@@ -510,8 +510,8 @@ _slang_link2(GLcontext *ctx,
              GLhandleARB programObj,
              struct gl_shader_program *shProg)
 {
-   struct gl_vertex_program *vertProg;
-   struct gl_fragment_program *fragProg;
+   const struct gl_vertex_program *vertProg;
+   const struct gl_fragment_program *fragProg;
    GLuint i;
 
    _mesa_free_shader_program_data(ctx, shProg);
@@ -532,6 +532,7 @@ _slang_link2(GLcontext *ctx,
       else
          _mesa_problem(ctx, "unexpected shader target in slang_link2()");
    }
+#if 00
    if (!vertProg || !fragProg) {
       /* XXX is it legal to have one but not the other?? */
       /* XXX record error */
@@ -539,68 +540,108 @@ _slang_link2(GLcontext *ctx,
       return;
    }
 
+   /* XXX is this test used? */
    if (!vertProg->Base.Varying || !fragProg->Base.Varying) {
       /* temporary */
       _mesa_problem(ctx, "vertex/fragment program lacks varying list!");
+      abort();
       shProg->LinkStatus = GL_FALSE;
       return;
    }  
+#endif
 
    /*
     * Make copies of the vertex/fragment programs now since we'll be
     * changing src/dst registers after merging the uniforms and varying vars.
     */
-   shProg->VertexProgram
-      = vertex_program(_mesa_clone_program(ctx, &vertProg->Base));
-   shProg->FragmentProgram
-      = fragment_program(_mesa_clone_program(ctx, &fragProg->Base));
-
-   link_varying_vars(shProg, &shProg->VertexProgram->Base);
-   link_varying_vars(shProg, &shProg->FragmentProgram->Base);
-
-   link_uniform_vars(shProg, &shProg->VertexProgram->Base);
-   link_uniform_vars(shProg, &shProg->FragmentProgram->Base);
-
-   /* The vertex and fragment programs share a common set of uniforms now */
-   _mesa_free_parameter_list(shProg->VertexProgram->Base.Parameters);
-   _mesa_free_parameter_list(shProg->FragmentProgram->Base.Parameters);
-   shProg->VertexProgram->Base.Parameters = shProg->Uniforms;
-   shProg->FragmentProgram->Base.Parameters = shProg->Uniforms;
-
-   _slang_resolve_branches(&shProg->VertexProgram->Base);
-   _slang_resolve_branches(&shProg->FragmentProgram->Base);
-
-   _slang_resolve_samplers(shProg, &shProg->VertexProgram->Base);
-   _slang_resolve_samplers(shProg, &shProg->FragmentProgram->Base);
-
-   if (!_slang_resolve_attributes(shProg, &shProg->VertexProgram->Base)) {
-      /*goto cleanup;*/
+   if (vertProg) {
+      shProg->VertexProgram
+         = vertex_program(_mesa_clone_program(ctx, &vertProg->Base));
+   }
+   else {
+      shProg->VertexProgram = NULL;
    }
 
-   _slang_update_inputs_outputs(&shProg->VertexProgram->Base);
-   _slang_update_inputs_outputs(&shProg->FragmentProgram->Base);
+   if (fragProg) {
+      shProg->FragmentProgram
+         = fragment_program(_mesa_clone_program(ctx, &fragProg->Base));
+   }
+   else {
+      shProg->FragmentProgram = NULL;
+   }
 
-#if 1
-   printf("************** original fragment program\n");
-   _mesa_print_program(&fragProg->Base);
-   _mesa_print_program_parameters(ctx, &fragProg->Base);
-#endif
-#if 1
-   printf("************** linked fragment prog\n");
-   _mesa_print_program(&shProg->FragmentProgram->Base);
-   _mesa_print_program_parameters(ctx, &shProg->FragmentProgram->Base);
-#endif
-#if 1
-   printf("************** original vertex program\n");
-   _mesa_print_program(&vertProg->Base);
-   _mesa_print_program_parameters(ctx, &fragProg->Base);
-#endif
-#if 1
-   printf("************** linked vertex prog\n");
-   _mesa_print_program(&shProg->VertexProgram->Base);
-   _mesa_print_program_parameters(ctx, &shProg->VertexProgram->Base);
-#endif
+   if (shProg->VertexProgram)
+      link_varying_vars(shProg, &shProg->VertexProgram->Base);
+   if (shProg->FragmentProgram)
+      link_varying_vars(shProg, &shProg->FragmentProgram->Base);
 
+   if (shProg->VertexProgram)
+      link_uniform_vars(shProg, &shProg->VertexProgram->Base);
+   if (shProg->FragmentProgram)
+      link_uniform_vars(shProg, &shProg->FragmentProgram->Base);
+
+   /* The vertex and fragment programs share a common set of uniforms now */
+   if (shProg->VertexProgram) {
+      _mesa_free_parameter_list(shProg->VertexProgram->Base.Parameters);
+      shProg->VertexProgram->Base.Parameters = shProg->Uniforms;
+   }
+   if (shProg->FragmentProgram) {
+      _mesa_free_parameter_list(shProg->FragmentProgram->Base.Parameters);
+      shProg->FragmentProgram->Base.Parameters = shProg->Uniforms;
+   }
+
+   if (shProg->VertexProgram) {
+      _slang_resolve_branches(&shProg->VertexProgram->Base);
+      _slang_resolve_samplers(shProg, &shProg->VertexProgram->Base);
+   }
+   if (shProg->FragmentProgram) {
+      _slang_resolve_branches(&shProg->FragmentProgram->Base);
+      _slang_resolve_samplers(shProg, &shProg->FragmentProgram->Base);
+   }
+
+   if (shProg->VertexProgram) {
+      if (!_slang_resolve_attributes(shProg, &shProg->VertexProgram->Base)) {
+         /*goto cleanup;*/
+         _mesa_problem(ctx, "_slang_resolve_attributes() failed");
+         abort(); /* XXX fix */
+      }
+   }
+
+   if (shProg->VertexProgram)
+      _slang_update_inputs_outputs(&shProg->VertexProgram->Base);
+   if (shProg->FragmentProgram)
+      _slang_update_inputs_outputs(&shProg->FragmentProgram->Base);
+
+   if (fragProg && shProg->FragmentProgram) {
+#if 1
+      printf("************** original fragment program\n");
+      _mesa_print_program(&fragProg->Base);
+      _mesa_print_program_parameters(ctx, &fragProg->Base);
+#endif
+#if 1
+      printf("************** linked fragment prog\n");
+      _mesa_print_program(&shProg->FragmentProgram->Base);
+      _mesa_print_program_parameters(ctx, &shProg->FragmentProgram->Base);
+#endif
+   }
+
+   if (vertProg && shProg->VertexProgram) {
+#if 1
+      printf("************** original vertex program\n");
+      _mesa_print_program(&vertProg->Base);
+      _mesa_print_program_parameters(ctx, &fragProg->Base);
+#endif
+#if 1
+      printf("************** linked vertex prog\n");
+      _mesa_print_program(&shProg->VertexProgram->Base);
+      _mesa_print_program_parameters(ctx, &shProg->VertexProgram->Base);
+#endif
+   }
+
+#if 0
    shProg->LinkStatus = (shProg->VertexProgram && shProg->FragmentProgram);
+#else
+   shProg->LinkStatus = (shProg->VertexProgram || shProg->FragmentProgram);
+#endif
 }
 
