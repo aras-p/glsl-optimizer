@@ -376,7 +376,7 @@ const char *glXGetDriverConfig (const char *driverName) {
 }
 
 
-/* This function isn't currently used.
+/* Called from __glXFreeDisplayPrivate.
  */
 static void driDestroyDisplay(Display *dpy, void *private)
 {
