@@ -480,7 +480,7 @@ static void meta_draw_quad(struct intel_context *intel,
 		  prim, 1,
 		  NULL,
 		  0,
-		  4 );
+		  3 );
 }
 
 

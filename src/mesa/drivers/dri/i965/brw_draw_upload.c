@@ -408,6 +408,8 @@ GLboolean brw_upload_vertices( struct brw_context *brw,
 
    /* First build an array of pointers to ve's in vb.inputs_read
     */
+   if (0)
+      _mesa_printf("%s %d..%d\n", __FUNCTION__, min_index, max_index);
    
    while (tmp) {
       GLuint i = ffsll(tmp)-1;
@@ -418,7 +420,7 @@ GLboolean brw_upload_vertices( struct brw_context *brw,
 
       input->index = i;
       input->element_size = get_size(input->glarray->Type) * input->glarray->Size;
-      input->count = input->glarray->StrideB ? max_index - min_index : 1;
+      input->count = input->glarray->StrideB ? max_index + 1 - min_index : 1;
 
       if (!input->glarray->BufferObj->Name) {
 	 if (i == 0) {
