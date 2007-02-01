@@ -207,6 +207,10 @@ fetch_vector4( GLcontext *ctx,
       COPY_4V(result, src);
    }
    else {
+      ASSERT(GET_SWZ(source->Swizzle, 0) <= 3);
+      ASSERT(GET_SWZ(source->Swizzle, 1) <= 3);
+      ASSERT(GET_SWZ(source->Swizzle, 2) <= 3);
+      ASSERT(GET_SWZ(source->Swizzle, 3) <= 3);
       result[0] = src[GET_SWZ(source->Swizzle, 0)];
       result[1] = src[GET_SWZ(source->Swizzle, 1)];
       result[2] = src[GET_SWZ(source->Swizzle, 2)];
@@ -664,7 +668,7 @@ execute_program( GLcontext *ctx,
                  struct fp_machine *machine, const SWspan *span,
                  GLuint column )
 {
-   const GLuint MAX_EXEC = 5000;
+   const GLuint MAX_EXEC = 10000;
    GLuint pc, total = 0;
 
    if (DEBUG_FRAG) {
@@ -1659,6 +1663,7 @@ execute_program( GLcontext *ctx,
       total++;
       if (total > MAX_EXEC) {
          _mesa_problem(ctx, "Infinite loop detected in fragment program");
+         return GL_TRUE;
          abort();
       }
    }
