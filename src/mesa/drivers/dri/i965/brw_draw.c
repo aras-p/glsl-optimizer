@@ -183,10 +183,13 @@ static void brw_merge_inputs( struct brw_context *brw,
    for (i = 0; i < VERT_ATTRIB_MAX; i++) {
       brw->vb.inputs[i].glarray = arrays[i];
 
-      if (arrays[i]->StrideB != 0)
-	 brw->vb.info.varying |= 1 << i;
+      /* XXX: metaops passes null arrays */
+      if (arrays[i]) {
+	 if (arrays[i]->StrideB != 0)
+	    brw->vb.info.varying |= 1 << i;
 
-      brw->vb.info.sizes[i/16] |= (inputs[i].glarray->Size - 1) << ((i%16) * 2);
+	 brw->vb.info.sizes[i/16] |= (inputs[i].glarray->Size - 1) << ((i%16) * 2);
+      }
    }
 
    /* Raise statechanges if input sizes and varying have changed: 
