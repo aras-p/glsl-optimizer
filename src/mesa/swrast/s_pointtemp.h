@@ -280,7 +280,7 @@ NAME ( GLcontext *ctx, const SWvertex *vert )
 #if FLAGS & TEXTURE
             for (u = 0; u < ctx->Const.MaxTextureUnits; u++) {
                if (ctx->Texture._EnabledCoordUnits & (1 << u)) {
-                  COPY_4V(span->array->texcoords[u][count], texcoord[u]);
+                  COPY_4V(span->array->attribs[FRAG_ATTRIB_TEX0 + u][count], texcoord[u]);
                   span->array->lambda[u][count] = 0.0;
                }
             }
@@ -342,14 +342,14 @@ NAME ( GLcontext *ctx, const SWvertex *vert )
                         r = vert->texcoord[u][0];
                      else /* GL_R */
                         r = vert->texcoord[u][2];
-                     span->array->texcoords[u][count][0] = s;
-                     span->array->texcoords[u][count][1] = t;
-                     span->array->texcoords[u][count][2] = r;
-                     span->array->texcoords[u][count][3] = 1.0F;
+                     span->array->attribs[FRAG_ATTRIB_TEX0 + u][count][0] = s;
+                     span->array->attribs[FRAG_ATTRIB_TEX0 + u][count][1] = t;
+                     span->array->attribs[FRAG_ATTRIB_TEX0 + u][count][2] = r;
+                     span->array->attribs[FRAG_ATTRIB_TEX0 + u][count][3] = 1.0F;
                      span->array->lambda[u][count] = 0.0; /* XXX fix? */
                   }
                   else {
-                     COPY_4V(span->array->texcoords[u][count], vert->texcoord[u]);
+                     COPY_4V(span->array->attribs[FRAG_ATTRIB_TEX0 + u][count], vert->texcoord[u]);
                   }
                }
             }
@@ -402,7 +402,7 @@ NAME ( GLcontext *ctx, const SWvertex *vert )
 #if FLAGS & TEXTURE
       for (u = 0; u < ctx->Const.MaxTextureUnits; u++) {
          if (ctx->Texture.Unit[u]._ReallyEnabled) {
-            COPY_4V(span->array->texcoords[u][count], texcoord[u]);
+            COPY_4V(span->array->attribs[FRAG_ATTRIB_TEX0 + u][count], texcoord[u]);
          }
       }
 #endif

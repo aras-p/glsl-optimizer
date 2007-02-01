@@ -394,7 +394,7 @@ read_rgba_pixels( GLcontext *ctx,
       /* no convolution */
       const GLint dstStride
          = _mesa_image_row_stride(packing, width, format, type);
-      GLfloat (*rgba)[4] = swrast->SpanArrays->color.sz4.rgba;
+      GLfloat (*rgba)[4] = swrast->SpanArrays->attribs[FRAG_ATTRIB_COL0];
       GLint row;
       GLubyte *dst = _mesa_image_address2d(packing, pixels, width, height,
                                            format, type, 0, 0);

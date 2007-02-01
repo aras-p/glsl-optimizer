@@ -239,7 +239,7 @@ interpolate_colors(SWspan *span)
 #endif
    case GL_FLOAT:
       {
-         GLfloat (*rgba)[4] = span->array->color.sz4.rgba;
+         GLfloat (*rgba)[4] = span->array->attribs[FRAG_ATTRIB_COL0];
          GLfloat r, g, b, a, dr, dg, db, da;
          r = span->red;
          g = span->green;
@@ -351,7 +351,7 @@ interpolate_specular(SWspan *span)
 #endif
    case GL_FLOAT:
       {
-         GLfloat (*spec)[4] = span->array->color.sz4.spec;
+         GLfloat (*spec)[4] = span->array->attribs[FRAG_ATTRIB_COL1];
 #if CHAN_BITS <= 16
          GLfloat r = CHAN_TO_FLOAT(FixedToChan(span->specRed));
          GLfloat g = CHAN_TO_FLOAT(FixedToChan(span->specGreen));
@@ -430,7 +430,7 @@ interpolate_indexes(GLcontext *ctx, SWspan *span)
 static INLINE void
 interpolate_fog(const GLcontext *ctx, SWspan *span)
 {
-   GLfloat *fog = span->array->fog;
+   GLfloat (*fog)[4] = span->array->attribs[FRAG_ATTRIB_FOGC];
    const GLfloat fogStep = span->fogStep;
    GLfloat fogCoord = span->fog;
    const GLuint haveW = (span->interpMask & SPAN_W);
@@ -438,7 +438,7 @@ interpolate_fog(const GLcontext *ctx, SWspan *span)
    GLfloat w = haveW ? span->w : 1.0F;
    GLuint i;
    for (i = 0; i < span->end; i++) {
-      fog[i] = fogCoord / w;
+      fog[i][0] = fogCoord / w;
       fogCoord += fogStep;
       w += wStep;
    }
@@ -565,7 +565,7 @@ interpolate_texcoords(GLcontext *ctx, SWspan *span)
                needLambda = GL_FALSE;
             }
             if (needLambda) {
-               GLfloat (*texcoord)[4] = span->array->texcoords[u];
+               GLfloat (*texcoord)[4] = span->array->attribs[FRAG_ATTRIB_TEX0 + u];
                GLfloat *lambda = span->array->lambda[u];
                const GLfloat dsdx = span->texStepX[u][0];
                const GLfloat dsdy = span->texStepY[u][0];
@@ -620,7 +620,7 @@ interpolate_texcoords(GLcontext *ctx, SWspan *span)
                span->arrayMask |= SPAN_LAMBDA;
             }
             else {
-               GLfloat (*texcoord)[4] = span->array->texcoords[u];
+               GLfloat (*texcoord)[4] = span->array->attribs[FRAG_ATTRIB_TEX0 + u];
                GLfloat *lambda = span->array->lambda[u];
                const GLfloat dsdx = span->texStepX[u][0];
                const GLfloat dtdx = span->texStepX[u][1];
@@ -701,7 +701,7 @@ interpolate_texcoords(GLcontext *ctx, SWspan *span)
       span->arrayMask |= SPAN_TEXTURE;
       if (needLambda) {
          /* just texture unit 0, with lambda */
-         GLfloat (*texcoord)[4] = span->array->texcoords[0];
+         GLfloat (*texcoord)[4] = span->array->attribs[FRAG_ATTRIB_TEX0];
          GLfloat *lambda = span->array->lambda[0];
          const GLfloat dsdx = span->texStepX[0][0];
          const GLfloat dsdy = span->texStepY[0][0];
@@ -757,7 +757,7 @@ interpolate_texcoords(GLcontext *ctx, SWspan *span)
       }
       else {
          /* just texture 0, without lambda */
-         GLfloat (*texcoord)[4] = span->array->texcoords[0];
+         GLfloat (*texcoord)[4] = span->array->attribs[FRAG_ATTRIB_TEX0];
          const GLfloat dsdx = span->texStepX[0][0];
          const GLfloat dtdx = span->texStepX[0][1];
          const GLfloat drdx = span->texStepX[0][2];
@@ -841,12 +841,39 @@ interpolate_varying(GLcontext *ctx, SWspan *span)
             GLuint k;
             for (k = 0; k < span->end; k++) {
                GLfloat invW = 1.0f / w;
-               span->array->varying[var][k][j] = v * invW;
+               span->array->attribs[FRAG_ATTRIB_VAR0 + var][k][j] = v * invW;
                v += dvdx;
                w += dwdx;
             }
          }
       }
+   }
+}
+
+
+/**
+ * Fill in the arrays->attribs[FRAG_ATTRIB_WPOS] array.
+ */
+static INLINE void
+interpolate_wpos(GLcontext *ctx, SWspan *span)
+{
+   GLfloat (*wpos)[4] = span->array->attribs[FRAG_ATTRIB_WPOS];
+   GLuint i;
+   if (span->arrayMask & SPAN_XY) {
+      for (i = 0; i < span->end; i++) {
+         wpos[i][0] = (GLfloat) span->array->x[i];
+         wpos[i][1] = (GLfloat) span->array->y[i];
+      }
+   }
+   else {
+      for (i = 0; i < span->end; i++) {
+         wpos[i][0] = (GLfloat) span->x + i;
+         wpos[i][1] = (GLfloat) span->y;
+      }
+   }
+   for (i = 0; i < span->end; i++) {
+      wpos[i][2] = (GLfloat) span->array->z[i] / ctx->DrawBuffer->_DepthMaxF;
+      wpos[i][3] = span->w + i * span->dwdx;
    }
 }
 
@@ -1238,8 +1265,8 @@ add_specular(GLcontext *ctx, SWspan *span)
       break;
    case GL_FLOAT:
       {
-         GLfloat (*rgba)[4] = span->array->color.sz4.rgba;
-         GLfloat (*spec)[4] = span->array->color.sz4.spec;
+         GLfloat (*rgba)[4] = span->array->attribs[FRAG_ATTRIB_COL0];
+         GLfloat (*spec)[4] = span->array->attribs[FRAG_ATTRIB_COL1];
          GLuint i;
          for (i = 0; i < span->end; i++) {
             rgba[i][RCOMP] += spec[i][RCOMP];
@@ -1280,7 +1307,7 @@ apply_aa_coverage(SWspan *span)
       }
    }
    else {
-      GLfloat (*rgba)[4] = span->array->color.sz4.rgba;
+      GLfloat (*rgba)[4] = span->array->attribs[FRAG_ATTRIB_COL0];
       for (i = 0; i < span->end; i++) {
          rgba[i][ACOMP] = rgba[i][ACOMP] * coverage[i];
       }
@@ -1294,7 +1321,7 @@ apply_aa_coverage(SWspan *span)
 static INLINE void
 clamp_colors(SWspan *span)
 {
-   GLfloat (*rgba)[4] = span->array->color.sz4.rgba;
+   GLfloat (*rgba)[4] = span->array->attribs[FRAG_ATTRIB_COL0];
    GLuint i;
    ASSERT(span->array->ChanType == GL_FLOAT);
    for (i = 0; i < span->end; i++) {
@@ -1320,7 +1347,7 @@ convert_color_type(SWspan *span, GLenum newType)
       src = span->array->color.sz2.rgba;
    }
    else {
-      src = span->array->color.sz4.rgba;
+      src = span->array->attribs[FRAG_ATTRIB_COL0];
    }
    if (newType == GL_UNSIGNED_BYTE) {
       dst = span->array->color.sz1.rgba;
@@ -1329,7 +1356,7 @@ convert_color_type(SWspan *span, GLenum newType)
       dst = span->array->color.sz2.rgba;
    }
    else {
-      dst = span->array->color.sz4.rgba;
+      dst = span->array->attribs[FRAG_ATTRIB_COL0];
    }
 
    _mesa_convert_colors(span->array->ChanType, src,
@@ -1365,7 +1392,7 @@ shade_texture_span(GLcontext *ctx, SWspan *span)
             ? (GLvoid *) span->array->color.sz1.rgba
             : (GLvoid *) span->array->color.sz2.rgba;
          _mesa_convert_colors(oldType, src,
-                              newType, span->array->color.sz4.rgba,
+                              newType, span->array->attribs[FRAG_ATTRIB_COL0],
                               span->end, span->array->mask);
          span->array->ChanType = newType;
       }
@@ -1382,6 +1409,10 @@ shade_texture_span(GLcontext *ctx, SWspan *span)
 
       if (ctx->Shader.CurrentProgram && span->interpMask & SPAN_VARYING)
          interpolate_varying(ctx, span);
+
+      if (ctx->FragmentProgram._Current &&
+          (ctx->FragmentProgram._Current->Base.InputsRead & FRAG_BIT_WPOS))
+         interpolate_wpos(ctx, span);
 
       /* Run fragment program/shader now */
       if (ctx->FragmentProgram._Current) {
@@ -1938,7 +1969,7 @@ _swrast_get_dest_rgba(GLcontext *ctx, struct gl_renderbuffer *rb,
       rbPixels = span->array->color.sz2.spec;
    }
    else {
-      rbPixels = span->array->color.sz4.spec;
+      rbPixels = span->array->attribs[FRAG_ATTRIB_COL1];
    }
 
    /* Get destination values from renderbuffer */

@@ -263,7 +263,7 @@ copy_rgba_pixels(GLcontext *ctx, GLint srcx, GLint srcy,
    ASSERT(width < MAX_WIDTH);
 
    for (row = 0; row < height; row++, sy += stepy, dy += stepy) {
-      GLvoid *rgba = span.array->color.sz4.rgba;
+      GLvoid *rgba = span.array->attribs[FRAG_ATTRIB_COL0];
 
       /* Get row/span of source pixels */
       if (overlapping) {

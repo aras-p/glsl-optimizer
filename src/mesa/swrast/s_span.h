@@ -32,7 +32,7 @@
 
 
 /**
- * \defgroup SpanFlags SPAN_*-flags
+ * \defgroup SpanFlags
  * Bitflags used for interpMask and arrayMask fields below to indicate
  * which interpolant values and fragment arrays are in use, respectively.
  */
@@ -60,12 +60,10 @@ struct arrays2 {
    union {
       GLubyte  sz1[MAX_WIDTH][4]; /* primary color */
       GLushort sz2[MAX_WIDTH][4];
-      GLfloat  sz4[MAX_WIDTH][4];
    } rgba;
    union {
       GLubyte  sz1[MAX_WIDTH][4]; /* specular color and temp storage */
       GLushort sz2[MAX_WIDTH][4];
-      GLfloat  sz4[MAX_WIDTH][4];
    } spec;
 };
 #endif
@@ -80,7 +78,14 @@ struct arrays2 {
  * filled in by glDraw/CopyPixels, etc.
  * These arrays are separated out of sw_span to conserve memory.
  */
-typedef struct sw_span_arrays {
+typedef struct sw_span_arrays
+{
+   /** Per-fragment attributes (indexed by FRAG_ATTRIB_* tokens) */
+   GLfloat attribs[FRAG_ATTRIB_MAX][MAX_WIDTH][4];
+
+   /** This mask indicates which fragments are alive or culled */
+   GLubyte mask[MAX_WIDTH];
+
    GLenum ChanType; /**< Color channel type, GL_UNSIGNED_BYTE, GL_FLOAT */
    union {
       struct {
@@ -91,37 +96,17 @@ typedef struct sw_span_arrays {
          GLushort rgba[MAX_WIDTH][4];
          GLushort spec[MAX_WIDTH][4];
       } sz2;
-      struct {
-         GLfloat rgba[MAX_WIDTH][4];
-         GLfloat spec[MAX_WIDTH][4];
-      } sz4;
    } color;
    /** XXX these are temporary fields, pointing into above color arrays */
    GLchan (*rgba)[4];
    GLchan (*spec)[4];
 
-#if 0
-   /* XXX rearrange and unify these arrays to so that we can
-    * index all fragment inputs with the FRAG_ATTRIB_* values:
-    */
-   GLfloat attribs[FRAG_ATTRIB_MAX][MAX_WIDTH][4];
-   /*OR*/
-   typedef GLfloat (*array4f)[4];
-   array4f attribs[FRAG_ATTRIB_MAX];
-#endif
-
    GLint   x[MAX_WIDTH];  /**< fragment X coords */
    GLint   y[MAX_WIDTH];  /**< fragment Y coords */
    GLuint  z[MAX_WIDTH];  /**< fragment Z coords */
    GLuint  index[MAX_WIDTH];  /**< Color indexes */
-   GLfloat fog[MAX_WIDTH];
-   GLfloat texcoords[MAX_TEXTURE_COORD_UNITS][MAX_WIDTH][4];
-   GLfloat lambda[MAX_TEXTURE_COORD_UNITS][MAX_WIDTH];
+   GLfloat lambda[MAX_TEXTURE_COORD_UNITS][MAX_WIDTH]; /**< Texture LOD */
    GLfloat coverage[MAX_WIDTH];  /**< Fragment coverage for AA/smoothing */
-   GLfloat varying[MAX_VARYING][MAX_WIDTH][4]; /**< For shaders */
-
-   /** This mask indicates which fragments are alive or culled */
-   GLubyte mask[MAX_WIDTH];
 } SWspanarrays;
 
 
@@ -137,7 +122,8 @@ typedef struct sw_span_arrays {
  * stream of these structures which would be consumed by one or more
  * span-processing threads which could run in parallel.
  */
-typedef struct sw_span {
+typedef struct sw_span
+{
    GLint x, y;
 
    /** Only need to process pixels between start <= i < end */

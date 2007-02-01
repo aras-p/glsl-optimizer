@@ -230,7 +230,7 @@ zoom_span( GLcontext *ctx, GLint imgX, GLint imgY, const SWspan *span,
             GLint j = unzoom_x(ctx->Pixel.ZoomX, imgX, x0 + i) - span->x;
             ASSERT(j >= 0);
             ASSERT(j < span->end);
-            COPY_4V(zoomed.array->color.sz4.rgba[i], rgba[j]);
+            COPY_4V(zoomed.array->attribs[FRAG_ATTRIB_COL0][i], rgba[j]);
          }
       }
    }
@@ -268,10 +268,10 @@ zoom_span( GLcontext *ctx, GLint imgX, GLint imgY, const SWspan *span,
             GLint j = unzoom_x(ctx->Pixel.ZoomX, imgX, x0 + i) - span->x;
             ASSERT(j >= 0);
             ASSERT(j < span->end);
-            zoomed.array->color.sz4.rgba[i][0] = rgb[j][0];
-            zoomed.array->color.sz4.rgba[i][1] = rgb[j][1];
-            zoomed.array->color.sz4.rgba[i][2] = rgb[j][2];
-            zoomed.array->color.sz4.rgba[i][3] = 1.0F;
+            zoomed.array->attribs[FRAG_ATTRIB_COL0][i][0] = rgb[j][0];
+            zoomed.array->attribs[FRAG_ATTRIB_COL0][i][1] = rgb[j][1];
+            zoomed.array->attribs[FRAG_ATTRIB_COL0][i][2] = rgb[j][2];
+            zoomed.array->attribs[FRAG_ATTRIB_COL0][i][3] = 1.0F;
          }
       }
    }

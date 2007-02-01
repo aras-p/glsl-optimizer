@@ -289,7 +289,7 @@
             array->z[count] = (GLuint) solve_plane(cx, cy, zPlane);
 #endif
 #ifdef DO_FOG
-	    array->fog[count] = solve_plane(cx, cy, fogPlane);
+	    array->attribs[FRAG_ATTRIB_FOGC][count][0] = solve_plane(cx, cy, fogPlane);
 #endif
 #ifdef DO_RGBA
             array->rgba[count][RCOMP] = solve_plane_chan(cx, cy, rPlane);
@@ -308,9 +308,9 @@
 #ifdef DO_TEX
             {
                const GLfloat invQ = solve_plane_recip(cx, cy, vPlane);
-               array->texcoords[0][count][0] = solve_plane(cx, cy, sPlane) * invQ;
-               array->texcoords[0][count][1] = solve_plane(cx, cy, tPlane) * invQ;
-               array->texcoords[0][count][2] = solve_plane(cx, cy, uPlane) * invQ;
+               array->attribs[FRAG_ATTRIB_TEX0 + 0][count][0] = solve_plane(cx, cy, sPlane) * invQ;
+               array->attribs[FRAG_ATTRIB_TEX0 + 0][count][1] = solve_plane(cx, cy, tPlane) * invQ;
+               array->attribs[FRAG_ATTRIB_TEX0 + 0][count][2] = solve_plane(cx, cy, uPlane) * invQ;
                array->lambda[0][count] = compute_lambda(sPlane, tPlane, vPlane,
                                                       cx, cy, invQ,
                                                       texWidth, texHeight);
@@ -321,9 +321,9 @@
                for (unit = 0; unit < ctx->Const.MaxTextureUnits; unit++) {
                   if (ctx->Texture.Unit[unit]._ReallyEnabled) {
                      GLfloat invQ = solve_plane_recip(cx, cy, vPlane[unit]);
-                     array->texcoords[unit][count][0] = solve_plane(cx, cy, sPlane[unit]) * invQ;
-                     array->texcoords[unit][count][1] = solve_plane(cx, cy, tPlane[unit]) * invQ;
-                     array->texcoords[unit][count][2] = solve_plane(cx, cy, uPlane[unit]) * invQ;
+                     array->attribs[FRAG_ATTRIB_TEX0 + unit][count][0] = solve_plane(cx, cy, sPlane[unit]) * invQ;
+                     array->attribs[FRAG_ATTRIB_TEX0 + unit][count][1] = solve_plane(cx, cy, tPlane[unit]) * invQ;
+                     array->attribs[FRAG_ATTRIB_TEX0 + unit][count][2] = solve_plane(cx, cy, uPlane[unit]) * invQ;
                      array->lambda[unit][count] = compute_lambda(sPlane[unit],
                                       tPlane[unit], vPlane[unit], cx, cy, invQ,
                                       texWidth[unit], texHeight[unit]);
@@ -393,7 +393,7 @@
             array->z[ix] = (GLuint) solve_plane(cx, cy, zPlane);
 #endif
 #ifdef DO_FOG
-            array->fog[ix] = solve_plane(cx, cy, fogPlane);
+            array->attribs[FRAG_ATTRIB_FOGC][ix][0] = solve_plane(cx, cy, fogPlane);
 #endif
 #ifdef DO_RGBA
             array->rgba[ix][RCOMP] = solve_plane_chan(cx, cy, rPlane);
@@ -412,9 +412,9 @@
 #ifdef DO_TEX
             {
                const GLfloat invQ = solve_plane_recip(cx, cy, vPlane);
-               array->texcoords[0][ix][0] = solve_plane(cx, cy, sPlane) * invQ;
-               array->texcoords[0][ix][1] = solve_plane(cx, cy, tPlane) * invQ;
-               array->texcoords[0][ix][2] = solve_plane(cx, cy, uPlane) * invQ;
+               array->attribs[FRAG_ATTRIB_TEX0][ix][0] = solve_plane(cx, cy, sPlane) * invQ;
+               array->attribs[FRAG_ATTRIB_TEX0][ix][1] = solve_plane(cx, cy, tPlane) * invQ;
+               array->attribs[FRAG_ATTRIB_TEX0][ix][2] = solve_plane(cx, cy, uPlane) * invQ;
                array->lambda[0][ix] = compute_lambda(sPlane, tPlane, vPlane,
                                           cx, cy, invQ, texWidth, texHeight);
             }
@@ -424,9 +424,9 @@
                for (unit = 0; unit < ctx->Const.MaxTextureUnits; unit++) {
                   if (ctx->Texture.Unit[unit]._ReallyEnabled) {
                      GLfloat invQ = solve_plane_recip(cx, cy, vPlane[unit]);
-                     array->texcoords[unit][ix][0] = solve_plane(cx, cy, sPlane[unit]) * invQ;
-                     array->texcoords[unit][ix][1] = solve_plane(cx, cy, tPlane[unit]) * invQ;
-                     array->texcoords[unit][ix][2] = solve_plane(cx, cy, uPlane[unit]) * invQ;
+                     array->attribs[FRAG_ATTRIB_TEX0 + unit][ix][0] = solve_plane(cx, cy, sPlane[unit]) * invQ;
+                     array->attribs[FRAG_ATTRIB_TEX0 + unit][ix][1] = solve_plane(cx, cy, tPlane[unit]) * invQ;
+                     array->attribs[FRAG_ATTRIB_TEX0 + unit][ix][2] = solve_plane(cx, cy, uPlane[unit]) * invQ;
                      array->lambda[unit][ix] = compute_lambda(sPlane[unit],
                                                             tPlane[unit],
                                                             vPlane[unit],
@@ -468,10 +468,11 @@
                array->z[j] = array->z[j + left];
 #endif
 #ifdef DO_FOG
-               array->fog[j] = array->fog[j + left];
+               array->attribs[FRAG_ATTRIB_FOGC][j][0]
+                  = array->attribs[FRAG_ATTRIB_FOGC][j + left][0];
 #endif
 #ifdef DO_TEX
-               COPY_4V(array->texcoords[0][j], array->texcoords[0][j + left]);
+               COPY_4V(array->attribs[FRAG_ATTRIB_TEX0 + 0][j], array->attribs[FRAG_ATTRIB_TEX0 + 0][j + left]);
 #endif
 #if defined(DO_MULTITEX) || defined(DO_TEX)
                array->lambda[0][j] = array->lambda[0][j + left];
@@ -488,9 +489,9 @@
                if (ctx->Texture.Unit[unit]._ReallyEnabled) {
                   GLint j;
                   for (j = 0; j < (GLint) n; j++) {
-		     array->texcoords[unit][j][0] = array->texcoords[unit][j + left][0];
-                     array->texcoords[unit][j][1] = array->texcoords[unit][j + left][1];
-                     array->texcoords[unit][j][2] = array->texcoords[unit][j + left][2];
+                     array->attribs[FRAG_ATTRIB_TEX0 + unit][j][0] = array->attribs[FRAG_ATTRIB_TEX0 + unit][j + left][0];
+                     array->attribs[FRAG_ATTRIB_TEX0 + unit][j][1] = array->attribs[FRAG_ATTRIB_TEX0 + unit][j + left][1];
+                     array->attribs[FRAG_ATTRIB_TEX0 + unit][j][2] = array->attribs[FRAG_ATTRIB_TEX0 + unit][j + left][2];
                      array->lambda[unit][j] = array->lambda[unit][j + left];
                   }
                }

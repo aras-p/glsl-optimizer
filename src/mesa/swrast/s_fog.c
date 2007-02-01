@@ -154,7 +154,7 @@ _swrast_fog_rgba_span( const GLcontext *ctx, SWspan *span )
             FOG_LOOP(GLushort, COMPUTE_F);
          }
          else {
-            GLfloat (*rgba)[4] = span->array->color.sz4.rgba;
+            GLfloat (*rgba)[4] = span->array->attribs[FRAG_ATTRIB_COL0];
             ASSERT(span->array->ChanType == GL_FLOAT);
             FOG_LOOP(GLfloat, COMPUTE_F);
          }
@@ -172,7 +172,7 @@ _swrast_fog_rgba_span( const GLcontext *ctx, SWspan *span )
             FOG_LOOP(GLushort, COMPUTE_F);
          }
          else {
-            GLfloat (*rgba)[4] = span->array->color.sz4.rgba;
+            GLfloat (*rgba)[4] = span->array->attribs[FRAG_ATTRIB_COL0];
             ASSERT(span->array->ChanType == GL_FLOAT);
             FOG_LOOP(GLfloat, COMPUTE_F);
          }
@@ -194,7 +194,7 @@ _swrast_fog_rgba_span( const GLcontext *ctx, SWspan *span )
             FOG_LOOP(GLushort, COMPUTE_F);
          }
          else {
-            GLfloat (*rgba)[4] = span->array->color.sz4.rgba;
+            GLfloat (*rgba)[4] = span->array->attribs[FRAG_ATTRIB_COL0];
             ASSERT(span->array->ChanType == GL_FLOAT);
             FOG_LOOP(GLfloat, COMPUTE_F);
          }
@@ -214,7 +214,7 @@ _swrast_fog_rgba_span( const GLcontext *ctx, SWspan *span )
       if (span->array->ChanType == GL_UNSIGNED_BYTE) {
          GLubyte (*rgba)[4] = span->array->color.sz1.rgba;
          for (i = 0; i < span->end; i++) {
-            const GLfloat f = span->array->fog[i];
+            const GLfloat f = span->array->attribs[FRAG_ATTRIB_FOGC][i][0];
             const GLfloat oneMinusF = 1.0F - f;
             rgba[i][RCOMP] = (GLubyte) (f * rgba[i][RCOMP] + oneMinusF * rFog);
             rgba[i][GCOMP] = (GLubyte) (f * rgba[i][GCOMP] + oneMinusF * gFog);
@@ -224,7 +224,7 @@ _swrast_fog_rgba_span( const GLcontext *ctx, SWspan *span )
       else if (span->array->ChanType == GL_UNSIGNED_SHORT) {
          GLushort (*rgba)[4] = span->array->color.sz2.rgba;
          for (i = 0; i < span->end; i++) {
-            const GLfloat f = span->array->fog[i];
+            const GLfloat f = span->array->attribs[FRAG_ATTRIB_FOGC][i][0];
             const GLfloat oneMinusF = 1.0F - f;
             rgba[i][RCOMP] = (GLushort) (f * rgba[i][RCOMP] + oneMinusF * rFog);
             rgba[i][GCOMP] = (GLushort) (f * rgba[i][GCOMP] + oneMinusF * gFog);
@@ -232,10 +232,10 @@ _swrast_fog_rgba_span( const GLcontext *ctx, SWspan *span )
          }
       }
       else {
-         GLfloat (*rgba)[4] = span->array->color.sz4.rgba;
+         GLfloat (*rgba)[4] = span->array->attribs[FRAG_ATTRIB_COL0];
          ASSERT(span->array->ChanType == GL_FLOAT);
          for (i = 0; i < span->end; i++) {
-            const GLfloat f = span->array->fog[i];
+            const GLfloat f = span->array->attribs[FRAG_ATTRIB_FOGC][i][0];
             const GLfloat oneMinusF = 1.0F - f;
             rgba[i][RCOMP] = f * rgba[i][RCOMP] + oneMinusF * rFog;
             rgba[i][GCOMP] = f * rgba[i][GCOMP] + oneMinusF * gFog;
@@ -258,7 +258,7 @@ _swrast_fog_rgba_span( const GLcontext *ctx, SWspan *span )
          FOG_LOOP(GLushort, COMPUTE_F);
       }
       else {
-         GLfloat (*rgba)[4] = span->array->color.sz4.rgba;
+         GLfloat (*rgba)[4] = span->array->attribs[FRAG_ATTRIB_COL0];
          ASSERT(span->array->ChanType == GL_FLOAT);
          FOG_LOOP(GLfloat, COMPUTE_F);
       }
@@ -360,7 +360,7 @@ _swrast_fog_ci_span( const GLcontext *ctx, SWspan *span )
        */
       GLuint i;
       for (i = 0; i < span->end; i++) {
-         const GLfloat f = span->array->fog[i];
+         const GLfloat f = span->array->attribs[FRAG_ATTRIB_FOGC][i][0];
          index[i] = (GLuint) ((GLfloat) index[i] + (1.0F - f) * fogIndex);
       }
    }

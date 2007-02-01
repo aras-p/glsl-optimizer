@@ -61,7 +61,7 @@ NAME(plot)(GLcontext *ctx, struct LineInfo *line, int ix, int iy)
    line->span.array->z[i] = (GLuint) solve_plane(fx, fy, line->zPlane);
 #endif
 #ifdef DO_FOG
-   line->span.array->fog[i] = solve_plane(fx, fy, line->fPlane);
+   line->span.array->attribs[FRAG_ATTRIB_FOGC][i][0] = solve_plane(fx, fy, line->fPlane);
 #endif
 #ifdef DO_RGBA
    line->span.array->rgba[i][RCOMP] = solve_plane_chan(fx, fy, line->rPlane);
@@ -86,9 +86,9 @@ NAME(plot)(GLcontext *ctx, struct LineInfo *line, int ix, int iy)
       else {
          invQ = solve_plane_recip(fx, fy, line->vPlane[0]);
       }
-      line->span.array->texcoords[0][i][0] = solve_plane(fx, fy, line->sPlane[0]) * invQ;
-      line->span.array->texcoords[0][i][1] = solve_plane(fx, fy, line->tPlane[0]) * invQ;
-      line->span.array->texcoords[0][i][2] = solve_plane(fx, fy, line->uPlane[0]) * invQ;
+      line->span.array->attribs[FRAG_ATTRIB_TEX0][i][0] = solve_plane(fx, fy, line->sPlane[0]) * invQ;
+      line->span.array->attribs[FRAG_ATTRIB_TEX0][i][1] = solve_plane(fx, fy, line->tPlane[0]) * invQ;
+      line->span.array->attribs[FRAG_ATTRIB_TEX0][i][2] = solve_plane(fx, fy, line->uPlane[0]) * invQ;
       line->span.array->lambda[0][i] = compute_lambda(line->sPlane[0],
                                                       line->tPlane[0], invQ,
                                                       line->texWidth[0],
@@ -106,9 +106,9 @@ NAME(plot)(GLcontext *ctx, struct LineInfo *line, int ix, int iy)
             else {
                invQ = solve_plane_recip(fx, fy, line->vPlane[unit]);
             }
-            line->span.array->texcoords[unit][i][0] = solve_plane(fx, fy, line->sPlane[unit]) * invQ;
-            line->span.array->texcoords[unit][i][1] = solve_plane(fx, fy, line->tPlane[unit]) * invQ;
-            line->span.array->texcoords[unit][i][2] = solve_plane(fx, fy, line->uPlane[unit]) * invQ;
+            line->span.array->attribs[FRAG_ATTRIB_TEX0 + unit][i][0] = solve_plane(fx, fy, line->sPlane[unit]) * invQ;
+            line->span.array->attribs[FRAG_ATTRIB_TEX0 + unit][i][1] = solve_plane(fx, fy, line->tPlane[unit]) * invQ;
+            line->span.array->attribs[FRAG_ATTRIB_TEX0 + unit][i][2] = solve_plane(fx, fy, line->uPlane[unit]) * invQ;
             line->span.array->lambda[unit][i] = compute_lambda(line->sPlane[unit],
                                                                line->tPlane[unit], invQ,
                                                                line->texWidth[unit], line->texHeight[unit]);
