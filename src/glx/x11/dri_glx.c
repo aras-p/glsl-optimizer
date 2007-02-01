@@ -376,7 +376,7 @@ const char *glXGetDriverConfig (const char *driverName) {
 }
 
 
-/* This function isn't currently used.
+/* Called from __glXFreeDisplayPrivate.
  */
 static void driDestroyDisplay(Display *dpy, void *private)
 {
@@ -386,8 +386,24 @@ static void driDestroyDisplay(Display *dpy, void *private)
         const int numScreens = ScreenCount(dpy);
         int i;
         for (i = 0; i < numScreens; i++) {
-            if (pdpyp->libraryHandles[i])
-                dlclose(pdpyp->libraryHandles[i]);
+	   if (pdpyp->libraryHandles[i]) {
+	      __DRIdriver *driver, *prev;
+
+	      /* Remove driver from Drivers list */
+	      for (prev = NULL, driver = Drivers; driver;
+		   prev = driver, driver = driver->next) {
+		 if (driver->handle == pdpyp->libraryHandles[i]) {
+		    if (prev)
+		       prev->next = driver->next;
+		    else
+		       Drivers = driver->next;
+
+		    Xfree(driver);
+		 }
+	      }
+
+	      dlclose(pdpyp->libraryHandles[i]);
+	   }
         }
         Xfree(pdpyp->libraryHandles);
 	Xfree(pdpyp);
