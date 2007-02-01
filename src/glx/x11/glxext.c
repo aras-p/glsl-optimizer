@@ -758,6 +758,7 @@ static void __glXReportDamage(__DRInativeDisplay *dpy, int screen,
 	xrects[i].height = rects[i].y2 - rects[i].y1;
     }
     region = XFixesCreateRegion(dpy, xrects, num_rects);
+    free(xrects);
     XDamageAdd(dpy, drawable, region);
     XFixesDestroyRegion(dpy, region);
 #endif
