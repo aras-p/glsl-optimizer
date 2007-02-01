@@ -599,7 +599,6 @@ interpolate_texcoords(GLcontext *ctx, SWspan *span)
                      q += dqdx;
                      w += dwdx;
                   }
-
                }
                else {
                   for (i = 0; i < span->end; i++) {
@@ -817,7 +816,10 @@ interpolate_texcoords(GLcontext *ctx, SWspan *span)
 
 
 /**
- * Fill in the span.varying array from the interpolation values.
+ * Fill in the arrays->attribs[FRAG_ATTRIB_VARx] arrays from the
+ * interpolation values.
+ * XXX since interpolants/arrays are getting uniformed, we might merge
+ * this with interpolate_texcoords(), interpolate_Fog(), etc. someday.
  */
 static INLINE void
 interpolate_varying(GLcontext *ctx, SWspan *span)

@@ -81,6 +81,9 @@ struct arrays2 {
 typedef struct sw_span_arrays
 {
    /** Per-fragment attributes (indexed by FRAG_ATTRIB_* tokens) */
+   /* XXX someday look at transposing first two indexes for better memory
+    * access pattern.
+    */
    GLfloat attribs[FRAG_ATTRIB_MAX][MAX_WIDTH][4];
 
    /** This mask indicates which fragments are alive or culled */
