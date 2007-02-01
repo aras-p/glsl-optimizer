@@ -773,6 +773,7 @@ _mesa_exec_vertex_program(GLcontext *ctx,
                cross[0] = t[1] * u[2] - t[2] * u[1];
                cross[1] = t[2] * u[0] - t[0] * u[2];
                cross[2] = t[0] * u[1] - t[1] * u[0];
+               cross[3] = 0.0;
                store_vector4( inst, machine, cross );
             }
             break;
