@@ -1461,7 +1461,7 @@ parse_attrib_binding(GLcontext * ctx, const GLubyte ** inst,
             break;
          case FRAGMENT_ATTRIB_TEXCOORD:
             {
-               GLuint texcoord;
+               GLuint texcoord = 0;
                err = parse_texcoord_num (ctx, inst, Program, &texcoord);
                *inputReg = FRAG_ATTRIB_TEX0 + texcoord;
             }
@@ -1522,7 +1522,7 @@ parse_attrib_binding(GLcontext * ctx, const GLubyte ** inst,
 
          case VERTEX_ATTRIB_TEXCOORD:
             {
-               GLuint unit;
+               GLuint unit = 0;
                err = parse_texcoord_num (ctx, inst, Program, &unit);
                *inputReg = VERT_ATTRIB_TEX0 + unit;
             }
