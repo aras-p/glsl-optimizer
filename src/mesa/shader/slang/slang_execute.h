@@ -46,7 +46,7 @@ typedef union slang_machine_slot_
 #define SLANG_MACHINE_MEMORY_SIZE (SLANG_MACHINE_GLOBAL_SIZE + SLANG_MACHINE_STACK_SIZE)
 
 
-#if defined(USE_X86_ASM) || defined(SLANG_X86)
+#if 0/*defined(USE_X86_ASM) || defined(SLANG_X86)*/
 /**
  * Extra machine state for x86 execution.
  */
@@ -73,7 +73,7 @@ typedef struct slang_machine_
    /** Machine memory */
    slang_machine_slot mem[SLANG_MACHINE_MEMORY_SIZE];
    struct slang_info_log_ *infolog;     /**< printMESA() support */
-#if defined(USE_X86_ASM) || defined(SLANG_X86)
+#if 0/*defined(USE_X86_ASM) || defined(SLANG_X86)*/
    slang_machine_x86 x86;
 #endif
 } slang_machine;
@@ -92,7 +92,7 @@ extern GLboolean
 _slang_execute2(const slang_assembly_file *, slang_machine *);
 
 
-#if defined(USE_X86_ASM) || defined(SLANG_X86)
+#if 0/*defined(USE_X86_ASM) || defined(SLANG_X86)*/
 extern GLboolean
 _slang_x86_codegen(slang_machine *, slang_assembly_file *, GLuint);
 #endif

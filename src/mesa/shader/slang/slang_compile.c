@@ -2137,8 +2137,7 @@ static const byte slang_vertex_builtin_gc[] = {
 #include "library/slang_vertex_builtin_gc.h"
 };
 
-#if defined(USE_X86_ASM) || defined(SLANG_X86)
-foo
+#if 0 /*defined(USE_X86_ASM) || defined(SLANG_X86)*/
 static const byte slang_builtin_vec4_gc[] = {
 #include "library/slang_builtin_vec4_gc.h"
 };
@@ -2204,7 +2203,7 @@ compile_object(grammar * id, const char *source, slang_code_object * object,
             return GL_FALSE;
       }
 
-#if defined(USE_X86_ASM) || defined(SLANG_X86)
+#if 0/*defined(USE_X86_ASM) || defined(SLANG_X86)*/
       /* compile x86 4-component vector overrides, link to target */
       if (!compile_binary(slang_builtin_vec4_gc,
                           &object->builtin[SLANG_BUILTIN_VEC4],

@@ -70,7 +70,7 @@ _slang_code_unit_dtr (slang_code_unit *);
 #define SLANG_BUILTIN_COMMON 1
 #define SLANG_BUILTIN_TARGET 2
 
-#if defined(USE_X86_ASM) || defined(SLANG_X86)
+#if 0/*defined(USE_X86_ASM) || defined(SLANG_X86)*/
 #define SLANG_BUILTIN_VEC4   3
 #define SLANG_BUILTIN_TOTAL  4
 #else

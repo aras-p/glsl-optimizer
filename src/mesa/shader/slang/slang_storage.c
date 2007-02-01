@@ -212,7 +212,7 @@ GLboolean _slang_aggregate_variable (slang_storage_aggregate *agg, slang_type_sp
 	case slang_spec_vec3:
 		return aggregate_vector (agg, slang_stor_float, 3);
    case slang_spec_vec4:
-#if defined(USE_X86_ASM) || defined(SLANG_X86)
+#if 0/*defined(USE_X86_ASM) || defined(SLANG_X86)*/
       return aggregate_vector (agg, slang_stor_vec4, 1);
 #else
       return aggregate_vector (agg, slang_stor_float, 4);
@@ -222,7 +222,7 @@ GLboolean _slang_aggregate_variable (slang_storage_aggregate *agg, slang_type_sp
 	case slang_spec_mat3:
 		return aggregate_matrix (agg, slang_stor_float, 3);
    case slang_spec_mat4:
-#if defined(USE_X86_ASM) || defined(SLANG_X86)
+#if 0/*defined(USE_X86_ASM) || defined(SLANG_X86)*/
       return aggregate_vector (agg, slang_stor_vec4, 4);
 #else
       return aggregate_matrix (agg, slang_stor_float, 4);

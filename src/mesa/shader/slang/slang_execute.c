@@ -41,7 +41,7 @@ slang_machine_ctr(slang_machine * self)
 {
    slang_machine_init(self);
    self->infolog = NULL;
-#if defined(USE_X86_ASM) || defined(SLANG_X86)
+#if 0/*defined(USE_X86_ASM) || defined(SLANG_X86)*/
    self->x86.compiled_func = NULL;
 #endif
 }
@@ -53,7 +53,7 @@ slang_machine_dtr(slang_machine * self)
       slang_info_log_destruct(self->infolog);
       slang_alloc_free(self->infolog);
    }
-#if defined(USE_X86_ASM) || defined(SLANG_X86)
+#if 0/*defined(USE_X86_ASM) || defined(SLANG_X86)*/
    if (self->x86.compiled_func != NULL)
       _mesa_exec_free(self->x86.compiled_func);
 #endif
@@ -357,7 +357,7 @@ _slang_execute2(const slang_assembly_file * file, slang_machine * mach)
    f = fopen(filename, "w");
 #endif
 
-#if defined(USE_X86_ASM) || defined(SLANG_X86)
+#if 0/*defined(USE_X86_ASM) || defined(SLANG_X86)*/
    if (mach->x86.compiled_func != NULL) {
       mach->x86.compiled_func(mach);
       return GL_TRUE;

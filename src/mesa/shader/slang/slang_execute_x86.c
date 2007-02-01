@@ -34,7 +34,7 @@
 #include "slang_library_noise.h"
 #include "slang_library_texsample.h"
 
-#if defined(USE_X86_ASM) || defined(SLANG_X86)
+#if 0/*defined(USE_X86_ASM) || defined(SLANG_X86)*/
 
 #include "x86/rtasm/x86sse.h"
 
@@ -353,10 +353,12 @@ codegen_assem(codegen_ctx * G, slang_assembly * a, slang_info_log ** infolog)
       x87_fyl2x(&G->f);
       x87_fstp(&G->f, x86_deref(G->r_esp));
       break;
+#if 00
    case slang_asm_float_floor:
       x86_call(&G->f, (GLubyte *) do_floorf);
       x87_fstp(&G->f, x86_deref(G->r_esp));
       break;
+#endif
    case slang_asm_float_ceil:
       x86_call(&G->f, (GLubyte *) do_ceilf);
       x87_fstp(&G->f, x86_deref(G->r_esp));

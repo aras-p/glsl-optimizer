@@ -79,7 +79,7 @@ assign_basic(slang_assemble_ctx * A, slang_storage_type type, GLuint * index,
    case slang_stor_float:
       ty = slang_asm_float_copy;
       break;
-#if defined(USE_X86_ASM) || defined(SLANG_X86)
+#if 0/*defined(USE_X86_ASM) || defined(SLANG_X86)*/
    case slang_stor_vec4:
       ty = slang_asm_vec4_copy;
       break;
