@@ -230,7 +230,7 @@ slang_type_specifier_equal(const slang_type_specifier * x,
 
 
 GLboolean
-slang_assembly_typeinfo_construct(slang_assembly_typeinfo * ti)
+slang_typeinfo_construct(slang_typeinfo * ti)
 {
    slang_type_specifier_ctr(&ti->spec);
    ti->array_len = 0;
@@ -238,7 +238,7 @@ slang_assembly_typeinfo_construct(slang_assembly_typeinfo * ti)
 }
 
 GLvoid
-slang_assembly_typeinfo_destruct(slang_assembly_typeinfo * ti)
+slang_typeinfo_destruct(slang_typeinfo * ti)
 {
    slang_type_specifier_dtr(&ti->spec);
 }
@@ -274,7 +274,7 @@ typeof_existing_function(const char *name, const slang_operation * params,
 GLboolean
 _slang_typeof_operation(const slang_assemble_ctx * A,
                         const slang_operation * op,
-                        slang_assembly_typeinfo * ti)
+                        slang_typeinfo * ti)
 {
    return _slang_typeof_operation_(op, &A->space, ti, A->atoms);
 }
@@ -291,7 +291,7 @@ _slang_typeof_operation(const slang_assemble_ctx * A,
 GLboolean
 _slang_typeof_operation_(const slang_operation * op,
                          const slang_name_space * space,
-                         slang_assembly_typeinfo * ti,
+                         slang_typeinfo * ti,
                          slang_atom_pool * atoms)
 {
    ti->can_be_referenced = GL_FALSE;
@@ -415,30 +415,30 @@ _slang_typeof_operation_(const slang_operation * op,
       /*case slang_oper_complement: */
    case slang_oper_subscript:
       {
-         slang_assembly_typeinfo _ti;
+         slang_typeinfo _ti;
 
-         if (!slang_assembly_typeinfo_construct(&_ti))
+         if (!slang_typeinfo_construct(&_ti))
             RETURN_NIL();
          if (!_slang_typeof_operation_(op->children, space, &_ti, atoms)) {
-            slang_assembly_typeinfo_destruct(&_ti);
+            slang_typeinfo_destruct(&_ti);
             RETURN_NIL();
          }
          ti->can_be_referenced = _ti.can_be_referenced;
          if (_ti.spec.type == slang_spec_array) {
             if (!slang_type_specifier_copy(&ti->spec, _ti.spec._array)) {
-               slang_assembly_typeinfo_destruct(&_ti);
+               slang_typeinfo_destruct(&_ti);
                RETURN_NIL();
             }
          }
          else {
             if (!_slang_type_is_vector(_ti.spec.type)
                 && !_slang_type_is_matrix(_ti.spec.type)) {
-               slang_assembly_typeinfo_destruct(&_ti);
+               slang_typeinfo_destruct(&_ti);
                RETURN_ERROR("cannot index a non-array type", 0);
             }
             ti->spec.type = _slang_type_base(_ti.spec.type);
          }
-         slang_assembly_typeinfo_destruct(&_ti);
+         slang_typeinfo_destruct(&_ti);
       }
       break;
    case slang_oper_call:
@@ -480,12 +480,12 @@ _slang_typeof_operation_(const slang_operation * op,
       break;
    case slang_oper_field:
       {
-         slang_assembly_typeinfo _ti;
+         slang_typeinfo _ti;
 
-         if (!slang_assembly_typeinfo_construct(&_ti))
+         if (!slang_typeinfo_construct(&_ti))
             RETURN_NIL();
          if (!_slang_typeof_operation_(op->children, space, &_ti, atoms)) {
-            slang_assembly_typeinfo_destruct(&_ti);
+            slang_typeinfo_destruct(&_ti);
             RETURN_NIL();
          }
          if (_ti.spec.type == slang_spec_struct) {
@@ -494,11 +494,11 @@ _slang_typeof_operation_(const slang_operation * op,
             field = _slang_locate_variable(_ti.spec._struct->fields, op->a_id,
                                            GL_FALSE);
             if (field == NULL) {
-               slang_assembly_typeinfo_destruct(&_ti);
+               slang_typeinfo_destruct(&_ti);
                RETURN_NIL();
             }
             if (!slang_type_specifier_copy(&ti->spec, &field->type.specifier)) {
-               slang_assembly_typeinfo_destruct(&_ti);
+               slang_typeinfo_destruct(&_ti);
                RETURN_NIL();
             }
             ti->can_be_referenced = _ti.can_be_referenced;
@@ -511,14 +511,14 @@ _slang_typeof_operation_(const slang_operation * op,
             /* determine the swizzle of the field expression */
 #if 000
             if (!_slang_type_is_vector(_ti.spec.type)) {
-               slang_assembly_typeinfo_destruct(&_ti);
+               slang_typeinfo_destruct(&_ti);
                RETURN_ERROR("Can't swizzle scalar expression", 0);
             }
 #endif
             rows = _slang_type_dim(_ti.spec.type);
             swizzle = slang_atom_pool_id(atoms, op->a_id);
             if (!_slang_is_swizzle(swizzle, rows, &ti->swz)) {
-               slang_assembly_typeinfo_destruct(&_ti);
+               slang_typeinfo_destruct(&_ti);
                RETURN_ERROR("Bad swizzle", 0);
             }
             ti->is_swizzled = GL_TRUE;
@@ -585,7 +585,7 @@ _slang_typeof_operation_(const slang_operation * op,
                break;
             }
          }
-         slang_assembly_typeinfo_destruct(&_ti);
+         slang_typeinfo_destruct(&_ti);
       }
       break;
    case slang_oper_postincrement:

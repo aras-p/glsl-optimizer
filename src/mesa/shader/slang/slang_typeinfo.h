@@ -143,20 +143,20 @@ slang_type_specifier_equal(const slang_type_specifier *,
                            const slang_type_specifier *);
 
 
-typedef struct slang_assembly_typeinfo_
+typedef struct slang_typeinfo_
 {
    GLboolean can_be_referenced;
    GLboolean is_swizzled;
    slang_swizzle swz;
    slang_type_specifier spec;
    GLuint array_len;
-} slang_assembly_typeinfo;
+} slang_typeinfo;
 
 extern GLboolean
-slang_assembly_typeinfo_construct(slang_assembly_typeinfo *);
+slang_typeinfo_construct(slang_typeinfo *);
 
 extern GLvoid
-slang_assembly_typeinfo_destruct(slang_assembly_typeinfo *);
+slang_typeinfo_destruct(slang_typeinfo *);
 
 
 /**
@@ -167,12 +167,12 @@ slang_assembly_typeinfo_destruct(slang_assembly_typeinfo *);
 extern GLboolean
 _slang_typeof_operation(const slang_assemble_ctx *,
                         const struct slang_operation_ *,
-                        slang_assembly_typeinfo *);
+                        slang_typeinfo *);
 
 extern GLboolean
 _slang_typeof_operation_(const struct slang_operation_ *,
                          const slang_name_space *,
-                         slang_assembly_typeinfo *, slang_atom_pool *);
+                         slang_typeinfo *, slang_atom_pool *);
 
 /**
  * Retrieves type of a function prototype, if one exists.

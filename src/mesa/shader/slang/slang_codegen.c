@@ -1284,20 +1284,20 @@ _slang_locate_function(const slang_function_scope * funcs, slang_atom a_name,
 
       /* compare parameter / argument types */
       for (j = 0; j < num_args; j++) {
-         slang_assembly_typeinfo ti;
+         slang_typeinfo ti;
 
-         if (!slang_assembly_typeinfo_construct(&ti))
+         if (!slang_typeinfo_construct(&ti))
             return NULL;
          if (!_slang_typeof_operation_(&args[j], space, &ti, atoms)) {
-            slang_assembly_typeinfo_destruct(&ti);
+            slang_typeinfo_destruct(&ti);
             return NULL;
          }
          if (!slang_type_specifier_equal(&ti.spec,
              &f->parameters->variables[j/* + haveRetValue*/]->type.specifier)) {
-            slang_assembly_typeinfo_destruct(&ti);
+            slang_typeinfo_destruct(&ti);
             break;
          }
-         slang_assembly_typeinfo_destruct(&ti);
+         slang_typeinfo_destruct(&ti);
 
          /* "out" and "inout" formal parameter requires the actual parameter to be l-value */
          if (!ti.can_be_referenced &&
@@ -1667,14 +1667,14 @@ _slang_gen_select(slang_assemble_ctx *A, slang_operation *oper)
    slang_ir_node *altLab, *endLab;
    slang_ir_node *tree, *tmpDecl, *tmpVar, *cond, *cjump, *jump;
    slang_ir_node *bodx, *body, *assignx, *assigny;
-   slang_assembly_typeinfo type;
+   slang_typeinfo type;
    int size;
 
    assert(oper->type == slang_oper_select);
    assert(oper->num_children == 3);
 
    /* size of x or y's type */
-   slang_assembly_typeinfo_construct(&type);
+   slang_typeinfo_construct(&type);
    _slang_typeof_operation(A, &oper->children[1], &type);
    size = _slang_sizeof_type_specifier(&type.spec);
    assert(size > 0);
@@ -2110,9 +2110,9 @@ _slang_gen_assignment(slang_assemble_ctx * A, slang_operation *oper)
 static slang_ir_node *
 _slang_gen_field(slang_assemble_ctx * A, slang_operation *oper)
 {
-   slang_assembly_typeinfo ti;
+   slang_typeinfo ti;
 
-   slang_assembly_typeinfo_construct(&ti);
+   slang_typeinfo_construct(&ti);
    _slang_typeof_operation(A, &oper->children[0], &ti);
 
    if (_slang_type_is_vector(ti.spec.type)) {
@@ -2167,10 +2167,10 @@ _slang_gen_field(slang_assemble_ctx * A, slang_operation *oper)
 static slang_ir_node *
 _slang_gen_subscript(slang_assemble_ctx * A, slang_operation *oper)
 {
-   slang_assembly_typeinfo array_ti;
+   slang_typeinfo array_ti;
 
    /* get array's type info */
-   slang_assembly_typeinfo_construct(&array_ti);
+   slang_typeinfo_construct(&array_ti);
    _slang_typeof_operation(A, &oper->children[0], &array_ti);
 
    if (_slang_type_is_vector(array_ti.spec.type)) {
@@ -2201,12 +2201,12 @@ _slang_gen_subscript(slang_assemble_ctx * A, slang_operation *oper)
    }
    else {
       /* conventional array */
-      slang_assembly_typeinfo elem_ti;
+      slang_typeinfo elem_ti;
       slang_ir_node *elem, *array, *index;
       GLint elemSize;
 
       /* size of array element */
-      slang_assembly_typeinfo_construct(&elem_ti);
+      slang_typeinfo_construct(&elem_ti);
       _slang_typeof_operation(A, oper, &elem_ti);
       elemSize = _slang_sizeof_type_specifier(&elem_ti.spec);
       assert(elemSize >= 1);

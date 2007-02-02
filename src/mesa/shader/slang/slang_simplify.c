@@ -294,15 +294,15 @@ _slang_adapt_call(slang_operation *callOper, const slang_function *fun,
           * into individual floats/ints and try to match the function params.
           */
          for (i = 0; i < numParams; i++) {
-            slang_assembly_typeinfo argType;
+            slang_typeinfo argType;
             GLint argSz, j;
 
             /* Get type of arg[i] */
-            if (!slang_assembly_typeinfo_construct(&argType))
+            if (!slang_typeinfo_construct(&argType))
                return GL_FALSE;
             if (!_slang_typeof_operation_(&callOper->children[i], space,
                                           &argType, atoms)) {
-               slang_assembly_typeinfo_destruct(&argType);
+               slang_typeinfo_destruct(&argType);
                return GL_FALSE;
             }
 
@@ -369,15 +369,15 @@ _slang_adapt_call(slang_operation *callOper, const slang_function *fun,
     *   x = foo(int(3.15), bool(9))
     */
    for (i = 0; i < numParams; i++) {
-      slang_assembly_typeinfo argType;
+      slang_typeinfo argType;
       slang_variable *paramVar = fun->parameters->variables[i];
 
       /* Get type of arg[i] */
-      if (!slang_assembly_typeinfo_construct(&argType))
+      if (!slang_typeinfo_construct(&argType))
          return GL_FALSE;
       if (!_slang_typeof_operation_(&callOper->children[i], space,
                                     &argType, atoms)) {
-         slang_assembly_typeinfo_destruct(&argType);
+         slang_typeinfo_destruct(&argType);
          return GL_FALSE;
       }
 
@@ -398,7 +398,7 @@ _slang_adapt_call(slang_operation *callOper, const slang_function *fun,
          callOper->children[i].children = child;
       }
 
-      slang_assembly_typeinfo_destruct(&argType);
+      slang_typeinfo_destruct(&argType);
    }
 
    if (dbg) {
