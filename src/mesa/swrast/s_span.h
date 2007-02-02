@@ -129,9 +129,8 @@ typedef struct sw_span
 {
    GLint x, y;
 
-   /** Only need to process pixels between start <= i < end */
-   /** At this time, start is always zero. */
-   GLuint start, end;
+   /** Number of fragments in the span */
+   GLuint end;
 
    /** This flag indicates that mask[] array is effectively filled with ones */
    GLboolean writeAll;
@@ -213,7 +212,6 @@ do {								\
    (S).primitive = (PRIMITIVE);					\
    (S).interpMask = (INTERP_MASK);				\
    (S).arrayMask = (ARRAY_MASK);				\
-   (S).start = 0;						\
    (S).end = (END);						\
    (S).facing = 0;						\
    (S).array = SWRAST_CONTEXT(ctx)->SpanArrays;			\

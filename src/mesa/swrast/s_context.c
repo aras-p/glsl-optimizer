@@ -704,7 +704,6 @@ _swrast_CreateContext( GLcontext *ctx )
 
    /* init point span buffer */
    swrast->PointSpan.primitive = GL_POINT;
-   swrast->PointSpan.start = 0;
    swrast->PointSpan.end = 0;
    swrast->PointSpan.facing = 0;
    swrast->PointSpan.array = swrast->SpanArrays;
