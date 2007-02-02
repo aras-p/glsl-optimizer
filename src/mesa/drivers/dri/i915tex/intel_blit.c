@@ -453,16 +453,6 @@ intelClearWithBlit(GLcontext * ctx, GLbitfield mask)
          clear.y1 = intel->driDrawable->y + intel->driDrawable->h - cy - ch;
          clear.x2 = clear.x1 + cw;
          clear.y2 = clear.y1 + ch;
-
-         /* adjust for page flipping */
-         if (intel->sarea->pf_current_page == 1) {
-            const GLuint tmp = mask;
-            mask &= ~(BUFFER_BIT_FRONT_LEFT | BUFFER_BIT_BACK_LEFT);
-            if (tmp & BUFFER_BIT_FRONT_LEFT)
-               mask |= BUFFER_BIT_BACK_LEFT;
-            if (tmp & BUFFER_BIT_BACK_LEFT)
-               mask |= BUFFER_BIT_FRONT_LEFT;
-         }
       }
       else {
          /* clearing FBO */
@@ -499,11 +489,10 @@ intelClearWithBlit(GLcontext * ctx, GLbitfield mask)
             const GLbitfield bufBit = 1 << buf;
             if ((clearMask & bufBit) && !(bufBit & skipBuffers)) {
                /* OK, clear this renderbuffer */
-               const struct intel_renderbuffer *irb
-                  = intel_renderbuffer(ctx->DrawBuffer->
-                                       Attachment[buf].Renderbuffer);
+               struct intel_region *irb_region =
+		  intel_get_rb_region(ctx->DrawBuffer, buf);
                struct _DriBufferObject *write_buffer =
-                  intel_region_buffer(intel->intelScreen, irb->region,
+                  intel_region_buffer(intel->intelScreen, irb_region,
                                       all ? INTEL_WRITE_FULL :
                                       INTEL_WRITE_PART);
 
@@ -511,16 +500,15 @@ intelClearWithBlit(GLcontext * ctx, GLbitfield mask)
                GLint pitch, cpp;
                GLuint BR13, CMD;
 
-               ASSERT(irb);
-               ASSERT(irb->region);
+               ASSERT(irb_region);
 
-               pitch = irb->region->pitch;
-               cpp = irb->region->cpp;
+               pitch = irb_region->pitch;
+               cpp = irb_region->cpp;
 
                DBG("%s dst:buf(%p)/%d+%d %d,%d sz:%dx%d\n",
                    __FUNCTION__,
-                   irb->region->buffer, (pitch * cpp),
-                   irb->region->draw_offset,
+                   irb_region->buffer, (pitch * cpp),
+                   irb_region->draw_offset,
                    b.x1, b.y1, b.x2 - b.x1, b.y2 - b.y1);
 
 
@@ -558,6 +546,16 @@ intelClearWithBlit(GLcontext * ctx, GLbitfield mask)
                   _mesa_debug(ctx, "hardware blit clear buf %d rb id %d\n",
                   buf, irb->Base.Name);
                 */
+	       if (intel->flip_pending) {
+		  /* Wait for a pending flip to take effect */
+		  BEGIN_BATCH(2, INTEL_BATCH_NO_CLIPRECTS);
+		  OUT_BATCH(MI_WAIT_FOR_EVENT | MI_WAIT_FOR_PLANE_A_FLIP);
+		  OUT_BATCH(0);
+		  ADVANCE_BATCH();
+
+		  intel->flip_pending = GL_FALSE;
+	       }
+
                BEGIN_BATCH(6, INTEL_BATCH_NO_CLIPRECTS);
                OUT_BATCH(CMD);
                OUT_BATCH(BR13);
@@ -565,7 +563,7 @@ intelClearWithBlit(GLcontext * ctx, GLbitfield mask)
                OUT_BATCH((b.y2 << 16) | b.x2);
                OUT_RELOC(write_buffer, DRM_BO_FLAG_MEM_TT | DRM_BO_FLAG_WRITE,
                          DRM_BO_MASK_MEM | DRM_BO_FLAG_WRITE,
-                         irb->region->draw_offset);
+                         irb_region->draw_offset);
                OUT_BATCH(clearVal);
                ADVANCE_BATCH();
                clearMask &= ~bufBit;    /* turn off bit, for faster loop exit */

@@ -78,8 +78,23 @@ intel_get_renderbuffer(struct gl_framebuffer *fb, GLuint attIndex)
 struct intel_region *
 intel_get_rb_region(struct gl_framebuffer *fb, GLuint attIndex)
 {
-   struct intel_renderbuffer *irb
-      = intel_renderbuffer(fb->Attachment[attIndex].Renderbuffer);
+   GET_CURRENT_CONTEXT(ctx);
+   struct intel_context *intel = intel_context(ctx);
+   struct intel_renderbuffer *irb;
+
+   if (intel->sarea->pf_current_page) {
+      switch (attIndex) {
+      case BUFFER_BACK_LEFT:
+	 attIndex = BUFFER_FRONT_LEFT;
+	 break;
+      case BUFFER_FRONT_LEFT:
+	 attIndex = BUFFER_BACK_LEFT;
+	 break;
+      }
+   }
+
+   irb = intel_renderbuffer(fb->Attachment[attIndex].Renderbuffer);
+
    if (irb)
       return irb->region;
    else

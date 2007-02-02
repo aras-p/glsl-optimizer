@@ -59,6 +59,7 @@
 #include "intel_buffer_objects.h"
 #include "intel_fbo.h"
 
+#include "drirenderbuffer.h"
 #include "vblank.h"
 #include "utils.h"
 #include "xmlpool.h"            /* for symbolic values of enum-type options */
@@ -683,13 +684,24 @@ intelContendedLock(struct intel_context *intel, GLuint flags)
       intel->current_rotation = sarea->rotation;
    }
 
-
    /* Drawable changed?
     */
    if (dPriv && intel->lastStamp != dPriv->lastStamp) {
       intelWindowMoved(intel);
       intel->lastStamp = dPriv->lastStamp;
    }
+
+   /* Update page flipping info
+    */
+   if (INTEL_DEBUG & DEBUG_LOCK)
+      if (intel->doPageFlip != intel->sarea->pf_active)
+	 _mesa_printf("%s - age flipping %sactive\n", __progname,
+		      intel->sarea->pf_active ? "" : "in");
+
+   intel->doPageFlip = intel->sarea->pf_active;
+   driFlipRenderbuffers(intel->ctx.WinSysDrawBuffer,
+			intel->sarea->pf_current_page);
+   intel_draw_buffer(&intel->ctx, intel->ctx.DrawBuffer);
 }
 
 
