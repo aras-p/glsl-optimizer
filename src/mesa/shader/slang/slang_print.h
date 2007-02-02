@@ -9,12 +9,6 @@ slang_print_function(const slang_function *f, GLboolean body);
 extern void
 slang_print_tree(const slang_operation *op, int indent);
 
-
-#if 0
-extern const char *
-slang_asm_string(slang_assembly_type t);
-#endif
-
 extern const char *
 slang_type_qual_string(slang_type_qualifier q);
 
