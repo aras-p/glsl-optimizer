@@ -1891,6 +1891,9 @@ _slang_gen_declaration(slang_assemble_ctx *A, slang_operation *oper)
          RETURN_ERROR2("Undefined variable:", varName, 0);
       }
       /* XXX make copy of this initializer? */
+
+      /* XXX try to simplify initializer here */foo
+
       rhs = _slang_gen_operation(A, v->initializer);
       assert(rhs);
       init = new_node(IR_MOVE, var, rhs);
@@ -2649,7 +2652,7 @@ _slang_codegen_global_variable(slang_assemble_ctx *A, slang_variable *var,
          lhs->Store = n->Store;
 
          /* constant folding, etc */
-         slang_simplify(var->initializer, &A->space, A->atoms);
+         _slang_simplify(var->initializer, &A->space, A->atoms);
 
          rhs = _slang_gen_operation(A, var->initializer);
          assert(rhs);
@@ -2703,7 +2706,7 @@ _slang_codegen_function(slang_assemble_ctx * A, slang_function * fun)
    assert(A->vartable);
 
    /* fold constant expressions, etc. */
-   slang_simplify(fun->body, &A->space, A->atoms);
+   _slang_simplify(fun->body, &A->space, A->atoms);
 
    A->CurFunction = fun;
 

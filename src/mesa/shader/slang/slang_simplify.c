@@ -44,9 +44,9 @@
  * declarations.  I.e.:  float foo[3 + 5];
  */
 void
-slang_simplify(slang_operation *oper,
-               const slang_assembly_name_space * space,
-               slang_atom_pool * atoms)
+_slang_simplify(slang_operation *oper,
+                const slang_assembly_name_space * space,
+                slang_atom_pool * atoms)
 {
    GLboolean isFloat[4];
    GLboolean isBool[4];
@@ -54,7 +54,7 @@ slang_simplify(slang_operation *oper,
 
    /* first, simplify children */
    for (i = 0; i < oper->num_children; i++) {
-      slang_simplify(&oper->children[i], space, atoms);
+      _slang_simplify(&oper->children[i], space, atoms);
    }
 
    /* examine children */
@@ -75,7 +75,7 @@ slang_simplify(slang_operation *oper,
          }
          slang_operation_destruct(oper);
          oper->type = slang_oper_literal_float;
-         break;
+         return;
       case slang_oper_subtract:
          for (i = 0; i < 4; i++) {
             oper->literal[i]
@@ -83,7 +83,7 @@ slang_simplify(slang_operation *oper,
          }
          slang_operation_destruct(oper);
          oper->type = slang_oper_literal_float;
-         break;
+         return;
       case slang_oper_multiply:
          for (i = 0; i < 4; i++) {
             oper->literal[i]
@@ -91,7 +91,7 @@ slang_simplify(slang_operation *oper,
          }
          slang_operation_destruct(oper);
          oper->type = slang_oper_literal_float;
-         break;
+         return;
       case slang_oper_divide:
          for (i = 0; i < 4; i++) {
             oper->literal[i]
@@ -99,12 +99,13 @@ slang_simplify(slang_operation *oper,
          }
          slang_operation_destruct(oper);
          oper->type = slang_oper_literal_float;
-         break;
+         return;
       default:
          ; /* nothing */
       }
    }
-   else if (n == 1 && isFloat[0]) {
+
+   if (n == 1 && isFloat[0]) {
       switch (oper->type) {
       case slang_oper_minus:
          for (i = 0; i < 4; i++) {
@@ -112,17 +113,18 @@ slang_simplify(slang_operation *oper,
          }
          slang_operation_destruct(oper);
          oper->type = slang_oper_literal_float;
-         break;
+         return;
       case slang_oper_plus:
          COPY_4V(oper->literal, oper->children[0].literal);
          slang_operation_destruct(oper);
          oper->type = slang_oper_literal_float;
-         break;
+         return;
       default:
          ; /* nothing */
       }
    }
-   else if (n == 2 && isBool[0] && isBool[1]) {
+
+   if (n == 2 && isBool[0] && isBool[1]) {
       /* simple boolean expression */
       switch (oper->type) {
       case slang_oper_logicaland:
@@ -133,7 +135,7 @@ slang_simplify(slang_operation *oper,
          }
          slang_operation_destruct(oper);
          oper->type = slang_oper_literal_bool;
-         break;
+         return;
       case slang_oper_logicalor:
          for (i = 0; i < 4; i++) {
             const GLint a = oper->children[0].literal[i] ? 1 : 0;
@@ -142,7 +144,7 @@ slang_simplify(slang_operation *oper,
          }
          slang_operation_destruct(oper);
          oper->type = slang_oper_literal_bool;
-         break;
+         return;
       case slang_oper_logicalxor:
          for (i = 0; i < 4; i++) {
             const GLint a = oper->children[0].literal[i] ? 1 : 0;
@@ -151,12 +153,13 @@ slang_simplify(slang_operation *oper,
          }
          slang_operation_destruct(oper);
          oper->type = slang_oper_literal_bool;
-         break;
+         return;
       default:
          ; /* nothing */
       }
    }
-   else if (n == 4 && isFloat[0] && isFloat[1] && isFloat[2] && isFloat[3]) {
+
+   if (n == 4 && isFloat[0] && isFloat[1] && isFloat[2] && isFloat[3]) {
       /* vec4(flt, flt, flt, flt) constructor */
       if (oper->type == slang_oper_call) {
          if (strcmp((char *) oper->a_id, "vec4") == 0) {
@@ -166,19 +169,37 @@ slang_simplify(slang_operation *oper,
             oper->literal[3] = oper->children[3].literal[0];
             slang_operation_destruct(oper);
             oper->type = slang_oper_literal_float;
+            return;
          }
       }
    }
-   else if (n == 3 && isFloat[0] && isFloat[1] && isFloat[2]) {
+
+   if (n == 3 && isFloat[0] && isFloat[1] && isFloat[2]) {
       /* vec3(flt, flt, flt) constructor */
       if (oper->type == slang_oper_call) {
          if (strcmp((char *) oper->a_id, "vec3") == 0) {
             oper->literal[0] = oper->children[0].literal[0];
             oper->literal[1] = oper->children[1].literal[0];
             oper->literal[2] = oper->children[2].literal[0];
-            oper->literal[3] = 0.0;
+            oper->literal[3] = oper->literal[2];
             slang_operation_destruct(oper);
             oper->type = slang_oper_literal_float;
+            return;
+         }
+      }
+   }
+
+   if (n == 2 && isFloat[0] && isFloat[1]) {
+      /* vec4(flt, flt) constructor */
+      if (oper->type == slang_oper_call) {
+         if (strcmp((char *) oper->a_id, "vec2") == 0) {
+            oper->literal[0] = oper->children[0].literal[0];
+            oper->literal[1] = oper->children[1].literal[0];
+            oper->literal[2] = oper->literal[1];
+            oper->literal[3] = oper->literal[1];
+            slang_operation_destruct(oper); /* XXX oper->locals goes NULL! */
+            oper->type = slang_oper_literal_float;
+            return;
          }
       }
    }
