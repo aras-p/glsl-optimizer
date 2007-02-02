@@ -1683,7 +1683,8 @@ run_program(GLcontext *ctx, SWspan *span, GLuint start, GLuint end)
       if (span->array->mask[i]) {
          init_machine(ctx, &machine, program, span, i);
 
-         if (execute_program(ctx, program, ~0, &machine, span, i)) {
+         if (execute_program(ctx, program, program->Base.NumInstructions,
+                             &machine, span, i)) {
             /* Store result color */
             COPY_4V(span->array->attribs[FRAG_ATTRIB_COL0][i],
                     machine.Outputs[FRAG_RESULT_COLR]);
