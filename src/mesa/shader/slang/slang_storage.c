@@ -76,14 +76,10 @@ slang_storage_aggregate_push_new(slang_storage_aggregate * agg)
 {
    slang_storage_array *arr = NULL;
 
-   agg->arrays =
-      (slang_storage_array *) slang_alloc_realloc(agg->arrays,
-                                                  agg->count *
-                                                  sizeof(slang_storage_array),
-                                                  (agg->count +
-                                                   1) *
-                                                  sizeof
-                                                  (slang_storage_array));
+   agg->arrays = (slang_storage_array *)
+      slang_alloc_realloc(agg->arrays,
+                          agg->count * sizeof(slang_storage_array),
+                          (agg->count + 1) * sizeof(slang_storage_array));
    if (agg->arrays != NULL) {
       arr = agg->arrays + agg->count;
       if (!slang_storage_array_construct(arr))
@@ -131,6 +127,7 @@ aggregate_matrix(slang_storage_aggregate * agg, slang_storage_type basic_type,
    return GL_TRUE;
 }
 
+
 static GLboolean
 aggregate_variables(slang_storage_aggregate * agg,
                     slang_variable_scope * vars, slang_function_scope * funcs,
@@ -147,6 +144,7 @@ aggregate_variables(slang_storage_aggregate * agg,
          return GL_FALSE;
    return GL_TRUE;
 }
+
 
 GLboolean
 _slang_aggregate_variable(slang_storage_aggregate * agg,
@@ -227,7 +225,6 @@ _slang_aggregate_variable(slang_storage_aggregate * agg,
    }
 }
 
-/* _slang_sizeof_type() */
 
 GLuint
 _slang_sizeof_type(slang_storage_type type)
@@ -239,7 +236,6 @@ _slang_sizeof_type(slang_storage_type type)
    return sizeof(GLfloat);
 }
 
-/* _slang_sizeof_aggregate() */
 
 GLuint
 _slang_sizeof_aggregate(const slang_storage_aggregate * agg)
@@ -259,7 +255,6 @@ _slang_sizeof_aggregate(const slang_storage_aggregate * agg)
    return size;
 }
 
-/* _slang_flatten_aggregate () */
 
 GLboolean
 _slang_flatten_aggregate(slang_storage_aggregate * flat,
