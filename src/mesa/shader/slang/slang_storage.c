@@ -132,56 +132,6 @@ static GLboolean aggregate_variables (slang_storage_aggregate *agg, slang_variab
 	return GL_TRUE;
 }
 
-GLboolean _slang_evaluate_int (slang_assembly_file *file, slang_machine *pmach,
-	slang_assembly_name_space *space, slang_operation *array_size, GLuint *pint,
-	slang_atom_pool *atoms)
-{
-	slang_assembly_file_restore_point point;
-	slang_machine mach;
-	slang_assemble_ctx A;
-
-	A.file = file;
-	A.mach = pmach;
-	A.atoms = atoms;
-	A.space = *space;
-	A.local.ret_size = 0;
-	A.local.addr_tmp = 0;
-	A.local.swizzle_tmp = 4;
-
-	/* save the current assembly */
-	if (!slang_assembly_file_restore_point_save (file, &point))
-		return GL_FALSE;
-
-	/* setup the machine */
-	mach = *pmach;
-	mach.ip = file->count;
-
-	/* allocate local storage for expression */
-	if (!slang_assembly_file_push_label (file, slang_asm_local_alloc, 20))
-		return GL_FALSE;
-	if (!slang_assembly_file_push_label (file, slang_asm_enter, 20))
-		return GL_FALSE;
-
-	/* insert the actual expression */
-	if (!_slang_assemble_operation (&A, array_size, slang_ref_forbid))
-		return GL_FALSE;
-	if (!slang_assembly_file_push (file, slang_asm_exit))
-		return GL_FALSE;
-
-	/* execute the expression */
-	if (!_slang_execute2 (file, &mach))
-		return GL_FALSE;
-
-	/* the evaluated expression is on top of the stack */
-	*pint = (GLuint) mach.mem[mach.sp + SLANG_MACHINE_GLOBAL_SIZE]._float;
-
-	/* restore the old assembly */
-	if (!slang_assembly_file_restore_point_load (file, &point))
-		return GL_FALSE;
-
-	return GL_TRUE;
-}
-
 GLboolean _slang_aggregate_variable (slang_storage_aggregate *agg, slang_type_specifier *spec,
 	GLuint array_len, slang_function_scope *funcs, slang_struct_scope *structs,
 	slang_variable_scope *vars, slang_machine *mach, slang_assembly_file *file,

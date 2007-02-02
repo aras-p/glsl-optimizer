@@ -103,14 +103,6 @@ _slang_aggregate_variable(slang_storage_aggregate *agg,
                           slang_assembly_file *file,
                           slang_atom_pool *atoms);
 
-extern GLboolean
-_slang_evaluate_int(slang_assembly_file *file,
-                    slang_machine *pmach,
-                    slang_assembly_name_space *space,
-                    slang_operation *array_size,
-                    GLuint *pint,
-                    slang_atom_pool *atoms);
-
 /*
  * Returns the size (in machine units) of the given storage type.
  * It is an error to pass-in slang_stor_aggregate.
