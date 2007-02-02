@@ -180,7 +180,6 @@ SLANG_SOURCES =	\
 	shader/slang/slang_compile_variable.c	\
 	shader/slang/slang_emit.c	\
 	shader/slang/slang_error.c	\
-	shader/slang/slang_execute.c	\
 	shader/slang/slang_export.c	\
 	shader/slang/slang_library_noise.c	\
 	shader/slang/slang_library_texsample.c	\
@@ -201,8 +200,7 @@ ASM_C_SOURCES =	\
 	x86/rtasm/x86sse.c \
 	sparc/sparc.c \
 	ppc/common_ppc.c \
-	x86-64/x86-64.c \
-	shader/slang/slang_execute_x86.c
+	x86-64/x86-64.c
 
 X86_SOURCES =			\
 	x86/common_x86_asm.S	\
