@@ -98,7 +98,9 @@ _slang_aggregate_variable(slang_storage_aggregate *agg,
                           slang_function_scope *funcs,
                           slang_struct_scope *structs,
                           slang_variable_scope *vars,
+#if 0
                           slang_assembly_file *file,
+#endif
                           slang_atom_pool *atoms);
 
 /*

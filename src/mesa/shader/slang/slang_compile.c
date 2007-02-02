@@ -100,9 +100,6 @@ _slang_code_object_ctr(slang_code_object * self)
    for (i = 0; i < SLANG_BUILTIN_TOTAL; i++)
       _slang_code_unit_ctr(&self->builtin[i], self);
    _slang_code_unit_ctr(&self->unit, self);
-#if 0
-   _slang_assembly_file_ctr(&self->assembly);
-#endif
    self->varpool.next_addr = 0;
    slang_atom_pool_construct(&self->atompool);
 }
@@ -115,9 +112,6 @@ _slang_code_object_dtr(slang_code_object * self)
    for (i = 0; i < SLANG_BUILTIN_TOTAL; i++)
       _slang_code_unit_dtr(&self->builtin[i]);
    _slang_code_unit_dtr(&self->unit);
-#if 0
-   slang_assembly_file_destruct(&self->assembly);
-#endif
    slang_atom_pool_destruct(&self->atompool);
 }
 
@@ -242,7 +236,6 @@ typedef struct slang_output_ctx_
    slang_variable_scope *vars;
    slang_function_scope *funs;
    slang_struct_scope *structs;
-   slang_assembly_file *assembly;
    slang_var_pool *global_pool;
    struct gl_program *program;
    slang_var_table *vartable;
@@ -377,8 +370,7 @@ calculate_var_size(slang_parse_ctx * C, slang_output_ctx * O,
    if (!slang_storage_aggregate_construct(&agg))
       return GL_FALSE;
    if (!_slang_aggregate_variable(&agg, &var->type.specifier, var->array_len,
-                                  O->funs, O->structs, O->vars,
-                                  O->assembly, C->atoms)) {
+                                  O->funs, O->structs, O->vars, C->atoms)) {
       slang_storage_aggregate_destruct(&agg);
       return GL_FALSE;
    }
@@ -1544,29 +1536,8 @@ parse_function_definition(slang_parse_ctx * C, slang_output_ctx * O,
 static GLboolean
 initialize_global(slang_assemble_ctx * A, slang_variable * var)
 {
-#if 01
-   slang_assembly_file_restore_point point;
-#endif
-   slang_assembly_local_info save_local = A->local;
    slang_operation op_id, op_assign;
    GLboolean result;
-
-#if 0
-   /* save the current assembly */
-   if (!slang_assembly_file_restore_point_save(A->file, &point))
-      return GL_FALSE;
-#endif
-
-   /* allocate local storage for expression */
-   A->local.ret_size = 0;
-   A->local.addr_tmp = 0;
-   A->local.swizzle_tmp = 4;
-#if 0
-   if (!slang_assembly_file_push_label(A->file, slang_asm_local_alloc, 20))
-      return GL_FALSE;
-   if (!slang_assembly_file_push_label(A->file, slang_asm_enter, 20))
-      return GL_FALSE;
-#endif
 
    /* construct the left side of assignment */
    if (!slang_operation_construct(&op_id))
@@ -1603,12 +1574,7 @@ initialize_global(slang_assemble_ctx * A, slang_variable * var)
    op_assign.children[0] = op_id;
    op_assign.children[1] = *var->initializer;
 
-#if 0 /* this should go away */
-   /* insert the actual expression */
-   result = _slang_assemble_operation(A, &op_assign, slang_ref_forbid);
-#else
    result = 1;
-#endif
 
    /* carefully destroy the operations */
    op_assign.num_children = 0;
@@ -1620,16 +1586,6 @@ initialize_global(slang_assemble_ctx * A, slang_variable * var)
 
    if (!result)
       return GL_FALSE;
-#if 0
-   if (!slang_assembly_file_push(A->file, slang_asm_exit))
-      return GL_FALSE;
-#endif
-#if 0
-   /* restore the old assembly */
-   if (!slang_assembly_file_restore_point_load(A->file, &point))
-      return GL_FALSE;
-#endif
-   A->local = save_local;
 
    return GL_TRUE;
 }
@@ -1721,7 +1677,6 @@ parse_init_declarator(slang_parse_ctx * C, slang_output_ctx * O,
    if (C->global_scope) {
       slang_assemble_ctx A;
 
-      A.file = O->assembly;
       A.atoms = C->atoms;
       A.space.funcs = O->funs;
       A.space.structs = O->structs;
@@ -1747,7 +1702,6 @@ parse_init_declarator(slang_parse_ctx * C, slang_output_ctx * O,
       if (var->initializer != NULL) {
          slang_assemble_ctx A;
 
-         A.file = O->assembly;
          A.atoms = C->atoms;
          A.space.funcs = O->funs;
          A.space.structs = O->structs;
@@ -1878,7 +1832,6 @@ parse_function(slang_parse_ctx * C, slang_output_ctx * O, int definition,
    {
       slang_assemble_ctx A;
 
-      A.file = O->assembly;
       A.atoms = C->atoms;
       A.space.funcs = O->funs;
       A.space.structs = O->structs;
@@ -1888,27 +1841,7 @@ parse_function(slang_parse_ctx * C, slang_output_ctx * O, int definition,
 
       _slang_reset_error();
 
-#if 0
-      printf("*************** Assemble function %s ****\n", (char *) (*parsed_func_ret)->header.a_name);
-      slang_print_var_scope((*parsed_func_ret)->parameters,
-                            (*parsed_func_ret)->param_count);
-#endif
-
-#if 0
-      if (!_slang_assemble_function(&A, *parsed_func_ret)) {
-         /* propogate the error message back through the info log */
-         C->L->text = _mesa_strdup(_slang_error_text());
-         C->L->dont_free_text = GL_FALSE;
-         return GL_FALSE;
-      }
-#endif
-
-#if 0
-      printf("**************************************\n");
-#endif
-#if 1
       _slang_codegen_function(&A, *parsed_func_ret);
-#endif
    }
    return GL_TRUE;
 }
@@ -1967,7 +1900,6 @@ parse_code_unit(slang_parse_ctx * C, slang_code_unit * unit,
    o.funs = &unit->funs;
    o.structs = &unit->structs;
    o.vars = &unit->vars;
-   o.assembly = &unit->object->assembly;
    o.global_pool = &unit->object->varpool;
    o.program = program;
    o.vartable = _slang_new_var_table(maxRegs);

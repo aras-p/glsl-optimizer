@@ -136,14 +136,14 @@ aggregate_variables(slang_storage_aggregate * agg,
                     slang_variable_scope * vars, slang_function_scope * funcs,
                     slang_struct_scope * structs,
                     slang_variable_scope * globals,
-                    slang_assembly_file * file, slang_atom_pool * atoms)
+                    slang_atom_pool * atoms)
 {
    GLuint i;
 
    for (i = 0; i < vars->num_variables; i++)
       if (!_slang_aggregate_variable(agg, &vars->variables[i]->type.specifier,
                                      vars->variables[i]->array_len, funcs,
-                                     structs, globals, file, atoms))
+                                     structs, globals, atoms))
          return GL_FALSE;
    return GL_TRUE;
 }
@@ -154,7 +154,7 @@ _slang_aggregate_variable(slang_storage_aggregate * agg,
                           slang_function_scope * funcs,
                           slang_struct_scope * structs,
                           slang_variable_scope * vars,
-                          slang_assembly_file * file, slang_atom_pool * atoms)
+                          slang_atom_pool * atoms)
 {
    switch (spec->type) {
    case slang_spec_bool:
@@ -196,7 +196,7 @@ _slang_aggregate_variable(slang_storage_aggregate * agg,
       return aggregate_vector(agg, slang_stor_int, 1);
    case slang_spec_struct:
       return aggregate_variables(agg, spec->_struct->fields, funcs, structs,
-                                 vars, file, atoms);
+                                 vars, atoms);
    case slang_spec_array:
       {
          slang_storage_array *arr;
@@ -216,7 +216,7 @@ _slang_aggregate_variable(slang_storage_aggregate * agg,
             return GL_FALSE;
          }
          if (!_slang_aggregate_variable(arr->aggregate, spec->_array, 0,
-                                        funcs, structs, vars, file, atoms))
+                                        funcs, structs, vars, atoms))
             return GL_FALSE;
          arr->length = array_len;
          /* TODO: check if 0 < arr->length <= 65535 */

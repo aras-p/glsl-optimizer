@@ -631,7 +631,7 @@ slang_print_function(const slang_function *f, GLboolean body)
 
 
 
-
+#if 0
 
 const char *
 slang_asm_string(slang_assembly_type t)
@@ -784,6 +784,7 @@ slang_asm_string(slang_assembly_type t)
       return "??asm??";
    }
 }
+#endif
 
 
 const char *
