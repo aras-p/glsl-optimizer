@@ -175,7 +175,6 @@ SLANG_SOURCES =	\
 	shader/slang/slang_emit.c	\
 	shader/slang/slang_error.c	\
 	shader/slang/slang_library_noise.c	\
-	shader/slang/slang_library_texsample.c	\
 	shader/slang/slang_link.c	\
 	shader/slang/slang_preprocess.c	\
 	shader/slang/slang_print.c	\
