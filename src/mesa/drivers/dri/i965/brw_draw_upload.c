@@ -439,7 +439,15 @@ GLboolean brw_upload_vertices( struct brw_context *brw,
 	 }
 
 	 upload[nr_uploads++] = input;
-	 assert(min_index == 0);
+	 
+	 /* We rebase drawing to start at element zero only when
+	  * varyings are not in vbos, which means we can end up
+	  * uploading non-varying arrays (stride != 0) when min_index
+	  * is zero.  This doesn't matter as the amount to upload is
+	  * the same for these arrays whether the draw call is rebased
+	  * or not - we just have to upload the one element.
+	  */
+	 assert(min_index == 0 || input->glarray->StrideB == 0);
       }
    }
 
