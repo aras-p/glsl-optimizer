@@ -166,10 +166,6 @@ SHADER_SOURCES = \
 	shader/shader_api.c \
 
 SLANG_SOURCES =	\
-	shader/slang/slang_assemble.c	\
-	shader/slang/slang_assemble_assignment.c	\
-	shader/slang/slang_assemble_conditional.c	\
-	shader/slang/slang_assemble_constructor.c	\
 	shader/slang/slang_assemble_typeinfo.c	\
 	shader/slang/slang_codegen.c	\
 	shader/slang/slang_compile.c	\
