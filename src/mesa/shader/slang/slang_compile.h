@@ -27,7 +27,7 @@
 
 #include "imports.h"
 #include "mtypes.h"
-#include "slang_assemble_typeinfo.h"
+#include "slang_typeinfo.h"
 #include "slang_compile_variable.h"
 #include "slang_compile_struct.h"
 #include "slang_compile_operation.h"

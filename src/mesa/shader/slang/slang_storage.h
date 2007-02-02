@@ -26,7 +26,7 @@
 #define SLANG_STORAGE_H
 
 #include "slang_compile.h"
-#include "slang_assemble_typeinfo.h"
+#include "slang_typeinfo.h"
 
 #if defined __cplusplus
 extern "C" {

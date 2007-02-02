@@ -30,7 +30,7 @@
 
 #include "imports.h"
 #include "macros.h"
-#include "slang_assemble_typeinfo.h"
+#include "slang_typeinfo.h"
 #include "slang_codegen.h"
 #include "slang_compile.h"
 #include "slang_storage.h"

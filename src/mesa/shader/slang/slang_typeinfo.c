@@ -29,7 +29,7 @@
  */
 
 #include "imports.h"
-#include "slang_assemble_typeinfo.h"
+#include "slang_typeinfo.h"
 #include "slang_compile.h"
 #include "slang_error.h"
 #include "prog_instruction.h"
