@@ -1472,7 +1472,6 @@ parse_function_prototype(slang_parse_ctx * C, slang_output_ctx * O,
          return 0;
    }
 
-#if 111
    /* if the function returns a value, append a hidden __retVal 'out'
     * parameter that corresponds to the return value.
     */
@@ -1484,7 +1483,6 @@ parse_function_prototype(slang_parse_ctx * C, slang_output_ctx * O,
       p->type = func->header.type;
       p->type.qualifier = slang_qual_out;
    }
-#endif
 
    /* function formal parameters and local variables share the same
     * scope, so save the information about param count in a seperate
@@ -1654,7 +1652,6 @@ parse_init_declarator(slang_parse_ctx * C, slang_output_ctx * O,
       if (!parse_expression(C, O, var->initializer))
          return 0;
       break;
-#if 0
    case VARIABLE_ARRAY_UNKNOWN:
       /* unsized array - mark it as array and copy the specifier to
          the array element
@@ -1662,7 +1659,6 @@ parse_init_declarator(slang_parse_ctx * C, slang_output_ctx * O,
       if (!convert_to_array(C, var, &type->specifier))
          return GL_FALSE;
       break;
-#endif
    case VARIABLE_ARRAY_EXPLICIT:
       if (!convert_to_array(C, var, &type->specifier))
          return GL_FALSE;
@@ -1673,20 +1669,17 @@ parse_init_declarator(slang_parse_ctx * C, slang_output_ctx * O,
       return 0;
    }
 
-#if 1
+   /* emit code for global var decl */
    if (C->global_scope) {
       slang_assemble_ctx A;
-
       A.atoms = C->atoms;
       A.space.funcs = O->funs;
       A.space.structs = O->structs;
       A.space.vars = O->vars;
       A.program = O->program;
       A.vartable = O->vartable;
-
       _slang_codegen_global_variable(&A, var, C->type);
    }
-#endif
 
    /* allocate global address space for a variable with a known size */
    if (C->global_scope
@@ -1995,8 +1988,7 @@ compile_with_grammar(grammar id, const char *source, slang_code_unit * unit,
    /* Finally check the syntax and generate its binary representation. */
    if (!grammar_fast_check(id,
                            (const byte *) (slang_string_cstr(&preprocessed)),
-                           &prod, &size,
-        65536)) {
+                           &prod, &size, 65536)) {
       char buf[1024];
       GLint pos;
 
@@ -2132,14 +2124,6 @@ compile_shader(GLcontext *ctx, slang_code_object * object,
       grammar_destroy(id);
    if (!success)
       return GL_FALSE;
-
-#if NEW_SLANG
-   {
-      slang_create_uniforms(&object->expdata, shader);
-      _mesa_print_program(program);
-      _mesa_print_program_parameters(ctx, program);
-   }
-#endif
 
    return GL_TRUE;
 }
