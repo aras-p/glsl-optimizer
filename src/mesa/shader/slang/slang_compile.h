@@ -75,9 +75,6 @@ typedef struct slang_code_object_
 {
    slang_code_unit builtin[SLANG_BUILTIN_TOTAL];
    slang_code_unit unit;
-#if 0
-   slang_assembly_file assembly;
-#endif
    slang_var_pool varpool;
    slang_atom_pool atompool;
 } slang_code_object;
