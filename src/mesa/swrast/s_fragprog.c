@@ -261,28 +261,30 @@ fetch_vector4_deriv( GLcontext *ctx,
       if (xOrY == 'X') {
          src[0] = 1.0;
          src[1] = 0.0;
-         src[2] = span->dzdx / ctx->DrawBuffer->_DepthMaxF;
-         src[3] = span->dwdx;
+         src[2] = span->attrStepX[FRAG_ATTRIB_WPOS][2]
+                / ctx->DrawBuffer->_DepthMaxF;
+         src[3] = span->attrStepX[FRAG_ATTRIB_WPOS][3];
       }
       else {
          src[0] = 0.0;
          src[1] = 1.0;
-         src[2] = span->dzdy / ctx->DrawBuffer->_DepthMaxF;
-         src[3] = span->dwdy;
+         src[2] = span->attrStepY[FRAG_ATTRIB_WPOS][2]
+                / ctx->DrawBuffer->_DepthMaxF;
+         src[3] = span->attrStepY[FRAG_ATTRIB_WPOS][3];
       }
       break;
    case FRAG_ATTRIB_COL0:
       if (xOrY == 'X') {
-         src[0] = span->drdx * (1.0F / CHAN_MAXF);
-         src[1] = span->dgdx * (1.0F / CHAN_MAXF);
-         src[2] = span->dbdx * (1.0F / CHAN_MAXF);
-         src[3] = span->dadx * (1.0F / CHAN_MAXF);
+         src[0] = span->attrStepX[FRAG_ATTRIB_COL0][0] * (1.0F / CHAN_MAXF);
+         src[1] = span->attrStepX[FRAG_ATTRIB_COL0][1] * (1.0F / CHAN_MAXF);
+         src[2] = span->attrStepX[FRAG_ATTRIB_COL0][2] * (1.0F / CHAN_MAXF);
+         src[3] = span->attrStepX[FRAG_ATTRIB_COL0][3] * (1.0F / CHAN_MAXF);
       }
       else {
-         src[0] = span->drdy * (1.0F / CHAN_MAXF);
-         src[1] = span->dgdy * (1.0F / CHAN_MAXF);
-         src[2] = span->dbdy * (1.0F / CHAN_MAXF);
-         src[3] = span->dady * (1.0F / CHAN_MAXF);
+         src[0] = span->attrStepY[FRAG_ATTRIB_COL0][0] * (1.0F / CHAN_MAXF);
+         src[1] = span->attrStepY[FRAG_ATTRIB_COL0][1] * (1.0F / CHAN_MAXF);
+         src[2] = span->attrStepY[FRAG_ATTRIB_COL0][2] * (1.0F / CHAN_MAXF);
+         src[3] = span->attrStepY[FRAG_ATTRIB_COL0][3] * (1.0F / CHAN_MAXF);
       }
       break;
    case FRAG_ATTRIB_COL1:
@@ -322,23 +324,22 @@ fetch_vector4_deriv( GLcontext *ctx,
    case FRAG_ATTRIB_TEX6:
    case FRAG_ATTRIB_TEX7:
       if (xOrY == 'X') {
-         const GLuint u = source->Index - FRAG_ATTRIB_TEX0;
          /* this is a little tricky - I think I've got it right */
-         const GLfloat invQ = 1.0f / (span->tex[u][3]
-                                      + span->texStepX[u][3] * column);
-         src[0] = span->texStepX[u][0] * invQ;
-         src[1] = span->texStepX[u][1] * invQ;
-         src[2] = span->texStepX[u][2] * invQ;
-         src[3] = span->texStepX[u][3] * invQ;
+         const GLfloat invQ = 1.0f / (span->attrStart[source->Index][3]
+                               + span->attrStepX[source->Index][3] * column);
+         src[0] = span->attrStepX[source->Index][0] * invQ;
+         src[1] = span->attrStepX[source->Index][1] * invQ;
+         src[2] = span->attrStepX[source->Index][2] * invQ;
+         src[3] = span->attrStepX[source->Index][3] * invQ;
       }
       else {
-         const GLuint u = source->Index - FRAG_ATTRIB_TEX0;
          /* Tricky, as above, but in Y direction */
-         const GLfloat invQ = 1.0f / (span->tex[u][3] + span->texStepY[u][3]);
-         src[0] = span->texStepY[u][0] * invQ;
-         src[1] = span->texStepY[u][1] * invQ;
-         src[2] = span->texStepY[u][2] * invQ;
-         src[3] = span->texStepY[u][3] * invQ;
+         const GLfloat invQ = 1.0f / (span->attrStart[source->Index][3]
+                                      + span->attrStepY[source->Index][3]);
+         src[0] = span->attrStepY[source->Index][0] * invQ;
+         src[1] = span->attrStepY[source->Index][1] * invQ;
+         src[2] = span->attrStepY[source->Index][2] * invQ;
+         src[3] = span->attrStepY[source->Index][3] * invQ;
       }
       break;
    default:
@@ -561,29 +562,29 @@ init_machine_deriv( GLcontext *ctx,
       if (xOrY == 'X') {
          wpos[0] += 1.0F;
          wpos[1] += 0.0F;
-         wpos[2] += span->dzdx;
-         wpos[3] += span->dwdx;
+         wpos[2] += span->attrStepX[FRAG_ATTRIB_WPOS][2];
+         wpos[3] += span->attrStepX[FRAG_ATTRIB_WPOS][3];
       }
       else {
          wpos[0] += 0.0F;
          wpos[1] += 1.0F;
-         wpos[2] += span->dzdy;
-         wpos[3] += span->dwdy;
+         wpos[2] += span->attrStepY[FRAG_ATTRIB_WPOS][2];
+         wpos[3] += span->attrStepY[FRAG_ATTRIB_WPOS][3];
       }
    }
    if (program->Base.InputsRead & FRAG_BIT_COL0) {
       GLfloat *col0 = machine->Attribs[FRAG_ATTRIB_COL0][machine->CurFrag];
       if (xOrY == 'X') {
-         col0[0] += span->drdx * (1.0F / CHAN_MAXF);
-         col0[1] += span->dgdx * (1.0F / CHAN_MAXF);
-         col0[2] += span->dbdx * (1.0F / CHAN_MAXF);
-         col0[3] += span->dadx * (1.0F / CHAN_MAXF);
+         col0[0] += span->attrStepX[FRAG_ATTRIB_COL0][0] * (1.0F / CHAN_MAXF);
+         col0[1] += span->attrStepX[FRAG_ATTRIB_COL0][1] * (1.0F / CHAN_MAXF);
+         col0[2] += span->attrStepX[FRAG_ATTRIB_COL0][2] * (1.0F / CHAN_MAXF);
+         col0[3] += span->attrStepX[FRAG_ATTRIB_COL0][3] * (1.0F / CHAN_MAXF);
       }
       else {
-         col0[0] += span->drdy * (1.0F / CHAN_MAXF);
-         col0[1] += span->dgdy * (1.0F / CHAN_MAXF);
-         col0[2] += span->dbdy * (1.0F / CHAN_MAXF);
-         col0[3] += span->dady * (1.0F / CHAN_MAXF);
+         col0[0] += span->attrStepY[FRAG_ATTRIB_COL0][0] * (1.0F / CHAN_MAXF);
+         col0[1] += span->attrStepY[FRAG_ATTRIB_COL0][1] * (1.0F / CHAN_MAXF);
+         col0[2] += span->attrStepY[FRAG_ATTRIB_COL0][2] * (1.0F / CHAN_MAXF);
+         col0[3] += span->attrStepY[FRAG_ATTRIB_COL0][3] * (1.0F / CHAN_MAXF);
       }
    }
    if (program->Base.InputsRead & FRAG_BIT_COL1) {
@@ -615,16 +616,16 @@ init_machine_deriv( GLcontext *ctx,
          GLfloat *tex = machine->Attribs[FRAG_ATTRIB_TEX0 + u][machine->CurFrag];
          /* XXX perspective-correct interpolation */
          if (xOrY == 'X') {
-            tex[0] += span->texStepX[u][0];
-            tex[1] += span->texStepX[u][1];
-            tex[2] += span->texStepX[u][2];
-            tex[3] += span->texStepX[u][3];
+            tex[0] += span->attrStepX[FRAG_ATTRIB_TEX0 + u][0];
+            tex[1] += span->attrStepX[FRAG_ATTRIB_TEX0 + u][1];
+            tex[2] += span->attrStepX[FRAG_ATTRIB_TEX0 + u][2];
+            tex[3] += span->attrStepX[FRAG_ATTRIB_TEX0 + u][3];
          }
          else {
-            tex[0] += span->texStepY[u][0];
-            tex[1] += span->texStepY[u][1];
-            tex[2] += span->texStepY[u][2];
-            tex[3] += span->texStepY[u][3];
+            tex[0] += span->attrStepY[FRAG_ATTRIB_TEX0 + u][0];
+            tex[1] += span->attrStepY[FRAG_ATTRIB_TEX0 + u][1];
+            tex[2] += span->attrStepY[FRAG_ATTRIB_TEX0 + u][2];
+            tex[3] += span->attrStepY[FRAG_ATTRIB_TEX0 + u][3];
          }
       }
    }

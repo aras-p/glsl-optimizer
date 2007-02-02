@@ -676,13 +676,13 @@ fast_persp_span(GLcontext *ctx, SWspan *span,
    const GLuint savedTexEnable = ctx->Texture._EnabledUnits;
    ctx->Texture._EnabledUnits = 0;
 
-   tex_coord[0] = span->tex[0][0]  * (info->smask + 1);
-   tex_step[0] = span->texStepX[0][0] * (info->smask + 1);
-   tex_coord[1] = span->tex[0][1] * (info->tmask + 1);
-   tex_step[1] = span->texStepX[0][1] * (info->tmask + 1);
-   /* span->tex[0][2] only if 3D-texturing, here only 2D */
-   tex_coord[2] = span->tex[0][3];
-   tex_step[2] = span->texStepX[0][3];
+   tex_coord[0] = span->attrStart[FRAG_ATTRIB_TEX0][0]  * (info->smask + 1);
+   tex_step[0] = span->attrStepX[FRAG_ATTRIB_TEX0][0] * (info->smask + 1);
+   tex_coord[1] = span->attrStart[FRAG_ATTRIB_TEX0][1] * (info->tmask + 1);
+   tex_step[1] = span->attrStepX[FRAG_ATTRIB_TEX0][1] * (info->tmask + 1);
+   /* span->attrStart[FRAG_ATTRIB_TEX0][2] only if 3D-texturing, here only 2D */
+   tex_coord[2] = span->attrStart[FRAG_ATTRIB_TEX0][3];
+   tex_step[2] = span->attrStepX[FRAG_ATTRIB_TEX0][3];
 
    switch (info->filter) {
    case GL_NEAREST:

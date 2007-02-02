@@ -129,22 +129,23 @@ _swrast_span_default_texcoords( GLcontext *ctx, SWspan *span )
 {
    GLuint i;
    for (i = 0; i < ctx->Const.MaxTextureCoordUnits; i++) {
+      const GLuint attr = FRAG_ATTRIB_TEX0 + i;
       const GLfloat *tc = ctx->Current.RasterTexCoords[i];
       if (ctx->FragmentProgram._Current || ctx->ATIFragmentShader._Enabled) {
-         COPY_4V(span->tex[i], tc);
+         COPY_4V(span->attrStart[attr], tc);
       }
       else if (tc[3] > 0.0F) {
          /* use (s/q, t/q, r/q, 1) */
-         span->tex[i][0] = tc[0] / tc[3];
-         span->tex[i][1] = tc[1] / tc[3];
-         span->tex[i][2] = tc[2] / tc[3];
-         span->tex[i][3] = 1.0;
+         span->attrStart[attr][0] = tc[0] / tc[3];
+         span->attrStart[attr][1] = tc[1] / tc[3];
+         span->attrStart[attr][2] = tc[2] / tc[3];
+         span->attrStart[attr][3] = 1.0;
       }
       else {
-         ASSIGN_4V(span->tex[i], 0.0F, 0.0F, 0.0F, 1.0F);
+         ASSIGN_4V(span->attrStart[attr], 0.0F, 0.0F, 0.0F, 1.0F);
       }
-      ASSIGN_4V(span->texStepX[i], 0.0F, 0.0F, 0.0F, 0.0F);
-      ASSIGN_4V(span->texStepY[i], 0.0F, 0.0F, 0.0F, 0.0F);
+      ASSIGN_4V(span->attrStepX[attr], 0.0F, 0.0F, 0.0F, 0.0F);
+      ASSIGN_4V(span->attrStepY[attr], 0.0F, 0.0F, 0.0F, 0.0F);
    }
    span->interpMask |= SPAN_TEXTURE;
 }
@@ -435,8 +436,8 @@ interpolate_fog(const GLcontext *ctx, SWspan *span)
    const GLfloat fogStep = span->attrStepX[FRAG_ATTRIB_FOGC][0];
    GLfloat fogCoord = span->attrStart[FRAG_ATTRIB_FOGC][0];
    const GLuint haveW = (span->interpMask & SPAN_W);
-   const GLfloat wStep = haveW ? span->dwdx : 0.0F;
-   GLfloat w = haveW ? span->w : 1.0F;
+   const GLfloat wStep = haveW ? span->attrStepX[FRAG_ATTRIB_WPOS][3] : 0.0F;
+   GLfloat w = haveW ? span->attrStart[FRAG_ATTRIB_WPOS][3] : 1.0F;
    GLuint i;
    for (i = 0; i < span->end; i++) {
       fog[i][0] = fogCoord / w;
@@ -549,6 +550,7 @@ interpolate_texcoords(GLcontext *ctx, SWspan *span)
       /* XXX CoordUnits vs. ImageUnits */
       for (u = 0; u < ctx->Const.MaxTextureUnits; u++) {
          if (ctx->Texture._EnabledCoordUnits & (1 << u)) {
+            const GLuint attr = FRAG_ATTRIB_TEX0 + u;
             const struct gl_texture_object *obj =ctx->Texture.Unit[u]._Current;
             GLfloat texW, texH;
             GLboolean needLambda;
@@ -568,23 +570,23 @@ interpolate_texcoords(GLcontext *ctx, SWspan *span)
             if (needLambda) {
                GLfloat (*texcoord)[4] = span->array->attribs[FRAG_ATTRIB_TEX0 + u];
                GLfloat *lambda = span->array->lambda[u];
-               const GLfloat dsdx = span->texStepX[u][0];
-               const GLfloat dsdy = span->texStepY[u][0];
-               const GLfloat dtdx = span->texStepX[u][1];
-               const GLfloat dtdy = span->texStepY[u][1];
-               const GLfloat drdx = span->texStepX[u][2];
-               const GLfloat dqdx = span->texStepX[u][3];
-               const GLfloat dqdy = span->texStepY[u][3];
-               GLfloat s = span->tex[u][0];
-               GLfloat t = span->tex[u][1];
-               GLfloat r = span->tex[u][2];
-               GLfloat q = span->tex[u][3];
+               const GLfloat dsdx = span->attrStepX[attr][0];
+               const GLfloat dsdy = span->attrStepY[attr][0];
+               const GLfloat dtdx = span->attrStepX[attr][1];
+               const GLfloat dtdy = span->attrStepY[attr][1];
+               const GLfloat drdx = span->attrStepX[attr][2];
+               const GLfloat dqdx = span->attrStepX[attr][3];
+               const GLfloat dqdy = span->attrStepY[attr][3];
+               GLfloat s = span->attrStart[attr][0];
+               GLfloat t = span->attrStart[attr][1];
+               GLfloat r = span->attrStart[attr][2];
+               GLfloat q = span->attrStart[attr][3];
                GLuint i;
                if (ctx->FragmentProgram._Current
                    || ctx->ATIFragmentShader._Enabled) {
                   /* do perspective correction but don't divide s, t, r by q */
-                  const GLfloat dwdx = span->dwdx;
-                  GLfloat w = span->w;
+                  const GLfloat dwdx = span->attrStepX[FRAG_ATTRIB_WPOS][3];
+                  GLfloat w = span->attrStart[FRAG_ATTRIB_WPOS][3];
                   for (i = 0; i < span->end; i++) {
                      const GLfloat invW = 1.0F / w;
                      texcoord[i][0] = s * invW;
@@ -622,20 +624,20 @@ interpolate_texcoords(GLcontext *ctx, SWspan *span)
             else {
                GLfloat (*texcoord)[4] = span->array->attribs[FRAG_ATTRIB_TEX0 + u];
                GLfloat *lambda = span->array->lambda[u];
-               const GLfloat dsdx = span->texStepX[u][0];
-               const GLfloat dtdx = span->texStepX[u][1];
-               const GLfloat drdx = span->texStepX[u][2];
-               const GLfloat dqdx = span->texStepX[u][3];
-               GLfloat s = span->tex[u][0];
-               GLfloat t = span->tex[u][1];
-               GLfloat r = span->tex[u][2];
-               GLfloat q = span->tex[u][3];
+               const GLfloat dsdx = span->attrStepX[attr][0];
+               const GLfloat dtdx = span->attrStepX[attr][1];
+               const GLfloat drdx = span->attrStepX[attr][2];
+               const GLfloat dqdx = span->attrStepX[attr][3];
+               GLfloat s = span->attrStart[attr][0];
+               GLfloat t = span->attrStart[attr][1];
+               GLfloat r = span->attrStart[attr][2];
+               GLfloat q = span->attrStart[attr][3];
                GLuint i;
                if (ctx->FragmentProgram._Current ||
                    ctx->ATIFragmentShader._Enabled) {
                   /* do perspective correction but don't divide s, t, r by q */
-                  const GLfloat dwdx = span->dwdx;
-                  GLfloat w = span->w;
+                  const GLfloat dwdx = span->attrStepX[FRAG_ATTRIB_WPOS][3];
+                  GLfloat w = span->attrStart[FRAG_ATTRIB_WPOS][3];
                   for (i = 0; i < span->end; i++) {
                      const GLfloat invW = 1.0F / w;
                      texcoord[i][0] = s * invW;
@@ -703,23 +705,23 @@ interpolate_texcoords(GLcontext *ctx, SWspan *span)
          /* just texture unit 0, with lambda */
          GLfloat (*texcoord)[4] = span->array->attribs[FRAG_ATTRIB_TEX0];
          GLfloat *lambda = span->array->lambda[0];
-         const GLfloat dsdx = span->texStepX[0][0];
-         const GLfloat dsdy = span->texStepY[0][0];
-         const GLfloat dtdx = span->texStepX[0][1];
-         const GLfloat dtdy = span->texStepY[0][1];
-         const GLfloat drdx = span->texStepX[0][2];
-         const GLfloat dqdx = span->texStepX[0][3];
-         const GLfloat dqdy = span->texStepY[0][3];
-         GLfloat s = span->tex[0][0];
-         GLfloat t = span->tex[0][1];
-         GLfloat r = span->tex[0][2];
-         GLfloat q = span->tex[0][3];
+         const GLfloat dsdx = span->attrStepX[FRAG_ATTRIB_TEX0][0];
+         const GLfloat dsdy = span->attrStepY[FRAG_ATTRIB_TEX0][0];
+         const GLfloat dtdx = span->attrStepX[FRAG_ATTRIB_TEX0][1];
+         const GLfloat dtdy = span->attrStepY[FRAG_ATTRIB_TEX0][1];
+         const GLfloat drdx = span->attrStepX[FRAG_ATTRIB_TEX0][2];
+         const GLfloat dqdx = span->attrStepX[FRAG_ATTRIB_TEX0][3];
+         const GLfloat dqdy = span->attrStepY[FRAG_ATTRIB_TEX0][3];
+         GLfloat s = span->attrStart[FRAG_ATTRIB_TEX0][0];
+         GLfloat t = span->attrStart[FRAG_ATTRIB_TEX0][1];
+         GLfloat r = span->attrStart[FRAG_ATTRIB_TEX0][2];
+         GLfloat q = span->attrStart[FRAG_ATTRIB_TEX0][3];
          GLuint i;
          if (ctx->FragmentProgram._Current
              || ctx->ATIFragmentShader._Enabled) {
             /* do perspective correction but don't divide s, t, r by q */
-            const GLfloat dwdx = span->dwdx;
-            GLfloat w = span->w;
+            const GLfloat dwdx = span->attrStepX[FRAG_ATTRIB_WPOS][3];
+            GLfloat w = span->attrStart[FRAG_ATTRIB_WPOS][3];
             for (i = 0; i < span->end; i++) {
                const GLfloat invW = 1.0F / w;
                texcoord[i][0] = s * invW;
@@ -758,20 +760,20 @@ interpolate_texcoords(GLcontext *ctx, SWspan *span)
       else {
          /* just texture 0, without lambda */
          GLfloat (*texcoord)[4] = span->array->attribs[FRAG_ATTRIB_TEX0];
-         const GLfloat dsdx = span->texStepX[0][0];
-         const GLfloat dtdx = span->texStepX[0][1];
-         const GLfloat drdx = span->texStepX[0][2];
-         const GLfloat dqdx = span->texStepX[0][3];
-         GLfloat s = span->tex[0][0];
-         GLfloat t = span->tex[0][1];
-         GLfloat r = span->tex[0][2];
-         GLfloat q = span->tex[0][3];
+         const GLfloat dsdx = span->attrStepX[FRAG_ATTRIB_TEX0][0];
+         const GLfloat dtdx = span->attrStepX[FRAG_ATTRIB_TEX0][1];
+         const GLfloat drdx = span->attrStepX[FRAG_ATTRIB_TEX0][2];
+         const GLfloat dqdx = span->attrStepX[FRAG_ATTRIB_TEX0][3];
+         GLfloat s = span->attrStart[FRAG_ATTRIB_TEX0][0];
+         GLfloat t = span->attrStart[FRAG_ATTRIB_TEX0][1];
+         GLfloat r = span->attrStart[FRAG_ATTRIB_TEX0][2];
+         GLfloat q = span->attrStart[FRAG_ATTRIB_TEX0][3];
          GLuint i;
          if (ctx->FragmentProgram._Current
              || ctx->ATIFragmentShader._Enabled) {
             /* do perspective correction but don't divide s, t, r by q */
-            const GLfloat dwdx = span->dwdx;
-            GLfloat w = span->w;
+            const GLfloat dwdx = span->attrStepX[FRAG_ATTRIB_WPOS][3];
+            GLfloat w = span->attrStart[FRAG_ATTRIB_WPOS][3];
             for (i = 0; i < span->end; i++) {
                const GLfloat invW = 1.0F / w;
                texcoord[i][0] = s * invW;
@@ -840,8 +842,8 @@ interpolate_varying(GLcontext *ctx, SWspan *span)
          for (j = 0; j < 4; j++) {
             const GLfloat dvdx = span->attrStepX[attr][j];
             GLfloat v = span->attrStart[attr][j];
-            const GLfloat dwdx = span->dwdx;
-            GLfloat w = span->w;
+            const GLfloat dwdx = span->attrStepX[FRAG_ATTRIB_WPOS][3];
+            GLfloat w = span->attrStart[FRAG_ATTRIB_WPOS][3];
             GLuint k;
             for (k = 0; k < span->end; k++) {
                GLfloat invW = 1.0f / w;
@@ -877,7 +879,8 @@ interpolate_wpos(GLcontext *ctx, SWspan *span)
    }
    for (i = 0; i < span->end; i++) {
       wpos[i][2] = (GLfloat) span->array->z[i] / ctx->DrawBuffer->_DepthMaxF;
-      wpos[i][3] = span->w + i * span->dwdx;
+      wpos[i][3] = span->attrStart[FRAG_ATTRIB_WPOS][3]
+                 + i * span->attrStepX[FRAG_ATTRIB_WPOS][3];
    }
 }
 

@@ -74,8 +74,8 @@ _swrast_z_to_fogfactor(GLcontext *ctx, GLfloat z)
 do {									\
    const GLfloat fogStep = span->attrStepX[FRAG_ATTRIB_FOGC][0];	\
    GLfloat fogCoord = span->attrStart[FRAG_ATTRIB_FOGC][0];		\
-   const GLfloat wStep = haveW ? span->dwdx : 0.0F;			\
-   GLfloat w = haveW ? span->w : 1.0F;					\
+   const GLfloat wStep = haveW ? span->attrStepX[FRAG_ATTRIB_WPOS][3] : 0.0F;\
+   GLfloat w = haveW ? span->attrStart[FRAG_ATTRIB_WPOS][3] : 1.0F;	\
    GLuint i;								\
    for (i = 0; i < span->end; i++) {					\
       GLfloat f, oneMinusF;						\
@@ -295,8 +295,8 @@ _swrast_fog_ci_span( const GLcontext *ctx, SWspan *span )
                ? 1.0F : 1.0F / (ctx->Fog.End - ctx->Fog.Start);
             const GLfloat fogStep = span->attrStepX[FRAG_ATTRIB_FOGC][0];
             GLfloat fogCoord = span->attrStart[FRAG_ATTRIB_FOGC][0];
-            const GLfloat wStep = haveW ? span->dwdx : 0.0F;
-            GLfloat w = haveW ? span->w : 1.0F;
+            const GLfloat wStep = haveW ? span->attrStepX[FRAG_ATTRIB_WPOS][3] : 0.0F;
+            GLfloat w = haveW ? span->attrStart[FRAG_ATTRIB_WPOS][3] : 1.0F;
             GLuint i;
             for (i = 0; i < span->end; i++) {
                GLfloat f = (fogEnd - fogCoord / w) * fogScale;
@@ -312,8 +312,8 @@ _swrast_fog_ci_span( const GLcontext *ctx, SWspan *span )
             const GLfloat density = -ctx->Fog.Density;
             const GLfloat fogStep = span->attrStepX[FRAG_ATTRIB_FOGC][0];
             GLfloat fogCoord = span->attrStart[FRAG_ATTRIB_FOGC][0];
-            const GLfloat wStep = haveW ? span->dwdx : 0.0F;
-            GLfloat w = haveW ? span->w : 1.0F;
+            const GLfloat wStep = haveW ? span->attrStepX[FRAG_ATTRIB_WPOS][3] : 0.0F;
+            GLfloat w = haveW ? span->attrStart[FRAG_ATTRIB_WPOS][3] : 1.0F;
             GLuint i;
             for (i = 0; i < span->end; i++) {
                GLfloat f = EXPF(density * fogCoord / w);
@@ -329,8 +329,8 @@ _swrast_fog_ci_span( const GLcontext *ctx, SWspan *span )
             const GLfloat negDensitySquared = -ctx->Fog.Density * ctx->Fog.Density;
             const GLfloat fogStep = span->attrStepX[FRAG_ATTRIB_FOGC][0];
             GLfloat fogCoord = span->attrStart[FRAG_ATTRIB_FOGC][0];
-            const GLfloat wStep = haveW ? span->dwdx : 0.0F;
-            GLfloat w = haveW ? span->w : 1.0F;
+            const GLfloat wStep = haveW ? span->attrStepX[FRAG_ATTRIB_WPOS][3] : 0.0F;
+            GLfloat w = haveW ? span->attrStart[FRAG_ATTRIB_WPOS][3] : 1.0F;
             GLuint i;
             for (i = 0; i < span->end; i++) {
                const GLfloat coord = fogCoord / w;
@@ -370,8 +370,8 @@ _swrast_fog_ci_span( const GLcontext *ctx, SWspan *span )
        */
       const GLfloat fogStep = span->attrStepX[FRAG_ATTRIB_FOGC][0];
       GLfloat fog = span->attrStart[FRAG_ATTRIB_FOGC][0];
-      const GLfloat wStep = haveW ? span->dwdx : 0.0F;
-      GLfloat w = haveW ? span->w : 1.0F;
+      const GLfloat wStep = haveW ? span->attrStepX[FRAG_ATTRIB_WPOS][3] : 0.0F;
+      GLfloat w = haveW ? span->attrStart[FRAG_ATTRIB_WPOS][3] : 1.0F;
       GLuint i;
       ASSERT(span->interpMask & SPAN_FOG);
       for (i = 0; i < span->end; i++) {

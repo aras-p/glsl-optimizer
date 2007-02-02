@@ -127,6 +127,7 @@ typedef struct sw_span_arrays
  */
 typedef struct sw_span
 {
+   /** Coord of first fragment in horizontal span/run */
    GLint x, y;
 
    /** Number of fragments in the span */
@@ -143,9 +144,16 @@ typedef struct sw_span
 
    /**
     * This bitmask (of  \link SpanFlags SPAN_* flags\endlink) indicates
-    * which of the x/xStep variables are relevant.
+    * which of the attrStart/StepX/StepY variables are relevant.
     */
    GLbitfield interpMask;
+
+   /** Fragment attribute interpolants */
+   GLfloat attrStart[FRAG_ATTRIB_MAX][4];   /**< initial value */
+   GLfloat attrStepX[FRAG_ATTRIB_MAX][4];   /**< dvalue/dx */
+   GLfloat attrStepY[FRAG_ATTRIB_MAX][4];   /**< dvalue/dy */
+
+   /* XXX the rest of these will go away eventually... */
 
    /* For horizontal spans, step is the partial derivative wrt X.
     * For lines, step is the delta from one fragment to the next.
@@ -169,23 +177,7 @@ typedef struct sw_span
 #endif
    GLfixed index, indexStep;
    GLfixed z, zStep;    /* XXX z should probably be GLuint */
-   GLfloat tex[MAX_TEXTURE_COORD_UNITS][4];  /* s, t, r, q */
-   GLfloat texStepX[MAX_TEXTURE_COORD_UNITS][4];
-   GLfloat texStepY[MAX_TEXTURE_COORD_UNITS][4];
    GLfixed intTex[2], intTexStep[2];  /* s, t only */
-
-   /** Fragment attribute interpolants */
-   GLfloat attrStart[FRAG_ATTRIB_MAX][4];   /**< initial value */
-   GLfloat attrStepX[FRAG_ATTRIB_MAX][4];   /**< dvalue/dx */
-   GLfloat attrStepY[FRAG_ATTRIB_MAX][4];   /**< dvalue/dy */
-
-   /* partial derivatives wrt X and Y. */
-   GLfloat dzdx, dzdy;
-   GLfloat w, dwdx, dwdy;
-   GLfloat drdx, drdy;
-   GLfloat dgdx, dgdy;
-   GLfloat dbdx, dbdy;
-   GLfloat dadx, dady;
 
    /**
     * This bitmask (of \link SpanFlags SPAN_* flags\endlink) indicates

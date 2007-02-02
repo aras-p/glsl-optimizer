@@ -143,9 +143,9 @@ NAME ( GLcontext *ctx, const SWvertex *vert )
       }
    }
    /* need these for fragment programs */
-   span->w = 1.0F;
-   span->dwdx = 0.0F;
-   span->dwdy = 0.0F;
+   span->attrStart[FRAG_ATTRIB_WPOS][3] = 1.0F;
+   span->attrStepX[FRAG_ATTRIB_WPOS][3] = 0.0F;
+   span->attrStepY[FRAG_ATTRIB_WPOS][3] = 0.0F;
 #endif
 #if FLAGS & SMOOTH
    span->arrayMask |= SPAN_COVERAGE;
