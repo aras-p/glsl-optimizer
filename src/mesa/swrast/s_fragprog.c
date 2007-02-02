@@ -274,31 +274,18 @@ fetch_vector4_deriv( GLcontext *ctx,
       }
       break;
    case FRAG_ATTRIB_COL0:
-      if (xOrY == 'X') {
-         src[0] = span->attrStepX[FRAG_ATTRIB_COL0][0] * (1.0F / CHAN_MAXF);
-         src[1] = span->attrStepX[FRAG_ATTRIB_COL0][1] * (1.0F / CHAN_MAXF);
-         src[2] = span->attrStepX[FRAG_ATTRIB_COL0][2] * (1.0F / CHAN_MAXF);
-         src[3] = span->attrStepX[FRAG_ATTRIB_COL0][3] * (1.0F / CHAN_MAXF);
-      }
-      else {
-         src[0] = span->attrStepY[FRAG_ATTRIB_COL0][0] * (1.0F / CHAN_MAXF);
-         src[1] = span->attrStepY[FRAG_ATTRIB_COL0][1] * (1.0F / CHAN_MAXF);
-         src[2] = span->attrStepY[FRAG_ATTRIB_COL0][2] * (1.0F / CHAN_MAXF);
-         src[3] = span->attrStepY[FRAG_ATTRIB_COL0][3] * (1.0F / CHAN_MAXF);
-      }
-      break;
    case FRAG_ATTRIB_COL1:
       if (xOrY == 'X') {
-         src[0] = span->attrStepX[FRAG_ATTRIB_COL1][0] * (1.0F / CHAN_MAXF);
-         src[1] = span->attrStepX[FRAG_ATTRIB_COL1][1] * (1.0F / CHAN_MAXF);
-         src[2] = span->attrStepX[FRAG_ATTRIB_COL1][2] * (1.0F / CHAN_MAXF);
-         src[3] = span->attrStepX[FRAG_ATTRIB_COL1][3] * (1.0F / CHAN_MAXF);
+         src[0] = span->attrStepX[source->Index][0] * (1.0F / CHAN_MAXF);
+         src[1] = span->attrStepX[source->Index][1] * (1.0F / CHAN_MAXF);
+         src[2] = span->attrStepX[source->Index][2] * (1.0F / CHAN_MAXF);
+         src[3] = span->attrStepX[source->Index][3] * (1.0F / CHAN_MAXF);
       }
       else {
-         src[0] = span->attrStepY[FRAG_ATTRIB_COL1][0] * (1.0F / CHAN_MAXF);
-         src[1] = span->attrStepY[FRAG_ATTRIB_COL1][1] * (1.0F / CHAN_MAXF);
-         src[2] = span->attrStepY[FRAG_ATTRIB_COL1][2] * (1.0F / CHAN_MAXF);
-         src[3] = span->attrStepY[FRAG_ATTRIB_COL1][3] * (1.0F / CHAN_MAXF);
+         src[0] = span->attrStepY[source->Index][0] * (1.0F / CHAN_MAXF);
+         src[1] = span->attrStepY[source->Index][1] * (1.0F / CHAN_MAXF);
+         src[2] = span->attrStepY[source->Index][2] * (1.0F / CHAN_MAXF);
+         src[3] = span->attrStepY[source->Index][3] * (1.0F / CHAN_MAXF);
       }
       break;
    case FRAG_ATTRIB_FOGC:
@@ -315,14 +302,9 @@ fetch_vector4_deriv( GLcontext *ctx,
          src[3] = 0.0;
       }
       break;
-   case FRAG_ATTRIB_TEX0:
-   case FRAG_ATTRIB_TEX1:
-   case FRAG_ATTRIB_TEX2:
-   case FRAG_ATTRIB_TEX3:
-   case FRAG_ATTRIB_TEX4:
-   case FRAG_ATTRIB_TEX5:
-   case FRAG_ATTRIB_TEX6:
-   case FRAG_ATTRIB_TEX7:
+   default:
+      assert(source->Index < FRAG_ATTRIB_MAX);
+      /* texcoord or varying */
       if (xOrY == 'X') {
          /* this is a little tricky - I think I've got it right */
          const GLfloat invQ = 1.0f / (span->attrStart[source->Index][3]
@@ -342,8 +324,6 @@ fetch_vector4_deriv( GLcontext *ctx,
          src[3] = span->attrStepY[source->Index][3] * invQ;
       }
       break;
-   default:
-      return GL_FALSE;
    }
 
    result[0] = src[GET_SWZ(source->Swizzle, 0)];
@@ -543,7 +523,7 @@ init_machine_deriv( GLcontext *ctx,
                     const SWspan *span, char xOrY,
                     struct fp_machine *dMachine )
 {
-   GLuint u, v;
+   GLuint attr;
 
    ASSERT(xOrY == 'X' || xOrY == 'Y');
 
@@ -572,34 +552,23 @@ init_machine_deriv( GLcontext *ctx,
          wpos[3] += span->attrStepY[FRAG_ATTRIB_WPOS][3];
       }
    }
-   if (program->Base.InputsRead & FRAG_BIT_COL0) {
-      GLfloat *col0 = machine->Attribs[FRAG_ATTRIB_COL0][machine->CurFrag];
-      if (xOrY == 'X') {
-         col0[0] += span->attrStepX[FRAG_ATTRIB_COL0][0] * (1.0F / CHAN_MAXF);
-         col0[1] += span->attrStepX[FRAG_ATTRIB_COL0][1] * (1.0F / CHAN_MAXF);
-         col0[2] += span->attrStepX[FRAG_ATTRIB_COL0][2] * (1.0F / CHAN_MAXF);
-         col0[3] += span->attrStepX[FRAG_ATTRIB_COL0][3] * (1.0F / CHAN_MAXF);
-      }
-      else {
-         col0[0] += span->attrStepY[FRAG_ATTRIB_COL0][0] * (1.0F / CHAN_MAXF);
-         col0[1] += span->attrStepY[FRAG_ATTRIB_COL0][1] * (1.0F / CHAN_MAXF);
-         col0[2] += span->attrStepY[FRAG_ATTRIB_COL0][2] * (1.0F / CHAN_MAXF);
-         col0[3] += span->attrStepY[FRAG_ATTRIB_COL0][3] * (1.0F / CHAN_MAXF);
-      }
-   }
-   if (program->Base.InputsRead & FRAG_BIT_COL1) {
-      GLfloat *col1 = machine->Attribs[FRAG_ATTRIB_COL1][machine->CurFrag];
-      if (xOrY == 'X') {
-         col1[0] += span->attrStepX[FRAG_ATTRIB_COL1][0] * (1.0F / CHAN_MAXF);
-         col1[1] += span->attrStepX[FRAG_ATTRIB_COL1][1] * (1.0F / CHAN_MAXF);
-         col1[2] += span->attrStepX[FRAG_ATTRIB_COL1][2] * (1.0F / CHAN_MAXF);
-         col1[3] += span->attrStepX[FRAG_ATTRIB_COL1][3] * (1.0F / CHAN_MAXF);
-      }
-      else {
-         col1[0] += span->attrStepY[FRAG_ATTRIB_COL1][0] * (1.0F / CHAN_MAXF);
-         col1[1] += span->attrStepY[FRAG_ATTRIB_COL1][1] * (1.0F / CHAN_MAXF);
-         col1[2] += span->attrStepY[FRAG_ATTRIB_COL1][2] * (1.0F / CHAN_MAXF);
-         col1[3] += span->attrStepY[FRAG_ATTRIB_COL1][3] * (1.0F / CHAN_MAXF);
+
+   /* primary, secondary colors */
+   for (attr = FRAG_ATTRIB_COL0; attr <= FRAG_ATTRIB_COL1; attr++) {
+      if (program->Base.InputsRead & (1 << attr)) {
+         GLfloat *col = machine->Attribs[attr][machine->CurFrag];
+         if (xOrY == 'X') {
+            col[0] += span->attrStepX[attr][0] * (1.0F / CHAN_MAXF);
+            col[1] += span->attrStepX[attr][1] * (1.0F / CHAN_MAXF);
+            col[2] += span->attrStepX[attr][2] * (1.0F / CHAN_MAXF);
+            col[3] += span->attrStepX[attr][3] * (1.0F / CHAN_MAXF);
+         }
+         else {
+            col[0] += span->attrStepY[attr][0] * (1.0F / CHAN_MAXF);
+            col[1] += span->attrStepY[attr][1] * (1.0F / CHAN_MAXF);
+            col[2] += span->attrStepY[attr][2] * (1.0F / CHAN_MAXF);
+            col[3] += span->attrStepY[attr][3] * (1.0F / CHAN_MAXF);
+         }
       }
    }
    if (program->Base.InputsRead & FRAG_BIT_FOGC) {
@@ -611,40 +580,22 @@ init_machine_deriv( GLcontext *ctx,
          fogc[0] += span->attrStepY[FRAG_ATTRIB_FOGC][0];
       }
    }
-   for (u = 0; u < ctx->Const.MaxTextureCoordUnits; u++) {
-      if (program->Base.InputsRead & FRAG_BIT_TEX(u)) {
-         GLfloat *tex = machine->Attribs[FRAG_ATTRIB_TEX0 + u][machine->CurFrag];
+   /* texcoord and varying vars */
+   for (attr = FRAG_ATTRIB_TEX0; attr < FRAG_ATTRIB_MAX; attr++) {
+      if (program->Base.InputsRead & (1 << attr)) {
+         GLfloat *val = machine->Attribs[attr][machine->CurFrag];
          /* XXX perspective-correct interpolation */
          if (xOrY == 'X') {
-            tex[0] += span->attrStepX[FRAG_ATTRIB_TEX0 + u][0];
-            tex[1] += span->attrStepX[FRAG_ATTRIB_TEX0 + u][1];
-            tex[2] += span->attrStepX[FRAG_ATTRIB_TEX0 + u][2];
-            tex[3] += span->attrStepX[FRAG_ATTRIB_TEX0 + u][3];
+            val[0] += span->attrStepX[attr][0];
+            val[1] += span->attrStepX[attr][1];
+            val[2] += span->attrStepX[attr][2];
+            val[3] += span->attrStepX[attr][3];
          }
          else {
-            tex[0] += span->attrStepY[FRAG_ATTRIB_TEX0 + u][0];
-            tex[1] += span->attrStepY[FRAG_ATTRIB_TEX0 + u][1];
-            tex[2] += span->attrStepY[FRAG_ATTRIB_TEX0 + u][2];
-            tex[3] += span->attrStepY[FRAG_ATTRIB_TEX0 + u][3];
-         }
-      }
-   }
-
-   for (v = 0; v < ctx->Const.MaxVarying; v++) {
-      if (program->Base.InputsRead & FRAG_BIT_VAR(v)) {
-         GLfloat *var = machine->Attribs[FRAG_ATTRIB_VAR0 + v][machine->CurFrag];
-         GLuint attr = FRAG_ATTRIB_VAR0 + v;
-         if (xOrY == 'X') {
-            var[0] += span->attrStepX[attr][0];
-            var[1] += span->attrStepX[attr][1];
-            var[2] += span->attrStepX[attr][2];
-            var[3] += span->attrStepX[attr][3];
-         }
-         else {
-            var[0] += span->attrStepY[attr][0];
-            var[1] += span->attrStepY[attr][1];
-            var[2] += span->attrStepY[attr][2];
-            var[3] += span->attrStepY[attr][3];
+            val[0] += span->attrStepY[attr][0];
+            val[1] += span->attrStepY[attr][1];
+            val[2] += span->attrStepY[attr][2];
+            val[3] += span->attrStepY[attr][3];
          }
       }
    }
