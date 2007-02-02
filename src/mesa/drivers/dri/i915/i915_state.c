@@ -611,10 +611,12 @@ void i915_update_fog( GLcontext *ctx )
 	 i915->state.Ctx[I915_CTXREG_LIS5] &= ~S5_FOG_ENABLE;
    }
 
-   if (enabled) {
-      _tnl_allow_vertex_fog( ctx, (i915->vertex_fog == I915_FOG_VERTEX) ); 
-      _tnl_allow_pixel_fog( ctx, (i915->vertex_fog != I915_FOG_VERTEX) ); 
-   }
+   /* always enbale pixel fog
+    * vertex fog use precaculted fog coord will conflict with appended
+    * fog program
+    */
+    _tnl_allow_vertex_fog( ctx, 0 );
+    _tnl_allow_pixel_fog( ctx, 1 );
 }
 
 static void i915Fogfv(GLcontext *ctx, GLenum pname, const GLfloat *param)
