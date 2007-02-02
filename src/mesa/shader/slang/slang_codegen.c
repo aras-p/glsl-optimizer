@@ -2124,8 +2124,11 @@ _slang_gen_field(slang_assemble_ctx * A, slang_operation *oper)
       return n;
    }
    else {
-      /* the field is a structure member */
-      abort();
+      /* the field is a structure member (base.field) */
+      /* oper->children[0] is the base */
+      /* oper->a_id is the field name */
+      _mesa_problem(NULL, "glsl structs/fields not supported yet");
+      return NULL;
    }
 }
 
