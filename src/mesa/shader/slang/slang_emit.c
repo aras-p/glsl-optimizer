@@ -858,6 +858,8 @@ emit_tex(slang_var_table *vt, slang_ir_node *n, struct gl_program *prog)
 
    storage_to_dst_reg(&inst->DstReg, n->Store, n->Writemask);
 
+   (void) emit(vt, n->Children[1], prog);
+
    /* Child[1] is the coord */
    storage_to_src_reg(&inst->SrcReg[0], n->Children[1]->Store);
 
