@@ -1264,6 +1264,58 @@ _slang_first_function(struct slang_function_scope_ *scope, const char *name)
 
 
 
+slang_function *
+_slang_locate_function(const slang_function_scope * funcs, slang_atom a_name,
+                       const slang_operation * args, GLuint num_args,
+                       const slang_assembly_name_space * space,
+                       slang_atom_pool * atoms)
+{
+   GLuint i;
+
+   for (i = 0; i < funcs->num_functions; i++) {
+      slang_function *f = &funcs->functions[i];
+      const GLuint haveRetValue = _slang_function_has_return_value(f);
+      GLuint j;
+
+      if (a_name != f->header.a_name)
+         continue;
+      if (f->param_count - haveRetValue != num_args)
+         continue;
+
+      /* compare parameter / argument types */
+      for (j = 0; j < num_args; j++) {
+         slang_assembly_typeinfo ti;
+
+         if (!slang_assembly_typeinfo_construct(&ti))
+            return NULL;
+         if (!_slang_typeof_operation_(&args[j], space, &ti, atoms)) {
+            slang_assembly_typeinfo_destruct(&ti);
+            return NULL;
+         }
+         if (!slang_type_specifier_equal(&ti.spec,
+             &f->parameters->variables[j/* + haveRetValue*/]->type.specifier)) {
+            slang_assembly_typeinfo_destruct(&ti);
+            break;
+         }
+         slang_assembly_typeinfo_destruct(&ti);
+
+         /* "out" and "inout" formal parameter requires the actual parameter to be l-value */
+         if (!ti.can_be_referenced &&
+             (f->parameters->variables[j/* + haveRetValue*/]->type.qualifier == slang_qual_out ||
+              f->parameters->variables[j/* + haveRetValue*/]->type.qualifier == slang_qual_inout))
+            break;
+      }
+      if (j == num_args)
+         return f;
+   }
+   if (funcs->outer_scope != NULL)
+      return _slang_locate_function(funcs->outer_scope, a_name, args,
+                                    num_args, space, atoms);
+   return NULL;
+}
+
+
+
 /**
  * Assemble a function call, given a particular function name.
  * \param name  the function's name (operators like '*' are possible).

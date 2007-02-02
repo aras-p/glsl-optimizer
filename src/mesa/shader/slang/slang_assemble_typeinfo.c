@@ -32,6 +32,123 @@
 #include "slang_assemble.h"
 #include "slang_compile.h"
 #include "slang_error.h"
+#include "prog_instruction.h"
+
+
+
+
+/**
+ * Checks if a field selector is a general swizzle (an r-value swizzle
+ * with replicated components or an l-value swizzle mask) for a
+ * vector.  Returns GL_TRUE if this is the case, <swz> is filled with
+ * swizzle information.  Returns GL_FALSE otherwise.
+ */
+GLboolean
+_slang_is_swizzle(const char *field, GLuint rows, slang_swizzle * swz)
+{
+   GLuint i;
+   GLboolean xyzw = GL_FALSE, rgba = GL_FALSE, stpq = GL_FALSE;
+
+   /* init to undefined.
+    * We rely on undefined/nil values to distinguish between
+    * regular swizzles and writemasks.
+    * For example, the swizzle ".xNNN" is the writemask ".x".
+    * That's different than the swizzle ".xxxx".
+    */
+   for (i = 0; i < 4; i++)
+      swz->swizzle[i] = SWIZZLE_NIL;
+
+   /* the swizzle can be at most 4-component long */
+   swz->num_components = slang_string_length(field);
+   if (swz->num_components > 4)
+      return GL_FALSE;
+
+   for (i = 0; i < swz->num_components; i++) {
+      /* mark which swizzle group is used */
+      switch (field[i]) {
+      case 'x':
+      case 'y':
+      case 'z':
+      case 'w':
+         xyzw = GL_TRUE;
+         break;
+      case 'r':
+      case 'g':
+      case 'b':
+      case 'a':
+         rgba = GL_TRUE;
+         break;
+      case 's':
+      case 't':
+      case 'p':
+      case 'q':
+         stpq = GL_TRUE;
+         break;
+      default:
+         return GL_FALSE;
+      }
+
+      /* collect swizzle component */
+      switch (field[i]) {
+      case 'x':
+      case 'r':
+      case 's':
+         swz->swizzle[i] = 0;
+         break;
+      case 'y':
+      case 'g':
+      case 't':
+         swz->swizzle[i] = 1;
+         break;
+      case 'z':
+      case 'b':
+      case 'p':
+         swz->swizzle[i] = 2;
+         break;
+      case 'w':
+      case 'a':
+      case 'q':
+         swz->swizzle[i] = 3;
+         break;
+      }
+
+      /* check if the component is valid for given vector's row count */
+      if (rows <= swz->swizzle[i])
+         return GL_FALSE;
+   }
+
+   /* only one swizzle group can be used */
+   if ((xyzw && rgba) || (xyzw && stpq) || (rgba && stpq))
+      return GL_FALSE;
+
+   return GL_TRUE;
+}
+
+
+
+/**
+ * Checks if a general swizzle is an l-value swizzle - these swizzles
+ * do not have duplicated fields.  Returns GL_TRUE if this is a
+ * swizzle mask.  Returns GL_FALSE otherwise
+ */
+GLboolean
+_slang_is_swizzle_mask(const slang_swizzle * swz, GLuint rows)
+{
+   GLuint i, c = 0;
+
+   /* the swizzle may not be longer than the vector dim */
+   if (swz->num_components > rows)
+      return GL_FALSE;
+
+   /* the swizzle components cannot be duplicated */
+   for (i = 0; i < swz->num_components; i++) {
+      if ((c & (1 << swz->swizzle[i])) != 0)
+         return GL_FALSE;
+      c |= 1 << swz->swizzle[i];
+   }
+
+   return GL_TRUE;
+}
 
 
 GLvoid

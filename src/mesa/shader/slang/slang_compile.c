@@ -100,7 +100,7 @@ _slang_code_object_ctr(slang_code_object * self)
    for (i = 0; i < SLANG_BUILTIN_TOTAL; i++)
       _slang_code_unit_ctr(&self->builtin[i], self);
    _slang_code_unit_ctr(&self->unit, self);
-#if 01
+#if 0
    _slang_assembly_file_ctr(&self->assembly);
 #endif
    self->varpool.next_addr = 0;
@@ -115,7 +115,7 @@ _slang_code_object_dtr(slang_code_object * self)
    for (i = 0; i < SLANG_BUILTIN_TOTAL; i++)
       _slang_code_unit_dtr(&self->builtin[i]);
    _slang_code_unit_dtr(&self->unit);
-#if 01
+#if 0
    slang_assembly_file_destruct(&self->assembly);
 #endif
    slang_atom_pool_destruct(&self->atompool);
@@ -1551,7 +1551,7 @@ initialize_global(slang_assemble_ctx * A, slang_variable * var)
    slang_operation op_id, op_assign;
    GLboolean result;
 
-#if 01
+#if 0
    /* save the current assembly */
    if (!slang_assembly_file_restore_point_save(A->file, &point))
       return GL_FALSE;
@@ -1561,10 +1561,12 @@ initialize_global(slang_assemble_ctx * A, slang_variable * var)
    A->local.ret_size = 0;
    A->local.addr_tmp = 0;
    A->local.swizzle_tmp = 4;
+#if 0
    if (!slang_assembly_file_push_label(A->file, slang_asm_local_alloc, 20))
       return GL_FALSE;
    if (!slang_assembly_file_push_label(A->file, slang_asm_enter, 20))
       return GL_FALSE;
+#endif
 
    /* construct the left side of assignment */
    if (!slang_operation_construct(&op_id))
@@ -1618,10 +1620,11 @@ initialize_global(slang_assemble_ctx * A, slang_variable * var)
 
    if (!result)
       return GL_FALSE;
+#if 0
    if (!slang_assembly_file_push(A->file, slang_asm_exit))
       return GL_FALSE;
-
-#if 01
+#endif
+#if 0
    /* restore the old assembly */
    if (!slang_assembly_file_restore_point_load(A->file, &point))
       return GL_FALSE;
