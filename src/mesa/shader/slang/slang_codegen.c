@@ -1891,9 +1891,7 @@ _slang_gen_declaration(slang_assemble_ctx *A, slang_operation *oper)
          RETURN_ERROR2("Undefined variable:", varName, 0);
       }
       /* XXX make copy of this initializer? */
-
-      /* XXX try to simplify initializer here */foo
-
+      _slang_simplify(v->initializer, &A->space, A->atoms); 
       rhs = _slang_gen_operation(A, v->initializer);
       assert(rhs);
       init = new_node(IR_MOVE, var, rhs);
