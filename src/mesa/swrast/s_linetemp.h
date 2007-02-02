@@ -276,8 +276,8 @@ NAME( GLcontext *ctx, const SWvertex *vert0, const SWvertex *vert1 )
 #endif
 #ifdef INTERP_FOG
    interpFlags |= SPAN_FOG;
-   span.fog = vert0->fog;
-   span.fogStep = (vert1->fog - vert0->fog) / numPixels;
+   span.attrStart[FRAG_ATTRIB_FOGC][0] = vert0->fog;
+   span.attrStepX[FRAG_ATTRIB_FOGC][0] = (vert1->fog - vert0->fog) / numPixels;
 #endif
 #ifdef INTERP_TEX
    interpFlags |= SPAN_TEXTURE;
@@ -345,23 +345,24 @@ NAME( GLcontext *ctx, const SWvertex *vert0, const SWvertex *vert1 )
       GLuint v;
       for (v = 0; v < MAX_VARYING; v++) {
          if (inputsUsed & FRAG_BIT_VAR(v)) {
+            GLuint attr = FRAG_ATTRIB_VAR0 + v;
             GLfloat ds, dt, dr, dq;
-            span.var[v][0] = invw0 * vert0->varying[v][0];
-            span.var[v][1] = invw0 * vert0->varying[v][1];
-            span.var[v][2] = invw0 * vert0->varying[v][2];
-            span.var[v][3] = invw0 * vert0->varying[v][3];
-            ds = (invw1 * vert1->varying[v][0]) - span.var[v][0];
-            dt = (invw1 * vert1->varying[v][1]) - span.var[v][1];
-            dr = (invw1 * vert1->varying[v][2]) - span.var[v][2];
-            dq = (invw1 * vert1->varying[v][3]) - span.var[v][3];
-            span.varStepX[v][0] = ds * invLen;
-            span.varStepX[v][1] = dt * invLen;
-            span.varStepX[v][2] = dr * invLen;
-            span.varStepX[v][3] = dq * invLen;
-            span.varStepY[v][0] = 0.0F;
-            span.varStepY[v][1] = 0.0F;
-            span.varStepY[v][2] = 0.0F;
-            span.varStepY[v][3] = 0.0F;
+            span.attrStart[attr][0] = invw0 * vert0->varying[v][0];
+            span.attrStart[attr][1] = invw0 * vert0->varying[v][1];
+            span.attrStart[attr][2] = invw0 * vert0->varying[v][2];
+            span.attrStart[attr][3] = invw0 * vert0->varying[v][3];
+            ds = (invw1 * vert1->varying[v][0]) - span.attrStart[attr][0];
+            dt = (invw1 * vert1->varying[v][1]) - span.attrStart[attr][1];
+            dr = (invw1 * vert1->varying[v][2]) - span.attrStart[attr][2];
+            dq = (invw1 * vert1->varying[v][3]) - span.attrStart[attr][3];
+            span.attrStepX[attr][0] = ds * invLen;
+            span.attrStepX[attr][1] = dt * invLen;
+            span.attrStepX[attr][2] = dr * invLen;
+            span.attrStepX[attr][3] = dq * invLen;
+            span.attrStepY[attr][0] = 0.0F;
+            span.attrStepY[attr][1] = 0.0F;
+            span.attrStepY[attr][2] = 0.0F;
+            span.attrStepY[attr][3] = 0.0F;
          }
       }
    }

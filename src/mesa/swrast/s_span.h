@@ -169,14 +169,15 @@ typedef struct sw_span
 #endif
    GLfixed index, indexStep;
    GLfixed z, zStep;    /* XXX z should probably be GLuint */
-   GLfloat fog, fogStep;
    GLfloat tex[MAX_TEXTURE_COORD_UNITS][4];  /* s, t, r, q */
    GLfloat texStepX[MAX_TEXTURE_COORD_UNITS][4];
    GLfloat texStepY[MAX_TEXTURE_COORD_UNITS][4];
    GLfixed intTex[2], intTexStep[2];  /* s, t only */
-   GLfloat var[MAX_VARYING][4];
-   GLfloat varStepX[MAX_VARYING][4];
-   GLfloat varStepY[MAX_VARYING][4];
+
+   /** Fragment attribute interpolants */
+   GLfloat attrStart[FRAG_ATTRIB_MAX][4];   /**< initial value */
+   GLfloat attrStepX[FRAG_ATTRIB_MAX][4];   /**< dvalue/dx */
+   GLfloat attrStepY[FRAG_ATTRIB_MAX][4];   /**< dvalue/dy */
 
    /* partial derivatives wrt X and Y. */
    GLfloat dzdx, dzdy;
@@ -185,10 +186,6 @@ typedef struct sw_span
    GLfloat dgdx, dgdy;
    GLfloat dbdx, dbdy;
    GLfloat dadx, dady;
-   GLfloat dsrdx, dsrdy;
-   GLfloat dsgdx, dsgdy;
-   GLfloat dsbdx, dsbdy;
-   GLfloat dfogdx, dfogdy;
 
    /**
     * This bitmask (of \link SpanFlags SPAN_* flags\endlink) indicates

@@ -75,8 +75,9 @@ _swrast_span_default_z( GLcontext *ctx, SWspan *span )
 void
 _swrast_span_default_fog( GLcontext *ctx, SWspan *span )
 {
-   span->fog = _swrast_z_to_fogfactor(ctx, ctx->Current.RasterDistance);
-   span->fogStep = span->dfogdx = span->dfogdy = 0.0F;
+   span->attrStart[FRAG_ATTRIB_FOGC][0] = _swrast_z_to_fogfactor(ctx, ctx->Current.RasterDistance);
+   span->attrStepX[FRAG_ATTRIB_FOGC][0] = 0.0;
+   span->attrStepY[FRAG_ATTRIB_FOGC][0] = 0.0;
    span->interpMask |= SPAN_FOG;
 }
 
@@ -431,8 +432,8 @@ static INLINE void
 interpolate_fog(const GLcontext *ctx, SWspan *span)
 {
    GLfloat (*fog)[4] = span->array->attribs[FRAG_ATTRIB_FOGC];
-   const GLfloat fogStep = span->fogStep;
-   GLfloat fogCoord = span->fog;
+   const GLfloat fogStep = span->attrStepX[FRAG_ATTRIB_FOGC][0];
+   GLfloat fogCoord = span->attrStart[FRAG_ATTRIB_FOGC][0];
    const GLuint haveW = (span->interpMask & SPAN_W);
    const GLfloat wStep = haveW ? span->dwdx : 0.0F;
    GLfloat w = haveW ? span->w : 1.0F;
@@ -834,16 +835,17 @@ interpolate_varying(GLcontext *ctx, SWspan *span)
 
    for (var = 0; var < MAX_VARYING; var++) {
       if (inputsUsed & FRAG_BIT_VAR(var)) {
+         const GLuint attr = FRAG_ATTRIB_VAR0 + var;
          GLuint j;
          for (j = 0; j < 4; j++) {
-            const GLfloat dvdx = span->varStepX[var][j];
-            GLfloat v = span->var[var][j];
+            const GLfloat dvdx = span->attrStepX[attr][j];
+            GLfloat v = span->attrStart[attr][j];
             const GLfloat dwdx = span->dwdx;
             GLfloat w = span->w;
             GLuint k;
             for (k = 0; k < span->end; k++) {
                GLfloat invW = 1.0f / w;
-               span->array->attribs[FRAG_ATTRIB_VAR0 + var][k][j] = v * invW;
+               span->array->attribs[attr][k][j] = v * invW;
                v += dvdx;
                w += dwdx;
             }

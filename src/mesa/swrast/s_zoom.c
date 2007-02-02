@@ -159,8 +159,9 @@ zoom_span( GLcontext *ctx, GLint imgX, GLint imgY, const SWspan *span,
 
 
    /* copy fog interp info */
-   zoomed.fog = span->fog;
-   zoomed.fogStep = span->fogStep;
+   zoomed.attrStart[FRAG_ATTRIB_FOGC][0] = span->attrStart[FRAG_ATTRIB_FOGC][0];
+   zoomed.attrStepX[FRAG_ATTRIB_FOGC][0] = span->attrStepX[FRAG_ATTRIB_FOGC][0];
+   zoomed.attrStepY[FRAG_ATTRIB_FOGC][0] = span->attrStepY[FRAG_ATTRIB_FOGC][0];
    /* XXX copy texcoord info? */
 
    if (format == GL_RGBA || format == GL_RGB) {

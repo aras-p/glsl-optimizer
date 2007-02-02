@@ -287,27 +287,27 @@ fetch_vector4_deriv( GLcontext *ctx,
       break;
    case FRAG_ATTRIB_COL1:
       if (xOrY == 'X') {
-         src[0] = span->dsrdx * (1.0F / CHAN_MAXF);
-         src[1] = span->dsgdx * (1.0F / CHAN_MAXF);
-         src[2] = span->dsbdx * (1.0F / CHAN_MAXF);
-         src[3] = 0.0; /* XXX need this */
+         src[0] = span->attrStepX[FRAG_ATTRIB_COL1][0] * (1.0F / CHAN_MAXF);
+         src[1] = span->attrStepX[FRAG_ATTRIB_COL1][1] * (1.0F / CHAN_MAXF);
+         src[2] = span->attrStepX[FRAG_ATTRIB_COL1][2] * (1.0F / CHAN_MAXF);
+         src[3] = span->attrStepX[FRAG_ATTRIB_COL1][3] * (1.0F / CHAN_MAXF);
       }
       else {
-         src[0] = span->dsrdy * (1.0F / CHAN_MAXF);
-         src[1] = span->dsgdy * (1.0F / CHAN_MAXF);
-         src[2] = span->dsbdy * (1.0F / CHAN_MAXF);
-         src[3] = 0.0; /* XXX need this */
+         src[0] = span->attrStepY[FRAG_ATTRIB_COL1][0] * (1.0F / CHAN_MAXF);
+         src[1] = span->attrStepY[FRAG_ATTRIB_COL1][1] * (1.0F / CHAN_MAXF);
+         src[2] = span->attrStepY[FRAG_ATTRIB_COL1][2] * (1.0F / CHAN_MAXF);
+         src[3] = span->attrStepY[FRAG_ATTRIB_COL1][3] * (1.0F / CHAN_MAXF);
       }
       break;
    case FRAG_ATTRIB_FOGC:
       if (xOrY == 'X') {
-         src[0] = span->dfogdx;
+         src[0] = span->attrStepX[FRAG_ATTRIB_FOGC][0] * (1.0F / CHAN_MAXF);
          src[1] = 0.0;
          src[2] = 0.0;
          src[3] = 0.0;
       }
       else {
-         src[0] = span->dfogdy;
+         src[0] = span->attrStepY[FRAG_ATTRIB_FOGC][0] * (1.0F / CHAN_MAXF);
          src[1] = 0.0;
          src[2] = 0.0;
          src[3] = 0.0;
@@ -589,25 +589,25 @@ init_machine_deriv( GLcontext *ctx,
    if (program->Base.InputsRead & FRAG_BIT_COL1) {
       GLfloat *col1 = machine->Attribs[FRAG_ATTRIB_COL1][machine->CurFrag];
       if (xOrY == 'X') {
-         col1[0] += span->dsrdx * (1.0F / CHAN_MAXF);
-         col1[1] += span->dsgdx * (1.0F / CHAN_MAXF);
-         col1[2] += span->dsbdx * (1.0F / CHAN_MAXF);
-         col1[3] += 0.0; /*XXX fix */
+         col1[0] += span->attrStepX[FRAG_ATTRIB_COL1][0] * (1.0F / CHAN_MAXF);
+         col1[1] += span->attrStepX[FRAG_ATTRIB_COL1][1] * (1.0F / CHAN_MAXF);
+         col1[2] += span->attrStepX[FRAG_ATTRIB_COL1][2] * (1.0F / CHAN_MAXF);
+         col1[3] += span->attrStepX[FRAG_ATTRIB_COL1][3] * (1.0F / CHAN_MAXF);
       }
       else {
-         col1[0] += span->dsrdy * (1.0F / CHAN_MAXF);
-         col1[1] += span->dsgdy * (1.0F / CHAN_MAXF);
-         col1[2] += span->dsbdy * (1.0F / CHAN_MAXF);
-         col1[3] += 0.0; /*XXX fix */
+         col1[0] += span->attrStepY[FRAG_ATTRIB_COL1][0] * (1.0F / CHAN_MAXF);
+         col1[1] += span->attrStepY[FRAG_ATTRIB_COL1][1] * (1.0F / CHAN_MAXF);
+         col1[2] += span->attrStepY[FRAG_ATTRIB_COL1][2] * (1.0F / CHAN_MAXF);
+         col1[3] += span->attrStepY[FRAG_ATTRIB_COL1][3] * (1.0F / CHAN_MAXF);
       }
    }
    if (program->Base.InputsRead & FRAG_BIT_FOGC) {
       GLfloat *fogc = machine->Attribs[FRAG_ATTRIB_FOGC][machine->CurFrag];
       if (xOrY == 'X') {
-         fogc[0] += span->dfogdx;
+         fogc[0] += span->attrStepX[FRAG_ATTRIB_FOGC][0];
       }
       else {
-         fogc[0] += span->dfogdy;
+         fogc[0] += span->attrStepY[FRAG_ATTRIB_FOGC][0];
       }
    }
    for (u = 0; u < ctx->Const.MaxTextureCoordUnits; u++) {
@@ -632,17 +632,18 @@ init_machine_deriv( GLcontext *ctx,
    for (v = 0; v < ctx->Const.MaxVarying; v++) {
       if (program->Base.InputsRead & FRAG_BIT_VAR(v)) {
          GLfloat *var = machine->Attribs[FRAG_ATTRIB_VAR0 + v][machine->CurFrag];
+         GLuint attr = FRAG_ATTRIB_VAR0 + v;
          if (xOrY == 'X') {
-            var[0] += span->varStepX[v][0];
-            var[1] += span->varStepX[v][1];
-            var[2] += span->varStepX[v][2];
-            var[3] += span->varStepX[v][3];
+            var[0] += span->attrStepX[attr][0];
+            var[1] += span->attrStepX[attr][1];
+            var[2] += span->attrStepX[attr][2];
+            var[3] += span->attrStepX[attr][3];
          }
          else {
-            var[0] += span->varStepY[v][0];
-            var[1] += span->varStepY[v][1];
-            var[2] += span->varStepY[v][2];
-            var[3] += span->varStepY[v][3];
+            var[0] += span->attrStepY[attr][0];
+            var[1] += span->attrStepY[attr][1];
+            var[2] += span->attrStepY[attr][2];
+            var[3] += span->attrStepY[attr][3];
          }
       }
    }
