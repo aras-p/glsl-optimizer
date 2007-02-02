@@ -339,7 +339,7 @@ static GLboolean
 parse_array_len(slang_parse_ctx * C, slang_output_ctx * O, GLuint * len)
 {
    slang_operation array_size;
-   slang_assembly_name_space space;
+   slang_name_space space;
    GLboolean result;
 
    if (!slang_operation_construct(&array_size))

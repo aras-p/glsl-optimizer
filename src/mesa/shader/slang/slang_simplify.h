@@ -9,13 +9,13 @@ _slang_lookup_constant(const char *name);
 
 extern void
 _slang_simplify(slang_operation *oper,
-                const slang_assembly_name_space * space,
+                const slang_name_space * space,
                 slang_atom_pool * atoms);
 
 
 extern GLboolean
 _slang_adapt_call(slang_operation *callOper, const slang_function *fun,
-                  const slang_assembly_name_space * space,
+                  const slang_name_space * space,
                   slang_atom_pool * atoms);
 
 

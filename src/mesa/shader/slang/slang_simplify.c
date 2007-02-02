@@ -90,7 +90,7 @@ _slang_lookup_constant(const char *name)
  */
 void
 _slang_simplify(slang_operation *oper,
-                const slang_assembly_name_space * space,
+                const slang_name_space * space,
                 slang_atom_pool * atoms)
 {
    GLboolean isFloat[4];
@@ -275,7 +275,7 @@ _slang_simplify(slang_operation *oper,
  */
 GLboolean
 _slang_adapt_call(slang_operation *callOper, const slang_function *fun,
-                  const slang_assembly_name_space * space,
+                  const slang_name_space * space,
                   slang_atom_pool * atoms)
 {
    const GLboolean haveRetValue = _slang_function_has_return_value(fun);

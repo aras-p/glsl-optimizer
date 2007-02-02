@@ -1267,7 +1267,7 @@ _slang_first_function(struct slang_function_scope_ *scope, const char *name)
 slang_function *
 _slang_locate_function(const slang_function_scope * funcs, slang_atom a_name,
                        const slang_operation * args, GLuint num_args,
-                       const slang_assembly_name_space * space,
+                       const slang_name_space * space,
                        slang_atom_pool * atoms)
 {
    GLuint i;

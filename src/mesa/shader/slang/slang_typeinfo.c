@@ -257,7 +257,7 @@ slang_assembly_typeinfo_destruct(slang_assembly_typeinfo * ti)
 static GLboolean
 typeof_existing_function(const char *name, const slang_operation * params,
                          GLuint num_params,
-                         const slang_assembly_name_space * space,
+                         const slang_name_space * space,
                          slang_type_specifier * spec,
                          slang_atom_pool * atoms)
 {
@@ -290,7 +290,7 @@ _slang_typeof_operation(const slang_assemble_ctx * A,
  */
 GLboolean
 _slang_typeof_operation_(const slang_operation * op,
-                         const slang_assembly_name_space * space,
+                         const slang_name_space * space,
                          slang_assembly_typeinfo * ti,
                          slang_atom_pool * atoms)
 {
@@ -616,7 +616,7 @@ _slang_typeof_operation_(const slang_operation * op,
 GLboolean
 _slang_typeof_function(slang_atom a_name, const slang_operation * params,
                        GLuint num_params,
-                       const slang_assembly_name_space * space,
+                       const slang_name_space * space,
                        slang_type_specifier * spec, GLboolean * exists,
                        slang_atom_pool * atoms)
 {

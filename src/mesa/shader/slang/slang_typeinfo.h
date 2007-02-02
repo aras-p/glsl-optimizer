@@ -46,18 +46,18 @@ typedef struct slang_swizzle_
    GLuint swizzle[4];
 } slang_swizzle;
 
-typedef struct slang_assembly_name_space_
+typedef struct slang_name_space_
 {
    struct slang_function_scope_ *funcs;
    struct slang_struct_scope_ *structs;
    struct slang_variable_scope_ *vars;
-} slang_assembly_name_space;
+} slang_name_space;
 
 
 typedef struct slang_assemble_ctx_
 {
    slang_atom_pool *atoms;
-   slang_assembly_name_space space;
+   slang_name_space space;
    slang_swizzle swz;
    struct gl_program *program;
    slang_var_table *vartable;
@@ -71,7 +71,7 @@ extern struct slang_function_ *
 _slang_locate_function(const struct slang_function_scope_ *funcs,
                        slang_atom name, const struct slang_operation_ *params,
                        GLuint num_params,
-                       const slang_assembly_name_space *space,
+                       const slang_name_space *space,
                        slang_atom_pool *);
 
 
@@ -171,7 +171,7 @@ _slang_typeof_operation(const slang_assemble_ctx *,
 
 extern GLboolean
 _slang_typeof_operation_(const struct slang_operation_ *,
-                         const slang_assembly_name_space *,
+                         const slang_name_space *,
                          slang_assembly_typeinfo *, slang_atom_pool *);
 
 /**
@@ -182,7 +182,7 @@ _slang_typeof_operation_(const struct slang_operation_ *,
 extern GLboolean
 _slang_typeof_function(slang_atom a_name,
                        const struct slang_operation_ *params,
-                       GLuint num_params, const slang_assembly_name_space *,
+                       GLuint num_params, const slang_name_space *,
                        slang_type_specifier *spec, GLboolean *exists,
                        slang_atom_pool *);
 
