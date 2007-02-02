@@ -102,12 +102,6 @@ slang_function_scope_find_by_name(slang_function_scope *, slang_atom, int);
 extern slang_function *
 slang_function_scope_find(slang_function_scope *, slang_function *, int);
 
-extern GLboolean
-_slang_build_export_code_table(slang_export_code_table *,
-                               slang_function_scope *,
-                               struct slang_code_unit_ *);
-
-
 #ifdef __cplusplus
 }
 #endif

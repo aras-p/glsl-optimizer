@@ -27,7 +27,6 @@
 
 #include "imports.h"
 #include "mtypes.h"
-#include "slang_export.h"
 #include "slang_assemble.h"
 #include "slang_compile_variable.h"
 #include "slang_compile_struct.h"
@@ -70,12 +69,7 @@ _slang_code_unit_dtr (slang_code_unit *);
 #define SLANG_BUILTIN_COMMON 1
 #define SLANG_BUILTIN_TARGET 2
 
-#if 0/*defined(USE_X86_ASM) || defined(SLANG_X86)*/
-#define SLANG_BUILTIN_VEC4   3
-#define SLANG_BUILTIN_TOTAL  4
-#else
 #define SLANG_BUILTIN_TOTAL  3
-#endif
 
 typedef struct slang_code_object_
 {
@@ -84,8 +78,6 @@ typedef struct slang_code_object_
    slang_assembly_file assembly;
    slang_var_pool varpool;
    slang_atom_pool atompool;
-   slang_export_data_table expdata;
-   slang_export_code_table expcode;
 } slang_code_object;
 
 extern GLvoid

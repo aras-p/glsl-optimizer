@@ -126,11 +126,6 @@ extern slang_variable *
 _slang_locate_variable(const slang_variable_scope *, const slang_atom a_name,
                        GLboolean all);
 
-extern GLboolean
-_slang_build_export_data_table(slang_export_data_table *,
-                               slang_variable_scope *);
-
-
 
 #ifdef __cplusplus
 }

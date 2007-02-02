@@ -105,10 +105,6 @@ _slang_code_object_ctr(slang_code_object * self)
 #endif
    self->varpool.next_addr = 0;
    slang_atom_pool_construct(&self->atompool);
-   slang_export_data_table_ctr(&self->expdata);
-   self->expdata.atoms = &self->atompool;
-   slang_export_code_table_ctr(&self->expcode);
-   self->expcode.atoms = &self->atompool;
 }
 
 GLvoid
@@ -123,8 +119,6 @@ _slang_code_object_dtr(slang_code_object * self)
    slang_assembly_file_destruct(&self->assembly);
 #endif
    slang_atom_pool_destruct(&self->atompool);
-   slang_export_data_table_dtr(&self->expdata);
-   slang_export_code_table_ctr(&self->expcode);
 }
 
 /* slang_info_log */
@@ -1730,9 +1724,6 @@ parse_init_declarator(slang_parse_ctx * C, slang_output_ctx * O,
       A.space.structs = O->structs;
       A.space.vars = O->vars;
       A.program = O->program;
-#if 0
-      A.codegen = O->codegen;
-#endif
       A.vartable = O->vartable;
 
       _slang_codegen_global_variable(&A, var, C->type);
@@ -1890,9 +1881,6 @@ parse_function(slang_parse_ctx * C, slang_output_ctx * O, int definition,
       A.space.structs = O->structs;
       A.space.vars = O->vars;
       A.program = O->program;
-#if 0
-      A.codegen = O->codegen;
-#endif
       A.vartable = O->vartable;
 
       _slang_reset_error();
@@ -2115,12 +2103,6 @@ static const byte slang_vertex_builtin_gc[] = {
 #include "library/slang_vertex_builtin_gc.h"
 };
 
-#if 0 /*defined(USE_X86_ASM) || defined(SLANG_X86)*/
-static const byte slang_builtin_vec4_gc[] = {
-#include "library/slang_builtin_vec4_gc.h"
-};
-#endif
-
 static GLboolean
 compile_object(grammar * id, const char *source, slang_code_object * object,
                slang_unit_type type, slang_info_log * infolog,
@@ -2181,15 +2163,6 @@ compile_object(grammar * id, const char *source, slang_code_object * object,
             return GL_FALSE;
       }
 
-#if 0/*defined(USE_X86_ASM) || defined(SLANG_X86)*/
-      /* compile x86 4-component vector overrides, link to target */
-      if (!compile_binary(slang_builtin_vec4_gc,
-                          &object->builtin[SLANG_BUILTIN_VEC4],
-                          slang_unit_fragment_builtin, infolog, NULL,
-                          &object->builtin[SLANG_BUILTIN_TARGET]))
-         return GL_FALSE;
-#endif
-
       /* disable language extensions */
 #if NEW_SLANG /* allow-built-ins */
       grammar_set_reg8(*id, (const byte *) "parsing_builtin", 1);
@@ -2203,24 +2176,6 @@ compile_object(grammar * id, const char *source, slang_code_object * object,
    return compile_with_grammar(*id, source, &object->unit, type, infolog,
                                builtins, program);
 }
-
-
-#if 0
-static void
-slang_create_uniforms(const slang_export_data_table *exports,
-                      struct gl_program *program)
-{
-   /* XXX only add uniforms that are actually going to get used */
-   GLuint i;
-   for (i = 0; i < exports->count; i++) {
-      if (exports->entries[i].access == slang_exp_uniform) {
-         const char *name = (char *) exports->entries[i].quant.name;
-         GLint j = _mesa_add_uniform(program->Parameters, name, 4);
-         assert(j >= 0);
-      }
-   }
-}
-#endif
 
 
 static GLboolean
@@ -2241,12 +2196,6 @@ compile_shader(GLcontext *ctx, slang_code_object * object,
    if (id != 0)
       grammar_destroy(id);
    if (!success)
-      return GL_FALSE;
-
-   if (!_slang_build_export_data_table(&object->expdata, &object->unit.vars))
-      return GL_FALSE;
-   if (!_slang_build_export_code_table(&object->expcode, &object->unit.funs,
-                                       &object->unit))
       return GL_FALSE;
 
 #if NEW_SLANG
