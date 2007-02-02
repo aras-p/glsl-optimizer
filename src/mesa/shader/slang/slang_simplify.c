@@ -30,10 +30,55 @@
 
 #include "imports.h"
 #include "macros.h"
+#include "get.h"
 #include "slang_compile.h"
 #include "slang_codegen.h"
 #include "slang_simplify.h"
 #include "slang_print.h"
+
+
+
+
+/**
+ * Lookup the value of named constant, such as gl_MaxLights.
+ * \return value of constant, or -1 if unknown
+ */
+GLint
+_slang_lookup_constant(const char *name)
+{
+   struct constant_info {
+      const char *Name;
+      const GLenum Token;
+   };
+   static const struct constant_info info[] = {
+      { "gl_MaxClipPlanes", GL_MAX_CLIP_PLANES },
+      { "gl_MaxCombinedTextureImageUnits", GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS },
+      { "gl_MaxDrawBuffers", GL_MAX_DRAW_BUFFERS },
+      { "gl_MaxFragmentUniformComponents", GL_MAX_FRAGMENT_UNIFORM_COMPONENTS },
+      { "gl_MaxLights", GL_MAX_LIGHTS },
+      { "gl_MaxTextureUnits", GL_MAX_TEXTURE_UNITS },
+      { "gl_MaxTextureCoords", GL_MAX_TEXTURE_COORDS },
+      { "gl_MaxVertexAttribs", GL_MAX_VERTEX_ATTRIBS },
+      { "gl_MaxVertexUniformComponents", GL_MAX_VERTEX_UNIFORM_COMPONENTS },
+      { "gl_MaxVaryingFloats", GL_MAX_VARYING_FLOATS },
+      { "gl_MaxVertexTextureImageUnits", GL_MAX_VERTEX_TEXTURE_IMAGE_UNITS },
+      { "gl_MaxTextureImageUnits", GL_MAX_TEXTURE_IMAGE_UNITS },
+      { NULL, 0 }
+   };
+   GLuint i;
+
+   for (i = 0; info[i].Name; i++) {
+      if (strcmp(info[i].Name, name) == 0) {
+         /* found */
+         GLint value = -1.0;
+         _mesa_GetIntegerv(info[i].Token, &value);
+         ASSERT(value >= 0);  /* sanity check that glGetFloatv worked */
+         return value;
+      }
+   }
+   return -1;
+}
+
 
 
 /**
@@ -51,6 +96,19 @@ _slang_simplify(slang_operation *oper,
    GLboolean isFloat[4];
    GLboolean isBool[4];
    GLuint i, n;
+
+   if (oper->type == slang_oper_identifier) {
+      /* see if it's a named constant */
+      GLint value = _slang_lookup_constant((char *) oper->a_id);
+      if (value >= 0) {
+         oper->literal[0] =
+         oper->literal[1] =
+         oper->literal[2] =
+         oper->literal[3] = value;
+         oper->type = slang_oper_literal_int;
+         return;
+      }
+   }
 
    /* first, simplify children */
    for (i = 0; i < oper->num_children; i++) {

@@ -2,6 +2,11 @@
 #ifndef SLANG_SIMPLIFY_H
 #define SLANG_SIMPLIFY_H
 
+
+extern GLint
+_slang_lookup_constant(const char *name);
+
+
 extern void
 _slang_simplify(slang_operation *oper,
                 const slang_assembly_name_space * space,

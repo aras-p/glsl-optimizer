@@ -29,7 +29,6 @@
  */
 
 #include "imports.h"
-#include "get.h"
 #include "macros.h"
 #include "slang_assemble.h"
 #include "slang_codegen.h"
@@ -61,41 +60,17 @@ _slang_gen_operation(slang_assemble_ctx * A, slang_operation *oper);
  * \return position of the constant in the paramList.
  */
 static GLint
-slang_lookup_constant(const char *name, GLint index,
+slang_lookup_constant(const char *name,
                       struct gl_program_parameter_list *paramList,
                       GLuint *swizzleOut)
 {
-   struct constant_info {
-      const char *Name;
-      const GLenum Token;
-   };
-   static const struct constant_info info[] = {
-      { "gl_MaxLights", GL_MAX_LIGHTS },
-      { "gl_MaxClipPlanes", GL_MAX_CLIP_PLANES },
-      { "gl_MaxTextureUnits", GL_MAX_TEXTURE_UNITS },
-      { "gl_MaxTextureCoords", GL_MAX_TEXTURE_COORDS },
-      { "gl_MaxVertexAttribs", GL_MAX_VERTEX_ATTRIBS },
-      { "gl_MaxVertexUniformComponents", GL_MAX_VERTEX_UNIFORM_COMPONENTS },
-      { "gl_MaxVaryingFloats", GL_MAX_VARYING_FLOATS },
-      { "gl_MaxVertexTextureImageUnits", GL_MAX_VERTEX_TEXTURE_IMAGE_UNITS },
-      { "gl_MaxTextureImageUnits", GL_MAX_TEXTURE_IMAGE_UNITS },
-      { "gl_MaxFragmentUniformComponents", GL_MAX_FRAGMENT_UNIFORM_COMPONENTS },
-      { "gl_MaxCombinedTextureImageUnits", GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS },
-      { NULL, 0 }
-   };
-   GLuint i;
-
-   for (i = 0; info[i].Name; i++) {
-      if (strcmp(info[i].Name, name) == 0) {
-         /* found */
-         GLfloat value = -1.0;
-         GLint pos;
-         _mesa_GetFloatv(info[i].Token, &value);
-         ASSERT(value >= 0.0);  /* sanity check that glGetFloatv worked */
-         /* XXX named constant! */
-         pos = _mesa_add_unnamed_constant(paramList, &value, 1, swizzleOut);
-         return pos;
-      }
+   GLint value = _slang_lookup_constant(name);
+   if (value >= 0) {
+      /* XXX named constant! */
+      GLfloat fvalue = (GLfloat) value;
+      GLint pos;
+      pos = _mesa_add_unnamed_constant(paramList, &fvalue, 1, swizzleOut);
+      return pos;
    }
    return -1;
 }
@@ -300,7 +275,8 @@ slang_allocate_storage(slang_assemble_ctx *A, slang_ir_node *n)
             n->Store->Index = i;
          }
          else if (n->Store->File == PROGRAM_CONSTANT) {
-            GLint i = slang_lookup_constant(varName, 0, prog->Parameters,
+            /* XXX compile-time constants should be converted to literals */
+            GLint i = slang_lookup_constant(varName, prog->Parameters,
                                             &n->Store->Swizzle);
             assert(i >= 0);
             assert(n->Store->Size == 1);
