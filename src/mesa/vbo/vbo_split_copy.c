@@ -360,6 +360,7 @@ static void replay_init( struct copy_context *copy )
    GLcontext *ctx = copy->ctx;
    GLuint i;
    GLuint offset;
+   const GLvoid *srcptr;
 
    /* Make a list of varying attributes and their vbo's.  Also
     * calculate vertex size.
@@ -402,13 +403,15 @@ static void replay_init( struct copy_context *copy )
 			    GL_WRITE_ONLY, /* XXX */
 			    copy->ib->obj);
 
+   srcptr = (const GLubyte *)ADD_POINTERS(copy->ib->obj->Pointer, copy->ib->ptr);
+
    switch (copy->ib->type) {
    case GL_UNSIGNED_BYTE:
       copy->translated_elt_buf = _mesa_malloc(sizeof(GLuint) * copy->ib->count);
       copy->srcelt = copy->translated_elt_buf;
-      
+
       for (i = 0; i < copy->ib->count; i++)
-	 copy->translated_elt_buf[i] = ((const GLubyte *)copy->ib->ptr)[i];
+	 copy->translated_elt_buf[i] = ((const GLubyte *)srcptr)[i];
       break;
 
    case GL_UNSIGNED_SHORT:
@@ -416,13 +419,12 @@ static void replay_init( struct copy_context *copy )
       copy->srcelt = copy->translated_elt_buf;
 
       for (i = 0; i < copy->ib->count; i++)
-	 copy->translated_elt_buf[i] = ((const GLushort *)copy->ib->ptr)[i];
+	 copy->translated_elt_buf[i] = ((const GLushort *)srcptr)[i];
       break;
 
    case GL_UNSIGNED_INT:
       copy->translated_elt_buf = NULL;
-      copy->srcelt = (const GLuint *)ADD_POINTERS(copy->ib->obj->Pointer, 
-						  copy->ib->ptr);
+      copy->srcelt = (const GLuint *)srcptr;
       break;
    }
    
