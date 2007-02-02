@@ -58,14 +58,13 @@ typedef struct slang_assemble_ctx_
 {
    slang_atom_pool *atoms;
    slang_name_space space;
-   slang_swizzle swz;
    struct gl_program *program;
    slang_var_table *vartable;
-
    struct slang_function_ *CurFunction;
    slang_atom CurLoopBreak;
    slang_atom CurLoopCont;
 } slang_assemble_ctx;
+
 
 extern struct slang_function_ *
 _slang_locate_function(const struct slang_function_scope_ *funcs,
