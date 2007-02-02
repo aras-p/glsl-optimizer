@@ -166,7 +166,6 @@ SHADER_SOURCES = \
 	shader/shader_api.c \
 
 SLANG_SOURCES =	\
-	shader/slang/slang_typeinfo.c	\
 	shader/slang/slang_codegen.c	\
 	shader/slang/slang_compile.c	\
 	shader/slang/slang_compile_function.c	\
@@ -177,12 +176,13 @@ SLANG_SOURCES =	\
 	shader/slang/slang_error.c	\
 	shader/slang/slang_library_noise.c	\
 	shader/slang/slang_library_texsample.c	\
-	shader/slang/slang_link2.c	\
+	shader/slang/slang_link.c	\
 	shader/slang/slang_preprocess.c	\
+	shader/slang/slang_print.c	\
 	shader/slang/slang_simplify.c	\
 	shader/slang/slang_storage.c	\
+	shader/slang/slang_typeinfo.c	\
 	shader/slang/slang_vartable.c	\
-	shader/slang/slang_print.c	\
 	shader/slang/slang_utility.c
 
 ASM_C_SOURCES =	\
