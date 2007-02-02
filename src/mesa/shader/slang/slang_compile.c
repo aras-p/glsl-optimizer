@@ -40,6 +40,7 @@
 #include "slang_error.h"
 #include "slang_emit.h"
 #include "slang_vartable.h"
+#include "slang_simplify.h"
 
 #include "slang_print.h"
 
@@ -367,8 +368,11 @@ parse_array_len(slang_parse_ctx * C, slang_output_ctx * O, GLuint * len)
    space.funcs = O->funs;
    space.structs = O->structs;
    space.vars = O->vars;
-   result = _slang_evaluate_int(O->assembly, O->machine, &space,
-                                &array_size, len, C->atoms);
+
+   /* evaluate compile-time expression which is array size */
+   _slang_simplify(&array_size, &space, C->atoms);
+   result = (array_size.type == slang_oper_literal_int);
+
    slang_operation_destruct(&array_size);
    return result;
 }
