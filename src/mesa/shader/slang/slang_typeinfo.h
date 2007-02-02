@@ -22,8 +22,8 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#ifndef SLANG_ASSEMBLE_TYPEINFO_H
-#define SLANG_ASSEMBLE_TYPEINFO_H 1
+#ifndef SLANG_TYPEINFO_H
+#define SLANG_TYPEINFO_H 1
 
 #include "imports.h"
 #include "mtypes.h"
@@ -199,6 +199,4 @@ extern GLuint
 _slang_type_dim(slang_type_specifier_type);
 
 
-
 #endif
-
