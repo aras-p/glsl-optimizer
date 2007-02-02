@@ -185,7 +185,7 @@ sizeof_variable(const slang_assemble_ctx * A, slang_type_specifier * spec,
    if (!slang_storage_aggregate_construct(&agg))
       return GL_FALSE;
    if (!_slang_aggregate_variable(&agg, spec, array_len, A->space.funcs,
-                                  A->space.structs, A->space.vars, A->mach,
+                                  A->space.structs, A->space.vars,
                                   A->file, A->atoms)) {
       slang_storage_aggregate_destruct(&agg);
       return GL_FALSE;
@@ -551,7 +551,7 @@ _slang_dereference(slang_assemble_ctx * A, slang_operation * op)
    if (!slang_storage_aggregate_construct(&agg))
       goto end1;
    if (!_slang_aggregate_variable(&agg, &ti.spec, ti.array_len, A->space.funcs,
-                                  A->space.structs, A->space.vars, A->mach,
+                                  A->space.structs, A->space.vars,
                                   A->file, A->atoms))
       goto end;
 
@@ -871,7 +871,7 @@ equality(slang_assemble_ctx * A, slang_operation * op, GLboolean equal)
       goto end1;
    if (!_slang_aggregate_variable(&agg, &ti.spec, 0, A->space.funcs,
                                   A->space.structs, A->space.vars,
-                                  A->mach, A->file, A->atoms))
+                                  A->file, A->atoms))
       goto end;
 
    /* compute the size of the agregate - there are two such aggregates
@@ -1094,7 +1094,7 @@ handle_field(slang_assemble_ctx * A, slang_assembly_typeinfo * tia,
          if (!_slang_aggregate_variable(&agg, &field->type.specifier,
                                         field->array_len, A->space.funcs,
                                         A->space.structs, A->space.vars,
-                                        A->mach, A->file, A->atoms)) {
+                                        A->file, A->atoms)) {
             slang_storage_aggregate_destruct(&agg);
             RETURN_NIL();
          }

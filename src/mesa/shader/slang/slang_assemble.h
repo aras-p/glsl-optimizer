@@ -247,7 +247,6 @@ typedef struct slang_assembly_name_space_
 typedef struct slang_assemble_ctx_
 {
    slang_assembly_file *file;
-   struct slang_machine_ *mach;
    slang_atom_pool *atoms;
    slang_assembly_name_space space;
    slang_assembly_flow_control flow;

@@ -103,7 +103,6 @@ _slang_code_object_ctr(slang_code_object * self)
 #if 01
    _slang_assembly_file_ctr(&self->assembly);
 #endif
-   slang_machine_ctr(&self->machine);
    self->varpool.next_addr = 0;
    slang_atom_pool_construct(&self->atompool);
    slang_export_data_table_ctr(&self->expdata);
@@ -123,7 +122,6 @@ _slang_code_object_dtr(slang_code_object * self)
 #if 01
    slang_assembly_file_destruct(&self->assembly);
 #endif
-   slang_machine_dtr(&self->machine);
    slang_atom_pool_destruct(&self->atompool);
    slang_export_data_table_dtr(&self->expdata);
    slang_export_code_table_ctr(&self->expcode);
@@ -252,7 +250,6 @@ typedef struct slang_output_ctx_
    slang_struct_scope *structs;
    slang_assembly_file *assembly;
    slang_var_pool *global_pool;
-   slang_machine *machine;
    struct gl_program *program;
    slang_var_table *vartable;
 } slang_output_ctx;
@@ -386,7 +383,7 @@ calculate_var_size(slang_parse_ctx * C, slang_output_ctx * O,
    if (!slang_storage_aggregate_construct(&agg))
       return GL_FALSE;
    if (!_slang_aggregate_variable(&agg, &var->type.specifier, var->array_len,
-                                  O->funs, O->structs, O->vars, O->machine,
+                                  O->funs, O->structs, O->vars,
                                   O->assembly, C->atoms)) {
       slang_storage_aggregate_destruct(&agg);
       return GL_FALSE;
@@ -1556,7 +1553,6 @@ initialize_global(slang_assemble_ctx * A, slang_variable * var)
 #if 01
    slang_assembly_file_restore_point point;
 #endif
-   slang_machine mach;
    slang_assembly_local_info save_local = A->local;
    slang_operation op_id, op_assign;
    GLboolean result;
@@ -1566,10 +1562,6 @@ initialize_global(slang_assemble_ctx * A, slang_variable * var)
    if (!slang_assembly_file_restore_point_save(A->file, &point))
       return GL_FALSE;
 #endif
-
-   /* setup the machine */
-   mach = *A->mach;
-   mach.ip = A->file->count;
 
    /* allocate local storage for expression */
    A->local.ret_size = 0;
@@ -1635,22 +1627,12 @@ initialize_global(slang_assemble_ctx * A, slang_variable * var)
    if (!slang_assembly_file_push(A->file, slang_asm_exit))
       return GL_FALSE;
 
-   /* execute the expression */
-#if 0
-   if (!_slang_execute2(A->file, &mach))
-      return GL_FALSE;
-#endif
-
 #if 01
    /* restore the old assembly */
    if (!slang_assembly_file_restore_point_load(A->file, &point))
       return GL_FALSE;
 #endif
    A->local = save_local;
-
-   /* now we copy the contents of the initialized variable back to the original machine */
-   _mesa_memcpy((GLubyte *) A->mach->mem + var->address,
-                (GLubyte *) mach.mem + var->address, var->size);
 
    return GL_TRUE;
 }
@@ -1743,7 +1725,6 @@ parse_init_declarator(slang_parse_ctx * C, slang_output_ctx * O,
       slang_assemble_ctx A;
 
       A.file = O->assembly;
-      A.mach = O->machine;
       A.atoms = C->atoms;
       A.space.funcs = O->funs;
       A.space.structs = O->structs;
@@ -1773,17 +1754,12 @@ parse_init_declarator(slang_parse_ctx * C, slang_output_ctx * O,
          slang_assemble_ctx A;
 
          A.file = O->assembly;
-         A.mach = O->machine;
          A.atoms = C->atoms;
          A.space.funcs = O->funs;
          A.space.structs = O->structs;
          A.space.vars = O->vars;
          if (!initialize_global(&A, var))
             return 0;
-      }
-      else {
-         _mesa_memset((GLubyte *) (O->machine->mem) + var->address, 0,
-                      var->size);
       }
    }
    return 1;
@@ -1909,7 +1885,6 @@ parse_function(slang_parse_ctx * C, slang_output_ctx * O, int definition,
       slang_assemble_ctx A;
 
       A.file = O->assembly;
-      A.mach = O->machine;
       A.atoms = C->atoms;
       A.space.funcs = O->funs;
       A.space.structs = O->structs;
@@ -2003,7 +1978,6 @@ parse_code_unit(slang_parse_ctx * C, slang_code_unit * unit,
    o.vars = &unit->vars;
    o.assembly = &unit->object->assembly;
    o.global_pool = &unit->object->varpool;
-   o.machine = &unit->object->machine;
    o.program = program;
    o.vartable = _slang_new_var_table(maxRegs);
    _slang_push_var_table(o.vartable);

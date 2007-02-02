@@ -27,7 +27,6 @@
 
 #include "slang_compile.h"
 #include "slang_assemble.h"
-#include "slang_execute.h"
 
 #if defined __cplusplus
 extern "C" {
@@ -99,7 +98,6 @@ _slang_aggregate_variable(slang_storage_aggregate *agg,
                           slang_function_scope *funcs,
                           slang_struct_scope *structs,
                           slang_variable_scope *vars,
-                          slang_machine *mach,
                           slang_assembly_file *file,
                           slang_atom_pool *atoms);
 

@@ -164,7 +164,7 @@ _slang_assemble_assignment(slang_assemble_ctx * A, const slang_operation * op)
       goto end1;
    if (!_slang_aggregate_variable(&agg, &ti.spec, 0, A->space.funcs,
                                   A->space.structs, A->space.vars,
-                                  A->mach, A->file, A->atoms))
+                                  A->file, A->atoms))
       goto end;
 
    index = 0;

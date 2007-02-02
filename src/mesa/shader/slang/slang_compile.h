@@ -28,7 +28,7 @@
 #include "imports.h"
 #include "mtypes.h"
 #include "slang_export.h"
-#include "slang_execute.h"
+#include "slang_assemble.h"
 #include "slang_compile_variable.h"
 #include "slang_compile_struct.h"
 #include "slang_compile_operation.h"
@@ -82,7 +82,6 @@ typedef struct slang_code_object_
    slang_code_unit builtin[SLANG_BUILTIN_TOTAL];
    slang_code_unit unit;
    slang_assembly_file assembly;
-   slang_machine machine;
    slang_var_pool varpool;
    slang_atom_pool atompool;
    slang_export_data_table expdata;

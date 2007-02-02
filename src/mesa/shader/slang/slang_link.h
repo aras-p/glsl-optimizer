@@ -332,7 +332,6 @@ typedef struct
    GLuint vertex_fixed_entries[SLANG_VERTEX_FIXED_MAX];
    GLuint fragment_fixed_entries[SLANG_FRAGMENT_FIXED_MAX];
    GLuint code[SLANG_SHADER_MAX][SLANG_COMMON_CODE_MAX];
-   slang_machine *machines[SLANG_SHADER_MAX];
    slang_assembly_file *assemblies[SLANG_SHADER_MAX];
 } slang_program;
 

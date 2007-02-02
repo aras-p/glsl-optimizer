@@ -646,7 +646,6 @@ _slang_program_ctr (slang_program *self)
          self->common_fixed_entries[i][j] = ~0;
       for (j = 0; j < SLANG_COMMON_CODE_MAX; j++)
          self->code[i][j] = ~0;
-      self->machines[i] = NULL;
       self->assemblies[i] = NULL;
    }
    for (i = 0; i < SLANG_VERTEX_FIXED_MAX; i++)
@@ -859,7 +858,6 @@ _slang_link (slang_program *prog, slang_code_object **objects, GLuint count)
          return GL_FALSE;
       resolve_common_fixed (prog->common_fixed_entries[index], &objects[i]->expdata);
       resolve_common_code (prog->code[index], &objects[i]->expcode);
-      prog->machines[index] = &objects[i]->machine;
       prog->assemblies[index] = &objects[i]->assembly;
    }
 

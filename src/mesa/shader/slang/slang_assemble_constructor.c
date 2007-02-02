@@ -182,7 +182,7 @@ sizeof_argument(slang_assemble_ctx * A, GLuint * size, slang_operation * op)
       goto end1;
    if (!_slang_aggregate_variable(&agg, &ti.spec, 0, A->space.funcs,
                                   A->space.structs, A->space.vars,
-                                  A->mach, A->file, A->atoms))
+                                  A->file, A->atoms))
       goto end;
 
    *size = _slang_sizeof_aggregate(&agg);
@@ -214,7 +214,7 @@ constructor_aggregate(slang_assemble_ctx * A,
       goto end1;
    if (!_slang_aggregate_variable(&agg, &ti.spec, 0, A->space.funcs,
                                   A->space.structs, A->space.vars,
-                                  A->mach, A->file, A->atoms))
+                                  A->file, A->atoms))
       goto end2;
 
    if (!slang_storage_aggregate_construct(&flat_agg))
@@ -276,7 +276,7 @@ _slang_assemble_constructor(slang_assemble_ctx * A, const slang_operation * op)
       goto end1;
    if (!_slang_aggregate_variable(&agg, &ti.spec, 0, A->space.funcs,
                                   A->space.structs, A->space.vars,
-                                  A->mach, A->file, A->atoms))
+                                  A->file, A->atoms))
       goto end2;
 
    /* calculate size of the constructor */
@@ -316,7 +316,7 @@ _slang_assemble_constructor(slang_assemble_ctx * A, const slang_operation * op)
             goto end1;
          if (!_slang_aggregate_variable(&agg, &ti.spec, 0, A->space.funcs,
                                         A->space.structs, A->space.vars,
-                                        A->mach, A->file, A->atoms))
+                                        A->file, A->atoms))
             goto end2;
          
          /* calculate size of the constructor */

@@ -135,7 +135,7 @@ static GLboolean
 aggregate_variables(slang_storage_aggregate * agg,
                     slang_variable_scope * vars, slang_function_scope * funcs,
                     slang_struct_scope * structs,
-                    slang_variable_scope * globals, slang_machine * mach,
+                    slang_variable_scope * globals,
                     slang_assembly_file * file, slang_atom_pool * atoms)
 {
    GLuint i;
@@ -143,7 +143,7 @@ aggregate_variables(slang_storage_aggregate * agg,
    for (i = 0; i < vars->num_variables; i++)
       if (!_slang_aggregate_variable(agg, &vars->variables[i]->type.specifier,
                                      vars->variables[i]->array_len, funcs,
-                                     structs, globals, mach, file, atoms))
+                                     structs, globals, file, atoms))
          return GL_FALSE;
    return GL_TRUE;
 }
@@ -153,7 +153,7 @@ _slang_aggregate_variable(slang_storage_aggregate * agg,
                           slang_type_specifier * spec, GLuint array_len,
                           slang_function_scope * funcs,
                           slang_struct_scope * structs,
-                          slang_variable_scope * vars, slang_machine * mach,
+                          slang_variable_scope * vars,
                           slang_assembly_file * file, slang_atom_pool * atoms)
 {
    switch (spec->type) {
@@ -204,7 +204,7 @@ _slang_aggregate_variable(slang_storage_aggregate * agg,
       return aggregate_vector(agg, slang_stor_int, 1);
    case slang_spec_struct:
       return aggregate_variables(agg, spec->_struct->fields, funcs, structs,
-                                 vars, mach, file, atoms);
+                                 vars, file, atoms);
    case slang_spec_array:
       {
          slang_storage_array *arr;
@@ -223,9 +223,8 @@ _slang_aggregate_variable(slang_storage_aggregate * agg,
             arr->aggregate = NULL;
             return GL_FALSE;
          }
-         if (!_slang_aggregate_variable
-             (arr->aggregate, spec->_array, 0, funcs, structs, vars, mach,
-              file, atoms))
+         if (!_slang_aggregate_variable(arr->aggregate, spec->_array, 0,
+                                        funcs, structs, vars, file, atoms))
             return GL_FALSE;
          arr->length = array_len;
          /* TODO: check if 0 < arr->length <= 65535 */

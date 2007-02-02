@@ -246,7 +246,6 @@ _slang_build_export_code_table(slang_export_code_table * tbl,
             return GL_FALSE;
 
          A.file = &unit->object->assembly;
-         A.mach = &unit->object->machine;
          A.atoms = &unit->object->atompool;
          A.space.funcs = &unit->funs;
          A.space.structs = &unit->structs;
