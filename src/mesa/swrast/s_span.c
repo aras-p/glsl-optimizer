@@ -702,19 +702,28 @@ interpolate_varying(GLcontext *ctx, SWspan *span)
    for (var = 0; var < MAX_VARYING; var++) {
       if (inputsUsed & FRAG_BIT_VAR(var)) {
          const GLuint attr = FRAG_ATTRIB_VAR0 + var;
-         GLuint j;
-         for (j = 0; j < 4; j++) {
-            const GLfloat dvdx = span->attrStepX[attr][j];
-            GLfloat v = span->attrStart[attr][j];
-            const GLfloat dwdx = span->attrStepX[FRAG_ATTRIB_WPOS][3];
-            GLfloat w = span->attrStart[FRAG_ATTRIB_WPOS][3];
-            GLuint k;
-            for (k = 0; k < span->end; k++) {
-               GLfloat invW = 1.0f / w;
-               span->array->attribs[attr][k][j] = v * invW;
-               v += dvdx;
-               w += dwdx;
-            }
+         const GLfloat dwdx = span->attrStepX[FRAG_ATTRIB_WPOS][3];
+         GLfloat w = span->attrStart[FRAG_ATTRIB_WPOS][3];
+         const GLfloat dv0dx = span->attrStepX[attr][0];
+         const GLfloat dv1dx = span->attrStepX[attr][1];
+         const GLfloat dv2dx = span->attrStepX[attr][2];
+         const GLfloat dv3dx = span->attrStepX[attr][3];
+         GLfloat v0 = span->attrStart[attr][0];
+         GLfloat v1 = span->attrStart[attr][1];
+         GLfloat v2 = span->attrStart[attr][2];
+         GLfloat v3 = span->attrStart[attr][3];
+         GLuint k;
+         for (k = 0; k < span->end; k++) {
+            GLfloat invW = 1.0f / w;
+            span->array->attribs[attr][k][0] = v0 * invW;
+            span->array->attribs[attr][k][1] = v1 * invW;
+            span->array->attribs[attr][k][2] = v2 * invW;
+            span->array->attribs[attr][k][3] = v3 * invW;
+            v0 += dv0dx;
+            v1 += dv1dx;
+            v2 += dv2dx;
+            v3 += dv3dx;
+            w += dwdx;
          }
       }
    }
