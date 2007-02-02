@@ -1,8 +1,8 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.5
+ * Version:  6.5.3
  *
- * Copyright (C) 2005-2006  Brian Paul   All Rights Reserved.
+ * Copyright (C) 2005-2007  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -313,6 +313,7 @@ slang_variable_copy(slang_variable * x, const slang_variable * y)
    return 1;
 }
 
+
 slang_variable *
 _slang_locate_variable(const slang_variable_scope * scope,
                        const slang_atom a_name, GLboolean all)
@@ -327,10 +328,7 @@ _slang_locate_variable(const slang_variable_scope * scope,
    return NULL;
 }
 
-/*
- * _slang_build_export_data_table()
- */
-
+#if 0
 static GLenum
 gl_type_from_specifier(const slang_type_specifier * type)
 {
@@ -383,3 +381,5 @@ gl_type_from_specifier(const slang_type_specifier * type)
       return GL_FLOAT;
    }
 }
+#endif
+
