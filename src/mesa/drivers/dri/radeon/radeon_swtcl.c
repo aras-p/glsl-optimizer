@@ -45,7 +45,6 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "tnl/tnl.h"
 #include "tnl/t_context.h"
 #include "tnl/t_pipeline.h"
-#include "tnl/t_vtx_api.h"	/* for _tnl_FlushVertices */
 
 #include "radeon_context.h"
 #include "radeon_ioctl.h"
@@ -847,14 +846,6 @@ void radeonFallback( GLcontext *ctx, GLuint bit, GLboolean mode )
    }
 }
 
-
-void radeonFlushVertices( GLcontext *ctx, GLuint flags )
-{
-   _tnl_FlushVertices( ctx, flags );
-
-   if (flags & FLUSH_STORED_VERTICES)
-      RADEON_NEWPRIM( RADEON_CONTEXT( ctx ) );
-}
 
 /**********************************************************************/
 /*                            Initialization.                         */

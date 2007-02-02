@@ -116,7 +116,7 @@ struct brw_clip_compile {
    GLuint last_mrf;
 
    GLuint header_position_offset;
-   GLuint offset[BRW_ATTRIB_MAX];
+   GLuint offset[VERT_ATTRIB_MAX];
 };
 
 #define ATTR_SIZE  (4*4)

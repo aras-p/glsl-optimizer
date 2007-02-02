@@ -46,8 +46,6 @@
 #include "brw_state.h"
 
 #include "brw_draw.h"
-#include "brw_exec.h"
-#include "brw_save.h"
 #include "brw_state.h"
 #include "brw_aub.h"
 #include "brw_fallback.h"
@@ -67,9 +65,6 @@ static void brw_destroy_context( struct intel_context *intel )
    brw_destroy_metaops(brw);
    brw_destroy_state(brw);
    brw_draw_destroy( brw );
-
-   brw_exec_destroy( ctx );
-   brw_save_destroy( ctx );
 
    brw_ProgramCacheDestroy( ctx );
    brw_FrameBufferTexDestroy( brw );
@@ -166,10 +161,7 @@ static GLuint brw_flush_cmd( void )
 
 static void brw_invalidate_state( struct intel_context *intel, GLuint new_state )
 {
-   GLcontext *ctx = &intel->ctx;
-
-   brw_exec_invalidate_state(ctx, new_state);
-   brw_save_invalidate_state(ctx, new_state);
+   /* nothing */
 }
 
 

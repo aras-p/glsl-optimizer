@@ -33,7 +33,7 @@
 #include "api_arrayelt.h"
 
 #include "swrast/swrast.h"
-#include "array_cache/acache.h"
+#include "vbo/vbo.h"
 #include "tnl/tnl.h"
 #include "tnl/t_pipeline.h"
 #include "swrast_setup/swrast_setup.h"
@@ -44,7 +44,6 @@
 #include "radeon_tcl.h"
 #include "radeon_tex.h"
 #include "radeon_swtcl.h"
-#include "radeon_vtxfmt.h"
 
 #include "xmlpool.h"
 

@@ -48,7 +48,10 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "radeon_context.h"
 
 #define USER_BUFFERS
-#define RADEON_VTXFMT_A
+/* KW: Disable this code.  Driver should hook into vbo module
+ * directly, see i965 driver for example.
+ */
+/* #define RADEON_VTXFMT_A */
 #define HW_VBOS
 
 /* We don't handle 16 bits elts swapping yet */
@@ -754,7 +757,7 @@ struct radeon_vertex_buffer {
 	
 	struct dt AttribPtr[VERT_ATTRIB_MAX];
 	
-	struct tnl_prim  *Primitive;	              
+	const struct _mesa_prim  *Primitive;	              
 	GLuint      PrimitiveCount;
 	GLint LockFirst;
 	GLsizei LockCount;

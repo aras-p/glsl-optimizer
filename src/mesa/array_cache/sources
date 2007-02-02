@@ -1,7 +1,0 @@
-MESA_ARRAY_CACHE_SOURCES = \
-ac_context.c \
-ac_import.c
-
-MESA_ARRAY_CACHE_HEADERS = \
-ac_context.h \
-acache.h

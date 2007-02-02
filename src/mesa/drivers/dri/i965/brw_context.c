@@ -34,8 +34,6 @@
 #include "brw_aub.h"
 #include "brw_defines.h"
 #include "brw_draw.h"
-#include "brw_exec.h"
-#include "brw_save.h"
 #include "brw_vs.h"
 #include "imports.h"
 #include "intel_tex.h"
@@ -157,12 +155,6 @@ GLboolean brwCreateContext( const __GLcontextModes *mesaVis,
    brw_ProgramCacheInit( ctx );
 
    brw_FrameBufferTexInit( brw );
-
-   /* Hook our functions into exec and compile dispatch tables.  Only
-    * fallback on out-of-memory situations.
-    */
-   brw_exec_init( ctx );
-   brw_save_init( ctx );
 
    {
       const char *filename = getenv("INTEL_REPLAY");

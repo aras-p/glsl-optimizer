@@ -56,7 +56,7 @@ static void
 client_state(GLcontext *ctx, GLenum cap, GLboolean state)
 {
    GLuint flag;
-   GLuint *var;
+   GLboolean *var;
 
    switch (cap) {
       case GL_VERTEX_ARRAY:

@@ -31,7 +31,6 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "matrix.h"
 #include "swrast/swrast.h"
 #include "swrast_setup/swrast_setup.h"
-#include "array_cache/acache.h"
 #include "framebuffer.h"
 
 #include "tnl/tnl.h"
@@ -200,7 +199,7 @@ GLboolean nouveauCreateContext( const __GLcontextModes *glVisual,
 
 	/* Initialize the swrast */
 	_swrast_CreateContext( ctx );
-	_ac_CreateContext( ctx );
+	_vbo_CreateContext( ctx );
 	_tnl_CreateContext( ctx );
 	_swsetup_CreateContext( ctx );
 

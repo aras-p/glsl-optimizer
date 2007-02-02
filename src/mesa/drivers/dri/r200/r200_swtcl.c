@@ -48,7 +48,6 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "tnl/tnl.h"
 #include "tnl/t_context.h"
 #include "tnl/t_pipeline.h"
-#include "tnl/t_vtx_api.h"
 
 #include "r200_context.h"
 #include "r200_ioctl.h"
@@ -936,13 +935,6 @@ r200PointsBitmap( GLcontext *ctx, GLint px, GLint py,
 }
 
 
-void r200FlushVertices( GLcontext *ctx, GLuint flags )
-{
-   _tnl_FlushVertices( ctx, flags );
-
-   if (flags & FLUSH_STORED_VERTICES)
-      R200_NEWPRIM( R200_CONTEXT( ctx ) );
-}
 
 /**********************************************************************/
 /*                            Initialization.                         */

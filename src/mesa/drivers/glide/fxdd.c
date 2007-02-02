@@ -55,7 +55,7 @@
 #include "tnl/tnl.h"
 #include "tnl/t_context.h"
 #include "tnl/t_pipeline.h"
-#include "array_cache/acache.h"
+#include "vbo/vbo.h"
 
 
 
