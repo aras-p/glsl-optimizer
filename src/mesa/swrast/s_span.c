@@ -75,7 +75,8 @@ _swrast_span_default_z( GLcontext *ctx, SWspan *span )
 void
 _swrast_span_default_fog( GLcontext *ctx, SWspan *span )
 {
-   span->attrStart[FRAG_ATTRIB_FOGC][0] = _swrast_z_to_fogfactor(ctx, ctx->Current.RasterDistance);
+   span->attrStart[FRAG_ATTRIB_FOGC][0]
+      = _swrast_z_to_fogfactor(ctx, ctx->Current.RasterDistance);
    span->attrStepX[FRAG_ATTRIB_FOGC][0] = 0.0;
    span->attrStepY[FRAG_ATTRIB_FOGC][0] = 0.0;
    span->interpMask |= SPAN_FOG;
@@ -540,282 +541,145 @@ _swrast_compute_lambda(GLfloat dsdx, GLfloat dsdy, GLfloat dtdx, GLfloat dtdy,
 static void
 interpolate_texcoords(GLcontext *ctx, SWspan *span)
 {
+   const GLuint maxUnit
+      = (ctx->Texture._EnabledCoordUnits > 1) ? ctx->Const.MaxTextureUnits : 1;
+   GLuint u;
+
    ASSERT(span->interpMask & SPAN_TEXTURE);
    ASSERT(!(span->arrayMask & SPAN_TEXTURE));
 
-   if (ctx->Texture._EnabledCoordUnits > 1) {
-      /* multitexture */
-      GLuint u;
-      span->arrayMask |= SPAN_TEXTURE;
-      /* XXX CoordUnits vs. ImageUnits */
-      for (u = 0; u < ctx->Const.MaxTextureUnits; u++) {
-         if (ctx->Texture._EnabledCoordUnits & (1 << u)) {
-            const GLuint attr = FRAG_ATTRIB_TEX0 + u;
-            const struct gl_texture_object *obj =ctx->Texture.Unit[u]._Current;
-            GLfloat texW, texH;
-            GLboolean needLambda;
-            if (obj) {
-               const struct gl_texture_image *img = obj->Image[0][obj->BaseLevel];
-               needLambda = (obj->MinFilter != obj->MagFilter)
-                  || ctx->FragmentProgram._Current;
-               texW = img->WidthScale;
-               texH = img->HeightScale;
+   span->arrayMask |= SPAN_TEXTURE;
+
+   /* XXX CoordUnits vs. ImageUnits */
+   for (u = 0; u < maxUnit; u++) {
+      if (ctx->Texture._EnabledCoordUnits & (1 << u)) {
+         const GLuint attr = FRAG_ATTRIB_TEX0 + u;
+         const struct gl_texture_object *obj =ctx->Texture.Unit[u]._Current;
+         GLfloat texW, texH;
+         GLboolean needLambda;
+         GLfloat (*texcoord)[4] = span->array->attribs[attr];
+         GLfloat *lambda = span->array->lambda[u];
+         const GLfloat dsdx = span->attrStepX[attr][0];
+         const GLfloat dsdy = span->attrStepY[attr][0];
+         const GLfloat dtdx = span->attrStepX[attr][1];
+         const GLfloat dtdy = span->attrStepY[attr][1];
+         const GLfloat drdx = span->attrStepX[attr][2];
+         const GLfloat dqdx = span->attrStepX[attr][3];
+         const GLfloat dqdy = span->attrStepY[attr][3];
+         GLfloat s = span->attrStart[attr][0];
+         GLfloat t = span->attrStart[attr][1];
+         GLfloat r = span->attrStart[attr][2];
+         GLfloat q = span->attrStart[attr][3];
+
+         if (obj) {
+            const struct gl_texture_image *img = obj->Image[0][obj->BaseLevel];
+            needLambda = (obj->MinFilter != obj->MagFilter)
+               || ctx->FragmentProgram._Current;
+            texW = img->WidthScale;
+            texH = img->HeightScale;
+         }
+         else {
+            /* using a fragment program */
+            texW = 1.0;
+            texH = 1.0;
+            needLambda = GL_FALSE;
+         }
+
+         if (needLambda) {
+            GLuint i;
+            if (ctx->FragmentProgram._Current
+                || ctx->ATIFragmentShader._Enabled) {
+               /* do perspective correction but don't divide s, t, r by q */
+               const GLfloat dwdx = span->attrStepX[FRAG_ATTRIB_WPOS][3];
+               GLfloat w = span->attrStart[FRAG_ATTRIB_WPOS][3];
+               for (i = 0; i < span->end; i++) {
+                  const GLfloat invW = 1.0F / w;
+                  texcoord[i][0] = s * invW;
+                  texcoord[i][1] = t * invW;
+                  texcoord[i][2] = r * invW;
+                  texcoord[i][3] = q * invW;
+                  lambda[i] = _swrast_compute_lambda(dsdx, dsdy, dtdx, dtdy,
+                                                     dqdx, dqdy, texW, texH,
+                                                     s, t, q, invW);
+                  s += dsdx;
+                  t += dtdx;
+                  r += drdx;
+                  q += dqdx;
+                  w += dwdx;
+               }
             }
             else {
-               /* using a fragment program */
-               texW = 1.0;
-               texH = 1.0;
-               needLambda = GL_FALSE;
-            }
-            if (needLambda) {
-               GLfloat (*texcoord)[4] = span->array->attribs[FRAG_ATTRIB_TEX0 + u];
-               GLfloat *lambda = span->array->lambda[u];
-               const GLfloat dsdx = span->attrStepX[attr][0];
-               const GLfloat dsdy = span->attrStepY[attr][0];
-               const GLfloat dtdx = span->attrStepX[attr][1];
-               const GLfloat dtdy = span->attrStepY[attr][1];
-               const GLfloat drdx = span->attrStepX[attr][2];
-               const GLfloat dqdx = span->attrStepX[attr][3];
-               const GLfloat dqdy = span->attrStepY[attr][3];
-               GLfloat s = span->attrStart[attr][0];
-               GLfloat t = span->attrStart[attr][1];
-               GLfloat r = span->attrStart[attr][2];
-               GLfloat q = span->attrStart[attr][3];
-               GLuint i;
-               if (ctx->FragmentProgram._Current
-                   || ctx->ATIFragmentShader._Enabled) {
-                  /* do perspective correction but don't divide s, t, r by q */
-                  const GLfloat dwdx = span->attrStepX[FRAG_ATTRIB_WPOS][3];
-                  GLfloat w = span->attrStart[FRAG_ATTRIB_WPOS][3];
-                  for (i = 0; i < span->end; i++) {
-                     const GLfloat invW = 1.0F / w;
-                     texcoord[i][0] = s * invW;
-                     texcoord[i][1] = t * invW;
-                     texcoord[i][2] = r * invW;
-                     texcoord[i][3] = q * invW;
-                     lambda[i] = _swrast_compute_lambda(dsdx, dsdy, dtdx, dtdy,
-                                                        dqdx, dqdy, texW, texH,
-                                                        s, t, q, invW);
-                     s += dsdx;
-                     t += dtdx;
-                     r += drdx;
-                     q += dqdx;
-                     w += dwdx;
-                  }
-               }
-               else {
-                  for (i = 0; i < span->end; i++) {
-                     const GLfloat invQ = (q == 0.0F) ? 1.0F : (1.0F / q);
-                     texcoord[i][0] = s * invQ;
-                     texcoord[i][1] = t * invQ;
-                     texcoord[i][2] = r * invQ;
-                     texcoord[i][3] = q;
-                     lambda[i] = _swrast_compute_lambda(dsdx, dsdy, dtdx, dtdy,
-                                                        dqdx, dqdy, texW, texH,
-                                                        s, t, q, invQ);
-                     s += dsdx;
-                     t += dtdx;
-                     r += drdx;
-                     q += dqdx;
-                  }
-               }
-               span->arrayMask |= SPAN_LAMBDA;
-            }
-            else {
-               GLfloat (*texcoord)[4] = span->array->attribs[FRAG_ATTRIB_TEX0 + u];
-               GLfloat *lambda = span->array->lambda[u];
-               const GLfloat dsdx = span->attrStepX[attr][0];
-               const GLfloat dtdx = span->attrStepX[attr][1];
-               const GLfloat drdx = span->attrStepX[attr][2];
-               const GLfloat dqdx = span->attrStepX[attr][3];
-               GLfloat s = span->attrStart[attr][0];
-               GLfloat t = span->attrStart[attr][1];
-               GLfloat r = span->attrStart[attr][2];
-               GLfloat q = span->attrStart[attr][3];
-               GLuint i;
-               if (ctx->FragmentProgram._Current ||
-                   ctx->ATIFragmentShader._Enabled) {
-                  /* do perspective correction but don't divide s, t, r by q */
-                  const GLfloat dwdx = span->attrStepX[FRAG_ATTRIB_WPOS][3];
-                  GLfloat w = span->attrStart[FRAG_ATTRIB_WPOS][3];
-                  for (i = 0; i < span->end; i++) {
-                     const GLfloat invW = 1.0F / w;
-                     texcoord[i][0] = s * invW;
-                     texcoord[i][1] = t * invW;
-                     texcoord[i][2] = r * invW;
-                     texcoord[i][3] = q * invW;
-                     lambda[i] = 0.0;
-                     s += dsdx;
-                     t += dtdx;
-                     r += drdx;
-                     q += dqdx;
-                     w += dwdx;
-                  }
-               }
-               else if (dqdx == 0.0F) {
-                  /* Ortho projection or polygon's parallel to window X axis */
+               for (i = 0; i < span->end; i++) {
                   const GLfloat invQ = (q == 0.0F) ? 1.0F : (1.0F / q);
-                  for (i = 0; i < span->end; i++) {
-                     texcoord[i][0] = s * invQ;
-                     texcoord[i][1] = t * invQ;
-                     texcoord[i][2] = r * invQ;
-                     texcoord[i][3] = q;
-                     lambda[i] = 0.0;
-                     s += dsdx;
-                     t += dtdx;
-                     r += drdx;
-                  }
+                  texcoord[i][0] = s * invQ;
+                  texcoord[i][1] = t * invQ;
+                  texcoord[i][2] = r * invQ;
+                  texcoord[i][3] = q;
+                  lambda[i] = _swrast_compute_lambda(dsdx, dsdy, dtdx, dtdy,
+                                                     dqdx, dqdy, texW, texH,
+                                                     s, t, q, invQ);
+                  s += dsdx;
+                  t += dtdx;
+                  r += drdx;
+                  q += dqdx;
                }
-               else {
-                  for (i = 0; i < span->end; i++) {
-                     const GLfloat invQ = (q == 0.0F) ? 1.0F : (1.0F / q);
-                     texcoord[i][0] = s * invQ;
-                     texcoord[i][1] = t * invQ;
-                     texcoord[i][2] = r * invQ;
-                     texcoord[i][3] = q;
-                     lambda[i] = 0.0;
-                     s += dsdx;
-                     t += dtdx;
-                     r += drdx;
-                     q += dqdx;
-                  }
-               }
-            } /* lambda */
-         } /* if */
-      } /* for */
-   }
-   else {
-      /* single texture */
-      const struct gl_texture_object *obj = ctx->Texture.Unit[0]._Current;
-      GLfloat texW, texH;
-      GLboolean needLambda;
-      if (obj) {
-         const struct gl_texture_image *img = obj->Image[0][obj->BaseLevel];
-         needLambda = (obj->MinFilter != obj->MagFilter)
-            || ctx->FragmentProgram._Current;
-         texW = (GLfloat) img->WidthScale;
-         texH = (GLfloat) img->HeightScale;
-      }
-      else {
-         needLambda = GL_FALSE;
-         texW = texH = 1.0;
-      }
-      span->arrayMask |= SPAN_TEXTURE;
-      if (needLambda) {
-         /* just texture unit 0, with lambda */
-         GLfloat (*texcoord)[4] = span->array->attribs[FRAG_ATTRIB_TEX0];
-         GLfloat *lambda = span->array->lambda[0];
-         const GLfloat dsdx = span->attrStepX[FRAG_ATTRIB_TEX0][0];
-         const GLfloat dsdy = span->attrStepY[FRAG_ATTRIB_TEX0][0];
-         const GLfloat dtdx = span->attrStepX[FRAG_ATTRIB_TEX0][1];
-         const GLfloat dtdy = span->attrStepY[FRAG_ATTRIB_TEX0][1];
-         const GLfloat drdx = span->attrStepX[FRAG_ATTRIB_TEX0][2];
-         const GLfloat dqdx = span->attrStepX[FRAG_ATTRIB_TEX0][3];
-         const GLfloat dqdy = span->attrStepY[FRAG_ATTRIB_TEX0][3];
-         GLfloat s = span->attrStart[FRAG_ATTRIB_TEX0][0];
-         GLfloat t = span->attrStart[FRAG_ATTRIB_TEX0][1];
-         GLfloat r = span->attrStart[FRAG_ATTRIB_TEX0][2];
-         GLfloat q = span->attrStart[FRAG_ATTRIB_TEX0][3];
-         GLuint i;
-         if (ctx->FragmentProgram._Current
-             || ctx->ATIFragmentShader._Enabled) {
-            /* do perspective correction but don't divide s, t, r by q */
-            const GLfloat dwdx = span->attrStepX[FRAG_ATTRIB_WPOS][3];
-            GLfloat w = span->attrStart[FRAG_ATTRIB_WPOS][3];
-            for (i = 0; i < span->end; i++) {
-               const GLfloat invW = 1.0F / w;
-               texcoord[i][0] = s * invW;
-               texcoord[i][1] = t * invW;
-               texcoord[i][2] = r * invW;
-               texcoord[i][3] = q * invW;
-               lambda[i] = _swrast_compute_lambda(dsdx, dsdy, dtdx, dtdy,
-                                                  dqdx, dqdy, texW, texH,
-                                                  s, t, q, invW);
-               s += dsdx;
-               t += dtdx;
-               r += drdx;
-               q += dqdx;
-               w += dwdx;
             }
+            span->arrayMask |= SPAN_LAMBDA;
          }
          else {
-            /* tex.c */
-            for (i = 0; i < span->end; i++) {
+            GLuint i;
+            if (ctx->FragmentProgram._Current ||
+                ctx->ATIFragmentShader._Enabled) {
+               /* do perspective correction but don't divide s, t, r by q */
+               const GLfloat dwdx = span->attrStepX[FRAG_ATTRIB_WPOS][3];
+               GLfloat w = span->attrStart[FRAG_ATTRIB_WPOS][3];
+               for (i = 0; i < span->end; i++) {
+                  const GLfloat invW = 1.0F / w;
+                  texcoord[i][0] = s * invW;
+                  texcoord[i][1] = t * invW;
+                  texcoord[i][2] = r * invW;
+                  texcoord[i][3] = q * invW;
+                  lambda[i] = 0.0;
+                  s += dsdx;
+                  t += dtdx;
+                  r += drdx;
+                  q += dqdx;
+                  w += dwdx;
+               }
+            }
+            else if (dqdx == 0.0F) {
+               /* Ortho projection or polygon's parallel to window X axis */
                const GLfloat invQ = (q == 0.0F) ? 1.0F : (1.0F / q);
-               lambda[i] = _swrast_compute_lambda(dsdx, dsdy, dtdx, dtdy,
-                                                dqdx, dqdy, texW, texH,
-                                                s, t, q, invQ);
-               texcoord[i][0] = s * invQ;
-               texcoord[i][1] = t * invQ;
-               texcoord[i][2] = r * invQ;
-               texcoord[i][3] = q;
-               s += dsdx;
-               t += dtdx;
-               r += drdx;
-               q += dqdx;
+               for (i = 0; i < span->end; i++) {
+                  texcoord[i][0] = s * invQ;
+                  texcoord[i][1] = t * invQ;
+                  texcoord[i][2] = r * invQ;
+                  texcoord[i][3] = q;
+                  lambda[i] = 0.0;
+                  s += dsdx;
+                  t += dtdx;
+                  r += drdx;
+               }
             }
-         }
-         span->arrayMask |= SPAN_LAMBDA;
-      }
-      else {
-         /* just texture 0, without lambda */
-         GLfloat (*texcoord)[4] = span->array->attribs[FRAG_ATTRIB_TEX0];
-         const GLfloat dsdx = span->attrStepX[FRAG_ATTRIB_TEX0][0];
-         const GLfloat dtdx = span->attrStepX[FRAG_ATTRIB_TEX0][1];
-         const GLfloat drdx = span->attrStepX[FRAG_ATTRIB_TEX0][2];
-         const GLfloat dqdx = span->attrStepX[FRAG_ATTRIB_TEX0][3];
-         GLfloat s = span->attrStart[FRAG_ATTRIB_TEX0][0];
-         GLfloat t = span->attrStart[FRAG_ATTRIB_TEX0][1];
-         GLfloat r = span->attrStart[FRAG_ATTRIB_TEX0][2];
-         GLfloat q = span->attrStart[FRAG_ATTRIB_TEX0][3];
-         GLuint i;
-         if (ctx->FragmentProgram._Current
-             || ctx->ATIFragmentShader._Enabled) {
-            /* do perspective correction but don't divide s, t, r by q */
-            const GLfloat dwdx = span->attrStepX[FRAG_ATTRIB_WPOS][3];
-            GLfloat w = span->attrStart[FRAG_ATTRIB_WPOS][3];
-            for (i = 0; i < span->end; i++) {
-               const GLfloat invW = 1.0F / w;
-               texcoord[i][0] = s * invW;
-               texcoord[i][1] = t * invW;
-               texcoord[i][2] = r * invW;
-               texcoord[i][3] = q * invW;
-               s += dsdx;
-               t += dtdx;
-               r += drdx;
-               q += dqdx;
-               w += dwdx;
+            else {
+               for (i = 0; i < span->end; i++) {
+                  const GLfloat invQ = (q == 0.0F) ? 1.0F : (1.0F / q);
+                  texcoord[i][0] = s * invQ;
+                  texcoord[i][1] = t * invQ;
+                  texcoord[i][2] = r * invQ;
+                  texcoord[i][3] = q;
+                  lambda[i] = 0.0;
+                  s += dsdx;
+                  t += dtdx;
+                  r += drdx;
+                  q += dqdx;
+               }
             }
-         }
-         else if (dqdx == 0.0F) {
-            /* Ortho projection or polygon's parallel to window X axis */
-            const GLfloat invQ = (q == 0.0F) ? 1.0F : (1.0F / q);
-            for (i = 0; i < span->end; i++) {
-               texcoord[i][0] = s * invQ;
-               texcoord[i][1] = t * invQ;
-               texcoord[i][2] = r * invQ;
-               texcoord[i][3] = q;
-               s += dsdx;
-               t += dtdx;
-               r += drdx;
-            }
-         }
-         else {
-            for (i = 0; i < span->end; i++) {
-               const GLfloat invQ = (q == 0.0F) ? 1.0F : (1.0F / q);
-               texcoord[i][0] = s * invQ;
-               texcoord[i][1] = t * invQ;
-               texcoord[i][2] = r * invQ;
-               texcoord[i][3] = q;
-               s += dsdx;
-               t += dtdx;
-               r += drdx;
-               q += dqdx;
-            }
-         }
-      }
-   }
+         } /* lambda */
+      } /* if */
+   } /* for */
 }
+
 
 
 /**
