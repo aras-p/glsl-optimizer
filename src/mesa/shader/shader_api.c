@@ -842,6 +842,14 @@ _mesa_link_program(GLcontext *ctx, GLuint program)
 void
 _mesa_use_program(GLcontext *ctx, GLuint program)
 {
+   if (ctx->Shader.CurrentProgram &&
+       ctx->Shader.CurrentProgram->Name == program) {
+      /* no-op */
+      return;
+   }
+
+   FLUSH_VERTICES(ctx, _NEW_PROGRAM);
+
    /* unbind old */
    if (ctx->Shader.CurrentProgram) {
       ctx->Shader.CurrentProgram->RefCount--;
