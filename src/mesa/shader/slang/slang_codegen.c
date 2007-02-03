@@ -460,6 +460,7 @@ static slang_asm_info AsmInfo[] = {
    { "vec4_tex3d", IR_TEX, 1, 2 },
    { "vec4_texb3d", IR_TEXB, 1, 2 },  /* 3d w/ bias */
    { "vec4_texp3d", IR_TEXP, 1, 2 },  /* 3d w/ projection */
+   { "vec4_texcube", IR_TEX, 1, 2 },  /* cubemap */
 
    /* unary op */
    { "int_to_float", IR_I_TO_F, 1, 1 },
