@@ -18,7 +18,8 @@ PROGS = \
 	bump \
 	mandelbrot \
 	noise \
-	toyball
+	toyball \
+	texdemo1
 
 
 ##### RULES #####
@@ -43,6 +44,14 @@ default: $(PROGS)
 extfuncs.h:  $(TOP)/progs/util/extfuncs.h
 	cp $< .
 
+readtex.c: $(TOP)/progs/util/readtex.c
+	cp $< .
+
+readtex.h: $(TOP)/progs/util/readtex.h
+	cp $< .
+
+readtex.o: readtex.c readtex.h
+	$(CC) -c -I$(INCDIR) $(CFLAGS) readtex.c
 
 brick.c: extfuncs.h
 
@@ -51,6 +60,12 @@ bump.c: extfuncs.h
 mandelbrot.c: extfuncs.h
 
 toyball.c: extfuncs.h
+
+texdemo1: texdemo1.o readtex.o
+	$(CC) -I$(INCDIR) $(CFLAGS) texdemo1.o readtex.o $(APP_LIB_DEPS) -o $@
+
+texdemo1.o: texdemo1.c readtex.h extfuncs.h
+	$(CC) -c -I$(INCDIR) $(CFLAGS) texdemo1.c
 
 
 clean:
