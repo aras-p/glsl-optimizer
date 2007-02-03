@@ -612,10 +612,13 @@ static void nv10WindowMoved(nouveauContextPtr nmesa)
         OUT_RING_CACHE((h << 16) | y);
 
 	/* something to do with clears, possibly doesn't belong here */
+	BEGIN_RING_SIZE(NvSub3D, 0x02b4, 1);
+	OUT_RING(0);
+
 	BEGIN_RING_CACHE(NvSub3D,
 	      NV10_TCL_PRIMITIVE_3D_VIEWPORT_CLIP_HORIZ(0), 2);
-        OUT_RING_CACHE(((w+x) << 16) | x | 0x800);
-        OUT_RING_CACHE(((h+y) << 16) | y | 0x800);
+        OUT_RING_CACHE(((w+x-1) << 16) | x | 0x08000800);
+        OUT_RING_CACHE(((h+y-1) << 16) | y | 0x08000800);
 	for (i=1; i<7; i++) {
 		BEGIN_RING_CACHE(NvSub3D,
 		      NV10_TCL_PRIMITIVE_3D_VIEWPORT_CLIP_HORIZ(i), 1);
@@ -651,14 +654,12 @@ static GLboolean nv10InitCard(nouveauContextPtr nmesa)
 	OUT_RING(NvDmaFB);	/* 194 dma_in_memory2 */
 	OUT_RING(NvDmaFB);	/* 198 dma_in_memory3 */
 
-	BEGIN_RING_SIZE(NvSub3D, 0x02b4, 1);
-	OUT_RING(0);
 	BEGIN_RING_SIZE(NvSub3D, 0x0290, 1);
 	OUT_RING(0x00100001);
 	BEGIN_RING_SIZE(NvSub3D, 0x03f4, 1);
 	OUT_RING(0);
 
-	return GL_FALSE;
+	return GL_TRUE;
 }
 
 /* Update buffer offset/pitch/format */
