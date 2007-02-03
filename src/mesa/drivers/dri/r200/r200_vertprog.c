@@ -461,7 +461,7 @@ static GLboolean r200_translate_vertex_program(GLcontext *ctx, struct r200_verte
 
    /* for fogc, can't change mesa_vp, as it would hose swtnl, and exp with
       base e isn't directly available neither. */
-   if (mesa_vp->Base.OutputsWritten & VERT_RESULT_FOGC && !vp->fogpidx) {
+   if ((mesa_vp->Base.OutputsWritten & (1 << VERT_RESULT_FOGC)) && !vp->fogpidx) {
       struct gl_program_parameter_list *paramList;
       GLint tokens[6] = { STATE_FOG_PARAMS, 0, 0, 0, 0, 0 };
       paramList = mesa_vp->Base.Parameters;
