@@ -170,8 +170,10 @@ void nouveauDDInitState(nouveauContextPtr nmesa)
         case NV_30:
         case NV_40:
         case NV_44:
-        case NV_50:
             nv30InitStateFuncs(nmesa->glCtx, &nmesa->glCtx->Driver);
+            break;
+        case NV_50:
+            nv50InitStateFuncs(nmesa->glCtx, &nmesa->glCtx->Driver);
             break;
         default:
             break;
