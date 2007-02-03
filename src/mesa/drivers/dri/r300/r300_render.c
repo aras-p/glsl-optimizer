@@ -385,7 +385,17 @@ GLboolean r300_run_vb_render(GLcontext *ctx,
 int r300Fallback(GLcontext *ctx)
 {
 	r300ContextPtr r300 = R300_CONTEXT(ctx);
+	struct r300_fragment_program *rp =
+		(struct r300_fragment_program *)
+		(char *)ctx->FragmentProgram._Current;
 	int i;
+
+	if (rp) {
+		if (!rp->translated)
+			r300_translate_fragment_shader(rp);
+
+		FALLBACK_IF(!rp->translated);
+	}
 
 	/* We do not do SELECT or FEEDBACK (yet ?)
 	 * Is it worth doing them ?

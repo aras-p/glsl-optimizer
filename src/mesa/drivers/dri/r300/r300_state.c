@@ -1823,7 +1823,7 @@ void r300SetupPixelShader(r300ContextPtr rmesa)
 	r300_translate_fragment_shader(rp);
 	if (!rp->translated) {
 		fprintf(stderr, "%s: No valid fragment shader, exiting\n", __func__);
-		exit(-1);
+		return;
 	}
 	
 #define OUTPUT_FIELD(st, reg, field)  \
