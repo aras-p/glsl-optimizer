@@ -667,7 +667,7 @@ static GLboolean nv10BindBuffers(nouveauContextPtr nmesa, int num_color,
 				 nouveau_renderbuffer *depth)
 {
 	GLuint x, y, w, h;
-	GLuint pitch, format;
+	GLuint pitch, format, depth_pitch;
 
 	w = color[0]->mesa.Width;
 	h = color[0]->mesa.Height;
@@ -680,10 +680,8 @@ static GLboolean nv10BindBuffers(nouveauContextPtr nmesa, int num_color,
         BEGIN_RING_CACHE(NvSub3D, NV10_TCL_PRIMITIVE_3D_VIEWPORT_HORIZ, 6);
         OUT_RING_CACHE((w << 16) | x);
         OUT_RING_CACHE((h << 16) | y);
-	pitch = color[0]->pitch;
-	if (depth) {
-		pitch |= (depth->pitch << 16);
-	}
+	depth_pitch = (depth ? depth->pitch : color[0]->pitch);
+	pitch = (depth_pitch<<16) | color[0]->pitch;
 	format = 0x108;
 	if (color[0]->mesa._ActualFormat != GL_RGBA8) {
 		format = 0x103; /* R5G6B5 color buffer */
