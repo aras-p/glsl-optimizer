@@ -200,6 +200,8 @@ GLboolean r300CreateContext(const __GLcontextModes * glVisual,
 	 */
 	driParseConfigFiles(&r300->radeon.optionCache, &screen->optionCache,
 			    screen->driScreen->myNum, "r300");
+	r300->initialMaxAnisotropy = driQueryOptionf(&r300->radeon.optionCache,
+						     "def_max_anisotropy");
 
 	//r300->texmicrotile = GL_TRUE;
 	
