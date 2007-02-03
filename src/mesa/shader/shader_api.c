@@ -891,7 +891,21 @@ _mesa_uniform(GLcontext *ctx, GLint location, GLsizei count,
 
    FLUSH_VERTICES(ctx, _NEW_PROGRAM);
 
+   /*
+    * If we're setting a sampler, we must use glUniformi1()!
+    */
+   if (shProg->Uniforms->Parameters[location].Type == PROGRAM_SAMPLER) {
+      if (type != GL_INT || count != 1) {
+         _mesa_error(ctx, GL_INVALID_OPERATION,
+                     "glUniform(only glUniform1i can be used "
+                     "to set sampler uniforms)");
+         return;
+      }
+   }
+
    uniformVal = shProg->Uniforms->ParameterValues[location];
+
+   /* XXX obey 'count' parameter! */
 
    if (type == GL_INT ||
        type == GL_INT_VEC2 ||
