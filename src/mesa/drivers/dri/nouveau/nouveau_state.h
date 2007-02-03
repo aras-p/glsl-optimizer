@@ -36,6 +36,7 @@ extern void nv04InitStateFuncs(GLcontext *ctx, struct dd_function_table *func);
 extern void nv10InitStateFuncs(GLcontext *ctx, struct dd_function_table *func);
 extern void nv20InitStateFuncs(GLcontext *ctx, struct dd_function_table *func);
 extern void nv30InitStateFuncs(GLcontext *ctx, struct dd_function_table *func);
+extern void nv50InitStateFuncs(GLcontext *ctx, struct dd_function_table *func);
 
 extern void nouveauInitState(GLcontext *ctx);
 
