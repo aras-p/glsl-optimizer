@@ -121,8 +121,6 @@ typedef struct slang_operation_
    slang_variable_scope *locals; /**< local vars for scope */
    struct slang_function_ *fun;  /**< If type == slang_oper_call */
    struct slang_variable_ *var;  /**< If type == slang_oper_identier */
-   slang_fully_specified_type *datatype; /**< Type of this operation */
-   slang_typeinfo ti;
 } slang_operation;
 
 
