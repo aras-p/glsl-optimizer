@@ -664,14 +664,13 @@ void r200EmitArrays( GLcontext *ctx, GLuint inputs )
 */
 
    if (vfmt0 != rmesa->hw.vtx.cmd[VTX_VTXFMT_0] ||
-       vfmt1 != rmesa->hw.vtx.cmd[VTX_VTXFMT_1]) { 
-      R200_STATECHANGE( rmesa, vtx ); 
+       vfmt1 != rmesa->hw.vtx.cmd[VTX_VTXFMT_1]) {
+      R200_STATECHANGE( rmesa, vtx );
       rmesa->hw.vtx.cmd[VTX_VTXFMT_0] = vfmt0;
       rmesa->hw.vtx.cmd[VTX_VTXFMT_1] = vfmt1;
-   } 
+   }
 
    rmesa->tcl.nr_aos_components = nr;
-   rmesa->tcl.vertex_format = vfmt0;
 }
 
 
