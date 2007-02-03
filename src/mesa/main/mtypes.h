@@ -2674,6 +2674,7 @@ struct matrix_stack
 #define _MESA_NEW_NEED_EYE_COORDS         (_NEW_LIGHT |		\
                                            _NEW_TEXTURE |	\
                                            _NEW_POINT |		\
+                                           _NEW_PROGRAM |	\
                                            _NEW_MODELVIEW)
 
 #define _MESA_NEW_NEED_NORMALS            (_NEW_LIGHT |		\
