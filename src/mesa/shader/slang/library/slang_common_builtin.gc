@@ -1175,25 +1175,25 @@ float length(const vec4 v)
 float distance(const float x, const float y)
 {
    const float d = x - y;
-   return length(d);
+   __retVal = length(d);
 }
 
 float distance(const vec2 v, const vec2 u)
 {
-   const vec2 d = v - u;
-   return length(d);
+   const vec2 d2 = v - u;
+   __retVal = length(d2);
 }
 
 float distance(const vec3 v, const vec3 u)
 {
-   const vec3 d = v - u;
-   return length(d);
+   const vec3 d3 = v - u;
+   __retVal = length(d3);
 }
 
 float distance(const vec4 v, const vec4 u)
 {
-   const vec4 d = v - u;
-   return length(d);
+   const vec4 d4 = v - u;
+   __retVal = length(d4);
 }
 
 
