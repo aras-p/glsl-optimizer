@@ -341,6 +341,21 @@ _slang_typeof_operation_(const slang_operation * op,
          return GL_FALSE;
       break;
    case slang_oper_literal_bool:
+      if (op->literal_size == 1)
+         ti->spec.type = slang_spec_bool;
+      else if (op->literal_size == 2)
+         ti->spec.type = slang_spec_bvec2;
+      else if (op->literal_size == 3)
+         ti->spec.type = slang_spec_bvec3;
+      else if (op->literal_size == 4)
+         ti->spec.type = slang_spec_bvec4;
+      else {
+         _mesa_problem(NULL,
+               "Unexpected bool literal_size %d in _slang_typeof_operation()",
+               op->literal_size);
+         ti->spec.type = slang_spec_bool;
+      }
+      break;
    case slang_oper_logicalor:
    case slang_oper_logicalxor:
    case slang_oper_logicaland:
@@ -354,10 +369,36 @@ _slang_typeof_operation_(const slang_operation * op,
       ti->spec.type = slang_spec_bool;
       break;
    case slang_oper_literal_int:
-      ti->spec.type = slang_spec_int;
+      if (op->literal_size == 1)
+         ti->spec.type = slang_spec_int;
+      else if (op->literal_size == 2)
+         ti->spec.type = slang_spec_ivec2;
+      else if (op->literal_size == 3)
+         ti->spec.type = slang_spec_ivec3;
+      else if (op->literal_size == 4)
+         ti->spec.type = slang_spec_ivec4;
+      else {
+         _mesa_problem(NULL,
+               "Unexpected int literal_size %d in _slang_typeof_operation()",
+               op->literal_size);
+         ti->spec.type = slang_spec_int;
+      }
       break;
    case slang_oper_literal_float:
-      ti->spec.type = slang_spec_float;
+      if (op->literal_size == 1)
+         ti->spec.type = slang_spec_float;
+      else if (op->literal_size == 2)
+         ti->spec.type = slang_spec_vec2;
+      else if (op->literal_size == 3)
+         ti->spec.type = slang_spec_vec3;
+      else if (op->literal_size == 4)
+         ti->spec.type = slang_spec_vec4;
+      else {
+         _mesa_problem(NULL,
+               "Unexpected float literal_size %d in _slang_typeof_operation()",
+               op->literal_size);
+         ti->spec.type = slang_spec_float;
+      }
       break;
    case slang_oper_identifier:
       {

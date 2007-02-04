@@ -123,7 +123,7 @@ _slang_simplify(slang_operation *oper,
       isBool[i] = (oper->children[i].type == slang_oper_literal_bool);
    }
                               
-   if (n == 2 && isFloat[0] && isFloat[1]) {
+   if (oper->num_children == 2 && isFloat[0] && isFloat[1]) {
       /* probably simple arithmetic */
       switch (oper->type) {
       case slang_oper_add:
@@ -131,6 +131,7 @@ _slang_simplify(slang_operation *oper,
             oper->literal[i]
                = oper->children[0].literal[i] + oper->children[1].literal[i];
          }
+         oper->literal_size = oper->children[0].literal_size;
          slang_operation_destruct(oper);
          oper->type = slang_oper_literal_float;
          return;
@@ -139,6 +140,7 @@ _slang_simplify(slang_operation *oper,
             oper->literal[i]
                = oper->children[0].literal[i] - oper->children[1].literal[i];
          }
+         oper->literal_size = oper->children[0].literal_size;
          slang_operation_destruct(oper);
          oper->type = slang_oper_literal_float;
          return;
@@ -147,6 +149,7 @@ _slang_simplify(slang_operation *oper,
             oper->literal[i]
                = oper->children[0].literal[i] * oper->children[1].literal[i];
          }
+         oper->literal_size = oper->children[0].literal_size;
          slang_operation_destruct(oper);
          oper->type = slang_oper_literal_float;
          return;
@@ -155,6 +158,7 @@ _slang_simplify(slang_operation *oper,
             oper->literal[i]
                = oper->children[0].literal[i] / oper->children[1].literal[i];
          }
+         oper->literal_size = oper->children[0].literal_size;
          slang_operation_destruct(oper);
          oper->type = slang_oper_literal_float;
          return;
@@ -163,17 +167,19 @@ _slang_simplify(slang_operation *oper,
       }
    }
 
-   if (n == 1 && isFloat[0]) {
+   if (oper->num_children == 1 && isFloat[0]) {
       switch (oper->type) {
       case slang_oper_minus:
          for (i = 0; i < 4; i++) {
             oper->literal[i] = -oper->children[0].literal[i];
          }
+         oper->literal_size = oper->children[0].literal_size;
          slang_operation_destruct(oper);
          oper->type = slang_oper_literal_float;
          return;
       case slang_oper_plus:
          COPY_4V(oper->literal, oper->children[0].literal);
+         oper->literal_size = oper->children[0].literal_size;
          slang_operation_destruct(oper);
          oper->type = slang_oper_literal_float;
          return;
@@ -182,7 +188,7 @@ _slang_simplify(slang_operation *oper,
       }
    }
 
-   if (n == 2 && isBool[0] && isBool[1]) {
+   if (oper->num_children == 2 && isBool[0] && isBool[1]) {
       /* simple boolean expression */
       switch (oper->type) {
       case slang_oper_logicaland:
@@ -191,6 +197,7 @@ _slang_simplify(slang_operation *oper,
             const GLint b = oper->children[1].literal[i] ? 1 : 0;
             oper->literal[i] = (GLfloat) (a && b);
          }
+         oper->literal_size = oper->children[0].literal_size;
          slang_operation_destruct(oper);
          oper->type = slang_oper_literal_bool;
          return;
@@ -200,6 +207,7 @@ _slang_simplify(slang_operation *oper,
             const GLint b = oper->children[1].literal[i] ? 1 : 0;
             oper->literal[i] = (GLfloat) (a || b);
          }
+         oper->literal_size = oper->children[0].literal_size;
          slang_operation_destruct(oper);
          oper->type = slang_oper_literal_bool;
          return;
@@ -209,6 +217,7 @@ _slang_simplify(slang_operation *oper,
             const GLint b = oper->children[1].literal[i] ? 1 : 0;
             oper->literal[i] = (GLfloat) (a ^ b);
          }
+         oper->literal_size = oper->children[0].literal_size;
          slang_operation_destruct(oper);
          oper->type = slang_oper_literal_bool;
          return;
@@ -217,7 +226,8 @@ _slang_simplify(slang_operation *oper,
       }
    }
 
-   if (n == 4 && isFloat[0] && isFloat[1] && isFloat[2] && isFloat[3]) {
+   if (oper->num_children == 4
+       && isFloat[0] && isFloat[1] && isFloat[2] && isFloat[3]) {
       /* vec4(flt, flt, flt, flt) constructor */
       if (oper->type == slang_oper_call) {
          if (strcmp((char *) oper->a_id, "vec4") == 0) {
@@ -225,6 +235,7 @@ _slang_simplify(slang_operation *oper,
             oper->literal[1] = oper->children[1].literal[0];
             oper->literal[2] = oper->children[2].literal[0];
             oper->literal[3] = oper->children[3].literal[0];
+            oper->literal_size = 4;
             slang_operation_destruct(oper);
             oper->type = slang_oper_literal_float;
             return;
@@ -232,7 +243,7 @@ _slang_simplify(slang_operation *oper,
       }
    }
 
-   if (n == 3 && isFloat[0] && isFloat[1] && isFloat[2]) {
+   if (oper->num_children == 3 && isFloat[0] && isFloat[1] && isFloat[2]) {
       /* vec3(flt, flt, flt) constructor */
       if (oper->type == slang_oper_call) {
          if (strcmp((char *) oper->a_id, "vec3") == 0) {
@@ -240,6 +251,7 @@ _slang_simplify(slang_operation *oper,
             oper->literal[1] = oper->children[1].literal[0];
             oper->literal[2] = oper->children[2].literal[0];
             oper->literal[3] = oper->literal[2];
+            oper->literal_size = 3;
             slang_operation_destruct(oper);
             oper->type = slang_oper_literal_float;
             return;
@@ -247,16 +259,20 @@ _slang_simplify(slang_operation *oper,
       }
    }
 
-   if (n == 2 && isFloat[0] && isFloat[1]) {
-      /* vec4(flt, flt) constructor */
+   if (oper->num_children == 2 && isFloat[0] && isFloat[1]) {
+      /* vec2(flt, flt) constructor */
       if (oper->type == slang_oper_call) {
          if (strcmp((char *) oper->a_id, "vec2") == 0) {
+            printf("SIMPLIFY vec2 constructor scope = %p\n",
+                   (void*) oper->locals);
             oper->literal[0] = oper->children[0].literal[0];
             oper->literal[1] = oper->children[1].literal[0];
             oper->literal[2] = oper->literal[1];
             oper->literal[3] = oper->literal[1];
+            oper->literal_size = 2;
             slang_operation_destruct(oper); /* XXX oper->locals goes NULL! */
             oper->type = slang_oper_literal_float;
+            assert(oper->num_children == 0);
             return;
          }
       }

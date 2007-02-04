@@ -1029,6 +1029,7 @@ parse_expression(slang_parse_ctx * C, slang_output_ctx * O,
          op->literal[1] =
          op->literal[2] =
          op->literal[3] = (GLfloat) number;
+         op->literal_size = 1;
          break;
       case OP_PUSH_INT:
          op->type = slang_oper_literal_int;
@@ -1038,6 +1039,7 @@ parse_expression(slang_parse_ctx * C, slang_output_ctx * O,
          op->literal[1] =
          op->literal[2] =
          op->literal[3] = (GLfloat) number;
+         op->literal_size = 1;
          break;
       case OP_PUSH_FLOAT:
          op->type = slang_oper_literal_float;
@@ -1046,6 +1048,7 @@ parse_expression(slang_parse_ctx * C, slang_output_ctx * O,
          op->literal[1] =
          op->literal[2] =
          op->literal[3] = op->literal[0];
+         op->literal_size = 1;
          break;
       case OP_PUSH_IDENTIFIER:
          op->type = slang_oper_identifier;

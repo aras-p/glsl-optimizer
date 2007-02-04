@@ -117,6 +117,7 @@ typedef struct slang_operation_
    struct slang_operation_ *children;
    GLuint num_children;
    GLfloat literal[4];           /**< Used for float, int and bool values */
+   GLuint literal_size;          /**< 1, 2, 3, or 4 */
    slang_atom a_id;              /**< type: asm, identifier, call, field */
    slang_variable_scope *locals; /**< local vars for scope */
    struct slang_function_ *fun;  /**< If type == slang_oper_call */

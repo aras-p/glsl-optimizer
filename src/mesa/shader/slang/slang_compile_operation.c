@@ -60,6 +60,7 @@ slang_operation_destruct(slang_operation * oper)
    for (i = 0; i < oper->num_children; i++)
       slang_operation_destruct(oper->children + i);
    slang_alloc_free(oper->children);
+   /*#define FREE_MEMORY*/
 #ifdef FREE_MEMORY
    /* XXX revisit and fix memory coruption here ! */
    slang_variable_scope_destruct(oper->locals);
@@ -106,6 +107,7 @@ slang_operation_copy(slang_operation * x, const slang_operation * y)
    z.literal[1] = y->literal[1];
    z.literal[2] = y->literal[2];
    z.literal[3] = y->literal[3];
+   z.literal_size = y->literal_size;
    z.a_id = y->a_id;
    if (y->locals) {
       if (!slang_variable_scope_copy(z.locals, y->locals)) {

@@ -1040,7 +1040,7 @@ slang_inline_function_call(slang_assemble_ctx * A, slang_function *fun,
 
 static slang_ir_node *
 _slang_gen_function_call(slang_assemble_ctx *A, slang_function *fun,
-			     slang_operation *oper, slang_operation *dest)
+                         slang_operation *oper, slang_operation *dest)
 {
    slang_ir_node *n;
    slang_operation *inlined;
@@ -1694,6 +1694,7 @@ _slang_gen_logical_and(slang_assemble_ctx *A, slang_operation *oper)
    slang_operation_copy(&select->children[1], &oper->children[1]);
    select->children[2].type = slang_oper_literal_bool;
    ASSIGN_4V(select->children[2].literal, 0, 0, 0, 0);
+   select->children[2].literal_size = 2;
 
    n = _slang_gen_select(A, select);
 
@@ -1724,6 +1725,7 @@ _slang_gen_logical_or(slang_assemble_ctx *A, slang_operation *oper)
    select->children[1].type = slang_oper_literal_bool;
    ASSIGN_4V(select->children[2].literal, 1, 1, 1, 1);
    slang_operation_copy(&select->children[2], &oper->children[1]);
+   select->children[2].literal_size = 2;
 
    n = _slang_gen_select(A, select);
 
@@ -1867,9 +1869,19 @@ _slang_gen_declaration(slang_assemble_ctx *A, slang_operation *oper)
       if (!var) {
          RETURN_ERROR2("Undefined variable:", varName, 0);
       }
+#if 0
       /* XXX make copy of this initializer? */
+      {
+         slang_operation dup;
+         slang_operation_construct(&dup);
+         slang_operation_copy(&dup, v->initializer);
+         _slang_simplify(&dup, &A->space, A->atoms); 
+         rhs = _slang_gen_operation(A, &dup);
+      }
+#else
       _slang_simplify(v->initializer, &A->space, A->atoms); 
       rhs = _slang_gen_operation(A, v->initializer);
+#endif
       assert(rhs);
       init = new_node(IR_MOVE, var, rhs);
       /*
