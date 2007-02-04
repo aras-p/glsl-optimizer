@@ -303,6 +303,58 @@ static void nv10_render_clipped_poly(GLcontext *ctx,const GLuint *elts,GLuint n)
 	VB->Elts = tmp;
 }
 
+static inline void nv10_render_points(GLcontext *ctx,GLuint first,GLuint last)
+{
+	WARN_ONCE("Unimplemented\n");
+}
+
+static inline void nv10_render_line(GLcontext *ctx,GLuint v1,GLuint v2)
+{
+	struct nouveau_context *nmesa = NOUVEAU_CONTEXT(ctx);
+	GLubyte *vertptr = (GLubyte *)nmesa->verts;
+	GLuint vertsize = nmesa->vertex_size;
+	GLuint size_dword = vertsize*(2)/4;
+
+	nv10ExtendPrimitive(nmesa, size_dword);
+	nv10StartPrimitive(nmesa,GL_LINES+1,size_dword);
+	OUT_RINGp((nouveauVertex*)(vertptr+(v1*vertsize)),vertsize);
+	OUT_RINGp((nouveauVertex*)(vertptr+(v2*vertsize)),vertsize);
+	nv10FinishPrimitive(nmesa);
+}
+
+static inline void nv10_render_triangle(GLcontext *ctx,GLuint v1,GLuint v2,GLuint v3)
+{
+	struct nouveau_context *nmesa = NOUVEAU_CONTEXT(ctx);
+	GLubyte *vertptr = (GLubyte *)nmesa->verts;
+	GLuint vertsize = nmesa->vertex_size;
+	GLuint size_dword = vertsize*(3)/4;
+
+	nv10ExtendPrimitive(nmesa, size_dword);
+	nv10StartPrimitive(nmesa,GL_TRIANGLES+1,size_dword);
+	OUT_RINGp((nouveauVertex*)(vertptr+(v1*vertsize)),vertsize);
+	OUT_RINGp((nouveauVertex*)(vertptr+(v2*vertsize)),vertsize);
+	OUT_RINGp((nouveauVertex*)(vertptr+(v3*vertsize)),vertsize);
+	nv10FinishPrimitive(nmesa);
+}
+
+static inline void nv10_render_quad(GLcontext *ctx,GLuint v1,GLuint v2,GLuint v3,GLuint v4)
+{
+	struct nouveau_context *nmesa = NOUVEAU_CONTEXT(ctx);
+	GLubyte *vertptr = (GLubyte *)nmesa->verts;
+	GLuint vertsize = nmesa->vertex_size;
+	GLuint size_dword = vertsize*(4)/4;
+
+	nv10ExtendPrimitive(nmesa, size_dword);
+	nv10StartPrimitive(nmesa,GL_QUADS+1,size_dword);
+	OUT_RINGp((nouveauVertex*)(vertptr+(v1*vertsize)),vertsize);
+	OUT_RINGp((nouveauVertex*)(vertptr+(v2*vertsize)),vertsize);
+	OUT_RINGp((nouveauVertex*)(vertptr+(v3*vertsize)),vertsize);
+	OUT_RINGp((nouveauVertex*)(vertptr+(v4*vertsize)),vertsize);
+	nv10FinishPrimitive(nmesa);
+}
+
+
+
 static void nv10ChooseRenderState(GLcontext *ctx)
 {
 	TNLcontext *tnl = TNL_CONTEXT(ctx);
@@ -312,6 +364,10 @@ static void nv10ChooseRenderState(GLcontext *ctx)
 	tnl->Driver.Render.PrimTabElts = nv10_render_tab_elts;
 	tnl->Driver.Render.ClippedLine = nv10_render_clipped_line;
 	tnl->Driver.Render.ClippedPolygon = nv10_render_clipped_poly;
+	tnl->Driver.Render.Points = nv10_render_points;
+	tnl->Driver.Render.Line = nv10_render_line;
+	tnl->Driver.Render.Triangle = nv10_render_triangle;
+	tnl->Driver.Render.Quad = nv10_render_quad;
 }
 
 

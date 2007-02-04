@@ -84,6 +84,43 @@ static inline void nv04_1quad(struct nouveau_context *nmesa,nouveauVertex* v0,no
 	OUT_RING(0xFECEDC);
 }
 
+static inline void nv04_render_points(GLcontext *ctx,GLuint first,GLuint last)
+{
+	WARN_ONCE("Unimplemented\n");
+}
+
+static inline void nv04_render_line(GLcontext *ctx,GLuint v1,GLuint v2)
+{
+	WARN_ONCE("Unimplemented\n");
+}
+
+static inline void nv04_render_triangle(GLcontext *ctx,GLuint v1,GLuint v2,GLuint v3)
+{
+	struct nouveau_context *nmesa = NOUVEAU_CONTEXT(ctx);
+	GLubyte *vertptr = (GLubyte *)nmesa->verts;
+	GLuint vertsize = nmesa->vertex_size;
+
+	nv04_1triangle(nmesa,
+			(nouveauVertex*)(vertptr+v1*vertsize),
+			(nouveauVertex*)(vertptr+v2*vertsize),
+			(nouveauVertex*)(vertptr+v3*vertsize)
+		  );
+}
+
+static inline void nv04_render_quad(GLcontext *ctx,GLuint v1,GLuint v2,GLuint v3,GLuint v4)
+{
+	struct nouveau_context *nmesa = NOUVEAU_CONTEXT(ctx);
+	GLubyte *vertptr = (GLubyte *)nmesa->verts;
+	GLuint vertsize = nmesa->vertex_size;
+
+	nv04_1quad(nmesa,
+			(nouveauVertex*)(vertptr+v1*vertsize),
+			(nouveauVertex*)(vertptr+v2*vertsize),
+			(nouveauVertex*)(vertptr+v3*vertsize),
+			(nouveauVertex*)(vertptr+v4*vertsize)
+		  );
+}
+
 /**********************************************************************/
 /*               Render unclipped begin/end objects                   */
 /**********************************************************************/
@@ -404,6 +441,13 @@ do {									\
    nmesa->vertex_attr_count++;						\
 } while (0)
 
+static void nv04_render_clipped_line(GLcontext *ctx,GLuint ii,GLuint jj)
+{
+}
+
+static void nv04_render_clipped_poly(GLcontext *ctx,const GLuint *elts,GLuint n)
+{
+}
 
 static void nv04ChooseRenderState(GLcontext *ctx)
 {
@@ -411,8 +455,12 @@ static void nv04ChooseRenderState(GLcontext *ctx)
 
 	tnl->Driver.Render.PrimTabVerts = nv04_render_tab_verts;
 	tnl->Driver.Render.PrimTabElts = nv04_render_tab_elts;
-	tnl->Driver.Render.ClippedLine = NULL;
-	tnl->Driver.Render.ClippedPolygon = NULL;
+	tnl->Driver.Render.ClippedLine = nv04_render_clipped_line;
+	tnl->Driver.Render.ClippedPolygon = nv04_render_clipped_poly;
+	tnl->Driver.Render.Points = nv04_render_points;
+	tnl->Driver.Render.Line = nv04_render_line;
+	tnl->Driver.Render.Triangle = nv04_render_triangle;
+	tnl->Driver.Render.Quad = nv04_render_quad;
 }
 
 

@@ -84,7 +84,7 @@ void nouveauFallback(struct nouveau_context *nmesa, GLuint bit, GLboolean mode)
 			if (nmesa->screen->card->type<NV_10) {
 				//nv04FinishPrimitive(nmesa);
 			} else {
-				nv10FinishPrimitive(nmesa);
+				//nv10FinishPrimitive(nmesa);
 			}
 
 			_swsetup_Wakeup(ctx);
@@ -97,7 +97,7 @@ void nouveauFallback(struct nouveau_context *nmesa, GLuint bit, GLboolean mode)
 			_swrast_flush( ctx );
 
 			if (nmesa->screen->card->type<NV_10) {
-				//nv04TriInitFunctions(ctx);
+				nv04TriInitFunctions(ctx);
 			} else {
 				nv10TriInitFunctions(ctx);
 			}

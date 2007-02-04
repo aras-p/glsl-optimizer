@@ -35,9 +35,9 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "mtypes.h"
 #include "colormac.h"
 
-static uint32_t nv04_compare_func(GLcontext *ctx,GLuint f)
+static uint32_t nv04_compare_func(GLuint f)
 {
-	switch ( ctx->Color.AlphaFunc ) {
+	switch ( f ) {
 		case GL_NEVER:		return 1;
 		case GL_LESS:		return 2;
 		case GL_EQUAL:		return 3;
@@ -51,9 +51,9 @@ static uint32_t nv04_compare_func(GLcontext *ctx,GLuint f)
 	return 0;
 }
 
-static uint32_t nv04_blend_func(GLcontext *ctx,GLuint f)
+static uint32_t nv04_blend_func(GLuint f)
 {
-	switch ( ctx->Color.AlphaFunc ) {
+	switch ( f ) {
 		case GL_ZERO:			return 0x1;
 		case GL_ONE:			return 0x2;
 		case GL_SRC_COLOR:		return 0x3;
@@ -66,7 +66,7 @@ static uint32_t nv04_blend_func(GLcontext *ctx,GLuint f)
 		case GL_ONE_MINUS_DST_COLOR:	return 0xA;
 		case GL_SRC_ALPHA_SATURATE:	return 0xB;
 	}
-	WARN_ONCE("Unable to find the function\n");
+	WARN_ONCE("Unable to find the function 0x%x\n",f);
 	return 0;
 }
 
@@ -78,11 +78,11 @@ static void nv04_emit_control(GLcontext *ctx)
 
 	CLAMPED_FLOAT_TO_UBYTE(alpha_ref, ctx->Color.AlphaRef);
 	control=alpha_ref;
-	control|=(nv04_compare_func(ctx,ctx->Color.AlphaFunc)<<8);
+	control|=(nv04_compare_func(ctx->Color.AlphaFunc)<<8);
 	control|=(ctx->Color.AlphaEnabled<<12);
 	control|=(1<<13);
 	control|=(ctx->Depth.Test<<14);
-	control|=(nv04_compare_func(ctx,ctx->Depth.Func)<<16);
+	control|=(nv04_compare_func(ctx->Depth.Func)<<16);
 	if ((ctx->Polygon.CullFlag)&&(ctx->Polygon.CullFaceMode!=GL_FRONT_AND_BACK))
 	{
 		if ((ctx->Polygon.FrontFace==GL_CW)&&(ctx->Polygon.CullFaceMode==GL_FRONT))
@@ -126,8 +126,8 @@ static void nv04_emit_blend(GLcontext *ctx)
 		blend|=(1<<8);
 	blend|=(ctx->Fog.Enabled<<16);
 	blend|=(ctx->Color.BlendEnabled<<20);
-	blend|=(nv04_blend_func(ctx,ctx->Color.BlendSrcRGB)<<24);
-	blend|=(nv04_blend_func(ctx,ctx->Color.BlendDstRGB)<<28);
+	blend|=(nv04_blend_func(ctx->Color.BlendSrcRGB)<<24);
+	blend|=(nv04_blend_func(ctx->Color.BlendDstRGB)<<28);
 
 	BEGIN_RING_CACHE(NvSub3D, NV04_DX5_TEXTURED_TRIANGLE_BLEND, 1);
 	OUT_RING_CACHE(blend);
@@ -463,7 +463,7 @@ static GLboolean nv04BindBuffers(nouveauContextPtr nmesa, int num_color,
 
 	/* FIXME pitches have to be aligned ! */
 	BEGIN_RING_SIZE(NvSubCtxSurf3D, NV04_CONTEXT_SURFACES_3D_PITCH, 2);
-	OUT_RING(color[0]->pitch|(depth->pitch<<16));
+	OUT_RING(color[0]->pitch|(depth?(depth->pitch<<16):0));
 	OUT_RING(color[0]->offset);
 
 	if (depth) {
