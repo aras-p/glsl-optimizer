@@ -196,9 +196,9 @@ static inline void nv10_render_generic_primitive_elts(GLcontext *ctx,GLuint star
 	GLuint j;
 
 	nv10ExtendPrimitive(nmesa, size_dword);
-	nv10StartPrimitive(nmesa,prim+1,size_dword*count);
+	nv10StartPrimitive(nmesa,prim+1,size_dword);
 	for (j=start; j<count; j++ ) {
-		OUT_RINGp((nouveauVertex*)(vertptr+(elt[j]*vertsize)),vertsize);
+		OUT_RINGp((nouveauVertex*)(vertptr+(elt[j]*vertsize)),vertsize/4);
 	}
 	nv10FinishPrimitive(nmesa);
 }
