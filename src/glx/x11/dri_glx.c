@@ -399,6 +399,7 @@ static void driDestroyDisplay(Display *dpy, void *private)
 		       Drivers = driver->next;
 
 		    Xfree(driver);
+		    break;
 		 }
 	      }
 
