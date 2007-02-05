@@ -32,14 +32,13 @@ NV30FPUploadToHW(GLcontext *ctx, nouveauShader *nvs)
 							GL_ARRAY_BUFFER_ARB);
 
    /* Should use STATIC_DRAW_ARB if shader doesn't use changable params */
-   ctx->Driver.BufferData(ctx, GL_ARRAY_BUFFER_ARB,
+   nouveau_bo_init_storage(ctx, NOUVEAU_BO_VRAM_OK,
 	 		  nvs->program_size * sizeof(uint32_t),
 			  (const GLvoid *)nvs->program,
 			  GL_DYNAMIC_DRAW_ARB,
 			  nvs->program_buffer);
 
-   offset = nouveau_bufferobj_gpu_ref(ctx, GL_READ_ONLY_ARB,
-	 			      nvs->program_buffer);
+   offset = nouveau_bo_gpu_ref(ctx, nvs->program_buffer);
 
    /* Not using state cache here, updated programs at the same address don't
     * seem to take effect unless the ACTIVE_PROGRAM method is called again.
