@@ -1179,6 +1179,7 @@ static int viaInitFBDev(DRIDriverContext *ctx)
         pVia->Chipset = VIA_KM400;
         break;
     case PCI_CHIP_VT3204:
+    case PCI_CHIP_VT3344:
         pVia->Chipset = VIA_K8M800;
         break;
     case PCI_CHIP_VT3259:
