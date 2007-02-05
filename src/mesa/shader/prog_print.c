@@ -325,16 +325,16 @@ _mesa_print_instruction(const struct prog_instruction *inst, GLint indent)
       print_comment(inst);
       return indent + 3;
    case OPCODE_ELSE:
-      _mesa_printf("ELSE;\n");
+      _mesa_printf("ELSE\n");
       return indent + 3;
    case OPCODE_ENDIF:
-      _mesa_printf("ENDIF;\n");
+      _mesa_printf("ENDIF\n");
       break;
    case OPCODE_BGNLOOP:
-      _mesa_printf("LOOP;\n");
+      _mesa_printf("BGNLOOP\n");
       return indent + 3;
    case OPCODE_ENDLOOP:
-      _mesa_printf("ENDLOOP;\n");
+      _mesa_printf("ENDLOOP (goto %d)\n", inst->BranchTarget);
       break;
    case OPCODE_BRK:
       /* XXX just like BRA */
