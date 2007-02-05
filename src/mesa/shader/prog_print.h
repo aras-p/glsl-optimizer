@@ -2,7 +2,7 @@
  * Mesa 3-D graphics library
  * Version:  6.5.3
  *
- * Copyright (C) 1999-2006  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2007  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -27,8 +27,8 @@
 #define PROG_PRINT_H
 
 
-extern void
-_mesa_print_instruction(const struct prog_instruction *inst);
+extern GLint
+_mesa_print_instruction(const struct prog_instruction *inst, GLint indent);
 
 extern void
 _mesa_print_alu_instruction(const struct prog_instruction *inst,

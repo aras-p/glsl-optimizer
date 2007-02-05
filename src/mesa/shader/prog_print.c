@@ -2,7 +2,7 @@
  * Mesa 3-D graphics library
  * Version:  6.5.3
  *
- * Copyright (C) 1999-2006  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2007  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -238,9 +238,22 @@ _mesa_print_alu_instruction(const struct prog_instruction *inst,
 /**
  * Print a single vertex/fragment program instruction.
  */
-void
-_mesa_print_instruction(const struct prog_instruction *inst)
+GLint
+_mesa_print_instruction(const struct prog_instruction *inst, GLint indent)
 {
+   GLuint i;
+
+   if (inst->Opcode == OPCODE_ELSE ||
+       inst->Opcode == OPCODE_ENDIF ||
+       inst->Opcode == OPCODE_ENDLOOP ||
+       inst->Opcode == OPCODE_ENDSUB) {
+      indent -= 3;
+   }
+   assert(indent >= 0);
+   for (i = 0; i < indent; i++) {
+      _mesa_printf(" ");
+   }
+
    switch (inst->Opcode) {
    case OPCODE_PRINT:
       _mesa_printf("PRINT '%s'", inst->Data);
@@ -306,16 +319,38 @@ _mesa_print_instruction(const struct prog_instruction *inst)
       print_comment(inst);
       break;
    case OPCODE_IF:
-      _mesa_printf("  IF (%s%s)",
+      _mesa_printf("IF (%s%s)",
+                   condcode_string(inst->DstReg.CondMask),
+                   swizzle_string(inst->DstReg.CondSwizzle, 0, GL_FALSE));
+      print_comment(inst);
+      return indent + 3;
+   case OPCODE_ELSE:
+      _mesa_printf("ELSE;\n");
+      return indent + 3;
+   case OPCODE_ENDIF:
+      _mesa_printf("ENDIF;\n");
+      break;
+   case OPCODE_BGNLOOP:
+      _mesa_printf("LOOP;\n");
+      return indent + 3;
+   case OPCODE_ENDLOOP:
+      _mesa_printf("ENDLOOP;\n");
+      break;
+   case OPCODE_BRK:
+      /* XXX just like BRA */
+      _mesa_printf("BRK %u (%s%s)",
+                   inst->BranchTarget,
                    condcode_string(inst->DstReg.CondMask),
                    swizzle_string(inst->DstReg.CondSwizzle, 0, GL_FALSE));
       print_comment(inst);
       break;
-   case OPCODE_ELSE:
-      _mesa_printf("  ELSE;\n");
-      break;
-   case OPCODE_ENDIF:
-      _mesa_printf("  ENDIF;\n");
+   case OPCODE_BGNSUB:
+      _mesa_printf("SUB;\n");
+      print_comment(inst);
+      return indent + 3;
+   case OPCODE_ENDSUB:
+      _mesa_printf("ENDSUB;\n");
+      print_comment(inst);
       break;
    case OPCODE_END:
       _mesa_printf("END");
@@ -333,6 +368,7 @@ _mesa_print_instruction(const struct prog_instruction *inst)
 				  _mesa_num_inst_src_regs(inst->Opcode));
       break;
    }
+   return indent;
 }
 
 
@@ -343,10 +379,10 @@ _mesa_print_instruction(const struct prog_instruction *inst)
 void
 _mesa_print_program(const struct gl_program *prog)
 {
-   GLuint i;
+   GLuint i, indent = 0;
    for (i = 0; i < prog->NumInstructions; i++) {
       _mesa_printf("%3d: ", i);
-      _mesa_print_instruction(prog->Instructions + i);
+      indent = _mesa_print_instruction(prog->Instructions + i, indent);
    }
 }
 
