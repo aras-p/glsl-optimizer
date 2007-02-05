@@ -1,8 +1,8 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.5
+ * Version:  6.5.3
  *
- * Copyright (C) 1999-2006  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2007  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -38,10 +38,8 @@
  *    INTERP_INDEX    - if defined, interpolate color index values
  *    INTERP_INT_TEX  - if defined, interpolate integer ST texcoords
  *                         (fast, simple 2-D texture mapping)
- *    INTERP_TEX      - if defined, interpolate set 0 float STRQ texcoords
+ *    INTERP_TEX      - if defined, interpolate texcoords and varying vars
  *                         NOTE:  OpenGL STRQ = Mesa STUV (R was taken for red)
- *    INTERP_MULTITEX - if defined, interpolate N units of STRQ texcoords
- *    INTERP_VARYING  - if defined, interpolate M GLSL varyings
  *
  * When one can directly address pixels in the color buffer the following
  * macros can be defined and used to compute pixel addresses during
@@ -119,50 +117,17 @@
 #endif
 
 
-/*
- * Either loop over all texture units, or just use unit zero.
- */
-#ifdef INTERP_MULTITEX
-#define TEX_UNIT_LOOP(CODE)					\
-   {								\
-      GLuint u;							\
-      for (u = 0; u < ctx->Const.MaxTextureUnits; u++) {	\
-         if (ctx->Texture._EnabledCoordUnits & (1 << u)) {	\
-            const GLuint attr = FRAG_ATTRIB_TEX0 + u;		\
-            (void) attr;                                        \
-            CODE						\
-         }							\
-      }								\
+#define TEXVAR_LOOP(CODE)                                \
+   {                                                     \
+      GLuint attr;                                       \
+      for (attr = swrast->_MinFragmentAttrib;            \
+           attr < swrast->_MaxFragmentAttrib; attr++) {  \
+         if (swrast->_FragmentAttribs & (1 << attr)) {   \
+            CODE                                         \
+         }                                               \
+      }                                                  \
    }
-#define INTERP_TEX
-#elif defined(INTERP_TEX)
-#define TEX_UNIT_LOOP(CODE)					\
-   {								\
-      const GLuint u = 0;					\
-      const GLuint attr = FRAG_ATTRIB_TEX0 + u;			\
-      (void) attr;                                              \
-      CODE							\
-   }
-#endif
 
-
-
-#ifdef INTERP_VARYING
-
-#define VARYING_LOOP(CODE)                       \
-   {                                             \
-      GLuint iv, ic;                             \
-      for (iv = 0; iv < MAX_VARYING; iv++) {     \
-         if (inputsUsed & FRAG_BIT_VAR(iv)) {    \
-            GLuint attr = FRAG_ATTRIB_VAR0 + iv; \
-            (void) attr;                         \
-            for (ic = 0; ic < 4; ic++) {         \
-               CODE                              \
-            }                                    \
-         }                                       \
-      }                                          \
-   }
-#endif
 
 
 
@@ -210,6 +175,7 @@ static void NAME(GLcontext *ctx, const SWvertex *v0,
       GLint lines;	/* number of lines to be sampled on this edge */
    } EdgeT;
 
+   const SWcontext *swrast = SWRAST_CONTEXT(ctx);
 #ifdef INTERP_Z
    const GLint depthBits = ctx->DrawBuffer->Visual.depthBits;
    const GLint fixedToDepthShift = depthBits <= 16 ? FIXED_SHIFT : 0;
@@ -224,12 +190,10 @@ static void NAME(GLcontext *ctx, const SWvertex *v0,
    const GLint snapMask = ~((FIXED_ONE / (1 << SUB_PIXEL_BITS)) - 1); /* for x/y coord snapping */
 #endif
    GLinterp vMin_fx, vMin_fy, vMid_fx, vMid_fy, vMax_fx, vMax_fy;
-#ifdef INTERP_VARYING
-   const GLbitfield inputsUsed = ctx->FragmentProgram._Current ?
-      ctx->FragmentProgram._Current->Base.InputsRead : 0x0;
-#endif
 
    SWspan span;
+
+   (void) swrast;
 
    INIT_SPAN(span, GL_POLYGON, 0, 0, 0);
 
@@ -638,10 +602,10 @@ static void NAME(GLcontext *ctx, const SWvertex *v0,
 #ifdef INTERP_INT_TEX
       span.interpMask |= SPAN_INT_TEXTURE;
       {
-         GLfloat eMaj_ds = (vMax->texcoord[0][0] - vMin->texcoord[0][0]) * S_SCALE;
-         GLfloat eBot_ds = (vMid->texcoord[0][0] - vMin->texcoord[0][0]) * S_SCALE;
-         GLfloat eMaj_dt = (vMax->texcoord[0][1] - vMin->texcoord[0][1]) * T_SCALE;
-         GLfloat eBot_dt = (vMid->texcoord[0][1] - vMin->texcoord[0][1]) * T_SCALE;
+         GLfloat eMaj_ds = (vMax->attrib[FRAG_ATTRIB_TEX0][0] - vMin->attrib[FRAG_ATTRIB_TEX0][0]) * S_SCALE;
+         GLfloat eBot_ds = (vMid->attrib[FRAG_ATTRIB_TEX0][0] - vMin->attrib[FRAG_ATTRIB_TEX0][0]) * S_SCALE;
+         GLfloat eMaj_dt = (vMax->attrib[FRAG_ATTRIB_TEX0][1] - vMin->attrib[FRAG_ATTRIB_TEX0][1]) * T_SCALE;
+         GLfloat eBot_dt = (vMid->attrib[FRAG_ATTRIB_TEX0][1] - vMin->attrib[FRAG_ATTRIB_TEX0][1]) * T_SCALE;
          span.attrStepX[FRAG_ATTRIB_TEX0][0] = oneOverArea * (eMaj_ds * eBot.dy - eMaj.dy * eBot_ds);
          span.attrStepY[FRAG_ATTRIB_TEX0][0] = oneOverArea * (eMaj.dx * eBot_ds - eMaj_ds * eBot.dx);
          span.attrStepX[FRAG_ATTRIB_TEX0][1] = oneOverArea * (eMaj_dt * eBot.dy - eMaj.dy * eBot_dt);
@@ -651,19 +615,19 @@ static void NAME(GLcontext *ctx, const SWvertex *v0,
       }
 #endif
 #ifdef INTERP_TEX
-      span.interpMask |= SPAN_TEXTURE;
+      span.interpMask |= (SPAN_TEXTURE | SPAN_VARYING);
       {
          /* win[3] is 1/W */
          const GLfloat wMax = vMax->win[3], wMin = vMin->win[3], wMid = vMid->win[3];
-         TEX_UNIT_LOOP(
-            GLfloat eMaj_ds = vMax->texcoord[u][0] * wMax - vMin->texcoord[u][0] * wMin;
-            GLfloat eBot_ds = vMid->texcoord[u][0] * wMid - vMin->texcoord[u][0] * wMin;
-            GLfloat eMaj_dt = vMax->texcoord[u][1] * wMax - vMin->texcoord[u][1] * wMin;
-            GLfloat eBot_dt = vMid->texcoord[u][1] * wMid - vMin->texcoord[u][1] * wMin;
-            GLfloat eMaj_du = vMax->texcoord[u][2] * wMax - vMin->texcoord[u][2] * wMin;
-            GLfloat eBot_du = vMid->texcoord[u][2] * wMid - vMin->texcoord[u][2] * wMin;
-            GLfloat eMaj_dv = vMax->texcoord[u][3] * wMax - vMin->texcoord[u][3] * wMin;
-            GLfloat eBot_dv = vMid->texcoord[u][3] * wMid - vMin->texcoord[u][3] * wMin;
+         TEXVAR_LOOP(
+            GLfloat eMaj_ds = vMax->attrib[attr][0] * wMax - vMin->attrib[attr][0] * wMin;
+            GLfloat eBot_ds = vMid->attrib[attr][0] * wMid - vMin->attrib[attr][0] * wMin;
+            GLfloat eMaj_dt = vMax->attrib[attr][1] * wMax - vMin->attrib[attr][1] * wMin;
+            GLfloat eBot_dt = vMid->attrib[attr][1] * wMid - vMin->attrib[attr][1] * wMin;
+            GLfloat eMaj_du = vMax->attrib[attr][2] * wMax - vMin->attrib[attr][2] * wMin;
+            GLfloat eBot_du = vMid->attrib[attr][2] * wMid - vMin->attrib[attr][2] * wMin;
+            GLfloat eMaj_dv = vMax->attrib[attr][3] * wMax - vMin->attrib[attr][3] * wMin;
+            GLfloat eBot_dv = vMid->attrib[attr][3] * wMid - vMin->attrib[attr][3] * wMin;
             span.attrStepX[attr][0] = oneOverArea * (eMaj_ds * eBot.dy - eMaj.dy * eBot_ds);
             span.attrStepY[attr][0] = oneOverArea * (eMaj.dx * eBot_ds - eMaj_ds * eBot.dx);
             span.attrStepX[attr][1] = oneOverArea * (eMaj_dt * eBot.dy - eMaj.dy * eBot_dt);
@@ -672,19 +636,6 @@ static void NAME(GLcontext *ctx, const SWvertex *v0,
             span.attrStepY[attr][2] = oneOverArea * (eMaj.dx * eBot_du - eMaj_du * eBot.dx);
             span.attrStepX[attr][3] = oneOverArea * (eMaj_dv * eBot.dy - eMaj.dy * eBot_dv);
             span.attrStepY[attr][3] = oneOverArea * (eMaj.dx * eBot_dv - eMaj_dv * eBot.dx);
-         )
-      }
-#endif
-#ifdef INTERP_VARYING
-      span.interpMask |= SPAN_VARYING;
-      {
-         /* win[3] is 1/W */
-         const GLfloat wMax = vMax->win[3], wMin = vMin->win[3], wMid = vMid->win[3];
-         VARYING_LOOP(
-            GLfloat eMaj_dvar = vMax->varying[iv][ic] * wMax - vMin->varying[iv][ic] * wMin;
-            GLfloat eBot_dvar = vMid->varying[iv][ic] * wMid - vMin->varying[iv][ic] * wMin;
-            span.attrStepX[attr][ic] = oneOverArea * (eMaj_dvar * eBot.dy - eMaj.dy * eBot_dvar);
-            span.attrStepY[attr][ic] = oneOverArea * (eMaj.dx * eBot_dvar - eMaj_dvar * eBot.dx);
          )
       }
 #endif
@@ -782,19 +733,14 @@ static void NAME(GLcontext *ctx, const SWvertex *v0,
          GLfixed tLeft=0, dtOuter=0, dtInner;
 #endif
 #ifdef INTERP_TEX
-         GLfloat sLeft[MAX_TEXTURE_COORD_UNITS];
-         GLfloat tLeft[MAX_TEXTURE_COORD_UNITS];
-         GLfloat uLeft[MAX_TEXTURE_COORD_UNITS];
-         GLfloat vLeft[MAX_TEXTURE_COORD_UNITS];
-         GLfloat dsOuter[MAX_TEXTURE_COORD_UNITS], dsInner[MAX_TEXTURE_COORD_UNITS];
-         GLfloat dtOuter[MAX_TEXTURE_COORD_UNITS], dtInner[MAX_TEXTURE_COORD_UNITS];
-         GLfloat duOuter[MAX_TEXTURE_COORD_UNITS], duInner[MAX_TEXTURE_COORD_UNITS];
-         GLfloat dvOuter[MAX_TEXTURE_COORD_UNITS], dvInner[MAX_TEXTURE_COORD_UNITS];
-#endif
-#ifdef INTERP_VARYING
-         GLfloat varLeft[MAX_VARYING][4];
-         GLfloat dvarOuter[MAX_VARYING][4];
-         GLfloat dvarInner[MAX_VARYING][4];
+         GLfloat sLeft[FRAG_ATTRIB_MAX];
+         GLfloat tLeft[FRAG_ATTRIB_MAX];
+         GLfloat uLeft[FRAG_ATTRIB_MAX];
+         GLfloat vLeft[FRAG_ATTRIB_MAX];
+         GLfloat dsOuter[FRAG_ATTRIB_MAX], dsInner[FRAG_ATTRIB_MAX];
+         GLfloat dtOuter[FRAG_ATTRIB_MAX], dtInner[FRAG_ATTRIB_MAX];
+         GLfloat duOuter[FRAG_ATTRIB_MAX], duInner[FRAG_ATTRIB_MAX];
+         GLfloat dvOuter[FRAG_ATTRIB_MAX], dvInner[FRAG_ATTRIB_MAX];
 #endif
 
          for (subTriangle=0; subTriangle<=1; subTriangle++) {
@@ -1042,41 +988,32 @@ static void NAME(GLcontext *ctx, const SWvertex *v0,
 #ifdef INTERP_INT_TEX
                {
                   GLfloat s0, t0;
-                  s0 = vLower->texcoord[0][0] * S_SCALE;
+                  s0 = vLower->attrib[FRAG_ATTRIB_TEX0][0] * S_SCALE;
                   sLeft = (GLfixed)(s0 * FIXED_SCALE + span.attrStepX[FRAG_ATTRIB_TEX0][0] * adjx
                                  + span.attrStepY[FRAG_ATTRIB_TEX0][0] * adjy) + FIXED_HALF;
                   dsOuter = SignedFloatToFixed(span.attrStepY[FRAG_ATTRIB_TEX0][0] + dxOuter * span.attrStepX[FRAG_ATTRIB_TEX0][0]);
 
-                  t0 = vLower->texcoord[0][1] * T_SCALE;
+                  t0 = vLower->attrib[FRAG_ATTRIB_TEX0][1] * T_SCALE;
                   tLeft = (GLfixed)(t0 * FIXED_SCALE + span.attrStepX[FRAG_ATTRIB_TEX0][1] * adjx
                                  + span.attrStepY[FRAG_ATTRIB_TEX0][1] * adjy) + FIXED_HALF;
                   dtOuter = SignedFloatToFixed(span.attrStepY[FRAG_ATTRIB_TEX0][1] + dxOuter * span.attrStepX[FRAG_ATTRIB_TEX0][1]);
                }
 #endif
 #ifdef INTERP_TEX
-               TEX_UNIT_LOOP(
+               TEXVAR_LOOP(
                   const GLfloat invW = vLower->win[3];
-                  const GLfloat s0 = vLower->texcoord[u][0] * invW;
-                  const GLfloat t0 = vLower->texcoord[u][1] * invW;
-                  const GLfloat u0 = vLower->texcoord[u][2] * invW;
-                  const GLfloat v0 = vLower->texcoord[u][3] * invW;
-                  sLeft[u] = s0 + (span.attrStepX[attr][0] * adjx + span.attrStepY[attr][0] * adjy) * (1.0F/FIXED_SCALE);
-                  tLeft[u] = t0 + (span.attrStepX[attr][1] * adjx + span.attrStepY[attr][1] * adjy) * (1.0F/FIXED_SCALE);
-                  uLeft[u] = u0 + (span.attrStepX[attr][2] * adjx + span.attrStepY[attr][2] * adjy) * (1.0F/FIXED_SCALE);
-                  vLeft[u] = v0 + (span.attrStepX[attr][3] * adjx + span.attrStepY[attr][3] * adjy) * (1.0F/FIXED_SCALE);
-                  dsOuter[u] = span.attrStepY[attr][0] + dxOuter * span.attrStepX[attr][0];
-                  dtOuter[u] = span.attrStepY[attr][1] + dxOuter * span.attrStepX[attr][1];
-                  duOuter[u] = span.attrStepY[attr][2] + dxOuter * span.attrStepX[attr][2];
-                  dvOuter[u] = span.attrStepY[attr][3] + dxOuter * span.attrStepX[attr][3];
-               )
-#endif
-#ifdef INTERP_VARYING
-               VARYING_LOOP(
-                  const GLfloat invW = vLower->win[3];
-                  const GLfloat var0 = vLower->varying[iv][ic] * invW;
-                  varLeft[iv][ic] = var0 + (span.attrStepX[attr][ic] * adjx +
-                     span.attrStepY[attr][ic] * adjy) * (1.0f / FIXED_SCALE);
-                  dvarOuter[iv][ic] = span.attrStepY[attr][ic] + dxOuter * span.attrStepX[attr][ic];
+                  const GLfloat s0 = vLower->attrib[attr][0] * invW;
+                  const GLfloat t0 = vLower->attrib[attr][1] * invW;
+                  const GLfloat u0 = vLower->attrib[attr][2] * invW;
+                  const GLfloat v0 = vLower->attrib[attr][3] * invW;
+                  sLeft[attr] = s0 + (span.attrStepX[attr][0] * adjx + span.attrStepY[attr][0] * adjy) * (1.0F/FIXED_SCALE);
+                  tLeft[attr] = t0 + (span.attrStepX[attr][1] * adjx + span.attrStepY[attr][1] * adjy) * (1.0F/FIXED_SCALE);
+                  uLeft[attr] = u0 + (span.attrStepX[attr][2] * adjx + span.attrStepY[attr][2] * adjy) * (1.0F/FIXED_SCALE);
+                  vLeft[attr] = v0 + (span.attrStepX[attr][3] * adjx + span.attrStepY[attr][3] * adjy) * (1.0F/FIXED_SCALE);
+                  dsOuter[attr] = span.attrStepY[attr][0] + dxOuter * span.attrStepX[attr][0];
+                  dtOuter[attr] = span.attrStepY[attr][1] + dxOuter * span.attrStepX[attr][1];
+                  duOuter[attr] = span.attrStepY[attr][2] + dxOuter * span.attrStepX[attr][2];
+                  dvOuter[attr] = span.attrStepY[attr][3] + dxOuter * span.attrStepX[attr][3];
                )
 #endif
             } /*if setupLeft*/
@@ -1134,16 +1071,11 @@ static void NAME(GLcontext *ctx, const SWvertex *v0,
             dtInner = dtOuter + span.intTexStep[1];
 #endif
 #ifdef INTERP_TEX
-            TEX_UNIT_LOOP(
-               dsInner[u] = dsOuter[u] + span.attrStepX[attr][0];
-               dtInner[u] = dtOuter[u] + span.attrStepX[attr][1];
-               duInner[u] = duOuter[u] + span.attrStepX[attr][2];
-               dvInner[u] = dvOuter[u] + span.attrStepX[attr][3];
-            )
-#endif
-#ifdef INTERP_VARYING
-            VARYING_LOOP(
-               dvarInner[iv][ic] = dvarOuter[iv][ic] + span.attrStepX[attr][ic];
+            TEXVAR_LOOP(
+               dsInner[attr] = dsOuter[attr] + span.attrStepX[attr][0];
+               dtInner[attr] = dtOuter[attr] + span.attrStepX[attr][1];
+               duInner[attr] = duOuter[attr] + span.attrStepX[attr][2];
+               dvInner[attr] = dvOuter[attr] + span.attrStepX[attr][3];
             )
 #endif
 
@@ -1188,16 +1120,11 @@ static void NAME(GLcontext *ctx, const SWvertex *v0,
 #endif
 
 #ifdef INTERP_TEX
-               TEX_UNIT_LOOP(
-                  span.attrStart[attr][0] = sLeft[u];
-                  span.attrStart[attr][1] = tLeft[u];
-                  span.attrStart[attr][2] = uLeft[u];
-                  span.attrStart[attr][3] = vLeft[u];
-               )
-#endif
-#ifdef INTERP_VARYING
-               VARYING_LOOP(
-                  span.attrStart[attr][ic] = varLeft[iv][ic];
+               TEXVAR_LOOP(
+                  span.attrStart[attr][0] = sLeft[attr];
+                  span.attrStart[attr][1] = tLeft[attr];
+                  span.attrStart[attr][2] = uLeft[attr];
+                  span.attrStart[attr][3] = vLeft[attr];
                )
 #endif
 
@@ -1281,16 +1208,11 @@ static void NAME(GLcontext *ctx, const SWvertex *v0,
                   tLeft += dtOuter;
 #endif
 #ifdef INTERP_TEX
-                  TEX_UNIT_LOOP(
-                     sLeft[u] += dsOuter[u];
-                     tLeft[u] += dtOuter[u];
-                     uLeft[u] += duOuter[u];
-                     vLeft[u] += dvOuter[u];
-                  )
-#endif
-#ifdef INTERP_VARYING
-                  VARYING_LOOP(
-                     varLeft[iv][ic] += dvarOuter[iv][ic];
+                  TEXVAR_LOOP(
+                     sLeft[attr] += dsOuter[attr];
+                     tLeft[attr] += dtOuter[attr];
+                     uLeft[attr] += duOuter[attr];
+                     vLeft[attr] += dvOuter[attr];
                   )
 #endif
                }
@@ -1331,16 +1253,11 @@ static void NAME(GLcontext *ctx, const SWvertex *v0,
                   tLeft += dtInner;
 #endif
 #ifdef INTERP_TEX
-                  TEX_UNIT_LOOP(
-                     sLeft[u] += dsInner[u];
-                     tLeft[u] += dtInner[u];
-                     uLeft[u] += duInner[u];
-                     vLeft[u] += dvInner[u];
-                  )
-#endif
-#ifdef INTERP_VARYING
-                  VARYING_LOOP(
-                     varLeft[iv][ic] += dvarInner[iv][ic];
+                  TEXVAR_LOOP(
+                     sLeft[attr] += dsInner[attr];
+                     tLeft[attr] += dtInner[attr];
+                     uLeft[attr] += duInner[attr];
+                     vLeft[attr] += dvInner[attr];
                   )
 #endif
                }
@@ -1373,8 +1290,6 @@ static void NAME(GLcontext *ctx, const SWvertex *v0,
 #undef INTERP_INDEX
 #undef INTERP_INT_TEX
 #undef INTERP_TEX
-#undef INTERP_MULTITEX
-#undef INTERP_VARYING
 #undef TEX_UNIT_LOOP
 #undef VARYING_LOOP
 

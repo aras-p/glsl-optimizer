@@ -1,8 +1,8 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.5.2
+ * Version:  6.5.3
  *
- * Copyright (C) 1999-2006  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2007  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -866,7 +866,6 @@ fast_persp_span(GLcontext *ctx, SWspan *span,
 
 /*
  * Render a smooth-shaded, textured, RGBA triangle.
- * Interpolate S,T,R with perspective correction, w/out mipmapping.
  */
 #define NAME general_textured_triangle
 #define INTERP_Z 1
@@ -879,24 +878,6 @@ fast_persp_span(GLcontext *ctx, SWspan *span,
 #define RENDER_SPAN( span )   _swrast_write_rgba_span(ctx, &span);
 #include "s_tritemp.h"
 
-
-
-/*
- * This is the big one!
- * Interpolate Z, RGB, Alpha, specular, fog, N sets of texture coordinates,
- * and varying floats.  Yup, it's slow.
- */
-#define NAME multitextured_triangle
-#define INTERP_Z 1
-#define INTERP_W 1
-#define INTERP_FOG 1
-#define INTERP_RGB 1
-#define INTERP_ALPHA 1
-#define INTERP_SPEC 1
-#define INTERP_MULTITEX 1
-#define INTERP_VARYING 1
-#define RENDER_SPAN( span )   _swrast_write_rgba_span(ctx, &span);
-#include "s_tritemp.h"
 
 
 
@@ -1137,13 +1118,7 @@ _swrast_choose_triangle( GLcontext *ctx )
 	 }
          else {
             /* general case textured triangles */
-            if (ctx->Texture._EnabledCoordUnits > 1 ||
-                ctx->FragmentProgram._Current) {
-               USE(multitextured_triangle);
-            }
-            else {
-               USE(general_textured_triangle);
-            }
+            USE(general_textured_triangle);
          }
       }
       else {

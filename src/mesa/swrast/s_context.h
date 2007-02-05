@@ -133,6 +133,13 @@ typedef struct
    GLboolean _FogEnabled;
    GLenum _FogMode;  /* either GL_FOG_MODE or fragment program's fog mode */
 
+   /** Fragment attributes to compute during rasterization.
+    * Mask of FRAG_BIT_* flags.
+    */
+   GLbitfield _FragmentAttribs;
+   GLuint _MinFragmentAttrib;  /**< Lowest bit set in _FragmentAttribs */
+   GLuint _MaxFragmentAttrib;  /**< Highest bit set in _FragmentAttribs + 1 */
+
    /* Accum buffer temporaries.
     */
    GLboolean _IntegerAccumMode;	/**< Storing unscaled integers? */

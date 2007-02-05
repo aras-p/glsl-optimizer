@@ -507,6 +507,50 @@ _swrast_update_texture_samplers(GLcontext *ctx)
 }
 
 
+/**
+ * Update the swrast->_FragmentAttribs field.
+ */
+static void
+_swrast_update_fragment_attribs(GLcontext *ctx)
+{
+   SWcontext *swrast = SWRAST_CONTEXT(ctx);
+   
+   if (ctx->FragmentProgram._Current) {
+      swrast->_FragmentAttribs
+         = ctx->FragmentProgram._Current->Base.InputsRead;
+   }
+   else {
+      GLuint u;
+      swrast->_FragmentAttribs = 0x0;
+
+      if (ctx->Depth.Test)
+         swrast->_FragmentAttribs |= FRAG_BIT_WPOS;
+      if (NEED_SECONDARY_COLOR(ctx))
+         swrast->_FragmentAttribs |= FRAG_BIT_COL1;
+      if (swrast->_FogEnabled)
+         swrast->_FragmentAttribs |= FRAG_BIT_FOGC;
+
+      for (u = 0; u < ctx->Const.MaxTextureUnits; u++) {
+         if (ctx->Texture.Unit[u]._ReallyEnabled) {
+            swrast->_FragmentAttribs |= FRAG_BIT_TEX(u);
+         }
+      }
+   }
+
+   /* Find lowest, highest bit set in _FragmentAttribs */
+   {
+      GLuint bits = swrast->_FragmentAttribs;
+      GLuint i = 0;;
+      while (bits) {
+         i++;
+         bits = bits >> 1;
+      }
+      swrast->_MaxFragmentAttrib = i;
+      swrast->_MinFragmentAttrib = FRAG_ATTRIB_TEX0; /* XXX temporary */
+   }
+}
+
+
 void
 _swrast_validate_derived( GLcontext *ctx )
 {
@@ -546,6 +590,12 @@ _swrast_validate_derived( GLcontext *ctx )
 
       if (swrast->NewState & _SWRAST_NEW_RASTERMASK)
  	 _swrast_update_rasterflags( ctx );
+
+      if (swrast->NewState & (_NEW_DEPTH |
+                              _NEW_FOG |
+                              _NEW_PROGRAM |
+                              _NEW_TEXTURE))
+         _swrast_update_fragment_attribs(ctx);
 
       swrast->NewState = 0;
       swrast->StateChanges = 0;
@@ -806,8 +856,10 @@ _swrast_print_vertex( GLcontext *ctx, const SWvertex *v )
       for (i = 0 ; i < ctx->Const.MaxTextureCoordUnits ; i++)
 	 if (ctx->Texture.Unit[i]._ReallyEnabled)
 	    _mesa_debug(ctx, "texcoord[%d] %f %f %f %f\n", i,
-                        v->texcoord[i][0], v->texcoord[i][1],
-                        v->texcoord[i][2], v->texcoord[i][3]);
+                        v->attrib[FRAG_ATTRIB_TEX0 + i][0],
+                        v->attrib[FRAG_ATTRIB_TEX0 + i][1],
+                        v->attrib[FRAG_ATTRIB_TEX0 + i][2],
+                        v->attrib[FRAG_ATTRIB_TEX0 + i][3]);
 
 #if CHAN_TYPE == GL_FLOAT
       _mesa_debug(ctx, "color %f %f %f %f\n",

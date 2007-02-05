@@ -71,6 +71,7 @@
 static void
 NAME( GLcontext *ctx, const SWvertex *vert0, const SWvertex *vert1 )
 {
+   const SWcontext *swrast = SWRAST_CONTEXT(ctx);
    SWspan span;
    GLuint interpFlags = 0;
    GLint x0 = (GLint) vert0->win[0];
@@ -98,6 +99,8 @@ NAME( GLcontext *ctx, const SWvertex *vert0, const SWvertex *vert1 )
 #ifdef SETUP_CODE
    SETUP_CODE
 #endif
+
+   (void) swrast;
 
    /* Cull primitives with malformed coordinates.
     */
@@ -286,14 +289,14 @@ NAME( GLcontext *ctx, const SWvertex *vert0, const SWvertex *vert1 )
       const GLfloat invw1 = vert1->win[3];
       const GLfloat invLen = 1.0F / numPixels;
       GLfloat ds, dt, dr, dq;
-      span.attrStart[FRAG_ATTRIB_TEX0][0] = invw0 * vert0->texcoord[0][0];
-      span.attrStart[FRAG_ATTRIB_TEX0][1] = invw0 * vert0->texcoord[0][1];
-      span.attrStart[FRAG_ATTRIB_TEX0][2] = invw0 * vert0->texcoord[0][2];
-      span.attrStart[FRAG_ATTRIB_TEX0][3] = invw0 * vert0->texcoord[0][3];
-      ds = (invw1 * vert1->texcoord[0][0]) - span.attrStart[FRAG_ATTRIB_TEX0][0];
-      dt = (invw1 * vert1->texcoord[0][1]) - span.attrStart[FRAG_ATTRIB_TEX0][1];
-      dr = (invw1 * vert1->texcoord[0][2]) - span.attrStart[FRAG_ATTRIB_TEX0][2];
-      dq = (invw1 * vert1->texcoord[0][3]) - span.attrStart[FRAG_ATTRIB_TEX0][3];
+      span.attrStart[FRAG_ATTRIB_TEX0][0] = invw0 * vert0->attrib[FRAG_ATTRIB_TEX0][0];
+      span.attrStart[FRAG_ATTRIB_TEX0][1] = invw0 * vert0->attrib[FRAG_ATTRIB_TEX0][1];
+      span.attrStart[FRAG_ATTRIB_TEX0][2] = invw0 * vert0->attrib[FRAG_ATTRIB_TEX0][2];
+      span.attrStart[FRAG_ATTRIB_TEX0][3] = invw0 * vert0->attrib[FRAG_ATTRIB_TEX0][3];
+      ds = (invw1 * vert1->attrib[FRAG_ATTRIB_TEX0][0]) - span.attrStart[FRAG_ATTRIB_TEX0][0];
+      dt = (invw1 * vert1->attrib[FRAG_ATTRIB_TEX0][1]) - span.attrStart[FRAG_ATTRIB_TEX0][1];
+      dr = (invw1 * vert1->attrib[FRAG_ATTRIB_TEX0][2]) - span.attrStart[FRAG_ATTRIB_TEX0][2];
+      dq = (invw1 * vert1->attrib[FRAG_ATTRIB_TEX0][3]) - span.attrStart[FRAG_ATTRIB_TEX0][3];
       span.attrStepX[FRAG_ATTRIB_TEX0][0] = ds * invLen;
       span.attrStepX[FRAG_ATTRIB_TEX0][1] = dt * invLen;
       span.attrStepX[FRAG_ATTRIB_TEX0][2] = dr * invLen;
@@ -304,25 +307,24 @@ NAME( GLcontext *ctx, const SWvertex *vert0, const SWvertex *vert1 )
       span.attrStepY[FRAG_ATTRIB_TEX0][3] = 0.0F;
    }
 #endif
-#ifdef INTERP_MULTITEX
-   interpFlags |= SPAN_TEXTURE;
+#if defined(INTERP_MULTITEX) || defined(INTERP_VARYING)
+   interpFlags |= (SPAN_TEXTURE | SPAN_VARYING);
    {
       const GLfloat invLen = 1.0F / numPixels;
-      GLuint u;
-      for (u = 0; u < ctx->Const.MaxTextureUnits; u++) {
-         if (ctx->Texture.Unit[u]._ReallyEnabled) {
-            const GLuint attr = FRAG_ATTRIB_TEX0 + u;
-            const GLfloat invw0 = vert0->win[3];
-            const GLfloat invw1 = vert1->win[3];
+      const GLfloat invw0 = vert0->win[3];
+      const GLfloat invw1 = vert1->win[3];
+      GLuint attr;
+      for (attr = swrast->_MinFragmentAttrib; attr < swrast->_MaxFragmentAttrib; attr++) {
+         if (swrast->_FragmentAttribs & (1 << attr)) {
             GLfloat ds, dt, dr, dq;
-            span.attrStart[attr][0] = invw0 * vert0->texcoord[u][0];
-            span.attrStart[attr][1] = invw0 * vert0->texcoord[u][1];
-            span.attrStart[attr][2] = invw0 * vert0->texcoord[u][2];
-            span.attrStart[attr][3] = invw0 * vert0->texcoord[u][3];
-            ds = (invw1 * vert1->texcoord[u][0]) - span.attrStart[attr][0];
-            dt = (invw1 * vert1->texcoord[u][1]) - span.attrStart[attr][1];
-            dr = (invw1 * vert1->texcoord[u][2]) - span.attrStart[attr][2];
-            dq = (invw1 * vert1->texcoord[u][3]) - span.attrStart[attr][3];
+            span.attrStart[attr][0] = invw0 * vert0->attrib[attr][0];
+            span.attrStart[attr][1] = invw0 * vert0->attrib[attr][1];
+            span.attrStart[attr][2] = invw0 * vert0->attrib[attr][2];
+            span.attrStart[attr][3] = invw0 * vert0->attrib[attr][3];
+            ds = (invw1 * vert1->attrib[attr][0]) - span.attrStart[attr][0];
+            dt = (invw1 * vert1->attrib[attr][1]) - span.attrStart[attr][1];
+            dr = (invw1 * vert1->attrib[attr][2]) - span.attrStart[attr][2];
+            dq = (invw1 * vert1->attrib[attr][3]) - span.attrStart[attr][3];
             span.attrStepX[attr][0] = ds * invLen;
             span.attrStepX[attr][1] = dt * invLen;
             span.attrStepX[attr][2] = dr * invLen;
@@ -332,39 +334,6 @@ NAME( GLcontext *ctx, const SWvertex *vert0, const SWvertex *vert1 )
             span.attrStepY[attr][2] = 0.0F;
             span.attrStepY[attr][3] = 0.0F;
 	 }
-      }
-   }
-#endif
-#ifdef INTERP_VARYING
-   interpFlags |= SPAN_VARYING;
-   {
-      const GLfloat invLen = 1.0F / numPixels;
-      const GLbitfield inputsUsed = ctx->FragmentProgram._Current ?
-         ctx->FragmentProgram._Current->Base.InputsRead : 0x0;
-      const GLfloat invw0 = vert0->win[3];
-      const GLfloat invw1 = vert1->win[3];
-      GLuint v;
-      for (v = 0; v < MAX_VARYING; v++) {
-         if (inputsUsed & FRAG_BIT_VAR(v)) {
-            GLuint attr = FRAG_ATTRIB_VAR0 + v;
-            GLfloat ds, dt, dr, dq;
-            span.attrStart[attr][0] = invw0 * vert0->varying[v][0];
-            span.attrStart[attr][1] = invw0 * vert0->varying[v][1];
-            span.attrStart[attr][2] = invw0 * vert0->varying[v][2];
-            span.attrStart[attr][3] = invw0 * vert0->varying[v][3];
-            ds = (invw1 * vert1->varying[v][0]) - span.attrStart[attr][0];
-            dt = (invw1 * vert1->varying[v][1]) - span.attrStart[attr][1];
-            dr = (invw1 * vert1->varying[v][2]) - span.attrStart[attr][2];
-            dq = (invw1 * vert1->varying[v][3]) - span.attrStart[attr][3];
-            span.attrStepX[attr][0] = ds * invLen;
-            span.attrStepX[attr][1] = dt * invLen;
-            span.attrStepX[attr][2] = dr * invLen;
-            span.attrStepX[attr][3] = dq * invLen;
-            span.attrStepY[attr][0] = 0.0F;
-            span.attrStepY[attr][1] = 0.0F;
-            span.attrStepY[attr][2] = 0.0F;
-            span.attrStepY[attr][3] = 0.0F;
-         }
       }
    }
 #endif
