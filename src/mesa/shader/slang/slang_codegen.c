@@ -47,7 +47,7 @@
 #include "slang_print.h"
 
 
-static GLboolean UseHighLevelInstructions = GL_TRUE;
+static GLboolean UseHighLevelInstructions = GL_FALSE;
 
 static slang_ir_node *
 _slang_gen_operation(slang_assemble_ctx * A, slang_operation *oper);
