@@ -625,7 +625,7 @@ execute_program( GLcontext *ctx,
                  GLuint column )
 {
    const GLuint MAX_EXEC = 10000;
-   GLuint pc, total = 0;
+   GLint pc, total = 0, loopDepth = 0;
 
    if (DEBUG_FRAG) {
       printf("execute fragment program --------------------\n");
@@ -642,7 +642,7 @@ execute_program( GLcontext *ctx,
       }
 
       if (DEBUG_FRAG) {
-         _mesa_print_instruction(inst);
+         _mesa_print_instruction(inst, 0);
       }
 
       switch (inst->Opcode) {
@@ -676,8 +676,13 @@ execute_program( GLcontext *ctx,
             }
             break;
          case OPCODE_BGNLOOP: /* begin loop */
+            loopDepth++;
             break;
          case OPCODE_ENDLOOP: /* end loop */
+            loopDepth--;
+            assert(loopDepth >= 0);
+            /* subtract 1 here since pc is incremented by for(pc) loop */
+            pc = inst->BranchTarget - 1; /* go to matching BNGLOOP */
             break;
          case OPCODE_BGNSUB: /* begin subroutine */
             break;
@@ -701,7 +706,19 @@ execute_program( GLcontext *ctx,
             }
             break;
          case OPCODE_BRK: /* break out of loop */
-            /* assert inside loop */
+            if (loopDepth == 0) {
+               _mesa_problem(ctx, "BRK not inside a loop");
+            }
+            /* search for OPCODE_ENDLOOP */
+            do {
+               pc++;
+               inst = program->Base.Instructions + pc;
+               if (inst->Opcode == OPCODE_ENDLOOP) {
+                  loopDepth--;
+                  assert(loopDepth >= 0);
+                  break;
+               }
+            } while (pc < maxInst);
             break;
          case OPCODE_CAL: /* Call subroutine */
             {
@@ -880,20 +897,25 @@ execute_program( GLcontext *ctx,
                   /* do if-clause (just continue execution) */
                }
                else {
-                  /* do else-clause, or go to endif */
+                  /* search for else-clause or endif */
+                  /* XXX could encode location of the else/endif statement
+                   * in the IF instruction to avoid searching...
+                   */
                   GLint ifDepth = 1;
                   do {
                      pc++;
                      inst = program->Base.Instructions + pc;
                      if (inst->Opcode == OPCODE_END) {
                         /* mal-formed program! */
-                        abort();
+                        _mesa_problem(ctx, "END found before ELSE/ENDIF");
+                        return GL_FALSE;
                      }
                      else if (inst->Opcode == OPCODE_IF) {
+                        /* nested if */
                         ifDepth++;
                      }
                      else if (inst->Opcode == OPCODE_ELSE) {
-                        if (ifDepth == 0) {
+                        if (ifDepth == 1) {
                            /* ok, continue normal execution */
                            break;
                         }
@@ -1335,6 +1357,10 @@ execute_program( GLcontext *ctx,
                result[2] = (a[2] > b[2]) ? 1.0F : 0.0F;
                result[3] = (a[3] > b[3]) ? 1.0F : 0.0F;
                store_vector4( inst, machine, result );
+               if (DEBUG_FRAG) {
+                  printf("SGT %g %g %g %g\n",
+                         result[0], result[1], result[2], result[3]);
+               }
             }
             break;
          case OPCODE_SIN:

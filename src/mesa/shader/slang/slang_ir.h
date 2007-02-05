@@ -150,6 +150,8 @@ typedef struct slang_ir_node_
    GLfloat Value[4];    /**< If Opcode == IR_FLOAT */
    slang_variable *Var;  /**< If Opcode == IR_VAR or IR_VAR_DECL */
    slang_ir_storage *Store;  /**< location of result of this operation */
+   GLint InstLocation;  /**< Location of instruction emitted for this node */
+   struct slang_ir_node_ *BranchNode;  /**< Used for branch instructions */
 } slang_ir_node;
 
 

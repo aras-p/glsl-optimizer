@@ -1006,6 +1006,42 @@ emit_cond(slang_var_table *vt, slang_ir_node *n, struct gl_program *prog)
 
 
 /**
+ * Logical-NOT
+ */
+static struct prog_instruction *
+emit_not(slang_var_table *vt, slang_ir_node *n, struct gl_program *prog)
+{
+   GLfloat zero = 0.0;
+   slang_ir_storage st;
+   struct prog_instruction *inst;
+
+   /* need zero constant */
+   st.File = PROGRAM_CONSTANT;
+   st.Size = 1;
+   st.Index = _mesa_add_unnamed_constant(prog->Parameters, &zero,
+                                         1, &st.Swizzle);
+
+   /* child expr */
+   (void) emit(vt, n->Children[0], prog);
+   /* XXXX if child instr is SGT convert to SLE, if SEQ, SNE, etc */
+
+   if (!n->Store)
+      if (!alloc_temp_storage(vt, n, n->Children[0]->Store->Size))
+         return NULL;
+
+   inst = new_instruction(prog, OPCODE_SEQ);
+   storage_to_dst_reg(&inst->DstReg, n->Store, n->Writemask);
+   storage_to_src_reg(&inst->SrcReg[0], n->Children[0]->Store);
+   storage_to_src_reg(&inst->SrcReg[1], &st);
+
+   free_temp_storage(vt, n->Children[0]);
+
+   return inst;
+}
+
+
+
+/**
  * Remove any SWIZZLE_NIL terms from given swizzle mask (smear prev term).
  * Ex: fix_swizzle("zyNN") -> "zyyy"
  */
@@ -1202,6 +1238,9 @@ emit(slang_var_table *vt, slang_ir_node *n, struct gl_program *prog)
    case IR_COND:
       return emit_cond(vt, n, prog);
 
+   case IR_NOT:
+      return emit_not(vt, n, prog);
+
    case IR_LABEL:
       return emit_label(n->Target, prog);
    case IR_JUMP:
@@ -1234,6 +1273,39 @@ emit(slang_var_table *vt, slang_ir_node *n, struct gl_program *prog)
          inst = new_instruction(prog, OPCODE_ENDIF);
          return inst;
       }
+
+   case IR_BEGIN_LOOP:
+      {
+         /* save location of this instruction, used by OPCODE_ENDLOOP */
+         n->InstLocation = prog->NumInstructions;
+         (void) new_instruction(prog, OPCODE_BGNLOOP);
+      }
+      break;
+   case IR_END_LOOP:
+      {
+         struct prog_instruction *inst;
+         inst = new_instruction(prog, OPCODE_ENDLOOP);
+         assert(n->BranchNode);
+         assert(n->BranchNode->InstLocation >= 0);
+         /* The instruction BranchTarget points to top of loop */
+         inst->BranchTarget = n->BranchNode->InstLocation;
+         return inst;
+      }
+   case IR_CONT:
+      return new_instruction(prog, OPCODE_CONT);
+   case IR_BREAK:
+      {
+         struct prog_instruction *inst;
+         inst = new_instruction(prog, OPCODE_BRK);
+         inst->DstReg.CondMask = COND_TR;  /* always true */
+         return inst;
+      }
+   case IR_BEGIN_SUB:
+      return new_instruction(prog, OPCODE_BGNSUB);
+   case IR_END_SUB:
+      return new_instruction(prog, OPCODE_ENDSUB);
+   case IR_RETURN:
+      return new_instruction(prog, OPCODE_RET);
 
    default:
       _mesa_problem(NULL, "Unexpected IR opcode in emit()\n");

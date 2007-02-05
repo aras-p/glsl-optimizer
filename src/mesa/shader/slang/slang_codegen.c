@@ -47,6 +47,8 @@
 #include "slang_print.h"
 
 
+static GLboolean UseHighLevelInstructions = GL_TRUE;
+
 static slang_ir_node *
 _slang_gen_operation(slang_assemble_ctx * A, slang_operation *oper);
 
@@ -506,6 +508,7 @@ new_node(slang_ir_opcode op, slang_ir_node *left, slang_ir_node *right)
       n->Children[0] = left;
       n->Children[1] = right;
       n->Writemask = WRITEMASK_XYZW;
+      n->InstLocation = -1;
    }
    return n;
 }
@@ -563,6 +566,26 @@ new_jump(slang_atom target)
    slang_ir_node *n = new_node(IR_JUMP, NULL, NULL);
    if (n)
       n->Target = (char *) target;
+   return n;
+}
+
+
+static slang_ir_node *
+new_begin_loop(void)
+{
+   slang_ir_node *n = new_node(IR_BEGIN_LOOP, NULL, NULL);
+   return n;
+}
+
+
+static slang_ir_node *
+new_end_loop(slang_ir_node *beginNode)
+{
+   slang_ir_node *n = new_node(IR_END_LOOP, NULL, NULL);
+   assert(beginNode);
+   if (n) {
+      n->BranchNode = beginNode;
+   }
    return n;
 }
 
@@ -1304,7 +1327,7 @@ _slang_gen_function_call_name(slang_assemble_ctx *A, const char *name,
 
 
 /**
- * Generate IR tree for a while-loop.
+ * Generate IR tree for a while-loop.  Use BRA-nch instruction.
  */
 static slang_ir_node *
 _slang_gen_while(slang_assemble_ctx * A, const slang_operation *oper)
@@ -1313,7 +1336,7 @@ _slang_gen_while(slang_assemble_ctx * A, const slang_operation *oper)
     * label "__startWhile"
     * eval expr (child[0]), updating condcodes
     * branch if false to "__endWhile"
-    * code body
+    * body code
     * jump "__startWhile"
     * label "__endWhile"
     */
@@ -1348,6 +1371,51 @@ _slang_gen_while(slang_assemble_ctx * A, const slang_operation *oper)
    /* Pop this loop */
    A->CurLoopBreak = prevLoopBreak;
    A->CurLoopCont = prevLoopCont;
+
+   return tree;
+}
+
+
+/**
+ * Generate IR tree for a while-loop using high-level BGNLOOP/ENDLOOP,
+ * IF/ENDIF instructions.
+ */
+static slang_ir_node *
+_slang_gen_hl_while(slang_assemble_ctx * A, const slang_operation *oper)
+{
+   /*
+    * BGNLOOP
+    *    eval expr (child[0]), updating condcodes
+    *    IF !expr THEN
+    *       BRK
+    *    ENDIF
+    *    body code
+    * ENDLOOP
+    */
+   slang_ir_node *beginLoop, *endLoop, *ifThen, *endif;
+   slang_ir_node *brk, *cond, *body, *tree;
+
+   beginLoop = new_begin_loop();
+
+   cond = _slang_gen_operation(A, &oper->children[0]);
+   cond = new_node(IR_NOT, cond, NULL);
+   cond = _slang_gen_cond(cond);
+
+   ifThen = new_node(IR_IF, cond, NULL);
+   tree = new_seq(beginLoop, ifThen);
+
+   brk = new_node(IR_BREAK, NULL, NULL);
+   tree = new_seq(tree, brk);
+
+   endif = new_node(IR_ENDIF, NULL, NULL);
+   tree = new_seq(tree, endif);
+
+   body = _slang_gen_operation(A, &oper->children[1]);
+   if (body)
+      tree = new_seq(tree, body);
+
+   endLoop = new_end_loop(beginLoop);
+   tree = new_seq(tree, endLoop);
 
    return tree;
 }
@@ -1517,7 +1585,7 @@ _slang_gen_if(slang_assemble_ctx * A, const slang_operation *oper)
  * IF/ELSE/ENDIF instructions
  */
 static slang_ir_node *
-_slang_gen_if2(slang_assemble_ctx * A, const slang_operation *oper)
+_slang_gen_hl_if(slang_assemble_ctx * A, const slang_operation *oper)
 {
    /*
     * eval expr (child[0]), updating condcodes
@@ -1528,6 +1596,10 @@ _slang_gen_if2(slang_assemble_ctx * A, const slang_operation *oper)
     *    label "__else"
     *    "false" code block
     * label "__endif"
+    */
+   /* XXX special cases to check for:
+    * if body of conditiona is just a "break", emit a conditional break
+    * instruction.
     */
    const GLboolean haveElseClause = !_slang_is_noop(&oper->children[2]);
    slang_ir_node *ifNode, *cond, *trueBody, *elseNode, *falseBody, *endifNode;
@@ -2261,7 +2333,10 @@ _slang_gen_operation(slang_assemble_ctx * A, slang_operation *oper)
       return _slang_gen_operation(A, &oper->children[0]);
       break;
    case slang_oper_while:
-      return _slang_gen_while(A, oper);
+      if (UseHighLevelInstructions)
+         return _slang_gen_hl_while(A, oper);
+      else
+         return _slang_gen_while(A, oper);
    case slang_oper_do:
       return _slang_gen_do(A, oper);
    case slang_oper_for:
@@ -2427,8 +2502,9 @@ _slang_gen_operation(slang_assemble_ctx * A, slang_operation *oper)
    case slang_oper_identifier:
       return _slang_gen_variable(A, oper);
    case slang_oper_if:
-      if (A->program->Target == GL_FRAGMENT_PROGRAM_ARB) {
-         return _slang_gen_if(A, oper);
+      if (A->program->Target == GL_FRAGMENT_PROGRAM_ARB
+          && UseHighLevelInstructions) {
+         return _slang_gen_hl_if(A, oper);
       }
       else {
          /* XXX update tnl executor */
