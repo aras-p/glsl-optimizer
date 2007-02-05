@@ -143,9 +143,13 @@ typedef enum prog_opcode {
    OPCODE_ARL,       /*   X                X                     */
    OPCODE_ARL_NV,    /*                    2                     */
    OPCODE_ARR,       /*                    2                     */
+   OPCODE_BGNLOOP,   /*                                     opt  */
+   OPCODE_BGNSUB,    /*                                     opt  */
    OPCODE_BRA,       /*                    2                 X   */
+   OPCODE_BRK,       /*                    2                opt  */
    OPCODE_CAL,       /*                    2       2             */
    OPCODE_CMP,       /*            X                             */
+   OPCODE_CONT,      /*                                     opt  */
    OPCODE_COS,       /*            X       2       X         X   */
    OPCODE_DDX,       /*                            X         X   */
    OPCODE_DDY,       /*                            X         X   */
@@ -154,13 +158,15 @@ typedef enum prog_opcode {
    OPCODE_DPH,       /*   X        X       1.1                   */
    OPCODE_DST,       /*   X        X       X       X             */
    OPCODE_ELSE,      /*                                      X   */
-   OPCODE_END,       /*   X        X       X       X         X   */
-   OPCODE_ENDIF,      /*                                     X   */
+   OPCODE_END,       /*   X        X       X       X        opt  */
+   OPCODE_ENDIF,     /*                                     opt  */
+   OPCODE_ENDLOOP,   /*                                     opt  */
+   OPCODE_ENDSUB,    /*                                     opt  */
    OPCODE_EX2,       /*   X        X       2       X         X   */
    OPCODE_EXP,       /*   X                X                 X   */
    OPCODE_FLR,       /*   X        X       2       X         X   */
    OPCODE_FRC,       /*   X        X       2       X         X   */
-   OPCODE_IF,        /*                                      X   */
+   OPCODE_IF,        /*                                     opt  */
    OPCODE_INT,       /*                                      X   */
    OPCODE_KIL,       /*            X                             */
    OPCODE_KIL_NV,    /*                            X         X   */

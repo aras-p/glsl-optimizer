@@ -297,6 +297,32 @@ slang_print_ir(const slang_ir_node *n, int indent)
       printf("ENDIF\n");
       break;
 
+   case IR_BEGIN_SUB:
+      printf("BEGIN_SUB\n");
+      break;
+   case IR_END_SUB:
+      printf("END_SUB\n");
+      break;
+   case IR_RETURN:
+      printf("RETURN\n");
+      break;
+   case IR_CALL:
+      printf("CALL\n");
+      break;
+
+   case IR_BEGIN_LOOP:
+      printf("BEGIN_LOOP\n");
+      break;
+   case IR_END_LOOP:
+      printf("END_LOOP\n");
+      break;
+   case IR_CONT:
+      printf("CONT\n");
+      break;
+   case IR_BREAK:
+      printf("BREAK\n");
+      break;
+
    case IR_VAR:
       printf("VAR %s%s at %s  store %p\n",
              (n->Var ? (char *) n->Var->a_name : "TEMP"),
@@ -312,9 +338,6 @@ slang_print_ir(const slang_ir_node *n, int indent)
    case IR_FIELD:
       printf("FIELD %s of\n", n->Target);
       slang_print_ir(n->Children[0], indent+3);
-      break;
-   case IR_CALL:
-      printf("ASMCALL %s(%d args)\n", n->Target, 0/*XXX*/);
       break;
    case IR_FLOAT:
       printf("FLOAT %f %f %f %f\n",

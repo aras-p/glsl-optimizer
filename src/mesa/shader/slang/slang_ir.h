@@ -46,15 +46,27 @@ typedef enum
    IR_NOP = 0,
    IR_SEQ,     /* sequence (eval left, then right) */
    IR_SCOPE,   /* new variable scope (one child) */
+
    IR_LABEL,   /* target of a jump or cjump */
    IR_JUMP,    /* unconditional jump */
    IR_CJUMP0,  /* conditional jump if zero */
    IR_CJUMP1,  /* conditional jump if one (or non-zero) */
-   IR_COND,    /* conditional expression */
+   IR_COND,    /* conditional expression/predicate */
+
    IR_IF,      /* high-level IF */
    IR_ELSE,    /* high-level ELSE */
    IR_ENDIF,   /* high-level ENDIF */
-   IR_CALL,    /* call subroutine */
+
+   IR_BEGIN_SUB, /* begin subroutine */
+   IR_END_SUB,   /* end subroutine */
+   IR_RETURN,    /* return from subroutine */
+   IR_CALL,      /* call subroutine */
+
+   IR_BEGIN_LOOP,/* begin loop */
+   IR_END_LOOP,  /* end loop */
+   IR_CONT,      /* continue loop */
+   IR_BREAK,     /* break loop */
+
    IR_MOVE,
    IR_ADD,
    IR_SUB,
@@ -90,17 +102,22 @@ typedef enum
    IR_NOISE3,  /* noise(x, y, z) */
    IR_NOISE4,  /* noise(x, y, z, w) */
    IR_NOT,     /* logical not */
+
    IR_VAR,     /* variable reference */
    IR_VAR_DECL,/* var declaration */
+
    IR_ELEMENT, /* array element */
+   IR_FIELD,   /* struct field */
    IR_SWIZZLE, /* swizzled storage access */
+
    IR_TEX,     /* texture lookup */
    IR_TEXB,    /* texture lookup with LOD bias */
    IR_TEXP,    /* texture lookup with projection */
+
    IR_FLOAT,
-   IR_FIELD,
    IR_I_TO_F,  /* int[4] to float[4] conversion */
    IR_F_TO_I,  /* float[4] to int[4] conversion */
+
    IR_KILL     /* fragment kill/discard */
 } slang_ir_opcode;
 

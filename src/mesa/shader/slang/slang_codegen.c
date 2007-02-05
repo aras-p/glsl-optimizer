@@ -1463,7 +1463,7 @@ _slang_gen_for(slang_assemble_ctx * A, const slang_operation *oper)
 
 
 /**
- * Generate IR tree for an if/then/else conditional.
+ * Generate IR tree for an if/then/else conditional using BRAnch instructions.
  */
 static slang_ir_node *
 _slang_gen_if(slang_assemble_ctx * A, const slang_operation *oper)
@@ -1513,7 +1513,8 @@ _slang_gen_if(slang_assemble_ctx * A, const slang_operation *oper)
 
 
 /**
- * Use high-level IF/ELSE/ENDIF instructions
+ * Generate IR tree for an if/then/else conditional using high-level
+ * IF/ELSE/ENDIF instructions
  */
 static slang_ir_node *
 _slang_gen_if2(slang_assemble_ctx * A, const slang_operation *oper)

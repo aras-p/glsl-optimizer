@@ -675,6 +675,14 @@ execute_program( GLcontext *ctx,
                }
             }
             break;
+         case OPCODE_BGNLOOP: /* begin loop */
+            break;
+         case OPCODE_ENDLOOP: /* end loop */
+            break;
+         case OPCODE_BGNSUB: /* begin subroutine */
+            break;
+         case OPCODE_ENDSUB: /* end subroutine */
+            break;
          case OPCODE_BRA: /* conditional branch */
             {
                /* NOTE: The branch is conditional! */
@@ -691,6 +699,9 @@ execute_program( GLcontext *ctx,
                   */
                }
             }
+            break;
+         case OPCODE_BRK: /* break out of loop */
+            /* assert inside loop */
             break;
          case OPCODE_CAL: /* Call subroutine */
             {
@@ -721,6 +732,8 @@ execute_program( GLcontext *ctx,
                result[3] = a[3] < 0.0F ? b[3] : c[3];
                store_vector4( inst, machine, result );
             }
+            break;
+         case OPCODE_CONT: /* continue loop */
             break;
          case OPCODE_COS:
             {
