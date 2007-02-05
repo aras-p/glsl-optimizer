@@ -396,6 +396,10 @@ static int __glXFreeDisplayPrivate(XExtData *extension)
 	(*priv->driDisplay.destroyDisplay)(priv->dpy,
 					   priv->driDisplay.private);
     priv->driDisplay.private = NULL;
+    if (priv->driDisplay.createNewScreen) {
+        Xfree(priv->driDisplay.createNewScreen); /* free array of ptrs */
+        priv->driDisplay.createNewScreen = NULL;
+    }
 #endif
 
     Xfree((char*) priv);
