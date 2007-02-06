@@ -1036,6 +1036,7 @@ emit_not(slang_var_table *vt, slang_ir_node *n, struct gl_program *prog)
 
    free_temp_storage(vt, n->Children[0]);
 
+   inst->Comment = _mesa_strdup("NOT");
    return inst;
 }
 
@@ -1259,18 +1260,29 @@ emit(slang_var_table *vt, slang_ir_node *n, struct gl_program *prog)
          inst = new_instruction(prog, OPCODE_IF);
          inst->DstReg.CondMask = COND_NE;  /* if cond is non-zero */
          inst->DstReg.CondSwizzle = SWIZZLE_X;
+         n->InstLocation = prog->NumInstructions - 1;
          return inst;
       }
    case IR_ELSE:
       {
          struct prog_instruction *inst;
+         n->InstLocation = prog->NumInstructions;
          inst = new_instruction(prog, OPCODE_ELSE);
+         /* point IF's BranchTarget just after this instruction */
+         assert(n->BranchNode);
+         assert(n->BranchNode->InstLocation >= 0);
+         prog->Instructions[n->BranchNode->InstLocation].BranchTarget = prog->NumInstructions;
          return inst;
       }
    case IR_ENDIF:
       {
          struct prog_instruction *inst;
+         n->InstLocation = prog->NumInstructions;
          inst = new_instruction(prog, OPCODE_ENDIF);
+         /* point ELSE's BranchTarget to just after this inst */
+         assert(n->BranchNode);
+         assert(n->BranchNode->InstLocation >= 0);
+         prog->Instructions[n->BranchNode->InstLocation].BranchTarget = prog->NumInstructions;
          return inst;
       }
 

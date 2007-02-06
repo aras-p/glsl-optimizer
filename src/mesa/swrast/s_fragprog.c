@@ -897,62 +897,17 @@ execute_program( GLcontext *ctx,
                   /* do if-clause (just continue execution) */
                }
                else {
-                  /* search for else-clause or endif */
-                  /* XXX could encode location of the else/endif statement
-                   * in the IF instruction to avoid searching...
-                   */
-                  GLint ifDepth = 1;
-                  do {
-                     pc++;
-                     inst = program->Base.Instructions + pc;
-                     if (inst->Opcode == OPCODE_END) {
-                        /* mal-formed program! */
-                        _mesa_problem(ctx, "END found before ELSE/ENDIF");
-                        return GL_FALSE;
-                     }
-                     else if (inst->Opcode == OPCODE_IF) {
-                        /* nested if */
-                        ifDepth++;
-                     }
-                     else if (inst->Opcode == OPCODE_ELSE) {
-                        if (ifDepth == 1) {
-                           /* ok, continue normal execution */
-                           break;
-                        }
-                     }
-                     else if (inst->Opcode == OPCODE_ENDIF) {
-                        ifDepth--;
-                        if (ifDepth == 0) {
-                           /* ok, continue normal execution */
-                           break;
-                        }
-                     }
-                     assert(ifDepth >= 0);
-                  } while (pc < maxInst);
+                  /* go to the instruction after ELSE or ENDIF */
+                  assert(inst->BranchTarget >= 0);
+                  pc = inst->BranchTarget - 1;
                }
             }
             break;
          case OPCODE_ELSE:
             {
-               /* find/goto ENDIF */
-               GLint ifDepth = 1;
-               do {
-                  pc++;
-                  inst = program->Base.Instructions + pc;
-                  if (inst->Opcode == OPCODE_END) {
-                     /* mal-formed program! */
-                     abort();
-                  }
-                  else if (inst->Opcode == OPCODE_IF) {
-                     ifDepth++;
-                  }
-                  else if (inst->Opcode == OPCODE_ENDIF) {
-                     ifDepth--;
-                     if (ifDepth == 0)
-                        break;
-                  }
-                  assert(ifDepth >= 0);
-               } while (pc < maxInst);
+               /* goto ENDIF */
+               assert(inst->BranchTarget >= 0);
+               pc = inst->BranchTarget - 1;
             }
             break;
          case OPCODE_ENDIF:

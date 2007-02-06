@@ -319,13 +319,14 @@ _mesa_print_instruction(const struct prog_instruction *inst, GLint indent)
       print_comment(inst);
       break;
    case OPCODE_IF:
-      _mesa_printf("IF (%s%s)",
+      _mesa_printf("IF (%s%s) (if false, goto %d)",
                    condcode_string(inst->DstReg.CondMask),
-                   swizzle_string(inst->DstReg.CondSwizzle, 0, GL_FALSE));
+                   swizzle_string(inst->DstReg.CondSwizzle, 0, GL_FALSE),
+                   inst->BranchTarget);
       print_comment(inst);
       return indent + 3;
    case OPCODE_ELSE:
-      _mesa_printf("ELSE\n");
+      _mesa_printf("ELSE (goto %d)\n", inst->BranchTarget);
       return indent + 3;
    case OPCODE_ENDIF:
       _mesa_printf("ENDIF\n");

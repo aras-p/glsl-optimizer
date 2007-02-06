@@ -591,6 +591,47 @@ new_end_loop(slang_ir_node *beginNode)
 
 
 /**
+ * Child[0] is the condition.
+ * XXX we might re-design IR_IF so Children[1] is the "then" body and
+ * Children[0] is the "else" body.
+ */
+static slang_ir_node *
+new_if(slang_ir_node *cond)
+{
+   slang_ir_node *n = new_node(IR_IF, NULL, NULL);
+   assert(cond);
+   if (n) {
+      n->Children[0] = cond;
+   }
+   return n;
+}
+
+
+static slang_ir_node *
+new_else(slang_ir_node *ifNode)
+{
+   slang_ir_node *n = new_node(IR_ELSE, NULL, NULL);
+   assert(ifNode);
+   if (n) {
+      n->BranchNode = ifNode;
+   }
+   return n;
+}
+
+
+static slang_ir_node *
+new_endif(slang_ir_node *elseOrIfNode)
+{
+   slang_ir_node *n = new_node(IR_ENDIF, NULL, NULL);
+   assert(elseOrIfNode);
+   if (n) {
+      n->BranchNode = elseOrIfNode;
+   }
+   return n;
+}
+
+
+/**
  * New IR_VAR node - a reference to a previously declared variable.
  */
 static slang_ir_node *
@@ -1401,13 +1442,13 @@ _slang_gen_hl_while(slang_assemble_ctx * A, const slang_operation *oper)
    cond = new_node(IR_NOT, cond, NULL);
    cond = _slang_gen_cond(cond);
 
-   ifThen = new_node(IR_IF, cond, NULL);
+   ifThen = new_if(cond);
    tree = new_seq(beginLoop, ifThen);
 
    brk = new_node(IR_BREAK, NULL, NULL);
    tree = new_seq(tree, brk);
 
-   endif = new_node(IR_ENDIF, NULL, NULL);
+   endif = new_endif(ifThen);
    tree = new_seq(tree, endif);
 
    body = _slang_gen_operation(A, &oper->children[1]);
@@ -1589,13 +1630,11 @@ _slang_gen_hl_if(slang_assemble_ctx * A, const slang_operation *oper)
 {
    /*
     * eval expr (child[0]), updating condcodes
-    * branch if false to _else or _endif
-    * "true" code block
-    * if haveElseClause clause:
-    *    jump "__endif"
-    *    label "__else"
-    *    "false" code block
-    * label "__endif"
+    * IF expr THEN
+    *    if-body code
+    * ELSE
+    *    else-body code
+    * ENDIF
     */
    /* XXX special cases to check for:
     * if body of conditiona is just a "break", emit a conditional break
@@ -1608,21 +1647,20 @@ _slang_gen_hl_if(slang_assemble_ctx * A, const slang_operation *oper)
    cond = _slang_gen_operation(A, &oper->children[0]);
    cond = _slang_gen_cond(cond);
    /*assert(cond->Store);*/
-   ifNode = new_node(IR_IF, cond, NULL);
+   ifNode = new_if(cond);
 
    trueBody = _slang_gen_operation(A, &oper->children[1]);
    tree = new_seq(ifNode, trueBody);
 
    if (haveElseClause) {
-      /* else clause */
-      elseNode = new_node(IR_ELSE, NULL, NULL);
+      elseNode = new_else(ifNode);
       tree = new_seq(tree, elseNode);
 
       falseBody = _slang_gen_operation(A, &oper->children[2]);
       tree = new_seq(tree, falseBody);
    }
 
-   endifNode = new_node(IR_ENDIF, NULL, NULL);
+   endifNode = new_endif(haveElseClause ? elseNode : ifNode);
    tree = new_seq(tree, endifNode);
 
    return tree;
