@@ -332,17 +332,17 @@ _mesa_print_instruction(const struct prog_instruction *inst, GLint indent)
       _mesa_printf("ENDIF\n");
       break;
    case OPCODE_BGNLOOP:
-      _mesa_printf("BGNLOOP\n");
+      _mesa_printf("BGNLOOP (end at %d)\n", inst->BranchTarget);
       return indent + 3;
    case OPCODE_ENDLOOP:
       _mesa_printf("ENDLOOP (goto %d)\n", inst->BranchTarget);
       break;
    case OPCODE_BRK:
       /* XXX just like BRA */
-      _mesa_printf("BRK %u (%s%s)",
-                   inst->BranchTarget,
+      _mesa_printf("BRK (%s%s) (for loop beginning at %d)",
                    condcode_string(inst->DstReg.CondMask),
-                   swizzle_string(inst->DstReg.CondSwizzle, 0, GL_FALSE));
+                   swizzle_string(inst->DstReg.CondSwizzle, 0, GL_FALSE),
+                   inst->BranchTarget);
       print_comment(inst);
       break;
    case OPCODE_BGNSUB:

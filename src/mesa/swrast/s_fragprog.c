@@ -625,7 +625,7 @@ execute_program( GLcontext *ctx,
                  GLuint column )
 {
    const GLuint MAX_EXEC = 10000;
-   GLint pc, total = 0, loopDepth = 0;
+   GLint pc, total = 0;
 
    if (DEBUG_FRAG) {
       printf("execute fragment program --------------------\n");
@@ -676,11 +676,8 @@ execute_program( GLcontext *ctx,
             }
             break;
          case OPCODE_BGNLOOP: /* begin loop */
-            loopDepth++;
             break;
          case OPCODE_ENDLOOP: /* end loop */
-            loopDepth--;
-            assert(loopDepth >= 0);
             /* subtract 1 here since pc is incremented by for(pc) loop */
             pc = inst->BranchTarget - 1; /* go to matching BNGLOOP */
             break;
@@ -706,19 +703,18 @@ execute_program( GLcontext *ctx,
             }
             break;
          case OPCODE_BRK: /* break out of loop */
-            if (loopDepth == 0) {
-               _mesa_problem(ctx, "BRK not inside a loop");
+            {
+               /* The location of the ENDLOOP instruction is saved in the
+                * BGNLOOP instruction.  Get that instruction and jump to
+                * its BranchTarget + 1.
+                */
+               const struct prog_instruction *loopBeginInst
+                  = program->Base.Instructions + inst->BranchTarget;
+               ASSERT(loopBeginInst->Opcode == OPCODE_BGNLOOP);
+               ASSERT(loopBeginInst->BranchTarget >= 0);
+               /* we'll add one at bottom of for-loop */
+               pc = loopBeginInst->BranchTarget;
             }
-            /* search for OPCODE_ENDLOOP */
-            do {
-               pc++;
-               inst = program->Base.Instructions + pc;
-               if (inst->Opcode == OPCODE_ENDLOOP) {
-                  loopDepth--;
-                  assert(loopDepth >= 0);
-                  break;
-               }
-            } while (pc < maxInst);
             break;
          case OPCODE_CAL: /* Call subroutine */
             {

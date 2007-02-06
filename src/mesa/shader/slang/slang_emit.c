@@ -1265,24 +1265,29 @@ emit(slang_var_table *vt, slang_ir_node *n, struct gl_program *prog)
       }
    case IR_ELSE:
       {
-         struct prog_instruction *inst;
+         struct prog_instruction *inst, *ifInst;
          n->InstLocation = prog->NumInstructions;
          inst = new_instruction(prog, OPCODE_ELSE);
          /* point IF's BranchTarget just after this instruction */
          assert(n->BranchNode);
          assert(n->BranchNode->InstLocation >= 0);
-         prog->Instructions[n->BranchNode->InstLocation].BranchTarget = prog->NumInstructions;
+         ifInst = prog->Instructions + n->BranchNode->InstLocation;
+         assert(ifInst->Opcode == OPCODE_IF);
+         ifInst->BranchTarget = prog->NumInstructions;
          return inst;
       }
    case IR_ENDIF:
       {
-         struct prog_instruction *inst;
+         struct prog_instruction *inst, *elseInst;
          n->InstLocation = prog->NumInstructions;
          inst = new_instruction(prog, OPCODE_ENDIF);
          /* point ELSE's BranchTarget to just after this inst */
          assert(n->BranchNode);
          assert(n->BranchNode->InstLocation >= 0);
-         prog->Instructions[n->BranchNode->InstLocation].BranchTarget = prog->NumInstructions;
+         elseInst = prog->Instructions + n->BranchNode->InstLocation;
+         assert(elseInst->Opcode == OPCODE_ELSE ||
+                elseInst->Opcode == OPCODE_IF);
+         elseInst->BranchTarget = prog->NumInstructions;
          return inst;
       }
 
@@ -1295,12 +1300,15 @@ emit(slang_var_table *vt, slang_ir_node *n, struct gl_program *prog)
       break;
    case IR_END_LOOP:
       {
-         struct prog_instruction *inst;
+         struct prog_instruction *inst, *beginInst;
          inst = new_instruction(prog, OPCODE_ENDLOOP);
          assert(n->BranchNode);
          assert(n->BranchNode->InstLocation >= 0);
          /* The instruction BranchTarget points to top of loop */
          inst->BranchTarget = n->BranchNode->InstLocation;
+         /* Update BEGIN_LOOP's BranchTarget to point to this instruction */
+         beginInst = prog->Instructions + n->BranchNode->InstLocation;
+         beginInst->BranchTarget = prog->NumInstructions - 1;
          return inst;
       }
    case IR_CONT:
@@ -1310,6 +1318,12 @@ emit(slang_var_table *vt, slang_ir_node *n, struct gl_program *prog)
          struct prog_instruction *inst;
          inst = new_instruction(prog, OPCODE_BRK);
          inst->DstReg.CondMask = COND_TR;  /* always true */
+         /* This instruction's branch target is top of loop, not bottom of
+          * loop because we don't know where it is yet!
+          */
+         assert(n->BranchNode);
+         assert(n->BranchNode->InstLocation >= 0);
+         inst->BranchTarget = n->BranchNode->InstLocation;
          return inst;
       }
    case IR_BEGIN_SUB:

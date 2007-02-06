@@ -590,6 +590,18 @@ new_end_loop(slang_ir_node *beginNode)
 }
 
 
+static slang_ir_node *
+new_break(slang_ir_node *beginNode)
+{
+   slang_ir_node *n = new_node(IR_BREAK, NULL, NULL);
+   assert(beginNode);
+   if (n) {
+      n->BranchNode = beginNode;
+   }
+   return n;
+}
+
+
 /**
  * Child[0] is the condition.
  * XXX we might re-design IR_IF so Children[1] is the "then" body and
@@ -1430,7 +1442,7 @@ _slang_gen_hl_while(slang_assemble_ctx * A, const slang_operation *oper)
     *    IF !expr THEN
     *       BRK
     *    ENDIF
-    *    body code
+    *    body code (child[1])
     * ENDLOOP
     */
    slang_ir_node *beginLoop, *endLoop, *ifThen, *endif;
@@ -1445,7 +1457,7 @@ _slang_gen_hl_while(slang_assemble_ctx * A, const slang_operation *oper)
    ifThen = new_if(cond);
    tree = new_seq(beginLoop, ifThen);
 
-   brk = new_node(IR_BREAK, NULL, NULL);
+   brk = new_break(beginLoop);
    tree = new_seq(tree, brk);
 
    endif = new_endif(ifThen);
@@ -1524,6 +1536,73 @@ _slang_gen_for(slang_assemble_ctx * A, const slang_operation *oper)
     * incr code (child[2])
     * jump "__startFor"
     * label "__endFor"
+    */
+   slang_atom startAtom = slang_atom_pool_gen(A->atoms, "__startFor");
+   slang_atom contAtom = slang_atom_pool_gen(A->atoms, "__continueFor");
+   slang_atom endAtom = slang_atom_pool_gen(A->atoms, "__endFor");
+   slang_ir_node *init, *startLab, *cond, *bra, *body, *contLab;
+   slang_ir_node *incr, *jump, *endLab, *tree;
+   slang_atom prevLoopBreak = A->CurLoopBreak;
+   slang_atom prevLoopCont = A->CurLoopCont;
+
+   /* Push this loop */
+   A->CurLoopBreak = endAtom;
+   A->CurLoopCont = contAtom;
+
+   init = _slang_gen_operation(A, &oper->children[0]);
+   startLab = new_label(startAtom);
+   tree = new_seq(init, startLab);
+
+   cond = _slang_gen_operation(A, &oper->children[1]);
+   cond = _slang_gen_cond(cond);
+   tree = new_seq(tree, cond);
+
+   bra = new_cjump(endAtom, 0);
+   tree = new_seq(tree, bra);
+
+   body = _slang_gen_operation(A, &oper->children[3]);
+   tree = new_seq(tree, body);
+
+   contLab = new_label(contAtom);
+   tree = new_seq(tree, contLab);
+
+   incr = _slang_gen_operation(A, &oper->children[2]);
+   tree = new_seq(tree, incr);
+
+   jump = new_jump(startAtom);
+   tree = new_seq(tree, jump);
+
+   endLab = new_label(endAtom);
+   tree = new_seq(tree, endLab);
+
+   /* Pop this loop */
+   A->CurLoopBreak = prevLoopBreak;
+   A->CurLoopCont = prevLoopCont;
+
+   return tree;
+}
+
+
+/**
+ * Generate IR tree for a for-loop, using high-level BGNLOOP/ENDLOOP and
+ * IF/ENDIF instructions.
+ *
+ * XXX note done yet!
+ */
+static slang_ir_node *
+_slang_gen_hl_for(slang_assemble_ctx * A, const slang_operation *oper)
+{
+   /*
+    * init code (child[0])
+    * BGNLOOP
+    *    eval expr (child[1]), updating condcodes
+    *    IF !expr THEN
+    *       BRK
+    *    ENDIF
+    *    code body (child[3])
+    *    label "__continueFor"   // jump here for "continue"
+    *    incr code (child[2])
+    * ENDLOOP
     */
    slang_atom startAtom = slang_atom_pool_gen(A->atoms, "__startFor");
    slang_atom contAtom = slang_atom_pool_gen(A->atoms, "__continueFor");
@@ -2378,16 +2457,21 @@ _slang_gen_operation(slang_assemble_ctx * A, slang_operation *oper)
    case slang_oper_do:
       return _slang_gen_do(A, oper);
    case slang_oper_for:
-      return _slang_gen_for(A, oper);
+      if (UseHighLevelInstructions)
+         return _slang_gen_hl_for(A, oper);
+      else
+         return _slang_gen_for(A, oper);
    case slang_oper_break:
       if (!A->CurLoopBreak) {
          RETURN_ERROR("'break' not in loop", 0);
       }
+      /* XXX emit IR_BREAK instruction */
       return new_jump(A->CurLoopBreak);
    case slang_oper_continue:
       if (!A->CurLoopCont) {
          RETURN_ERROR("'continue' not in loop", 0);
       }
+      /* XXX emit IR_CONT instruction */
       return new_jump(A->CurLoopCont);
    case slang_oper_discard:
       return new_node(IR_KILL, NULL, NULL);
