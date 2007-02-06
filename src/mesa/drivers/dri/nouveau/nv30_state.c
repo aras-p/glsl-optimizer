@@ -811,8 +811,6 @@ static GLboolean nv30InitCard(nouveauContextPtr nmesa)
 	OUT_RING(0);
 	BEGIN_RING_SIZE(NvSub3D, 0x1d80, 1);
 	OUT_RING(3);
-	BEGIN_RING_SIZE(NvSub3D, 0x1450, 1);
-	OUT_RING(0x00030004);
 	
 	/* NEW */
        	BEGIN_RING_SIZE(NvSub3D, 0x1e98, 1);
@@ -839,6 +837,9 @@ static GLboolean nv30InitCard(nouveauContextPtr nmesa)
 
         BEGIN_RING_SIZE(NvSub3D, 0x1d88, 1);
         OUT_RING(0x00001200);
+
+	BEGIN_RING_SIZE(NvSub3D, NV30_TCL_PRIMITIVE_3D_RC_ENABLE, 1);
+	OUT_RING       (0);
 
 	return GL_TRUE;
 }

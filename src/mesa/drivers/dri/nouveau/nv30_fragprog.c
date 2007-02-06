@@ -46,9 +46,18 @@ NV30FPUploadToHW(GLcontext *ctx, nouveauShader *nvs)
     */
    BEGIN_RING_SIZE(NvSub3D, NV30_TCL_PRIMITIVE_3D_FP_ACTIVE_PROGRAM, 1);
    OUT_RING       (offset | 1);
-   BEGIN_RING_SIZE(NvSub3D, 0x1d60 /*NV30_TCL_PRIMITIVE_3D_FP_CONTROL*/, 1);
-   OUT_RING       ((priv->NV30FP.uses_kil <<  7) |
-		   (priv->NV30FP.num_regs << 24));
+   if (nmesa->screen->card->type == NV_30) {  
+	   BEGIN_RING_SIZE(NvSub3D,
+			   0x1d60 /*NV30_TCL_PRIMITIVE_3D_FP_CONTROL*/, 1);
+	   OUT_RING       ((priv->NV30FP.uses_kil << 7));
+	   BEGIN_RING_SIZE(NvSub3D, 0x1450, 1);
+	   OUT_RING       (priv->NV30FP.num_regs << 16);
+   } else {
+	   BEGIN_RING_SIZE(NvSub3D,
+			   0x1d60 /*NV30_TCL_PRIMITIVE_3D_FP_CONTROL*/, 1);
+	   OUT_RING       ((priv->NV30FP.uses_kil <<  7) |
+			   (priv->NV30FP.num_regs << 24));
+   }
 }
 
 static void

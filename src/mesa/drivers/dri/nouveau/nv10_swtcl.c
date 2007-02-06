@@ -527,6 +527,16 @@ static void nv10ChooseVertexState( GLcontext *ctx )
 		nv10OutputVertexFormat(nmesa);
 	}
 
+	if (nmesa->screen->card->type == NV_30) {
+		nouveauShader *fp;
+		
+		if (ctx->FragmentProgram.Enabled) {
+			fp = (nouveauShader *) ctx->FragmentProgram.Current;
+			nvsUpdateShader(ctx, fp);
+		} else
+			nvsUpdateShader(ctx, nmesa->passthrough_fp);
+	}
+
 	if (nmesa->screen->card->type >= NV_40) {
 		/* Ensure passthrough shader is being used, and mvp matrix
 		 * is up to date

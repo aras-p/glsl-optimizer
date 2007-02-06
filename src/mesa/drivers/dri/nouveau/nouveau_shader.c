@@ -220,6 +220,21 @@ nvsBuildPassthroughVP(GLcontext *ctx)
 					      vp_text);
 }
 
+static void
+nvsBuildPassthroughFP(GLcontext *ctx)
+{
+	nouveauContextPtr nmesa = NOUVEAU_CONTEXT(ctx);
+
+	const char *fp_text =
+		"!!ARBfp1.0\n"
+		"MOV result.color, fragment.color;\n"
+		"END";
+
+	nmesa->passthrough_fp = nvsBuildTextShader(ctx,
+						   GL_FRAGMENT_PROGRAM_ARB,
+						   fp_text);
+}
+
 void
 nouveauShaderInitFuncs(GLcontext * ctx)
 {
@@ -248,6 +263,10 @@ nouveauShaderInitFuncs(GLcontext * ctx)
     */
    if (nmesa->screen->card->type >= NV_40)
       nvsBuildPassthroughVP(ctx);
+
+   /* Needed on NV30, even when using swtcl, if you want to get colours */
+   if (nmesa->screen->card->type >= NV_30)
+      nvsBuildPassthroughFP(ctx);
 
    ctx->Const.VertexProgram.MaxNativeInstructions    = nmesa->VPfunc.MaxInst;
    ctx->Const.VertexProgram.MaxNativeAluInstructions = nmesa->VPfunc.MaxInst;
