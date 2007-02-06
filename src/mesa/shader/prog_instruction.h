@@ -400,6 +400,10 @@ struct prog_instruction
 
    /**
     * For BRA and CAL instructions, the location to jump to.
+    * For BGNLOOP, points to ENDLOOP (and vice-versa).
+    * For BRK, points to BGNLOOP (which points to ENDLOOP).
+    * For IF, points to else or endif.
+    * For ELSE, points to endif.
     */
    GLuint BranchTarget;
 
