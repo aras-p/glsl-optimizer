@@ -1303,7 +1303,9 @@ emit(slang_var_table *vt, slang_ir_node *n, struct gl_program *prog)
 
    case IR_LOOP:
       {
-         struct prog_instruction *beginInst;
+         struct prog_instruction *beginInst, *endInst;
+         GLuint endInstLoc;
+         slang_ir_node *p;
 
          /* save location of this instruction, used by OPCODE_ENDLOOP */
          n->InstLocation = prog->NumInstructions;
@@ -1312,27 +1314,48 @@ emit(slang_var_table *vt, slang_ir_node *n, struct gl_program *prog)
          /* body */
          emit(vt, n->Children[0], prog);
 
-         inst = new_instruction(prog, OPCODE_ENDLOOP);
-         /* The instruction BranchTarget points to top of loop */
-         inst->BranchTarget = n->InstLocation;
+         endInstLoc = prog->NumInstructions;
+         endInst = new_instruction(prog, OPCODE_ENDLOOP);
+         /* The ENDLOOP's BranchTarget points to top of loop */
+         endInst->BranchTarget = n->InstLocation;
          /* Update BGNLOOP's BranchTarget to point to this instruction */
          beginInst = prog->Instructions + n->InstLocation;
          beginInst->BranchTarget = prog->NumInstructions - 1;
-         return inst;
+
+         /* Done emitting loop code.  Now walk over the loop's linked list
+          * of BREAK and CONT nodes, filling in their BranchTarget fields.
+          */
+         for (p = n->BranchNode; p; p = p->BranchNode) {
+            if (p->Opcode == IR_BREAK) {
+               struct prog_instruction *brkInst
+                  = prog->Instructions + p->InstLocation;
+               assert(brkInst->Opcode == OPCODE_BRK);
+               brkInst->BranchTarget = endInstLoc + 1;
+            }
+            else {
+               assert(p->Opcode == IR_CONT);
+               struct prog_instruction *contInst
+                  = prog->Instructions + p->InstLocation;
+               assert(contInst->Opcode == OPCODE_CONT);
+               contInst->BranchTarget = endInstLoc;
+            }
+         }
+         return NULL;
       }
    case IR_CONT:
-      return new_instruction(prog, OPCODE_CONT);
+      {
+         struct prog_instruction *inst;
+         n->InstLocation = prog->NumInstructions;
+         inst = new_instruction(prog, OPCODE_CONT);
+         inst->DstReg.CondMask = COND_TR;  /* always true */
+         return inst;
+      }
    case IR_BREAK:
       {
          struct prog_instruction *inst;
+         n->InstLocation = prog->NumInstructions;
          inst = new_instruction(prog, OPCODE_BRK);
          inst->DstReg.CondMask = COND_TR;  /* always true */
-         /* This instruction's branch target is top of loop, not bottom of
-          * loop because we don't know where it is yet!
-          */
-         assert(n->BranchNode);
-         assert(n->BranchNode->InstLocation >= 0);
-         inst->BranchTarget = n->BranchNode->InstLocation;
          return inst;
       }
 

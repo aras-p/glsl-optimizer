@@ -608,7 +608,24 @@ new_break(slang_ir_node *loopNode)
    assert(loopNode);
    assert(loopNode->Opcode == IR_LOOP);
    if (n) {
-      n->BranchNode = loopNode;
+      /* insert this node at head of linked list */
+      n->BranchNode = loopNode->BranchNode;
+      loopNode->BranchNode = n;
+   }
+   return n;
+}
+
+
+static slang_ir_node *
+new_cont(slang_ir_node *loopNode)
+{
+   slang_ir_node *n = new_node0(IR_CONT);
+   assert(loopNode);
+   assert(loopNode->Opcode == IR_LOOP);
+   if (n) {
+      /* insert this node at head of linked list */
+      n->BranchNode = loopNode->BranchNode;
+      loopNode->BranchNode = n;
    }
    return n;
 }
@@ -2434,11 +2451,15 @@ _slang_gen_operation(slang_assemble_ctx * A, slang_operation *oper)
          return new_jump(A->CurLoopBreak);
       }
    case slang_oper_continue:
-      if (!A->CurLoopCont) {
+      if (!A->CurLoop && !A->CurLoopCont) {
          RETURN_ERROR("'continue' not in loop", 0);
       }
-      /* XXX emit IR_CONT instruction */
-      return new_jump(A->CurLoopCont);
+      if (UseHighLevelInstructions) {
+         return new_cont(A->CurLoop);
+      }
+      else {
+         return new_jump(A->CurLoopCont);
+      }
    case slang_oper_discard:
       return new_node0(IR_KILL);
 

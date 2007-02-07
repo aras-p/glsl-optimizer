@@ -338,8 +338,14 @@ _mesa_print_instruction(const struct prog_instruction *inst, GLint indent)
       _mesa_printf("ENDLOOP (goto %d)\n", inst->BranchTarget);
       break;
    case OPCODE_BRK:
-      /* XXX just like BRA */
-      _mesa_printf("BRK (%s%s) (for loop beginning at %d)",
+      _mesa_printf("BRK (%s%s) (goto %d)",
+                   condcode_string(inst->DstReg.CondMask),
+                   swizzle_string(inst->DstReg.CondSwizzle, 0, GL_FALSE),
+                   inst->BranchTarget);
+      print_comment(inst);
+      break;
+   case OPCODE_CONT:
+      _mesa_printf("CONT (%s%s) (goto %d)",
                    condcode_string(inst->DstReg.CondMask),
                    swizzle_string(inst->DstReg.CondSwizzle, 0, GL_FALSE),
                    inst->BranchTarget);
