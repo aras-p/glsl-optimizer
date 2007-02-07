@@ -2295,25 +2295,15 @@ _slang_gen_operation(slang_assemble_ctx * A, slang_operation *oper)
    case slang_oper_while:
       return _slang_gen_while(A, oper);
    case slang_oper_break:
-      if (!A->CurLoop && !A->CurLoopBreak) {
+      if (!A->CurLoop) {
          RETURN_ERROR("'break' not in loop", 0);
       }
-      if (UseHighLevelInstructions) {
-         return new_break(A->CurLoop);
-      }
-      else {
-         return new_jump(A->CurLoopBreak);
-      }
+      return new_break(A->CurLoop);
    case slang_oper_continue:
-      if (!A->CurLoop && !A->CurLoopCont) {
+      if (!A->CurLoop) {
          RETURN_ERROR("'continue' not in loop", 0);
       }
-      if (UseHighLevelInstructions) {
-         return new_cont(A->CurLoop);
-      }
-      else {
-         return new_jump(A->CurLoopCont);
-      }
+      return new_cont(A->CurLoop);
    case slang_oper_discard:
       return new_node0(IR_KILL);
 
