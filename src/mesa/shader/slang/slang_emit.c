@@ -317,11 +317,11 @@ slang_print_ir(const slang_ir_node *n, int indent)
       printf("CALL\n");
       break;
 
-   case IR_BEGIN_LOOP:
-      printf("BEGIN_LOOP\n");
-      break;
-   case IR_END_LOOP:
-      printf("END_LOOP\n");
+   case IR_LOOP:
+      printf("LOOP\n");
+      slang_print_ir(n->Children[0], indent+3);
+      spaces(indent);
+      printf("ENDLOOP\n");
       break;
    case IR_CONT:
       printf("CONT\n");
@@ -1301,23 +1301,22 @@ emit(slang_var_table *vt, slang_ir_node *n, struct gl_program *prog)
    case IR_IF:
       return emit_if(vt, n, prog);
 
-   case IR_BEGIN_LOOP:
+   case IR_LOOP:
       {
+         struct prog_instruction *beginInst;
+
          /* save location of this instruction, used by OPCODE_ENDLOOP */
          n->InstLocation = prog->NumInstructions;
          (void) new_instruction(prog, OPCODE_BGNLOOP);
-      }
-      break;
-   case IR_END_LOOP:
-      {
-         struct prog_instruction *inst, *beginInst;
+
+         /* body */
+         emit(vt, n->Children[0], prog);
+
          inst = new_instruction(prog, OPCODE_ENDLOOP);
-         assert(n->BranchNode);
-         assert(n->BranchNode->InstLocation >= 0);
          /* The instruction BranchTarget points to top of loop */
-         inst->BranchTarget = n->BranchNode->InstLocation;
-         /* Update BEGIN_LOOP's BranchTarget to point to this instruction */
-         beginInst = prog->Instructions + n->BranchNode->InstLocation;
+         inst->BranchTarget = n->InstLocation;
+         /* Update BGNLOOP's BranchTarget to point to this instruction */
+         beginInst = prog->Instructions + n->InstLocation;
          beginInst->BranchTarget = prog->NumInstructions - 1;
          return inst;
       }
@@ -1336,12 +1335,16 @@ emit(slang_var_table *vt, slang_ir_node *n, struct gl_program *prog)
          inst->BranchTarget = n->BranchNode->InstLocation;
          return inst;
       }
+
    case IR_BEGIN_SUB:
       return new_instruction(prog, OPCODE_BGNSUB);
    case IR_END_SUB:
       return new_instruction(prog, OPCODE_ENDSUB);
    case IR_RETURN:
       return new_instruction(prog, OPCODE_RET);
+
+   case IR_NOP:
+      return NULL;
 
    default:
       _mesa_problem(NULL, "Unexpected IR opcode in emit()\n");

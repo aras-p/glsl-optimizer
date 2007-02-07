@@ -490,10 +490,12 @@ static void
 _slang_free_ir_tree(slang_ir_node *n)
 {
 #if 0
+   GLuint i;
    if (!n)
       return;
-   _slang_free_ir_tree(n->Children[0]);
-   _slang_free_ir_tree(n->Children[1]);
+   for (i = 0; i < 3; i++)
+      _slang_free_ir_tree(n->Children[i]);
+   /* Do not free n->BranchNode since it's a child elsewhere */
    free(n);
 #endif
 }
@@ -537,9 +539,10 @@ new_node0(slang_ir_opcode op)
 static slang_ir_node *
 new_seq(slang_ir_node *left, slang_ir_node *right)
 {
-   /* XXX if either left or right is null, just return pointer to other?? */
-   assert(left);
-   assert(right);
+   if (!left)
+      return right;
+   if (!right)
+      return left;
    return new_node2(IR_SEQ, left, right);
 }
 
@@ -592,32 +595,20 @@ new_jump(slang_atom target)
 
 
 static slang_ir_node *
-new_begin_loop(void)
+new_loop(slang_ir_node *body)
 {
-   slang_ir_node *n = new_node0(IR_BEGIN_LOOP);
-   return n;
+   return new_node1(IR_LOOP, body);
 }
 
 
 static slang_ir_node *
-new_end_loop(slang_ir_node *beginNode)
-{
-   slang_ir_node *n = new_node0(IR_END_LOOP);
-   assert(beginNode);
-   if (n) {
-      n->BranchNode = beginNode;
-   }
-   return n;
-}
-
-
-static slang_ir_node *
-new_break(slang_ir_node *beginNode)
+new_break(slang_ir_node *loopNode)
 {
    slang_ir_node *n = new_node0(IR_BREAK);
-   assert(beginNode);
+   assert(loopNode);
+   assert(loopNode->Opcode == IR_LOOP);
    if (n) {
-      n->BranchNode = beginNode;
+      n->BranchNode = loopNode;
    }
    return n;
 }
@@ -1415,43 +1406,43 @@ _slang_gen_while(slang_assemble_ctx * A, const slang_operation *oper)
 
 
 /**
- * Generate IR tree for a while-loop using high-level BGNLOOP/ENDLOOP,
- * IF/ENDIF instructions.
+ * Generate IR tree for a while-loop using high-level LOOP, IF instructions.
  */
 static slang_ir_node *
 _slang_gen_hl_while(slang_assemble_ctx * A, const slang_operation *oper)
 {
+   slang_ir_node *prevLoop;
    /*
-    * BGNLOOP
+    * LOOP:
     *    eval expr (child[0]), updating condcodes
-    *    IF !expr THEN
+    *    IF !expr:
     *       BRK
-    *    ENDIF
     *    body code (child[1])
-    * ENDLOOP
     */
-   slang_ir_node *beginLoop, *endLoop, *ifThen;
-   slang_ir_node *cond, *body, *tree;
+   slang_ir_node *ifThen, *cond, *body, *loop;
 
-   beginLoop = new_begin_loop();
+   loop = new_loop(NULL);
+
+   /* save old, push new loop */
+   prevLoop = A->CurLoop;
+   A->CurLoop = loop;
 
    cond = _slang_gen_operation(A, &oper->children[0]);
    cond = new_node1(IR_NOT, cond);
    cond = _slang_gen_cond(cond);
 
    ifThen = new_if(cond,
-                   new_break(beginLoop),
+                   new_break(A->CurLoop),
                    NULL);
-   tree = new_seq(beginLoop, ifThen);
 
    body = _slang_gen_operation(A, &oper->children[1]);
-   if (body)
-      tree = new_seq(tree, body);
 
-   endLoop = new_end_loop(beginLoop);
-   tree = new_seq(tree, endLoop);
+   loop->Children[0] = new_seq(ifThen, body);
 
-   return tree;
+
+   A->CurLoop = prevLoop; /* pop loop, restore prev */
+
+   return loop;
 }
 
 
@@ -2433,11 +2424,15 @@ _slang_gen_operation(slang_assemble_ctx * A, slang_operation *oper)
       else
          return _slang_gen_for(A, oper);
    case slang_oper_break:
-      if (!A->CurLoopBreak) {
+      if (!A->CurLoop && !A->CurLoopBreak) {
          RETURN_ERROR("'break' not in loop", 0);
       }
-      /* XXX emit IR_BREAK instruction */
-      return new_jump(A->CurLoopBreak);
+      if (UseHighLevelInstructions) {
+         return new_break(A->CurLoop);
+      }
+      else {
+         return new_jump(A->CurLoopBreak);
+      }
    case slang_oper_continue:
       if (!A->CurLoopCont) {
          RETURN_ERROR("'continue' not in loop", 0);

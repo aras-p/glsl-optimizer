@@ -60,8 +60,7 @@ typedef enum
    IR_RETURN,    /* return from subroutine */
    IR_CALL,      /* call subroutine */
 
-   IR_BEGIN_LOOP,/* begin loop */
-   IR_END_LOOP,  /* end loop */
+   IR_LOOP,      /* high-level loop-begin / loop-end */
    IR_CONT,      /* continue loop */
    IR_BREAK,     /* break loop */
 
