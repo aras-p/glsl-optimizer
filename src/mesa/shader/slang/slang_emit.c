@@ -103,8 +103,6 @@ static slang_ir_info IrInfo[] = {
    { IR_CJUMP0, "IR_CJUMP0", OPCODE_NOP, 0, 0 },
    { IR_CJUMP1, "IR_CJUMP1", OPCODE_NOP, 0, 0 },
    { IR_IF, "IR_IF", OPCODE_NOP, 0, 0 },
-   { IR_ELSE, "IR_ELSE", OPCODE_NOP, 0, 0 },
-   { IR_ENDIF, "IR_ENDIF", OPCODE_NOP, 0, 0 },
    { IR_KILL, "IR_KILL", OPCODE_NOP, 0, 0 },
    { IR_COND, "IR_COND", OPCODE_NOP, 0, 0 },
    { IR_CALL, "IR_CALL", OPCODE_NOP, 0, 0 },
@@ -232,11 +230,18 @@ storage_string(const slang_ir_storage *st)
 }
 
 
+static void
+spaces(int n)
+{
+   while (n-- > 0) {
+      printf(" ");
+   }
+}
+
 #define IND 0
 void
 slang_print_ir(const slang_ir_node *n, int indent)
 {
-   int i;
    if (!n)
       return;
 #if !IND
@@ -244,8 +249,7 @@ slang_print_ir(const slang_ir_node *n, int indent)
 #else
       printf("%3d:", indent);
 #endif
-      for (i = 0; i < indent; i++)
-	 printf(" ");
+      spaces(indent);
 
    switch (n->Opcode) {
    case IR_SEQ:
@@ -289,11 +293,14 @@ slang_print_ir(const slang_ir_node *n, int indent)
    case IR_IF:
       printf("IF \n");
       slang_print_ir(n->Children[0], indent+3);
-      break;
-   case IR_ELSE:
-      printf("ELSE\n");
-      break;
-   case IR_ENDIF:
+      spaces(indent);
+      printf("THEN\n");
+      slang_print_ir(n->Children[1], indent+3);
+      if (n->Children[2]) {
+         spaces(indent);
+         printf("ELSE\n");
+         slang_print_ir(n->Children[2], indent+3);
+      }
       printf("ENDIF\n");
       break;
 
@@ -1041,6 +1048,44 @@ emit_not(slang_var_table *vt, slang_ir_node *n, struct gl_program *prog)
 }
 
 
+static struct prog_instruction *
+emit_if(slang_var_table *vt, slang_ir_node *n, struct gl_program *prog)
+{
+   struct prog_instruction *ifInst;
+   GLuint ifInstLoc, elseInstLoc;
+
+   emit(vt, n->Children[0], prog);  /* the condition */
+   ifInstLoc = prog->NumInstructions;
+   ifInst = new_instruction(prog, OPCODE_IF);
+   ifInst->DstReg.CondMask = COND_NE;  /* if cond is non-zero */
+   ifInst->DstReg.CondSwizzle = SWIZZLE_X;
+
+   /* if body */
+   emit(vt, n->Children[1], prog);
+
+   if (n->Children[2]) {
+      /* else body */
+      elseInstLoc = prog->NumInstructions;
+      (void) new_instruction(prog, OPCODE_ELSE);
+      ifInst = prog->Instructions + ifInstLoc;
+      ifInst->BranchTarget = prog->NumInstructions;
+
+      emit(vt, n->Children[2], prog);
+   }
+   else {
+      ifInst = prog->Instructions + ifInstLoc;
+      ifInst->BranchTarget = prog->NumInstructions + 1;
+   }
+
+   (void) new_instruction(prog, OPCODE_ENDIF);
+   if (n->Children[2]) {
+      struct prog_instruction *elseInst;
+      elseInst = prog->Instructions + elseInstLoc;
+      elseInst->BranchTarget = prog->NumInstructions;
+   }
+   return NULL;
+}
+
 
 /**
  * Remove any SWIZZLE_NIL terms from given swizzle mask (smear prev term).
@@ -1254,42 +1299,7 @@ emit(slang_var_table *vt, slang_ir_node *n, struct gl_program *prog)
       return emit_kill(prog);
 
    case IR_IF:
-      {
-         struct prog_instruction *inst;
-         emit(vt, n->Children[0], prog);  /* the condition */
-         inst = new_instruction(prog, OPCODE_IF);
-         inst->DstReg.CondMask = COND_NE;  /* if cond is non-zero */
-         inst->DstReg.CondSwizzle = SWIZZLE_X;
-         n->InstLocation = prog->NumInstructions - 1;
-         return inst;
-      }
-   case IR_ELSE:
-      {
-         struct prog_instruction *inst, *ifInst;
-         n->InstLocation = prog->NumInstructions;
-         inst = new_instruction(prog, OPCODE_ELSE);
-         /* point IF's BranchTarget just after this instruction */
-         assert(n->BranchNode);
-         assert(n->BranchNode->InstLocation >= 0);
-         ifInst = prog->Instructions + n->BranchNode->InstLocation;
-         assert(ifInst->Opcode == OPCODE_IF);
-         ifInst->BranchTarget = prog->NumInstructions;
-         return inst;
-      }
-   case IR_ENDIF:
-      {
-         struct prog_instruction *inst, *elseInst;
-         n->InstLocation = prog->NumInstructions;
-         inst = new_instruction(prog, OPCODE_ENDIF);
-         /* point ELSE's BranchTarget to just after this inst */
-         assert(n->BranchNode);
-         assert(n->BranchNode->InstLocation >= 0);
-         elseInst = prog->Instructions + n->BranchNode->InstLocation;
-         assert(elseInst->Opcode == OPCODE_ELSE ||
-                elseInst->Opcode == OPCODE_IF);
-         elseInst->BranchTarget = prog->NumInstructions;
-         return inst;
-      }
+      return emit_if(vt, n, prog);
 
    case IR_BEGIN_LOOP:
       {

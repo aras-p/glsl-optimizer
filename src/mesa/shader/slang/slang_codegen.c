@@ -47,7 +47,7 @@
 #include "slang_print.h"
 
 
-static GLboolean UseHighLevelInstructions = GL_FALSE;
+static GLboolean UseHighLevelInstructions = GL_TRUE;
 
 static slang_ir_node *
 _slang_gen_operation(slang_assemble_ctx * A, slang_operation *oper);
@@ -602,42 +602,13 @@ new_break(slang_ir_node *beginNode)
 }
 
 
-/**
- * Child[0] is the condition.
- * XXX we might re-design IR_IF so Children[1] is the "then" body and
- * Children[0] is the "else" body.
- */
 static slang_ir_node *
-new_if(slang_ir_node *cond)
+new_if(slang_ir_node *cond, slang_ir_node *ifPart, slang_ir_node *elsePart)
 {
-   slang_ir_node *n = new_node(IR_IF, NULL, NULL);
+   slang_ir_node *n = new_node(IR_IF, cond, ifPart);
    assert(cond);
    if (n) {
-      n->Children[0] = cond;
-   }
-   return n;
-}
-
-
-static slang_ir_node *
-new_else(slang_ir_node *ifNode)
-{
-   slang_ir_node *n = new_node(IR_ELSE, NULL, NULL);
-   assert(ifNode);
-   if (n) {
-      n->BranchNode = ifNode;
-   }
-   return n;
-}
-
-
-static slang_ir_node *
-new_endif(slang_ir_node *elseOrIfNode)
-{
-   slang_ir_node *n = new_node(IR_ENDIF, NULL, NULL);
-   assert(elseOrIfNode);
-   if (n) {
-      n->BranchNode = elseOrIfNode;
+      n->Children[2] = elsePart;
    }
    return n;
 }
@@ -1445,8 +1416,8 @@ _slang_gen_hl_while(slang_assemble_ctx * A, const slang_operation *oper)
     *    body code (child[1])
     * ENDLOOP
     */
-   slang_ir_node *beginLoop, *endLoop, *ifThen, *endif;
-   slang_ir_node *brk, *cond, *body, *tree;
+   slang_ir_node *beginLoop, *endLoop, *ifThen;
+   slang_ir_node *cond, *body, *tree;
 
    beginLoop = new_begin_loop();
 
@@ -1454,14 +1425,10 @@ _slang_gen_hl_while(slang_assemble_ctx * A, const slang_operation *oper)
    cond = new_node(IR_NOT, cond, NULL);
    cond = _slang_gen_cond(cond);
 
-   ifThen = new_if(cond);
+   ifThen = new_if(cond,
+                   new_break(beginLoop),
+                   NULL);
    tree = new_seq(beginLoop, ifThen);
-
-   brk = new_break(beginLoop);
-   tree = new_seq(tree, brk);
-
-   endif = new_endif(ifThen);
-   tree = new_seq(tree, endif);
 
    body = _slang_gen_operation(A, &oper->children[1]);
    if (body)
@@ -1702,7 +1669,7 @@ _slang_gen_if(slang_assemble_ctx * A, const slang_operation *oper)
 
 /**
  * Generate IR tree for an if/then/else conditional using high-level
- * IF/ELSE/ENDIF instructions
+ * IR_IF instruction.
  */
 static slang_ir_node *
 _slang_gen_hl_if(slang_assemble_ctx * A, const slang_operation *oper)
@@ -1720,29 +1687,19 @@ _slang_gen_hl_if(slang_assemble_ctx * A, const slang_operation *oper)
     * instruction.
     */
    const GLboolean haveElseClause = !_slang_is_noop(&oper->children[2]);
-   slang_ir_node *ifNode, *cond, *trueBody, *elseNode, *falseBody, *endifNode;
-   slang_ir_node *tree;
+   slang_ir_node *ifNode, *cond, *ifBody, *elseBody;
 
    cond = _slang_gen_operation(A, &oper->children[0]);
    cond = _slang_gen_cond(cond);
-   /*assert(cond->Store);*/
-   ifNode = new_if(cond);
+   ifBody = _slang_gen_operation(A, &oper->children[1]);
+   if (haveElseClause)
+      elseBody = _slang_gen_operation(A, &oper->children[2]);
+   else
+      elseBody = NULL;
 
-   trueBody = _slang_gen_operation(A, &oper->children[1]);
-   tree = new_seq(ifNode, trueBody);
+   ifNode = new_if(cond, ifBody, elseBody);
 
-   if (haveElseClause) {
-      elseNode = new_else(ifNode);
-      tree = new_seq(tree, elseNode);
-
-      falseBody = _slang_gen_operation(A, &oper->children[2]);
-      tree = new_seq(tree, falseBody);
-   }
-
-   endifNode = new_endif(haveElseClause ? elseNode : ifNode);
-   tree = new_seq(tree, endifNode);
-
-   return tree;
+   return ifNode;
 }
 
 

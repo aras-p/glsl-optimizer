@@ -53,9 +53,7 @@ typedef enum
    IR_CJUMP1,  /* conditional jump if one (or non-zero) */
    IR_COND,    /* conditional expression/predicate */
 
-   IR_IF,      /* high-level IF */
-   IR_ELSE,    /* high-level ELSE */
-   IR_ENDIF,   /* high-level ENDIF */
+   IR_IF,      /* high-level IF/then/else */
 
    IR_BEGIN_SUB, /* begin subroutine */
    IR_END_SUB,   /* end subroutine */
