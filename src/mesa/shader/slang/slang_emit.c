@@ -43,7 +43,7 @@
 #define ANNOTATE 1
 
 
-static GLboolean EmitHighLevelInstructions = GL_FALSE;
+static GLboolean EmitHighLevelInstructions = GL_TRUE;
 
 
 /**
@@ -523,9 +523,9 @@ storage_annotation(const slang_ir_node *n, const struct gl_program *prog)
       if (st->Index >= 0) {
          const GLfloat *val = prog->Parameters->ParameterValues[st->Index];
          if (st->Swizzle == SWIZZLE_NOOP)
-            sprintf(s, "{%f, %f, %f, %f}", val[0], val[1], val[2], val[3]);
+            sprintf(s, "{%g, %g, %g, %g}", val[0], val[1], val[2], val[3]);
          else {
-            sprintf(s, "%f", val[GET_SWZ(st->Swizzle, 0)]);
+            sprintf(s, "%g", val[GET_SWZ(st->Swizzle, 0)]);
          }
       }
       break;
@@ -1059,34 +1059,135 @@ emit_if(slang_var_table *vt, slang_ir_node *n, struct gl_program *prog)
 
    emit(vt, n->Children[0], prog);  /* the condition */
    ifInstLoc = prog->NumInstructions;
-   ifInst = new_instruction(prog, OPCODE_IF);
-   ifInst->DstReg.CondMask = COND_NE;  /* if cond is non-zero */
-   ifInst->DstReg.CondSwizzle = SWIZZLE_X;
+   if (EmitHighLevelInstructions) {
+      ifInst = new_instruction(prog, OPCODE_IF);
+      ifInst->DstReg.CondMask = COND_NE;  /* if cond is non-zero */
+      ifInst->DstReg.CondSwizzle = SWIZZLE_X;
+   }
+   else {
+      /* conditional jump to else, or endif */
+      ifInst = new_instruction(prog, OPCODE_BRA);
+      ifInst->DstReg.CondMask = COND_EQ;  /* BRA if cond is zero */
+      ifInst->DstReg.CondSwizzle = SWIZZLE_X;
+      ifInst->Comment = _mesa_strdup("if zero");
+   }
 
    /* if body */
    emit(vt, n->Children[1], prog);
 
    if (n->Children[2]) {
-      /* else body */
+      /* have else body */
       elseInstLoc = prog->NumInstructions;
-      (void) new_instruction(prog, OPCODE_ELSE);
+      if (EmitHighLevelInstructions) {
+         (void) new_instruction(prog, OPCODE_ELSE);
+      }
+      else {
+         /* jump to endif instruction */
+         struct prog_instruction *inst;
+         inst = new_instruction(prog, OPCODE_BRA);
+         inst->Comment = _mesa_strdup("else");
+         inst->DstReg.CondMask = COND_TR;  /* always branch */
+      }
       ifInst = prog->Instructions + ifInstLoc;
       ifInst->BranchTarget = prog->NumInstructions;
 
       emit(vt, n->Children[2], prog);
    }
    else {
+      /* no else body */
       ifInst = prog->Instructions + ifInstLoc;
       ifInst->BranchTarget = prog->NumInstructions + 1;
    }
 
-   (void) new_instruction(prog, OPCODE_ENDIF);
+   if (EmitHighLevelInstructions) {
+      (void) new_instruction(prog, OPCODE_ENDIF);
+   }
+
    if (n->Children[2]) {
       struct prog_instruction *elseInst;
       elseInst = prog->Instructions + elseInstLoc;
       elseInst->BranchTarget = prog->NumInstructions;
    }
    return NULL;
+}
+
+
+static struct prog_instruction *
+emit_loop(slang_var_table *vt, slang_ir_node *n, struct gl_program *prog)
+{
+   struct prog_instruction *beginInst, *endInst;
+   GLuint beginInstLoc, endInstLoc;
+   slang_ir_node *ir;
+
+   /* emit OPCODE_BGNLOOP */
+   beginInstLoc = prog->NumInstructions;
+   if (EmitHighLevelInstructions) {
+      (void) new_instruction(prog, OPCODE_BGNLOOP);
+   }
+
+   /* body */
+   emit(vt, n->Children[0], prog);
+
+   endInstLoc = prog->NumInstructions;
+   if (EmitHighLevelInstructions) {
+      /* emit OPCODE_ENDLOOP */
+      endInst = new_instruction(prog, OPCODE_ENDLOOP);
+   }
+   else {
+      /* emit unconditional BRA-nch */
+      endInst = new_instruction(prog, OPCODE_BRA);
+      endInst->DstReg.CondMask = COND_TR;  /* always true */
+   }
+   /* end instruction's BranchTarget points to top of loop */
+   endInst->BranchTarget = beginInstLoc;
+
+   if (EmitHighLevelInstructions) {
+      /* BGNLOOP's BranchTarget points to the ENDLOOP inst */
+      beginInst = prog->Instructions + beginInstLoc;
+      beginInst->BranchTarget = prog->NumInstructions - 1;
+   }
+
+   /* Done emitting loop code.  Now walk over the loop's linked list
+    * of BREAK and CONT nodes, filling in their BranchTarget fields
+    * (which will point to the ENDLOOP or ENDLOOP+1 instructions).
+    */
+   for (ir = n->BranchNode; ir; ir = ir->BranchNode) {
+      struct prog_instruction *inst = prog->Instructions + ir->InstLocation;
+      if (ir->Opcode == IR_BREAK) {
+         assert(inst->Opcode == OPCODE_BRK ||
+                inst->Opcode == OPCODE_BRA);
+         inst->BranchTarget = endInstLoc + 1;
+      }
+      else {
+         assert(ir->Opcode == IR_CONT);
+         assert(inst->Opcode == OPCODE_CONT ||
+                inst->Opcode == OPCODE_BRA);
+         /* XXX goto top of loop instead! */
+         inst->BranchTarget = endInstLoc;
+      }
+   }
+   return NULL;
+}
+
+
+/**
+ * Emit code for IR_CONT or IR_BREAK.
+ */
+static struct prog_instruction *
+emit_cont_break(slang_var_table *vt, slang_ir_node *n, struct gl_program *prog)
+{
+   gl_inst_opcode opcode;
+   struct prog_instruction *inst;
+   n->InstLocation = prog->NumInstructions;
+   if (EmitHighLevelInstructions) {
+      opcode = (n->Opcode == IR_CONT) ? OPCODE_CONT : OPCODE_BRK;
+   }
+   else {
+      opcode = OPCODE_BRA;
+   }
+   inst = new_instruction(prog, opcode);
+   inst->DstReg.CondMask = COND_TR;  /* always true */
+   return inst;
 }
 
 
@@ -1305,77 +1406,11 @@ emit(slang_var_table *vt, slang_ir_node *n, struct gl_program *prog)
       return emit_if(vt, n, prog);
 
    case IR_LOOP:
-      {
-         struct prog_instruction *beginInst, *endInst;
-         GLuint beginInstLoc, endInstLoc;
-         slang_ir_node *ir;
-
-         /* emit OPCODE_BGNLOOP */
-         beginInstLoc = prog->NumInstructions;
-         if (EmitHighLevelInstructions) {
-            (void) new_instruction(prog, OPCODE_BGNLOOP);
-         }
-
-         /* body */
-         emit(vt, n->Children[0], prog);
-
-         endInstLoc = prog->NumInstructions;
-         if (EmitHighLevelInstructions) {
-            /* emit OPCODE_ENDLOOP */
-            endInst = new_instruction(prog, OPCODE_ENDLOOP);
-         }
-         else {
-            /* emit unconditional BRA-nch */
-            endInst = new_instruction(prog, OPCODE_BRA);
-            endInst->DstReg.CondMask = COND_TR;  /* always true */
-         }
-         /* end instruction's BranchTarget points to top of loop */
-         endInst->BranchTarget = beginInstLoc;
-
-         if (EmitHighLevelInstructions) {
-            /* BGNLOOP's BranchTarget points to the ENDLOOP inst */
-            beginInst = prog->Instructions + beginInstLoc;
-            beginInst->BranchTarget = prog->NumInstructions - 1;
-         }
-
-         /* Done emitting loop code.  Now walk over the loop's linked list
-          * of BREAK and CONT nodes, filling in their BranchTarget fields
-          * (which will point to the ENDLOOP or ENDLOOP+1 instructions).
-          */
-         for (ir = n->BranchNode; ir; ir = ir->BranchNode) {
-            struct prog_instruction *inst
-               = prog->Instructions + ir->InstLocation;
-            if (ir->Opcode == IR_BREAK) {
-               assert(inst->Opcode == OPCODE_BRK ||
-                      inst->Opcode == OPCODE_BRA);
-               inst->BranchTarget = endInstLoc + 1;
-            }
-            else {
-               assert(ir->Opcode == IR_CONT);
-               assert(inst->Opcode == OPCODE_CONT ||
-                      inst->Opcode == OPCODE_BRA);
-               inst->BranchTarget = endInstLoc;
-            }
-         }
-         return NULL;
-      }
+      return emit_loop(vt, n, prog);
    case IR_BREAK:
       /* fall-through */
    case IR_CONT:
-      {
-         gl_inst_opcode opcode;
-         struct prog_instruction *inst;
-         n->InstLocation = prog->NumInstructions;
-         if (EmitHighLevelInstructions) {
-            opcode = (n->Opcode == IR_CONT) ? OPCODE_CONT : OPCODE_BRK;
-         }
-         else {
-            opcode = OPCODE_BRA;
-         }
-         inst = new_instruction(prog, opcode);
-         inst->DstReg.CondMask = COND_TR;  /* always true */
-         return inst;
-      }
+      return emit_cont_break(vt, n, prog);
 
    case IR_BEGIN_SUB:
       return new_instruction(prog, OPCODE_BGNSUB);
