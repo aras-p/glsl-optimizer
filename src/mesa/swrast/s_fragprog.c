@@ -703,22 +703,10 @@ execute_program( GLcontext *ctx,
             }
             break;
          case OPCODE_BRK: /* break out of loop */
-            {
-#if 0
-               /* The location of the ENDLOOP instruction is saved in the
-                * BGNLOOP instruction.  Get that instruction and jump to
-                * its BranchTarget + 1.
-                */
-               const struct prog_instruction *loopBeginInst
-                  = program->Base.Instructions + inst->BranchTarget;
-               ASSERT(loopBeginInst->Opcode == OPCODE_BGNLOOP);
-               ASSERT(loopBeginInst->BranchTarget >= 0);
-               /* we'll add one at bottom of for-loop */
-               pc = loopBeginInst->BranchTarget;
-#else
-               pc = inst->BranchTarget - 1;
-#endif
-            }
+            /* fall-through */
+         case OPCODE_CONT: /* continue loop */
+            /* Subtract 1 here since we'll do pc++ at end of for-loop */
+            pc = inst->BranchTarget - 1;
             break;
          case OPCODE_CAL: /* Call subroutine */
             {
@@ -749,10 +737,6 @@ execute_program( GLcontext *ctx,
                result[3] = a[3] < 0.0F ? b[3] : c[3];
                store_vector4( inst, machine, result );
             }
-            break;
-         case OPCODE_CONT: /* continue loop */
-            /* Subtract 1 here since we'll do pc++ at end of for-loop */
-            pc = inst->BranchTarget - 1;
             break;
          case OPCODE_COS:
             {
