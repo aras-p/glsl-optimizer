@@ -39,7 +39,7 @@
 
 
 /**
- * Intermediate Representation opcode
+ * Intermediate Representation opcodes
  */
 typedef enum
 {
@@ -63,6 +63,11 @@ typedef enum
    IR_LOOP,      /* high-level loop-begin / loop-end */
    IR_CONT,      /* continue loop */
    IR_BREAK,     /* break loop */
+
+   IR_BREAK_IF_TRUE,
+   IR_BREAK_IF_FALSE,
+   IR_CONT_IF_TRUE,
+   IR_CONT_IF_FALSE,
 
    IR_MOVE,
    IR_ADD,

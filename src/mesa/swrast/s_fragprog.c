@@ -675,9 +675,10 @@ execute_program( GLcontext *ctx,
                }
             }
             break;
-         case OPCODE_BGNLOOP: /* begin loop */
+         case OPCODE_BGNLOOP:
+            /* no-op */
             break;
-         case OPCODE_ENDLOOP: /* end loop */
+         case OPCODE_ENDLOOP:
             /* subtract 1 here since pc is incremented by for(pc) loop */
             pc = inst->BranchTarget - 1; /* go to matching BNGLOOP */
             break;
@@ -695,10 +696,7 @@ execute_program( GLcontext *ctx,
                    test_cc(machine->CondCodes[GET_SWZ(swizzle, 2)], condMask) ||
                    test_cc(machine->CondCodes[GET_SWZ(swizzle, 3)], condMask)) {
                   /* take branch */
-                  pc = inst->BranchTarget;
-                  /*
-                  printf("Take branch to %u\n", pc);
-                  */
+                  pc = inst->BranchTarget - 1;
                }
             }
             break;
@@ -721,7 +719,7 @@ execute_program( GLcontext *ctx,
                      return GL_TRUE; /* Per GL_NV_vertex_program2 spec */
                   }
                   machine->CallStack[machine->StackDepth++] = pc + 1;
-                  pc = inst->BranchTarget;
+                  pc = inst->BranchTarget; /* XXX - 1 ??? */
                }
             }
             break;

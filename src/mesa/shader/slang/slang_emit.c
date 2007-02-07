@@ -43,6 +43,9 @@
 #define ANNOTATE 1
 
 
+static GLboolean EmitHighLevelInstructions = GL_FALSE;
+
+
 /**
  * Assembly and IR info
  */
@@ -1304,57 +1307,72 @@ emit(slang_var_table *vt, slang_ir_node *n, struct gl_program *prog)
    case IR_LOOP:
       {
          struct prog_instruction *beginInst, *endInst;
-         GLuint endInstLoc;
-         slang_ir_node *p;
+         GLuint beginInstLoc, endInstLoc;
+         slang_ir_node *ir;
 
-         /* save location of this instruction, used by OPCODE_ENDLOOP */
-         n->InstLocation = prog->NumInstructions;
-         (void) new_instruction(prog, OPCODE_BGNLOOP);
+         /* emit OPCODE_BGNLOOP */
+         beginInstLoc = prog->NumInstructions;
+         if (EmitHighLevelInstructions) {
+            (void) new_instruction(prog, OPCODE_BGNLOOP);
+         }
 
          /* body */
          emit(vt, n->Children[0], prog);
 
          endInstLoc = prog->NumInstructions;
-         endInst = new_instruction(prog, OPCODE_ENDLOOP);
-         /* The ENDLOOP's BranchTarget points to top of loop */
-         endInst->BranchTarget = n->InstLocation;
-         /* Update BGNLOOP's BranchTarget to point to this instruction */
-         beginInst = prog->Instructions + n->InstLocation;
-         beginInst->BranchTarget = prog->NumInstructions - 1;
+         if (EmitHighLevelInstructions) {
+            /* emit OPCODE_ENDLOOP */
+            endInst = new_instruction(prog, OPCODE_ENDLOOP);
+         }
+         else {
+            /* emit unconditional BRA-nch */
+            endInst = new_instruction(prog, OPCODE_BRA);
+            endInst->DstReg.CondMask = COND_TR;  /* always true */
+         }
+         /* end instruction's BranchTarget points to top of loop */
+         endInst->BranchTarget = beginInstLoc;
+
+         if (EmitHighLevelInstructions) {
+            /* BGNLOOP's BranchTarget points to the ENDLOOP inst */
+            beginInst = prog->Instructions + beginInstLoc;
+            beginInst->BranchTarget = prog->NumInstructions - 1;
+         }
 
          /* Done emitting loop code.  Now walk over the loop's linked list
-          * of BREAK and CONT nodes, filling in their BranchTarget fields.
+          * of BREAK and CONT nodes, filling in their BranchTarget fields
+          * (which will point to the ENDLOOP or ENDLOOP+1 instructions).
           */
-         for (p = n->BranchNode; p; p = p->BranchNode) {
-            if (p->Opcode == IR_BREAK) {
-               struct prog_instruction *brkInst
-                  = prog->Instructions + p->InstLocation;
-               assert(brkInst->Opcode == OPCODE_BRK);
-               brkInst->BranchTarget = endInstLoc + 1;
+         for (ir = n->BranchNode; ir; ir = ir->BranchNode) {
+            struct prog_instruction *inst
+               = prog->Instructions + ir->InstLocation;
+            if (ir->Opcode == IR_BREAK) {
+               assert(inst->Opcode == OPCODE_BRK ||
+                      inst->Opcode == OPCODE_BRA);
+               inst->BranchTarget = endInstLoc + 1;
             }
             else {
-               assert(p->Opcode == IR_CONT);
-               struct prog_instruction *contInst
-                  = prog->Instructions + p->InstLocation;
-               assert(contInst->Opcode == OPCODE_CONT);
-               contInst->BranchTarget = endInstLoc;
+               assert(ir->Opcode == IR_CONT);
+               assert(inst->Opcode == OPCODE_CONT ||
+                      inst->Opcode == OPCODE_BRA);
+               inst->BranchTarget = endInstLoc;
             }
          }
          return NULL;
       }
+   case IR_BREAK:
+      /* fall-through */
    case IR_CONT:
       {
+         gl_inst_opcode opcode;
          struct prog_instruction *inst;
          n->InstLocation = prog->NumInstructions;
-         inst = new_instruction(prog, OPCODE_CONT);
-         inst->DstReg.CondMask = COND_TR;  /* always true */
-         return inst;
-      }
-   case IR_BREAK:
-      {
-         struct prog_instruction *inst;
-         n->InstLocation = prog->NumInstructions;
-         inst = new_instruction(prog, OPCODE_BRK);
+         if (EmitHighLevelInstructions) {
+            opcode = (n->Opcode == IR_CONT) ? OPCODE_CONT : OPCODE_BRK;
+         }
+         else {
+            opcode = OPCODE_BRA;
+         }
+         inst = new_instruction(prog, opcode);
          inst->DstReg.CondMask = COND_TR;  /* always true */
          return inst;
       }

@@ -1423,7 +1423,7 @@ _slang_gen_while(slang_assemble_ctx * A, const slang_operation *oper)
 
 
 /**
- * Generate IR tree for a while-loop using high-level LOOP, IF instructions.
+ * Generate loop code using high-level IR_LOOP instruction
  */
 static slang_ir_node *
 _slang_gen_hl_while(slang_assemble_ctx * A, const slang_operation *oper)
@@ -1510,6 +1510,46 @@ _slang_gen_do(slang_assemble_ctx * A, const slang_operation *oper)
 
 
 /**
+ * Generate IR tree for a do-while loop using high-level LOOP, IF instructions.
+ */
+static slang_ir_node *
+_slang_gen_hl_do(slang_assemble_ctx * A, const slang_operation *oper)
+{
+   slang_ir_node *prevLoop;
+   /*
+    * LOOP:
+    *    body code (child[0])
+    *    eval expr (child[1]), updating condcodes
+    *    IF !expr:
+    *       BRK
+    */
+   slang_ir_node *ifThen, *cond, *body, *loop;
+
+   loop = new_loop(NULL);
+
+   /* save old, push new loop */
+   prevLoop = A->CurLoop;
+   A->CurLoop = loop;
+
+   body = _slang_gen_operation(A, &oper->children[0]);
+
+   cond = _slang_gen_operation(A, &oper->children[1]);
+   cond = new_node1(IR_NOT, cond);
+   cond = _slang_gen_cond(cond);
+
+   ifThen = new_if(cond,
+                   new_break(A->CurLoop),
+                   NULL);
+
+   loop->Children[0] = new_seq(body, ifThen);
+
+   A->CurLoop = prevLoop; /* pop loop, restore prev */
+
+   return loop;
+}
+
+
+/**
  * Generate IR tree for a for-loop.
  */
 static slang_ir_node *
@@ -1573,69 +1613,48 @@ _slang_gen_for(slang_assemble_ctx * A, const slang_operation *oper)
 
 
 /**
- * Generate IR tree for a for-loop, using high-level BGNLOOP/ENDLOOP and
- * IF/ENDIF instructions.
- *
- * XXX note done yet!
+ * Generate for-loop using high-level IR_LOOP instruction.
  */
 static slang_ir_node *
 _slang_gen_hl_for(slang_assemble_ctx * A, const slang_operation *oper)
 {
+   slang_ir_node *prevLoop;
    /*
-    * init code (child[0])
-    * BGNLOOP
+    * init (child[0])
+    * LOOP:
     *    eval expr (child[1]), updating condcodes
-    *    IF !expr THEN
+    *    IF !expr:
     *       BRK
-    *    ENDIF
-    *    code body (child[3])
-    *    label "__continueFor"   // jump here for "continue"
-    *    incr code (child[2])
-    * ENDLOOP
+    *    body code (child[3])
+    *    incr code (child[2])   // XXX continue here
     */
-   slang_atom startAtom = slang_atom_pool_gen(A->atoms, "__startFor");
-   slang_atom contAtom = slang_atom_pool_gen(A->atoms, "__continueFor");
-   slang_atom endAtom = slang_atom_pool_gen(A->atoms, "__endFor");
-   slang_ir_node *init, *startLab, *cond, *bra, *body, *contLab;
-   slang_ir_node *incr, *jump, *endLab, *tree;
-   slang_atom prevLoopBreak = A->CurLoopBreak;
-   slang_atom prevLoopCont = A->CurLoopCont;
-
-   /* Push this loop */
-   A->CurLoopBreak = endAtom;
-   A->CurLoopCont = contAtom;
+   slang_ir_node *init, *ifThen, *cond, *body, *loop, *incr;
 
    init = _slang_gen_operation(A, &oper->children[0]);
-   startLab = new_label(startAtom);
-   tree = new_seq(init, startLab);
+   loop = new_loop(NULL);
+
+   /* save old, push new loop */
+   prevLoop = A->CurLoop;
+   A->CurLoop = loop;
 
    cond = _slang_gen_operation(A, &oper->children[1]);
+   cond = new_node1(IR_NOT, cond);
    cond = _slang_gen_cond(cond);
-   tree = new_seq(tree, cond);
 
-   bra = new_cjump(endAtom, 0);
-   tree = new_seq(tree, bra);
+   ifThen = new_if(cond,
+                   new_break(A->CurLoop),
+                   NULL);
 
    body = _slang_gen_operation(A, &oper->children[3]);
-   tree = new_seq(tree, body);
-
-   contLab = new_label(contAtom);
-   tree = new_seq(tree, contLab);
 
    incr = _slang_gen_operation(A, &oper->children[2]);
-   tree = new_seq(tree, incr);
 
-   jump = new_jump(startAtom);
-   tree = new_seq(tree, jump);
+   loop->Children[0] = new_seq(ifThen,
+                               new_seq(body,incr));
 
-   endLab = new_label(endAtom);
-   tree = new_seq(tree, endLab);
+   A->CurLoop = prevLoop; /* pop loop, restore prev */
 
-   /* Pop this loop */
-   A->CurLoopBreak = prevLoopBreak;
-   A->CurLoopCont = prevLoopCont;
-
-   return tree;
+   return new_seq(init, loop);
 }
 
 
@@ -2434,7 +2453,10 @@ _slang_gen_operation(slang_assemble_ctx * A, slang_operation *oper)
       else
          return _slang_gen_while(A, oper);
    case slang_oper_do:
-      return _slang_gen_do(A, oper);
+      if (UseHighLevelInstructions)
+         return _slang_gen_hl_do(A, oper);
+      else
+         return _slang_gen_do(A, oper);
    case slang_oper_for:
       if (UseHighLevelInstructions)
          return _slang_gen_hl_for(A, oper);

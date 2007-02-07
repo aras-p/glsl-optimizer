@@ -298,7 +298,7 @@ _slang_resolve_branches(struct gl_program *prog)
 
    for (i = 0; i < prog->NumInstructions; i++) {
       struct prog_instruction *inst = prog->Instructions + i;
-      if (inst->Opcode == OPCODE_BRA) {
+      if (inst->Opcode == OPCODE_BRA && inst->BranchTarget < 0) {
          for (j = 0; j < numTargets; j++) {
             if (!strcmp(inst->Comment, targets[j].Name)) {
                inst->BranchTarget = targets[j].Pos;
