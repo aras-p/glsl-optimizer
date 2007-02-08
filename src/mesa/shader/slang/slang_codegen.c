@@ -47,8 +47,6 @@
 #include "slang_print.h"
 
 
-static GLboolean UseHighLevelInstructions = GL_TRUE;
-
 static slang_ir_node *
 _slang_gen_operation(slang_assemble_ctx * A, slang_operation *oper);
 
@@ -2441,8 +2439,7 @@ _slang_gen_operation(slang_assemble_ctx * A, slang_operation *oper)
    case slang_oper_identifier:
       return _slang_gen_variable(A, oper);
    case slang_oper_if:
-      if (A->program->Target == GL_FRAGMENT_PROGRAM_ARB
-          && UseHighLevelInstructions) {
+      if (A->program->Target == GL_FRAGMENT_PROGRAM_ARB) {
          return _slang_gen_hl_if(A, oper);
       }
       else {
