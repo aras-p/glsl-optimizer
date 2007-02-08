@@ -1407,7 +1407,7 @@ _slang_gen_while(slang_assemble_ctx * A, const slang_operation *oper)
    prevLoop = A->CurLoop;
    A->CurLoop = loop;
 
-   cond = _slang_gen_operation(A, &oper->children[0]);
+   cond = new_cond(_slang_gen_operation(A, &oper->children[0]));
    breakIf = new_break_if_false(A->CurLoop, cond);
    body = _slang_gen_operation(A, &oper->children[1]);
    loop->Children[0] = new_seq(breakIf, body);
@@ -1440,7 +1440,7 @@ _slang_gen_do(slang_assemble_ctx * A, const slang_operation *oper)
    A->CurLoop = loop;
 
    body = _slang_gen_operation(A, &oper->children[0]);
-   cond = _slang_gen_operation(A, &oper->children[1]);
+   cond = new_cond(_slang_gen_operation(A, &oper->children[1]));
    breakIf = new_break_if_false(A->CurLoop, cond);
    loop->Children[0] = new_seq(body, breakIf);
 
@@ -1474,7 +1474,7 @@ _slang_gen_for(slang_assemble_ctx * A, const slang_operation *oper)
    prevLoop = A->CurLoop;
    A->CurLoop = loop;
 
-   cond = _slang_gen_operation(A, &oper->children[1]);
+   cond = new_cond(_slang_gen_operation(A, &oper->children[1]));
    breakIf = new_break_if_false(A->CurLoop, cond);
    body = _slang_gen_operation(A, &oper->children[3]);
    incr = _slang_gen_operation(A, &oper->children[2]);

@@ -487,6 +487,7 @@ new_instruction(struct gl_program *prog, gl_inst_opcode opcode)
    prog->NumInstructions++;
    _mesa_init_instructions(inst, 1);
    inst->Opcode = opcode;
+   inst->BranchTarget = -1; /* invalid */
    return inst;
 }
 
