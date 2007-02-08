@@ -709,18 +709,14 @@ execute_program( GLcontext *ctx,
             break;
          case OPCODE_ENDSUB: /* end subroutine */
             break;
-         case OPCODE_BRA: /* conditional branch */
-            if (eval_condition(machine, inst)) {
-               /* take branch */
-               pc = inst->BranchTarget - 1;
-            }
-            break;
+         case OPCODE_BRA: /* branch (conditional) */
+            /* fall-through */
          case OPCODE_BRK: /* break out of loop (conditional) */
             /* fall-through */
          case OPCODE_CONT: /* continue loop (conditional) */
-            /* Subtract 1 here since we'll do pc++ at end of for-loop */
             if (eval_condition(machine, inst)) {
                /* take branch */
+               /* Subtract 1 here since we'll do pc++ at end of for-loop */
                pc = inst->BranchTarget - 1;
             }
             break;
