@@ -996,6 +996,30 @@ _mesa_fetch_state(GLcontext *ctx, const enum state_index state[],
 	       }
                break;
 	    }
+	    case STATE_FOG_PARAMS_OPTIMIZED:
+	       /* this makes it possible to use simpler per-vertex fog calcs. POW
+		  (for EXP/EXP2 fog) might be more expensive than EX2 on some hw,
+		  plus it needs another constant (e) anyway. Linear fog can now be
+		  done with a single MAD.
+		  linear: fogcoord * -1/(end-start) + end/(end-start)
+		  exp: 2^-(density/ln(2) * fogcoord)
+		  exp2: 2^-((density/(ln(2)^2) * fogcoord)^2) */
+	       value[0] = -1.0F / (ctx->Fog.End - ctx->Fog.Start);
+	       value[1] = ctx->Fog.End / (ctx->Fog.End - ctx->Fog.Start);
+	       value[2] = ctx->Fog.Density * ONE_DIV_LN2;
+	       value[3] = ctx->Fog.Density * ONE_DIV_SQRT_LN2;
+	       break;
+	    case STATE_SPOT_DIR_NORMALIZED: {
+	       /* here, state[2] is the light number */
+	       /* pre-normalize spot dir */
+	       const GLuint ln = (GLuint) state[2];
+	       value[0] = ctx->Light.Light[ln].EyeDirection[0];
+	       value[1] = ctx->Light.Light[ln].EyeDirection[1];
+	       value[2] = ctx->Light.Light[ln].EyeDirection[2];
+	       NORMALIZE_3FV(value);
+	       value[3] = ctx->Light.Light[ln]._CosCutoff;
+	       break;
+	    }
 	    default:
 	       /* unknown state indexes are silently ignored
 	       *  should be handled by the driver.
@@ -1075,6 +1099,10 @@ make_state_flags(const GLint state[])
 	 return _NEW_MODELVIEW;
       case STATE_TEXRECT_SCALE:
 	 return _NEW_TEXTURE;
+      case STATE_FOG_PARAMS_OPTIMIZED:
+	 return _NEW_FOG;
+      case STATE_SPOT_DIR_NORMALIZED:
+	 return _NEW_LIGHT;
       default:
          /* unknown state indexes are silently ignored and
          *  no flag set, since it is handled by the driver.
@@ -1232,6 +1260,8 @@ append_token(char *dst, enum state_index k)
    case STATE_INTERNAL:
    case STATE_NORMAL_SCALE:
    case STATE_POSITION_NORMALIZED:
+   case STATE_FOG_PARAMS_OPTIMIZED:
+   case STATE_SPOT_DIR_NORMALIZED:
       append(dst, "(internal)");
       break;
    default:
