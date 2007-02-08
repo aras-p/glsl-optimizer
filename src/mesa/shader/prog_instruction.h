@@ -401,7 +401,7 @@ struct prog_instruction
    /**
     * For BRA and CAL instructions, the location to jump to.
     */
-   GLuint BranchTarget;
+   GLint BranchTarget;
 
    /**
     * For TEX instructions in shaders, the sampler to use for the
