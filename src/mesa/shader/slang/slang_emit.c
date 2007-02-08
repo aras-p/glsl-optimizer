@@ -40,7 +40,7 @@
 
 
 #define PEEPHOLE_OPTIMIZATIONS 1
-#define ANNOTATE 1
+#define ANNOTATE 0
 
 
 static GLboolean EmitHighLevelInstructions = GL_TRUE;
@@ -59,7 +59,7 @@ typedef struct
 
 
 
-static slang_ir_info IrInfo[] = {
+static const slang_ir_info IrInfo[] = {
    /* binary ops */
    { IR_ADD, "IR_ADD", OPCODE_ADD, 4, 2 },
    { IR_SUB, "IR_SUB", OPCODE_SUB, 4, 2 },
@@ -124,7 +124,7 @@ static slang_ir_info IrInfo[] = {
 };
 
 
-static slang_ir_info *
+static const slang_ir_info *
 slang_find_ir_info(slang_ir_opcode opcode)
 {
    GLuint i;
@@ -334,6 +334,11 @@ slang_print_ir(const slang_ir_node *n, int indent)
       break;
    case IR_BREAK_IF_FALSE:
       printf("BREAK_IF_FALSE\n");
+      slang_print_ir(n->Children[0], indent+3);
+      break;
+   case IR_BREAK_IF_TRUE:
+      printf("BREAK_IF_TRUE\n");
+      slang_print_ir(n->Children[0], indent+3);
       break;
 
    case IR_VAR:
@@ -1157,11 +1162,13 @@ emit_loop(slang_var_table *vt, slang_ir_node *n, struct gl_program *prog)
     */
    for (ir = n->BranchNode; ir; ir = ir->BranchNode) {
       struct prog_instruction *inst = prog->Instructions + ir->InstLocation;
+      assert(inst->BranchTarget < 0);
       if (ir->Opcode == IR_BREAK ||
           ir->Opcode == IR_BREAK_IF_FALSE ||
           ir->Opcode == IR_BREAK_IF_TRUE) {
          assert(inst->Opcode == OPCODE_BRK ||
                 inst->Opcode == OPCODE_BRA);
+         /* go to instruction after end of loop */
          inst->BranchTarget = endInstLoc + 1;
       }
       else {
@@ -1170,8 +1177,8 @@ emit_loop(slang_var_table *vt, slang_ir_node *n, struct gl_program *prog)
                 ir->Opcode == IR_CONT_IF_TRUE);
          assert(inst->Opcode == OPCODE_CONT ||
                 inst->Opcode == OPCODE_BRA);
-         /* XXX goto top of loop instead! */
-         inst->BranchTarget = endInstLoc;
+         /* to go instruction at top of loop */
+         inst->BranchTarget = beginInstLoc;
       }
    }
    return NULL;
