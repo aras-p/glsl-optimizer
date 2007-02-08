@@ -960,26 +960,23 @@ static void position_invariant(struct gl_program *prog)
 
 static void insert_wpos(struct r300_vertex_program *vp,
 		       struct gl_program *prog,
-		       GLint pos)
+		       GLuint temp_index)
 {
 
 	GLint tokens[6] = { STATE_INTERNAL, STATE_R300_WINDOW_DIMENSION, 0, 0, 0, 0 };
 	struct prog_instruction *vpi;
 	struct prog_instruction *vpi_insert;
-	GLuint temp_index;
 	GLuint window_index;
 	int i = 0;
 	
 	vpi = malloc((prog->NumInstructions + 5) * sizeof(struct prog_instruction));
-	memcpy(vpi, prog->Instructions, (pos+1) * sizeof(struct prog_instruction));
+	/* all but END */
+	memcpy(vpi, prog->Instructions, (prog->NumInstructions - 1) * sizeof(struct prog_instruction));
+	/* END */
+	memcpy(&vpi[prog->NumInstructions + 4], &prog->Instructions[prog->NumInstructions - 1],
+		sizeof(struct prog_instruction));
 	
-	vpi_insert = &vpi[pos];
-
-	/* make a copy before outputting VERT_RESULT_HPOS */
-	vpi_insert->DstReg.File = vpi_insert->SrcReg[2].File;
-	vpi_insert->DstReg.Index = temp_index = vpi_insert->SrcReg[2].Index;
-	
-	vpi_insert++;
+	vpi_insert = &vpi[prog->NumInstructions - 1];
 	memset(vpi_insert, 0, 5 * sizeof(struct prog_instruction));
 
 	vpi_insert[i].Opcode = OPCODE_MOV;
@@ -1062,8 +1059,6 @@ static void insert_wpos(struct r300_vertex_program *vp,
 	vpi_insert[i].SrcReg[1].Swizzle = MAKE_SWIZZLE4(SWIZZLE_X, SWIZZLE_Y, SWIZZLE_ONE, SWIZZLE_ONE);
 	i++;
 
-	memcpy(&vpi_insert[i], &prog->Instructions[pos+1], (prog->NumInstructions-(pos+1)) * sizeof(struct prog_instruction));
-
 	free(prog->Instructions);
 
 	prog->Instructions = vpi;
@@ -1072,24 +1067,24 @@ static void insert_wpos(struct r300_vertex_program *vp,
 	vpi = &prog->Instructions[prog->NumInstructions-1];
 
 	assert(vpi->Opcode == OPCODE_END);
-	/* we need position, don't we ? :) */
-	prog->InputsRead |= (1 << VERT_ATTRIB_POS);
 }
 
 static void pos_as_texcoord(struct r300_vertex_program *vp,
 			    struct gl_program *prog)
 {
 	struct prog_instruction *vpi;
-	int pos = 0;
-	
-	for(vpi = prog->Instructions; vpi->Opcode != OPCODE_END; vpi++, pos++){
+	GLuint tempregi = prog->NumTemporaries;
+	/* should do something else if no temps left... */
+	prog->NumTemporaries++;
+
+	for(vpi = prog->Instructions; vpi->Opcode != OPCODE_END; vpi++){
 		if( vpi->DstReg.File == PROGRAM_OUTPUT &&
 		    vpi->DstReg.Index == VERT_RESULT_HPOS ){
-			insert_wpos(vp, prog, pos);
-			break;
+			vpi->DstReg.File = PROGRAM_TEMPORARY;
+			vpi->DstReg.Index = tempregi;
 		}
 	}
-
+	insert_wpos(vp, prog, tempregi);
 }
 
 static struct r300_vertex_program *build_program(struct r300_vertex_program_key *wanted_key,
