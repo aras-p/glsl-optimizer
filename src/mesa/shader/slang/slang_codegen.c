@@ -617,6 +617,21 @@ new_break(slang_ir_node *loopNode)
 
 
 static slang_ir_node *
+new_break_if_false(slang_ir_node *loopNode, slang_ir_node *cond)
+{
+   slang_ir_node *n = new_node1(IR_BREAK_IF_FALSE, cond);
+   assert(loopNode);
+   assert(loopNode->Opcode == IR_LOOP);
+   if (n) {
+      /* insert this node at head of linked list */
+      n->BranchNode = loopNode->BranchNode;
+      loopNode->BranchNode = n;
+   }
+   return n;
+}
+
+
+static slang_ir_node *
 new_cont(slang_ir_node *loopNode)
 {
    slang_ir_node *n = new_node0(IR_CONT);
@@ -628,6 +643,14 @@ new_cont(slang_ir_node *loopNode)
       loopNode->BranchNode = n;
    }
    return n;
+}
+
+
+static slang_ir_node *
+new_cond(slang_ir_node *n)
+{
+   slang_ir_node *c = new_node1(IR_COND, n);
+   return c;
 }
 
 
@@ -1290,14 +1313,6 @@ _slang_is_noop(const slang_operation *oper)
 }
 
 
-static slang_ir_node *
-_slang_gen_cond(slang_ir_node *n)
-{
-   slang_ir_node *c = new_node1(IR_COND, n);
-   return c;
-}
-
-
 static void
 print_funcs(struct slang_function_scope_ *scope, const char *name)
 {
@@ -1381,12 +1396,10 @@ _slang_gen_while(slang_assemble_ctx * A, const slang_operation *oper)
    slang_ir_node *prevLoop;
    /*
     * LOOP:
-    *    eval expr (child[0]), updating condcodes
-    *    IF !expr:
-    *       BRK
+    *    BREAK if !expr (child[0])
     *    body code (child[1])
     */
-   slang_ir_node *ifThen, *cond, *body, *loop;
+   slang_ir_node *loop, *cond, *breakIf, *body;
 
    loop = new_loop(NULL);
 
@@ -1395,19 +1408,12 @@ _slang_gen_while(slang_assemble_ctx * A, const slang_operation *oper)
    A->CurLoop = loop;
 
    cond = _slang_gen_operation(A, &oper->children[0]);
-   cond = new_node1(IR_NOT, cond);
-   cond = _slang_gen_cond(cond);
-
-   ifThen = new_if(cond,
-                   new_break(A->CurLoop),
-                   NULL);
-
+   breakIf = new_break_if_false(A->CurLoop, cond);
    body = _slang_gen_operation(A, &oper->children[1]);
+   loop->Children[0] = new_seq(breakIf, body);
 
-   loop->Children[0] = new_seq(ifThen, body);
-
-
-   A->CurLoop = prevLoop; /* pop loop, restore prev */
+   /* pop loop, restore prev */
+   A->CurLoop = prevLoop;
 
    return loop;
 }
@@ -1423,11 +1429,9 @@ _slang_gen_do(slang_assemble_ctx * A, const slang_operation *oper)
    /*
     * LOOP:
     *    body code (child[0])
-    *    eval expr (child[1]), updating condcodes
-    *    IF !expr:
-    *       BRK
+    *    BREAK if !expr (child[1])
     */
-   slang_ir_node *ifThen, *cond, *body, *loop;
+   slang_ir_node *loop, *cond, *breakIf, *body;
 
    loop = new_loop(NULL);
 
@@ -1436,18 +1440,12 @@ _slang_gen_do(slang_assemble_ctx * A, const slang_operation *oper)
    A->CurLoop = loop;
 
    body = _slang_gen_operation(A, &oper->children[0]);
-
    cond = _slang_gen_operation(A, &oper->children[1]);
-   cond = new_node1(IR_NOT, cond);
-   cond = _slang_gen_cond(cond);
+   breakIf = new_break_if_false(A->CurLoop, cond);
+   loop->Children[0] = new_seq(body, breakIf);
 
-   ifThen = new_if(cond,
-                   new_break(A->CurLoop),
-                   NULL);
-
-   loop->Children[0] = new_seq(body, ifThen);
-
-   A->CurLoop = prevLoop; /* pop loop, restore prev */
+   /* pop loop, restore prev */
+   A->CurLoop = prevLoop;
 
    return loop;
 }
@@ -1463,13 +1461,11 @@ _slang_gen_for(slang_assemble_ctx * A, const slang_operation *oper)
    /*
     * init (child[0])
     * LOOP:
-    *    eval expr (child[1]), updating condcodes
-    *    IF !expr:
-    *       BRK
+    *    BREAK if !expr (child[1])
     *    body code (child[3])
     *    incr code (child[2])   // XXX continue here
     */
-   slang_ir_node *init, *ifThen, *cond, *body, *loop, *incr;
+   slang_ir_node *loop, *cond, *breakIf, *body, *init, *incr;
 
    init = _slang_gen_operation(A, &oper->children[0]);
    loop = new_loop(NULL);
@@ -1479,21 +1475,14 @@ _slang_gen_for(slang_assemble_ctx * A, const slang_operation *oper)
    A->CurLoop = loop;
 
    cond = _slang_gen_operation(A, &oper->children[1]);
-   cond = new_node1(IR_NOT, cond);
-   cond = _slang_gen_cond(cond);
-
-   ifThen = new_if(cond,
-                   new_break(A->CurLoop),
-                   NULL);
-
+   breakIf = new_break_if_false(A->CurLoop, cond);
    body = _slang_gen_operation(A, &oper->children[3]);
-
    incr = _slang_gen_operation(A, &oper->children[2]);
+   loop->Children[0] = new_seq(breakIf,
+                               new_seq(body, incr));
 
-   loop->Children[0] = new_seq(ifThen,
-                               new_seq(body,incr));
-
-   A->CurLoop = prevLoop; /* pop loop, restore prev */
+   /* pop loop, restore prev */
+   A->CurLoop = prevLoop;
 
    return new_seq(init, loop);
 }
@@ -1521,7 +1510,7 @@ _slang_gen_if(slang_assemble_ctx * A, const slang_operation *oper)
    slang_atom endifAtom = slang_atom_pool_gen(A->atoms, "__endif");
 
    cond = _slang_gen_operation(A, &oper->children[0]);
-   cond = _slang_gen_cond(cond);
+   cond = new_cond(cond);
    /*assert(cond->Store);*/
    bra = new_cjump(haveElseClause ? elseAtom : endifAtom, 0);
    tree = new_seq(cond, bra);
@@ -1572,7 +1561,7 @@ _slang_gen_hl_if(slang_assemble_ctx * A, const slang_operation *oper)
    slang_ir_node *ifNode, *cond, *ifBody, *elseBody;
 
    cond = _slang_gen_operation(A, &oper->children[0]);
-   cond = _slang_gen_cond(cond);
+   cond = new_cond(cond);
    ifBody = _slang_gen_operation(A, &oper->children[1]);
    if (haveElseClause)
       elseBody = _slang_gen_operation(A, &oper->children[2]);
@@ -1662,7 +1651,7 @@ _slang_gen_select(slang_assemble_ctx *A, slang_operation *oper)
 
    /* eval condition */
    cond = _slang_gen_operation(A, &oper->children[0]);
-   cond = _slang_gen_cond(cond);
+   cond = new_cond(cond);
    tree = new_seq(tmpDecl, cond);
 
    /* jump if false to "alt" label */
@@ -2245,9 +2234,6 @@ _slang_gen_operation(slang_assemble_ctx * A, slang_operation *oper)
 
    case slang_oper_block_no_new_scope:
       /* list of operations */
-      /*
-      assert(oper->num_children > 0);
-      */
       if (oper->num_children > 0)
       {
          slang_ir_node *n, *tree = NULL;
@@ -2287,7 +2273,7 @@ _slang_gen_operation(slang_assemble_ctx * A, slang_operation *oper)
       break;
    case slang_oper_expression:
       return _slang_gen_operation(A, &oper->children[0]);
-      break;
+
    case slang_oper_for:
       return _slang_gen_for(A, oper);
    case slang_oper_do:

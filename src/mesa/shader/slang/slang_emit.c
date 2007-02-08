@@ -332,6 +332,9 @@ slang_print_ir(const slang_ir_node *n, int indent)
    case IR_BREAK:
       printf("BREAK\n");
       break;
+   case IR_BREAK_IF_FALSE:
+      printf("BREAK_IF_FALSE\n");
+      break;
 
    case IR_VAR:
       printf("VAR %s%s at %s  store %p\n",
@@ -1153,13 +1156,17 @@ emit_loop(slang_var_table *vt, slang_ir_node *n, struct gl_program *prog)
     */
    for (ir = n->BranchNode; ir; ir = ir->BranchNode) {
       struct prog_instruction *inst = prog->Instructions + ir->InstLocation;
-      if (ir->Opcode == IR_BREAK) {
+      if (ir->Opcode == IR_BREAK ||
+          ir->Opcode == IR_BREAK_IF_FALSE ||
+          ir->Opcode == IR_BREAK_IF_TRUE) {
          assert(inst->Opcode == OPCODE_BRK ||
                 inst->Opcode == OPCODE_BRA);
          inst->BranchTarget = endInstLoc + 1;
       }
       else {
-         assert(ir->Opcode == IR_CONT);
+         assert(ir->Opcode == IR_CONT ||
+                ir->Opcode == IR_CONT_IF_FALSE ||
+                ir->Opcode == IR_CONT_IF_TRUE);
          assert(inst->Opcode == OPCODE_CONT ||
                 inst->Opcode == OPCODE_BRA);
          /* XXX goto top of loop instead! */
@@ -1189,6 +1196,35 @@ emit_cont_break(slang_var_table *vt, slang_ir_node *n, struct gl_program *prog)
    inst->DstReg.CondMask = COND_TR;  /* always true */
    return inst;
 }
+
+
+/**
+ * Conditional loop continue/break.
+ */
+static struct prog_instruction *
+emit_cont_break_if(slang_var_table *vt, slang_ir_node *n,
+                   struct gl_program *prog, GLboolean breakTrue)
+{
+   gl_inst_opcode opcode;
+   struct prog_instruction *inst;
+
+   /* evaluate condition expr, setting cond codes */
+   inst = emit(vt, n->Children[0], prog);
+   assert(inst);
+   inst->CondUpdate = GL_TRUE;
+
+   n->InstLocation = prog->NumInstructions;
+   if (EmitHighLevelInstructions) {
+      opcode = (n->Opcode == IR_CONT) ? OPCODE_CONT : OPCODE_BRK;
+   }
+   else {
+      opcode = OPCODE_BRA;
+   }
+   inst = new_instruction(prog, opcode);
+   inst->DstReg.CondMask = breakTrue ? COND_NE : COND_EQ;
+   return inst;
+}
+
 
 
 /**
@@ -1407,6 +1443,10 @@ emit(slang_var_table *vt, slang_ir_node *n, struct gl_program *prog)
 
    case IR_LOOP:
       return emit_loop(vt, n, prog);
+   case IR_BREAK_IF_FALSE:
+      return emit_cont_break_if(vt, n, prog, GL_FALSE);
+   case IR_BREAK_IF_TRUE:
+      return emit_cont_break_if(vt, n, prog, GL_TRUE);
    case IR_BREAK:
       /* fall-through */
    case IR_CONT:
