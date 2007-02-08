@@ -107,8 +107,7 @@ struct r200_vertex_program {
         VERTEX_SHADER_INSTRUCTION instr[R200_VSF_MAX_INST + 6];
         int pos_end;
         int inputs[VERT_ATTRIB_MAX];
-        int rev_inputs[16];
-        int gen_inputs_mapped;
+        GLubyte inputmap_rev[16];
         int native;
         int fogpidx;
         int fogmode;
@@ -733,14 +732,7 @@ struct r200_tcl_info {
    GLuint *Elts;
 
    struct r200_dma_region indexed_verts;
-   struct r200_dma_region weight;
-   struct r200_dma_region obj;
-   struct r200_dma_region rgba;
-   struct r200_dma_region spec;
-   struct r200_dma_region fog;
-   struct r200_dma_region tex[R200_MAX_TEXTURE_UNITS];
-   struct r200_dma_region norm;
-   struct r200_dma_region generic[16];
+   struct r200_dma_region vertex_data[15];
 };
 
 

@@ -405,7 +405,6 @@ static GLboolean r200_translate_vertex_program(GLcontext *ctx, struct r200_verte
    int dofogfix = 0;
    int fog_temp_i = 0;
    int free_inputs;
-   int free_inputs_conv;
    int array_count = 0;
 
    vp->native = GL_FALSE;
@@ -477,6 +476,8 @@ static GLboolean r200_translate_vertex_program(GLcontext *ctx, struct r200_verte
 
    for(i = 0; i < VERT_ATTRIB_MAX; i++)
       vp->inputs[i] = -1;
+   for(i = 0; i < 15; i++)
+      vp->inputmap_rev[i] = 255;
    free_inputs = 0x2ffd;
 
 /* fglrx uses fixed inputs as follows for conventional attribs.
@@ -499,38 +500,45 @@ static GLboolean r200_translate_vertex_program(GLcontext *ctx, struct r200_verte
 /* may look different when using idx buf / input_route instead of se_vtx_fmt? */
    if (mesa_vp->Base.InputsRead & VERT_BIT_POS) {
       vp->inputs[VERT_ATTRIB_POS] = 0;
+      vp->inputmap_rev[0] = VERT_ATTRIB_POS;
       free_inputs &= ~(1 << 0);
       array_count++;
    }
    if (mesa_vp->Base.InputsRead & VERT_BIT_WEIGHT) {
       vp->inputs[VERT_ATTRIB_WEIGHT] = 12;
+      vp->inputmap_rev[1] = VERT_ATTRIB_WEIGHT;
       array_count++;
    }
    if (mesa_vp->Base.InputsRead & VERT_BIT_NORMAL) {
       vp->inputs[VERT_ATTRIB_NORMAL] = 1;
+      vp->inputmap_rev[2] = VERT_ATTRIB_NORMAL;
       array_count++;
    }
    if (mesa_vp->Base.InputsRead & VERT_BIT_COLOR0) {
       vp->inputs[VERT_ATTRIB_COLOR0] = 2;
+      vp->inputmap_rev[4] = VERT_ATTRIB_COLOR0;
       free_inputs &= ~(1 << 2);
       array_count++;
    }
    if (mesa_vp->Base.InputsRead & VERT_BIT_COLOR1) {
       vp->inputs[VERT_ATTRIB_COLOR1] = 3;
+      vp->inputmap_rev[5] = VERT_ATTRIB_COLOR1;
       free_inputs &= ~(1 << 3);
       array_count++;
    }
    if (mesa_vp->Base.InputsRead & VERT_BIT_FOG) {
       vp->inputs[VERT_ATTRIB_FOG] = 15; array_count++;
+      vp->inputmap_rev[3] = VERT_ATTRIB_FOG;
+      array_count++;
    }
    for (i = VERT_ATTRIB_TEX0; i <= VERT_ATTRIB_TEX5; i++) {
       if (mesa_vp->Base.InputsRead & (1 << i)) {
 	 vp->inputs[i] = i - VERT_ATTRIB_TEX0 + 6;
+	 vp->inputmap_rev[8 + i - VERT_ATTRIB_TEX0] = i;
 	 free_inputs &= ~(1 << (i - VERT_ATTRIB_TEX0 + 6));
 	 array_count++;
       }
    }
-   free_inputs_conv = free_inputs;
    /* using VERT_ATTRIB_TEX6/7 would be illegal */
    /* completely ignore aliasing? */
    for (i = VERT_ATTRIB_GENERIC0; i < VERT_ATTRIB_MAX; i++) {
@@ -549,13 +557,14 @@ static GLboolean r200_translate_vertex_program(GLcontext *ctx, struct r200_verte
 	    if (free_inputs & (1 << j)) {
 	       free_inputs &= ~(1 << j);
 	       vp->inputs[i] = j;
-	       vp->rev_inputs[j] = i;
+	       if (j == 0) vp->inputmap_rev[j] = i; /* mapped to pos */
+	       else if (j < 12) vp->inputmap_rev[j + 2] = i; /* mapped to col/tex */
+	       else vp->inputmap_rev[j + 1] = i; /* mapped to pos1 */
 	       break;
 	    }
 	 }
       }
    }
-   vp->gen_inputs_mapped = free_inputs ^ free_inputs_conv;
 
    if (!(mesa_vp->Base.OutputsWritten & (1 << VERT_RESULT_HPOS))) {
       if (R200_DEBUG & DEBUG_FALLBACKS) {
