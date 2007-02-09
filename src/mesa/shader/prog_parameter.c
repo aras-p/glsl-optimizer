@@ -131,6 +131,10 @@ _mesa_add_parameter(struct gl_program_parameter_list *paramList,
             COPY_4V(paramList->ParameterValues[oldNum + i], values);
             values += 4;
          }
+         else {
+            /* silence valgrind */
+            ASSIGN_4V(paramList->ParameterValues[oldNum + i], 0, 0, 0, 0);
+         }
          size -= 4;
       }
 
