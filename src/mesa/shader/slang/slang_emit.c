@@ -43,7 +43,9 @@
 #define ANNOTATE 0
 
 
+/* XXX temporarily here */
 static GLboolean EmitHighLevelInstructions = GL_TRUE;
+
 
 
 /**
@@ -116,7 +118,7 @@ static const slang_ir_info IrInfo[] = {
    { IR_TEX, "IR_TEX", OPCODE_TEX, 4, 1 },
    { IR_TEXB, "IR_TEXB", OPCODE_TXB, 4, 1 },
    { IR_TEXP, "IR_TEXP", OPCODE_TXP, 4, 1 },
-   { IR_FLOAT, "IR_FLOAT", OPCODE_NOP, 0, 0 },
+   { IR_FLOAT, "IR_FLOAT", OPCODE_NOP, 0, 0 }, /* float literal */
    { IR_FIELD, "IR_FIELD", OPCODE_NOP, 0, 0 },
    { IR_ELEMENT, "IR_ELEMENT", OPCODE_NOP, 0, 0 },
    { IR_SWIZZLE, "IR_SWIZZLE", OPCODE_NOP, 0, 0 },
@@ -340,6 +342,14 @@ slang_print_ir(const slang_ir_node *n, int indent)
       printf("BREAK_IF_TRUE\n");
       slang_print_ir(n->Children[0], indent+3);
       break;
+   case IR_CONT_IF_FALSE:
+      printf("CONT_IF_FALSE\n");
+      slang_print_ir(n->Children[0], indent+3);
+      break;
+   case IR_CONT_IF_TRUE:
+      printf("CONT_IF_TRUE\n");
+      slang_print_ir(n->Children[0], indent+3);
+      break;
 
    case IR_VAR:
       printf("VAR %s%s at %s  store %p\n",
@@ -358,11 +368,16 @@ slang_print_ir(const slang_ir_node *n, int indent)
       slang_print_ir(n->Children[0], indent+3);
       break;
    case IR_FLOAT:
-      printf("FLOAT %f %f %f %f\n",
+      printf("FLOAT %g %g %g %g\n",
              n->Value[0], n->Value[1], n->Value[2], n->Value[3]);
       break;
    case IR_I_TO_F:
-      printf("INT_TO_FLOAT %d\n", (int) n->Value[0]);
+      printf("INT_TO_FLOAT\n");
+      slang_print_ir(n->Children[0], indent+3);
+      break;
+   case IR_F_TO_I:
+      printf("FLOAT_TO_INT\n");
+      slang_print_ir(n->Children[0], indent+3);
       break;
    case IR_SWIZZLE:
       printf("SWIZZLE %s of  (store %p) \n",
@@ -1386,6 +1401,7 @@ emit(slang_var_table *vt, slang_ir_node *n, struct gl_program *prog)
    case IR_FLOOR:
    case IR_FRAC:
    case IR_F_TO_I:
+   case IR_I_TO_F:
    case IR_ABS:
    case IR_SIN:
    case IR_COS:
