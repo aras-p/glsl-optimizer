@@ -614,12 +614,35 @@ new_break(slang_ir_node *loopNode)
 }
 
 
+/**
+ * Make new IR_BREAK_IF_TRUE or IR_BREAK_IF_FALSE node.
+ */
 static slang_ir_node *
-new_break_if_false(slang_ir_node *loopNode, slang_ir_node *cond)
+new_break_if(slang_ir_node *loopNode, slang_ir_node *cond, GLboolean breakTrue)
 {
-   slang_ir_node *n = new_node1(IR_BREAK_IF_FALSE, cond);
+   slang_ir_node *n;
    assert(loopNode);
    assert(loopNode->Opcode == IR_LOOP);
+   n = new_node1(breakTrue ? IR_BREAK_IF_TRUE : IR_BREAK_IF_FALSE, cond);
+   if (n) {
+      /* insert this node at head of linked list */
+      n->BranchNode = loopNode->BranchNode;
+      loopNode->BranchNode = n;
+   }
+   return n;
+}
+
+
+/**
+ * Make new IR_CONT_IF_TRUE or IR_CONT_IF_FALSE node.
+ */
+static slang_ir_node *
+new_cont_if(slang_ir_node *loopNode, slang_ir_node *cond, GLboolean contTrue)
+{
+   slang_ir_node *n;
+   assert(loopNode);
+   assert(loopNode->Opcode == IR_LOOP);
+   n = new_node1(contTrue ? IR_CONT_IF_TRUE : IR_CONT_IF_FALSE, cond);
    if (n) {
       /* insert this node at head of linked list */
       n->BranchNode = loopNode->BranchNode;
@@ -1406,7 +1429,7 @@ _slang_gen_while(slang_assemble_ctx * A, const slang_operation *oper)
    A->CurLoop = loop;
 
    cond = new_cond(_slang_gen_operation(A, &oper->children[0]));
-   breakIf = new_break_if_false(A->CurLoop, cond);
+   breakIf = new_break_if(A->CurLoop, cond, GL_FALSE);
    body = _slang_gen_operation(A, &oper->children[1]);
    loop->Children[0] = new_seq(breakIf, body);
 
@@ -1439,7 +1462,7 @@ _slang_gen_do(slang_assemble_ctx * A, const slang_operation *oper)
 
    body = _slang_gen_operation(A, &oper->children[0]);
    cond = new_cond(_slang_gen_operation(A, &oper->children[1]));
-   breakIf = new_break_if_false(A->CurLoop, cond);
+   breakIf = new_break_if(A->CurLoop, cond, GL_FALSE);
    loop->Children[0] = new_seq(body, breakIf);
 
    /* pop loop, restore prev */
@@ -1473,7 +1496,7 @@ _slang_gen_for(slang_assemble_ctx * A, const slang_operation *oper)
    A->CurLoop = loop;
 
    cond = new_cond(_slang_gen_operation(A, &oper->children[1]));
-   breakIf = new_break_if_false(A->CurLoop, cond);
+   breakIf = new_break_if(A->CurLoop, cond, GL_FALSE);
    body = _slang_gen_operation(A, &oper->children[3]);
    incr = _slang_gen_operation(A, &oper->children[2]);
    loop->Children[0] = new_seq(breakIf,
@@ -1537,6 +1560,23 @@ _slang_gen_if(slang_assemble_ctx * A, const slang_operation *oper)
 
 
 /**
+ * Determine if the given operation is of a specific type.
+ */
+static GLboolean
+is_operation_type(const const slang_operation *oper, slang_operation_type type)
+{
+   if (oper->type == type)
+      return GL_TRUE;
+   else if ((oper->type == slang_oper_block_new_scope ||
+             oper->type == slang_oper_block_no_new_scope) &&
+            oper->num_children == 1)
+      return is_operation_type(&oper->children[0], type);
+   else
+      return GL_FALSE;
+}
+
+
+/**
  * Generate IR tree for an if/then/else conditional using high-level
  * IR_IF instruction.
  */
@@ -1551,24 +1591,40 @@ _slang_gen_hl_if(slang_assemble_ctx * A, const slang_operation *oper)
     *    else-body code
     * ENDIF
     */
-   /* XXX special cases to check for:
-    * if body of conditiona is just a "break", emit a conditional break
-    * instruction.
-    */
    const GLboolean haveElseClause = !_slang_is_noop(&oper->children[2]);
    slang_ir_node *ifNode, *cond, *ifBody, *elseBody;
 
    cond = _slang_gen_operation(A, &oper->children[0]);
    cond = new_cond(cond);
-   ifBody = _slang_gen_operation(A, &oper->children[1]);
-   if (haveElseClause)
-      elseBody = _slang_gen_operation(A, &oper->children[2]);
-   else
-      elseBody = NULL;
 
-   ifNode = new_if(cond, ifBody, elseBody);
-
-   return ifNode;
+   if (is_operation_type(&oper->children[1], slang_oper_break)) {
+      /* Special case: generate a conditional break */
+      ifBody = new_break_if(A->CurLoop, cond, GL_TRUE);
+      if (haveElseClause) {
+         elseBody = _slang_gen_operation(A, &oper->children[2]);
+         return new_seq(ifBody, elseBody);
+      }
+      return ifBody;
+   }
+   else if (is_operation_type(&oper->children[1], slang_oper_continue)) {
+      /* Special case: generate a conditional break */
+      ifBody = new_cont_if(A->CurLoop, cond, GL_TRUE);
+      if (haveElseClause) {
+         elseBody = _slang_gen_operation(A, &oper->children[2]);
+         return new_seq(ifBody, elseBody);
+      }
+      return ifBody;
+   }
+   else {
+      /* general case */
+      ifBody = _slang_gen_operation(A, &oper->children[1]);
+      if (haveElseClause)
+         elseBody = _slang_gen_operation(A, &oper->children[2]);
+      else
+         elseBody = NULL;
+      ifNode = new_if(cond, ifBody, elseBody);
+      return ifNode;
+   }
 }
 
 

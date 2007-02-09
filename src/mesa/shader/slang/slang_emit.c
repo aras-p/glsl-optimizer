@@ -1156,9 +1156,9 @@ emit_loop(slang_var_table *vt, slang_ir_node *n, struct gl_program *prog)
       beginInst->BranchTarget = prog->NumInstructions - 1;
    }
 
-   /* Done emitting loop code.  Now walk over the loop's linked list
-    * of BREAK and CONT nodes, filling in their BranchTarget fields
-    * (which will point to the ENDLOOP or ENDLOOP+1 instructions).
+   /* Done emitting loop code.  Now walk over the loop's linked list of
+    * BREAK and CONT nodes, filling in their BranchTarget fields (which
+    * will point to the ENDLOOP+1 or BGNLOOP instructions, respectively).
     */
    for (ir = n->BranchNode; ir; ir = ir->BranchNode) {
       struct prog_instruction *inst = prog->Instructions + ir->InstLocation;
@@ -1186,7 +1186,8 @@ emit_loop(slang_var_table *vt, slang_ir_node *n, struct gl_program *prog)
 
 
 /**
- * Emit code for IR_CONT or IR_BREAK.
+ * "Continue" or "break" statement.
+ * Either OPCODE_CONT, OPCODE_BRK or OPCODE_BRA will be emitted.
  */
 static struct prog_instruction *
 emit_cont_break(slang_var_table *vt, slang_ir_node *n, struct gl_program *prog)
@@ -1207,7 +1208,8 @@ emit_cont_break(slang_var_table *vt, slang_ir_node *n, struct gl_program *prog)
 
 
 /**
- * Conditional loop continue/break.
+ * Conditional "continue" or "break" statement.
+ * Either OPCODE_CONT, OPCODE_BRK or OPCODE_BRA will be emitted.
  */
 static struct prog_instruction *
 emit_cont_break_if(slang_var_table *vt, slang_ir_node *n,
@@ -1223,7 +1225,11 @@ emit_cont_break_if(slang_var_table *vt, slang_ir_node *n,
 
    n->InstLocation = prog->NumInstructions;
    if (EmitHighLevelInstructions) {
-      opcode = (n->Opcode == IR_CONT) ? OPCODE_CONT : OPCODE_BRK;
+      if (n->Opcode == IR_CONT_IF_TRUE ||
+          n->Opcode == IR_CONT_IF_FALSE)
+         opcode = OPCODE_CONT;
+      else
+         opcode = OPCODE_BRK;
    }
    else {
       opcode = OPCODE_BRA;
@@ -1452,8 +1458,10 @@ emit(slang_var_table *vt, slang_ir_node *n, struct gl_program *prog)
    case IR_LOOP:
       return emit_loop(vt, n, prog);
    case IR_BREAK_IF_FALSE:
+   case IR_CONT_IF_FALSE:
       return emit_cont_break_if(vt, n, prog, GL_FALSE);
    case IR_BREAK_IF_TRUE:
+   case IR_CONT_IF_TRUE:
       return emit_cont_break_if(vt, n, prog, GL_TRUE);
    case IR_BREAK:
       /* fall-through */
