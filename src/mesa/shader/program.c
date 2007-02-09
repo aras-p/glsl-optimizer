@@ -997,7 +997,7 @@ _mesa_fetch_state(GLcontext *ctx, const enum state_index state[],
                break;
 	    }
 	    case STATE_FOG_PARAMS_OPTIMIZED:
-	       /* this makes it possible to use simpler per-vertex fog calcs. POW
+	       /* for simpler per-vertex/pixel fog calcs. POW
 		  (for EXP/EXP2 fog) might be more expensive than EX2 on some hw,
 		  plus it needs another constant (e) anyway. Linear fog can now be
 		  done with a single MAD.
