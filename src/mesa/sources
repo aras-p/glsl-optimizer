@@ -158,6 +158,7 @@ SHADER_SOURCES = \
 	shader/nvvertexec.c \
 	shader/nvvertparse.c \
 	shader/program.c \
+	shader/prog_debug.c \
 	shader/prog_instruction.c \
 	shader/prog_parameter.c \
 	shader/prog_print.c \
