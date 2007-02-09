@@ -487,7 +487,7 @@ static slang_asm_info AsmInfo[] = {
 static void
 _slang_free_ir_tree(slang_ir_node *n)
 {
-#if 0
+#if 1
    GLuint i;
    if (!n)
       return;
