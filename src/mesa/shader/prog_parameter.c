@@ -493,17 +493,28 @@ _mesa_lookup_parameter_constant(const struct gl_program_parameter_list *list,
                }
             }
          }
-         else if (list->Parameters[i].Size >= vSize) {
-            /* see if we can match this constant */
-            GLuint match = 0, j;
+         else if (vSize <= list->Parameters[i].Size) {
+            /* see if we can match this constant (with a swizzle) */
+            GLuint swz[4];
+            GLuint match = 0, j, k;
             for (j = 0; j < vSize; j++) {
-               if (list->ParameterValues[i][j] == v[j]) {
+               if (v[j] == list->ParameterValues[i][j]) {
+                  swz[j] = j;
                   match++;
+               }
+               else {
+                  for (k = 0; k < list->Parameters[i].Size; k++) {
+                     if (v[j] == list->ParameterValues[i][k]) {
+                        swz[j] = k;
+                        match++;
+                        break;
+                     }
+                  }
                }
             }
             if (match == vSize) {
                *posOut = i;
-               *swizzleOut = SWIZZLE_NOOP;
+               *swizzleOut = MAKE_SWIZZLE4(swz[0], swz[1], swz[2], swz[3]);
                return GL_TRUE;
             }
          }
