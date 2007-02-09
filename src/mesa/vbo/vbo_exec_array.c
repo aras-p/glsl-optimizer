@@ -147,8 +147,8 @@ static void recalculate_input_bindings( GLcontext *ctx )
       /* Could use just about anything, just to fill in the empty
        * slots:
        */
-      for (i = MAT_ATTRIB_MAX; i < VERT_ATTRIB_MAX; i++)
-	 inputs[i] = &vbo->generic_currval[i - VERT_ATTRIB_GENERIC0];
+      for (i = MAT_ATTRIB_MAX; i < VERT_ATTRIB_MAX - VERT_ATTRIB_GENERIC0; i++)
+	 inputs[VERT_ATTRIB_GENERIC0 + i] = &vbo->generic_currval[i];
 
       break;
    case VP_NV:
