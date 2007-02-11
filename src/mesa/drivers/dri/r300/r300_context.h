@@ -729,6 +729,11 @@ struct r300_fragment_program {
 	GLboolean params_uptodate;
 
 	int max_temp_idx;
+
+	/* the index of the sin constant is stored here */
+	GLint const_sin;
+	
+	GLuint optimization;
 };
 
 #define R300_MAX_AOS_ARRAYS		16

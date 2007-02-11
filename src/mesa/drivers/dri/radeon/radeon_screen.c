@@ -55,6 +55,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "r200_span.h"
 #elif RADEON_COMMON && defined(RADEON_COMMON_FOR_R300)
 #include "r300_context.h"
+#include "r300_fragprog.h"
 #include "radeon_span.h"
 #endif
 
@@ -168,6 +169,13 @@ DRI_CONF_OPT_BEGIN(disable_stencil_two_side,bool,def) \
         DRI_CONF_DESC(en,"Disable GL_EXT_stencil_two_side") \
 DRI_CONF_OPT_END
 
+#define DRI_CONF_FP_OPTIMIZATION(def) \
+DRI_CONF_OPT_BEGIN_V(fp_optimization,enum,def,"0:1") \
+	DRI_CONF_DESC_BEGIN(en,"Fragment Program optimization") \
+                DRI_CONF_ENUM(0,"Optimize for Speed") \
+                DRI_CONF_ENUM(1,"Optimize for Quality") \
+        DRI_CONF_DESC_END \
+DRI_CONF_OPT_END
 
 const char __driConfigOptions[] =
 DRI_CONF_BEGIN
@@ -190,12 +198,13 @@ DRI_CONF_BEGIN
 		DRI_CONF_COLOR_REDUCTION(DRI_CONF_COLOR_REDUCTION_DITHER)
 		DRI_CONF_ROUND_MODE(DRI_CONF_ROUND_TRUNC)
 		DRI_CONF_DITHER_MODE(DRI_CONF_DITHER_XERRORDIFF)
+		DRI_CONF_FP_OPTIMIZATION(DRI_CONF_FP_OPTIMIZATION_SPEED)
 	DRI_CONF_SECTION_END
 	DRI_CONF_SECTION_DEBUG
 		DRI_CONF_NO_RAST(false)
 	DRI_CONF_SECTION_END
 DRI_CONF_END;
-static const GLuint __driNConfigOptions = 17;
+static const GLuint __driNConfigOptions = 18;
 
 #ifndef RADEON_DEBUG
 int RADEON_DEBUG = 0;
