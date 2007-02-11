@@ -1111,9 +1111,6 @@ _mesa_update_state_locked( GLcontext *ctx )
    if (new_state & (_NEW_SCISSOR | _NEW_BUFFERS | _NEW_VIEWPORT))
       _mesa_update_draw_buffer_bounds( ctx );
 
-   if (new_state & _NEW_POINT)
-      _mesa_update_point( ctx );
-
    if (new_state & _NEW_LIGHT)
       _mesa_update_lighting( ctx );
 
