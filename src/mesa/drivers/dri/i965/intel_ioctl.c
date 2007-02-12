@@ -108,7 +108,8 @@ void intelWaitIrq( struct intel_context *intel, int seq )
 
 	 /* This seems quite often to return before it should!?! 
 	  */
-      } while (ret == -EAGAIN || ret == -EINTR || (ret == -EBUSY && lastdispatch != intel->sarea->last_dispatch) || (ret == 0 && seq > intel->sarea->last_dispatch));
+      } while (ret == -EAGAIN || ret == -EINTR || (ret == -EBUSY && lastdispatch != intel->sarea->last_dispatch) || (ret == 0 && seq > intel->sarea->last_dispatch)
+	       || (ret == 0 && intel->sarea->last_dispatch - seq >= (1 << 24)));
       
 
       if ( ret ) {
