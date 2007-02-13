@@ -690,7 +690,7 @@ _slang_locate_function(const slang_function_scope * funcs, slang_atom a_name,
             return NULL;
          }
          if (!slang_type_specifier_equal(&ti.spec,
-             &f->parameters->variables[j/* + haveRetValue*/]->type.specifier)) {
+             &f->parameters->variables[j]->type.specifier)) {
             slang_typeinfo_destruct(&ti);
             break;
          }
@@ -698,8 +698,8 @@ _slang_locate_function(const slang_function_scope * funcs, slang_atom a_name,
 
          /* "out" and "inout" formal parameter requires the actual parameter to be l-value */
          if (!ti.can_be_referenced &&
-             (f->parameters->variables[j/* + haveRetValue*/]->type.qualifier == slang_qual_out ||
-              f->parameters->variables[j/* + haveRetValue*/]->type.qualifier == slang_qual_inout))
+             (f->parameters->variables[j]->type.qualifier == slang_qual_out ||
+              f->parameters->variables[j]->type.qualifier == slang_qual_inout))
             break;
       }
       if (j == num_args)
