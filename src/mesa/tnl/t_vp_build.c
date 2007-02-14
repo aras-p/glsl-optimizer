@@ -1102,7 +1102,8 @@ static void build_fog( struct tnl_program *p )
    }
 
    if (p->state->tnl_do_vertex_fog) {
-      struct ureg params = register_param1(p, STATE_FOG_PARAMS_OPTIMIZED);
+      struct ureg params = register_param2(p, STATE_INTERNAL,
+					   STATE_FOG_PARAMS_OPTIMIZED);
       struct ureg tmp = get_temp(p);
 
       switch (p->state->fog_mode) {
