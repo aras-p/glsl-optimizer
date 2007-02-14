@@ -196,7 +196,7 @@ static void recalculate_input_bindings( GLcontext *ctx )
       }
 
       for (i = 0; i < 16; i++) {
-	 if (exec->array.generic_array[0]->Enabled)
+	 if (exec->array.generic_array[i]->Enabled)
 	    inputs[VERT_ATTRIB_GENERIC0 + i] = exec->array.generic_array[i];
 	 else
 	    inputs[VERT_ATTRIB_GENERIC0 + i] = &vbo->generic_currval[i];
