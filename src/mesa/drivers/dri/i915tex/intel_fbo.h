@@ -32,6 +32,20 @@
 struct intel_context;
 struct intel_region;
 
+/**
+ * Intel framebuffer, derived from gl_framebuffer.
+ */
+struct intel_framebuffer
+{
+   struct gl_framebuffer Base;
+
+   /* Drawable page flipping state */
+   GLboolean pf_active;
+   GLboolean flip_pending;
+   GLint pf_pipes;
+   GLint pf_current_page;
+};
+
 
 /**
  * Intel renderbuffer, derived from gl_renderbuffer.

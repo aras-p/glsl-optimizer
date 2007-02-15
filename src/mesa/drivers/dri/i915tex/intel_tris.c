@@ -102,15 +102,7 @@ intelStartInlinePrimitive(struct intel_context *intel,
 
 /*    _mesa_printf("%s *", __progname); */
 
-   if (intel->flip_pending) {
-      /* Wait for a pending flip to take effect */
-      BEGIN_BATCH(2, batch_flags);
-      OUT_BATCH(MI_WAIT_FOR_EVENT | MI_WAIT_FOR_PLANE_A_FLIP);
-      OUT_BATCH(0);
-      ADVANCE_BATCH();
-
-      intel->flip_pending = GL_FALSE;
-   }
+   intel_wait_flips(intel, batch_flags);
 
    /* Emit a slot which will be filled with the inline primitive
     * command later.

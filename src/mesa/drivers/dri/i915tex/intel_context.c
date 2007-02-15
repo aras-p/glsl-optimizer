@@ -690,19 +690,8 @@ intelContendedLock(struct intel_context *intel, GLuint flags)
       intelWindowMoved(intel);
       intel->lastStamp = dPriv->lastStamp;
    }
-
-   /* Update page flipping info
-    */
-   if (INTEL_DEBUG & DEBUG_LOCK)
-      if (intel->doPageFlip != intel->sarea->pf_active)
-	 _mesa_printf("%s - age flipping %sactive\n", __progname,
-		      intel->sarea->pf_active ? "" : "in");
-
-   intel->doPageFlip = intel->sarea->pf_active;
-   driFlipRenderbuffers(intel->ctx.WinSysDrawBuffer,
-			intel->sarea->pf_current_page);
-   intel_draw_buffer(&intel->ctx, intel->ctx.DrawBuffer);
 }
+
 
 
 /* Lock the hardware and validate our state.  

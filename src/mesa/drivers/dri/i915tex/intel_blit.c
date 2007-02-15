@@ -123,14 +123,13 @@ noschedule:
        */
       LOCK_HARDWARE(intel);
 
-      if (intel->driDrawable && intel->driDrawable->numClipRects) {
+      if (dPriv && dPriv->numClipRects) {
 	 const intelScreenPrivate *intelScreen = intel->intelScreen;
-	 struct gl_framebuffer *fb
-	    = (struct gl_framebuffer *) dPriv->driverPrivate;
+	 struct intel_framebuffer *intel_fb = dPriv->driverPrivate;
 	 const struct intel_region *frontRegion
-	    = intel_get_rb_region(fb, BUFFER_FRONT_LEFT);
+	    = intel_get_rb_region(&intel_fb->Base, BUFFER_FRONT_LEFT);
 	 const struct intel_region *backRegion
-	    = intel_get_rb_region(fb, BUFFER_BACK_LEFT);
+	    = intel_get_rb_region(&intel_fb->Base, BUFFER_BACK_LEFT);
 	 const int nbox = dPriv->numClipRects;
 	 const drm_clip_rect_t *pbox = dPriv->pClipRects;
 	 const int pitch = frontRegion->pitch;
@@ -138,8 +137,8 @@ noschedule:
 	 int BR13, CMD;
 	 int i;
 
-	 ASSERT(fb);
-	 ASSERT(fb->Name == 0);    /* Not a user-created FBO */
+	 ASSERT(intel_fb);
+	 ASSERT(intel_fb->Base.Name == 0);    /* Not a user-created FBO */
 	 ASSERT(frontRegion);
 	 ASSERT(backRegion);
 	 ASSERT(frontRegion->pitch == backRegion->pitch);
@@ -185,7 +184,7 @@ noschedule:
 	    OUT_BATCH((pbox->y1 << 16) | pbox->x1);
 	    OUT_BATCH((pbox->y2 << 16) | pbox->x2);
 
-	    if (intel->sarea->pf_current_page == 0)
+	    if (intel_fb->pf_current_page == 0)
 	       OUT_RELOC(frontRegion->buffer,
 			 DRM_BO_FLAG_MEM_TT | DRM_BO_FLAG_WRITE,
 			 DRM_BO_MASK_MEM | DRM_BO_FLAG_WRITE, 0);
@@ -196,7 +195,7 @@ noschedule:
 	    OUT_BATCH((pbox->y1 << 16) | pbox->x1);
 	    OUT_BATCH(BR13 & 0xffff);
 
-	    if (intel->sarea->pf_current_page == 0)
+	    if (intel_fb->pf_current_page == 0)
 	       OUT_RELOC(backRegion->buffer,
 			 DRM_BO_FLAG_MEM_TT | DRM_BO_FLAG_READ,
 			 DRM_BO_MASK_MEM | DRM_BO_FLAG_READ, 0);
@@ -406,6 +405,7 @@ void
 intelClearWithBlit(GLcontext * ctx, GLbitfield mask)
 {
    struct intel_context *intel = intel_context(ctx);
+   struct gl_framebuffer *fb = ctx->DrawBuffer;
    GLuint clear_depth;
    GLbitfield skipBuffers = 0;
    BATCH_LOCALS;
@@ -417,7 +417,7 @@ intelClearWithBlit(GLcontext * ctx, GLbitfield mask)
     */
    clear_depth = 0;
    if (mask & BUFFER_BIT_DEPTH) {
-      clear_depth = (GLuint) (ctx->DrawBuffer->_DepthMax * ctx->Depth.Clear);
+      clear_depth = (GLuint) (fb->_DepthMax * ctx->Depth.Clear);
    }
    if (mask & BUFFER_BIT_STENCIL) {
       clear_depth |= (ctx->Stencil.Clear & 0xff) << 24;
@@ -440,12 +440,12 @@ intelClearWithBlit(GLcontext * ctx, GLbitfield mask)
       int i;
 
       /* Get clear bounds after locking */
-      cx = ctx->DrawBuffer->_Xmin;
-      cy = ctx->DrawBuffer->_Ymin;
-      cw = ctx->DrawBuffer->_Xmax - ctx->DrawBuffer->_Xmin;
-      ch = ctx->DrawBuffer->_Ymax - ctx->DrawBuffer->_Ymin;
+      cx = fb->_Xmin;
+      cy = fb->_Ymin;
+      cw = fb->_Xmax - cx;
+      ch = fb->_Ymax - cy;
 
-      if (intel->ctx.DrawBuffer->Name == 0) {
+      if (fb->Name == 0) {
          /* clearing a window */
 
          /* flip top to bottom */
@@ -470,8 +470,7 @@ intelClearWithBlit(GLcontext * ctx, GLbitfield mask)
          drm_clip_rect_t b;
          GLuint buf;
          GLuint clearMask = mask;      /* use copy, since we modify it below */
-         GLboolean all = (cw == ctx->DrawBuffer->Width &&
-                          ch == ctx->DrawBuffer->Height);
+         GLboolean all = (cw == fb->Width && ch == fb->Height);
 
          if (!all) {
             intel_intersect_cliprects(&b, &clear, box);
@@ -490,7 +489,7 @@ intelClearWithBlit(GLcontext * ctx, GLbitfield mask)
             if ((clearMask & bufBit) && !(bufBit & skipBuffers)) {
                /* OK, clear this renderbuffer */
                struct intel_region *irb_region =
-		  intel_get_rb_region(ctx->DrawBuffer, buf);
+		  intel_get_rb_region(fb, buf);
                struct _DriBufferObject *write_buffer =
                   intel_region_buffer(intel->intelScreen, irb_region,
                                       all ? INTEL_WRITE_FULL :
@@ -546,15 +545,7 @@ intelClearWithBlit(GLcontext * ctx, GLbitfield mask)
                   _mesa_debug(ctx, "hardware blit clear buf %d rb id %d\n",
                   buf, irb->Base.Name);
                 */
-	       if (intel->flip_pending) {
-		  /* Wait for a pending flip to take effect */
-		  BEGIN_BATCH(2, INTEL_BATCH_NO_CLIPRECTS);
-		  OUT_BATCH(MI_WAIT_FOR_EVENT | MI_WAIT_FOR_PLANE_A_FLIP);
-		  OUT_BATCH(0);
-		  ADVANCE_BATCH();
-
-		  intel->flip_pending = GL_FALSE;
-	       }
+	       intel_wait_flips(intel, INTEL_BATCH_NO_CLIPRECTS);
 
                BEGIN_BATCH(6, INTEL_BATCH_NO_CLIPRECTS);
                OUT_BATCH(CMD);

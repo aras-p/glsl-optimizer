@@ -71,6 +71,21 @@ intel_renderbuffer(struct gl_renderbuffer *rb)
 struct intel_renderbuffer *
 intel_get_renderbuffer(struct gl_framebuffer *fb, GLuint attIndex)
 {
+   if (fb->Name == 0) {
+      struct intel_framebuffer *intel_fb = (struct intel_framebuffer*)fb;
+
+      if (intel_fb->pf_current_page) {
+	 switch (attIndex) {
+	 case BUFFER_BACK_LEFT:
+	    attIndex = BUFFER_FRONT_LEFT;
+	    break;
+	 case BUFFER_FRONT_LEFT:
+	    attIndex = BUFFER_BACK_LEFT;
+	    break;
+	 }
+      }
+   }
+
    return intel_renderbuffer(fb->Attachment[attIndex].Renderbuffer);
 }
 
@@ -78,22 +93,7 @@ intel_get_renderbuffer(struct gl_framebuffer *fb, GLuint attIndex)
 struct intel_region *
 intel_get_rb_region(struct gl_framebuffer *fb, GLuint attIndex)
 {
-   GET_CURRENT_CONTEXT(ctx);
-   struct intel_context *intel = intel_context(ctx);
-   struct intel_renderbuffer *irb;
-
-   if (intel->sarea->pf_current_page) {
-      switch (attIndex) {
-      case BUFFER_BACK_LEFT:
-	 attIndex = BUFFER_FRONT_LEFT;
-	 break;
-      case BUFFER_FRONT_LEFT:
-	 attIndex = BUFFER_BACK_LEFT;
-	 break;
-      }
-   }
-
-   irb = intel_renderbuffer(fb->Attachment[attIndex].Renderbuffer);
+   struct intel_renderbuffer *irb = intel_get_renderbuffer(fb, attIndex);
 
    if (irb)
       return irb->region;
@@ -109,7 +109,9 @@ intel_get_rb_region(struct gl_framebuffer *fb, GLuint attIndex)
 static struct gl_framebuffer *
 intel_new_framebuffer(GLcontext * ctx, GLuint name)
 {
-   /* there's no intel_framebuffer at this time, just use Mesa's class */
+   /* Only drawable state in intel_framebuffer at this time, just use Mesa's
+    * class
+    */
    return _mesa_new_framebuffer(ctx, name);
 }
 

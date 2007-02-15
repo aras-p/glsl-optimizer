@@ -294,11 +294,6 @@ struct intel_context
   int width;
   int height;
   int current_rotation;
-
-  /* Page flipping
-   */
-  GLboolean doPageFlip;
-  GLboolean flip_pending;
 };
 
 /* These are functions now:
