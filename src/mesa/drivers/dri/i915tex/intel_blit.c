@@ -184,25 +184,12 @@ noschedule:
 	    OUT_BATCH((pbox->y1 << 16) | pbox->x1);
 	    OUT_BATCH((pbox->y2 << 16) | pbox->x2);
 
-	    if (intel_fb->pf_current_page == 0)
-	       OUT_RELOC(frontRegion->buffer,
-			 DRM_BO_FLAG_MEM_TT | DRM_BO_FLAG_WRITE,
-			 DRM_BO_MASK_MEM | DRM_BO_FLAG_WRITE, 0);
-	    else
-	       OUT_RELOC(backRegion->buffer,
-			 DRM_BO_FLAG_MEM_TT | DRM_BO_FLAG_WRITE,
-			 DRM_BO_MASK_MEM | DRM_BO_FLAG_WRITE, 0);
+	    OUT_RELOC(frontRegion->buffer, DRM_BO_FLAG_MEM_TT | DRM_BO_FLAG_WRITE,
+		      DRM_BO_MASK_MEM | DRM_BO_FLAG_WRITE, 0);
 	    OUT_BATCH((pbox->y1 << 16) | pbox->x1);
 	    OUT_BATCH(BR13 & 0xffff);
-
-	    if (intel_fb->pf_current_page == 0)
-	       OUT_RELOC(backRegion->buffer,
-			 DRM_BO_FLAG_MEM_TT | DRM_BO_FLAG_READ,
-			 DRM_BO_MASK_MEM | DRM_BO_FLAG_READ, 0);
-	    else
-	       OUT_RELOC(frontRegion->buffer,
-			 DRM_BO_FLAG_MEM_TT | DRM_BO_FLAG_READ,
-			 DRM_BO_MASK_MEM | DRM_BO_FLAG_READ, 0);
+	    OUT_RELOC(backRegion->buffer, DRM_BO_FLAG_MEM_TT | DRM_BO_FLAG_READ,
+		      DRM_BO_MASK_MEM | DRM_BO_FLAG_READ, 0);
 
 	    ADVANCE_BATCH();
 	 }
