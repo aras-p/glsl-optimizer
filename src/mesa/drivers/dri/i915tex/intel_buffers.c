@@ -249,7 +249,7 @@ intelWindowMoved(struct intel_context *intel)
 
       pf_active = (pf_pipes & intel->sarea->pf_active) == pf_pipes;
 
-      if (1 /*INTEL_DEBUG & DEBUG_LOCK*/)
+      if (INTEL_DEBUG & DEBUG_LOCK)
 	 if (pf_active != intel_fb->pf_active)
 	    _mesa_printf("%s - Page flipping %sactive\n", __progname,
 			 pf_active ? "" : "in");
