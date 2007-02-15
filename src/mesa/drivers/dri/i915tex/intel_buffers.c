@@ -471,16 +471,15 @@ intelRotateWindow(struct intel_context *intel,
 
    intel_fb = dPriv->driverPrivate;
 
-   if ((srcBuf == BUFFER_BIT_BACK_LEFT && intel_fb->pf_current_page) ||
-       (srcBuf == BUFFER_BIT_FRONT_LEFT && !intel_fb->pf_current_page)) {
-      src = intel->intelScreen->front_region;
-      clipRects = dPriv->pClipRects;
-      numClipRects = dPriv->numClipRects;
-   }
-   else {
+   if ((srcBuf == BUFFER_BIT_BACK_LEFT && !intel_fb->pf_active)) {
       src = intel->intelScreen->back_region;
       clipRects = dPriv->pBackClipRects;
       numClipRects = dPriv->numBackClipRects;
+   }
+   else {
+      src = intel->intelScreen->front_region;
+      clipRects = dPriv->pClipRects;
+      numClipRects = dPriv->numClipRects;
    }
 
    if (src->cpp == 4) {
