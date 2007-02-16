@@ -658,8 +658,10 @@ static void nv10WindowMoved(nouveauContextPtr nmesa)
 	OUT_RING(0);
 
 	BEGIN_RING_CACHE(NvSub3D,
-	      NV10_TCL_PRIMITIVE_3D_VIEWPORT_CLIP_HORIZ(0), 2);
+	      NV10_TCL_PRIMITIVE_3D_VIEWPORT_CLIP_HORIZ(0), 1);
         OUT_RING_CACHE(((w+x-1) << 16) | x | 0x08000800);
+	BEGIN_RING_CACHE(NvSub3D,
+	      NV10_TCL_PRIMITIVE_3D_VIEWPORT_CLIP_VERT(0), 1);
         OUT_RING_CACHE(((h+y-1) << 16) | y | 0x08000800);
 	for (i=1; i<8; i++) {
 		BEGIN_RING_CACHE(NvSub3D,

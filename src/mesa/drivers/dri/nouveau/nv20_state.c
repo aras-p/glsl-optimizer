@@ -642,8 +642,10 @@ static void nv20WindowMoved(nouveauContextPtr nmesa)
 	OUT_RING(0);
 
 	BEGIN_RING_CACHE(NvSub3D,
-	      NV20_TCL_PRIMITIVE_3D_VIEWPORT_CLIP_HORIZ(0), 2);
+	      NV20_TCL_PRIMITIVE_3D_VIEWPORT_CLIP_HORIZ(0), 1);
         OUT_RING_CACHE((4095 << 16) | 0);
+	BEGIN_RING_CACHE(NvSub3D,
+	      NV20_TCL_PRIMITIVE_3D_VIEWPORT_CLIP_VERT(0), 1);
         OUT_RING_CACHE((4095 << 16) | 0);
 	for (i=1; i<8; i++) {
 		BEGIN_RING_CACHE(NvSub3D,
