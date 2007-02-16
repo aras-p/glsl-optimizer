@@ -162,6 +162,9 @@ slang_info_log_message(slang_info_log * log, const char *prefix,
    }
    slang_string_concat(log->text, msg);
    slang_string_concat(log->text, "\n");
+#if 1
+   abort(); /* XXX temporary */
+#endif
    return 1;
 }
 
@@ -214,7 +217,7 @@ slang_info_log_memory(slang_info_log * log)
       log->dont_free_text = 1;
       log->text = out_of_memory;
    }
-   abort();
+   abort(); /* XXX temporary */
 }
 
 /* slang_parse_ctx */
