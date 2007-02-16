@@ -121,16 +121,27 @@ static void nv10ClearColor(GLcontext *ctx, const GLfloat color[4])
 
 static void nv10ClearDepth(GLcontext *ctx, GLclampd d)
 {
-	/* FIXME: check if 16 or 24/32 bits depth buffer */
 	nouveauContextPtr nmesa = NOUVEAU_CONTEXT(ctx);
-	nmesa->clear_value=((nmesa->clear_value&0x000000FF)|(((uint32_t)(d*0xFFFFFF))<<8));
+
+	switch (ctx->DrawBuffer->_DepthBuffer->DepthBits) {
+		case 16:
+			nmesa->clear_value = (uint32_t)(d*0x7FFF);
+			break;
+		case 24:
+			nmesa->clear_value = ((nmesa->clear_value&0x000000FF) |
+				(((uint32_t)(d*0xFFFFFF))<<8));
+			break;
+	}
 }
 
 static void nv10ClearStencil(GLcontext *ctx, GLint s)
 {
-	/* FIXME: not valid for 16 bits depth buffer (0 stencil bits) */
 	nouveauContextPtr nmesa = NOUVEAU_CONTEXT(ctx);
-	nmesa->clear_value=((nmesa->clear_value&0xFFFFFF00)|(s&0x000000FF));
+
+	if (ctx->DrawBuffer->_DepthBuffer->DepthBits == 24) {
+		nmesa->clear_value = ((nmesa->clear_value&0xFFFFFF00)|
+			(s&0x000000FF));
+	}
 }
 
 static void nv10ClipPlane(GLcontext *ctx, GLenum plane, const GLfloat *equation)
