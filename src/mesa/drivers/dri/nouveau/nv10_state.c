@@ -34,6 +34,29 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "mtypes.h"
 #include "colormac.h"
 
+static void nv10ViewportScale(nouveauContextPtr nmesa)
+{
+	GLcontext *ctx = nmesa->glCtx;
+	GLuint w = ctx->Viewport.Width;
+	GLuint h = ctx->Viewport.Height;
+
+	GLfloat max_depth = (ctx->Viewport.Near + ctx->Viewport.Far) * 0.5;
+	switch (ctx->DrawBuffer->_DepthBuffer->DepthBits) {
+		case 16:
+			max_depth *= 32767.0;
+			break;
+		case 24:
+			max_depth *= 16777215.0;
+			break;
+	}
+
+	BEGIN_RING_CACHE(NvSub3D, NV10_TCL_PRIMITIVE_3D_VIEWPORT_SCALE_X, 4);
+	OUT_RING_CACHEf ((((GLfloat) w) * 0.5) - 2048.0);
+	OUT_RING_CACHEf ((((GLfloat) h) * 0.5) - 2048.0);
+	OUT_RING_CACHEf (max_depth);
+	OUT_RING_CACHEf (0.0);
+}
+
 static void nv10AlphaFunc(GLcontext *ctx, GLenum func, GLfloat ref)
 {
 	nouveauContextPtr nmesa = NOUVEAU_CONTEXT(ctx);
@@ -167,6 +190,8 @@ static void nv10DepthRange(GLcontext *ctx, GLclampd nearval, GLclampd farval)
 	BEGIN_RING_CACHE(NvSub3D, NV10_TCL_PRIMITIVE_3D_DEPTH_RANGE_NEAR, 2);
 	OUT_RING_CACHEf(nearval);
 	OUT_RING_CACHEf(farval);
+
+	nv10ViewportScale(nmesa);
 }
 
 /** Specify the current buffer for writing */
@@ -628,18 +653,7 @@ static void nv10WindowMoved(nouveauContextPtr nmesa)
 	        OUT_RING_CACHE(0);
 	}
 
-	/* viewport transform */
-	BEGIN_RING_CACHE(NvSub3D, NV10_TCL_PRIMITIVE_3D_VIEWPORT_ORIGIN_X, 4);
-	OUT_RING_CACHEf ((GLfloat) x);
-	OUT_RING_CACHEf ((GLfloat) (y+h));
-	OUT_RING_CACHEf (0.0);
-	OUT_RING_CACHEf (0.0);
-
-	BEGIN_RING_CACHE(NvSub3D, NV10_TCL_PRIMITIVE_3D_VIEWPORT_SCALE_X, 4);
-	OUT_RING_CACHEf ((((GLfloat) w) * 0.5) - 2048.0);
-	OUT_RING_CACHEf ((((GLfloat) h) * 0.5) - 2048.0);
-	OUT_RING_CACHEf (16777215.0 * 0.5);
-	OUT_RING_CACHEf (0.0);
+	nv10ViewportScale(nmesa);
 }
 
 /* Initialise any card-specific non-GL related state */
@@ -699,6 +713,13 @@ static GLboolean nv10BindBuffers(nouveauContextPtr nmesa, int num_color,
 	OUT_RING_CACHE(pitch);
 	OUT_RING_CACHE(color[0]->offset);
 	OUT_RING_CACHE(depth ? depth->offset : color[0]->offset);
+
+	/* Always set to bottom left of buffer */
+	BEGIN_RING_CACHE(NvSub3D, NV10_TCL_PRIMITIVE_3D_VIEWPORT_ORIGIN_X, 4);
+	OUT_RING_CACHEf (0.0);
+	OUT_RING_CACHEf ((GLfloat) h);
+	OUT_RING_CACHEf (0.0);
+	OUT_RING_CACHEf (0.0);
 
 	return GL_TRUE;
 }
