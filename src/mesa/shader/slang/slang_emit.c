@@ -1394,6 +1394,12 @@ emit(slang_var_table *vt, slang_ir_node *n, struct gl_program *prog)
    case IR_SWIZZLE:
       return emit_swizzle(vt, n, prog);
 
+   case IR_I_TO_F:
+      {
+         n->Store = n->Children[0]->Store;
+      }
+      return NULL;
+
    /* Simple arithmetic */
    /* unary */
    case IR_RSQ:
@@ -1401,7 +1407,6 @@ emit(slang_var_table *vt, slang_ir_node *n, struct gl_program *prog)
    case IR_FLOOR:
    case IR_FRAC:
    case IR_F_TO_I:
-   case IR_I_TO_F:
    case IR_ABS:
    case IR_SIN:
    case IR_COS:
