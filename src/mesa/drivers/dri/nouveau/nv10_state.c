@@ -187,9 +187,15 @@ static void nv10DepthMask(GLcontext *ctx, GLboolean flag)
 static void nv10DepthRange(GLcontext *ctx, GLclampd nearval, GLclampd farval)
 {
 	nouveauContextPtr nmesa = NOUVEAU_CONTEXT(ctx);
+
+	GLfloat depth_scale = 16777216.0;
+	if (ctx->DrawBuffer->_DepthBuffer->DepthBits == 16) {
+		depth_scale = 32768.0;
+	}
+
 	BEGIN_RING_CACHE(NvSub3D, NV10_TCL_PRIMITIVE_3D_DEPTH_RANGE_NEAR, 2);
-	OUT_RING_CACHEf(nearval);
-	OUT_RING_CACHEf(farval);
+	OUT_RING_CACHEf(nearval * depth_scale);
+	OUT_RING_CACHEf(farval * depth_scale);
 
 	nv10ViewportScale(nmesa);
 }
