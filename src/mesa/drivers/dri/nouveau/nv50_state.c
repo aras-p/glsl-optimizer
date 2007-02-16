@@ -293,7 +293,11 @@ static void nv50Enable(GLcontext *ctx, GLenum cap, GLboolean state)
 //		case GL_POST_COLOR_MATRIX_COLOR_TABLE:
 //		case GL_POST_CONVOLUTION_COLOR_TABLE:
 //		case GL_RESCALE_NORMAL:
-//		case GL_SCISSOR_TEST:
+		case GL_SCISSOR_TEST:
+			/* No enable bit, nv50Scissor will adjust to max range */
+			ctx->Driver.Scissor(ctx, ctx->Scissor.X, ctx->Scissor.Y,
+			      			 ctx->Scissor.Width, ctx->Scissor.Height);
+			break;
 //		case GL_SEPARABLE_2D:
 		case GL_STENCIL_TEST:
 			// TODO BACK and FRONT ?
@@ -416,6 +420,21 @@ void (*RenderMode)(GLcontext *ctx, GLenum mode );
 static void nv50Scissor(GLcontext *ctx, GLint x, GLint y, GLsizei w, GLsizei h)
 {
         nouveauContextPtr nmesa = NOUVEAU_CONTEXT(ctx);
+
+	/* There's no scissor enable bit, so adjust the scissor to cover the
+	 * maximum draw buffer bounds
+	 */
+	if (!ctx->Scissor.Enabled) {
+	   x = y = 0;
+	   w = h = 8191;
+	} else {
+	   x += nmesa->drawX;
+	   y += nmesa->drawY;
+	}
+
+        BEGIN_RING_CACHE(NvSub3D, NV50_TCL_PRIMITIVE_3D_SCISSOR_WIDTH_XPOS, 2);
+        OUT_RING_CACHE(((w) << 16) | x);
+        OUT_RING_CACHE(((h) << 16) | y);
 }
 
 /** Select flat or smooth shading */
@@ -503,10 +522,65 @@ static void nv50TextureMatrix(GLcontext *ctx, GLuint unit, const GLmatrix *mat)
 
 static void nv50WindowMoved(nouveauContextPtr nmesa)
 {
+	GLcontext *ctx = nmesa->glCtx;
+	GLfloat *v = nmesa->viewport.m;
+	GLuint w = ctx->Viewport.Width;
+	GLuint h = ctx->Viewport.Height;
+	GLuint x = ctx->Viewport.X + nmesa->drawX;
+	GLuint y = ctx->Viewport.Y + nmesa->drawY;
+	int i;
+
+	BEGIN_RING_CACHE(NvSub3D,
+	      NV50_TCL_PRIMITIVE_3D_VIEWPORT_CLIP_HORIZ(0), 2);
+        OUT_RING_CACHE((8191 << 16) | 0);
+        OUT_RING_CACHE((8191 << 16) | 0);
+	for (i=1; i<8; i++) {
+		BEGIN_RING_CACHE(NvSub3D,
+		      NV50_TCL_PRIMITIVE_3D_VIEWPORT_CLIP_HORIZ(i), 2);
+        	OUT_RING_CACHE(0);
+	        OUT_RING_CACHE(0);
+	}
+
+	ctx->Driver.Scissor(ctx, ctx->Scissor.X, ctx->Scissor.Y,
+	      		    ctx->Scissor.Width, ctx->Scissor.Height);
 }
 
 static GLboolean nv50InitCard(nouveauContextPtr nmesa)
 {
+	int i,j;
+
+	nouveauObjectOnSubchannel(nmesa, NvSub3D, Nv3D);
+
+	BEGIN_RING_SIZE(NvSub3D, 0x1558, 1);
+	OUT_RING(1);
+
+	BEGIN_RING_SIZE(NvSub3D, NV50_TCL_PRIMITIVE_3D_SET_OBJECT_1(0), 8);
+	for (i=0; i<8; i++) {
+		OUT_RING(NvDmaFB);
+	}
+
+	BEGIN_RING_SIZE(NvSub3D, NV50_TCL_PRIMITIVE_3D_SET_OBJECT_0(0), 12);
+	for (i=0; i<12; i++) {
+		OUT_RING(NvDmaFB);
+	}
+
+	BEGIN_RING_SIZE(NvSub3D, 0x121c, 1);
+	OUT_RING(1);
+
+	for (i=0; i<8; i++) {
+		BEGIN_RING_SIZE(NvSub3D, 0x0200 + (i*0x20), 5);
+		for (j=0; j<5; j++) {
+			OUT_RING(0);
+		}
+	}
+
+	BEGIN_RING_SIZE(NvSub3D, 0x0fe0, 5);
+	OUT_RING(0);
+	OUT_RING(0);
+	OUT_RING(0x16);
+	OUT_RING(0);
+	OUT_RING(0);
+
 	return GL_FALSE;
 }
 
