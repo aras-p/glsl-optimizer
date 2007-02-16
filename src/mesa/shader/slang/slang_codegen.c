@@ -1353,6 +1353,9 @@ print_funcs(struct slang_function_scope_ *scope, const char *name)
  * Return first function in the scope that has the given name.
  * This is the function we'll try to call when there is no exact match
  * between function parameters and call arguments.
+ *
+ * XXX we should really create a list of candidate functions and try
+ * all of them...
  */
 static slang_function *
 _slang_first_function(struct slang_function_scope_ *scope, const char *name)
