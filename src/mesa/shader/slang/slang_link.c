@@ -532,23 +532,6 @@ _slang_link(GLcontext *ctx,
       else
          _mesa_problem(ctx, "unexpected shader target in slang_link()");
    }
-#if 00
-   if (!vertProg || !fragProg) {
-      /* XXX is it legal to have one but not the other?? */
-      /* XXX record error */
-      shProg->LinkStatus = GL_FALSE;
-      return;
-   }
-
-   /* XXX is this test used? */
-   if (!vertProg->Base.Varying || !fragProg->Base.Varying) {
-      /* temporary */
-      _mesa_problem(ctx, "vertex/fragment program lacks varying list!");
-      abort();
-      shProg->LinkStatus = GL_FALSE;
-      return;
-   }  
-#endif
 
    /*
     * Make copies of the vertex/fragment programs now since we'll be
@@ -638,10 +621,6 @@ _slang_link(GLcontext *ctx,
 #endif
    }
 
-#if 0
-   shProg->LinkStatus = (shProg->VertexProgram && shProg->FragmentProgram);
-#else
    shProg->LinkStatus = (shProg->VertexProgram || shProg->FragmentProgram);
-#endif
 }
 
