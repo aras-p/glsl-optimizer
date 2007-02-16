@@ -231,17 +231,44 @@ slang_type_specifier_copy(slang_type_specifier * x,
    return GL_TRUE;
 }
 
+
+/**
+ * Test if two types are equal.
+ */
 GLboolean
 slang_type_specifier_equal(const slang_type_specifier * x,
                            const slang_type_specifier * y)
 {
    if (x->type != y->type)
-      return 0;
+      return GL_FALSE;
    if (x->type == slang_spec_struct)
       return slang_struct_equal(x->_struct, y->_struct);
    if (x->type == slang_spec_array)
       return slang_type_specifier_equal(x->_array, y->_array);
-   return 1;
+   return GL_TRUE;
+}
+
+
+/**
+ * As above, but allow float/int casting.
+ */
+static GLboolean
+slang_type_specifier_compatible(const slang_type_specifier * x,
+                                const slang_type_specifier * y)
+{
+   /* special case: float == int */
+   if (x->type == slang_spec_int && y->type == slang_spec_float) {
+      return GL_TRUE;
+   }
+   /* XXX may need to add bool/int compatibility, etc */
+
+   if (x->type != y->type)
+      return GL_FALSE;
+   if (x->type == slang_spec_struct)
+      return slang_struct_equal(x->_struct, y->_struct);
+   if (x->type == slang_spec_array)
+      return slang_type_specifier_compatible(x->_array, y->_array);
+   return GL_TRUE;
 }
 
 
@@ -660,12 +687,13 @@ _slang_typeof_operation_(const slang_operation * op,
 }
 
 
-
+/**
+ * Lookup a function according to name and parameter count/types.
+ */
 slang_function *
 _slang_locate_function(const slang_function_scope * funcs, slang_atom a_name,
                        const slang_operation * args, GLuint num_args,
-                       const slang_name_space * space,
-                       slang_atom_pool * atoms)
+                       const slang_name_space * space, slang_atom_pool * atoms)
 {
    GLuint i;
 
@@ -689,14 +717,16 @@ _slang_locate_function(const slang_function_scope * funcs, slang_atom a_name,
             slang_typeinfo_destruct(&ti);
             return NULL;
          }
-         if (!slang_type_specifier_equal(&ti.spec,
+         if (!slang_type_specifier_compatible(&ti.spec,
              &f->parameters->variables[j]->type.specifier)) {
             slang_typeinfo_destruct(&ti);
             break;
          }
          slang_typeinfo_destruct(&ti);
 
-         /* "out" and "inout" formal parameter requires the actual parameter to be l-value */
+         /* "out" and "inout" formal parameter requires the actual
+          * parameter to be l-value.
+          */
          if (!ti.can_be_referenced &&
              (f->parameters->variables[j]->type.qualifier == slang_qual_out ||
               f->parameters->variables[j]->type.qualifier == slang_qual_inout))
