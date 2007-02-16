@@ -41,8 +41,8 @@ static void nv20AlphaFunc(GLcontext *ctx, GLenum func, GLfloat ref)
 	CLAMPED_FLOAT_TO_UBYTE(ubRef, ref);
 
 	BEGIN_RING_CACHE(NvSub3D, NV20_TCL_PRIMITIVE_3D_ALPHA_FUNC_FUNC, 2);
-	OUT_RING_CACHE(func);     /* NV20_TCL_PRIMITIVE_3D_ALPHA_FUNC_FUNC */
-	OUT_RING_CACHE(ubRef);    /* NV20_TCL_PRIMITIVE_3D_ALPHA_FUNC_REF  */
+	OUT_RING_CACHE(func);
+	OUT_RING_CACHE(ubRef);
 }
 
 static void nv20BlendColor(GLcontext *ctx, const GLfloat color[4])
@@ -74,6 +74,11 @@ static void nv20BlendFuncSeparate(GLcontext *ctx, GLenum sfactorRGB, GLenum dfac
 	BEGIN_RING_CACHE(NvSub3D, NV20_TCL_PRIMITIVE_3D_BLEND_FUNC_SRC, 2);
 	OUT_RING_CACHE((sfactorA<<16) | sfactorRGB);
 	OUT_RING_CACHE((dfactorA<<16) | dfactorRGB);
+}
+
+static void nv20Clear(GLcontext *ctx, GLbitfield mask)
+{
+	/* TODO */
 }
 
 static void nv20ClearColor(GLcontext *ctx, const GLfloat color[4])
@@ -297,7 +302,11 @@ static void nv20Enable(GLcontext *ctx, GLenum cap, GLboolean state)
 //		case GL_POST_COLOR_MATRIX_COLOR_TABLE:
 //		case GL_POST_CONVOLUTION_COLOR_TABLE:
 //		case GL_RESCALE_NORMAL:
-//		case GL_SCISSOR_TEST:
+		case GL_SCISSOR_TEST:
+			/* No enable bit, nv20Scissor will adjust to max range */
+			ctx->Driver.Scissor(ctx, ctx->Scissor.X, ctx->Scissor.Y,
+			      			 ctx->Scissor.Width, ctx->Scissor.Height);
+			break;
 //		case GL_SEPARABLE_2D:
 		case GL_STENCIL_TEST:
 			// TODO BACK and FRONT ?
@@ -511,9 +520,22 @@ static void nv20PolygonMode(GLcontext *ctx, GLenum face, GLenum mode)
 }
 
 /** Set the scale and units used to calculate depth values */
-void (*PolygonOffset)(GLcontext *ctx, GLfloat factor, GLfloat units);
+static void nv20PolygonOffset(GLcontext *ctx, GLfloat factor, GLfloat units)
+{
+        nouveauContextPtr nmesa = NOUVEAU_CONTEXT(ctx);
+        BEGIN_RING_CACHE(NvSub3D, NV20_TCL_PRIMITIVE_3D_POLYGON_OFFSET_FACTOR, 2);
+        OUT_RING_CACHEf(factor);
+        OUT_RING_CACHEf(units);
+}
+
 /** Set the polygon stippling pattern */
-void (*PolygonStipple)(GLcontext *ctx, const GLubyte *mask );
+static void nv20PolygonStipple(GLcontext *ctx, const GLubyte *mask )
+{
+        nouveauContextPtr nmesa = NOUVEAU_CONTEXT(ctx);
+        BEGIN_RING_CACHE(NvSub3D, NV20_TCL_PRIMITIVE_3D_POLYGON_STIPPLE_PATTERN(0), 32);
+        OUT_RING_CACHEp(mask, 32);
+}
+
 /* Specifies the current buffer for reading */
 void (*ReadBuffer)( GLcontext *ctx, GLenum buffer );
 /** Set rasterization mode */
@@ -522,6 +544,22 @@ void (*RenderMode)(GLcontext *ctx, GLenum mode );
 /** Define the scissor box */
 static void nv20Scissor(GLcontext *ctx, GLint x, GLint y, GLsizei w, GLsizei h)
 {
+        nouveauContextPtr nmesa = NOUVEAU_CONTEXT(ctx);
+
+	/* There's no scissor enable bit, so adjust the scissor to cover the
+	 * maximum draw buffer bounds
+	 */
+	if (!ctx->Scissor.Enabled) {
+	   x = y = 0;
+	   w = h = 4095;
+	} else {
+	   x += nmesa->drawX;
+	   y += nmesa->drawY;
+	}
+
+        BEGIN_RING_CACHE(NvSub3D, NV20_TCL_PRIMITIVE_3D_SCISSOR_X2_X1, 2);
+        OUT_RING_CACHE(((x+w-1) << 16) | x);
+        OUT_RING_CACHE(((y+h-1) << 16) | y);
 }
 
 /** Select flat or smooth shading */
@@ -576,22 +614,98 @@ void (*TexEnv)(GLcontext *ctx, GLenum target, GLenum pname,
 void (*TexParameter)(GLcontext *ctx, GLenum target,
 		struct gl_texture_object *texObj,
 		GLenum pname, const GLfloat *params);
-void (*TextureMatrix)(GLcontext *ctx, GLuint unit, const GLmatrix *mat);
 
-/** Set the viewport */
-static void nv20Viewport(GLcontext *ctx, GLint x, GLint y, GLsizei w, GLsizei h)
+static void nv20TextureMatrix(GLcontext *ctx, GLuint unit, const GLmatrix *mat)
 {
-    /* TODO: Where do the VIEWPORT_XFRM_* regs come in? */
-    nouveauContextPtr nmesa = NOUVEAU_CONTEXT(ctx);
-    BEGIN_RING_CACHE(NvSub3D, NV20_TCL_PRIMITIVE_3D_VIEWPORT_HORIZ, 2);
-    OUT_RING_CACHE((w << 16) | x);
-    OUT_RING_CACHE((h << 16) | y);
+	/* TODO */
+}
+
+/* Update anything that depends on the window position/size */
+static void nv20WindowMoved(nouveauContextPtr nmesa)
+{
+	GLcontext *ctx = nmesa->glCtx;
+	GLfloat *v = nmesa->viewport.m;
+	GLuint w = ctx->Viewport.Width;
+	GLuint h = ctx->Viewport.Height;
+	GLuint x = ctx->Viewport.X + nmesa->drawX;
+	GLuint y = ctx->Viewport.Y + nmesa->drawY;
+	int i;
+
+        BEGIN_RING_CACHE(NvSub3D, NV20_TCL_PRIMITIVE_3D_VIEWPORT_HORIZ, 2);
+        OUT_RING_CACHE((w << 16) | x);
+        OUT_RING_CACHE((h << 16) | y);
+
+	BEGIN_RING_SIZE(NvSub3D, 0x02b4, 1);
+	OUT_RING(0);
+
+	BEGIN_RING_CACHE(NvSub3D,
+	      NV20_TCL_PRIMITIVE_3D_VIEWPORT_CLIP_HORIZ(0), 2);
+        OUT_RING_CACHE((4095 << 16) | 0);
+        OUT_RING_CACHE((4095 << 16) | 0);
+	for (i=1; i<8; i++) {
+		BEGIN_RING_CACHE(NvSub3D,
+		      NV20_TCL_PRIMITIVE_3D_VIEWPORT_CLIP_HORIZ(i), 1);
+        	OUT_RING_CACHE(0);
+		BEGIN_RING_CACHE(NvSub3D,
+		      NV20_TCL_PRIMITIVE_3D_VIEWPORT_CLIP_VERT(i), 1);
+	        OUT_RING_CACHE(0);
+	}
+
+	ctx->Driver.Scissor(ctx, ctx->Scissor.X, ctx->Scissor.Y,
+	      		    ctx->Scissor.Width, ctx->Scissor.Height);
+
+	/* TODO: recalc viewport scale coefs */
 }
 
 /* Initialise any card-specific non-GL related state */
 static GLboolean nv20InitCard(nouveauContextPtr nmesa)
 {
-   return GL_TRUE;
+	nouveauObjectOnSubchannel(nmesa, NvSub3D, Nv3D);
+
+	BEGIN_RING_SIZE(NvSub3D, NV20_TCL_PRIMITIVE_3D_SET_OBJECT1, 2);
+	OUT_RING(NvDmaFB);	/* 184 dma_object1 */
+	OUT_RING(NvDmaFB);	/* 188 dma_object2 */
+	BEGIN_RING_SIZE(NvSub3D, NV20_TCL_PRIMITIVE_3D_SET_OBJECT3, 2);
+	OUT_RING(NvDmaFB);	/* 194 dma_object3 */
+	OUT_RING(NvDmaFB);	/* 198 dma_object4 */
+	BEGIN_RING_SIZE(NvSub3D, NV20_TCL_PRIMITIVE_3D_SET_OBJECT8, 1);
+	OUT_RING(NvDmaFB);	/* 1a8 dma_object8 */
+
+	BEGIN_RING_SIZE(NvSub3D, 0x17e0, 3);
+	OUT_RINGf(0.0);
+	OUT_RINGf(0.0);
+	OUT_RINGf(1.0);
+
+	BEGIN_RING_SIZE(NvSub3D, 0x1e6c, 1);
+	OUT_RING(0x0db6);
+	BEGIN_RING_SIZE(NvSub3D, 0x0290, 1);
+	OUT_RING(0x00100001);
+	BEGIN_RING_SIZE(NvSub3D, 0x09fc, 1);
+	OUT_RING(0);
+	BEGIN_RING_SIZE(NvSub3D, 0x1d80, 1);
+	OUT_RING(1);
+	BEGIN_RING_SIZE(NvSub3D, 0x09f8, 1);
+	OUT_RING(4);
+
+	BEGIN_RING_SIZE(NvSub3D, 0x17ec, 3);
+	OUT_RINGf(0.0);
+	OUT_RINGf(1.0);
+	OUT_RINGf(0.0);
+
+	BEGIN_RING_SIZE(NvSub3D, 0x1d88, 1);
+	OUT_RING(3);
+
+	/* FIXME: More dma objects to setup ? */
+
+	BEGIN_RING_SIZE(NvSub3D, 0x1e98, 1);
+	OUT_RING(0);
+
+	BEGIN_RING_SIZE(NvSub3D, 0x120, 3);
+	OUT_RING(0);
+	OUT_RING(1);
+	OUT_RING(2);
+
+	return GL_TRUE;
 }
 
 /* Update buffer offset/pitch/format */
@@ -599,26 +713,57 @@ static GLboolean nv20BindBuffers(nouveauContextPtr nmesa, int num_color,
 				 nouveau_renderbuffer **color,
 				 nouveau_renderbuffer *depth)
 {
-   return GL_TRUE;
-}
+	GLuint x, y, w, h;
+	GLuint pitch, format, depth_pitch;
 
-/* Update anything that depends on the window position/size */
-static void nv20WindowMoved(nouveauContextPtr nmesa)
-{
+	w = color[0]->mesa.Width;
+	h = color[0]->mesa.Height;
+	x = nmesa->drawX;
+	y = nmesa->drawY;
+
+	if (num_color != 1)
+		return GL_FALSE;
+
+        BEGIN_RING_CACHE(NvSub3D, NV20_TCL_PRIMITIVE_3D_VIEWPORT_HORIZ, 6);
+        OUT_RING_CACHE((w << 16) | x);
+        OUT_RING_CACHE((h << 16) | y);
+	depth_pitch = (depth ? depth->pitch : color[0]->pitch);
+	pitch = (depth_pitch<<16) | color[0]->pitch;
+	format = 0x128;
+	if (color[0]->mesa._ActualFormat != GL_RGBA8) {
+		format = 0x123; /* R5G6B5 color buffer */
+	}
+	OUT_RING_CACHE(format);
+	OUT_RING_CACHE(pitch);
+	OUT_RING_CACHE(color[0]->offset);
+	OUT_RING_CACHE(depth ? depth->offset : color[0]->offset);
+
+	if (depth) {
+		BEGIN_RING_SIZE(NvSub3D, NV20_TCL_PRIMITIVE_3D_LMA_DEPTH_BUFFER_PITCH, 2);
+		/* TODO: use a different buffer */
+		OUT_RING(depth->pitch);
+		OUT_RING(depth->offset);
+	}
+
+	/* Always set to bottom left of buffer */
+	BEGIN_RING_CACHE(NvSub3D, NV20_TCL_PRIMITIVE_3D_VIEWPORT_ORIGIN_X, 4);
+	OUT_RING_CACHEf (0.0);
+	OUT_RING_CACHEf ((GLfloat) h);
+	OUT_RING_CACHEf (0.0);
+	OUT_RING_CACHEf (0.0);
+
+	return GL_TRUE;
 }
 
 void nv20InitStateFuncs(GLcontext *ctx, struct dd_function_table *func)
 {
 	nouveauContextPtr nmesa = NOUVEAU_CONTEXT(ctx);
 
-	nmesa->hw_func.InitCard		= nv20InitCard;
-	nmesa->hw_func.BindBuffers	= nv20BindBuffers;
-	nmesa->hw_func.WindowMoved	= nv20WindowMoved;
-
 	func->AlphaFunc			= nv20AlphaFunc;
 	func->BlendColor		= nv20BlendColor;
 	func->BlendEquationSeparate	= nv20BlendEquationSeparate;
 	func->BlendFuncSeparate		= nv20BlendFuncSeparate;
+	func->Clear			= nv20Clear;
 	func->ClearColor		= nv20ClearColor;
 	func->ClearDepth		= nv20ClearDepth;
 	func->ClearStencil		= nv20ClearStencil;
@@ -641,22 +786,21 @@ void nv20InitStateFuncs(GLcontext *ctx, struct dd_function_table *func)
 	func->PointParameterfv		= nv20PointParameterfv;
 	func->PointSize			= nv20PointSize;
 	func->PolygonMode		= nv20PolygonMode;
-#if 0
 	func->PolygonOffset		= nv20PolygonOffset;
 	func->PolygonStipple		= nv20PolygonStipple;
-	func->ReadBuffer		= nv20ReadBuffer;
-	func->RenderMode		= nv20RenderMode;
-#endif
+/*	func->ReadBuffer		= nv20ReadBuffer;*/
+/*	func->RenderMode		= nv20RenderMode;*/
 	func->Scissor			= nv20Scissor;
 	func->ShadeModel		= nv20ShadeModel;
 	func->StencilFuncSeparate	= nv20StencilFuncSeparate;
 	func->StencilMaskSeparate	= nv20StencilMaskSeparate;
 	func->StencilOpSeparate		= nv20StencilOpSeparate;
-#if 0
-	func->TexGen			= nv20TexGen;
-	func->TexParameter		= nv20TexParameter;
+/*	func->TexGen			= nv20TexGen;*/
+/*	func->TexParameter		= nv20TexParameter;*/
 	func->TextureMatrix		= nv20TextureMatrix;
-#endif
-	func->Viewport			= nv20Viewport;
+
+	nmesa->hw_func.InitCard		= nv20InitCard;
+	nmesa->hw_func.BindBuffers	= nv20BindBuffers;
+	nmesa->hw_func.WindowMoved	= nv20WindowMoved;
 }
 
