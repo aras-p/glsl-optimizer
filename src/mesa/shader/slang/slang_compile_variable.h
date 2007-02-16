@@ -32,15 +32,15 @@ extern "C" {
 
 typedef enum slang_type_qualifier_
 {
-   slang_qual_none,
-   slang_qual_const,
-   slang_qual_attribute,
-   slang_qual_varying,
-   slang_qual_uniform,
-   slang_qual_out,
-   slang_qual_inout,
-   slang_qual_fixedoutput,      /* internal */
-   slang_qual_fixedinput        /* internal */
+   SLANG_QUAL_NONE,
+   SLANG_QUAL_CONST,
+   SLANG_QUAL_ATTRIBUTE,
+   SLANG_QUAL_VARYING,
+   SLANG_QUAL_UNIFORM,
+   SLANG_QUAL_OUT,
+   SLANG_QUAL_INOUT,
+   SLANG_QUAL_FIXEDOUTPUT,      /* internal */
+   SLANG_QUAL_FIXEDINPUT        /* internal */
 } slang_type_qualifier;
 
 extern slang_type_specifier_type
@@ -75,7 +75,7 @@ typedef struct slang_variable_
 {
    slang_fully_specified_type type; /**< Variable's data type */
    slang_atom a_name;               /**< The variable's name (char *) */
-   GLuint array_len;                /**< only if type == slang_spec_array */
+   GLuint array_len;                /**< only if type == SLANG_SPEC_ARRAy */
    struct slang_operation_ *initializer; /**< Optional initializer code */
    GLuint address;                  /**< Storage location */
    GLuint size;                     /**< Variable's size in bytes */

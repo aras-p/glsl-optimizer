@@ -170,7 +170,7 @@ _slang_multiply_swizzles(slang_swizzle * dst, const slang_swizzle * left,
 GLvoid
 slang_type_specifier_ctr(slang_type_specifier * self)
 {
-   self->type = slang_spec_void;
+   self->type = SLANG_SPEC_VOID;
    self->_struct = NULL;
    self->_array = NULL;
 }
@@ -196,7 +196,7 @@ slang_type_specifier_copy(slang_type_specifier * x,
 
    slang_type_specifier_ctr(&z);
    z.type = y->type;
-   if (z.type == slang_spec_struct) {
+   if (z.type == SLANG_SPEC_STRUCT) {
       z._struct = (slang_struct *) slang_alloc_malloc(sizeof(slang_struct));
       if (z._struct == NULL) {
          slang_type_specifier_dtr(&z);
@@ -212,7 +212,7 @@ slang_type_specifier_copy(slang_type_specifier * x,
          return GL_FALSE;
       }
    }
-   else if (z.type == slang_spec_array) {
+   else if (z.type == SLANG_SPEC_ARRAY) {
       z._array =
          (slang_type_specifier *)
          slang_alloc_malloc(sizeof(slang_type_specifier));
@@ -241,9 +241,9 @@ slang_type_specifier_equal(const slang_type_specifier * x,
 {
    if (x->type != y->type)
       return GL_FALSE;
-   if (x->type == slang_spec_struct)
+   if (x->type == SLANG_SPEC_STRUCT)
       return slang_struct_equal(x->_struct, y->_struct);
-   if (x->type == slang_spec_array)
+   if (x->type == SLANG_SPEC_ARRAY)
       return slang_type_specifier_equal(x->_array, y->_array);
    return GL_TRUE;
 }
@@ -257,16 +257,16 @@ slang_type_specifier_compatible(const slang_type_specifier * x,
                                 const slang_type_specifier * y)
 {
    /* special case: float == int */
-   if (x->type == slang_spec_int && y->type == slang_spec_float) {
+   if (x->type == SLANG_SPEC_INT && y->type == SLANG_SPEC_FLOAT) {
       return GL_TRUE;
    }
    /* XXX may need to add bool/int compatibility, etc */
 
    if (x->type != y->type)
       return GL_FALSE;
-   if (x->type == slang_spec_struct)
+   if (x->type == SLANG_SPEC_STRUCT)
       return slang_struct_equal(x->_struct, y->_struct);
-   if (x->type == slang_spec_array)
+   if (x->type == SLANG_SPEC_ARRAY)
       return slang_type_specifier_compatible(x->_array, y->_array);
    return GL_TRUE;
 }
@@ -341,93 +341,93 @@ _slang_typeof_operation_(const slang_operation * op,
    ti->is_swizzled = GL_FALSE;
 
    switch (op->type) {
-   case slang_oper_block_no_new_scope:
-   case slang_oper_block_new_scope:
-   case slang_oper_variable_decl:
-   case slang_oper_asm:
-   case slang_oper_break:
-   case slang_oper_continue:
-   case slang_oper_discard:
-   case slang_oper_return:
-   case slang_oper_if:
-   case slang_oper_while:
-   case slang_oper_do:
-   case slang_oper_for:
-   case slang_oper_void:
-      ti->spec.type = slang_spec_void;
+   case SLANG_OPER_BLOCK_NO_NEW_SCOPE:
+   case SLANG_OPER_BLOCK_NEW_SCOPE:
+   case SLANG_OPER_VARIABLE_DECL:
+   case SLANG_OPER_ASM:
+   case SLANG_OPER_BREAK:
+   case SLANG_OPER_CONTINUE:
+   case SLANG_OPER_DISCARD:
+   case SLANG_OPER_RETURN:
+   case SLANG_OPER_IF:
+   case SLANG_OPER_WHILE:
+   case SLANG_OPER_DO:
+   case SLANG_OPER_FOR:
+   case SLANG_OPER_VOID:
+      ti->spec.type = SLANG_SPEC_VOID;
       break;
-   case slang_oper_expression:
-   case slang_oper_assign:
-   case slang_oper_addassign:
-   case slang_oper_subassign:
-   case slang_oper_mulassign:
-   case slang_oper_divassign:
-   case slang_oper_preincrement:
-   case slang_oper_predecrement:
+   case SLANG_OPER_EXPRESSION:
+   case SLANG_OPER_ASSIGN:
+   case SLANG_OPER_ADDASSIGN:
+   case SLANG_OPER_SUBASSIGN:
+   case SLANG_OPER_MULASSIGN:
+   case SLANG_OPER_DIVASSIGN:
+   case SLANG_OPER_PREINCREMENT:
+   case SLANG_OPER_PREDECREMENT:
       if (!_slang_typeof_operation_(op->children, space, ti, atoms))
          return GL_FALSE;
       break;
-   case slang_oper_literal_bool:
+   case SLANG_OPER_LITERAL_BOOL:
       if (op->literal_size == 1)
-         ti->spec.type = slang_spec_bool;
+         ti->spec.type = SLANG_SPEC_BOOL;
       else if (op->literal_size == 2)
-         ti->spec.type = slang_spec_bvec2;
+         ti->spec.type = SLANG_SPEC_BVEC2;
       else if (op->literal_size == 3)
-         ti->spec.type = slang_spec_bvec3;
+         ti->spec.type = SLANG_SPEC_BVEC3;
       else if (op->literal_size == 4)
-         ti->spec.type = slang_spec_bvec4;
+         ti->spec.type = SLANG_SPEC_BVEC4;
       else {
          _mesa_problem(NULL,
                "Unexpected bool literal_size %d in _slang_typeof_operation()",
                op->literal_size);
-         ti->spec.type = slang_spec_bool;
+         ti->spec.type = SLANG_SPEC_BOOL;
       }
       break;
-   case slang_oper_logicalor:
-   case slang_oper_logicalxor:
-   case slang_oper_logicaland:
-   case slang_oper_equal:
-   case slang_oper_notequal:
-   case slang_oper_less:
-   case slang_oper_greater:
-   case slang_oper_lessequal:
-   case slang_oper_greaterequal:
-   case slang_oper_not:
-      ti->spec.type = slang_spec_bool;
+   case SLANG_OPER_LOGICALOR:
+   case SLANG_OPER_LOGICALXOR:
+   case SLANG_OPER_LOGICALAND:
+   case SLANG_OPER_EQUAL:
+   case SLANG_OPER_NOTEQUAL:
+   case SLANG_OPER_LESS:
+   case SLANG_OPER_GREATER:
+   case SLANG_OPER_LESSequal:
+   case SLANG_OPER_GREATERequal:
+   case SLANG_OPER_NOT:
+      ti->spec.type = SLANG_SPEC_BOOL;
       break;
-   case slang_oper_literal_int:
+   case SLANG_OPER_LITERAL_INT:
       if (op->literal_size == 1)
-         ti->spec.type = slang_spec_int;
+         ti->spec.type = SLANG_SPEC_INT;
       else if (op->literal_size == 2)
-         ti->spec.type = slang_spec_ivec2;
+         ti->spec.type = SLANG_SPEC_IVEC2;
       else if (op->literal_size == 3)
-         ti->spec.type = slang_spec_ivec3;
+         ti->spec.type = SLANG_SPEC_IVEC3;
       else if (op->literal_size == 4)
-         ti->spec.type = slang_spec_ivec4;
+         ti->spec.type = SLANG_SPEC_IVEC4;
       else {
          _mesa_problem(NULL,
                "Unexpected int literal_size %d in _slang_typeof_operation()",
                op->literal_size);
-         ti->spec.type = slang_spec_int;
+         ti->spec.type = SLANG_SPEC_INT;
       }
       break;
-   case slang_oper_literal_float:
+   case SLANG_OPER_LITERAL_FLOAT:
       if (op->literal_size == 1)
-         ti->spec.type = slang_spec_float;
+         ti->spec.type = SLANG_SPEC_FLOAT;
       else if (op->literal_size == 2)
-         ti->spec.type = slang_spec_vec2;
+         ti->spec.type = SLANG_SPEC_VEC2;
       else if (op->literal_size == 3)
-         ti->spec.type = slang_spec_vec3;
+         ti->spec.type = SLANG_SPEC_VEC3;
       else if (op->literal_size == 4)
-         ti->spec.type = slang_spec_vec4;
+         ti->spec.type = SLANG_SPEC_VEC4;
       else {
          _mesa_problem(NULL,
                "Unexpected float literal_size %d in _slang_typeof_operation()",
                op->literal_size);
-         ti->spec.type = slang_spec_float;
+         ti->spec.type = SLANG_SPEC_FLOAT;
       }
       break;
-   case slang_oper_identifier:
+   case SLANG_OPER_IDENTIFIER:
       {
          slang_variable *var;
          var = _slang_locate_variable(op->locals, op->a_id, GL_TRUE);
@@ -439,65 +439,65 @@ _slang_typeof_operation_(const slang_operation * op,
          ti->array_len = var->array_len;
       }
       break;
-   case slang_oper_sequence:
+   case SLANG_OPER_SEQUENCE:
       /* TODO: check [0] and [1] if they match */
       if (!_slang_typeof_operation_(&op->children[1], space, ti, atoms))
          RETURN_NIL();
       ti->can_be_referenced = GL_FALSE;
       ti->is_swizzled = GL_FALSE;
       break;
-      /*case slang_oper_modassign: */
-      /*case slang_oper_lshassign: */
-      /*case slang_oper_rshassign: */
-      /*case slang_oper_orassign: */
-      /*case slang_oper_xorassign: */
-      /*case slang_oper_andassign: */
-   case slang_oper_select:
+      /*case SLANG_OPER_MODASSIGN: */
+      /*case SLANG_OPER_LSHASSIGN: */
+      /*case SLANG_OPER_RSHASSIGN: */
+      /*case SLANG_OPER_ORASSIGN: */
+      /*case SLANG_OPER_XORASSIGN: */
+      /*case SLANG_OPER_ANDASSIGN: */
+   case SLANG_OPER_SELECT:
       /* TODO: check [1] and [2] if they match */
       if (!_slang_typeof_operation_(&op->children[1], space, ti, atoms))
          RETURN_NIL();
       ti->can_be_referenced = GL_FALSE;
       ti->is_swizzled = GL_FALSE;
       break;
-      /*case slang_oper_bitor: */
-      /*case slang_oper_bitxor: */
-      /*case slang_oper_bitand: */
-      /*case slang_oper_lshift: */
-      /*case slang_oper_rshift: */
-   case slang_oper_add:
+      /*case SLANG_OPER_BITOR: */
+      /*case SLANG_OPER_BITXOR: */
+      /*case SLANG_OPER_BITAND: */
+      /*case SLANG_OPER_LSHIFT: */
+      /*case SLANG_OPER_RSHIFT: */
+   case SLANG_OPER_ADD:
       if (!typeof_existing_function("+", op->children, 2, space,
                                     &ti->spec, atoms))
          RETURN_NIL();
       break;
-   case slang_oper_subtract:
+   case SLANG_OPER_SUBTRACT:
       if (!typeof_existing_function("-", op->children, 2, space,
                                     &ti->spec, atoms))
          RETURN_NIL();
       break;
-   case slang_oper_multiply:
+   case SLANG_OPER_MULTIPLY:
       if (!typeof_existing_function("*", op->children, 2, space,
                                     &ti->spec, atoms))
          RETURN_NIL();
       break;
-   case slang_oper_divide:
+   case SLANG_OPER_DIVIDE:
       if (!typeof_existing_function("/", op->children, 2, space,
                                     &ti->spec, atoms))
          RETURN_NIL();
       break;
-      /*case slang_oper_modulus: */
-   case slang_oper_plus:
+      /*case SLANG_OPER_MODULUS: */
+   case SLANG_OPER_PLUS:
       if (!_slang_typeof_operation_(op->children, space, ti, atoms))
          RETURN_NIL();
       ti->can_be_referenced = GL_FALSE;
       ti->is_swizzled = GL_FALSE;
       break;
-   case slang_oper_minus:
+   case SLANG_OPER_MINUS:
       if (!typeof_existing_function("-", op->children, 1, space,
                                     &ti->spec, atoms))
          RETURN_NIL();
       break;
-      /*case slang_oper_complement: */
-   case slang_oper_subscript:
+      /*case SLANG_OPER_COMPLEMENT: */
+   case SLANG_OPER_SUBSCRIPT:
       {
          slang_typeinfo _ti;
 
@@ -508,7 +508,7 @@ _slang_typeof_operation_(const slang_operation * op,
             RETURN_NIL();
          }
          ti->can_be_referenced = _ti.can_be_referenced;
-         if (_ti.spec.type == slang_spec_array) {
+         if (_ti.spec.type == SLANG_SPEC_ARRAY) {
             if (!slang_type_specifier_copy(&ti->spec, _ti.spec._array)) {
                slang_typeinfo_destruct(&_ti);
                RETURN_NIL();
@@ -525,7 +525,7 @@ _slang_typeof_operation_(const slang_operation * op,
          slang_typeinfo_destruct(&_ti);
       }
       break;
-   case slang_oper_call:
+   case SLANG_OPER_CALL:
       {
          GLboolean exists;
 
@@ -536,7 +536,7 @@ _slang_typeof_operation_(const slang_operation * op,
             slang_struct *s =
                slang_struct_scope_find(space->structs, op->a_id, GL_TRUE);
             if (s != NULL) {
-               ti->spec.type = slang_spec_struct;
+               ti->spec.type = SLANG_SPEC_STRUCT;
                ti->spec._struct =
                   (slang_struct *) slang_alloc_malloc(sizeof(slang_struct));
                if (ti->spec._struct == NULL)
@@ -555,14 +555,14 @@ _slang_typeof_operation_(const slang_operation * op,
 
                name = slang_atom_pool_id(atoms, op->a_id);
                type = slang_type_specifier_type_from_string(name);
-               if (type == slang_spec_void)
+               if (type == SLANG_SPEC_VOID)
                   RETURN_ERROR2("function not found", name, 0);
                ti->spec.type = type;
             }
          }
       }
       break;
-   case slang_oper_field:
+   case SLANG_OPER_FIELD:
       {
          slang_typeinfo _ti;
 
@@ -572,7 +572,7 @@ _slang_typeof_operation_(const slang_operation * op,
             slang_typeinfo_destruct(&_ti);
             RETURN_NIL();
          }
-         if (_ti.spec.type == slang_spec_struct) {
+         if (_ti.spec.type == SLANG_SPEC_STRUCT) {
             slang_variable *field;
 
             field = _slang_locate_variable(_ti.spec._struct->fields, op->a_id,
@@ -622,14 +622,14 @@ _slang_typeof_operation_(const slang_operation * op,
                break;
             case 2:
                switch (base) {
-               case slang_spec_float:
-                  ti->spec.type = slang_spec_vec2;
+               case SLANG_SPEC_FLOAT:
+                  ti->spec.type = SLANG_SPEC_VEC2;
                   break;
-               case slang_spec_int:
-                  ti->spec.type = slang_spec_ivec2;
+               case SLANG_SPEC_INT:
+                  ti->spec.type = SLANG_SPEC_IVEC2;
                   break;
-               case slang_spec_bool:
-                  ti->spec.type = slang_spec_bvec2;
+               case SLANG_SPEC_BOOL:
+                  ti->spec.type = SLANG_SPEC_BVEC2;
                   break;
                default:
                   break;
@@ -637,14 +637,14 @@ _slang_typeof_operation_(const slang_operation * op,
                break;
             case 3:
                switch (base) {
-               case slang_spec_float:
-                  ti->spec.type = slang_spec_vec3;
+               case SLANG_SPEC_FLOAT:
+                  ti->spec.type = SLANG_SPEC_VEC3;
                   break;
-               case slang_spec_int:
-                  ti->spec.type = slang_spec_ivec3;
+               case SLANG_SPEC_INT:
+                  ti->spec.type = SLANG_SPEC_IVEC3;
                   break;
-               case slang_spec_bool:
-                  ti->spec.type = slang_spec_bvec3;
+               case SLANG_SPEC_BOOL:
+                  ti->spec.type = SLANG_SPEC_BVEC3;
                   break;
                default:
                   break;
@@ -652,14 +652,14 @@ _slang_typeof_operation_(const slang_operation * op,
                break;
             case 4:
                switch (base) {
-               case slang_spec_float:
-                  ti->spec.type = slang_spec_vec4;
+               case SLANG_SPEC_FLOAT:
+                  ti->spec.type = SLANG_SPEC_VEC4;
                   break;
-               case slang_spec_int:
-                  ti->spec.type = slang_spec_ivec4;
+               case SLANG_SPEC_INT:
+                  ti->spec.type = SLANG_SPEC_IVEC4;
                   break;
-               case slang_spec_bool:
-                  ti->spec.type = slang_spec_bvec4;
+               case SLANG_SPEC_BOOL:
+                  ti->spec.type = SLANG_SPEC_BVEC4;
                   break;
                default:
                   break;
@@ -672,8 +672,8 @@ _slang_typeof_operation_(const slang_operation * op,
          slang_typeinfo_destruct(&_ti);
       }
       break;
-   case slang_oper_postincrement:
-   case slang_oper_postdecrement:
+   case SLANG_OPER_POSTINCREMENT:
+   case SLANG_OPER_POSTDECREMENT:
       if (!_slang_typeof_operation_(op->children, space, ti, atoms))
          RETURN_NIL();
       ti->can_be_referenced = GL_FALSE;
@@ -728,8 +728,8 @@ _slang_locate_function(const slang_function_scope * funcs, slang_atom a_name,
           * parameter to be l-value.
           */
          if (!ti.can_be_referenced &&
-             (f->parameters->variables[j]->type.qualifier == slang_qual_out ||
-              f->parameters->variables[j]->type.qualifier == slang_qual_inout))
+             (f->parameters->variables[j]->type.qualifier == SLANG_QUAL_OUT ||
+              f->parameters->variables[j]->type.qualifier == SLANG_QUAL_INOUT))
             break;
       }
       if (j == num_args)
@@ -777,9 +777,9 @@ GLboolean
 _slang_type_is_matrix(slang_type_specifier_type ty)
 {
    switch (ty) {
-   case slang_spec_mat2:
-   case slang_spec_mat3:
-   case slang_spec_mat4:
+   case SLANG_SPEC_MAT2:
+   case SLANG_SPEC_MAT3:
+   case SLANG_SPEC_MAT4:
       return GL_TRUE;
    default:
       return GL_FALSE;
@@ -795,15 +795,15 @@ GLboolean
 _slang_type_is_vector(slang_type_specifier_type ty)
 {
    switch (ty) {
-   case slang_spec_vec2:
-   case slang_spec_vec3:
-   case slang_spec_vec4:
-   case slang_spec_ivec2:
-   case slang_spec_ivec3:
-   case slang_spec_ivec4:
-   case slang_spec_bvec2:
-   case slang_spec_bvec3:
-   case slang_spec_bvec4:
+   case SLANG_SPEC_VEC2:
+   case SLANG_SPEC_VEC3:
+   case SLANG_SPEC_VEC4:
+   case SLANG_SPEC_IVEC2:
+   case SLANG_SPEC_IVEC3:
+   case SLANG_SPEC_IVEC4:
+   case SLANG_SPEC_BVEC2:
+   case SLANG_SPEC_BVEC3:
+   case SLANG_SPEC_BVEC4:
       return GL_TRUE;
    default:
       return GL_FALSE;
@@ -818,29 +818,29 @@ slang_type_specifier_type
 _slang_type_base(slang_type_specifier_type ty)
 {
    switch (ty) {
-   case slang_spec_float:
-   case slang_spec_vec2:
-   case slang_spec_vec3:
-   case slang_spec_vec4:
-      return slang_spec_float;
-   case slang_spec_int:
-   case slang_spec_ivec2:
-   case slang_spec_ivec3:
-   case slang_spec_ivec4:
-      return slang_spec_int;
-   case slang_spec_bool:
-   case slang_spec_bvec2:
-   case slang_spec_bvec3:
-   case slang_spec_bvec4:
-      return slang_spec_bool;
-   case slang_spec_mat2:
-      return slang_spec_vec2;
-   case slang_spec_mat3:
-      return slang_spec_vec3;
-   case slang_spec_mat4:
-      return slang_spec_vec4;
+   case SLANG_SPEC_FLOAT:
+   case SLANG_SPEC_VEC2:
+   case SLANG_SPEC_VEC3:
+   case SLANG_SPEC_VEC4:
+      return SLANG_SPEC_FLOAT;
+   case SLANG_SPEC_INT:
+   case SLANG_SPEC_IVEC2:
+   case SLANG_SPEC_IVEC3:
+   case SLANG_SPEC_IVEC4:
+      return SLANG_SPEC_INT;
+   case SLANG_SPEC_BOOL:
+   case SLANG_SPEC_BVEC2:
+   case SLANG_SPEC_BVEC3:
+   case SLANG_SPEC_BVEC4:
+      return SLANG_SPEC_BOOL;
+   case SLANG_SPEC_MAT2:
+      return SLANG_SPEC_VEC2;
+   case SLANG_SPEC_MAT3:
+      return SLANG_SPEC_VEC3;
+   case SLANG_SPEC_MAT4:
+      return SLANG_SPEC_VEC4;
    default:
-      return slang_spec_void;
+      return SLANG_SPEC_VOID;
    }
 }
 
@@ -852,24 +852,24 @@ GLuint
 _slang_type_dim(slang_type_specifier_type ty)
 {
    switch (ty) {
-   case slang_spec_float:
-   case slang_spec_int:
-   case slang_spec_bool:
+   case SLANG_SPEC_FLOAT:
+   case SLANG_SPEC_INT:
+   case SLANG_SPEC_BOOL:
       return 1;
-   case slang_spec_vec2:
-   case slang_spec_ivec2:
-   case slang_spec_bvec2:
-   case slang_spec_mat2:
+   case SLANG_SPEC_VEC2:
+   case SLANG_SPEC_IVEC2:
+   case SLANG_SPEC_BVEC2:
+   case SLANG_SPEC_MAT2:
       return 2;
-   case slang_spec_vec3:
-   case slang_spec_ivec3:
-   case slang_spec_bvec3:
-   case slang_spec_mat3:
+   case SLANG_SPEC_VEC3:
+   case SLANG_SPEC_IVEC3:
+   case SLANG_SPEC_BVEC3:
+   case SLANG_SPEC_MAT3:
       return 3;
-   case slang_spec_vec4:
-   case slang_spec_ivec4:
-   case slang_spec_bvec4:
-   case slang_spec_mat4:
+   case SLANG_SPEC_VEC4:
+   case SLANG_SPEC_IVEC4:
+   case SLANG_SPEC_BVEC4:
+   case SLANG_SPEC_MAT4:
       return 4;
    default:
       return 0;

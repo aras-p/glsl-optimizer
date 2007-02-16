@@ -40,29 +40,29 @@ typedef struct
 } type_specifier_type_name;
 
 static const type_specifier_type_name type_specifier_type_names[] = {
-   {"void", slang_spec_void},
-   {"bool", slang_spec_bool},
-   {"bvec2", slang_spec_bvec2},
-   {"bvec3", slang_spec_bvec3},
-   {"bvec4", slang_spec_bvec4},
-   {"int", slang_spec_int},
-   {"ivec2", slang_spec_ivec2},
-   {"ivec3", slang_spec_ivec3},
-   {"ivec4", slang_spec_ivec4},
-   {"float", slang_spec_float},
-   {"vec2", slang_spec_vec2},
-   {"vec3", slang_spec_vec3},
-   {"vec4", slang_spec_vec4},
-   {"mat2", slang_spec_mat2},
-   {"mat3", slang_spec_mat3},
-   {"mat4", slang_spec_mat4},
-   {"sampler1D", slang_spec_sampler1D},
-   {"sampler2D", slang_spec_sampler2D},
-   {"sampler3D", slang_spec_sampler3D},
-   {"samplerCube", slang_spec_samplerCube},
-   {"sampler1DShadow", slang_spec_sampler1DShadow},
-   {"sampler2DShadow", slang_spec_sampler2DShadow},
-   {NULL, slang_spec_void}
+   {"void", SLANG_SPEC_VOID},
+   {"bool", SLANG_SPEC_BOOL},
+   {"bvec2", SLANG_SPEC_BVEC2},
+   {"bvec3", SLANG_SPEC_BVEC3},
+   {"bvec4", SLANG_SPEC_BVEC4},
+   {"int", SLANG_SPEC_INT},
+   {"ivec2", SLANG_SPEC_IVEC2},
+   {"ivec3", SLANG_SPEC_IVEC3},
+   {"ivec4", SLANG_SPEC_IVEC4},
+   {"float", SLANG_SPEC_FLOAT},
+   {"vec2", SLANG_SPEC_VEC2},
+   {"vec3", SLANG_SPEC_VEC3},
+   {"vec4", SLANG_SPEC_VEC4},
+   {"mat2", SLANG_SPEC_MAT2},
+   {"mat3", SLANG_SPEC_MAT3},
+   {"mat4", SLANG_SPEC_MAT4},
+   {"sampler1D", SLANG_SPEC_SAMPLER1D},
+   {"sampler2D", SLANG_SPEC_SAMPLER2D},
+   {"sampler3D", SLANG_SPEC_SAMPLER3D},
+   {"samplerCube", SLANG_SPEC_SAMPLERCUBE},
+   {"sampler1DShadow", SLANG_SPEC_SAMPLER1DSHADOW},
+   {"sampler2DShadow", SLANG_SPEC_SAMPLER2DSHADOW},
+   {NULL, SLANG_SPEC_VOID}
 };
 
 slang_type_specifier_type
@@ -94,7 +94,7 @@ slang_type_specifier_type_to_string(slang_type_specifier_type type)
 int
 slang_fully_specified_type_construct(slang_fully_specified_type * type)
 {
-   type->qualifier = slang_qual_none;
+   type->qualifier = SLANG_QUAL_NONE;
    slang_type_specifier_ctr(&type->specifier);
    return 1;
 }
@@ -333,49 +333,49 @@ static GLenum
 gl_type_from_specifier(const slang_type_specifier * type)
 {
    switch (type->type) {
-   case slang_spec_bool:
+   case SLANG_SPEC_BOOL:
       return GL_BOOL_ARB;
-   case slang_spec_bvec2:
+   case SLANG_SPEC_BVEC2:
       return GL_BOOL_VEC2_ARB;
-   case slang_spec_bvec3:
+   case SLANG_SPEC_BVEC3:
       return GL_BOOL_VEC3_ARB;
-   case slang_spec_bvec4:
+   case SLANG_SPEC_BVEC4:
       return GL_BOOL_VEC4_ARB;
-   case slang_spec_int:
+   case SLANG_SPEC_INT:
       return GL_INT;
-   case slang_spec_ivec2:
+   case SLANG_SPEC_IVEC2:
       return GL_INT_VEC2_ARB;
-   case slang_spec_ivec3:
+   case SLANG_SPEC_IVEC3:
       return GL_INT_VEC3_ARB;
-   case slang_spec_ivec4:
+   case SLANG_SPEC_IVEC4:
       return GL_INT_VEC4_ARB;
-   case slang_spec_float:
+   case SLANG_SPEC_FLOAT:
       return GL_FLOAT;
-   case slang_spec_vec2:
+   case SLANG_SPEC_VEC2:
       return GL_FLOAT_VEC2_ARB;
-   case slang_spec_vec3:
+   case SLANG_SPEC_VEC3:
       return GL_FLOAT_VEC3_ARB;
-   case slang_spec_vec4:
+   case SLANG_SPEC_VEC4:
       return GL_FLOAT_VEC4_ARB;
-   case slang_spec_mat2:
+   case SLANG_SPEC_MAT2:
       return GL_FLOAT_MAT2_ARB;
-   case slang_spec_mat3:
+   case SLANG_SPEC_MAT3:
       return GL_FLOAT_MAT3_ARB;
-   case slang_spec_mat4:
+   case SLANG_SPEC_MAT4:
       return GL_FLOAT_MAT4_ARB;
-   case slang_spec_sampler1D:
+   case SLANG_SPEC_SAMPLER1D:
       return GL_SAMPLER_1D_ARB;
-   case slang_spec_sampler2D:
+   case SLANG_SPEC_SAMPLER2D:
       return GL_SAMPLER_2D_ARB;
-   case slang_spec_sampler3D:
+   case SLANG_SPEC_SAMPLER3D:
       return GL_SAMPLER_3D_ARB;
-   case slang_spec_samplerCube:
+   case SLANG_SPEC_SAMPLERCUBE:
       return GL_SAMPLER_CUBE_ARB;
-   case slang_spec_sampler1DShadow:
+   case SLANG_SPEC_SAMPLER1DShadow:
       return GL_SAMPLER_1D_SHADOW_ARB;
-   case slang_spec_sampler2DShadow:
+   case SLANG_SPEC_SAMPLER2DShadow:
       return GL_SAMPLER_2D_SHADOW_ARB;
-   case slang_spec_array:
+   case SLANG_SPEC_ARRAy:
       return gl_type_from_specifier(type->_array);
    default:
       return GL_FLOAT;

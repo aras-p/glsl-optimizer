@@ -358,7 +358,7 @@ parse_array_len(slang_parse_ctx * C, slang_output_ctx * O, GLuint * len)
 
    /* evaluate compile-time expression which is array size */
    _slang_simplify(&array_size, &space, C->atoms);
-   result = (array_size.type == slang_oper_literal_int);
+   result = (array_size.type == SLANG_OPER_LITERAL_INT);
 
    slang_operation_destruct(&array_size);
    return result;
@@ -388,7 +388,7 @@ convert_to_array(slang_parse_ctx * C, slang_variable * var,
 {
    /* sized array - mark it as array, copy the specifier to the array element and
     * parse the expression */
-   var->type.specifier.type = slang_spec_array;
+   var->type.specifier.type = SLANG_SPEC_ARRAY;
    var->type.specifier._array = (slang_type_specifier *)
       slang_alloc_malloc(sizeof(slang_type_specifier));
    if (var->type.specifier._array == NULL) {
@@ -540,25 +540,25 @@ parse_type_qualifier(slang_parse_ctx * C, slang_type_qualifier * qual)
 {
    switch (*C->I++) {
    case TYPE_QUALIFIER_NONE:
-      *qual = slang_qual_none;
+      *qual = SLANG_QUAL_NONE;
       break;
    case TYPE_QUALIFIER_CONST:
-      *qual = slang_qual_const;
+      *qual = SLANG_QUAL_CONST;
       break;
    case TYPE_QUALIFIER_ATTRIBUTE:
-      *qual = slang_qual_attribute;
+      *qual = SLANG_QUAL_ATTRIBUTE;
       break;
    case TYPE_QUALIFIER_VARYING:
-      *qual = slang_qual_varying;
+      *qual = SLANG_QUAL_VARYING;
       break;
    case TYPE_QUALIFIER_UNIFORM:
-      *qual = slang_qual_uniform;
+      *qual = SLANG_QUAL_UNIFORM;
       break;
    case TYPE_QUALIFIER_FIXEDOUTPUT:
-      *qual = slang_qual_fixedoutput;
+      *qual = SLANG_QUAL_FIXEDOUTPUT;
       break;
    case TYPE_QUALIFIER_FIXEDINPUT:
-      *qual = slang_qual_fixedinput;
+      *qual = SLANG_QUAL_FIXEDINPUT;
       break;
    default:
       return 0;
@@ -598,78 +598,78 @@ parse_type_specifier(slang_parse_ctx * C, slang_output_ctx * O,
 {
    switch (*C->I++) {
    case TYPE_SPECIFIER_VOID:
-      spec->type = slang_spec_void;
+      spec->type = SLANG_SPEC_VOID;
       break;
    case TYPE_SPECIFIER_BOOL:
-      spec->type = slang_spec_bool;
+      spec->type = SLANG_SPEC_BOOL;
       break;
    case TYPE_SPECIFIER_BVEC2:
-      spec->type = slang_spec_bvec2;
+      spec->type = SLANG_SPEC_BVEC2;
       break;
    case TYPE_SPECIFIER_BVEC3:
-      spec->type = slang_spec_bvec3;
+      spec->type = SLANG_SPEC_BVEC3;
       break;
    case TYPE_SPECIFIER_BVEC4:
-      spec->type = slang_spec_bvec4;
+      spec->type = SLANG_SPEC_BVEC4;
       break;
    case TYPE_SPECIFIER_INT:
-      spec->type = slang_spec_int;
+      spec->type = SLANG_SPEC_INT;
       break;
    case TYPE_SPECIFIER_IVEC2:
-      spec->type = slang_spec_ivec2;
+      spec->type = SLANG_SPEC_IVEC2;
       break;
    case TYPE_SPECIFIER_IVEC3:
-      spec->type = slang_spec_ivec3;
+      spec->type = SLANG_SPEC_IVEC3;
       break;
    case TYPE_SPECIFIER_IVEC4:
-      spec->type = slang_spec_ivec4;
+      spec->type = SLANG_SPEC_IVEC4;
       break;
    case TYPE_SPECIFIER_FLOAT:
-      spec->type = slang_spec_float;
+      spec->type = SLANG_SPEC_FLOAT;
       break;
    case TYPE_SPECIFIER_VEC2:
-      spec->type = slang_spec_vec2;
+      spec->type = SLANG_SPEC_VEC2;
       break;
    case TYPE_SPECIFIER_VEC3:
-      spec->type = slang_spec_vec3;
+      spec->type = SLANG_SPEC_VEC3;
       break;
    case TYPE_SPECIFIER_VEC4:
-      spec->type = slang_spec_vec4;
+      spec->type = SLANG_SPEC_VEC4;
       break;
    case TYPE_SPECIFIER_MAT2:
-      spec->type = slang_spec_mat2;
+      spec->type = SLANG_SPEC_MAT2;
       break;
    case TYPE_SPECIFIER_MAT3:
-      spec->type = slang_spec_mat3;
+      spec->type = SLANG_SPEC_MAT3;
       break;
    case TYPE_SPECIFIER_MAT4:
-      spec->type = slang_spec_mat4;
+      spec->type = SLANG_SPEC_MAT4;
       break;
    case TYPE_SPECIFIER_SAMPLER1D:
-      spec->type = slang_spec_sampler1D;
+      spec->type = SLANG_SPEC_SAMPLER1D;
       break;
    case TYPE_SPECIFIER_SAMPLER2D:
-      spec->type = slang_spec_sampler2D;
+      spec->type = SLANG_SPEC_SAMPLER2D;
       break;
    case TYPE_SPECIFIER_SAMPLER3D:
-      spec->type = slang_spec_sampler3D;
+      spec->type = SLANG_SPEC_SAMPLER3D;
       break;
    case TYPE_SPECIFIER_SAMPLERCUBE:
-      spec->type = slang_spec_samplerCube;
+      spec->type = SLANG_SPEC_SAMPLERCUBE;
       break;
    case TYPE_SPECIFIER_SAMPLER1DSHADOW:
-      spec->type = slang_spec_sampler1DShadow;
+      spec->type = SLANG_SPEC_SAMPLER1DSHADOW;
       break;
    case TYPE_SPECIFIER_SAMPLER2DSHADOW:
-      spec->type = slang_spec_sampler2DShadow;
+      spec->type = SLANG_SPEC_SAMPLER2DSHADOW;
       break;
    case TYPE_SPECIFIER_STRUCT:
-      spec->type = slang_spec_struct;
+      spec->type = SLANG_SPEC_STRUCT;
       if (!parse_struct(C, O, &spec->_struct))
          return 0;
       break;
    case TYPE_SPECIFIER_TYPENAME:
-      spec->type = slang_spec_struct;
+      spec->type = SLANG_SPEC_STRUCT;
       {
          slang_atom a_name;
          slang_struct *stru;
@@ -817,7 +817,7 @@ parse_statement(slang_parse_ctx * C, slang_output_ctx * O,
    switch (*C->I++) {
    case OP_BLOCK_BEGIN_NO_NEW_SCOPE:
       /* parse child statements, do not create new variable scope */
-      oper->type = slang_oper_block_no_new_scope;
+      oper->type = SLANG_OPER_BLOCK_NO_NEW_SCOPE;
       while (*C->I != OP_END)
          if (!parse_child_operation(C, O, oper, 1))
             return 0;
@@ -828,7 +828,7 @@ parse_statement(slang_parse_ctx * C, slang_output_ctx * O,
       {
          slang_output_ctx o = *O;
 
-         oper->type = slang_oper_block_new_scope;
+         oper->type = SLANG_OPER_BLOCK_NEW_SCOPE;
          o.vars = oper->locals;
          while (*C->I != OP_END)
             if (!parse_child_operation(C, &o, oper, 1))
@@ -840,7 +840,7 @@ parse_statement(slang_parse_ctx * C, slang_output_ctx * O,
       /* local variable declaration, individual declarators are stored as
        * children identifiers
        */
-      oper->type = slang_oper_block_no_new_scope;
+      oper->type = SLANG_OPER_BLOCK_NO_NEW_SCOPE;
       {
          const unsigned int first_var = O->vars->num_variables;
 
@@ -861,7 +861,7 @@ parse_statement(slang_parse_ctx * C, slang_output_ctx * O,
             }
             for (i = first_var; i < O->vars->num_variables; i++) {
                slang_operation *o = &oper->children[i - first_var];
-               o->type = slang_oper_variable_decl;
+               o->type = SLANG_OPER_VARIABLE_DECL;
                o->locals->outer_scope = O->vars;
                o->a_id = O->vars->variables[i]->a_name;
             }
@@ -872,7 +872,7 @@ parse_statement(slang_parse_ctx * C, slang_output_ctx * O,
       /* the __asm statement, parse the mnemonic and all its arguments
        * as expressions
        */
-      oper->type = slang_oper_asm;
+      oper->type = SLANG_OPER_ASM;
       oper->a_id = parse_identifier(C);
       if (oper->a_id == SLANG_ATOM_NULL)
          return 0;
@@ -883,26 +883,26 @@ parse_statement(slang_parse_ctx * C, slang_output_ctx * O,
       C->I++;
       break;
    case OP_BREAK:
-      oper->type = slang_oper_break;
+      oper->type = SLANG_OPER_BREAK;
       break;
    case OP_CONTINUE:
-      oper->type = slang_oper_continue;
+      oper->type = SLANG_OPER_CONTINUE;
       break;
    case OP_DISCARD:
-      oper->type = slang_oper_discard;
+      oper->type = SLANG_OPER_DISCARD;
       break;
    case OP_RETURN:
-      oper->type = slang_oper_return;
+      oper->type = SLANG_OPER_RETURN;
       if (!parse_child_operation(C, O, oper, 0))
          return 0;
       break;
    case OP_EXPRESSION:
-      oper->type = slang_oper_expression;
+      oper->type = SLANG_OPER_EXPRESSION;
       if (!parse_child_operation(C, O, oper, 0))
          return 0;
       break;
    case OP_IF:
-      oper->type = slang_oper_if;
+      oper->type = SLANG_OPER_IF;
       if (!parse_child_operation(C, O, oper, 0))
          return 0;
       if (!parse_child_operation(C, O, oper, 1))
@@ -914,7 +914,7 @@ parse_statement(slang_parse_ctx * C, slang_output_ctx * O,
       {
          slang_output_ctx o = *O;
 
-         oper->type = slang_oper_while;
+         oper->type = SLANG_OPER_WHILE;
          o.vars = oper->locals;
          if (!parse_child_operation(C, &o, oper, 1))
             return 0;
@@ -923,7 +923,7 @@ parse_statement(slang_parse_ctx * C, slang_output_ctx * O,
       }
       break;
    case OP_DO:
-      oper->type = slang_oper_do;
+      oper->type = SLANG_OPER_DO;
       if (!parse_child_operation(C, O, oper, 1))
          return 0;
       if (!parse_child_operation(C, O, oper, 0))
@@ -933,7 +933,7 @@ parse_statement(slang_parse_ctx * C, slang_output_ctx * O,
       {
          slang_output_ctx o = *O;
 
-         oper->type = slang_oper_for;
+         oper->type = SLANG_OPER_FOR;
          o.vars = oper->locals;
          if (!parse_child_operation(C, &o, oper, 1))
             return 0;
@@ -986,7 +986,7 @@ static int
 is_constructor_name(const char *name, slang_atom a_name,
                     slang_struct_scope * structs)
 {
-   if (slang_type_specifier_type_from_string(name) != slang_spec_void)
+   if (slang_type_specifier_type_from_string(name) != SLANG_SPEC_VOID)
       return 1;
    return slang_struct_scope_find(structs, a_name, 1) != NULL;
 }
@@ -1022,10 +1022,10 @@ parse_expression(slang_parse_ctx * C, slang_output_ctx * O,
 
       switch (op_code) {
       case OP_PUSH_VOID:
-         op->type = slang_oper_void;
+         op->type = SLANG_OPER_VOID;
          break;
       case OP_PUSH_BOOL:
-         op->type = slang_oper_literal_bool;
+         op->type = SLANG_OPER_LITERAL_BOOL;
          if (!parse_number(C, &number))
             return 0;
          op->literal[0] =
@@ -1035,7 +1035,7 @@ parse_expression(slang_parse_ctx * C, slang_output_ctx * O,
          op->literal_size = 1;
          break;
       case OP_PUSH_INT:
-         op->type = slang_oper_literal_int;
+         op->type = SLANG_OPER_LITERAL_INT;
          if (!parse_number(C, &number))
             return 0;
          op->literal[0] =
@@ -1045,7 +1045,7 @@ parse_expression(slang_parse_ctx * C, slang_output_ctx * O,
          op->literal_size = 1;
          break;
       case OP_PUSH_FLOAT:
-         op->type = slang_oper_literal_float;
+         op->type = SLANG_OPER_LITERAL_FLOAT;
          if (!parse_float(C, &op->literal[0]))
             return 0;
          op->literal[1] =
@@ -1054,38 +1054,38 @@ parse_expression(slang_parse_ctx * C, slang_output_ctx * O,
          op->literal_size = 1;
          break;
       case OP_PUSH_IDENTIFIER:
-         op->type = slang_oper_identifier;
+         op->type = SLANG_OPER_IDENTIFIER;
          op->a_id = parse_identifier(C);
          if (op->a_id == SLANG_ATOM_NULL)
             return 0;
          break;
       case OP_SEQUENCE:
-         op->type = slang_oper_sequence;
+         op->type = SLANG_OPER_SEQUENCE;
          if (!handle_nary_expression(C, op, &ops, &num_ops, 2))
             return 0;
          break;
       case OP_ASSIGN:
-         op->type = slang_oper_assign;
+         op->type = SLANG_OPER_ASSIGN;
          if (!handle_nary_expression(C, op, &ops, &num_ops, 2))
             return 0;
          break;
       case OP_ADDASSIGN:
-         op->type = slang_oper_addassign;
+         op->type = SLANG_OPER_ADDASSIGN;
          if (!handle_nary_expression(C, op, &ops, &num_ops, 2))
             return 0;
          break;
       case OP_SUBASSIGN:
-         op->type = slang_oper_subassign;
+         op->type = SLANG_OPER_SUBASSIGN;
          if (!handle_nary_expression(C, op, &ops, &num_ops, 2))
             return 0;
          break;
       case OP_MULASSIGN:
-         op->type = slang_oper_mulassign;
+         op->type = SLANG_OPER_MULASSIGN;
          if (!handle_nary_expression(C, op, &ops, &num_ops, 2))
             return 0;
          break;
       case OP_DIVASSIGN:
-         op->type = slang_oper_divassign;
+         op->type = SLANG_OPER_DIVASSIGN;
          if (!handle_nary_expression(C, op, &ops, &num_ops, 2))
             return 0;
          break;
@@ -1096,22 +1096,22 @@ parse_expression(slang_parse_ctx * C, slang_output_ctx * O,
          /*case OP_XORASSIGN: */
          /*case OP_ANDASSIGN: */
       case OP_SELECT:
-         op->type = slang_oper_select;
+         op->type = SLANG_OPER_SELECT;
          if (!handle_nary_expression(C, op, &ops, &num_ops, 3))
             return 0;
          break;
       case OP_LOGICALOR:
-         op->type = slang_oper_logicalor;
+         op->type = SLANG_OPER_LOGICALOR;
          if (!handle_nary_expression(C, op, &ops, &num_ops, 2))
             return 0;
          break;
       case OP_LOGICALXOR:
-         op->type = slang_oper_logicalxor;
+         op->type = SLANG_OPER_LOGICALXOR;
          if (!handle_nary_expression(C, op, &ops, &num_ops, 2))
             return 0;
          break;
       case OP_LOGICALAND:
-         op->type = slang_oper_logicaland;
+         op->type = SLANG_OPER_LOGICALAND;
          if (!handle_nary_expression(C, op, &ops, &num_ops, 2))
             return 0;
          break;
@@ -1119,91 +1119,91 @@ parse_expression(slang_parse_ctx * C, slang_output_ctx * O,
          /*case OP_BITXOR: */
          /*case OP_BITAND: */
       case OP_EQUAL:
-         op->type = slang_oper_equal;
+         op->type = SLANG_OPER_EQUAL;
          if (!handle_nary_expression(C, op, &ops, &num_ops, 2))
             return 0;
          break;
       case OP_NOTEQUAL:
-         op->type = slang_oper_notequal;
+         op->type = SLANG_OPER_NOTEQUAL;
          if (!handle_nary_expression(C, op, &ops, &num_ops, 2))
             return 0;
          break;
       case OP_LESS:
-         op->type = slang_oper_less;
+         op->type = SLANG_OPER_LESS;
          if (!handle_nary_expression(C, op, &ops, &num_ops, 2))
             return 0;
          break;
       case OP_GREATER:
-         op->type = slang_oper_greater;
+         op->type = SLANG_OPER_GREATER;
          if (!handle_nary_expression(C, op, &ops, &num_ops, 2))
             return 0;
          break;
       case OP_LESSEQUAL:
-         op->type = slang_oper_lessequal;
+         op->type = SLANG_OPER_LESSequal;
          if (!handle_nary_expression(C, op, &ops, &num_ops, 2))
             return 0;
          break;
       case OP_GREATEREQUAL:
-         op->type = slang_oper_greaterequal;
+         op->type = SLANG_OPER_GREATERequal;
          if (!handle_nary_expression(C, op, &ops, &num_ops, 2))
             return 0;
          break;
          /*case OP_LSHIFT: */
          /*case OP_RSHIFT: */
       case OP_ADD:
-         op->type = slang_oper_add;
+         op->type = SLANG_OPER_ADD;
          if (!handle_nary_expression(C, op, &ops, &num_ops, 2))
             return 0;
          break;
       case OP_SUBTRACT:
-         op->type = slang_oper_subtract;
+         op->type = SLANG_OPER_SUBTRACT;
          if (!handle_nary_expression(C, op, &ops, &num_ops, 2))
             return 0;
          break;
       case OP_MULTIPLY:
-         op->type = slang_oper_multiply;
+         op->type = SLANG_OPER_MULTIPLY;
          if (!handle_nary_expression(C, op, &ops, &num_ops, 2))
             return 0;
          break;
       case OP_DIVIDE:
-         op->type = slang_oper_divide;
+         op->type = SLANG_OPER_DIVIDE;
          if (!handle_nary_expression(C, op, &ops, &num_ops, 2))
             return 0;
          break;
          /*case OP_MODULUS: */
       case OP_PREINCREMENT:
-         op->type = slang_oper_preincrement;
+         op->type = SLANG_OPER_PREINCREMENT;
          if (!handle_nary_expression(C, op, &ops, &num_ops, 1))
             return 0;
          break;
       case OP_PREDECREMENT:
-         op->type = slang_oper_predecrement;
+         op->type = SLANG_OPER_PREDECREMENT;
          if (!handle_nary_expression(C, op, &ops, &num_ops, 1))
             return 0;
          break;
       case OP_PLUS:
-         op->type = slang_oper_plus;
+         op->type = SLANG_OPER_PLUS;
          if (!handle_nary_expression(C, op, &ops, &num_ops, 1))
             return 0;
          break;
       case OP_MINUS:
-         op->type = slang_oper_minus;
+         op->type = SLANG_OPER_MINUS;
          if (!handle_nary_expression(C, op, &ops, &num_ops, 1))
             return 0;
          break;
       case OP_NOT:
-         op->type = slang_oper_not;
+         op->type = SLANG_OPER_NOT;
          if (!handle_nary_expression(C, op, &ops, &num_ops, 1))
             return 0;
          break;
          /*case OP_COMPLEMENT: */
       case OP_SUBSCRIPT:
-         op->type = slang_oper_subscript;
+         op->type = SLANG_OPER_SUBSCRIPT;
          if (!handle_nary_expression(C, op, &ops, &num_ops, 2))
             return 0;
          break;
       case OP_CALL:
-         op->type = slang_oper_call;
+         op->type = SLANG_OPER_CALL;
          op->a_id = parse_identifier(C);
          if (op->a_id == SLANG_ATOM_NULL)
             return 0;
@@ -1224,7 +1224,7 @@ parse_expression(slang_parse_ctx * C, slang_output_ctx * O,
          }
          break;
       case OP_FIELD:
-         op->type = slang_oper_field;
+         op->type = SLANG_OPER_FIELD;
          op->a_id = parse_identifier(C);
          if (op->a_id == SLANG_ATOM_NULL)
             return 0;
@@ -1232,12 +1232,12 @@ parse_expression(slang_parse_ctx * C, slang_output_ctx * O,
             return 0;
          break;
       case OP_POSTINCREMENT:
-         op->type = slang_oper_postincrement;
+         op->type = SLANG_OPER_POSTINCREMENT;
          if (!handle_nary_expression(C, op, &ops, &num_ops, 1))
             return 0;
          break;
       case OP_POSTDECREMENT:
-         op->type = slang_oper_postdecrement;
+         op->type = SLANG_OPER_POSTDECREMENT;
          if (!handle_nary_expression(C, op, &ops, &num_ops, 1))
             return 0;
          break;
@@ -1273,23 +1273,23 @@ parse_parameter_declaration(slang_parse_ctx * C, slang_output_ctx * O,
       return 0;
    switch (*C->I++) {
    case PARAM_QUALIFIER_IN:
-      if (param->type.qualifier != slang_qual_const
-          && param->type.qualifier != slang_qual_none) {
+      if (param->type.qualifier != SLANG_QUAL_CONST
+          && param->type.qualifier != SLANG_QUAL_NONE) {
          slang_info_log_error(C->L, "Invalid type qualifier.");
          return 0;
       }
       break;
    case PARAM_QUALIFIER_OUT:
-      if (param->type.qualifier == slang_qual_none)
-         param->type.qualifier = slang_qual_out;
+      if (param->type.qualifier == SLANG_QUAL_NONE)
+         param->type.qualifier = SLANG_QUAL_OUT;
       else {
          slang_info_log_error(C->L, "Invalid type qualifier.");
          return 0;
       }
       break;
    case PARAM_QUALIFIER_INOUT:
-      if (param->type.qualifier == slang_qual_none)
-         param->type.qualifier = slang_qual_inout;
+      if (param->type.qualifier == SLANG_QUAL_NONE)
+         param->type.qualifier = SLANG_QUAL_INOUT;
       else {
          slang_info_log_error(C->L, "Invalid type qualifier.");
          return 0;
@@ -1439,14 +1439,14 @@ parse_function_prototype(slang_parse_ctx * C, slang_output_ctx * O,
       return 0;
    switch (*C->I++) {
    case FUNCTION_ORDINARY:
-      func->kind = slang_func_ordinary;
+      func->kind = SLANG_FUNC_ORDINARY;
       func->header.a_name = parse_identifier(C);
       if (func->header.a_name == SLANG_ATOM_NULL)
          return 0;
       break;
    case FUNCTION_CONSTRUCTOR:
-      func->kind = slang_func_constructor;
-      if (func->header.type.specifier.type == slang_spec_struct)
+      func->kind = SLANG_FUNC_CONSTRUCTOR;
+      if (func->header.type.specifier.type == SLANG_SPEC_STRUCT)
          return 0;
       func->header.a_name =
          slang_atom_pool_atom(C->atoms,
@@ -1458,7 +1458,7 @@ parse_function_prototype(slang_parse_ctx * C, slang_output_ctx * O,
       }
       break;
    case FUNCTION_OPERATOR:
-      func->kind = slang_func_operator;
+      func->kind = SLANG_FUNC_OPERATOR;
       func->header.a_name = parse_operator_name(C);
       if (func->header.a_name == SLANG_ATOM_NULL)
          return 0;
@@ -1487,7 +1487,7 @@ parse_function_prototype(slang_parse_ctx * C, slang_output_ctx * O,
       assert(a_retVal);
       p->a_name = a_retVal;
       p->type = func->header.type;
-      p->type.qualifier = slang_qual_out;
+      p->type.qualifier = SLANG_QUAL_OUT;
    }
 
    /* function formal parameters and local variables share the same
@@ -1546,7 +1546,7 @@ initialize_global(slang_assemble_ctx * A, slang_variable * var)
    /* construct the left side of assignment */
    if (!slang_operation_construct(&op_id))
       return GL_FALSE;
-   op_id.type = slang_oper_identifier;
+   op_id.type = SLANG_OPER_IDENTIFIER;
    op_id.a_id = var->a_name;
 
    /* put the variable into operation's scope */
@@ -1565,7 +1565,7 @@ initialize_global(slang_assemble_ctx * A, slang_variable * var)
       slang_operation_destruct(&op_id);
       return GL_FALSE;
    }
-   op_assign.type = slang_oper_assign;
+   op_assign.type = SLANG_OPER_ASSIGN;
    op_assign.children =
       (slang_operation *) slang_alloc_malloc(2 * sizeof(slang_operation));
    if (op_assign.children == NULL) {
@@ -1689,7 +1689,7 @@ parse_init_declarator(slang_parse_ctx * C, slang_output_ctx * O,
 
    /* allocate global address space for a variable with a known size */
    if (C->global_scope
-       && !(var->type.specifier.type == slang_spec_array
+       && !(var->type.specifier.type == SLANG_SPEC_ARRAY
             && var->array_len == 0)) {
       if (!calculate_var_size(C, O, var))
          return GL_FALSE;
@@ -1885,13 +1885,13 @@ parse_code_unit(slang_parse_ctx * C, slang_code_unit * unit,
    GLboolean success;
    GLuint maxRegs;
 
-   if (unit->type == slang_unit_fragment_builtin ||
-       unit->type == slang_unit_fragment_shader) {
+   if (unit->type == SLANG_UNIT_FRAGMENT_BUILTIN ||
+       unit->type == SLANG_UNIT_FRAGMENT_SHADER) {
       maxRegs = ctx->Const.FragmentProgram.MaxTemps;
    }
    else {
-      assert(unit->type == slang_unit_vertex_builtin ||
-             unit->type == slang_unit_vertex_shader);
+      assert(unit->type == SLANG_UNIT_VERTEX_BUILTIN ||
+             unit->type == SLANG_UNIT_VERTEX_SHADER);
       maxRegs = ctx->Const.VertexProgram.MaxTemps;
    }
 
@@ -2055,8 +2055,8 @@ compile_object(grammar * id, const char *source, slang_code_object * object,
    }
 
    /* set shader type - the syntax is slightly different for different shaders */
-   if (type == slang_unit_fragment_shader
-       || type == slang_unit_fragment_builtin)
+   if (type == SLANG_UNIT_FRAGMENT_SHADER
+       || type == SLANG_UNIT_FRAGMENT_BUILTIN)
       grammar_set_reg8(*id, (const byte *) "shader_type", 1);
    else
       grammar_set_reg8(*id, (const byte *) "shader_type", 2);
@@ -2065,33 +2065,33 @@ compile_object(grammar * id, const char *source, slang_code_object * object,
    grammar_set_reg8(*id, (const byte *) "parsing_builtin", 1);
 
    /* if parsing user-specified shader, load built-in library */
-   if (type == slang_unit_fragment_shader || type == slang_unit_vertex_shader) {
+   if (type == SLANG_UNIT_FRAGMENT_SHADER || type == SLANG_UNIT_VERTEX_SHADER) {
       /* compile core functionality first */
       if (!compile_binary(slang_core_gc,
                           &object->builtin[SLANG_BUILTIN_CORE],
-                          slang_unit_fragment_builtin, infolog,
+                          SLANG_UNIT_FRAGMENT_BUILTIN, infolog,
                           NULL, NULL, NULL))
          return GL_FALSE;
 
       /* compile common functions and variables, link to core */
       if (!compile_binary(slang_common_builtin_gc,
                           &object->builtin[SLANG_BUILTIN_COMMON],
-                          slang_unit_fragment_builtin, infolog, NULL,
+                          SLANG_UNIT_FRAGMENT_BUILTIN, infolog, NULL,
                           &object->builtin[SLANG_BUILTIN_CORE], NULL))
          return GL_FALSE;
 
       /* compile target-specific functions and variables, link to common */
-      if (type == slang_unit_fragment_shader) {
+      if (type == SLANG_UNIT_FRAGMENT_SHADER) {
          if (!compile_binary(slang_fragment_builtin_gc,
                              &object->builtin[SLANG_BUILTIN_TARGET],
-                             slang_unit_fragment_builtin, infolog, NULL,
+                             SLANG_UNIT_FRAGMENT_BUILTIN, infolog, NULL,
                              &object->builtin[SLANG_BUILTIN_COMMON], NULL))
             return GL_FALSE;
       }
-      else if (type == slang_unit_vertex_shader) {
+      else if (type == SLANG_UNIT_VERTEX_SHADER) {
          if (!compile_binary(slang_vertex_builtin_gc,
                              &object->builtin[SLANG_BUILTIN_TARGET],
-                             slang_unit_vertex_builtin, infolog, NULL,
+                             SLANG_UNIT_VERTEX_BUILTIN, infolog, NULL,
                              &object->builtin[SLANG_BUILTIN_COMMON], NULL))
             return GL_FALSE;
       }
@@ -2145,11 +2145,11 @@ _slang_compile(GLcontext *ctx, struct gl_shader *shader)
    slang_unit_type type;
 
    if (shader->Type == GL_VERTEX_SHADER) {
-      type = slang_unit_vertex_shader;
+      type = SLANG_UNIT_VERTEX_SHADER;
    }
    else {
       assert(shader->Type == GL_FRAGMENT_SHADER);
-      type = slang_unit_fragment_shader;
+      type = SLANG_UNIT_FRAGMENT_SHADER;
    }
 
    /* XXX temporary hack */

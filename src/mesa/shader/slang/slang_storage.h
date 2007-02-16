@@ -22,7 +22,7 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#if !defined SLANG_STORAGE_H
+#ifndef SLANG_STORAGE_H
 #define SLANG_STORAGE_H
 
 #include "slang_compile.h"
@@ -47,12 +47,12 @@
 typedef enum slang_storage_type_
 {
    /* core */
-   slang_stor_aggregate,
-   slang_stor_bool,
-   slang_stor_int,
-   slang_stor_float,
+   SLANG_STORE_AGGREGATE,
+   SLANG_STORE_BOOL,
+   SLANG_STORE_INT,
+   SLANG_STORE_FLOAT,
    /* vec4 */
-   slang_stor_vec4
+   SLANG_STORE_VEC4
 } slang_storage_type;
 
 
@@ -110,7 +110,7 @@ _slang_aggregate_variable(slang_storage_aggregate *agg,
 
 /*
  * Returns the size (in machine units) of the given storage type.
- * It is an error to pass-in slang_stor_aggregate.
+ * It is an error to pass-in SLANG_STORE_AGGREGATE.
  * Returns 0 on error.
  */
 extern GLuint
@@ -135,5 +135,4 @@ _slang_flatten_aggregate (slang_storage_aggregate *,
                           const slang_storage_aggregate *);
 
 
-#endif
-
+#endif /* SLANG_STORAGE_H */

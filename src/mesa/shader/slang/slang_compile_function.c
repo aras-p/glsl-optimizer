@@ -71,7 +71,7 @@ slang_fixup_save(slang_fixup_table *fixups, GLuint address)
 int
 slang_function_construct(slang_function * func)
 {
-   func->kind = slang_func_ordinary;
+   func->kind = SLANG_FUNC_ORDINARY;
    if (!slang_variable_construct(&func->header))
       return 0;
 
@@ -133,7 +133,7 @@ slang_function_scope_destruct(slang_function_scope * scope)
 GLboolean
 _slang_function_has_return_value(const slang_function *fun)
 {
-   return fun->header.type.specifier.type != slang_spec_void;
+   return fun->header.type.specifier.type != SLANG_SPEC_VOID;
 }
 
 
@@ -179,7 +179,7 @@ slang_function_scope_find(slang_function_scope * funcs, slang_function * fun,
       slang_function *f = &funcs->functions[i];
       const GLuint haveRetValue = 0;
 #if 0
-         = (f->header.type.specifier.type != slang_spec_void);
+         = (f->header.type.specifier.type != SLANG_SPEC_VOID);
 #endif
       unsigned int j;
 

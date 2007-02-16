@@ -160,7 +160,7 @@ int slang_struct_equal (const slang_struct *x, const slang_struct *y)
 			return 0;
 		if (!slang_type_specifier_equal (&varx->type.specifier, &vary->type.specifier))
 			return 0;
-		if (varx->type.specifier.type == slang_spec_array)
+		if (varx->type.specifier.type == SLANG_SPEC_ARRAY)
 			if (varx->array_len != vary->array_len)
 				return GL_FALSE;
 	}

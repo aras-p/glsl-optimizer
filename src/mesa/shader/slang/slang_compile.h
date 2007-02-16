@@ -39,16 +39,18 @@ extern "C" {
 
 typedef enum slang_unit_type_
 {
-	slang_unit_fragment_shader,
-	slang_unit_vertex_shader,
-	slang_unit_fragment_builtin,
-	slang_unit_vertex_builtin
+   SLANG_UNIT_FRAGMENT_SHADER,
+   SLANG_UNIT_VERTEX_SHADER,
+   SLANG_UNIT_FRAGMENT_BUILTIN,
+   SLANG_UNIT_VERTEX_BUILTIN
 } slang_unit_type;
+
 
 typedef struct slang_var_pool_
 {
-	GLuint next_addr;
+   GLuint next_addr;
 } slang_var_pool;
+
 
 typedef struct slang_code_unit_
 {
@@ -58,6 +60,7 @@ typedef struct slang_code_unit_
    slang_unit_type type;
    struct slang_code_object_ *object;
 } slang_code_unit;
+
 
 extern GLvoid
 _slang_code_unit_ctr (slang_code_unit *, struct slang_code_object_ *);

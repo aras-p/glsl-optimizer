@@ -21,31 +21,31 @@ static void
 print_type(const slang_fully_specified_type *t)
 {
    switch (t->qualifier) {
-   case slang_qual_none:
+   case SLANG_QUAL_NONE:
       /*printf("");*/
       break;
-   case slang_qual_const:
+   case SLANG_QUAL_CONST:
       printf("const ");
       break;
-   case slang_qual_attribute:
+   case SLANG_QUAL_ATTRIBUTE:
       printf("attrib ");
       break;
-   case slang_qual_varying:
+   case SLANG_QUAL_VARYING:
       printf("varying ");
       break;
-   case slang_qual_uniform:
+   case SLANG_QUAL_UNIFORM:
       printf("uniform ");
       break;
-   case slang_qual_out:
+   case SLANG_QUAL_OUT:
       printf("output ");
       break;
-   case slang_qual_inout:
+   case SLANG_QUAL_INOUT:
       printf("inout ");
       break;
-   case slang_qual_fixedoutput:
+   case SLANG_QUAL_FIXEDOUTPUT:
       printf("fixedoutput");
       break;
-   case slang_qual_fixedinput:
+   case SLANG_QUAL_FIXEDINPUT:
       printf("fixedinput");
       break;
    default:
@@ -53,76 +53,76 @@ print_type(const slang_fully_specified_type *t)
    }
 
    switch (t->specifier.type) {
-   case slang_spec_void:
+   case SLANG_SPEC_VOID:
       printf("void");
       break;
-   case slang_spec_bool:
+   case SLANG_SPEC_BOOL:
       printf("bool");
       break;
-   case slang_spec_bvec2:
+   case SLANG_SPEC_BVEC2:
       printf("bvec2");
       break;
-   case slang_spec_bvec3:
+   case SLANG_SPEC_BVEC3:
       printf("bvec3");
       break;
-   case slang_spec_bvec4:
+   case SLANG_SPEC_BVEC4:
       printf("bvec4");
       break;
-   case slang_spec_int:
+   case SLANG_SPEC_INT:
       printf("int");
       break;
-   case slang_spec_ivec2:
+   case SLANG_SPEC_IVEC2:
       printf("ivec2");
       break;
-   case slang_spec_ivec3:
+   case SLANG_SPEC_IVEC3:
       printf("ivec3");
       break;
-   case slang_spec_ivec4:
+   case SLANG_SPEC_IVEC4:
       printf("ivec4");
       break;
-   case slang_spec_float:
+   case SLANG_SPEC_FLOAT:
       printf("float");
       break;
-   case slang_spec_vec2:
+   case SLANG_SPEC_VEC2:
       printf("vec2");
       break;
-   case slang_spec_vec3:
+   case SLANG_SPEC_VEC3:
       printf("vec3");
       break;
-   case slang_spec_vec4:
+   case SLANG_SPEC_VEC4:
       printf("vec4");
       break;
-   case slang_spec_mat2:
+   case SLANG_SPEC_MAT2:
       printf("mat2");
       break;
-   case slang_spec_mat3:
+   case SLANG_SPEC_MAT3:
       printf("mat3");
       break;
-   case slang_spec_mat4:
+   case SLANG_SPEC_MAT4:
       printf("mat4");
       break;
-   case slang_spec_sampler1D:
+   case SLANG_SPEC_SAMPLER1D:
       printf("sampler1D");
       break;
-   case slang_spec_sampler2D:
+   case SLANG_SPEC_SAMPLER2D:
       printf("sampler2D");
       break;
-   case slang_spec_sampler3D:
+   case SLANG_SPEC_SAMPLER3D:
       printf("sampler3D");
       break;
-   case slang_spec_samplerCube:
+   case SLANG_SPEC_SAMPLERCUBE:
       printf("samplerCube");
       break;
-   case slang_spec_sampler1DShadow:
+   case SLANG_SPEC_SAMPLER1DSHADOW:
       printf("sampler1DShadow");
       break;
-   case slang_spec_sampler2DShadow:
+   case SLANG_SPEC_SAMPLER2DSHADOW:
       printf("sampler2DShadow");
       break;
-   case slang_spec_struct:
+   case SLANG_SPEC_STRUCT:
       printf("struct");
       break;
-   case slang_spec_array:
+   case SLANG_SPEC_ARRAY:
       printf("array");
       break;
    default:
@@ -219,12 +219,12 @@ slang_print_tree(const slang_operation *op, int indent)
 
    switch (op->type) {
 
-   case slang_oper_none:
+   case SLANG_OPER_NONE:
       spaces(indent);
-      printf("slang_oper_none\n");
+      printf("SLANG_OPER_NONE\n");
       break;
 
-   case slang_oper_block_no_new_scope:
+   case SLANG_OPER_BLOCK_NO_NEW_SCOPE:
       spaces(indent);
       printf("{ locals %p  outer %p\n", (void*)op->locals, (void*)op->locals->outer_scope);
       print_generic(op, NULL, indent+3);
@@ -232,7 +232,7 @@ slang_print_tree(const slang_operation *op, int indent)
       printf("}\n");
       break;
 
-   case slang_oper_block_new_scope:
+   case SLANG_OPER_BLOCK_NEW_SCOPE:
       spaces(indent);
       printf("{{ // new scope  locals %p\n", (void*)op->locals);
       print_generic(op, NULL, indent+3);
@@ -240,7 +240,7 @@ slang_print_tree(const slang_operation *op, int indent)
       printf("}}\n");
       break;
 
-   case slang_oper_variable_decl:
+   case SLANG_OPER_VARIABLE_DECL:
       assert(op->num_children == 0 || op->num_children == 1);
       {
          slang_variable *v;
@@ -282,52 +282,52 @@ slang_print_tree(const slang_operation *op, int indent)
       }
       break;
 
-   case slang_oper_asm:
+   case SLANG_OPER_ASM:
       spaces(indent);
       printf("ASM: %s\n", (char*) op->a_id);
       print_generic(op, NULL, indent+3);
       break;
 
-   case slang_oper_break:
+   case SLANG_OPER_BREAK:
       spaces(indent);
       printf("BREAK\n");
       break;
 
-   case slang_oper_continue:
+   case SLANG_OPER_CONTINUE:
       spaces(indent);
       printf("CONTINUE\n");
       break;
 
-   case slang_oper_discard:
+   case SLANG_OPER_DISCARD:
       spaces(indent);
       printf("DISCARD\n");
       break;
 
-   case slang_oper_return:
+   case SLANG_OPER_RETURN:
       spaces(indent);
       printf("RETURN\n");
       if (op->num_children > 0)
          slang_print_tree(&op->children[0], indent + 3);
       break;
 
-   case slang_oper_goto:
+   case SLANG_OPER_GOTO:
       spaces(indent);
       printf("GOTO %s\n", (char *) op->a_id);
       break;
 
-   case slang_oper_label:
+   case SLANG_OPER_LABEL:
       spaces(indent);
       printf("LABEL %s\n", (char *) op->a_id);
       break;
 
-   case slang_oper_expression:
+   case SLANG_OPER_EXPRESSION:
       spaces(indent);
       printf("EXPR:  locals %p\n", (void*) op->locals);
-      /*print_generic(op, "slang_oper_expression", indent);*/
+      /*print_generic(op, "SLANG_OPER_EXPRESSION", indent);*/
       slang_print_tree(&op->children[0], indent + 3);
       break;
 
-   case slang_oper_if:
+   case SLANG_OPER_IF:
       spaces(indent);
       printf("IF\n");
       slang_print_tree(&op->children[0], indent + 3);
@@ -341,7 +341,7 @@ slang_print_tree(const slang_operation *op, int indent)
       printf("ENDIF\n");
       break;
 
-   case slang_oper_while:
+   case SLANG_OPER_WHILE:
       assert(op->num_children == 2);
       spaces(indent);
       printf("WHILE cond:\n");
@@ -351,7 +351,7 @@ slang_print_tree(const slang_operation *op, int indent)
       slang_print_tree(&op->children[1], indent + 3);
       break;
 
-   case slang_oper_do:
+   case SLANG_OPER_DO:
       spaces(indent);
       printf("DO body:\n");
       slang_print_tree(&op->children[0], indent + 3);
@@ -360,7 +360,7 @@ slang_print_tree(const slang_operation *op, int indent)
       slang_print_tree(&op->children[1], indent + 3);
       break;
 
-   case slang_oper_for:
+   case SLANG_OPER_FOR:
       spaces(indent);
       printf("FOR init:\n");
       slang_print_tree(&op->children[0], indent + 3);
@@ -380,32 +380,32 @@ slang_print_tree(const slang_operation *op, int indent)
       */
       break;
 
-   case slang_oper_void:
+   case SLANG_OPER_VOID:
       spaces(indent);
       printf("(oper-void)\n");
       break;
 
-   case slang_oper_literal_bool:
+   case SLANG_OPER_LITERAL_BOOL:
       spaces(indent);
-      /*printf("slang_oper_literal_bool\n");*/
+      /*printf("SLANG_OPER_LITERAL_BOOL\n");*/
       printf("%s\n", op->literal[0] ? "TRUE" : "FALSE");
       break;
 
-   case slang_oper_literal_int:
+   case SLANG_OPER_LITERAL_INT:
       spaces(indent);
-      /*printf("slang_oper_literal_int\n");*/
+      /*printf("SLANG_OPER_LITERAL_INT\n");*/
       printf("(%d %d %d %d)\n", (int) op->literal[0], (int) op->literal[1],
              (int) op->literal[2], (int) op->literal[3]);
       break;
 
-   case slang_oper_literal_float:
+   case SLANG_OPER_LITERAL_FLOAT:
       spaces(indent);
-      /*printf("slang_oper_literal_float\n");*/
+      /*printf("SLANG_OPER_LITERAL_FLOAT\n");*/
       printf("(%f %f %f %f)\n", op->literal[0], op->literal[1], op->literal[2],
              op->literal[3]);
       break;
 
-   case slang_oper_identifier:
+   case SLANG_OPER_IDENTIFIER:
       spaces(indent);
       if (op->var && op->var->a_name)
          printf("VAR %s  (in scope %p)\n", (char *) op->var->a_name,
@@ -415,49 +415,49 @@ slang_print_tree(const slang_operation *op, int indent)
                 (void *) find_scope(op->locals, op->a_id));
       break;
 
-   case slang_oper_sequence:
+   case SLANG_OPER_SEQUENCE:
       print_generic(op, "COMMA-SEQ", indent+3);
       break;
 
-   case slang_oper_assign:
+   case SLANG_OPER_ASSIGN:
       spaces(indent);
       printf("ASSIGNMENT  locals %p\n", (void*)op->locals);
       print_binary(op, ":=", indent);
       break;
 
-   case slang_oper_addassign:
+   case SLANG_OPER_ADDASSIGN:
       spaces(indent);
       printf("ASSIGN\n");
       print_binary(op, "+=", indent);
       break;
 
-   case slang_oper_subassign:
+   case SLANG_OPER_SUBASSIGN:
       spaces(indent);
       printf("ASSIGN\n");
       print_binary(op, "-=", indent);
       break;
 
-   case slang_oper_mulassign:
+   case SLANG_OPER_MULASSIGN:
       spaces(indent);
       printf("ASSIGN\n");
       print_binary(op, "*=", indent);
       break;
 
-   case slang_oper_divassign:
+   case SLANG_OPER_DIVASSIGN:
       spaces(indent);
       printf("ASSIGN\n");
       print_binary(op, "/=", indent);
       break;
 
-	/*slang_oper_modassign,*/
-	/*slang_oper_lshassign,*/
-	/*slang_oper_rshassign,*/
-	/*slang_oper_orassign,*/
-	/*slang_oper_xorassign,*/
-	/*slang_oper_andassign,*/
-   case slang_oper_select:
+	/*SLANG_OPER_MODASSIGN,*/
+	/*SLANG_OPER_LSHASSIGN,*/
+	/*SLANG_OPER_RSHASSIGN,*/
+	/*SLANG_OPER_ORASSIGN,*/
+	/*SLANG_OPER_XORASSIGN,*/
+	/*SLANG_OPER_ANDASSIGN,*/
+   case SLANG_OPER_SELECT:
       spaces(indent);
-      printf("slang_oper_select n=%d\n", op->num_children);
+      printf("SLANG_OPER_SELECT n=%d\n", op->num_children);
       assert(op->num_children == 3);
       slang_print_tree(&op->children[0], indent+3);
       spaces(indent);
@@ -468,100 +468,100 @@ slang_print_tree(const slang_operation *op, int indent)
       slang_print_tree(&op->children[2], indent+3);
       break;
 
-   case slang_oper_logicalor:
+   case SLANG_OPER_LOGICALOR:
       print_binary(op, "||", indent);
       break;
 
-   case slang_oper_logicalxor:
+   case SLANG_OPER_LOGICALXOR:
       print_binary(op, "^^", indent);
       break;
 
-   case slang_oper_logicaland:
+   case SLANG_OPER_LOGICALAND:
       print_binary(op, "&&", indent);
       break;
 
-   /*slang_oper_bitor*/
-   /*slang_oper_bitxor*/
-   /*slang_oper_bitand*/
-   case slang_oper_equal:
+   /*SLANG_OPER_BITOR*/
+   /*SLANG_OPER_BITXOR*/
+   /*SLANG_OPER_BITAND*/
+   case SLANG_OPER_EQUAL:
       print_binary(op, "==", indent);
       break;
 
-   case slang_oper_notequal:
+   case SLANG_OPER_NOTEQUAL:
       print_binary(op, "!=", indent);
       break;
 
-   case slang_oper_less:
+   case SLANG_OPER_LESS:
       print_binary(op, "<", indent);
       break;
 
-   case slang_oper_greater:
+   case SLANG_OPER_GREATER:
       print_binary(op, ">", indent);
       break;
 
-   case slang_oper_lessequal:
+   case SLANG_OPER_LESSequal:
       print_binary(op, "<=", indent);
       break;
 
-   case slang_oper_greaterequal:
+   case SLANG_OPER_GREATERequal:
       print_binary(op, ">=", indent);
       break;
 
-   /*slang_oper_lshift*/
-   /*slang_oper_rshift*/
-   case slang_oper_add:
+   /*SLANG_OPER_LSHIFT*/
+   /*SLANG_OPER_RSHIFT*/
+   case SLANG_OPER_ADD:
       print_binary(op, "+", indent);
       break;
 
-   case slang_oper_subtract:
+   case SLANG_OPER_SUBTRACT:
       print_binary(op, "-", indent);
       break;
 
-   case slang_oper_multiply:
+   case SLANG_OPER_MULTIPLY:
       print_binary(op, "*", indent);
       break;
 
-   case slang_oper_divide:
+   case SLANG_OPER_DIVIDE:
       print_binary(op, "/", indent);
       break;
 
-   /*slang_oper_modulus*/
-   case slang_oper_preincrement:
+   /*SLANG_OPER_MODULUS*/
+   case SLANG_OPER_PREINCREMENT:
       spaces(indent);
       printf("PRE++\n");
       slang_print_tree(&op->children[0], indent+3);
       break;
 
-   case slang_oper_predecrement:
+   case SLANG_OPER_PREDECREMENT:
       spaces(indent);
       printf("PRE--\n");
       slang_print_tree(&op->children[0], indent+3);
       break;
 
-   case slang_oper_plus:
+   case SLANG_OPER_PLUS:
       spaces(indent);
-      printf("slang_oper_plus\n");
+      printf("SLANG_OPER_PLUS\n");
       break;
 
-   case slang_oper_minus:
+   case SLANG_OPER_MINUS:
       spaces(indent);
-      printf("slang_oper_minus\n");
+      printf("SLANG_OPER_MINUS\n");
       break;
 
-   /*slang_oper_complement*/
-   case slang_oper_not:
+   /*SLANG_OPER_COMPLEMENT*/
+   case SLANG_OPER_NOT:
       spaces(indent);
       printf("NOT\n");
       slang_print_tree(&op->children[0], indent+3);
       break;
 
-   case slang_oper_subscript:
+   case SLANG_OPER_SUBSCRIPT:
       spaces(indent);
-      printf("slang_oper_subscript\n");
+      printf("SLANG_OPER_SUBSCRIPT\n");
       print_generic(op, NULL, indent+3);
       break;
 
-   case slang_oper_call:
+   case SLANG_OPER_CALL:
 #if 0
          slang_function *fun
             = _slang_locate_function(A->space.funcs, oper->a_id,
@@ -581,19 +581,19 @@ slang_print_tree(const slang_operation *op, int indent)
       printf(")\n");
       break;
 
-   case slang_oper_field:
+   case SLANG_OPER_FIELD:
       spaces(indent);
       printf("FIELD %s of\n", (char*) op->a_id);
       slang_print_tree(&op->children[0], indent+3);
       break;
 
-   case slang_oper_postincrement:
+   case SLANG_OPER_POSTINCREMENT:
       spaces(indent);
       printf("POST++\n");
       slang_print_tree(&op->children[0], indent+3);
       break;
 
-   case slang_oper_postdecrement:
+   case SLANG_OPER_POSTDECREMENT:
       spaces(indent);
       printf("POST--\n");
       slang_print_tree(&op->children[0], indent+3);
@@ -637,23 +637,23 @@ const char *
 slang_type_qual_string(slang_type_qualifier q)
 {
    switch (q) {
-   case slang_qual_none:
+   case SLANG_QUAL_NONE:
       return "none";
-   case slang_qual_const:
+   case SLANG_QUAL_CONST:
       return "const";
-   case slang_qual_attribute:
+   case SLANG_QUAL_ATTRIBUTE:
       return "attribute";
-   case slang_qual_varying:
+   case SLANG_QUAL_VARYING:
       return "varying";
-   case slang_qual_uniform:
+   case SLANG_QUAL_UNIFORM:
       return "uniform";
-   case slang_qual_out:
+   case SLANG_QUAL_OUT:
       return "out";
-   case slang_qual_inout:
+   case SLANG_QUAL_INOUT:
       return "inout";
-   case slang_qual_fixedoutput:
+   case SLANG_QUAL_FIXEDOUTPUT:
       return "fixedoutput";
-   case slang_qual_fixedinput:
+   case SLANG_QUAL_FIXEDINPUT:
       return "fixedinputk";
    default:
       return "qual?";
@@ -665,53 +665,53 @@ static const char *
 slang_type_string(slang_type_specifier_type t)
 {
    switch (t) {
-   case slang_spec_void:
+   case SLANG_SPEC_VOID:
       return "void";
-   case slang_spec_bool:
+   case SLANG_SPEC_BOOL:
       return "bool";
-   case slang_spec_bvec2:
+   case SLANG_SPEC_BVEC2:
       return "bvec2";
-   case slang_spec_bvec3:
+   case SLANG_SPEC_BVEC3:
       return "bvec3";
-   case slang_spec_bvec4:
+   case SLANG_SPEC_BVEC4:
       return "bvec4";
-   case slang_spec_int:
+   case SLANG_SPEC_INT:
       return "int";
-   case slang_spec_ivec2:
+   case SLANG_SPEC_IVEC2:
       return "ivec2";
-   case slang_spec_ivec3:
+   case SLANG_SPEC_IVEC3:
       return "ivec3";
-   case slang_spec_ivec4:
+   case SLANG_SPEC_IVEC4:
       return "ivec4";
-   case slang_spec_float:
+   case SLANG_SPEC_FLOAT:
       return "float";
-   case slang_spec_vec2:
+   case SLANG_SPEC_VEC2:
       return "vec2";
-   case slang_spec_vec3:
+   case SLANG_SPEC_VEC3:
       return "vec3";
-   case slang_spec_vec4:
+   case SLANG_SPEC_VEC4:
       return "vec4";
-   case slang_spec_mat2:
+   case SLANG_SPEC_MAT2:
       return "mat2";
-   case slang_spec_mat3:
+   case SLANG_SPEC_MAT3:
       return "mat3";
-   case slang_spec_mat4:
+   case SLANG_SPEC_MAT4:
       return "mat4";
-   case slang_spec_sampler1D:
+   case SLANG_SPEC_SAMPLER1D:
       return "sampler1D";
-   case slang_spec_sampler2D:
+   case SLANG_SPEC_SAMPLER2D:
       return "sampler2D";
-   case slang_spec_sampler3D:
+   case SLANG_SPEC_SAMPLER3D:
       return "sampler3D";
-   case slang_spec_samplerCube:
+   case SLANG_SPEC_SAMPLERCUBE:
       return "samplerCube";
-   case slang_spec_sampler1DShadow:
+   case SLANG_SPEC_SAMPLER1DSHADOW:
       return "sampler1DShadow";
-   case slang_spec_sampler2DShadow:
+   case SLANG_SPEC_SAMPLER2DSHADOW:
       return "sampler2DShadow";
-   case slang_spec_struct:
+   case SLANG_SPEC_STRUCT:
       return "struct";
-   case slang_spec_array:
+   case SLANG_SPEC_ARRAY:
       return "array";
    default:
       return "type?";
