@@ -29,8 +29,8 @@
 
 
 extern void
-_slang_link2(GLcontext *ctx, GLhandleARB h,
-             struct gl_shader_program *shProg);
+_slang_link(GLcontext *ctx, GLhandleARB h,
+            struct gl_shader_program *shProg);
 
 extern void
 _slang_resolve_samplers(struct gl_shader_program *shProg,
