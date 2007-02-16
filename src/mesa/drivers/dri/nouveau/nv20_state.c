@@ -617,7 +617,10 @@ void (*TexParameter)(GLcontext *ctx, GLenum target,
 
 static void nv20TextureMatrix(GLcontext *ctx, GLuint unit, const GLmatrix *mat)
 {
-	/* TODO */
+        nouveauContextPtr nmesa = NOUVEAU_CONTEXT(ctx);
+        BEGIN_RING_CACHE(NvSub3D, NV20_TCL_PRIMITIVE_3D_TX_MATRIX(unit, 0), 16);
+        /*XXX: This SHOULD work.*/
+        OUT_RING_CACHEp(mat->m, 16);
 }
 
 /* Update anything that depends on the window position/size */
