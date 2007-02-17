@@ -625,7 +625,7 @@ _mesa_print_instruction_opt(const struct prog_instruction *inst, GLint indent,
 void
 _mesa_print_program(const struct gl_program *prog)
 {
-   _mesa_print_program_opt(prog, PROG_PRINT_ARB, GL_TRUE);
+   _mesa_print_program_opt(prog, PROG_PRINT_DEBUG, GL_TRUE);
 }
 
 
