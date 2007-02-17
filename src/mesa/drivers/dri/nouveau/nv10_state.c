@@ -34,6 +34,29 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "mtypes.h"
 #include "colormac.h"
 
+static void nv10ViewportScale(nouveauContextPtr nmesa)
+{
+	GLcontext *ctx = nmesa->glCtx;
+	GLuint w = ctx->Viewport.Width;
+	GLuint h = ctx->Viewport.Height;
+
+	GLfloat max_depth = (ctx->Viewport.Near + ctx->Viewport.Far) * 0.5;
+	switch (ctx->DrawBuffer->_DepthBuffer->DepthBits) {
+		case 16:
+			max_depth *= 32767.0;
+			break;
+		case 24:
+			max_depth *= 16777215.0;
+			break;
+	}
+
+	BEGIN_RING_CACHE(NvSub3D, NV10_TCL_PRIMITIVE_3D_VIEWPORT_SCALE_X, 4);
+	OUT_RING_CACHEf ((((GLfloat) w) * 0.5) - 2048.0);
+	OUT_RING_CACHEf ((((GLfloat) h) * 0.5) - 2048.0);
+	OUT_RING_CACHEf (max_depth);
+	OUT_RING_CACHEf (0.0);
+}
+
 static void nv10AlphaFunc(GLcontext *ctx, GLenum func, GLfloat ref)
 {
 	nouveauContextPtr nmesa = NOUVEAU_CONTEXT(ctx);
@@ -98,16 +121,27 @@ static void nv10ClearColor(GLcontext *ctx, const GLfloat color[4])
 
 static void nv10ClearDepth(GLcontext *ctx, GLclampd d)
 {
-	/* FIXME: check if 16 or 24/32 bits depth buffer */
 	nouveauContextPtr nmesa = NOUVEAU_CONTEXT(ctx);
-	nmesa->clear_value=((nmesa->clear_value&0x000000FF)|(((uint32_t)(d*0xFFFFFF))<<8));
+
+	switch (ctx->DrawBuffer->_DepthBuffer->DepthBits) {
+		case 16:
+			nmesa->clear_value = (uint32_t)(d*0x7FFF);
+			break;
+		case 24:
+			nmesa->clear_value = ((nmesa->clear_value&0x000000FF) |
+				(((uint32_t)(d*0xFFFFFF))<<8));
+			break;
+	}
 }
 
 static void nv10ClearStencil(GLcontext *ctx, GLint s)
 {
-	/* FIXME: not valid for 16 bits depth buffer (0 stencil bits) */
 	nouveauContextPtr nmesa = NOUVEAU_CONTEXT(ctx);
-	nmesa->clear_value=((nmesa->clear_value&0xFFFFFF00)|(s&0x000000FF));
+
+	if (ctx->DrawBuffer->_DepthBuffer->DepthBits == 24) {
+		nmesa->clear_value = ((nmesa->clear_value&0xFFFFFF00)|
+			(s&0x000000FF));
+	}
 }
 
 static void nv10ClipPlane(GLcontext *ctx, GLenum plane, const GLfloat *equation)
@@ -164,9 +198,17 @@ static void nv10DepthMask(GLcontext *ctx, GLboolean flag)
 static void nv10DepthRange(GLcontext *ctx, GLclampd nearval, GLclampd farval)
 {
 	nouveauContextPtr nmesa = NOUVEAU_CONTEXT(ctx);
+
+	GLfloat depth_scale = 16777216.0;
+	if (ctx->DrawBuffer->_DepthBuffer->DepthBits == 16) {
+		depth_scale = 32768.0;
+	}
+
 	BEGIN_RING_CACHE(NvSub3D, NV10_TCL_PRIMITIVE_3D_DEPTH_RANGE_NEAR, 2);
-	OUT_RING_CACHEf(nearval);
-	OUT_RING_CACHEf(farval);
+	OUT_RING_CACHEf(nearval * depth_scale);
+	OUT_RING_CACHEf(farval * depth_scale);
+
+	nv10ViewportScale(nmesa);
 }
 
 /** Specify the current buffer for writing */
@@ -616,8 +658,10 @@ static void nv10WindowMoved(nouveauContextPtr nmesa)
 	OUT_RING(0);
 
 	BEGIN_RING_CACHE(NvSub3D,
-	      NV10_TCL_PRIMITIVE_3D_VIEWPORT_CLIP_HORIZ(0), 2);
+	      NV10_TCL_PRIMITIVE_3D_VIEWPORT_CLIP_HORIZ(0), 1);
         OUT_RING_CACHE(((w+x-1) << 16) | x | 0x08000800);
+	BEGIN_RING_CACHE(NvSub3D,
+	      NV10_TCL_PRIMITIVE_3D_VIEWPORT_CLIP_VERT(0), 1);
         OUT_RING_CACHE(((h+y-1) << 16) | y | 0x08000800);
 	for (i=1; i<8; i++) {
 		BEGIN_RING_CACHE(NvSub3D,
@@ -628,18 +672,7 @@ static void nv10WindowMoved(nouveauContextPtr nmesa)
 	        OUT_RING_CACHE(0);
 	}
 
-	/* viewport transform */
-	BEGIN_RING_CACHE(NvSub3D, NV10_TCL_PRIMITIVE_3D_VIEWPORT_ORIGIN_X, 4);
-	OUT_RING_CACHEf ((GLfloat) x);
-	OUT_RING_CACHEf ((GLfloat) (y+h));
-	OUT_RING_CACHEf (0.0);
-	OUT_RING_CACHEf (0.0);
-
-	BEGIN_RING_CACHE(NvSub3D, NV10_TCL_PRIMITIVE_3D_VIEWPORT_SCALE_X, 4);
-	OUT_RING_CACHEf ((((GLfloat) w) * 0.5) - 2048.0);
-	OUT_RING_CACHEf ((((GLfloat) h) * 0.5) - 2048.0);
-	OUT_RING_CACHEf (16777215.0 * 0.5);
-	OUT_RING_CACHEf (0.0);
+	nv10ViewportScale(nmesa);
 }
 
 /* Initialise any card-specific non-GL related state */
@@ -699,6 +732,13 @@ static GLboolean nv10BindBuffers(nouveauContextPtr nmesa, int num_color,
 	OUT_RING_CACHE(pitch);
 	OUT_RING_CACHE(color[0]->offset);
 	OUT_RING_CACHE(depth ? depth->offset : color[0]->offset);
+
+	/* Always set to bottom left of buffer */
+	BEGIN_RING_CACHE(NvSub3D, NV10_TCL_PRIMITIVE_3D_VIEWPORT_ORIGIN_X, 4);
+	OUT_RING_CACHEf (0.0);
+	OUT_RING_CACHEf ((GLfloat) h);
+	OUT_RING_CACHEf (0.0);
+	OUT_RING_CACHEf (0.0);
 
 	return GL_TRUE;
 }

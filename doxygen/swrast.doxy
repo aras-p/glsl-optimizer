@@ -44,5 +44,5 @@ TAGFILES               = main.tag=../core \
                          tnl_dd.tag=../tnl_dd \
                          swrast_setup.tag=../swrast_setup \
                          tnl.tag=../tnl \
-                         array_cache.tag=array_cache
+                         vbo.tag=vbo
 GENERATE_TAGFILE       = swrast.tag

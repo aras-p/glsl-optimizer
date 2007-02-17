@@ -40,7 +40,7 @@ SKIP_FUNCTION_MACROS   = YES
 # Configuration::addtions related to external references   
 #---------------------------------------------------------------------------
 TAGFILES		= tnl_dd.tag=../tnl_dd \
-			 array_cache.tag=../array_cache \
+			 vbo.tag=../vbo \
                          glapi.tag=../glapi \
                          math.tag=../math \
                          shader.tag=../shader \

@@ -5,11 +5,11 @@
 #---------------------------------------------------------------------------
 # General configuration options
 #---------------------------------------------------------------------------
-PROJECT_NAME           = "Mesa array_cache"
+PROJECT_NAME           = "Mesa vbo"
 #---------------------------------------------------------------------------
 # configuration options related to the input files
 #---------------------------------------------------------------------------
-INPUT                  = ../src/mesa/array_cache/
+INPUT                  = ../src/mesa/vbo/
 FILE_PATTERNS          = *.c \
                          *.h
 RECURSIVE              = NO
@@ -24,7 +24,7 @@ FILTER_SOURCE_FILES    = NO
 #---------------------------------------------------------------------------
 # configuration options related to the HTML output
 #---------------------------------------------------------------------------
-HTML_OUTPUT            = array_cache
+HTML_OUTPUT            = vbo
 #---------------------------------------------------------------------------
 # Configuration options related to the preprocessor   
 #---------------------------------------------------------------------------
@@ -47,4 +47,4 @@ TAGFILES               = main.tag=../core \
 			 swrast_setup.tag=../swrast_setup \
 			 tnl.tag=../tnl \
 			 tnl_dd.tag=../tnl_dd
-GENERATE_TAGFILE       = array_cache.tag
+GENERATE_TAGFILE       = vbo.tag
