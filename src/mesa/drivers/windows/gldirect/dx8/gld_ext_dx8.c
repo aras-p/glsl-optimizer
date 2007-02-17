@@ -58,7 +58,7 @@
 #include "mtypes.h"
 #include "texformat.h"
 #include "texstore.h"
-#include "array_cache/acache.h"
+#include "vbo/vbo.h"
 #include "swrast_setup/swrast_setup.h"
 #include "swrast_setup/ss_context.h"
 #include "tnl/tnl.h"

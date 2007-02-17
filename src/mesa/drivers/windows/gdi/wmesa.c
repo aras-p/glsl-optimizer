@@ -11,7 +11,7 @@
 #include "framebuffer.h"
 #include "renderbuffer.h"
 #include "drivers/common/driverfuncs.h"
-#include "array_cache/acache.h"
+#include "vbo/vbo.h"
 #include "swrast/swrast.h"
 #include "swrast_setup/swrast_setup.h"
 #include "tnl/tnl.h"
@@ -1125,7 +1125,7 @@ static void wmesa_update_state(GLcontext *ctx, GLuint new_state)
 {
     _swrast_InvalidateState(ctx, new_state);
     _swsetup_InvalidateState(ctx, new_state);
-    _ac_InvalidateState(ctx, new_state);
+    _vbo_InvalidateState(ctx, new_state);
     _tnl_InvalidateState(ctx, new_state);
 
     /* TODO - This code is not complete yet because I 
@@ -1242,7 +1242,7 @@ WMesaContext WMesaCreateContext(HDC hDC,
   
     /* Initialize the software rasterizer and helper modules. */
     if (!_swrast_CreateContext(ctx) ||
-        !_ac_CreateContext(ctx) ||
+        !_vbo_CreateContext(ctx) ||
         !_tnl_CreateContext(ctx) ||
 	!_swsetup_CreateContext(ctx)) {
 	_mesa_free_context_data(ctx);
@@ -1285,7 +1285,7 @@ void WMesaDestroyContext( WMesaContext pwc )
     
     _swsetup_DestroyContext(ctx);
     _tnl_DestroyContext(ctx);
-    _ac_DestroyContext(ctx);
+    _vbo_DestroyContext(ctx);
     _swrast_DestroyContext(ctx);
     
     _mesa_free_context_data(ctx);
