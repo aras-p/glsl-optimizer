@@ -37,11 +37,12 @@
 #include "prog_statevars.h"
 
 
+
 /**
  * Return string name for given program/register file.
  */
 static const char *
-program_file_string(enum register_file f)
+file_string(enum register_file f, gl_prog_print_mode mode)
 {
    switch (f) {
    case PROGRAM_TEMPORARY:
@@ -73,6 +74,213 @@ program_file_string(enum register_file f)
    default:
       return "Unknown program file!";
    }
+}
+
+
+/**
+ * Return ARB_v/f_prog-style input attrib string.
+ */
+static const char *
+arb_input_attrib_string(GLint index, GLenum progType)
+{
+   const char *vertAttribs[] = {
+      "vertex.position",
+      "vertex.weight",
+      "vertex.normal",
+      "vertex.color.primary",
+      "vertex.color.secondary",
+      "vertex.fogcoord",
+      "vertex.(six)",
+      "vertex.(seven)",
+      "vertex.texcoord[0]",
+      "vertex.texcoord[1]",
+      "vertex.texcoord[2]",
+      "vertex.texcoord[3]",
+      "vertex.texcoord[4]",
+      "vertex.texcoord[5]",
+      "vertex.texcoord[6]",
+      "vertex.texcoord[7]"
+   };
+   const char *fragAttribs[] = {
+      "fragment.position",
+      "fragment.color.primary",
+      "fragment.color.secondary",
+      "fragment.fogcoord",
+      "fragment.texcoord[0]",
+      "fragment.texcoord[1]",
+      "fragment.texcoord[2]",
+      "fragment.texcoord[3]",
+      "fragment.texcoord[4]",
+      "fragment.texcoord[5]",
+      "fragment.texcoord[6]",
+      "fragment.texcoord[7]",
+      "fragment.varying[0]",
+      "fragment.varying[1]",
+      "fragment.varying[2]",
+      "fragment.varying[3]",
+      "fragment.varying[4]",
+      "fragment.varying[5]",
+      "fragment.varying[6]",
+      "fragment.varying[7]"
+   };
+
+   if (progType == GL_VERTEX_PROGRAM_ARB) {
+      assert(index < sizeof(vertAttribs) / sizeof(vertAttribs[0]));
+      return vertAttribs[index];
+   }
+   else {
+      assert(index < sizeof(fragAttribs) / sizeof(fragAttribs[0]));
+      return fragAttribs[index];
+   }
+}
+
+
+/**
+ * Return ARB_v/f_prog-style output attrib string.
+ */
+static const char *
+arb_output_attrib_string(GLint index, GLenum progType)
+{
+   const char *vertResults[] = {
+      "result.position",
+      "result.color.primary",
+      "result.color.secondary",
+      "result.fogcoord",
+      "result.texcoord[0]",
+      "result.texcoord[1]",
+      "result.texcoord[2]",
+      "result.texcoord[3]",
+      "result.texcoord[4]",
+      "result.texcoord[5]",
+      "result.texcoord[6]",
+      "result.texcoord[7]",
+      "result.varying[0]",
+      "result.varying[1]",
+      "result.varying[2]",
+      "result.varying[3]",
+      "result.varying[4]",
+      "result.varying[5]",
+      "result.varying[6]",
+      "result.varying[7]"
+   };
+   const char *fragResults[] = {
+      "result.color",
+      "result.depth"
+   };
+
+   if (progType == GL_VERTEX_PROGRAM_ARB) {
+      assert(index < sizeof(vertResults) / sizeof(vertResults[0]));
+      return vertResults[index];
+   }
+   else {
+      assert(index < sizeof(fragResults) / sizeof(fragResults[0]));
+      return fragResults[index];
+   }
+}
+
+
+/**
+ * Return string representation of the given register.
+ * Note that some types of registers (like PROGRAM_UNIFORM) aren't defined
+ * by the ARB/NV program languages so we've taken some liberties here.
+ * \param file  the register file (PROGRAM_INPUT, PROGRAM_TEMPORARY, etc)
+ * \param index  number of the register in the register file
+ * \param mode  the output format/mode/style
+ * \param prog  pointer to containing program
+ */
+static const char *
+reg_string(enum register_file f, GLint index, gl_prog_print_mode mode,
+           const struct gl_program *prog)
+{
+   static char str[100];
+
+   str[0] = 0;
+
+   switch (mode) {
+   case PROG_PRINT_DEBUG:
+      sprintf(str, "%s[%d]", file_string(f, mode), index);
+      break;
+
+   case PROG_PRINT_ARB:
+      switch (f) {
+      case PROGRAM_INPUT:
+         sprintf(str, "%s", arb_input_attrib_string(index, prog->Target));
+         break;
+      case PROGRAM_OUTPUT:
+         sprintf(str, "%s", arb_output_attrib_string(index, prog->Target));
+         break;
+      case PROGRAM_TEMPORARY:
+         sprintf(str, "temp%d", index);
+         break;
+      case PROGRAM_ENV_PARAM:
+         sprintf(str, "program.env[%d]", index);
+         break;
+      case PROGRAM_LOCAL_PARAM:
+         sprintf(str, "program.local[%d]", index);
+         break;
+      case PROGRAM_VARYING: /* extension */
+         sprintf(str, "varying[%d]", index);
+         break;
+      case PROGRAM_CONSTANT: /* extension */
+         sprintf(str, "constant[%d]", index);
+         break;
+      case PROGRAM_UNIFORM: /* extension */
+         sprintf(str, "uniform[%d]", index);
+         break;
+      case PROGRAM_STATE_VAR:
+         {
+            struct gl_program_parameter *param
+               = prog->Parameters->Parameters + index;
+            sprintf(str, _mesa_program_state_string(param->StateIndexes));
+         }
+         break;
+      case PROGRAM_ADDRESS:
+         sprintf(str, "A%d", index);
+         break;
+      default:
+         _mesa_problem(NULL, "bad file in reg_string()");
+      }
+      break;
+
+   case PROG_PRINT_NV:
+      switch (f) {
+      case PROGRAM_INPUT:
+         if (prog->Target == GL_VERTEX_PROGRAM_ARB)
+            sprintf(str, "v[%d]", index);
+         else
+            sprintf(str, "f[%d]", index);
+         break;
+      case PROGRAM_OUTPUT:
+         sprintf(str, "o[%d]", index);
+         break;
+      case PROGRAM_TEMPORARY:
+         sprintf(str, "R%d", index);
+         break;
+      case PROGRAM_ENV_PARAM:
+         sprintf(str, "c[%d]", index);
+         break;
+      case PROGRAM_VARYING: /* extension */
+         sprintf(str, "varying[%d]", index);
+         break;
+      case PROGRAM_UNIFORM: /* extension */
+         sprintf(str, "uniform[%d]", index);
+         break;
+      case PROGRAM_CONSTANT: /* extension */
+         sprintf(str, "constant[%d]", index);
+         break;
+      case PROGRAM_STATE_VAR: /* extension */
+         sprintf(str, "state[%d]", index);
+         break;
+      default:
+         _mesa_problem(NULL, "bad file in reg_string()");
+      }
+      break;
+
+   default:
+      _mesa_problem(NULL, "bad mode in reg_string()");
+   }
+
+   return str;
 }
 
 
@@ -172,22 +380,38 @@ condcode_string(GLuint condcode)
 
 
 static void
-print_dst_reg(const struct prog_dst_register *dstReg)
+print_dst_reg(const struct prog_dst_register *dstReg, gl_prog_print_mode mode,
+              const struct gl_program *prog)
 {
-   _mesa_printf(" %s[%d]%s",
-                program_file_string((enum register_file) dstReg->File),
+   _mesa_printf("%s%s",
+                reg_string((enum register_file) dstReg->File,
+                           dstReg->Index, mode, prog),
+                writemask_string(dstReg->WriteMask));
+
+#if 0
+   _mesa_printf("%s[%d]%s",
+                file_string((enum register_file) dstReg->File, mode),
                 dstReg->Index,
                 writemask_string(dstReg->WriteMask));
+#endif
 }
 
 static void
-print_src_reg(const struct prog_src_register *srcReg)
+print_src_reg(const struct prog_src_register *srcReg, gl_prog_print_mode mode,
+              const struct gl_program *prog)
 {
+   _mesa_printf("%s%s",
+                reg_string((enum register_file) srcReg->File,
+                           srcReg->Index, mode, prog),
+                swizzle_string(srcReg->Swizzle,
+                               srcReg->NegateBase, GL_FALSE));
+#if 0
    _mesa_printf("%s[%d]%s",
-                program_file_string((enum register_file) srcReg->File),
+                file_string((enum register_file) srcReg->File, mode),
                 srcReg->Index,
                 swizzle_string(srcReg->Swizzle,
                                srcReg->NegateBase, GL_FALSE));
+#endif
 }
 
 static void
@@ -200,10 +424,11 @@ print_comment(const struct prog_instruction *inst)
 }
 
 
-void
-_mesa_print_alu_instruction(const struct prog_instruction *inst,
-			    const char *opcode_string, 
-			    GLuint numRegs)
+static void
+print_alu_instruction(const struct prog_instruction *inst,
+                      const char *opcode_string,  GLuint numRegs,
+                      gl_prog_print_mode mode,
+                      const struct gl_program *prog)
 {
    GLuint j;
 
@@ -215,8 +440,9 @@ _mesa_print_alu_instruction(const struct prog_instruction *inst,
    if (inst->SaturateMode == SATURATE_ZERO_ONE)
       _mesa_printf("_SAT");
 
+   _mesa_printf(" ");
    if (inst->DstReg.File != PROGRAM_UNDEFINED) {
-      print_dst_reg(&inst->DstReg);
+      print_dst_reg(&inst->DstReg, mode, prog);
    }
    else {
       _mesa_printf(" ???");
@@ -226,7 +452,7 @@ _mesa_print_alu_instruction(const struct prog_instruction *inst,
       _mesa_printf(", ");
 
    for (j = 0; j < numRegs; j++) {
-      print_src_reg(inst->SrcReg + j);
+      print_src_reg(inst->SrcReg + j, mode, prog);
       if (j + 1 < numRegs)
 	 _mesa_printf(", ");
    }
@@ -235,11 +461,21 @@ _mesa_print_alu_instruction(const struct prog_instruction *inst,
 }
 
 
+void
+_mesa_print_instruction(const struct prog_instruction *inst)
+{
+   /* note: 4th param should be ignored for PROG_PRINT_DEBUG */
+   _mesa_print_instruction_opt(inst, 0, PROG_PRINT_DEBUG, NULL);
+}
+
+
 /**
  * Print a single vertex/fragment program instruction.
  */
 GLint
-_mesa_print_instruction(const struct prog_instruction *inst, GLint indent)
+_mesa_print_instruction_opt(const struct prog_instruction *inst, GLint indent,
+                            gl_prog_print_mode mode,
+                            const struct gl_program *prog)
 {
    GLuint i;
 
@@ -260,7 +496,8 @@ _mesa_print_instruction(const struct prog_instruction *inst, GLint indent)
       if (inst->SrcReg[0].File != PROGRAM_UNDEFINED) {
          _mesa_printf(", ");
          _mesa_printf("%s[%d]%s",
-                      program_file_string((enum register_file) inst->SrcReg[0].File),
+                      file_string((enum register_file) inst->SrcReg[0].File,
+                                  mode),
                       inst->SrcReg[0].Index,
                       swizzle_string(inst->SrcReg[0].Swizzle,
                                      inst->SrcReg[0].NegateBase, GL_FALSE));
@@ -273,9 +510,11 @@ _mesa_print_instruction(const struct prog_instruction *inst, GLint indent)
       _mesa_printf("SWZ");
       if (inst->SaturateMode == SATURATE_ZERO_ONE)
          _mesa_printf("_SAT");
-      print_dst_reg(&inst->DstReg);
+      _mesa_printf(" ");
+      print_dst_reg(&inst->DstReg, mode, prog);
       _mesa_printf("%s[%d], %s",
-                   program_file_string((enum register_file) inst->SrcReg[0].File),
+                   file_string((enum register_file) inst->SrcReg[0].File,
+                               mode),
                    inst->SrcReg[0].Index,
                    swizzle_string(inst->SrcReg[0].Swizzle,
                                   inst->SrcReg[0].NegateBase, GL_TRUE));
@@ -287,9 +526,10 @@ _mesa_print_instruction(const struct prog_instruction *inst, GLint indent)
       _mesa_printf("%s", _mesa_opcode_string(inst->Opcode));
       if (inst->SaturateMode == SATURATE_ZERO_ONE)
          _mesa_printf("_SAT");
-      print_dst_reg(&inst->DstReg);
+      _mesa_printf(" ");
+      print_dst_reg(&inst->DstReg, mode, prog);
       _mesa_printf(", ");
-      print_src_reg(&inst->SrcReg[0]);
+      print_src_reg(&inst->SrcReg[0], mode, prog);
       _mesa_printf(", texture[%d], ", inst->TexSrcUnit);
       switch (inst->TexSrcTarget) {
       case TEXTURE_1D_INDEX:   _mesa_printf("1D");    break;
@@ -304,7 +544,7 @@ _mesa_print_instruction(const struct prog_instruction *inst, GLint indent)
       break;
    case OPCODE_ARL:
       _mesa_printf("ARL addr.x, ");
-      print_src_reg(&inst->SrcReg[0]);
+      print_src_reg(&inst->SrcReg[0], mode, prog);
       print_comment(inst);
       break;
    case OPCODE_BRA:
@@ -319,49 +559,48 @@ _mesa_print_instruction(const struct prog_instruction *inst, GLint indent)
       print_comment(inst);
       break;
    case OPCODE_IF:
-      _mesa_printf("IF (%s%s) (if false, goto %d)",
+      _mesa_printf("IF (%s%s); # (if false, goto %d)",
                    condcode_string(inst->DstReg.CondMask),
                    swizzle_string(inst->DstReg.CondSwizzle, 0, GL_FALSE),
                    inst->BranchTarget);
       print_comment(inst);
       return indent + 3;
    case OPCODE_ELSE:
-      _mesa_printf("ELSE (goto %d)\n", inst->BranchTarget);
+      _mesa_printf("ELSE; # (goto %d)\n", inst->BranchTarget);
       return indent + 3;
    case OPCODE_ENDIF:
-      _mesa_printf("ENDIF\n");
+      _mesa_printf("ENDIF;\n");
       break;
    case OPCODE_BGNLOOP:
-      _mesa_printf("BGNLOOP (end at %d)\n", inst->BranchTarget);
+      _mesa_printf("BGNLOOP; # (end at %d)\n", inst->BranchTarget);
       return indent + 3;
    case OPCODE_ENDLOOP:
-      _mesa_printf("ENDLOOP (goto %d)\n", inst->BranchTarget);
+      _mesa_printf("ENDLOOP; # (goto %d)\n", inst->BranchTarget);
       break;
    case OPCODE_BRK:
-      _mesa_printf("BRK (%s%s) (goto %d)",
+      _mesa_printf("BRK (%s%s); #(goto %d)",
                    condcode_string(inst->DstReg.CondMask),
                    swizzle_string(inst->DstReg.CondSwizzle, 0, GL_FALSE),
                    inst->BranchTarget);
       print_comment(inst);
       break;
    case OPCODE_CONT:
-      _mesa_printf("CONT (%s%s) (goto %d)",
+      _mesa_printf("CONT (%s%s); #(goto %d)",
                    condcode_string(inst->DstReg.CondMask),
                    swizzle_string(inst->DstReg.CondSwizzle, 0, GL_FALSE),
                    inst->BranchTarget);
       print_comment(inst);
       break;
    case OPCODE_BGNSUB:
-      _mesa_printf("SUB;\n");
+      _mesa_printf("SUB");
       print_comment(inst);
       return indent + 3;
    case OPCODE_ENDSUB:
-      _mesa_printf("ENDSUB;\n");
+      _mesa_printf("ENDSUB");
       print_comment(inst);
       break;
    case OPCODE_END:
-      _mesa_printf("END");
-      print_comment(inst);
+      _mesa_printf("END\n");
       break;
    case OPCODE_NOP:
       _mesa_printf("NOP");
@@ -370,9 +609,10 @@ _mesa_print_instruction(const struct prog_instruction *inst, GLint indent)
    /* XXX may need other special-case instructions */
    default:
       /* typical alu instruction */
-      _mesa_print_alu_instruction(inst,
-				  _mesa_opcode_string(inst->Opcode),
-				  _mesa_num_inst_src_regs(inst->Opcode));
+      print_alu_instruction(inst,
+                            _mesa_opcode_string(inst->Opcode),
+                            _mesa_num_inst_src_regs(inst->Opcode),
+                            mode, prog);
       break;
    }
    return indent;
@@ -380,16 +620,50 @@ _mesa_print_instruction(const struct prog_instruction *inst, GLint indent)
 
 
 /**
- * Print a vertx/fragment program to stdout.
- * XXX this function could be greatly improved.
+ * Print program to stdout, default options.
  */
 void
 _mesa_print_program(const struct gl_program *prog)
 {
+   _mesa_print_program_opt(prog, PROG_PRINT_ARB, GL_TRUE);
+}
+
+
+/**
+ * Print program, with options.
+ */
+void
+_mesa_print_program_opt(const struct gl_program *prog,
+                        gl_prog_print_mode mode,
+                        GLboolean lineNumbers)
+{
    GLuint i, indent = 0;
+
+   switch (prog->Target) {
+   case GL_VERTEX_PROGRAM_ARB:
+      if (mode == PROG_PRINT_ARB)
+         _mesa_printf("!!ARBvp1.0\n");
+      else if (mode == PROG_PRINT_NV)
+         _mesa_printf("!!VP1.0\n");
+      else
+         _mesa_printf("# Vertex Program/Shader\n");
+      break;
+   case GL_FRAGMENT_PROGRAM_ARB:
+   case GL_FRAGMENT_PROGRAM_NV:
+      if (mode == PROG_PRINT_ARB)
+         _mesa_printf("!!ARBfp1.0\n");
+      else if (mode == PROG_PRINT_NV)
+         _mesa_printf("!!FP1.0\n");
+      else
+         _mesa_printf("# Fragment Program/Shader\n");
+      break;
+   }
+
    for (i = 0; i < prog->NumInstructions; i++) {
-      _mesa_printf("%3d: ", i);
-      indent = _mesa_print_instruction(prog->Instructions + i, indent);
+      if (lineNumbers)
+         _mesa_printf("%3d: ", i);
+      indent = _mesa_print_instruction_opt(prog->Instructions + i,
+                                           indent, mode, prog);
    }
 }
 
@@ -424,14 +698,16 @@ _mesa_print_program_parameters(GLcontext *ctx, const struct gl_program *prog)
 void
 _mesa_print_parameter_list(const struct gl_program_parameter_list *list)
 {
+   const gl_prog_print_mode mode = PROG_PRINT_DEBUG;
    GLuint i;
+
    _mesa_printf("param list %p\n", (void *) list);
    for (i = 0; i < list->NumParameters; i++){
       struct gl_program_parameter *param = list->Parameters + i;
       const GLfloat *v = list->ParameterValues[i];
       _mesa_printf("param[%d] sz=%d %s %s = {%.3g, %.3g, %.3g, %.3g};\n",
                    i, param->Size,
-                   program_file_string(list->Parameters[i].Type),
+                   file_string(list->Parameters[i].Type, mode),
                    param->Name, v[0], v[1], v[2], v[3]);
    }
 }

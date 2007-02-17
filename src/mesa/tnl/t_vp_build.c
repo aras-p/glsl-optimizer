@@ -497,7 +497,7 @@ static void debug_insn( struct prog_instruction *inst, const char *fn,
       }
 	 
       _mesa_printf("%d:\t", line);
-      _mesa_print_instruction(inst, 0);
+      _mesa_print_instruction(inst);
    }
 }
 

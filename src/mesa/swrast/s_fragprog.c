@@ -554,6 +554,7 @@ init_machine_deriv( GLcontext *ctx,
    _mesa_memcpy(dMachine, machine, sizeof(struct fp_machine));
 
    if (program->Base.Target == GL_FRAGMENT_PROGRAM_NV) {
+      /* XXX also need to do this when using valgrind */
       /* Clear temporary registers (undefined for ARB_f_p) */
       _mesa_bzero( (void*) machine->Temporaries,
                    MAX_NV_FRAGMENT_PROGRAM_TEMPS * 4 * sizeof(GLfloat));
@@ -665,7 +666,7 @@ execute_program( GLcontext *ctx,
       }
 
       if (DEBUG_FRAG) {
-         _mesa_print_instruction(inst, 0);
+         _mesa_print_instruction(inst);
       }
 
       switch (inst->Opcode) {

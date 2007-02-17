@@ -27,16 +27,30 @@
 #define PROG_PRINT_H
 
 
-extern GLint
-_mesa_print_instruction(const struct prog_instruction *inst, GLint indent);
+/**
+ * The output style to use when printing programs.
+ */
+typedef enum {
+   PROG_PRINT_ARB,
+   PROG_PRINT_NV,
+   PROG_PRINT_DEBUG
+} gl_prog_print_mode;
+
 
 extern void
-_mesa_print_alu_instruction(const struct prog_instruction *inst,
-			    const char *opcode_string, 
-			    GLuint numRegs);
+_mesa_print_instruction(const struct prog_instruction *inst);
+
+extern GLint
+_mesa_print_instruction_opt(const struct prog_instruction *inst, GLint indent,
+                            gl_prog_print_mode mode,
+                            const struct gl_program *prog);
 
 extern void
 _mesa_print_program(const struct gl_program *prog);
+
+extern void
+_mesa_print_program_opt(const struct gl_program *prog, gl_prog_print_mode mode,
+                        GLboolean lineNumbers);
 
 extern void
 _mesa_print_program_parameters(GLcontext *ctx, const struct gl_program *prog);
