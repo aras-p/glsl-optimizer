@@ -1319,16 +1319,17 @@ emit_field(slang_var_table *vt, slang_ir_node *n, struct gl_program *prog)
       /* state variable sub-field */
       GLint pos;
       GLuint swizzle;
+      assert(n->Children[0]->Opcode == IR_VAR);
       pos = _slang_lookup_statevar_field((char *) n->Children[0]->Var->a_name,
                                          n->Target,
                                          prog->Parameters, &swizzle);
       if (pos < 0) {
          RETURN_ERROR2("Undefined structure member", n->Target, 0);
       }
-
-      n->Store = _slang_new_ir_storage(PROGRAM_STATE_VAR, pos, 4);/*XXX size*/
-      if (n->Store)
-         n->Store->Swizzle = swizzle;
+      assert(n->Store);
+      assert(n->Store->File == PROGRAM_STATE_VAR);
+      n->Store->Index = pos;
+      n->Store->Swizzle = swizzle;
    }
 
    /*

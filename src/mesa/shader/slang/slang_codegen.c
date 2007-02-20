@@ -2184,12 +2184,16 @@ _slang_gen_field(slang_assemble_ctx * A, slang_operation *oper)
       /* oper->children[0] is the base */
       /* oper->a_id is the field name */
       slang_ir_node *base, *n;
+      GLint size = 4; /* XXX fix? */
 
       base = _slang_gen_operation(A, &oper->children[0]);
 
       n = new_node1(IR_FIELD, base);
       if (n) {
          n->Target = (char *) oper->a_id;
+         n->Store = _slang_new_ir_storage(base->Store->File,
+                                          base->Store->Index,
+                                          size);
       }
       return n;
 
