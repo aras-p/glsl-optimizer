@@ -31,6 +31,7 @@
 #include "imports.h"
 #include "macros.h"
 #include "slang_typeinfo.h"
+#include "slang_builtin.h"
 #include "slang_codegen.h"
 #include "slang_compile.h"
 #include "slang_storage.h"
@@ -71,68 +72,6 @@ slang_lookup_constant(const char *name,
       GLint pos;
       pos = _mesa_add_unnamed_constant(paramList, &fvalue, 1, swizzleOut);
       return pos;
-   }
-   return -1;
-}
-
-
-/**
- * Determine if 'name' is a state variable.  If so, create a new program
- * parameter for it, and return the param's index.  Else, return -1.
- */
-static GLint
-slang_lookup_statevar(const char *name, GLint index,
-                      struct gl_program_parameter_list *paramList)
-{
-   struct state_info {
-      const char *Name;
-      const GLuint NumRows;  /** for matrices */
-      const GLuint Swizzle;
-      const GLint Indexes[STATE_LENGTH];
-   };
-   static const struct state_info state[] = {
-      { "gl_ModelViewMatrix", 4, SWIZZLE_NOOP,
-        { STATE_MATRIX, STATE_MODELVIEW, 0, 0, 0, 0 } },
-      { "gl_NormalMatrix", 3, SWIZZLE_NOOP,
-        { STATE_MATRIX, STATE_MODELVIEW, 0, 0, 0, 0 } },
-      { "gl_ProjectionMatrix", 4, SWIZZLE_NOOP,
-        { STATE_MATRIX, STATE_PROJECTION, 0, 0, 0, 0 } },
-      { "gl_ModelViewProjectionMatrix", 4, SWIZZLE_NOOP,
-        { STATE_MATRIX, STATE_MVP, 0, 0, 0, 0 } },
-      { "gl_TextureMatrix", 4, SWIZZLE_NOOP,
-        { STATE_MATRIX, STATE_TEXTURE, 0, 0, 0, 0 } },
-      { NULL, 0, 0, {0, 0, 0, 0, 0, 0} }
-   };
-   GLuint i;
-
-   for (i = 0; state[i].Name; i++) {
-      if (strcmp(state[i].Name, name) == 0) {
-         /* found */
-         if (paramList) {
-            if (state[i].NumRows > 1) {
-               /* a matrix */
-               GLuint j;
-               GLint pos[4], indexesCopy[STATE_LENGTH];
-               /* make copy of state tokens */
-               for (j = 0; j < STATE_LENGTH; j++)
-                  indexesCopy[j] = state[i].Indexes[j];
-               /* load rows */
-               for (j = 0; j < state[i].NumRows; j++) {
-                  indexesCopy[3] = indexesCopy[4] = j; /* jth row of matrix */
-                  pos[j] = _mesa_add_state_reference(paramList, indexesCopy);
-                  assert(pos[j] >= 0);
-               }
-               return pos[0];
-            }
-            else {
-               /* non-matrix state */
-               GLint pos
-                  = _mesa_add_state_reference(paramList, state[i].Indexes);
-               assert(pos >= 0);
-               return pos;
-            }
-         }
-      }
    }
    return -1;
 }
@@ -270,7 +209,8 @@ slang_allocate_storage(slang_assemble_ctx *A, slang_ir_node *n)
           * used to avoid wasting registers.
           */
          if (n->Store->File == PROGRAM_STATE_VAR) {
-            GLint i = slang_lookup_statevar(varName, 0, prog->Parameters);
+            GLint i = _slang_lookup_statevar(varName, 0, prog->Parameters,
+                                             &n->Store->Swizzle);
             assert(i >= 0);
             n->Store->Index = i;
          }
@@ -2241,8 +2181,20 @@ _slang_gen_field(slang_assemble_ctx * A, slang_operation *oper)
       /* the field is a structure member (base.field) */
       /* oper->children[0] is the base */
       /* oper->a_id is the field name */
+      slang_ir_node *base, *n;
+
+      base = _slang_gen_operation(A, &oper->children[0]);
+
+      n = new_node1(IR_FIELD, base);
+      if (n) {
+         n->Target = (char *) oper->a_id;
+      }
+      return n;
+
+#if 0
       _mesa_problem(NULL, "glsl structs/fields not supported yet");
       return NULL;
+#endif
    }
 }
 
@@ -2644,7 +2596,7 @@ _slang_codegen_global_variable(slang_assemble_ctx *A, slang_variable *var,
    GLboolean success = GL_TRUE;
    GLint texIndex;
    slang_ir_storage *store = NULL;
-   int dbg = 0;
+   int dbg = 1;
 
    texIndex = sampler_to_texture_index(var->type.specifier.type);
 

@@ -35,6 +35,7 @@
 #include "prog_instruction.h"
 #include "prog_parameter.h"
 #include "prog_print.h"
+#include "slang_builtin.h"
 #include "slang_emit.h"
 #include "slang_error.h"
 
@@ -1307,6 +1308,36 @@ emit_swizzle(slang_var_table *vt, slang_ir_node *n, struct gl_program *prog)
 }
 
 
+/**
+ * Resolve storage for accessing a structure field.
+ */
+static struct prog_instruction *
+emit_field(slang_var_table *vt, slang_ir_node *n, struct gl_program *prog)
+{
+   /* field of a struct */
+   if (n->Children[0]->Store->File == PROGRAM_STATE_VAR) {
+      /* state variable sub-field */
+      GLint pos;
+      GLuint swizzle;
+      pos = _slang_lookup_statevar_field((char *) n->Children[0]->Var->a_name,
+                                         n->Target,
+                                         prog->Parameters, &swizzle);
+      if (pos < 0) {
+         RETURN_ERROR2("Undefined structure member", n->Target, 0);
+      }
+
+      n->Store = _slang_new_ir_storage(PROGRAM_STATE_VAR, pos, 4);/*XXX size*/
+      if (n->Store)
+         n->Store->Swizzle = swizzle;
+   }
+
+   /*
+   _mesa_problem(NULL, "glsl structs/fields not supported yet");
+   */ 
+   return NULL;
+}
+
+
 static struct prog_instruction *
 emit(slang_var_table *vt, slang_ir_node *n, struct gl_program *prog)
 {
@@ -1390,6 +1421,9 @@ emit(slang_var_table *vt, slang_ir_node *n, struct gl_program *prog)
          n->Store->Index = arrayAddr + index;
       }
       return NULL; /* no instruction */
+
+   case IR_FIELD:
+      return emit_field(vt, n, prog);
 
    case IR_SWIZZLE:
       return emit_swizzle(vt, n, prog);
