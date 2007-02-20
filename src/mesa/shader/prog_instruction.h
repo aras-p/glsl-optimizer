@@ -57,6 +57,11 @@
 #define GET_SWZ(swz, idx)      (((swz) >> ((idx)*3)) & 0x7)
 #define GET_BIT(msk, idx)      (((msk) >> (idx)) & 0x1)
 
+#define SWIZZLE_XXXX MAKE_SWIZZLE4(SWIZZLE_X, SWIZZLE_X, SWIZZLE_X, SWIZZLE_X)
+#define SWIZZLE_YYYY MAKE_SWIZZLE4(SWIZZLE_Y, SWIZZLE_Y, SWIZZLE_Y, SWIZZLE_Y)
+#define SWIZZLE_ZZZZ MAKE_SWIZZLE4(SWIZZLE_Z, SWIZZLE_Z, SWIZZLE_Z, SWIZZLE_Z)
+#define SWIZZLE_WWWW MAKE_SWIZZLE4(SWIZZLE_W, SWIZZLE_W, SWIZZLE_W, SWIZZLE_W)
+
 
 /**
  * Writemask values, 1 bit per component.
