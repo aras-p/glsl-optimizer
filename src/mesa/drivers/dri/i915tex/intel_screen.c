@@ -98,6 +98,18 @@ intelMapScreenRegions(__DRIscreenPrivate * sPriv)
       return GL_FALSE;
    }
 
+   if (intelScreen->third.handle) {
+      if (0)
+	 _mesa_printf("Third 0x%08x ", intelScreen->third.handle);
+      if (drmMap(sPriv->fd,
+		 intelScreen->third.handle,
+		 intelScreen->third.size,
+		 (drmAddress *) & intelScreen->third.map) != 0) {
+	 intelUnmapScreenRegions(intelScreen);
+	 return GL_FALSE;
+      }
+   }
+
    if (0)
       _mesa_printf("Depth 0x%08x ", intelScreen->depth.handle);
    if (drmMap(sPriv->fd,
@@ -119,9 +131,9 @@ intelMapScreenRegions(__DRIscreenPrivate * sPriv)
    }
 #endif
    if (0)
-      printf("Mappings:  front: %p  back: %p  depth: %p  tex: %p\n",
+      printf("Mappings:  front: %p  back: %p  third: %p  depth: %p  tex: %p\n",
              intelScreen->front.map,
-             intelScreen->back.map,
+             intelScreen->back.map, intelScreen->third.map,
              intelScreen->depth.map, intelScreen->tex.map);
    return GL_TRUE;
 }
@@ -191,6 +203,18 @@ intel_recreate_static_regions(intelScreenPrivate *intelScreen)
 			    intelScreen->back.pitch / intelScreen->cpp,
 			    intelScreen->height);
 
+   if (intelScreen->third.handle) {
+      intelScreen->third_region =
+	 intel_recreate_static(intelScreen,
+			       intelScreen->third_region,
+			       DRM_BO_FLAG_MEM_TT,
+			       intelScreen->third.offset,
+			       intelScreen->third.map,
+			       intelScreen->cpp,
+			       intelScreen->third.pitch / intelScreen->cpp,
+			       intelScreen->height);
+   }
+
    /* Still assuming front.cpp == depth.cpp
     */
    intelScreen->depth_region =
@@ -239,6 +263,13 @@ intelUnmapScreenRegions(intelScreenPrivate * intelScreen)
          printf("drmUnmap back failed!\n");
 #endif
       intelScreen->back.map = NULL;
+   }
+   if (intelScreen->third.map) {
+#if REALLY_UNMAP
+      if (drmUnmap(intelScreen->third.map, intelScreen->third.size) != 0)
+         printf("drmUnmap third failed!\n");
+#endif
+      intelScreen->third.map = NULL;
    }
    if (intelScreen->depth.map) {
 #if REALLY_UNMAP
@@ -324,6 +355,13 @@ intelUpdateScreenFromSAREA(intelScreenPrivate * intelScreen,
    intelScreen->back.pitch = sarea->pitch * intelScreen->cpp;
    intelScreen->back.handle = sarea->back_handle;
    intelScreen->back.size = sarea->back_size;
+
+   if (intelScreen->driScrnPriv->ddxMinor >= 8) {
+      intelScreen->third.offset = sarea->third_offset;
+      intelScreen->third.pitch = sarea->pitch * intelScreen->cpp;
+      intelScreen->third.handle = sarea->third_handle;
+      intelScreen->third.size = sarea->third_size;
+   }
 
    intelScreen->depth.offset = sarea->depth_offset;
    intelScreen->depth.pitch = sarea->pitch * intelScreen->cpp;
@@ -550,29 +588,40 @@ intelCreateBuffer(__DRIscreenPrivate * driScrnPriv,
 
       /* setup the hardware-based renderbuffers */
       {
-         struct intel_renderbuffer *frontRb
+         intel_fb->color_rb[0]
             = intel_create_renderbuffer(rgbFormat,
                                         screen->width, screen->height,
                                         screen->front.offset,
                                         screen->front.pitch,
                                         screen->cpp,
                                         screen->front.map);
-         intel_set_span_functions(&frontRb->Base);
+         intel_set_span_functions(&intel_fb->color_rb[0]->Base);
          _mesa_add_renderbuffer(&intel_fb->Base, BUFFER_FRONT_LEFT,
-				&frontRb->Base);
+				&intel_fb->color_rb[0]->Base);
       }
 
       if (mesaVis->doubleBufferMode) {
-         struct intel_renderbuffer *backRb
+         intel_fb->color_rb[1]
             = intel_create_renderbuffer(rgbFormat,
                                         screen->width, screen->height,
                                         screen->back.offset,
                                         screen->back.pitch,
                                         screen->cpp,
                                         screen->back.map);
-         intel_set_span_functions(&backRb->Base);
+         intel_set_span_functions(&intel_fb->color_rb[1]->Base);
          _mesa_add_renderbuffer(&intel_fb->Base, BUFFER_BACK_LEFT,
-				&backRb->Base);
+				&intel_fb->color_rb[1]->Base);
+
+	 if (screen->third.handle) {
+	    intel_fb->color_rb[2]
+	       = intel_create_renderbuffer(rgbFormat,
+					   screen->width, screen->height,
+					   screen->third.offset,
+					   screen->third.pitch,
+					   screen->cpp,
+					   screen->third.map);
+	    intel_set_span_functions(&intel_fb->color_rb[2]->Base);
+	 }
       }
 
       if (mesaVis->depthBits == 24 && mesaVis->stencilBits == 8) {

@@ -551,27 +551,30 @@ intelMakeCurrent(__DRIcontextPrivate * driContextPriv,
    if (driContextPriv) {
       struct intel_context *intel =
          (struct intel_context *) driContextPriv->driverPrivate;
-      GLframebuffer *drawFb = (GLframebuffer *) driDrawPriv->driverPrivate;
+      struct intel_framebuffer *intel_fb =
+	 (struct intel_framebuffer *) driDrawPriv->driverPrivate;
       GLframebuffer *readFb = (GLframebuffer *) driReadPriv->driverPrivate;
 
 
       /* XXX FBO temporary fix-ups! */
       /* if the renderbuffers don't have regions, init them from the context */
       {
-         struct intel_renderbuffer *irbFront
-            = intel_get_renderbuffer(drawFb, BUFFER_FRONT_LEFT);
-         struct intel_renderbuffer *irbBack
-            = intel_get_renderbuffer(drawFb, BUFFER_BACK_LEFT);
          struct intel_renderbuffer *irbDepth
-            = intel_get_renderbuffer(drawFb, BUFFER_DEPTH);
+            = intel_get_renderbuffer(&intel_fb->Base, BUFFER_DEPTH);
          struct intel_renderbuffer *irbStencil
-            = intel_get_renderbuffer(drawFb, BUFFER_STENCIL);
+            = intel_get_renderbuffer(&intel_fb->Base, BUFFER_STENCIL);
 
-         if (irbFront && !irbFront->region) {
-            intel_region_reference(&irbFront->region, intel->intelScreen->front_region);
+         if (intel_fb->color_rb[0] && !intel_fb->color_rb[0]->region) {
+            intel_region_reference(&intel_fb->color_rb[0]->region,
+				   intel->intelScreen->front_region);
          }
-         if (irbBack && !irbBack->region) {
-            intel_region_reference(&irbBack->region, intel->intelScreen->back_region);
+         if (intel_fb->color_rb[1] && !intel_fb->color_rb[1]->region) {
+            intel_region_reference(&intel_fb->color_rb[1]->region,
+				   intel->intelScreen->back_region);
+         }
+         if (intel_fb->color_rb[2] && !intel_fb->color_rb[2]->region) {
+            intel_region_reference(&intel_fb->color_rb[2]->region,
+				   intel->intelScreen->third_region);
          }
          if (irbDepth && !irbDepth->region) {
             intel_region_reference(&irbDepth->region, intel->intelScreen->depth_region);
@@ -581,21 +584,11 @@ intelMakeCurrent(__DRIcontextPrivate * driContextPriv,
          }
       }
 
-      /* set initial GLframebuffer size to match window, if needed */
-      if (drawFb->Width == 0 && driDrawPriv->w) {
-         _mesa_resize_framebuffer(&intel->ctx, drawFb,
-                                  driDrawPriv->w, driDrawPriv->h);
-      }         
-      if (readFb->Width == 0 && driReadPriv->w) {
-         _mesa_resize_framebuffer(&intel->ctx, readFb,
-                                  driReadPriv->w, driReadPriv->h);
-      }         
-
-      _mesa_make_current(&intel->ctx, drawFb, readFb);
+      _mesa_make_current(&intel->ctx, &intel_fb->Base, readFb);
 
       /* The drawbuffer won't always be updated by _mesa_make_current: 
        */
-      if (intel->ctx.DrawBuffer == drawFb) {
+      if (intel->ctx.DrawBuffer == &intel_fb->Base) {
 
 	 if (intel->driDrawable != driDrawPriv) {
 	    driDrawableInitVBlank(driDrawPriv, intel->vblank_flags, &intel->vbl_seq);	    
@@ -603,8 +596,18 @@ intelMakeCurrent(__DRIcontextPrivate * driContextPriv,
 	    intelWindowMoved(intel);
 	 }
 
-	 intel_draw_buffer(&intel->ctx, drawFb);
+	 intel_draw_buffer(&intel->ctx, &intel_fb->Base);
       }
+
+      /* set initial GLframebuffer size to match window, if needed */
+      if (&intel_fb->Base.Width == 0 && driDrawPriv->w) {
+         _mesa_resize_framebuffer(&intel->ctx, &intel_fb->Base,
+                                  driDrawPriv->w, driDrawPriv->h);
+      }         
+      if (readFb->Width == 0 && driReadPriv->w) {
+         _mesa_resize_framebuffer(&intel->ctx, readFb,
+                                  driReadPriv->w, driReadPriv->h);
+      }         
    }
    else {
       _mesa_make_current(NULL, NULL, NULL);

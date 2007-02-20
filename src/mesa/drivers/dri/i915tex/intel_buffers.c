@@ -214,10 +214,6 @@ intelWindowMoved(struct intel_context *intel)
       }
    }
 
-   /* Update Mesa's notion of window size */
-   driUpdateFramebufferSize(ctx, dPriv);
-   intel_fb->Base.Initialized = GL_TRUE; /* XXX remove someday */
-
    if (intel->intelScreen->driScrnPriv->ddxMinor >= 7) {
       drmI830Sarea *sarea = intel->sarea;
       drm_clip_rect_t drw_rect = { .x1 = dPriv->x, .x2 = dPriv->x + dPriv->w,
@@ -247,7 +243,9 @@ intelWindowMoved(struct intel_context *intel)
       intel_fb->pf_current_page = (intel->sarea->pf_current_page >>
 				   (intel_fb->pf_pipes & 0x2)) & 0x3;
 
-      pf_active = (pf_pipes & intel->sarea->pf_active) == pf_pipes;
+      intel_fb->pf_num_pages = intel->intelScreen->third.handle ? 3 : 2;
+
+      pf_active = pf_pipes && (pf_pipes & intel->sarea->pf_active) == pf_pipes;
 
       if (INTEL_DEBUG & DEBUG_LOCK)
 	 if (pf_active != intel_fb->pf_active)
@@ -255,9 +253,13 @@ intelWindowMoved(struct intel_context *intel)
 			 pf_active ? "" : "in");
 
       if (pf_active) {
-	 if (pf_pipes != intel_fb->pf_pipes && intel_fb->pf_pipes == 0x3 &&
-	     (intel->sarea->pf_current_page & 0x3) !=
-	     ((intel->sarea->pf_current_page) >> 2 & 0x3)) {
+	 int i;
+
+	 /* Sync pages between pipes if we're flipping on both at the same time */
+	 for (i = 0; i < 2 && pf_pipes != intel_fb->pf_pipes &&
+		intel_fb->pf_pipes == 0x3 &&
+		(intel->sarea->pf_current_page & 0x3) !=
+		((intel->sarea->pf_current_page) >> 2 & 0x3); i++) {
 	    drm_i915_flip_t flip;
 
 	    flip.pipes = (intel_fb->pf_current_page ==
@@ -270,7 +272,7 @@ intelWindowMoved(struct intel_context *intel)
       }
 
       intel_fb->pf_active = pf_active;
-      driFlipRenderbuffers(intel->ctx.WinSysDrawBuffer, intel_fb->pf_current_page);
+      intel_flip_renderbuffers(intel_fb);
       intel_draw_buffer(&intel->ctx, intel->ctx.DrawBuffer);
 
       /* Update vblank info
@@ -288,6 +290,10 @@ intelWindowMoved(struct intel_context *intel)
    } else {
       intel->vblank_flags &= ~VBLANK_FLAG_SECONDARY;
    }
+
+   /* Update Mesa's notion of window size */
+   driUpdateFramebufferSize(ctx, dPriv);
+   intel_fb->Base.Initialized = GL_TRUE; /* XXX remove someday */
 
    /* Update hardware scissor */
    ctx->Driver.Scissor(ctx, ctx->Scissor.X, ctx->Scissor.Y,
@@ -472,12 +478,12 @@ intelRotateWindow(struct intel_context *intel,
    intel_fb = dPriv->driverPrivate;
 
    if ((srcBuf == BUFFER_BIT_BACK_LEFT && !intel_fb->pf_active)) {
-      src = intel->intelScreen->back_region;
+      src = intel_get_rb_region(&intel_fb->Base, BUFFER_BACK_LEFT);
       clipRects = dPriv->pBackClipRects;
       numClipRects = dPriv->numBackClipRects;
    }
    else {
-      src = intel->intelScreen->front_region;
+      src = intel_get_rb_region(&intel_fb->Base, BUFFER_FRONT_LEFT);
       clipRects = dPriv->pClipRects;
       numClipRects = dPriv->numClipRects;
    }
@@ -643,8 +649,13 @@ intel_wait_flips(struct intel_context *intel, GLuint batch_flags)
 {
    struct intel_framebuffer *intel_fb =
       (struct intel_framebuffer *) intel->ctx.DrawBuffer;
+   struct intel_renderbuffer *intel_rb =
+      intel_get_renderbuffer(&intel_fb->Base,
+			     intel_fb->Base._ColorDrawBufferMask[0] ==
+			     BUFFER_BIT_FRONT_LEFT ? BUFFER_FRONT_LEFT :
+			     BUFFER_BACK_LEFT);
 
-   if (intel_fb->Base.Name == 0 && intel_fb->flip_pending) {
+   if (intel_fb->Base.Name == 0 && intel_rb->pf_pending == intel_fb->pf_seq) {
       GLuint mi_wait = MI_WAIT_FOR_EVENT;
       GLint pf_pipes = intel_fb->pf_pipes;
       BATCH_LOCALS;
@@ -661,7 +672,7 @@ intel_wait_flips(struct intel_context *intel, GLuint batch_flags)
       OUT_BATCH(0);
       ADVANCE_BATCH();
 
-      intel_fb->flip_pending = GL_FALSE;
+      intel_rb->pf_pending--;
    }
 }
 
@@ -721,10 +732,14 @@ intelPageFlip(const __DRIdrawablePrivate * dPriv)
    intel_fb->pf_current_page = (intel->sarea->pf_current_page >>
 				(intel_fb->pf_pipes & 0x2)) & 0x3;
 
-   driFlipRenderbuffers(intel->ctx.WinSysDrawBuffer, intel_fb->pf_current_page);
-   intel_draw_buffer(&intel->ctx, &intel_fb->Base);
+   if (dPriv->numClipRects != 0) {
+      intel_get_renderbuffer(&intel_fb->Base, BUFFER_FRONT_LEFT)->pf_pending =
+      intel_get_renderbuffer(&intel_fb->Base, BUFFER_BACK_LEFT)->pf_pending =
+	 ++intel_fb->pf_seq;
+   }
 
-   intel_fb->flip_pending = dPriv->numClipRects != 0;
+   intel_flip_renderbuffers(intel_fb);
+   intel_draw_buffer(&intel->ctx, &intel_fb->Base);
 
    return GL_TRUE;
 }

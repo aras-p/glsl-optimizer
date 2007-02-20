@@ -71,22 +71,29 @@ intel_renderbuffer(struct gl_renderbuffer *rb)
 struct intel_renderbuffer *
 intel_get_renderbuffer(struct gl_framebuffer *fb, GLuint attIndex)
 {
-   if (fb->Name == 0) {
-      struct intel_framebuffer *intel_fb = (struct intel_framebuffer*)fb;
+   return intel_renderbuffer(fb->Attachment[attIndex].Renderbuffer);
+}
 
-      if (intel_fb->pf_current_page) {
-	 switch (attIndex) {
-	 case BUFFER_BACK_LEFT:
-	    attIndex = BUFFER_FRONT_LEFT;
-	    break;
-	 case BUFFER_FRONT_LEFT:
-	    attIndex = BUFFER_BACK_LEFT;
-	    break;
-	 }
-      }
+
+void
+intel_flip_renderbuffers(struct intel_framebuffer *intel_fb)
+{
+   int current_page = intel_fb->pf_current_page;
+   int next_page = (current_page + 1) % intel_fb->pf_num_pages;
+
+   if (intel_fb->Base.Attachment[BUFFER_FRONT_LEFT].Renderbuffer !=
+       &intel_fb->color_rb[current_page]->Base) {
+      _mesa_remove_renderbuffer(&intel_fb->Base, BUFFER_FRONT_LEFT);
+      _mesa_add_renderbuffer(&intel_fb->Base, BUFFER_FRONT_LEFT,
+			     &intel_fb->color_rb[current_page]->Base);
    }
 
-   return intel_renderbuffer(fb->Attachment[attIndex].Renderbuffer);
+   if (intel_fb->Base.Attachment[BUFFER_BACK_LEFT].Renderbuffer !=
+       &intel_fb->color_rb[next_page]->Base) {
+      _mesa_remove_renderbuffer(&intel_fb->Base, BUFFER_BACK_LEFT);
+      _mesa_add_renderbuffer(&intel_fb->Base, BUFFER_BACK_LEFT,
+			     &intel_fb->color_rb[next_page]->Base);
+   }
 }
 
 
@@ -288,10 +295,24 @@ static GLboolean
 intel_alloc_window_storage(GLcontext * ctx, struct gl_renderbuffer *rb,
                            GLenum internalFormat, GLuint width, GLuint height)
 {
+   struct intel_context *intel = intel_context(ctx);
+   struct intel_framebuffer *intel_fb;
+
    ASSERT(rb->Name == 0);
    rb->Width = width;
    rb->Height = height;
    rb->_ActualFormat = internalFormat;
+
+   if (intel && intel->driDrawable &&
+       (intel_fb = intel->driDrawable->driverPrivate) &&
+       intel_fb->pf_num_pages == 3 &&
+       rb == &intel_fb->color_rb[intel_fb->pf_current_page]->Base &&
+       (rb = &intel_fb->color_rb[(intel_fb->pf_current_page + 2) % 3]->Base)) {
+      rb->Width = width;
+      rb->Height = height;
+      rb->_ActualFormat = internalFormat;
+   }
+
    return GL_TRUE;
 }
 

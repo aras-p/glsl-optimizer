@@ -39,11 +39,14 @@ struct intel_framebuffer
 {
    struct gl_framebuffer Base;
 
+   struct intel_renderbuffer *color_rb[3];
+
    /* Drawable page flipping state */
    GLboolean pf_active;
-   GLboolean flip_pending;
+   GLuint pf_seq;
    GLint pf_pipes;
    GLint pf_current_page;
+   GLint pf_num_pages;
 };
 
 
@@ -63,6 +66,8 @@ struct intel_renderbuffer
 
    GLuint PairedDepth;   /**< only used if this is a depth renderbuffer */
    GLuint PairedStencil; /**< only used if this is a stencil renderbuffer */
+
+   GLuint pf_pending;  /**< sequence number of pending flip */
 };
 
 
@@ -82,6 +87,8 @@ extern void intel_fbo_init(struct intel_context *intel);
 extern struct intel_renderbuffer *intel_get_renderbuffer(struct gl_framebuffer
                                                          *fb,
                                                          GLuint attIndex);
+
+extern void intel_flip_renderbuffers(struct intel_framebuffer *intel_fb);
 
 
 /* XXX make inline or macro */
