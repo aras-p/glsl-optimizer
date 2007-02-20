@@ -360,6 +360,8 @@ parse_array_len(slang_parse_ctx * C, slang_output_ctx * O, GLuint * len)
    _slang_simplify(&array_size, &space, C->atoms);
    result = (array_size.type == SLANG_OPER_LITERAL_INT);
 
+   *len = (GLint) array_size.literal[0];
+
    slang_operation_destruct(&array_size);
    return result;
 }
