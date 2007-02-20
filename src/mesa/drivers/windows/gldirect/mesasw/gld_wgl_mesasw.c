@@ -54,7 +54,7 @@
 #include "texformat.h"
 #include "texstore.h"
 #include "teximage.h"
-#include "array_cache/acache.h"
+#include "vbo/vbo.h"
 #include "swrast/swrast.h"
 #include "swrast_setup/swrast_setup.h"
 #include "swrast/s_context.h"
@@ -1321,7 +1321,7 @@ static void wmesa_update_state(
 {
     _swrast_InvalidateState( ctx, new_state );
 	_swsetup_InvalidateState( ctx, new_state );
-	_ac_InvalidateState( ctx, new_state );
+	_vbo_InvalidateState( ctx, new_state );
 	_tnl_InvalidateState( ctx, new_state );
 }
 
@@ -1631,7 +1631,7 @@ BOOL gldInitialiseMesa_MesaSW(
 	_mesa_enable_1_3_extensions(ctx);
 	
 //	_swrast_CreateContext( ctx );
-//	_ac_CreateContext( ctx );
+//	_vbo_CreateContext( ctx );
 //	_tnl_CreateContext( ctx );
 //	_swsetup_CreateContext( ctx );
 	

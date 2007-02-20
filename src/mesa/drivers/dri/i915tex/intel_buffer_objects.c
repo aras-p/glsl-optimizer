@@ -50,7 +50,10 @@ intel_bufferobj_alloc(GLcontext * ctx, GLuint name, GLenum target)
    _mesa_initialize_buffer_object(&obj->Base, name, target);
 
    driGenBuffers(intel->intelScreen->regionPool,
-                 "bufferobj", 1, &obj->buffer, 64, 0, 0);
+                 "bufferobj", 1, &obj->buffer, 64,
+		 DRM_BO_FLAG_MEM_LOCAL |
+		 DRM_BO_FLAG_READ | DRM_BO_FLAG_WRITE,
+		 0);
 
    return &obj->Base;
 }

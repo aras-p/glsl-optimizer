@@ -374,7 +374,7 @@ dfbUpdateState( GLcontext *ctx, GLuint new_state )
 {
      _swrast_InvalidateState( ctx, new_state );
      _swsetup_InvalidateState( ctx, new_state );
-     _ac_InvalidateState( ctx, new_state );
+     _vbo_InvalidateState( ctx, new_state );
      _tnl_InvalidateState( ctx, new_state );
 }
 
@@ -787,7 +787,7 @@ directfbgl_create_context( GLcontext             *context,
      }
 
      _swrast_CreateContext( context );
-     _ac_CreateContext( context );
+     _vbo_CreateContext( context );
      _tnl_CreateContext( context );
      _swsetup_CreateContext( context );
      _swsetup_Wakeup( context );

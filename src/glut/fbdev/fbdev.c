@@ -173,6 +173,9 @@ void glutInit (int *argcp, char **argv)
    int RequiredWidth = 0, RequiredHeight;
    char *fbdev;
 
+   stack_t stack;
+   struct sigaction sa;
+
    /* parse out args */
    for (i = 1; i < *argcp;) {
       if (!strcmp(argv[i], "-geometry")) {
@@ -239,7 +242,19 @@ void glutInit (int *argcp, char **argv)
    gettimeofday(&StartTime, 0);
    atexit(Cleanup);
 
-   signal(SIGSEGV, CrashHandler);
+   /* set up SIGSEGV to use alternate stack */
+   stack.ss_flags = 0;
+   stack.ss_size = SIGSTKSZ;
+   if(!(stack.ss_sp = malloc(SIGSTKSZ)))
+      sprintf(exiterror, "Failed to allocate alternate stack for SIGSEGV!\n");
+
+   sigaltstack(&stack, NULL);
+
+   sa.sa_handler = CrashHandler;
+   sa.sa_flags = SA_ONSTACK;
+   sigemptyset(&sa.sa_mask);
+   sigaction(SIGSEGV, &sa, NULL);
+
    signal(SIGINT, CrashHandler);
    signal(SIGTERM, CrashHandler);
    signal(SIGABRT, CrashHandler);

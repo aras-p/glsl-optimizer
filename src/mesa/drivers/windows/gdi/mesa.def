@@ -859,9 +859,9 @@ EXPORTS
 	wglGetExtensionsStringARB
 ;
 ; Mesa internals - mostly for OSMESA
-	_ac_CreateContext
-	_ac_DestroyContext
-	_ac_InvalidateState
+	_vbo_CreateContext
+	_vbo_DestroyContext
+	_vbo_InvalidateState
 	_glapi_check_multithread
 	_glapi_get_context
 	_glapi_get_proc_address

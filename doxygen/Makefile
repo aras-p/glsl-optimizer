@@ -9,7 +9,7 @@ all: full subset
 FULL = \
 	main.doxy \
 	math.doxy \
-	array_cache.doxy \
+	vbo.doxy \
 	glapi.doxy \
 	shader.doxy \
 	swrast.doxy \
