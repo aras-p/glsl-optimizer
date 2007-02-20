@@ -123,25 +123,25 @@ static void nv10ClearDepth(GLcontext *ctx, GLclampd d)
 {
 	nouveauContextPtr nmesa = NOUVEAU_CONTEXT(ctx);
 
-	switch (ctx->DrawBuffer->_DepthBuffer->DepthBits) {
+/*	switch (ctx->DrawBuffer->_DepthBuffer->DepthBits) {
 		case 16:
 			nmesa->clear_value = (uint32_t)(d*0x7FFF);
 			break;
-		case 24:
+		case 24:*/
 			nmesa->clear_value = ((nmesa->clear_value&0x000000FF) |
 				(((uint32_t)(d*0xFFFFFF))<<8));
-			break;
-	}
+/*			break;
+	}*/
 }
 
 static void nv10ClearStencil(GLcontext *ctx, GLint s)
 {
 	nouveauContextPtr nmesa = NOUVEAU_CONTEXT(ctx);
 
-	if (ctx->DrawBuffer->_DepthBuffer->DepthBits == 24) {
+/*	if (ctx->DrawBuffer->_DepthBuffer->DepthBits == 24) {*/
 		nmesa->clear_value = ((nmesa->clear_value&0xFFFFFF00)|
 			(s&0x000000FF));
-	}
+/*	}*/
 }
 
 static void nv10ClipPlane(GLcontext *ctx, GLenum plane, const GLfloat *equation)
