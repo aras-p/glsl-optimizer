@@ -40,7 +40,12 @@
 
 
 #define PEEPHOLE_OPTIMIZATIONS 1
-#define ANNOTATE 1
+#define ANNOTATE 0
+
+
+/* XXX temporarily here */
+static GLboolean EmitHighLevelInstructions = GL_TRUE;
+
 
 
 /**
@@ -56,7 +61,7 @@ typedef struct
 
 
 
-static slang_ir_info IrInfo[] = {
+static const slang_ir_info IrInfo[] = {
    /* binary ops */
    { IR_ADD, "IR_ADD", OPCODE_ADD, 4, 2 },
    { IR_SUB, "IR_SUB", OPCODE_SUB, 4, 2 },
@@ -103,8 +108,6 @@ static slang_ir_info IrInfo[] = {
    { IR_CJUMP0, "IR_CJUMP0", OPCODE_NOP, 0, 0 },
    { IR_CJUMP1, "IR_CJUMP1", OPCODE_NOP, 0, 0 },
    { IR_IF, "IR_IF", OPCODE_NOP, 0, 0 },
-   { IR_ELSE, "IR_ELSE", OPCODE_NOP, 0, 0 },
-   { IR_ENDIF, "IR_ENDIF", OPCODE_NOP, 0, 0 },
    { IR_KILL, "IR_KILL", OPCODE_NOP, 0, 0 },
    { IR_COND, "IR_COND", OPCODE_NOP, 0, 0 },
    { IR_CALL, "IR_CALL", OPCODE_NOP, 0, 0 },
@@ -115,7 +118,7 @@ static slang_ir_info IrInfo[] = {
    { IR_TEX, "IR_TEX", OPCODE_TEX, 4, 1 },
    { IR_TEXB, "IR_TEXB", OPCODE_TXB, 4, 1 },
    { IR_TEXP, "IR_TEXP", OPCODE_TXP, 4, 1 },
-   { IR_FLOAT, "IR_FLOAT", OPCODE_NOP, 0, 0 },
+   { IR_FLOAT, "IR_FLOAT", OPCODE_NOP, 0, 0 }, /* float literal */
    { IR_FIELD, "IR_FIELD", OPCODE_NOP, 0, 0 },
    { IR_ELEMENT, "IR_ELEMENT", OPCODE_NOP, 0, 0 },
    { IR_SWIZZLE, "IR_SWIZZLE", OPCODE_NOP, 0, 0 },
@@ -123,7 +126,7 @@ static slang_ir_info IrInfo[] = {
 };
 
 
-static slang_ir_info *
+static const slang_ir_info *
 slang_find_ir_info(slang_ir_opcode opcode)
 {
    GLuint i;
@@ -232,11 +235,18 @@ storage_string(const slang_ir_storage *st)
 }
 
 
+static void
+spaces(int n)
+{
+   while (n-- > 0) {
+      printf(" ");
+   }
+}
+
 #define IND 0
 void
 slang_print_ir(const slang_ir_node *n, int indent)
 {
-   int i;
    if (!n)
       return;
 #if !IND
@@ -244,8 +254,7 @@ slang_print_ir(const slang_ir_node *n, int indent)
 #else
       printf("%3d:", indent);
 #endif
-      for (i = 0; i < indent; i++)
-	 printf(" ");
+      spaces(indent);
 
    switch (n->Opcode) {
    case IR_SEQ:
@@ -289,11 +298,14 @@ slang_print_ir(const slang_ir_node *n, int indent)
    case IR_IF:
       printf("IF \n");
       slang_print_ir(n->Children[0], indent+3);
-      break;
-   case IR_ELSE:
-      printf("ELSE\n");
-      break;
-   case IR_ENDIF:
+      spaces(indent);
+      printf("THEN\n");
+      slang_print_ir(n->Children[1], indent+3);
+      if (n->Children[2]) {
+         spaces(indent);
+         printf("ELSE\n");
+         slang_print_ir(n->Children[2], indent+3);
+      }
       printf("ENDIF\n");
       break;
 
@@ -310,17 +322,33 @@ slang_print_ir(const slang_ir_node *n, int indent)
       printf("CALL\n");
       break;
 
-   case IR_BEGIN_LOOP:
-      printf("BEGIN_LOOP\n");
-      break;
-   case IR_END_LOOP:
-      printf("END_LOOP\n");
+   case IR_LOOP:
+      printf("LOOP\n");
+      slang_print_ir(n->Children[0], indent+3);
+      spaces(indent);
+      printf("ENDLOOP\n");
       break;
    case IR_CONT:
       printf("CONT\n");
       break;
    case IR_BREAK:
       printf("BREAK\n");
+      break;
+   case IR_BREAK_IF_FALSE:
+      printf("BREAK_IF_FALSE\n");
+      slang_print_ir(n->Children[0], indent+3);
+      break;
+   case IR_BREAK_IF_TRUE:
+      printf("BREAK_IF_TRUE\n");
+      slang_print_ir(n->Children[0], indent+3);
+      break;
+   case IR_CONT_IF_FALSE:
+      printf("CONT_IF_FALSE\n");
+      slang_print_ir(n->Children[0], indent+3);
+      break;
+   case IR_CONT_IF_TRUE:
+      printf("CONT_IF_TRUE\n");
+      slang_print_ir(n->Children[0], indent+3);
       break;
 
    case IR_VAR:
@@ -340,11 +368,16 @@ slang_print_ir(const slang_ir_node *n, int indent)
       slang_print_ir(n->Children[0], indent+3);
       break;
    case IR_FLOAT:
-      printf("FLOAT %f %f %f %f\n",
+      printf("FLOAT %g %g %g %g\n",
              n->Value[0], n->Value[1], n->Value[2], n->Value[3]);
       break;
    case IR_I_TO_F:
-      printf("INT_TO_FLOAT %d\n", (int) n->Value[0]);
+      printf("INT_TO_FLOAT\n");
+      slang_print_ir(n->Children[0], indent+3);
+      break;
+   case IR_F_TO_I:
+      printf("FLOAT_TO_INT\n");
+      slang_print_ir(n->Children[0], indent+3);
       break;
    case IR_SWIZZLE:
       printf("SWIZZLE %s of  (store %p) \n",
@@ -474,6 +507,7 @@ new_instruction(struct gl_program *prog, gl_inst_opcode opcode)
    prog->NumInstructions++;
    _mesa_init_instructions(inst, 1);
    inst->Opcode = opcode;
+   inst->BranchTarget = -1; /* invalid */
    return inst;
 }
 
@@ -513,9 +547,9 @@ storage_annotation(const slang_ir_node *n, const struct gl_program *prog)
       if (st->Index >= 0) {
          const GLfloat *val = prog->Parameters->ParameterValues[st->Index];
          if (st->Swizzle == SWIZZLE_NOOP)
-            sprintf(s, "{%f, %f, %f, %f}", val[0], val[1], val[2], val[3]);
+            sprintf(s, "{%g, %g, %g, %g}", val[0], val[1], val[2], val[3]);
          else {
-            sprintf(s, "%f", val[GET_SWZ(st->Swizzle, 0)]);
+            sprintf(s, "%g", val[GET_SWZ(st->Swizzle, 0)]);
          }
       }
       break;
@@ -1041,6 +1075,186 @@ emit_not(slang_var_table *vt, slang_ir_node *n, struct gl_program *prog)
 }
 
 
+static struct prog_instruction *
+emit_if(slang_var_table *vt, slang_ir_node *n, struct gl_program *prog)
+{
+   struct prog_instruction *ifInst;
+   GLuint ifInstLoc, elseInstLoc;
+
+   emit(vt, n->Children[0], prog);  /* the condition */
+   ifInstLoc = prog->NumInstructions;
+   if (EmitHighLevelInstructions) {
+      ifInst = new_instruction(prog, OPCODE_IF);
+      ifInst->DstReg.CondMask = COND_NE;  /* if cond is non-zero */
+      ifInst->DstReg.CondSwizzle = SWIZZLE_X;
+   }
+   else {
+      /* conditional jump to else, or endif */
+      ifInst = new_instruction(prog, OPCODE_BRA);
+      ifInst->DstReg.CondMask = COND_EQ;  /* BRA if cond is zero */
+      ifInst->DstReg.CondSwizzle = SWIZZLE_X;
+      ifInst->Comment = _mesa_strdup("if zero");
+   }
+
+   /* if body */
+   emit(vt, n->Children[1], prog);
+
+   if (n->Children[2]) {
+      /* have else body */
+      elseInstLoc = prog->NumInstructions;
+      if (EmitHighLevelInstructions) {
+         (void) new_instruction(prog, OPCODE_ELSE);
+      }
+      else {
+         /* jump to endif instruction */
+         struct prog_instruction *inst;
+         inst = new_instruction(prog, OPCODE_BRA);
+         inst->Comment = _mesa_strdup("else");
+         inst->DstReg.CondMask = COND_TR;  /* always branch */
+      }
+      ifInst = prog->Instructions + ifInstLoc;
+      ifInst->BranchTarget = prog->NumInstructions;
+
+      emit(vt, n->Children[2], prog);
+   }
+   else {
+      /* no else body */
+      ifInst = prog->Instructions + ifInstLoc;
+      ifInst->BranchTarget = prog->NumInstructions + 1;
+   }
+
+   if (EmitHighLevelInstructions) {
+      (void) new_instruction(prog, OPCODE_ENDIF);
+   }
+
+   if (n->Children[2]) {
+      struct prog_instruction *elseInst;
+      elseInst = prog->Instructions + elseInstLoc;
+      elseInst->BranchTarget = prog->NumInstructions;
+   }
+   return NULL;
+}
+
+
+static struct prog_instruction *
+emit_loop(slang_var_table *vt, slang_ir_node *n, struct gl_program *prog)
+{
+   struct prog_instruction *beginInst, *endInst;
+   GLuint beginInstLoc, endInstLoc;
+   slang_ir_node *ir;
+
+   /* emit OPCODE_BGNLOOP */
+   beginInstLoc = prog->NumInstructions;
+   if (EmitHighLevelInstructions) {
+      (void) new_instruction(prog, OPCODE_BGNLOOP);
+   }
+
+   /* body */
+   emit(vt, n->Children[0], prog);
+
+   endInstLoc = prog->NumInstructions;
+   if (EmitHighLevelInstructions) {
+      /* emit OPCODE_ENDLOOP */
+      endInst = new_instruction(prog, OPCODE_ENDLOOP);
+   }
+   else {
+      /* emit unconditional BRA-nch */
+      endInst = new_instruction(prog, OPCODE_BRA);
+      endInst->DstReg.CondMask = COND_TR;  /* always true */
+   }
+   /* end instruction's BranchTarget points to top of loop */
+   endInst->BranchTarget = beginInstLoc;
+
+   if (EmitHighLevelInstructions) {
+      /* BGNLOOP's BranchTarget points to the ENDLOOP inst */
+      beginInst = prog->Instructions + beginInstLoc;
+      beginInst->BranchTarget = prog->NumInstructions - 1;
+   }
+
+   /* Done emitting loop code.  Now walk over the loop's linked list of
+    * BREAK and CONT nodes, filling in their BranchTarget fields (which
+    * will point to the ENDLOOP+1 or BGNLOOP instructions, respectively).
+    */
+   for (ir = n->BranchNode; ir; ir = ir->BranchNode) {
+      struct prog_instruction *inst = prog->Instructions + ir->InstLocation;
+      assert(inst->BranchTarget < 0);
+      if (ir->Opcode == IR_BREAK ||
+          ir->Opcode == IR_BREAK_IF_FALSE ||
+          ir->Opcode == IR_BREAK_IF_TRUE) {
+         assert(inst->Opcode == OPCODE_BRK ||
+                inst->Opcode == OPCODE_BRA);
+         /* go to instruction after end of loop */
+         inst->BranchTarget = endInstLoc + 1;
+      }
+      else {
+         assert(ir->Opcode == IR_CONT ||
+                ir->Opcode == IR_CONT_IF_FALSE ||
+                ir->Opcode == IR_CONT_IF_TRUE);
+         assert(inst->Opcode == OPCODE_CONT ||
+                inst->Opcode == OPCODE_BRA);
+         /* to go instruction at top of loop */
+         inst->BranchTarget = beginInstLoc;
+      }
+   }
+   return NULL;
+}
+
+
+/**
+ * "Continue" or "break" statement.
+ * Either OPCODE_CONT, OPCODE_BRK or OPCODE_BRA will be emitted.
+ */
+static struct prog_instruction *
+emit_cont_break(slang_var_table *vt, slang_ir_node *n, struct gl_program *prog)
+{
+   gl_inst_opcode opcode;
+   struct prog_instruction *inst;
+   n->InstLocation = prog->NumInstructions;
+   if (EmitHighLevelInstructions) {
+      opcode = (n->Opcode == IR_CONT) ? OPCODE_CONT : OPCODE_BRK;
+   }
+   else {
+      opcode = OPCODE_BRA;
+   }
+   inst = new_instruction(prog, opcode);
+   inst->DstReg.CondMask = COND_TR;  /* always true */
+   return inst;
+}
+
+
+/**
+ * Conditional "continue" or "break" statement.
+ * Either OPCODE_CONT, OPCODE_BRK or OPCODE_BRA will be emitted.
+ */
+static struct prog_instruction *
+emit_cont_break_if(slang_var_table *vt, slang_ir_node *n,
+                   struct gl_program *prog, GLboolean breakTrue)
+{
+   gl_inst_opcode opcode;
+   struct prog_instruction *inst;
+
+   /* evaluate condition expr, setting cond codes */
+   inst = emit(vt, n->Children[0], prog);
+   assert(inst);
+   inst->CondUpdate = GL_TRUE;
+
+   n->InstLocation = prog->NumInstructions;
+   if (EmitHighLevelInstructions) {
+      if (n->Opcode == IR_CONT_IF_TRUE ||
+          n->Opcode == IR_CONT_IF_FALSE)
+         opcode = OPCODE_CONT;
+      else
+         opcode = OPCODE_BRK;
+   }
+   else {
+      opcode = OPCODE_BRA;
+   }
+   inst = new_instruction(prog, opcode);
+   inst->DstReg.CondMask = breakTrue ? COND_NE : COND_EQ;
+   return inst;
+}
+
+
 
 /**
  * Remove any SWIZZLE_NIL terms from given swizzle mask (smear prev term).
@@ -1180,6 +1394,12 @@ emit(slang_var_table *vt, slang_ir_node *n, struct gl_program *prog)
    case IR_SWIZZLE:
       return emit_swizzle(vt, n, prog);
 
+   case IR_I_TO_F:
+      {
+         n->Store = n->Children[0]->Store;
+      }
+      return NULL;
+
    /* Simple arithmetic */
    /* unary */
    case IR_RSQ:
@@ -1254,84 +1474,30 @@ emit(slang_var_table *vt, slang_ir_node *n, struct gl_program *prog)
       return emit_kill(prog);
 
    case IR_IF:
-      {
-         struct prog_instruction *inst;
-         emit(vt, n->Children[0], prog);  /* the condition */
-         inst = new_instruction(prog, OPCODE_IF);
-         inst->DstReg.CondMask = COND_NE;  /* if cond is non-zero */
-         inst->DstReg.CondSwizzle = SWIZZLE_X;
-         n->InstLocation = prog->NumInstructions - 1;
-         return inst;
-      }
-   case IR_ELSE:
-      {
-         struct prog_instruction *inst, *ifInst;
-         n->InstLocation = prog->NumInstructions;
-         inst = new_instruction(prog, OPCODE_ELSE);
-         /* point IF's BranchTarget just after this instruction */
-         assert(n->BranchNode);
-         assert(n->BranchNode->InstLocation >= 0);
-         ifInst = prog->Instructions + n->BranchNode->InstLocation;
-         assert(ifInst->Opcode == OPCODE_IF);
-         ifInst->BranchTarget = prog->NumInstructions;
-         return inst;
-      }
-   case IR_ENDIF:
-      {
-         struct prog_instruction *inst, *elseInst;
-         n->InstLocation = prog->NumInstructions;
-         inst = new_instruction(prog, OPCODE_ENDIF);
-         /* point ELSE's BranchTarget to just after this inst */
-         assert(n->BranchNode);
-         assert(n->BranchNode->InstLocation >= 0);
-         elseInst = prog->Instructions + n->BranchNode->InstLocation;
-         assert(elseInst->Opcode == OPCODE_ELSE ||
-                elseInst->Opcode == OPCODE_IF);
-         elseInst->BranchTarget = prog->NumInstructions;
-         return inst;
-      }
+      return emit_if(vt, n, prog);
 
-   case IR_BEGIN_LOOP:
-      {
-         /* save location of this instruction, used by OPCODE_ENDLOOP */
-         n->InstLocation = prog->NumInstructions;
-         (void) new_instruction(prog, OPCODE_BGNLOOP);
-      }
-      break;
-   case IR_END_LOOP:
-      {
-         struct prog_instruction *inst, *beginInst;
-         inst = new_instruction(prog, OPCODE_ENDLOOP);
-         assert(n->BranchNode);
-         assert(n->BranchNode->InstLocation >= 0);
-         /* The instruction BranchTarget points to top of loop */
-         inst->BranchTarget = n->BranchNode->InstLocation;
-         /* Update BEGIN_LOOP's BranchTarget to point to this instruction */
-         beginInst = prog->Instructions + n->BranchNode->InstLocation;
-         beginInst->BranchTarget = prog->NumInstructions - 1;
-         return inst;
-      }
-   case IR_CONT:
-      return new_instruction(prog, OPCODE_CONT);
+   case IR_LOOP:
+      return emit_loop(vt, n, prog);
+   case IR_BREAK_IF_FALSE:
+   case IR_CONT_IF_FALSE:
+      return emit_cont_break_if(vt, n, prog, GL_FALSE);
+   case IR_BREAK_IF_TRUE:
+   case IR_CONT_IF_TRUE:
+      return emit_cont_break_if(vt, n, prog, GL_TRUE);
    case IR_BREAK:
-      {
-         struct prog_instruction *inst;
-         inst = new_instruction(prog, OPCODE_BRK);
-         inst->DstReg.CondMask = COND_TR;  /* always true */
-         /* This instruction's branch target is top of loop, not bottom of
-          * loop because we don't know where it is yet!
-          */
-         assert(n->BranchNode);
-         assert(n->BranchNode->InstLocation >= 0);
-         inst->BranchTarget = n->BranchNode->InstLocation;
-         return inst;
-      }
+      /* fall-through */
+   case IR_CONT:
+      return emit_cont_break(vt, n, prog);
+
    case IR_BEGIN_SUB:
       return new_instruction(prog, OPCODE_BGNSUB);
    case IR_END_SUB:
       return new_instruction(prog, OPCODE_ENDSUB);
    case IR_RETURN:
       return new_instruction(prog, OPCODE_RET);
+
+   case IR_NOP:
+      return NULL;
 
    default:
       _mesa_problem(NULL, "Unexpected IR opcode in emit()\n");

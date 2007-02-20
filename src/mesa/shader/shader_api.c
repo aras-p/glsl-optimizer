@@ -832,7 +832,7 @@ _mesa_link_program(GLcontext *ctx, GLuint program)
       return;
    }
 
-   _slang_link2(ctx, program, shProg);
+   _slang_link(ctx, program, shProg);
 }
 
 

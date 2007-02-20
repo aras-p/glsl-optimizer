@@ -405,7 +405,7 @@ struct prog_instruction
     * For IF, points to else or endif.
     * For ELSE, points to endif.
     */
-   GLuint BranchTarget;
+   GLint BranchTarget;
 
    /**
     * For TEX instructions in shaders, the sampler to use for the

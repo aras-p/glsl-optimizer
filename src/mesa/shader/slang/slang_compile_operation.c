@@ -38,7 +38,7 @@
 GLboolean
 slang_operation_construct(slang_operation * oper)
 {
-   oper->type = slang_oper_none;
+   oper->type = SLANG_OPER_NONE;
    oper->children = NULL;
    oper->num_children = 0;
    oper->literal[0] = 0.0;

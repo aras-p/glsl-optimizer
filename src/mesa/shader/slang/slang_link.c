@@ -2,7 +2,7 @@
  * Mesa 3-D graphics library
  * Version:  6.5.3
  *
- * Copyright (C) 2006  Brian Paul   All Rights Reserved.
+ * Copyright (C) 2007  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -23,7 +23,7 @@
  */
 
 /**
- * \file slang_link2.c
+ * \file slang_link.c
  * GLSL linker
  * \author Brian Paul
  */
@@ -298,7 +298,7 @@ _slang_resolve_branches(struct gl_program *prog)
 
    for (i = 0; i < prog->NumInstructions; i++) {
       struct prog_instruction *inst = prog->Instructions + i;
-      if (inst->Opcode == OPCODE_BRA) {
+      if (inst->Opcode == OPCODE_BRA && inst->BranchTarget < 0) {
          for (j = 0; j < numTargets; j++) {
             if (!strcmp(inst->Comment, targets[j].Name)) {
                inst->BranchTarget = targets[j].Pos;
@@ -506,9 +506,9 @@ fragment_program(struct gl_program *prog)
  *    varying storage locations.
  */
 void
-_slang_link2(GLcontext *ctx,
-             GLhandleARB programObj,
-             struct gl_shader_program *shProg)
+_slang_link(GLcontext *ctx,
+            GLhandleARB programObj,
+            struct gl_shader_program *shProg)
 {
    const struct gl_vertex_program *vertProg;
    const struct gl_fragment_program *fragProg;
@@ -530,25 +530,8 @@ _slang_link2(GLcontext *ctx,
       else if (shProg->Shaders[i]->Type == GL_FRAGMENT_SHADER)
          fragProg = fragment_program(shProg->Shaders[i]->Programs[0]);
       else
-         _mesa_problem(ctx, "unexpected shader target in slang_link2()");
+         _mesa_problem(ctx, "unexpected shader target in slang_link()");
    }
-#if 00
-   if (!vertProg || !fragProg) {
-      /* XXX is it legal to have one but not the other?? */
-      /* XXX record error */
-      shProg->LinkStatus = GL_FALSE;
-      return;
-   }
-
-   /* XXX is this test used? */
-   if (!vertProg->Base.Varying || !fragProg->Base.Varying) {
-      /* temporary */
-      _mesa_problem(ctx, "vertex/fragment program lacks varying list!");
-      abort();
-      shProg->LinkStatus = GL_FALSE;
-      return;
-   }  
-#endif
 
    /*
     * Make copies of the vertex/fragment programs now since we'll be
@@ -638,10 +621,6 @@ _slang_link2(GLcontext *ctx,
 #endif
    }
 
-#if 0
-   shProg->LinkStatus = (shProg->VertexProgram && shProg->FragmentProgram);
-#else
    shProg->LinkStatus = (shProg->VertexProgram || shProg->FragmentProgram);
-#endif
 }
 

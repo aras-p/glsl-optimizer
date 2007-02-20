@@ -15,9 +15,21 @@ OpenGL Shading Language</a>.
 </p>
 
 <p>
-Last updated on 20 Jan 2007.
+Last updated on 17 Feb 2007.
 </p>
 
+<p>
+Contents
+</p>
+<ul>
+<li><a href="#unsup">Unsupported Features</a>
+<li><a href="#impl">Implementation Notes</a>
+<li><a href="#hints">Programming Hints</a>
+<li><a href="#standalone">Stand-alone Compiler</a>
+</ul>
+
+
+<a name="unsup">
 <h2>Unsupported Features</h2>
 
 <p>
@@ -41,6 +53,7 @@ All other major features of the shading language should function.
 </p>
 
 
+<a name="impl">
 <h2>Implementation Notes</h2>
 
 <ul>
@@ -63,6 +76,7 @@ These issues will be addressed/resolved in the future.
 </p>
 
 
+<a name="hints">
 <h2>Programming Hints</h2>
 
 <ul>
@@ -110,6 +124,65 @@ These issues will be addressed/resolved in the future.
 </pre>
 </ul>
 
+
+<a name="standalone">
+<h2>Stand-alone Compiler</h2>
+
+<p>
+A unique stand-alone GLSL compiler driver has been added to Mesa.
+<p>
+
+<p>
+The stand-alone compiler (like a conventional command-line compiler)
+is a tool that accepts Shading Language programs and emits low-level
+GPU programs.
+</p>
+
+<p>
+This tool is useful for:
+<p>
+<ul>
+<li>Inspecting GPU code to gain insight into compilation
+<li>Generating initial GPU code for subsequent hand-tuning
+<li>Debugging the GLSL compiler itself
+</ul>
+
+<p>
+(compiler build instructions TBD)
+</p>
+
+<p>
+Here's an example of using the compiler to compile a vertex shader and
+emit GL_ARB_vertex_program-style instructions:
+</p>
+<pre>
+    glslcompiler --arb --linenumbers --vs vertshader.txt
+</pre>
+<p>
+The output may look similar to this:
+</p>
+<pre>
+!!ARBvp1.0
+  0: MOV result.texcoord[0], vertex.texcoord[0];
+  1: DP4 temp0.x, state.matrix.mvp.row[0], vertex.position;
+  2: DP4 temp0.y, state.matrix.mvp.row[1], vertex.position;
+  3: DP4 temp0.z, state.matrix.mvp.row[2], vertex.position;
+  4: DP4 temp0.w, state.matrix.mvp.row[3], vertex.position;
+  5: MOV result.position, temp0;
+  6: END
+</pre>
+
+<p>
+Note that some shading language constructs (such as uniform and varying
+variables) aren't expressible in ARB or NV-style programs.
+Therefore, the resulting output is not always legal by definition of
+those program languages.
+</p>
+<p>
+Also note that this compiler driver is still under development.
+Over time, the correctness of the GPU programs, with respect to the ARB
+and NV languagues, should improve.
+</p>
 
 </BODY>
 </HTML>

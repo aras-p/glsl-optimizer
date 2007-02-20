@@ -36,9 +36,9 @@ struct slang_code_unit_;
  */
 typedef enum slang_function_kind_
 {
-   slang_func_ordinary,
-   slang_func_constructor,
-   slang_func_operator
+   SLANG_FUNC_ORDINARY,
+   SLANG_FUNC_CONSTRUCTOR,
+   SLANG_FUNC_OPERATOR
 } slang_function_kind;
 
 

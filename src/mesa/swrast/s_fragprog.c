@@ -418,6 +418,29 @@ test_cc(GLuint condCode, GLuint ccMaskRule)
 
 
 /**
+ * Evaluate the 4 condition codes against a predicate and return GL_TRUE
+ * or GL_FALSE to indicate result.
+ */
+static INLINE GLboolean
+eval_condition(const struct fp_machine *machine,
+               const struct prog_instruction *inst)
+{
+   const GLuint swizzle = inst->DstReg.CondSwizzle;
+   const GLuint condMask = inst->DstReg.CondMask;
+   if (test_cc(machine->CondCodes[GET_SWZ(swizzle, 0)], condMask) ||
+       test_cc(machine->CondCodes[GET_SWZ(swizzle, 1)], condMask) ||
+       test_cc(machine->CondCodes[GET_SWZ(swizzle, 2)], condMask) ||
+       test_cc(machine->CondCodes[GET_SWZ(swizzle, 3)], condMask)) {
+      return GL_TRUE;
+   }
+   else {
+      return GL_FALSE;
+   }
+}
+
+
+
+/**
  * Store 4 floats into a register.  Observe the instructions saturate and
  * set-condition-code flags.
  */
@@ -531,6 +554,7 @@ init_machine_deriv( GLcontext *ctx,
    _mesa_memcpy(dMachine, machine, sizeof(struct fp_machine));
 
    if (program->Base.Target == GL_FRAGMENT_PROGRAM_NV) {
+      /* XXX also need to do this when using valgrind */
       /* Clear temporary registers (undefined for ARB_f_p) */
       _mesa_bzero( (void*) machine->Temporaries,
                    MAX_NV_FRAGMENT_PROGRAM_TEMPS * 4 * sizeof(GLfloat));
@@ -642,7 +666,7 @@ execute_program( GLcontext *ctx,
       }
 
       if (DEBUG_FRAG) {
-         _mesa_print_instruction(inst, 0);
+         _mesa_print_instruction(inst);
       }
 
       switch (inst->Opcode) {
@@ -675,9 +699,10 @@ execute_program( GLcontext *ctx,
                }
             }
             break;
-         case OPCODE_BGNLOOP: /* begin loop */
+         case OPCODE_BGNLOOP:
+            /* no-op */
             break;
-         case OPCODE_ENDLOOP: /* end loop */
+         case OPCODE_ENDLOOP:
             /* subtract 1 here since pc is incremented by for(pc) loop */
             pc = inst->BranchTarget - 1; /* go to matching BNGLOOP */
             break;
@@ -685,52 +710,25 @@ execute_program( GLcontext *ctx,
             break;
          case OPCODE_ENDSUB: /* end subroutine */
             break;
-         case OPCODE_BRA: /* conditional branch */
-            {
-               /* NOTE: The branch is conditional! */
-               const GLuint swizzle = inst->DstReg.CondSwizzle;
-               const GLuint condMask = inst->DstReg.CondMask;
-               if (test_cc(machine->CondCodes[GET_SWZ(swizzle, 0)], condMask) ||
-                   test_cc(machine->CondCodes[GET_SWZ(swizzle, 1)], condMask) ||
-                   test_cc(machine->CondCodes[GET_SWZ(swizzle, 2)], condMask) ||
-                   test_cc(machine->CondCodes[GET_SWZ(swizzle, 3)], condMask)) {
-                  /* take branch */
-                  pc = inst->BranchTarget;
-                  /*
-                  printf("Take branch to %u\n", pc);
-                  */
-               }
+         case OPCODE_BRA: /* branch (conditional) */
+            /* fall-through */
+         case OPCODE_BRK: /* break out of loop (conditional) */
+            /* fall-through */
+         case OPCODE_CONT: /* continue loop (conditional) */
+            if (eval_condition(machine, inst)) {
+               /* take branch */
+               /* Subtract 1 here since we'll do pc++ at end of for-loop */
+               pc = inst->BranchTarget - 1;
             }
             break;
-         case OPCODE_BRK: /* break out of loop */
-            {
-               /* The location of the ENDLOOP instruction is saved in the
-                * BGNLOOP instruction.  Get that instruction and jump to
-                * its BranchTarget + 1.
-                */
-               const struct prog_instruction *loopBeginInst
-                  = program->Base.Instructions + inst->BranchTarget;
-               ASSERT(loopBeginInst->Opcode == OPCODE_BGNLOOP);
-               ASSERT(loopBeginInst->BranchTarget >= 0);
-               /* we'll add one at bottom of for-loop */
-               pc = loopBeginInst->BranchTarget;
-            }
-            break;
-         case OPCODE_CAL: /* Call subroutine */
-            {
-               /* NOTE: The call is conditional! */
-               const GLuint swizzle = inst->DstReg.CondSwizzle;
-               const GLuint condMask = inst->DstReg.CondMask;
-               if (test_cc(machine->CondCodes[GET_SWZ(swizzle, 0)], condMask) ||
-                   test_cc(machine->CondCodes[GET_SWZ(swizzle, 1)], condMask) ||
-                   test_cc(machine->CondCodes[GET_SWZ(swizzle, 2)], condMask) ||
-                   test_cc(machine->CondCodes[GET_SWZ(swizzle, 3)], condMask)) {
-                  if (machine->StackDepth >= MAX_PROGRAM_CALL_DEPTH) {
-                     return GL_TRUE; /* Per GL_NV_vertex_program2 spec */
-                  }
-                  machine->CallStack[machine->StackDepth++] = pc + 1;
-                  pc = inst->BranchTarget;
+         case OPCODE_CAL: /* Call subroutine (conditional) */
+            if (eval_condition(machine, inst)) {
+               /* call the subroutine */
+               if (machine->StackDepth >= MAX_PROGRAM_CALL_DEPTH) {
+                  return GL_TRUE; /* Per GL_NV_vertex_program2 spec */
                }
+               machine->CallStack[machine->StackDepth++] = pc + 1;
+               pc = inst->BranchTarget; /* XXX - 1 ??? */
             }
             break;
          case OPCODE_CMP:
@@ -745,8 +743,6 @@ execute_program( GLcontext *ctx,
                result[3] = a[3] < 0.0F ? b[3] : c[3];
                store_vector4( inst, machine, result );
             }
-            break;
-         case OPCODE_CONT: /* continue loop */
             break;
          case OPCODE_COS:
             {
@@ -883,28 +879,19 @@ execute_program( GLcontext *ctx,
             }
             break;
          case OPCODE_IF:
-            {
-               const GLuint swizzle = inst->DstReg.CondSwizzle;
-               const GLuint condMask = inst->DstReg.CondMask;
-               if (test_cc(machine->CondCodes[GET_SWZ(swizzle, 0)], condMask) ||
-                   test_cc(machine->CondCodes[GET_SWZ(swizzle, 1)], condMask) ||
-                   test_cc(machine->CondCodes[GET_SWZ(swizzle, 2)], condMask) ||
-                   test_cc(machine->CondCodes[GET_SWZ(swizzle, 3)], condMask)) {
-                  /* do if-clause (just continue execution) */
-               }
-               else {
-                  /* go to the instruction after ELSE or ENDIF */
-                  assert(inst->BranchTarget >= 0);
-                  pc = inst->BranchTarget - 1;
-               }
+            if (eval_condition(machine, inst)) {
+               /* do if-clause (just continue execution) */
             }
-            break;
-         case OPCODE_ELSE:
-            {
-               /* goto ENDIF */
+            else {
+               /* go to the instruction after ELSE or ENDIF */
                assert(inst->BranchTarget >= 0);
                pc = inst->BranchTarget - 1;
             }
+            break;
+         case OPCODE_ELSE:
+            /* goto ENDIF */
+            assert(inst->BranchTarget >= 0);
+            pc = inst->BranchTarget - 1;
             break;
          case OPCODE_ENDIF:
             /* nothing */
@@ -920,16 +907,9 @@ execute_program( GLcontext *ctx,
                store_vector4( inst, machine, result );
             }
             break;
-         case OPCODE_KIL_NV: /* NV_f_p only */
-            {
-               const GLuint swizzle = inst->DstReg.CondSwizzle;
-               const GLuint condMask = inst->DstReg.CondMask;
-               if (test_cc(machine->CondCodes[GET_SWZ(swizzle, 0)], condMask) ||
-                   test_cc(machine->CondCodes[GET_SWZ(swizzle, 1)], condMask) ||
-                   test_cc(machine->CondCodes[GET_SWZ(swizzle, 2)], condMask) ||
-                   test_cc(machine->CondCodes[GET_SWZ(swizzle, 3)], condMask)) {
-                  return GL_FALSE;
-               }
+         case OPCODE_KIL_NV: /* NV_f_p only (conditional) */
+            if (eval_condition(machine, inst)) {
+               return GL_FALSE;
             }
             break;
          case OPCODE_KIL: /* ARB_f_p only */
@@ -1215,20 +1195,12 @@ execute_program( GLcontext *ctx,
                store_vector4( inst, machine, result );
             }
             break;
-         case OPCODE_RET: /* return from subroutine */
-            {
-               /* NOTE: The return is conditional! */
-               const GLuint swizzle = inst->DstReg.CondSwizzle;
-               const GLuint condMask = inst->DstReg.CondMask;
-               if (test_cc(machine->CondCodes[GET_SWZ(swizzle, 0)], condMask) ||
-                   test_cc(machine->CondCodes[GET_SWZ(swizzle, 1)], condMask) ||
-                   test_cc(machine->CondCodes[GET_SWZ(swizzle, 2)], condMask) ||
-                   test_cc(machine->CondCodes[GET_SWZ(swizzle, 3)], condMask)) {
-                  if (machine->StackDepth == 0) {
-                     return GL_TRUE; /* Per GL_NV_vertex_program2 spec */
-                  }
-                  pc = machine->CallStack[--machine->StackDepth];
+         case OPCODE_RET: /* return from subroutine (conditional) */
+            if (eval_condition(machine, inst)) {
+               if (machine->StackDepth == 0) {
+                  return GL_TRUE; /* Per GL_NV_vertex_program2 spec */
                }
+               pc = machine->CallStack[--machine->StackDepth];
             }
             break;
          case OPCODE_RFL: /* reflection vector */

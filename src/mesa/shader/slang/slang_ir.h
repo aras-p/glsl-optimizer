@@ -39,7 +39,7 @@
 
 
 /**
- * Intermediate Representation opcode
+ * Intermediate Representation opcodes
  */
 typedef enum
 {
@@ -53,19 +53,21 @@ typedef enum
    IR_CJUMP1,  /* conditional jump if one (or non-zero) */
    IR_COND,    /* conditional expression/predicate */
 
-   IR_IF,      /* high-level IF */
-   IR_ELSE,    /* high-level ELSE */
-   IR_ENDIF,   /* high-level ENDIF */
+   IR_IF,      /* high-level IF/then/else */
 
    IR_BEGIN_SUB, /* begin subroutine */
    IR_END_SUB,   /* end subroutine */
    IR_RETURN,    /* return from subroutine */
    IR_CALL,      /* call subroutine */
 
-   IR_BEGIN_LOOP,/* begin loop */
-   IR_END_LOOP,  /* end loop */
+   IR_LOOP,      /* high-level loop-begin / loop-end */
    IR_CONT,      /* continue loop */
    IR_BREAK,     /* break loop */
+
+   IR_BREAK_IF_TRUE,
+   IR_BREAK_IF_FALSE,
+   IR_CONT_IF_TRUE,
+   IR_CONT_IF_FALSE,
 
    IR_MOVE,
    IR_ADD,

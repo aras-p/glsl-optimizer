@@ -1,8 +1,8 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.5.2
+ * Version:  6.5.3
  *
- * Copyright (C) 1999-2006  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2007  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -101,19 +101,6 @@ _mesa_DeletePrograms(GLsizei n, const GLuint *ids);
 extern void GLAPIENTRY
 _mesa_GenPrograms(GLsizei n, GLuint *ids);
 
-
-
-/*
- * GL_MESA_program_debug
- */
-
-extern void
-_mesa_ProgramCallbackMESA(GLenum target, GLprogramcallbackMESA callback,
-                          GLvoid *data);
-
-extern void
-_mesa_GetProgramRegisterfvMESA(GLenum target, GLsizei len,
-                               const GLubyte *registerName, GLfloat *v);
 
 
 #endif /* PROGRAM_H */
