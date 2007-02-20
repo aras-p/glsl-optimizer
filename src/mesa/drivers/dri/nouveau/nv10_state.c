@@ -41,13 +41,18 @@ static void nv10ViewportScale(nouveauContextPtr nmesa)
 	GLuint h = ctx->Viewport.Height;
 
 	GLfloat max_depth = (ctx->Viewport.Near + ctx->Viewport.Far) * 0.5;
-	switch (ctx->DrawBuffer->_DepthBuffer->DepthBits) {
-		case 16:
-			max_depth *= 32767.0;
-			break;
-		case 24:
-			max_depth *= 16777215.0;
-			break;
+	if (ctx->DrawBuffer) {
+		switch (ctx->DrawBuffer->_DepthBuffer->DepthBits) {
+			case 16:
+				max_depth *= 32767.0;
+				break;
+			case 24:
+				max_depth *= 16777215.0;
+				break;
+		}
+	} else {
+		/* Default to 24 bits range */	
+		max_depth *= 16777215.0;
 	}
 
 	BEGIN_RING_CACHE(NvSub3D, NV10_TCL_PRIMITIVE_3D_VIEWPORT_SCALE_X, 4);
