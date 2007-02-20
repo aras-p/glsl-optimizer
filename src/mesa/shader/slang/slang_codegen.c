@@ -94,20 +94,11 @@ is_sampler_type(const slang_fully_specified_type *t)
 }
 
 
-static GLuint
-_slang_sizeof_struct(const slang_struct *s)
-{
-   /* XXX TBD */
-   return 0;
-}
-
-
 GLuint
 _slang_sizeof_type_specifier(const slang_type_specifier *spec)
 {
    switch (spec->type) {
    case SLANG_SPEC_VOID:
-      abort();
       return 0;
    case SLANG_SPEC_BOOL:
       return 1;
@@ -147,11 +138,22 @@ _slang_sizeof_type_specifier(const slang_type_specifier *spec)
    case SLANG_SPEC_SAMPLER2DSHADOW:
       return 1; /* special case */
    case SLANG_SPEC_STRUCT:
-      return _slang_sizeof_struct(spec->_struct);
+      {
+         GLuint sum = 0, i;
+         for (i = 0; i < spec->_struct->fields->num_variables; i++) {
+            slang_variable *v = spec->_struct->fields->variables[i];
+            GLuint sz = _slang_sizeof_type_specifier(&v->type.specifier);
+            /* XXX verify padding */
+            if (sz < 4)
+               sz = 4;
+            sum += sz;
+         }
+         return sum;
+      }
    case SLANG_SPEC_ARRAY:
-      return 1; /* XXX */
+      return _slang_sizeof_type_specifier(spec->_array);
    default:
-      abort();
+      _mesa_problem(NULL, "Unexpected type in _slang_sizeof_type_specifier()");
       return 0;
    }
    return 0;
@@ -2612,7 +2614,8 @@ _slang_codegen_global_variable(slang_assemble_ctx *A, slang_variable *var,
    }
    else if (var->type.qualifier == SLANG_QUAL_UNIFORM) {
       /* Uniform variable */
-      const GLint size = _slang_sizeof_type_specifier(&var->type.specifier);
+      const GLint size = _slang_sizeof_type_specifier(&var->type.specifier)
+                         * MAX2(var->array_len, 1);
       if (prog) {
          /* user-defined uniform */
          GLint uniformLoc = _mesa_add_uniform(prog->Parameters, varName, size);
@@ -2625,7 +2628,7 @@ _slang_codegen_global_variable(slang_assemble_ctx *A, slang_variable *var,
           */
          store = _slang_new_ir_storage(PROGRAM_STATE_VAR, -1, size);
       }
-      if (dbg) printf("UNIFORM ");
+      if (dbg) printf("UNIFORM (sz %d) ", size);
    }
    else if (var->type.qualifier == SLANG_QUAL_VARYING) {
       const GLint size = 4; /* XXX fix */
