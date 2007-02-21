@@ -29,18 +29,13 @@
  */
 
 #include "imports.h"
-#include "macros.h"
 #include "slang_builtin.h"
-#include "slang_typeinfo.h"
-#include "slang_codegen.h"
-#include "slang_compile.h"
 #include "slang_ir.h"
 #include "mtypes.h"
 #include "program.h"
 #include "prog_instruction.h"
 #include "prog_parameter.h"
 #include "prog_statevars.h"
-#include "slang_print.h"
 
 
 /**
