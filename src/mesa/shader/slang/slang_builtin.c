@@ -43,341 +43,283 @@
 #include "slang_print.h"
 
 
-
 /**
- * XXX we might consider moving much of this into the prog_statevars.c file
+ * Lookup GL state given a variable name, 0, 1 or 2 indexes and a field.
+ * Allocate room for the state in the given param list and return position
+ * in the list.
  */
-
-
-/**
- * Determine if 'name' is a state variable (pre-defined uniform).
- * If so, create a new program parameter for it, and return the
- * param's index.
- *
- * \param swizzleOut  returns the swizzle needed to access 'float' values
- * \return the state value's position in the parameter list, or -1 if error
- */
-GLint
-_slang_lookup_statevar(const char *name, GLint index,
-                       struct gl_program_parameter_list *paramList,
-                       GLuint *swizzleOut)
-{
-   struct state_info {
-      const char *Name;
-      const GLuint NumRows;  /** for matrices */
-      const GLuint Swizzle;
-      const GLint Indexes[STATE_LENGTH];
-   };
-   static const struct state_info state[] = {
-      { "gl_ModelViewMatrix", 4, SWIZZLE_NOOP,
-        { STATE_MODELVIEW_MATRIX, 0, 0, 0, 0, 0 } },
-      { "gl_NormalMatrix", 3, SWIZZLE_NOOP,
-        { STATE_MODELVIEW_MATRIX, 0, 0, 0, 0, 0 } },
-      { "gl_ProjectionMatrix", 4, SWIZZLE_NOOP,
-        { STATE_PROJECTION_MATRIX, 0, 0, 0, 0, 0 } },
-      { "gl_ModelViewProjectionMatrix", 4, SWIZZLE_NOOP,
-        { STATE_MVP_MATRIX, 0, 0, 0, 0, 0 } },
-      { "gl_TextureMatrix", 4, SWIZZLE_NOOP,
-        { STATE_TEXTURE_MATRIX, 0, 0, 0, 0, 0 } },
-      { "gl_NormalScale", 1, SWIZZLE_NOOP,
-        { STATE_INTERNAL, STATE_NORMAL_SCALE, 0, 0, 0, 0} },
-
-      /* For aggregate/structs we need entries for both the base name
-       * and base.field.
-       */
-      { "gl_DepthRange", 1, SWIZZLE_NOOP,
-        { STATE_DEPTH_RANGE, 0, 0, 0, 0, 0 } },
-      { "gl_DepthRange.near", 1, SWIZZLE_XXXX,
-        { STATE_DEPTH_RANGE, 0, 0, 0, 0, 0 } },
-      { "gl_DepthRange.far", 1, SWIZZLE_YYYY,
-        { STATE_DEPTH_RANGE, 0, 0, 0, 0, 0 } },
-      { "gl_DepthRange.diff", 1, SWIZZLE_ZZZZ,
-        { STATE_DEPTH_RANGE, 0, 0, 0, 0, 0 } },
-
-      { "gl_Point", 1, SWIZZLE_NOOP,
-        { STATE_POINT_SIZE, 0, 0, 0, 0, 0 } },
-      { "gl_Point.size", 1, SWIZZLE_XXXX,
-        { STATE_POINT_SIZE, 0, 0, 0, 0, 0 } },
-      { "gl_Point.sizeMin", 1, SWIZZLE_YYYY,
-        { STATE_POINT_SIZE, 0, 0, 0, 0, 0 } },
-      { "gl_Point.sizeMax", 1, SWIZZLE_ZZZZ,
-        { STATE_POINT_SIZE, 0, 0, 0, 0, 0 } },
-      { "gl_Point.fadeThresholdSize", 1, SWIZZLE_WWWW,
-        { STATE_POINT_SIZE, 0, 0, 0, 0, 0 } },
-      { "gl_Point.distanceConstantAttenuation", 1, SWIZZLE_XXXX,
-        { STATE_POINT_ATTENUATION, 0, 0, 0, 0, 0 } },
-      { "gl_Point.distanceLinearAttenuation", 1, SWIZZLE_YYYY,
-        { STATE_POINT_ATTENUATION, 0, 0, 0, 0, 0 } },
-      { "gl_Point.distanceQuadraticAttenuation", 1, SWIZZLE_ZZZZ,
-        { STATE_POINT_ATTENUATION, 0, 0, 0, 0, 0 } },
-
-      { "gl_FrontMaterial", 1, SWIZZLE_NOOP,
-        { STATE_MATERIAL, 0, STATE_EMISSION, 0, 0, 0 } },
-      { "gl_FrontMaterial.emission", 1, SWIZZLE_NOOP,
-        { STATE_MATERIAL, 0, STATE_EMISSION, 0, 0, 0 } },
-      { "gl_FrontMaterial.ambient", 1, SWIZZLE_NOOP,
-        { STATE_MATERIAL, 0, STATE_AMBIENT, 0, 0, 0 } },
-      { "gl_FrontMaterial.diffuse", 1, SWIZZLE_NOOP,
-        { STATE_MATERIAL, 0, STATE_DIFFUSE, 0, 0, 0 } },
-      { "gl_FrontMaterial.specular", 1, SWIZZLE_NOOP,
-        { STATE_MATERIAL, 0, STATE_SPECULAR, 0, 0, 0 } },
-      { "gl_FrontMaterial.shininess", 1, SWIZZLE_XXXX,
-        { STATE_MATERIAL, 0, STATE_SHININESS, 0, 0, 0 } },
-
-      { "gl_BackMaterial", 1, SWIZZLE_NOOP,
-        { STATE_MATERIAL, 1, STATE_EMISSION, 0, 0, 0 } },
-      { "gl_BackMaterial.emission", 1, SWIZZLE_NOOP,
-        { STATE_MATERIAL, 1, STATE_EMISSION, 0, 0, 0 } },
-      { "gl_BackMaterial.ambient", 1, SWIZZLE_NOOP,
-        { STATE_MATERIAL, 1, STATE_AMBIENT, 0, 0, 0 } },
-      { "gl_BackMaterial.diffuse", 1, SWIZZLE_NOOP,
-        { STATE_MATERIAL, 1, STATE_DIFFUSE, 0, 0, 0 } },
-      { "gl_BackMaterial.specular", 1, SWIZZLE_NOOP,
-        { STATE_MATERIAL, 1, STATE_SPECULAR, 0, 0, 0 } },
-      { "gl_BackMaterial.shininess", 1, SWIZZLE_XXXX,
-        { STATE_MATERIAL, 1, STATE_SHININESS, 0, 0, 0 } },
-
-      { "gl_LightModel", 1, SWIZZLE_NOOP,
-        { STATE_LIGHTMODEL_AMBIENT, 0, 0, 0, 0, 0 } },
-      { "gl_LightModel.ambient", 1, SWIZZLE_NOOP,
-        { STATE_LIGHTMODEL_AMBIENT, 0, 0, 0, 0, 0 } },
-
-      { "gl_FrontLightModelProduct", 1, SWIZZLE_NOOP,
-        { STATE_LIGHTMODEL_SCENECOLOR, 0, 0, 0, 0, 0 } },
-      { "gl_FrontLightModelProduct.sceneColor", 1, SWIZZLE_NOOP,
-        { STATE_LIGHTMODEL_SCENECOLOR, 0, 0, 0, 0, 0 } },
-
-      { "gl_BackLightModelProduct", 1, SWIZZLE_NOOP,
-        { STATE_LIGHTMODEL_SCENECOLOR, 1, 0, 0, 0, 0 } },
-      { "gl_BackLightModelProduct.sceneColor", 1, SWIZZLE_NOOP,
-        { STATE_LIGHTMODEL_SCENECOLOR, 1, 0, 0, 0, 0 } },
-
-      { "gl_FrontLightProduct", 1, SWIZZLE_NOOP,
-        { STATE_LIGHTPROD, 0, STATE_AMBIENT, 0, 0, 0 } },
-
-
-      { "gl_Fog", 1, SWIZZLE_NOOP,
-        { STATE_FOG, STATE_FOG_COLOR, 0, 0, 0, 0 } },
-      { "gl_Fog.color", 1, SWIZZLE_NOOP,
-        { STATE_FOG, STATE_FOG_COLOR, 0, 0, 0, 0 } },
-      { "gl_Fog.density", 1, SWIZZLE_XXXX,
-        { STATE_FOG, STATE_FOG_PARAMS, 0, 0, 0, 0 } },
-      { "gl_Fog.start", 1, SWIZZLE_YYYY,
-        { STATE_FOG, STATE_FOG_PARAMS, 0, 0, 0, 0 } },
-      { "gl_Fog.end", 1, SWIZZLE_ZZZZ,
-        { STATE_FOG, STATE_FOG_PARAMS, 0, 0, 0, 0 } },
-      { "gl_Fog.scale", 1, SWIZZLE_WWWW,
-        { STATE_FOG, STATE_FOG_PARAMS, 0, 0, 0, 0 } },
-
-      { "gl_ClipPlane", 1, SWIZZLE_NOOP,
-        { STATE_CLIPPLANE, 0, 0, 0, 0, 0 } },
-
-      { NULL, 0, 0, {0, 0, 0, 0, 0, 0} }
-   };
-   GLuint i;
-
-   for (i = 0; state[i].Name; i++) {
-      if (strcmp(state[i].Name, name) == 0) {
-         /* found */
-         *swizzleOut = state[i].Swizzle;
-         if (paramList) {
-            if (state[i].NumRows > 1) {
-               /* a matrix */
-               GLuint j;
-               GLint pos[4], indexesCopy[STATE_LENGTH];
-               /* make copy of state tokens */
-               for (j = 0; j < STATE_LENGTH; j++)
-                  indexesCopy[j] = state[i].Indexes[j];
-               /* load rows */
-               for (j = 0; j < state[i].NumRows; j++) {
-                  indexesCopy[2] = indexesCopy[3] = j; /* jth row of matrix */
-                  pos[j] = _mesa_add_state_reference(paramList, indexesCopy);
-                  assert(pos[j] >= 0);
-               }
-               return pos[0];
-            }
-            else {
-               /* non-matrix state */
-               GLint pos
-                  = _mesa_add_state_reference(paramList, state[i].Indexes);
-               assert(pos >= 0);
-               return pos;
-            }
-         }
-      }
-   }
-   return -1;
-}
-
-
-GLint
-_slang_lookup_statevar_field(const char *base, const char *field,
-                             struct gl_program_parameter_list *paramList,
-                             GLuint *swizzleOut)
-{
-   GLint pos = -1;
-   const GLint len = _mesa_strlen(base)
-                   + _mesa_strlen(field) + 2;
-   char *name = (char *) _mesa_malloc(len);
-
-   if (!name)
-      return -1;
-
-   _mesa_strcpy(name, base);
-   /*_mesa_*/strcat(name, ".");
-   /*_mesa_*/strcat(name, field);
-   printf("FULL NAME: %s\n", name);
-
-   pos = _slang_lookup_statevar(name, 0, paramList, swizzleOut);
-
-   _mesa_free(name);
-
-   return pos;
-}
-
-
-struct field_info {
-   const char *Name;
-   gl_state_index Token;
-   GLint TokenPos;
-   GLuint Swizzle;
-};
-
-#define MT_FIELD { NULL, 0, -1, 0 }
-#define MAX_FIELDS 5
-#define INDEX_POS 1000
-
-struct state_uniform_info {
-   const char *Name;
-   gl_state_index StateTokens[2];
-   struct field_info Fields[MAX_FIELDS];
-};
-
-
-
-static const struct state_uniform_info Uniforms[] = {
-   { "gl_ModelViewMatrix", { STATE_MODELVIEW_MATRIX, INDEX_POS },
-     { MT_FIELD, MT_FIELD, MT_FIELD, MT_FIELD, MT_FIELD}
-   },
-   { "gl_ProjectionMatrix", { STATE_PROJECTION_MATRIX, INDEX_POS },
-     { MT_FIELD, MT_FIELD, MT_FIELD, MT_FIELD, MT_FIELD}
-   },
-   { "gl_ModelViewProjectionMatrix", { STATE_MVP_MATRIX, INDEX_POS },
-     { MT_FIELD, MT_FIELD, MT_FIELD, MT_FIELD, MT_FIELD}
-   },
-   { "gl_NormalMatrix", { STATE_MODELVIEW_MATRIX, INDEX_POS },
-     { MT_FIELD, MT_FIELD, MT_FIELD, MT_FIELD, MT_FIELD}
-   },
-   { "gl_TextureMatrix", { STATE_TEXTURE_MATRIX, INDEX_POS },
-     { MT_FIELD, MT_FIELD, MT_FIELD, MT_FIELD, MT_FIELD}
-   },
-
-   { "gl_ClipPlane", { STATE_CLIPPLANE, INDEX_POS },
-     { MT_FIELD, MT_FIELD, MT_FIELD, MT_FIELD, MT_FIELD}
-   },
-
-   { "gl_DepthRange", { STATE_DEPTH_RANGE, 0 },
-     {
-        { "near", 0, -1, SWIZZLE_XXXX },
-        { "far", 0, -1, SWIZZLE_YYYY },
-        { "diff", 0, -1, SWIZZLE_ZZZZ },
-        MT_FIELD,
-        MT_FIELD
-     }
-   },
-
-   { "gl_Fog", { STATE_FOG, 0 },
-     {
-        { "color", STATE_FOG_COLOR, 1, SWIZZLE_NOOP },
-        { "density", STATE_FOG_PARAMS, 1, SWIZZLE_XXXX },
-        { "start", STATE_FOG_PARAMS, 1, SWIZZLE_YYYY },
-        { "end", STATE_FOG_PARAMS, 1, SWIZZLE_ZZZZ },
-        { "scale", STATE_FOG_PARAMS, 1, SWIZZLE_WWWW }
-     }
-   },
-
-   { NULL, { 0, 0 },
-     { MT_FIELD, MT_FIELD, MT_FIELD, MT_FIELD, MT_FIELD }
-   }
-};
-
-
 static GLint
-lookup_statevar(const char *var, GLint index, const char *field,
+lookup_statevar(const char *var, GLint index1, GLint index2, const char *field,
                 GLuint *swizzleOut,
                 struct gl_program_parameter_list *paramList)
 {
    gl_state_index tokens[STATE_LENGTH];
-   GLuint i, j;
-   GLint pos;
+   GLuint i;
+   GLboolean isMatrix = GL_FALSE;
 
    for (i = 0; i < STATE_LENGTH; i++) {
       tokens[i] = 0;
    }
+   *swizzleOut = SWIZZLE_NOOP;
 
-   for (i = 0; Uniforms[i].Name; i++) {
-      if (strcmp(var, Uniforms[i].Name) == 0) {
-         /* found the uniform */
-
-         for (j = 0; j < 2; j++) {
-            tokens[j] = Uniforms[i].StateTokens[j];
-            if (tokens[j] == INDEX_POS) {
-               /* replace INDEX_POS with actual array index */
-               assert(index >= 0);
-               tokens[j] = index;
-            }
-         }
-
-         if (field) {
-            /* extra work for var.field */
-            for (j = 0; j < MAX_FIELDS; j++) {
-               if (!Uniforms[i].Fields[j].Name) {
-                  /* field not found! */
-                  _mesa_problem(NULL, "field not found");
-                  return -1;
-               }
-               else if (strcmp(field, Uniforms[i].Fields[j].Name) == 0) {
-                  /* found the field */
-                  GLint tokenPos = Uniforms[i].Fields[j].TokenPos;
-                  if (tokenPos>= 0) {
-                     tokens[tokenPos] = Uniforms[i].Fields[j].Token;
-                  }
-                  *swizzleOut = Uniforms[i].Fields[j].Swizzle;
-                  break;
-               }
-
-            }
-         }
-
-         if (tokens[0] == STATE_MODELVIEW_MATRIX ||
-             tokens[0] == STATE_PROJECTION_MATRIX ||
-             tokens[0] == STATE_MVP_MATRIX ||
-             tokens[0] == STATE_TEXTURE_MATRIX ||
-             tokens[0] == STATE_PROGRAM_MATRIX) {
-            /* a matrix */
-            GLuint j;
-            GLint pos[4];
-            gl_state_index indexesCopy[STATE_LENGTH];
-            /* make copy of state tokens */
-            for (j = 0; j < STATE_LENGTH; j++)
-               indexesCopy[j] = tokens[j];
-            /* load rows */
-            for (j = 0; j < 4/*state[i].NumRows*/; j++) {
-               indexesCopy[2] = indexesCopy[3] = j; /* jth row of matrix */
-               pos[j] = _mesa_add_state_reference(paramList, (GLint*) indexesCopy);
-               assert(pos[j] >= 0);
-            }
-            return pos[0] + index;
-         }
-
-         pos = _mesa_add_state_reference(paramList, (GLint *) tokens);
-         assert(pos >= 0);
-         return pos;
+   if (strcmp(var, "gl_ModelViewMatrix") == 0) {
+      tokens[0] = STATE_MODELVIEW_MATRIX;
+      isMatrix = GL_TRUE;
+   }
+   else if (strcmp(var, "gl_ModelProjectionMatrix") == 0) {
+      tokens[0] = STATE_PROJECTION_MATRIX;
+      isMatrix = GL_TRUE;
+   }
+   else if (strcmp(var, "gl_ModelViewProjectionMatrix") == 0) {
+      tokens[0] = STATE_MVP_MATRIX;
+      isMatrix = GL_TRUE;
+   }
+   else if (strcmp(var, "gl_NormalMatrix") == 0) {
+      tokens[0] = STATE_MODELVIEW_MATRIX;
+      isMatrix = GL_TRUE;
+   }
+   else if (strcmp(var, "gl_TextureMatrix") == 0) {
+      tokens[0] = STATE_TEXTURE_MATRIX;
+      if (index2 >= 0)
+         tokens[1] = index2;
+      isMatrix = GL_TRUE;
+   }
+   else if (strcmp(var, "gl_DepthRange") == 0) {
+      tokens[0] = STATE_DEPTH_RANGE;
+      if (strcmp(field, "near") == 0) {
+         *swizzleOut = SWIZZLE_XXXX;
+      }
+      else if (strcmp(field, "far") == 0) {
+         *swizzleOut = SWIZZLE_YYYY;
+      }
+      else if (strcmp(field, "diff") == 0) {
+         *swizzleOut = SWIZZLE_ZZZZ;
+      }
+      else {
+         return -1;
       }
    }
-   return -1;
-}
+   else if (strcmp(var, "gl_ClipPlane") == 0) {
+      tokens[0] = STATE_CLIPPLANE;
+      tokens[1] = index1;
+   }
+   else if (strcmp(var, "gl_FrontMaterial") == 0 ||
+            strcmp(var, "gl_BackMaterial") == 0) {
+      tokens[0] = STATE_MATERIAL;
+      if (strcmp(var, "gl_FrontMaterial") == 0)
+         tokens[1] = 0;
+      else
+         tokens[1] = 1;
+      if (strcmp(field, "emission") == 0) {
+         tokens[2] = STATE_EMISSION;
+      }
+      else if (strcmp(field, "ambient") == 0) {
+         tokens[2] = STATE_AMBIENT;
+      }
+      else if (strcmp(field, "diffuse") == 0) {
+         tokens[2] = STATE_DIFFUSE;
+      }
+      else if (strcmp(field, "specular") == 0) {
+         tokens[2] = STATE_SPECULAR;
+      }
+      else if (strcmp(field, "shininess") == 0) {
+         tokens[2] = STATE_SHININESS;
+         *swizzleOut = SWIZZLE_XXXX;
+      }
+      else {
+         return -1;
+      }
+   }
+   else if (strcmp(var, "gl_LightSource") == 0) {
+      tokens[0] = STATE_LIGHT;
+      tokens[1] = index1;
+      if (strcmp(field, "ambient") == 0) {
+         tokens[2] = STATE_AMBIENT;
+      }
+      else if (strcmp(field, "diffuse") == 0) {
+         tokens[2] = STATE_DIFFUSE;
+      }
+      else if (strcmp(field, "specular") == 0) {
+         tokens[2] = STATE_SPECULAR;
+      }
+      else if (strcmp(field, "position") == 0) {
+         tokens[2] = STATE_POSITION;
+      }
+      else if (strcmp(field, "halfVector") == 0) {
+         tokens[2] = STATE_HALF_VECTOR;
+      }
+      else if (strcmp(field, "spotDirection") == 0) {
+         tokens[2] = STATE_SPOT_DIRECTION;
+      }
+      else if (strcmp(field, "spotCosCutoff") == 0) {
+         tokens[2] = STATE_SPOT_DIRECTION;
+         *swizzleOut = SWIZZLE_WWWW;
+      }
+      else if (strcmp(field, "spotCutoff") == 0) {
+         tokens[2] = STATE_SPOT_CUTOFF;
+         *swizzleOut = SWIZZLE_XXXX;
+      }
+      else if (strcmp(field, "spotExponent") == 0) {
+         tokens[2] = STATE_ATTENUATION;
+         *swizzleOut = SWIZZLE_WWWW;
+      }
+      else if (strcmp(field, "constantAttenuation") == 0) {
+         tokens[2] = STATE_ATTENUATION;
+         *swizzleOut = SWIZZLE_XXXX;
+      }
+      else if (strcmp(field, "linearAttenuation") == 0) {
+         tokens[2] = STATE_ATTENUATION;
+         *swizzleOut = SWIZZLE_YYYY;
+      }
+      else if (strcmp(field, "quadraticAttenuation") == 0) {
+         tokens[2] = STATE_ATTENUATION;
+         *swizzleOut = SWIZZLE_ZZZZ;
+      }
+      else {
+         return -1;
+      }
+   }
+   else if (strcmp(var, "gl_LightModel") == 0) {
+      if (strcmp(field, "ambient") == 0) {
+         tokens[0] = STATE_LIGHTMODEL_AMBIENT;
+      }
+      else {
+         return -1;
+      }
+   }
+   else if (strcmp(var, "gl_FrontLightModelProduct") == 0) {
+      if (strcmp(field, "ambient") == 0) {
+         tokens[0] = STATE_LIGHTMODEL_SCENECOLOR;
+         tokens[1] = 0;
+      }
+      else {
+         return -1;
+      }
+   }
+   else if (strcmp(var, "gl_BackLightModelProduct") == 0) {
+      if (strcmp(field, "ambient") == 0) {
+         tokens[0] = STATE_LIGHTMODEL_SCENECOLOR;
+         tokens[1] = 1;
+      }
+      else {
+         return -1;
+      }
+   }
+   else if (strcmp(var, "gl_FrontLightProduct") == 0 ||
+            strcmp(var, "gl_BackLightProduct") == 0) {
+      tokens[0] = STATE_LIGHTPROD;
+      tokens[1] = index1; /* light number */
+      if (strcmp(var, "gl_FrontLightProduct") == 0) {
+         tokens[2] = 0; /* front */
+      }
+      else {
+         tokens[2] = 1; /* back */
+      }
+      if (strcmp(field, "ambient") == 0) {
+         tokens[3] = STATE_AMBIENT;
+      }
+      else if (strcmp(field, "diffuset") == 0) {
+         tokens[3] = STATE_DIFFUSE;
+      }
+      else if (strcmp(field, "specular") == 0) {
+         tokens[3] = STATE_SPECULAR;
+      }
+      else {
+         return -1;
+      }
+   }
+   else if (strcmp(var, "gl_TextureEnvColor") == 0) {
+      tokens[0] = STATE_TEXENV_COLOR;
+      tokens[1] = index1;
+   }
+   else if (strcmp(var, "gl_EyePlaneS") == 0) {
+      tokens[0] = STATE_TEXGEN;
+      tokens[1] = index1; /* tex unit */
+      tokens[2] = STATE_TEXGEN_EYE_S;
+   }
+   else if (strcmp(var, "gl_EyePlaneT") == 0) {
+      tokens[0] = STATE_TEXGEN;
+      tokens[1] = index1; /* tex unit */
+      tokens[2] = STATE_TEXGEN_EYE_T;
+   }
+   else if (strcmp(var, "gl_EyePlaneR") == 0) {
+      tokens[0] = STATE_TEXGEN;
+      tokens[1] = index1; /* tex unit */
+      tokens[2] = STATE_TEXGEN_EYE_R;
+   }
+   else if (strcmp(var, "gl_EyePlaneQ") == 0) {
+      tokens[0] = STATE_TEXGEN;
+      tokens[1] = index1; /* tex unit */
+      tokens[2] = STATE_TEXGEN_EYE_Q;
+   }
+   else if (strcmp(var, "gl_ObjectPlaneS") == 0) {
+      tokens[0] = STATE_TEXGEN;
+      tokens[1] = index1; /* tex unit */
+      tokens[2] = STATE_TEXGEN_OBJECT_S;
+   }
+   else if (strcmp(var, "gl_ObjectPlaneT") == 0) {
+      tokens[0] = STATE_TEXGEN;
+      tokens[1] = index1; /* tex unit */
+      tokens[2] = STATE_TEXGEN_OBJECT_T;
+   }
+   else if (strcmp(var, "gl_ObjectPlaneT") == 0) {
+      tokens[0] = STATE_TEXGEN;
+      tokens[1] = index1; /* tex unit */
+      tokens[2] = STATE_TEXGEN_OBJECT_T;
+   }
+   else if (strcmp(var, "gl_ObjectPlaneT") == 0) {
+      tokens[0] = STATE_TEXGEN;
+      tokens[1] = index1; /* tex unit */
+      tokens[2] = STATE_TEXGEN_OBJECT_T;
+   }
+   else if (strcmp(var, "gl_Fog") == 0) {
+      tokens[0] = STATE_FOG;
+      if (strcmp(field, "color") == 0) {
+         tokens[1] = STATE_FOG_COLOR;
+      }
+      else if (strcmp(field, "density") == 0) {
+         tokens[1] = STATE_FOG_PARAMS;
+         *swizzleOut = SWIZZLE_XXXX;
+      }
+      else if (strcmp(field, "start") == 0) {
+         tokens[1] = STATE_FOG_PARAMS;
+         *swizzleOut = SWIZZLE_YYYY;
+      }
+      else if (strcmp(field, "end") == 0) {
+         tokens[1] = STATE_FOG_PARAMS;
+         *swizzleOut = SWIZZLE_ZZZZ;
+      }
+      else if (strcmp(field, "scale") == 0) {
+         tokens[1] = STATE_FOG_PARAMS;
+         *swizzleOut = SWIZZLE_WWWW;
+      }
+      else {
+         return -1;
+      }
+   }
+   else {
+      return -1;
+   }
 
+   if (isMatrix) {
+      /* load all four columns of matrix */
+      GLint pos[4];
+      GLuint j;
+      for (j = 0; j < 4; j++) {
+         tokens[2] = tokens[3] = j; /* jth row of matrix */
+         pos[j] = _mesa_add_state_reference(paramList, (GLint *) tokens);
+         assert(pos[j] >= 0);
+         ASSERT(pos[j] >= 0);
+      }
+      return pos[0] + index1;
+   }
+   else {
+      /* allocate a single register */
+      GLint pos = _mesa_add_state_reference(paramList, (GLint *) tokens);
+      ASSERT(pos >= 0);
+      return pos;
+   }
+}
 
 
 /**
@@ -390,16 +332,17 @@ lookup_statevar(const char *var, GLint index, const char *field,
  *
  * Currently, all pre-defined uniforms are in one of these forms:
  *   var
- *   var[index]
+ *   var[i]
  *   var.field
- *   var[index].field
+ *   var[i].field
+ *   var[i][j]
  */
 GLint
 _slang_alloc_statevar(slang_ir_node *n,
                       struct gl_program_parameter_list *paramList)
 {
    const char *field = NULL, *var;
-   GLint index = -1, pos;
+   GLint index1 = -1, index2 = -1, pos;
    GLuint swizzle;
 
    if (n->Opcode == IR_FIELD) {
@@ -410,14 +353,21 @@ _slang_alloc_statevar(slang_ir_node *n,
    if (n->Opcode == IR_ELEMENT) {
       /* XXX can only handle constant indexes for now */
       assert(n->Children[1]->Opcode == IR_FLOAT);
-      index = (GLint) n->Children[1]->Value[0];
+      index1 = (GLint) n->Children[1]->Value[0];
+      n = n->Children[0];
+   }
+
+   if (n->Opcode == IR_ELEMENT) {
+      /* XXX can only handle constant indexes for now */
+      assert(n->Children[1]->Opcode == IR_FLOAT);
+      index2 = (GLint) n->Children[1]->Value[0];
       n = n->Children[0];
    }
 
    assert(n->Opcode == IR_VAR);
    var = (char *) n->Var->a_name;
 
-   pos = lookup_statevar(var, index, field, &swizzle, paramList);
+   pos = lookup_statevar(var, index1, index2, field, &swizzle, paramList);
    assert(pos >= 0);
    if (pos >= 0) {
       n->Store->Index = pos;

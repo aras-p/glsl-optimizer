@@ -32,17 +32,6 @@
 
 
 extern GLint
-_slang_lookup_statevar(const char *name, GLint index,
-                       struct gl_program_parameter_list *paramList,
-                       GLuint *swizzleOut);
-
-
-extern GLint
-_slang_lookup_statevar_field(const char *base, const char *field,
-                             struct gl_program_parameter_list *paramList,
-                             GLuint *swizzleOut);
-
-extern GLint
 _slang_alloc_statevar(slang_ir_node *n,
                       struct gl_program_parameter_list *paramList);
 
