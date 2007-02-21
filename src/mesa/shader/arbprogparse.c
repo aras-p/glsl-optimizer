@@ -1138,7 +1138,7 @@ parse_state_single_item (GLcontext * ctx, const GLubyte ** inst,
                state_tokens[2] = STATE_ATTENUATION;
                break;
             case LIGHT_HALF:
-               state_tokens[2] = STATE_HALF;
+               state_tokens[2] = STATE_HALF_VECTOR;
                break;
             case LIGHT_SPOT_DIRECTION:
                state_tokens[2] = STATE_SPOT_DIRECTION;
@@ -1276,11 +1276,13 @@ parse_state_single_item (GLcontext * ctx, const GLubyte ** inst,
       case STATE_POINT:
          switch (*(*inst++)) {
             case POINT_SIZE:
-               state_tokens[0] = STATE_POINT_SIZE;
+               state_tokens[0] = STATE_POINT;
+               state_tokens[1] = STATE_POINT_SIZE;
                break;
 
             case POINT_ATTENUATION:
-               state_tokens[0] = STATE_POINT_ATTENUATION;
+               state_tokens[0] = STATE_POINT;
+               state_tokens[1] = STATE_POINT_ATTENUATION;
                break;
          }
          break;
@@ -3376,6 +3378,10 @@ print_state_token (GLint token)
 
       case STATE_CLIPPLANE:
          fprintf (stderr, "STATE_CLIPPLANE ");
+         break;
+
+      case STATE_POINT:
+         fprintf (stderr, "STATE_POINT ");
          break;
 
       case STATE_POINT_SIZE:

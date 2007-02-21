@@ -116,7 +116,10 @@ _mesa_fetch_state(GLcontext *ctx, const gl_state_index state[],
             COPY_3V(value, ctx->Light.Light[ln].EyeDirection);
             value[3] = ctx->Light.Light[ln]._CosCutoff;
             return;
-         case STATE_HALF:
+         case STATE_SPOT_CUTOFF:
+            value[0] = ctx->Light.Light[ln].SpotCutoff;
+            return;
+         case STATE_HALF_VECTOR:
             {
                GLfloat eye_z[] = {0, 0, 1};
 					
@@ -261,17 +264,20 @@ _mesa_fetch_state(GLcontext *ctx, const gl_state_index state[],
          COPY_4V(value, ctx->Transform.EyeUserPlane[plane]);
       }
       return;
-   case STATE_POINT_SIZE:
-      value[0] = ctx->Point.Size;
-      value[1] = ctx->Point.MinSize;
-      value[2] = ctx->Point.MaxSize;
-      value[3] = ctx->Point.Threshold;
-      return;
-   case STATE_POINT_ATTENUATION:
-      value[0] = ctx->Point.Params[0];
-      value[1] = ctx->Point.Params[1];
-      value[2] = ctx->Point.Params[2];
-      value[3] = 1.0F;
+   case STATE_POINT:
+      if (state[1] == STATE_POINT_SIZE) {
+         value[0] = ctx->Point.Size;
+         value[1] = ctx->Point.MinSize;
+         value[2] = ctx->Point.MaxSize;
+         value[3] = ctx->Point.Threshold;
+      }
+      else {
+         ASSERT(state[1] == STATE_POINT_ATTENUATION);
+         value[0] = ctx->Point.Params[0];
+         value[1] = ctx->Point.Params[1];
+         value[2] = ctx->Point.Params[2];
+         value[3] = 1.0F;
+      }
       return;
    case STATE_MODELVIEW_MATRIX:
    case STATE_PROJECTION_MATRIX:
@@ -399,12 +405,13 @@ _mesa_fetch_state(GLcontext *ctx, const gl_state_index state[],
       }
       return;
 
+   case STATE_NORMAL_SCALE:
+      ASSIGN_4V(value, ctx->_ModelViewInvScale, 0, 0, 1);
+      return;
+
    case STATE_INTERNAL:
       {
          switch (state[1]) {
-	    case STATE_NORMAL_SCALE:
-               ASSIGN_4V(value, ctx->_ModelViewInvScale, 0, 0, 1);
-               break;
 	    case STATE_TEXRECT_SCALE: {
    	       const int unit = (int) state[2];
 	       const struct gl_texture_object *texObj = ctx->Texture.Unit[unit]._Current;
@@ -462,8 +469,7 @@ _mesa_program_state_flags(const GLint state[STATE_LENGTH])
    case STATE_CLIPPLANE:
       return _NEW_TRANSFORM;
 
-   case STATE_POINT_SIZE:
-   case STATE_POINT_ATTENUATION:
+   case STATE_POINT:
       return _NEW_POINT;
 
    case STATE_MODELVIEW_MATRIX:
@@ -484,10 +490,11 @@ _mesa_program_state_flags(const GLint state[STATE_LENGTH])
    case STATE_VERTEX_PROGRAM:
       return _NEW_PROGRAM;
 
+   case STATE_NORMAL_SCALE:
+      return _NEW_MODELVIEW;
+
    case STATE_INTERNAL:
       switch (state[1]) {
-      case STATE_NORMAL_SCALE:
-	 return _NEW_MODELVIEW;
       case STATE_TEXRECT_SCALE:
 	 return _NEW_TEXTURE;
       default:
@@ -520,7 +527,7 @@ append_token(char *dst, gl_state_index k)
 {
    switch (k) {
    case STATE_MATERIAL:
-      append(dst, "material.");
+      append(dst, "material");
       break;
    case STATE_LIGHT:
       append(dst, "light");
@@ -548,26 +555,29 @@ append_token(char *dst, gl_state_index k)
    case STATE_CLIPPLANE:
       append(dst, "clip");
       break;
+   case STATE_POINT:
+      append(dst, "point");
+      break;
    case STATE_POINT_SIZE:
-      append(dst, "point.size");
+      append(dst, "size");
       break;
    case STATE_POINT_ATTENUATION:
-      append(dst, "point.attenuation");
+      append(dst, "attenuation");
       break;
    case STATE_MODELVIEW_MATRIX:
-      append(dst, "modelview");
+      append(dst, "matrix.modelview");
       break;
    case STATE_PROJECTION_MATRIX:
-      append(dst, "projection");
+      append(dst, "matrix.projection");
       break;
    case STATE_MVP_MATRIX:
-      append(dst, "mvp");
+      append(dst, "matrix.mvp");
       break;
    case STATE_TEXTURE_MATRIX:
-      append(dst, "texture");
+      append(dst, "matrix.texture");
       break;
    case STATE_PROGRAM_MATRIX:
-      append(dst, "program");
+      append(dst, "matrix.program");
       break;
    case STATE_MATRIX_INVERSE:
       append(dst, ".inverse");
@@ -579,22 +589,22 @@ append_token(char *dst, gl_state_index k)
       append(dst, ".invtrans");
       break;
    case STATE_AMBIENT:
-      append(dst, "ambient");
+      append(dst, ".ambient");
       break;
    case STATE_DIFFUSE:
-      append(dst, "diffuse");
+      append(dst, ".diffuse");
       break;
    case STATE_SPECULAR:
-      append(dst, "specular");
+      append(dst, ".specular");
       break;
    case STATE_EMISSION:
-      append(dst, "emission");
+      append(dst, ".emission");
       break;
    case STATE_SHININESS:
-      append(dst, "shininess");
+      append(dst, "lshininess");
       break;
-   case STATE_HALF:
-      append(dst, "half");
+   case STATE_HALF_VECTOR:
+      append(dst, ".half");
       break;
    case STATE_POSITION:
       append(dst, ".position");
@@ -604,6 +614,9 @@ append_token(char *dst, gl_state_index k)
       break;
    case STATE_SPOT_DIRECTION:
       append(dst, ".spot.direction");
+      break;
+   case STATE_SPOT_CUTOFF:
+      append(dst, ".spot.cutoff");
       break;
    case STATE_TEXGEN_EYE_S:
       append(dst, "eye.s");
@@ -644,8 +657,10 @@ append_token(char *dst, gl_state_index k)
    case STATE_LOCAL:
       append(dst, "local");
       break;
-   case STATE_INTERNAL:
    case STATE_NORMAL_SCALE:
+      append(dst, "normalScale");
+      break;
+   case STATE_INTERNAL:
    case STATE_POSITION_NORMALIZED:
       append(dst, "(internal)");
       break;
@@ -667,7 +682,7 @@ static void
 append_index(char *dst, GLint index)
 {
    char s[20];
-   _mesa_sprintf(s, "[%d].", index);
+   _mesa_sprintf(s, "[%d]", index);
    append(dst, s);
 }
 
@@ -691,7 +706,6 @@ _mesa_program_state_string(const GLint state[STATE_LENGTH])
       append_token(str, (gl_state_index) state[2]);
       break;
    case STATE_LIGHT:
-      append(str, "light");
       append_index(str, state[1]); /* light number [i]. */
       append_token(str, (gl_state_index) state[2]); /* coefficients */
       break;
@@ -725,10 +739,10 @@ _mesa_program_state_string(const GLint state[STATE_LENGTH])
       break;
    case STATE_CLIPPLANE:
       append_index(str, state[1]); /* plane [i] */
-      append(str, "plane");
+      append(str, ".plane");
       break;
-   case STATE_POINT_SIZE:
-   case STATE_POINT_ATTENUATION:
+   case STATE_POINT:
+      append_token(str, state[1]);
       break;
    case STATE_MODELVIEW_MATRIX:
    case STATE_PROJECTION_MATRIX:
@@ -746,8 +760,9 @@ _mesa_program_state_string(const GLint state[STATE_LENGTH])
          const GLuint firstRow = (GLuint) state[2];
          const GLuint lastRow = (GLuint) state[3];
          const gl_state_index modifier = (gl_state_index) state[4];
-         append_token(str, mat);
-         if (index)
+         if (index ||
+             mat == STATE_TEXTURE_MATRIX ||
+             mat == STATE_PROGRAM_MATRIX)
             append_index(str, index);
          if (modifier)
             append_token(str, modifier);
