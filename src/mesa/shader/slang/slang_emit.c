@@ -513,6 +513,7 @@ new_instruction(struct gl_program *prog, gl_inst_opcode opcode)
 }
 
 
+#if 0
 /**
  * Return pointer to last instruction in program.
  */
@@ -524,6 +525,7 @@ prev_instruction(struct gl_program *prog)
    else
       return prog->Instructions + prog->NumInstructions - 1;
 }
+#endif
 
 
 static struct prog_instruction *
@@ -1354,24 +1356,6 @@ emit_struct_field(slang_var_table *vt, slang_ir_node *n,
       n->Store->Index = _slang_alloc_statevar(n, prog->Parameters);
       return NULL;
    }
-#if 0
-   if (n->Children[0]->Store->File == PROGRAM_STATE_VAR) {
-      /* state variable sub-field */
-      GLint pos;
-      GLuint swizzle;
-      assert(n->Children[0]->Opcode == IR_VAR);
-      pos = _slang_lookup_statevar_field((char *) n->Children[0]->Var->a_name,
-                                         n->Target,
-                                         prog->Parameters, &swizzle);
-      if (pos < 0) {
-         RETURN_ERROR2("Undefined structure member", n->Target, 0);
-      }
-      assert(n->Store);
-      assert(n->Store->File == PROGRAM_STATE_VAR);
-      n->Store->Index = pos;
-      n->Store->Swizzle = swizzle;
-   }
-#endif
    else {
       _mesa_problem(NULL, "structs/fields not supported yet");
    }
