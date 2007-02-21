@@ -1354,7 +1354,7 @@ emit_struct_field(slang_var_table *vt, slang_ir_node *n,
       n->Store->Index = _slang_alloc_statevar(n, prog->Parameters);
       return NULL;
    }
-
+#if 0
    if (n->Children[0]->Store->File == PROGRAM_STATE_VAR) {
       /* state variable sub-field */
       GLint pos;
@@ -1371,6 +1371,7 @@ emit_struct_field(slang_var_table *vt, slang_ir_node *n,
       n->Store->Index = pos;
       n->Store->Swizzle = swizzle;
    }
+#endif
    else {
       _mesa_problem(NULL, "structs/fields not supported yet");
    }

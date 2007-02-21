@@ -243,14 +243,17 @@ _mesa_fetch_state(GLcontext *ctx, const gl_state_index state[],
          COPY_4V(value, ctx->Texture.Unit[unit].EnvColor);
       }			
       return;
-   case STATE_FOG_COLOR:
-      COPY_4V(value, ctx->Fog.Color);
-      return;
-   case STATE_FOG_PARAMS:
-      value[0] = ctx->Fog.Density;
-      value[1] = ctx->Fog.Start;
-      value[2] = ctx->Fog.End;
-      value[3] = 1.0F / (ctx->Fog.End - ctx->Fog.Start);
+   case STATE_FOG:
+      if (state[1] == STATE_FOG_COLOR) {
+         COPY_4V(value, ctx->Fog.Color);
+      }
+      else {
+         ASSERT(state[1] == STATE_FOG_PARAMS);
+         value[0] = ctx->Fog.Density;
+         value[1] = ctx->Fog.Start;
+         value[2] = ctx->Fog.End;
+         value[3] = 1.0F / (ctx->Fog.End - ctx->Fog.Start);
+      }
       return;
    case STATE_CLIPPLANE:
       {
@@ -270,7 +273,12 @@ _mesa_fetch_state(GLcontext *ctx, const gl_state_index state[],
       value[2] = ctx->Point.Params[2];
       value[3] = 1.0F;
       return;
-   case STATE_MATRIX:
+   case STATE_MODELVIEW_MATRIX:
+   case STATE_PROJECTION_MATRIX:
+   case STATE_MVP_MATRIX:
+   case STATE_TEXTURE_MATRIX:
+   case STATE_PROGRAM_MATRIX:
+      /*case STATE_MATRIX:*/
       {
          /* state[1] = modelview, projection, texture, etc. */
          /* state[2] = which texture matrix or program matrix */
@@ -279,26 +287,38 @@ _mesa_fetch_state(GLcontext *ctx, const gl_state_index state[],
          /* state[5] = transpose, inverse or invtrans */
 
          const GLmatrix *matrix;
+#if 0
          const gl_state_index mat = state[1];
          const GLuint index = (GLuint) state[2];
          const GLuint firstRow = (GLuint) state[3];
          const GLuint lastRow = (GLuint) state[4];
          const gl_state_index modifier = state[5];
+#else
+         const gl_state_index mat = state[0];
+         const GLuint index = (GLuint) state[1];
+         const GLuint firstRow = (GLuint) state[2];
+         const GLuint lastRow = (GLuint) state[3];
+         const gl_state_index modifier = state[4];
+#endif
          const GLfloat *m;
          GLuint row, i;
-         if (mat == STATE_MODELVIEW) {
+         ASSERT(firstRow >= 0);
+         ASSERT(firstRow < 4);
+         ASSERT(lastRow >= 0);
+         ASSERT(lastRow < 4);
+         if (mat == STATE_MODELVIEW_MATRIX) {
             matrix = ctx->ModelviewMatrixStack.Top;
          }
-         else if (mat == STATE_PROJECTION) {
+         else if (mat == STATE_PROJECTION_MATRIX) {
             matrix = ctx->ProjectionMatrixStack.Top;
          }
-         else if (mat == STATE_MVP) {
+         else if (mat == STATE_MVP_MATRIX) {
             matrix = &ctx->_ModelProjectMatrix;
          }
-         else if (mat == STATE_TEXTURE) {
+         else if (mat == STATE_TEXTURE_MATRIX) {
             matrix = ctx->TextureMatrixStack[index].Top;
          }
-         else if (mat == STATE_PROGRAM) {
+         else if (mat == STATE_PROGRAM_MATRIX) {
             matrix = ctx->ProgramMatrixStack[index].Top;
          }
          else {
@@ -432,8 +452,11 @@ _mesa_program_state_flags(const GLint state[STATE_LENGTH])
    case STATE_TEXENV_COLOR:
       return _NEW_TEXTURE;
 
+   case STATE_FOG:
+#if 0
    case STATE_FOG_COLOR:
    case STATE_FOG_PARAMS:
+#endif
       return _NEW_FOG;
 
    case STATE_CLIPPLANE:
@@ -443,23 +466,16 @@ _mesa_program_state_flags(const GLint state[STATE_LENGTH])
    case STATE_POINT_ATTENUATION:
       return _NEW_POINT;
 
-   case STATE_MATRIX:
-      switch (state[1]) {
-      case STATE_MODELVIEW:
-	 return _NEW_MODELVIEW;
-      case STATE_PROJECTION:
-	 return _NEW_PROJECTION;
-      case STATE_MVP:
-	 return _NEW_MODELVIEW | _NEW_PROJECTION;
-      case STATE_TEXTURE:
-	 return _NEW_TEXTURE_MATRIX;
-      case STATE_PROGRAM:
-	 return _NEW_TRACK_MATRIX;
-      default:
-	 _mesa_problem(NULL,
-                       "unexpected matrix in _mesa_program_state_flags()");
-	 return 0;
-      }
+   case STATE_MODELVIEW_MATRIX:
+      return _NEW_MODELVIEW;
+   case STATE_PROJECTION_MATRIX:
+      return _NEW_PROJECTION;
+   case STATE_MVP_MATRIX:
+      return _NEW_MODELVIEW | _NEW_PROJECTION;
+   case STATE_TEXTURE_MATRIX:
+      return _NEW_TEXTURE_MATRIX;
+   case STATE_PROGRAM_MATRIX:
+      return _NEW_TRACK_MATRIX;
 
    case STATE_DEPTH_RANGE:
       return _NEW_VIEWPORT;
@@ -520,11 +536,14 @@ append_token(char *dst, gl_state_index k)
    case STATE_TEXGEN:
       append(dst, "texgen");
       break;
+   case STATE_FOG:
+      append(dst, "fog");
+      break;
    case STATE_FOG_COLOR:
-      append(dst, "fog.color");
+      append(dst, ".color");
       break;
    case STATE_FOG_PARAMS:
-      append(dst, "fog.params");
+      append(dst, ".params");
       break;
    case STATE_CLIPPLANE:
       append(dst, "clip");
@@ -535,22 +554,19 @@ append_token(char *dst, gl_state_index k)
    case STATE_POINT_ATTENUATION:
       append(dst, "point.attenuation");
       break;
-   case STATE_MATRIX:
-      append(dst, "matrix.");
-      break;
-   case STATE_MODELVIEW:
+   case STATE_MODELVIEW_MATRIX:
       append(dst, "modelview");
       break;
-   case STATE_PROJECTION:
+   case STATE_PROJECTION_MATRIX:
       append(dst, "projection");
       break;
-   case STATE_MVP:
+   case STATE_MVP_MATRIX:
       append(dst, "mvp");
       break;
-   case STATE_TEXTURE:
+   case STATE_TEXTURE_MATRIX:
       append(dst, "texture");
       break;
-   case STATE_PROGRAM:
+   case STATE_PROGRAM_MATRIX:
       append(dst, "program");
       break;
    case STATE_MATRIX_INVERSE:
@@ -703,8 +719,9 @@ _mesa_program_state_string(const GLint state[STATE_LENGTH])
       append_index(str, state[1]); /* tex unit [i] */
       append(str, "color");
       break;
-   case STATE_FOG_COLOR:
-   case STATE_FOG_PARAMS:
+   case STATE_FOG:
+      append(str, "fog");
+      append_token(str, (gl_state_index) state[1]); /* color or params */
       break;
    case STATE_CLIPPLANE:
       append_index(str, state[1]); /* plane [i] */
@@ -713,18 +730,22 @@ _mesa_program_state_string(const GLint state[STATE_LENGTH])
    case STATE_POINT_SIZE:
    case STATE_POINT_ATTENUATION:
       break;
-   case STATE_MATRIX:
+   case STATE_MODELVIEW_MATRIX:
+   case STATE_PROJECTION_MATRIX:
+   case STATE_MVP_MATRIX:
+   case STATE_TEXTURE_MATRIX:
+   case STATE_PROGRAM_MATRIX:
       {
-         /* state[1] = modelview, projection, texture, etc. */
-         /* state[2] = which texture matrix or program matrix */
-         /* state[3] = first row to fetch */
-         /* state[4] = last row to fetch */
-         /* state[5] = transpose, inverse or invtrans */
-         const gl_state_index mat = (gl_state_index) state[1];
-         const GLuint index = (GLuint) state[2];
-         const GLuint firstRow = (GLuint) state[3];
-         const GLuint lastRow = (GLuint) state[4];
-         const gl_state_index modifier = (gl_state_index) state[5];
+         /* state[0] = modelview, projection, texture, etc. */
+         /* state[1] = which texture matrix or program matrix */
+         /* state[2] = first row to fetch */
+         /* state[3] = last row to fetch */
+         /* state[4] = transpose, inverse or invtrans */
+         const gl_state_index mat = (gl_state_index) state[0];
+         const GLuint index = (GLuint) state[1];
+         const GLuint firstRow = (GLuint) state[2];
+         const GLuint lastRow = (GLuint) state[3];
+         const gl_state_index modifier = (gl_state_index) state[4];
          append_token(str, mat);
          if (index)
             append_index(str, index);

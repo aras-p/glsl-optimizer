@@ -636,14 +636,14 @@ static struct ureg get_eye_position( struct tnl_program *p )
       p->eye_position = reserve_temp(p);
 
       if (PREFER_DP4) {
-	 register_matrix_param6( p, STATE_MATRIX, STATE_MODELVIEW, 0, 0, 3, 
-				 STATE_MATRIX, modelview );
+	 register_matrix_param6( p, STATE_MODELVIEW_MATRIX, 0, 0, 3,
+                                 0, 0, modelview );
 
 	 emit_matrix_transform_vec4(p, p->eye_position, modelview, pos);
       }
       else {
-	 register_matrix_param6( p, STATE_MATRIX, STATE_MODELVIEW, 0, 0, 3, 
-				 STATE_MATRIX_TRANSPOSE, modelview );
+	 register_matrix_param6( p, STATE_MODELVIEW_MATRIX, 0, 0, 3,
+				 STATE_MATRIX_TRANSPOSE, 0, modelview );
 
 	 emit_transpose_matrix_transform_vec4(p, p->eye_position, modelview, pos);
       }
@@ -671,8 +671,8 @@ static struct ureg get_eye_normal( struct tnl_program *p )
       struct ureg normal = register_input(p, VERT_ATTRIB_NORMAL );
       struct ureg mvinv[3];
 
-      register_matrix_param6( p, STATE_MATRIX, STATE_MODELVIEW, 0, 0, 2,
-			      STATE_MATRIX_INVTRANS, mvinv );
+      register_matrix_param6( p, STATE_MODELVIEW_MATRIX, 0, 0, 2,
+			      STATE_MATRIX_INVTRANS, 0, mvinv );
 
       p->eye_normal = reserve_temp(p);
 
@@ -706,13 +706,13 @@ static void build_hpos( struct tnl_program *p )
    struct ureg mvp[4];
 
    if (PREFER_DP4) {
-      register_matrix_param6( p, STATE_MATRIX, STATE_MVP, 0, 0, 3, 
-			      STATE_MATRIX, mvp );
+      register_matrix_param6( p, STATE_MVP_MATRIX, 0, 0, 3, 
+			      0, 0, mvp );
       emit_matrix_transform_vec4( p, hpos, mvp, pos );
    }
    else {
-      register_matrix_param6( p, STATE_MATRIX, STATE_MVP, 0, 0, 3, 
-			      STATE_MATRIX_TRANSPOSE, mvp );
+      register_matrix_param6( p, STATE_MVP_MATRIX, 0, 0, 3, 
+			      STATE_MATRIX_TRANSPOSE, 0, mvp );
       emit_transpose_matrix_transform_vec4( p, hpos, mvp, pos );
    }
 }
@@ -1109,7 +1109,7 @@ static void build_fog( struct tnl_program *p )
    }
 
    if (p->state->tnl_do_vertex_fog) {
-      struct ureg params = register_param1(p, STATE_FOG_PARAMS);
+      struct ureg params = register_param2(p, STATE_FOG, STATE_FOG_PARAMS);
       struct ureg tmp = get_temp(p);
 
       switch (p->state->fog_mode) {
@@ -1303,13 +1303,13 @@ static void build_texture_transform( struct tnl_program *p )
 			      out_texgen : 
 			      register_input(p, VERT_ATTRIB_TEX0+i));
 	    if (PREFER_DP4) {
-	       register_matrix_param6( p, STATE_MATRIX, STATE_TEXTURE, i, 
-				       0, 3, STATE_MATRIX, texmat );
+	       register_matrix_param6( p, STATE_TEXTURE_MATRIX, i, 0, 3,
+				       0, 0, texmat );
 	       emit_matrix_transform_vec4( p, out, texmat, in );
 	    }
 	    else {
-	       register_matrix_param6( p, STATE_MATRIX, STATE_TEXTURE, i, 
-				       0, 3, STATE_MATRIX_TRANSPOSE, texmat );
+	       register_matrix_param6( p, STATE_TEXTURE_MATRIX, i, 0, 3,
+				       STATE_MATRIX_TRANSPOSE, 0, texmat );
 	       emit_transpose_matrix_transform_vec4( p, out, texmat, in );
 	    }
 	 }

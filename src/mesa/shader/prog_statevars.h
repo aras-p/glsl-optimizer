@@ -40,6 +40,9 @@
  * fragment programs.
  * A string such as "state.light[0].ambient" gets translated into a
  * sequence of tokens such as [ STATE_LIGHT, 0, STATE_AMBIENT ].
+ *
+ * For state that's an array, like STATE_CLIPPLANE, the 2nd token [1] should
+ * always be the array index.
  */
 typedef enum gl_state_index_ {
    STATE_MATERIAL = 100,  /* start at 100 so small ints are seen as ints */
@@ -51,6 +54,7 @@ typedef enum gl_state_index_ {
 
    STATE_TEXGEN,
 
+   STATE_FOG,
    STATE_FOG_COLOR,
    STATE_FOG_PARAMS,
 
@@ -59,12 +63,11 @@ typedef enum gl_state_index_ {
    STATE_POINT_SIZE,
    STATE_POINT_ATTENUATION,
 
-   STATE_MATRIX,
-   STATE_MODELVIEW,
-   STATE_PROJECTION,
-   STATE_MVP,
-   STATE_TEXTURE,
-   STATE_PROGRAM,
+   STATE_MODELVIEW_MATRIX,
+   STATE_PROJECTION_MATRIX,
+   STATE_MVP_MATRIX,
+   STATE_TEXTURE_MATRIX,
+   STATE_PROGRAM_MATRIX,
    STATE_MATRIX_INVERSE,
    STATE_MATRIX_TRANSPOSE,
    STATE_MATRIX_INVTRANS,

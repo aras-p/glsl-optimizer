@@ -70,15 +70,15 @@ _slang_lookup_statevar(const char *name, GLint index,
    };
    static const struct state_info state[] = {
       { "gl_ModelViewMatrix", 4, SWIZZLE_NOOP,
-        { STATE_MATRIX, STATE_MODELVIEW, 0, 0, 0, 0 } },
+        { STATE_MODELVIEW_MATRIX, 0, 0, 0, 0, 0 } },
       { "gl_NormalMatrix", 3, SWIZZLE_NOOP,
-        { STATE_MATRIX, STATE_MODELVIEW, 0, 0, 0, 0 } },
+        { STATE_MODELVIEW_MATRIX, 0, 0, 0, 0, 0 } },
       { "gl_ProjectionMatrix", 4, SWIZZLE_NOOP,
-        { STATE_MATRIX, STATE_PROJECTION, 0, 0, 0, 0 } },
+        { STATE_PROJECTION_MATRIX, 0, 0, 0, 0, 0 } },
       { "gl_ModelViewProjectionMatrix", 4, SWIZZLE_NOOP,
-        { STATE_MATRIX, STATE_MVP, 0, 0, 0, 0 } },
+        { STATE_MVP_MATRIX, 0, 0, 0, 0, 0 } },
       { "gl_TextureMatrix", 4, SWIZZLE_NOOP,
-        { STATE_MATRIX, STATE_TEXTURE, 0, 0, 0, 0 } },
+        { STATE_TEXTURE_MATRIX, 0, 0, 0, 0, 0 } },
       { "gl_NormalScale", 1, SWIZZLE_NOOP,
         { STATE_INTERNAL, STATE_NORMAL_SCALE, 0, 0, 0, 0} },
 
@@ -157,17 +157,17 @@ _slang_lookup_statevar(const char *name, GLint index,
 
 
       { "gl_Fog", 1, SWIZZLE_NOOP,
-        { STATE_FOG_COLOR, 0, 0, 0, 0, 0 } },
+        { STATE_FOG, STATE_FOG_COLOR, 0, 0, 0, 0 } },
       { "gl_Fog.color", 1, SWIZZLE_NOOP,
-        { STATE_FOG_COLOR, 0, 0, 0, 0, 0 } },
+        { STATE_FOG, STATE_FOG_COLOR, 0, 0, 0, 0 } },
       { "gl_Fog.density", 1, SWIZZLE_XXXX,
-        { STATE_FOG_PARAMS, 0, 0, 0, 0, 0 } },
+        { STATE_FOG, STATE_FOG_PARAMS, 0, 0, 0, 0 } },
       { "gl_Fog.start", 1, SWIZZLE_YYYY,
-        { STATE_FOG_PARAMS, 0, 0, 0, 0, 0 } },
+        { STATE_FOG, STATE_FOG_PARAMS, 0, 0, 0, 0 } },
       { "gl_Fog.end", 1, SWIZZLE_ZZZZ,
-        { STATE_FOG_PARAMS, 0, 0, 0, 0, 0 } },
+        { STATE_FOG, STATE_FOG_PARAMS, 0, 0, 0, 0 } },
       { "gl_Fog.scale", 1, SWIZZLE_WWWW,
-        { STATE_FOG_PARAMS, 0, 0, 0, 0, 0 } },
+        { STATE_FOG, STATE_FOG_PARAMS, 0, 0, 0, 0 } },
 
       { "gl_ClipPlane", 1, SWIZZLE_NOOP,
         { STATE_CLIPPLANE, 0, 0, 0, 0, 0 } },
@@ -190,7 +190,7 @@ _slang_lookup_statevar(const char *name, GLint index,
                   indexesCopy[j] = state[i].Indexes[j];
                /* load rows */
                for (j = 0; j < state[i].NumRows; j++) {
-                  indexesCopy[3] = indexesCopy[4] = j; /* jth row of matrix */
+                  indexesCopy[2] = indexesCopy[3] = j; /* jth row of matrix */
                   pos[j] = _mesa_add_state_reference(paramList, indexesCopy);
                   assert(pos[j] >= 0);
                }
@@ -256,19 +256,19 @@ struct state_uniform_info {
 
 
 static const struct state_uniform_info Uniforms[] = {
-   { "gl_ModelViewMatrix", { STATE_MATRIX, STATE_MODELVIEW },
+   { "gl_ModelViewMatrix", { STATE_MODELVIEW_MATRIX, INDEX_POS },
      { MT_FIELD, MT_FIELD, MT_FIELD, MT_FIELD, MT_FIELD}
    },
-   { "gl_ProjectionMatrix", { STATE_MATRIX, STATE_PROJECTION },
+   { "gl_ProjectionMatrix", { STATE_PROJECTION_MATRIX, INDEX_POS },
      { MT_FIELD, MT_FIELD, MT_FIELD, MT_FIELD, MT_FIELD}
    },
-   { "gl_ModelViewProjectionMatrix", { STATE_MATRIX, STATE_MVP },
+   { "gl_ModelViewProjectionMatrix", { STATE_MVP_MATRIX, INDEX_POS },
      { MT_FIELD, MT_FIELD, MT_FIELD, MT_FIELD, MT_FIELD}
    },
-   { "gl_NormalMatrix", { STATE_MATRIX, STATE_MODELVIEW },
+   { "gl_NormalMatrix", { STATE_MODELVIEW_MATRIX, INDEX_POS },
      { MT_FIELD, MT_FIELD, MT_FIELD, MT_FIELD, MT_FIELD}
    },
-   { "gl_TextureMatrix", { STATE_MATRIX, STATE_TEXTURE },
+   { "gl_TextureMatrix", { STATE_TEXTURE_MATRIX, INDEX_POS },
      { MT_FIELD, MT_FIELD, MT_FIELD, MT_FIELD, MT_FIELD}
    },
 
@@ -286,13 +286,13 @@ static const struct state_uniform_info Uniforms[] = {
      }
    },
 
-   { "gl_Fog", { 0, 0 },
+   { "gl_Fog", { STATE_FOG, 0 },
      {
-        { "color", STATE_FOG_COLOR, 0, SWIZZLE_NOOP },
-        { "density", STATE_FOG_PARAMS, 0, SWIZZLE_XXXX },
-        { "start", STATE_FOG_PARAMS, 0, SWIZZLE_YYYY },
-        { "end", STATE_FOG_PARAMS, 0, SWIZZLE_ZZZZ },
-        { "scale", STATE_FOG_PARAMS, 0, SWIZZLE_WWWW }
+        { "color", STATE_FOG_COLOR, 1, SWIZZLE_NOOP },
+        { "density", STATE_FOG_PARAMS, 1, SWIZZLE_XXXX },
+        { "start", STATE_FOG_PARAMS, 1, SWIZZLE_YYYY },
+        { "end", STATE_FOG_PARAMS, 1, SWIZZLE_ZZZZ },
+        { "scale", STATE_FOG_PARAMS, 1, SWIZZLE_WWWW }
      }
    },
 
@@ -349,7 +349,11 @@ lookup_statevar(const char *var, GLint index, const char *field,
             }
          }
 
-         if (tokens[0] == STATE_MATRIX) {
+         if (tokens[0] == STATE_MODELVIEW_MATRIX ||
+             tokens[0] == STATE_PROJECTION_MATRIX ||
+             tokens[0] == STATE_MVP_MATRIX ||
+             tokens[0] == STATE_TEXTURE_MATRIX ||
+             tokens[0] == STATE_PROGRAM_MATRIX) {
             /* a matrix */
             GLuint j;
             GLint pos[4];
@@ -359,7 +363,7 @@ lookup_statevar(const char *var, GLint index, const char *field,
                indexesCopy[j] = tokens[j];
             /* load rows */
             for (j = 0; j < 4/*state[i].NumRows*/; j++) {
-               indexesCopy[3] = indexesCopy[4] = j; /* jth row of matrix */
+               indexesCopy[2] = indexesCopy[3] = j; /* jth row of matrix */
                pos[j] = _mesa_add_state_reference(paramList, (GLint*) indexesCopy);
                assert(pos[j] >= 0);
             }

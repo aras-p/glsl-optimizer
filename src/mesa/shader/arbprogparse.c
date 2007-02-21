@@ -1010,7 +1010,7 @@ parse_matrix (GLcontext * ctx, const GLubyte ** inst, struct arb_program *Progra
 
    switch (mat) {
       case MATRIX_MODELVIEW:
-         *matrix = STATE_MODELVIEW;
+         *matrix = STATE_MODELVIEW_MATRIX;
          *matrix_idx = parse_integer (inst, Program);
          if (*matrix_idx > 0) {
             program_error(ctx, Program->Position,
@@ -1020,15 +1020,15 @@ parse_matrix (GLcontext * ctx, const GLubyte ** inst, struct arb_program *Progra
          break;
 
       case MATRIX_PROJECTION:
-         *matrix = STATE_PROJECTION;
+         *matrix = STATE_PROJECTION_MATRIX;
          break;
 
       case MATRIX_MVP:
-         *matrix = STATE_MVP;
+         *matrix = STATE_MVP_MATRIX;
          break;
 
       case MATRIX_TEXTURE:
-         *matrix = STATE_TEXTURE;
+         *matrix = STATE_TEXTURE_MATRIX;
          *matrix_idx = parse_integer (inst, Program);
          if (*matrix_idx >= (GLint) ctx->Const.MaxTextureUnits) {
             program_error(ctx, Program->Position, "Invalid Texture Unit");
@@ -1046,7 +1046,7 @@ parse_matrix (GLcontext * ctx, const GLubyte ** inst, struct arb_program *Progra
          break;
 
       case MATRIX_PROGRAM:
-         *matrix = STATE_PROGRAM;
+         *matrix = STATE_PROGRAM_MATRIX;
          *matrix_idx = parse_integer (inst, Program);
          if (*matrix_idx >= (GLint) ctx->Const.MaxProgramMatrices) {
             program_error(ctx, Program->Position, "Invalid Program Matrix");
@@ -1187,10 +1187,12 @@ parse_state_single_item (GLcontext * ctx, const GLubyte ** inst,
       case STATE_FOG:
          switch (*(*inst)++) {
             case FOG_COLOR:
-               state_tokens[0] = STATE_FOG_COLOR;
+               state_tokens[0] = STATE_FOG;
+               state_tokens[1] = STATE_FOG_COLOR;
                break;
             case FOG_PARAMS:
-               state_tokens[0] = STATE_FOG_PARAMS;
+               state_tokens[0] = STATE_FOG;
+               state_tokens[1] = STATE_FOG_PARAMS;
                break;
          }
          break;
@@ -1285,17 +1287,16 @@ parse_state_single_item (GLcontext * ctx, const GLubyte ** inst,
 
          /* XXX: I think this is the correct format for a matrix row */
       case STATE_MATRIX_ROWS:
-         state_tokens[0] = STATE_MATRIX;
          if (parse_matrix
-             (ctx, inst, Program, &state_tokens[1], &state_tokens[2],
-              &state_tokens[5]))
+             (ctx, inst, Program, &state_tokens[0], &state_tokens[1],
+              &state_tokens[4]))
             return 1;
 
-         state_tokens[3] = parse_integer (inst, Program);       /* The first row to grab */
+         state_tokens[2] = parse_integer (inst, Program);       /* The first row to grab */
 
          if ((**inst) != 0) {                                   /* Either the last row, 0 */
-            state_tokens[4] = parse_integer (inst, Program);
-            if (state_tokens[4] < state_tokens[3]) {
+            state_tokens[3] = parse_integer (inst, Program);
+            if (state_tokens[3] < state_tokens[2]) {
                program_error(ctx, Program->Position,
                              "Second matrix index less than the first");
                /* state_tokens[4] vs. state_tokens[3] */
@@ -1303,7 +1304,7 @@ parse_state_single_item (GLcontext * ctx, const GLubyte ** inst,
             }
          }
          else {
-            state_tokens[4] = state_tokens[3];
+            state_tokens[3] = state_tokens[2];
             (*inst)++;
          }
          break;
@@ -1730,14 +1731,18 @@ parse_param_elements (GLcontext * ctx, const GLubyte ** inst,
          /* If we adding STATE_MATRIX that has multiple rows, we need to
           * unroll it and call _mesa_add_state_reference() for each row
           */
-         if ((state_tokens[0] == STATE_MATRIX)
-             && (state_tokens[3] != state_tokens[4])) {
+         if ((state_tokens[0] == STATE_MODELVIEW_MATRIX ||
+              state_tokens[0] == STATE_PROJECTION_MATRIX ||
+              state_tokens[0] == STATE_MVP_MATRIX ||
+              state_tokens[0] == STATE_TEXTURE_MATRIX ||
+              state_tokens[0] == STATE_PROGRAM_MATRIX)
+             && (state_tokens[2] != state_tokens[3])) {
             GLint row;
-            GLint first_row = state_tokens[3];
-            GLint last_row = state_tokens[4];
+            const GLint first_row = state_tokens[2];
+            const GLint last_row = state_tokens[3];
 
             for (row = first_row; row <= last_row; row++) {
-               state_tokens[3] = state_tokens[4] = row;
+               state_tokens[2] = state_tokens[3] = row;
 
                idx = _mesa_add_state_reference(Program->Base.Parameters,
                                                state_tokens);
@@ -3355,6 +3360,10 @@ print_state_token (GLint token)
 
       case STATE_TEXGEN:
          fprintf (stderr, "STATE_TEXGEN ");
+         break;
+
+      case STATE_FOG:
+         fprintf (stderr, "STATE_FOG ");
          break;
 
       case STATE_FOG_COLOR:
