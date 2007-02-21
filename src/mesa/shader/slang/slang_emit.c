@@ -1309,12 +1309,40 @@ emit_swizzle(slang_var_table *vt, slang_ir_node *n, struct gl_program *prog)
 
 
 /**
+ * Dereference array element.  Just resolve storage for the array
+ * element represented by this node.
+ */
+static struct prog_instruction *
+emit_array_element(slang_var_table *vt, slang_ir_node *n,
+                   struct gl_program *prog)
+{
+   assert(n->Store);
+   assert(n->Store->File != PROGRAM_UNDEFINED);
+   assert(n->Store->Size > 0);
+   if (n->Children[1]->Opcode == IR_FLOAT) {
+      /* Constant index */
+      const GLint arrayAddr = n->Children[0]->Store->Index;
+      const GLint index = (GLint) n->Children[1]->Value[0];
+      n->Store->Index = arrayAddr + index;
+   }
+   else {
+      /* Variable index - PROBLEM */
+      const GLint arrayAddr = n->Children[0]->Store->Index;
+      const GLint index = 0;
+      _mesa_problem(NULL, "variable array indexes not supported yet!");
+      n->Store->Index = arrayAddr + index;
+   }
+   return NULL; /* no instruction */
+}
+
+
+/**
  * Resolve storage for accessing a structure field.
  */
 static struct prog_instruction *
-emit_field(slang_var_table *vt, slang_ir_node *n, struct gl_program *prog)
+emit_struct_field(slang_var_table *vt, slang_ir_node *n,
+                  struct gl_program *prog)
 {
-   /* field of a struct */
    if (n->Children[0]->Store->File == PROGRAM_STATE_VAR) {
       /* state variable sub-field */
       GLint pos;
@@ -1331,11 +1359,10 @@ emit_field(slang_var_table *vt, slang_ir_node *n, struct gl_program *prog)
       n->Store->Index = pos;
       n->Store->Swizzle = swizzle;
    }
-
-   /*
-   _mesa_problem(NULL, "glsl structs/fields not supported yet");
-   */ 
-   return NULL;
+   else {
+      _mesa_problem(NULL, "structs/fields not supported yet");
+   }
+   return NULL; /* no instruction */
 }
 
 
@@ -1402,30 +1429,9 @@ emit(slang_var_table *vt, slang_ir_node *n, struct gl_program *prog)
       break;
 
    case IR_ELEMENT:
-      /* Dereference array element.  Just resolve storage for the array
-       * element represented by this node.
-       */
-      assert(n->Store);
-      assert(n->Store->File != PROGRAM_UNDEFINED);
-      assert(n->Store->Size > 0);
-      if (n->Children[1]->Opcode == IR_FLOAT) {
-         /* OK, constant index */
-         const GLint arrayAddr = n->Children[0]->Store->Index;
-         const GLint index = (GLint) n->Children[1]->Value[0];
-         n->Store->Index = arrayAddr + index;
-      }
-      else {
-         /* Problem: variable index */
-         const GLint arrayAddr = n->Children[0]->Store->Index;
-         const GLint index = 0;
-         _mesa_problem(NULL, "variable array indexes not supported yet!");
-         n->Store->Index = arrayAddr + index;
-      }
-      return NULL; /* no instruction */
-
+      return emit_array_element(vt, n, prog);
    case IR_FIELD:
-      return emit_field(vt, n, prog);
-
+      return emit_struct_field(vt, n, prog);
    case IR_SWIZZLE:
       return emit_swizzle(vt, n, prog);
 
