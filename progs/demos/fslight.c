@@ -30,14 +30,13 @@ static char *VertProgFile = NULL;
 
 static GLfloat diffuse[4] = { 0.5f, 0.5f, 1.0f, 1.0f };
 static GLfloat specular[4] = { 0.8f, 0.8f, 0.8f, 1.0f };
-static GLfloat lightPos[4] = { 0.0f, 10.0f, 20.0f, 1.0f };
+static GLfloat lightPos[4] = { 0.0f, 10.0f, 20.0f, 0.0f };
 static GLfloat delta = 1.0f;
 
 static GLuint fragShader;
 static GLuint vertShader;
 static GLuint program;
 
-static GLint uLightPos;
 static GLint uDiffuse;
 static GLint uSpecular;
 static GLint uTexture;
@@ -61,24 +60,27 @@ normalize(GLfloat *dst, const GLfloat *src)
    dst[0] = src[0] / len;
    dst[1] = src[1] / len;
    dst[2] = src[2] / len;
+   dst[3] = src[3];
 }
 
 
 static void
 Redisplay(void)
 {
+   GLfloat vec[4];
+
    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+   /* update light position */
+   normalize(vec, lightPos);
+   glLightfv(GL_LIGHT0, GL_POSITION, vec);
    
    if (pixelLight) {
-      GLfloat vec[3];
       glUseProgram_func(program);
-      normalize(vec, lightPos);
-      glUniform3fv_func(uLightPos, 1, vec);
       glDisable(GL_LIGHTING);
    }
    else {
       glUseProgram_func(0);
-      glLightfv(GL_LIGHT0, GL_POSITION, lightPos);
       glEnable(GL_LIGHTING);
    }
 
@@ -223,8 +225,6 @@ TestFunctions(void)
    printf("Error 0x%x at line %d\n", glGetError(), __LINE__);
    {
       GLfloat pos[3];
-      glUniform3fv_func(uLightPos, 1, lightPos);
-      glGetUniformfv_func(program, uLightPos, pos);
       printf("Error 0x%x at line %d\n", glGetError(), __LINE__);
       printf("Light pos %g %g %g\n", pos[0], pos[1], pos[2]);
    }
@@ -453,13 +453,13 @@ static void
 Init(void)
 {
    static const char *fragShaderText =
-      "uniform vec3 lightPos;\n"
       "uniform vec4 diffuse;\n"
       "uniform vec4 specular;\n"
       "varying vec3 normal;\n"
       "void main() {\n"
       "   // Compute dot product of light direction and normal vector\n"
-      "   float dotProd = max(dot(lightPos, normalize(normal)), 0.0);\n"
+      "   float dotProd = max(dot(gl_LightSource[0].position.xyz, \n"
+      "                           normalize(normal)), 0.0);\n"
       "   // Compute diffuse and specular contributions\n"
       "   gl_FragColor = diffuse * dotProd + specular * pow(dotProd, 20.0);\n"
       "}\n";
@@ -499,16 +499,17 @@ Init(void)
    CheckLink(program);
    glUseProgram_func(program);
 
-   uLightPos = glGetUniformLocation_func(program, "lightPos");
    uDiffuse = glGetUniformLocation_func(program, "diffuse");
    uSpecular = glGetUniformLocation_func(program, "specular");
    uTexture = glGetUniformLocation_func(program, "texture");
-   printf("LightPos %d  DiffusePos %d  SpecularPos %d  TexturePos %d\n",
-          uLightPos, uDiffuse, uSpecular, uTexture);
+   printf("DiffusePos %d  SpecularPos %d  TexturePos %d\n",
+          uDiffuse, uSpecular, uTexture);
 
    glUniform4fv_func(uDiffuse, 1, diffuse);
    glUniform4fv_func(uSpecular, 1, specular);
+   assert(glGetError() == 0);
    glUniform1i_func(uTexture, 2);  /* use texture unit 2 */
+   /*assert(glGetError() == 0);*/
 
    if (CoordAttrib) {
       int i;
@@ -561,6 +562,15 @@ Init(void)
    assert(glIsShader_func(vertShader));
 
    glColor3f(1, 0, 0);
+
+   /* for testing state vars */
+   {
+      static GLfloat fc[4] = { 1, 1, 0, 0 };
+      static GLfloat amb[4] = { 1, 0, 1, 0 };
+      glFogfv(GL_FOG_COLOR, fc);
+      glLightfv(GL_LIGHT1, GL_AMBIENT, amb);
+   }
+
 #if 0
    TestFunctions();
 #endif
@@ -601,4 +611,5 @@ main(int argc, char *argv[])
    glutMainLoop();
    return 0;
 }
+
 
