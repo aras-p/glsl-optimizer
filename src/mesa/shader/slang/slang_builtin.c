@@ -47,6 +47,7 @@
  * Lookup GL state given a variable name, 0, 1 or 2 indexes and a field.
  * Allocate room for the state in the given param list and return position
  * in the list.
+ * Yes, this is kind of ugly, but it works.
  */
 static GLint
 lookup_statevar(const char *var, GLint index1, GLint index2, const char *field,
@@ -262,15 +263,15 @@ lookup_statevar(const char *var, GLint index1, GLint index2, const char *field,
       tokens[1] = index1; /* tex unit */
       tokens[2] = STATE_TEXGEN_OBJECT_T;
    }
-   else if (strcmp(var, "gl_ObjectPlaneT") == 0) {
+   else if (strcmp(var, "gl_ObjectPlaneR") == 0) {
       tokens[0] = STATE_TEXGEN;
       tokens[1] = index1; /* tex unit */
-      tokens[2] = STATE_TEXGEN_OBJECT_T;
+      tokens[2] = STATE_TEXGEN_OBJECT_R;
    }
-   else if (strcmp(var, "gl_ObjectPlaneT") == 0) {
+   else if (strcmp(var, "gl_ObjectPlaneQ") == 0) {
       tokens[0] = STATE_TEXGEN;
       tokens[1] = index1; /* tex unit */
-      tokens[2] = STATE_TEXGEN_OBJECT_T;
+      tokens[2] = STATE_TEXGEN_OBJECT_Q;
    }
    else if (strcmp(var, "gl_Fog") == 0) {
       tokens[0] = STATE_FOG;
