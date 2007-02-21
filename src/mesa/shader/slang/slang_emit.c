@@ -1319,6 +1319,13 @@ emit_array_element(slang_var_table *vt, slang_ir_node *n,
    assert(n->Store);
    assert(n->Store->File != PROGRAM_UNDEFINED);
    assert(n->Store->Size > 0);
+
+   if (n->Store->File == PROGRAM_STATE_VAR) {
+      n->Store->Index = _slang_alloc_statevar(n, prog->Parameters);
+      return NULL;
+   }
+
+
    if (n->Children[1]->Opcode == IR_FLOAT) {
       /* Constant index */
       const GLint arrayAddr = n->Children[0]->Store->Index;
@@ -1343,6 +1350,11 @@ static struct prog_instruction *
 emit_struct_field(slang_var_table *vt, slang_ir_node *n,
                   struct gl_program *prog)
 {
+   if (n->Store->File == PROGRAM_STATE_VAR) {
+      n->Store->Index = _slang_alloc_statevar(n, prog->Parameters);
+      return NULL;
+   }
+
    if (n->Children[0]->Store->File == PROGRAM_STATE_VAR) {
       /* state variable sub-field */
       GLint pos;
@@ -1421,6 +1433,12 @@ emit(slang_var_table *vt, slang_ir_node *n, struct gl_program *prog)
        */
       assert(n->Store);
       assert(n->Store->File != PROGRAM_UNDEFINED);
+
+      if (n->Store->File == PROGRAM_STATE_VAR &&
+          n->Store->Index < 0) {
+         n->Store->Index = _slang_alloc_statevar(n, prog->Parameters);
+      }
+
       if (n->Store->Index < 0) {
          printf("#### VAR %s not allocated!\n", (char*)n->Var->a_name);
       }

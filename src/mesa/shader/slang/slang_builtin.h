@@ -28,6 +28,7 @@
 
 #include "prog_parameter.h"
 #include "slang_utility.h"
+#include "slang_ir.h"
 
 
 extern GLint
@@ -40,6 +41,10 @@ extern GLint
 _slang_lookup_statevar_field(const char *base, const char *field,
                              struct gl_program_parameter_list *paramList,
                              GLuint *swizzleOut);
+
+extern GLint
+_slang_alloc_statevar(slang_ir_node *n,
+                      struct gl_program_parameter_list *paramList);
 
 
 #endif /* SLANG_BUILTIN_H */

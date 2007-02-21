@@ -205,18 +205,7 @@ slang_allocate_storage(slang_assemble_ctx *A, slang_ir_node *n)
          struct gl_program *prog = A->program;
          assert(prog);
 
-         /* determine storage location for this var.
-          * This is probably a pre-defined uniform or constant.
-          * We don't allocate storage for these until they're actually
-          * used to avoid wasting registers.
-          */
-         if (n->Store->File == PROGRAM_STATE_VAR) {
-            GLint i = _slang_lookup_statevar(varName, 0, prog->Parameters,
-                                             &n->Store->Swizzle);
-            assert(i >= 0);
-            n->Store->Index = i;
-         }
-         else if (n->Store->File == PROGRAM_CONSTANT) {
+         if (n->Store->File == PROGRAM_CONSTANT) {
             /* XXX compile-time constants should be converted to literals */
             GLint i = slang_lookup_constant(varName, prog->Parameters,
                                             &n->Store->Swizzle);
@@ -2262,6 +2251,7 @@ _slang_gen_subscript(slang_assemble_ctx * A, slang_operation *oper)
          elem->Store = _slang_new_ir_storage(array->Store->File,
                                              array->Store->Index,
                                              elemSize);
+         /* XXX try to do some array bounds checking here */
          return elem;
       }
       else {
