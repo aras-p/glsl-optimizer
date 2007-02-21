@@ -2592,7 +2592,7 @@ _slang_codegen_global_variable(slang_assemble_ctx *A, slang_variable *var,
    GLboolean success = GL_TRUE;
    GLint texIndex;
    slang_ir_storage *store = NULL;
-   int dbg = 1;
+   int dbg = 0;
 
    texIndex = sampler_to_texture_index(var->type.specifier.type);
 
