@@ -1439,6 +1439,7 @@ _slang_gen_for(slang_assemble_ctx * A, const slang_operation *oper)
 }
 
 
+#if 0
 /**
  * Generate IR tree for an if/then/else conditional using BRAnch instructions.
  */
@@ -1487,6 +1488,7 @@ _slang_gen_if(slang_assemble_ctx * A, const slang_operation *oper)
 
    return tree;
 }
+#endif
 
 
 /**
@@ -2443,13 +2445,7 @@ _slang_gen_operation(slang_assemble_ctx * A, slang_operation *oper)
    case SLANG_OPER_IDENTIFIER:
       return _slang_gen_variable(A, oper);
    case SLANG_OPER_IF:
-      if (A->program->Target == GL_FRAGMENT_PROGRAM_ARB) {
-         return _slang_gen_hl_if(A, oper);
-      }
-      else {
-         /* XXX update tnl executor */
-         return _slang_gen_if(A, oper);
-      }
+      return _slang_gen_hl_if(A, oper);
    case SLANG_OPER_FIELD:
       return _slang_gen_field(A, oper);
    case SLANG_OPER_SUBSCRIPT:
