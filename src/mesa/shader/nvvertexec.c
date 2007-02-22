@@ -511,442 +511,500 @@ _mesa_exec_vertex_program(GLcontext *ctx,
       }
 
       switch (inst->Opcode) {
-         case OPCODE_MOV:
-            {
-               GLfloat t[4];
-               fetch_vector4( ctx, &inst->SrcReg[0], machine, program, t );
-               store_vector4( inst, machine, t );
+      case OPCODE_ABS: /* GL_NV_vertex_program1_1 */
+         {
+            GLfloat t[4];
+            fetch_vector4( ctx, &inst->SrcReg[0], machine, program, t );
+            if (t[0] < 0.0)  t[0] = -t[0];
+            if (t[1] < 0.0)  t[1] = -t[1];
+            if (t[2] < 0.0)  t[2] = -t[2];
+            if (t[3] < 0.0)  t[3] = -t[3];
+            store_vector4( inst, machine, t );
+         }
+         break;
+      case OPCODE_ADD:
+         {
+            GLfloat t[4], u[4], sum[4];
+            fetch_vector4( ctx, &inst->SrcReg[0], machine, program, t );
+            fetch_vector4( ctx, &inst->SrcReg[1], machine, program, u );
+            sum[0] = t[0] + u[0];
+            sum[1] = t[1] + u[1];
+            sum[2] = t[2] + u[2];
+            sum[3] = t[3] + u[3];
+            store_vector4( inst, machine, sum );
+         }
+         break;
+      case OPCODE_ARA:
+         break;
+      case OPCODE_ARL:
+         {
+            GLfloat t[4];
+            fetch_vector4( ctx, &inst->SrcReg[0], machine, program, t );
+            machine->AddressReg[0][0] = (GLint) FLOORF(t[0]);
+         }
+         break;
+      case OPCODE_ARL_NV:
+         break;
+      case OPCODE_ARR:
+         break;
+      case OPCODE_BGNLOOP:
+         /* no-op */
+         break;
+      case OPCODE_ENDLOOP:
+         /* subtract 1 here since pc is incremented by for(pc) loop */
+         pc = inst->BranchTarget - 1; /* go to matching BNGLOOP */
+         break;
+      case OPCODE_BRA: /* branch (conditional) */
+         /* fall-through */
+      case OPCODE_BRK: /* break out of loop (conditional) */
+         /* fall-through */
+      case OPCODE_CONT: /* continue loop (conditional) */
+         if (eval_condition(machine, inst)) {
+            /* take branch */
+            /* Subtract 1 here since we'll do pc++ at end of for-loop */
+            pc = inst->BranchTarget - 1;
+         }
+         break;
+      case OPCODE_CAL: /* Call subroutine (conditional) */
+         if (eval_condition(machine, inst)) {
+            /* call the subroutine */
+            if (machine->StackDepth >= MAX_PROGRAM_CALL_DEPTH) {
+               return; /* abort execution */
             }
-            break;
-         case OPCODE_LIT:
-            {
-               const GLfloat epsilon = 1.0F / 256.0F; /* per NV spec */
-               GLfloat t[4], lit[4];
-               fetch_vector4( ctx, &inst->SrcReg[0], machine, program, t );
-               t[0] = MAX2(t[0], 0.0F);
-               t[1] = MAX2(t[1], 0.0F);
-               t[3] = CLAMP(t[3], -(128.0F - epsilon), (128.0F - epsilon));
-               lit[0] = 1.0;
-               lit[1] = t[0];
-               lit[2] = (t[0] > 0.0) ? (GLfloat) _mesa_pow(t[1], t[3]) : 0.0F;
-               lit[3] = 1.0;
-               store_vector4( inst, machine, lit );
+            machine->CallStack[machine->StackDepth++] = pc + 1;
+            pc = inst->BranchTarget; /* XXX - 1 ??? */
+         }
+         break;
+      case OPCODE_CMP:
+         {
+            GLfloat a[4], b[4], c[4], result[4];
+            fetch_vector4( ctx, &inst->SrcReg[0], machine, program, a );
+            fetch_vector4( ctx, &inst->SrcReg[1], machine, program, b );
+            fetch_vector4( ctx, &inst->SrcReg[2], machine, program, c );
+            result[0] = a[0] < 0.0F ? b[0] : c[0];
+            result[1] = a[1] < 0.0F ? b[1] : c[1];
+            result[2] = a[2] < 0.0F ? b[2] : c[2];
+            result[3] = a[3] < 0.0F ? b[3] : c[3];
+            store_vector4( inst, machine, result );
+         }
+         break;
+      case OPCODE_COS:
+         {
+            GLfloat a[4], result[4];
+            fetch_vector1( ctx, &inst->SrcReg[0], machine, program, a );
+            result[0] = result[1] = result[2] = result[3]
+               = (GLfloat) _mesa_cos(a[0]);
+            store_vector4( inst, machine, result );
+         }
+         break;
+      case OPCODE_DDX:
+         /* fallthrough */
+      case OPCODE_DDY:
+         _mesa_problem(ctx, "DDX/DDY not allowed in vertex programs");
+         break;
+
+      case OPCODE_DP3:
+         {
+            GLfloat t[4], u[4], dot[4];
+            fetch_vector4( ctx, &inst->SrcReg[0], machine, program, t );
+            fetch_vector4( ctx, &inst->SrcReg[1], machine, program, u );
+            dot[0] = t[0] * u[0] + t[1] * u[1] + t[2] * u[2];
+            dot[1] = dot[2] = dot[3] = dot[0];
+            store_vector4( inst, machine, dot );
+         }
+         break;
+      case OPCODE_DP4:
+         {
+            GLfloat t[4], u[4], dot[4];
+            fetch_vector4( ctx, &inst->SrcReg[0], machine, program, t );
+            fetch_vector4( ctx, &inst->SrcReg[1], machine, program, u );
+            dot[0] = t[0] * u[0] + t[1] * u[1] + t[2] * u[2] + t[3] * u[3];
+            dot[1] = dot[2] = dot[3] = dot[0];
+            store_vector4( inst, machine, dot );
+         }
+         break;
+      case OPCODE_DPH:
+         {
+            GLfloat t[4], u[4], dot[4];
+            fetch_vector4( ctx, &inst->SrcReg[0], machine, program, t );
+            fetch_vector4( ctx, &inst->SrcReg[1], machine, program, u );
+            dot[0] = t[0] * u[0] + t[1] * u[1] + t[2] * u[2] + u[3];
+            dot[1] = dot[2] = dot[3] = dot[0];
+            store_vector4( inst, machine, dot );
+         }
+         break;
+      case OPCODE_DST:
+         {
+            GLfloat t[4], u[4], dst[4];
+            fetch_vector4( ctx, &inst->SrcReg[0], machine, program, t );
+            fetch_vector4( ctx, &inst->SrcReg[1], machine, program, u );
+            dst[0] = 1.0F;
+            dst[1] = t[1] * u[1];
+            dst[2] = t[2];
+            dst[3] = u[3];
+            store_vector4( inst, machine, dst );
+         }
+         break;
+      case OPCODE_EXP:
+         {
+            GLfloat t[4], q[4], floor_t0;
+            fetch_vector1( ctx, &inst->SrcReg[0], machine, program, t );
+            floor_t0 = FLOORF(t[0]);
+            if (floor_t0 > FLT_MAX_EXP) {
+               SET_POS_INFINITY(q[0]);
+               SET_POS_INFINITY(q[2]);
             }
-            break;
-         case OPCODE_RCP:
-            {
-               GLfloat t[4];
-               fetch_vector1( ctx, &inst->SrcReg[0], machine, program, t );
-               if (t[0] != 1.0F)
-                  t[0] = 1.0F / t[0];  /* div by zero is infinity! */
-               t[1] = t[2] = t[3] = t[0];
-               store_vector4( inst, machine, t );
-            }
-            break;
-         case OPCODE_RSQ:
-            {
-               GLfloat t[4];
-               fetch_vector1( ctx, &inst->SrcReg[0], machine, program, t );
-               t[0] = INV_SQRTF(FABSF(t[0]));
-               t[1] = t[2] = t[3] = t[0];
-               store_vector4( inst, machine, t );
-            }
-            break;
-         case OPCODE_EXP:
-            {
-               GLfloat t[4], q[4], floor_t0;
-               fetch_vector1( ctx, &inst->SrcReg[0], machine, program, t );
-               floor_t0 = FLOORF(t[0]);
-               if (floor_t0 > FLT_MAX_EXP) {
-                  SET_POS_INFINITY(q[0]);
-                  SET_POS_INFINITY(q[2]);
-               }
-               else if (floor_t0 < FLT_MIN_EXP) {
-                  q[0] = 0.0F;
-                  q[2] = 0.0F;
-               }
-               else {
-#ifdef USE_IEEE
-                  GLint ii = (GLint) floor_t0;
-                  ii = (ii < 23) + 0x3f800000;
-                  SET_FLOAT_BITS(q[0], ii);
-                  q[0] = *((GLfloat *) (void *)&ii);
-#else
-                  q[0] = (GLfloat) pow(2.0, floor_t0);
-#endif
-                  q[2] = (GLfloat) (q[0] * LOG2(q[1]));
-               }
-               q[1] = t[0] - floor_t0;
-               q[3] = 1.0F;
-               store_vector4( inst, machine, q );
-            }
-            break;
-         case OPCODE_LOG:
-            {
-               GLfloat t[4], q[4], abs_t0;
-               fetch_vector1( ctx, &inst->SrcReg[0], machine, program, t );
-               abs_t0 = FABSF(t[0]);
-               if (abs_t0 != 0.0F) {
-                  /* Since we really can't handle infinite values on VMS
-                   * like other OSes we'll use __MAXFLOAT to represent
-                   * infinity.  This may need some tweaking.
-                   */
-#ifdef VMS
-                  if (abs_t0 == __MAXFLOAT)
-#else
-                  if (IS_INF_OR_NAN(abs_t0))
-#endif
-                  {
-                     SET_POS_INFINITY(q[0]);
-                     q[1] = 1.0F;
-                     SET_POS_INFINITY(q[2]);
-                  }
-                  else {
-                     int exponent;
-                     GLfloat mantissa = FREXPF(t[0], &exponent);
-                     q[0] = (GLfloat) (exponent - 1);
-                     q[1] = (GLfloat) (2.0 * mantissa); /* map [.5, 1) -> [1, 2) */
-                     q[2] = (GLfloat) (q[0] + LOG2(q[1]));
-                  }
-                  }
-               else {
-                  SET_NEG_INFINITY(q[0]);
-                  q[1] = 1.0F;
-                  SET_NEG_INFINITY(q[2]);
-               }
-               q[3] = 1.0;
-               store_vector4( inst, machine, q );
-            }
-            break;
-         case OPCODE_MUL:
-            {
-               GLfloat t[4], u[4], prod[4];
-               fetch_vector4( ctx, &inst->SrcReg[0], machine, program, t );
-               fetch_vector4( ctx, &inst->SrcReg[1], machine, program, u );
-               prod[0] = t[0] * u[0];
-               prod[1] = t[1] * u[1];
-               prod[2] = t[2] * u[2];
-               prod[3] = t[3] * u[3];
-               store_vector4( inst, machine, prod );
-            }
-            break;
-         case OPCODE_ADD:
-            {
-               GLfloat t[4], u[4], sum[4];
-               fetch_vector4( ctx, &inst->SrcReg[0], machine, program, t );
-               fetch_vector4( ctx, &inst->SrcReg[1], machine, program, u );
-               sum[0] = t[0] + u[0];
-               sum[1] = t[1] + u[1];
-               sum[2] = t[2] + u[2];
-               sum[3] = t[3] + u[3];
-               store_vector4( inst, machine, sum );
-            }
-            break;
-         case OPCODE_DP3:
-            {
-               GLfloat t[4], u[4], dot[4];
-               fetch_vector4( ctx, &inst->SrcReg[0], machine, program, t );
-               fetch_vector4( ctx, &inst->SrcReg[1], machine, program, u );
-               dot[0] = t[0] * u[0] + t[1] * u[1] + t[2] * u[2];
-               dot[1] = dot[2] = dot[3] = dot[0];
-               store_vector4( inst, machine, dot );
-            }
-            break;
-         case OPCODE_DP4:
-            {
-               GLfloat t[4], u[4], dot[4];
-               fetch_vector4( ctx, &inst->SrcReg[0], machine, program, t );
-               fetch_vector4( ctx, &inst->SrcReg[1], machine, program, u );
-               dot[0] = t[0] * u[0] + t[1] * u[1] + t[2] * u[2] + t[3] * u[3];
-               dot[1] = dot[2] = dot[3] = dot[0];
-               store_vector4( inst, machine, dot );
-            }
-            break;
-         case OPCODE_DST:
-            {
-               GLfloat t[4], u[4], dst[4];
-               fetch_vector4( ctx, &inst->SrcReg[0], machine, program, t );
-               fetch_vector4( ctx, &inst->SrcReg[1], machine, program, u );
-               dst[0] = 1.0F;
-               dst[1] = t[1] * u[1];
-               dst[2] = t[2];
-               dst[3] = u[3];
-               store_vector4( inst, machine, dst );
-            }
-            break;
-         case OPCODE_MIN:
-            {
-               GLfloat t[4], u[4], min[4];
-               fetch_vector4( ctx, &inst->SrcReg[0], machine, program, t );
-               fetch_vector4( ctx, &inst->SrcReg[1], machine, program, u );
-               min[0] = (t[0] < u[0]) ? t[0] : u[0];
-               min[1] = (t[1] < u[1]) ? t[1] : u[1];
-               min[2] = (t[2] < u[2]) ? t[2] : u[2];
-               min[3] = (t[3] < u[3]) ? t[3] : u[3];
-               store_vector4( inst, machine, min );
-            }
-            break;
-         case OPCODE_MAX:
-            {
-               GLfloat t[4], u[4], max[4];
-               fetch_vector4( ctx, &inst->SrcReg[0], machine, program, t );
-               fetch_vector4( ctx, &inst->SrcReg[1], machine, program, u );
-               max[0] = (t[0] > u[0]) ? t[0] : u[0];
-               max[1] = (t[1] > u[1]) ? t[1] : u[1];
-               max[2] = (t[2] > u[2]) ? t[2] : u[2];
-               max[3] = (t[3] > u[3]) ? t[3] : u[3];
-               store_vector4( inst, machine, max );
-            }
-            break;
-         case OPCODE_SLT:
-            {
-               GLfloat t[4], u[4], slt[4];
-               fetch_vector4( ctx, &inst->SrcReg[0], machine, program, t );
-               fetch_vector4( ctx, &inst->SrcReg[1], machine, program, u );
-               slt[0] = (t[0] < u[0]) ? 1.0F : 0.0F;
-               slt[1] = (t[1] < u[1]) ? 1.0F : 0.0F;
-               slt[2] = (t[2] < u[2]) ? 1.0F : 0.0F;
-               slt[3] = (t[3] < u[3]) ? 1.0F : 0.0F;
-               store_vector4( inst, machine, slt );
-            }
-            break;
-         case OPCODE_SGE:
-            {
-               GLfloat t[4], u[4], sge[4];
-               fetch_vector4( ctx, &inst->SrcReg[0], machine, program, t );
-               fetch_vector4( ctx, &inst->SrcReg[1], machine, program, u );
-               sge[0] = (t[0] >= u[0]) ? 1.0F : 0.0F;
-               sge[1] = (t[1] >= u[1]) ? 1.0F : 0.0F;
-               sge[2] = (t[2] >= u[2]) ? 1.0F : 0.0F;
-               sge[3] = (t[3] >= u[3]) ? 1.0F : 0.0F;
-               store_vector4( inst, machine, sge );
-            }
-            break;
-         case OPCODE_SGT: /* set on greater */
-            {
-               GLfloat a[4], b[4], result[4];
-               fetch_vector4( ctx, &inst->SrcReg[0], machine, program, a );
-               fetch_vector4( ctx, &inst->SrcReg[1], machine, program, b );
-               result[0] = (a[0] > b[0]) ? 1.0F : 0.0F;
-               result[1] = (a[1] > b[1]) ? 1.0F : 0.0F;
-               result[2] = (a[2] > b[2]) ? 1.0F : 0.0F;
-               result[3] = (a[3] > b[3]) ? 1.0F : 0.0F;
-               store_vector4( inst, machine, result );
-               if (DEBUG_VERT) {
-                  printf("SGT %g %g %g %g\n",
-                         result[0], result[1], result[2], result[3]);
-               }
-            }
-            break;
-         case OPCODE_MAD:
-            {
-               GLfloat t[4], u[4], v[4], sum[4];
-               fetch_vector4( ctx, &inst->SrcReg[0], machine, program, t );
-               fetch_vector4( ctx, &inst->SrcReg[1], machine, program, u );
-               fetch_vector4( ctx, &inst->SrcReg[2], machine, program, v );
-               sum[0] = t[0] * u[0] + v[0];
-               sum[1] = t[1] * u[1] + v[1];
-               sum[2] = t[2] * u[2] + v[2];
-               sum[3] = t[3] * u[3] + v[3];
-               store_vector4( inst, machine, sum );
-            }
-            break;
-         case OPCODE_ARL:
-            {
-               GLfloat t[4];
-               fetch_vector4( ctx, &inst->SrcReg[0], machine, program, t );
-               machine->AddressReg[0][0] = (GLint) FLOORF(t[0]);
-            }
-            break;
-         case OPCODE_DPH:
-            {
-               GLfloat t[4], u[4], dot[4];
-               fetch_vector4( ctx, &inst->SrcReg[0], machine, program, t );
-               fetch_vector4( ctx, &inst->SrcReg[1], machine, program, u );
-               dot[0] = t[0] * u[0] + t[1] * u[1] + t[2] * u[2] + u[3];
-               dot[1] = dot[2] = dot[3] = dot[0];
-               store_vector4( inst, machine, dot );
-            }
-            break;
-         case OPCODE_RCC:
-            {
-               GLfloat t[4], u;
-               fetch_vector1( ctx, &inst->SrcReg[0], machine, program, t );
-               if (t[0] == 1.0F)
-                  u = 1.0F;
-               else
-                  u = 1.0F / t[0];
-               if (u > 0.0F) {
-                  if (u > 1.884467e+019F) {
-                     u = 1.884467e+019F;  /* IEEE 32-bit binary value 0x5F800000 */
-                  }
-                  else if (u < 5.42101e-020F) {
-                     u = 5.42101e-020F;   /* IEEE 32-bit binary value 0x1F800000 */
-                  }
-               }
-               else {
-                  if (u < -1.884467e+019F) {
-                     u = -1.884467e+019F; /* IEEE 32-bit binary value 0xDF800000 */
-                  }
-                  else if (u > -5.42101e-020F) {
-                     u = -5.42101e-020F;  /* IEEE 32-bit binary value 0x9F800000 */
-                  }
-               }
-               t[0] = t[1] = t[2] = t[3] = u;
-               store_vector4( inst, machine, t );
-            }
-            break;
-         case OPCODE_SUB: /* GL_NV_vertex_program1_1 */
-            {
-               GLfloat t[4], u[4], sum[4];
-               fetch_vector4( ctx, &inst->SrcReg[0], machine, program, t );
-               fetch_vector4( ctx, &inst->SrcReg[1], machine, program, u );
-               sum[0] = t[0] - u[0];
-               sum[1] = t[1] - u[1];
-               sum[2] = t[2] - u[2];
-               sum[3] = t[3] - u[3];
-               store_vector4( inst, machine, sum );
-            }
-            break;
-         case OPCODE_ABS: /* GL_NV_vertex_program1_1 */
-            {
-               GLfloat t[4];
-               fetch_vector4( ctx, &inst->SrcReg[0], machine, program, t );
-               if (t[0] < 0.0)  t[0] = -t[0];
-               if (t[1] < 0.0)  t[1] = -t[1];
-               if (t[2] < 0.0)  t[2] = -t[2];
-               if (t[3] < 0.0)  t[3] = -t[3];
-               store_vector4( inst, machine, t );
-            }
-            break;
-         case OPCODE_FLR: /* GL_ARB_vertex_program */
-            {
-               GLfloat t[4];
-               fetch_vector4( ctx, &inst->SrcReg[0], machine, program, t );
-               t[0] = FLOORF(t[0]);
-               t[1] = FLOORF(t[1]);
-               t[2] = FLOORF(t[2]);
-               t[3] = FLOORF(t[3]);
-               store_vector4( inst, machine, t );
-            }
-            break;
-         case OPCODE_FRC: /* GL_ARB_vertex_program */
-            {
-               GLfloat t[4];
-               fetch_vector4( ctx, &inst->SrcReg[0], machine, program, t );
-               t[0] = t[0] - FLOORF(t[0]);
-               t[1] = t[1] - FLOORF(t[1]);
-               t[2] = t[2] - FLOORF(t[2]);
-               t[3] = t[3] - FLOORF(t[3]);
-               store_vector4( inst, machine, t );
-            }
-            break;
-         case OPCODE_IF:
-            if (eval_condition(machine, inst)) {
-               /* do if-clause (just continue execution) */
+            else if (floor_t0 < FLT_MIN_EXP) {
+               q[0] = 0.0F;
+               q[2] = 0.0F;
             }
             else {
-               /* go to the instruction after ELSE or ENDIF */
-               assert(inst->BranchTarget >= 0);
-               pc = inst->BranchTarget - 1;
+#ifdef USE_IEEE
+               GLint ii = (GLint) floor_t0;
+               ii = (ii < 23) + 0x3f800000;
+               SET_FLOAT_BITS(q[0], ii);
+               q[0] = *((GLfloat *) (void *)&ii);
+#else
+               q[0] = (GLfloat) pow(2.0, floor_t0);
+#endif
+               q[2] = (GLfloat) (q[0] * LOG2(q[1]));
             }
-            break;
-         case OPCODE_ELSE:
-            /* goto ENDIF */
+            q[1] = t[0] - floor_t0;
+            q[3] = 1.0F;
+            store_vector4( inst, machine, q );
+         }
+         break;
+      case OPCODE_EX2: /* GL_ARB_vertex_program */
+         {
+            GLfloat t[4];
+            fetch_vector1( ctx, &inst->SrcReg[0], machine, program, t );
+            t[0] = t[1] = t[2] = t[3] = (GLfloat)_mesa_pow(2.0, t[0]);
+            store_vector4( inst, machine, t );
+         }
+         break;
+      case OPCODE_FLR: /* GL_ARB_vertex_program */
+         {
+            GLfloat t[4];
+            fetch_vector4( ctx, &inst->SrcReg[0], machine, program, t );
+            t[0] = FLOORF(t[0]);
+            t[1] = FLOORF(t[1]);
+            t[2] = FLOORF(t[2]);
+            t[3] = FLOORF(t[3]);
+            store_vector4( inst, machine, t );
+         }
+         break;
+      case OPCODE_FRC: /* GL_ARB_vertex_program */
+         {
+            GLfloat t[4];
+            fetch_vector4( ctx, &inst->SrcReg[0], machine, program, t );
+            t[0] = t[0] - FLOORF(t[0]);
+            t[1] = t[1] - FLOORF(t[1]);
+            t[2] = t[2] - FLOORF(t[2]);
+            t[3] = t[3] - FLOORF(t[3]);
+            store_vector4( inst, machine, t );
+         }
+         break;
+      case OPCODE_IF:
+         if (eval_condition(machine, inst)) {
+            /* do if-clause (just continue execution) */
+         }
+         else {
+            /* go to the instruction after ELSE or ENDIF */
             assert(inst->BranchTarget >= 0);
             pc = inst->BranchTarget - 1;
-            break;
-         case OPCODE_ENDIF:
-            /* nothing */
-            break;
-
-         case OPCODE_EX2: /* GL_ARB_vertex_program */
-            {
-               GLfloat t[4];
-               fetch_vector1( ctx, &inst->SrcReg[0], machine, program, t );
-               t[0] = t[1] = t[2] = t[3] = (GLfloat)_mesa_pow(2.0, t[0]);
-               store_vector4( inst, machine, t );
-            }
-            break;
-         case OPCODE_LG2: /* GL_ARB_vertex_program */
-            {
-               GLfloat t[4];
-               fetch_vector1( ctx, &inst->SrcReg[0], machine, program, t );
-               t[0] = t[1] = t[2] = t[3] = LOG2(t[0]);
-               store_vector4( inst, machine, t );
-            }
-            break;
-         case OPCODE_POW: /* GL_ARB_vertex_program */
-            {
-               GLfloat t[4], u[4];
-               fetch_vector1( ctx, &inst->SrcReg[0], machine, program, t );
-               fetch_vector1( ctx, &inst->SrcReg[1], machine, program, u );
-               t[0] = t[1] = t[2] = t[3] = (GLfloat)_mesa_pow(t[0], u[0]);
-               store_vector4( inst, machine, t );
-            }
-            break;
-         case OPCODE_XPD: /* GL_ARB_vertex_program */
-            {
-               GLfloat t[4], u[4], cross[4];
-               fetch_vector4( ctx, &inst->SrcReg[0], machine, program, t );
-               fetch_vector4( ctx, &inst->SrcReg[1], machine, program, u );
-               cross[0] = t[1] * u[2] - t[2] * u[1];
-               cross[1] = t[2] * u[0] - t[0] * u[2];
-               cross[2] = t[0] * u[1] - t[1] * u[0];
-               cross[3] = 0.0;
-               store_vector4( inst, machine, cross );
-            }
-            break;
-         case OPCODE_SWZ: /* GL_ARB_vertex_program */
-            {
-               const struct prog_src_register *source = &inst->SrcReg[0];
-               const GLfloat *src = get_register_pointer(ctx, source,
-                                                         machine, program);
-               GLfloat result[4];
-               GLuint i;
-
-               /* do extended swizzling here */
-               for (i = 0; i < 4; i++) {
-                  const GLuint swz = GET_SWZ(source->Swizzle, i);
-                  if (swz == SWIZZLE_ZERO)
-                     result[i] = 0.0;
-                  else if (swz == SWIZZLE_ONE)
-                     result[i] = 1.0;
-                  else {
-                     ASSERT(swz >= 0);
-                     ASSERT(swz <= 3);
-                     result[i] = src[swz];
-                  }
-                  if (source->NegateBase & (1 << i))
-                     result[i] = -result[i];
+         }
+         break;
+      case OPCODE_ELSE:
+         /* goto ENDIF */
+         assert(inst->BranchTarget >= 0);
+         pc = inst->BranchTarget - 1;
+         break;
+      case OPCODE_ENDIF:
+         /* nothing */
+         break;
+      case OPCODE_MOV:
+         {
+            GLfloat t[4];
+            fetch_vector4( ctx, &inst->SrcReg[0], machine, program, t );
+            store_vector4( inst, machine, t );
+         }
+         break;
+      case OPCODE_LIT:
+         {
+            const GLfloat epsilon = 1.0F / 256.0F; /* per NV spec */
+            GLfloat t[4], lit[4];
+            fetch_vector4( ctx, &inst->SrcReg[0], machine, program, t );
+            t[0] = MAX2(t[0], 0.0F);
+            t[1] = MAX2(t[1], 0.0F);
+            t[3] = CLAMP(t[3], -(128.0F - epsilon), (128.0F - epsilon));
+            lit[0] = 1.0;
+            lit[1] = t[0];
+            lit[2] = (t[0] > 0.0) ? (GLfloat) _mesa_pow(t[1], t[3]) : 0.0F;
+            lit[3] = 1.0;
+            store_vector4( inst, machine, lit );
+         }
+         break;
+      case OPCODE_LOG:
+         {
+            GLfloat t[4], q[4], abs_t0;
+            fetch_vector1( ctx, &inst->SrcReg[0], machine, program, t );
+            abs_t0 = FABSF(t[0]);
+            if (abs_t0 != 0.0F) {
+               /* Since we really can't handle infinite values on VMS
+                * like other OSes we'll use __MAXFLOAT to represent
+                * infinity.  This may need some tweaking.
+                */
+#ifdef VMS
+               if (abs_t0 == __MAXFLOAT)
+#else
+               if (IS_INF_OR_NAN(abs_t0))
+#endif
+               {
+                  SET_POS_INFINITY(q[0]);
+                  q[1] = 1.0F;
+                  SET_POS_INFINITY(q[2]);
                }
-               store_vector4( inst, machine, result );
-            }
-            break;
-         case OPCODE_PRINT:
-            if (inst->SrcReg[0].File) {
-               GLfloat t[4];
-               fetch_vector4( ctx, &inst->SrcReg[0], machine, program, t );
-               _mesa_printf("%s%g, %g, %g, %g\n",
-                            (char *) inst->Data, t[0], t[1], t[2], t[3]);
+               else {
+                  int exponent;
+                  GLfloat mantissa = FREXPF(t[0], &exponent);
+                  q[0] = (GLfloat) (exponent - 1);
+                  q[1] = (GLfloat) (2.0 * mantissa); /* map [.5, 1) -> [1, 2) */
+                  q[2] = (GLfloat) (q[0] + LOG2(q[1]));
+               }
             }
             else {
-               _mesa_printf("%s\n", (char *) inst->Data);
+               SET_NEG_INFINITY(q[0]);
+               q[1] = 1.0F;
+               SET_NEG_INFINITY(q[2]);
             }
-            break;
-         case OPCODE_END:
-            ctx->_CurrentProgram = 0;
-            return;
-         case OPCODE_BRA:
-            /* XXX implement */
-            /* FALLTHROUGH */
-         case OPCODE_NOP:
-            break;
-         default:
-            /* bad instruction opcode */
-            _mesa_problem(ctx, "Bad VP Opcode in _mesa_exec_vertex_program");
-            ctx->_CurrentProgram = 0;
-            return;
+            q[3] = 1.0;
+            store_vector4( inst, machine, q );
+         }
+         break;
+      case OPCODE_MAD:
+         {
+            GLfloat t[4], u[4], v[4], sum[4];
+            fetch_vector4( ctx, &inst->SrcReg[0], machine, program, t );
+            fetch_vector4( ctx, &inst->SrcReg[1], machine, program, u );
+            fetch_vector4( ctx, &inst->SrcReg[2], machine, program, v );
+            sum[0] = t[0] * u[0] + v[0];
+            sum[1] = t[1] * u[1] + v[1];
+            sum[2] = t[2] * u[2] + v[2];
+            sum[3] = t[3] * u[3] + v[3];
+            store_vector4( inst, machine, sum );
+         }
+         break;
+      case OPCODE_MAX:
+         {
+            GLfloat t[4], u[4], max[4];
+            fetch_vector4( ctx, &inst->SrcReg[0], machine, program, t );
+            fetch_vector4( ctx, &inst->SrcReg[1], machine, program, u );
+            max[0] = (t[0] > u[0]) ? t[0] : u[0];
+            max[1] = (t[1] > u[1]) ? t[1] : u[1];
+            max[2] = (t[2] > u[2]) ? t[2] : u[2];
+            max[3] = (t[3] > u[3]) ? t[3] : u[3];
+            store_vector4( inst, machine, max );
+         }
+         break;
+      case OPCODE_MIN:
+         {
+            GLfloat t[4], u[4], min[4];
+            fetch_vector4( ctx, &inst->SrcReg[0], machine, program, t );
+            fetch_vector4( ctx, &inst->SrcReg[1], machine, program, u );
+            min[0] = (t[0] < u[0]) ? t[0] : u[0];
+            min[1] = (t[1] < u[1]) ? t[1] : u[1];
+            min[2] = (t[2] < u[2]) ? t[2] : u[2];
+            min[3] = (t[3] < u[3]) ? t[3] : u[3];
+            store_vector4( inst, machine, min );
+         }
+         break;
+      case OPCODE_MUL:
+         {
+            GLfloat t[4], u[4], prod[4];
+            fetch_vector4( ctx, &inst->SrcReg[0], machine, program, t );
+            fetch_vector4( ctx, &inst->SrcReg[1], machine, program, u );
+            prod[0] = t[0] * u[0];
+            prod[1] = t[1] * u[1];
+            prod[2] = t[2] * u[2];
+            prod[3] = t[3] * u[3];
+            store_vector4( inst, machine, prod );
+         }
+         break;
+      case OPCODE_RCP:
+         {
+            GLfloat t[4];
+            fetch_vector1( ctx, &inst->SrcReg[0], machine, program, t );
+            if (t[0] != 1.0F)
+               t[0] = 1.0F / t[0];  /* div by zero is infinity! */
+            t[1] = t[2] = t[3] = t[0];
+            store_vector4( inst, machine, t );
+         }
+         break;
+      case OPCODE_RSQ:
+         {
+            GLfloat t[4];
+            fetch_vector1( ctx, &inst->SrcReg[0], machine, program, t );
+            t[0] = INV_SQRTF(FABSF(t[0]));
+            t[1] = t[2] = t[3] = t[0];
+            store_vector4( inst, machine, t );
+         }
+         break;
+      case OPCODE_SLT:
+         {
+            GLfloat t[4], u[4], slt[4];
+            fetch_vector4( ctx, &inst->SrcReg[0], machine, program, t );
+            fetch_vector4( ctx, &inst->SrcReg[1], machine, program, u );
+            slt[0] = (t[0] < u[0]) ? 1.0F : 0.0F;
+            slt[1] = (t[1] < u[1]) ? 1.0F : 0.0F;
+            slt[2] = (t[2] < u[2]) ? 1.0F : 0.0F;
+            slt[3] = (t[3] < u[3]) ? 1.0F : 0.0F;
+            store_vector4( inst, machine, slt );
+         }
+         break;
+      case OPCODE_SGE:
+         {
+            GLfloat t[4], u[4], sge[4];
+            fetch_vector4( ctx, &inst->SrcReg[0], machine, program, t );
+            fetch_vector4( ctx, &inst->SrcReg[1], machine, program, u );
+            sge[0] = (t[0] >= u[0]) ? 1.0F : 0.0F;
+            sge[1] = (t[1] >= u[1]) ? 1.0F : 0.0F;
+            sge[2] = (t[2] >= u[2]) ? 1.0F : 0.0F;
+            sge[3] = (t[3] >= u[3]) ? 1.0F : 0.0F;
+            store_vector4( inst, machine, sge );
+         }
+         break;
+      case OPCODE_SGT: /* set on greater */
+         {
+            GLfloat a[4], b[4], result[4];
+            fetch_vector4( ctx, &inst->SrcReg[0], machine, program, a );
+            fetch_vector4( ctx, &inst->SrcReg[1], machine, program, b );
+            result[0] = (a[0] > b[0]) ? 1.0F : 0.0F;
+            result[1] = (a[1] > b[1]) ? 1.0F : 0.0F;
+            result[2] = (a[2] > b[2]) ? 1.0F : 0.0F;
+            result[3] = (a[3] > b[3]) ? 1.0F : 0.0F;
+            store_vector4( inst, machine, result );
+            if (DEBUG_VERT) {
+               printf("SGT %g %g %g %g\n",
+                      result[0], result[1], result[2], result[3]);
+            }
+         }
+         break;
+      case OPCODE_RCC:
+         {
+            GLfloat t[4], u;
+            fetch_vector1( ctx, &inst->SrcReg[0], machine, program, t );
+            if (t[0] == 1.0F)
+               u = 1.0F;
+            else
+               u = 1.0F / t[0];
+            if (u > 0.0F) {
+               if (u > 1.884467e+019F) {
+                  u = 1.884467e+019F;  /* IEEE 32-bit binary value 0x5F800000 */
+               }
+               else if (u < 5.42101e-020F) {
+                  u = 5.42101e-020F;   /* IEEE 32-bit binary value 0x1F800000 */
+               }
+            }
+            else {
+               if (u < -1.884467e+019F) {
+                  u = -1.884467e+019F; /* IEEE 32-bit binary value 0xDF800000 */
+               }
+               else if (u > -5.42101e-020F) {
+                  u = -5.42101e-020F;  /* IEEE 32-bit binary value 0x9F800000 */
+               }
+            }
+            t[0] = t[1] = t[2] = t[3] = u;
+            store_vector4( inst, machine, t );
+         }
+         break;
+      case OPCODE_SUB: /* GL_NV_vertex_program1_1 */
+         {
+            GLfloat t[4], u[4], sum[4];
+            fetch_vector4( ctx, &inst->SrcReg[0], machine, program, t );
+            fetch_vector4( ctx, &inst->SrcReg[1], machine, program, u );
+            sum[0] = t[0] - u[0];
+            sum[1] = t[1] - u[1];
+            sum[2] = t[2] - u[2];
+            sum[3] = t[3] - u[3];
+            store_vector4( inst, machine, sum );
+         }
+         break;
+      case OPCODE_LG2: /* GL_ARB_vertex_program */
+         {
+            GLfloat t[4];
+            fetch_vector1( ctx, &inst->SrcReg[0], machine, program, t );
+            t[0] = t[1] = t[2] = t[3] = LOG2(t[0]);
+            store_vector4( inst, machine, t );
+         }
+         break;
+      case OPCODE_POW: /* GL_ARB_vertex_program */
+         {
+            GLfloat t[4], u[4];
+            fetch_vector1( ctx, &inst->SrcReg[0], machine, program, t );
+            fetch_vector1( ctx, &inst->SrcReg[1], machine, program, u );
+            t[0] = t[1] = t[2] = t[3] = (GLfloat)_mesa_pow(t[0], u[0]);
+            store_vector4( inst, machine, t );
+         }
+         break;
+      case OPCODE_XPD: /* GL_ARB_vertex_program */
+         {
+            GLfloat t[4], u[4], cross[4];
+            fetch_vector4( ctx, &inst->SrcReg[0], machine, program, t );
+            fetch_vector4( ctx, &inst->SrcReg[1], machine, program, u );
+            cross[0] = t[1] * u[2] - t[2] * u[1];
+            cross[1] = t[2] * u[0] - t[0] * u[2];
+            cross[2] = t[0] * u[1] - t[1] * u[0];
+            cross[3] = 0.0;
+            store_vector4( inst, machine, cross );
+         }
+         break;
+      case OPCODE_SWZ: /* GL_ARB_vertex_program */
+         {
+            const struct prog_src_register *source = &inst->SrcReg[0];
+            const GLfloat *src = get_register_pointer(ctx, source,
+                                                      machine, program);
+            GLfloat result[4];
+            GLuint i;
+            
+            /* do extended swizzling here */
+            for (i = 0; i < 4; i++) {
+               const GLuint swz = GET_SWZ(source->Swizzle, i);
+               if (swz == SWIZZLE_ZERO)
+                  result[i] = 0.0;
+               else if (swz == SWIZZLE_ONE)
+                  result[i] = 1.0;
+               else {
+                  ASSERT(swz >= 0);
+                  ASSERT(swz <= 3);
+                  result[i] = src[swz];
+               }
+               if (source->NegateBase & (1 << i))
+                  result[i] = -result[i];
+            }
+            store_vector4( inst, machine, result );
+         }
+         break;
+      case OPCODE_PRINT:
+         if (inst->SrcReg[0].File) {
+            GLfloat t[4];
+            fetch_vector4( ctx, &inst->SrcReg[0], machine, program, t );
+            _mesa_printf("%s%g, %g, %g, %g\n",
+                         (char *) inst->Data, t[0], t[1], t[2], t[3]);
+         }
+         else {
+            _mesa_printf("%s\n", (char *) inst->Data);
+         }
+         break;
+      case OPCODE_END:
+         ctx->_CurrentProgram = 0;
+         return;
+      case OPCODE_NOP:
+         break;
+      default:
+         /* bad instruction opcode */
+         _mesa_problem(ctx, "Bad VP Opcode in _mesa_exec_vertex_program");
+         ctx->_CurrentProgram = 0;
+         return;
       } /* switch */
    } /* for */
 
