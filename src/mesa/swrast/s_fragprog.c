@@ -172,7 +172,7 @@ get_register_pointer( GLcontext *ctx,
       ASSERT(source->Index < MAX_PROGRAM_LOCAL_PARAMS);
       return program->Base.LocalParams[source->Index];
    case PROGRAM_ENV_PARAM:
-      ASSERT(source->Index < MAX_NV_FRAGMENT_PROGRAM_PARAMS);
+      ASSERT(source->Index < MAX_PROGRAM_ENV_PARAMS);
       return ctx->FragmentProgram.Parameters[source->Index];
    case PROGRAM_STATE_VAR:
       /* Fallthrough */
@@ -557,7 +557,7 @@ init_machine_deriv( GLcontext *ctx,
       /* XXX also need to do this when using valgrind */
       /* Clear temporary registers (undefined for ARB_f_p) */
       _mesa_bzero( (void*) machine->Temporaries,
-                   MAX_NV_FRAGMENT_PROGRAM_TEMPS * 4 * sizeof(GLfloat));
+                   MAX_PROGRAM_TEMPS * 4 * sizeof(GLfloat));
    }
 
    /* Add derivatives */
@@ -1611,7 +1611,7 @@ init_machine( GLcontext *ctx, struct fp_machine *machine,
    if (program->Base.Target == GL_FRAGMENT_PROGRAM_NV) {
       /* Clear temporary registers (undefined for ARB_f_p) */
       _mesa_bzero(machine->Temporaries,
-                  MAX_NV_FRAGMENT_PROGRAM_TEMPS * 4 * sizeof(GLfloat));
+                  MAX_PROGRAM_TEMPS * 4 * sizeof(GLfloat));
    }
 
    /* Setup pointer to input attributes */
