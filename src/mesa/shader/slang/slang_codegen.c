@@ -52,31 +52,6 @@ static slang_ir_node *
 _slang_gen_operation(slang_assemble_ctx * A, slang_operation *oper);
 
 
-
-
-/**
- * Lookup a named constant and allocate storage for the parameter in
- * the given parameter list.
- * \param swizzleOut  returns swizzle mask for accessing the constant
- * \return position of the constant in the paramList.
- */
-static GLint
-slang_lookup_constant(const char *name,
-                      struct gl_program_parameter_list *paramList,
-                      GLuint *swizzleOut)
-{
-   GLint value = _slang_lookup_constant(name);
-   if (value >= 0) {
-      /* XXX named constant! */
-      GLfloat fvalue = (GLfloat) value;
-      GLint pos;
-      pos = _mesa_add_unnamed_constant(paramList, &fvalue, 1, swizzleOut);
-      return pos;
-   }
-   return -1;
-}
-
-
 static GLboolean
 is_sampler_type(const slang_fully_specified_type *t)
 {
@@ -161,19 +136,24 @@ _slang_sizeof_type_specifier(const slang_type_specifier *spec)
 
 
 /**
- * Allocate storage info for an IR node (n->Store).
- * If n is an IR_VAR_DECL, allocate a temporary for the variable.
- * Otherwise, if n is an IR_VAR, check if it's a uniform or constant
- * that needs to have storage allocated.
+ * Establish the binding between a slang_ir_node and a slang_variable.
+ * Then, allocate/attach a slang_ir_storage object to the IR node if needed.
+ * The IR node must be a IR_VAR or IR_VAR_DECL node.
+ * \param n  the IR node
+ * \param var  the variable to associate with the IR node
  */
 static void
-slang_allocate_storage(slang_assemble_ctx *A, slang_ir_node *n)
+slang_attach_storage(slang_ir_node *n, slang_variable *var)
 {
-   assert(A->vartable);
    assert(n);
+   assert(var);
+   assert(n->Opcode == IR_VAR || n->Opcode == IR_VAR_DECL);
+   assert(!n->Var || n->Var == var);
+
+   n->Var = var;
 
    if (!n->Store) {
-      /* allocate storage info for this node */
+      /* need to setup storage */
       if (n->Var && n->Var->aux) {
          /* node storage info = var storage info */
          n->Store = (slang_ir_storage *) n->Var->aux;
@@ -184,35 +164,6 @@ slang_allocate_storage(slang_assemble_ctx *A, slang_ir_node *n)
          if (n->Var)
             n->Var->aux = n->Store;
          assert(n->Var->aux);
-      }
-   }
-
-   if (n->Opcode == IR_VAR_DECL) {
-      /* variable declaration */
-      assert(n->Var);
-      assert(!is_sampler_type(&n->Var->type));
-      n->Store->File = PROGRAM_TEMPORARY;
-      n->Store->Size = _slang_sizeof_type_specifier(&n->Var->type.specifier);
-      assert(n->Store->Size > 0);
-      return;
-   }
-   else {
-      assert(n->Opcode == IR_VAR);
-      assert(n->Var);
-
-      if (n->Store->Index < 0) {
-         const char *varName = (char *) n->Var->a_name;
-         struct gl_program *prog = A->program;
-         assert(prog);
-
-         if (n->Store->File == PROGRAM_CONSTANT) {
-            /* XXX compile-time constants should be converted to literals */
-            GLint i = slang_lookup_constant(varName, prog->Parameters,
-                                            &n->Store->Swizzle);
-            assert(i >= 0);
-            assert(n->Store->Size == 1);
-            n->Store->Index = i;
-         }
       }
    }
 }
@@ -619,15 +570,18 @@ new_if(slang_ir_node *cond, slang_ir_node *ifPart, slang_ir_node *elsePart)
 static slang_ir_node *
 new_var(slang_assemble_ctx *A, slang_operation *oper, slang_atom name)
 {
-   slang_variable *v = _slang_locate_variable(oper->locals, name, GL_TRUE);
-   slang_ir_node *n = new_node0(IR_VAR);
-   if (!v)
+   slang_ir_node *n;
+   slang_variable *var = _slang_locate_variable(oper->locals, name, GL_TRUE);
+   if (!var)
       return NULL;
-   assert(!oper->var || oper->var == v);
-   v->used = GL_TRUE;
-   n->Var = v;
-   slang_allocate_storage(A, n);
 
+   assert(!oper->var || oper->var == var);
+
+   n = new_node0(IR_VAR);
+   if (n) {
+      var->used = GL_TRUE;
+      slang_attach_storage(n, var);
+   }
    return n;
 }
 
@@ -1643,15 +1597,19 @@ static slang_ir_node *
 _slang_gen_var_decl(slang_assemble_ctx *A, slang_variable *var)
 {
    slang_ir_node *n;
+   assert(!is_sampler_type(&var->type));
    n = new_node0(IR_VAR_DECL);
    if (n) {
-      n->Var = var;
-      slang_allocate_storage(A, n);
-      assert(n->Store);
-      assert(n->Store->Index < 0);
-      assert(n->Store->Size > 0);
+      slang_attach_storage(n, var);
+
       assert(var->aux);
       assert(n->Store == var->aux);
+      assert(n->Store);
+      assert(n->Store->Index < 0);
+
+      n->Store->File = PROGRAM_TEMPORARY;
+      n->Store->Size = _slang_sizeof_type_specifier(&n->Var->type.specifier);
+      assert(n->Store->Size > 0);
    }
    return n;
 }
@@ -2564,7 +2522,7 @@ _slang_gen_operation(slang_assemble_ctx * A, slang_operation *oper)
       abort();
       return new_node0(IR_NOP);
    }
-      abort();
+
    return NULL;
 }
 
