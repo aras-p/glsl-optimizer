@@ -41,6 +41,9 @@ struct vp_machine
    GLfloat Outputs[VERT_RESULT_MAX][4];
    GLuint CondCodes[4];  /**< COND_* value for x/y/z/w */
    GLint AddressReg[MAX_VERTEX_PROGRAM_ADDRESS_REGS][4];
+
+   GLuint CallStack[MAX_PROGRAM_CALL_DEPTH]; /**< For CAL/RET instructions */
+   GLuint StackDepth; /**< Index/ptr to top of CallStack[] */
 };
 
 
