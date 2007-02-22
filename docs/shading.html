@@ -145,8 +145,15 @@ This tool is useful for:
 </ul>
 
 <p>
-(compiler build instructions TBD)
+To build the glslcompiler program (this will be improved someday):
 </p>
+<pre>
+    cd src/mesa
+    make libmesa.a
+    cd drivers/glslcompiler
+    make
+</pre>
+
 
 <p>
 Here's an example of using the compiler to compile a vertex shader and
