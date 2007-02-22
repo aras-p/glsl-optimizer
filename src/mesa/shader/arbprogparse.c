@@ -3336,206 +3336,18 @@ parse_vp_instruction (GLcontext * ctx, const GLubyte ** inst,
 #if DEBUG_PARSING
 
 static GLvoid
-print_state_token (GLint token)
-{
-   switch (token) {
-      case STATE_MATERIAL:
-         fprintf (stderr, "STATE_MATERIAL ");
-         break;
-      case STATE_LIGHT:
-         fprintf (stderr, "STATE_LIGHT ");
-         break;
-
-      case STATE_LIGHTMODEL_AMBIENT:
-         fprintf (stderr, "STATE_AMBIENT ");
-         break;
-
-      case STATE_LIGHTMODEL_SCENECOLOR:
-         fprintf (stderr, "STATE_SCENECOLOR ");
-         break;
-
-      case STATE_LIGHTPROD:
-         fprintf (stderr, "STATE_LIGHTPROD ");
-         break;
-
-      case STATE_TEXGEN:
-         fprintf (stderr, "STATE_TEXGEN ");
-         break;
-
-      case STATE_FOG:
-         fprintf (stderr, "STATE_FOG ");
-         break;
-
-      case STATE_FOG_COLOR:
-         fprintf (stderr, "STATE_FOG_COLOR ");
-         break;
-
-      case STATE_FOG_PARAMS:
-         fprintf (stderr, "STATE_FOG_PARAMS ");
-         break;
-
-      case STATE_CLIPPLANE:
-         fprintf (stderr, "STATE_CLIPPLANE ");
-         break;
-
-      case STATE_POINT:
-         fprintf (stderr, "STATE_POINT ");
-         break;
-
-      case STATE_POINT_SIZE:
-         fprintf (stderr, "STATE_POINT_SIZE ");
-         break;
-
-      case STATE_POINT_ATTENUATION:
-         fprintf (stderr, "STATE_ATTENUATION ");
-         break;
-
-      case STATE_MATRIX:
-         fprintf (stderr, "STATE_MATRIX ");
-         break;
-
-      case STATE_MODELVIEW:
-         fprintf (stderr, "STATE_MODELVIEW ");
-         break;
-
-      case STATE_PROJECTION:
-         fprintf (stderr, "STATE_PROJECTION ");
-         break;
-
-      case STATE_MVP:
-         fprintf (stderr, "STATE_MVP ");
-         break;
-
-      case STATE_TEXTURE:
-         fprintf (stderr, "STATE_TEXTURE ");
-         break;
-
-      case STATE_PROGRAM:
-         fprintf (stderr, "STATE_PROGRAM ");
-         break;
-
-      case STATE_MATRIX_INVERSE:
-         fprintf (stderr, "STATE_INVERSE ");
-         break;
-
-      case STATE_MATRIX_TRANSPOSE:
-         fprintf (stderr, "STATE_TRANSPOSE ");
-         break;
-
-      case STATE_MATRIX_INVTRANS:
-         fprintf (stderr, "STATE_INVTRANS ");
-         break;
-
-      case STATE_AMBIENT:
-         fprintf (stderr, "STATE_AMBIENT ");
-         break;
-
-      case STATE_DIFFUSE:
-         fprintf (stderr, "STATE_DIFFUSE ");
-         break;
-
-      case STATE_SPECULAR:
-         fprintf (stderr, "STATE_SPECULAR ");
-         break;
-
-      case STATE_EMISSION:
-         fprintf (stderr, "STATE_EMISSION ");
-         break;
-
-      case STATE_SHININESS:
-         fprintf (stderr, "STATE_SHININESS ");
-         break;
-
-      case STATE_HALF:
-         fprintf (stderr, "STATE_HALF ");
-         break;
-
-      case STATE_POSITION:
-         fprintf (stderr, "STATE_POSITION ");
-         break;
-
-      case STATE_ATTENUATION:
-         fprintf (stderr, "STATE_ATTENUATION ");
-         break;
-
-      case STATE_SPOT_DIRECTION:
-         fprintf (stderr, "STATE_DIRECTION ");
-         break;
-
-      case STATE_TEXGEN_EYE_S:
-         fprintf (stderr, "STATE_TEXGEN_EYE_S ");
-         break;
-
-      case STATE_TEXGEN_EYE_T:
-         fprintf (stderr, "STATE_TEXGEN_EYE_T ");
-         break;
-
-      case STATE_TEXGEN_EYE_R:
-         fprintf (stderr, "STATE_TEXGEN_EYE_R ");
-         break;
-
-      case STATE_TEXGEN_EYE_Q:
-         fprintf (stderr, "STATE_TEXGEN_EYE_Q ");
-         break;
-
-      case STATE_TEXGEN_OBJECT_S:
-         fprintf (stderr, "STATE_TEXGEN_EYE_S ");
-         break;
-
-      case STATE_TEXGEN_OBJECT_T:
-         fprintf (stderr, "STATE_TEXGEN_OBJECT_T ");
-         break;
-
-      case STATE_TEXGEN_OBJECT_R:
-         fprintf (stderr, "STATE_TEXGEN_OBJECT_R ");
-         break;
-
-      case STATE_TEXGEN_OBJECT_Q:
-         fprintf (stderr, "STATE_TEXGEN_OBJECT_Q ");
-         break;
-
-      case STATE_TEXENV_COLOR:
-         fprintf (stderr, "STATE_TEXENV_COLOR ");
-         break;
-
-      case STATE_DEPTH_RANGE:
-         fprintf (stderr, "STATE_DEPTH_RANGE ");
-         break;
-
-      case STATE_VERTEX_PROGRAM:
-         fprintf (stderr, "STATE_VERTEX_PROGRAM ");
-         break;
-
-      case STATE_FRAGMENT_PROGRAM:
-         fprintf (stderr, "STATE_FRAGMENT_PROGRAM ");
-         break;
-
-      case STATE_ENV:
-         fprintf (stderr, "STATE_ENV ");
-         break;
-
-      case STATE_LOCAL:
-         fprintf (stderr, "STATE_LOCAL ");
-         break;
-
-   }
-   fprintf (stderr, "[%d] ", token);
-}
-
-
-static GLvoid
 debug_variables (GLcontext * ctx, struct var_cache *vc_head,
                  struct arb_program *Program)
 {
    struct var_cache *vc;
    GLint a, b;
 
-   fprintf (stderr, "debug_variables, vc_head: %x\n", vc_head);
+   fprintf (stderr, "debug_variables, vc_head: %p\n", (void*) vc_head);
 
    /* First of all, print out the contents of the var_cache */
    vc = vc_head;
    while (vc) {
-      fprintf (stderr, "[%x]\n", vc);
+      fprintf (stderr, "[%p]\n", (void*) vc);
       switch (vc->type) {
          case vt_none:
             fprintf (stderr, "UNDEFINED %s\n", vc->name);
@@ -3550,27 +3362,20 @@ debug_variables (GLcontext * ctx, struct var_cache *vc_head,
             b = vc->param_binding_begin;
             for (a = 0; a < vc->param_binding_length; a++) {
                fprintf (stderr, "%s\n",
-                        Program->Parameters->Parameters[a + b].Name);
-               if (Program->Parameters->Parameters[a + b].Type == STATE) {
-                  print_state_token (Program->Parameters->Parameters[a + b].
-                                     StateIndexes[0]);
-                  print_state_token (Program->Parameters->Parameters[a + b].
-                                     StateIndexes[1]);
-                  print_state_token (Program->Parameters->Parameters[a + b].
-                                     StateIndexes[2]);
-                  print_state_token (Program->Parameters->Parameters[a + b].
-                                     StateIndexes[3]);
-                  print_state_token (Program->Parameters->Parameters[a + b].
-                                     StateIndexes[4]);
-                  print_state_token (Program->Parameters->Parameters[a + b].
-                                     StateIndexes[5]);
+                        Program->Base.Parameters->Parameters[a + b].Name);
+               if (Program->Base.Parameters->Parameters[a + b].Type == PROGRAM_STATE_VAR) {
+                  const char *s;
+                  s = _mesa_program_state_string(Program->Base.Parameters->Parameters
+                                                 [a + b].StateIndexes);
+                  fprintf(stderr, "%s\n", s);
+                  _mesa_free((char *) s);
                }
                else
                   fprintf (stderr, "%f %f %f %f\n",
-                           Program->Parameters->Parameters[a + b].Values[0],
-                           Program->Parameters->Parameters[a + b].Values[1],
-                           Program->Parameters->Parameters[a + b].Values[2],
-                           Program->Parameters->Parameters[a + b].Values[3]);
+                           Program->Base.Parameters->ParameterValues[a + b][0],
+                           Program->Base.Parameters->ParameterValues[a + b][1],
+                           Program->Base.Parameters->ParameterValues[a + b][2],
+                           Program->Base.Parameters->ParameterValues[a + b][3]);
             }
             break;
          case vt_temp:
@@ -3583,9 +3388,12 @@ debug_variables (GLcontext * ctx, struct var_cache *vc_head,
             break;
          case vt_alias:
             fprintf (stderr, "ALIAS     %s\n", vc->name);
-            fprintf (stderr, "          binding: 0x%x (%s)\n",
-                     vc->alias_binding, vc->alias_binding->name);
+            fprintf (stderr, "          binding: 0x%p (%s)\n",
+                     (void*) vc->alias_binding, vc->alias_binding->name);
             break;
+         default:
+            /* nothing */
+            ;
       }
       vc = vc->next;
    }
