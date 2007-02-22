@@ -726,8 +726,9 @@ _tnl_disassem_vba_insn( union instruction op )
    }
 }
 
+typedef void (*gpu_function)(struct arb_vp_machine *m, union instruction op);
 
-static void (* const opcode_func[MAX_OPCODE+3])(struct arb_vp_machine *, union instruction) = 
+static gpu_function opcode_func[MAX_OPCODE+3] =
 {
    do_NOP,
    do_ABS,
@@ -958,7 +959,10 @@ static GLuint cvp_choose_result( struct compilation *cp,
       idx = REG_OUT0 + dst->Index;
       break;
    default:
+#if 0
+      /* IF/ELSE/ENDIF instructions will hit this */
       assert(0);
+#endif
       return REG_RES;		/* can't happen */
    }
 
@@ -1279,8 +1283,13 @@ run_arb_vertex_program(GLcontext *ctx, struct tnl_pipeline_stage *stage)
    GLuint i, j;
    GLbitfield outputs;
 
+#define FORCE_PROG_EXECUTE_C 0
+#if FORCE_PROG_EXECUTE_C
+   return GL_TRUE;   
+#else
    if (!program)
       return GL_TRUE;   
+#endif
 
    if (program->Base.Parameters) {
       _mesa_load_state_parameters(ctx, program->Base.Parameters);
@@ -1338,9 +1347,9 @@ run_arb_vertex_program(GLcontext *ctx, struct tnl_pipeline_stage *stage)
 	 call_func( p, m );
       }
       else {
-         GLint j;
-	 for (j = 0; j < p->nr_instructions; j++) {
-	    union instruction inst = p->instructions[j];	 
+         GLint pc;
+	 for (pc = 0; pc < p->nr_instructions; pc++) {
+	    union instruction inst = p->instructions[pc];	 
 	    opcode_func[inst.alu.opcode]( m, inst );
 	 }
       }
@@ -1468,7 +1477,11 @@ validate_vertex_program( GLcontext *ctx, struct tnl_pipeline_stage *stage )
    struct arb_vp_machine *m = ARB_VP_MACHINE(stage);
    struct gl_vertex_program *program = ctx->VertexProgram._Current;
 
+#if FORCE_OLD
+   if (0 &&program) {
+#else
    if (program) {
+#endif
       if (!program->TnlData)
 	 compile_vertex_program( program, m->try_codegen );
       
