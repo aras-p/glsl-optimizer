@@ -1768,9 +1768,7 @@ void r300UpdateShaderStates(r300ContextPtr rmesa)
 	GLcontext *ctx;
 	ctx = rmesa->radeon.glCtx;
 	
-#ifdef CB_DPATH
 	r300UpdateTextureState(ctx);
-#endif
 
 	r300SetupPixelShader(rmesa);
 	r300_setup_textures(ctx);
@@ -1895,10 +1893,6 @@ static void r300InvalidateState(GLcontext * ctx, GLuint new_state)
 
 	r300UpdateStateParameters(ctx, new_state);
 
-#ifndef CB_DPATH
-	/* Go inefficiency! */
-	r300ResetHwState(r300);
-#endif
 #ifdef HW_VBOS
 	if(new_state & _NEW_ARRAY)
 		r300->state.VB.lock_uptodate = GL_FALSE;
