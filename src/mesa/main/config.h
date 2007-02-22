@@ -196,6 +196,7 @@
 /** For any program target/extension */
 /*@{*/
 #define MAX_PROGRAM_LOCAL_PARAMS 128 /* KW: power of two */
+#define MAX_PROGRAM_ENV_PARAMS 128
 #define MAX_PROGRAM_MATRICES 8
 #define MAX_PROGRAM_MATRIX_STACK_DEPTH 4
 #define MAX_PROGRAM_CALL_DEPTH 8

@@ -1934,11 +1934,11 @@ struct gl_vertex_program_state
    /** Currently enabled and valid program (including internal programs) */
    struct gl_vertex_program *_Current;
 
-   GLfloat Parameters[MAX_NV_VERTEX_PROGRAM_PARAMS][4]; /**< Env params */
+   GLfloat Parameters[MAX_PROGRAM_ENV_PARAMS][4]; /**< Env params */
 
    /* For GL_NV_vertex_program only: */
-   GLenum TrackMatrix[MAX_NV_VERTEX_PROGRAM_PARAMS / 4];
-   GLenum TrackMatrixTransform[MAX_NV_VERTEX_PROGRAM_PARAMS / 4];
+   GLenum TrackMatrix[MAX_PROGRAM_ENV_PARAMS / 4];
+   GLenum TrackMatrixTransform[MAX_PROGRAM_ENV_PARAMS / 4];
 
    /** Should fixed-function T&L be implemented with a vertex prog? */
    GLboolean _MaintainTnlProgram;
@@ -1967,7 +1967,7 @@ struct gl_fragment_program_state
    /** Currently enabled and valid program (including internal programs) */
    struct gl_fragment_program *_Current;
 
-   GLfloat Parameters[MAX_NV_FRAGMENT_PROGRAM_PARAMS][4]; /**< Env params */
+   GLfloat Parameters[MAX_PROGRAM_ENV_PARAMS][4]; /**< Env params */
 
    /** Should fixed-function texturing be implemented with a fragment prog? */
    GLboolean _MaintainTexEnvProgram;
