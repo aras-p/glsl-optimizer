@@ -66,7 +66,9 @@ static void compile_gs_prog( struct brw_context *brw,
    /* Begin the compilation:
     */
    brw_init_compile(&c.func);
-	
+
+   c.func.single_program_flow = 1;
+
    /* For some reason the thread is spawned with only 4 channels
     * unmasked.  
     */
@@ -79,6 +81,9 @@ static void compile_gs_prog( struct brw_context *brw,
    switch (key->primitive) {
    case GL_QUADS:
       brw_gs_quads( &c ); 
+      break;
+   case GL_QUAD_STRIP:
+      brw_gs_quad_strip( &c );
       break;
    case GL_LINE_LOOP:
       brw_gs_lines( &c );
@@ -143,7 +148,7 @@ static const GLenum gs_prim[GL_POLYGON+1] = {
    GL_TRIANGLES,
    GL_TRIANGLES,
    GL_QUADS,
-   GL_QUADS,
+   GL_QUAD_STRIP,
    GL_TRIANGLES
 };
 

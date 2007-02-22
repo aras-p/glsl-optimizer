@@ -1453,7 +1453,7 @@ SkipPrimaryCreate:
 #ifdef _USE_GLD3_WGL
 	// Init Mesa internals
 	_swrast_CreateContext( lpCtx->glCtx );
-	_ac_CreateContext( lpCtx->glCtx );
+	_vbo_CreateContext( lpCtx->glCtx );
 	_tnl_CreateContext( lpCtx->glCtx );
 	_swsetup_CreateContext( lpCtx->glCtx );
 

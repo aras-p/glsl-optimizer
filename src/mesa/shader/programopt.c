@@ -125,19 +125,15 @@ _mesa_insert_mvp_code(GLcontext *ctx, struct gl_vertex_program *vprog)
 void
 _mesa_append_fog_code(GLcontext *ctx, struct gl_fragment_program *fprog)
 {
-   static const GLint fogParamsState[]
-      = { STATE_FOG, STATE_FOG_PARAMS, 0, 0, 0 };
-   static const GLint fogColorState[]
-      = { STATE_FOG, STATE_FOG_COLOR, 0, 0, 0 };
+   static const GLint fogPStateOpt[] = { STATE_INTERNAL,
+					 STATE_FOG_PARAMS_OPTIMIZED, 0, 0, 0 };
+   static const GLint fogColorState[] = { STATE_FOG, STATE_FOG_COLOR, 0, 0, 0};
    struct prog_instruction *newInst, *inst;
    const GLuint origLen = fprog->Base.NumInstructions;
-   const GLuint newLen = origLen + 6;
+   const GLuint newLen = origLen + 5;
    GLuint i;
-   GLint fogParamsRef, fogColorRef; /* state references */
+   GLint fogPRefOpt, fogColorRef; /* state references */
    GLuint colorTemp, fogFactorTemp; /* temporary registerss */
-   GLfloat fogVals[4];
-   GLuint fogConsts;                /* constant values for EXP, EXP2 mode */
-   GLuint swizzle;
 
    if (fprog->FogOption == GL_NONE) {
       _mesa_problem(ctx, "_mesa_append_fog_code() called for fragment program"
@@ -157,9 +153,9 @@ _mesa_append_fog_code(GLcontext *ctx, struct gl_fragment_program *fprog)
    _mesa_memcpy(newInst, fprog->Base.Instructions,
                 origLen * sizeof(struct prog_instruction));
 
-   /* PARAM fogParamsRef = state.fog.params; */
-   fogParamsRef
-      = _mesa_add_state_reference(fprog->Base.Parameters, fogParamsState);
+   /* PARAM fogParamsRefOpt = internal optimized fog params; */
+   fogPRefOpt
+      = _mesa_add_state_reference(fprog->Base.Parameters, fogPStateOpt);
    /* PARAM fogColorRef = state.fog.color; */
    fogColorRef
       = _mesa_add_state_reference(fprog->Base.Parameters, fogColorState);
@@ -168,15 +164,6 @@ _mesa_append_fog_code(GLcontext *ctx, struct gl_fragment_program *fprog)
    colorTemp = fprog->Base.NumTemporaries++;
    /* TEMP fogFactorTemp; */
    fogFactorTemp = fprog->Base.NumTemporaries++;
-
-   /* PARAM fogVals = { 1/ln(2), 1/sqrt(ln(2), 0, 0 }; */
-   fogVals[0] = 1.0 / log(2.0);
-   fogVals[1] = 1.0 / SQRTF(log(2.0));
-   fogVals[2] = 0.0;
-   fogVals[3] = 0.0;
-   fogConsts = _mesa_add_unnamed_constant(fprog->Base.Parameters,
-                                          fogVals, 4, &swizzle);
-   ASSERT(swizzle == SWIZZLE_NOOP);
 
    /* Scan program to find where result.color is written */
    inst = newInst;
@@ -195,43 +182,39 @@ _mesa_append_fog_code(GLcontext *ctx, struct gl_fragment_program *fprog)
    }
    assert(inst->Opcode == OPCODE_END); /* we'll overwrite this inst */
 
-   _mesa_init_instructions(inst, 6);
+   _mesa_init_instructions(inst, 5);
 
    /* emit instructions to compute fog blending factor */
    if (fprog->FogOption == GL_LINEAR) {
-      /* SUB fogFactorTemp.x, fogParamsRef.z, fragment.fogcoord.x; */
-      inst->Opcode = OPCODE_SUB;
+      /* MAD fogFactorTemp.x, fragment.fogcoord.x, fogPRefOpt.x, fogPRefOpt.y; */
+      inst->Opcode = OPCODE_MAD;
       inst->DstReg.File = PROGRAM_TEMPORARY;
       inst->DstReg.Index = fogFactorTemp;
       inst->DstReg.WriteMask = WRITEMASK_X;
-      inst->SrcReg[0].File = PROGRAM_STATE_VAR;
-      inst->SrcReg[0].Index = fogParamsRef;
-      inst->SrcReg[0].Swizzle = SWIZZLE_Z;
-      inst->SrcReg[1].File = PROGRAM_INPUT;
-      inst->SrcReg[1].Index = FRAG_ATTRIB_FOGC;
-      inst++;
-      /* MUL fogFactorTemp.x, fogFactorTemp, fogParamsRef.w; */
-      inst->Opcode = OPCODE_MUL;
-      inst->DstReg.File = PROGRAM_TEMPORARY;
-      inst->DstReg.Index = fogFactorTemp;
-      inst->DstReg.WriteMask = WRITEMASK_X;
-      inst->SrcReg[0].File = PROGRAM_TEMPORARY;
-      inst->SrcReg[0].Index = fogFactorTemp;
+      inst->SrcReg[0].File = PROGRAM_INPUT;
+      inst->SrcReg[0].Index = FRAG_ATTRIB_FOGC;
+      inst->SrcReg[0].Swizzle = SWIZZLE_X;
       inst->SrcReg[1].File = PROGRAM_STATE_VAR;
-      inst->SrcReg[1].Index = fogParamsRef;
-      inst->SrcReg[1].Swizzle = SWIZZLE_W;
+      inst->SrcReg[1].Index = fogPRefOpt;
+      inst->SrcReg[1].Swizzle = SWIZZLE_X;
+      inst->SrcReg[2].File = PROGRAM_STATE_VAR;
+      inst->SrcReg[2].Index = fogPRefOpt;
+      inst->SrcReg[2].Swizzle = SWIZZLE_Y;
       inst++;
    }
    else {
       ASSERT(fprog->FogOption == GL_EXP || fprog->FogOption == GL_EXP2);
-      /* MUL fogFactorTemp.x, fogParamsRef.x, fragment.fogcoord; */
+      /* fogPRefOpt.z = d/ln(2), fogPRefOpt.w = d/sqrt(ln(2) */
+      /* EXP: MUL fogFactorTemp.x, fogPRefOpt.z, fragment.fogcoord.x; */
+      /* EXP2: MUL fogFactorTemp.x, fogPRefOpt.w, fragment.fogcoord.x; */
       inst->Opcode = OPCODE_MUL;
       inst->DstReg.File = PROGRAM_TEMPORARY;
       inst->DstReg.Index = fogFactorTemp;
       inst->DstReg.WriteMask = WRITEMASK_X;
       inst->SrcReg[0].File = PROGRAM_STATE_VAR;
-      inst->SrcReg[0].Index = fogParamsRef;
-      inst->SrcReg[0].Swizzle = SWIZZLE_X; /* X=density */
+      inst->SrcReg[0].Index = fogPRefOpt;
+      inst->SrcReg[0].Swizzle
+         = (fprog->FogOption == GL_EXP) ? SWIZZLE_Z : SWIZZLE_W;
       inst->SrcReg[1].File = PROGRAM_INPUT;
       inst->SrcReg[1].Index = FRAG_ATTRIB_FOGC;
       inst->SrcReg[1].Swizzle = SWIZZLE_X;
@@ -244,23 +227,12 @@ _mesa_append_fog_code(GLcontext *ctx, struct gl_fragment_program *fprog)
          inst->DstReg.WriteMask = WRITEMASK_X;
          inst->SrcReg[0].File = PROGRAM_TEMPORARY;
          inst->SrcReg[0].Index = fogFactorTemp;
+         inst->SrcReg[0].Swizzle = SWIZZLE_X;
          inst->SrcReg[1].File = PROGRAM_TEMPORARY;
          inst->SrcReg[1].Index = fogFactorTemp;
+         inst->SrcReg[1].Swizzle = SWIZZLE_X;
          inst++;
       }
-      /* EXP:  MUL fogFactorTemp.x, fogFactorTemp.x, {1/ln(2)}; */
-      /* EXP2: MUL fogFactorTemp.x, fogFactorTemp.x, {1/sqrt(ln(2))}; */
-      inst->Opcode = OPCODE_MUL;
-      inst->DstReg.File = PROGRAM_TEMPORARY;
-      inst->DstReg.Index = fogFactorTemp;
-      inst->DstReg.WriteMask = WRITEMASK_X;
-      inst->SrcReg[0].File = PROGRAM_TEMPORARY;
-      inst->SrcReg[0].Index = fogFactorTemp;
-      inst->SrcReg[1].File = PROGRAM_CONSTANT;
-      inst->SrcReg[1].Index = fogConsts;
-      inst->SrcReg[1].Swizzle
-         = (fprog->FogOption == GL_EXP) ? SWIZZLE_X : SWIZZLE_Y;
-      inst++;
       /* EX2_SAT fogFactorTemp.x, -fogFactorTemp.x; */
       inst->Opcode = OPCODE_EX2;
       inst->DstReg.File = PROGRAM_TEMPORARY;
@@ -269,6 +241,7 @@ _mesa_append_fog_code(GLcontext *ctx, struct gl_fragment_program *fprog)
       inst->SrcReg[0].File = PROGRAM_TEMPORARY;
       inst->SrcReg[0].Index = fogFactorTemp;
       inst->SrcReg[0].NegateBase = GL_TRUE;
+      inst->SrcReg[0].Swizzle = SWIZZLE_X;
       inst->SaturateMode = SATURATE_ZERO_ONE;
       inst++;
    }
@@ -283,8 +256,10 @@ _mesa_append_fog_code(GLcontext *ctx, struct gl_fragment_program *fprog)
       = MAKE_SWIZZLE4(SWIZZLE_X, SWIZZLE_X, SWIZZLE_X, SWIZZLE_X);
    inst->SrcReg[1].File = PROGRAM_TEMPORARY;
    inst->SrcReg[1].Index = colorTemp;
+   inst->SrcReg[1].Swizzle = SWIZZLE_NOOP;
    inst->SrcReg[2].File = PROGRAM_STATE_VAR;
    inst->SrcReg[2].Index = fogColorRef;
+   inst->SrcReg[2].Swizzle = SWIZZLE_NOOP;
    inst++;
    /* MOV result.color.w, colorTemp.x;  # copy alpha */
    inst->Opcode = OPCODE_MOV;
@@ -293,6 +268,7 @@ _mesa_append_fog_code(GLcontext *ctx, struct gl_fragment_program *fprog)
    inst->DstReg.WriteMask = WRITEMASK_W;
    inst->SrcReg[0].File = PROGRAM_TEMPORARY;
    inst->SrcReg[0].Index = colorTemp;
+   inst->SrcReg[0].Swizzle = SWIZZLE_NOOP;
    inst++;
    /* END; */
    inst->Opcode = OPCODE_END;

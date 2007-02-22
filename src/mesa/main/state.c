@@ -821,16 +821,6 @@ _mesa_init_exec_table(struct _glapi_table *exec)
 /*@{*/
 
 
-static void
-update_separate_specular( GLcontext *ctx )
-{
-   if (NEED_SECONDARY_COLOR(ctx))
-      ctx->_TriangleCaps |= DD_SEPARATE_SPECULAR;
-   else
-      ctx->_TriangleCaps &= ~DD_SEPARATE_SPECULAR;
-}
-
-
 /**
  * Update state dependent on vertex arrays.
  */
@@ -909,8 +899,8 @@ update_arrays( GLcontext *ctx )
 
    /* 7 */
    if (ctx->VertexProgram._Enabled
-       && ctx->Array.ArrayObj->VertexAttrib[VERT_ATTRIB_SEVEN].Enabled) {
-      min = MIN2(min, ctx->Array.ArrayObj->VertexAttrib[VERT_ATTRIB_SEVEN]._MaxElement);
+       && ctx->Array.ArrayObj->VertexAttrib[VERT_ATTRIB_EDGEFLAG].Enabled) {
+      min = MIN2(min, ctx->Array.ArrayObj->VertexAttrib[VERT_ATTRIB_EDGEFLAG]._MaxElement);
    }
 
    /* 8..15 */
@@ -1047,6 +1037,79 @@ update_color(GLcontext *ctx)
 
 
 /**
+ * Update the ctx->_TriangleCaps bitfield.
+ * XXX that bitfield should really go away someday!
+ * This function must be called after other update_*() functions since
+ * there are dependencies on some other derived values.
+ */
+static void
+update_tricaps(GLcontext *ctx, GLbitfield new_state)
+{
+   ctx->_TriangleCaps = 0;
+
+   /*
+    * Points
+    */
+   if (new_state & _NEW_POINT) {
+      if (ctx->Point.SmoothFlag)
+         ctx->_TriangleCaps |= DD_POINT_SMOOTH;
+      if (ctx->Point._Size != 1.0F)
+         ctx->_TriangleCaps |= DD_POINT_SIZE;
+      if (ctx->Point._Attenuated)
+         ctx->_TriangleCaps |= DD_POINT_ATTEN;
+   }
+
+   /*
+    * Lines
+    */
+   if (new_state & _NEW_LINE) {
+      if (ctx->Line.SmoothFlag)
+         ctx->_TriangleCaps |= DD_LINE_SMOOTH;
+      if (ctx->Line.StippleFlag)
+         ctx->_TriangleCaps |= DD_LINE_STIPPLE;
+      if (ctx->Line._Width != 1.0)
+         ctx->_TriangleCaps |= DD_LINE_WIDTH;
+   }
+
+   /*
+    * Polygons
+    */
+   if (new_state & _NEW_POLYGON) {
+      if (ctx->Polygon.SmoothFlag)
+         ctx->_TriangleCaps |= DD_TRI_SMOOTH;
+      if (ctx->Polygon.StippleFlag)
+         ctx->_TriangleCaps |= DD_TRI_STIPPLE;
+      if (ctx->Polygon.FrontMode != GL_FILL
+          || ctx->Polygon.BackMode != GL_FILL)
+         ctx->_TriangleCaps |= DD_TRI_UNFILLED;
+      if (ctx->Polygon.CullFlag
+          && ctx->Polygon.CullFaceMode == GL_FRONT_AND_BACK)
+         ctx->_TriangleCaps |= DD_TRI_CULL_FRONT_BACK;
+      if (ctx->Polygon.OffsetPoint ||
+          ctx->Polygon.OffsetLine ||
+          ctx->Polygon.OffsetFill)
+         ctx->_TriangleCaps |= DD_TRI_OFFSET;
+   }
+
+   /*
+    * Lighting and shading
+    */
+   if (ctx->Light.Enabled && ctx->Light.Model.TwoSide)
+      ctx->_TriangleCaps |= DD_TRI_LIGHT_TWOSIDE;
+   if (ctx->Light.ShadeModel == GL_FLAT)
+      ctx->_TriangleCaps |= DD_FLATSHADE;
+   if (NEED_SECONDARY_COLOR(ctx))
+      ctx->_TriangleCaps |= DD_SEPARATE_SPECULAR;
+
+   /*
+    * Stencil
+    */
+   if (ctx->Stencil._TestTwoSide)
+      ctx->_TriangleCaps |= DD_TRI_TWOSTENCIL;
+}
+
+
+/**
  * Compute derived GL state.
  * If __GLcontextRec::NewState is non-zero then this function \b must
  * be called before rendering anything.
@@ -1055,7 +1118,7 @@ update_color(GLcontext *ctx)
  * management necessary.
  * 
  * \sa _mesa_update_modelview_project(), _mesa_update_texture(),
- * _mesa_update_buffer_bounds(), _mesa_update_polygon(),
+ * _mesa_update_buffer_bounds(),
  * _mesa_update_lighting() and _mesa_update_tnl_spaces().
  */
 void
@@ -1081,12 +1144,6 @@ _mesa_update_state_locked( GLcontext *ctx )
    if (new_state & (_NEW_SCISSOR | _NEW_BUFFERS | _NEW_VIEWPORT))
       _mesa_update_draw_buffer_bounds( ctx );
 
-   if (new_state & _NEW_POINT)
-      _mesa_update_point( ctx );
-
-   if (new_state & _NEW_POLYGON)
-      _mesa_update_polygon( ctx );
-
    if (new_state & _NEW_LIGHT)
       _mesa_update_lighting( ctx );
 
@@ -1096,9 +1153,6 @@ _mesa_update_state_locked( GLcontext *ctx )
    if (new_state & _IMAGE_NEW_TRANSFER_STATE)
       _mesa_update_pixel( ctx, new_state );
 
-   if (new_state & _DD_NEW_SEPARATE_SPECULAR)
-      update_separate_specular( ctx );
-
    if (new_state & (_NEW_ARRAY | _NEW_PROGRAM))
       update_arrays( ctx );
 
@@ -1107,6 +1161,10 @@ _mesa_update_state_locked( GLcontext *ctx )
 
    if (new_state & _NEW_COLOR)
       update_color( ctx );
+
+   if (new_state & (_NEW_POINT | _NEW_LINE | _NEW_POLYGON | _NEW_LIGHT
+                    | _NEW_STENCIL | _DD_NEW_SEPARATE_SPECULAR))
+      update_tricaps( ctx, new_state );
 
    if (ctx->FragmentProgram._MaintainTexEnvProgram) {
       if (new_state & (_NEW_TEXTURE | _DD_NEW_SEPARATE_SPECULAR | _NEW_FOG))

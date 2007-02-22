@@ -18,7 +18,7 @@ Status
 
 Version
 
-    10 (10 August 2005)
+    11 (27 January 2006)
 
 Number
 
@@ -127,22 +127,8 @@ Issues
        isn't always reliable (consider video projectors) but can still be
        used to determine the pixel aspect ratio.
 
-       Arguments for:
-
-          X supports a similar query with DisplayWidthMM(), DisplayHeightMM().
-          If this information can be easily queried with EDID, why not
-          make it available to the user?
-
-       Arguments against:
-
-          Historically, these values aren't always accurate.  Also, they're
-          not always applicable to the display device.
-
-       Other options:
-
-          Perhaps just a pixel aspect ratio should be supported.  [M. Danzer]
-
-          Postpone for a future extension, if needed.  [A. Jackson]
+       Resolution: Omit.  The EGL 1.2 specification includes queries for
+       the display resolution and pixel aspect ratio.
 
 
     6. Should detailed mode timing information be exposed by this API?
@@ -222,7 +208,7 @@ Issues
     14. What if the physical screen size can't be determined?  Should
         a query of EGL_PHYSICAL_SIZE_MESA return [0,0]?
 
-        TBD.
+        Obsolete: EGL_PHYSICAL_SIZE_MESA not used.
 
 
     15. Suppose the device's number of RAMDACs is different from the
@@ -317,7 +303,6 @@ New Tokens
 
     EGL_SCREEN_COUNT_MESA      
     EGL_SCREEN_POSITION_MESA   
-    EGL_PHYSICAL_SIZE_MESA
     EGL_SCREEN_BIT_MESA        
     EGL_SCREEN_POSITION_GRANULARITY_MESA
 
@@ -488,8 +473,6 @@ Additions to Chapter X of the EGL 1.1 Specification
         EGL_SCREEN_POSITION_GRANULARITY_MESA
                                   Returns the granularity, in pixels, for
                                   which the screen position is constrained.
-        EGL_PHYSICAL_SIZE_MESA    Physical width and height of the screen
-                                  in millimeters
 
     Any other token will generate the error EGL_BAD_ATTRIBUTE.
 
@@ -575,4 +558,7 @@ Version History
 
     10. 10 August 2005 - BrianP
         Added EGL_SCREEN_POSITION_GRANULARITY_MESA.
+
+    11. 27 January 2006 - BrianP
+        EGL_PHYSICAL_SIZE_MESA removed since EGL 1.2 has a similar feature.
 

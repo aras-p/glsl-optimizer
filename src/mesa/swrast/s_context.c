@@ -395,7 +395,7 @@ _swrast_validate_texture_images(GLcontext *ctx)
             GLuint numFaces = (texObj->Target == GL_TEXTURE_CUBE_MAP) ? 6 : 1;
             GLuint face;
             for (face = 0; face < numFaces; face++) {
-               GLuint lvl;
+               GLint lvl;
                for (lvl = texObj->BaseLevel; lvl <= texObj->_MaxLevel; lvl++) {
                   struct gl_texture_image *texImg = texObj->Image[face][lvl];
                   if (texImg && !texImg->Data) {
@@ -433,7 +433,7 @@ _swrast_eject_texture_images(GLcontext *ctx)
             GLuint numFaces = (texObj->Target == GL_TEXTURE_CUBE_MAP) ? 6 : 1;
             GLuint face;
             for (face = 0; face < numFaces; face++) {
-               GLuint lvl;
+               GLint lvl;
                for (lvl = texObj->BaseLevel; lvl <= texObj->_MaxLevel; lvl++) {
                   struct gl_texture_image *texImg = texObj->Image[face][lvl];
                   if (texImg && texImg->Data) {

@@ -149,7 +149,7 @@ enum
    VERT_ATTRIB_COLOR1 = 4,
    VERT_ATTRIB_FOG = 5,
    VERT_ATTRIB_COLOR_INDEX = 6,
-   VERT_ATTRIB_SEVEN = 7,
+   VERT_ATTRIB_EDGEFLAG = 7,
    VERT_ATTRIB_TEX0 = 8,
    VERT_ATTRIB_TEX1 = 9,
    VERT_ATTRIB_TEX2 = 10,
@@ -189,7 +189,7 @@ enum
 #define VERT_BIT_COLOR1      (1 << VERT_ATTRIB_COLOR1)
 #define VERT_BIT_FOG         (1 << VERT_ATTRIB_FOG)
 #define VERT_BIT_COLOR_INDEX (1 << VERT_ATTRIB_COLOR_INDEX)
-#define VERT_BIT_SEVEN       (1 << VERT_ATTRIB_SEVEN)
+#define VERT_BIT_EDGEFLAG    (1 << VERT_ATTRIB_EDGEFLAG)
 #define VERT_BIT_TEX0        (1 << VERT_ATTRIB_TEX0)
 #define VERT_BIT_TEX1        (1 << VERT_ATTRIB_TEX1)
 #define VERT_BIT_TEX2        (1 << VERT_ATTRIB_TEX2)
@@ -613,11 +613,11 @@ struct gl_current_attrib
    /**
     * \name Current vertex attributes.
     * \note Values are valid only after FLUSH_VERTICES has been called.
+    * \note Index and Edgeflag current values are stored as floats in the 
+    * SIX and SEVEN attribute slots.
     */
    /*@{*/
    GLfloat Attrib[VERT_ATTRIB_MAX][4];	/**< Position, color, texcoords, etc */
-   GLfloat Index;			/**< Current color index */
-   GLboolean EdgeFlag;			/**< Current edge flag */
    /*@}*/
 
    /**
@@ -1637,8 +1637,6 @@ struct gl_pixelstore_attrib
 };
 
 
-#define CA_CLIENT_DATA     0x1	/**< Data not allocated by mesa */
-
 
 /**
  * Client vertex array attributes
@@ -1650,14 +1648,12 @@ struct gl_client_array
    GLsizei Stride;		/**< user-specified stride */
    GLsizei StrideB;		/**< actual stride in bytes */
    const GLubyte *Ptr;          /**< Points to array data */
-   GLbitfield Enabled;		/**< one of the _NEW_ARRAY_ bits */
+   GLboolean Enabled;		/**< Enabled flag is a boolean */
    GLboolean Normalized;        /**< GL_ARB_vertex_program */
 
    /**< GL_ARB_vertex_buffer_object */
    struct gl_buffer_object *BufferObj;
    GLuint _MaxElement;
-
-   GLbitfield Flags;
 };
 
 
@@ -1678,8 +1674,8 @@ struct gl_array_object
    struct gl_client_array SecondaryColor;
    struct gl_client_array FogCoord;
    struct gl_client_array Index;
-   struct gl_client_array TexCoord[MAX_TEXTURE_COORD_UNITS];
    struct gl_client_array EdgeFlag;
+   struct gl_client_array TexCoord[MAX_TEXTURE_COORD_UNITS];
    /*@}*/
 
    /** Generic arrays for vertex programs/shaders */
@@ -2547,6 +2543,7 @@ struct gl_extensions
    GLboolean ATI_texture_mirror_once;
    GLboolean ATI_texture_env_combine3;
    GLboolean ATI_fragment_shader;
+   GLboolean ATI_separate_stencil;
    GLboolean IBM_rasterpos_clip;
    GLboolean IBM_multimode_draw_arrays;
    GLboolean MESA_pack_invert;
@@ -2680,7 +2677,7 @@ struct matrix_stack
 #define _NEW_ARRAY_COLOR1           VERT_BIT_COLOR1
 #define _NEW_ARRAY_FOGCOORD         VERT_BIT_FOG
 #define _NEW_ARRAY_INDEX            VERT_BIT_COLOR_INDEX
-#define _NEW_ARRAY_EDGEFLAG         VERT_BIT_SEVEN
+#define _NEW_ARRAY_EDGEFLAG         VERT_BIT_EDGEFLAG
 #define _NEW_ARRAY_TEXCOORD_0       VERT_BIT_TEX0
 #define _NEW_ARRAY_TEXCOORD_1       VERT_BIT_TEX1
 #define _NEW_ARRAY_TEXCOORD_2       VERT_BIT_TEX2
@@ -2689,7 +2686,7 @@ struct matrix_stack
 #define _NEW_ARRAY_TEXCOORD_5       VERT_BIT_TEX5
 #define _NEW_ARRAY_TEXCOORD_6       VERT_BIT_TEX6
 #define _NEW_ARRAY_TEXCOORD_7       VERT_BIT_TEX7
-#define _NEW_ARRAY_ATTRIB_0         0x10000  /* start at bit 16 */
+#define _NEW_ARRAY_ATTRIB_0         VERT_BIT_GENERIC0  /* start at bit 16 */
 #define _NEW_ARRAY_ALL              0xffffffff
 
 

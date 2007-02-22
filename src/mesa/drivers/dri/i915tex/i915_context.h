@@ -243,7 +243,6 @@ struct i915_context
    GLuint lodbias_ss2[MAX_TEXTURE_UNITS];
 
 
-   struct i915_fragment_program tex_program;
    struct i915_fragment_program *current_program;
 
    struct i915_hw_state meta, initial, state, *current;

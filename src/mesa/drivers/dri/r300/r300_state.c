@@ -46,7 +46,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "api_arrayelt.h"
 #include "swrast/swrast.h"
 #include "swrast_setup/swrast_setup.h"
-#include "array_cache/acache.h"
+#include "vbo/vbo.h"
 #include "tnl/tnl.h"
 #include "texformat.h"
 
@@ -509,7 +509,6 @@ static void r300Enable(GLcontext* ctx, GLenum cap, GLboolean state)
 		if (r300->state.stencil.hw_stencil) {
 			R300_STATECHANGE(r300, zs);
 			if (state) {
-				WARN_ONCE("TODO - double side stencil !\n");
 				r300->hw.zs.cmd[R300_ZS_CNTL_0] |=
 				    R300_RB3D_STENCIL_ENABLE;
 			} else {
@@ -863,9 +862,12 @@ static void r300StencilFuncSeparate(GLcontext * ctx, GLenum face,
 						(R300_RB3D_ZS2_STENCIL_MASK << R300_RB3D_ZS2_STENCIL_MASK_SHIFT));
 	
 	flag = translate_func(ctx->Stencil.Function[0]);
-
-	rmesa->hw.zs.cmd[R300_ZS_CNTL_1] |= (flag << R300_RB3D_ZS1_FRONT_FUNC_SHIFT)
-					  | (flag << R300_RB3D_ZS1_BACK_FUNC_SHIFT);
+	rmesa->hw.zs.cmd[R300_ZS_CNTL_1] |= (flag << R300_RB3D_ZS1_FRONT_FUNC_SHIFT);
+	
+	if (ctx->Stencil._TestTwoSide)
+		flag = translate_func(ctx->Stencil.Function[1]);
+	
+	rmesa->hw.zs.cmd[R300_ZS_CNTL_1] |= (flag << R300_RB3D_ZS1_BACK_FUNC_SHIFT);
 	rmesa->hw.zs.cmd[R300_ZS_CNTL_2] |= refmask;
 }
 
@@ -894,10 +896,19 @@ static void r300StencilOpSeparate(GLcontext * ctx, GLenum face, GLenum fail,
 	rmesa->hw.zs.cmd[R300_ZS_CNTL_1] |=
 		 (translate_stencil_op(ctx->Stencil.FailFunc[0]) << R300_RB3D_ZS1_FRONT_FAIL_OP_SHIFT)
 		|(translate_stencil_op(ctx->Stencil.ZFailFunc[0]) << R300_RB3D_ZS1_FRONT_ZFAIL_OP_SHIFT)
-		|(translate_stencil_op(ctx->Stencil.ZPassFunc[0]) << R300_RB3D_ZS1_FRONT_ZPASS_OP_SHIFT)
-		|(translate_stencil_op(ctx->Stencil.FailFunc[0]) << R300_RB3D_ZS1_BACK_FAIL_OP_SHIFT)
-		|(translate_stencil_op(ctx->Stencil.ZFailFunc[0]) << R300_RB3D_ZS1_BACK_ZFAIL_OP_SHIFT)
-		|(translate_stencil_op(ctx->Stencil.ZPassFunc[0]) << R300_RB3D_ZS1_BACK_ZPASS_OP_SHIFT);
+		|(translate_stencil_op(ctx->Stencil.ZPassFunc[0]) << R300_RB3D_ZS1_FRONT_ZPASS_OP_SHIFT);
+	
+	if (ctx->Stencil._TestTwoSide) {
+		rmesa->hw.zs.cmd[R300_ZS_CNTL_1] |=
+			 (translate_stencil_op(ctx->Stencil.FailFunc[1]) << R300_RB3D_ZS1_BACK_FAIL_OP_SHIFT)
+			|(translate_stencil_op(ctx->Stencil.ZFailFunc[1]) << R300_RB3D_ZS1_BACK_ZFAIL_OP_SHIFT)
+			|(translate_stencil_op(ctx->Stencil.ZPassFunc[1]) << R300_RB3D_ZS1_BACK_ZPASS_OP_SHIFT);
+	} else {
+		rmesa->hw.zs.cmd[R300_ZS_CNTL_1] |=
+			 (translate_stencil_op(ctx->Stencil.FailFunc[0]) << R300_RB3D_ZS1_BACK_FAIL_OP_SHIFT)
+			|(translate_stencil_op(ctx->Stencil.ZFailFunc[0]) << R300_RB3D_ZS1_BACK_ZFAIL_OP_SHIFT)
+			|(translate_stencil_op(ctx->Stencil.ZPassFunc[0]) << R300_RB3D_ZS1_BACK_ZPASS_OP_SHIFT);
+	}
 }
 
 static void r300ClearStencil(GLcontext * ctx, GLint s)
@@ -1809,10 +1820,10 @@ void r300SetupPixelShader(r300ContextPtr rmesa)
 	if (!rp)	/* should only happenen once, just after context is created */
 		return;
 	
-	r300_translate_fragment_shader(rp);
+	r300_translate_fragment_shader(rmesa, rp);
 	if (!rp->translated) {
 		fprintf(stderr, "%s: No valid fragment shader, exiting\n", __func__);
-		exit(-1);
+		return;
 	}
 	
 #define OUTPUT_FIELD(st, reg, field)  \
@@ -1874,7 +1885,7 @@ static void r300InvalidateState(GLcontext * ctx, GLuint new_state)
 	
 	_swrast_InvalidateState(ctx, new_state);
 	_swsetup_InvalidateState(ctx, new_state);
-	_ac_InvalidateState(ctx, new_state);
+	_vbo_InvalidateState(ctx, new_state);
 	_tnl_InvalidateState(ctx, new_state);
 	_ae_invalidate_state(ctx, new_state);
 

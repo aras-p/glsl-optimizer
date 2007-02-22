@@ -210,7 +210,7 @@ zoom_span( GLcontext *ctx, GLint imgX, GLint imgY, const SWspan *span,
          for (i = 0; i < zoomedWidth; i++) {
             GLint j = unzoom_x(ctx->Pixel.ZoomX, imgX, x0 + i) - span->x;
             ASSERT(j >= 0);
-            ASSERT(j < span->end);
+            ASSERT(j < (GLint) span->end);
             COPY_4UBV(zoomed.array->color.sz1.rgba[i], rgba[j]);
          }
       }
@@ -220,7 +220,7 @@ zoom_span( GLcontext *ctx, GLint imgX, GLint imgY, const SWspan *span,
          for (i = 0; i < zoomedWidth; i++) {
             GLint j = unzoom_x(ctx->Pixel.ZoomX, imgX, x0 + i) - span->x;
             ASSERT(j >= 0);
-            ASSERT(j < span->end);
+            ASSERT(j < (GLint) span->end);
             COPY_4V(zoomed.array->color.sz2.rgba[i], rgba[j]);
          }
       }
@@ -242,7 +242,7 @@ zoom_span( GLcontext *ctx, GLint imgX, GLint imgY, const SWspan *span,
          for (i = 0; i < zoomedWidth; i++) {
             GLint j = unzoom_x(ctx->Pixel.ZoomX, imgX, x0 + i) - span->x;
             ASSERT(j >= 0);
-            ASSERT(j < span->end);
+            ASSERT(j < (GLint) span->end);
             zoomed.array->color.sz1.rgba[i][0] = rgb[j][0];
             zoomed.array->color.sz1.rgba[i][1] = rgb[j][1];
             zoomed.array->color.sz1.rgba[i][2] = rgb[j][2];
@@ -255,7 +255,7 @@ zoom_span( GLcontext *ctx, GLint imgX, GLint imgY, const SWspan *span,
          for (i = 0; i < zoomedWidth; i++) {
             GLint j = unzoom_x(ctx->Pixel.ZoomX, imgX, x0 + i) - span->x;
             ASSERT(j >= 0);
-            ASSERT(j < span->end);
+            ASSERT(j < (GLint) span->end);
             zoomed.array->color.sz2.rgba[i][0] = rgb[j][0];
             zoomed.array->color.sz2.rgba[i][1] = rgb[j][1];
             zoomed.array->color.sz2.rgba[i][2] = rgb[j][2];
@@ -282,7 +282,7 @@ zoom_span( GLcontext *ctx, GLint imgX, GLint imgY, const SWspan *span,
       for (i = 0; i < zoomedWidth; i++) {
          GLint j = unzoom_x(ctx->Pixel.ZoomX, imgX, x0 + i) - span->x;
          ASSERT(j >= 0);
-         ASSERT(j < span->end);
+         ASSERT(j < (GLint) span->end);
          zoomed.array->index[i] = indexes[j];
       }
    }
@@ -292,7 +292,7 @@ zoom_span( GLcontext *ctx, GLint imgX, GLint imgY, const SWspan *span,
       for (i = 0; i < zoomedWidth; i++) {
          GLint j = unzoom_x(ctx->Pixel.ZoomX, imgX, x0 + i) - span->x;
          ASSERT(j >= 0);
-         ASSERT(j < span->end);
+         ASSERT(j < (GLint) span->end);
          zoomed.array->z[i] = zValues[j];
       }
       /* Now, fall into either the RGB or COLOR_INDEX path below */

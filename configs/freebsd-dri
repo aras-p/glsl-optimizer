@@ -28,7 +28,8 @@ ASM_SOURCES =
 LIBDRM_CFLAGS = `pkg-config --cflags libdrm`
 LIBDRM_LIB = `pkg-config --libs libdrm`
 DRI_LIB_DEPS = -L/usr/local/lib -lm -lpthread -lexpat $(LIBDRM_LIB)
-GL_LIB_DEPS = -L/usr/X11R6/lib -lX11 -lXext -lXxf86vm -lm -lpthread $(LIBDRM_LIB)
+GL_LIB_DEPS = -L/usr/X11R6/lib -lX11 -lXext -lXxf86vm -lXdamage -lXfixes \
+	-lm -lpthread $(LIBDRM_LIB)
 
 GLUT_LIB_DEPS = -L$(TOP)/$(LIB_DIR) -L/usr/X11R6/lib -lGLU -lGL -lX11 -lXmu -lXt -lXi -lm
 GLW_LIB_DEPS = -L$(TOP)/$(LIB_DIR) -L/usr/X11R6/lib -lGL -lXt -lX11

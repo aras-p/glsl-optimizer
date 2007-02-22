@@ -42,7 +42,7 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "api_arrayelt.h"
 #include "swrast/swrast.h"
 #include "swrast_setup/swrast_setup.h"
-#include "array_cache/acache.h"
+#include "vbo/vbo.h"
 #include "tnl/tnl.h"
 #include "tnl/t_vp_build.h"
 
@@ -352,7 +352,7 @@ GLboolean r300_run_vb_render(GLcontext *ctx,
 	r300EmitState(rmesa);
 	
 	for(i=0; i < VB->PrimitiveCount; i++){
-		GLuint prim = VB->Primitive[i].mode;
+		GLuint prim = _tnl_translate_prim(&VB->Primitive[i]);
 		GLuint start = VB->Primitive[i].start;
 		GLuint length = VB->Primitive[i].count;
 		
@@ -385,7 +385,17 @@ GLboolean r300_run_vb_render(GLcontext *ctx,
 int r300Fallback(GLcontext *ctx)
 {
 	r300ContextPtr r300 = R300_CONTEXT(ctx);
+	struct r300_fragment_program *rp =
+		(struct r300_fragment_program *)
+		(char *)ctx->FragmentProgram._Current;
 	int i;
+
+	if (rp) {
+		if (!rp->translated)
+			r300_translate_fragment_shader(r300, rp);
+
+		FALLBACK_IF(!rp->translated);
+	}
 
 	/* We do not do SELECT or FEEDBACK (yet ?)
 	 * Is it worth doing them ?
@@ -406,6 +416,10 @@ int r300Fallback(GLcontext *ctx)
 	 */
 	FALLBACK_IF(ctx->Fog.Enabled);
 #endif
+	FALLBACK_IF(ctx->Stencil._TestTwoSide &&
+		    (ctx->Stencil.Ref[0] != ctx->Stencil.Ref[1] ||
+		     ctx->Stencil.ValueMask[0] != ctx->Stencil.ValueMask[1] ||
+		     ctx->Stencil.WriteMask[0] != ctx->Stencil.WriteMask[1]));
 
 	if(!r300->disable_lowimpact_fallback){
 		/* GL_POLYGON_OFFSET_POINT */

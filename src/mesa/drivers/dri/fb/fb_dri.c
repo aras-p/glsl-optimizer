@@ -50,7 +50,7 @@
 #include "extensions.h"
 #include "framebuffer.h"
 #include "renderbuffer.h"
-#include "array_cache/acache.h"
+#include "vbo/vbo.h"
 #include "swrast/swrast.h"
 #include "swrast_setup/swrast_setup.h"
 #include "tnl/tnl.h"
@@ -93,7 +93,7 @@ update_state( GLcontext *ctx, GLuint new_state )
    /* not much to do here - pass it on */
    _swrast_InvalidateState( ctx, new_state );
    _swsetup_InvalidateState( ctx, new_state );
-   _ac_InvalidateState( ctx, new_state );
+   _vbo_InvalidateState( ctx, new_state );
    _tnl_InvalidateState( ctx, new_state );
 }
 
@@ -365,7 +365,7 @@ fbCreateContext( const __GLcontextModes *glVisual,
 
    /* Create module contexts */
    _swrast_CreateContext( ctx );
-   _ac_CreateContext( ctx );
+   _vbo_CreateContext( ctx );
    _tnl_CreateContext( ctx );
    _swsetup_CreateContext( ctx );
    _swsetup_Wakeup( ctx );
@@ -399,7 +399,7 @@ fbDestroyContext( __DRIcontextPrivate *driContextPriv )
    if ( fbmesa ) {
       _swsetup_DestroyContext( fbmesa->glCtx );
       _tnl_DestroyContext( fbmesa->glCtx );
-      _ac_DestroyContext( fbmesa->glCtx );
+      _vbo_DestroyContext( fbmesa->glCtx );
       _swrast_DestroyContext( fbmesa->glCtx );
 
       /* free the Mesa context */

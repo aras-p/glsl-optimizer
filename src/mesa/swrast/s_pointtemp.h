@@ -1,8 +1,8 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.5.2
+ * Version:  6.5.3
  *
- * Copyright (C) 1999-2006  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2007  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -195,7 +195,7 @@ NAME ( GLcontext *ctx, const SWvertex *vert )
    {{
       GLint x, y;
       const GLfloat radius = 0.5F * size;
-      const GLint z = (GLint) (vert->win[2] + 0.5F);
+      const GLuint z = (GLuint) (vert->win[2] + 0.5F);
       GLuint count;
 #if FLAGS & SMOOTH
       const GLfloat rmin = radius - 0.7071F;  /* 0.7071 = sqrt(2)/2 */

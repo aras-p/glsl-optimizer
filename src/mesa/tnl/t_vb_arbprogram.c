@@ -1096,7 +1096,7 @@ static void compile_vertex_program( struct gl_vertex_program *program,
 { 
    struct compilation cp;
    struct tnl_compiled_program *p = CALLOC_STRUCT(tnl_compiled_program);
-   GLuint i;
+   GLint i;
 
 #if 1
    if (!program->IsNVProgram && program->IsPositionInvariant) {
@@ -1293,8 +1293,7 @@ run_arb_vertex_program(GLcontext *ctx, struct tnl_pipeline_stage *stage)
    m->nr_inputs = m->nr_outputs = 0;
 
    for (i = 0; i < VERT_ATTRIB_MAX; i++) {
-      if (program->Base.InputsRead & (1<<i) ||
-	  (i == VERT_ATTRIB_POS && program->IsPositionInvariant)) {
+      if (program->Base.InputsRead & (1<<i)) {
 	 GLuint j = m->nr_inputs++;
 	 m->input[j].idx = i;
 	 m->input[j].data = (GLfloat *)m->VB->AttribPtr[i]->data;
@@ -1302,16 +1301,15 @@ run_arb_vertex_program(GLcontext *ctx, struct tnl_pipeline_stage *stage)
 	 m->input[j].size = m->VB->AttribPtr[i]->size;
 	 ASSIGN_4V(m->File[0][REG_IN0 + i], 0, 0, 0, 1);
       }
-   }     
+   }
 
    for (i = 0; i < VERT_RESULT_MAX; i++) {
-      if (program->Base.OutputsWritten & (1 << i) ||
-	  (i == VERT_RESULT_HPOS && program->IsPositionInvariant)) {
+      if (program->Base.OutputsWritten & (1 << i)) {
 	 GLuint j = m->nr_outputs++;
 	 m->output[j].idx = i;
 	 m->output[j].data = (GLfloat *)m->attribs[i].data;
       }
-   }     
+   }
 
 
    /* Run the actual program:
@@ -1325,7 +1323,13 @@ run_arb_vertex_program(GLcontext *ctx, struct tnl_pipeline_stage *stage)
 	 case 2: m->File[0][idx][1] = m->input[j].data[1];
 	 case 1: m->File[0][idx][0] = m->input[j].data[0];
 	 }
-
+#if 0
+         printf("  attr %d/%d: %g %g %g %g\n", j, idx-REG_IN0,
+                m->input[j].data[0],
+                m->input[j].data[1],
+                m->input[j].data[2],
+                m->input[j].data[3]);
+#endif
 	 STRIDE_F(m->input[j].data, m->input[j].stride);
       }
 
@@ -1334,22 +1338,13 @@ run_arb_vertex_program(GLcontext *ctx, struct tnl_pipeline_stage *stage)
 	 call_func( p, m );
       }
       else {
+         GLint j;
 	 for (j = 0; j < p->nr_instructions; j++) {
 	    union instruction inst = p->instructions[j];	 
 	    opcode_func[inst.alu.opcode]( m, inst );
 	 }
       }
 
-      /* If the program is position invariant, multiply the input position
-       * by the MVP matrix and store in the vertex position result register.
-       */
-#if 0
-      if (program->IsPositionInvariant) {
-	 TRANSFORM_POINT( m->File[0][REG_OUT0+0], 
-			  ctx->_ModelProjectMatrix.m, 
-			  m->File[0][REG_IN0+0]);
-      }
-#endif
       for (j = 0; j < m->nr_outputs; j++) {
 	 GLuint idx = REG_OUT0 + m->output[j].idx;
 	 m->output[j].data[0] = m->File[0][idx][0];
@@ -1371,15 +1366,39 @@ run_arb_vertex_program(GLcontext *ctx, struct tnl_pipeline_stage *stage)
     * TODO: 2) Integrate t_vertex.c so that we just go straight ahead
     * and build machine vertices here.
     */
-   VB->ClipPtr = &m->attribs[VERT_RESULT_HPOS];
-   VB->ClipPtr->count = VB->Count;
 
    /* XXX There seems to be confusion between using the VERT_ATTRIB_*
     * values vs _TNL_ATTRIB_* tokens here:
     */
    outputs = program->Base.OutputsWritten;
-   if (program->IsPositionInvariant) 
-      outputs |= (1<<VERT_RESULT_HPOS);
+
+   if (program->IsPositionInvariant) {
+      /* We need the exact same transform as in the fixed function path here
+         to guarantee invariance, depending on compiler optimization flags results
+         could be different otherwise */
+      VB->ClipPtr = TransformRaw( &m->attribs[0],
+				  &ctx->_ModelProjectMatrix,
+				  m->VB->AttribPtr[0] );
+
+      /* Drivers expect this to be clean to element 4...
+       */
+      switch (VB->ClipPtr->size) {
+      case 1:
+	 /* impossible */
+      case 2:
+	 _mesa_vector4f_clean_elem( VB->ClipPtr, VB->Count, 2 );
+	 /* fall-through */
+      case 3:
+	 _mesa_vector4f_clean_elem( VB->ClipPtr, VB->Count, 3 );
+	 /* fall-through */
+      case 4:
+	 break;
+      }
+   }
+   else {
+      VB->ClipPtr = &m->attribs[VERT_RESULT_HPOS];
+      VB->ClipPtr->count = VB->Count;
+   }
 
    if (outputs & (1<<VERT_RESULT_COL0)) {
       VB->ColorPtr[0] =

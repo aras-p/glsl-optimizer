@@ -79,10 +79,6 @@ MATH_SOURCES = \
 	math/m_vector.c \
 	math/m_xform.c
 
-ARRAY_CACHE_SOURCES = \
-	array_cache/ac_context.c \
-	array_cache/ac_import.c
-
 SWRAST_SOURCES = \
 	swrast/s_aaline.c \
 	swrast/s_aatriangle.c \
@@ -119,13 +115,9 @@ SWRAST_SETUP_SOURCES = \
 	swrast_setup/ss_triangle.c 
 
 TNL_SOURCES = \
-	tnl/t_array_api.c \
-	tnl/t_array_import.c \
 	tnl/t_context.c \
 	tnl/t_pipeline.c \
-	tnl/t_save_api.c \
-	tnl/t_save_loopback.c \
-	tnl/t_save_playback.c \
+	tnl/t_draw.c \
 	tnl/t_vb_arbprogram.c \
 	tnl/t_vb_arbprogram_sse.c \
 	tnl/t_vb_program.c \
@@ -141,12 +133,24 @@ TNL_SOURCES = \
 	tnl/t_vp_build.c \
 	tnl/t_vertex.c \
 	tnl/t_vertex_sse.c \
-	tnl/t_vertex_generic.c \
-	tnl/t_vtx_api.c \
-	tnl/t_vtx_generic.c \
-	tnl/t_vtx_x86.c \
-	tnl/t_vtx_eval.c \
-	tnl/t_vtx_exec.c 
+	tnl/t_vertex_generic.c 
+
+VBO_SOURCES = \
+	vbo/vbo_context.c \
+	vbo/vbo_exec.c \
+	vbo/vbo_exec_api.c \
+	vbo/vbo_exec_array.c \
+	vbo/vbo_exec_draw.c \
+	vbo/vbo_exec_eval.c \
+	vbo/vbo_rebase.c \
+	vbo/vbo_split.c \
+	vbo/vbo_split_copy.c \
+	vbo/vbo_split_inplace.c \
+	vbo/vbo_save.c \
+	vbo/vbo_save_api.c \
+	vbo/vbo_save_draw.c \
+	vbo/vbo_save_loopback.c 
+
 
 SHADER_SOURCES = \
 	shader/arbprogparse.c \
@@ -213,8 +217,7 @@ X86_SOURCES =			\
 	x86/sse_xform3.S	\
 	x86/sse_xform4.S	\
 	x86/sse_normal.S	\
-	x86/read_rgba_span_x86.S \
-	tnl/t_vtx_x86_gcc.S
+	x86/read_rgba_span_x86.S
 
 X86_API =			\
 	x86/glapi_x86.S
@@ -288,7 +291,7 @@ ALL_SOURCES = \
 SOLO_SOURCES = \
 	$(MAIN_SOURCES)		\
 	$(MATH_SOURCES)		\
-	$(ARRAY_CACHE_SOURCES)	\
+	$(VBO_SOURCES)		\
 	$(TNL_SOURCES)		\
 	$(SHADER_SOURCES)	\
 	$(SWRAST_SOURCES)	\

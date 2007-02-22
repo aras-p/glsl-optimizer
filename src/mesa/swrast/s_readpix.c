@@ -94,8 +94,8 @@ read_depth_pixels( GLcontext *ctx,
    /* clipping should have been done already */
    ASSERT(x >= 0);
    ASSERT(y >= 0);
-   ASSERT(x + width <= rb->Width);
-   ASSERT(y + height <= rb->Height);
+   ASSERT(x + width <= (GLint) rb->Width);
+   ASSERT(y + height <= (GLint) rb->Height);
    /* width should never be > MAX_WIDTH since we did clipping earlier */
    ASSERT(width <= MAX_WIDTH);
 
@@ -210,8 +210,8 @@ fast_read_rgba_pixels( GLcontext *ctx,
    ASSERT(rb->_BaseFormat == GL_RGBA || rb->_BaseFormat == GL_RGB);
 
    /* clipping should have already been done */
-   ASSERT(x + width <= rb->Width);
-   ASSERT(y + height <= rb->Height);
+   ASSERT(x + width <= (GLint) rb->Width);
+   ASSERT(y + height <= (GLint) rb->Height);
 
    /* check for things we can't handle here */
    if (transferOps ||
@@ -223,8 +223,9 @@ fast_read_rgba_pixels( GLcontext *ctx,
    if (format == GL_RGBA && rb->DataType == type) {
       const GLint dstStride = _mesa_image_row_stride(packing, width,
                                                      format, type);
-      GLubyte *dest = _mesa_image_address2d(packing, pixels, width, height,
-                                            format, type, 0, 0);
+      GLubyte *dest
+         = (GLubyte *) _mesa_image_address2d(packing, pixels, width, height,
+                                             format, type, 0, 0);
       GLint row;
       ASSERT(rb->GetRow);
       for (row = 0; row < height; row++) {
@@ -239,8 +240,9 @@ fast_read_rgba_pixels( GLcontext *ctx,
        type == GL_UNSIGNED_BYTE) {
       const GLint dstStride = _mesa_image_row_stride(packing, width,
                                                      format, type);
-      GLubyte *dest = _mesa_image_address2d(packing, pixels, width, height,
-                                            format, type, 0, 0);
+      GLubyte *dest
+         = (GLubyte *) _mesa_image_address2d(packing, pixels, width, height,
+                                             format, type, 0, 0);
       GLint row;
       ASSERT(rb->GetRow);
       for (row = 0; row < height; row++) {
@@ -396,8 +398,9 @@ read_rgba_pixels( GLcontext *ctx,
          = _mesa_image_row_stride(packing, width, format, type);
       GLfloat (*rgba)[4] = swrast->SpanArrays->attribs[FRAG_ATTRIB_COL0];
       GLint row;
-      GLubyte *dst = _mesa_image_address2d(packing, pixels, width, height,
-                                           format, type, 0, 0);
+      GLubyte *dst
+         = (GLubyte *) _mesa_image_address2d(packing, pixels, width, height,
+                                             format, type, 0, 0);
 
       for (row = 0; row < height; row++, y++) {
 

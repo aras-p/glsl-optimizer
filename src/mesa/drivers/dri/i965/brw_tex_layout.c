@@ -34,12 +34,8 @@
  */
 
 #include "intel_mipmap_tree.h"
+#include "intel_tex_layout.h"
 #include "macros.h"
-
-static GLuint minify( GLuint d )
-{
-   return MAX2(1, d>>1);
-}
 
 
 GLboolean brw_miptree_layout( struct intel_mipmap_tree *mt )
@@ -47,8 +43,6 @@ GLboolean brw_miptree_layout( struct intel_mipmap_tree *mt )
    /* XXX: these vary depending on image format: 
     */
 /*    GLint align_w = 4; */
-   GLint align_h = 2;
-
 
    switch (mt->target) {
    case GL_TEXTURE_CUBE_MAP: 
@@ -107,52 +101,9 @@ GLboolean brw_miptree_layout( struct intel_mipmap_tree *mt )
       break;
    }
 
-   default: {
-      GLuint level;
-      GLuint x = 0;
-      GLuint y = 0;
-      GLuint width = mt->width0;
-      GLuint height = mt->height0;
-
-      mt->pitch = ((mt->width0 * mt->cpp + 3) & ~3) / mt->cpp;
-      mt->total_height = 0;
-
-      for ( level = mt->first_level ; level <= mt->last_level ; level++ ) {
-	 GLuint img_height;
-
-	 intel_miptree_set_level_info(mt, level, 1,
-				      x, y,
-				      width, 
-				      mt->compressed ? height/4 : height, 1);
-
-	 if (mt->compressed)
-	    img_height = MAX2(1, height/4);
-	 else
-	    img_height = MAX2(align_h, height);
-
-
-	 /* Because the images are packed better, the final offset
-	  * might not be the maximal one:
-	  */
-	 mt->total_height = MAX2(mt->total_height, y + img_height);
-	 
-	 /* Layout_below: step right after second mipmap.
-	  */
-	 if (level == mt->first_level + 1) {
-	    x += mt->pitch / 2;
-	    x = (x + 3) & ~ 3;
-	 }
-	 else {
-	    y += img_height;
-	    y += align_h - 1;
-	    y &= ~(align_h - 1);
-	 }
-
-	 width  = minify(width);
-	 height = minify(height);
-      }
+   default:
+      i945_miptree_layout_2d(mt);
       break;
-   }
    }
    DBG("%s: %dx%dx%d - sz 0x%x\n", __FUNCTION__, 
 		mt->pitch, 

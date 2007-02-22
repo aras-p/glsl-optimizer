@@ -199,9 +199,11 @@ void *bmFindVirtual( struct intel_context *intel,
  * For now they can stay, but will likely change/move before final:
  */
 unsigned bmSetFence( struct intel_context * );
+unsigned bmSetFenceLock( struct intel_context * );
 unsigned bmLockAndFence( struct intel_context *intel );
 int bmTestFence( struct intel_context *, unsigned fence );
 void bmFinishFence( struct intel_context *, unsigned fence );
+void bmFinishFenceLock( struct intel_context *, unsigned fence );
 
 void bm_fake_NotifyContendedLockTake( struct intel_context * );
 

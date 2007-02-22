@@ -82,14 +82,15 @@ NAME( GLcontext *ctx, const SWvertex *vert0, const SWvertex *vert1 )
    GLint numPixels;
    GLint xstep, ystep;
 #if defined(DEPTH_TYPE)
-   const GLint depthBits = ctx->Visual.depthBits;
+   const GLint depthBits = ctx->DrawBuffer->Visual.depthBits;
    const GLint fixedToDepthShift = depthBits <= 16 ? FIXED_SHIFT : 0;
    struct gl_renderbuffer *zrb = ctx->DrawBuffer->Attachment[BUFFER_DEPTH].Renderbuffer;
 #define FixedToDepth(F)  ((F) >> fixedToDepthShift)
    GLint zPtrXstep, zPtrYstep;
    DEPTH_TYPE *zPtr;
 #elif defined(INTERP_Z)
-   const GLint depthBits = ctx->Visual.depthBits;
+   const GLint depthBits = ctx->DrawBuffer->Visual.depthBits;
+/*ctx->Visual.depthBits;*/
 #endif
 #ifdef PIXEL_ADDRESS
    PIXEL_TYPE *pixelPtr;
@@ -272,7 +273,7 @@ NAME( GLcontext *ctx, const SWvertex *vert0, const SWvertex *vert1 )
       }
       else {
          /* don't use fixed point */
-         span.z = (GLint) vert0->win[2];
+         span.z = (GLuint) vert0->win[2];
          span.zStep = (GLint) ((vert1->win[2] - vert0->win[2]) / numPixels);
       }
    }

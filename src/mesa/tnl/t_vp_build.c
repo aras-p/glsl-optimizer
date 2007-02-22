@@ -812,14 +812,13 @@ static struct ureg calculate_light_attenuation( struct tnl_program *p,
    /* Calculate spot attenuation:
     */
    if (!p->state->unit[i].light_spotcutoff_is_180) {
-      struct ureg spot_dir = register_param3(p, STATE_LIGHT, i,
-					     STATE_SPOT_DIRECTION);
+      struct ureg spot_dir_norm = register_param3(p, STATE_INTERNAL,
+						  STATE_SPOT_DIR_NORMALIZED, i);
       struct ureg spot = get_temp(p);
       struct ureg slt = get_temp(p);
-	       
-      emit_normalize_vec3( p, spot, spot_dir ); /* XXX: precompute! */
-      emit_op2(p, OPCODE_DP3, spot, 0, negate(VPpli), spot);
-      emit_op2(p, OPCODE_SLT, slt, 0, swizzle1(spot_dir,W), spot);
+
+      emit_op2(p, OPCODE_DP3, spot, 0, negate(VPpli), spot_dir_norm);
+      emit_op2(p, OPCODE_SLT, slt, 0, swizzle1(spot_dir_norm,W), spot);
       emit_op2(p, OPCODE_POW, spot, 0, spot, swizzle1(attenuation, W));
       emit_op2(p, OPCODE_MUL, att, 0, slt, spot);
 
@@ -1109,29 +1108,27 @@ static void build_fog( struct tnl_program *p )
    }
 
    if (p->state->tnl_do_vertex_fog) {
-      struct ureg params = register_param2(p, STATE_FOG, STATE_FOG_PARAMS);
+      struct ureg params = register_param2(p, STATE_INTERNAL,
+					   STATE_FOG_PARAMS_OPTIMIZED);
       struct ureg tmp = get_temp(p);
 
       switch (p->state->fog_mode) {
       case FOG_LINEAR: {
 	 struct ureg id = get_identity_param(p);
-	 emit_op2(p, OPCODE_SUB, tmp, 0, swizzle1(params,Z), input); 
-	 emit_op2(p, OPCODE_MUL, tmp, 0, tmp, swizzle1(params,W)); 
+	 emit_op3(p, OPCODE_MAD, tmp, 0, input, swizzle1(params,X), swizzle1(params,Y));
 	 emit_op2(p, OPCODE_MAX, tmp, 0, tmp, swizzle1(id,X)); /* saturate */
 	 emit_op2(p, OPCODE_MIN, fog, WRITEMASK_X, tmp, swizzle1(id,W));
 	 break;
       }
       case FOG_EXP:
 	 emit_op1(p, OPCODE_ABS, tmp, 0, input); 
-	 emit_op2(p, OPCODE_MUL, tmp, 0, tmp, swizzle1(params,X)); 
-	 emit_op2(p, OPCODE_POW, fog, WRITEMASK_X, 
-		  register_const1f(p, M_E), negate(tmp)); 
+	 emit_op2(p, OPCODE_MUL, tmp, 0, tmp, swizzle1(params,Z));
+	 emit_op1(p, OPCODE_EX2, fog, WRITEMASK_X, negate(tmp));
 	 break;
       case FOG_EXP2:
-	 emit_op2(p, OPCODE_MUL, tmp, 0, input, swizzle1(params,X)); 
+	 emit_op2(p, OPCODE_MUL, tmp, 0, input, swizzle1(params,W));
 	 emit_op2(p, OPCODE_MUL, tmp, 0, tmp, tmp); 
-	 emit_op2(p, OPCODE_POW, fog, WRITEMASK_X, 
-		  register_const1f(p, M_E), negate(tmp)); 
+	 emit_op1(p, OPCODE_EX2, fog, WRITEMASK_X, negate(tmp));
 	 break;
       }
       
@@ -1323,8 +1320,6 @@ static void build_texture_transform( struct tnl_program *p )
 }
 
 
-/* Seems like it could be tighter:
- */
 static void build_pointsize( struct tnl_program *p )
 {
    struct ureg eye = get_eye_position(p);
@@ -1333,20 +1328,25 @@ static void build_pointsize( struct tnl_program *p )
    struct ureg out = register_output(p, VERT_RESULT_PSIZ);
    struct ureg ut = get_temp(p);
 
-   /* 1, -Z, Z * Z, 1 */      
-   emit_op1(p, OPCODE_MOV, ut, 0, swizzle1(get_identity_param(p), W));
-   emit_op2(p, OPCODE_MUL, ut, WRITEMASK_YZ, ut, negate(swizzle1(eye, Z)));
-   emit_op2(p, OPCODE_MUL, ut, WRITEMASK_Z, ut, negate(swizzle1(eye, Z)));
+   /* p1 + dist * (p2 + dist * p3); */
+   emit_op3(p, OPCODE_MAD, ut, 0, negate(swizzle1(eye, Z)),
+		swizzle1(state_attenuation, Z), swizzle1(state_attenuation, Y));
+   emit_op3(p, OPCODE_MAD, ut, 0, negate(swizzle1(eye, Z)),
+		ut, swizzle1(state_attenuation, X));
 
+   /* 1 / sqrt(factor) */
+   emit_op1(p, OPCODE_RSQ, ut, 0, ut );
 
-   /* p1 +  p2 * dist + p3 * dist * dist, 0 */
-   emit_op2(p, OPCODE_DP3, ut, 0, ut, state_attenuation);
-
-   /* 1 / factor */
-   emit_op1(p, OPCODE_RCP, ut, 0, ut ); 
-
-   /* out = pointSize / factor */
-   emit_op2(p, OPCODE_MUL, out, WRITEMASK_X, ut, state_size); 
+#if 1
+   /* out = pointSize / sqrt(factor) */
+   emit_op2(p, OPCODE_MUL, out, WRITEMASK_X, ut, state_size);
+#else
+   /* not sure, might make sense to do clamping here,
+      but it's not done in t_vb_points neither */
+   emit_op2(p, OPCODE_MUL, ut, 0, ut, state_size);
+   emit_op2(p, OPCODE_MAX, ut, 0, ut, swizzle1(state_size, Y));
+   emit_op2(p, OPCODE_MIN, out, WRITEMASK_X, ut, swizzle1(state_size, Z));
+#endif
 
    release_temp(p, ut);
 }

@@ -122,10 +122,10 @@ struct intel_region *intel_region_create_static( struct intel_context *intel,
 						 GLuint cpp,
 						 GLuint pitch, 
 						 GLuint height,
+						 GLuint size,
 						 GLboolean tiled )
 {
    struct intel_region *region = calloc(sizeof(*region), 1);
-   GLuint size = cpp * pitch * height;
    GLint pool;
 
    DBG("%s\n", __FUNCTION__);

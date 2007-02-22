@@ -30,6 +30,7 @@
  */
 
 #include "intel_mipmap_tree.h"
+#include "intel_tex_layout.h"
 #include "macros.h"
 #include "intel_context.h"
 
@@ -51,12 +52,6 @@ static GLint step_offsets[6][2] = { {0, 2},
 {-1, 1},
 {-1, 1}
 };
-
-static GLuint
-minify(GLuint d)
-{
-   return MAX2(1, d >> 1);
-}
 
 GLboolean
 i915_miptree_layout(struct intel_mipmap_tree * mt)
@@ -217,7 +212,7 @@ i945_miptree_layout(struct intel_mipmap_tree * mt)
                y = mt->total_height - 4;
                x = (face - 4) * 8;
             }
-            else if (dim < 4) {
+            else if (dim < 4 && (face > 0 || mt->first_level > 0)) {
                y = mt->total_height - 4;
                x = face * 8;
             }
@@ -322,52 +317,9 @@ i945_miptree_layout(struct intel_mipmap_tree * mt)
 
    case GL_TEXTURE_1D:
    case GL_TEXTURE_2D:
-   case GL_TEXTURE_RECTANGLE_ARB:{
-         GLuint x = 0;
-         GLuint y = 0;
-         GLuint width = mt->width0;
-         GLuint height = mt->height0;
-	 GLint align_h = 2;
-
-         mt->pitch = ((mt->width0 * mt->cpp + 3) & ~3) / mt->cpp;
-         mt->total_height = 0;
-
-         for (level = mt->first_level; level <= mt->last_level; level++) {
-	    GLuint img_height;
-
-            intel_miptree_set_level_info(mt, level, 1,
-                                         x, y, 
-					 width, 
-					 mt->compressed ? height/4 : height, 1);
-
-
-	    if (mt->compressed)
-               img_height = MAX2(1, height / 4);
-            else
-               img_height = MAX2(align_h, height);
-
-            /* LPT change: step right after second mipmap.
-             */
-            if (level == mt->first_level + 1) {
-               x += mt->pitch / 2;
-	       x = (x + 3) & ~3;
-	    }
-            else {
-	       y += img_height;
-	       y += align_h - 1;
-	       y &= ~(align_h - 1);
-	    }
-
-            /* Because the images are packed better, the final offset
-             * might not be the maximal one:
-             */
-            mt->total_height = MAX2(mt->total_height, y);
-
-            width = minify(width);
-            height = minify(height);
-         }
+   case GL_TEXTURE_RECTANGLE_ARB:
+         i945_miptree_layout_2d(mt);
          break;
-      }
    default:
       _mesa_problem(NULL, "Unexpected tex target in i945_miptree_layout()");
    }

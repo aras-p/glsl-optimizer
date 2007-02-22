@@ -22,11 +22,7 @@ DRIVER_SOURCES = \
 	radeon_swtcl.c \
 	radeon_span.c \
 	radeon_maos.c \
-	radeon_sanity.c \
-	radeon_vtxfmt.c \
-	radeon_vtxfmt_c.c \
-	radeon_vtxfmt_sse.c \
-	radeon_vtxfmt_x86.c 
+	radeon_sanity.c 
 
 C_SOURCES = \
 	$(COMMON_SOURCES) \
@@ -34,8 +30,7 @@ C_SOURCES = \
 
 DRIVER_DEFINES = -DRADEON_COMMON=0
 
-X86_SOURCES = \
-	radeon_vtxtmp_x86.S 
+X86_SOURCES = 
 
 include ../Makefile.template
 

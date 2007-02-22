@@ -38,7 +38,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #include "r200_context.h"
 
-extern void r200EmitArrays( GLcontext *ctx, GLuint inputs );
+extern void r200EmitArrays( GLcontext *ctx, GLubyte *vimap_rev );
 extern void r200ReleaseArrays( GLcontext *ctx, GLuint newinputs );
 
 #endif

@@ -44,6 +44,7 @@
 #define PCI_CHIP_VT7205         0x7205
 #define PCI_CHIP_VT3204         0x3108
 #define PCI_CHIP_VT3259         0x3118
+#define PCI_CHIP_VT3344         0x3344
 
 
 #define BIOS_BSIZE              1024

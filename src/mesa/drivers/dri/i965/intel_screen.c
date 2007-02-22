@@ -38,6 +38,7 @@
 
 #include "intel_screen.h"
 
+#include "intel_context.h"
 #include "intel_tex.h"
 #include "intel_span.h"
 #include "intel_ioctl.h"
@@ -60,8 +61,6 @@ const GLuint __driNConfigOptions = 4;
 #ifdef USE_NEW_INTERFACE
 static PFNGLXCREATECONTEXTMODES create_context_modes = NULL;
 #endif /*USE_NEW_INTERFACE*/
-
-extern const struct dri_extension card_extensions[];
 
 /**
  * Map all the memory regions described by the screen.
@@ -230,16 +229,19 @@ intelUpdateScreenFromSAREA(intelScreenPrivate *intelScreen,
    intelScreen->front.pitch = sarea->pitch * intelScreen->cpp;
    intelScreen->front.handle = sarea->front_handle;
    intelScreen->front.size = sarea->front_size;
+   intelScreen->front.tiled = sarea->front_tiled;
 
    intelScreen->back.offset = sarea->back_offset;
    intelScreen->back.pitch = sarea->pitch * intelScreen->cpp;
    intelScreen->back.handle = sarea->back_handle;
    intelScreen->back.size = sarea->back_size;
-			 
+   intelScreen->back.tiled = sarea->back_tiled;
+
    intelScreen->depth.offset = sarea->depth_offset;
    intelScreen->depth.pitch = sarea->pitch * intelScreen->cpp;
    intelScreen->depth.handle = sarea->depth_handle;
    intelScreen->depth.size = sarea->depth_size;
+   intelScreen->depth.tiled = sarea->depth_tiled;
 
    intelScreen->tex.offset = sarea->tex_offset;
    intelScreen->logTextureGranularity = sarea->log_tex_granularity;
@@ -249,6 +251,7 @@ intelUpdateScreenFromSAREA(intelScreenPrivate *intelScreen,
    intelScreen->rotated.offset = sarea->rotated_offset;
    intelScreen->rotated.pitch = sarea->rotated_pitch * intelScreen->cpp;
    intelScreen->rotated.size = sarea->rotated_size;
+   intelScreen->rotated.tiled = sarea->rotated_tiled;
    intelScreen->current_rotation = sarea->rotation;
 #if 0
    matrix23Rotate(&intelScreen->rotMatrix,
@@ -683,7 +686,6 @@ void * __driCreateNewScreen_20050727( __DRInativeDisplay *dpy, int scrn, __DRIsc
 					(dri_priv->cpp == 2) ? 16 : 24,
 					(dri_priv->cpp == 2) ? 0  : 8,
 					GL_TRUE );
-
       /* Calling driInitExtensions here, with a NULL context pointer, does not actually
        * enable the extensions.  It just makes sure that all the dispatch offsets for all
        * the extensions that *might* be enables are known.  This is needed because the
@@ -692,7 +694,7 @@ void * __driCreateNewScreen_20050727( __DRInativeDisplay *dpy, int scrn, __DRIsc
        *
        * Hello chicken.  Hello egg.  How are you two today?
        */
-      driInitExtensions( NULL, card_extensions, GL_FALSE );
+      intelInitExtensions(NULL, GL_FALSE);
    }
 
    return (void *) psp;

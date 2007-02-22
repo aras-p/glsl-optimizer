@@ -38,7 +38,7 @@
 #include "swrast_setup/swrast_setup.h"
 #include "tnl/tnl.h"
 #include "tnl/t_pipeline.h"
-#include "array_cache/acache.h"
+#include "vbo/vbo.h"
 #include "drivers/common/driverfuncs.h"
 
 #include "ffb_context.h"
@@ -277,7 +277,7 @@ ffbCreateContext(const __GLcontextModes *mesaVis,
 
 	/* Initialize the software rasterizer and helper modules. */
 	_swrast_CreateContext( ctx );
-	_ac_CreateContext( ctx );
+	_vbo_CreateContext( ctx );
 	_tnl_CreateContext( ctx );
 	_swsetup_CreateContext( ctx );
 
@@ -313,7 +313,7 @@ ffbDestroyContext(__DRIcontextPrivate *driContextPriv)
 
 		_swsetup_DestroyContext( fmesa->glCtx );
 		_tnl_DestroyContext( fmesa->glCtx );
-		_ac_DestroyContext( fmesa->glCtx );
+		_vbo_DestroyContext( fmesa->glCtx );
 		_swrast_DestroyContext( fmesa->glCtx );
 
                 /* free the Mesa context */
