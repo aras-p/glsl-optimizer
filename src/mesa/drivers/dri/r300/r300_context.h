@@ -60,7 +60,6 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #endif
 
 //#define OPTIMIZE_ELTS
-#define CB_DPATH
 
 struct r300_context;
 typedef struct r300_context r300ContextRec;
