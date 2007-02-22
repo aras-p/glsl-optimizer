@@ -24,27 +24,25 @@
 
 /**
  * \file slang_codegen.c
- * Mesa GLSL code generator.  Convert AST to IR tree.
+ * Generate IR tree from AST.
  * \author Brian Paul
  */
 
 #include "imports.h"
 #include "macros.h"
-#include "slang_typeinfo.h"
-#include "slang_builtin.h"
-#include "slang_codegen.h"
-#include "slang_compile.h"
-#include "slang_storage.h"
-#include "slang_error.h"
-#include "slang_simplify.h"
-#include "slang_emit.h"
-#include "slang_vartable.h"
-#include "slang_ir.h"
 #include "mtypes.h"
 #include "program.h"
 #include "prog_instruction.h"
 #include "prog_parameter.h"
 #include "prog_statevars.h"
+#include "slang_typeinfo.h"
+#include "slang_codegen.h"
+#include "slang_compile.h"
+#include "slang_error.h"
+#include "slang_simplify.h"
+#include "slang_emit.h"
+#include "slang_vartable.h"
+#include "slang_ir.h"
 #include "slang_print.h"
 
 
@@ -639,12 +637,8 @@ slang_inline_asm_function(slang_assemble_ctx *A,
 static void
 slang_resolve_variable(slang_operation *oper)
 {
-   if (oper->type != SLANG_OPER_IDENTIFIER)
-      return;
-   if (!oper->var) {
-      oper->var = _slang_locate_variable(oper->locals,
-                                         (const slang_atom) oper->a_id,
-                                         GL_TRUE);
+   if (oper->type == SLANG_OPER_IDENTIFIER && !oper->var) {
+      oper->var = _slang_locate_variable(oper->locals, oper->a_id, GL_TRUE);
    }
 }
 
@@ -671,7 +665,8 @@ slang_substitute(slang_assemble_ctx *A, slang_operation *oper,
          }
          if (oper->num_children == 1) {
             /* the initializer */
-            slang_substitute(A, &oper->children[0], substCount, substOld, substNew, GL_FALSE);
+            slang_substitute(A, &oper->children[0], substCount,
+                             substOld, substNew, GL_FALSE);
          }
       }
       break;
@@ -1102,7 +1097,7 @@ slang_find_asm_info(const char *name)
 
 
 static GLuint
-make_writemask(char *field)
+make_writemask(const char *field)
 {
    GLuint mask = 0x0;
    while (*field) {
@@ -1183,9 +1178,9 @@ _slang_gen_asm(slang_assemble_ctx *A, slang_operation *oper,
       slang_ir_node *n0;
 
       dest_oper = &oper->children[0];
-      while /*if*/ (dest_oper->type == SLANG_OPER_FIELD) {
+      while (dest_oper->type == SLANG_OPER_FIELD) {
          /* writemask */
-         writemask &= /*=*/make_writemask((char*) dest_oper->a_id);
+         writemask &= make_writemask((char*) dest_oper->a_id);
          dest_oper = &dest_oper->children[0];
       }
 
@@ -1612,8 +1607,6 @@ _slang_gen_var_decl(slang_assemble_ctx *A, slang_variable *var)
 }
 
 
-
-
 /**
  * Generate code for a selection expression:   b ? x : y
  * XXX in some cases we could implement a selection expression
@@ -1746,7 +1739,6 @@ _slang_gen_logical_or(slang_assemble_ctx *A, slang_operation *oper)
 
    return n;
 }
-
 
 
 /**
