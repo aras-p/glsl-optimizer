@@ -30,6 +30,7 @@
 #include "framebuffer.h"
 #include "occlude.h"
 #include "program.h"
+#include "prog_execute.h"
 #include "renderbuffer.h"
 #include "texcompress.h"
 #include "texformat.h"
@@ -128,7 +129,7 @@ _mesa_init_driver_functions(struct dd_function_table *driver)
    driver->NewProgram = _mesa_new_program;
    driver->DeleteProgram = _mesa_delete_program;
 #if FEATURE_MESA_program_debug
-   driver->GetFragmentProgramRegister = _swrast_get_program_register;
+   driver->GetFragmentProgramRegister = _mesa_get_program_register;
 #endif /* FEATURE_MESA_program_debug */
 
    /* simple state commands */
