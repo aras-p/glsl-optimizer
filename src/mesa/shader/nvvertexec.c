@@ -39,6 +39,8 @@
 #include "math/m_matrix.h"
 
 
+static const GLboolean DEBUG_VERT = GL_FALSE;
+
 static const GLfloat ZeroVec[4] = { 0.0F, 0.0F, 0.0F, 0.0F };
 
 
@@ -67,6 +69,12 @@ _mesa_init_vp_per_vertex_registers(GLcontext *ctx, struct vp_machine *machine)
          ASSIGN_4V(machine->AddressReg[i], 0, 0, 0, 0);
       }
    }
+
+   /* init condition codes */
+   machine->CondCodes[0] = COND_EQ;
+   machine->CondCodes[1] = COND_EQ;
+   machine->CondCodes[2] = COND_EQ;
+   machine->CondCodes[3] = COND_EQ;
 }
 
 
@@ -334,6 +342,65 @@ fetch_vector1( GLcontext *ctx,
 
 
 /**
+ * Test value against zero and return GT, LT, EQ or UN if NaN.
+ */
+static INLINE GLuint
+generate_cc( float value )
+{
+   if (value != value)
+      return COND_UN;  /* NaN */
+   if (value > 0.0F)
+      return COND_GT;
+   if (value < 0.0F)
+      return COND_LT;
+   return COND_EQ;
+}
+
+
+/**
+ * Test if the ccMaskRule is satisfied by the given condition code.
+ * Used to mask destination writes according to the current condition code.
+ */
+static INLINE GLboolean
+test_cc(GLuint condCode, GLuint ccMaskRule)
+{
+   switch (ccMaskRule) {
+   case COND_EQ: return (condCode == COND_EQ);
+   case COND_NE: return (condCode != COND_EQ);
+   case COND_LT: return (condCode == COND_LT);
+   case COND_GE: return (condCode == COND_GT || condCode == COND_EQ);
+   case COND_LE: return (condCode == COND_LT || condCode == COND_EQ);
+   case COND_GT: return (condCode == COND_GT);
+   case COND_TR: return GL_TRUE;
+   case COND_FL: return GL_FALSE;
+   default:      return GL_TRUE;
+   }
+}
+
+
+/**
+ * Evaluate the 4 condition codes against a predicate and return GL_TRUE
+ * or GL_FALSE to indicate result.
+ */
+static INLINE GLboolean
+eval_condition(const struct vp_machine *machine,
+               const struct prog_instruction *inst)
+{
+   const GLuint swizzle = inst->DstReg.CondSwizzle;
+   const GLuint condMask = inst->DstReg.CondMask;
+   if (test_cc(machine->CondCodes[GET_SWZ(swizzle, 0)], condMask) ||
+       test_cc(machine->CondCodes[GET_SWZ(swizzle, 1)], condMask) ||
+       test_cc(machine->CondCodes[GET_SWZ(swizzle, 2)], condMask) ||
+       test_cc(machine->CondCodes[GET_SWZ(swizzle, 3)], condMask)) {
+      return GL_TRUE;
+   }
+   else {
+      return GL_FALSE;
+   }
+}
+
+
+/**
  * Store 4 floats into a register.
  */
 static void
@@ -342,12 +409,16 @@ store_vector4( const struct prog_instruction *inst,
                const GLfloat value[4] )
 {
    const struct prog_dst_register *dest = &(inst->DstReg);
+   GLuint writeMask = dest->WriteMask;
    GLfloat *dst;
+
    switch (dest->File) {
       case PROGRAM_OUTPUT:
+         ASSERT(dest->Index < VERT_RESULT_MAX);
          dst = machine->Outputs[dest->Index];
          break;
       case PROGRAM_TEMPORARY:
+         ASSERT(dest->Index < MAX_PROGRAM_TEMPS);
          dst = machine->Temporaries[dest->Index];
          break;
       case PROGRAM_ENV_PARAM:
@@ -355,6 +426,7 @@ store_vector4( const struct prog_instruction *inst,
          {
             /* a slight hack */
             GET_CURRENT_CONTEXT(ctx);
+            ASSERT(dest->Index < MAX_PROGRAM_ENV_PARAMS);
             dst = ctx->VertexProgram.Parameters[dest->Index];
          }
          break;
@@ -372,6 +444,17 @@ store_vector4( const struct prog_instruction *inst,
       dst[2] = value[2];
    if (dest->WriteMask & WRITEMASK_W)
       dst[3] = value[3];
+
+   if (inst->CondUpdate) {
+      if (writeMask & WRITEMASK_X)
+         machine->CondCodes[0] = generate_cc(value[0]);
+      if (writeMask & WRITEMASK_Y)
+         machine->CondCodes[1] = generate_cc(value[1]);
+      if (writeMask & WRITEMASK_Z)
+         machine->CondCodes[2] = generate_cc(value[2]);
+      if (writeMask & WRITEMASK_W)
+         machine->CondCodes[3] = generate_cc(value[3]);
+   }
 }
 
 
@@ -400,7 +483,8 @@ _mesa_exec_vertex_program(GLcontext *ctx,
                           struct vp_machine *machine,
                           const struct gl_vertex_program *program)
 {
-   const struct prog_instruction *inst;
+   const GLuint maxInst = program->Base.NumInstructions;
+   GLuint pc;
 
    ctx->_CurrentProgram = GL_VERTEX_PROGRAM_ARB; /* or NV, doesn't matter */
 
@@ -416,7 +500,8 @@ _mesa_exec_vertex_program(GLcontext *ctx,
       ctx->VertexProgram.Current->Base.OutputsWritten |= VERT_BIT_POS;
    }
 
-   for (inst = program->Base.Instructions; ; inst++) {
+   for (pc = 0; pc < maxInst; pc++) {
+      const struct prog_instruction *inst = program->Base.Instructions + pc;
 
       if (ctx->VertexProgram.CallbackEnabled &&
           ctx->VertexProgram.Callback) {
@@ -637,6 +722,22 @@ _mesa_exec_vertex_program(GLcontext *ctx,
                store_vector4( inst, machine, sge );
             }
             break;
+         case OPCODE_SGT: /* set on greater */
+            {
+               GLfloat a[4], b[4], result[4];
+               fetch_vector4( ctx, &inst->SrcReg[0], machine, program, a );
+               fetch_vector4( ctx, &inst->SrcReg[1], machine, program, b );
+               result[0] = (a[0] > b[0]) ? 1.0F : 0.0F;
+               result[1] = (a[1] > b[1]) ? 1.0F : 0.0F;
+               result[2] = (a[2] > b[2]) ? 1.0F : 0.0F;
+               result[3] = (a[3] > b[3]) ? 1.0F : 0.0F;
+               store_vector4( inst, machine, result );
+               if (DEBUG_VERT) {
+                  printf("SGT %g %g %g %g\n",
+                         result[0], result[1], result[2], result[3]);
+               }
+            }
+            break;
          case OPCODE_MAD:
             {
                GLfloat t[4], u[4], v[4], sum[4];
@@ -740,6 +841,25 @@ _mesa_exec_vertex_program(GLcontext *ctx,
                store_vector4( inst, machine, t );
             }
             break;
+         case OPCODE_IF:
+            if (eval_condition(machine, inst)) {
+               /* do if-clause (just continue execution) */
+            }
+            else {
+               /* go to the instruction after ELSE or ENDIF */
+               assert(inst->BranchTarget >= 0);
+               pc = inst->BranchTarget - 1;
+            }
+            break;
+         case OPCODE_ELSE:
+            /* goto ENDIF */
+            assert(inst->BranchTarget >= 0);
+            pc = inst->BranchTarget - 1;
+            break;
+         case OPCODE_ENDIF:
+            /* nothing */
+            break;
+
          case OPCODE_EX2: /* GL_ARB_vertex_program */
             {
                GLfloat t[4];

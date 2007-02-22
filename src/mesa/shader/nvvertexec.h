@@ -39,6 +39,7 @@ struct vp_machine
    GLfloat Inputs[VERT_ATTRIB_MAX][4];
    GLuint InputsSize[VERT_ATTRIB_MAX];
    GLfloat Outputs[VERT_RESULT_MAX][4];
+   GLuint CondCodes[4];  /**< COND_* value for x/y/z/w */
    GLint AddressReg[MAX_VERTEX_PROGRAM_ADDRESS_REGS][4];
 };
 
