@@ -53,7 +53,6 @@
 #include "shader/shader_api.h"
 #include "shader/prog_print.h"
 #include "drivers/common/driverfuncs.h"
-#include "array_cache/acache.h"
 #include "tnl/tnl.h"
 #include "tnl/t_context.h"
 #include "tnl/t_pipeline.h"
@@ -61,6 +60,7 @@
 #include "swrast/s_context.h"
 #include "swrast/s_triangle.h"
 #include "swrast_setup/swrast_setup.h"
+#include "vbo/vbo.h"
 
 
 static const char *Prog = "glslcompiler";
@@ -96,8 +96,8 @@ UpdateState(GLcontext *ctx, GLuint new_state)
    /* easy - just propogate */
    _swrast_InvalidateState( ctx, new_state );
    _swsetup_InvalidateState( ctx, new_state );
-   _ac_InvalidateState( ctx, new_state );
    _tnl_InvalidateState( ctx, new_state );
+   _vbo_InvalidateState( ctx, new_state );
 }
 
 
@@ -136,7 +136,7 @@ CreateContext(void)
    _mesa_enable_sw_extensions(ctx);
 
    if (!_swrast_CreateContext( ctx ) ||
-       !_ac_CreateContext( ctx ) ||
+       !_vbo_CreateContext( ctx ) ||
        !_tnl_CreateContext( ctx ) ||
        !_swsetup_CreateContext( ctx )) {
       _mesa_destroy_visual(vis);
@@ -276,6 +276,11 @@ ParseOptions(int argc, char *argv[])
    Options.VertFile = NULL;
    Options.FragFile = NULL;
    Options.OutputFile = NULL;
+
+   if (argc == 1) {
+      Usage();
+      exit(0);
+   }
 
    for (i = 1; i < argc; i++) {
       if (strcmp(argv[i], "--vs") == 0) {
