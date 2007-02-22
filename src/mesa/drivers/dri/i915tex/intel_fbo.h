@@ -47,6 +47,18 @@ struct intel_framebuffer
    GLint pf_pipes;
    GLint pf_current_page;
    GLint pf_num_pages;
+
+   /* VBI
+    */
+   GLuint vbl_seq;
+   GLuint vblank_flags;
+   GLuint vbl_waited;
+
+   int64_t swap_ust;
+   int64_t swap_missed_ust;
+
+   GLuint swap_count;
+   GLuint swap_missed_count;
 };
 
 
@@ -68,6 +80,8 @@ struct intel_renderbuffer
    GLuint PairedStencil; /**< only used if this is a stencil renderbuffer */
 
    GLuint pf_pending;  /**< sequence number of pending flip */
+
+   GLuint vbl_pending;   /**< vblank sequence number of pending flip */
 };
 
 

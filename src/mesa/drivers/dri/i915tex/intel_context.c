@@ -443,10 +443,6 @@ intelInitContext(struct intel_context *intel,
 
    intel->do_usleeps = (fthrottle_mode == DRI_CONF_FTHROTTLE_USLEEPS);
 
-   intel->vblank_flags = (intel->intelScreen->irq_active != 0)
-      ? driGetDefaultVBlankFlags(&intel->optionCache) : VBLANK_FLAG_NO_IRQ;
-
-   (*dri_interface->getUST) (&intel->swap_ust);
    _math_matrix_ctr(&intel->ViewportMatrix);
 
    /* Disable imaging extension until convolution is working in
@@ -591,7 +587,12 @@ intelMakeCurrent(__DRIcontextPrivate * driContextPriv,
       if (intel->ctx.DrawBuffer == &intel_fb->Base) {
 
 	 if (intel->driDrawable != driDrawPriv) {
-	    driDrawableInitVBlank(driDrawPriv, intel->vblank_flags, &intel->vbl_seq);	    
+	    intel_fb->vblank_flags = (intel->intelScreen->irq_active != 0)
+	       ? driGetDefaultVBlankFlags(&intel->optionCache)
+	       : VBLANK_FLAG_NO_IRQ;
+	    (*dri_interface->getUST) (&intel_fb->swap_ust);
+	    driDrawableInitVBlank(driDrawPriv, intel_fb->vblank_flags,
+				  &intel_fb->vbl_seq);
 	    intel->driDrawable = driDrawPriv;
 	    intelWindowMoved(intel);
 	 }
@@ -702,19 +703,34 @@ intelContendedLock(struct intel_context *intel, GLuint flags)
 void LOCK_HARDWARE( struct intel_context *intel )
 {
     char __ret=0;
-
+    struct intel_framebuffer *intel_fb = NULL;
+    struct intel_renderbuffer *intel_rb = NULL;
     _glthread_LOCK_MUTEX(lockMutex);
     assert(!intel->locked);
 
-    if (intel->swap_scheduled) {
+    if (intel->driDrawable) {
+       intel_fb = intel->driDrawable->driverPrivate;
+
+       if (intel_fb)
+	  intel_rb =
+	     intel_get_renderbuffer(&intel_fb->Base,
+				    intel_fb->Base._ColorDrawBufferMask[0] ==
+				    BUFFER_BIT_FRONT_LEFT ? BUFFER_FRONT_LEFT :
+				    BUFFER_BACK_LEFT);
+    }
+
+    if (intel_rb && (intel_fb->vbl_waited - intel_rb->vbl_pending) > (1<<23)) {
 	drmVBlank vbl;
+
 	vbl.request.type = DRM_VBLANK_ABSOLUTE;
-	if ( intel->vblank_flags & VBLANK_FLAG_SECONDARY ) {
+
+	if ( intel_fb->vblank_flags & VBLANK_FLAG_SECONDARY ) {
 	    vbl.request.type |= DRM_VBLANK_SECONDARY;
 	}
-	vbl.request.sequence = intel->vbl_seq;
+
+	vbl.request.sequence = intel_rb->vbl_pending;
 	drmWaitVBlank(intel->driFd, &vbl);
-	intel->swap_scheduled = 0;
+	intel_fb->vbl_waited = intel_rb->vbl_pending;
     }
 
     DRM_CAS(intel->driHwLock, intel->hHWContext,

@@ -679,21 +679,20 @@ intelDestroyBuffer(__DRIdrawablePrivate * driDrawPriv)
 static int
 intelGetSwapInfo(__DRIdrawablePrivate * dPriv, __DRIswapInfo * sInfo)
 {
-   struct intel_context *intel;
+   struct intel_framebuffer *intel_fb;
 
-   if ((dPriv == NULL) || (dPriv->driContextPriv == NULL)
-       || (dPriv->driContextPriv->driverPrivate == NULL)
+   if ((dPriv == NULL) || (dPriv->driverPrivate == NULL)
        || (sInfo == NULL)) {
       return -1;
    }
 
-   intel = dPriv->driContextPriv->driverPrivate;
-   sInfo->swap_count = intel->swap_count;
-   sInfo->swap_ust = intel->swap_ust;
-   sInfo->swap_missed_count = intel->swap_missed_count;
+   intel_fb = dPriv->driverPrivate;
+   sInfo->swap_count = intel_fb->swap_count;
+   sInfo->swap_ust = intel_fb->swap_ust;
+   sInfo->swap_missed_count = intel_fb->swap_missed_count;
 
    sInfo->swap_missed_usage = (sInfo->swap_missed_count != 0)
-      ? driCalculateSwapUsage(dPriv, 0, intel->swap_missed_ust)
+      ? driCalculateSwapUsage(dPriv, 0, intel_fb->swap_missed_ust)
       : 0.0;
 
    return 0;

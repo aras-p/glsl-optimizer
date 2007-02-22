@@ -274,19 +274,6 @@ struct intel_context
     */
    driOptionCache optionCache;
 
-   /* VBI
-    */
-   GLuint vbl_seq;
-   GLuint vblank_flags;
-
-   int64_t swap_ust;
-   int64_t swap_missed_ust;
-
-   GLuint swap_count;
-   GLuint swap_missed_count;
-
-   GLuint swap_scheduled;
-
   /* Rotation. Need to match that of the
    * current screen.
    */

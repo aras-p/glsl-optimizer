@@ -55,8 +55,6 @@ intelCopyBuffer(const __DRIdrawablePrivate * dPriv,
 
    struct intel_context *intel;
    const intelScreenPrivate *intelScreen;
-   GLboolean missed_target;
-   int64_t ust;
 
    DBG("%s\n", __FUNCTION__);
 
@@ -68,41 +66,6 @@ intelCopyBuffer(const __DRIdrawablePrivate * dPriv,
 
    intelScreen = intel->intelScreen;
 
-   if (!rect && !intel->swap_scheduled && intelScreen->drmMinor >= 6 &&
-	!(intel->vblank_flags & VBLANK_FLAG_NO_IRQ) &&
-	intelScreen->current_rotation == 0) {
-      unsigned int interval = driGetVBlankInterval(dPriv, intel->vblank_flags);
-      unsigned int target;
-      drm_i915_vblank_swap_t swap;
- 
-      swap.drawable = dPriv->hHWDrawable;
-      swap.seqtype = DRM_VBLANK_ABSOLUTE;
-      target = swap.sequence = intel->vbl_seq + interval;
-
-      if (intel->vblank_flags & VBLANK_FLAG_SYNC) {
-	 swap.seqtype |= DRM_VBLANK_NEXTONMISS;
-      } else if (interval == 0) {
-	 goto noschedule;
-      }
-
-      if ( intel->vblank_flags & VBLANK_FLAG_SECONDARY ) {
-	 swap.seqtype |= DRM_VBLANK_SECONDARY;
-      }
-
-      intel_batchbuffer_flush(intel->batch);
-
-      if (!drmCommandWriteRead(intel->driFd, DRM_I915_VBLANK_SWAP, &swap,
-			       sizeof(swap))) {
-	 intel->swap_scheduled = 1;
-	 intel->vbl_seq = swap.sequence;
-	 swap.sequence -= target;
-	 missed_target = swap.sequence > 0 && swap.sequence <= (1 << 23);
-      }
-   } else {
-      intel->swap_scheduled = 0;
-   }
-noschedule:
-  
    if (intel->last_swap_fence) {
       driFenceFinish(intel->last_swap_fence, DRM_FENCE_TYPE_EXE, GL_TRUE);
       driFenceUnReference(intel->last_swap_fence);
@@ -111,108 +74,88 @@ noschedule:
    intel->last_swap_fence = intel->first_swap_fence;
    intel->first_swap_fence = NULL;
 
-   if (!intel->swap_scheduled) {
-      if (!rect) {
-	 driWaitForVBlank(dPriv, &intel->vbl_seq, intel->vblank_flags,
-			  &missed_target);
+   /* The LOCK_HARDWARE is required for the cliprects.  Buffer offsets
+    * should work regardless.
+    */
+   LOCK_HARDWARE(intel);
+
+   if (dPriv && dPriv->numClipRects) {
+      struct intel_framebuffer *intel_fb = dPriv->driverPrivate;
+      const struct intel_region *frontRegion
+	 = intel_get_rb_region(&intel_fb->Base, BUFFER_FRONT_LEFT);
+      const struct intel_region *backRegion
+	 = intel_get_rb_region(&intel_fb->Base, BUFFER_BACK_LEFT);
+      const int nbox = dPriv->numClipRects;
+      const drm_clip_rect_t *pbox = dPriv->pClipRects;
+      const int pitch = frontRegion->pitch;
+      const int cpp = frontRegion->cpp;
+      int BR13, CMD;
+      int i;
+
+      ASSERT(intel_fb);
+      ASSERT(intel_fb->Base.Name == 0);    /* Not a user-created FBO */
+      ASSERT(frontRegion);
+      ASSERT(backRegion);
+      ASSERT(frontRegion->pitch == backRegion->pitch);
+      ASSERT(frontRegion->cpp == backRegion->cpp);
+
+      if (cpp == 2) {
+	 BR13 = (pitch * cpp) | (0xCC << 16) | (1 << 24);
+	 CMD = XY_SRC_COPY_BLT_CMD;
+      }
+      else {
+	 BR13 = (pitch * cpp) | (0xCC << 16) | (1 << 24) | (1 << 25);
+	 CMD = (XY_SRC_COPY_BLT_CMD | XY_SRC_COPY_BLT_WRITE_ALPHA |
+		XY_SRC_COPY_BLT_WRITE_RGB);
       }
 
+      for (i = 0; i < nbox; i++, pbox++) {
+	 drm_clip_rect_t box;
 
-      /* The LOCK_HARDWARE is required for the cliprects.  Buffer offsets
-       * should work regardless.
-       */
-      LOCK_HARDWARE(intel);
+	 if (pbox->x1 > pbox->x2 ||
+	     pbox->y1 > pbox->y2 ||
+	     pbox->x2 > intelScreen->width || pbox->y2 > intelScreen->height)
+	    continue;
 
-      if (dPriv && dPriv->numClipRects) {
-	 const intelScreenPrivate *intelScreen = intel->intelScreen;
-	 struct intel_framebuffer *intel_fb = dPriv->driverPrivate;
-	 const struct intel_region *frontRegion
-	    = intel_get_rb_region(&intel_fb->Base, BUFFER_FRONT_LEFT);
-	 const struct intel_region *backRegion
-	    = intel_get_rb_region(&intel_fb->Base, BUFFER_BACK_LEFT);
-	 const int nbox = dPriv->numClipRects;
-	 const drm_clip_rect_t *pbox = dPriv->pClipRects;
-	 const int pitch = frontRegion->pitch;
-	 const int cpp = frontRegion->cpp;
-	 int BR13, CMD;
-	 int i;
+	 box = *pbox;
 
-	 ASSERT(intel_fb);
-	 ASSERT(intel_fb->Base.Name == 0);    /* Not a user-created FBO */
-	 ASSERT(frontRegion);
-	 ASSERT(backRegion);
-	 ASSERT(frontRegion->pitch == backRegion->pitch);
-	 ASSERT(frontRegion->cpp == backRegion->cpp);
+	 if (rect) {
+	    if (rect->x1 > box.x1)
+	       box.x1 = rect->x1;
+	    if (rect->y1 > box.y1)
+	       box.y1 = rect->y1;
+	    if (rect->x2 < box.x2)
+	       box.x2 = rect->x2;
+	    if (rect->y2 < box.y2)
+	       box.y2 = rect->y2;
 
-	 if (cpp == 2) {
-	    BR13 = (pitch * cpp) | (0xCC << 16) | (1 << 24);
-	    CMD = XY_SRC_COPY_BLT_CMD;
-	 }
-	 else {
-	    BR13 = (pitch * cpp) | (0xCC << 16) | (1 << 24) | (1 << 25);
-	    CMD = (XY_SRC_COPY_BLT_CMD | XY_SRC_COPY_BLT_WRITE_ALPHA |
-		   XY_SRC_COPY_BLT_WRITE_RGB);
-	 }
-
-	 for (i = 0; i < nbox; i++, pbox++) {
-	    drm_clip_rect_t box;
-
-	    if (pbox->x1 > pbox->x2 ||
-		pbox->y1 > pbox->y2 ||
-		pbox->x2 > intelScreen->width || pbox->y2 > intelScreen->height)
+	    if (box.x1 > box.x2 || box.y1 > box.y2)
 	       continue;
-
-	    box = *pbox;
-
-	    if (rect) {
-	       if (rect->x1 > box.x1)
-		  box.x1 = rect->x1;
-	       if (rect->y1 > box.y1)
-		  box.y1 = rect->y1;
-	       if (rect->x2 < box.x2)
-		  box.x2 = rect->x2;
-	       if (rect->y2 < box.y2)
-		  box.y2 = rect->y2;
-
-	       if (box.x1 > box.x2 || box.y1 > box.y2)
-		  continue;
-	    }
-
-	    BEGIN_BATCH(8, INTEL_BATCH_NO_CLIPRECTS);
-	    OUT_BATCH(CMD);
-	    OUT_BATCH(BR13);
-	    OUT_BATCH((pbox->y1 << 16) | pbox->x1);
-	    OUT_BATCH((pbox->y2 << 16) | pbox->x2);
-
-	    OUT_RELOC(frontRegion->buffer, DRM_BO_FLAG_MEM_TT | DRM_BO_FLAG_WRITE,
-		      DRM_BO_MASK_MEM | DRM_BO_FLAG_WRITE, 0);
-	    OUT_BATCH((pbox->y1 << 16) | pbox->x1);
-	    OUT_BATCH(BR13 & 0xffff);
-	    OUT_RELOC(backRegion->buffer, DRM_BO_FLAG_MEM_TT | DRM_BO_FLAG_READ,
-		      DRM_BO_MASK_MEM | DRM_BO_FLAG_READ, 0);
-
-	    ADVANCE_BATCH();
 	 }
 
-	 if (intel->first_swap_fence)
-	    driFenceUnReference(intel->first_swap_fence);
-	 intel->first_swap_fence = intel_batchbuffer_flush(intel->batch);
-	 driFenceReference(intel->first_swap_fence);
+	 BEGIN_BATCH(8, INTEL_BATCH_NO_CLIPRECTS);
+	 OUT_BATCH(CMD);
+	 OUT_BATCH(BR13);
+	 OUT_BATCH((pbox->y1 << 16) | pbox->x1);
+	 OUT_BATCH((pbox->y2 << 16) | pbox->x2);
+
+	 OUT_RELOC(frontRegion->buffer, DRM_BO_FLAG_MEM_TT | DRM_BO_FLAG_WRITE,
+		   DRM_BO_MASK_MEM | DRM_BO_FLAG_WRITE, 0);
+	 OUT_BATCH((pbox->y1 << 16) | pbox->x1);
+	 OUT_BATCH(BR13 & 0xffff);
+	 OUT_RELOC(backRegion->buffer, DRM_BO_FLAG_MEM_TT | DRM_BO_FLAG_READ,
+		   DRM_BO_MASK_MEM | DRM_BO_FLAG_READ, 0);
+
+	 ADVANCE_BATCH();
       }
 
-      UNLOCK_HARDWARE(intel);
+      if (intel->first_swap_fence)
+	 driFenceUnReference(intel->first_swap_fence);
+      intel->first_swap_fence = intel_batchbuffer_flush(intel->batch);
+      driFenceReference(intel->first_swap_fence);
    }
 
-   if (!rect) {
-      intel->swap_count++;
-      (*dri_interface->getUST) (&ust);
-      if (missed_target) {
-         intel->swap_missed_count++;
-         intel->swap_missed_ust = ust - intel->swap_ust;
-      }
-
-      intel->swap_ust = ust;
-   }
+   UNLOCK_HARDWARE(intel);
 }
 
 

@@ -226,7 +226,7 @@ intelWindowMoved(struct intel_context *intel)
 				     .y2 = sarea->pipeB_y + sarea->pipeB_h };
       GLint areaA = driIntersectArea( drw_rect, pipeA_rect );
       GLint areaB = driIntersectArea( drw_rect, pipeB_rect );
-      GLuint flags = intel->vblank_flags;
+      GLuint flags = intel_fb->vblank_flags;
       GLboolean pf_active;
       GLint pf_pipes;
 
@@ -278,17 +278,17 @@ intelWindowMoved(struct intel_context *intel)
       /* Update vblank info
        */
       if (areaB > areaA || (areaA == areaB && areaB > 0)) {
-	 flags = intel->vblank_flags | VBLANK_FLAG_SECONDARY;
+	 flags = intel_fb->vblank_flags | VBLANK_FLAG_SECONDARY;
       } else {
-	 flags = intel->vblank_flags & ~VBLANK_FLAG_SECONDARY;
+	 flags = intel_fb->vblank_flags & ~VBLANK_FLAG_SECONDARY;
       }
 
-      if (flags != intel->vblank_flags) {
-	 intel->vblank_flags = flags;
-	 driGetCurrentVBlank(dPriv, intel->vblank_flags, &intel->vbl_seq);
+      if (flags != intel_fb->vblank_flags) {
+	 intel_fb->vblank_flags = flags;
+	 driGetCurrentVBlank(dPriv, intel_fb->vblank_flags, &intel_fb->vbl_seq);
       }
    } else {
-      intel->vblank_flags &= ~VBLANK_FLAG_SECONDARY;
+      intel_fb->vblank_flags &= ~VBLANK_FLAG_SECONDARY;
    }
 
    /* Update Mesa's notion of window size */
@@ -683,7 +683,6 @@ static GLboolean
 intelPageFlip(const __DRIdrawablePrivate * dPriv)
 {
    struct intel_context *intel;
-   GLboolean missed_target;
    int ret;
    struct intel_framebuffer *intel_fb = dPriv->driverPrivate;
 
@@ -700,13 +699,6 @@ intelPageFlip(const __DRIdrawablePrivate * dPriv)
       return GL_FALSE;
 
    intelFlush(&intel->ctx);
-
-   driWaitForVBlank(dPriv, &intel->vbl_seq, intel->vblank_flags, &missed_target);
-
-   if (missed_target) {
-      intel->swap_missed_count++;
-      (void)(*dri_interface->getUST) (&intel->swap_missed_ust);
-   }
 
    ret = 0;
 
@@ -772,6 +764,83 @@ intelSwapBuffers(__DRIdrawablePrivate * dPriv)
 #else
 /* Trunk version:
  */
+
+static GLboolean
+intelScheduleSwap(const __DRIdrawablePrivate * dPriv, GLboolean *missed_target)
+{
+   struct intel_framebuffer *intel_fb = dPriv->driverPrivate;
+   unsigned int interval = driGetVBlankInterval(dPriv, intel_fb->vblank_flags);
+   struct intel_context *intel =
+      intelScreenContext(dPriv->driScreenPriv->private);
+   const intelScreenPrivate *intelScreen = intel->intelScreen;
+   unsigned int target;
+   drm_i915_vblank_swap_t swap;
+   GLboolean ret;
+
+   if ((intel_fb->vblank_flags & VBLANK_FLAG_NO_IRQ) ||
+       intelScreen->current_rotation != 0 ||
+       intelScreen->drmMinor < (intel_fb->pf_active ? 9 : 6))
+      return GL_FALSE;
+
+   swap.seqtype = DRM_VBLANK_ABSOLUTE;
+
+   if (intel_fb->vblank_flags & VBLANK_FLAG_SYNC) {
+      swap.seqtype |= DRM_VBLANK_NEXTONMISS;
+   } else if (interval == 0) {
+      return GL_FALSE;
+   }
+
+   swap.drawable = dPriv->hHWDrawable;
+   target = swap.sequence = intel_fb->vbl_seq + interval;
+
+   if ( intel_fb->vblank_flags & VBLANK_FLAG_SECONDARY ) {
+      swap.seqtype |= DRM_VBLANK_SECONDARY;
+   }
+
+   LOCK_HARDWARE(intel);
+
+   intel_batchbuffer_flush(intel->batch);
+
+   if ( intel_fb->pf_active ) {
+      swap.seqtype |= DRM_VBLANK_FLIP;
+
+      intel_fb->pf_current_page = (((intel->sarea->pf_current_page >>
+				     (intel_fb->pf_pipes & 0x2)) & 0x3) + 1) %
+				  intel_fb->pf_num_pages;
+   }
+
+   if (!drmCommandWriteRead(intel->driFd, DRM_I915_VBLANK_SWAP, &swap,
+			    sizeof(swap))) {
+      intel_fb->vbl_seq = swap.sequence;
+      swap.sequence -= target;
+      *missed_target = swap.sequence > 0 && swap.sequence <= (1 << 23);
+
+      if (swap.seqtype & DRM_VBLANK_FLIP) {
+	 intel_get_renderbuffer(&intel_fb->Base,
+				BUFFER_FRONT_LEFT)->vbl_pending =
+	    intel_get_renderbuffer(&intel_fb->Base,
+				   BUFFER_BACK_LEFT)->vbl_pending = intel_fb->vbl_seq;
+
+	 intel_flip_renderbuffers(intel_fb);
+	 intel_draw_buffer(&intel->ctx, intel->ctx.DrawBuffer);
+      }
+
+      ret = GL_TRUE;
+   } else {
+      if (swap.seqtype & DRM_VBLANK_FLIP) {
+	 intel_fb->pf_current_page = ((intel->sarea->pf_current_page >>
+					(intel_fb->pf_pipes & 0x2)) & 0x3) %
+				     intel_fb->pf_num_pages;
+      }
+
+      ret = GL_FALSE;
+   }
+
+   UNLOCK_HARDWARE(intel);
+
+   return ret;
+}
+  
 void
 intelSwapBuffers(__DRIdrawablePrivate * dPriv)
 {
@@ -786,13 +855,34 @@ intelSwapBuffers(__DRIdrawablePrivate * dPriv)
 
       if (ctx->Visual.doubleBufferMode) {
          intelScreenPrivate *screen = intel->intelScreen;
-         _mesa_notifySwapBuffers(ctx);  /* flush pending rendering comands */
-         if (screen->current_rotation != 0 || !intelPageFlip(dPriv)) {
-            intelCopyBuffer(dPriv, NULL);
-         }
-         if (screen->current_rotation != 0) {
-            intelRotateWindow(intel, dPriv, BUFFER_BIT_FRONT_LEFT);
-         }
+	 GLboolean missed_target;
+	 struct intel_framebuffer *intel_fb = dPriv->driverPrivate;
+	 int64_t ust;
+         
+	 _mesa_notifySwapBuffers(ctx);  /* flush pending rendering comands */
+
+         if (screen->current_rotation != 0 ||
+	     !intelScheduleSwap(dPriv, &missed_target)) {
+	    driWaitForVBlank(dPriv, &intel_fb->vbl_seq, intel_fb->vblank_flags,
+			     &missed_target);
+
+	    if (screen->current_rotation != 0 || !intelPageFlip(dPriv)) {
+	       intelCopyBuffer(dPriv, NULL);
+	    }
+
+	    if (screen->current_rotation != 0) {
+	       intelRotateWindow(intel, dPriv, BUFFER_BIT_FRONT_LEFT);
+	    }
+	 }
+
+	 intel_fb->swap_count++;
+	 (*dri_interface->getUST) (&ust);
+	 if (missed_target) {
+	    intel_fb->swap_missed_count++;
+	    intel_fb->swap_missed_ust = ust - intel_fb->swap_ust;
+	 }
+
+	 intel_fb->swap_ust = ust;
       }
    }
    else {
