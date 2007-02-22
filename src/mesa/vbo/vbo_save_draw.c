@@ -203,6 +203,7 @@ void vbo_save_playback_vertex_list( GLcontext *ctx, void *data )
       if (ctx->NewState)
 	 _mesa_update_state( ctx );
 
+      /* XXX also need to check if shader enabled, but invalid */
       if ((ctx->VertexProgram.Enabled && !ctx->VertexProgram._Enabled) ||
           (ctx->FragmentProgram.Enabled && !ctx->FragmentProgram._Enabled)) {
          _mesa_error(ctx, GL_INVALID_OPERATION,

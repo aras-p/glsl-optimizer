@@ -486,6 +486,7 @@ static void GLAPIENTRY vbo_exec_Begin( GLenum mode )
       if (ctx->NewState) {
 	 _mesa_update_state( ctx );
 
+         /* XXX also need to check if shader enabled, but invalid */
          if ((ctx->VertexProgram.Enabled && !ctx->VertexProgram._Enabled) ||
             (ctx->FragmentProgram.Enabled && !ctx->FragmentProgram._Enabled)) {
             _mesa_error(ctx, GL_INVALID_OPERATION,
