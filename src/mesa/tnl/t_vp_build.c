@@ -1323,8 +1323,8 @@ static void build_texture_transform( struct tnl_program *p )
 static void build_pointsize( struct tnl_program *p )
 {
    struct ureg eye = get_eye_position(p);
-   struct ureg state_size = register_param2(p, STATE_POINT, STATE_POINT_SIZE);
-   struct ureg state_attenuation = register_param2(p, STATE_POINT, STATE_POINT_ATTENUATION);
+   struct ureg state_size = register_param1(p, STATE_POINT_SIZE);
+   struct ureg state_attenuation = register_param1(p, STATE_POINT_ATTENUATION);
    struct ureg out = register_output(p, VERT_RESULT_PSIZ);
    struct ureg ut = get_temp(p);
 

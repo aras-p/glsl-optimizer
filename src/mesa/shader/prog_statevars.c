@@ -246,17 +246,14 @@ _mesa_fetch_state(GLcontext *ctx, const gl_state_index state[],
          COPY_4V(value, ctx->Texture.Unit[unit].EnvColor);
       }			
       return;
-   case STATE_FOG:
-      if (state[1] == STATE_FOG_COLOR) {
-         COPY_4V(value, ctx->Fog.Color);
-      }
-      else {
-         ASSERT(state[1] == STATE_FOG_PARAMS);
-         value[0] = ctx->Fog.Density;
-         value[1] = ctx->Fog.Start;
-         value[2] = ctx->Fog.End;
-         value[3] = 1.0F / (ctx->Fog.End - ctx->Fog.Start);
-      }
+   case STATE_FOG_COLOR:
+      COPY_4V(value, ctx->Fog.Color);
+      return;
+   case STATE_FOG_PARAMS:
+      value[0] = ctx->Fog.Density;
+      value[1] = ctx->Fog.Start;
+      value[2] = ctx->Fog.End;
+      value[3] = 1.0F / (ctx->Fog.End - ctx->Fog.Start);
       return;
    case STATE_CLIPPLANE:
       {
@@ -264,20 +261,17 @@ _mesa_fetch_state(GLcontext *ctx, const gl_state_index state[],
          COPY_4V(value, ctx->Transform.EyeUserPlane[plane]);
       }
       return;
-   case STATE_POINT:
-      if (state[1] == STATE_POINT_SIZE) {
-         value[0] = ctx->Point.Size;
-         value[1] = ctx->Point.MinSize;
-         value[2] = ctx->Point.MaxSize;
-         value[3] = ctx->Point.Threshold;
-      }
-      else {
-         ASSERT(state[1] == STATE_POINT_ATTENUATION);
-         value[0] = ctx->Point.Params[0];
-         value[1] = ctx->Point.Params[1];
-         value[2] = ctx->Point.Params[2];
-         value[3] = 1.0F;
-      }
+   case STATE_POINT_SIZE:
+      value[0] = ctx->Point.Size;
+      value[1] = ctx->Point.MinSize;
+      value[2] = ctx->Point.MaxSize;
+      value[3] = ctx->Point.Threshold;
+      return;
+   case STATE_POINT_ATTENUATION:
+      value[0] = ctx->Point.Params[0];
+      value[1] = ctx->Point.Params[1];
+      value[2] = ctx->Point.Params[2];
+      value[3] = 1.0F;
       return;
    case STATE_MODELVIEW_MATRIX:
    case STATE_PROJECTION_MATRIX:
@@ -459,17 +453,15 @@ _mesa_program_state_flags(const GLint state[STATE_LENGTH])
    case STATE_TEXENV_COLOR:
       return _NEW_TEXTURE;
 
-   case STATE_FOG:
-#if 0
    case STATE_FOG_COLOR:
    case STATE_FOG_PARAMS:
-#endif
       return _NEW_FOG;
 
    case STATE_CLIPPLANE:
       return _NEW_TRANSFORM;
 
-   case STATE_POINT:
+   case STATE_POINT_SIZE:
+   case STATE_POINT_ATTENUATION:
       return _NEW_POINT;
 
    case STATE_MODELVIEW_MATRIX:
@@ -543,26 +535,20 @@ append_token(char *dst, gl_state_index k)
    case STATE_TEXGEN:
       append(dst, "texgen");
       break;
-   case STATE_FOG:
-      append(dst, "fog");
-      break;
    case STATE_FOG_COLOR:
-      append(dst, ".color");
+      append(dst, "fog.color");
       break;
    case STATE_FOG_PARAMS:
-      append(dst, ".params");
+      append(dst, "fog.params");
       break;
    case STATE_CLIPPLANE:
       append(dst, "clip");
       break;
-   case STATE_POINT:
-      append(dst, "point");
-      break;
    case STATE_POINT_SIZE:
-      append(dst, "size");
+      append(dst, "point.size");
       break;
    case STATE_POINT_ATTENUATION:
-      append(dst, "attenuation");
+      append(dst, "point.attenuation");
       break;
    case STATE_MODELVIEW_MATRIX:
       append(dst, "matrix.modelview");
@@ -733,16 +719,9 @@ _mesa_program_state_string(const GLint state[STATE_LENGTH])
       append_index(str, state[1]); /* tex unit [i] */
       append(str, "color");
       break;
-   case STATE_FOG:
-      append(str, "fog");
-      append_token(str, (gl_state_index) state[1]); /* color or params */
-      break;
    case STATE_CLIPPLANE:
       append_index(str, state[1]); /* plane [i] */
       append(str, ".plane");
-      break;
-   case STATE_POINT:
-      append_token(str, state[1]);
       break;
    case STATE_MODELVIEW_MATRIX:
    case STATE_PROJECTION_MATRIX:

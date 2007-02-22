@@ -1276,13 +1276,11 @@ parse_state_single_item (GLcontext * ctx, const GLubyte ** inst,
       case STATE_POINT:
          switch (*(*inst++)) {
             case POINT_SIZE:
-               state_tokens[0] = STATE_POINT;
-               state_tokens[1] = STATE_POINT_SIZE;
+               state_tokens[0] = STATE_POINT_SIZE;
                break;
 
             case POINT_ATTENUATION:
-               state_tokens[0] = STATE_POINT;
-               state_tokens[1] = STATE_POINT_ATTENUATION;
+               state_tokens[0] = STATE_POINT_ATTENUATION;
                break;
          }
          break;

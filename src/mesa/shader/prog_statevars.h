@@ -32,7 +32,7 @@
  * Number of STATE_* values we need to address any GL state.
  * Used to dimension arrays.
  */
-#define STATE_LENGTH 6
+#define STATE_LENGTH 5
 
 
 /**
@@ -54,13 +54,11 @@ typedef enum gl_state_index_ {
 
    STATE_TEXGEN,
 
-   STATE_FOG,
    STATE_FOG_COLOR,
    STATE_FOG_PARAMS,
 
    STATE_CLIPPLANE,
 
-   STATE_POINT,
    STATE_POINT_SIZE,
    STATE_POINT_ATTENUATION,
 

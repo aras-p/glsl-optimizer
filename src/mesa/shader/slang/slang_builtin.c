@@ -99,6 +99,13 @@ lookup_statevar(const char *var, GLint index1, GLint index2, const char *field,
       tokens[0] = STATE_CLIPPLANE;
       tokens[1] = index1;
    }
+   else if (strcmp(var, "gl_Point") == 0) {
+      if (strcmp(field, "size") == 0) {
+         tokens[0] = STATE_POINT_SIZE;
+         *swizzleOut = SWIZZLE_XXXX;
+      }
+         /* XXX finish */
+   }
    else if (strcmp(var, "gl_FrontMaterial") == 0 ||
             strcmp(var, "gl_BackMaterial") == 0) {
       tokens[0] = STATE_MATERIAL;
@@ -269,24 +276,23 @@ lookup_statevar(const char *var, GLint index1, GLint index2, const char *field,
       tokens[2] = STATE_TEXGEN_OBJECT_Q;
    }
    else if (strcmp(var, "gl_Fog") == 0) {
-      tokens[0] = STATE_FOG;
       if (strcmp(field, "color") == 0) {
-         tokens[1] = STATE_FOG_COLOR;
+         tokens[0] = STATE_FOG_COLOR;
       }
       else if (strcmp(field, "density") == 0) {
-         tokens[1] = STATE_FOG_PARAMS;
+         tokens[0] = STATE_FOG_PARAMS;
          *swizzleOut = SWIZZLE_XXXX;
       }
       else if (strcmp(field, "start") == 0) {
-         tokens[1] = STATE_FOG_PARAMS;
+         tokens[0] = STATE_FOG_PARAMS;
          *swizzleOut = SWIZZLE_YYYY;
       }
       else if (strcmp(field, "end") == 0) {
-         tokens[1] = STATE_FOG_PARAMS;
+         tokens[0] = STATE_FOG_PARAMS;
          *swizzleOut = SWIZZLE_ZZZZ;
       }
       else if (strcmp(field, "scale") == 0) {
-         tokens[1] = STATE_FOG_PARAMS;
+         tokens[0] = STATE_FOG_PARAMS;
          *swizzleOut = SWIZZLE_WWWW;
       }
       else {

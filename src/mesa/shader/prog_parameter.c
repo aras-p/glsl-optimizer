@@ -379,7 +379,7 @@ _mesa_add_state_reference(struct gl_program_parameter_list *paramList,
    /* Check if the state reference is already in the list */
    for (index = 0; index < (GLint) paramList->NumParameters; index++) {
       GLuint i, match = 0;
-      for (i = 0; i < 6; i++) {
+      for (i = 0; i < STATE_LENGTH; i++) {
          if (paramList->Parameters[index].StateIndexes[i] == stateTokens[i]) {
             match++;
          }
