@@ -268,7 +268,7 @@ get_register_pointer( GLcontext *ctx,
             return machine->Inputs[source->Index];
          case PROGRAM_OUTPUT:
             /* This is only needed for the PRINT instruction */
-            ASSERT(source->Index < MAX_NV_VERTEX_PROGRAM_OUTPUTS);
+            ASSERT(source->Index < VERT_RESULT_MAX);
             return machine->Outputs[source->Index];
          case PROGRAM_LOCAL_PARAM:
             ASSERT(source->Index < MAX_PROGRAM_LOCAL_PARAMS);
