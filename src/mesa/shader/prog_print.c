@@ -477,7 +477,7 @@ _mesa_print_instruction_opt(const struct prog_instruction *inst, GLint indent,
                             gl_prog_print_mode mode,
                             const struct gl_program *prog)
 {
-   GLuint i;
+   GLint i;
 
    if (inst->Opcode == OPCODE_ELSE ||
        inst->Opcode == OPCODE_ENDIF ||
@@ -485,7 +485,6 @@ _mesa_print_instruction_opt(const struct prog_instruction *inst, GLint indent,
        inst->Opcode == OPCODE_ENDSUB) {
       indent -= 3;
    }
-   assert(indent >= 0);
    for (i = 0; i < indent; i++) {
       _mesa_printf(" ");
    }
