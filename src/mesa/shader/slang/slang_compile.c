@@ -1629,7 +1629,6 @@ parse_init_declarator(slang_parse_ctx * C, slang_output_ctx * O,
    }
 
    /* copy the declarator qualifier type, parse the identifier */
-   var->global = C->global_scope;
    var->type.qualifier = type->qualifier;
    var->a_name = parse_identifier(C);
    if (var->a_name == SLANG_ATOM_NULL)

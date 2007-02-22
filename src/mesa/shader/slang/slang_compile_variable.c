@@ -256,9 +256,7 @@ slang_variable_construct(slang_variable * var)
    var->initializer = NULL;
    var->address = ~0;
    var->size = 0;
-   var->global = GL_FALSE;
    var->isTemp = GL_FALSE;
-   var->used = GL_FALSE;
    var->aux = NULL;
    return 1;
 }
@@ -307,7 +305,6 @@ slang_variable_copy(slang_variable * x, const slang_variable * y)
    }
    z.address = y->address;
    z.size = y->size;
-   z.global = y->global;
    slang_variable_destruct(x);
    *x = z;
    return 1;

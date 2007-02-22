@@ -143,7 +143,7 @@ _slang_sizeof_type_specifier(const slang_type_specifier *spec)
  * \param var  the variable to associate with the IR node
  */
 static void
-slang_attach_storage(slang_ir_node *n, slang_variable *var)
+_slang_attach_storage(slang_ir_node *n, slang_variable *var)
 {
    assert(n);
    assert(var);
@@ -579,8 +579,7 @@ new_var(slang_assemble_ctx *A, slang_operation *oper, slang_atom name)
 
    n = new_node0(IR_VAR);
    if (n) {
-      var->used = GL_TRUE;
-      slang_attach_storage(n, var);
+      _slang_attach_storage(n, var);
    }
    return n;
 }
@@ -646,8 +645,6 @@ slang_resolve_variable(slang_operation *oper)
       oper->var = _slang_locate_variable(oper->locals,
                                          (const slang_atom) oper->a_id,
                                          GL_TRUE);
-      if (oper->var)
-         oper->var->used = GL_TRUE;
    }
 }
 
@@ -1600,7 +1597,7 @@ _slang_gen_var_decl(slang_assemble_ctx *A, slang_variable *var)
    assert(!is_sampler_type(&var->type));
    n = new_node0(IR_VAR_DECL);
    if (n) {
-      slang_attach_storage(n, var);
+      _slang_attach_storage(n, var);
 
       assert(var->aux);
       assert(n->Store == var->aux);

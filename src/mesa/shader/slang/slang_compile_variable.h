@@ -79,8 +79,6 @@ typedef struct slang_variable_
    struct slang_operation_ *initializer; /**< Optional initializer code */
    GLuint address;                  /**< Storage location */
    GLuint size;                     /**< Variable's size in bytes */
-   GLboolean global;                /**< A global var? */
-   GLboolean used;                  /**< Ever referenced by code? */
    GLboolean isTemp;                /**< a named temporary (__resultTmp) */
    void *aux;                       /**< Used during code gen */
 } slang_variable;
