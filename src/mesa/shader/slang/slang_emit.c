@@ -28,6 +28,14 @@
  * \author Brian Paul
  */
 
+/***
+ *** NOTES
+ ***
+ *** To emit GPU instructions, we basically just do an in-order traversal
+ *** of the IR tree.
+ ***/
+
+
 #include "imports.h"
 #include "context.h"
 #include "macros.h"
@@ -46,6 +54,7 @@
 
 /* XXX temporarily here */
 static GLboolean EmitHighLevelInstructions = GL_TRUE;
+static GLboolean EmitComments = GL_FALSE;
 
 
 
@@ -1415,9 +1424,8 @@ emit(slang_var_table *vt, slang_ir_node *n, struct gl_program *prog)
          */
          assert(n->Var->aux == n->Store);
       }
-#ifdef DEBUG_foo
-      /* emit NOP with comment describing the variable's storage location */
-      {
+      if (EmitComments) {
+         /* emit NOP with comment describing the variable's storage location */
          char s[1000];
          sprintf(s, "TEMP[%d]%s = %s (size %d)",
                  n->Store->Index,
@@ -1428,9 +1436,7 @@ emit(slang_var_table *vt, slang_ir_node *n, struct gl_program *prog)
          inst->Comment = _mesa_strdup(s);
          return inst;
       }
-#else
       return NULL;
-#endif
 
    case IR_VAR:
       /* Reference to a variable
