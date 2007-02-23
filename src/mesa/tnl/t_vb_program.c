@@ -38,6 +38,7 @@
 #include "prog_statevars.h"
 #include "prog_execute.h"
 
+#include "tnl.h"
 #include "t_context.h"
 #include "t_pipeline.h"
 
@@ -121,11 +122,12 @@ load_transpose_matrix(GLfloat registers[][4], GLuint pos,
 
 
 /**
- * Load program parameter registers with tracked matrices (if NV program).
- * This only needs to be done per glBegin/glEnd, not per-vertex.
+ * Load current vertex program's parameter registers with tracked
+ * matrices (if NV program).  This only needs to be done per
+ * glBegin/glEnd, not per-vertex.
  */
-static void
-load_program_parameters(GLcontext *ctx)
+void
+_mesa_load_tracked_matrices(GLcontext *ctx)
 {
    GLuint i;
 
@@ -160,7 +162,7 @@ load_program_parameters(GLcontext *ctx)
          continue;
       }
 
-         /* load the matrix values into sequential registers */
+      /* load the matrix values into sequential registers */
       if (ctx->VertexProgram.TrackMatrixTransform[i] == GL_IDENTITY_NV) {
          load_matrix(ctx->VertexProgram.Parameters, i*4, mat->m);
       }
@@ -206,7 +208,7 @@ run_vp( GLcontext *ctx, struct tnl_pipeline_stage *stage )
 #endif
 
    if (ctx->VertexProgram.Current->IsNVProgram) {
-      load_program_parameters(ctx);
+      _mesa_load_tracked_matrices(ctx);
    }
    else {
       _mesa_load_state_parameters(ctx, program->Base.Parameters);
