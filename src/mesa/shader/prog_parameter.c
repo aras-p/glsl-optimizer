@@ -370,7 +370,7 @@ sizeof_state_reference(const GLint *stateTokens)
  */
 GLint
 _mesa_add_state_reference(struct gl_program_parameter_list *paramList,
-                          const GLint stateTokens[STATE_LENGTH])
+                          const gl_state_index stateTokens[STATE_LENGTH])
 {
    const GLuint size = 4; /* XXX fix */
    const char *name;

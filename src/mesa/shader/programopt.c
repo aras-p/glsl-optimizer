@@ -56,7 +56,7 @@ _mesa_insert_mvp_code(GLcontext *ctx, struct gl_vertex_program *vprog)
     * Setup state references for the modelview/projection matrix.
     * XXX we should check if these state vars are already declared.
     */
-   static const GLint mvpState[4][STATE_LENGTH] = {
+   static const gl_state_index mvpState[4][STATE_LENGTH] = {
       { STATE_MVP_MATRIX, 0, 0, 0, 0 },  /* state.matrix.mvp.row[0] */
       { STATE_MVP_MATRIX, 0, 1, 1, 0 },  /* state.matrix.mvp.row[1] */
       { STATE_MVP_MATRIX, 0, 2, 2, 0 },  /* state.matrix.mvp.row[2] */
@@ -125,9 +125,9 @@ _mesa_insert_mvp_code(GLcontext *ctx, struct gl_vertex_program *vprog)
 void
 _mesa_append_fog_code(GLcontext *ctx, struct gl_fragment_program *fprog)
 {
-   static const GLint fogPStateOpt[STATE_LENGTH]
+   static const gl_state_index fogPStateOpt[STATE_LENGTH]
       = { STATE_INTERNAL, STATE_FOG_PARAMS_OPTIMIZED, 0, 0, 0 };
-   static const GLint fogColorState[STATE_LENGTH]
+   static const gl_state_index fogColorState[STATE_LENGTH]
       = { STATE_FOG_COLOR, 0, 0, 0, 0};
    struct prog_instruction *newInst, *inst;
    const GLuint origLen = fprog->Base.NumInstructions;

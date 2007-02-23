@@ -309,7 +309,7 @@ lookup_statevar(const char *var, GLint index1, GLint index2, const char *field,
       GLuint j;
       for (j = 0; j < 4; j++) {
          tokens[2] = tokens[3] = j; /* jth row of matrix */
-         pos[j] = _mesa_add_state_reference(paramList, (GLint *) tokens);
+         pos[j] = _mesa_add_state_reference(paramList, tokens);
          assert(pos[j] >= 0);
          ASSERT(pos[j] >= 0);
       }
@@ -317,7 +317,7 @@ lookup_statevar(const char *var, GLint index1, GLint index2, const char *field,
    }
    else {
       /* allocate a single register */
-      GLint pos = _mesa_add_state_reference(paramList, (GLint *) tokens);
+      GLint pos = _mesa_add_state_reference(paramList, tokens);
       ASSERT(pos >= 0);
       return pos;
    }

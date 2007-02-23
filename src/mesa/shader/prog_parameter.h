@@ -50,7 +50,7 @@ struct gl_program_parameter
    /**
     * A sequence of STATE_* tokens and integers to identify GL state.
     */
-   GLint StateIndexes[STATE_LENGTH];
+   gl_state_index StateIndexes[STATE_LENGTH];
 };
 
 
@@ -115,7 +115,7 @@ _mesa_add_attribute(struct gl_program_parameter_list *paramList,
 
 extern GLint
 _mesa_add_state_reference(struct gl_program_parameter_list *paramList,
-                          const GLint stateTokens[STATE_LENGTH]);
+                          const gl_state_index stateTokens[STATE_LENGTH]);
 
 extern GLfloat *
 _mesa_lookup_parameter_value(const struct gl_program_parameter_list *paramList,

@@ -1085,7 +1085,8 @@ parse_matrix (GLcontext * ctx, const GLubyte ** inst, struct arb_program *Progra
  */
 static GLuint
 parse_state_single_item (GLcontext * ctx, const GLubyte ** inst,
-                         struct arb_program *Program, GLint * state_tokens)
+                         struct arb_program *Program,
+                         gl_state_index state_tokens[STATE_LENGTH])
 {
    switch (*(*inst)++) {
       case STATE_MATERIAL_PARSER:
@@ -1269,7 +1270,8 @@ parse_state_single_item (GLcontext * ctx, const GLubyte ** inst,
       case STATE_CLIP_PLANE:
          state_tokens[0] = STATE_CLIPPLANE;
          state_tokens[1] = parse_integer (inst, Program);
-         if (parse_clipplane_num (ctx, inst, Program, &state_tokens[1]))
+         if (parse_clipplane_num (ctx, inst, Program,
+                                  (GLint *) &state_tokens[1]))
             return 1;
          break;
 
@@ -1287,9 +1289,10 @@ parse_state_single_item (GLcontext * ctx, const GLubyte ** inst,
 
          /* XXX: I think this is the correct format for a matrix row */
       case STATE_MATRIX_ROWS:
-         if (parse_matrix
-             (ctx, inst, Program, &state_tokens[0], &state_tokens[1],
-              &state_tokens[4]))
+         if (parse_matrix(ctx, inst, Program,
+                          (GLint *) &state_tokens[0],
+                          (GLint *) &state_tokens[1],
+                          (GLint *) &state_tokens[4]))
             return 1;
 
          state_tokens[2] = parse_integer (inst, Program);       /* The first row to grab */
@@ -1345,7 +1348,8 @@ parse_state_single_item (GLcontext * ctx, const GLubyte ** inst,
  */
 static GLuint
 parse_program_single_item (GLcontext * ctx, const GLubyte ** inst,
-                           struct arb_program *Program, GLint * state_tokens)
+                           struct arb_program *Program,
+                           gl_state_index state_tokens[STATE_LENGTH])
 {
    if (Program->Base.Target == GL_FRAGMENT_PROGRAM_ARB)
       state_tokens[0] = STATE_FRAGMENT_PROGRAM;
@@ -1720,7 +1724,7 @@ parse_param_elements (GLcontext * ctx, const GLubyte ** inst,
 {
    GLint idx;
    GLuint err = 0;
-   GLint state_tokens[STATE_LENGTH];
+   gl_state_index state_tokens[STATE_LENGTH];
    GLfloat const_values[4];
 
    switch (*(*inst)++) {

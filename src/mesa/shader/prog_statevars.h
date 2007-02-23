@@ -119,11 +119,11 @@ _mesa_load_state_parameters(GLcontext *ctx,
 
 
 extern GLbitfield
-_mesa_program_state_flags(const GLint state[STATE_LENGTH]);
+_mesa_program_state_flags(const gl_state_index state[STATE_LENGTH]);
 
 
 extern const char *
-_mesa_program_state_string(const GLint state[STATE_LENGTH]);
+_mesa_program_state_string(const gl_state_index state[STATE_LENGTH]);
 
 
 #endif /* PROG_STATEVARS_H */

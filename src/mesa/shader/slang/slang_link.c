@@ -199,7 +199,7 @@ link_uniform_vars(struct gl_shader_program *shProg, struct gl_program *prog)
             j = _mesa_add_named_constant(shProg->Uniforms, p->Name, pVals, p->Size);
             break;
          case PROGRAM_STATE_VAR:
-            j = _mesa_add_state_reference(shProg->Uniforms, (const GLint *) p->StateIndexes);
+            j = _mesa_add_state_reference(shProg->Uniforms, p->StateIndexes);
             break;
          case PROGRAM_UNIFORM:
             j = _mesa_add_uniform(shProg->Uniforms, p->Name, p->Size);
