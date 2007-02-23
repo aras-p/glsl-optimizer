@@ -25,9 +25,6 @@
 #if !defined SLANG_UTILITY_H
 #define SLANG_UTILITY_H
 
-#if defined __cplusplus
-extern "C" {
-#endif
 
 /* Compile-time assertions.  If the expression is zero, try to declare an
  * array of size [-1] to cause compilation error.
@@ -102,13 +99,6 @@ GLvoid slang_atom_pool_destruct (slang_atom_pool *);
 slang_atom slang_atom_pool_atom (slang_atom_pool *, const char *);
 const char *slang_atom_pool_id (slang_atom_pool *, slang_atom);
 
-slang_atom
-slang_atom_pool_gen(slang_atom_pool * pool, const char *prefix);
-
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif
 
