@@ -414,40 +414,37 @@ static struct ureg get_identity_param( struct tnl_program *p )
    return p->identity;
 }
 
-static struct ureg register_param6( struct tnl_program *p, 
+static struct ureg register_param5(struct tnl_program *p, 
 				   GLint s0,
 				   GLint s1,
 				   GLint s2,
 				   GLint s3,
-				   GLint s4,
-				   GLint s5)
+                                   GLint s4)
 {
-   GLint tokens[6];
+   gl_state_index tokens[STATE_LENGTH];
    GLint idx;
    tokens[0] = s0;
    tokens[1] = s1;
    tokens[2] = s2;
    tokens[3] = s3;
    tokens[4] = s4;
-   tokens[5] = s5;
    idx = _mesa_add_state_reference( p->program->Base.Parameters, tokens );
    return make_ureg(PROGRAM_STATE_VAR, idx);
 }
 
 
-#define register_param1(p,s0)          register_param6(p,s0,0,0,0,0,0)
-#define register_param2(p,s0,s1)       register_param6(p,s0,s1,0,0,0,0)
-#define register_param3(p,s0,s1,s2)    register_param6(p,s0,s1,s2,0,0,0)
-#define register_param4(p,s0,s1,s2,s3) register_param6(p,s0,s1,s2,s3,0,0)
+#define register_param1(p,s0)          register_param5(p,s0,0,0,0,0)
+#define register_param2(p,s0,s1)       register_param5(p,s0,s1,0,0,0)
+#define register_param3(p,s0,s1,s2)    register_param5(p,s0,s1,s2,0,0)
+#define register_param4(p,s0,s1,s2,s3) register_param5(p,s0,s1,s2,s3,0)
 
 
-static void register_matrix_param6( struct tnl_program *p,
-				    GLint s0,
-				    GLint s1,
-				    GLint s2,
-				    GLint s3,
-				    GLint s4,
-				    GLint s5,
+static void register_matrix_param5( struct tnl_program *p,
+				    GLint s0, /* modelview, projection, etc */
+				    GLint s1, /* texture matrix number */
+				    GLint s2, /* first row */
+				    GLint s3, /* last row */
+				    GLint s4, /* inverse, transpose, etc */
 				    struct ureg *matrix )
 {
    GLint i;
@@ -455,8 +452,8 @@ static void register_matrix_param6( struct tnl_program *p,
    /* This is a bit sad as the support is there to pull the whole
     * matrix out in one go:
     */
-   for (i = 0; i <= s4 - s3; i++) 
-      matrix[i] = register_param6( p, s0, s1, s2, i, i, s5 );
+   for (i = 0; i <= s3 - s2; i++) 
+      matrix[i] = register_param5( p, s0, s1, i, i, s4 );
 }
 
 
@@ -636,14 +633,14 @@ static struct ureg get_eye_position( struct tnl_program *p )
       p->eye_position = reserve_temp(p);
 
       if (PREFER_DP4) {
-	 register_matrix_param6( p, STATE_MODELVIEW_MATRIX, 0, 0, 3,
-                                 0, 0, modelview );
+	 register_matrix_param5( p, STATE_MODELVIEW_MATRIX, 0, 0, 3,
+                                 0, modelview );
 
 	 emit_matrix_transform_vec4(p, p->eye_position, modelview, pos);
       }
       else {
-	 register_matrix_param6( p, STATE_MODELVIEW_MATRIX, 0, 0, 3,
-				 STATE_MATRIX_TRANSPOSE, 0, modelview );
+	 register_matrix_param5( p, STATE_MODELVIEW_MATRIX, 0, 0, 3,
+				 STATE_MATRIX_TRANSPOSE, modelview );
 
 	 emit_transpose_matrix_transform_vec4(p, p->eye_position, modelview, pos);
       }
@@ -671,8 +668,8 @@ static struct ureg get_eye_normal( struct tnl_program *p )
       struct ureg normal = register_input(p, VERT_ATTRIB_NORMAL );
       struct ureg mvinv[3];
 
-      register_matrix_param6( p, STATE_MODELVIEW_MATRIX, 0, 0, 2,
-			      STATE_MATRIX_INVTRANS, 0, mvinv );
+      register_matrix_param5( p, STATE_MODELVIEW_MATRIX, 0, 0, 2,
+			      STATE_MATRIX_INVTRANS, mvinv );
 
       p->eye_normal = reserve_temp(p);
 
@@ -706,13 +703,13 @@ static void build_hpos( struct tnl_program *p )
    struct ureg mvp[4];
 
    if (PREFER_DP4) {
-      register_matrix_param6( p, STATE_MVP_MATRIX, 0, 0, 3, 
-			      0, 0, mvp );
+      register_matrix_param5( p, STATE_MVP_MATRIX, 0, 0, 3, 
+			      0, mvp );
       emit_matrix_transform_vec4( p, hpos, mvp, pos );
    }
    else {
-      register_matrix_param6( p, STATE_MVP_MATRIX, 0, 0, 3, 
-			      STATE_MATRIX_TRANSPOSE, 0, mvp );
+      register_matrix_param5( p, STATE_MVP_MATRIX, 0, 0, 3, 
+			      STATE_MATRIX_TRANSPOSE, mvp );
       emit_transpose_matrix_transform_vec4( p, hpos, mvp, pos );
    }
 }
@@ -1300,13 +1297,13 @@ static void build_texture_transform( struct tnl_program *p )
 			      out_texgen : 
 			      register_input(p, VERT_ATTRIB_TEX0+i));
 	    if (PREFER_DP4) {
-	       register_matrix_param6( p, STATE_TEXTURE_MATRIX, i, 0, 3,
-				       0, 0, texmat );
+	       register_matrix_param5( p, STATE_TEXTURE_MATRIX, i, 0, 3,
+				       0, texmat );
 	       emit_matrix_transform_vec4( p, out, texmat, in );
 	    }
 	    else {
-	       register_matrix_param6( p, STATE_TEXTURE_MATRIX, i, 0, 3,
-				       STATE_MATRIX_TRANSPOSE, 0, texmat );
+	       register_matrix_param5( p, STATE_TEXTURE_MATRIX, i, 0, 3,
+				       STATE_MATRIX_TRANSPOSE, texmat );
 	       emit_transpose_matrix_transform_vec4( p, out, texmat, in );
 	    }
 	 }
