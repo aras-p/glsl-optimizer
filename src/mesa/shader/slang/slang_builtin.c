@@ -348,7 +348,7 @@ _slang_alloc_statevar(slang_ir_node *n,
    GLuint swizzle;
 
    if (n->Opcode == IR_FIELD) {
-      field = n->Target;
+      field = n->Field;
       n = n->Children[0];
    }
 

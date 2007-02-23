@@ -147,13 +147,14 @@ typedef struct slang_ir_node_
 {
    slang_ir_opcode Opcode;
    struct slang_ir_node_ *Children[3];
-   const char *Comment;
-   const char *Target;  /**< Branch target string */
+   slang_ir_storage *Store;  /**< location of result of this operation */
+   GLint InstLocation;  /**< Location of instruction emitted for this node */
+
+   /** special fields depending on Opcode: */
+   const char *Field;  /**< If Opcode == IR_FIELD */
    GLuint Writemask;  /**< If Opcode == IR_MOVE */
    GLfloat Value[4];    /**< If Opcode == IR_FLOAT */
    slang_variable *Var;  /**< If Opcode == IR_VAR or IR_VAR_DECL */
-   slang_ir_storage *Store;  /**< location of result of this operation */
-   GLint InstLocation;  /**< Location of instruction emitted for this node */
    struct slang_ir_node_ *BranchNode;  /**< Used for branching instructions */
    slang_label *Label;  /**< Used for branches */
 } slang_ir_node;

@@ -2077,7 +2077,7 @@ _slang_gen_field(slang_assemble_ctx * A, slang_operation *oper)
 
       n = new_node1(IR_FIELD, base);
       if (n) {
-         n->Target = (char *) oper->a_id;
+         n->Field = (char *) oper->a_id;
          n->Store = _slang_new_ir_storage(base->Store->File,
                                           base->Store->Index,
                                           size);

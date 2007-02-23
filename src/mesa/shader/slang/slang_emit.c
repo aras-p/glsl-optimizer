@@ -285,14 +285,14 @@ slang_print_ir(const slang_ir_node *n, int indent)
       slang_print_ir(n->Children[0], indent + 3);
       break;
    case IR_JUMP:
-      printf("JUMP %s\n", n->Target);
+      printf("JUMP %s\n", n->Label->Name);
       break;
    case IR_CJUMP0:
-      printf("CJUMP0 %s\n", n->Target);
+      printf("CJUMP0 %s\n", n->Label->Name);
       slang_print_ir(n->Children[0], indent+3);
       break;
    case IR_CJUMP1:
-      printf("CJUMP1 %s\n", n->Target);
+      printf("CJUMP1 %s\n", n->Label->Name);
       slang_print_ir(n->Children[0], indent+3);
       break;
 
@@ -365,7 +365,7 @@ slang_print_ir(const slang_ir_node *n, int indent)
              (void*) n->Store);
       break;
    case IR_FIELD:
-      printf("FIELD %s of\n", n->Target);
+      printf("FIELD %s of\n", n->Field);
       slang_print_ir(n->Children[0], indent+3);
       break;
    case IR_FLOAT:
@@ -842,7 +842,6 @@ emit_negation(slang_var_table *vt, slang_ir_node *n, struct gl_program *prog)
    storage_to_dst_reg(&inst->DstReg, n->Store, n->Writemask);
    storage_to_src_reg(&inst->SrcReg[0], n->Children[0]->Store);
    inst->SrcReg[0].NegateBase = NEGATE_XYZW;
-   inst->Comment = n->Comment;
    return inst;
 }
 
