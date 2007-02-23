@@ -1410,7 +1410,22 @@ emit(slang_var_table *vt, slang_ir_node *n, struct gl_program *prog)
          */
          assert(n->Var->aux == n->Store);
       }
-      break;
+#ifdef DEBUG_foo
+      /* emit NOP with comment describing the variable's storage location */
+      {
+         char s[1000];
+         sprintf(s, "TEMP[%d]%s = %s (size %d)",
+                 n->Store->Index,
+                 _mesa_swizzle_string(n->Store->Swizzle, 0, GL_FALSE), 
+                 (char *) n->Var->a_name,
+                 n->Store->Size);
+         inst = new_instruction(prog, OPCODE_NOP);
+         inst->Comment = _mesa_strdup(s);
+         return inst;
+      }
+#else
+      return NULL;
+#endif
 
    case IR_VAR:
       /* Reference to a variable
