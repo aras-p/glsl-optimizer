@@ -291,8 +291,8 @@ reg_string(enum register_file f, GLint index, gl_prog_print_mode mode,
  * \param negateBase  4-bit negation vector
  * \param extended  if true, also allow 0, 1 values
  */
-static const char *
-swizzle_string(GLuint swizzle, GLuint negateBase, GLboolean extended)
+const char *
+_mesa_swizzle_string(GLuint swizzle, GLuint negateBase, GLboolean extended)
 {
    static const char swz[] = "xyzw01?!";
    static char s[20];
@@ -403,13 +403,13 @@ print_src_reg(const struct prog_src_register *srcReg, gl_prog_print_mode mode,
    _mesa_printf("%s%s",
                 reg_string((enum register_file) srcReg->File,
                            srcReg->Index, mode, prog),
-                swizzle_string(srcReg->Swizzle,
+                _mesa_swizzle_string(srcReg->Swizzle,
                                srcReg->NegateBase, GL_FALSE));
 #if 0
    _mesa_printf("%s[%d]%s",
                 file_string((enum register_file) srcReg->File, mode),
                 srcReg->Index,
-                swizzle_string(srcReg->Swizzle,
+                _mesa_swizzle_string(srcReg->Swizzle,
                                srcReg->NegateBase, GL_FALSE));
 #endif
 }
@@ -498,8 +498,8 @@ _mesa_print_instruction_opt(const struct prog_instruction *inst, GLint indent,
                       file_string((enum register_file) inst->SrcReg[0].File,
                                   mode),
                       inst->SrcReg[0].Index,
-                      swizzle_string(inst->SrcReg[0].Swizzle,
-                                     inst->SrcReg[0].NegateBase, GL_FALSE));
+                      _mesa_swizzle_string(inst->SrcReg[0].Swizzle,
+                                           inst->SrcReg[0].NegateBase, GL_FALSE));
       }
       if (inst->Comment)
          _mesa_printf("  # %s", inst->Comment);
@@ -515,8 +515,8 @@ _mesa_print_instruction_opt(const struct prog_instruction *inst, GLint indent,
                    file_string((enum register_file) inst->SrcReg[0].File,
                                mode),
                    inst->SrcReg[0].Index,
-                   swizzle_string(inst->SrcReg[0].Swizzle,
-                                  inst->SrcReg[0].NegateBase, GL_TRUE));
+                   _mesa_swizzle_string(inst->SrcReg[0].Swizzle,
+                                        inst->SrcReg[0].NegateBase, GL_TRUE));
       print_comment(inst);
       break;
    case OPCODE_TEX:
@@ -550,7 +550,7 @@ _mesa_print_instruction_opt(const struct prog_instruction *inst, GLint indent,
       _mesa_printf("BRA %u (%s%s)",
                    inst->BranchTarget,
                    condcode_string(inst->DstReg.CondMask),
-                   swizzle_string(inst->DstReg.CondSwizzle, 0, GL_FALSE));
+                   _mesa_swizzle_string(inst->DstReg.CondSwizzle, 0, GL_FALSE));
       print_comment(inst);
       break;
    case OPCODE_CAL:
@@ -560,7 +560,7 @@ _mesa_print_instruction_opt(const struct prog_instruction *inst, GLint indent,
    case OPCODE_IF:
       _mesa_printf("IF (%s%s); # (if false, goto %d)",
                    condcode_string(inst->DstReg.CondMask),
-                   swizzle_string(inst->DstReg.CondSwizzle, 0, GL_FALSE),
+                   _mesa_swizzle_string(inst->DstReg.CondSwizzle, 0, GL_FALSE),
                    inst->BranchTarget);
       print_comment(inst);
       return indent + 3;
@@ -579,14 +579,14 @@ _mesa_print_instruction_opt(const struct prog_instruction *inst, GLint indent,
    case OPCODE_BRK:
       _mesa_printf("BRK (%s%s); #(goto %d)",
                    condcode_string(inst->DstReg.CondMask),
-                   swizzle_string(inst->DstReg.CondSwizzle, 0, GL_FALSE),
+                   _mesa_swizzle_string(inst->DstReg.CondSwizzle, 0, GL_FALSE),
                    inst->BranchTarget);
       print_comment(inst);
       break;
    case OPCODE_CONT:
       _mesa_printf("CONT (%s%s); #(goto %d)",
                    condcode_string(inst->DstReg.CondMask),
-                   swizzle_string(inst->DstReg.CondSwizzle, 0, GL_FALSE),
+                   _mesa_swizzle_string(inst->DstReg.CondSwizzle, 0, GL_FALSE),
                    inst->BranchTarget);
       print_comment(inst);
       break;
@@ -602,8 +602,14 @@ _mesa_print_instruction_opt(const struct prog_instruction *inst, GLint indent,
       _mesa_printf("END\n");
       break;
    case OPCODE_NOP:
-      _mesa_printf("NOP");
-      print_comment(inst);
+      if (mode == PROG_PRINT_DEBUG) {
+         _mesa_printf("NOP");
+         print_comment(inst);
+      }
+      else if (inst->Comment) {
+         /* ARB/NV extensions don't have NOP instruction */
+         _mesa_printf("# %s\n", inst->Comment);
+      }
       break;
    /* XXX may need other special-case instructions */
    default:
