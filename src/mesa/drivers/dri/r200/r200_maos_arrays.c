@@ -420,14 +420,14 @@ void r200EmitArrays( GLcontext *ctx, GLubyte *vimap_rev )
 	    if (!rmesa->tcl.vertex_data[i].buf) {
 	       if (ctx->VertexProgram._Enabled)
 		  emit_vector( ctx,
-			 &(rmesa->tcl.vertex_data[attrib]),
+			 &(rmesa->tcl.vertex_data[i]),
 			 (char *)VB->AttribPtr[attrib]->data,
 			 1,
 			 VB->AttribPtr[attrib]->stride,
 			 count);
 	       else
 		  emit_vecfog( ctx,
-			 &(rmesa->tcl.vertex_data[attrib]),
+			 &(rmesa->tcl.vertex_data[i]),
 			 (char *)VB->AttribPtr[attrib]->data,
 			 VB->AttribPtr[attrib]->stride,
 			 count);
