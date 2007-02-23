@@ -1439,58 +1439,6 @@ _slang_gen_for(slang_assemble_ctx * A, const slang_operation *oper)
 }
 
 
-#if 0
-/**
- * Generate IR tree for an if/then/else conditional using BRAnch instructions.
- */
-static slang_ir_node *
-_slang_gen_if(slang_assemble_ctx * A, const slang_operation *oper)
-{
-   /*
-    * eval expr (child[0]), updating condcodes
-    * branch if false to _else or _endif
-    * "true" code block
-    * if haveElseClause clause:
-    *    jump "__endif"
-    *    label "__else"
-    *    "false" code block
-    * label "__endif"
-    */
-   const GLboolean haveElseClause = !_slang_is_noop(&oper->children[2]);
-   slang_ir_node *cond, *bra, *trueBody, *endifLab, *tree;
-   slang_atom elseAtom = slang_atom_pool_gen(A->atoms, "__else");
-   slang_atom endifAtom = slang_atom_pool_gen(A->atoms, "__endif");
-
-   cond = _slang_gen_operation(A, &oper->children[0]);
-   cond = new_cond(cond);
-   /*assert(cond->Store);*/
-   bra = new_cjump(haveElseClause ? elseAtom : endifAtom, 0);
-   tree = new_seq(cond, bra);
-
-   trueBody = _slang_gen_operation(A, &oper->children[1]);
-   tree = new_seq(tree, trueBody);
-
-   if (haveElseClause) {
-      /* else clause */
-      slang_ir_node *jump, *elseLab, *falseBody;
-      jump = new_jump(endifAtom);
-      tree = new_seq(tree, jump);
-
-      elseLab = new_label(elseAtom);
-      tree = new_seq(tree, elseLab);
-
-      falseBody = _slang_gen_operation(A, &oper->children[2]);
-      tree = new_seq(tree, falseBody);
-   }
-
-   endifLab = new_label(endifAtom);
-   tree = new_seq(tree, endifLab);
-
-   return tree;
-}
-#endif
-
-
 /**
  * Determine if the given operation is of a specific type.
  */
