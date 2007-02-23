@@ -28,6 +28,15 @@
  * \author Brian Paul
  */
 
+
+/***
+ *** NOTES:
+ *** The new_() functions return a new instance of a simple IR node.
+ *** The gen_() functions generate larger IR trees from the simple nodes.
+ ***/
+
+
+
 #include "imports.h"
 #include "macros.h"
 #include "mtypes.h"
@@ -1711,7 +1720,6 @@ _slang_gen_return(slang_assemble_ctx * A, slang_operation *oper)
       slang_operation gotoOp;
       slang_operation_construct(&gotoOp);
       gotoOp.type = SLANG_OPER_GOTO;
-      /* XXX don't call function? */
       gotoOp.label = A->CurFunction->end_label;
 
       /* assemble the new code */
@@ -2636,7 +2644,7 @@ _slang_codegen_global_variable(slang_assemble_ctx *A, slang_variable *var,
 GLboolean
 _slang_codegen_function(slang_assemble_ctx * A, slang_function * fun)
 {
-   slang_ir_node *n, *endLabel;
+   slang_ir_node *n;
    GLboolean success = GL_TRUE;
 
    if (_mesa_strcmp((char *) fun->header.a_name, "main") != 0) {
@@ -2684,8 +2692,7 @@ _slang_codegen_function(slang_assemble_ctx * A, slang_function * fun)
    }
 
    /* append an end-of-function-label to IR tree */
-   endLabel = new_label(fun->end_label);
-   n = new_seq(n, endLabel);
+   n = new_seq(n, new_label(fun->end_label));
 
    A->CurFunction = NULL;
 
