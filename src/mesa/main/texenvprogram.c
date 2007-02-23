@@ -411,31 +411,29 @@ static void release_temps( struct texenv_fragment_program *p )
 }
 
 
-static struct ureg register_param6( struct texenv_fragment_program *p, 
+static struct ureg register_param5( struct texenv_fragment_program *p, 
 				    GLint s0,
 				    GLint s1,
 				    GLint s2,
 				    GLint s3,
-				    GLint s4,
-				    GLint s5)
+				    GLint s4)
 {
-   GLint tokens[6];
+   gl_state_index tokens[STATE_LENGTH];
    GLuint idx;
    tokens[0] = s0;
    tokens[1] = s1;
    tokens[2] = s2;
    tokens[3] = s3;
    tokens[4] = s4;
-   tokens[5] = s5;
    idx = _mesa_add_state_reference( p->program->Base.Parameters, tokens );
    return make_ureg(PROGRAM_STATE_VAR, idx);
 }
 
 
-#define register_param1(p,s0)          register_param6(p,s0,0,0,0,0,0)
-#define register_param2(p,s0,s1)       register_param6(p,s0,s1,0,0,0,0)
-#define register_param3(p,s0,s1,s2)    register_param6(p,s0,s1,s2,0,0,0)
-#define register_param4(p,s0,s1,s2,s3) register_param6(p,s0,s1,s2,s3,0,0)
+#define register_param1(p,s0)          register_param5(p,s0,0,0,0,0)
+#define register_param2(p,s0,s1)       register_param5(p,s0,s1,0,0,0)
+#define register_param3(p,s0,s1,s2)    register_param5(p,s0,s1,s2,0,0)
+#define register_param4(p,s0,s1,s2,s3) register_param5(p,s0,s1,s2,s3,0)
 
 
 static struct ureg register_input( struct texenv_fragment_program *p, GLuint input )
