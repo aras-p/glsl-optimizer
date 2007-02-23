@@ -30,10 +30,11 @@
   */
             
 
-#include "brw_context.h"
 #include "program.h"
-#include "program_instruction.h"
 #include "macros.h"
+#include "shader/prog_parameter.h"
+#include "shader/prog_print.h"
+#include "brw_context.h"
 #include "brw_vs.h"
 
 

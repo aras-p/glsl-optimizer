@@ -165,21 +165,21 @@ tdfx_translate_vertex( GLcontext *ctx, const tdfxVertex *src, SWvertex *dst)
       dst->color[2] = src->color[0];
       dst->color[3] = src->color[3];
 
-      dst->texcoord[0][0] = 1.0 / fxMesa->sScale0 * w * src->tu0;
-      dst->texcoord[0][1] = 1.0 / fxMesa->tScale0 * w * src->tv0;
+      dst->attrib[FRAG_ATTRIB_TEX0][0] = 1.0 / fxMesa->sScale0 * w * src->tu0;
+      dst->attrib[FRAG_ATTRIB_TEX0][1] = 1.0 / fxMesa->tScale0 * w * src->tv0;
       if (fxMesa->vertexFormat == TDFX_LAYOUT_PROJ1 || fxMesa->vertexFormat == TDFX_LAYOUT_PROJ2) {
-         dst->texcoord[0][3] = w * src->tq0;
+         dst->attrib[FRAG_ATTRIB_TEX0][3] = w * src->tq0;
       } else {
-	 dst->texcoord[0][3] = 1.0;
+	 dst->attrib[FRAG_ATTRIB_TEX0][3] = 1.0;
       }
 
       if (fxMesa->SetupIndex & TDFX_TEX1_BIT) {
-         dst->texcoord[1][0] = 1.0 / fxMesa->sScale1 * w * src->tu1;
-         dst->texcoord[1][1] = 1.0 / fxMesa->tScale1 * w * src->tv1;
+         dst->attrib[FRAG_ATTRIB_TEX1][0] = 1.0 / fxMesa->sScale1 * w * src->tu1;
+         dst->attrib[FRAG_ATTRIB_TEX1][1] = 1.0 / fxMesa->tScale1 * w * src->tv1;
          if (fxMesa->vertexFormat == TDFX_LAYOUT_PROJ2) {
-            dst->texcoord[1][3] = w * src->tq1;
+            dst->attrib[FRAG_ATTRIB_TEX1][3] = w * src->tq1;
          } else {
-	    dst->texcoord[1][3] = 1.0;
+	    dst->attrib[FRAG_ATTRIB_TEX1][3] = 1.0;
          }
       }
    }

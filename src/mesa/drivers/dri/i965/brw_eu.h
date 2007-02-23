@@ -35,7 +35,7 @@
 
 #include "brw_structs.h"
 #include "brw_defines.h"
-#include "shader/program.h"
+#include "shader/prog_instruction.h"
 
 #define BRW_SWIZZLE4(a,b,c,d) (((a)<<0) | ((b)<<2) | ((c)<<4) | ((d)<<6))
 #define BRW_GET_SWZ(swz, idx) (((swz) >> ((idx)*2)) & 0x3)

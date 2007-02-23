@@ -52,14 +52,14 @@ void TAG(translate_vertex)(GLcontext *ctx,
 	 {
 	    float rhw = 1.0 / LE32_IN_FLOAT( p + 2 );
 	    
-	    dst->texcoord[1][0] = rhw*LE32_IN_FLOAT( p++ );
-	    dst->texcoord[1][1] = rhw*LE32_IN_FLOAT( p++ );
+	    dst->attrib[FRAG_ATTRIB_TEX1][0] = rhw*LE32_IN_FLOAT( p++ );
+	    dst->attrib[FRAG_ATTRIB_TEX1][1] = rhw*LE32_IN_FLOAT( p++ );
 	 }
 #else
-	 dst->texcoord[1][0] = LE32_IN_FLOAT( p++ );
-	 dst->texcoord[1][1] = LE32_IN_FLOAT( p++ );
+	 dst->attrib[FRAG_ATTRIB_TEX1][0] = LE32_IN_FLOAT( p++ );
+	 dst->attrib[FRAG_ATTRIB_TEX1][1] = LE32_IN_FLOAT( p++ );
 #endif
-	 dst->texcoord[1][3] = 1.0;
+	 dst->attrib[FRAG_ATTRIB_TEX1][3] = 1.0;
 	 p++;
 
       case TEX0_VERTEX_FORMAT:
@@ -67,14 +67,14 @@ void TAG(translate_vertex)(GLcontext *ctx,
 	 {
 	    float rhw = 1.0 / LE32_IN_FLOAT( p + 2 );
 	    
-	    dst->texcoord[0][0] = rhw*LE32_IN_FLOAT( p++ );
-	    dst->texcoord[0][1] = rhw*LE32_IN_FLOAT( p++ );
+	    dst->attrib[FRAG_ATTRIB_TEX0][0] = rhw*LE32_IN_FLOAT( p++ );
+	    dst->attrib[FRAG_ATTRIB_TEX0][1] = rhw*LE32_IN_FLOAT( p++ );
 	 }
 #else
-	 dst->texcoord[0][0] = LE32_IN_FLOAT( p++ );
-	 dst->texcoord[0][1] = LE32_IN_FLOAT( p++ );
+	 dst->attrib[FRAG_ATTRIB_TEX0][0] = LE32_IN_FLOAT( p++ );
+	 dst->attrib[FRAG_ATTRIB_TEX0][1] = LE32_IN_FLOAT( p++ );
 #endif
-	 dst->texcoord[0][3] = 1.0;
+	 dst->attrib[FRAG_ATTRIB_TEX0][3] = 1.0;
 	 dst->win[3] = LE32_IN_FLOAT( p++ );
 	
       case NOTEX_VERTEX_FORMAT:

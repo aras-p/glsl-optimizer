@@ -36,10 +36,6 @@
 #include "brw_state.h"
 #include "brw_hal.h"
 
-#include "program.h"
-#include "program_instruction.h"
-#include "arbprogparse.h"
-
 
 GLuint brw_wm_nr_args( GLuint opcode )
 {

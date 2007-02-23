@@ -33,11 +33,13 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "macros.h"
 #include "enums.h"
 #include "program.h"
-#include "nvvertexec.h"
+#include "shader/prog_instruction.h"
+#include "shader/prog_parameter.h"
+#include "shader/prog_statevars.h"
+#include "tnl/tnl.h"
 
 #include "r300_context.h"
 #include "r300_program.h"
-#include "program_instruction.h"
 
 #if SWIZZLE_X != VSF_IN_COMPONENT_X || \
     SWIZZLE_Y != VSF_IN_COMPONENT_Y || \
@@ -103,7 +105,7 @@ int r300VertexProgUpdateParams(GLcontext *ctx, struct r300_vertex_program_cont *
         struct gl_program_parameter_list *paramList;
 	
 	if (mesa_vp->IsNVProgram) {
-		_mesa_init_vp_per_primitive_registers(ctx);
+		_mesa_load_tracked_matrices(ctx);
 		
 		for (pi=0; pi < MAX_NV_VERTEX_PROGRAM_PARAMS; pi++) {
 			*dst++=ctx->VertexProgram.Parameters[pi][0];
@@ -880,7 +882,7 @@ static void position_invariant(struct gl_program *prog)
 	struct gl_program_parameter_list *paramList;
 	int i;
 
-	GLint tokens[6] = { STATE_MATRIX, STATE_MVP, 0, 0, 0, STATE_MATRIX };
+	gl_state_index tokens[STATE_LENGTH] = { STATE_MVP_MATRIX, 0, 0, 0, 0 };
 
 #ifdef PREFER_DP4
 	tokens[5] = STATE_MATRIX;
@@ -963,7 +965,8 @@ static void insert_wpos(struct r300_vertex_program *vp,
 		       GLuint temp_index)
 {
 
-	GLint tokens[6] = { STATE_INTERNAL, STATE_R300_WINDOW_DIMENSION, 0, 0, 0, 0 };
+        gl_state_index tokens[STATE_LENGTH]
+           = { STATE_INTERNAL, STATE_R300_WINDOW_DIMENSION, 0, 0, 0 };
 	struct prog_instruction *vpi;
 	struct prog_instruction *vpi_insert;
 	GLuint window_index;

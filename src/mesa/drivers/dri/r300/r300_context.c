@@ -334,7 +334,7 @@ GLboolean r300CreateContext(const __GLcontextModes * glVisual,
 	ctx->Const.FragmentProgram.MaxNativeTexIndirections = PFS_MAX_TEX_INDIRECT;
 	ctx->Const.FragmentProgram.MaxNativeAddressRegs = 0; /* and these are?? */
 	_tnl_ProgramCacheInit(ctx);
-	ctx->_MaintainTexEnvProgram = GL_TRUE;
+	ctx->FragmentProgram._MaintainTexEnvProgram = GL_TRUE;
 
 	driInitExtensions(ctx, card_extensions, GL_TRUE);
 	

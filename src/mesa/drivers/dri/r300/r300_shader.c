@@ -10,11 +10,6 @@
 static void
 r300BindProgram(GLcontext *ctx, GLenum target, struct gl_program *prog)
 {
-	
-	r300ContextPtr rmesa = R300_CONTEXT(ctx);
-	struct r300_vertex_program_cont *vp=(void *)prog;
-	
-	
 	switch(target){
 		case GL_VERTEX_PROGRAM_ARB:
 		//rmesa->curr_vp = (struct gl_vertex_program *)vp;

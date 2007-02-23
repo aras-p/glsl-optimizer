@@ -34,9 +34,10 @@
 #include "macros.h"
 #include "enums.h"
 
-#include "program.h"
-#include "programopt.h"
-#include "program_instruction.h"
+#include "shader/prog_instruction.h"
+#include "shader/prog_parameter.h"
+#include "shader/prog_statevars.h"
+#include "shader/programopt.h"
 
 #include "nouveau_context.h"
 #include "nouveau_shader.h"
@@ -411,8 +412,10 @@ pass0_fixup_swizzle(nvsPtr nvs, nvsFragmentHeader *parent, int fpos,
 
 	if (!rec->swzconst_done) {
 		struct gl_program *prog = &nvs->mesa.vp.Base;
+                GLuint swizzle;
 		rec->swzconst_id = _mesa_add_unnamed_constant(prog->Parameters,
-							      sc, 4);
+							      sc, 4, &swizzle);
+                /* XXX what about swizzle? */
 		rec->swzconst_done = 1;
 		COPY_4V(nvs->params[rec->swzconst_id].val, sc);
 	}
@@ -818,7 +821,8 @@ pass0_vp_insert_ff_clip_planes(GLcontext *ctx, nouveauShader *nvs)
 	nvsInstruction *nvsinst;
 	GLuint fpos = 0;
 	nvsRegister opos, epos, eqn, mv[4];
-	GLint tokens[6] = { STATE_MATRIX, STATE_MODELVIEW, 0, 0, 0, 0 };
+	gl_state_index tokens[STATE_LENGTH]
+           = { STATE_MODELVIEW_MATRIX, 0, 0, 0, 0 };
 	GLint id;
 	int i;
 
@@ -826,7 +830,7 @@ pass0_vp_insert_ff_clip_planes(GLcontext *ctx, nouveauShader *nvs)
 	pass0_make_reg(nvs, &opos, NVS_FILE_ATTRIB, NVS_FR_POSITION);
 	pass0_make_reg(nvs, &epos, NVS_FILE_TEMP  , -1);
 	for (i=0; i<4; i++) {
-		tokens[3] = tokens[4] = i;
+		tokens[2] = tokens[3] = i;
 		id = _mesa_add_state_reference(prog->Parameters, tokens);
 		pass0_make_reg(nvs, &mv[i], NVS_FILE_CONST, id);
 	}

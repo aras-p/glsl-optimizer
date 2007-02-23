@@ -36,10 +36,11 @@
 #include "glheader.h"
 #include "macros.h"
 #include "enums.h"
+#include "shader/program.h"
+#include "shader/prog_instruction.h"
 
-#include "program.h"
 #include "r300_context.h"
-#include "program_instruction.h"
+
 
 #if 0
 /* representation of a register for emit_arith/swizzle */

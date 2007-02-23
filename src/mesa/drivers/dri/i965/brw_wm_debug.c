@@ -32,9 +32,6 @@
 
 #include "brw_context.h"
 #include "brw_wm.h"
-#include "program.h"
-#include "shader/arbprogparse.h"
-#include "shader/program_instruction.h"
 
 
 void brw_wm_print_value( struct brw_wm_compile *c,

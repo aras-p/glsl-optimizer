@@ -43,9 +43,10 @@
 #include "glheader.h"
 #include "macros.h"
 #include "enums.h"
+#include "shader/prog_instruction.h"
+#include "shader/prog_parameter.h"
+#include "shader/prog_print.h"
 
-#include "program.h"
-#include "program_instruction.h"
 #include "r300_context.h"
 #include "r300_fragprog.h"
 #include "r300_reg.h"

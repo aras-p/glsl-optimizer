@@ -30,10 +30,8 @@
   */
                
 
-#include "brw_context.h"
-#include "program.h"
-#include "program_instruction.h"
 #include "macros.h"
+#include "brw_context.h"
 #include "brw_wm.h"
 
 #define SATURATE (1<<5)

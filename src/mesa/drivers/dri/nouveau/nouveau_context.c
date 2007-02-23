@@ -195,7 +195,7 @@ GLboolean nouveauCreateContext( const __GLcontextModes *glVisual,
 	nouveauShaderInitFuncs(ctx);
 	/* Install Mesa's fixed-function texenv shader support */
 	if (nmesa->screen->card->type >= NV_40)
-		ctx->_MaintainTexEnvProgram = GL_TRUE;
+		ctx->FragmentProgram._MaintainTexEnvProgram = GL_TRUE;
 
 	/* Initialize the swrast */
 	_swrast_CreateContext( ctx );

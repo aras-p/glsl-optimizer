@@ -179,7 +179,7 @@ struct trident_context {
 	GLuint vertex_format;
 	GLuint vertex_size;
 	GLuint vertex_stride_shift;
-	char *verts;
+	GLubyte *verts;
 
 	GLint tmu_source[2];
 

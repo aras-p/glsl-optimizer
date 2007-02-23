@@ -46,6 +46,8 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "api_arrayelt.h"
 #include "swrast/swrast.h"
 #include "swrast_setup/swrast_setup.h"
+#include "shader/prog_parameter.h"
+#include "shader/prog_statevars.h"
 #include "vbo/vbo.h"
 #include "tnl/tnl.h"
 #include "texformat.h"
@@ -1055,8 +1057,10 @@ r300UpdateDrawBuffer(GLcontext *ctx)
 #endif
 }
 
-static void r300FetchStateParameter(GLcontext *ctx, const enum state_index state[],
-                  GLfloat *value)
+static void
+r300FetchStateParameter(GLcontext *ctx,
+                        const gl_state_index state[STATE_LENGTH],
+                        GLfloat *value)
 {
     r300ContextPtr r300 = R300_CONTEXT(ctx);
 

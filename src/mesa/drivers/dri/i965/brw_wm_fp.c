@@ -37,9 +37,10 @@
 #include "brw_wm.h"
 #include "brw_util.h"
 
-#include "shader/program.h"
-#include "shader/program_instruction.h"
-#include "shader/arbprogparse.h"
+#include "shader/prog_parameter.h"
+#include "shader/prog_print.h"
+#include "shader/prog_statevars.h"
+
 
 #define FIRST_INTERNAL_TEMP MAX_NV_FRAGMENT_PROGRAM_TEMPS
 
@@ -370,23 +371,21 @@ static void emit_interp( struct brw_wm_compile *c,
  * harm and it's not as if the parameter handling isn't a big hack
  * anyway.
  */
-static struct prog_src_register search_or_add_param6( struct brw_wm_compile *c, 
-					     GLint s0,
-					     GLint s1,
-					     GLint s2,
-					     GLint s3,
-					     GLint s4,
-					     GLint s5)
+static struct prog_src_register search_or_add_param5(struct brw_wm_compile *c, 
+                                                     GLint s0,
+                                                     GLint s1,
+                                                     GLint s2,
+                                                     GLint s3,
+                                                     GLint s4)
 {
    struct gl_program_parameter_list *paramList = c->fp->program.Base.Parameters;
-   GLint tokens[6];
+   gl_state_index tokens[STATE_LENGTH];
    GLuint idx;
    tokens[0] = s0;
    tokens[1] = s1;
    tokens[2] = s2;
    tokens[3] = s3;
    tokens[4] = s4;
-   tokens[5] = s5;
    
    for (idx = 0; idx < paramList->NumParameters; idx++) {
       if (paramList->Parameters[idx].Type == PROGRAM_STATE_VAR &&
@@ -413,6 +412,7 @@ static struct prog_src_register search_or_add_const4f( struct brw_wm_compile *c,
    struct gl_program_parameter_list *paramList = c->fp->program.Base.Parameters;
    GLfloat values[4];
    GLuint idx;
+   GLuint swizzle;
 
    values[0] = s0;
    values[1] = s1;
@@ -432,8 +432,8 @@ static struct prog_src_register search_or_add_const4f( struct brw_wm_compile *c,
 	 return src_reg(PROGRAM_STATE_VAR, idx);
    }
    
-   idx = _mesa_add_unnamed_constant( paramList, values, 4 );
-
+   idx = _mesa_add_unnamed_constant( paramList, values, 4, &swizzle );
+   /* XXX what about swizzle? */
    return src_reg(PROGRAM_STATE_VAR, idx);
 }
 
@@ -527,11 +527,11 @@ static void precalc_tex( struct brw_wm_compile *c,
 
    if (inst->TexSrcTarget == TEXTURE_RECT_INDEX) {
       struct prog_src_register scale = 
-	 search_or_add_param6( c, 
+	 search_or_add_param5( c, 
 			       STATE_INTERNAL, 
 			       STATE_TEXRECT_SCALE,
 			       inst->TexSrcUnit,
-			       0,0,0 );
+			       0,0 );
 
       tmpcoord = get_temp(c);
 
@@ -724,7 +724,7 @@ static void fog_blend( struct brw_wm_compile *c,
 			     struct prog_src_register fog_factor )
 {
    struct prog_dst_register outcolor = dst_reg(PROGRAM_OUTPUT, FRAG_RESULT_COLR);
-   struct prog_src_register fogcolor = search_or_add_param6( c, STATE_FOG_COLOR, 0,0,0,0,0 );
+   struct prog_src_register fogcolor = search_or_add_param5( c, STATE_FOG_COLOR, 0,0,0,0 );
 
    /* color.xyz = LRP fog_factor.xxxx, output_color, fog_color */
    
