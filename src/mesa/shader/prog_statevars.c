@@ -287,19 +287,11 @@ _mesa_fetch_state(GLcontext *ctx, const gl_state_index state[],
          /* state[5] = transpose, inverse or invtrans */
 
          const GLmatrix *matrix;
-#if 0
-         const gl_state_index mat = state[1];
-         const GLuint index = (GLuint) state[2];
-         const GLuint firstRow = (GLuint) state[3];
-         const GLuint lastRow = (GLuint) state[4];
-         const gl_state_index modifier = state[5];
-#else
          const gl_state_index mat = state[0];
          const GLuint index = (GLuint) state[1];
          const GLuint firstRow = (GLuint) state[2];
          const GLuint lastRow = (GLuint) state[3];
          const gl_state_index modifier = state[4];
-#endif
          const GLfloat *m;
          GLuint row, i;
          ASSERT(firstRow >= 0);
