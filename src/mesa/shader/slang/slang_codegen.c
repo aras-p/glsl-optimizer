@@ -39,6 +39,7 @@
 #include "slang_codegen.h"
 #include "slang_compile.h"
 #include "slang_error.h"
+#include "slang_label.h"
 #include "slang_simplify.h"
 #include "slang_emit.h"
 #include "slang_vartable.h"
@@ -425,10 +426,11 @@ new_seq(slang_ir_node *left, slang_ir_node *right)
 }
 
 static slang_ir_node *
-new_label(slang_atom labName)
+new_label(slang_label *label)
 {
    slang_ir_node *n = new_node0(IR_LABEL);
-   n->Target = (char *) labName; /*_mesa_strdup(name);*/
+   if (n)
+      n->Label = label;
    return n;
 }
 
@@ -450,11 +452,11 @@ new_float_literal(const float v[4])
  * XXX maybe pass an IR node as second param to indicate the jump target???
  */
 static slang_ir_node *
-new_cjump(slang_atom target, GLuint zeroOrOne)
+new_cjump(slang_label *dest, GLuint zeroOrOne)
 {
    slang_ir_node *n = new_node0(zeroOrOne ? IR_CJUMP1 : IR_CJUMP0);
    if (n)
-      n->Target = (char *) target;
+      n->Label = dest;
    return n;
 }
 
@@ -463,11 +465,11 @@ new_cjump(slang_atom target, GLuint zeroOrOne)
  * XXX maybe pass an IR node as second param to indicate the jump target???
  */
 static slang_ir_node *
-new_jump(slang_atom target)
+new_jump(slang_label *dest)
 {
    slang_ir_node *n = new_node0(IR_JUMP);
    if (n)
-      n->Target = (char *) target;
+      n->Label = dest;
    return n;
 }
 
@@ -599,6 +601,18 @@ slang_is_asm_function(const slang_function *fun)
 }
 
 
+static GLboolean
+_slang_is_noop(const slang_operation *oper)
+{
+   if (!oper ||
+       oper->type == SLANG_OPER_VOID ||
+       (oper->num_children == 1 && oper->children[0].type == SLANG_OPER_VOID))
+      return GL_TRUE;
+   else
+      return GL_FALSE;
+}
+
+
 /**
  * Produce inline code for a call to an assembly instruction.
  */
@@ -709,11 +723,11 @@ slang_substitute(slang_assemble_ctx *A, slang_operation *oper,
 	 }
       }
       break;
-#if 1 /* XXX rely on default case below */
+
    case SLANG_OPER_RETURN:
       /* do return replacement here too */
       assert(oper->num_children == 0 || oper->num_children == 1);
-      if (oper->num_children == 1) {
+      if (!_slang_is_noop(oper)) {
          /* replace:
           *   return expr;
           * with:
@@ -751,7 +765,7 @@ slang_substitute(slang_assemble_ctx *A, slang_operation *oper,
          slang_operation_destruct(blockOper);
       }
       break;
-#endif
+
    case SLANG_OPER_ASSIGN:
    case SLANG_OPER_SUBSCRIPT:
       /* special case:
@@ -992,8 +1006,7 @@ slang_inline_function_call(slang_assemble_ctx * A, slang_function *fun,
                                                     &inlined->children,
                                                     inlined->num_children);
       lab->type = SLANG_OPER_LABEL;
-      lab->a_id = slang_atom_pool_atom(A->atoms,
-                                       (char *) A->CurFunction->end_label);
+      lab->label = A->CurFunction->end_label;
    }
 
    for (i = 0; i < totalArgs; i++) {
@@ -1044,7 +1057,7 @@ _slang_gen_function_call(slang_assemble_ctx *A, slang_function *fun,
    if (!A->CurFunction->end_label) {
       char name[200];
       sprintf(name, "__endOfFunc_%s_", (char *) A->CurFunction->header.a_name);
-      A->CurFunction->end_label = slang_atom_pool_gen(A->atoms, name);
+      A->CurFunction->end_label = _slang_label_new(name);
    }
 
    if (slang_is_asm_function(fun) && !dest) {
@@ -1075,7 +1088,7 @@ _slang_gen_function_call(slang_assemble_ctx *A, slang_function *fun,
 
    n = _slang_gen_operation(A, oper);
 
-   A->CurFunction->end_label = NULL;
+   A->CurFunction->end_label = NULL; /* XXX delete/free? */
 
    A->CurFunction = prevFunc;
 
@@ -1195,19 +1208,6 @@ _slang_gen_asm(slang_assemble_ctx *A, slang_operation *oper,
    }
 
    return n;
-}
-
-
-
-static GLboolean
-_slang_is_noop(const slang_operation *oper)
-{
-   if (!oper ||
-       oper->type == SLANG_OPER_VOID ||
-       (oper->num_children == 1 && oper->children[0].type == SLANG_OPER_VOID))
-      return GL_TRUE;
-   else
-      return GL_FALSE;
 }
 
 
@@ -1617,8 +1617,7 @@ _slang_gen_var_decl(slang_assemble_ctx *A, slang_variable *var)
 static slang_ir_node *
 _slang_gen_select(slang_assemble_ctx *A, slang_operation *oper)
 {
-   slang_atom altAtom = slang_atom_pool_gen(A->atoms, "__selectAlt");
-   slang_atom endAtom = slang_atom_pool_gen(A->atoms, "__selectEnd");
+   slang_label *altLabel, *endLabel;
    slang_ir_node *altLab, *endLab;
    slang_ir_node *tree, *tmpDecl, *tmpVar, *cond, *cjump, *jump;
    slang_ir_node *bodx, *body, *assignx, *assigny;
@@ -1627,6 +1626,9 @@ _slang_gen_select(slang_assemble_ctx *A, slang_operation *oper)
 
    assert(oper->type == SLANG_OPER_SELECT);
    assert(oper->num_children == 3);
+
+   altLabel = _slang_label_new("selectAlt");
+   endLabel = _slang_label_new("selectEnd");
 
    /* size of x or y's type */
    slang_typeinfo_construct(&type);
@@ -1643,7 +1645,7 @@ _slang_gen_select(slang_assemble_ctx *A, slang_operation *oper)
    tree = new_seq(tmpDecl, cond);
 
    /* jump if false to "alt" label */
-   cjump = new_cjump(altAtom, 0);
+   cjump = new_cjump(altLabel, 0);
    tree = new_seq(tree, cjump);
 
    /* evaluate child 1 (x) and assign to tmp */
@@ -1654,11 +1656,11 @@ _slang_gen_select(slang_assemble_ctx *A, slang_operation *oper)
    tree = new_seq(tree, assigny);
 
    /* jump to "end" label */
-   jump = new_jump(endAtom);
+   jump = new_jump(endLabel);
    tree = new_seq(tree, jump);
 
    /* "alt" label */
-   altLab = new_label(altAtom);
+   altLab = new_label(altLabel);
    tree = new_seq(tree, altLab);
 
    /* evaluate child 2 (y) and assign to tmp */
@@ -1669,7 +1671,7 @@ _slang_gen_select(slang_assemble_ctx *A, slang_operation *oper)
    tree = new_seq(tree, assignx);
 
    /* "end" label */
-   endLab = new_label(endAtom);
+   endLab = new_label(endLabel);
    tree = new_seq(tree, endLab);
    
    /* tmp var value */
@@ -1762,8 +1764,8 @@ _slang_gen_return(slang_assemble_ctx * A, slang_operation *oper)
       slang_operation_construct(&gotoOp);
       gotoOp.type = SLANG_OPER_GOTO;
       /* XXX don't call function? */
-      gotoOp.a_id = slang_atom_pool_atom(A->atoms,
-                                         (char *) A->CurFunction->end_label);
+      gotoOp.label = A->CurFunction->end_label;
+
       /* assemble the new code */
       n = _slang_gen_operation(A, &gotoOp);
       /* destroy temp code */
@@ -1819,8 +1821,7 @@ _slang_gen_return(slang_assemble_ctx * A, slang_operation *oper)
       jump->type = SLANG_OPER_GOTO;
       assert(A->CurFunction->end_label);
       /* XXX don't call function? */
-      jump->a_id = slang_atom_pool_atom(A->atoms,
-                                        (char *) A->CurFunction->end_label);
+      jump->label = A->CurFunction->end_label;
 
 #if 0 /* debug */
       printf("NEW RETURN:\n");
@@ -2439,9 +2440,9 @@ _slang_gen_operation(slang_assemble_ctx * A, slang_operation *oper)
    case SLANG_OPER_RETURN:
       return _slang_gen_return(A, oper);
    case SLANG_OPER_GOTO:
-      return new_jump((char*) oper->a_id);
+      return new_jump(oper->label);
    case SLANG_OPER_LABEL:
-      return new_label((char*) oper->a_id);
+      return new_label(oper->label);
    case SLANG_OPER_IDENTIFIER:
       return _slang_gen_variable(A, oper);
    case SLANG_OPER_IF:
@@ -2716,7 +2717,7 @@ _slang_codegen_function(slang_assemble_ctx * A, slang_function * fun)
 
    /* Create an end-of-function label */
    if (!A->CurFunction->end_label)
-      A->CurFunction->end_label = slang_atom_pool_gen(A->atoms, "__endOfFunc_main_");
+      A->CurFunction->end_label = _slang_label_new("__endOfFunc__main");
 
    /* push new vartable scope */
    _slang_push_var_table(A->vartable);

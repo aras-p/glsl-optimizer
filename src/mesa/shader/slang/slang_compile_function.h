@@ -25,9 +25,6 @@
 #ifndef SLANG_COMPILE_FUNCTION_H
 #define SLANG_COMPILE_FUNCTION_H
 
-#if defined __cplusplus
-extern "C" {
-#endif
 
 struct slang_code_unit_;
 
@@ -69,7 +66,11 @@ typedef struct slang_function_
    slang_operation *body;      /**< The instruction tree */
    unsigned int address;       /**< Address of this func in memory */
    slang_fixup_table fixups;   /**< Mem locations which need func's address */
+#if 0
    slang_atom end_label;       /**< The end-of-function label */
+#else
+   struct slang_label_ *end_label;
+#endif
 } slang_function;
 
 extern int slang_function_construct(slang_function *);
@@ -101,9 +102,5 @@ slang_function_scope_find_by_name(slang_function_scope *, slang_atom, int);
 
 extern slang_function *
 slang_function_scope_find(slang_function_scope *, slang_function *, int);
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif /* SLANG_COMPILE_FUNCTION_H */

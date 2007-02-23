@@ -274,46 +274,6 @@ link_uniform_vars(struct gl_shader_program *shProg, struct gl_program *prog)
 
 
 /**
- * XXX Temporary
- */
-static void
-_slang_resolve_branches(struct gl_program *prog)
-{
-   struct target {
-      const char *Name;
-      GLuint Pos;
-   };
-   struct target targets[500];
-   GLuint numTargets = 0;
-   GLuint i, j;
-
-   for (i = 0; i < prog->NumInstructions; i++) {
-      struct prog_instruction *inst = prog->Instructions + i;
-      if (inst->Opcode == OPCODE_NOP && inst->Comment) {
-         targets[numTargets].Name = inst->Comment;
-         targets[numTargets].Pos = i;
-         numTargets++;
-      }
-   }
-
-   for (i = 0; i < prog->NumInstructions; i++) {
-      struct prog_instruction *inst = prog->Instructions + i;
-      if (inst->Opcode == OPCODE_BRA && inst->BranchTarget < 0) {
-         for (j = 0; j < numTargets; j++) {
-            if (!strcmp(inst->Comment, targets[j].Name)) {
-               inst->BranchTarget = targets[j].Pos;
-               break;
-            }
-         }
-         if (j == numTargets) {
-            abort();
-         }
-      }
-   }
-}
-
-
-/**
  * Resolve binding of generic vertex attributes.
  * For example, if the vertex shader declared "attribute vec4 foobar" we'll
  * allocate a generic vertex attribute for "foobar" and plug that value into
@@ -574,11 +534,9 @@ _slang_link(GLcontext *ctx,
    }
 
    if (shProg->VertexProgram) {
-      _slang_resolve_branches(&shProg->VertexProgram->Base);
       _slang_resolve_samplers(shProg, &shProg->VertexProgram->Base);
    }
    if (shProg->FragmentProgram) {
-      _slang_resolve_branches(&shProg->FragmentProgram->Base);
       _slang_resolve_samplers(shProg, &shProg->FragmentProgram->Base);
    }
 

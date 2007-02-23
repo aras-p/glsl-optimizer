@@ -278,7 +278,7 @@ slang_print_ir(const slang_ir_node *n, int indent)
       slang_print_ir(n->Children[1], indent+3);
       break;
    case IR_LABEL:
-      printf("LABEL: %s\n", n->Target);
+      printf("LABEL: %s\n", n->Label->Name);
       break;
    case IR_COND:
       printf("COND\n");
@@ -848,38 +848,44 @@ emit_negation(slang_var_table *vt, slang_ir_node *n, struct gl_program *prog)
 
 
 static struct prog_instruction *
-emit_label(const char *target, struct gl_program *prog)
+emit_label(const slang_ir_node *n, struct gl_program *prog)
 {
-   struct prog_instruction *inst;
-   inst = new_instruction(prog, OPCODE_NOP);
-   inst->Comment = _mesa_strdup(target);
-   return inst;
+   assert(n->Label);
+   assert(_slang_label_get_location(n->Label) < 0);
+   _slang_label_set_location(n->Label, prog->NumInstructions, prog);
+   return NULL;
 }
 
 
 static struct prog_instruction *
-emit_cjump(const char *target, struct gl_program *prog, GLuint zeroOrOne)
+emit_cjump(slang_ir_node *n, struct gl_program *prog, GLuint zeroOrOne)
 {
    struct prog_instruction *inst;
+   assert(n->Opcode == IR_CJUMP0 || n->Opcode == IR_CJUMP1);
    inst = new_instruction(prog, OPCODE_BRA);
    if (zeroOrOne)
       inst->DstReg.CondMask = COND_NE;  /* branch if non-zero */
    else
       inst->DstReg.CondMask = COND_EQ;  /* branch if equal to zero */
    inst->DstReg.CondSwizzle = SWIZZLE_X;
-   inst->Comment = _mesa_strdup(target);
+   inst->BranchTarget = _slang_label_get_location(n->Label);
+   if (inst->BranchTarget < 0) {
+      _slang_label_add_reference(n->Label, prog->NumInstructions - 1);
+   }
    return inst;
 }
 
 
 static struct prog_instruction *
-emit_jump(const char *target, struct gl_program *prog)
+emit_jump(slang_ir_node *n, struct gl_program *prog)
 {
    struct prog_instruction *inst;
    inst = new_instruction(prog, OPCODE_BRA);
    inst->DstReg.CondMask = COND_TR;  /* always branch */
-   /*inst->DstReg.CondSwizzle = SWIZZLE_X;*/
-   inst->Comment = _mesa_strdup(target);
+   inst->BranchTarget = _slang_label_get_location(n->Label);
+   if (inst->BranchTarget < 0) {
+      _slang_label_add_reference(n->Label, prog->NumInstructions - 1);
+   }
    return inst;
 }
 
@@ -1522,13 +1528,13 @@ emit(slang_var_table *vt, slang_ir_node *n, struct gl_program *prog)
       return emit_not(vt, n, prog);
 
    case IR_LABEL:
-      return emit_label(n->Target, prog);
+      return emit_label(n, prog);
    case IR_JUMP:
-      return emit_jump(n->Target, prog);
+      return emit_jump(n, prog);
    case IR_CJUMP0:
-      return emit_cjump(n->Target, prog, 0);
+      return emit_cjump(n, prog, 0);
    case IR_CJUMP1:
-      return emit_cjump(n->Target, prog, 1);
+      return emit_cjump(n, prog, 1);
    case IR_KILL:
       return emit_kill(prog);
 
@@ -1572,18 +1578,14 @@ _slang_emit_code(slang_ir_node *n, slang_var_table *vt,
 {
    GLboolean success;
 
-   if (emit(vt, n, prog)) {
-      /* finish up by adding the END opcode to program */
-      if (withEnd) {
-         struct prog_instruction *inst;
-         inst = new_instruction(prog, OPCODE_END);
-      }
-      success = GL_TRUE;
+   (void) emit(vt, n, prog);
+
+   /* finish up by adding the END opcode to program */
+   if (withEnd) {
+      struct prog_instruction *inst;
+      inst = new_instruction(prog, OPCODE_END);
    }
-   else {
-      /* record an error? */
-      success = GL_FALSE;
-   }
+   success = GL_TRUE;
 
    printf("*********** End generate code (%u inst):\n", prog->NumInstructions);
 #if 0

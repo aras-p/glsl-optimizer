@@ -25,10 +25,6 @@
 #ifndef SLANG_COMPILE_OPERATION_H
 #define SLANG_COMPILE_OPERATION_H
 
-#if defined __cplusplus
-extern "C" {
-#endif
-
 
 /**
  * Types of slang operations.
@@ -122,6 +118,7 @@ typedef struct slang_operation_
    slang_variable_scope *locals; /**< local vars for scope */
    struct slang_function_ *fun;  /**< If type == SLANG_OPER_CALL */
    struct slang_variable_ *var;  /**< If type == slang_oper_identier */
+   struct slang_label_ *label;   /**< If type == SLANG_OPER_LABEL or GOTO */
 } slang_operation;
 
 
@@ -147,9 +144,5 @@ extern slang_operation *
 slang_operation_insert(GLuint *numChildren, slang_operation **children,
                        GLuint pos);
 
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif /* SLANG_COMPILE_OPERATION_H */
