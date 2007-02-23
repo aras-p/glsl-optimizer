@@ -41,6 +41,10 @@ extern const char *
 _mesa_swizzle_string(GLuint swizzle, GLuint negateBase, GLboolean extended);
 
 extern void
+_mesa_print_alu_instruction(const struct prog_instruction *inst,
+                            const char *opcode_string, GLuint numRegs);
+
+extern void
 _mesa_print_instruction(const struct prog_instruction *inst);
 
 extern GLint

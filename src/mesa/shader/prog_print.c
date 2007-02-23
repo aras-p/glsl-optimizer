@@ -426,7 +426,7 @@ print_comment(const struct prog_instruction *inst)
 
 static void
 print_alu_instruction(const struct prog_instruction *inst,
-                      const char *opcode_string,  GLuint numRegs,
+                      const char *opcode_string, GLuint numRegs,
                       gl_prog_print_mode mode,
                       const struct gl_program *prog)
 {
@@ -458,6 +458,14 @@ print_alu_instruction(const struct prog_instruction *inst,
    }
 
    print_comment(inst);
+}
+
+
+void
+_mesa_print_alu_instruction(const struct prog_instruction *inst,
+                            const char *opcode_string, GLuint numRegs)
+{
+   print_alu_instruction(inst, opcode_string, numRegs, PROG_PRINT_DEBUG, NULL);
 }
 
 
