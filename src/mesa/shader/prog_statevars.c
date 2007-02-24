@@ -744,6 +744,14 @@ _mesa_program_state_string(const gl_state_index state[STATE_LENGTH])
          append(str, tmp);
       }
       break;
+   case STATE_POINT_SIZE:
+      break;
+   case STATE_POINT_ATTENUATION:
+      break;
+   case STATE_FOG_PARAMS:
+      break;
+   case STATE_FOG_COLOR:
+      break;
    case STATE_DEPTH_RANGE:
       break;
    case STATE_FRAGMENT_PROGRAM:
