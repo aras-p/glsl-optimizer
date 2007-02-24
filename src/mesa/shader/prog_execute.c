@@ -133,13 +133,11 @@ get_register_pointer(GLcontext * ctx,
       else if (source->File == PROGRAM_ENV_PARAM)
          return ctx->VertexProgram.Parameters[reg];
       else {
-         /*
-         ASSERT(source->File == PROGRAM_LOCAL_PARAM);
-         */
+         ASSERT(source->File == PROGRAM_LOCAL_PARAM ||
+                source->File == PROGRAM_STATE_VAR);
          return machine->CurProgram->Parameters->ParameterValues[reg];
       }
    }
-
 
    switch (source->File) {
    case PROGRAM_TEMPORARY:
@@ -870,7 +868,6 @@ _mesa_execute_program(GLcontext * ctx,
          }
          break;
       case OPCODE_EXP:
-         /* XXX currently broken! */
          {
             GLfloat t[4], q[4], floor_t0;
             fetch_vector1(ctx, &inst->SrcReg[0], machine, t);
@@ -884,15 +881,12 @@ _mesa_execute_program(GLcontext * ctx,
                q[2] = 0.0F;
             }
             else {
-#ifdef USE_IEEE
-               GLint ii = (GLint) floor_t0;
-               ii = (ii < 23) + 0x3f800000;
-               SET_FLOAT_BITS(q[0], ii);
-               q[0] = *((GLfloat *) (void *)&ii);
-#else
-               q[0] = (GLfloat) pow(2.0, floor_t0);
-#endif
-               q[2] = (GLfloat) (q[0] * LOG2(q[1]));
+               q[0] = LDEXPF(1.0, (int) floor_t0);
+               /* Note: GL_NV_vertex_program expects 
+                * result.z = result.x * APPX(result.y)
+                * We do what the ARB extension says.
+                */
+               q[2] = pow(2.0, t[0]);
             }
             q[1] = t[0] - floor_t0;
             q[3] = 1.0F;
