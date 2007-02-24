@@ -1,8 +1,8 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.5.1
+ * Version:  6.5.3
  *
- * Copyright (C) 1999-2006  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2007  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -1151,7 +1151,6 @@ static void compile_vertex_program( struct gl_vertex_program *program,
 
 
 
-
 /* ----------------------------------------------------------------------
  * Execution
  */
@@ -1264,6 +1263,7 @@ static INLINE void call_func( struct tnl_compiled_program *p,
    p->compiled_func(m);
 }
 
+
 /**
  * Execute the given vertex program.  
  * 
@@ -1283,7 +1283,7 @@ run_arb_vertex_program(GLcontext *ctx, struct tnl_pipeline_stage *stage)
    GLuint i, j;
    GLbitfield outputs;
 
-#define FORCE_PROG_EXECUTE_C 0
+#define FORCE_PROG_EXECUTE_C 1
 #if FORCE_PROG_EXECUTE_C
    return GL_TRUE;   
 #else
@@ -1498,11 +1498,6 @@ validate_vertex_program( GLcontext *ctx, struct tnl_pipeline_stage *stage )
 }
 
 
-
-
-
-
-
 /**
  * Called the first time stage->run is called.  In effect, don't
  * allocate data until the first time the stage is run.
@@ -1563,8 +1558,6 @@ static GLboolean init_vertex_program( GLcontext *ctx,
 }
 
 
-
-
 /**
  * Destructor for this pipeline stage.
  */
@@ -1588,6 +1581,7 @@ static void dtr( struct tnl_pipeline_stage *stage )
       stage->privatePtr = NULL;
    }
 }
+
 
 /**
  * Public description of this pipeline stage.

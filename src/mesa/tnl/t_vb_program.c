@@ -198,7 +198,7 @@ run_vp( GLcontext *ctx, struct tnl_pipeline_stage *stage )
    struct gl_program_machine machine;
    GLuint i;
 
-#define FORCE_PROG_EXECUTE_C 0
+#define FORCE_PROG_EXECUTE_C 1
 #if FORCE_PROG_EXECUTE_C
    if (!program)
       return GL_TRUE;
