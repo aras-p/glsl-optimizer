@@ -1188,12 +1188,10 @@ parse_state_single_item (GLcontext * ctx, const GLubyte ** inst,
       case STATE_FOG:
          switch (*(*inst)++) {
             case FOG_COLOR:
-               state_tokens[0] = STATE_FOG;
-               state_tokens[1] = STATE_FOG_COLOR;
+               state_tokens[0] = STATE_FOG_COLOR;
                break;
             case FOG_PARAMS:
-               state_tokens[0] = STATE_FOG;
-               state_tokens[1] = STATE_FOG_PARAMS;
+               state_tokens[0] = STATE_FOG_PARAMS;
                break;
          }
          break;
