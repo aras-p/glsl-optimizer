@@ -53,6 +53,27 @@
 #define DEBUG_PROG 0
 
 
+/**
+ * Set x to positive or negative infinity.
+ */
+#if defined(USE_IEEE) || defined(_WIN32)
+#define SET_POS_INFINITY(x)  ( *((GLuint *) (void *)&x) = 0x7F800000 )
+#define SET_NEG_INFINITY(x)  ( *((GLuint *) (void *)&x) = 0xFF800000 )
+#elif defined(VMS)
+#define SET_POS_INFINITY(x)  x = __MAXFLOAT
+#define SET_NEG_INFINITY(x)  x = -__MAXFLOAT
+#else
+#define SET_POS_INFINITY(x)  x = (GLfloat) HUGE_VAL
+#define SET_NEG_INFINITY(x)  x = (GLfloat) -HUGE_VAL
+#endif
+
+#define SET_FLOAT_BITS(x, bits) ((fi_type *) (void *) &(x))->i = bits
+
+
+static const GLfloat ZeroVec[4] = { 0.0F, 0.0F, 0.0F, 0.0F };
+
+
+
 #if FEATURE_MESA_program_debug
 static struct gl_program_machine *CurrentMachine = NULL;
 
@@ -102,6 +123,24 @@ get_register_pointer(GLcontext * ctx,
                      const struct gl_program_machine *machine)
 {
    /* XXX relative addressing... */
+
+   if (source->RelAddr) {
+      const GLint reg = source->Index + machine->AddressReg[0][0];
+      ASSERT( (source->File == PROGRAM_ENV_PARAM) || 
+        (source->File == PROGRAM_STATE_VAR) );
+      if (reg < 0 || reg > MAX_NV_VERTEX_PROGRAM_PARAMS)
+         return ZeroVec;
+      else if (source->File == PROGRAM_ENV_PARAM)
+         return ctx->VertexProgram.Parameters[reg];
+      else {
+         /*
+         ASSERT(source->File == PROGRAM_LOCAL_PARAM);
+         */
+         return machine->CurProgram->Parameters->ParameterValues[reg];
+      }
+   }
+
+
    switch (source->File) {
    case PROGRAM_TEMPORARY:
       ASSERT(source->Index < MAX_PROGRAM_TEMPS);
@@ -665,6 +704,13 @@ _mesa_execute_program(GLcontext * ctx,
             }
          }
          break;
+      case OPCODE_ARL:
+         {
+            GLfloat t[4];
+            fetch_vector4(ctx, &inst->SrcReg[0], machine, t);
+            machine->AddressReg[0][0] = (GLint) FLOORF(t[0]);
+         }
+         break;
       case OPCODE_BGNLOOP:
          /* no-op */
          break;
@@ -746,8 +792,7 @@ _mesa_execute_program(GLcontext * ctx,
             }
             store_vector4(inst, machine, result);
 #else
-            static const GLfloat result[4] = { 0, 0, 0, 0 };
-            store_vector4(inst, machine, result);
+            store_vector4(inst, machine, ZeroVec);
 #endif
          }
          break;
@@ -771,8 +816,7 @@ _mesa_execute_program(GLcontext * ctx,
             }
             store_vector4(inst, machine, result);
 #else
-            static const GLfloat result[4] = { 0, 0, 0, 0 };
-            store_vector4(inst, machine, result);
+            store_vector4(inst, machine, ZeroVec);
 #endif
          }
          break;
@@ -823,6 +867,36 @@ _mesa_execute_program(GLcontext * ctx,
             result[2] = a[2];
             result[3] = b[3];
             store_vector4(inst, machine, result);
+         }
+         break;
+      case OPCODE_EXP:
+         /* XXX currently broken! */
+         {
+            GLfloat t[4], q[4], floor_t0;
+            fetch_vector1(ctx, &inst->SrcReg[0], machine, t);
+            floor_t0 = FLOORF(t[0]);
+            if (floor_t0 > FLT_MAX_EXP) {
+               SET_POS_INFINITY(q[0]);
+               SET_POS_INFINITY(q[2]);
+            }
+            else if (floor_t0 < FLT_MIN_EXP) {
+               q[0] = 0.0F;
+               q[2] = 0.0F;
+            }
+            else {
+#ifdef USE_IEEE
+               GLint ii = (GLint) floor_t0;
+               ii = (ii < 23) + 0x3f800000;
+               SET_FLOAT_BITS(q[0], ii);
+               q[0] = *((GLfloat *) (void *)&ii);
+#else
+               q[0] = (GLfloat) pow(2.0, floor_t0);
+#endif
+               q[2] = (GLfloat) (q[0] * LOG2(q[1]));
+            }
+            q[1] = t[0] - floor_t0;
+            q[3] = 1.0F;
+            store_vector4( inst, machine, q );
          }
          break;
       case OPCODE_EX2:         /* Exponential base 2 */
@@ -935,6 +1009,43 @@ _mesa_execute_program(GLcontext * ctx,
                       result[0], result[1], result[2], result[3],
                       a[0], a[1], a[2], a[3]);
             }
+         }
+         break;
+      case OPCODE_LOG:
+         {
+            GLfloat t[4], q[4], abs_t0;
+            fetch_vector1(ctx, &inst->SrcReg[0], machine, t);
+            abs_t0 = FABSF(t[0]);
+            if (abs_t0 != 0.0F) {
+               /* Since we really can't handle infinite values on VMS
+                * like other OSes we'll use __MAXFLOAT to represent
+                * infinity.  This may need some tweaking.
+                */
+#ifdef VMS
+               if (abs_t0 == __MAXFLOAT)
+#else
+               if (IS_INF_OR_NAN(abs_t0))
+#endif
+               {
+                  SET_POS_INFINITY(q[0]);
+                  q[1] = 1.0F;
+                  SET_POS_INFINITY(q[2]);
+               }
+               else {
+                  int exponent;
+                  GLfloat mantissa = FREXPF(t[0], &exponent);
+                  q[0] = (GLfloat) (exponent - 1);
+                  q[1] = (GLfloat) (2.0 * mantissa); /* map [.5, 1) -> [1, 2) */
+                  q[2] = (GLfloat) (q[0] + LOG2(q[1]));
+               }
+            }
+            else {
+               SET_NEG_INFINITY(q[0]);
+               q[1] = 1.0F;
+               SET_NEG_INFINITY(q[2]);
+            }
+            q[3] = 1.0;
+            store_vector4(inst, machine, q);
          }
          break;
       case OPCODE_LRP:
