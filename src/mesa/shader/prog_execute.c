@@ -122,8 +122,6 @@ get_register_pointer(GLcontext * ctx,
                      const struct prog_src_register *source,
                      const struct gl_program_machine *machine)
 {
-   /* XXX relative addressing... */
-
    if (source->RelAddr) {
       const GLint reg = source->Index + machine->AddressReg[0][0];
       ASSERT( (source->File == PROGRAM_ENV_PARAM) || 
