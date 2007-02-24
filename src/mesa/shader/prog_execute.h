@@ -35,6 +35,10 @@ typedef void (*FetchTexelDerivFunc)(GLcontext *ctx, const GLfloat texcoord[4],
                                     GLuint unit, GLfloat color[4]);
 
 
+/** The larger of VERT_RESULT_MAX, FRAG_RESULT_MAX */
+#define MAX_PROGRAM_OUTPUTS VERT_RESULT_MAX
+
+
 /**
  * Virtual machine state used during execution of vertex/fragment programs.
  */
@@ -50,7 +54,7 @@ struct gl_program_machine
    GLfloat VertAttribs[VERT_ATTRIB_MAX][4];
 
    GLfloat Temporaries[MAX_PROGRAM_TEMPS][4];
-   GLfloat Outputs[FRAG_RESULT_MAX][4];
+   GLfloat Outputs[MAX_PROGRAM_OUTPUTS][4];
    GLuint CondCodes[4];  /**< COND_* value for x/y/z/w */
 
    GLint AddressReg[MAX_VERTEX_PROGRAM_ADDRESS_REGS][4];

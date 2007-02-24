@@ -153,8 +153,7 @@ get_register_pointer(GLcontext * ctx,
       }
 
    case PROGRAM_OUTPUT:
-      /* This is only for PRINT */
-      ASSERT(source->Index < FRAG_RESULT_MAX);
+      ASSERT(source->Index < MAX_PROGRAM_OUTPUTS);
       return machine->Outputs[source->Index];
 
    case PROGRAM_LOCAL_PARAM:
@@ -453,9 +452,11 @@ store_vector4(const struct prog_instruction *inst,
 
    switch (dest->File) {
    case PROGRAM_OUTPUT:
+      ASSERT(dest->Index < MAX_PROGRAM_OUTPUTS);
       dstReg = machine->Outputs[dest->Index];
       break;
    case PROGRAM_TEMPORARY:
+      ASSERT(dest->Index < MAX_PROGRAM_TEMPS);
       dstReg = machine->Temporaries[dest->Index];
       break;
    case PROGRAM_WRITE_ONLY:
