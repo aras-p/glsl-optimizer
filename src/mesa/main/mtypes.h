@@ -1929,9 +1929,11 @@ struct gl_vertex_program_state
    GLboolean _Enabled;              /**< Enabled and valid program? */
    GLboolean PointSizeEnabled;      /**< GL_VERTEX_PROGRAM_POINT_SIZE_ARB/NV */
    GLboolean TwoSideEnabled;        /**< GL_VERTEX_PROGRAM_TWO_SIDE_ARB/NV */
-   struct gl_vertex_program *Current;  /**< ptr to currently bound program */
+   struct gl_vertex_program *Current;  /**< user-bound vertex program */
 
-   /** Currently enabled and valid program (including internal programs) */
+   /** Currently enabled and valid program (including internal programs
+    * and compiled shader programs).
+    */
    struct gl_vertex_program *_Current;
 
    GLfloat Parameters[MAX_PROGRAM_ENV_PARAMS][4]; /**< Env params */
@@ -1962,9 +1964,11 @@ struct gl_fragment_program_state
 {
    GLboolean Enabled;     /**< User-set fragment program enable flag */
    GLboolean _Enabled;    /**< Fragment program enabled and valid? */
-   struct gl_fragment_program *Current;  /**< User-bound program */
+   struct gl_fragment_program *Current;  /**< User-bound fragment program */
 
-   /** Currently enabled and valid program (including internal programs) */
+   /** Currently enabled and valid program (including internal programs
+    * and compiled shader programs).
+    */
    struct gl_fragment_program *_Current;
 
    GLfloat Parameters[MAX_PROGRAM_ENV_PARAMS][4]; /**< Env params */
@@ -2099,9 +2103,7 @@ struct gl_shader_program
  */
 struct gl_shader_state
 {
-   GLboolean _VertexShaderPresent;
-   GLboolean _FragmentShaderPresent;
-   struct gl_shader_program *CurrentProgram;
+   struct gl_shader_program *CurrentProgram; /**< The user-bound program */
 };
 
 

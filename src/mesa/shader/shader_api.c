@@ -199,8 +199,7 @@ _mesa_lookup_shader(GLcontext *ctx, GLuint name)
 void
 _mesa_init_shader_state(GLcontext * ctx)
 {
-   ctx->Shader._FragmentShaderPresent = GL_FALSE;
-   ctx->Shader._VertexShaderPresent = GL_FALSE;
+   /* no-op */
 }
 
 

@@ -102,10 +102,6 @@ _swrast_update_rasterflags( GLcontext *ctx )
       rasterMask |= FRAGPROG_BIT;
    }
 
-   if (ctx->Shader._FragmentShaderPresent) {
-      rasterMask |= FRAGPROG_BIT;
-   }
-
    if (ctx->ATIFragmentShader._Enabled) {
       rasterMask |= ATIFRAGSHADER_BIT;
    }
