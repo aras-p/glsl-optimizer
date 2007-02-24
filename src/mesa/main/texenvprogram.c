@@ -1239,10 +1239,12 @@ _mesa_UpdateTexEnvProgram( GLcontext *ctx )
    ASSERT(ctx->FragmentProgram._MaintainTexEnvProgram);
 
    /* If a conventional fragment program/shader isn't in effect... */
-   if (!ctx->FragmentProgram._Current) {
+   if (!ctx->FragmentProgram._Enabled &&
+       !ctx->Shader.CurrentProgram) {
       make_state_key(ctx, &key);
       hash = hash_key(&key);
       
+      ctx->FragmentProgram._Current =
       ctx->FragmentProgram._TexEnvProgram =
          search_cache(&ctx->Texture.env_fp_cache, hash, &key, sizeof(key));
 
@@ -1251,7 +1253,9 @@ _mesa_UpdateTexEnvProgram( GLcontext *ctx )
             _mesa_printf("Building new texenv proggy for key %x\n", hash);
 
          /* create new tex env program */
-         ctx->FragmentProgram._TexEnvProgram = (struct gl_fragment_program *) 
+	 ctx->FragmentProgram._Current =
+         ctx->FragmentProgram._TexEnvProgram =
+            (struct gl_fragment_program *) 
             ctx->Driver.NewProgram(ctx, GL_FRAGMENT_PROGRAM_ARB, 0);
 
          create_new_program(ctx, &key, ctx->FragmentProgram._TexEnvProgram);
@@ -1263,8 +1267,10 @@ _mesa_UpdateTexEnvProgram( GLcontext *ctx )
          if (0)
             _mesa_printf("Found existing texenv program for key %x\n", hash);
       }
-      ctx->FragmentProgram._Current = ctx->FragmentProgram._TexEnvProgram;
    } 
+   else {
+      ctx->FragmentProgram._Current = ctx->FragmentProgram.Current;
+   }
 
    /* Tell the driver about the change.  Could define a new target for
     * this?
