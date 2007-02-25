@@ -396,23 +396,51 @@ _mesa_fetch_state(GLcontext *ctx, const gl_state_index state[],
       return;
 
    case STATE_INTERNAL:
-      {
-         switch (state[1]) {
-	    case STATE_TEXRECT_SCALE: {
-   	       const int unit = (int) state[2];
-	       const struct gl_texture_object *texObj = ctx->Texture.Unit[unit]._Current;
-	       if (texObj) {
-		  struct gl_texture_image *texImage = texObj->Image[0][0];
-		  ASSIGN_4V(value, 1.0 / texImage->Width, 1.0 / texImage->Height, 0, 1);
-	       }
-               break;
-	    }
-	    default:
-	       /* unknown state indexes are silently ignored
-	       *  should be handled by the driver.
-	       */
-               return;
+      switch (state[1]) {
+      case STATE_NORMAL_SCALE:
+         ASSIGN_4V(value, ctx->_ModelViewInvScale, 0, 0, 1);
+         return;
+      case STATE_TEXRECT_SCALE:
+         {
+            const int unit = (int) state[2];
+            const struct gl_texture_object *texObj
+               = ctx->Texture.Unit[unit]._Current;
+            if (texObj) {
+               struct gl_texture_image *texImage = texObj->Image[0][0];
+               ASSIGN_4V(value, 1.0 / texImage->Width,
+                         1.0 / texImage->Height,
+                         0.0, 1.0);
+            }
          }
+         return;
+      case STATE_FOG_PARAMS_OPTIMIZED:
+         /* for simpler per-vertex/pixel fog calcs. POW (for EXP/EXP2 fog)
+          * might be more expensive than EX2 on some hw, plus it needs
+          * another constant (e) anyway. Linear fog can now be done with a
+          * single MAD.
+          * linear: fogcoord * -1/(end-start) + end/(end-start)
+          * exp: 2^-(density/ln(2) * fogcoord)
+          * exp2: 2^-((density/(ln(2)^2) * fogcoord)^2)
+          */
+         value[0] = -1.0F / (ctx->Fog.End - ctx->Fog.Start);
+         value[1] = ctx->Fog.End / (ctx->Fog.End - ctx->Fog.Start);
+         value[2] = ctx->Fog.Density * ONE_DIV_LN2;
+         value[3] = ctx->Fog.Density * ONE_DIV_SQRT_LN2;
+         return;
+      case STATE_SPOT_DIR_NORMALIZED: {
+         /* here, state[2] is the light number */
+         /* pre-normalize spot dir */
+         const GLuint ln = (GLuint) state[2];
+         COPY_3V(value, ctx->Light.Light[ln].EyeDirection);
+         NORMALIZE_3FV(value);
+         value[3] = ctx->Light.Light[ln]._CosCutoff;
+         return;
+      }
+      default:
+         /* unknown state indexes are silently ignored
+          *  should be handled by the driver.
+          */
+         return;
       }
       return;
 
