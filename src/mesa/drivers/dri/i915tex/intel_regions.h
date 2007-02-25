@@ -103,7 +103,7 @@ void intel_region_data(intelScreenPrivate *intelScreen,
                        struct intel_region *dest,
                        GLuint dest_offset,
                        GLuint destx, GLuint desty,
-                       void *src, GLuint src_stride,
+                       const void *src, GLuint src_stride,
                        GLuint srcx, GLuint srcy, GLuint width, GLuint height);
 
 /* Copy rectangular sub-regions
