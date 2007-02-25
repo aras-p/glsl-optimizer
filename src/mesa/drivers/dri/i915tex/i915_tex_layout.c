@@ -62,15 +62,23 @@ i915_miptree_layout(struct intel_mipmap_tree * mt)
    case GL_TEXTURE_CUBE_MAP:{
          const GLuint dim = mt->width0;
          GLuint face;
+         GLuint lvlWidth = mt->width0, lvlHeight = mt->height0;
+
+         assert(lvlWidth == lvlHeight); /* cubemap images are square */
 
          /* double pitch for cube layouts */
          mt->pitch = ((dim * mt->cpp * 2 + 3) & ~3) / mt->cpp;
          mt->total_height = dim * 4;
 
-         for (level = mt->first_level; level <= mt->last_level; level++)
+         for (level = mt->first_level; level <= mt->last_level; level++) {
             intel_miptree_set_level_info(mt, level, 6,
                                          0, 0,
-                                         mt->pitch, mt->total_height, 1);
+                                         /*OLD: mt->pitch, mt->total_height,*/
+                                         lvlWidth, lvlHeight,
+                                         1);
+            lvlWidth /= 2;
+            lvlHeight /= 2;
+         }
 
          for (face = 0; face < 6; face++) {
             GLuint x = initial_offsets[face][0] * dim;

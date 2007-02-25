@@ -34,7 +34,7 @@
 #include "swrast/swrast.h"
 #include "swrast_setup/swrast_setup.h"
 #include "tnl/tnl.h"
-#include "array_cache/acache.h"
+#include "vbo/vbo.h"
 
 static GLboolean 
 gammaInitDriver(__DRIscreenPrivate *sPriv)
@@ -57,7 +57,7 @@ gammaDestroyContext(__DRIcontextPrivate *driContextPriv)
     if (gmesa) {
       _swsetup_DestroyContext( gmesa->glCtx );
       _tnl_DestroyContext( gmesa->glCtx );
-      _ac_DestroyContext( gmesa->glCtx );
+      _vbo_DestroyContext( gmesa->glCtx );
       _swrast_DestroyContext( gmesa->glCtx );
 
       gammaFreeVB( gmesa->glCtx );

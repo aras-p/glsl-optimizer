@@ -138,6 +138,14 @@ typedef union { GLfloat f; GLint i; } fi_type;
 #define M_E (2.7182818284590452354)
 #endif
 
+#ifndef ONE_DIV_LN2
+#define ONE_DIV_LN2 (1.442695040888963456)
+#endif
+
+#ifndef ONE_DIV_SQRT_LN2
+#define ONE_DIV_SQRT_LN2 (1.201122408786449815)
+#endif
+
 #ifndef FLT_MAX_EXP
 #define FLT_MAX_EXP 128
 #endif
@@ -687,6 +695,9 @@ _mesa_pow(double x, double y);
 
 extern int
 _mesa_ffs(int i);
+
+extern int
+_mesa_ffsll(long long i);
 
 extern unsigned int
 _mesa_bitcount(unsigned int n);

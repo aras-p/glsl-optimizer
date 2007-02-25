@@ -107,8 +107,7 @@ struct r200_vertex_program {
         VERTEX_SHADER_INSTRUCTION instr[R200_VSF_MAX_INST + 6];
         int pos_end;
         int inputs[VERT_ATTRIB_MAX];
-        int rev_inputs[16];
-        int gen_inputs_mapped;
+        GLubyte inputmap_rev[16];
         int native;
         int fogpidx;
         int fogmode;
@@ -724,8 +723,6 @@ struct r200_store {
 /* r200_tcl.c
  */
 struct r200_tcl_info {
-   GLuint vertex_format;
-   GLint last_offset;
    GLuint hw_primitive;
 
 /* hw can handle 12 components max */
@@ -735,14 +732,7 @@ struct r200_tcl_info {
    GLuint *Elts;
 
    struct r200_dma_region indexed_verts;
-   struct r200_dma_region weight;
-   struct r200_dma_region obj;
-   struct r200_dma_region rgba;
-   struct r200_dma_region spec;
-   struct r200_dma_region fog;
-   struct r200_dma_region tex[R200_MAX_TEXTURE_UNITS];
-   struct r200_dma_region norm;
-   struct r200_dma_region generic[16];
+   struct r200_dma_region vertex_data[15];
 };
 
 
@@ -812,87 +802,6 @@ struct r200_ioctl {
 #define R200_MAX_PRIMS 64
 
 
-/* Want to keep a cache of these around.  Each is parameterized by
- * only a single value which has only a small range.  Only expect a
- * few, so just rescan the list each time?
- */
-struct dynfn {
-   struct dynfn *next, *prev;
-   int key[2];
-   char *code;
-};
-
-struct dfn_lists {
-   struct dynfn Vertex2f;
-   struct dynfn Vertex2fv;
-   struct dynfn Vertex3f;
-   struct dynfn Vertex3fv;
-   struct dynfn Color4ub;
-   struct dynfn Color4ubv;
-   struct dynfn Color3ub;
-   struct dynfn Color3ubv;
-   struct dynfn Color4f;
-   struct dynfn Color4fv;
-   struct dynfn Color3f;
-   struct dynfn Color3fv;
-   struct dynfn SecondaryColor3ubEXT;
-   struct dynfn SecondaryColor3ubvEXT;
-   struct dynfn SecondaryColor3fEXT;
-   struct dynfn SecondaryColor3fvEXT;
-   struct dynfn Normal3f;
-   struct dynfn Normal3fv;
-   struct dynfn TexCoord3f;
-   struct dynfn TexCoord3fv;
-   struct dynfn TexCoord2f;
-   struct dynfn TexCoord2fv;
-   struct dynfn TexCoord1f;
-   struct dynfn TexCoord1fv;
-   struct dynfn MultiTexCoord3fARB;
-   struct dynfn MultiTexCoord3fvARB;
-   struct dynfn MultiTexCoord2fARB;
-   struct dynfn MultiTexCoord2fvARB;
-   struct dynfn MultiTexCoord1fARB;
-   struct dynfn MultiTexCoord1fvARB;
-   struct dynfn FogCoordfEXT;
-   struct dynfn FogCoordfvEXT;
-};
-
-struct dfn_generators {
-   struct dynfn *(*Vertex2f)( GLcontext *, const int * );
-   struct dynfn *(*Vertex2fv)( GLcontext *, const int * );
-   struct dynfn *(*Vertex3f)( GLcontext *, const int * );
-   struct dynfn *(*Vertex3fv)( GLcontext *, const int * );
-   struct dynfn *(*Color4ub)( GLcontext *, const int * );
-   struct dynfn *(*Color4ubv)( GLcontext *, const int * );
-   struct dynfn *(*Color3ub)( GLcontext *, const int * );
-   struct dynfn *(*Color3ubv)( GLcontext *, const int * );
-   struct dynfn *(*Color4f)( GLcontext *, const int * );
-   struct dynfn *(*Color4fv)( GLcontext *, const int * );
-   struct dynfn *(*Color3f)( GLcontext *, const int * );
-   struct dynfn *(*Color3fv)( GLcontext *, const int * );
-   struct dynfn *(*SecondaryColor3ubEXT)( GLcontext *, const int * );
-   struct dynfn *(*SecondaryColor3ubvEXT)( GLcontext *, const int * );
-   struct dynfn *(*SecondaryColor3fEXT)( GLcontext *, const int * );
-   struct dynfn *(*SecondaryColor3fvEXT)( GLcontext *, const int * );
-   struct dynfn *(*Normal3f)( GLcontext *, const int * );
-   struct dynfn *(*Normal3fv)( GLcontext *, const int * );
-   struct dynfn *(*TexCoord3f)( GLcontext *, const int * );
-   struct dynfn *(*TexCoord3fv)( GLcontext *, const int * );
-   struct dynfn *(*TexCoord2f)( GLcontext *, const int * );
-   struct dynfn *(*TexCoord2fv)( GLcontext *, const int * );
-   struct dynfn *(*TexCoord1f)( GLcontext *, const int * );
-   struct dynfn *(*TexCoord1fv)( GLcontext *, const int * );
-   struct dynfn *(*MultiTexCoord3fARB)( GLcontext *, const int * );
-   struct dynfn *(*MultiTexCoord3fvARB)( GLcontext *, const int * );
-   struct dynfn *(*MultiTexCoord2fARB)( GLcontext *, const int * );
-   struct dynfn *(*MultiTexCoord2fvARB)( GLcontext *, const int * );
-   struct dynfn *(*MultiTexCoord1fARB)( GLcontext *, const int * );
-   struct dynfn *(*MultiTexCoord1fvARB)( GLcontext *, const int * );
-   struct dynfn *(*FogCoordfEXT)( GLcontext *, const int * );
-   struct dynfn *(*FogCoordfvEXT)( GLcontext *, const int * );
-};
-
-
 
 struct r200_prim {
    GLuint start;
@@ -912,43 +821,6 @@ struct r200_prim {
     */
 
 #define R200_MAX_VERTEX_SIZE ((3*6)+11)
-
-struct r200_vbinfo {
-   GLint counter, initial_counter;
-   GLint *dmaptr;
-   void (*notify)( void );
-   GLint vertex_size;
-
-   union { float f; int i; r200_color_t color; } vertex[R200_MAX_VERTEX_SIZE];
-
-   GLfloat *normalptr;
-   GLfloat *floatcolorptr;
-   GLfloat *fogptr;
-   r200_color_t *colorptr;
-   GLfloat *floatspecptr;
-   r200_color_t *specptr;
-   GLfloat *texcoordptr[8];	/* 6 (TMU) + 2 for r200_vtxfmt_c.c when GL_TEXTURE6/7 */
-
-
-   GLenum *prim;		/* &ctx->Driver.CurrentExecPrimitive */
-   GLuint primflags;
-   GLboolean enabled;		/* *_NO_VTXFMT / *_NO_TCL env vars */
-   GLboolean installed;
-   GLboolean fell_back;
-   GLboolean recheck;
-   GLint nrverts;
-   GLuint vtxfmt_0, vtxfmt_1;
-
-   GLuint installed_vertex_format;
-   GLuint installed_color_3f_sz;
-
-   struct r200_prim primlist[R200_MAX_PRIMS];
-   int nrprims;
-
-   struct dfn_lists dfn_cache;
-   struct dfn_generators codegen;
-   GLvertexformat vtxfmt;
-};
 
 
 struct r200_context {
@@ -1040,10 +912,6 @@ struct r200_context {
    /* r200_swtcl.c
     */
    struct r200_swtcl_info swtcl;
-
-   /* r200_vtxfmt.c
-    */
-   struct r200_vbinfo vb;
 
    /* Mirrors of some DRI state
     */

@@ -177,7 +177,7 @@ struct intel_context
    GLuint second_last_swap_fence;
    
    GLboolean aub_wrap;
-   GLboolean stats_wm;
+   GLuint stats_wm;
 
    struct intel_batchbuffer *batch;
 

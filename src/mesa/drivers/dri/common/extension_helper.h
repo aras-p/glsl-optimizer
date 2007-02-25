@@ -2466,10 +2466,10 @@ static const char MultiTexCoord4ivARB_names[] =
     "";
 #endif
 
-#if defined(need_GL_VERSION_2_0)
-static const char GetVertexAttribPointervARB_names[] = 
-    "iip\0" /* Parameter signature */
-    "glGetVertexAttribPointerv\0"
+#if defined(need_GL_EXT_gpu_program_parameters)
+static const char ProgramLocalParameters4fvEXT_names[] = 
+    "iiip\0" /* Parameter signature */
+    "glProgramLocalParameters4fvEXT\0"
     "";
 #endif
 
@@ -3152,13 +3152,6 @@ static const char VertexAttribPointerNV_names[] =
     "";
 #endif
 
-#if defined(need_GL_EXT_gpu_program_parameters)
-static const char ProgramLocalParameters4fvEXT_names[] = 
-    "iiip\0" /* Parameter signature */
-    "glProgramLocalParameters4fvEXT\0"
-    "";
-#endif
-
 #if defined(need_GL_EXT_framebuffer_object)
 static const char GetFramebufferAttachmentParameterivEXT_names[] = 
     "iiip\0" /* Parameter signature */
@@ -3781,9 +3774,10 @@ static const char ReplacementCodeuiColor3fVertex3fSUN_names[] =
     "";
 #endif
 
-#if defined(need_GL_ARB_vertex_program) || defined(need_GL_NV_vertex_program)
+#if defined(need_GL_VERSION_2_0) || defined(need_GL_ARB_vertex_program) || defined(need_GL_NV_vertex_program)
 static const char GetVertexAttribPointervNV_names[] = 
     "iip\0" /* Parameter signature */
+    "glGetVertexAttribPointerv\0"
     "glGetVertexAttribPointervARB\0"
     "glGetVertexAttribPointervNV\0"
     "";
@@ -5343,8 +5337,8 @@ static const struct dri_extension_function GL_EXT_framebuffer_object_functions[]
 
 #if defined(need_GL_EXT_gpu_program_parameters)
 static const struct dri_extension_function GL_EXT_gpu_program_parameters_functions[] = {
-    { ProgramEnvParameters4fvEXT_names, ProgramEnvParameters4fvEXT_remap_index, -1 },
     { ProgramLocalParameters4fvEXT_names, ProgramLocalParameters4fvEXT_remap_index, -1 },
+    { ProgramEnvParameters4fvEXT_names, ProgramEnvParameters4fvEXT_remap_index, -1 },
     { NULL, 0, 0 }
 };
 #endif
@@ -6263,7 +6257,6 @@ static const struct dri_extension_function GL_VERSION_2_0_functions[] = {
     { GetVertexAttribfvARB_names, GetVertexAttribfvARB_remap_index, -1 },
     { GetAttribLocationARB_names, GetAttribLocationARB_remap_index, -1 },
     { Uniform3ivARB_names, Uniform3ivARB_remap_index, -1 },
-    { GetVertexAttribPointervARB_names, GetVertexAttribPointervARB_remap_index, -1 },
     { VertexAttrib4sARB_names, VertexAttrib4sARB_remap_index, -1 },
     { VertexAttrib2dvARB_names, VertexAttrib2dvARB_remap_index, -1 },
     { VertexAttrib2fvARB_names, VertexAttrib2fvARB_remap_index, -1 },
@@ -6295,6 +6288,7 @@ static const struct dri_extension_function GL_VERSION_2_0_functions[] = {
     { Uniform4iARB_names, Uniform4iARB_remap_index, -1 },
     { UseProgramObjectARB_names, UseProgramObjectARB_remap_index, -1 },
     { DeleteProgram_names, DeleteProgram_remap_index, -1 },
+    { GetVertexAttribPointervNV_names, GetVertexAttribPointervNV_remap_index, -1 },
     { Uniform2iARB_names, Uniform2iARB_remap_index, -1 },
     { VertexAttrib4dARB_names, VertexAttrib4dARB_remap_index, -1 },
     { GetUniformLocationARB_names, GetUniformLocationARB_remap_index, -1 },

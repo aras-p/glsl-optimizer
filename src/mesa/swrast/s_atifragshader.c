@@ -325,7 +325,8 @@ execute_shader(GLcontext *ctx, const struct ati_fragment_shader *shader,
    struct atifs_instruction *inst;
    struct atifs_setupinst *texinst;
    GLint optype;
-   GLint i, j, pass;
+   GLuint i;
+   GLint j, pass;
    GLint dstreg;
    GLfloat src[2][3][4];
    GLfloat zeros[4] = { 0.0, 0.0, 0.0, 0.0 };
@@ -348,7 +349,7 @@ execute_shader(GLcontext *ctx, const struct ati_fragment_shader *shader,
 
 	 /* setup the source registers for color and alpha ops */
 	 for (optype = 0; optype < 2; optype++) {
-	    for (i = 0; i < inst->ArgCount[optype]; i++) {
+ 	    for (i = 0; i < inst->ArgCount[optype]; i++) {
 	       GLint index = inst->SrcReg[optype][i].Index;
 
 	       if (index >= GL_REG_0_ATI && index <= GL_REG_5_ATI)

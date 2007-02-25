@@ -31,7 +31,7 @@
 #include "mtypes.h"		/* for GLcontext... */
 
 struct brw_context;
-struct brw_draw_prim;
+struct vbo_prim;
 
 void brw_fallback( GLcontext *ctx );
 void brw_unfallback( GLcontext *ctx );
@@ -39,7 +39,7 @@ void brw_unfallback( GLcontext *ctx );
 void brw_loopback_vertex_list( GLcontext *ctx,
 			       const GLfloat *buffer,
 			       const GLubyte *attrsz,
-			       const struct brw_draw_prim *prim,
+			       const struct vbo_prim *prim,
 			       GLuint prim_count,
 			       GLuint wrap_count,
 			       GLuint vertex_size);

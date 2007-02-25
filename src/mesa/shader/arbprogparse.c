@@ -4101,7 +4101,7 @@ _mesa_parse_arb_vertex_program(GLcontext *ctx, GLenum target,
    program->Base.Parameters = ap.Base.Parameters; 
 
 #if DEBUG_VP
-   _mesa_printf("____________Vertex program %u __________\n", program->Base.ID);
+   _mesa_printf("____________Vertex program %u __________\n", program->Base.Id);
    _mesa_print_program(&program->Base);
 #endif
 }

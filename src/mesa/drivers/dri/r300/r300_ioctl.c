@@ -70,10 +70,6 @@ static void r300ClearBuffer(r300ContextPtr r300, int flags, int buffer)
 	drm_radeon_cmd_header_t *cmd = NULL;
 	r300ContextPtr rmesa=r300;
 
-#ifndef CB_DPATH
-	int i;
-#endif
-	
 	if (RADEON_DEBUG & DEBUG_IOCTL)
 		fprintf(stderr, "%s: %s buffer (%i,%i %ix%i)\n",
 			__FUNCTION__, buffer ? "back" : "front",
@@ -89,168 +85,8 @@ static void r300ClearBuffer(r300ContextPtr r300, int flags, int buffer)
 
 	cboffset += r300->radeon.radeonScreen->fbLocation;
 
-#ifndef CB_DPATH
-	R300_STATECHANGE(r300, vir[0]);
-	((drm_r300_cmd_header_t*)r300->hw.vir[0].cmd)->packet0.count = 1;
-	r300->hw.vir[0].cmd[1] = 0x21030003;
-
-	R300_STATECHANGE(r300, vir[1]);
-	((drm_r300_cmd_header_t*)r300->hw.vir[1].cmd)->packet0.count = 1;
-	r300->hw.vir[1].cmd[1] = 0xF688F688;
-
-	R300_STATECHANGE(r300, vic);
-	r300->hw.vic.cmd[R300_VIC_CNTL_0] = 0x00000001;
-	r300->hw.vic.cmd[R300_VIC_CNTL_1] = 0x00000405;
-	
-	R300_STATECHANGE(r300, vof);
-	r300->hw.vof.cmd[R300_VOF_CNTL_0] = R300_VAP_OUTPUT_VTX_FMT_0__POS_PRESENT
-				| R300_VAP_OUTPUT_VTX_FMT_0__COLOR_PRESENT;
-	r300->hw.vof.cmd[R300_VOF_CNTL_1] = 0; /* no textures */
-	
-	R300_STATECHANGE(r300, txe);
-	r300->hw.txe.cmd[R300_TXE_ENABLE] = 0;
-	
-	R300_STATECHANGE(r300, vpt);
-	r300->hw.vpt.cmd[R300_VPT_XSCALE] = r300PackFloat32(1.0);
-	r300->hw.vpt.cmd[R300_VPT_XOFFSET] = r300PackFloat32(dPriv->x);
-	r300->hw.vpt.cmd[R300_VPT_YSCALE] = r300PackFloat32(1.0);
-	r300->hw.vpt.cmd[R300_VPT_YOFFSET] = r300PackFloat32(dPriv->y);
-	r300->hw.vpt.cmd[R300_VPT_ZSCALE] = r300PackFloat32(1.0);
-	r300->hw.vpt.cmd[R300_VPT_ZOFFSET] = r300PackFloat32(0.0);
-
-	R300_STATECHANGE(r300, at);
-	r300->hw.at.cmd[R300_AT_ALPHA_TEST] = 0;
-	
-	R300_STATECHANGE(r300, bld);
-	r300->hw.bld.cmd[R300_BLD_CBLEND] = 0;
-	r300->hw.bld.cmd[R300_BLD_ABLEND] = 0;
-	
-	if (r300->radeon.radeonScreen->cpp == 4)
-		cbpitch |= R300_COLOR_FORMAT_ARGB8888;
-	else
-		cbpitch |= R300_COLOR_FORMAT_RGB565;
-	
-	if (r300->radeon.sarea->tiling_enabled)
-		cbpitch |= R300_COLOR_TILE_ENABLE;
-	
-	R300_STATECHANGE(r300, cb);
-	r300->hw.cb.cmd[R300_CB_OFFSET] = cboffset;
-	r300->hw.cb.cmd[R300_CB_PITCH] = cbpitch;
-
-	R300_STATECHANGE(r300, unk221C);
-	r300->hw.unk221C.cmd[1] = R300_221C_CLEAR;
-
-	R300_STATECHANGE(r300, ps);
-	r300->hw.ps.cmd[R300_PS_POINTSIZE] =
-		((dPriv->w * 6) << R300_POINTSIZE_X_SHIFT) |
-		((dPriv->h * 6) << R300_POINTSIZE_Y_SHIFT);
-
-	R300_STATECHANGE(r300, ri);
-	for(i = 1; i <= 8; ++i)
-		r300->hw.ri.cmd[i] = R300_RS_INTERP_USED;
-
-	R300_STATECHANGE(r300, rc);
-	/* The second constant is needed to get glxgears display anything .. */
-	r300->hw.rc.cmd[1] = (1 << R300_RS_CNTL_CI_CNT_SHIFT) | R300_RS_CNTL_0_UNKNOWN_18;
-	r300->hw.rc.cmd[2] = 0;
-	
-	R300_STATECHANGE(r300, rr);
-	((drm_r300_cmd_header_t*)r300->hw.rr.cmd)->packet0.count = 1;
-	r300->hw.rr.cmd[1] = 0x00004000;
-
-	R300_STATECHANGE(r300, cmk);
-	if (flags & CLEARBUFFER_COLOR) {
-		r300->hw.cmk.cmd[R300_CMK_COLORMASK] =
-			(ctx->Color.ColorMask[BCOMP] ? R300_COLORMASK0_B : 0) |
-			(ctx->Color.ColorMask[GCOMP] ? R300_COLORMASK0_G : 0) |
-			(ctx->Color.ColorMask[RCOMP] ? R300_COLORMASK0_R : 0) |
-			(ctx->Color.ColorMask[ACOMP] ? R300_COLORMASK0_A : 0);
-	} else {
-		r300->hw.cmk.cmd[R300_CMK_COLORMASK] = 0;
-	}
-
-	R300_STATECHANGE(r300, fp);
-	r300->hw.fp.cmd[R300_FP_CNTL0] = 0; /* 1 pass, no textures */
-	r300->hw.fp.cmd[R300_FP_CNTL1] = 0; /* no temporaries */
-	r300->hw.fp.cmd[R300_FP_CNTL2] = 0; /* no offset, one ALU instr */
-	r300->hw.fp.cmd[R300_FP_NODE0] = 0;
-	r300->hw.fp.cmd[R300_FP_NODE1] = 0;
-	r300->hw.fp.cmd[R300_FP_NODE2] = 0;
-	r300->hw.fp.cmd[R300_FP_NODE3] = R300_PFS_NODE_OUTPUT_COLOR;
-
-	R300_STATECHANGE(r300, fpi[0]);
-	R300_STATECHANGE(r300, fpi[1]);
-	R300_STATECHANGE(r300, fpi[2]);
-	R300_STATECHANGE(r300, fpi[3]);
-	((drm_r300_cmd_header_t*)r300->hw.fpi[0].cmd)->packet0.count = 1;
-	((drm_r300_cmd_header_t*)r300->hw.fpi[1].cmd)->packet0.count = 1;
-	((drm_r300_cmd_header_t*)r300->hw.fpi[2].cmd)->packet0.count = 1;
-	((drm_r300_cmd_header_t*)r300->hw.fpi[3].cmd)->packet0.count = 1;
-
-	/* MOV o0, t0 */
-	r300->hw.fpi[0].cmd[1] = FP_INSTRC(MAD, FP_ARGC(SRC0C_XYZ), FP_ARGC(ONE), FP_ARGC(ZERO));
-	r300->hw.fpi[1].cmd[1] = FP_SELC(0,NO,XYZ,FP_TMP(0),0,0);
-	r300->hw.fpi[2].cmd[1] = FP_INSTRA(MAD, FP_ARGA(SRC0A), FP_ARGA(ONE), FP_ARGA(ZERO));
-	r300->hw.fpi[3].cmd[1] = FP_SELA(0,NO,W,FP_TMP(0),0,0);
-
-	R300_STATECHANGE(r300, pvs);
-	r300->hw.pvs.cmd[R300_PVS_CNTL_1] =
-		(0 << R300_PVS_CNTL_1_PROGRAM_START_SHIFT) |
-		(0 << R300_PVS_CNTL_1_POS_END_SHIFT) |
-		(1 << R300_PVS_CNTL_1_PROGRAM_END_SHIFT);
-	r300->hw.pvs.cmd[R300_PVS_CNTL_2] = 0; /* no parameters */
-	r300->hw.pvs.cmd[R300_PVS_CNTL_3] =
-		(1 << R300_PVS_CNTL_3_PROGRAM_UNKNOWN_SHIFT);
-
-	R300_STATECHANGE(r300, vpi);
-	((drm_r300_cmd_header_t*)r300->hw.vpi.cmd)->packet0.count = 8;
-
-	/* MOV o0, i0; */
-	r300->hw.vpi.cmd[1] = VP_OUT(ADD,OUT,0,XYZW);
-	r300->hw.vpi.cmd[2] = VP_IN(IN,0);
-	r300->hw.vpi.cmd[3] = VP_ZERO();
-	r300->hw.vpi.cmd[4] = 0;
-
-	/* MOV o1, i1; */
-	r300->hw.vpi.cmd[5] = VP_OUT(ADD,OUT,1,XYZW);
-	r300->hw.vpi.cmd[6] = VP_IN(IN,1);
-	r300->hw.vpi.cmd[7] = VP_ZERO();
-	r300->hw.vpi.cmd[8] = 0;
-
-	R300_STATECHANGE(r300, zs);
-	r300->hw.zs.cmd[R300_ZS_CNTL_0] = 0;
-	r300->hw.zs.cmd[R300_ZS_CNTL_1] = 0;
-	if (flags & CLEARBUFFER_DEPTH) {
-		r300->hw.zs.cmd[R300_ZS_CNTL_0] |= R300_RB3D_Z_WRITE_ONLY;
-		r300->hw.zs.cmd[R300_ZS_CNTL_1] |= (R300_ZS_ALWAYS<<R300_RB3D_ZS1_DEPTH_FUNC_SHIFT);
-	} else {
-		r300->hw.zs.cmd[R300_ZS_CNTL_0] |= R300_RB3D_Z_DISABLED_1; // disable
-	}
-	
-	R300_STATECHANGE(r300, zs);
-	if (flags & CLEARBUFFER_STENCIL) {
-		r300->hw.zs.cmd[R300_ZS_CNTL_0] |= R300_RB3D_STENCIL_ENABLE;
-		r300->hw.zs.cmd[R300_ZS_CNTL_1] |= 
-		    (R300_ZS_ALWAYS<<R300_RB3D_ZS1_FRONT_FUNC_SHIFT) | 
-		    (R300_ZS_REPLACE<<R300_RB3D_ZS1_FRONT_FAIL_OP_SHIFT) |
-		    (R300_ZS_REPLACE<<R300_RB3D_ZS1_FRONT_ZPASS_OP_SHIFT) |
-		    (R300_ZS_REPLACE<<R300_RB3D_ZS1_FRONT_ZFAIL_OP_SHIFT) |
-		    (R300_ZS_ALWAYS<<R300_RB3D_ZS1_BACK_FUNC_SHIFT) |
-		    (R300_ZS_REPLACE<<R300_RB3D_ZS1_BACK_FAIL_OP_SHIFT) |
-		    (R300_ZS_REPLACE<<R300_RB3D_ZS1_BACK_ZPASS_OP_SHIFT) |
-		    (R300_ZS_REPLACE<<R300_RB3D_ZS1_BACK_ZFAIL_OP_SHIFT) ;
-		r300->hw.zs.cmd[R300_ZS_CNTL_2] = r300->state.stencil.clear;
-	}
-			
-	/* Make sure we have enough space */
-	r300EnsureCmdBufSpace(r300, r300->hw.max_state_size + 9+8, __FUNCTION__);
-
-	r300EmitState(r300);
-#else
-#if 1
 	cp_wait(r300, R300_WAIT_3D | R300_WAIT_3D_CLEAN);
 	end_3d(rmesa);
-#endif
 	
 	R300_STATECHANGE(r300, cb);
 	reg_start(R300_RB3D_COLOROFFSET0, 0);
@@ -313,8 +149,6 @@ static void r300ClearBuffer(r300ContextPtr r300, int flags, int buffer)
 	e32(r300->state.stencil.clear);
 	}
 	
-#endif
-
 	cmd2 = (drm_r300_cmd_header_t*)r300AllocCmdBuf(r300, 9, __FUNCTION__);
 	cmd2[0].packet3.cmd_type = R300_CMD_PACKET3;
 	cmd2[0].packet3.packet = R300_CMD_PACKET3_CLEAR;
@@ -327,7 +161,6 @@ static void r300ClearBuffer(r300ContextPtr r300, int flags, int buffer)
 	cmd2[7].u = r300PackFloat32(ctx->Color.ClearColor[2]);
 	cmd2[8].u = r300PackFloat32(ctx->Color.ClearColor[3]);
 
-#if 1
 	reg_start(R300_RB3D_DSTCACHE_CTLSTAT,0);
 	e32(0x0000000a);
 	  
@@ -335,10 +168,8 @@ static void r300ClearBuffer(r300ContextPtr r300, int flags, int buffer)
 	reg_start(0x4f18,0);
 	e32(0x00000003);
 	cp_wait(rmesa, R300_WAIT_3D | R300_WAIT_3D_CLEAN);
-#endif
 }
 
-#ifdef CB_DPATH
 static void r300EmitClearState(GLcontext * ctx)
 {
 	r300ContextPtr r300 = R300_CONTEXT(ctx);
@@ -472,7 +303,6 @@ static void r300EmitClearState(GLcontext * ctx)
 	/*reg_start(0x4500,0);
 	e32(2560-1);*/
 }
-#endif
 
 /**
  * Buffer clear
@@ -524,12 +354,10 @@ static void r300Clear(GLcontext * ctx, GLbitfield mask)
 
 	swapped = r300->radeon.doPageFlip && (r300->radeon.sarea->pfCurrentPage == 1);
 
-#ifdef CB_DPATH
 	/* Make sure it fits there. */
 	r300EnsureCmdBufSpace(r300, 421*3, __FUNCTION__);
 	if(flags || bits)
 		r300EmitClearState(ctx);
-#endif
 
 	if (flags & BUFFER_BIT_FRONT_LEFT) {
 		r300ClearBuffer(r300, bits | CLEARBUFFER_COLOR, swapped);
@@ -544,15 +372,6 @@ static void r300Clear(GLcontext * ctx, GLbitfield mask)
 	if (bits)
 		r300ClearBuffer(r300, bits, 0);
 
-#ifndef CB_DPATH
-	/* Recalculate the hardware state. This could be done more efficiently,
-	 * but do keep it like this for now.
-	 */
-	r300ResetHwState(r300);
-	
-	/* r300ClearBuffer has trampled all over the hardware state.. */
-	r300->hw.all_dirty=GL_TRUE;
-#endif
 }
 
 

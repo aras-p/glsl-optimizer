@@ -52,27 +52,6 @@ i915TexEnv(GLcontext * ctx, GLenum target,
    struct i915_context *i915 = I915_CONTEXT(ctx);
 
    switch (pname) {
-   case GL_TEXTURE_ENV_COLOR:  /* Should be a tracked param */
-   case GL_TEXTURE_ENV_MODE:
-   case GL_COMBINE_RGB:
-   case GL_COMBINE_ALPHA:
-   case GL_SOURCE0_RGB:
-   case GL_SOURCE1_RGB:
-   case GL_SOURCE2_RGB:
-   case GL_SOURCE0_ALPHA:
-   case GL_SOURCE1_ALPHA:
-   case GL_SOURCE2_ALPHA:
-   case GL_OPERAND0_RGB:
-   case GL_OPERAND1_RGB:
-   case GL_OPERAND2_RGB:
-   case GL_OPERAND0_ALPHA:
-   case GL_OPERAND1_ALPHA:
-   case GL_OPERAND2_ALPHA:
-   case GL_RGB_SCALE:
-   case GL_ALPHA_SCALE:
-      i915->tex_program.translated = 0;
-      break;
-
    case GL_TEXTURE_LOD_BIAS:{
          GLuint unit = ctx->Texture.CurrentUnit;
          GLint b = (int) ((*param) * 16.0);
@@ -92,22 +71,8 @@ i915TexEnv(GLcontext * ctx, GLenum target,
 }
 
 
-static void
-i915BindTexture(GLcontext * ctx, GLenum target,
-                struct gl_texture_object *texobj)
-{
-   /* Need this if image format changes between bound textures.
-    * Could try and shortcircuit by checking for differences in
-    * state between incoming and outgoing textures:
-    */
-   I915_CONTEXT(ctx)->tex_program.translated = 0;
-}
-
-
-
 void
 i915InitTextureFuncs(struct dd_function_table *functions)
 {
-   functions->BindTexture = i915BindTexture;
    functions->TexEnv = i915TexEnv;
 }

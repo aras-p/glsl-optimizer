@@ -26,10 +26,6 @@ DRIVER_SOURCES = r200_context.c \
 		 r200_span.c \
 		 r200_maos.c \
 		 r200_sanity.c \
-		 r200_vtxfmt.c \
-		 r200_vtxfmt_c.c \
-		 r200_vtxfmt_sse.c \
-		 r200_vtxfmt_x86.c \
 		 r200_fragshader.c \
 		 r200_vertprog.c \
 		 radeon_screen.c \
@@ -37,7 +33,7 @@ DRIVER_SOURCES = r200_context.c \
 
 C_SOURCES = $(COMMON_SOURCES) $(DRIVER_SOURCES)
 
-X86_SOURCES = r200_vtxtmp_x86.S
+X86_SOURCES = 
 
 DRIVER_DEFINES = -DRADEON_COMMON=1 -DRADEON_COMMON_FOR_R200
 

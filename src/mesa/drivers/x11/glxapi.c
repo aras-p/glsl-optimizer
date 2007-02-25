@@ -241,7 +241,7 @@ glXGetCurrentContext(void)
 #if defined(GLX_USE_TLS)
    return CurrentContext;
 #elif defined(THREADS)
-   return _glthread_GetTSD(&ContextTSD);
+   return (GLXContext) _glthread_GetTSD(&ContextTSD);
 #else
    return CurrentContext;
 #endif

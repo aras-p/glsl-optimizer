@@ -40,7 +40,7 @@
 #include "enums.h"
 
 #include "swrast/swrast.h"
-#include "array_cache/acache.h"
+#include "vbo/vbo.h"
 #include "tnl/tnl.h"
 #include "swrast_setup/swrast_setup.h"
 
@@ -1034,7 +1034,7 @@ static void ffbDDUpdateState(GLcontext *ctx, GLuint newstate)
 
 	_swrast_InvalidateState( ctx, newstate );
 	_swsetup_InvalidateState( ctx, newstate );
-	_ac_InvalidateState( ctx, newstate );
+	_vbo_InvalidateState( ctx, newstate );
 	_tnl_InvalidateState( ctx, newstate );
 
 	if (newstate & _NEW_TEXTURE)

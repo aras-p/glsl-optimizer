@@ -37,7 +37,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "imports.h"
 #include "mtypes.h"
 
-#include "array_cache/acache.h"
+#include "vbo/vbo.h"
 #include "math/m_translate.h"
 #include "tnl/tnl.h"
 #include "tnl/t_pipeline.h"

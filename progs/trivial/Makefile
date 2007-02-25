@@ -40,11 +40,16 @@ SOURCES = \
 	quad-tex-2d.c \
 	quad-tex-pbo.c \
 	quad-tex-3d.c \
-	quad-tex-dep.c \
 	quad.c \
 	quads.c \
 	quadstrip.c \
 	quadstrip-flat.c \
+	dlist-edgeflag.c \
+	dlist-dangling.c \
+	dlist-edgeflag-dangling.c \
+	drawrange.c \
+	drawelements.c \
+	drawarrays.c \
 	tri-blend.c \
 	tri-tex-3d.c \
 	tri-clip.c \
@@ -61,6 +66,9 @@ SOURCES = \
 	tri.c \
 	tristrip-clip.c \
 	tristrip.c \
+	vbo-drawrange.c \
+	vbo-drawelements.c \
+	vbo-drawarrays.c \
 	vp-clip.c \
 	vp-tri.c \
 	vp-line-clip.c \

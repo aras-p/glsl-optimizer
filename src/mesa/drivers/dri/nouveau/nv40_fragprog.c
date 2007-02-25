@@ -5,6 +5,71 @@
 unsigned int NVFP_TX_BOP_COUNT = 5;
 struct _op_xlat NVFP_TX_BOP[64];
 
+
+/*****************************************************************************
+ * Assembly routines
+ * 	- These extend the NV30 routines, which are almost identical.  NV40
+ * 	  just has branching hacked into the instruction set.
+ */
+static int
+NV40FPSupportsResultScale(nvsFunc *shader, nvsScale scale)
+{
+	switch (scale) {
+	case NVS_SCALE_1X:
+	case NVS_SCALE_2X:
+	case NVS_SCALE_4X:
+	case NVS_SCALE_8X:
+	case NVS_SCALE_INV_2X:
+	case NVS_SCALE_INV_4X:
+	case NVS_SCALE_INV_8X:
+		return 1;
+	default:
+		return 0;
+	}
+}
+
+static void
+NV40FPSetResultScale(nvsFunc *shader, nvsScale scale)
+{
+	shader->inst[2] &= ~NV40_FP_OP_DST_SCALE_MASK;
+	shader->inst[2] |= ((unsigned int)scale << NV40_FP_OP_DST_SCALE_SHIFT);
+}
+
+static void
+NV40FPSetBranchTarget(nvsFunc *shader, int addr)
+{
+	shader->inst[2] &= ~NV40_FP_OP_IADDR_MASK;
+	shader->inst[2] |= (addr << NV40_FP_OP_IADDR_SHIFT);
+}
+
+static void
+NV40FPSetBranchElse(nvsFunc *shader, int addr)
+{
+	shader->inst[2] &= ~NV40_FP_OP_ELSE_ID_MASK;
+	shader->inst[2] |= (addr << NV40_FP_OP_ELSE_ID_SHIFT);
+}
+
+static void
+NV40FPSetBranchEnd(nvsFunc *shader, int addr)
+{
+	shader->inst[3] &= ~NV40_FP_OP_END_ID_MASK;
+	shader->inst[3] |= (addr << NV40_FP_OP_END_ID_SHIFT);
+}
+
+static void
+NV40FPSetLoopParams(nvsFunc *shader, int count, int initial, int increment)
+{
+	shader->inst[2] &= ~(NV40_FP_OP_LOOP_COUNT_MASK |
+			     NV40_FP_OP_LOOP_INDEX_MASK |
+			     NV40_FP_OP_LOOP_INCR_MASK);
+	shader->inst[2] |= ((count     << NV40_FP_OP_LOOP_COUNT_SHIFT) |
+			    (initial   << NV40_FP_OP_LOOP_INDEX_SHIFT) |
+			    (increment << NV40_FP_OP_LOOP_INCR_SHIFT));
+}
+
+/*****************************************************************************
+ * Disassembly routines
+ */
 static struct _op_xlat *
 NV40FPGetOPTXRec(nvsFunc * shader, int merged)
 {
@@ -138,6 +203,9 @@ NV40FPInitShaderFuncs(nvsFunc * shader)
    MOD_OPCODE(NVFP_TX_BOP, NV40_FP_OP_BRA_OPCODE_REP , NVS_OP_REP , -1, -1, -1);
    MOD_OPCODE(NVFP_TX_BOP, NV40_FP_OP_BRA_OPCODE_RET , NVS_OP_RET , -1, -1, -1);
 
+   shader->SupportsResultScale	= NV40FPSupportsResultScale;
+   shader->SetResultScale	= NV40FPSetResultScale;
+
    /* fragment.facing */
    shader->GetSourceID		= NV40FPGetSourceID;
 
@@ -149,4 +217,8 @@ NV40FPInitShaderFuncs(nvsFunc * shader)
    shader->GetLoopCount		= NV40FPGetLoopCount;
    shader->GetLoopInitial	= NV40FPGetLoopInitial;
    shader->GetLoopIncrement	= NV40FPGetLoopIncrement;
+   shader->SetBranchTarget	= NV40FPSetBranchTarget;
+   shader->SetBranchElse	= NV40FPSetBranchElse;
+   shader->SetBranchEnd		= NV40FPSetBranchEnd;
+   shader->SetLoopParams	= NV40FPSetLoopParams;
 }

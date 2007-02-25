@@ -42,7 +42,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "context.h"
 #include "framebuffer.h"
 
-#include "array_cache/acache.h"
+#include "vbo/vbo.h"
 #include "tnl/tnl.h"
 #include "tnl/t_pipeline.h"
 #include "swrast_setup/swrast_setup.h"
@@ -53,7 +53,6 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "radeon_tcl.h"
 #include "radeon_tex.h"
 #include "radeon_swtcl.h"
-#include "radeon_vtxfmt.h"
 #include "drirenderbuffer.h"
 
 static void radeonUpdateSpecular( GLcontext *ctx );
@@ -2303,11 +2302,10 @@ static void radeonInvalidateState( GLcontext *ctx, GLuint new_state )
 {
    _swrast_InvalidateState( ctx, new_state );
    _swsetup_InvalidateState( ctx, new_state );
-   _ac_InvalidateState( ctx, new_state );
+   _vbo_InvalidateState( ctx, new_state );
    _tnl_InvalidateState( ctx, new_state );
    _ae_invalidate_state( ctx, new_state );
    RADEON_CONTEXT(ctx)->NewGLState |= new_state;
-   radeonVtxfmtInvalidate( ctx );
 }
 
 

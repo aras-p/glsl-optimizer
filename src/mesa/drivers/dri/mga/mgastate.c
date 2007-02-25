@@ -41,7 +41,7 @@
 #include "mgaregs.h"
 
 #include "swrast/swrast.h"
-#include "array_cache/acache.h"
+#include "vbo/vbo.h"
 #include "tnl/tnl.h"
 #include "tnl/t_context.h"
 #include "tnl/t_pipeline.h"
@@ -1042,7 +1042,7 @@ static void mgaDDInvalidateState( GLcontext *ctx, GLuint new_state )
 {
    _swrast_InvalidateState( ctx, new_state );
    _swsetup_InvalidateState( ctx, new_state );
-   _ac_InvalidateState( ctx, new_state );
+   _vbo_InvalidateState( ctx, new_state );
    _tnl_InvalidateState( ctx, new_state );
    MGA_CONTEXT(ctx)->NewGLState |= new_state;
 }

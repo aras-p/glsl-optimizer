@@ -39,7 +39,7 @@
 #include "tnl/tnl.h"
 #include "tnl/t_context.h"
 #include "tnl/t_pipeline.h"
-#include "array_cache/acache.h"
+#include "vbo/vbo.h"
 #include "teximage.h"
 #include "texformat.h"
 #include "texstore.h"
@@ -563,7 +563,7 @@ ggi_mesa_context_t ggiMesaCreateContext(ggi_visual_t vis)
         _mesa_enable_sw_extensions(ctx->gl_ctx);
 	
 	_swrast_CreateContext(ctx->gl_ctx);
-	_ac_CreateContext(ctx->gl_ctx);
+	_vbo_CreateContext(ctx->gl_ctx);
 	_tnl_CreateContext(ctx->gl_ctx);
 	_swsetup_CreateContext(ctx->gl_ctx);
 	

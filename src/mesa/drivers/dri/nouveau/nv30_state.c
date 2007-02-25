@@ -127,6 +127,11 @@ static void nv30ClearStencil(GLcontext *ctx, GLint s)
 static void nv30ClipPlane(GLcontext *ctx, GLenum plane, const GLfloat *equation)
 {
 	nouveauContextPtr nmesa = NOUVEAU_CONTEXT(ctx);
+
+	if (NOUVEAU_CARD_USING_SHADERS)
+		return;
+
+	plane -= GL_CLIP_PLANE0;
 	BEGIN_RING_CACHE(NvSub3D, NV30_TCL_PRIMITIVE_3D_CLIP_PLANE_A(plane), 4);
 	OUT_RING_CACHEf(equation[0]);
 	OUT_RING_CACHEf(equation[1]);
@@ -208,8 +213,14 @@ static void nv30Enable(GLcontext *ctx, GLenum cap, GLboolean state)
 		case GL_CLIP_PLANE3:
 		case GL_CLIP_PLANE4:
 		case GL_CLIP_PLANE5:
-			BEGIN_RING_CACHE(NvSub3D, NV30_TCL_PRIMITIVE_3D_CLIP_PLANE_ENABLE(cap-GL_CLIP_PLANE0), 1);
-			OUT_RING_CACHE(state);
+			if (NOUVEAU_CARD_USING_SHADERS) {
+				nouveauShader *nvs = (nouveauShader *)ctx->VertexProgram._Current;
+				if (nvs)
+					nvs->translated = GL_FALSE;
+			} else {
+				BEGIN_RING_CACHE(NvSub3D, NV30_TCL_PRIMITIVE_3D_CLIP_PLANE_ENABLE(cap-GL_CLIP_PLANE0), 1);
+				OUT_RING_CACHE(state);
+			}
 			break;
 		case GL_COLOR_LOGIC_OP:
 			BEGIN_RING_CACHE(NvSub3D, NV30_TCL_PRIMITIVE_3D_COLOR_LOGIC_OP_ENABLE, 1);
@@ -233,6 +244,8 @@ static void nv30Enable(GLcontext *ctx, GLenum cap, GLboolean state)
 			OUT_RING_CACHE(state);
 			break;
 		case GL_FOG:
+			if (NOUVEAU_CARD_USING_SHADERS)
+				break;
 			BEGIN_RING_CACHE(NvSub3D, NV30_TCL_PRIMITIVE_3D_FOG_ENABLE, 1);
 			OUT_RING_CACHE(state);
 			break;
@@ -348,17 +361,71 @@ static void nv30Enable(GLcontext *ctx, GLenum cap, GLboolean state)
 static void nv30Fogfv(GLcontext *ctx, GLenum pname, const GLfloat *params)
 {
     nouveauContextPtr nmesa = NOUVEAU_CONTEXT(ctx);
+
+    if (NOUVEAU_CARD_USING_SHADERS)
+        return;
+
     switch(pname)
     {
-        case GL_FOG_MODE:
-            //BEGIN_RING_CACHE(NvSub3D, NV30_TCL_PRIMITIVE_3D_FOG_MODE, 1);
-            //OUT_RING_CACHE (params);
+    case GL_FOG_MODE:
+    {
+        int mode = 0;
+        /* The modes are different in GL and the card.  */
+        switch(ctx->Fog.Mode)
+        {
+        case GL_LINEAR:
+            mode = 0x804;
             break;
-            /* TODO: unsure about the rest.*/
-        default:
+        case GL_EXP:
+            mode = 0x802;
             break;
+        case GL_EXP2:
+            mode = 0x803;
+            break;
+        }
+	BEGIN_RING_CACHE(NvSub3D, NV30_TCL_PRIMITIVE_3D_FOG_MODE, 1);
+	OUT_RING_CACHE (mode);
+	break;
     }
-
+    case GL_FOG_COLOR:
+    {
+	GLubyte c[4];
+	UNCLAMPED_FLOAT_TO_RGBA_CHAN(c,params);
+        BEGIN_RING_CACHE(NvSub3D, NV30_TCL_PRIMITIVE_3D_FOG_COLOR, 1);
+        /* nvidia ignores the alpha channel */
+	OUT_RING_CACHE(PACK_COLOR_8888_REV(c[0],c[1],c[2],c[3]));
+        break;
+    }
+    case GL_FOG_DENSITY:
+    case GL_FOG_START:
+    case GL_FOG_END:
+    {
+        GLfloat f=0., c=0.;
+        switch(ctx->Fog.Mode)
+        {
+        case GL_LINEAR:
+            f = -1.0/(ctx->Fog.End - ctx->Fog.Start);
+            c = ctx->Fog.Start/(ctx->Fog.End - ctx->Fog.Start) + 2.001953;
+            break;
+        case GL_EXP:
+            f = -0.090168*ctx->Fog.Density;
+            c = 1.5;
+        case GL_EXP2:
+            f = -0.212330*ctx->Fog.Density;
+            c = 1.5;
+        }
+        BEGIN_RING_CACHE(NvSub3D, NV30_TCL_PRIMITIVE_3D_FOG_EQUATION_LINEAR, 1);
+        OUT_RING_CACHE(f);
+        BEGIN_RING_CACHE(NvSub3D, NV30_TCL_PRIMITIVE_3D_FOG_EQUATION_CONSTANT, 1);
+        OUT_RING_CACHE(c);
+        BEGIN_RING_CACHE(NvSub3D, NV30_TCL_PRIMITIVE_3D_FOG_EQUATION_QUADRATIC, 1);
+        OUT_RING_CACHE(0); /* Is this always the same? */
+        break;
+    }
+//    case GL_FOG_COORD_SRC:
+    default:
+        break;
+    }
 }
    
 static void nv30Hint(GLcontext *ctx, GLenum target, GLenum mode)
@@ -505,7 +572,7 @@ static void nv30LineWidth(GLcontext *ctx, GLfloat width)
 	nouveauContextPtr nmesa = NOUVEAU_CONTEXT(ctx);
 	GLubyte ubWidth;
 
-	CLAMPED_FLOAT_TO_UBYTE(ubWidth, width);
+	ubWidth = (GLubyte)(width * 8.0) & 0xFF;
 
 	BEGIN_RING_CACHE(NvSub3D, NV30_TCL_PRIMITIVE_3D_LINE_WIDTH_SMOOTH, 1);
 	OUT_RING_CACHE(ubWidth);
@@ -671,9 +738,13 @@ void (*TexParameter)(GLcontext *ctx, GLenum target,
 static void nv30TextureMatrix(GLcontext *ctx, GLuint unit, const GLmatrix *mat)
 {
         nouveauContextPtr nmesa = NOUVEAU_CONTEXT(ctx);
-        BEGIN_RING_CACHE(NvSub3D, NV30_TCL_PRIMITIVE_3D_TX_MATRIX(unit, 0), 16);
-        /*XXX: This SHOULD work.*/
-        OUT_RING_CACHEp(mat->m, 16);
+
+	if (!NOUVEAU_CARD_USING_SHADERS) {
+		BEGIN_RING_CACHE(NvSub3D,
+				 NV30_TCL_PRIMITIVE_3D_TX_MATRIX(unit, 0), 16);
+		/*XXX: This SHOULD work.*/
+		OUT_RING_CACHEp(mat->m, 16);
+	}
 }
 
 static void nv30WindowMoved(nouveauContextPtr nmesa)
@@ -710,8 +781,67 @@ static void nv30WindowMoved(nouveauContextPtr nmesa)
 
 static GLboolean nv30InitCard(nouveauContextPtr nmesa)
 {
-	/* Need some love.. */
-	return GL_FALSE;
+	int i;
+	nouveauObjectOnSubchannel(nmesa, NvSub3D, Nv3D);
+
+	BEGIN_RING_SIZE(NvSub3D, NV30_TCL_PRIMITIVE_3D_SET_OBJECT1, 3);
+	OUT_RING(NvDmaFB);
+	OUT_RING(NvDmaAGP);
+        OUT_RING(NvDmaFB);
+	BEGIN_RING_SIZE(NvSub3D, NV30_TCL_PRIMITIVE_3D_SET_OBJECT8, 1);
+	OUT_RING(NvDmaFB);
+	BEGIN_RING_SIZE(NvSub3D, NV30_TCL_PRIMITIVE_3D_SET_OBJECT4, 2);
+	OUT_RING(NvDmaFB);
+	OUT_RING(NvDmaFB);
+        BEGIN_RING_SIZE(NvSub3D, 0x1b0, 1); /* SET_OBJECT8B*/
+        OUT_RING(NvDmaFB);
+
+        for(i = 0x2c8; i <= 0x2fc; i += 4)
+        {
+            BEGIN_RING_SIZE(NvSub3D, i, 1);
+            OUT_RING(0x0);
+        }
+
+	BEGIN_RING_SIZE(NvSub3D, 0x0220, 1);
+	OUT_RING(1);
+
+	BEGIN_RING_SIZE(NvSub3D, 0x03b0, 1);
+	OUT_RING(0x00100000);
+	BEGIN_RING_SIZE(NvSub3D, 0x1454, 1);
+	OUT_RING(0);
+	BEGIN_RING_SIZE(NvSub3D, 0x1d80, 1);
+	OUT_RING(3);
+	
+	/* NEW */
+       	BEGIN_RING_SIZE(NvSub3D, 0x1e98, 1);
+        OUT_RING(0);
+        BEGIN_RING_SIZE(NvSub3D, 0x17e0, 3);
+        OUT_RING(0);
+        OUT_RING(0);
+        OUT_RING(0x3f800000);
+        BEGIN_RING_SIZE(NvSub3D, 0x1f80, 16);
+        OUT_RING(0); OUT_RING(0); OUT_RING(0); OUT_RING(0); 
+        OUT_RING(0); OUT_RING(0); OUT_RING(0); OUT_RING(0); 
+        OUT_RING(0x0000ffff);
+        OUT_RING(0); OUT_RING(0); OUT_RING(0); OUT_RING(0); 
+        OUT_RING(0); OUT_RING(0); OUT_RING(0); 
+/*
+        BEGIN_RING_SIZE(NvSub3D, 0x100, 2);
+        OUT_RING(0);
+        OUT_RING(0);
+*/
+        BEGIN_RING_SIZE(NvSub3D, 0x120, 3);
+        OUT_RING(0);
+        OUT_RING(1);
+        OUT_RING(2);
+
+        BEGIN_RING_SIZE(NvSub3D, 0x1d88, 1);
+        OUT_RING(0x00001200);
+
+	BEGIN_RING_SIZE(NvSub3D, NV30_TCL_PRIMITIVE_3D_RC_ENABLE, 1);
+	OUT_RING       (0);
+
+	return GL_TRUE;
 }
 
 static GLboolean nv40InitCard(nouveauContextPtr nmesa)
@@ -750,43 +880,45 @@ static GLboolean nv40InitCard(nouveauContextPtr nmesa)
 	BEGIN_RING_SIZE(NvSub3D, 0x1e94, 1);
 	OUT_RING(0x00000001);
 
-	BEGIN_RING_SIZE(NvSub3D, 0x1d60, 1);
-	OUT_RING(0x03008000);
-
 	return GL_TRUE;
 }
 
 static GLboolean nv30BindBuffers(nouveauContextPtr nmesa, int num_color,
-      				 nouveau_renderbuffer **color,
-				 nouveau_renderbuffer *depth)
+		nouveau_renderbuffer **color,
+		nouveau_renderbuffer *depth)
 {
-   GLuint x, y, w, h;
+	GLuint x, y, w, h;
 
-   w = color[0]->mesa.Width;
-   h = color[0]->mesa.Height;
-   x = nmesa->drawX;
-   y = nmesa->drawY;
+	w = color[0]->mesa.Width;
+	h = color[0]->mesa.Height;
+	x = nmesa->drawX;
+	y = nmesa->drawY;
 
-   if (num_color != 1)
-      return GL_FALSE;
-   BEGIN_RING_SIZE(NvSub3D, NV30_TCL_PRIMITIVE_3D_VIEWPORT_COLOR_BUFFER_DIM0, 5);
-   OUT_RING        (((w+x)<<16)|x);
-   OUT_RING        (((h+y)<<16)|y);
-   if (color[0]->mesa._ActualFormat == GL_RGBA8)
-      OUT_RING        (0x148);
-   else
-      OUT_RING        (0x143);
-   OUT_RING        (color[0]->pitch);
-   OUT_RING        (color[0]->offset);
+	if (num_color != 1)
+		return GL_FALSE;
+	BEGIN_RING_SIZE(NvSub3D, NV30_TCL_PRIMITIVE_3D_VIEWPORT_COLOR_BUFFER_DIM0, 5);
+	OUT_RING        (((w+x)<<16)|x);
+	OUT_RING        (((h+y)<<16)|y);
+	if (color[0]->mesa._ActualFormat == GL_RGBA8)
+		OUT_RING        (0x148);
+	else
+		OUT_RING        (0x143);
+	if (nmesa->screen->card->type >= NV_40)
+		OUT_RING        (color[0]->pitch);
+	else
+		OUT_RING        (color[0]->pitch | (depth ? (depth->pitch << 16): 0));
+	OUT_RING        (color[0]->offset);
 
-   if (depth) {
-      BEGIN_RING_SIZE(NvSub3D, NV30_TCL_PRIMITIVE_3D_DEPTH_OFFSET, 1);
-      OUT_RING        (depth->offset);
-      BEGIN_RING_SIZE(NvSub3D, NV30_TCL_PRIMITIVE_3D_LMA_DEPTH_BUFFER_PITCH, 1);
-      OUT_RING        (depth->pitch);
-   }
+	if (depth) {
+		BEGIN_RING_SIZE(NvSub3D, NV30_TCL_PRIMITIVE_3D_DEPTH_OFFSET, 1);
+		OUT_RING        (depth->offset);
+		if (nmesa->screen->card->type >= NV_40) {
+			BEGIN_RING_SIZE(NvSub3D, NV30_TCL_PRIMITIVE_3D_LMA_DEPTH_BUFFER_PITCH, 1);
+			OUT_RING        (depth->pitch);
+		}
+	}
 
-   return GL_TRUE;
+	return GL_TRUE;
 }
 
 void nv30InitStateFuncs(GLcontext *ctx, struct dd_function_table *func)
@@ -808,6 +940,7 @@ void nv30InitStateFuncs(GLcontext *ctx, struct dd_function_table *func)
 	func->FrontFace			= nv30FrontFace;
 	func->DepthFunc			= nv30DepthFunc;
 	func->DepthMask			= nv30DepthMask;
+	func->DepthRange                = nv30DepthRange;
 	func->Enable			= nv30Enable;
 	func->Fogfv			= nv30Fogfv;
 	func->Hint			= nv30Hint;

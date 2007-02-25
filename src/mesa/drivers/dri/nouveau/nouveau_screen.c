@@ -71,6 +71,14 @@ static nouveauScreenPtr nouveauCreateScreen(__DRIscreenPrivate *sPriv)
 		return NULL;
 	}
 	
+	screen->card=nouveau_card_lookup(dri_priv->device_id);
+	if (!screen->card) {
+		__driUtilMessage("%s: Unknown card type 0x%04x:0x%04x\n",
+			__func__, dri_priv->device_id >> 16, dri_priv->device_id & 0xFFFF);
+		FREE(screen);
+		return NULL;
+	}
+
 	/* parse information in __driConfigOptions */
 	driParseOptionInfo (&screen->optionCache,__driConfigOptions, __driNConfigOptions);
 
@@ -82,7 +90,6 @@ static nouveauScreenPtr nouveauCreateScreen(__DRIscreenPrivate *sPriv)
 	screen->depthOffset = dri_priv->depth_offset;
 	screen->depthPitch  = dri_priv->depth_pitch;
 
-	screen->card=nouveau_card_lookup(dri_priv->device_id);
 	screen->driScreen = sPriv;
 	return screen;
 }
@@ -320,7 +327,7 @@ void * __driCreateNewScreen_20050727( __DRInativeDisplay *dpy, int scrn, __DRIsc
 	__DRIscreenPrivate *psp;
 	static const __DRIversion ddx_expected = { 1, 2, 0 };
 	static const __DRIversion dri_expected = { 4, 0, 0 };
-	static const __DRIversion drm_expected = { 0, 0, 2 };
+	static const __DRIversion drm_expected = { 0, 0, 3 };
 
 	dri_interface = interface;
 
@@ -332,8 +339,12 @@ void * __driCreateNewScreen_20050727( __DRInativeDisplay *dpy, int scrn, __DRIsc
 	}
 
 	// temporary lock step versioning
-	if (drm_expected.patch!=drm_version->patch)
+	if (drm_expected.patch!=drm_version->patch) {
+		__driUtilMessage("%s: wrong DRM version, expected %d, got %d\n",
+				__func__,
+				drm_expected.patch, drm_version->patch);
 		return NULL;
+	}
 
 	psp = __driUtilCreateNewScreen(dpy, scrn, psc, NULL,
 				       ddx_version, dri_version, drm_version,

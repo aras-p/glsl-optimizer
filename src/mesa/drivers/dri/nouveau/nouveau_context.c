@@ -31,7 +31,6 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "matrix.h"
 #include "swrast/swrast.h"
 #include "swrast_setup/swrast_setup.h"
-#include "array_cache/acache.h"
 #include "framebuffer.h"
 
 #include "tnl/tnl.h"
@@ -50,6 +49,8 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "nouveau_msg.h"
 #include "nouveau_reg.h"
 #include "nouveau_lock.h"
+#include "nouveau_query.h"
+#include "nv04_swtcl.h"
 #include "nv10_swtcl.h"
 
 #include "vblank.h"
@@ -70,6 +71,7 @@ static const struct dri_debug_control debug_control[] =
 };
 
 #define need_GL_ARB_vertex_program
+#define need_GL_ARB_occlusion_query
 #include "extension_helper.h"
 
 const struct dri_extension common_extensions[] =
@@ -99,6 +101,7 @@ const struct dri_extension nv40_extensions[] =
     * written for those cards.
     */
 	{ "GL_ARB_vertex_program",	GL_ARB_vertex_program_functions },
+	{ "GL_ARB_occlusion_query",	GL_ARB_occlusion_query_functions},
 	{ NULL, 0 }
 };
 
@@ -196,7 +199,7 @@ GLboolean nouveauCreateContext( const __GLcontextModes *glVisual,
 
 	/* Initialize the swrast */
 	_swrast_CreateContext( ctx );
-	_ac_CreateContext( ctx );
+	_vbo_CreateContext( ctx );
 	_tnl_CreateContext( ctx );
 	_swsetup_CreateContext( ctx );
 
@@ -212,7 +215,7 @@ GLboolean nouveauCreateContext( const __GLcontextModes *glVisual,
 			break;
 		case NV_04:
 		case NV_05:
-			//nv04TriInitFunctions( ctx );
+			nv04TriInitFunctions( ctx );
 			break;
 		case NV_10:
 		case NV_20:
@@ -228,6 +231,7 @@ GLboolean nouveauCreateContext( const __GLcontextModes *glVisual,
 	nouveauInitBufferObjects(ctx);
 	if (!nouveauSyncInitFuncs(ctx))
 	   return GL_FALSE;
+	nouveauQueryInitFuncs(ctx);
 	nmesa->hw_func.InitCard(nmesa);
         nouveauInitState(ctx);
 

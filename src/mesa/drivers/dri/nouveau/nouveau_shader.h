@@ -12,18 +12,29 @@ typedef struct _nvsFunc nvsFunc;
 #define NVS_MAX_ADDRESS 2
 #define NVS_MAX_INSNS   4096
 
-typedef struct {
+typedef struct _nvs_fragment_header {
+   struct _nvs_fragment_header *parent;
+   struct _nvs_fragment_header *prev;
+   struct _nvs_fragment_header *next;
    enum {
       NVS_INSTRUCTION,
+      NVS_BRANCH,
+      NVS_LOOP,
+      NVS_SUBROUTINE
    } type;
-   int position;
 } nvsFragmentHeader;
 
-typedef struct _nvs_fragment_list {
-   struct _nvs_fragment_list *prev;
-   struct _nvs_fragment_list *next;
-   nvsFragmentHeader *fragment;
-} nvsFragmentList;
+typedef union {
+	struct {
+		GLboolean uses_kil;
+		GLuint    num_regs;
+	} NV30FP;
+	struct {
+		uint32_t vp_in_reg;
+		uint32_t vp_out_reg;
+		uint32_t clip_enables;
+	} NV30VP;
+} nvsCardPriv;
 
 typedef struct _nouveauShader {
    union {
@@ -42,11 +53,14 @@ typedef struct _nouveauShader {
    unsigned int program_start_id;
    unsigned int program_current;
    struct gl_buffer_object *program_buffer;
-   unsigned int inputs_read;
-   unsigned int outputs_written;
    int		inst_count;
 
+   nvsCardPriv card_priv;
+   int		vp_attrib_map[NVS_MAX_ATTRIBS];
+
    struct {
+      GLboolean in_use;
+
       GLfloat  *source_val;	/* NULL if invariant */
       float	val[4];
       /* Hardware-specific tracking, currently only nv30_fragprog
@@ -55,16 +69,12 @@ typedef struct _nouveauShader {
       int	*hw_index;
       int        hw_index_cnt;
    } params[NVS_MAX_CONSTS];
-
-   struct {
-      int last_use;
-   } temps[NVS_MAX_TEMPS];
+   int param_high;
 
    /* Pass-private data */
    void *pass_rec;
 
-   nvsFragmentList *list_head;
-   nvsFragmentList *list_tail;
+   nvsFragmentHeader *program_tree;
 } nouveauShader, *nvsPtr;
 
 typedef enum {
@@ -119,35 +129,35 @@ typedef enum {
 } nvsSwzComp;
 
 typedef enum {
-   NVS_FR_POSITION,
-   NVS_FR_WEIGHT,
-   NVS_FR_NORMAL,
-   NVS_FR_COL0,
-   NVS_FR_COL1,
-   NVS_FR_BFC0,
-   NVS_FR_BFC1,
-   NVS_FR_FOGCOORD,
-   NVS_FR_POINTSZ,
-   NVS_FR_TEXCOORD0,
-   NVS_FR_TEXCOORD1,
-   NVS_FR_TEXCOORD2,
-   NVS_FR_TEXCOORD3,
-   NVS_FR_TEXCOORD4,
-   NVS_FR_TEXCOORD5,
-   NVS_FR_TEXCOORD6,
-   NVS_FR_TEXCOORD7,
-   NVS_FR_FRAGDATA0,
-   NVS_FR_FRAGDATA1,
-   NVS_FR_FRAGDATA2,
-   NVS_FR_FRAGDATA3,
-   NVS_FR_CLIP0,
-   NVS_FR_CLIP1,
-   NVS_FR_CLIP2,
-   NVS_FR_CLIP3,
-   NVS_FR_CLIP4,
-   NVS_FR_CLIP5,
-   NVS_FR_CLIP6,
-   NVS_FR_FACING,
+   NVS_FR_POSITION	= 0,
+   NVS_FR_WEIGHT	= 1,
+   NVS_FR_NORMAL	= 2,
+   NVS_FR_COL0		= 3,
+   NVS_FR_COL1		= 4,
+   NVS_FR_FOGCOORD	= 5,
+   NVS_FR_TEXCOORD0	= 8,
+   NVS_FR_TEXCOORD1	= 9,
+   NVS_FR_TEXCOORD2	= 10,
+   NVS_FR_TEXCOORD3	= 11,
+   NVS_FR_TEXCOORD4	= 12,
+   NVS_FR_TEXCOORD5	= 13,
+   NVS_FR_TEXCOORD6	= 14,
+   NVS_FR_TEXCOORD7	= 15,
+   NVS_FR_BFC0		= 16,
+   NVS_FR_BFC1		= 17,
+   NVS_FR_POINTSZ	= 18,
+   NVS_FR_FRAGDATA0	= 19,
+   NVS_FR_FRAGDATA1	= 20,
+   NVS_FR_FRAGDATA2	= 21,
+   NVS_FR_FRAGDATA3	= 22,
+   NVS_FR_CLIP0		= 23,
+   NVS_FR_CLIP1		= 24,
+   NVS_FR_CLIP2		= 25,
+   NVS_FR_CLIP3		= 26,
+   NVS_FR_CLIP4		= 27,
+   NVS_FR_CLIP5		= 28,
+   NVS_FR_CLIP6		= 29,
+   NVS_FR_FACING	= 30,
    NVS_FR_UNKNOWN
 } nvsFixedReg;
 
@@ -190,7 +200,18 @@ typedef enum {
    NVS_TEX_TARGET_UNKNOWN = 0
 } nvsTexTarget;
 
-typedef struct {
+typedef enum {
+	NVS_SCALE_1X	 = 0,
+	NVS_SCALE_2X	 = 1,
+	NVS_SCALE_4X	 = 2,
+	NVS_SCALE_8X	 = 3,
+	NVS_SCALE_INV_2X = 5,
+	NVS_SCALE_INV_4X = 6,
+	NVS_SCALE_INV_8X = 7,
+} nvsScale;
+
+/* Arith/TEX instructions */
+typedef struct nvs_instruction {
    nvsFragmentHeader header;
 
    nvsOpcode	op;
@@ -198,6 +219,7 @@ typedef struct {
 
    nvsRegister	dest;
    unsigned int	mask;
+   nvsScale	dest_scale;
 
    nvsRegister	src[3];
 
@@ -210,6 +232,43 @@ typedef struct {
    int		cond_test;
    int		cond_update;
 } nvsInstruction;
+
+/* BRA, CAL, IF */
+typedef struct nvs_branch {
+	nvsFragmentHeader  header;
+
+	nvsOpcode	op;
+
+	nvsCond		cond;
+	nvsSwzComp	cond_swizzle[4];
+	int		cond_test;
+
+	nvsFragmentHeader *target_head;
+	nvsFragmentHeader *target_tail;
+	nvsFragmentHeader *else_head;
+	nvsFragmentHeader *else_tail;
+} nvsBranch;
+
+/* LOOP+ENDLOOP */
+typedef struct {
+	nvsFragmentHeader  header;
+
+	int                count;
+	int                initial;
+	int                increment;
+
+	nvsFragmentHeader *insn_head;
+	nvsFragmentHeader *insn_tail;
+} nvsLoop;
+
+/* label+following instructions */
+typedef struct nvs_subroutine {
+	nvsFragmentHeader  header;
+
+	char *             label;
+	nvsFragmentHeader *insn_head;
+	nvsFragmentHeader *insn_tail;
+} nvsSubroutine;
 
 #define SMASK_X (1<<0)
 #define SMASK_Y (1<<1)
@@ -247,6 +306,8 @@ extern nvsSwzComp NV20VP_TX_SWIZZLE[4];
 #define SCAP_SRC_ABS	(1<<0)
 
 struct _nvsFunc {
+   nvsCardPriv *card_priv;
+
    unsigned int	MaxInst;
    unsigned int	MaxAttrib;
    unsigned int	MaxTemp;
@@ -263,6 +324,7 @@ struct _nvsFunc {
 
    void		(*InitInstruction)	(nvsFunc *);
    int		(*SupportsOpcode)	(nvsFunc *, nvsOpcode);
+   int		(*SupportsResultScale)	(nvsFunc *, nvsScale);
    void		(*SetOpcode)		(nvsFunc *, unsigned int opcode,
 	 				 int slot);
    void		(*SetCCUpdate)		(nvsFunc *);
@@ -270,10 +332,16 @@ struct _nvsFunc {
 	 				 nvsSwzComp *swizzle);
    void		(*SetResult)		(nvsFunc *, nvsRegister *,
 	 				 unsigned int mask, int slot);
+   void		(*SetResultScale)	(nvsFunc *, nvsScale);
    void		(*SetSource)		(nvsFunc *, nvsRegister *, int pos);
    void		(*SetTexImageUnit)	(nvsFunc *, int unit);
    void		(*SetSaturate)		(nvsFunc *);
    void		(*SetLastInst)		(nvsFunc *);
+
+   void		(*SetBranchTarget)	(nvsFunc *, int addr);
+   void		(*SetBranchElse)	(nvsFunc *, int addr);
+   void		(*SetBranchEnd)		(nvsFunc *, int addr);
+   void		(*SetLoopParams)	(nvsFunc *, int cnt, int init, int inc);
 
    int		(*HasMergedInst)	(nvsFunc *);
    int		(*IsLastInst)		(nvsFunc *);
@@ -352,7 +420,7 @@ nvsSwizzle(nvsRegister reg, nvsSwzComp x, nvsSwzComp y,
 
 extern GLboolean nvsUpdateShader(GLcontext *ctx, nouveauShader *nvs);
 extern void nvsDisasmHWShader(nvsPtr);
-extern void nvsDumpFragmentList(nvsFragmentList *f, int lvl);
+extern void nvsDumpFragmentList(nvsFragmentHeader *f, int lvl);
 extern nouveauShader *nvsBuildTextShader(GLcontext *ctx, GLenum target,
       					 const char *text);
 
@@ -365,8 +433,7 @@ extern void NV40FPInitShaderFuncs(nvsFunc *);
 
 extern void nouveauShaderInitFuncs(GLcontext *ctx);
 
-extern GLboolean nouveau_shader_pass0_arb(GLcontext *ctx, nouveauShader *nvs);
-extern GLboolean nouveau_shader_pass0_slang(GLcontext *ctx, nouveauShader *nvs);
+extern GLboolean nouveau_shader_pass0(GLcontext *ctx, nouveauShader *nvs);
 extern GLboolean nouveau_shader_pass1(nvsPtr nvs);
 extern GLboolean nouveau_shader_pass2(nvsPtr nvs);
 

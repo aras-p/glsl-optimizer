@@ -111,7 +111,7 @@ nvsUpdateShader(GLcontext *ctx, nouveauShader *nvs)
    /* Translate to HW format now if necessary */
    if (!nvs->translated) {
       /* Mesa ASM shader -> nouveauShader */
-      if (!nouveau_shader_pass0_arb(ctx, nvs))
+      if (!nouveau_shader_pass0(ctx, nvs))
 	 return GL_FALSE;
       /* Basic dead code elimination + register usage info */
       if (!nouveau_shader_pass1(nvs))
@@ -126,15 +126,16 @@ nvsUpdateShader(GLcontext *ctx, nouveauShader *nvs)
    /* Update state parameters */
    plist = nvs->mesa.vp.Base.Parameters;
    _mesa_load_state_parameters(ctx, plist);
-   for (i=0; i<plist->NumParameters; i++) {
+   for (i=0; i<nvs->param_high; i++) {
+      if (!nvs->params[i].in_use)
+	 continue;
+
       if (!nvs->on_hardware) {
 	 /* if we've been kicked off the hardware there's no guarantee our
 	  * consts are still there.. reupload them all
 	  */
 	 nvs->func->UpdateConst(ctx, nvs, i);
-      } else if (plist->Parameters[i].Type == PROGRAM_STATE_VAR) {
-	 if (!nvs->params[i].source_val) /* this is a workaround when consts aren't alloc'd from id=0.. */
-	    continue;
+      } else if (nvs->params[i].source_val) {
 	 /* update any changed state parameters */
 	 if (!TEST_EQ_4V(nvs->params[i].val, nvs->params[i].source_val))
 	    nvs->func->UpdateConst(ctx, nvs, i);
@@ -179,7 +180,7 @@ nvsBuildTextShader(GLcontext *ctx, GLenum target, const char *text)
 				     strlen(text),
 				     &nvs->mesa.vp);
    } else if (target == GL_FRAGMENT_PROGRAM_ARB) {
-      _mesa_init_fragment_program(ctx, &nvs->mesa.fp, GL_VERTEX_PROGRAM_ARB, 0);
+      _mesa_init_fragment_program(ctx, &nvs->mesa.fp, GL_FRAGMENT_PROGRAM_ARB, 0);
       _mesa_parse_arb_fragment_program(ctx,
 	    			       GL_FRAGMENT_PROGRAM_ARB,
 				       text,
@@ -187,7 +188,7 @@ nvsBuildTextShader(GLcontext *ctx, GLenum target, const char *text)
 				       &nvs->mesa.fp);
    }
 
-   nouveau_shader_pass0_arb(ctx, nvs);
+   nouveau_shader_pass0(ctx, nvs);
    nouveau_shader_pass1(nvs);
    nouveau_shader_pass2(nvs);
 
@@ -219,6 +220,21 @@ nvsBuildPassthroughVP(GLcontext *ctx)
 					      vp_text);
 }
 
+static void
+nvsBuildPassthroughFP(GLcontext *ctx)
+{
+	nouveauContextPtr nmesa = NOUVEAU_CONTEXT(ctx);
+
+	const char *fp_text =
+		"!!ARBfp1.0\n"
+		"MOV result.color, fragment.color;\n"
+		"END";
+
+	nmesa->passthrough_fp = nvsBuildTextShader(ctx,
+						   GL_FRAGMENT_PROGRAM_ARB,
+						   fp_text);
+}
+
 void
 nouveauShaderInitFuncs(GLcontext * ctx)
 {
@@ -247,6 +263,10 @@ nouveauShaderInitFuncs(GLcontext * ctx)
     */
    if (nmesa->screen->card->type >= NV_40)
       nvsBuildPassthroughVP(ctx);
+
+   /* Needed on NV30, even when using swtcl, if you want to get colours */
+   if (nmesa->screen->card->type >= NV_30)
+      nvsBuildPassthroughFP(ctx);
 
    ctx->Const.VertexProgram.MaxNativeInstructions    = nmesa->VPfunc.MaxInst;
    ctx->Const.VertexProgram.MaxNativeAluInstructions = nmesa->VPfunc.MaxInst;
@@ -563,12 +583,12 @@ nvsDumpInstruction(nvsInstruction * inst, int slot, int lvl)
 }
 
 void
-nvsDumpFragmentList(nvsFragmentList *f, int lvl)
+nvsDumpFragmentList(nvsFragmentHeader *f, int lvl)
 {
    while (f) {
-      switch (f->fragment->type) {
+      switch (f->type) {
       case NVS_INSTRUCTION:
-	 nvsDumpInstruction((nvsInstruction*)f->fragment, 0, lvl);
+	 nvsDumpInstruction((nvsInstruction*)f, 0, lvl);
 	 break;
       default:
 	 fprintf(stderr, "%s: Only NVS_INSTRUCTION fragments can be in"

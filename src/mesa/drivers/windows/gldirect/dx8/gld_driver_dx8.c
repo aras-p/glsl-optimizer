@@ -52,7 +52,7 @@
 #include "texformat.h"
 #include "teximage.h"
 #include "texstore.h"
-#include "array_cache/acache.h"
+#include "vbo/vbo.h"
 #include "swrast_setup/swrast_setup.h"
 #include "swrast_setup/ss_context.h"
 #include "tnl/tnl.h"
@@ -850,7 +850,7 @@ void gld_update_state_DX8(
 		return;
 
 	_swsetup_InvalidateState( ctx, new_state );
-	_ac_InvalidateState( ctx, new_state );
+	_vbo_InvalidateState( ctx, new_state );
 	_tnl_InvalidateState( ctx, new_state );
 
 	// SetupIndex will be used in the pipelines for choosing setup function

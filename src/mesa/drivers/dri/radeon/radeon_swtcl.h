@@ -43,7 +43,6 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 extern void radeonInitSwtcl( GLcontext *ctx );
 extern void radeonDestroySwtcl( GLcontext *ctx );
 
-extern void radeonFlushVertices( GLcontext *ctx, GLuint flags );
 extern void radeonChooseRenderState( GLcontext *ctx );
 extern void radeonChooseVertexState( GLcontext *ctx );
 

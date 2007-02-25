@@ -1087,10 +1087,6 @@ static void radeonClear( GLcontext *ctx, GLbitfield mask )
       }
    }
 
-   /* Flip top to bottom */
-   cx += dPriv->x;
-   cy  = dPriv->y + dPriv->h - cy - ch;
-
    LOCK_HARDWARE( rmesa );
 
    /* compute region after locking: */
@@ -1098,6 +1094,10 @@ static void radeonClear( GLcontext *ctx, GLbitfield mask )
    cy = ctx->DrawBuffer->_Ymin;
    cw = ctx->DrawBuffer->_Xmax - cx;
    ch = ctx->DrawBuffer->_Ymax - cy;
+
+   /* Flip top to bottom */
+   cx += dPriv->x;
+   cy  = dPriv->y + dPriv->h - cy - ch;
 
    /* Throttle the number of clear ioctls we do.
     */

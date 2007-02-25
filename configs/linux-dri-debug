@@ -1,0 +1,16 @@
+# -*-makefile-*-
+# Configuration for linux-dri-debug: Linux DRI hardware drivers for XFree86 & others
+
+include $(TOP)/configs/linux-dri
+
+CONFIG_NAME = linux-dri-debug
+OPT_FLAGS  = -O0 -g
+ARCH_FLAGS = -DDEBUG
+
+# Helpful to reduce the amount of stuff that gets built sometimes:
+#DRI_DIRS = i915tex i915 
+#DRI_DIRS = i965
+#DRI_DIRS = radeon r200 r300
+#DRI_DIRS = unichrome sis trident
+#DRI_DIRS = i810 mga r128 tdfx
+

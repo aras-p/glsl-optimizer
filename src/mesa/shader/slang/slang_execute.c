@@ -328,7 +328,7 @@ static GLvoid
 ensure_infolog_created(slang_info_log ** infolog)
 {
    if (*infolog == NULL) {
-      *infolog = slang_alloc_malloc(sizeof(slang_info_log));
+      *infolog = (slang_info_log *) slang_alloc_malloc(sizeof(slang_info_log));
       if (*infolog == NULL)
          return;
       slang_info_log_construct(*infolog);

@@ -46,7 +46,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #include "swrast/swrast.h"
 #include "swrast_setup/swrast_setup.h"
-#include "array_cache/acache.h"
+#include "vbo/vbo.h"
 
 #include "tnl/tnl.h"
 #include "tnl/t_pipeline.h"
@@ -60,7 +60,6 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "radeon_tex.h"
 #include "radeon_swtcl.h"
 #include "radeon_tcl.h"
-#include "radeon_vtxfmt.h"
 #include "radeon_maos.h"
 
 #define need_GL_ARB_multisample
@@ -361,7 +360,7 @@ radeonCreateContext( const __GLcontextModes *glVisual,
    /* Initialize the software rasterizer and helper modules.
     */
    _swrast_CreateContext( ctx );
-   _ac_CreateContext( ctx );
+   _vbo_CreateContext( ctx );
    _tnl_CreateContext( ctx );
    _swsetup_CreateContext( ctx );
    _ae_create_context( ctx );
@@ -370,13 +369,10 @@ radeonCreateContext( const __GLcontextModes *glVisual,
     */
    _tnl_destroy_pipeline( ctx );
    _tnl_install_pipeline( ctx, radeon_pipeline );
-   ctx->Driver.FlushVertices = radeonFlushVertices;
 
    /* Try and keep materials and vertices separate:
     */
-   _tnl_isolate_materials( ctx, GL_TRUE );
-
-/*     _mesa_allow_light_in_model( ctx, GL_FALSE ); */
+/*    _tnl_isolate_materials( ctx, GL_TRUE ); */
 
    /* Configure swrast and T&L to match hardware characteristics:
     */
@@ -450,10 +446,7 @@ radeonCreateContext( const __GLcontextModes *glVisual,
    }
 
    if (rmesa->radeonScreen->chip_flags & RADEON_CHIPSET_TCL) {
-      if (tcl_mode >= DRI_CONF_TCL_VTXFMT)
-	 radeonVtxfmtInit( ctx, tcl_mode >= DRI_CONF_TCL_CODEGEN );
-
-      _tnl_need_dlist_norm_lengths( ctx, GL_FALSE );
+/*       _tnl_need_dlist_norm_lengths( ctx, GL_FALSE ); */
    }
    return GL_TRUE;
 }
@@ -484,7 +477,7 @@ void radeonDestroyContext( __DRIcontextPrivate *driContextPriv )
       release_texture_heaps = (rmesa->glCtx->Shared->RefCount == 1);
       _swsetup_DestroyContext( rmesa->glCtx );
       _tnl_DestroyContext( rmesa->glCtx );
-      _ac_DestroyContext( rmesa->glCtx );
+      _vbo_DestroyContext( rmesa->glCtx );
       _swrast_DestroyContext( rmesa->glCtx );
 
       radeonDestroySwtcl( rmesa->glCtx );
@@ -492,12 +485,6 @@ void radeonDestroyContext( __DRIcontextPrivate *driContextPriv )
       if (rmesa->dma.current.buf) {
 	 radeonReleaseDmaRegion( rmesa, &rmesa->dma.current, __FUNCTION__ );
 	 radeonFlushCmdBuf( rmesa, __FUNCTION__ );
-      }
-
-      if (!(rmesa->TclFallback & RADEON_TCL_FALLBACK_TCL_DISABLE)) {
-	 int tcl_mode = driQueryOptioni(&rmesa->optionCache, "tcl_mode");
-	 if (tcl_mode >= DRI_CONF_TCL_VTXFMT)
-	    radeonVtxfmtDestroy( rmesa->glCtx );
       }
 
       _mesa_vector4f_free( &rmesa->tcl.ObjClean );
@@ -620,9 +607,6 @@ radeonMakeCurrent( __DRIcontextPrivate *driContextPriv,
       _mesa_make_current( newCtx->glCtx,
 			  (GLframebuffer *) driDrawPriv->driverPrivate,
 			  (GLframebuffer *) driReadPriv->driverPrivate );
-
-      if (newCtx->vb.enabled)
-	 radeonVtxfmtMakeCurrent( newCtx->glCtx );
 
    } else {
       if (RADEON_DEBUG & DEBUG_DRI)

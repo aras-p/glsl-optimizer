@@ -21,8 +21,8 @@
 #include "i810ioctl.h"
 
 #include "swrast/swrast.h"
-#include "array_cache/acache.h"
 #include "tnl/tnl.h"
+#include "vbo/vbo.h"
 #include "swrast_setup/swrast_setup.h"
 
 #include "tnl/t_pipeline.h"
@@ -953,7 +953,7 @@ static void i810InvalidateState( GLcontext *ctx, GLuint new_state )
 {
    _swrast_InvalidateState( ctx, new_state );
    _swsetup_InvalidateState( ctx, new_state );
-   _ac_InvalidateState( ctx, new_state );
+   _vbo_InvalidateState( ctx, new_state );
    _tnl_InvalidateState( ctx, new_state );
    I810_CONTEXT(ctx)->new_state |= new_state;
 }

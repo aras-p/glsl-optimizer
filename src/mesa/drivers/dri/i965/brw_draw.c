@@ -35,7 +35,6 @@
 
 #include "brw_draw.h"
 #include "brw_defines.h"
-#include "brw_attrib.h"
 #include "brw_context.h"
 #include "brw_aub.h"
 #include "brw_state.h"
@@ -45,7 +44,8 @@
 #include "intel_batchbuffer.h"
 #include "intel_buffer_objects.h"
 
-
+#include "tnl/tnl.h"
+#include "vbo/vbo_context.h"
 
 
 
@@ -143,7 +143,7 @@ static void brw_emit_cliprect( struct brw_context *brw,
 
 
 static void brw_emit_prim( struct brw_context *brw, 
-			   const struct brw_draw_prim *prim )
+			   const struct _mesa_prim *prim )
 
 {
    struct brw_3d_primitive prim_packet;
@@ -170,34 +170,9 @@ static void brw_emit_prim( struct brw_context *brw,
    }
 }
 
-
-
-static void update_current_size( struct gl_client_array *array)
-{
-   const GLfloat *ptr = (const GLfloat *)array->Ptr;
-
-   assert(array->StrideB == 0);
-   assert(array->Type == GL_FLOAT || array->Type == GL_UNSIGNED_BYTE);
-
-   if (ptr[3] != 1.0) 
-      array->Size = 4;
-   else if (ptr[2] != 0.0) 
-      array->Size = 3;
-   else if (ptr[1] != 0.0) 
-      array->Size = 2;
-   else
-      array->Size = 1;
-}
-
-
-
-/* Fill in any gaps in passed arrays with pointers to current
- * attributes:
- */
 static void brw_merge_inputs( struct brw_context *brw,
 		       const struct gl_client_array *arrays[])
 {
-   struct gl_client_array *current_values = brw->vb.current_values;
    struct brw_vertex_element *inputs = brw->vb.inputs;
    struct brw_vertex_info old = brw->vb.info;
    GLuint i;
@@ -205,19 +180,16 @@ static void brw_merge_inputs( struct brw_context *brw,
    memset(inputs, 0, sizeof(*inputs));
    memset(&brw->vb.info, 0, sizeof(brw->vb.info));
 
-   for (i = 0; i < BRW_ATTRIB_MAX; i++) {
-      if (arrays[i] && arrays[i]->Enabled)
-      {
-	 brw->vb.inputs[i].glarray = arrays[i];
-	 brw->vb.info.varying |= (GLuint64EXT) 1 << i;
-      }
-      else 
-      {
-	 brw->vb.inputs[i].glarray = &current_values[i];
-	 update_current_size(&current_values[i]);
-      }
+   for (i = 0; i < VERT_ATTRIB_MAX; i++) {
+      brw->vb.inputs[i].glarray = arrays[i];
 
-      brw->vb.info.sizes[i/16] |= (inputs[i].glarray->Size - 1) << ((i%16) * 2);
+      /* XXX: metaops passes null arrays */
+      if (arrays[i]) {
+	 if (arrays[i]->StrideB != 0)
+	    brw->vb.info.varying |= 1 << i;
+
+	 brw->vb.info.sizes[i/16] |= (inputs[i].glarray->Size - 1) << ((i%16) * 2);
+      }
    }
 
    /* Raise statechanges if input sizes and varying have changed: 
@@ -229,8 +201,11 @@ static void brw_merge_inputs( struct brw_context *brw,
       brw->state.dirty.brw |= BRW_NEW_INPUT_VARYING;
 }
 
+/* XXX: could split the primitive list to fallback only on the
+ * non-conformant primitives.
+ */
 static GLboolean check_fallbacks( struct brw_context *brw,
-				  const struct brw_draw_prim *prim,
+				  const struct _mesa_prim *prim,
 				  GLuint nr_prims )
 {
    GLuint i;
@@ -281,15 +256,16 @@ static GLboolean check_fallbacks( struct brw_context *brw,
    return GL_FALSE;
 }
 
-
+/* May fail if out of video memory for texture or vbo upload, or on
+ * fallback conditions.
+ */
 static GLboolean brw_try_draw_prims( GLcontext *ctx,
 				     const struct gl_client_array *arrays[],
-				     const struct brw_draw_prim *prim,
+				     const struct _mesa_prim *prim,
 				     GLuint nr_prims,
-				     const struct brw_draw_index_buffer *ib,
+				     const struct _mesa_index_buffer *ib,
 				     GLuint min_index,
-				     GLuint max_index,
-				     GLuint flags )
+				     GLuint max_index )
 {
    struct intel_context *intel = intel_context(ctx);
    struct brw_context *brw = brw_context(ctx);
@@ -298,11 +274,11 @@ static GLboolean brw_try_draw_prims( GLcontext *ctx,
 
    if (ctx->NewState)
       _mesa_update_state( ctx );
-      
+
    /* Bind all inputs, derive varying and size information:
     */
    brw_merge_inputs( brw, arrays );
-
+      
    /* Have to validate state quite late.  Will rebuild tnl_program,
     * which depends on varying information.  
     * 
@@ -319,10 +295,6 @@ static GLboolean brw_try_draw_prims( GLcontext *ctx,
    }
 
    {
-      assert(intel->locked);
-      
-
-
       /* Set the first primitive early, ahead of validate_state:
        */
       brw_set_prim(brw, prim[0].mode);
@@ -411,44 +383,88 @@ static GLboolean brw_try_draw_prims( GLcontext *ctx,
    return retval;
 }
 
+static GLboolean brw_need_rebase( GLcontext *ctx,
+				  const struct gl_client_array *arrays[],
+				  const struct _mesa_index_buffer *ib,
+				  GLuint min_index )
+{
+   if (min_index == 0) 
+      return GL_FALSE;
 
-GLboolean brw_draw_prims( GLcontext *ctx,
-			  const struct gl_client_array *arrays[],
-			  const struct brw_draw_prim *prim,
-			  GLuint nr_prims,
-			  const struct brw_draw_index_buffer *ib,
-			  GLuint min_index,
-			  GLuint max_index,
-			  GLuint flags )
+   if (ib) {
+      if (!vbo_all_varyings_in_vbos(arrays))
+	 return GL_TRUE;
+      else
+	 return GL_FALSE;
+   }
+   else {
+      /* Hmm.  This isn't quite what I wanted.  BRW can actually
+       * handle the mixed case well enough that we shouldn't need to
+       * rebase.  However, it's probably not very common, nor hugely
+       * expensive to do it this way:
+       */
+      if (!vbo_all_varyings_in_vbos(arrays))
+	 return GL_TRUE;
+      else
+	 return GL_FALSE;
+   }
+}
+				  
+
+void brw_draw_prims( GLcontext *ctx,
+		     const struct gl_client_array *arrays[],
+		     const struct _mesa_prim *prim,
+		     GLuint nr_prims,
+		     const struct _mesa_index_buffer *ib,
+		     GLuint min_index,
+		     GLuint max_index )
 {
    struct intel_context *intel = intel_context(ctx);
    GLboolean retval;
 
-   retval = brw_try_draw_prims(ctx, arrays, prim, nr_prims, ib, min_index, max_index, flags);
+   /* Decide if we want to rebase.  If so we end up recursing once
+    * only into this function.
+    */
+   if (brw_need_rebase( ctx, arrays, ib, min_index )) {
+      vbo_rebase_prims( ctx, arrays, 
+			prim, nr_prims, 
+			ib, min_index, max_index, 
+			brw_draw_prims );
+      
+      return;
+   }
+
+
+   /* Make a first attempt at drawing:
+    */
+   retval = brw_try_draw_prims(ctx, arrays, prim, nr_prims, ib, min_index, max_index);
 
    
-   if (!retval && bmError(intel)) {
-
+   /* This looks like out-of-memory but potentially we have
+    * situation where there is enough memory but it has become
+    * fragmented.  Clear out all heaps and start from scratch by
+    * faking a contended lock event:  (done elsewhere)
+    */
+   if (!retval && !intel->Fallback && bmError(intel)) {
       DBG("retrying\n");
-      /* This looks like out-of-memory but potentially we have
-       * situation where there is enough memory but it has become
-       * fragmented.  Clear out all heaps and start from scratch by
-       * faking a contended lock event:  (done elsewhere)
-       */
-
       /* Then try a second time only to upload textures and draw the
        * primitives:
        */
-      retval = brw_try_draw_prims(ctx, arrays, prim, nr_prims, ib, min_index, max_index, flags);
+      retval = brw_try_draw_prims(ctx, arrays, prim, nr_prims, ib, min_index, max_index);
+   }
+
+   /* Otherwise, we really are out of memory.  Pass the drawing
+    * command to the software tnl module and which will in turn call
+    * swrast to do the drawing.
+    */
+   if (!retval) {
+      _tnl_draw_prims(ctx, arrays, prim, nr_prims, ib, min_index, max_index);
    }
 
    if (intel->aub_file && (INTEL_DEBUG & DEBUG_SYNC)) {
       intelFinish( &intel->ctx );
       intel->aub_wrap = 1;
    }
-
-
-   return retval;
 }
 
 
@@ -461,21 +477,25 @@ static void brw_invalidate_vbo_cb( struct intel_context *intel, void *ptr )
 void brw_draw_init( struct brw_context *brw )
 {
    GLcontext *ctx = &brw->intel.ctx;
+   struct vbo_context *vbo = vbo_context(ctx);
    GLuint i;
    
+   /* Register our drawing function: 
+    */
+   vbo->draw_prims = brw_draw_prims;
+
    brw->vb.upload.size = BRW_UPLOAD_INIT_SIZE;
 
    for (i = 0; i < BRW_NR_UPLOAD_BUFS; i++) {
       brw->vb.upload.vbo[i] = ctx->Driver.NewBufferObject(ctx, 1, GL_ARRAY_BUFFER_ARB);
       
-      /* XXX: Set these to no-backing-store
+      /* NOTE:  These are set to no-backing-store.
        */
       bmBufferSetInvalidateCB(&brw->intel,
 			      intel_bufferobj_buffer(intel_buffer_object(brw->vb.upload.vbo[i])),
 			      brw_invalidate_vbo_cb,
 			      &brw->intel,
 			      GL_TRUE);
-
    }
 
    ctx->Driver.BufferData( ctx, 
@@ -484,9 +504,6 @@ void brw_draw_init( struct brw_context *brw )
 			   NULL,
 			   GL_DYNAMIC_DRAW_ARB,
 			   brw->vb.upload.vbo[0] );
-						     
-   
-   brw_init_current_values(ctx, brw->vb.current_values);
 }
 
 void brw_draw_destroy( struct brw_context *brw )

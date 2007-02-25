@@ -142,7 +142,7 @@ depend: $(ALL_SOURCES)
 	@ echo "running $(MKDEP)"
 	@ touch depend
 	@$(MKDEP) $(MKDEP_OPTIONS) $(DEFINES) $(INCLUDE_DIRS) $(ALL_SOURCES) \
-		> /dev/null 
+		> /dev/null 2>/dev/null
 
 
 subdirs:

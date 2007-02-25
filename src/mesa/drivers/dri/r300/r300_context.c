@@ -44,7 +44,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #include "swrast/swrast.h"
 #include "swrast_setup/swrast_setup.h"
-#include "array_cache/acache.h"
+#include "vbo/vbo.h"
 
 #include "tnl/tnl.h"
 #include "tnl/t_pipeline.h"
@@ -73,6 +73,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 int future_hw_tcl_on=1;
 int hw_tcl_on=1;
 
+#define need_GL_EXT_stencil_two_side
 #define need_GL_ARB_multisample
 #define need_GL_ARB_texture_compression
 #define need_GL_ARB_vertex_buffer_object
@@ -124,6 +125,10 @@ const struct dri_extension card_extensions[] = {
   {"GL_NV_vertex_program",		GL_NV_vertex_program_functions},
   {"GL_SGIS_generate_mipmap",		NULL},
   {NULL,				NULL}
+};
+
+const struct dri_extension stencil_two_side[] = {
+  {"GL_EXT_stencil_two_side",		GL_EXT_stencil_two_side_functions},
 };
 
 extern struct tnl_pipeline_stage _r300_render_stage;
@@ -195,6 +200,8 @@ GLboolean r300CreateContext(const __GLcontextModes * glVisual,
 	 */
 	driParseConfigFiles(&r300->radeon.optionCache, &screen->optionCache,
 			    screen->driScreen->myNum, "r300");
+	r300->initialMaxAnisotropy = driQueryOptionf(&r300->radeon.optionCache,
+						     "def_max_anisotropy");
 
 	//r300->texmicrotile = GL_TRUE;
 	
@@ -287,7 +294,7 @@ GLboolean r300CreateContext(const __GLcontextModes * glVisual,
 	/* Initialize the software rasterizer and helper modules.
 	 */
 	_swrast_CreateContext(ctx);
-	_ac_CreateContext(ctx);
+	_vbo_CreateContext(ctx);
 	_tnl_CreateContext(ctx);
 	_swsetup_CreateContext(ctx);
 	_swsetup_Wakeup(ctx);
@@ -300,7 +307,7 @@ GLboolean r300CreateContext(const __GLcontextModes * glVisual,
 
 	/* Try and keep materials and vertices separate:
 	 */
-	_tnl_isolate_materials(ctx, GL_TRUE);
+/* 	_tnl_isolate_materials(ctx, GL_TRUE); */
 
 	/* Configure swrast and TNL to match hardware characteristics:
 	 */
@@ -330,6 +337,9 @@ GLboolean r300CreateContext(const __GLcontextModes * glVisual,
 	ctx->_MaintainTexEnvProgram = GL_TRUE;
 
 	driInitExtensions(ctx, card_extensions, GL_TRUE);
+	
+	if (driQueryOptionb(&r300->radeon.optionCache, "disable_stencil_two_side") == 0)
+		driInitSingleExtension(ctx, stencil_two_side);
 	
 	if (r300->radeon.glCtx->Mesa_DXTn && !driQueryOptionb (&r300->radeon.optionCache, "disable_s3tc")) {
 	  _mesa_enable_extension( ctx, "GL_EXT_texture_compression_s3tc" );
@@ -478,7 +488,7 @@ void r300DestroyContext(__DRIcontextPrivate * driContextPriv)
 		_swsetup_DestroyContext(r300->radeon.glCtx);
 		_tnl_ProgramCacheDestroy(r300->radeon.glCtx);
 		_tnl_DestroyContext(r300->radeon.glCtx);
-		_ac_DestroyContext(r300->radeon.glCtx);
+		_vbo_DestroyContext(r300->radeon.glCtx);
 		_swrast_DestroyContext(r300->radeon.glCtx);
 		
 		if (r300->dma.current.buf) {

@@ -41,7 +41,6 @@
 #include "imports.h"
 #include "mtypes.h"
 #include "renderbuffer.h"
-#include "array_cache/acache.h"
 #include "swrast/swrast.h"
 #include "swrast_setup/swrast_setup.h"
 #include "swrast/s_context.h"
@@ -51,6 +50,7 @@
 #include "tnl/t_context.h"
 #include "tnl/t_pipeline.h"
 #include "drivers/common/driverfuncs.h"
+#include "vbo/vbo.h"
 
 
 
@@ -110,8 +110,8 @@ osmesa_update_state( GLcontext *ctx, GLuint new_state )
    /* easy - just propogate */
    _swrast_InvalidateState( ctx, new_state );
    _swsetup_InvalidateState( ctx, new_state );
-   _ac_InvalidateState( ctx, new_state );
    _tnl_InvalidateState( ctx, new_state );
+   _vbo_InvalidateState( ctx, new_state );
 }
 
 
@@ -1261,7 +1261,7 @@ OSMesaCreateContextExt( GLenum format, GLint depthBits, GLint stencilBits,
          TNLcontext *tnl;
 
 	 if (!_swrast_CreateContext( ctx ) ||
-             !_ac_CreateContext( ctx ) ||
+             !_vbo_CreateContext( ctx ) ||
              !_tnl_CreateContext( ctx ) ||
              !_swsetup_CreateContext( ctx )) {
             _mesa_destroy_visual(osmesa->gl_visual);
@@ -1299,7 +1299,7 @@ OSMesaDestroyContext( OSMesaContext osmesa )
    if (osmesa) {
       _swsetup_DestroyContext( &osmesa->mesa );
       _tnl_DestroyContext( &osmesa->mesa );
-      _ac_DestroyContext( &osmesa->mesa );
+      _vbo_DestroyContext( &osmesa->mesa );
       _swrast_DestroyContext( &osmesa->mesa );
 
       _mesa_destroy_visual( osmesa->gl_visual );

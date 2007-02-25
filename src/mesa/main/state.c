@@ -903,8 +903,8 @@ update_arrays( GLcontext *ctx )
 
    /* 7 */
    if (ctx->VertexProgram._Enabled
-       && ctx->Array.ArrayObj->VertexAttrib[VERT_ATTRIB_SEVEN].Enabled) {
-      min = MIN2(min, ctx->Array.ArrayObj->VertexAttrib[VERT_ATTRIB_SEVEN]._MaxElement);
+       && ctx->Array.ArrayObj->VertexAttrib[VERT_ATTRIB_EDGEFLAG].Enabled) {
+      min = MIN2(min, ctx->Array.ArrayObj->VertexAttrib[VERT_ATTRIB_EDGEFLAG]._MaxElement);
    }
 
    /* 8..15 */
@@ -1110,9 +1110,6 @@ _mesa_update_state_locked( GLcontext *ctx )
 
    if (new_state & (_NEW_SCISSOR | _NEW_BUFFERS | _NEW_VIEWPORT))
       _mesa_update_draw_buffer_bounds( ctx );
-
-   if (new_state & _NEW_POINT)
-      _mesa_update_point( ctx );
 
    if (new_state & _NEW_LIGHT)
       _mesa_update_lighting( ctx );

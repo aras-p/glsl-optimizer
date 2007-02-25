@@ -30,7 +30,6 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "nouveau_fifo.h"
 
 #include "swrast/swrast.h"
-#include "array_cache/acache.h"
 #include "tnl/tnl.h"
 #include "swrast_setup/swrast_setup.h"
 
@@ -144,7 +143,7 @@ static void nouveauDDInvalidateState(GLcontext *ctx, GLuint new_state)
 {
     _swrast_InvalidateState( ctx, new_state );
     _swsetup_InvalidateState( ctx, new_state );
-    _ac_InvalidateState( ctx, new_state );
+    _vbo_InvalidateState( ctx, new_state );
     _tnl_InvalidateState( ctx, new_state );
     NOUVEAU_CONTEXT(ctx)->new_render_state |= new_state;
 }
@@ -156,9 +155,11 @@ void nouveauDDInitState(nouveauContextPtr nmesa)
     switch(type)
     {
         case NV_03:
+            /* Unimplemented */
+            break;
         case NV_04:
         case NV_05:
-            /* No TCL engines for these ones */
+            nv04InitStateFuncs(nmesa->glCtx, &nmesa->glCtx->Driver);
             break;
         case NV_10:
             nv10InitStateFuncs(nmesa->glCtx, &nmesa->glCtx->Driver);
@@ -169,8 +170,10 @@ void nouveauDDInitState(nouveauContextPtr nmesa)
         case NV_30:
         case NV_40:
         case NV_44:
-        case NV_50:
             nv30InitStateFuncs(nmesa->glCtx, &nmesa->glCtx->Driver);
+            break;
+        case NV_50:
+            nv50InitStateFuncs(nmesa->glCtx, &nmesa->glCtx->Driver);
             break;
         default:
             break;

@@ -33,7 +33,6 @@
 
 /*TODO'S
  *
- * - COS/SIN/SCS instructions
  * - Depth write, WPOS/FOGC inputs
  * - FogOption
  * - Verify results of opcodes for accuracy, I've only checked them
@@ -187,6 +186,10 @@ static const struct {
 #define SLOT_VECTOR	(1<<0)
 #define SLOT_SCALAR	(1<<3)
 #define SLOT_BOTH	(SLOT_VECTOR | SLOT_SCALAR)
+
+/* mapping from SWIZZLE_* to r300 native values for scalar insns */
+#define SWIZZLE_HALF 6
+
 #define MAKE_SWZ3(x, y, z) (MAKE_SWIZZLE4(SWIZZLE_##x, \
 					  SWIZZLE_##y, \
 					  SWIZZLE_##z, \
@@ -208,7 +211,7 @@ static const struct r300_pfs_swizzle {
 	{ MAKE_SWZ3(W, Z, Y), R300_FPI0_ARGC_SRC0CA_WZY, 1, SLOT_BOTH },
 	{ MAKE_SWZ3(ONE, ONE, ONE), R300_FPI0_ARGC_ONE, 0, 0},
 	{ MAKE_SWZ3(ZERO, ZERO, ZERO), R300_FPI0_ARGC_ZERO, 0, 0},
-	{ PFS_INVAL, R300_FPI0_ARGC_HALF, 0, 0},
+	{ MAKE_SWZ3(HALF, HALF, HALF), R300_FPI0_ARGC_HALF, 0, 0},
 	{ PFS_INVAL, 0, 0, 0},
 };
 
@@ -232,8 +235,6 @@ static const struct {
 	{ PFS_INVAL, PFS_INVAL, PFS_INVAL}
 };
 
-/* mapping from SWIZZLE_* to r300 native values for scalar insns */
-#define SWIZZLE_HALF 6
 static const struct {
 	int base;	/* hw value of swizzle */
 	int stride;	/* difference between SRC0/1/2 */
@@ -463,7 +464,7 @@ static int swz_native(struct r300_fragment_program *rp,
 		      GLuint arbneg)
 {
 	/* Native swizzle, handle negation */
-	src = (src & ~REG_NEGS_SHIFT) |
+	src = (src & ~REG_NEGS_MASK) |
 		(((arbneg >> 3) & 1) << REG_NEGS_SHIFT);
 
 	if ((arbneg & 0x7) == 0x0) {
@@ -590,6 +591,7 @@ static GLuint do_swizzle(struct r300_fragment_program *rp,
 	/* If swizzling from something without an XYZW native swizzle,
 	 * emit result to a temp, and do new swizzle from the temp.
 	 */
+#if 0
 	if (REG_GET_VSWZ(src) != SWIZZLE_XYZ ||
 	    REG_GET_SSWZ(src) != SWIZZLE_W) {
 		GLuint temp = get_temp_reg(rp);
@@ -603,10 +605,30 @@ static GLuint do_swizzle(struct r300_fragment_program *rp,
 			   0);
 		src = temp;
 	}
+#endif
 
-	/* set scalar swizzling */
-	REG_SET_SSWZ(src, GET_SWZ(arbswz, 3));
+	if (REG_GET_VSWZ(src) != SWIZZLE_XYZ ||
+	    REG_GET_SSWZ(src) != SWIZZLE_W) {
+	    GLuint vsrcswz = (v_swiz[REG_GET_VSWZ(src)].hash & (SWZ_X_MASK|SWZ_Y_MASK|SWZ_Z_MASK)) | REG_GET_SSWZ(src) << 9;
+	    GLint i;
 
+	    GLuint newswz = 0;
+	    GLuint offset;
+	    for(i=0; i < 4; ++i){
+		offset = GET_SWZ(arbswz, i);
+		
+		newswz |= (offset <= 3)?GET_SWZ(vsrcswz, offset) << i*3:offset << i*3;
+	    }
+
+	    arbswz = newswz & (SWZ_X_MASK|SWZ_Y_MASK|SWZ_Z_MASK);
+	    REG_SET_SSWZ(src, GET_SWZ(newswz, 3));
+	}
+	else
+	{
+	    /* set scalar swizzling */
+	    REG_SET_SSWZ(src, GET_SWZ(arbswz, 3));
+
+	}
 	do {
 		vswz = REG_GET_VSWZ(src);
 		do {
@@ -1058,7 +1080,7 @@ static void emit_arith(struct r300_fragment_program *rp,
 				break;
 			}
 			if (emit_sop &&
-			    (s_swiz[REG_GET_VSWZ(src[i])].flags & SLOT_VECTOR)) {
+			    (s_swiz[REG_GET_SSWZ(src[i])].flags & SLOT_VECTOR)) {
 				vpos = spos = MAX2(vpos, spos);
 				break;
 			}
@@ -1181,6 +1203,25 @@ static GLuint get_attrib(struct r300_fragment_program *rp, GLuint attr)
 }
 #endif
 
+static void make_sin_const(struct r300_fragment_program *rp)
+{
+	if(rp->const_sin[0] == -1){
+	    GLfloat cnstv[4];
+
+	    cnstv[0] = 1.273239545; // 4/PI
+	    cnstv[1] =-0.405284735; // -4/(PI*PI)
+	    cnstv[2] = 3.141592654; // PI
+	    cnstv[3] = 0.2225;      // weight
+	    rp->const_sin[0] = emit_const4fv(rp, cnstv);
+
+	    cnstv[0] = 0.5;
+	    cnstv[1] = -1.5;
+	    cnstv[2] = 0.159154943; // 1/(2*PI)
+	    cnstv[3] = 6.283185307; // 2*PI
+	    rp->const_sin[1] = emit_const4fv(rp, cnstv);
+	}
+}
+
 static GLboolean parse_program(struct r300_fragment_program *rp)
 {	
 	struct gl_fragment_program *mp = &rp->mesa_program;
@@ -1234,62 +1275,71 @@ static GLboolean parse_program(struct r300_fragment_program *rp)
 			break;
 		case OPCODE_COS:
 			/*
-			 * cos using taylor serie:
-			 * cos(x) = 1 - x^2/2! + x^4/4! - x^6/6!
+			 * cos using a parabola (see SIN):
+			 * cos(x):
+			 *   x += PI/2
+			 *   x = (x/(2*PI))+0.5
+			 *   x = frac(x)
+			 *   x = (x*2*PI)-PI
+			 *   result = sin(x)
 			 */
 			temp = get_temp_reg(rp);
-			cnstv[0] = 0.5;
-			cnstv[1] = 0.041666667;
-			cnstv[2] = 0.001388889;
-			cnstv[4] = 0.0;
-			cnst = emit_const4fv(rp, cnstv);
+			make_sin_const(rp);
 			src[0] = t_scalar_src(rp, fpi->SrcReg[0]);
 
-			emit_arith(rp, PFS_OP_MAD, temp,
-				   WRITEMASK_XYZ,
-				   src[0],
-				   src[0],
-				   pfs_zero,
-				   flags);
-			emit_arith(rp, PFS_OP_MAD, temp,
-				   WRITEMASK_Y | WRITEMASK_Z,
-				   temp, temp,
-				   pfs_zero,
-				   flags);
-			emit_arith(rp, PFS_OP_MAD, temp,
-				   WRITEMASK_Z,
-				   temp,
-				   swizzle(temp, X, X, X, W),
-				   pfs_zero,
-				   flags);
-			emit_arith(rp, PFS_OP_MAD, temp,
-				   WRITEMASK_XYZ,
-				   temp, cnst,
-				   pfs_zero,
-				   flags);
-			emit_arith(rp, PFS_OP_MAD, temp,
-				   WRITEMASK_X,
-				   pfs_one,
-				   pfs_one,
-				   negate(temp),
-				   flags);
-			emit_arith(rp, PFS_OP_MAD, temp,
-				   WRITEMASK_X,
-				   temp,
-				   pfs_one,
-				   swizzle(temp, Y, Y, Y, W),
-				   flags);
-			emit_arith(rp, PFS_OP_MAD, temp,
-				   WRITEMASK_X,
-				   temp,
-				   pfs_one,
-				   negate(swizzle(temp, Z, Z, Z, W)),
-				   flags);
-			emit_arith(rp, PFS_OP_MAD, dest, mask,
+			/* add 0.5*PI and do range reduction */
+
+			emit_arith(rp, PFS_OP_MAD, temp, WRITEMASK_X,
+				   swizzle(rp->const_sin[0], Z, Z, Z, Z), //PI
+				   pfs_half,
+				   swizzle(keep(src[0]), X, X, X, X),
+				   0);
+
+			emit_arith(rp, PFS_OP_MAD, temp, WRITEMASK_X,
 				   swizzle(temp, X, X, X, X),
-				   pfs_one,
+				   swizzle(rp->const_sin[1], Z, Z, Z, Z),
+				   pfs_half,
+				   0);
+
+			emit_arith(rp, PFS_OP_FRC, temp, WRITEMASK_X,
+				   swizzle(temp, X, X, X, X),
+				   undef,
+				   undef,
+				   0);
+
+			emit_arith(rp, PFS_OP_MAD, temp, WRITEMASK_Z,
+				   swizzle(temp, X, X, X, X),
+				   swizzle(rp->const_sin[1], W, W, W, W), //2*PI
+				   negate(swizzle(rp->const_sin[0], Z, Z, Z, Z)), //-PI
+				   0);
+
+			/* SIN */
+
+			emit_arith(rp, PFS_OP_MAD, temp, WRITEMASK_X | WRITEMASK_Y,
+				   swizzle(temp, Z, Z, Z, Z),
+				   rp->const_sin[0],
 				   pfs_zero,
+				   0);
+
+			emit_arith(rp, PFS_OP_MAD, temp, WRITEMASK_X,
+				   swizzle(temp, Y, Y, Y, Y),
+				   absolute(swizzle(temp, Z, Z, Z, Z)),
+				   swizzle(temp, X, X, X, X),
+				   0);
+			
+			emit_arith(rp, PFS_OP_MAD, temp, WRITEMASK_Y,
+				   swizzle(temp, X, X, X, X),
+				   absolute(swizzle(temp, X, X, X, X)),
+				   negate(swizzle(temp, X, X, X, X)),
+				   0);
+
+
+	    		emit_arith(rp, PFS_OP_MAD, dest, mask,
+				   swizzle(temp, Y, Y, Y, Y),
+				   swizzle(rp->const_sin[0], W, W, W, W),
+				   swizzle(temp, X, X, X, X),
 				   flags);
+
 			free_temp(rp, temp);
 			break;
 		case OPCODE_DP3:
@@ -1398,7 +1448,7 @@ static GLboolean parse_program(struct r300_fragment_program *rp)
 			 * change the compare to (t.x + 0.5) > 0.5 we may
 			 * save one instruction by doing CMP -t.x 
 			 */
-			cnstv[0] = cnstv[1] = cnstv[2] = cnstv[4] = 0.50001;
+			cnstv[0] = cnstv[1] = cnstv[2] = cnstv[3] = 0.50001;
 			src[0] = t_src(rp, fpi->SrcReg[0]);
 			temp = get_temp_reg(rp);
 			cnst = emit_const4fv(rp, cnstv);
@@ -1529,7 +1579,93 @@ static GLboolean parse_program(struct r300_fragment_program *rp)
 				   flags);
 			break;
 		case OPCODE_SCS:
-			ERROR("SCS not implemented\n");
+			/*
+			 * cos using a parabola (see SIN):
+			 * cos(x):
+			 *   x += PI/2
+			 *   x = (x/(2*PI))+0.5
+			 *   x = frac(x)
+			 *   x = (x*2*PI)-PI
+			 *   result = sin(x)
+			 */
+			temp = get_temp_reg(rp);
+			make_sin_const(rp);
+			src[0] = t_scalar_src(rp, fpi->SrcReg[0]);
+
+			/* add 0.5*PI and do range reduction */
+
+			emit_arith(rp, PFS_OP_MAD, temp, WRITEMASK_X|WRITEMASK_Y,
+				   swizzle(rp->const_sin[0], Z, Z, Z, Z),
+				   rp->const_sin[1],
+				   swizzle(keep(src[0]), X, X, X, X),
+				   0);
+
+			emit_arith(rp, PFS_OP_CMP, temp, WRITEMASK_W,
+				   swizzle(rp->const_sin[0], Z, Z, Z, Z),
+				   negate(pfs_half),
+				   swizzle(keep(src[0]), X, X, X, X),
+				   0);
+
+			emit_arith(rp, PFS_OP_CMP, temp, WRITEMASK_Z,
+				   swizzle(temp, X, X, X, X),
+				   swizzle(temp, Y, Y, Y, Y),
+				   swizzle(temp, W, W, W, W),
+				   0);
+
+			emit_arith(rp, PFS_OP_MAD, temp, WRITEMASK_X | WRITEMASK_Y,
+			           swizzle(temp, Z, Z, Z, Z),
+				   rp->const_sin[0],
+			           pfs_zero,
+				   0);
+
+			emit_arith(rp, PFS_OP_MAD, temp, WRITEMASK_W,
+				   swizzle(temp, Y, Y, Y, Y),
+				   absolute(swizzle(temp, Z, Z, Z, Z)),
+				   swizzle(temp, X, X, X, X),
+				   0);
+
+			if(mask & WRITEMASK_Y)
+			{
+			    emit_arith(rp, PFS_OP_MAD, temp, WRITEMASK_X | WRITEMASK_Y,
+				       swizzle(keep(src[0]), X, X, X, X),
+				       rp->const_sin[0],
+				       pfs_zero,
+				       0);
+
+			    emit_arith(rp, PFS_OP_MAD, temp, WRITEMASK_X,
+				       swizzle(temp, Y, Y, Y, Y),
+				       absolute(swizzle(keep(src[0]), X, X, X, X)),
+				       swizzle(temp, X, X, X, X),
+				       0);
+			}
+
+			emit_arith(rp, PFS_OP_MAD, temp, WRITEMASK_Z,
+				   swizzle(temp, W, W, W, W),
+				   absolute(swizzle(temp, W, W, W, W)),
+				   negate(swizzle(temp, W, W, W, W)),
+				   0);
+
+			emit_arith(rp, PFS_OP_MAD, dest, WRITEMASK_X,
+				   swizzle(temp, Z, Z, Z, Z),
+				   swizzle(rp->const_sin[0], W, W, W, W),
+				   swizzle(temp, W, W, W, W),
+				   flags);
+
+			if(mask & WRITEMASK_Y)
+			{
+			    emit_arith(rp, PFS_OP_MAD, temp, WRITEMASK_W,
+				       swizzle(temp, X, X, X, X),
+				       absolute(swizzle(temp, X, X, X, X)),
+				       negate(swizzle(temp, X, X, X, X)),
+				       0);
+
+	    		    emit_arith(rp, PFS_OP_MAD, dest, WRITEMASK_Y,
+				       swizzle(temp, W, W, W, W),
+				       swizzle(rp->const_sin[0], W, W, W, W),
+				       swizzle(temp, X, X, X, X),
+				       flags);
+			}
+			free_temp(rp, temp);
 			break;
 		case OPCODE_SGE:
 			src[0] = t_src(rp, fpi->SrcReg[0]);
@@ -1548,68 +1684,63 @@ static GLboolean parse_program(struct r300_fragment_program *rp)
 			break;
 		case OPCODE_SIN:
 			/*
-			 * sin using taylor serie:
-			 * sin(x) = x - x^3/3! + x^5/5! - x^7/7!
+			 *  using a parabola:
+			 * sin(x) = 4/pi * x + -4/(pi*pi) * x * abs(x)
+			 * extra precision is obtained by weighting against
+			 * itself squared.
 			 */
+
 			temp = get_temp_reg(rp);
-			cnstv[0] = 0.333333333;
-			cnstv[1] = 0.008333333;
-			cnstv[2] = 0.000198413;
-			cnstv[4] = 0.0;
-			cnst = emit_const4fv(rp, cnstv);
+			make_sin_const(rp);
 			src[0] = t_scalar_src(rp, fpi->SrcReg[0]);
 
-			emit_arith(rp, PFS_OP_MAD, temp,
-				   WRITEMASK_XYZ,
-				   src[0],
-				   src[0],
-				   pfs_zero,
-				   flags);
-			emit_arith(rp, PFS_OP_MAD, temp,
-				   WRITEMASK_Y | WRITEMASK_Z,
-				   temp, temp,
-				   pfs_zero,
-				   flags);
-			emit_arith(rp, PFS_OP_MAD, temp,
-				   WRITEMASK_Z,
-				   temp,
-				   swizzle(temp, X, X, X, W),
-				   pfs_zero,
-				   flags);
-			emit_arith(rp, PFS_OP_MAD, temp,
-				   WRITEMASK_XYZ,
-				   src[0],
-				   temp,
-				   pfs_zero,
-				   flags);
-			emit_arith(rp, PFS_OP_MAD, temp,
-				   WRITEMASK_XYZ,
-				   temp, cnst,
-				   pfs_zero,
-				   flags);
-			emit_arith(rp, PFS_OP_MAD, temp,
-				   WRITEMASK_X,
-				   src[0],
-				   pfs_one,
-				   negate(temp),
-				   flags);
-			emit_arith(rp, PFS_OP_MAD, temp,
-				   WRITEMASK_X,
-				   temp,
-				   pfs_one,
-				   swizzle(temp, Y, Y, Y, W),
-				   flags);
-			emit_arith(rp, PFS_OP_MAD, temp,
-				   WRITEMASK_X,
-				   temp,
-				   pfs_one,
-				   negate(swizzle(temp, Z, Z, Z, W)),
-				   flags);
-			emit_arith(rp, PFS_OP_MAD, dest, mask,
+			/* do range reduction */
+
+			emit_arith(rp, PFS_OP_MAD, temp, WRITEMASK_X,
+				   swizzle(keep(src[0]), X, X, X, X),
+				   swizzle(rp->const_sin[1], Z, Z, Z, Z),
+				   pfs_half,
+				   0);
+
+			emit_arith(rp, PFS_OP_FRC, temp, WRITEMASK_X,
 				   swizzle(temp, X, X, X, X),
-				   pfs_one,
+				   undef,
+				   undef,
+				   0);
+
+			emit_arith(rp, PFS_OP_MAD, temp, WRITEMASK_Z,
+				   swizzle(temp, X, X, X, X),
+				   swizzle(rp->const_sin[1], W, W, W, W), //2*PI
+				   negate(swizzle(rp->const_sin[0], Z, Z, Z, Z)), //PI
+				   0);
+
+			/* SIN */
+
+			emit_arith(rp, PFS_OP_MAD, temp, WRITEMASK_X | WRITEMASK_Y,
+				   swizzle(temp, Z, Z, Z, Z),
+				   rp->const_sin[0],
 				   pfs_zero,
+				   0);
+
+			emit_arith(rp, PFS_OP_MAD, temp, WRITEMASK_X,
+				   swizzle(temp, Y, Y, Y, Y),
+				   absolute(swizzle(temp, Z, Z, Z, Z)),
+				   swizzle(temp, X, X, X, X),
+				   0);
+			
+			emit_arith(rp, PFS_OP_MAD, temp, WRITEMASK_Y,
+				   swizzle(temp, X, X, X, X),
+				   absolute(swizzle(temp, X, X, X, X)),
+				   negate(swizzle(temp, X, X, X, X)),
+				   0);
+
+
+	    		emit_arith(rp, PFS_OP_MAD, dest, mask,
+				   swizzle(temp, Y, Y, Y, Y),
+				   swizzle(rp->const_sin[0], W, W, W, W),
+				   swizzle(temp, X, X, X, X),
 				   flags);
+
 			free_temp(rp, temp);
 			break;
 		case OPCODE_SLT:
@@ -1681,7 +1812,7 @@ static GLboolean parse_program(struct r300_fragment_program *rp)
 /* - Init structures
  * - Determine what hwregs each input corresponds to
  */
-static void init_program(struct r300_fragment_program *rp)
+static void init_program(r300ContextPtr r300, struct r300_fragment_program *rp)
 {
 	struct r300_pfs_compile_state *cs = NULL;
 	struct gl_fragment_program *mp = &rp->mesa_program;	
@@ -1691,6 +1822,7 @@ static void init_program(struct r300_fragment_program *rp)
 	int i,j;
 
 	/* New compile, reset tracking data */
+	rp->optimization = driQueryOptioni(&r300->radeon.optionCache, "fp_optimization");
 	rp->translated = GL_FALSE;
 	rp->error      = GL_FALSE;
 	rp->cs = cs	   = &(R300_CONTEXT(rp->ctx)->state.pfs_compile);
@@ -1703,6 +1835,7 @@ static void init_program(struct r300_fragment_program *rp)
 	rp->max_temp_idx = 0;
 	rp->node[0].alu_end = -1;
 	rp->node[0].tex_end = -1;
+	rp->const_sin[0] = -1;
 	
 	_mesa_memset(cs, 0, sizeof(*rp->cs));
 	for (i=0;i<PFS_MAX_ALU_INST;i++) {
@@ -1816,13 +1949,13 @@ static void update_params(struct r300_fragment_program *rp)
 	rp->params_uptodate = GL_TRUE;
 }
 
-void r300_translate_fragment_shader(struct r300_fragment_program *rp)
+void r300_translate_fragment_shader(r300ContextPtr r300, struct r300_fragment_program *rp)
 {
 	struct r300_pfs_compile_state *cs = NULL;
 
 	if (!rp->translated) {
 		
-		init_program(rp);
+		init_program(r300, rp);
 		cs = rp->cs;
 
 		if (parse_program(rp) == GL_FALSE) {

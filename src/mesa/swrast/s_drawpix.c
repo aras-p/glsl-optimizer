@@ -110,8 +110,9 @@ fast_draw_rgba_pixels(GLcontext *ctx, GLint x, GLint y,
     */
 
    if (format == GL_RGBA && type == rbType) {
-      const GLubyte *src = _mesa_image_address2d(&unpack, pixels, width,
-                                                 height, format, type, 0, 0);
+      const GLubyte *src
+         = (const GLubyte *) _mesa_image_address2d(&unpack, pixels, width,
+                                                   height, format, type, 0, 0);
       const GLint srcStride = _mesa_image_row_stride(&unpack, width,
                                                      format, type);
       if (simpleZoom) {
@@ -139,8 +140,9 @@ fast_draw_rgba_pixels(GLcontext *ctx, GLint x, GLint y,
    }
 
    if (format == GL_RGB && type == rbType) {
-      const GLubyte *src = _mesa_image_address2d(&unpack, pixels, width,
-                                                 height, format, type, 0, 0);
+      const GLubyte *src
+         = (const GLubyte *) _mesa_image_address2d(&unpack, pixels, width,
+                                                   height, format, type, 0, 0);
       const GLint srcStride = _mesa_image_row_stride(&unpack, width,
                                                      format, type);
       if (simpleZoom) {
@@ -640,8 +642,10 @@ draw_rgba_pixels( GLcontext *ctx, GLint x, GLint y,
       /* if the span is wider than MAX_WIDTH we have to do it in chunks */
       while (skipPixels < width) {
          const GLint spanWidth = MIN2(width - skipPixels, MAX_WIDTH);
-         const GLubyte *source = _mesa_image_address2d(unpack, pixels,
-                               width, height, format, type, 0, skipPixels);
+         const GLubyte *source
+            = (const GLubyte *) _mesa_image_address2d(unpack, pixels,
+                                                      width, height, format,
+                                                      type, 0, skipPixels);
          GLint row;
 
          for (row = 0; row < height; row++) {

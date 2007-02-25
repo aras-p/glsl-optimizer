@@ -190,6 +190,8 @@ enum state_index {
    STATE_NORMAL_SCALE,
    STATE_TEXRECT_SCALE,
    STATE_POSITION_NORMALIZED,   /* normalized light position */
+   STATE_FOG_PARAMS_OPTIMIZED,  /* for faster fog calc */
+   STATE_SPOT_DIR_NORMALIZED,   /* pre-normalized spot dir */
    STATE_INTERNAL_DRIVER	/* first available state index for drivers (must be last) */
 };
 

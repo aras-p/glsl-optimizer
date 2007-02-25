@@ -29,6 +29,13 @@ NV30VPUploadToHW(GLcontext *ctx, nouveauShader *nvs)
    }
    BEGIN_RING_SIZE(NvSub3D, NV30_TCL_PRIMITIVE_3D_VP_PROGRAM_START_ID, 1);
    OUT_RING(0);
+
+   BEGIN_RING_SIZE(NvSub3D, NV30_TCL_PRIMITIVE_3D_VP_IN_REG, 2);
+   OUT_RING(nvs->card_priv.NV30VP.vp_in_reg);
+   OUT_RING(nvs->card_priv.NV30VP.vp_out_reg);
+
+   BEGIN_RING_CACHE(NvSub3D, NV30_TCL_PRIMITIVE_3D_SET_CLIPPING_PLANES, 1);
+   OUT_RING_CACHE  (nvs->card_priv.NV30VP.clip_enables);
 }
 
 static void
@@ -48,6 +55,12 @@ NV30VPUpdateConst(GLcontext *ctx, nouveauShader *nvs, int id)
 /*****************************************************************************
  * Assembly routines
  */
+static void
+NV30VPSetBranchTarget(nvsFunc *shader, int addr)
+{
+	shader->inst[2] &= ~NV30_VP_INST_IADDR_MASK;
+	shader->inst[2] |= (addr << NV30_VP_INST_IADDR_SHIFT);
+}
 
 /*****************************************************************************
  * Disassembly routines
@@ -349,5 +362,6 @@ NV30VPInitShaderFuncs(nvsFunc * shader)
    shader->GetCondRegID		= NV30VPGetCondRegID;
 
    shader->GetBranch		= NV30VPGetBranch;
+   shader->SetBranchTarget	= NV30VPSetBranchTarget;
 }
 

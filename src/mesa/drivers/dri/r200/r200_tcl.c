@@ -40,7 +40,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "colormac.h"
 #include "light.h"
 
-#include "array_cache/acache.h"
+#include "vbo/vbo.h"
 #include "tnl/tnl.h"
 #include "tnl/t_pipeline.h"
 
@@ -384,8 +384,14 @@ static GLboolean r200_run_tcl_render( GLcontext *ctx,
    r200ContextPtr rmesa = R200_CONTEXT(ctx);
    TNLcontext *tnl = TNL_CONTEXT(ctx);
    struct vertex_buffer *VB = &tnl->vb;
-   GLuint inputs = 0;
    GLuint i;
+   GLubyte *vimap_rev;
+/* use hw fixed order for simplicity, pos 0, weight 1, normal 2, fog 3, 
+   color0 - color3 4-7, texcoord0 - texcoord5 8-13, pos 1 14. Must not use
+   more than 12 of those at the same time. */
+   GLubyte map_rev_fixed[15] = {255, 255, 255, 255, 255, 255, 255, 255,
+			    255, 255, 255, 255, 255, 255, 255};
+
 
    /* TODO: separate this from the swtnl pipeline 
     */
@@ -404,30 +410,40 @@ static GLboolean r200_run_tcl_render( GLcontext *ctx,
       r200ValidateState( ctx );
 
    if (!ctx->VertexProgram._Enabled) {
-      inputs = VERT_BIT_POS | VERT_BIT_COLOR0;
    /* NOTE: inputs != tnl->render_inputs - these are the untransformed
     * inputs.
     */
+      map_rev_fixed[0] = VERT_ATTRIB_POS;
+      /* technically there is no reason we always need VA_COLOR0. In theory
+         could disable it depending on lighting, color materials, texturing... */
+      map_rev_fixed[4] = VERT_ATTRIB_COLOR0;
+
       if (ctx->Light.Enabled) {
-	 inputs |= VERT_BIT_NORMAL;
+	 map_rev_fixed[2] = VERT_ATTRIB_NORMAL;
       }
 
+      /* this also enables VA_COLOR1 when using separate specular
+         lighting model, which is unnecessary.
+         FIXME: OTOH, we're missing the case where a ATI_fragment_shader accesses
+         the secondary color (if lighting is disabled). The chip seems
+         misconfigured for that though elsewhere (tcl output, might lock up) */
       if (ctx->_TriangleCaps & DD_SEPARATE_SPECULAR) {
-	 inputs |= VERT_BIT_COLOR1;
+	 map_rev_fixed[5] = VERT_ATTRIB_COLOR1;
       }
 
       if ( (ctx->Fog.FogCoordinateSource == GL_FOG_COORD) && ctx->Fog.Enabled ) {
-	 inputs |= VERT_BIT_FOG;
+	 map_rev_fixed[3] = VERT_ATTRIB_FOG;
       }
 
       for (i = 0 ; i < ctx->Const.MaxTextureUnits; i++) {
 	 if (ctx->Texture.Unit[i]._ReallyEnabled) {
 	    if (rmesa->TexGenNeedNormals[i]) {
-	       inputs |= VERT_BIT_NORMAL;
+	       map_rev_fixed[2] = VERT_ATTRIB_NORMAL;
 	    }
-	    inputs |= VERT_BIT_TEX(i);
+	    map_rev_fixed[8 + i] = VERT_ATTRIB_TEX0 + i;
 	 }
       }
+      vimap_rev = &map_rev_fixed[0];
    }
    else {
       /* vtx_tcl_output_vtxfmt_0/1 need to match configuration of "fragment
@@ -437,14 +453,8 @@ static GLboolean r200_run_tcl_render( GLcontext *ctx,
 	 We only need to change compsel. */
       GLuint out_compsel = 0;
       GLuint vp_out = rmesa->curr_vp_hw->mesa_program.Base.OutputsWritten;
-#if 0
-      /* can't handle other inputs, generic attribs etc. currently - should never arrive here */
-      assert ((rmesa->curr_vp_hw->mesa_program.Base.InputsRead &
-	 ~(VERT_BIT_POS | VERT_BIT_NORMAL | VERT_BIT_COLOR0 | VERT_BIT_COLOR1 |
-	  VERT_BIT_FOG | VERT_BIT_TEX0 | VERT_BIT_TEX1 | VERT_BIT_TEX2 |
-	  VERT_BIT_TEX3 | VERT_BIT_TEX4 | VERT_BIT_TEX5)) == 0);
-#endif
-      inputs |= rmesa->curr_vp_hw->mesa_program.Base.InputsRead;
+
+      vimap_rev = &rmesa->curr_vp_hw->inputmap_rev[0];
       assert(vp_out & (1 << VERT_RESULT_HPOS));
       out_compsel = R200_OUTPUT_XYZW;
       if (vp_out & (1 << VERT_RESULT_COL0)) {
@@ -473,7 +483,7 @@ static GLboolean r200_run_tcl_render( GLcontext *ctx,
    /* Do the actual work:
     */
    r200ReleaseArrays( ctx, ~0 /* stage->changed_inputs */ );
-   r200EmitArrays( ctx, inputs );
+   r200EmitArrays( ctx, vimap_rev );
 
    rmesa->tcl.Elts = VB->Elts;
 

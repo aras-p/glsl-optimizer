@@ -34,6 +34,34 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "mtypes.h"
 #include "colormac.h"
 
+static void nv10ViewportScale(nouveauContextPtr nmesa)
+{
+	GLcontext *ctx = nmesa->glCtx;
+	GLuint w = ctx->Viewport.Width;
+	GLuint h = ctx->Viewport.Height;
+
+	GLfloat max_depth = (ctx->Viewport.Near + ctx->Viewport.Far) * 0.5;
+/*	if (ctx->DrawBuffer) {
+		switch (ctx->DrawBuffer->_DepthBuffer->DepthBits) {
+			case 16:
+				max_depth *= 32767.0;
+				break;
+			case 24:
+				max_depth *= 16777215.0;
+				break;
+		}
+	} else {*/
+		/* Default to 24 bits range */	
+		max_depth *= 16777215.0;
+/*	}*/
+
+	BEGIN_RING_CACHE(NvSub3D, NV10_TCL_PRIMITIVE_3D_VIEWPORT_SCALE_X, 4);
+	OUT_RING_CACHEf ((((GLfloat) w) * 0.5) - 2048.0);
+	OUT_RING_CACHEf ((((GLfloat) h) * 0.5) - 2048.0);
+	OUT_RING_CACHEf (max_depth);
+	OUT_RING_CACHEf (0.0);
+}
+
 static void nv10AlphaFunc(GLcontext *ctx, GLenum func, GLfloat ref)
 {
 	nouveauContextPtr nmesa = NOUVEAU_CONTEXT(ctx);
@@ -41,8 +69,8 @@ static void nv10AlphaFunc(GLcontext *ctx, GLenum func, GLfloat ref)
 	CLAMPED_FLOAT_TO_UBYTE(ubRef, ref);
 
 	BEGIN_RING_CACHE(NvSub3D, NV10_TCL_PRIMITIVE_3D_ALPHA_FUNC_FUNC, 2);
-	OUT_RING_CACHE(func);     /* NV10_TCL_PRIMITIVE_3D_ALPHA_FUNC_FUNC */
-	OUT_RING_CACHE(ubRef);    /* NV10_TCL_PRIMITIVE_3D_ALPHA_FUNC_REF  */
+	OUT_RING_CACHE(func);
+	OUT_RING_CACHE(ubRef);
 }
 
 static void nv10BlendColor(GLcontext *ctx, const GLfloat color[4])
@@ -62,8 +90,11 @@ static void nv10BlendColor(GLcontext *ctx, const GLfloat color[4])
 static void nv10BlendEquationSeparate(GLcontext *ctx, GLenum modeRGB, GLenum modeA)
 {
 	nouveauContextPtr nmesa = NOUVEAU_CONTEXT(ctx);
+
+	assert( modeRGB == modeA );
+
 	BEGIN_RING_CACHE(NvSub3D, NV10_TCL_PRIMITIVE_3D_BLEND_EQUATION, 1);
-	OUT_RING_CACHE((modeA<<16) | modeRGB);
+	OUT_RING_CACHE(modeRGB);
 }
 
 
@@ -71,30 +102,52 @@ static void nv10BlendFuncSeparate(GLcontext *ctx, GLenum sfactorRGB, GLenum dfac
 		GLenum sfactorA, GLenum dfactorA)
 {
 	nouveauContextPtr nmesa = NOUVEAU_CONTEXT(ctx);
+
+	assert( sfactorRGB == sfactorA );
+	assert( dfactorRGB == dfactorA );
+
 	BEGIN_RING_CACHE(NvSub3D, NV10_TCL_PRIMITIVE_3D_BLEND_FUNC_SRC, 2);
-	OUT_RING_CACHE((sfactorA<<16) | sfactorRGB);
-	OUT_RING_CACHE((dfactorA<<16) | dfactorRGB);
+	OUT_RING_CACHE(sfactorRGB);
+	OUT_RING_CACHE(dfactorRGB);
 }
 
-/*
+static void nv10Clear(GLcontext *ctx, GLbitfield mask)
+{
+	/* TODO */
+}
+
 static void nv10ClearColor(GLcontext *ctx, const GLfloat color[4])
 {
+	nouveauContextPtr nmesa = NOUVEAU_CONTEXT(ctx);
+	GLubyte c[4];
+	UNCLAMPED_FLOAT_TO_RGBA_CHAN(c,color);
+	nmesa->clear_color_value = PACK_COLOR_8888(c[3],c[0],c[1],c[2]);
 }
 
 static void nv10ClearDepth(GLcontext *ctx, GLclampd d)
 {
+	nouveauContextPtr nmesa = NOUVEAU_CONTEXT(ctx);
+
+/*	switch (ctx->DrawBuffer->_DepthBuffer->DepthBits) {
+		case 16:
+			nmesa->clear_value = (uint32_t)(d*0x7FFF);
+			break;
+		case 24:*/
+			nmesa->clear_value = ((nmesa->clear_value&0x000000FF) |
+				(((uint32_t)(d*0xFFFFFF))<<8));
+/*			break;
+	}*/
 }
-*/
 
-/* we're don't support indexed buffers
-   void (*ClearIndex)(GLcontext *ctx, GLuint index)
- */
-
-/*
 static void nv10ClearStencil(GLcontext *ctx, GLint s)
 {
+	nouveauContextPtr nmesa = NOUVEAU_CONTEXT(ctx);
+
+/*	if (ctx->DrawBuffer->_DepthBuffer->DepthBits == 24) {*/
+		nmesa->clear_value = ((nmesa->clear_value&0xFFFFFF00)|
+			(s&0x000000FF));
+/*	}*/
 }
-*/
 
 static void nv10ClipPlane(GLcontext *ctx, GLenum plane, const GLfloat *equation)
 {
@@ -106,18 +159,17 @@ static void nv10ClipPlane(GLcontext *ctx, GLenum plane, const GLfloat *equation)
 	OUT_RING_CACHEf(equation[3]);
 }
 
-/* Seems does not support alpha in color mask */
 static void nv10ColorMask(GLcontext *ctx, GLboolean rmask, GLboolean gmask,
 		GLboolean bmask, GLboolean amask )
 {
 	nouveauContextPtr nmesa = NOUVEAU_CONTEXT(ctx);
 	BEGIN_RING_CACHE(NvSub3D, NV10_TCL_PRIMITIVE_3D_COLOR_MASK, 1);
-	OUT_RING_CACHE(/*((amask && 0x01) << 24) |*/ ((rmask && 0x01) << 16) | ((gmask && 0x01)<< 8) | ((bmask && 0x01) << 0));
+	OUT_RING_CACHE(((amask && 0x01) << 24) | ((rmask && 0x01) << 16) | ((gmask && 0x01)<< 8) | ((bmask && 0x01) << 0));
 }
 
 static void nv10ColorMaterial(GLcontext *ctx, GLenum face, GLenum mode)
 {
-	// TODO I need love
+	/* TODO I need love */
 }
 
 static void nv10CullFace(GLcontext *ctx, GLenum mode)
@@ -151,9 +203,17 @@ static void nv10DepthMask(GLcontext *ctx, GLboolean flag)
 static void nv10DepthRange(GLcontext *ctx, GLclampd nearval, GLclampd farval)
 {
 	nouveauContextPtr nmesa = NOUVEAU_CONTEXT(ctx);
+
+	GLfloat depth_scale = 16777216.0;
+	if (ctx->DrawBuffer->_DepthBuffer->DepthBits == 16) {
+		depth_scale = 32768.0;
+	}
+
 	BEGIN_RING_CACHE(NvSub3D, NV10_TCL_PRIMITIVE_3D_DEPTH_RANGE_NEAR, 2);
-	OUT_RING_CACHEf(nearval);
-	OUT_RING_CACHEf(farval);
+	OUT_RING_CACHEf(nearval * depth_scale);
+	OUT_RING_CACHEf(farval * depth_scale);
+
+	nv10ViewportScale(nmesa);
 }
 
 /** Specify the current buffer for writing */
@@ -309,7 +369,7 @@ static void nv10Fogfv(GLcontext *ctx, GLenum pname, const GLfloat *params)
     switch(pname)
     {
         case GL_FOG_MODE:
-            BEGIN_RING_CACHE(NvSub3D, NV10_TCL_PRIMITIVE_3D_FOG_MODE, 1);
+            //BEGIN_RING_CACHE(NvSub3D, NV10_TCL_PRIMITIVE_3D_FOG_MODE, 1);
             //OUT_RING_CACHE (params);
             break;
             /* TODO: unsure about the rest.*/
@@ -321,7 +381,7 @@ static void nv10Fogfv(GLcontext *ctx, GLenum pname, const GLfloat *params)
    
 static void nv10Hint(GLcontext *ctx, GLenum target, GLenum mode)
 {
-	// TODO I need love (fog and line_smooth hints)
+	/* TODO I need love (fog and line_smooth hints) */
 }
 
 // void (*IndexMask)(GLcontext *ctx, GLuint mask);
@@ -449,6 +509,7 @@ static void (*LightModelfv)(GLcontext *ctx, GLenum pname, const GLfloat *params)
 
 static void nv10LineStipple(GLcontext *ctx, GLint factor, GLushort pattern )
 {
+	/* Not for NV10 */
 }
 
 static void nv10LineWidth(GLcontext *ctx, GLfloat width)
@@ -472,7 +533,6 @@ static void nv10PointParameterfv(GLcontext *ctx, GLenum pname, const GLfloat *pa
 	
 }
 
-/** Specify the diameter of rasterized points */
 static void nv10PointSize(GLcontext *ctx, GLfloat size)
 {
 	nouveauContextPtr nmesa = NOUVEAU_CONTEXT(ctx);
@@ -480,7 +540,6 @@ static void nv10PointSize(GLcontext *ctx, GLfloat size)
 	OUT_RING_CACHE(((int) (size * 8.0)) & -4);
 }
 
-/** Select a polygon rasterization mode */
 static void nv10PolygonMode(GLcontext *ctx, GLenum face, GLenum mode)
 {
 	nouveauContextPtr nmesa = NOUVEAU_CONTEXT(ctx);
@@ -496,9 +555,20 @@ static void nv10PolygonMode(GLcontext *ctx, GLenum face, GLenum mode)
 }
 
 /** Set the scale and units used to calculate depth values */
-void (*PolygonOffset)(GLcontext *ctx, GLfloat factor, GLfloat units);
+static void nv10PolygonOffset(GLcontext *ctx, GLfloat factor, GLfloat units)
+{
+        nouveauContextPtr nmesa = NOUVEAU_CONTEXT(ctx);
+        BEGIN_RING_CACHE(NvSub3D, NV10_TCL_PRIMITIVE_3D_POLYGON_OFFSET_FACTOR, 2);
+        OUT_RING_CACHEf(factor);
+        OUT_RING_CACHEf(units);
+}
+
 /** Set the polygon stippling pattern */
-void (*PolygonStipple)(GLcontext *ctx, const GLubyte *mask );
+static void nv10PolygonStipple(GLcontext *ctx, const GLubyte *mask )
+{
+	/* Not for NV10 */
+}
+
 /* Specifies the current buffer for reading */
 void (*ReadBuffer)( GLcontext *ctx, GLenum buffer );
 /** Set rasterization mode */
@@ -524,6 +594,7 @@ static void nv10StencilFuncSeparate(GLcontext *ctx, GLenum face, GLenum func,
 {
 	nouveauContextPtr nmesa = NOUVEAU_CONTEXT(ctx);
 
+	/* NV10 do not have separate FRONT and BACK stencils */
 	BEGIN_RING_CACHE(NvSub3D, NV10_TCL_PRIMITIVE_3D_STENCIL_FUNC_FUNC, 3);
 	OUT_RING_CACHE(func);
 	OUT_RING_CACHE(ref);
@@ -535,6 +606,7 @@ static void nv10StencilMaskSeparate(GLcontext *ctx, GLenum face, GLuint mask)
 {
 	nouveauContextPtr nmesa = NOUVEAU_CONTEXT(ctx);
 
+	/* NV10 do not have separate FRONT and BACK stencils */
 	BEGIN_RING_CACHE(NvSub3D, NV10_TCL_PRIMITIVE_3D_STENCIL_MASK, 1);
 	OUT_RING_CACHE(mask);
 }
@@ -545,7 +617,8 @@ static void nv10StencilOpSeparate(GLcontext *ctx, GLenum face, GLenum fail,
 {
 	nouveauContextPtr nmesa = NOUVEAU_CONTEXT(ctx);
 
-	BEGIN_RING_CACHE(NvSub3D, NV10_TCL_PRIMITIVE_3D_STENCIL_OP_FAIL, 1);
+	/* NV10 do not have separate FRONT and BACK stencils */
+	BEGIN_RING_CACHE(NvSub3D, NV10_TCL_PRIMITIVE_3D_STENCIL_OP_FAIL, 3);
 	OUT_RING_CACHE(fail);
 	OUT_RING_CACHE(zfail);
 	OUT_RING_CACHE(zpass);
@@ -561,22 +634,78 @@ void (*TexEnv)(GLcontext *ctx, GLenum target, GLenum pname,
 void (*TexParameter)(GLcontext *ctx, GLenum target,
 		struct gl_texture_object *texObj,
 		GLenum pname, const GLfloat *params);
-void (*TextureMatrix)(GLcontext *ctx, GLuint unit, const GLmatrix *mat);
 
-/** Set the viewport */
-static void nv10Viewport(GLcontext *ctx, GLint x, GLint y, GLsizei w, GLsizei h)
+static void nv10TextureMatrix(GLcontext *ctx, GLuint unit, const GLmatrix *mat)
 {
-    /* TODO: Where do the VIEWPORT_XFRM_* regs come in? */
-    nouveauContextPtr nmesa = NOUVEAU_CONTEXT(ctx);
-    BEGIN_RING_CACHE(NvSub3D, NV10_TCL_PRIMITIVE_3D_VIEWPORT_HORIZ, 2);
-    OUT_RING_CACHE((w << 16) | x);
-    OUT_RING_CACHE((h << 16) | y);
+        nouveauContextPtr nmesa = NOUVEAU_CONTEXT(ctx);
+        BEGIN_RING_CACHE(NvSub3D, NV10_TCL_PRIMITIVE_3D_TX_MATRIX(unit, 0), 16);
+        /*XXX: This SHOULD work.*/
+        OUT_RING_CACHEp(mat->m, 16);
+}
+
+/* Update anything that depends on the window position/size */
+static void nv10WindowMoved(nouveauContextPtr nmesa)
+{
+	GLcontext *ctx = nmesa->glCtx;
+	GLfloat *v = nmesa->viewport.m;
+	GLuint w = ctx->Viewport.Width;
+	GLuint h = ctx->Viewport.Height;
+	GLuint x = ctx->Viewport.X + nmesa->drawX;
+	GLuint y = ctx->Viewport.Y + nmesa->drawY;
+	int i;
+
+        BEGIN_RING_CACHE(NvSub3D, NV10_TCL_PRIMITIVE_3D_VIEWPORT_HORIZ, 2);
+        OUT_RING_CACHE((w << 16) | x);
+        OUT_RING_CACHE((h << 16) | y);
+
+	/* something to do with clears, possibly doesn't belong here */
+	BEGIN_RING_SIZE(NvSub3D, 0x02b4, 1);
+	OUT_RING(0);
+
+	BEGIN_RING_CACHE(NvSub3D,
+	      NV10_TCL_PRIMITIVE_3D_VIEWPORT_CLIP_HORIZ(0), 1);
+        OUT_RING_CACHE(((w+x-1) << 16) | x | 0x08000800);
+	BEGIN_RING_CACHE(NvSub3D,
+	      NV10_TCL_PRIMITIVE_3D_VIEWPORT_CLIP_VERT(0), 1);
+        OUT_RING_CACHE(((h+y-1) << 16) | y | 0x08000800);
+	for (i=1; i<8; i++) {
+		BEGIN_RING_CACHE(NvSub3D,
+		      NV10_TCL_PRIMITIVE_3D_VIEWPORT_CLIP_HORIZ(i), 1);
+        	OUT_RING_CACHE(0);
+		BEGIN_RING_CACHE(NvSub3D,
+		      NV10_TCL_PRIMITIVE_3D_VIEWPORT_CLIP_VERT(i), 1);
+	        OUT_RING_CACHE(0);
+	}
+
+	nv10ViewportScale(nmesa);
 }
 
 /* Initialise any card-specific non-GL related state */
 static GLboolean nv10InitCard(nouveauContextPtr nmesa)
 {
-   return GL_TRUE;
+	nouveauObjectOnSubchannel(nmesa, NvSub3D, Nv3D);
+
+	BEGIN_RING_SIZE(NvSub3D, NV10_TCL_PRIMITIVE_3D_SET_DMA_IN_MEMORY0, 2);
+	OUT_RING(NvDmaFB);	/* 184 dma_in_memory0 */
+	OUT_RING(NvDmaFB);	/* 188 dma_in_memory1 */
+	BEGIN_RING_SIZE(NvSub3D, NV10_TCL_PRIMITIVE_3D_SET_DMA_IN_MEMORY2, 2);
+	OUT_RING(NvDmaFB);	/* 194 dma_in_memory2 */
+	OUT_RING(NvDmaFB);	/* 198 dma_in_memory3 */
+
+	BEGIN_RING_SIZE(NvSub3D, 0x0290, 1);
+	OUT_RING(0x00100001);
+	BEGIN_RING_SIZE(NvSub3D, 0x03f4, 1);
+	OUT_RING(0);
+
+	/* not for nv10, only for >= nv11 */
+	if ((nmesa->screen->card->id>>4) >= 0x11) {
+	        BEGIN_RING_SIZE(NvSub3D, 0x120, 3);
+        	OUT_RING(0);
+	        OUT_RING(1);
+	        OUT_RING(2);
+	}
+
+	return GL_TRUE;
 }
 
 /* Update buffer offset/pitch/format */
@@ -584,12 +713,39 @@ static GLboolean nv10BindBuffers(nouveauContextPtr nmesa, int num_color,
 				 nouveau_renderbuffer **color,
 				 nouveau_renderbuffer *depth)
 {
-   return GL_TRUE;
-}
+	GLuint x, y, w, h;
+	GLuint pitch, format, depth_pitch;
 
-/* Update anything that depends on the window position/size */
-static void nv10WindowMoved(nouveauContextPtr nmesa)
-{
+	w = color[0]->mesa.Width;
+	h = color[0]->mesa.Height;
+	x = nmesa->drawX;
+	y = nmesa->drawY;
+
+	if (num_color != 1)
+		return GL_FALSE;
+
+        BEGIN_RING_CACHE(NvSub3D, NV10_TCL_PRIMITIVE_3D_VIEWPORT_HORIZ, 6);
+        OUT_RING_CACHE((w << 16) | x);
+        OUT_RING_CACHE((h << 16) | y);
+	depth_pitch = (depth ? depth->pitch : color[0]->pitch);
+	pitch = (depth_pitch<<16) | color[0]->pitch;
+	format = 0x108;
+	if (color[0]->mesa._ActualFormat != GL_RGBA8) {
+		format = 0x103; /* R5G6B5 color buffer */
+	}
+	OUT_RING_CACHE(format);
+	OUT_RING_CACHE(pitch);
+	OUT_RING_CACHE(color[0]->offset);
+	OUT_RING_CACHE(depth ? depth->offset : color[0]->offset);
+
+	/* Always set to bottom left of buffer */
+	BEGIN_RING_CACHE(NvSub3D, NV10_TCL_PRIMITIVE_3D_VIEWPORT_ORIGIN_X, 4);
+	OUT_RING_CACHEf (0.0);
+	OUT_RING_CACHEf ((GLfloat) h);
+	OUT_RING_CACHEf (0.0);
+	OUT_RING_CACHEf (0.0);
+
+	return GL_TRUE;
 }
 
 void nv10InitStateFuncs(GLcontext *ctx, struct dd_function_table *func)
@@ -600,11 +756,10 @@ void nv10InitStateFuncs(GLcontext *ctx, struct dd_function_table *func)
 	func->BlendColor		= nv10BlendColor;
 	func->BlendEquationSeparate	= nv10BlendEquationSeparate;
 	func->BlendFuncSeparate		= nv10BlendFuncSeparate;
-#if 0
+	func->Clear			= nv10Clear;
 	func->ClearColor		= nv10ClearColor;
 	func->ClearDepth		= nv10ClearDepth;
 	func->ClearStencil		= nv10ClearStencil;
-#endif
 	func->ClipPlane			= nv10ClipPlane;
 	func->ColorMask			= nv10ColorMask;
 	func->ColorMaterial		= nv10ColorMaterial;
@@ -618,32 +773,26 @@ void nv10InitStateFuncs(GLcontext *ctx, struct dd_function_table *func)
 	func->Hint			= nv10Hint;
 	func->Lightfv			= nv10Lightfv;
 /*	func->LightModelfv		= nv10LightModelfv; */
-	func->LineStipple		= nv10LineStipple;
+	func->LineStipple		= nv10LineStipple;		/* Not for NV10 */
 	func->LineWidth			= nv10LineWidth;
 	func->LogicOpcode		= nv10LogicOpcode;
 	func->PointParameterfv		= nv10PointParameterfv;
 	func->PointSize			= nv10PointSize;
 	func->PolygonMode		= nv10PolygonMode;
-#if 0
 	func->PolygonOffset		= nv10PolygonOffset;
-	func->PolygonStipple		= nv10PolygonStipple;
-	func->ReadBuffer		= nv10ReadBuffer;
-	func->RenderMode		= nv10RenderMode;
-#endif
+	func->PolygonStipple		= nv10PolygonStipple;		/* Not for NV10 */
+/*	func->ReadBuffer		= nv10ReadBuffer;*/
+/*	func->RenderMode		= nv10RenderMode;*/
 	func->Scissor			= nv10Scissor;
 	func->ShadeModel		= nv10ShadeModel;
 	func->StencilFuncSeparate	= nv10StencilFuncSeparate;
 	func->StencilMaskSeparate	= nv10StencilMaskSeparate;
 	func->StencilOpSeparate		= nv10StencilOpSeparate;
-#if 0
-	func->TexGen			= nv10TexGen;
-	func->TexParameter		= nv10TexParameter;
+/*	func->TexGen			= nv10TexGen;*/
+/*	func->TexParameter		= nv10TexParameter;*/
 	func->TextureMatrix		= nv10TextureMatrix;
-#endif
-	func->Viewport			= nv10Viewport;
 
 	nmesa->hw_func.InitCard		= nv10InitCard;
 	nmesa->hw_func.BindBuffers	= nv10BindBuffers;
 	nmesa->hw_func.WindowMoved	= nv10WindowMoved;
 }
-

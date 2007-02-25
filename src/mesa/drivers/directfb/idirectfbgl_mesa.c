@@ -1,18 +1,19 @@
 /*
- * Copyright (C) 2004-2006 Claudio Ciccani <klan@users.sf.net>
+ * Copyright (C) 2004-2007 Claudio Ciccani <klan@directfb.org>
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License version 2 as
- * published by the Free Software Foundation.
- *
- * This program is distributed in the hope that it will be useful,
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2 of the License, or (at your option) any later version.
+ * 
+ * This library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ * 
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
  * 
  * Based on glfbdev.c, written by Brian Paul.
@@ -45,7 +46,7 @@
 #include "texformat.h"
 #include "teximage.h"
 #include "texstore.h"
-#include "array_cache/acache.h"
+#include "vbo/vbo.h"
 #include "swrast/swrast.h"
 #include "swrast_setup/swrast_setup.h"
 #include "tnl/tnl.h"
@@ -373,7 +374,7 @@ dfbUpdateState( GLcontext *ctx, GLuint new_state )
 {
      _swrast_InvalidateState( ctx, new_state );
      _swsetup_InvalidateState( ctx, new_state );
-     _ac_InvalidateState( ctx, new_state );
+     _vbo_InvalidateState( ctx, new_state );
      _tnl_InvalidateState( ctx, new_state );
 }
 
@@ -786,7 +787,7 @@ directfbgl_create_context( GLcontext             *context,
      }
 
      _swrast_CreateContext( context );
-     _ac_CreateContext( context );
+     _vbo_CreateContext( context );
      _tnl_CreateContext( context );
      _swsetup_CreateContext( context );
      _swsetup_Wakeup( context );

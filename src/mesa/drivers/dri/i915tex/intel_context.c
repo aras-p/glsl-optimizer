@@ -37,7 +37,6 @@
 #include "swrast/swrast.h"
 #include "swrast_setup/swrast_setup.h"
 #include "tnl/tnl.h"
-#include "array_cache/acache.h"
 
 #include "tnl/t_pipeline.h"
 #include "tnl/t_vertex.h"
@@ -241,7 +240,7 @@ intelInvalidateState(GLcontext * ctx, GLuint new_state)
 {
    _swrast_InvalidateState(ctx, new_state);
    _swsetup_InvalidateState(ctx, new_state);
-   _ac_InvalidateState(ctx, new_state);
+   _vbo_InvalidateState(ctx, new_state);
    _tnl_InvalidateState(ctx, new_state);
    _tnl_invalidate_vertex_state(ctx, new_state);
    intel_context(ctx)->NewGLState |= new_state;
@@ -357,6 +356,10 @@ intelInitContext(struct intel_context *intel,
    intel->driScreen = sPriv;
    intel->sarea = saPriv;
 
+   intel->width = intelScreen->width;
+   intel->height = intelScreen->height;
+   intel->current_rotation = intelScreen->current_rotation;
+
    if (!lockMutexInit) {
       lockMutexInit = GL_TRUE;
       _glthread_INIT_MUTEX(lockMutex);
@@ -390,7 +393,7 @@ intelInitContext(struct intel_context *intel,
 
    /* Initialize the software rasterizer and helper modules. */
    _swrast_CreateContext(ctx);
-   _ac_CreateContext(ctx);
+   _vbo_CreateContext(ctx);
    _tnl_CreateContext(ctx);
    _swsetup_CreateContext(ctx);
 
@@ -500,7 +503,7 @@ intelDestroyContext(__DRIcontextPrivate * driContextPriv)
       release_texture_heaps = (intel->ctx.Shared->RefCount == 1);
       _swsetup_DestroyContext(&intel->ctx);
       _tnl_DestroyContext(&intel->ctx);
-      _ac_DestroyContext(&intel->ctx);
+      _vbo_DestroyContext(&intel->ctx);
 
       _swrast_DestroyContext(&intel->ctx);
       intel->Fallback = 0;      /* don't call _swrast_Flush later */
@@ -635,13 +638,34 @@ intelContendedLock(struct intel_context *intel, GLuint flags)
        sarea->rotation != intelScreen->current_rotation) {
 
       intelUpdateScreenRotation(sPriv, sarea);
+   }
 
-      /* 
-       * This will drop the outstanding batchbuffer on the floor
-       * FIXME: This should be done for all contexts?
+   if (sarea->width != intel->width ||
+       sarea->height != intel->height ||
+       sarea->rotation != intel->current_rotation) {
+      
+      void *batchMap = intel->batch->map;
+      
+      /*
+       * FIXME: Really only need to do this when drawing to a
+       * common back- or front buffer.
        */
 
+      /*
+       * This will drop the outstanding batchbuffer on the floor
+       */
+
+      if (batchMap != NULL) {
+	 driBOUnmap(intel->batch->buffer);
+	 intel->batch->map = NULL;
+      }
+
       intel_batchbuffer_reset(intel->batch);
+
+      if (batchMap == NULL) {
+	 driBOUnmap(intel->batch->buffer);
+	 intel->batch->map = NULL;
+      }
 
       /* lose all primitives */
       intel->prim.primitive = ~0;
@@ -653,6 +677,10 @@ intelContendedLock(struct intel_context *intel, GLuint flags)
 
       /* force window update */
       intel->lastStamp = 0;
+
+      intel->width = sarea->width;
+      intel->height = sarea->height;
+      intel->current_rotation = sarea->rotation;
    }
 
 

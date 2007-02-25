@@ -77,8 +77,8 @@ static void brw_vs_alloc_regs( struct brw_vs_compile *c )
    /* Allocate input regs:  
     */
    c->nr_inputs = 0;
-   for (i = 0; i < BRW_ATTRIB_MAX; i++) {
-      if (c->prog_data.inputs_read & ((GLuint64EXT)1<<i)) {
+   for (i = 0; i < VERT_ATTRIB_MAX; i++) {
+      if (c->prog_data.inputs_read & (1<<i)) {
 	 c->nr_inputs++;
 	 c->regs[PROGRAM_INPUT][i] = brw_vec8_grf(reg, 0);
 	 reg++;
@@ -791,7 +791,7 @@ static void emit_vertex_write( struct brw_vs_compile *c)
    if (c->key.copy_edgeflag) {
       brw_MOV(p, 
 	      get_reg(c, PROGRAM_OUTPUT, VERT_RESULT_EDGE),
-	      get_reg(c, PROGRAM_INPUT, BRW_ATTRIB_EDGEFLAG));
+	      get_reg(c, PROGRAM_INPUT, VERT_ATTRIB_EDGEFLAG));
    }
 
 

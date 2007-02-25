@@ -105,6 +105,11 @@ typedef struct nouveau_context {
 	/* Channel synchronisation */
 	nouveau_notifier *syncNotifier;
 
+	/* ARB_occlusion_query / EXT_timer_query */
+	GLuint		  query_object_max;
+	GLboolean *	  query_alloc;
+	nouveau_notifier *queryNotifier;
+
 	/* Additional hw-specific functions */
 	nouveau_hw_func hw_func;
 
@@ -119,7 +124,10 @@ typedef struct nouveau_context {
 	struct tnl_attr_map vertex_attrs[VERT_ATTRIB_MAX];
 	GLuint vertex_attr_count;
 
-	/* Depth/stencil clear state */
+	/* Color buffer clear value */
+	uint32_t clear_color_value;
+
+	/* Depth/stencil clear value */
 	uint32_t clear_value;
 
 	/* Light state */
@@ -151,6 +159,7 @@ typedef struct nouveau_context {
 	nouveauShader *current_fragprog;
 	nouveauShader *current_vertprog;
 	nouveauShader *passthrough_vp;
+	nouveauShader *passthrough_fp;
 
 	nouveauScreenRec *screen;
 	drm_nouveau_sarea_t *sarea;
@@ -167,15 +176,15 @@ typedef struct nouveau_context {
 	/* Configuration cache */
 	driOptionCache optionCache;
 
-        /* vblank stuff */
-        uint32_t vblank_flags;
-        uint32_t vblank_seq;
+	/* vblank stuff */
+	uint32_t vblank_flags;
+	uint32_t vblank_seq;
 
-        GLuint new_state;
-        GLuint new_render_state;
-        GLuint render_index;
-        GLmatrix viewport;
-        GLfloat depth_scale;
+	GLuint new_state;
+	GLuint new_render_state;
+	GLuint render_index;
+	GLmatrix viewport;
+	GLfloat depth_scale;
 
 }nouveauContextRec, *nouveauContextPtr;
 

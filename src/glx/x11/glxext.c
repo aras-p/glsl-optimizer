@@ -396,6 +396,10 @@ static int __glXFreeDisplayPrivate(XExtData *extension)
 	(*priv->driDisplay.destroyDisplay)(priv->dpy,
 					   priv->driDisplay.private);
     priv->driDisplay.private = NULL;
+    if (priv->driDisplay.createNewScreen) {
+        Xfree(priv->driDisplay.createNewScreen); /* free array of ptrs */
+        priv->driDisplay.createNewScreen = NULL;
+    }
 #endif
 
     Xfree((char*) priv);
@@ -758,7 +762,8 @@ static void __glXReportDamage(__DRInativeDisplay *dpy, int screen,
 	xrects[i].height = rects[i].y2 - rects[i].y1;
     }
     region = XFixesCreateRegion(dpy, xrects, num_rects);
-    XDamagePost(dpy, drawable, region);
+    free(xrects);
+    XDamageAdd(dpy, drawable, region);
     XFixesDestroyRegion(dpy, region);
 #endif
 }

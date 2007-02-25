@@ -13,7 +13,7 @@
 #include "swrast/swrast.h"
 #include "swrast_setup/swrast_setup.h"
 #include "tnl/tnl.h"
-#include "array_cache/acache.h"
+#include "vbo/vbo.h"
 
 /* #define DEBUG(str) printf str */
 
@@ -38,7 +38,7 @@ s3vDestroyContext(__DRIcontextPrivate *driContextPriv)
     if (vmesa) {
       _swsetup_DestroyContext( vmesa->glCtx );
       _tnl_DestroyContext( vmesa->glCtx );
-      _ac_DestroyContext( vmesa->glCtx );
+      _vbo_DestroyContext( vmesa->glCtx );
       _swrast_DestroyContext( vmesa->glCtx );
 
       s3vFreeVB( vmesa->glCtx );

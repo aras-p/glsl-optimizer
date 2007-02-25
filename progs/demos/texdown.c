@@ -149,7 +149,7 @@ TypeStr(GLenum type)
  */
 #define ALIGN (1<<12)
 
-static unsigned align(unsigned value, unsigned a)
+static unsigned long align(unsigned long value, unsigned long a)
 {
    return (value + a - 1) & ~(a-1);
 }
@@ -186,10 +186,10 @@ MeasureDownloadRate(void)
 
    printf("alloc %p %p\n", orig_texImage, orig_getImage);
 
-   texImage = (GLubyte *)align((unsigned)orig_texImage, ALIGN);
-   getImage = (GLubyte *)align((unsigned)orig_getImage, ALIGN);   
+   texImage = (GLubyte *)align((unsigned long)orig_texImage, ALIGN);
+   getImage = (GLubyte *)align((unsigned long)orig_getImage, ALIGN);   
 
-   for (i = 1; !(((unsigned)texImage) & i); i<<=1)
+   for (i = 1; !(((unsigned long)texImage) & i); i<<=1)
       ;
    printf("texture image alignment: %d bytes (%p)\n", i, texImage);
       

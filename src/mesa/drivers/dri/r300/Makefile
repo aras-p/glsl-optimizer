@@ -90,9 +90,11 @@ COMMON_SYMLINKS = \
 
 include ../Makefile.template
 
-$(SYMLINKS):
+server:
 	mkdir -p server
-	for i in $(SYMLINKS) ; do rm -f $$i && test -f ../radeon/$$i && ln -s ../../radeon/$$i $$i ; done
+
+$(SYMLINKS): server
+	@[ -e $@ ] || ln -sf ../../radeon/$@ server/
 
 $(COMMON_SYMLINKS):
 	@[ -e $@ ] || ln -sf ../radeon/$@ ./

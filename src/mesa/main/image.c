@@ -1331,6 +1331,7 @@ _mesa_pack_rgba_span_float(GLcontext *ctx, GLuint n, GLfloat rgba[][4],
                      dst[i*4+2] = FLOAT_TO_BYTE(rgba[i][RCOMP]);
                      dst[i*4+3] = FLOAT_TO_BYTE(rgba[i][ACOMP]);
                   }
+		  break;
                case GL_ABGR_EXT:
                   for (i=0;i<n;i++) {
                      dst[i*4+0] = FLOAT_TO_BYTE(rgba[i][ACOMP]);
@@ -1479,6 +1480,7 @@ _mesa_pack_rgba_span_float(GLcontext *ctx, GLuint n, GLfloat rgba[][4],
                      dst[i*4+2] = FLOAT_TO_SHORT(rgba[i][RCOMP]);
                      dst[i*4+3] = FLOAT_TO_SHORT(rgba[i][ACOMP]);
                   }
+		  break;
                case GL_ABGR_EXT:
                   for (i=0;i<n;i++) {
                      dst[i*4+0] = FLOAT_TO_SHORT(rgba[i][ACOMP]);
@@ -1815,7 +1817,7 @@ _mesa_pack_rgba_span_float(GLcontext *ctx, GLuint n, GLfloat rgba[][4],
             for (i=0;i<n;i++) {
                dst[i] = (((GLint) (rgba[i][RCOMP] * 7.0F))     )
                       | (((GLint) (rgba[i][GCOMP] * 7.0F)) << 3)
-                      | (((GLint) (rgba[i][BCOMP] * 3.0F)) << 5);
+                      | (((GLint) (rgba[i][BCOMP] * 3.0F)) << 6);
             }
          }
          break;
@@ -1861,9 +1863,9 @@ _mesa_pack_rgba_span_float(GLcontext *ctx, GLuint n, GLfloat rgba[][4],
          else if (dstFormat == GL_ABGR_EXT) {
             GLushort *dst = (GLushort *) dstAddr;
             for (i=0;i<n;i++) {
-               dst[i] = (((GLint) (rgba[i][ACOMP] * 15.0F)) <<  4)
+               dst[i] = (((GLint) (rgba[i][ACOMP] * 15.0F)) << 12)
                       | (((GLint) (rgba[i][BCOMP] * 15.0F)) <<  8)
-                      | (((GLint) (rgba[i][GCOMP] * 15.0F)) << 12)
+                      | (((GLint) (rgba[i][GCOMP] * 15.0F)) <<  4)
                       | (((GLint) (rgba[i][RCOMP] * 15.0F))      );
             }
          }
