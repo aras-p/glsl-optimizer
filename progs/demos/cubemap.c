@@ -47,6 +47,7 @@ static GLfloat Xrot = 0, Yrot = 0;
 static GLfloat EyeDist = 10;
 static GLboolean use_vertex_arrays = GL_FALSE;
 static GLboolean anim = GL_TRUE;
+static GLboolean Mipmap = GL_FALSE;
 
 #define eps1 0.99
 #define br   20.0  /* box radius */
@@ -335,8 +336,14 @@ static void init_checkers( void )
          }
       }
 
-      glTexImage2D(targets[f], 0, GL_RGB, CUBE_TEX_SIZE, CUBE_TEX_SIZE, 0,
-                   GL_RGB, GL_UNSIGNED_BYTE, image);
+      if (Mipmap) {
+         gluBuild2DMipmaps(targets[f], GL_RGB, CUBE_TEX_SIZE, CUBE_TEX_SIZE,
+                           GL_RGB, GL_UNSIGNED_BYTE, image);
+      }
+      else {
+         glTexImage2D(targets[f], 0, GL_RGB, CUBE_TEX_SIZE, CUBE_TEX_SIZE, 0,
+                      GL_RGB, GL_UNSIGNED_BYTE, image);
+      }
    }
 }
 
@@ -427,8 +434,16 @@ static void init( GLboolean useImageFiles )
       filter = GL_NEAREST;
    }
 
-   glTexParameteri(GL_TEXTURE_CUBE_MAP_ARB, GL_TEXTURE_MIN_FILTER, filter);
-   glTexParameteri(GL_TEXTURE_CUBE_MAP_ARB, GL_TEXTURE_MAG_FILTER, filter);
+   if (Mipmap) {
+      glTexParameteri(GL_TEXTURE_CUBE_MAP_ARB,
+                      GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+      glTexParameteri(GL_TEXTURE_CUBE_MAP_ARB,
+                      GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+   }
+   else {
+      glTexParameteri(GL_TEXTURE_CUBE_MAP_ARB, GL_TEXTURE_MIN_FILTER, filter);
+      glTexParameteri(GL_TEXTURE_CUBE_MAP_ARB, GL_TEXTURE_MAG_FILTER, filter);
+   }
    glTexParameteri(GL_TEXTURE_CUBE_MAP_ARB, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
    glTexParameteri(GL_TEXTURE_CUBE_MAP_ARB, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 
