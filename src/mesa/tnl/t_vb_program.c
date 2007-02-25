@@ -244,7 +244,7 @@ run_vp( GLcontext *ctx, struct tnl_pipeline_stage *stage )
 	    const GLuint size = VB->AttribPtr[attr]->size;
 	    const GLuint stride = VB->AttribPtr[attr]->stride;
 	    const GLfloat *data = (GLfloat *) (ptr + stride * i);
-	    COPY_CLEAN_4V(machine.VertAttribs/*Inputs*/[attr], size, data);
+	    COPY_CLEAN_4V(machine.VertAttribs[attr], size, data);
 	 }
       }
 
@@ -264,9 +264,10 @@ run_vp( GLcontext *ctx, struct tnl_pipeline_stage *stage )
       }
 
       /* copy the output registers into the VB->attribs arrays */
-      /* XXX (optimize) could use a conditional and smaller loop limit here */
       for (attr = 0; attr < VERT_RESULT_MAX; attr++) {
-         COPY_4V(store->attribs[attr].data[i], machine.Outputs[attr]);
+         if (program->Base.OutputsWritten & (1 << attr)) {
+            COPY_4V(store->attribs[attr].data[i], machine.Outputs[attr]);
+         }
       }
 #if 0
       printf("HPOS: %f %f %f %f\n",
