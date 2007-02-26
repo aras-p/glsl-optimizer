@@ -27,13 +27,9 @@
 #include "context.h"
 #include "prog_execute.h"
 #include "prog_instruction.h"
-#include "prog_parameter.h"
-#include "prog_print.h"
-#include "program.h"
 
 #include "s_fragprog.h"
 #include "s_span.h"
-#include "slang_library_noise.h"
 
 
 /**
