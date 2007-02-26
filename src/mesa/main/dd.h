@@ -570,9 +570,9 @@ struct dd_function_table {
    /** Notify driver that a program string has been specified. */
    void (*ProgramStringNotify)(GLcontext *ctx, GLenum target, 
 			       struct gl_program *prog);
-   /** Get value of a fragment program register during program execution. */
-   void (*GetFragmentProgramRegister)(GLcontext *ctx, enum register_file file,
-                                      GLuint index, GLfloat val[4]);
+   /** Get value of a program register during program execution. */
+   void (*GetProgramRegister)(GLcontext *ctx, enum register_file file,
+                              GLuint index, GLfloat val[4]);
 
    /** Query if program can be loaded onto hardware */
    GLboolean (*IsProgramNative)(GLcontext *ctx, GLenum target, 
