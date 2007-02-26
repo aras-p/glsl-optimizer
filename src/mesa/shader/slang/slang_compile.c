@@ -1898,6 +1898,17 @@ compile_with_grammar(grammar id, const char *source, slang_code_unit * unit,
       grammar_get_last_error((byte *) (buf), sizeof(buf), &pos);
       slang_info_log_error(infolog, buf);
       /* syntax error (possibly in library code) */
+#if 0
+      {
+         int line, col;
+         char *s;
+         s = (char *) _mesa_find_line_column((const GLubyte *) source,
+                                             (const GLubyte *) source + pos,
+                                             &line, &col);
+         printf("Error on line %d, col %d: %s\n", line, col, s);
+      }
+#endif
+      return GL_FALSE;
    }
    slang_string_free(&preprocessed);
 
@@ -2070,16 +2081,19 @@ _slang_compile(GLcontext *ctx, struct gl_shader *shader)
 
    success = compile_shader(ctx, &obj, type, &info_log, shader);
 
-   if (!success || info_log.error_flag) {
-      success = GL_FALSE;
+   /* free shader's prev info log */
+   if (shader->InfoLog) {
+      _mesa_free(shader->InfoLog);
+      shader->InfoLog = NULL;
+   }
+
+   if (info_log.text) {
       /* copy info-log string to shader object */
-      if (info_log.text) {
-         if (shader->InfoLog) {
-            free(shader->InfoLog);
-            shader->InfoLog = NULL;
-         }
-         shader->InfoLog = strdup(info_log.text);
-      }
+      shader->InfoLog = _mesa_strdup(info_log.text);
+   }
+
+   if (info_log.error_flag) {
+      success = GL_FALSE;
    }
 
    slang_info_log_destruct(&info_log);
