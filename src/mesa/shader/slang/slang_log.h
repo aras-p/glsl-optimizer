@@ -1,8 +1,8 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.5.2
+ * Version:  6.5.3
  *
- * Copyright (C) 2005-2006  Brian Paul   All Rights Reserved.
+ * Copyright (C) 2005-2007  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -22,23 +22,35 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#ifndef SLANG_ERROR_H
-#define SLANG_ERROR_H
 
-#if 0
+#ifndef SLANG_LOG_H
+#define SLANG_LOG_H
+
+
+typedef struct slang_info_log_
+{
+   char *text;
+   int dont_free_text;
+} slang_info_log;
+
+
 extern void
-_slang_reset_error(void);
-
+slang_info_log_construct(slang_info_log *);
 
 extern void
-_slang_record_error(const char *msg1, const char *msg2,
-                    GLint pos, const char *file, int line);
+slang_info_log_destruct(slang_info_log *);
+
+extern int
+slang_info_log_print(slang_info_log *, const char *, ...);
+
+extern int
+slang_info_log_error(slang_info_log *, const char *, ...);
+
+extern int
+slang_info_log_warning(slang_info_log *, const char *, ...);
+
+extern void
+slang_info_log_memory(slang_info_log *);
 
 
-extern const char *
-_slang_error_text(void);
-#endif
-foo!
-
-
-#endif /* SLANG_ERROR_H */
+#endif /* SLANG_LOG_H */
