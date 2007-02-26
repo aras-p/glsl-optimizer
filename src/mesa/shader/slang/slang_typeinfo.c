@@ -605,13 +605,11 @@ _slang_typeof_operation_(const slang_operation * op,
             slang_type_specifier_type base;
 
             /* determine the swizzle of the field expression */
-#if 000 /*XXX re-enable? */
             if (!_slang_type_is_vector(_ti.spec.type)) {
                slang_typeinfo_destruct(&_ti);
                slang_info_log_error(log, "Can't swizzle scalar expression");
                return GL_FALSE;
             }
-#endif
             rows = _slang_type_dim(_ti.spec.type);
             swizzle = slang_atom_pool_id(atoms, op->a_id);
             if (!_slang_is_swizzle(swizzle, rows, &ti->swz)) {
