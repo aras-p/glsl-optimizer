@@ -218,7 +218,7 @@ void vbo_save_playback_vertex_list( GLcontext *ctx, void *data )
 				    node->prim_count,
 				    NULL,
 				    0,	/* Node is a VBO, so this is ok */
-				    node->count );
+				    node->count - 1);
    }
 
    /* Copy to current?
