@@ -75,7 +75,7 @@ _mesa_get_program_register(GLcontext *ctx, enum register_file file,
 extern GLboolean
 _mesa_execute_program(GLcontext *ctx,
                       const struct gl_program *program, GLuint maxInst,
-                      struct gl_program_machine *machine, GLuint element);
+                      struct gl_program_machine *machine);
 
 
 #endif /* PROG_EXECUTE_H */

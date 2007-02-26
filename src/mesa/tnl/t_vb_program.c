@@ -258,7 +258,7 @@ run_vp( GLcontext *ctx, struct tnl_pipeline_stage *stage )
 
       /* execute the program */
       _mesa_execute_program(ctx, &program->Base, program->Base.NumInstructions,
-                            &machine, 0);
+                            &machine);
 
       /* Fixup fog an point size results if needed */
       if (ctx->Fog.Enabled &&

@@ -641,7 +641,7 @@ init_machine_deriv(GLcontext * ctx,
 GLboolean
 _mesa_execute_program(GLcontext * ctx,
                       const struct gl_program *program, GLuint maxInst,
-                      struct gl_program_machine *machine, GLuint element)
+                      struct gl_program_machine *machine)
 {
    const GLuint MAX_EXEC = 10000;
    GLint pc, total = 0;
