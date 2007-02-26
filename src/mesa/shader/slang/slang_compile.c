@@ -2070,16 +2070,9 @@ _slang_compile(GLcontext *ctx, struct gl_shader *shader)
 
    success = compile_shader(ctx, &obj, type, &info_log, shader);
 
-   if (success && !info_log.text) {
-#if 0
-      slang_create_uniforms(&object->expdata, shader);
-      _mesa_print_program(program);
-      _mesa_print_program_parameters(ctx, program);
-#endif
-   }
-   else {
+   if (!success || info_log.error_flag) {
       success = GL_FALSE;
-      /* XXX more work on info log needed here */
+      /* copy info-log string to shader object */
       if (info_log.text) {
          if (shader->InfoLog) {
             free(shader->InfoLog);

@@ -30,7 +30,8 @@
 typedef struct slang_info_log_
 {
    char *text;
-   int dont_free_text;
+   GLboolean dont_free_text;
+   GLboolean error_flag;
 } slang_info_log;
 
 

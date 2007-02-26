@@ -34,7 +34,8 @@ void
 slang_info_log_construct(slang_info_log * log)
 {
    log->text = NULL;
-   log->dont_free_text = 0;
+   log->dont_free_text = GL_FALSE;
+   log->error_flag = GL_FALSE;
 }
 
 void
@@ -97,6 +98,7 @@ slang_info_log_error(slang_info_log * log, const char *msg, ...)
    va_start(va, msg);
    _mesa_vsprintf(buf, msg, va);
    va_end(va);
+   log->error_flag = GL_TRUE;
    if (slang_info_log_message(log, "Error", buf))
       return 1;
    slang_info_log_memory(log);
@@ -122,7 +124,8 @@ void
 slang_info_log_memory(slang_info_log * log)
 {
    if (!slang_info_log_message(log, "Error", "Out of memory.")) {
-      log->dont_free_text = 1;
+      log->dont_free_text = GL_TRUE;
+      log->error_flag = GL_TRUE;
       log->text = out_of_memory;
    }
 }
