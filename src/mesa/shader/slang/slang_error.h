@@ -25,7 +25,7 @@
 #ifndef SLANG_ERROR_H
 #define SLANG_ERROR_H
 
-
+#if 0
 extern void
 _slang_reset_error(void);
 
@@ -37,49 +37,8 @@ _slang_record_error(const char *msg1, const char *msg2,
 
 extern const char *
 _slang_error_text(void);
-
-
-/**
- * Record a compilation error, single string message.
- */
-#define RETURN_ERROR(MSG, POS)                             \
-do {                                                       \
-   _slang_record_error(MSG, "", POS, __FILE__, __LINE__);  \
-   return GL_FALSE;                                        \
-} while (0)
-
-
-/**
- * Record a compilation error, two-string message.
- */
-#define RETURN_ERROR2(MSG1, MSG2, POS)                        \
-do {                                                          \
-   _slang_record_error(MSG1, MSG2, POS, __FILE__, __LINE__);  \
-   return GL_FALSE;                                           \
-} while (0)
-
-
-/**
- * Record a nil error.  Either a real error message or out of memory should
- * have already been recorded.
- */
-#define RETURN_NIL()                                            \
-do {                                                            \
-   _slang_record_error("unknown", "", -1, __FILE__, __LINE__);  \
-   return GL_FALSE;                                             \
-} while (0)
-
-
-/**
- * Used to report an out of memory condition.
- */
-#define RETURN_OUT_OF_MEMORY()                                        \
-do {                                                                  \
-   _slang_record_error("Out of memory", "", -1, __FILE__, __LINE__);  \
-   return GL_FALSE;                                                   \
-} while (0)
-
-
+#endif
+foo!
 
 
 #endif /* SLANG_ERROR_H */
