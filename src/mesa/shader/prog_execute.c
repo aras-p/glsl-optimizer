@@ -615,9 +615,9 @@ init_machine_deriv(GLcontext * ctx,
 /**
  * Execute the given vertex/fragment program.
  *
- * \param ctx - rendering context
- * \param program - the fragment program to execute
- * \param machine - machine state (register file)
+ * \param ctx  rendering context
+ * \param program  the program to execute
+ * \param machine  machine state (must be initialized)
  * \return GL_TRUE if program completed or GL_FALSE if program executed KIL.
  */
 GLboolean
