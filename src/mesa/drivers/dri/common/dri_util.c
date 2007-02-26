@@ -420,7 +420,7 @@ __driUtilUpdateDrawableInfo(__DRIdrawablePrivate *pdp)
     psp = pdp->driScreenPriv;
     if (!psp) {
 	/* ERROR!!! */
-       _mesa_problem("Warning! Possible infinite loop due to bug "
+       _mesa_problem(NULL, "Warning! Possible infinite loop due to bug "
 		     "in file %s, line %d\n",
 		     __FILE__, __LINE__);
 	return;
