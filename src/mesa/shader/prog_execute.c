@@ -74,45 +74,6 @@ static const GLfloat ZeroVec[4] = { 0.0F, 0.0F, 0.0F, 0.0F };
 
 
 
-#if FEATURE_MESA_program_debug
-static struct gl_program_machine *CurrentMachine = NULL;
-
-/**
- * For GL_MESA_program_debug.
- * Return current value (4*GLfloat) of a program register.
- * Called via ctx->Driver.GetFragmentProgramRegister().
- */
-void
-_mesa_get_program_register(GLcontext *ctx, enum register_file file,
-                           GLuint index, GLfloat val[4])
-{
-   if (CurrentMachine) {
-      switch (file) {
-      case PROGRAM_INPUT:
-         if (CurrentMachine->CurProgram->Target == GL_VERTEX_PROGRAM_ARB) {
-            COPY_4V(val, CurrentMachine->VertAttribs[index]);
-         }
-         else {
-            COPY_4V(val,
-                   CurrentMachine->Attribs[index][CurrentMachine->CurElement]);
-         }
-         break;
-      case PROGRAM_OUTPUT:
-         COPY_4V(val, CurrentMachine->Outputs[index]);
-         break;
-      case PROGRAM_TEMPORARY:
-         COPY_4V(val, CurrentMachine->Temporaries[index]);
-         break;
-      default:
-         _mesa_problem(NULL,
-                       "bad register file in _swrast_get_program_register");
-      }
-   }
-}
-#endif /* FEATURE_MESA_program_debug */
-
-
-
 /**
  * Return a pointer to the 4-element float vector specified by the given
  * source register.
@@ -185,6 +146,30 @@ get_register_pointer(GLcontext * ctx,
       return NULL;
    }
 }
+
+
+#if FEATURE_MESA_program_debug
+static struct gl_program_machine *CurrentMachine = NULL;
+
+/**
+ * For GL_MESA_program_debug.
+ * Return current value (4*GLfloat) of a program register.
+ * Called via ctx->Driver.GetProgramRegister().
+ */
+void
+_mesa_get_program_register(GLcontext *ctx, enum register_file file,
+                           GLuint index, GLfloat val[4])
+{
+   if (CurrentMachine) {
+      struct prog_src_register src;
+      const GLfloat *reg;
+      src.File = file;
+      src.Index = index;
+      reg = get_register_pointer(ctx, &src, CurrentMachine);
+      COPY_4V(val, reg);
+   }
+}
+#endif /* FEATURE_MESA_program_debug */
 
 
 /**
