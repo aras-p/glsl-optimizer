@@ -340,7 +340,7 @@ static GLboolean DoBindContext(__DRInativeDisplay *dpy,
 	DRM_SPINUNLOCK(&psp->pSAREA->drawable_lock, psp->drawLockID);
     }
 
-    if ((pdp != prp) && (!pdp->pStamp || *pdp->pStamp != pdp->lastStamp)) {
+    if ((pdp != prp) && (!prp->pStamp || *prp->pStamp != prp->lastStamp)) {
 	DRM_SPINLOCK(&psp->pSAREA->drawable_lock, psp->drawLockID);
 	__driUtilUpdateDrawableInfo(prp);
 	DRM_SPINUNLOCK(&psp->pSAREA->drawable_lock, psp->drawLockID);
