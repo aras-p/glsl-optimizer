@@ -196,7 +196,8 @@ run_vp( GLcontext *ctx, struct tnl_pipeline_stage *stage )
    struct vertex_buffer *VB = &tnl->vb;
    struct gl_vertex_program *program = ctx->VertexProgram._Current;
    struct gl_program_machine machine;
-   GLuint i;
+   GLuint outputs[VERT_RESULT_MAX], numOutputs;
+   GLuint i, j;
 
 #define FORCE_PROG_EXECUTE_C 1
 #if FORCE_PROG_EXECUTE_C
@@ -212,6 +213,13 @@ run_vp( GLcontext *ctx, struct tnl_pipeline_stage *stage )
    }
    else {
       _mesa_load_state_parameters(ctx, program->Base.Parameters);
+   }
+
+   numOutputs = 0;
+   for (i = 0; i < VERT_RESULT_MAX; i++) {
+      if (program->Base.OutputsWritten & (1 << i)) {
+         outputs[numOutputs++] = i;
+      }
    }
 
    for (i = 0; i < VB->Count; i++) {
@@ -264,10 +272,9 @@ run_vp( GLcontext *ctx, struct tnl_pipeline_stage *stage )
       }
 
       /* copy the output registers into the VB->attribs arrays */
-      for (attr = 0; attr < VERT_RESULT_MAX; attr++) {
-         if (program->Base.OutputsWritten & (1 << attr)) {
-            COPY_4V(store->attribs[attr].data[i], machine.Outputs[attr]);
-         }
+      for (j = 0; j < numOutputs; j++) {
+         const GLuint attr = outputs[j];
+         COPY_4V(store->attribs[attr].data[i], machine.Outputs[attr]);
       }
 #if 0
       printf("HPOS: %f %f %f %f\n",
