@@ -47,7 +47,6 @@
 #include "slang_typeinfo.h"
 #include "slang_codegen.h"
 #include "slang_compile.h"
-#include "slang_error.h"
 #include "slang_label.h"
 #include "slang_simplify.h"
 #include "slang_emit.h"
@@ -1154,7 +1153,7 @@ make_writemask(const char *field)
  */
 static slang_ir_node *
 _slang_gen_asm(slang_assemble_ctx *A, slang_operation *oper,
-                   slang_operation *dest)
+               slang_operation *dest)
 {
    const slang_asm_info *info;
    slang_ir_node *kids[3], *n;
@@ -1280,15 +1279,15 @@ _slang_gen_function_call_name(slang_assemble_ctx *A, const char *name,
     * Use 'name' to find the function to call
     */
    fun = _slang_locate_function(A->space.funcs, atom, params, param_count,
-				&A->space, A->atoms);
+				&A->space, A->atoms, A->log);
    if (!fun) {
       /* A function with exactly the right parameters/types was not found.
        * Try adapting the parameters.
        */
       fun = _slang_first_function(A->space.funcs, name);
-      if (!_slang_adapt_call(oper, fun, &A->space, A->atoms)) {
-         RETURN_ERROR2("Undefined function (or no matching parameters)",
-                       name, 0);
+      if (!_slang_adapt_call(oper, fun, &A->space, A->atoms, A->log)) {
+         slang_info_log_error(A->log, "Undefined function '%s'", name);
+         return NULL;
       }
       assert(fun);
    }
@@ -1361,7 +1360,8 @@ _slang_gen_while(slang_assemble_ctx * A, const slang_operation *oper)
    if (loop->BranchNode == 0 && isConst && constTrue) {
       /* infinite loop detected */
       A->CurLoop = prevLoop; /* clean-up */
-      RETURN_ERROR("Infinite loop detected!", 0);
+      slang_info_log_error(A->log, "Infinite loop detected!");
+      return NULL;
    }
 
    /* pop loop, restore prev */
@@ -1816,7 +1816,8 @@ _slang_gen_declaration(slang_assemble_ctx *A, slang_operation *oper)
       assert(oper->num_children == 1);
       var = new_var(A, oper, oper->a_id);
       if (!var) {
-         RETURN_ERROR2("Undefined variable:", varName, 0);
+         slang_info_log_error(A->log, "undefined variable '%s'", varName);
+         return NULL;
       }
       /* XXX make copy of this initializer? */
       rhs = _slang_gen_operation(A, &oper->children[0]);
@@ -1829,7 +1830,8 @@ _slang_gen_declaration(slang_assemble_ctx *A, slang_operation *oper)
       slang_ir_node *var, *init, *rhs;
       var = new_var(A, oper, oper->a_id);
       if (!var) {
-         RETURN_ERROR2("Undefined variable:", varName, 0);
+         slang_info_log_error(A->log, "undefined variable '%s'", varName);
+         return NULL;
       }
 #if 0
       /* XXX make copy of this initializer? */
@@ -1870,7 +1872,8 @@ _slang_gen_variable(slang_assemble_ctx * A, slang_operation *oper)
    slang_atom aVar = oper->var ? oper->var->a_name : oper->a_id;
    slang_ir_node *n = new_var(A, oper, aVar);
    if (!n) {
-      RETURN_ERROR2("Undefined variable:", (char *) aVar, 0);
+      slang_info_log_error(A->log, "undefined variable '%s'", (char *) aVar);
+      return NULL;
    }
    return n;
 }
@@ -2045,7 +2048,7 @@ _slang_gen_field(slang_assemble_ctx * A, slang_operation *oper)
       slang_ir_node *n;
       GLuint swizzle;
       if (!_slang_is_swizzle((char *) oper->a_id, rows, &swz)) {
-         RETURN_ERROR("Bad swizzle", 0);
+         slang_info_log_error(A->log, "Bad swizzle");
       }
       swizzle = MAKE_SWIZZLE4(swz.swizzle[0],
                               swz.swizzle[1],
@@ -2063,7 +2066,7 @@ _slang_gen_field(slang_assemble_ctx * A, slang_operation *oper)
       slang_ir_node *n;
       GLuint swizzle;
       if (!_slang_is_swizzle((char *) oper->a_id, rows, &swz)) {
-         RETURN_ERROR("Bad swizzle", 0);
+         slang_info_log_error(A->log, "Bad swizzle");
       }
       swizzle = MAKE_SWIZZLE4(swz.swizzle[0],
                               swz.swizzle[1],
@@ -2122,7 +2125,7 @@ _slang_gen_subscript(slang_assemble_ctx * A, slang_operation *oper)
       index = (GLint) oper->children[1].literal[0];
       if (oper->children[1].type != SLANG_OPER_LITERAL_INT ||
           index >= max) {
-         RETURN_ERROR("Invalid array index for vector type", 0);
+         slang_info_log_error(A->log, "Invalid array index for vector type");
       }
 
       n = _slang_gen_operation(A, &oper->children[0]);
@@ -2243,12 +2246,12 @@ _slang_gen_operation(slang_assemble_ctx * A, slang_operation *oper)
       return _slang_gen_while(A, oper);
    case SLANG_OPER_BREAK:
       if (!A->CurLoop) {
-         RETURN_ERROR("'break' not in loop", 0);
+         slang_info_log_error(A->log, "'break' not in loop");
       }
       return new_break(A->CurLoop);
    case SLANG_OPER_CONTINUE:
       if (!A->CurLoop) {
-         RETURN_ERROR("'continue' not in loop", 0);
+         slang_info_log_error(A->log, "'continue' not in loop");
       }
       return new_cont(A->CurLoop);
    case SLANG_OPER_DISCARD:
@@ -2621,7 +2624,7 @@ _slang_codegen_global_variable(slang_assemble_ctx *A, slang_variable *var,
          n = new_seq(n, init);
       }
 
-      success = _slang_emit_code(n, A->vartable, A->program, GL_FALSE);
+      success = _slang_emit_code(n, A->vartable, A->program, GL_FALSE, A->log);
 
       _slang_free_ir_tree(n);
    }
@@ -2709,7 +2712,7 @@ _slang_codegen_function(slang_assemble_ctx * A, slang_function * fun)
 #endif
 
    /* Emit program instructions */
-   success = _slang_emit_code(n, A->vartable, A->program, GL_TRUE);
+   success = _slang_emit_code(n, A->vartable, A->program, GL_TRUE, A->log);
    _slang_free_ir_tree(n);
 
    /* free codegen context */

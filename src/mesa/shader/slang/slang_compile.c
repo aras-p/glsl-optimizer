@@ -37,8 +37,8 @@
 #include "slang_compile.h"
 #include "slang_preprocess.h"
 #include "slang_storage.h"
-#include "slang_error.h"
 #include "slang_emit.h"
+#include "slang_log.h"
 #include "slang_vartable.h"
 #include "slang_simplify.h"
 
@@ -115,110 +115,6 @@ _slang_code_object_dtr(slang_code_object * self)
    slang_atom_pool_destruct(&self->atompool);
 }
 
-/* slang_info_log */
-
-static char *out_of_memory = "Error: Out of memory.\n";
-
-void
-slang_info_log_construct(slang_info_log * log)
-{
-   log->text = NULL;
-   log->dont_free_text = 0;
-}
-
-void
-slang_info_log_destruct(slang_info_log * log)
-{
-   if (!log->dont_free_text)
-      slang_alloc_free(log->text);
-}
-
-static int
-slang_info_log_message(slang_info_log * log, const char *prefix,
-                       const char *msg)
-{
-   GLuint size;
-
-   if (log->dont_free_text)
-      return 0;
-   size = slang_string_length(msg) + 2;
-   if (prefix != NULL)
-      size += slang_string_length(prefix) + 2;
-   if (log->text != NULL) {
-      GLuint old_len = slang_string_length(log->text);
-      log->text = (char *)
-	 slang_alloc_realloc(log->text, old_len + 1, old_len + size);
-   }
-   else {
-      log->text = (char *) (slang_alloc_malloc(size));
-      if (log->text != NULL)
-         log->text[0] = '\0';
-   }
-   if (log->text == NULL)
-      return 0;
-   if (prefix != NULL) {
-      slang_string_concat(log->text, prefix);
-      slang_string_concat(log->text, ": ");
-   }
-   slang_string_concat(log->text, msg);
-   slang_string_concat(log->text, "\n");
-#if 1
-   abort(); /* XXX temporary */
-#endif
-   return 1;
-}
-
-int
-slang_info_log_print(slang_info_log * log, const char *msg, ...)
-{
-   va_list va;
-   char buf[1024];
-
-   va_start(va, msg);
-   _mesa_vsprintf(buf, msg, va);
-   va_end(va);
-   return slang_info_log_message(log, NULL, buf);
-}
-
-int
-slang_info_log_error(slang_info_log * log, const char *msg, ...)
-{
-   va_list va;
-   char buf[1024];
-
-   va_start(va, msg);
-   _mesa_vsprintf(buf, msg, va);
-   va_end(va);
-   if (slang_info_log_message(log, "Error", buf))
-      return 1;
-   slang_info_log_memory(log);
-   return 0;
-}
-
-int
-slang_info_log_warning(slang_info_log * log, const char *msg, ...)
-{
-   va_list va;
-   char buf[1024];
-
-   va_start(va, msg);
-   _mesa_vsprintf(buf, msg, va);
-   va_end(va);
-   if (slang_info_log_message(log, "Warning", buf))
-      return 1;
-   slang_info_log_memory(log);
-   return 0;
-}
-
-void
-slang_info_log_memory(slang_info_log * log)
-{
-   if (!slang_info_log_message(log, "Error", "Out of memory.")) {
-      log->dont_free_text = 1;
-      log->text = out_of_memory;
-   }
-   abort(); /* XXX temporary */
-}
 
 /* slang_parse_ctx */
 
@@ -1838,8 +1734,7 @@ parse_function(slang_parse_ctx * C, slang_output_ctx * O, int definition,
       A.space.vars = O->vars;
       A.program = O->program;
       A.vartable = O->vartable;
-
-      _slang_reset_error();
+      A.log = C->L;
 
       _slang_codegen_function(&A, *parsed_func_ret);
    }
@@ -2002,7 +1897,7 @@ compile_with_grammar(grammar id, const char *source, slang_code_unit * unit,
       slang_string_free(&preprocessed);
       grammar_get_last_error((byte *) (buf), sizeof(buf), &pos);
       slang_info_log_error(infolog, buf);
-      RETURN_ERROR("syntax error (possibly in library code)", 0);
+      /* syntax error (possibly in library code) */
    }
    slang_string_free(&preprocessed);
 
@@ -2175,7 +2070,7 @@ _slang_compile(GLcontext *ctx, struct gl_shader *shader)
 
    success = compile_shader(ctx, &obj, type, &info_log, shader);
 
-   if (success) {
+   if (success && !info_log.text) {
 #if 0
       slang_create_uniforms(&object->expdata, shader);
       _mesa_print_program(program);
@@ -2183,6 +2078,7 @@ _slang_compile(GLcontext *ctx, struct gl_shader *shader)
 #endif
    }
    else {
+      success = GL_FALSE;
       /* XXX more work on info log needed here */
       if (info_log.text) {
          if (shader->InfoLog) {

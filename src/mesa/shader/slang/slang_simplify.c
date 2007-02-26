@@ -292,7 +292,7 @@ _slang_simplify(slang_operation *oper,
 GLboolean
 _slang_adapt_call(slang_operation *callOper, const slang_function *fun,
                   const slang_name_space * space,
-                  slang_atom_pool * atoms)
+                  slang_atom_pool * atoms, slang_info_log *log)
 {
    const GLboolean haveRetValue = _slang_function_has_return_value(fun);
    const int numParams = fun->param_count - haveRetValue;
@@ -317,7 +317,7 @@ _slang_adapt_call(slang_operation *callOper, const slang_function *fun,
             if (!slang_typeinfo_construct(&argType))
                return GL_FALSE;
             if (!_slang_typeof_operation_(&callOper->children[i], space,
-                                          &argType, atoms)) {
+                                          &argType, atoms, log)) {
                slang_typeinfo_destruct(&argType);
                return GL_FALSE;
             }
@@ -392,7 +392,7 @@ _slang_adapt_call(slang_operation *callOper, const slang_function *fun,
       if (!slang_typeinfo_construct(&argType))
          return GL_FALSE;
       if (!_slang_typeof_operation_(&callOper->children[i], space,
-                                    &argType, atoms)) {
+                                    &argType, atoms, log)) {
          slang_typeinfo_destruct(&argType);
          return GL_FALSE;
       }

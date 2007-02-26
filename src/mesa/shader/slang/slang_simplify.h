@@ -16,8 +16,7 @@ _slang_simplify(slang_operation *oper,
 extern GLboolean
 _slang_adapt_call(slang_operation *callOper, const slang_function *fun,
                   const slang_name_space * space,
-                  slang_atom_pool * atoms);
-
+                  slang_atom_pool * atoms, slang_info_log *log);
 
 
 #endif /* SLANG_SIMPLIFY_H */

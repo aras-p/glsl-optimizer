@@ -22,28 +22,35 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#ifndef SLANG_EMIT_H
-#define SLANG_EMIT_H
+
+#ifndef SLANG_LOG_H
+#define SLANG_LOG_H
 
 
-#include "imports.h"
-#include "slang_compile.h"
-#include "slang_ir.h"
-#include "mtypes.h"
+typedef struct slang_info_log_
+{
+   char *text;
+   int dont_free_text;
+} slang_info_log;
 
 
 extern void
-slang_print_ir(const slang_ir_node *n, int indent);
+slang_info_log_construct(slang_info_log *);
+
+extern void
+slang_info_log_destruct(slang_info_log *);
+
+extern int
+slang_info_log_print(slang_info_log *, const char *, ...);
+
+extern int
+slang_info_log_error(slang_info_log *, const char *, ...);
+
+extern int
+slang_info_log_warning(slang_info_log *, const char *, ...);
+
+extern void
+slang_info_log_memory(slang_info_log *);
 
 
-extern slang_ir_storage *
-_slang_new_ir_storage(enum register_file file, GLint index, GLint size);
-
-
-extern GLboolean
-_slang_emit_code(slang_ir_node *n, slang_var_table *vartable,
-                 struct gl_program *prog, GLboolean withEnd,
-                 slang_info_log *log);
-
-
-#endif /* SLANG_EMIT_H */
+#endif /* SLANG_LOG_H */

@@ -27,6 +27,7 @@
 
 #include "imports.h"
 #include "mtypes.h"
+#include "slang_log.h"
 #include "slang_utility.h"
 #include "slang_vartable.h"
 
@@ -60,6 +61,7 @@ typedef struct slang_assemble_ctx_
    slang_name_space space;
    struct gl_program *program;
    slang_var_table *vartable;
+   slang_info_log *log;
    struct slang_function_ *CurFunction;
    struct slang_ir_node_ *CurLoop;
 } slang_assemble_ctx;
@@ -70,7 +72,7 @@ _slang_locate_function(const struct slang_function_scope_ *funcs,
                        slang_atom name, const struct slang_operation_ *params,
                        GLuint num_params,
                        const slang_name_space *space,
-                       slang_atom_pool *);
+                       slang_atom_pool *atoms, slang_info_log *log);
 
 
 extern GLboolean
@@ -170,7 +172,8 @@ _slang_typeof_operation(const slang_assemble_ctx *,
 extern GLboolean
 _slang_typeof_operation_(const struct slang_operation_ *,
                          const slang_name_space *,
-                         slang_typeinfo *, slang_atom_pool *);
+                         slang_typeinfo *, slang_atom_pool *,
+                         slang_info_log *log);
 
 /**
  * Retrieves type of a function prototype, if one exists.
@@ -182,7 +185,7 @@ _slang_typeof_function(slang_atom a_name,
                        const struct slang_operation_ *params,
                        GLuint num_params, const slang_name_space *,
                        slang_type_specifier *spec, GLboolean *exists,
-                       slang_atom_pool *);
+                       slang_atom_pool *, slang_info_log *log);
 
 extern GLboolean
 _slang_type_is_matrix(slang_type_specifier_type);
