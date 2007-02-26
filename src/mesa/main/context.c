@@ -95,6 +95,7 @@
 #include "fbobject.h"
 #include "feedback.h"
 #include "fog.h"
+#include "framebuffer.h"
 #include "get.h"
 #include "glthread.h"
 #include "glapioffsets.h"
@@ -1666,6 +1667,8 @@ void
 _mesa_make_current( GLcontext *newCtx, GLframebuffer *drawBuffer,
                     GLframebuffer *readBuffer )
 {
+   GET_CURRENT_CONTEXT(oldCtx);
+
    if (MESA_VERBOSE & VERBOSE_API)
       _mesa_debug(newCtx, "_mesa_make_current()\n");
 
@@ -1690,6 +1693,15 @@ _mesa_make_current( GLcontext *newCtx, GLframebuffer *drawBuffer,
    _glapi_set_context((void *) newCtx);
    ASSERT(_mesa_get_current_context() == newCtx);
 
+   if (oldCtx) {
+      if (oldCtx->WinSysDrawBuffer) {
+         _mesa_dereference_framebuffer(&oldCtx->WinSysDrawBuffer);
+      }
+      if (oldCtx->WinSysReadBuffer) {
+         _mesa_dereference_framebuffer(&oldCtx->WinSysReadBuffer);
+      }
+   }
+         
    if (!newCtx) {
       _glapi_set_dispatch(NULL);  /* none current */
    }
@@ -1703,6 +1715,8 @@ _mesa_make_current( GLcontext *newCtx, GLframebuffer *drawBuffer,
          ASSERT(readBuffer->Name == 0);
          newCtx->WinSysDrawBuffer = drawBuffer;
          newCtx->WinSysReadBuffer = readBuffer;
+         drawBuffer->RefCount++;
+         readBuffer->RefCount++;
 
          /*
           * Only set the context's Draw/ReadBuffer fields if they're NULL

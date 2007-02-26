@@ -166,6 +166,8 @@ _mesa_initialize_framebuffer(struct gl_framebuffer *fb, const GLvisual *visual)
 
    _glthread_INIT_MUTEX(fb->Mutex);
 
+   fb->RefCount = 1;
+
    /* save the visual */
    fb->Visual = *visual;
 
@@ -198,7 +200,6 @@ void
 _mesa_destroy_framebuffer(struct gl_framebuffer *fb)
 {
    if (fb) {
-      _glthread_DESTROY_MUTEX(fb->Mutex);
       _mesa_free_framebuffer_data(fb);
       _mesa_free(fb);
    }
@@ -215,6 +216,8 @@ _mesa_free_framebuffer_data(struct gl_framebuffer *fb)
    GLuint i;
 
    assert(fb);
+
+   _glthread_DESTROY_MUTEX(fb->Mutex);
 
    for (i = 0; i < BUFFER_COUNT; i++) {
       struct gl_renderbuffer_attachment *att = &fb->Attachment[i];
@@ -605,21 +608,25 @@ update_color_draw_buffers(GLcontext *ctx, struct gl_framebuffer *fb)
       GLbitfield bufferMask = fb->_ColorDrawBufferMask[output];
       GLuint count = 0;
       GLuint i;
-      /* We need the inner loop here because glDrawBuffer(GL_FRONT_AND_BACK)
-       * can specify writing to two or four color buffers (for example).
-       */
-      for (i = 0; bufferMask && i < BUFFER_COUNT; i++) {
-         const GLuint bufferBit = 1 << i;
-         if (bufferBit & bufferMask) {
-            struct gl_renderbuffer *rb = fb->Attachment[i].Renderbuffer;
-            if (rb) {
-               fb->_ColorDrawBuffers[output][count] = rb;
-               count++;
+      if (!fb->DeletePending) {
+         /* We need the inner loop here because glDrawBuffer(GL_FRONT_AND_BACK)
+          * can specify writing to two or four color buffers (for example).
+          */
+         for (i = 0; bufferMask && i < BUFFER_COUNT; i++) {
+            const GLuint bufferBit = 1 << i;
+            if (bufferBit & bufferMask) {
+               struct gl_renderbuffer *rb = fb->Attachment[i].Renderbuffer;
+               if (rb) {
+                  fb->_ColorDrawBuffers[output][count] = rb;
+                  count++;
+               }
+               else {
+                  /*
+                  _mesa_warning(ctx, "DrawBuffer names a missing buffer!\n");
+                  */
+               }
+               bufferMask &= ~bufferBit;
             }
-            else {
-               /*_mesa_warning(ctx, "DrawBuffer names a missing buffer!\n");*/
-            }
-            bufferMask &= ~bufferBit;
          }
       }
       fb->_NumColorDrawBuffers[output] = count;
@@ -635,7 +642,7 @@ static void
 update_color_read_buffer(GLcontext *ctx, struct gl_framebuffer *fb)
 {
    (void) ctx;
-   if (fb->_ColorReadBufferIndex == -1) {
+   if (fb->_ColorReadBufferIndex == -1 || fb->DeletePending) {
       fb->_ColorReadBuffer = NULL; /* legal! */
    }
    else {
