@@ -55,9 +55,9 @@ struct gl_program_machine
 
    GLfloat Temporaries[MAX_PROGRAM_TEMPS][4];
    GLfloat Outputs[MAX_PROGRAM_OUTPUTS][4];
+   GLfloat (*EnvParams)[4]; /**< Vertex or Fragment env parameters */
    GLuint CondCodes[4];  /**< COND_* value for x/y/z/w */
-
-   GLint AddressReg[MAX_VERTEX_PROGRAM_ADDRESS_REGS][4];
+   GLint AddressReg[MAX_PROGRAM_ADDRESS_REGS][4];
 
    GLuint CallStack[MAX_PROGRAM_CALL_DEPTH]; /**< For CAL/RET instructions */
    GLuint StackDepth; /**< Index/ptr to top of CallStack[] */
@@ -74,8 +74,8 @@ _mesa_get_program_register(GLcontext *ctx, enum register_file file,
 
 extern GLboolean
 _mesa_execute_program(GLcontext *ctx,
-                      const struct gl_program *program, GLuint maxInst,
-                      struct gl_program_machine *machine, GLuint element);
+                      const struct gl_program *program,
+                      struct gl_program_machine *machine);
 
 
 #endif /* PROG_EXECUTE_H */

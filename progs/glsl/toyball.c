@@ -51,8 +51,19 @@ static struct uniform_info Uniforms[] = {
 };
 
 static GLint win = 0;
-
+static GLboolean Anim = GL_FALSE;
+static GLfloat TexRot = 0.0;
 static GLfloat xRot = 0.0f, yRot = 0.0f, zRot = 0.0f;
+
+
+static void
+Idle(void)
+{
+   TexRot += 2.0;
+   if (TexRot > 360.0)
+      TexRot -= 360.0;
+   glutPostRedisplay();
+}
 
 
 static void
@@ -64,6 +75,11 @@ Redisplay(void)
    glRotatef(xRot, 1.0f, 0.0f, 0.0f);
    glRotatef(yRot, 0.0f, 1.0f, 0.0f);
    glRotatef(zRot, 0.0f, 0.0f, 1.0f);
+
+   glMatrixMode(GL_TEXTURE);
+   glLoadIdentity();
+   glRotatef(TexRot, 0.0f, 1.0f, 0.0f);
+   glMatrixMode(GL_MODELVIEW);
 
    glutSolidSphere(2.0, 20, 10);
 
@@ -106,6 +122,13 @@ Key(unsigned char key, int x, int y)
   (void) y;
 
    switch(key) {
+   case 'a':
+      Anim = !Anim;
+      if (Anim)
+         glutIdleFunc(Idle);
+      else
+         glutIdleFunc(NULL);
+      break;
    case 'z':
       zRot += step;
       break;

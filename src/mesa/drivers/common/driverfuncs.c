@@ -129,7 +129,7 @@ _mesa_init_driver_functions(struct dd_function_table *driver)
    driver->NewProgram = _mesa_new_program;
    driver->DeleteProgram = _mesa_delete_program;
 #if FEATURE_MESA_program_debug
-   driver->GetFragmentProgramRegister = _mesa_get_program_register;
+   driver->GetProgramRegister = _mesa_get_program_register;
 #endif /* FEATURE_MESA_program_debug */
 
    /* simple state commands */

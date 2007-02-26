@@ -141,9 +141,7 @@ _mesa_GetProgramRegisterfvMESA(GLenum target,
                            "glGetProgramRegisterfvMESA(registerName)");
                return;
             }
-#if 0 /* FIX ME */
-            ctx->Driver.GetVertexProgramRegister(ctx, PROGRAM_TEMPORARY, i, v);
-#endif
+            ctx->Driver.GetProgramRegister(ctx, PROGRAM_TEMPORARY, i, v);
          }
          else if (reg[0] == 'v' && reg[1] == '[') {
             /* Vertex Input attribute */
@@ -154,10 +152,7 @@ _mesa_GetProgramRegisterfvMESA(GLenum target,
                _mesa_sprintf(number, "%d", i);
                if (_mesa_strncmp(reg + 2, name, 4) == 0 ||
                    _mesa_strncmp(reg + 2, number, _mesa_strlen(number)) == 0) {
-#if 0 /* FIX ME */
-                  ctx->Driver.GetVertexProgramRegister(ctx, PROGRAM_INPUT,
-                                                       i, v);
-#endif
+                  ctx->Driver.GetProgramRegister(ctx, PROGRAM_INPUT, i, v);
                   return;
                }
             }
@@ -210,7 +205,7 @@ _mesa_GetProgramRegisterfvMESA(GLenum target,
                            "glGetProgramRegisterfvMESA(registerName)");
                return;
             }
-            ctx->Driver.GetFragmentProgramRegister(ctx, PROGRAM_TEMPORARY,
+            ctx->Driver.GetProgramRegister(ctx, PROGRAM_TEMPORARY,
                                                    i, v);
          }
          else if (reg[0] == 'f' && reg[1] == '[') {
@@ -219,8 +214,7 @@ _mesa_GetProgramRegisterfvMESA(GLenum target,
             for (i = 0; i < ctx->Const.FragmentProgram.MaxAttribs; i++) {
                const char *name = _mesa_nv_fragment_input_register_name(i);
                if (_mesa_strncmp(reg + 2, name, 4) == 0) {
-                  ctx->Driver.GetFragmentProgramRegister(ctx,
-                                                         PROGRAM_INPUT, i, v);
+                  ctx->Driver.GetProgramRegister(ctx, PROGRAM_INPUT, i, v);
                   return;
                }
             }
@@ -230,18 +224,18 @@ _mesa_GetProgramRegisterfvMESA(GLenum target,
          }
          else if (_mesa_strcmp(reg, "o[COLR]") == 0) {
             /* Fragment output color */
-            ctx->Driver.GetFragmentProgramRegister(ctx, PROGRAM_OUTPUT,
-                                                   FRAG_RESULT_COLR, v);
+            ctx->Driver.GetProgramRegister(ctx, PROGRAM_OUTPUT,
+                                           FRAG_RESULT_COLR, v);
          }
          else if (_mesa_strcmp(reg, "o[COLH]") == 0) {
             /* Fragment output color */
-            ctx->Driver.GetFragmentProgramRegister(ctx, PROGRAM_OUTPUT,
-                                                   FRAG_RESULT_COLH, v);
+            ctx->Driver.GetProgramRegister(ctx, PROGRAM_OUTPUT,
+                                           FRAG_RESULT_COLH, v);
          }
          else if (_mesa_strcmp(reg, "o[DEPR]") == 0) {
             /* Fragment output depth */
-            ctx->Driver.GetFragmentProgramRegister(ctx, PROGRAM_OUTPUT,
-                                                   FRAG_RESULT_DEPR, v);
+            ctx->Driver.GetProgramRegister(ctx, PROGRAM_OUTPUT,
+                                           FRAG_RESULT_DEPR, v);
          }
          else {
             /* try user-defined identifiers */
