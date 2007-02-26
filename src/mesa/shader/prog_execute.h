@@ -55,8 +55,8 @@ struct gl_program_machine
 
    GLfloat Temporaries[MAX_PROGRAM_TEMPS][4];
    GLfloat Outputs[MAX_PROGRAM_OUTPUTS][4];
+   GLfloat (*EnvParams)[4]; /**< Vertex or Fragment env parameters */
    GLuint CondCodes[4];  /**< COND_* value for x/y/z/w */
-
    GLint AddressReg[MAX_VERTEX_PROGRAM_ADDRESS_REGS][4];
 
    GLuint CallStack[MAX_PROGRAM_CALL_DEPTH]; /**< For CAL/RET instructions */
