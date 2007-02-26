@@ -49,7 +49,7 @@
  */
 struct vp_stage_data {
    /** The results of running the vertex program go into these arrays. */
-   GLvector4f attribs[VERT_RESULT_MAX];
+   GLvector4f results[VERT_RESULT_MAX];
 
    GLvector4f ndcCoords;              /**< normalized device coords */
    GLubyte *clipmask;                 /**< clip flags */
@@ -274,7 +274,7 @@ run_vp( GLcontext *ctx, struct tnl_pipeline_stage *stage )
       /* copy the output registers into the VB->attribs arrays */
       for (j = 0; j < numOutputs; j++) {
          const GLuint attr = outputs[j];
-         COPY_4V(store->attribs[attr].data[i], machine.Outputs[attr]);
+         COPY_4V(store->results[attr].data[i], machine.Outputs[attr]);
       }
 #if 0
       printf("HPOS: %f %f %f %f\n",
@@ -288,31 +288,31 @@ run_vp( GLcontext *ctx, struct tnl_pipeline_stage *stage )
    /* Setup the VB pointers so that the next pipeline stages get
     * their data from the right place (the program output arrays).
     */
-   VB->ClipPtr = &store->attribs[VERT_RESULT_HPOS];
+   VB->ClipPtr = &store->results[VERT_RESULT_HPOS];
    VB->ClipPtr->size = 4;
    VB->ClipPtr->count = VB->Count;
-   VB->ColorPtr[0] = &store->attribs[VERT_RESULT_COL0];
-   VB->ColorPtr[1] = &store->attribs[VERT_RESULT_BFC0];
-   VB->SecondaryColorPtr[0] = &store->attribs[VERT_RESULT_COL1];
-   VB->SecondaryColorPtr[1] = &store->attribs[VERT_RESULT_BFC1];
-   VB->FogCoordPtr = &store->attribs[VERT_RESULT_FOGC];
+   VB->ColorPtr[0] = &store->results[VERT_RESULT_COL0];
+   VB->ColorPtr[1] = &store->results[VERT_RESULT_BFC0];
+   VB->SecondaryColorPtr[0] = &store->results[VERT_RESULT_COL1];
+   VB->SecondaryColorPtr[1] = &store->results[VERT_RESULT_BFC1];
+   VB->FogCoordPtr = &store->results[VERT_RESULT_FOGC];
 
-   VB->AttribPtr[VERT_ATTRIB_COLOR0] = &store->attribs[VERT_RESULT_COL0];
-   VB->AttribPtr[VERT_ATTRIB_COLOR1] = &store->attribs[VERT_RESULT_COL1];
-   VB->AttribPtr[VERT_ATTRIB_FOG] = &store->attribs[VERT_RESULT_FOGC];
-   VB->AttribPtr[_TNL_ATTRIB_POINTSIZE] = &store->attribs[VERT_RESULT_PSIZ];
+   VB->AttribPtr[VERT_ATTRIB_COLOR0] = &store->results[VERT_RESULT_COL0];
+   VB->AttribPtr[VERT_ATTRIB_COLOR1] = &store->results[VERT_RESULT_COL1];
+   VB->AttribPtr[VERT_ATTRIB_FOG] = &store->results[VERT_RESULT_FOGC];
+   VB->AttribPtr[_TNL_ATTRIB_POINTSIZE] = &store->results[VERT_RESULT_PSIZ];
 
    for (i = 0; i < ctx->Const.MaxTextureCoordUnits; i++) {
       VB->TexCoordPtr[i] = 
       VB->AttribPtr[_TNL_ATTRIB_TEX0 + i]
-         = &store->attribs[VERT_RESULT_TEX0 + i];
+         = &store->results[VERT_RESULT_TEX0 + i];
    }
 
    for (i = 0; i < ctx->Const.MaxVarying; i++) {
       if (program->Base.OutputsWritten & (1 << (VERT_RESULT_VAR0 + i))) {
          /* Note: varying results get put into the generic attributes */
 	 VB->AttribPtr[VERT_ATTRIB_GENERIC0+i]
-            = &store->attribs[VERT_RESULT_VAR0 + i];
+            = &store->results[VERT_RESULT_VAR0 + i];
       }
    }
 
@@ -374,8 +374,8 @@ static GLboolean init_vp( GLcontext *ctx,
 
    /* Allocate arrays of vertex output values */
    for (i = 0; i < VERT_RESULT_MAX; i++) {
-      _mesa_vector4f_alloc( &store->attribs[i], 0, size, 32 );
-      store->attribs[i].size = 4;
+      _mesa_vector4f_alloc( &store->results[i], 0, size, 32 );
+      store->results[i].size = 4;
    }
 
    /* a few other misc allocations */
@@ -398,7 +398,7 @@ static void dtr( struct tnl_pipeline_stage *stage )
 
       /* free the vertex program result arrays */
       for (i = 0; i < VERT_RESULT_MAX; i++)
-         _mesa_vector4f_free( &store->attribs[i] );
+         _mesa_vector4f_free( &store->results[i] );
 
       /* free misc arrays */
       _mesa_vector4f_free( &store->ndcCoords );
