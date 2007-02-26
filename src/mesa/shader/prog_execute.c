@@ -643,8 +643,8 @@ _mesa_execute_program(GLcontext * ctx,
                       struct gl_program_machine *machine)
 {
    const GLuint numInst = program->NumInstructions;
-   const GLuint MAX_EXEC = 10000;
-   GLint pc, total = 0;
+   const GLuint maxExec = 10000;
+   GLint pc, numExec = 0;
 
    machine->CurProgram = program;
 
@@ -1666,11 +1666,10 @@ _mesa_execute_program(GLcontext * ctx,
 
       }
 
-      total++;
-      if (total > MAX_EXEC) {
+      numExec++;
+      if (numExec > maxExec) {
          _mesa_problem(ctx, "Infinite loop detected in fragment program");
          return GL_TRUE;
-         abort();
       }
 
    } /* for pc */
