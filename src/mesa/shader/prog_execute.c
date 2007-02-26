@@ -635,14 +635,14 @@ init_machine_deriv(GLcontext * ctx,
  * \param ctx - rendering context
  * \param program - the fragment program to execute
  * \param machine - machine state (register file)
- * \param maxInst - max number of instructions to execute
  * \return GL_TRUE if program completed or GL_FALSE if program executed KIL.
  */
 GLboolean
 _mesa_execute_program(GLcontext * ctx,
-                      const struct gl_program *program, GLuint maxInst,
+                      const struct gl_program *program,
                       struct gl_program_machine *machine)
 {
+   const GLuint numInst = program->NumInstructions;
    const GLuint MAX_EXEC = 10000;
    GLint pc, total = 0;
 
@@ -656,7 +656,7 @@ _mesa_execute_program(GLcontext * ctx,
    CurrentMachine = machine;
 #endif
 
-   for (pc = 0; pc < maxInst; pc++) {
+   for (pc = 0; pc < numInst; pc++) {
       const struct prog_instruction *inst = program->Instructions + pc;
 
 #if FEATURE_MESA_program_debug
