@@ -84,14 +84,20 @@ get_register_pointer(const struct prog_src_register *source,
 {
    if (source->RelAddr) {
       const GLint reg = source->Index + machine->AddressReg[0][0];
-      if (reg < 0 || reg > MAX_NV_VERTEX_PROGRAM_PARAMS)
-         return ZeroVec;
-      else if (source->File == PROGRAM_ENV_PARAM)
-         return machine->EnvParams[reg];
+      if (source->File == PROGRAM_ENV_PARAM)
+         if (reg < 0 || reg >= MAX_PROGRAM_ENV_PARAMS)
+            return ZeroVec;
+         else
+            return machine->EnvParams[reg];
       else {
+         const struct gl_program_parameter_list *params;
          ASSERT(source->File == PROGRAM_LOCAL_PARAM ||
                 source->File == PROGRAM_STATE_VAR);
-         return machine->CurProgram->Parameters->ParameterValues[reg];
+         params = machine->CurProgram->Parameters;
+         if (reg < 0 || reg >= params->NumParameters)
+            return ZeroVec;
+         else
+            return params->ParameterValues[reg];
       }
    }
 
