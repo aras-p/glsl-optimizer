@@ -45,7 +45,6 @@
 #include "prog_print.h"
 #include "slang_builtin.h"
 #include "slang_emit.h"
-#include "slang_error.h"
 
 
 #define PEEPHOLE_OPTIMIZATIONS 1
@@ -1421,14 +1420,20 @@ emit(slang_emit_info *emitInfo, slang_ir_node *n)
       assert(n->Store->Index < 0);
       if (!n->Var || n->Var->isTemp) {
          /* a nameless/temporary variable, will be freed after first use */
-         if (!_slang_alloc_temp(emitInfo->vt, n->Store))
-            RETURN_ERROR("Ran out of registers, too many temporaries", 0);
+         if (!_slang_alloc_temp(emitInfo->vt, n->Store)) {
+            slang_info_log_error(emitInfo->log,
+                                 "Ran out of registers, too many temporaries");
+            return NULL;
+         }
       }
       else {
          /* a regular variable */
          _slang_add_variable(emitInfo->vt, n->Var);
-         if (!_slang_alloc_var(emitInfo->vt, n->Store))
-            RETURN_ERROR("Ran out of registers, too many variables", 0);
+         if (!_slang_alloc_var(emitInfo->vt, n->Store)) {
+            slang_info_log_error(emitInfo->log,
+                                 "Ran out of registers, too many variables");
+            return NULL;
+         }
          /*
          printf("IR_VAR_DECL %s %d store %p\n",
                 (char*) n->Var->a_name, n->Store->Index, (void*) n->Store);
@@ -1530,7 +1535,8 @@ emit(slang_emit_info *emitInfo, slang_ir_node *n)
                                                    n->Store->Size,
                                                    &n->Store->Swizzle);
       if (n->Store->Index < 0) {
-         RETURN_ERROR("Ran out of space for constants.", 0);
+         slang_info_log_error(emitInfo->log, "Ran out of space for constants");
+         return NULL;
       }
       return NULL;
 

@@ -88,19 +88,6 @@ _slang_code_object_ctr (slang_code_object *);
 extern GLvoid
 _slang_code_object_dtr (slang_code_object *);
 
-typedef struct slang_info_log_
-{
-	char *text;
-	int dont_free_text;
-} slang_info_log;
-
-void slang_info_log_construct (slang_info_log *);
-void slang_info_log_destruct (slang_info_log *);
-int slang_info_log_print (slang_info_log *, const char *, ...);
-int slang_info_log_error (slang_info_log *, const char *, ...);
-int slang_info_log_warning (slang_info_log *, const char *, ...);
-void slang_info_log_memory (slang_info_log *);
-
 extern GLboolean
 _slang_compile (GLcontext *ctx, struct gl_shader *shader);
 

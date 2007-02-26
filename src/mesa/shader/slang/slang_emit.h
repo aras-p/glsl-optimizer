@@ -42,7 +42,8 @@ _slang_new_ir_storage(enum register_file file, GLint index, GLint size);
 
 extern GLboolean
 _slang_emit_code(slang_ir_node *n, slang_var_table *vartable,
-                 struct gl_program *prog, GLboolean withEnd);
+                 struct gl_program *prog, GLboolean withEnd,
+                 slang_info_log *log);
 
 
 #endif /* SLANG_EMIT_H */
