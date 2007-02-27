@@ -2584,7 +2584,7 @@ struct gl_extensions
 /**
  * A stack of matrices (projection, modelview, color, texture, etc).
  */
-struct matrix_stack
+struct gl_matrix_stack
 {
    GLmatrix *Top;      /**< points into Stack */
    GLmatrix *Stack;    /**< array [MaxDepth] of GLmatrix */
@@ -2815,7 +2815,7 @@ struct mesa_display_list
 /**
  * State used during display list compilation and execution.
  */
-struct mesa_list_state
+struct gl_dlist_state
 {
    struct mesa_display_list *CallStack[MAX_LIST_NESTING];
    GLuint CallDepth;		/**< Current recursion calling depth */
@@ -2893,19 +2893,19 @@ struct __GLcontextRec
 
    /** \name The various 4x4 matrix stacks */
    /*@{*/
-   struct matrix_stack ModelviewMatrixStack;
-   struct matrix_stack ProjectionMatrixStack;
-   struct matrix_stack ColorMatrixStack;
-   struct matrix_stack TextureMatrixStack[MAX_TEXTURE_COORD_UNITS];
-   struct matrix_stack ProgramMatrixStack[MAX_PROGRAM_MATRICES];
-   struct matrix_stack *CurrentStack; /**< Points to one of the above stacks */
+   struct gl_matrix_stack ModelviewMatrixStack;
+   struct gl_matrix_stack ProjectionMatrixStack;
+   struct gl_matrix_stack ColorMatrixStack;
+   struct gl_matrix_stack TextureMatrixStack[MAX_TEXTURE_COORD_UNITS];
+   struct gl_matrix_stack ProgramMatrixStack[MAX_PROGRAM_MATRICES];
+   struct gl_matrix_stack *CurrentStack; /**< Points to one of the above stacks */
    /*@}*/
 
    /** Combined modelview and projection matrix */
    GLmatrix _ModelProjectMatrix;
 
    /** \name Display lists */
-   struct mesa_list_state ListState;
+   struct gl_dlist_state ListState;
 
    GLboolean ExecuteFlag;	/**< Execute GL commands? */
    GLboolean CompileFlag;	/**< Compile GL commands into display list? */
