@@ -2243,6 +2243,7 @@ struct gl_framebuffer
    _glthread_Mutex Mutex;		   /**< for thread safety */
    GLuint Name;      /* if zero, this is a window system framebuffer */
    GLint RefCount;
+   GLboolean DeletePending;
 
    GLvisual Visual;	/**< The framebuffer's visual.
                              Immutable if this is a window system buffer.

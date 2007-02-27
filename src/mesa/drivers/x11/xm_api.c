@@ -345,7 +345,7 @@ xmesa_get_window_size(XMesaDisplay *dpy, XMesaBuffer b,
 /*****                Linked list of XMesaBuffers                 *****/
 /**********************************************************************/
 
-static XMesaBuffer XMesaBufferList = NULL;
+XMesaBuffer XMesaBufferList = NULL;
 
 
 /**
@@ -378,6 +378,7 @@ create_xmesa_buffer(XMesaDrawable d, BufferType type,
    b->cmap = cmap;
 
    _mesa_initialize_framebuffer(&b->mesa_buffer, &vis->mesa_visual);
+   b->mesa_buffer.Delete = xmesa_delete_framebuffer;
 
    /*
     * Front renderbuffer
@@ -451,8 +452,8 @@ create_xmesa_buffer(XMesaDrawable d, BufferType type,
  * Find an XMesaBuffer by matching X display and colormap but NOT matching
  * the notThis buffer.
  */
-static XMesaBuffer
-find_xmesa_buffer(XMesaDisplay *dpy, XMesaColormap cmap, XMesaBuffer notThis)
+XMesaBuffer
+xmesa_find_buffer(XMesaDisplay *dpy, XMesaColormap cmap, XMesaBuffer notThis)
 {
    XMesaBuffer b;
    for (b=XMesaBufferList; b; b=b->Next) {
@@ -465,38 +466,27 @@ find_xmesa_buffer(XMesaDisplay *dpy, XMesaColormap cmap, XMesaBuffer notThis)
 
 
 /**
- * Free an XMesaBuffer, remove from linked list, perhaps free X colormap
- * entries.
+ * Remove buffer from linked list, delete if no longer referenced.
  */
 static void
-free_xmesa_buffer(int client, XMesaBuffer buffer)
+xmesa_free_buffer(XMesaBuffer buffer)
 {
    XMesaBuffer prev = NULL, b;
-   (void) client;
-   for (b=XMesaBufferList; b; b=b->Next) {
-      if (b==buffer) {
-         /* unlink bufer from list */
+
+   for (b = XMesaBufferList; b; b = b->Next) {
+      if (b == buffer) {
+         struct gl_framebuffer *fb = &buffer->mesa_buffer;
+
+         /* unlink buffer from list */
          if (prev)
             prev->Next = buffer->Next;
          else
             XMesaBufferList = buffer->Next;
-         /* Check to free X colors */
-         if (buffer->num_alloced>0) {
-            /* If no other buffer uses this X colormap then free the colors. */
-            if (!find_xmesa_buffer(buffer->display, buffer->cmap, buffer)) {
-#ifdef XFree86Server
-               (void)FreeColors(buffer->cmap, client,
-				buffer->num_alloced, buffer->alloced_colors,
-				0);
-#else
-               XFreeColors(buffer->display, buffer->cmap,
-                           buffer->alloced_colors, buffer->num_alloced, 0);
-#endif
-            }
-         }
 
-         _mesa_free_framebuffer_data(&buffer->mesa_buffer);
-         _mesa_free(buffer);
+         /* mark as delete pending */
+         fb->DeletePending = GL_TRUE;
+         /* Dereference.  If count = zero we'll really delete the buffer */
+         _mesa_dereference_framebuffer(&fb);
 
          return;
       }
@@ -504,7 +494,7 @@ free_xmesa_buffer(int client, XMesaBuffer buffer)
       prev = b;
    }
    /* buffer not found in XMesaBufferList */
-   _mesa_problem(NULL,"free_xmesa_buffer() - buffer not found\n");
+   _mesa_problem(NULL,"xmesa_free_buffer() - buffer not found\n");
 }
 
 
@@ -686,7 +676,7 @@ setup_grayscale(int client, XMesaVisual v,
          return GL_FALSE;
       }
 
-      prevBuffer = find_xmesa_buffer(v->display, cmap, buffer);
+      prevBuffer = xmesa_find_buffer(v->display, cmap, buffer);
       if (prevBuffer &&
           (buffer->xm_visual->mesa_visual.rgbMode ==
            prevBuffer->xm_visual->mesa_visual.rgbMode)) {
@@ -775,7 +765,7 @@ setup_dithered_color(int client, XMesaVisual v,
          return GL_FALSE;
       }
 
-      prevBuffer = find_xmesa_buffer(v->display, cmap, buffer);
+      prevBuffer = xmesa_find_buffer(v->display, cmap, buffer);
       if (prevBuffer &&
           (buffer->xm_visual->mesa_visual.rgbMode ==
            prevBuffer->xm_visual->mesa_visual.rgbMode)) {
@@ -1666,7 +1656,7 @@ XMesaCreateWindowBuffer2(XMesaVisual v, XMesaWindow w, XMesaContext c)
 
    if (!initialize_visual_and_buffer( client, v, b, v->mesa_visual.rgbMode,
                                       (XMesaDrawable) w, cmap )) {
-      free_xmesa_buffer(client, b);
+      xmesa_free_buffer(b);
       return NULL;
    }
 
@@ -1787,7 +1777,7 @@ XMesaCreatePixmapBuffer(XMesaVisual v, XMesaPixmap p, XMesaColormap cmap)
 
    if (!initialize_visual_and_buffer(client, v, b, v->mesa_visual.rgbMode,
 				     (XMesaDrawable) p, cmap)) {
-      free_xmesa_buffer(client, b);
+      xmesa_free_buffer(b);
       return NULL;
    }
 
@@ -1821,7 +1811,7 @@ XMesaCreatePBuffer(XMesaVisual v, XMesaColormap cmap,
 
    if (!initialize_visual_and_buffer(client, v, b, v->mesa_visual.rgbMode,
 				     drawable, cmap)) {
-      free_xmesa_buffer(client, b);
+      xmesa_free_buffer(b);
       return NULL;
    }
 
@@ -1834,48 +1824,10 @@ XMesaCreatePBuffer(XMesaVisual v, XMesaColormap cmap,
 /*
  * Deallocate an XMesaBuffer structure and all related info.
  */
-void XMesaDestroyBuffer( XMesaBuffer b )
+void
+XMesaDestroyBuffer(XMesaBuffer b)
 {
-   int client = 0;
-
-#ifdef XFree86Server
-   if (b->frontxrb->drawable)
-       client = CLIENT_ID(b->frontxrb->drawable->id);
-#endif
-
-   if (b->gc)  XMesaFreeGC( b->xm_visual->display, b->gc );
-   if (b->cleargc)  XMesaFreeGC( b->xm_visual->display, b->cleargc );
-   if (b->swapgc)  XMesaFreeGC( b->xm_visual->display, b->swapgc );
-
-   if (b->xm_visual->mesa_visual.doubleBufferMode)
-   {
-      if (b->backxrb->ximage) {
-#if defined(USE_XSHM) && !defined(XFree86Server)
-         if (b->shm) {
-            XShmDetach( b->xm_visual->display, &b->shminfo );
-            XDestroyImage( b->backxrb->ximage );
-            shmdt( b->shminfo.shmaddr );
-         }
-         else
-#endif
-            XMesaDestroyImage( b->backxrb->ximage );
-      }
-      if (b->backxrb->pixmap) {
-         XMesaFreePixmap( b->xm_visual->display, b->backxrb->pixmap );
-         if (b->xm_visual->hpcr_clear_flag) {
-            XMesaFreePixmap( b->xm_visual->display,
-                             b->xm_visual->hpcr_clear_pixmap );
-            XMesaDestroyImage( b->xm_visual->hpcr_clear_ximage );
-         }
-      }
-   }
-   if (b->rowimage) {
-      _mesa_free( b->rowimage->data );
-      b->rowimage->data = NULL;
-      XMesaDestroyImage( b->rowimage );
-   }
-
-   free_xmesa_buffer(client, b);
+   xmesa_free_buffer(b);
 }
 
 
@@ -2436,7 +2388,7 @@ void xmesa_destroy_buffers_on_display(XMesaDisplay *dpy)
    for (b = XMesaBufferList; b; b = next) {
       next = b->Next;
       if (b->display == dpy) {
-         free_xmesa_buffer(0, b);
+         xmesa_free_buffer(b);
       }
    }
 }

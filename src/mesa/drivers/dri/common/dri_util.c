@@ -340,7 +340,7 @@ static GLboolean DoBindContext(__DRInativeDisplay *dpy,
 	DRM_SPINUNLOCK(&psp->pSAREA->drawable_lock, psp->drawLockID);
     }
 
-    if ((pdp != prp) && (!pdp->pStamp || *pdp->pStamp != pdp->lastStamp)) {
+    if ((pdp != prp) && (!prp->pStamp || *prp->pStamp != prp->lastStamp)) {
 	DRM_SPINLOCK(&psp->pSAREA->drawable_lock, psp->drawLockID);
 	__driUtilUpdateDrawableInfo(prp);
 	DRM_SPINUNLOCK(&psp->pSAREA->drawable_lock, psp->drawLockID);
@@ -420,7 +420,7 @@ __driUtilUpdateDrawableInfo(__DRIdrawablePrivate *pdp)
     psp = pdp->driScreenPriv;
     if (!psp) {
 	/* ERROR!!! */
-       _mesa_problem("Warning! Possible infinite loop due to bug "
+       _mesa_problem(NULL, "Warning! Possible infinite loop due to bug "
 		     "in file %s, line %d\n",
 		     __FILE__, __LINE__);
 	return;
