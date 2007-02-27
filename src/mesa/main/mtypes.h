@@ -2104,6 +2104,8 @@ struct gl_shader_program
 struct gl_shader_state
 {
    struct gl_shader_program *CurrentProgram; /**< The user-bound program */
+   GLboolean EmitHighLevelInstructions; /**< Driver-selectable */
+   GLboolean EmitComments;              /**< Driver-selectable */
 };
 
 

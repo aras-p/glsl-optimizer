@@ -52,8 +52,6 @@
 
 
 /* XXX temporarily here */
-static GLboolean EmitHighLevelInstructions = GL_TRUE;
-static GLboolean EmitComments = GL_FALSE;
 
 
 typedef struct
@@ -61,6 +59,9 @@ typedef struct
    slang_info_log *log;
    slang_var_table *vt;
    struct gl_program *prog;
+   /* code-gen options */
+   GLboolean EmitHighLevelInstructions;
+   GLboolean EmitComments;
 } slang_emit_info;
 
 
@@ -1111,7 +1112,7 @@ emit_if(slang_emit_info *emitInfo, slang_ir_node *n)
 
    emit(emitInfo, n->Children[0]);  /* the condition */
    ifInstLoc = prog->NumInstructions;
-   if (EmitHighLevelInstructions) {
+   if (emitInfo->EmitHighLevelInstructions) {
       ifInst = new_instruction(emitInfo, OPCODE_IF);
       ifInst->DstReg.CondMask = COND_NE;  /* if cond is non-zero */
       ifInst->DstReg.CondSwizzle = SWIZZLE_X;
@@ -1130,7 +1131,7 @@ emit_if(slang_emit_info *emitInfo, slang_ir_node *n)
    if (n->Children[2]) {
       /* have else body */
       elseInstLoc = prog->NumInstructions;
-      if (EmitHighLevelInstructions) {
+      if (emitInfo->EmitHighLevelInstructions) {
          (void) new_instruction(emitInfo, OPCODE_ELSE);
       }
       else {
@@ -1151,7 +1152,7 @@ emit_if(slang_emit_info *emitInfo, slang_ir_node *n)
       ifInst->BranchTarget = prog->NumInstructions + 1;
    }
 
-   if (EmitHighLevelInstructions) {
+   if (emitInfo->EmitHighLevelInstructions) {
       (void) new_instruction(emitInfo, OPCODE_ENDIF);
    }
 
@@ -1174,7 +1175,7 @@ emit_loop(slang_emit_info *emitInfo, slang_ir_node *n)
 
    /* emit OPCODE_BGNLOOP */
    beginInstLoc = prog->NumInstructions;
-   if (EmitHighLevelInstructions) {
+   if (emitInfo->EmitHighLevelInstructions) {
       (void) new_instruction(emitInfo, OPCODE_BGNLOOP);
    }
 
@@ -1182,7 +1183,7 @@ emit_loop(slang_emit_info *emitInfo, slang_ir_node *n)
    emit(emitInfo, n->Children[0]);
 
    endInstLoc = prog->NumInstructions;
-   if (EmitHighLevelInstructions) {
+   if (emitInfo->EmitHighLevelInstructions) {
       /* emit OPCODE_ENDLOOP */
       endInst = new_instruction(emitInfo, OPCODE_ENDLOOP);
    }
@@ -1194,7 +1195,7 @@ emit_loop(slang_emit_info *emitInfo, slang_ir_node *n)
    /* end instruction's BranchTarget points to top of loop */
    endInst->BranchTarget = beginInstLoc;
 
-   if (EmitHighLevelInstructions) {
+   if (emitInfo->EmitHighLevelInstructions) {
       /* BGNLOOP's BranchTarget points to the ENDLOOP inst */
       beginInst = prog->Instructions + beginInstLoc;
       beginInst->BranchTarget = prog->NumInstructions - 1;
@@ -1239,7 +1240,7 @@ emit_cont_break(slang_emit_info *emitInfo, slang_ir_node *n)
    gl_inst_opcode opcode;
    struct prog_instruction *inst;
    n->InstLocation = emitInfo->prog->NumInstructions;
-   if (EmitHighLevelInstructions) {
+   if (emitInfo->EmitHighLevelInstructions) {
       opcode = (n->Opcode == IR_CONT) ? OPCODE_CONT : OPCODE_BRK;
    }
    else {
@@ -1268,7 +1269,7 @@ emit_cont_break_if(slang_emit_info *emitInfo, slang_ir_node *n,
    inst->CondUpdate = GL_TRUE;
 
    n->InstLocation = emitInfo->prog->NumInstructions;
-   if (EmitHighLevelInstructions) {
+   if (emitInfo->EmitHighLevelInstructions) {
       if (n->Opcode == IR_CONT_IF_TRUE ||
           n->Opcode == IR_CONT_IF_FALSE)
          opcode = OPCODE_CONT;
@@ -1440,7 +1441,7 @@ emit(slang_emit_info *emitInfo, slang_ir_node *n)
          */
          assert(n->Var->aux == n->Store);
       }
-      if (EmitComments) {
+      if (emitInfo->EmitComments) {
          /* emit NOP with comment describing the variable's storage location */
          char s[1000];
          sprintf(s, "TEMP[%d]%s = %s (size %d)",
@@ -1599,12 +1600,16 @@ _slang_emit_code(slang_ir_node *n, slang_var_table *vt,
                  struct gl_program *prog, GLboolean withEnd,
                  slang_info_log *log)
 {
+   GET_CURRENT_CONTEXT(ctx);
    GLboolean success;
    slang_emit_info emitInfo;
 
    emitInfo.log = log;
    emitInfo.vt = vt;
    emitInfo.prog = prog;
+
+   emitInfo.EmitHighLevelInstructions = ctx->Shader.EmitHighLevelInstructions;
+   emitInfo.EmitComments = ctx->Shader.EmitComments;
 
    (void) emit(&emitInfo, n);
 
