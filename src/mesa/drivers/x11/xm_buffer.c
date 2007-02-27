@@ -355,8 +355,7 @@ xmesa_new_renderbuffer(GLcontext *ctx, GLuint name, const GLvisual *visual,
 
 /**
  * Called via gl_framebuffer::Delete() method when this buffer
- * is _really_ being
- * deleted.
+ * is _really_ being deleted.
  */
 void
 xmesa_delete_framebuffer(struct gl_framebuffer *fb)
