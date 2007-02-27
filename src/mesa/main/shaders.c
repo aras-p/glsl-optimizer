@@ -422,6 +422,8 @@ _mesa_ShaderSourceARB(GLhandleARB shaderObj, GLsizei count,
    source[offsets[count - 1]] = '\0';
 
    ctx->Driver.ShaderSource(ctx, shaderObj, source);
+
+   _mesa_free(offsets);
 }
 
 
