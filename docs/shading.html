@@ -23,9 +23,10 @@ Contents
 </p>
 <ul>
 <li><a href="#unsup">Unsupported Features</a>
-<li><a href="#impl">Implementation Notes</a>
+<li><a href="#notes">Implementation Notes</a>
 <li><a href="#hints">Programming Hints</a>
 <li><a href="#standalone">Stand-alone Compiler</a>
+<li><a href="#implementation">Compiler Implementation</a>
 </ul>
 
 
@@ -50,7 +51,7 @@ All other major features of the shading language should function.
 </p>
 
 
-<a name="impl">
+<a name="notes">
 <h2>Implementation Notes</h2>
 
 <ul>
@@ -187,6 +188,54 @@ Also note that this compiler driver is still under development.
 Over time, the correctness of the GPU programs, with respect to the ARB
 and NV languagues, should improve.
 </p>
+
+
+
+<a name="implementation">
+<h2>Compiler Implementation</h2>
+
+<p>
+The source code for Mesa's shading language compiler is in the
+<code>src/mesa/shader/slang/</code> directory.
+</p>
+
+<p>
+The compiler follows a fairly standard design and basically works as follows:
+</p>
+<ul>
+<li>The input string is tokenized (see grammar.c) and parsed
+(see slang_compiler_*.c) to produce an Abstract Syntax Tree (AST).
+The nodes in this tree are slang_operation structures
+(see slang_compile_operation.h).
+The nodes are decorated with symbol table, scoping and datatype information.
+<li>The AST is converted into an Intermediate representation (IR) tree
+(see the slang_codegen.c file).
+The IR nodes represent basic GPU instructions, like add, dot product,
+move, etc. 
+The IR tree is mostly a binary tree, but a few nodes have three or four
+children.
+In principle, the IR tree could be executed by doing an in-order traversal.
+<li>The IR tree is traversed in-order to emit code (see slang_emit.c).
+This is also when registers are allocated to store variables and temps.
+<li>In the future, a pattern-matching code generator-generator may be
+used for code generation.
+Programs such as L-BURG (Bottom-Up Rewrite Generator) and Twig look for
+patterns in IR trees, compute weights for subtrees and use the weights
+to select the best instructions to represent the sub-tree.
+<li>The emitted GPU instructions (see prog_instruction.h) are stored in a
+gl_program object (see mtypes.h).
+<li>When a fragment shader and vertex shader are linked (see slang_link.c)
+the varying vars are matched up, uniforms are merged, and vertex
+attributes are resolved (rewriting instructions as needed).
+</ul>
+
+<p>
+The final vertex and fragment programs may be interpreted in software
+(see prog_execute.c) or translated into a specific hardware architecture
+(see drivers/dri/i915/i915_fragprog.c for example).
+</p>
+
+
 
 </BODY>
 </HTML>
