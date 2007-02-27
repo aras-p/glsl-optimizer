@@ -31,10 +31,12 @@
 #include "imports.h"
 #include "slang_utility.h"
 
-char *slang_string_concat (char *dst, const char *src)
+char *
+slang_string_concat (char *dst, const char *src)
 {
-	return _mesa_strcpy (dst + _mesa_strlen (dst), src);
+   return _mesa_strcpy (dst + _mesa_strlen (dst), src);
 }
+
 
 /* slang_string */
 
@@ -156,8 +158,8 @@ slang_atom_pool_destruct (slang_atom_pool * pool)
          slang_alloc_free(entry->id);
          slang_alloc_free(entry);
          entry = next;
-		}
-	}
+      }
+   }
 }
 
 /*
@@ -211,11 +213,11 @@ slang_atom_pool_atom(slang_atom_pool * pool, const char * id)
    return (slang_atom) (**entry).id;
 }
 
-/*
+/**
  * Return the name of a given atom.
  */
 const char *
 slang_atom_pool_id(slang_atom_pool * pool, slang_atom atom)
 {
-	return (const char *) (atom);
+   return (const char *) (atom);
 }
