@@ -2887,7 +2887,6 @@ struct __GLcontextRec
    struct dd_function_table Driver;
 
    void *DriverCtx;	/**< Points to device driver context/state */
-   void *DriverMgrCtx;	/**< Points to device driver manager (optional)*/
 
    /** Core/Driver constants */
    struct gl_constants Const;
