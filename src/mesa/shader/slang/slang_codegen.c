@@ -457,7 +457,6 @@ new_float_literal(const float v[4])
  * Conditional jump.
  * \param zeroOrOne indicates if the jump is to be taken on zero, or non-zero
  *                  condition code state.
- * XXX maybe pass an IR node as second param to indicate the jump target???
  */
 static slang_ir_node *
 new_cjump(slang_label *dest, GLuint zeroOrOne)
@@ -470,7 +469,6 @@ new_cjump(slang_label *dest, GLuint zeroOrOne)
 
 /**
  * Unconditional jump.
- * XXX maybe pass an IR node as second param to indicate the jump target???
  */
 static slang_ir_node *
 new_jump(slang_label *dest)
@@ -641,12 +639,7 @@ slang_inline_asm_function(slang_assemble_ctx *A,
    inlined->a_id = fun->body->children[0].a_id;
    inlined->num_children = numArgs;
    inlined->children = slang_operation_new(numArgs);
-#if 0
-   inlined->locals = slang_variable_scope_copy(oper->locals);
-#else
-   assert(inlined->locals);
    inlined->locals->outer_scope = oper->locals->outer_scope;
-#endif
 
    for (i = 0; i < numArgs; i++) {
       slang_operation_copy(inlined->children + i, args + i);
@@ -747,17 +740,19 @@ slang_substitute(slang_assemble_ctx *A, slang_operation *oper,
          blockOper = slang_operation_new(1);
          blockOper->type = SLANG_OPER_BLOCK_NO_NEW_SCOPE;
          blockOper->num_children = 2;
+         blockOper->locals->outer_scope = oper->locals->outer_scope;
          blockOper->children = slang_operation_new(2);
          assignOper = blockOper->children + 0;
          returnOper = blockOper->children + 1;
 
          assignOper->type = SLANG_OPER_ASSIGN;
          assignOper->num_children = 2;
+         assignOper->locals->outer_scope = blockOper->locals;
          assignOper->children = slang_operation_new(2);
          assignOper->children[0].type = SLANG_OPER_IDENTIFIER;
          assignOper->children[0].a_id = slang_atom_pool_atom(A->atoms, "__retVal");
-         assignOper->children[0].locals->outer_scope = oper->locals;
-         assignOper->locals = oper->locals;
+         assignOper->children[0].locals->outer_scope = assignOper->locals;
+
          slang_operation_copy(&assignOper->children[1],
                               &oper->children[0]);
 
@@ -872,11 +867,10 @@ slang_inline_function_call(slang_assemble_ctx * A, slang_function *fun,
       declOper = &commaSeq->children[0];
       declOper->type = SLANG_OPER_VARIABLE_DECL;
       declOper->a_id = resultVar->a_name;
-      declOper->locals->outer_scope = commaSeq->locals; /*** ??? **/
+      declOper->locals->outer_scope = commaSeq->locals;
 
       /* child[1] = function body */
       inlined = &commaSeq->children[1];
-      /* XXXX this may be inappropriate!!!!: */
       inlined->locals->outer_scope = commaSeq->locals;
 
       /* child[2] = __resultTmp reference */
@@ -884,7 +878,6 @@ slang_inline_function_call(slang_assemble_ctx * A, slang_function *fun,
       returnOper->type = SLANG_OPER_IDENTIFIER;
       returnOper->a_id = resultVar->a_name;
       returnOper->locals->outer_scope = commaSeq->locals;
-      declOper->locals->outer_scope = commaSeq->locals;
 
       top = commaSeq;
    }
@@ -993,7 +986,7 @@ slang_inline_function_call(slang_assemble_ctx * A, slang_function *fun,
          */
 	 decl->type = SLANG_OPER_VARIABLE_DECL;
          assert(decl->locals);
-	 decl->locals = fun->parameters;
+         decl->locals->outer_scope = inlined->locals;
 	 decl->a_id = p->a_name;
 	 decl->num_children = 1;
 	 decl->children = slang_operation_new(1);
@@ -1027,13 +1020,12 @@ slang_inline_function_call(slang_assemble_ctx * A, slang_function *fun,
 						       inlined->num_children);
 	 ass->type = SLANG_OPER_ASSIGN;
 	 ass->num_children = 2;
-	 ass->locals = _slang_variable_scope_new(inlined->locals);
-	 assert(ass->locals);
+         ass->locals->outer_scope = inlined->locals;
 	 ass->children = slang_operation_new(2);
 	 ass->children[0] = args[i]; /*XXX copy */
 	 ass->children[1].type = SLANG_OPER_IDENTIFIER;
 	 ass->children[1].a_id = p->a_name;
-	 ass->children[1].locals = _slang_variable_scope_new(ass->locals);
+         ass->children[1].locals->outer_scope = ass->locals;
       }
    }
 
@@ -1753,10 +1745,10 @@ _slang_gen_return(slang_assemble_ctx * A, slang_operation *oper)
 
       block = slang_operation_new(1);
       block->type = SLANG_OPER_BLOCK_NO_NEW_SCOPE;
-      block->num_children = 2;
-      block->children = slang_operation_new(2);
       assert(block->locals);
       block->locals->outer_scope = oper->locals->outer_scope;
+      block->num_children = 2;
+      block->children = slang_operation_new(2);
 
       /* child[0]: __retVal = expr; */
       assign = &block->children[0];
