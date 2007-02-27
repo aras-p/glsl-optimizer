@@ -216,6 +216,7 @@ _mesa_free_framebuffer_data(struct gl_framebuffer *fb)
    GLuint i;
 
    assert(fb);
+   assert(fb->RefCount == 0);
 
    _glthread_DESTROY_MUTEX(fb->Mutex);
 
