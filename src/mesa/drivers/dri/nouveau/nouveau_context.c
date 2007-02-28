@@ -141,8 +141,14 @@ GLboolean nouveauCreateContext( const __GLcontextModes *glVisual,
 	if (!nouveauDRMGetParam(nmesa, NOUVEAU_GETPARAM_FB_PHYSICAL,
 		 		&nmesa->vram_phys))
 	   return GL_FALSE;
+	if (!nouveauDRMGetParam(nmesa, NOUVEAU_GETPARAM_FB_SIZE,
+		 		&nmesa->vram_size))
+	   return GL_FALSE;
 	if (!nouveauDRMGetParam(nmesa, NOUVEAU_GETPARAM_AGP_PHYSICAL,
 		 		&nmesa->agp_phys))
+	   return GL_FALSE;
+	if (!nouveauDRMGetParam(nmesa, NOUVEAU_GETPARAM_AGP_SIZE,
+		 		&nmesa->agp_size))
 	   return GL_FALSE;
 	if (!nouveauFifoInit(nmesa))
 	   return GL_FALSE;
