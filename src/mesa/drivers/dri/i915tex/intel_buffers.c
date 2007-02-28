@@ -815,12 +815,12 @@ intelScheduleSwap(const __DRIdrawablePrivate * dPriv, GLboolean *missed_target)
       swap.sequence -= target;
       *missed_target = swap.sequence > 0 && swap.sequence <= (1 << 23);
 
-      if (swap.seqtype & DRM_VBLANK_FLIP) {
+      intel_get_renderbuffer(&intel_fb->Base, BUFFER_BACK_LEFT)->vbl_pending =
 	 intel_get_renderbuffer(&intel_fb->Base,
 				BUFFER_FRONT_LEFT)->vbl_pending =
-	    intel_get_renderbuffer(&intel_fb->Base,
-				   BUFFER_BACK_LEFT)->vbl_pending = intel_fb->vbl_seq;
+	 intel_fb->vbl_seq;
 
+      if (swap.seqtype & DRM_VBLANK_FLIP) {
 	 intel_flip_renderbuffers(intel_fb);
 	 intel_draw_buffer(&intel->ctx, intel->ctx.DrawBuffer);
       }
