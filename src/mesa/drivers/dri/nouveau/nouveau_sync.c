@@ -58,10 +58,9 @@ nouveau_notifier_new(GLcontext *ctx, GLuint handle, GLuint count)
 		return NULL;
 	}
 
-	if (!nouveauCreateDmaObject(nmesa, handle, notifier->mem->offset,
-						   notifier->mem->size,
-						   0 /* NV_DMA_TARGET_FB */,
-						   0 /* NV_DMA_ACCESS_RW */)) {
+	if (!nouveauCreateDmaObjectFromMem(nmesa, handle, NV_DMA_IN_MEMORY,
+					   notifier->mem,
+					   NOUVEAU_MEM_ACCESS_RW)) {
 		nouveau_mem_free(ctx, notifier->mem);
 		FREE(notifier);
 		return NULL;
