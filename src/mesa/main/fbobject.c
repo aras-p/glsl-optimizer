@@ -938,7 +938,7 @@ check_end_texture_render(GLcontext *ctx, struct gl_framebuffer *fb)
 void GLAPIENTRY
 _mesa_BindFramebufferEXT(GLenum target, GLuint framebuffer)
 {
-   struct gl_framebuffer *newFb, *oldFb;
+   struct gl_framebuffer *newFb;
    GLboolean bindReadBuf, bindDrawBuf;
    GET_CURRENT_CONTEXT(ctx);
 
@@ -1020,7 +1020,7 @@ _mesa_BindFramebufferEXT(GLenum target, GLuint framebuffer)
     */
 
    if (bindReadBuf) {
-      oldFb = ctx->ReadBuffer;
+      struct gl_framebuffer *oldFb = ctx->ReadBuffer;
       if (oldFb && oldFb->Name != 0) {
          _mesa_dereference_framebuffer(&oldFb);
       }
@@ -1028,7 +1028,7 @@ _mesa_BindFramebufferEXT(GLenum target, GLuint framebuffer)
    }
 
    if (bindDrawBuf) {
-      oldFb = ctx->DrawBuffer;
+      struct gl_framebuffer *oldFb = ctx->DrawBuffer;
       if (oldFb && oldFb->Name != 0) {
          /* check if old FB had any texture attachments */
          check_end_texture_render(ctx, oldFb);
