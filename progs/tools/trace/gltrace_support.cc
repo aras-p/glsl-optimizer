@@ -35,7 +35,7 @@ namespace {
   {
     static char buf[4096];
     int status;
-    unsigned int length = sizeof(buf)-1;
+    size_t length = sizeof(buf)-1;
     
     memset (buf, 0, sizeof(buf));
     
