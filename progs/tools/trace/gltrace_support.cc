@@ -20,6 +20,7 @@
  */
 
 #include "gltrace_support.h"
+#include <assert.h>
 #include <sstream>
 #include <fstream>
 #include <iomanip>
