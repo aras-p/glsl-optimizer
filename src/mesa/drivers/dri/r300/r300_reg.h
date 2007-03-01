@@ -1378,6 +1378,10 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 	/* 16 bit format or some aditional bit ? */
 #	define R300_DEPTH_FORMAT_UNK32          (32 << 0)
 
+#define R300_RB3D_EARLY_Z                           0x4F14
+#	define R300_EARLY_Z_DISABLE              (0 << 0)
+#	define R300_EARLY_Z_ENABLE               (1 << 0)
+
 /* gap */
 
 #define R300_RB3D_DEPTHOFFSET               0x4F20
