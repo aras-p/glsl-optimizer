@@ -544,6 +544,9 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 /* Some sort of scale or clamp value for texcoordless textures. */
 #define R300_RE_UNK4238                       0x4238
 
+/* Something shade related */
+#define R300_RE_SHADE                         0x4274
+
 #define R300_RE_SHADE_MODEL                   0x4278
 #	define R300_RE_SHADE_MODEL_SMOOTH     0x3aaaa
 #	define R300_RE_SHADE_MODEL_FLAT       0x39595
@@ -1279,6 +1282,7 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #       define R300_BLEND_MASK                       (63)
 #       define R300_SRC_BLEND_SHIFT                  (16)
 #       define R300_DST_BLEND_SHIFT                  (24)
+#define R300_RB3D_BLEND_COLOR               0x4E10
 #define R300_RB3D_COLORMASK                 0x4E0C
 #       define R300_COLORMASK0_B                 (1<<0)
 #       define R300_COLORMASK0_G                 (1<<1)
