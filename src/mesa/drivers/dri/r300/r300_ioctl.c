@@ -228,7 +228,7 @@ static void r300EmitClearState(GLcontext * ctx)
 	e32(0);
 	
 	R300_STATECHANGE(r300, unk221C);
-	reg_start(0x221C, 0);
+	reg_start(R300_VAP_UNKNOWN_221C, 0);
 	e32(R300_221C_CLEAR);
 	
 	R300_STATECHANGE(r300, ps);

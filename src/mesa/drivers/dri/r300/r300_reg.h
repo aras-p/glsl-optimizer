@@ -63,6 +63,12 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #define R300_SE_VPORT_ZOFFSET               0x1DAC
 
 
+/*
+ * Vertex Array Processing (VAP) Control
+ * Stolen from r200 code from Christoph Brill (It's a guess!)
+ */
+#define R300_VAP_CNTL	0x2080
+
 /* This register is written directly and also starts data section
  * in many 3d CP_PACKET3's
  */
@@ -135,7 +141,7 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 /* gap */
 
-#define R300_VAP_CNTL                     0x2140
+#define R300_VAP_CNTL_STATUS              0x2140
 #	define R300_VC_NO_SWAP                  (0 << 0)
 #	define R300_VC_16BIT_SWAP               (1 << 0)
 #	define R300_VC_32BIT_SWAP               (2 << 0)
