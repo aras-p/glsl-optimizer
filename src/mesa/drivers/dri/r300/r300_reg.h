@@ -63,6 +63,12 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #define R300_SE_VPORT_ZOFFSET               0x1DAC
 
 
+/*
+ * Vertex Array Processing (VAP) Control
+ * Stolen from r200 code from Christoph Brill (It's a guess!)
+ */
+#define R300_VAP_CNTL	0x2080
+
 /* This register is written directly and also starts data section
  * in many 3d CP_PACKET3's
  */
@@ -135,7 +141,7 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 /* gap */
 
-#define R300_VAP_CNTL                     0x2140
+#define R300_VAP_CNTL_STATUS              0x2140
 #	define R300_VC_NO_SWAP                  (0 << 0)
 #	define R300_VC_16BIT_SWAP               (1 << 0)
 #	define R300_VC_32BIT_SWAP               (2 << 0)
@@ -537,6 +543,9 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 /* Some sort of scale or clamp value for texcoordless textures. */
 #define R300_RE_UNK4238                       0x4238
+
+/* Something shade related */
+#define R300_RE_SHADE                         0x4274
 
 #define R300_RE_SHADE_MODEL                   0x4278
 #	define R300_RE_SHADE_MODEL_SMOOTH     0x3aaaa
@@ -1273,6 +1282,7 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #       define R300_BLEND_MASK                       (63)
 #       define R300_SRC_BLEND_SHIFT                  (16)
 #       define R300_DST_BLEND_SHIFT                  (24)
+#define R300_RB3D_BLEND_COLOR               0x4E10
 #define R300_RB3D_COLORMASK                 0x4E0C
 #       define R300_COLORMASK0_B                 (1<<0)
 #       define R300_COLORMASK0_G                 (1<<1)
@@ -1377,6 +1387,10 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #	define R300_DEPTH_FORMAT_24BIT_INT_Z     (2 << 0)
 	/* 16 bit format or some aditional bit ? */
 #	define R300_DEPTH_FORMAT_UNK32          (32 << 0)
+
+#define R300_RB3D_EARLY_Z                           0x4F14
+#	define R300_EARLY_Z_DISABLE              (0 << 0)
+#	define R300_EARLY_Z_ENABLE               (1 << 0)
 
 /* gap */
 

@@ -328,24 +328,24 @@ static void r300UpdateCulling(GLcontext* ctx)
 
 static void update_early_z(GLcontext *ctx)
 {
-	/* updates register 0x4f14 
-	   if depth test is not enabled it should be 0x00000000
-	   if depth is enabled and alpha not it should be 0x00000001
-	   if depth and alpha is enabled it should be 0x00000000
+	/* updates register R300_RB3D_EARLY_Z (0x4F14)
+	   if depth test is not enabled it should be R300_EARLY_Z_DISABLE
+	   if depth is enabled and alpha not it should be R300_EARLY_Z_ENABLE
+	   if depth and alpha is enabled it should be R300_EARLY_Z_DISABLE
 	*/
 	r300ContextPtr r300 = R300_CONTEXT(ctx);
 
 	R300_STATECHANGE(r300, unk4F10);
 	if (ctx->Color.AlphaEnabled && ctx->Color.AlphaFunc != GL_ALWAYS)
 		/* disable early Z */
-		r300->hw.unk4F10.cmd[2] = 0x00000000;
+		r300->hw.unk4F10.cmd[2] = R300_EARLY_Z_DISABLE;
 	else {
 		if (ctx->Depth.Test && ctx->Depth.Func != GL_NEVER)
 			/* enable early Z */
-			r300->hw.unk4F10.cmd[2] = 0x00000001;
+			r300->hw.unk4F10.cmd[2] = R300_EARLY_Z_ENABLE;
 		else
 			/* disable early Z */
-			r300->hw.unk4F10.cmd[2] = 0x00000000;
+			r300->hw.unk4F10.cmd[2] = R300_EARLY_Z_DISABLE;
 	}
 }
 
