@@ -570,7 +570,7 @@ _slang_link(GLcontext *ctx,
 #if 1
       printf("************** original vertex program\n");
       _mesa_print_program(&vertProg->Base);
-      _mesa_print_program_parameters(ctx, &fragProg->Base);
+      _mesa_print_program_parameters(ctx, &vertProg->Base);
 #endif
 #if 1
       printf("************** linked vertex prog\n");
