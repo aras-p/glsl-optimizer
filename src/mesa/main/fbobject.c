@@ -602,7 +602,7 @@ _mesa_BindRenderbufferEXT(GLenum target, GLuint renderbuffer)
 
    oldRb = ctx->CurrentRenderbuffer;
    if (oldRb) {
-      _mesa_dereference_renderbuffer(&oldRb);
+      _mesa_unreference_renderbuffer(&oldRb);
    }
 
    ASSERT(newRb != &DummyRenderbuffer);
@@ -639,7 +639,7 @@ _mesa_DeleteRenderbuffersEXT(GLsizei n, const GLuint *renderbuffers)
                /* But the object will not be freed until it's no longer
                 * bound in any context.
                 */
-               _mesa_dereference_renderbuffer(&rb);
+               _mesa_unreference_renderbuffer(&rb);
 	    }
 	 }
       }
@@ -938,7 +938,7 @@ check_end_texture_render(GLcontext *ctx, struct gl_framebuffer *fb)
 void GLAPIENTRY
 _mesa_BindFramebufferEXT(GLenum target, GLuint framebuffer)
 {
-   struct gl_framebuffer *newFb, *oldFb;
+   struct gl_framebuffer *newFb;
    GLboolean bindReadBuf, bindDrawBuf;
    GET_CURRENT_CONTEXT(ctx);
 
@@ -998,12 +998,6 @@ _mesa_BindFramebufferEXT(GLenum target, GLuint framebuffer)
 	 }
          _mesa_HashInsert(ctx->Shared->FrameBuffers, framebuffer, newFb);
       }
-      _glthread_LOCK_MUTEX(newFb->Mutex);
-      if (bindReadBuf)
-         newFb->RefCount++;
-      if (bindDrawBuf)
-         newFb->RefCount++;
-      _glthread_UNLOCK_MUTEX(newFb->Mutex);
    }
    else {
       /* Binding the window system framebuffer (which was originally set
@@ -1020,22 +1014,16 @@ _mesa_BindFramebufferEXT(GLenum target, GLuint framebuffer)
     */
 
    if (bindReadBuf) {
-      oldFb = ctx->ReadBuffer;
-      if (oldFb && oldFb->Name != 0) {
-         _mesa_dereference_framebuffer(&oldFb);
-      }
-      ctx->ReadBuffer = newFb;
+      _mesa_unreference_framebuffer(&ctx->ReadBuffer);
+      _mesa_reference_framebuffer(&ctx->ReadBuffer, newFb);
    }
 
    if (bindDrawBuf) {
-      oldFb = ctx->DrawBuffer;
-      if (oldFb && oldFb->Name != 0) {
-         /* check if old FB had any texture attachments */
-         check_end_texture_render(ctx, oldFb);
-         /* check if time to delete this framebuffer */
-         _mesa_dereference_framebuffer(&oldFb);
-      }
-      ctx->DrawBuffer = newFb;
+      /* check if old FB had any texture attachments */
+      check_end_texture_render(ctx, ctx->DrawBuffer);
+      /* check if time to delete this framebuffer */
+      _mesa_unreference_framebuffer(&ctx->DrawBuffer);
+      _mesa_reference_framebuffer(&ctx->DrawBuffer, newFb);
       if (newFb->Name != 0) {
          /* check if newly bound framebuffer has any texture attachments */
          check_begin_texture_render(ctx, newFb);
@@ -1083,7 +1071,7 @@ _mesa_DeleteFramebuffersEXT(GLsizei n, const GLuint *framebuffers)
                /* But the object will not be freed until it's no longer
                 * bound in any context.
                 */
-               _mesa_dereference_framebuffer(&fb);
+               _mesa_unreference_framebuffer(&fb);
 	    }
 	 }
       }

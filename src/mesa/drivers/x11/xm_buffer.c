@@ -33,6 +33,7 @@
 #include "GL/xmesa.h"
 #include "xmesaP.h"
 #include "imports.h"
+#include "framebuffer.h"
 #include "renderbuffer.h"
 
 
@@ -352,5 +353,71 @@ xmesa_new_renderbuffer(GLcontext *ctx, GLuint name, const GLvisual *visual,
 }
 
 
+/**
+ * Called via gl_framebuffer::Delete() method when this buffer
+ * is _really_ being deleted.
+ */
+void
+xmesa_delete_framebuffer(struct gl_framebuffer *fb)
+{
+   XMesaBuffer b = XMESA_BUFFER(fb);
 
+#ifdef XFree86Server
+   int client = 0;
+   if (b->frontxrb->drawable)
+       client = CLIENT_ID(b->frontxrb->drawable->id);
+#endif
 
+   if (b->num_alloced > 0) {
+      /* If no other buffer uses this X colormap then free the colors. */
+      if (!xmesa_find_buffer(b->display, b->cmap, b)) {
+#ifdef XFree86Server
+         (void)FreeColors(b->cmap, client,
+                          b->num_alloced, b->alloced_colors, 0);
+#else
+         XFreeColors(b->display, b->cmap,
+                     b->alloced_colors, b->num_alloced, 0);
+#endif
+      }
+   }
+
+   if (b->gc)
+      XMesaFreeGC(b->xm_visual->display, b->gc);
+   if (b->cleargc)
+      XMesaFreeGC(b->xm_visual->display, b->cleargc);
+   if (b->swapgc)
+      XMesaFreeGC(b->xm_visual->display, b->swapgc);
+
+   if (b->xm_visual->mesa_visual.doubleBufferMode) {
+      /* free back ximage/pixmap/shmregion */
+      if (b->backxrb->ximage) {
+#if defined(USE_XSHM) && !defined(XFree86Server)
+         if (b->shm) {
+            XShmDetach( b->xm_visual->display, &b->shminfo );
+            XDestroyImage( b->backxrb->ximage );
+            shmdt( b->shminfo.shmaddr );
+         }
+         else
+#endif
+            XMesaDestroyImage( b->backxrb->ximage );
+         b->backxrb->ximage = NULL;
+      }
+      if (b->backxrb->pixmap) {
+         XMesaFreePixmap( b->xm_visual->display, b->backxrb->pixmap );
+         if (b->xm_visual->hpcr_clear_flag) {
+            XMesaFreePixmap( b->xm_visual->display,
+                             b->xm_visual->hpcr_clear_pixmap );
+            XMesaDestroyImage( b->xm_visual->hpcr_clear_ximage );
+         }
+      }
+   }
+
+   if (b->rowimage) {
+      _mesa_free( b->rowimage->data );
+      b->rowimage->data = NULL;
+      XMesaDestroyImage( b->rowimage );
+   }
+
+   _mesa_free_framebuffer_data(fb);
+   _mesa_free(fb);
+}

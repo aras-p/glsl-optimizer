@@ -1,8 +1,8 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.5.2
+ * Version:  6.5.3
  *
- * Copyright (C) 1999-2006  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2007  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -54,7 +54,8 @@ read_index_pixels( GLcontext *ctx,
    struct gl_renderbuffer *rb = ctx->ReadBuffer->_ColorReadBuffer;
    GLint i;
 
-   ASSERT(rb);
+   if (!rb)
+      return;
 
    /* width should never be > MAX_WIDTH since we did clipping earlier */
    ASSERT(width <= MAX_WIDTH);
@@ -91,6 +92,9 @@ read_depth_pixels( GLcontext *ctx,
    const GLboolean biasOrScale
       = ctx->Pixel.DepthScale != 1.0 || ctx->Pixel.DepthBias != 0.0;
 
+   if (!rb)
+      return;
+
    /* clipping should have been done already */
    ASSERT(x >= 0);
    ASSERT(y >= 0);
@@ -98,8 +102,6 @@ read_depth_pixels( GLcontext *ctx,
    ASSERT(y + height <= (GLint) rb->Height);
    /* width should never be > MAX_WIDTH since we did clipping earlier */
    ASSERT(width <= MAX_WIDTH);
-
-   ASSERT(rb);
 
    if (type == GL_UNSIGNED_SHORT && fb->Visual.depthBits == 16
        && !biasOrScale && !packing->SwapBytes) {
@@ -171,7 +173,8 @@ read_stencil_pixels( GLcontext *ctx,
    struct gl_renderbuffer *rb = fb->_StencilBuffer;
    GLint j;
 
-   ASSERT(rb);
+   if (!rb)
+      return;
 
    /* width should never be > MAX_WIDTH since we did clipping earlier */
    ASSERT(width <= MAX_WIDTH);
@@ -195,6 +198,7 @@ read_stencil_pixels( GLcontext *ctx,
 /**
  * Optimized glReadPixels for particular pixel formats when pixel
  * scaling, biasing, mapping, etc. are disabled.
+ * \return GL_TRUE if success, GL_FALSE if unable to do the readpixels
  */
 static GLboolean
 fast_read_rgba_pixels( GLcontext *ctx,
@@ -206,6 +210,9 @@ fast_read_rgba_pixels( GLcontext *ctx,
                        GLbitfield transferOps)
 {
    struct gl_renderbuffer *rb = ctx->ReadBuffer->_ColorReadBuffer;
+
+   if (!rb)
+      return GL_FALSE;
 
    ASSERT(rb->_BaseFormat == GL_RGBA || rb->_BaseFormat == GL_RGB);
 
@@ -316,7 +323,8 @@ read_rgba_pixels( GLcontext *ctx,
    struct gl_framebuffer *fb = ctx->ReadBuffer;
    struct gl_renderbuffer *rb = fb->_ColorReadBuffer;
 
-   ASSERT(rb);
+   if (!rb)
+      return;
 
    if (type == GL_FLOAT && ((ctx->Color.ClampReadColor == GL_TRUE) ||
                             (ctx->Color.ClampReadColor == GL_FIXED_ONLY_ARB &&
@@ -457,8 +465,8 @@ read_depth_stencil_pixels(GLcontext *ctx,
    depthRb = ctx->ReadBuffer->_DepthBuffer;
    stencilRb = ctx->ReadBuffer->_StencilBuffer;
 
-   ASSERT(depthRb);
-   ASSERT(stencilRb);
+   if (!depthRb || !stencilRb)
+      return;
 
    depthRb = ctx->ReadBuffer->Attachment[BUFFER_DEPTH].Renderbuffer;
    stencilRb = ctx->ReadBuffer->Attachment[BUFFER_STENCIL].Renderbuffer;

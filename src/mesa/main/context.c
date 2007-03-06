@@ -95,6 +95,7 @@
 #include "fbobject.h"
 #include "feedback.h"
 #include "fog.h"
+#include "framebuffer.h"
 #include "get.h"
 #include "glthread.h"
 #include "glapioffsets.h"
@@ -1407,6 +1408,13 @@ _mesa_free_context_data( GLcontext *ctx )
    if (ctx == _mesa_get_current_context()) {
       _mesa_make_current(NULL, NULL, NULL);
    }
+   else {
+      /* unreference WinSysDraw/Read buffers */
+      _mesa_unreference_framebuffer(&ctx->WinSysDrawBuffer);
+      _mesa_unreference_framebuffer(&ctx->WinSysReadBuffer);
+      _mesa_unreference_framebuffer(&ctx->DrawBuffer);
+      _mesa_unreference_framebuffer(&ctx->ReadBuffer);
+   }
 
    _mesa_free_lighting_data( ctx );
    _mesa_free_eval_data( ctx );
@@ -1666,6 +1674,8 @@ void
 _mesa_make_current( GLcontext *newCtx, GLframebuffer *drawBuffer,
                     GLframebuffer *readBuffer )
 {
+   GET_CURRENT_CONTEXT(oldCtx);
+
    if (MESA_VERBOSE & VERBOSE_API)
       _mesa_debug(newCtx, "_mesa_make_current()\n");
 
@@ -1690,6 +1700,11 @@ _mesa_make_current( GLcontext *newCtx, GLframebuffer *drawBuffer,
    _glapi_set_context((void *) newCtx);
    ASSERT(_mesa_get_current_context() == newCtx);
 
+   if (oldCtx) {
+      _mesa_unreference_framebuffer(&oldCtx->WinSysDrawBuffer);
+      _mesa_unreference_framebuffer(&oldCtx->WinSysReadBuffer);
+   }
+         
    if (!newCtx) {
       _glapi_set_dispatch(NULL);  /* none current */
    }
@@ -1701,18 +1716,18 @@ _mesa_make_current( GLcontext *newCtx, GLframebuffer *drawBuffer,
 
          ASSERT(drawBuffer->Name == 0);
          ASSERT(readBuffer->Name == 0);
-         newCtx->WinSysDrawBuffer = drawBuffer;
-         newCtx->WinSysReadBuffer = readBuffer;
+         _mesa_reference_framebuffer(&newCtx->WinSysDrawBuffer, drawBuffer);
+         _mesa_reference_framebuffer(&newCtx->WinSysReadBuffer, readBuffer);
 
          /*
           * Only set the context's Draw/ReadBuffer fields if they're NULL
           * or not bound to a user-created FBO.
           */
          if (!newCtx->DrawBuffer || newCtx->DrawBuffer->Name == 0) {
-            newCtx->DrawBuffer = drawBuffer;
+            _mesa_reference_framebuffer(&newCtx->DrawBuffer, drawBuffer);
          }
          if (!newCtx->ReadBuffer || newCtx->ReadBuffer->Name == 0) {
-            newCtx->ReadBuffer = readBuffer;
+            _mesa_reference_framebuffer(&newCtx->ReadBuffer, readBuffer);
          }
 
 	 newCtx->NewState |= _NEW_BUFFERS;

@@ -309,8 +309,13 @@ intel_miptree_image_data(struct intel_context *intel,
       height = dst->level[level].height;
       if(dst->compressed)
 	 height /= 4;
-      intel_region_data(intel->intelScreen, dst->region, dst_offset + dst_depth_offset[i], 0, 0, src, src_row_pitch, 0, 0,   /* source x,y */
-                        dst->level[level].width, height);
+      intel_region_data(intel->intelScreen, dst->region,
+                        dst_offset + dst_depth_offset[i], /* dst_offset */
+                        0, 0,                             /* dstx, dsty */
+                        src,
+                        src_row_pitch,
+                        0, 0,                             /* source x, y */
+                        dst->level[level].width, height); /* width, height */
 
       src += src_image_pitch;
    }

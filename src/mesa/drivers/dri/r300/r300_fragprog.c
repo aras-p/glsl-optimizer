@@ -1214,8 +1214,8 @@ static void make_sin_const(struct r300_fragment_program *rp)
 	    cnstv[3] = 0.2225;      // weight
 	    rp->const_sin[0] = emit_const4fv(rp, cnstv);
 
-	    cnstv[0] = 0.5;
-	    cnstv[1] = -1.5;
+	    cnstv[0] = 0.75;
+	    cnstv[1] = 0.0;
 	    cnstv[2] = 0.159154943; // 1/(2*PI)
 	    cnstv[3] = 6.283185307; // 2*PI
 	    rp->const_sin[1] = emit_const4fv(rp, cnstv);
@@ -1227,7 +1227,7 @@ static GLboolean parse_program(struct r300_fragment_program *rp)
 	struct gl_fragment_program *mp = &rp->mesa_program;
 	const struct prog_instruction *inst = mp->Base.Instructions;
 	struct prog_instruction *fpi;
-	GLuint src[3], dest, temp;
+	GLuint src[3], dest, temp[2];
 	GLuint cnst;
 	int flags, mask = 0;
 	GLfloat cnstv[4] = {0.0, 0.0, 0.0, 0.0};
@@ -1277,70 +1277,63 @@ static GLboolean parse_program(struct r300_fragment_program *rp)
 			/*
 			 * cos using a parabola (see SIN):
 			 * cos(x):
-			 *   x += PI/2
-			 *   x = (x/(2*PI))+0.5
+			 *   x = (x/(2*PI))+0.75
 			 *   x = frac(x)
 			 *   x = (x*2*PI)-PI
 			 *   result = sin(x)
 			 */
-			temp = get_temp_reg(rp);
+			temp[0] = get_temp_reg(rp);
 			make_sin_const(rp);
 			src[0] = t_scalar_src(rp, fpi->SrcReg[0]);
 
 			/* add 0.5*PI and do range reduction */
 
-			emit_arith(rp, PFS_OP_MAD, temp, WRITEMASK_X,
-				   swizzle(rp->const_sin[0], Z, Z, Z, Z), //PI
-				   pfs_half,
-				   swizzle(keep(src[0]), X, X, X, X),
-				   0);
-
-			emit_arith(rp, PFS_OP_MAD, temp, WRITEMASK_X,
-				   swizzle(temp, X, X, X, X),
+			emit_arith(rp, PFS_OP_MAD, temp[0], WRITEMASK_X,
+				   swizzle(src[0], X, X, X, X),
 				   swizzle(rp->const_sin[1], Z, Z, Z, Z),
-				   pfs_half,
+				   swizzle(rp->const_sin[1], X, X, X, X),
 				   0);
 
-			emit_arith(rp, PFS_OP_FRC, temp, WRITEMASK_X,
-				   swizzle(temp, X, X, X, X),
+			emit_arith(rp, PFS_OP_FRC, temp[0], WRITEMASK_X,
+				   swizzle(temp[0], X, X, X, X),
 				   undef,
 				   undef,
 				   0);
 
-			emit_arith(rp, PFS_OP_MAD, temp, WRITEMASK_Z,
-				   swizzle(temp, X, X, X, X),
+			emit_arith(rp, PFS_OP_MAD, temp[0], WRITEMASK_Z,
+				   swizzle(temp[0], X, X, X, X),
 				   swizzle(rp->const_sin[1], W, W, W, W), //2*PI
 				   negate(swizzle(rp->const_sin[0], Z, Z, Z, Z)), //-PI
 				   0);
 
 			/* SIN */
 
-			emit_arith(rp, PFS_OP_MAD, temp, WRITEMASK_X | WRITEMASK_Y,
-				   swizzle(temp, Z, Z, Z, Z),
+			emit_arith(rp, PFS_OP_MAD, temp[0], WRITEMASK_X | WRITEMASK_Y,
+				   swizzle(temp[0], Z, Z, Z, Z),
 				   rp->const_sin[0],
 				   pfs_zero,
 				   0);
 
-			emit_arith(rp, PFS_OP_MAD, temp, WRITEMASK_X,
-				   swizzle(temp, Y, Y, Y, Y),
-				   absolute(swizzle(temp, Z, Z, Z, Z)),
-				   swizzle(temp, X, X, X, X),
+			emit_arith(rp, PFS_OP_MAD, temp[0], WRITEMASK_X,
+				   swizzle(temp[0], Y, Y, Y, Y),
+				   absolute(swizzle(temp[0], Z, Z, Z, Z)),
+				   swizzle(temp[0], X, X, X, X),
 				   0);
 			
-			emit_arith(rp, PFS_OP_MAD, temp, WRITEMASK_Y,
-				   swizzle(temp, X, X, X, X),
-				   absolute(swizzle(temp, X, X, X, X)),
-				   negate(swizzle(temp, X, X, X, X)),
+			emit_arith(rp, PFS_OP_MAD, temp[0], WRITEMASK_Y,
+				   swizzle(temp[0], X, X, X, X),
+				   absolute(swizzle(temp[0], X, X, X, X)),
+				   negate(swizzle(temp[0], X, X, X, X)),
 				   0);
 
 
 	    		emit_arith(rp, PFS_OP_MAD, dest, mask,
-				   swizzle(temp, Y, Y, Y, Y),
+				   swizzle(temp[0], Y, Y, Y, Y),
 				   swizzle(rp->const_sin[0], W, W, W, W),
-				   swizzle(temp, X, X, X, X),
+				   swizzle(temp[0], X, X, X, X),
 				   flags);
 
-			free_temp(rp, temp);
+			free_temp(rp, temp[0]);
 			break;
 		case OPCODE_DP3:
 			src[0] = t_src(rp, fpi->SrcReg[0]);
@@ -1363,15 +1356,15 @@ static GLboolean parse_program(struct r300_fragment_program *rp)
 			 * DP4 dest, temp, src1
 			 */
 #if 0
-			temp = get_temp_reg(rp);
+			temp[0] = get_temp_reg(rp);
 			src[0].s_swz = SWIZZLE_ONE;
-			emit_arith(rp, PFS_OP_MAD, temp, mask,
+			emit_arith(rp, PFS_OP_MAD, temp[0], mask,
 				   src[0], pfs_one, pfs_zero,
 				   0);
 			emit_arith(rp, PFS_OP_DP4, dest, mask,
-				   temp, src[1], undef,
+				   temp[0], src[1], undef,
 				   flags);	
-			free_temp(rp, temp);
+			free_temp(rp, temp[0]);
 #else
 			emit_arith(rp, PFS_OP_DP4, dest, mask,
 				   swizzle(src[0], X, Y, Z, ONE), src[1],
@@ -1408,17 +1401,17 @@ static GLboolean parse_program(struct r300_fragment_program *rp)
 			break;
 		case OPCODE_FLR:		
 			src[0] = t_src(rp, fpi->SrcReg[0]);
-			temp = get_temp_reg(rp);
+			temp[0] = get_temp_reg(rp);
 			/* FRC temp, src0
 			 * MAD dest, src0, 1.0, -temp
 			 */
-			emit_arith(rp, PFS_OP_FRC, temp, mask,
+			emit_arith(rp, PFS_OP_FRC, temp[0], mask,
 				   keep(src[0]), undef, undef,
 				   0);
 			emit_arith(rp, PFS_OP_MAD, dest, mask,
-				   src[0], pfs_one, negate(temp),
+				   src[0], pfs_one, negate(temp[0]),
 				   flags);
-			free_temp(rp, temp);
+			free_temp(rp, temp[0]);
 			break;
 		case OPCODE_FRC:
 			src[0] = t_src(rp, fpi->SrcReg[0]);
@@ -1450,44 +1443,44 @@ static GLboolean parse_program(struct r300_fragment_program *rp)
 			 */
 			cnstv[0] = cnstv[1] = cnstv[2] = cnstv[3] = 0.50001;
 			src[0] = t_src(rp, fpi->SrcReg[0]);
-			temp = get_temp_reg(rp);
+			temp[0] = get_temp_reg(rp);
 			cnst = emit_const4fv(rp, cnstv);
-			emit_arith(rp, PFS_OP_CMP, temp,
+			emit_arith(rp, PFS_OP_CMP, temp[0],
 				   WRITEMASK_X | WRITEMASK_Y,
 				   src[0], pfs_zero, src[0], flags);
-			emit_arith(rp, PFS_OP_MIN, temp, WRITEMASK_Z,
+			emit_arith(rp, PFS_OP_MIN, temp[0], WRITEMASK_Z,
 				   swizzle(keep(src[0]), W, W, W, W),
 				   cnst, undef, flags);
-			emit_arith(rp, PFS_OP_LG2, temp, WRITEMASK_W,
-				   swizzle(temp, Y, Y, Y, Y),
+			emit_arith(rp, PFS_OP_LG2, temp[0], WRITEMASK_W,
+				   swizzle(temp[0], Y, Y, Y, Y),
 				   undef, undef, flags);
-			emit_arith(rp, PFS_OP_MAX, temp, WRITEMASK_Z,
-				   temp, negate(cnst), undef, flags);
-			emit_arith(rp, PFS_OP_MAD, temp, WRITEMASK_W,
-				   temp, swizzle(temp, Z, Z, Z, Z),
+			emit_arith(rp, PFS_OP_MAX, temp[0], WRITEMASK_Z,
+				   temp[0], negate(cnst), undef, flags);
+			emit_arith(rp, PFS_OP_MAD, temp[0], WRITEMASK_W,
+				   temp[0], swizzle(temp[0], Z, Z, Z, Z),
 				   pfs_zero, flags);
-			emit_arith(rp, PFS_OP_EX2, temp, WRITEMASK_W,
-				   temp, undef, undef, flags);
+			emit_arith(rp, PFS_OP_EX2, temp[0], WRITEMASK_W,
+				   temp[0], undef, undef, flags);
 			emit_arith(rp, PFS_OP_MAD, dest, WRITEMASK_Y,
-				   swizzle(keep(temp), X, X, X, X),
+				   swizzle(keep(temp[0]), X, X, X, X),
 				   pfs_one, pfs_zero, flags);
 #if 0
-			emit_arith(rp, PFS_OP_MAD, temp, WRITEMASK_X,
-				   temp, pfs_one, pfs_half, flags);
-			emit_arith(rp, PFS_OP_CMPH, temp, WRITEMASK_Z,
-				   swizzle(keep(temp), W, W, W, W),
-				   pfs_zero, swizzle(keep(temp), X, X, X, X),
+			emit_arith(rp, PFS_OP_MAD, temp[0], WRITEMASK_X,
+				   temp[0], pfs_one, pfs_half, flags);
+			emit_arith(rp, PFS_OP_CMPH, temp[0], WRITEMASK_Z,
+				   swizzle(keep(temp[0]), W, W, W, W),
+				   pfs_zero, swizzle(keep(temp[0]), X, X, X, X),
 				   flags);
 #else
-			emit_arith(rp, PFS_OP_CMP, temp, WRITEMASK_Z,
+			emit_arith(rp, PFS_OP_CMP, temp[0], WRITEMASK_Z,
 				   pfs_zero,
-				   swizzle(keep(temp), W, W, W, W),
-				   negate(swizzle(keep(temp), X, X, X, X)),
+				   swizzle(keep(temp[0]), W, W, W, W),
+				   negate(swizzle(keep(temp[0]), X, X, X, X)),
 				   flags);
 #endif
 			emit_arith(rp, PFS_OP_CMP, dest, WRITEMASK_Z,
-				   pfs_zero, temp,
-				   negate(swizzle(keep(temp), Y, Y, Y, Y)),
+				   pfs_zero, temp[0],
+				   negate(swizzle(keep(temp[0]), Y, Y, Y, Y)),
 				   flags);
 			emit_arith(rp, PFS_OP_MAD, dest,
 				   WRITEMASK_X | WRITEMASK_W,
@@ -1495,7 +1488,7 @@ static GLboolean parse_program(struct r300_fragment_program *rp)
 				   pfs_one,
 				   pfs_zero,
 				   flags);
-			free_temp(rp, temp);
+			free_temp(rp, temp[0]);
 			break;
 		case OPCODE_LRP:
 			src[0] = t_src(rp, fpi->SrcReg[0]);
@@ -1506,14 +1499,14 @@ static GLboolean parse_program(struct r300_fragment_program *rp)
 			 *     MAD temp, -tmp0, tmp2, tmp2
 			 *     MAD result, tmp0, tmp1, temp
 			 */
-			temp = get_temp_reg(rp);
-			emit_arith(rp, PFS_OP_MAD, temp, mask,
+			temp[0] = get_temp_reg(rp);
+			emit_arith(rp, PFS_OP_MAD, temp[0], mask,
 				   negate(keep(src[0])), keep(src[2]), src[2],
 				   0);
 			emit_arith(rp, PFS_OP_MAD, dest, mask,
-				   src[0], src[1], temp,
+				   src[0], src[1], temp[0],
 				   flags);
-			free_temp(rp, temp);
+			free_temp(rp, temp[0]);
 			break;			
 		case OPCODE_MAD:
 			src[0] = t_src(rp, fpi->SrcReg[0]);
@@ -1554,17 +1547,17 @@ static GLboolean parse_program(struct r300_fragment_program *rp)
 		case OPCODE_POW:
 			src[0] = t_scalar_src(rp, fpi->SrcReg[0]);
 			src[1] = t_scalar_src(rp, fpi->SrcReg[1]);
-			temp = get_temp_reg(rp);	
-			emit_arith(rp, PFS_OP_LG2, temp, WRITEMASK_W,
+			temp[0] = get_temp_reg(rp);	
+			emit_arith(rp, PFS_OP_LG2, temp[0], WRITEMASK_W,
 				   src[0], undef, undef,
 				   0);
-			emit_arith(rp, PFS_OP_MAD, temp, WRITEMASK_W,
-				   temp, src[1], pfs_zero,
+			emit_arith(rp, PFS_OP_MAD, temp[0], WRITEMASK_W,
+				   temp[0], src[1], pfs_zero,
 				   0);
 			emit_arith(rp, PFS_OP_EX2, dest, fpi->DstReg.WriteMask,
-				   temp, undef, undef,
+				   temp[0], undef, undef,
 				   0);
-			free_temp(rp, temp);
+			free_temp(rp, temp[0]);
 			break;
 		case OPCODE_RCP:
 			src[0] = t_scalar_src(rp, fpi->SrcReg[0]);
@@ -1580,107 +1573,91 @@ static GLboolean parse_program(struct r300_fragment_program *rp)
 			break;
 		case OPCODE_SCS:
 			/*
-			 * cos using a parabola (see SIN):
-			 * cos(x):
-			 *   x += PI/2
-			 *   x = (x/(2*PI))+0.5
-			 *   x = frac(x)
-			 *   x = (x*2*PI)-PI
-			 *   result = sin(x)
+			 * scs using a parabola :
+			 * scs(x):
+			 *   result.x = sin(-abs(x)+0.5*PI)  (cos)
+			 *   result.y = sin(x)               (sin)
+			 *
 			 */
-			temp = get_temp_reg(rp);
+			temp[0] = get_temp_reg(rp);
+			temp[1] = get_temp_reg(rp);
 			make_sin_const(rp);
 			src[0] = t_scalar_src(rp, fpi->SrcReg[0]);
 
-			/* add 0.5*PI and do range reduction */
+			/* x = -abs(x)+0.5*PI */
+			emit_arith(rp, PFS_OP_MAD, temp[0], WRITEMASK_Z,
+				   swizzle(rp->const_sin[0], Z, Z, Z, Z), //PI
+				   pfs_half,
+				   negate(abs(swizzle(keep(src[0]), X, X, X, X))),
+				   0);
 
-			emit_arith(rp, PFS_OP_MAD, temp, WRITEMASK_X|WRITEMASK_Y,
-				   swizzle(rp->const_sin[0], Z, Z, Z, Z),
-				   rp->const_sin[1],
+			/* C*x (sin) */
+			emit_arith(rp, PFS_OP_MAD, temp[0], WRITEMASK_W,
+				   swizzle(rp->const_sin[0], Y, Y, Y, Y),
 				   swizzle(keep(src[0]), X, X, X, X),
+				   pfs_zero,
 				   0);
 
-			emit_arith(rp, PFS_OP_CMP, temp, WRITEMASK_W,
-				   swizzle(rp->const_sin[0], Z, Z, Z, Z),
-				   negate(pfs_half),
-				   swizzle(keep(src[0]), X, X, X, X),
-				   0);
-
-			emit_arith(rp, PFS_OP_CMP, temp, WRITEMASK_Z,
-				   swizzle(temp, X, X, X, X),
-				   swizzle(temp, Y, Y, Y, Y),
-				   swizzle(temp, W, W, W, W),
-				   0);
-
-			emit_arith(rp, PFS_OP_MAD, temp, WRITEMASK_X | WRITEMASK_Y,
-			           swizzle(temp, Z, Z, Z, Z),
+			/* B*x, C*x (cos) */
+			emit_arith(rp, PFS_OP_MAD, temp[0], WRITEMASK_X | WRITEMASK_Y,
+			           swizzle(temp[0], Z, Z, Z, Z),
 				   rp->const_sin[0],
 			           pfs_zero,
 				   0);
 
-			emit_arith(rp, PFS_OP_MAD, temp, WRITEMASK_W,
-				   swizzle(temp, Y, Y, Y, Y),
-				   absolute(swizzle(temp, Z, Z, Z, Z)),
-				   swizzle(temp, X, X, X, X),
+			/* B*x (sin) */
+			emit_arith(rp, PFS_OP_MAD, temp[1], WRITEMASK_W,
+				   swizzle(rp->const_sin[0], X, X, X, X),
+				   keep(src[0]),
+				   pfs_zero,
 				   0);
 
-			if(mask & WRITEMASK_Y)
-			{
-			    emit_arith(rp, PFS_OP_MAD, temp, WRITEMASK_X | WRITEMASK_Y,
-				       swizzle(keep(src[0]), X, X, X, X),
-				       rp->const_sin[0],
-				       pfs_zero,
-				       0);
-
-			    emit_arith(rp, PFS_OP_MAD, temp, WRITEMASK_X,
-				       swizzle(temp, Y, Y, Y, Y),
-				       absolute(swizzle(keep(src[0]), X, X, X, X)),
-				       swizzle(temp, X, X, X, X),
-				       0);
-			}
-
-			emit_arith(rp, PFS_OP_MAD, temp, WRITEMASK_Z,
-				   swizzle(temp, W, W, W, W),
-				   absolute(swizzle(temp, W, W, W, W)),
-				   negate(swizzle(temp, W, W, W, W)),
+			/* y = B*x + C*x*abs(x) (sin)*/
+		    	emit_arith(rp, PFS_OP_MAD, temp[1], WRITEMASK_Z,
+				   absolute(src[0]),
+				   swizzle(temp[0], W, W, W, W),
+				   swizzle(temp[1], W, W, W, W),
 				   0);
 
-			emit_arith(rp, PFS_OP_MAD, dest, WRITEMASK_X,
-				   swizzle(temp, Z, Z, Z, Z),
+			/* y = B*x + C*x*abs(x) (cos)*/
+			emit_arith(rp, PFS_OP_MAD, temp[1], WRITEMASK_W,
+				   swizzle(temp[0], Y, Y, Y, Y),
+				   absolute(swizzle(temp[0], Z, Z, Z, Z)),
+				   swizzle(temp[0], X, X, X, X),
+				   0);
+
+			/* y*abs(y) - y (cos), y*abs(y) - y (sin) */
+			emit_arith(rp, PFS_OP_MAD, temp[0], WRITEMASK_X | WRITEMASK_Y,
+			           swizzle(temp[1], W, Z, Y, X),
+				   absolute(swizzle(temp[1], W, Z, Y, X)),
+				   negate(swizzle(temp[1], W, Z, Y, X)),
+
+				   0);
+
+			/* dest.xy = mad(temp.xy, P, temp2.wz) */
+			emit_arith(rp, PFS_OP_MAD, dest, mask & (WRITEMASK_X | WRITEMASK_Y),
+				   temp[0],
 				   swizzle(rp->const_sin[0], W, W, W, W),
-				   swizzle(temp, W, W, W, W),
+				   swizzle(temp[1], W, Z, Y, X),
 				   flags);
 
-			if(mask & WRITEMASK_Y)
-			{
-			    emit_arith(rp, PFS_OP_MAD, temp, WRITEMASK_W,
-				       swizzle(temp, X, X, X, X),
-				       absolute(swizzle(temp, X, X, X, X)),
-				       negate(swizzle(temp, X, X, X, X)),
-				       0);
-
-	    		    emit_arith(rp, PFS_OP_MAD, dest, WRITEMASK_Y,
-				       swizzle(temp, W, W, W, W),
-				       swizzle(rp->const_sin[0], W, W, W, W),
-				       swizzle(temp, X, X, X, X),
-				       flags);
-			}
-			free_temp(rp, temp);
+			free_temp(rp, temp[0]);
+			free_temp(rp, temp[1]);
 			break;
 		case OPCODE_SGE:
 			src[0] = t_src(rp, fpi->SrcReg[0]);
 			src[1] = t_src(rp, fpi->SrcReg[1]);
-			temp = get_temp_reg(rp);
+			temp[0] = get_temp_reg(rp);
 			/* temp = src0 - src1
 			 * dest.c = (temp.c < 0.0) ? 0 : 1
 			 */
-			emit_arith(rp, PFS_OP_MAD, temp, mask,
+			emit_arith(rp, PFS_OP_MAD, temp[0], mask,
 				   src[0], pfs_one, negate(src[1]),
 				   0);
 			emit_arith(rp, PFS_OP_CMP, dest, mask,
-				   pfs_one, pfs_zero, temp,
+				   pfs_one, pfs_zero, temp[0],
 				   0);
-			free_temp(rp, temp);
+			free_temp(rp, temp[0]);
 			break;
 		case OPCODE_SIN:
 			/*
@@ -1690,73 +1667,74 @@ static GLboolean parse_program(struct r300_fragment_program *rp)
 			 * itself squared.
 			 */
 
-			temp = get_temp_reg(rp);
+			temp[0] = get_temp_reg(rp);
 			make_sin_const(rp);
 			src[0] = t_scalar_src(rp, fpi->SrcReg[0]);
 
+
 			/* do range reduction */
 
-			emit_arith(rp, PFS_OP_MAD, temp, WRITEMASK_X,
+			emit_arith(rp, PFS_OP_MAD, temp[0], WRITEMASK_X,
 				   swizzle(keep(src[0]), X, X, X, X),
 				   swizzle(rp->const_sin[1], Z, Z, Z, Z),
 				   pfs_half,
 				   0);
 
-			emit_arith(rp, PFS_OP_FRC, temp, WRITEMASK_X,
-				   swizzle(temp, X, X, X, X),
+			emit_arith(rp, PFS_OP_FRC, temp[0], WRITEMASK_X,
+				   swizzle(temp[0], X, X, X, X),
 				   undef,
 				   undef,
 				   0);
 
-			emit_arith(rp, PFS_OP_MAD, temp, WRITEMASK_Z,
-				   swizzle(temp, X, X, X, X),
+			emit_arith(rp, PFS_OP_MAD, temp[0], WRITEMASK_Z,
+				   swizzle(temp[0], X, X, X, X),
 				   swizzle(rp->const_sin[1], W, W, W, W), //2*PI
 				   negate(swizzle(rp->const_sin[0], Z, Z, Z, Z)), //PI
 				   0);
 
 			/* SIN */
 
-			emit_arith(rp, PFS_OP_MAD, temp, WRITEMASK_X | WRITEMASK_Y,
-				   swizzle(temp, Z, Z, Z, Z),
+			emit_arith(rp, PFS_OP_MAD, temp[0], WRITEMASK_X | WRITEMASK_Y,
+				   swizzle(temp[0], Z, Z, Z, Z),
 				   rp->const_sin[0],
 				   pfs_zero,
 				   0);
 
-			emit_arith(rp, PFS_OP_MAD, temp, WRITEMASK_X,
-				   swizzle(temp, Y, Y, Y, Y),
-				   absolute(swizzle(temp, Z, Z, Z, Z)),
-				   swizzle(temp, X, X, X, X),
+			emit_arith(rp, PFS_OP_MAD, temp[0], WRITEMASK_X,
+				   swizzle(temp[0], Y, Y, Y, Y),
+				   absolute(swizzle(temp[0], Z, Z, Z, Z)),
+				   swizzle(temp[0], X, X, X, X),
 				   0);
 			
-			emit_arith(rp, PFS_OP_MAD, temp, WRITEMASK_Y,
-				   swizzle(temp, X, X, X, X),
-				   absolute(swizzle(temp, X, X, X, X)),
-				   negate(swizzle(temp, X, X, X, X)),
+			emit_arith(rp, PFS_OP_MAD, temp[0], WRITEMASK_Y,
+				   swizzle(temp[0], X, X, X, X),
+				   absolute(swizzle(temp[0], X, X, X, X)),
+				   negate(swizzle(temp[0], X, X, X, X)),
 				   0);
 
 
 	    		emit_arith(rp, PFS_OP_MAD, dest, mask,
-				   swizzle(temp, Y, Y, Y, Y),
+				   swizzle(temp[0], Y, Y, Y, Y),
 				   swizzle(rp->const_sin[0], W, W, W, W),
-				   swizzle(temp, X, X, X, X),
+				   swizzle(temp[0], X, X, X, X),
 				   flags);
 
-			free_temp(rp, temp);
+			free_temp(rp, temp[0]);
 			break;
 		case OPCODE_SLT:
 			src[0] = t_src(rp, fpi->SrcReg[0]);
 			src[1] = t_src(rp, fpi->SrcReg[1]);
-			temp = get_temp_reg(rp);
+			temp[0] = get_temp_reg(rp);
 			/* temp = src0 - src1
 			 * dest.c = (temp.c < 0.0) ? 1 : 0
 			 */
-			emit_arith(rp, PFS_OP_MAD, temp, mask,
+			emit_arith(rp, PFS_OP_MAD, temp[0], mask,
 				   src[0], pfs_one, negate(src[1]),
 				   0);
 			emit_arith(rp, PFS_OP_CMP, dest, mask,
-				   pfs_zero, pfs_one, temp,
+				   pfs_zero, pfs_one, temp[0],
 				   0);
-			free_temp(rp, temp);
+			free_temp(rp, temp[0]);
 			break;
 		case OPCODE_SUB:
 			src[0] = t_src(rp, fpi->SrcReg[0]);
@@ -1777,9 +1755,9 @@ static GLboolean parse_program(struct r300_fragment_program *rp)
 		case OPCODE_XPD: {
 			src[0] = t_src(rp, fpi->SrcReg[0]);
 			src[1] = t_src(rp, fpi->SrcReg[1]);
-			temp = get_temp_reg(rp);
+			temp[0] = get_temp_reg(rp);
 			/* temp = src0.zxy * src1.yzx */
-			emit_arith(rp, PFS_OP_MAD, temp, WRITEMASK_XYZ,
+			emit_arith(rp, PFS_OP_MAD, temp[0], WRITEMASK_XYZ,
 				   swizzle(keep(src[0]), Z, X, Y, W),
 				   swizzle(keep(src[1]), Y, Z, X, W),
 				   pfs_zero,
@@ -1790,10 +1768,10 @@ static GLboolean parse_program(struct r300_fragment_program *rp)
 			emit_arith(rp, PFS_OP_MAD, dest, mask & WRITEMASK_XYZ,
 				   swizzle(src[0], Y, Z, X, W),
 				   swizzle(src[1], Z, X, Y, W),
-				   negate(temp),
+				   negate(temp[0]),
 				   flags);
 			/* cleanup */
-			free_temp(rp, temp);
+			free_temp(rp, temp[0]);
 			break;
 		}
 		default:

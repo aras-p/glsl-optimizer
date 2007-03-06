@@ -435,7 +435,7 @@ mach64CreateBuffer( __DRIscreenPrivate *driScrnPriv,
 static void
 mach64DestroyBuffer(__DRIdrawablePrivate *driDrawPriv)
 {
-   _mesa_destroy_framebuffer((GLframebuffer *) (driDrawPriv->driverPrivate));
+   _mesa_unreference_framebuffer((GLframebuffer **)(&(driDrawPriv->driverPrivate)));
 }
 
 

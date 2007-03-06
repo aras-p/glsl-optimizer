@@ -78,7 +78,7 @@ set_depth_renderbuffer(struct gl_framebuffer *fb,
                        struct gl_renderbuffer *rb)
 {
    if (fb->_DepthBuffer) {
-      _mesa_dereference_renderbuffer(&fb->_DepthBuffer);
+      _mesa_unreference_renderbuffer(&fb->_DepthBuffer);
    }
    fb->_DepthBuffer = rb;
    if (rb) {
@@ -96,7 +96,7 @@ set_stencil_renderbuffer(struct gl_framebuffer *fb,
                          struct gl_renderbuffer *rb)
 {
    if (fb->_StencilBuffer) {
-      _mesa_dereference_renderbuffer(&fb->_StencilBuffer);
+      _mesa_unreference_renderbuffer(&fb->_StencilBuffer);
    }
    fb->_StencilBuffer = rb;
    if (rb) {
@@ -166,6 +166,8 @@ _mesa_initialize_framebuffer(struct gl_framebuffer *fb, const GLvisual *visual)
 
    _glthread_INIT_MUTEX(fb->Mutex);
 
+   fb->RefCount = 1;
+
    /* save the visual */
    fb->Visual = *visual;
 
@@ -198,7 +200,6 @@ void
 _mesa_destroy_framebuffer(struct gl_framebuffer *fb)
 {
    if (fb) {
-      _glthread_DESTROY_MUTEX(fb->Mutex);
       _mesa_free_framebuffer_data(fb);
       _mesa_free(fb);
    }
@@ -215,20 +216,27 @@ _mesa_free_framebuffer_data(struct gl_framebuffer *fb)
    GLuint i;
 
    assert(fb);
+   assert(fb->RefCount == 0);
+
+   _glthread_DESTROY_MUTEX(fb->Mutex);
 
    for (i = 0; i < BUFFER_COUNT; i++) {
       struct gl_renderbuffer_attachment *att = &fb->Attachment[i];
       if (att->Renderbuffer) {
-         struct gl_renderbuffer *rb = att->Renderbuffer;
-         /* remove framebuffer's reference to renderbuffer */
-         _mesa_dereference_renderbuffer(&rb);
-         if (rb && rb->Name == 0) {
-            /* delete window system renderbuffer */
-            _mesa_dereference_renderbuffer(&rb);
+         _mesa_unreference_renderbuffer(&att->Renderbuffer);
+      }
+      if (att->Texture) {
+         /* render to texture */
+         att->Texture->RefCount--;
+         if (att->Texture->RefCount == 0) {
+            GET_CURRENT_CONTEXT(ctx);
+            if (ctx) {
+               ctx->Driver.DeleteTexture(ctx, att->Texture);
+            }
          }
       }
       att->Type = GL_NONE;
-      att->Renderbuffer = NULL;
+      att->Texture = NULL;
    }
 
    /* unbind depth/stencil to decr ref counts */
@@ -238,25 +246,44 @@ _mesa_free_framebuffer_data(struct gl_framebuffer *fb)
 
 
 /**
- * Decrement the reference count on a framebuffer and delete it when
- * the refcount hits zero.
- * Note: we pass the address of a pointer and set it to NULL if we delete it.
+ * Set *ptr to point to fb, with refcounting and locking.
  */
 void
-_mesa_dereference_framebuffer(struct gl_framebuffer **fb)
+_mesa_reference_framebuffer(struct gl_framebuffer **ptr,
+                            struct gl_framebuffer *fb)
 {
-   GLboolean deleteFlag = GL_FALSE;
+   assert(ptr);
+   assert(!*ptr);
+   assert(fb);
+   _glthread_LOCK_MUTEX(fb->Mutex);
+   fb->RefCount++;
+   _glthread_UNLOCK_MUTEX(fb->Mutex);
+   *ptr = fb;
+}
 
-   _glthread_LOCK_MUTEX((*fb)->Mutex);
-   {
+
+/**
+ * Undo/remove a reference to a framebuffer object.
+ * Decrement the framebuffer object's reference count and delete it when
+ * the refcount hits zero.
+ * Note: we pass the address of a pointer and set it to NULL.
+ */
+void
+_mesa_unreference_framebuffer(struct gl_framebuffer **fb)
+{
+   assert(fb);
+   if (*fb) {
+      GLboolean deleteFlag = GL_FALSE;
+
+      _glthread_LOCK_MUTEX((*fb)->Mutex);
       ASSERT((*fb)->RefCount > 0);
       (*fb)->RefCount--;
       deleteFlag = ((*fb)->RefCount == 0);
-   }
-   _glthread_UNLOCK_MUTEX((*fb)->Mutex);
+      _glthread_UNLOCK_MUTEX((*fb)->Mutex);
+      
+      if (deleteFlag)
+         (*fb)->Delete(*fb);
 
-   if (deleteFlag) {
-      (*fb)->Delete(*fb);
       *fb = NULL;
    }
 }
@@ -605,21 +632,25 @@ update_color_draw_buffers(GLcontext *ctx, struct gl_framebuffer *fb)
       GLbitfield bufferMask = fb->_ColorDrawBufferMask[output];
       GLuint count = 0;
       GLuint i;
-      /* We need the inner loop here because glDrawBuffer(GL_FRONT_AND_BACK)
-       * can specify writing to two or four color buffers (for example).
-       */
-      for (i = 0; bufferMask && i < BUFFER_COUNT; i++) {
-         const GLuint bufferBit = 1 << i;
-         if (bufferBit & bufferMask) {
-            struct gl_renderbuffer *rb = fb->Attachment[i].Renderbuffer;
-            if (rb) {
-               fb->_ColorDrawBuffers[output][count] = rb;
-               count++;
+      if (!fb->DeletePending) {
+         /* We need the inner loop here because glDrawBuffer(GL_FRONT_AND_BACK)
+          * can specify writing to two or four color buffers (for example).
+          */
+         for (i = 0; bufferMask && i < BUFFER_COUNT; i++) {
+            const GLuint bufferBit = 1 << i;
+            if (bufferBit & bufferMask) {
+               struct gl_renderbuffer *rb = fb->Attachment[i].Renderbuffer;
+               if (rb) {
+                  fb->_ColorDrawBuffers[output][count] = rb;
+                  count++;
+               }
+               else {
+                  /*
+                  _mesa_warning(ctx, "DrawBuffer names a missing buffer!\n");
+                  */
+               }
+               bufferMask &= ~bufferBit;
             }
-            else {
-               /*_mesa_warning(ctx, "DrawBuffer names a missing buffer!\n");*/
-            }
-            bufferMask &= ~bufferBit;
          }
       }
       fb->_NumColorDrawBuffers[output] = count;
@@ -635,7 +666,7 @@ static void
 update_color_read_buffer(GLcontext *ctx, struct gl_framebuffer *fb)
 {
    (void) ctx;
-   if (fb->_ColorReadBufferIndex == -1) {
+   if (fb->_ColorReadBufferIndex == -1 || fb->DeletePending) {
       fb->_ColorReadBuffer = NULL; /* legal! */
    }
    else {
