@@ -1014,7 +1014,6 @@ _mesa_BindFramebufferEXT(GLenum target, GLuint framebuffer)
     */
 
    if (bindReadBuf) {
-      _mesa_unreference_framebuffer(&ctx->ReadBuffer);
       _mesa_reference_framebuffer(&ctx->ReadBuffer, newFb);
    }
 
@@ -1022,7 +1021,6 @@ _mesa_BindFramebufferEXT(GLenum target, GLuint framebuffer)
       /* check if old FB had any texture attachments */
       check_end_texture_render(ctx, ctx->DrawBuffer);
       /* check if time to delete this framebuffer */
-      _mesa_unreference_framebuffer(&ctx->DrawBuffer);
       _mesa_reference_framebuffer(&ctx->DrawBuffer, newFb);
       if (newFb->Name != 0) {
          /* check if newly bound framebuffer has any texture attachments */
