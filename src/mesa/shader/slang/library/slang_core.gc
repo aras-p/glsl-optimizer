@@ -932,106 +932,130 @@ vec4 __operator / (const vec4 v, const float b)
 
 //// Basic ivec2/int operators
 
-ivec2 __operator + (const int a, const ivec2 u) {
-    return ivec2 (a) + u;
+ivec2 __operator + (const int a, const ivec2 u)
+{
+   __retVal = ivec2(a) + u;
 }
 
-ivec2 __operator + (const ivec2 v, const int b) {
-    return v + ivec2 (b);
+ivec2 __operator + (const ivec2 v, const int b)
+{
+   __retVal = v + ivec2(b);
 }
 
-ivec2 __operator - (const int a, const ivec2 u) {
-    return ivec2 (a) - u;
+ivec2 __operator - (const int a, const ivec2 u)
+{
+   __retVal = ivec2(a) - u;
 }
 
-ivec2 __operator - (const ivec2 v, const int b) {
-    return v - ivec2 (b);
+ivec2 __operator - (const ivec2 v, const int b)
+{
+   __retVal = v - ivec2(b);
 }
 
-ivec2 __operator * (const int a, const ivec2 u) {
-    return ivec2 (a) * u;
+ivec2 __operator * (const int a, const ivec2 u)
+{
+   __retVal = ivec2(a) * u;
 }
 
-ivec2 __operator * (const ivec2 v, const int b) {
-    return v * ivec2 (b);
+ivec2 __operator * (const ivec2 v, const int b)
+{
+   __retVal = v * ivec2(b);
 }
 
-ivec2 __operator / (const int a, const ivec2 u) {
-    return ivec2 (a) / u;
+ivec2 __operator / (const int a, const ivec2 u)
+{
+   __retVal = ivec2(a) / u;
 }
 
-ivec2 __operator / (const ivec2 v, const int b) {
-    return v / ivec2 (b);
+ivec2 __operator / (const ivec2 v, const int b)
+{
+   __retVal = v / ivec2(b);
 }
 
 
 //// Basic ivec3/int operators
 
-ivec3 __operator + (const int a, const ivec3 u) {
-    return ivec3 (a) + u;
+ivec3 __operator + (const int a, const ivec3 u)
+{
+   __retVal = ivec3(a) + u;
 }
 
-ivec3 __operator + (const ivec3 v, const int b) {
-    return v + ivec3 (b);
+ivec3 __operator + (const ivec3 v, const int b)
+{
+   __retVal = v + ivec3(b);
 }
 
-ivec3 __operator - (const int a, const ivec3 u) {
-    return ivec3 (a) - u;
+ivec3 __operator - (const int a, const ivec3 u)
+{
+   __retVal = ivec3(a) - u;
 }
 
-ivec3 __operator - (const ivec3 v, const int b) {
-    return v - ivec3 (b);
+ivec3 __operator - (const ivec3 v, const int b)
+{
+   __retVal = v - ivec3(b);
 }
 
-ivec3 __operator * (const int a, const ivec3 u) {
-    return ivec3 (a) * u;
+ivec3 __operator * (const int a, const ivec3 u)
+{
+   __retVal = ivec3(a) * u;
 }
 
-ivec3 __operator * (const ivec3 v, const int b) {
-    return v * ivec3 (b);
+ivec3 __operator * (const ivec3 v, const int b)
+{
+   __retVal = v * ivec3(b);
 }
 
-ivec3 __operator / (const int a, const ivec3 u) {
-    return ivec3 (a) / u;
+ivec3 __operator / (const int a, const ivec3 u)
+{
+   __retVal = ivec3(a) / u;
 }
 
-ivec3 __operator / (const ivec3 v, const int b) {
-    return v / ivec3 (b);
+ivec3 __operator / (const ivec3 v, const int b)
+{
+   __retVal = v / ivec3(b);
 }
 
 
 //// Basic ivec4/int operators
 
-ivec4 __operator + (const int a, const ivec4 u) {
-    return ivec4 (a) + u;
+ivec4 __operator + (const int a, const ivec4 u)
+{
+   __retVal = ivec4(a) + u;
 }
 
-ivec4 __operator + (const ivec4 v, const int b) {
-    return v + ivec4 (b);
+ivec4 __operator + (const ivec4 v, const int b)
+{
+   __retVal = v + ivec4(b);
 }
 
-ivec4 __operator - (const int a, const ivec4 u) {
-    return ivec4 (a) - u;
+ivec4 __operator - (const int a, const ivec4 u)
+{
+   __retVal = ivec4(a) - u;
 }
 
-ivec4 __operator - (const ivec4 v, const int b) {
-    return v - ivec4 (b);
+ivec4 __operator - (const ivec4 v, const int b)
+{
+   __retVal = v - ivec4(b);
 }
 
-ivec4 __operator * (const int a, const ivec4 u) {
-    return ivec4 (a) * u;
+ivec4 __operator * (const int a, const ivec4 u)
+{
+   __retVal = ivec4(a) * u;
 }
 
-ivec4 __operator * (const ivec4 v, const int b) {
-    return v * ivec4 (b);
+ivec4 __operator * (const ivec4 v, const int b)
+{
+   __retVal = v * ivec4(b);
 }
 
-ivec4 __operator / (const int a, const ivec4 u) {
-    return ivec4 (a) / u;
+ivec4 __operator / (const int a, const ivec4 u)
+{
+   __retVal = ivec4(a) / u;
 }
 
-ivec4 __operator / (const ivec4 v, const int b) {
-    return v / ivec4 (b);
+ivec4 __operator / (const ivec4 v, const int b)
+{
+   __retVal = v / ivec4(b);
 }
 
 
@@ -1041,25 +1065,22 @@ ivec4 __operator / (const ivec4 v, const int b) {
 
 int __operator - (const int a)
 {
-   __asm float_negate __retVal.x, a;
+   __asm vec4_negate __retVal.x, a;
 }
 
 ivec2 __operator - (const ivec2 v)
 {
-// XXX redo
-    return ivec2 (-v.x, -v.y);
+   __asm vec4_negate __retVal, v;
 }
 
 ivec3 __operator - (const ivec3 v)
 {
-// XXX redo
-    return ivec3 (-v.x, -v.y, -v.z);
+   __asm vec4_negate __retVal, v;
 }
 
 ivec4 __operator - (const ivec4 v)
 {
-// XXX redo
-    return ivec4 (-v.x, -v.y, -v.z, -v.w);
+   __asm vec4_negate __retVal, v;
 }
 
 float __operator - (const float a)
@@ -1109,12 +1130,12 @@ mat4 __operator - (const mat4 m)
 
 float dot(const float a, const float b)
 {
-   return a * b;
+   __retVal = a * b;
 }
 
 float dot(const vec2 a, const vec2 b)
 {
-   return a.x * b.x + a.y * b.y;
+   __retVal = a.x * b.x + a.y * b.y;
 }
 
 float dot(const vec3 a, const vec3 b)
@@ -1133,22 +1154,24 @@ float dot(const vec4 a, const vec4 b)
 
 void __operator += (inout int a, const int b)
 {
-    a = int (float (a) + float (b));
+   __asm vec4_add a, a, b;
 }
 
 void __operator -= (inout int a, const int b)
 {
-    a += -b;
+   __asm vec4_subtract a, a, b;
 }
 
 void __operator *= (inout int a, const int b)
 {
-    a = int (float (a) * float (b));
+   __asm vec4_multiply a, a, b;
 }
 
 void __operator /= (inout int a, const int b)
 {
-    a = int (float (a) / float (b));
+   float invB;
+   __asm float_rcp invB, b;
+   __asm vec4_multiply a, a, invB;
 }
 
 
@@ -1156,26 +1179,26 @@ void __operator /= (inout int a, const int b)
 
 void __operator += (inout ivec2 v, const ivec2 u)
 {
-    v.x += u.x;
-    v.y += u.y;
+   __asm vec4_add v, v, u;
 }
 
 void __operator -= (inout ivec2 v, const ivec2 u)
 {
-    v.x -= u.x;
-    v.y -= u.y;
+   __asm vec4_subtract v, v, u;
 }
 
 void __operator *= (inout ivec2 v, const ivec2 u)
 {
-    v.x *= u.x;
-    v.y *= u.y;
+   __asm vec4_multiply v, v, u;
 }
 
 void __operator /= (inout ivec2 v, const ivec2 u)
 {
-    v.x /= u.x;
-    v.y /= u.y;
+   ivec2 inv, z;
+   __asm float_rcp inv.x, u.x;
+   __asm float_rcp inv.y, u.y;
+   __asm vec4_multiply z, v, inv;
+   __asm float_to_int __retVal, z;
 }
 
 
@@ -1183,61 +1206,53 @@ void __operator /= (inout ivec2 v, const ivec2 u)
 
 void __operator += (inout ivec3 v, const ivec3 u)
 {
-    v.x += u.x;
-    v.y += u.y;
-    v.z += u.z;
+   __asm vec4_add v, v, u;
 }
 
 void __operator -= (inout ivec3 v, const ivec3 u)
 {
-    v.x -= u.x;
-    v.y -= u.y;
-    v.z -= u.z;
+   __asm vec4_subtract v, v, u;
 }
 
 void __operator *= (inout ivec3 v, const ivec3 u)
 {
-    v.x *= u.x;
-    v.y *= u.y;
-    v.z *= u.z;
+   __asm vec4_multiply v, v, u;
 }
 
 void __operator /= (inout ivec3 v, const ivec3 u)
 {
-    v.x /= u.x;
-    v.y /= u.y;
-    v.z /= u.z;
+   ivec3 inv, z;
+   __asm float_rcp inv.x, u.x;
+   __asm float_rcp inv.y, u.y;
+   __asm vec4_multiply z, v, inv;
+   __asm float_to_int __retVal, z;
 }
 
 
 //// ivec4 assignment operators
 
-void __operator += (inout ivec4 v, const ivec4 u) {
-    v.x += u.x;
-    v.y += u.y;
-    v.z += u.z;
-    v.w += u.w;
+void __operator += (inout ivec4 v, const ivec4 u)
+{
+   __asm vec4_add v, v, u;
 }
 
-void __operator -= (inout ivec4 v, const ivec4 u) {
-    v.x -= u.x;
-    v.y -= u.y;
-    v.z -= u.z;
-    v.w -= u.w;
+void __operator -= (inout ivec4 v, const ivec4 u)
+{
+   __asm vec4_subtract v, v, u;
 }
 
-void __operator *= (inout ivec4 v, const ivec4 u) {
-    v.x *= u.x;
-    v.y *= u.y;
-    v.z *= u.z;
-    v.w *= u.w;
+void __operator *= (inout ivec4 v, const ivec4 u)
+{
+   __asm vec4_multiply v, v, u;
 }
 
-void __operator /= (inout ivec4 v, const ivec4 u) {
-    v.x /= u.x;
-    v.y /= u.y;
-    v.z /= u.z;
-    v.w /= u.w;
+void __operator /= (inout ivec4 v, const ivec4 u)
+{
+   ivec4 inv, z;
+   __asm float_rcp inv.x, u.x;
+   __asm float_rcp inv.y, u.y;
+   __asm vec4_multiply z, v, inv;
+   __asm float_to_int __retVal, z;
 }
 
 
