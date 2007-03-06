@@ -223,16 +223,21 @@ _mesa_free_framebuffer_data(struct gl_framebuffer *fb)
    for (i = 0; i < BUFFER_COUNT; i++) {
       struct gl_renderbuffer_attachment *att = &fb->Attachment[i];
       if (att->Renderbuffer) {
-         struct gl_renderbuffer *rb = att->Renderbuffer;
-         /* remove framebuffer's reference to renderbuffer */
-         _mesa_dereference_renderbuffer(&rb);
-         if (rb && rb->Name == 0) {
-            /* delete window system renderbuffer */
-            _mesa_dereference_renderbuffer(&rb);
+         _mesa_dereference_renderbuffer(&att->Renderbuffer);
+      }
+      if (att->Texture) {
+         /* render to texture */
+         att->Texture->RefCount--;
+         if (att->Texture->RefCount == 0) {
+            GET_CURRENT_CONTEXT(ctx);
+            if (ctx) {
+               ctx->Driver.DeleteTexture(ctx, att->Texture);
+            }
          }
       }
       att->Type = GL_NONE;
       att->Renderbuffer = NULL;
+      att->Texture = NULL;
    }
 
    /* unbind depth/stencil to decr ref counts */
