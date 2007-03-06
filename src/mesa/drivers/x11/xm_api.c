@@ -383,8 +383,7 @@ create_xmesa_buffer(XMesaDrawable d, BufferType type,
    /*
     * Front renderbuffer
     */
-   b->frontxrb = xmesa_new_renderbuffer(NULL, 0, &vis->mesa_visual,
-                                           GL_FALSE);
+   b->frontxrb = xmesa_new_renderbuffer(NULL, 0, &vis->mesa_visual, GL_FALSE);
    if (!b->frontxrb) {
       _mesa_free(b);
       return NULL;
@@ -399,8 +398,7 @@ create_xmesa_buffer(XMesaDrawable d, BufferType type,
     * Back renderbuffer
     */
    if (vis->mesa_visual.doubleBufferMode) {
-      b->backxrb = xmesa_new_renderbuffer(NULL, 0, &vis->mesa_visual,
-                                          GL_TRUE);
+      b->backxrb = xmesa_new_renderbuffer(NULL, 0, &vis->mesa_visual, GL_TRUE);
       if (!b->backxrb) {
          /* XXX free front xrb too */
          _mesa_free(b);
