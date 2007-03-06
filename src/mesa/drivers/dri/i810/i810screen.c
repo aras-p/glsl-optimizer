@@ -398,7 +398,8 @@ i810CreateBuffer( __DRIscreenPrivate *driScrnPriv,
 static void
 i810DestroyBuffer(__DRIdrawablePrivate *driDrawPriv)
 {
-   _mesa_destroy_framebuffer((GLframebuffer *) (driDrawPriv->driverPrivate));
+    /* _mesa_destroy_framebuffer((GLframebuffer *) (driDrawPriv->driverPrivate)); */
+    _mesa_dereference_framebuffer((GLframebuffer **)(&(driDrawPriv->driverPrivate)));
 }
 
 
