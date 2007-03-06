@@ -1482,9 +1482,13 @@ emit(slang_emit_info *emitInfo, slang_ir_node *n)
       return emit_swizzle(emitInfo, n);
 
    case IR_I_TO_F:
-      {
-         n->Store = n->Children[0]->Store;
-      }
+      /* just move */
+      emit(emitInfo, n->Children[0]);
+      inst = new_instruction(emitInfo, OPCODE_MOV);
+      storage_to_dst_reg(&inst->DstReg, n->Store, n->Writemask);
+      storage_to_src_reg(&inst->SrcReg[0], n->Children[0]->Store);
+      if (emitInfo->EmitComments)
+         inst->Comment = _mesa_strdup("int to float");
       return NULL;
 
    /* Simple arithmetic */
