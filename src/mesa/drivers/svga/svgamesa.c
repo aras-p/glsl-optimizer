@@ -433,7 +433,6 @@ void SVGAMesaDestroyContext( SVGAMesaContext ctx )
    if (ctx) {
       _mesa_destroy_visual( ctx->gl_vis );
       _mesa_destroy_context( ctx->gl_ctx );
-      _mesa_destroy_framebuffer( ctx->gl_buffer );
       free( ctx );
       if (ctx==SVGAMesa) {
          SVGAMesa = NULL;

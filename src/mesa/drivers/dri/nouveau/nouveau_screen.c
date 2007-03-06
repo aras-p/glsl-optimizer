@@ -202,7 +202,7 @@ nouveauCreateBuffer(__DRIscreenPrivate *driScrnPriv,
 static void
 nouveauDestroyBuffer(__DRIdrawablePrivate *driDrawPriv)
 {
-	_mesa_destroy_framebuffer((GLframebuffer *) (driDrawPriv->driverPrivate));
+	_mesa_unreference_framebuffer((GLframebuffer **)(&(driDrawPriv->driverPrivate)));
 }
 
 static int

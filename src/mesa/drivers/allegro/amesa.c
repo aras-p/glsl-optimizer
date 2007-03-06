@@ -338,7 +338,7 @@ void AMesaDestroyBuffer(AMesaBuffer buffer)
 {
    if (buffer->Screen)     destroy_bitmap(buffer->Screen);
    if (buffer->Background) destroy_bitmap(buffer->Background);
-   _mesa_destroy_framebuffer(buffer->GLBuffer);
+   _mesa_unreference_framebuffer(&buffer->GLBuffer);
    free(buffer);
 }
 

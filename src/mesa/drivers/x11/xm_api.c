@@ -485,8 +485,8 @@ xmesa_free_buffer(XMesaBuffer buffer)
 
          /* mark as delete pending */
          fb->DeletePending = GL_TRUE;
-         /* Dereference.  If count = zero we'll really delete the buffer */
-         _mesa_dereference_framebuffer(&fb);
+         /* Unreference.  If count = zero we'll really delete the buffer */
+         _mesa_unreference_framebuffer(&fb);
 
          return;
       }

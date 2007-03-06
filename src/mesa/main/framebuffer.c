@@ -78,7 +78,7 @@ set_depth_renderbuffer(struct gl_framebuffer *fb,
                        struct gl_renderbuffer *rb)
 {
    if (fb->_DepthBuffer) {
-      _mesa_dereference_renderbuffer(&fb->_DepthBuffer);
+      _mesa_unreference_renderbuffer(&fb->_DepthBuffer);
    }
    fb->_DepthBuffer = rb;
    if (rb) {
@@ -96,7 +96,7 @@ set_stencil_renderbuffer(struct gl_framebuffer *fb,
                          struct gl_renderbuffer *rb)
 {
    if (fb->_StencilBuffer) {
-      _mesa_dereference_renderbuffer(&fb->_StencilBuffer);
+      _mesa_unreference_renderbuffer(&fb->_StencilBuffer);
    }
    fb->_StencilBuffer = rb;
    if (rb) {
@@ -223,7 +223,7 @@ _mesa_free_framebuffer_data(struct gl_framebuffer *fb)
    for (i = 0; i < BUFFER_COUNT; i++) {
       struct gl_renderbuffer_attachment *att = &fb->Attachment[i];
       if (att->Renderbuffer) {
-         _mesa_dereference_renderbuffer(&att->Renderbuffer);
+         _mesa_unreference_renderbuffer(&att->Renderbuffer);
       }
       if (att->Texture) {
          /* render to texture */
@@ -236,7 +236,6 @@ _mesa_free_framebuffer_data(struct gl_framebuffer *fb)
          }
       }
       att->Type = GL_NONE;
-      att->Renderbuffer = NULL;
       att->Texture = NULL;
    }
 
@@ -247,25 +246,44 @@ _mesa_free_framebuffer_data(struct gl_framebuffer *fb)
 
 
 /**
- * Decrement the reference count on a framebuffer and delete it when
- * the refcount hits zero.
- * Note: we pass the address of a pointer and set it to NULL if we delete it.
+ * Set *ptr to point to fb, with refcounting and locking.
  */
 void
-_mesa_dereference_framebuffer(struct gl_framebuffer **fb)
+_mesa_reference_framebuffer(struct gl_framebuffer **ptr,
+                            struct gl_framebuffer *fb)
 {
-   GLboolean deleteFlag = GL_FALSE;
+   assert(ptr);
+   assert(!*ptr);
+   assert(fb);
+   _glthread_LOCK_MUTEX(fb->Mutex);
+   fb->RefCount++;
+   _glthread_UNLOCK_MUTEX(fb->Mutex);
+   *ptr = fb;
+}
 
-   _glthread_LOCK_MUTEX((*fb)->Mutex);
-   {
+
+/**
+ * Undo/remove a reference to a framebuffer object.
+ * Decrement the framebuffer object's reference count and delete it when
+ * the refcount hits zero.
+ * Note: we pass the address of a pointer and set it to NULL.
+ */
+void
+_mesa_unreference_framebuffer(struct gl_framebuffer **fb)
+{
+   assert(fb);
+   if (*fb) {
+      GLboolean deleteFlag = GL_FALSE;
+
+      _glthread_LOCK_MUTEX((*fb)->Mutex);
       ASSERT((*fb)->RefCount > 0);
       (*fb)->RefCount--;
       deleteFlag = ((*fb)->RefCount == 0);
-   }
-   _glthread_UNLOCK_MUTEX((*fb)->Mutex);
+      _glthread_UNLOCK_MUTEX((*fb)->Mutex);
+      
+      if (deleteFlag)
+         (*fb)->Delete(*fb);
 
-   if (deleteFlag) {
-      (*fb)->Delete(*fb);
       *fb = NULL;
    }
 }
