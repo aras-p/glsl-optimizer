@@ -90,7 +90,6 @@ static void r300RegainedLock(radeonContextPtr radeon)
 #else
 		radeonUpdateScissor(radeon->glCtx);
 #endif
-		radeon->lastStamp = drawable->lastStamp;
 	}
 
 	if (sarea->ctx_owner != radeon->dri.hwContext) {

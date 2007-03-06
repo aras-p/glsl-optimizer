@@ -51,6 +51,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "radeon_macros.h"
 #include "radeon_reg.h"
 
+#include "radeon_state.h"
 #include "r300_state.h"
 
 #include "utils.h"
@@ -279,6 +280,8 @@ GLboolean radeonMakeCurrent(__DRIcontextPrivate * driContextPriv,
 
 			r300UpdateWindow(radeon->glCtx);
 			r300UpdateViewportOffset(radeon->glCtx);
+
+			radeonSetCliprects(radeon);
 		}
 
 		_mesa_make_current(radeon->glCtx,
