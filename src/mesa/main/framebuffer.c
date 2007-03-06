@@ -253,6 +253,13 @@ _mesa_reference_framebuffer(struct gl_framebuffer **ptr,
                             struct gl_framebuffer *fb)
 {
    assert(ptr);
+   if (*ptr == fb) {
+      /* no change */
+      return;
+   }
+   if (*ptr) {
+      _mesa_unreference_framebuffer(ptr);
+   }
    assert(!*ptr);
    assert(fb);
    _glthread_LOCK_MUTEX(fb->Mutex);
