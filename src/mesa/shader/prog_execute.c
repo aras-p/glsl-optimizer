@@ -1316,6 +1316,12 @@ _mesa_execute_program(GLcontext * ctx,
             result[2] = (a[2] == b[2]) ? 1.0F : 0.0F;
             result[3] = (a[3] == b[3]) ? 1.0F : 0.0F;
             store_vector4(inst, machine, result);
+            if (DEBUG_PROG) {
+               printf("SEQ (%g %g %g %g) = (%g %g %g %g) == (%g %g %g %g)\n",
+                      result[0], result[1], result[2], result[3],
+                      a[0], a[1], a[2], a[3],
+                      b[0], b[1], b[2], b[3]);
+            }
          }
          break;
       case OPCODE_SFL:         /* set false, operands ignored */
@@ -1334,6 +1340,12 @@ _mesa_execute_program(GLcontext * ctx,
             result[2] = (a[2] >= b[2]) ? 1.0F : 0.0F;
             result[3] = (a[3] >= b[3]) ? 1.0F : 0.0F;
             store_vector4(inst, machine, result);
+            if (DEBUG_PROG) {
+               printf("SGE (%g %g %g %g) = (%g %g %g %g) >= (%g %g %g %g)\n",
+                      result[0], result[1], result[2], result[3],
+                      a[0], a[1], a[2], a[3],
+                      b[0], b[1], b[2], b[3]);
+            }
          }
          break;
       case OPCODE_SGT:         /* set on greater */
@@ -1347,8 +1359,10 @@ _mesa_execute_program(GLcontext * ctx,
             result[3] = (a[3] > b[3]) ? 1.0F : 0.0F;
             store_vector4(inst, machine, result);
             if (DEBUG_PROG) {
-               printf("SGT %g %g %g %g\n",
-                      result[0], result[1], result[2], result[3]);
+               printf("SGT (%g %g %g %g) = (%g %g %g %g) > (%g %g %g %g)\n",
+                      result[0], result[1], result[2], result[3],
+                      a[0], a[1], a[2], a[3],
+                      b[0], b[1], b[2], b[3]);
             }
          }
          break;
@@ -1371,6 +1385,12 @@ _mesa_execute_program(GLcontext * ctx,
             result[2] = (a[2] <= b[2]) ? 1.0F : 0.0F;
             result[3] = (a[3] <= b[3]) ? 1.0F : 0.0F;
             store_vector4(inst, machine, result);
+            if (DEBUG_PROG) {
+               printf("SLE (%g %g %g %g) = (%g %g %g %g) <= (%g %g %g %g)\n",
+                      result[0], result[1], result[2], result[3],
+                      a[0], a[1], a[2], a[3],
+                      b[0], b[1], b[2], b[3]);
+            }
          }
          break;
       case OPCODE_SLT:         /* set on less */
@@ -1383,6 +1403,12 @@ _mesa_execute_program(GLcontext * ctx,
             result[2] = (a[2] < b[2]) ? 1.0F : 0.0F;
             result[3] = (a[3] < b[3]) ? 1.0F : 0.0F;
             store_vector4(inst, machine, result);
+            if (DEBUG_PROG) {
+               printf("SLT (%g %g %g %g) = (%g %g %g %g) < (%g %g %g %g)\n",
+                      result[0], result[1], result[2], result[3],
+                      a[0], a[1], a[2], a[3],
+                      b[0], b[1], b[2], b[3]);
+            }
          }
          break;
       case OPCODE_SNE:         /* set on not equal */
@@ -1395,6 +1421,12 @@ _mesa_execute_program(GLcontext * ctx,
             result[2] = (a[2] != b[2]) ? 1.0F : 0.0F;
             result[3] = (a[3] != b[3]) ? 1.0F : 0.0F;
             store_vector4(inst, machine, result);
+            if (DEBUG_PROG) {
+               printf("SNE (%g %g %g %g) = (%g %g %g %g) != (%g %g %g %g)\n",
+                      result[0], result[1], result[2], result[3],
+                      a[0], a[1], a[2], a[3],
+                      b[0], b[1], b[2], b[3]);
+            }
          }
          break;
       case OPCODE_STR:         /* set true, operands ignored */
