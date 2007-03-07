@@ -899,6 +899,8 @@ static struct prog_instruction *
 emit_jump(slang_emit_info *emitInfo, slang_ir_node *n)
 {
    struct prog_instruction *inst;
+   assert(n);
+   assert(n->Label);
    inst = new_instruction(emitInfo, OPCODE_BRA);
    inst->DstReg.CondMask = COND_TR;  /* always branch */
    inst->BranchTarget = _slang_label_get_location(n->Label);
@@ -1557,6 +1559,8 @@ emit(slang_emit_info *emitInfo, slang_ir_node *n)
    case IR_LABEL:
       return emit_label(emitInfo, n);
    case IR_JUMP:
+      assert(n);
+      assert(n->Label);
       return emit_jump(emitInfo, n);
    case IR_CJUMP0:
       return emit_cjump(emitInfo, n, 0);

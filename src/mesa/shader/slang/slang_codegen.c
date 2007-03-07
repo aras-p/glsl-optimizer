@@ -437,6 +437,7 @@ static slang_ir_node *
 new_label(slang_label *label)
 {
    slang_ir_node *n = new_node0(IR_LABEL);
+   assert(label);
    if (n)
       n->Label = label;
    return n;
@@ -474,6 +475,7 @@ static slang_ir_node *
 new_jump(slang_label *dest)
 {
    slang_ir_node *n = new_node0(IR_JUMP);
+   assert(dest);
    if (n)
       n->Label = dest;
    return n;
@@ -1007,7 +1009,7 @@ slang_inline_function_call(slang_assemble_ctx * A, slang_function *fun,
                                                     &inlined->children,
                                                     inlined->num_children);
       lab->type = SLANG_OPER_LABEL;
-      lab->label = A->CurFunction->end_label;
+      lab->label = A->curFuncEndLabel;
    }
 
    for (i = 0; i < totalArgs; i++) {
@@ -1049,16 +1051,13 @@ _slang_gen_function_call(slang_assemble_ctx *A, slang_function *fun,
 {
    slang_ir_node *n;
    slang_operation *inlined;
-   slang_function *prevFunc;
+   slang_label *prevFuncEndLabel;
+   char name[200];
 
-   prevFunc = A->CurFunction;
-   A->CurFunction = fun;
-
-   if (!A->CurFunction->end_label) {
-      char name[200];
-      sprintf(name, "__endOfFunc_%s_", (char *) A->CurFunction->header.a_name);
-      A->CurFunction->end_label = _slang_label_new(name);
-   }
+   prevFuncEndLabel = A->curFuncEndLabel;
+   sprintf(name, "__endOfFunc_%s_", (char *) fun->header.a_name);
+   A->curFuncEndLabel = _slang_label_new(name);
+   assert(A->curFuncEndLabel);
 
    if (slang_is_asm_function(fun) && !dest) {
       /* assemble assembly function - tree style */
@@ -1088,9 +1087,9 @@ _slang_gen_function_call(slang_assemble_ctx *A, slang_function *fun,
 
    n = _slang_gen_operation(A, oper);
 
-   A->CurFunction->end_label = NULL; /* XXX delete/free? */
-
-   A->CurFunction = prevFunc;
+   /*_slang_label_delete(A->curFuncEndLabel);*/
+   A->curFuncEndLabel = prevFuncEndLabel;
+   assert(A->curFuncEndLabel);
 
    return n;
 }
@@ -1712,7 +1711,8 @@ _slang_gen_return(slang_assemble_ctx * A, slang_operation *oper)
       slang_operation gotoOp;
       slang_operation_construct(&gotoOp);
       gotoOp.type = SLANG_OPER_GOTO;
-      gotoOp.label = A->CurFunction->end_label;
+      gotoOp.label = A->curFuncEndLabel;
+      assert(gotoOp.label);
 
       /* assemble the new code */
       n = _slang_gen_operation(A, &gotoOp);
@@ -1767,9 +1767,10 @@ _slang_gen_return(slang_assemble_ctx * A, slang_operation *oper)
       /* child[1]: goto __endOfFunction */
       jump = &block->children[1];
       jump->type = SLANG_OPER_GOTO;
-      assert(A->CurFunction->end_label);
+      assert(A->curFuncEndLabel);
       /* XXX don't call function? */
-      jump->label = A->CurFunction->end_label;
+      jump->label = A->curFuncEndLabel;
+      assert(jump->label);
 
 #if 0 /* debug */
       printf("NEW RETURN:\n");
@@ -2679,11 +2680,8 @@ _slang_codegen_function(slang_assemble_ctx * A, slang_function * fun)
    /* fold constant expressions, etc. */
    _slang_simplify(fun->body, &A->space, A->atoms);
 
-   A->CurFunction = fun;
-
    /* Create an end-of-function label */
-   if (!A->CurFunction->end_label)
-      A->CurFunction->end_label = _slang_label_new("__endOfFunc__main");
+   A->curFuncEndLabel = _slang_label_new("__endOfFunc__main");
 
    /* push new vartable scope */
    _slang_push_var_table(A->vartable);
@@ -2702,9 +2700,10 @@ _slang_codegen_function(slang_assemble_ctx * A, slang_function * fun)
    }
 
    /* append an end-of-function-label to IR tree */
-   n = new_seq(n, new_label(fun->end_label));
+   n = new_seq(n, new_label(A->curFuncEndLabel));
 
-   A->CurFunction = NULL;
+   /*_slang_label_delete(A->curFuncEndLabel);*/
+   A->curFuncEndLabel = NULL;
 
 #if 0
    printf("************* New AST for %s *****\n", (char*)fun->header.a_name);
