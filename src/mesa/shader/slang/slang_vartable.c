@@ -299,7 +299,7 @@ _slang_free_temp(slang_var_table *vt, slang_ir_storage *store)
       t->Temps[r * 4 + comp] = FREE;
    }
    else {
-      assert(store->Swizzle == SWIZZLE_NOOP);
+      /*assert(store->Swizzle == SWIZZLE_NOOP);*/
       assert(t->ValSize[r*4] == store->Size);
       for (i = 0; i < store->Size; i++) {
          assert(t->Temps[r * 4 + i] == TEMP);
