@@ -221,7 +221,7 @@ lookup_statevar(const char *var, GLint index1, GLint index2, const char *field,
       if (strcmp(field, "ambient") == 0) {
          tokens[3] = STATE_AMBIENT;
       }
-      else if (strcmp(field, "diffuset") == 0) {
+      else if (strcmp(field, "diffuse") == 0) {
          tokens[3] = STATE_DIFFUSE;
       }
       else if (strcmp(field, "specular") == 0) {
