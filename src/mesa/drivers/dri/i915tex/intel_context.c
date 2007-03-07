@@ -580,6 +580,16 @@ intelMakeCurrent(__DRIcontextPrivate * driContextPriv,
          }
       }
 
+      /* set GLframebuffer size to match window, if needed */
+      if (intel_fb->Base.Width != driDrawPriv->w) {
+         _mesa_resize_framebuffer(&intel->ctx, &intel_fb->Base,
+                                  driDrawPriv->w, driDrawPriv->h);
+      }         
+      if (readFb->Width != driReadPriv->w) {
+         _mesa_resize_framebuffer(&intel->ctx, readFb,
+                                  driReadPriv->w, driReadPriv->h);
+      }         
+
       _mesa_make_current(&intel->ctx, &intel_fb->Base, readFb);
 
       /* The drawbuffer won't always be updated by _mesa_make_current: 
@@ -599,16 +609,6 @@ intelMakeCurrent(__DRIcontextPrivate * driContextPriv,
 
 	 intel_draw_buffer(&intel->ctx, &intel_fb->Base);
       }
-
-      /* set initial GLframebuffer size to match window, if needed */
-      if (&intel_fb->Base.Width == 0 && driDrawPriv->w) {
-         _mesa_resize_framebuffer(&intel->ctx, &intel_fb->Base,
-                                  driDrawPriv->w, driDrawPriv->h);
-      }         
-      if (readFb->Width == 0 && driReadPriv->w) {
-         _mesa_resize_framebuffer(&intel->ctx, readFb,
-                                  driReadPriv->w, driReadPriv->h);
-      }         
    }
    else {
       _mesa_make_current(NULL, NULL, NULL);
