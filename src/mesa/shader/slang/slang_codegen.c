@@ -1878,26 +1878,32 @@ _slang_gen_variable(slang_assemble_ctx * A, slang_operation *oper)
  *    v.xy = vec2(a, b);
  * Hard example:
  *    vec3 v;
- *    v.yz = vec2(a, b);
- * this would have to be transformed/swizzled into:
- *    v.yz = vec2(a, b).*xy*         (* = don't care)
- * Instead, we'll effectively do this:
- *    v.y = vec2(a, b).xxxx;
- *    v.z = vec2(a, b).yyyy;
- *
+ *    v.zy = vec2(a, b);
+ * this gets transformed/swizzled into:
+ *    v.zy = vec2(a, b).*yx*         (* = don't care)
+ * This function helps to determine simple vs. non-simple.
  */
 static GLboolean
-_slang_simple_writemask(GLuint writemask)
+_slang_simple_writemask(GLuint writemask, GLuint swizzle)
 {
    switch (writemask) {
    case WRITEMASK_X:
+      return GET_SWZ(swizzle, 0) == SWIZZLE_X;
    case WRITEMASK_Y:
+      return GET_SWZ(swizzle, 1) == SWIZZLE_Y;
    case WRITEMASK_Z:
+      return GET_SWZ(swizzle, 2) == SWIZZLE_Z;
    case WRITEMASK_W:
+      return GET_SWZ(swizzle, 3) == SWIZZLE_W;
    case WRITEMASK_XY:
+      return (GET_SWZ(swizzle, 0) == SWIZZLE_X)
+         && (GET_SWZ(swizzle, 1) == SWIZZLE_Y);
    case WRITEMASK_XYZ:
+      return (GET_SWZ(swizzle, 0) == SWIZZLE_X)
+         && (GET_SWZ(swizzle, 1) == SWIZZLE_Y)
+         && (GET_SWZ(swizzle, 2) == SWIZZLE_Z);
    case WRITEMASK_XYZW:
-      return GL_TRUE;
+      return swizzle == SWIZZLE_NOOP;
    default:
       return GL_FALSE;
    }
@@ -1948,7 +1954,7 @@ swizzle_to_writemask(GLuint swizzle,
                                newSwizzle[2],
                                newSwizzle[3]);
 
-   if (_slang_simple_writemask(mask)) {
+   if (_slang_simple_writemask(mask, *swizzleOut)) {
       if (size >= 1)
          assert(GET_SWZ(*swizzleOut, 0) == SWIZZLE_X);
       if (size >= 2)
