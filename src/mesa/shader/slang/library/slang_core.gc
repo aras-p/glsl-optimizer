@@ -2333,8 +2333,8 @@ ivec4 __postDecr(inout ivec4 v)
 
 float __postDecr(inout float a)
 {
-   __retVal = v;
-   v = v - 1.0;
+   __retVal = a;
+   a = a - 1.0;
 }
 
 vec2 __postDecr(inout vec2 v)
