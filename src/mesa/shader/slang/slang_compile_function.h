@@ -66,11 +66,6 @@ typedef struct slang_function_
    slang_operation *body;      /**< The instruction tree */
    unsigned int address;       /**< Address of this func in memory */
    slang_fixup_table fixups;   /**< Mem locations which need func's address */
-#if 0
-   slang_atom end_label;       /**< The end-of-function label */
-#else
-   struct slang_label_ *end_label;
-#endif
 } slang_function;
 
 extern int slang_function_construct(slang_function *);

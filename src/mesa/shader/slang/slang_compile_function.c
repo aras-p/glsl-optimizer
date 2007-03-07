@@ -86,7 +86,6 @@ slang_function_construct(slang_function * func)
    func->param_count = 0;
    func->body = NULL;
    func->address = ~0;
-   func->end_label = 0;
    slang_fixup_table_init(&func->fixups);
    return 1;
 }
