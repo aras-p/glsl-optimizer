@@ -2077,6 +2077,10 @@ _slang_gen_field(slang_assemble_ctx * A, slang_operation *oper)
       GLint size = 4; /* XXX fix? */
 
       base = _slang_gen_operation(A, &oper->children[0]);
+      if (!base) {
+         /* error previously found */
+         return NULL;
+      }
 
       n = new_node1(IR_FIELD, base);
       if (n) {
@@ -2118,6 +2122,7 @@ _slang_gen_subscript(slang_assemble_ctx * A, slang_operation *oper)
       if (oper->children[1].type != SLANG_OPER_LITERAL_INT ||
           index >= max) {
          slang_info_log_error(A->log, "Invalid array index for vector type");
+         return NULL;
       }
 
       n = _slang_gen_operation(A, &oper->children[0]);
@@ -2143,7 +2148,11 @@ _slang_gen_subscript(slang_assemble_ctx * A, slang_operation *oper)
       slang_typeinfo_construct(&elem_ti);
       _slang_typeof_operation(A, oper, &elem_ti);
       elemSize = _slang_sizeof_type_specifier(&elem_ti.spec);
-      assert(elemSize >= 1);
+      if (elemSize <= 0) {
+         /* unknown var or type */
+         slang_info_log_error(A->log, "Undefined var or type");
+         return NULL;
+      }
 
       array = _slang_gen_operation(A, &oper->children[0]);
       index = _slang_gen_operation(A, &oper->children[1]);
