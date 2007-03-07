@@ -104,7 +104,33 @@ lookup_statevar(const char *var, GLint index1, GLint index2, const char *field,
          tokens[0] = STATE_POINT_SIZE;
          *swizzleOut = SWIZZLE_XXXX;
       }
-         /* XXX finish */
+      else if (strcmp(field, "sizeMin") == 0) {
+         tokens[0] = STATE_POINT_SIZE;
+         *swizzleOut = SWIZZLE_YYYY;
+      }
+      else if (strcmp(field, "sizeMax") == 0) {
+         tokens[0] = STATE_POINT_SIZE;
+         *swizzleOut = SWIZZLE_ZZZZ;
+      }
+      else if (strcmp(field, "fadeThresholdSize") == 0) {
+         tokens[0] = STATE_POINT_SIZE;
+         *swizzleOut = SWIZZLE_WWWW;
+      }
+      else if (strcmp(field, "distanceConstantAttenuation") == 0) {
+         tokens[0] = STATE_POINT_ATTENUATION;
+         *swizzleOut = SWIZZLE_XXXX;
+      }
+      else if (strcmp(field, "distanceLinearAttenuation") == 0) {
+         tokens[0] = STATE_POINT_ATTENUATION;
+         *swizzleOut = SWIZZLE_YYYY;
+      }
+      else if (strcmp(field, "distanceQuadraticAttenuation") == 0) {
+         tokens[0] = STATE_POINT_ATTENUATION;
+         *swizzleOut = SWIZZLE_ZZZZ;
+      }
+      else {
+         return -1;
+      }
    }
    else if (strcmp(var, "gl_FrontMaterial") == 0 ||
             strcmp(var, "gl_BackMaterial") == 0) {
@@ -343,6 +369,7 @@ GLint
 _slang_alloc_statevar(slang_ir_node *n,
                       struct gl_program_parameter_list *paramList)
 {
+   slang_ir_node *n0 = n;
    const char *field = NULL, *var;
    GLint index1 = -1, index2 = -1, pos;
    GLuint swizzle;
@@ -372,8 +399,8 @@ _slang_alloc_statevar(slang_ir_node *n,
    pos = lookup_statevar(var, index1, index2, field, &swizzle, paramList);
    assert(pos >= 0);
    if (pos >= 0) {
-      n->Store->Index = pos;
-      n->Store->Swizzle = swizzle;
+      n0->Store->Index = pos;
+      n0->Store->Swizzle = swizzle;
    }
    return pos;
 }
