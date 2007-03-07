@@ -1351,7 +1351,7 @@ _swrast_write_rgba_span( GLcontext *ctx, SWspan *span)
    }
    else if (shaderOrTexture) {
       if (ctx->FragmentProgram._Current) {
-         if (ctx->FragmentProgram.Current->Base.OutputsWritten
+         if (ctx->FragmentProgram._Current->Base.OutputsWritten
              & (1 << FRAG_RESULT_DEPR)) {
             /* Z comes from fragment program/shader */
             deferredTexture = GL_FALSE;
