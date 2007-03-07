@@ -1381,7 +1381,6 @@ emit_struct_field(slang_emit_info *emitInfo, slang_ir_node *n)
 {
    if (n->Store->File == PROGRAM_STATE_VAR) {
       n->Store->Index = _slang_alloc_statevar(n, emitInfo->prog->Parameters);
-      return NULL;
    }
    else {
       _mesa_problem(NULL, "structs/fields not supported yet");
