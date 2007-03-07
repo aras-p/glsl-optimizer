@@ -54,8 +54,8 @@ _mesa_GetString( GLenum name )
    static const char *version_1_3 = "1.3 Mesa " MESA_VERSION_STRING;
    static const char *version_1_4 = "1.4 Mesa " MESA_VERSION_STRING;
    static const char *version_1_5 = "1.5 Mesa " MESA_VERSION_STRING;
-   static const char *version_2_0 = "1.5 Mesa " MESA_VERSION_STRING;
-   static const char *version_2_1 = "1.5 Mesa " MESA_VERSION_STRING;
+   static const char *version_2_0 = "2.0 Mesa " MESA_VERSION_STRING;
+   static const char *version_2_1 = "2.1 Mesa " MESA_VERSION_STRING;
 
 #if FEATURE_ARB_shading_language_100
    static const char *sl_version_110 = "1.10 Mesa " MESA_VERSION_STRING;
