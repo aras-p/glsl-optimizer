@@ -961,8 +961,10 @@ _mesa_uniform(GLcontext *ctx, GLint location, GLsizei count,
    }
 
    if (shProg->Uniforms->Parameters[location].Type == PROGRAM_SAMPLER) {
-      _slang_resolve_samplers(shProg, &shProg->VertexProgram->Base);
-      _slang_resolve_samplers(shProg, &shProg->FragmentProgram->Base);
+      if (shProg->VertexProgram)
+         _slang_resolve_samplers(shProg, &shProg->VertexProgram->Base);
+      if (shProg->FragmentProgram)
+         _slang_resolve_samplers(shProg, &shProg->FragmentProgram->Base);
       FLUSH_VERTICES(ctx, _NEW_TEXTURE);
    }
 }
