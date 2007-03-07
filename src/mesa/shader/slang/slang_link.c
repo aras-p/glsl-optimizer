@@ -550,13 +550,13 @@ _slang_link(GLcontext *ctx,
 
    if (shProg->VertexProgram) {
       _slang_update_inputs_outputs(&shProg->VertexProgram->Base);
-      if (!(shProg->VertexProgram->Base.OutputsWritten & VERT_RESULT_HPOS)) {
+      if (!(shProg->VertexProgram->Base.OutputsWritten & (1 << VERT_RESULT_HPOS))) {
          /* the vertex program did not compute a vertex position */
          if (shProg->InfoLog) {
             _mesa_free(shProg->InfoLog);
          }
          shProg->InfoLog
-            = _mesa_strdup("gl_Position was not written by vertex shader");
+            = _mesa_strdup("gl_Position was not written by vertex shader\n");
          shProg->LinkStatus = GL_FALSE;
          return;
       }
