@@ -77,8 +77,8 @@ typedef enum slang_operation_type_
    SLANG_OPER_NOTEQUAL,         /* [expr] "!=" [expr] */
    SLANG_OPER_LESS,             /* [expr] "<" [expr] */
    SLANG_OPER_GREATER,          /* [expr] ">" [expr] */
-   SLANG_OPER_LESSequal,        /* [expr] "<=" [expr] */
-   SLANG_OPER_GREATERequal,     /* [expr] ">=" [expr] */
+   SLANG_OPER_LESSEQUAL,        /* [expr] "<=" [expr] */
+   SLANG_OPER_GREATEREQUAL,     /* [expr] ">=" [expr] */
    /*SLANG_OPER_LSHIFT, */
    /*SLANG_OPER_RSHIFT, */
    SLANG_OPER_ADD,              /* [expr] "+" [expr] */

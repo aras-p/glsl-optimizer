@@ -499,11 +499,11 @@ slang_print_tree(const slang_operation *op, int indent)
       print_binary(op, ">", indent);
       break;
 
-   case SLANG_OPER_LESSequal:
+   case SLANG_OPER_LESSEQUAL:
       print_binary(op, "<=", indent);
       break;
 
-   case SLANG_OPER_GREATERequal:
+   case SLANG_OPER_GREATEREQUAL:
       print_binary(op, ">=", indent);
       break;
 

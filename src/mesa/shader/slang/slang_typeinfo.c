@@ -392,8 +392,8 @@ _slang_typeof_operation_(const slang_operation * op,
    case SLANG_OPER_NOTEQUAL:
    case SLANG_OPER_LESS:
    case SLANG_OPER_GREATER:
-   case SLANG_OPER_LESSequal:
-   case SLANG_OPER_GREATERequal:
+   case SLANG_OPER_LESSEQUAL:
+   case SLANG_OPER_GREATEREQUAL:
    case SLANG_OPER_NOT:
       ti->spec.type = SLANG_SPEC_BOOL;
       break;

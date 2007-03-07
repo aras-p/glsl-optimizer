@@ -1037,12 +1037,12 @@ parse_expression(slang_parse_ctx * C, slang_output_ctx * O,
             return 0;
          break;
       case OP_LESSEQUAL:
-         op->type = SLANG_OPER_LESSequal;
+         op->type = SLANG_OPER_LESSEQUAL;
          if (!handle_nary_expression(C, op, &ops, &num_ops, 2))
             return 0;
          break;
       case OP_GREATEREQUAL:
-         op->type = SLANG_OPER_GREATERequal;
+         op->type = SLANG_OPER_GREATEREQUAL;
          if (!handle_nary_expression(C, op, &ops, &num_ops, 2))
             return 0;
          break;

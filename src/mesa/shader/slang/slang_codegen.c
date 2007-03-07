@@ -1650,8 +1650,8 @@ _slang_gen_logical_and(slang_assemble_ctx *A, slang_operation *oper)
    slang_operation_copy(&select->children[0], &oper->children[0]);
    slang_operation_copy(&select->children[1], &oper->children[1]);
    select->children[2].type = SLANG_OPER_LITERAL_BOOL;
-   ASSIGN_4V(select->children[2].literal, 0, 0, 0, 0);
-   select->children[2].literal_size = 2;
+   ASSIGN_4V(select->children[2].literal, 0, 0, 0, 0); /* false */
+   select->children[2].literal_size = 1;
 
    n = _slang_gen_select(A, select);
 
@@ -1680,9 +1680,9 @@ _slang_gen_logical_or(slang_assemble_ctx *A, slang_operation *oper)
 
    slang_operation_copy(&select->children[0], &oper->children[0]);
    select->children[1].type = SLANG_OPER_LITERAL_BOOL;
-   ASSIGN_4V(select->children[2].literal, 1, 1, 1, 1);
+   ASSIGN_4V(select->children[1].literal, 1, 1, 1, 1); /* true */
+   select->children[1].literal_size = 1;
    slang_operation_copy(&select->children[2], &oper->children[1]);
-   select->children[2].literal_size = 2;
 
    n = _slang_gen_select(A, select);
 
@@ -2281,11 +2281,11 @@ _slang_gen_operation(slang_assemble_ctx * A, slang_operation *oper)
       return new_node2(IR_SGT,
                       _slang_gen_operation(A, &oper->children[1]),
                       _slang_gen_operation(A, &oper->children[0]));
-   case SLANG_OPER_GREATERequal:
+   case SLANG_OPER_GREATEREQUAL:
       return new_node2(IR_SGE,
                       _slang_gen_operation(A, &oper->children[0]),
                       _slang_gen_operation(A, &oper->children[1]));
-   case SLANG_OPER_LESSequal:
+   case SLANG_OPER_LESSEQUAL:
       /* child[0] <= child[1]  ---->   child[1] >= child[0] */
       return new_node2(IR_SGE,
                       _slang_gen_operation(A, &oper->children[1]),
