@@ -901,7 +901,7 @@ radeonCreateBuffer( __DRIscreenPrivate *driScrnPriv,
 static void
 radeonDestroyBuffer(__DRIdrawablePrivate *driDrawPriv)
 {
-   _mesa_destroy_framebuffer((GLframebuffer *) (driDrawPriv->driverPrivate));
+   _mesa_unreference_framebuffer((GLframebuffer **)(&(driDrawPriv->driverPrivate)));
 }
 
 #if RADEON_COMMON && defined(RADEON_COMMON_FOR_R300)

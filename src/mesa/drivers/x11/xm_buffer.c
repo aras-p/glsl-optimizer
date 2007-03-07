@@ -418,6 +418,18 @@ xmesa_delete_framebuffer(struct gl_framebuffer *fb)
       XMesaDestroyImage( b->rowimage );
    }
 
+   /* Note that XMesaBuffer renderbuffers normally have a refcount of 2
+    * (creation + binding) so we need to explicitly delete/unbind them here.
+    */
+   if (b->frontxrb) {
+      _mesa_unreference_renderbuffer((struct gl_renderbuffer **) &b->frontxrb);
+      ASSERT(b->frontxrb == NULL);
+   }
+   if (b->backxrb) {
+      _mesa_unreference_renderbuffer((struct gl_renderbuffer **) &b->backxrb);
+      ASSERT(b->backxrb == NULL);
+   }
+
    _mesa_free_framebuffer_data(fb);
    _mesa_free(fb);
 }
