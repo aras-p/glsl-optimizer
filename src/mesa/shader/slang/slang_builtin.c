@@ -76,8 +76,8 @@ lookup_statevar(const char *var, GLint index1, GLint index2, const char *field,
    }
    else if (strcmp(var, "gl_TextureMatrix") == 0) {
       tokens[0] = STATE_TEXTURE_MATRIX;
-      if (index2 >= 0)
-         tokens[1] = index2;
+      if (index1 >= 0)
+         tokens[1] = index1;
       isMatrix = GL_TRUE;
    }
    else if (strcmp(var, "gl_DepthRange") == 0) {
