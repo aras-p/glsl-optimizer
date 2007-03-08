@@ -1559,80 +1559,12 @@ _slang_gen_var_decl(slang_assemble_ctx *A, slang_variable *var)
 
 /**
  * Generate code for a selection expression:   b ? x : y
- * XXX in some cases we could implement a selection expression
+ * XXX In some cases we could implement a selection expression
  * with an LRP instruction (use the boolean as the interpolant).
+ * Otherwise, we use an IF/ELSE/ENDIF construct.
  */
 static slang_ir_node *
 _slang_gen_select(slang_assemble_ctx *A, slang_operation *oper)
-{
-   slang_label *altLabel, *endLabel;
-   slang_ir_node *altLab, *endLab;
-   slang_ir_node *tree, *tmpDecl, *tmpVar, *cond, *cjump, *jump;
-   slang_ir_node *bodx, *body, *assignx, *assigny;
-   slang_typeinfo type;
-   int size;
-
-   assert(oper->type == SLANG_OPER_SELECT);
-   assert(oper->num_children == 3);
-
-   altLabel = _slang_label_new("selectAlt");
-   endLabel = _slang_label_new("selectEnd");
-
-   /* size of x or y's type */
-   slang_typeinfo_construct(&type);
-   _slang_typeof_operation(A, &oper->children[1], &type);
-   size = _slang_sizeof_type_specifier(&type.spec);
-   assert(size > 0);
-
-   /* temporary var */
-   tmpDecl = _slang_gen_temporary(size);
-
-   /* eval condition */
-   cond = _slang_gen_operation(A, &oper->children[0]);
-   cond = new_cond(cond);
-   tree = new_seq(tmpDecl, cond);
-
-   /* jump if false to "alt" label */
-   cjump = new_cjump(altLabel, 0);
-   tree = new_seq(tree, cjump);
-
-   /* evaluate child 1 (x) and assign to tmp */
-   tmpVar = new_node0(IR_VAR);
-   tmpVar->Store = tmpDecl->Store;
-   body = _slang_gen_operation(A, &oper->children[1]);
-   assigny = new_node2(IR_MOVE, tmpVar, body);
-   tree = new_seq(tree, assigny);
-
-   /* jump to "end" label */
-   jump = new_jump(endLabel);
-   tree = new_seq(tree, jump);
-
-   /* "alt" label */
-   altLab = new_label(altLabel);
-   tree = new_seq(tree, altLab);
-
-   /* evaluate child 2 (y) and assign to tmp */
-   tmpVar = new_node0(IR_VAR);
-   tmpVar->Store = tmpDecl->Store;
-   bodx = _slang_gen_operation(A, &oper->children[2]);
-   assignx = new_node2(IR_MOVE, tmpVar, bodx);
-   tree = new_seq(tree, assignx);
-
-   /* "end" label */
-   endLab = new_label(endLabel);
-   tree = new_seq(tree, endLab);
-   
-   /* tmp var value */
-   tmpVar = new_node0(IR_VAR);
-   tmpVar->Store = tmpDecl->Store;
-   tree = new_seq(tree, tmpVar);
-
-   return tree;
-}
-
-
-static slang_ir_node *
-_slang_gen_hl_select(slang_assemble_ctx *A, slang_operation *oper)
 {
    slang_ir_node *cond, *ifNode, *trueExpr, *falseExpr, *trueNode, *falseNode;
    slang_ir_node *tmpDecl, *tmpVar, *tree;
@@ -1675,6 +1607,8 @@ _slang_gen_hl_select(slang_assemble_ctx *A, slang_operation *oper)
 
    tree = new_seq(ifNode, tmpVar);
    tree = new_seq(tmpDecl, tree);
+
+   slang_print_ir(tree, 10);
    return tree;
 }
 
@@ -2056,7 +1990,9 @@ _slang_gen_assignment(slang_assemble_ctx * A, slang_operation *oper)
       slang_ir_node *n, *lhs, *rhs;
       lhs = _slang_gen_operation(A, &oper->children[0]);
       if (lhs->Store->File != PROGRAM_OUTPUT &&
-          lhs->Store->File != PROGRAM_TEMPORARY) {
+          lhs->Store->File != PROGRAM_TEMPORARY &&
+          lhs->Store->File != PROGRAM_VARYING &&
+          lhs->Store->File != PROGRAM_UNDEFINED) {
          slang_info_log_error(A->log, "Assignment to read-only variable");
          return NULL;
       }
@@ -2492,7 +2428,7 @@ _slang_gen_operation(slang_assemble_ctx * A, slang_operation *oper)
       {
 	 slang_ir_node *n;
          assert(oper->num_children == 3);
-	 n = _slang_gen_hl_select(A, oper);
+	 n = _slang_gen_select(A, oper);
 	 return n;
       }
 
