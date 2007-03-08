@@ -62,7 +62,7 @@ lookup_statevar(const char *var, GLint index1, GLint index2, const char *field,
       tokens[0] = STATE_MODELVIEW_MATRIX;
       isMatrix = GL_TRUE;
    }
-   else if (strcmp(var, "gl_ModelProjectionMatrix") == 0) {
+   else if (strcmp(var, "gl_ProjectionMatrix") == 0) {
       tokens[0] = STATE_PROJECTION_MATRIX;
       isMatrix = GL_TRUE;
    }
