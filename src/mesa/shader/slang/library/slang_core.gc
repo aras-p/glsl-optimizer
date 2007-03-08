@@ -322,6 +322,12 @@ ivec4 __constructor(const bool b)
 
 //// bvec2 constructors
 
+bvec2 __constructor(const bool b1, const bool b2)
+{
+   __retVal.x = b1;
+   __retVal.y = b2;
+}
+
 bvec2 __constructor(const bool b)
 {
    __retVal.xy = b.xx;
@@ -342,6 +348,13 @@ bvec2 __constructor(const int i)
 
 //// bvec3 constructors
 
+bvec3 __constructor(const bool b1, const bool b2, const bool b3)
+{
+   __retVal.x = b1;
+   __retVal.y = b2;
+   __retVal.z = b3;
+}
+
 bvec3 __constructor(const bool b)
 {
    __retVal.xyz = b.xxx;
@@ -361,6 +374,14 @@ bvec3 __constructor(const int i)
 
 
 //// bvec4 constructors
+
+bvec4 __constructor(const bool b1, const bool b2, const bool b3, const bool b4)
+{
+   __retVal.x = b1;
+   __retVal.y = b2;
+   __retVal.z = b3;
+   __retVal.w = b4;
+}
 
 bvec4 __constructor(const bool b)
 {
