@@ -212,3 +212,13 @@ slang_operation_insert(GLuint *numChildren, slang_operation **children,
    return NULL;
 }
 
+
+void
+_slang_operation_swap(slang_operation *oper0, slang_operation *oper1)
+{
+   slang_operation tmp = *oper0;
+   *oper0 = *oper1;
+   *oper1 = tmp;
+}
+
+

@@ -49,6 +49,42 @@ lookup_statevar(const char *var, GLint index1, GLint index2, const char *field,
                 GLuint *swizzleOut,
                 struct gl_program_parameter_list *paramList)
 {
+   /*
+    * NOTE: The ARB_vertex_program extension specified that matrices get
+    * loaded in registers in row-major order.  With GLSL, we want column-
+    * major order.  So, we need to transpose all matrices here...
+    */
+   static const struct {
+      const char *name;
+      gl_state_index matrix;
+      gl_state_index modifier;
+   } matrices[] = {
+      { "gl_ModelViewMatrix", STATE_MODELVIEW_MATRIX, STATE_MATRIX_TRANSPOSE },
+      { "gl_ModelViewMatrixInverse", STATE_MODELVIEW_MATRIX, STATE_MATRIX_INVTRANS },
+      { "gl_ModelViewMatrixTranspose", STATE_MODELVIEW_MATRIX, 0 },
+      { "gl_ModelViewMatrixInverseTranspose", STATE_MODELVIEW_MATRIX, STATE_MATRIX_INVERSE },
+
+      { "gl_ProjectionMatrix", STATE_PROJECTION_MATRIX, STATE_MATRIX_TRANSPOSE },
+      { "gl_ProjectionMatrixInverse", STATE_PROJECTION_MATRIX, STATE_MATRIX_INVTRANS },
+      { "gl_ProjectionMatrixTranpose", STATE_PROJECTION_MATRIX, 0 },
+      { "gl_ProjectionMatrixInverseTranpose", STATE_PROJECTION_MATRIX, STATE_MATRIX_INVERSE },
+
+      { "gl_ModelViewProjectionMatrix", STATE_MVP_MATRIX, STATE_MATRIX_TRANSPOSE },
+      { "gl_ModelViewProjectionMatrixInverse", STATE_MVP_MATRIX, STATE_MATRIX_INVTRANS },
+      { "gl_ModelViewProjectionMatrixTranspose", STATE_MVP_MATRIX, 0 },
+      { "gl_ModelViewProjectionMatrixInverseTranpose", STATE_MVP_MATRIX, STATE_MATRIX_INVERSE },
+
+      { "gl_TextureMatrix", STATE_TEXTURE_MATRIX, STATE_MATRIX_TRANSPOSE },
+      { "gl_TextureMatrixInverse", STATE_TEXTURE_MATRIX, STATE_MATRIX_INVTRANS },
+      { "gl_TextureMatrixTranpose", STATE_TEXTURE_MATRIX, 0 },
+      { "gl_TextureMatrixInverseTranspose", STATE_TEXTURE_MATRIX, STATE_MATRIX_INVERSE },
+
+      /* XXX verify these!!! */
+      { "gl_NormalMatrix", STATE_MODELVIEW_MATRIX, STATE_MATRIX_TRANSPOSE },
+      { "__NormalMatrixTranspose", STATE_MODELVIEW_MATRIX, 0 },
+
+      { NULL, 0, 0 }
+   };
    gl_state_index tokens[STATE_LENGTH];
    GLuint i;
    GLboolean isMatrix = GL_FALSE;
@@ -58,27 +94,24 @@ lookup_statevar(const char *var, GLint index1, GLint index2, const char *field,
    }
    *swizzleOut = SWIZZLE_NOOP;
 
-   if (strcmp(var, "gl_ModelViewMatrix") == 0) {
-      tokens[0] = STATE_MODELVIEW_MATRIX;
-      isMatrix = GL_TRUE;
+   /* first, look if var is a pre-defined matrix */
+   for (i = 0; matrices[i].name; i++) {
+      if (strcmp(var, matrices[i].name) == 0) {
+         tokens[0] = matrices[i].matrix;
+         /* tokens[1], [2] and [3] filled below */
+         tokens[4] = matrices[i].modifier;
+         isMatrix = GL_TRUE;
+         break;
+      }
    }
-   else if (strcmp(var, "gl_ProjectionMatrix") == 0) {
-      tokens[0] = STATE_PROJECTION_MATRIX;
-      isMatrix = GL_TRUE;
-   }
-   else if (strcmp(var, "gl_ModelViewProjectionMatrix") == 0) {
-      tokens[0] = STATE_MVP_MATRIX;
-      isMatrix = GL_TRUE;
-   }
-   else if (strcmp(var, "gl_NormalMatrix") == 0) {
-      tokens[0] = STATE_MODELVIEW_MATRIX;
-      isMatrix = GL_TRUE;
-   }
-   else if (strcmp(var, "gl_TextureMatrix") == 0) {
-      tokens[0] = STATE_TEXTURE_MATRIX;
-      if (index1 >= 0)
-         tokens[1] = index1;
-      isMatrix = GL_TRUE;
+
+   if (isMatrix) {
+      if (tokens[0] == STATE_TEXTURE_MATRIX) {
+         if (index1 >= 0) {
+            tokens[1] = index1;
+            index1 = 0; /* prevent extra addition at end of function */
+         }
+      }
    }
    else if (strcmp(var, "gl_DepthRange") == 0) {
       tokens[0] = STATE_DEPTH_RANGE;
