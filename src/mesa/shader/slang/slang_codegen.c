@@ -1461,7 +1461,7 @@ is_operation_type(const const slang_operation *oper, slang_operation_type type)
  * IR_IF instruction.
  */
 static slang_ir_node *
-_slang_gen_hl_if(slang_assemble_ctx * A, const slang_operation *oper)
+_slang_gen_if(slang_assemble_ctx * A, const slang_operation *oper)
 {
    /*
     * eval expr (child[0]), updating condcodes
@@ -2462,7 +2462,7 @@ _slang_gen_operation(slang_assemble_ctx * A, slang_operation *oper)
    case SLANG_OPER_IDENTIFIER:
       return _slang_gen_variable(A, oper);
    case SLANG_OPER_IF:
-      return _slang_gen_hl_if(A, oper);
+      return _slang_gen_if(A, oper);
    case SLANG_OPER_FIELD:
       return _slang_gen_field(A, oper);
    case SLANG_OPER_SUBSCRIPT:
