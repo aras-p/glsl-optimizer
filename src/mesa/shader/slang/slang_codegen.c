@@ -1631,6 +1631,54 @@ _slang_gen_select(slang_assemble_ctx *A, slang_operation *oper)
 }
 
 
+static slang_ir_node *
+_slang_gen_hl_select(slang_assemble_ctx *A, slang_operation *oper)
+{
+   slang_ir_node *cond, *ifNode, *trueExpr, *falseExpr, *trueNode, *falseNode;
+   slang_ir_node *tmpDecl, *tmpVar, *tree;
+   slang_typeinfo type;
+   int size;
+
+   assert(oper->type == SLANG_OPER_SELECT);
+   assert(oper->num_children == 3);
+
+   /* size of x or y's type */
+   slang_typeinfo_construct(&type);
+   _slang_typeof_operation(A, &oper->children[1], &type);
+   size = _slang_sizeof_type_specifier(&type.spec);
+   assert(size > 0);
+
+   /* temporary var */
+   tmpDecl = _slang_gen_temporary(size);
+
+   /* the condition (child 0) */
+   cond = _slang_gen_operation(A, &oper->children[0]);
+   cond = new_cond(cond);
+
+   /* if-true body (child 1) */
+   tmpVar = new_node0(IR_VAR);
+   tmpVar->Store = tmpDecl->Store;
+   trueExpr = _slang_gen_operation(A, &oper->children[1]);
+   trueNode = new_node2(IR_MOVE, tmpVar, trueExpr);
+
+   /* if-false body (child 2) */
+   tmpVar = new_node0(IR_VAR);
+   tmpVar->Store = tmpDecl->Store;
+   falseExpr = _slang_gen_operation(A, &oper->children[2]);
+   falseNode = new_node2(IR_MOVE, tmpVar, falseExpr);
+
+   ifNode = new_if(cond, trueNode, falseNode);
+
+   /* tmp var value */
+   tmpVar = new_node0(IR_VAR);
+   tmpVar->Store = tmpDecl->Store;
+
+   tree = new_seq(ifNode, tmpVar);
+   tree = new_seq(tmpDecl, tree);
+   return tree;
+}
+
+
 /**
  * Generate code for &&.
  */
@@ -2444,7 +2492,7 @@ _slang_gen_operation(slang_assemble_ctx * A, slang_operation *oper)
       {
 	 slang_ir_node *n;
          assert(oper->num_children == 3);
-	 n = _slang_gen_select(A, oper);
+	 n = _slang_gen_hl_select(A, oper);
 	 return n;
       }
 
