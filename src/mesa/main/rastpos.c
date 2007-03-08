@@ -133,8 +133,7 @@ shade_rastpos(GLcontext *ctx,
    GLfloat diffuseColor[4], specularColor[4];  /* for RGB mode only */
    GLfloat diffuseCI = 0.0, specularCI = 0.0;  /* for CI mode only */
 
-   if (!ctx->_ShineTable[0] || !ctx->_ShineTable[1])
-      _mesa_validate_all_lighting_tables( ctx );
+   _mesa_validate_all_lighting_tables( ctx );
 
    COPY_3V(diffuseColor, base[0]);
    diffuseColor[3] = CLAMP( 
