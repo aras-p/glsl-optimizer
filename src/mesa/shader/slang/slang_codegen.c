@@ -327,6 +327,8 @@ static slang_asm_info AsmInfo[] = {
    { "vec4_seq", IR_SEQ, 1, 2 },
    { "vec4_sge", IR_SGE, 1, 2 },
    { "vec4_sgt", IR_SGT, 1, 2 },
+   { "vec4_sle", IR_SLE, 1, 2 },
+   { "vec4_slt", IR_SLT, 1, 2 },
    /* vec4 unary */
    { "vec4_floor", IR_FLOOR, 1, 1 },
    { "vec4_frac", IR_FRAC, 1, 1 },
@@ -609,6 +611,7 @@ _slang_is_noop(const slang_operation *oper)
 
 /**
  * Produce inline code for a call to an assembly instruction.
+ * XXX Note: children are passed as asm args in-order, not by name!
  */
 static slang_operation *
 slang_inline_asm_function(slang_assemble_ctx *A,
@@ -2299,19 +2302,17 @@ _slang_gen_operation(slang_assemble_ctx * A, slang_operation *oper)
                       _slang_gen_operation(A, &oper->children[0]),
                       _slang_gen_operation(A, &oper->children[1]));
    case SLANG_OPER_LESS:
-      /* child[0] < child[1]  ---->   child[1] > child[0] */
-      return new_node2(IR_SGT,
-                      _slang_gen_operation(A, &oper->children[1]),
-                      _slang_gen_operation(A, &oper->children[0]));
+      return new_node2(IR_SLT,
+                      _slang_gen_operation(A, &oper->children[0]),
+                      _slang_gen_operation(A, &oper->children[1]));
    case SLANG_OPER_GREATEREQUAL:
       return new_node2(IR_SGE,
                       _slang_gen_operation(A, &oper->children[0]),
                       _slang_gen_operation(A, &oper->children[1]));
    case SLANG_OPER_LESSEQUAL:
-      /* child[0] <= child[1]  ---->   child[1] >= child[0] */
-      return new_node2(IR_SGE,
-                      _slang_gen_operation(A, &oper->children[1]),
-                      _slang_gen_operation(A, &oper->children[0]));
+      return new_node2(IR_SLE,
+                       _slang_gen_operation(A, &oper->children[0]),
+                       _slang_gen_operation(A, &oper->children[1]));
    case SLANG_OPER_ADD:
       {
 	 slang_ir_node *n;

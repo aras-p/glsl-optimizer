@@ -95,6 +95,8 @@ static const slang_ir_info IrInfo[] = {
    { IR_SNEQUAL, "IR_SNEQUAL", OPCODE_SNE, 4, 2 },
    { IR_SGE, "IR_SGE", OPCODE_SGE, 4, 2 },
    { IR_SGT, "IR_SGT", OPCODE_SGT, 4, 2 },
+   { IR_SLE, "IR_SLE", OPCODE_SLE, 4, 2 },
+   { IR_SLT, "IR_SLT", OPCODE_SLT, 4, 2 },
    { IR_POW, "IR_POW", OPCODE_POW, 1, 2 },
    /* unary ops */
    { IR_I_TO_F, "IR_I_TO_F", OPCODE_NOP, 1, 1 },
@@ -1495,6 +1497,8 @@ emit(slang_emit_info *emitInfo, slang_ir_node *n)
    case IR_SNEQUAL:
    case IR_SGE:
    case IR_SGT:
+   case IR_SLE:
+   case IR_SLT:
    case IR_POW:
    case IR_EXP:
    case IR_EXP2:

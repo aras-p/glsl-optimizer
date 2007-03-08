@@ -84,6 +84,8 @@ typedef enum
    IR_SNEQUAL, /* Set if args are not equal */
    IR_SGE,     /* Set if greater or equal */
    IR_SGT,     /* Set if greater than */
+   IR_SLE,     /* Set if less or equal */
+   IR_SLT,     /* Set if less than */
    IR_POW,     /* x^y */
    IR_EXP,     /* e^x */
    IR_EXP2,    /* 2^x */
