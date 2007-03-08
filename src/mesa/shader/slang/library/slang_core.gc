@@ -113,23 +113,23 @@ int __constructor(const float f)
 bool __constructor(const int i)
 {
    const float zero = 0.0;
-   __asm vec4_seq __retVal.x, i.x, zero;
+   __asm vec4_seq __retVal, i, zero;
 }
 
 bool __constructor(const float f)
 {
    const float zero = 0.0;
-   __asm vec4_seq __retVal.x, i.x, zero;
+   __asm vec4_seq __retVal, i, zero;
 }
 
 int __constructor(const bool b)
 {
-   __retVal.x = b.x;
+   __retVal = b;
 }
 
 float __constructor(const bool b)
 {
-   __retVal.x = b.x;
+   __retVal = b;
 }
 
 float __constructor(const int i)
@@ -139,17 +139,17 @@ float __constructor(const int i)
 
 bool __constructor(const bool b)
 {
-   __retVal = b.x;
+   __retVal = b;
 }
 
 int __constructor(const int i)
 {
-   __retVal = i.x;
+   __retVal = i;
 }
 
 float __constructor(const float f)
 {
-   __retVal = f.x;
+   __retVal = f;
 }
 
 
@@ -386,7 +386,6 @@ bvec4 __constructor(const int i)
 mat2 __constructor(const float m00, const float m10,
                    const float m01, const float m11)
 {
-   // xxx verify:
    __retVal[0].x = m00;
    __retVal[0].y = m10;
    __retVal[1].x = m01;
@@ -411,10 +410,10 @@ mat2 __constructor(const bool b)
    return mat2(float(b));
 }
 
-mat2 __constructor(const vec2 r0, const vec2 r1)
+mat2 __constructor(const vec2 c0, const vec2 c1)
 {
-   __retVal[0] = r0;
-   __retVal[1] = r1;
+   __retVal[0] = c0;
+   __retVal[1] = c1;
 }
 
 
@@ -424,7 +423,6 @@ mat3 __constructor(const float m00, const float m10, const float m20,
                    const float m01, const float m11, const float m21,
                    const float m02, const float m12, const float m22)
 {
-   // xxx verify:
    __retVal[0].x = m00;
    __retVal[0].y = m10;
    __retVal[0].z = m20;
@@ -438,15 +436,10 @@ mat3 __constructor(const float m00, const float m10, const float m20,
 
 mat3 __constructor(const float f)
 {
-   __retVal[0].x = f;
-   __retVal[0].y = 0.0;
-   __retVal[0].z = 0.0;
-   __retVal[1].x = 0.0;
-   __retVal[1].y = f;
-   __retVal[1].z = 0.0;
-   __retVal[2].x = 0.0;
-   __retVal[2].y = 0.0;
-   __retVal[2].z = f;
+   vec2 v = vec2(f, 0.0);
+   __retVal[0] = v.xyy;
+   __retVal[1] = v.yxy;
+   __retVal[2] = v.yyx;
 }
 
 mat3 __constructor(const int i)
@@ -459,11 +452,11 @@ mat3 __constructor(const bool b)
    return mat3(float(b));
 }
 
-mat3 __constructor(const vec3 r0, const vec3 r1, const vec3 r2)
+mat3 __constructor(const vec3 c0, const vec3 c1, const vec3 c2)
 {
-   __retVal[0] = r0;
-   __retVal[1] = r1;
-   __retVal[2] = r2;
+   __retVal[0] = c0;
+   __retVal[1] = c1;
+   __retVal[2] = c2;
 }
 
 
@@ -495,22 +488,11 @@ mat4 __constructor(const float m00, const float m10, const float m20, const floa
 
 mat4 __constructor(const float f)
 {
-   __retVal[0].x = f;
-   __retVal[0].y = 0.0;
-   __retVal[0].z = 0.0;
-   __retVal[0].w = 0.0;
-   __retVal[1].x = 0.0;
-   __retVal[1].y = f;
-   __retVal[1].z = 0.0;
-   __retVal[1].w = 0.0;
-   __retVal[2].x = 0.0;
-   __retVal[2].y = 0.0;
-   __retVal[2].z = f;
-   __retVal[2].w = 0.0;
-   __retVal[3].x = 0.0;
-   __retVal[3].y = 0.0;
-   __retVal[3].z = 0.0;
-   __retVal[3].w = f;
+   vec2 v = vec2(f, 0.0);
+   __retVal[0] = v.xyyy;
+   __retVal[1] = v.yxyy;
+   __retVal[2] = v.yyxy;
+   __retVal[3] = v.yyyx;
 }
 
 mat4 __constructor(const int i)
@@ -523,12 +505,12 @@ mat4 __constructor(const bool b)
    return mat4(float(b));
 }
 
-mat4 __constructor(const vec4 r0, const vec4 r1, const vec4 r2, const vec4 r3)
+mat4 __constructor(const vec4 c0, const vec4 c1, const vec4 c2, const vec4 c3)
 {
-   __retVal[0] = r0;
-   __retVal[1] = r1;
-   __retVal[2] = r2;
-   __retVal[3] = r3;
+   __retVal[0] = c0;
+   __retVal[1] = c1;
+   __retVal[2] = c2;
+   __retVal[3] = c3;
 }
 
 

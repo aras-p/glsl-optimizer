@@ -1329,199 +1329,199 @@ mat4 matrixCompMult (mat4 m, mat4 n) {
 
 //// lessThan
 
-bvec2 lessThan(const vec2 v, const vec2 u)
+bvec2 lessThan(const vec2 u, const vec2 v)
 {
-   __asm vec4_sgt __retVal.xy, u, v;
+   __asm vec4_slt __retVal.xy, u, v;
 }
 
-bvec3 lessThan(const vec3 v, const vec3 u)
+bvec3 lessThan(const vec3 u, const vec3 v)
 {
-   __asm vec4_sgt __retVal.xyz, u, v;
+   __asm vec4_slt __retVal.xyz, u, v;
 }
 
-bvec4 lessThan(const vec4 v, const vec4 u)
+bvec4 lessThan(const vec4 u, const vec4 v)
 {
-   __asm vec4_sgt __retVal, u, v;
+   __asm vec4_slt __retVal, u, v;
 }
 
-bvec2 lessThan(const ivec2 v, const ivec2 u)
+bvec2 lessThan(const ivec2 u, const ivec2 v)
 {
-   __asm vec4_sgt __retVal.xy, u, v;
+   __asm vec4_slt __retVal.xy, u, v;
 }
 
-bvec3 lessThan(const ivec3 v, const ivec3 u)
+bvec3 lessThan(const ivec3 u, const ivec3 v)
 {
-   __asm vec4_sgt __retVal.xyz, u, v;
+   __asm vec4_slt __retVal.xyz, u, v;
 }
 
-bvec4 lessThan(const ivec4 v, const ivec4 u)
+bvec4 lessThan(const ivec4 u, const ivec4 v)
 {
-   __asm vec4_sgt __retVal, u, v;
+   __asm vec4_slt __retVal, u, v;
 }
 
 
 //// lessThanEqual
 
-bvec2 lessThanEqual(const vec2 v, const vec2 u)
+bvec2 lessThanEqual(const vec2 u, const vec2 v)
 {
-   __asm vec4_sge __retVal.xy, u, v;
+   __asm vec4_sle __retVal.xy, u, v;
 }
 
-bvec3 lessThanEqual(const vec3 v, const vec3 u)
+bvec3 lessThanEqual(const vec3 u, const vec3 v)
 {
-   __asm vec4_sge __retVal.xyz, u, v;
+   __asm vec4_sle __retVal.xyz, u, v;
 }
 
-bvec4 lessThanEqual(const vec4 v, const vec4 u)
+bvec4 lessThanEqual(const vec4 u, const vec4 v)
 {
-   __asm vec4_sge __retVal, u, v;
+   __asm vec4_sle __retVal, u, v;
 }
 
-bvec2 lessThanEqual(const ivec2 v, const ivec2 u)
+bvec2 lessThanEqual(const ivec2 u, const ivec2 v)
 {
-   __asm vec4_sge __retVal.xy, u, v;
+   __asm vec4_sle __retVal.xy, u, v;
 }
 
-bvec3 lessThanEqual(const ivec3 v, const ivec3 u)
+bvec3 lessThanEqual(const ivec3 u, const ivec3 v)
 {
-   __asm vec4_sge __retVal.xyz, u, v;
+   __asm vec4_sle __retVal.xyz, u, v;
 }
 
-bvec4 lessThanEqual(const ivec4 v, const ivec4 u)
+bvec4 lessThanEqual(const ivec4 u, const ivec4 v)
 {
-   __asm vec4_sge __retVal, u, v;
+   __asm vec4_sle __retVal, u, v;
 }
 
 
 //// greaterThan
 
-bvec2 greaterThan(const vec2 v, const vec2 u)
+bvec2 greaterThan(const vec2 u, const vec2 v)
 {
-   __asm vec4_sgt __retVal.xy, v, u;
+   __asm vec4_sgt __retVal.xy, u, v;
 }
 
-bvec3 greaterThan(const vec3 v, const vec3 u)
+bvec3 greaterThan(const vec3 u, const vec3 v)
 {
-   __asm vec4_sgt __retVal.xyz, v, u;
+   __asm vec4_sgt __retVal.xyz, u, v;
 }
 
-bvec4 greaterThan(const vec4 v, const vec4 u)
+bvec4 greaterThan(const vec4 u, const vec4 v)
 {
-   __asm vec4_sgt __retVal, v, u;
+   __asm vec4_sgt __retVal, u, v;
 }
 
-bvec2 greaterThan(const ivec2 v, const ivec2 u)
+bvec2 greaterThan(const ivec2 u, const ivec2 v)
 {
-   __asm vec4_sgt __retVal.xy, v, u;
+   __asm vec4_sgt __retVal.xy, u, v;
 }
 
-bvec3 greaterThan(const ivec3 v, const ivec3 u)
+bvec3 greaterThan(const ivec3 u, const ivec3 v)
 {
-   __asm vec4_sgt __retVal.xyz, v, u;
+   __asm vec4_sgt __retVal.xyz, u, v;
 }
 
-bvec4 greaterThan(const ivec4 v, const ivec4 u)
+bvec4 greaterThan(const ivec4 u, const ivec4 v)
 {
-   __asm vec4_sgt __retVal, v, u;
+   __asm vec4_sgt __retVal, u, v;
 }
 
 
 //// greaterThanEqual
 
-bvec2 greaterThanEqual(const vec2 v, const vec2 u)
+bvec2 greaterThanEqual(const vec2 u, const vec2 v)
 {
-   __asm vec4_sge __retVal.xy, v, u;
+   __asm vec4_sge __retVal.xy, u, v;
 }
 
-bvec3 greaterThanEqual(const vec3 v, const vec3 u)
+bvec3 greaterThanEqual(const vec3 u, const vec3 v)
 {
-   __asm vec4_sge __retVal.xyz, v, u;
+   __asm vec4_sge __retVal.xyz, u, v;
 }
 
-bvec4 greaterThanEqual(const vec4 v, const vec4 u)
+bvec4 greaterThanEqual(const vec4 u, const vec4 v)
 {
-   __asm vec4_sge __retVal, v, u;
+   __asm vec4_sge __retVal, u, v;
 }
 
-bvec2 greaterThanEqual(const ivec2 v, const ivec2 u)
+bvec2 greaterThanEqual(const ivec2 u, const ivec2 v)
 {
-   __asm vec4_sge __retVal.xy, v, u;
+   __asm vec4_sge __retVal.xy, u, v;
 }
 
-bvec3 greaterThanEqual(const ivec3 v, const ivec3 u)
+bvec3 greaterThanEqual(const ivec3 u, const ivec3 v)
 {
-   __asm vec4_sge __retVal.xyz, v, u;
+   __asm vec4_sge __retVal.xyz, u, v;
 }
 
-bvec4 greaterThanEqual(const ivec4 v, const ivec4 u)
+bvec4 greaterThanEqual(const ivec4 u, const ivec4 v)
 {
-   __asm vec4_sge __retVal, v, u;
+   __asm vec4_sge __retVal, u, v;
 }
 
 
 //// equal
 
-bvec2 equal(const vec2 v, const vec2 u)
+bvec2 equal(const vec2 u, const vec2 v)
 {
-   __asm vec4_seq __retVal.xy, v, u;
+   __asm vec4_seq __retVal.xy, u, v;
 }
 
-bvec3 equal(const vec3 v, const vec3 u)
+bvec3 equal(const vec3 u, const vec3 v)
 {
-   __asm vec4_seq __retVal.xyz, v, u;
+   __asm vec4_seq __retVal.xyz, u, v;
 }
 
-bvec4 equal(const vec4 v, const vec4 u)
+bvec4 equal(const vec4 u, const vec4 v)
 {
-   __asm vec4_seq __retVal, v, u;
+   __asm vec4_seq __retVal, u, v;
 }
 
-bvec2 equal(const ivec2 v, const ivec2 u)
+bvec2 equal(const ivec2 u, const ivec2 v)
 {
-   __asm vec4_seq __retVal.xy, v, u;
+   __asm vec4_seq __retVal.xy, u, v;
 }
 
-bvec3 equal(const ivec3 v, const ivec3 u)
+bvec3 equal(const ivec3 u, const ivec3 v)
 {
-   __asm vec4_seq __retVal.xyz, v, u;
+   __asm vec4_seq __retVal.xyz, u, v;
 }
 
-bvec4 equal(const ivec4 v, const ivec4 u)
+bvec4 equal(const ivec4 u, const ivec4 v)
 {
-   __asm vec4_seq __retVal, v, u;
+   __asm vec4_seq __retVal, u, v;
 }
 
 
 //// notEqual
 
-bvec2 notEqual(const vec2 v, const vec2 u)
+bvec2 notEqual(const vec2 u, const vec2 v)
 {
-   __asm vec4_sne __retVal.xy, v, u;
+   __asm vec4_sne __retVal.xy, u, v;
 }
 
-bvec3 notEqual(const vec3 v, const vec3 u)
+bvec3 notEqual(const vec3 u, const vec3 v)
 {
-   __asm vec4_sne __retVal.xyz, v, u;
+   __asm vec4_sne __retVal.xyz, u, v;
 }
 
-bvec4 notEqual(const vec4 v, const vec4 u)
+bvec4 notEqual(const vec4 u, const vec4 v)
 {
-   __asm vec4_sne __retVal, v, u;
+   __asm vec4_sne __retVal, u, v;
 }
 
-bvec2 notEqual(const ivec2 v, const ivec2 u)
+bvec2 notEqual(const ivec2 u, const ivec2 v)
 {
-   __asm vec4_sne __retVal.xy, v, u;
+   __asm vec4_sne __retVal.xy, u, v;
 }
 
-bvec3 notEqual(const ivec3 v, const ivec3 u)
+bvec3 notEqual(const ivec3 u, const ivec3 v)
 {
-   __asm vec4_sne __retVal.xyz, v, u;
+   __asm vec4_sne __retVal.xyz, u, v;
 }
 
-bvec4 notEqual(const ivec4 v, const ivec4 u)
+bvec4 notEqual(const ivec4 u, const ivec4 v)
 {
-   __asm vec4_sne __retVal, v, u;
+   __asm vec4_sne __retVal, u, v;
 }
 
 
