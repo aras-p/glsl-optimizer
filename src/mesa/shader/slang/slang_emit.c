@@ -450,7 +450,7 @@ storage_to_dst_reg(struct prog_dst_register *dst, const slang_ir_storage *st,
       WRITEMASK_X | WRITEMASK_Y | WRITEMASK_Z,
       WRITEMASK_X | WRITEMASK_Y | WRITEMASK_Z | WRITEMASK_W
    };
-   assert(st->Index >= 0 && st->Index <= 16);
+   assert(st->Index >= 0);
    dst->File = st->File;
    dst->Index = st->Index;
    assert(st->File != PROGRAM_UNDEFINED);
