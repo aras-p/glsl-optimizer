@@ -2260,7 +2260,10 @@ _slang_gen_operation(slang_assemble_ctx * A, slang_operation *oper)
 #endif
          return tree;
       }
-      break;
+      else {
+         return new_node0(IR_NOP);
+      }
+
    case SLANG_OPER_EXPRESSION:
       return _slang_gen_operation(A, &oper->children[0]);
 
@@ -2485,9 +2488,9 @@ _slang_gen_operation(slang_assemble_ctx * A, slang_operation *oper)
       }
 
    case SLANG_OPER_NONE:
-      return NULL;
    case SLANG_OPER_VOID:
-      return NULL;
+      /* returning NULL here would generate an error */
+      return new_node0(IR_NOP);
 
    default:
       printf("Unhandled node type %d\n", oper->type);
