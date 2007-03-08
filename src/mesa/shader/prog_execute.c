@@ -1651,6 +1651,11 @@ _mesa_execute_program(GLcontext * ctx,
             result[2] = a[0] * b[1] - a[1] * b[0];
             result[3] = 1.0;
             store_vector4(inst, machine, result);
+            if (DEBUG_PROG) {
+               printf("XPD (%g %g %g %g) = (%g %g %g) X (%g %g %g)\n",
+                      result[0], result[1], result[2], result[3],
+                      a[0], a[1], a[2], b[0], b[1], b[2]);
+            }
          }
          break;
       case OPCODE_X2D:         /* 2-D matrix transform */
