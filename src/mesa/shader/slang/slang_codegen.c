@@ -455,20 +455,6 @@ new_float_literal(const float v[4])
 }
 
 /**
- * Conditional jump.
- * \param zeroOrOne indicates if the jump is to be taken on zero, or non-zero
- *                  condition code state.
- */
-static slang_ir_node *
-new_cjump(slang_label *dest, GLuint zeroOrOne)
-{
-   slang_ir_node *n = new_node0(zeroOrOne ? IR_CJUMP1 : IR_CJUMP0);
-   if (n)
-      n->Label = dest;
-   return n;
-}
-
-/**
  * Unconditional jump.
  */
 static slang_ir_node *
