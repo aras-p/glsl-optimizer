@@ -1456,6 +1456,10 @@ emit(slang_emit_info *emitInfo, slang_ir_node *n)
       /* just move */
       emit(emitInfo, n->Children[0]);
       inst = new_instruction(emitInfo, OPCODE_MOV);
+      if (!n->Store) {
+         if (!alloc_temp_storage(emitInfo, n, 1))
+            return NULL;
+      }
       storage_to_dst_reg(&inst->DstReg, n->Store, n->Writemask);
       storage_to_src_reg(&inst->SrcReg[0], n->Children[0]->Store);
       if (emitInfo->EmitComments)
