@@ -122,8 +122,6 @@ static const slang_ir_info IrInfo[] = {
    { IR_SCOPE, "IR_SCOPE", OPCODE_NOP, 0, 0 },
    { IR_LABEL, "IR_LABEL", OPCODE_NOP, 0, 0 },
    { IR_JUMP, "IR_JUMP", OPCODE_NOP, 0, 0 },
-   { IR_CJUMP0, "IR_CJUMP0", OPCODE_NOP, 0, 0 },
-   { IR_CJUMP1, "IR_CJUMP1", OPCODE_NOP, 0, 0 },
    { IR_IF, "IR_IF", OPCODE_NOP, 0, 0 },
    { IR_KILL, "IR_KILL", OPCODE_NOP, 0, 0 },
    { IR_COND, "IR_COND", OPCODE_NOP, 0, 0 },
@@ -302,14 +300,6 @@ slang_print_ir(const slang_ir_node *n, int indent)
       break;
    case IR_JUMP:
       printf("JUMP %s\n", n->Label->Name);
-      break;
-   case IR_CJUMP0:
-      printf("CJUMP0 %s\n", n->Label->Name);
-      slang_print_ir(n->Children[0], indent+3);
-      break;
-   case IR_CJUMP1:
-      printf("CJUMP1 %s\n", n->Label->Name);
-      slang_print_ir(n->Children[0], indent+3);
       break;
 
    case IR_IF:
@@ -877,25 +867,6 @@ emit_label(slang_emit_info *emitInfo, const slang_ir_node *n)
 
 
 static struct prog_instruction *
-emit_cjump(slang_emit_info *emitInfo, slang_ir_node *n, GLuint zeroOrOne)
-{
-   struct prog_instruction *inst;
-   assert(n->Opcode == IR_CJUMP0 || n->Opcode == IR_CJUMP1);
-   inst = new_instruction(emitInfo, OPCODE_BRA);
-   if (zeroOrOne)
-      inst->DstReg.CondMask = COND_NE;  /* branch if non-zero */
-   else
-      inst->DstReg.CondMask = COND_EQ;  /* branch if equal to zero */
-   inst->DstReg.CondSwizzle = SWIZZLE_X;
-   inst->BranchTarget = _slang_label_get_location(n->Label);
-   if (inst->BranchTarget < 0) {
-      _slang_label_add_reference(n->Label, emitInfo->prog->NumInstructions - 1);
-   }
-   return inst;
-}
-
-
-static struct prog_instruction *
 emit_jump(slang_emit_info *emitInfo, slang_ir_node *n)
 {
    struct prog_instruction *inst;
@@ -1039,7 +1010,7 @@ emit_cond(slang_emit_info *emitInfo, slang_ir_node *n)
 {
    /* Conditional expression (in if/while/for stmts).
     * Need to update condition code register.
-    * Next instruction is typically an IR_CJUMP0/1.
+    * Next instruction is typically an IR_IF.
     */
    /* last child expr instruction: */
    struct prog_instruction *inst = emit(emitInfo, n->Children[0]);
@@ -1560,10 +1531,6 @@ emit(slang_emit_info *emitInfo, slang_ir_node *n)
       assert(n);
       assert(n->Label);
       return emit_jump(emitInfo, n);
-   case IR_CJUMP0:
-      return emit_cjump(emitInfo, n, 0);
-   case IR_CJUMP1:
-      return emit_cjump(emitInfo, n, 1);
    case IR_KILL:
       return emit_kill(emitInfo);
 
