@@ -1021,7 +1021,6 @@ emit_move(slang_emit_info *emitInfo, slang_ir_node *n)
          char *srcAnnot, *dstAnnot;
          inst = new_instruction(emitInfo, OPCODE_MOV);
          assert(n->Children[0]->Store->Index >= 0);
-         assert(n->Children[0]->Store->Index < 16);
          storage_to_dst_reg(&inst->DstReg, n->Children[0]->Store, n->Writemask);
          storage_to_src_reg(&inst->SrcReg[0], n->Children[1]->Store);
          dstAnnot = storage_annotation(n->Children[0], emitInfo->prog);
