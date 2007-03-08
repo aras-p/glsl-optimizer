@@ -278,14 +278,12 @@ _mesa_fetch_state(GLcontext *ctx, const gl_state_index state[],
    case STATE_MVP_MATRIX:
    case STATE_TEXTURE_MATRIX:
    case STATE_PROGRAM_MATRIX:
-      /*case STATE_MATRIX:*/
       {
-         /* state[1] = modelview, projection, texture, etc. */
-         /* state[2] = which texture matrix or program matrix */
-         /* state[3] = first row to fetch */
-         /* state[4] = last row to fetch */
-         /* state[5] = transpose, inverse or invtrans */
-
+         /* state[0] = modelview, projection, texture, etc. */
+         /* state[1] = which texture matrix or program matrix */
+         /* state[2] = first row to fetch */
+         /* state[3] = last row to fetch */
+         /* state[4] = transpose, inverse or invtrans */
          const GLmatrix *matrix;
          const gl_state_index mat = state[0];
          const GLuint index = (GLuint) state[1];
