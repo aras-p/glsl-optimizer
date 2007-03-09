@@ -30,15 +30,18 @@ enum DMASubchannel {
 extern void nouveauObjectOnSubchannel(nouveauContextPtr nmesa, int subchannel, int handle);
 
 extern GLboolean nouveauCreateContextObject(nouveauContextPtr nmesa,
-      					    int handle, int class,
-					    uint32_t flags,
-					    uint32_t dma_in,
-					    uint32_t dma_out,
-					    uint32_t dma_notifier);
+      					    uint32_t handle, int class);
 extern GLboolean nouveauCreateDmaObject(nouveauContextPtr nmesa,
       					uint32_t handle,
+					int      class,
 					uint32_t offset,
 					uint32_t size,
 					int      target,
 					int      access);
+extern GLboolean nouveauCreateDmaObjectFromMem(nouveauContextPtr nmesa,
+					       uint32_t     handle,
+					       int          class,
+					       nouveau_mem *mem,
+					       int          access);
+
 #endif

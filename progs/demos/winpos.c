@@ -77,7 +77,7 @@ static void init( void )
       WindowPosFunc = &glWindowPos2fARB;
    }
    else
-#elif defined(GL_ARB_window_pos)
+#elif defined(GL_MESA_window_pos)
    if (glutExtensionSupported("GL_MESA_window_pos")) {
       printf("Using GL_MESA_window_pos\n");
       WindowPosFunc = &glWindowPos2fMESA;

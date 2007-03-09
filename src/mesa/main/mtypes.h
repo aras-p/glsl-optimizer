@@ -2316,6 +2316,7 @@ struct gl_framebuffer
    _glthread_Mutex Mutex;		   /**< for thread safety */
    GLuint Name;      /* if zero, this is a window system framebuffer */
    GLint RefCount;
+   GLboolean DeletePending;
 
    GLvisual Visual;	/**< The framebuffer's visual.
                              Immutable if this is a window system buffer.
@@ -2612,6 +2613,7 @@ struct gl_matrix_stack
 #define IMAGE_HISTOGRAM_BIT                       0x200
 #define IMAGE_MIN_MAX_BIT                         0x400
 #define IMAGE_CLAMP_BIT                           0x800 /* extra */
+#define IMAGE_RED_TO_LUMINANCE                    0x1000
 
 
 /** Pixel Transfer ops up to convolution */

@@ -368,7 +368,7 @@ Resize(const struct window *h, unsigned int width, unsigned int height)
    glFrustum(-1, 1, -1, 1, 2, 10);
    glMatrixMode(GL_MODELVIEW);
    glLoadIdentity();
-   glTranslatef(0, 0, -3.5);
+   glTranslatef(0, 0, -4.5);
 }
 
 
@@ -408,28 +408,30 @@ EventLoop(void)
 }
 
 
-
+#if 0
 static void
 PrintInfo(const struct window *h)
 {
    printf("Name: %s\n", h->DisplayName);
-   printf("  Display:     0x%x\n", h->Dpy);
-   printf("  Window:      0x%x\n", h->Win);
-   printf("  Context:     0x%x\n", h->Context);
+   printf("  Display:     %p\n", (void *) h->Dpy);
+   printf("  Window:      0x%x\n", (int) h->Win);
+   printf("  Context:     0x%x\n", (int) h->Context);
 }
+#endif
 
 
 int
 main(int argc, char *argv[])
 {
-   int i;
+   const char *dpyName = XDisplayName(NULL);
+
    struct window *h0, *h1, *h2, *h3;
 
    /* four windows and contexts sharing display lists and texture objects */
-   h0 = AddWindow(":0",  10,  10, NULL);
-   h1 = AddWindow(":0", 330,  10, h0);
-   h2 = AddWindow(":0",  10, 350, h0);
-   h3 = AddWindow(":0", 330, 350, h0);
+   h0 = AddWindow(dpyName,  10,  10, NULL);
+   h1 = AddWindow(dpyName, 330,  10, h0);
+   h2 = AddWindow(dpyName,  10, 350, h0);
+   h3 = AddWindow(dpyName, 330, 350, h0);
 
    InitGLstuff(h0);
 

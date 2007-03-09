@@ -51,6 +51,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "radeon_macros.h"
 #include "radeon_reg.h"
 
+#include "radeon_state.h"
 #include "r300_state.h"
 
 #include "utils.h"
@@ -272,11 +273,13 @@ GLboolean radeonMakeCurrent(__DRIcontextPrivate * driContextPriv,
 					      &radeon->vbl_seq);
 		}
 
-		if (radeon->dri.drawable != driDrawPriv ||
-		    radeon->dri.readable != driReadPriv) {
-			radeon->dri.drawable = driDrawPriv;
-			radeon->dri.readable = driReadPriv;
+		radeon->dri.readable = driReadPriv;
 
+		if (radeon->dri.drawable != driDrawPriv ||
+		    radeon->lastStamp != driDrawPriv->lastStamp) {
+			radeon->dri.drawable = driDrawPriv;
+
+			radeonSetCliprects(radeon);
 			r300UpdateWindow(radeon->glCtx);
 			r300UpdateViewportOffset(radeon->glCtx);
 		}

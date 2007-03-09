@@ -217,7 +217,8 @@ _mesa_copy_rect(GLubyte * dst,
                 GLuint dst_y,
                 GLuint width,
                 GLuint height,
-                GLubyte * src, GLuint src_pitch, GLuint src_x, GLuint src_y)
+                const GLubyte * src,
+                GLuint src_pitch, GLuint src_x, GLuint src_y)
 {
    GLuint i;
 
@@ -253,7 +254,7 @@ intel_region_data(intelScreenPrivate *intelScreen,
                   struct intel_region *dst,
                   GLuint dst_offset,
                   GLuint dstx, GLuint dsty,
-                  void *src, GLuint src_pitch,
+                  const void *src, GLuint src_pitch,
                   GLuint srcx, GLuint srcy, GLuint width, GLuint height)
 {
    struct intel_context *intel = intelScreenContext(intelScreen);

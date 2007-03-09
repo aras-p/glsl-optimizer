@@ -23,6 +23,7 @@
 #define DRAW 1
 
 
+static int Win = 0;
 static int Width = 400, Height = 400;
 
 static GLenum TexTarget = GL_TEXTURE_2D; /*GL_TEXTURE_RECTANGLE_ARB;*/
@@ -232,6 +233,8 @@ CleanUp(void)
 
    glDeleteTextures(1, &TexObj);
 
+   glutDestroyWindow(Win);
+
    exit(0);
 }
 
@@ -392,7 +395,7 @@ main(int argc, char *argv[])
    glutInitWindowPosition(0, 0);
    glutInitWindowSize(Width, Height);
    glutInitDisplayMode(GLUT_RGB | GLUT_DOUBLE);
-   glutCreateWindow(argv[0]);
+   Win = glutCreateWindow(argv[0]);
    glutReshapeFunc(Reshape);
    glutKeyboardFunc(Key);
    glutDisplayFunc(Display);

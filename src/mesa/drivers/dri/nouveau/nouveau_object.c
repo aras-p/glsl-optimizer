@@ -4,17 +4,14 @@
 #include "nouveau_reg.h"
 
 
-GLboolean nouveauCreateContextObject(nouveauContextPtr nmesa, int handle, int class, uint32_t flags, uint32_t dma_in, uint32_t dma_out, uint32_t dma_notifier)
+GLboolean nouveauCreateContextObject(nouveauContextPtr nmesa,
+				     uint32_t handle, int class)
 {
 	drm_nouveau_object_init_t cto;
 	int ret;
 
 	cto.handle = handle;
 	cto.class  = class;
-	cto.flags  = flags;
-	cto.dma0= dma_in;
-	cto.dma1= dma_out;
-	cto.dma_notifier = dma_notifier;
 	ret = drmCommandWrite(nmesa->driFd, DRM_NOUVEAU_OBJECT_INIT, &cto, sizeof(cto));
 
 	return ret == 0;
@@ -22,6 +19,7 @@ GLboolean nouveauCreateContextObject(nouveauContextPtr nmesa, int handle, int cl
 
 GLboolean nouveauCreateDmaObject(nouveauContextPtr nmesa,
       				 uint32_t handle,
+				 int      class,
 				 uint32_t offset,
 				 uint32_t size,
 				 int	  target,
@@ -30,6 +28,7 @@ GLboolean nouveauCreateDmaObject(nouveauContextPtr nmesa,
 	drm_nouveau_dma_object_init_t dma;
 	int ret;
 
+	dma.class  = class;
 	dma.handle = handle;
 	dma.target = target;
 	dma.access = access;
@@ -38,6 +37,27 @@ GLboolean nouveauCreateDmaObject(nouveauContextPtr nmesa,
 	ret = drmCommandWriteRead(nmesa->driFd, DRM_NOUVEAU_DMA_OBJECT_INIT,
 				  &dma, sizeof(dma));
 	return ret == 0;
+}
+
+GLboolean nouveauCreateDmaObjectFromMem(nouveauContextPtr nmesa,
+					uint32_t handle, int class,
+					nouveau_mem *mem,
+					int access)
+{
+	uint32_t offset = mem->offset;
+	int target = mem->type & (NOUVEAU_MEM_FB | NOUVEAU_MEM_AGP);
+
+	if (!target)
+		return GL_FALSE;
+
+	if (target & NOUVEAU_MEM_FB)
+		offset -= nmesa->vram_phys;
+	else if (target & NOUVEAU_MEM_AGP)
+		offset -= nmesa->agp_phys;
+
+	return nouveauCreateDmaObject(nmesa, handle, class,
+				      offset, mem->size,
+				      target, access);
 }
 
 void nouveauObjectOnSubchannel(nouveauContextPtr nmesa, int subchannel, int handle)
@@ -53,31 +73,25 @@ void nouveauObjectInit(nouveauContextPtr nmesa)
 #endif
 
 /* We need to know vram size.. and AGP size (and even if the card is AGP..) */
-	nouveauCreateDmaObject( nmesa, NvDmaFB,
-				0, (256*1024*1024),
-				0 /*NV_DMA_TARGET_FB*/, 0 /*NV_DMA_ACCESS_RW*/);
-	nouveauCreateDmaObject( nmesa, NvDmaAGP,
-	      			nmesa->agp_phys, (128*1024*1024),
-				3 /* AGP */, 0 /* RW */);
+	nouveauCreateDmaObject( nmesa, NvDmaFB, NV_DMA_IN_MEMORY,
+				0, nmesa->vram_size,
+				NOUVEAU_MEM_FB,
+				NOUVEAU_MEM_ACCESS_RW);
+	nouveauCreateDmaObject( nmesa, NvDmaAGP, NV_DMA_IN_MEMORY,
+	      			0, nmesa->agp_size,
+				NOUVEAU_MEM_AGP,
+				NOUVEAU_MEM_ACCESS_RW);
 
-	nouveauCreateContextObject(nmesa, Nv3D, nmesa->screen->card->class_3d,
-	      			   0, 0, 0, 0);
+	nouveauCreateContextObject(nmesa, Nv3D, nmesa->screen->card->class_3d);
 	if (nmesa->screen->card->type>=NV_10) {
-		nouveauCreateContextObject(nmesa, NvCtxSurf2D, NV10_CONTEXT_SURFACES_2D,
-	      			   0, 0, 0, 0);
-		nouveauCreateContextObject(nmesa, NvImageBlit, NV10_IMAGE_BLIT,
-	      			   NV_DMA_CONTEXT_FLAGS_PATCH_SRCCOPY, 0, 0, 0);
+		nouveauCreateContextObject(nmesa, NvCtxSurf2D, NV10_CONTEXT_SURFACES_2D);
+		nouveauCreateContextObject(nmesa, NvImageBlit, NV10_IMAGE_BLIT);
 	} else {
-		nouveauCreateContextObject(nmesa, NvCtxSurf2D, NV04_CONTEXT_SURFACES_2D,
-	      			   0, 0, 0, 0);
-		nouveauCreateContextObject(nmesa, NvCtxSurf3D, NV04_CONTEXT_SURFACES_3D,
-	      			   0, 0, 0, 0);
-		nouveauCreateContextObject(nmesa, NvImageBlit, NV_IMAGE_BLIT,
-	      			   NV_DMA_CONTEXT_FLAGS_PATCH_SRCCOPY, 0, 0, 0);
+		nouveauCreateContextObject(nmesa, NvCtxSurf2D, NV04_CONTEXT_SURFACES_2D);
+		nouveauCreateContextObject(nmesa, NvCtxSurf3D, NV04_CONTEXT_SURFACES_3D);
+		nouveauCreateContextObject(nmesa, NvImageBlit, NV_IMAGE_BLIT);
 	}
-	nouveauCreateContextObject(nmesa, NvMemFormat,
-	      			   NV_MEMORY_TO_MEMORY_FORMAT,
-	      			   0, 0, 0, 0);
+	nouveauCreateContextObject(nmesa, NvMemFormat, NV_MEMORY_TO_MEMORY_FORMAT);
 
 #ifdef ALLOW_MULTI_SUBCHANNEL
 	nouveauObjectOnSubchannel(nmesa, NvSubCtxSurf2D, NvCtxSurf2D);

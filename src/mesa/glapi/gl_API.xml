@@ -6091,7 +6091,7 @@
         <size name="GetTexLevelParameterfv" mode="get"/>
         <size name="GetTexLevelParameteriv" mode="get"/>
     </enum>
-    <enum name="NUM_TEXTURE_COMPRESSED_FORMATS_ARB" count="1" value="0x86A2">
+    <enum name="NUM_COMPRESSED_TEXTURE_FORMATS_ARB" count="1" value="0x86A2">
         <size name="Get" mode="get"/>
     </enum>
     <enum name="TEXTURE_COMPRESSED_FORMATS_ARB"           value="0x86A3"/>

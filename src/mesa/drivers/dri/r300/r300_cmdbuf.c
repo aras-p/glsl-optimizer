@@ -292,13 +292,13 @@ void r300InitCmdBuf(r300ContextPtr r300)
 	ALLOC_STATE( vpt, always, R300_VPT_CMDSIZE, "vpt", 0 );
 		r300->hw.vpt.cmd[R300_VPT_CMD_0] = cmdpacket0(R300_SE_VPORT_XSCALE, 6);
 	ALLOC_STATE( unk2080, always, 2, "unk2080", 0 );
-		r300->hw.unk2080.cmd[0] = cmdpacket0(0x2080, 1);
+		r300->hw.unk2080.cmd[0] = cmdpacket0(R300_VAP_CNTL, 1);
 	ALLOC_STATE( vte, always, 3, "vte", 0 );
 		r300->hw.vte.cmd[0] = cmdpacket0(R300_SE_VTE_CNTL, 2);
 	ALLOC_STATE( unk2134, always, 3, "unk2134", 0 );
 		r300->hw.unk2134.cmd[0] = cmdpacket0(0x2134, 2);
 	ALLOC_STATE( unk2140, always, 2, "unk2140", 0 );
-		r300->hw.unk2140.cmd[0] = cmdpacket0(0x2140, 1);
+		r300->hw.unk2140.cmd[0] = cmdpacket0(R300_VAP_CNTL_STATUS, 1);
 	ALLOC_STATE( vir[0], variable, R300_VIR_CMDSIZE, "vir/0", 0 );
 		r300->hw.vir[0].cmd[R300_VIR_CMD_0] = cmdpacket0(R300_VAP_INPUT_ROUTE_0_0, 1);
 	ALLOC_STATE( vir[1], variable, R300_VIR_CMDSIZE, "vir/1", 1 );
@@ -308,11 +308,11 @@ void r300InitCmdBuf(r300ContextPtr r300)
 	ALLOC_STATE( unk21DC, always, 2, "unk21DC", 0 );
 		r300->hw.unk21DC.cmd[0] = cmdpacket0(0x21DC, 1);
 	ALLOC_STATE( unk221C, always, 2, "unk221C", 0 );
-		r300->hw.unk221C.cmd[0] = cmdpacket0(0x221C, 1);
+		r300->hw.unk221C.cmd[0] = cmdpacket0(R300_VAP_UNKNOWN_221C, 1);
 	ALLOC_STATE( unk2220, always, 5, "unk2220", 0 );
 		r300->hw.unk2220.cmd[0] = cmdpacket0(0x2220, 4);
 	ALLOC_STATE( unk2288, always, 2, "unk2288", 0 );
-		r300->hw.unk2288.cmd[0] = cmdpacket0(0x2288, 1);
+		r300->hw.unk2288.cmd[0] = cmdpacket0(R300_VAP_UNKNOWN_2288, 1);
 	ALLOC_STATE( vof, always, R300_VOF_CMDSIZE, "vof", 0 );
 		r300->hw.vof.cmd[R300_VOF_CMD_0] = cmdpacket0(R300_VAP_OUTPUT_VTX_FMT_0, 2);
 	ALLOC_STATE( pvs, always, R300_PVS_CMDSIZE, "pvs", 0 );
@@ -336,9 +336,9 @@ void r300InitCmdBuf(r300ContextPtr r300)
 	ALLOC_STATE( unk4260, always, 4, "unk4260", 0 );
 		r300->hw.unk4260.cmd[0] = cmdpacket0(0x4260, 3);
 	ALLOC_STATE( unk4274, always, 5, "unk4274", 0 );
-		r300->hw.unk4274.cmd[0] = cmdpacket0(0x4274, 4);
+		r300->hw.unk4274.cmd[0] = cmdpacket0(R300_RE_SHADE, 4);
 	ALLOC_STATE( unk4288, always, 4, "unk4288", 0 );
-		r300->hw.unk4288.cmd[0] = cmdpacket0(0x4288, 3);
+		r300->hw.unk4288.cmd[0] = cmdpacket0(R300_RE_POLYGON_MODE, 3);
 	ALLOC_STATE( fogp, always, 3, "fogp", 0 );
 		r300->hw.fogp.cmd[0] = cmdpacket0(R300_RE_FOG_SCALE, 2);
 	ALLOC_STATE( unk42A0, always, 2, "unk42A0", 0 );
@@ -346,7 +346,7 @@ void r300InitCmdBuf(r300ContextPtr r300)
 	ALLOC_STATE( zbs, always, R300_ZBS_CMDSIZE, "zbs", 0 );
 		r300->hw.zbs.cmd[R300_ZBS_CMD_0] = cmdpacket0(R300_RE_ZBIAS_T_FACTOR, 4);
 	ALLOC_STATE( unk42B4, always, 2, "unk42B4", 0 );
-		r300->hw.unk42B4.cmd[0] = cmdpacket0(0x42B4, 1);
+		r300->hw.unk42B4.cmd[0] = cmdpacket0(R300_RE_OCCLUSION_CNTL, 1);
 	ALLOC_STATE( cul, always, R300_CUL_CMDSIZE, "cul", 0 );
 		r300->hw.cul.cmd[R300_CUL_CMD_0] = cmdpacket0(R300_RE_CULL_CNTL, 1);
 	ALLOC_STATE( unk42C0, always, 3, "unk42C0", 0 );
@@ -393,7 +393,7 @@ void r300InitCmdBuf(r300ContextPtr r300)
 	ALLOC_STATE( cmk, always, R300_CMK_CMDSIZE, "cmk", 0 );
 		r300->hw.cmk.cmd[R300_CMK_CMD_0] = cmdpacket0(R300_RB3D_COLORMASK, 1);
 	ALLOC_STATE( unk4E10, always, 4, "unk4E10", 0 );
-		r300->hw.unk4E10.cmd[0] = cmdpacket0(0x4E10, 3);
+		r300->hw.unk4E10.cmd[0] = cmdpacket0(R300_RB3D_BLEND_COLOR, 3);
 	ALLOC_STATE( cb, always, R300_CB_CMDSIZE, "cb", 0 );
 		r300->hw.cb.cmd[R300_CB_CMD_0] = cmdpacket0(R300_RB3D_COLOROFFSET0, 1);
 		r300->hw.cb.cmd[R300_CB_CMD_1] = cmdpacket0(R300_RB3D_COLORPITCH0, 1);
@@ -406,7 +406,7 @@ void r300InitCmdBuf(r300ContextPtr r300)
 	ALLOC_STATE( zs, always, R300_ZS_CMDSIZE, "zstencil", 0 );
 		r300->hw.zs.cmd[R300_ZS_CMD_0] = cmdpacket0(R300_RB3D_ZSTENCIL_CNTL_0, 3);
 	ALLOC_STATE( unk4F10, always, 5, "unk4F10", 0 );
-		r300->hw.unk4F10.cmd[0] = cmdpacket0(0x4F10, 4);
+		r300->hw.unk4F10.cmd[0] = cmdpacket0(R300_RB3D_ZSTENCIL_FORMAT, 4);
 	ALLOC_STATE( zb, always, R300_ZB_CMDSIZE, "zb", 0 );
 		r300->hw.zb.cmd[R300_ZB_CMD_0] = cmdpacket0(R300_RB3D_DEPTHOFFSET, 2);
 	ALLOC_STATE( unk4F28, always, 2, "unk4F28", 0 );

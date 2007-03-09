@@ -279,7 +279,7 @@ tridentCreateBuffer( __DRIscreenPrivate *driScrnPriv,
 static void
 tridentDestroyBuffer(__DRIdrawablePrivate *driDrawPriv)
 {
-   _mesa_destroy_framebuffer((GLframebuffer *) (driDrawPriv->driverPrivate));
+   _mesa_unreference_framebuffer((GLframebuffer **)(&(driDrawPriv->driverPrivate)));
 }
 
 static void

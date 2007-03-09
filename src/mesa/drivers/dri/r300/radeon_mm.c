@@ -283,7 +283,7 @@ static void emit_lin_cp(r300ContextPtr rmesa, unsigned long dst, unsigned long s
 		size -= cp_size;
 	}
 	
-	reg_start(0x4e4c,0);
+	reg_start(R300_RB3D_DSTCACHE_CTLSTAT,0);
 	e32(0x0000000a);
 	
 	reg_start(0x342c,0);

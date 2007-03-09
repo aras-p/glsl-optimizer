@@ -49,7 +49,11 @@ class PrintGlTable(gl_XML.gl_print_base):
 
 	def printRealHeader(self):
 		print '#ifndef GLAPIENTRYP'
-		print '#define GLAPIENTRYP'
+		print '# ifndef GLAPIENTRY'
+		print '#  define GLAPIENTRY'
+		print '# endif'
+		print ''
+		print '# define GLAPIENTRYP GLAPIENTRY *'
 		print '#endif'
 		print ''
 		print 'typedef void (*_glapi_proc)(void); /* generic function pointer */'

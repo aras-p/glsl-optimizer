@@ -320,7 +320,7 @@ viaCreateBuffer(__DRIscreenPrivate *driScrnPriv,
 static void
 viaDestroyBuffer(__DRIdrawablePrivate *driDrawPriv)
 {
-    _mesa_destroy_framebuffer((GLframebuffer *)(driDrawPriv->driverPrivate));
+   _mesa_unreference_framebuffer((GLframebuffer **)(&(driDrawPriv->driverPrivate)));
 }
 
 

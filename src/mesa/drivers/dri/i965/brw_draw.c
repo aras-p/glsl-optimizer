@@ -458,6 +458,7 @@ void brw_draw_prims( GLcontext *ctx,
     * swrast to do the drawing.
     */
    if (!retval) {
+       _swsetup_Wakeup(ctx);
       _tnl_draw_prims(ctx, arrays, prim, nr_prims, ib, min_index, max_index);
    }
 

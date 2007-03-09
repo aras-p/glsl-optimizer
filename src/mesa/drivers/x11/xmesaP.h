@@ -42,6 +42,7 @@
 
 extern _glthread_Mutex _xmesa_lock;
 
+extern XMesaBuffer XMesaBufferList;
 
 /* for PF_8R8G8B24 pixel format */
 typedef struct {
@@ -488,6 +489,12 @@ extern const int xmesa_kernel1[16];
 extern struct xmesa_renderbuffer *
 xmesa_new_renderbuffer(GLcontext *ctx, GLuint name, const GLvisual *visual,
                        GLboolean backBuffer);
+
+extern void
+xmesa_delete_framebuffer(struct gl_framebuffer *fb);
+
+extern XMesaBuffer
+xmesa_find_buffer(XMesaDisplay *dpy, XMesaColormap cmap, XMesaBuffer notThis);
 
 extern unsigned long
 xmesa_color_to_pixel( GLcontext *ctx,

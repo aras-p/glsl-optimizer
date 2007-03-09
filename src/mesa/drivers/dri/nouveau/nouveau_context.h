@@ -100,7 +100,9 @@ typedef struct nouveau_context {
 
 	/* Physical addresses of AGP/VRAM apertures */
 	uint64_t vram_phys;
+	uint64_t vram_size;
 	uint64_t agp_phys;
+	uint64_t agp_size;
 
 	/* Channel synchronisation */
 	nouveau_notifier *syncNotifier;

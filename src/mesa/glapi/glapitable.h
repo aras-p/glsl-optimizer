@@ -30,7 +30,11 @@
 #  define _GLAPI_TABLE_H_
 
 #ifndef GLAPIENTRYP
-#define GLAPIENTRYP
+# ifndef GLAPIENTRY
+#  define GLAPIENTRY
+# endif
+
+# define GLAPIENTRYP GLAPIENTRY *
 #endif
 
 typedef void (*_glapi_proc)(void); /* generic function pointer */

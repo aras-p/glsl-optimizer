@@ -480,11 +480,7 @@ fbCreateBuffer( __DRIscreenPrivate *driScrnPriv,
 static void
 fbDestroyBuffer(__DRIdrawablePrivate *driDrawPriv)
 {
-   struct gl_framebuffer *mesa_framebuffer = (struct gl_framebuffer *)driDrawPriv->driverPrivate;
-   
-   _mesa_free(mesa_framebuffer->Attachment[BUFFER_BACK_LEFT].Renderbuffer->Data);
-   _mesa_destroy_framebuffer(mesa_framebuffer);
-   driDrawPriv->driverPrivate = NULL;
+   _mesa_unreference_framebuffer((GLframebuffer **)(&(driDrawPriv->driverPrivate)));
 }
 
 
