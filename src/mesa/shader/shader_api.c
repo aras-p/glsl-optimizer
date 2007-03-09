@@ -1005,7 +1005,7 @@ _mesa_uniform_matrix(GLcontext *ctx, GLint cols, GLint rows,
       for (col = 0; col < cols; col++) {
          GLfloat *v = shProg->Uniforms->ParameterValues[location + col];
          for (row = 0; row < rows; row++) {
-            v[row] = values[col * rows + row];
+            v[row] = values[row * cols + col];
          }
       }
    }
@@ -1014,7 +1014,7 @@ _mesa_uniform_matrix(GLcontext *ctx, GLint cols, GLint rows,
       for (col = 0; col < cols; col++) {
          GLfloat *v = shProg->Uniforms->ParameterValues[location + col];
          for (row = 0; row < rows; row++) {
-            v[row] = values[row * cols + col];
+            v[row] = values[col * rows + row];
          }
       }
    }
