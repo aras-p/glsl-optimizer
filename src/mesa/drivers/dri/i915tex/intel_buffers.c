@@ -662,20 +662,15 @@ intel_wait_flips(struct intel_context *intel, GLuint batch_flags)
 			     BUFFER_BACK_LEFT);
 
    if (intel_fb->Base.Name == 0 && intel_rb->pf_pending == intel_fb->pf_seq) {
-      GLuint mi_wait = MI_WAIT_FOR_EVENT;
       GLint pf_pipes = intel_fb->pf_pipes;
       BATCH_LOCALS;
 
-      if (pf_pipes & 0x1)
-	mi_wait |= MI_WAIT_FOR_PLANE_A_FLIP;
-
-      if (pf_pipes & 0x2)
-	mi_wait |= MI_WAIT_FOR_PLANE_B_FLIP;
-
       /* Wait for pending flips to take effect */
       BEGIN_BATCH(2, batch_flags);
-      OUT_BATCH(mi_wait);
-      OUT_BATCH(0);
+      OUT_BATCH(pf_pipes & 0x1 ? (MI_WAIT_FOR_EVENT | MI_WAIT_FOR_PLANE_A_FLIP)
+		: 0);
+      OUT_BATCH(pf_pipes & 0x2 ? (MI_WAIT_FOR_EVENT | MI_WAIT_FOR_PLANE_B_FLIP)
+		: 0);
       ADVANCE_BATCH();
 
       intel_rb->pf_pending--;
