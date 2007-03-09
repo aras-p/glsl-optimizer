@@ -257,6 +257,8 @@ intelWindowMoved(struct intel_context *intel)
 	 if (pf_pipes == 0x3 &&	pf_pipes != intel_fb->pf_pipes &&
 	     (intel->sarea->pf_current_page & 0x3) !=
 	     (((intel->sarea->pf_current_page) >> 2) & 0x3)) {
+	    drm_i915_flip_t flip;
+
 	    if (intel_fb->pf_current_page ==
 		(intel->sarea->pf_current_page & 0x3)) {
 	       /* XXX: This is ugly, but emitting two flips 'in a row' can cause
@@ -265,13 +267,21 @@ intelWindowMoved(struct intel_context *intel)
                intel->sarea->pf_current_page =
 		  intel->sarea->pf_current_page & 0x3;
 	       intel->sarea->pf_current_page |=
-		  intel->sarea->pf_current_page << 2;
+		  ((intel_fb->pf_current_page + intel_fb->pf_num_pages - 1) %
+		   intel_fb->pf_num_pages) << 2;
+
+	       flip.pipes = 0x2;
 	    } else {
                intel->sarea->pf_current_page =
 		  intel->sarea->pf_current_page & (0x3 << 2);
 	       intel->sarea->pf_current_page |=
-		  intel->sarea->pf_current_page >> 2;
+		  (intel_fb->pf_current_page + intel_fb->pf_num_pages - 1) %
+		  intel_fb->pf_num_pages;
+
+	       flip.pipes = 0x1;
 	    }
+
+	    drmCommandWrite(intel->driFd, DRM_I915_FLIP, &flip, sizeof(flip));
 	 }
 
 	 intel_fb->pf_pipes = pf_pipes;
