@@ -730,7 +730,7 @@ void LOCK_HARDWARE( struct intel_context *intel )
 
 	vbl.request.sequence = intel_rb->vbl_pending;
 	drmWaitVBlank(intel->driFd, &vbl);
-	intel_fb->vbl_waited = intel_rb->vbl_pending;
+	intel_fb->vbl_waited = vbl.reply.sequence;
     }
 
     DRM_CAS(intel->driHwLock, intel->hHWContext,
