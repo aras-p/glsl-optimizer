@@ -300,8 +300,27 @@ intelWindowMoved(struct intel_context *intel)
       }
 
       if (flags != intel_fb->vblank_flags) {
+	 drmVBlank vbl;
+	 int i;
+
+	 vbl.request.type = DRM_VBLANK_ABSOLUTE;
+
+	 if ( intel_fb->vblank_flags & VBLANK_FLAG_SECONDARY ) {
+	    vbl.request.type |= DRM_VBLANK_SECONDARY;
+	 }
+
+	 for (i = 0; i < intel_fb->pf_num_pages; i++) {
+	    vbl.request.sequence = intel_fb->color_rb[i]->vbl_pending;
+	    drmWaitVBlank(intel->driFd, &vbl);
+	 }
+
 	 intel_fb->vblank_flags = flags;
 	 driGetCurrentVBlank(dPriv, intel_fb->vblank_flags, &intel_fb->vbl_seq);
+	 intel_fb->vbl_waited = intel_fb->vbl_seq;
+
+	 for (i = 0; i < intel_fb->pf_num_pages; i++) {
+	    intel_fb->color_rb[i]->vbl_pending = intel_fb->vbl_waited;
+	 }
       }
    } else {
       intel_fb->vblank_flags &= ~VBLANK_FLAG_SECONDARY;
