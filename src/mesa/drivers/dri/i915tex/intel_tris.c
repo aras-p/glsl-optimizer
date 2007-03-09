@@ -102,6 +102,8 @@ intelStartInlinePrimitive(struct intel_context *intel,
 
 /*    _mesa_printf("%s *", __progname); */
 
+   intel_wait_flips(intel, batch_flags);
+
    /* Emit a slot which will be filled with the inline primitive
     * command later.
     */
