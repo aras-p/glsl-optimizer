@@ -1167,6 +1167,8 @@ _slang_gen_asm(slang_assemble_ctx *A, slang_operation *oper,
    kids[0] = kids[1] = kids[2] = NULL;
    for (j = 0; j < info->NumParams; j++) {
       kids[j] = _slang_gen_operation(A, &oper->children[firstOperand + j]);
+      if (!kids[j])
+         return NULL;
    }
 
    n = new_node3(info->Opcode, kids[0], kids[1], kids[2]);
