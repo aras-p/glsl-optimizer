@@ -1888,6 +1888,10 @@ _mesa_GetBooleanv( GLenum pname, GLboolean *params )
          CHECK_EXT1(ARB_vertex_shader, "GetBooleanv");
          params[0] = INT_TO_BOOLEAN(MAX_COMBINED_TEXTURE_IMAGE_UNITS);
          break;
+      case GL_CURRENT_PROGRAM:
+         CHECK_EXT1(ARB_shader_objects, "GetBooleanv");
+         params[0] = INT_TO_BOOLEAN(ctx->Shader.CurrentProgram ? ctx->Shader.CurrentProgram->Name : 0);
+         break;
       default:
          _mesa_error(ctx, GL_INVALID_ENUM, "glGetBooleanv(pname=0x%x)", pname);
    }
@@ -3715,6 +3719,10 @@ _mesa_GetFloatv( GLenum pname, GLfloat *params )
          CHECK_EXT1(ARB_vertex_shader, "GetFloatv");
          params[0] = (GLfloat)(MAX_COMBINED_TEXTURE_IMAGE_UNITS);
          break;
+      case GL_CURRENT_PROGRAM:
+         CHECK_EXT1(ARB_shader_objects, "GetFloatv");
+         params[0] = (GLfloat)(ctx->Shader.CurrentProgram ? ctx->Shader.CurrentProgram->Name : 0);
+         break;
       default:
          _mesa_error(ctx, GL_INVALID_ENUM, "glGetFloatv(pname=0x%x)", pname);
    }
@@ -5541,6 +5549,10 @@ _mesa_GetIntegerv( GLenum pname, GLint *params )
       case GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS_ARB:
          CHECK_EXT1(ARB_vertex_shader, "GetIntegerv");
          params[0] = MAX_COMBINED_TEXTURE_IMAGE_UNITS;
+         break;
+      case GL_CURRENT_PROGRAM:
+         CHECK_EXT1(ARB_shader_objects, "GetIntegerv");
+         params[0] = ctx->Shader.CurrentProgram ? ctx->Shader.CurrentProgram->Name : 0;
          break;
       default:
          _mesa_error(ctx, GL_INVALID_ENUM, "glGetIntegerv(pname=0x%x)", pname);
