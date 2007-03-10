@@ -114,7 +114,8 @@ _mesa_GetString( GLenum name )
                       ctx->Extensions.ARB_shader_objects &&
                       ctx->Extensions.ARB_vertex_shader &&
                       ctx->Extensions.ARB_fragment_shader &&
-                      ctx->Extensions.ARB_texture_non_power_of_two) {
+                      ctx->Extensions.ARB_texture_non_power_of_two &&
+                      ctx->Extensions.EXT_blend_equation_separate) {
                      if (ctx->Extensions.ARB_shading_language_120 &&
                          ctx->Extensions.EXT_pixel_buffer_object &&
                          ctx->Extensions.EXT_texture_sRGB) {

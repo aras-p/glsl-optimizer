@@ -473,6 +473,7 @@ static inline void nv04OutputVertexFormat(struct nouveau_context* nmesa)
 	/*
 	 * Tell t_vertex about the vertex format
 	 */
+	nmesa->vertex_attr_count = 0;
 	RENDERINPUTS_COPY(index, nmesa->render_inputs_bitset);
 
 	// SX SY SZ INVW
@@ -503,7 +504,7 @@ static inline void nv04OutputVertexFormat(struct nouveau_context* nmesa)
 	nmesa->vertex_size=_tnl_install_attrs( ctx,
 			nmesa->vertex_attrs, 
 			nmesa->vertex_attr_count,
-			ctx->Viewport._WindowMap.m, 0 );
+			nmesa->viewport.m, 0 );
 }
 
 
