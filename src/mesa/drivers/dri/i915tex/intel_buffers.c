@@ -43,7 +43,7 @@
 #include "vblank.h"
 
 
-/* This block can be removed when libdrm > 2.3.0 is required */
+/* This block can be removed when libdrm >= 2.3.1 is required */
 
 #ifndef DRM_VBLANK_FLIP
 
