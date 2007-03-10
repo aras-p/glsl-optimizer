@@ -209,35 +209,37 @@ sampler_to_texture_index(const slang_type_specifier_type type)
  * XXX return size too
  */
 static GLint
-_slang_input_index(const char *name, GLenum target)
+_slang_input_index(const char *name, GLenum target, GLuint *swizzleOut)
 {
    struct input_info {
       const char *Name;
       GLuint Attrib;
+      GLuint Swizzle;
    };
    static const struct input_info vertInputs[] = {
-      { "gl_Vertex", VERT_ATTRIB_POS },
-      { "gl_Normal", VERT_ATTRIB_NORMAL },
-      { "gl_Color", VERT_ATTRIB_COLOR0 },
-      { "gl_SecondaryColor", VERT_ATTRIB_COLOR1 },
-      { "gl_FogCoord", VERT_ATTRIB_FOG },
-      { "gl_MultiTexCoord0", VERT_ATTRIB_TEX0 },
-      { "gl_MultiTexCoord1", VERT_ATTRIB_TEX1 },
-      { "gl_MultiTexCoord2", VERT_ATTRIB_TEX2 },
-      { "gl_MultiTexCoord3", VERT_ATTRIB_TEX3 },
-      { "gl_MultiTexCoord4", VERT_ATTRIB_TEX4 },
-      { "gl_MultiTexCoord5", VERT_ATTRIB_TEX5 },
-      { "gl_MultiTexCoord6", VERT_ATTRIB_TEX6 },
-      { "gl_MultiTexCoord7", VERT_ATTRIB_TEX7 },
-      { NULL, 0 }
+      { "gl_Vertex", VERT_ATTRIB_POS, SWIZZLE_NOOP },
+      { "gl_Normal", VERT_ATTRIB_NORMAL, SWIZZLE_NOOP },
+      { "gl_Color", VERT_ATTRIB_COLOR0, SWIZZLE_NOOP },
+      { "gl_SecondaryColor", VERT_ATTRIB_COLOR1, SWIZZLE_NOOP },
+      { "gl_FogCoord", VERT_ATTRIB_FOG, SWIZZLE_XXXX },
+      { "gl_MultiTexCoord0", VERT_ATTRIB_TEX0, SWIZZLE_NOOP },
+      { "gl_MultiTexCoord1", VERT_ATTRIB_TEX1, SWIZZLE_NOOP },
+      { "gl_MultiTexCoord2", VERT_ATTRIB_TEX2, SWIZZLE_NOOP },
+      { "gl_MultiTexCoord3", VERT_ATTRIB_TEX3, SWIZZLE_NOOP },
+      { "gl_MultiTexCoord4", VERT_ATTRIB_TEX4, SWIZZLE_NOOP },
+      { "gl_MultiTexCoord5", VERT_ATTRIB_TEX5, SWIZZLE_NOOP },
+      { "gl_MultiTexCoord6", VERT_ATTRIB_TEX6, SWIZZLE_NOOP },
+      { "gl_MultiTexCoord7", VERT_ATTRIB_TEX7, SWIZZLE_NOOP },
+      { NULL, 0, SWIZZLE_NOOP }
    };
    static const struct input_info fragInputs[] = {
-      { "gl_FragCoord", FRAG_ATTRIB_WPOS },
-      { "gl_Color", FRAG_ATTRIB_COL0 },
-      { "gl_SecondaryColor", FRAG_ATTRIB_COL1 },
-      { "gl_FogFragCoord", FRAG_ATTRIB_FOGC },
-      { "gl_TexCoord", FRAG_ATTRIB_TEX0 },
-      { NULL, 0 }
+      { "gl_FragCoord", FRAG_ATTRIB_WPOS, SWIZZLE_NOOP },
+      { "gl_Color", FRAG_ATTRIB_COL0, SWIZZLE_NOOP },
+      { "gl_SecondaryColor", FRAG_ATTRIB_COL1, SWIZZLE_NOOP },
+      { "gl_FogFragCoord", FRAG_ATTRIB_FOGC, SWIZZLE_XXXX },
+      { "gl_TexCoord", FRAG_ATTRIB_TEX0, SWIZZLE_NOOP },
+      { "gl_FrontFacing", FRAG_ATTRIB_FOGC, SWIZZLE_YYYY }, /*XXX*/
+      { NULL, 0, SWIZZLE_NOOP }
    };
    GLuint i;
    const struct input_info *inputs
@@ -248,6 +250,7 @@ _slang_input_index(const char *name, GLenum target)
    for (i = 0; inputs[i].Name; i++) {
       if (strcmp(inputs[i].Name, name) == 0) {
          /* found */
+         *swizzleOut = inputs[i].Swizzle;
          return inputs[i].Attrib;
       }
    }
@@ -2571,9 +2574,12 @@ _slang_codegen_global_variable(slang_assemble_ctx *A, slang_variable *var,
       else {
          /* pre-defined varying, like gl_Color or gl_TexCoord */
          if (type == SLANG_UNIT_FRAGMENT_BUILTIN) {
-            GLint index = _slang_input_index(varName, GL_FRAGMENT_PROGRAM_ARB);
+            GLuint swizzle;
+            GLint index = _slang_input_index(varName, GL_FRAGMENT_PROGRAM_ARB,
+                                             &swizzle);
             assert(index >= 0);
             store = _slang_new_ir_storage(PROGRAM_INPUT, index, size);
+            store->Swizzle = swizzle;
             assert(index < FRAG_ATTRIB_MAX);
          }
          else {
@@ -2600,17 +2606,23 @@ _slang_codegen_global_variable(slang_assemble_ctx *A, slang_variable *var,
       }
       else {
          /* pre-defined vertex attrib */
-         GLint index = _slang_input_index(varName, GL_VERTEX_PROGRAM_ARB);
+         GLuint swizzle;
+         GLint index = _slang_input_index(varName, GL_VERTEX_PROGRAM_ARB,
+                                          &swizzle);
          GLint size = 4; /* XXX? */
          assert(index >= 0);
          store = _slang_new_ir_storage(PROGRAM_INPUT, index, size);
+         store->Swizzle = swizzle;
       }
       if (dbg) printf("ATTRIB ");
    }
    else if (var->type.qualifier == SLANG_QUAL_FIXEDINPUT) {
-      GLint index = _slang_input_index(varName, GL_FRAGMENT_PROGRAM_ARB);
+      GLuint swizzle;
+      GLint index = _slang_input_index(varName, GL_FRAGMENT_PROGRAM_ARB,
+                                       &swizzle);
       GLint size = 4; /* XXX? */
       store = _slang_new_ir_storage(PROGRAM_INPUT, index, size);
+      store->Swizzle = swizzle;
       if (dbg) printf("INPUT ");
    }
    else if (var->type.qualifier == SLANG_QUAL_FIXEDOUTPUT) {
