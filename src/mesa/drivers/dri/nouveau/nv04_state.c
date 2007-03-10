@@ -455,35 +455,37 @@ static GLboolean nv04BindBuffers(nouveauContextPtr nmesa, int num_color,
 		nouveau_renderbuffer *depth)
 {
 	GLuint x, y, w, h;
+	uint32_t depth_pitch=(depth?depth->pitch:0+15)&~15+16;
+	if (depth_pitch<256) depth_pitch=256;
 
 	w = color[0]->mesa.Width;
 	h = color[0]->mesa.Height;
 	x = nmesa->drawX;
 	y = nmesa->drawY;
 
+	BEGIN_RING_SIZE(NvSubCtxSurf3D, NV04_CONTEXT_SURFACES_3D_FORMAT, 1);
+	if (color[0]->mesa._ActualFormat == GL_RGBA8)
+		OUT_RING(0x108/*A8R8G8B8*/);
+	else
+		OUT_RING(0x103/*R5G6B5*/);
+
 	/* FIXME pitches have to be aligned ! */
 	BEGIN_RING_SIZE(NvSubCtxSurf3D, NV04_CONTEXT_SURFACES_3D_PITCH, 2);
-	OUT_RING(color[0]->pitch|(depth?(depth->pitch<<16):0));
+	OUT_RING(color[0]->pitch|(depth_pitch<<16));
 	OUT_RING(color[0]->offset);
-
 	if (depth) {
 		BEGIN_RING_SIZE(NvSubCtxSurf3D, NV04_CONTEXT_SURFACES_3D_OFFSET_ZETA, 1);
 		OUT_RING(depth->offset);
 	}
 
-	BEGIN_RING_SIZE(NvSubCtxSurf3D, NV04_CONTEXT_SURFACES_3D_CLIP_HORIZONTAL, 2);
-	OUT_RING((w<<16)|x);
-	OUT_RING((h<<16)|y);
+//	BEGIN_RING_SIZE(NvSubCtxSurf3D, NV04_CONTEXT_SURFACES_3D_CLIP_HORIZONTAL, 2);
+//	OUT_RING((w<<16)|x);
+//	OUT_RING((h<<16)|y);
+
 
 	/* FIXME not sure... */
-	BEGIN_RING_SIZE(NvSubCtxSurf3D, NV04_CONTEXT_SURFACES_3D_CLIP_SIZE, 1);
-	OUT_RING((h<<16)|w);
-
-	BEGIN_RING_SIZE(NvSubCtxSurf3D, NV04_CONTEXT_SURFACES_3D_FORMAT, 1);
-	if (color[0]->mesa._ActualFormat == GL_RGBA8)
-		OUT_RING(108/*A8R8G8B8*/);
-	else
-		OUT_RING(103/*R5G6B5*/);
+/*	BEGIN_RING_SIZE(NvSubCtxSurf3D, NV04_CONTEXT_SURFACES_3D_CLIP_SIZE, 1);
+	OUT_RING((h<<16)|w);*/
 
 	return GL_TRUE;
 }
