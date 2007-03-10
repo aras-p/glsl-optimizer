@@ -1014,8 +1014,12 @@ emit_cond(slang_emit_info *emitInfo, slang_ir_node *n)
     * Need to update condition code register.
     * Next instruction is typically an IR_IF.
     */
-   /* last child expr instruction: */
-   struct prog_instruction *inst = emit(emitInfo, n->Children[0]);
+   struct prog_instruction *inst;
+
+   if (!n->Children[0])
+      return NULL;
+
+   inst = emit(emitInfo, n->Children[0]);
    if (inst) {
       /* set inst's CondUpdate flag */
       inst->CondUpdate = GL_TRUE;
