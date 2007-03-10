@@ -125,27 +125,28 @@ _swrast_update_rasterflags( GLcontext *ctx )
 static void
 _swrast_update_polygon( GLcontext *ctx )
 {
-   GLfloat backface_sign = 1;
+   GLfloat backface_sign;
 
    if (ctx->Polygon.CullFlag) {
-      backface_sign = 1;
-      switch(ctx->Polygon.CullFaceMode) {
+      backface_sign = 1.0;
+      switch (ctx->Polygon.CullFaceMode) {
       case GL_BACK:
-	 if(ctx->Polygon.FrontFace==GL_CCW)
-	    backface_sign = -1;
+	 if (ctx->Polygon.FrontFace == GL_CCW)
+	    backface_sign = -1.0;
 	 break;
       case GL_FRONT:
-	 if(ctx->Polygon.FrontFace!=GL_CCW)
-	    backface_sign = -1;
+	 if (ctx->Polygon.FrontFace != GL_CCW)
+	    backface_sign = -1.0;
 	 break;
-      default:
       case GL_FRONT_AND_BACK:
-	 backface_sign = 0;
+         /* fallthrough */
+      default:
+	 backface_sign = 0.0;
 	 break;
       }
    }
    else {
-      backface_sign = 0;
+      backface_sign = 0.0;
    }
 
    SWRAST_CONTEXT(ctx)->_BackfaceSign = backface_sign;
