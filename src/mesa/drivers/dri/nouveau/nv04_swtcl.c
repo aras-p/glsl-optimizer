@@ -503,7 +503,7 @@ static inline void nv04OutputVertexFormat(struct nouveau_context* nmesa)
 	nmesa->vertex_size=_tnl_install_attrs( ctx,
 			nmesa->vertex_attrs, 
 			nmesa->vertex_attr_count,
-			ctx->Viewport._WindowMap.m, 0 );
+			nmesa->viewport.m, 0 );
 }
 
 
