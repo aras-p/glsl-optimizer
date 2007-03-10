@@ -34,7 +34,7 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "nouveau_state_cache.h"
 
 //#define NOUVEAU_RING_TRACE
-#define NOUVEAU_RING_DEBUG
+//#define NOUVEAU_RING_DEBUG
 //#define NOUVEAU_STATE_CACHE_DISABLE
 
 #ifndef NOUVEAU_RING_TRACE
