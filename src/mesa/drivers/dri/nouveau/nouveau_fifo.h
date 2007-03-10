@@ -34,7 +34,7 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "nouveau_state_cache.h"
 
 //#define NOUVEAU_RING_TRACE
-//#define NOUVEAU_RING_DEBUG
+#define NOUVEAU_RING_DEBUG
 //#define NOUVEAU_STATE_CACHE_DISABLE
 
 #ifndef NOUVEAU_RING_TRACE
@@ -74,17 +74,33 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 #ifdef NOUVEAU_RING_DEBUG
 
+extern int nouveau_fifo_remaining;
+
 #define OUT_RINGp(ptr,sz) do {                                                  \
 uint32_t* p=(uint32_t*)(ptr);							\
 int i; printf("OUT_RINGp: (size 0x%x dwords)\n",sz); for(i=0;i<sz;i++) printf(" 0x%08x   %f\n", *(p+i), *((float*)(p+i))); 	\
+nouveau_fifo_remaining-=sz;							\
 }while(0)
 
 #define OUT_RING(n) do {                                                        \
     printf("OUT_RINGn: 0x%08x (%s)\n", n, __func__);                            \
+    nouveau_fifo_remaining--;							\
 }while(0)
 
 #define OUT_RINGf(n) do {                                                       \
     printf("OUT_RINGf: %.04f (%s)\n", n, __func__);                             \
+    nouveau_fifo_remaining--;							\
+}while(0)
+
+#define BEGIN_RING_SIZE(subchannel,tag,size) do {					\
+	if (nouveau_fifo_remaining!=0)							\
+		printf("RING ERROR : remaining %d\n",nouveau_fifo_remaining);		\
+	nouveau_state_cache_flush(nmesa);						\
+	if (nmesa->fifo.free <= (size))							\
+		WAIT_RING(nmesa,(size));						\
+	OUT_RING( ((size)<<18) | ((subchannel) << 13) | (tag));				\
+	nmesa->fifo.free -= ((size) + 1);                                               \
+	nouveau_fifo_remaining=size;							\
 }while(0)
 
 #else
@@ -110,8 +126,6 @@ if (NOUVEAU_RING_TRACE) \
 *((float*)(nmesa->fifo.buffer+nmesa->fifo.current++))=(n);			\
 }while(0)
 
-#endif
-
 #define BEGIN_RING_SIZE(subchannel,tag,size) do {					\
 	nouveau_state_cache_flush(nmesa);						\
 	if (nmesa->fifo.free <= (size))							\
@@ -119,6 +133,8 @@ if (NOUVEAU_RING_TRACE) \
 	OUT_RING( ((size)<<18) | ((subchannel) << 13) | (tag));				\
 	nmesa->fifo.free -= ((size) + 1);                                               \
 }while(0)
+
+#endif
 
 extern void WAIT_RING(nouveauContextPtr nmesa,u_int32_t size);
 extern void nouveau_state_cache_flush(nouveauContextPtr nmesa);
