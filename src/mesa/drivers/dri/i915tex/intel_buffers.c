@@ -43,6 +43,23 @@
 #include "vblank.h"
 
 
+/* This block can be removed when libdrm > 2.3.0 is required */
+
+#ifndef DRM_VBLANK_FLIP
+
+#define DRM_VBLANK_FLIP 0x8000000
+
+typedef struct drm_i915_flip {
+   int pipes;
+} drm_i915_flip_t;
+
+#undef DRM_IOCTL_I915_FLIP
+#define DRM_IOCTL_I915_FLIP DRM_IOW(DRM_COMMAND_BASE + DRM_I915_FLIP, \
+				    drm_i915_flip_t)
+
+#endif
+
+
 /**
  * XXX move this into a new dri/common/cliprects.c file.
  */
