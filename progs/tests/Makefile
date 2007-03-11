@@ -33,6 +33,7 @@ SOURCES = \
 	crossbar.c \
 	cva.c \
 	dinoshade.c \
+	drawbuffers.c \
 	floattex.c \
 	fbotest1.c \
 	fbotest2.c \
