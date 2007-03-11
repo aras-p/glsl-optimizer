@@ -939,7 +939,14 @@ static void build_lighting( struct tnl_program *p )
 	     */
 	    VPpli = register_param3(p, STATE_LIGHT, i, 
 				    STATE_POSITION_NORMALIZED); 
-	    half = register_param3(p, STATE_LIGHT, i, STATE_HALF);
+            if (p->state->light_local_viewer) {
+                struct ureg eye_hat = get_eye_position_normalized(p);
+                half = get_temp(p);
+                emit_op2(p, OPCODE_SUB, half, 0, VPpli, eye_hat);
+                emit_normalize_vec3(p, half, half);
+            } else {
+                half = register_param3(p, STATE_LIGHT, i, STATE_HALF);
+            }
 	 } 
 	 else {
 	    struct ureg Ppli = register_param3(p, STATE_LIGHT, i, 
