@@ -284,6 +284,7 @@ _slang_output_index(const char *name, GLenum target)
    static const struct output_info fragOutputs[] = {
       { "gl_FragColor", FRAG_RESULT_COLR },
       { "gl_FragDepth", FRAG_RESULT_DEPR },
+      { "gl_FragData", FRAG_RESULT_DATA0 },
       { NULL, 0 }
    };
    GLuint i;

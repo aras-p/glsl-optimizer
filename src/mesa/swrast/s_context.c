@@ -548,6 +548,44 @@ _swrast_update_fragment_attribs(GLcontext *ctx)
 }
 
 
+/**
+ * Update the swrast->_ColorOutputsMask which indicates which color
+ * renderbuffers (aka rendertargets) are being written to by the current
+ * fragment program.
+ * We also take glDrawBuffers() into account to skip outputs that are
+ * set to GL_NONE.
+ */
+static void
+_swrast_update_color_outputs(GLcontext *ctx)
+{
+   SWcontext *swrast = SWRAST_CONTEXT(ctx);
+   const struct gl_framebuffer *fb = ctx->DrawBuffer;
+
+   swrast->_ColorOutputsMask = 0;
+   swrast->_NumColorOutputs = 0;
+
+   if (ctx->FragmentProgram._Current) {
+      const GLbitfield outputsWritten
+         = ctx->FragmentProgram._Current->Base.OutputsWritten;
+      GLuint output;
+      for (output = 0; output < ctx->Const.MaxDrawBuffers; output++) {
+         if ((outputsWritten & (1 << (FRAG_RESULT_DATA0 + output)))
+             && (fb->_NumColorDrawBuffers[output] > 0)) {
+            swrast->_ColorOutputsMask |= (1 << output);
+            swrast->_NumColorOutputs = output + 1;
+         }
+      }
+   }
+   if (swrast->_ColorOutputsMask == 0x0) {
+      /* no fragment program, or frag prog didn't write to gl_FragData[] */
+      if (fb->_NumColorDrawBuffers[0] > 0) {
+         swrast->_ColorOutputsMask = 0x1;
+         swrast->_NumColorOutputs = 1;
+      }
+   }
+}
+
+
 void
 _swrast_validate_derived( GLcontext *ctx )
 {
@@ -593,6 +631,9 @@ _swrast_validate_derived( GLcontext *ctx )
                               _NEW_PROGRAM |
                               _NEW_TEXTURE))
          _swrast_update_fragment_attribs(ctx);
+
+      if (swrast->NewState & (_NEW_PROGRAM | _NEW_BUFFERS))
+         _swrast_update_color_outputs(ctx);
 
       swrast->NewState = 0;
       swrast->StateChanges = 0;

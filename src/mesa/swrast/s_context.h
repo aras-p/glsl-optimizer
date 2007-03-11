@@ -133,6 +133,10 @@ typedef struct
    GLboolean _FogEnabled;
    GLenum _FogMode;  /* either GL_FOG_MODE or fragment program's fog mode */
 
+   /** Multiple render targets */
+   GLbitfield _ColorOutputsMask;
+   GLuint _NumColorOutputs;
+
    /** Fragment attributes to compute during rasterization.
     * Mask of FRAG_BIT_* flags.
     */
