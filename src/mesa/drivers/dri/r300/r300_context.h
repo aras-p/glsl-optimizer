@@ -457,7 +457,7 @@ struct r300_hw_state {
 	struct r300_state_atom polygon_mode;
 	struct r300_state_atom fogp;	/* fog parameters (4294) */
 	struct r300_state_atom unk429C; /* (429C) */
-	struct r300_state_atom unk42A0;	/* (42A0) */
+	struct r300_state_atom zbias_cntl;
 	struct r300_state_atom zbs;	/* zbias (42A4) */
 	struct r300_state_atom occlusion_cntl;
 	struct r300_state_atom cul;	/* cull cntl (42B8) */

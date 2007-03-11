@@ -2089,7 +2089,7 @@ void r300ResetHwState(r300ContextPtr r300)
 	r300PolygonMode(ctx, GL_BACK, ctx->Polygon.BackMode);
 	r300->hw.polygon_mode.cmd[2] = 0x00000001;
 	r300->hw.polygon_mode.cmd[3] = 0x00000000;
-	r300->hw.unk42A0.cmd[1] = 0x00000000;
+	r300->hw.zbias_cntl.cmd[1] = 0x00000000;
 
 	r300PolygonOffset(ctx, ctx->Polygon.OffsetFactor, ctx->Polygon.OffsetUnits);
 	r300Enable(ctx, GL_POLYGON_OFFSET_FILL, ctx->Polygon.OffsetFill);

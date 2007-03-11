@@ -341,8 +341,8 @@ void r300InitCmdBuf(r300ContextPtr r300)
 		r300->hw.polygon_mode.cmd[0] = cmdpacket0(R300_RE_POLYGON_MODE, 3);
 	ALLOC_STATE( fogp, always, 3, "fogp", 0 );
 		r300->hw.fogp.cmd[0] = cmdpacket0(R300_RE_FOG_SCALE, 2);
-	ALLOC_STATE( unk42A0, always, 2, "unk42A0", 0 );
-		r300->hw.unk42A0.cmd[0] = cmdpacket0(0x42A0, 1);
+	ALLOC_STATE( zbias_cntl, always, 2, "zbias_cntl", 0 );
+		r300->hw.zbias_cntl.cmd[0] = cmdpacket0(R300_RE_ZBIAS_CNTL, 1);
 	ALLOC_STATE( zbs, always, R300_ZBS_CMDSIZE, "zbs", 0 );
 		r300->hw.zbs.cmd[R300_ZBS_CMD_0] = cmdpacket0(R300_RE_ZBIAS_T_FACTOR, 4);
 	ALLOC_STATE( occlusion_cntl, always, 2, "occlusion_cntl", 0 );
@@ -481,7 +481,7 @@ void r300InitCmdBuf(r300ContextPtr r300)
 	insert_at_tail(&r300->hw.atomlist, &r300->hw.shade);
 	insert_at_tail(&r300->hw.atomlist, &r300->hw.polygon_mode);
 	insert_at_tail(&r300->hw.atomlist, &r300->hw.fogp);
-	insert_at_tail(&r300->hw.atomlist, &r300->hw.unk42A0);
+	insert_at_tail(&r300->hw.atomlist, &r300->hw.zbias_cntl);
 	insert_at_tail(&r300->hw.atomlist, &r300->hw.zbs);
 	insert_at_tail(&r300->hw.atomlist, &r300->hw.occlusion_cntl);
 	insert_at_tail(&r300->hw.atomlist, &r300->hw.cul);

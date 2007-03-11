@@ -571,6 +571,7 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
  * Some of the tests indicate that fgl has a fallback implementation of zbias
  * via pixel shaders.
  */
+#define R300_RE_ZBIAS_CNTL                    0x42A0 /* GUESS */
 #define R300_RE_ZBIAS_T_FACTOR                0x42A4
 #define R300_RE_ZBIAS_T_CONSTANT              0x42A8
 #define R300_RE_ZBIAS_W_FACTOR                0x42AC
