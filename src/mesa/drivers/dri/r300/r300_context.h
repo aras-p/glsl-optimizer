@@ -180,6 +180,7 @@ struct r300_tex_obj {
 	/* hardware register values */
 	/* Note that R200 has 8 registers per texture and R300 only 7 */
 	GLuint filter;
+	GLuint filter_1;
 	GLuint pitch_reg;
 	GLuint size;	/* npot only */
 	GLuint format;
@@ -432,11 +433,11 @@ struct r300_hw_state {
 	int		max_state_size;	/* in dwords */
 
 	struct r300_state_atom vpt;	/* viewport (1D98) */
-	struct r300_state_atom unk2080;	/* (2080) */
+	struct r300_state_atom vap_cntl;
 	struct r300_state_atom vof;     /* VAP output format register 0x2090 */
 	struct r300_state_atom vte;	/* (20B0) */
 	struct r300_state_atom unk2134;	/* (2134) */
-	struct r300_state_atom unk2140;	/* (2140) */
+	struct r300_state_atom vap_cntl_status;
 	struct r300_state_atom vir[2];	/* vap input route (2150/21E0) */
 	struct r300_state_atom vic;	/* vap input control (2180) */
 	struct r300_state_atom unk21DC; /* (21DC) */
@@ -452,13 +453,13 @@ struct r300_hw_state {
 	struct r300_state_atom unk4230; /* (4230) */
 	struct r300_state_atom lcntl;	/* line control */
 	struct r300_state_atom unk4260; /* (4260) */
-	struct r300_state_atom unk4274; /* (4274) */
-	struct r300_state_atom unk4288; /* (4288) */
+	struct r300_state_atom shade;
+	struct r300_state_atom polygon_mode;
 	struct r300_state_atom fogp;	/* fog parameters (4294) */
 	struct r300_state_atom unk429C; /* (429C) */
 	struct r300_state_atom unk42A0;	/* (42A0) */
 	struct r300_state_atom zbs;	/* zbias (42A4) */
-	struct r300_state_atom unk42B4; /* (42B4) */
+	struct r300_state_atom occlusion_cntl;
 	struct r300_state_atom cul;	/* cull cntl (42B8) */
 	struct r300_state_atom unk42C0; /* (42C0) */
 	struct r300_state_atom rc;	/* rs control (4300) */
@@ -478,13 +479,13 @@ struct r300_hw_state {
 	struct r300_state_atom unk4E00;	/* (4E00) */
 	struct r300_state_atom bld;	/* blending (4E04) */
 	struct r300_state_atom cmk;	/* colormask (4E0C) */
-	struct r300_state_atom unk4E10;	/* constant blend color + ??? (4E10) */
+	struct r300_state_atom blend_color;	/* constant blend color */
 	struct r300_state_atom cb;	/* colorbuffer (4E28) */
 	struct r300_state_atom unk4E50;	/* (4E50) */
 	struct r300_state_atom unk4E88;	/* (4E88) */
 	struct r300_state_atom unk4EA0;	/* (4E88) I saw it only written on RV350 hardware..  */
 	struct r300_state_atom zs;	/* zstencil control (4F00) */
-	struct r300_state_atom unk4F10;	/* (4F10) */
+	struct r300_state_atom zstencil_format;
 	struct r300_state_atom zb;	/* z buffer (4F20) */
 	struct r300_state_atom unk4F28;	/* (4F28) */
 	struct r300_state_atom unk4F30;	/* (4F30) */
@@ -501,12 +502,12 @@ struct r300_hw_state {
 		   updating the whole thing at once */
 	struct {
 		struct r300_state_atom filter;
-		struct r300_state_atom unknown1;
+		struct r300_state_atom filter_1;
 		struct r300_state_atom size;
 		struct r300_state_atom format;
 		struct r300_state_atom pitch;
 		struct r300_state_atom offset;
-		struct r300_state_atom unknown4;
+		struct r300_state_atom chroma_key;
 		struct r300_state_atom border_color;
 		} tex;
 	struct r300_state_atom txe;	/* tex enable (4104) */
