@@ -1985,12 +1985,15 @@ _slang_gen_assignment(slang_assemble_ctx * A, slang_operation *oper)
    else {
       slang_ir_node *n, *lhs, *rhs;
       lhs = _slang_gen_operation(A, &oper->children[0]);
-      if (lhs->Store->File != PROGRAM_OUTPUT &&
-          lhs->Store->File != PROGRAM_TEMPORARY &&
-          lhs->Store->File != PROGRAM_VARYING &&
-          lhs->Store->File != PROGRAM_UNDEFINED) {
-         slang_info_log_error(A->log, "Assignment to read-only variable");
-         return NULL;
+
+      if (lhs) {
+         if (lhs->Store->File != PROGRAM_OUTPUT &&
+             lhs->Store->File != PROGRAM_TEMPORARY &&
+             lhs->Store->File != PROGRAM_VARYING &&
+             lhs->Store->File != PROGRAM_UNDEFINED) {
+            slang_info_log_error(A->log, "Assignment to read-only variable");
+            return NULL;
+         }
       }
 
       rhs = _slang_gen_operation(A, &oper->children[1]);
