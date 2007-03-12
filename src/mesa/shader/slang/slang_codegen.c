@@ -276,7 +276,7 @@ _slang_output_index(const char *name, GLenum target)
       { "gl_BackColor", VERT_RESULT_BFC0 },
       { "gl_FrontSecondaryColor", VERT_RESULT_COL1 },
       { "gl_BackSecondaryColor", VERT_RESULT_BFC1 },
-      { "gl_TexCoord", VERT_RESULT_TEX0 }, /* XXX indexed */
+      { "gl_TexCoord", VERT_RESULT_TEX0 },
       { "gl_FogFragCoord", VERT_RESULT_FOGC },
       { "gl_PointSize", VERT_RESULT_PSIZ },
       { NULL, 0 }
@@ -1953,6 +1953,7 @@ static slang_ir_node *
 _slang_gen_swizzle(slang_ir_node *child, GLuint swizzle)
 {
    slang_ir_node *n = new_node1(IR_SWIZZLE, child);
+   assert(child);
    if (n) {
       n->Store = _slang_new_ir_storage(PROGRAM_UNDEFINED, -1, -1);
       n->Store->Swizzle = swizzle;
@@ -2045,7 +2046,8 @@ _slang_gen_field(slang_assemble_ctx * A, slang_operation *oper)
 
       n = _slang_gen_operation(A, &oper->children[0]);
       /* create new parent node with swizzle */
-      n = _slang_gen_swizzle(n, swizzle);
+      if (n)
+         n = _slang_gen_swizzle(n, swizzle);
       return n;
    }
    else if (ti.spec.type == SLANG_SPEC_FLOAT) {
@@ -2138,21 +2140,42 @@ _slang_gen_subscript(slang_assemble_ctx * A, slang_operation *oper)
       /* conventional array */
       slang_typeinfo elem_ti;
       slang_ir_node *elem, *array, *index;
-      GLint elemSize;
+      GLint elemSize, arrayLen;
 
       /* size of array element */
       slang_typeinfo_construct(&elem_ti);
       _slang_typeof_operation(A, oper, &elem_ti);
       elemSize = _slang_sizeof_type_specifier(&elem_ti.spec);
+
+      if (_slang_type_is_matrix(array_ti.spec.type))
+         arrayLen = _slang_type_dim(array_ti.spec.type);
+      else
+         arrayLen = array_ti.array_len;
+
+      slang_typeinfo_destruct(&array_ti);
+      slang_typeinfo_destruct(&elem_ti);
+
       if (elemSize <= 0) {
          /* unknown var or type */
-         slang_info_log_error(A->log, "Undefined var or type");
+         slang_info_log_error(A->log, "Undefined variable or type");
          return NULL;
       }
 
       array = _slang_gen_operation(A, &oper->children[0]);
       index = _slang_gen_operation(A, &oper->children[1]);
       if (array && index) {
+         /* bounds check */
+         if (index->Opcode == IR_FLOAT &&
+             ((int) index->Value[0] < 0 ||
+              (int) index->Value[0] >= arrayLen)) {
+            slang_info_log_error(A->log,
+                                "Array index out of bounds (index=%d size=%d)",
+                                 (int) index->Value[0], arrayLen);
+            _slang_free_ir_tree(array);
+            _slang_free_ir_tree(index);
+            return NULL;
+         }
+
          elem = new_node2(IR_ELEMENT, array, index);
          elem->Store = _slang_new_ir_storage(array->Store->File,
                                              array->Store->Index,
@@ -2161,6 +2184,8 @@ _slang_gen_subscript(slang_assemble_ctx * A, slang_operation *oper)
          return elem;
       }
       else {
+         _slang_free_ir_tree(array);
+         _slang_free_ir_tree(index);
          return NULL;
       }
    }
