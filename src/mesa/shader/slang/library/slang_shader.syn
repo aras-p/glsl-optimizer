@@ -139,8 +139,10 @@
 .emtcode TYPE_SPECIFIER_SAMPLERCUBE                 19
 .emtcode TYPE_SPECIFIER_SAMPLER1DSHADOW             20
 .emtcode TYPE_SPECIFIER_SAMPLER2DSHADOW             21
-.emtcode TYPE_SPECIFIER_STRUCT                      22
-.emtcode TYPE_SPECIFIER_TYPENAME                    23
+.emtcode TYPE_SPECIFIER_SAMPLER2DRECT               22
+.emtcode TYPE_SPECIFIER_SAMPLER2DRECTSHADOW         23
+.emtcode TYPE_SPECIFIER_STRUCT                      24
+.emtcode TYPE_SPECIFIER_TYPENAME                    25
 
 /* structure field */
 .emtcode FIELD_NONE                                 0
@@ -884,6 +886,8 @@ type_qualifier
                                           | "samplerCube"
                                           | "sampler1DShadow"
                                           | "sampler2DShadow"
+					  | "sampler2DRect"
+					  | "sampler2DRectShadow"
                                           | <struct_specifier>
                                           | <type_name>
 */
@@ -910,6 +914,8 @@ type_specifier_space
     "samplerCube" .emit TYPE_SPECIFIER_SAMPLERCUBE .or
     "sampler1DShadow" .emit TYPE_SPECIFIER_SAMPLER1DSHADOW .or
     "sampler2DShadow" .emit TYPE_SPECIFIER_SAMPLER2DSHADOW .or
+    "sampler2DRect" .emit TYPE_SPECIFIER_SAMPLER2DRECT .or
+    "sampler2DRectShadow" .emit TYPE_SPECIFIER_SAMPLER2DRECTSHADOW .or
     type_name .emit TYPE_SPECIFIER_TYPENAME;
 type_specifier_nospace
     struct_specifier .emit TYPE_SPECIFIER_STRUCT;

@@ -487,8 +487,10 @@ parse_type_qualifier(slang_parse_ctx * C, slang_type_qualifier * qual)
 #define TYPE_SPECIFIER_SAMPLERCUBE 19
 #define TYPE_SPECIFIER_SAMPLER1DSHADOW 20
 #define TYPE_SPECIFIER_SAMPLER2DSHADOW 21
-#define TYPE_SPECIFIER_STRUCT 22
-#define TYPE_SPECIFIER_TYPENAME 23
+#define TYPE_SPECIFIER_SAMPLER2DRECT 22
+#define TYPE_SPECIFIER_SAMPLER2DRECTSHADOW 23
+#define TYPE_SPECIFIER_STRUCT 24
+#define TYPE_SPECIFIER_TYPENAME 25
 
 static int
 parse_type_specifier(slang_parse_ctx * C, slang_output_ctx * O,
@@ -555,11 +557,17 @@ parse_type_specifier(slang_parse_ctx * C, slang_output_ctx * O,
    case TYPE_SPECIFIER_SAMPLERCUBE:
       spec->type = SLANG_SPEC_SAMPLERCUBE;
       break;
+   case TYPE_SPECIFIER_SAMPLER2DRECT:
+      spec->type = SLANG_SPEC_SAMPLER2DRECT;
+      break;
    case TYPE_SPECIFIER_SAMPLER1DSHADOW:
       spec->type = SLANG_SPEC_SAMPLER1DSHADOW;
       break;
    case TYPE_SPECIFIER_SAMPLER2DSHADOW:
       spec->type = SLANG_SPEC_SAMPLER2DSHADOW;
+      break;
+   case TYPE_SPECIFIER_SAMPLER2DRECTSHADOW:
+      spec->type = SLANG_SPEC_SAMPLER2DRECTSHADOW;
       break;
    case TYPE_SPECIFIER_STRUCT:
       spec->type = SLANG_SPEC_STRUCT;

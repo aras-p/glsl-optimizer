@@ -709,6 +709,10 @@ slang_type_string(slang_type_specifier_type t)
       return "sampler1DShadow";
    case SLANG_SPEC_SAMPLER2DSHADOW:
       return "sampler2DShadow";
+   case SLANG_SPEC_SAMPLER2DRECT:
+      return "sampler2DRect";
+   case SLANG_SPEC_SAMPLER2DRECTSHADOW:
+      return "sampler2DRectShadow";
    case SLANG_SPEC_STRUCT:
       return "struct";
    case SLANG_SPEC_ARRAY:

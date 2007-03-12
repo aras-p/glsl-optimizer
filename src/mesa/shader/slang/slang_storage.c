@@ -191,6 +191,8 @@ _slang_aggregate_variable(slang_storage_aggregate * agg,
    case SLANG_SPEC_SAMPLERCUBE:
    case SLANG_SPEC_SAMPLER1DSHADOW:
    case SLANG_SPEC_SAMPLER2DSHADOW:
+   case SLANG_SPEC_SAMPLER2DRECT:
+   case SLANG_SPEC_SAMPLER2DRECTSHADOW:
       return aggregate_vector(agg, SLANG_STORE_INT, 1);
    case SLANG_SPEC_STRUCT:
       return aggregate_variables(agg, spec->_struct->fields, funcs, structs,

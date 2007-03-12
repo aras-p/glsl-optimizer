@@ -69,6 +69,8 @@ is_sampler_type(const slang_fully_specified_type *t)
    case SLANG_SPEC_SAMPLERCUBE:
    case SLANG_SPEC_SAMPLER1DSHADOW:
    case SLANG_SPEC_SAMPLER2DSHADOW:
+   case SLANG_SPEC_SAMPLER2DRECT:
+   case SLANG_SPEC_SAMPLER2DRECTSHADOW:
       return GL_TRUE;
    default:
       return GL_FALSE;
@@ -118,6 +120,8 @@ _slang_sizeof_type_specifier(const slang_type_specifier *spec)
    case SLANG_SPEC_SAMPLERCUBE:
    case SLANG_SPEC_SAMPLER1DSHADOW:
    case SLANG_SPEC_SAMPLER2DSHADOW:
+   case SLANG_SPEC_SAMPLER2DRECT:
+   case SLANG_SPEC_SAMPLER2DRECTSHADOW:
       return 1; /* special case */
    case SLANG_SPEC_STRUCT:
       {
@@ -196,6 +200,10 @@ sampler_to_texture_index(const slang_type_specifier_type type)
       return TEXTURE_1D_INDEX; /* XXX fix */
    case SLANG_SPEC_SAMPLER2DSHADOW:
       return TEXTURE_2D_INDEX; /* XXX fix */
+   case SLANG_SPEC_SAMPLER2DRECT:
+      return TEXTURE_RECT_INDEX;
+   case SLANG_SPEC_SAMPLER2DRECTSHADOW:
+      return TEXTURE_RECT_INDEX; /* XXX fix */
    default:
       return -1;
    }
@@ -357,6 +365,8 @@ static slang_asm_info AsmInfo[] = {
    { "vec4_texb3d", IR_TEXB, 1, 2 },  /* 3d w/ bias */
    { "vec4_texp3d", IR_TEXP, 1, 2 },  /* 3d w/ projection */
    { "vec4_texcube", IR_TEX, 1, 2 },  /* cubemap */
+   { "vec4_tex_rect", IR_TEX, 1, 2 }, /* rectangle */
+   { "vec4_texp_rect", IR_TEX, 1, 2 },/* rectangle w/ projection */
 
    /* unary op */
    { "int_to_float", IR_I_TO_F, 1, 1 },

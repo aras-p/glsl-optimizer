@@ -62,6 +62,8 @@ static const type_specifier_type_name type_specifier_type_names[] = {
    {"samplerCube", SLANG_SPEC_SAMPLERCUBE},
    {"sampler1DShadow", SLANG_SPEC_SAMPLER1DSHADOW},
    {"sampler2DShadow", SLANG_SPEC_SAMPLER2DSHADOW},
+   {"sampler2DRect", SLANG_SPEC_SAMPLER2DRECT},
+   {"sampler2DRectShadow", SLANG_SPEC_SAMPLER2DRECTSHADOW},
    {NULL, SLANG_SPEC_VOID}
 };
 
