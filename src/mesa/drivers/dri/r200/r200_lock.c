@@ -98,7 +98,6 @@ void r200GetLock( r200ContextPtr rmesa, GLuint flags )
          r200SetCliprects( rmesa, GL_FRONT_LEFT );
       r200UpdateViewportOffset( rmesa->glCtx );
       driUpdateFramebufferSize(rmesa->glCtx, drawable);
-      rmesa->lastStamp = drawable->lastStamp;
    }
 
    R200_STATECHANGE( rmesa, ctx );

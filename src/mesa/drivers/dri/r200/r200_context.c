@@ -673,11 +673,13 @@ r200MakeCurrent( __DRIcontextPrivate *driContextPriv,
 				&newCtx->vbl_seq );
       }
 
-      if ( newCtx->dri.drawable != driDrawPriv ||
-           newCtx->dri.readable != driReadPriv ) {
-	 newCtx->dri.drawable = driDrawPriv;
-	 newCtx->dri.readable = driReadPriv;
+      newCtx->dri.readable = driReadPriv;
 
+      if ( newCtx->dri.drawable != driDrawPriv ||
+           newCtx->lastStamp != driDrawPriv->lastStamp ) {
+	 newCtx->dri.drawable = driDrawPriv;
+
+	 r200SetCliprects(newCtx, GL_BACK_LEFT);
 	 r200UpdateWindow( newCtx->glCtx );
 	 r200UpdateViewportOffset( newCtx->glCtx );
       }

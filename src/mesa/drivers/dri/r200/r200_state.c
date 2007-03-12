@@ -1889,6 +1889,8 @@ void r200SetCliprects( r200ContextPtr rmesa, GLenum mode )
 
    if (rmesa->state.scissor.enabled)
       r200RecalcScissorRects( rmesa );
+
+   rmesa->lastStamp = drawable->lastStamp;
 }
 
 
