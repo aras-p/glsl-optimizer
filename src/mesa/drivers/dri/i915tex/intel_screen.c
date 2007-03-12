@@ -98,6 +98,18 @@ intelMapScreenRegions(__DRIscreenPrivate * sPriv)
       return GL_FALSE;
    }
 
+   if (intelScreen->third.handle) {
+      if (0)
+	 _mesa_printf("Third 0x%08x ", intelScreen->third.handle);
+      if (drmMap(sPriv->fd,
+		 intelScreen->third.handle,
+		 intelScreen->third.size,
+		 (drmAddress *) & intelScreen->third.map) != 0) {
+	 intelUnmapScreenRegions(intelScreen);
+	 return GL_FALSE;
+      }
+   }
+
    if (0)
       _mesa_printf("Depth 0x%08x ", intelScreen->depth.handle);
    if (drmMap(sPriv->fd,
@@ -119,9 +131,9 @@ intelMapScreenRegions(__DRIscreenPrivate * sPriv)
    }
 #endif
    if (0)
-      printf("Mappings:  front: %p  back: %p  depth: %p  tex: %p\n",
+      printf("Mappings:  front: %p  back: %p  third: %p  depth: %p  tex: %p\n",
              intelScreen->front.map,
-             intelScreen->back.map,
+             intelScreen->back.map, intelScreen->third.map,
              intelScreen->depth.map, intelScreen->tex.map);
    return GL_TRUE;
 }
@@ -191,6 +203,18 @@ intel_recreate_static_regions(intelScreenPrivate *intelScreen)
 			    intelScreen->back.pitch / intelScreen->cpp,
 			    intelScreen->height);
 
+   if (intelScreen->third.handle) {
+      intelScreen->third_region =
+	 intel_recreate_static(intelScreen,
+			       intelScreen->third_region,
+			       DRM_BO_FLAG_MEM_TT,
+			       intelScreen->third.offset,
+			       intelScreen->third.map,
+			       intelScreen->cpp,
+			       intelScreen->third.pitch / intelScreen->cpp,
+			       intelScreen->height);
+   }
+
    /* Still assuming front.cpp == depth.cpp
     */
    intelScreen->depth_region =
@@ -239,6 +263,13 @@ intelUnmapScreenRegions(intelScreenPrivate * intelScreen)
          printf("drmUnmap back failed!\n");
 #endif
       intelScreen->back.map = NULL;
+   }
+   if (intelScreen->third.map) {
+#if REALLY_UNMAP
+      if (drmUnmap(intelScreen->third.map, intelScreen->third.size) != 0)
+         printf("drmUnmap third failed!\n");
+#endif
+      intelScreen->third.map = NULL;
    }
    if (intelScreen->depth.map) {
 #if REALLY_UNMAP
@@ -324,6 +355,13 @@ intelUpdateScreenFromSAREA(intelScreenPrivate * intelScreen,
    intelScreen->back.pitch = sarea->pitch * intelScreen->cpp;
    intelScreen->back.handle = sarea->back_handle;
    intelScreen->back.size = sarea->back_size;
+
+   if (intelScreen->driScrnPriv->ddxMinor >= 8) {
+      intelScreen->third.offset = sarea->third_offset;
+      intelScreen->third.pitch = sarea->pitch * intelScreen->cpp;
+      intelScreen->third.handle = sarea->third_handle;
+      intelScreen->third.size = sarea->third_size;
+   }
 
    intelScreen->depth.offset = sarea->depth_offset;
    intelScreen->depth.pitch = sarea->pitch * intelScreen->cpp;
@@ -541,31 +579,49 @@ intelCreateBuffer(__DRIscreenPrivate * driScrnPriv,
                              mesaVis->depthBits != 24);
       GLenum rgbFormat = (mesaVis->redBits == 5 ? GL_RGB5 : GL_RGBA8);
 
-      struct gl_framebuffer *fb = _mesa_create_framebuffer(mesaVis);
+      struct intel_framebuffer *intel_fb = CALLOC_STRUCT(intel_framebuffer);
+
+      if (!intel_fb)
+	 return GL_FALSE;
+
+      _mesa_initialize_framebuffer(&intel_fb->Base, mesaVis);
 
       /* setup the hardware-based renderbuffers */
       {
-         struct intel_renderbuffer *frontRb
+         intel_fb->color_rb[0]
             = intel_create_renderbuffer(rgbFormat,
                                         screen->width, screen->height,
                                         screen->front.offset,
                                         screen->front.pitch,
                                         screen->cpp,
                                         screen->front.map);
-         intel_set_span_functions(&frontRb->Base);
-         _mesa_add_renderbuffer(fb, BUFFER_FRONT_LEFT, &frontRb->Base);
+         intel_set_span_functions(&intel_fb->color_rb[0]->Base);
+         _mesa_add_renderbuffer(&intel_fb->Base, BUFFER_FRONT_LEFT,
+				&intel_fb->color_rb[0]->Base);
       }
 
       if (mesaVis->doubleBufferMode) {
-         struct intel_renderbuffer *backRb
+         intel_fb->color_rb[1]
             = intel_create_renderbuffer(rgbFormat,
                                         screen->width, screen->height,
                                         screen->back.offset,
                                         screen->back.pitch,
                                         screen->cpp,
                                         screen->back.map);
-         intel_set_span_functions(&backRb->Base);
-         _mesa_add_renderbuffer(fb, BUFFER_BACK_LEFT, &backRb->Base);
+         intel_set_span_functions(&intel_fb->color_rb[1]->Base);
+         _mesa_add_renderbuffer(&intel_fb->Base, BUFFER_BACK_LEFT,
+				&intel_fb->color_rb[1]->Base);
+
+	 if (screen->third.handle) {
+	    intel_fb->color_rb[2]
+	       = intel_create_renderbuffer(rgbFormat,
+					   screen->width, screen->height,
+					   screen->third.offset,
+					   screen->third.pitch,
+					   screen->cpp,
+					   screen->third.map);
+	    intel_set_span_functions(&intel_fb->color_rb[2]->Base);
+	 }
       }
 
       if (mesaVis->depthBits == 24 && mesaVis->stencilBits == 8) {
@@ -579,8 +635,10 @@ intelCreateBuffer(__DRIscreenPrivate * driScrnPriv,
                                         screen->depth.map);
          intel_set_span_functions(&depthStencilRb->Base);
          /* note: bind RB to two attachment points */
-         _mesa_add_renderbuffer(fb, BUFFER_DEPTH, &depthStencilRb->Base);
-         _mesa_add_renderbuffer(fb, BUFFER_STENCIL, &depthStencilRb->Base);
+         _mesa_add_renderbuffer(&intel_fb->Base, BUFFER_DEPTH,
+				&depthStencilRb->Base);
+         _mesa_add_renderbuffer(&intel_fb->Base, BUFFER_STENCIL,
+				&depthStencilRb->Base);
       }
       else if (mesaVis->depthBits == 16) {
          /* just 16-bit depth buffer, no hw stencil */
@@ -592,17 +650,19 @@ intelCreateBuffer(__DRIscreenPrivate * driScrnPriv,
                                         screen->cpp,    /* 2! */
                                         screen->depth.map);
          intel_set_span_functions(&depthRb->Base);
-         _mesa_add_renderbuffer(fb, BUFFER_DEPTH, &depthRb->Base);
+         _mesa_add_renderbuffer(&intel_fb->Base, BUFFER_DEPTH, &depthRb->Base);
       }
 
       /* now add any/all software-based renderbuffers we may need */
-      _mesa_add_soft_renderbuffers(fb, GL_FALSE,        /* never sw color */
-                                   GL_FALSE,    /* never sw depth */
-                                   swStencil, mesaVis->accumRedBits > 0, GL_FALSE,      /* never sw alpha */
-                                   GL_FALSE /* never sw aux */ );
-      driDrawPriv->driverPrivate = (void *) fb;
+      _mesa_add_soft_renderbuffers(&intel_fb->Base,
+                                   GL_FALSE, /* never sw color */
+                                   GL_FALSE, /* never sw depth */
+                                   swStencil, mesaVis->accumRedBits > 0,
+                                   GL_FALSE, /* never sw alpha */
+                                   GL_FALSE  /* never sw aux */ );
+      driDrawPriv->driverPrivate = (void *) intel_fb;
 
-      return (driDrawPriv->driverPrivate != NULL);
+      return GL_TRUE;
    }
 }
 
@@ -619,21 +679,20 @@ intelDestroyBuffer(__DRIdrawablePrivate * driDrawPriv)
 static int
 intelGetSwapInfo(__DRIdrawablePrivate * dPriv, __DRIswapInfo * sInfo)
 {
-   struct intel_context *intel;
+   struct intel_framebuffer *intel_fb;
 
-   if ((dPriv == NULL) || (dPriv->driContextPriv == NULL)
-       || (dPriv->driContextPriv->driverPrivate == NULL)
+   if ((dPriv == NULL) || (dPriv->driverPrivate == NULL)
        || (sInfo == NULL)) {
       return -1;
    }
 
-   intel = dPriv->driContextPriv->driverPrivate;
-   sInfo->swap_count = intel->swap_count;
-   sInfo->swap_ust = intel->swap_ust;
-   sInfo->swap_missed_count = intel->swap_missed_count;
+   intel_fb = dPriv->driverPrivate;
+   sInfo->swap_count = intel_fb->swap_count;
+   sInfo->swap_ust = intel_fb->swap_ust;
+   sInfo->swap_missed_count = intel_fb->swap_missed_count;
 
    sInfo->swap_missed_usage = (sInfo->swap_missed_count != 0)
-      ? driCalculateSwapUsage(dPriv, 0, intel->swap_missed_ust)
+      ? driCalculateSwapUsage(dPriv, 0, intel_fb->swap_missed_ust)
       : 0.0;
 
    return 0;

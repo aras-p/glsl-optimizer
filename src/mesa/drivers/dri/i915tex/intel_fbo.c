@@ -75,11 +75,35 @@ intel_get_renderbuffer(struct gl_framebuffer *fb, GLuint attIndex)
 }
 
 
+void
+intel_flip_renderbuffers(struct intel_framebuffer *intel_fb)
+{
+   int current_page = intel_fb->pf_current_page;
+   int next_page = (current_page + 1) % intel_fb->pf_num_pages;
+
+   if (intel_fb->color_rb[current_page] &&
+       intel_fb->Base.Attachment[BUFFER_FRONT_LEFT].Renderbuffer !=
+       &intel_fb->color_rb[current_page]->Base) {
+      _mesa_remove_renderbuffer(&intel_fb->Base, BUFFER_FRONT_LEFT);
+      _mesa_add_renderbuffer(&intel_fb->Base, BUFFER_FRONT_LEFT,
+			     &intel_fb->color_rb[current_page]->Base);
+   }
+
+   if (intel_fb->color_rb[next_page] &&
+       intel_fb->Base.Attachment[BUFFER_BACK_LEFT].Renderbuffer !=
+       &intel_fb->color_rb[next_page]->Base) {
+      _mesa_remove_renderbuffer(&intel_fb->Base, BUFFER_BACK_LEFT);
+      _mesa_add_renderbuffer(&intel_fb->Base, BUFFER_BACK_LEFT,
+			     &intel_fb->color_rb[next_page]->Base);
+   }
+}
+
+
 struct intel_region *
 intel_get_rb_region(struct gl_framebuffer *fb, GLuint attIndex)
 {
-   struct intel_renderbuffer *irb
-      = intel_renderbuffer(fb->Attachment[attIndex].Renderbuffer);
+   struct intel_renderbuffer *irb = intel_get_renderbuffer(fb, attIndex);
+
    if (irb)
       return irb->region;
    else
@@ -94,7 +118,9 @@ intel_get_rb_region(struct gl_framebuffer *fb, GLuint attIndex)
 static struct gl_framebuffer *
 intel_new_framebuffer(GLcontext * ctx, GLuint name)
 {
-   /* there's no intel_framebuffer at this time, just use Mesa's class */
+   /* Only drawable state in intel_framebuffer at this time, just use Mesa's
+    * class
+    */
    return _mesa_new_framebuffer(ctx, name);
 }
 
@@ -271,10 +297,24 @@ static GLboolean
 intel_alloc_window_storage(GLcontext * ctx, struct gl_renderbuffer *rb,
                            GLenum internalFormat, GLuint width, GLuint height)
 {
+   struct intel_context *intel = intel_context(ctx);
+   struct intel_framebuffer *intel_fb;
+
    ASSERT(rb->Name == 0);
    rb->Width = width;
    rb->Height = height;
    rb->_ActualFormat = internalFormat;
+
+   if (intel && intel->driDrawable &&
+       (intel_fb = intel->driDrawable->driverPrivate) &&
+       intel_fb->pf_num_pages == 3 &&
+       rb == &intel_fb->color_rb[intel_fb->pf_current_page]->Base &&
+       (rb = &intel_fb->color_rb[(intel_fb->pf_current_page + 2) % 3]->Base)) {
+      rb->Width = width;
+      rb->Height = height;
+      rb->_ActualFormat = internalFormat;
+   }
+
    return GL_TRUE;
 }
 

@@ -38,6 +38,10 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "nouveau_object.h"
 #include "nouveau_sync.h"
 
+#ifdef NOUVEAU_RING_DEBUG
+int nouveau_fifo_remaining=0;
+#endif
+
 
 #define RING_SKIPS 8
 

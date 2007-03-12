@@ -273,15 +273,15 @@ GLboolean radeonMakeCurrent(__DRIcontextPrivate * driContextPriv,
 					      &radeon->vbl_seq);
 		}
 
-		if (radeon->dri.drawable != driDrawPriv ||
-		    radeon->dri.readable != driReadPriv) {
-			radeon->dri.drawable = driDrawPriv;
-			radeon->dri.readable = driReadPriv;
+		radeon->dri.readable = driReadPriv;
 
-			r300UpdateWindow(radeon->glCtx);
-			r300UpdateViewportOffset(radeon->glCtx);
+		if (radeon->dri.drawable != driDrawPriv ||
+		    radeon->lastStamp != driDrawPriv->lastStamp) {
+			radeon->dri.drawable = driDrawPriv;
 
 			radeonSetCliprects(radeon);
+			r300UpdateWindow(radeon->glCtx);
+			r300UpdateViewportOffset(radeon->glCtx);
 		}
 
 		_mesa_make_current(radeon->glCtx,

@@ -43,6 +43,7 @@
 #include "intel_context.h"
 #include "intel_tris.h"
 #include "intel_batchbuffer.h"
+#include "intel_buffers.h"
 #include "intel_reg.h"
 #include "intel_span.h"
 #include "intel_tex.h"
@@ -101,6 +102,8 @@ intelStartInlinePrimitive(struct intel_context *intel,
    }
 
 /*    _mesa_printf("%s *", __progname); */
+
+   intel_wait_flips(intel, batch_flags);
 
    /* Emit a slot which will be filled with the inline primitive
     * command later.

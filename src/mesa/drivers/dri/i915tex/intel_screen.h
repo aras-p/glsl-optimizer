@@ -51,12 +51,14 @@ typedef struct
 {
    intelRegion front;
    intelRegion back;
+   intelRegion third;
    intelRegion rotated;
    intelRegion depth;
    intelRegion tex;
 
    struct intel_region *front_region;
    struct intel_region *back_region;
+   struct intel_region *third_region;
    struct intel_region *depth_region;
    struct intel_region *rotated_region;
 

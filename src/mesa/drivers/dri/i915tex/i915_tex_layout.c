@@ -190,6 +190,9 @@ i945_miptree_layout(struct intel_mipmap_tree * mt)
    case GL_TEXTURE_CUBE_MAP:{
          const GLuint dim = mt->width0;
          GLuint face;
+         GLuint lvlWidth = mt->width0, lvlHeight = mt->height0;
+
+         assert(lvlWidth == lvlHeight); /* cubemap images are square */
 
          /* Depending on the size of the largest images, pitch can be
           * determined either by the old-style packing of cubemap faces,
@@ -204,11 +207,13 @@ i945_miptree_layout(struct intel_mipmap_tree * mt)
 
          /* Set all the levels to effectively occupy the whole rectangular region. 
           */
-         for (level = mt->first_level; level <= mt->last_level; level++)
+         for (level = mt->first_level; level <= mt->last_level; level++) {
             intel_miptree_set_level_info(mt, level, 6,
                                          0, 0,
-                                         mt->pitch, mt->total_height, 1);
-
+                                         lvlWidth, lvlHeight, 1);
+	    lvlWidth /= 2;
+	    lvlHeight /= 2;
+	 }
 
 
          for (face = 0; face < 6; face++) {

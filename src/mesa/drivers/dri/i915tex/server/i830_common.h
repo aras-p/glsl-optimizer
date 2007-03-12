@@ -129,6 +129,12 @@ typedef struct {
 	int pipeB_y;
 	int pipeB_w;
 	int pipeB_h;
+
+	/* Triple buffering */
+	drm_handle_t third_handle;
+	int third_offset;
+	int third_size;
+	unsigned int third_tiled;
 } drmI830Sarea;
 
 /* Flags for perf_boxes

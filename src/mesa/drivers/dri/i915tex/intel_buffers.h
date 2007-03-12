@@ -30,6 +30,7 @@
 
 
 struct intel_context;
+struct intel_framebuffer;
 
 
 extern GLboolean
@@ -40,6 +41,8 @@ intel_intersect_cliprects(drm_clip_rect_t * dest,
 extern struct intel_region *intel_readbuf_region(struct intel_context *intel);
 
 extern struct intel_region *intel_drawbuf_region(struct intel_context *intel);
+
+extern void intel_wait_flips(struct intel_context *intel, GLuint batch_flags);
 
 extern void intelSwapBuffers(__DRIdrawablePrivate * dPriv);
 

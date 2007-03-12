@@ -81,4 +81,8 @@
 #define XY_SRC_COPY_BLT_WRITE_ALPHA     (1<<21)
 #define XY_SRC_COPY_BLT_WRITE_RGB       (1<<20)
 
+#define MI_WAIT_FOR_EVENT               ((0x3<<23))
+#define MI_WAIT_FOR_PLANE_B_FLIP        (1<<6)
+#define MI_WAIT_FOR_PLANE_A_FLIP        (1<<2)
+
 #endif
