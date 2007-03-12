@@ -667,7 +667,7 @@ _mesa_image_row_stride( const struct gl_pixelstore_attrib *packing,
    ASSERT(packing);
    if (type == GL_BITMAP) {
       /* BITMAP data */
-      GLint bytes;
+      GLint bytes, remainder;
       if (packing->RowLength == 0) {
          bytes = (width + 7) / 8;
       }
@@ -678,6 +678,11 @@ _mesa_image_row_stride( const struct gl_pixelstore_attrib *packing,
          /* negate the bytes per row (negative row stride) */
          bytes = -bytes;
       }
+
+      remainder = bytes % packing->Alignment;
+      if (remainder > 0)
+         bytes += (packing->Alignment - remainder);
+
       return bytes;
    }
    else {
