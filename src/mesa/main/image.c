@@ -651,44 +651,34 @@ _mesa_image_address3d( const struct gl_pixelstore_attrib *packing,
 
 
 /**
- * Compute the stride between image rows.
+ * Compute the stride (in bytes) between image rows.
  *
  * \param packing the pixelstore attributes
  * \param width image width.
  * \param format pixel format.
  * \param type pixel data type.
  * 
- * \return the stride in bytes for the given parameters.
+ * \return the stride in bytes for the given parameters, or -1 if error
  */
 GLint
 _mesa_image_row_stride( const struct gl_pixelstore_attrib *packing,
                         GLint width, GLenum format, GLenum type )
 {
+   GLint bytesPerRow, remainder;
+
    ASSERT(packing);
+
    if (type == GL_BITMAP) {
-      /* BITMAP data */
-      GLint bytes, remainder;
       if (packing->RowLength == 0) {
-         bytes = (width + 7) / 8;
+         bytesPerRow = (width + 7) / 8;
       }
       else {
-         bytes = (packing->RowLength + 7) / 8;
+         bytesPerRow = (packing->RowLength + 7) / 8;
       }
-      if (packing->Invert) {
-         /* negate the bytes per row (negative row stride) */
-         bytes = -bytes;
-      }
-
-      remainder = bytes % packing->Alignment;
-      if (remainder > 0)
-         bytes += (packing->Alignment - remainder);
-
-      return bytes;
    }
    else {
       /* Non-BITMAP data */
       const GLint bytesPerPixel = _mesa_bytes_per_pixel(format, type);
-      GLint bytesPerRow, remainder;
       if (bytesPerPixel <= 0)
          return -1;  /* error */
       if (packing->RowLength == 0) {
@@ -697,13 +687,19 @@ _mesa_image_row_stride( const struct gl_pixelstore_attrib *packing,
       else {
          bytesPerRow = bytesPerPixel * packing->RowLength;
       }
-      remainder = bytesPerRow % packing->Alignment;
-      if (remainder > 0)
-         bytesPerRow += (packing->Alignment - remainder);
-      if (packing->Invert)
-         bytesPerRow = -bytesPerRow;
-      return bytesPerRow;
    }
+
+   remainder = bytesPerRow % packing->Alignment;
+   if (remainder > 0) {
+      bytesPerRow += (packing->Alignment - remainder);
+   }
+
+   if (packing->Invert) {
+      /* negate the bytes per row (negative row stride) */
+      bytesPerRow = -bytesPerRow;
+   }
+
+   return bytesPerRow;
 }
 
 
