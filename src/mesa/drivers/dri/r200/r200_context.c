@@ -679,7 +679,7 @@ r200MakeCurrent( __DRIcontextPrivate *driContextPriv,
            newCtx->lastStamp != driDrawPriv->lastStamp ) {
 	 newCtx->dri.drawable = driDrawPriv;
 
-	 r200SetCliprects(newCtx, GL_BACK_LEFT);
+	 r200SetCliprects(newCtx);
 	 r200UpdateWindow( newCtx->glCtx );
 	 r200UpdateViewportOffset( newCtx->glCtx );
       }
