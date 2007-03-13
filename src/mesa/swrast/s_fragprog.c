@@ -201,11 +201,18 @@ _swrast_exec_fragment_program( GLcontext *ctx, SWspan *span )
    const struct gl_fragment_program *program = ctx->FragmentProgram._Current;
 
    /* incoming colors should be floats */
-   ASSERT(span->array->ChanType == GL_FLOAT);
+   if (program->Base.InputsRead & FRAG_BIT_COL0) {
+      ASSERT(span->array->ChanType == GL_FLOAT);
+   }
 
    ctx->_CurrentProgram = GL_FRAGMENT_PROGRAM_ARB; /* or NV, doesn't matter */
 
    run_program(ctx, span, 0, span->end);
+
+   if (program->Base.OutputsWritten & (1 << FRAG_RESULT_COLR)) {
+      span->interpMask &= ~SPAN_RGBA;
+      span->arrayMask |= SPAN_RGBA;
+   }
 
    if (program->Base.OutputsWritten & (1 << FRAG_RESULT_DEPR)) {
       span->interpMask &= ~SPAN_Z;
