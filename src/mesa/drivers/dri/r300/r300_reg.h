@@ -497,6 +497,7 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 /* Zero to flush caches. */
 #define R300_TX_CNTL                        0x4100
+#define R300_TX_FLUSH                       0x0
 
 /* The upper enable bits are guessed, based on fglrx reported limits. */
 #define R300_TX_ENABLE                      0x4104
@@ -1392,6 +1393,12 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #define R300_RB3D_EARLY_Z                           0x4F14
 #	define R300_EARLY_Z_DISABLE              (0 << 0)
 #	define R300_EARLY_Z_ENABLE               (1 << 0)
+
+/* gap */
+
+#define R300_RB3D_ZCACHE_CTLSTAT            0x4F18 /* GUESS */
+#       define R300_RB3D_ZCACHE_CTLSTAT_01  0x1
+#       define R300_RB3D_ZCACHE_CTLSTAT_03  0x3
 
 /* gap */
 

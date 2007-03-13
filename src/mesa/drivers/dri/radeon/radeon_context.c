@@ -594,12 +594,14 @@ radeonMakeCurrent( __DRIcontextPrivate *driContextPriv,
 	 driDrawableInitVBlank( driDrawPriv, newCtx->vblank_flags,
 				&newCtx->vbl_seq );
       }
-      
-      if ( (newCtx->dri.drawable != driDrawPriv)
-	   || (newCtx->dri.readable != driReadPriv) ) {
-	 newCtx->dri.drawable = driDrawPriv;
-	 newCtx->dri.readable = driReadPriv;
 
+      newCtx->dri.readable = driReadPriv;
+
+      if ( (newCtx->dri.drawable != driDrawPriv) ||
+           newCtx->lastStamp != driDrawPriv->lastStamp ) {
+	 newCtx->dri.drawable = driDrawPriv;
+
+	 radeonSetCliprects(newCtx);
 	 radeonUpdateWindow( newCtx->glCtx );
 	 radeonUpdateViewportOffset( newCtx->glCtx );
       }

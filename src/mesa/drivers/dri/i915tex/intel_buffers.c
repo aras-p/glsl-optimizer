@@ -327,6 +327,9 @@ intelWindowMoved(struct intel_context *intel)
 	 }
 
 	 for (i = 0; i < intel_fb->pf_num_pages; i++) {
+	    if (!intel_fb->color_rb[i])
+	       continue;
+
 	    vbl.request.sequence = intel_fb->color_rb[i]->vbl_pending;
 	    drmWaitVBlank(intel->driFd, &vbl);
 	 }
@@ -336,7 +339,8 @@ intelWindowMoved(struct intel_context *intel)
 	 intel_fb->vbl_waited = intel_fb->vbl_seq;
 
 	 for (i = 0; i < intel_fb->pf_num_pages; i++) {
-	    intel_fb->color_rb[i]->vbl_pending = intel_fb->vbl_waited;
+	    if (intel_fb->color_rb[i])
+	       intel_fb->color_rb[i]->vbl_pending = intel_fb->vbl_waited;
 	 }
       }
    } else {

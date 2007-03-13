@@ -1691,6 +1691,11 @@ static void r200ClearStencil( GLcontext *ctx, GLint s )
 #define SUBPIXEL_X 0.125
 #define SUBPIXEL_Y 0.125
 
+
+/**
+ * Called when window size or position changes or viewport or depth range
+ * state is changed.  We update the hardware viewport state here.
+ */
 void r200UpdateWindow( GLcontext *ctx )
 {
    r200ContextPtr rmesa = R200_CONTEXT(ctx);
@@ -1843,19 +1848,18 @@ static void r200LogicOpCode( GLcontext *ctx, GLenum opcode )
 }
 
 
-void r200SetCliprects( r200ContextPtr rmesa, GLenum mode )
+/*
+ * Set up the cliprects for either front or back-buffer drawing.
+ */
+void r200SetCliprects( r200ContextPtr rmesa )
 {
    __DRIdrawablePrivate *const drawable = rmesa->dri.drawable;
    __DRIdrawablePrivate *const readable = rmesa->dri.readable;
    GLframebuffer *const draw_fb = (GLframebuffer*) drawable->driverPrivate;
    GLframebuffer *const read_fb = (GLframebuffer*) readable->driverPrivate;
 
-   switch ( mode ) {
-   case GL_FRONT_LEFT:
-      rmesa->numClipRects = drawable->numClipRects;
-      rmesa->pClipRects = drawable->pClipRects;
-      break;
-   case GL_BACK_LEFT:
+   if (draw_fb->_ColorDrawBufferMask[0]
+       == BUFFER_BIT_BACK_LEFT) {
       /* Can't ignore 2d windows if we are page flipping.
        */
       if ( drawable->numBackClipRects == 0 || rmesa->doPageFlip ) {
@@ -1866,11 +1870,12 @@ void r200SetCliprects( r200ContextPtr rmesa, GLenum mode )
          rmesa->numClipRects = drawable->numBackClipRects;
          rmesa->pClipRects = drawable->pBackClipRects;
       }
-      break;
-   default:
-      fprintf(stderr, "bad mode in r200SetCliprects\n");
-      return;
    }
+   else {
+     /* front buffer (or none, or multiple buffers) */
+     rmesa->numClipRects = drawable->numClipRects;
+     rmesa->pClipRects = drawable->pClipRects;
+  }
 
    if ((draw_fb->Width != drawable->w) || (draw_fb->Height != drawable->h)) {
       _mesa_resize_framebuffer(rmesa->glCtx, draw_fb,
@@ -1889,6 +1894,8 @@ void r200SetCliprects( r200ContextPtr rmesa, GLenum mode )
 
    if (rmesa->state.scissor.enabled)
       r200RecalcScissorRects( rmesa );
+
+   rmesa->lastStamp = drawable->lastStamp;
 }
 
 
@@ -1908,18 +1915,16 @@ static void r200DrawBuffer( GLcontext *ctx, GLenum mode )
     */
    switch ( ctx->DrawBuffer->_ColorDrawBufferMask[0] ) {
    case BUFFER_BIT_FRONT_LEFT:
-      FALLBACK( rmesa, R200_FALLBACK_DRAW_BUFFER, GL_FALSE );
-      r200SetCliprects( rmesa, GL_FRONT_LEFT );
-      break;
    case BUFFER_BIT_BACK_LEFT:
       FALLBACK( rmesa, R200_FALLBACK_DRAW_BUFFER, GL_FALSE );
-      r200SetCliprects( rmesa, GL_BACK_LEFT );
       break;
    default:
-      /* GL_NONE or GL_FRONT_AND_BACK or stereo left&right, etc */
+      /* 0 (GL_NONE) buffers or multiple color drawing buffers */
       FALLBACK( rmesa, R200_FALLBACK_DRAW_BUFFER, GL_TRUE );
       return;
    }
+
+   r200SetCliprects( rmesa );
 
    /* We'll set the drawing engine's offset/pitch parameters later
     * when we update other state.

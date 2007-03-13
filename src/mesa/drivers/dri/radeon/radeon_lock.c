@@ -96,7 +96,6 @@ void radeonGetLock( radeonContextPtr rmesa, GLuint flags )
       radeonSetCliprects( rmesa );
       radeonUpdateViewportOffset( rmesa->glCtx );
       driUpdateFramebufferSize(rmesa->glCtx, drawable);
-      rmesa->lastStamp = drawable->lastStamp;
    }
 
    RADEON_STATECHANGE( rmesa, ctx );
