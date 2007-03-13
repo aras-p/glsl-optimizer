@@ -482,12 +482,12 @@ storage_to_src_reg(struct prog_src_register *src, const slang_ir_storage *st)
       MAKE_SWIZZLE4(SWIZZLE_X, SWIZZLE_Y, SWIZZLE_Z, SWIZZLE_W),
       MAKE_SWIZZLE4(SWIZZLE_X, SWIZZLE_Y, SWIZZLE_Z, SWIZZLE_W)
    };
-   assert(st->File >= 0 && st->File <= 16);
-   src->File = st->File;
-   src->Index = st->Index;
-   assert(st->File != PROGRAM_UNDEFINED);
+   assert(st->File >= 0);
+   assert(st->File < PROGRAM_UNDEFINED);
    assert(st->Size >= 1);
    assert(st->Size <= 4);
+   src->File = st->File;
+   src->Index = st->Index;
    if (st->Swizzle != SWIZZLE_NOOP)
       src->Swizzle = st->Swizzle;
    else
@@ -520,6 +520,10 @@ new_instruction(slang_emit_info *emitInfo, gl_inst_opcode opcode)
    _mesa_init_instructions(inst, 1);
    inst->Opcode = opcode;
    inst->BranchTarget = -1; /* invalid */
+   /*
+   printf("New inst %d: %p %s\n", prog->NumInstructions-1,(void*)inst,
+          _mesa_opcode_string(inst->Opcode));
+   */
    return inst;
 }
 
@@ -901,6 +905,9 @@ static struct prog_instruction *
 emit_tex(slang_emit_info *emitInfo, slang_ir_node *n)
 {
    struct prog_instruction *inst;
+
+   (void) emit(emitInfo, n->Children[1]);
+
    if (n->Opcode == IR_TEX) {
       inst = new_instruction(emitInfo, OPCODE_TEX);
    }
@@ -918,9 +925,9 @@ emit_tex(slang_emit_info *emitInfo, slang_ir_node *n)
 
    storage_to_dst_reg(&inst->DstReg, n->Store, n->Writemask);
 
-   (void) emit(emitInfo, n->Children[1]);
-
    /* Child[1] is the coord */
+   assert(n->Children[1]->Store->File != PROGRAM_UNDEFINED);
+   assert(n->Children[1]->Store->Index >= 0);
    storage_to_src_reg(&inst->SrcReg[0], n->Children[1]->Store);
 
    /* Child[0] is the sampler (a uniform which'll indicate the texture unit) */
@@ -941,14 +948,14 @@ emit_move(slang_emit_info *emitInfo, slang_ir_node *n)
 {
    struct prog_instruction *inst;
 
+   /* lhs */
+   emit(emitInfo, n->Children[0]);
+
    /* rhs */
    assert(n->Children[1]);
    inst = emit(emitInfo, n->Children[1]);
 
    assert(n->Children[1]->Store->Index >= 0);
-
-   /* lhs */
-   emit(emitInfo, n->Children[0]);
 
    assert(!n->Store);
    n->Store = n->Children[0]->Store;
