@@ -886,7 +886,7 @@ _mesa_uniform(GLcontext *ctx, GLint location, GLsizei count,
               const GLvoid *values, GLenum type)
 {
    struct gl_shader_program *shProg = ctx->Shader.CurrentProgram;
-   GLfloat *uniformVal;
+   GLint elems, i, k;
 
    if (!shProg || !shProg->LinkStatus) {
       _mesa_error(ctx, GL_INVALID_OPERATION, "glUniform(program not linked)");
@@ -912,51 +912,49 @@ _mesa_uniform(GLcontext *ctx, GLint location, GLsizei count,
       }
    }
 
-   uniformVal = shProg->Uniforms->ParameterValues[location];
-
-   /* XXX obey 'count' parameter! */
-
-   if (type == GL_INT ||
-       type == GL_INT_VEC2 ||
-       type == GL_INT_VEC3 ||
-       type == GL_INT_VEC4) {
-      const GLint *iValues = (const GLint *) values;
-      switch (type) {
-      case GL_INT_VEC4:
-         uniformVal[3] = (GLfloat) iValues[3];
-         /* fall-through */
-      case GL_INT_VEC3:
-         uniformVal[2] = (GLfloat) iValues[2];
-         /* fall-through */
-      case GL_INT_VEC2:
-         uniformVal[1] = (GLfloat) iValues[1];
-         /* fall-through */
-      case GL_INT:
-         uniformVal[0] = (GLfloat) iValues[0];
-         break;
-      default:
-         _mesa_problem(ctx, "Invalid type in _mesa_uniform");
-         return;
-      }
+   switch (type) {
+   case GL_FLOAT:
+   case GL_INT:
+      elems = 1;
+      break;
+   case GL_FLOAT_VEC2:
+   case GL_INT_VEC2:
+      elems = 2;
+      break;
+   case GL_FLOAT_VEC3:
+   case GL_INT_VEC3:
+      elems = 3;
+      break;
+   case GL_FLOAT_VEC4:
+   case GL_INT_VEC4:
+      elems = 4;
+      break;
+   default:
+      _mesa_problem(ctx, "Invalid type in _mesa_uniform");
+      return;
    }
-   else {
-      const GLfloat *fValues = (const GLfloat *) values;
-      switch (type) {
-      case GL_FLOAT_VEC4:
-         uniformVal[3] = fValues[3];
-         /* fall-through */
-      case GL_FLOAT_VEC3:
-         uniformVal[2] = fValues[2];
-         /* fall-through */
-      case GL_FLOAT_VEC2:
-         uniformVal[1] = fValues[1];
-         /* fall-through */
-      case GL_FLOAT:
-         uniformVal[0] = fValues[0];
-         break;
-      default:
-         _mesa_problem(ctx, "Invalid type in _mesa_uniform");
-         return;
+
+   if (count * elems > shProg->Uniforms->Parameters[location].Size) {
+      _mesa_error(ctx, GL_INVALID_OPERATION, "glUniform(count too large)");
+      return;
+   }
+
+   for (k = 0; k < count; k++) {
+      GLfloat *uniformVal = shProg->Uniforms->ParameterValues[location + k];
+      if (type == GL_INT ||
+          type == GL_INT_VEC2 ||
+          type == GL_INT_VEC3 ||
+          type == GL_INT_VEC4) {
+         const GLint *iValues = (const GLint *) values;
+         for (i = 0; i < elems; i++) {
+            uniformVal[i] = (GLfloat) iValues[i];
+         }
+      }
+      else {
+         const GLfloat *fValues = (const GLfloat *) values;
+         for (i = 0; i < elems; i++) {
+            uniformVal[i] = fValues[i];
+         }
       }
    }
 
