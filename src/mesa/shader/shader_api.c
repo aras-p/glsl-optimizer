@@ -912,6 +912,11 @@ _mesa_uniform(GLcontext *ctx, GLint location, GLsizei count,
       }
    }
 
+   if (count < 0) {
+      _mesa_error(ctx, GL_INVALID_VALUE, "glUniform(count < 0)");
+      return;
+   }
+
    switch (type) {
    case GL_FLOAT:
    case GL_INT:
@@ -945,13 +950,13 @@ _mesa_uniform(GLcontext *ctx, GLint location, GLsizei count,
           type == GL_INT_VEC2 ||
           type == GL_INT_VEC3 ||
           type == GL_INT_VEC4) {
-         const GLint *iValues = (const GLint *) values;
+         const GLint *iValues = ((const GLint *) values) + k * elems;
          for (i = 0; i < elems; i++) {
             uniformVal[i] = (GLfloat) iValues[i];
          }
       }
       else {
-         const GLfloat *fValues = (const GLfloat *) values;
+         const GLfloat *fValues = ((const GLfloat *) values) + k * elems;
          for (i = 0; i < elems; i++) {
             uniformVal[i] = fValues[i];
          }
