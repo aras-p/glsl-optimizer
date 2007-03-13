@@ -1612,8 +1612,8 @@ _slang_emit_code(slang_ir_node *n, slang_var_table *vt,
    }
    success = GL_TRUE;
 
-   printf("*********** End generate code (%u inst):\n", prog->NumInstructions);
 #if 0
+   printf("*********** End emit code (%u inst):\n", prog->NumInstructions);
    _mesa_print_program(prog);
    _mesa_print_program_parameters(ctx,prog);
 #endif
