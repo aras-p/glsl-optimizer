@@ -1074,7 +1074,7 @@ _slang_gen_function_call(slang_assemble_ctx *A, slang_function *fun,
    slang_operation_construct(oper);
    slang_operation_copy(oper, inlined);
 #else
-   *oper = *inlined;
+   *oper = *inlined;  /* XXX slang_operation_copy() */
 #endif
 
 
@@ -1280,7 +1280,7 @@ _slang_gen_function_call_name(slang_assemble_ctx *A, const char *name,
        */
       fun = _slang_first_function(A->space.funcs, name);
       if (!_slang_adapt_call(oper, fun, &A->space, A->atoms, A->log)) {
-         slang_info_log_error(A->log, "Undefined function '%s'", name);
+         slang_info_log_error(A->log, "Function '%s' not found (check argument types)", name);
          return NULL;
       }
       assert(fun);
@@ -2739,10 +2739,8 @@ _slang_codegen_function(slang_assemble_ctx * A, slang_function * fun)
       return GL_TRUE;  /* not an error */
    }
 
-#if 1
-   printf("\n*********** codegen_function %s\n", (char *) fun->header.a_name);
-#endif
 #if 0
+   printf("\n*********** codegen_function %s\n", (char *) fun->header.a_name);
    slang_print_function(fun, 1);
 #endif
 
@@ -2753,6 +2751,11 @@ _slang_codegen_function(slang_assemble_ctx * A, slang_function * fun)
 
    /* fold constant expressions, etc. */
    _slang_simplify(fun->body, &A->space, A->atoms);
+
+#if 0
+   printf("\n*********** simplified %s\n", (char *) fun->header.a_name);
+   slang_print_function(fun, 1);
+#endif
 
    /* Create an end-of-function label */
    A->curFuncEndLabel = _slang_label_new("__endOfFunc__main");
@@ -2787,7 +2790,7 @@ _slang_codegen_function(slang_assemble_ctx * A, slang_function * fun)
    printf("************* IR for %s *******\n", (char*)fun->header.a_name);
    slang_print_ir(n, 0);
 #endif
-#if 1
+#if 0
    printf("************* End codegen function ************\n\n");
 #endif
 
