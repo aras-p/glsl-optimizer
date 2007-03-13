@@ -174,11 +174,12 @@ static __inline__ void r300DoEmitState(r300ContextPtr r300, GLboolean dirty)
 	dest ++;
 	r300->cmdbuf.count_used ++;
 
+	/* Emit cache flush */
 	*dest = cmdpacket0(R300_TX_CNTL, 1);
 	dest ++;
 	r300->cmdbuf.count_used ++;
 	
-	*dest = 0x0;
+	*dest = R300_TX_FLUSH;
 	dest ++;
 	r300->cmdbuf.count_used ++;
 	
