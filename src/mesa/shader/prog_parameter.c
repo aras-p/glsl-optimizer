@@ -88,7 +88,6 @@ _mesa_add_parameter(struct gl_program_parameter_list *paramList,
    const GLuint sz4 = (size + 3) / 4; /* no. of new param slots needed */
 
    assert(size > 0);
-   assert(size <= 16);  /* XXX anything larger than a matrix??? */
 
    if (oldNum + sz4 > paramList->Size) {
       /* Need to grow the parameter list array (alloc some extra) */
