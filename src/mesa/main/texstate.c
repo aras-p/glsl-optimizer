@@ -1,8 +1,8 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.5.1
+ * Version:  6.5.3
  *
- * Copyright (C) 1999-2006  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2007  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -41,8 +41,6 @@
 #include "texenvprogram.h"
 #include "mtypes.h"
 #include "math/m_xform.h"
-/*#include "shaderobjects.h"*/
-
 
 
 #define ENUM_TO_FLOAT(X) ((GLfloat)(GLint)(X))
@@ -3076,16 +3074,14 @@ update_texture_state( GLcontext *ctx )
 	 ctx->Texture._TexMatEnabled |= ENABLE_TEXMAT(unit);
    }
 
-   /* XXX maybe move this below as an else-clause */
-   ctx->Texture._EnabledCoordUnits = ctx->Texture._EnabledUnits;
-
-   /* Fragment programs may need texture coordinates but not the
-    * corresponding texture images.
-    */
+   /* Determine which texture coordinate sets are actually needed */
    if (fprog) {
-      const GLuint coordMask = (1 << MAX_TEXTURE_UNITS) - 1;
+      const GLuint coordMask = (1 << MAX_TEXTURE_COORD_UNITS) - 1;
       ctx->Texture._EnabledCoordUnits
-         |= (fprog->Base.InputsRead >> FRAG_ATTRIB_TEX0) & coordMask;
+         = (fprog->Base.InputsRead >> FRAG_ATTRIB_TEX0) & coordMask;
+   }
+   else {
+      ctx->Texture._EnabledCoordUnits = ctx->Texture._EnabledUnits;
    }
 }
 
