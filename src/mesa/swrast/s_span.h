@@ -35,6 +35,8 @@
  * \defgroup SpanFlags
  * Bitflags used for interpMask and arrayMask fields below to indicate
  * which interpolant values and fragment arrays are in use, respectively.
+ *
+ * XXX We should replace these flags with the FRAG_BIT_ values someday...
  */
 /*@{*/
 #define SPAN_RGBA         0x001
