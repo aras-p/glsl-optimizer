@@ -554,7 +554,7 @@ interpolate_texcoords(GLcontext *ctx, SWspan *span)
    for (u = 0; u < maxUnit; u++) {
       if (ctx->Texture._EnabledCoordUnits & (1 << u)) {
          const GLuint attr = FRAG_ATTRIB_TEX0 + u;
-         const struct gl_texture_object *obj =ctx->Texture.Unit[u]._Current;
+         const struct gl_texture_object *obj = ctx->Texture.Unit[u]._Current;
          GLfloat texW, texH;
          GLboolean needLambda;
          GLfloat (*texcoord)[4] = span->array->attribs[attr];
@@ -1261,8 +1261,18 @@ convert_color_type(SWspan *span, GLenum newType, GLuint output)
 static INLINE void
 shade_texture_span(GLcontext *ctx, SWspan *span)
 {
-   /* Now we need the rgba array, fill it in if needed */
-   if (span->interpMask & SPAN_RGBA)
+   GLbitfield inputsRead;
+
+   /* Determine which fragment attributes are actually needed */
+   if (ctx->FragmentProgram._Current) {
+      inputsRead = ctx->FragmentProgram._Current->Base.InputsRead;
+   }
+   else {
+      /* XXX we could be a bit smarter about this */
+      inputsRead = ~0;
+   }
+
+   if ((inputsRead & FRAG_BIT_COL0) && (span->interpMask & SPAN_RGBA))
       interpolate_colors(span);
 
    if (ctx->Texture._EnabledCoordUnits && (span->interpMask & SPAN_TEXTURE))
@@ -1270,35 +1280,35 @@ shade_texture_span(GLcontext *ctx, SWspan *span)
 
    if (ctx->FragmentProgram._Current ||
        ctx->ATIFragmentShader._Enabled) {
-
       /* use float colors if running a fragment program or shader */
       const GLenum oldType = span->array->ChanType;
       const GLenum newType = GL_FLOAT;
-      if (oldType != newType) {
+
+      if ((inputsRead & FRAG_BIT_COL0) && (oldType != newType)) {
          GLvoid *src = (oldType == GL_UNSIGNED_BYTE)
             ? (GLvoid *) span->array->color.sz1.rgba
             : (GLvoid *) span->array->color.sz2.rgba;
+         assert(span->arrayMask & SPAN_RGBA);
          _mesa_convert_colors(oldType, src,
                               newType, span->array->attribs[FRAG_ATTRIB_COL0],
                               span->end, span->array->mask);
-         span->array->ChanType = newType;
       }
+      span->array->ChanType = newType;
 
       /* fragment programs/shaders may need specular, fog and Z coords */
-      if (span->interpMask & SPAN_SPEC)
+      if ((inputsRead & FRAG_BIT_COL1) && (span->interpMask & SPAN_SPEC))
          interpolate_specular(span);
 
-      if (span->interpMask & SPAN_FOG)
+      if ((inputsRead & FRAG_BIT_FOGC) && (span->interpMask & SPAN_FOG))
          interpolate_fog(ctx, span);
 
       if (span->interpMask & SPAN_Z)
          _swrast_span_interpolate_z (ctx, span);
 
-      if (ctx->Shader.CurrentProgram && span->interpMask & SPAN_VARYING)
+      if ((inputsRead >= FRAG_BIT_VAR0) && (span->interpMask & SPAN_VARYING))
          interpolate_varying(ctx, span);
 
-      if (ctx->FragmentProgram._Current &&
-          (ctx->FragmentProgram._Current->Base.InputsRead & FRAG_BIT_WPOS))
+      if (inputsRead & FRAG_BIT_WPOS)
          interpolate_wpos(ctx, span);
 
       /* Run fragment program/shader now */
