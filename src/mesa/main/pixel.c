@@ -1,8 +1,8 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.5.2
+ * Version:  6.5.3
  *
- * Copyright (C) 1999-2006  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2007  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -1040,16 +1040,16 @@ _mesa_PixelTransferf( GLenum pname, GLfloat param )
          ctx->Pixel.PostConvolutionBias[2] = param;
 	 break;
       case GL_POST_CONVOLUTION_ALPHA_SCALE:
-         if (ctx->Pixel.PostConvolutionScale[2] == param)
+         if (ctx->Pixel.PostConvolutionScale[3] == param)
 	    return;
 	 FLUSH_VERTICES(ctx, _NEW_PIXEL);
-         ctx->Pixel.PostConvolutionScale[2] = param;
+         ctx->Pixel.PostConvolutionScale[3] = param;
 	 break;
       case GL_POST_CONVOLUTION_ALPHA_BIAS:
-         if (ctx->Pixel.PostConvolutionBias[2] == param)
+         if (ctx->Pixel.PostConvolutionBias[3] == param)
 	    return;
 	 FLUSH_VERTICES(ctx, _NEW_PIXEL);
-         ctx->Pixel.PostConvolutionBias[2] = param;
+         ctx->Pixel.PostConvolutionBias[3] = param;
 	 break;
       default:
          _mesa_error( ctx, GL_INVALID_ENUM, "glPixelTransfer(pname)" );
