@@ -162,11 +162,11 @@ static void r300ClearBuffer(r300ContextPtr r300, int flags, int buffer)
 	cmd2[8].u = r300PackFloat32(ctx->Color.ClearColor[3]);
 
 	reg_start(R300_RB3D_DSTCACHE_CTLSTAT,0);
-	e32(R300_RB3D_DSTCACHE_0A);
+	e32(R300_RB3D_DSTCACHE_UNKNOWN_0A);
 	  
 
 	reg_start(R300_RB3D_ZCACHE_CTLSTAT,0);
-	e32(R300_RB3D_ZCACHE_CTLSTAT_03);
+	e32(R300_RB3D_ZCACHE_UNKNOWN_03);
 	cp_wait(rmesa, R300_WAIT_3D | R300_WAIT_3D_CLEAN);
 }
 
