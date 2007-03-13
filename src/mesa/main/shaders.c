@@ -373,7 +373,7 @@ _mesa_ShaderSourceARB(GLhandleARB shaderObj, GLsizei count,
 {
    GET_CURRENT_CONTEXT(ctx);
    GLint *offsets;
-   GLsizei i;
+   GLsizei i, totalLength;
    GLcharARB *source;
 
    if (string == NULL) {
@@ -406,8 +406,12 @@ _mesa_ShaderSourceARB(GLhandleARB shaderObj, GLsizei count,
          offsets[i] += offsets[i - 1];
    }
 
-   source = (GLcharARB *) _mesa_malloc((offsets[count - 1] + 1) *
-                                       sizeof(GLcharARB));
+   /* Total length of source string is sum off all strings plus two.
+    * One extra byte for terminating zero, another extra byte to silence
+    * valgrind warnings in the parser/grammer code.
+    */
+   totalLength = offsets[count - 1] + 2;
+   source = (GLcharARB *) _mesa_malloc(totalLength * sizeof(GLcharARB));
    if (source == NULL) {
       _mesa_free((GLvoid *) offsets);
       _mesa_error(ctx, GL_OUT_OF_MEMORY, "glShaderSourceARB");
@@ -419,7 +423,8 @@ _mesa_ShaderSourceARB(GLhandleARB shaderObj, GLsizei count,
       _mesa_memcpy(source + start, string[i],
                    (offsets[i] - start) * sizeof(GLcharARB));
    }
-   source[offsets[count - 1]] = '\0';
+   source[totalLength - 1] = '\0';
+   source[totalLength - 2] = '\0';
 
    ctx->Driver.ShaderSource(ctx, shaderObj, source);
 
