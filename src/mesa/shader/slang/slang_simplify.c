@@ -263,13 +263,31 @@ _slang_simplify(slang_operation *oper,
       /* vec2(flt, flt) constructor */
       if (oper->type == SLANG_OPER_CALL) {
          if (strcmp((char *) oper->a_id, "vec2") == 0) {
-            printf("SIMPLIFY vec2 constructor scope = %p\n",
-                   (void*) oper->locals);
             oper->literal[0] = oper->children[0].literal[0];
             oper->literal[1] = oper->children[1].literal[0];
             oper->literal[2] = oper->literal[1];
             oper->literal[3] = oper->literal[1];
             oper->literal_size = 2;
+            slang_operation_destruct(oper); /* XXX oper->locals goes NULL! */
+            oper->type = SLANG_OPER_LITERAL_FLOAT;
+            assert(oper->num_children == 0);
+            return;
+         }
+      }
+   }
+
+   if (oper->num_children == 1 && isFloat[0]) {
+      /* vec2/3/4(flt, flt) constructor */
+      if (oper->type == SLANG_OPER_CALL) {
+         const char *func = (const char *) oper->a_id;
+         if (strncmp(func, "vec", 3) == 0 && func[3] >= '2' && func[3] <= '4') {
+            oper->literal[0] =
+            oper->literal[1] =
+            oper->literal[2] =
+            oper->literal[3] = oper->children[0].literal[0];
+            oper->literal_size = func[3] - '0';
+            assert(oper->literal_size >= 2);
+            assert(oper->literal_size <= 4);
             slang_operation_destruct(oper); /* XXX oper->locals goes NULL! */
             oper->type = SLANG_OPER_LITERAL_FLOAT;
             assert(oper->num_children == 0);
@@ -301,6 +319,10 @@ _slang_adapt_call(slang_operation *callOper, const slang_function *fun,
 
    if (dbg) printf("Adapt %d args to %d parameters\n",
                    callOper->num_children, numParams);
+
+   /* Only try adapting for constructors */
+   if (fun->kind != SLANG_FUNC_CONSTRUCTOR)
+      return GL_FALSE;
 
    if (callOper->num_children != numParams) {
       /* number of arguments doesn't match number of parameters */
@@ -406,7 +428,7 @@ _slang_adapt_call(slang_operation *callOper, const slang_function *fun,
          slang_operation *child = slang_operation_new(1);
 
          slang_operation_copy(child, &callOper->children[i]);
-         child->locals->outer_scope = callOper->locals;
+         child->locals->outer_scope = callOper->children[i].locals;
 
          callOper->children[i].type = SLANG_OPER_CALL;
          callOper->children[i].a_id = slang_atom_pool_atom(atoms, constructorName);
