@@ -387,22 +387,27 @@ slang_print_tree(const slang_operation *op, int indent)
 
    case SLANG_OPER_LITERAL_BOOL:
       spaces(indent);
-      /*printf("SLANG_OPER_LITERAL_BOOL\n");*/
-      printf("%s\n", op->literal[0] ? "TRUE" : "FALSE");
+      printf("LITERAL (");
+      for (i = 0; i < op->literal_size; i++)
+         printf("%s ", op->literal[0] ? "TRUE" : "FALSE");
+      printf(")\n");
+
       break;
 
    case SLANG_OPER_LITERAL_INT:
       spaces(indent);
-      /*printf("SLANG_OPER_LITERAL_INT\n");*/
-      printf("(%d %d %d %d)\n", (int) op->literal[0], (int) op->literal[1],
-             (int) op->literal[2], (int) op->literal[3]);
+      printf("LITERAL (");
+      for (i = 0; i < op->literal_size; i++)
+         printf("%d ", (int) op->literal[i]);
+      printf(")\n");
       break;
 
    case SLANG_OPER_LITERAL_FLOAT:
       spaces(indent);
-      /*printf("SLANG_OPER_LITERAL_FLOAT\n");*/
-      printf("(%f %f %f %f)\n", op->literal[0], op->literal[1], op->literal[2],
-             op->literal[3]);
+      printf("LITERAL (");
+      for (i = 0; i < op->literal_size; i++)
+         printf("%f ", op->literal[i]);
+      printf(")\n");
       break;
 
    case SLANG_OPER_IDENTIFIER:
