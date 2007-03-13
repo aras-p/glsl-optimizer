@@ -1395,6 +1395,10 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 /* gap */
 
+#define R300_RB3D_ZCACHE_CTLSTAT            0x4F18 /* GUESS */
+
+/* gap */
+
 #define R300_RB3D_DEPTHOFFSET               0x4F20
 #define R300_RB3D_DEPTHPITCH                0x4F24
 #       define R300_DEPTHPITCH_MASK              0x00001FF8 /* GUESS */

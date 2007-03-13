@@ -346,7 +346,7 @@ GLboolean r300_run_vb_render(GLcontext *ctx,
 	reg_start(R300_RB3D_DSTCACHE_CTLSTAT,0);
 	e32(0x0000000a);
 
-	reg_start(0x4f18,0);
+	reg_start(R300_RB3D_ZCACHE_CTLSTAT,0);
 	e32(0x00000003);
 	
 	r300EmitState(rmesa);
@@ -362,7 +362,7 @@ GLboolean r300_run_vb_render(GLcontext *ctx,
 	reg_start(R300_RB3D_DSTCACHE_CTLSTAT,0);
 	e32(0x0000000a/*0x2*/);
 
-	reg_start(0x4f18,0);
+	reg_start(R300_RB3D_ZCACHE_CTLSTAT,0);
 	e32(0x00000003/*0x1*/);
 
 #ifdef USER_BUFFERS
