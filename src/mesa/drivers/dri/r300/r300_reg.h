@@ -1397,6 +1397,8 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 /* gap */
 
 #define R300_RB3D_ZCACHE_CTLSTAT            0x4F18 /* GUESS */
+#       define R300_RB3D_ZCACHE_CTLSTAT_01  0x1
+#       define R300_RB3D_ZCACHE_CTLSTAT_03  0x3
 
 /* gap */
 

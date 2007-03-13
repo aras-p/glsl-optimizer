@@ -166,7 +166,7 @@ static void r300ClearBuffer(r300ContextPtr r300, int flags, int buffer)
 	  
 
 	reg_start(R300_RB3D_ZCACHE_CTLSTAT,0);
-	e32(0x00000003);
+	e32(R300_RB3D_ZCACHE_CTLSTAT_03);
 	cp_wait(rmesa, R300_WAIT_3D | R300_WAIT_3D_CLEAN);
 }
 
