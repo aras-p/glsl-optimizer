@@ -691,7 +691,7 @@ float __operator - (const float a, const float b)
 
 float __operator * (const float a, const float b)
 {
-    __asm float_multiply __retVal, a, b;
+    __asm vec4_multiply __retVal.x, a, b;
 }
 
 float __operator / (const float a, const float b)

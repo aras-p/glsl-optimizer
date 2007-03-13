@@ -350,9 +350,6 @@ static slang_asm_info AsmInfo[] = {
    { "vec4_ddx", IR_DDX, 1, 1 },
    { "vec4_ddy", IR_DDY, 1, 1 },
    /* float binary op */
-   { "float_add", IR_ADD, 1, 2 },
-   { "float_multiply", IR_MUL, 1, 2 },
-   { "float_divide", IR_DIV, 1, 2 },
    { "float_power", IR_POW, 1, 2 },
    /* texture / sampler */
    { "vec4_tex1d", IR_TEX, 1, 2 },
