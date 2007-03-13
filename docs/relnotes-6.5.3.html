@@ -11,8 +11,7 @@
 <H1>Mesa 6.5.3 Release Notes / (in progress)</H1>
 
 <p>
-Mesa 6.5.3 is a 6.5 follow-on development release mostly consisting of
-bug fixes</a>.
+Mesa 6.5.3 is a 6.5 follow-on development release with many internal changes.
 </p>
 
 
@@ -24,6 +23,10 @@ TBD
 
 <h2>New features</h2>
 <ul>
+<li>OpenGL 2.0 support.
+<li>Entirely new Shading Language code generator.
+<li>Much faster software execution of vertex, fragment shaders.
+<li>New vertex buffer object infrastructure (replaces old array_cache code).
 <li>Updated glext.h file (version 39)
 <li>Updated glxext.h file (version 18)
 </ul>
@@ -33,12 +36,16 @@ TBD
 <li>Fog was errantly applied when a fragment shader was enabled (bug 9346)
 <li>glPush/PopClientAttrib didn't handle VBO bindings correctly (bug 9445)
 <li>With 32-bit Z buffer, the fragment Z of lines and points was sometimes wrong.
+<li>GL_POST_CONVOLUTION_ALPHA_BIAS/SCALE was broken.
+<li>GL_MAX_DRAWBUFFERS is now 4 (software rendering) so
+    "multiple render targets" are really supported.
 </ul>
 
 
 <h2>Internal code changes</h2>
 
 <ul>
+<li>Massive changes to the Shading Language compiler.
 <li>The _MaintainTnlProgram, _MaintainTexEnvProgram, _TexEnvProgram and
 _TnlProgram fields have been moved.
 <li>The ctx->FragmentProgram._Active field has been removed.
@@ -52,7 +59,6 @@ fixed-function program.
 <h2>To Do (someday) items</h2>
 <ul>
 <li>Switch to freeglut
-<li>Increase MAX_DRAWBUFFERS
 <li>Fix linux-glide target/driver.
 <li>Improved lambda and derivative calculation for frag progs.
 </ul>
@@ -64,8 +70,8 @@ fixed-function program.
 Driver			Status
 ----------------------	----------------------
 DRI drivers		varies with the driver
-XMesa/GLX (on Xlib)	implements OpenGL 1.5
-OSMesa (off-screen)	implements OpenGL 1.5
+XMesa/GLX (on Xlib)	implements OpenGL 2.0
+OSMesa (off-screen)	implements OpenGL 2.0
 Glide (3dfx Voodoo1/2)	implements OpenGL 1.3
 SVGA			implements OpenGL 1.3
 Wind River UGL		implements OpenGL 1.3
