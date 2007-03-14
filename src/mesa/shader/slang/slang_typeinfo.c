@@ -576,17 +576,24 @@ _slang_typeof_operation_(slang_operation * op,
       }
       break;
    case SLANG_OPER_CALL:
-      {
+      if (op->fun) {
+         /* we've resolved this call before */
+         slang_type_specifier_copy(&ti->spec, &op->fun->header.type.specifier);
+      }
+      else {
          slang_function *fun;
-
          if (!_slang_typeof_function(op->a_id, op->children, op->num_children,
                                      space, &ti->spec, &fun, atoms, log))
             return GL_FALSE;
-         if (!fun) {
-            /* Look for struct initializer? */
+         if (fun) {
+            /* save result for future use */
+            op->fun = fun;
+         }
+         else {
             slang_struct *s =
                slang_struct_scope_find(space->structs, op->a_id, GL_TRUE);
-            if (s != NULL) {
+            if (s) {
+               /* struct initializer */
                ti->spec.type = SLANG_SPEC_STRUCT;
                ti->spec._struct =
                   (slang_struct *) slang_alloc_malloc(sizeof(slang_struct));
@@ -601,6 +608,7 @@ _slang_typeof_operation_(slang_operation * op,
                   return GL_FALSE;
             }
             else {
+               /* float, int, vec4, mat3, etc. constructor? */
                const char *name;
                slang_type_specifier_type type;
 
