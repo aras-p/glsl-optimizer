@@ -60,6 +60,34 @@
 
 
 /**
+ * \return GL_TRUE if type is packed pixel type, GL_FALSE otherwise.
+ */
+static GLboolean
+_mesa_type_is_packed(GLenum type)
+    {
+        switch (type) {
+            case GL_UNSIGNED_BYTE_3_3_2:
+            case GL_UNSIGNED_BYTE_2_3_3_REV:
+            case GL_UNSIGNED_SHORT_5_6_5:
+            case GL_UNSIGNED_SHORT_5_6_5_REV:
+            case GL_UNSIGNED_SHORT_4_4_4_4:
+            case GL_UNSIGNED_SHORT_4_4_4_4_REV:
+            case GL_UNSIGNED_SHORT_5_5_5_1:
+            case GL_UNSIGNED_SHORT_1_5_5_5_REV:
+            case GL_UNSIGNED_INT_8_8_8_8:
+            case GL_UNSIGNED_INT_8_8_8_8_REV:
+            case GL_UNSIGNED_INT_10_10_10_2:
+            case GL_UNSIGNED_INT_2_10_10_10_REV:
+            case GL_UNSIGNED_SHORT_8_8_MESA:
+            case GL_UNSIGNED_SHORT_8_8_REV_MESA:
+            case GL_UNSIGNED_INT_24_8_EXT:
+                return GL_TRUE;
+         }
+
+        return GL_FALSE;
+}
+
+/**
  * Flip the 8 bits in each byte of the given array.
  *
  * \param p array.
@@ -4187,14 +4215,18 @@ _mesa_unpack_image( GLuint dimensions,
 
    if (type == GL_BITMAP) {
       bytesPerRow = (width + 7) >> 3;
-      flipBytes = !unpack->LsbFirst;
+      flipBytes = unpack->LsbFirst;
       swap2 = swap4 = GL_FALSE;
       compsPerRow = 0;
    }
    else {
       const GLint bytesPerPixel = _mesa_bytes_per_pixel(format, type);
-      const GLint components = _mesa_components_in_format(format);
+      GLint components = _mesa_components_in_format(format);
       GLint bytesPerComp;
+
+      if (_mesa_type_is_packed(type))
+          components = 1;
+
       if (bytesPerPixel <= 0 || components <= 0)
          return NULL;   /* bad format or type.  generate error later */
       bytesPerRow = bytesPerPixel * width;
@@ -4219,7 +4251,61 @@ _mesa_unpack_image( GLuint dimensions,
          for (row = 0; row < height; row++) {
             const GLvoid *src = _mesa_image_address(dimensions, unpack, pixels,
                                width, height, format, type, img, row, 0);
-            _mesa_memcpy(dst, src, bytesPerRow);
+
+                if ((type == GL_BITMAP) && (unpack->SkipPixels & 0x7)) {
+                    GLint i;
+                    flipBytes = GL_FALSE;
+                    if (unpack->LsbFirst) {
+                            GLubyte srcMask = 1 << (unpack->SkipPixels & 0x7);
+                            GLubyte dstMask = 128;
+                            const GLubyte *s = src;
+                            GLubyte *d = dst;
+                            *d = 0;
+                            for (i = 0; i < width; i++) {
+                                if (*s & srcMask) {
+                                    *d |= dstMask;
+                                }      
+                                if (srcMask == 128) {
+                                    srcMask = 1;
+                                    s++;
+                                } else {
+                                    srcMask = srcMask << 1;
+                                }
+                                if (dstMask == 1) {
+                                    dstMask = 128;
+                                    d++;
+                                    *d = 0;
+                                } else {
+                                    dstMask = dstMask >> 1;
+                                }
+                            }
+                    } else {
+                        GLubyte srcMask = 128 >> (unpack->SkipPixels & 0x7);
+                        GLubyte dstMask = 128;
+                        const GLubyte *s = src;
+                        GLubyte *d = dst;
+                        *d = 0;
+                        for (i = 0; i < width; i++) {
+                            if (*s & srcMask) {
+                                *d |= dstMask;
+                            }
+                            if (srcMask == 1) {
+                                srcMask = 128;
+                                s++;
+                            } else {
+                                srcMask = srcMask >> 1;
+                            }
+                            if (dstMask == 1) {
+                                dstMask = 128;
+                                d++;
+                                *d = 0;
+                            } else {
+                                dstMask = dstMask >> 1;
+                            }      
+                        }
+                    }
+                } else
+                    _mesa_memcpy(dst, src, bytesPerRow);
             /* byte flipping/swapping */
             if (flipBytes) {
                flip_bytes((GLubyte *) dst, bytesPerRow);

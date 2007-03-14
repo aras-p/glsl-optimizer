@@ -72,6 +72,7 @@
 
 #define need_GL_ARB_multisample
 #define need_GL_ARB_texture_compression
+#define need_GL_ARB_vertex_buffer_object
 #define need_GL_ARB_vertex_program
 #define need_GL_EXT_fog_coord
 #define need_GL_EXT_multi_draw_arrays
@@ -401,6 +402,7 @@ static const struct dri_extension card_extensions[] =
    { "GL_ARB_multisample",            GL_ARB_multisample_functions },
    { "GL_ARB_texture_compression",    GL_ARB_texture_compression_functions },
    { "GL_ARB_texture_rectangle",      NULL },
+   { "GL_ARB_vertex_buffer_object",   GL_ARB_vertex_buffer_object_functions },
    { "GL_EXT_blend_logic_op",         NULL },
    { "GL_EXT_fog_coord",              GL_EXT_fog_coord_functions },
    { "GL_EXT_multi_draw_arrays",      GL_EXT_multi_draw_arrays_functions },

@@ -850,14 +850,13 @@ static struct ureg calculate_light_attenuation( struct tnl_program *p,
    /* Calculate spot attenuation:
     */
    if (!p->state->unit[i].light_spotcutoff_is_180) {
-      struct ureg spot_dir = register_param3(p, STATE_LIGHT, i,
-					     STATE_SPOT_DIRECTION);
+      struct ureg spot_dir_norm = register_param3(p, STATE_INTERNAL,
+						  STATE_SPOT_DIR_NORMALIZED, i);
       struct ureg spot = get_temp(p);
       struct ureg slt = get_temp(p);
-	       
-      emit_normalize_vec3( p, spot, spot_dir ); /* XXX: precompute! */
-      emit_op2(p, OPCODE_DP3, spot, 0, ureg_negate(VPpli), spot);
-      emit_op2(p, OPCODE_SLT, slt, 0, swizzle1(spot_dir,W), spot);
+
+      emit_op2(p, OPCODE_DP3, spot, 0, ureg_negate(VPpli), spot_dir_norm);
+      emit_op2(p, OPCODE_SLT, slt, 0, swizzle1(spot_dir_norm,W), spot);
       emit_op2(p, OPCODE_POW, spot, 0, spot, swizzle1(attenuation, W));
       emit_op2(p, OPCODE_MUL, att, 0, slt, spot);
 
@@ -1166,7 +1165,8 @@ static void build_fog( struct tnl_program *p )
 
    if (p->state->fog_option &&
        p->state->tnl_do_vertex_fog) {
-      struct ureg params = register_param1(p, STATE_FOG_PARAMS);
+      struct ureg params = register_param2(p, STATE_INTERNAL,
+					   STATE_FOG_PARAMS_OPTIMIZED);
       struct ureg tmp = get_temp(p);
       struct ureg id = get_identity_param(p);
 
@@ -1174,8 +1174,7 @@ static void build_fog( struct tnl_program *p )
 
       switch (p->state->fog_option) {
       case FOG_LINEAR: {
-	 emit_op1(p, OPCODE_ABS, tmp, 0, input); 
-	 emit_op2(p, OPCODE_SUB, tmp, 0, swizzle1(params,Z), tmp); 
+	 emit_op3(p, OPCODE_MAD, tmp, 0, input, swizzle1(params,X), swizzle1(params,Y));
 	 emit_op2(p, OPCODE_MUL, tmp, 0, tmp, swizzle1(params,W)); 
 	 emit_op2(p, OPCODE_MAX, tmp, 0, tmp, swizzle1(id,X)); /* saturate */
 	 emit_op2(p, OPCODE_MIN, fog, WRITEMASK_X, tmp, swizzle1(id,W));
@@ -1183,15 +1182,13 @@ static void build_fog( struct tnl_program *p )
       }
       case FOG_EXP:
 	 emit_op1(p, OPCODE_ABS, tmp, 0, input); 
-	 emit_op2(p, OPCODE_MUL, tmp, 0, tmp, swizzle1(params,X)); 
-	 emit_op2(p, OPCODE_POW, fog, WRITEMASK_X, 
-		  register_const1f(p, M_E), ureg_negate(tmp)); 
+	 emit_op2(p, OPCODE_MUL, tmp, 0, tmp, swizzle1(params,Z));
+	 emit_op1(p, OPCODE_EX2, fog, WRITEMASK_X, ureg_negate(tmp));
 	 break;
       case FOG_EXP2:
-	 emit_op2(p, OPCODE_MUL, tmp, 0, input, swizzle1(params,X)); 
+	 emit_op2(p, OPCODE_MUL, tmp, 0, input, swizzle1(params,W));
 	 emit_op2(p, OPCODE_MUL, tmp, 0, tmp, tmp); 
-	 emit_op2(p, OPCODE_POW, fog, WRITEMASK_X, 
-		  register_const1f(p, M_E), ureg_negate(tmp)); 
+	 emit_op1(p, OPCODE_EX2, fog, WRITEMASK_X, ureg_negate(tmp));
 	 break;
       }
       
