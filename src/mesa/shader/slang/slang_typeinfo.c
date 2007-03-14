@@ -35,6 +35,31 @@
 #include "prog_instruction.h"
 
 
+/**
+ * Determine the return type of a function.
+ * \param a_name  the function name
+ * \param param  function parameters (overloading)
+ * \param num_params  number of parameters to function
+ * \param space  namespace to search
+ * \param spec  returns the type
+ * \param exists  returns GL_TRUE or GL_FALSE to indicate existance of function
+ * \return GL_TRUE for success, GL_FALSE if failure (bad function name)
+ */
+static GLboolean
+_slang_typeof_function(slang_atom a_name, const slang_operation * params,
+                       GLuint num_params,
+                       const slang_name_space * space,
+                       slang_type_specifier * spec, GLboolean * exists,
+                       slang_atom_pool *atoms, slang_info_log *log)
+{
+   slang_function *fun;
+   fun = _slang_locate_function(space->funcs, a_name, params,
+                                num_params, space, atoms, log);
+   *exists = fun != NULL;
+   if (!fun)
+      return GL_TRUE;  /* yes, not false */
+   return slang_type_specifier_copy(spec, &fun->header.type.specifier);
+}
 
 
 /**
@@ -288,7 +313,8 @@ slang_typeinfo_destruct(slang_typeinfo * ti)
 
 
 /**
- * Determine the return type of a function.
+ * Determine the return type of a function.  This involves searching for
+ * the function by name and matching parameter types.
  * \param name  name of the function
  * \param params  array of function parameters
  * \param num_params  number of parameters
@@ -543,6 +569,7 @@ _slang_typeof_operation_(const slang_operation * op,
                                      space, &ti->spec, &exists, atoms, log))
             return GL_FALSE;
          if (!exists) {
+            /* Look for struct initializer? */
             slang_struct *s =
                slang_struct_scope_find(space->structs, op->a_id, GL_TRUE);
             if (s != NULL) {
@@ -753,33 +780,6 @@ _slang_locate_function(const slang_function_scope * funcs, slang_atom a_name,
                                     num_args, space, atoms, log);
    return NULL;
 }
-
-
-
-/**
- * Determine the return type of a function.
- * \param a_name  the function name
- * \param param  function parameters (overloading)
- * \param num_params  number of parameters to function
- * \param space  namespace to search
- * \param exists  returns GL_TRUE or GL_FALSE to indicate existance of function
- * \return GL_TRUE for success, GL_FALSE if failure (bad function name)
- */
-GLboolean
-_slang_typeof_function(slang_atom a_name, const slang_operation * params,
-                       GLuint num_params,
-                       const slang_name_space * space,
-                       slang_type_specifier * spec, GLboolean * exists,
-                       slang_atom_pool *atoms, slang_info_log *log)
-{
-   slang_function *fun = _slang_locate_function(space->funcs, a_name, params,
-                                                num_params, space, atoms, log);
-   *exists = fun != NULL;
-   if (!fun)
-      return GL_TRUE;  /* yes, not false */
-   return slang_type_specifier_copy(spec, &fun->header.type.specifier);
-}
-
 
 
 /**

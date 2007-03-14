@@ -177,18 +177,6 @@ _slang_typeof_operation_(const struct slang_operation_ *,
                          slang_typeinfo *, slang_atom_pool *,
                          slang_info_log *log);
 
-/**
- * Retrieves type of a function prototype, if one exists.
- * Returns GL_TRUE on success, even if the function was not found.
- * Returns GL_FALSE otherwise.
- */
-extern GLboolean
-_slang_typeof_function(slang_atom a_name,
-                       const struct slang_operation_ *params,
-                       GLuint num_params, const slang_name_space *,
-                       slang_type_specifier *spec, GLboolean *exists,
-                       slang_atom_pool *, slang_info_log *log);
-
 extern GLboolean
 _slang_type_is_matrix(slang_type_specifier_type);
 
