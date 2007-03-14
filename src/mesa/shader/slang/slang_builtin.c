@@ -66,17 +66,17 @@ lookup_statevar(const char *var, GLint index1, GLint index2, const char *field,
 
       { "gl_ProjectionMatrix", STATE_PROJECTION_MATRIX, STATE_MATRIX_TRANSPOSE },
       { "gl_ProjectionMatrixInverse", STATE_PROJECTION_MATRIX, STATE_MATRIX_INVTRANS },
-      { "gl_ProjectionMatrixTranpose", STATE_PROJECTION_MATRIX, 0 },
-      { "gl_ProjectionMatrixInverseTranpose", STATE_PROJECTION_MATRIX, STATE_MATRIX_INVERSE },
+      { "gl_ProjectionMatrixTranspose", STATE_PROJECTION_MATRIX, 0 },
+      { "gl_ProjectionMatrixInverseTranspose", STATE_PROJECTION_MATRIX, STATE_MATRIX_INVERSE },
 
       { "gl_ModelViewProjectionMatrix", STATE_MVP_MATRIX, STATE_MATRIX_TRANSPOSE },
       { "gl_ModelViewProjectionMatrixInverse", STATE_MVP_MATRIX, STATE_MATRIX_INVTRANS },
       { "gl_ModelViewProjectionMatrixTranspose", STATE_MVP_MATRIX, 0 },
-      { "gl_ModelViewProjectionMatrixInverseTranpose", STATE_MVP_MATRIX, STATE_MATRIX_INVERSE },
+      { "gl_ModelViewProjectionMatrixInverseTranspose", STATE_MVP_MATRIX, STATE_MATRIX_INVERSE },
 
       { "gl_TextureMatrix", STATE_TEXTURE_MATRIX, STATE_MATRIX_TRANSPOSE },
       { "gl_TextureMatrixInverse", STATE_TEXTURE_MATRIX, STATE_MATRIX_INVTRANS },
-      { "gl_TextureMatrixTranpose", STATE_TEXTURE_MATRIX, 0 },
+      { "gl_TextureMatrixTranspose", STATE_TEXTURE_MATRIX, 0 },
       { "gl_TextureMatrixInverseTranspose", STATE_TEXTURE_MATRIX, STATE_MATRIX_INVERSE },
 
       /* XXX verify these!!! */
