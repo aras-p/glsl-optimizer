@@ -69,7 +69,7 @@ typedef struct slang_assemble_ctx_
 
 extern struct slang_function_ *
 _slang_locate_function(const struct slang_function_scope_ *funcs,
-                       slang_atom name, const struct slang_operation_ *params,
+                       slang_atom name, struct slang_operation_ *params,
                        GLuint num_params,
                        const slang_name_space *space,
                        slang_atom_pool *atoms, slang_info_log *log);
@@ -168,11 +168,11 @@ slang_typeinfo_destruct(slang_typeinfo *);
  */
 extern GLboolean
 _slang_typeof_operation(const slang_assemble_ctx *,
-                        const struct slang_operation_ *,
+                        struct slang_operation_ *,
                         slang_typeinfo *);
 
 extern GLboolean
-_slang_typeof_operation_(const struct slang_operation_ *,
+_slang_typeof_operation_(struct slang_operation_ *,
                          const slang_name_space *,
                          slang_typeinfo *, slang_atom_pool *,
                          slang_info_log *log);

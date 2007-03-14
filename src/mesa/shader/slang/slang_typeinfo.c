@@ -36,33 +36,6 @@
 
 
 /**
- * Determine the return type of a function.
- * \param a_name  the function name
- * \param param  function parameters (overloading)
- * \param num_params  number of parameters to function
- * \param space  namespace to search
- * \param spec  returns the type
- * \param exists  returns GL_TRUE or GL_FALSE to indicate existance of function
- * \return GL_TRUE for success, GL_FALSE if failure (bad function name)
- */
-static GLboolean
-_slang_typeof_function(slang_atom a_name, const slang_operation * params,
-                       GLuint num_params,
-                       const slang_name_space * space,
-                       slang_type_specifier * spec, GLboolean * exists,
-                       slang_atom_pool *atoms, slang_info_log *log)
-{
-   slang_function *fun;
-   fun = _slang_locate_function(space->funcs, a_name, params,
-                                num_params, space, atoms, log);
-   *exists = fun != NULL;
-   if (!fun)
-      return GL_TRUE;  /* yes, not false */
-   return slang_type_specifier_copy(spec, &fun->header.type.specifier);
-}
-
-
-/**
  * Checks if a field selector is a general swizzle (an r-value swizzle
  * with replicated components or an l-value swizzle mask) for a
  * vector.  Returns GL_TRUE if this is the case, <swz> is filled with
@@ -312,10 +285,36 @@ slang_typeinfo_destruct(slang_typeinfo * ti)
 }
 
 
+
 /**
- * Determine the return type of a function.  This involves searching for
- * the function by name and matching parameter types.
- * \param name  name of the function
+ * Determine the return type of a function.
+ * \param a_name  the function name
+ * \param param  function parameters (overloading)
+ * \param num_params  number of parameters to function
+ * \param space  namespace to search
+ * \param spec  returns the type
+ * \param funFound  returns pointer to the function, or NULL if not found.
+ * \return GL_TRUE for success, GL_FALSE if failure (bad function name)
+ */
+static GLboolean
+_slang_typeof_function(slang_atom a_name,
+                       slang_operation * params, GLuint num_params,
+                       const slang_name_space * space,
+                       slang_type_specifier * spec,
+                       slang_function **funFound,
+                       slang_atom_pool *atoms, slang_info_log *log)
+{
+   *funFound = _slang_locate_function(space->funcs, a_name, params,
+                                      num_params, space, atoms, log);
+   if (!*funFound)
+      return GL_TRUE;  /* yes, not false */
+   return slang_type_specifier_copy(spec, &(*funFound)->header.type.specifier);
+}
+
+
+/**
+ * Determine the type of a math function.
+ * \param name  name of the operator, one of +,-,*,/ or unary -
  * \param params  array of function parameters
  * \param num_params  number of parameters
  * \param space  namespace to use
@@ -324,26 +323,41 @@ slang_typeinfo_destruct(slang_typeinfo * ti)
  * \return GL_TRUE for success, GL_FALSE if failure
  */
 static GLboolean
-typeof_existing_function(const char *name, const slang_operation * params,
-                         GLuint num_params,
-                         const slang_name_space * space,
-                         slang_type_specifier * spec,
-                         slang_atom_pool * atoms,
-                         slang_info_log *log)
+typeof_math_call(const char *name, slang_operation *call,
+                 const slang_name_space * space,
+                 slang_type_specifier * spec,
+                 slang_atom_pool * atoms,
+                 slang_info_log *log)
 {
-   slang_atom atom;
-   GLboolean exists;
+   if (call->fun) {
+      /* we've previously resolved this function call */
+      slang_type_specifier_copy(spec, &call->fun->header.type.specifier);
+      return GL_TRUE;
+   }
+   else {
+      slang_atom atom;
+      slang_function *fun;
 
-   atom = slang_atom_pool_atom(atoms, name);
-   if (!_slang_typeof_function(atom, params, num_params, space, spec,
-                               &exists, atoms, log))
+      /* number of params: */
+      assert(call->num_children == 1 || call->num_children == 2);
+
+      atom = slang_atom_pool_atom(atoms, name);
+      if (!_slang_typeof_function(atom, call->children, call->num_children,
+                                  space, spec, &fun, atoms, log))
+         return GL_FALSE;
+
+      if (fun) {
+         /* Save pointer to save time in future */
+         call->fun = fun;
+         return GL_TRUE;
+      }
       return GL_FALSE;
-   return exists;
+   }
 }
 
 GLboolean
 _slang_typeof_operation(const slang_assemble_ctx * A,
-                        const slang_operation * op,
+                        slang_operation * op,
                         slang_typeinfo * ti)
 {
    return _slang_typeof_operation_(op, &A->space, ti, A->atoms, A->log);
@@ -359,7 +373,7 @@ _slang_typeof_operation(const slang_assemble_ctx * A,
  * \return GL_TRUE for success, GL_FALSE if failure
  */
 GLboolean
-_slang_typeof_operation_(const slang_operation * op,
+_slang_typeof_operation_(slang_operation * op,
                          const slang_name_space * space,
                          slang_typeinfo * ti,
                          slang_atom_pool * atoms,
@@ -500,26 +514,26 @@ _slang_typeof_operation_(const slang_operation * op,
       /*case SLANG_OPER_LSHIFT: */
       /*case SLANG_OPER_RSHIFT: */
    case SLANG_OPER_ADD:
-      if (!typeof_existing_function("+", op->children, 2, space,
-                                    &ti->spec, atoms, log))
+      assert(op->num_children == 2);
+      if (!typeof_math_call("+", op, space, &ti->spec, atoms, log))
          return GL_FALSE;
       break;
    case SLANG_OPER_SUBTRACT:
-      if (!typeof_existing_function("-", op->children, 2, space,
-                                    &ti->spec, atoms, log))
+      assert(op->num_children == 2);
+      if (!typeof_math_call("-", op, space, &ti->spec, atoms, log))
          return GL_FALSE;
       break;
    case SLANG_OPER_MULTIPLY:
-      if (!typeof_existing_function("*", op->children, 2, space,
-                                    &ti->spec, atoms, log))
+      assert(op->num_children == 2);
+      if (!typeof_math_call("*", op, space, &ti->spec, atoms, log))
          return GL_FALSE;
       break;
    case SLANG_OPER_DIVIDE:
-      if (!typeof_existing_function("/", op->children, 2, space,
-                                    &ti->spec, atoms, log))
+      assert(op->num_children == 2);
+      if (!typeof_math_call("/", op, space, &ti->spec, atoms, log))
          return GL_FALSE;
       break;
-      /*case SLANG_OPER_MODULUS: */
+   /*case SLANG_OPER_MODULUS: */
    case SLANG_OPER_PLUS:
       if (!_slang_typeof_operation_(op->children, space, ti, atoms, log))
          return GL_FALSE;
@@ -527,8 +541,8 @@ _slang_typeof_operation_(const slang_operation * op,
       ti->is_swizzled = GL_FALSE;
       break;
    case SLANG_OPER_MINUS:
-      if (!typeof_existing_function("-", op->children, 1, space,
-                                    &ti->spec, atoms, log))
+      assert(op->num_children == 1);
+      if (!typeof_math_call("-", op, space, &ti->spec, atoms, log))
          return GL_FALSE;
       break;
       /*case SLANG_OPER_COMPLEMENT: */
@@ -563,12 +577,12 @@ _slang_typeof_operation_(const slang_operation * op,
       break;
    case SLANG_OPER_CALL:
       {
-         GLboolean exists;
+         slang_function *fun;
 
          if (!_slang_typeof_function(op->a_id, op->children, op->num_children,
-                                     space, &ti->spec, &exists, atoms, log))
+                                     space, &ti->spec, &fun, atoms, log))
             return GL_FALSE;
-         if (!exists) {
+         if (!fun) {
             /* Look for struct initializer? */
             slang_struct *s =
                slang_struct_scope_find(space->structs, op->a_id, GL_TRUE);
@@ -731,7 +745,7 @@ _slang_typeof_operation_(const slang_operation * op,
  */
 slang_function *
 _slang_locate_function(const slang_function_scope * funcs, slang_atom a_name,
-                       const slang_operation * args, GLuint num_args,
+                       slang_operation * args, GLuint num_args,
                        const slang_name_space * space, slang_atom_pool * atoms,
                        slang_info_log *log)
 {
