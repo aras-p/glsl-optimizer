@@ -970,7 +970,6 @@ emit_move(slang_emit_info *emitInfo, slang_ir_node *n)
       *n->Children[1]->Store = *n->Children[0]->Store;
       /* fixup the prev (RHS) instruction */
       assert(n->Children[0]->Store->Index >= 0);
-      assert(n->Children[0]->Store->Index < 16);
       storage_to_dst_reg(&inst->DstReg, n->Children[0]->Store, n->Writemask);
       return inst;
    }
