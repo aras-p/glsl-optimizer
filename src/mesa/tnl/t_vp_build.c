@@ -1329,14 +1329,16 @@ static void build_pointsize( struct tnl_program *p )
    struct ureg out = register_output(p, VERT_RESULT_PSIZ);
    struct ureg ut = get_temp(p);
 
+   /* dist = |eyez| */
+   emit_op1(p, OPCODE_ABS, ut, WRITEMASK_Y, swizzle1(eye, Z));
    /* p1 + dist * (p2 + dist * p3); */
-   emit_op3(p, OPCODE_MAD, ut, 0, negate(swizzle1(eye, Z)),
+   emit_op3(p, OPCODE_MAD, ut, WRITEMASK_X, swizzle1(ut, Y),
 		swizzle1(state_attenuation, Z), swizzle1(state_attenuation, Y));
-   emit_op3(p, OPCODE_MAD, ut, 0, negate(swizzle1(eye, Z)),
+   emit_op3(p, OPCODE_MAD, ut, WRITEMASK_X, swizzle1(ut, Y),
 		ut, swizzle1(state_attenuation, X));
 
    /* 1 / sqrt(factor) */
-   emit_op1(p, OPCODE_RSQ, ut, 0, ut );
+   emit_op1(p, OPCODE_RSQ, ut, WRITEMASK_X, ut );
 
 #if 1
    /* out = pointSize / sqrt(factor) */
@@ -1344,8 +1346,8 @@ static void build_pointsize( struct tnl_program *p )
 #else
    /* not sure, might make sense to do clamping here,
       but it's not done in t_vb_points neither */
-   emit_op2(p, OPCODE_MUL, ut, 0, ut, state_size);
-   emit_op2(p, OPCODE_MAX, ut, 0, ut, swizzle1(state_size, Y));
+   emit_op2(p, OPCODE_MUL, ut, WRITEMASK_X, ut, state_size);
+   emit_op2(p, OPCODE_MAX, ut, WRITEMASK_X, ut, swizzle1(state_size, Y));
    emit_op2(p, OPCODE_MIN, out, WRITEMASK_X, ut, swizzle1(state_size, Z));
 #endif
 

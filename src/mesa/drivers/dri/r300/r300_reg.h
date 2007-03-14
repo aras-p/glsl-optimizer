@@ -1324,8 +1324,8 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
  * Set to 0A before 3D operations, set to 02 afterwards.
  */
 #define R300_RB3D_DSTCACHE_CTLSTAT          0x4E4C
-#       define R300_RB3D_DSTCACHE_02             0x00000002
-#       define R300_RB3D_DSTCACHE_0A             0x0000000A
+#       define R300_RB3D_DSTCACHE_UNKNOWN_02             0x00000002
+#       define R300_RB3D_DSTCACHE_UNKNOWN_0A             0x0000000A
 
 /* gap */
 /* There seems to be no "write only" setting, so use Z-test = ALWAYS
@@ -1397,8 +1397,8 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 /* gap */
 
 #define R300_RB3D_ZCACHE_CTLSTAT            0x4F18 /* GUESS */
-#       define R300_RB3D_ZCACHE_CTLSTAT_01  0x1
-#       define R300_RB3D_ZCACHE_CTLSTAT_03  0x3
+#       define R300_RB3D_ZCACHE_UNKNOWN_01  0x1
+#       define R300_RB3D_ZCACHE_UNKNOWN_03  0x3
 
 /* gap */
 

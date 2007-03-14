@@ -58,6 +58,7 @@
 #include "vblank.h"
 
 #define need_GL_ARB_multisample
+#define need_GL_ARB_vertex_buffer_object
 #include "extension_helper.h"
 
 #ifndef MACH64_DEBUG
@@ -83,6 +84,7 @@ const struct dri_extension card_extensions[] =
 {
     { "GL_ARB_multisample",                GL_ARB_multisample_functions },
     { "GL_ARB_multitexture",               NULL },
+    { "GL_ARB_vertex_buffer_object",       GL_ARB_vertex_buffer_object_functions },
     { "GL_EXT_texture_edge_clamp",         NULL },
     { "GL_MESA_ycbcr_texture",             NULL },
     { "GL_SGIS_generate_mipmap",           NULL },
