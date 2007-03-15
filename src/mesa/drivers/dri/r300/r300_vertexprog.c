@@ -889,8 +889,8 @@ static void position_invariant(struct gl_program *prog)
 #endif
 	paramList = prog->Parameters;
 
-	vpi = malloc((prog->NumInstructions + 4) * sizeof(struct prog_instruction));
-	memset(vpi, 0, 4 * sizeof(struct prog_instruction));
+	vpi = _mesa_alloc_instructions (prog->NumInstructions + 4);
+	_mesa_init_instructions (vpi, prog->NumInstructions + 4);
 
 	for (i=0; i < 4; i++) {
 		GLint idx;
@@ -946,7 +946,7 @@ static void position_invariant(struct gl_program *prog)
 #endif					
 	}
 
-	memcpy(&vpi[i], prog->Instructions, prog->NumInstructions * sizeof(struct prog_instruction));
+	_mesa_memcpy(&vpi[i], prog->Instructions, prog->NumInstructions * sizeof(struct prog_instruction));
 
 	free(prog->Instructions);
 
@@ -966,15 +966,14 @@ static void insert_wpos(struct r300_vertex_program *vp,
 	struct prog_instruction *vpi_insert;
 	int i = 0;
 	
-	vpi = malloc((prog->NumInstructions + 2) * sizeof(struct prog_instruction));
+	vpi = _mesa_alloc_instructions (prog->NumInstructions + 2);
+	_mesa_init_instructions (vpi, prog->NumInstructions + 2);
 	/* all but END */
-	memcpy(vpi, prog->Instructions, (prog->NumInstructions - 1) * sizeof(struct prog_instruction));
+	_mesa_memcpy(vpi, prog->Instructions, (prog->NumInstructions - 1) * sizeof(struct prog_instruction));
 	/* END */
-	memcpy(&vpi[prog->NumInstructions + 1], &prog->Instructions[prog->NumInstructions - 1],
+	_mesa_memcpy(&vpi[prog->NumInstructions + 1], &prog->Instructions[prog->NumInstructions - 1],
 		sizeof(struct prog_instruction));
-	
 	vpi_insert = &vpi[prog->NumInstructions - 1];
-	memset(vpi_insert, 0, 2 * sizeof(struct prog_instruction));
 
 	vpi_insert[i].Opcode = OPCODE_MOV;
 

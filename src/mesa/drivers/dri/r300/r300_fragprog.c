@@ -1798,12 +1798,8 @@ static void insert_wpos(struct gl_program *prog)
 	/* should do something else if no temps left... */
 	prog->NumTemporaries++;
 
-	
-	fpi = malloc((prog->NumInstructions + 3) * sizeof(struct prog_instruction));
-	/* all including END */
-	memcpy(&fpi[3], prog->Instructions, prog->NumInstructions * sizeof(struct prog_instruction));
-	
-	memset(fpi, 0, 3 * sizeof(struct prog_instruction));
+	fpi = _mesa_alloc_instructions (prog->NumInstructions + 3);
+	_mesa_init_instructions (fpi, prog->NumInstructions + 3);
 
 	/* perspective divide */
 	fpi[i].Opcode = OPCODE_RCP;
@@ -1856,6 +1852,8 @@ static void insert_wpos(struct gl_program *prog)
 	fpi[i].SrcReg[2].Index = window_index;
 	fpi[i].SrcReg[2].Swizzle = MAKE_SWIZZLE4(SWIZZLE_X, SWIZZLE_Y, SWIZZLE_Z, SWIZZLE_ZERO);
 	i++;
+
+	_mesa_memcpy(&fpi[i], prog->Instructions, prog->NumInstructions * sizeof(struct prog_instruction));
 
 	free(prog->Instructions);
 
