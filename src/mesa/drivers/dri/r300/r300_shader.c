@@ -10,22 +10,8 @@
 static void
 r300BindProgram(GLcontext *ctx, GLenum target, struct gl_program *prog)
 {
-	
-	r300ContextPtr rmesa = R300_CONTEXT(ctx);
-	struct r300_vertex_program_cont *vp=(void *)prog;
-	
-	
 	switch(target){
 		case GL_VERTEX_PROGRAM_ARB:
-		//rmesa->curr_vp = (struct gl_vertex_program *)vp;
-		//vp->ref_count++;
-#if 0
-		if((vp->ref_count % 1500) == 0) {
-			fprintf(stderr, "id %p, ref_count %d\n", vp, vp->ref_count);
-			_mesa_print_program(&vp->mesa_program.Base);
-		}
-#endif
-		
 		case GL_FRAGMENT_PROGRAM_ARB:
 		break;
 		default:
@@ -59,18 +45,9 @@ r300NewProgram(GLcontext *ctx, GLenum target, GLuint id)
 	return NULL;	
 }
 
-
 static void
 r300DeleteProgram(GLcontext *ctx, struct gl_program *prog)
 {
-#if 0
-	r300ContextPtr rmesa = R300_CONTEXT(ctx);
-	struct r300_vertex_program *vp=(void *)prog;
-	
-	if(rmesa->curr_vp == vp)
-		rmesa->curr_vp = NULL;
-#endif
-
 	_mesa_delete_program(ctx, prog);
 }
 
@@ -98,9 +75,6 @@ r300ProgramStringNotify(GLcontext *ctx, GLenum target, struct gl_program *prog)
 static GLboolean
 r300IsProgramNative(GLcontext *ctx, GLenum target, struct gl_program *prog)
 {
-	//struct r300_vertex_program *vp=(void *)prog;
-	//r300ContextPtr rmesa = R300_CONTEXT(ctx);
-
 	return 1;
 }
 
