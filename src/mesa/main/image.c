@@ -1129,11 +1129,11 @@ _mesa_apply_ci_transfer_ops(const GLcontext *ctx, GLbitfield transferOps,
       shift_and_offset_ci(ctx, n, indexes);
    }
    if (transferOps & IMAGE_MAP_COLOR_BIT) {
-      const GLuint mask = ctx->Pixel.MapItoIsize - 1;
+      const GLuint mask = ctx->PixelMaps.ItoI.Size - 1;
       GLuint i;
       for (i = 0; i < n; i++) {
          const GLuint j = indexes[i] & mask;
-         indexes[i] = IROUND(ctx->Pixel.MapItoI[j]);
+         indexes[i] = IROUND(ctx->PixelMaps.ItoI.Map[j]);
       }
    }
 }
@@ -1169,10 +1169,10 @@ _mesa_apply_stencil_transfer_ops(const GLcontext *ctx, GLuint n,
       }
    }
    if (ctx->Pixel.MapStencilFlag) {
-      GLuint mask = ctx->Pixel.MapStoSsize - 1;
+      GLuint mask = ctx->PixelMaps.StoS.Size - 1;
       GLuint i;
       for (i = 0; i < n; i++) {
-         stencil[i] = ctx->Pixel.MapStoS[ stencil[i] & mask ];
+         stencil[i] = ctx->PixelMaps.StoS.Map[ stencil[i] & mask ];
       }
    }
 }
@@ -3691,10 +3691,10 @@ _mesa_unpack_stencil_span( const GLcontext *ctx, GLuint n,
 
          if (ctx->Pixel.MapStencilFlag) {
             /* Apply stencil lookup table */
-            GLuint mask = ctx->Pixel.MapStoSsize - 1;
+            GLuint mask = ctx->PixelMaps.StoS.Size - 1;
             GLuint i;
             for (i=0;i<n;i++) {
-               indexes[i] = ctx->Pixel.MapStoS[ indexes[i] & mask ];
+               indexes[i] = ctx->PixelMaps.StoS.Map[ indexes[i] & mask ];
             }
          }
       }

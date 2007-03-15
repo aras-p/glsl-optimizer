@@ -483,6 +483,12 @@ xmesa_free_buffer(XMesaBuffer buffer)
 
          /* mark as delete pending */
          fb->DeletePending = GL_TRUE;
+
+         /* Since the X window for the XMesaBuffer is going away, we don't
+          * want to dereference this pointer in the future.
+          */
+         b->frontxrb->drawable = 0;
+
          /* Unreference.  If count = zero we'll really delete the buffer */
          _mesa_unreference_framebuffer(&fb);
 

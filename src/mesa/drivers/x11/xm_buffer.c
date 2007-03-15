@@ -362,16 +362,13 @@ xmesa_delete_framebuffer(struct gl_framebuffer *fb)
 {
    XMesaBuffer b = XMESA_BUFFER(fb);
 
-#ifdef XFree86Server
-   int client = 0;
-   if (b->frontxrb->drawable)
-       client = CLIENT_ID(b->frontxrb->drawable->id);
-#endif
-
    if (b->num_alloced > 0) {
       /* If no other buffer uses this X colormap then free the colors. */
       if (!xmesa_find_buffer(b->display, b->cmap, b)) {
 #ifdef XFree86Server
+         int client = 0;
+         if (b->frontxrb->drawable)
+            client = CLIENT_ID(b->frontxrb->drawable->id);
          (void)FreeColors(b->cmap, client,
                           b->num_alloced, b->alloced_colors, 0);
 #else
