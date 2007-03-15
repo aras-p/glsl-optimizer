@@ -49,6 +49,7 @@
 #include "r300_context.h"
 #include "r300_fragprog.h"
 #include "r300_reg.h"
+#include "r300_state.h"
 
 /*
  * Usefull macros and values
@@ -1787,6 +1788,94 @@ static GLboolean parse_program(struct r300_fragment_program *rp)
 	return GL_TRUE;
 }
 
+static void insert_wpos(struct gl_program *prog)
+{
+	GLint tokens[6] = { STATE_INTERNAL, STATE_R300_WINDOW_DIMENSION, 0, 0, 0, 0 };
+	struct prog_instruction *fpi;
+	GLuint window_index;
+	int i = 0;
+	GLuint tempregi = prog->NumTemporaries;
+	/* should do something else if no temps left... */
+	prog->NumTemporaries++;
+
+	
+	fpi = malloc((prog->NumInstructions + 3) * sizeof(struct prog_instruction));
+	/* all including END */
+	memcpy(&fpi[3], prog->Instructions, prog->NumInstructions * sizeof(struct prog_instruction));
+	
+	memset(fpi, 0, 3 * sizeof(struct prog_instruction));
+
+	/* perspective divide */
+	fpi[i].Opcode = OPCODE_RCP;
+
+	fpi[i].DstReg.File = PROGRAM_TEMPORARY;
+	fpi[i].DstReg.Index = tempregi;
+	fpi[i].DstReg.WriteMask = WRITEMASK_W;
+	fpi[i].DstReg.CondMask = COND_TR;
+
+	fpi[i].SrcReg[0].File = PROGRAM_INPUT;
+	fpi[i].SrcReg[0].Index = FRAG_ATTRIB_WPOS;
+	fpi[i].SrcReg[0].Swizzle = MAKE_SWIZZLE4(SWIZZLE_W, SWIZZLE_W, SWIZZLE_W, SWIZZLE_W);
+	i++;
+
+	fpi[i].Opcode = OPCODE_MUL;
+
+	fpi[i].DstReg.File = PROGRAM_TEMPORARY;
+	fpi[i].DstReg.Index = tempregi;
+	fpi[i].DstReg.WriteMask = WRITEMASK_XYZ;
+	fpi[i].DstReg.CondMask = COND_TR;
+
+	fpi[i].SrcReg[0].File = PROGRAM_INPUT;
+	fpi[i].SrcReg[0].Index = FRAG_ATTRIB_WPOS;
+	fpi[i].SrcReg[0].Swizzle = MAKE_SWIZZLE4(SWIZZLE_X, SWIZZLE_Y, SWIZZLE_Z, SWIZZLE_W);
+
+	fpi[i].SrcReg[1].File = PROGRAM_TEMPORARY;
+	fpi[i].SrcReg[1].Index = tempregi;
+	fpi[i].SrcReg[1].Swizzle = MAKE_SWIZZLE4(SWIZZLE_W, SWIZZLE_W, SWIZZLE_W, SWIZZLE_W);
+	i++;
+
+	/* viewport transformation */
+	window_index = _mesa_add_state_reference(prog->Parameters, tokens);
+
+	fpi[i].Opcode = OPCODE_MAD;
+
+	fpi[i].DstReg.File = PROGRAM_TEMPORARY;
+	fpi[i].DstReg.Index = tempregi;
+	fpi[i].DstReg.WriteMask = WRITEMASK_XYZ;
+	fpi[i].DstReg.CondMask = COND_TR;
+
+	fpi[i].SrcReg[0].File = PROGRAM_TEMPORARY;
+	fpi[i].SrcReg[0].Index = tempregi;
+	fpi[i].SrcReg[0].Swizzle = MAKE_SWIZZLE4(SWIZZLE_X, SWIZZLE_Y, SWIZZLE_Z, SWIZZLE_ZERO);
+
+	fpi[i].SrcReg[1].File = PROGRAM_STATE_VAR;
+	fpi[i].SrcReg[1].Index = window_index;
+	fpi[i].SrcReg[1].Swizzle = MAKE_SWIZZLE4(SWIZZLE_X, SWIZZLE_Y, SWIZZLE_Z, SWIZZLE_ZERO);
+
+	fpi[i].SrcReg[2].File = PROGRAM_STATE_VAR;
+	fpi[i].SrcReg[2].Index = window_index;
+	fpi[i].SrcReg[2].Swizzle = MAKE_SWIZZLE4(SWIZZLE_X, SWIZZLE_Y, SWIZZLE_Z, SWIZZLE_ZERO);
+	i++;
+
+	free(prog->Instructions);
+
+	prog->Instructions = fpi;
+
+	prog->NumInstructions += i;
+	fpi = &prog->Instructions[prog->NumInstructions-1];
+
+	assert(fpi->Opcode == OPCODE_END);
+	
+	for(fpi = &prog->Instructions[3]; fpi->Opcode != OPCODE_END; fpi++){
+		for(i=0; i<3; i++)
+		    if( fpi->SrcReg[i].File == PROGRAM_INPUT &&
+			fpi->SrcReg[i].Index == FRAG_ATTRIB_WPOS ){
+			    fpi->SrcReg[i].File = PROGRAM_TEMPORARY;
+			    fpi->SrcReg[i].Index = tempregi;
+    		    }
+	}
+}
+
 /* - Init structures
  * - Determine what hwregs each input corresponds to
  */
@@ -1844,6 +1933,7 @@ static void init_program(r300ContextPtr r300, struct r300_fragment_program *rp)
 	if (InputsRead & FRAG_BIT_WPOS) {
 		cs->inputs[FRAG_ATTRIB_WPOS].refcount = 0;
 		cs->inputs[FRAG_ATTRIB_WPOS].reg = get_hw_temp(rp);
+		insert_wpos(&mp->Base);
 	}
 	InputsRead &= ~FRAG_BIT_WPOS;
 
@@ -1956,6 +2046,7 @@ void r300_translate_fragment_shader(r300ContextPtr r300, struct r300_fragment_pr
 	
 		rp->translated = GL_TRUE;
 		if (0) dump_program(rp);
+		r300UpdateStateParameters(rp->ctx, _NEW_PROGRAM);
 	}
 
 	update_params(rp);

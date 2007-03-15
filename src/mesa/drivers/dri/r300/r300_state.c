@@ -1066,8 +1066,8 @@ static void r300FetchStateParameter(GLcontext *ctx, const enum state_index state
     	switch(state[1])
 	{
 	case STATE_R300_WINDOW_DIMENSION:
-	    value[0] = r300->radeon.dri.drawable->w;	/* width */
-    	    value[1] = r300->radeon.dri.drawable->h;	/* height */
+	    value[0] = r300->radeon.dri.drawable->w*0.5f;/* width*0.5 */
+    	    value[1] = r300->radeon.dri.drawable->h*0.5f;/* height*0.5 */
 	    value[2] = 0.5F; 				/* for moving range [-1 1] -> [0 1] */
     	    value[3] = 1.0F; 				/* not used */
 	    break;
@@ -1081,20 +1081,20 @@ static void r300FetchStateParameter(GLcontext *ctx, const enum state_index state
  * Update R300's own internal state parameters.
  * For now just STATE_R300_WINDOW_DIMENSION
  */
-static void r300UpdateStateParameters(GLcontext * ctx, GLuint new_state)
+void r300UpdateStateParameters(GLcontext * ctx, GLuint new_state)
 {
-	struct r300_vertex_program_cont *vpc;
+	struct r300_fragment_program *fp;
 	struct gl_program_parameter_list *paramList;
 	GLuint i;
 
 	if(!(new_state & (_NEW_BUFFERS|_NEW_PROGRAM)))
 	    return;
 
-	vpc = (struct r300_vertex_program_cont *)ctx->VertexProgram._Current;
-	if (!vpc)
+	fp = (struct r300_fragment_program *)ctx->FragmentProgram._Current;
+	if (!fp)
 	    return;
 
-	paramList = vpc->mesa_program.Base.Parameters;
+	paramList = fp->mesa_program.Base.Parameters;
 
 	if (!paramList)
 	    return;

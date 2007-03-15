@@ -962,22 +962,19 @@ static void insert_wpos(struct r300_vertex_program *vp,
 		       struct gl_program *prog,
 		       GLuint temp_index)
 {
-
-	GLint tokens[6] = { STATE_INTERNAL, STATE_R300_WINDOW_DIMENSION, 0, 0, 0, 0 };
 	struct prog_instruction *vpi;
 	struct prog_instruction *vpi_insert;
-	GLuint window_index;
 	int i = 0;
 	
-	vpi = malloc((prog->NumInstructions + 5) * sizeof(struct prog_instruction));
+	vpi = malloc((prog->NumInstructions + 2) * sizeof(struct prog_instruction));
 	/* all but END */
 	memcpy(vpi, prog->Instructions, (prog->NumInstructions - 1) * sizeof(struct prog_instruction));
 	/* END */
-	memcpy(&vpi[prog->NumInstructions + 4], &prog->Instructions[prog->NumInstructions - 1],
+	memcpy(&vpi[prog->NumInstructions + 1], &prog->Instructions[prog->NumInstructions - 1],
 		sizeof(struct prog_instruction));
 	
 	vpi_insert = &vpi[prog->NumInstructions - 1];
-	memset(vpi_insert, 0, 5 * sizeof(struct prog_instruction));
+	memset(vpi_insert, 0, 2 * sizeof(struct prog_instruction));
 
 	vpi_insert[i].Opcode = OPCODE_MOV;
 
@@ -991,59 +988,7 @@ static void insert_wpos(struct r300_vertex_program *vp,
 	vpi_insert[i].SrcReg[0].Swizzle = MAKE_SWIZZLE4(SWIZZLE_X, SWIZZLE_Y, SWIZZLE_Z, SWIZZLE_W);
 	i++;
 
-	/* perspective divide */
-	vpi_insert[i].Opcode = OPCODE_RCP;
-
-	vpi_insert[i].DstReg.File = PROGRAM_TEMPORARY;
-	vpi_insert[i].DstReg.Index = temp_index;
-	vpi_insert[i].DstReg.WriteMask = WRITEMASK_W;
-	vpi_insert[i].DstReg.CondMask = COND_TR;
-
-	vpi_insert[i].SrcReg[0].File = PROGRAM_TEMPORARY;
-	vpi_insert[i].SrcReg[0].Index = temp_index;
-	vpi_insert[i].SrcReg[0].Swizzle = MAKE_SWIZZLE4(SWIZZLE_W, SWIZZLE_ZERO, SWIZZLE_ZERO, SWIZZLE_ZERO);
-	i++;
-
-	vpi_insert[i].Opcode = OPCODE_MUL;
-
-	vpi_insert[i].DstReg.File = PROGRAM_TEMPORARY;
-	vpi_insert[i].DstReg.Index = temp_index;
-	vpi_insert[i].DstReg.WriteMask = WRITEMASK_XYZ;
-	vpi_insert[i].DstReg.CondMask = COND_TR;
-
-	vpi_insert[i].SrcReg[0].File = PROGRAM_TEMPORARY;
-	vpi_insert[i].SrcReg[0].Index = temp_index;
-	vpi_insert[i].SrcReg[0].Swizzle = MAKE_SWIZZLE4(SWIZZLE_X, SWIZZLE_Y, SWIZZLE_Z, SWIZZLE_ZERO);
-
-	vpi_insert[i].SrcReg[1].File = PROGRAM_TEMPORARY;
-	vpi_insert[i].SrcReg[1].Index = temp_index;
-	vpi_insert[i].SrcReg[1].Swizzle = MAKE_SWIZZLE4(SWIZZLE_W, SWIZZLE_W, SWIZZLE_W, SWIZZLE_ZERO);
-	i++;
-
-	/* viewport transformation */
-	window_index = _mesa_add_state_reference(prog->Parameters, tokens);
-
-	vpi_insert[i].Opcode = OPCODE_MAD;
-
-	vpi_insert[i].DstReg.File = PROGRAM_TEMPORARY;
-	vpi_insert[i].DstReg.Index = temp_index;
-	vpi_insert[i].DstReg.WriteMask = WRITEMASK_XYZ;
-	vpi_insert[i].DstReg.CondMask = COND_TR;
-
-	vpi_insert[i].SrcReg[0].File = PROGRAM_TEMPORARY;
-	vpi_insert[i].SrcReg[0].Index = temp_index;
-	vpi_insert[i].SrcReg[0].Swizzle = MAKE_SWIZZLE4(SWIZZLE_X, SWIZZLE_Y, SWIZZLE_Z, SWIZZLE_ZERO);
-
-	vpi_insert[i].SrcReg[1].File = PROGRAM_STATE_VAR;
-	vpi_insert[i].SrcReg[1].Index = window_index;
-	vpi_insert[i].SrcReg[1].Swizzle = MAKE_SWIZZLE4(SWIZZLE_Z, SWIZZLE_Z, SWIZZLE_Z, SWIZZLE_ZERO);
-
-	vpi_insert[i].SrcReg[2].File = PROGRAM_STATE_VAR;
-	vpi_insert[i].SrcReg[2].Index = window_index;
-	vpi_insert[i].SrcReg[2].Swizzle = MAKE_SWIZZLE4(SWIZZLE_Z, SWIZZLE_Z, SWIZZLE_Z, SWIZZLE_ZERO);
-	i++;
-
-	vpi_insert[i].Opcode = OPCODE_MUL;
+	vpi_insert[i].Opcode = OPCODE_MOV;
 
 	vpi_insert[i].DstReg.File = PROGRAM_OUTPUT;
 	vpi_insert[i].DstReg.Index = VERT_RESULT_TEX0+vp->wpos_idx;
@@ -1053,10 +998,6 @@ static void insert_wpos(struct r300_vertex_program *vp,
 	vpi_insert[i].SrcReg[0].File = PROGRAM_TEMPORARY;
 	vpi_insert[i].SrcReg[0].Index = temp_index;
 	vpi_insert[i].SrcReg[0].Swizzle = MAKE_SWIZZLE4(SWIZZLE_X, SWIZZLE_Y, SWIZZLE_Z, SWIZZLE_W);
-
-	vpi_insert[i].SrcReg[1].File = PROGRAM_STATE_VAR;
-	vpi_insert[i].SrcReg[1].Index = window_index;
-	vpi_insert[i].SrcReg[1].Swizzle = MAKE_SWIZZLE4(SWIZZLE_X, SWIZZLE_Y, SWIZZLE_ONE, SWIZZLE_ONE);
 	i++;
 
 	free(prog->Instructions);
