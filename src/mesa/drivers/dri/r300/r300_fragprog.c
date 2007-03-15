@@ -1815,7 +1815,7 @@ static void insert_wpos(struct gl_program *prog)
 
 	fpi[i].SrcReg[0].File = PROGRAM_INPUT;
 	fpi[i].SrcReg[0].Index = FRAG_ATTRIB_WPOS;
-	fpi[i].SrcReg[0].Swizzle = MAKE_SWIZZLE4(SWIZZLE_W, SWIZZLE_W, SWIZZLE_W, SWIZZLE_W);
+	fpi[i].SrcReg[0].Swizzle = SWIZZLE_WWWW;
 	i++;
 
 	fpi[i].Opcode = OPCODE_MUL;
@@ -1827,11 +1827,11 @@ static void insert_wpos(struct gl_program *prog)
 
 	fpi[i].SrcReg[0].File = PROGRAM_INPUT;
 	fpi[i].SrcReg[0].Index = FRAG_ATTRIB_WPOS;
-	fpi[i].SrcReg[0].Swizzle = MAKE_SWIZZLE4(SWIZZLE_X, SWIZZLE_Y, SWIZZLE_Z, SWIZZLE_W);
+	fpi[i].SrcReg[0].Swizzle = SWIZZLE_XYZW;
 
 	fpi[i].SrcReg[1].File = PROGRAM_TEMPORARY;
 	fpi[i].SrcReg[1].Index = tempregi;
-	fpi[i].SrcReg[1].Swizzle = MAKE_SWIZZLE4(SWIZZLE_W, SWIZZLE_W, SWIZZLE_W, SWIZZLE_W);
+	fpi[i].SrcReg[1].Swizzle = SWIZZLE_WWWW;
 	i++;
 
 	/* viewport transformation */

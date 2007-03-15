@@ -908,11 +908,11 @@ static void position_invariant(struct gl_program *prog)
 
 		vpi[i].SrcReg[0].File = PROGRAM_STATE_VAR;
 		vpi[i].SrcReg[0].Index = idx;
-		vpi[i].SrcReg[0].Swizzle = MAKE_SWIZZLE4(SWIZZLE_X, SWIZZLE_Y, SWIZZLE_Z, SWIZZLE_W);
+		vpi[i].SrcReg[0].Swizzle = SWIZZLE_XYZW;
 
 		vpi[i].SrcReg[1].File = PROGRAM_INPUT;
 		vpi[i].SrcReg[1].Index = VERT_ATTRIB_POS;
-		vpi[i].SrcReg[1].Swizzle = MAKE_SWIZZLE4(SWIZZLE_X, SWIZZLE_Y, SWIZZLE_Z, SWIZZLE_W);
+		vpi[i].SrcReg[1].Swizzle = SWIZZLE_XYZW;
 #else
 		if (i == 0)
 			vpi[i].Opcode = OPCODE_MUL;
@@ -932,7 +932,7 @@ static void position_invariant(struct gl_program *prog)
 
 		vpi[i].SrcReg[0].File = PROGRAM_STATE_VAR;
 		vpi[i].SrcReg[0].Index = idx;
-		vpi[i].SrcReg[0].Swizzle = MAKE_SWIZZLE4(SWIZZLE_X, SWIZZLE_Y, SWIZZLE_Z, SWIZZLE_W);
+		vpi[i].SrcReg[0].Swizzle = SWIZZLE_XYZW;
 
 		vpi[i].SrcReg[1].File = PROGRAM_INPUT;
 		vpi[i].SrcReg[1].Index = VERT_ATTRIB_POS;
@@ -941,7 +941,7 @@ static void position_invariant(struct gl_program *prog)
 		if (i > 0) {
 			vpi[i].SrcReg[2].File = PROGRAM_TEMPORARY;
 			vpi[i].SrcReg[2].Index = 0;
-			vpi[i].SrcReg[2].Swizzle = MAKE_SWIZZLE4(SWIZZLE_X, SWIZZLE_Y, SWIZZLE_Z, SWIZZLE_W);
+			vpi[i].SrcReg[2].Swizzle = SWIZZLE_XYZW;
 		}
 #endif					
 	}
@@ -985,7 +985,7 @@ static void insert_wpos(struct r300_vertex_program *vp,
 
 	vpi_insert[i].SrcReg[0].File = PROGRAM_TEMPORARY;
 	vpi_insert[i].SrcReg[0].Index = temp_index;
-	vpi_insert[i].SrcReg[0].Swizzle = MAKE_SWIZZLE4(SWIZZLE_X, SWIZZLE_Y, SWIZZLE_Z, SWIZZLE_W);
+	vpi_insert[i].SrcReg[0].Swizzle = SWIZZLE_XYZW;
 	i++;
 
 	vpi_insert[i].Opcode = OPCODE_MOV;
@@ -997,7 +997,7 @@ static void insert_wpos(struct r300_vertex_program *vp,
 
 	vpi_insert[i].SrcReg[0].File = PROGRAM_TEMPORARY;
 	vpi_insert[i].SrcReg[0].Index = temp_index;
-	vpi_insert[i].SrcReg[0].Swizzle = MAKE_SWIZZLE4(SWIZZLE_X, SWIZZLE_Y, SWIZZLE_Z, SWIZZLE_W);
+	vpi_insert[i].SrcReg[0].Swizzle = SWIZZLE_XYZW;
 	i++;
 
 	free(prog->Instructions);
