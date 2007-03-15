@@ -110,15 +110,17 @@ _mesa_CreateProgramObjectARB(void)
 void GLAPIENTRY
 _mesa_DeleteObjectARB(GLhandleARB obj)
 {
-   GET_CURRENT_CONTEXT(ctx);
-   if (ctx->Driver.IsProgram(ctx, obj)) {
-      ctx->Driver.DeleteProgram2(ctx, obj);
-   }
-   else if (ctx->Driver.IsShader(ctx, obj)) {
-      ctx->Driver.DeleteShader(ctx, obj);
-   }
-   else {
-      /* error? */
+   if (obj) {
+      GET_CURRENT_CONTEXT(ctx);
+      if (ctx->Driver.IsProgram(ctx, obj)) {
+         ctx->Driver.DeleteProgram2(ctx, obj);
+      }
+      else if (ctx->Driver.IsShader(ctx, obj)) {
+         ctx->Driver.DeleteShader(ctx, obj);
+      }
+      else {
+         /* error? */
+      }
    }
 }
 
@@ -126,16 +128,20 @@ _mesa_DeleteObjectARB(GLhandleARB obj)
 void GLAPIENTRY
 _mesa_DeleteProgram(GLuint name)
 {
-   GET_CURRENT_CONTEXT(ctx);
-   ctx->Driver.DeleteProgram2(ctx, name);
+   if (name) {
+      GET_CURRENT_CONTEXT(ctx);
+      ctx->Driver.DeleteProgram2(ctx, name);
+   }
 }
 
 
 void GLAPIENTRY
 _mesa_DeleteShader(GLuint name)
 {
-   GET_CURRENT_CONTEXT(ctx);
-   ctx->Driver.DeleteShader(ctx, name);
+   if (name) {
+      GET_CURRENT_CONTEXT(ctx);
+      ctx->Driver.DeleteShader(ctx, name);
+   }
 }
 
 
