@@ -946,7 +946,7 @@ static void position_invariant(struct gl_program *prog)
 #endif					
 	}
 
-	_mesa_memcpy(&vpi[i], prog->Instructions, prog->NumInstructions * sizeof(struct prog_instruction));
+	_mesa_copy_instructions (&vpi[i], prog->Instructions, prog->NumInstructions);
 
 	free(prog->Instructions);
 
@@ -969,10 +969,11 @@ static void insert_wpos(struct r300_vertex_program *vp,
 	vpi = _mesa_alloc_instructions (prog->NumInstructions + 2);
 	_mesa_init_instructions (vpi, prog->NumInstructions + 2);
 	/* all but END */
-	_mesa_memcpy(vpi, prog->Instructions, (prog->NumInstructions - 1) * sizeof(struct prog_instruction));
+	_mesa_copy_instructions (vpi, prog->Instructions, prog->NumInstructions - 1);
 	/* END */
-	_mesa_memcpy(&vpi[prog->NumInstructions + 1], &prog->Instructions[prog->NumInstructions - 1],
-		sizeof(struct prog_instruction));
+	_mesa_copy_instructions (&vpi[prog->NumInstructions + 1],
+				 &prog->Instructions[prog->NumInstructions - 1],
+				 1);
 	vpi_insert = &vpi[prog->NumInstructions - 1];
 
 	vpi_insert[i].Opcode = OPCODE_MOV;

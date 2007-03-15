@@ -1853,7 +1853,7 @@ static void insert_wpos(struct gl_program *prog)
 	fpi[i].SrcReg[2].Swizzle = MAKE_SWIZZLE4(SWIZZLE_X, SWIZZLE_Y, SWIZZLE_Z, SWIZZLE_ZERO);
 	i++;
 
-	_mesa_memcpy(&fpi[i], prog->Instructions, prog->NumInstructions * sizeof(struct prog_instruction));
+	_mesa_copy_instructions (&fpi[i], prog->Instructions, prog->NumInstructions);
 
 	free(prog->Instructions);
 
