@@ -1367,7 +1367,7 @@ update_image_transfer_state(GLcontext *ctx)
    if (ctx->Pixel.MapColorFlag)
       mask |= IMAGE_MAP_COLOR_BIT;
 
-   if (ctx->Pixel.ColorTableEnabled)
+   if (ctx->Pixel.ColorTableEnabled[COLORTABLE_PRECONVOLUTION])
       mask |= IMAGE_COLOR_TABLE_BIT;
 
    if (ctx->Pixel.Convolution1DEnabled ||
@@ -1386,7 +1386,7 @@ update_image_transfer_state(GLcontext *ctx)
       }
    }
 
-   if (ctx->Pixel.PostConvolutionColorTableEnabled)
+   if (ctx->Pixel.ColorTableEnabled[COLORTABLE_POSTCONVOLUTION])
       mask |= IMAGE_POST_CONVOLUTION_COLOR_TABLE_BIT;
 
    if (ctx->ColorMatrixStack.Top->type != MATRIX_IDENTITY ||
@@ -1400,7 +1400,7 @@ update_image_transfer_state(GLcontext *ctx)
        ctx->Pixel.PostColorMatrixBias[3]  != 0.0F)
       mask |= IMAGE_COLOR_MATRIX_BIT;
 
-   if (ctx->Pixel.PostColorMatrixColorTableEnabled)
+   if (ctx->Pixel.ColorTableEnabled[COLORTABLE_POSTCOLORMATRIX])
       mask |= IMAGE_POST_COLOR_MATRIX_COLOR_TABLE_BIT;
 
    if (ctx->Pixel.HistogramEnabled)
@@ -1477,15 +1477,11 @@ _mesa_init_pixel( GLcontext *ctx )
    ctx->Pixel.MinMaxEnabled = GL_FALSE;
    ASSIGN_4V(ctx->Pixel.PostColorMatrixScale, 1.0, 1.0, 1.0, 1.0);
    ASSIGN_4V(ctx->Pixel.PostColorMatrixBias, 0.0, 0.0, 0.0, 0.0);
-   ASSIGN_4V(ctx->Pixel.ColorTableScale, 1.0, 1.0, 1.0, 1.0);
-   ASSIGN_4V(ctx->Pixel.ColorTableBias, 0.0, 0.0, 0.0, 0.0);
-   ASSIGN_4V(ctx->Pixel.PCCTscale, 1.0, 1.0, 1.0, 1.0);
-   ASSIGN_4V(ctx->Pixel.PCCTbias, 0.0, 0.0, 0.0, 0.0);
-   ASSIGN_4V(ctx->Pixel.PCMCTscale, 1.0, 1.0, 1.0, 1.0);
-   ASSIGN_4V(ctx->Pixel.PCMCTbias, 0.0, 0.0, 0.0, 0.0);
-   ctx->Pixel.ColorTableEnabled = GL_FALSE;
-   ctx->Pixel.PostConvolutionColorTableEnabled = GL_FALSE;
-   ctx->Pixel.PostColorMatrixColorTableEnabled = GL_FALSE;
+   for (i = 0; i < COLORTABLE_MAX; i++) {
+      ASSIGN_4V(ctx->Pixel.ColorTableScale[i], 1.0, 1.0, 1.0, 1.0);
+      ASSIGN_4V(ctx->Pixel.ColorTableBias[i], 0.0, 0.0, 0.0, 0.0);
+      ctx->Pixel.ColorTableEnabled[i] = GL_FALSE;
+   }
    ctx->Pixel.Convolution1DEnabled = GL_FALSE;
    ctx->Pixel.Convolution2DEnabled = GL_FALSE;
    ctx->Pixel.Separable2DEnabled = GL_FALSE;

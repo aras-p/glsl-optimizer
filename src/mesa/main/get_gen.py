@@ -624,11 +624,11 @@ StateVars = [
 
 	# GL_SGI_color_table / GL_ARB_imaging
 	( "GL_COLOR_TABLE_SGI", GLboolean,
-	  ["ctx->Pixel.ColorTableEnabled"], "", ["SGI_color_table"] ),
+	  ["ctx->Pixel.ColorTableEnabled[COLORTABLE_PRECONVOLUTION]"], "", ["SGI_color_table"] ),
 	( "GL_POST_CONVOLUTION_COLOR_TABLE_SGI", GLboolean,
-	  ["ctx->Pixel.PostConvolutionColorTableEnabled"], "", ["SGI_color_table"] ),
+	  ["ctx->Pixel.ColorTableEnabled[COLORTABLE_POSTCONVOLUTION]"], "", ["SGI_color_table"] ),
 	( "GL_POST_COLOR_MATRIX_COLOR_TABLE_SGI", GLboolean,
-	  ["ctx->Pixel.PostColorMatrixColorTableEnabled"], "", ["SGI_color_table"] ),
+	  ["ctx->Pixel.ColorTableEnabled[COLORTABLE_POSTCOLORMATRIX]"], "", ["SGI_color_table"] ),
 
 	# GL_SGI_texture_color_table
 	( "GL_TEXTURE_COLOR_TABLE_SGI", GLboolean,

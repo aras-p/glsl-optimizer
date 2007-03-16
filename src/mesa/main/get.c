@@ -1283,15 +1283,15 @@ _mesa_GetBooleanv( GLenum pname, GLboolean *params )
          break;
       case GL_COLOR_TABLE_SGI:
          CHECK_EXT1(SGI_color_table, "GetBooleanv");
-         params[0] = ctx->Pixel.ColorTableEnabled;
+         params[0] = ctx->Pixel.ColorTableEnabled[COLORTABLE_PRECONVOLUTION];
          break;
       case GL_POST_CONVOLUTION_COLOR_TABLE_SGI:
          CHECK_EXT1(SGI_color_table, "GetBooleanv");
-         params[0] = ctx->Pixel.PostConvolutionColorTableEnabled;
+         params[0] = ctx->Pixel.ColorTableEnabled[COLORTABLE_POSTCONVOLUTION];
          break;
       case GL_POST_COLOR_MATRIX_COLOR_TABLE_SGI:
          CHECK_EXT1(SGI_color_table, "GetBooleanv");
-         params[0] = ctx->Pixel.PostColorMatrixColorTableEnabled;
+         params[0] = ctx->Pixel.ColorTableEnabled[COLORTABLE_POSTCOLORMATRIX];
          break;
       case GL_TEXTURE_COLOR_TABLE_SGI:
          CHECK_EXT1(SGI_texture_color_table, "GetBooleanv");
@@ -3110,15 +3110,15 @@ _mesa_GetFloatv( GLenum pname, GLfloat *params )
          break;
       case GL_COLOR_TABLE_SGI:
          CHECK_EXT1(SGI_color_table, "GetFloatv");
-         params[0] = BOOLEAN_TO_FLOAT(ctx->Pixel.ColorTableEnabled);
+         params[0] = BOOLEAN_TO_FLOAT(ctx->Pixel.ColorTableEnabled[COLORTABLE_PRECONVOLUTION]);
          break;
       case GL_POST_CONVOLUTION_COLOR_TABLE_SGI:
          CHECK_EXT1(SGI_color_table, "GetFloatv");
-         params[0] = BOOLEAN_TO_FLOAT(ctx->Pixel.PostConvolutionColorTableEnabled);
+         params[0] = BOOLEAN_TO_FLOAT(ctx->Pixel.ColorTableEnabled[COLORTABLE_POSTCONVOLUTION]);
          break;
       case GL_POST_COLOR_MATRIX_COLOR_TABLE_SGI:
          CHECK_EXT1(SGI_color_table, "GetFloatv");
-         params[0] = BOOLEAN_TO_FLOAT(ctx->Pixel.PostColorMatrixColorTableEnabled);
+         params[0] = BOOLEAN_TO_FLOAT(ctx->Pixel.ColorTableEnabled[COLORTABLE_POSTCOLORMATRIX]);
          break;
       case GL_TEXTURE_COLOR_TABLE_SGI:
          CHECK_EXT1(SGI_texture_color_table, "GetFloatv");
@@ -4937,15 +4937,15 @@ _mesa_GetIntegerv( GLenum pname, GLint *params )
          break;
       case GL_COLOR_TABLE_SGI:
          CHECK_EXT1(SGI_color_table, "GetIntegerv");
-         params[0] = BOOLEAN_TO_INT(ctx->Pixel.ColorTableEnabled);
+         params[0] = BOOLEAN_TO_INT(ctx->Pixel.ColorTableEnabled[COLORTABLE_PRECONVOLUTION]);
          break;
       case GL_POST_CONVOLUTION_COLOR_TABLE_SGI:
          CHECK_EXT1(SGI_color_table, "GetIntegerv");
-         params[0] = BOOLEAN_TO_INT(ctx->Pixel.PostConvolutionColorTableEnabled);
+         params[0] = BOOLEAN_TO_INT(ctx->Pixel.ColorTableEnabled[COLORTABLE_POSTCONVOLUTION]);
          break;
       case GL_POST_COLOR_MATRIX_COLOR_TABLE_SGI:
          CHECK_EXT1(SGI_color_table, "GetIntegerv");
-         params[0] = BOOLEAN_TO_INT(ctx->Pixel.PostColorMatrixColorTableEnabled);
+         params[0] = BOOLEAN_TO_INT(ctx->Pixel.ColorTableEnabled[COLORTABLE_POSTCOLORMATRIX]);
          break;
       case GL_TEXTURE_COLOR_TABLE_SGI:
          CHECK_EXT1(SGI_texture_color_table, "GetIntegerv");

@@ -663,24 +663,24 @@ _mesa_set_enable(GLcontext *ctx, GLenum cap, GLboolean state)
       /* GL_SGI_color_table */
       case GL_COLOR_TABLE_SGI:
          CHECK_EXTENSION(SGI_color_table, cap);
-         if (ctx->Pixel.ColorTableEnabled == state)
+         if (ctx->Pixel.ColorTableEnabled[COLORTABLE_PRECONVOLUTION] == state)
             return;
          FLUSH_VERTICES(ctx, _NEW_PIXEL);
-         ctx->Pixel.ColorTableEnabled = state;
+         ctx->Pixel.ColorTableEnabled[COLORTABLE_PRECONVOLUTION] = state;
          break;
       case GL_POST_CONVOLUTION_COLOR_TABLE_SGI:
          CHECK_EXTENSION(SGI_color_table, cap);
-         if (ctx->Pixel.PostConvolutionColorTableEnabled == state)
+         if (ctx->Pixel.ColorTableEnabled[COLORTABLE_POSTCONVOLUTION] == state)
             return;
          FLUSH_VERTICES(ctx, _NEW_PIXEL);
-         ctx->Pixel.PostConvolutionColorTableEnabled = state;
+         ctx->Pixel.ColorTableEnabled[COLORTABLE_POSTCONVOLUTION] = state;
          break;
       case GL_POST_COLOR_MATRIX_COLOR_TABLE_SGI:
          CHECK_EXTENSION(SGI_color_table, cap);
-         if (ctx->Pixel.PostColorMatrixColorTableEnabled == state)
+         if (ctx->Pixel.ColorTableEnabled[COLORTABLE_POSTCOLORMATRIX] == state)
             return;
          FLUSH_VERTICES(ctx, _NEW_PIXEL);
-         ctx->Pixel.PostColorMatrixColorTableEnabled = state;
+         ctx->Pixel.ColorTableEnabled[COLORTABLE_POSTCOLORMATRIX] = state;
          break;
       case GL_TEXTURE_COLOR_TABLE_SGI:
          CHECK_EXTENSION(SGI_texture_color_table, cap);
@@ -1192,13 +1192,13 @@ _mesa_IsEnabled( GLenum cap )
       /* GL_SGI_color_table */
       case GL_COLOR_TABLE_SGI:
          CHECK_EXTENSION(SGI_color_table);
-         return ctx->Pixel.ColorTableEnabled;
+         return ctx->Pixel.ColorTableEnabled[COLORTABLE_PRECONVOLUTION];
       case GL_POST_CONVOLUTION_COLOR_TABLE_SGI:
          CHECK_EXTENSION(SGI_color_table);
-         return ctx->Pixel.PostConvolutionColorTableEnabled;
+         return ctx->Pixel.ColorTableEnabled[COLORTABLE_POSTCONVOLUTION];
       case GL_POST_COLOR_MATRIX_COLOR_TABLE_SGI:
          CHECK_EXTENSION(SGI_color_table);
-         return ctx->Pixel.PostColorMatrixColorTableEnabled;
+         return ctx->Pixel.ColorTableEnabled[COLORTABLE_POSTCOLORMATRIX];
 
       /* GL_SGI_texture_color_table */
       case GL_TEXTURE_COLOR_TABLE_SGI:

@@ -383,6 +383,13 @@ enum {
                             BUFFER_BIT_COLOR7)
 
 
+/** The pixel transfer path has three color tables: */
+/*@{*/
+#define COLORTABLE_PRECONVOLUTION  0
+#define COLORTABLE_POSTCONVOLUTION 1
+#define COLORTABLE_POSTCOLORMATRIX 2
+#define COLORTABLE_MAX 3
+/*@}*/
 
 
 /**
@@ -663,9 +670,7 @@ struct gl_enable_attrib
    GLboolean Blend;
    GLbitfield ClipPlanes;
    GLboolean ColorMaterial;
-   GLboolean ColorTable;                /* SGI_color_table */
-   GLboolean PostColorMatrixColorTable; /* SGI_color_table */
-   GLboolean PostConvolutionColorTable; /* SGI_color_table */
+   GLboolean ColorTable[COLORTABLE_MAX];
    GLboolean Convolution1D;
    GLboolean Convolution2D;
    GLboolean Separable2D;
@@ -1016,11 +1021,10 @@ struct gl_pixel_attrib
    GLboolean MapColorFlag;
    GLboolean MapStencilFlag;
 
-   /* Color table lookup (GL_SGI_color_table) */
-   /* Note: actual table is not part of this attrib group */
-   GLfloat ColorTableScale[4];
-   GLfloat ColorTableBias[4];
-   GLboolean ColorTableEnabled;
+   /* There are multiple color table stages: */
+   GLboolean ColorTableEnabled[COLORTABLE_MAX];
+   GLfloat ColorTableScale[COLORTABLE_MAX][4];  /**< RGBA */
+   GLfloat ColorTableBias[COLORTABLE_MAX][4];   /**< RGBA */
 
    /* Convolution (GL_EXT_convolution) */
    GLboolean Convolution1DEnabled;
@@ -1033,22 +1037,10 @@ struct gl_pixel_attrib
    GLfloat PostConvolutionScale[4];  /**< RGBA */
    GLfloat PostConvolutionBias[4];   /**< RGBA */
 
-   /* Post-convolution color table */
-   /* Note: actual table is not part of this attrib group */
-   GLboolean PostConvolutionColorTableEnabled;
-   GLfloat PCCTscale[4];  /** Post Convolution Color Table scale */
-   GLfloat PCCTbias[4];   /** Post Convolution Color Table bias */
-
    /* Color matrix (GL_SGI_color_matrix) */
    /* Note: the color matrix is not part of this attrib group */
    GLfloat PostColorMatrixScale[4];  /**< RGBA */
    GLfloat PostColorMatrixBias[4];   /**< RGBA */
-
-   /* Post color matrix color table */
-   /* Note: actual table is not part of this attrib group */
-   GLboolean PostColorMatrixColorTableEnabled;
-   GLfloat PCMCTscale[4]; /** Post Color Matrix Color Table scale */
-   GLfloat PCMCTbias[4];  /** Post Color Matrix Color Table bias */
 
    /* Histogram & minmax (GL_EXT_histogram) */
    /* Note: histogram and minmax data are not part of this attrib group */
@@ -2934,12 +2926,14 @@ struct __GLcontextRec
    struct gl_feedback   Feedback;  /**< Feedback */
    struct gl_selection  Select;    /**< Selection */
 
-   struct gl_color_table ColorTable;       /**< Pre-convolution */
-   struct gl_color_table ProxyColorTable;  /**< Pre-convolution */
+   struct gl_color_table ColorTable[COLORTABLE_MAX];
+   struct gl_color_table ProxyColorTable[COLORTABLE_MAX];
+#if 0
    struct gl_color_table PostConvolutionColorTable;
    struct gl_color_table ProxyPostConvolutionColorTable;
    struct gl_color_table PostColorMatrixColorTable;
    struct gl_color_table ProxyPostColorMatrixColorTable;
+#endif
 
    struct gl_program_state Program;        /**< for vertex or fragment progs */
    struct gl_vertex_program_state VertexProgram;   /**< GL_ARB/NV_vertex_program */
