@@ -545,9 +545,9 @@ void r300InitCmdBuf(r300ContextPtr r300)
 		size = 64*256;
 
 	if (RADEON_DEBUG & (DEBUG_IOCTL|DEBUG_DMA)) {
-		fprintf(stderr, "sizeof(drm_r300_cmd_header_t)=%u\n",
+		fprintf(stderr, "sizeof(drm_r300_cmd_header_t)=%zd\n",
 			sizeof(drm_r300_cmd_header_t));
-		fprintf(stderr, "sizeof(drm_radeon_cmd_buffer_t)=%u\n",
+		fprintf(stderr, "sizeof(drm_radeon_cmd_buffer_t)=%zd\n",
 			sizeof(drm_radeon_cmd_buffer_t));
 		fprintf(stderr,
 			"Allocating %d bytes command buffer (max state is %d bytes)\n",

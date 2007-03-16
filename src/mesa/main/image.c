@@ -1,8 +1,8 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.5.2
+ * Version:  6.5.3
  *
- * Copyright (C) 1999-2006  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2007  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -1454,9 +1454,6 @@ _mesa_pack_rgba_span_float(GLcontext *ctx, GLuint n, GLfloat rgba[][4],
                default:
                   _mesa_problem(ctx, "bad format in _mesa_pack_rgba_span\n");
             }
-            if (dstPacking->SwapBytes) {
-               _mesa_swap2( (GLushort *) dst, n * comps);
-            }
          }
          break;
       case GL_SHORT:
@@ -1529,9 +1526,6 @@ _mesa_pack_rgba_span_float(GLcontext *ctx, GLuint n, GLfloat rgba[][4],
                   break;
                default:
                   _mesa_problem(ctx, "bad format in _mesa_pack_rgba_span\n");
-            }
-            if (dstPacking->SwapBytes) {
-               _mesa_swap2( (GLushort *) dst, n * comps );
             }
          }
          break;
@@ -1606,9 +1600,6 @@ _mesa_pack_rgba_span_float(GLcontext *ctx, GLuint n, GLfloat rgba[][4],
                default:
                   _mesa_problem(ctx, "bad format in _mesa_pack_rgba_span\n");
             }
-            if (dstPacking->SwapBytes) {
-               _mesa_swap4( (GLuint *) dst, n * comps );
-            }
          }
          break;
       case GL_INT:
@@ -1681,9 +1672,6 @@ _mesa_pack_rgba_span_float(GLcontext *ctx, GLuint n, GLfloat rgba[][4],
                   break;
                default:
                   _mesa_problem(ctx, "bad format in _mesa_pack_rgba_span\n");
-            }
-            if (dstPacking->SwapBytes) {
-               _mesa_swap4( (GLuint *) dst, n * comps );
             }
          }
          break;
@@ -1758,9 +1746,6 @@ _mesa_pack_rgba_span_float(GLcontext *ctx, GLuint n, GLfloat rgba[][4],
                default:
                   _mesa_problem(ctx, "bad format in _mesa_pack_rgba_span\n");
             }
-            if (dstPacking->SwapBytes) {
-               _mesa_swap4( (GLuint *) dst, n * comps );
-            }
          }
          break;
       case GL_HALF_FLOAT_ARB:
@@ -1833,9 +1818,6 @@ _mesa_pack_rgba_span_float(GLcontext *ctx, GLuint n, GLfloat rgba[][4],
                   break;
                default:
                   _mesa_problem(ctx, "bad format in _mesa_pack_rgba_span\n");
-            }
-            if (dstPacking->SwapBytes) {
-               _mesa_swap2( (GLushort *) dst, n * comps );
             }
          }
          break;
@@ -2113,6 +2095,21 @@ _mesa_pack_rgba_span_float(GLcontext *ctx, GLuint n, GLfloat rgba[][4],
          break;
       default:
          _mesa_problem(ctx, "bad type in _mesa_pack_rgba_span_float");
+         return;
+   }
+
+   if (dstPacking->SwapBytes) {
+      GLint swapSize = _mesa_sizeof_packed_type(dstType);
+      if (swapSize == 2) {
+         if (dstPacking->SwapBytes) {
+            _mesa_swap2((GLushort *) dstAddr, n * comps);
+         }
+      }
+      else if (swapSize == 4) {
+         if (dstPacking->SwapBytes) {
+            _mesa_swap4((GLuint *) dstAddr, n * comps);
+         }
+      }
    }
 }
 

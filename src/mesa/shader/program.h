@@ -53,6 +53,13 @@
 
 #define MAKE_SWIZZLE4(a,b,c,d) (((a)<<0) | ((b)<<3) | ((c)<<6) | ((d)<<9))
 #define SWIZZLE_NOOP           MAKE_SWIZZLE4(0,1,2,3)
+
+#define SWIZZLE_XYZW MAKE_SWIZZLE4(SWIZZLE_X, SWIZZLE_Y, SWIZZLE_Z, SWIZZLE_W)
+#define SWIZZLE_XXXX MAKE_SWIZZLE4(SWIZZLE_X, SWIZZLE_X, SWIZZLE_X, SWIZZLE_X)
+#define SWIZZLE_YYYY MAKE_SWIZZLE4(SWIZZLE_Y, SWIZZLE_Y, SWIZZLE_Y, SWIZZLE_Y)
+#define SWIZZLE_ZZZZ MAKE_SWIZZLE4(SWIZZLE_Z, SWIZZLE_Z, SWIZZLE_Z, SWIZZLE_Z)
+#define SWIZZLE_WWWW MAKE_SWIZZLE4(SWIZZLE_W, SWIZZLE_W, SWIZZLE_W, SWIZZLE_W)
+
 #define GET_SWZ(swz, idx)      (((swz) >> ((idx)*3)) & 0x7)
 #define GET_BIT(msk, idx)      (((msk) >> (idx)) & 0x1)
 
@@ -121,6 +128,9 @@ extern struct prog_instruction *
 _mesa_realloc_instructions(struct prog_instruction *oldInst,
                            GLuint numOldInst, GLuint numNewInst);
 
+extern struct prog_instruction *
+_mesa_copy_instructions (struct prog_instruction *dest,
+			 const struct prog_instruction *src, GLuint n);
 
 /**
  * Used for describing GL state referenced from inside ARB vertex and

@@ -61,6 +61,7 @@ do {							\
 	
 extern void r300ResetHwState(r300ContextPtr r300);
 
+extern void r300UpdateStateParameters(GLcontext * ctx, GLuint new_state);
 extern void r300InitState(r300ContextPtr r300);
 extern void r300InitStateFuncs(struct dd_function_table* functions);
 extern void r300UpdateViewportOffset( GLcontext *ctx );
