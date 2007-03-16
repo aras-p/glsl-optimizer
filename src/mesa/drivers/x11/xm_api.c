@@ -2499,6 +2499,8 @@ XMesaResizeBuffers( XMesaBuffer b )
 {
    GET_CURRENT_CONTEXT(ctx);
    XMesaContext xmctx = XMESA_CONTEXT(ctx);
+   if (!xmctx)
+      return;
    xmesa_check_and_update_buffer_size(xmctx, b);
 }
 
