@@ -100,8 +100,7 @@ _mesa_insert_mvp_code(GLcontext *ctx, struct gl_vertex_program *vprog)
    }
 
    /* Append original instructions after new instructions */
-   _mesa_memcpy(newInst + 4, vprog->Base.Instructions,
-                origLen * sizeof(struct prog_instruction));
+   _mesa_copy_instructions (newInst + 4, vprog->Base.Instructions, origLen);
 
    /* free old instructions */
    _mesa_free(vprog->Base.Instructions);
