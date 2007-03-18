@@ -1,4 +1,3 @@
-/* $XFree86: xc/lib/GL/mesa/src/drv/radeon/radeon_span.c,v 1.6 2002/10/30 12:51:56 alanh Exp $ */
 /**************************************************************************
 
 Copyright (C) The Weather Channel, Inc.  2002.  All Rights Reserved.
