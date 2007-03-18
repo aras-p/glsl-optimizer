@@ -2230,15 +2230,16 @@ static void dump_program(struct r300_fragment_program *rp)
 		
 		if (rp->tex.length) {
 			fprintf(stderr, "  TEX:\n");
-			for(i = rp->node[n].tex_offset; i <= rp->node[n].tex_end; ++i)
+			for(i = rp->node[n].tex_offset; i <= rp->node[n].tex_offset+rp->node[n].tex_end; ++i)
 				fprintf(stderr, "    %08x\n", rp->tex.inst[i]);
 		}
 		
-		for(i = rp->node[n].alu_offset; i <= rp->node[n].alu_end; ++i) {
+		for(i = rp->node[n].alu_offset; i <= rp->node[n].alu_offset+rp->node[n].alu_end; ++i) {
 			char srcc[3][10], dstc[20];
 			char srca[3][10], dsta[20];
 			char argc[3][20];
 			char arga[3][20];
+			char flags[5], tmp[10];
 			
 			for(j = 0; j < 3; ++j) {
 				int regc = rp->alu.inst[i].inst1 >> (j*6);
@@ -2248,22 +2249,38 @@ static void dump_program(struct r300_fragment_program *rp)
 				sprintf(srca[j], "%c%i", (rega & 32) ? 'c' : 't', rega & 31);
 			}
 			
-			sprintf(dstc, "t%i.%c%c%c o%i.%c%c%c",
-					(rp->alu.inst[i].inst1 >> R300_FPI1_DSTC_SHIFT) & 31,
-					(rp->alu.inst[i].inst1 & R300_FPI1_DSTC_REG_X) ? 'x' : ' ',
-					(rp->alu.inst[i].inst1 & R300_FPI1_DSTC_REG_Y) ? 'y' : ' ',
-					(rp->alu.inst[i].inst1 & R300_FPI1_DSTC_REG_Z) ? 'z' : ' ',
-					(rp->alu.inst[i].inst1 >> R300_FPI1_DSTC_SHIFT) & 31,
-					(rp->alu.inst[i].inst1 & R300_FPI1_DSTC_OUTPUT_X) ? 'x' : ' ',
-					(rp->alu.inst[i].inst1 & R300_FPI1_DSTC_OUTPUT_Y) ? 'y' : ' ',
-					(rp->alu.inst[i].inst1 & R300_FPI1_DSTC_OUTPUT_Z) ? 'z' : ' ');
+			dstc[0] = 0;
+			sprintf(flags, "%s%s%s",
+					(rp->alu.inst[i].inst1 & R300_FPI1_DSTC_REG_X) ? "x" : "",
+					(rp->alu.inst[i].inst1 & R300_FPI1_DSTC_REG_Y) ? "y" : "",
+					(rp->alu.inst[i].inst1 & R300_FPI1_DSTC_REG_Z) ? "z" : "");
+			if (flags[0] != 0) {
+				sprintf(dstc, "t%i.%s ",
+						(rp->alu.inst[i].inst1 >> R300_FPI1_DSTC_SHIFT) & 31,
+						flags);
+			}
+			sprintf(flags, "%s%s%s",
+					(rp->alu.inst[i].inst1 & R300_FPI1_DSTC_OUTPUT_X) ? "x" : "",
+					(rp->alu.inst[i].inst1 & R300_FPI1_DSTC_OUTPUT_Y) ? "y" : "",
+					(rp->alu.inst[i].inst1 & R300_FPI1_DSTC_OUTPUT_Z) ? "z" : "");
+			if (flags[0] != 0) {
+				sprintf(tmp, "o%i.%s",
+						(rp->alu.inst[i].inst1 >> R300_FPI1_DSTC_SHIFT) & 31,
+						flags);
+				strcat(dstc, tmp);
+			}
 			
-			sprintf(dsta, "t%i.%c o%i.%c %c",
-					(rp->alu.inst[i].inst3 >> R300_FPI3_DSTA_SHIFT) & 31,
-					(rp->alu.inst[i].inst3 & R300_FPI3_DSTA_REG) ? 'w' : ' ',
-					(rp->alu.inst[i].inst3 >> R300_FPI3_DSTA_SHIFT) & 31,
-					(rp->alu.inst[i].inst3 & R300_FPI3_DSTA_OUTPUT) ? 'w' : ' ',
-					(rp->alu.inst[i].inst3 & R300_FPI3_DSTA_DEPTH) ? 'Z' : ' ');
+			dsta[0] = 0;
+			if (rp->alu.inst[i].inst3 & R300_FPI3_DSTA_REG) {
+				sprintf(dsta, "t%i.w ", (rp->alu.inst[i].inst3 >> R300_FPI3_DSTA_SHIFT) & 31);
+			}
+			if (rp->alu.inst[i].inst3 & R300_FPI3_DSTA_OUTPUT) {
+				sprintf(tmp, "o%i.w ", (rp->alu.inst[i].inst3 >> R300_FPI3_DSTA_SHIFT) & 31);
+				strcat(dsta, tmp);
+			}
+			if (rp->alu.inst[i].inst3 & R300_FPI3_DSTA_DEPTH) {
+				strcat(dsta, "Z");
+			}
 			
 			fprintf(stderr, "%3i: xyz: %3s %3s %3s -> %-20s (%08x)\n"
 			                "       w: %3s %3s %3s -> %-20s (%08x)\n",
