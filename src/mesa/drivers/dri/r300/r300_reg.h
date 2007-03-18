@@ -1047,7 +1047,7 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
  * WRT swizzling. If, for example, you want to load an R component into an
  * Alpha operand, this R component is taken from a *color* source, not from
  * an alpha source. The corresponding register doesn't even have to appear in
- * the alpha sources list. (I hope this alll makes sense to you)
+ * the alpha sources list. (I hope this all makes sense to you)
  *
  * Destination selection
  * The destination register index is in FPI1 (color) and FPI3 (alpha)
@@ -1074,6 +1074,7 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #       define R300_FPI1_SRC2C_SHIFT             12
 #       define R300_FPI1_SRC2C_MASK              (31 << 12)
 #       define R300_FPI1_SRC2C_CONST             (1 << 17)
+#       define R300_FPI1_SRC_MASK                0x0003ffff
 #       define R300_FPI1_DSTC_SHIFT              18
 #       define R300_FPI1_DSTC_MASK               (31 << 18)
 #		define R300_FPI1_DSTC_REG_MASK_SHIFT     23
@@ -1095,6 +1096,7 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #       define R300_FPI3_SRC2A_SHIFT             12
 #       define R300_FPI3_SRC2A_MASK              (31 << 12)
 #       define R300_FPI3_SRC2A_CONST             (1 << 17)
+#       define R300_FPI3_SRC_MASK                0x0003ffff
 #       define R300_FPI3_DSTA_SHIFT              18
 #       define R300_FPI3_DSTA_MASK               (31 << 18)
 #       define R300_FPI3_DSTA_REG                (1 << 23)

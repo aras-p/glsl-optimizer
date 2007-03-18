@@ -647,38 +647,84 @@ struct r300_vertex_program_cont {
 #define PFS_NUM_TEMP_REGS	32
 #define PFS_NUM_CONST_REGS	16
 
-/* Tracking data for Mesa registers */
+/* Mapping Mesa registers to R300 temporaries */
 struct reg_acc {
        int reg;        /* Assigned hw temp */
        unsigned int refcount; /* Number of uses by mesa program */
 };
 
-struct r300_pfs_compile_state {
-       int v_pos, s_pos;       /* highest ALU slots used */
-
-       /* Track some information gathered during opcode
-        * construction.
-        * 
-        * NOTE: Data is only set by the code, and isn't used yet.
-        */
-       struct {
-               int vsrc[3];
-               int ssrc[3];
-               int umask;
-       } slot[PFS_MAX_ALU_INST];
-
-       /* Used to map Mesa's inputs/temps onto hardware temps */
-       int temp_in_use;
-       struct reg_acc temps[PFS_NUM_TEMP_REGS];
-       struct reg_acc inputs[32]; /* don't actually need 32... */
-
-       /* Track usage of hardware temps, for register allocation,
-        * indirection detection, etc. */
-       int hwreg_in_use;
-       GLuint used_in_node;
-       GLuint dest_in_node;
+/**
+ * Describe the current lifetime information for an R300 temporary
+ */
+struct reg_lifetime {
+	/* Index of the first slot where this register is free in the sense
+	   that it can be used as a new destination register.
+	   This is -1 if the register has been assigned to a Mesa register
+	   and the last access to the register has not yet been emitted */
+	int free;
+	
+	/* Index of the first slot where this register is currently reserved.
+	   This is used to stop e.g. a scalar operation from being moved
+	   before the allocation time of a register that was first allocated
+	   for a vector operation. */
+	int reserved;
+	
+	/* Index of the first slot in which the register can be used as a
+	   source without losing the value that is written by the last
+	   emitted instruction that writes to the register */
+	int vector_valid;
+	int scalar_valid;
 };
 
+
+/**
+ * Store usage information about an ALU instruction slot during the
+ * compilation of a fragment program.
+ */
+#define SLOT_SRC_VECTOR  (1<<0)
+#define SLOT_SRC_SCALAR  (1<<3)
+#define SLOT_SRC_BOTH    (SLOT_SRC_VECTOR | SLOT_SRC_SCALAR)
+#define SLOT_OP_VECTOR   (1<<16)
+#define SLOT_OP_SCALAR   (1<<17)
+#define SLOT_OP_BOTH     (SLOT_OP_VECTOR | SLOT_OP_SCALAR)
+
+struct r300_pfs_compile_slot {
+	/* Bitmask indicating which parts of the slot are used, using SLOT_ constants 
+	   defined above */
+	unsigned int used;
+
+	/* Selected sources */
+	int vsrc[3];
+	int ssrc[3];
+};
+
+/**
+ * Store information during compilation of fragment programs.
+ */
+struct r300_pfs_compile_state {
+	int nrslots;       /* number of ALU slots used so far */
+	
+	/* Track which (parts of) slots are already filled with instructions */
+	struct r300_pfs_compile_slot slot[PFS_MAX_ALU_INST];
+	
+	/* Track the validity of R300 temporaries */
+	struct reg_lifetime hwtemps[PFS_NUM_TEMP_REGS];
+	
+	/* Used to map Mesa's inputs/temps onto hardware temps */
+	int temp_in_use;
+	struct reg_acc temps[PFS_NUM_TEMP_REGS];
+	struct reg_acc inputs[32]; /* don't actually need 32... */
+	
+	/* Track usage of hardware temps, for register allocation,
+	 * indirection detection, etc. */
+	GLuint used_in_node;
+	GLuint dest_in_node;
+};
+
+/**
+ * Store everything about a fragment program that is needed
+ * to render with that program.
+ */
 struct r300_fragment_program {
 	struct gl_fragment_program mesa_program;
 
