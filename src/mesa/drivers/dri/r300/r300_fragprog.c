@@ -492,7 +492,7 @@ static GLuint emit_param4fv(struct r300_fragment_program *rp,
 	return r;
 }
 
-static GLuint emit_const4fv(struct r300_fragment_program *rp, GLfloat *cp)
+static GLuint emit_const4fv(struct r300_fragment_program *rp, const GLfloat* cp)
 { 
 	GLuint r = undef;
 	GLuint index;
@@ -1405,15 +1405,112 @@ static void make_sin_const(struct r300_fragment_program *rp)
 	}
 }
 
+/**
+ * Emit a LIT instruction.
+ * \p flags may be PFS_FLAG_SAT
+ *
+ * Definition of LIT (from ARB_fragment_program):
+ * tmp = VectorLoad(op0);
+ * if (tmp.x < 0) tmp.x = 0;
+ * if (tmp.y < 0) tmp.y = 0;
+ * if (tmp.w < -(128.0-epsilon)) tmp.w = -(128.0-epsilon);
+ * else if (tmp.w > 128-epsilon) tmp.w = 128-epsilon;
+ * result.x = 1.0;
+ * result.y = tmp.x;
+ * result.z = (tmp.x > 0) ? RoughApproxPower(tmp.y, tmp.w) : 0.0;
+ * result.w = 1.0;
+ *
+ * The longest path of computation is the one leading to result.z,
+ * consisting of 5 operations. This implementation of LIT takes
+ * 5 slots. So unless there's some special undocumented opcode,
+ * this implementation is potentially optimal. Unfortunately,
+ * emit_arith is a bit too conservative because it doesn't understand
+ * partial writes to the vector component.
+ */
+static void emit_lit(struct r300_fragment_program *rp,
+		GLuint dest,
+		int mask,
+		GLuint src,
+		int flags)
+{
+	COMPILE_STATE;
+	static const GLfloat cnstv[4] = { 127.999999, 127.999999, 127.999999, -127.999999 };
+	GLuint cnst;
+	int needTemporary;
+	GLuint temp;
+	
+	cnst = emit_const4fv(rp, cnstv);
+	
+	needTemporary = 0;
+	if ((mask & WRITEMASK_XYZW) != WRITEMASK_XYZW) {
+		needTemporary = 1;
+	} else if (REG_GET_TYPE(dest) == REG_TYPE_OUTPUT) {
+		// LIT is typically followed by DP3/DP4, so there's no point
+		// in creating special code for this case
+		needTemporary = 1;
+	}
+	
+	if (needTemporary) {
+		temp = keep(get_temp_reg(rp));
+	} else {
+		temp = keep(dest);
+	}
+	
+	// Npte: The order of emit_arith inside the slots is relevant,
+	// because emit_arith only looks at scalar vs. vector when resolving
+	// dependencies, and it does not consider individual vector components,
+	// so swizzling between the two parts can create fake dependencies.
+	
+	// First slot
+	emit_arith(rp, PFS_OP_MAX, temp, WRITEMASK_XY,
+	           keep(src), pfs_zero, undef, 0);
+	emit_arith(rp, PFS_OP_MAX, temp, WRITEMASK_W,
+	           src, cnst, undef, 0);
+	
+	// Second slot
+	emit_arith(rp, PFS_OP_MIN, temp, WRITEMASK_Z,
+	           swizzle(temp, W, W, W, W), cnst, undef, 0);
+	emit_arith(rp, PFS_OP_LG2, temp, WRITEMASK_W,
+	           swizzle(temp, Y, Y, Y, Y), undef, undef, 0);
+	
+	// Third slot
+	// If desired, we saturate the y result here.
+	// This does not affect the use as a condition variable in the CMP later
+	emit_arith(rp, PFS_OP_MAD, temp, WRITEMASK_W,
+	           temp, swizzle(temp, Z, Z, Z, Z), pfs_zero, 0);
+	emit_arith(rp, PFS_OP_MAD, temp, WRITEMASK_Y,
+	           swizzle(temp, X, X, X, X), pfs_one, pfs_zero, flags);
+	
+	// Fourth slot
+	emit_arith(rp, PFS_OP_MAD, temp, WRITEMASK_X,
+	           pfs_one, pfs_one, pfs_zero, 0);
+	emit_arith(rp, PFS_OP_EX2, temp, WRITEMASK_W,
+	           temp, undef, undef, 0);
+	
+	// Fifth slot
+	emit_arith(rp, PFS_OP_CMP, temp, WRITEMASK_Z,
+	           swizzle(temp, W, W, W, W), pfs_zero, swizzle(temp, Y, Y, Y, Y), flags);
+	emit_arith(rp, PFS_OP_MAD, temp, WRITEMASK_W,
+	           pfs_one, pfs_one, pfs_zero, 0);
+	
+	if (needTemporary) {
+		emit_arith(rp, PFS_OP_MAD, dest, mask,
+			           temp, pfs_one, pfs_zero, flags);
+		free_temp(rp, temp);
+	} else {
+		// Decrease refcount of the destination
+		t_hw_dst(rp, dest, GL_FALSE, cs->nrslots);
+	}
+}
+
+
 static GLboolean parse_program(struct r300_fragment_program *rp)
 {	
 	struct gl_fragment_program *mp = &rp->mesa_program;
 	const struct prog_instruction *inst = mp->Base.Instructions;
 	struct prog_instruction *fpi;
 	GLuint src[3], dest, temp[2];
-	GLuint cnst;
 	int flags, mask = 0;
-	GLfloat cnstv[4] = {0.0, 0.0, 0.0, 0.0};
 
 	if (!inst || inst[0].Opcode == OPCODE_END) {
 		ERROR("empty program?\n");
@@ -1612,66 +1709,8 @@ static GLboolean parse_program(struct r300_fragment_program *rp)
 				   flags);
 			break;
 		case OPCODE_LIT:
-			/* LIT
-			 * if (s.x < 0) t.x = 0; else t.x = s.x;
-			 * if (s.y < 0) t.y = 0; else t.y = s.y;
-			 * if (s.w >  128.0) t.w =  128.0; else t.w = s.w;
-			 * if (s.w < -128.0) t.w = -128.0; else t.w = s.w;
-			 * r.x = 1.0
-			 * if (t.x > 0) r.y = pow(t.y, t.w); else r.y = 0;
-			 * Also r.y = 0 if t.y < 0
-			 * For the t.x > 0 FGLRX use the CMPH opcode which
-			 * change the compare to (t.x + 0.5) > 0.5 we may
-			 * save one instruction by doing CMP -t.x 
-			 */
-			cnstv[0] = cnstv[1] = cnstv[2] = cnstv[3] = 0.50001;
 			src[0] = t_src(rp, fpi->SrcReg[0]);
-			temp[0] = get_temp_reg(rp);
-			cnst = emit_const4fv(rp, cnstv);
-			emit_arith(rp, PFS_OP_CMP, temp[0],
-				   WRITEMASK_X | WRITEMASK_Y,
-				   src[0], pfs_zero, src[0], flags);
-			emit_arith(rp, PFS_OP_MIN, temp[0], WRITEMASK_Z,
-				   swizzle(keep(src[0]), W, W, W, W),
-				   cnst, undef, flags);
-			emit_arith(rp, PFS_OP_LG2, temp[0], WRITEMASK_W,
-				   swizzle(temp[0], Y, Y, Y, Y),
-				   undef, undef, flags);
-			emit_arith(rp, PFS_OP_MAX, temp[0], WRITEMASK_Z,
-				   temp[0], negate(cnst), undef, flags);
-			emit_arith(rp, PFS_OP_MAD, temp[0], WRITEMASK_W,
-				   temp[0], swizzle(temp[0], Z, Z, Z, Z),
-				   pfs_zero, flags);
-			emit_arith(rp, PFS_OP_EX2, temp[0], WRITEMASK_W,
-				   temp[0], undef, undef, flags);
-			emit_arith(rp, PFS_OP_MAD, dest, WRITEMASK_Y,
-				   swizzle(keep(temp[0]), X, X, X, X),
-				   pfs_one, pfs_zero, flags);
-#if 0
-			emit_arith(rp, PFS_OP_MAD, temp[0], WRITEMASK_X,
-				   temp[0], pfs_one, pfs_half, flags);
-			emit_arith(rp, PFS_OP_CMPH, temp[0], WRITEMASK_Z,
-				   swizzle(keep(temp[0]), W, W, W, W),
-				   pfs_zero, swizzle(keep(temp[0]), X, X, X, X),
-				   flags);
-#else
-			emit_arith(rp, PFS_OP_CMP, temp[0], WRITEMASK_Z,
-				   pfs_zero,
-				   swizzle(keep(temp[0]), W, W, W, W),
-				   negate(swizzle(keep(temp[0]), X, X, X, X)),
-				   flags);
-#endif
-			emit_arith(rp, PFS_OP_CMP, dest, WRITEMASK_Z,
-				   pfs_zero, temp[0],
-				   negate(swizzle(keep(temp[0]), Y, Y, Y, Y)),
-				   flags);
-			emit_arith(rp, PFS_OP_MAD, dest,
-				   WRITEMASK_X | WRITEMASK_W,
-				   pfs_one,
-				   pfs_one,
-				   pfs_zero,
-				   flags);
-			free_temp(rp, temp[0]);
+			emit_lit(rp, dest, mask, src[0], flags);
 			break;
 		case OPCODE_LRP:
 			src[0] = t_src(rp, fpi->SrcReg[0]);
