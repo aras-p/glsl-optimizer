@@ -2230,8 +2230,34 @@ static void dump_program(struct r300_fragment_program *rp)
 		
 		if (rp->tex.length) {
 			fprintf(stderr, "  TEX:\n");
-			for(i = rp->node[n].tex_offset; i <= rp->node[n].tex_offset+rp->node[n].tex_end; ++i)
-				fprintf(stderr, "    %08x\n", rp->tex.inst[i]);
+			for(i = rp->node[n].tex_offset; i <= rp->node[n].tex_offset+rp->node[n].tex_end; ++i) {
+				const char* instr;
+				
+				switch((rp->tex.inst[i] >> R300_FPITX_OPCODE_SHIFT) & 15) {
+				case R300_FPITX_OP_TEX:
+					instr = "TEX";
+					break;
+				case R300_FPITX_OP_KIL:
+					instr = "KIL";
+					break;
+				case R300_FPITX_OP_TXP:
+					instr = "TXP";
+					break;
+				case R300_FPITX_OP_TXB:
+					instr = "TXB";
+					break;
+				default:
+					instr = "UNKNOWN";
+				}
+				
+				fprintf(stderr, "    %s t%i, %c%i, texture[%i]   (%08x)\n",
+						instr,
+						(rp->tex.inst[i] >> R300_FPITX_DST_SHIFT) & 31,
+						(rp->tex.inst[i] & R300_FPITX_SRC_CONST) ? 'c': 't',
+						(rp->tex.inst[i] >> R300_FPITX_SRC_SHIFT) & 31,
+						(rp->tex.inst[i] & R300_FPITX_IMAGE_MASK) >> R300_FPITX_IMAGE_SHIFT,
+						rp->tex.inst[i]);
+			}
 		}
 		
 		for(i = rp->node[n].alu_offset; i <= rp->node[n].alu_offset+rp->node[n].alu_end; ++i) {
