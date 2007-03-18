@@ -263,6 +263,23 @@ pass0_make_mask(GLuint mesa_mask)
 	return mask;
 }
 
+static GLboolean
+pass0_opcode_is_tex(enum prog_opcode op)
+{
+	switch (op) {
+	case OPCODE_TEX:
+	case OPCODE_TXB:
+	case OPCODE_TXD:
+	case OPCODE_TXL:
+	case OPCODE_TXP:
+		return GL_TRUE;
+	default:
+		break;
+	}
+
+	return GL_FALSE;
+}
+
 static nvsTexTarget
 pass0_make_tex_target(GLuint mesa)
 {
@@ -721,7 +738,11 @@ pass0_translate_arith(nouveauShader *nvs, struct gl_program *prog,
 				(inst->SaturateMode != SATURATE_OFF),
 				src[0], src[1], src[2]);
 		nvsinst->tex_unit   = inst->TexSrcUnit;
-		nvsinst->tex_target = pass0_make_tex_target(inst->TexSrcTarget);
+		if (pass0_opcode_is_tex(inst->Opcode))
+			nvsinst->tex_target =
+				pass0_make_tex_target(inst->TexSrcTarget);
+		else
+			nvsinst->tex_target = NVS_TEX_TARGET_UNKNOWN;
 
 		ret = GL_TRUE;
 	} else
