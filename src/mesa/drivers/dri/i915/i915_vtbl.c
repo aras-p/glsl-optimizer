@@ -180,7 +180,7 @@ static void i915_emit_invarient_state( intelContextPtr intel )
     */
    OUT_BATCH(_3DSTATE_LOAD_STATE_IMMEDIATE_1 | 
 	     I1_LOAD_S(3) |
-	     (1));
+	     (0));
    OUT_BATCH(0);
  
    /* XXX: Use this */
