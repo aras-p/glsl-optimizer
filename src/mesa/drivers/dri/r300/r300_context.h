@@ -674,6 +674,11 @@ struct reg_lifetime {
 	   emitted instruction that writes to the register */
 	int vector_valid;
 	int scalar_valid;
+	
+	/* Index to the slot where the register was last read.
+	   This is also the first slot in which the register may be written again */
+	int vector_lastread;
+	int scalar_lastread;
 };
 
 

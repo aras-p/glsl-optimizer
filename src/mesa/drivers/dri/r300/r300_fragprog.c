@@ -1026,10 +1026,11 @@ static void emit_tex(struct r300_fragment_program *rp,
  */
 static int get_earliest_allowed_write(
 		struct r300_fragment_program* rp,
-		GLuint dest)
+		GLuint dest, int mask)
 {
 	COMPILE_STATE;
 	int idx;
+	int pos;
 	GLuint index = REG_GET_INDEX(dest);
 	assert(REG_GET_VALID(dest));
 
@@ -1047,7 +1048,17 @@ static int get_earliest_allowed_write(
 			return 0;
 	}
 	
-	return cs->hwtemps[idx].reserved;
+	pos = cs->hwtemps[idx].reserved;
+	if (mask & WRITEMASK_XYZ) {
+		if (pos < cs->hwtemps[idx].vector_lastread)
+			pos = cs->hwtemps[idx].vector_lastread;
+	}
+	if (mask & WRITEMASK_W) {
+		if (pos < cs->hwtemps[idx].scalar_lastread)
+			pos = cs->hwtemps[idx].scalar_lastread;
+	}
+	
+	return pos;
 }
 
 
@@ -1070,7 +1081,8 @@ static int find_and_prepare_slot(struct r300_fragment_program* rp,
 		GLboolean emit_sop,
 		int argc,
 		GLuint* src,
-		GLuint dest)
+		GLuint dest,
+		int mask)
 {
 	COMPILE_STATE;
 	int hwsrc[3];
@@ -1092,7 +1104,7 @@ static int find_and_prepare_slot(struct r300_fragment_program* rp,
 	if (emit_sop)
 		used |= SLOT_OP_SCALAR;
 	
-	pos = get_earliest_allowed_write(rp, dest);
+	pos = get_earliest_allowed_write(rp, dest, mask);
 	
 	if (rp->node[rp->cur_node].alu_offset > pos)
 		pos = rp->node[rp->cur_node].alu_offset;
@@ -1191,6 +1203,21 @@ static int find_and_prepare_slot(struct r300_fragment_program* rp,
 		cs->slot[pos].ssrc[i] = tempssrc[i];
 	}
 	
+	for(i = 0; i < argc; ++i) {
+		if (REG_GET_TYPE(src[i]) == REG_TYPE_TEMP) {
+			int regnr = hwsrc[i] & 31;
+			
+			if (used & (SLOT_SRC_VECTOR << i)) {
+				if (cs->hwtemps[regnr].vector_lastread < pos)
+					cs->hwtemps[regnr].vector_lastread = pos;
+			}
+			if (used & (SLOT_SRC_SCALAR << i)) {
+				if (cs->hwtemps[regnr].scalar_lastread < pos)
+					cs->hwtemps[regnr].scalar_lastread = pos;
+			}
+		}
+	}
+	
 	// Emit the source fetch code
 	rp->alu.inst[pos].inst1 &= ~R300_FPI1_SRC_MASK;
 	rp->alu.inst[pos].inst1 |=
@@ -1287,7 +1314,7 @@ static void emit_arith(struct r300_fragment_program *rp,
 	if ((mask & WRITEMASK_W) || vop == R300_FPI0_OUTC_REPL_ALPHA)
 		emit_sop = GL_TRUE;
 
-	pos = find_and_prepare_slot(rp, emit_vop, emit_sop, argc, src, dest);
+	pos = find_and_prepare_slot(rp, emit_vop, emit_sop, argc, src, dest, mask);
 	if (pos < 0)
 		return;
 	
