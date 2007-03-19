@@ -2268,7 +2268,7 @@ void r300_translate_fragment_shader(r300ContextPtr r300, struct r300_fragment_pr
 		assert(rp->alu_end >= 0);
 
 		rp->translated = GL_TRUE;
-		if (1) dump_program(rp);
+		if (RADEON_DEBUG & DEBUG_PIXEL) dump_program(rp);
 		r300UpdateStateParameters(rp->ctx, _NEW_PROGRAM);
 	}
 
