@@ -349,28 +349,6 @@ intelWindowMoved(struct intel_context *intel)
 
    /* Update Mesa's notion of window size */
    driUpdateFramebufferSize(ctx, dPriv);
-
-   /* Update size of third renderbuffer */
-   if (intel_fb->pf_num_pages == 3) {
-      struct gl_renderbuffer *rb = &intel_fb->color_rb[(intel_fb->pf_current_page
-						        + 2) % 3]->Base;
-
-      /* only resize if size is changing */
-         if (rb->Width != intel_fb->Base.Width ||
-	     rb->Height != intel_fb->Base.Height) {
-            /* could just as well pass rb->_ActualFormat here */
-            if (rb->AllocStorage(ctx, rb, rb->InternalFormat,
-				 intel_fb->Base.Width, intel_fb->Base.Height)) {
-               ASSERT(rb->Width == intel_fb->Base.Width);
-               ASSERT(rb->Height == intel_fb->Base.Height);
-            }
-            else {
-               _mesa_error(ctx, GL_OUT_OF_MEMORY, "Resizing framebuffer");
-               /* no return */
-            }
-         }
-   }
-
    intel_fb->Base.Initialized = GL_TRUE; /* XXX remove someday */
 
    /* Update hardware scissor */
