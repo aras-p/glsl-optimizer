@@ -1304,9 +1304,14 @@ static void emit_arith(struct r300_fragment_program *rp,
 	argc = r300_fpop[op].argc;
 
 	if (REG_GET_TYPE(dest) == REG_TYPE_OUTPUT &&
-	    REG_GET_INDEX(dest) == FRAG_RESULT_DEPR)
-		mask &= ~WRITEMASK_XYZ;
-	
+	    REG_GET_INDEX(dest) == FRAG_RESULT_DEPR) {
+		if (mask & WRITEMASK_Z) {
+			mask = WRITEMASK_W;
+		} else {
+			return;
+		}
+	}
+
 	emit_vop = GL_FALSE;
 	emit_sop = GL_FALSE;
 	if ((mask & WRITEMASK_XYZ) || vop == R300_FPI0_OUTC_DP3)
