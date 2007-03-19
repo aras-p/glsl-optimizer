@@ -119,7 +119,7 @@ read_depth_pixels( GLcontext *ctx,
             && !biasOrScale && !packing->SwapBytes) {
       /* Special case: directly read 24-bit unsigned depth values. */
       GLint j;
-      ASSERT(rb->InternalFormat == GL_DEPTH_COMPONENT32);
+      ASSERT(rb->InternalFormat == GL_DEPTH_COMPONENT24);
       ASSERT(rb->DataType == GL_UNSIGNED_INT);
       for (j = 0; j < height; j++, y++) {
          GLuint *dest = (GLuint *)

@@ -338,7 +338,7 @@ void r300InitCmdBuf(r300ContextPtr r300)
 		r300->hw.unk4260.cmd[0] = cmdpacket0(0x4260, 3);
 	ALLOC_STATE( shade, always, 5, "shade", 0 );
 		r300->hw.shade.cmd[0] = cmdpacket0(R300_RE_SHADE, 4);
-	ALLOC_STATE( polygon_mode, always, 4, "unk4288", 0 );
+	ALLOC_STATE( polygon_mode, always, 4, "polygon_mode", 0 );
 		r300->hw.polygon_mode.cmd[0] = cmdpacket0(R300_RE_POLYGON_MODE, 3);
 	ALLOC_STATE( fogp, always, 3, "fogp", 0 );
 		r300->hw.fogp.cmd[0] = cmdpacket0(R300_RE_FOG_SCALE, 2);

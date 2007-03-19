@@ -46,7 +46,7 @@
     GLuint pitch = vrb->pitch;                                          \
     GLuint height = dPriv->h;                                        	\
     GLint p = 0;							\
-    char *buf = (char *)(vrb->origMap + vrb->drawXoff * vrb->bpp);      \
+    char *buf = (char *)(vrb->origMap);					\
     (void) p;
 
 /* ================================================================
@@ -82,7 +82,7 @@
     __DRIdrawablePrivate *dPriv = vrb->dPriv;                       \
     GLuint depth_pitch = vrb->pitch;                                \
     GLuint height = dPriv->h;                                       \
-    char *buf = (char *)(vrb->map + (vrb->drawXoff * vrb->bpp/8))
+    char *buf = (char *)(vrb->map)
 
 #define LOCAL_STENCIL_VARS LOCAL_DEPTH_VARS 
 

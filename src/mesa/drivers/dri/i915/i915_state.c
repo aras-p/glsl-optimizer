@@ -813,7 +813,7 @@ static void i915_init_packets( i915ContextPtr i915 )
 				       I1_LOAD_S(4) |
 				       I1_LOAD_S(5) |
 				       I1_LOAD_S(6) | 
-				       (4));
+				       (3));
       i915->state.Ctx[I915_CTXREG_LIS2] = 0;
       i915->state.Ctx[I915_CTXREG_LIS4] = 0;
       i915->state.Ctx[I915_CTXREG_LIS5] = 0;

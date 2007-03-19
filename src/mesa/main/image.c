@@ -3877,6 +3877,22 @@ _mesa_pack_stencil_span( const GLcontext *ctx, GLuint n,
    }
 }
 
+#define DEPTH_VALUES(GLTYPE, GLTYPE2FLOAT)                              \
+    do {                                                                \
+        GLuint i;                                                       \
+        const GLTYPE *src = (const GLTYPE *)source;                     \
+        for (i = 0; i < n; i++) {                                       \
+            GLTYPE value = src[i];                                      \
+            if (srcPacking->SwapBytes) {                                \
+                if (sizeof(GLTYPE) == 2) {                              \
+                    SWAP2BYTE(value);                                   \
+                } else if (sizeof(GLTYPE) == 4) {                       \
+                    SWAP4BYTE(value);                                   \
+                }                                                       \
+            }                                                           \
+            depthValues[i] = CLAMP(GLTYPE2FLOAT(value), 0.0F, 1.0F);    \
+        }                                                               \
+    } while (0)
 
 void
 _mesa_unpack_depth_span( const GLcontext *ctx, GLuint n,
@@ -3898,59 +3914,23 @@ _mesa_unpack_depth_span( const GLcontext *ctx, GLuint n,
 
    switch (srcType) {
       case GL_BYTE:
-         {
-            GLuint i;
-            const GLubyte *src = (const GLubyte *) source;
-            for (i = 0; i < n; i++) {
-               depthValues[i] = BYTE_TO_FLOAT(src[i]);
-            }
-         }
-         break;
+          DEPTH_VALUES(GLbyte, BYTE_TO_FLOAT);
+          break;
       case GL_UNSIGNED_BYTE:
-         {
-            GLuint i;
-            const GLubyte *src = (const GLubyte *) source;
-            for (i = 0; i < n; i++) {
-               depthValues[i] = UBYTE_TO_FLOAT(src[i]);
-            }
-         }
-         break;
+          DEPTH_VALUES(GLubyte, UBYTE_TO_FLOAT);
+          break;
       case GL_SHORT:
-         {
-            GLuint i;
-            const GLshort *src = (const GLshort *) source;
-            for (i = 0; i < n; i++) {
-               depthValues[i] = SHORT_TO_FLOAT(src[i]);
-            }
-         }
-         break;
+          DEPTH_VALUES(GLshort, SHORT_TO_FLOAT);
+          break;
       case GL_UNSIGNED_SHORT:
-         {
-            GLuint i;
-            const GLushort *src = (const GLushort *) source;
-            for (i = 0; i < n; i++) {
-               depthValues[i] = USHORT_TO_FLOAT(src[i]);
-            }
-         }
-         break;
+          DEPTH_VALUES(GLushort, USHORT_TO_FLOAT);
+          break;
       case GL_INT:
-         {
-            GLuint i;
-            const GLint *src = (const GLint *) source;
-            for (i = 0; i < n; i++) {
-               depthValues[i] = INT_TO_FLOAT(src[i]);
-            }
-         }
-         break;
+          DEPTH_VALUES(GLint, INT_TO_FLOAT);
+          break;
       case GL_UNSIGNED_INT:
-         {
-            GLuint i;
-            const GLuint *src = (const GLuint *) source;
-            for (i = 0; i < n; i++) {
-               depthValues[i] = UINT_TO_FLOAT(src[i]);
-            }
-         }
-         break;
+          DEPTH_VALUES(GLuint, UINT_TO_FLOAT);
+          break;
       case GL_UNSIGNED_INT_24_8_EXT: /* GL_EXT_packed_depth_stencil */
          if (dstType == GL_UNSIGNED_INT &&
              depthScale == (GLfloat) 0xffffff &&
@@ -3960,7 +3940,11 @@ _mesa_unpack_depth_span( const GLcontext *ctx, GLuint n,
             GLuint *zValues = (GLuint *) dest;
             GLuint i;
             for (i = 0; i < n; i++) {
-               zValues[i] = src[i] & 0xffffff00;
+                GLuint value = src[i];
+                if (srcPacking->SwapBytes) {
+                    SWAP4BYTE(value);
+                }
+                zValues[i] = value & 0xffffff00;
             }
             return;
          }
@@ -3969,19 +3953,27 @@ _mesa_unpack_depth_span( const GLcontext *ctx, GLuint n,
             const GLfloat scale = 1.0f / 0xffffff;
             GLuint i;
             for (i = 0; i < n; i++) {
-               depthValues[i] = (src[i] >> 8) * scale;
+                GLuint value = src[i];
+                if (srcPacking->SwapBytes) {
+                    SWAP4BYTE(value);
+                }
+                depthValues[i] = (value >> 8) * scale;
             }
          }
          break;
       case GL_FLOAT:
-         _mesa_memcpy(depthValues, source, n * sizeof(GLfloat));
-         break;
+          DEPTH_VALUES(GLfloat, 1*);
+          break;
       case GL_HALF_FLOAT_ARB:
          {
             GLuint i;
             const GLhalfARB *src = (const GLhalfARB *) source;
             for (i = 0; i < n; i++) {
-               depthValues[i] = _mesa_half_to_float(src[i]);
+                GLhalfARB value = src[i];
+                if (srcPacking->SwapBytes) {
+                    SWAP2BYTE(value);
+                }
+               depthValues[i] = _mesa_half_to_float(value);
             }
          }
          break;

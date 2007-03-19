@@ -187,7 +187,7 @@ static void viaFillBuffer(struct via_context *vmesa,
       int w = pbox[i].x2 - pbox[i].x1;
       int h = pbox[i].y2 - pbox[i].y1;
 
-      int offset = (buffer->orig + 
+      int offset = (buffer->offset + 
 		    y * buffer->pitch + 
 		    x * bytePerPixel);
 
@@ -276,7 +276,7 @@ static void viaClear(GLcontext *ctx, GLbitfield mask)
 
       /* flip top to bottom */
       cy = dPriv->h - cy - ch;
-      cx += vrb->drawX + vrb->drawXoff;
+      cx += vrb->drawX;
       cy += vrb->drawY;
         
       if (!all) {
@@ -359,8 +359,8 @@ static void viaDoSwapBuffers(struct via_context *vmesa,
       GLint w = b->x2 - b->x1;
       GLint h = b->y2 - b->y1;
 	
-      GLuint src = back->orig + y * back->pitch + x * bytePerPixel;
-      GLuint dest = front->orig + y * front->pitch + x * bytePerPixel;
+      GLuint src = back->offset + y * back->pitch + x * bytePerPixel;
+      GLuint dest = front->offset + y * front->pitch + x * bytePerPixel;
 
       viaBlit(vmesa, 
 	      bytePerPixel << 3, 
@@ -747,7 +747,7 @@ static void via_emit_cliprect(struct via_context *vmesa,
 		    : HC_HDBFM_RGB565);
 
    GLuint pitch = buffer->pitch;
-   GLuint offset = buffer->orig;
+   GLuint offset = buffer->offset;
 
    if (0)
       fprintf(stderr, "emit cliprect for box %d,%d %d,%d\n", 
@@ -768,7 +768,7 @@ static void via_emit_cliprect(struct via_context *vmesa,
    vb[4] = (HC_SubA_HDBBasL << 24) | (offset & 0xFFFFFF);
    vb[5] = (HC_SubA_HDBBasH << 24) | ((offset & 0xFF000000) >> 24); 
 
-   vb[6] = (HC_SubA_HSPXYOS << 24) | ((31 - buffer->drawXoff) << HC_HSPXOS_SHIFT);
+   vb[6] = (HC_SubA_HSPXYOS << 24);
    vb[7] = (HC_SubA_HDBFM << 24) | HC_HDBLoc_Local | format | pitch;
 }
 
@@ -887,21 +887,17 @@ void viaFlushDmaLocked(struct via_context *vmesa, GLuint flags)
       struct via_renderbuffer *const vrb = 
 	(struct via_renderbuffer *) dPriv->driverPrivate;
 
-
       for (i = 0; i < vmesa->numClipRects; i++) {
 	 drm_clip_rect_t b;
 
-	 b.x1 = pbox[i].x1 - (vrb->drawX + vrb->drawXoff);
-	 b.x2 = pbox[i].x2 - (vrb->drawX + vrb->drawXoff);
-	 b.y1 = pbox[i].y1 - vrb->drawY;
-	 b.y2 = pbox[i].y2 - vrb->drawY;
+	 b.x1 = pbox[i].x1;
+	 b.x2 = pbox[i].x2;
+	 b.y1 = pbox[i].y1;
+	 b.y2 = pbox[i].y2;
 
 	 if (vmesa->scissor &&
 	     !intersect_rect(&b, &b, &vmesa->scissorRect)) 
 	    continue;
-
-	 b.x1 += vrb->drawXoff;
-	 b.x2 += vrb->drawXoff;
 
 	 via_emit_cliprect(vmesa, &b);
 

@@ -1,4 +1,3 @@
-/* $XFree86: xc/lib/GL/mesa/src/drv/r300/r300_tex.c,v 1.2 2002/11/05 17:46:08 tsi Exp $ */
 /*
 Copyright (C) The Weather Channel, Inc.  2002.  All Rights Reserved.
 

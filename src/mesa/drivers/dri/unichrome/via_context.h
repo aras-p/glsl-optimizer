@@ -104,11 +104,6 @@ struct via_renderbuffer {
    int drawW;                  
    int drawH;    
 
-   int drawXoff;		/* drawX is 32byte aligned - this is
-				 * the delta to the real origin, in
-				 * pixel units.
-				 */
-
    __DRIdrawablePrivate *dPriv;
 };
 
