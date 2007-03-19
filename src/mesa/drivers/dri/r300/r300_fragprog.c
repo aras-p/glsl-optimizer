@@ -1143,7 +1143,9 @@ static int find_and_prepare_slot(struct r300_fragment_program* rp,
 			}
 
 			rp->alu.inst[pos].inst0 = NOP_INST0;
+			rp->alu.inst[pos].inst1 = NOP_INST1;
 			rp->alu.inst[pos].inst2 = NOP_INST2;
+			rp->alu.inst[pos].inst3 = NOP_INST3;
 
 			cs->nrslots++;
 		}
