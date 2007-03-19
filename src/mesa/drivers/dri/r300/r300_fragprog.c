@@ -1463,7 +1463,7 @@ static void emit_lit(struct r300_fragment_program *rp,
 		temp = keep(dest);
 	}
 
-	// Npte: The order of emit_arith inside the slots is relevant,
+	// Note: The order of emit_arith inside the slots is relevant,
 	// because emit_arith only looks at scalar vs. vector when resolving
 	// dependencies, and it does not consider individual vector components,
 	// so swizzling between the two parts can create fake dependencies.
@@ -1496,7 +1496,7 @@ static void emit_lit(struct r300_fragment_program *rp,
 
 	// Fifth slot
 	emit_arith(rp, PFS_OP_CMP, temp, WRITEMASK_Z,
-	           swizzle(temp, W, W, W, W), pfs_zero, swizzle(temp, Y, Y, Y, Y), flags);
+	           pfs_zero, swizzle(temp, W, W, W, W), negate(swizzle(temp, Y, Y, Y, Y)), flags);
 	emit_arith(rp, PFS_OP_MAD, temp, WRITEMASK_W,
 	           pfs_one, pfs_one, pfs_zero, 0);
 
