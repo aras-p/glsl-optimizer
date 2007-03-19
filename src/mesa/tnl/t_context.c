@@ -150,13 +150,19 @@ _tnl_InvalidateState( GLcontext *ctx, GLuint new_state )
        (ctx->VertexProgram._Enabled && ctx->VertexProgram.PointSizeEnabled))
       RENDERINPUTS_SET( tnl->render_inputs_bitset, _TNL_ATTRIB_POINTSIZE );
 
-#if 1 /* XXX NEW_SLANG */
-   RENDERINPUTS_SET_RANGE( tnl->render_inputs_bitset,
-                           _TNL_FIRST_GENERIC, _TNL_LAST_GENERIC );
-#else
-   if (ctx->ShaderObjects._VertexShaderPresent || ctx->ShaderObjects._FragmentShaderPresent)
-      RENDERINPUTS_SET_RANGE( tnl->render_inputs_bitset, _TNL_FIRST_GENERIC, _TNL_LAST_GENERIC );
-#endif
+   /* check for varying vars which are written by the vertex program */
+   {
+      struct gl_vertex_program *vp = ctx->VertexProgram._Current;
+      if (vp) {
+         GLuint i;
+         for (i = 0; i < MAX_VARYING; i++) {
+            if (vp->Base.OutputsWritten & (1 << (VERT_RESULT_VAR0 + i))) {
+               RENDERINPUTS_SET(tnl->render_inputs_bitset,
+                                _TNL_ATTRIB_GENERIC(i));
+            }
+         }
+      }
+   }
 }
 
 
