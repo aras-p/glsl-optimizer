@@ -468,47 +468,39 @@ static void free_temp(struct r300_fragment_program *rp, GLuint r)
 	}
 }
 
-static GLuint emit_param4fv(struct r300_fragment_program *rp,
-			    GLfloat *values)
-{
-	GLuint r = undef;
-	GLuint index;
-	int pidx;
-
-	pidx = rp->param_nr++;
-	index = rp->const_nr++;
-	if (pidx >= PFS_NUM_CONST_REGS || index >= PFS_NUM_CONST_REGS) {
-		ERROR("Out of const/param slots!\n");
-		return r;
-	}
-
-	rp->param[pidx].idx = index;
-	rp->param[pidx].values = values;
-	rp->params_uptodate = GL_FALSE;
-
-	REG_SET_TYPE(r, REG_TYPE_CONST);
-	REG_SET_INDEX(r, index);
-	REG_SET_VALID(r, GL_TRUE);
-	return r;
-}
-
+/**
+ * Emit a hardware constant/parameter.
+ *
+ * \p cp Stable pointer to an array of 4 floats.
+ *  The pointer must be stable in the sense that it remains to be valid
+ *  and hold the contents of the constant/parameter throughout the lifetime
+ *  of the fragment program (actually, up until the next time the fragment
+ *  program is translated).
+ */
 static GLuint emit_const4fv(struct r300_fragment_program *rp, const GLfloat* cp)
 {
-	GLuint r = undef;
-	GLuint index;
+	GLuint reg = undef;
+	int index;
 
-	index = rp->const_nr++;
-	if (index >= PFS_NUM_CONST_REGS) {
-		ERROR("Out of hw constants!\n");
-		return r;
+	for(index = 0; index < rp->const_nr; ++index) {
+		if (rp->constant[index] == cp)
+			break;
 	}
 
-	COPY_4V(rp->constant[index], cp);
+	if (index >= rp->const_nr) {
+		if (index >= PFS_NUM_CONST_REGS) {
+			ERROR("Out of hw constants!\n");
+			return reg;
+		}
 
-	REG_SET_TYPE(r, REG_TYPE_CONST);
-	REG_SET_INDEX(r, index);
-	REG_SET_VALID(r, GL_TRUE);
-	return r;
+		rp->const_nr++;
+		rp->constant[index] = cp;
+	}
+
+	REG_SET_TYPE(reg, REG_TYPE_CONST);
+	REG_SET_INDEX(reg, index);
+	REG_SET_VALID(reg, GL_TRUE);
+	return reg;
 }
 
 static inline GLuint negate(GLuint r)
@@ -762,16 +754,16 @@ static GLuint t_src(struct r300_fragment_program *rp,
 		REG_SET_TYPE(r, REG_TYPE_INPUT);
 		break;
 	case PROGRAM_LOCAL_PARAM:
-		r = emit_param4fv(rp,
+		r = emit_const4fv(rp,
 				  rp->mesa_program.Base.LocalParams[fpsrc.Index]);
 		break;
 	case PROGRAM_ENV_PARAM:
-		r = emit_param4fv(rp,
+		r = emit_const4fv(rp,
 				  rp->ctx->FragmentProgram.Parameters[fpsrc.Index]);
 		break;
 	case PROGRAM_STATE_VAR:
 	case PROGRAM_NAMED_PARAM:
-		r = emit_param4fv(rp,
+		r = emit_const4fv(rp,
 				  rp->mesa_program.Base.Parameters->ParameterValues[fpsrc.Index]);
 		break;
 	default:
@@ -1393,22 +1385,27 @@ static GLuint get_attrib(struct r300_fragment_program *rp, GLuint attr)
 }
 #endif
 
+static GLfloat SinCosConsts[2][4] = {
+	{
+		1.273239545,  // 4/PI
+		-0.405284735, // -4/(PI*PI)
+		3.141592654,  // PI
+		0.2225        // weight
+	},
+	{
+		0.75,
+		0.0,
+		0.159154943,  // 1/(2*PI)
+		6.283185307   // 2*PI
+	}
+};
+
+
 static void make_sin_const(struct r300_fragment_program *rp)
 {
-	if(rp->const_sin[0] == -1){
-	    GLfloat cnstv[4];
-
-	    cnstv[0] = 1.273239545; // 4/PI
-	    cnstv[1] =-0.405284735; // -4/(PI*PI)
-	    cnstv[2] = 3.141592654; // PI
-	    cnstv[3] = 0.2225;      // weight
-	    rp->const_sin[0] = emit_const4fv(rp, cnstv);
-
-	    cnstv[0] = 0.75;
-	    cnstv[1] = 0.0;
-	    cnstv[2] = 0.159154943; // 1/(2*PI)
-	    cnstv[3] = 6.283185307; // 2*PI
-	    rp->const_sin[1] = emit_const4fv(rp, cnstv);
+	if(rp->const_sin[0] == -1) {
+		rp->const_sin[0] = emit_const4fv(rp, SinCosConsts[0]);
+		rp->const_sin[1] = emit_const4fv(rp, SinCosConsts[1]);
 	}
 }
 
@@ -1434,6 +1431,8 @@ static void make_sin_const(struct r300_fragment_program *rp)
  * emit_arith is a bit too conservative because it doesn't understand
  * partial writes to the vector component.
  */
+static const GLfloat LitConst[4] = { 127.999999, 127.999999, 127.999999, -127.999999 };
+
 static void emit_lit(struct r300_fragment_program *rp,
 		GLuint dest,
 		int mask,
@@ -1441,12 +1440,11 @@ static void emit_lit(struct r300_fragment_program *rp,
 		int flags)
 {
 	COMPILE_STATE;
-	static const GLfloat cnstv[4] = { 127.999999, 127.999999, 127.999999, -127.999999 };
 	GLuint cnst;
 	int needTemporary;
 	GLuint temp;
 
-	cnst = emit_const4fv(rp, cnstv);
+	cnst = emit_const4fv(rp, LitConst);
 
 	needTemporary = 0;
 	if ((mask & WRITEMASK_XYZW) != WRITEMASK_XYZW) {
@@ -2123,8 +2121,6 @@ static void init_program(r300ContextPtr r300, struct r300_fragment_program *rp)
 	rp->cur_node   = 0;
 	rp->first_node_has_tex = 0;
 	rp->const_nr   = 0;
-	rp->param_nr   = 0;
-	rp->params_uptodate = GL_FALSE;
 	rp->max_temp_idx = 0;
 	rp->node[0].alu_end = -1;
 	rp->node[0].tex_end = -1;
@@ -2231,16 +2227,10 @@ static void init_program(r300ContextPtr r300, struct r300_fragment_program *rp)
 static void update_params(struct r300_fragment_program *rp)
 {
 	struct gl_fragment_program *mp = &rp->mesa_program;
-	int i;
 
 	/* Ask Mesa nicely to fill in ParameterValues for us */
-	if (rp->param_nr)
+	if (mp->Base.Parameters)
 		_mesa_load_state_parameters(rp->ctx, mp->Base.Parameters);
-
-	for (i=0;i<rp->param_nr;i++)
-		COPY_4V(rp->constant[rp->param[i].idx], rp->param[i].values);
-
-	rp->params_uptodate = GL_TRUE;
 }
 
 void r300_translate_fragment_shader(r300ContextPtr r300, struct r300_fragment_program *rp)

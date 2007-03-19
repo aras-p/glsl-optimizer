@@ -767,23 +767,21 @@ struct r300_fragment_program {
 	int tex_offset;
 	int tex_end;
 
-	/* Hardware constants */
-	GLfloat constant[PFS_NUM_CONST_REGS][4];
+	/* Hardware constants.
+	 * Contains a pointer to the value. The destination of the pointer
+	 * is supposed to be updated when GL state changes.
+	 * Typically, this is either a pointer into
+	 * gl_program_parameter_list::ParameterValues, or a pointer to a
+	 * global constant (e.g. for sin/cos-approximation)
+	 */
+	const GLfloat* constant[PFS_NUM_CONST_REGS];
 	int const_nr;
-
-	/* Tracked parameters */
-	struct {
-		int idx;			/* hardware index */
-		GLfloat *values;	/* pointer to values */
-	} param[PFS_NUM_CONST_REGS];
-	int param_nr;
-	GLboolean params_uptodate;
 
 	int max_temp_idx;
 
 	/* the index of the sin constant is stored here */
 	GLint const_sin[2];
-	
+
 	GLuint optimization;
 };
 
