@@ -154,19 +154,13 @@ brwChooseTextureFormat( GLcontext *ctx, GLint internalFormat,
 
    case GL_RGB_S3TC:
    case GL_RGB4_S3TC:
-   case GL_COMPRESSED_RGB_S3TC_DXT1_EXT:
-       return &_mesa_texformat_rgb_dxt1;
-
-   case GL_COMPRESSED_RGBA_S3TC_DXT1_EXT:
-       return &_mesa_texformat_rgba_dxt1;
-
    case GL_RGBA_S3TC:
    case GL_RGBA4_S3TC:
    case GL_COMPRESSED_RGBA_S3TC_DXT3_EXT:
-       return &_mesa_texformat_rgba_dxt3;
-
    case GL_COMPRESSED_RGBA_S3TC_DXT5_EXT:
-       return &_mesa_texformat_rgba_dxt5;
+   case GL_COMPRESSED_RGBA_S3TC_DXT1_EXT:
+   case GL_COMPRESSED_RGB_S3TC_DXT1_EXT:
+     return &_mesa_texformat_rgb_dxt1; /* there is no rgba support? */
 
    case GL_DEPTH_COMPONENT:
    case GL_DEPTH_COMPONENT16:
