@@ -1401,14 +1401,6 @@ static GLfloat SinCosConsts[2][4] = {
 };
 
 
-static void make_sin_const(struct r300_fragment_program *rp)
-{
-	if(rp->const_sin[0] == -1) {
-		rp->const_sin[0] = emit_const4fv(rp, SinCosConsts[0]);
-		rp->const_sin[1] = emit_const4fv(rp, SinCosConsts[1]);
-	}
-}
-
 /**
  * Emit a LIT instruction.
  * \p flags may be PFS_FLAG_SAT
@@ -1516,6 +1508,7 @@ static GLboolean parse_program(struct r300_fragment_program *rp)
 	struct prog_instruction *fpi;
 	GLuint src[3], dest, temp[2];
 	int flags, mask = 0;
+	int const_sin[2];
 
 	if (!inst || inst[0].Opcode == OPCODE_END) {
 		ERROR("empty program?\n");
@@ -1568,15 +1561,16 @@ static GLboolean parse_program(struct r300_fragment_program *rp)
 			 *   result = sin(x)
 			 */
 			temp[0] = get_temp_reg(rp);
-			make_sin_const(rp);
+			const_sin[0] = emit_const4fv(rp, SinCosConsts[0]);
+			const_sin[1] = emit_const4fv(rp, SinCosConsts[1]);
 			src[0] = t_scalar_src(rp, fpi->SrcReg[0]);
 
 			/* add 0.5*PI and do range reduction */
 
 			emit_arith(rp, PFS_OP_MAD, temp[0], WRITEMASK_X,
 				   swizzle(src[0], X, X, X, X),
-				   swizzle(rp->const_sin[1], Z, Z, Z, Z),
-				   swizzle(rp->const_sin[1], X, X, X, X),
+				   swizzle(const_sin[1], Z, Z, Z, Z),
+				   swizzle(const_sin[1], X, X, X, X),
 				   0);
 
 			emit_arith(rp, PFS_OP_FRC, temp[0], WRITEMASK_X,
@@ -1587,15 +1581,15 @@ static GLboolean parse_program(struct r300_fragment_program *rp)
 
 			emit_arith(rp, PFS_OP_MAD, temp[0], WRITEMASK_Z,
 				   swizzle(temp[0], X, X, X, X),
-				   swizzle(rp->const_sin[1], W, W, W, W), //2*PI
-				   negate(swizzle(rp->const_sin[0], Z, Z, Z, Z)), //-PI
+				   swizzle(const_sin[1], W, W, W, W), //2*PI
+				   negate(swizzle(const_sin[0], Z, Z, Z, Z)), //-PI
 				   0);
 
 			/* SIN */
 
 			emit_arith(rp, PFS_OP_MAD, temp[0], WRITEMASK_X | WRITEMASK_Y,
 				   swizzle(temp[0], Z, Z, Z, Z),
-				   rp->const_sin[0],
+				   const_sin[0],
 				   pfs_zero,
 				   0);
 
@@ -1614,7 +1608,7 @@ static GLboolean parse_program(struct r300_fragment_program *rp)
 
 	    		emit_arith(rp, PFS_OP_MAD, dest, mask,
 				   swizzle(temp[0], Y, Y, Y, Y),
-				   swizzle(rp->const_sin[0], W, W, W, W),
+				   swizzle(const_sin[0], W, W, W, W),
 				   swizzle(temp[0], X, X, X, X),
 				   flags);
 
@@ -1808,19 +1802,20 @@ static GLboolean parse_program(struct r300_fragment_program *rp)
 			 */
 			temp[0] = get_temp_reg(rp);
 			temp[1] = get_temp_reg(rp);
-			make_sin_const(rp);
+			const_sin[0] = emit_const4fv(rp, SinCosConsts[0]);
+			const_sin[1] = emit_const4fv(rp, SinCosConsts[1]);
 			src[0] = t_scalar_src(rp, fpi->SrcReg[0]);
 
 			/* x = -abs(x)+0.5*PI */
 			emit_arith(rp, PFS_OP_MAD, temp[0], WRITEMASK_Z,
-				   swizzle(rp->const_sin[0], Z, Z, Z, Z), //PI
+				   swizzle(const_sin[0], Z, Z, Z, Z), //PI
 				   pfs_half,
 				   negate(abs(swizzle(keep(src[0]), X, X, X, X))),
 				   0);
 
 			/* C*x (sin) */
 			emit_arith(rp, PFS_OP_MAD, temp[0], WRITEMASK_W,
-				   swizzle(rp->const_sin[0], Y, Y, Y, Y),
+				   swizzle(const_sin[0], Y, Y, Y, Y),
 				   swizzle(keep(src[0]), X, X, X, X),
 				   pfs_zero,
 				   0);
@@ -1828,13 +1823,13 @@ static GLboolean parse_program(struct r300_fragment_program *rp)
 			/* B*x, C*x (cos) */
 			emit_arith(rp, PFS_OP_MAD, temp[0], WRITEMASK_X | WRITEMASK_Y,
 			           swizzle(temp[0], Z, Z, Z, Z),
-				   rp->const_sin[0],
+				   const_sin[0],
 			           pfs_zero,
 				   0);
 
 			/* B*x (sin) */
 			emit_arith(rp, PFS_OP_MAD, temp[1], WRITEMASK_W,
-				   swizzle(rp->const_sin[0], X, X, X, X),
+				   swizzle(const_sin[0], X, X, X, X),
 				   keep(src[0]),
 				   pfs_zero,
 				   0);
@@ -1864,7 +1859,7 @@ static GLboolean parse_program(struct r300_fragment_program *rp)
 			/* dest.xy = mad(temp.xy, P, temp2.wz) */
 			emit_arith(rp, PFS_OP_MAD, dest, mask & (WRITEMASK_X | WRITEMASK_Y),
 				   temp[0],
-				   swizzle(rp->const_sin[0], W, W, W, W),
+				   swizzle(const_sin[0], W, W, W, W),
 				   swizzle(temp[1], W, Z, Y, X),
 				   flags);
 
@@ -1895,7 +1890,8 @@ static GLboolean parse_program(struct r300_fragment_program *rp)
 			 */
 
 			temp[0] = get_temp_reg(rp);
-			make_sin_const(rp);
+			const_sin[0] = emit_const4fv(rp, SinCosConsts[0]);
+			const_sin[1] = emit_const4fv(rp, SinCosConsts[1]);
 			src[0] = t_scalar_src(rp, fpi->SrcReg[0]);
 
 
@@ -1903,7 +1899,7 @@ static GLboolean parse_program(struct r300_fragment_program *rp)
 
 			emit_arith(rp, PFS_OP_MAD, temp[0], WRITEMASK_X,
 				   swizzle(keep(src[0]), X, X, X, X),
-				   swizzle(rp->const_sin[1], Z, Z, Z, Z),
+				   swizzle(const_sin[1], Z, Z, Z, Z),
 				   pfs_half,
 				   0);
 
@@ -1915,15 +1911,15 @@ static GLboolean parse_program(struct r300_fragment_program *rp)
 
 			emit_arith(rp, PFS_OP_MAD, temp[0], WRITEMASK_Z,
 				   swizzle(temp[0], X, X, X, X),
-				   swizzle(rp->const_sin[1], W, W, W, W), //2*PI
-				   negate(swizzle(rp->const_sin[0], Z, Z, Z, Z)), //PI
+				   swizzle(const_sin[1], W, W, W, W), //2*PI
+				   negate(swizzle(const_sin[0], Z, Z, Z, Z)), //PI
 				   0);
 
 			/* SIN */
 
 			emit_arith(rp, PFS_OP_MAD, temp[0], WRITEMASK_X | WRITEMASK_Y,
 				   swizzle(temp[0], Z, Z, Z, Z),
-				   rp->const_sin[0],
+				   const_sin[0],
 				   pfs_zero,
 				   0);
 
@@ -1942,7 +1938,7 @@ static GLboolean parse_program(struct r300_fragment_program *rp)
 
 	    		emit_arith(rp, PFS_OP_MAD, dest, mask,
 				   swizzle(temp[0], Y, Y, Y, Y),
-				   swizzle(rp->const_sin[0], W, W, W, W),
+				   swizzle(const_sin[0], W, W, W, W),
 				   swizzle(temp[0], X, X, X, X),
 				   flags);
 
@@ -2124,7 +2120,6 @@ static void init_program(r300ContextPtr r300, struct r300_fragment_program *rp)
 	rp->max_temp_idx = 0;
 	rp->node[0].alu_end = -1;
 	rp->node[0].tex_end = -1;
-	rp->const_sin[0] = -1;
 
 	_mesa_memset(cs, 0, sizeof(*rp->cs));
 	for (i=0;i<PFS_MAX_ALU_INST;i++) {

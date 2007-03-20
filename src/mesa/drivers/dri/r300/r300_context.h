@@ -779,9 +779,6 @@ struct r300_fragment_program {
 
 	int max_temp_idx;
 
-	/* the index of the sin constant is stored here */
-	GLint const_sin[2];
-
 	GLuint optimization;
 };
 
