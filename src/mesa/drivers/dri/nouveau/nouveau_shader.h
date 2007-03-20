@@ -51,6 +51,7 @@ typedef struct _nouveauShader {
    nvsFunc *func;
 
    /* State of the final program */
+   GLboolean error;
    GLboolean translated;
    GLboolean on_hardware;
    unsigned int *program;
@@ -423,6 +424,12 @@ nvsSwizzle(nvsRegister reg, nvsSwzComp x, nvsSwzComp y,
       reg.swizzle[i] = oc[sc[i]];
    return reg;
 }
+
+#define nvsProgramError(nvs,fmt,args...) do {                           \
+	fprintf(stderr, "nvsProgramError (%s): "fmt, __func__, ##args); \
+	(nvs)->error = GL_TRUE;                                         \
+	(nvs)->translated = GL_FALSE;                                   \
+} while(0)
 
 extern GLboolean nvsUpdateShader(GLcontext *ctx, nouveauShader *nvs);
 extern void nvsDisasmHWShader(nvsPtr);

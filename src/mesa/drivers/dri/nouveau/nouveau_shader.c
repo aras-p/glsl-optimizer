@@ -96,7 +96,9 @@ nouveauProgramStringNotify(GLcontext *ctx, GLenum target,
 
    if (nvs->translated)
       FREE(nvs->program);
-   nvs->translated = 0;
+
+   nvs->error      = GL_FALSE;
+   nvs->translated = GL_FALSE;
 
    _tnl_program_string(ctx, target, prog);
 }
