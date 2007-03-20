@@ -124,7 +124,7 @@ nouveau_notifier_wait_status(nouveau_notifier *notifier, GLuint id,
 	while (time <= timeout) {
 		if (n[NV_NOTIFY_STATE/4] & NV_NOTIFY_STATE_ERROR_CODE_MASK) {
 			MESSAGE("Notifier returned error: 0x%04x\n",
-					n[NV_NOTIFY_STATE] &
+					n[NV_NOTIFY_STATE/4] &
 					NV_NOTIFY_STATE_ERROR_CODE_MASK);
 			return GL_FALSE;
 		}

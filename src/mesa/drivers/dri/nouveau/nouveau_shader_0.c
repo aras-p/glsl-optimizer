@@ -924,7 +924,7 @@ pass0_rebase_mesa_consts(nouveauShader *nvs)
 	}
 }
 
-static void
+static GLboolean
 pass0_resolve_mesa_consts(nouveauShader *nvs)
 {
 	struct pass0_rec *rec = nvs->pass_rec;
@@ -945,6 +945,11 @@ pass0_resolve_mesa_consts(nouveauShader *nvs)
 	for (i=0; i<plist->NumParameters; i++) {
 		int hw = rec->mesa_const_base + i;
 
+		if (hw > NVS_MAX_CONSTS) {
+			nvsProgramError(nvs, "hw = %d > NVS_MAX_CONSTS!\n", hw);
+			return GL_FALSE;
+		}
+
 		switch (plist->Parameters[i].Type) {
 		case PROGRAM_NAMED_PARAM:
 		case PROGRAM_STATE_VAR:
@@ -958,10 +963,13 @@ pass0_resolve_mesa_consts(nouveauShader *nvs)
 			COPY_4V(nvs->params[hw].val, plist->ParameterValues[i]);
 			break;
 		default:
-			assert(0);
-			break;
+			nvsProgramError(nvs, "hit bad type=%d on param %d\n",
+					plist->Parameters[i].Type, i);
+			return GL_FALSE;
 		}
 	}
+
+	return GL_TRUE;
 }
 
 GLboolean
@@ -973,6 +981,16 @@ nouveau_shader_pass0(GLcontext *ctx, nouveauShader *nvs)
 	struct gl_fragment_program *fp    = (struct gl_fragment_program *)prog;
 	struct pass0_rec *rec;
 	int ret = GL_FALSE;
+
+	NVSDBG("start: nvs=%p\n", nvs);
+
+	/* Previously detected an error, and haven't recieved new program
+	 * string, so fail immediately.
+	 */
+	if (nvs->error) {
+		NVSDBG("failed previous compile attempt, not retrying\n");
+		return GL_FALSE;
+	}
 
 	rec = CALLOC_STRUCT(pass0_rec);
 	if (!rec)
@@ -1018,7 +1036,8 @@ nouveau_shader_pass0(GLcontext *ctx, nouveauShader *nvs)
 
 	ret = pass0_translate_instructions(nvs, 0, 0, nvs->program_tree);
 	if (ret)
-		pass0_resolve_mesa_consts(nvs);
+		ret = pass0_resolve_mesa_consts(nvs);	
+	
 	/*XXX: if (!ret) DESTROY TREE!!! */
 
 	FREE(rec);
