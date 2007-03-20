@@ -974,6 +974,8 @@ nouveau_shader_pass0(GLcontext *ctx, nouveauShader *nvs)
 	struct pass0_rec *rec;
 	int ret = GL_FALSE;
 
+	NVSDBG("start: nvs=%p\n", nvs);
+
 	rec = CALLOC_STRUCT(pass0_rec);
 	if (!rec)
 		return GL_FALSE;

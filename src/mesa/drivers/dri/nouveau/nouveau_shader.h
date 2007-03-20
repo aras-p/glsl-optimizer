@@ -4,6 +4,12 @@
 #include "mtypes.h"
 #include "bufferobj.h"
 
+#define NVSDBG(fmt, args...) do {                             \
+	if (NOUVEAU_DEBUG & DEBUG_SHADERS) {                  \
+		fprintf(stderr, "%s: "fmt, __func__, ##args); \
+	}                                                     \
+} while(0)
+
 typedef struct _nvsFunc nvsFunc;
 
 #define NVS_MAX_TEMPS   32
