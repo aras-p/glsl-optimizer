@@ -78,6 +78,35 @@ is_sampler_type(const slang_fully_specified_type *t)
 }
 
 
+/**
+ * Return the offset (in floats or ints) of the named field within
+ * the given struct.  Return -1 if field not found.
+ * If field is NULL, return the size of the struct instead.
+ */
+static GLint
+_slang_field_offset(const slang_type_specifier *spec, slang_atom field)
+{
+   GLint offset = 0;
+   GLuint i;
+   for (i = 0; i < spec->_struct->fields->num_variables; i++) {
+      const slang_variable *v = spec->_struct->fields->variables[i];
+      const GLuint sz = _slang_sizeof_type_specifier(&v->type.specifier);
+      if (sz > 1) {
+         /* types larger than 1 float are register (4-float) aligned */
+         offset = (offset + 3) & ~3;
+      }
+      if (field && v->a_name == field) {
+         return offset;
+      }
+      offset += sz;
+   }
+   if (field)
+      return -1; /* field not found */
+   else
+      return offset;  /* struct size */
+}
+
+
 GLuint
 _slang_sizeof_type_specifier(const slang_type_specifier *spec)
 {
@@ -122,20 +151,9 @@ _slang_sizeof_type_specifier(const slang_type_specifier *spec)
    case SLANG_SPEC_SAMPLER2DSHADOW:
    case SLANG_SPEC_SAMPLER2DRECT:
    case SLANG_SPEC_SAMPLER2DRECTSHADOW:
-      return 1; /* special case */
+      return 1; /* a sampler is basically just an integer index */
    case SLANG_SPEC_STRUCT:
-      {
-         GLuint sum = 0, i;
-         for (i = 0; i < spec->_struct->fields->num_variables; i++) {
-            slang_variable *v = spec->_struct->fields->variables[i];
-            GLuint sz = _slang_sizeof_type_specifier(&v->type.specifier);
-            /* XXX verify padding */
-            if (sz < 4)
-               sz = 4;
-            sum += sz;
-         }
-         return sum;
-      }
+      return _slang_field_offset(spec, 0); /* special use */
    case SLANG_SPEC_ARRAY:
       return _slang_sizeof_type_specifier(spec->_array);
    default:
@@ -2034,6 +2052,7 @@ _slang_gen_field(slang_assemble_ctx * A, slang_operation *oper)
 {
    slang_typeinfo ti;
 
+   /* type of struct */
    slang_typeinfo_construct(&ti);
    _slang_typeof_operation(A, &oper->children[0], &ti);
 
@@ -2079,20 +2098,38 @@ _slang_gen_field(slang_assemble_ctx * A, slang_operation *oper)
       /* oper->children[0] is the base */
       /* oper->a_id is the field name */
       slang_ir_node *base, *n;
-      GLint size = 4; /* XXX fix? */
+      slang_typeinfo field_ti;
+      GLint fieldSize, fieldOffset;
+      /* type of field */
+      slang_typeinfo_construct(&field_ti);
+      _slang_typeof_operation(A, oper, &field_ti);
+
+      fieldSize = _slang_sizeof_type_specifier(&field_ti.spec);
+      fieldOffset = _slang_field_offset(&ti.spec, oper->a_id);
+
+      if (fieldOffset < 0) {
+         slang_info_log_error(A->log,
+                              "\"%s\" is not a member of struct \"%s\"",
+                              (char *) oper->a_id,
+                              (char *) ti.spec._struct->a_name);
+         return NULL;
+      }
+      assert(fieldSize >= 0);
 
       base = _slang_gen_operation(A, &oper->children[0]);
       if (!base) {
-         /* error previously found */
+         /* error msg should have already been logged */
          return NULL;
       }
 
       n = new_node1(IR_FIELD, base);
       if (n) {
          n->Field = (char *) oper->a_id;
+         n->FieldOffset = fieldOffset;
+         assert(n->FieldOffset >= 0);
          n->Store = _slang_new_ir_storage(base->Store->File,
                                           base->Store->Index,
-                                          size);
+                                          fieldSize);
       }
       return n;
 

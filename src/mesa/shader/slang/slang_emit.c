@@ -771,6 +771,53 @@ emit_arith(slang_emit_info *emitInfo, slang_ir_node *n)
 
 
 /**
+ * Emit code for == and != operators.  These could normally be handled
+ * by emit_arith() except we need to be able to handle structure comparisons.
+ */
+static struct prog_instruction *
+emit_compare(slang_emit_info *emitInfo, slang_ir_node *n)
+{
+   struct prog_instruction *inst;
+
+   assert(n->Opcode == IR_SEQUAL || n->Opcode == IR_SNEQUAL);
+
+   /* gen code for children */
+   emit(emitInfo, n->Children[0]);
+   emit(emitInfo, n->Children[1]);
+
+   assert(n->Children[0]->Store->Size == n->Children[1]->Store->Size);
+
+   /* gen this instruction and src registers */
+   inst = new_instruction(emitInfo,
+                          (n->Opcode == IR_SEQUAL) ? OPCODE_SEQ : OPCODE_SNE);
+   if (n->Children[0]->Store->Size > 4) {
+      /* struct compare */
+      _mesa_problem(NULL, "struct compare not implemented!");
+      return NULL;
+   }
+   else {
+      /* small/simple types */
+      storage_to_src_reg(&inst->SrcReg[0], n->Children[0]->Store);
+      storage_to_src_reg(&inst->SrcReg[1], n->Children[1]->Store);
+   }
+
+   /* free temps */
+   free_temp_storage(emitInfo->vt, n->Children[0]);
+   free_temp_storage(emitInfo->vt, n->Children[1]);
+
+   /* result storage */
+   if (!n->Store) {
+      if (!alloc_temp_storage(emitInfo, n, 1))  /* 1 bool */
+         return NULL;
+   }
+   storage_to_dst_reg(&inst->DstReg, n->Store, n->Writemask);
+
+   return inst;
+}
+
+
+
+/**
  * Generate code for an IR_CLAMP instruction.
  */
 static struct prog_instruction *
@@ -1337,7 +1384,6 @@ emit_array_element(slang_emit_info *emitInfo, slang_ir_node *n)
       return NULL;
    }
 
-
    if (n->Children[1]->Opcode == IR_FLOAT) {
       /* Constant index */
       const GLint arrayAddr = n->Children[0]->Store->Index;
@@ -1365,7 +1411,16 @@ emit_struct_field(slang_emit_info *emitInfo, slang_ir_node *n)
       n->Store->Index = _slang_alloc_statevar(n, emitInfo->prog->Parameters);
    }
    else {
-      _mesa_problem(NULL, "structs/fields not supported yet");
+      GLint offset = n->FieldOffset / 4;
+      assert(n->Children[0]->Store->Index >= 0);
+      n->Store->Index = n->Children[0]->Store->Index + offset;
+      if (n->Store->Size == 1) {
+         GLint swz = n->FieldOffset % 4;
+         n->Store->Swizzle = MAKE_SWIZZLE4(swz, swz, swz, swz);
+      }
+      else {
+         n->Store->Swizzle = SWIZZLE_XYZW;
+      }
    }
    return NULL; /* no instruction */
 }
@@ -1427,10 +1482,10 @@ emit(slang_emit_info *emitInfo, slang_ir_node *n)
       if (emitInfo->EmitComments) {
          /* emit NOP with comment describing the variable's storage location */
          char s[1000];
-         sprintf(s, "TEMP[%d]%s = %s (size %d)",
+         sprintf(s, "TEMP[%d]%s = variable %s (size %d)",
                  n->Store->Index,
                  _mesa_swizzle_string(n->Store->Swizzle, 0, GL_FALSE), 
-                 (char *) n->Var->a_name,
+                 (n->Var ? (char *) n->Var->a_name : "anonymous"),
                  n->Store->Size);
          inst = new_instruction(emitInfo, OPCODE_NOP);
          inst->Comment = _mesa_strdup(s);
@@ -1503,8 +1558,6 @@ emit(slang_emit_info *emitInfo, slang_ir_node *n)
    case IR_CROSS:
    case IR_MIN:
    case IR_MAX:
-   case IR_SEQUAL:
-   case IR_SNEQUAL:
    case IR_SGE:
    case IR_SGT:
    case IR_SLE:
@@ -1515,6 +1568,11 @@ emit(slang_emit_info *emitInfo, slang_ir_node *n)
    /* trinary operators */
    case IR_LRP:
       return emit_arith(emitInfo, n);
+
+   case IR_SEQUAL:
+   case IR_SNEQUAL:
+      return emit_compare(emitInfo, n);
+
    case IR_CLAMP:
       return emit_clamp(emitInfo, n);
    case IR_TEX:
@@ -1600,7 +1658,7 @@ _slang_emit_code(slang_ir_node *n, slang_var_table *vt,
    emitInfo.prog = prog;
 
    emitInfo.EmitHighLevelInstructions = ctx->Shader.EmitHighLevelInstructions;
-   emitInfo.EmitComments = ctx->Shader.EmitComments;
+   emitInfo.EmitComments = 1+ctx->Shader.EmitComments;
 
    (void) emit(&emitInfo, n);
 
