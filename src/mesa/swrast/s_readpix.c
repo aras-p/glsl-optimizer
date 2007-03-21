@@ -410,6 +410,10 @@ read_rgba_pixels( GLcontext *ctx,
          = (GLubyte *) _mesa_image_address2d(packing, pixels, width, height,
                                              format, type, 0, 0);
 
+      /* make sure we don't apply 1D convolution */
+      transferOps &= ~(IMAGE_CONVOLUTION_BIT |
+                       IMAGE_POST_CONVOLUTION_SCALE_BIAS);
+
       for (row = 0; row < height; row++, y++) {
 
          /* Get float rgba pixels */
