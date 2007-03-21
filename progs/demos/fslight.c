@@ -507,7 +507,7 @@ Init(void)
 
    glUniform4fv_func(uDiffuse, 1, diffuse);
    glUniform4fv_func(uSpecular, 1, specular);
-   assert(glGetError() == 0);
+   /*   assert(glGetError() == 0);*/
    glUniform1i_func(uTexture, 2);  /* use texture unit 2 */
    /*assert(glGetError() == 0);*/
 
