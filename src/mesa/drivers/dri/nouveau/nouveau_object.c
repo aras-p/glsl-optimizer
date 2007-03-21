@@ -10,8 +10,9 @@ GLboolean nouveauCreateContextObject(nouveauContextPtr nmesa,
 	drm_nouveau_object_init_t cto;
 	int ret;
 
-	cto.handle = handle;
-	cto.class  = class;
+	cto.channel = nmesa->fifo.channel;
+	cto.handle  = handle;
+	cto.class   = class;
 	ret = drmCommandWrite(nmesa->driFd, DRM_NOUVEAU_OBJECT_INIT, &cto, sizeof(cto));
 
 	return ret == 0;
@@ -28,12 +29,13 @@ GLboolean nouveauCreateDmaObject(nouveauContextPtr nmesa,
 	drm_nouveau_dma_object_init_t dma;
 	int ret;
 
-	dma.class  = class;
-	dma.handle = handle;
-	dma.target = target;
-	dma.access = access;
-	dma.offset = offset;
-	dma.size   = size;
+	dma.channel = nmesa->fifo.channel;
+	dma.class   = class;
+	dma.handle  = handle;
+	dma.target  = target;
+	dma.access  = access;
+	dma.offset  = offset;
+	dma.size    = size;
 	ret = drmCommandWriteRead(nmesa->driFd, DRM_NOUVEAU_DMA_OBJECT_INIT,
 				  &dma, sizeof(dma));
 	return ret == 0;

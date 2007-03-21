@@ -1211,24 +1211,15 @@ _mesa_pack_rgba_span_float(GLcontext *ctx, GLuint n, GLfloat rgba[][4],
 
    if (dstFormat == GL_LUMINANCE || dstFormat == GL_LUMINANCE_ALPHA) {
       /* compute luminance values */
-      if (transferOps & IMAGE_RED_TO_LUMINANCE) {
-         /* Luminance = Red (glGetTexImage) */
+      if (dstType != GL_FLOAT || ctx->Color.ClampReadColor == GL_TRUE) {
          for (i = 0; i < n; i++) {
-            luminance[i] = rgba[i][RCOMP];
+            GLfloat sum = rgba[i][RCOMP] + rgba[i][GCOMP] + rgba[i][BCOMP];
+            luminance[i] = CLAMP(sum, 0.0F, 1.0F);
          }
       }
       else {
-         /* Luminance = Red + Green + Blue (glReadPixels) */
-         if (dstType != GL_FLOAT || ctx->Color.ClampReadColor == GL_TRUE) {
-            for (i = 0; i < n; i++) {
-               GLfloat sum = rgba[i][RCOMP] + rgba[i][GCOMP] + rgba[i][BCOMP];
-               luminance[i] = CLAMP(sum, 0.0F, 1.0F);
-            }
-         }
-         else {
-            for (i = 0; i < n; i++) {
-               luminance[i] = rgba[i][RCOMP] + rgba[i][GCOMP] + rgba[i][BCOMP];
-            }
+         for (i = 0; i < n; i++) {
+            luminance[i] = rgba[i][RCOMP] + rgba[i][GCOMP] + rgba[i][BCOMP];
          }
       }
    }

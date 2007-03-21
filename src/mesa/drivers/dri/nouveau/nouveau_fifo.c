@@ -124,6 +124,7 @@ GLboolean nouveauFifoInit(nouveauContextPtr nmesa)
 	}
 
 	/* Setup our initial FIFO tracking params */
+	nmesa->fifo.channel  = fifo_init.channel;
 	nmesa->fifo.put_base = fifo_init.put_base;
 	nmesa->fifo.current  = 0;
 	nmesa->fifo.put      = 0;

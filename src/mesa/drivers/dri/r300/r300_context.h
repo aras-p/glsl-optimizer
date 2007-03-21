@@ -71,7 +71,7 @@ typedef struct r300_context *r300ContextPtr;
 /* Checkpoint.. for convenience */
 #define CPT	{ fprintf(stderr, "%s:%s line %d\n", __FILE__, __FUNCTION__, __LINE__); }
 /* From http://gcc.gnu.org/onlinedocs/gcc-3.2.3/gcc/Variadic-Macros.html .
-   I suppose we could inline this and use macro to fetch out __LINE__ and stuff in case we run into trouble 
+   I suppose we could inline this and use macro to fetch out __LINE__ and stuff in case we run into trouble
    with other compilers ... GLUE!
 */
 #if 1
@@ -548,7 +548,7 @@ struct r300_stencilbuffer_state {
 /* Perhaps more if we store programs in vmem? */
 /* drm_r300_cmd_header_t->vpu->count is unsigned char */
 #define VSF_MAX_FRAGMENT_LENGTH (255*4)
-	
+
 /* Can be tested with colormat currently. */
 #define VSF_MAX_FRAGMENT_TEMPS (14)
 
@@ -593,7 +593,7 @@ struct r300_vertex_shader_state {
 	int unknown_ptr2;  /* pointer within program space */
 	int unknown_ptr3;  /* pointer within program space */
 	};
-	
+
 extern int hw_tcl_on;
 
 //#define CURRENT_VERTEX_SHADER(ctx) (ctx->VertexProgram._Current)
@@ -602,16 +602,16 @@ extern int hw_tcl_on;
 /* Should but doesnt work */
 //#define CURRENT_VERTEX_SHADER(ctx) (R300_CONTEXT(ctx)->curr_vp)
 
-//#define TMU_ENABLED(ctx, unit) (hw_tcl_on ? ctx->Texture.Unit[unit]._ReallyEnabled && (OutputsWritten & (1<<(VERT_RESULT_TEX0+(unit)))) : 
+//#define TMU_ENABLED(ctx, unit) (hw_tcl_on ? ctx->Texture.Unit[unit]._ReallyEnabled && (OutputsWritten & (1<<(VERT_RESULT_TEX0+(unit)))) :
 //	(r300->state.render_inputs & (_TNL_BIT_TEX0<<(unit))))
-//#define TMU_ENABLED(ctx, unit) (hw_tcl_on ? ctx->Texture.Unit[unit]._ReallyEnabled && OutputsWritten & (1<<(VERT_RESULT_TEX0+(unit))) : 
+//#define TMU_ENABLED(ctx, unit) (hw_tcl_on ? ctx->Texture.Unit[unit]._ReallyEnabled && OutputsWritten & (1<<(VERT_RESULT_TEX0+(unit))) :
 //	ctx->Texture.Unit[unit]._ReallyEnabled && r300->state.render_inputs & (_TNL_BIT_TEX0<<(unit)))
 
 #define TMU_ENABLED(ctx, unit) (ctx->Texture.Unit[unit]._ReallyEnabled)
 
 /* r300_vertex_shader_state and r300_vertex_program should probably be merged together someday.
  * Keeping them them seperate for now should ensure fixed pipeline keeps functioning properly.
- */	
+ */
 
 struct r300_vertex_program_key {
 	GLuint InputsRead;
@@ -622,9 +622,9 @@ struct r300_vertex_program {
 	struct r300_vertex_program *next;
 	struct r300_vertex_program_key key;
 	int translated;
-	
+
 	struct r300_vertex_shader_fragment program;
-	
+
 	int pos_end;
 	int num_temporaries; /* Number of temp vars used by program */
 	int wpos_idx;
@@ -662,19 +662,19 @@ struct reg_lifetime {
 	   This is -1 if the register has been assigned to a Mesa register
 	   and the last access to the register has not yet been emitted */
 	int free;
-	
+
 	/* Index of the first slot where this register is currently reserved.
 	   This is used to stop e.g. a scalar operation from being moved
 	   before the allocation time of a register that was first allocated
 	   for a vector operation. */
 	int reserved;
-	
+
 	/* Index of the first slot in which the register can be used as a
 	   source without losing the value that is written by the last
 	   emitted instruction that writes to the register */
 	int vector_valid;
 	int scalar_valid;
-	
+
 	/* Index to the slot where the register was last read.
 	   This is also the first slot in which the register may be written again */
 	int vector_lastread;
@@ -694,7 +694,7 @@ struct reg_lifetime {
 #define SLOT_OP_BOTH     (SLOT_OP_VECTOR | SLOT_OP_SCALAR)
 
 struct r300_pfs_compile_slot {
-	/* Bitmask indicating which parts of the slot are used, using SLOT_ constants 
+	/* Bitmask indicating which parts of the slot are used, using SLOT_ constants
 	   defined above */
 	unsigned int used;
 
@@ -708,18 +708,18 @@ struct r300_pfs_compile_slot {
  */
 struct r300_pfs_compile_state {
 	int nrslots;       /* number of ALU slots used so far */
-	
+
 	/* Track which (parts of) slots are already filled with instructions */
 	struct r300_pfs_compile_slot slot[PFS_MAX_ALU_INST];
-	
+
 	/* Track the validity of R300 temporaries */
 	struct reg_lifetime hwtemps[PFS_NUM_TEMP_REGS];
-	
+
 	/* Used to map Mesa's inputs/temps onto hardware temps */
 	int temp_in_use;
 	struct reg_acc temps[PFS_NUM_TEMP_REGS];
 	struct reg_acc inputs[32]; /* don't actually need 32... */
-	
+
 	/* Track usage of hardware temps, for register allocation,
 	 * indirection detection, etc. */
 	GLuint used_in_node;
@@ -779,9 +779,6 @@ struct r300_fragment_program {
 
 	int max_temp_idx;
 
-	/* the index of the sin constant is stored here */
-	GLint const_sin[2];
-
 	GLuint optimization;
 };
 
@@ -808,10 +805,10 @@ struct radeon_vertex_buffer {
 	void *Elts;
 	int elt_size;
 	int elt_min, elt_max; /* debug */
-	
+
 	struct dt AttribPtr[VERT_ATTRIB_MAX];
-	
-	const struct _mesa_prim  *Primitive;	              
+
+	const struct _mesa_prim  *Primitive;
 	GLuint      PrimitiveCount;
 	GLint LockFirst;
 	GLsizei LockCount;
@@ -843,16 +840,16 @@ struct r300_state {
 
 	GLuint *Elts;
 	struct r300_dma_region elt_dma;
-	
-	DECLARE_RENDERINPUTS(render_inputs_bitset); /* actual render inputs that R300 was configured for. 
-				 They are the same as tnl->render_inputs for fixed pipeline */	
-	
+
+	DECLARE_RENDERINPUTS(render_inputs_bitset); /* actual render inputs that R300 was configured for.
+				 They are the same as tnl->render_inputs for fixed pipeline */
+
 	struct {
 		int transform_offset;  /* Transform matrix offset, -1 if none */
 		} vap_param;  /* vertex processor parameter allocation - tells where to write parameters */
-	
+
 	struct r300_stencilbuffer_state stencil;
-	
+
 };
 
 #define R300_FALLBACK_NONE 0
@@ -904,7 +901,7 @@ struct r300_buffer_object {
 	struct gl_buffer_object mesa_obj;
 	int id;
 };
-		
+
 #define R300_CONTEXT(ctx)		((r300ContextPtr)(ctx->DriverCtx))
 
 static __inline GLuint r300PackColor( GLuint cpp,

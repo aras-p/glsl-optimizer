@@ -3630,7 +3630,7 @@ _mesa_get_teximage(GLcontext *ctx, GLenum target, GLint level,
                }
                _mesa_pack_rgba_span_float(ctx, width, (GLfloat (*)[4]) rgba,
                                           format, type, dest,
-                                          &ctx->Pack, IMAGE_RED_TO_LUMINANCE);
+                                          &ctx->Pack, 0x0 /*image xfer ops*/);
             } /* format */
          } /* row */
       } /* img */
