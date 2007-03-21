@@ -483,6 +483,12 @@ xmesa_free_buffer(XMesaBuffer buffer)
 
          /* mark as delete pending */
          fb->DeletePending = GL_TRUE;
+
+         /* Since the X window for the XMesaBuffer is going away, we don't
+          * want to dereference this pointer in the future.
+          */
+         b->frontxrb->drawable = 0;
+
          /* Unreference.  If count = zero we'll really delete the buffer */
          _mesa_unreference_framebuffer(&fb);
 
@@ -1836,16 +1842,18 @@ XMesaDestroyBuffer(XMesaBuffer b)
  *  1. the first time a buffer is bound to a context.
  *  2. from glViewport to poll for window size changes
  *  3. from the XMesaResizeBuffers() API function.
+ * Note: it's possible (and legal) for xmctx to be NULL.  That can happen
+ * when resizing a buffer when no rendering context is bound.
  */
 void
 xmesa_check_and_update_buffer_size(XMesaContext xmctx, XMesaBuffer drawBuffer)
 {
    GLuint width, height;
-   xmesa_get_window_size(xmctx->display, drawBuffer, &width, &height);
+   xmesa_get_window_size(drawBuffer->display, drawBuffer, &width, &height);
    if (drawBuffer->mesa_buffer.Width != width ||
        drawBuffer->mesa_buffer.Height != height) {
-      _mesa_resize_framebuffer(&(xmctx->mesa),
-                               &(drawBuffer->mesa_buffer), width, height);
+      GLcontext *ctx = xmctx ? &xmctx->mesa : NULL;
+      _mesa_resize_framebuffer(ctx, &(drawBuffer->mesa_buffer), width, height);
    }
    drawBuffer->mesa_buffer.Initialized = GL_TRUE; /* XXX TEMPORARY? */
 }
@@ -2169,7 +2177,7 @@ void XMesaSwapBuffers( XMesaBuffer b )
       }
 #endif
      if (b->backxrb->ximage) {
-	 /* Copy Ximage from host's memory to server's window */
+	 /* Copy Ximage (back buf) from client memory to server window */
 #if defined(USE_XSHM) && !defined(XFree86Server)
 	 if (b->shm) {
             /*_glthread_LOCK_MUTEX(_xmesa_lock);*/
@@ -2191,8 +2199,8 @@ void XMesaSwapBuffers( XMesaBuffer b )
             /*_glthread_UNLOCK_MUTEX(_xmesa_lock);*/
          }
       }
-      else {
-	 /* Copy pixmap to window on server */
+      else if (b->backxrb->pixmap) {
+	 /* Copy pixmap (back buf) to window (front buf) on server */
          /*_glthread_LOCK_MUTEX(_xmesa_lock);*/
 	 XMesaCopyArea( b->xm_visual->display,
 			b->backxrb->pixmap,   /* source drawable */
@@ -2493,6 +2501,8 @@ XMesaResizeBuffers( XMesaBuffer b )
 {
    GET_CURRENT_CONTEXT(ctx);
    XMesaContext xmctx = XMESA_CONTEXT(ctx);
+   if (!xmctx)
+      return;
    xmesa_check_and_update_buffer_size(xmctx, b);
 }
 

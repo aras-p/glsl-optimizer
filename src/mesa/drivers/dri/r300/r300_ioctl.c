@@ -162,11 +162,11 @@ static void r300ClearBuffer(r300ContextPtr r300, int flags, int buffer)
 	cmd2[8].u = r300PackFloat32(ctx->Color.ClearColor[3]);
 
 	reg_start(R300_RB3D_DSTCACHE_CTLSTAT,0);
-	e32(0x0000000a);
+	e32(R300_RB3D_DSTCACHE_UNKNOWN_0A);
 	  
 
-	reg_start(0x4f18,0);
-	e32(0x00000003);
+	reg_start(R300_RB3D_ZCACHE_CTLSTAT,0);
+	e32(R300_RB3D_ZCACHE_UNKNOWN_03);
 	cp_wait(rmesa, R300_WAIT_3D | R300_WAIT_3D_CLEAN);
 }
 
@@ -389,7 +389,7 @@ void r300Flush(GLcontext * ctx)
 #ifdef USER_BUFFERS
 #include "radeon_mm.h"
 
-void r300RefillCurrentDmaRegion(r300ContextPtr rmesa, int size)
+static void r300RefillCurrentDmaRegion(r300ContextPtr rmesa, int size)
 {
 	struct r300_dma_buffer *dmabuf;
 	size = MAX2(size, RADEON_BUFFER_SIZE*16);
@@ -503,7 +503,7 @@ void r300AllocDmaRegion(r300ContextPtr rmesa,
 }
 
 #else
-void r300RefillCurrentDmaRegion(r300ContextPtr rmesa)
+static void r300RefillCurrentDmaRegion(r300ContextPtr rmesa)
 {
 	struct r300_dma_buffer *dmabuf;
 	int fd = rmesa->radeon.dri.fd;

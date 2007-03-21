@@ -3608,10 +3608,29 @@ _mesa_get_teximage(GLcontext *ctx, GLenum target, GLint level,
                GLint col;
                for (col = 0; col < width; col++) {
                   (*texImage->FetchTexelf)(texImage, col, row, img, rgba[col]);
+                  if (texImage->TexFormat->BaseFormat == GL_ALPHA) {
+                     rgba[col][RCOMP] = 0.0;
+                     rgba[col][GCOMP] = 0.0;
+                     rgba[col][BCOMP] = 0.0;
+                  }
+                  else if (texImage->TexFormat->BaseFormat == GL_LUMINANCE) {
+                     rgba[col][GCOMP] = 0.0;
+                     rgba[col][BCOMP] = 0.0;
+                     rgba[col][ACOMP] = 1.0;
+                  }
+                  else if (texImage->TexFormat->BaseFormat == GL_LUMINANCE_ALPHA) {
+                     rgba[col][GCOMP] = 0.0;
+                     rgba[col][BCOMP] = 0.0;
+                  }
+                  else if (texImage->TexFormat->BaseFormat == GL_INTENSITY) {
+                     rgba[col][GCOMP] = 0.0;
+                     rgba[col][BCOMP] = 0.0;
+                     rgba[col][ACOMP] = 1.0;
+                  }
                }
                _mesa_pack_rgba_span_float(ctx, width, (GLfloat (*)[4]) rgba,
                                           format, type, dest,
-                                          &ctx->Pack, IMAGE_RED_TO_LUMINANCE);
+                                          &ctx->Pack, 0x0 /*image xfer ops*/);
             } /* format */
          } /* row */
       } /* img */

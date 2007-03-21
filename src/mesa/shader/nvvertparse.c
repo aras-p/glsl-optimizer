@@ -684,13 +684,13 @@ Parse_SwizzleSrcReg(struct parse_state *parseState, struct prog_src_register *sr
       if (token[1] == 0) {
          /* single letter swizzle */
          if (token[0] == 'x')
-            srcReg->Swizzle = MAKE_SWIZZLE4(0, 0, 0, 0);
+            srcReg->Swizzle = SWIZZLE_XXXX;
          else if (token[0] == 'y')
-            srcReg->Swizzle = MAKE_SWIZZLE4(1, 1, 1, 1);
+            srcReg->Swizzle = SWIZZLE_YYYY;
          else if (token[0] == 'z')
-            srcReg->Swizzle = MAKE_SWIZZLE4(2, 2, 2, 2);
+            srcReg->Swizzle = SWIZZLE_ZZZZ;
          else if (token[0] == 'w')
-            srcReg->Swizzle = MAKE_SWIZZLE4(3, 3, 3, 3);
+            srcReg->Swizzle = SWIZZLE_WWWW;
          else
             RETURN_ERROR1("Expected x, y, z, or w");
       }

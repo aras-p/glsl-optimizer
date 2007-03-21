@@ -497,6 +497,7 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 /* Zero to flush caches. */
 #define R300_TX_CNTL                        0x4100
+#define R300_TX_FLUSH                       0x0
 
 /* The upper enable bits are guessed, based on fglrx reported limits. */
 #define R300_TX_ENABLE                      0x4104
@@ -571,6 +572,7 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
  * Some of the tests indicate that fgl has a fallback implementation of zbias
  * via pixel shaders.
  */
+#define R300_RE_ZBIAS_CNTL                    0x42A0 /* GUESS */
 #define R300_RE_ZBIAS_T_FACTOR                0x42A4
 #define R300_RE_ZBIAS_T_CONSTANT              0x42A8
 #define R300_RE_ZBIAS_W_FACTOR                0x42AC
@@ -1045,7 +1047,7 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
  * WRT swizzling. If, for example, you want to load an R component into an
  * Alpha operand, this R component is taken from a *color* source, not from
  * an alpha source. The corresponding register doesn't even have to appear in
- * the alpha sources list. (I hope this alll makes sense to you)
+ * the alpha sources list. (I hope this all makes sense to you)
  *
  * Destination selection
  * The destination register index is in FPI1 (color) and FPI3 (alpha)
@@ -1072,6 +1074,7 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #       define R300_FPI1_SRC2C_SHIFT             12
 #       define R300_FPI1_SRC2C_MASK              (31 << 12)
 #       define R300_FPI1_SRC2C_CONST             (1 << 17)
+#       define R300_FPI1_SRC_MASK                0x0003ffff
 #       define R300_FPI1_DSTC_SHIFT              18
 #       define R300_FPI1_DSTC_MASK               (31 << 18)
 #		define R300_FPI1_DSTC_REG_MASK_SHIFT     23
@@ -1093,6 +1096,7 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #       define R300_FPI3_SRC2A_SHIFT             12
 #       define R300_FPI3_SRC2A_MASK              (31 << 12)
 #       define R300_FPI3_SRC2A_CONST             (1 << 17)
+#       define R300_FPI3_SRC_MASK                0x0003ffff
 #       define R300_FPI3_DSTA_SHIFT              18
 #       define R300_FPI3_DSTA_MASK               (31 << 18)
 #       define R300_FPI3_DSTA_REG                (1 << 23)
@@ -1322,8 +1326,8 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
  * Set to 0A before 3D operations, set to 02 afterwards.
  */
 #define R300_RB3D_DSTCACHE_CTLSTAT          0x4E4C
-#       define R300_RB3D_DSTCACHE_02             0x00000002
-#       define R300_RB3D_DSTCACHE_0A             0x0000000A
+#       define R300_RB3D_DSTCACHE_UNKNOWN_02             0x00000002
+#       define R300_RB3D_DSTCACHE_UNKNOWN_0A             0x0000000A
 
 /* gap */
 /* There seems to be no "write only" setting, so use Z-test = ALWAYS
@@ -1391,6 +1395,12 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #define R300_RB3D_EARLY_Z                           0x4F14
 #	define R300_EARLY_Z_DISABLE              (0 << 0)
 #	define R300_EARLY_Z_ENABLE               (1 << 0)
+
+/* gap */
+
+#define R300_RB3D_ZCACHE_CTLSTAT            0x4F18 /* GUESS */
+#       define R300_RB3D_ZCACHE_UNKNOWN_01  0x1
+#       define R300_RB3D_ZCACHE_UNKNOWN_03  0x3
 
 /* gap */
 

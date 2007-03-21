@@ -45,6 +45,7 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "xmlconfig.h"
 
 typedef struct nouveau_fifo_t{
+	int channel;
 	u_int32_t* buffer;
 	u_int32_t* mmio;
 	u_int32_t put_base;

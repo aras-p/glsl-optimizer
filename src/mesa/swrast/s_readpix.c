@@ -119,7 +119,7 @@ read_depth_pixels( GLcontext *ctx,
             && !biasOrScale && !packing->SwapBytes) {
       /* Special case: directly read 24-bit unsigned depth values. */
       GLint j;
-      ASSERT(rb->InternalFormat == GL_DEPTH_COMPONENT32);
+      ASSERT(rb->InternalFormat == GL_DEPTH_COMPONENT24);
       ASSERT(rb->DataType == GL_UNSIGNED_INT);
       for (j = 0; j < height; j++, y++) {
          GLuint *dest = (GLuint *)
@@ -409,6 +409,10 @@ read_rgba_pixels( GLcontext *ctx,
       GLubyte *dst
          = (GLubyte *) _mesa_image_address2d(packing, pixels, width, height,
                                              format, type, 0, 0);
+
+      /* make sure we don't apply 1D convolution */
+      transferOps &= ~(IMAGE_CONVOLUTION_BIT |
+                       IMAGE_POST_CONVOLUTION_SCALE_BIAS);
 
       for (row = 0; row < height; row++, y++) {
 

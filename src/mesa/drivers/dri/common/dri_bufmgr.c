@@ -431,7 +431,7 @@ void
 driBOCreateList(int target, drmBOList * list)
 {
    _glthread_LOCK_MUTEX(bmMutex);
-   BM_CKFATAL(drmBOCreateList(20, list));
+   BM_CKFATAL(drmBOCreateList(target, list));
    _glthread_UNLOCK_MUTEX(bmMutex);
 }
 

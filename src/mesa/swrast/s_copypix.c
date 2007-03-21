@@ -199,7 +199,7 @@ copy_rgba_pixels(GLcontext *ctx, GLint srcx, GLint srcy,
    GLint sy, dy, stepy, row;
    const GLboolean zoom = ctx->Pixel.ZoomX != 1.0F || ctx->Pixel.ZoomY != 1.0F;
    GLint overlapping;
-   const GLuint transferOps = ctx->_ImageTransferState;
+   GLuint transferOps = ctx->_ImageTransferState;
    SWspan span;
 
    if (!ctx->ReadBuffer->_ColorReadBuffer) {
@@ -210,6 +210,11 @@ copy_rgba_pixels(GLcontext *ctx, GLint srcx, GLint srcy,
    if (ctx->Pixel.Convolution2DEnabled || ctx->Pixel.Separable2DEnabled) {
       copy_conv_rgba_pixels(ctx, srcx, srcy, width, height, destx, desty);
       return;
+   }
+   else if (ctx->Pixel.Convolution1DEnabled) {
+      /* make sure we don't apply 1D convolution */
+      transferOps &= ~(IMAGE_CONVOLUTION_BIT |
+                       IMAGE_POST_CONVOLUTION_SCALE_BIAS);
    }
 
    /* Determine if copy should be done bottom-to-top or top-to-bottom */

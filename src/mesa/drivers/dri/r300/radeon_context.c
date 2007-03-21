@@ -70,7 +70,10 @@ static const GLubyte *radeonGetString(GLcontext * ctx, GLenum name)
 
 	switch (name) {
 	case GL_VENDOR:
-		return (GLubyte *) "Tungsten Graphics, Inc.";
+		if (IS_R300_CLASS(radeon->radeonScreen))
+			return (GLubyte *) "DRI R300 Project";
+		else
+			return (GLubyte *) "Tungsten Graphics, Inc.";
 
 	case GL_RENDERER:
 	{

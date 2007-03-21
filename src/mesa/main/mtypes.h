@@ -381,6 +381,13 @@ enum {
                             BUFFER_BIT_COLOR7)
 
 
+/** The pixel transfer path has three color tables: */
+/*@{*/
+#define COLORTABLE_PRECONVOLUTION  0
+#define COLORTABLE_POSTCONVOLUTION 1
+#define COLORTABLE_POSTCOLORMATRIX 2
+#define COLORTABLE_MAX 3
+/*@}*/
 
 
 /**
@@ -661,9 +668,7 @@ struct gl_enable_attrib
    GLboolean Blend;
    GLbitfield ClipPlanes;
    GLboolean ColorMaterial;
-   GLboolean ColorTable;                /* SGI_color_table */
-   GLboolean PostColorMatrixColorTable; /* SGI_color_table */
-   GLboolean PostConvolutionColorTable; /* SGI_color_table */
+   GLboolean ColorTable[COLORTABLE_MAX];
    GLboolean Convolution1D;
    GLboolean Convolution2D;
    GLboolean Separable2D;
@@ -963,74 +968,91 @@ struct gl_multisample_attrib
 
 
 /**
+ * A pixelmap (see glPixelMap)
+ */
+struct gl_pixelmap
+{
+   GLint Size;
+   GLfloat Map[MAX_PIXEL_MAP_TABLE];
+   GLubyte Map8[MAX_PIXEL_MAP_TABLE];  /**< converted to 8-bit color */
+};
+
+
+/**
+ * Collection of all pixelmaps
+ */
+struct gl_pixelmaps
+{
+   struct gl_pixelmap RtoR;  /**< i.e. GL_PIXEL_MAP_R_TO_R */
+   struct gl_pixelmap GtoG;
+   struct gl_pixelmap BtoB;
+   struct gl_pixelmap AtoA;
+   struct gl_pixelmap ItoR;
+   struct gl_pixelmap ItoG;
+   struct gl_pixelmap ItoB;
+   struct gl_pixelmap ItoA;
+   struct gl_pixelmap ItoI;
+   struct gl_pixelmap StoS;
+};
+
+
+/**
  * Pixel attribute group (GL_PIXEL_MODE_BIT).
  */
 struct gl_pixel_attrib
 {
    GLenum ReadBuffer;		/**< source buffer for glRead/CopyPixels() */
+
+   /*--- Begin Pixel Transfer State ---*/
+   /* Fields are in the order in which they're applied... */
+
+   /* Scale & Bias (index shift, offset) */
    GLfloat RedBias, RedScale;
    GLfloat GreenBias, GreenScale;
    GLfloat BlueBias, BlueScale;
    GLfloat AlphaBias, AlphaScale;
    GLfloat DepthBias, DepthScale;
    GLint IndexShift, IndexOffset;
+
+   /* Pixel Maps */
+   /* Note: actual pixel maps are not part of this attrib group */
    GLboolean MapColorFlag;
    GLboolean MapStencilFlag;
-   GLfloat ZoomX, ZoomY;
-   /* XXX move these out of gl_pixel_attrib */
-   GLint MapStoSsize;		/**< Size of each pixel map */
-   GLint MapItoIsize;
-   GLint MapItoRsize;
-   GLint MapItoGsize;
-   GLint MapItoBsize;
-   GLint MapItoAsize;
-   GLint MapRtoRsize;
-   GLint MapGtoGsize;
-   GLint MapBtoBsize;
-   GLint MapAtoAsize;
-   GLint MapStoS[MAX_PIXEL_MAP_TABLE];	/**< Pixel map tables */
-   GLfloat MapItoI[MAX_PIXEL_MAP_TABLE];
-   GLfloat MapItoR[MAX_PIXEL_MAP_TABLE];
-   GLfloat MapItoG[MAX_PIXEL_MAP_TABLE];
-   GLfloat MapItoB[MAX_PIXEL_MAP_TABLE];
-   GLfloat MapItoA[MAX_PIXEL_MAP_TABLE];
-   GLubyte MapItoR8[MAX_PIXEL_MAP_TABLE];  /**< converted to 8-bit color */
-   GLubyte MapItoG8[MAX_PIXEL_MAP_TABLE];
-   GLubyte MapItoB8[MAX_PIXEL_MAP_TABLE];
-   GLubyte MapItoA8[MAX_PIXEL_MAP_TABLE];
-   GLfloat MapRtoR[MAX_PIXEL_MAP_TABLE];
-   GLfloat MapGtoG[MAX_PIXEL_MAP_TABLE];
-   GLfloat MapBtoB[MAX_PIXEL_MAP_TABLE];
-   GLfloat MapAtoA[MAX_PIXEL_MAP_TABLE];
-   /** GL_EXT_histogram */
-   GLboolean HistogramEnabled;
-   GLboolean MinMaxEnabled;
-   /** GL_SGI_color_matrix */
-   GLfloat PostColorMatrixScale[4];  /**< RGBA */
-   GLfloat PostColorMatrixBias[4];   /**< RGBA */
-   /** GL_SGI_color_table */
-   GLfloat ColorTableScale[4];
-   GLfloat ColorTableBias[4];
-   GLboolean ColorTableEnabled;
-   GLfloat PCCTscale[4];
-   GLfloat PCCTbias[4];
-   GLboolean PostConvolutionColorTableEnabled;
-   GLfloat PCMCTscale[4];
-   GLfloat PCMCTbias[4];
-   GLboolean PostColorMatrixColorTableEnabled;
-   /** GL_SGI_texture_color_table */
-   GLfloat TextureColorTableScale[4];
-   GLfloat TextureColorTableBias[4];
-   /** Convolution */
+
+   /* There are multiple color table stages: */
+   GLboolean ColorTableEnabled[COLORTABLE_MAX];
+   GLfloat ColorTableScale[COLORTABLE_MAX][4];  /**< RGBA */
+   GLfloat ColorTableBias[COLORTABLE_MAX][4];   /**< RGBA */
+
+   /* Convolution (GL_EXT_convolution) */
    GLboolean Convolution1DEnabled;
    GLboolean Convolution2DEnabled;
    GLboolean Separable2DEnabled;
    GLfloat ConvolutionBorderColor[3][4];
    GLenum ConvolutionBorderMode[3];
-   GLfloat ConvolutionFilterScale[3][4];
-   GLfloat ConvolutionFilterBias[3][4];
+   GLfloat ConvolutionFilterScale[3][4];  /**< RGBA */
+   GLfloat ConvolutionFilterBias[3][4];   /**< RGBA */
    GLfloat PostConvolutionScale[4];  /**< RGBA */
    GLfloat PostConvolutionBias[4];   /**< RGBA */
+
+   /* Color matrix (GL_SGI_color_matrix) */
+   /* Note: the color matrix is not part of this attrib group */
+   GLfloat PostColorMatrixScale[4];  /**< RGBA */
+   GLfloat PostColorMatrixBias[4];   /**< RGBA */
+
+   /* Histogram & minmax (GL_EXT_histogram) */
+   /* Note: histogram and minmax data are not part of this attrib group */
+   GLboolean HistogramEnabled;
+   GLboolean MinMaxEnabled;
+
+   /*--- End Pixel Transfer State ---*/
+
+   /* Pixel Zoom */
+   GLfloat ZoomX, ZoomY;
+
+   /** GL_SGI_texture_color_table */
+   GLfloat TextureColorTableScale[4];
+   GLfloat TextureColorTableBias[4];
 };
 
 
@@ -2213,7 +2235,7 @@ struct gl_renderbuffer
    GLubyte IndexBits;
    GLubyte DepthBits;
    GLubyte StencilBits;
-   GLvoid *Data;
+   GLvoid *Data;        /**< This may not be used by some kinds of RBs */
 
    /* Used to wrap one renderbuffer around another: */
    struct gl_renderbuffer *Wrapped;
@@ -2614,7 +2636,6 @@ struct gl_matrix_stack
 #define IMAGE_HISTOGRAM_BIT                       0x200
 #define IMAGE_MIN_MAX_BIT                         0x400
 #define IMAGE_CLAMP_BIT                           0x800 /* extra */
-#define IMAGE_RED_TO_LUMINANCE                    0x1000
 
 
 /** Pixel Transfer ops up to convolution */
@@ -2966,6 +2987,7 @@ struct __GLcontextRec
 
    /** \name Other assorted state (not pushed/popped on attribute stack) */
    /*@{*/
+   struct gl_pixelmaps          PixelMaps;
    struct gl_histogram_attrib	Histogram;
    struct gl_minmax_attrib	MinMax;
    struct gl_convolution_attrib Convolution1D;
@@ -2976,12 +2998,14 @@ struct __GLcontextRec
    struct gl_feedback   Feedback;  /**< Feedback */
    struct gl_selection  Select;    /**< Selection */
 
-   struct gl_color_table ColorTable;       /**< Pre-convolution */
-   struct gl_color_table ProxyColorTable;  /**< Pre-convolution */
+   struct gl_color_table ColorTable[COLORTABLE_MAX];
+   struct gl_color_table ProxyColorTable[COLORTABLE_MAX];
+#if 0
    struct gl_color_table PostConvolutionColorTable;
    struct gl_color_table ProxyPostConvolutionColorTable;
    struct gl_color_table PostColorMatrixColorTable;
    struct gl_color_table ProxyPostColorMatrixColorTable;
+#endif
 
    struct gl_program_state Program;        /**< for vertex or fragment progs */
    struct gl_vertex_program_state VertexProgram;   /**< GL_ARB/NV_vertex_program */

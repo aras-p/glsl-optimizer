@@ -1192,18 +1192,22 @@ _mesa_soft_renderbuffer_storage(GLcontext *ctx, struct gl_renderbuffer *rb,
    ASSERT(rb->PutMonoValues);
 
    /* free old buffer storage */
-   if (rb->Data)
+   if (rb->Data) {
       _mesa_free(rb->Data);
+      rb->Data = NULL;
+   }
 
-   /* allocate new buffer storage */
-   rb->Data = _mesa_malloc(width * height * pixelSize);
-   if (rb->Data == NULL) {
-      rb->Width = 0;
-      rb->Height = 0;
-      _mesa_error(ctx, GL_OUT_OF_MEMORY,
-                  "software renderbuffer allocation (%d x %d x %d)",
-                  width, height, pixelSize);
-      return GL_FALSE;
+   if (width > 0 && height > 0) {
+      /* allocate new buffer storage */
+      rb->Data = _mesa_malloc(width * height * pixelSize);
+      if (rb->Data == NULL) {
+         rb->Width = 0;
+         rb->Height = 0;
+         _mesa_error(ctx, GL_OUT_OF_MEMORY,
+                     "software renderbuffer allocation (%d x %d x %d)",
+                     width, height, pixelSize);
+         return GL_FALSE;
+      }
    }
 
    rb->Width = width;

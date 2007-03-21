@@ -29,6 +29,8 @@ TBD
 <li>New vertex buffer object infrastructure (replaces old array_cache code).
 <li>Updated glext.h file (version 39)
 <li>Updated glxext.h file (version 18)
+<li>GL_MAX_DRAWBUFFERS is now 4 (software rendering) so
+    "multiple render targets" are really supported.
 </ul>
 
 <h2>Bug fixes</h2>
@@ -37,8 +39,7 @@ TBD
 <li>glPush/PopClientAttrib didn't handle VBO bindings correctly (bug 9445)
 <li>With 32-bit Z buffer, the fragment Z of lines and points was sometimes wrong.
 <li>GL_POST_CONVOLUTION_ALPHA_BIAS/SCALE was broken.
-<li>GL_MAX_DRAWBUFFERS is now 4 (software rendering) so
-    "multiple render targets" are really supported.
+<li>1D convolution state could effect 2D image transfers
 </ul>
 
 

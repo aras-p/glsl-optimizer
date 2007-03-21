@@ -49,6 +49,7 @@
 static void
 nouveauBindProgram(GLcontext *ctx, GLenum target, struct gl_program *prog)
 {
+   NVSDBG("target=%s, prog=%p\n", _mesa_lookup_enum_by_nr(target), prog);
 }
 
 static struct gl_program *
@@ -56,7 +57,10 @@ nouveauNewProgram(GLcontext *ctx, GLenum target, GLuint id)
 {
    nouveauShader *nvs;
 
+   NVSDBG("target=%s, id=%d\n", _mesa_lookup_enum_by_nr(target), id);
+
    nvs = CALLOC_STRUCT(_nouveauShader);
+   NVSDBG("prog=%p\n", nvs);
    switch (target) {
    case GL_VERTEX_PROGRAM_ARB:
       return _mesa_init_vertex_program(ctx, &nvs->mesa.vp, target, id);
@@ -76,6 +80,8 @@ nouveauDeleteProgram(GLcontext *ctx, struct gl_program *prog)
 {
    nouveauShader *nvs = (nouveauShader *)prog;
 
+   NVSDBG("prog=%p\n", prog);
+
    if (nvs->translated)
       FREE(nvs->program);
    _mesa_delete_program(ctx, prog);
@@ -87,9 +93,13 @@ nouveauProgramStringNotify(GLcontext *ctx, GLenum target,
 {
    nouveauShader *nvs = (nouveauShader *)prog;
 
+   NVSDBG("target=%s, prog=%p\n", _mesa_lookup_enum_by_nr(target), prog);
+
    if (nvs->translated)
       FREE(nvs->program);
-   nvs->translated = 0;
+
+   nvs->error      = GL_FALSE;
+   nvs->translated = GL_FALSE;
 
    _tnl_program_string(ctx, target, prog);
 }
@@ -98,6 +108,8 @@ static GLboolean
 nouveauIsProgramNative(GLcontext * ctx, GLenum target, struct gl_program *prog)
 {
    nouveauShader *nvs = (nouveauShader *)prog;
+
+   NVSDBG("target=%s, prog=%p\n", _mesa_lookup_enum_by_nr(target), prog);
 
    return nvs->translated;
 }
@@ -108,6 +120,8 @@ nvsUpdateShader(GLcontext *ctx, nouveauShader *nvs)
    nouveauContextPtr nmesa = NOUVEAU_CONTEXT(ctx);
    struct gl_program_parameter_list *plist;
    int i;
+
+   NVSDBG("prog=%p\n", nvs);
 
    /* Translate to HW format now if necessary */
    if (!nvs->translated) {

@@ -1675,6 +1675,8 @@ void radeonSetCliprects( radeonContextPtr rmesa )
 
    if (rmesa->state.scissor.enabled)
       radeonRecalcScissorRects( rmesa );
+
+   rmesa->lastStamp = drawable->lastStamp;
 }
 
 

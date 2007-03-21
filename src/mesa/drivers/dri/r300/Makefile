@@ -39,7 +39,7 @@ DRIVER_SOURCES = \
 		 r300_texmem.c \
 		 r300_tex.c \
 		 r300_texstate.c \
-		 r300_vertexprog.c \
+		 r300_vertprog.c \
 		 r300_fragprog.c \
 		 r300_shader.c \
 		 r300_maos.c \

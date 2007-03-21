@@ -369,7 +369,7 @@ _generic_read_RGBA_span_BGRA8888_REV_SSE2:
 	movdqa	mask, %xmm1
 	movdqa	mask+16, %xmm2
  */
-	LOAD_MASK(movdqa,%xmm1,%xmm2)
+	LOAD_MASK(movdqu,%xmm1,%xmm2)
 
 	movl	12(%esp), %ebx	/* source pointer */
 	movl	20(%esp), %edx	/* number of pixels to copy */

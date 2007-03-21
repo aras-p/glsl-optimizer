@@ -210,6 +210,8 @@ nouveau_shader_pass2(nvsPtr nvs)
 	struct pass2_rec *rec;
 	int i;
 
+	NVSDBG("start: nvs=%p\n", nvs);
+
 	rec = calloc(1, sizeof(struct pass2_rec));
 	for (i=0; i<NVS_MAX_TEMPS; i++)
 		rec->temps[i] = -1;

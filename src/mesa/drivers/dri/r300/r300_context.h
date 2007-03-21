@@ -71,7 +71,7 @@ typedef struct r300_context *r300ContextPtr;
 /* Checkpoint.. for convenience */
 #define CPT	{ fprintf(stderr, "%s:%s line %d\n", __FILE__, __FUNCTION__, __LINE__); }
 /* From http://gcc.gnu.org/onlinedocs/gcc-3.2.3/gcc/Variadic-Macros.html .
-   I suppose we could inline this and use macro to fetch out __LINE__ and stuff in case we run into trouble 
+   I suppose we could inline this and use macro to fetch out __LINE__ and stuff in case we run into trouble
    with other compilers ... GLUE!
 */
 #if 1
@@ -180,6 +180,7 @@ struct r300_tex_obj {
 	/* hardware register values */
 	/* Note that R200 has 8 registers per texture and R300 only 7 */
 	GLuint filter;
+	GLuint filter_1;
 	GLuint pitch_reg;
 	GLuint size;	/* npot only */
 	GLuint format;
@@ -432,11 +433,11 @@ struct r300_hw_state {
 	int		max_state_size;	/* in dwords */
 
 	struct r300_state_atom vpt;	/* viewport (1D98) */
-	struct r300_state_atom unk2080;	/* (2080) */
+	struct r300_state_atom vap_cntl;
 	struct r300_state_atom vof;     /* VAP output format register 0x2090 */
 	struct r300_state_atom vte;	/* (20B0) */
 	struct r300_state_atom unk2134;	/* (2134) */
-	struct r300_state_atom unk2140;	/* (2140) */
+	struct r300_state_atom vap_cntl_status;
 	struct r300_state_atom vir[2];	/* vap input route (2150/21E0) */
 	struct r300_state_atom vic;	/* vap input control (2180) */
 	struct r300_state_atom unk21DC; /* (21DC) */
@@ -452,13 +453,13 @@ struct r300_hw_state {
 	struct r300_state_atom unk4230; /* (4230) */
 	struct r300_state_atom lcntl;	/* line control */
 	struct r300_state_atom unk4260; /* (4260) */
-	struct r300_state_atom unk4274; /* (4274) */
-	struct r300_state_atom unk4288; /* (4288) */
+	struct r300_state_atom shade;
+	struct r300_state_atom polygon_mode;
 	struct r300_state_atom fogp;	/* fog parameters (4294) */
 	struct r300_state_atom unk429C; /* (429C) */
-	struct r300_state_atom unk42A0;	/* (42A0) */
+	struct r300_state_atom zbias_cntl;
 	struct r300_state_atom zbs;	/* zbias (42A4) */
-	struct r300_state_atom unk42B4; /* (42B4) */
+	struct r300_state_atom occlusion_cntl;
 	struct r300_state_atom cul;	/* cull cntl (42B8) */
 	struct r300_state_atom unk42C0; /* (42C0) */
 	struct r300_state_atom rc;	/* rs control (4300) */
@@ -478,13 +479,13 @@ struct r300_hw_state {
 	struct r300_state_atom unk4E00;	/* (4E00) */
 	struct r300_state_atom bld;	/* blending (4E04) */
 	struct r300_state_atom cmk;	/* colormask (4E0C) */
-	struct r300_state_atom unk4E10;	/* constant blend color + ??? (4E10) */
+	struct r300_state_atom blend_color;	/* constant blend color */
 	struct r300_state_atom cb;	/* colorbuffer (4E28) */
 	struct r300_state_atom unk4E50;	/* (4E50) */
 	struct r300_state_atom unk4E88;	/* (4E88) */
 	struct r300_state_atom unk4EA0;	/* (4E88) I saw it only written on RV350 hardware..  */
 	struct r300_state_atom zs;	/* zstencil control (4F00) */
-	struct r300_state_atom unk4F10;	/* (4F10) */
+	struct r300_state_atom zstencil_format;
 	struct r300_state_atom zb;	/* z buffer (4F20) */
 	struct r300_state_atom unk4F28;	/* (4F28) */
 	struct r300_state_atom unk4F30;	/* (4F30) */
@@ -501,12 +502,12 @@ struct r300_hw_state {
 		   updating the whole thing at once */
 	struct {
 		struct r300_state_atom filter;
-		struct r300_state_atom unknown1;
+		struct r300_state_atom filter_1;
 		struct r300_state_atom size;
 		struct r300_state_atom format;
 		struct r300_state_atom pitch;
 		struct r300_state_atom offset;
-		struct r300_state_atom unknown4;
+		struct r300_state_atom chroma_key;
 		struct r300_state_atom border_color;
 		} tex;
 	struct r300_state_atom txe;	/* tex enable (4104) */
@@ -547,7 +548,7 @@ struct r300_stencilbuffer_state {
 /* Perhaps more if we store programs in vmem? */
 /* drm_r300_cmd_header_t->vpu->count is unsigned char */
 #define VSF_MAX_FRAGMENT_LENGTH (255*4)
-	
+
 /* Can be tested with colormat currently. */
 #define VSF_MAX_FRAGMENT_TEMPS (14)
 
@@ -592,7 +593,7 @@ struct r300_vertex_shader_state {
 	int unknown_ptr2;  /* pointer within program space */
 	int unknown_ptr3;  /* pointer within program space */
 	};
-	
+
 extern int hw_tcl_on;
 
 //#define CURRENT_VERTEX_SHADER(ctx) (ctx->VertexProgram._Current)
@@ -601,16 +602,16 @@ extern int hw_tcl_on;
 /* Should but doesnt work */
 //#define CURRENT_VERTEX_SHADER(ctx) (R300_CONTEXT(ctx)->curr_vp)
 
-//#define TMU_ENABLED(ctx, unit) (hw_tcl_on ? ctx->Texture.Unit[unit]._ReallyEnabled && (OutputsWritten & (1<<(VERT_RESULT_TEX0+(unit)))) : 
+//#define TMU_ENABLED(ctx, unit) (hw_tcl_on ? ctx->Texture.Unit[unit]._ReallyEnabled && (OutputsWritten & (1<<(VERT_RESULT_TEX0+(unit)))) :
 //	(r300->state.render_inputs & (_TNL_BIT_TEX0<<(unit))))
-//#define TMU_ENABLED(ctx, unit) (hw_tcl_on ? ctx->Texture.Unit[unit]._ReallyEnabled && OutputsWritten & (1<<(VERT_RESULT_TEX0+(unit))) : 
+//#define TMU_ENABLED(ctx, unit) (hw_tcl_on ? ctx->Texture.Unit[unit]._ReallyEnabled && OutputsWritten & (1<<(VERT_RESULT_TEX0+(unit))) :
 //	ctx->Texture.Unit[unit]._ReallyEnabled && r300->state.render_inputs & (_TNL_BIT_TEX0<<(unit)))
 
 #define TMU_ENABLED(ctx, unit) (ctx->Texture.Unit[unit]._ReallyEnabled)
 
 /* r300_vertex_shader_state and r300_vertex_program should probably be merged together someday.
  * Keeping them them seperate for now should ensure fixed pipeline keeps functioning properly.
- */	
+ */
 
 struct r300_vertex_program_key {
 	GLuint InputsRead;
@@ -621,9 +622,9 @@ struct r300_vertex_program {
 	struct r300_vertex_program *next;
 	struct r300_vertex_program_key key;
 	int translated;
-	
+
 	struct r300_vertex_shader_fragment program;
-	
+
 	int pos_end;
 	int num_temporaries; /* Number of temp vars used by program */
 	int wpos_idx;
@@ -646,38 +647,89 @@ struct r300_vertex_program_cont {
 #define PFS_NUM_TEMP_REGS	32
 #define PFS_NUM_CONST_REGS	16
 
-/* Tracking data for Mesa registers */
+/* Mapping Mesa registers to R300 temporaries */
 struct reg_acc {
        int reg;        /* Assigned hw temp */
        unsigned int refcount; /* Number of uses by mesa program */
 };
 
-struct r300_pfs_compile_state {
-       int v_pos, s_pos;       /* highest ALU slots used */
+/**
+ * Describe the current lifetime information for an R300 temporary
+ */
+struct reg_lifetime {
+	/* Index of the first slot where this register is free in the sense
+	   that it can be used as a new destination register.
+	   This is -1 if the register has been assigned to a Mesa register
+	   and the last access to the register has not yet been emitted */
+	int free;
 
-       /* Track some information gathered during opcode
-        * construction.
-        * 
-        * NOTE: Data is only set by the code, and isn't used yet.
-        */
-       struct {
-               int vsrc[3];
-               int ssrc[3];
-               int umask;
-       } slot[PFS_MAX_ALU_INST];
+	/* Index of the first slot where this register is currently reserved.
+	   This is used to stop e.g. a scalar operation from being moved
+	   before the allocation time of a register that was first allocated
+	   for a vector operation. */
+	int reserved;
 
-       /* Used to map Mesa's inputs/temps onto hardware temps */
-       int temp_in_use;
-       struct reg_acc temps[PFS_NUM_TEMP_REGS];
-       struct reg_acc inputs[32]; /* don't actually need 32... */
+	/* Index of the first slot in which the register can be used as a
+	   source without losing the value that is written by the last
+	   emitted instruction that writes to the register */
+	int vector_valid;
+	int scalar_valid;
 
-       /* Track usage of hardware temps, for register allocation,
-        * indirection detection, etc. */
-       int hwreg_in_use;
-       GLuint used_in_node;
-       GLuint dest_in_node;
+	/* Index to the slot where the register was last read.
+	   This is also the first slot in which the register may be written again */
+	int vector_lastread;
+	int scalar_lastread;
 };
 
+
+/**
+ * Store usage information about an ALU instruction slot during the
+ * compilation of a fragment program.
+ */
+#define SLOT_SRC_VECTOR  (1<<0)
+#define SLOT_SRC_SCALAR  (1<<3)
+#define SLOT_SRC_BOTH    (SLOT_SRC_VECTOR | SLOT_SRC_SCALAR)
+#define SLOT_OP_VECTOR   (1<<16)
+#define SLOT_OP_SCALAR   (1<<17)
+#define SLOT_OP_BOTH     (SLOT_OP_VECTOR | SLOT_OP_SCALAR)
+
+struct r300_pfs_compile_slot {
+	/* Bitmask indicating which parts of the slot are used, using SLOT_ constants
+	   defined above */
+	unsigned int used;
+
+	/* Selected sources */
+	int vsrc[3];
+	int ssrc[3];
+};
+
+/**
+ * Store information during compilation of fragment programs.
+ */
+struct r300_pfs_compile_state {
+	int nrslots;       /* number of ALU slots used so far */
+
+	/* Track which (parts of) slots are already filled with instructions */
+	struct r300_pfs_compile_slot slot[PFS_MAX_ALU_INST];
+
+	/* Track the validity of R300 temporaries */
+	struct reg_lifetime hwtemps[PFS_NUM_TEMP_REGS];
+
+	/* Used to map Mesa's inputs/temps onto hardware temps */
+	int temp_in_use;
+	struct reg_acc temps[PFS_NUM_TEMP_REGS];
+	struct reg_acc inputs[32]; /* don't actually need 32... */
+
+	/* Track usage of hardware temps, for register allocation,
+	 * indirection detection, etc. */
+	GLuint used_in_node;
+	GLuint dest_in_node;
+};
+
+/**
+ * Store everything about a fragment program that is needed
+ * to render with that program.
+ */
 struct r300_fragment_program {
 	struct gl_fragment_program mesa_program;
 
@@ -715,23 +767,18 @@ struct r300_fragment_program {
 	int tex_offset;
 	int tex_end;
 
-	/* Hardware constants */
-	GLfloat constant[PFS_NUM_CONST_REGS][4];
+	/* Hardware constants.
+	 * Contains a pointer to the value. The destination of the pointer
+	 * is supposed to be updated when GL state changes.
+	 * Typically, this is either a pointer into
+	 * gl_program_parameter_list::ParameterValues, or a pointer to a
+	 * global constant (e.g. for sin/cos-approximation)
+	 */
+	const GLfloat* constant[PFS_NUM_CONST_REGS];
 	int const_nr;
-
-	/* Tracked parameters */
-	struct {
-		int idx;			/* hardware index */
-		GLfloat *values;	/* pointer to values */
-	} param[PFS_NUM_CONST_REGS];
-	int param_nr;
-	GLboolean params_uptodate;
 
 	int max_temp_idx;
 
-	/* the index of the sin constant is stored here */
-	GLint const_sin[2];
-	
 	GLuint optimization;
 };
 
@@ -758,10 +805,10 @@ struct radeon_vertex_buffer {
 	void *Elts;
 	int elt_size;
 	int elt_min, elt_max; /* debug */
-	
+
 	struct dt AttribPtr[VERT_ATTRIB_MAX];
-	
-	const struct _mesa_prim  *Primitive;	              
+
+	const struct _mesa_prim  *Primitive;
 	GLuint      PrimitiveCount;
 	GLint LockFirst;
 	GLsizei LockCount;
@@ -793,16 +840,16 @@ struct r300_state {
 
 	GLuint *Elts;
 	struct r300_dma_region elt_dma;
-	
-	DECLARE_RENDERINPUTS(render_inputs_bitset); /* actual render inputs that R300 was configured for. 
-				 They are the same as tnl->render_inputs for fixed pipeline */	
-	
+
+	DECLARE_RENDERINPUTS(render_inputs_bitset); /* actual render inputs that R300 was configured for.
+				 They are the same as tnl->render_inputs for fixed pipeline */
+
 	struct {
 		int transform_offset;  /* Transform matrix offset, -1 if none */
 		} vap_param;  /* vertex processor parameter allocation - tells where to write parameters */
-	
+
 	struct r300_stencilbuffer_state stencil;
-	
+
 };
 
 #define R300_FALLBACK_NONE 0
@@ -854,7 +901,7 @@ struct r300_buffer_object {
 	struct gl_buffer_object mesa_obj;
 	int id;
 };
-		
+
 #define R300_CONTEXT(ctx)		((r300ContextPtr)(ctx->DriverCtx))
 
 static __inline GLuint r300PackColor( GLuint cpp,

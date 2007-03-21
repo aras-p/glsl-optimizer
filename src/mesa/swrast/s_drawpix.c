@@ -452,7 +452,8 @@ draw_depth_pixels( GLcontext *ctx, GLint x, GLint y,
        && !scaleOrBias
        && !zoom
        && ctx->Visual.rgbMode
-       && width <= MAX_WIDTH) {
+       && width <= MAX_WIDTH
+       && !unpack->SwapBytes) {
       /* Special case: directly write 16-bit depth values */
       GLint row;
       for (row = 0; row < height; row++) {
@@ -472,7 +473,8 @@ draw_depth_pixels( GLcontext *ctx, GLint x, GLint y,
             && !scaleOrBias
             && !zoom
             && ctx->Visual.rgbMode
-            && width <= MAX_WIDTH) {
+            && width <= MAX_WIDTH
+            && !unpack->SwapBytes) {
       /* Special case: shift 32-bit values down to Visual.depthBits */
       const GLint shift = 32 - ctx->DrawBuffer->Visual.depthBits;
       GLint row;
@@ -616,6 +618,11 @@ draw_rgba_pixels( GLcontext *ctx, GLint x, GLint y,
       format = GL_RGBA;
       type = GL_FLOAT;
       transferOps &= IMAGE_POST_CONVOLUTION_BITS;
+   }
+   else if (ctx->Pixel.Convolution1DEnabled) {
+      /* we only want to apply 1D convolution to glTexImage1D */
+      transferOps &= ~(IMAGE_CONVOLUTION_BIT |
+                       IMAGE_POST_CONVOLUTION_SCALE_BIAS);
    }
 
    if (ctx->DrawBuffer->_NumColorDrawBuffers[0] > 0 &&

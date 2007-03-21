@@ -64,6 +64,7 @@
 
 #define need_GL_ARB_multisample
 #define need_GL_ARB_point_parameters
+#define need_GL_ARB_vertex_buffer_object
 #define need_GL_EXT_fog_coord
 #define need_GL_EXT_secondary_color
 #include "extension_helper.h"
@@ -372,6 +373,7 @@ const struct dri_extension card_extensions[] =
     { "GL_ARB_texture_env_combine",        NULL },
 /*    { "GL_ARB_texture_env_dot3",           NULL }, */
     { "GL_ARB_texture_mirrored_repeat",    NULL },
+    { "GL_ARB_vertex_buffer_object",       GL_ARB_vertex_buffer_object_functions },
     { "GL_EXT_fog_coord",                  GL_EXT_fog_coord_functions },
     { "GL_EXT_secondary_color",            GL_EXT_secondary_color_functions },
     { "GL_EXT_stencil_wrap",               NULL },
@@ -766,9 +768,7 @@ void viaXMesaWindowMoved(struct via_context *vmesa)
 				  drawable);
    }
 
-   draw_buffer->drawXoff = (GLuint)(((drawable->x * bytePerPixel) & 0x1f) / 
-			      bytePerPixel);  
-   draw_buffer->drawX = drawable->x - draw_buffer->drawXoff;
+   draw_buffer->drawX = drawable->x;
    draw_buffer->drawY = drawable->y;
    draw_buffer->drawW = drawable->w;
    draw_buffer->drawH = drawable->h;
@@ -780,9 +780,7 @@ void viaXMesaWindowMoved(struct via_context *vmesa)
 				     readable);
       }
 
-      read_buffer->drawXoff = (GLuint)(((readable->x * bytePerPixel) & 0x1f) / 
-				       bytePerPixel);  
-      read_buffer->drawX = readable->x - read_buffer->drawXoff;
+      read_buffer->drawX = readable->x;
       read_buffer->drawY = readable->y;
       read_buffer->drawW = readable->w;
       read_buffer->drawH = readable->h;
@@ -793,13 +791,24 @@ void viaXMesaWindowMoved(struct via_context *vmesa)
 			draw_buffer->drawX * bytePerPixel);
 
    vmesa->front.origMap = (vmesa->front.map + 
-			   draw_buffer->drawY * vmesa->front.pitch + 
-			   draw_buffer->drawX * bytePerPixel);
+			draw_buffer->drawY * vmesa->front.pitch + 
+			draw_buffer->drawX * bytePerPixel);
 
-   vmesa->back.orig = vmesa->back.offset;
-   vmesa->depth.orig = vmesa->depth.offset;   
-   vmesa->back.origMap = vmesa->back.map;
-   vmesa->depth.origMap = vmesa->depth.map;
+   vmesa->back.orig = (vmesa->back.offset +
+			draw_buffer->drawY * vmesa->back.pitch +
+			draw_buffer->drawX * bytePerPixel);
+
+   vmesa->back.origMap = (vmesa->back.map +
+			draw_buffer->drawY * vmesa->back.pitch +
+			draw_buffer->drawX * bytePerPixel);
+
+   vmesa->depth.orig = (vmesa->depth.offset +
+			draw_buffer->drawY * vmesa->depth.pitch +
+			draw_buffer->drawX * bytePerPixel);   
+
+   vmesa->depth.origMap = (vmesa->depth.map +
+			draw_buffer->drawY * vmesa->depth.pitch +
+			draw_buffer->drawX * bytePerPixel);
 
    viaCalcViewport(vmesa->glCtx);
 }

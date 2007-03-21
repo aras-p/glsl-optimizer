@@ -148,8 +148,9 @@ brwChooseTextureFormat( GLcontext *ctx, GLint internalFormat,
          return &_mesa_texformat_ycbcr_rev;
 
    case GL_COMPRESSED_RGB_FXT1_3DFX:
+       return &_mesa_texformat_rgb_fxt1;
    case GL_COMPRESSED_RGBA_FXT1_3DFX:
-     return &_mesa_texformat_rgb_fxt1;
+       return &_mesa_texformat_rgba_fxt1;
 
    case GL_RGB_S3TC:
    case GL_RGB4_S3TC:
