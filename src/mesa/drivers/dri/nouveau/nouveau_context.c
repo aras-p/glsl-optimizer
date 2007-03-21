@@ -352,6 +352,7 @@ static void nouveauDoSwapBuffers(nouveauContextPtr nmesa,
 		OUT_RING       (((box->y2 - box->y1) << 16) |
 				(box->x2 - box->x1));
 	}
+	FIRE_RING();
 
 	UNLOCK_HARDWARE(nmesa);
 #endif
