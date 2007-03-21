@@ -258,6 +258,7 @@ _slang_sizeof_aggregate(const slang_storage_aggregate * agg)
 }
 
 
+#if 0
 GLboolean
 _slang_flatten_aggregate(slang_storage_aggregate * flat,
                          const slang_storage_aggregate * agg)
@@ -299,3 +300,4 @@ _slang_flatten_aggregate(slang_storage_aggregate * flat,
    }
    return GL_TRUE;
 }
+#endif

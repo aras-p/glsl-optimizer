@@ -125,6 +125,7 @@ extern GLuint
 _slang_sizeof_aggregate (const slang_storage_aggregate *);
 
 
+#if 0
 /**
  * Converts structured aggregate to a flat one, with arrays of generic
  * type being one-element long.  Returns GL_TRUE on success.  Returns
@@ -134,5 +135,6 @@ extern GLboolean
 _slang_flatten_aggregate (slang_storage_aggregate *,
                           const slang_storage_aggregate *);
 
+#endif
 
 #endif /* SLANG_STORAGE_H */
