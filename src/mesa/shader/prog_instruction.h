@@ -298,7 +298,7 @@ struct prog_dst_register
    /*@{*/
    /**
     * Takes one of the 9 possible condition values (EQ, FL, GT, GE, LE, LT,
-    * NE, TR, or UN).  Destination update is enabled if the matching
+    * NE, TR, or UN).  Dest reg is only written to if the matching
     * (swizzled) condition code value passes.  When a conditional update mask
     * is not specified, this will be \c COND_TR.
     */
