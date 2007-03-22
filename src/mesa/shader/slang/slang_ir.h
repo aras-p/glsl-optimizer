@@ -69,6 +69,8 @@ typedef enum
    IR_CONT_IF_FALSE,
 
    IR_MOVE,
+
+   /* vector ops: */
    IR_ADD,
    IR_SUB,
    IR_MUL,
@@ -80,12 +82,12 @@ typedef enum
    IR_CLAMP,
    IR_MIN,
    IR_MAX,
-   IR_SEQUAL,  /* Set if args are equal */
-   IR_SNEQUAL, /* Set if args are not equal */
-   IR_SGE,     /* Set if greater or equal */
-   IR_SGT,     /* Set if greater than */
-   IR_SLE,     /* Set if less or equal */
-   IR_SLT,     /* Set if less than */
+   IR_SEQUAL,  /* Set if args are equal (vector) */
+   IR_SNEQUAL, /* Set if args are not equal (vector) */
+   IR_SGE,     /* Set if greater or equal (vector) */
+   IR_SGT,     /* Set if greater than (vector) */
+   IR_SLE,     /* Set if less or equal (vector) */
+   IR_SLT,     /* Set if less than (vector) */
    IR_POW,     /* x^y */
    IR_EXP,     /* e^x */
    IR_EXP2,    /* 2^x */
@@ -104,7 +106,10 @@ typedef enum
    IR_NOISE2,  /* noise(x, y) */
    IR_NOISE3,  /* noise(x, y, z) */
    IR_NOISE4,  /* noise(x, y, z, w) */
-   IR_NOT,     /* logical not */
+
+   IR_EQUAL,   /* boolean equality */
+   IR_NOTEQUAL,/* boolean inequality */
+   IR_NOT,     /* boolean not */
 
    IR_VAR,     /* variable reference */
    IR_VAR_DECL,/* var declaration */

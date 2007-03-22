@@ -2369,11 +2369,11 @@ _slang_gen_operation(slang_assemble_ctx * A, slang_operation *oper)
       return new_node0(IR_KILL);
 
    case SLANG_OPER_EQUAL:
-      return new_node2(IR_SEQUAL,
+      return new_node2(IR_EQUAL,
                       _slang_gen_operation(A, &oper->children[0]),
                       _slang_gen_operation(A, &oper->children[1]));
    case SLANG_OPER_NOTEQUAL:
-      return new_node2(IR_SNEQUAL,
+      return new_node2(IR_NOTEQUAL,
                       _slang_gen_operation(A, &oper->children[0]),
                       _slang_gen_operation(A, &oper->children[1]));
    case SLANG_OPER_GREATER:

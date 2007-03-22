@@ -462,6 +462,12 @@ storage_to_dst_reg(struct prog_dst_register *dst, const slang_ir_storage *st,
       GLuint comp = GET_SWZ(st->Swizzle, 0);
       assert(comp < 4);
       assert(writemask & WRITEMASK_X);
+      /*
+      assert((writemask == WRITEMASK_X) ||
+             (writemask == WRITEMASK_Y) ||
+             (writemask == WRITEMASK_Z) ||
+             (writemask == WRITEMASK_W));
+      */
       dst->WriteMask = WRITEMASK_X << comp;
    }
    else {
@@ -778,27 +784,100 @@ static struct prog_instruction *
 emit_compare(slang_emit_info *emitInfo, slang_ir_node *n)
 {
    struct prog_instruction *inst;
-   gl_inst_opcode opcode;
+   GLint size;
 
-   assert(n->Opcode == IR_SEQUAL || n->Opcode == IR_SNEQUAL);
-
-   opcode = n->Opcode == IR_SEQUAL ? OPCODE_SEQ : OPCODE_SNE;
+   assert(n->Opcode == IR_EQUAL || n->Opcode == IR_NOTEQUAL);
 
    /* gen code for children */
    emit(emitInfo, n->Children[0]);
    emit(emitInfo, n->Children[1]);
 
+#if 0
    assert(n->Children[0]->Store->Size == n->Children[1]->Store->Size);
+   size = n->Children[0]->Store->Size;
+#else
+   /* XXX kind of a hack for now... */
+   size = MIN2(n->Children[0]->Store->Size, n->Children[1]->Store->Size);
+#endif
+   if (size == 1) {
+      gl_inst_opcode opcode;
 
-   if (!n->Store) {
-      if (!alloc_temp_storage(emitInfo, n, 1))  /* 1 bool */
-         return NULL;
+      if (!n->Store) {
+         if (!alloc_temp_storage(emitInfo, n, 1))  /* 1 bool */
+            return NULL;
+      }
+
+      opcode = n->Opcode == IR_EQUAL ? OPCODE_SEQ : OPCODE_SNE;
+      inst = new_instruction(emitInfo, opcode);
+      storage_to_src_reg(&inst->SrcReg[0], n->Children[0]->Store);
+      ASSERT(inst->SrcReg[0].Swizzle != SWIZZLE_XYZW);
+      storage_to_src_reg(&inst->SrcReg[1], n->Children[1]->Store);
+      ASSERT(inst->SrcReg[1].Swizzle != SWIZZLE_XYZW);
+      storage_to_dst_reg(&inst->DstReg, n->Store, n->Writemask);
    }
+   else if (size <= 4) {
+      static const GLfloat zero[4] = { 0, 0, 0, 0 };
+      GLuint zeroSwizzle, swizzle;
+      GLint zeroReg = _mesa_add_unnamed_constant(emitInfo->prog->Parameters,
+                                                 zero, 4, &zeroSwizzle);
+      gl_inst_opcode dotOp;
+      
+      assert(zeroReg >= 0);
 
-   if (n->Children[0]->Store->Size > 4) {
-      /* struct compare */
+      if (!n->Store) {
+         if (!alloc_temp_storage(emitInfo, n, 4))  /* 4 bools */
+            return NULL;
+      }
+
+      if (size == 4) {
+         dotOp = OPCODE_DP4;
+         swizzle = SWIZZLE_XYZW;
+      }
+      else if (size == 3) {
+         dotOp = OPCODE_DP3;
+         swizzle = SWIZZLE_XYZW;
+      }
+      else {
+         assert(size == 2);
+         dotOp = OPCODE_DP3;
+         swizzle = MAKE_SWIZZLE4(SWIZZLE_X, SWIZZLE_Y, SWIZZLE_Y, SWIZZLE_Y);
+      }
+
+      /* Compute equality, inequality */
+      inst = new_instruction(emitInfo, OPCODE_SNE);
+      storage_to_src_reg(&inst->SrcReg[0], n->Children[0]->Store);
+      storage_to_src_reg(&inst->SrcReg[1], n->Children[1]->Store);
+      storage_to_dst_reg(&inst->DstReg, n->Store, n->Writemask);
+      inst->Comment = _mesa_strdup("Compare values");
+      /* compute D = DP4(D, D)  (reduction) */
+      inst = new_instruction(emitInfo, dotOp);
+      inst->SrcReg[0].File = PROGRAM_TEMPORARY;
+      inst->SrcReg[0].Index = n->Store->Index;
+      inst->SrcReg[0].Swizzle = swizzle;
+      inst->SrcReg[1].File = PROGRAM_TEMPORARY;
+      inst->SrcReg[1].Index = n->Store->Index;
+      inst->SrcReg[1].Swizzle = swizzle;
+      inst->DstReg.File = PROGRAM_TEMPORARY;
+      inst->DstReg.Index = n->Store->Index;
+      inst->Comment = _mesa_strdup("Reduce vec to bool");
+      /* compute D = (D == 0)  actually: D.x = (D.x = 0) */
+      if (n->Opcode == IR_EQUAL) {
+         inst = new_instruction(emitInfo, OPCODE_SEQ);
+         inst->SrcReg[0].File = PROGRAM_TEMPORARY;
+         inst->SrcReg[0].Index = n->Store->Index;
+         inst->SrcReg[1].File = PROGRAM_CONSTANT;
+         inst->SrcReg[1].Index = zeroReg;
+         inst->SrcReg[1].Swizzle = zeroSwizzle;
+         inst->DstReg.File = PROGRAM_TEMPORARY;
+         inst->DstReg.Index = n->Store->Index;
+         inst->DstReg.WriteMask = WRITEMASK_X;
+         inst->Comment = _mesa_strdup("Invert true/false");
+      }
+   }
+   else {
+      /* size > 4, struct compare */
+#if 0
       GLint i, num = (n->Children[0]->Store->Size + 3) / 4;
-
       /*printf("BEGIN COMPARE size %d\n", num);*/
       for (i = 0; i < num; i++) {
          inst = new_instruction(emitInfo, opcode);
@@ -808,28 +887,22 @@ emit_compare(slang_emit_info *emitInfo, slang_ir_node *n)
          inst->SrcReg[1].Index = n->Children[1]->Store->Index + i;
          inst->DstReg.File = n->Store->File;
          inst->DstReg.Index = n->Store->Index;
-         if (i == 0) {
-            inst->CondUpdate = 1; /* update cond code */
-         }
-         else {
+
+         inst->CondUpdate = 1; /* update cond code */
+         if (i > 0) {
             inst->DstReg.CondMask = COND_NE; /* update if !=0 */
          }
          /*_mesa_print_instruction(inst);*/
       }
-   }
-   else {
-      /* small/simple types */
-      inst = new_instruction(emitInfo, opcode);
-      storage_to_src_reg(&inst->SrcReg[0], n->Children[0]->Store);
-      storage_to_src_reg(&inst->SrcReg[1], n->Children[1]->Store);
+      storage_to_dst_reg(&inst->DstReg, n->Store, n->Writemask);
+#endif
+      _mesa_problem(NULL, "struct comparison not implemented yet");
+      inst = NULL;
    }
 
    /* free temps */
    free_temp_storage(emitInfo->vt, n->Children[0]);
    free_temp_storage(emitInfo->vt, n->Children[1]);
-
-   /* result storage */
-   storage_to_dst_reg(&inst->DstReg, n->Store, n->Writemask);
 
    return inst;
 }
@@ -1092,9 +1165,11 @@ emit_cond(slang_emit_info *emitInfo, slang_ir_node *n)
       return NULL;
 
    inst = emit(emitInfo, n->Children[0]);
+
    if (inst) {
       /* set inst's CondUpdate flag */
       inst->CondUpdate = GL_TRUE;
+      n->Store = n->Children[0]->Store;
       return inst; /* XXX or null? */
    }
    else {
@@ -1161,19 +1236,24 @@ emit_if(slang_emit_info *emitInfo, slang_ir_node *n)
    GLuint ifInstLoc, elseInstLoc = 0;
 
    emit(emitInfo, n->Children[0]);  /* the condition */
+
+#if 0
+   assert(n->Children[0]->Store->Size == 1); /* a bool! */
+#endif
+
    ifInstLoc = prog->NumInstructions;
    if (emitInfo->EmitHighLevelInstructions) {
       ifInst = new_instruction(emitInfo, OPCODE_IF);
       ifInst->DstReg.CondMask = COND_NE;  /* if cond is non-zero */
-      ifInst->DstReg.CondSwizzle = SWIZZLE_X;
    }
    else {
       /* conditional jump to else, or endif */
       ifInst = new_instruction(emitInfo, OPCODE_BRA);
       ifInst->DstReg.CondMask = COND_EQ;  /* BRA if cond is zero */
-      ifInst->DstReg.CondSwizzle = SWIZZLE_X;
       ifInst->Comment = _mesa_strdup("if zero");
    }
+   /* which condition code to use: */
+   ifInst->DstReg.CondSwizzle = n->Children[0]->Store->Swizzle;
 
    /* if body */
    emit(emitInfo, n->Children[1]);
@@ -1354,6 +1434,20 @@ fix_swizzle(GLuint swizzle)
 }
 
 
+#if 0
+static GLuint
+swizzle_size(GLuint swizzle)
+{
+   GLuint size = 0, i;
+   for (i = 0; i < 4; i++) {
+      GLuint swz = GET_SWZ(swizzle, i);
+      size += (swz >= 0 && swz <= 3);
+   }
+   return size;
+}
+#endif
+
+
 static struct prog_instruction *
 emit_swizzle(slang_emit_info *emitInfo, slang_ir_node *n)
 {
@@ -1380,6 +1474,12 @@ emit_swizzle(slang_emit_info *emitInfo, slang_ir_node *n)
    }
 #endif
 
+#if 0
+   n->Store->Size = swizzle_size(n->Store->Swizzle);
+   printf("Emit Swizzle reg %d  chSize %d  size %d\n",
+          n->Store->Index, n->Children[0]->Store->Size,
+          n->Store->Size);
+#endif
    /* apply this swizzle to child's swizzle to get composed swizzle */
    n->Store->Swizzle = swizzle_swizzle(n->Children[0]->Store->Swizzle,
                                        swizzle);
@@ -1577,6 +1677,8 @@ emit(slang_emit_info *emitInfo, slang_ir_node *n)
    case IR_CROSS:
    case IR_MIN:
    case IR_MAX:
+   case IR_SEQUAL:
+   case IR_SNEQUAL:
    case IR_SGE:
    case IR_SGT:
    case IR_SLE:
@@ -1588,8 +1690,8 @@ emit(slang_emit_info *emitInfo, slang_ir_node *n)
    case IR_LRP:
       return emit_arith(emitInfo, n);
 
-   case IR_SEQUAL:
-   case IR_SNEQUAL:
+   case IR_EQUAL:
+   case IR_NOTEQUAL:
       return emit_compare(emitInfo, n);
 
    case IR_CLAMP:
