@@ -619,6 +619,11 @@ draw_rgba_pixels( GLcontext *ctx, GLint x, GLint y,
       type = GL_FLOAT;
       transferOps &= IMAGE_POST_CONVOLUTION_BITS;
    }
+   else if (ctx->Pixel.Convolution1DEnabled) {
+      /* we only want to apply 1D convolution to glTexImage1D */
+      transferOps &= ~(IMAGE_CONVOLUTION_BIT |
+                       IMAGE_POST_CONVOLUTION_SCALE_BIAS);
+   }
 
    if (ctx->DrawBuffer->_NumColorDrawBuffers[0] > 0 &&
        ctx->DrawBuffer->_ColorDrawBuffers[0][0]->DataType != GL_FLOAT &&

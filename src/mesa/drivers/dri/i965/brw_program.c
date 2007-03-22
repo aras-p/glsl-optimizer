@@ -117,7 +117,7 @@ static void brwProgramStringNotify( GLcontext *ctx,
       if (p == fp)
 	 brw->state.dirty.brw |= BRW_NEW_FRAGMENT_PROGRAM;
       p->id = brw->program_id++;      
-      p->param_state = brw_parameter_list_state_flags(p->program.Base.Parameters); 
+      p->param_state = p->program.Base.Parameters->StateFlags;
    }
    else if (target == GL_VERTEX_PROGRAM_ARB) {
       struct brw_context *brw = brw_context(ctx);
@@ -126,7 +126,7 @@ static void brwProgramStringNotify( GLcontext *ctx,
       if (p == vp)
 	 brw->state.dirty.brw |= BRW_NEW_VERTEX_PROGRAM;
       p->id = brw->program_id++;      
-      p->param_state = brw_parameter_list_state_flags(p->program.Base.Parameters); 
+      p->param_state = p->program.Base.Parameters->StateFlags;
 
       /* Also tell tnl about it:
        */
