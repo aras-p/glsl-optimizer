@@ -388,6 +388,12 @@ print_dst_reg(const struct prog_dst_register *dstReg, gl_prog_print_mode mode,
                            dstReg->Index, mode, prog),
                 writemask_string(dstReg->WriteMask));
 
+   if (dstReg->CondMask != COND_TR) {
+      _mesa_printf(" (%s.%s)",
+                   condcode_string(dstReg->CondMask),
+                   _mesa_swizzle_string(dstReg->CondSwizzle, GL_FALSE, GL_FALSE));
+   }
+
 #if 0
    _mesa_printf("%s[%d]%s",
                 file_string((enum register_file) dstReg->File, mode),
