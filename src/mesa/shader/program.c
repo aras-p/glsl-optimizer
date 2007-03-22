@@ -342,8 +342,8 @@ _mesa_clone_program(GLcontext *ctx, const struct gl_program *prog)
       _mesa_delete_program(ctx, clone);
       return NULL;
    }
-   memcpy(clone->Instructions, prog->Instructions,
-          prog->NumInstructions * sizeof(struct prog_instruction));
+   _mesa_copy_instructions(clone->Instructions, prog->Instructions,
+                           prog->NumInstructions);
    clone->InputsRead = prog->InputsRead;
    clone->OutputsWritten = prog->OutputsWritten;
    memcpy(clone->TexturesUsed, prog->TexturesUsed, sizeof(prog->TexturesUsed));

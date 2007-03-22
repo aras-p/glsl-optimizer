@@ -150,8 +150,7 @@ _mesa_append_fog_code(GLcontext *ctx, struct gl_fragment_program *fprog)
    }
 
    /* Copy orig instructions into new instruction buffer */
-   _mesa_memcpy(newInst, fprog->Base.Instructions,
-                origLen * sizeof(struct prog_instruction));
+   _mesa_copy_instructions(newInst, fprog->Base.Instructions, origLen);
 
    /* PARAM fogParamsRefOpt = internal optimized fog params; */
    fogPRefOpt

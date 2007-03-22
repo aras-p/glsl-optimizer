@@ -1545,8 +1545,7 @@ _mesa_parse_nv_fragment_program(GLcontext *ctx, GLenum dstTarget,
          _mesa_error(ctx, GL_OUT_OF_MEMORY, "glLoadProgramNV");
          return;  /* out of memory */
       }
-      _mesa_memcpy(newInst, instBuffer,
-                   parseState.numInst * sizeof(struct prog_instruction));
+      _mesa_copy_instructions(newInst, instBuffer, parseState.numInst);
 
       /* install the program */
       program->Base.Target = target;
