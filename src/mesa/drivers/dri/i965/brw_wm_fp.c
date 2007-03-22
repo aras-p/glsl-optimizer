@@ -398,7 +398,7 @@ static struct prog_src_register search_or_add_param6( struct brw_wm_compile *c,
 
    /* Recalculate state dependency: 
     */
-   c->fp->param_state = brw_parameter_list_state_flags( paramList );
+   c->fp->param_state = paramList->StateFlags;
 
    return src_reg(PROGRAM_STATE_VAR, idx);
 }
