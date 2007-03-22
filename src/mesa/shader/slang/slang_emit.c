@@ -778,8 +778,11 @@ static struct prog_instruction *
 emit_compare(slang_emit_info *emitInfo, slang_ir_node *n)
 {
    struct prog_instruction *inst;
+   gl_inst_opcode opcode;
 
    assert(n->Opcode == IR_SEQUAL || n->Opcode == IR_SNEQUAL);
+
+   opcode = n->Opcode == IR_SEQUAL ? OPCODE_SEQ : OPCODE_SNE;
 
    /* gen code for children */
    emit(emitInfo, n->Children[0]);
@@ -787,16 +790,36 @@ emit_compare(slang_emit_info *emitInfo, slang_ir_node *n)
 
    assert(n->Children[0]->Store->Size == n->Children[1]->Store->Size);
 
-   /* gen this instruction and src registers */
-   inst = new_instruction(emitInfo,
-                          (n->Opcode == IR_SEQUAL) ? OPCODE_SEQ : OPCODE_SNE);
+   if (!n->Store) {
+      if (!alloc_temp_storage(emitInfo, n, 1))  /* 1 bool */
+         return NULL;
+   }
+
    if (n->Children[0]->Store->Size > 4) {
       /* struct compare */
-      _mesa_problem(NULL, "struct compare not implemented!");
-      return NULL;
+      GLint i, num = (n->Children[0]->Store->Size + 3) / 4;
+
+      /*printf("BEGIN COMPARE size %d\n", num);*/
+      for (i = 0; i < num; i++) {
+         inst = new_instruction(emitInfo, opcode);
+         inst->SrcReg[0].File = n->Children[0]->Store->File;
+         inst->SrcReg[0].Index = n->Children[0]->Store->Index + i;
+         inst->SrcReg[1].File = n->Children[1]->Store->File;
+         inst->SrcReg[1].Index = n->Children[1]->Store->Index + i;
+         inst->DstReg.File = n->Store->File;
+         inst->DstReg.Index = n->Store->Index;
+         if (i == 0) {
+            inst->CondUpdate = 1; /* update cond code */
+         }
+         else {
+            inst->DstReg.CondMask = COND_NE; /* update if !=0 */
+         }
+         /*_mesa_print_instruction(inst);*/
+      }
    }
    else {
       /* small/simple types */
+      inst = new_instruction(emitInfo, opcode);
       storage_to_src_reg(&inst->SrcReg[0], n->Children[0]->Store);
       storage_to_src_reg(&inst->SrcReg[1], n->Children[1]->Store);
    }
@@ -806,10 +829,6 @@ emit_compare(slang_emit_info *emitInfo, slang_ir_node *n)
    free_temp_storage(emitInfo->vt, n->Children[1]);
 
    /* result storage */
-   if (!n->Store) {
-      if (!alloc_temp_storage(emitInfo, n, 1))  /* 1 bool */
-         return NULL;
-   }
    storage_to_dst_reg(&inst->DstReg, n->Store, n->Writemask);
 
    return inst;
