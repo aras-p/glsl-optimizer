@@ -1040,7 +1040,7 @@ Parse_VectorSrc(struct parse_state *parseState,
       if (!Parse_ScalarConstant(parseState, values))
          RETURN_ERROR;
       paramIndex = _mesa_add_unnamed_constant(parseState->parameters,
-                                              values, 4, &swizzle);
+                                              values, 4, NULL);
       ASSERT(swizzle == SWIZZLE_NOOP);
       srcReg->File = PROGRAM_NAMED_PARAM;
       srcReg->Index = paramIndex;
@@ -1053,7 +1053,7 @@ Parse_VectorSrc(struct parse_state *parseState,
       if (!Parse_VectorConstant(parseState, values))
          RETURN_ERROR;
       paramIndex = _mesa_add_unnamed_constant(parseState->parameters,
-                                              values, 4, &swizzle);
+                                              values, 4, NULL);
       ASSERT(swizzle == SWIZZLE_NOOP);
       srcReg->File = PROGRAM_NAMED_PARAM;
       srcReg->Index = paramIndex;      
@@ -1145,7 +1145,7 @@ Parse_ScalarSrcReg(struct parse_state *parseState,
       if (!Parse_VectorConstant(parseState, values))
          RETURN_ERROR;
       paramIndex = _mesa_add_unnamed_constant(parseState->parameters,
-                                              values, 4, &swizzle);
+                                              values, 4, NULL);
       ASSERT(swizzle == SWIZZLE_NOOP);
       srcReg->File = PROGRAM_NAMED_PARAM;
       srcReg->Index = paramIndex;      
@@ -1171,7 +1171,7 @@ Parse_ScalarSrcReg(struct parse_state *parseState,
       if (!Parse_ScalarConstant(parseState, values))
          RETURN_ERROR;
       paramIndex = _mesa_add_unnamed_constant(parseState->parameters,
-                                              values, 4, &swizzle);
+                                              values, 4, NULL);
       ASSERT(swizzle == SWIZZLE_NOOP);
       srcReg->Index = paramIndex;      
       srcReg->File = PROGRAM_NAMED_PARAM;

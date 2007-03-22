@@ -172,10 +172,10 @@ link_uniform_vars(struct gl_shader_program *shProg, struct gl_program *prog)
          j = _mesa_lookup_parameter_index(shProg->Uniforms, -1, p->Name);
       }
       else {
-         GLuint swizzle;
+         /*GLuint swizzle;*/
          ASSERT(p->Type == PROGRAM_CONSTANT);
          if (_mesa_lookup_parameter_constant(shProg->Uniforms, pVals,
-                                             p->Size, &j, &swizzle)) {
+                                             p->Size, &j, NULL)) {
             assert(j >= 0);
          }
          else {
