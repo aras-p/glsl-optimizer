@@ -67,7 +67,7 @@ All other major features of the shading language should function.
 <li>The quality of generated code is pretty good, register usage is fair.
 <li>Shader error detection and reporting of errors (InfoLog) is not
     very good yet.
-<li>There are massive memory leaks in the compiler.
+<li>There are known memory leaks in the compiler.
 </ul>
 
 <p>
@@ -236,6 +236,50 @@ The final vertex and fragment programs may be interpreted in software
 (see drivers/dri/i915/i915_fragprog.c for example).
 </p>
 
+<h3>Code Generation Options</h3>
+
+<p>
+Internally, there are several options that control the compiler's code
+generation and instruction selection.
+These options are seen in the gl_shader_state struct and may be set
+by the device driver to indicate its preferences:
+
+<pre>
+struct gl_shader_state
+{
+   ...
+   /** Driver-selectable options: */
+   GLboolean EmitHighLevelInstructions;
+   GLboolean EmitCondCodes;
+   GLboolean EmitComments;
+};
+</pre>
+
+<ul>
+<li>EmitHighLevelInstructions
+<br>
+This option controls instruction selection for loops and conditionals.
+If the option is set high-level IF/ELSE/ENDIF, LOOP/ENDLOOP, CONT/BRK
+instructions will be emitted.
+Otherwise, those constructs will be implemented with BRA instructions.
+</li>
+
+<li>EmitCondCodes
+<br>
+If set, condition codes (ala GL_NV_fragment_program) will be used for
+branching and looping.
+Otherwise, ordinary registers will be used (the IF instruction will
+examine the first operand's X component and do the if-part if non-zero).
+This option is only relevant if EmitHighLevelInstructions is set.
+</li>
+
+<li>EmitComments
+<br>
+If set, instructions will be annoted with comments to help with debugging.
+Extra NOP instructions will also be inserted.
+</br>
+
+</ul>
 
 
 </BODY>
