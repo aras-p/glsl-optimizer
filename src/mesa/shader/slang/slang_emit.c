@@ -860,8 +860,8 @@ emit_compare(slang_emit_info *emitInfo, slang_ir_node *n)
       inst->DstReg.File = PROGRAM_TEMPORARY;
       inst->DstReg.Index = n->Store->Index;
       inst->Comment = _mesa_strdup("Reduce vec to bool");
-      /* compute D = (D == 0)  actually: D.x = (D.x = 0) */
       if (n->Opcode == IR_EQUAL) {
+         /* compute D.x = !D.x  via D.x = (D.x == 0) */
          inst = new_instruction(emitInfo, OPCODE_SEQ);
          inst->SrcReg[0].File = PROGRAM_TEMPORARY;
          inst->SrcReg[0].Index = n->Store->Index;
