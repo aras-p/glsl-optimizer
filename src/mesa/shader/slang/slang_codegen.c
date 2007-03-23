@@ -414,7 +414,7 @@ _slang_free_ir_tree(slang_ir_node *n)
       return;
    for (i = 0; i < 3; i++)
       _slang_free_ir_tree(n->Children[i]);
-   /* Do not free n->BranchNode since it's a child elsewhere */
+   /* Do not free n->List since it's a child elsewhere */
    free(n);
 #endif
 }
@@ -515,8 +515,8 @@ new_break(slang_ir_node *loopNode)
    assert(loopNode->Opcode == IR_LOOP);
    if (n) {
       /* insert this node at head of linked list */
-      n->BranchNode = loopNode->BranchNode;
-      loopNode->BranchNode = n;
+      n->List = loopNode->List;
+      loopNode->List = n;
    }
    return n;
 }
@@ -534,8 +534,8 @@ new_break_if(slang_ir_node *loopNode, slang_ir_node *cond, GLboolean breakTrue)
    n = new_node1(breakTrue ? IR_BREAK_IF_TRUE : IR_BREAK_IF_FALSE, cond);
    if (n) {
       /* insert this node at head of linked list */
-      n->BranchNode = loopNode->BranchNode;
-      loopNode->BranchNode = n;
+      n->List = loopNode->List;
+      loopNode->List = n;
    }
    return n;
 }
@@ -553,23 +553,8 @@ new_cont_if(slang_ir_node *loopNode, slang_ir_node *cond, GLboolean contTrue)
    n = new_node1(contTrue ? IR_CONT_IF_TRUE : IR_CONT_IF_FALSE, cond);
    if (n) {
       /* insert this node at head of linked list */
-      n->BranchNode = loopNode->BranchNode;
-      loopNode->BranchNode = n;
-   }
-   return n;
-}
-
-
-static slang_ir_node *
-new_cont(slang_ir_node *loopNode)
-{
-   slang_ir_node *n = new_node0(IR_CONT);
-   assert(loopNode);
-   assert(loopNode->Opcode == IR_LOOP);
-   if (n) {
-      /* insert this node at head of linked list */
-      n->BranchNode = loopNode->BranchNode;
-      loopNode->BranchNode = n;
+      n->List = loopNode->List;
+      loopNode->List = n;
    }
    return n;
 }
@@ -1369,7 +1354,8 @@ _slang_gen_while(slang_assemble_ctx * A, const slang_operation *oper)
    loop->Children[0] = new_seq(breakIf, body);
 
    /* Do infinite loop detection */
-   if (!loop->BranchNode && isConst && constTrue) {
+   /* loop->List is head of linked list of break/continue nodes */
+   if (!loop->List && isConst && constTrue) {
       /* infinite loop detected */
       A->CurLoop = prevLoop; /* clean-up */
       slang_info_log_error(A->log, "Infinite loop detected!");
@@ -1392,13 +1378,11 @@ _slang_gen_do(slang_assemble_ctx * A, const slang_operation *oper)
    /*
     * LOOP:
     *    body code (child[0])
-    *    BREAK if !expr (child[1])
+    *    tail code:
+    *       BREAK if !expr (child[1])
     */
-   slang_ir_node *prevLoop, *loop, *cond, *breakIf, *body;
+   slang_ir_node *prevLoop, *loop, *cond;
    GLboolean isConst, constTrue;
-
-   /* Check if loop condition is a constant */
-   isConst = _slang_is_constant_cond(&oper->children[0], &constTrue);
 
    loop = new_loop(NULL);
 
@@ -1406,16 +1390,21 @@ _slang_gen_do(slang_assemble_ctx * A, const slang_operation *oper)
    prevLoop = A->CurLoop;
    A->CurLoop = loop;
 
-   body = _slang_gen_operation(A, &oper->children[0]);
-   cond = new_cond(_slang_gen_operation(A, &oper->children[1]));
+   /* loop body: */
+   loop->Children[0] = _slang_gen_operation(A, &oper->children[0]);
+
+   /* Check if loop condition is a constant */
+   isConst = _slang_is_constant_cond(&oper->children[1], &constTrue);
    if (isConst && constTrue) {
-      /* while(nonzero constant), no conditional break */
-      breakIf = NULL;
+      /* do { } while(1)   ==> no conditional break */
+      loop->Children[1] = NULL; /* no tail code */
    }
    else {
-      breakIf = new_break_if(A->CurLoop, cond, GL_FALSE);
+      cond = new_cond(_slang_gen_operation(A, &oper->children[1]));
+      loop->Children[1] = new_break_if(A->CurLoop, cond, GL_FALSE);
    }
-   loop->Children[0] = new_seq(body, breakIf);
+
+   /* XXX we should do infinite loop detection, as above */
 
    /* pop loop, restore prev */
    A->CurLoop = prevLoop;
@@ -1431,11 +1420,12 @@ static slang_ir_node *
 _slang_gen_for(slang_assemble_ctx * A, const slang_operation *oper)
 {
    /*
-    * init (child[0])
+    * init code (child[0])
     * LOOP:
     *    BREAK if !expr (child[1])
     *    body code (child[3])
-    *    incr code (child[2])   // XXX continue here
+    *    tail code:
+    *       incr code (child[2])   // XXX continue here
     */
    slang_ir_node *prevLoop, *loop, *cond, *breakIf, *body, *init, *incr;
 
@@ -1450,13 +1440,33 @@ _slang_gen_for(slang_assemble_ctx * A, const slang_operation *oper)
    breakIf = new_break_if(A->CurLoop, cond, GL_FALSE);
    body = _slang_gen_operation(A, &oper->children[3]);
    incr = _slang_gen_operation(A, &oper->children[2]);
-   loop->Children[0] = new_seq(breakIf,
-                               new_seq(body, incr));
+
+   loop->Children[0] = new_seq(breakIf, body);
+   loop->Children[1] = incr;  /* tail code */
 
    /* pop loop, restore prev */
    A->CurLoop = prevLoop;
 
    return new_seq(init, loop);
+}
+
+
+static slang_ir_node *
+_slang_gen_continue(slang_assemble_ctx * A, const slang_operation *oper)
+{
+   slang_ir_node *n, *loopNode;
+   assert(oper->type == SLANG_OPER_CONTINUE);
+   loopNode = A->CurLoop;
+   assert(loopNode);
+   assert(loopNode->Opcode == IR_LOOP);
+   n = new_node0(IR_CONT);
+   if (n) {
+      n->Parent = loopNode;
+      /* insert this node at head of linked list */
+      n->List = loopNode->List;
+      loopNode->List = n;
+   }
+   return n;
 }
 
 
@@ -2364,7 +2374,7 @@ _slang_gen_operation(slang_assemble_ctx * A, slang_operation *oper)
       if (!A->CurLoop) {
          slang_info_log_error(A->log, "'continue' not in loop");
       }
-      return new_cont(A->CurLoop);
+      return _slang_gen_continue(A, oper);
    case SLANG_OPER_DISCARD:
       return new_node0(IR_KILL);
 

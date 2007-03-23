@@ -53,6 +53,9 @@ typedef enum
    IR_COND,    /* conditional expression/predicate */
 
    IR_IF,      /* high-level IF/then/else */
+               /* Children[0] = conditional expression */
+               /* Children[1] = if-true part */
+               /* Children[2] = if-else part, or NULL */
 
    IR_BEGIN_SUB, /* begin subroutine */
    IR_END_SUB,   /* end subroutine */
@@ -60,13 +63,18 @@ typedef enum
    IR_CALL,      /* call subroutine */
 
    IR_LOOP,      /* high-level loop-begin / loop-end */
+                 /* Children[0] = loop body */
+                 /* Children[1] = loop tail code, or NULL */
+
    IR_CONT,      /* continue loop */
+                 /* n->Parent = ptr to parent IR_LOOP Node */
    IR_BREAK,     /* break loop */
 
    IR_BREAK_IF_TRUE,
    IR_BREAK_IF_FALSE,
    IR_CONT_IF_TRUE,
    IR_CONT_IF_FALSE,
+                 /* Children[0] = the condition expression */
 
    IR_MOVE,
 
@@ -161,7 +169,8 @@ typedef struct slang_ir_node_
    GLuint Writemask;  /**< If Opcode == IR_MOVE */
    GLfloat Value[4];    /**< If Opcode == IR_FLOAT */
    slang_variable *Var;  /**< If Opcode == IR_VAR or IR_VAR_DECL */
-   struct slang_ir_node_ *BranchNode;  /**< Used for branching instructions */
+   struct slang_ir_node_ *List;  /**< For various linked lists */
+   struct slang_ir_node_ *Parent;  /**< Pointer to logical parent (ie. loop) */
    slang_label *Label;  /**< Used for branches */
 } slang_ir_node;
 

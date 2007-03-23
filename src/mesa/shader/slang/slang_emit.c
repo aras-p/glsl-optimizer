@@ -316,6 +316,7 @@ slang_print_ir(const slang_ir_node *n, int indent)
          printf("ELSE\n");
          slang_print_ir(n->Children[2], indent+3);
       }
+      spaces(indent);
       printf("ENDIF\n");
       break;
 
@@ -335,6 +336,11 @@ slang_print_ir(const slang_ir_node *n, int indent)
    case IR_LOOP:
       printf("LOOP\n");
       slang_print_ir(n->Children[0], indent+3);
+      if (n->Children[1]) {
+         spaces(indent);
+         printf("TAIL:\n");
+         slang_print_ir(n->Children[1], indent+3);
+      }
       spaces(indent);
       printf("ENDLOOP\n");
       break;
@@ -685,6 +691,19 @@ instruction_annotation(gl_inst_opcode opcode, char *dstAnnot,
 }
 
 
+/**
+ * Emit an instruction that's just a comment.
+ */
+static struct prog_instruction *
+emit_comment(slang_emit_info *emitInfo, const char *s)
+{
+   struct prog_instruction *inst = new_instruction(emitInfo, OPCODE_NOP);
+   if (inst) {
+      inst->Comment = _mesa_strdup(s);
+   }
+   return inst;
+}
+
 
 /**
  * Generate code for a simple arithmetic instruction.
@@ -1005,9 +1024,16 @@ static struct prog_instruction *
 emit_label(slang_emit_info *emitInfo, const slang_ir_node *n)
 {
    assert(n->Label);
+#if 0
+   /* XXX this fails in loop tail code - investigate someday */
    assert(_slang_label_get_location(n->Label) < 0);
    _slang_label_set_location(n->Label, emitInfo->prog->NumInstructions,
                              emitInfo->prog);
+#else
+   if (_slang_label_get_location(n->Label) < 0)
+      _slang_label_set_location(n->Label, emitInfo->prog->NumInstructions,
+                                emitInfo->prog);
+#endif
    return NULL;
 }
 
@@ -1097,7 +1123,9 @@ emit_move(slang_emit_info *emitInfo, slang_ir_node *n)
 
    assert(n->Children[1]->Store->Index >= 0);
 
+#if 0
    assert(!n->Store);
+#endif
    n->Store = n->Children[0]->Store;
 
 #if PEEPHOLE_OPTIMIZATIONS
@@ -1316,8 +1344,10 @@ emit_loop(slang_emit_info *emitInfo, slang_ir_node *n)
 {
    struct gl_program *prog = emitInfo->prog;
    struct prog_instruction *beginInst, *endInst;
-   GLuint beginInstLoc, endInstLoc;
+   GLuint beginInstLoc, tailInstLoc, endInstLoc;
    slang_ir_node *ir;
+
+   slang_print_ir(n, 10);
 
    /* emit OPCODE_BGNLOOP */
    beginInstLoc = prog->NumInstructions;
@@ -1327,6 +1357,14 @@ emit_loop(slang_emit_info *emitInfo, slang_ir_node *n)
 
    /* body */
    emit(emitInfo, n->Children[0]);
+
+   /* tail */
+   tailInstLoc = prog->NumInstructions;
+   if (n->Children[1]) {
+      if (emitInfo->EmitComments)
+         emit_comment(emitInfo, "Loop tail code:");
+      emit(emitInfo, n->Children[1]);
+   }
 
    endInstLoc = prog->NumInstructions;
    if (emitInfo->EmitHighLevelInstructions) {
@@ -1338,7 +1376,7 @@ emit_loop(slang_emit_info *emitInfo, slang_ir_node *n)
       endInst = new_instruction(emitInfo, OPCODE_BRA);
       endInst->DstReg.CondMask = COND_TR;  /* always true */
    }
-   /* end instruction's BranchTarget points to top of loop */
+   /* ENDLOOP's BranchTarget points to the BGNLOOP inst */
    endInst->BranchTarget = beginInstLoc;
 
    if (emitInfo->EmitHighLevelInstructions) {
@@ -1351,7 +1389,7 @@ emit_loop(slang_emit_info *emitInfo, slang_ir_node *n)
     * BREAK and CONT nodes, filling in their BranchTarget fields (which
     * will point to the ENDLOOP+1 or BGNLOOP instructions, respectively).
     */
-   for (ir = n->BranchNode; ir; ir = ir->BranchNode) {
+   for (ir = n->List; ir; ir = ir->List) {
       struct prog_instruction *inst = prog->Instructions + ir->InstLocation;
       assert(inst->BranchTarget < 0);
       if (ir->Opcode == IR_BREAK ||
@@ -1372,8 +1410,8 @@ emit_loop(slang_emit_info *emitInfo, slang_ir_node *n)
                 inst->Opcode == OPCODE_CONT0 ||
                 inst->Opcode == OPCODE_CONT1 ||
                 inst->Opcode == OPCODE_BRA);
-         /* to go instruction at top of loop */
-         inst->BranchTarget = beginInstLoc;
+         /* go to instruction at tail of loop */
+         inst->BranchTarget = endInstLoc;
       }
    }
    return NULL;
@@ -1389,13 +1427,28 @@ emit_cont_break(slang_emit_info *emitInfo, slang_ir_node *n)
 {
    gl_inst_opcode opcode;
    struct prog_instruction *inst;
-   n->InstLocation = emitInfo->prog->NumInstructions;
+
+   if (n->Opcode == IR_CONT) {
+      /* we need to execute the loop's tail code before doing CONT */
+      assert(n->Parent);
+      assert(n->Parent->Opcode == IR_LOOP);
+      if (n->Parent->Children[1]) {
+         /* emit tail code */
+         if (emitInfo->EmitComments) {
+            emit_comment(emitInfo, "continue - tail code:");
+         }
+         emit(emitInfo, n->Parent->Children[1]);
+      }
+   }
+
+   /* opcode selection */
    if (emitInfo->EmitHighLevelInstructions) {
       opcode = (n->Opcode == IR_CONT) ? OPCODE_CONT : OPCODE_BRK;
    }
    else {
       opcode = OPCODE_BRA;
    }
+   n->InstLocation = emitInfo->prog->NumInstructions;
    inst = new_instruction(emitInfo, opcode);
    inst->DstReg.CondMask = COND_TR;  /* always true */
    return inst;
@@ -1456,7 +1509,7 @@ emit_cont_break_if(slang_emit_info *emitInfo, slang_ir_node *n,
       inst->DstReg.CondMask = breakTrue ? COND_NE : COND_EQ;
    }
    else {
-      /* BRK0, BRK1, CONT0, CONT1 */
+      /* BRK0, BRK1, CONT0, CONT1 uses SrcReg[0] as the condition */
       storage_to_src_reg(&inst->SrcReg[0], n->Children[0]->Store);
    }
    return inst;
@@ -1607,7 +1660,9 @@ emit(slang_emit_info *emitInfo, slang_ir_node *n)
       assert(n->Children[1]);
       emit(emitInfo, n->Children[0]);
       inst = emit(emitInfo, n->Children[1]);
+#if 0
       assert(!n->Store);
+#endif
       n->Store = n->Children[1]->Store;
       return inst;
 
@@ -1623,10 +1678,11 @@ emit(slang_emit_info *emitInfo, slang_ir_node *n)
       assert(n->Store);
       assert(n->Store->File != PROGRAM_UNDEFINED);
       assert(n->Store->Size > 0);
-      assert(n->Store->Index < 0);
+      /*assert(n->Store->Index < 0);*/
       if (!n->Var || n->Var->isTemp) {
          /* a nameless/temporary variable, will be freed after first use */
-         if (!_slang_alloc_temp(emitInfo->vt, n->Store)) {
+         /*NEW*/
+         if (n->Store->Index < 0 && !_slang_alloc_temp(emitInfo->vt, n->Store)) {
             slang_info_log_error(emitInfo->log,
                                  "Ran out of registers, too many temporaries");
             return NULL;
@@ -1654,8 +1710,7 @@ emit(slang_emit_info *emitInfo, slang_ir_node *n)
                  _mesa_swizzle_string(n->Store->Swizzle, 0, GL_FALSE), 
                  (n->Var ? (char *) n->Var->a_name : "anonymous"),
                  n->Store->Size);
-         inst = new_instruction(emitInfo, OPCODE_NOP);
-         inst->Comment = _mesa_strdup(s);
+         inst = emit_comment(emitInfo, s);
          return inst;
       }
       return NULL;
@@ -1828,7 +1883,7 @@ _slang_emit_code(slang_ir_node *n, slang_var_table *vt,
 
    emitInfo.EmitHighLevelInstructions = ctx->Shader.EmitHighLevelInstructions;
    emitInfo.EmitCondCodes = 0; /* XXX temporary! */
-   emitInfo.EmitComments = ctx->Shader.EmitComments;
+   emitInfo.EmitComments = 1 + ctx->Shader.EmitComments;
 
    (void) emit(&emitInfo, n);
 
