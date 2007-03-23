@@ -601,14 +601,9 @@ _mesa_print_instruction_opt(const struct prog_instruction *inst, GLint indent,
       _mesa_printf("ENDLOOP; # (goto %d)\n", inst->BranchTarget);
       break;
    case OPCODE_BRK:
-      _mesa_printf("BRK (%s%s); #(goto %d)",
-                   condcode_string(inst->DstReg.CondMask),
-                   _mesa_swizzle_string(inst->DstReg.CondSwizzle, 0, GL_FALSE),
-                   inst->BranchTarget);
-      print_comment(inst);
-      break;
    case OPCODE_CONT:
-      _mesa_printf("CONT (%s%s); #(goto %d)",
+      _mesa_printf("%s (%s%s); # (goto %d)",
+                   _mesa_opcode_string(inst->Opcode),
                    condcode_string(inst->DstReg.CondMask),
                    _mesa_swizzle_string(inst->DstReg.CondSwizzle, 0, GL_FALSE),
                    inst->BranchTarget);
