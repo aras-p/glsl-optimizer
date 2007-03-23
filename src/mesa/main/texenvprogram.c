@@ -1013,7 +1013,7 @@ create_new_program(GLcontext *ctx, struct state_key *key,
    p.program->NumTexIndirections = 1;	/* correct? */
    p.program->NumTexInstructions = 0;
    p.program->NumAluInstructions = 0;
-   p.program->Base.String = 0;
+   p.program->Base.String = NULL;
    p.program->Base.NumInstructions =
    p.program->Base.NumTemporaries =
    p.program->Base.NumParameters =
@@ -1102,9 +1102,8 @@ create_new_program(GLcontext *ctx, struct state_key *key,
                   "generating tex env program");
       return;
    }
-   _mesa_memcpy(program->Base.Instructions, instBuffer,
-                sizeof(struct prog_instruction)
-                * program->Base.NumInstructions);
+   _mesa_copy_instructions(program->Base.Instructions, instBuffer,
+                           program->Base.NumInstructions);
 
    /* Notify driver the fragment program has (actually) changed.
     */

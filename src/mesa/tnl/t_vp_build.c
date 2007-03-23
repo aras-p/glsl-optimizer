@@ -1416,9 +1416,8 @@ create_new_program( const struct state_key *key,
    else
       p.temp_reserved = ~((1<<max_temps)-1);
 
-   p.program->Base.Instructions
-      = (struct prog_instruction*) MALLOC(sizeof(struct prog_instruction) * MAX_INSN);
-   p.program->Base.String = 0;
+   p.program->Base.Instructions = _mesa_alloc_instructions(MAX_INSN);
+   p.program->Base.String = NULL;
    p.program->Base.NumInstructions =
    p.program->Base.NumTemporaries =
    p.program->Base.NumParameters =
