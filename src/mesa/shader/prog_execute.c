@@ -720,6 +720,32 @@ _mesa_execute_program(GLcontext * ctx,
             pc = inst->BranchTarget - 1;
          }
          break;
+      case OPCODE_BRK0:   /* Break if zero */
+         /* fall-through */
+      case OPCODE_CONT0:  /* Continue if zero */
+         {
+            GLfloat a[4];
+            fetch_vector1(&inst->SrcReg[0], machine, a);
+            if (a[0] == 0.0) {
+               /* take branch */
+               /* Subtract 1 here since we'll do pc++ at end of for-loop */
+               pc = inst->BranchTarget - 1;
+            }
+         }
+         break;
+      case OPCODE_BRK1:   /* Break if non-zero */
+         /* fall-through */
+      case OPCODE_CONT1:  /* Continue if non-zero */
+         {
+            GLfloat a[4];
+            fetch_vector1(&inst->SrcReg[0], machine, a);
+            if (a[0] != 0.0) {
+               /* take branch */
+               /* Subtract 1 here since we'll do pc++ at end of for-loop */
+               pc = inst->BranchTarget - 1;
+            }
+         }
+         break;
       case OPCODE_CAL:         /* Call subroutine (conditional) */
          if (eval_condition(machine, inst)) {
             /* call the subroutine */
@@ -914,13 +940,26 @@ _mesa_execute_program(GLcontext * ctx,
          }
          break;
       case OPCODE_IF:
-         if (eval_condition(machine, inst)) {
-            /* do if-clause (just continue execution) */
-         }
-         else {
-            /* go to the instruction after ELSE or ENDIF */
-            assert(inst->BranchTarget >= 0);
-            pc = inst->BranchTarget - 1;
+         {
+            GLboolean cond;
+            /* eval condition */
+            if (inst->SrcReg[0].File != PROGRAM_UNDEFINED) {
+               GLfloat a[4];
+               fetch_vector1(&inst->SrcReg[0], machine, a);
+               cond = (a[0] != 0.0);
+            }
+            else {
+               cond = eval_condition(machine, inst);
+            }
+            /* do if/else */
+            if (cond) {
+               /* do if-clause (just continue execution) */
+            }
+            else {
+               /* go to the instruction after ELSE or ENDIF */
+               assert(inst->BranchTarget >= 0);
+               pc = inst->BranchTarget - 1;
+            }
          }
          break;
       case OPCODE_ELSE:

@@ -61,6 +61,7 @@ typedef struct
    struct gl_program *prog;
    /* code-gen options */
    GLboolean EmitHighLevelInstructions;
+   GLboolean EmitCondCodes;
    GLboolean EmitComments;
 } slang_emit_info;
 
@@ -1155,10 +1156,6 @@ emit_move(slang_emit_info *emitInfo, slang_ir_node *n)
 static struct prog_instruction *
 emit_cond(slang_emit_info *emitInfo, slang_ir_node *n)
 {
-   /* Conditional expression (in if/while/for stmts).
-    * Need to update condition code register.
-    * Next instruction is typically an IR_IF.
-    */
    struct prog_instruction *inst;
 
    if (!n->Children[0])
@@ -1166,28 +1163,39 @@ emit_cond(slang_emit_info *emitInfo, slang_ir_node *n)
 
    inst = emit(emitInfo, n->Children[0]);
 
-   if (inst) {
-      /* set inst's CondUpdate flag */
-      inst->CondUpdate = GL_TRUE;
-      n->Store = n->Children[0]->Store;
-      return inst; /* XXX or null? */
+   if (emitInfo->EmitCondCodes) {
+      /* Conditional expression (in if/while/for stmts).
+       * Need to update condition code register.
+       * Next instruction is typically an IR_IF.
+       */
+      if (inst) {
+         /* set inst's CondUpdate flag */
+         inst->CondUpdate = GL_TRUE;
+         n->Store = n->Children[0]->Store;
+         return inst; /* XXX or null? */
+      }
+      else {
+         /* This'll happen for things like "if (i) ..." where no code
+          * is normally generated for the expression "i".
+          * Generate a move instruction just to set condition codes.
+          * Note: must use full 4-component vector since all four
+          * condition codes must be set identically.
+          */
+         if (!alloc_temp_storage(emitInfo, n, 4))
+            return NULL;
+         inst = new_instruction(emitInfo, OPCODE_MOV);
+         inst->CondUpdate = GL_TRUE;
+         storage_to_dst_reg(&inst->DstReg, n->Store, n->Writemask);
+         storage_to_src_reg(&inst->SrcReg[0], n->Children[0]->Store);
+         _slang_free_temp(emitInfo->vt, n->Store);
+         inst->Comment = _mesa_strdup("COND expr");
+         return inst; /* XXX or null? */
+      }
    }
    else {
-      /* This'll happen for things like "if (i) ..." where no code
-       * is normally generated for the expression "i".
-       * Generate a move instruction just to set condition codes.
-       * Note: must use full 4-component vector since all four
-       * condition codes must be set identically.
-       */
-      if (!alloc_temp_storage(emitInfo, n, 4))
-         return NULL;
-      inst = new_instruction(emitInfo, OPCODE_MOV);
-      inst->CondUpdate = GL_TRUE;
-      storage_to_dst_reg(&inst->DstReg, n->Store, n->Writemask);
-      storage_to_src_reg(&inst->SrcReg[0], n->Children[0]->Store);
-      _slang_free_temp(emitInfo->vt, n->Store);
-      inst->Comment = _mesa_strdup("COND expr");
-      return inst; /* XXX or null? */
+      /* No-op */
+      n->Store = n->Children[0]->Store;
+      return NULL;
    }
 }
 
@@ -1244,7 +1252,13 @@ emit_if(slang_emit_info *emitInfo, slang_ir_node *n)
    ifInstLoc = prog->NumInstructions;
    if (emitInfo->EmitHighLevelInstructions) {
       ifInst = new_instruction(emitInfo, OPCODE_IF);
-      ifInst->DstReg.CondMask = COND_NE;  /* if cond is non-zero */
+      if (emitInfo->EmitCondCodes) {
+         ifInst->DstReg.CondMask = COND_NE;  /* if cond is non-zero */
+      }
+      else {
+         /* test reg.x */
+         storage_to_src_reg(&ifInst->SrcReg[0], n->Children[0]->Store);
+      }
    }
    else {
       /* conditional jump to else, or endif */
@@ -1252,8 +1266,10 @@ emit_if(slang_emit_info *emitInfo, slang_ir_node *n)
       ifInst->DstReg.CondMask = COND_EQ;  /* BRA if cond is zero */
       ifInst->Comment = _mesa_strdup("if zero");
    }
-   /* which condition code to use: */
-   ifInst->DstReg.CondSwizzle = n->Children[0]->Store->Swizzle;
+   if (emitInfo->EmitCondCodes) {
+      /* which condition code to use: */
+      ifInst->DstReg.CondSwizzle = n->Children[0]->Store->Swizzle;
+   }
 
    /* if body */
    emit(emitInfo, n->Children[1]);
@@ -1342,6 +1358,8 @@ emit_loop(slang_emit_info *emitInfo, slang_ir_node *n)
           ir->Opcode == IR_BREAK_IF_FALSE ||
           ir->Opcode == IR_BREAK_IF_TRUE) {
          assert(inst->Opcode == OPCODE_BRK ||
+                inst->Opcode == OPCODE_BRK0 ||
+                inst->Opcode == OPCODE_BRK1 ||
                 inst->Opcode == OPCODE_BRA);
          /* go to instruction after end of loop */
          inst->BranchTarget = endInstLoc + 1;
@@ -1351,6 +1369,8 @@ emit_loop(slang_emit_info *emitInfo, slang_ir_node *n)
                 ir->Opcode == IR_CONT_IF_FALSE ||
                 ir->Opcode == IR_CONT_IF_TRUE);
          assert(inst->Opcode == OPCODE_CONT ||
+                inst->Opcode == OPCODE_CONT0 ||
+                inst->Opcode == OPCODE_CONT1 ||
                 inst->Opcode == OPCODE_BRA);
          /* to go instruction at top of loop */
          inst->BranchTarget = beginInstLoc;
@@ -1361,7 +1381,7 @@ emit_loop(slang_emit_info *emitInfo, slang_ir_node *n)
 
 
 /**
- * "Continue" or "break" statement.
+ * Unconditional "continue" or "break" statement.
  * Either OPCODE_CONT, OPCODE_BRK or OPCODE_BRA will be emitted.
  */
 static struct prog_instruction *
@@ -1393,24 +1413,52 @@ emit_cont_break_if(slang_emit_info *emitInfo, slang_ir_node *n,
    gl_inst_opcode opcode;
    struct prog_instruction *inst;
 
+   assert(n->Opcode == IR_CONT_IF_TRUE ||
+          n->Opcode == IR_CONT_IF_FALSE ||
+          n->Opcode == IR_BREAK_IF_TRUE ||
+          n->Opcode == IR_BREAK_IF_FALSE);
+
    /* evaluate condition expr, setting cond codes */
    inst = emit(emitInfo, n->Children[0]);
-   assert(inst);
-   inst->CondUpdate = GL_TRUE;
+   if (emitInfo->EmitCondCodes) {
+      assert(inst);
+      inst->CondUpdate = GL_TRUE;
+   }
 
    n->InstLocation = emitInfo->prog->NumInstructions;
+
+   /* opcode selection */
    if (emitInfo->EmitHighLevelInstructions) {
-      if (n->Opcode == IR_CONT_IF_TRUE ||
-          n->Opcode == IR_CONT_IF_FALSE)
-         opcode = OPCODE_CONT;
-      else
-         opcode = OPCODE_BRK;
+      if (emitInfo->EmitCondCodes) {
+         if (n->Opcode == IR_CONT_IF_TRUE ||
+             n->Opcode == IR_CONT_IF_FALSE)
+            opcode = OPCODE_CONT;
+         else
+            opcode = OPCODE_BRK;
+      }
+      else {
+         if (n->Opcode == IR_CONT_IF_TRUE)
+            opcode = OPCODE_CONT1;
+         else if (n->Opcode == IR_CONT_IF_FALSE)
+            opcode = OPCODE_CONT0;
+         else if (n->Opcode == IR_BREAK_IF_TRUE)
+            opcode = OPCODE_BRK1;
+         else if (n->Opcode == IR_BREAK_IF_FALSE)
+            opcode = OPCODE_BRK0;
+      }
    }
    else {
       opcode = OPCODE_BRA;
    }
+
    inst = new_instruction(emitInfo, opcode);
-   inst->DstReg.CondMask = breakTrue ? COND_NE : COND_EQ;
+   if (emitInfo->EmitCondCodes) {
+      inst->DstReg.CondMask = breakTrue ? COND_NE : COND_EQ;
+   }
+   else {
+      /* BRK0, BRK1, CONT0, CONT1 */
+      storage_to_src_reg(&inst->SrcReg[0], n->Children[0]->Store);
+   }
    return inst;
 }
 
@@ -1779,7 +1827,8 @@ _slang_emit_code(slang_ir_node *n, slang_var_table *vt,
    emitInfo.prog = prog;
 
    emitInfo.EmitHighLevelInstructions = ctx->Shader.EmitHighLevelInstructions;
-   emitInfo.EmitComments = 1+ctx->Shader.EmitComments;
+   emitInfo.EmitCondCodes = 0; /* XXX temporary! */
+   emitInfo.EmitComments = ctx->Shader.EmitComments;
 
    (void) emit(&emitInfo, n);
 

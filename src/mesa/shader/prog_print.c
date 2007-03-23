@@ -572,10 +572,20 @@ _mesa_print_instruction_opt(const struct prog_instruction *inst, GLint indent,
       print_comment(inst);
       break;
    case OPCODE_IF:
-      _mesa_printf("IF (%s%s); # (if false, goto %d)",
-                   condcode_string(inst->DstReg.CondMask),
-                   _mesa_swizzle_string(inst->DstReg.CondSwizzle, 0, GL_FALSE),
-                   inst->BranchTarget);
+      if (inst->SrcReg[0].File != PROGRAM_UNDEFINED) {
+         /* Use ordinary register */
+         _mesa_printf("IF ");
+         print_src_reg(&inst->SrcReg[0], mode, prog);
+         _mesa_printf("; ");
+      }
+      else {
+         /* Use cond codes */
+         _mesa_printf("IF (%s%s);",
+                      condcode_string(inst->DstReg.CondMask),
+                      _mesa_swizzle_string(inst->DstReg.CondSwizzle,
+                                           0, GL_FALSE));
+      }
+      _mesa_printf(" # (if false, goto %d)", inst->BranchTarget);
       print_comment(inst);
       return indent + 3;
    case OPCODE_ELSE:
@@ -604,6 +614,18 @@ _mesa_print_instruction_opt(const struct prog_instruction *inst, GLint indent,
                    inst->BranchTarget);
       print_comment(inst);
       break;
+
+   case OPCODE_BRK0:
+   case OPCODE_BRK1:
+   case OPCODE_CONT0:
+   case OPCODE_CONT1:
+      _mesa_printf("%s ", _mesa_opcode_string(inst->Opcode));
+      print_src_reg(&inst->SrcReg[0], mode, prog);
+      _mesa_printf("; ");
+      _mesa_printf(" # (goto %d)", inst->BranchTarget);
+      print_comment(inst);
+      break;
+
    case OPCODE_BGNSUB:
       _mesa_printf("SUB");
       print_comment(inst);
