@@ -1369,7 +1369,7 @@ _slang_gen_while(slang_assemble_ctx * A, const slang_operation *oper)
    loop->Children[0] = new_seq(breakIf, body);
 
    /* Do infinite loop detection */
-   if (loop->BranchNode == 0 && isConst && constTrue) {
+   if (!loop->BranchNode && isConst && constTrue) {
       /* infinite loop detected */
       A->CurLoop = prevLoop; /* clean-up */
       slang_info_log_error(A->log, "Infinite loop detected!");
@@ -1485,7 +1485,7 @@ static slang_ir_node *
 _slang_gen_if(slang_assemble_ctx * A, const slang_operation *oper)
 {
    /*
-    * eval expr (child[0]), updating condcodes
+    * eval expr (child[0])
     * IF expr THEN
     *    if-body code
     * ELSE
