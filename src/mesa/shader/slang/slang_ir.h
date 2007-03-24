@@ -175,4 +175,30 @@ typedef struct slang_ir_node_
 } slang_ir_node;
 
 
+
+/**
+ * Assembly and IR info
+ */
+typedef struct
+{
+   slang_ir_opcode IrOpcode;
+   const char *IrName;
+   gl_inst_opcode InstOpcode;
+   GLuint ResultSize, NumParams;
+} slang_ir_info;
+
+
+
+extern const slang_ir_info *
+_slang_ir_info(slang_ir_opcode opcode);
+
+
+extern void
+_slang_free_ir_tree(slang_ir_node *n);
+
+
+extern void
+_slang_print_ir_tree(const slang_ir_node *n, int indent);
+
+
 #endif /* SLANG_IR_H */

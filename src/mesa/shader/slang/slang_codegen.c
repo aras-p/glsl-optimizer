@@ -402,24 +402,6 @@ static slang_asm_info AsmInfo[] = {
 };
 
 
-/**
- * Recursively free an IR tree.
- */
-static void
-_slang_free_ir_tree(slang_ir_node *n)
-{
-#if 1
-   GLuint i;
-   if (!n)
-      return;
-   for (i = 0; i < 3; i++)
-      _slang_free_ir_tree(n->Children[i]);
-   /* Do not free n->List since it's a child elsewhere */
-   free(n);
-#endif
-}
-
-
 static slang_ir_node *
 new_node3(slang_ir_opcode op,
           slang_ir_node *c0, slang_ir_node *c1, slang_ir_node *c2)
@@ -1639,7 +1621,7 @@ _slang_gen_select(slang_assemble_ctx *A, slang_operation *oper)
    tree = new_seq(ifNode, tmpVar);
    tree = new_seq(tmpDecl, tree);
 
-   slang_print_ir(tree, 10);
+   /*_slang_print_ir_tree(tree, 10);*/
    return tree;
 }
 
@@ -2835,7 +2817,7 @@ _slang_codegen_function(slang_assemble_ctx * A, slang_function * fun)
 #endif
 #if 0
    printf("************* IR for %s *******\n", (char*)fun->header.a_name);
-   slang_print_ir(n, 0);
+   _slang_print_ir_tree(n, 0);
 #endif
 #if 0
    printf("************* End codegen function ************\n\n");
