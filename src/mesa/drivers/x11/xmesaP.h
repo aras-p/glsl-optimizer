@@ -224,6 +224,7 @@ struct xmesa_buffer {
    GLint db_mode;		/* 0 = single buffered */
 				/* BACK_PIXMAP = use Pixmap for back buffer */
 				/* BACK_XIMAGE = use XImage for back buffer */
+   GLboolean swAlpha;
 
    GLuint shm;			/* X Shared Memory extension status:	*/
 				/*    0 = not available			*/

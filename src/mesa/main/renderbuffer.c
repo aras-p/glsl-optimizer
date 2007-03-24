@@ -1435,6 +1435,17 @@ put_mono_values_alpha8(GLcontext *ctx, struct gl_renderbuffer *arb,
 }
 
 
+static void
+copy_buffer_alpha8(struct gl_renderbuffer* dst, struct gl_renderbuffer* src)
+{
+   ASSERT(dst->_ActualFormat == GL_ALPHA8);
+   ASSERT(src->_ActualFormat == GL_ALPHA8);
+   ASSERT(dst->Width == src->Width);
+   ASSERT(dst->Height == src->Height);
+
+   _mesa_memcpy(dst->Data, src->Data, dst->Width * dst->Height * sizeof(GLubyte));
+}
+
 
 /**********************************************************************/
 /**********************************************************************/
@@ -1762,6 +1773,27 @@ _mesa_add_alpha_renderbuffers(GLcontext *ctx, struct gl_framebuffer *fb,
    }
 
    return GL_TRUE;
+}
+
+
+/**
+ * For framebuffers that use a software alpha channel wrapper
+ * created by _mesa_add_alpha_renderbuffer or _mesa_add_soft_renderbuffers,
+ * copy the back buffer alpha channel into the front buffer alpha channel.
+ */
+void
+_mesa_copy_soft_alpha_renderbuffers(GLcontext *ctx, struct gl_framebuffer *fb)
+{
+   if (fb->Attachment[BUFFER_FRONT_LEFT].Renderbuffer &&
+       fb->Attachment[BUFFER_BACK_LEFT].Renderbuffer)
+      copy_buffer_alpha8(fb->Attachment[BUFFER_FRONT_LEFT].Renderbuffer,
+                         fb->Attachment[BUFFER_BACK_LEFT].Renderbuffer);
+
+
+   if (fb->Attachment[BUFFER_FRONT_RIGHT].Renderbuffer &&
+       fb->Attachment[BUFFER_BACK_RIGHT].Renderbuffer)
+      copy_buffer_alpha8(fb->Attachment[BUFFER_FRONT_RIGHT].Renderbuffer,
+                         fb->Attachment[BUFFER_BACK_RIGHT].Renderbuffer);
 }
 
 
