@@ -150,7 +150,7 @@ _slang_free_ir(slang_ir_node *n)
    }
 
    for (i = 0; i < 3; i++)
-      _slang_free_ir_tree(n->Children[i]);
+      _slang_free_ir(n->Children[i]);
    /* Do not free n->List since it's a child elsewhere */
    free(n);
 }
