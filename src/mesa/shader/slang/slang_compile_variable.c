@@ -272,6 +272,9 @@ slang_variable_destruct(slang_variable * var)
       slang_operation_destruct(var->initializer);
       slang_alloc_free(var->initializer);
    }
+   if (var->aux) {
+      _mesa_free(var->aux);
+   }
 }
 
 
