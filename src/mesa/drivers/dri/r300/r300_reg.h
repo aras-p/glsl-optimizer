@@ -325,7 +325,7 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
  * Most likely this is used to ignore rest of the program in cases
  * where group of verts arent visible. For some reason this "section"
  * is sometimes accepted other instruction that have no relationship with
- *position calculations. 
+ *position calculations.
  */
 #define R300_VAP_PVS_CNTL_1                 0x22D0
 #       define R300_PVS_CNTL_1_PROGRAM_START_SHIFT   0
@@ -566,8 +566,8 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #define R300_RE_FOG_SCALE                     0x4294
 #define R300_RE_FOG_START                     0x4298
 
-/* Not sure why there are duplicate of factor and constant values. 
- * My best guess so far is that there are seperate zbiases for test and write. 
+/* Not sure why there are duplicate of factor and constant values.
+ * My best guess so far is that there are seperate zbiases for test and write.
  * Ordering might be wrong.
  * Some of the tests indicate that fgl has a fallback implementation of zbias
  * via pixel shaders.
@@ -909,7 +909,7 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 /* 32 bit chroma key */
 #define R300_TX_CHROMA_KEY_0                      0x4580
 /* ff00ff00 == { 0, 1.0, 0, 1.0 } */
-#define R300_TX_BORDER_COLOR_0              0x45C0 
+#define R300_TX_BORDER_COLOR_0              0x45C0
 
 /* END: Texture specification */
 
@@ -999,6 +999,7 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #		define R300_FPITX_OP_KIL	2
 #		define R300_FPITX_OP_TXP	3
 #		define R300_FPITX_OP_TXB	4
+#	define R300_FPITX_OPCODE_MASK           (7 << 15)
 
 /* ALU
  * The ALU instructions register blocks are enumerated according to the order

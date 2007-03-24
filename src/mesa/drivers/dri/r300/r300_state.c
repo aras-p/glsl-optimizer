@@ -1239,7 +1239,7 @@ void r300_setup_textures(GLcontext *ctx)
 
 	/* We cannot let disabled tmu offsets pass DRM */
 	for(i=0; i < mtu; i++) {
-		if(TMU_ENABLED(ctx, i)) {
+		if (ctx->Texture.Unit[i]._ReallyEnabled) {
 
 #if 0 /* Enables old behaviour */
 			hw_tmu = i;
@@ -1299,6 +1299,7 @@ void r300_setup_textures(GLcontext *ctx)
 
 	for(i = 0; i < rp->tex.length; i++){
 		int unit;
+		int opcode;
 		unsigned long val;
 
 		unit = rp->tex.inst[i] >> R300_FPITX_IMAGE_SHIFT;
@@ -1307,13 +1308,18 @@ void r300_setup_textures(GLcontext *ctx)
 		val = rp->tex.inst[i];
 		val &= ~R300_FPITX_IMAGE_MASK;
 
-		if (((val >> R300_FPITX_OPCODE_SHIFT) & 7) == R300_FPITX_OP_KIL) {
+		opcode = (val & R300_FPITX_OPCODE_MASK) >> R300_FPITX_OPCODE_SHIFT;
+		if (opcode == R300_FPITX_OP_KIL) {
 			r300->hw.fpt.cmd[R300_FPT_INSTR_0+i] = val;
 		} else {
-			assert(tmu_mappings[unit] >= 0);
-
-			val |= tmu_mappings[unit] << R300_FPITX_IMAGE_SHIFT;
-			r300->hw.fpt.cmd[R300_FPT_INSTR_0+i] = val;
+			if (tmu_mappings[unit] >= 0) {
+				val |= tmu_mappings[unit] << R300_FPITX_IMAGE_SHIFT;
+				r300->hw.fpt.cmd[R300_FPT_INSTR_0+i] = val;
+			} else {
+				// We get here when the corresponding texture image is incomplete
+				// (e.g. incomplete mipmaps etc.)
+				r300->hw.fpt.cmd[R300_FPT_INSTR_0+i] = val;
+			}
 		}
 	}
 
