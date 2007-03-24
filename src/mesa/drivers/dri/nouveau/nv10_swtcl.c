@@ -315,6 +315,9 @@ static inline void nv10_render_line(GLcontext *ctx,GLuint v1,GLuint v2)
 	GLuint vertsize = nmesa->vertex_size;
 	GLuint size_dword = vertsize*(2)/4;
 
+	/* OUT_RINGp wants size in DWORDS */
+	vertsize >>= 2;
+
 	nv10ExtendPrimitive(nmesa, size_dword);
 	nv10StartPrimitive(nmesa,GL_LINES+1,size_dword);
 	OUT_RINGp((nouveauVertex*)(vertptr+(v1*vertsize)),vertsize);
@@ -328,6 +331,9 @@ static inline void nv10_render_triangle(GLcontext *ctx,GLuint v1,GLuint v2,GLuin
 	GLubyte *vertptr = (GLubyte *)nmesa->verts;
 	GLuint vertsize = nmesa->vertex_size;
 	GLuint size_dword = vertsize*(3)/4;
+
+	/* OUT_RINGp wants size in DWORDS */
+	vertsize >>= 2;
 
 	nv10ExtendPrimitive(nmesa, size_dword);
 	nv10StartPrimitive(nmesa,GL_TRIANGLES+1,size_dword);
@@ -343,6 +349,9 @@ static inline void nv10_render_quad(GLcontext *ctx,GLuint v1,GLuint v2,GLuint v3
 	GLubyte *vertptr = (GLubyte *)nmesa->verts;
 	GLuint vertsize = nmesa->vertex_size;
 	GLuint size_dword = vertsize*(4)/4;
+
+	/* OUT_RINGp wants size in DWORDS */
+	vertsize >>= 2;
 
 	nv10ExtendPrimitive(nmesa, size_dword);
 	nv10StartPrimitive(nmesa,GL_QUADS+1,size_dword);
