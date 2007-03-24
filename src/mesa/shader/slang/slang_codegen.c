@@ -1055,13 +1055,9 @@ _slang_gen_function_call(slang_assemble_ctx *A, slang_function *fun,
    }
 
    /* Replace the function call with the inlined block */
-#if 0
-   slang_operation_construct(oper);
-   slang_operation_copy(oper, inlined);
-#else
-   *oper = *inlined;  /* XXX slang_operation_copy() */
-#endif
-
+   slang_operation_destruct(oper);
+   *oper = *inlined;
+   /* XXX slang_operation_destruct(inlined) ??? */
 
 #if 0
    assert(inlined->locals);
