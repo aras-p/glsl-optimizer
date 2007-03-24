@@ -363,7 +363,6 @@ static XMesaBuffer
 create_xmesa_buffer(XMesaDrawable d, BufferType type,
                     XMesaVisual vis, XMesaColormap cmap)
 {
-   GLboolean swAlpha;
    XMesaBuffer b;
 
    ASSERT(type == WINDOW || type == PIXMAP || type == PBUFFER);
@@ -421,10 +420,10 @@ create_xmesa_buffer(XMesaDrawable d, BufferType type,
       /* Visual has alpha, but pixel format doesn't support it.
        * We'll use an alpha renderbuffer wrapper.
        */
-      swAlpha = GL_TRUE;
+      b->swAlpha = GL_TRUE;
    }
    else {
-      swAlpha = GL_FALSE;
+      b->swAlpha = GL_FALSE;
    }
 
    /*
@@ -435,9 +434,9 @@ create_xmesa_buffer(XMesaDrawable d, BufferType type,
                                 vis->mesa_visual.haveDepthBuffer,
                                 vis->mesa_visual.haveStencilBuffer,
                                 vis->mesa_visual.haveAccumBuffer,
-                                swAlpha,
+                                b->swAlpha,
                                 vis->mesa_visual.numAuxBuffers > 0 );
-   
+
    /* insert buffer into linked list */
    b->Next = XMesaBufferList;
    XMesaBufferList = b;
@@ -2211,6 +2210,9 @@ void XMesaSwapBuffers( XMesaBuffer b )
 		      );
          /*_glthread_UNLOCK_MUTEX(_xmesa_lock);*/
       }
+
+      if (b->swAlpha)
+         _mesa_copy_soft_alpha_renderbuffers(ctx, &b->mesa_buffer);
    }
 #if !defined(XFree86Server)
    XSync( b->xm_visual->display, False );
