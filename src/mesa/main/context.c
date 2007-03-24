@@ -1439,6 +1439,7 @@ _mesa_free_context_data( GLcontext *ctx )
    _mesa_free_viewport_data( ctx );
    _mesa_free_colortables_data( ctx );
    _mesa_free_program_data(ctx);
+   _mesa_free_shader_state(ctx);
    _mesa_free_query_data(ctx);
 
 #if FEATURE_ARB_vertex_buffer_object

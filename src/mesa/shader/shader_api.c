@@ -212,6 +212,22 @@ _mesa_init_shader_state(GLcontext * ctx)
 
 
 /**
+ * Free the per-context shader-related state.
+ */
+void
+_mesa_free_shader_state(GLcontext *ctx)
+{
+   if (ctx->Shader.CurrentProgram) {
+      ctx->Shader.CurrentProgram->RefCount--;
+      if (ctx->Shader.CurrentProgram->RefCount <= 0) {
+         _mesa_free_shader_program(ctx, ctx->Shader.CurrentProgram);
+         ctx->Shader.CurrentProgram = NULL;
+      }
+   }
+}
+
+
+/**
  * Copy string from <src> to <dst>, up to maxLength characters, returning
  * length of <dst> in <length>.
  * \param src  the strings source
