@@ -147,6 +147,7 @@ struct _slang_ir_storage
    GLint Index;  /**< -1 means unallocated */
    GLint Size;  /**< number of floats */
    GLuint Swizzle;
+   GLint RefCount; /**< Used during IR tree delete */
 };
 
 typedef struct _slang_ir_storage slang_ir_storage;

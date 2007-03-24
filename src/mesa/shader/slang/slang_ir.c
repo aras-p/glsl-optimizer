@@ -106,12 +106,54 @@ _slang_ir_info(slang_ir_opcode opcode)
    return NULL;
 }
 
+
 static const char *
-slang_ir_name(slang_ir_opcode opcode)
+_slang_ir_name(slang_ir_opcode opcode)
 {
    return _slang_ir_info(opcode)->IrName;
 }
 
+
+/**
+ * Since many IR nodes might point to the same IR storage info, we need
+ * to be careful when deleting things.
+ * Before deleting an IR tree, traverse it and do refcounting on the
+ * IR storage nodes.  Use the refcount info during delete to free things
+ * properly.
+ */
+static void
+_slang_refcount_storage(slang_ir_node *n)
+{
+   GLuint i;
+   if (!n)
+      return;
+   if (n->Store)
+      n->Store->RefCount++;
+   for (i = 0; i < 3; i++)
+      _slang_refcount_storage(n->Children[i]);
+}
+
+
+static void
+_slang_free_ir(slang_ir_node *n)
+{
+   GLuint i;
+   if (!n)
+      return;
+
+   if (n->Store) {
+      n->Store->RefCount--;
+      if (n->Store->RefCount == 0) {
+         free(n->Store);
+         n->Store = NULL;
+      }
+   }
+
+   for (i = 0; i < 3; i++)
+      _slang_free_ir_tree(n->Children[i]);
+   /* Do not free n->List since it's a child elsewhere */
+   free(n);
+}
 
 
 /**
@@ -120,19 +162,9 @@ slang_ir_name(slang_ir_opcode opcode)
 void
 _slang_free_ir_tree(slang_ir_node *n)
 {
-#if 1
-   GLuint i;
-   if (!n)
-      return;
-   for (i = 0; i < 3; i++)
-      _slang_free_ir_tree(n->Children[i]);
-   /* Do not free n->List since it's a child elsewhere */
-   free(n);
-#endif
+   _slang_refcount_storage(n);
+   _slang_free_ir(n);
 }
-
-
-
 
 
 
@@ -149,6 +181,7 @@ swizzle_string(GLuint swizzle)
    return s;
 }
 
+
 static const char *
 writemask_string(GLuint writemask)
 {
@@ -162,6 +195,7 @@ writemask_string(GLuint writemask)
    s[j] = 0;
    return s;
 }
+
 
 static const char *
 storage_string(const slang_ir_storage *st)
@@ -204,12 +238,11 @@ spaces(int n)
 }
 
 
-#define IND 0
-
-
 void
 _slang_print_ir_tree(const slang_ir_node *n, int indent)
 {
+#define IND 0
+
    if (!n)
       return;
 #if !IND
@@ -346,7 +379,7 @@ _slang_print_ir_tree(const slang_ir_node *n, int indent)
       _slang_print_ir_tree(n->Children[0], indent + 3);
       break;
    default:
-      printf("%s (%p, %p)  (store %p)\n", slang_ir_name(n->Opcode),
+      printf("%s (%p, %p)  (store %p)\n", _slang_ir_name(n->Opcode),
              (void*) n->Children[0], (void*) n->Children[1], (void*) n->Store);
       _slang_print_ir_tree(n->Children[0], indent+3);
       _slang_print_ir_tree(n->Children[1], indent+3);
