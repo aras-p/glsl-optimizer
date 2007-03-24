@@ -288,9 +288,11 @@ _mesa_delete_program(GLcontext *ctx, struct gl_program *prog)
    if (prog->Parameters) {
       _mesa_free_parameter_list(prog->Parameters);
    }
-
    if (prog->Varying) {
       _mesa_free_parameter_list(prog->Varying);
+   }
+   if (prog->Attributes) {
+      _mesa_free_parameter_list(prog->Attributes);
    }
 
    /* XXX this is a little ugly */
