@@ -691,7 +691,7 @@ parse_fully_specified_type(slang_parse_ctx * C, slang_output_ctx * O,
 /**
  * When parsing a compound production, this function is used to parse the
  * children.
- * For example, a a while-loop compound will have two children, the
+ * For example, a while-loop compound will have two children, the
  * while condition expression and the loop body.  So, this function will
  * be called twice to parse those two sub-expressions.
  * \param C  the parsing context
@@ -758,7 +758,7 @@ parse_statement(slang_parse_ctx * C, slang_output_ctx * O,
          if (first_var < O->vars->num_variables) {
             const unsigned int num_vars = O->vars->num_variables - first_var;
             unsigned int i;
-
+            assert(oper->num_children == 0);
             oper->num_children = num_vars;
             oper->children = slang_operation_new(num_vars);
             if (oper->children == NULL) {
@@ -864,16 +864,18 @@ handle_nary_expression(slang_parse_ctx * C, slang_operation * op,
 {
    unsigned int i;
 
-   op->children =
-      (slang_operation *) slang_alloc_malloc(n * sizeof(slang_operation));
+   op->children = slang_operation_new(n);
    if (op->children == NULL) {
       slang_info_log_memory(C->L);
       return 0;
    }
    op->num_children = n;
 
-   for (i = 0; i < n; i++)
+   for (i = 0; i < n; i++) {
+      slang_operation_destruct(&op->children[i]);
       op->children[i] = (*ops)[*total_ops - (n + 1 - i)];
+   }
+
    (*ops)[*total_ops - (n + 1)] = (*ops)[*total_ops - 1];
    *total_ops -= n;
 
@@ -1153,7 +1155,8 @@ parse_expression(slang_parse_ctx * C, slang_output_ctx * O,
    }
    C->I++;
 
-   *oper = *ops;
+   slang_operation_destruct(oper);
+   *oper = *ops; /* struct copy */
    slang_alloc_free(ops);
 
    return 1;
