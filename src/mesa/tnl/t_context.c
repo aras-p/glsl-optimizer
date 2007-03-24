@@ -102,6 +102,8 @@ void
 _tnl_InvalidateState( GLcontext *ctx, GLuint new_state )
 {
    TNLcontext *tnl = TNL_CONTEXT(ctx);
+   const struct gl_vertex_program *vp = ctx->VertexProgram._Current;
+   const struct gl_fragment_program *fp = ctx->FragmentProgram._Current;
 
    if (new_state & (_NEW_HINT)) {
       ASSERT(tnl->AllowVertexFog || tnl->AllowPixelFog);
@@ -118,7 +120,9 @@ _tnl_InvalidateState( GLcontext *ctx, GLuint new_state )
 
       RENDERINPUTS_ZERO( tnl->render_inputs_bitset );
       RENDERINPUTS_SET( tnl->render_inputs_bitset, _TNL_ATTRIB_POS );
-      RENDERINPUTS_SET( tnl->render_inputs_bitset, _TNL_ATTRIB_COLOR0 );
+      if (!fp || fp->Base.InputsRead & FRAG_BIT_COL0) {
+         RENDERINPUTS_SET( tnl->render_inputs_bitset, _TNL_ATTRIB_COLOR0 );
+      }
       for (i = 0; i < ctx->Const.MaxTextureCoordUnits; i++) {
          if (ctx->Texture._EnabledCoordUnits & (1 << i)) {
             RENDERINPUTS_SET( tnl->render_inputs_bitset, _TNL_ATTRIB_TEX(i) );
@@ -151,15 +155,12 @@ _tnl_InvalidateState( GLcontext *ctx, GLuint new_state )
       RENDERINPUTS_SET( tnl->render_inputs_bitset, _TNL_ATTRIB_POINTSIZE );
 
    /* check for varying vars which are written by the vertex program */
-   {
-      struct gl_vertex_program *vp = ctx->VertexProgram._Current;
-      if (vp) {
-         GLuint i;
-         for (i = 0; i < MAX_VARYING; i++) {
-            if (vp->Base.OutputsWritten & (1 << (VERT_RESULT_VAR0 + i))) {
-               RENDERINPUTS_SET(tnl->render_inputs_bitset,
-                                _TNL_ATTRIB_GENERIC(i));
-            }
+   if (vp) {
+      GLuint i;
+      for (i = 0; i < MAX_VARYING; i++) {
+         if (vp->Base.OutputsWritten & (1 << (VERT_RESULT_VAR0 + i))) {
+            RENDERINPUTS_SET(tnl->render_inputs_bitset,
+                             _TNL_ATTRIB_GENERIC(i));
          }
       }
    }
