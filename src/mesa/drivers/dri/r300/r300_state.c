@@ -1210,7 +1210,7 @@ void r300_setup_textures(GLcontext *ctx)
 	r300ContextPtr r300 = R300_CONTEXT(ctx);
 	int hw_tmu=0;
 	int last_hw_tmu=-1; /* -1 translates into no setup costs for fields */
-	int tmu_mappings[R300_MAX_TEXTURE_UNITS] = { -1 };
+	int tmu_mappings[R300_MAX_TEXTURE_UNITS] = { -1, };
 	struct r300_fragment_program *rp =
 		(struct r300_fragment_program *)
 		(char *)ctx->FragmentProgram._Current;
@@ -1307,10 +1307,14 @@ void r300_setup_textures(GLcontext *ctx)
 		val = rp->tex.inst[i];
 		val &= ~R300_FPITX_IMAGE_MASK;
 
-		assert(tmu_mappings[unit] >= 0);
+		if (((val >> R300_FPITX_OPCODE_SHIFT) & 7) == R300_FPITX_OP_KIL) {
+			r300->hw.fpt.cmd[R300_FPT_INSTR_0+i] = val;
+		} else {
+			assert(tmu_mappings[unit] >= 0);
 
-		val |= tmu_mappings[unit] << R300_FPITX_IMAGE_SHIFT;
-		r300->hw.fpt.cmd[R300_FPT_INSTR_0+i] = val;
+			val |= tmu_mappings[unit] << R300_FPITX_IMAGE_SHIFT;
+			r300->hw.fpt.cmd[R300_FPT_INSTR_0+i] = val;
+		}
 	}
 
 	r300->hw.fpt.cmd[R300_FPT_CMD_0] = cmdpacket0(R300_PFS_TEXI_0, rp->tex.length);
