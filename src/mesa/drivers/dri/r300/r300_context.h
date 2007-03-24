@@ -553,6 +553,7 @@ struct r300_stencilbuffer_state {
 #define VSF_MAX_FRAGMENT_TEMPS (14)
 
 #define STATE_R300_WINDOW_DIMENSION (STATE_INTERNAL_DRIVER+0)
+#define STATE_R300_TEXRECT_FACTOR (STATE_INTERNAL_DRIVER+1)
 
 struct r300_vertex_shader_fragment {
 	int length;

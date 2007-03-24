@@ -1058,23 +1058,41 @@ r300UpdateDrawBuffer(GLcontext *ctx)
 static void r300FetchStateParameter(GLcontext *ctx, const enum state_index state[],
                   GLfloat *value)
 {
-    r300ContextPtr r300 = R300_CONTEXT(ctx);
+	r300ContextPtr r300 = R300_CONTEXT(ctx);
 
-    switch(state[0])
-    {
-    case STATE_INTERNAL:
-    	switch(state[1])
-	{
-	case STATE_R300_WINDOW_DIMENSION:
-	    value[0] = r300->radeon.dri.drawable->w*0.5f;/* width*0.5 */
-    	    value[1] = r300->radeon.dri.drawable->h*0.5f;/* height*0.5 */
-	    value[2] = 0.5F; 				/* for moving range [-1 1] -> [0 1] */
-    	    value[3] = 1.0F; 				/* not used */
-	    break;
-	default:;
+	switch(state[0]) {
+	case STATE_INTERNAL:
+		switch(state[1]) {
+		case STATE_R300_WINDOW_DIMENSION:
+			value[0] = r300->radeon.dri.drawable->w*0.5f;/* width*0.5 */
+			value[1] = r300->radeon.dri.drawable->h*0.5f;/* height*0.5 */
+			value[2] = 0.5F; 				/* for moving range [-1 1] -> [0 1] */
+			value[3] = 1.0F; 				/* not used */
+			break;
+
+		case STATE_R300_TEXRECT_FACTOR: {
+			struct gl_texture_object* t = ctx->Texture.Unit[state[2]].CurrentRect;
+
+			if (t && t->Image[0][t->BaseLevel]) {
+				struct gl_texture_image* image = t->Image[0][t->BaseLevel];
+				value[0] = 1.0 / image->Width2;
+				value[1] = 1.0 / image->Height2;
+			} else {
+				value[0] = 1.0;
+				value[1] = 1.0;
+			}
+			value[2] = 1.0;
+			value[3] = 1.0;
+			break; }
+
+		default:
+			break;
+		}
+		break;
+
+	default:
+		break;
 	}
-    default:;
-    }
 }
 
 /**

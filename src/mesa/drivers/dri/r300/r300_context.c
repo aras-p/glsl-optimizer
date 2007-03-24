@@ -133,7 +133,6 @@ const struct dri_extension stencil_two_side[] = {
 
 extern struct tnl_pipeline_stage _r300_render_stage;
 extern const struct tnl_pipeline_stage _r300_tcl_stage;
-extern const struct tnl_pipeline_stage _r300_texrect_stage;
 
 static const struct tnl_pipeline_stage *r300_pipeline[] = {
 
@@ -164,8 +163,6 @@ static const struct tnl_pipeline_stage *r300_pipeline[] = {
 
 	/* Else do them here.
 	 */
-	/* scale texture rectangle to 0..1. */
-	&_r300_texrect_stage,
 	&_r300_render_stage,
 	&_tnl_render_stage,	/* FALLBACK  */
 	0,
@@ -204,7 +201,7 @@ GLboolean r300CreateContext(const __GLcontextModes * glVisual,
 						     "def_max_anisotropy");
 
 	//r300->texmicrotile = GL_TRUE;
-	
+
 	/* Init default driver functions then plug in our R300-specific functions
 	 * (the texture functions are especially important)
 	 */
@@ -213,7 +210,7 @@ GLboolean r300CreateContext(const __GLcontextModes * glVisual,
 	r300InitStateFuncs(&functions);
 	r300InitTextureFuncs(&functions);
 	r300InitShaderFuncs(&functions);
-	
+
 #ifdef USER_BUFFERS
 	radeon_mm_init(r300);
 #endif
@@ -221,7 +218,7 @@ GLboolean r300CreateContext(const __GLcontextModes * glVisual,
 	if (hw_tcl_on) {
 		r300_init_vbo_funcs(&functions);
 	}
-#endif	
+#endif
 	if (!radeonInitContext(&r300->radeon, &functions,
 			       glVisual, driContextPriv, sharedContextPrivate)) {
 		FREE(r300);
@@ -264,8 +261,8 @@ GLboolean r300CreateContext(const __GLcontextModes * glVisual,
 	 * texturable memory at once.
 	 */
 
-	ctx = r300->radeon.glCtx; 
-	
+	ctx = r300->radeon.glCtx;
+
 	ctx->Const.MaxTextureImageUnits = driQueryOptioni(&r300->radeon.optionCache,
 						     "texture_image_units");
 	ctx->Const.MaxTextureCoordUnits = driQueryOptioni(&r300->radeon.optionCache,
@@ -283,7 +280,7 @@ GLboolean r300CreateContext(const __GLcontextModes * glVisual,
 	ctx->Const.MinLineWidthAA = 1.0;
 	ctx->Const.MaxLineWidth = R300_LINESIZE_MAX;
 	ctx->Const.MaxLineWidthAA = R300_LINESIZE_MAX;
-	
+
 #ifdef USER_BUFFERS
 	/* Needs further modifications */
 #if 0
@@ -337,10 +334,10 @@ GLboolean r300CreateContext(const __GLcontextModes * glVisual,
 	ctx->_MaintainTexEnvProgram = GL_TRUE;
 
 	driInitExtensions(ctx, card_extensions, GL_TRUE);
-	
+
 	if (driQueryOptionb(&r300->radeon.optionCache, "disable_stencil_two_side") == 0)
 		driInitSingleExtension(ctx, stencil_two_side);
-	
+
 	if (r300->radeon.glCtx->Mesa_DXTn && !driQueryOptionb (&r300->radeon.optionCache, "disable_s3tc")) {
 	  _mesa_enable_extension( ctx, "GL_EXT_texture_compression_s3tc" );
 	  _mesa_enable_extension( ctx, "GL_S3_s3tc" );
@@ -354,7 +351,7 @@ GLboolean r300CreateContext(const __GLcontextModes * glVisual,
 	radeonInitSpanFuncs(ctx);
 	r300InitCmdBuf(r300);
 	r300InitState(r300);
-	
+
 #ifdef RADEON_VTXFMT_A
 	radeon_init_vtxfmt_a(r300);
 #endif
@@ -407,9 +404,9 @@ static void r300FreeGartAllocations(r300ContextPtr r300)
 	/* Cannot flush/lock if no context exists. */
 	if (in_use)
 		r300FlushCmdBuf(r300, __FUNCTION__);
-	
+
 	done_age = radeonGetAge((radeonContextPtr)r300);
-	
+
 	for (i = r300->rmm->u_last; i > 0; i--) {
 		if (r300->rmm->u_list[i].ptr == NULL) {
 			continue;
@@ -421,7 +418,7 @@ static void r300FreeGartAllocations(r300ContextPtr r300)
 		}
 
 		assert(r300->rmm->u_list[i].h_pending == 0);
-		
+
 		tries = 0;
 		while(r300->rmm->u_list[i].age > done_age && tries++ < 1000) {
 			usleep(10);
@@ -430,10 +427,10 @@ static void r300FreeGartAllocations(r300ContextPtr r300)
 		if (tries >= 1000) {
 			WARN_ONCE("Failed to idle region!");
 		}
-		
+
 		memfree.region_offset = (char *)r300->rmm->u_list[i].ptr -
 			(char *)r300->radeon.radeonScreen->gartTextures.map;
-		
+
 		ret = drmCommandWrite(r300->radeon.radeonScreen->driScreen->fd,
 				DRM_RADEON_FREE, &memfree, sizeof(memfree));
 		if (ret) {
@@ -442,7 +439,7 @@ static void r300FreeGartAllocations(r300ContextPtr r300)
 		} else {
 			if (i == r300->rmm->u_last)
 				r300->rmm->u_last--;
-			
+
 			r300->rmm->u_list[i].pending = 0;
 			r300->rmm->u_list[i].ptr = NULL;
 			if (r300->rmm->u_list[i].fb) {
@@ -490,12 +487,12 @@ void r300DestroyContext(__DRIcontextPrivate * driContextPriv)
 		_tnl_DestroyContext(r300->radeon.glCtx);
 		_vbo_DestroyContext(r300->radeon.glCtx);
 		_swrast_DestroyContext(r300->radeon.glCtx);
-		
+
 		if (r300->dma.current.buf) {
 			r300ReleaseDmaRegion(r300, &r300->dma.current, __FUNCTION__ );
 #ifndef USER_BUFFERS
 			r300FlushCmdBuf(r300, __FUNCTION__);
-#endif  
+#endif
 		}
 		r300FreeGartAllocations(r300);
 		r300DestroyCmdBuf(r300);
