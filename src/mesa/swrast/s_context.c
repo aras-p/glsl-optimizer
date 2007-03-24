@@ -505,9 +505,7 @@ _swrast_update_texture_samplers(GLcontext *ctx)
 
    for (u = 0; u < ctx->Const.MaxTextureImageUnits; u++) {
       const struct gl_texture_object *tObj = ctx->Texture.Unit[u]._Current;
-      if (tObj)
-         swrast->TextureSample[u] =
-            _swrast_choose_texture_sample_func(ctx, tObj);
+      swrast->TextureSample[u] = _swrast_choose_texture_sample_func(ctx, tObj);
    }
 }
 
