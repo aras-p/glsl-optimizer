@@ -78,7 +78,18 @@ static void nv20BlendFuncSeparate(GLcontext *ctx, GLenum sfactorRGB, GLenum dfac
 
 static void nv20Clear(GLcontext *ctx, GLbitfield mask)
 {
-	/* TODO */
+	nouveauContextPtr nmesa = NOUVEAU_CONTEXT(ctx);
+	GLuint hw_bufs = 0;
+
+	if (mask & (BUFFER_BIT_FRONT_LEFT | BUFFER_BIT_BACK_LEFT))
+		hw_bufs |= 0xf0;
+	if (mask & (BUFFER_BIT_DEPTH))
+		hw_bufs |= 0x03;
+
+	if (hw_bufs) {
+		BEGIN_RING_CACHE(NvSub3D, NV30_TCL_PRIMITIVE_3D_CLEAR_WHICH_BUFFERS, 1);
+		OUT_RING_CACHE(hw_bufs);
+	}
 }
 
 static void nv20ClearColor(GLcontext *ctx, const GLfloat color[4])
@@ -557,9 +568,11 @@ static void nv20Scissor(GLcontext *ctx, GLint x, GLint y, GLsizei w, GLsizei h)
 	   y += nmesa->drawY;
 	}
 
-        BEGIN_RING_CACHE(NvSub3D, NV20_TCL_PRIMITIVE_3D_SCISSOR_X2_X1, 2);
-        OUT_RING_CACHE(((x+w-1) << 16) | x);
-        OUT_RING_CACHE(((y+h-1) << 16) | y);
+        BEGIN_RING_CACHE(NvSub3D, NV20_TCL_PRIMITIVE_3D_SCISSOR_X2_X1, 1);
+        OUT_RING_CACHE((w << 16) | x );
+        BEGIN_RING_CACHE(NvSub3D, NV20_TCL_PRIMITIVE_3D_SCISSOR_Y2_Y1, 1);
+        OUT_RING_CACHE((h << 16) | y );
+
 }
 
 /** Select flat or smooth shading */
