@@ -131,7 +131,7 @@ static void recalculate_urb_fence( struct brw_context *brw )
 
 	 brw->urb.constrained = 1;
 	 
-	 if (check_urb_layout(brw)) {
+	 if (!check_urb_layout(brw)) {
 	    /* This is impossible, given the maximal sizes of urb
 	     * entries and the values for minimum nr of entries
 	     * provided above.
