@@ -218,7 +218,7 @@ static void r300SetTexImages(r300ContextPtr rmesa,
 		if (rmesa->texmicrotile  && (tObj->Target != GL_TEXTURE_RECTANGLE_NV) &&
 		   /* texrect might be able to use micro tiling too in theory? */
 		   (baseImage->Height > 1)) {
-			
+
 			/* allow 32 (bytes) x 1 mip (which will use two times the space
 			   the non-tiled version would use) max if base texture is large enough */
 			if ((numLevels == 1) ||
@@ -228,7 +228,7 @@ static void r300SetTexImages(r300ContextPtr rmesa,
 				t->tile_bits |= R300_TXO_MICRO_TILE;
 			}
 		}
-		
+
 		if (tObj->Target != GL_TEXTURE_RECTANGLE_NV) {
 			/* we can set macro tiling even for small textures, they will be untiled anyway */
 			t->tile_bits |= R300_TXO_MACRO_TILE;
@@ -237,91 +237,85 @@ static void r300SetTexImages(r300ContextPtr rmesa,
 #endif
 
 	for (i = 0; i < numLevels; i++) {
-	  const struct gl_texture_image *texImage;
-	  GLuint size;
-	  
-	  texImage = tObj->Image[0][i + t->base.firstLevel];
-	  if (!texImage)
-	    break;
-	  
-	  /* find image size in bytes */
-	  if (texImage->IsCompressed) {
-	    if ((t->format & R300_TX_FORMAT_DXT1) == R300_TX_FORMAT_DXT1) {
-	      // fprintf(stderr,"DXT 1 %d %08X\n", texImage->Width, t->format);
-	      if ((texImage->Width + 3) < 8) /* width one block */
-		size = texImage->CompressedSize * 4;
-	      else if ((texImage->Width + 3) < 16)
-		size = texImage->CompressedSize * 2;
-	      else size = texImage->CompressedSize;
-	    }
-	    else /* DXT3/5, 16 bytes per block */
-	    {
-	      WARN_ONCE("DXT 3/5 suffers from multitexturing problems!\n");
-	      // fprintf(stderr,"DXT 3/5 %d\n", texImage->Width);
-	      if ((texImage->Width + 3) < 8)
-		size = texImage->CompressedSize * 2;
-	      else size = texImage->CompressedSize;
-	    }
-	    
-	  } else if (tObj->Target == GL_TEXTURE_RECTANGLE_NV) {
-	    size = ((texImage->Width * texelBytes + 63) & ~63) * texImage->Height;
-	    blitWidth = 64 / texelBytes;
-	  } else if (t->tile_bits & R300_TXO_MICRO_TILE) {
-		/* tile pattern is 16 bytes x2. mipmaps stay 32 byte aligned,
-		   though the actual offset may be different (if texture is less than
-		   32 bytes width) to the untiled case */
-		int w = (texImage->Width * texelBytes * 2 + 31) & ~31;
-		size = (w * ((texImage->Height + 1) / 2)) * texImage->Depth;
-		blitWidth = MAX2(texImage->Width, 64 / texelBytes);
-	  } else {
-	    int w = (texImage->Width * texelBytes + 31) & ~31;
-	    size = w * texImage->Height * texImage->Depth;
-	    blitWidth = MAX2(texImage->Width, 64 / texelBytes);
-	  }
-	  assert(size > 0);
-	  
-	  if(0)
-	    fprintf(stderr, "w=%d h=%d d=%d tb=%d intFormat=%d\n", texImage->Width, texImage->Height,
-		    texImage->Depth, texImage->TexFormat->TexelBytes,
-		    texImage->InternalFormat);
-	  
-	  /* Align to 32-byte offset.  It is faster to do this unconditionally
-	   * (no branch penalty).
-	   */
-	  
-	  curOffset = (curOffset + 0x1f) & ~0x1f;
-	  
-	  if (texelBytes) {
-	    t->image[0][i].x = curOffset; /* fix x and y coords up later together with offset */
-	    t->image[0][i].y = 0;
-	    t->image[0][i].width = MIN2(size / texelBytes, blitWidth);
-	    t->image[0][i].height = (size / texelBytes) / t->image[0][i].width;
-	  } else {
-	    t->image[0][i].x = curOffset % R300_BLIT_WIDTH_BYTES;
-	    t->image[0][i].y = curOffset / R300_BLIT_WIDTH_BYTES;
-	    t->image[0][i].width = MIN2(size, R300_BLIT_WIDTH_BYTES);
-	    t->image[0][i].height = size / t->image[0][i].width;
-	  }
-#if 0
-	  /* for debugging only and only  applicable to non-rectangle targets */
-	  assert(size % t->image[0][i].width == 0);
-	  assert(t->image[0][i].x == 0
-		 || (size < R300_BLIT_WIDTH_BYTES
-		     && t->image[0][i].height == 1));
-#endif
-	  
-	  if (0)
-	    fprintf(stderr,
-		    "level %d: %dx%d x=%d y=%d w=%d h=%d size=%d at %d\n",
-		    i, texImage->Width, texImage->Height,
-		    t->image[0][i].x, t->image[0][i].y,
-		    t->image[0][i].width, t->image[0][i].height,
-		    size, curOffset);
-	  
-	  curOffset += size;
-	  
+		const struct gl_texture_image *texImage;
+		GLuint size;
+
+		texImage = tObj->Image[0][i + t->base.firstLevel];
+		if (!texImage)
+			break;
+
+		/* find image size in bytes */
+		if (texImage->IsCompressed) {
+			if ((t->format & R300_TX_FORMAT_DXT1) == R300_TX_FORMAT_DXT1) {
+				// fprintf(stderr,"DXT 1 %d %08X\n", texImage->Width, t->format);
+				if ((texImage->Width + 3) < 8) /* width one block */
+					size = texImage->CompressedSize * 4;
+				else if ((texImage->Width + 3) < 16)
+					size = texImage->CompressedSize * 2;
+				else
+					size = texImage->CompressedSize;
+			} else {
+				/* DXT3/5, 16 bytes per block */
+				WARN_ONCE("DXT 3/5 suffers from multitexturing problems!\n");
+				// fprintf(stderr,"DXT 3/5 %d\n", texImage->Width);
+				if ((texImage->Width + 3) < 8)
+					size = texImage->CompressedSize * 2;
+				else
+					size = texImage->CompressedSize;
+			}
+		} else if (tObj->Target == GL_TEXTURE_RECTANGLE_NV) {
+			size = ((texImage->Width * texelBytes + 63) & ~63) * texImage->Height;
+			blitWidth = 64 / texelBytes;
+		} else if (t->tile_bits & R300_TXO_MICRO_TILE) {
+			/* tile pattern is 16 bytes x2. mipmaps stay 32 byte aligned,
+				though the actual offset may be different (if texture is less than
+				32 bytes width) to the untiled case */
+			int w = (texImage->Width * texelBytes * 2 + 31) & ~31;
+			size = (w * ((texImage->Height + 1) / 2)) * texImage->Depth;
+			blitWidth = MAX2(texImage->Width, 64 / texelBytes);
+		} else {
+			int w = (texImage->Width * texelBytes + 31) & ~31;
+			size = w * texImage->Height * texImage->Depth;
+			blitWidth = MAX2(texImage->Width, 64 / texelBytes);
+		}
+		assert(size > 0);
+
+		if(0)
+			fprintf(stderr, "w=%d h=%d d=%d tb=%d intFormat=%d\n",
+					texImage->Width, texImage->Height,
+					texImage->Depth, texImage->TexFormat->TexelBytes,
+					texImage->InternalFormat);
+
+		/* Align to 32-byte offset.  It is faster to do this unconditionally
+		 * (no branch penalty).
+		 */
+
+		curOffset = (curOffset + 0x1f) & ~0x1f;
+
+		if (texelBytes) {
+			/* fix x and y coords up later together with offset */
+			t->image[0][i].x = curOffset;
+			t->image[0][i].y = 0;
+			t->image[0][i].width = MIN2(size / texelBytes, blitWidth);
+			t->image[0][i].height = (size / texelBytes) / t->image[0][i].width;
+		} else {
+			t->image[0][i].x = curOffset % R300_BLIT_WIDTH_BYTES;
+			t->image[0][i].y = curOffset / R300_BLIT_WIDTH_BYTES;
+			t->image[0][i].width = MIN2(size, R300_BLIT_WIDTH_BYTES);
+			t->image[0][i].height = size / t->image[0][i].width;
+		}
+
+		if (0)
+			fprintf(stderr,
+					"level %d: %dx%d x=%d y=%d w=%d h=%d size=%d at %d\n",
+					i, texImage->Width, texImage->Height,
+					t->image[0][i].x, t->image[0][i].y,
+					t->image[0][i].width, t->image[0][i].height,
+					size, curOffset);
+
+		curOffset += size;
 	}
-	
+
 	/* Align the total size of texture memory block.
 	 */
 	t->base.totalSize =
@@ -361,7 +355,7 @@ static void r300SetTexImages(r300ContextPtr rmesa,
 	} else if (tObj->Target == GL_TEXTURE_CUBE_MAP) {
 		ASSERT(log2Width == log2Height);
 		t->format |= R300_TX_FORMAT_CUBIC_MAP;
-		
+
 		t->format_x |= R200_TEXCOORD_CUBIC_ENV;
 		t->pp_cubic_faces = ((log2Width << R200_FACE_WIDTH_1_SHIFT) |
 				     (log2Height << R200_FACE_HEIGHT_1_SHIFT) |
@@ -377,7 +371,7 @@ static void r300SetTexImages(r300ContextPtr rmesa,
 		ASSERT(log2Width == log2Height);
 		t->format |= R300_TX_FORMAT_CUBIC_MAP;
 	}
-	
+
 	t->size = (((tObj->Image[0][t->base.firstLevel]->Width - 1) << R300_TX_WIDTHMASK_SHIFT)
 			|((tObj->Image[0][t->base.firstLevel]->Height - 1) << R300_TX_HEIGHTMASK_SHIFT))
 			|((numLevels - 1) << R300_TX_MAX_MIP_LEVEL_SHIFT);
