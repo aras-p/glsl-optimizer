@@ -1473,7 +1473,7 @@ _mesa_init_renderbuffer(struct gl_renderbuffer *rb, GLuint name)
 
    rb->ClassID = 0;
    rb->Name = name;
-   rb->RefCount = 1;
+   rb->RefCount = 0;
    rb->Delete = _mesa_delete_renderbuffer;
 
    /* The rest of these should be set later by the caller of this function or
@@ -2105,9 +2105,7 @@ _mesa_add_renderbuffer(struct gl_framebuffer *fb,
 
    fb->Attachment[bufferName].Type = GL_RENDERBUFFER_EXT;
    fb->Attachment[bufferName].Complete = GL_TRUE;
-   fb->Attachment[bufferName].Renderbuffer = rb;
-
-   rb->RefCount++;
+   _mesa_reference_renderbuffer(&fb->Attachment[bufferName].Renderbuffer, rb);
 }
 
 
@@ -2125,38 +2123,55 @@ _mesa_remove_renderbuffer(struct gl_framebuffer *fb, GLuint bufferName)
    if (!rb)
       return;
 
-   _mesa_unreference_renderbuffer(&rb);
+   _mesa_reference_renderbuffer(&rb, NULL);
 
    fb->Attachment[bufferName].Renderbuffer = NULL;
 }
 
 
 /**
- * Decrement a renderbuffer object's reference count and delete it when
- * the refcount hits zero.
- * Note: we pass the address of a pointer.
+ * Set *ptr to point to rb.  If *ptr points to another renderbuffer,
+ * dereference that buffer first.  The new renderbuffer's refcount will
+ * be incremented.  The old renderbuffer's refcount will be decremented.
  */
 void
-_mesa_unreference_renderbuffer(struct gl_renderbuffer **rb)
+_mesa_reference_renderbuffer(struct gl_renderbuffer **ptr,
+                             struct gl_renderbuffer *rb)
 {
-   assert(rb);
-   if (*rb) {
-      GLboolean deleteFlag = GL_FALSE;
+   assert(ptr);
+   if (*ptr == rb) {
+      /* no change */
+      return;
+   }
 
-      _glthread_LOCK_MUTEX((*rb)->Mutex);
-      ASSERT((*rb)->RefCount > 0);
-      (*rb)->RefCount--;
-      deleteFlag = ((*rb)->RefCount == 0);
-      _glthread_UNLOCK_MUTEX((*rb)->Mutex);
+   if (*ptr) {
+      /* Unreference the old renderbuffer */
+      GLboolean deleteFlag = GL_FALSE;
+      struct gl_renderbuffer *oldRb = *ptr;
+
+      _glthread_LOCK_MUTEX(oldRb->Mutex);
+      ASSERT(oldRb->RefCount > 0);
+      oldRb->RefCount--;
+      /*printf("RB DECR %p to %d\n", (void*) oldRb, oldRb->RefCount);*/
+      deleteFlag = (oldRb->RefCount == 0);
+      _glthread_UNLOCK_MUTEX(oldRb->Mutex);
 
       if (deleteFlag)
-         (*rb)->Delete(*rb);
+         oldRb->Delete(oldRb);
 
-      *rb = NULL;
+      *ptr = NULL;
+   }
+   assert(!*ptr);
+
+   if (rb) {
+      /* reference new renderbuffer */
+      _glthread_LOCK_MUTEX(rb->Mutex);
+      rb->RefCount++;
+      /*printf("RB REF  %p to %d\n", (void*)rb, rb->RefCount);*/
+      _glthread_UNLOCK_MUTEX(rb->Mutex);
+      *ptr = rb;
    }
 }
-
-
 
 
 /**
@@ -2180,4 +2195,3 @@ _mesa_new_depthstencil_renderbuffer(GLcontext *ctx, GLuint name)
 
    return dsrb;
 }
-
