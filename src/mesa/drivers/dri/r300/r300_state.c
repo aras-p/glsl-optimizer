@@ -1058,23 +1058,41 @@ r300UpdateDrawBuffer(GLcontext *ctx)
 static void r300FetchStateParameter(GLcontext *ctx, const enum state_index state[],
                   GLfloat *value)
 {
-    r300ContextPtr r300 = R300_CONTEXT(ctx);
+	r300ContextPtr r300 = R300_CONTEXT(ctx);
 
-    switch(state[0])
-    {
-    case STATE_INTERNAL:
-    	switch(state[1])
-	{
-	case STATE_R300_WINDOW_DIMENSION:
-	    value[0] = r300->radeon.dri.drawable->w*0.5f;/* width*0.5 */
-    	    value[1] = r300->radeon.dri.drawable->h*0.5f;/* height*0.5 */
-	    value[2] = 0.5F; 				/* for moving range [-1 1] -> [0 1] */
-    	    value[3] = 1.0F; 				/* not used */
-	    break;
-	default:;
+	switch(state[0]) {
+	case STATE_INTERNAL:
+		switch(state[1]) {
+		case STATE_R300_WINDOW_DIMENSION:
+			value[0] = r300->radeon.dri.drawable->w*0.5f;/* width*0.5 */
+			value[1] = r300->radeon.dri.drawable->h*0.5f;/* height*0.5 */
+			value[2] = 0.5F; 				/* for moving range [-1 1] -> [0 1] */
+			value[3] = 1.0F; 				/* not used */
+			break;
+
+		case STATE_R300_TEXRECT_FACTOR: {
+			struct gl_texture_object* t = ctx->Texture.Unit[state[2]].CurrentRect;
+
+			if (t && t->Image[0][t->BaseLevel]) {
+				struct gl_texture_image* image = t->Image[0][t->BaseLevel];
+				value[0] = 1.0 / image->Width2;
+				value[1] = 1.0 / image->Height2;
+			} else {
+				value[0] = 1.0;
+				value[1] = 1.0;
+			}
+			value[2] = 1.0;
+			value[3] = 1.0;
+			break; }
+
+		default:
+			break;
+		}
+		break;
+
+	default:
+		break;
 	}
-    default:;
-    }
 }
 
 /**
@@ -1210,7 +1228,7 @@ void r300_setup_textures(GLcontext *ctx)
 	r300ContextPtr r300 = R300_CONTEXT(ctx);
 	int hw_tmu=0;
 	int last_hw_tmu=-1; /* -1 translates into no setup costs for fields */
-	int tmu_mappings[R300_MAX_TEXTURE_UNITS] = { -1 };
+	int tmu_mappings[R300_MAX_TEXTURE_UNITS] = { -1, };
 	struct r300_fragment_program *rp =
 		(struct r300_fragment_program *)
 		(char *)ctx->FragmentProgram._Current;
@@ -1239,7 +1257,7 @@ void r300_setup_textures(GLcontext *ctx)
 
 	/* We cannot let disabled tmu offsets pass DRM */
 	for(i=0; i < mtu; i++) {
-		if(TMU_ENABLED(ctx, i)) {
+		if (ctx->Texture.Unit[i]._ReallyEnabled) {
 
 #if 0 /* Enables old behaviour */
 			hw_tmu = i;
@@ -1299,6 +1317,7 @@ void r300_setup_textures(GLcontext *ctx)
 
 	for(i = 0; i < rp->tex.length; i++){
 		int unit;
+		int opcode;
 		unsigned long val;
 
 		unit = rp->tex.inst[i] >> R300_FPITX_IMAGE_SHIFT;
@@ -1307,10 +1326,19 @@ void r300_setup_textures(GLcontext *ctx)
 		val = rp->tex.inst[i];
 		val &= ~R300_FPITX_IMAGE_MASK;
 
-		assert(tmu_mappings[unit] >= 0);
-
-		val |= tmu_mappings[unit] << R300_FPITX_IMAGE_SHIFT;
-		r300->hw.fpt.cmd[R300_FPT_INSTR_0+i] = val;
+		opcode = (val & R300_FPITX_OPCODE_MASK) >> R300_FPITX_OPCODE_SHIFT;
+		if (opcode == R300_FPITX_OP_KIL) {
+			r300->hw.fpt.cmd[R300_FPT_INSTR_0+i] = val;
+		} else {
+			if (tmu_mappings[unit] >= 0) {
+				val |= tmu_mappings[unit] << R300_FPITX_IMAGE_SHIFT;
+				r300->hw.fpt.cmd[R300_FPT_INSTR_0+i] = val;
+			} else {
+				// We get here when the corresponding texture image is incomplete
+				// (e.g. incomplete mipmaps etc.)
+				r300->hw.fpt.cmd[R300_FPT_INSTR_0+i] = val;
+			}
+		}
 	}
 
 	r300->hw.fpt.cmd[R300_FPT_CMD_0] = cmdpacket0(R300_PFS_TEXI_0, rp->tex.length);

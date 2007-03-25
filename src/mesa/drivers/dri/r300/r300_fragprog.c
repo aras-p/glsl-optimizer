@@ -929,13 +929,40 @@ static void emit_tex(struct r300_fragment_program *rp,
 	COMPILE_STATE;
 	GLuint coord = t_src(rp, fpi->SrcReg[0]);
 	GLuint dest = undef, rdest = undef;
-	GLuint din = cs->dest_in_node, uin = cs->used_in_node;
+	GLuint din, uin;
 	int unit = fpi->TexSrcUnit;
 	int hwsrc, hwdest;
+	GLuint tempreg = 0;
 
 	/* Resolve source/dest to hardware registers */
-	hwsrc = t_hw_src(rp, coord, GL_TRUE);
 	if (opcode != R300_FPITX_OP_KIL) {
+		if (fpi->TexSrcTarget == TEXTURE_RECT_INDEX) {
+			/**
+			 * Hardware uses [0..1]x[0..1] range for rectangle textures
+			 * instead of [0..Width]x[0..Height].
+			 * Add a scaling instruction.
+			 *
+			 * \todo Refactor this once we have proper rewriting/optimization
+			 * support for programs.
+			 */
+			GLint tokens[6] = { STATE_INTERNAL, STATE_R300_TEXRECT_FACTOR, 0, 0, 0, 0 };
+			int factor_index;
+			GLuint factorreg;
+
+			tokens[2] = unit;
+			factor_index = _mesa_add_state_reference(rp->mesa_program.Base.Parameters, tokens);
+			factorreg = emit_const4fv(rp,
+					rp->mesa_program.Base.Parameters->ParameterValues[factor_index]);
+			tempreg = keep(get_temp_reg(rp));
+
+			emit_arith(rp, PFS_OP_MAD, tempreg, WRITEMASK_XYZW,
+			           coord, factorreg, pfs_zero, 0);
+
+			hwsrc = t_hw_src(rp, tempreg, GL_TRUE);
+		} else {
+			hwsrc = t_hw_src(rp, coord, GL_TRUE);
+		}
+
 		dest = t_dst(rp, fpi->DstReg);
 
 		/* r300 doesn't seem to be able to do TEX->output reg */
@@ -956,7 +983,11 @@ static void emit_tex(struct r300_fragment_program *rp,
 	} else {
 		hwdest = 0;
 		unit = 0;
+		hwsrc = t_hw_src(rp, coord, GL_TRUE);
 	}
+
+	din = cs->dest_in_node;
+	uin = cs->used_in_node;
 
 	/* Indirection if source has been written in this node, or if the
 	 * dest has been read/written in this node
@@ -1009,6 +1040,10 @@ static void emit_tex(struct r300_fragment_program *rp,
 			   pfs_one, pfs_zero, 0);
 		free_temp(rp, dest);
 	}
+
+	/* Free temp register */
+	if (tempreg != 0)
+		free_temp(rp, tempreg);
 }
 
 
