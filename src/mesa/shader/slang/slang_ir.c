@@ -74,7 +74,6 @@ static const slang_ir_info IrInfo[] = {
    { IR_SEQ, "IR_SEQ", OPCODE_NOP, 0, 0 },
    { IR_SCOPE, "IR_SCOPE", OPCODE_NOP, 0, 0 },
    { IR_LABEL, "IR_LABEL", OPCODE_NOP, 0, 0 },
-   { IR_JUMP, "IR_JUMP", OPCODE_NOP, 0, 0 },
    { IR_IF, "IR_IF", OPCODE_NOP, 0, 0 },
    { IR_KILL, "IR_KILL", OPCODE_NOP, 0, 0 },
    { IR_COND, "IR_COND", OPCODE_NOP, 0, 0 },
@@ -280,9 +279,6 @@ _slang_print_ir_tree(const slang_ir_node *n, int indent)
    case IR_COND:
       printf("COND\n");
       _slang_print_ir_tree(n->Children[0], indent + 3);
-      break;
-   case IR_JUMP:
-      printf("JUMP %s\n", n->Label->Name);
       break;
 
    case IR_IF:
