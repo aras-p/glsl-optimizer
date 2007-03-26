@@ -716,7 +716,7 @@ slang_substitute(slang_assemble_ctx *A, slang_operation *oper,
    case SLANG_OPER_RETURN:
       /* do return replacement here too */
       assert(oper->num_children == 0 || oper->num_children == 1);
-      if (!_slang_is_noop(oper)) {
+      if (oper->num_children == 1 && !_slang_is_noop(&oper->children[0])) {
          /* replace:
           *   return expr;
           * with:
@@ -725,6 +725,14 @@ slang_substitute(slang_assemble_ctx *A, slang_operation *oper,
           * then do substitutions on the assignment.
           */
          slang_operation *blockOper, *assignOper, *returnOper;
+
+         /* check if function actually has a return type */
+         assert(A->CurFunction);
+         if (A->CurFunction->header.type.specifier.type == SLANG_SPEC_VOID) {
+            slang_info_log_error(A->log, "illegal return expression");
+            return;
+         }
+
          blockOper = slang_operation_new(1);
          blockOper->type = SLANG_OPER_BLOCK_NO_NEW_SCOPE;
          blockOper->num_children = 2;
@@ -754,6 +762,14 @@ slang_substitute(slang_assemble_ctx *A, slang_operation *oper,
          /* install new code */
          slang_operation_copy(oper, blockOper);
          slang_operation_destruct(blockOper);
+      }
+      else {
+         /* check if return value was expected */
+         assert(A->CurFunction);
+         if (A->CurFunction->header.type.specifier.type != SLANG_SPEC_VOID) {
+            slang_info_log_error(A->log, "return statement requires an expression");
+            return;
+         }
       }
       break;
 
@@ -806,6 +822,11 @@ slang_inline_function_call(slang_assemble_ctx * A, slang_function *fun,
    slang_variable **substOld;
    slang_operation **substNew;
    GLuint substCount, numCopyIn, i;
+   slang_function *prevFunction;
+
+   /* save / push */
+   prevFunction = A->CurFunction;
+   A->CurFunction = fun;
 
    /*assert(oper->type == SLANG_OPER_CALL); (or (matrix) multiply, etc) */
    assert(fun->param_count == totalArgs);
@@ -1027,6 +1048,10 @@ slang_inline_function_call(slang_assemble_ctx * A, slang_function *fun,
 	  fun->parameters->num_variables, numArgs);
    slang_print_tree(top, 0);
 #endif
+
+   /* pop */
+   A->CurFunction = prevFunction;
+
    return top;
 }
 
@@ -1703,9 +1728,24 @@ _slang_gen_logical_or(slang_assemble_ctx *A, slang_operation *oper)
 static slang_ir_node *
 _slang_gen_return(slang_assemble_ctx * A, slang_operation *oper)
 {
-   if (oper->num_children == 0 ||
-       (oper->num_children == 1 &&
-        oper->children[0].type == SLANG_OPER_VOID)) {
+   const GLboolean haveReturnValue
+      = (oper->num_children == 1 &&
+         oper->children[0].type != SLANG_OPER_VOID);
+
+   /* error checking */
+   assert(A->CurFunction);
+   if (haveReturnValue &&
+       A->CurFunction->header.type.specifier.type == SLANG_SPEC_VOID) {
+      slang_info_log_error(A->log, "illegal return expression");
+      return NULL;
+   }
+   else if (!haveReturnValue &&
+       A->CurFunction->header.type.specifier.type != SLANG_SPEC_VOID) {
+      slang_info_log_error(A->log, "return statement requires an expression");
+      return NULL;
+   }
+
+   if (!haveReturnValue) {
       /* Convert from:
        *   return;
        * To:
@@ -1718,7 +1758,6 @@ _slang_gen_return(slang_assemble_ctx * A, slang_operation *oper)
       gotoOp.label = A->curFuncEndLabel;
       assert(gotoOp.label);
 
-      /* assemble the new code */
       n = _slang_gen_operation(A, &gotoOp);
       /* destroy temp code */
       slang_operation_destruct(&gotoOp);
@@ -1743,7 +1782,10 @@ _slang_gen_return(slang_assemble_ctx * A, slang_operation *oper)
       {
          slang_variable *v
             = _slang_locate_variable(oper->locals, a_retVal, GL_TRUE);
-         assert(v);
+         if (!v) {
+            /* trying to return a value in a void-valued function */
+            return NULL;
+         }
       }
 #endif
 
@@ -1843,6 +1885,9 @@ _slang_gen_declaration(slang_assemble_ctx *A, slang_operation *oper)
       _slang_simplify(v->initializer, &A->space, A->atoms); 
       rhs = _slang_gen_operation(A, v->initializer);
 #endif
+      if (!rhs)
+         return NULL;
+
       assert(rhs);
       init = new_node2(IR_MOVE, var, rhs);
       /*
@@ -2786,6 +2831,8 @@ _slang_codegen_function(slang_assemble_ctx * A, slang_function * fun)
    assert(A->program->Parameters );
    assert(A->program->Varying);
    assert(A->vartable);
+   A->CurLoop = NULL;
+   A->CurFunction = fun;
 
    /* fold constant expressions, etc. */
    _slang_simplify(fun->body, &A->space, A->atoms);

@@ -793,11 +793,12 @@ emit_move(slang_emit_info *emitInfo, slang_ir_node *n)
    assert(n->Children[1]);
    inst = emit(emitInfo, n->Children[1]);
 
+   if (!n->Children[1]->Store) {
+      slang_info_log_error(emitInfo->log, "invalid assignment");
+      return NULL;
+   }
    assert(n->Children[1]->Store->Index >= 0);
 
-#if 0
-   assert(!n->Store);
-#endif
    n->Store = n->Children[0]->Store;
 
 #if PEEPHOLE_OPTIMIZATIONS
