@@ -1,8 +1,8 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.5.2
+ * Version:  6.5.3
  *
- * Copyright (C) 1999-2006  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2007  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -676,13 +676,13 @@ fast_persp_span(GLcontext *ctx, SWspan *span,
    const GLuint savedTexEnable = ctx->Texture._EnabledUnits;
    ctx->Texture._EnabledUnits = 0;
 
-   tex_coord[0] = span->tex[0][0]  * (info->smask + 1);
-   tex_step[0] = span->texStepX[0][0] * (info->smask + 1);
-   tex_coord[1] = span->tex[0][1] * (info->tmask + 1);
-   tex_step[1] = span->texStepX[0][1] * (info->tmask + 1);
-   /* span->tex[0][2] only if 3D-texturing, here only 2D */
-   tex_coord[2] = span->tex[0][3];
-   tex_step[2] = span->texStepX[0][3];
+   tex_coord[0] = span->attrStart[FRAG_ATTRIB_TEX0][0]  * (info->smask + 1);
+   tex_step[0] = span->attrStepX[FRAG_ATTRIB_TEX0][0] * (info->smask + 1);
+   tex_coord[1] = span->attrStart[FRAG_ATTRIB_TEX0][1] * (info->tmask + 1);
+   tex_step[1] = span->attrStepX[FRAG_ATTRIB_TEX0][1] * (info->tmask + 1);
+   /* span->attrStart[FRAG_ATTRIB_TEX0][2] only if 3D-texturing, here only 2D */
+   tex_coord[2] = span->attrStart[FRAG_ATTRIB_TEX0][3];
+   tex_step[2] = span->attrStepX[FRAG_ATTRIB_TEX0][3];
 
    switch (info->filter) {
    case GL_NEAREST:
@@ -866,7 +866,6 @@ fast_persp_span(GLcontext *ctx, SWspan *span,
 
 /*
  * Render a smooth-shaded, textured, RGBA triangle.
- * Interpolate S,T,R with perspective correction, w/out mipmapping.
  */
 #define NAME general_textured_triangle
 #define INTERP_Z 1
@@ -879,24 +878,6 @@ fast_persp_span(GLcontext *ctx, SWspan *span,
 #define RENDER_SPAN( span )   _swrast_write_rgba_span(ctx, &span);
 #include "s_tritemp.h"
 
-
-
-/*
- * This is the big one!
- * Interpolate Z, RGB, Alpha, specular, fog, N sets of texture coordinates, and varying floats.
- * Yup, it's slow.
- */
-#define NAME multitextured_triangle
-#define INTERP_Z 1
-#define INTERP_W 1
-#define INTERP_FOG 1
-#define INTERP_RGB 1
-#define INTERP_ALPHA 1
-#define INTERP_SPEC 1
-#define INTERP_MULTITEX 1
-#define INTERP_VARYING 1
-#define RENDER_SPAN( span )   _swrast_write_rgba_span(ctx, &span);
-#include "s_tritemp.h"
 
 
 
@@ -1073,8 +1054,9 @@ _swrast_choose_triangle( GLcontext *ctx )
          }
       }
 
-      if (ctx->Texture._EnabledCoordUnits || ctx->FragmentProgram._Enabled ||
-          ctx->ATIFragmentShader._Enabled || ctx->ShaderObjects._FragmentShaderPresent) {
+      if (ctx->Texture._EnabledCoordUnits ||
+          ctx->FragmentProgram._Current ||
+          ctx->ATIFragmentShader._Enabled) {
          /* Ugh, we do a _lot_ of tests to pick the best textured tri func */
          const struct gl_texture_object *texObj2D;
          const struct gl_texture_image *texImg;
@@ -1089,9 +1071,8 @@ _swrast_choose_triangle( GLcontext *ctx )
 
          /* First see if we can use an optimized 2-D texture function */
          if (ctx->Texture._EnabledCoordUnits == 0x1
-             && !ctx->FragmentProgram._Enabled
+             && !ctx->FragmentProgram._Current
              && !ctx->ATIFragmentShader._Enabled
-             && !ctx->ShaderObjects._FragmentShaderPresent
              && ctx->Texture.Unit[0]._ReallyEnabled == TEXTURE_2D_BIT
              && texObj2D->WrapS == GL_REPEAT
              && texObj2D->WrapT == GL_REPEAT
@@ -1137,12 +1118,7 @@ _swrast_choose_triangle( GLcontext *ctx )
 	 }
          else {
             /* general case textured triangles */
-            if (ctx->Texture._EnabledCoordUnits > 1) {
-               USE(multitextured_triangle);
-            }
-            else {
-               USE(general_textured_triangle);
-            }
+            USE(general_textured_triangle);
          }
       }
       else {

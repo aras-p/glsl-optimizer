@@ -32,9 +32,7 @@
 
 #include "brw_context.h"
 #include "brw_wm.h"
-#include "program.h"
-#include "arbprogparse.h"
-#include "program_instruction.h"
+
 
 /* Use these to force spilling so that that functionality can be
  * tested with known-good examples rather than having to construct new

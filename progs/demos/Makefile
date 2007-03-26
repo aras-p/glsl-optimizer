@@ -113,6 +113,10 @@ trackball.o: trackball.c trackball.h
 	$(CC) -c -I$(INCDIR) $(CFLAGS) trackball.c
 
 
+extfuncs.h:  $(TOP)/progs/util/extfuncs.h
+	cp $< .
+
+
 reflect: reflect.o showbuffer.o readtex.o
 	$(CC) -I$(INCDIR) $(CFLAGS) reflect.o showbuffer.o readtex.o $(APP_LIB_DEPS) -o $@
 
@@ -139,6 +143,9 @@ engine: engine.o trackball.o readtex.o
 
 engine.o: engine.c trackball.h
 	$(CC) -c -I$(INCDIR) $(CFLAGS) engine.c
+
+
+fslight.c: extfuncs.h
 
 
 clean:

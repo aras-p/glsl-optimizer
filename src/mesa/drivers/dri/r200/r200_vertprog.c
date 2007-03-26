@@ -34,14 +34,16 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "macros.h"
 #include "enums.h"
 #include "program.h"
+#include "shader/prog_instruction.h"
+#include "shader/prog_parameter.h"
+#include "shader/prog_statevars.h"
+#include "shader/programopt.h"
+#include "tnl/tnl.h"
 
 #include "r200_context.h"
 #include "r200_vertprog.h"
 #include "r200_ioctl.h"
 #include "r200_tcl.h"
-#include "program_instruction.h"
-#include "programopt.h"
-#include "tnl/tnl.h"
 
 #if SWIZZLE_X != VSF_IN_COMPONENT_X || \
     SWIZZLE_Y != VSF_IN_COMPONENT_Y || \
@@ -462,7 +464,7 @@ static GLboolean r200_translate_vertex_program(GLcontext *ctx, struct r200_verte
       base e isn't directly available neither. */
    if ((mesa_vp->Base.OutputsWritten & (1 << VERT_RESULT_FOGC)) && !vp->fogpidx) {
       struct gl_program_parameter_list *paramList;
-      GLint tokens[6] = { STATE_FOG_PARAMS, 0, 0, 0, 0, 0 };
+      gl_state_index tokens[STATE_LENGTH] = { STATE_FOG_PARAMS, 0, 0, 0, 0 };
       paramList = mesa_vp->Base.Parameters;
       vp->fogpidx = _mesa_add_state_reference(paramList, tokens);
    }

@@ -42,6 +42,9 @@
 #define _SWSETUP_NEW_RENDERINDEX (_NEW_POLYGON|_NEW_LIGHT|_NEW_PROGRAM)
 
 
+#define VARYING_EMIT_STYLE  EMIT_4F
+
+
 GLboolean
 _swsetup_CreateContext( GLcontext *ctx )
 {
@@ -142,17 +145,20 @@ _swsetup_RenderStart( GLcontext *ctx )
       if (RENDERINPUTS_TEST_RANGE( index_bitset, _TNL_FIRST_TEX, _TNL_LAST_TEX )) {
          for (i = 0; i < MAX_TEXTURE_COORD_UNITS; i++) {
             if (RENDERINPUTS_TEST( index_bitset, _TNL_ATTRIB_TEX(i) )) {
-               EMIT_ATTR( _TNL_ATTRIB_TEX(i), EMIT_4F, texcoord[i] );
+               EMIT_ATTR( _TNL_ATTRIB_TEX(i), EMIT_4F, attrib[FRAG_ATTRIB_TEX0 + i] );
             }
          }
       }
 
-      if (RENDERINPUTS_TEST_RANGE( index_bitset, _TNL_FIRST_GENERIC, _TNL_LAST_GENERIC )) {
-          for (i = 0; i < MAX_VERTEX_ATTRIBS; i++) {
-              if (RENDERINPUTS_TEST( index_bitset, _TNL_ATTRIB_GENERIC(i) )) {
-                  EMIT_ATTR( _TNL_ATTRIB_GENERIC(i), VARYING_EMIT_STYLE, attribute[i] );
-              }
-          }
+      /* shader varying vars */
+      if (RENDERINPUTS_TEST_RANGE( index_bitset,
+                                   _TNL_FIRST_GENERIC, _TNL_LAST_GENERIC )) {
+         for (i = 0; i < ctx->Const.MaxVarying; i++) {
+            if (RENDERINPUTS_TEST( index_bitset, _TNL_ATTRIB_GENERIC(i) )) {
+               EMIT_ATTR( _TNL_ATTRIB_GENERIC(i), VARYING_EMIT_STYLE,
+                          attrib[FRAG_ATTRIB_VAR0 + i] );
+            }
+         }
       }
 
       if (RENDERINPUTS_TEST( index_bitset, _TNL_ATTRIB_POINTSIZE ))
@@ -236,8 +242,13 @@ _swsetup_Translate( GLcontext *ctx, const void *vertex, SWvertex *dest )
 
 
    for (i = 0 ; i < ctx->Const.MaxTextureCoordUnits ; i++)
-      _tnl_get_attr( ctx, vertex, _TNL_ATTRIB_TEX0+i, dest->texcoord[i] );
-	  
+      _tnl_get_attr( ctx, vertex, _TNL_ATTRIB_TEX0+i,
+                     dest->attrib[FRAG_ATTRIB_TEX0 + i] );
+
+   for (i = 0 ; i < ctx->Const.MaxVarying ; i++)
+      _tnl_get_attr( ctx, vertex, _TNL_ATTRIB_GENERIC0+i,
+                     dest->attrib[FRAG_ATTRIB_VAR0 + i] );
+
    _tnl_get_attr( ctx, vertex, _TNL_ATTRIB_COLOR0, tmp );
    UNCLAMPED_FLOAT_TO_RGBA_CHAN( dest->color, tmp );
 

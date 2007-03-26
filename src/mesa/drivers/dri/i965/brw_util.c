@@ -30,9 +30,9 @@
   */
          
 
-#include "brw_util.h"
 #include "mtypes.h"
-#include "shader/program.h"
+#include "shader/prog_parameter.h"
+#include "brw_util.h"
 #include "brw_defines.h"
 
 GLuint brw_count_bits( GLuint val )
@@ -45,7 +45,7 @@ GLuint brw_count_bits( GLuint val )
 }
 
 
-static GLuint brw_parameter_state_flags(const enum state_index state[])
+static GLuint brw_parameter_state_flags(const gl_state_index state[])
 {
    switch (state[0]) {
    case STATE_MATERIAL:
@@ -70,22 +70,16 @@ static GLuint brw_parameter_state_flags(const enum state_index state[])
    case STATE_POINT_ATTENUATION:
       return _NEW_POINT;
 
-   case STATE_MATRIX:
-      switch (state[1]) {
-      case STATE_MODELVIEW:
-	 return _NEW_MODELVIEW;
-      case STATE_PROJECTION:
-	 return _NEW_PROJECTION;
-      case STATE_MVP:
-	 return _NEW_MODELVIEW | _NEW_PROJECTION;
-      case STATE_TEXTURE:
-	 return _NEW_TEXTURE_MATRIX;
-      case STATE_PROGRAM:
-	 return _NEW_TRACK_MATRIX;
-      default:
-	 assert(0);
-	 return 0;
-      }
+   case STATE_MODELVIEW_MATRIX:
+      return _NEW_MODELVIEW;
+   case STATE_PROJECTION_MATRIX:
+      return _NEW_PROJECTION;
+   case STATE_MVP_MATRIX:
+      return _NEW_MODELVIEW | _NEW_PROJECTION;
+   case STATE_TEXTURE_MATRIX:
+      return _NEW_TEXTURE_MATRIX;
+   case STATE_PROGRAM_MATRIX:
+      return _NEW_TRACK_MATRIX;
 
    case STATE_DEPTH_RANGE:
       return _NEW_VIEWPORT;

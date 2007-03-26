@@ -39,13 +39,11 @@
 
 #include "glheader.h"
 #include "context.h"
-#include "hash.h"
 #include "imports.h"
 #include "macros.h"
-#include "mtypes.h"
 #include "nvprogram.h"
 #include "nvvertparse.h"
-#include "program_instruction.h"
+#include "prog_instruction.h"
 #include "program.h"
 
 
@@ -1380,8 +1378,7 @@ _mesa_parse_nv_vertex_program(GLcontext *ctx, GLenum dstTarget,
          _mesa_free(programString);
          return;  /* out of memory */
       }
-      _mesa_memcpy(newInst, instBuffer,
-                   parseState.numInst * sizeof(struct prog_instruction));
+      _mesa_copy_instructions(newInst, instBuffer, parseState.numInst);
 
       /* install the program */
       program->Base.Target = target;

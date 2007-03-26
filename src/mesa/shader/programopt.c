@@ -1,8 +1,8 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.5.2
+ * Version:  6.5.3
  *
- * Copyright (C) 1999-2006  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2007  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -33,11 +33,10 @@
 
 #include "glheader.h"
 #include "context.h"
-#include "imports.h"
-#include "mtypes.h"
-#include "program.h"
+#include "prog_parameter.h"
+#include "prog_statevars.h"
 #include "programopt.h"
-#include "program_instruction.h"
+#include "prog_instruction.h"
 
 
 /**
@@ -57,11 +56,11 @@ _mesa_insert_mvp_code(GLcontext *ctx, struct gl_vertex_program *vprog)
     * Setup state references for the modelview/projection matrix.
     * XXX we should check if these state vars are already declared.
     */
-   static const GLint mvpState[4][5] = {
-      { STATE_MATRIX, STATE_MVP, 0, 0, 0 },  /* state.matrix.mvp.row[0] */
-      { STATE_MATRIX, STATE_MVP, 0, 1, 1 },  /* state.matrix.mvp.row[1] */
-      { STATE_MATRIX, STATE_MVP, 0, 2, 2 },  /* state.matrix.mvp.row[2] */
-      { STATE_MATRIX, STATE_MVP, 0, 3, 3 },  /* state.matrix.mvp.row[3] */
+   static const gl_state_index mvpState[4][STATE_LENGTH] = {
+      { STATE_MVP_MATRIX, 0, 0, 0, 0 },  /* state.matrix.mvp.row[0] */
+      { STATE_MVP_MATRIX, 0, 1, 1, 0 },  /* state.matrix.mvp.row[1] */
+      { STATE_MVP_MATRIX, 0, 2, 2, 0 },  /* state.matrix.mvp.row[2] */
+      { STATE_MVP_MATRIX, 0, 3, 3, 0 },  /* state.matrix.mvp.row[3] */
    };
    GLint mvpRef[4];
 
@@ -125,9 +124,10 @@ _mesa_insert_mvp_code(GLcontext *ctx, struct gl_vertex_program *vprog)
 void
 _mesa_append_fog_code(GLcontext *ctx, struct gl_fragment_program *fprog)
 {
-   static const GLint fogPStateOpt[] = { STATE_INTERNAL,
-					 STATE_FOG_PARAMS_OPTIMIZED, 0, 0, 0 };
-   static const GLint fogColorState[] = { STATE_FOG_COLOR, 0, 0, 0, 0 };
+   static const gl_state_index fogPStateOpt[STATE_LENGTH]
+      = { STATE_INTERNAL, STATE_FOG_PARAMS_OPTIMIZED, 0, 0, 0 };
+   static const gl_state_index fogColorState[STATE_LENGTH]
+      = { STATE_FOG_COLOR, 0, 0, 0, 0};
    struct prog_instruction *newInst, *inst;
    const GLuint origLen = fprog->Base.NumInstructions;
    const GLuint newLen = origLen + 5;
@@ -150,8 +150,7 @@ _mesa_append_fog_code(GLcontext *ctx, struct gl_fragment_program *fprog)
    }
 
    /* Copy orig instructions into new instruction buffer */
-   _mesa_memcpy(newInst, fprog->Base.Instructions,
-                origLen * sizeof(struct prog_instruction));
+   _mesa_copy_instructions(newInst, fprog->Base.Instructions, origLen);
 
    /* PARAM fogParamsRefOpt = internal optimized fog params; */
    fogPRefOpt
@@ -283,3 +282,85 @@ _mesa_append_fog_code(GLcontext *ctx, struct gl_fragment_program *fprog)
    fprog->Base.InputsRead |= FRAG_BIT_FOGC;
    /* XXX do this?  fprog->FogOption = GL_NONE; */
 }
+
+
+
+static GLboolean
+is_texture_instruction(const struct prog_instruction *inst)
+{
+   switch (inst->Opcode) {
+   case OPCODE_TEX:
+   case OPCODE_TXB:
+   case OPCODE_TXD:
+   case OPCODE_TXL:
+   case OPCODE_TXP:
+   case OPCODE_TXP_NV:
+      return GL_TRUE;
+   default:
+      return GL_FALSE;
+   }
+}
+      
+
+/**
+ * Count the number of texure indirections in the given program.
+ * The program's NumTexIndirections field will be updated.
+ * See the GL_ARB_fragment_program spec (issue 24) for details.
+ * XXX we count texture indirections in texenvprogram.c (maybe use this code
+ * instead and elsewhere).
+ */
+void
+_mesa_count_texture_indirections(struct gl_program *prog)
+{
+   GLuint indirections = 1;
+   GLbitfield tempsOutput = 0x0;
+   GLbitfield aluTemps = 0x0;
+   GLuint i;
+
+   for (i = 0; i < prog->NumInstructions; i++) {
+      const struct prog_instruction *inst = prog->Instructions + i;
+
+      if (is_texture_instruction(inst)) {
+         if (((inst->SrcReg[0].File == PROGRAM_TEMPORARY) && 
+              (tempsOutput & (1 << inst->SrcReg[0].Index))) ||
+             ((inst->Opcode != OPCODE_KIL) &&
+              (inst->DstReg.File == PROGRAM_TEMPORARY) && 
+              (aluTemps & (1 << inst->DstReg.Index)))) 
+            {
+               indirections++;
+               tempsOutput = 0x0;
+               aluTemps = 0x0;
+            }
+      }
+      else {
+         GLuint j;
+         for (j = 0; j < 3; j++) {
+            if (inst->SrcReg[j].File == PROGRAM_TEMPORARY)
+               aluTemps |= (1 << inst->SrcReg[j].Index);
+         }
+         if (inst->DstReg.File == PROGRAM_TEMPORARY)
+            aluTemps |= (1 << inst->DstReg.Index);
+      }
+
+      if ((inst->Opcode != OPCODE_KIL) && (inst->DstReg.File == PROGRAM_TEMPORARY))
+         tempsOutput |= (1 << inst->DstReg.Index);
+   }
+
+   prog->NumTexIndirections = indirections;
+}
+
+
+/**
+ * Count number of texture instructions in given program and update the
+ * program's NumTexInstructions field.
+ */
+void
+_mesa_count_texture_instructions(struct gl_program *prog)
+{
+   GLuint i;
+   prog->NumTexInstructions = 0;
+   for (i = 0; i < prog->NumInstructions; i++) {
+      prog->NumTexInstructions += is_texture_instruction(prog->Instructions + i);
+   }
+}
+

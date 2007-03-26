@@ -1,8 +1,8 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.5.2
+ * Version:  6.5.3
  *
- * Copyright (C) 1999-2006  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2007  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -677,6 +677,10 @@ _mesa_GetColorTable( GLenum target, GLenum format,
    }
 
    ASSERT(table);
+
+   if (table->Size <= 0) {
+      return;
+   }
 
    switch (table->_BaseFormat) {
    case GL_ALPHA:

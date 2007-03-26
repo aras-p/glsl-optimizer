@@ -55,8 +55,7 @@ static void TAG(triangle)(GLcontext *ctx, GLuint e0, GLuint e1, GLuint e2 )
       if (IND & (SS_TWOSIDE_BIT | SS_UNFILLED_BIT))
       {
 	 facing = (cc < 0.0) ^ ctx->Polygon._FrontBit;
-         if (ctx->Stencil.TestTwoSide)
-            ctx->_Facing = facing; /* for 2-sided stencil test */
+         ctx->_Facing = facing;
 
 	 if (IND & SS_UNFILLED_BIT)
 	    mode = facing ? ctx->Polygon.BackMode : ctx->Polygon.FrontMode;

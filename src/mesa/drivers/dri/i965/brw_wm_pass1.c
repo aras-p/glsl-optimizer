@@ -32,9 +32,6 @@
 
 #include "brw_context.h"
 #include "brw_wm.h"
-#include "program.h"
-#include "arbprogparse.h"
-#include "program_instruction.h"
 
 
 static GLuint get_tracked_mask(struct brw_wm_compile *c,

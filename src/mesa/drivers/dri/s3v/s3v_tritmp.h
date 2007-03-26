@@ -407,17 +407,17 @@ do { \
                 ctx->Texture.Unit[0]._Current->DriverData); \
         deltwx = deltwy = wstart = deltdx = deltdy = dstart = 0; \
 \
-        u0 = (v[idx[0]].texcoord[0][0] \
+        u0 = (v[idx[0]].attrib[FRAG_ATTRIB_TEX0][0] \
                 * (GLfloat)(t->image[0].image->Width) * 256.0); \
-        u1 = (v[idx[1]].texcoord[0][0] \
+        u1 = (v[idx[1]].attrib[FRAG_ATTRIB_TEX0][0] \
                 * (GLfloat)(t->globj->Image[0][0]->Width) * 256.0); \
-        u2 = (v[idx[2]].texcoord[0][0] \
+        u2 = (v[idx[2]].attrib[FRAG_ATTRIB_TEX0][0] \
                 * (GLfloat)(t->globj->Image[0][0]->Width) * 256.0); \
-        v0 = (v[idx[0]].texcoord[0][1] \
+        v0 = (v[idx[0]].attrib[FRAG_ATTRIB_TEX0][1] \
                 * (GLfloat)(t->globj->Image[0][0]->Height) * 256.0); \
-        v1 = (v[idx[1]].texcoord[0][1] \
+        v1 = (v[idx[1]].attrib[FRAG_ATTRIB_TEX0][1] \
                 * (GLfloat)(t->globj->Image[0][0]->Height) * 256.0); \
-        v2 = (v[idx[2]].texcoord[0][1] \
+        v2 = (v[idx[2]].attrib[FRAG_ATTRIB_TEX0][1] \
                 * (GLfloat)(t->globj->Image[0][0]->Height) * 256.0); \
 \
         w0 = (v[idx[0]].win[3]); \
@@ -485,23 +485,23 @@ do { \
         GLfloat sxy, suv; \
         int lev; \
 \
-        suv = (v[idx[0]].texcoord[0][0] - \
-                v[idx[2]].texcoord[0][0]) * \
-                (v[idx[1]].texcoord[0][1] - \
-                v[idx[2]].texcoord[0][1]) - \
-                (v[idx[1]].texcoord[0][0] - \
-                v[idx[2]].texcoord[0][0]) * \
-                (v[idx[0]].texcoord[0][1] - \
-                v[idx[2]].texcoord[0][2]); \
+        suv = (v[idx[0]].attrib[FRAG_ATTRIB_TEX0][0] - \
+                v[idx[2]].attrib[FRAG_ATTRIB_TEX0][0]) * \
+                (v[idx[1]].attrib[FRAG_ATTRIB_TEX0][1] - \
+                v[idx[2]].attrib[FRAG_ATTRIB_TEX0][1]) - \
+                (v[idx[1]].attrib[FRAG_ATTRIB_TEX0][0] - \
+                v[idx[2]].attrib[FRAG_ATTRIB_TEX0][0]) * \
+                (v[idx[0]].attrib[FRAG_ATTRIB_TEX0][1] - \
+                v[idx[2]].attrib[FRAG_ATTRIB_TEX0][2]); \
 \
-        sxy = (v[idx[0]].texcoord[0][0] - \
-                v[idx[2]].texcoord[0][0]) * \
-                (v[idx[1]].texcoord[0][1] - \
-                v[idx[2]].texcoord[0][1]) - \
-                (v[idx[1]].texcoord[0][0] - \
-                v[idx[2]].texcoord[0][0]) * \
-                (v[idx[0]].texcoord[0][1] - \
-                v[idx[2]].texcoord[0][2]); \
+        sxy = (v[idx[0]].attrib[FRAG_ATTRIB_TEX0][0] - \
+                v[idx[2]].attrib[FRAG_ATTRIB_TEX0][0]) * \
+                (v[idx[1]].attrib[FRAG_ATTRIB_TEX0][1] - \
+                v[idx[2]].attrib[FRAG_ATTRIB_TEX0][1]) - \
+                (v[idx[1]].attrib[FRAG_ATTRIB_TEX0][0] - \
+                v[idx[2]].attrib[FRAG_ATTRIB_TEX0][0]) * \
+                (v[idx[0]].attrib[FRAG_ATTRIB_TEX0][1] - \
+                v[idx[2]].attrib[FRAG_ATTRIB_TEX0][2]); \
 \
 	if (sxy < 0) sxy *= -1.0; \
 	if (suv < 0) suv *= -1.0; \

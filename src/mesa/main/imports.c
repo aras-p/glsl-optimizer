@@ -849,15 +849,23 @@ _mesa_strncmp( const char *s1, const char *s2, size_t n )
    return strncmp(s1, s2, n);
 }
 
-/** Implemented using _mesa_malloc() and _mesa_strcpy */
+/**
+ * Implemented using _mesa_malloc() and _mesa_strcpy.
+ * Note that NULL is handled accordingly.
+ */
 char *
 _mesa_strdup( const char *s )
 {
-   size_t l = _mesa_strlen(s);
-   char *s2 = (char *) _mesa_malloc(l + 1);
-   if (s2)
-      _mesa_strcpy(s2, s);
-   return s2;
+   if (s) {
+      size_t l = _mesa_strlen(s);
+      char *s2 = (char *) _mesa_malloc(l + 1);
+      if (s2)
+         _mesa_strcpy(s2, s);
+      return s2;
+   }
+   else {
+      return NULL;
+   }
 }
 
 /** Wrapper around atoi() */

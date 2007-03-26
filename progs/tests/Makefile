@@ -33,6 +33,7 @@ SOURCES = \
 	crossbar.c \
 	cva.c \
 	dinoshade.c \
+	drawbuffers.c \
 	floattex.c \
 	fbotest1.c \
 	fbotest2.c \
@@ -122,6 +123,12 @@ afsmultiarb: afsmultiarb.o readtex.o
 afsmultiarb.o: afsmultiarb.c readtex.h
 	$(CC) -c $(INCLUDES) $(CFLAGS) $(DEFINES) $< -o $@
 
+drawbuffers: drawbuffers.o
+	$(CC) $(CFLAGS) drawbuffers.o $(LIBS) -o $@
+
+drawbuffers.o: drawbuffers.c extfuncs.h
+	$(CC) -c $(INCLUDES) $(CFLAGS) $(DEFINES) $< -o $@
+
 texrect: texrect.o readtex.o
 	$(CC) $(CFLAGS) texrect.o readtex.o $(LIBS) -o $@
 
@@ -150,6 +157,8 @@ readtex.h: $(TOP)/progs/util/readtex.h
 readtex.c: $(TOP)/progs/util/readtex.c
 	ln -s $(TOP)/progs/util/readtex.c .
 
+extfuncs.h: $(TOP)/progs/util/extfuncs.h
+	ln -s $(TOP)/progs/util/extfuncs.h .
 
 
 

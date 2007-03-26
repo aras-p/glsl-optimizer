@@ -148,7 +148,7 @@ GLboolean brwCreateContext( const __GLcontextModes *mesaVis,
 
    brw->emit_state_always = 0;
 
-   ctx->_MaintainTexEnvProgram = 1;
+   ctx->FragmentProgram._MaintainTexEnvProgram = 1;
 
    brw_draw_init( brw );
 

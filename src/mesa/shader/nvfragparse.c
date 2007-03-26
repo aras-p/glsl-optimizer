@@ -39,13 +39,11 @@
 
 #include "glheader.h"
 #include "context.h"
-#include "hash.h"
 #include "imports.h"
 #include "macros.h"
-#include "mtypes.h"
-#include "program_instruction.h"
+#include "prog_parameter.h"
+#include "prog_instruction.h"
 #include "nvfragparse.h"
-#include "nvprogram.h"
 #include "program.h"
 
 
@@ -1038,21 +1036,25 @@ Parse_VectorSrc(struct parse_state *parseState,
    else if (IsDigit(token[0]) || token[0] == '-' || token[0] == '+' || token[0] == '.'){
       /* literal scalar constant */
       GLfloat values[4];
-      GLuint paramIndex;
+      GLuint paramIndex, swizzle;
       if (!Parse_ScalarConstant(parseState, values))
          RETURN_ERROR;
-      paramIndex = _mesa_add_unnamed_constant(parseState->parameters, values, 4);
+      paramIndex = _mesa_add_unnamed_constant(parseState->parameters,
+                                              values, 4, NULL);
+      ASSERT(swizzle == SWIZZLE_NOOP);
       srcReg->File = PROGRAM_NAMED_PARAM;
       srcReg->Index = paramIndex;
    }
    else if (token[0] == '{'){
       /* literal vector constant */
       GLfloat values[4];
-      GLuint paramIndex;
+      GLuint paramIndex, swizzle;
       (void) Parse_String(parseState, "{");
       if (!Parse_VectorConstant(parseState, values))
          RETURN_ERROR;
-      paramIndex = _mesa_add_unnamed_constant(parseState->parameters, values, 4);
+      paramIndex = _mesa_add_unnamed_constant(parseState->parameters,
+                                              values, 4, NULL);
+      ASSERT(swizzle == SWIZZLE_NOOP);
       srcReg->File = PROGRAM_NAMED_PARAM;
       srcReg->Index = paramIndex;      
    }
@@ -1138,11 +1140,13 @@ Parse_ScalarSrcReg(struct parse_state *parseState,
    else if (token[0] == '{') {
       /* vector literal */
       GLfloat values[4];
-      GLuint paramIndex;
+      GLuint paramIndex, swizzle;
       (void) Parse_String(parseState, "{");
       if (!Parse_VectorConstant(parseState, values))
          RETURN_ERROR;
-      paramIndex = _mesa_add_unnamed_constant(parseState->parameters, values, 4);
+      paramIndex = _mesa_add_unnamed_constant(parseState->parameters,
+                                              values, 4, NULL);
+      ASSERT(swizzle == SWIZZLE_NOOP);
       srcReg->File = PROGRAM_NAMED_PARAM;
       srcReg->Index = paramIndex;      
    }
@@ -1163,10 +1167,12 @@ Parse_ScalarSrcReg(struct parse_state *parseState,
    else if (IsDigit(token[0])) {
       /* scalar literal */
       GLfloat values[4];
-      GLuint paramIndex;
+      GLuint paramIndex, swizzle;
       if (!Parse_ScalarConstant(parseState, values))
          RETURN_ERROR;
-      paramIndex = _mesa_add_unnamed_constant(parseState->parameters, values, 4);
+      paramIndex = _mesa_add_unnamed_constant(parseState->parameters,
+                                              values, 4, NULL);
+      ASSERT(swizzle == SWIZZLE_NOOP);
       srcReg->Index = paramIndex;      
       srcReg->File = PROGRAM_NAMED_PARAM;
       needSuffix = GL_FALSE;
@@ -1539,8 +1545,7 @@ _mesa_parse_nv_fragment_program(GLcontext *ctx, GLenum dstTarget,
          _mesa_error(ctx, GL_OUT_OF_MEMORY, "glLoadProgramNV");
          return;  /* out of memory */
       }
-      _mesa_memcpy(newInst, instBuffer,
-                   parseState.numInst * sizeof(struct prog_instruction));
+      _mesa_copy_instructions(newInst, instBuffer, parseState.numInst);
 
       /* install the program */
       program->Base.Target = target;
@@ -1557,7 +1562,7 @@ _mesa_parse_nv_fragment_program(GLcontext *ctx, GLenum dstTarget,
       program->Base.InputsRead = parseState.inputsRead;
       program->Base.OutputsWritten = parseState.outputsWritten;
       for (u = 0; u < ctx->Const.MaxTextureImageUnits; u++)
-         program->TexturesUsed[u] = parseState.texturesUsed[u];
+         program->Base.TexturesUsed[u] = parseState.texturesUsed[u];
 
       /* save program parameters */
       program->Base.Parameters = parseState.parameters;

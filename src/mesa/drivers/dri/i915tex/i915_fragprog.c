@@ -37,7 +37,8 @@
 #include "i915_context.h"
 #include "i915_program.h"
 
-#include "program_instruction.h"
+#include "prog_instruction.h"
+#include "prog_parameter.h"
 #include "program.h"
 #include "programopt.h"
 
@@ -770,9 +771,6 @@ fixup_depth_write(struct i915_fragment_program *p)
                       swizzle(depth, X, Y, Z, Z), 0, 0);
    }
 }
-
-
-#define FRAG_BIT_TEX(n)  (FRAG_BIT_TEX0 << (n))
 
 
 static void

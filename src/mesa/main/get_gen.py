@@ -989,11 +989,18 @@ StateVars = [
 	  ["ctx->Const.VertexProgram.MaxUniformComponents"], "",
 	  ["ARB_vertex_shader"] ),
 	( "GL_MAX_VARYING_FLOATS_ARB", GLint,
-	  ["ctx->Const.MaxVaryingFloats"], "", ["ARB_vertex_shader"] ),
+	  ["ctx->Const.MaxVarying * 4"], "", ["ARB_vertex_shader"] ),
 	( "GL_MAX_VERTEX_TEXTURE_IMAGE_UNITS_ARB", GLint,
 	  ["ctx->Const.MaxVertexTextureImageUnits"], "", ["ARB_vertex_shader"] ),
 	( "GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS_ARB", GLint,
-	  ["MAX_COMBINED_TEXTURE_IMAGE_UNITS"], "", ["ARB_vertex_shader"] )
+	  ["MAX_COMBINED_TEXTURE_IMAGE_UNITS"], "", ["ARB_vertex_shader"] ),
+
+	# GL_ARB_shader_objects
+	# Actually, this token isn't part of GL_ARB_shader_objects, but is
+	# close enough for now.
+	( "GL_CURRENT_PROGRAM", GLint,
+	  ["ctx->Shader.CurrentProgram ? ctx->Shader.CurrentProgram->Name : 0"],
+	  "", ["ARB_shader_objects"] )
 ]
 
 

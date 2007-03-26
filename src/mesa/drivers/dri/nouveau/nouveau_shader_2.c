@@ -34,7 +34,8 @@
 #include "macros.h"
 #include "enums.h"
 
-#include "program.h"
+#include "shader/prog_parameter.h"
+#include "shader/prog_print.h"
 
 #include "nouveau_context.h"
 #include "nouveau_shader.h"

@@ -30,10 +30,8 @@
   */
             
 
-#include "brw_context.h"
-#include "program.h"
-#include "program_instruction.h"
 #include "macros.h"
+#include "brw_context.h"
 #include "brw_vs.h"
 
 /* Component is active if it may diverge from [0,0,0,1].  Undef values

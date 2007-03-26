@@ -60,7 +60,7 @@ _tnl_CreateContext( GLcontext *ctx )
 
    /* Initialize tnl state.
     */
-   if (ctx->_MaintainTnlProgram) {
+   if (ctx->VertexProgram._MaintainTnlProgram) {
       _tnl_ProgramCacheInit( ctx );
       _tnl_install_pipeline( ctx, _tnl_vp_pipeline );
    } else {
@@ -90,7 +90,7 @@ _tnl_DestroyContext( GLcontext *ctx )
 
    _tnl_destroy_pipeline( ctx );
 
-   if (ctx->_MaintainTnlProgram)
+   if (ctx->VertexProgram._MaintainTnlProgram)
       _tnl_ProgramCacheDestroy( ctx );
 
    FREE(tnl);
@@ -102,6 +102,8 @@ void
 _tnl_InvalidateState( GLcontext *ctx, GLuint new_state )
 {
    TNLcontext *tnl = TNL_CONTEXT(ctx);
+   const struct gl_vertex_program *vp = ctx->VertexProgram._Current;
+   const struct gl_fragment_program *fp = ctx->FragmentProgram._Current;
 
    if (new_state & (_NEW_HINT)) {
       ASSERT(tnl->AllowVertexFog || tnl->AllowPixelFog);
@@ -118,7 +120,9 @@ _tnl_InvalidateState( GLcontext *ctx, GLuint new_state )
 
       RENDERINPUTS_ZERO( tnl->render_inputs_bitset );
       RENDERINPUTS_SET( tnl->render_inputs_bitset, _TNL_ATTRIB_POS );
-      RENDERINPUTS_SET( tnl->render_inputs_bitset, _TNL_ATTRIB_COLOR0 );
+      if (!fp || fp->Base.InputsRead & FRAG_BIT_COL0) {
+         RENDERINPUTS_SET( tnl->render_inputs_bitset, _TNL_ATTRIB_COLOR0 );
+      }
       for (i = 0; i < ctx->Const.MaxTextureCoordUnits; i++) {
          if (ctx->Texture._EnabledCoordUnits & (1 << i)) {
             RENDERINPUTS_SET( tnl->render_inputs_bitset, _TNL_ATTRIB_TEX(i) );
@@ -134,7 +138,7 @@ _tnl_InvalidateState( GLcontext *ctx, GLuint new_state )
    }
 
    if (ctx->Fog.Enabled ||
-       (ctx->FragmentProgram._Active &&
+       (ctx->FragmentProgram._Current &&
         (ctx->FragmentProgram._Current->FogOption != GL_NONE ||
          ctx->FragmentProgram._Current->Base.InputsRead & FRAG_BIT_FOGC)))
       RENDERINPUTS_SET( tnl->render_inputs_bitset, _TNL_ATTRIB_FOG );
@@ -150,8 +154,16 @@ _tnl_InvalidateState( GLcontext *ctx, GLuint new_state )
        (ctx->VertexProgram._Enabled && ctx->VertexProgram.PointSizeEnabled))
       RENDERINPUTS_SET( tnl->render_inputs_bitset, _TNL_ATTRIB_POINTSIZE );
 
-   if (ctx->ShaderObjects._VertexShaderPresent || ctx->ShaderObjects._FragmentShaderPresent)
-      RENDERINPUTS_SET_RANGE( tnl->render_inputs_bitset, _TNL_FIRST_GENERIC, _TNL_LAST_GENERIC );
+   /* check for varying vars which are written by the vertex program */
+   if (vp) {
+      GLuint i;
+      for (i = 0; i < MAX_VARYING; i++) {
+         if (vp->Base.OutputsWritten & (1 << (VERT_RESULT_VAR0 + i))) {
+            RENDERINPUTS_SET(tnl->render_inputs_bitset,
+                             _TNL_ATTRIB_GENERIC(i));
+         }
+      }
+   }
 }
 
 

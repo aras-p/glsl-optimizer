@@ -35,8 +35,6 @@
 #include "glheader.h"
 #include "context.h"
 #include "macros.h"
-#include "enums.h"
-#include "dd.h"
 
 #include "shader/arbprogparse.h"
 

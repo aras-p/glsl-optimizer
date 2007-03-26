@@ -35,9 +35,10 @@
 #include "enums.h"
 #include "extensions.h"
 
-#include "program.h"
+#include "shader/program.h"
+#include "shader/prog_instruction.h"
+/*#include "shader/arbprogparse.h"*/
 #include "tnl/tnl.h"
-#include "shader/arbprogparse.h"
 
 #include "nouveau_context.h"
 #include "nouveau_shader.h"

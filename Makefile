@@ -92,6 +92,7 @@ linux-alpha-static \
 linux-debug \
 linux-directfb \
 linux-dri \
+linux-dri-debug \
 linux-dri-x86 \
 linux-dri-x86-64 \
 linux-dri-ppc \
