@@ -1535,7 +1535,6 @@ emit(slang_emit_info *emitInfo, slang_ir_node *n)
 
    default:
       _mesa_problem(NULL, "Unexpected IR opcode in emit()\n");
-      abort();
    }
    return NULL;
 }

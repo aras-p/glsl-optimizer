@@ -681,11 +681,8 @@ slang_substitute(slang_assemble_ctx *A, slang_operation *oper,
 	 GLuint i;
          v = _slang_locate_variable(oper->locals, id, GL_TRUE);
 	 if (!v) {
-	    printf("var %s not found!\n", (char *) oper->a_id);
-            _slang_print_var_scope(oper->locals, 6);
-
-            abort();
-	    break;
+            _mesa_problem(NULL, "var %s not found!\n", (char *) oper->a_id);
+            return;
 	 }
 
 	 /* look for a substitution */
@@ -1134,7 +1131,8 @@ make_writemask(const char *field)
          mask |= WRITEMASK_W;
          break;
       default:
-         abort();
+         _mesa_problem(NULL, "invalid writemask in make_writemask()");
+         return 0;
       }
       field++;
    }
@@ -2619,8 +2617,8 @@ _slang_gen_operation(slang_assemble_ctx * A, slang_operation *oper)
       return new_node0(IR_NOP);
 
    default:
-      printf("Unhandled node type %d\n", oper->type);
-      abort();
+      _mesa_problem(NULL, "bad node type %d in _slang_gen_operation",
+                    oper->type);
       return new_node0(IR_NOP);
    }
 

@@ -274,10 +274,8 @@ slang_print_tree(const slang_operation *op, int indent)
             */
          }
          else {
-            abort();
             spaces(indent);
             printf("DECL %s (anonymous variable!!!!)\n", (char *) op->a_id);
-            /*abort();*/
          }
       }
       break;

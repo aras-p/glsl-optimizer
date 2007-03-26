@@ -208,10 +208,11 @@ link_uniform_vars(struct gl_shader_program *shProg, struct gl_program *prog)
             j = _mesa_add_sampler(shProg->Uniforms, p->Name);
             break;
          default:
-            abort();
+            _mesa_problem(NULL, "bad parameter type in link_uniform_vars()");
+            return GL_FALSE;
          }
-
       }
+
       ASSERT(j >= 0);
 
       size = p->Size;
@@ -544,7 +545,7 @@ _slang_link(GLcontext *ctx,
       if (!_slang_resolve_attributes(shProg, &shProg->VertexProgram->Base)) {
          /*goto cleanup;*/
          _mesa_problem(ctx, "_slang_resolve_attributes() failed");
-         abort(); /* XXX fix */
+         return;
       }
    }
 
