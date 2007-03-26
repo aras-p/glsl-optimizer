@@ -121,6 +121,35 @@ _swrast_span_default_color( GLcontext *ctx, SWspan *span )
 }
 
 
+void
+_swrast_span_default_secondary_color(GLcontext *ctx, SWspan *span)
+{
+   if (ctx->Visual.rgbMode) {
+      GLchan r, g, b, a;
+      UNCLAMPED_FLOAT_TO_CHAN(r, ctx->Current.RasterSecondaryColor[0]);
+      UNCLAMPED_FLOAT_TO_CHAN(g, ctx->Current.RasterSecondaryColor[1]);
+      UNCLAMPED_FLOAT_TO_CHAN(b, ctx->Current.RasterSecondaryColor[2]);
+      UNCLAMPED_FLOAT_TO_CHAN(a, ctx->Current.RasterSecondaryColor[3]);
+#if CHAN_TYPE == GL_FLOAT
+      span->specRed = r;
+      span->specGreen = g;
+      span->specBlue = b;
+      /8span->specAlpha = a;*/
+#else
+      span->specRed   = IntToFixed(r);
+      span->specGreen = IntToFixed(g);
+      span->specBlue  = IntToFixed(b);
+      /*span->specAlpha = IntToFixed(a);*/
+#endif
+      span->specRedStep = 0;
+      span->specGreenStep = 0;
+      span->specBlueStep = 0;
+      /*span->specAlphaStep = 0;*/
+      span->interpMask |= SPAN_SPEC;
+   }
+}
+
+
 /**
  * Init span's texcoord interpolation values to the RasterPos texcoords.
  * Used during setup for glDraw/CopyPixels.

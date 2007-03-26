@@ -223,6 +223,9 @@ extern void
 _swrast_span_default_color( GLcontext *ctx, SWspan *span );
 
 extern void
+_swrast_span_default_secondary_color(GLcontext *ctx, SWspan *span);
+
+extern void
 _swrast_span_default_texcoords( GLcontext *ctx, SWspan *span );
 
 extern GLfloat
