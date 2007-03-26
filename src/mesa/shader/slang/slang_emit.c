@@ -1554,8 +1554,8 @@ _slang_emit_code(slang_ir_node *n, slang_var_table *vt,
    emitInfo.prog = prog;
 
    emitInfo.EmitHighLevelInstructions = ctx->Shader.EmitHighLevelInstructions;
-   emitInfo.EmitCondCodes = 0; /* XXX temporary! */
-   emitInfo.EmitComments = 1 + ctx->Shader.EmitComments;
+   emitInfo.EmitCondCodes = ctx->Shader.EmitCondCodes;
+   emitInfo.EmitComments = ctx->Shader.EmitComments;
 
    (void) emit(&emitInfo, n);
 
