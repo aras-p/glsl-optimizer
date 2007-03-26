@@ -458,10 +458,10 @@ new_label(slang_label *label)
 }
 
 static slang_ir_node *
-new_float_literal(const float v[4])
+new_float_literal(const float v[4], GLuint size)
 {
-   const GLuint size = (v[0] == v[1] && v[0] == v[2] && v[0] == v[3]) ? 1 : 4;
    slang_ir_node *n = new_node0(IR_FLOAT);
+   assert(size <= 4);
    COPY_4V(n->Value, v);
    /* allocate a storage object, but compute actual location (Index) later */
    n->Store = _slang_new_ir_storage(PROGRAM_CONSTANT, -1, size);
@@ -2513,7 +2513,7 @@ _slang_gen_operation(slang_assemble_ctx * A, slang_operation *oper)
    case SLANG_OPER_LITERAL_INT:
       /* fall-through */
    case SLANG_OPER_LITERAL_BOOL:
-      return new_float_literal(oper->literal);
+      return new_float_literal(oper->literal, oper->literal_size);
 
    case SLANG_OPER_POSTINCREMENT:   /* var++ */
       {

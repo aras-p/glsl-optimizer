@@ -125,7 +125,9 @@ alloc_temp_storage(slang_emit_info *emitInfo, slang_ir_node *n, GLint size)
 static void
 free_temp_storage(slang_var_table *vt, slang_ir_node *n)
 {
-   if (n->Store->File == PROGRAM_TEMPORARY && n->Store->Index >= 0) {
+   if (n->Store->File == PROGRAM_TEMPORARY &&
+       n->Store->Index >= 0 &&
+       n->Opcode != IR_SWIZZLE) {
       if (_slang_is_temp(vt, n->Store)) {
          _slang_free_temp(vt, n->Store);
          n->Store->Index = -1;
@@ -142,12 +144,6 @@ static void
 storage_to_dst_reg(struct prog_dst_register *dst, const slang_ir_storage *st,
                    GLuint writemask)
 {
-   static const GLuint defaultWritemask[4] = {
-      WRITEMASK_X,
-      WRITEMASK_X | WRITEMASK_Y,
-      WRITEMASK_X | WRITEMASK_Y | WRITEMASK_Z,
-      WRITEMASK_X | WRITEMASK_Y | WRITEMASK_Z | WRITEMASK_W
-   };
    assert(st->Index >= 0);
    dst->File = st->File;
    dst->Index = st->Index;
@@ -157,17 +153,10 @@ storage_to_dst_reg(struct prog_dst_register *dst, const slang_ir_storage *st,
    if (st->Size == 1) {
       GLuint comp = GET_SWZ(st->Swizzle, 0);
       assert(comp < 4);
-      assert(writemask & WRITEMASK_X);
-      /*
-      assert((writemask == WRITEMASK_X) ||
-             (writemask == WRITEMASK_Y) ||
-             (writemask == WRITEMASK_Z) ||
-             (writemask == WRITEMASK_W));
-      */
       dst->WriteMask = WRITEMASK_X << comp;
    }
    else {
-      dst->WriteMask = defaultWritemask[st->Size - 1] & writemask;
+      dst->WriteMask = writemask;
    }
 }
 
@@ -195,10 +184,10 @@ storage_to_src_reg(struct prog_src_register *src, const slang_ir_storage *st)
    else
       src->Swizzle = defaultSwizzle[st->Size - 1]; /*XXX really need this?*/
 
-   assert(GET_SWZ(src->Swizzle, 0) != SWIZZLE_NIL);
-   assert(GET_SWZ(src->Swizzle, 1) != SWIZZLE_NIL);
-   assert(GET_SWZ(src->Swizzle, 2) != SWIZZLE_NIL);
-   assert(GET_SWZ(src->Swizzle, 3) != SWIZZLE_NIL);
+   assert(GET_SWZ(src->Swizzle, 0) <= 3);
+   assert(GET_SWZ(src->Swizzle, 1) <= 3);
+   assert(GET_SWZ(src->Swizzle, 2) <= 3);
+   assert(GET_SWZ(src->Swizzle, 3) <= 3);
 }
 
 
@@ -501,13 +490,9 @@ emit_compare(slang_emit_info *emitInfo, slang_ir_node *n)
    emit(emitInfo, n->Children[0]);
    emit(emitInfo, n->Children[1]);
 
-#if 0
    assert(n->Children[0]->Store->Size == n->Children[1]->Store->Size);
    size = n->Children[0]->Store->Size;
-#else
-   /* XXX kind of a hack for now... */
-   size = MIN2(n->Children[0]->Store->Size, n->Children[1]->Store->Size);
-#endif
+
    if (size == 1) {
       gl_inst_opcode opcode;
 
@@ -1220,7 +1205,10 @@ fix_swizzle(GLuint swizzle)
 }
 
 
-#if 0
+/**
+ * Return the number of components actually named by the swizzle.
+ * Recall that swizzles may have undefined/don't-care values.
+ */
 static GLuint
 swizzle_size(GLuint swizzle)
 {
@@ -1231,7 +1219,6 @@ swizzle_size(GLuint swizzle)
    }
    return size;
 }
-#endif
 
 
 static struct prog_instruction *
@@ -1239,17 +1226,8 @@ emit_swizzle(slang_emit_info *emitInfo, slang_ir_node *n)
 {
    GLuint swizzle;
 
-   /* swizzled storage access */
    (void) emit(emitInfo, n->Children[0]);
 
-   /* "pull-up" the child's storage info, applying our swizzle info */
-   n->Store->File  = n->Children[0]->Store->File;
-   n->Store->Index = n->Children[0]->Store->Index;
-   n->Store->Size  = n->Children[0]->Store->Size;
-   /*n->Var = n->Children[0]->Var; XXX for debug */
-   assert(n->Store->Index >= 0);
-
-   swizzle = fix_swizzle(n->Store->Swizzle);
 #ifdef DEBUG
    {
       GLuint s = n->Children[0]->Store->Swizzle;
@@ -1259,16 +1237,24 @@ emit_swizzle(slang_emit_info *emitInfo, slang_ir_node *n)
       assert(GET_SWZ(s, 3) != SWIZZLE_NIL);
    }
 #endif
+   /* For debug: n->Var = n->Children[0]->Var; */
 
-#if 0
+   /* "pull-up" the child's storage info, applying our swizzle info */
+   n->Store->File  = n->Children[0]->Store->File;
+   n->Store->Index = n->Children[0]->Store->Index;
    n->Store->Size = swizzle_size(n->Store->Swizzle);
-   printf("Emit Swizzle reg %d  chSize %d  size %d\n",
+#if 0
+   printf("Emit Swizzle reg %d  chSize %d  size %d  swz %s\n",
           n->Store->Index, n->Children[0]->Store->Size,
-          n->Store->Size);
+          n->Store->Size,
+          _mesa_swizzle_string(n->Store->Swizzle, 0, 0));
 #endif
+
    /* apply this swizzle to child's swizzle to get composed swizzle */
+   swizzle = fix_swizzle(n->Store->Swizzle); /* remove the don't care terms */
    n->Store->Swizzle = swizzle_swizzle(n->Children[0]->Store->Swizzle,
                                        swizzle);
+
    return NULL;
 }
 
@@ -1492,7 +1478,8 @@ emit(slang_emit_info *emitInfo, slang_ir_node *n)
       return emit_negation(emitInfo, n);
    case IR_FLOAT:
       /* find storage location for this float constant */
-      n->Store->Index = _mesa_add_unnamed_constant(emitInfo->prog->Parameters, n->Value,
+      n->Store->Index = _mesa_add_unnamed_constant(emitInfo->prog->Parameters,
+                                                   n->Value,
                                                    n->Store->Size,
                                                    &n->Store->Swizzle);
       if (n->Store->Index < 0) {
