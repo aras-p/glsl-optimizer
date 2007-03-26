@@ -519,9 +519,7 @@ emit_compare(slang_emit_info *emitInfo, slang_ir_node *n)
       opcode = n->Opcode == IR_EQUAL ? OPCODE_SEQ : OPCODE_SNE;
       inst = new_instruction(emitInfo, opcode);
       storage_to_src_reg(&inst->SrcReg[0], n->Children[0]->Store);
-      ASSERT(inst->SrcReg[0].Swizzle != SWIZZLE_XYZW);
       storage_to_src_reg(&inst->SrcReg[1], n->Children[1]->Store);
-      ASSERT(inst->SrcReg[1].Swizzle != SWIZZLE_XYZW);
       storage_to_dst_reg(&inst->DstReg, n->Store, n->Writemask);
    }
    else if (size <= 4) {
