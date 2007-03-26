@@ -1482,6 +1482,19 @@ _slang_gen_if(slang_assemble_ctx * A, const slang_operation *oper)
     */
    const GLboolean haveElseClause = !_slang_is_noop(&oper->children[2]);
    slang_ir_node *ifNode, *cond, *ifBody, *elseBody;
+   GLboolean isConst, constTrue;
+
+   isConst = _slang_is_constant_cond(&oper->children[0], &constTrue);
+   if (isConst) {
+      if (constTrue) {
+         /* if (true) ... */
+         return _slang_gen_operation(A, &oper->children[1]);
+      }
+      else {
+         /* if (false) ... */
+         return _slang_gen_operation(A, &oper->children[2]);
+      }
+   }
 
    cond = _slang_gen_operation(A, &oper->children[0]);
    cond = new_cond(cond);
