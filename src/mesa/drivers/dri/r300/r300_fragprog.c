@@ -949,7 +949,9 @@ static void emit_tex(struct r300_fragment_program *rp,
 			 * \todo Refactor this once we have proper rewriting/optimization
 			 * support for programs.
 			 */
-			GLint tokens[6] = { STATE_INTERNAL, STATE_R300_TEXRECT_FACTOR, 0, 0, 0, 0 };
+			gl_state_index tokens[STATE_LENGTH] = {
+				STATE_INTERNAL, STATE_R300_TEXRECT_FACTOR, 0, 0, 0
+			};
 			int factor_index;
 			GLuint factorreg;
 
@@ -2053,7 +2055,9 @@ static GLboolean parse_program(struct r300_fragment_program *rp)
 
 static void insert_wpos(struct gl_program *prog)
 {
-	GLint tokens[6] = { STATE_INTERNAL, STATE_R300_WINDOW_DIMENSION, 0, 0, 0, 0 };
+	static gl_state_index tokens[STATE_LENGTH] = {
+		STATE_INTERNAL, STATE_R300_WINDOW_DIMENSION, 0, 0, 0
+	};
 	struct prog_instruction *fpi;
 	GLuint window_index;
 	int i = 0;
