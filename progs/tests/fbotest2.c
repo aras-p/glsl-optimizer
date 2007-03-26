@@ -13,6 +13,7 @@
 #include <math.h>
 #include <GL/glut.h>
 
+static int Win = 0;
 static int Width = 400, Height = 400;
 static GLuint MyFB, ColorRb, DepthRb;
 static GLboolean Animate = GL_TRUE;
@@ -110,6 +111,7 @@ CleanUp(void)
    assert(!glIsFramebufferEXT(MyFB));
    assert(!glIsRenderbufferEXT(ColorRb));
    assert(!glIsRenderbufferEXT(DepthRb));
+   glutDestroyWindow(Win);
    exit(0);
 }
 
@@ -187,7 +189,7 @@ main( int argc, char *argv[] )
    glutInitWindowPosition( 0, 0 );
    glutInitWindowSize(Width, Height);
    glutInitDisplayMode( GLUT_RGB | GLUT_DOUBLE );
-   glutCreateWindow(argv[0]);
+   Win = glutCreateWindow(argv[0]);
    glutReshapeFunc( Reshape );
    glutKeyboardFunc( Key );
    glutDisplayFunc( Display );

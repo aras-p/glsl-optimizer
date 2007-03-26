@@ -559,7 +559,7 @@ _mesa_IsRenderbufferEXT(GLuint renderbuffer)
 void GLAPIENTRY
 _mesa_BindRenderbufferEXT(GLenum target, GLuint renderbuffer)
 {
-   struct gl_renderbuffer *newRb, *oldRb;
+   struct gl_renderbuffer *newRb;
    GET_CURRENT_CONTEXT(ctx);
 
    ASSERT_OUTSIDE_BEGIN_END(ctx);
@@ -593,21 +593,16 @@ _mesa_BindRenderbufferEXT(GLenum target, GLuint renderbuffer)
 	 }
          ASSERT(newRb->AllocStorage);
          _mesa_HashInsert(ctx->Shared->RenderBuffers, renderbuffer, newRb);
+         newRb->RefCount = 1; /* referenced by hash table */
       }
-      newRb->RefCount++;
    }
    else {
       newRb = NULL;
    }
 
-   oldRb = ctx->CurrentRenderbuffer;
-   if (oldRb) {
-      _mesa_unreference_renderbuffer(&oldRb);
-   }
-
    ASSERT(newRb != &DummyRenderbuffer);
 
-   ctx->CurrentRenderbuffer = newRb;
+   _mesa_reference_renderbuffer(&ctx->CurrentRenderbuffer, newRb);
 }
 
 
@@ -632,14 +627,15 @@ _mesa_DeleteRenderbuffersEXT(GLsizei n, const GLuint *renderbuffers)
                _mesa_BindRenderbufferEXT(GL_RENDERBUFFER_EXT, 0);
             }
 
-	    /* remove from hash table immediately, to free the ID */
+	    /* Remove from hash table immediately, to free the ID.
+             * But the object will not be freed until it's no longer
+             * referenced anywhere else.
+             */
 	    _mesa_HashRemove(ctx->Shared->RenderBuffers, renderbuffers[i]);
 
             if (rb != &DummyRenderbuffer) {
-               /* But the object will not be freed until it's no longer
-                * bound in any context.
-                */
-               _mesa_unreference_renderbuffer(&rb);
+               /* no longer referenced by hash table */
+               _mesa_reference_renderbuffer(&rb, NULL);
 	    }
 	 }
       }

@@ -45,7 +45,7 @@ Delete_wrapper(struct gl_renderbuffer *rb)
    /* Decrement reference count on the buffer we're wrapping and delete
     * it if refcount hits zero.
     */
-   _mesa_unreference_renderbuffer(&rb->Wrapped);
+   _mesa_reference_renderbuffer(&rb->Wrapped, NULL);
 
    /* delete myself */
    _mesa_delete_renderbuffer(rb);

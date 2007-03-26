@@ -934,6 +934,9 @@ static void emit_tex(struct r300_fragment_program *rp,
 	int hwsrc, hwdest;
 	GLuint tempreg = 0;
 
+	uin = cs->used_in_node;
+	din = cs->dest_in_node;
+
 	/* Resolve source/dest to hardware registers */
 	if (opcode != R300_FPITX_OP_KIL) {
 		if (fpi->TexSrcTarget == TEXTURE_RECT_INDEX) {
@@ -957,6 +960,10 @@ static void emit_tex(struct r300_fragment_program *rp,
 
 			emit_arith(rp, PFS_OP_MAD, tempreg, WRITEMASK_XYZW,
 			           coord, factorreg, pfs_zero, 0);
+
+			/* Ensure correct node indirection */
+			uin = cs->used_in_node;
+			din = cs->dest_in_node;
 
 			hwsrc = t_hw_src(rp, tempreg, GL_TRUE);
 		} else {
@@ -986,8 +993,6 @@ static void emit_tex(struct r300_fragment_program *rp,
 		hwsrc = t_hw_src(rp, coord, GL_TRUE);
 	}
 
-	din = cs->dest_in_node;
-	uin = cs->used_in_node;
 
 	/* Indirection if source has been written in this node, or if the
 	 * dest has been read/written in this node
