@@ -67,6 +67,10 @@ _mesa_new_shader_program(GLcontext *ctx, GLuint name)
 }
 
 
+/**
+ * Free the data that hangs off a shader program object, but not the object
+ * itself.
+ */
 void
 _mesa_free_shader_program_data(GLcontext *ctx,
                                struct gl_shader_program *shProg)
@@ -104,11 +108,17 @@ _mesa_free_shader_program_data(GLcontext *ctx,
 }
 
 
-
+/**
+ * Free/delete a shader program object.
+ */
 void
 _mesa_free_shader_program(GLcontext *ctx, struct gl_shader_program *shProg)
 {
    _mesa_free_shader_program_data(ctx, shProg);
+   if (shProg->Shaders) {
+      _mesa_free(shProg->Shaders);
+      shProg->Shaders = NULL;
+   }
    _mesa_free(shProg);
 }
 
@@ -431,6 +441,10 @@ _mesa_detach_shader(GLcontext *ctx, GLuint program, GLuint shader)
          /* found it */
 
          shProg->Shaders[i]->RefCount--;
+         if (shProg->Shaders[i]->RefCount == 0) {
+            /* delete now */
+            _mesa_free_shader(ctx, shProg->Shaders[i]);
+         }
 
          /* alloc new, smaller array */
          newList = (struct gl_shader **)
@@ -445,8 +459,6 @@ _mesa_detach_shader(GLcontext *ctx, GLuint program, GLuint shader)
          while (++i < n)
             newList[j++] = shProg->Shaders[i];
          _mesa_free(shProg->Shaders);
-
-         /* XXX refcounting! */
 
          shProg->Shaders = newList;
          return;
