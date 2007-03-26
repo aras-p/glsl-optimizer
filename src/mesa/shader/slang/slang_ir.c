@@ -144,7 +144,9 @@ _slang_free_ir(slang_ir_node *n)
    if (n->Store) {
       n->Store->RefCount--;
       if (n->Store->RefCount == 0) {
+#if 0
          free(n->Store);
+#endif
          n->Store = NULL;
       }
    }
