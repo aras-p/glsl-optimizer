@@ -308,11 +308,6 @@ slang_print_tree(const slang_operation *op, int indent)
          slang_print_tree(&op->children[0], indent + 3);
       break;
 
-   case SLANG_OPER_GOTO:
-      spaces(indent);
-      printf("GOTO %s\n", (char *) op->a_id);
-      break;
-
    case SLANG_OPER_LABEL:
       spaces(indent);
       printf("LABEL %s\n", (char *) op->a_id);

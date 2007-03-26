@@ -472,9 +472,9 @@ new_float_literal(const float v[4], GLuint size)
  * Unconditional jump.
  */
 static slang_ir_node *
-new_jump(slang_label *dest)
+new_return(slang_label *dest)
 {
-   slang_ir_node *n = new_node0(IR_JUMP);
+   slang_ir_node *n = new_node0(IR_RETURN);
    assert(dest);
    if (n)
       n->Label = dest;
@@ -603,6 +603,24 @@ _slang_is_noop(const slang_operation *oper)
       return GL_TRUE;
    else
       return GL_FALSE;
+}
+
+
+/**
+ * Recursively search tree for a node of the given type.
+ */
+static slang_operation *
+_slang_find_node_type(slang_operation *oper, slang_operation_type type)
+{
+   GLuint i;
+   if (oper->type == type)
+      return oper;
+   for (i = 0; i < oper->num_children; i++) {
+      slang_operation *p = _slang_find_node_type(&oper->children[i], type);
+      if (p)
+         return p;
+   }
+   return NULL;
 }
 
 
@@ -749,7 +767,7 @@ slang_substitute(slang_assemble_ctx *A, slang_operation *oper,
          slang_operation_copy(&assignOper->children[1],
                               &oper->children[0]);
 
-         returnOper->type = SLANG_OPER_RETURN;
+         returnOper->type = SLANG_OPER_RETURN; /* return w/ no value */
          assert(returnOper->num_children == 0);
 
          /* do substitutions on the "__retVal = expr" sub-tree */
@@ -1744,22 +1762,7 @@ _slang_gen_return(slang_assemble_ctx * A, slang_operation *oper)
    }
 
    if (!haveReturnValue) {
-      /* Convert from:
-       *   return;
-       * To:
-       *   goto __endOfFunction;
-       */
-      slang_ir_node *n;
-      slang_operation gotoOp;
-      slang_operation_construct(&gotoOp);
-      gotoOp.type = SLANG_OPER_GOTO;
-      gotoOp.label = A->curFuncEndLabel;
-      assert(gotoOp.label);
-
-      n = _slang_gen_operation(A, &gotoOp);
-      /* destroy temp code */
-      slang_operation_destruct(&gotoOp);
-      return n;
+      return new_return(A->curFuncEndLabel);
    }
    else {
       /*
@@ -1767,9 +1770,9 @@ _slang_gen_return(slang_assemble_ctx * A, slang_operation *oper)
        *   return expr;
        * To:
        *   __retVal = expr;
-       *   goto __endOfFunction;
+       *   return;  // goto __endOfFunction
        */
-      slang_operation *block, *assign, *jump;
+      slang_operation *assign;
       slang_atom a_retVal;
       slang_ir_node *n;
 
@@ -1787,17 +1790,8 @@ _slang_gen_return(slang_assemble_ctx * A, slang_operation *oper)
       }
 #endif
 
-      block = slang_operation_new(1);
-      block->type = SLANG_OPER_BLOCK_NO_NEW_SCOPE;
-      assert(block->locals);
-      block->locals->outer_scope = oper->locals->outer_scope;
-      block->num_children = 2;
-      block->children = slang_operation_new(2);
-
-      /* child[0]: __retVal = expr; */
-      assign = &block->children[0];
+      assign = slang_operation_new(1);
       assign->type = SLANG_OPER_ASSIGN;
-      assign->locals->outer_scope = block->locals;
       assign->num_children = 2;
       assign->children = slang_operation_new(2);
       /* lhs (__retVal) */
@@ -1808,22 +1802,11 @@ _slang_gen_return(slang_assemble_ctx * A, slang_operation *oper)
       /* XXX we might be able to avoid this copy someday */
       slang_operation_copy(&assign->children[1], &oper->children[0]);
 
-      /* child[1]: goto __endOfFunction */
-      jump = &block->children[1];
-      jump->type = SLANG_OPER_GOTO;
-      assert(A->curFuncEndLabel);
-      /* XXX don't call function? */
-      jump->label = A->curFuncEndLabel;
-      assert(jump->label);
-
-#if 0 /* debug */
-      printf("NEW RETURN:\n");
-      slang_print_tree(block, 0);
-#endif
-
       /* assemble the new code */
-      n = _slang_gen_operation(A, block);
-      slang_operation_delete(block);
+      n = new_seq(_slang_gen_operation(A, assign),
+                  new_return(A->curFuncEndLabel));
+
+      slang_operation_delete(assign);
       return n;
    }
 }
@@ -2552,8 +2535,6 @@ _slang_gen_operation(slang_assemble_ctx * A, slang_operation *oper)
                                            oper, NULL);
    case SLANG_OPER_RETURN:
       return _slang_gen_return(A, oper);
-   case SLANG_OPER_GOTO:
-      return new_jump(oper->label);
    case SLANG_OPER_LABEL:
       return new_label(oper->label);
    case SLANG_OPER_IDENTIFIER:
@@ -2817,6 +2798,23 @@ _slang_codegen_function(slang_assemble_ctx * A, slang_function * fun)
       /* we only really generate code for main, all other functions get
        * inlined.
        */
+#if 0
+      /* do some basic error checking though */
+      if (fun->header.type.specifier.type != SLANG_SPEC_VOID) {
+         /* check that non-void functions actually return something */
+         slang_operation *op
+            = _slang_find_node_type(fun->body, SLANG_OPER_RETURN);
+         if (!op) {
+            slang_info_log_error(A->log,
+                                 "function \"%s\" has no return statement",
+                                 (char *) fun->header.a_name);
+            printf(
+                   "function \"%s\" has no return statement\n",
+                   (char *) fun->header.a_name);
+            return GL_FALSE;
+         }
+      }
+#endif
       return GL_TRUE;  /* not an error */
    }
 

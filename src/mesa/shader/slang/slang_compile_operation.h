@@ -42,7 +42,6 @@ typedef enum slang_operation_type_
    SLANG_OPER_CONTINUE,         /* "continue" statement */
    SLANG_OPER_DISCARD,          /* "discard" (kill fragment) statement */
    SLANG_OPER_RETURN,           /* "return" [expr]  */
-   SLANG_OPER_GOTO,             /* jump to label */
    SLANG_OPER_LABEL,            /* a jump target */
    SLANG_OPER_EXPRESSION,       /* [expr] */
    SLANG_OPER_IF,               /* "if" [0] then [1] else [2] */
@@ -118,7 +117,7 @@ typedef struct slang_operation_
    slang_variable_scope *locals; /**< local vars for scope */
    struct slang_function_ *fun;  /**< If type == SLANG_OPER_CALL */
    struct slang_variable_ *var;  /**< If type == slang_oper_identier */
-   struct slang_label_ *label;   /**< If type == SLANG_OPER_LABEL or GOTO */
+   struct slang_label_ *label;   /**< If type == SLANG_OPER_LABEL */
 } slang_operation;
 
 

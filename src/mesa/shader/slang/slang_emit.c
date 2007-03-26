@@ -727,6 +727,23 @@ emit_jump(slang_emit_info *emitInfo, slang_ir_node *n)
 
 
 static struct prog_instruction *
+emit_return(slang_emit_info *emitInfo, slang_ir_node *n)
+{
+   struct prog_instruction *inst;
+   assert(n);
+   assert(n->Opcode == IR_RETURN);
+   assert(n->Label);
+   inst = new_instruction(emitInfo, OPCODE_BRA /*RET*/); /*XXX TEMPORARY*/
+   inst->DstReg.CondMask = COND_TR;  /* always branch */
+   inst->BranchTarget = _slang_label_get_location(n->Label);
+   if (inst->BranchTarget < 0) {
+      _slang_label_add_reference(n->Label, emitInfo->prog->NumInstructions - 1);
+   }
+   return inst;
+}
+
+
+static struct prog_instruction *
 emit_kill(slang_emit_info *emitInfo)
 {
    struct prog_instruction *inst;
@@ -1528,7 +1545,7 @@ emit(slang_emit_info *emitInfo, slang_ir_node *n)
    case IR_END_SUB:
       return new_instruction(emitInfo, OPCODE_ENDSUB);
    case IR_RETURN:
-      return new_instruction(emitInfo, OPCODE_RET);
+      return emit_return(emitInfo, n);
 
    case IR_NOP:
       return NULL;
