@@ -613,6 +613,8 @@ intelCreateBuffer(__DRIscreenPrivate * driScrnPriv,
 				&intel_fb->color_rb[1]->Base);
 
 	 if (screen->third.handle) {
+	    struct gl_renderbuffer *tmp_rb = NULL;
+
 	    intel_fb->color_rb[2]
 	       = intel_create_renderbuffer(rgbFormat,
 					   screen->width, screen->height,
@@ -621,6 +623,7 @@ intelCreateBuffer(__DRIscreenPrivate * driScrnPriv,
 					   screen->cpp,
 					   screen->third.map);
 	    intel_set_span_functions(&intel_fb->color_rb[2]->Base);
+	    _mesa_reference_renderbuffer(&tmp_rb, &intel_fb->color_rb[2]->Base);
 	 }
       }
 
