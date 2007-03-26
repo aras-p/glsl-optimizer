@@ -565,12 +565,12 @@ _slang_link(GLcontext *ctx,
       _slang_update_inputs_outputs(&shProg->FragmentProgram->Base);
 
    if (fragProg && shProg->FragmentProgram) {
-#if 1
+#if 0
       printf("************** original fragment program\n");
       _mesa_print_program(&fragProg->Base);
       _mesa_print_program_parameters(ctx, &fragProg->Base);
 #endif
-#if 1
+#if 0
       printf("************** linked fragment prog\n");
       _mesa_print_program(&shProg->FragmentProgram->Base);
       _mesa_print_program_parameters(ctx, &shProg->FragmentProgram->Base);
@@ -578,12 +578,12 @@ _slang_link(GLcontext *ctx,
    }
 
    if (vertProg && shProg->VertexProgram) {
-#if 1
+#if 0
       printf("************** original vertex program\n");
       _mesa_print_program(&vertProg->Base);
       _mesa_print_program_parameters(ctx, &vertProg->Base);
 #endif
-#if 1
+#if 0
       printf("************** linked vertex prog\n");
       _mesa_print_program(&shProg->VertexProgram->Base);
       _mesa_print_program_parameters(ctx, &shProg->VertexProgram->Base);
