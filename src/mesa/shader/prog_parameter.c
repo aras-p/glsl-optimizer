@@ -532,6 +532,10 @@ _mesa_lookup_parameter_constant(const struct gl_program_parameter_list *list,
                       }
                    }
                 }
+                /* smear last value to remaining positions */
+                for (; j < 4; j++)
+                   swz[j] = swz[j-1];
+
                 if (match == vSize) {
                    *posOut = i;
                    *swizzleOut = MAKE_SWIZZLE4(swz[0], swz[1], swz[2], swz[3]);
