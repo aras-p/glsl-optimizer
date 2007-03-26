@@ -331,10 +331,9 @@ static unsigned long op_operands(enum prog_opcode opcode)
 
 static GLboolean valid_dst(struct r300_vertex_program *vp, struct prog_dst_register *dst)
 {
-	if(dst->File == PROGRAM_OUTPUT && vp->outputs[dst->Index] == -1){
-		WARN_ONCE("Output %d not used by fragment program\n", dst->Index);
+	if(dst->File == PROGRAM_OUTPUT && vp->outputs[dst->Index] == -1) {
 		return GL_FALSE;
-	}else if(dst->File == PROGRAM_ADDRESS) {
+	} else if(dst->File == PROGRAM_ADDRESS) {
 		assert(dst->Index == 0);
 	}
 
