@@ -468,6 +468,21 @@ new_float_literal(const float v[4], GLuint size)
    return n;
 }
 
+
+/**
+ * Inlined subroutine.
+ */
+static slang_ir_node *
+new_inlined_function_call(slang_ir_node *code, slang_label *name)
+{
+   slang_ir_node *n = new_node1(IR_FUNC, code);
+   assert(name);
+   if (n)
+      n->Label = name;
+   return n;
+}
+
+
 /**
  * Unconditional jump.
  */
@@ -1092,7 +1107,17 @@ _slang_gen_function_call(slang_assemble_ctx *A, slang_function *fun,
    else {
       /* non-assembly function */
       inlined = slang_inline_function_call(A, fun, oper, dest);
+      if (inlined) {
+         assert(inlined->type == SLANG_OPER_BLOCK_NEW_SCOPE ||
+                inlined->type == SLANG_OPER_SEQUENCE);
+         inlined->type = SLANG_OPER_INLINED_CALL;
+         inlined->fun = fun;
+         inlined->label = _slang_label_new((char*) fun->header.a_name);
+      }
    }
+
+   if (!inlined)
+      return NULL;
 
    /* Replace the function call with the inlined block */
    slang_operation_destruct(oper);
@@ -2581,6 +2606,7 @@ _slang_gen_operation(slang_assemble_ctx * A, slang_operation *oper)
 	 return n;
       }
 
+   case SLANG_OPER_INLINED_CALL:
    case SLANG_OPER_SEQUENCE:
       {
          slang_ir_node *tree = NULL;
@@ -2588,6 +2614,9 @@ _slang_gen_operation(slang_assemble_ctx * A, slang_operation *oper)
          for (i = 0; i < oper->num_children; i++) {
             slang_ir_node *n = _slang_gen_operation(A, &oper->children[i]);
             tree = tree ? new_seq(tree, n) : n;
+         }
+         if (oper->type == SLANG_OPER_INLINED_CALL) {
+            tree = new_inlined_function_call(tree, oper->label);
          }
          return tree;
       }
