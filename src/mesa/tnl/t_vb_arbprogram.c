@@ -1608,7 +1608,7 @@ const struct tnl_pipeline_stage _tnl_arb_vertex_program_stage =
 void
 _tnl_program_string(GLcontext *ctx, GLenum target, struct gl_program *program)
 {
-   if (program->Target == GL_VERTEX_PROGRAM_ARB) {
+   if (target == GL_VERTEX_PROGRAM_ARB) {
       /* free any existing tnl data hanging off the program */
       struct gl_vertex_program *vprog = (struct gl_vertex_program *) program;
       if (vprog->TnlData) {
