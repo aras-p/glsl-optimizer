@@ -216,6 +216,7 @@ case $ARCH in
             echo "mklib: Making" $ARCH "static library: " ${LIBNAME}.a
             LINK="ar"
             OPTS="-ru"
+            rm -f ${LIBNAME}.a
             # make lib
             ${LINK} ${OPTS} ${LIBNAME}.a ${OBJECTS}
 	    ranlib ${LIBNAME}.a
