@@ -752,8 +752,8 @@ _mesa_execute_program(GLcontext * ctx,
             if (machine->StackDepth >= MAX_PROGRAM_CALL_DEPTH) {
                return GL_TRUE;  /* Per GL_NV_vertex_program2 spec */
             }
-            machine->CallStack[machine->StackDepth++] = pc + 1;
-            pc = inst->BranchTarget;    /* XXX - 1 ??? */
+            machine->CallStack[machine->StackDepth++] = pc + 1; /* next inst */
+            pc = inst->BranchTarget;
          }
          break;
       case OPCODE_CMP:
@@ -1305,7 +1305,8 @@ _mesa_execute_program(GLcontext * ctx,
             if (machine->StackDepth == 0) {
                return GL_TRUE;  /* Per GL_NV_vertex_program2 spec */
             }
-            pc = machine->CallStack[--machine->StackDepth];
+            /* subtract one because of pc++ in the for loop */
+            pc = machine->CallStack[--machine->StackDepth] - 1;
          }
          break;
       case OPCODE_RFL:         /* reflection vector */
