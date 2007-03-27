@@ -629,7 +629,7 @@ _mesa_print_instruction_opt(const struct prog_instruction *inst, GLint indent,
       break;
 
    case OPCODE_BGNSUB:
-      _mesa_printf("SUB");
+      _mesa_printf("BGNSUB");
       print_comment(inst);
       return indent + 3;
    case OPCODE_ENDSUB:
