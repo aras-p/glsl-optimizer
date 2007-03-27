@@ -90,6 +90,9 @@ init_machine(GLcontext *ctx, struct gl_program_machine *machine)
    machine->CondCodes[1] = COND_EQ;
    machine->CondCodes[2] = COND_EQ;
    machine->CondCodes[3] = COND_EQ;
+
+   /* init call stack */
+   machine->StackDepth = 0;
 }
 
 
