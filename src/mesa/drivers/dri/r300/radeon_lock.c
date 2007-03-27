@@ -55,7 +55,7 @@ static void radeonUpdatePageFlipping(radeonContextPtr radeon)
 	int use_back;
 
 	radeon->doPageFlip = radeon->sarea->pfState;
-        if (!radeon->doPageFlip) {
+        if (!radeon->doPageFlip && radeon->glCtx->WinSysDrawBuffer) {
            driFlipRenderbuffers(radeon->glCtx->WinSysDrawBuffer, GL_FALSE);
         }
 
