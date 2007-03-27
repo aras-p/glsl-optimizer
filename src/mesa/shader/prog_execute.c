@@ -753,7 +753,8 @@ _mesa_execute_program(GLcontext * ctx,
                return GL_TRUE;  /* Per GL_NV_vertex_program2 spec */
             }
             machine->CallStack[machine->StackDepth++] = pc + 1; /* next inst */
-            pc = inst->BranchTarget;
+            /* Subtract 1 here since we'll do pc++ at end of for-loop */
+            pc = inst->BranchTarget - 1;
          }
          break;
       case OPCODE_CMP:
