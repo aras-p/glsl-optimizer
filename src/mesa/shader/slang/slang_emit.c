@@ -51,20 +51,39 @@
 #define ANNOTATE 0
 
 
-/* XXX temporarily here */
-
-
 typedef struct
 {
    slang_info_log *log;
    slang_var_table *vt;
    struct gl_program *prog;
+   struct gl_program **Subroutines;
+   GLuint NumSubroutines;
+
    /* code-gen options */
    GLboolean EmitHighLevelInstructions;
    GLboolean EmitCondCodes;
-   GLboolean EmitBeginEndSub;
    GLboolean EmitComments;
+   GLboolean EmitBeginEndSub; /* XXX TEMPORARY */
 } slang_emit_info;
+
+
+
+static struct gl_program *
+new_subroutine(slang_emit_info *emitInfo, GLuint *id)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   const GLuint n = emitInfo->NumSubroutines;
+
+   emitInfo->Subroutines = (struct gl_program **)
+      _mesa_realloc(emitInfo->Subroutines,
+                    n * sizeof(struct gl_program),
+                    (n + 1) * sizeof(struct gl_program));
+   emitInfo->Subroutines[n] = _mesa_new_program(ctx, emitInfo->prog->Target, 0);
+   emitInfo->Subroutines[n]->Parameters = emitInfo->prog->Parameters;
+   emitInfo->NumSubroutines++;
+   *id = n;
+   return emitInfo->Subroutines[n];
+}
 
 
 
@@ -227,19 +246,18 @@ new_instruction(slang_emit_info *emitInfo, gl_inst_opcode opcode)
 }
 
 
-#if 0
 /**
  * Return pointer to last instruction in program.
  */
 static struct prog_instruction *
-prev_instruction(struct gl_program *prog)
+prev_instruction(slang_emit_info *emitInfo)
 {
+   struct gl_program *prog = emitInfo->prog;
    if (prog->NumInstructions == 0)
       return NULL;
    else
       return prog->Instructions + prog->NumInstructions - 1;
 }
-#endif
 
 
 static struct prog_instruction *
@@ -719,27 +737,62 @@ emit_label(slang_emit_info *emitInfo, const slang_ir_node *n)
 
 
 /**
- * Emit code for an inlined function call.
+ * Emit code for an inlined function call (subroutine).
  */
 static struct prog_instruction *
 emit_func(slang_emit_info *emitInfo, slang_ir_node *n)
 {
+   struct gl_program *progSave;
    struct prog_instruction *inst;
+   GLuint subroutineId;
+
+   assert(n->Opcode == IR_FUNC);
    assert(n->Label);
+
+   /* save/push cur program */
+   progSave = emitInfo->prog;
+   emitInfo->prog = new_subroutine(emitInfo, &subroutineId);
+
+   _slang_label_set_location(n->Label, emitInfo->prog->NumInstructions,
+                             emitInfo->prog);
+
    if (emitInfo->EmitBeginEndSub) {
       inst = new_instruction(emitInfo, OPCODE_BGNSUB);
       inst->Comment = _mesa_strdup(n->Label->Name);
    }
-   inst = emit(emitInfo, n->Children[0]);
+
+   /* body of function: */
+   emit(emitInfo, n->Children[0]);
+   n->Store = n->Children[0]->Store;
+
+   /* add RET instruction now, if needed */
+   inst = prev_instruction(emitInfo);
+   if (inst && inst->Opcode != OPCODE_RET) {
+      inst = new_instruction(emitInfo, OPCODE_RET);
+   }
+
    if (emitInfo->EmitBeginEndSub) {
       inst = new_instruction(emitInfo, OPCODE_ENDSUB);
       inst->Comment = _mesa_strdup(n->Label->Name);
    }
-   n->Store = n->Children[0]->Store;
+
+   /* pop/restore cur program */
+   emitInfo->prog = progSave;
+
+   /* emit the function call */
+   inst = new_instruction(emitInfo, OPCODE_CAL);
+   /* The branch target is just the subroutine number (changed later) */
+   inst->BranchTarget = subroutineId;
+   inst->Comment = _mesa_strdup(n->Label->Name);
+   assert(inst->BranchTarget >= 0);
+
    return inst;
 }
 
 
+/**
+ * Emit code for a 'return' statement.
+ */
 static struct prog_instruction *
 emit_return(slang_emit_info *emitInfo, slang_ir_node *n)
 {
@@ -747,12 +800,17 @@ emit_return(slang_emit_info *emitInfo, slang_ir_node *n)
    assert(n);
    assert(n->Opcode == IR_RETURN);
    assert(n->Label);
-   inst = new_instruction(emitInfo, OPCODE_BRA /*RET*/); /*XXX TEMPORARY*/
-   inst->DstReg.CondMask = COND_TR;  /* always branch */
-   inst->BranchTarget = _slang_label_get_location(n->Label);
-   if (inst->BranchTarget < 0) {
-      _slang_label_add_reference(n->Label, emitInfo->prog->NumInstructions - 1);
+   inst = new_instruction(emitInfo, OPCODE_RET/*BRA*/); /*XXX TEMPORARY*/
+   inst->DstReg.CondMask = COND_TR;  /* always return/branch */
+
+   if (inst->Opcode == OPCODE_BRA) {
+      inst->BranchTarget = _slang_label_get_location(n->Label);
+      if (inst->BranchTarget < 0) {
+         _slang_label_add_reference(n->Label,
+                                    emitInfo->prog->NumInstructions - 1);
+      }
    }
+
    return inst;
 }
 
@@ -1549,7 +1607,11 @@ emit(slang_emit_info *emitInfo, slang_ir_node *n)
       return emit_kill(emitInfo);
 
    case IR_FUNC:
-      return emit_func(emitInfo, n);
+      /* new variable scope for subroutines/function calls*/
+      _slang_push_var_table(emitInfo->vt);
+      inst = emit_func(emitInfo, n);
+      _slang_pop_var_table(emitInfo->vt);
+      return inst;
 
    case IR_IF:
       return emit_if(emitInfo, n);
@@ -1584,6 +1646,76 @@ emit(slang_emit_info *emitInfo, slang_ir_node *n)
 }
 
 
+/**
+ * After code generation, any subroutines will be in separate program
+ * objects.  This function appends all the subroutines onto the main
+ * program and resolves the linking of all the branch/call instructions.
+ * XXX this logic should really be part of the linking process...
+ */
+static void
+_slang_resolve_subroutines(slang_emit_info *emitInfo)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   struct gl_program *mainP = emitInfo->prog;
+   GLuint *subroutineLoc, i, total;
+
+   subroutineLoc
+      = (GLuint *) _mesa_malloc(emitInfo->NumSubroutines * sizeof(GLuint));
+
+   /* total number of instructions */
+   total = mainP->NumInstructions;
+   for (i = 0; i < emitInfo->NumSubroutines; i++) {
+      subroutineLoc[i] = total;
+      total += emitInfo->Subroutines[i]->NumInstructions;
+   }
+
+   /* adjust BrancTargets within the functions */
+   for (i = 0; i < emitInfo->NumSubroutines; i++) {
+      struct gl_program *sub = emitInfo->Subroutines[i];
+      GLuint j;
+      for (j = 0; j < sub->NumInstructions; j++) {
+         struct prog_instruction *inst = sub->Instructions + j;
+         if (inst->Opcode != OPCODE_CAL && inst->BranchTarget >= 0) {
+            inst->BranchTarget += subroutineLoc[i];
+         }
+      }
+   }
+
+   /* append subroutines' instructions after main's instructions */
+   mainP->Instructions = _mesa_realloc_instructions(mainP->Instructions,
+                                                    mainP->NumInstructions,
+                                                    total);
+   for (i = 0; i < emitInfo->NumSubroutines; i++) {
+      struct gl_program *sub = emitInfo->Subroutines[i];
+      _mesa_copy_instructions(mainP->Instructions + subroutineLoc[i],
+                              sub->Instructions,
+                              sub->NumInstructions);
+      /* delete subroutine code */
+      sub->Parameters = NULL; /* prevent double-free */
+      _mesa_delete_program(ctx, sub);
+   }
+   mainP->NumInstructions = total;
+
+   /* Examine CAL instructions.
+    * At this point, the BranchTarget field of the CAL instructions is
+    * the number/id of the subroutine to call (an index into the
+    * emitInfo->Subroutines list).
+    * Translate that into an actual instruction location now.
+    */
+   for (i = 0; i < mainP->NumInstructions; i++) {
+      struct prog_instruction *inst = mainP->Instructions + i;
+      if (inst->Opcode == OPCODE_CAL) {
+         const GLuint f = inst->BranchTarget;
+         inst->BranchTarget = subroutineLoc[f];
+      }
+   }
+
+   _mesa_free(subroutineLoc);
+}
+
+
+
+
 GLboolean
 _slang_emit_code(slang_ir_node *n, slang_var_table *vt,
                  struct gl_program *prog, GLboolean withEnd,
@@ -1596,11 +1728,13 @@ _slang_emit_code(slang_ir_node *n, slang_var_table *vt,
    emitInfo.log = log;
    emitInfo.vt = vt;
    emitInfo.prog = prog;
+   emitInfo.Subroutines = NULL;
+   emitInfo.NumSubroutines = 0;
 
    emitInfo.EmitHighLevelInstructions = ctx->Shader.EmitHighLevelInstructions;
    emitInfo.EmitCondCodes = ctx->Shader.EmitCondCodes;
-   emitInfo.EmitBeginEndSub = 0;  /* XXX temporary */
    emitInfo.EmitComments = ctx->Shader.EmitComments;
+   emitInfo.EmitBeginEndSub = 0;  /* XXX for compiler debug only */
 
    (void) emit(&emitInfo, n);
 
@@ -1609,6 +1743,9 @@ _slang_emit_code(slang_ir_node *n, slang_var_table *vt,
       struct prog_instruction *inst;
       inst = new_instruction(&emitInfo, OPCODE_END);
    }
+
+   _slang_resolve_subroutines(&emitInfo);
+
    success = GL_TRUE;
 
 #if 0

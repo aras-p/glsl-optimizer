@@ -1107,12 +1107,18 @@ _slang_gen_function_call(slang_assemble_ctx *A, slang_function *fun,
    else {
       /* non-assembly function */
       inlined = slang_inline_function_call(A, fun, oper, dest);
-      if (inlined) {
+      if (inlined && _slang_find_node_type(inlined, SLANG_OPER_RETURN)) {
+         /* This inlined function has one or more 'return' statements.
+          * So, we can't truly inline this function because we need to
+          * implement 'return' with RET (and CAL).
+          * XXX check if there's one 'return' and if it's the very last
+          * statement in the function - we can optimize that case.
+          */
          assert(inlined->type == SLANG_OPER_BLOCK_NEW_SCOPE ||
                 inlined->type == SLANG_OPER_SEQUENCE);
          inlined->type = SLANG_OPER_INLINED_CALL;
          inlined->fun = fun;
-         inlined->label = _slang_label_new((char*) fun->header.a_name);
+         inlined->label = _slang_label_new_unique((char*) fun->header.a_name);
       }
    }
 
