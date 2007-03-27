@@ -29,7 +29,7 @@
   *   Keith Whitwell <keith@tungstengraphics.com>
   */
   
-
+#include "shader/prog_parameter.h"
 #include "brw_context.h"
 #include "brw_aub.h"
 #include "brw_util.h"
