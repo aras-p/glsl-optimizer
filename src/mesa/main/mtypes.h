@@ -1987,6 +1987,7 @@ struct gl_fragment_program_state
 {
    GLboolean Enabled;     /**< User-set fragment program enable flag */
    GLboolean _Enabled;    /**< Fragment program enabled and valid? */
+   GLboolean _Active;
    struct gl_fragment_program *Current;  /**< User-bound fragment program */
 
    /** Currently enabled and valid program (including internal programs
@@ -1998,6 +1999,7 @@ struct gl_fragment_program_state
 
    /** Should fixed-function texturing be implemented with a fragment prog? */
    GLboolean _MaintainTexEnvProgram;
+   GLboolean _UseTexEnvProgram;
 
    /** Program to emulate fixed-function texture env/combine (see above) */
    struct gl_fragment_program *_TexEnvProgram;

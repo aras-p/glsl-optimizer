@@ -158,7 +158,7 @@ i915CreateContext(const __GLcontextModes * mesaVis,
    ctx->Const.FragmentProgram.MaxNativeAddressRegs = 0; /* I don't think we have one */
 
    ctx->FragmentProgram._MaintainTexEnvProgram = GL_TRUE;
-   /*ctx->_UseTexEnvProgram = 1;*/
+   ctx->_UseTexEnvProgram = GL_TRUE;
 
    driInitExtensions(ctx, i915_extensions, GL_FALSE);
 

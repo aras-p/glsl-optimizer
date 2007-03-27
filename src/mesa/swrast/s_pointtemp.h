@@ -121,7 +121,7 @@ NAME ( GLcontext *ctx, const SWvertex *vert )
 #endif
 #if FLAGS & TEXTURE
    span->arrayMask |= (SPAN_TEXTURE | SPAN_LAMBDA);
-   if (ctx->FragmentProgram._Current) {
+   if (ctx->FragmentProgram._Active) {
       /* Don't divide texture s,t,r by q (use TXP to do that) */
       for (attr = swrast->_MinFragmentAttrib; attr < swrast->_MaxFragmentAttrib; attr++) {
          if (swrast->_FragmentAttribs & (1 << attr)) {

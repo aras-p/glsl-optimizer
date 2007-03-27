@@ -1355,14 +1355,16 @@ _mesa_initialize_context(GLcontext *ctx,
    ctx->TnlModule.SwapCount = 0;
 #endif
 
+   ctx->FragmentProgram._MaintainTexEnvProgram
+      = (_mesa_getenv("MESA_TEX_PROG") != NULL);
+   ctx->FragmentProgram._UseTexEnvProgram = ctx->FragmentProgram._MaintainTexEnvProgram;
+
    ctx->VertexProgram._MaintainTnlProgram
       = (_mesa_getenv("MESA_TNL_PROG") != NULL);
-   if (ctx->VertexProgram._MaintainTnlProgram)
+   if (ctx->VertexProgram._MaintainTnlProgram) {
       /* this is required... */
       ctx->FragmentProgram._MaintainTexEnvProgram = GL_TRUE;
-   else
-      ctx->FragmentProgram._MaintainTexEnvProgram
-         = (_mesa_getenv("MESA_TEX_PROG") != NULL);
+   }
 
    ctx->FirstTimeCurrent = GL_TRUE;
 

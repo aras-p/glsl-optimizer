@@ -964,6 +964,9 @@ update_program(GLcontext *ctx)
 
    if (shProg && shProg->LinkStatus) {
       /* Use shader programs */
+      /* XXX this isn't quite right, since we may have either a vertex
+       * _or_ fragment shader (not always both).
+       */
       ctx->VertexProgram._Current = shProg->VertexProgram;
       ctx->FragmentProgram._Current = shProg->FragmentProgram;
    }
@@ -999,6 +1002,13 @@ update_program(GLcontext *ctx)
          /* no fragment program */
          ctx->FragmentProgram._Current = NULL;
       }
+   }
+
+   ctx->FragmentProgram._Active = ctx->FragmentProgram._Enabled;
+   if (ctx->FragmentProgram._MaintainTexEnvProgram &&
+       !ctx->FragmentProgram._Enabled) {
+      if (ctx->FragmentProgram._UseTexEnvProgram)
+	 ctx->FragmentProgram._Active = GL_TRUE;
    }
 }
 

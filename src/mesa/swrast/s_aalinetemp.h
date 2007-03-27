@@ -87,7 +87,7 @@ NAME(plot)(GLcontext *ctx, struct LineInfo *line, int ix, int iy)
          if (swrast->_FragmentAttribs & (1 << attr)) {
             GLfloat (*attribArray)[4] = line->span.array->attribs[attr];
             GLfloat invQ;
-            if (ctx->FragmentProgram._Current) {
+            if (ctx->FragmentProgram._Active) {
                invQ = 1.0F;
             }
             else {
