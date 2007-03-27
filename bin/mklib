@@ -212,16 +212,16 @@ case $ARCH in
             # finish up
             FINAL_LIBS="${LIBNAME}"
         elif [ $STATIC = 1 ] ; then
-	    LIBNAME="lib${LIBNAME}"     # prefix with "lib"
-            echo "mklib: Making" $ARCH "static library: " ${LIBNAME}.a
+            LIBNAME="lib${LIBNAME}.a"     # prefix with "lib", suffix with ".a"
+            echo "mklib: Making" $ARCH "static library: " ${LIBNAME}
             LINK="ar"
             OPTS="-ru"
-            rm -f ${LIBNAME}.a
+            rm -f ${LIBNAME}
             # make lib
-            ${LINK} ${OPTS} ${LIBNAME}.a ${OBJECTS}
-	    ranlib ${LIBNAME}.a
+            ${LINK} ${OPTS} ${LIBNAME} ${OBJECTS}
+            ranlib ${LIBNAME}
             # finish up
-            FINAL_LIBS=${LIBNAME}.a
+            FINAL_LIBS=${LIBNAME}
         else
 	    LIBNAME="lib${LIBNAME}"     # prefix with "lib"
 	    case $ARCH in 'Linux' | 'GNU' | GNU/*)
