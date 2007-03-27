@@ -25,6 +25,9 @@ typedef struct slang_label_ slang_label;
 extern slang_label *
 _slang_label_new(const char *name);
 
+extern slang_label *
+_slang_label_new_unique(const char *name);
+
 extern void
 _slang_label_delete(slang_label *l);
 

@@ -21,6 +21,27 @@ _slang_label_new(const char *name)
    return l;
 }
 
+/**
+ * As above, but suffix the name with a unique number.
+ */
+slang_label *
+_slang_label_new_unique(const char *name)
+{
+   static int id = 1;
+   slang_label *l = (slang_label *) _mesa_calloc(sizeof(slang_label));
+   if (l) {
+      l->Name = (char *) _mesa_malloc(_mesa_strlen(name) + 10);
+      if (!l->Name) {
+         _mesa_free(l);
+         return NULL;
+      }
+      _mesa_sprintf(l->Name, "%s_%d", name, id);
+      id++;
+      l->Location = -1;
+   }
+   return l;
+}
+
 void
 _slang_label_delete(slang_label *l)
 {
