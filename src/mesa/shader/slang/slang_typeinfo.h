@@ -64,6 +64,7 @@ typedef struct slang_assemble_ctx_
    slang_info_log *log;
    struct slang_label_ *curFuncEndLabel;
    struct slang_ir_node_ *CurLoop;
+   struct slang_function_ *CurFunction;
 } slang_assemble_ctx;
 
 

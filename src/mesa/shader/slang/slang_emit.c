@@ -62,6 +62,7 @@ typedef struct
    /* code-gen options */
    GLboolean EmitHighLevelInstructions;
    GLboolean EmitCondCodes;
+   GLboolean EmitBeginEndSub;
    GLboolean EmitComments;
 } slang_emit_info;
 
@@ -203,6 +204,13 @@ new_instruction(slang_emit_info *emitInfo, gl_inst_opcode opcode)
 {
    struct gl_program *prog = emitInfo->prog;
    struct prog_instruction *inst;
+
+#if 0
+   /* print prev inst */
+   if (prog->NumInstructions > 0) {
+      _mesa_print_instruction(prog->Instructions + prog->NumInstructions - 1);
+   }
+#endif
    prog->Instructions = _mesa_realloc_instructions(prog->Instructions,
                                                    prog->NumInstructions,
                                                    prog->NumInstructions + 1);
@@ -710,13 +718,36 @@ emit_label(slang_emit_info *emitInfo, const slang_ir_node *n)
 }
 
 
+/**
+ * Emit code for an inlined function call.
+ */
 static struct prog_instruction *
-emit_jump(slang_emit_info *emitInfo, slang_ir_node *n)
+emit_func(slang_emit_info *emitInfo, slang_ir_node *n)
+{
+   struct prog_instruction *inst;
+   assert(n->Label);
+   if (emitInfo->EmitBeginEndSub) {
+      inst = new_instruction(emitInfo, OPCODE_BGNSUB);
+      inst->Comment = _mesa_strdup(n->Label->Name);
+   }
+   inst = emit(emitInfo, n->Children[0]);
+   if (emitInfo->EmitBeginEndSub) {
+      inst = new_instruction(emitInfo, OPCODE_ENDSUB);
+      inst->Comment = _mesa_strdup(n->Label->Name);
+   }
+   n->Store = n->Children[0]->Store;
+   return inst;
+}
+
+
+static struct prog_instruction *
+emit_return(slang_emit_info *emitInfo, slang_ir_node *n)
 {
    struct prog_instruction *inst;
    assert(n);
+   assert(n->Opcode == IR_RETURN);
    assert(n->Label);
-   inst = new_instruction(emitInfo, OPCODE_BRA);
+   inst = new_instruction(emitInfo, OPCODE_BRA /*RET*/); /*XXX TEMPORARY*/
    inst->DstReg.CondMask = COND_TR;  /* always branch */
    inst->BranchTarget = _slang_label_get_location(n->Label);
    if (inst->BranchTarget < 0) {
@@ -793,22 +824,29 @@ emit_move(slang_emit_info *emitInfo, slang_ir_node *n)
    assert(n->Children[1]);
    inst = emit(emitInfo, n->Children[1]);
 
+   if (!n->Children[1]->Store) {
+      slang_info_log_error(emitInfo->log, "invalid assignment");
+      return NULL;
+   }
    assert(n->Children[1]->Store->Index >= 0);
 
-#if 0
-   assert(!n->Store);
-#endif
    n->Store = n->Children[0]->Store;
 
 #if PEEPHOLE_OPTIMIZATIONS
-   if (inst && _slang_is_temp(emitInfo->vt, n->Children[1]->Store)) {
+   if (inst &&
+       _slang_is_temp(emitInfo->vt, n->Children[1]->Store) &&
+       (inst->DstReg.File == n->Children[1]->Store->File) &&
+       (inst->DstReg.Index == n->Children[1]->Store->Index)) {
       /* Peephole optimization:
-       * Just modify the RHS to put its result into the dest of this
-       * MOVE operation.  Then, this MOVE is a no-op.
+       * The Right-Hand-Side has its results in a temporary place.
+       * Modify the RHS (and the prev instruction) to store its results
+       * in the destination specified by n->Children[0].
+       * Then, this MOVE is a no-op.
        */
-      _slang_free_temp(emitInfo->vt, n->Children[1]->Store);
+      if (n->Children[1]->Opcode != IR_SWIZZLE)
+         _slang_free_temp(emitInfo->vt, n->Children[1]->Store);
       *n->Children[1]->Store = *n->Children[0]->Store;
-      /* fixup the prev (RHS) instruction */
+      /* fixup the previous instruction (which stored the RHS result) */
       assert(n->Children[0]->Store->Index >= 0);
       storage_to_dst_reg(&inst->DstReg, n->Children[0]->Store, n->Writemask);
       return inst;
@@ -868,11 +906,17 @@ emit_cond(slang_emit_info *emitInfo, slang_ir_node *n)
        * Need to update condition code register.
        * Next instruction is typically an IR_IF.
        */
-      if (inst) {
-         /* set inst's CondUpdate flag */
+      if (inst &&
+          n->Children[0]->Store &&
+          inst->DstReg.File == n->Children[0]->Store->File &&
+          inst->DstReg.Index == n->Children[0]->Store->Index) {
+         /* The previous instruction wrote to the register who's value
+          * we're testing.  Just update that instruction so that the
+          * condition codes are updated.
+          */
          inst->CondUpdate = GL_TRUE;
          n->Store = n->Children[0]->Store;
-         return inst; /* XXX or null? */
+         return inst;
       }
       else {
          /* This'll happen for things like "if (i) ..." where no code
@@ -1225,8 +1269,9 @@ static struct prog_instruction *
 emit_swizzle(slang_emit_info *emitInfo, slang_ir_node *n)
 {
    GLuint swizzle;
+   struct prog_instruction *inst;
 
-   (void) emit(emitInfo, n->Children[0]);
+   inst = emit(emitInfo, n->Children[0]);
 
 #ifdef DEBUG
    {
@@ -1244,10 +1289,10 @@ emit_swizzle(slang_emit_info *emitInfo, slang_ir_node *n)
    n->Store->Index = n->Children[0]->Store->Index;
    n->Store->Size = swizzle_size(n->Store->Swizzle);
 #if 0
-   printf("Emit Swizzle reg %d  chSize %d  size %d  swz %s\n",
+   printf("Emit Swizzle %s  reg %d  chSize %d  mySize %d\n",
+          _mesa_swizzle_string(n->Store->Swizzle, 0, 0),
           n->Store->Index, n->Children[0]->Store->Size,
-          n->Store->Size,
-          _mesa_swizzle_string(n->Store->Swizzle, 0, 0));
+          n->Store->Size);
 #endif
 
    /* apply this swizzle to child's swizzle to get composed swizzle */
@@ -1255,7 +1300,7 @@ emit_swizzle(slang_emit_info *emitInfo, slang_ir_node *n)
    n->Store->Swizzle = swizzle_swizzle(n->Children[0]->Store->Swizzle,
                                        swizzle);
 
-   return NULL;
+   return inst;
 }
 
 
@@ -1499,12 +1544,12 @@ emit(slang_emit_info *emitInfo, slang_ir_node *n)
 
    case IR_LABEL:
       return emit_label(emitInfo, n);
-   case IR_JUMP:
-      assert(n);
-      assert(n->Label);
-      return emit_jump(emitInfo, n);
+
    case IR_KILL:
       return emit_kill(emitInfo);
+
+   case IR_FUNC:
+      return emit_func(emitInfo, n);
 
    case IR_IF:
       return emit_if(emitInfo, n);
@@ -1527,14 +1572,13 @@ emit(slang_emit_info *emitInfo, slang_ir_node *n)
    case IR_END_SUB:
       return new_instruction(emitInfo, OPCODE_ENDSUB);
    case IR_RETURN:
-      return new_instruction(emitInfo, OPCODE_RET);
+      return emit_return(emitInfo, n);
 
    case IR_NOP:
       return NULL;
 
    default:
       _mesa_problem(NULL, "Unexpected IR opcode in emit()\n");
-      abort();
    }
    return NULL;
 }
@@ -1555,6 +1599,7 @@ _slang_emit_code(slang_ir_node *n, slang_var_table *vt,
 
    emitInfo.EmitHighLevelInstructions = ctx->Shader.EmitHighLevelInstructions;
    emitInfo.EmitCondCodes = ctx->Shader.EmitCondCodes;
+   emitInfo.EmitBeginEndSub = 0;  /* XXX temporary */
    emitInfo.EmitComments = ctx->Shader.EmitComments;
 
    (void) emit(&emitInfo, n);

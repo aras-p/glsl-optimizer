@@ -49,7 +49,7 @@ typedef enum
    IR_SCOPE,   /* new variable scope (one child) */
 
    IR_LABEL,   /* target of a jump or cjump */
-   IR_JUMP,    /* unconditional jump */
+
    IR_COND,    /* conditional expression/predicate */
 
    IR_IF,      /* high-level IF/then/else */
@@ -61,6 +61,8 @@ typedef enum
    IR_END_SUB,   /* end subroutine */
    IR_RETURN,    /* return from subroutine */
    IR_CALL,      /* call subroutine */
+
+   IR_FUNC,      /* inlined function code */
 
    IR_LOOP,      /* high-level loop-begin / loop-end */
                  /* Children[0] = loop body */

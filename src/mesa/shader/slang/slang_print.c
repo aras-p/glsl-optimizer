@@ -274,10 +274,8 @@ slang_print_tree(const slang_operation *op, int indent)
             */
          }
          else {
-            abort();
             spaces(indent);
             printf("DECL %s (anonymous variable!!!!)\n", (char *) op->a_id);
-            /*abort();*/
          }
       }
       break;
@@ -308,11 +306,6 @@ slang_print_tree(const slang_operation *op, int indent)
       printf("RETURN\n");
       if (op->num_children > 0)
          slang_print_tree(&op->children[0], indent + 3);
-      break;
-
-   case SLANG_OPER_GOTO:
-      spaces(indent);
-      printf("GOTO %s\n", (char *) op->a_id);
       break;
 
    case SLANG_OPER_LABEL:

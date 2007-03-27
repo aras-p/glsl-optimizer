@@ -571,6 +571,13 @@ _mesa_print_instruction_opt(const struct prog_instruction *inst, GLint indent,
       _mesa_printf("CAL %u", inst->BranchTarget);
       print_comment(inst);
       break;
+   case OPCODE_RET:
+      _mesa_printf("RET (%s%s); # (goto %d)",
+                   condcode_string(inst->DstReg.CondMask),
+                   _mesa_swizzle_string(inst->DstReg.CondSwizzle, 0, GL_FALSE),
+                   inst->BranchTarget);
+      print_comment(inst);
+      break;
    case OPCODE_IF:
       if (inst->SrcReg[0].File != PROGRAM_UNDEFINED) {
          /* Use ordinary register */
@@ -622,7 +629,7 @@ _mesa_print_instruction_opt(const struct prog_instruction *inst, GLint indent,
       break;
 
    case OPCODE_BGNSUB:
-      _mesa_printf("SUB");
+      _mesa_printf("BGNSUB");
       print_comment(inst);
       return indent + 3;
    case OPCODE_ENDSUB:
