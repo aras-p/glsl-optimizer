@@ -23,6 +23,8 @@
 #include "extfuncs.h"
 
 
+#define TEXTURE 0
+
 static GLint CoordAttrib = 0;
 
 static char *FragProgFile = NULL;
@@ -281,11 +283,12 @@ TestFunctions(void)
 }
 
 
+#if TEXTURE
 static void
 MakeTexture(void)
 {
-#define SZ0 128
-#define SZ1 64
+#define SZ0 64
+#define SZ1 32
    GLubyte image0[SZ0][SZ0][SZ0][4];
    GLubyte image1[SZ1][SZ1][SZ1][4];
    GLuint i, j, k;
@@ -348,6 +351,7 @@ MakeTexture(void)
    glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
    glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 }
+#endif
 
 
 static void
@@ -540,7 +544,9 @@ Init(void)
 
    CurList = SphereList;
 
+#if TEXTURE
    MakeTexture();
+#endif
 
    printf("GL_RENDERER = %s\n",(const char *) glGetString(GL_RENDERER));
    printf("Press p to toggle between per-pixel and per-vertex lighting\n");
