@@ -81,11 +81,15 @@ static void InfoMessageF(const char *f, ...)
     }
 }
 
+/**
+ * Print error to stderr, unless LIBGL_DEBUG=="quiet".
+ */
 static void ErrorMessageF(const char *f, ...)
 {
     va_list args;
+    const char *env;
 
-    if (getenv("LIBGL_DEBUG")) {
+    if ((env = getenv("LIBGL_DEBUG")) && !strstr(env, "quiet")) {
 	fprintf(stderr, "libGL error: ");
 	va_start(args, f);
 	vfprintf(stderr, f, args);
