@@ -56,8 +56,10 @@ static void
 radeonUpdatePageFlipping( radeonContextPtr rmesa )
 {
    rmesa->doPageFlip = rmesa->sarea->pfState;
-   driFlipRenderbuffers(rmesa->glCtx->WinSysDrawBuffer,
-                        rmesa->sarea->pfCurrentPage);
+   if (rmesa->glCtx->WinSysDrawBuffer) {
+      driFlipRenderbuffers(rmesa->glCtx->WinSysDrawBuffer,
+                           rmesa->sarea->pfCurrentPage);
+   }
 }
 
 

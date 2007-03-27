@@ -52,8 +52,10 @@ static void
 r128UpdatePageFlipping( r128ContextPtr rmesa )
 {
    rmesa->doPageFlip = rmesa->sarea->pfAllowPageFlip;
-   driFlipRenderbuffers(rmesa->glCtx->WinSysDrawBuffer,
-                        rmesa->sarea->pfCurrentPage);
+   if (rmesa->glCtx->WinSysDrawBuffer) {
+      driFlipRenderbuffers(rmesa->glCtx->WinSysDrawBuffer,
+                           rmesa->sarea->pfCurrentPage);
+   }
    rmesa->new_state |= R128_NEW_WINDOW;
 }
 
