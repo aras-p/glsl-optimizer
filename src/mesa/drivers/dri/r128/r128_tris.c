@@ -605,9 +605,9 @@ static void r128RenderStart( GLcontext *ctx )
     * build up a hardware vertex.
     */
    if (RENDERINPUTS_TEST_RANGE( index_bitset, _TNL_FIRST_TEX, _TNL_LAST_TEX ))
-      EMIT_ATTR( _TNL_ATTRIB_POS, EMIT_4F_VIEWPORT, R128_CCE_VC_FRMT_RHW, 16 );
+      EMIT_ATTR( _TNL_ATTRIB_POS, EMIT_4F_VIEWPORT, R128_CCE_VC_FRMT_RHW, 4 );
    else
-      EMIT_ATTR( _TNL_ATTRIB_POS, EMIT_3F_VIEWPORT, 0, 12 );
+      EMIT_ATTR( _TNL_ATTRIB_POS, EMIT_3F_VIEWPORT, 0, 3 );
 
    rmesa->coloroffset = offset;
 #if MESA_LITTLE_ENDIAN 
