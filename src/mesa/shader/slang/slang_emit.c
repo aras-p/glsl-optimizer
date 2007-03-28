@@ -232,6 +232,27 @@ storage_to_src_reg(struct prog_src_register *src, const slang_ir_storage *st)
 }
 
 
+/*
+ * Setup an instrucion src register to point to a scalar constant.
+ */
+static void
+constant_to_src_reg(struct prog_src_register *src, GLfloat val,
+                    slang_emit_info *emitInfo)
+{
+   GLuint zeroSwizzle;
+   GLint zeroReg;
+   GLfloat value[4];
+
+   value[0] = val;
+   zeroReg = _mesa_add_unnamed_constant(emitInfo->prog->Parameters,
+                                        value, 1, &zeroSwizzle);
+   assert(zeroReg >= 0);
+
+   src->File = PROGRAM_CONSTANT;
+   src->Index = zeroReg;
+   src->Swizzle = zeroSwizzle;
+}
+
 
 /**
  * Add new instruction at end of given program.
@@ -556,14 +577,9 @@ emit_compare(slang_emit_info *emitInfo, slang_ir_node *n)
       storage_to_dst_reg(&inst->DstReg, n->Store, n->Writemask);
    }
    else if (size <= 4) {
-      static const GLfloat zero[4] = { 0, 0, 0, 0 };
-      GLuint zeroSwizzle, swizzle;
-      GLint zeroReg = _mesa_add_unnamed_constant(emitInfo->prog->Parameters,
-                                                 zero, 4, &zeroSwizzle);
+      GLuint swizzle;
       gl_inst_opcode dotOp;
       
-      assert(zeroReg >= 0);
-
       assert(!n->Store);
       if (!n->Store) {
          if (!alloc_temp_storage(emitInfo, n, size))  /* 'size' bools */
@@ -606,9 +622,7 @@ emit_compare(slang_emit_info *emitInfo, slang_ir_node *n)
          /* compute tmp2.x = !tmp2.x  via tmp2.x = (tmp2.x == 0) */
          inst = new_instruction(emitInfo, OPCODE_SEQ);
          storage_to_src_reg(&inst->SrcReg[0], n->Store);
-         inst->SrcReg[1].File = PROGRAM_CONSTANT;
-         inst->SrcReg[1].Index = zeroReg;
-         inst->SrcReg[1].Swizzle = zeroSwizzle;
+         constant_to_src_reg(&inst->SrcReg[1], 0.0, emitInfo);
          storage_to_dst_reg(&inst->DstReg, n->Store, n->Writemask);
          inst->Comment = _mesa_strdup("Invert true/false");
       }
@@ -1029,15 +1043,7 @@ emit_cond(slang_emit_info *emitInfo, slang_ir_node *n)
 static struct prog_instruction *
 emit_not(slang_emit_info *emitInfo, slang_ir_node *n)
 {
-   GLfloat zero = 0.0;
-   slang_ir_storage st;
    struct prog_instruction *inst;
-
-   /* need zero constant */
-   st.File = PROGRAM_CONSTANT;
-   st.Size = 1;
-   st.Index = _mesa_add_unnamed_constant(emitInfo->prog->Parameters, &zero,
-                                         1, &st.Swizzle);
 
    /* child expr */
    (void) emit(emitInfo, n->Children[0]);
@@ -1050,8 +1056,7 @@ emit_not(slang_emit_info *emitInfo, slang_ir_node *n)
    inst = new_instruction(emitInfo, OPCODE_SEQ);
    storage_to_dst_reg(&inst->DstReg, n->Store, n->Writemask);
    storage_to_src_reg(&inst->SrcReg[0], n->Children[0]->Store);
-   storage_to_src_reg(&inst->SrcReg[1], &st);
-
+   constant_to_src_reg(&inst->SrcReg[1], 0.0, emitInfo);
    free_temp_storage(emitInfo->vt, n->Children[0]);
 
    inst->Comment = _mesa_strdup("NOT");
