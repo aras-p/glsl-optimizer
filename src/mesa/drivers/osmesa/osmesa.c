@@ -1570,6 +1570,7 @@ static struct name_function functions[] = {
    { "OSMesaGetDepthBuffer", (OSMESAproc) OSMesaGetDepthBuffer },
    { "OSMesaGetColorBuffer", (OSMESAproc) OSMesaGetColorBuffer },
    { "OSMesaGetProcAddress", (OSMESAproc) OSMesaGetProcAddress },
+   { "OSMesaColorClamp", (OSMESAproc) OSMesaColorClamp },
    { NULL, NULL }
 };
 
