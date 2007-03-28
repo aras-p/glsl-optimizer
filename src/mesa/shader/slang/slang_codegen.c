@@ -1363,6 +1363,22 @@ _slang_is_constant_cond(const slang_operation *oper, GLboolean *value)
 }
 
 
+/**
+ * Test if an operation is a scalar or boolean.
+ */
+static GLboolean
+_slang_is_scalar_or_boolean(slang_assemble_ctx *A, slang_operation *oper)
+{
+   slang_typeinfo type;
+   GLint size;
+
+   slang_typeinfo_construct(&type);
+   _slang_typeof_operation(A, oper, &type);
+   size = _slang_sizeof_type_specifier(&type.spec);
+   slang_typeinfo_destruct(&type);
+   return size == 1;
+}
+
 
 /**
  * Generate loop code using high-level IR_LOOP instruction
@@ -1377,6 +1393,12 @@ _slang_gen_while(slang_assemble_ctx * A, const slang_operation *oper)
     */
    slang_ir_node *prevLoop, *loop, *cond, *breakIf, *body;
    GLboolean isConst, constTrue;
+
+   /* type-check expression */
+   if (!_slang_is_scalar_or_boolean(A, &oper->children[0])) {
+      slang_info_log_error(A->log, "scalar/boolean expression expected for 'while'");
+      return NULL;
+   }
 
    /* Check if loop condition is a constant */
    isConst = _slang_is_constant_cond(&oper->children[0], &constTrue);
@@ -1433,6 +1455,12 @@ _slang_gen_do(slang_assemble_ctx * A, const slang_operation *oper)
     */
    slang_ir_node *prevLoop, *loop, *cond;
    GLboolean isConst, constTrue;
+
+   /* type-check expression */
+   if (!_slang_is_scalar_or_boolean(A, &oper->children[1])) {
+      slang_info_log_error(A->log, "scalar/boolean expression expected for 'do/while'");
+      return NULL;
+   }
 
    loop = new_loop(NULL);
 
@@ -1555,6 +1583,12 @@ _slang_gen_if(slang_assemble_ctx * A, const slang_operation *oper)
    const GLboolean haveElseClause = !_slang_is_noop(&oper->children[2]);
    slang_ir_node *ifNode, *cond, *ifBody, *elseBody;
    GLboolean isConst, constTrue;
+
+   /* type-check expression */
+   if (!_slang_is_scalar_or_boolean(A, &oper->children[0])) {
+      slang_info_log_error(A->log, "scalar/boolean expression expected for 'if'");
+      return NULL;
+   }
 
    isConst = _slang_is_constant_cond(&oper->children[0], &constTrue);
    if (isConst) {
