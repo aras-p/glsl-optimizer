@@ -508,8 +508,13 @@ emit_arith(slang_emit_info *emitInfo, slang_ir_node *n)
       /* normal case */
 
       /* gen code for children */
-      for (i = 0; i < info->NumParams; i++)
+      for (i = 0; i < info->NumParams; i++) {
          emit(emitInfo, n->Children[i]);
+         if (!n->Children[i] || !n->Children[i]->Store) {
+            /* error recovery */
+            return NULL;
+         }
+      }
 
       /* gen this instruction and src registers */
       inst = new_instruction(emitInfo, info->InstOpcode);
@@ -997,6 +1002,11 @@ emit_cond(slang_emit_info *emitInfo, slang_ir_node *n)
    /* emit code for the expression */
    inst = emit(emitInfo, n->Children[0]);
 
+   if (!n->Children[0]->Store) {
+      /* error recovery */
+      return NULL;
+   }
+
    assert(n->Children[0]->Store);
    /*assert(n->Children[0]->Store->Size == 1);*/
 
@@ -1074,7 +1084,10 @@ emit_if(slang_emit_info *emitInfo, slang_ir_node *n)
 
    inst = emit(emitInfo, n->Children[0]);  /* the condition */
    if (emitInfo->EmitCondCodes) {
-      assert(inst);
+      if (!inst) {
+         /* error recovery */
+         return NULL;
+      }
       condWritemask = inst->DstReg.WriteMask;
    }
 
