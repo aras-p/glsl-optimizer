@@ -2450,11 +2450,13 @@ _slang_gen_operation(slang_assemble_ctx * A, slang_operation *oper)
    case SLANG_OPER_BREAK:
       if (!A->CurLoop) {
          slang_info_log_error(A->log, "'break' not in loop");
+         return NULL;
       }
       return new_break(A->CurLoop);
    case SLANG_OPER_CONTINUE:
       if (!A->CurLoop) {
          slang_info_log_error(A->log, "'continue' not in loop");
+         return NULL;
       }
       return _slang_gen_continue(A, oper);
    case SLANG_OPER_DISCARD:
