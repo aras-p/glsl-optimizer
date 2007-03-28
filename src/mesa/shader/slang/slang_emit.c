@@ -1314,8 +1314,13 @@ emit_cont_break_if_true(slang_emit_info *emitInfo, slang_ir_node *n)
       const gl_inst_opcode opcode
          = (n->Opcode == IR_CONT_IF_TRUE) ? OPCODE_CONT : OPCODE_BRK;
       if (emitInfo->EmitCondCodes) {
+         /* Get the writemask from the previous instruction which set
+          * the condcodes.  Use that writemask as the CondSwizzle.
+          */
+         const GLuint condWritemask = inst->DstReg.WriteMask;
          inst = new_instruction(emitInfo, opcode);
          inst->DstReg.CondMask = COND_NE;
+         inst->DstReg.CondSwizzle = writemask_to_swizzle(condWritemask);
          return inst;
       }
       else {
