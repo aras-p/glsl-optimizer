@@ -1646,6 +1646,52 @@ _slang_gen_if(slang_assemble_ctx * A, const slang_operation *oper)
 
 
 
+static slang_ir_node *
+_slang_gen_not(slang_assemble_ctx * A, const slang_operation *oper)
+{
+   slang_ir_node *n;
+
+   assert(oper->type == SLANG_OPER_NOT);
+
+   /* type-check expression */
+   if (!_slang_is_scalar_or_boolean(A, &oper->children[0])) {
+      slang_info_log_error(A->log,
+                           "scalar/boolean expression expected for '!'");
+      return NULL;
+   }
+
+   n = _slang_gen_operation(A, &oper->children[0]);
+   if (n)
+      return new_not(n);
+   else
+      return NULL;
+}
+
+
+static slang_ir_node *
+_slang_gen_xor(slang_assemble_ctx * A, const slang_operation *oper)
+{
+   slang_ir_node *n1, *n2;
+
+   assert(oper->type == SLANG_OPER_LOGICALXOR);
+
+   if (!_slang_is_scalar_or_boolean(A, &oper->children[0]) ||
+       !_slang_is_scalar_or_boolean(A, &oper->children[0])) {
+      slang_info_log_error(A->log,
+                           "scalar/boolean expressions expected for '^^'");
+      return NULL;
+   }
+
+   n1 = _slang_gen_operation(A, &oper->children[0]);
+   if (!n1)
+      return NULL;
+   n2 = _slang_gen_operation(A, &oper->children[1]);
+   if (!n2)
+      return NULL;
+   return new_node2(IR_NOTEQUAL, n1, n2);
+}
+
+
 /**
  * Generate IR node for storage of a temporary of given size.
  */
@@ -2582,20 +2628,9 @@ _slang_gen_operation(slang_assemble_ctx * A, slang_operation *oper)
 	 return n;
       }
    case SLANG_OPER_LOGICALXOR:
-      {
-	 slang_ir_node *n;
-         assert(oper->num_children == 2);
-	 n = _slang_gen_function_call_name(A, "__logicalXor", oper, NULL);
-	 return n;
-      }
+      return _slang_gen_xor(A, oper);
    case SLANG_OPER_NOT:
-      {
-	 slang_ir_node *n;
-         assert(oper->num_children == 1);
-	 n = _slang_gen_function_call_name(A, "__logicalNot", oper, NULL);
-	 return n;
-      }
-
+      return _slang_gen_not(A, oper);
    case SLANG_OPER_SELECT:  /* b ? x : y */
       {
 	 slang_ir_node *n;

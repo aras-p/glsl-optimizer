@@ -2515,23 +2515,6 @@ bool __operator <= (const int a, const int b) {
 
 
 
-bool __logicalNot(const bool a)
-{
-   if (a)
-      return false;
-   return true;
-}
-
-bool __logicalXor(const bool a, const bool b)
-{
-   // XXX   return a != b;
-   if (a)
-      return __logicalNot(b);
-   return b;
-}
-
-
-
 //
 // MESA-specific extension functions.
 //
