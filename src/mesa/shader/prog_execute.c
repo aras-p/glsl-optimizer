@@ -508,6 +508,13 @@ store_vector4(const struct prog_instruction *inst,
          machine->CondCodes[2] = generate_cc(value[2]);
       if (writeMask & WRITEMASK_W)
          machine->CondCodes[3] = generate_cc(value[3]);
+#if DEBUG_PROG
+      printf("CondCodes=(%s,%s,%s,%s) for:\n",
+             _mesa_condcode_string(machine->CondCodes[0]),
+             _mesa_condcode_string(machine->CondCodes[1]),
+             _mesa_condcode_string(machine->CondCodes[2]),
+             _mesa_condcode_string(machine->CondCodes[3]));
+#endif
    }
 }
 
