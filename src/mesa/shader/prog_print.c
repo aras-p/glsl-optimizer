@@ -361,8 +361,8 @@ writemask_string(GLuint writeMask)
 }
 
 
-static const char *
-condcode_string(GLuint condcode)
+const char *
+_mesa_condcode_string(GLuint condcode)
 {
    switch (condcode) {
    case COND_GT:  return "GT";
@@ -390,7 +390,7 @@ print_dst_reg(const struct prog_dst_register *dstReg, gl_prog_print_mode mode,
 
    if (dstReg->CondMask != COND_TR) {
       _mesa_printf(" (%s.%s)",
-                   condcode_string(dstReg->CondMask),
+                   _mesa_condcode_string(dstReg->CondMask),
                    _mesa_swizzle_string(dstReg->CondSwizzle, GL_FALSE, GL_FALSE));
    }
 
@@ -561,9 +561,9 @@ _mesa_print_instruction_opt(const struct prog_instruction *inst, GLint indent,
       print_comment(inst);
       break;
    case OPCODE_BRA:
-      _mesa_printf("BRA %u (%s%s)",
+      _mesa_printf("BRA %d (%s%s)",
                    inst->BranchTarget,
-                   condcode_string(inst->DstReg.CondMask),
+                   _mesa_condcode_string(inst->DstReg.CondMask),
                    _mesa_swizzle_string(inst->DstReg.CondSwizzle, 0, GL_FALSE));
       print_comment(inst);
       break;
@@ -577,7 +577,7 @@ _mesa_print_instruction_opt(const struct prog_instruction *inst, GLint indent,
       else {
          /* Use cond codes */
          _mesa_printf("IF (%s%s);",
-                      condcode_string(inst->DstReg.CondMask),
+                      _mesa_condcode_string(inst->DstReg.CondMask),
                       _mesa_swizzle_string(inst->DstReg.CondSwizzle,
                                            0, GL_FALSE));
       }
@@ -600,7 +600,7 @@ _mesa_print_instruction_opt(const struct prog_instruction *inst, GLint indent,
    case OPCODE_CONT:
       _mesa_printf("%s (%s%s); # (goto %d)",
                    _mesa_opcode_string(inst->Opcode),
-                   condcode_string(inst->DstReg.CondMask),
+                   _mesa_condcode_string(inst->DstReg.CondMask),
                    _mesa_swizzle_string(inst->DstReg.CondSwizzle, 0, GL_FALSE),
                    inst->BranchTarget);
       print_comment(inst);
@@ -635,7 +635,7 @@ _mesa_print_instruction_opt(const struct prog_instruction *inst, GLint indent,
       break;
    case OPCODE_CAL:
       if (mode == PROG_PRINT_NV) {
-         _mesa_printf("CAL %s;\n", inst->Comment);
+         _mesa_printf("CAL %s;  # (goto %d)\n", inst->Comment, inst->BranchTarget);
       }
       else {
          _mesa_printf("CAL %u", inst->BranchTarget);
@@ -643,10 +643,9 @@ _mesa_print_instruction_opt(const struct prog_instruction *inst, GLint indent,
       }
       break;
    case OPCODE_RET:
-      _mesa_printf("RET (%s%s); # (goto %d)",
-                   condcode_string(inst->DstReg.CondMask),
-                   _mesa_swizzle_string(inst->DstReg.CondSwizzle, 0, GL_FALSE),
-                   inst->BranchTarget);
+      _mesa_printf("RET (%s%s)",
+                   _mesa_condcode_string(inst->DstReg.CondMask),
+                   _mesa_swizzle_string(inst->DstReg.CondSwizzle, 0, GL_FALSE));
       print_comment(inst);
       break;
 

@@ -38,6 +38,9 @@ typedef enum {
 
 
 extern const char *
+_mesa_condcode_string(GLuint condcode);
+
+extern const char *
 _mesa_swizzle_string(GLuint swizzle, GLuint negateBase, GLboolean extended);
 
 extern void
