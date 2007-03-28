@@ -326,10 +326,6 @@ _slang_print_ir_tree(const slang_ir_node *n, int indent)
    case IR_BREAK:
       printf("BREAK\n");
       break;
-   case IR_BREAK_IF_FALSE:
-      printf("BREAK_IF_FALSE\n");
-      _slang_print_ir_tree(n->Children[0], indent+3);
-      break;
    case IR_BREAK_IF_TRUE:
       printf("BREAK_IF_TRUE\n");
       _slang_print_ir_tree(n->Children[0], indent+3);

@@ -73,7 +73,6 @@ typedef enum
    IR_BREAK,     /* break loop */
 
    IR_BREAK_IF_TRUE,
-   IR_BREAK_IF_FALSE,
    IR_CONT_IF_TRUE,
                  /* Children[0] = the condition expression */
 

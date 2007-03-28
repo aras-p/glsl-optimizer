@@ -1207,7 +1207,6 @@ emit_loop(slang_emit_info *emitInfo, slang_ir_node *n)
       struct prog_instruction *inst = prog->Instructions + ir->InstLocation;
       assert(inst->BranchTarget < 0);
       if (ir->Opcode == IR_BREAK ||
-          ir->Opcode == IR_BREAK_IF_FALSE ||
           ir->Opcode == IR_BREAK_IF_TRUE) {
          assert(inst->Opcode == OPCODE_BRK ||
                 inst->Opcode == OPCODE_BRA);
@@ -1269,14 +1268,12 @@ emit_cont_break(slang_emit_info *emitInfo, slang_ir_node *n)
  * Either OPCODE_CONT, OPCODE_BRK or OPCODE_BRA will be emitted.
  */
 static struct prog_instruction *
-emit_cont_break_if(slang_emit_info *emitInfo, slang_ir_node *n,
-                   GLboolean breakTrue)
+emit_cont_break_if_true(slang_emit_info *emitInfo, slang_ir_node *n)
 {
    struct prog_instruction *inst;
 
    assert(n->Opcode == IR_CONT_IF_TRUE ||
-          n->Opcode == IR_BREAK_IF_TRUE ||
-          n->Opcode == IR_BREAK_IF_FALSE);
+          n->Opcode == IR_BREAK_IF_TRUE);
 
    /* evaluate condition expr, setting cond codes */
    inst = emit(emitInfo, n->Children[0]);
@@ -1289,11 +1286,11 @@ emit_cont_break_if(slang_emit_info *emitInfo, slang_ir_node *n,
 
    /* opcode selection */
    if (emitInfo->EmitHighLevelInstructions) {
+      const gl_inst_opcode opcode
+         = (n->Opcode == IR_CONT_IF_TRUE) ? OPCODE_CONT : OPCODE_BRK;
       if (emitInfo->EmitCondCodes) {
-         gl_inst_opcode opcode
-            = (n->Opcode == IR_CONT_IF_TRUE) ? OPCODE_CONT : OPCODE_BRK;
          inst = new_instruction(emitInfo, opcode);
-         inst->DstReg.CondMask = breakTrue ? COND_NE : COND_EQ;
+         inst->DstReg.CondMask = COND_NE;
          return inst;
       }
       else {
@@ -1302,35 +1299,12 @@ emit_cont_break_if(slang_emit_info *emitInfo, slang_ir_node *n,
           * ENDIF
           */
          GLint ifInstLoc;
-         if (n->Opcode == IR_CONT_IF_TRUE ||
-             n->Opcode == IR_BREAK_IF_TRUE) {
-            ifInstLoc = emitInfo->prog->NumInstructions;
-            inst = new_instruction(emitInfo, OPCODE_IF);
-            storage_to_src_reg(&inst->SrcReg[0], n->Children[0]->Store);
-         }
-         else {
-            /* invert the expression */
-            if (!alloc_temp_storage(emitInfo, n, 1))
-               return NULL;
-            inst = new_instruction(emitInfo, OPCODE_SEQ);
-            storage_to_src_reg(&inst->SrcReg[0], n->Children[0]->Store);
-            constant_to_src_reg(&inst->SrcReg[1], 0.0, emitInfo);
-            storage_to_dst_reg(&inst->DstReg, n->Store, n->Writemask);
-            inst->Comment = _mesa_strdup("Invert true/false");
-
-            ifInstLoc = emitInfo->prog->NumInstructions;
-            inst = new_instruction(emitInfo, OPCODE_IF);
-            storage_to_src_reg(&inst->SrcReg[0], n->Store);
-            free_temp_storage(emitInfo->vt, n);
-         }
+         ifInstLoc = emitInfo->prog->NumInstructions;
+         inst = new_instruction(emitInfo, OPCODE_IF);
+         storage_to_src_reg(&inst->SrcReg[0], n->Children[0]->Store);
          n->InstLocation = emitInfo->prog->NumInstructions;
-         if (n->Opcode == IR_BREAK_IF_TRUE ||
-             n->Opcode == IR_BREAK_IF_FALSE) {
-            inst = new_instruction(emitInfo, OPCODE_BRK);
-         }
-         else {
-            inst = new_instruction(emitInfo, OPCODE_CONT);
-         }
+
+         inst = new_instruction(emitInfo, opcode);
          inst = new_instruction(emitInfo, OPCODE_ENDIF);
 
          emitInfo->prog->Instructions[ifInstLoc].BranchTarget
@@ -1341,7 +1315,7 @@ emit_cont_break_if(slang_emit_info *emitInfo, slang_ir_node *n,
    else {
       assert(emitInfo->EmitCondCodes);
       inst = new_instruction(emitInfo, OPCODE_BRA);
-      inst->DstReg.CondMask = breakTrue ? COND_NE : COND_EQ;
+      inst->DstReg.CondMask = COND_NE;
       return inst;
    }
 }
@@ -1677,11 +1651,9 @@ emit(slang_emit_info *emitInfo, slang_ir_node *n)
 
    case IR_LOOP:
       return emit_loop(emitInfo, n);
-   case IR_BREAK_IF_FALSE:
-      return emit_cont_break_if(emitInfo, n, GL_FALSE);
    case IR_BREAK_IF_TRUE:
    case IR_CONT_IF_TRUE:
-      return emit_cont_break_if(emitInfo, n, GL_TRUE);
+      return emit_cont_break_if_true(emitInfo, n);
    case IR_BREAK:
       /* fall-through */
    case IR_CONT:
@@ -1790,7 +1762,7 @@ _slang_emit_code(slang_ir_node *n, slang_var_table *vt,
    emitInfo.NumSubroutines = 0;
 
    emitInfo.EmitHighLevelInstructions = ctx->Shader.EmitHighLevelInstructions;
-   emitInfo.EmitCondCodes = ctx->Shader.EmitCondCodes;
+   emitInfo.EmitCondCodes = 0*ctx->Shader.EmitCondCodes;
    emitInfo.EmitComments = ctx->Shader.EmitComments;
    emitInfo.EmitBeginEndSub = 0;  /* XXX for compiler debug only */
 
