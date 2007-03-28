@@ -171,7 +171,7 @@ free_temp_storage(slang_var_table *vt, slang_ir_node *n)
          _slang_free_temp(vt, n->Store);
          n->Store->Index = -1;
          n->Store->Size = -1;
-         _mesa_free(n->Store);
+         /*_mesa_free(n->Store);*/ /* XXX leak */
          n->Store = NULL;
       }
    }
@@ -1078,17 +1078,20 @@ static struct prog_instruction *
 emit_if(slang_emit_info *emitInfo, slang_ir_node *n)
 {
    struct gl_program *prog = emitInfo->prog;
-   struct prog_instruction *ifInst, *inst;
    GLuint ifInstLoc, elseInstLoc = 0;
    GLuint condWritemask = 0;
 
-   inst = emit(emitInfo, n->Children[0]);  /* the condition */
-   if (emitInfo->EmitCondCodes) {
-      if (!inst) {
-         /* error recovery */
-         return NULL;
+   /* emit condition expression code */
+   {
+      struct prog_instruction *inst;
+      inst = emit(emitInfo, n->Children[0]);
+      if (emitInfo->EmitCondCodes) {
+         if (!inst) {
+            /* error recovery */
+            return NULL;
+         }
+         condWritemask = inst->DstReg.WriteMask;
       }
-      condWritemask = inst->DstReg.WriteMask;
    }
 
 #if 0
@@ -1097,7 +1100,7 @@ emit_if(slang_emit_info *emitInfo, slang_ir_node *n)
 
    ifInstLoc = prog->NumInstructions;
    if (emitInfo->EmitHighLevelInstructions) {
-      ifInst = new_instruction(emitInfo, OPCODE_IF);
+      struct prog_instruction *ifInst = new_instruction(emitInfo, OPCODE_IF);
       if (emitInfo->EmitCondCodes) {
          ifInst->DstReg.CondMask = COND_NE;  /* if cond is non-zero */
          /* only test the cond code (1 of 4) that was updated by the
@@ -1112,7 +1115,7 @@ emit_if(slang_emit_info *emitInfo, slang_ir_node *n)
    }
    else {
       /* conditional jump to else, or endif */
-      ifInst = new_instruction(emitInfo, OPCODE_BRA);
+      struct prog_instruction *ifInst = new_instruction(emitInfo, OPCODE_BRA);
       ifInst->DstReg.CondMask = COND_EQ;  /* BRA if cond is zero */
       ifInst->Comment = _mesa_strdup("if zero");
       ifInst->DstReg.CondSwizzle = writemask_to_swizzle(condWritemask);
@@ -1134,15 +1137,12 @@ emit_if(slang_emit_info *emitInfo, slang_ir_node *n)
          inst->Comment = _mesa_strdup("else");
          inst->DstReg.CondMask = COND_TR;  /* always branch */
       }
-      ifInst = prog->Instructions + ifInstLoc;
-      ifInst->BranchTarget = prog->NumInstructions;
-
+      prog->Instructions[ifInstLoc].BranchTarget = prog->NumInstructions;
       emit(emitInfo, n->Children[2]);
    }
    else {
       /* no else body */
-      ifInst = prog->Instructions + ifInstLoc;
-      ifInst->BranchTarget = prog->NumInstructions /*+ 1*/;
+      prog->Instructions[ifInstLoc].BranchTarget = prog->NumInstructions;
    }
 
    if (emitInfo->EmitHighLevelInstructions) {
@@ -1150,9 +1150,7 @@ emit_if(slang_emit_info *emitInfo, slang_ir_node *n)
    }
 
    if (n->Children[2]) {
-      struct prog_instruction *elseInst;
-      elseInst = prog->Instructions + elseInstLoc;
-      elseInst->BranchTarget = prog->NumInstructions;
+      prog->Instructions[elseInstLoc].BranchTarget = prog->NumInstructions;
    }
    return NULL;
 }
@@ -1162,7 +1160,7 @@ static struct prog_instruction *
 emit_loop(slang_emit_info *emitInfo, slang_ir_node *n)
 {
    struct gl_program *prog = emitInfo->prog;
-   struct prog_instruction *beginInst, *endInst;
+   struct prog_instruction *endInst;
    GLuint beginInstLoc, tailInstLoc, endInstLoc;
    slang_ir_node *ir;
 
@@ -1198,8 +1196,7 @@ emit_loop(slang_emit_info *emitInfo, slang_ir_node *n)
 
    if (emitInfo->EmitHighLevelInstructions) {
       /* BGNLOOP's BranchTarget points to the ENDLOOP inst */
-      beginInst = prog->Instructions + beginInstLoc;
-      beginInst->BranchTarget = prog->NumInstructions - 1;
+      prog->Instructions[beginInstLoc].BranchTarget = prog->NumInstructions -1;
    }
 
    /* Done emitting loop code.  Now walk over the loop's linked list of
@@ -1213,8 +1210,6 @@ emit_loop(slang_emit_info *emitInfo, slang_ir_node *n)
           ir->Opcode == IR_BREAK_IF_FALSE ||
           ir->Opcode == IR_BREAK_IF_TRUE) {
          assert(inst->Opcode == OPCODE_BRK ||
-                inst->Opcode == OPCODE_BRK0 ||
-                inst->Opcode == OPCODE_BRK1 ||
                 inst->Opcode == OPCODE_BRA);
          /* go to instruction after end of loop */
          inst->BranchTarget = endInstLoc + 1;
@@ -1224,8 +1219,6 @@ emit_loop(slang_emit_info *emitInfo, slang_ir_node *n)
                 ir->Opcode == IR_CONT_IF_FALSE ||
                 ir->Opcode == IR_CONT_IF_TRUE);
          assert(inst->Opcode == OPCODE_CONT ||
-                inst->Opcode == OPCODE_CONT0 ||
-                inst->Opcode == OPCODE_CONT1 ||
                 inst->Opcode == OPCODE_BRA);
          /* go to instruction at tail of loop */
          inst->BranchTarget = endInstLoc;
@@ -1280,7 +1273,6 @@ static struct prog_instruction *
 emit_cont_break_if(slang_emit_info *emitInfo, slang_ir_node *n,
                    GLboolean breakTrue)
 {
-   gl_inst_opcode opcode;
    struct prog_instruction *inst;
 
    assert(n->Opcode == IR_CONT_IF_TRUE ||
@@ -1300,36 +1292,61 @@ emit_cont_break_if(slang_emit_info *emitInfo, slang_ir_node *n,
    /* opcode selection */
    if (emitInfo->EmitHighLevelInstructions) {
       if (emitInfo->EmitCondCodes) {
-         if (n->Opcode == IR_CONT_IF_TRUE ||
-             n->Opcode == IR_CONT_IF_FALSE)
-            opcode = OPCODE_CONT;
-         else
-            opcode = OPCODE_BRK;
+         gl_inst_opcode opcode
+            = (n->Opcode == IR_CONT_IF_TRUE || n->Opcode == IR_CONT_IF_FALSE)
+            ? OPCODE_CONT : OPCODE_BRK;
+         inst = new_instruction(emitInfo, opcode);
+         inst->DstReg.CondMask = breakTrue ? COND_NE : COND_EQ;
+         return inst;
       }
       else {
-         if (n->Opcode == IR_CONT_IF_TRUE)
-            opcode = OPCODE_CONT1;
-         else if (n->Opcode == IR_CONT_IF_FALSE)
-            opcode = OPCODE_CONT0;
-         else if (n->Opcode == IR_BREAK_IF_TRUE)
-            opcode = OPCODE_BRK1;
-         else if (n->Opcode == IR_BREAK_IF_FALSE)
-            opcode = OPCODE_BRK0;
+         /* IF reg
+          *    BRK/CONT;
+          * ENDIF
+          */
+         GLint ifInstLoc;
+         if (n->Opcode == IR_CONT_IF_TRUE ||
+             n->Opcode == IR_BREAK_IF_TRUE) {
+            ifInstLoc = emitInfo->prog->NumInstructions;
+            inst = new_instruction(emitInfo, OPCODE_IF);
+            storage_to_src_reg(&inst->SrcReg[0], n->Children[0]->Store);
+         }
+         else {
+            /* invert the expression */
+            if (!alloc_temp_storage(emitInfo, n, 1))
+               return NULL;
+            inst = new_instruction(emitInfo, OPCODE_SEQ);
+            storage_to_src_reg(&inst->SrcReg[0], n->Children[0]->Store);
+            constant_to_src_reg(&inst->SrcReg[1], 0.0, emitInfo);
+            storage_to_dst_reg(&inst->DstReg, n->Store, n->Writemask);
+            inst->Comment = _mesa_strdup("Invert true/false");
+
+            ifInstLoc = emitInfo->prog->NumInstructions;
+            inst = new_instruction(emitInfo, OPCODE_IF);
+            storage_to_src_reg(&inst->SrcReg[0], n->Store);
+            free_temp_storage(emitInfo->vt, n);
+         }
+         n->InstLocation = emitInfo->prog->NumInstructions;
+         if (n->Opcode == IR_BREAK_IF_TRUE ||
+             n->Opcode == IR_BREAK_IF_FALSE) {
+            inst = new_instruction(emitInfo, OPCODE_BRK);
+         }
+         else {
+            inst = new_instruction(emitInfo, OPCODE_CONT);
+         }
+         inst = new_instruction(emitInfo, OPCODE_ENDIF);
+
+         emitInfo->prog->Instructions[ifInstLoc].BranchTarget
+            = emitInfo->prog->NumInstructions;
+         return inst;
       }
    }
    else {
-      opcode = OPCODE_BRA;
-   }
-
-   inst = new_instruction(emitInfo, opcode);
-   if (emitInfo->EmitCondCodes) {
+      assert(emitInfo->EmitCondCodes);
+      inst = new_instruction(emitInfo, OPCODE_BRA);
       inst->DstReg.CondMask = breakTrue ? COND_NE : COND_EQ;
+      return inst;
    }
-   else {
-      /* BRK0, BRK1, CONT0, CONT1 uses SrcReg[0] as the condition */
-      storage_to_src_reg(&inst->SrcReg[0], n->Children[0]->Store);
-   }
-   return inst;
 }
 
 
