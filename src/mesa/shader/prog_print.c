@@ -606,17 +606,6 @@ _mesa_print_instruction_opt(const struct prog_instruction *inst, GLint indent,
       print_comment(inst);
       break;
 
-   case OPCODE_BRK0:
-   case OPCODE_BRK1:
-   case OPCODE_CONT0:
-   case OPCODE_CONT1:
-      _mesa_printf("%s ", _mesa_opcode_string(inst->Opcode));
-      print_src_reg(&inst->SrcReg[0], mode, prog);
-      _mesa_printf("; ");
-      _mesa_printf(" # (goto %d)", inst->BranchTarget);
-      print_comment(inst);
-      break;
-
    case OPCODE_BGNSUB:
       if (mode == PROG_PRINT_NV) {
          _mesa_printf("%s:\n", inst->Comment); /* comment is label */

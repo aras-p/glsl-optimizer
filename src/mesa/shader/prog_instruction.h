@@ -153,13 +153,9 @@ typedef enum prog_opcode {
    OPCODE_BGNSUB,    /*                                     opt  */
    OPCODE_BRA,       /*                    2                 X   */
    OPCODE_BRK,       /*                    2                opt  */
-   OPCODE_BRK0,      /*                                     opt  */
-   OPCODE_BRK1,      /*                                     opt  */
    OPCODE_CAL,       /*                    2       2             */
    OPCODE_CMP,       /*            X                             */
    OPCODE_CONT,      /*                                     opt  */
-   OPCODE_CONT0,     /*                                     opt  */
-   OPCODE_CONT1,     /*                                     opt  */
    OPCODE_COS,       /*            X       2       X         X   */
    OPCODE_DDX,       /*                            X         X   */
    OPCODE_DDY,       /*                            X         X   */

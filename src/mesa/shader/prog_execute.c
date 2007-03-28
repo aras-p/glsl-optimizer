@@ -727,32 +727,6 @@ _mesa_execute_program(GLcontext * ctx,
             pc = inst->BranchTarget - 1;
          }
          break;
-      case OPCODE_BRK0:   /* Break if zero */
-         /* fall-through */
-      case OPCODE_CONT0:  /* Continue if zero */
-         {
-            GLfloat a[4];
-            fetch_vector1(&inst->SrcReg[0], machine, a);
-            if (a[0] == 0.0) {
-               /* take branch */
-               /* Subtract 1 here since we'll do pc++ at end of for-loop */
-               pc = inst->BranchTarget - 1;
-            }
-         }
-         break;
-      case OPCODE_BRK1:   /* Break if non-zero */
-         /* fall-through */
-      case OPCODE_CONT1:  /* Continue if non-zero */
-         {
-            GLfloat a[4];
-            fetch_vector1(&inst->SrcReg[0], machine, a);
-            if (a[0] != 0.0) {
-               /* take branch */
-               /* Subtract 1 here since we'll do pc++ at end of for-loop */
-               pc = inst->BranchTarget - 1;
-            }
-         }
-         break;
       case OPCODE_CAL:         /* Call subroutine (conditional) */
          if (eval_condition(machine, inst)) {
             /* call the subroutine */

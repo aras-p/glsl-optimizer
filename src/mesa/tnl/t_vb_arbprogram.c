@@ -741,13 +741,9 @@ static gpu_function opcode_func[MAX_OPCODE+3] =
    do_NOP,/*BGNSUB*/
    do_NOP,/*BRA*/
    do_NOP,/*BRK*/
-   do_NOP,/*BRK0*/
-   do_NOP,/*BRK1*/
    do_NOP,/*CAL*/
    do_NOP,/*CMP*/
    do_NOP,/*CONT*/
-   do_NOP,/*CONT0*/
-   do_NOP,/*CONT1*/
    do_NOP,/*COS*/
    do_NOP,/*DDX*/
    do_NOP,/*DDY*/
