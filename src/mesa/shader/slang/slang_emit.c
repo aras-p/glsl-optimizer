@@ -86,6 +86,25 @@ new_subroutine(slang_emit_info *emitInfo, GLuint *id)
 }
 
 
+/**
+ * Convert a writemask to a swizzle.  Used for testing cond codes because
+ * we only want to test the cond code component(s) that was set by the
+ * previous instruction.
+ */
+static GLuint
+writemask_to_swizzle(GLuint writemask)
+{
+   if (writemask == WRITEMASK_X)
+      return SWIZZLE_XXXX;
+   if (writemask == WRITEMASK_Y)
+      return SWIZZLE_YYYY;
+   if (writemask == WRITEMASK_Z)
+      return SWIZZLE_ZZZZ;
+   if (writemask == WRITEMASK_W)
+      return SWIZZLE_WWWW;
+   return SWIZZLE_XYZW;  /* shouldn't be hit */
+}
+
 
 /**
  * Swizzle a swizzle.  That is, return swz2(swz1)
@@ -152,6 +171,8 @@ free_temp_storage(slang_var_table *vt, slang_ir_node *n)
          _slang_free_temp(vt, n->Store);
          n->Store->Index = -1;
          n->Store->Size = -1;
+         _mesa_free(n->Store);
+         n->Store = NULL;
       }
    }
 }
@@ -485,6 +506,7 @@ emit_arith(slang_emit_info *emitInfo, slang_ir_node *n)
 
    /* result storage */
    if (!n->Store) {
+      /* XXX this size isn't correct, it depends on the operands */
       if (!alloc_temp_storage(emitInfo, n, info->ResultSize))
          return NULL;
    }
@@ -542,8 +564,9 @@ emit_compare(slang_emit_info *emitInfo, slang_ir_node *n)
       
       assert(zeroReg >= 0);
 
+      assert(!n->Store);
       if (!n->Store) {
-         if (!alloc_temp_storage(emitInfo, n, 4))  /* 4 bools */
+         if (!alloc_temp_storage(emitInfo, n, size))  /* 'size' bools */
             return NULL;
       }
 
@@ -561,34 +584,32 @@ emit_compare(slang_emit_info *emitInfo, slang_ir_node *n)
          swizzle = MAKE_SWIZZLE4(SWIZZLE_X, SWIZZLE_Y, SWIZZLE_Y, SWIZZLE_Y);
       }
 
-      /* Compute equality, inequality */
+      /* Compute equality, inequality (tmp1 = (A ?= B)) */
       inst = new_instruction(emitInfo, OPCODE_SNE);
       storage_to_src_reg(&inst->SrcReg[0], n->Children[0]->Store);
       storage_to_src_reg(&inst->SrcReg[1], n->Children[1]->Store);
       storage_to_dst_reg(&inst->DstReg, n->Store, n->Writemask);
       inst->Comment = _mesa_strdup("Compare values");
-      /* compute D = DP4(D, D)  (reduction) */
+
+      /* Compute tmp2 = DOT(tmp1, tmp1)  (reduction) */
       inst = new_instruction(emitInfo, dotOp);
-      inst->SrcReg[0].File = PROGRAM_TEMPORARY;
-      inst->SrcReg[0].Index = n->Store->Index;
-      inst->SrcReg[0].Swizzle = swizzle;
-      inst->SrcReg[1].File = PROGRAM_TEMPORARY;
-      inst->SrcReg[1].Index = n->Store->Index;
-      inst->SrcReg[1].Swizzle = swizzle;
-      inst->DstReg.File = PROGRAM_TEMPORARY;
-      inst->DstReg.Index = n->Store->Index;
+      storage_to_src_reg(&inst->SrcReg[0], n->Store);
+      storage_to_src_reg(&inst->SrcReg[1], n->Store);
+      inst->SrcReg[0].Swizzle = inst->SrcReg[1].Swizzle = swizzle; /*override*/
+      free_temp_storage(emitInfo->vt, n); /* free tmp1 */
+      if (!alloc_temp_storage(emitInfo, n, 1))  /* alloc tmp2 */
+         return NULL;
+      storage_to_dst_reg(&inst->DstReg, n->Store, n->Writemask);
       inst->Comment = _mesa_strdup("Reduce vec to bool");
+
       if (n->Opcode == IR_EQUAL) {
-         /* compute D.x = !D.x  via D.x = (D.x == 0) */
+         /* compute tmp2.x = !tmp2.x  via tmp2.x = (tmp2.x == 0) */
          inst = new_instruction(emitInfo, OPCODE_SEQ);
-         inst->SrcReg[0].File = PROGRAM_TEMPORARY;
-         inst->SrcReg[0].Index = n->Store->Index;
+         storage_to_src_reg(&inst->SrcReg[0], n->Store);
          inst->SrcReg[1].File = PROGRAM_CONSTANT;
          inst->SrcReg[1].Index = zeroReg;
          inst->SrcReg[1].Swizzle = zeroSwizzle;
-         inst->DstReg.File = PROGRAM_TEMPORARY;
-         inst->DstReg.Index = n->Store->Index;
-         inst->DstReg.WriteMask = WRITEMASK_X;
+         storage_to_dst_reg(&inst->DstReg, n->Store, n->Writemask);
          inst->Comment = _mesa_strdup("Invert true/false");
       }
    }
@@ -757,6 +778,11 @@ emit_func(slang_emit_info *emitInfo, slang_ir_node *n)
                              emitInfo->prog);
 
    if (emitInfo->EmitBeginEndSub) {
+      /* BGNSUB isn't a real instruction.
+       * We require a label (i.e. "foobar:") though, if we're going to
+       * print the program in the NV format.  The BNGSUB instruction is
+       * really just a NOP to attach the label to.
+       */
       inst = new_instruction(emitInfo, OPCODE_BGNSUB);
       inst->Comment = _mesa_strdup(n->Label->Name);
    }
@@ -800,17 +826,8 @@ emit_return(slang_emit_info *emitInfo, slang_ir_node *n)
    assert(n);
    assert(n->Opcode == IR_RETURN);
    assert(n->Label);
-   inst = new_instruction(emitInfo, OPCODE_RET/*BRA*/); /*XXX TEMPORARY*/
-   inst->DstReg.CondMask = COND_TR;  /* always return/branch */
-
-   if (inst->Opcode == OPCODE_BRA) {
-      inst->BranchTarget = _slang_label_get_location(n->Label);
-      if (inst->BranchTarget < 0) {
-         _slang_label_add_reference(n->Label,
-                                    emitInfo->prog->NumInstructions - 1);
-      }
-   }
-
+   inst = new_instruction(emitInfo, OPCODE_RET);
+   inst->DstReg.CondMask = COND_TR;  /* always return */
    return inst;
 }
 
@@ -949,28 +966,34 @@ emit_move(slang_emit_info *emitInfo, slang_ir_node *n)
 }
 
 
+/**
+ * An IR_COND node wraps a boolean expression which is used by an
+ * IF or WHILE test.  This is where we'll set condition codes, if needed.
+ */
 static struct prog_instruction *
 emit_cond(slang_emit_info *emitInfo, slang_ir_node *n)
 {
    struct prog_instruction *inst;
 
+   assert(n->Opcode == IR_COND);
+
    if (!n->Children[0])
       return NULL;
 
+   /* emit code for the expression */
    inst = emit(emitInfo, n->Children[0]);
 
+   assert(n->Children[0]->Store);
+   /*assert(n->Children[0]->Store->Size == 1);*/
+
    if (emitInfo->EmitCondCodes) {
-      /* Conditional expression (in if/while/for stmts).
-       * Need to update condition code register.
-       * Next instruction is typically an IR_IF.
-       */
       if (inst &&
           n->Children[0]->Store &&
           inst->DstReg.File == n->Children[0]->Store->File &&
           inst->DstReg.Index == n->Children[0]->Store->Index) {
          /* The previous instruction wrote to the register who's value
-          * we're testing.  Just update that instruction so that the
-          * condition codes are updated.
+          * we're testing.  Just fix that instruction so that the
+          * condition codes are computed.
           */
          inst->CondUpdate = GL_TRUE;
          n->Store = n->Children[0]->Store;
@@ -980,10 +1003,8 @@ emit_cond(slang_emit_info *emitInfo, slang_ir_node *n)
          /* This'll happen for things like "if (i) ..." where no code
           * is normally generated for the expression "i".
           * Generate a move instruction just to set condition codes.
-          * Note: must use full 4-component vector since all four
-          * condition codes must be set identically.
           */
-         if (!alloc_temp_storage(emitInfo, n, 4))
+         if (!alloc_temp_storage(emitInfo, n, 1))
             return NULL;
          inst = new_instruction(emitInfo, OPCODE_MOV);
          inst->CondUpdate = GL_TRUE;
@@ -991,13 +1012,13 @@ emit_cond(slang_emit_info *emitInfo, slang_ir_node *n)
          storage_to_src_reg(&inst->SrcReg[0], n->Children[0]->Store);
          _slang_free_temp(emitInfo->vt, n->Store);
          inst->Comment = _mesa_strdup("COND expr");
-         return inst; /* XXX or null? */
+         return inst;
       }
    }
    else {
-      /* No-op */
+      /* No-op: the boolean result of the expression is in a regular reg */
       n->Store = n->Children[0]->Store;
-      return NULL;
+      return inst;
    }
 }
 
@@ -1042,10 +1063,15 @@ static struct prog_instruction *
 emit_if(slang_emit_info *emitInfo, slang_ir_node *n)
 {
    struct gl_program *prog = emitInfo->prog;
-   struct prog_instruction *ifInst;
+   struct prog_instruction *ifInst, *inst;
    GLuint ifInstLoc, elseInstLoc = 0;
+   GLuint condWritemask = 0;
 
-   emit(emitInfo, n->Children[0]);  /* the condition */
+   inst = emit(emitInfo, n->Children[0]);  /* the condition */
+   if (emitInfo->EmitCondCodes) {
+      assert(inst);
+      condWritemask = inst->DstReg.WriteMask;
+   }
 
 #if 0
    assert(n->Children[0]->Store->Size == 1); /* a bool! */
@@ -1056,6 +1082,10 @@ emit_if(slang_emit_info *emitInfo, slang_ir_node *n)
       ifInst = new_instruction(emitInfo, OPCODE_IF);
       if (emitInfo->EmitCondCodes) {
          ifInst->DstReg.CondMask = COND_NE;  /* if cond is non-zero */
+         /* only test the cond code (1 of 4) that was updated by the
+          * previous instruction.
+          */
+         ifInst->DstReg.CondSwizzle = writemask_to_swizzle(condWritemask);
       }
       else {
          /* test reg.x */
@@ -1067,10 +1097,7 @@ emit_if(slang_emit_info *emitInfo, slang_ir_node *n)
       ifInst = new_instruction(emitInfo, OPCODE_BRA);
       ifInst->DstReg.CondMask = COND_EQ;  /* BRA if cond is zero */
       ifInst->Comment = _mesa_strdup("if zero");
-   }
-   if (emitInfo->EmitCondCodes) {
-      /* which condition code to use: */
-      ifInst->DstReg.CondSwizzle = n->Children[0]->Store->Swizzle;
+      ifInst->DstReg.CondSwizzle = writemask_to_swizzle(condWritemask);
    }
 
    /* if body */
@@ -1097,7 +1124,7 @@ emit_if(slang_emit_info *emitInfo, slang_ir_node *n)
    else {
       /* no else body */
       ifInst = prog->Instructions + ifInstLoc;
-      ifInst->BranchTarget = prog->NumInstructions + 1;
+      ifInst->BranchTarget = prog->NumInstructions /*+ 1*/;
    }
 
    if (emitInfo->EmitHighLevelInstructions) {
@@ -1735,6 +1762,10 @@ _slang_emit_code(slang_ir_node *n, slang_var_table *vt,
    emitInfo.EmitCondCodes = ctx->Shader.EmitCondCodes;
    emitInfo.EmitComments = ctx->Shader.EmitComments;
    emitInfo.EmitBeginEndSub = 0;  /* XXX for compiler debug only */
+
+   if (!emitInfo.EmitCondCodes) {
+      emitInfo.EmitHighLevelInstructions = GL_TRUE;
+   }      
 
    (void) emit(&emitInfo, n);
 
