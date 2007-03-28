@@ -15,7 +15,7 @@ OpenGL Shading Language</a>.
 </p>
 
 <p>
-Last updated on 26 March 2007.
+Last updated on 28 March 2007.
 </p>
 
 <p>
@@ -27,6 +27,7 @@ Contents
 <li><a href="#hints">Programming Hints</a>
 <li><a href="#standalone">Stand-alone Compiler</a>
 <li><a href="#implementation">Compiler Implementation</a>
+<li><a href="#validation">Compiler Validation</a>
 </ul>
 
 
@@ -121,6 +122,9 @@ These issues will be addressed/resolved in the future.
 <pre>
         float x = inversesqrt(y);
 </pre>
+<li>
+   Use ++i when possible as it's more efficient than i++
+</li>
 </ul>
 
 
@@ -280,6 +284,25 @@ Extra NOP instructions will also be inserted.
 </br>
 
 </ul>
+
+
+<a name="validation">
+<h2>Compiler Validation</h2>
+
+<p>
+A new <a href="http://glean.sf.net" target="_parent">Glean</a> test has
+been create to exercise the GLSL compiler.
+</p>
+<p>
+The <em>glsl1</em> test runs over 130 sub-tests to check that the language
+features and built-in functions work properly.
+This test should be run frequently while working on the compiler to catch
+regressions.
+</p>
+<p>
+The test coverage is reasonably broad and complete but additional tests
+should be added.
+</p>
 
 
 </BODY>
