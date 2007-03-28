@@ -1216,7 +1216,6 @@ emit_loop(slang_emit_info *emitInfo, slang_ir_node *n)
       }
       else {
          assert(ir->Opcode == IR_CONT ||
-                ir->Opcode == IR_CONT_IF_FALSE ||
                 ir->Opcode == IR_CONT_IF_TRUE);
          assert(inst->Opcode == OPCODE_CONT ||
                 inst->Opcode == OPCODE_BRA);
@@ -1276,7 +1275,6 @@ emit_cont_break_if(slang_emit_info *emitInfo, slang_ir_node *n,
    struct prog_instruction *inst;
 
    assert(n->Opcode == IR_CONT_IF_TRUE ||
-          n->Opcode == IR_CONT_IF_FALSE ||
           n->Opcode == IR_BREAK_IF_TRUE ||
           n->Opcode == IR_BREAK_IF_FALSE);
 
@@ -1293,8 +1291,7 @@ emit_cont_break_if(slang_emit_info *emitInfo, slang_ir_node *n,
    if (emitInfo->EmitHighLevelInstructions) {
       if (emitInfo->EmitCondCodes) {
          gl_inst_opcode opcode
-            = (n->Opcode == IR_CONT_IF_TRUE || n->Opcode == IR_CONT_IF_FALSE)
-            ? OPCODE_CONT : OPCODE_BRK;
+            = (n->Opcode == IR_CONT_IF_TRUE) ? OPCODE_CONT : OPCODE_BRK;
          inst = new_instruction(emitInfo, opcode);
          inst->DstReg.CondMask = breakTrue ? COND_NE : COND_EQ;
          return inst;
@@ -1681,7 +1678,6 @@ emit(slang_emit_info *emitInfo, slang_ir_node *n)
    case IR_LOOP:
       return emit_loop(emitInfo, n);
    case IR_BREAK_IF_FALSE:
-   case IR_CONT_IF_FALSE:
       return emit_cont_break_if(emitInfo, n, GL_FALSE);
    case IR_BREAK_IF_TRUE:
    case IR_CONT_IF_TRUE:
