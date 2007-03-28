@@ -1053,12 +1053,37 @@ emit_cond(slang_emit_info *emitInfo, slang_ir_node *n)
 static struct prog_instruction *
 emit_not(slang_emit_info *emitInfo, slang_ir_node *n)
 {
+   static const struct {
+      gl_inst_opcode op, opNot;
+   } operators[] = {
+      { OPCODE_SLT, OPCODE_SGE },
+      { OPCODE_SLE, OPCODE_SGT },
+      { OPCODE_SGT, OPCODE_SLE },
+      { OPCODE_SGE, OPCODE_SLT },
+      { OPCODE_SEQ, OPCODE_SNE },
+      { OPCODE_SNE, OPCODE_SEQ },
+      { 0, 0 }
+   };
    struct prog_instruction *inst;
+   GLuint i;
 
    /* child expr */
-   (void) emit(emitInfo, n->Children[0]);
-   /* XXXX if child instr is SGT convert to SLE, if SEQ, SNE, etc */
+   inst = emit(emitInfo, n->Children[0]);
 
+#if PEEPHOLE_OPTIMIZATIONS
+   if (inst) {
+      /* if the prev instruction was a comparison instruction, invert it */
+      for (i = 0; operators[i].op; i++) {
+         if (inst->Opcode == operators[i].op) {
+            inst->Opcode = operators[i].opNot;
+            n->Store = n->Children[0]->Store;
+            return inst;
+         }
+      }
+   }
+#endif
+
+   /* else, invert using SEQ (v = v == 0) */
    if (!n->Store)
       if (!alloc_temp_storage(emitInfo, n, n->Children[0]->Store->Size))
          return NULL;
@@ -1762,7 +1787,7 @@ _slang_emit_code(slang_ir_node *n, slang_var_table *vt,
    emitInfo.NumSubroutines = 0;
 
    emitInfo.EmitHighLevelInstructions = ctx->Shader.EmitHighLevelInstructions;
-   emitInfo.EmitCondCodes = 0*ctx->Shader.EmitCondCodes;
+   emitInfo.EmitCondCodes = ctx->Shader.EmitCondCodes;
    emitInfo.EmitComments = ctx->Shader.EmitComments;
    emitInfo.EmitBeginEndSub = 0;  /* XXX for compiler debug only */
 
