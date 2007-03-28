@@ -1343,9 +1343,11 @@ emit_cont_break_if_true(slang_emit_info *emitInfo, slang_ir_node *n)
       }
    }
    else {
+      const GLuint condWritemask = inst->DstReg.WriteMask;
       assert(emitInfo->EmitCondCodes);
       inst = new_instruction(emitInfo, OPCODE_BRA);
       inst->DstReg.CondMask = COND_NE;
+      inst->DstReg.CondSwizzle = writemask_to_swizzle(condWritemask);
       return inst;
    }
 }
@@ -1791,7 +1793,7 @@ _slang_emit_code(slang_ir_node *n, slang_var_table *vt,
    emitInfo.Subroutines = NULL;
    emitInfo.NumSubroutines = 0;
 
-   emitInfo.EmitHighLevelInstructions = ctx->Shader.EmitHighLevelInstructions;
+   emitInfo.EmitHighLevelInstructions = 0*ctx->Shader.EmitHighLevelInstructions;
    emitInfo.EmitCondCodes = ctx->Shader.EmitCondCodes;
    emitInfo.EmitComments = ctx->Shader.EmitComments;
    emitInfo.EmitBeginEndSub = 0;  /* XXX for compiler debug only */
@@ -1799,6 +1801,9 @@ _slang_emit_code(slang_ir_node *n, slang_var_table *vt,
    if (!emitInfo.EmitCondCodes) {
       emitInfo.EmitHighLevelInstructions = GL_TRUE;
    }      
+   if (emitInfo.EmitComments) {
+      emitInfo.EmitBeginEndSub = GL_TRUE;
+   }
 
    (void) emit(&emitInfo, n);
 
