@@ -293,6 +293,8 @@ GLboolean radeonMakeCurrent(__DRIcontextPrivate * driContextPriv,
 				    driverPrivate);
 
 		_mesa_update_state(radeon->glCtx);		
+
+		radeonUpdatePageFlipping(radeon);
 	} else {
 		if (RADEON_DEBUG & DEBUG_DRI)
 			fprintf(stderr, "%s ctx is null\n", __FUNCTION__);

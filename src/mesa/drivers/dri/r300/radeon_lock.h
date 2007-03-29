@@ -41,6 +41,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "radeon_context.h"
 
 extern void radeonGetLock(radeonContextPtr radeon, GLuint flags);
+extern void radeonUpdatePageFlipping(radeonContextPtr radeon);
 
 /* Turn DEBUG_LOCKING on to find locking conflicts.
  */

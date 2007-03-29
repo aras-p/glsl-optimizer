@@ -370,7 +370,7 @@ static void r300Clear(GLcontext * ctx, GLbitfield mask)
 		_swrast_Clear(ctx, mask);
 	}
 
-	swapped = r300->radeon.doPageFlip && (r300->radeon.sarea->pfCurrentPage == 1);
+	swapped = r300->radeon.sarea->pfCurrentPage == 1;
 
 	/* Make sure it fits there. */
 	r300EnsureCmdBufSpace(r300, 421*3, __FUNCTION__);
