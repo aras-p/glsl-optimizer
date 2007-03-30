@@ -2140,6 +2140,26 @@ _slang_gen_swizzle(slang_ir_node *child, GLuint swizzle)
 static slang_ir_node *
 _slang_gen_assignment(slang_assemble_ctx * A, slang_operation *oper)
 {
+   if (oper->children[0].type == SLANG_OPER_IDENTIFIER) {
+      /* Check that var is writeable */
+      slang_variable *var
+         = _slang_locate_variable(oper->locals,
+                                  oper->children[0].a_id, GL_TRUE);
+      if (!var) {
+         slang_info_log_error(A->log, "undefined variable '%s'",
+                              (char *) oper->children[0].a_id);
+         return NULL;
+      }
+      if (var->type.qualifier == SLANG_QUAL_CONST ||
+          var->type.qualifier == SLANG_QUAL_ATTRIBUTE ||
+          var->type.qualifier == SLANG_QUAL_UNIFORM) {
+         slang_info_log_error(A->log,
+                              "illegal assignment to read-only variable '%s'",
+                              (char *) oper->children[0].a_id);
+         return NULL;
+      }
+   }
+
    if (oper->children[0].type == SLANG_OPER_IDENTIFIER &&
        oper->children[1].type == SLANG_OPER_CALL) {
       /* Special case of:  x = f(a, b)
@@ -2164,7 +2184,8 @@ _slang_gen_assignment(slang_assemble_ctx * A, slang_operation *oper)
              lhs->Store->File != PROGRAM_TEMPORARY &&
              lhs->Store->File != PROGRAM_VARYING &&
              lhs->Store->File != PROGRAM_UNDEFINED) {
-            slang_info_log_error(A->log, "Assignment to read-only variable");
+            slang_info_log_error(A->log,
+                                 "illegal assignment to read-only l-value");
             return NULL;
          }
       }
