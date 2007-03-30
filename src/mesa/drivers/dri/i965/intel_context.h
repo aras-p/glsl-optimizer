@@ -384,6 +384,7 @@ extern int INTEL_DEBUG;
 #define PCI_CHIP_I965_Q			0x2992
 #define PCI_CHIP_I965_G_1		0x2982
 #define PCI_CHIP_I946_GZ		0x2972
+#define PCI_CHIP_I965_GM                0x2A02
 
 
 /* ================================================================
