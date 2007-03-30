@@ -910,6 +910,7 @@ void mgaGetLock( mgaContextPtr mmesa, GLuint flags )
 
    drmGetLock(mmesa->driFd, mmesa->hHWContext, flags);
 
+   DRI_VALIDATE_DRAWABLE_INFO( mmesa->driScreen, dPriv );
    if (*(dPriv->pStamp) != mmesa->lastStamp) {
       mmesa->lastStamp = *(dPriv->pStamp);
       mmesa->SetupNewInputs |= VERT_BIT_POS;
@@ -920,7 +921,7 @@ void mgaGetLock( mgaContextPtr mmesa, GLuint flags )
 
    mmesa->dirty |= MGA_UPLOAD_CONTEXT | MGA_UPLOAD_CLIPRECTS;
 
-    mmesa->sarea->dirty |= MGA_UPLOAD_CONTEXT;
+   mmesa->sarea->dirty |= MGA_UPLOAD_CONTEXT;
 
    if (sarea->ctxOwner != me) {
       mmesa->dirty |= (MGA_UPLOAD_CONTEXT | MGA_UPLOAD_TEX0 |

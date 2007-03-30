@@ -41,6 +41,7 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #include "scrnintstr.h"
 #include "pixmapstr.h"
+#include "gcstruct.h"
 
 typedef struct _XMesaImageRec XMesaImage;
 

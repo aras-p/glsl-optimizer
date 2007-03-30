@@ -37,7 +37,7 @@
 #include "renderbuffer.h"
 
 
-#ifndef XFree86Server
+#if defined(USE_XSHM) && !defined(XFree86Server)
 static volatile int mesaXErrorFlag = 0;
 
 /**
@@ -51,18 +51,14 @@ mesaHandleXError(XMesaDisplay *dpy, XErrorEvent *event)
    mesaXErrorFlag = 1;
    return 0;
 }
-#endif
-
 
 /**
  * Allocate a shared memory XImage back buffer for the given XMesaBuffer.
  * Return:  GL_TRUE if success, GL_FALSE if error
  */
-#ifndef XFree86Server
 static GLboolean
 alloc_back_shm_ximage(XMesaBuffer b, GLuint width, GLuint height)
 {
-#ifdef USE_XSHM
    /*
     * We have to do a _lot_ of error checking here to be sure we can
     * really use the XSHM extension.  It seems different servers trigger
@@ -152,10 +148,13 @@ alloc_back_shm_ximage(XMesaBuffer b, GLuint width, GLuint height)
    }
 
    return GL_TRUE;
+}
 #else
+static GLboolean
+alloc_back_shm_ximage(XMesaBuffer b, GLuint width, GLuint height)
+{
    /* Can't compile XSHM support */
    return GL_FALSE;
-#endif
 }
 #endif
 
@@ -187,14 +186,12 @@ alloc_back_buffer(XMesaBuffer b, GLuint width, GLuint height)
          return;
 
       /* Allocate new back buffer */
-#ifdef XFree86Server
-      /* Allocate a regular XImage for the back buffer. */
-      b->backxrb->ximage = XMesaCreateImage(b->xm_visual->BitsPerPixel,
-                                            width, height, NULL);
-      {
-#else
       if (b->shm == 0 || !alloc_back_shm_ximage(b, width, height)) {
 	 /* Allocate a regular XImage for the back buffer. */
+#ifdef XFree86Server
+	 b->backxrb->ximage = XMesaCreateImage(b->xm_visual->BitsPerPixel,
+                                               width, height, NULL);
+#else
 	 b->backxrb->ximage = XCreateImage(b->xm_visual->display,
                                       b->xm_visual->visinfo->visual,
                                       GET_VISUAL_DEPTH(b->xm_visual),
