@@ -2143,7 +2143,7 @@ _slang_gen_assignment(slang_assemble_ctx * A, slang_operation *oper)
    if (oper->children[0].type == SLANG_OPER_IDENTIFIER) {
       /* Check that var is writeable */
       slang_variable *var
-         = _slang_locate_variable(oper->locals,
+         = _slang_locate_variable(oper->children[0].locals,
                                   oper->children[0].a_id, GL_TRUE);
       if (!var) {
          slang_info_log_error(A->log, "undefined variable '%s'",
