@@ -1796,14 +1796,11 @@ _slang_emit_code(slang_ir_node *n, slang_var_table *vt,
    emitInfo.EmitHighLevelInstructions = 0*ctx->Shader.EmitHighLevelInstructions;
    emitInfo.EmitCondCodes = ctx->Shader.EmitCondCodes;
    emitInfo.EmitComments = ctx->Shader.EmitComments;
-   emitInfo.EmitBeginEndSub = 0;  /* XXX for compiler debug only */
+   emitInfo.EmitBeginEndSub = GL_TRUE;
 
    if (!emitInfo.EmitCondCodes) {
       emitInfo.EmitHighLevelInstructions = GL_TRUE;
    }      
-   if (emitInfo.EmitComments) {
-      emitInfo.EmitBeginEndSub = GL_TRUE;
-   }
 
    (void) emit(&emitInfo, n);
 
