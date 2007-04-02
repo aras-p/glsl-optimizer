@@ -240,6 +240,7 @@ _glapi_check_multithread(void)
       else if (knownID != _glthread_GetID()) {
          ThreadSafe = GL_TRUE;
          _glapi_set_dispatch(NULL);
+         _glapi_set_context(NULL);
       }
    }
    else if (!_glapi_get_dispatch()) {
