@@ -165,11 +165,7 @@ _mesa_remove_attachment(GLcontext *ctx, struct gl_renderbuffer_attachment *att)
    if (att->Type == GL_TEXTURE || att->Type == GL_RENDERBUFFER_EXT) {
       ASSERT(att->Renderbuffer);
       ASSERT(!att->Texture);
-      att->Renderbuffer->RefCount--;
-      if (att->Renderbuffer->RefCount == 0) {
-         att->Renderbuffer->Delete(att->Renderbuffer);
-      }
-      att->Renderbuffer = NULL;
+      _mesa_reference_renderbuffer(&att->Renderbuffer, NULL);
    }
    att->Type = GL_NONE;
    att->Complete = GL_TRUE;
@@ -228,10 +224,9 @@ _mesa_set_renderbuffer_attachment(GLcontext *ctx,
    /* XXX check if re-doing same attachment, exit early */
    _mesa_remove_attachment(ctx, att);
    att->Type = GL_RENDERBUFFER_EXT;
-   att->Renderbuffer = rb;
    att->Texture = NULL; /* just to be safe */
    att->Complete = GL_FALSE;
-   rb->RefCount++;
+   _mesa_reference_renderbuffer(&att->Renderbuffer, rb);
 }
 
 
@@ -246,12 +241,9 @@ _mesa_framebuffer_renderbuffer(GLcontext *ctx, struct gl_framebuffer *fb,
    struct gl_renderbuffer_attachment *att;
 
    _glthread_LOCK_MUTEX(fb->Mutex);
-   if (rb)
-      _glthread_LOCK_MUTEX(rb->Mutex);
 
    att = _mesa_get_attachment(ctx, fb, attachment);
    ASSERT(att);
-
    if (rb) {
       _mesa_set_renderbuffer_attachment(ctx, att, rb);
    }
@@ -259,8 +251,6 @@ _mesa_framebuffer_renderbuffer(GLcontext *ctx, struct gl_framebuffer *fb,
       _mesa_remove_attachment(ctx, att);
    }
 
-   if (rb)
-      _glthread_UNLOCK_MUTEX(rb->Mutex);
    _glthread_UNLOCK_MUTEX(fb->Mutex);
 }
 
