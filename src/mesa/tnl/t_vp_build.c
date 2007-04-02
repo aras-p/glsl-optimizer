@@ -1506,7 +1506,8 @@ void _tnl_UpdateFixedFunctionProgram( GLcontext *ctx )
    GLuint hash;
    const struct gl_vertex_program *prev = ctx->VertexProgram._Current;
 
-   if (!ctx->VertexProgram._Current) {
+   if (!ctx->VertexProgram._Current ||
+       ctx->VertexProgram._Current == ctx->VertexProgram._TnlProgram) {
       /* Grab all the relevent state and put it in a single structure:
        */
       key = make_state_key(ctx);
