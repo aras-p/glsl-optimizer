@@ -2152,7 +2152,7 @@ _mesa_reference_renderbuffer(struct gl_renderbuffer **ptr,
       _glthread_LOCK_MUTEX(oldRb->Mutex);
       ASSERT(oldRb->RefCount > 0);
       oldRb->RefCount--;
-      /*printf("RB DECR %p to %d\n", (void*) oldRb, oldRb->RefCount);*/
+      /*printf("RB DECR %p (%d) to %d\n", (void*) oldRb, oldRb->Name, oldRb->RefCount);*/
       deleteFlag = (oldRb->RefCount == 0);
       _glthread_UNLOCK_MUTEX(oldRb->Mutex);
 
@@ -2167,7 +2167,7 @@ _mesa_reference_renderbuffer(struct gl_renderbuffer **ptr,
       /* reference new renderbuffer */
       _glthread_LOCK_MUTEX(rb->Mutex);
       rb->RefCount++;
-      /*printf("RB REF  %p to %d\n", (void*)rb, rb->RefCount);*/
+      /*printf("RB INCR %p (%d) to %d\n", (void*) rb, rb->Name, rb->RefCount);*/
       _glthread_UNLOCK_MUTEX(rb->Mutex);
       *ptr = rb;
    }
