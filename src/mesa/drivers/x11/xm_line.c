@@ -147,7 +147,7 @@ void xmesa_choose_point( GLcontext *ctx )
 #define SETUP_CODE						\
    GET_XRB(xrb);						\
    const GLubyte *color = vert1->color;				\
-   GLuint pixel = PACK_8B8G8R( color[0], color[1], color[2] );
+   GLuint pixel = PACK_8A8B8G8R(color[0], color[1], color[2], color[3]);
 #define PIXEL_TYPE GLuint
 #define BYTES_PER_ROW (xrb->ximage->bytes_per_line)
 #define PIXEL_ADDRESS(X,Y) PIXEL_ADDR4(xrb, X, Y)
@@ -164,7 +164,7 @@ void xmesa_choose_point( GLcontext *ctx )
 #define SETUP_CODE						\
    GET_XRB(xrb);						\
    const GLubyte *color = vert1->color;				\
-   GLuint pixel = PACK_8R8G8B( color[0], color[1], color[2] );
+   GLuint pixel = PACK_8A8R8G8B(color[0], color[1], color[2], color[3]);
 #define PIXEL_TYPE GLuint
 #define BYTES_PER_ROW (xrb->ximage->bytes_per_line)
 #define PIXEL_ADDRESS(X,Y) PIXEL_ADDR4(xrb, X, Y)
@@ -331,7 +331,7 @@ void xmesa_choose_point( GLcontext *ctx )
 #define SETUP_CODE						\
    GET_XRB(xrb);						\
    const GLubyte *color = vert1->color;				\
-   GLuint pixel = PACK_8B8G8R( color[0], color[1], color[2] );
+   GLuint pixel = PACK_8A8B8G8R(color[0], color[1], color[2], color[3]);
 #define INTERP_Z 1
 #define DEPTH_TYPE DEFAULT_SOFTWARE_DEPTH_TYPE
 #define PIXEL_TYPE GLuint
@@ -354,7 +354,7 @@ void xmesa_choose_point( GLcontext *ctx )
 #define SETUP_CODE						\
    GET_XRB(xrb);						\
    const GLubyte *color = vert1->color;				\
-   GLuint pixel = PACK_8R8G8B( color[0], color[1], color[2] );
+   GLuint pixel = PACK_8A8R8G8B(color[0], color[1], color[2], color[3]);
 #define INTERP_Z 1
 #define DEPTH_TYPE DEFAULT_SOFTWARE_DEPTH_TYPE
 #define PIXEL_TYPE GLuint
@@ -581,13 +581,11 @@ static swrast_line_func
 get_line_func(GLcontext *ctx)
 {
 #if CHAN_BITS == 8
-   XMesaContext xmesa = XMESA_CONTEXT(ctx);
    SWcontext *swrast = SWRAST_CONTEXT(ctx);
-   int depth = GET_VISUAL_DEPTH(xmesa->xm_visual);
-   struct xmesa_renderbuffer *xrb;
-
-   if (CHAN_BITS != 8)
-      return NULL;
+   XMesaContext xmesa = XMESA_CONTEXT(ctx);
+   XMesaBuffer xmbuf = XMESA_BUFFER(ctx->DrawBuffer);
+   const int depth = GET_VISUAL_DEPTH(xmesa->xm_visual);
+   const struct xmesa_renderbuffer *xrb;
 
    if ((ctx->DrawBuffer->_ColorDrawBufferMask[0]
         & (BUFFER_BIT_FRONT_LEFT | BUFFER_BIT_BACK_LEFT)) == 0)
@@ -598,6 +596,7 @@ get_line_func(GLcontext *ctx)
    if (ctx->Light.ShadeModel != GL_FLAT)  return (swrast_line_func) NULL;
    if (ctx->Line.StippleFlag)             return (swrast_line_func) NULL;
    if (swrast->_RasterMask & MULTI_DRAW_BIT) return (swrast_line_func) NULL;
+   if (xmbuf->swAlpha)                    return (swrast_line_func) NULL;
 
    xrb = xmesa_renderbuffer(ctx->DrawBuffer->_ColorDrawBuffers[0][0]->Wrapped);
 

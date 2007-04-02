@@ -96,6 +96,7 @@
 #define INTERP_Z 1
 #define DEPTH_TYPE DEFAULT_SOFTWARE_DEPTH_TYPE
 #define INTERP_RGB 1
+#define INTERP_ALPHA 1
 #define PIXEL_ADDRESS(X,Y) PIXEL_ADDR4(xrb, X, Y)
 #define PIXEL_TYPE GLuint
 #define BYTES_PER_ROW (xrb->ximage->bytes_per_line)
@@ -106,13 +107,15 @@
    for (i = 0; i < span.end; i++) {				\
       const DEPTH_TYPE z = FixedToDepth(span.z);		\
       if (z < zRow[i]) {					\
-         pRow[i] = PACK_8B8G8R(FixedToInt(span.red),		\
-            FixedToInt(span.green), FixedToInt(span.blue));	\
+         pRow[i] = PACK_8A8B8G8R(FixedToInt(span.red),		\
+            FixedToInt(span.green), FixedToInt(span.blue),	\
+            FixedToInt(span.alpha));				\
          zRow[i] = z;						\
       }								\
       span.red += span.redStep;					\
       span.green += span.greenStep;				\
       span.blue += span.blueStep;				\
+      span.alpha += span.alphaStep;				\
       span.z += span.zStep;					\
    }
 
@@ -127,6 +130,7 @@
 #define INTERP_Z 1
 #define DEPTH_TYPE DEFAULT_SOFTWARE_DEPTH_TYPE
 #define INTERP_RGB 1
+#define INTERP_ALPHA 1
 #define PIXEL_ADDRESS(X,Y) PIXEL_ADDR4(xrb, X, Y)
 #define PIXEL_TYPE GLuint
 #define BYTES_PER_ROW (xrb->ximage->bytes_per_line)
@@ -138,13 +142,15 @@
    for (i = 0; i < span.end; i++) {				\
       const DEPTH_TYPE z = FixedToDepth(span.z);		\
       if (z < zRow[i]) {					\
-         pRow[i] = PACK_8R8G8B(FixedToInt(span.red),		\
-            FixedToInt(span.green), FixedToInt(span.blue));	\
+         pRow[i] = PACK_8A8R8G8B(FixedToInt(span.red),		\
+            FixedToInt(span.green), FixedToInt(span.blue),	\
+            FixedToInt(span.alpha));				\
          zRow[i] = z;						\
       }								\
       span.red += span.redStep;					\
       span.green += span.greenStep;				\
       span.blue += span.blueStep;				\
+      span.alpha += span.alphaStep;				\
       span.z += span.zStep;					\
    }
 
@@ -473,7 +479,8 @@
 #define BYTES_PER_ROW (xrb->ximage->bytes_per_line)
 #define SETUP_CODE					\
    GET_XRB(xrb);					\
-   GLuint p = PACK_8B8G8R( v2->color[0], v2->color[1], v2->color[2] );
+   GLuint p = PACK_8A8B8G8R( v2->color[0], v2->color[1],\
+                             v2->color[2], v2->color[3]);
 #define RENDER_SPAN( span )				\
    GLuint i;						\
    for (i = 0; i < span.end; i++) {			\
@@ -499,7 +506,8 @@
 #define BYTES_PER_ROW (xrb->ximage->bytes_per_line)
 #define SETUP_CODE					\
    GET_XRB(xrb);					\
-   GLuint p = PACK_8R8G8B( v2->color[0], v2->color[1], v2->color[2] );
+   GLuint p = PACK_8A8R8G8B(v2->color[0], v2->color[1],	\
+                            v2->color[2], v2->color[3]);
 #define RENDER_SPAN( span )				\
    GLuint i;						\
    for (i = 0; i < span.end; i++) {			\
@@ -798,6 +806,7 @@
  */
 #define NAME smooth_8A8B8G8R_triangle
 #define INTERP_RGB 1
+#define INTERP_ALPHA 1
 #define PIXEL_ADDRESS(X,Y) PIXEL_ADDR4(xrb, X, Y)
 #define PIXEL_TYPE GLuint
 #define BYTES_PER_ROW (xrb->ximage->bytes_per_line)
@@ -806,11 +815,13 @@
 #define RENDER_SPAN( span )					\
    GLuint i;							\
    for (i = 0; i < span.end; i++) {				\
-      pRow[i] = PACK_8B8G8R(FixedToInt(span.red),		\
-         FixedToInt(span.green), FixedToInt(span.blue) );	\
+      pRow[i] = PACK_8A8B8G8R(FixedToInt(span.red),		\
+         FixedToInt(span.green), FixedToInt(span.blue),		\
+         FixedToInt(span.alpha));				\
       span.red += span.redStep;					\
       span.green += span.greenStep;				\
       span.blue += span.blueStep;				\
+      span.alpha += span.alphaStep;				\
    }
 #include "swrast/s_tritemp.h"
 
@@ -821,6 +832,7 @@
  */
 #define NAME smooth_8A8R8G8B_triangle
 #define INTERP_RGB 1
+#define INTERP_ALPHA 1
 #define PIXEL_ADDRESS(X,Y) PIXEL_ADDR4(xrb, X, Y)
 #define PIXEL_TYPE GLuint
 #define BYTES_PER_ROW (xrb->ximage->bytes_per_line)
@@ -829,11 +841,13 @@
 #define RENDER_SPAN( span )					\
    GLuint i;							\
    for (i = 0; i < span.end; i++) {				\
-      pRow[i] = PACK_8R8G8B(FixedToInt(span.red),		\
-         FixedToInt(span.green), FixedToInt(span.blue) );	\
+      pRow[i] = PACK_8A8R8G8B(FixedToInt(span.red),		\
+         FixedToInt(span.green), FixedToInt(span.blue),		\
+         FixedToInt(span.alpha));				\
       span.red += span.redStep;					\
       span.green += span.greenStep;				\
       span.blue += span.blueStep;				\
+      span.alpha += span.alphaStep;				\
    }
 #include "swrast/s_tritemp.h"
 
@@ -1419,6 +1433,7 @@ static const char *triFuncName = NULL;
 #define USE(triFunc)                   \
 do {                                   \
     triFuncName = #triFunc;            \
+    printf("%s\n", triFuncName);\
     return triFunc;                    \
 } while (0)
 
@@ -1436,16 +1451,17 @@ do {                                   \
 static swrast_tri_func
 get_triangle_func(GLcontext *ctx)
 {
+#if CHAN_BITS == 8
    SWcontext *swrast = SWRAST_CONTEXT(ctx);
    XMesaContext xmesa = XMESA_CONTEXT(ctx);
-   int depth = GET_VISUAL_DEPTH(xmesa->xm_visual);
-   struct xmesa_renderbuffer *xrb;
+   XMesaBuffer xmbuf = XMESA_BUFFER(ctx->DrawBuffer);
+   const int depth = GET_VISUAL_DEPTH(xmesa->xm_visual);
+   const struct xmesa_renderbuffer *xrb;
 
 #ifdef DEBUG
    triFuncName = NULL;
 #endif
 
-#if CHAN_BITS == 8
    /* trivial fallback tests */
    if ((ctx->DrawBuffer->_ColorDrawBufferMask[0]
         & (BUFFER_BIT_FRONT_LEFT | BUFFER_BIT_BACK_LEFT)) == 0)
@@ -1460,6 +1476,8 @@ get_triangle_func(GLcontext *ctx)
       return (swrast_tri_func) NULL;
    if (ctx->Polygon.CullFlag && 
        ctx->Polygon.CullFaceMode == GL_FRONT_AND_BACK)
+      return (swrast_tri_func) NULL;
+   if (xmbuf->swAlpha)
       return (swrast_tri_func) NULL;
 
    xrb = xmesa_renderbuffer(ctx->DrawBuffer->_ColorDrawBuffers[0][0]->Wrapped);
