@@ -970,42 +970,33 @@ setup_truecolor(XMesaVisual v, XMesaBuffer buffer, XMesaColormap cmap)
        && GET_BLUEMASK(v) ==0xff0000
        && CHECK_BYTE_ORDER(v)
        && v->BitsPerPixel==32
-       && sizeof(GLuint)==4
        && v->RedGamma==1.0 && v->GreenGamma==1.0 && v->BlueGamma==1.0) {
       /* common 32 bpp config used on SGI, Sun */
-      v->undithered_pf = v->dithered_pf = PF_8A8B8G8R;
+      v->undithered_pf = v->dithered_pf = PF_8A8B8G8R; /* ABGR */
    }
-   else if (GET_REDMASK(v)  ==0xff0000
-       &&   GET_GREENMASK(v)==0x00ff00
-       &&   GET_BLUEMASK(v) ==0x0000ff
-       && CHECK_BYTE_ORDER(v)
-       && v->BitsPerPixel==32
-       && sizeof(GLuint)==4
-       && v->RedGamma==1.0 && v->GreenGamma==1.0 && v->BlueGamma==1.0) {
-      /* common 32 bpp config used on Linux, HP, IBM */
-      if (GET_VISUAL_DEPTH(v)==32)
-	  v->undithered_pf = v->dithered_pf = PF_8A8R8G8B;
-      else
-	  v->undithered_pf = v->dithered_pf = PF_8R8G8B;
-   }
-   else if (GET_REDMASK(v)  ==0xff0000
-       &&   GET_GREENMASK(v)==0x00ff00
-       &&   GET_BLUEMASK(v) ==0x0000ff
-       && CHECK_BYTE_ORDER(v)
-       && v->BitsPerPixel==24
-       && sizeof(GLuint)==4
-       && v->RedGamma==1.0 && v->GreenGamma==1.0 && v->BlueGamma==1.0) {
-      /* common packed 24 bpp config used on Linux */
-      v->undithered_pf = v->dithered_pf = PF_8R8G8B24;
+   else if (GET_REDMASK(v)  == 0xff0000
+         && GET_GREENMASK(v)== 0x00ff00
+         && GET_BLUEMASK(v) == 0x0000ff
+         && CHECK_BYTE_ORDER(v)
+         && v->RedGamma == 1.0 && v->GreenGamma == 1.0 && v->BlueGamma == 1.0){
+      if (v->BitsPerPixel==32) {
+         /* if 32 bpp, and visual indicates 8 bpp alpha channel */
+         if (GET_VISUAL_DEPTH(v) == 32 && v->mesa_visual.alphaBits == 8)
+            v->undithered_pf = v->dithered_pf = PF_8A8R8G8B; /* ARGB */
+         else
+            v->undithered_pf = v->dithered_pf = PF_8R8G8B; /* xRGB */
+      }
+      else if (v->BitsPerPixel == 24) {
+         v->undithered_pf = v->dithered_pf = PF_8R8G8B24; /* RGB */
+      }
    }
    else if (GET_REDMASK(v)  ==0xf800
        &&   GET_GREENMASK(v)==0x07e0
        &&   GET_BLUEMASK(v) ==0x001f
        && CHECK_BYTE_ORDER(v)
        && v->BitsPerPixel==16
-       && sizeof(GLushort)==2
        && v->RedGamma==1.0 && v->GreenGamma==1.0 && v->BlueGamma==1.0) {
-      /* 5-6-5 color weight on common PC VGA boards */
+      /* 5-6-5 RGB */
       v->undithered_pf = PF_5R6G5B;
       v->dithered_pf = PF_Dither_5R6G5B;
    }
@@ -1013,6 +1004,7 @@ setup_truecolor(XMesaVisual v, XMesaBuffer buffer, XMesaColormap cmap)
        &&   GET_GREENMASK(v)==0x1c
        &&   GET_BLUEMASK(v) ==0x03
        && CHECK_FOR_HPCR(v)) {
+      /* 8-bit HP color recovery */
       setup_8bit_hpcr( v );
    }
 }
@@ -1414,6 +1406,9 @@ XMesaVisual XMesaCreateVisual( XMesaDisplay *display,
 
    v->mesa_visual.visualRating = visualCaveat;
 
+   if (alpha_flag)
+      v->mesa_visual.alphaBits = 8;
+
    (void) initialize_visual_and_buffer( 0, v, NULL, rgb_flag, 0, 0 );
 
    {
@@ -1422,7 +1417,6 @@ XMesaVisual XMesaCreateVisual( XMesaDisplay *display,
          red_bits   = _mesa_bitcount(GET_REDMASK(v));
          green_bits = _mesa_bitcount(GET_GREENMASK(v));
          blue_bits  = _mesa_bitcount(GET_BLUEMASK(v));
-         alpha_bits = 0;
       }
       else {
          /* this is an approximation */
@@ -1436,10 +1430,8 @@ XMesaVisual XMesaCreateVisual( XMesaDisplay *display,
          alpha_bits = 0;
          assert( red_bits + green_bits + blue_bits == GET_VISUAL_DEPTH(v) );
       }
+      alpha_bits = v->mesa_visual.alphaBits;
    }
-
-   if (alpha_flag && alpha_bits == 0)
-      alpha_bits = 8;
 
    _mesa_initialize_visual( &v->mesa_visual,
                             rgb_flag, db_flag, stereo_flag,
