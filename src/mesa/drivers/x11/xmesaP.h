@@ -67,17 +67,17 @@ enum pixel_format {
    PF_Index,		/**< Color Index mode */
    PF_Truecolor,	/**< TrueColor or DirectColor, any depth */
    PF_Dither_True,	/**< TrueColor with dithering */
-   PF_8A8B8G8R,		/**< 32-bit TrueColor:  8-A, 8-B, 8-G, 8-R */
+   PF_8A8R8G8B,		/**< 32-bit TrueColor:  8-A, 8-R, 8-G, 8-B bits */
+   PF_8A8B8G8R,		/**< 32-bit TrueColor:  8-A, 8-B, 8-G, 8-R bits */
    PF_8R8G8B,		/**< 32-bit TrueColor:  8-R, 8-G, 8-B bits */
+   PF_8R8G8B24,		/**< 24-bit TrueColor:  8-R, 8-G, 8-B bits */
    PF_5R6G5B,		/**< 16-bit TrueColor:  5-R, 6-G, 5-B bits */
    PF_Dither,		/**< Color-mapped RGB with dither */
    PF_Lookup,		/**< Color-mapped RGB without dither */
    PF_HPCR,		/**< HP Color Recovery (ad@lms.be 30/08/95) */
    PF_1Bit,		/**< monochrome dithering of RGB */
    PF_Grayscale,	/**< Grayscale or StaticGray */
-   PF_8R8G8B24,		/**< 24-bit TrueColor: 8-R, 8-G, 8-B bits */
-   PF_Dither_5R6G5B,	/**< 16-bit dithered TrueColor: 5-R, 6-G, 5-B */
-   PF_8A8R8G8B		/**< 32-bit TrueColor:  8-A, 8-R, 8-G, 8-B */
+   PF_Dither_5R6G5B	/**< 16-bit dithered TrueColor: 5-R, 6-G, 5-B */
 };
 
 
