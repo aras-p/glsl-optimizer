@@ -30,7 +30,6 @@
 #include "main/state.h"
 #include "main/api_validate.h"
 #include "main/api_noop.h"
-#include "glapi/dispatch.h"
 
 #include "vbo_context.h"
 

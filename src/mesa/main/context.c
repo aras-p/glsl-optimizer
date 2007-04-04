@@ -121,7 +121,6 @@
 #include "version.h"
 #include "vtxfmt.h"
 #include "glapi/glthread.h"
-#include "glapi/glapioffsets.h"
 #if FEATURE_NV_vertex_program || FEATURE_NV_fragment_program
 #include "shader/program.h"
 #endif
