@@ -1433,7 +1433,6 @@ static const char *triFuncName = NULL;
 #define USE(triFunc)                   \
 do {                                   \
     triFuncName = #triFunc;            \
-    printf("%s\n", triFuncName);\
     return triFunc;                    \
 } while (0)
 
