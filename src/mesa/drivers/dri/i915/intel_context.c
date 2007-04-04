@@ -302,6 +302,11 @@ GLboolean intelInitContext( intelContextPtr intel,
    ctx->Const.MaxPointSizeAA = 3.0;
    ctx->Const.PointSizeGranularity = 1.0;
 
+   /* reinitialize the context point state.
+    * It depend on constants in __GLcontextRec::Const
+    */
+   _mesa_init_point(ctx);
+
    /* Initialize the software rasterizer and helper modules. */
    _swrast_CreateContext( ctx );
    _vbo_CreateContext( ctx );

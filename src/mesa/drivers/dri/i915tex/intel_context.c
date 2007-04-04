@@ -390,6 +390,11 @@ intelInitContext(struct intel_context *intel,
    ctx->Const.MaxPointSizeAA = 3.0;
    ctx->Const.PointSizeGranularity = 1.0;
 
+   /* reinitialize the context point state.
+    * It depend on constants in __GLcontextRec::Const
+    */
+   _mesa_init_point(ctx);
+
    ctx->Const.MaxColorAttachments = 4;  /* XXX FBO: review this */
 
    /* Initialize the software rasterizer and helper modules. */

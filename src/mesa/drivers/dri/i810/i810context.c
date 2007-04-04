@@ -278,6 +278,11 @@ i810CreateContext( const __GLcontextModes *mesaVis,
    ctx->Const.MaxPointSizeAA = 3.0;
    ctx->Const.PointSizeGranularity = 1.0;
 
+   /* reinitialize the context point state.
+    * It depend on constants in __GLcontextRec::Const
+    */
+   _mesa_init_point(ctx);
+
    ctx->Driver.GetBufferSize = i810BufferSize;
    ctx->Driver.GetString = i810GetString;
 
