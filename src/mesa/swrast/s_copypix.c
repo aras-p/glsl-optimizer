@@ -1,8 +1,8 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.5.2
+ * Version:  6.5.3
  *
- * Copyright (C) 1999-2006  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2007  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -218,8 +218,16 @@ copy_rgba_pixels(GLcontext *ctx, GLint srcx, GLint srcy,
                        IMAGE_POST_CONVOLUTION_SCALE_BIAS);
    }
 
+   if (ctx->DrawBuffer == ctx->ReadBuffer) {
+      overlapping = regions_overlap(srcx, srcy, destx, desty, width, height,
+                                    ctx->Pixel.ZoomX, ctx->Pixel.ZoomY);
+   }
+   else {
+      overlapping = GL_FALSE;
+   }
+
    /* Determine if copy should be done bottom-to-top or top-to-bottom */
-   if (srcy < desty) {
+   if (!overlapping && srcy < desty) {
       /* top-down  max-to-min */
       sy = srcy + height - 1;
       dy = desty + height - 1;
@@ -230,14 +238,6 @@ copy_rgba_pixels(GLcontext *ctx, GLint srcx, GLint srcy,
       sy = srcy;
       dy = desty;
       stepy = 1;
-   }
-
-   if (ctx->DrawBuffer == ctx->ReadBuffer) {
-      overlapping = regions_overlap(srcx, srcy, destx, desty, width, height,
-                                    ctx->Pixel.ZoomX, ctx->Pixel.ZoomY);
-   }
-   else {
-      overlapping = GL_FALSE;
    }
 
    INIT_SPAN(span, GL_BITMAP, 0, 0, SPAN_RGBA);
@@ -330,8 +330,16 @@ copy_ci_pixels( GLcontext *ctx, GLint srcx, GLint srcy,
 
    INIT_SPAN(span, GL_BITMAP, 0, 0, SPAN_INDEX);
 
+   if (ctx->DrawBuffer == ctx->ReadBuffer) {
+      overlapping = regions_overlap(srcx, srcy, destx, desty, width, height,
+                                    ctx->Pixel.ZoomX, ctx->Pixel.ZoomY);
+   }
+   else {
+      overlapping = GL_FALSE;
+   }
+
    /* Determine if copy should be bottom-to-top or top-to-bottom */
-   if (srcy<desty) {
+   if (!overlapping && srcy < desty) {
       /* top-down  max-to-min */
       sy = srcy + height - 1;
       dy = desty + height - 1;
@@ -342,14 +350,6 @@ copy_ci_pixels( GLcontext *ctx, GLint srcx, GLint srcy,
       sy = srcy;
       dy = desty;
       stepy = 1;
-   }
-
-   if (ctx->DrawBuffer == ctx->ReadBuffer) {
-      overlapping = regions_overlap(srcx, srcy, destx, desty, width, height,
-                                    ctx->Pixel.ZoomX, ctx->Pixel.ZoomY);
-   }
-   else {
-      overlapping = GL_FALSE;
    }
 
    if (ctx->Depth.Test)
@@ -469,8 +469,16 @@ copy_depth_pixels( GLcontext *ctx, GLint srcx, GLint srcy,
 
    INIT_SPAN(span, GL_BITMAP, 0, 0, SPAN_Z);
 
+   if (ctx->DrawBuffer == ctx->ReadBuffer) {
+      overlapping = regions_overlap(srcx, srcy, destx, desty, width, height,
+                                    ctx->Pixel.ZoomX, ctx->Pixel.ZoomY);
+   }
+   else {
+      overlapping = GL_FALSE;
+   }
+
    /* Determine if copy should be bottom-to-top or top-to-bottom */
-   if (srcy<desty) {
+   if (!overlapping && srcy < desty) {
       /* top-down  max-to-min */
       sy = srcy + height - 1;
       dy = desty + height - 1;
@@ -481,14 +489,6 @@ copy_depth_pixels( GLcontext *ctx, GLint srcx, GLint srcy,
       sy = srcy;
       dy = desty;
       stepy = 1;
-   }
-
-   if (ctx->DrawBuffer == ctx->ReadBuffer) {
-      overlapping = regions_overlap(srcx, srcy, destx, desty, width, height,
-                                    ctx->Pixel.ZoomX, ctx->Pixel.ZoomY);
-   }
-   else {
-      overlapping = GL_FALSE;
    }
 
    _swrast_span_default_color(ctx, &span);
@@ -573,8 +573,16 @@ copy_stencil_pixels( GLcontext *ctx, GLint srcx, GLint srcy,
       return;
    }
 
+   if (ctx->DrawBuffer == ctx->ReadBuffer) {
+      overlapping = regions_overlap(srcx, srcy, destx, desty, width, height,
+                                    ctx->Pixel.ZoomX, ctx->Pixel.ZoomY);
+   }
+   else {
+      overlapping = GL_FALSE;
+   }
+
    /* Determine if copy should be bottom-to-top or top-to-bottom */
-   if (srcy < desty) {
+   if (!overlapping && srcy < desty) {
       /* top-down  max-to-min */
       sy = srcy + height - 1;
       dy = desty + height - 1;
@@ -585,14 +593,6 @@ copy_stencil_pixels( GLcontext *ctx, GLint srcx, GLint srcy,
       sy = srcy;
       dy = desty;
       stepy = 1;
-   }
-
-   if (ctx->DrawBuffer == ctx->ReadBuffer) {
-      overlapping = regions_overlap(srcx, srcy, destx, desty, width, height,
-                                    ctx->Pixel.ZoomX, ctx->Pixel.ZoomY);
-   }
-   else {
-      overlapping = GL_FALSE;
    }
 
    if (overlapping) {
@@ -674,8 +674,16 @@ copy_depth_stencil_pixels(GLcontext *ctx,
    ASSERT(depthReadRb);
    ASSERT(stencilReadRb);
 
+   if (ctx->DrawBuffer == ctx->ReadBuffer) {
+      overlapping = regions_overlap(srcX, srcY, destX, destY, width, height,
+                                    ctx->Pixel.ZoomX, ctx->Pixel.ZoomY);
+   }
+   else {
+      overlapping = GL_FALSE;
+   }
+
    /* Determine if copy should be bottom-to-top or top-to-bottom */
-   if (srcY < destY) {
+   if (!overlapping && srcY < destY) {
       /* top-down  max-to-min */
       sy = srcY + height - 1;
       dy = destY + height - 1;
@@ -686,14 +694,6 @@ copy_depth_stencil_pixels(GLcontext *ctx,
       sy = srcY;
       dy = destY;
       stepy = 1;
-   }
-
-   if (ctx->DrawBuffer == ctx->ReadBuffer) {
-      overlapping = regions_overlap(srcX, srcY, destX, destY, width, height,
-                                    ctx->Pixel.ZoomX, ctx->Pixel.ZoomY);
-   }
-   else {
-      overlapping = GL_FALSE;
    }
 
    if (overlapping) {
