@@ -196,6 +196,7 @@ static void NAME(GLcontext *ctx, const SWvertex *v0,
    (void) swrast;
 
    INIT_SPAN(span, GL_POLYGON, 0, 0, 0);
+   span.y = 0; /* silence warnings */
 
 #ifdef INTERP_Z
    (void) fixedToDepthShift;
