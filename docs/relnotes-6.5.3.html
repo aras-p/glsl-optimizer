@@ -40,6 +40,9 @@ TBD
 <li>With 32-bit Z buffer, the fragment Z of lines and points was sometimes wrong.
 <li>GL_POST_CONVOLUTION_ALPHA_BIAS/SCALE was broken.
 <li>1D convolution state could effect 2D image transfers
+<li>Overlapping glCopyPixels with negative Y zoom didn't work (bug 10521)
+<li>Fixed a number of framebuffer/renderbuffer reference counting bugs
+<li>Fixed a few bugs in software-emulated alpha planes
 </ul>
 
 
@@ -49,11 +52,9 @@ TBD
 <li>Massive changes to the Shading Language compiler.
 <li>The _MaintainTnlProgram, _MaintainTexEnvProgram, _TexEnvProgram and
 _TnlProgram fields have been moved.
-<li>The ctx->FragmentProgram._Active field has been removed.
 <li>The ctx->Vertex/FragmentProgram._Current fields point to the program
 in effect, whether it comes from a shader, user-program or generated
 fixed-function program.
-<li>The _UseTexEnvProgram field has been removed.
 </ul>
 
 
