@@ -348,7 +348,8 @@ _mesa_sqrtd(double x)
  */
 static short sqrttab[0x100];    /* declare table of square roots */
 
-static void init_sqrt_table(void)
+void
+_mesa_init_sqrt_table(void)
 {
 #if defined(USE_IEEE) && !defined(DEBUG)
    unsigned short i;
@@ -1088,10 +1089,6 @@ _mesa_debug( const GLcontext *ctx, const char *fmtString, ... )
 /*@}*/
 
 
-/**********************************************************************/
-/** \name Exit */
-/*@{*/
-
 /**
  * Wrapper for exit().
  */
@@ -1099,157 +1096,4 @@ void
 _mesa_exit( int status )
 {
    exit(status);
-}
-
-/*@}*/
-
-
-/**********************************************************************/
-/** \name Default Imports Wrapper */
-/*@{*/
-
-/** Wrapper around _mesa_malloc() */
-static void *
-default_malloc(__GLcontext *gc, size_t size)
-{
-   (void) gc;
-   return _mesa_malloc(size);
-}
-
-/** Wrapper around _mesa_malloc() */
-static void *
-default_calloc(__GLcontext *gc, size_t numElem, size_t elemSize)
-{
-   (void) gc;
-   return _mesa_calloc(numElem * elemSize);
-}
-
-/** Wrapper around realloc() */
-static void *
-default_realloc(__GLcontext *gc, void *oldAddr, size_t newSize)
-{
-   (void) gc;
-   return realloc(oldAddr, newSize);
-}
-
-/** Wrapper around _mesa_free() */
-static void
-default_free(__GLcontext *gc, void *addr)
-{
-   (void) gc;
-   _mesa_free(addr);
-}
-
-/** Wrapper around _mesa_getenv() */
-static char * CAPI
-default_getenv( __GLcontext *gc, const char *var )
-{
-   (void) gc;
-   return _mesa_getenv(var);
-}
-
-/** Wrapper around _mesa_warning() */
-static void
-default_warning(__GLcontext *gc, char *str)
-{
-   _mesa_warning(gc, str);
-}
-
-/** Wrapper around _mesa_problem() */
-static void
-default_fatal(__GLcontext *gc, char *str)
-{
-   _mesa_problem(gc, str);
-   abort();
-}
-
-/** Wrapper around atoi() */
-static int CAPI
-default_atoi(__GLcontext *gc, const char *str)
-{
-   (void) gc;
-   return atoi(str);
-}
-
-/** Wrapper around vsprintf() */
-static int CAPI
-default_sprintf(__GLcontext *gc, char *str, const char *fmt, ...)
-{
-   int r;
-   va_list args;
-   (void) gc;
-   va_start( args, fmt );  
-   r = vsprintf( str, fmt, args );
-   va_end( args );
-   return r;
-}
-
-/** Wrapper around fopen() */
-static void * CAPI
-default_fopen(__GLcontext *gc, const char *path, const char *mode)
-{
-   (void) gc;
-   return fopen(path, mode);
-}
-
-/** Wrapper around fclose() */
-static int CAPI
-default_fclose(__GLcontext *gc, void *stream)
-{
-   (void) gc;
-   return fclose((FILE *) stream);
-}
-
-/** Wrapper around vfprintf() */
-static int CAPI
-default_fprintf(__GLcontext *gc, void *stream, const char *fmt, ...)
-{
-   int r;
-   va_list args;
-   (void) gc;
-   va_start( args, fmt );  
-   r = vfprintf( (FILE *) stream, fmt, args );
-   va_end( args );
-   return r;
-}
-
-/*@}*/
-
-
-/**
- * Initialize a __GLimports object to point to the functions in this
- * file.  
- *
- * This is to be called from device drivers.
- * 
- * Also, do some one-time initializations.
- * 
- * \param imports the object to initialize.
- * \param driverCtx pointer to device driver-specific data.
- */
-void
-_mesa_init_default_imports(__GLimports *imports, void *driverCtx)
-{
-   /* XXX maybe move this one-time init stuff into context.c */
-   static GLboolean initialized = GL_FALSE;
-   if (!initialized) {
-      init_sqrt_table();
-      initialized = GL_TRUE;
-   }
-
-   imports->malloc = default_malloc;
-   imports->calloc = default_calloc;
-   imports->realloc = default_realloc;
-   imports->free = default_free;
-   imports->warning = default_warning;
-   imports->fatal = default_fatal;
-   imports->getenv = default_getenv; /* not used for now */
-   imports->atoi = default_atoi;
-   imports->sprintf = default_sprintf;
-   imports->fopen = default_fopen;
-   imports->fclose = default_fclose;
-   imports->fprintf = default_fprintf;
-   imports->getDrawablePrivate = NULL; /* driver-specific */
-   imports->getReadablePrivate = NULL; /* driver-specific */
-   imports->other = driverCtx;
 }

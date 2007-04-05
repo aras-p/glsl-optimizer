@@ -690,6 +690,9 @@ _mesa_sqrtf(float x);
 extern float
 _mesa_inv_sqrtf(float x);
 
+extern void
+_mesa_init_sqrt_table(void);
+
 extern double
 _mesa_pow(double x, double y);
 
@@ -770,10 +773,6 @@ _mesa_debug( const __GLcontext *ctx, const char *fmtString, ... );
 
 extern void 
 _mesa_exit( int status );
-
-
-extern void
-_mesa_init_default_imports( __GLimports *imports, void *driverCtx );
 
 
 #ifdef __cplusplus

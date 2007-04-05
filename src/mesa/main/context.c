@@ -154,166 +154,6 @@ static void
 free_shared_state( GLcontext *ctx, struct gl_shared_state *ss );
 
 
-/**********************************************************************/
-/** \name OpenGL SI-style interface (new in Mesa 3.5)
- *
- * \if subset
- * \note Most of these functions are never called in the Mesa subset.
- * \endif
- */
-/*@{*/
-
-/**
- * Destroy context callback.
- * 
- * \param gc context.
- * \return GL_TRUE on success, or GL_FALSE on failure.
- * 
- * \ifnot subset
- * Called by window system/device driver (via __GLexports::destroyCurrent) when
- * the rendering context is to be destroyed.
- * \endif
- *
- * Frees the context data and the context structure.
- */
-GLboolean
-_mesa_destroyContext(__GLcontext *gc)
-{
-   if (gc) {
-      _mesa_free_context_data(gc);
-      _mesa_free(gc);
-   }
-   return GL_TRUE;
-}
-
-/**
- * Unbind context callback.
- * 
- * \param gc context.
- * \return GL_TRUE on success, or GL_FALSE on failure.
- *
- * \ifnot subset
- * Called by window system/device driver (via __GLexports::loseCurrent)
- * when the rendering context is made non-current.
- * \endif
- *
- * No-op
- */
-GLboolean
-_mesa_loseCurrent(__GLcontext *gc)
-{
-   /* XXX unbind context from thread */
-   (void) gc;
-   return GL_TRUE;
-}
-
-/**
- * Bind context callback.
- * 
- * \param gc context.
- * \return GL_TRUE on success, or GL_FALSE on failure.
- *
- * \ifnot subset
- * Called by window system/device driver (via __GLexports::makeCurrent)
- * when the rendering context is made current.
- * \endif
- *
- * No-op
- */
-GLboolean
-_mesa_makeCurrent(__GLcontext *gc)
-{
-   /* XXX bind context to thread */
-   (void) gc;
-   return GL_TRUE;
-}
-
-/**
- * Share context callback.
- * 
- * \param gc context.
- * \param gcShare shared context.
- * \return GL_TRUE on success, or GL_FALSE on failure.
- *
- * \ifnot subset
- * Called by window system/device driver (via __GLexports::shareContext)
- * \endif
- *
- * Update the shared context reference count, gl_shared_state::RefCount.
- */
-GLboolean
-_mesa_shareContext(__GLcontext *gc, __GLcontext *gcShare)
-{
-   if (gc && gcShare && gc->Shared && gcShare->Shared) {
-      gc->Shared->RefCount--;
-      if (gc->Shared->RefCount == 0) {
-         free_shared_state(gc, gc->Shared);
-      }
-      gc->Shared = gcShare->Shared;
-      gc->Shared->RefCount++;
-      return GL_TRUE;
-   }
-   else {
-      return GL_FALSE;
-   }
-}
-
-
-#if _HAVE_FULL_GL
-/**
- * Copy context callback.
- */
-GLboolean
-_mesa_copyContext(__GLcontext *dst, const __GLcontext *src, GLuint mask)
-{
-   if (dst && src) {
-      _mesa_copy_context( src, dst, mask );
-      return GL_TRUE;
-   }
-   else {
-      return GL_FALSE;
-   }
-}
-#endif
-
-/** No-op */
-GLboolean
-_mesa_forceCurrent(__GLcontext *gc)
-{
-   (void) gc;
-   return GL_TRUE;
-}
-
-/**
- * Windows/buffer resizing notification callback.
- *
- * \param gc GL context.
- * \return GL_TRUE on success, or GL_FALSE on failure.
- */
-GLboolean
-_mesa_notifyResize(__GLcontext *gc)
-{
-   /* update viewport, resize software buffers, etc. */
-   (void) gc;
-   return GL_TRUE;
-}
-
-/**
- * Window/buffer destruction notification callback.
- *
- * \param gc GL context.
- * 
- * Called when the context's window/buffer is going to be destroyed. 
- *
- * No-op
- */
-void
-_mesa_notifyDestroy(__GLcontext *gc)
-{
-   /* Unbind from it. */
-   (void) gc;
-}
-
 /**
  * Swap buffers notification callback.
  * 
@@ -327,105 +167,6 @@ _mesa_notifySwapBuffers(__GLcontext *gc)
 {
    FLUSH_VERTICES( gc, 0 );
 }
-
-/** No-op */
-struct __GLdispatchStateRec *
-_mesa_dispatchExec(__GLcontext *gc)
-{
-   (void) gc;
-   return NULL;
-}
-
-/** No-op */
-void
-_mesa_beginDispatchOverride(__GLcontext *gc)
-{
-   (void) gc;
-}
-
-/** No-op */
-void
-_mesa_endDispatchOverride(__GLcontext *gc)
-{
-   (void) gc;
-}
-
-/**
- * \ifnot subset
- * Setup the exports.  
- *
- * The window system will call these functions when it needs Mesa to do
- * something.
- * 
- * \note Device drivers should override these functions!  For example,
- * the Xlib driver should plug in the XMesa*-style functions into this
- * structure.  The XMesa-style functions should then call the _mesa_*
- * version of these functions.  This is an approximation to OO design
- * (inheritance and virtual functions).
- * \endif
- *
- * \if subset
- * No-op.
- * 
- * \endif
- */
-static void
-_mesa_init_default_exports(__GLexports *exports)
-{
-#if _HAVE_FULL_GL
-    exports->destroyContext = _mesa_destroyContext;
-    exports->loseCurrent = _mesa_loseCurrent;
-    exports->makeCurrent = _mesa_makeCurrent;
-    exports->shareContext = _mesa_shareContext;
-    exports->copyContext = _mesa_copyContext;
-    exports->forceCurrent = _mesa_forceCurrent;
-    exports->notifyResize = _mesa_notifyResize;
-    exports->notifyDestroy = _mesa_notifyDestroy;
-    exports->notifySwapBuffers = _mesa_notifySwapBuffers;
-    exports->dispatchExec = _mesa_dispatchExec;
-    exports->beginDispatchOverride = _mesa_beginDispatchOverride;
-    exports->endDispatchOverride = _mesa_endDispatchOverride;
-#else
-    (void) exports;
-#endif
-}
-
-/**
- * Exported OpenGL SI interface.
- */
-__GLcontext *
-__glCoreCreateContext(__GLimports *imports, __GLcontextModes *modes)
-{
-    GLcontext *ctx;
-
-    ctx = (GLcontext *) (*imports->calloc)(NULL, 1, sizeof(GLcontext));
-    if (ctx == NULL) {
-	return NULL;
-    }
-
-    /* XXX doesn't work at this time */
-    _mesa_initialize_context(ctx, modes, NULL, NULL, NULL);
-    ctx->imports = *imports;
-
-    return ctx;
-}
-
-/**
- * Exported OpenGL SI interface.
- */
-void
-__glCoreNopDispatch(void)
-{
-#if 0
-   /* SI */
-   __gl_dispatch = __glNopDispatchState;
-#else
-   /* Mesa */
-   _glapi_set_dispatch(NULL);
-#endif
-}
-
-/*@}*/
 
 
 /**********************************************************************/
@@ -620,6 +361,8 @@ one_time_init( GLcontext *ctx )
       assert( sizeof(GLushort) == 2 );
       assert( sizeof(GLint) == 4 );
       assert( sizeof(GLuint) == 4 );
+
+      _mesa_init_sqrt_table();
 
 #if _HAVE_FULL_GL
       _math_init();
@@ -1291,14 +1034,6 @@ _mesa_initialize_context(GLcontext *ctx,
    ASSERT(driverContext);
    assert(driverFunctions->NewTextureObject);
    assert(driverFunctions->FreeTexImageData);
-
-   /* If the driver wants core Mesa to use special imports, it'll have to
-    * override these defaults.
-    */
-   _mesa_init_default_imports( &(ctx->imports), driverContext );
-
-   /* initialize the exports (Mesa functions called by the window system) */
-   _mesa_init_default_exports( &(ctx->exports) );
 
    /* misc one-time initializations */
    one_time_init(ctx);

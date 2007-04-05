@@ -2882,17 +2882,6 @@ struct gl_dlist_state
  */
 struct __GLcontextRec
 {
-   /**
-    * \name OS related interfaces. 
-    *
-    * These \b must be the first members of this structure, because they are
-    * exposed to the outside world (i.e. GLX extension).
-    */
-   /*@{*/
-   __GLimports imports;
-   __GLexports exports;
-   /*@}*/
-
    /** State possibly shared with other contexts in the address space */
    struct gl_shared_state *Shared;
 
