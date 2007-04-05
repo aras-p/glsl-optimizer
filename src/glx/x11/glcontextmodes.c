@@ -32,20 +32,24 @@
  */
 
 #if defined(IN_MINI_GLX)
+#include <GL/gl.h>
+#else
+#if defined(HAVE_DIX_CONFIG_H)
+# include <dix-config.h>
+#endif
+#include <X11/X.h>
+#include <GL/glx.h>
+#include "GL/glxint.h"
+#endif
+
+/* Memory macros */
+#if defined(IN_MINI_GLX)
 # include <stdlib.h>
 # include <string.h>
-# include <GL/gl.h>
-# include "GL/internal/dri_interface.h"
-# include "imports.h"
+# define _mesa_malloc(b) malloc(b)
+# define _mesa_free(m) free(m)
 # define _mesa_memset  memset
 #else
-# if defined(HAVE_DIX_CONFIG_H)
-#  include <dix-config.h>
-# endif
-# include <X11/X.h>
-# include <GL/glx.h>
-# include "GL/glxint.h"
-
 # ifdef XFree86Server
 # include <os.h>
 # include <string.h>
