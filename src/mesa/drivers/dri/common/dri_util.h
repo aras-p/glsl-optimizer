@@ -49,8 +49,6 @@
 #ifndef _DRI_UTIL_H_
 #define _DRI_UTIL_H_
 
-#define CAPI  /* XXX this should be globally defined somewhere */
-
 #include <GL/gl.h>
 #include "drm.h"
 #include "drm_sarea.h"

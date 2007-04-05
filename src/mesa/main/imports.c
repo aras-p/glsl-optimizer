@@ -12,14 +12,6 @@
  *
  * Eventually, I want to move roll the glheader.h file into this.
  *
- * The OpenGL SI's __GLimports structure allows per-context specification of
- * replacements for the standard C lib functions.  In practice that's probably
- * never needed; compile-time replacements are far more likely.
- *
- * The _mesa_*() functions defined here don't in general take a context
- * parameter.  I guess we can change that someday, if need be.
- * So for now, the __GLimports stuff really isn't used.
- *
  * \todo Functions still needed:
  * - scanf
  * - qsort

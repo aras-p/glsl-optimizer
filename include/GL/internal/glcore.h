@@ -38,17 +38,11 @@
 
 #include <sys/types.h>
 
-#ifdef CAPI
-#undef CAPI
-#endif
-#define CAPI
-
 #define GL_CORE_SGI  1
 #define GL_CORE_MESA 2
 #define GL_CORE_APPLE 4
 
 typedef struct __GLcontextRec __GLcontext;
-typedef struct __GLinterfaceRec __GLinterface;
 
 /*
 ** This file defines the interface between the GL core and the surrounding
@@ -185,82 +179,5 @@ typedef struct __GLcontextModesRec {
 #define GLX_TEXTURE_1D_BIT_EXT             0x00000001
 #define GLX_TEXTURE_2D_BIT_EXT             0x00000002
 #define GLX_TEXTURE_RECTANGLE_BIT_EXT      0x00000004
-
-
-/************************************************************************/
-
-/*
-** Procedures which are imported by the GL from the surrounding
-** "operating system".  Math functions are not considered part of the
-** "operating system".
-*/
-typedef struct __GLimportsRec {
-    /* Memory management */
-    void * (*malloc)(__GLcontext *gc, size_t size);
-    void *(*calloc)(__GLcontext *gc, size_t numElem, size_t elemSize);
-    void *(*realloc)(__GLcontext *gc, void *oldAddr, size_t newSize);
-    void (*free)(__GLcontext *gc, void *addr);
-
-    /* Error handling */
-    void (*warning)(__GLcontext *gc, char *fmt);
-    void (*fatal)(__GLcontext *gc, char *fmt);
-
-    /* other system calls */
-    char *(CAPI *getenv)(__GLcontext *gc, const char *var);
-    int (CAPI *atoi)(__GLcontext *gc, const char *str);
-    int (CAPI *sprintf)(__GLcontext *gc, char *str, const char *fmt, ...);
-    void *(CAPI *fopen)(__GLcontext *gc, const char *path, const char *mode);
-    int (CAPI *fclose)(__GLcontext *gc, void *stream);
-    int (CAPI *fprintf)(__GLcontext *gc, void *stream, const char *fmt, ...);
-
-    /* Drawing surface management */
-    void *(*getDrawablePrivate)(__GLcontext *gc);
-    void *(*getReadablePrivate)(__GLcontext *gc);
-
-    /* Operating system dependent data goes here */
-    void *other;
-} __GLimports;
-
-/************************************************************************/
-
-/*
-** Procedures which are exported by the GL to the surrounding "operating
-** system" so that it can manage multiple GL context's.
-*/
-typedef struct __GLexportsRec {
-    /* Context management (return GL_FALSE on failure) */
-    GLboolean (*destroyContext)(__GLcontext *gc);
-    GLboolean (*loseCurrent)(__GLcontext *gc);
-    /* oldglPriv isn't used anymore, kept for backwards compatibility */
-    GLboolean (*makeCurrent)(__GLcontext *gc);
-    GLboolean (*shareContext)(__GLcontext *gc, __GLcontext *gcShare);
-    GLboolean (*copyContext)(__GLcontext *dst, const __GLcontext *src, GLuint mask);
-    GLboolean (*forceCurrent)(__GLcontext *gc);
-
-    /* Drawing surface notification callbacks */
-    GLboolean (*notifyResize)(__GLcontext *gc);
-    void (*notifyDestroy)(__GLcontext *gc);
-    void (*notifySwapBuffers)(__GLcontext *gc);
-
-    /* Dispatch table override control for external agents like libGLS */
-    struct __GLdispatchStateRec* (*dispatchExec)(__GLcontext *gc);
-    void (*beginDispatchOverride)(__GLcontext *gc);
-    void (*endDispatchOverride)(__GLcontext *gc);
-} __GLexports;
-
-/************************************************************************/
-
-/*
-** This must be the first member of a __GLcontext structure.  This is the
-** only part of a context that is exposed to the outside world; everything
-** else is opaque.
-*/
-struct __GLinterfaceRec {
-    __GLimports imports;
-    __GLexports exports;
-};
-
-extern __GLcontext *__glCoreCreateContext(__GLimports *, __GLcontextModes *);
-extern void __glCoreNopDispatch(void);
 
 #endif /* __gl_core_h_ */

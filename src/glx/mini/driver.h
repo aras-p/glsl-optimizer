@@ -47,8 +47,6 @@
 #ifndef _driver_H_
 #define _driver_H_
 
-#define CAPI  /* XXX this should be globally defined somewhere */
-
 #include "GL/gl.h"
 #include "GL/internal/glcore.h"
 

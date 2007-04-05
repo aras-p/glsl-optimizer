@@ -27,10 +27,6 @@
 #define   MANGLE(x) mgl##x
 #endif  /*MANGLE*/
 
-/* Internal symbols which may collide with other OpenGL implementations. */
-#define __glCoreCreateContext __mglCoreCreateContext
-#define __glCoreNopDispatch   __mglCoreNopDispatch
-
 /*REGENERATE_TO_END-----------ALL LINES BELOW HERE GET REPLACED ON REGENERATION */
 
 #define glAccum		MANGLE(Accum)
