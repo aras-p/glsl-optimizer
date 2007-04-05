@@ -46,7 +46,6 @@ INCLUDES = -I. \
 	-I$(TOP)/include/GL/internal \
 	-I$(TOP)/src/mesa/main \
 	-I$(TOP)/src/mesa/glapi \
-	-I$(TOP)/src/mesa/drivers/dri/common \
 	$(LIBDRM_CFLAGS) \
 	$(X11_INCLUDES)
 
@@ -62,9 +61,6 @@ INCLUDES = -I. \
 ##### TARGETS #####
 
 default: depend $(TOP)/$(LIB_DIR)/$(GL_LIB_NAME)
-
-glcontextmodes.c:
-	ln -s $(TOP)/src/mesa/drivers/dri/common/glcontextmodes.c .
 
 # Make libGL
 $(TOP)/$(LIB_DIR)/$(GL_LIB_NAME):  $(OBJECTS) Makefile

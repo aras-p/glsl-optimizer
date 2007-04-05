@@ -11,7 +11,7 @@ C_SOURCES = \
 	  $(TOP)/src/mesa/main/dispatch.c \
 	  $(TOP)/src/mesa/glapi/glapi.c \
 	  $(TOP)/src/mesa/glapi/glthread.c \
-	  $(TOP)/src/mesa/drivers/dri/common/glcontextmodes.c \
+	  $(TOP)/src/glx/x11/glcontextmodes.c \
 	  miniglx.c \
 	  miniglx_events.c
 
@@ -27,10 +27,7 @@ INCLUDE_DIRS = \
 	-I$(TOP)/src/mesa \
 	-I$(TOP)/src/mesa/main \
 	-I$(TOP)/src/mesa/glapi \
-	-I$(TOP)/src/mesa/math \
-	-I$(TOP)/src/mesa/transform \
-	-I$(TOP)/src/mesa/swrast \
-	-I$(TOP)/src/mesa/swrast_setup \
+	-I$(TOP)/src/glx/x11 \
 	-I$(TOP)/src/mesa/drivers/dri/common \
 	`pkg-config --cflags libdrm`
 
