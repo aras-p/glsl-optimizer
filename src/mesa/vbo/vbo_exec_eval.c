@@ -135,7 +135,7 @@ void vbo_exec_do_EvalCoord1f(struct vbo_exec_context *exec, GLfloat u)
 {
    GLuint attr;
 
-   for (attr = 1; attr <= VBO_ATTRIB_INDEX; attr++) {
+   for (attr = 1; attr <= VBO_ATTRIB_TEX7; attr++) {
       struct gl_1d_map *map = exec->eval.map1[attr].map;
       if (map) {
 	 GLfloat uu = (u - map->u1) * map->du;
@@ -180,7 +180,7 @@ void vbo_exec_do_EvalCoord2f( struct vbo_exec_context *exec,
 {   
    GLuint attr;
 
-   for (attr = 1; attr <= VBO_ATTRIB_INDEX; attr++) {
+   for (attr = 1; attr <= VBO_ATTRIB_TEX7; attr++) {
       struct gl_2d_map *map = exec->eval.map2[attr].map;
       if (map) {
 	 GLfloat uu = (u - map->u1) * map->du;

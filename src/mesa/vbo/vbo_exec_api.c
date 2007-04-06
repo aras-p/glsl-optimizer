@@ -390,7 +390,7 @@ static void GLAPIENTRY vbo_exec_EvalCoord1f( GLfloat u )
       if (exec->eval.recalculate_maps) 
 	 vbo_exec_eval_update( exec );
 
-      for (i = 0 ; i <= VBO_ATTRIB_INDEX ; i++) {
+      for (i = 0; i <= VBO_ATTRIB_TEX7; i++) {
 	 if (exec->eval.map1[i].map) 
 	    if (exec->vtx.active_sz[i] != exec->eval.map1[i].sz)
 	       vbo_exec_fixup_vertex( ctx, i, exec->eval.map1[i].sz );
@@ -417,7 +417,7 @@ static void GLAPIENTRY vbo_exec_EvalCoord2f( GLfloat u, GLfloat v )
       if (exec->eval.recalculate_maps) 
 	 vbo_exec_eval_update( exec );
 
-      for (i = 0 ; i <= VBO_ATTRIB_INDEX ; i++) {
+      for (i = 0; i <= VBO_ATTRIB_TEX7; i++) {
 	 if (exec->eval.map2[i].map) 
 	    if (exec->vtx.active_sz[i] != exec->eval.map2[i].sz)
 	       vbo_exec_fixup_vertex( ctx, i, exec->eval.map2[i].sz );
