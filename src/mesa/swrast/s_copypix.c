@@ -163,7 +163,7 @@ copy_conv_rgba_pixels(GLcontext *ctx, GLint srcx, GLint srcy,
       /* write the new image */
       for (row = 0; row < height; row++) {
          const GLfloat *src = convImage + row * width * 4;
-         GLvoid *rgba = span.array->color.sz1.rgba; /* row storage */
+         GLvoid *rgba = (GLvoid *) span.array->attribs[FRAG_ATTRIB_COL0];
 
          /* copy convolved colors into span array */
          _mesa_memcpy(rgba, src, width * 4 * sizeof(GLfloat));
