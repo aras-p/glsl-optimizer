@@ -31,14 +31,13 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  *   Brian Paul <brian@precisioninsight.com>
  */
 
-#ifdef HAVE_DIX_CONFIG_H
-#include <dix-config.h>
-#endif
-
 #include <stdlib.h>
-
-#include "xf86glx_util.h"
 #include <X11/Xmd.h>
+
+#include "glxheader.h"
+#include "xmesaP.h"
+
+#ifdef XFree86Server
 
 #ifdef ROUNDUP
 #undef ROUNDUP
@@ -147,3 +146,5 @@ void XMesaPutImageHelper(ScreenPtr display,
     (*gc->ops->PutImage)(d, gc, d->depth, dest_x, dest_y, width, height,
 			 0, ZPixmap, src);
 }
+
+#endif /* XFree86Server */

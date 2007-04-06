@@ -27,16 +27,14 @@
 #define XMESAP_H
 
 
-#ifdef XFree86Server
-# include "xf86glx_util.h"
-#elif defined(USE_XSHM)
-# include <X11/extensions/XShm.h>
-#endif
 #include "GL/xmesa.h"
 #include "mtypes.h"
 #if defined(FX)
 #include "GL/fxmesa.h"
 #include "../glide/fxdrv.h"
+#endif
+#ifdef XFree86Server
+#include "xm_image.h"
 #endif
 
 

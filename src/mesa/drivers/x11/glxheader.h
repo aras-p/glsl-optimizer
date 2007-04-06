@@ -36,7 +36,6 @@
 
 # include "resource.h"
 # include "windowstr.h"
-# include "xf86glx_util.h"
 
 #else
 

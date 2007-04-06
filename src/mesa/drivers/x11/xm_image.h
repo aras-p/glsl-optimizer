@@ -31,22 +31,8 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  *   Brian Paul <brian@precisioninsight.com>
  */
 
-#ifdef HAVE_DIX_CONFIG_H
-#include <dix-config.h>
-#endif
-
-#ifndef _XF86GLX_UTIL_H_
-#define _XF86GLX_UTIL_H_
-
-#ifdef __CYGWIN__
-#undef WIN32
-#undef _WIN32
-#endif
-
-#include <screenint.h>
-#include <pixmap.h>
-#include <gc.h>
-#include "GL/xmesa.h"
+#ifndef _XM_IMAGE_H_
+#define _XM_IMAGE_H_
 
 #define XMESA_USE_PUTPIXEL_MACRO
 
@@ -102,4 +88,4 @@ extern void XMesaPutImageHelper(ScreenPtr display,
 				int dest_x, int dest_y,
 				unsigned int width, unsigned int height);
 
-#endif /* _XF86GLX_UTIL_H_ */
+#endif /* _XM_IMAGE_H_ */
