@@ -155,10 +155,10 @@ ultrix-gcc:
 
 # Rules for making release tarballs
 
-DIRECTORY = Mesa-6.5.2
-LIB_NAME = MesaLib-6.5.2
-DEMO_NAME = MesaDemos-6.5.2
-GLUT_NAME = MesaGLUT-6.5.2
+DIRECTORY = Mesa-6.5.3pre
+LIB_NAME = MesaLib-6.5.3pre
+DEMO_NAME = MesaDemos-6.5.3pre
+GLUT_NAME = MesaGLUT-6.5.3pre
 
 MAIN_FILES = \
 	$(DIRECTORY)/Makefile*						\
