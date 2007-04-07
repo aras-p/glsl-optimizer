@@ -786,8 +786,8 @@ _swrast_CreateContext( GLcontext *ctx )
    swrast->SpanArrays->rgba = swrast->SpanArrays->color.sz2.rgba;
    swrast->SpanArrays->spec = swrast->SpanArrays->color.sz2.spec;
 #else
-   swrast->SpanArrays->rgba = swrast->SpanArrays->color.sz4.rgba;
-   swrast->SpanArrays->spec = swrast->SpanArrays->color.sz4.spec;
+   swrast->SpanArrays->rgba = swrast->SpanArrays->attribs[FRAG_ATTRIB_COL0];
+   swrast->SpanArrays->spec = swrast->SpanArrays->attribs[FRAG_ATTRIB_COL1];
 #endif
 
    /* init point span buffer */

@@ -153,8 +153,8 @@ zoom_span( GLcontext *ctx, GLint imgX, GLint imgY, const SWspan *span,
    zoomed_arrays.rgba = zoomed_arrays.color.sz2.rgba;
    zoomed_arrays.spec = zoomed_arrays.color.sz2.spec;
 #else
-   zoomed_arrays.rgba = zoomed_arrays.color.sz4.rgba;
-   zoomed_arrays.spec = zoomed_arrays.color.sz4.spec;
+   zoomed_arrays.rgba = zoomed_arrays.attribs[FRAG_ATTRIB_COL0];
+   zoomed_arrays.spec = zoomed_arrays.attribs[FRAG_ATTRIB_COL1];
 #endif
 
 
