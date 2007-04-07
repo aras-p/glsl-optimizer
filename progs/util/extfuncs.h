@@ -56,6 +56,8 @@ static PFNGLDELETEVERTEXARRAYSAPPLEPROC glDeleteVertexArraysAPPLE_func = NULL;
 static PFNGLGENVERTEXARRAYSAPPLEPROC glGenVertexArraysAPPLE_func = NULL;
 static PFNGLISVERTEXARRAYAPPLEPROC glIsVertexArrayAPPLE_func = NULL;
 
+/* GL_EXT_stencil_two_side */
+static PFNGLACTIVESTENCILFACEEXTPROC glActiveStencilFaceEXT_func = NULL;
 
 
 static void
@@ -114,5 +116,7 @@ GetExtensionFuncs(void)
    glGenVertexArraysAPPLE_func = (PFNGLGENVERTEXARRAYSAPPLEPROC) glutGetProcAddress("glGenVertexArraysAPPLE");
    glIsVertexArrayAPPLE_func = (PFNGLISVERTEXARRAYAPPLEPROC) glutGetProcAddress("glIsVertexArrayAPPLE");
 
+   /* GL_EXT_stencil_two_side */
+   glActiveStencilFaceEXT_func = (PFNGLACTIVESTENCILFACEEXTPROC) glutGetProcAddress("glActiveStencilFaceEXT");
 }
 
