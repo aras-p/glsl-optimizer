@@ -209,9 +209,6 @@ MAIN_FILES = \
 	$(DIRECTORY)/src/mesa/glapi/*.[chS]				\
 	$(DIRECTORY)/src/mesa/glapi/descrip.mms				\
 	$(DIRECTORY)/src/mesa/glapi/sources				\
-	$(DIRECTORY)/src/mesa/array_cache/*.[ch]			\
-	$(DIRECTORY)/src/mesa/array_cache/descrip.mms			\
-	$(DIRECTORY)/src/mesa/array_cache/sources			\
 	$(DIRECTORY)/src/mesa/math/*.[ch]				\
 	$(DIRECTORY)/src/mesa/math/descrip.mms				\
 	$(DIRECTORY)/src/mesa/math/sources				\
@@ -231,6 +228,8 @@ MAIN_FILES = \
 	$(DIRECTORY)/src/mesa/swrast_setup/*.[ch]			\
 	$(DIRECTORY)/src/mesa/swrast_setup/descrip.mms			\
 	$(DIRECTORY)/src/mesa/swrast_setup/sources			\
+	$(DIRECTORY)/src/mesa/vbo/*.[chS]				\
+	$(DIRECTORY)/src/mesa/vbo/descrip.mms				\
 	$(DIRECTORY)/src/mesa/tnl/*.[chS]				\
 	$(DIRECTORY)/src/mesa/tnl/descrip.mms				\
 	$(DIRECTORY)/src/mesa/tnl/sources				\
