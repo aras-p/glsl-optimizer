@@ -561,9 +561,9 @@ static void NAME(GLcontext *ctx, const SWvertex *v0,
          span.attrStepX[FRAG_ATTRIB_COL1][2] = oneOverArea * (eMaj_dsb * eBot.dy - eMaj.dy * eBot_dsb);
          span.attrStepY[FRAG_ATTRIB_COL1][2] = oneOverArea * (eMaj.dx * eBot_dsb - eMaj_dsb * eBot.dx);
 #  if CHAN_TYPE == GL_FLOAT
-         span.specRedStep   = span.attrStep[FRAG_ATTRIB_COL1][0];
-         span.specGreenStep = span.dsgdx;
-         span.specBlueStep  = span.dsbdx;
+         span.specRedStep   = span.attrStepX[FRAG_ATTRIB_COL1][0];
+         span.specGreenStep = span.attrStepX[FRAG_ATTRIB_COL1][1];
+         span.specBlueStep  = span.attrStepX[FRAG_ATTRIB_COL1][2];
 #  else
          span.specRedStep   = SignedFloatToFixed(span.attrStepX[FRAG_ATTRIB_COL1][0]);
          span.specGreenStep = SignedFloatToFixed(span.attrStepX[FRAG_ATTRIB_COL1][1]);
