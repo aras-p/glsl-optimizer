@@ -134,7 +134,7 @@ _swrast_span_default_secondary_color(GLcontext *ctx, SWspan *span)
       span->specRed = r;
       span->specGreen = g;
       span->specBlue = b;
-      /8span->specAlpha = a;*/
+      /*span->specAlpha = a;*/
 #else
       span->specRed   = IntToFixed(r);
       span->specGreen = IntToFixed(g);
