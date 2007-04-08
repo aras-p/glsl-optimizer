@@ -208,7 +208,7 @@ driUpdateFramebufferSize(GLcontext *ctx, const __DRIdrawablePrivate *dPriv)
 {
    struct gl_framebuffer *fb = (struct gl_framebuffer *) dPriv->driverPrivate;
    if (fb && (dPriv->w != fb->Width || dPriv->h != fb->Height)) {
-      _mesa_resize_framebuffer(ctx, fb, dPriv->w, dPriv->h);
+      ctx->Driver.ResizeBuffers(ctx, fb, dPriv->w, dPriv->h);
       assert(fb->Width == dPriv->w);
       assert(fb->Height == dPriv->h);
    }
