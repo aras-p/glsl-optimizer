@@ -39,6 +39,7 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include <X11/Xlibint.h>
 #include <X11/extensions/Xext.h>
 #include <X11/extensions/extutil.h>
+#include "glheader.h"
 #include "glxclient.h"
 #include "xf86dri.h"
 #include "sarea.h"
@@ -342,7 +343,7 @@ __DRIdriver *driGetDriver(Display *dpy, int scrNum)
  * The returned char pointer points to a static array that will be
  * overwritten by subsequent calls.
  */
-const char *glXGetScreenDriver (Display *dpy, int scrNum) {
+PUBLIC const char *glXGetScreenDriver (Display *dpy, int scrNum) {
    static char ret[32];
    char *driverName;
    if (GetDriverName(dpy, scrNum, &driverName)) {
@@ -371,7 +372,7 @@ const char *glXGetScreenDriver (Display *dpy, int scrNum) {
  *
  * Note: The driver remains opened after this function returns.
  */
-const char *glXGetDriverConfig (const char *driverName) {
+PUBLIC const char *glXGetDriverConfig (const char *driverName) {
    __DRIdriver *driver = OpenDriver (driverName);
    if (driver)
       return dlsym (driver->handle, "__driConfigOptions");

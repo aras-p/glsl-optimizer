@@ -1488,7 +1488,7 @@ void __glXSendLargeCommand(__GLXcontext *ctx,
 
 /************************************************************************/
 
-GLXContext glXGetCurrentContext(void)
+PUBLIC GLXContext glXGetCurrentContext(void)
 {
     GLXContext cx = __glXGetCurrentContext();
     
@@ -1499,7 +1499,7 @@ GLXContext glXGetCurrentContext(void)
     }
 }
 
-GLXDrawable glXGetCurrentDrawable(void)
+PUBLIC GLXDrawable glXGetCurrentDrawable(void)
 {
     GLXContext gc = __glXGetCurrentContext();
     return gc->currentDrawable;
