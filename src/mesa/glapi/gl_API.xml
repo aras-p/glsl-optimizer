@@ -317,7 +317,9 @@
     <enum name="ATTRIB_STACK_DEPTH"            count="1"  value="0x0BB0">
         <size name="Get" mode="get"/>
     </enum>
-    <enum name="CLIENT_ATTRIB_STACK_DEPTH"                value="0x0BB1"/>
+    <enum name="CLIENT_ATTRIB_STACK_DEPTH"     count="1"  value="0x0BB1">
+        <size name="Get" mode="get"/>
+    </enum>
     <enum name="ALPHA_TEST"                    count="1"  value="0x0BC0">
         <size name="Get" mode="get"/>
     </enum>
@@ -577,7 +579,9 @@
     <enum name="MAX_VIEWPORT_DIMS"             count="2"  value="0x0D3A">
         <size name="Get" mode="get"/>
     </enum>
-    <enum name="MAX_CLIENT_ATTRIB_STACK_DEPTH"            value="0x0D3B"/>
+    <enum name="MAX_CLIENT_ATTRIB_STACK_DEPTH" count="1"  value="0x0D3B">
+        <size name="Get" mode="get"/>
+    </enum>
     <enum name="SUBPIXEL_BITS"                 count="1"  value="0x0D50">
         <size name="Get" mode="get"/>
     </enum>

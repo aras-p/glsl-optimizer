@@ -145,9 +145,10 @@ GLenum __indirect_glGetError(void)
  * On success \c GL_TRUE is returned.  Otherwise, \c GL_FALSE is returned.
  */
 static GLboolean
-get_client_data( __GLXattribute * state, GLenum cap, GLintptr * data )
+get_client_data( __GLXcontext * gc, GLenum cap, GLintptr * data )
 {
     GLboolean retval = GL_TRUE;
+    __GLXattribute * state = (__GLXattribute *)(gc->client_state_private);
     const GLint tex_unit = __glXGetActiveTextureUnit( state );
 
 
@@ -281,6 +282,9 @@ get_client_data( __GLXattribute * state, GLenum cap, GLintptr * data )
     case GL_UNPACK_LSB_FIRST:
 	*data = (GLintptr)state->storeUnpack.lsbFirst;
 	break;
+    case GL_CLIENT_ATTRIB_STACK_DEPTH:
+        *data = (GLintptr)(gc->attributes.stackPointer - gc->attributes.stack);
+	break;
     case GL_MAX_CLIENT_ATTRIB_STACK_DEPTH:
 	*data = (GLintptr)__GL_CLIENT_ATTRIB_STACK_DEPTH;
 	break;
@@ -302,7 +306,6 @@ void __indirect_glGetBooleanv(GLenum val, GLboolean *b)
 {
     const GLenum origVal = val;
     __GLX_SINGLE_DECLARE_VARIABLES();
-    __GLXattribute * state = (__GLXattribute *)(gc->client_state_private);
     xGLXSingleReply reply;
 
     val = RemapTransposeEnum( val );
@@ -326,7 +329,7 @@ void __indirect_glGetBooleanv(GLenum val, GLboolean *b)
 	** for example, to call a query between glBegin() and glEnd()).
 	*/
 
-	if ( get_client_data( state, val, & data ) ) {
+	if ( get_client_data( gc, val, & data ) ) {
 	    *b = (GLboolean) data;
 	}
 	else {
@@ -351,7 +354,6 @@ void __indirect_glGetDoublev(GLenum val, GLdouble *d)
 {
     const GLenum origVal = val;
     __GLX_SINGLE_DECLARE_VARIABLES();
-    __GLXattribute * state = (__GLXattribute *)(gc->client_state_private);
     xGLXSingleReply reply;
 
     val = RemapTransposeEnum( val );
@@ -375,7 +377,7 @@ void __indirect_glGetDoublev(GLenum val, GLdouble *d)
 	** for example, to call a query between glBegin() and glEnd()).
 	*/
 
-	if ( get_client_data( state, val, & data ) ) {
+	if ( get_client_data( gc, val, & data ) ) {
 	    *d = (GLdouble) data;
 	}
 	else {
@@ -400,7 +402,6 @@ void __indirect_glGetFloatv(GLenum val, GLfloat *f)
 {
     const GLenum origVal = val;
     __GLX_SINGLE_DECLARE_VARIABLES();
-    __GLXattribute * state = (__GLXattribute *)(gc->client_state_private);
     xGLXSingleReply reply;
 
     val = RemapTransposeEnum( val );
@@ -424,7 +425,7 @@ void __indirect_glGetFloatv(GLenum val, GLfloat *f)
 	** for example, to call a query between glBegin() and glEnd()).
 	*/
 
-	if ( get_client_data( state, val, & data ) ) {
+	if ( get_client_data( gc, val, & data ) ) {
 	    *f = (GLfloat) data;
 	}
 	else {
@@ -449,7 +450,6 @@ void __indirect_glGetIntegerv(GLenum val, GLint *i)
 {
     const GLenum origVal = val;
     __GLX_SINGLE_DECLARE_VARIABLES();
-    __GLXattribute * state = (__GLXattribute *)(gc->client_state_private);
     xGLXSingleReply reply;
 
     val = RemapTransposeEnum( val );
@@ -473,7 +473,7 @@ void __indirect_glGetIntegerv(GLenum val, GLint *i)
 	** for example, to call a query between glBegin() and glEnd()).
 	*/
 
-	if ( get_client_data( state, val, & data ) ) {
+	if ( get_client_data( gc, val, & data ) ) {
 	    *i = (GLint) data;
 	}
 	else {
