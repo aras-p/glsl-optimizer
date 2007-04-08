@@ -105,13 +105,13 @@ aggregate_vector(slang_storage_aggregate * agg, slang_storage_type basic_type,
 
 static GLboolean
 aggregate_matrix(slang_storage_aggregate * agg, slang_storage_type basic_type,
-                 GLuint dimension)
+                 GLuint columns, GLuint rows)
 {
    slang_storage_array *arr = slang_storage_aggregate_push_new(agg);
    if (arr == NULL)
       return GL_FALSE;
    arr->type = SLANG_STORE_AGGREGATE;
-   arr->length = dimension;
+   arr->length = columns;
    arr->aggregate =
       (slang_storage_aggregate *)
       slang_alloc_malloc(sizeof(slang_storage_aggregate));
@@ -122,7 +122,7 @@ aggregate_matrix(slang_storage_aggregate * agg, slang_storage_type basic_type,
       arr->aggregate = NULL;
       return GL_FALSE;
    }
-   if (!aggregate_vector(arr->aggregate, basic_type, dimension))
+   if (!aggregate_vector(arr->aggregate, basic_type, rows))
       return GL_FALSE;
    return GL_TRUE;
 }
@@ -180,11 +180,25 @@ _slang_aggregate_variable(slang_storage_aggregate * agg,
    case SLANG_SPEC_VEC4:
       return aggregate_vector(agg, SLANG_STORE_FLOAT, 4);
    case SLANG_SPEC_MAT2:
-      return aggregate_matrix(agg, SLANG_STORE_FLOAT, 2);
+      return aggregate_matrix(agg, SLANG_STORE_FLOAT, 2, 2);
    case SLANG_SPEC_MAT3:
-      return aggregate_matrix(agg, SLANG_STORE_FLOAT, 3);
+      return aggregate_matrix(agg, SLANG_STORE_FLOAT, 3, 3);
    case SLANG_SPEC_MAT4:
-      return aggregate_matrix(agg, SLANG_STORE_FLOAT, 4);
+      return aggregate_matrix(agg, SLANG_STORE_FLOAT, 4, 4);
+
+   case SLANG_SPEC_MAT23:
+      return aggregate_matrix(agg, SLANG_STORE_FLOAT, 2, 3);
+   case SLANG_SPEC_MAT32:
+      return aggregate_matrix(agg, SLANG_STORE_FLOAT, 3, 2);
+   case SLANG_SPEC_MAT24:
+      return aggregate_matrix(agg, SLANG_STORE_FLOAT, 2, 4);
+   case SLANG_SPEC_MAT42:
+      return aggregate_matrix(agg, SLANG_STORE_FLOAT, 4, 2);
+   case SLANG_SPEC_MAT34:
+      return aggregate_matrix(agg, SLANG_STORE_FLOAT, 3, 4);
+   case SLANG_SPEC_MAT43:
+      return aggregate_matrix(agg, SLANG_STORE_FLOAT, 4, 3);
+
    case SLANG_SPEC_SAMPLER1D:
    case SLANG_SPEC_SAMPLER2D:
    case SLANG_SPEC_SAMPLER3D:

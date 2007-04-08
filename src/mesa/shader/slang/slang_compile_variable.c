@@ -56,6 +56,12 @@ static const type_specifier_type_name type_specifier_type_names[] = {
    {"mat2", SLANG_SPEC_MAT2},
    {"mat3", SLANG_SPEC_MAT3},
    {"mat4", SLANG_SPEC_MAT4},
+   {"mat2x3", SLANG_SPEC_MAT23},
+   {"mat3x2", SLANG_SPEC_MAT32},
+   {"mat2x4", SLANG_SPEC_MAT24},
+   {"mat4x2", SLANG_SPEC_MAT42},
+   {"mat3x4", SLANG_SPEC_MAT34},
+   {"mat4x3", SLANG_SPEC_MAT43},
    {"sampler1D", SLANG_SPEC_SAMPLER1D},
    {"sampler2D", SLANG_SPEC_SAMPLER2D},
    {"sampler3D", SLANG_SPEC_SAMPLER3D},
@@ -367,6 +373,18 @@ gl_type_from_specifier(const slang_type_specifier * type)
       return GL_FLOAT_MAT3_ARB;
    case SLANG_SPEC_MAT4:
       return GL_FLOAT_MAT4_ARB;
+   case SLANG_SPEC_MAT23:
+      return GL_FLOAT_MAT2x3_ARB;
+   case SLANG_SPEC_MAT32:
+      return GL_FLOAT_MAT3x2_ARB;
+   case SLANG_SPEC_MAT24:
+      return GL_FLOAT_MAT2x4_ARB;
+   case SLANG_SPEC_MAT42:
+      return GL_FLOAT_MAT4x2_ARB;
+   case SLANG_SPEC_MAT34:
+      return GL_FLOAT_MAT3x4_ARB;
+   case SLANG_SPEC_MAT43:
+      return GL_FLOAT_MAT4x3_ARB;
    case SLANG_SPEC_SAMPLER1D:
       return GL_SAMPLER_1D_ARB;
    case SLANG_SPEC_SAMPLER2D:

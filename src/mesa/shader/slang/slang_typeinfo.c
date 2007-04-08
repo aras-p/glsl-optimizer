@@ -815,6 +815,12 @@ _slang_type_is_matrix(slang_type_specifier_type ty)
    case SLANG_SPEC_MAT2:
    case SLANG_SPEC_MAT3:
    case SLANG_SPEC_MAT4:
+   case SLANG_SPEC_MAT23:
+   case SLANG_SPEC_MAT32:
+   case SLANG_SPEC_MAT24:
+   case SLANG_SPEC_MAT42:
+   case SLANG_SPEC_MAT34:
+   case SLANG_SPEC_MAT43:
       return GL_TRUE;
    default:
       return GL_FALSE;
@@ -847,7 +853,8 @@ _slang_type_is_vector(slang_type_specifier_type ty)
 
 
 /**
- * Given a vector type, return the type of the vector's elements
+ * Given a vector type, return the type of the vector's elements.
+ * For a matrix, return the type of the columns.
  */
 slang_type_specifier_type
 _slang_type_base(slang_type_specifier_type ty)
@@ -874,6 +881,18 @@ _slang_type_base(slang_type_specifier_type ty)
       return SLANG_SPEC_VEC3;
    case SLANG_SPEC_MAT4:
       return SLANG_SPEC_VEC4;
+   case SLANG_SPEC_MAT23:
+      return SLANG_SPEC_VEC3;
+   case SLANG_SPEC_MAT32:
+      return SLANG_SPEC_VEC2;
+   case SLANG_SPEC_MAT24:
+      return SLANG_SPEC_VEC4;
+   case SLANG_SPEC_MAT42:
+      return SLANG_SPEC_VEC2;
+   case SLANG_SPEC_MAT34:
+      return SLANG_SPEC_VEC4;
+   case SLANG_SPEC_MAT43:
+      return SLANG_SPEC_VEC3;
    default:
       return SLANG_SPEC_VOID;
    }
@@ -881,7 +900,8 @@ _slang_type_base(slang_type_specifier_type ty)
 
 
 /**
- * Return the dimensionality of a vector or matrix type.
+ * Return the dimensionality of a vector, or for a matrix, return number
+ * of columns.
  */
 GLuint
 _slang_type_dim(slang_type_specifier_type ty)
@@ -906,6 +926,20 @@ _slang_type_dim(slang_type_specifier_type ty)
    case SLANG_SPEC_BVEC4:
    case SLANG_SPEC_MAT4:
       return 4;
+
+   case SLANG_SPEC_MAT23:
+      return 2;
+   case SLANG_SPEC_MAT32:
+      return 3;
+   case SLANG_SPEC_MAT24:
+      return 2;
+   case SLANG_SPEC_MAT42:
+      return 4;
+   case SLANG_SPEC_MAT34:
+      return 3;
+   case SLANG_SPEC_MAT43:
+      return 4;
+
    default:
       return 0;
    }

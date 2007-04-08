@@ -101,6 +101,24 @@ print_type(const slang_fully_specified_type *t)
    case SLANG_SPEC_MAT4:
       printf("mat4");
       break;
+   case SLANG_SPEC_MAT23:
+      printf("mat2x3");
+      break;
+   case SLANG_SPEC_MAT32:
+      printf("mat3x2");
+      break;
+   case SLANG_SPEC_MAT24:
+      printf("mat2x4");
+      break;
+   case SLANG_SPEC_MAT42:
+      printf("mat4x2");
+      break;
+   case SLANG_SPEC_MAT34:
+      printf("mat3x4");
+      break;
+   case SLANG_SPEC_MAT43:
+      printf("mat4x3");
+      break;
    case SLANG_SPEC_SAMPLER1D:
       printf("sampler1D");
       break;

@@ -491,6 +491,13 @@ parse_type_qualifier(slang_parse_ctx * C, slang_type_qualifier * qual)
 #define TYPE_SPECIFIER_SAMPLER2DRECTSHADOW 23
 #define TYPE_SPECIFIER_STRUCT 24
 #define TYPE_SPECIFIER_TYPENAME 25
+#define TYPE_SPECIFIER_MAT23 26
+#define TYPE_SPECIFIER_MAT32 27
+#define TYPE_SPECIFIER_MAT24 28
+#define TYPE_SPECIFIER_MAT42 29
+#define TYPE_SPECIFIER_MAT34 30
+#define TYPE_SPECIFIER_MAT43 31
+
 
 static int
 parse_type_specifier(slang_parse_ctx * C, slang_output_ctx * O,
@@ -544,6 +551,24 @@ parse_type_specifier(slang_parse_ctx * C, slang_output_ctx * O,
       break;
    case TYPE_SPECIFIER_MAT4:
       spec->type = SLANG_SPEC_MAT4;
+      break;
+   case TYPE_SPECIFIER_MAT23:
+      spec->type = SLANG_SPEC_MAT23;
+      break;
+   case TYPE_SPECIFIER_MAT32:
+      spec->type = SLANG_SPEC_MAT32;
+      break;
+   case TYPE_SPECIFIER_MAT24:
+      spec->type = SLANG_SPEC_MAT24;
+      break;
+   case TYPE_SPECIFIER_MAT42:
+      spec->type = SLANG_SPEC_MAT42;
+      break;
+   case TYPE_SPECIFIER_MAT34:
+      spec->type = SLANG_SPEC_MAT34;
+      break;
+   case TYPE_SPECIFIER_MAT43:
+      spec->type = SLANG_SPEC_MAT43;
       break;
    case TYPE_SPECIFIER_SAMPLER1D:
       spec->type = SLANG_SPEC_SAMPLER1D;

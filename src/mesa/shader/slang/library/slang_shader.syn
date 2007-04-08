@@ -144,6 +144,15 @@
 .emtcode TYPE_SPECIFIER_STRUCT                      24
 .emtcode TYPE_SPECIFIER_TYPENAME                    25
 
+/* OpenGL 2.1 */
+.emtcode TYPE_SPECIFIER_MAT23                       26
+.emtcode TYPE_SPECIFIER_MAT32                       27
+.emtcode TYPE_SPECIFIER_MAT24                       28
+.emtcode TYPE_SPECIFIER_MAT42                       29
+.emtcode TYPE_SPECIFIER_MAT34                       30
+.emtcode TYPE_SPECIFIER_MAT43                       31
+
+
 /* structure field */
 .emtcode FIELD_NONE                                 0
 .emtcode FIELD_NEXT                                 1
@@ -880,6 +889,12 @@ type_qualifier
                                           | "mat2"
                                           | "mat3"
                                           | "mat4"
+                                          | "mat2x3"
+                                          | "mat3x2"
+                                          | "mat2x4"
+                                          | "mat4x2"
+                                          | "mat3x4"
+                                          | "mat4x3"
                                           | "sampler1D"
                                           | "sampler2D"
                                           | "sampler3D"
@@ -908,6 +923,12 @@ type_specifier_space
     "mat2" .emit TYPE_SPECIFIER_MAT2 .or
     "mat3" .emit TYPE_SPECIFIER_MAT3 .or
     "mat4" .emit TYPE_SPECIFIER_MAT4 .or
+    "mat2x3" .emit TYPE_SPECIFIER_MAT23 .or
+    "mat3x2" .emit TYPE_SPECIFIER_MAT32 .or
+    "mat2x4" .emit TYPE_SPECIFIER_MAT24 .or
+    "mat4x2" .emit TYPE_SPECIFIER_MAT42 .or
+    "mat3x4" .emit TYPE_SPECIFIER_MAT34 .or
+    "mat4x3" .emit TYPE_SPECIFIER_MAT43 .or
     "sampler1D" .emit TYPE_SPECIFIER_SAMPLER1D .or
     "sampler2D" .emit TYPE_SPECIFIER_SAMPLER2D .or
     "sampler3D" .emit TYPE_SPECIFIER_SAMPLER3D .or
