@@ -7254,10 +7254,10 @@
         <size name="GetProgramivARB" mode="get"/>
     </enum>
     <enum name="MAX_TEXTURE_COORDS_ARB"        count="1"  value="0x8871">
-        <size name="GetProgramivARB" mode="get"/>
+        <size name="Get" mode="get"/>
     </enum>
     <enum name="MAX_TEXTURE_IMAGE_UNITS_ARB"   count="1"  value="0x8872">
-        <size name="GetProgramivARB" mode="get"/>
+        <size name="Get" mode="get"/>
     </enum>
 </category>
 
