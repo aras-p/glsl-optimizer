@@ -77,7 +77,7 @@ depend: $(SOURCES) $(MESA_GLAPI_SOURCES) $(MESA_ASM_API) Makefile
 
 # Emacs tags
 tags:
-	etags `find . -name \*.[ch]` `find ../include`
+	etags `find . -name \*.[ch]` `find $(TOP)/include`
 
 # Dummy install target
 install:
