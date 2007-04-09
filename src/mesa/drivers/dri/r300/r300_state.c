@@ -2023,6 +2023,10 @@ void r300ResetHwState(r300ContextPtr r300)
 	else
 		r300->hw.vap_cntl_status.cmd[1] = 0x00000002;
 
+	/* disable VAP/TCL on non-TCL capable chips */
+	if (!(r300->radeon.radeonScreen->chip_flags & RADEON_CHIPSET_TCL))
+		r300->hw.vap_cntl_status.cmd[1] |= R300_VAP_TCL_BYPASS;
+
 #if 0 /* Done in setup routing */
 	((drm_r300_cmd_header_t*)r300->hw.vir[0].cmd)->packet0.count = 1;
 	r300->hw.vir[0].cmd[1] = 0x21030003;

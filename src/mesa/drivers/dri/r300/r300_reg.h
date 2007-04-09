@@ -145,6 +145,7 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #	define R300_VC_NO_SWAP                  (0 << 0)
 #	define R300_VC_16BIT_SWAP               (1 << 0)
 #	define R300_VC_32BIT_SWAP               (2 << 0)
+#	define R300_VAP_TCL_BYPASS		(1 << 8)
 
 /* gap */
 
