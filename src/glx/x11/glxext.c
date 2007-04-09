@@ -1246,7 +1246,7 @@ __GLXdisplayPrivate *__glXInitialize(Display* dpy)
 	__glXUnlock();
 	return 0;
     }
-    dpyPriv = (__GLXdisplayPrivate *) Xmalloc(sizeof(__GLXdisplayPrivate));
+    dpyPriv = (__GLXdisplayPrivate *) Xcalloc(1, sizeof(__GLXdisplayPrivate));
     if (!dpyPriv) {
 	__glXUnlock();
 	Xfree((char*) private);
