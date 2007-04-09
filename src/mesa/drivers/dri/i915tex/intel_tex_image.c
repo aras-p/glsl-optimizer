@@ -614,6 +614,7 @@ intel_get_tex_image(GLcontext * ctx, GLenum target, GLint level,
                                  intelImage->level,
                                  &intelImage->base.RowStride,
                                  intelImage->base.ImageOffsets);
+      intelImage->base.RowStride /= intelImage->mt->cpp;
    }
    else {
       /* Otherwise, the image should actually be stored in
