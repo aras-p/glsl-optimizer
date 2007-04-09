@@ -1271,12 +1271,7 @@ __GLXdisplayPrivate *__glXInitialize(Display* dpy)
     ** Note: This _must_ be done before calling any other DRI routines
     ** (e.g., those called in AllocAndFetchScreenConfigs).
     */
-    if (getenv("LIBGL_ALWAYS_INDIRECT")) {
-        /* Assinging zero here assures we'll never go direct */
-        dpyPriv->driDisplay.private = 0;
-        dpyPriv->driDisplay.destroyDisplay = 0;
-    }
-    else {
+    if (getenv("LIBGL_ALWAYS_INDIRECT") == NULL) {
         dpyPriv->driDisplay.private =
             driCreateDisplay(dpy, &dpyPriv->driDisplay);
     }
