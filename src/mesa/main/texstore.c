@@ -2771,8 +2771,8 @@ fetch_texel_chan_to_float(const struct gl_texture_image *texImage,
 /**
  * Initialize the texture image's FetchTexelc and FetchTexelf methods.
  */
-static void
-set_fetch_functions(struct gl_texture_image *texImage, GLuint dims)
+void
+_mesa_set_fetch_functions(struct gl_texture_image *texImage, GLuint dims)
 {
    ASSERT(dims == 1 || dims == 2 || dims == 3);
    ASSERT(texImage->TexFormat);
@@ -2832,7 +2832,7 @@ choose_texture_format(GLcontext *ctx, struct gl_texture_image *texImage,
 
    ASSERT(texImage->TexFormat);
 
-   set_fetch_functions(texImage, dims);
+   _mesa_set_fetch_functions(texImage, dims);
 
    if (texImage->TexFormat->TexelBytes == 0) {
       /* must be a compressed format */

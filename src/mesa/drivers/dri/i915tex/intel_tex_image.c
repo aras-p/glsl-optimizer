@@ -329,25 +329,7 @@ intelTexImage(GLcontext * ctx,
    texImage->TexFormat = intelChooseTextureFormat(ctx, internalFormat,
                                                   format, type);
 
-   assert(texImage->TexFormat);
-
-   switch (dims) {
-   case 1:
-      texImage->FetchTexelc = texImage->TexFormat->FetchTexel1D;
-      texImage->FetchTexelf = texImage->TexFormat->FetchTexel1Df;
-      break;
-   case 2:
-      texImage->FetchTexelc = texImage->TexFormat->FetchTexel2D;
-      texImage->FetchTexelf = texImage->TexFormat->FetchTexel2Df;
-      break;
-   case 3:
-      texImage->FetchTexelc = texImage->TexFormat->FetchTexel3D;
-      texImage->FetchTexelf = texImage->TexFormat->FetchTexel3Df;
-      break;
-   default:
-      assert(0);
-      break;
-   }
+   _mesa_set_fetch_functions(texImage, dims);
 
    if (texImage->TexFormat->TexelBytes == 0) {
       /* must be a compressed format */
