@@ -569,7 +569,7 @@ void intelWindowMoved( intelContextPtr intel )
 	 GLint areaB = driIntersectArea( drw_rect, pipeB_rect );
 	 GLuint flags = intel->vblank_flags;
 
-	 if (areaB > areaA || (areaA > 0 && areaB > 0)) {
+	 if (areaB > areaA || (areaA == areaB && areaB > 0)) {
 	    flags = intel->vblank_flags | VBLANK_FLAG_SECONDARY;
 	 } else {
 	    flags = intel->vblank_flags & ~VBLANK_FLAG_SECONDARY;
