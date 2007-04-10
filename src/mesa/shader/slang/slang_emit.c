@@ -1793,7 +1793,7 @@ _slang_emit_code(slang_ir_node *n, slang_var_table *vt,
    emitInfo.Subroutines = NULL;
    emitInfo.NumSubroutines = 0;
 
-   emitInfo.EmitHighLevelInstructions = 0*ctx->Shader.EmitHighLevelInstructions;
+   emitInfo.EmitHighLevelInstructions = ctx->Shader.EmitHighLevelInstructions;
    emitInfo.EmitCondCodes = ctx->Shader.EmitCondCodes;
    emitInfo.EmitComments = ctx->Shader.EmitComments;
    emitInfo.EmitBeginEndSub = GL_TRUE;
