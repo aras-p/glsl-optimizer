@@ -1348,7 +1348,7 @@ _slang_gen_function_call_name(slang_assemble_ctx *A, const char *name,
        * Try adapting the parameters.
        */
       fun = _slang_first_function(A->space.funcs, name);
-      if (!_slang_adapt_call(oper, fun, &A->space, A->atoms, A->log)) {
+      if (!fun || !_slang_adapt_call(oper, fun, &A->space, A->atoms, A->log)) {
          slang_info_log_error(A->log, "Function '%s' not found (check argument types)", name);
          return NULL;
       }
