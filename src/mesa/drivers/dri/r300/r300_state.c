@@ -2005,8 +2005,10 @@ void r300ResetHwState(r300ContextPtr r300)
 		/* Initialize magic registers
 		 TODO : learn what they really do, or get rid of
 		 those we don't have to touch */
-	r300->hw.vap_cntl.cmd[1] = 0x0030045A; //0x0030065a /* Dangerous */
-
+	if (!(r300->radeon.radeonScreen->chip_flags & RADEON_CHIPSET_TCL))
+		r300->hw.vap_cntl.cmd[1] = 0x0014045a;
+	else
+		r300->hw.vap_cntl.cmd[1] = 0x0030045A; //0x0030065a /* Dangerous */
 	r300->hw.vte.cmd[1] = R300_VPORT_X_SCALE_ENA
 				| R300_VPORT_X_OFFSET_ENA
 				| R300_VPORT_Y_SCALE_ENA
