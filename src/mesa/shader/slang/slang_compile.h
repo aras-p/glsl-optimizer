@@ -69,10 +69,11 @@ extern GLvoid
 _slang_code_unit_dtr (slang_code_unit *);
 
 #define SLANG_BUILTIN_CORE   0
-#define SLANG_BUILTIN_COMMON 1
-#define SLANG_BUILTIN_TARGET 2
+#define SLANG_BUILTIN_120_CORE   1
+#define SLANG_BUILTIN_COMMON 2
+#define SLANG_BUILTIN_TARGET 3
 
-#define SLANG_BUILTIN_TOTAL  3
+#define SLANG_BUILTIN_TOTAL  4
 
 typedef struct slang_code_object_
 {

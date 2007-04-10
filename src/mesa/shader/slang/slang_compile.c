@@ -1967,6 +1967,10 @@ static const byte slang_core_gc[] = {
 #include "library/slang_core_gc.h"
 };
 
+static const byte slang_120_core_gc[] = {
+#include "library/slang_120_core_gc.h"
+};
+
 static const byte slang_common_builtin_gc[] = {
 #include "library/slang_common_builtin_gc.h"
 };
@@ -2016,11 +2020,24 @@ compile_object(grammar * id, const char *source, slang_code_object * object,
                           NULL, NULL, NULL))
          return GL_FALSE;
 
+#if FEATURE_ARB_shading_language_120
+      if (!compile_binary(slang_120_core_gc,
+                          &object->builtin[SLANG_BUILTIN_120_CORE],
+                          SLANG_UNIT_FRAGMENT_BUILTIN, infolog,
+                          NULL, &object->builtin[SLANG_BUILTIN_CORE], NULL))
+         return GL_FALSE;
+#endif
+
       /* compile common functions and variables, link to core */
       if (!compile_binary(slang_common_builtin_gc,
                           &object->builtin[SLANG_BUILTIN_COMMON],
                           SLANG_UNIT_FRAGMENT_BUILTIN, infolog, NULL,
-                          &object->builtin[SLANG_BUILTIN_CORE], NULL))
+#if FEATURE_ARB_shading_language_120
+                          &object->builtin[SLANG_BUILTIN_120_CORE],
+#else
+                          &object->builtin[SLANG_BUILTIN_CORE],
+#endif
+                          NULL))
          return GL_FALSE;
 
       /* compile target-specific functions and variables, link to common */
