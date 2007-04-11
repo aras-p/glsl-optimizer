@@ -536,8 +536,7 @@ copy_depth_pixels( GLcontext *ctx, GLint srcx, GLint srcy,
       span.end = width;
       if (fb->Visual.rgbMode) {
          if (zoom)
-            _swrast_write_zoomed_rgba_span(ctx, destx, desty, &span, 
-                                           span.array->rgba);
+            _swrast_write_zoomed_depth_span(ctx, destx, desty, &span);
          else
             _swrast_write_rgba_span(ctx, &span);
       }
