@@ -150,9 +150,6 @@ vec4 shadow1DProj(const sampler1DShadow sampler, const vec4 coord, const float b
    __asm vec4_texb1d __retVal, sampler, pcoord;
 }
 
-
-
-
 vec4 shadow2D(const sampler2DShadow sampler, const vec3 coord, const float bias)
 {
    vec4 coord4;
@@ -168,40 +165,6 @@ vec4 shadow2DProj(const sampler2DShadow sampler, const vec4 coord, const float b
    pcoord.z = coord.z;
    pcoord.w = bias;
    __asm vec4_texb2d __retVal, sampler, pcoord;
-}
-
-
-
-//// GL_ARB_texture_rectangle:
-vec4 texture2DRect(const sampler2DRect sampler, const vec2 coord)
-{
-   __asm vec4_tex_rect __retVal, sampler, coord;
-}
-
-vec4 texture2DRectProj(const sampler2DRect sampler, const vec3 coord)
-{
-   // do projection here
-   vec4 pcoord;
-   pcoord.xy = coord.xy / coord.z;
-   __asm vec4_texp_rect __retVal, sampler, pcoord;
-}
-
-vec4 texture2DRectProj(const sampler2DRect sampler, const vec4 coord)
-{
-   // do projection here
-   vec4 pcoord;
-   pcoord.xy = coord.xy / coord.w;
-   __asm vec4_texp_rect __retVal, sampler, pcoord;
-}
-
-vec4 shadow2DRect(const sampler2DRectShadow sampler, const vec3 coord)
-{
-// XXX to do
-}
-
-vec4 shadow2DRectProj(const sampler2DRectShadow sampler, const vec4 coord)
-{
-// XXX to do
 }
 
 

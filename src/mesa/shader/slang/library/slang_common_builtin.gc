@@ -1660,25 +1660,67 @@ vec4 textureCube(const samplerCube sampler, const vec3 coord)
 
 
 
-vec4 shadow1D (sampler1DShadow sampler, vec3 coord) {
-    vec4 texel;
-    __asm vec4_shad1d texel, sampler, coord, 0.0;
-    return texel;
+vec4 shadow1D(const sampler1DShadow sampler, const vec3 coord)
+{
+   __asm vec4_tex1d __retVal, sampler, coord;
 }
 
-vec4 shadow1DProj (sampler1DShadow sampler, vec4 coord) {
-    return shadow1D (sampler, vec3 (coord.s / coord.q, 0.0, coord.p / coord.q));
+vec4 shadow1DProj(const sampler1DShadow sampler, const vec4 coord)
+{
+   vec4 pcoord;
+   pcoord.x = coord.x / coord.w;
+   pcoord.z = coord.z;
+   pcoord.w = bias;
+   __asm vec4_tex1d __retVal, sampler, pcoord;
 }
 
-vec4 shadow2D (sampler2DShadow sampler, vec3 coord) {
-    vec4 texel;
-    __asm vec4_shad2d texel, sampler, coord, 0.0;
-    return texel;
+vec4 shadow2D(const sampler2DShadow sampler, const vec3 coord)
+{
+   __asm vec4_tex2d __retVal, sampler, coord;
 }
 
-vec4 shadow2DProj (sampler2DShadow sampler, vec4 coord) {
-    return shadow2D (sampler, vec3 (coord.s / coord.q, coord.t / coord.q, coord.p / coord.q));
+vec4 shadow2DProj(const sampler2DShadow sampler, const vec4 coord)
+{
+   vec4 pcoord;
+   pcoord.xy = coord.xy / coord.w;
+   pcoord.z = coord.z;
+   __asm vec4_tex2d __retVal, sampler, pcoord;
 }
+
+
+//// GL_ARB_texture_rectangle:
+vec4 texture2DRect(const sampler2DRect sampler, const vec2 coord)
+{
+   __asm vec4_tex_rect __retVal, sampler, coord;
+}
+
+vec4 texture2DRectProj(const sampler2DRect sampler, const vec3 coord)
+{
+   // do projection here
+   vec4 pcoord;
+   pcoord.xy = coord.xy / coord.z;
+   __asm vec4_texp_rect __retVal, sampler, pcoord;
+}
+
+vec4 texture2DRectProj(const sampler2DRect sampler, const vec4 coord)
+{
+   // do projection here
+   vec4 pcoord;
+   pcoord.xy = coord.xy / coord.w;
+   __asm vec4_texp_rect __retVal, sampler, pcoord;
+}
+
+vec4 shadow2DRect(const sampler2DRectShadow sampler, const vec3 coord)
+{
+// XXX to do
+}
+
+vec4 shadow2DRectProj(const sampler2DRectShadow sampler, const vec4 coord)
+{
+// XXX to do
+}
+
+
 
 //
 // 8.9 Noise Functions
