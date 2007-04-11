@@ -45,7 +45,7 @@ static GLint uTexture;
 
 static GLuint SphereList, RectList, CurList;
 static GLint win = 0;
-static GLboolean anim = GL_FALSE;
+static GLboolean anim = GL_TRUE;
 static GLboolean wire = GL_FALSE;
 static GLboolean pixelLight = GL_TRUE;
 
@@ -477,8 +477,8 @@ Init(void)
 
    version = (const char *) glGetString(GL_VERSION);
    if (version[0] != '2' || version[1] != '.') {
-      printf("Warning: this program expects OpenGL 2.0\n");
-      /*exit(1);*/
+      printf("This program requires OpenGL 2.x, found %s\n", version);
+      exit(1);
    }
 
    GetExtensionFuncs();
@@ -579,6 +579,8 @@ Init(void)
 
 #if 0
    TestFunctions();
+#else
+   (void) TestFunctions;
 #endif
 }
 
@@ -603,7 +605,7 @@ main(int argc, char *argv[])
 {
    glutInit(&argc, argv);
    glutInitWindowPosition( 0, 0);
-   glutInitWindowSize(100, 100);
+   glutInitWindowSize(200, 200);
    glutInitDisplayMode(GLUT_RGB | GLUT_DOUBLE | GLUT_DEPTH);
    win = glutCreateWindow(argv[0]);
    glutReshapeFunc(Reshape);
