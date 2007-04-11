@@ -1904,14 +1904,22 @@ compile_with_grammar(grammar id, const char *source, slang_code_unit * unit,
    byte *prod;
    GLuint size, start, version;
    slang_string preprocessed;
+   int maxVersion;
+
+#if FEATURE_ARB_shading_language_120
+   maxVersion = 120;
+#else
+   maxVersion = 110;
+#endif
 
    /* First retrieve the version number. */
    if (!_slang_preprocess_version(source, &version, &start, infolog))
       return GL_FALSE;
 
-   if (version > 110) {
+   if (version > maxVersion) {
       slang_info_log_error(infolog,
-                           "language version specified is not supported.");
+                           "language version %.2f is not supported.",
+                           version * 0.01);
       return GL_FALSE;
    }
 
