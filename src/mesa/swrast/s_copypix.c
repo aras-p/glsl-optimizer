@@ -542,7 +542,7 @@ copy_depth_pixels( GLcontext *ctx, GLint srcx, GLint srcy,
       }
       else {
          if (zoom)
-            _swrast_write_zoomed_index_span(ctx, destx, desty, &span);
+            _swrast_write_zoomed_depth_span(ctx, destx, desty, &span);
          else
             _swrast_write_index_span(ctx, &span);
       }
