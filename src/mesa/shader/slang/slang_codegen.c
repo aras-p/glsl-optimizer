@@ -144,14 +144,17 @@ _slang_sizeof_type_specifier(const slang_type_specifier *spec)
    case SLANG_SPEC_MAT4:
       return 4 * 4;
    case SLANG_SPEC_MAT23:
+      return 2 * 4; /* special case */
    case SLANG_SPEC_MAT32:
-      return 2 * 3;
+      return 3 * 4; /* special case: 3 registers (columns), not two */
    case SLANG_SPEC_MAT24:
-   case SLANG_SPEC_MAT42:
       return 2 * 4;
+   case SLANG_SPEC_MAT42:
+      return 4 * 4; /* special case: 4 registers (columns), not two */
    case SLANG_SPEC_MAT34:
-   case SLANG_SPEC_MAT43:
       return 3 * 4;
+   case SLANG_SPEC_MAT43:
+      return 4 * 4; /* special case: 4 registers (columns), not two */
    case SLANG_SPEC_SAMPLER1D:
    case SLANG_SPEC_SAMPLER2D:
    case SLANG_SPEC_SAMPLER3D:
