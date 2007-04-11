@@ -520,7 +520,7 @@ intel_framebuffer_renderbuffer(GLcontext * ctx,
 
 /**
  * When glFramebufferTexture[123]D is called this function sets up the
- * gl_renderbuffer wrapp around the texture image.
+ * gl_renderbuffer wrapper around the texture image.
  * This will have the region info needed for hardware rendering.
  */
 static struct intel_renderbuffer *
@@ -606,7 +606,7 @@ intel_render_texture(GLcontext * ctx,
       irb = intel_wrap_texture(ctx, newImage);
       if (irb) {
          /* bind the wrapper to the attachment point */
-         att->Renderbuffer = &irb->Base;
+         _mesa_reference_renderbuffer(&att->Renderbuffer, &irb->Base);
       }
       else {
          /* fallback to software rendering */
