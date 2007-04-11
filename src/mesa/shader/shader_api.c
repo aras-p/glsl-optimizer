@@ -323,7 +323,13 @@ _mesa_bind_attrib_location(GLcontext *ctx, GLuint program, GLuint index,
       return;
    }
 
-   oldIndex = _mesa_get_attrib_location(ctx, program, name);
+   if (shProg->LinkStatus) {
+      /* get current index/location for the attribute */
+      oldIndex = _mesa_get_attrib_location(ctx, program, name);
+   }
+   else {
+      oldIndex = -1;
+   }
 
    /* this will replace the current value if it's already in the list */
    i = _mesa_add_attribute(shProg->Attributes, name, size, index);
@@ -331,14 +337,12 @@ _mesa_bind_attrib_location(GLcontext *ctx, GLuint program, GLuint index,
       _mesa_error(ctx, GL_OUT_OF_MEMORY, "glBindAttribLocation");
    }
 
-   if (shProg->VertexProgram && oldIndex >= 0) {
+   if (shProg->VertexProgram && oldIndex >= 0 && oldIndex != index) {
+      /* If the index changed, need to search/replace references to that attribute
+       * in the vertex program.
+       */
       _slang_remap_attribute(&shProg->VertexProgram->Base, oldIndex, index);
    }
-
-#if 0
-   printf("===== post BindAttrib:\n");
-   _mesa_print_program(&shProg->VertexProgram->Base);
-#endif
 }
 
 
