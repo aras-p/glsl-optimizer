@@ -393,9 +393,9 @@ gl_type_from_specifier(const slang_type_specifier * type)
       return GL_SAMPLER_3D_ARB;
    case SLANG_SPEC_SAMPLERCUBE:
       return GL_SAMPLER_CUBE_ARB;
-   case SLANG_SPEC_SAMPLER1DShadow:
+   case SLANG_SPEC_SAMPLER1DSHADOW:
       return GL_SAMPLER_1D_SHADOW_ARB;
-   case SLANG_SPEC_SAMPLER2DShadow:
+   case SLANG_SPEC_SAMPLER2DSHADOW:
       return GL_SAMPLER_2D_SHADOW_ARB;
    case SLANG_SPEC_ARRAy:
       return gl_type_from_specifier(type->_array);
