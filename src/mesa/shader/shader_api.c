@@ -135,7 +135,6 @@ _mesa_free_shader_program_data(GLcontext *ctx,
 void
 _mesa_free_shader_program(GLcontext *ctx, struct gl_shader_program *shProg)
 {
-   printf("FREE SHADER PROG %d\n", shProg->Name);
    _mesa_free_shader_program_data(ctx, shProg);
    if (shProg->Shaders) {
       _mesa_free(shProg->Shaders);
@@ -184,8 +183,8 @@ _mesa_reference_shader_program(GLcontext *ctx,
 
    if (shProg) {
       shProg->RefCount++;
-      printf("SHPROG INCR %p (%d) to %d\n",
-               (void*) shProg, shProg->Name, shProg->RefCount);
+      /*printf("SHPROG INCR %p (%d) to %d\n",
+        (void*) shProg, shProg->Name, shProg->RefCount);*/
       *ptr = shProg;
    }
 }
@@ -236,7 +235,6 @@ void
 _mesa_free_shader(GLcontext *ctx, struct gl_shader *sh)
 {
    GLuint i;
-   printf("FREE SHADER %d\n", sh->Name);
    if (sh->Source)
       _mesa_free((void *) sh->Source);
    if (sh->InfoLog)
@@ -274,8 +272,8 @@ _mesa_reference_shader(GLcontext *ctx, struct gl_shader **ptr,
 
       ASSERT(old->RefCount > 0);
       old->RefCount--;
-      printf("SHADER DECR %p (%d) to %d\n",
-               (void*) old, old->Name, old->RefCount);
+      /*printf("SHADER DECR %p (%d) to %d\n",
+        (void*) old, old->Name, old->RefCount);*/
       deleteFlag = (old->RefCount == 0);
 
       if (deleteFlag) {
@@ -290,8 +288,8 @@ _mesa_reference_shader(GLcontext *ctx, struct gl_shader **ptr,
    if (sh) {
       /* reference new */
       sh->RefCount++;
-      printf("SHADER INCR %p (%d) to %d\n",
-               (void*) sh, sh->Name, sh->RefCount);
+      /*printf("SHADER INCR %p (%d) to %d\n",
+        (void*) sh, sh->Name, sh->RefCount);*/
       *ptr = sh;
    }
 }
