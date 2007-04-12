@@ -107,54 +107,84 @@ _slang_field_offset(const slang_type_specifier *spec, slang_atom field)
 }
 
 
+/**
+ * Return the size (in floats) of the given type specifier.
+ * If the size is greater than 4, the size should be a multiple of 4
+ * so that the correct number of 4-float registers are allocated.
+ * For example, a mat3x2 is size 12 because we want to store the
+ * 3 columns in 3 float[4] registers.
+ */
 GLuint
 _slang_sizeof_type_specifier(const slang_type_specifier *spec)
 {
+   GLuint sz;
    switch (spec->type) {
    case SLANG_SPEC_VOID:
-      return 0;
+      sz = 0;
+      break;
    case SLANG_SPEC_BOOL:
-      return 1;
+      sz = 1;
+      break;
    case SLANG_SPEC_BVEC2:
-      return 2;
+      sz = 2;
+      break;
    case SLANG_SPEC_BVEC3:
-      return 3;
+      sz = 3;
+      break;
    case SLANG_SPEC_BVEC4:
-      return 4;
+      sz = 4;
+      break;
    case SLANG_SPEC_INT:
-      return 1;
+      sz = 1;
+      break;
    case SLANG_SPEC_IVEC2:
-      return 2;
+      sz = 2;
+      break;
    case SLANG_SPEC_IVEC3:
-      return 3;
+      sz = 3;
+      break;
    case SLANG_SPEC_IVEC4:
-      return 4;
+      sz = 4;
+      break;
    case SLANG_SPEC_FLOAT:
-      return 1;
+      sz = 1;
+      break;
    case SLANG_SPEC_VEC2:
-      return 2;
+      sz = 2;
+      break;
    case SLANG_SPEC_VEC3:
-      return 3;
+      sz = 3;
+      break;
    case SLANG_SPEC_VEC4:
-      return 4;
+      sz = 4;
+      break;
    case SLANG_SPEC_MAT2:
-      return 2 * 2;
+      sz = 2 * 4; /* 2 columns (regs) */
+      break;
    case SLANG_SPEC_MAT3:
-      return 3 * 3;
+      sz = 3 * 4;
+      break;
    case SLANG_SPEC_MAT4:
-      return 4 * 4;
+      sz = 4 * 4;
+      break;
    case SLANG_SPEC_MAT23:
-      return 2 * 4; /* special case */
+      sz = 2 * 4; /* 2 columns (regs) */
+      break;
    case SLANG_SPEC_MAT32:
-      return 3 * 4; /* special case: 3 registers (columns), not two */
+      sz = 3 * 4; /* 3 columns (regs) */
+      break;
    case SLANG_SPEC_MAT24:
-      return 2 * 4;
+      sz = 2 * 4;
+      break;
    case SLANG_SPEC_MAT42:
-      return 4 * 4; /* special case: 4 registers (columns), not two */
+      sz = 4 * 4; /* 4 columns (regs) */
+      break;
    case SLANG_SPEC_MAT34:
-      return 3 * 4;
+      sz = 3 * 4;
+      break;
    case SLANG_SPEC_MAT43:
-      return 4 * 4; /* special case: 4 registers (columns), not two */
+      sz = 4 * 4; /* 4 columns (regs) */
+      break;
    case SLANG_SPEC_SAMPLER1D:
    case SLANG_SPEC_SAMPLER2D:
    case SLANG_SPEC_SAMPLER3D:
@@ -163,16 +193,27 @@ _slang_sizeof_type_specifier(const slang_type_specifier *spec)
    case SLANG_SPEC_SAMPLER2DSHADOW:
    case SLANG_SPEC_SAMPLER2DRECT:
    case SLANG_SPEC_SAMPLER2DRECTSHADOW:
-      return 1; /* a sampler is basically just an integer index */
+      sz = 1; /* a sampler is basically just an integer index */
+      break;
    case SLANG_SPEC_STRUCT:
-      return _slang_field_offset(spec, 0); /* special use */
+      sz = _slang_field_offset(spec, 0); /* special use */
+      if (sz > 4) {
+         sz = (sz + 3) & ~0x3; /* round up to multiple of four */
+      }
+      break;
    case SLANG_SPEC_ARRAY:
-      return _slang_sizeof_type_specifier(spec->_array);
+      sz = _slang_sizeof_type_specifier(spec->_array);
+      break;
    default:
       _mesa_problem(NULL, "Unexpected type in _slang_sizeof_type_specifier()");
-      return 0;
+      sz = 0;
    }
-   return 0;
+
+   if (sz > 4) {
+      /* if size is > 4, it should be a multiple of four */
+      assert((sz & 0x3) == 0);
+   }
+   return sz;
 }
 
 
