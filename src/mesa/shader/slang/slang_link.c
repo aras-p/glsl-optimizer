@@ -475,7 +475,7 @@ _slang_link(GLcontext *ctx,
    const struct gl_fragment_program *fragProg;
    GLuint i;
 
-   _mesa_free_shader_program_data(ctx, shProg);
+   _mesa_clear_shader_program_data(ctx, shProg);
 
    shProg->Uniforms = _mesa_new_parameter_list();
    shProg->Varying = _mesa_new_parameter_list();
