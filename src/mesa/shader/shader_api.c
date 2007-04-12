@@ -68,15 +68,12 @@ _mesa_new_shader_program(GLcontext *ctx, GLuint name)
 
 
 /**
- * Free the data that hangs off a shader program object, but not the object
- * itself.
+ * Clear (free) the shader program state that gets produced by linking.
  */
 void
-_mesa_free_shader_program_data(GLcontext *ctx,
-                               struct gl_shader_program *shProg)
+_mesa_clear_shader_program_data(GLcontext *ctx,
+                                struct gl_shader_program *shProg)
 {
-   assert(shProg->Type == GL_SHADER_PROGRAM);
-
    if (shProg->VertexProgram) {
       if (shProg->VertexProgram->Base.Parameters == shProg->Uniforms) {
          /* to prevent a double-free in the next call */
@@ -95,7 +92,6 @@ _mesa_free_shader_program_data(GLcontext *ctx,
       shProg->FragmentProgram = NULL;
    }
 
-
    if (shProg->Uniforms) {
       _mesa_free_parameter_list(shProg->Uniforms);
       shProg->Uniforms = NULL;
@@ -109,17 +105,89 @@ _mesa_free_shader_program_data(GLcontext *ctx,
 
 
 /**
+ * Free all the data that hangs off a shader program object, but not the
+ * object itself.
+ */
+void
+_mesa_free_shader_program_data(GLcontext *ctx,
+                               struct gl_shader_program *shProg)
+{
+   GLuint i;
+
+   assert(shProg->Type == GL_SHADER_PROGRAM);
+
+   _mesa_clear_shader_program_data(ctx, shProg);
+
+   /* detach shaders */
+   for (i = 0; i < shProg->NumShaders; i++) {
+      _mesa_reference_shader(ctx, &shProg->Shaders[i], NULL);
+   }
+   if (shProg->Shaders) {
+      _mesa_free(shProg->Shaders);
+      shProg->Shaders = NULL;
+   }
+}
+
+
+/**
  * Free/delete a shader program object.
  */
 void
 _mesa_free_shader_program(GLcontext *ctx, struct gl_shader_program *shProg)
 {
+   printf("FREE SHADER PROG %d\n", shProg->Name);
    _mesa_free_shader_program_data(ctx, shProg);
    if (shProg->Shaders) {
       _mesa_free(shProg->Shaders);
       shProg->Shaders = NULL;
    }
    _mesa_free(shProg);
+}
+
+
+/**
+ * Set ptr to point to shProg.
+ * If ptr is pointing to another object, decrement its refcount (and delete
+ * if refcount hits zero).
+ * Then set ptr to point to shProg, incrementing its refcount.
+ */
+/* XXX this could be static */
+void
+_mesa_reference_shader_program(GLcontext *ctx,
+                               struct gl_shader_program **ptr,
+                               struct gl_shader_program *shProg)
+{
+   assert(ptr);
+   if (*ptr == shProg) {
+      /* no-op */
+      return;
+   }
+   if (*ptr) {
+      /* Unreference the old shader program */
+      GLboolean deleteFlag = GL_FALSE;
+      struct gl_shader_program *old = *ptr;
+
+      ASSERT(old->RefCount > 0);
+      old->RefCount--;
+      /*printf("SHPROG DECR %p (%d) to %d\n",
+        (void*) old, old->Name, old->RefCount);*/
+      deleteFlag = (old->RefCount == 0);
+
+      if (deleteFlag) {
+         _mesa_HashRemove(ctx->Shared->ShaderObjects, old->Name);
+         _mesa_free_shader_program(ctx, old);
+      }
+
+      *ptr = NULL;
+   }
+   assert(!*ptr);
+
+   if (shProg) {
+      shProg->RefCount++;
+      printf("SHPROG INCR %p (%d) to %d\n",
+               (void*) shProg, shProg->Name, shProg->RefCount);
+      *ptr = shProg;
+   }
 }
 
 
@@ -168,6 +236,7 @@ void
 _mesa_free_shader(GLcontext *ctx, struct gl_shader *sh)
 {
    GLuint i;
+   printf("FREE SHADER %d\n", sh->Name);
    if (sh->Source)
       _mesa_free((void *) sh->Source);
    if (sh->InfoLog)
@@ -179,6 +248,52 @@ _mesa_free_shader(GLcontext *ctx, struct gl_shader *sh)
    if (sh->Programs)
       _mesa_free(sh->Programs);
    _mesa_free(sh);
+}
+
+
+/**
+ * Set ptr to point to sh.
+ * If ptr is pointing to another shader, decrement its refcount (and delete
+ * if refcount hits zero).
+ * Then set ptr to point to sh, incrementing its refcount.
+ */
+/* XXX this could be static */
+void
+_mesa_reference_shader(GLcontext *ctx, struct gl_shader **ptr,
+                       struct gl_shader *sh)
+{
+   assert(ptr);
+   if (*ptr == sh) {
+      /* no-op */
+      return;
+   }
+   if (*ptr) {
+      /* Unreference the old shader */
+      GLboolean deleteFlag = GL_FALSE;
+      struct gl_shader *old = *ptr;
+
+      ASSERT(old->RefCount > 0);
+      old->RefCount--;
+      printf("SHADER DECR %p (%d) to %d\n",
+               (void*) old, old->Name, old->RefCount);
+      deleteFlag = (old->RefCount == 0);
+
+      if (deleteFlag) {
+         _mesa_HashRemove(ctx->Shared->ShaderObjects, old->Name);
+         _mesa_free_shader(ctx, old);
+      }
+
+      *ptr = NULL;
+   }
+   assert(!*ptr);
+
+   if (sh) {
+      /* reference new */
+      sh->RefCount++;
+      printf("SHADER INCR %p (%d) to %d\n",
+               (void*) sh, sh->Name, sh->RefCount);
+      *ptr = sh;
+   }
 }
 
 
@@ -227,13 +342,7 @@ _mesa_init_shader_state(GLcontext * ctx)
 void
 _mesa_free_shader_state(GLcontext *ctx)
 {
-   if (ctx->Shader.CurrentProgram) {
-      ctx->Shader.CurrentProgram->RefCount--;
-      if (ctx->Shader.CurrentProgram->RefCount <= 0) {
-         _mesa_free_shader_program(ctx, ctx->Shader.CurrentProgram);
-         ctx->Shader.CurrentProgram = NULL;
-      }
-   }
+   _mesa_reference_shader_program(ctx, &ctx->Shader.CurrentProgram, NULL);
 }
 
 
@@ -294,8 +403,8 @@ _mesa_attach_shader(GLcontext *ctx, GLuint program, GLuint shader)
    }
 
    /* append */
-   shProg->Shaders[n] = sh;
-   sh->RefCount++;
+   shProg->Shaders[n] = NULL; /* since realloc() didn't zero the new space */
+   _mesa_reference_shader(ctx, &shProg->Shaders[n], sh);
    shProg->NumShaders++;
 }
 
@@ -381,13 +490,27 @@ _mesa_create_program(GLcontext *ctx)
 
    _mesa_HashInsert(ctx->Shared->ShaderObjects, name, shProg);
 
+   assert(shProg->RefCount == 1);
+
    return name;
 }
 
 
+/**
+ * Named w/ "2" to indicate OpenGL 2.x vs GL_ARB_fragment_programs's
+ * DeleteProgramARB.
+ */
 void
 _mesa_delete_program2(GLcontext *ctx, GLuint name)
 {
+   /*
+    * NOTE: deleting shaders/programs works a bit differently than
+    * texture objects (and buffer objects, etc).  Shader/program
+    * handles/IDs exist in the hash table until the object is really
+    * deleted (refcount==0).  With texture objects, the handle/ID is
+    * removed from the hash table in glDeleteTextures() while the tex
+    * object itself might linger until its refcount goes to zero.
+    */
    struct gl_shader_program *shProg;
 
    shProg = _mesa_lookup_shader_program(ctx, name);
@@ -396,16 +519,10 @@ _mesa_delete_program2(GLcontext *ctx, GLuint name)
       return;
    }
 
-   /* always remove from hash table */
-   _mesa_HashRemove(ctx->Shared->ShaderObjects, name);
-
    shProg->DeletePending = GL_TRUE;
 
-   /* decrement refcount, delete if zero */
-   shProg->RefCount--;
-   if (shProg->RefCount <= 0) {
-      _mesa_free_shader_program(ctx, shProg);
-   }
+   /* effectively, decr shProg's refcount */
+   _mesa_reference_shader_program(ctx, &shProg, NULL);
 }
 
 
@@ -418,10 +535,9 @@ _mesa_delete_shader(GLcontext *ctx, GLuint shader)
    }
 
    sh->DeletePending = GL_TRUE;
-   sh->RefCount--;
-   if (sh->RefCount <= 0) {
-      _mesa_free_shader(ctx, sh);
-   }
+
+   /* effectively, decr sh's refcount */
+   _mesa_reference_shader(ctx, &sh, NULL);
 }
 
 
@@ -441,14 +557,11 @@ _mesa_detach_shader(GLcontext *ctx, GLuint program, GLuint shader)
 
    for (i = 0; i < n; i++) {
       if (shProg->Shaders[i]->Name == shader) {
-         struct gl_shader **newList;
          /* found it */
+         struct gl_shader **newList;
 
-         shProg->Shaders[i]->RefCount--;
-         if (shProg->Shaders[i]->RefCount == 0) {
-            /* delete now */
-            _mesa_free_shader(ctx, shProg->Shaders[i]);
-         }
+         /* derefernce */
+         _mesa_reference_shader(ctx, &shProg->Shaders[i], NULL);
 
          /* alloc new, smaller array */
          newList = (struct gl_shader **)
@@ -876,6 +989,8 @@ _mesa_link_program(GLcontext *ctx, GLuint program)
 void
 _mesa_use_program(GLcontext *ctx, GLuint program)
 {
+   struct gl_shader_program *shProg;
+
    if (ctx->Shader.CurrentProgram &&
        ctx->Shader.CurrentProgram->Name == program) {
       /* no-op */
@@ -884,30 +999,19 @@ _mesa_use_program(GLcontext *ctx, GLuint program)
 
    FLUSH_VERTICES(ctx, _NEW_PROGRAM);
 
-   /* unbind old */
-   if (ctx->Shader.CurrentProgram) {
-      ctx->Shader.CurrentProgram->RefCount--;
-      if (ctx->Shader.CurrentProgram->RefCount <= 0) {
-         _mesa_free_shader_program(ctx, ctx->Shader.CurrentProgram);
-      }
-      ctx->Shader.CurrentProgram = NULL;
-   }
-
    if (program) {
-      struct gl_shader_program *shProg;
       shProg = _mesa_lookup_shader_program(ctx, program);
       if (!shProg) {
          _mesa_error(ctx, GL_INVALID_VALUE,
                      "glUseProgramObjectARB(programObj)");
          return;
       }
-      ctx->Shader.CurrentProgram = shProg;
-      shProg->RefCount++;
    }
    else {
-      /* don't use a shader program */
-      ctx->Shader.CurrentProgram = NULL;
-   }      
+      shProg = NULL;
+   }
+
+   _mesa_reference_shader_program(ctx, &ctx->Shader.CurrentProgram, shProg);
 }
 
 
