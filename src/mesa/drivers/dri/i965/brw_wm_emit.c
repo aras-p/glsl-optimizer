@@ -343,7 +343,24 @@ static void emit_lrp( struct brw_compile *p,
       }
    }
 }
+static void emit_sop( struct brw_compile *p, 
+		      const struct brw_reg *dst,
+		      GLuint mask,
+		      GLuint cond,
+		      const struct brw_reg *arg0,
+		      const struct brw_reg *arg1 )
+{
+   GLuint i;
 
+   for (i = 0; i < 4; i++) {
+      if (mask & (1<<i)) {	
+	 brw_MOV(p, dst[i], brw_imm_f(0));
+	 brw_CMP(p, brw_null_reg(), cond, arg0[i], arg1[i]);
+	 brw_MOV(p, dst[i], brw_imm_f(1.0));
+	 brw_set_predicate_control_flag_value(p, 0xff);
+      }
+   }
+}
 
 static void emit_slt( struct brw_compile *p, 
 		      const struct brw_reg *dst,
@@ -351,39 +368,53 @@ static void emit_slt( struct brw_compile *p,
 		      const struct brw_reg *arg0,
 		      const struct brw_reg *arg1 )
 {
-   GLuint i;
-
-   for (i = 0; i < 4; i++) {
-      if (mask & (1<<i)) {	
-	 brw_MOV(p, dst[i], brw_imm_f(0));
-	 brw_CMP(p, brw_null_reg(), BRW_CONDITIONAL_L, arg0[i], arg1[i]);
-	 brw_MOV(p, dst[i], brw_imm_f(1.0));
-	 brw_set_predicate_control_flag_value(p, 0xff);
-      }
-   }
+	 emit_sop(p, dst, mask, BRW_CONDITIONAL_L, arg0, arg1);
 }
 
-/* Isn't this just the same as the above with the args swapped?
- */
+static void emit_sle( struct brw_compile *p, 
+		      const struct brw_reg *dst,
+		      GLuint mask,
+		      const struct brw_reg *arg0,
+		      const struct brw_reg *arg1 )
+{
+	 emit_sop(p, dst, mask, BRW_CONDITIONAL_LE, arg0, arg1);
+}
+
+static void emit_sgt( struct brw_compile *p, 
+		      const struct brw_reg *dst,
+		      GLuint mask,
+		      const struct brw_reg *arg0,
+		      const struct brw_reg *arg1 )
+{
+	 emit_sop(p, dst, mask, BRW_CONDITIONAL_G, arg0, arg1);
+}
+
 static void emit_sge( struct brw_compile *p, 
 		      const struct brw_reg *dst,
 		      GLuint mask,
 		      const struct brw_reg *arg0,
 		      const struct brw_reg *arg1 )
 {
-   GLuint i;
-
-   for (i = 0; i < 4; i++) {
-      if (mask & (1<<i)) {	
-	 brw_MOV(p, dst[i], brw_imm_f(0));
-	 brw_CMP(p, brw_null_reg(), BRW_CONDITIONAL_GE, arg0[i], arg1[i]);
-	 brw_MOV(p, dst[i], brw_imm_f(1.0));
-	 brw_set_predicate_control_flag_value(p, 0xff);
-      }
-   }
+	 emit_sop(p, dst, mask, BRW_CONDITIONAL_GE, arg0, arg1);
 }
 
+static void emit_seq( struct brw_compile *p, 
+		      const struct brw_reg *dst,
+		      GLuint mask,
+		      const struct brw_reg *arg0,
+		      const struct brw_reg *arg1 )
+{
+	 emit_sop(p, dst, mask, BRW_CONDITIONAL_EQ, arg0, arg1);
+}
 
+static void emit_sne( struct brw_compile *p, 
+		      const struct brw_reg *dst,
+		      GLuint mask,
+		      const struct brw_reg *arg0,
+		      const struct brw_reg *arg1 )
+{
+	 emit_sop(p, dst, mask, BRW_CONDITIONAL_NEQ, arg0, arg1);
+}
 
 static void emit_cmp( struct brw_compile *p, 
 		      const struct brw_reg *dst,
@@ -543,8 +574,8 @@ static void emit_math1( struct brw_compile *p,
 			GLuint mask,
 			const struct brw_reg *arg0 )
 {
-   assert((mask & WRITEMASK_XYZW) == WRITEMASK_X ||
-	  function == BRW_MATH_FUNCTION_SINCOS);
+   //assert((mask & WRITEMASK_XYZW) == WRITEMASK_X ||
+   //	  function == BRW_MATH_FUNCTION_SINCOS);
    
    brw_MOV(p, brw_message_reg(2), arg0[0]);
 
@@ -1208,9 +1239,21 @@ void brw_wm_emit( struct brw_wm_compile *c )
 	 emit_slt(p, dst, dst_flags, args[0], args[1]);
 	 break;
 
+      case OPCODE_SLE:
+	 emit_sle(p, dst, dst_flags, args[0], args[1]);
+	break;
+      case OPCODE_SGT:
+	 emit_sgt(p, dst, dst_flags, args[0], args[1]);
+	break;
       case OPCODE_SGE:
 	 emit_sge(p, dst, dst_flags, args[0], args[1]);
 	 break;
+      case OPCODE_SEQ:
+	 emit_seq(p, dst, dst_flags, args[0], args[1]);
+	break;
+      case OPCODE_SNE:
+	 emit_sne(p, dst, dst_flags, args[0], args[1]);
+	break;
 
       case OPCODE_LIT:
 	 emit_lit(p, dst, dst_flags, args[0]);
@@ -1231,7 +1274,8 @@ void brw_wm_emit( struct brw_wm_compile *c )
 	 break;
 
       default:
-	 assert(0);
+	_mesa_printf("unsupport opcode %d in fragment program\n", 
+		inst->opcode);
       }
       
       for (i = 0; i < 4; i++)

@@ -44,6 +44,8 @@
 #include "api_noop.h"
 #include "vtxfmt.h"
 
+#include "shader/shader_api.h"
+
 /***************************************
  * Mesa's Driver Functions
  ***************************************/
@@ -60,12 +62,57 @@ static const struct dri_extension brw_extensions[] =
     { NULL,                                NULL }
 };
 
+static void brwLinkProgram(GLcontext *ctx, GLuint program)
+{
+        struct brw_context *brw = brw_context(ctx);
+        struct brw_vertex_program *vert_prog;
+        struct brw_fragment_program *frag_prog;
+        struct gl_shader_program *sh_prog;
+        _mesa_link_program(ctx, program);
 
+        sh_prog = _mesa_lookup_shader_program(ctx, program);
+	if (sh_prog) {
+	    sh_prog->FragmentProgram = 
+		_mesa_realloc(sh_prog->FragmentProgram,
+			sizeof(struct gl_fragment_program),
+			sizeof(struct brw_fragment_program));
+	    frag_prog = (struct brw_fragment_program *)sh_prog->FragmentProgram;
+	    frag_prog->id = brw->program_id++;
+	    sh_prog->VertexProgram = _mesa_realloc(sh_prog->VertexProgram,
+		    sizeof(struct gl_vertex_program),
+		    sizeof(struct brw_vertex_program));
+	    vert_prog = (struct brw_vertex_program *)sh_prog->VertexProgram;
+	    vert_prog->id = brw->program_id++;
+	}
+}
+
+static void brwUseProgram(GLcontext *ctx, GLuint program)
+{
+        struct brw_context *brw = brw_context(ctx);
+        struct gl_shader_program *sh_prog;
+        _mesa_use_program(ctx, program);
+        sh_prog = ctx->Shader.CurrentProgram;
+        if (sh_prog) {
+            ctx->VertexProgram.Enabled = GL_TRUE;
+            ctx->FragmentProgram.Enabled = GL_TRUE;
+            brw->attribs.VertexProgram->Current = sh_prog->VertexProgram;
+            brw->attribs.FragmentProgram->Current = sh_prog->FragmentProgram;
+            brw->state.dirty.brw |= BRW_NEW_VERTEX_PROGRAM;
+            brw->state.dirty.brw |= BRW_NEW_FRAGMENT_PROGRAM;
+        }
+}
+
+static void brwInitProgFuncs( struct dd_function_table *functions )
+{
+   functions->UseProgram = brwUseProgram;
+   functions->LinkProgram = brwLinkProgram;
+}
 static void brwInitDriverFunctions( struct dd_function_table *functions )
 {
    intelInitDriverFunctions( functions );
    brwInitTextureFuncs( functions );
    brwInitFragProgFuncs( functions );
+   brwInitProgFuncs( functions );
 }
 
 

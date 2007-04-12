@@ -860,5 +860,6 @@ void brw_math_invert( struct brw_compile *p,
 		      struct brw_reg dst,
 		      struct brw_reg src);
 
-
+void brw_set_src1( struct brw_instruction *insn,
+                          struct brw_reg reg );
 #endif

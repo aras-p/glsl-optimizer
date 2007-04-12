@@ -155,7 +155,11 @@ void brw_wm_pass1( struct brw_wm_compile *c )
 
       case OPCODE_SUB:
       case OPCODE_SLT:
+      case OPCODE_SLE:
       case OPCODE_SGE:
+      case OPCODE_SGT:
+      case OPCODE_SEQ:
+      case OPCODE_SNE:
       case OPCODE_ADD:
       case OPCODE_MAX:
       case OPCODE_MIN:
@@ -257,7 +261,6 @@ void brw_wm_pass1( struct brw_wm_compile *c )
       case OPCODE_DST:
       case OPCODE_TXP:
       default:
-	 assert(0);
 	 break;
       }
 

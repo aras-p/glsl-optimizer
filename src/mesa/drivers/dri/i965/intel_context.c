@@ -81,6 +81,7 @@ int INTEL_DEBUG = (0);
 #define need_GL_EXT_fog_coord
 #define need_GL_EXT_multi_draw_arrays
 #define need_GL_EXT_secondary_color
+#define need_GL_VERSION_2_0
 #include "extension_helper.h"
 
 #ifndef VERBOSE
@@ -180,6 +181,9 @@ const struct dri_extension card_extensions[] =
     { "GL_MESA_ycbcr_texture",             NULL },
     { "GL_NV_blend_square",                NULL },
     { "GL_SGIS_generate_mipmap",           NULL },
+    { "GL_ARB_shading_language_100",       GL_VERSION_2_0_functions},
+    /* XXX not implement yet, to compile builtin glsl lib */
+    { "GL_ARB_draw_buffers",               NULL },
     { NULL,                                NULL }
 };
 

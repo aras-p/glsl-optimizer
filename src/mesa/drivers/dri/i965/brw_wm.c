@@ -66,7 +66,11 @@ GLuint brw_wm_nr_args( GLuint opcode )
    case OPCODE_POW:
    case OPCODE_SUB:
    case OPCODE_SGE:
+   case OPCODE_SGT:
+   case OPCODE_SLE:
    case OPCODE_SLT:
+   case OPCODE_SEQ:
+   case OPCODE_SNE:
    case OPCODE_ADD:
    case OPCODE_MAX:
    case OPCODE_MIN:
