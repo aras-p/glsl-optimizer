@@ -573,16 +573,6 @@ extern XMesaBuffer XMesaCreateWindowBuffer2( XMesaVisual v,
 					     XMesaWindow w,
 					     XMesaContext c );
 
-/*
- * These are the extra routines required for integration with XFree86.
- * None of these routines should be user visible. -KEM
- */
-extern GLboolean XMesaForceCurrent(XMesaContext c);
-extern GLboolean XMesaLoseCurrent(XMesaContext c);
-extern GLboolean XMesaCopyContext( XMesaContext src,
-				   XMesaContext dst,
-				   GLuint mask );
-
 
 #define ENABLE_EXT_texure_compression_s3tc 0 /* SW texture compression */
 

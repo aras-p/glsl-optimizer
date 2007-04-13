@@ -1308,6 +1308,7 @@ xmesa_convert_from_x_visual_type( int visualType )
  *         visualCaveat - ala the GLX extension, usually GLX_NONE
  * Return;  a new XMesaVisual or 0 if error.
  */
+PUBLIC
 XMesaVisual XMesaCreateVisual( XMesaDisplay *display,
                                XMesaVisualInfo visinfo,
                                GLboolean rgb_flag,
@@ -1450,6 +1451,7 @@ XMesaVisual XMesaCreateVisual( XMesaDisplay *display,
 }
 
 
+PUBLIC
 void XMesaDestroyVisual( XMesaVisual v )
 {
 #ifndef XFree86Server
@@ -1467,6 +1469,7 @@ void XMesaDestroyVisual( XMesaVisual v )
  *                    lists or NULL if no sharing is wanted.
  * \return an XMesaContext or NULL if error.
  */
+PUBLIC
 XMesaContext XMesaCreateContext( XMesaVisual v, XMesaContext share_list )
 {
    static GLboolean firstTime = GL_TRUE;
@@ -1550,6 +1553,7 @@ XMesaContext XMesaCreateContext( XMesaVisual v, XMesaContext share_list )
 
 
 
+PUBLIC
 void XMesaDestroyContext( XMesaContext c )
 {
    GLcontext *mesaCtx = &c->mesa;
@@ -1721,7 +1725,7 @@ XMesaCreateWindowBuffer2(XMesaVisual v, XMesaWindow w, XMesaContext c)
 }
 
 
-XMesaBuffer
+PUBLIC XMesaBuffer
 XMesaCreateWindowBuffer(XMesaVisual v, XMesaWindow w)
 {
    return XMesaCreateWindowBuffer2( v, w, NULL );
@@ -1737,7 +1741,7 @@ XMesaCreateWindowBuffer(XMesaVisual v, XMesaWindow w)
  *             \c GLX_DIRECT_COLOR visual for the pixmap
  * \returns new XMesaBuffer or NULL if error
  */
-XMesaBuffer
+PUBLIC XMesaBuffer
 XMesaCreatePixmapBuffer(XMesaVisual v, XMesaPixmap p, XMesaColormap cmap)
 {
    int client = 0;
@@ -1802,7 +1806,7 @@ XMesaCreatePBuffer(XMesaVisual v, XMesaColormap cmap,
 /*
  * Deallocate an XMesaBuffer structure and all related info.
  */
-void
+PUBLIC void
 XMesaDestroyBuffer(XMesaBuffer b)
 {
    xmesa_free_buffer(b);
@@ -1845,6 +1849,7 @@ GLboolean XMesaMakeCurrent( XMesaContext c, XMesaBuffer b )
 /*
  * Bind buffer b to context c and make c the current rendering context.
  */
+PUBLIC
 GLboolean XMesaMakeCurrent2( XMesaContext c, XMesaBuffer drawBuffer,
                              XMesaBuffer readBuffer )
 {
@@ -1958,6 +1963,8 @@ XMesaBuffer XMesaGetCurrentReadBuffer( void )
 }
 
 
+#ifdef XFree86Server
+PUBLIC
 GLboolean XMesaForceCurrent(XMesaContext c)
 {
    if (c) {
@@ -1976,6 +1983,7 @@ GLboolean XMesaForceCurrent(XMesaContext c)
 }
 
 
+PUBLIC
 GLboolean XMesaLoseCurrent(XMesaContext c)
 {
    (void) c;
@@ -1984,11 +1992,13 @@ GLboolean XMesaLoseCurrent(XMesaContext c)
 }
 
 
+PUBLIC
 GLboolean XMesaCopyContext( XMesaContext xm_src, XMesaContext xm_dst, GLuint mask )
 {
    _mesa_copy_context(&xm_src->mesa, &xm_dst->mesa, mask);
    return GL_TRUE;
 }
+#endif /* XFree86Server */
 
 
 /*
@@ -2135,6 +2145,7 @@ static void FXgetImage( XMesaBuffer b )
  * Copy the back buffer to the front buffer.  If there's no back buffer
  * this is a no-op.
  */
+PUBLIC
 void XMesaSwapBuffers( XMesaBuffer b )
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -2475,7 +2486,7 @@ unsigned long XMesaDitherColor( XMesaContext xmesa, GLint x, GLint y,
  * This is typically called when the window size changes and we need
  * to reallocate the buffer's back/depth/stencil/accum buffers.
  */
-void
+PUBLIC void
 XMesaResizeBuffers( XMesaBuffer b )
 {
    GET_CURRENT_CONTEXT(ctx);

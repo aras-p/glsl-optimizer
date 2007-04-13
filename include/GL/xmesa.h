@@ -180,6 +180,21 @@ extern XMesaContext XMesaCreateContext( XMesaVisual v,
 extern void XMesaDestroyContext( XMesaContext c );
 
 
+#ifdef XFree86Server
+/*
+ * These are the extra routines required for integration with XFree86.
+ * None of these routines should be user visible. -KEM
+ */
+extern GLboolean XMesaForceCurrent( XMesaContext c );
+
+extern GLboolean XMesaLoseCurrent( XMesaContext c );
+
+extern GLboolean XMesaCopyContext( XMesaContext src,
+				   XMesaContext dst,
+				   GLuint mask );
+#endif /* XFree86Server */
+
+
 /*
  * Create an XMesaBuffer from an X window.
  */
