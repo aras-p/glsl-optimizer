@@ -386,7 +386,7 @@ typedef struct {
 /* (as used in the GLX_OML_sync_control extension). */
 #if defined(__STDC_VERSION__) && __STDC_VERSION__ >= 199901L
 #include <inttypes.h>
-#elif defined(__sun__)
+#elif defined(__sun__) || defined(__digital__)
 #include <inttypes.h>
 #if defined(__STDC__)
 #if defined(__arch64__)
