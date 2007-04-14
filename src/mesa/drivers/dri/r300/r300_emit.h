@@ -162,7 +162,7 @@ static __inline__ uint32_t cmdpacify(void)
 				cmd_written, cmd_reserved);		\
 			exit(-1);					\
 		}							\
-	} while(0);
+	} while(0)
 
 #define	efloat(f) e32(r300PackFloat32(f))
 
