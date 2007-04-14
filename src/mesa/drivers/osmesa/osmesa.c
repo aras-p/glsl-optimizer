@@ -1,8 +1,8 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.5.1
+ * Version:  6.5.3
  *
- * Copyright (C) 1999-2006  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2007  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -1041,6 +1041,7 @@ new_osmesa_renderbuffer(GLcontext *ctx, GLenum format, GLenum type)
    const GLuint name = 0;
    struct gl_renderbuffer *rb = _mesa_new_renderbuffer(ctx, name);
    if (rb) {
+      rb->RefCount = 1;
       rb->Delete = osmesa_delete_renderbuffer;
       rb->AllocStorage = osmesa_renderbuffer_storage;
 
@@ -1237,6 +1238,7 @@ OSMesaCreateContextExt( GLenum format, GLint depthBits, GLint stencilBits,
       /* create front color buffer in user-provided memory (no back buffer) */
       osmesa->rb = new_osmesa_renderbuffer(&osmesa->mesa, format, type);
       _mesa_add_renderbuffer(osmesa->gl_buffer, BUFFER_FRONT_LEFT, osmesa->rb);
+      assert(osmesa->rb->RefCount == 2);
                         
       _mesa_add_soft_renderbuffers(osmesa->gl_buffer,
                                    GL_FALSE, /* color */
@@ -1297,6 +1299,9 @@ GLAPI void GLAPIENTRY
 OSMesaDestroyContext( OSMesaContext osmesa )
 {
    if (osmesa) {
+      if (osmesa->rb)
+         _mesa_reference_renderbuffer(&osmesa->rb, NULL);
+
       _swsetup_DestroyContext( &osmesa->mesa );
       _tnl_DestroyContext( &osmesa->mesa );
       _vbo_DestroyContext( &osmesa->mesa );
