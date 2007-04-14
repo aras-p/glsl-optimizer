@@ -37,8 +37,9 @@
  * Compute the bounds of the region resulting from zooming a pixel span.
  * The resulting region will be entirely inside the window/scissor bounds
  * so no additional clipping is needed.
- * \param imageX, imageY  position of the overall image being drawn
+ * \param imageX, imageY  position of the mage being drawn (gl WindowPos)
  * \param spanX, spanY  position of span being drawing
+ * \param width  number of pixels in span
  * \param x0, x1  returned X bounds of zoomed region [x0, x1)
  * \param y0, y1  returned Y bounds of zoomed region [y0, y1)
  * \return GL_TRUE if any zoomed pixels visible, GL_FALSE if totally clipped
@@ -98,7 +99,11 @@ compute_zoomed_bounds(GLcontext *ctx, GLint imageX, GLint imageY,
 
 
 /**
- * Can use this for unzooming X or Y values.
+ * Convert a zoomed x image coordinate back to an unzoomed x coord.
+ * 'zx' is screen position of a pixel in the zoomed image, who's left edge
+ * is at 'imageX'.
+ * return corresponding x coord in the original, unzoomed image.
+ * This can use this for unzooming X or Y values.
  */
 static INLINE GLint
 unzoom_x(GLfloat zoomX, GLint imageX, GLint zx)
@@ -108,7 +113,10 @@ unzoom_x(GLfloat zoomX, GLint imageX, GLint zx)
    zx - imageX = (x - imageX) * zoomX;
    (zx - imageX) / zoomX = x - imageX;
    */
-   GLint x = imageX + (GLint) ((zx - imageX) / zoomX);
+   GLint x;
+   if (zoomX < 0.0)
+      zx++;
+   x = imageX + (GLint) ((zx - imageX) / zoomX);
    return x;
 }
 
