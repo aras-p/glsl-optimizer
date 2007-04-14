@@ -1450,30 +1450,6 @@ _mesa_make_current( GLcontext *newCtx, GLframebuffer *drawBuffer,
       }
    }
 
-#if 0 /** XXX enable this someday */
-   if (oldCtx && oldCtx != newCtx) {
-      /* unbind old context's draw/read buffers */
-      if (oldCtx->DrawBuffer && oldCtx->DrawBuffer->Name == 0) {
-         oldCtx->DrawBuffer->RefCount--;
-         oldCtx->DrawBuffer = NULL;
-      }
-      if (oldCtx->ReadBuffer && oldCtx->ReadBuffer->Name == 0) {
-         oldCtx->ReadBuffer->RefCount--;
-         oldCtx->ReadBuffer = NULL;
-      }
-      if (oldCtx->WinSysDrawBuffer) {
-         ASSERT(oldCtx->WinSysDrawBuffer->Name == 0);
-         oldCtx->WinSysDrawBuffer->RefCount--;
-         oldCtx->WinSysDrawBuffer = NULL;
-      }
-      if (oldCtx->WinSysReadBuffer) {
-         ASSERT(oldCtx->WinSysReadBuffer->Name == 0);
-         oldCtx->WinSysReadBuffer->RefCount--;
-         oldCtx->WinSysReadBuffer = NULL;
-      }
-   }
-#endif
-
    /* We used to call _glapi_check_multithread() here.  Now do it in drivers */
    _glapi_set_context((void *) newCtx);
    ASSERT(_mesa_get_current_context() == newCtx);
@@ -1481,6 +1457,8 @@ _mesa_make_current( GLcontext *newCtx, GLframebuffer *drawBuffer,
    if (oldCtx) {
       _mesa_unreference_framebuffer(&oldCtx->WinSysDrawBuffer);
       _mesa_unreference_framebuffer(&oldCtx->WinSysReadBuffer);
+      _mesa_unreference_framebuffer(&oldCtx->DrawBuffer);
+      _mesa_unreference_framebuffer(&oldCtx->ReadBuffer);
    }
          
    if (!newCtx) {
