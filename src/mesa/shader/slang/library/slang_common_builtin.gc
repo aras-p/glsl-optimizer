@@ -1704,20 +1704,17 @@ vec4 texture2DRectProj(const sampler2DRect sampler, const vec3 coord)
 
 vec4 texture2DRectProj(const sampler2DRect sampler, const vec4 coord)
 {
-   // do projection here
-   vec4 pcoord;
-   pcoord.xy = coord.xy / coord.w;
-   __asm vec4_texp_rect __retVal, sampler, pcoord;
+   __asm vec4_texp_rect __retVal, sampler, ccoord;
 }
 
 vec4 shadow2DRect(const sampler2DRectShadow sampler, const vec3 coord)
 {
-// XXX to do
+   __asm vec4_tex_rect __retVal, sampler, coord;
 }
 
 vec4 shadow2DRectProj(const sampler2DRectShadow sampler, const vec4 coord)
 {
-// XXX to do
+   __asm vec4_texp_rect __retVal, sampler, coord;
 }
 
 
