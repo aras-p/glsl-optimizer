@@ -186,7 +186,10 @@ static void r300EmitClearState(GLcontext * ctx)
 		
 	R300_STATECHANGE(r300, vir[0]);
 	reg_start(R300_VAP_INPUT_ROUTE_0_0, 0);
-	e32(0x21030003);
+	if (!has_tcl)
+	  e32(0x22030003);
+	else
+	  e32(0x21030003);
 	
 	/* disable fog */
 	R300_STATECHANGE(r300, fogs);
@@ -201,7 +204,17 @@ static void r300EmitClearState(GLcontext * ctx)
 	reg_start(R300_VAP_INPUT_CNTL_0, 1);
 	e32(0x00000001);
 	e32(0x00000405);
-	
+
+	if (!has_tcl) {
+	  /* comes from fglrx startup of clear */
+	  reg_start(R300_SE_VTE_CNTL, 1);
+	  e32(0x043f);
+	  e32(0x8);
+	  
+	  reg_start(0x21dc, 0);
+	  e32(0xaaaaaaaa);
+	}
+
 	R300_STATECHANGE(r300, vof);
 	reg_start(R300_VAP_OUTPUT_VTX_FMT_0, 1);
 	e32(R300_VAP_OUTPUT_VTX_FMT_0__POS_PRESENT | R300_VAP_OUTPUT_VTX_FMT_0__COLOR_PRESENT);
