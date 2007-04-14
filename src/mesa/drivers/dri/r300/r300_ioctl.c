@@ -179,8 +179,11 @@ static void r300EmitClearState(GLcontext * ctx)
 	int cmd_reserved = 0;
 	int cmd_written = 0;
 	drm_radeon_cmd_header_t *cmd = NULL;
-	
-	
+	int has_tcl = 1;
+
+	if (!(r300->radeon.radeonScreen->chip_flags & RADEON_CHIPSET_TCL))
+ 	      has_tcl = 0;
+		
 	R300_STATECHANGE(r300, vir[0]);
 	reg_start(R300_VAP_INPUT_ROUTE_0_0, 0);
 	e32(0x21030003);
@@ -279,26 +282,28 @@ static void r300EmitClearState(GLcontext * ctx)
 	
 	reg_start(R300_PFS_INSTR3_0, 0);
 	e32(FP_SELA(0,NO,W,FP_TMP(0),0,0));
+
+	if (has_tcl) {
+	  R300_STATECHANGE(r300, pvs);
+	  reg_start(R300_VAP_PVS_CNTL_1, 2);
+	  e32((0 << R300_PVS_CNTL_1_PROGRAM_START_SHIFT) |
+	      (0 << R300_PVS_CNTL_1_POS_END_SHIFT) |
+	      (1 << R300_PVS_CNTL_1_PROGRAM_END_SHIFT));
+	  e32(0);
+	  e32(1 << R300_PVS_CNTL_3_PROGRAM_UNKNOWN_SHIFT);
+	  
+	  R300_STATECHANGE(r300, vpi);
+	  vsf_start_fragment(0x0, 8);
+	  e32(VP_OUT(ADD,OUT,0,XYZW));
+	  e32(VP_IN(IN,0));
+	  e32(VP_ZERO());
+	  e32(0);
 	
-	R300_STATECHANGE(r300, pvs);
-	reg_start(R300_VAP_PVS_CNTL_1, 2);
-	e32((0 << R300_PVS_CNTL_1_PROGRAM_START_SHIFT) |
-		(0 << R300_PVS_CNTL_1_POS_END_SHIFT) |
-		(1 << R300_PVS_CNTL_1_PROGRAM_END_SHIFT));
-	e32(0);
-	e32(1 << R300_PVS_CNTL_3_PROGRAM_UNKNOWN_SHIFT);
-	
-	R300_STATECHANGE(r300, vpi);
-	vsf_start_fragment(0x0, 8);
-	e32(VP_OUT(ADD,OUT,0,XYZW));
-	e32(VP_IN(IN,0));
-	e32(VP_ZERO());
-	e32(0);
-	
-	e32(VP_OUT(ADD,OUT,1,XYZW));
-	e32(VP_IN(IN,1));
-	e32(VP_ZERO());
-	e32(0);
+	  e32(VP_OUT(ADD,OUT,1,XYZW));
+	  e32(VP_IN(IN,1));
+	  e32(VP_ZERO());
+	  e32(0);
+	}
 	
 	/*reg_start(0x4500,0);
 	e32(2560-1);*/

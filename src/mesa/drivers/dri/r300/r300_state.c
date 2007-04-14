@@ -1660,18 +1660,7 @@ void r300SetupVertexShader(r300ContextPtr rmesa)
 		return ;
 	}
 
-/* This needs to be replaced by vertex shader generation code */
-
-
-#if 0
-	/* textures enabled ? */
-	if(rmesa->state.texture.tc_count>0){
-		rmesa->state.vertex_shader=SINGLE_TEXTURE_VERTEX_SHADER;
-		} else {
-		rmesa->state.vertex_shader=FLAT_COLOR_VERTEX_SHADER;
-		}
-#endif
-
+	/* This needs to be replaced by vertex shader generation code */
 	r300GenerateSimpleVertexShader(rmesa);
 
         rmesa->state.vertex_shader.matrix[0].length=16;
@@ -1805,7 +1794,8 @@ void r300UpdateShaderStates(r300ContextPtr rmesa)
 	r300SetupPixelShader(rmesa);
 	r300_setup_textures(ctx);
 
-	r300SetupVertexShader(rmesa);
+	if ((rmesa->radeon.radeonScreen->chip_flags & RADEON_CHIPSET_TCL))
+	  r300SetupVertexShader(rmesa);
 	r300_setup_rs_unit(ctx);
 }
 
@@ -1938,6 +1928,10 @@ static void r300InvalidateState(GLcontext * ctx, GLuint new_state)
 void r300ResetHwState(r300ContextPtr r300)
 {
 	GLcontext* ctx = r300->radeon.glCtx;
+	int has_tcl = 1;
+
+	if (!(r300->radeon.radeonScreen->chip_flags & RADEON_CHIPSET_TCL))
+ 	      has_tcl = 0;
 
 	if (RADEON_DEBUG & DEBUG_STATE)
 		fprintf(stderr, "%s\n", __FUNCTION__);
@@ -2005,7 +1999,7 @@ void r300ResetHwState(r300ContextPtr r300)
 		/* Initialize magic registers
 		 TODO : learn what they really do, or get rid of
 		 those we don't have to touch */
-	if (!(r300->radeon.radeonScreen->chip_flags & RADEON_CHIPSET_TCL))
+	if (!has_tcl)
 		r300->hw.vap_cntl.cmd[1] = 0x0014045a;
 	else
 		r300->hw.vap_cntl.cmd[1] = 0x0030045A; //0x0030065a /* Dangerous */
@@ -2026,7 +2020,7 @@ void r300ResetHwState(r300ContextPtr r300)
 		r300->hw.vap_cntl_status.cmd[1] = 0x00000002;
 
 	/* disable VAP/TCL on non-TCL capable chips */
-	if (!(r300->radeon.radeonScreen->chip_flags & RADEON_CHIPSET_TCL))
+	if (!has_tcl)
 		r300->hw.vap_cntl_status.cmd[1] |= R300_VAP_TCL_BYPASS;
 
 #if 0 /* Done in setup routing */
@@ -2272,10 +2266,12 @@ void r300ResetHwState(r300ContextPtr r300)
 		r300->hw.vpp.cmd[i] = 0;
 #endif
 
-	r300->hw.vps.cmd[R300_VPS_ZERO_0] = 0;
-	r300->hw.vps.cmd[R300_VPS_ZERO_1] = 0;
-	r300->hw.vps.cmd[R300_VPS_POINTSIZE] = r300PackFloat32(1.0);
-	r300->hw.vps.cmd[R300_VPS_ZERO_3] = 0;
+	if (has_tcl) {
+	  r300->hw.vps.cmd[R300_VPS_ZERO_0] = 0;
+	  r300->hw.vps.cmd[R300_VPS_ZERO_1] = 0;
+	  r300->hw.vps.cmd[R300_VPS_POINTSIZE] = r300PackFloat32(1.0);
+	  r300->hw.vps.cmd[R300_VPS_ZERO_3] = 0;
+	}
 
 //END: TODO
 	r300->hw.all_dirty = GL_TRUE;

@@ -281,7 +281,11 @@ CHECK( vpu, vpu_count(atom->cmd) ? (1 + vpu_count(atom->cmd)*4) : 0 )
 void r300InitCmdBuf(r300ContextPtr r300)
 {
 	int size, mtu;
-	
+	int has_tcl = 1;
+
+	if (!(r300->radeon.radeonScreen->chip_flags & RADEON_CHIPSET_TCL))
+ 	      has_tcl = 0;
+
 	r300->hw.max_state_size = 2+2; /* reserve extra space for WAIT_IDLE and tex cache flush */
 
 	mtu = r300->radeon.glCtx->Const.MaxTextureUnits;
@@ -291,33 +295,37 @@ void r300InitCmdBuf(r300ContextPtr r300)
 
 	/* Initialize state atoms */
 	ALLOC_STATE( vpt, always, R300_VPT_CMDSIZE, "vpt", 0 );
-		r300->hw.vpt.cmd[R300_VPT_CMD_0] = cmdpacket0(R300_SE_VPORT_XSCALE, 6);
+	r300->hw.vpt.cmd[R300_VPT_CMD_0] = cmdpacket0(R300_SE_VPORT_XSCALE, 6);
 	ALLOC_STATE( vap_cntl, always, 2, "vap_cntl", 0 );
-		r300->hw.vap_cntl.cmd[0] = cmdpacket0(R300_VAP_CNTL, 1);
+	r300->hw.vap_cntl.cmd[0] = cmdpacket0(R300_VAP_CNTL, 1);
 	ALLOC_STATE( vte, always, 3, "vte", 0 );
-		r300->hw.vte.cmd[0] = cmdpacket0(R300_SE_VTE_CNTL, 2);
+	r300->hw.vte.cmd[0] = cmdpacket0(R300_SE_VTE_CNTL, 2);
 	ALLOC_STATE( unk2134, always, 3, "unk2134", 0 );
-		r300->hw.unk2134.cmd[0] = cmdpacket0(0x2134, 2);
+	r300->hw.unk2134.cmd[0] = cmdpacket0(0x2134, 2);
 	ALLOC_STATE( vap_cntl_status, always, 2, "vap_cntl_status", 0 );
-		r300->hw.vap_cntl_status.cmd[0] = cmdpacket0(R300_VAP_CNTL_STATUS, 1);
+	r300->hw.vap_cntl_status.cmd[0] = cmdpacket0(R300_VAP_CNTL_STATUS, 1);
 	ALLOC_STATE( vir[0], variable, R300_VIR_CMDSIZE, "vir/0", 0 );
-		r300->hw.vir[0].cmd[R300_VIR_CMD_0] = cmdpacket0(R300_VAP_INPUT_ROUTE_0_0, 1);
+	r300->hw.vir[0].cmd[R300_VIR_CMD_0] = cmdpacket0(R300_VAP_INPUT_ROUTE_0_0, 1);
 	ALLOC_STATE( vir[1], variable, R300_VIR_CMDSIZE, "vir/1", 1 );
-		r300->hw.vir[1].cmd[R300_VIR_CMD_0] = cmdpacket0(R300_VAP_INPUT_ROUTE_1_0, 1);
+	r300->hw.vir[1].cmd[R300_VIR_CMD_0] = cmdpacket0(R300_VAP_INPUT_ROUTE_1_0, 1);
 	ALLOC_STATE( vic, always, R300_VIC_CMDSIZE, "vic", 0 );
-		r300->hw.vic.cmd[R300_VIC_CMD_0] = cmdpacket0(R300_VAP_INPUT_CNTL_0, 2);
+	r300->hw.vic.cmd[R300_VIC_CMD_0] = cmdpacket0(R300_VAP_INPUT_CNTL_0, 2);
 	ALLOC_STATE( unk21DC, always, 2, "unk21DC", 0 );
-		r300->hw.unk21DC.cmd[0] = cmdpacket0(0x21DC, 1);
+	r300->hw.unk21DC.cmd[0] = cmdpacket0(0x21DC, 1);
 	ALLOC_STATE( unk221C, always, 2, "unk221C", 0 );
-		r300->hw.unk221C.cmd[0] = cmdpacket0(R300_VAP_UNKNOWN_221C, 1);
+	r300->hw.unk221C.cmd[0] = cmdpacket0(R300_VAP_UNKNOWN_221C, 1);
 	ALLOC_STATE( unk2220, always, 5, "unk2220", 0 );
-		r300->hw.unk2220.cmd[0] = cmdpacket0(0x2220, 4);
+	r300->hw.unk2220.cmd[0] = cmdpacket0(0x2220, 4);
 	ALLOC_STATE( unk2288, always, 2, "unk2288", 0 );
-		r300->hw.unk2288.cmd[0] = cmdpacket0(R300_VAP_UNKNOWN_2288, 1);
+	r300->hw.unk2288.cmd[0] = cmdpacket0(R300_VAP_UNKNOWN_2288, 1);
 	ALLOC_STATE( vof, always, R300_VOF_CMDSIZE, "vof", 0 );
-		r300->hw.vof.cmd[R300_VOF_CMD_0] = cmdpacket0(R300_VAP_OUTPUT_VTX_FMT_0, 2);
-	ALLOC_STATE( pvs, always, R300_PVS_CMDSIZE, "pvs", 0 );
-		r300->hw.pvs.cmd[R300_PVS_CMD_0] = cmdpacket0(R300_VAP_PVS_CNTL_1, 3);
+	r300->hw.vof.cmd[R300_VOF_CMD_0] = cmdpacket0(R300_VAP_OUTPUT_VTX_FMT_0, 2);
+	
+	if (has_tcl) {
+	  ALLOC_STATE( pvs, always, R300_PVS_CMDSIZE, "pvs", 0 );
+	  r300->hw.pvs.cmd[R300_PVS_CMD_0] = cmdpacket0(R300_VAP_PVS_CNTL_1, 3);
+	}
+
 	ALLOC_STATE( gb_enable, always, 2, "gb_enable", 0 );
 		r300->hw.gb_enable.cmd[0] = cmdpacket0(R300_GB_ENABLE, 1);
 	ALLOC_STATE( gb_misc, always, R300_GB_MISC_CMDSIZE, "gb_misc", 0 );
@@ -407,51 +415,54 @@ void r300InitCmdBuf(r300ContextPtr r300)
 	ALLOC_STATE( zs, always, R300_ZS_CMDSIZE, "zstencil", 0 );
 		r300->hw.zs.cmd[R300_ZS_CMD_0] = cmdpacket0(R300_RB3D_ZSTENCIL_CNTL_0, 3);
 	ALLOC_STATE( zstencil_format, always, 5, "zstencil_format", 0 );
-		r300->hw.zstencil_format.cmd[0] = cmdpacket0(R300_RB3D_ZSTENCIL_FORMAT, 4);
+	r300->hw.zstencil_format.cmd[0] = cmdpacket0(R300_RB3D_ZSTENCIL_FORMAT, 4);
 	ALLOC_STATE( zb, always, R300_ZB_CMDSIZE, "zb", 0 );
-		r300->hw.zb.cmd[R300_ZB_CMD_0] = cmdpacket0(R300_RB3D_DEPTHOFFSET, 2);
+	r300->hw.zb.cmd[R300_ZB_CMD_0] = cmdpacket0(R300_RB3D_DEPTHOFFSET, 2);
 	ALLOC_STATE( unk4F28, always, 2, "unk4F28", 0 );
-		r300->hw.unk4F28.cmd[0] = cmdpacket0(0x4F28, 1);
+	r300->hw.unk4F28.cmd[0] = cmdpacket0(0x4F28, 1);
 	ALLOC_STATE( unk4F30, always, 3, "unk4F30", 0 );
-		r300->hw.unk4F30.cmd[0] = cmdpacket0(0x4F30, 2);
+	r300->hw.unk4F30.cmd[0] = cmdpacket0(0x4F30, 2);
 	ALLOC_STATE( unk4F44, always, 2, "unk4F44", 0 );
-		r300->hw.unk4F44.cmd[0] = cmdpacket0(0x4F44, 1);
+	r300->hw.unk4F44.cmd[0] = cmdpacket0(0x4F44, 1);
 	ALLOC_STATE( unk4F54, always, 2, "unk4F54", 0 );
-		r300->hw.unk4F54.cmd[0] = cmdpacket0(0x4F54, 1);
+	r300->hw.unk4F54.cmd[0] = cmdpacket0(0x4F54, 1);
 
-	ALLOC_STATE( vpi, vpu, R300_VPI_CMDSIZE, "vpi", 0 );
-		r300->hw.vpi.cmd[R300_VPI_CMD_0] = cmdvpu(R300_PVS_UPLOAD_PROGRAM, 0);
-	ALLOC_STATE( vpp, vpu, R300_VPP_CMDSIZE, "vpp", 0 );
-		r300->hw.vpp.cmd[R300_VPP_CMD_0] = cmdvpu(R300_PVS_UPLOAD_PARAMETERS, 0);
-	ALLOC_STATE( vps, vpu, R300_VPS_CMDSIZE, "vps", 0 );
-		r300->hw.vps.cmd[R300_VPS_CMD_0] = cmdvpu(R300_PVS_UPLOAD_POINTSIZE, 1);
+	/* VPU only on TCL */
+	if (has_tcl) {
+	  ALLOC_STATE( vpi, vpu, R300_VPI_CMDSIZE, "vpi", 0 );
+	  r300->hw.vpi.cmd[R300_VPI_CMD_0] = cmdvpu(R300_PVS_UPLOAD_PROGRAM, 0);
+	  ALLOC_STATE( vpp, vpu, R300_VPP_CMDSIZE, "vpp", 0 );
+	  r300->hw.vpp.cmd[R300_VPP_CMD_0] = cmdvpu(R300_PVS_UPLOAD_PARAMETERS, 0);
+	  ALLOC_STATE( vps, vpu, R300_VPS_CMDSIZE, "vps", 0 );
+	  r300->hw.vps.cmd[R300_VPS_CMD_0] = cmdvpu(R300_PVS_UPLOAD_POINTSIZE, 1);
+	}
 
 	/* Textures */
 	ALLOC_STATE( tex.filter, variable, mtu+1, "tex_filter", 0 );
-		r300->hw.tex.filter.cmd[R300_TEX_CMD_0] = cmdpacket0(R300_TX_FILTER_0, 0);
+	r300->hw.tex.filter.cmd[R300_TEX_CMD_0] = cmdpacket0(R300_TX_FILTER_0, 0);
 
 	ALLOC_STATE( tex.filter_1, variable, mtu+1, "tex_filter_1", 0 );
-		r300->hw.tex.filter_1.cmd[R300_TEX_CMD_0] = cmdpacket0(R300_TX_FILTER1_0, 0);
-
+	r300->hw.tex.filter_1.cmd[R300_TEX_CMD_0] = cmdpacket0(R300_TX_FILTER1_0, 0);
+	
 	ALLOC_STATE( tex.size, variable, mtu+1, "tex_size", 0 );
-		r300->hw.tex.size.cmd[R300_TEX_CMD_0] = cmdpacket0(R300_TX_SIZE_0, 0);
+	r300->hw.tex.size.cmd[R300_TEX_CMD_0] = cmdpacket0(R300_TX_SIZE_0, 0);
 
 	ALLOC_STATE( tex.format, variable, mtu+1, "tex_format", 0 );
-		r300->hw.tex.format.cmd[R300_TEX_CMD_0] = cmdpacket0(R300_TX_FORMAT_0, 0);
+	r300->hw.tex.format.cmd[R300_TEX_CMD_0] = cmdpacket0(R300_TX_FORMAT_0, 0);
 
 	ALLOC_STATE( tex.pitch, variable, mtu+1, "tex_pitch", 0 );
-		r300->hw.tex.pitch.cmd[R300_TEX_CMD_0] = cmdpacket0(R300_TX_PITCH_0, 0);
-
+	r300->hw.tex.pitch.cmd[R300_TEX_CMD_0] = cmdpacket0(R300_TX_PITCH_0, 0);
+	
 	ALLOC_STATE( tex.offset, variable, mtu+1, "tex_offset", 0 );
-		r300->hw.tex.offset.cmd[R300_TEX_CMD_0] = cmdpacket0(R300_TX_OFFSET_0, 0);
-
+	r300->hw.tex.offset.cmd[R300_TEX_CMD_0] = cmdpacket0(R300_TX_OFFSET_0, 0);
+	
 	ALLOC_STATE( tex.chroma_key, variable, mtu+1, "tex_chroma_key", 0 );
-		r300->hw.tex.chroma_key.cmd[R300_TEX_CMD_0] = cmdpacket0(R300_TX_CHROMA_KEY_0, 0);
-
+	r300->hw.tex.chroma_key.cmd[R300_TEX_CMD_0] = cmdpacket0(R300_TX_CHROMA_KEY_0, 0);
+	
 	ALLOC_STATE( tex.border_color, variable, mtu+1, "tex_border_color", 0 );
-		r300->hw.tex.border_color.cmd[R300_TEX_CMD_0] = cmdpacket0(R300_TX_BORDER_COLOR_0, 0);
-
-
+	r300->hw.tex.border_color.cmd[R300_TEX_CMD_0] = cmdpacket0(R300_TX_BORDER_COLOR_0, 0);
+	
+	
 	/* Setup the atom linked list */
 	make_empty_list(&r300->hw.atomlist);
 	r300->hw.atomlist.name = "atom-list";
@@ -469,7 +480,9 @@ void r300InitCmdBuf(r300ContextPtr r300)
 	insert_at_tail(&r300->hw.atomlist, &r300->hw.unk2220);
 	insert_at_tail(&r300->hw.atomlist, &r300->hw.unk2288);
 	insert_at_tail(&r300->hw.atomlist, &r300->hw.vof);
-	insert_at_tail(&r300->hw.atomlist, &r300->hw.pvs);
+
+	if (has_tcl)
+	  insert_at_tail(&r300->hw.atomlist, &r300->hw.pvs);
 	insert_at_tail(&r300->hw.atomlist, &r300->hw.gb_enable);
 	insert_at_tail(&r300->hw.atomlist, &r300->hw.gb_misc);
 	insert_at_tail(&r300->hw.atomlist, &r300->hw.txe);
@@ -520,9 +533,11 @@ void r300InitCmdBuf(r300ContextPtr r300)
 	insert_at_tail(&r300->hw.atomlist, &r300->hw.unk4F44);
 	insert_at_tail(&r300->hw.atomlist, &r300->hw.unk4F54);
 
-	insert_at_tail(&r300->hw.atomlist, &r300->hw.vpi);
-	insert_at_tail(&r300->hw.atomlist, &r300->hw.vpp);
-	insert_at_tail(&r300->hw.atomlist, &r300->hw.vps);
+	if (has_tcl) {
+	  insert_at_tail(&r300->hw.atomlist, &r300->hw.vpi);
+	  insert_at_tail(&r300->hw.atomlist, &r300->hw.vpp);
+	  insert_at_tail(&r300->hw.atomlist, &r300->hw.vps);
+	}
 
 	insert_at_tail(&r300->hw.atomlist, &r300->hw.tex.filter);
 	insert_at_tail(&r300->hw.atomlist, &r300->hw.tex.filter_1);
