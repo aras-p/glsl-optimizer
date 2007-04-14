@@ -1440,11 +1440,11 @@ _mesa_TexParameterfv( GLenum target, GLenum pname, const GLfloat *params )
          break;
       case GL_TEXTURE_BASE_LEVEL:
          if (params[0] < 0.0) {
-            _mesa_error(ctx, GL_INVALID_VALUE, "glTexParameter(param)" );
+            _mesa_error(ctx, GL_INVALID_VALUE, "glTexParameter(param)");
             return;
          }
-         if (target == GL_TEXTURE_RECTANGLE_NV && params[0] != 0.0) {
-            _mesa_error(ctx, GL_INVALID_VALUE, "glTexParameter(param)" );
+         if (target == GL_TEXTURE_RECTANGLE_ARB && params[0] != 0.0) {
+            _mesa_error(ctx, GL_INVALID_VALUE, "glTexParameter(param)");
             return;
          }
          FLUSH_VERTICES(ctx, _NEW_TEXTURE);
@@ -1452,7 +1452,11 @@ _mesa_TexParameterfv( GLenum target, GLenum pname, const GLfloat *params )
          break;
       case GL_TEXTURE_MAX_LEVEL:
          if (params[0] < 0.0) {
-            _mesa_error(ctx, GL_INVALID_VALUE, "glTexParameter(param)" );
+            _mesa_error(ctx, GL_INVALID_VALUE, "glTexParameter(param)");
+            return;
+         }
+         if (target == GL_TEXTURE_RECTANGLE_ARB) {
+            _mesa_error(ctx, GL_INVALID_OPERATION, "glTexParameter(param)");
             return;
          }
          FLUSH_VERTICES(ctx, _NEW_TEXTURE);
