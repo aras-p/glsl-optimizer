@@ -151,6 +151,8 @@ alloc_temp_storage(slang_emit_info *emitInfo, slang_ir_node *n, GLint size)
    if (!_slang_alloc_temp(emitInfo->vt, n->Store)) {
       slang_info_log_error(emitInfo->log,
                            "Ran out of registers, too many temporaries");
+      _mesa_free(n->Store);
+      n->Store = NULL;
       return GL_FALSE;
    }
    return GL_TRUE;
@@ -895,7 +897,11 @@ emit_tex(slang_emit_info *emitInfo, slang_ir_node *n)
 
    /* Child[0] is the sampler (a uniform which'll indicate the texture unit) */
    assert(n->Children[0]->Store);
+   /* Store->Index is the sampler index */
+   assert(n->Children[0]->Store->Index >= 0);
+   /* Store->Size is the texture target */
    assert(n->Children[0]->Store->Size >= TEXTURE_1D_INDEX);
+   assert(n->Children[0]->Store->Size <= TEXTURE_RECT_INDEX);
 
    inst->Sampler = n->Children[0]->Store->Index; /* i.e. uniform's index */
    inst->TexSrcTarget = n->Children[0]->Store->Size;
@@ -913,16 +919,25 @@ emit_move(slang_emit_info *emitInfo, slang_ir_node *n)
 
    /* lhs */
    emit(emitInfo, n->Children[0]);
+   if (!n->Children[0]->Store || n->Children[0]->Store->Index < 0) {
+      /* an error should have been already recorded */
+      return NULL;
+   }
 
    /* rhs */
    assert(n->Children[1]);
    inst = emit(emitInfo, n->Children[1]);
 
-   if (!n->Children[1]->Store) {
-      slang_info_log_error(emitInfo->log, "invalid assignment");
+   if (!n->Children[1]->Store || n->Children[1]->Store->Index < 0) {
+      if (!emitInfo->log->text) {
+         slang_info_log_error(emitInfo->log, "invalid assignment");
+      }
       return NULL;
    }
+
    assert(n->Children[1]->Store->Index >= 0);
+
+   /*assert(n->Children[0]->Store->Size == n->Children[1]->Store->Size);*/
 
    n->Store = n->Children[0]->Store;
 
@@ -1567,9 +1582,9 @@ emit(slang_emit_info *emitInfo, slang_ir_node *n)
       }
 
       if (n->Store->Index < 0) {
-         printf("#### VAR %s not allocated!\n", (char*)n->Var->a_name);
+         /* probably ran out of registers */
+         return NULL;
       }
-      assert(n->Store->Index >= 0);
       assert(n->Store->Size > 0);
       break;
 
