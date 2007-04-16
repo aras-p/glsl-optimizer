@@ -7,151 +7,136 @@
  * Daniel Borca
  */
 
-
+#define GL_GLEXT_PROTOTYPES
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
 #include <GL/glut.h>
 
-#include "readtex.h"
+#define DEPTH 5.0f
 
-#define TEXTURE_FILE "../images/bw.rgb"
+static PFNGLFOGCOORDFEXTPROC glFogCoordf_ext;
+static PFNGLFOGCOORDPOINTEREXTPROC glFogCoordPointer_ext;
 
-#define ARRAYS 0     /* use glDrawElements   */
-
-#define VERBOSE 1    /* tell me what happens */
-
-#define DEPTH 15.0f
-
-#if !defined(GLAPIENTRYP)
-#    define GLAPIENTRYP *
-#endif
-
-typedef void (GLAPIENTRYP GLFOGCOORDFEXTPROC) (GLfloat f);
-typedef void (GLAPIENTRYP GLFOGCOORDPOINTEREXTPROC) (GLenum, GLsizei, const GLvoid *);
-
-static GLFOGCOORDFEXTPROC glFogCoordf_ext;
-#if ARRAYS
-static GLFOGCOORDPOINTEREXTPROC glFogCoordPointer_ext;
-#endif
 static GLboolean have_fog_coord;
 
 static GLfloat camz;
-static GLuint texture[1];
 
 static GLint fogMode;
 static GLboolean fogCoord;
 static GLfloat fogDensity = 0.75;
-static GLfloat fogStart = 1.0, fogEnd = 40.0;
+static GLfloat fogStart = 1.0, fogEnd = DEPTH;
 static GLfloat fogColor[4] = {0.6f, 0.3f, 0.0f, 1.0f};
+static const char *ModeStr = NULL;
+static GLboolean Arrays = GL_FALSE;
+static GLboolean Texture = GL_TRUE;
 
 
-static void APIENTRY glFogCoordf_nop (GLfloat f)
+static void
+Reset(void)
+{
+   fogMode = 1;
+   fogCoord = 1;
+   fogDensity = 0.75;
+   fogStart = 1.0;
+   fogEnd = DEPTH;
+   Arrays = GL_FALSE;
+   Texture = GL_TRUE;
+}
+
+
+static void APIENTRY
+glFogCoordf_nop (GLfloat f)
 {
    (void)f;
 }
 
 
-static int BuildTexture (const char *filename, GLuint texid[])
+static void
+PrintString(const char *s)
 {
-   GLubyte *tex_data;
-   GLenum tex_format;
-   GLint tex_width, tex_height;
-
-   tex_data = LoadRGBImage(filename, &tex_width, &tex_height, &tex_format);
-   if (tex_data == NULL) {
-      return -1;
+   while (*s) {
+      glutBitmapCharacter(GLUT_BITMAP_8_BY_13, (int) *s);
+      s++;
    }
-
-   {
-      GLint tex_max;
-      glGetIntegerv(GL_MAX_TEXTURE_SIZE, &tex_max);
-      if ((tex_width > tex_max) || (tex_height > tex_max)) {
-         return -1;
-      }
-   }
-
-   glGenTextures(1, texid);
-   
-   glBindTexture(GL_TEXTURE_2D, texid[0]);
-   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-
-   glTexImage2D(GL_TEXTURE_2D, 0, tex_format, tex_width, tex_height, 0,
-                tex_format, GL_UNSIGNED_BYTE, tex_data);
-
-   return 0;
 }
 
 
-static int SetFogMode (GLint fogMode)
+static void
+PrintInfo(void)
+{
+   char s[100];
+
+   glDisable(GL_FOG);
+   glColor3f(0, 1, 1);
+
+   sprintf(s, "Mode(m): %s  Start(s/S): %g  End(e/E): %g  Density(d/D): %g",
+           ModeStr, fogStart, fogEnd, fogDensity);
+   glWindowPos2iARB(5, 20);
+   PrintString(s);
+
+   sprintf(s, "Arrays(a): %s  glFogCoord(c): %s  EyeZ(z/z): %g",
+           (Arrays ? "Yes" : "No"),
+           (fogCoord ? "Yes" : "No"),
+           camz);
+   glWindowPos2iARB(5, 5);
+   PrintString(s);
+}
+
+
+static int
+SetFogMode(GLint fogMode)
 {
    fogMode &= 3;
    switch (fogMode) {
    case 0:
+      ModeStr = "Off";
       glDisable(GL_FOG);
-#if VERBOSE
-      printf("fog(disable)\n");
-#endif
       break;
    case 1:
+      ModeStr = "GL_LINEAR";
       glEnable(GL_FOG);
       glFogi(GL_FOG_MODE, GL_LINEAR);
       glFogf(GL_FOG_START, fogStart);
       glFogf(GL_FOG_END, fogEnd);
-#if VERBOSE
-      printf("fog(GL_LINEAR, %.2f, %.2f)\n", fogStart, fogEnd);
-#endif
       break;
    case 2:
+      ModeStr = "GL_EXP";
       glEnable(GL_FOG);
       glFogi(GL_FOG_MODE, GL_EXP);
       glFogf(GL_FOG_DENSITY, fogDensity);
-#if VERBOSE
-      printf("fog(GL_EXP, %.2f)\n", fogDensity);
-#endif
       break;
    case 3:
+      ModeStr = "GL_EXP2";
       glEnable(GL_FOG);
       glFogi(GL_FOG_MODE, GL_EXP2);
       glFogf(GL_FOG_DENSITY, fogDensity);
-#if VERBOSE
-      printf("fog(GL_EXP2, %.2f)\n", fogDensity);
-#endif
       break;
    }
    return fogMode;
 }
 
 
-static GLboolean SetFogCoord (GLboolean fogCoord)
+static GLboolean
+SetFogCoord(GLboolean fogCoord)
 {
    glFogCoordf_ext = glFogCoordf_nop;
 
    if (!have_fog_coord) {
-#if VERBOSE
-      printf("fog(GL_FRAGMENT_DEPTH_EXT)%s\n", fogCoord ? " EXT_fog_coord not available!" : "");
-#endif
       return GL_FALSE;
    }
 
    if (fogCoord) {
-      glFogCoordf_ext = (GLFOGCOORDFEXTPROC)glutGetProcAddress("glFogCoordfEXT");
+      glFogCoordf_ext = (PFNGLFOGCOORDFEXTPROC)glutGetProcAddress("glFogCoordfEXT");
       glFogi(GL_FOG_COORDINATE_SOURCE_EXT, GL_FOG_COORDINATE_EXT);
-#if VERBOSE
-      printf("fog(GL_FOG_COORDINATE_EXT)\n");
-#endif
-   } else {
+   }
+   else {
       glFogi(GL_FOG_COORDINATE_SOURCE_EXT, GL_FRAGMENT_DEPTH_EXT);
-#if VERBOSE
-      printf("fog(GL_FRAGMENT_DEPTH_EXT)\n");
-#endif
    }
    return fogCoord;
 }
 
 
-#if ARRAYS
 /* could reuse vertices */
 static GLuint vertex_index[] = {
    /* Back */
@@ -172,19 +157,19 @@ static GLuint vertex_index[] = {
 
 static GLfloat vertex_pointer[][3] = {
    /* Back */
-   {-2.5f,-2.5f,-DEPTH}, { 2.5f,-2.5f,-DEPTH}, { 2.5f, 2.5f,-DEPTH}, {-2.5f, 2.5f,-DEPTH},
+   {-1.0f,-1.0f,-DEPTH}, { 1.0f,-1.0f,-DEPTH}, { 1.0f, 1.0f,-DEPTH}, {-1.0f, 1.0f,-DEPTH},
 
    /* Floor */
-   {-2.5f,-2.5f,-DEPTH}, { 2.5f,-2.5f,-DEPTH}, { 2.5f,-2.5f, DEPTH}, {-2.5f,-2.5f, DEPTH},
+   {-1.0f,-1.0f,-DEPTH}, { 1.0f,-1.0f,-DEPTH}, { 1.0f,-1.0f, 0.0}, {-1.0f,-1.0f, 0.0},
 
    /* Roof */
-   {-2.5f, 2.5f,-DEPTH}, { 2.5f, 2.5f,-DEPTH}, { 2.5f, 2.5f, DEPTH}, {-2.5f, 2.5f, DEPTH},
+   {-1.0f, 1.0f,-DEPTH}, { 1.0f, 1.0f,-DEPTH}, { 1.0f, 1.0f, 0.0}, {-1.0f, 1.0f, 0.0},
 
    /* Right */
-   { 2.5f,-2.5f, DEPTH}, { 2.5f, 2.5f, DEPTH}, { 2.5f, 2.5f,-DEPTH}, { 2.5f,-2.5f,-DEPTH},
+   { 1.0f,-1.0f, 0.0}, { 1.0f, 1.0f, 0.0}, { 1.0f, 1.0f,-DEPTH}, { 1.0f,-1.0f,-DEPTH},
 
    /* Left */
-   {-2.5f,-2.5f, DEPTH}, {-2.5f, 2.5f, DEPTH}, {-2.5f, 2.5f,-DEPTH}, {-2.5f,-2.5f,-DEPTH}
+   {-1.0f,-1.0f, 0.0}, {-1.0f, 1.0f, 0.0}, {-1.0f, 1.0f,-DEPTH}, {-1.0f,-1.0f,-DEPTH}
 };
 
 static GLfloat texcoord_pointer[][2] = {
@@ -192,118 +177,139 @@ static GLfloat texcoord_pointer[][2] = {
    {0.0f, 0.0f}, {1.0f, 0.0f}, {1.0f, 1.0f}, {0.0f, 1.0f},
 
    /* Floor */
-   {0.0f, 0.0f}, {1.0f, 0.0f}, {1.0f, 1.0f}, {0.0f, 1.0f},
+   {0.0f, 0.0f}, {1.0f, 0.0f}, {1.0f, DEPTH}, {0.0f, DEPTH},
 
    /* Roof */
-   {0.0f, 0.0f}, {1.0f, 0.0f}, {1.0f, 1.0f}, {0.0f, 1.0f},
+   {1.0f, 0.0f}, {0.0f, 0.0f}, {0.0f, DEPTH}, {1.0f, DEPTH},
 
    /* Right */
-   {0.0f, 0.0f}, {0.0f, 1.0f}, {1.0f, 1.0f}, {1.0f, 0.0f},
+   {0.0f, 1.0f}, {0.0f, 0.0f}, {DEPTH, 0.0f}, {DEPTH, 1.0f},
 
    /* Left */
-   {0.0f, 0.0f}, {0.0f, 1.0f}, {1.0f, 1.0f}, {1.0f, 0.0f}
+   {0.0f, 0.0f}, {0.0f, 1.0f}, {DEPTH, 1.0f}, {DEPTH, 0.0f}
 };
 
-static GLfloat fogcoord_pointer[][1] = {
+static GLfloat fogcoord_pointer[] = {
    /* Back */
-   {1.0f}, {1.0f}, {1.0f}, {1.0f},
+   DEPTH, DEPTH, DEPTH, DEPTH,
 
    /* Floor */
-   {1.0f}, {1.0f}, {0.0f}, {0.0f},
+   DEPTH, DEPTH, 0.0, 0.0,
 
    /* Roof */
-   {1.0f}, {1.0f}, {0.0f}, {0.0f},
+   DEPTH, DEPTH, 0.0, 0.0,
 
    /* Right */
-   {0.0f}, {0.0f}, {1.0f}, {1.0f},
+   0.0, 0.0, DEPTH, DEPTH,
 
    /* Left */
-   {0.0f}, {0.0f}, {1.0f}, {1.0f}
+   0.0, 0.0, DEPTH, DEPTH
 };
-#endif
 
 
-static void Display( void )
+static void
+Display( void )
 {
    glClear (GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
    glLoadIdentity ();
    
-   glTranslatef(0.0f, 0.0f, camz);
+   glTranslatef(0.0f, 0.0f, -camz);
 
-#if ARRAYS
-   glDrawElements(GL_QUADS, sizeof(vertex_index) / sizeof(vertex_index[0]), GL_UNSIGNED_INT, vertex_index);
-#else
-   /* Back */
-   glBegin(GL_QUADS);
-   glFogCoordf_ext(1.0f); glTexCoord2f(0.0f, 0.0f); glVertex3f(-2.5f,-2.5f,-DEPTH);
-   glFogCoordf_ext(1.0f); glTexCoord2f(1.0f, 0.0f); glVertex3f( 2.5f,-2.5f,-DEPTH);
-   glFogCoordf_ext(1.0f); glTexCoord2f(1.0f, 1.0f); glVertex3f( 2.5f, 2.5f,-DEPTH);
-   glFogCoordf_ext(1.0f); glTexCoord2f(0.0f, 1.0f); glVertex3f(-2.5f, 2.5f,-DEPTH);
-   glEnd();
+   SetFogMode(fogMode);
 
-   /* Floor */
-   glBegin(GL_QUADS);
-   glFogCoordf_ext(1.0f); glTexCoord2f(0.0f, 0.0f); glVertex3f(-2.5f,-2.5f,-DEPTH);
-   glFogCoordf_ext(1.0f); glTexCoord2f(1.0f, 0.0f); glVertex3f( 2.5f,-2.5f,-DEPTH);
-   glFogCoordf_ext(0.0f); glTexCoord2f(1.0f, 1.0f); glVertex3f( 2.5f,-2.5f, DEPTH);
-   glFogCoordf_ext(0.0f); glTexCoord2f(0.0f, 1.0f); glVertex3f(-2.5f,-2.5f, DEPTH);
-   glEnd();
+   glColor3f(1, 1, 1);
 
-   /* Roof */
-   glBegin(GL_QUADS);
-   glFogCoordf_ext(1.0f); glTexCoord2f(0.0f, 0.0f); glVertex3f(-2.5f, 2.5f,-DEPTH);
-   glFogCoordf_ext(1.0f); glTexCoord2f(1.0f, 0.0f); glVertex3f( 2.5f, 2.5f,-DEPTH);
-   glFogCoordf_ext(0.0f); glTexCoord2f(1.0f, 1.0f); glVertex3f( 2.5f, 2.5f, DEPTH);
-   glFogCoordf_ext(0.0f); glTexCoord2f(0.0f, 1.0f); glVertex3f(-2.5f, 2.5f, DEPTH);
-   glEnd();
+   if (Texture)
+      glEnable(GL_TEXTURE_2D);
 
-   /* Right */
-   glBegin(GL_QUADS);
-   glFogCoordf_ext(0.0f); glTexCoord2f(0.0f, 0.0f); glVertex3f( 2.5f,-2.5f, DEPTH);
-   glFogCoordf_ext(0.0f); glTexCoord2f(0.0f, 1.0f); glVertex3f( 2.5f, 2.5f, DEPTH);
-   glFogCoordf_ext(1.0f); glTexCoord2f(1.0f, 1.0f); glVertex3f( 2.5f, 2.5f,-DEPTH);
-   glFogCoordf_ext(1.0f); glTexCoord2f(1.0f, 0.0f); glVertex3f( 2.5f,-2.5f,-DEPTH);
-   glEnd();
+   if (Arrays) {
+      glEnableClientState(GL_VERTEX_ARRAY);
+      glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+      glDrawElements(GL_QUADS, sizeof(vertex_index) / sizeof(vertex_index[0]),
+                     GL_UNSIGNED_INT, vertex_index);
+      glDisableClientState(GL_VERTEX_ARRAY);
+      glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+   }
+   else {
+      /* Back */
+      glBegin(GL_QUADS);
+      glFogCoordf_ext(DEPTH); glTexCoord2f(0.0f, 0.0f); glVertex3f(-1.0f,-1.0f,-DEPTH);
+      glFogCoordf_ext(DEPTH); glTexCoord2f(1.0f, 0.0f); glVertex3f( 1.0f,-1.0f,-DEPTH);
+      glFogCoordf_ext(DEPTH); glTexCoord2f(1.0f, 1.0f); glVertex3f( 1.0f, 1.0f,-DEPTH);
+      glFogCoordf_ext(DEPTH); glTexCoord2f(0.0f, 1.0f); glVertex3f(-1.0f, 1.0f,-DEPTH);
+      glEnd();
 
-   /* Left */
-   glBegin(GL_QUADS);
-   glFogCoordf_ext(0.0f); glTexCoord2f(0.0f, 0.0f); glVertex3f(-2.5f,-2.5f, DEPTH);
-   glFogCoordf_ext(0.0f); glTexCoord2f(0.0f, 1.0f); glVertex3f(-2.5f, 2.5f, DEPTH);
-   glFogCoordf_ext(1.0f); glTexCoord2f(1.0f, 1.0f); glVertex3f(-2.5f, 2.5f,-DEPTH);
-   glFogCoordf_ext(1.0f); glTexCoord2f(1.0f, 0.0f); glVertex3f(-2.5f,-2.5f,-DEPTH);
-   glEnd();
-#endif
+      /* Floor */
+      glBegin(GL_QUADS);
+      glFogCoordf_ext(DEPTH); glTexCoord2f(0.0f, 0.0f); glVertex3f(-1.0f,-1.0f,-DEPTH);
+      glFogCoordf_ext(DEPTH); glTexCoord2f(1.0f, 0.0f); glVertex3f( 1.0f,-1.0f,-DEPTH);
+      glFogCoordf_ext(0.0f); glTexCoord2f(1.0f,  DEPTH); glVertex3f( 1.0f,-1.0f,0.0);
+      glFogCoordf_ext(0.0f); glTexCoord2f(0.0f,  DEPTH); glVertex3f(-1.0f,-1.0f,0.0);
+      glEnd();
+
+      /* Roof */
+      glBegin(GL_QUADS);
+      glFogCoordf_ext(DEPTH); glTexCoord2f(1.0f, 0.0f); glVertex3f(-1.0f, 1.0f,-DEPTH);
+      glFogCoordf_ext(DEPTH); glTexCoord2f(0.0f, 0.0f); glVertex3f( 1.0f, 1.0f,-DEPTH);
+      glFogCoordf_ext(0.0f); glTexCoord2f(0.0f, DEPTH); glVertex3f( 1.0f, 1.0f,0.0);
+      glFogCoordf_ext(0.0f); glTexCoord2f(1.0f, DEPTH); glVertex3f(-1.0f, 1.0f,0.0);
+      glEnd();
+
+      /* Right */
+      glBegin(GL_QUADS);
+      glFogCoordf_ext(0.0f); glTexCoord2f(0.0f, 1.0f); glVertex3f( 1.0f,-1.0f,0.0);
+      glFogCoordf_ext(0.0f); glTexCoord2f(0.0f, 0.0f); glVertex3f( 1.0f, 1.0f,0.0);
+      glFogCoordf_ext(DEPTH); glTexCoord2f(DEPTH, 0.0f); glVertex3f( 1.0f, 1.0f,-DEPTH);
+      glFogCoordf_ext(DEPTH); glTexCoord2f(DEPTH, 1.0f); glVertex3f( 1.0f,-1.0f,-DEPTH);
+      glEnd();
+
+      /* Left */
+      glBegin(GL_QUADS);
+      glFogCoordf_ext(0.0f); glTexCoord2f(0.0f, 0.0f); glVertex3f(-1.0f,-1.0f,0.0);
+      glFogCoordf_ext(0.0f); glTexCoord2f(0.0f, 1.0f); glVertex3f(-1.0f, 1.0f,0.0);
+      glFogCoordf_ext(DEPTH); glTexCoord2f(DEPTH, 1.0f); glVertex3f(-1.0f, 1.0f,-DEPTH);
+      glFogCoordf_ext(DEPTH); glTexCoord2f(DEPTH, 0.0f); glVertex3f(-1.0f,-1.0f,-DEPTH);
+      glEnd();
+   }
+
+   glDisable(GL_TEXTURE_2D);
+
+   PrintInfo();
 
    glutSwapBuffers();
 }
 
 
-static void Reshape( int width, int height )
+static void
+Reshape( int width, int height )
 {
    glViewport(0, 0, width, height);
    glMatrixMode(GL_PROJECTION);
    glLoadIdentity();
-   gluPerspective(45.0f, (GLfloat)(width)/(GLfloat)(height), 0.1f, 100.0f);
+   glFrustum(-1, 1, -1, 1, 1.0, 100);
    glMatrixMode(GL_MODELVIEW);
    glLoadIdentity();
 }
 
 
-static void Key( unsigned char key, int x, int y )
+static void
+Key( unsigned char key, int x, int y )
 {
    (void) x;
    (void) y;
    switch (key) {
+      case 'a':
+         Arrays = !Arrays;
+         break;
       case 'f':
+      case 'm':
          fogMode = SetFogMode(fogMode + 1);
          break;
-      case '+':
-         if (fogDensity < 1.0) {
-            fogDensity += 0.05;
-         }
+      case 'D':
+         fogDensity += 0.05;
          SetFogMode(fogMode);
          break;
-      case '-':
+      case 'd':
          if (fogDensity > 0.0) {
             fogDensity -= 0.05;
          }
@@ -311,30 +317,42 @@ static void Key( unsigned char key, int x, int y )
          break;
       case 's':
          if (fogStart > 0.0) {
-            fogStart -= 1.0;
+            fogStart -= 0.25;
          }
          SetFogMode(fogMode);
          break;
       case 'S':
-         if (fogStart < fogEnd) {
-            fogStart += 1.0;
+         if (fogStart < 100.0) {
+            fogStart += 0.25;
          }
          SetFogMode(fogMode);
          break;
       case 'e':
-         if (fogEnd > fogStart) {
-            fogEnd -= 1.0;
+         if (fogEnd > 0.0) {
+            fogEnd -= 0.25;
          }
          SetFogMode(fogMode);
          break;
       case 'E':
          if (fogEnd < 100.0) {
-            fogEnd += 1.0;
+            fogEnd += 0.25;
          }
          SetFogMode(fogMode);
          break;
       case 'c':
          fogCoord = SetFogCoord(fogCoord ^ GL_TRUE);
+         break;
+      case 't':
+         Texture = !Texture;
+         break;
+      case 'z':
+         camz -= 0.1;
+         break;
+      case 'Z':
+         camz += 0.1;
+         break;
+      case 'r':
+         Reset();
          break;
       case 27:
          exit(0);
@@ -344,37 +362,28 @@ static void Key( unsigned char key, int x, int y )
 }
 
 
-static void SpecialKey( int key, int x, int y )
+static void
+Init(void)
 {
-   (void) x;
-   (void) y;
-   switch (key) {
-      case GLUT_KEY_UP:
-         if (camz < (DEPTH - 1.0)) {
-            camz += 1.0f;
-         }
-         break;
-      case GLUT_KEY_DOWN:
-         if (camz > -19.0) {
-            camz -= 1.0f;
-         }
-         break;
-   }
-   glutPostRedisplay();
-}
+   static const GLubyte teximage[2][2][4] = {
+      { { 255, 255, 255, 255}, { 128, 128, 128, 255} },
+      { { 128, 128, 128, 255}, { 255, 255, 255, 255} }
+   };
 
+   printf("GL_RENDERER = %s\n", (char *) glGetString(GL_RENDERER));
 
-static void Init( void )
-{
    have_fog_coord = glutExtensionSupported("GL_EXT_fog_coord");
-
-   if (BuildTexture(TEXTURE_FILE, texture) == -1) {
-      exit(1);
+   if (!have_fog_coord) {
+      printf("GL_EXT_fog_coord not supported!\n");
    }
 
-   glEnable(GL_TEXTURE_2D);
-   glClearColor(0.0f, 0.0f, 0.0f, 0.5f);
-   glClearDepth(1.0f);
+   glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 2, 2, 0,
+                GL_RGBA, GL_UNSIGNED_BYTE, teximage);
+   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+
+   glClearColor(0.1f, 0.1f, 0.1f, 0.0f);
+
    glDepthFunc(GL_LEQUAL);
    glEnable(GL_DEPTH_TEST);
    glShadeModel(GL_SMOOTH);
@@ -383,11 +392,8 @@ static void Init( void )
    glFogfv(GL_FOG_COLOR, fogColor);
    glHint(GL_FOG_HINT, GL_NICEST);
    fogCoord = SetFogCoord(GL_TRUE); /* try to enable fog_coord */
-   fogMode = SetFogMode(2);         /* GL_EXP */
+   fogMode = SetFogMode(1);
 
-   camz = -19.0f;
-
-#if ARRAYS
    glEnableClientState(GL_VERTEX_ARRAY);
    glVertexPointer(3, GL_FLOAT, 0, vertex_pointer);
 
@@ -395,24 +401,24 @@ static void Init( void )
    glTexCoordPointer(2, GL_FLOAT, 0, texcoord_pointer);
 
    if (have_fog_coord) {
-      glFogCoordPointer_ext = (GLFOGCOORDPOINTEREXTPROC)glutGetProcAddress("glFogCoordPointerEXT");
+      glFogCoordPointer_ext = (PFNGLFOGCOORDPOINTEREXTPROC)glutGetProcAddress("glFogCoordPointerEXT");
       glEnableClientState(GL_FOG_COORDINATE_ARRAY_EXT);
       glFogCoordPointer_ext(GL_FLOAT, 0, fogcoord_pointer);
    }
-#endif
+
+   Reset();
 }
 
 
-int main( int argc, char *argv[] )
+int
+main( int argc, char *argv[] )
 {
    glutInit( &argc, argv );
-   glutInitWindowPosition( 0, 0 );
-   glutInitWindowSize( 640, 480 );
+   glutInitWindowSize( 600, 600 );
    glutInitDisplayMode( GLUT_RGB | GLUT_DOUBLE | GLUT_DEPTH );
    glutCreateWindow(argv[0]);
    glutReshapeFunc( Reshape );
    glutKeyboardFunc( Key );
-   glutSpecialFunc( SpecialKey );
    glutDisplayFunc( Display );
    Init();
    glutMainLoop();
