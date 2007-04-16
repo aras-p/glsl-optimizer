@@ -878,8 +878,18 @@ __driCreateNewScreen_20050727(__DRInativeDisplay * dpy, int scrn,
    static const __DRIversion ddx_expected = { 1, 5, 0 };
    static const __DRIversion dri_expected = { 4, 0, 0 };
    static const __DRIversion drm_expected = { 1, 7, 0 };
+   int tmpContextID;
+   GLuint tmpContext;
 
    dri_interface = interface;
+
+   if (!(*dri_interface->createContext)(dpy, modes->screen,
+					modes->fbconfigID, 
+					&tmpContextID, &tmpContext)) {
+       fprintf(stderr, "Could not create temporary context.\n");
+       return NULL;
+   }
+   DRM_LIGHT_LOCK(fd, &((drm_sarea_t *)pSAREA)->lock, tmpContext);
 
    if (!driCheckDriDdxDrmVersions2("i915",
                                    dri_version, &dri_expected,
@@ -892,6 +902,10 @@ __driCreateNewScreen_20050727(__DRInativeDisplay * dpy, int scrn,
                                   ddx_version, dri_version, drm_version,
                                   frame_buffer, pSAREA, fd,
                                   internal_api_version, &intelAPI);
+
+   DRM_UNLOCK(fd, &((drm_sarea_t *)pSAREA)->lock, tmpContext);
+   (void) (*dri_interface->destroyContext)(dpy, modes->screen, tmpContextID);
+
    if (psp != NULL) {
       I830DRIPtr dri_priv = (I830DRIPtr) psp->pDevPriv;
       *driver_modes = intelFillInModes(dri_priv->cpp * 8,
