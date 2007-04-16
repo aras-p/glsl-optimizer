@@ -1477,8 +1477,11 @@ validate_vertex_program( GLcontext *ctx, struct tnl_pipeline_stage *stage )
    struct arb_vp_machine *m = ARB_VP_MACHINE(stage);
    struct gl_vertex_program *program = ctx->VertexProgram._Current;
 
+   /* don't use this module since it only handles 12 temp regs */
+   /* Need to allocate more bits for register indexes, etc. */
+#define  FORCE_OLD 1
 #if FORCE_OLD
-   if (0 &&program) {
+   if (0) {
 #else
    if (program) {
 #endif
