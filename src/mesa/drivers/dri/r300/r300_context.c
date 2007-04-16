@@ -124,11 +124,8 @@ const struct dri_extension card_extensions[] = {
   {"GL_NV_blend_square",		NULL},
   {"GL_NV_vertex_program",		GL_NV_vertex_program_functions},
   {"GL_SGIS_generate_mipmap",		NULL},
-  {NULL,				NULL}
-};
-
-const struct dri_extension stencil_two_side[] = {
   {"GL_EXT_stencil_two_side",		GL_EXT_stencil_two_side_functions},
+  {NULL,				NULL}
 };
 
 extern struct tnl_pipeline_stage _r300_render_stage;
@@ -334,8 +331,8 @@ GLboolean r300CreateContext(const __GLcontextModes * glVisual,
 
 	driInitExtensions(ctx, card_extensions, GL_TRUE);
 
-	if (driQueryOptionb(&r300->radeon.optionCache, "disable_stencil_two_side") == 0)
-		driInitSingleExtension(ctx, stencil_two_side);
+	if (driQueryOptionb(&r300->radeon.optionCache, "disable_stencil_two_side"))
+           _mesa_disable_extension(ctx, "GL_EXT_stencil_two_side");
 
 	if (r300->radeon.glCtx->Mesa_DXTn && !driQueryOptionb (&r300->radeon.optionCache, "disable_s3tc")) {
 	  _mesa_enable_extension( ctx, "GL_EXT_texture_compression_s3tc" );
