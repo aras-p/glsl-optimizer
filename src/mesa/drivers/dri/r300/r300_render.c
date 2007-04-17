@@ -388,7 +388,6 @@ int r300Fallback(GLcontext *ctx)
 	struct r300_fragment_program *rp =
 		(struct r300_fragment_program *)
 		(char *)ctx->FragmentProgram._Current;
-	int i;
 
 	if (rp) {
 		if (!rp->translated)
