@@ -386,6 +386,45 @@ intelUpdateScreenFromSAREA(intelScreenPrivate * intelScreen,
       intelPrintSAREA(sarea);
 }
 
+GLboolean
+intelCreatePools(intelScreenPrivate *intelScreen)
+{
+   unsigned batchPoolSize = 1024*1024;
+   __DRIscreenPrivate * sPriv = intelScreen->driScrnPriv;
+
+   if (intelScreen->havePools)
+      return GL_TRUE;
+
+   batchPoolSize /= intelScreen->maxBatchSize;
+   intelScreen->regionPool = driDRMPoolInit(sPriv->fd);
+
+   if (!intelScreen->regionPool)
+      return GL_FALSE;
+
+   intelScreen->staticPool = driDRMStaticPoolInit(sPriv->fd);
+
+   if (!intelScreen->staticPool)
+      return GL_FALSE;
+
+   intelScreen->texPool = intelScreen->regionPool;
+
+   intelScreen->batchPool = driBatchPoolInit(sPriv->fd,
+                                             DRM_BO_FLAG_EXE |
+                                             DRM_BO_FLAG_MEM_TT |
+                                             DRM_BO_FLAG_MEM_LOCAL,
+                                             intelScreen->maxBatchSize, 
+					     batchPoolSize, 5);
+   if (!intelScreen->batchPool) {
+      fprintf(stderr, "Failed to initialize batch pool - possible incorrect agpgart installed\n");
+      return GL_FALSE;
+   }
+   
+   intel_recreate_static_regions(intelScreen);
+   intelScreen->havePools = GL_TRUE;
+
+   return GL_TRUE;
+}
+
 
 static GLboolean
 intelInitDriver(__DRIscreenPrivate * sPriv)
@@ -393,7 +432,6 @@ intelInitDriver(__DRIscreenPrivate * sPriv)
    intelScreenPrivate *intelScreen;
    I830DRIPtr gDRIPriv = (I830DRIPtr) sPriv->pDevPriv;
    drmI830Sarea *sarea;
-   unsigned batchPoolSize = 1024*1024;
 
    PFNGLXSCRENABLEEXTENSIONPROC glx_enable_extension =
       (PFNGLXSCRENABLEEXTENSIONPROC) (*dri_interface->
@@ -426,7 +464,6 @@ intelInitDriver(__DRIscreenPrivate * sPriv)
    intelScreen->deviceID = gDRIPriv->deviceID;
    if (intelScreen->deviceID == PCI_CHIP_I865_G)
       intelScreen->maxBatchSize = 4096;
-   batchPoolSize /= intelScreen->maxBatchSize;
 
    intelScreen->mem = gDRIPriv->mem;
    intelScreen->cpp = gDRIPriv->cpp;
@@ -517,31 +554,6 @@ intelInitDriver(__DRIscreenPrivate * sPriv)
       (*glx_enable_extension) (psc, "GLX_SGI_make_current_read");
    }
 
-   intelScreen->regionPool = driDRMPoolInit(sPriv->fd);
-
-   if (!intelScreen->regionPool)
-      return GL_FALSE;
-
-   intelScreen->staticPool = driDRMStaticPoolInit(sPriv->fd);
-
-   if (!intelScreen->staticPool)
-      return GL_FALSE;
-
-   intelScreen->texPool = intelScreen->regionPool;
-
-   intelScreen->batchPool = driBatchPoolInit(sPriv->fd,
-                                             DRM_BO_FLAG_EXE |
-                                             DRM_BO_FLAG_MEM_TT |
-                                             DRM_BO_FLAG_MEM_LOCAL,
-                                             intelScreen->maxBatchSize, 
-					     batchPoolSize, 5);
-   if (!intelScreen->batchPool) {
-      fprintf(stderr, "Failed to initialize batch pool - possible incorrect agpgart installed\n");
-      return GL_FALSE;
-   }
-
-   intel_recreate_static_regions(intelScreen);
-
    return GL_TRUE;
 }
 
@@ -553,9 +565,11 @@ intelDestroyScreen(__DRIscreenPrivate * sPriv)
 
    intelUnmapScreenRegions(intelScreen);
 
-   driPoolTakeDown(intelScreen->regionPool);
-   driPoolTakeDown(intelScreen->staticPool);
-   driPoolTakeDown(intelScreen->batchPool);
+   if (intelScreen->havePools) {
+      driPoolTakeDown(intelScreen->regionPool);
+      driPoolTakeDown(intelScreen->staticPool);
+      driPoolTakeDown(intelScreen->batchPool);
+   }
    FREE(intelScreen);
    sPriv->private = NULL;
 }
@@ -878,18 +892,8 @@ __driCreateNewScreen_20050727(__DRInativeDisplay * dpy, int scrn,
    static const __DRIversion ddx_expected = { 1, 5, 0 };
    static const __DRIversion dri_expected = { 4, 0, 0 };
    static const __DRIversion drm_expected = { 1, 7, 0 };
-   int tmpContextID;
-   GLuint tmpContext;
 
    dri_interface = interface;
-
-   if (!(*dri_interface->createContext)(dpy, modes->screen,
-					modes->fbconfigID, 
-					&tmpContextID, &tmpContext)) {
-       fprintf(stderr, "Could not create temporary context.\n");
-       return NULL;
-   }
-   DRM_LIGHT_LOCK(fd, &((drm_sarea_t *)pSAREA)->lock, tmpContext);
 
    if (!driCheckDriDdxDrmVersions2("i915",
                                    dri_version, &dri_expected,
@@ -902,9 +906,6 @@ __driCreateNewScreen_20050727(__DRInativeDisplay * dpy, int scrn,
                                   ddx_version, dri_version, drm_version,
                                   frame_buffer, pSAREA, fd,
                                   internal_api_version, &intelAPI);
-
-   DRM_UNLOCK(fd, &((drm_sarea_t *)pSAREA)->lock, tmpContext);
-   (void) (*dri_interface->destroyContext)(dpy, modes->screen, tmpContextID);
 
    if (psp != NULL) {
       I830DRIPtr dri_priv = (I830DRIPtr) psp->pDevPriv;
