@@ -1609,11 +1609,8 @@ vec4 texture1D(const sampler1D sampler, const float coord)
 
 vec4 texture1DProj(const sampler1D sampler, const vec2 coord)
 {
-   // new coord with .z moved to .w
-   vec4 coord4;
-   coord4.x = coord.x;
-   coord4.w = coord.y;
-   __asm vec4_texp1d __retVal, sampler, coord4;
+   // need to swizzle .y into .w
+   __asm vec4_texp1d __retVal, sampler, coord.xyyy;
 }
 
 vec4 texture1DProj(const sampler1D sampler, const vec4 coord)
@@ -1629,11 +1626,8 @@ vec4 texture2D(const sampler2D sampler, const vec2 coord)
 
 vec4 texture2DProj(const sampler2D sampler, const vec3 coord)
 {
-   // new coord with .z moved to .w
-   vec4 coord4;
-   coord4.xy = coord.xy;
-   coord4.w = coord.z;
-    __asm vec4_texp2d __retVal, sampler, coord4;
+   // need to swizzle 'z' into 'w'.
+   __asm vec4_texp2d __retVal, sampler, coord.xyzz;
 }
 
 vec4 texture2DProj(const sampler2D sampler, const vec4 coord)
@@ -1667,11 +1661,8 @@ vec4 shadow1D(const sampler1DShadow sampler, const vec3 coord)
 
 vec4 shadow1DProj(const sampler1DShadow sampler, const vec4 coord)
 {
-   vec4 pcoord;
-   pcoord.x = coord.x / coord.w;
-   pcoord.z = coord.z;
-   pcoord.w = bias;
-   __asm vec4_tex1d __retVal, sampler, pcoord;
+   // .s and .p will be divided by .q
+   __asm vec4_texp1d __retVal, sampler, coord;
 }
 
 vec4 shadow2D(const sampler2DShadow sampler, const vec3 coord)
@@ -1681,10 +1672,8 @@ vec4 shadow2D(const sampler2DShadow sampler, const vec3 coord)
 
 vec4 shadow2DProj(const sampler2DShadow sampler, const vec4 coord)
 {
-   vec4 pcoord;
-   pcoord.xy = coord.xy / coord.w;
-   pcoord.z = coord.z;
-   __asm vec4_tex2d __retVal, sampler, pcoord;
+   // .s, .t and .p will be divided by .q
+   __asm vec4_texp2d __retVal, sampler, coord;
 }
 
 
@@ -1696,10 +1685,8 @@ vec4 texture2DRect(const sampler2DRect sampler, const vec2 coord)
 
 vec4 texture2DRectProj(const sampler2DRect sampler, const vec3 coord)
 {
-   // do projection here
-   vec4 pcoord;
-   pcoord.xy = coord.xy / coord.z;
-   __asm vec4_texp_rect __retVal, sampler, pcoord;
+   // need to swizzle .y into .w
+   __asm vec4_texp_rect __retVal, sampler, coord.xyzz;
 }
 
 vec4 texture2DRectProj(const sampler2DRect sampler, const vec4 coord)
