@@ -2921,17 +2921,24 @@ static void
 update_texture_state( GLcontext *ctx )
 {
    GLuint unit;
-   struct gl_fragment_program *fprog;
+   struct gl_fragment_program *fprog = NULL;
+   struct gl_vertex_program *vprog = NULL;
 
    if (ctx->Shader.CurrentProgram &&
        ctx->Shader.CurrentProgram->LinkStatus) {
       fprog = ctx->Shader.CurrentProgram->FragmentProgram;
-   }
-   else if (ctx->FragmentProgram._Enabled) {
-      fprog = ctx->FragmentProgram.Current;
+      vprog = ctx->Shader.CurrentProgram->VertexProgram;
    }
    else {
-      fprog = NULL;
+      if (ctx->FragmentProgram._Enabled) {
+         fprog = ctx->FragmentProgram.Current;
+      }
+      if (ctx->VertexProgram._Enabled) {
+         /* XXX enable this if/when non-shader vertex programs get
+          * texture fetches:
+         vprog = ctx->VertexProgram.Current;
+         */
+      }
    }
 
    ctx->NewState |= _NEW_TEXTURE; /* TODO: only set this if there are 
@@ -2960,8 +2967,12 @@ update_texture_state( GLcontext *ctx )
        * by a fragment shader/program.  When multiple flags are set, we'll
        * settle on the one with highest priority (see texture_override below).
        */
-      if (fprog) {
-         enableBits = fprog->Base.TexturesUsed[unit];
+      if (fprog || vprog) {
+         enableBits = 0x0;
+         if (fprog)
+            enableBits |= fprog->Base.TexturesUsed[unit];
+         if (vprog)
+            enableBits |= vprog->Base.TexturesUsed[unit];
       }
       else {
          if (!texUnit->Enabled)

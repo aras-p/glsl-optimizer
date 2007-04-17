@@ -488,7 +488,7 @@ _swrast_invalidate_state( GLcontext *ctx, GLbitfield new_state )
 }
 
 
-static void
+void
 _swrast_update_texture_samplers(GLcontext *ctx)
 {
    SWcontext *swrast = SWRAST_CONTEXT(ctx);
@@ -617,7 +617,7 @@ _swrast_validate_derived( GLcontext *ctx )
                               _NEW_PROGRAM))
 	 _swrast_update_fragment_program( ctx, swrast->NewState );
 
-      if (swrast->NewState & _NEW_TEXTURE)
+      if (swrast->NewState & (_NEW_TEXTURE | _NEW_PROGRAM))
          _swrast_update_texture_samplers( ctx );
 
       if (swrast->NewState & (_NEW_TEXTURE | _NEW_PROGRAM))
