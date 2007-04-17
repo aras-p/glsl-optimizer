@@ -1082,108 +1082,204 @@ vec3 __operator * (const mat4x3 m, const vec4 v)
 }
 
 
-mat3x2 __operator * (const mat2 m, const mat3x2 n) {
-    return mat3x2 (m * n[0], m * n[1], m * n[2]);
+mat3x2 __operator * (const mat2 m, const mat3x2 n)
+{
+   //return mat3x2 (m * n[0], m * n[1], m * n[2]);
+   __retVal[0] = m * n[0];
+   __retVal[1] = m * n[1];
+   __retVal[2] = m * n[2];
 }
 
-mat4x2 __operator * (const mat2 m, const mat4x2 n) {
-    return mat4x2 (m * n[0], m * n[1], m * n[2], m * n[3]);
-}
-
-
-mat2x3 __operator * (const mat2x3 m, const mat2 n) {
-    return mat2x3 (m * n[0], m * n[1]);
-}
-
-mat3 __operator * (const mat2x3 m, const mat3x2 n) {
-    return mat3 (m * n[0], m * n[1], m * n[2]);
-}
-
-mat4x3 __operator * (const mat2x3 m, const mat4x2 n) {
-    return mat4x3 (m * n[0], m * n[1], m * n[2], m * n[3]);
+mat4x2 __operator * (const mat2 m, const mat4x2 n)
+{
+   //return mat4x2 (m * n[0], m * n[1], m * n[2], m * n[3]);
+   __retVal[0] = m * n[0];
+   __retVal[1] = m * n[1];
+   __retVal[2] = m * n[2];
+   __retVal[3] = m * n[3];
 }
 
 
-mat2x4 __operator * (const mat2x4 m, const mat2 n) {
-    return mat2x4 (m * n[0], m * n[1]);
+mat2x3 __operator * (const mat2x3 m, const mat2 n)
+{
+   //return mat2x3 (m * n[0], m * n[1]);
+   __retVal[0] = m * n[0];
+   __retVal[1] = m * n[1];
 }
 
-mat3x4 __operator * (const mat2x4 m, const mat3x2 n) {
-    return mat3x4 (m * n[0], m * n[1], m * n[2]);
+mat3 __operator * (const mat2x3 m, const mat3x2 n)
+{
+   //return mat3 (m * n[0], m * n[1], m * n[2]);
+   __retVal[0] = m * n[0];
+   __retVal[1] = m * n[1];
+   __retVal[2] = m * n[2];
 }
 
-mat4 __operator * (const mat2x4 m, const mat4x2 n) {
-    return mat4 (m * n[0], m * n[1], m * n[2], m * n[3]);
-}
-
-
-mat2 __operator * (const mat3x2 m, const mat2x3 n) {
-    return mat2 (m * n[0], m * n[1]);
-}
-
-mat3x2 __operator * (const mat3x2 m, const mat3 n) {
-    return mat3x2 (m * n[0], m * n[1], m * n[2]);
-}
-
-mat4x2 __operator * (const mat3x2 m, const mat4x3 n) {
-    return mat4x2 (m * n[0], m * n[1], m * n[2], m * n[3]);
-}
-
-
-mat2x3 __operator * (const mat3 m, const mat2x3 n) {
-    return mat2x3 (m * n[0], m * n[1]);
-}
-
-mat4x3 __operator * (const mat3 m, const mat4x3 n) {
-    return mat4x3 (m * n[0], m * n[1], m * n[2], m * n[3]);
+mat4x3 __operator * (const mat2x3 m, const mat4x2 n)
+{
+   //return mat4x3 (m * n[0], m * n[1], m * n[2], m * n[3]);
+   __retVal[0] = m * n[0];
+   __retVal[1] = m * n[1];
+   __retVal[2] = m * n[2];
+   __retVal[3] = m * n[3];
 }
 
 
-mat2x4 __operator * (const mat3x4 m, const mat2x3 n) {
-    return mat2x4 (m * n[0], m * n[1]);
+mat2x4 __operator * (const mat2x4 m, const mat2 n)
+{
+   //return mat2x4 (m * n[0], m * n[1]);
+   __retVal[0] = m * n[0];
+   __retVal[1] = m * n[1];
 }
 
-mat3x4 __operator * (const mat3x4 m, const mat3 n) {
-    return mat3x4 (m * n[0], m * n[1], m * n[2]);
+mat3x4 __operator * (const mat2x4 m, const mat3x2 n)
+{
+   //return mat3x4 (m * n[0], m * n[1], m * n[2]);
+   __retVal[0] = m * n[0];
+   __retVal[1] = m * n[1];
+   __retVal[2] = m * n[2];
 }
 
-mat4 __operator * (const mat3x4 m, const mat4x3 n) {
-    return mat4 (m * n[0], m * n[1], m * n[2], m * n[3]);
-}
-
-
-mat2 __operator * (const mat4x2 m, const mat2x4 n) {
-    return mat2 (m * n[0], m * n[1]);
-}
-
-mat3x2 __operator * (const mat4x2 m, const mat3x4 n) {
-    return mat3x2 (m * n[0], m * n[1], m * n[2]);
-}
-
-mat4x2 __operator * (const mat4x2 m, const mat4 n) {
-    return mat4x2 (m * n[0], m * n[1], m * n[2], m * n[3]);
-}
-
-
-mat2x3 __operator * (const mat4x3 m, const mat2x4 n) {
-    return mat2x3 (m * n[0], m * n[1]);
-}
-
-mat3 __operator * (const mat4x3 m, const mat3x4 n) {
-    return mat3 (m * n[0], m * n[1], m * n[2]);
-}
-
-mat4x3 __operator * (const mat4x3 m, const mat4 n) {
-    return mat4x3 (m * n[0], m * n[1], m * n[2], m * n[3]);
+mat4 __operator * (const mat2x4 m, const mat4x2 n)
+{
+   //return mat4 (m * n[0], m * n[1], m * n[2], m * n[3]);
+   __retVal[0] = m * n[0];
+   __retVal[1] = m * n[1];
+   __retVal[2] = m * n[2];
+   __retVal[3] = m * n[3];
 }
 
 
-mat2x4 __operator * (const mat4 m, const mat2x4 n) {
-    return mat2x4 (m * n[0], m * n[1]);
+mat2 __operator * (const mat3x2 m, const mat2x3 n)
+{
+   //return mat2 (m * n[0], m * n[1]);
+   __retVal[0] = m * n[0];
+   __retVal[1] = m * n[1];
 }
 
-mat3x4 __operator * (const mat4 m, const mat3x4 n) {
-    return mat3x4 (m * n[0], m * n[1], m * n[2]);
+mat3x2 __operator * (const mat3x2 m, const mat3 n)
+{
+   //return mat3x2 (m * n[0], m * n[1], m * n[2]);
+   __retVal[0] = m * n[0];
+   __retVal[1] = m * n[1];
+   __retVal[2] = m * n[2];
+}
+
+mat4x2 __operator * (const mat3x2 m, const mat4x3 n)
+{
+   //return mat4x2 (m * n[0], m * n[1], m * n[2], m * n[3]);
+   __retVal[0] = m * n[0];
+   __retVal[1] = m * n[1];
+   __retVal[2] = m * n[2];
+   __retVal[3] = m * n[3];
+}
+
+
+mat2x3 __operator * (const mat3 m, const mat2x3 n)
+{
+   //return mat2x3 (m * n[0], m * n[1]);
+   __retVal[0] = m * n[0];
+   __retVal[1] = m * n[1];
+}
+
+mat4x3 __operator * (const mat3 m, const mat4x3 n)
+{
+   //return mat4x3 (m * n[0], m * n[1], m * n[2], m * n[3]);
+   __retVal[0] = m * n[0];
+   __retVal[1] = m * n[1];
+   __retVal[2] = m * n[2];
+   __retVal[3] = m * n[3];
+}
+
+
+mat2x4 __operator * (const mat3x4 m, const mat2x3 n)
+{
+   //return mat2x4 (m * n[0], m * n[1]);
+   __retVal[0] = m * n[0];
+   __retVal[1] = m * n[1];
+}
+
+mat3x4 __operator * (const mat3x4 m, const mat3 n)
+{
+   //return mat3x4 (m * n[0], m * n[1], m * n[2]);
+   __retVal[0] = m * n[0];
+   __retVal[1] = m * n[1];
+   __retVal[2] = m * n[2];
+}
+
+mat4 __operator * (const mat3x4 m, const mat4x3 n)
+{
+   //return mat4 (m * n[0], m * n[1], m * n[2], m * n[3]);
+   __retVal[0] = m * n[0];
+   __retVal[1] = m * n[1];
+   __retVal[2] = m * n[2];
+   __retVal[3] = m * n[3];
+}
+
+
+mat2 __operator * (const mat4x2 m, const mat2x4 n)
+{
+   //return = mat2 (m * n[0], m * n[1]);
+   __retVal[0] = m * n[0];
+   __retVal[1] = m * n[1];
+}
+
+mat3x2 __operator * (const mat4x2 m, const mat3x4 n)
+{
+   //return mat3x2 (m * n[0], m * n[1], m * n[2]);
+   __retVal[0] = m * n[0];
+   __retVal[1] = m * n[1];
+   __retVal[2] = m * n[2];
+}
+
+mat4x2 __operator * (const mat4x2 m, const mat4 n)
+{
+   //return mat4x2 (m * n[0], m * n[1], m * n[2], m * n[3]);
+   __retVal[0] = m * n[0];
+   __retVal[1] = m * n[1];
+   __retVal[2] = m * n[2];
+   __retVal[3] = m * n[3];
+}
+
+
+mat2x3 __operator * (const mat4x3 m, const mat2x4 n)
+{
+   //return mat2x3 (m * n[0], m * n[1]);
+   __retVal[0] = m * n[0];
+   __retVal[1] = m * n[1];
+}
+
+mat3 __operator * (const mat4x3 m, const mat3x4 n)
+{
+   //return mat3 (m * n[0], m * n[1], m * n[2]);
+   __retVal[0] = m * n[0];
+   __retVal[1] = m * n[1];
+   __retVal[2] = m * n[2];
+}
+
+mat4x3 __operator * (const mat4x3 m, const mat4 n)
+{
+   //return mat4x3 (m * n[0], m * n[1], m * n[2], m * n[3]);
+   __retVal[0] = m * n[0];
+   __retVal[1] = m * n[1];
+   __retVal[2] = m * n[2];
+   __retVal[3] = m * n[3];
+}
+
+
+mat2x4 __operator * (const mat4 m, const mat2x4 n)
+{
+   //return mat2x4 (m * n[0], m * n[1]);
+   __retVal[0] = m * n[0];
+   __retVal[1] = m * n[1];
+}
+
+mat3x4 __operator * (const mat4 m, const mat3x4 n)
+{
+   //return mat3x4 (m * n[0], m * n[1], m * n[2]);
+   __retVal[0] = m * n[0];
+   __retVal[1] = m * n[1];
+   __retVal[2] = m * n[2];
 }
 
 
@@ -1576,101 +1672,209 @@ mat4x3 __operator - (const float a, const mat4x3 n) {
 }
 
 
-mat2x3 __operator * (const float a, const mat2x3 n) {
-    return mat2x3 (a * n[0], a * n[1]);
+mat2x3 __operator * (const float a, const mat2x3 n)
+{
+   //return mat2x3 (a * n[0], a * n[1]);
+   __retVal[0] = a * n[0];
+   __retVal[1] = a * n[1];
 }
 
-mat2x3 __operator * (const mat2x3 m, const float b) {
-    return mat2x3 (m[0] * b, m[1] * b);
+mat2x3 __operator * (const mat2x3 m, const float b)
+{
+   //return mat2x3 (m[0] * b, m[1] * b);
+   __retVal[0] = m[0] * b;
+   __retVal[1] = m[1] * b;
 }
 
-mat2x4 __operator * (const float a, const mat2x4 n) {
-    return mat2x4 (a * n[0], a * n[1]);
+mat2x4 __operator * (const float a, const mat2x4 n)
+{
+   //return mat2x4 (a * n[0], a * n[1]);
+   __retVal[0] = a * n[0];
+   __retVal[1] = a * n[1];
 }
 
-mat2x4 __operator * (const mat2x4 m, const float b) {
-    return mat2x4 (m[0] * b, m[1] * b);
+mat2x4 __operator * (const mat2x4 m, const float b)
+{
+   //return mat2x4 (m[0] * b, m[1] * b);
+   __retVal[0] = m[0] * b;
+   __retVal[1] = m[1] * b;
 }
 
-mat3x2 __operator * (const float a, const mat3x2 n) {
-    return mat3x2 (a * n[0], a * n[1], a * n[2]);
+mat3x2 __operator * (const float a, const mat3x2 n)
+{
+   //return mat3x2 (a * n[0], a * n[1], a * n[2]);
+   __retVal[0] = a * n[0];
+   __retVal[1] = a * n[1];
+   __retVal[2] = a * n[2];
 }
 
-mat3x2 __operator * (const mat3x2 m, const float b) {
-    return mat3x2 (m[0] * b, m[1] * b, m[2] * b);
+mat3x2 __operator * (const mat3x2 m, const float b)
+{
+   //return mat3x2 (m[0] * b, m[1] * b, m[2] * b);
+   __retVal[0] = m[0] * b;
+   __retVal[1] = m[1] * b;
+   __retVal[2] = m[2] * b;
 }
 
-mat3x4 __operator * (const float a, const mat3x4 n) {
-    return mat3x4 (a * n[0], a * n[1], a * n[2]);
+mat3x4 __operator * (const float a, const mat3x4 n)
+{
+   //return mat3x4 (a * n[0], a * n[1], a * n[2]);
+   __retVal[0] = a * n[0];
+   __retVal[1] = a * n[1];
+   __retVal[2] = a * n[2];
 }
 
-mat3x4 __operator * (const mat3x4 m, const float b) {
-    return mat3x4 (m[0] * b, m[1] * b, m[2] * b);
+mat3x4 __operator * (const mat3x4 m, const float b)
+{
+   //return mat3x4 (m[0] * b, m[1] * b, m[2] * b);
+   __retVal[0] = m[0] * b;
+   __retVal[1] = m[1] * b;
+   __retVal[2] = m[2] * b;
 }
 
-mat4x2 __operator * (const mat4x2 m, const float b) {
-    return mat4x2 (m[0] * b, m[1] * b, m[2] * b, m[3] * b);
+mat4x2 __operator * (const mat4x2 m, const float b)
+{
+   //return mat4x2 (m[0] * b, m[1] * b, m[2] * b, m[3] * b);
+   __retVal[0] = m[0] * b;
+   __retVal[1] = m[1] * b;
+   __retVal[2] = m[2] * b;
+   __retVal[3] = m[3] * b;
 }
 
-mat4x2 __operator * (const float a, const mat4x2 n) {
-    return mat4x2 (a * n[0], a * n[1], a * n[2], a * n[3]);
+mat4x2 __operator * (const float a, const mat4x2 n)
+{
+   //return mat4x2 (a * n[0], a * n[1], a * n[2], a * n[3]);
+   __retVal[0] = a * n[0];
+   __retVal[1] = a * n[1];
+   __retVal[2] = a * n[2];
+   __retVal[3] = a * n[3];
 }
 
-mat4x3 __operator * (const mat4x3 m, const float b) {
-    return mat4x3 (m[0] * b, m[1] * b, m[2] * b, m[3] * b);
+mat4x3 __operator * (const mat4x3 m, const float b)
+{
+   //return mat4x3 (m[0] * b, m[1] * b, m[2] * b, m[3] * b);
+   __retVal[0] = m[0] * b;
+   __retVal[1] = m[1] * b;
+   __retVal[2] = m[2] * b;
+   __retVal[3] = m[3] * b;
 }
 
-mat4x3 __operator * (const float a, const mat4x3 n) {
-    return mat4x3 (a * n[0], a * n[1], a * n[2], a * n[3]);
+mat4x3 __operator * (const float a, const mat4x3 n)
+{
+   //return mat4x3 (a * n[0], a * n[1], a * n[2], a * n[3]);
+   __retVal[0] = a * n[0];
+   __retVal[1] = a * n[1];
+   __retVal[2] = a * n[2];
+   __retVal[3] = a * n[3];
 }
 
 
-mat2x3 __operator / (const float a, const mat2x3 n) {
-    return mat2x3 (a / n[0], a / n[1]);
+mat2x3 __operator / (const float a, const mat2x3 n)
+{
+   //return mat2x3 (a / n[0], a / n[1]);
+   const float inv = 1.0 / a;
+   __retVal[0] = inv * n[0];
+   __retVal[1] = inv * n[1];
 }
 
-mat2x3 __operator / (const mat2x3 m, const float b) {
-    return mat2x3 (m[0] / b, m[1] / b);
+mat2x3 __operator / (const mat2x3 m, const float b)
+{
+   //return mat2x3 (m[0] / b, m[1] / b);
+   const float inv = 1.0 / b;
+   __retVal[0] = m[0] * inv;
+   __retVal[1] = m[1] * inv;
 }
 
-mat2x4 __operator / (const float a, const mat2x4 n) {
-    return mat2x4 (a / n[0], a / n[1]);
+mat2x4 __operator / (const float a, const mat2x4 n)
+{
+   //return mat2x4 (a / n[0], a / n[1]);
+   const float inv = 1.0 / a;
+   __retVal[0] = inv * n[0];
+   __retVal[1] = inv * n[1];
 }
 
-mat2x4 __operator / (const mat2x4 m, const float b) {
-    return mat2x4 (m[0] / b, m[1] / b);
+mat2x4 __operator / (const mat2x4 m, const float b)
+{
+   //return mat2x4 (m[0] / b, m[1] / b);
+   const float inv = 1.0 / b;
+   __retVal[0] = m[0] * inv;
+   __retVal[1] = m[1] * inv;
 }
 
-mat3x2 __operator / (const float a, const mat3x2 n) {
-    return mat3x2 (a / n[0], a / n[1], a / n[2]);
+mat3x2 __operator / (const float a, const mat3x2 n)
+{
+   //return mat3x2 (a / n[0], a / n[1], a / n[2]);
+   const float inv = 1.0 / a;
+   __retVal[0] = inv * n[0];
+   __retVal[1] = inv * n[1];
+   __retVal[2] = inv * n[2];
 }
 
-mat3x2 __operator / (const mat3x2 m, const float b) {
-    return mat3x2 (m[0] / b, m[1] / b, m[2] / b);
+mat3x2 __operator / (const mat3x2 m, const float b)
+{
+   //return mat3x2 (m[0] / b, m[1] / b, m[2] / b);
+   const float inv = 1.0 / b;
+   __retVal[0] = m[0] * inv;
+   __retVal[1] = m[1] * inv;
+   __retVal[2] = m[2] * inv;
 }
 
-mat3x4 __operator / (const float a, const mat3x4 n) {
-    return mat3x4 (a / n[0], a / n[1], a / n[2]);
+mat3x4 __operator / (const float a, const mat3x4 n)
+{
+   //return mat3x4 (a / n[0], a / n[1], a / n[2]);
+   const float inv = 1.0 / a;
+   __retVal[0] = inv * n[0];
+   __retVal[1] = inv * n[1];
+   __retVal[2] = inv * n[2];
 }
 
-mat3x4 __operator / (const mat3x4 m, const float b) {
-    return mat3x4 (m[0] / b, m[1] / b, m[2] / b);
+mat3x4 __operator / (const mat3x4 m, const float b)
+{
+   //return mat3x4 (m[0] / b, m[1] / b, m[2] / b);
+   const float inv = 1.0 / b;
+   __retVal[0] = m[0] * inv;
+   __retVal[1] = m[1] * inv;
+   __retVal[2] = m[2] * inv;
 }
 
-mat4x2 __operator / (const mat4x2 m, const float b) {
-    return mat4x2 (m[0] / b, m[1] / b, m[2] / b, m[3] / b);
+mat4x2 __operator / (const mat4x2 m, const float b)
+{
+   //return mat4x2 (m[0] / b, m[1] / b, m[2] / b, m[3] / b);
+   const float inv = 1.0 / b;
+   __retVal[0] = m[0] * inv;
+   __retVal[1] = m[1] * inv;
+   __retVal[2] = m[2] * inv;
+   __retVal[3] = m[3] * inv;
 }
 
-mat4x2 __operator / (const float a, const mat4x2 n) {
-    return mat4x2 (a / n[0], a / n[1], a / n[2], a / n[3]);
+mat4x2 __operator / (const float a, const mat4x2 n)
+{
+   //return mat4x2 (a / n[0], a / n[1], a / n[2], a / n[3]);
+   const float inv = 1.0 / a;
+   __retVal[0] = inv * n[0];
+   __retVal[1] = inv * n[1];
+   __retVal[2] = inv * n[2];
+   __retVal[3] = inv * n[3];
 }
 
-mat4x3 __operator / (const mat4x3 m, const float b) {
-    return mat4x3 (m[0] / b, m[1] / b, m[2] / b, m[3] / b);
+mat4x3 __operator / (const mat4x3 m, const float b)
+{
+   //return mat4x3 (m[0] / b, m[1] / b, m[2] / b, m[3] / b);
+   const float inv = 1.0 / b;
+   __retVal[0] = m[0] * inv;
+   __retVal[1] = m[1] * inv;
+   __retVal[2] = m[2] * inv;
+   __retVal[3] = m[3] * inv;
 }
 
-mat4x3 __operator / (const float a, const mat4x3 n) {
-    return mat4x3 (a / n[0], a / n[1], a / n[2], a / n[3]);
+mat4x3 __operator / (const float a, const mat4x3 n)
+{
+   //return mat4x3 (a / n[0], a / n[1], a / n[2], a / n[3]);
+   const float inv = 1.0 / a;
+   __retVal[0] = inv * n[0];
+   __retVal[1] = inv * n[1];
+   __retVal[2] = inv * n[2];
+   __retVal[3] = inv * n[3];
 }
 
 
