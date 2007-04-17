@@ -84,7 +84,7 @@ init_machine(GLcontext *ctx, struct gl_program_machine *machine)
    MEMCPY(machine->VertAttribs, ctx->Current.Attrib,
           MAX_VERTEX_PROGRAM_ATTRIBS * 4 * sizeof(GLfloat));
 
-   if (ctx->VertexProgram.Current->IsNVProgram) {
+   if (ctx->VertexProgram._Current->IsNVProgram) {
       GLuint i;
       /* Output/result regs are initialized to [0,0,0,1] */
       for (i = 0; i < MAX_NV_VERTEX_PROGRAM_OUTPUTS; i++) {
@@ -225,7 +225,7 @@ run_vp( GLcontext *ctx, struct tnl_pipeline_stage *stage )
       return GL_TRUE;
 #endif
 
-   if (ctx->VertexProgram.Current->IsNVProgram) {
+   if (program->IsNVProgram) {
       _mesa_load_tracked_matrices(ctx);
    }
    else {
@@ -276,17 +276,6 @@ run_vp( GLcontext *ctx, struct tnl_pipeline_stage *stage )
       /* execute the program */
       _mesa_execute_program(ctx, &program->Base, &machine);
 
-      /* Fixup fog an point size results if needed */
-      if (ctx->Fog.Enabled &&
-          (program->Base.OutputsWritten & (1 << VERT_RESULT_FOGC)) == 0) {
-         machine.Outputs[VERT_RESULT_FOGC][0] = 1.0;
-      }
-
-      if (ctx->VertexProgram.PointSizeEnabled &&
-          (program->Base.OutputsWritten & (1 << VERT_RESULT_PSIZ)) == 0) {
-         machine.Outputs[VERT_RESULT_PSIZ][0] = ctx->Point.Size;
-      }
-
       /* copy the output registers into the VB->attribs arrays */
       for (j = 0; j < numOutputs; j++) {
          const GLuint attr = outputs[j];
@@ -299,6 +288,23 @@ run_vp( GLcontext *ctx, struct tnl_pipeline_stage *stage )
              machine.Outputs[0][2], 
              machine.Outputs[0][3]);
 #endif
+   }
+
+   /* Fixup fog and point size results if needed */
+   if (program->IsNVProgram) {
+      if (ctx->Fog.Enabled &&
+          (program->Base.OutputsWritten & (1 << VERT_RESULT_FOGC)) == 0) {
+         for (i = 0; i < VB->Count; i++) {
+            store->results[VERT_RESULT_FOGC].data[i][0] = 1.0;
+         }
+      }
+
+      if (ctx->VertexProgram.PointSizeEnabled &&
+          (program->Base.OutputsWritten & (1 << VERT_RESULT_PSIZ)) == 0) {
+         for (i = 0; i < VB->Count; i++) {
+            store->results[VERT_RESULT_PSIZ].data[i][0] = ctx->Point.Size;
+         }
+      }
    }
 
    /* Setup the VB pointers so that the next pipeline stages get
