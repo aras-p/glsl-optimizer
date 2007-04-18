@@ -605,3 +605,20 @@ _mesa_longest_parameter_name(const struct gl_program_parameter_list *list,
    return maxLen;
 }
 
+
+/**
+ * Count the number of parameters in the last that match the given type.
+ */
+GLuint
+_mesa_num_parameters_of_type(const struct gl_program_parameter_list *list,
+                             enum register_file type)
+{
+   GLuint i, count = 0;
+   if (list) {
+      for (i = 0; i < list->NumParameters; i++) {
+         if (list->Parameters[i].Type == type)
+            count++;
+      }
+   }
+   return count;
+}

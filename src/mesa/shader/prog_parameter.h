@@ -134,5 +134,9 @@ extern GLuint
 _mesa_longest_parameter_name(const struct gl_program_parameter_list *list,
                              enum register_file type);
 
+extern GLuint
+_mesa_num_parameters_of_type(const struct gl_program_parameter_list *list,
+                             enum register_file type);
+
 
 #endif /* PROG_PARAMETER_H */

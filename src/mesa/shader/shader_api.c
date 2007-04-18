@@ -38,6 +38,7 @@
 #include "glheader.h"
 #include "context.h"
 #include "hash.h"
+#include "macros.h"
 #include "program.h"
 #include "prog_parameter.h"
 #include "prog_print.h"
@@ -643,6 +644,7 @@ _mesa_get_active_uniform(GLcontext *ctx, GLuint program, GLuint index,
    struct gl_shader_program *shProg
       = _mesa_lookup_shader_program(ctx, program);
    GLint sz;
+   GLuint ind, j;
 
    if (!shProg) {
       _mesa_error(ctx, GL_INVALID_VALUE, "glGetActiveUniform");
@@ -654,13 +656,26 @@ _mesa_get_active_uniform(GLcontext *ctx, GLuint program, GLuint index,
       return;
    }
 
-   copy_string(nameOut, maxLength, length,
-               shProg->Uniforms->Parameters[index].Name);
-   sz = shProg->Uniforms->Parameters[index].Size;
-   if (size)
-      *size = sz;
-   if (type)
-      *type = vec_types[sz]; /* XXX this is a temporary hack */
+   ind = 0;
+   for (j = 0; j < shProg->Uniforms->NumParameters; j++) {
+      if (shProg->Uniforms->Parameters[j].Type == PROGRAM_UNIFORM ||
+          shProg->Uniforms->Parameters[j].Type == PROGRAM_SAMPLER) {
+         if (ind == index) {
+            /* found it */
+            copy_string(nameOut, maxLength, length,
+                        shProg->Uniforms->Parameters[j].Name);
+            sz = shProg->Uniforms->Parameters[j].Size;
+            if (size)
+               *size = sz;
+            if (type)
+               *type = vec_types[sz-1]; /* XXX this is a temporary hack */
+            return;
+         }
+         ind++;
+      }
+   }
+
+   _mesa_error(ctx, GL_INVALID_VALUE, "glGetActiveUniform(index)");
 }
 
 
@@ -774,13 +789,20 @@ _mesa_get_programiv(GLcontext *ctx, GLuint program,
       *params = shProg->Attributes ? shProg->Attributes->NumParameters : 0;
       break;
    case GL_ACTIVE_ATTRIBUTE_MAX_LENGTH:
-      *params = _mesa_longest_parameter_name(shProg->Attributes, PROGRAM_INPUT);
+      *params = _mesa_longest_parameter_name(shProg->Attributes,
+                                             PROGRAM_INPUT) + 1;
       break;
    case GL_ACTIVE_UNIFORMS:
-      *params = shProg->Uniforms ? shProg->Uniforms->NumParameters : 0;
+      *params
+         = _mesa_num_parameters_of_type(shProg->Uniforms, PROGRAM_UNIFORM)
+         + _mesa_num_parameters_of_type(shProg->Uniforms, PROGRAM_SAMPLER);
       break;
    case GL_ACTIVE_UNIFORM_MAX_LENGTH:
-      *params = _mesa_longest_parameter_name(shProg->Uniforms, PROGRAM_UNIFORM);
+      *params = MAX2(
+             _mesa_longest_parameter_name(shProg->Uniforms, PROGRAM_UNIFORM),
+             _mesa_longest_parameter_name(shProg->Uniforms, PROGRAM_SAMPLER));
+      if (*params > 0)
+         (*params)++;  /* add one for terminating zero */
       break;
    default:
       _mesa_error(ctx, GL_INVALID_ENUM, "glGetProgramiv(pname)");
