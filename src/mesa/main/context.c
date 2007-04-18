@@ -629,7 +629,7 @@ delete_shader_cb(GLuint id, void *data, void *userData)
    }
    else {
       struct gl_shader_program *shProg = (struct gl_shader_program *) data;
-      ASSERT(shProg->Type == GL_SHADER_PROGRAM);
+      ASSERT(shProg->Type == GL_SHADER_PROGRAM_MESA);
       _mesa_free_shader_program(ctx, shProg);
    }
 }

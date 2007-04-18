@@ -58,7 +58,7 @@ _mesa_new_shader_program(GLcontext *ctx, GLuint name)
    struct gl_shader_program *shProg;
    shProg = CALLOC_STRUCT(gl_shader_program);
    if (shProg) {
-      shProg->Type = GL_SHADER_PROGRAM;
+      shProg->Type = GL_SHADER_PROGRAM_MESA;
       shProg->Name = name;
       shProg->RefCount = 1;
       shProg->Attributes = _mesa_new_parameter_list();
@@ -114,7 +114,7 @@ _mesa_free_shader_program_data(GLcontext *ctx,
 {
    GLuint i;
 
-   assert(shProg->Type == GL_SHADER_PROGRAM);
+   assert(shProg->Type == GL_SHADER_PROGRAM_MESA);
 
    _mesa_clear_shader_program_data(ctx, shProg);
 
@@ -204,7 +204,7 @@ _mesa_lookup_shader_program(GLcontext *ctx, GLuint name)
        * in the same hash table.  Check the object's type to be sure it's
        * what we're expecting.
        */
-      if (shProg && shProg->Type != GL_SHADER_PROGRAM) {
+      if (shProg && shProg->Type != GL_SHADER_PROGRAM_MESA) {
          return NULL;
       }
       return shProg;
@@ -308,7 +308,7 @@ _mesa_lookup_shader(GLcontext *ctx, GLuint name)
        * in the same hash table.  Check the object's type to be sure it's
        * what we're expecting.
        */
-      if (sh && sh->Type == GL_SHADER_PROGRAM) {
+      if (sh && sh->Type == GL_SHADER_PROGRAM_MESA) {
          assert(sh->Type == GL_VERTEX_SHADER ||
                 sh->Type == GL_FRAGMENT_SHADER);
          return NULL;

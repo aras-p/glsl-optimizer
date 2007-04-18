@@ -47,7 +47,7 @@
 /**
  * Special, internal token
  */
-#define GL_SHADER_PROGRAM 0x9999
+#define GL_SHADER_PROGRAM_MESA 0x9999
 
 
 /**
