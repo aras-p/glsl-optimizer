@@ -575,6 +575,18 @@ _mesa_detach_shader(GLcontext *ctx, GLuint program, GLuint shader)
 
          shProg->Shaders = newList;
          shProg->NumShaders = n - 1;
+
+#ifdef DEBUG
+         /* sanity check */
+         {
+            for (j = 0; j < shProg->NumShaders; j++) {
+               assert(shProg->Shaders[j]->Type == GL_VERTEX_SHADER ||
+                      shProg->Shaders[j]->Type == GL_FRAGMENT_SHADER);
+               assert(shProg->Shaders[j]->RefCount > 0);
+            }
+         }
+#endif
+
          return;
       }
    }
@@ -598,12 +610,12 @@ _mesa_get_active_attrib(GLcontext *ctx, GLuint program, GLuint index,
    GLint sz;
 
    if (!shProg) {
-      _mesa_error(ctx, GL_INVALID_VALUE, "glGetActiveUniform");
+      _mesa_error(ctx, GL_INVALID_VALUE, "glGetActiveAttrib");
       return;
    }
 
    if (!shProg->Attributes || index >= shProg->Attributes->NumParameters) {
-      _mesa_error(ctx, GL_INVALID_VALUE, "glGetActiveUniform(index)");
+      _mesa_error(ctx, GL_INVALID_VALUE, "glGetActiveAttrib(index)");
       return;
    }
 
