@@ -566,6 +566,9 @@ _slang_link(GLcontext *ctx,
       _slang_update_inputs_outputs(&shProg->FragmentProgram->Base);
 
    if (fragProg && shProg->FragmentProgram) {
+      /* notify driver that a new fragment program has been compiled/linked */
+      ctx->Driver.ProgramStringNotify(ctx, GL_FRAGMENT_PROGRAM_ARB,
+                                      &shProg->FragmentProgram->Base);
 #if 0
       printf("************** original fragment program\n");
       _mesa_print_program(&fragProg->Base);
@@ -579,6 +582,9 @@ _slang_link(GLcontext *ctx,
    }
 
    if (vertProg && shProg->VertexProgram) {
+      /* notify driver that a new vertex program has been compiled/linked */
+      ctx->Driver.ProgramStringNotify(ctx, GL_VERTEX_PROGRAM_ARB,
+                                      &shProg->VertexProgram->Base);
 #if 0
       printf("************** original vertex program\n");
       _mesa_print_program(&vertProg->Base);
