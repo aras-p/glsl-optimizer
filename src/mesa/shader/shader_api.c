@@ -309,8 +309,6 @@ _mesa_lookup_shader(GLcontext *ctx, GLuint name)
        * what we're expecting.
        */
       if (sh && sh->Type == GL_SHADER_PROGRAM_MESA) {
-         assert(sh->Type == GL_VERTEX_SHADER ||
-                sh->Type == GL_FRAGMENT_SHADER);
          return NULL;
       }
       return sh;
@@ -576,6 +574,7 @@ _mesa_detach_shader(GLcontext *ctx, GLuint program, GLuint shader)
          _mesa_free(shProg->Shaders);
 
          shProg->Shaders = newList;
+         shProg->NumShaders = n - 1;
          return;
       }
    }
