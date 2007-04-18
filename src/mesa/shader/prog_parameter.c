@@ -251,6 +251,14 @@ _mesa_add_unnamed_constant(struct gl_program_parameter_list *paramList,
 }
 
 
+/**
+ * Add a uniform to the parameter list.
+ * Note that if the uniform is an array, size may be greater than
+ * what's implied by the datatype.
+ * \param name  uniform's name
+ * \param size  number of floats to allocate
+ * \param datatype  GL_FLOAT_VEC3, GL_FLOAT_MAT4, etc.
+ */
 GLint
 _mesa_add_uniform(struct gl_program_parameter_list *paramList,
                   const char *name, GLuint size, GLenum datatype)
@@ -272,6 +280,11 @@ _mesa_add_uniform(struct gl_program_parameter_list *paramList,
 }
 
 
+/**
+ * Add a sampler to the parameter list.
+ * \param name  uniform's name
+ * \param datatype  GL_SAMPLER_2D, GL_SAMPLER_2D_RECT_ARB, etc.
+ */
 GLint
 _mesa_add_sampler(struct gl_program_parameter_list *paramList,
                   const char *name, GLenum datatype)
