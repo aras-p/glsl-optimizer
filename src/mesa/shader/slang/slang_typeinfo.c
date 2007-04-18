@@ -944,3 +944,79 @@ _slang_type_dim(slang_type_specifier_type ty)
       return 0;
    }
 }
+
+
+/**
+ * Return the GL_* type that corresponds to a SLANG_SPEC_* type.
+ */
+GLenum
+_slang_gltype_from_specifier(const slang_type_specifier *type)
+{
+   switch (type->type) {
+   case SLANG_SPEC_BOOL:
+      return GL_BOOL;
+   case SLANG_SPEC_BVEC2:
+      return GL_BOOL_VEC2;
+   case SLANG_SPEC_BVEC3:
+      return GL_BOOL_VEC3;
+   case SLANG_SPEC_BVEC4:
+      return GL_BOOL_VEC4;
+   case SLANG_SPEC_INT:
+      return GL_INT;
+   case SLANG_SPEC_IVEC2:
+      return GL_INT_VEC2;
+   case SLANG_SPEC_IVEC3:
+      return GL_INT_VEC3;
+   case SLANG_SPEC_IVEC4:
+      return GL_INT_VEC4;
+   case SLANG_SPEC_FLOAT:
+      return GL_FLOAT;
+   case SLANG_SPEC_VEC2:
+      return GL_FLOAT_VEC2;
+   case SLANG_SPEC_VEC3:
+      return GL_FLOAT_VEC3;
+   case SLANG_SPEC_VEC4:
+      return GL_FLOAT_VEC4;
+   case SLANG_SPEC_MAT2:
+      return GL_FLOAT_MAT2;
+   case SLANG_SPEC_MAT3:
+      return GL_FLOAT_MAT3;
+   case SLANG_SPEC_MAT4:
+      return GL_FLOAT_MAT4;
+   case SLANG_SPEC_MAT23:
+      return GL_FLOAT_MAT2x3;
+   case SLANG_SPEC_MAT32:
+      return GL_FLOAT_MAT3x2;
+   case SLANG_SPEC_MAT24:
+      return GL_FLOAT_MAT2x4;
+   case SLANG_SPEC_MAT42:
+      return GL_FLOAT_MAT4x2;
+   case SLANG_SPEC_MAT34:
+      return GL_FLOAT_MAT3x4;
+   case SLANG_SPEC_MAT43:
+      return GL_FLOAT_MAT4x3;
+   case SLANG_SPEC_SAMPLER1D:
+      return GL_SAMPLER_1D;
+   case SLANG_SPEC_SAMPLER2D:
+      return GL_SAMPLER_2D;
+   case SLANG_SPEC_SAMPLER3D:
+      return GL_SAMPLER_3D;
+   case SLANG_SPEC_SAMPLERCUBE:
+      return GL_SAMPLER_CUBE;
+   case SLANG_SPEC_SAMPLER1DSHADOW:
+      return GL_SAMPLER_1D_SHADOW;
+   case SLANG_SPEC_SAMPLER2DSHADOW:
+      return GL_SAMPLER_2D_SHADOW;
+   case SLANG_SPEC_SAMPLER2DRECT:
+      return GL_SAMPLER_2D_RECT_ARB;
+   case SLANG_SPEC_SAMPLER2DRECTSHADOW:
+      return GL_SAMPLER_2D_RECT_SHADOW_ARB;
+   case SLANG_SPEC_ARRAY:
+      return _slang_gltype_from_specifier(type->_array);
+   case SLANG_SPEC_STRUCT:
+      /* fall-through */
+   default:
+      return GL_NONE;
+   }
+}
+
