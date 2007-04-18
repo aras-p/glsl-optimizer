@@ -2829,7 +2829,8 @@ _slang_codegen_global_variable(slang_assemble_ctx *A, slang_variable *var,
        * store->Index = sampler uniform location
        * store->Size = texture type index (1D, 2D, 3D, cube, etc)
        */
-      GLint samplerUniform = _mesa_add_sampler(prog->Parameters, varName);
+      GLenum datatype = GL_SAMPLER_2D;
+      GLint samplerUniform = _mesa_add_sampler(prog->Parameters, varName, datatype);
       store = _slang_new_ir_storage(PROGRAM_SAMPLER, samplerUniform, texIndex);
       if (dbg) printf("SAMPLER ");
    }
@@ -2839,7 +2840,9 @@ _slang_codegen_global_variable(slang_assemble_ctx *A, slang_variable *var,
                          * MAX2(var->array_len, 1);
       if (prog) {
          /* user-defined uniform */
-         GLint uniformLoc = _mesa_add_uniform(prog->Parameters, varName, size);
+         GLenum datatype = GL_FLOAT_VEC4; /* XXX */
+         GLint uniformLoc = _mesa_add_uniform(prog->Parameters, varName,
+                                              size, datatype);
          store = _slang_new_ir_storage(PROGRAM_UNIFORM, uniformLoc, size);
       }
       else {

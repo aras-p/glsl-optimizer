@@ -638,12 +638,8 @@ _mesa_get_active_uniform(GLcontext *ctx, GLuint program, GLuint index,
                          GLsizei maxLength, GLsizei *length, GLint *size,
                          GLenum *type, GLchar *nameOut)
 {
-   static const GLenum vec_types[] = {
-      GL_FLOAT, GL_FLOAT_VEC2, GL_FLOAT_VEC3, GL_FLOAT_VEC4
-   };
    struct gl_shader_program *shProg
       = _mesa_lookup_shader_program(ctx, program);
-   GLint sz;
    GLuint ind, j;
 
    if (!shProg) {
@@ -664,11 +660,10 @@ _mesa_get_active_uniform(GLcontext *ctx, GLuint program, GLuint index,
             /* found it */
             copy_string(nameOut, maxLength, length,
                         shProg->Uniforms->Parameters[j].Name);
-            sz = shProg->Uniforms->Parameters[j].Size;
             if (size)
-               *size = sz;
+               *size = shProg->Uniforms->Parameters[j].Size;
             if (type)
-               *type = vec_types[sz-1]; /* XXX this is a temporary hack */
+               *type = shProg->Uniforms->Parameters[j].DataType;
             return;
          }
          ind++;

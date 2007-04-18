@@ -81,7 +81,7 @@ _mesa_free_parameter_list(struct gl_program_parameter_list *paramList)
 GLint
 _mesa_add_parameter(struct gl_program_parameter_list *paramList,
                     enum register_file type, const char *name,
-                    GLuint size, const GLfloat *values,
+                    GLuint size, GLenum datatype, const GLfloat *values,
                     const gl_state_index state[STATE_LENGTH])
 {
    const GLuint oldNum = paramList->NumParameters;
@@ -126,6 +126,7 @@ _mesa_add_parameter(struct gl_program_parameter_list *paramList,
          p->Name = name ? _mesa_strdup(name) : NULL;
          p->Type = type;
          p->Size = size;
+         p->DataType = datatype;
          if (values) {
             COPY_4V(paramList->ParameterValues[oldNum + i], values);
             values += 4;
@@ -156,7 +157,7 @@ _mesa_add_named_parameter(struct gl_program_parameter_list *paramList,
                           const char *name, const GLfloat values[4])
 {
    return _mesa_add_parameter(paramList, PROGRAM_NAMED_PARAM, name,
-                              4, values, NULL);
+                              4, GL_NONE, values, NULL);
                               
 }
 
@@ -187,7 +188,7 @@ _mesa_add_named_constant(struct gl_program_parameter_list *paramList,
 #endif
    size = 4; /** XXX fix */
    return _mesa_add_parameter(paramList, PROGRAM_CONSTANT, name,
-                              size, values, NULL);
+                              size, GL_NONE, values, NULL);
 }
 
 
@@ -239,7 +240,7 @@ _mesa_add_unnamed_constant(struct gl_program_parameter_list *paramList,
 
    /* add a new parameter to store this constant */
    pos = _mesa_add_parameter(paramList, PROGRAM_CONSTANT, NULL,
-                             size, values, NULL);
+                             size, GL_NONE, values, NULL);
    if (pos >= 0 && swizzleOut) {
       if (size == 1)
          *swizzleOut = SWIZZLE_XXXX;
@@ -252,16 +253,19 @@ _mesa_add_unnamed_constant(struct gl_program_parameter_list *paramList,
 
 GLint
 _mesa_add_uniform(struct gl_program_parameter_list *paramList,
-                  const char *name, GLuint size)
+                  const char *name, GLuint size, GLenum datatype)
 {
    GLint i = _mesa_lookup_parameter_index(paramList, -1, name);
+   ASSERT(datatype != GL_NONE);
    if (i >= 0 && paramList->Parameters[i].Type == PROGRAM_UNIFORM) {
+      ASSERT(paramList->Parameters[i].Size == size);
+      ASSERT(paramList->Parameters[i].DataType == datatype);
       /* already in list */
       return i;
    }
    else {
       i = _mesa_add_parameter(paramList, PROGRAM_UNIFORM, name,
-                              size, NULL, NULL);
+                              size, datatype, NULL, NULL);
                               
       return i;
    }
@@ -270,7 +274,7 @@ _mesa_add_uniform(struct gl_program_parameter_list *paramList,
 
 GLint
 _mesa_add_sampler(struct gl_program_parameter_list *paramList,
-                  const char *name)
+                  const char *name, GLenum datatype)
 {
    GLint i = _mesa_lookup_parameter_index(paramList, -1, name);
    if (i >= 0 && paramList->Parameters[i].Type == PROGRAM_SAMPLER) {
@@ -280,7 +284,7 @@ _mesa_add_sampler(struct gl_program_parameter_list *paramList,
    else {
       const GLint size = 1;
       i = _mesa_add_parameter(paramList, PROGRAM_SAMPLER, name,
-                              size, NULL, NULL);
+                              size, datatype, NULL, NULL);
       return i;
    }
 }
@@ -301,7 +305,7 @@ _mesa_add_varying(struct gl_program_parameter_list *paramList,
    else {
       assert(size == 4);
       i = _mesa_add_parameter(paramList, PROGRAM_VARYING, name,
-                              size, NULL, NULL);
+                              size, GL_NONE, NULL, NULL);
       return i;
    }
 }
@@ -330,7 +334,7 @@ _mesa_add_attribute(struct gl_program_parameter_list *paramList,
       if (size < 0)
          size = 4;
       i = _mesa_add_parameter(paramList, PROGRAM_INPUT, name,
-                              size, NULL, state);
+                              size, GL_NONE, NULL, state);
    }
    return i;
 }
@@ -396,7 +400,8 @@ _mesa_add_state_reference(struct gl_program_parameter_list *paramList,
 
    name = _mesa_program_state_string(stateTokens);
    index = _mesa_add_parameter(paramList, PROGRAM_STATE_VAR, name,
-                               size, NULL, (gl_state_index *) stateTokens);
+                               size, GL_NONE,
+                               NULL, (gl_state_index *) stateTokens);
    paramList->StateFlags |= _mesa_program_state_flags(stateTokens);
 
    /* free name string here since we duplicated it in add_parameter() */
@@ -565,8 +570,8 @@ _mesa_clone_parameter_list(const struct gl_program_parameter_list *list)
    for (i = 0; i < list->NumParameters; i++) {
       struct gl_program_parameter *p = list->Parameters + i;
       GLuint size = MIN2(p->Size, 4);
-      GLint j = _mesa_add_parameter(clone, p->Type, p->Name,
-                                    size, list->ParameterValues[i], NULL);
+      GLint j = _mesa_add_parameter(clone, p->Type, p->Name, size, p->DataType,
+                                    list->ParameterValues[i], NULL);
       ASSERT(j >= 0);
       /* copy state indexes */
       if (p->Type == PROGRAM_STATE_VAR) {

@@ -46,6 +46,7 @@ struct gl_program_parameter
 {
    const char *Name;        /**< Null-terminated string */
    enum register_file Type; /**< PROGRAM_NAMED_PARAM, CONSTANT or STATE_VAR */
+   GLenum DataType;         /**< GL_FLOAT, GL_FLOAT_VEC2, etc */
    GLuint Size;             /**< Number of components (1..4) */
    /**
     * A sequence of STATE_* tokens and integers to identify GL state.
@@ -80,7 +81,7 @@ _mesa_clone_parameter_list(const struct gl_program_parameter_list *list);
 extern GLint
 _mesa_add_parameter(struct gl_program_parameter_list *paramList,
                     enum register_file type, const char *name,
-                    GLuint size, const GLfloat *values,
+                    GLuint size, GLenum datatype, const GLfloat *values,
                     const gl_state_index state[STATE_LENGTH]);
 
 extern GLint
@@ -99,11 +100,11 @@ _mesa_add_unnamed_constant(struct gl_program_parameter_list *paramList,
 
 extern GLint
 _mesa_add_uniform(struct gl_program_parameter_list *paramList,
-                  const char *name, GLuint size);
+                  const char *name, GLuint size, GLenum datatype);
 
 extern GLint
 _mesa_add_sampler(struct gl_program_parameter_list *paramList,
-                  const char *name);
+                  const char *name, GLenum datatype);
 
 extern GLint
 _mesa_add_varying(struct gl_program_parameter_list *paramList,
