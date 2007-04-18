@@ -2817,11 +2817,10 @@ _slang_codegen_global_variable(slang_assemble_ctx *A, slang_variable *var,
    struct gl_program *prog = A->program;
    const char *varName = (char *) var->a_name;
    GLboolean success = GL_TRUE;
-   GLint texIndex;
    slang_ir_storage *store = NULL;
    int dbg = 0;
-
-   texIndex = sampler_to_texture_index(var->type.specifier.type);
+   const GLenum datatype = _slang_gltype_from_specifier(&var->type.specifier);
+   const GLint texIndex = sampler_to_texture_index(var->type.specifier.type);
 
    if (texIndex != -1) {
       /* Texture sampler:
@@ -2829,8 +2828,8 @@ _slang_codegen_global_variable(slang_assemble_ctx *A, slang_variable *var,
        * store->Index = sampler uniform location
        * store->Size = texture type index (1D, 2D, 3D, cube, etc)
        */
-      GLenum datatype = GL_SAMPLER_2D;
-      GLint samplerUniform = _mesa_add_sampler(prog->Parameters, varName, datatype);
+      GLint samplerUniform
+         = _mesa_add_sampler(prog->Parameters, varName, datatype);
       store = _slang_new_ir_storage(PROGRAM_SAMPLER, samplerUniform, texIndex);
       if (dbg) printf("SAMPLER ");
    }
@@ -2840,7 +2839,6 @@ _slang_codegen_global_variable(slang_assemble_ctx *A, slang_variable *var,
                          * MAX2(var->array_len, 1);
       if (prog) {
          /* user-defined uniform */
-         GLenum datatype = GL_FLOAT_VEC4; /* XXX */
          GLint uniformLoc = _mesa_add_uniform(prog->Parameters, varName,
                                               size, datatype);
          store = _slang_new_ir_storage(PROGRAM_UNIFORM, uniformLoc, size);
