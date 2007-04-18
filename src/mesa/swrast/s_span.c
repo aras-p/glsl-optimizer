@@ -1,8 +1,8 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.5
+ * Version:  6.5.3
  *
- * Copyright (C) 1999-2006  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2007  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -69,14 +69,23 @@ _swrast_span_default_z( GLcontext *ctx, SWspan *span )
 
 
 /**
- * Init span's fog interpolation values to the RasterPos fog.
+ * Init span's fogcoord interpolation values to the RasterPos fog.
  * Used during setup for glDraw/CopyPixels.
  */
 void
 _swrast_span_default_fog( GLcontext *ctx, SWspan *span )
 {
-   span->attrStart[FRAG_ATTRIB_FOGC][0]
-      = _swrast_z_to_fogfactor(ctx, ctx->Current.RasterDistance);
+   const SWcontext *swrast = SWRAST_CONTEXT(ctx);
+   GLfloat fogVal; /* a coord or a blend factor */
+   if (swrast->_PreferPixelFog) {
+      /* fog blend factors will be computed from fog coordinates per pixel */
+      fogVal = ctx->Current.RasterDistance;
+   }
+   else {
+      /* fog blend factor should be computed from fogcoord now */
+      fogVal = _swrast_z_to_fogfactor(ctx, ctx->Current.RasterDistance);
+   }
+   span->attrStart[FRAG_ATTRIB_FOGC][0] = fogVal;
    span->attrStepX[FRAG_ATTRIB_FOGC][0] = 0.0;
    span->attrStepY[FRAG_ATTRIB_FOGC][0] = 0.0;
    span->interpMask |= SPAN_FOG;
