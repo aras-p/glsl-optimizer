@@ -274,7 +274,6 @@ _mesa_add_uniform(struct gl_program_parameter_list *paramList,
    else {
       i = _mesa_add_parameter(paramList, PROGRAM_UNIFORM, name,
                               size, datatype, NULL, NULL);
-                              
       return i;
    }
 }
@@ -291,11 +290,13 @@ _mesa_add_sampler(struct gl_program_parameter_list *paramList,
 {
    GLint i = _mesa_lookup_parameter_index(paramList, -1, name);
    if (i >= 0 && paramList->Parameters[i].Type == PROGRAM_SAMPLER) {
+      ASSERT(paramList->Parameters[i].Size == 1);
+      ASSERT(paramList->Parameters[i].DataType == datatype);
       /* already in list */
       return i;
    }
    else {
-      const GLint size = 1;
+      const GLint size = 1; /* a sampler is basically a texture unit number */
       i = _mesa_add_parameter(paramList, PROGRAM_SAMPLER, name,
                               size, datatype, NULL, NULL);
       return i;
