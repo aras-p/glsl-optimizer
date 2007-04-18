@@ -155,7 +155,7 @@ _swrast_update_polygon( GLcontext *ctx )
 
 /**
  * Update the _PreferPixelFog field to indicate if we need to compute
- * fog factors per-fragment.
+ * fog blend factors (from the fog coords) per-fragment.
  */
 static void
 _swrast_update_fog_hint( GLcontext *ctx )
