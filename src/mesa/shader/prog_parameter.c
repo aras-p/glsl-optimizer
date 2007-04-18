@@ -586,18 +586,21 @@ _mesa_clone_parameter_list(const struct gl_program_parameter_list *list)
 
 
 /**
- * Find longest name of any parameter in list.
+ * Find longest name of all uniform parameters in list.
  */
 GLuint
-_mesa_parameter_longest_name(const struct gl_program_parameter_list *list)
+_mesa_longest_parameter_name(const struct gl_program_parameter_list *list,
+                             enum register_file type)
 {
    GLuint i, maxLen = 0;
    if (!list)
       return 0;
    for (i = 0; i < list->NumParameters; i++) {
-      GLuint len = _mesa_strlen(list->Parameters[i].Name);
-      if (len > maxLen)
-         maxLen = len;
+      if (list->Parameters[i].Type == type) {
+         GLuint len = _mesa_strlen(list->Parameters[i].Name);
+         if (len > maxLen)
+            maxLen = len;
+      }
    }
    return maxLen;
 }

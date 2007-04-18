@@ -131,6 +131,8 @@ _mesa_lookup_parameter_constant(const struct gl_program_parameter_list *list,
                                 GLint *posOut, GLuint *swizzleOut);
 
 extern GLuint
-_mesa_parameter_longest_name(const struct gl_program_parameter_list *list);
+_mesa_longest_parameter_name(const struct gl_program_parameter_list *list,
+                             enum register_file type);
+
 
 #endif /* PROG_PARAMETER_H */

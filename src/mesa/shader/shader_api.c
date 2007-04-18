@@ -763,13 +763,13 @@ _mesa_get_programiv(GLcontext *ctx, GLuint program,
       *params = shProg->Attributes ? shProg->Attributes->NumParameters : 0;
       break;
    case GL_ACTIVE_ATTRIBUTE_MAX_LENGTH:
-      *params = _mesa_parameter_longest_name(shProg->Attributes);
+      *params = _mesa_longest_parameter_name(shProg->Attributes, PROGRAM_INPUT);
       break;
    case GL_ACTIVE_UNIFORMS:
       *params = shProg->Uniforms ? shProg->Uniforms->NumParameters : 0;
       break;
    case GL_ACTIVE_UNIFORM_MAX_LENGTH:
-      *params = _mesa_parameter_longest_name(shProg->Uniforms);
+      *params = _mesa_longest_parameter_name(shProg->Uniforms, PROGRAM_UNIFORM);
       break;
    default:
       _mesa_error(ctx, GL_INVALID_ENUM, "glGetProgramiv(pname)");
