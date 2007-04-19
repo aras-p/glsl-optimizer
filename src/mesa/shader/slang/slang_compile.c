@@ -1617,6 +1617,7 @@ parse_init_declarator(slang_parse_ctx * C, slang_output_ctx * O,
       A.space.vars = O->vars;
       A.program = O->program;
       A.vartable = O->vartable;
+      A.curFuncEndLabel = NULL;
       _slang_codegen_global_variable(&A, var, C->type);
    }
 
