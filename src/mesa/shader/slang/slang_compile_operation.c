@@ -175,40 +175,40 @@ slang_operation_grow(GLuint *numChildren, slang_operation **children)
 
 /**
  * Insert a new slang_operation into an array.
- * \param numChildren  pointer to current number of children (in/out)
- * \param children  address of array (in/out)
- * \param pos  position to insert
- * \return  pointer to the new operation
+ * \param numElements  pointer to current array size (in/out)
+ * \param array  address of the array (in/out)
+ * \param pos  position to insert new element
+ * \return  pointer to the new operation/element
  */
 slang_operation *
-slang_operation_insert(GLuint *numChildren, slang_operation **children,
+slang_operation_insert(GLuint *numElements, slang_operation **array,
                        GLuint pos)
 {
    slang_operation *ops;
 
-   assert(pos <= *numChildren);
+   assert(pos <= *numElements);
 
    ops = (slang_operation *)
-      _mesa_malloc((*numChildren + 1) * sizeof(slang_operation));
+      _mesa_malloc((*numElements + 1) * sizeof(slang_operation));
    if (ops) {
       slang_operation *newOp;
       newOp = ops + pos;
       if (pos > 0)
-         _mesa_memcpy(ops, *children, pos * sizeof(slang_operation));
-      if (pos < *numChildren)
-         _mesa_memcpy(newOp + 1, (*children) + pos,
-                      (*numChildren - pos) * sizeof(slang_operation));
+         _mesa_memcpy(ops, *array, pos * sizeof(slang_operation));
+      if (pos < *numElements)
+         _mesa_memcpy(newOp + 1, (*array) + pos,
+                      (*numElements - pos) * sizeof(slang_operation));
 
       if (!slang_operation_construct(newOp)) {
          _mesa_free(ops);
-         *numChildren = 0;
-         *children = NULL;
+         *numElements = 0;
+         *array = NULL;
          return NULL;
       }
-      if (*children)
-         _mesa_free(*children);
-      *children = ops;
-      (*numChildren)++;
+      if (*array)
+         _mesa_free(*array);
+      *array = ops;
+      (*numElements)++;
       return newOp;
    }
    return NULL;
