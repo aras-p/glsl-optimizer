@@ -2693,14 +2693,16 @@ fast_match (dict *di, const byte *text, int *index, rule *ru, int *_PP, bytepool
 
         if (status == mr_matched)
         {
-            if (sp->m_emits != NULL)
-                if (emit_push (sp->m_emits, _BP->_F + _P, text[ind - 1], save_ind, &ctx))
+            if (sp->m_emits != NULL) {
+                const byte ch = (ind <= 0) ? 0 : text[ind - 1];
+                if (emit_push (sp->m_emits, _BP->_F + _P, ch, save_ind, &ctx))
                 {
                     free_regbyte_ctx_stack (ctx, *rbc);
                     return mr_internal_error;
                 }
 
-            _P = _P2;
+           }
+           _P = _P2;
         }
 
         /* if the rule operator is a logical or, we pick up the first matching specifier */
