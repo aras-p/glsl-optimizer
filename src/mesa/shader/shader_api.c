@@ -119,6 +119,11 @@ _mesa_free_shader_program_data(GLcontext *ctx,
 
    _mesa_clear_shader_program_data(ctx, shProg);
 
+   if (shProg->Attributes) {
+      _mesa_free_parameter_list(shProg->Attributes);
+      shProg->Attributes = NULL;
+   }
+
    /* detach shaders */
    for (i = 0; i < shProg->NumShaders; i++) {
       _mesa_reference_shader(ctx, &shProg->Shaders[i], NULL);
