@@ -2320,15 +2320,16 @@ _slang_gen_field(slang_assemble_ctx * A, slang_operation *oper)
       /* oper->a_id is the field name */
       slang_ir_node *base, *n;
       slang_typeinfo field_ti;
-      GLint fieldSize, fieldOffset;
+      GLint fieldSize, fieldOffset = -1;
       /* type of field */
       slang_typeinfo_construct(&field_ti);
       _slang_typeof_operation(A, oper, &field_ti);
 
       fieldSize = _slang_sizeof_type_specifier(&field_ti.spec);
-      fieldOffset = _slang_field_offset(&ti.spec, oper->a_id);
+      if (fieldSize > 0)
+         fieldOffset = _slang_field_offset(&ti.spec, oper->a_id);
 
-      if (fieldOffset < 0) {
+      if (fieldSize == 0 || fieldOffset < 0) {
          slang_info_log_error(A->log,
                               "\"%s\" is not a member of struct \"%s\"",
                               (char *) oper->a_id,
