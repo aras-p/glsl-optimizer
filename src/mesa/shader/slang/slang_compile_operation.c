@@ -205,6 +205,8 @@ slang_operation_insert(GLuint *numChildren, slang_operation **children,
          *children = NULL;
          return NULL;
       }
+      if (*children)
+         _mesa_free(*children);
       *children = ops;
       (*numChildren)++;
       return newOp;
