@@ -290,6 +290,9 @@ _slang_resolve_attributes(struct gl_shader_program *shProg,
 
    assert(prog->Target == GL_VERTEX_PROGRAM_ARB);
 
+   if (!shProg->Attributes)
+      shProg->Attributes = _mesa_new_parameter_list();
+
    /* Build a bitmask indicating which attribute indexes have been
     * explicitly bound by the user with glBindAttributeLocation().
     */
@@ -298,9 +301,6 @@ _slang_resolve_attributes(struct gl_shader_program *shProg,
       GLint attr = shProg->Attributes->Parameters[i].StateIndexes[0];
       usedAttributes |= attr;
    }
-
-   if (!shProg->Attributes)
-      shProg->Attributes = _mesa_new_parameter_list();
 
    /*
     * Scan program for generic attribute references
