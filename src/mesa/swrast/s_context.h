@@ -1,8 +1,8 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.5.2
+ * Version:  6.5.3
  *
- * Copyright (C) 1999-2006  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2007  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -46,6 +46,7 @@
 #include "mtypes.h"
 #include "swrast.h"
 #include "s_span.h"
+#include "prog_execute.h"
 
 
 typedef void (*texture_sample_func)(GLcontext *ctx,
@@ -221,6 +222,9 @@ typedef struct
    GLchan *TexelBuffer;
 
    validate_texture_image_func ValidateTextureImage;
+
+   /** State used during execution of fragment programs */
+   struct gl_program_machine FragProgMachine;
 
 } SWcontext;
 
