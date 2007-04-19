@@ -1762,6 +1762,7 @@ _slang_resolve_subroutines(slang_emit_info *emitInfo)
    mainP->Instructions = _mesa_realloc_instructions(mainP->Instructions,
                                                     mainP->NumInstructions,
                                                     total);
+   mainP->NumInstructions = total;
    for (i = 0; i < emitInfo->NumSubroutines; i++) {
       struct gl_program *sub = emitInfo->Subroutines[i];
       _mesa_copy_instructions(mainP->Instructions + subroutineLoc[i],
@@ -1771,7 +1772,13 @@ _slang_resolve_subroutines(slang_emit_info *emitInfo)
       sub->Parameters = NULL; /* prevent double-free */
       _mesa_delete_program(ctx, sub);
    }
-   mainP->NumInstructions = total;
+
+   /* free subroutine list */
+   if (emitInfo->Subroutines) {
+      _mesa_free(emitInfo->Subroutines);
+      emitInfo->Subroutines = NULL;
+   }
+   emitInfo->NumSubroutines = 0;
 
    /* Examine CAL instructions.
     * At this point, the BranchTarget field of the CAL instructions is
