@@ -3893,6 +3893,36 @@ _mesa_unpack_depth_span( const GLcontext *ctx, GLuint n,
 {
    GLfloat depthTemp[MAX_WIDTH], *depthValues;
 
+   /* Look for special cases first.
+    * Not only are these faster, they're less prone to numeric conversion
+    * problems.  Otherwise, converting from an int type to a float then
+    * back to an int type can introduce errors that will show up as
+    * artifacts in things like depth peeling which uses glCopyTexImage.
+    */
+   if (ctx->Pixel.DepthScale == 1.0 && ctx->Pixel.DepthBias == 0.0) {
+      if (srcType == GL_UNSIGNED_INT && dstType == GL_UNSIGNED_SHORT) {
+         const GLuint *src = (const GLuint *) source;
+         GLushort *dst = (GLushort *) dest;
+         GLuint i;
+         for (i = 0; i < n; i++) {
+            dst[i] = src[i] >> 16;
+         }
+         return;
+      }
+      if (srcType == GL_UNSIGNED_SHORT && dstType == GL_UNSIGNED_INT) {
+         const GLushort *src = (const GLushort *) source;
+         GLuint *dst = (GLuint *) dest;
+         GLuint i;
+         for (i = 0; i < n; i++) {
+            dst[i] = src[i] | (src[i] << 16);
+         }
+         return;
+      }
+      /* XXX may want to add additional cases here someday */
+   }
+
+   /* general case path */
+
    if (dstType == GL_FLOAT) {
       depthValues = (GLfloat *) dest;
    }
@@ -3903,6 +3933,7 @@ _mesa_unpack_depth_span( const GLcontext *ctx, GLuint n,
    /* XXX we need to obey srcPacking->SwapBytes here!!! */
    (void) srcPacking;
 
+   /* convert incoming values to GLfloat */
    switch (srcType) {
       case GL_BYTE:
           DEPTH_VALUES(GLbyte, BYTE_TO_FLOAT);
