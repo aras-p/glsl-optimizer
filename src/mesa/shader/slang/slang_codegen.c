@@ -1752,7 +1752,7 @@ static slang_ir_node *
 _slang_gen_temporary(GLint size)
 {
    slang_ir_storage *store;
-   slang_ir_node *n;
+   slang_ir_node *n = NULL;
 
    store = _slang_new_ir_storage(PROGRAM_TEMPORARY, -1, size);
    if (store) {
@@ -2905,7 +2905,7 @@ _slang_codegen_global_variable(slang_assemble_ctx *A, slang_variable *var,
       if (dbg) printf("ATTRIB ");
    }
    else if (var->type.qualifier == SLANG_QUAL_FIXEDINPUT) {
-      GLuint swizzle;
+      GLuint swizzle = SWIZZLE_XYZW; /* silence compiler warning */
       GLint index = _slang_input_index(varName, GL_FRAGMENT_PROGRAM_ARB,
                                        &swizzle);
       GLint size = 4; /* XXX? */
