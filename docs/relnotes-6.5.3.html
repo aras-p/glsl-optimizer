@@ -22,6 +22,22 @@ TBD
 </pre>
 
 
+<h2>Shared library numbering</h2>
+<p>
+Mesa 6.5.3 supports the OpenGL 2.0/2.1 API.  However, the (unix)
+shared library version is still 1.5 (i.e. libGL.so.1.5.xxxxxx).
+Bumping the shared library version to 2.x would cause linking problems
+with existing OpenGL applications.  Since OpenGL 2.x is backward
+compatible with OpenGL 1.x the shared library version number doesn't
+have to be incremented (which would indicate an incompatible ABI).
+</p>
+<p>
+Other OpenGL vendors name their OpenGL 2.x libraries libGL.so.1.0.xxxxx
+for the same reason.
+</p>
+
+
+
 <h2>New features</h2>
 <ul>
 <li>OpenGL 2.0 and 2.1 API support.
@@ -47,6 +63,7 @@ TBD
 <li>Fixed a few bugs in software-emulated alpha planes
 <li>Assorted minor bug fixes in glCopy/DrawPixels, glPixelZoom, etc.
 <li>Assorted DRI driver bug fixes.
+<li>Fixed a number of bugs that prevented "depth-peeling" rendering from working.
 </ul>
 
 
