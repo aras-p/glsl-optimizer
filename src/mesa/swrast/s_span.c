@@ -776,6 +776,9 @@ interpolate_wpos(GLcontext *ctx, SWspan *span)
 {
    GLfloat (*wpos)[4] = span->array->attribs[FRAG_ATTRIB_WPOS];
    GLuint i;
+   const GLfloat zScale = 1.0 / ctx->DrawBuffer->_DepthMaxF;
+   GLfloat w, dw;
+
    if (span->arrayMask & SPAN_XY) {
       for (i = 0; i < span->end; i++) {
          wpos[i][0] = (GLfloat) span->array->x[i];
@@ -788,10 +791,13 @@ interpolate_wpos(GLcontext *ctx, SWspan *span)
          wpos[i][1] = (GLfloat) span->y;
       }
    }
+
+   w = span->attrStart[FRAG_ATTRIB_WPOS][3];
+   dw = span->attrStepX[FRAG_ATTRIB_WPOS][3];
    for (i = 0; i < span->end; i++) {
-      wpos[i][2] = (GLfloat) span->array->z[i] / ctx->DrawBuffer->_DepthMaxF;
-      wpos[i][3] = span->attrStart[FRAG_ATTRIB_WPOS][3]
-                 + i * span->attrStepX[FRAG_ATTRIB_WPOS][3];
+      wpos[i][2] = (GLfloat) span->array->z[i] * zScale;
+      wpos[i][3] = w;
+      w += dw;
    }
 }
 
@@ -1401,7 +1407,10 @@ _swrast_write_rgba_span( GLcontext *ctx, SWspan *span)
    ASSERT((span->interpMask & span->arrayMask) == 0);
    ASSERT((span->interpMask & SPAN_RGBA) ^ (span->arrayMask & SPAN_RGBA));
 
-   /* check for conditions that prevent deferred shading */
+   /* check for conditions that prevent deferred shading (doing shading
+    * after stencil/ztest).
+    * XXX move this code into state validation.
+    */
    if (ctx->Color.AlphaEnabled) {
       /* alpha test depends on post-texture/shader colors */
       deferredTexture = GL_FALSE;
@@ -1411,6 +1420,10 @@ _swrast_write_rgba_span( GLcontext *ctx, SWspan *span)
          if (ctx->FragmentProgram._Current->Base.OutputsWritten
              & (1 << FRAG_RESULT_DEPR)) {
             /* Z comes from fragment program/shader */
+            deferredTexture = GL_FALSE;
+         }
+         else if (ctx->Query.CurrentOcclusionObject) {
+            /* occlusion query depends on shader discard/kill results */
             deferredTexture = GL_FALSE;
          }
          else {
