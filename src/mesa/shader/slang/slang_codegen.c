@@ -1202,7 +1202,6 @@ _slang_gen_function_call(slang_assemble_ctx *A, slang_function *fun,
 
    /*_slang_label_delete(A->curFuncEndLabel);*/
    A->curFuncEndLabel = prevFuncEndLabel;
-   assert(A->curFuncEndLabel);
 
    return n;
 }
