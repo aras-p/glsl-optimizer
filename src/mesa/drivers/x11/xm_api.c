@@ -1869,9 +1869,7 @@ PUBLIC
 GLboolean XMesaForceCurrent(XMesaContext c)
 {
    if (c) {
-#ifdef XGLServer
       _glapi_set_dispatch(c->mesa.CurrentDispatch);
-#endif
 
       if (&(c->mesa) != _mesa_get_current_context()) {
 	 _mesa_make_current(&c->mesa, c->mesa.DrawBuffer, c->mesa.ReadBuffer);
