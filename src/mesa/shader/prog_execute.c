@@ -933,6 +933,9 @@ _mesa_execute_program(GLcontext * ctx,
             else {
                cond = eval_condition(machine, inst);
             }
+            if (DEBUG_PROG) {
+               printf("IF: %d\n", cond);
+            }
             /* do if/else */
             if (cond) {
                /* do if-clause (just continue execution) */
