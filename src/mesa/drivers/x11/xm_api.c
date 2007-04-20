@@ -1578,17 +1578,13 @@ void XMesaDestroyContext( XMesaContext c )
  * X window or pixmap.
  * \param v  the window's XMesaVisual
  * \param w  the window we're wrapping
- * \param c  context used to initialize the buffer if 3Dfx mode in use.
  * \return  new XMesaBuffer or NULL if error
  */
-XMesaBuffer
-XMesaCreateWindowBuffer2(XMesaVisual v, XMesaWindow w, XMesaContext c)
+PUBLIC XMesaBuffer
+XMesaCreateWindowBuffer(XMesaVisual v, XMesaWindow w)
 {
 #ifndef XFree86Server
    XWindowAttributes attr;
-#endif
-#ifdef FX
-   char *fxEnvVar;
 #endif
    int client = 0;
    XMesaBuffer b;
@@ -1596,7 +1592,6 @@ XMesaCreateWindowBuffer2(XMesaVisual v, XMesaWindow w, XMesaContext c)
 
    assert(v);
    assert(w);
-   (void) c;
 
    /* Check that window depth matches visual depth */
 #ifdef XFree86Server
@@ -1642,8 +1637,14 @@ XMesaCreateWindowBuffer2(XMesaVisual v, XMesaWindow w, XMesaContext c)
       return NULL;
    }
 
+   return b;
+}
+
 #ifdef FX
-   fxEnvVar = _mesa_getenv("MESA_GLX_FX");
+void
+FXcreateContext(XMesaVisual v, XMesaWindow w, XMesaContext c, XMesaBuffer b)
+{
+   char *fxEnvVar = _mesa_getenv("MESA_GLX_FX");
    if (fxEnvVar) {
      if (fxEnvVar[0]!='d') {
        int attribs[100];
@@ -1719,17 +1720,8 @@ XMesaCreateWindowBuffer2(XMesaVisual v, XMesaWindow w, XMesaContext c)
       _mesa_warning(NULL, "         (check the README.3DFX file for more information).\n\n");
       _mesa_warning(NULL, "         you can disable this message with a 'export MESA_GLX_FX=disable'.\n");
    }
+}
 #endif
-
-   return b;
-}
-
-
-PUBLIC XMesaBuffer
-XMesaCreateWindowBuffer(XMesaVisual v, XMesaWindow w)
-{
-   return XMesaCreateWindowBuffer2( v, w, NULL );
-}
 
 
 /**
@@ -2004,9 +1996,9 @@ GLboolean XMesaCopyContext( XMesaContext xm_src, XMesaContext xm_dst, GLuint mas
 /*
  * Switch 3Dfx support hack between window and full-screen mode.
  */
+#ifdef FX
 GLboolean XMesaSetFXmode( GLint mode )
 {
-#ifdef FX
    const char *fx = _mesa_getenv("MESA_GLX_FX");
    if (fx && fx[0] != 'd') {
       GET_CURRENT_CONTEXT(ctx);
@@ -2043,11 +2035,15 @@ GLboolean XMesaSetFXmode( GLint mode )
       }
    }
    /*fprintf(stderr, "fallthrough\n");*/
-#else
-   (void) mode;
-#endif
    return GL_FALSE;
 }
+#else
+GLboolean XMesaSetFXmode( GLint mode )
+{
+   (void) mode;
+   return GL_FALSE;
+}
+#endif
 
 
 

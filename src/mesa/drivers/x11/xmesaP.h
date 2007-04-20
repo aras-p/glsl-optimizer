@@ -569,9 +569,10 @@ extern void xmesa_register_swrast_functions( GLcontext *ctx );
 
 
 /* XXX this is a hack to implement shared display lists with 3Dfx */
-extern XMesaBuffer XMesaCreateWindowBuffer2( XMesaVisual v,
-					     XMesaWindow w,
-					     XMesaContext c );
+extern void FXcreateContext( XMesaVisual v,
+                             XMesaWindow w,
+                             XMesaContext c,
+                             XMesaBuffer b );
 
 
 #define ENABLE_EXT_texure_compression_s3tc 0 /* SW texture compression */
