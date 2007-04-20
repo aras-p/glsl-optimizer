@@ -29,7 +29,10 @@
 
 #include "GL/xmesa.h"
 #include "mtypes.h"
-
+#if defined(FX)
+#include "GL/fxmesa.h"
+#include "../glide/fxdrv.h"
+#endif
 #ifdef XFree86Server
 #include "xm_image.h"
 #endif
@@ -255,6 +258,13 @@ struct xmesa_buffer {
    Pixel alloced_colors[256];
 #else
    unsigned long alloced_colors[256];
+#endif
+
+#if defined( FX )
+   /* For 3Dfx Glide only */
+   GLboolean FXisHackUsable;	/* Can we render into window? */
+   GLboolean FXwindowHack;	/* Are we rendering into a window? */
+   fxMesaContext FXctx;
 #endif
 
    struct xmesa_buffer *Next;	/* Linked list pointer: */
@@ -555,6 +565,13 @@ extern void xmesa_choose_triangle( GLcontext *ctx );
 
 
 extern void xmesa_register_swrast_functions( GLcontext *ctx );
+
+
+
+/* XXX this is a hack to implement shared display lists with 3Dfx */
+extern XMesaBuffer XMesaCreateWindowBuffer2( XMesaVisual v,
+					     XMesaWindow w,
+					     XMesaContext c );
 
 
 #define ENABLE_EXT_texure_compression_s3tc 0 /* SW texture compression */

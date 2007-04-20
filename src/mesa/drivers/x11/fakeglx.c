@@ -1440,7 +1440,7 @@ Fake_glXMakeContextCurrent( Display *dpy, GLXDrawable draw,
       }
       if (!drawBuffer) {
          /* drawable must be a new window! */
-         drawBuffer = XMesaCreateWindowBuffer( xmctx->xm_visual, draw );
+         drawBuffer = XMesaCreateWindowBuffer2( xmctx->xm_visual, draw, xmctx);
          if (!drawBuffer) {
             /* Out of memory, or context/drawable depth mismatch */
             return False;
@@ -1457,7 +1457,8 @@ Fake_glXMakeContextCurrent( Display *dpy, GLXDrawable draw,
       }
       if (!readBuffer) {
          /* drawable must be a new window! */
-         readBuffer = XMesaCreateWindowBuffer( xmctx->xm_visual, read );
+         readBuffer = XMesaCreateWindowBuffer2(glxCtx->xmesaContext->xm_visual,
+                                               read, xmctx);
          if (!readBuffer) {
             /* Out of memory, or context/drawable depth mismatch */
             return False;
@@ -1929,6 +1930,12 @@ Fake_glXWaitX( void )
 static const char *
 get_extensions( void )
 {
+#ifdef FX
+   const char *fx = _mesa_getenv("MESA_GLX_FX");
+   if (fx && fx[0] != 'd') {
+      return EXTENSIONS;
+   }
+#endif
    return EXTENSIONS + 23; /* skip "GLX_MESA_set_3dfx_mode" */
 }
 
@@ -2100,7 +2107,7 @@ Fake_glXCreateWindow( Display *dpy, GLXFBConfig config, Window win,
    if (!xmvis)
       return 0;
 
-   xmbuf = XMesaCreateWindowBuffer(xmvis, win);
+   xmbuf = XMesaCreateWindowBuffer2(xmvis, win, NULL);
    if (!xmbuf)
       return 0;
 
