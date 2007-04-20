@@ -32,6 +32,7 @@
 #if defined(FX)
 #include "GL/fxmesa.h"
 #include "../glide/fxdrv.h"
+#include "xm_glide.h"
 #endif
 #ifdef XFree86Server
 #include "xm_image.h"
@@ -566,13 +567,6 @@ extern void xmesa_choose_triangle( GLcontext *ctx );
 
 extern void xmesa_register_swrast_functions( GLcontext *ctx );
 
-
-
-/* XXX this is a hack to implement shared display lists with 3Dfx */
-extern void FXcreateContext( XMesaVisual v,
-                             XMesaWindow w,
-                             XMesaContext c,
-                             XMesaBuffer b );
 
 
 #define ENABLE_EXT_texure_compression_s3tc 0 /* SW texture compression */
