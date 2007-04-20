@@ -104,7 +104,7 @@ init_machine(GLcontext *ctx, struct gl_program_machine *machine,
    if (ctx->FragmentProgram.CallbackEnabled)
       inputsRead = ~0;
 
-   if (1/*program->Base.Target == GL_FRAGMENT_PROGRAM_NV*/) {
+   if (program->Base.Target == GL_FRAGMENT_PROGRAM_NV) {
       /* Clear temporary registers (undefined for ARB_f_p) */
       _mesa_bzero(machine->Temporaries,
                   MAX_PROGRAM_TEMPS * 4 * sizeof(GLfloat));
