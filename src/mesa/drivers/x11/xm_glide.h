@@ -31,6 +31,10 @@ extern void FXcreateContext( XMesaVisual v,
                              XMesaContext c,
                              XMesaBuffer b );
 
+extern void FXdestroyContext( XMesaBuffer b );
+
+extern GLboolean FXmakeCurrent( XMesaBuffer b );
+
 extern GLboolean FXswapBuffers( XMesaBuffer b );
 
 #endif /* _XM_GLIDE_H_ */

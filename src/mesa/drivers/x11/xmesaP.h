@@ -31,7 +31,6 @@
 #include "mtypes.h"
 #if defined(FX)
 #include "GL/fxmesa.h"
-#include "../glide/fxdrv.h"
 #include "xm_glide.h"
 #endif
 #ifdef XFree86Server

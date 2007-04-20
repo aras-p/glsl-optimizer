@@ -27,6 +27,8 @@
 #include "xmesaP.h"
 
 #ifdef FX
+#include "../glide/fxdrv.h"
+
 void
 FXcreateContext(XMesaVisual v, XMesaWindow w, XMesaContext c, XMesaBuffer b)
 {
@@ -109,6 +111,24 @@ FXcreateContext(XMesaVisual v, XMesaWindow w, XMesaContext c, XMesaBuffer b)
 }
 
 
+void FXdestroyContext( XMesaBuffer b )
+{
+   if (b && b->FXctx)
+      fxMesaDestroyContext(b->FXctx);
+}
+
+
+GLboolean FXmakeCurrent( XMesaBuffer b )
+{
+   if (b->FXctx) {
+      fxMesaMakeCurrent(b->FXctx);
+
+      return GL_TRUE;
+   }
+   return GL_FALSE;
+}
+
+
 /*
  * Read image from VooDoo frame buffer into X/Mesa's back XImage.
  */
@@ -118,7 +138,6 @@ static void FXgetImage( XMesaBuffer b )
    static unsigned short pixbuf[MAX_WIDTH];
    GLuint x, y;
    GLuint width, height;
-   XMesaContext xmesa = XMESA_CONTEXT(ctx);
 
 #ifdef XFree86Server
    x = b->frontxrb->pixmap->x;

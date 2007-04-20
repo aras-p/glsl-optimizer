@@ -1557,12 +1557,11 @@ PUBLIC
 void XMesaDestroyContext( XMesaContext c )
 {
    GLcontext *mesaCtx = &c->mesa;
-#ifdef FX
-   XMesaBuffer xmbuf = XMESA_BUFFER(mesaCtx->DrawBuffer);
 
-   if (xmbuf && xmbuf->FXctx)
-      fxMesaDestroyContext(xmbuf->FXctx);
+#ifdef FX
+   FXdestroyContext( XMESA_BUFFER(mesaCtx->DrawBuffer) );
 #endif
+
    _swsetup_DestroyContext( mesaCtx );
    _swrast_DestroyContext( mesaCtx );
    _tnl_DestroyContext( mesaCtx );
@@ -1767,15 +1766,6 @@ GLboolean XMesaMakeCurrent2( XMesaContext c, XMesaBuffer drawBuffer,
       if (!drawBuffer || !readBuffer)
          return GL_FALSE;  /* must specify buffers! */
 
-#ifdef FX
-      if (drawBuffer->FXctx) {
-         fxMesaMakeCurrent(drawBuffer->FXctx);
-
-         c->xm_buffer = drawBuffer;
-
-         return GL_TRUE;
-      }
-#endif
       if (&(c->mesa) == _mesa_get_current_context()
           && c->mesa.DrawBuffer == &drawBuffer->mesa_buffer
           && c->mesa.ReadBuffer == &readBuffer->mesa_buffer
@@ -1785,6 +1775,11 @@ GLboolean XMesaMakeCurrent2( XMesaContext c, XMesaBuffer drawBuffer,
       }
 
       c->xm_buffer = drawBuffer;
+
+#ifdef FX
+      if (FXmakeCurrent( drawBuffer ))
+         return GL_TRUE;
+#endif
 
       /* Call this periodically to detect when the user has begun using
        * GL rendering from multiple threads.
