@@ -281,6 +281,8 @@ _mesa_delete_program(GLcontext *ctx, struct gl_program *prog)
       for (i = 0; i < prog->NumInstructions; i++) {
          if (prog->Instructions[i].Data)
             _mesa_free(prog->Instructions[i].Data);
+         if (prog->Instructions[i].Comment)
+            _mesa_free((char *) prog->Instructions[i].Comment);
       }
       _mesa_free(prog->Instructions);
    }
