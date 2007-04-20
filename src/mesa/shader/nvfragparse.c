@@ -1140,13 +1140,12 @@ Parse_ScalarSrcReg(struct parse_state *parseState,
    else if (token[0] == '{') {
       /* vector literal */
       GLfloat values[4];
-      GLuint paramIndex, swizzle;
+      GLuint paramIndex;
       (void) Parse_String(parseState, "{");
       if (!Parse_VectorConstant(parseState, values))
          RETURN_ERROR;
       paramIndex = _mesa_add_unnamed_constant(parseState->parameters,
                                               values, 4, NULL);
-      ASSERT(swizzle == SWIZZLE_NOOP);
       srcReg->File = PROGRAM_NAMED_PARAM;
       srcReg->Index = paramIndex;      
    }
@@ -1167,12 +1166,11 @@ Parse_ScalarSrcReg(struct parse_state *parseState,
    else if (IsDigit(token[0])) {
       /* scalar literal */
       GLfloat values[4];
-      GLuint paramIndex, swizzle;
+      GLuint paramIndex;
       if (!Parse_ScalarConstant(parseState, values))
          RETURN_ERROR;
       paramIndex = _mesa_add_unnamed_constant(parseState->parameters,
                                               values, 4, NULL);
-      ASSERT(swizzle == SWIZZLE_NOOP);
       srcReg->Index = paramIndex;      
       srcReg->File = PROGRAM_NAMED_PARAM;
       needSuffix = GL_FALSE;
