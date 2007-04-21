@@ -45,6 +45,7 @@
 #include "prog_print.h"
 #include "slang_builtin.h"
 #include "slang_emit.h"
+#include "slang_mem.h"
 
 
 #define PEEPHOLE_OPTIMIZATIONS 1
@@ -126,7 +127,11 @@ slang_ir_storage *
 _slang_new_ir_storage(enum register_file file, GLint index, GLint size)
 {
    slang_ir_storage *st;
+#if USE_MEMPOOL
+   st = (slang_ir_storage *) _slang_alloc(sizeof(slang_ir_storage));
+#else
    st = (slang_ir_storage *) _mesa_calloc(sizeof(slang_ir_storage));
+#endif
    if (st) {
       st->File = file;
       st->Index = index;
@@ -151,7 +156,11 @@ alloc_temp_storage(slang_emit_info *emitInfo, slang_ir_node *n, GLint size)
    if (!_slang_alloc_temp(emitInfo->vt, n->Store)) {
       slang_info_log_error(emitInfo->log,
                            "Ran out of registers, too many temporaries");
+#if USE_MEMPOOL
+      _slang_free(n->Store);
+#else
       _mesa_free(n->Store);
+#endif
       n->Store = NULL;
       return GL_FALSE;
    }

@@ -30,6 +30,7 @@
 
 #include "imports.h"
 #include "slang_compile.h"
+#include "slang_mem.h"
 
 
 /**
@@ -60,9 +61,11 @@ slang_operation_destruct(slang_operation * oper)
 
    for (i = 0; i < oper->num_children; i++)
       slang_operation_destruct(oper->children + i);
+#if !USE_MEMPOOL
    slang_alloc_free(oper->children);
    slang_variable_scope_destruct(oper->locals);
    slang_alloc_free(oper->locals);
+#endif
    oper->children = NULL;
    oper->num_children = 0;
    oper->locals = NULL;
@@ -82,7 +85,11 @@ slang_operation_copy(slang_operation * x, const slang_operation * y)
       return GL_FALSE;
    z.type = y->type;
    z.children = (slang_operation *)
+#if USE_MEMPOOL
+      _slang_alloc(y->num_children * sizeof(slang_operation));
+#else
       slang_alloc_malloc(y->num_children * sizeof(slang_operation));
+#endif
    if (z.children == NULL) {
       slang_operation_destruct(&z);
       return GL_FALSE;
@@ -128,7 +135,11 @@ slang_operation *
 slang_operation_new(GLuint count)
 {
    slang_operation *ops
+#if USE_MEMPOOL
+       = (slang_operation *) _slang_alloc(count * sizeof(slang_operation));
+#else
        = (slang_operation *) _mesa_malloc(count * sizeof(slang_operation));
+#endif
    assert(count > 0);
    if (ops) {
       GLuint i;
@@ -146,7 +157,9 @@ void
 slang_operation_delete(slang_operation *oper)
 {
    slang_operation_destruct(oper);
+#if !USE_MEMPOOL
    _mesa_free(oper);
+#endif
 }
 
 
@@ -156,13 +169,19 @@ slang_operation_grow(GLuint *numChildren, slang_operation **children)
    slang_operation *ops;
 
    ops = (slang_operation *)
+#if USE_MEMPOOL
+      _slang_realloc(*children,
+#else
       slang_alloc_realloc(*children,
+#endif
                           *numChildren * sizeof(slang_operation),
                           (*numChildren + 1) * sizeof(slang_operation));
    if (ops) {
       slang_operation *newOp = ops + *numChildren;
       if (!slang_operation_construct(newOp)) {
+#if !USE_MEMPOOL
          _mesa_free(ops);
+#endif
          *children = NULL;
          return NULL;
       }
@@ -189,7 +208,11 @@ slang_operation_insert(GLuint *numElements, slang_operation **array,
    assert(pos <= *numElements);
 
    ops = (slang_operation *)
+#if USE_MEMPOOL
+      _slang_alloc((*numElements + 1) * sizeof(slang_operation));
+#else
       _mesa_malloc((*numElements + 1) * sizeof(slang_operation));
+#endif
    if (ops) {
       slang_operation *newOp;
       newOp = ops + pos;
@@ -200,13 +223,17 @@ slang_operation_insert(GLuint *numElements, slang_operation **array,
                       (*numElements - pos) * sizeof(slang_operation));
 
       if (!slang_operation_construct(newOp)) {
+#if !USE_MEMPOOL
          _mesa_free(ops);
+#endif
          *numElements = 0;
          *array = NULL;
          return NULL;
       }
+#if !USE_MEMPOOL
       if (*array)
          _mesa_free(*array);
+#endif
       *array = ops;
       (*numElements)++;
       return newOp;

@@ -30,6 +30,7 @@
 
 #include "imports.h"
 #include "slang_storage.h"
+#include "slang_mem.h"
 
 /* slang_storage_array */
 
@@ -47,7 +48,11 @@ slang_storage_array_destruct(slang_storage_array * arr)
 {
    if (arr->aggregate != NULL) {
       slang_storage_aggregate_destruct(arr->aggregate);
+#if USE_MEMPOOL
+      _slang_free(arr->aggregate);
+#else
       slang_alloc_free(arr->aggregate);
+#endif
    }
 }
 
@@ -68,7 +73,11 @@ slang_storage_aggregate_destruct(slang_storage_aggregate * agg)
 
    for (i = 0; i < agg->count; i++)
       slang_storage_array_destruct(agg->arrays + i);
+#if USE_MEMPOOL
+   _slang_free(agg->arrays);
+#else
    slang_alloc_free(agg->arrays);
+#endif
 }
 
 static slang_storage_array *
@@ -77,7 +86,11 @@ slang_storage_aggregate_push_new(slang_storage_aggregate * agg)
    slang_storage_array *arr = NULL;
 
    agg->arrays = (slang_storage_array *)
+#if USE_MEMPOOL
+      _slang_realloc(agg->arrays,
+#else
       slang_alloc_realloc(agg->arrays,
+#endif
                           agg->count * sizeof(slang_storage_array),
                           (agg->count + 1) * sizeof(slang_storage_array));
    if (agg->arrays != NULL) {
@@ -114,11 +127,19 @@ aggregate_matrix(slang_storage_aggregate * agg, slang_storage_type basic_type,
    arr->length = columns;
    arr->aggregate =
       (slang_storage_aggregate *)
+#if USE_MEMPOOL
+      _slang_alloc(sizeof(slang_storage_aggregate));
+#else
       slang_alloc_malloc(sizeof(slang_storage_aggregate));
+#endif
    if (arr->aggregate == NULL)
       return GL_FALSE;
    if (!slang_storage_aggregate_construct(arr->aggregate)) {
+#if USE_MEMPOOL
+      _slang_free(arr->aggregate);
+#else
       slang_alloc_free(arr->aggregate);
+#endif
       arr->aggregate = NULL;
       return GL_FALSE;
    }
@@ -221,11 +242,19 @@ _slang_aggregate_variable(slang_storage_aggregate * agg,
          arr->type = SLANG_STORE_AGGREGATE;
          arr->aggregate =
             (slang_storage_aggregate *)
+#if USE_MEMPOOL
+            _slang_alloc(sizeof(slang_storage_aggregate));
+#else
             slang_alloc_malloc(sizeof(slang_storage_aggregate));
+#endif
          if (arr->aggregate == NULL)
             return GL_FALSE;
          if (!slang_storage_aggregate_construct(arr->aggregate)) {
+#if USE_MEMPOOL
+            _slang_free(arr->aggregate);
+#else
             slang_alloc_free(arr->aggregate);
+#endif
             arr->aggregate = NULL;
             return GL_FALSE;
          }

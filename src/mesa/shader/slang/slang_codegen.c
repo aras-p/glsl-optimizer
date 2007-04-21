@@ -48,6 +48,7 @@
 #include "slang_codegen.h"
 #include "slang_compile.h"
 #include "slang_label.h"
+#include "slang_mem.h"
 #include "slang_simplify.h"
 #include "slang_emit.h"
 #include "slang_vartable.h"
@@ -459,7 +460,11 @@ static slang_ir_node *
 new_node3(slang_ir_opcode op,
           slang_ir_node *c0, slang_ir_node *c1, slang_ir_node *c2)
 {
+#if USE_MEMPOOL
+   slang_ir_node *n = (slang_ir_node *) _slang_alloc(sizeof(slang_ir_node));
+#else
    slang_ir_node *n = (slang_ir_node *) calloc(1, sizeof(slang_ir_node));
+#endif
    if (n) {
       n->Opcode = op;
       n->Children[0] = c0;
@@ -922,12 +927,21 @@ slang_inline_function_call(slang_assemble_ctx * A, slang_function *fun,
    assert(fun->param_count == totalArgs);
 
    /* allocate temporary arrays */
+#if USE_MEMPOOL
+   paramMode = (ParamMode *)
+      _slang_alloc(totalArgs * sizeof(ParamMode));
+   substOld = (slang_variable **)
+      _slang_alloc(totalArgs * sizeof(slang_variable *));
+   substNew = (slang_operation **)
+      _slang_alloc(totalArgs * sizeof(slang_operation *));
+#else
    paramMode = (ParamMode *)
       _mesa_calloc(totalArgs * sizeof(ParamMode));
    substOld = (slang_variable **)
       _mesa_calloc(totalArgs * sizeof(slang_variable *));
    substNew = (slang_operation **)
       _mesa_calloc(totalArgs * sizeof(slang_operation *));
+#endif
 
 #if 0
    printf("Inline call to %s  (total vars=%d  nparams=%d)\n",
@@ -1128,9 +1142,11 @@ slang_inline_function_call(slang_assemble_ctx * A, slang_function *fun,
       }
    }
 
+#if !USE_MEMPOOL
    _mesa_free(paramMode);
    _mesa_free(substOld);
    _mesa_free(substNew);
+#endif
 
 #if 0
    printf("Done Inline call to %s  (total vars=%d  nparams=%d)\n",
@@ -1188,7 +1204,9 @@ _slang_gen_function_call(slang_assemble_ctx *A, slang_function *fun,
    /* Replace the function call with the inlined block */
    slang_operation_destruct(oper);
    *oper = *inlined;
-   /* XXX slang_operation_destruct(inlined) ??? */
+#if !USE_MEMPOOL
+   _mesa_free(inlined);
+#endif
 
 #if 0
    assert(inlined->locals);
@@ -1318,7 +1336,9 @@ _slang_gen_asm(slang_assemble_ctx *A, slang_operation *oper,
       n->Store = n0->Store;
       n->Writemask = writemask;
 
+#if !USE_MEMPOOL
       free(n0);
+#endif
    }
 
    return n;
@@ -1759,9 +1779,11 @@ _slang_gen_temporary(GLint size)
       if (n) {
          n->Store = store;
       }
+#if !USE_MEMPOOL
       else {
          free(store);
       }
+#endif
    }
    return n;
 }
@@ -1871,9 +1893,11 @@ _slang_gen_logical_and(slang_assemble_ctx *A, slang_operation *oper)
 
    n = _slang_gen_select(A, select);
 
+#if !USE_MEMPOOL
    /* xxx wrong */
    free(select->children);
    free(select);
+#endif
 
    return n;
 }
@@ -1902,9 +1926,11 @@ _slang_gen_logical_or(slang_assemble_ctx *A, slang_operation *oper)
 
    n = _slang_gen_select(A, select);
 
+#if !USE_MEMPOOL
    /* xxx wrong */
    free(select->children);
    free(select);
+#endif
 
    return n;
 }

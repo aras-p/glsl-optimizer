@@ -2,6 +2,7 @@
 #include "imports.h"
 #include "slang_compile.h"
 #include "slang_compile_variable.h"
+#include "slang_mem.h"
 #include "slang_vartable.h"
 #include "slang_ir.h"
 #include "prog_instruction.h"
@@ -49,7 +50,11 @@ slang_var_table *
 _slang_new_var_table(GLuint maxRegisters)
 {
    slang_var_table *vt
+#if USE_MEMPOOL
+      = (slang_var_table *) _slang_alloc(sizeof(slang_var_table));
+#else
       = (slang_var_table *) _mesa_calloc(sizeof(slang_var_table));
+#endif
    if (vt) {
       vt->MaxRegisters = maxRegisters;
    }
@@ -64,7 +69,9 @@ _slang_delete_var_table(slang_var_table *vt)
       _mesa_problem(NULL, "non-empty var table in _slang_delete_var_table()");
       return;
    }
+#if !USE_MEMPOOL
    _mesa_free(vt);
+#endif
 }
 
 
@@ -77,7 +84,11 @@ _slang_delete_var_table(slang_var_table *vt)
 void
 _slang_push_var_table(slang_var_table *vt)
 {
+#if USE_MEMPOOL
+   struct table *t = (struct table *) _slang_alloc(sizeof(struct table));
+#else
    struct table *t = (struct table *) _mesa_calloc(sizeof(struct table));
+#endif
    if (t) {
       t->Level = vt->CurLevel++;
       t->Parent = vt->Top;
@@ -137,10 +148,16 @@ _slang_pop_var_table(slang_var_table *vt)
    }
 
    if (t->Vars)
+#if USE_MEMPOOL
+      t->Vars = NULL;
+#else
       free(t->Vars);
+#endif
 
    vt->Top = t->Parent;
+#if !USE_MEMPOOL
    free(t);
+#endif
    vt->CurLevel--;
 }
 
@@ -156,7 +173,14 @@ _slang_add_variable(slang_var_table *vt, slang_variable *v)
    t = vt->Top;
    assert(t);
    if (dbg) printf("Adding var %s\n", (char *) v->a_name);
+#if USE_MEMPOOL
+   t->Vars =
+      (slang_variable **) _slang_realloc(t->Vars,
+                                         t->NumVars * sizeof(slang_variable *),
+                                  (t->NumVars + 1) * sizeof(slang_variable *));
+#else
    t->Vars = realloc(t->Vars, (t->NumVars + 1) * sizeof(slang_variable *));
+#endif
    t->Vars[t->NumVars] = v;
    t->NumVars++;
 }

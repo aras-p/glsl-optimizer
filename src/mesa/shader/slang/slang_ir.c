@@ -143,7 +143,7 @@ _slang_free_ir(slang_ir_node *n)
    if (n->Store) {
       n->Store->RefCount--;
       if (n->Store->RefCount == 0) {
-#if 0
+#if !USE_MEMPOOL
          free(n->Store);
 #endif
          n->Store = NULL;
@@ -153,7 +153,9 @@ _slang_free_ir(slang_ir_node *n)
    for (i = 0; i < 3; i++)
       _slang_free_ir(n->Children[i]);
    /* Do not free n->List since it's a child elsewhere */
+#if !USE_MEMPOOL
    free(n);
+#endif
 }
 
 
@@ -163,8 +165,10 @@ _slang_free_ir(slang_ir_node *n)
 void
 _slang_free_ir_tree(slang_ir_node *n)
 {
+#if 0
    _slang_refcount_storage(n);
    _slang_free_ir(n);
+#endif
 }
 
 

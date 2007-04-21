@@ -33,10 +33,24 @@
  */
 
 #include "context.h"
+#include "macros.h"
 #include "slang_mem.h"
+
 
 #define GRANULARITY 8
 #define ROUND_UP(B)  ( ((B) + (GRANULARITY - 1)) & ~(GRANULARITY - 1) )
+
+
+/** If 1, use conventional malloc/free.  Helpful for debugging */
+#define USE_MALLOC_FREE 0
+
+
+struct slang_mempool_
+{
+   GLuint Size, Used, Count, Largest;
+   char *Data;
+   struct slang_mempool_ *Next;
+};
 
 
 slang_mempool *
@@ -45,6 +59,7 @@ _slang_new_mempool(GLuint initialSize)
    slang_mempool *pool = (slang_mempool *) _mesa_calloc(sizeof(slang_mempool));
    if (pool) {
       pool->Data = (char *) _mesa_calloc(initialSize);
+      /*printf("ALLOC MEMPOOL %d at %p\n", initialSize, pool->Data);*/
       if (!pool->Data) {
          _mesa_free(pool);
          return NULL;
@@ -62,13 +77,45 @@ _slang_delete_mempool(slang_mempool *pool)
    GLuint total = 0;
    while (pool) {
       slang_mempool *next = pool->Next;
+      /*
+      printf("DELETE MEMPOOL %u / %u  count=%u largest=%u\n",
+             pool->Used, pool->Size, pool->Count, pool->Largest);
+      */
       total += pool->Used;
       _mesa_free(pool->Data);
       _mesa_free(pool);
       pool = next;
    }
-   printf("TOTAL USED %u\n", total);
+   /*printf("TOTAL ALLOCATED: %u\n", total);*/
 }
+
+
+#ifdef DEBUG
+static void
+check_zero(const char *addr, GLuint n)
+{
+   GLuint i;
+   for (i = 0; i < n; i++) {
+      assert(addr[i]==0);
+   }
+}
+#endif
+
+
+#ifdef DEBUG
+static GLboolean
+is_valid_address(const slang_mempool *pool, void *addr)
+{
+   while (pool) {
+      if ((char *) addr >= pool->Data &&
+          (char *) addr < pool->Data + pool->Used)
+         return GL_TRUE;
+
+      pool = pool->Next;
+   }
+   return GL_FALSE;
+}
+#endif
 
 
 /**
@@ -77,16 +124,26 @@ _slang_delete_mempool(slang_mempool *pool)
 void *
 _slang_alloc(GLuint bytes)
 {
+#if USE_MALLOC_FREE
+   return _mesa_calloc(bytes);
+#else
    slang_mempool *pool;
    GET_CURRENT_CONTEXT(ctx);
-
    pool = (slang_mempool *) ctx->Shader.MemPool;
+
+   if (bytes == 0)
+      bytes = 1;
 
    while (pool) {
       if (pool->Used + bytes <= pool->Size) {
          /* found room */
          void *addr = (void *) (pool->Data + pool->Used);
+#ifdef DEBUG
+         check_zero((char*) addr, bytes);
+#endif
          pool->Used += ROUND_UP(bytes);
+         pool->Largest = MAX2(pool->Largest, bytes);
+         pool->Count++;
          /*printf("alloc %u  Used %u\n", bytes, pool->Used);*/
          return addr;
       }
@@ -96,30 +153,54 @@ _slang_alloc(GLuint bytes)
       }
       else {
          /* alloc new pool */
-         assert(bytes <= pool->Size); /* XXX or max2() */
-         pool->Next = _slang_new_mempool(pool->Size);
+         const GLuint sz = MAX2(bytes, pool->Size);
+         pool->Next = _slang_new_mempool(sz);
          if (!pool->Next) {
             /* we're _really_ out of memory */
             return NULL;
          }
          else {
+            pool = pool->Next;
+            pool->Largest = bytes;
+            pool->Count++;
             pool->Used = ROUND_UP(bytes);
+#ifdef DEBUG
+            check_zero((char*) pool->Data, bytes);
+#endif
             return (void *) pool->Data;
          }
       }
    }
    return NULL;
+#endif
 }
 
 
 void *
 _slang_realloc(void *oldBuffer, GLuint oldSize, GLuint newSize)
 {
-   const GLuint copySize = (oldSize < newSize) ? oldSize : newSize;
-   void *newBuffer = _slang_alloc(newSize);
-   if (newBuffer && oldBuffer && copySize > 0)
-      _mesa_memcpy(newBuffer, oldBuffer, copySize);
-   return newBuffer;
+#if USE_MALLOC_FREE
+   return _mesa_realloc(oldBuffer, oldSize, newSize);
+#else
+   GET_CURRENT_CONTEXT(ctx);
+   slang_mempool *pool = (slang_mempool *) ctx->Shader.MemPool;
+
+   if (newSize < oldSize) {
+      return oldBuffer;
+   }
+   else {
+      const GLuint copySize = (oldSize < newSize) ? oldSize : newSize;
+      void *newBuffer = _slang_alloc(newSize);
+
+      if (oldBuffer)
+         ASSERT(is_valid_address(pool, oldBuffer));
+
+      if (newBuffer && oldBuffer && copySize > 0)
+         _mesa_memcpy(newBuffer, oldBuffer, copySize);
+
+      return newBuffer;
+   }
+#endif
 }
 
 
@@ -139,4 +220,22 @@ _slang_strdup(const char *s)
    else {
       return NULL;
    }
+}
+
+
+/**
+ * Don't actually free memory, but mark it (for debugging).
+ */
+void
+_slang_free(void *addr)
+{
+#if USE_MALLOC_FREE
+   _mesa_free(addr);
+#else
+   if (addr) {
+      GET_CURRENT_CONTEXT(ctx);
+      slang_mempool *pool = (slang_mempool *) ctx->Shader.MemPool;
+      ASSERT(is_valid_address(pool, addr));
+   }
+#endif
 }

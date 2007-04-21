@@ -30,12 +30,7 @@
 #include "imports.h"
 
 
-typedef struct slang_mempool_
-{
-   GLuint Size, Used;
-   char *Data;
-   struct slang_mempool_ *Next;
-} slang_mempool;
+typedef struct slang_mempool_ slang_mempool;
 
 
 extern slang_mempool *
@@ -52,6 +47,9 @@ _slang_realloc(void *oldBuffer, GLuint oldSize, GLuint newSize);
 
 extern char *
 _slang_strdup(const char *s);
+
+extern void
+_slang_free(void *addr);
 
 
 #define USE_MEMPOOL 1  /* XXX temporary */
