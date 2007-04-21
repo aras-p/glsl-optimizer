@@ -179,19 +179,11 @@ slang_type_specifier_dtr(slang_type_specifier * self)
 {
    if (self->_struct != NULL) {
       slang_struct_destruct(self->_struct);
-#if USE_MEMPOOL
       _slang_free(self->_struct);
-#else
-      slang_alloc_free(self->_struct);
-#endif
    }
    if (self->_array != NULL) {
       slang_type_specifier_dtr(self->_array);
-#if USE_MEMPOOL
       _slang_free(self->_array);
-#else
-      slang_alloc_free(self->_array);
-#endif
    }
 }
 
@@ -204,21 +196,13 @@ slang_type_specifier_copy(slang_type_specifier * x,
    slang_type_specifier_ctr(&z);
    z.type = y->type;
    if (z.type == SLANG_SPEC_STRUCT) {
-#if USE_MEMPOOL
       z._struct = (slang_struct *) _slang_alloc(sizeof(slang_struct));
-#else
-      z._struct = (slang_struct *) slang_alloc_malloc(sizeof(slang_struct));
-#endif
       if (z._struct == NULL) {
          slang_type_specifier_dtr(&z);
          return GL_FALSE;
       }
       if (!slang_struct_construct(z._struct)) {
-#if USE_MEMPOOL
          _slang_free(z._struct);
-#else
-         slang_alloc_free(z._struct);
-#endif
          slang_type_specifier_dtr(&z);
          return GL_FALSE;
       }
@@ -228,13 +212,8 @@ slang_type_specifier_copy(slang_type_specifier * x,
       }
    }
    else if (z.type == SLANG_SPEC_ARRAY) {
-      z._array =
-         (slang_type_specifier *)
-#if USE_MEMPOOL
+      z._array = (slang_type_specifier *)
          _slang_alloc(sizeof(slang_type_specifier));
-#else
-         slang_alloc_malloc(sizeof(slang_type_specifier));
-#endif
       if (z._array == NULL) {
          slang_type_specifier_dtr(&z);
          return GL_FALSE;
@@ -617,19 +596,11 @@ _slang_typeof_operation_(slang_operation * op,
                /* struct initializer */
                ti->spec.type = SLANG_SPEC_STRUCT;
                ti->spec._struct =
-#if USE_MEMPOOL
                   (slang_struct *) _slang_alloc(sizeof(slang_struct));
-#else
-                  (slang_struct *) slang_alloc_malloc(sizeof(slang_struct));
-#endif
                if (ti->spec._struct == NULL)
                   return GL_FALSE;
                if (!slang_struct_construct(ti->spec._struct)) {
-#if USE_MEMPOOL
                   _slang_free(ti->spec._struct);
-#else
-                  slang_alloc_free(ti->spec._struct);
-#endif
                   ti->spec._struct = NULL;
                   return GL_FALSE;
                }

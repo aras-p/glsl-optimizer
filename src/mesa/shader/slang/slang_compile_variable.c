@@ -135,16 +135,10 @@ slang_fully_specified_type_copy(slang_fully_specified_type * x,
 static slang_variable *
 slang_variable_new(void)
 {
-#if USE_MEMPOOL
    slang_variable *v = (slang_variable *) _slang_alloc(sizeof(slang_variable));
-#else
-   slang_variable *v = (slang_variable *) malloc(sizeof(slang_variable));
-#endif
    if (v) {
       if (!slang_variable_construct(v)) {
-#if !USE_MEMPOOL
-         free(v);
-#endif
+         _slang_free(v);
          v = NULL;
       }
    }
@@ -156,9 +150,7 @@ static void
 slang_variable_delete(slang_variable * var)
 {
    slang_variable_destruct(var);
-#if !USE_MEMPOOL
-   free(var);
-#endif
+   _slang_free(var);
 }
 
 
@@ -170,12 +162,9 @@ slang_variable_scope *
 _slang_variable_scope_new(slang_variable_scope *parent)
 {
    slang_variable_scope *s;
-#if USE_MEMPOOL
    s = (slang_variable_scope *) _slang_alloc(sizeof(slang_variable_scope));
-#else
-   s = (slang_variable_scope *) _mesa_calloc(sizeof(slang_variable_scope));
-#endif
-   s->outer_scope = parent;
+   if (s)
+      s->outer_scope = parent;
    return s;
 }
 
@@ -199,11 +188,7 @@ slang_variable_scope_destruct(slang_variable_scope * scope)
       if (scope->variables[i])
          slang_variable_delete(scope->variables[i]);
    }
-#if USE_MEMPOOL
    _slang_free(scope->variables);
-#else
-   slang_alloc_free(scope->variables);
-#endif
    /* do not free scope->outer_scope */
 }
 
@@ -216,11 +201,7 @@ slang_variable_scope_copy(slang_variable_scope * x,
 
    _slang_variable_scope_ctr(&z);
    z.variables = (slang_variable **)
-#if USE_MEMPOOL
       _slang_alloc(y->num_variables * sizeof(slang_variable *));
-#else
-      _mesa_calloc(y->num_variables * sizeof(slang_variable *));
-#endif
    if (z.variables == NULL) {
       slang_variable_scope_destruct(&z);
       return 0;
@@ -255,13 +236,9 @@ slang_variable_scope_grow(slang_variable_scope *scope)
 {
    const int n = scope->num_variables;
    scope->variables = (slang_variable **)
-#if USE_MEMPOOL
          _slang_realloc(scope->variables,
-#else
-         slang_alloc_realloc(scope->variables,
-#endif
-                             n * sizeof(slang_variable *),
-                             (n + 1) * sizeof(slang_variable *));
+                        n * sizeof(slang_variable *),
+                        (n + 1) * sizeof(slang_variable *));
    if (!scope->variables)
       return NULL;
 
@@ -300,11 +277,7 @@ slang_variable_destruct(slang_variable * var)
    slang_fully_specified_type_destruct(&var->type);
    if (var->initializer != NULL) {
       slang_operation_destruct(var->initializer);
-#if USE_MEMPOOL
       _slang_free(var->initializer);
-#else
-      slang_alloc_free(var->initializer);
-#endif
    }
 #if 0
    if (var->aux) {
@@ -329,19 +302,13 @@ slang_variable_copy(slang_variable * x, const slang_variable * y)
    z.array_len = y->array_len;
    if (y->initializer != NULL) {
       z.initializer
-#if USE_MEMPOOL
          = (slang_operation *) _slang_alloc(sizeof(slang_operation));
-#else
-         = (slang_operation *) slang_alloc_malloc(sizeof(slang_operation));
-#endif
       if (z.initializer == NULL) {
          slang_variable_destruct(&z);
          return 0;
       }
       if (!slang_operation_construct(z.initializer)) {
-#if !USE_MEMPOOL
-         slang_alloc_free(z.initializer);
-#endif
+         _slang_free(z.initializer);
          slang_variable_destruct(&z);
          return 0;
       }

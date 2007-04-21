@@ -153,16 +153,9 @@ slang_atom_pool_destruct (slang_atom_pool * pool)
 		
       entry = pool->entries[i];
       while (entry != NULL) {
-         slang_atom_entry *next;
-
-         next = entry->next;
-#if USE_MEMPOOL
+         slang_atom_entry *next = entry->next;
          _slang_free(entry->id);
          _slang_free(entry);
-#else
-         slang_alloc_free(entry->id);
-         slang_alloc_free(entry);
-#endif
          entry = next;
       }
    }
@@ -210,11 +203,7 @@ slang_atom_pool_atom(slang_atom_pool * pool, const char * id)
    /* Okay, we have not found an atom. Create a new entry for it.
     * Note that the <entry> points to the last entry's <next> field.
     */
-#if USE_MEMPOOL
-   *entry = (slang_atom_entry *) (_slang_alloc(sizeof(slang_atom_entry)));
-#else
-   *entry = (slang_atom_entry *) (slang_alloc_malloc(sizeof(slang_atom_entry)));
-#endif
+   *entry = (slang_atom_entry *) _slang_alloc(sizeof(slang_atom_entry));
    if (*entry == NULL)
       return SLANG_ATOM_NULL;
 
@@ -223,11 +212,7 @@ slang_atom_pool_atom(slang_atom_pool * pool, const char * id)
     * value.
     */
    (**entry).next = NULL;
-#if USE_MEMPOOL
    (**entry).id = _slang_strdup(id);
-#else
-   (**entry).id = slang_string_duplicate(id);
-#endif
    if ((**entry).id == NULL)
       return SLANG_ATOM_NULL;
    return (slang_atom) (**entry).id;

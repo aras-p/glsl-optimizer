@@ -26,6 +26,7 @@
 #include "imports.h"
 #include "context.h"
 #include "slang_ir.h"
+#include "slang_mem.h"
 #include "prog_print.h"
 
 
@@ -113,6 +114,7 @@ _slang_ir_name(slang_ir_opcode opcode)
 }
 
 
+#if 0 /* no longer needed with mempool */
 /**
  * Since many IR nodes might point to the same IR storage info, we need
  * to be careful when deleting things.
@@ -131,6 +133,7 @@ _slang_refcount_storage(slang_ir_node *n)
    for (i = 0; i < 3; i++)
       _slang_refcount_storage(n->Children[i]);
 }
+#endif
 
 
 static void
@@ -140,22 +143,20 @@ _slang_free_ir(slang_ir_node *n)
    if (!n)
       return;
 
+#if 0
    if (n->Store) {
       n->Store->RefCount--;
       if (n->Store->RefCount == 0) {
-#if !USE_MEMPOOL
-         free(n->Store);
-#endif
+         _slang_free(n->Store);
          n->Store = NULL;
       }
    }
+#endif
 
    for (i = 0; i < 3; i++)
       _slang_free_ir(n->Children[i]);
    /* Do not free n->List since it's a child elsewhere */
-#if !USE_MEMPOOL
-   free(n);
-#endif
+   _slang_free(n);
 }
 
 
@@ -167,8 +168,8 @@ _slang_free_ir_tree(slang_ir_node *n)
 {
 #if 0
    _slang_refcount_storage(n);
-   _slang_free_ir(n);
 #endif
+   _slang_free_ir(n);
 }
 
 

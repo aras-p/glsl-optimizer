@@ -15,17 +15,9 @@
 slang_label *
 _slang_label_new(const char *name)
 {
-#if !USE_MEMPOOL
-   slang_label *l = (slang_label *) _mesa_calloc(sizeof(slang_label));
-#else
    slang_label *l = (slang_label *) _slang_alloc(sizeof(slang_label));
-#endif
    if (l) {
-#if !USE_MEMPOOL
-      l->Name = _mesa_strdup(name);
-#else
       l->Name = _slang_strdup(name);
-#endif
       l->Location = -1;
    }
    return l;
@@ -38,17 +30,9 @@ slang_label *
 _slang_label_new_unique(const char *name)
 {
    static int id = 1;
-#if !USE_MEMPOOL
-   slang_label *l = (slang_label *) _mesa_calloc(sizeof(slang_label));
-#else
    slang_label *l = (slang_label *) _slang_alloc(sizeof(slang_label));
-#endif
    if (l) {
-#if !USE_MEMPOOL
-      l->Name = (char *) _mesa_malloc(_mesa_strlen(name) + 10);
-#else
       l->Name = (char *) _slang_alloc(_mesa_strlen(name) + 10);
-#endif
       if (!l->Name) {
          _mesa_free(l);
          return NULL;
@@ -63,13 +47,15 @@ _slang_label_new_unique(const char *name)
 void
 _slang_label_delete(slang_label *l)
 {
-#if !USE_MEMPOOL
-   if (l->Name)
-      _mesa_free(l->Name);
-   if (l->References)
-      _mesa_free(l->References);
-   _mesa_free(l);
-#endif
+   if (l->Name) {
+      _slang_free(l->Name);
+      l->Name = NULL;
+   }
+   if (l->References) {
+      _slang_free(l->References);
+      l->References = NULL;
+   }
+   _slang_free(l);
 }
 
 
@@ -78,13 +64,8 @@ _slang_label_add_reference(slang_label *l, GLuint inst)
 {
    const GLuint oldSize = l->NumReferences * sizeof(GLuint);
    assert(l->Location < 0);
-#if !USE_MEMPOOL
-   l->References = _mesa_realloc(l->References,
-                                 oldSize, oldSize + sizeof(GLuint));
-#else
    l->References = _slang_realloc(l->References,
                                   oldSize, oldSize + sizeof(GLuint));
-#endif
    if (l->References) {
       l->References[l->NumReferences] = inst;
       l->NumReferences++;
@@ -117,9 +98,7 @@ _slang_label_set_location(slang_label *l, GLint location,
    }
 
    if (l->References) {
-#if !USE_MEMPOOL
-      _mesa_free(l->References);
-#endif
+      _slang_free(l->References);
       l->References = NULL;
    }
 }

@@ -52,6 +52,4 @@ extern void
 _slang_free(void *addr);
 
 
-#define USE_MEMPOOL 1  /* XXX temporary */
-
 #endif

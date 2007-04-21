@@ -25,24 +25,15 @@
 #ifndef SLANG_UTILITY_H
 #define SLANG_UTILITY_H
 
-#include "slang_mem.h"
-
 
 /* Compile-time assertions.  If the expression is zero, try to declare an
  * array of size [-1] to cause compilation error.
  */
 #define static_assert(expr) do { int _array[(expr) ? 1 : -1]; (void) _array[0]; } while (0)
 
-#if !USE_MEMPOOL
-#define slang_alloc_free(ptr) _mesa_free (ptr)
-#define slang_alloc_malloc(size) _mesa_malloc (size)
-#define slang_alloc_realloc(ptr, old_size, size) _mesa_realloc (ptr, old_size, size)
-#endif
+
 #define slang_string_compare(str1, str2) _mesa_strcmp (str1, str2)
 #define slang_string_copy(dst, src) _mesa_strcpy (dst, src)
-#if !USE_MEMPOOL
-#define slang_string_duplicate(src) _mesa_strdup (src)
-#endif
 #define slang_string_length(str) _mesa_strlen (str)
 
 char *slang_string_concat (char *, const char *);
@@ -107,4 +98,3 @@ const char *slang_atom_pool_id (slang_atom_pool *, slang_atom);
 
 
 #endif
-

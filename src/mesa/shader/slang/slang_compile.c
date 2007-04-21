@@ -194,13 +194,9 @@ parse_float(slang_parse_ctx * C, float *number)
    parse_identifier_str(C, &fractional);
    parse_identifier_str(C, &exponent);
 
-#if USE_MEMPOOL
-   whole = (char *) (_slang_alloc((_mesa_strlen(integral) +
-#else
-   whole = (char *) (slang_alloc_malloc((_mesa_strlen(integral) +
-#endif
-                                         _mesa_strlen(fractional) +
-                                         _mesa_strlen(exponent) + 3) * sizeof(char)));
+   whole = (char *) _slang_alloc((_mesa_strlen(integral) +
+                                  _mesa_strlen(fractional) +
+                                  _mesa_strlen(exponent) + 3) * sizeof(char));
    if (whole == NULL) {
       slang_info_log_memory(C->L);
       return 0;
@@ -214,11 +210,8 @@ parse_float(slang_parse_ctx * C, float *number)
 
    *number = (float) (_mesa_strtod(whole, (char **) NULL));
 
-#if USE_MEMPOOL
    _slang_free(whole);
-#else
-   slang_alloc_free(whole);
-#endif
+
    return 1;
 }
 
@@ -297,11 +290,7 @@ convert_to_array(slang_parse_ctx * C, slang_variable * var,
     * parse the expression */
    var->type.specifier.type = SLANG_SPEC_ARRAY;
    var->type.specifier._array = (slang_type_specifier *)
-#if USE_MEMPOOL
       _slang_alloc(sizeof(slang_type_specifier));
-#else
-      slang_alloc_malloc(sizeof(slang_type_specifier));
-#endif
    if (var->type.specifier._array == NULL) {
       slang_info_log_memory(C->L);
       return GL_FALSE;
@@ -384,21 +373,13 @@ parse_struct(slang_parse_ctx * C, slang_output_ctx * O, slang_struct ** st)
    }
 
    /* set-up a new struct */
-#if USE_MEMPOOL
    *st = (slang_struct *) _slang_alloc(sizeof(slang_struct));
-#else
-   *st = (slang_struct *) slang_alloc_malloc(sizeof(slang_struct));
-#endif
    if (*st == NULL) {
       slang_info_log_memory(C->L);
       return 0;
    }
    if (!slang_struct_construct(*st)) {
-#if USE_MEMPOOL
       _slang_free(*st);
-#else
-      slang_alloc_free(*st);
-#endif
       *st = NULL;
       slang_info_log_memory(C->L);
       return 0;
@@ -424,15 +405,11 @@ parse_struct(slang_parse_ctx * C, slang_output_ctx * O, slang_struct ** st)
       slang_struct *s;
 
       O->structs->structs =
-#if USE_MEMPOOL
          (slang_struct *) _slang_realloc(O->structs->structs,
-#else
-         (slang_struct *) slang_alloc_realloc(O->structs->structs,
-#endif
-                                              O->structs->num_structs *
-                                              sizeof(slang_struct),
-                                              (O->structs->num_structs +
-                                               1) * sizeof(slang_struct));
+                                         O->structs->num_structs
+                                         * sizeof(slang_struct),
+                                         (O->structs->num_structs + 1)
+                                         * sizeof(slang_struct));
       if (O->structs->structs == NULL) {
          slang_info_log_memory(C->L);
          return 0;
@@ -641,22 +618,13 @@ parse_type_specifier(slang_parse_ctx * C, slang_output_ctx * O,
             return 0;
          }
 
-         spec->_struct =
-#if USE_MEMPOOL
-            (slang_struct *) _slang_alloc(sizeof(slang_struct));
-#else
-            (slang_struct *) slang_alloc_malloc(sizeof(slang_struct));
-#endif
+         spec->_struct = (slang_struct *) _slang_alloc(sizeof(slang_struct));
          if (spec->_struct == NULL) {
             slang_info_log_memory(C->L);
             return 0;
          }
          if (!slang_struct_construct(spec->_struct)) {
-#if USE_MEMPOOL
             _slang_free(spec->_struct);
-#else
-            slang_alloc_free(spec->_struct);
-#endif
             spec->_struct = NULL;
             return 0;
          }
@@ -938,13 +906,9 @@ handle_nary_expression(slang_parse_ctx * C, slang_operation * op,
    *total_ops -= n;
 
    *ops = (slang_operation *)
-#if USE_MEMPOOL
       _slang_realloc(*ops,
-#else
-      slang_alloc_realloc(*ops,
-#endif
-                          (*total_ops + n) * sizeof(slang_operation),
-                          *total_ops * sizeof(slang_operation));
+                     (*total_ops + n) * sizeof(slang_operation),
+                     *total_ops * sizeof(slang_operation));
    if (*ops == NULL) {
       slang_info_log_memory(C->L);
       return 0;
@@ -975,13 +939,9 @@ parse_expression(slang_parse_ctx * C, slang_output_ctx * O,
 
       /* allocate default operation, becomes a no-op if not used  */
       ops = (slang_operation *)
-#if USE_MEMPOOL
          _slang_realloc(ops,
-#else
-         slang_alloc_realloc(ops,
-#endif
-                             num_ops * sizeof(slang_operation),
-                             (num_ops + 1) * sizeof(slang_operation));
+                        num_ops * sizeof(slang_operation),
+                        (num_ops + 1) * sizeof(slang_operation));
       if (ops == NULL) {
          slang_info_log_memory(C->L);
          return 0;
@@ -1223,11 +1183,7 @@ parse_expression(slang_parse_ctx * C, slang_output_ctx * O,
 
    slang_operation_destruct(oper);
    *oper = *ops; /* struct copy */
-#if USE_MEMPOOL
    _slang_free(ops);
-#else
-   slang_alloc_free(ops);
-#endif
 
    return 1;
 }
@@ -1491,22 +1447,13 @@ parse_function_definition(slang_parse_ctx * C, slang_output_ctx * O,
       return 0;
 
    /* create function's body operation */
-   func->body =
-#if USE_MEMPOOL
-      (slang_operation *) _slang_alloc(sizeof(slang_operation));
-#else
-      (slang_operation *) slang_alloc_malloc(sizeof(slang_operation));
-#endif
+   func->body = (slang_operation *) _slang_alloc(sizeof(slang_operation));
    if (func->body == NULL) {
       slang_info_log_memory(C->L);
       return 0;
    }
    if (!slang_operation_construct(func->body)) {
-#if USE_MEMPOOL
       _slang_free(func->body);
-#else
-      slang_alloc_free(func->body);
-#endif
       func->body = NULL;
       slang_info_log_memory(C->L);
       return 0;
@@ -1538,11 +1485,7 @@ initialize_global(slang_assemble_ctx * A, slang_variable * var)
 
    /* put the variable into operation's scope */
    op_id.locals->variables =
-#if USE_MEMPOOL
       (slang_variable **) _slang_alloc(sizeof(slang_variable *));
-#else
-      (slang_variable **) slang_alloc_malloc(sizeof(slang_variable *));
-#endif
    if (op_id.locals->variables == NULL) {
       slang_operation_destruct(&op_id);
       return GL_FALSE;
@@ -1558,11 +1501,7 @@ initialize_global(slang_assemble_ctx * A, slang_variable * var)
    }
    op_assign.type = SLANG_OPER_ASSIGN;
    op_assign.children =
-#if USE_MEMPOOL
       (slang_operation *) _slang_alloc(2 * sizeof(slang_operation));
-#else
-      (slang_operation *) slang_alloc_malloc(2 * sizeof(slang_operation));
-#endif
    if (op_assign.children == NULL) {
       slang_operation_destruct(&op_assign);
       op_id.locals->num_variables = 0;
@@ -1577,11 +1516,7 @@ initialize_global(slang_assemble_ctx * A, slang_variable * var)
 
    /* carefully destroy the operations */
    op_assign.num_children = 0;
-#if USE_MEMPOOL
    _slang_free(op_assign.children);
-#else
-   slang_alloc_free(op_assign.children);
-#endif
    op_assign.children = NULL;
    slang_operation_destruct(&op_assign);
    op_id.locals->num_variables = 0;
@@ -1642,21 +1577,13 @@ parse_init_declarator(slang_parse_ctx * C, slang_output_ctx * O,
       if (!slang_type_specifier_copy(&var->type.specifier, &type->specifier))
          return 0;
       var->initializer =
-#if USE_MEMPOOL
          (slang_operation *) _slang_alloc(sizeof(slang_operation));
-#else
-         (slang_operation *) slang_alloc_malloc(sizeof(slang_operation));
-#endif
       if (var->initializer == NULL) {
          slang_info_log_memory(C->L);
          return 0;
       }
       if (!slang_operation_construct(var->initializer)) {
-#if USE_MEMPOOL
          _slang_free(var->initializer);
-#else
-         slang_alloc_free(var->initializer);
-#endif
          var->initializer = NULL;
          slang_info_log_memory(C->L);
          return 0;
@@ -1788,15 +1715,11 @@ parse_function(slang_parse_ctx * C, slang_output_ctx * O, int definition,
    if (found_func == NULL) {
       /* New function, add it to the function list */
       O->funs->functions =
-#if USE_MEMPOOL
          (slang_function *) _slang_realloc(O->funs->functions,
-#else
-         (slang_function *) slang_alloc_realloc(O->funs->functions,
-#endif
-                                                O->funs->num_functions *
-                                                sizeof(slang_function),
-                                                (O->funs->num_functions +
-                                                 1) * sizeof(slang_function));
+                                           O->funs->num_functions
+                                           * sizeof(slang_function),
+                                           (O->funs->num_functions + 1)
+                                           * sizeof(slang_function));
       if (O->funs->functions == NULL) {
          slang_info_log_memory(C->L);
          slang_function_destruct(&parsed_func);
