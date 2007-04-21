@@ -70,12 +70,12 @@
 #include "lines.h"
 #include "macros.h"
 #include "matrix.h"
-#if FEATURE_ARB_occlusion_query || FEATURE_EXT_timer_query
-#include "occlude.h"
-#endif
 #include "pixel.h"
 #include "points.h"
 #include "polygon.h"
+#if FEATURE_ARB_occlusion_query || FEATURE_EXT_timer_query
+#include "queryobj.h"
+#endif
 #include "rastpos.h"
 #include "state.h"
 #include "stencil.h"

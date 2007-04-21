@@ -107,13 +107,13 @@
 #include "lines.h"
 #include "macros.h"
 #include "matrix.h"
-#include "occlude.h"
 #include "pixel.h"
 #include "points.h"
 #include "polygon.h"
 #if FEATURE_NV_vertex_program || FEATURE_NV_fragment_program
 #include "program.h"
 #endif
+#include "queryobj.h"
 #include "rastpos.h"
 #include "simple_list.h"
 #include "state.h"

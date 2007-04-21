@@ -41,10 +41,10 @@ MAIN_SOURCES = \
 	main/matrix.c \
 	main/mipmap.c \
 	main/mm.c \
-	main/occlude.c \
 	main/pixel.c \
 	main/points.c \
 	main/polygon.c \
+	main/queryobj.c \
 	main/rastpos.c \
 	main/rbadaptors.c \
 	main/renderbuffer.c \

@@ -27,7 +27,7 @@
 #include "context.h"
 #include "hash.h"
 #include "imports.h"
-#include "occlude.h"
+#include "queryobj.h"
 #include "mtypes.h"
 
 
