@@ -1350,7 +1350,7 @@ _swrast_clear_depth_buffer( GLcontext *ctx, struct gl_renderbuffer *rb )
    GLuint clearValue;
    GLint x, y, width, height;
 
-   if (!rb || !ctx->Depth.Mask || !rb->Data) {
+   if (!rb || !ctx->Depth.Mask) {
       /* no depth buffer, or writing to it is disabled */
       return;
    }

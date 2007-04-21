@@ -1152,7 +1152,7 @@ _swrast_clear_stencil_buffer( GLcontext *ctx, struct gl_renderbuffer *rb )
    const GLuint stencilMax = (1 << stencilBits) - 1;
    GLint x, y, width, height;
 
-   if (!rb || mask == 0 || !rb->Data)
+   if (!rb || mask == 0)
       return;
 
    ASSERT(rb->DataType == GL_UNSIGNED_BYTE ||
