@@ -130,10 +130,15 @@ _swrast_span_default_color( GLcontext *ctx, SWspan *span )
 }
 
 
+/**
+ * Set the span's secondary color info to the current raster position's
+ * secondary color, when needed (lighting enabled or colorsum enabled).
+ */
 void
 _swrast_span_default_secondary_color(GLcontext *ctx, SWspan *span)
 {
-   if (ctx->Visual.rgbMode) {
+   if (ctx->Visual.rgbMode && (ctx->Light.Enabled || ctx->Fog.ColorSumEnabled))
+   {
       GLchan r, g, b, a;
       UNCLAMPED_FLOAT_TO_CHAN(r, ctx->Current.RasterSecondaryColor[0]);
       UNCLAMPED_FLOAT_TO_CHAN(g, ctx->Current.RasterSecondaryColor[1]);

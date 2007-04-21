@@ -71,8 +71,7 @@ fast_draw_rgba_pixels(GLcontext *ctx, GLint x, GLint y,
    }
 
    INIT_SPAN(span, GL_BITMAP, 0, 0, SPAN_RGBA);
-   if (ctx->Light.Model.ColorControl == GL_SEPARATE_SPECULAR_COLOR)
-      _swrast_span_default_secondary_color(ctx, &span);
+   _swrast_span_default_secondary_color(ctx, &span);
    if (ctx->Depth.Test)
       _swrast_span_default_z(ctx, &span);
    if (swrast->_FogEnabled)
@@ -443,8 +442,7 @@ draw_depth_pixels( GLcontext *ctx, GLint x, GLint y,
    INIT_SPAN(span, GL_BITMAP, 0, 0, SPAN_Z);
 
    _swrast_span_default_color(ctx, &span);
-   if (ctx->Light.Model.ColorControl == GL_SEPARATE_SPECULAR_COLOR)
-      _swrast_span_default_secondary_color(ctx, &span);
+   _swrast_span_default_secondary_color(ctx, &span);
    if (swrast->_FogEnabled)
       _swrast_span_default_fog(ctx, &span);
    if (ctx->Texture._EnabledCoordUnits)
@@ -565,8 +563,7 @@ draw_rgba_pixels( GLcontext *ctx, GLint x, GLint y,
       return;
 
    INIT_SPAN(span, GL_BITMAP, 0, 0, SPAN_RGBA);
-   if (ctx->Light.Model.ColorControl == GL_SEPARATE_SPECULAR_COLOR)
-      _swrast_span_default_secondary_color(ctx, &span);
+   _swrast_span_default_secondary_color(ctx, &span);
    if (ctx->Depth.Test)
       _swrast_span_default_z(ctx, &span);
    if (swrast->_FogEnabled)

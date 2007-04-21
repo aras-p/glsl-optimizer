@@ -109,8 +109,7 @@ copy_conv_rgba_pixels(GLcontext *ctx, GLint srcx, GLint srcy,
       _swrast_span_default_z(ctx, &span);
    if (swrast->_FogEnabled)
       _swrast_span_default_fog(ctx, &span);
-   if (ctx->Light.Model.ColorControl == GL_SEPARATE_SPECULAR_COLOR)
-      _swrast_span_default_secondary_color(ctx, &span);
+   _swrast_span_default_secondary_color(ctx, &span);
 
    /* allocate space for GLfloat image */
    tmpImage = (GLfloat *) _mesa_malloc(width * height * 4 * sizeof(GLfloat));
@@ -245,8 +244,7 @@ copy_rgba_pixels(GLcontext *ctx, GLint srcx, GLint srcy,
       _swrast_span_default_z(ctx, &span);
    if (swrast->_FogEnabled)
       _swrast_span_default_fog(ctx, &span);
-   if (ctx->Light.Model.ColorControl == GL_SEPARATE_SPECULAR_COLOR)
-      _swrast_span_default_secondary_color(ctx, &span);
+   _swrast_span_default_secondary_color(ctx, &span);
 
    if (overlapping) {
       tmpImage = (GLfloat *) _mesa_malloc(width * height * sizeof(GLfloat) * 4);
@@ -492,8 +490,7 @@ copy_depth_pixels( GLcontext *ctx, GLint srcx, GLint srcy,
    }
 
    _swrast_span_default_color(ctx, &span);
-   if (ctx->Light.Model.ColorControl == GL_SEPARATE_SPECULAR_COLOR)
-      _swrast_span_default_secondary_color(ctx, &span);
+   _swrast_span_default_secondary_color(ctx, &span);
    if (swrast->_FogEnabled)
       _swrast_span_default_fog(ctx, &span);
 
