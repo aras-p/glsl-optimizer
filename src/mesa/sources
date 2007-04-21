@@ -246,6 +246,7 @@ X11_DRIVER_SOURCES =		\
 	drivers/x11/xm_api.c	\
 	drivers/x11/xm_buffer.c	\
 	drivers/x11/xm_dd.c	\
+	drivers/x11/xm_glide.c	\
 	drivers/x11/xm_line.c	\
 	drivers/x11/xm_span.c	\
 	drivers/x11/xm_tri.c
