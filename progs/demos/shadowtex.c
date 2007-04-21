@@ -296,14 +296,27 @@ RenderShadowMap(void)
              0, 1, 0); /* up */
 
    if (UseFBO) {
+      GLenum fbo_status;
+
       glTexImage2D(GL_TEXTURE_2D, 0, depthFormat,
                    ShadowTexWidth, ShadowTexHeight, 0,
                    depthFormat, depthType, NULL);
+
+      /* Set the filter mode so that the texture is texture-complete.
+       * Otherwise it will cause the framebuffer to fail the framebuffer
+       * completeness test.
+       */
+      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+
       glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, ShadowFBO);
       glDrawBuffer(GL_NONE);
       glReadBuffer(GL_NONE);
-      assert(glCheckFramebufferStatusEXT(GL_FRAMEBUFFER_EXT)
-             == GL_FRAMEBUFFER_COMPLETE_EXT);
+
+      fbo_status = glCheckFramebufferStatusEXT(GL_FRAMEBUFFER_EXT);
+      if (fbo_status != GL_FRAMEBUFFER_COMPLETE_EXT) {
+         fprintf(stderr, "FBO not complete!  status = 0x%04x\n", fbo_status);
+         assert(fbo_status == GL_FRAMEBUFFER_COMPLETE_EXT);
+      }
    }
 
    assert(!glIsEnabled(GL_TEXTURE_1D));
