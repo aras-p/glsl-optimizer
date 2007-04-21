@@ -955,8 +955,8 @@ _mesa_pack_bitmap( GLint width, GLint height, const GLubyte *source,
          /* handling SkipPixels is a bit tricky (no pun intended!) */
          GLint i;
          if (packing->LsbFirst) {
-            GLubyte srcMask = 1 << (packing->SkipPixels & 0x7);
-            GLubyte dstMask = 128;
+            GLubyte srcMask = 128;
+            GLubyte dstMask = 1 << (packing->SkipPixels & 0x7);
             const GLubyte *s = src;
             GLubyte *d = dst;
             *d = 0;
@@ -982,8 +982,8 @@ _mesa_pack_bitmap( GLint width, GLint height, const GLubyte *source,
             }
          }
          else {
-            GLubyte srcMask = 128 >> (packing->SkipPixels & 0x7);
-            GLubyte dstMask = 128;
+            GLubyte srcMask = 128;
+            GLubyte dstMask = 128 >> (packing->SkipPixels & 0x7);
             const GLubyte *s = src;
             GLubyte *d = dst;
             *d = 0;
