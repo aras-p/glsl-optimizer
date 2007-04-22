@@ -802,7 +802,6 @@ glFBDevDestroyContext( GLFBDevContextPtr context )
       if (fbdevctx == context) {
          /* destroying current context */
          _mesa_make_current(NULL, NULL, NULL);
-         _mesa_notifyDestroy(&context->glcontext);
       }
       _mesa_free_context_data(&context->glcontext);
       _mesa_free(context);
