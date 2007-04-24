@@ -294,7 +294,7 @@ MAIN_FILES = \
 	$(DIRECTORY)/windows/VC8/mesa/glu/glu.vcproj			\
 	$(DIRECTORY)/windows/VC8/mesa/mesa/mesa.vcproj			\
 	$(DIRECTORY)/windows/VC8/mesa/osmesa/osmesa.vcproj		\
-	$(DIRECTORY)/widnows/VC8/progs/progs.sln			\
+	$(DIRECTORY)/windows/VC8/progs/progs.sln			\
 	$(DIRECTORY)/windows/VC8/progs/demos/gears.vcproj		\
 	$(DIRECTORY)/windows/VC8/progs/glut/glut.vcproj
 
