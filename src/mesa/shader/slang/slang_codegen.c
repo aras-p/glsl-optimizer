@@ -1614,7 +1614,7 @@ _slang_gen_continue(slang_assemble_ctx * A, const slang_operation *oper)
  * Determine if the given operation is of a specific type.
  */
 static GLboolean
-is_operation_type(const const slang_operation *oper, slang_operation_type type)
+is_operation_type(const slang_operation *oper, slang_operation_type type)
 {
    if (oper->type == type)
       return GL_TRUE;
@@ -2911,9 +2911,9 @@ _slang_codegen_global_variable(slang_assemble_ctx *A, slang_variable *var,
          store = _slang_new_ir_storage(PROGRAM_OUTPUT, index, size);
       }
       else {
-         assert(type == SLANG_UNIT_FRAGMENT_BUILTIN);
          GLint index = _slang_output_index(varName, GL_FRAGMENT_PROGRAM_ARB);
          GLint size = 4; /* XXX? */
+         assert(type == SLANG_UNIT_FRAGMENT_BUILTIN);
          store = _slang_new_ir_storage(PROGRAM_OUTPUT, index, size);
       }
       if (dbg) printf("OUTPUT ");
