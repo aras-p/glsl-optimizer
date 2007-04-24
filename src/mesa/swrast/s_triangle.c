@@ -124,7 +124,7 @@ _swrast_culltriangle( GLcontext *ctx,
  * Render an RGB, GL_DECAL, textured triangle.
  * Interpolate S,T only w/out mipmapping or perspective correction.
  *
- * No fog.
+ * No fog.  No depth testing.
  */
 #define NAME simple_textured_triangle
 #define INTERP_INT_TEX 1
@@ -850,9 +850,9 @@ fast_persp_span(GLcontext *ctx, SWspan *span,
 
 
 /*
- * Render a smooth-shaded, textured, RGBA triangle.
+ * Render an RGBA triangle with arbitrary attributes.
  */
-#define NAME general_textured_triangle
+#define NAME general_triangle
 #define INTERP_Z 1
 #define INTERP_W 1
 #define INTERP_FOG 1
@@ -1092,7 +1092,7 @@ _swrast_choose_triangle( GLcontext *ctx )
 	       }
 	       else {
 #if (CHAN_BITS == 16 || CHAN_BITS == 32)
-                  USE(general_textured_triangle);
+                  USE(general_triangle);
 #else
                   USE(affine_textured_triangle);
 #endif
@@ -1100,7 +1100,7 @@ _swrast_choose_triangle( GLcontext *ctx )
 	    }
 	    else {
 #if (CHAN_BITS == 16 || CHAN_BITS == 32)
-               USE(general_textured_triangle);
+               USE(general_triangle);
 #else
                USE(persp_textured_triangle);
 #endif
@@ -1108,7 +1108,7 @@ _swrast_choose_triangle( GLcontext *ctx )
 	 }
          else {
             /* general case textured triangles */
-            USE(general_textured_triangle);
+            USE(general_triangle);
          }
       }
       else {
