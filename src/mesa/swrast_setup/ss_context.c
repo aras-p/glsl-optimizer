@@ -132,7 +132,7 @@ setup_vertex_format(GLcontext *ctx)
          EMIT_ATTR( _TNL_ATTRIB_COLOR_INDEX, EMIT_1F, index );
 
       if (RENDERINPUTS_TEST( index_bitset, _TNL_ATTRIB_FOG ))
-         EMIT_ATTR( _TNL_ATTRIB_FOG, EMIT_1F, fog);
+         EMIT_ATTR( _TNL_ATTRIB_FOG, EMIT_1F, attrib[FRAG_ATTRIB_FOGC]);
 
       if (RENDERINPUTS_TEST_RANGE(index_bitset, _TNL_FIRST_TEX, _TNL_LAST_TEX))
       {
@@ -277,7 +277,7 @@ _swsetup_Translate( GLcontext *ctx, const void *vertex, SWvertex *dest )
    UNCLAMPED_FLOAT_TO_RGBA_CHAN( dest->specular, tmp );
 
    _tnl_get_attr( ctx, vertex, _TNL_ATTRIB_FOG, tmp );
-   dest->fog = tmp[0];
+   dest->attrib[FRAG_ATTRIB_FOGC][0] = tmp[0];
 
    _tnl_get_attr( ctx, vertex, _TNL_ATTRIB_COLOR_INDEX, tmp );
    dest->index = tmp[0];
