@@ -319,9 +319,9 @@ GLboolean
 _slang_is_temp(const slang_var_table *vt, const slang_ir_storage *store)
 {
    struct table *t = vt->Top;
+   GLuint comp;
    assert(store->Index >= 0);
    assert(store->Index < vt->MaxRegisters);
-   GLuint comp;
    if (store->Swizzle == SWIZZLE_NOOP)
       comp = 0;
    else

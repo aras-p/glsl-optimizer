@@ -584,11 +584,11 @@ _mesa_ffsll(long long val)
 
    assert(sizeof(val) == 8);
 
-   bit = ffs(val);
+   bit = _mesa_ffs(val);
    if (bit != 0)
       return bit;
 
-   bit = ffs(val >> 32);
+   bit = _mesa_ffs(val >> 32);
    if (bit != 0)
       return 32 + bit;
 
