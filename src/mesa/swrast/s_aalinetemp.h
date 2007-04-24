@@ -153,7 +153,9 @@ NAME(line)(GLcontext *ctx, const SWvertex *v0, const SWvertex *v1)
 #ifdef DO_FOG
    line.span.arrayMask |= SPAN_FOG;
    compute_plane(line.x0, line.y0, line.x1, line.y1,
-                 v0->fog, v1->fog, line.fPlane);
+                 v0->attrib[FRAG_ATTRIB_FOGC][0],
+                 v1->attrib[FRAG_ATTRIB_FOGC][0],
+                 line.fPlane);
 #endif
 #ifdef DO_RGBA
    line.span.arrayMask |= SPAN_RGBA;

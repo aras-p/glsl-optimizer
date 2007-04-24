@@ -458,11 +458,11 @@ static void NAME(GLcontext *ctx, const SWvertex *v0,
       {
 #  ifdef INTERP_W
          const GLfloat wMax = vMax->win[3], wMin = vMin->win[3], wMid = vMid->win[3];
-         const GLfloat eMaj_dfog = vMax->fog * wMax - vMin->fog * wMin;
-         const GLfloat eBot_dfog = vMid->fog * wMid - vMin->fog * wMin;
+         const GLfloat eMaj_dfog = vMax->attrib[FRAG_ATTRIB_FOGC][0] * wMax - vMin->attrib[FRAG_ATTRIB_FOGC][0] * wMin;
+         const GLfloat eBot_dfog = vMid->attrib[FRAG_ATTRIB_FOGC][0] * wMid - vMin->attrib[FRAG_ATTRIB_FOGC][0] * wMin;
 #  else
-         const GLfloat eMaj_dfog = vMax->fog - vMin->fog;
-         const GLfloat eBot_dfog = vMid->fog - vMin->fog;
+         const GLfloat eMaj_dfog = vMax->attrib[FRAG_ATTRIB_FOGC][0] - vMin->attrib[FRAG_ATTRIB_FOGC][0];
+         const GLfloat eBot_dfog = vMid->attrib[FRAG_ATTRIB_FOGC][0] - vMin->attrib[FRAG_ATTRIB_FOGC][0];
 #  endif
          span.attrStepX[FRAG_ATTRIB_FOGC][0] = oneOverArea * (eMaj_dfog * eBot.dy - eMaj.dy * eBot_dfog);
          span.attrStepY[FRAG_ATTRIB_FOGC][0] = oneOverArea * (eMaj.dx * eBot_dfog - eMaj_dfog * eBot.dx);
@@ -867,9 +867,9 @@ static void NAME(GLcontext *ctx, const SWvertex *v0,
 #endif
 #ifdef INTERP_FOG
 #  ifdef INTERP_W
-               fogLeft = vLower->fog * vLower->win[3] + (span.attrStepX[FRAG_ATTRIB_FOGC][0] * adjx + span.attrStepY[FRAG_ATTRIB_FOGC][0] * adjy) * (1.0F/FIXED_SCALE);
+               fogLeft = vLower->attrib[FRAG_ATTRIB_FOGC][0] * vLower->win[3] + (span.attrStepX[FRAG_ATTRIB_FOGC][0] * adjx + span.attrStepY[FRAG_ATTRIB_FOGC][0] * adjy) * (1.0F/FIXED_SCALE);
 #  else
-               fogLeft = vLower->fog + (span.attrStepX[FRAG_ATTRIB_FOGC][0] * adjx + span.attrStepY[FRAG_ATTRIB_FOGC][0] * adjy) * (1.0F/FIXED_SCALE);
+               fogLeft = vLower->attrib[FRAG_ATTRIB_FOGC][0] + (span.attrStepX[FRAG_ATTRIB_FOGC][0] * adjx + span.attrStepY[FRAG_ATTRIB_FOGC][0] * adjy) * (1.0F/FIXED_SCALE);
 #  endif
                dfogOuter = span.attrStepY[FRAG_ATTRIB_FOGC][0] + dxOuter * span.attrStepX[FRAG_ATTRIB_FOGC][0];
 #endif

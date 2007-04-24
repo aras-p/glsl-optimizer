@@ -910,7 +910,7 @@ _swrast_print_vertex( GLcontext *ctx, const SWvertex *v )
                   v->specular[0], v->specular[1],
                   v->specular[2], v->specular[3]);
 #endif
-      _mesa_debug(ctx, "fog %f\n", v->fog);
+      _mesa_debug(ctx, "fog %f\n", v->attrib[FRAG_ATTRIB_FOGC][0]);
       _mesa_debug(ctx, "index %d\n", v->index);
       _mesa_debug(ctx, "pointsize %f\n", v->pointSize);
       _mesa_debug(ctx, "\n");

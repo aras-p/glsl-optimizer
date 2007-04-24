@@ -105,7 +105,7 @@ NAME ( GLcontext *ctx, const SWvertex *vert )
     */
    span->interpMask = SPAN_FOG;
    span->arrayMask = SPAN_XY | SPAN_Z;
-   span->attrStart[FRAG_ATTRIB_FOGC][0] = vert->fog;
+   span->attrStart[FRAG_ATTRIB_FOGC][0] = vert->attrib[FRAG_ATTRIB_FOGC][0];
    span->attrStepX[FRAG_ATTRIB_FOGC][0] = 0.0;
    span->attrStepY[FRAG_ATTRIB_FOGC][0] = 0.0;
 #if FLAGS & RGBA

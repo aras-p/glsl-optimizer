@@ -69,7 +69,6 @@ typedef struct {
    GLfloat win[4];
    GLchan color[4];
    GLchan specular[4];
-   GLfloat fog;
    GLfloat index;
    GLfloat pointSize;
    GLfloat attrib[FRAG_ATTRIB_MAX][4]; /**< texcoords & varying, more to come */

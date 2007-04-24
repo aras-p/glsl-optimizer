@@ -280,8 +280,9 @@ NAME( GLcontext *ctx, const SWvertex *vert0, const SWvertex *vert1 )
 #endif
 #ifdef INTERP_FOG
    interpFlags |= SPAN_FOG;
-   span.attrStart[FRAG_ATTRIB_FOGC][0] = vert0->fog;
-   span.attrStepX[FRAG_ATTRIB_FOGC][0] = (vert1->fog - vert0->fog) / numPixels;
+   span.attrStart[FRAG_ATTRIB_FOGC][0] = vert0->attrib[FRAG_ATTRIB_FOGC][0];
+   span.attrStepX[FRAG_ATTRIB_FOGC][0] = (vert1->attrib[FRAG_ATTRIB_FOGC][0]
+                                          - vert0->attrib[FRAG_ATTRIB_FOGC][0]) / numPixels;
 #endif
 #ifdef INTERP_TEX
    interpFlags |= SPAN_TEXTURE;

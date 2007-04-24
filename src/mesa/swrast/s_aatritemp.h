@@ -136,7 +136,11 @@
    span.arrayMask |= SPAN_Z;
 #endif
 #ifdef DO_FOG
-   compute_plane(p0, p1, p2, v0->fog, v1->fog, v2->fog, fogPlane);
+   compute_plane(p0, p1, p2,
+                 v0->attrib[FRAG_ATTRIB_FOGC][0],
+                 v1->attrib[FRAG_ATTRIB_FOGC][0],
+                 v2->attrib[FRAG_ATTRIB_FOGC][0],
+                 fogPlane);
    span.arrayMask |= SPAN_FOG;
 #endif
 #ifdef DO_RGBA
