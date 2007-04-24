@@ -38,7 +38,8 @@
  *    INTERP_INDEX    - if defined, interpolate color index values
  *    INTERP_INT_TEX  - if defined, interpolate integer ST texcoords
  *                         (fast, simple 2-D texture mapping)
- *    INTERP_TEX      - if defined, interpolate texcoords and varying vars
+ *    INTERP_ATTRIBS  - if defined, interpolate arbitrary attribs (texcoords,
+ *                         varying vars, etc)
  *                         NOTE:  OpenGL STRQ = Mesa STUV (R was taken for red)
  *
  * When one can directly address pixels in the color buffer the following
@@ -601,7 +602,7 @@ static void NAME(GLcontext *ctx, const SWvertex *v0,
          span.intTexStep[1] = SignedFloatToFixed(span.attrStepX[FRAG_ATTRIB_TEX0][1]);
       }
 #endif
-#ifdef INTERP_TEX
+#ifdef INTERP_ATTRIBS
       span.interpMask |= (SPAN_TEXTURE | SPAN_VARYING);
       {
          /* win[3] is 1/W */
@@ -719,7 +720,7 @@ static void NAME(GLcontext *ctx, const SWvertex *v0,
          GLfixed sLeft=0, dsOuter=0, dsInner;
          GLfixed tLeft=0, dtOuter=0, dtInner;
 #endif
-#ifdef INTERP_TEX
+#ifdef INTERP_ATTRIBS
          GLfloat sLeft[FRAG_ATTRIB_MAX];
          GLfloat tLeft[FRAG_ATTRIB_MAX];
          GLfloat uLeft[FRAG_ATTRIB_MAX];
@@ -986,7 +987,7 @@ static void NAME(GLcontext *ctx, const SWvertex *v0,
                   dtOuter = SignedFloatToFixed(span.attrStepY[FRAG_ATTRIB_TEX0][1] + dxOuter * span.attrStepX[FRAG_ATTRIB_TEX0][1]);
                }
 #endif
-#ifdef INTERP_TEX
+#ifdef INTERP_ATTRIBS
                ATTRIB_LOOP_BEGIN
                   const GLfloat invW = vLower->win[3];
                   const GLfloat s0 = vLower->attrib[attr][0] * invW;
@@ -1057,7 +1058,7 @@ static void NAME(GLcontext *ctx, const SWvertex *v0,
             dsInner = dsOuter + span.intTexStep[0];
             dtInner = dtOuter + span.intTexStep[1];
 #endif
-#ifdef INTERP_TEX
+#ifdef INTERP_ATTRIBS
             ATTRIB_LOOP_BEGIN
                dsInner[attr] = dsOuter[attr] + span.attrStepX[attr][0];
                dtInner[attr] = dtOuter[attr] + span.attrStepX[attr][1];
@@ -1106,7 +1107,7 @@ static void NAME(GLcontext *ctx, const SWvertex *v0,
                span.intTex[1] = tLeft;
 #endif
 
-#ifdef INTERP_TEX
+#ifdef INTERP_ATTRIBS
                ATTRIB_LOOP_BEGIN
                   span.attrStart[attr][0] = sLeft[attr];
                   span.attrStart[attr][1] = tLeft[attr];
@@ -1194,7 +1195,7 @@ static void NAME(GLcontext *ctx, const SWvertex *v0,
                   sLeft += dsOuter;
                   tLeft += dtOuter;
 #endif
-#ifdef INTERP_TEX
+#ifdef INTERP_ATTRIBS
                   ATTRIB_LOOP_BEGIN
                      sLeft[attr] += dsOuter[attr];
                      tLeft[attr] += dtOuter[attr];
@@ -1239,7 +1240,7 @@ static void NAME(GLcontext *ctx, const SWvertex *v0,
                   sLeft += dsInner;
                   tLeft += dtInner;
 #endif
-#ifdef INTERP_TEX
+#ifdef INTERP_ATTRIBS
                   ATTRIB_LOOP_BEGIN
                      sLeft[attr] += dsInner[attr];
                      tLeft[attr] += dtInner[attr];
@@ -1276,7 +1277,7 @@ static void NAME(GLcontext *ctx, const SWvertex *v0,
 #undef INTERP_SPEC
 #undef INTERP_INDEX
 #undef INTERP_INT_TEX
-#undef INTERP_TEX
+#undef INTERP_ATTRIBS
 #undef TEX_UNIT_LOOP
 #undef VARYING_LOOP
 

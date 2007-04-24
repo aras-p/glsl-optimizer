@@ -803,7 +803,7 @@ fast_persp_span(GLcontext *ctx, SWspan *span,
 #define INTERP_FOG 1
 #define INTERP_RGB 1
 #define INTERP_ALPHA 1
-#define INTERP_TEX 1
+#define INTERP_ATTRIBS 1
 
 #define SETUP_CODE							\
    struct persp_info info;						\
@@ -874,7 +874,7 @@ fast_persp_span(GLcontext *ctx, SWspan *span,
 #define INTERP_RGB 1
 #define INTERP_SPEC 1
 #define INTERP_ALPHA 1
-#define INTERP_TEX 1
+#define INTERP_ATTRIBS 1
 #define RENDER_SPAN( span )   _swrast_write_rgba_span(ctx, &span);
 #include "s_tritemp.h"
 
