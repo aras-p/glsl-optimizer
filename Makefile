@@ -155,10 +155,10 @@ ultrix-gcc:
 
 # Rules for making release tarballs
 
-DIRECTORY = Mesa-6.5.3rc2
-LIB_NAME = MesaLib-6.5.3rc2
-DEMO_NAME = MesaDemos-6.5.3rc2
-GLUT_NAME = MesaGLUT-6.5.3rc2
+DIRECTORY = Mesa-6.5.3rc3
+LIB_NAME = MesaLib-6.5.3rc3
+DEMO_NAME = MesaDemos-6.5.3rc3
+GLUT_NAME = MesaGLUT-6.5.3rc3
 
 MAIN_FILES = \
 	$(DIRECTORY)/Makefile*						\
@@ -288,7 +288,14 @@ MAIN_FILES = \
 	$(DIRECTORY)/windows/VC7/mesa/glu/glu.vcproj			\
 	$(DIRECTORY)/windows/VC7/mesa/mesa.sln				\
 	$(DIRECTORY)/windows/VC7/mesa/mesa/mesa.vcproj			\
-	$(DIRECTORY)/windows/VC7/mesa/osmesa/osmesa.vcproj
+	$(DIRECTORY)/windows/VC7/mesa/osmesa/osmesa.vcproj		\
+	$(DIRECTORY)/windows/VC8/mesa/gdi/gdi.vcproj			\
+	$(DIRECTORY)/windows/VC8/mesa/glu/glu.vcproj			\
+	$(DIRECTORY)/windows/VC8/mesa/mesa/mesa.vcproj			\
+	$(DIRECTORY)/windows/VC8/mesa/osmesa/osmesa.vcproj		\
+	$(DIRECTORY)/windows/VC8/progs/demos/gears.vcproj		\
+	$(DIRECTORY)/windows/VC8/progs/glut/glut.vcproj
+
 
 DRI_FILES = \
 	$(DIRECTORY)/include/GL/internal/dri_interface.h		\
