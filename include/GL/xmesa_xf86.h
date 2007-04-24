@@ -124,7 +124,7 @@ do { \
 do { \
     /* Assumes: Images are always in ZPixmap format */ \
     (void) __d; \
-    ASSERT(!__sx && !__sy) /* The SubImage case */ \
+    ASSERT(!__sx && !__sy); /* The SubImage case */     \
     ValidateGC(__b, __gc); \
     (*__gc->ops->PutImage)(__b, __gc, ((XMesaDrawable)(__b))->depth, \
 			   __x, __y, __w, __h, 0, ZPixmap, \
