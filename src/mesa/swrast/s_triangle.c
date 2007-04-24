@@ -67,24 +67,9 @@ _swrast_culltriangle( GLcontext *ctx,
 
 
 /*
- * Render a flat-shaded color index triangle.
+ * Render a smooth or flat-shaded color index triangle.
  */
-#define NAME flat_ci_triangle
-#define INTERP_Z 1
-#define INTERP_FOG 1
-#define SETUP_CODE			\
-   span.interpMask |= SPAN_INDEX;	\
-   span.index = FloatToFixed(v2->index);\
-   span.indexStep = 0;
-#define RENDER_SPAN( span )  _swrast_write_index_span(ctx, &span);
-#include "s_tritemp.h"
-
-
-
-/*
- * Render a smooth-shaded color index triangle.
- */
-#define NAME smooth_ci_triangle
+#define NAME ci_triangle
 #define INTERP_Z 1
 #define INTERP_FOG 1
 #define INTERP_INDEX 1
@@ -1054,6 +1039,11 @@ _swrast_choose_triangle( GLcontext *ctx )
          }
       }
 
+      if (!rgbmode) {
+         USE(ci_triangle);
+         return;
+      }
+
       if (ctx->Texture._EnabledCoordUnits ||
           ctx->FragmentProgram._Current ||
           ctx->ATIFragmentShader._Enabled) {
@@ -1125,21 +1115,11 @@ _swrast_choose_triangle( GLcontext *ctx )
          ASSERT(!ctx->Texture._EnabledCoordUnits);
 	 if (ctx->Light.ShadeModel==GL_SMOOTH) {
 	    /* smooth shaded, no texturing, stippled or some raster ops */
-            if (rgbmode) {
-	       USE(smooth_rgba_triangle);
-            }
-            else {
-               USE(smooth_ci_triangle);
-            }
+            USE(smooth_rgba_triangle);
 	 }
 	 else {
 	    /* flat shaded, no texturing, stippled or some raster ops */
-            if (rgbmode) {
-	       USE(flat_rgba_triangle);
-            }
-            else {
-               USE(flat_ci_triangle);
-            }
+            USE(flat_rgba_triangle);
 	 }
       }
    }
