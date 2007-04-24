@@ -408,7 +408,7 @@ tex_aa_tri(GLcontext *ctx,
 #define DO_Z
 #define DO_FOG
 #define DO_RGBA
-#define DO_TEXVAR
+#define DO_ATTRIBS
 #include "s_aatritemp.h"
 }
 
@@ -422,7 +422,7 @@ spec_tex_aa_tri(GLcontext *ctx,
 #define DO_Z
 #define DO_FOG
 #define DO_RGBA
-#define DO_TEXVAR
+#define DO_ATTRIBS
 #define DO_SPEC
 #include "s_aatritemp.h"
 }

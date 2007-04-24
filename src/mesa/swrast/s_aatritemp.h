@@ -36,7 +36,7 @@
  *    DO_RGBA      - if defined, compute RGBA values
  *    DO_INDEX     - if defined, compute color index values
  *    DO_SPEC      - if defined, compute specular RGB values
- *    DO_TEXVAR    - if defined, compute texcoords, varying
+ *    DO_ATTRIBS   - if defined, compute texcoords, varying, etc.
  */
 
 /*void triangle( GLcontext *ctx, GLuint v0, GLuint v1, GLuint v2, GLuint pv )*/
@@ -70,7 +70,7 @@
 #ifdef DO_SPEC
    GLfloat srPlane[4], sgPlane[4], sbPlane[4];
 #endif
-#if defined(DO_TEXVAR)
+#if defined(DO_ATTRIBS)
    GLfloat sPlane[FRAG_ATTRIB_MAX][4];  /* texture S */
    GLfloat tPlane[FRAG_ATTRIB_MAX][4];  /* texture T */
    GLfloat uPlane[FRAG_ATTRIB_MAX][4];  /* texture R */
@@ -181,7 +181,7 @@
    }
    span.arrayMask |= SPAN_SPEC;
 #endif
-#if defined(DO_TEXVAR)
+#if defined(DO_ATTRIBS)
    {
       const GLfloat invW0 = v0->win[3];
       const GLfloat invW1 = v1->win[3];
@@ -283,7 +283,7 @@
             array->spec[count][GCOMP] = solve_plane_chan(cx, cy, sgPlane);
             array->spec[count][BCOMP] = solve_plane_chan(cx, cy, sbPlane);
 #endif
-#if defined(DO_TEXVAR)
+#if defined(DO_ATTRIBS)
             ATTRIB_LOOP_BEGIN
                GLfloat invQ = solve_plane_recip(cx, cy, vPlane[attr]);
                array->attribs[attr][count][0] = solve_plane(cx, cy, sPlane[attr]) * invQ;
@@ -375,7 +375,7 @@
             array->spec[ix][GCOMP] = solve_plane_chan(cx, cy, sgPlane);
             array->spec[ix][BCOMP] = solve_plane_chan(cx, cy, sbPlane);
 #endif
-#if defined(DO_TEXVAR)
+#if defined(DO_ATTRIBS)
             ATTRIB_LOOP_BEGIN
                GLfloat invQ = solve_plane_recip(cx, cy, vPlane[attr]);
                array->attribs[attr][ix][0] = solve_plane(cx, cy, sPlane[attr]) * invQ;
@@ -426,13 +426,13 @@
                array->attribs[FRAG_ATTRIB_FOGC][j][0]
                   = array->attribs[FRAG_ATTRIB_FOGC][j + left][0];
 #endif
-#if defined(DO_TEXVAR)
+#if defined(DO_ATTRIBS)
                array->lambda[0][j] = array->lambda[0][j + left];
 #endif
                array->coverage[j] = array->coverage[j + left];
             }
          }
-#ifdef DO_TEXVAR
+#ifdef DO_ATTRIBS
          /* shift texcoords, varying */
          {
             SWspanarrays *array = span.array;
@@ -482,8 +482,8 @@
 #undef DO_SPEC
 #endif
 
-#ifdef DO_TEXVAR
-#undef DO_TEXVAR
+#ifdef DO_ATTRIBS
+#undef DO_ATTRIBS
 #endif
 
 #ifdef DO_OCCLUSION_TEST

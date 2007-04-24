@@ -80,7 +80,7 @@ NAME(plot)(GLcontext *ctx, struct LineInfo *line, int ix, int iy)
    line->span.array->spec[i][GCOMP] = solve_plane_chan(fx, fy, line->sgPlane);
    line->span.array->spec[i][BCOMP] = solve_plane_chan(fx, fy, line->sbPlane);
 #endif
-#if defined(DO_TEXVAR)
+#if defined(DO_ATTRIBS)
    ATTRIB_LOOP_BEGIN
       GLfloat (*attribArray)[4] = line->span.array->attribs[attr];
       GLfloat invQ;
@@ -202,7 +202,7 @@ NAME(line)(GLcontext *ctx, const SWvertex *v0, const SWvertex *v1)
       constant_plane(v1->index, line.iPlane);
    }
 #endif
-#if defined(DO_TEXVAR)
+#if defined(DO_ATTRIBS)
    {
       const GLfloat invW0 = v0->win[3];
       const GLfloat invW1 = v1->win[3];
@@ -225,7 +225,7 @@ NAME(line)(GLcontext *ctx, const SWvertex *v0, const SWvertex *v1)
             const struct gl_texture_object *obj = ctx->Texture.Unit[u]._Current;
             const struct gl_texture_image *texImage = obj->Image[0][obj->BaseLevel];
             line.texWidth[attr]  = (GLfloat) texImage->Width;
-               line.texHeight[attr] = (GLfloat) texImage->Height;
+            line.texHeight[attr] = (GLfloat) texImage->Height;
          }
       ATTRIB_LOOP_END
    }
@@ -290,5 +290,5 @@ NAME(line)(GLcontext *ctx, const SWvertex *v0, const SWvertex *v1)
 #undef DO_RGBA
 #undef DO_INDEX
 #undef DO_SPEC
-#undef DO_TEXVAR
+#undef DO_ATTRIBS
 #undef NAME

@@ -67,7 +67,7 @@ struct LineInfo
    GLfloat iPlane[4];
    /* DO_SPEC */
    GLfloat srPlane[4], sgPlane[4], sbPlane[4];
-   /* DO_TEXVAR */
+   /* DO_ATTRIBS */
    GLfloat sPlane[FRAG_ATTRIB_MAX][4];
    GLfloat tPlane[FRAG_ATTRIB_MAX][4];
    GLfloat uPlane[FRAG_ATTRIB_MAX][4];
@@ -499,7 +499,7 @@ segment(GLcontext *ctx,
 #define DO_Z
 #define DO_FOG
 #define DO_RGBA
-#define DO_TEXVAR
+#define DO_ATTRIBS
 #include "s_aalinetemp.h"
 
 
@@ -507,7 +507,7 @@ segment(GLcontext *ctx,
 #define DO_Z
 #define DO_FOG
 #define DO_RGBA
-#define DO_TEXVAR
+#define DO_ATTRIBS
 #define DO_SPEC
 #include "s_aalinetemp.h"
 
