@@ -520,10 +520,12 @@ _swrast_update_fragment_attribs(GLcontext *ctx)
       GLuint u;
       attribsMask = 0x0;
 
+#if 0 /* not yet */
       if (ctx->Depth.Test)
          attribsMask |= FRAG_BIT_WPOS;
       if (NEED_SECONDARY_COLOR(ctx))
          attribsMask |= FRAG_BIT_COL1;
+#endif
       if (swrast->_FogEnabled)
          attribsMask |= FRAG_BIT_FOGC;
 
