@@ -314,28 +314,25 @@ NAME( GLcontext *ctx, const SWvertex *vert0, const SWvertex *vert1 )
       const GLfloat invLen = 1.0F / numPixels;
       const GLfloat invw0 = vert0->win[3];
       const GLfloat invw1 = vert1->win[3];
-      GLuint attr;
-      for (attr = swrast->_MinFragmentAttrib; attr < swrast->_MaxFragmentAttrib; attr++) {
-         if (swrast->_FragmentAttribs & (1 << attr)) {
-            GLfloat ds, dt, dr, dq;
-            span.attrStart[attr][0] = invw0 * vert0->attrib[attr][0];
-            span.attrStart[attr][1] = invw0 * vert0->attrib[attr][1];
-            span.attrStart[attr][2] = invw0 * vert0->attrib[attr][2];
-            span.attrStart[attr][3] = invw0 * vert0->attrib[attr][3];
-            ds = (invw1 * vert1->attrib[attr][0]) - span.attrStart[attr][0];
-            dt = (invw1 * vert1->attrib[attr][1]) - span.attrStart[attr][1];
-            dr = (invw1 * vert1->attrib[attr][2]) - span.attrStart[attr][2];
-            dq = (invw1 * vert1->attrib[attr][3]) - span.attrStart[attr][3];
-            span.attrStepX[attr][0] = ds * invLen;
-            span.attrStepX[attr][1] = dt * invLen;
-            span.attrStepX[attr][2] = dr * invLen;
-            span.attrStepX[attr][3] = dq * invLen;
-            span.attrStepY[attr][0] = 0.0F;
-            span.attrStepY[attr][1] = 0.0F;
-            span.attrStepY[attr][2] = 0.0F;
-            span.attrStepY[attr][3] = 0.0F;
-	 }
-      }
+      ATTRIB_LOOP_BEGIN
+         GLfloat ds, dt, dr, dq;
+         span.attrStart[attr][0] = invw0 * vert0->attrib[attr][0];
+         span.attrStart[attr][1] = invw0 * vert0->attrib[attr][1];
+         span.attrStart[attr][2] = invw0 * vert0->attrib[attr][2];
+         span.attrStart[attr][3] = invw0 * vert0->attrib[attr][3];
+         ds = (invw1 * vert1->attrib[attr][0]) - span.attrStart[attr][0];
+         dt = (invw1 * vert1->attrib[attr][1]) - span.attrStart[attr][1];
+         dr = (invw1 * vert1->attrib[attr][2]) - span.attrStart[attr][2];
+         dq = (invw1 * vert1->attrib[attr][3]) - span.attrStart[attr][3];
+         span.attrStepX[attr][0] = ds * invLen;
+         span.attrStepX[attr][1] = dt * invLen;
+         span.attrStepX[attr][2] = dr * invLen;
+         span.attrStepX[attr][3] = dq * invLen;
+         span.attrStepY[attr][0] = 0.0F;
+         span.attrStepY[attr][1] = 0.0F;
+         span.attrStepY[attr][2] = 0.0F;
+         span.attrStepY[attr][3] = 0.0F;
+      ATTRIB_LOOP_END
    }
 #endif
 

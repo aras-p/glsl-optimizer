@@ -138,12 +138,10 @@ typedef struct
    GLbitfield _ColorOutputsMask;
    GLuint _NumColorOutputs;
 
-   /** Fragment attributes to compute during rasterization.
-    * Mask of FRAG_BIT_* flags.
-    */
-   GLbitfield _FragmentAttribs;
-   GLuint _MinFragmentAttrib;  /**< Lowest bit set in _FragmentAttribs */
-   GLuint _MaxFragmentAttrib;  /**< Highest bit set in _FragmentAttribs + 1 */
+   /** List/array of the fragment attributes to interpolate */
+   GLuint _ActiveAttribs[FRAG_ATTRIB_MAX];
+   /** Number of fragment attributes to interpolate */
+   GLuint _NumActiveAttribs;
 
    /* Accum buffer temporaries.
     */
@@ -276,5 +274,20 @@ _swrast_update_texture_samplers(GLcontext *ctx);
 #define ChanToFixed(X)  IntToFixed(X)
 #define FixedToChan(X)  FixedToInt(X)
 #endif
+
+
+/**
+ * For looping over fragment attributes in the pointe, line
+ * triangle rasterizers.
+ */
+#define ATTRIB_LOOP_BEGIN                                \
+   {                                                     \
+      GLuint a;                                          \
+      for (a = 0; a < swrast->_NumActiveAttribs; a++) {  \
+         const GLuint attr = swrast->_ActiveAttribs[a];
+
+#define ATTRIB_LOOP_END } }
+
+
 
 #endif

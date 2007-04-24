@@ -63,7 +63,6 @@
  */
 
 
-
 static void
 NAME ( GLcontext *ctx, const SWvertex *vert )
 {
@@ -89,7 +88,6 @@ NAME ( GLcontext *ctx, const SWvertex *vert )
 #endif
 #if FLAGS & TEXTURE
    GLfloat attrib[FRAG_ATTRIB_MAX][4]; /* texture & varying */
-   GLuint attr;
 #endif
    SWcontext *swrast = SWRAST_CONTEXT(ctx);
    SWspan *span = &(swrast->PointSpan);
@@ -123,24 +121,20 @@ NAME ( GLcontext *ctx, const SWvertex *vert )
    span->arrayMask |= (SPAN_TEXTURE | SPAN_LAMBDA);
    if (ctx->FragmentProgram._Active) {
       /* Don't divide texture s,t,r by q (use TXP to do that) */
-      for (attr = swrast->_MinFragmentAttrib; attr < swrast->_MaxFragmentAttrib; attr++) {
-         if (swrast->_FragmentAttribs & (1 << attr)) {
-            COPY_4V(attrib[attr], vert->attrib[attr]);
-         }
-      }
+      ATTRIB_LOOP_BEGIN
+         COPY_4V(attrib[attr], vert->attrib[attr]);
+      ATTRIB_LOOP_END
    }
    else {
       /* Divide texture s,t,r by q here */
-      for (attr = swrast->_MinFragmentAttrib; attr < swrast->_MaxFragmentAttrib; attr++) {
-         if (swrast->_FragmentAttribs & (1 << attr)) {
-            const GLfloat q = vert->attrib[attr][3];
-            const GLfloat invQ = (q == 0.0F || q == 1.0F) ? 1.0F : (1.0F / q);
-            attrib[attr][0] = vert->attrib[attr][0] * invQ;
-            attrib[attr][1] = vert->attrib[attr][1] * invQ;
-            attrib[attr][2] = vert->attrib[attr][2] * invQ;
-            attrib[attr][3] = q;
-         }
-      }
+      ATTRIB_LOOP_BEGIN
+         const GLfloat q = vert->attrib[attr][3];
+         const GLfloat invQ = (q == 0.0F || q == 1.0F) ? 1.0F : (1.0F / q);
+         attrib[attr][0] = vert->attrib[attr][0] * invQ;
+         attrib[attr][1] = vert->attrib[attr][1] * invQ;
+         attrib[attr][2] = vert->attrib[attr][2] * invQ;
+         attrib[attr][3] = q;
+      ATTRIB_LOOP_END
    }
    /* need these for fragment programs */
    span->attrStart[FRAG_ATTRIB_WPOS][3] = 1.0F;
@@ -279,15 +273,13 @@ NAME ( GLcontext *ctx, const SWvertex *vert )
             span->array->index[count] = colorIndex;
 #endif
 #if FLAGS & TEXTURE
-            for (attr = swrast->_MinFragmentAttrib; attr < swrast->_MaxFragmentAttrib; attr++) {
-               if (swrast->_FragmentAttribs & (1 << attr)) {
-                  COPY_4V(span->array->attribs[attr][count], attrib[attr]);
-                  if (attr < FRAG_ATTRIB_VAR0) {
-                     const GLuint u = attr - FRAG_ATTRIB_TEX0;
-                     span->array->lambda[u][count] = 0.0;
-                  }
+            ATTRIB_LOOP_BEGIN
+               COPY_4V(span->array->attribs[attr][count], attrib[attr]);
+               if (attr < FRAG_ATTRIB_VAR0) {
+                  const GLuint u = attr - FRAG_ATTRIB_TEX0;
+                  span->array->lambda[u][count] = 0.0;
                }
-            }
+            ATTRIB_LOOP_END
 #endif
 
 #if FLAGS & SMOOTH
@@ -406,11 +398,9 @@ NAME ( GLcontext *ctx, const SWvertex *vert )
       span->array->index[count] = colorIndex;
 #endif
 #if FLAGS & TEXTURE
-      for (attr = swrast->_MinFragmentAttrib; attr < swrast->_MaxFragmentAttrib; attr++) {
-         if (swrast->_FragmentAttribs & (1 << attr)) {
-            COPY_4V(span->array->attribs[attr][count], attribs[attr]);
-         }
-      }
+      ATTRIB_LOOP_BEGIN
+         COPY_4V(span->array->attribs[attr][count], attribs[attr]);
+      ATTRIB_LOOP_END
 #endif
 
       span->array->x[count] = (GLint) vert->win[0];

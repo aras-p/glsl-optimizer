@@ -505,45 +505,43 @@ _swrast_update_texture_samplers(GLcontext *ctx)
 
 
 /**
- * Update the swrast->_FragmentAttribs field.
+ * Update swrast->_ActiveAttribs and swrast->_NumActiveAttribs
  */
 static void
 _swrast_update_fragment_attribs(GLcontext *ctx)
 {
    SWcontext *swrast = SWRAST_CONTEXT(ctx);
+   GLuint attribsMask;
    
    if (ctx->FragmentProgram._Current) {
-      swrast->_FragmentAttribs
-         = ctx->FragmentProgram._Current->Base.InputsRead;
+      attribsMask = ctx->FragmentProgram._Current->Base.InputsRead;
    }
    else {
       GLuint u;
-      swrast->_FragmentAttribs = 0x0;
+      attribsMask = 0x0;
 
       if (ctx->Depth.Test)
-         swrast->_FragmentAttribs |= FRAG_BIT_WPOS;
+         attribsMask |= FRAG_BIT_WPOS;
       if (NEED_SECONDARY_COLOR(ctx))
-         swrast->_FragmentAttribs |= FRAG_BIT_COL1;
+         attribsMask |= FRAG_BIT_COL1;
       if (swrast->_FogEnabled)
-         swrast->_FragmentAttribs |= FRAG_BIT_FOGC;
+         attribsMask |= FRAG_BIT_FOGC;
 
       for (u = 0; u < ctx->Const.MaxTextureUnits; u++) {
          if (ctx->Texture.Unit[u]._ReallyEnabled) {
-            swrast->_FragmentAttribs |= FRAG_BIT_TEX(u);
+            attribsMask |= FRAG_BIT_TEX(u);
          }
       }
    }
 
-   /* Find lowest, highest bit set in _FragmentAttribs */
+   /* Update _ActiveAttribs[] list */
    {
-      GLuint bits = swrast->_FragmentAttribs;
-      GLuint i = 0;;
-      while (bits) {
-         i++;
-         bits = bits >> 1;
+      GLuint i, num = 0;
+      for (i = 0; i < FRAG_ATTRIB_MAX; i++) {
+         if (attribsMask & (1 << i))
+            swrast->_ActiveAttribs[num++] = i;
       }
-      swrast->_MaxFragmentAttrib = i;
-      swrast->_MinFragmentAttrib = FRAG_ATTRIB_TEX0; /* XXX temporary */
+      swrast->_NumActiveAttribs = num;
    }
 }
 

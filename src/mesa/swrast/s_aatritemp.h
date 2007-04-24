@@ -179,40 +179,37 @@
 #endif
 #if defined(DO_TEXVAR)
    {
-      GLuint attr;
       const GLfloat invW0 = v0->win[3];
       const GLfloat invW1 = v1->win[3];
       const GLfloat invW2 = v2->win[3];
-      for (attr = swrast->_MinFragmentAttrib; attr < swrast->_MaxFragmentAttrib; attr++) {
-         if (swrast->_FragmentAttribs & (1 << attr)) {
-            const GLfloat s0 = v0->attrib[attr][0] * invW0;
-            const GLfloat s1 = v1->attrib[attr][0] * invW1;
-            const GLfloat s2 = v2->attrib[attr][0] * invW2;
-            const GLfloat t0 = v0->attrib[attr][1] * invW0;
-            const GLfloat t1 = v1->attrib[attr][1] * invW1;
-            const GLfloat t2 = v2->attrib[attr][1] * invW2;
-            const GLfloat r0 = v0->attrib[attr][2] * invW0;
-            const GLfloat r1 = v1->attrib[attr][2] * invW1;
-            const GLfloat r2 = v2->attrib[attr][2] * invW2;
-            const GLfloat q0 = v0->attrib[attr][3] * invW0;
-            const GLfloat q1 = v1->attrib[attr][3] * invW1;
-            const GLfloat q2 = v2->attrib[attr][3] * invW2;
-            compute_plane(p0, p1, p2, s0, s1, s2, sPlane[attr]);
-            compute_plane(p0, p1, p2, t0, t1, t2, tPlane[attr]);
-            compute_plane(p0, p1, p2, r0, r1, r2, uPlane[attr]);
-            compute_plane(p0, p1, p2, q0, q1, q2, vPlane[attr]);
-            if (attr < FRAG_ATTRIB_VAR0) {
-               const GLuint u = attr - FRAG_ATTRIB_TEX0;
-               const struct gl_texture_object *obj = ctx->Texture.Unit[u]._Current;
-               const struct gl_texture_image *texImage = obj->Image[0][obj->BaseLevel];
-               texWidth[attr]  = (GLfloat) texImage->Width;
-               texHeight[attr] = (GLfloat) texImage->Height;
-            }
-            else {
-               texWidth[attr] = texHeight[attr] = 1.0;
-            }
+      ATTRIB_LOOP_BEGIN
+         const GLfloat s0 = v0->attrib[attr][0] * invW0;
+         const GLfloat s1 = v1->attrib[attr][0] * invW1;
+         const GLfloat s2 = v2->attrib[attr][0] * invW2;
+         const GLfloat t0 = v0->attrib[attr][1] * invW0;
+         const GLfloat t1 = v1->attrib[attr][1] * invW1;
+         const GLfloat t2 = v2->attrib[attr][1] * invW2;
+         const GLfloat r0 = v0->attrib[attr][2] * invW0;
+         const GLfloat r1 = v1->attrib[attr][2] * invW1;
+         const GLfloat r2 = v2->attrib[attr][2] * invW2;
+         const GLfloat q0 = v0->attrib[attr][3] * invW0;
+         const GLfloat q1 = v1->attrib[attr][3] * invW1;
+         const GLfloat q2 = v2->attrib[attr][3] * invW2;
+         compute_plane(p0, p1, p2, s0, s1, s2, sPlane[attr]);
+         compute_plane(p0, p1, p2, t0, t1, t2, tPlane[attr]);
+         compute_plane(p0, p1, p2, r0, r1, r2, uPlane[attr]);
+         compute_plane(p0, p1, p2, q0, q1, q2, vPlane[attr]);
+         if (attr < FRAG_ATTRIB_VAR0) {
+            const GLuint u = attr - FRAG_ATTRIB_TEX0;
+            const struct gl_texture_object *obj = ctx->Texture.Unit[u]._Current;
+            const struct gl_texture_image *texImage = obj->Image[0][obj->BaseLevel];
+            texWidth[attr]  = (GLfloat) texImage->Width;
+            texHeight[attr] = (GLfloat) texImage->Height;
          }
-      }
+         else {
+            texWidth[attr] = texHeight[attr] = 1.0;
+         }
+      ATTRIB_LOOP_END
    }
    span.arrayMask |= (SPAN_TEXTURE | SPAN_LAMBDA | SPAN_VARYING);
 #endif
@@ -283,23 +280,18 @@
             array->spec[count][BCOMP] = solve_plane_chan(cx, cy, sbPlane);
 #endif
 #if defined(DO_TEXVAR)
-            {
-               GLuint attr;
-               for (attr = swrast->_MinFragmentAttrib; attr < swrast->_MaxFragmentAttrib; attr++) {
-                  if (swrast->_FragmentAttribs & (1 << attr)) {
-                     GLfloat invQ = solve_plane_recip(cx, cy, vPlane[attr]);
-                     array->attribs[attr][count][0] = solve_plane(cx, cy, sPlane[attr]) * invQ;
-                     array->attribs[attr][count][1] = solve_plane(cx, cy, tPlane[attr]) * invQ;
-                     array->attribs[attr][count][2] = solve_plane(cx, cy, uPlane[attr]) * invQ;
-                     if (attr < FRAG_ATTRIB_VAR0) {
-                        const GLuint unit = attr - FRAG_ATTRIB_TEX0;
-                        array->lambda[unit][count] = compute_lambda(sPlane[attr], tPlane[attr],
-                                                                    vPlane[attr], cx, cy, invQ,
-                                                                    texWidth[attr], texHeight[attr]);
-                     }
-                  }
+            ATTRIB_LOOP_BEGIN
+               GLfloat invQ = solve_plane_recip(cx, cy, vPlane[attr]);
+               array->attribs[attr][count][0] = solve_plane(cx, cy, sPlane[attr]) * invQ;
+               array->attribs[attr][count][1] = solve_plane(cx, cy, tPlane[attr]) * invQ;
+               array->attribs[attr][count][2] = solve_plane(cx, cy, uPlane[attr]) * invQ;
+               if (attr < FRAG_ATTRIB_VAR0) {
+                  const GLuint unit = attr - FRAG_ATTRIB_TEX0;
+                  array->lambda[unit][count] = compute_lambda(sPlane[attr], tPlane[attr],
+                                                              vPlane[attr], cx, cy, invQ,
+                                                              texWidth[attr], texHeight[attr]);
                }
-            }
+            ATTRIB_LOOP_END
 #endif
             ix++;
             count++;
@@ -380,26 +372,21 @@
             array->spec[ix][BCOMP] = solve_plane_chan(cx, cy, sbPlane);
 #endif
 #if defined(DO_TEXVAR)
-            {
-               GLuint attr;
-               for (attr = swrast->_MinFragmentAttrib; attr < swrast->_MaxFragmentAttrib; attr++) {
-                  if (swrast->_FragmentAttribs & (1 << attr)) {
-                     GLfloat invQ = solve_plane_recip(cx, cy, vPlane[attr]);
-                     array->attribs[attr][ix][0] = solve_plane(cx, cy, sPlane[attr]) * invQ;
-                     array->attribs[attr][ix][1] = solve_plane(cx, cy, tPlane[attr]) * invQ;
-                     array->attribs[attr][ix][2] = solve_plane(cx, cy, uPlane[attr]) * invQ;
-                     if (attr < FRAG_ATTRIB_VAR0) {
-                        const GLuint unit = attr - FRAG_ATTRIB_TEX0;
-                        array->lambda[unit][ix] = compute_lambda(sPlane[attr],
-                                                                 tPlane[attr],
-                                                                 vPlane[attr],
-                                                                 cx, cy, invQ,
-                                                                 texWidth[attr],
-                                                                 texHeight[attr]);
-                     }
-                  }
+            ATTRIB_LOOP_BEGIN
+               GLfloat invQ = solve_plane_recip(cx, cy, vPlane[attr]);
+               array->attribs[attr][ix][0] = solve_plane(cx, cy, sPlane[attr]) * invQ;
+               array->attribs[attr][ix][1] = solve_plane(cx, cy, tPlane[attr]) * invQ;
+               array->attribs[attr][ix][2] = solve_plane(cx, cy, uPlane[attr]) * invQ;
+               if (attr < FRAG_ATTRIB_VAR0) {
+                  const GLuint unit = attr - FRAG_ATTRIB_TEX0;
+                  array->lambda[unit][ix] = compute_lambda(sPlane[attr],
+                                                           tPlane[attr],
+                                                           vPlane[attr],
+                                                           cx, cy, invQ,
+                                                           texWidth[attr],
+                                                           texHeight[attr]);
                }
-            }
+            ATTRIB_LOOP_END
 #endif
             ix--;
             count++;
@@ -445,18 +432,15 @@
          /* shift texcoords, varying */
          {
             SWspanarrays *array = span.array;
-            GLuint attr;
-            for (attr = swrast->_MinFragmentAttrib; attr < swrast->_MaxFragmentAttrib; attr++) {
-               if (swrast->_FragmentAttribs & (1 << attr)) {
-                  GLint j;
-                  for (j = 0; j < (GLint) n; j++) {
-                     array->attribs[attr][j][0] = array->attribs[attr][j + left][0];
-                     array->attribs[attr][j][1] = array->attribs[attr][j + left][1];
-                     array->attribs[attr][j][2] = array->attribs[attr][j + left][2];
-                     /*array->lambda[unit][j] = array->lambda[unit][j + left];*/
-                  }
+            ATTRIB_LOOP_BEGIN
+               GLint j;
+               for (j = 0; j < (GLint) n; j++) {
+                  array->attribs[attr][j][0] = array->attribs[attr][j + left][0];
+                  array->attribs[attr][j][1] = array->attribs[attr][j + left][1];
+                  array->attribs[attr][j][2] = array->attribs[attr][j + left][2];
+                  /*array->lambda[unit][j] = array->lambda[unit][j + left];*/
                }
-            }
+            ATTRIB_LOOP_END
          }
 #endif
 

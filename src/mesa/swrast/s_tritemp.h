@@ -117,20 +117,6 @@
 #endif
 
 
-#define TEXVAR_LOOP(CODE)                                \
-   {                                                     \
-      GLuint attr;                                       \
-      for (attr = swrast->_MinFragmentAttrib;            \
-           attr < swrast->_MaxFragmentAttrib; attr++) {  \
-         if (swrast->_FragmentAttribs & (1 << attr)) {   \
-            CODE                                         \
-         }                                               \
-      }                                                  \
-   }
-
-
-
-
 /*
  * Some code we unfortunately need to prevent negative interpolated colors.
  */
@@ -620,7 +606,7 @@ static void NAME(GLcontext *ctx, const SWvertex *v0,
       {
          /* win[3] is 1/W */
          const GLfloat wMax = vMax->win[3], wMin = vMin->win[3], wMid = vMid->win[3];
-         TEXVAR_LOOP(
+         ATTRIB_LOOP_BEGIN
             GLfloat eMaj_ds = vMax->attrib[attr][0] * wMax - vMin->attrib[attr][0] * wMin;
             GLfloat eBot_ds = vMid->attrib[attr][0] * wMid - vMin->attrib[attr][0] * wMin;
             GLfloat eMaj_dt = vMax->attrib[attr][1] * wMax - vMin->attrib[attr][1] * wMin;
@@ -637,7 +623,7 @@ static void NAME(GLcontext *ctx, const SWvertex *v0,
             span.attrStepY[attr][2] = oneOverArea * (eMaj.dx * eBot_du - eMaj_du * eBot.dx);
             span.attrStepX[attr][3] = oneOverArea * (eMaj_dv * eBot.dy - eMaj.dy * eBot_dv);
             span.attrStepY[attr][3] = oneOverArea * (eMaj.dx * eBot_dv - eMaj_dv * eBot.dx);
-         )
+         ATTRIB_LOOP_END
       }
 #endif
 
@@ -1001,7 +987,7 @@ static void NAME(GLcontext *ctx, const SWvertex *v0,
                }
 #endif
 #ifdef INTERP_TEX
-               TEXVAR_LOOP(
+               ATTRIB_LOOP_BEGIN
                   const GLfloat invW = vLower->win[3];
                   const GLfloat s0 = vLower->attrib[attr][0] * invW;
                   const GLfloat t0 = vLower->attrib[attr][1] * invW;
@@ -1015,7 +1001,7 @@ static void NAME(GLcontext *ctx, const SWvertex *v0,
                   dtOuter[attr] = span.attrStepY[attr][1] + dxOuter * span.attrStepX[attr][1];
                   duOuter[attr] = span.attrStepY[attr][2] + dxOuter * span.attrStepX[attr][2];
                   dvOuter[attr] = span.attrStepY[attr][3] + dxOuter * span.attrStepX[attr][3];
-               )
+               ATTRIB_LOOP_END
 #endif
             } /*if setupLeft*/
 
@@ -1072,12 +1058,12 @@ static void NAME(GLcontext *ctx, const SWvertex *v0,
             dtInner = dtOuter + span.intTexStep[1];
 #endif
 #ifdef INTERP_TEX
-            TEXVAR_LOOP(
+            ATTRIB_LOOP_BEGIN
                dsInner[attr] = dsOuter[attr] + span.attrStepX[attr][0];
                dtInner[attr] = dtOuter[attr] + span.attrStepX[attr][1];
                duInner[attr] = duOuter[attr] + span.attrStepX[attr][2];
                dvInner[attr] = dvOuter[attr] + span.attrStepX[attr][3];
-            )
+            ATTRIB_LOOP_END
 #endif
 
             while (lines > 0) {
@@ -1121,12 +1107,12 @@ static void NAME(GLcontext *ctx, const SWvertex *v0,
 #endif
 
 #ifdef INTERP_TEX
-               TEXVAR_LOOP(
+               ATTRIB_LOOP_BEGIN
                   span.attrStart[attr][0] = sLeft[attr];
                   span.attrStart[attr][1] = tLeft[attr];
                   span.attrStart[attr][2] = uLeft[attr];
                   span.attrStart[attr][3] = vLeft[attr];
-               )
+               ATTRIB_LOOP_END
 #endif
 
                /* This is where we actually generate fragments */
@@ -1209,12 +1195,12 @@ static void NAME(GLcontext *ctx, const SWvertex *v0,
                   tLeft += dtOuter;
 #endif
 #ifdef INTERP_TEX
-                  TEXVAR_LOOP(
+                  ATTRIB_LOOP_BEGIN
                      sLeft[attr] += dsOuter[attr];
                      tLeft[attr] += dtOuter[attr];
                      uLeft[attr] += duOuter[attr];
                      vLeft[attr] += dvOuter[attr];
-                  )
+                  ATTRIB_LOOP_END
 #endif
                }
                else {
@@ -1254,12 +1240,12 @@ static void NAME(GLcontext *ctx, const SWvertex *v0,
                   tLeft += dtInner;
 #endif
 #ifdef INTERP_TEX
-                  TEXVAR_LOOP(
+                  ATTRIB_LOOP_BEGIN
                      sLeft[attr] += dsInner[attr];
                      tLeft[attr] += dtInner[attr];
                      uLeft[attr] += duInner[attr];
                      vLeft[attr] += dvInner[attr];
-                  )
+                  ATTRIB_LOOP_END
 #endif
                }
             } /*while lines>0*/
