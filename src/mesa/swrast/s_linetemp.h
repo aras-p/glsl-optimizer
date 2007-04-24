@@ -35,9 +35,7 @@
  *    INTERP_RGBA     - if defined, interpolate RGBA values
  *    INTERP_SPEC     - if defined, interpolate specular RGB values
  *    INTERP_INDEX    - if defined, interpolate color index values
- *    INTERP_TEX      - if defined, interpolate unit 0 texcoords
- *    INTERP_MULTITEX - if defined, interpolate multi-texcoords
- *    INTERP_VARYING  - if defined, interpolate GLSL varyings
+ *    INTERP_ATTRIBS  - if defined, interpolate attribs (texcoords, varying, etc)
  *
  * When one can directly address pixels in the color buffer the following
  * macros can be defined and used to directly compute pixel addresses during
@@ -284,32 +282,7 @@ NAME( GLcontext *ctx, const SWvertex *vert0, const SWvertex *vert1 )
    span.attrStepX[FRAG_ATTRIB_FOGC][0] = (vert1->attrib[FRAG_ATTRIB_FOGC][0]
                                           - vert0->attrib[FRAG_ATTRIB_FOGC][0]) / numPixels;
 #endif
-#ifdef INTERP_TEX
-   interpFlags |= SPAN_TEXTURE;
-   {
-      const GLfloat invw0 = vert0->win[3];
-      const GLfloat invw1 = vert1->win[3];
-      const GLfloat invLen = 1.0F / numPixels;
-      GLfloat ds, dt, dr, dq;
-      span.attrStart[FRAG_ATTRIB_TEX0][0] = invw0 * vert0->attrib[FRAG_ATTRIB_TEX0][0];
-      span.attrStart[FRAG_ATTRIB_TEX0][1] = invw0 * vert0->attrib[FRAG_ATTRIB_TEX0][1];
-      span.attrStart[FRAG_ATTRIB_TEX0][2] = invw0 * vert0->attrib[FRAG_ATTRIB_TEX0][2];
-      span.attrStart[FRAG_ATTRIB_TEX0][3] = invw0 * vert0->attrib[FRAG_ATTRIB_TEX0][3];
-      ds = (invw1 * vert1->attrib[FRAG_ATTRIB_TEX0][0]) - span.attrStart[FRAG_ATTRIB_TEX0][0];
-      dt = (invw1 * vert1->attrib[FRAG_ATTRIB_TEX0][1]) - span.attrStart[FRAG_ATTRIB_TEX0][1];
-      dr = (invw1 * vert1->attrib[FRAG_ATTRIB_TEX0][2]) - span.attrStart[FRAG_ATTRIB_TEX0][2];
-      dq = (invw1 * vert1->attrib[FRAG_ATTRIB_TEX0][3]) - span.attrStart[FRAG_ATTRIB_TEX0][3];
-      span.attrStepX[FRAG_ATTRIB_TEX0][0] = ds * invLen;
-      span.attrStepX[FRAG_ATTRIB_TEX0][1] = dt * invLen;
-      span.attrStepX[FRAG_ATTRIB_TEX0][2] = dr * invLen;
-      span.attrStepX[FRAG_ATTRIB_TEX0][3] = dq * invLen;
-      span.attrStepY[FRAG_ATTRIB_TEX0][0] = 0.0F;
-      span.attrStepY[FRAG_ATTRIB_TEX0][1] = 0.0F;
-      span.attrStepY[FRAG_ATTRIB_TEX0][2] = 0.0F;
-      span.attrStepY[FRAG_ATTRIB_TEX0][3] = 0.0F;
-   }
-#endif
-#if defined(INTERP_MULTITEX) || defined(INTERP_VARYING)
+#if defined(INTERP_ATTRIBS)
    interpFlags |= (SPAN_TEXTURE | SPAN_VARYING);
    {
       const GLfloat invLen = 1.0F / numPixels;
@@ -443,8 +416,7 @@ NAME( GLcontext *ctx, const SWvertex *vert0, const SWvertex *vert1 )
 #undef INTERP_FOG
 #undef INTERP_RGBA
 #undef INTERP_SPEC
-#undef INTERP_TEX
-#undef INTERP_MULTITEX
+#undef INTERP_ATTRIBS
 #undef INTERP_INDEX
 #undef PIXEL_ADDRESS
 #undef PIXEL_TYPE
