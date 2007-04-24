@@ -39,14 +39,14 @@
  *
  *   RGBA = do rgba instead of color index
  *   SMOOTH = do antialiasing
- *   TEXTURE = do texture coords
+ *   ATTRIBS = general attributes (texcoords, etc)
  *   SPECULAR = do separate specular color
  *   LARGE = do points with diameter > 1 pixel
  *   ATTENUATE = compute point size attenuation
  *   SPRITE = GL_ARB_point_sprite / GL_NV_point_sprite
  *
  * Notes: LARGE and ATTENUATE are exclusive of each other.
- *        TEXTURE requires RGBA
+ *        ATTRIBS requires RGBA
  */
 
 
@@ -86,7 +86,7 @@ NAME ( GLcontext *ctx, const SWvertex *vert )
 #if FLAGS & INDEX
    const GLuint colorIndex = (GLuint) vert->index; /* XXX round? */
 #endif
-#if FLAGS & TEXTURE
+#if FLAGS & ATTRIBS
    GLfloat attrib[FRAG_ATTRIB_MAX][4]; /* texture & varying */
 #endif
    SWcontext *swrast = SWRAST_CONTEXT(ctx);
@@ -117,7 +117,7 @@ NAME ( GLcontext *ctx, const SWvertex *vert )
 #if FLAGS & INDEX
    span->arrayMask |= SPAN_INDEX;
 #endif
-#if FLAGS & TEXTURE
+#if FLAGS & ATTRIBS
    span->arrayMask |= (SPAN_TEXTURE | SPAN_LAMBDA);
    if (ctx->FragmentProgram._Active) {
       /* Don't divide texture s,t,r by q (use TXP to do that) */
@@ -272,7 +272,7 @@ NAME ( GLcontext *ctx, const SWvertex *vert )
 #if FLAGS & INDEX
             span->array->index[count] = colorIndex;
 #endif
-#if FLAGS & TEXTURE
+#if FLAGS & ATTRIBS
             ATTRIB_LOOP_BEGIN
                COPY_4V(span->array->attribs[attr][count], attrib[attr]);
                if (attr < FRAG_ATTRIB_VAR0) {
@@ -397,7 +397,7 @@ NAME ( GLcontext *ctx, const SWvertex *vert )
 #if FLAGS & INDEX
       span->array->index[count] = colorIndex;
 #endif
-#if FLAGS & TEXTURE
+#if FLAGS & ATTRIBS
       ATTRIB_LOOP_BEGIN
          COPY_4V(span->array->attribs[attr][count], attribs[attr]);
       ATTRIB_LOOP_END
