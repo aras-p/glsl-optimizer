@@ -536,6 +536,13 @@ _swrast_update_fragment_attribs(GLcontext *ctx)
       }
    }
 
+   /* don't want to interpolate these generic attribs just yet */
+   /* XXX temporary */
+   attribsMask &= ~(FRAG_BIT_WPOS |
+                    FRAG_BIT_COL0 |
+                    FRAG_BIT_COL1 |
+                    FRAG_BIT_FOGC);
+
    /* Update _ActiveAttribs[] list */
    {
       GLuint i, num = 0;
