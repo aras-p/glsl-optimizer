@@ -58,7 +58,7 @@ static GLfloat xRot = 90.0f, yRot = 0.0f;
 static void
 normalize(GLfloat *dst, const GLfloat *src)
 {
-   GLfloat len = sqrtf(src[0] * src[0] + src[1] * src[1] + src[2] * src[2]);
+   GLfloat len = sqrt(src[0] * src[0] + src[1] * src[1] + src[2] * src[2]);
    dst[0] = src[0] / len;
    dst[1] = src[1] / len;
    dst[2] = src[2] / len;
