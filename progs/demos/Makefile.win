@@ -22,9 +22,11 @@ LIBS   = GLUT32.LIB OPENGL32.LIB
 
 all:	OPENGL32.DLL GLU32.DLL GLUT32.DLL \
 	readtex.h readtex.c showbuffer.h showbuffer.c \
+	extfuncs.h trackball.h trackball.c \
 	arbfplight.exe arbfslight.exe arbocclude.exe bounce.exe \
-	clearspd.exe cubemap.exe drawpix.exe fire.exe fogcoord.exe \
-	fplight.exe gamma.exe gearbox.exe \
+	clearspd.exe cubemap.exe drawpix.exe engine.exe \
+	fire.exe fogcoord.exe \
+	fplight.exe fslight.exe gamma.exe gearbox.exe \
 	gears.exe geartrain.exe gloss.exe \
 	glinfo.exe glslnoise.exe \
 	gltestperf.exe glutfx.exe ipers.exe isosurf.exe lodbias.exe \
@@ -42,14 +44,16 @@ bounce.exe: bounce.obj
 clearspd.exe: clearspd.obj
 cubemap.exe: cubemap.obj readtex.obj
 drawpix.exe: drawpix.obj readtex.obj
+engine.exe: engine.obj readtex.obj trackball.obj
 fire.exe: fire.obj readtex.obj
 fogcoord.exe: fogcoord.obj readtex.obj
 fplight.exe: fplight.obj
+fslight.exe: fslight.obj
 gamma.exe: gamma.obj
 gearbox.exe: gearbox.obj
 gears.exe: gears.obj
 geartrain.exe: geartrain.obj
-gloss.exe: gloss.obj readtex.obj
+gloss.exe: gloss.obj readtex.obj trackball.obj
 glinfo.exe: glinfo.obj
 glslnoise.exe: glslnoise.obj
 gltestperf.exe: gltestperf.obj
@@ -105,14 +109,23 @@ showbuffer.c: $(TOP)\progs\util\showbuffer.c
 showbuffer.h: $(TOP)\progs\util\showbuffer.h
 	copy $** .
 
+trackball.c: $(TOP)\progs\util\trackball.c
+	copy $** .
+
+trackball.h: $(TOP)\progs\util\trackball.h
+	copy $** .
+
+extfuncs.h: $(TOP)\progs\util\extfuncs.h
+	copy $** .
+
 .obj.exe:
 	$(link) $(ldebug) -out:$@ $** /LIBPATH:$(LIBDIR) $(LIBS)
 
 .c.obj:
-	$(cc) $(cdebug) $(cflags) $(cvars) /I$(INCDIR) $*.c
+	$(cc) $(cdebug) $(cflags) $(cvars) -D_USE_MATH_DEFINES /I$(INCDIR) $*.c
 
 clean::
-	del *.obj *.exe readtex.* showbuffer.*
+	del *.obj *.exe readtex.* showbuffer.* trackball.*
 
 clobber::
 
