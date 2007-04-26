@@ -114,17 +114,17 @@ link_varying_vars(struct gl_shader_program *shProg, struct gl_program *prog)
             varsRead |= (1 << inst->SrcReg[j].Index);
          }
       }
-      /* XXX update program OutputsWritten, InputsRead */
    }
 
    if (prog->Target == GL_VERTEX_PROGRAM_ARB) {
       prog->OutputsWritten |= varsWritten;
+      /*printf("VERT OUTPUTS: 0x%x \n", varsWritten);*/
    }
    else {
       assert(prog->Target == GL_FRAGMENT_PROGRAM_ARB);
       prog->InputsRead |= varsRead;
+      /*printf("FRAG INPUTS: 0x%x\n", varsRead);*/
    }
-
 
    free(map);
 
@@ -453,6 +453,21 @@ fragment_program(struct gl_program *prog)
 
 
 /**
+ * Record a linking error.
+ */
+static void
+link_error(struct gl_shader_program *shProg, const char *msg)
+{
+   if (shProg->InfoLog) {
+      _mesa_free(shProg->InfoLog);
+   }
+   shProg->InfoLog = _mesa_strdup(msg);
+   shProg->LinkStatus = GL_FALSE;
+}
+
+
+
+/**
  * Shader linker.  Currently:
  *
  * 1. The last attached vertex shader and fragment shader are linked.
@@ -553,17 +568,29 @@ _slang_link(GLcontext *ctx,
       _slang_update_inputs_outputs(&shProg->VertexProgram->Base);
       if (!(shProg->VertexProgram->Base.OutputsWritten & (1 << VERT_RESULT_HPOS))) {
          /* the vertex program did not compute a vertex position */
-         if (shProg->InfoLog) {
-            _mesa_free(shProg->InfoLog);
-         }
-         shProg->InfoLog
-            = _mesa_strdup("gl_Position was not written by vertex shader\n");
-         shProg->LinkStatus = GL_FALSE;
+         link_error(shProg,
+                    "gl_Position was not written by vertex shader\n");
          return;
       }
    }
    if (shProg->FragmentProgram)
       _slang_update_inputs_outputs(&shProg->FragmentProgram->Base);
+
+   /* Check that all the varying vars needed by the fragment shader are
+    * actually produced by the vertex shader.
+    */
+   if (shProg->FragmentProgram) {
+      const GLbitfield varyingRead
+         = shProg->FragmentProgram->Base.InputsRead >> FRAG_ATTRIB_VAR0;
+      const GLbitfield varyingWritten = shProg->VertexProgram ?
+         shProg->VertexProgram->Base.OutputsWritten >> VERT_RESULT_VAR0 : 0x0;
+      if ((varyingRead & varyingWritten) != varyingRead) {
+         link_error(shProg,
+          "Fragment program using varying vars not written by vertex shader\n");
+         return;
+      }         
+   }
+
 
    if (fragProg && shProg->FragmentProgram) {
       /* notify driver that a new fragment program has been compiled/linked */
