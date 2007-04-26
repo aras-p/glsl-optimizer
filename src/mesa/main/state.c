@@ -1060,7 +1060,7 @@ update_tricaps(GLcontext *ctx, GLbitfield new_state)
    /*
     * Points
     */
-   if (new_state & _NEW_POINT) {
+   if (1/*new_state & _NEW_POINT*/) {
       if (ctx->Point.SmoothFlag)
          ctx->_TriangleCaps |= DD_POINT_SMOOTH;
       if (ctx->Point._Size != 1.0F)
@@ -1072,7 +1072,7 @@ update_tricaps(GLcontext *ctx, GLbitfield new_state)
    /*
     * Lines
     */
-   if (new_state & _NEW_LINE) {
+   if (1/*new_state & _NEW_LINE*/) {
       if (ctx->Line.SmoothFlag)
          ctx->_TriangleCaps |= DD_LINE_SMOOTH;
       if (ctx->Line.StippleFlag)
@@ -1084,7 +1084,7 @@ update_tricaps(GLcontext *ctx, GLbitfield new_state)
    /*
     * Polygons
     */
-   if (new_state & _NEW_POLYGON) {
+   if (1/*new_state & _NEW_POLYGON*/) {
       if (ctx->Polygon.SmoothFlag)
          ctx->_TriangleCaps |= DD_TRI_SMOOTH;
       if (ctx->Polygon.StippleFlag)
