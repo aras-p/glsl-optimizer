@@ -1,6 +1,6 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.5.3
+ * Version:  7.0
  *
  * Copyright (C) 1999-2007  Brian Paul   All Rights Reserved.
  *
@@ -28,10 +28,10 @@
 
 
 /* Mesa version */
-#define MESA_MAJOR 6
-#define MESA_MINOR 5
-#define MESA_PATCH 3
-#define MESA_VERSION_STRING "6.5.3"
+#define MESA_MAJOR 7
+#define MESA_MINOR 0
+#define MESA_PATCH 0
+#define MESA_VERSION_STRING "7.0"
 
 /* To make version comparison easy */
 #define MESA_VERSION(a,b,c) (((a) << 16) + ((b) << 8) + (c))
@@ -40,9 +40,9 @@
 
 /* OpenGL API version */
 #define OPENGL_MAJOR 2
-#define OPENGL_MINOR 0
+#define OPENGL_MINOR 1
 #define OPENGL_PATCH 0
-#define OPENGL_VERSION_STRING "2.0"
+#define OPENGL_VERSION_STRING "2.1"
 
 /* To make version comparison easy */
 #define OPENGL_VERSION(a,b,c) (((a) << 16) + ((b) << 8) + (c))
