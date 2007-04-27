@@ -311,96 +311,93 @@ vec4 tan(const vec4 angle)
 
 
 
-float asin (float x) {
-    float y;
-    __asm float_arcsine y, x;
-    return y;
+float asin(const float x)
+{
+   // XXX FIX ME!
+   // __asm float_arcsine y, x;
+   __retVal = 0.5;
 }
 
-vec2 asin (vec2 v) {
-    return vec2 (
-        asin (v.x),
-        asin (v.y)
-    );
+vec2 asin(const vec2 v)
+{
+   __retVal.x = asin(v.x);
+   __retVal.y = asin(v.y);
 }
 
-vec3 asin (vec3 v) {
-    return vec3 (
-        asin (v.x),
-        asin (v.y),
-        asin (v.z)
-    );
+vec3 asin(const vec3 v)
+{
+   __retVal.x = asin(v.x);
+   __retVal.y = asin(v.y);
+   __retVal.z = asin(v.z);
 }
 
-vec4 asin (vec4 v) {
-    return vec4 (
-        asin (v.x),
-        asin (v.y),
-        asin (v.z),
-        asin (v.w)
-    );
+vec4 asin(const vec4 v)
+{
+   __retVal.x = asin(v.x);
+   __retVal.y = asin(v.y);
+   __retVal.z = asin(v.z);
 }
 
-float acos (float x) {
-    return 1.5708 - asin (x);
+float acos(const float x)
+{
+   // XXX FIX ME!
+   __retVal = 0.5;
 }
 
-vec2 acos (vec2 v) {
-    return vec2 (
-        acos (v.x),
-        acos (v.y)
-    );
+vec2 acos(const vec2 v)
+{
+   __retVal.x = acos(v.x);
+   __retVal.y = acos(v.y);
 }
 
-vec3 acos (vec3 v) {
-    return vec3 (
-        acos (v.x),
-        acos (v.y),
-        acos (v.z)
-    );
+vec3 acos(const vec3 v)
+{
+   __retVal.x = acos(v.x);
+   __retVal.y = acos(v.y);
+   __retVal.z = acos(v.z);
 }
 
-vec4 acos (vec4 v) {
-    return vec4 (
-        acos (v.x),
-        acos (v.y),
-        acos (v.z),
-        acos (v.w)
-    );
+vec4 acos(const vec4 v)
+{
+   __retVal.x = acos(v.x);
+   __retVal.y = acos(v.y);
+   __retVal.z = acos(v.z);
+   __retVal.w = acos(v.w);
 }
 
-float atan (float y_over_x) {
-    float z;
-    __asm float_arctan z, y_over_x;
-    return z;
+float atan(const float y_over_x)
+{
+   // XXX FIX ME
+   //__asm float_arctan z, y_over_x;
+   __retVal = 0.5;
 }
 
-vec2 atan (vec2 y_over_x) {
-    return vec2 (
-        atan (y_over_x.x),
-        atan (y_over_x.y)
-    );
+vec2 atan(const vec2 y_over_x)
+{
+   __retVal.x = atan(y_over_x.x);
+   __retVal.y = atan(y_over_x.y);
 }
 
-vec3 atan (vec3 y_over_x) {
-    return vec3 (
-        atan (y_over_x.x),
-        atan (y_over_x.y),
-        atan (y_over_x.z)
-    );
+vec3 atan(const vec3 y_over_x)
+{
+   __retVal.x = atan(y_over_x.x);
+   __retVal.y = atan(y_over_x.y);
+   __retVal.z = atan(y_over_x.z);
 }
 
-vec4 atan (vec4 y_over_x) {
-    return vec4 (
-        atan (y_over_x.x),
-        atan (y_over_x.y),
-        atan (y_over_x.z),
-        atan (y_over_x.w)
-    );
+vec4 atan(const vec4 y_over_x)
+{
+   __retVal.x = atan(y_over_x.x);
+   __retVal.y = atan(y_over_x.y);
+   __retVal.z = atan(y_over_x.z);
+   __retVal.w = atan(y_over_x.w);
 }
 
-float atan (float y, float x) {
-    float z = atan (y / x);
+float atan(const float y, const float x)
+{
+    if (x == 0.0)
+       return 0.0;
+    float z = atan(y / x);
     if (x < 0.0)
     {
         if (y < 0.0)
@@ -410,29 +407,27 @@ float atan (float y, float x) {
     return z;
 }
 
-vec2 atan (vec2 u, vec2 v) {
-    return vec2 (
-        atan (u.x, v.x),
-        atan (u.y, v.y)
-    );
+vec2 atan(const vec2 u, const vec2 v)
+{
+   __retVal.x = atan(u.x, v.x);
+   __retVal.y = atan(u.y, v.y);
 }
 
-vec3 atan (vec3 u, vec3 v) {
-    return vec3 (
-        atan (u.x, v.x),
-        atan (u.y, v.y),
-        atan (u.z, v.z)
-    );
+vec3 atan(const vec3 u, const vec3 v)
+{
+   __retVal.x = atan(u.x, v.x);
+   __retVal.y = atan(u.y, v.y);
+   __retVal.z = atan(u.z, v.z);
 }
 
-vec4 atan (vec4 u, vec4 v) {
-    return vec4 (
-        atan (u.x, v.x),
-        atan (u.y, v.y),
-        atan (u.z, v.z),
-        atan (u.w, v.w)
-    );
+vec4 atan(const vec4 u, const vec4 v)
+{
+   __retVal.x = atan(u.x, v.x);
+   __retVal.y = atan(u.y, v.y);
+   __retVal.z = atan(u.z, v.z);
+   __retVal.w = atan(u.w, v.w);
 }
+
 
 //
 // 8.2 Exponential Functions
