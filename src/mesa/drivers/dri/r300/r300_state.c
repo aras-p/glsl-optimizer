@@ -1269,6 +1269,9 @@ void r300_setup_textures(GLcontext *ctx)
 			tmu_mappings[i] = hw_tmu;
 
 			t=r300->state.texture.unit[i].texobj;
+			/* XXX questionable fix for bug 9170: */
+			if (!t)
+				continue;
 
 			if((t->format & 0xffffff00)==0xffffff00) {
 				WARN_ONCE("unknown texture format (entry %x) encountered. Help me !\n", t->format & 0xff);
