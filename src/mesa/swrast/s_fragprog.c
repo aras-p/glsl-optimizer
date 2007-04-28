@@ -113,8 +113,10 @@ init_machine(GLcontext *ctx, struct gl_program_machine *machine,
    /* Setup pointer to input attributes */
    machine->Attribs = span->array->attribs;
 
-   /* Store front/back facing value in register FOGC.Y */
-   machine->Attribs[FRAG_ATTRIB_FOGC][col][1] = (GLfloat) ctx->_Facing;
+   if (ctx->Shader.CurrentProgram) {
+      /* Store front/back facing value in register FOGC.Y */
+      machine->Attribs[FRAG_ATTRIB_FOGC][col][1] = (GLfloat) ctx->_Facing;
+   }
 
    machine->CurElement = col;
 
