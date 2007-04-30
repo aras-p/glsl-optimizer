@@ -67,7 +67,7 @@ struct brw_vs_compile {
    struct brw_reg r1;
    struct brw_reg regs[PROGRAM_ADDRESS+1][128];
    struct brw_reg tmp;
-   struct brw_reg ret;
+   struct brw_reg stack;
 
    struct brw_reg userplane[6];
 

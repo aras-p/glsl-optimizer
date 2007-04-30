@@ -135,16 +135,8 @@ static void brw_vs_alloc_regs( struct brw_vs_compile *c )
       reg++;
    }
 
-   c->ret =  brw_reg(BRW_GENERAL_REGISTER_FILE,
-           reg,
-           0,
-           BRW_REGISTER_TYPE_D,
-           BRW_VERTICAL_STRIDE_8,
-           BRW_WIDTH_8,
-           BRW_HORIZONTAL_STRIDE_1,
-           BRW_SWIZZLE_XXXX,
-           WRITEMASK_X);
-   reg++;
+   c->stack =  brw_uw16_reg(BRW_GENERAL_REGISTER_FILE, reg, 0);
+   reg += 2;
  
    
    /* Some opcodes need an internal temporary:
@@ -956,7 +948,8 @@ void brw_vs_emit(struct brw_vs_compile *c )
    GLuint nr_insns = c->vp->program.Base.NumInstructions;
    GLuint insn, if_insn = 0;
    struct brw_instruction *end_inst;
-   struct brw_instruction *if_inst[32];
+   struct brw_instruction *if_inst[MAX_IFSN];
+   struct brw_indirect stack_index = brw_indirect(0, 0);   
 
    if (INTEL_DEBUG & DEBUG_VS) {
       _mesa_printf("\n\n\nvs-emit:\n");
@@ -970,6 +963,7 @@ void brw_vs_emit(struct brw_vs_compile *c )
    /* Static register allocation
     */
    brw_vs_alloc_regs(c);
+   brw_MOV(p, get_addr_reg(stack_index), brw_address(c->stack));
 
    for (insn = 0; insn < nr_insns; insn++) {
 
@@ -1094,7 +1088,7 @@ void brw_vs_emit(struct brw_vs_compile *c )
          if_inst[if_insn++] = brw_IF(p, BRW_EXECUTE_8);
 	 break;
       case OPCODE_ELSE:
-	 brw_ELSE(p, if_inst[if_insn]);
+	 if_inst[if_insn-1] = brw_ELSE(p, if_inst[if_insn-1]);
 	 break;
       case OPCODE_ENDIF:
          assert(if_insn > 0);
@@ -1106,12 +1100,20 @@ void brw_vs_emit(struct brw_vs_compile *c )
          brw_set_predicate_control_flag_value(p, 0xFF);
         break;
       case OPCODE_CAL:
-         brw_ADD(p, c->ret, brw_ip_reg(), brw_imm_d(2*16));
+	 brw_set_access_mode(p, BRW_ALIGN_1);
+	 brw_ADD(p, deref_1uw(stack_index, 0), brw_ip_reg(), brw_imm_d(3*16));
+	 brw_set_access_mode(p, BRW_ALIGN_16);
+	 brw_ADD(p, get_addr_reg(stack_index),
+			 get_addr_reg(stack_index), brw_imm_d(4));
 	 inst->Data = &p->store[p->nr_insn];
 	 brw_ADD(p, brw_ip_reg(), brw_ip_reg(), brw_imm_d(1*16));
         break;
       case OPCODE_RET:
-         brw_MOV(p, brw_ip_reg(), c->ret);
+	 brw_ADD(p, get_addr_reg(stack_index),
+			 get_addr_reg(stack_index), brw_imm_d(-4));
+	 brw_set_access_mode(p, BRW_ALIGN_1);
+         brw_MOV(p, brw_ip_reg(), deref_1uw(stack_index, 0));
+	 brw_set_access_mode(p, BRW_ALIGN_16);
       case OPCODE_END:	
          brw_ADD(p, brw_ip_reg(), brw_ip_reg(), brw_imm_d(1*16));
         break;
