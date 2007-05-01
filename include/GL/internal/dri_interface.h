@@ -94,9 +94,26 @@ typedef void (* PFNGLXSCRENABLEEXTENSIONPROC) ( void *psc, const char * name );
 
 
 /**
+ * Macros for building symbol and strings.  Standard CPP two step...
+ */
+
+#define __DRI_REAL_STRINGIFY(x) # x
+#define __DRI_STRINGIFY(x) __DRI_REAL_STRINGIFY(x)
+#define __DRI_REAL_MAKE_VERSION(name, version) name ## _ ## version
+#define __DRI_MAKE_VERSION(name, version) __DRI_REAL_MAKE_VERSION(name, version)
+
+#define __DRI_CREATE_NEW_SCREEN \
+    __DRI_MAKE_VERSION(__driCreateNewScreen, __DRI_INTERFACE_VERSION)
+
+#define __DRI_CREATE_NEW_SCREEN_STRING \
+    __DRI_STRINGIFY(__DRI_CREATE_NEW_SCREEN)
+
+/**
  * \name Functions and data provided by the driver.
  */
 /*@{*/
+
+#define __DRI_INTERFACE_VERSION 20070105
 
 typedef void *(CREATENEWSCREENFUNC)(__DRInativeDisplay *dpy, int scrn,
     __DRIscreen *psc, const __GLcontextModes * modes,
@@ -106,7 +123,8 @@ typedef void *(CREATENEWSCREENFUNC)(__DRInativeDisplay *dpy, int scrn,
     const __DRIinterfaceMethods * interface,
     __GLcontextModes ** driver_modes);
 typedef CREATENEWSCREENFUNC* PFNCREATENEWSCREENFUNC;
-extern CREATENEWSCREENFUNC __driCreateNewScreen_20070105;
+extern CREATENEWSCREENFUNC __DRI_CREATE_NEW_SCREEN;
+
 
 
 /**

@@ -167,11 +167,8 @@ ExtractDir(int index, const char *paths, int dirLen, char *dir)
  * The version of the last incompatible loader/driver inteface change is
  * appended to the name of the \c __driCreateNewScreen function.  This
  * prevents loaders from trying to load drivers that are too old.
- * 
- * \todo
- * Create a macro or something so that this is automatically updated.
  */
-static const char createNewScreenName[] = "__driCreateNewScreen_20070105";
+static const char createNewScreenName[] = __DRI_CREATE_NEW_SCREEN_STRING;
 
 
 /**
