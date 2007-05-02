@@ -222,6 +222,9 @@ MAIN_FILES = \
 	$(DIRECTORY)/src/mesa/shader/slang/descrip.mms			\
 	$(DIRECTORY)/src/mesa/shader/slang/sources			\
 	$(DIRECTORY)/src/mesa/shader/slang/library/*.[ch]		\
+	$(DIRECTORY)/src/mesa/shader/slang/library/*.gc			\
+	$(DIRECTORY)/src/mesa/shader/slang/library/*.syn		\
+	$(DIRECTORY)/src/mesa/shader/slang/library/Makefile		\
 	$(DIRECTORY)/src/mesa/swrast/*.[ch]				\
 	$(DIRECTORY)/src/mesa/swrast/descrip.mms			\
 	$(DIRECTORY)/src/mesa/swrast/sources				\
