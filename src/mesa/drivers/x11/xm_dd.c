@@ -438,7 +438,7 @@ xmesa_DrawPixels_8R8G8B( GLcontext *ctx,
 {
    const SWcontext *swrast = SWRAST_CONTEXT( ctx );
    struct gl_renderbuffer *rb = ctx->DrawBuffer->_ColorDrawBuffers[0][0];
-   struct xmesa_renderbuffer *xrb = (struct xmesa_renderbuffer *) rb->Wrapped;
+   struct xmesa_renderbuffer *xrb = xmesa_renderbuffer(rb->Wrapped);
 
    if (swrast->NewState)
       _swrast_validate_derived( ctx );
@@ -546,7 +546,7 @@ xmesa_DrawPixels_5R6G5B( GLcontext *ctx,
                          const GLvoid *pixels )
 {
    struct xmesa_renderbuffer *xrb
-      = (struct xmesa_renderbuffer *) ctx->DrawBuffer->_ColorDrawBuffers[0][0];
+      = xmesa_renderbuffer(ctx->DrawBuffer->_ColorDrawBuffers[0][0]->Wrapped);
    const XMesaContext xmesa = XMESA_CONTEXT(ctx);
    const SWcontext *swrast = SWRAST_CONTEXT( ctx );
    XMesaDisplay *dpy = xmesa->xm_visual->display;
@@ -652,10 +652,10 @@ xmesa_CopyPixels( GLcontext *ctx,
    const SWcontext *swrast = SWRAST_CONTEXT( ctx );
    XMesaDisplay *dpy = xmesa->xm_visual->display;
    const XMesaGC gc = ((XMesaBuffer) ctx->DrawBuffer)->gc;
-   struct xmesa_renderbuffer *srcXrb = (struct xmesa_renderbuffer *)
-      ctx->ReadBuffer->_ColorReadBuffer;
-   struct xmesa_renderbuffer *dstXrb = (struct xmesa_renderbuffer *)
-      ctx->DrawBuffer->_ColorDrawBuffers[0][0];
+   struct xmesa_renderbuffer *srcXrb
+      = xmesa_renderbuffer(ctx->ReadBuffer->_ColorReadBuffer->Wrapped);
+   struct xmesa_renderbuffer *dstXrb
+      = xmesa_renderbuffer(ctx->DrawBuffer->_ColorDrawBuffers[0][0]->Wrapped);
 
    ASSERT(dpy);
    ASSERT(gc);
