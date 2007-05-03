@@ -16,6 +16,7 @@ LIB_DEP = $(TOP)/$(LIB_DIR)/$(GL_LIB_NAME) $(TOP)/$(LIB_DIR)/$(GLU_LIB_NAME) $(T
 PROGS = \
 	brick \
 	bump \
+	deriv \
 	mandelbrot \
 	noise \
 	toyball \
