@@ -883,10 +883,11 @@ static void position_invariant(struct gl_program *prog)
 
 	gl_state_index tokens[STATE_LENGTH] = { STATE_MVP_MATRIX, 0, 0, 0, 0 };
 
+        /* tokens[4] = matrix modifier */
 #ifdef PREFER_DP4
-	tokens[5] = STATE_MATRIX;
+	tokens[4] = 0;  /* not transposed or inverted */
 #else
-	tokens[5] = STATE_MATRIX_TRANSPOSE;
+	tokens[4] = STATE_MATRIX_TRANSPOSE;
 #endif
 	paramList = prog->Parameters;
 
@@ -895,7 +896,7 @@ static void position_invariant(struct gl_program *prog)
 
 	for (i=0; i < 4; i++) {
 		GLint idx;
-		tokens[3] = tokens[4] = i;
+		tokens[2] = tokens[3] = i;  /* matrix row[i]..row[i] */
 		idx = _mesa_add_state_reference(paramList, tokens);
 #ifdef PREFER_DP4
 		vpi[i].Opcode = OPCODE_DP4;
