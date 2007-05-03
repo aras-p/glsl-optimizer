@@ -149,7 +149,6 @@ MakeRect(void)
 {
    RectList = glGenLists(1);
    glNewList(RectList, GL_COMPILE);
-   glNormal3f(0, 0, 1);
    glBegin(GL_POLYGON);
    glTexCoord2f(0, 0);   glVertex2f(-2, -2);
    glTexCoord2f(1, 0);   glVertex2f( 2, -2);
@@ -231,7 +230,6 @@ Init(void)
       "  // gl_FragColor = gl_TexCoord[0];\n"
       "}\n";
    static const char *vertShaderText =
-      "varying vec3 normal;\n"
       "void main() {\n"
       "   gl_Position = gl_ModelViewProjectionMatrix * gl_Vertex;\n"
       "   gl_TexCoord[0] = gl_MultiTexCoord0;\n"
