@@ -34,6 +34,7 @@
 #include "brw_state.h"
 #include "brw_defines.h"
 #include "brw_util.h"
+#include "macros.h"
 #include "enums.h"
 
 static void upload_cc_vp( struct brw_context *brw )

@@ -46,7 +46,7 @@
 
 #include "tnl/tnl.h"
 #include "vbo/vbo_context.h"
-
+#include "swrast/swrast.h"
 
 
 
