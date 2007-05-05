@@ -1,5 +1,4 @@
-# Build a subset DRI-based libGL.so library.
-# Indirect rendering not supported, etc.
+# Build the MiniGLX libGL.so library.
 
 TOP = ../../..
 include $(TOP)/configs/current
@@ -29,7 +28,9 @@ INCLUDE_DIRS = \
 	-I$(TOP)/src/mesa/glapi \
 	-I$(TOP)/src/glx/x11 \
 	-I$(TOP)/src/mesa/drivers/dri/common \
-	`pkg-config --cflags libdrm`
+	$(LIBDRM_CFLAGS) \
+	$(PCIACCESS_CFLAGS)
+
 
 
 ##### RULES #####
@@ -43,16 +44,20 @@ INCLUDE_DIRS = \
 
 ##### TARGETS #####
 
-default: depend $(TOP)/$(LIB_DIR)/$(GL_LIB_NAME)
+default: depend $(TOP)/$(LIB_DIR)/$(GL_LIB_NAME) $(TOP)/$(LIB_DIR)/miniglx.conf
 
 
 # Make libGL
 $(TOP)/$(LIB_DIR)/$(GL_LIB_NAME):  $(OBJECTS) Makefile
-	$(TOP)/bin/mklib -o $(GL_LIB) -linker '$(CC)' \
+	@ $(TOP)/bin/mklib -o $(GL_LIB) -linker '$(CC)' \
 		-major 1 -minor 2 $(MKLIB_OPTIONS) \
-		-install $(TOP)/$(LIB_DIR) $(GL_LIB_DEPS) $(OBJECTS) `/usr/bin/pkg-config --libs libdrm` `/usr/bin/pkg-config --libs pciaccess`
-	rm -f $(TOP)/$(LIB_DIR)/miniglx.conf
-	install example.miniglx.conf $(TOP)/$(LIB_DIR)/miniglx.conf
+		-install $(TOP)/$(LIB_DIR) $(GL_LIB_DEPS) $(OBJECTS) \
+		$(LIBDRM_LIB) $(PCIACCESS_LIB)
+
+
+# install sample miniglx.conf
+$(TOP)/$(LIB_DIR)/miniglx.conf:
+	$(INSTALL) example.miniglx.conf $(TOP)/$(LIB_DIR)/miniglx.conf
 
 
 drmtest: xf86drm.o drmtest.o
