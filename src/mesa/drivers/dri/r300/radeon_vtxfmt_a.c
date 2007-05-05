@@ -68,7 +68,13 @@ void radeon_vb_to_rvb(r300ContextPtr rmesa, struct radeon_vertex_buffer *rvb, st
 	
 	rvb->Count = vb->Count;
 	
-	CONV_VB(VERT_ATTRIB_POS, ObjPtr);
+	if (hw_tcl_on) {
+		CONV_VB(VERT_ATTRIB_POS, ObjPtr);
+	} else {
+		assert(vb->ClipPtr);
+		CONV_VB(VERT_ATTRIB_POS, ClipPtr);
+	}	
+	
 	CONV_VB(VERT_ATTRIB_NORMAL, NormalPtr);
 	CONV_VB(VERT_ATTRIB_COLOR0, ColorPtr[0]);
 	CONV_VB(VERT_ATTRIB_COLOR1, SecondaryColorPtr[0]);

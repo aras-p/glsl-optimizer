@@ -576,11 +576,6 @@ struct r300_vertex_shader_fragment {
 struct r300_vertex_shader_state {
 	struct r300_vertex_shader_fragment program;
 
-	/* a bit of a waste - each uses only a subset of allocated space..
-	    but easier to program */
-	struct r300_vertex_shader_fragment matrix[3];
-	struct r300_vertex_shader_fragment vector[2];
-
 	struct r300_vertex_shader_fragment unknown1;
 	struct r300_vertex_shader_fragment unknown2;
 

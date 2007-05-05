@@ -1568,13 +1568,6 @@ static void r300GenerateSimpleVertexShader(r300ContextPtr r300)
 	r300->state.vertex_shader.unknown_ptr2=0x0; /* magic value */
 	r300->state.vertex_shader.unknown_ptr3=0x4; /* magic value */
 
-	/* Initialize matrix and vector parameters.. these should really be restructured */
-	/* TODO: fix vertex_shader structure */
-	r300->state.vertex_shader.matrix[0].length=16;
-	r300->state.vertex_shader.matrix[1].length=0;
-	r300->state.vertex_shader.matrix[2].length=0;
-	r300->state.vertex_shader.vector[0].length=0;
-	r300->state.vertex_shader.vector[1].length=0;
 	r300->state.vertex_shader.unknown1.length=0;
 	r300->state.vertex_shader.unknown2.length=0;
 
@@ -1586,48 +1579,11 @@ static void r300GenerateSimpleVertexShader(r300ContextPtr r300)
 	r300->state.vertex_shader.program_end++; \
 	}
 
-	/* Multiply vertex coordinates with transform matrix */
 
-	WRITE_OP(
-		EASY_VSF_OP(MUL, 0, ALL, TMP),
-		VSF_PARAM(3),
-		VSF_ATTR_W(0),
-		EASY_VSF_SOURCE(0, W, W, W, W, NONE, NONE)
-		)
-
-	WRITE_OP(
-		EASY_VSF_OP(MUL, 1, ALL, RESULT),
-		VSF_REG(1),
-		VSF_ATTR_UNITY(1),
-		VSF_UNITY(1)
-		)
-
-	WRITE_OP(
-		EASY_VSF_OP(MAD, 0, ALL, TMP),
-		VSF_PARAM(2),
-		VSF_ATTR_Z(0),
-		VSF_TMP(0)
-		)
-
-	WRITE_OP(
-		EASY_VSF_OP(MAD, 0, ALL, TMP),
-		VSF_PARAM(1),
-		VSF_ATTR_Y(0),
-		VSF_TMP(0)
-		)
-
-	WRITE_OP(
-		EASY_VSF_OP(MAD, 0, ALL, RESULT),
-		VSF_PARAM(0),
-		VSF_ATTR_X(0),
-		VSF_TMP(0)
-		)
-	o_reg += 2;
-
-	for (i = VERT_ATTRIB_COLOR1; i < VERT_ATTRIB_MAX; i++)
+	for (i = VERT_ATTRIB_POS; i < VERT_ATTRIB_MAX; i++)
 		if (r300->state.sw_tcl_inputs[i] != -1) {
 			WRITE_OP(
-				EASY_VSF_OP(MUL, o_reg++ /* 2+i */, ALL, RESULT),
+				EASY_VSF_OP(MUL, o_reg++, ALL, RESULT),
 				VSF_REG(r300->state.sw_tcl_inputs[i]),
 				VSF_ATTR_UNITY(r300->state.sw_tcl_inputs[i]),
 				VSF_UNITY(r300->state.sw_tcl_inputs[i])
@@ -1666,19 +1622,7 @@ void r300SetupVertexShader(r300ContextPtr rmesa)
 	/* This needs to be replaced by vertex shader generation code */
 	r300GenerateSimpleVertexShader(rmesa);
 
-        rmesa->state.vertex_shader.matrix[0].length=16;
-        memcpy(rmesa->state.vertex_shader.matrix[0].body.f, ctx->_ModelProjectMatrix.m, 16*4);
-
 	setup_vertex_shader_fragment(rmesa, VSF_DEST_PROGRAM, &(rmesa->state.vertex_shader.program));
-
-	setup_vertex_shader_fragment(rmesa, VSF_DEST_MATRIX0, &(rmesa->state.vertex_shader.matrix[0]));
-#if 0
-	setup_vertex_shader_fragment(rmesa, VSF_DEST_MATRIX1, &(rmesa->state.vertex_shader.matrix[0]));
-	setup_vertex_shader_fragment(rmesa, VSF_DEST_MATRIX2, &(rmesa->state.vertex_shader.matrix[0]));
-
-	setup_vertex_shader_fragment(rmesa, VSF_DEST_VECTOR0, &(rmesa->state.vertex_shader.vector[0]));
-	setup_vertex_shader_fragment(rmesa, VSF_DEST_VECTOR1, &(rmesa->state.vertex_shader.vector[1]));
-#endif
 
 #if 0
 	setup_vertex_shader_fragment(rmesa, VSF_DEST_UNKNOWN1, &(rmesa->state.vertex_shader.unknown1));
