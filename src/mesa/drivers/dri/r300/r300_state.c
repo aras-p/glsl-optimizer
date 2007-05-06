@@ -1886,20 +1886,6 @@ void r300ResetHwState(r300ContextPtr r300)
 		/* This is a place to initialize registers which
 		   have bitfields accessed by different functions
 		   and not all bits are used */
-#if 0
-	/* initialize similiar to r200 */
-	r300->hw.zs.cmd[R300_ZS_CNTL_0] = 0;
-	r300->hw.zs.cmd[R300_ZS_CNTL_1] =
-	    (R300_ZS_ALWAYS << R300_RB3D_ZS1_FRONT_FUNC_SHIFT) |
-	    (R300_ZS_KEEP << R300_RB3D_ZS1_FRONT_FAIL_OP_SHIFT) |
-	    (R300_ZS_KEEP << R300_RB3D_ZS1_FRONT_ZPASS_OP_SHIFT) |
-	    (R300_ZS_KEEP << R300_RB3D_ZS1_FRONT_ZFAIL_OP_SHIFT) |
-	    (R300_ZS_ALWAYS << R300_RB3D_ZS1_BACK_FUNC_SHIFT) |
-	    (R300_ZS_KEEP << R300_RB3D_ZS1_BACK_FAIL_OP_SHIFT) |
-	    (R300_ZS_KEEP << R300_RB3D_ZS1_BACK_ZPASS_OP_SHIFT) |
-	    (R300_ZS_KEEP << R300_RB3D_ZS1_BACK_ZFAIL_OP_SHIFT);
-	r300->hw.zs.cmd[R300_ZS_CNTL_2] = 0x00ffff00;
-#endif
 
 		/* go and compute register values from GL state */
 
@@ -1925,19 +1911,6 @@ void r300ResetHwState(r300ContextPtr r300)
 
 	r300UpdateTextureState(ctx);
 
-//	r300_setup_routing(ctx, GL_TRUE);
-
-#if 0 /* Done in prior to rendering */
-	if(hw_tcl_on == GL_FALSE){
-		r300EmitArrays(ctx, GL_TRUE); /* Just do the routing */
-		r300_setup_textures(ctx);
-		r300_setup_rs_unit(ctx);
-
-		r300SetupVertexShader(r300);
-		r300SetupPixelShader(r300);
-	}
-#endif
-
 	r300_set_blend_state(ctx);
 
 	r300AlphaFunc(ctx, ctx->Color.AlphaFunc, ctx->Color.AlphaRef);
@@ -1962,24 +1935,13 @@ void r300ResetHwState(r300ContextPtr r300)
 	r300->hw.unk2134.cmd[1] = 0x00FFFFFF;
 	r300->hw.unk2134.cmd[2] = 0x00000000;
 	if (_mesa_little_endian())
-		r300->hw.vap_cntl_status.cmd[1] = 0x00000000;
+		r300->hw.vap_cntl_status.cmd[1] = R300_VC_NO_SWAP;
 	else
-		r300->hw.vap_cntl_status.cmd[1] = 0x00000002;
+		r300->hw.vap_cntl_status.cmd[1] = R300_VC_32BIT_SWAP;
 
 	/* disable VAP/TCL on non-TCL capable chips */
 	if (!has_tcl)
 		r300->hw.vap_cntl_status.cmd[1] |= R300_VAP_TCL_BYPASS;
-
-#if 0 /* Done in setup routing */
-	((drm_r300_cmd_header_t*)r300->hw.vir[0].cmd)->packet0.count = 1;
-	r300->hw.vir[0].cmd[1] = 0x21030003;
-
-	((drm_r300_cmd_header_t*)r300->hw.vir[1].cmd)->packet0.count = 1;
-	r300->hw.vir[1].cmd[1] = 0xF688F688;
-
-	r300->hw.vic.cmd[R300_VIR_CNTL_0] = 0x00000001;
-	r300->hw.vic.cmd[R300_VIR_CNTL_1] = 0x00000405;
-#endif
 
 	r300->hw.unk21DC.cmd[1] = 0xAAAAAAAA;
 
@@ -1995,17 +1957,6 @@ void r300ResetHwState(r300ContextPtr r300)
 		r300->hw.unk2288.cmd[1] = R300_2288_R300;
 	else
 		r300->hw.unk2288.cmd[1] = R300_2288_RV350;
-
-#if 0
-	r300->hw.vof.cmd[R300_VOF_CNTL_0] = R300_VAP_OUTPUT_VTX_FMT_0__POS_PRESENT
-				| R300_VAP_OUTPUT_VTX_FMT_0__COLOR_PRESENT;
-	r300->hw.vof.cmd[R300_VOF_CNTL_1] = 0; /* no textures */
-
-
-	r300->hw.pvs.cmd[R300_PVS_CNTL_1] = 0;
-	r300->hw.pvs.cmd[R300_PVS_CNTL_2] = 0;
-	r300->hw.pvs.cmd[R300_PVS_CNTL_3] = 0;
-#endif
 
 	r300->hw.gb_enable.cmd[1] = R300_GB_POINT_STUFF_ENABLE
 		| R300_GB_LINE_STUFF_ENABLE
@@ -2032,9 +1983,7 @@ void r300ResetHwState(r300ContextPtr r300)
 							| R300_GB_TILE_SIZE_16;
 	/* set to 0 when fog is disabled? */
 	r300->hw.gb_misc.cmd[R300_GB_MISC_SELECT] = R300_GB_FOG_SELECT_1_1_W;
-	r300->hw.gb_misc.cmd[R300_GB_MISC_AA_CONFIG] = 0x00000000; /* No antialiasing */
-
-	//r300->hw.txe.cmd[R300_TXE_ENABLE] = 0;
+	r300->hw.gb_misc.cmd[R300_GB_MISC_AA_CONFIG] = R300_AA_DISABLE; /* No antialiasing */
 
 	r300->hw.unk4200.cmd[1] = r300PackFloat32(0.0);
 	r300->hw.unk4200.cmd[2] = r300PackFloat32(0.0);
@@ -2044,10 +1993,6 @@ void r300ResetHwState(r300ContextPtr r300)
 	r300->hw.unk4214.cmd[1] = 0x00050005;
 
 	r300PointSize(ctx, 0.0);
-#if 0
-	r300->hw.ps.cmd[R300_PS_POINTSIZE] = (6 << R300_POINTSIZE_X_SHIFT) |
-					     (6 << R300_POINTSIZE_Y_SHIFT);
-#endif
 
 	r300->hw.unk4230.cmd[1] = 0x18000006;
 	r300->hw.unk4230.cmd[2] = 0x00020006;
@@ -2082,31 +2027,12 @@ void r300ResetHwState(r300ContextPtr r300)
 
 	r300->hw.unk43E8.cmd[1] = 0x00FFFFFF;
 
-#if 0
-	r300->hw.fp.cmd[R300_FP_CNTL0] = 0;
-	r300->hw.fp.cmd[R300_FP_CNTL1] = 0;
-	r300->hw.fp.cmd[R300_FP_CNTL2] = 0;
-	r300->hw.fp.cmd[R300_FP_NODE0] = 0;
-	r300->hw.fp.cmd[R300_FP_NODE1] = 0;
-	r300->hw.fp.cmd[R300_FP_NODE2] = 0;
-	r300->hw.fp.cmd[R300_FP_NODE3] = 0;
-#endif
-
 	r300->hw.unk46A4.cmd[1] = 0x00001B01;
 	r300->hw.unk46A4.cmd[2] = 0x00001B0F;
 	r300->hw.unk46A4.cmd[3] = 0x00001B0F;
 	r300->hw.unk46A4.cmd[4] = 0x00001B0F;
 	r300->hw.unk46A4.cmd[5] = 0x00000001;
 
-#if 0
-	for(i = 1; i <= 64; ++i) {
-		/* create NOP instructions */
-		r300->hw.fpi[0].cmd[i] = FP_INSTRC(MAD, FP_ARGC(SRC0C_XYZ), FP_ARGC(ONE), FP_ARGC(ZERO));
-		r300->hw.fpi[1].cmd[i] = FP_SELC(0,XYZ,NO,FP_TMP(0),0,0);
-		r300->hw.fpi[2].cmd[i] = FP_INSTRA(MAD, FP_ARGA(SRC0A), FP_ARGA(ONE), FP_ARGA(ZERO));
-		r300->hw.fpi[3].cmd[i] = FP_SELA(0,W,NO,FP_TMP(0),0,0);
-	}
-#endif
 	r300Enable(ctx, GL_FOG, ctx->Fog.Enabled);
 	ctx->Driver.Fogfv( ctx, GL_FOG_MODE, NULL );
 	ctx->Driver.Fogfv( ctx, GL_FOG_DENSITY, &ctx->Fog.Density );
@@ -2119,11 +2045,6 @@ void r300ResetHwState(r300ContextPtr r300)
 	r300->hw.unk4BD8.cmd[1] = 0;
 
 	r300->hw.unk4E00.cmd[1] = 0;
-
-#if 0
-	r300->hw.bld.cmd[R300_BLD_CBLEND] = 0;
-	r300->hw.bld.cmd[R300_BLD_ABLEND] = 0;
-#endif
 
 	r300BlendColor(ctx, ctx->Color.BlendColor);
 	r300->hw.blend_color.cmd[2] = 0;
@@ -2197,21 +2118,6 @@ void r300ResetHwState(r300ContextPtr r300)
 	r300->hw.unk4F44.cmd[1] = 0;
 
 	r300->hw.unk4F54.cmd[1] = 0;
-
-#if 0
-	((drm_r300_cmd_header_t*)r300->hw.vpi.cmd)->vpu.count = 0;
-	for(i = 1; i < R300_VPI_CMDSIZE; i += 4) {
-		/* MOV t0, t0 */
-		r300->hw.vpi.cmd[i+0] = VP_OUT(ADD,TMP,0,XYZW);
-		r300->hw.vpi.cmd[i+1] = VP_IN(TMP,0);
-		r300->hw.vpi.cmd[i+2] = VP_ZERO();
-		r300->hw.vpi.cmd[i+3] = VP_ZERO();
-	}
-
-	((drm_r300_cmd_header_t*)r300->hw.vpp.cmd)->vpu.count = 0;
-	for(i = 1; i < R300_VPP_CMDSIZE; ++i)
-		r300->hw.vpp.cmd[i] = 0;
-#endif
 
 	if (has_tcl) {
 	  r300->hw.vps.cmd[R300_VPS_ZERO_0] = 0;
