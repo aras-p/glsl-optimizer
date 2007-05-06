@@ -2044,10 +2044,6 @@ void r300ResetHwState(r300ContextPtr r300)
 	r300->hw.unk4214.cmd[1] = 0x00050005;
 
 	r300PointSize(ctx, 0.0);
-#if 0
-	r300->hw.ps.cmd[R300_PS_POINTSIZE] = (6 << R300_POINTSIZE_X_SHIFT) |
-					     (6 << R300_POINTSIZE_Y_SHIFT);
-#endif
 
 	r300->hw.unk4230.cmd[1] = 0x18000006;
 	r300->hw.unk4230.cmd[2] = 0x00020006;
