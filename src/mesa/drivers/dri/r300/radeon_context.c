@@ -90,9 +90,15 @@ static const GLubyte *radeonGetString(GLcontext * ctx, GLenum name)
 		offset = driGetRendererString(buffer, chipname, DRIVER_DATE,
 					      agp_mode);
 
+		if (IS_R300_CLASS(radeon->radeonScreen)) {
 		sprintf(&buffer[offset], " %sTCL",
+			(radeon->radeonScreen->chip_flags & RADEON_CHIPSET_TCL)
+			? "" : "NO-");
+		} else {
+			sprintf(&buffer[offset], " %sTCL",
 			!(radeon->TclFallback & RADEON_TCL_FALLBACK_TCL_DISABLE)
 			? "" : "NO-");
+		}
 
 		return (GLubyte *) buffer;
 	}

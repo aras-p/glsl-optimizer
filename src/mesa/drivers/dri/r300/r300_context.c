@@ -187,6 +187,9 @@ GLboolean r300CreateContext(const __GLcontextModes * glVisual,
 	if (!r300)
 		return GL_FALSE;
 
+	if (!(screen->chip_flags & RADEON_CHIPSET_TCL))
+		hw_tcl_on = future_hw_tcl_on = 0;
+
 	/* Parse configuration files.
 	 * Do this here so that initialMaxAnisotropy is set before we create
 	 * the default textures.
