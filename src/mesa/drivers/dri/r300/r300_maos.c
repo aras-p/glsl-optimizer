@@ -400,6 +400,7 @@ int r300EmitArrays(GLcontext *ctx)
 	GLuint i;
 	GLuint InputsRead = 0, OutputsWritten = 0;
 	int *inputs = NULL;
+	int vir_inputs[VERT_ATTRIB_MAX];
 	GLint tab[VERT_ATTRIB_MAX];
 	int swizzle[VERT_ATTRIB_MAX][4];
 	
@@ -442,9 +443,22 @@ int r300EmitArrays(GLcontext *ctx)
 				inputs[i] = -1;
 				
 		if(!(r300->radeon.radeonScreen->chip_flags & RADEON_CHIPSET_TCL)) {
-			for (i = 0; i < VERT_ATTRIB_MAX; i++)
-				if (inputs[i] > 0)
-					inputs[i]++;
+			/* Fixed, apply to vir0 only */
+			memcpy(vir_inputs, inputs, VERT_ATTRIB_MAX * sizeof(int));
+			inputs = vir_inputs;
+			
+			if (InputsRead & VERT_ATTRIB_POS)
+				inputs[VERT_ATTRIB_POS] = 0;
+			
+			if (InputsRead & (1 << VERT_ATTRIB_COLOR0))
+				inputs[VERT_ATTRIB_COLOR0] = 2;
+			
+			if (InputsRead & (1 << VERT_ATTRIB_COLOR1))
+				inputs[VERT_ATTRIB_COLOR0] = 3;
+			
+			for (i = VERT_ATTRIB_TEX0; i <= VERT_ATTRIB_TEX7; i++)
+				if (InputsRead & (1 << i))
+					inputs[i] = 6 + (i - VERT_ATTRIB_TEX0);
 		}
 		
 		RENDERINPUTS_COPY( rmesa->state.render_inputs_bitset, inputs_bitset );
