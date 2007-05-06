@@ -440,6 +440,12 @@ int r300EmitArrays(GLcontext *ctx)
 				inputs[i] = nr++;
 			else
 				inputs[i] = -1;
+				
+		if(!(r300->radeon.radeonScreen->chip_flags & RADEON_CHIPSET_TCL)) {
+			for (i = 0; i < VERT_ATTRIB_MAX; i++)
+				if (inputs[i] > 0)
+					inputs[i]++;
+		}
 		
 		RENDERINPUTS_COPY( rmesa->state.render_inputs_bitset, inputs_bitset );
 	}
