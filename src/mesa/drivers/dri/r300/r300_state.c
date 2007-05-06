@@ -1886,20 +1886,6 @@ void r300ResetHwState(r300ContextPtr r300)
 		/* This is a place to initialize registers which
 		   have bitfields accessed by different functions
 		   and not all bits are used */
-#if 0
-	/* initialize similiar to r200 */
-	r300->hw.zs.cmd[R300_ZS_CNTL_0] = 0;
-	r300->hw.zs.cmd[R300_ZS_CNTL_1] =
-	    (R300_ZS_ALWAYS << R300_RB3D_ZS1_FRONT_FUNC_SHIFT) |
-	    (R300_ZS_KEEP << R300_RB3D_ZS1_FRONT_FAIL_OP_SHIFT) |
-	    (R300_ZS_KEEP << R300_RB3D_ZS1_FRONT_ZPASS_OP_SHIFT) |
-	    (R300_ZS_KEEP << R300_RB3D_ZS1_FRONT_ZFAIL_OP_SHIFT) |
-	    (R300_ZS_ALWAYS << R300_RB3D_ZS1_BACK_FUNC_SHIFT) |
-	    (R300_ZS_KEEP << R300_RB3D_ZS1_BACK_FAIL_OP_SHIFT) |
-	    (R300_ZS_KEEP << R300_RB3D_ZS1_BACK_ZPASS_OP_SHIFT) |
-	    (R300_ZS_KEEP << R300_RB3D_ZS1_BACK_ZFAIL_OP_SHIFT);
-	r300->hw.zs.cmd[R300_ZS_CNTL_2] = 0x00ffff00;
-#endif
 
 		/* go and compute register values from GL state */
 
