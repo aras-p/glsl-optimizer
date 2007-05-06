@@ -1983,7 +1983,7 @@ void r300ResetHwState(r300ContextPtr r300)
 							| R300_GB_TILE_SIZE_16;
 	/* set to 0 when fog is disabled? */
 	r300->hw.gb_misc.cmd[R300_GB_MISC_SELECT] = R300_GB_FOG_SELECT_1_1_W;
-	r300->hw.gb_misc.cmd[R300_GB_MISC_AA_CONFIG] = 0x00000000; /* No antialiasing */
+	r300->hw.gb_misc.cmd[R300_GB_MISC_AA_CONFIG] = R300_AA_DISABLE; /* No antialiasing */
 
 	r300->hw.unk4200.cmd[1] = r300PackFloat32(0.0);
 	r300->hw.unk4200.cmd[2] = r300PackFloat32(0.0);
