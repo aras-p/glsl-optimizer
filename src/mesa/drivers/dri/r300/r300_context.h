@@ -52,7 +52,9 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  * directly, see i965 driver for example.
  */
 /* #define RADEON_VTXFMT_A */
+#ifdef RADEON_VTXFMT_A
 #define HW_VBOS
+#endif
 
 /* We don't handle 16 bits elts swapping yet */
 #ifdef MESA_BIG_ENDIAN
