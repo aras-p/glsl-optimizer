@@ -454,7 +454,7 @@ int r300EmitArrays(GLcontext *ctx)
 				inputs[VERT_ATTRIB_COLOR0] = 2;
 			
 			if (InputsRead & (1 << VERT_ATTRIB_COLOR1))
-				inputs[VERT_ATTRIB_COLOR0] = 3;
+				inputs[VERT_ATTRIB_COLOR1] = 3;
 			
 			for (i = VERT_ATTRIB_TEX0; i <= VERT_ATTRIB_TEX7; i++)
 				if (InputsRead & (1 << i))
