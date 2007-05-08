@@ -196,8 +196,7 @@ static void inline r300FireEB(r300ContextPtr rmesa, unsigned long addr,
 	drm_radeon_cmd_header_t *cmd = NULL;
 	unsigned long t_addr;
 	unsigned long magic_1, magic_2;
-	GLcontext *ctx;
-	ctx = rmesa->radeon.glCtx;
+	GLcontext *ctx = rmesa->radeon.glCtx;
 
 	assert(elt_size == 2 || elt_size == 4);
 
@@ -207,7 +206,7 @@ static void inline r300FireEB(r300ContextPtr rmesa, unsigned long addr,
 	}
 
 	magic_1 = (addr % 32) / 4;
-	t_addr = addr & (~0x1d);
+	t_addr = addr & ~0x1d;
 	magic_2 = (vertex_count + 1 + (t_addr & 0x2)) / 2 + magic_1;
 
 	check_space(6);
