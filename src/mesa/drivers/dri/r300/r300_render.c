@@ -198,7 +198,6 @@ static void inline fire_EB(r300ContextPtr rmesa, unsigned long addr, int vertex_
 	int cmd_reserved = 0;
 	int cmd_written = 0;
 	drm_radeon_cmd_header_t *cmd = NULL;
-	unsigned long addr_a;
 	unsigned long t_addr;
 	unsigned long magic_1, magic_2;
 	GLcontext *ctx;
@@ -211,8 +210,6 @@ static void inline fire_EB(r300ContextPtr rmesa, unsigned long addr, int vertex_
 		return ;
 	}
 #ifdef OPTIMIZE_ELTS
-	addr_a = 0;
-
 	magic_1 = (addr % 32) / 4;
 	t_addr = addr & (~0x1d);
 	magic_2 = (vertex_count + 1 + (t_addr & 0x2)) / 2 + magic_1;
@@ -236,21 +233,13 @@ static void inline fire_EB(r300ContextPtr rmesa, unsigned long addr, int vertex_
 	}
 
 	if(elt_size == 4){
-		e32(vertex_count /*+ addr_a/4*/); /* Total number of dwords needed? */
+		e32(vertex_count); /* Total number of dwords needed? */
 	} else {
 		e32(magic_2); /* Total number of dwords needed? */
 	}
 	//cp_delay(rmesa, 1);
-#if 0
-	fprintf(stderr, "magic_1 %d\n", magic_1);
-	fprintf(stderr, "t_addr %x\n", t_addr);
-	fprintf(stderr, "magic_2 %d\n", magic_2);
-	exit(1);
-#endif
 #else
 	(void)magic_2, (void)magic_1, (void)t_addr;
-
-	addr_a = 0;
 
 	check_space(6);
 
@@ -266,9 +255,9 @@ static void inline fire_EB(r300ContextPtr rmesa, unsigned long addr, int vertex_
 	e32(addr /*& 0xffffffe3*/);
 
 	if(elt_size == 4){
-		e32(vertex_count /*+ addr_a/4*/); /* Total number of dwords needed? */
+		e32(vertex_count); /* Total number of dwords needed? */
 	} else {
-		e32((vertex_count+1)/2 /*+ addr_a/4*/); /* Total number of dwords needed? */
+		e32((vertex_count+1)/2); /* Total number of dwords needed? */
 	}
 	//cp_delay(rmesa, 1);
 #endif
@@ -289,29 +278,12 @@ static void r300_render_vb_primitive(r300ContextPtr rmesa,
 
    if(rmesa->state.VB.Elts){
 	r300EmitAOS(rmesa, rmesa->state.aos_count, /*0*/start);
-#if 0
-	int cmd_reserved = 0;
-	int cmd_written = 0;
-	drm_radeon_cmd_header_t *cmd = NULL;
-	int i;
-	start_index32_packet(num_verts, type);
-	for(i=0; i < num_verts; i++)
-		e32(((unsigned long *)rmesa->state.VB.Elts)[i]/*rmesa->state.Elts[start+i]*/); /* start ? */
-#else
-	if(num_verts == 1){
-		//start_index32_packet(num_verts, type);
-		//e32(rmesa->state.Elts[start]);
-		return;
-	}
-
 	if(num_verts > 65535){ /* not implemented yet */
 		WARN_ONCE("Too many elts\n");
 		return;
 	}
-
 	r300EmitElts(ctx, rmesa->state.VB.Elts, num_verts, rmesa->state.VB.elt_size);
 	fire_EB(rmesa, rmesa->state.elt_dma.aos_offset, num_verts, type, rmesa->state.VB.elt_size);
-#endif
    }else{
 	   r300EmitAOS(rmesa, rmesa->state.aos_count, start);
 	   fire_AOS(rmesa, num_verts, type);
@@ -401,20 +373,6 @@ int r300Fallback(GLcontext *ctx)
 	 */
 	FALLBACK_IF(ctx->RenderMode != GL_RENDER);
 
-#if 0
-	/* These should work now.. */
-	FALLBACK_IF(ctx->Color.DitherFlag);
-	/* GL_ALPHA_TEST */
-	FALLBACK_IF(ctx->Color.AlphaEnabled);
-	/* GL_BLEND */
-	FALLBACK_IF(ctx->Color.BlendEnabled);
-	/* GL_POLYGON_OFFSET_FILL */
-	FALLBACK_IF(ctx->Polygon.OffsetFill);
-	/* FOG seems to trigger an unknown output
-	 *  in vertex program.
-	 */
-	FALLBACK_IF(ctx->Fog.Enabled);
-#endif
 	FALLBACK_IF(ctx->Stencil._TestTwoSide &&
 		    (ctx->Stencil.Ref[0] != ctx->Stencil.Ref[1] ||
 		     ctx->Stencil.ValueMask[0] != ctx->Stencil.ValueMask[1] ||
@@ -425,12 +383,6 @@ int r300Fallback(GLcontext *ctx)
 		FALLBACK_IF(ctx->Polygon.OffsetPoint);
 		/* GL_POLYGON_OFFSET_LINE */
 		FALLBACK_IF(ctx->Polygon.OffsetLine);
-#if 0
-		/* GL_STENCIL_TEST */
-		FALLBACK_IF(ctx->Stencil.Enabled);
-		/* GL_POLYGON_SMOOTH disabling to get blender going */
-		FALLBACK_IF(ctx->Polygon.SmoothFlag);
-#endif
 		/* GL_POLYGON_STIPPLE */
 		FALLBACK_IF(ctx->Polygon.StippleFlag);
 		/* GL_MULTISAMPLE_ARB */
@@ -464,7 +416,6 @@ int r300Fallback(GLcontext *ctx)
 static GLboolean r300_run_render(GLcontext *ctx,
 				 struct tnl_pipeline_stage *stage)
 {
-
 	if (RADEON_DEBUG & DEBUG_PRIMS)
 		fprintf(stderr, "%s\n", __FUNCTION__);
 
@@ -504,31 +455,11 @@ static GLboolean r300_run_tcl_render(GLcontext *ctx,
 	r300UpdateShaders(rmesa);
 
 	vp = (struct r300_vertex_program *)CURRENT_VERTEX_SHADER(ctx);
-#if 0 /* Draw every second request with software arb vp */
-	vp->native++;
-	vp->native &= 1;
-	//vp->native = GL_FALSE;
-#endif
-
-#if 0 /* You dont want to know what this does... */
-	TNLcontext *tnl = TNL_CONTEXT(ctx);
-	struct tnl_cache *cache;
-	struct tnl_cache_item *c;
-
-	cache = tnl->vp_cache;
-	c = cache->items[0xc000cc0e % cache->size];
-
-	if(c && c->data == vp)
-		vp->native = GL_FALSE;
-
-#endif
-#if 0
-	vp->native = GL_FALSE;
-#endif
 	if (vp->native == GL_FALSE) {
 		hw_tcl_on = GL_FALSE;
 		return GL_TRUE;
 	}
+
 	//r300UpdateShaderStates(rmesa);
 
 	return r300_run_vb_render(ctx, stage);
