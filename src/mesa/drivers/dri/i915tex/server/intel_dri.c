@@ -895,31 +895,6 @@ I830DRIUnmapScreenRegions(const DRIDriverContext *ctx, I830Rec *pI830, drmI830Sa
    }
 }
 
-#if 0
-static void
-I830InitTextureHeap(const DRIDriverContext *ctx, I830Rec *pI830, drmI830Sarea *sarea)
-{
-   /* Start up the simple memory manager for agp space */
-   drmI830MemInitHeap drmHeap;
-   drmHeap.region = I830_MEM_REGION_AGP;
-   drmHeap.start  = 0;
-   drmHeap.size   = sarea->tex_size;
-      
-   if (drmCommandWrite(ctx->drmFD, DRM_I830_INIT_HEAP,
-			  &drmHeap, sizeof(drmHeap))) {
-      fprintf(stderr,
-		    "[drm] Failed to initialized agp heap manager\n");
-   } else {
-      fprintf(stderr,
-		    "[drm] Initialized kernel agp heap manager, %d\n",
-		    sarea->tex_size);
-
-      I830SetParam(ctx, I830_SETPARAM_TEX_LRU_LOG_GRANULARITY, 
-		      sarea->log_tex_granularity);
-   }
-}
-#endif
-
 static Bool
 I830DRIDoMappings(DRIDriverContext *ctx, I830Rec *pI830, drmI830Sarea *sarea)
 {
@@ -943,9 +918,6 @@ I830DRIDoMappings(DRIDriverContext *ctx, I830Rec *pI830, drmI830Sarea *sarea)
   I830DRIMapScreenRegions(ctx, pI830, sarea);
   SetupDRIMM(ctx, pI830);
 
-#if 0
-  I830InitTextureHeap(ctx, pI830, sarea);
-#endif
    if (ctx->pciDevice != PCI_CHIP_845_G &&
        ctx->pciDevice != PCI_CHIP_I830_M) {
       I830SetParam(ctx, I830_SETPARAM_USE_MI_BATCHBUFFER_START, 1 );
