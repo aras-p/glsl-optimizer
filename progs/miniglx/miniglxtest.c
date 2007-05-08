@@ -14,7 +14,6 @@
 #else
 #include <GL/glx.h>
 #endif
-#include "../util/writebuf.c"
 
 static GLXContext ctx;
 
@@ -132,10 +131,6 @@ event_loop(Display *dpy, Window win)
 
    for (i = 0; i < NumFrames; i++) {
       redraw(dpy, win, -i*2);
-      if (i == 1) {
-         glReadBuffer(GL_BACK);
-         WritePPMFile("frame1.ppm", 800,600);
-      }
       if (Sleeps) {
          usleep(20000);
       }
