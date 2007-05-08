@@ -618,7 +618,7 @@ static void r300DeleteBuffer(GLcontext *ctx, struct gl_buffer_object *obj)
 	_mesa_delete_buffer_object(ctx, obj);
 }
 
-void r300_evict_vbos(GLcontext *ctx, int amount)
+void r300EvictVBOs(GLcontext *ctx, int amount)
 {
 	r300ContextPtr rmesa = R300_CONTEXT(ctx);
 	struct _mesa_HashTable *hash = ctx->Shared->BufferObjects;
@@ -649,7 +649,7 @@ void r300_evict_vbos(GLcontext *ctx, int amount)
 	
 }
 
-void r300_init_vbo_funcs(struct dd_function_table *functions)
+void r300InitVBOFuncs(struct dd_function_table *functions)
 {
 	functions->NewBufferObject = r300NewBufferObject;
 	functions->BufferData = r300BufferData;

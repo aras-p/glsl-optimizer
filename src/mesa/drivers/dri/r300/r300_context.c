@@ -215,7 +215,7 @@ GLboolean r300CreateContext(const __GLcontextModes * glVisual,
 #endif
 #ifdef HW_VBOS
 	if (hw_tcl_on) {
-		r300_init_vbo_funcs(&functions);
+		r300InitVBOFuncs(&functions);
 	}
 #endif
 	if (!radeonInitContext(&r300->radeon, &functions,

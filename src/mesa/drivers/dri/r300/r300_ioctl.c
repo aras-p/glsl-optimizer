@@ -442,7 +442,7 @@ static void r300RefillCurrentDmaRegion(r300ContextPtr rmesa, int size)
 #ifdef HW_VBOS
 		if (dmabuf->id == 0) {
 			/* Just kick all */
-			r300_evict_vbos(rmesa->radeon.glCtx, /*RADEON_BUFFER_SIZE*16*/1<<30);
+			r300EvictVBOs(rmesa->radeon.glCtx, /*RADEON_BUFFER_SIZE*16*/1<<30);
 			dmabuf->id = radeon_mm_alloc(rmesa, 4, size);
 		}
 #endif
