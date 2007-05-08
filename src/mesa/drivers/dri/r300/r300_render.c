@@ -209,7 +209,7 @@ static void inline fire_EB(r300ContextPtr rmesa, unsigned long addr, int vertex_
 		WARN_ONCE("Badly aligned buffer\n");
 		return ;
 	}
-#ifdef OPTIMIZE_ELTS
+
 	magic_1 = (addr % 32) / 4;
 	t_addr = addr & (~0x1d);
 	magic_2 = (vertex_count + 1 + (t_addr & 0x2)) / 2 + magic_1;
@@ -224,43 +224,28 @@ static void inline fire_EB(r300ContextPtr rmesa, unsigned long addr, int vertex_
 	}
 
 	start_packet3(RADEON_CP_PACKET3_INDX_BUFFER, 2);
+#ifdef OPTIMIZE_ELTS
 	if(elt_size == 4){
 		e32(R300_EB_UNK1 | (0 << 16) | R300_EB_UNK2);
-		e32(addr /*& 0xffffffe3*/);
+		e32(addr);
 	} else {
 		e32(R300_EB_UNK1 | (magic_1 << 16) | R300_EB_UNK2);
 		e32(t_addr);
 	}
-
-	if(elt_size == 4){
-		e32(vertex_count); /* Total number of dwords needed? */
-	} else {
-		e32(magic_2); /* Total number of dwords needed? */
-	}
-	//cp_delay(rmesa, 1);
 #else
-	(void)magic_2, (void)magic_1, (void)t_addr;
-
-	check_space(6);
-
-	start_packet3(RADEON_CP_PACKET3_3D_DRAW_INDX_2, 0);
-	if(elt_size == 4){
-		e32(R300_VAP_VF_CNTL__PRIM_WALK_INDICES | (vertex_count<<16) | type | R300_VAP_VF_CNTL__INDEX_SIZE_32bit);
-	} else {
-		e32(R300_VAP_VF_CNTL__PRIM_WALK_INDICES | (vertex_count<<16) | type);
-	}
-
-	start_packet3(RADEON_CP_PACKET3_INDX_BUFFER, 2);
 	e32(R300_EB_UNK1 | (0 << 16) | R300_EB_UNK2);
-	e32(addr /*& 0xffffffe3*/);
+	e32(addr);
+#endif
 
 	if(elt_size == 4){
-		e32(vertex_count); /* Total number of dwords needed? */
+		e32(vertex_count);
 	} else {
-		e32((vertex_count+1)/2); /* Total number of dwords needed? */
-	}
-	//cp_delay(rmesa, 1);
+#ifdef OPTIMIZE_ELTS
+		e32(magic_2);
+#else
+		e32((vertex_count+1)/2);
 #endif
+	}
 }
 
 static void r300_render_vb_primitive(r300ContextPtr rmesa,
