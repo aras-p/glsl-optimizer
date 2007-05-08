@@ -24,7 +24,6 @@ OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
 USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 **************************************************************************/
-
 /*
  * \file
  *
@@ -41,7 +40,6 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
  *
  * \author Nicolai Haehnle <prefect_@gmx.net>
  */
-
 #include "glheader.h"
 #include "state.h"
 #include "imports.h"
@@ -50,14 +48,12 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "context.h"
 #include "dd.h"
 #include "simple_list.h"
-
 #include "api_arrayelt.h"
 #include "swrast/swrast.h"
 #include "swrast_setup/swrast_setup.h"
 #include "vbo/vbo.h"
 #include "tnl/tnl.h"
 #include "tnl/t_vp_build.h"
-
 #include "radeon_reg.h"
 #include "radeon_macros.h"
 #include "radeon_ioctl.h"
@@ -70,122 +66,125 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "r300_tex.h"
 #include "r300_maos.h"
 #include "r300_emit.h"
-
 extern int future_hw_tcl_on;
 
-static int r300PrimitiveType(r300ContextPtr rmesa, GLcontext *ctx, int prim)
+static int r300PrimitiveType(r300ContextPtr rmesa, GLcontext * ctx,
+			     int prim)
 {
-	int type=-1;
+	int type = -1;
 
 	switch (prim & PRIM_MODE_MASK) {
 	case GL_POINTS:
-	        type=R300_VAP_VF_CNTL__PRIM_POINTS;
-      		break;
-	case GL_LINES:
-	        type=R300_VAP_VF_CNTL__PRIM_LINES;
-      		break;
-	case GL_LINE_STRIP:
-	        type=R300_VAP_VF_CNTL__PRIM_LINE_STRIP;
-      		break;
-	case GL_LINE_LOOP:
-		type=R300_VAP_VF_CNTL__PRIM_LINE_LOOP;
-      		break;
-    	case GL_TRIANGLES:
-	        type=R300_VAP_VF_CNTL__PRIM_TRIANGLES;
-      		break;
-   	case GL_TRIANGLE_STRIP:
-	        type=R300_VAP_VF_CNTL__PRIM_TRIANGLE_STRIP;
-      		break;
-   	case GL_TRIANGLE_FAN:
-	        type=R300_VAP_VF_CNTL__PRIM_TRIANGLE_FAN;
-      		break;
-	case GL_QUADS:
-	        type=R300_VAP_VF_CNTL__PRIM_QUADS;
-      		break;
-	case GL_QUAD_STRIP:
-	        type=R300_VAP_VF_CNTL__PRIM_QUAD_STRIP;
-      		break;
-	case GL_POLYGON:
-		type=R300_VAP_VF_CNTL__PRIM_POLYGON;
+		type = R300_VAP_VF_CNTL__PRIM_POINTS;
 		break;
-   	default:
- 		fprintf(stderr, "%s:%s Do not know how to handle primitive 0x%04x - help me !\n",
-			__FILE__, __FUNCTION__,
-			prim & PRIM_MODE_MASK);
+	case GL_LINES:
+		type = R300_VAP_VF_CNTL__PRIM_LINES;
+		break;
+	case GL_LINE_STRIP:
+		type = R300_VAP_VF_CNTL__PRIM_LINE_STRIP;
+		break;
+	case GL_LINE_LOOP:
+		type = R300_VAP_VF_CNTL__PRIM_LINE_LOOP;
+		break;
+	case GL_TRIANGLES:
+		type = R300_VAP_VF_CNTL__PRIM_TRIANGLES;
+		break;
+	case GL_TRIANGLE_STRIP:
+		type = R300_VAP_VF_CNTL__PRIM_TRIANGLE_STRIP;
+		break;
+	case GL_TRIANGLE_FAN:
+		type = R300_VAP_VF_CNTL__PRIM_TRIANGLE_FAN;
+		break;
+	case GL_QUADS:
+		type = R300_VAP_VF_CNTL__PRIM_QUADS;
+		break;
+	case GL_QUAD_STRIP:
+		type = R300_VAP_VF_CNTL__PRIM_QUAD_STRIP;
+		break;
+	case GL_POLYGON:
+		type = R300_VAP_VF_CNTL__PRIM_POLYGON;
+		break;
+	default:
+		fprintf(stderr,
+			"%s:%s Do not know how to handle primitive 0x%04x - help me !\n",
+			__FILE__, __FUNCTION__, prim & PRIM_MODE_MASK);
 		return -1;
-         	break;
-   	}
-   return type;
+		break;
+	}
+	return type;
 }
 
 static int r300NumVerts(r300ContextPtr rmesa, int num_verts, int prim)
 {
-	int verts_off=0;
+	int verts_off = 0;
 
 	switch (prim & PRIM_MODE_MASK) {
 	case GL_POINTS:
 		verts_off = 0;
-      		break;
+		break;
 	case GL_LINES:
 		verts_off = num_verts % 2;
-      		break;
+		break;
 	case GL_LINE_STRIP:
-		if(num_verts < 2)
+		if (num_verts < 2)
 			verts_off = num_verts;
-      		break;
+		break;
 	case GL_LINE_LOOP:
-		if(num_verts < 2)
+		if (num_verts < 2)
 			verts_off = num_verts;
-      		break;
-    	case GL_TRIANGLES:
+		break;
+	case GL_TRIANGLES:
 		verts_off = num_verts % 3;
-      		break;
-   	case GL_TRIANGLE_STRIP:
-		if(num_verts < 3)
+		break;
+	case GL_TRIANGLE_STRIP:
+		if (num_verts < 3)
 			verts_off = num_verts;
-      		break;
-   	case GL_TRIANGLE_FAN:
-		if(num_verts < 3)
+		break;
+	case GL_TRIANGLE_FAN:
+		if (num_verts < 3)
 			verts_off = num_verts;
-      		break;
+		break;
 	case GL_QUADS:
 		verts_off = num_verts % 4;
-      		break;
+		break;
 	case GL_QUAD_STRIP:
-		if(num_verts < 4)
+		if (num_verts < 4)
 			verts_off = num_verts;
 		else
 			verts_off = num_verts % 2;
-      		break;
+		break;
 	case GL_POLYGON:
-		if(num_verts < 3)
+		if (num_verts < 3)
 			verts_off = num_verts;
 		break;
-   	default:
- 		fprintf(stderr, "%s:%s Do not know how to handle primitive 0x%04x - help me !\n",
-			__FILE__, __FUNCTION__,
-			prim & PRIM_MODE_MASK);
+	default:
+		fprintf(stderr,
+			"%s:%s Do not know how to handle primitive 0x%04x - help me !\n",
+			__FILE__, __FUNCTION__, prim & PRIM_MODE_MASK);
 		return -1;
-         	break;
-   	}
+		break;
+	}
 
 	if (RADEON_DEBUG & DEBUG_VERTS) {
 		if (num_verts - verts_off == 0) {
-			WARN_ONCE("user error: Need more than %d vertices to draw primitive 0x%04x !\n",
-				  num_verts, prim & PRIM_MODE_MASK);
+			WARN_ONCE
+			    ("user error: Need more than %d vertices to draw primitive 0x%04x !\n",
+			     num_verts, prim & PRIM_MODE_MASK);
 			return 0;
 		}
 
 		if (verts_off > 0) {
-			WARN_ONCE("user error: %d is not a valid number of vertices for primitive 0x%04x !\n",
-				  num_verts, prim & PRIM_MODE_MASK);
+			WARN_ONCE
+			    ("user error: %d is not a valid number of vertices for primitive 0x%04x !\n",
+			     num_verts, prim & PRIM_MODE_MASK);
 		}
 	}
 
 	return num_verts - verts_off;
 }
 
-static void inline r300FireEB(r300ContextPtr rmesa, unsigned long addr, int vertex_count, int type, int elt_size)
+static void inline r300FireEB(r300ContextPtr rmesa, unsigned long addr,
+			      int vertex_count, int type, int elt_size)
 {
 	int cmd_reserved = 0;
 	int cmd_written = 0;
@@ -197,9 +196,9 @@ static void inline r300FireEB(r300ContextPtr rmesa, unsigned long addr, int vert
 
 	assert(elt_size == 2 || elt_size == 4);
 
-	if(addr & (elt_size-1)){
+	if (addr & (elt_size - 1)) {
 		WARN_ONCE("Badly aligned buffer\n");
-		return ;
+		return;
 	}
 
 	magic_1 = (addr % 32) / 4;
@@ -209,15 +208,18 @@ static void inline r300FireEB(r300ContextPtr rmesa, unsigned long addr, int vert
 	check_space(6);
 
 	start_packet3(RADEON_CP_PACKET3_3D_DRAW_INDX_2, 0);
-	if(elt_size == 4){
-		e32(R300_VAP_VF_CNTL__PRIM_WALK_INDICES | (vertex_count<<16) | type | R300_VAP_VF_CNTL__INDEX_SIZE_32bit);
+	if (elt_size == 4) {
+		e32(R300_VAP_VF_CNTL__PRIM_WALK_INDICES |
+		    (vertex_count << 16) | type |
+		    R300_VAP_VF_CNTL__INDEX_SIZE_32bit);
 	} else {
-		e32(R300_VAP_VF_CNTL__PRIM_WALK_INDICES | (vertex_count<<16) | type);
+		e32(R300_VAP_VF_CNTL__PRIM_WALK_INDICES |
+		    (vertex_count << 16) | type);
 	}
 
 	start_packet3(RADEON_CP_PACKET3_INDX_BUFFER, 2);
 #ifdef OPTIMIZE_ELTS
-	if(elt_size == 4){
+	if (elt_size == 4) {
 		e32(R300_EB_UNK1 | (0 << 16) | R300_EB_UNK2);
 		e32(addr);
 	} else {
@@ -229,46 +231,46 @@ static void inline r300FireEB(r300ContextPtr rmesa, unsigned long addr, int vert
 	e32(addr);
 #endif
 
-	if(elt_size == 4){
+	if (elt_size == 4) {
 		e32(vertex_count);
 	} else {
 #ifdef OPTIMIZE_ELTS
 		e32(magic_2);
 #else
-		e32((vertex_count+1)/2);
+		e32((vertex_count + 1) / 2);
 #endif
 	}
 }
 
-static void r300RunRenderPrimitive(r300ContextPtr rmesa,
-	GLcontext *ctx,
-	int start,
-	int end,
-	int prim)
+static void r300RunRenderPrimitive(r300ContextPtr rmesa, GLcontext * ctx,
+				   int start, int end, int prim)
 {
-   int type, num_verts;
+	int type, num_verts;
 
-   type=r300PrimitiveType(rmesa, ctx, prim);
-   num_verts=r300NumVerts(rmesa, end-start, prim);
+	type = r300PrimitiveType(rmesa, ctx, prim);
+	num_verts = r300NumVerts(rmesa, end - start, prim);
 
-   if(type<0 || num_verts <= 0)return;
-
-   if(rmesa->state.VB.Elts){
-	r300EmitAOS(rmesa, rmesa->state.aos_count, /*0*/start);
-	if(num_verts > 65535){ /* not implemented yet */
-		WARN_ONCE("Too many elts\n");
+	if (type < 0 || num_verts <= 0)
 		return;
+
+	if (rmesa->state.VB.Elts) {
+		r300EmitAOS(rmesa, rmesa->state.aos_count, /*0 */ start);
+		if (num_verts > 65535) {	/* not implemented yet */
+			WARN_ONCE("Too many elts\n");
+			return;
+		}
+		r300EmitElts(ctx, rmesa->state.VB.Elts, num_verts,
+			     rmesa->state.VB.elt_size);
+		r300FireEB(rmesa, rmesa->state.elt_dma.aos_offset,
+			   num_verts, type, rmesa->state.VB.elt_size);
+	} else {
+		r300EmitAOS(rmesa, rmesa->state.aos_count, start);
+		fire_AOS(rmesa, num_verts, type);
 	}
-	r300EmitElts(ctx, rmesa->state.VB.Elts, num_verts, rmesa->state.VB.elt_size);
-	r300FireEB(rmesa, rmesa->state.elt_dma.aos_offset, num_verts, type, rmesa->state.VB.elt_size);
-   }else{
-	   r300EmitAOS(rmesa, rmesa->state.aos_count, start);
-	   fire_AOS(rmesa, num_verts, type);
-   }
 }
 
-static GLboolean r300RunRender(GLcontext *ctx,
-				 struct tnl_pipeline_stage *stage)
+static GLboolean r300RunRender(GLcontext * ctx,
+			       struct tnl_pipeline_stage *stage)
 {
 	r300ContextPtr rmesa = R300_CONTEXT(ctx);
 	struct radeon_vertex_buffer *VB = &rmesa->state.VB;
@@ -277,12 +279,11 @@ static GLboolean r300RunRender(GLcontext *ctx,
 	int cmd_written = 0;
 	drm_radeon_cmd_header_t *cmd = NULL;
 
-
 	if (RADEON_DEBUG & DEBUG_PRIMS)
 		fprintf(stderr, "%s\n", __FUNCTION__);
 
 	if (stage) {
- 		TNLcontext *tnl = TNL_CONTEXT(ctx);
+		TNLcontext *tnl = TNL_CONTEXT(ctx);
 		radeon_vb_to_rvb(rmesa, VB, &tnl->vb);
 	}
 
@@ -292,27 +293,29 @@ static GLboolean r300RunRender(GLcontext *ctx,
 
 	r300UpdateShaderStates(rmesa);
 
-	reg_start(R300_RB3D_DSTCACHE_CTLSTAT,0);
+	reg_start(R300_RB3D_DSTCACHE_CTLSTAT, 0);
 	e32(R300_RB3D_DSTCACHE_UNKNOWN_0A);
 
-	reg_start(R300_RB3D_ZCACHE_CTLSTAT,0);
+	reg_start(R300_RB3D_ZCACHE_CTLSTAT, 0);
 	e32(R300_RB3D_ZCACHE_UNKNOWN_03);
 
 	r300EmitState(rmesa);
 
-	for(i=0; i < VB->PrimitiveCount; i++){
+	for (i = 0; i < VB->PrimitiveCount; i++) {
 		GLuint prim = _tnl_translate_prim(&VB->Primitive[i]);
 		GLuint start = VB->Primitive[i].start;
 		GLuint length = VB->Primitive[i].count;
 
-		r300RunRenderPrimitive(rmesa, ctx, start, start + length, prim);
+		r300RunRenderPrimitive(rmesa, ctx, start, start + length,
+				       prim);
 	}
 
-	reg_start(R300_RB3D_DSTCACHE_CTLSTAT,0);
-	e32(R300_RB3D_DSTCACHE_UNKNOWN_0A /*R300_RB3D_DSTCACHE_UNKNOWN_02*/);
+	reg_start(R300_RB3D_DSTCACHE_CTLSTAT, 0);
+	e32(R300_RB3D_DSTCACHE_UNKNOWN_0A
+	    /*R300_RB3D_DSTCACHE_UNKNOWN_02 */ );
 
-	reg_start(R300_RB3D_ZCACHE_CTLSTAT,0);
-	e32(R300_RB3D_ZCACHE_UNKNOWN_03 /*R300_RB3D_ZCACHE_UNKNOWN_01*/);
+	reg_start(R300_RB3D_ZCACHE_CTLSTAT, 0);
+	e32(R300_RB3D_ZCACHE_UNKNOWN_03 /*R300_RB3D_ZCACHE_UNKNOWN_01 */ );
 
 #ifdef USER_BUFFERS
 	r300UseArrays(ctx);
@@ -331,12 +334,11 @@ static GLboolean r300RunRender(GLcontext *ctx,
 		}							\
 	} while(0)
 
-int r300Fallback(GLcontext *ctx)
+int r300Fallback(GLcontext * ctx)
 {
 	r300ContextPtr r300 = R300_CONTEXT(ctx);
-	struct r300_fragment_program *fp =
-		(struct r300_fragment_program *)
-		(char *)ctx->FragmentProgram._Current;
+	struct r300_fragment_program *fp = (struct r300_fragment_program *)
+	    (char *)ctx->FragmentProgram._Current;
 
 	if (fp) {
 		if (!fp->translated)
@@ -346,20 +348,22 @@ int r300Fallback(GLcontext *ctx)
 
 	FALLBACK_IF(ctx->RenderMode != GL_RENDER);
 
-	FALLBACK_IF(ctx->Stencil._TestTwoSide &&
-		    (ctx->Stencil.Ref[0] != ctx->Stencil.Ref[1] ||
-		     ctx->Stencil.ValueMask[0] != ctx->Stencil.ValueMask[1] ||
-		     ctx->Stencil.WriteMask[0] != ctx->Stencil.WriteMask[1]));
+	FALLBACK_IF(ctx->Stencil._TestTwoSide
+		    && (ctx->Stencil.Ref[0] != ctx->Stencil.Ref[1]
+			|| ctx->Stencil.ValueMask[0] !=
+			ctx->Stencil.ValueMask[1]
+			|| ctx->Stencil.WriteMask[0] !=
+			ctx->Stencil.WriteMask[1]));
 
 	/* GL_COLOR_LOGIC_OP */
 	FALLBACK_IF(ctx->Color.ColorLogicOpEnabled);
 
 	/* GL_POINT_SPRITE_ARB, GL_POINT_SPRITE_NV */
-	if (ctx->Extensions.NV_point_sprite ||
-	    ctx->Extensions.ARB_point_sprite)
+	if (ctx->Extensions.NV_point_sprite
+	    || ctx->Extensions.ARB_point_sprite)
 		FALLBACK_IF(ctx->Point.PointSprite);
 
-	if(!r300->disable_lowimpact_fallback){
+	if (!r300->disable_lowimpact_fallback) {
 		/* GL_POLYGON_OFFSET_POINT */
 		FALLBACK_IF(ctx->Polygon.OffsetPoint);
 		/* GL_POLYGON_OFFSET_LINE */
@@ -385,8 +389,8 @@ int r300Fallback(GLcontext *ctx)
  * rasterization) or false to indicate that the pipeline has finished
  * after we render something.
  */
-static GLboolean r300RunNonTNLRender(GLcontext *ctx,
-				 struct tnl_pipeline_stage *stage)
+static GLboolean r300RunNonTNLRender(GLcontext * ctx,
+				     struct tnl_pipeline_stage *stage)
 {
 	if (RADEON_DEBUG & DEBUG_PRIMS)
 		fprintf(stderr, "%s\n", __FUNCTION__);
@@ -397,18 +401,18 @@ static GLboolean r300RunNonTNLRender(GLcontext *ctx,
 	return r300RunRender(ctx, stage);
 }
 
-static GLboolean r300RunTCLRender(GLcontext *ctx,
-				 struct tnl_pipeline_stage *stage)
+static GLboolean r300RunTCLRender(GLcontext * ctx,
+				  struct tnl_pipeline_stage *stage)
 {
 	r300ContextPtr rmesa = R300_CONTEXT(ctx);
 	struct r300_vertex_program *vp;
 
-   	hw_tcl_on=future_hw_tcl_on;
+	hw_tcl_on = future_hw_tcl_on;
 
 	if (RADEON_DEBUG & DEBUG_PRIMS)
 		fprintf(stderr, "%s\n", __FUNCTION__);
 
-	if(hw_tcl_on == GL_FALSE)
+	if (hw_tcl_on == GL_FALSE)
 		return GL_TRUE;
 
 	if (r300Fallback(ctx) >= R300_FALLBACK_TCL) {
