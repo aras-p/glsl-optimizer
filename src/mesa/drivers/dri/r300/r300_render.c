@@ -104,7 +104,7 @@ static int r300_get_primitive_type(r300ContextPtr rmesa, GLcontext *ctx, int pri
 		type=R300_VAP_VF_CNTL__PRIM_POLYGON;
 		break;
    	default:
- 		fprintf(stderr, "%s:%s Do not know how to handle primitive %02x - help me !\n",
+ 		fprintf(stderr, "%s:%s Do not know how to handle primitive 0x%04x - help me !\n",
 			__FILE__, __FUNCTION__,
 			prim & PRIM_MODE_MASK);
 		return -1;
@@ -116,59 +116,48 @@ static int r300_get_primitive_type(r300ContextPtr rmesa, GLcontext *ctx, int pri
 int r300_get_num_verts(r300ContextPtr rmesa, int num_verts, int prim)
 {
 	int verts_off=0;
-	char *name="UNKNOWN";
 
 	switch (prim & PRIM_MODE_MASK) {
 	case GL_POINTS:
-   		name="P";
 		verts_off = 0;
       		break;
 	case GL_LINES:
-   		name="L";
 		verts_off = num_verts % 2;
       		break;
 	case GL_LINE_STRIP:
-   		name="LS";
 		if(num_verts < 2)
 			verts_off = num_verts;
       		break;
 	case GL_LINE_LOOP:
-   		name="LL";
 		if(num_verts < 2)
 			verts_off = num_verts;
       		break;
     	case GL_TRIANGLES:
-   		name="T";
 		verts_off = num_verts % 3;
       		break;
    	case GL_TRIANGLE_STRIP:
-   		name="TS";
 		if(num_verts < 3)
 			verts_off = num_verts;
       		break;
    	case GL_TRIANGLE_FAN:
-   		name="TF";
 		if(num_verts < 3)
 			verts_off = num_verts;
       		break;
 	case GL_QUADS:
-   		name="Q";
 		verts_off = num_verts % 4;
       		break;
 	case GL_QUAD_STRIP:
-   		name="QS";
 		if(num_verts < 4)
 			verts_off = num_verts;
 		else
 			verts_off = num_verts % 2;
       		break;
 	case GL_POLYGON:
-		name="P";
 		if(num_verts < 3)
 			verts_off = num_verts;
 		break;
    	default:
- 		fprintf(stderr, "%s:%s Do not know how to handle primitive %02x - help me !\n",
+ 		fprintf(stderr, "%s:%s Do not know how to handle primitive 0x%04x - help me !\n",
 			__FILE__, __FUNCTION__,
 			prim & PRIM_MODE_MASK);
 		return -1;
@@ -177,12 +166,14 @@ int r300_get_num_verts(r300ContextPtr rmesa, int num_verts, int prim)
 
 	if (RADEON_DEBUG & DEBUG_VERTS) {
 		if (num_verts - verts_off == 0) {
-			WARN_ONCE("user error: Need more than %d vertices to draw primitive %s !\n", num_verts, name);
+			WARN_ONCE("user error: Need more than %d vertices to draw primitive 0x%04x !\n",
+				  num_verts, prim & PRIM_MODE_MASK);
 			return 0;
 		}
 
 		if (verts_off > 0) {
-			WARN_ONCE("user error: %d is not a valid number of vertices for primitive %s !\n", num_verts, name);
+			WARN_ONCE("user error: %d is not a valid number of vertices for primitive 0x%04x !\n",
+				  num_verts, prim & PRIM_MODE_MASK);
 		}
 	}
 
