@@ -401,15 +401,6 @@ static GLboolean r300_run_render(GLcontext *ctx,
 	return r300_run_vb_render(ctx, stage);
 }
 
-const struct tnl_pipeline_stage _r300_render_stage = {
-	"r300 hw rasterize",
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	r300_run_render		/* run */
-};
-
 static GLboolean r300_run_tcl_render(GLcontext *ctx,
 				 struct tnl_pipeline_stage *stage)
 {
@@ -441,6 +432,15 @@ static GLboolean r300_run_tcl_render(GLcontext *ctx,
 	return r300_run_vb_render(ctx, stage);
 }
 
+const struct tnl_pipeline_stage _r300_render_stage = {
+	"r300 hw rasterize",
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	r300_run_render		/* run */
+};
+
 const struct tnl_pipeline_stage _r300_tcl_stage = {
 	"r300 tcl",
 	NULL,
@@ -449,4 +449,3 @@ const struct tnl_pipeline_stage _r300_tcl_stage = {
 	NULL,
 	r300_run_tcl_render	/* run */
 };
-
