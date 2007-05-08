@@ -32,6 +32,11 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
  * The immediate implementation has been removed from CVS in favor of the vertex
  * buffer implementation.
  *
+ * The render functions are called by the pipeline manager to render a batch of
+ * primitives. They return TRUE to pass on to the next stage (i.e. software
+ * rasterization) or FALSE to indicate that the pipeline has finished after
+ * rendering something.
+ *
  * When falling back to software TCL still attempt to use hardware
  * rasterization.
  *
@@ -254,8 +259,8 @@ static void r300RunRenderPrimitive(r300ContextPtr rmesa, GLcontext * ctx,
 		return;
 
 	if (rmesa->state.VB.Elts) {
-		r300EmitAOS(rmesa, rmesa->state.aos_count, /*0 */ start);
-		if (num_verts > 65535) {	/* not implemented yet */
+		r300EmitAOS(rmesa, rmesa->state.aos_count, start);
+		if (num_verts > 65535) {
 			WARN_ONCE("Too many elts\n");
 			return;
 		}
@@ -311,11 +316,10 @@ static GLboolean r300RunRender(GLcontext * ctx,
 	}
 
 	reg_start(R300_RB3D_DSTCACHE_CTLSTAT, 0);
-	e32(R300_RB3D_DSTCACHE_UNKNOWN_0A
-	    /*R300_RB3D_DSTCACHE_UNKNOWN_02 */ );
+	e32(R300_RB3D_DSTCACHE_UNKNOWN_0A);
 
 	reg_start(R300_RB3D_ZCACHE_CTLSTAT, 0);
-	e32(R300_RB3D_ZCACHE_UNKNOWN_03 /*R300_RB3D_ZCACHE_UNKNOWN_01 */ );
+	e32(R300_RB3D_ZCACHE_UNKNOWN_03);
 
 #ifdef USER_BUFFERS
 	r300UseArrays(ctx);
@@ -355,40 +359,25 @@ int r300Fallback(GLcontext * ctx)
 			|| ctx->Stencil.WriteMask[0] !=
 			ctx->Stencil.WriteMask[1]));
 
-	/* GL_COLOR_LOGIC_OP */
 	FALLBACK_IF(ctx->Color.ColorLogicOpEnabled);
 
-	/* GL_POINT_SPRITE_ARB, GL_POINT_SPRITE_NV */
 	if (ctx->Extensions.NV_point_sprite
 	    || ctx->Extensions.ARB_point_sprite)
 		FALLBACK_IF(ctx->Point.PointSprite);
 
 	if (!r300->disable_lowimpact_fallback) {
-		/* GL_POLYGON_OFFSET_POINT */
 		FALLBACK_IF(ctx->Polygon.OffsetPoint);
-		/* GL_POLYGON_OFFSET_LINE */
 		FALLBACK_IF(ctx->Polygon.OffsetLine);
-		/* GL_POLYGON_STIPPLE */
 		FALLBACK_IF(ctx->Polygon.StippleFlag);
-		/* GL_MULTISAMPLE */
 		FALLBACK_IF(ctx->Multisample.Enabled);
-		/* GL_LINE_STIPPLE */
 		FALLBACK_IF(ctx->Line.StippleFlag);
-		/* GL_LINE_SMOOTH */
 		FALLBACK_IF(ctx->Line.SmoothFlag);
-		/* GL_POINT_SMOOTH */
 		FALLBACK_IF(ctx->Point.SmoothFlag);
 	}
 
 	return R300_FALLBACK_NONE;
 }
 
-/**
- * Called by the pipeline manager to render a batch of primitives.
- * We can return true to pass on to the next stage (i.e. software
- * rasterization) or false to indicate that the pipeline has finished
- * after we render something.
- */
 static GLboolean r300RunNonTNLRender(GLcontext * ctx,
 				     struct tnl_pipeline_stage *stage)
 {
