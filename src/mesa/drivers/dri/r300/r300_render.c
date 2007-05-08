@@ -26,8 +26,20 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 **************************************************************************/
 
 /*
- * Authors:
- *   Nicolai Haehnle <prefect_@gmx.net>
+ * \file
+ *
+ * \brief R300 Render (Vertex Buffer Implementation)
+ *
+ * The immediate implementation has been removed from CVS in favor of the vertex
+ * buffer implementation.
+ *
+ * When falling back to software TCL still attempt to use hardware
+ * rasterization.
+ *
+ * I am not sure that the cache related registers are setup correctly, but
+ * obviously this does work... Further investigation is needed.
+ *
+ * \author Nicolai Haehnle <prefect_@gmx.net>
  */
 
 #include "glheader.h"
@@ -61,14 +73,7 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 extern int future_hw_tcl_on;
 
-/**********************************************************************
-*                     Hardware rasterization
-*
-* When we fell back to software TCL, we still try to use the
-* rasterization hardware for rendering.
-**********************************************************************/
-
-static int r300_get_primitive_type(r300ContextPtr rmesa, GLcontext *ctx, int prim)
+static int r300PrimitiveType(r300ContextPtr rmesa, GLcontext *ctx, int prim)
 {
 	int type=-1;
 
@@ -113,7 +118,7 @@ static int r300_get_primitive_type(r300ContextPtr rmesa, GLcontext *ctx, int pri
    return type;
 }
 
-int r300_get_num_verts(r300ContextPtr rmesa, int num_verts, int prim)
+static int r300NumVerts(r300ContextPtr rmesa, int num_verts, int prim)
 {
 	int verts_off=0;
 
@@ -180,11 +185,7 @@ int r300_get_num_verts(r300ContextPtr rmesa, int num_verts, int prim)
 	return num_verts - verts_off;
 }
 
-/* Immediate implementation has been removed from CVS. */
-
-/* vertex buffer implementation */
-
-static void inline fire_EB(r300ContextPtr rmesa, unsigned long addr, int vertex_count, int type, int elt_size)
+static void inline r300FireEB(r300ContextPtr rmesa, unsigned long addr, int vertex_count, int type, int elt_size)
 {
 	int cmd_reserved = 0;
 	int cmd_written = 0;
@@ -239,7 +240,7 @@ static void inline fire_EB(r300ContextPtr rmesa, unsigned long addr, int vertex_
 	}
 }
 
-static void r300_render_vb_primitive(r300ContextPtr rmesa,
+static void r300RunRenderPrimitive(r300ContextPtr rmesa,
 	GLcontext *ctx,
 	int start,
 	int end,
@@ -247,8 +248,8 @@ static void r300_render_vb_primitive(r300ContextPtr rmesa,
 {
    int type, num_verts;
 
-   type=r300_get_primitive_type(rmesa, ctx, prim);
-   num_verts=r300_get_num_verts(rmesa, end-start, prim);
+   type=r300PrimitiveType(rmesa, ctx, prim);
+   num_verts=r300NumVerts(rmesa, end-start, prim);
 
    if(type<0 || num_verts <= 0)return;
 
@@ -259,14 +260,14 @@ static void r300_render_vb_primitive(r300ContextPtr rmesa,
 		return;
 	}
 	r300EmitElts(ctx, rmesa->state.VB.Elts, num_verts, rmesa->state.VB.elt_size);
-	fire_EB(rmesa, rmesa->state.elt_dma.aos_offset, num_verts, type, rmesa->state.VB.elt_size);
+	r300FireEB(rmesa, rmesa->state.elt_dma.aos_offset, num_verts, type, rmesa->state.VB.elt_size);
    }else{
 	   r300EmitAOS(rmesa, rmesa->state.aos_count, start);
 	   fire_AOS(rmesa, num_verts, type);
    }
 }
 
-GLboolean r300_run_vb_render(GLcontext *ctx,
+static GLboolean r300RunRender(GLcontext *ctx,
 				 struct tnl_pipeline_stage *stage)
 {
 	r300ContextPtr rmesa = R300_CONTEXT(ctx);
@@ -304,7 +305,7 @@ GLboolean r300_run_vb_render(GLcontext *ctx,
 		GLuint start = VB->Primitive[i].start;
 		GLuint length = VB->Primitive[i].count;
 
-		r300_render_vb_primitive(rmesa, ctx, start, start + length, prim);
+		r300RunRenderPrimitive(rmesa, ctx, start, start + length, prim);
 	}
 
 	reg_start(R300_RB3D_DSTCACHE_CTLSTAT,0);
@@ -333,26 +334,30 @@ GLboolean r300_run_vb_render(GLcontext *ctx,
 int r300Fallback(GLcontext *ctx)
 {
 	r300ContextPtr r300 = R300_CONTEXT(ctx);
-	struct r300_fragment_program *rp =
+	struct r300_fragment_program *fp =
 		(struct r300_fragment_program *)
 		(char *)ctx->FragmentProgram._Current;
 
-	if (rp) {
-		if (!rp->translated)
-			r300_translate_fragment_shader(r300, rp);
-
-		FALLBACK_IF(!rp->translated);
+	if (fp) {
+		if (!fp->translated)
+			r300_translate_fragment_shader(r300, fp);
+		FALLBACK_IF(!fp->translated);
 	}
 
-	/* We do not do SELECT or FEEDBACK (yet ?)
-	 * Is it worth doing them ?
-	 */
 	FALLBACK_IF(ctx->RenderMode != GL_RENDER);
 
 	FALLBACK_IF(ctx->Stencil._TestTwoSide &&
 		    (ctx->Stencil.Ref[0] != ctx->Stencil.Ref[1] ||
 		     ctx->Stencil.ValueMask[0] != ctx->Stencil.ValueMask[1] ||
 		     ctx->Stencil.WriteMask[0] != ctx->Stencil.WriteMask[1]));
+
+	/* GL_COLOR_LOGIC_OP */
+	FALLBACK_IF(ctx->Color.ColorLogicOpEnabled);
+
+	/* GL_POINT_SPRITE_ARB, GL_POINT_SPRITE_NV */
+	if (ctx->Extensions.NV_point_sprite ||
+	    ctx->Extensions.ARB_point_sprite)
+		FALLBACK_IF(ctx->Point.PointSprite);
 
 	if(!r300->disable_lowimpact_fallback){
 		/* GL_POLYGON_OFFSET_POINT */
@@ -361,24 +366,15 @@ int r300Fallback(GLcontext *ctx)
 		FALLBACK_IF(ctx->Polygon.OffsetLine);
 		/* GL_POLYGON_STIPPLE */
 		FALLBACK_IF(ctx->Polygon.StippleFlag);
-		/* GL_MULTISAMPLE_ARB */
+		/* GL_MULTISAMPLE */
 		FALLBACK_IF(ctx->Multisample.Enabled);
-		/* blender ? */
+		/* GL_LINE_STIPPLE */
 		FALLBACK_IF(ctx->Line.StippleFlag);
 		/* GL_LINE_SMOOTH */
 		FALLBACK_IF(ctx->Line.SmoothFlag);
 		/* GL_POINT_SMOOTH */
 		FALLBACK_IF(ctx->Point.SmoothFlag);
 	}
-
-	/* Fallback for LOGICOP */
-	FALLBACK_IF(ctx->Color.ColorLogicOpEnabled);
-
-	/* Rest could be done with vertex fragments */
-	if (ctx->Extensions.NV_point_sprite ||
-	    ctx->Extensions.ARB_point_sprite)
-		/* GL_POINT_SPRITE_NV */
-		FALLBACK_IF(ctx->Point.PointSprite);
 
 	return R300_FALLBACK_NONE;
 }
@@ -389,7 +385,7 @@ int r300Fallback(GLcontext *ctx)
  * rasterization) or false to indicate that the pipeline has finished
  * after we render something.
  */
-static GLboolean r300_run_render(GLcontext *ctx,
+static GLboolean r300RunNonTNLRender(GLcontext *ctx,
 				 struct tnl_pipeline_stage *stage)
 {
 	if (RADEON_DEBUG & DEBUG_PRIMS)
@@ -398,10 +394,10 @@ static GLboolean r300_run_render(GLcontext *ctx,
 	if (r300Fallback(ctx) >= R300_FALLBACK_RAST)
 		return GL_TRUE;
 
-	return r300_run_vb_render(ctx, stage);
+	return r300RunRender(ctx, stage);
 }
 
-static GLboolean r300_run_tcl_render(GLcontext *ctx,
+static GLboolean r300RunTCLRender(GLcontext *ctx,
 				 struct tnl_pipeline_stage *stage)
 {
 	r300ContextPtr rmesa = R300_CONTEXT(ctx);
@@ -411,6 +407,7 @@ static GLboolean r300_run_tcl_render(GLcontext *ctx,
 
 	if (RADEON_DEBUG & DEBUG_PRIMS)
 		fprintf(stderr, "%s\n", __FUNCTION__);
+
 	if(hw_tcl_on == GL_FALSE)
 		return GL_TRUE;
 
@@ -427,25 +424,23 @@ static GLboolean r300_run_tcl_render(GLcontext *ctx,
 		return GL_TRUE;
 	}
 
-	//r300UpdateShaderStates(rmesa);
-
-	return r300_run_vb_render(ctx, stage);
+	return r300RunRender(ctx, stage);
 }
 
 const struct tnl_pipeline_stage _r300_render_stage = {
-	"r300 hw rasterize",
+	"r300 Hardware Rasterization",
 	NULL,
 	NULL,
 	NULL,
 	NULL,
-	r300_run_render		/* run */
+	r300RunNonTNLRender
 };
 
 const struct tnl_pipeline_stage _r300_tcl_stage = {
-	"r300 tcl",
+	"r300 Hardware Transform, Clipping and Lighting",
 	NULL,
 	NULL,
 	NULL,
 	NULL,
-	r300_run_tcl_render	/* run */
+	r300RunTCLRender
 };
