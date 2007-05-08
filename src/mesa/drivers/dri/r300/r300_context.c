@@ -355,12 +355,6 @@ GLboolean r300CreateContext(const __GLcontextModes * glVisual,
 	radeon_init_vtxfmt_a(r300);
 #endif
 
-#if 0
-	/* plug in a few more device driver functions */
-	/* XXX these should really go right after _mesa_init_driver_functions() */
-	r300InitPixelFuncs(ctx);
-	r300InitSwtcl(ctx);
-#endif
 	TNL_CONTEXT(ctx)->Driver.RunPipeline = _tnl_run_pipeline;
 
 	tcl_mode = driQueryOptioni(&r300->radeon.optionCache, "tcl_mode");
