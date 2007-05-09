@@ -99,6 +99,6 @@ typedef struct r300_fragment_program_swizzle {
 struct r300_fragment_program;
 
 extern void r300TranslateFragmentShader(r300ContextPtr r300,
-					struct r300_fragment_program *rp);
+					struct r300_fragment_program *fp);
 
 #endif

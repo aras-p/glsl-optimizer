@@ -58,11 +58,11 @@
 #define ERROR(fmt, args...) do {			\
 		fprintf(stderr, "%s::%s(): " fmt "\n",	\
 			__FILE__, __func__, ##args);	\
-		rp->error = GL_TRUE;			\
+		fp->error = GL_TRUE;			\
 	} while(0)
 
 #define PFS_INVAL 0xFFFFFFFF
-#define COMPILE_STATE struct r300_pfs_compile_state *cs = rp->cs
+#define COMPILE_STATE struct r300_pfs_compile_state *cs = fp->cs
 
 #define SWIZZLE_XYZ		0
 #define SWIZZLE_XXX		1
@@ -76,7 +76,7 @@
 #define SWIZZLE_000		9
 #define SWIZZLE_HHH		10
 
-#define swizzle(r, x, y, z, w) do_swizzle(rp, r,		\
+#define swizzle(r, x, y, z, w) do_swizzle(fp, r,		\
 					  ((SWIZZLE_##x<<0)|	\
 					   (SWIZZLE_##y<<3)|	\
 					   (SWIZZLE_##z<<6)|	\
@@ -301,15 +301,15 @@ static const GLuint pfs_zero = REG(REG_TYPE_CONST,
 /*
  * Common functions prototypes
  */
-static void dump_program(struct r300_fragment_program *rp);
-static void emit_arith(struct r300_fragment_program *rp, int op,
+static void dump_program(struct r300_fragment_program *fp);
+static void emit_arith(struct r300_fragment_program *fp, int op,
 		       GLuint dest, int mask,
 		       GLuint src0, GLuint src1, GLuint src2, int flags);
 
 /**
  * Get an R300 temporary that can be written to in the given slot.
  */
-static int get_hw_temp(struct r300_fragment_program *rp, int slot)
+static int get_hw_temp(struct r300_fragment_program *fp, int slot)
 {
 	COMPILE_STATE;
 	int r;
@@ -339,8 +339,8 @@ static int get_hw_temp(struct r300_fragment_program *rp, int slot)
 	cs->hwtemps[r].vector_valid = 0;
 	cs->hwtemps[r].scalar_valid = 0;
 
-	if (r > rp->max_temp_idx)
-		rp->max_temp_idx = r;
+	if (r > fp->max_temp_idx)
+		fp->max_temp_idx = r;
 
 	return r;
 }
@@ -348,7 +348,7 @@ static int get_hw_temp(struct r300_fragment_program *rp, int slot)
 /**
  * Get an R300 temporary that will act as a TEX destination register.
  */
-static int get_hw_temp_tex(struct r300_fragment_program *rp)
+static int get_hw_temp_tex(struct r300_fragment_program *fp)
 {
 	COMPILE_STATE;
 	int r;
@@ -363,7 +363,7 @@ static int get_hw_temp_tex(struct r300_fragment_program *rp)
 	}
 
 	if (r >= PFS_NUM_TEMP_REGS)
-		return get_hw_temp(rp, 0);	/* Will cause an indirection */
+		return get_hw_temp(fp, 0);	/* Will cause an indirection */
 
 	cs->hwtemps[r].reserved = cs->hwtemps[r].free;
 	cs->hwtemps[r].free = -1;
@@ -375,8 +375,8 @@ static int get_hw_temp_tex(struct r300_fragment_program *rp)
 	cs->hwtemps[r].vector_valid = cs->nrslots;
 	cs->hwtemps[r].scalar_valid = cs->nrslots;
 
-	if (r > rp->max_temp_idx)
-		rp->max_temp_idx = r;
+	if (r > fp->max_temp_idx)
+		fp->max_temp_idx = r;
 
 	return r;
 }
@@ -384,7 +384,7 @@ static int get_hw_temp_tex(struct r300_fragment_program *rp)
 /**
  * Mark the given hardware register as free.
  */
-static void free_hw_temp(struct r300_fragment_program *rp, int idx)
+static void free_hw_temp(struct r300_fragment_program *fp, int idx)
 {
 	COMPILE_STATE;
 
@@ -403,7 +403,7 @@ static void free_hw_temp(struct r300_fragment_program *rp, int idx)
 /**
  * Create a new Mesa temporary register.
  */
-static GLuint get_temp_reg(struct r300_fragment_program *rp)
+static GLuint get_temp_reg(struct r300_fragment_program *fp)
 {
 	COMPILE_STATE;
 	GLuint r = undef;
@@ -429,7 +429,7 @@ static GLuint get_temp_reg(struct r300_fragment_program *rp)
  * Create a new Mesa temporary register that will act as the destination
  * register for a texture read.
  */
-static GLuint get_temp_reg_tex(struct r300_fragment_program *rp)
+static GLuint get_temp_reg_tex(struct r300_fragment_program *fp)
 {
 	COMPILE_STATE;
 	GLuint r = undef;
@@ -443,7 +443,7 @@ static GLuint get_temp_reg_tex(struct r300_fragment_program *rp)
 
 	cs->temp_in_use |= (1 << --index);
 	cs->temps[index].refcount = 0xFFFFFFFF;
-	cs->temps[index].reg = get_hw_temp_tex(rp);
+	cs->temps[index].reg = get_hw_temp_tex(fp);
 
 	REG_SET_TYPE(r, REG_TYPE_TEMP);
 	REG_SET_INDEX(r, index);
@@ -454,7 +454,7 @@ static GLuint get_temp_reg_tex(struct r300_fragment_program *rp)
 /**
  * Free a Mesa temporary and the associated R300 temporary.
  */
-static void free_temp(struct r300_fragment_program *rp, GLuint r)
+static void free_temp(struct r300_fragment_program *fp, GLuint r)
 {
 	COMPILE_STATE;
 	GLuint index = REG_GET_INDEX(r);
@@ -463,11 +463,11 @@ static void free_temp(struct r300_fragment_program *rp, GLuint r)
 		return;
 
 	if (REG_GET_TYPE(r) == REG_TYPE_TEMP) {
-		free_hw_temp(rp, cs->temps[index].reg);
+		free_hw_temp(fp, cs->temps[index].reg);
 		cs->temps[index].reg = -1;
 		cs->temp_in_use &= ~(1 << index);
 	} else if (REG_GET_TYPE(r) == REG_TYPE_INPUT) {
-		free_hw_temp(rp, cs->inputs[index].reg);
+		free_hw_temp(fp, cs->inputs[index].reg);
 		cs->inputs[index].reg = -1;
 	}
 }
@@ -481,25 +481,25 @@ static void free_temp(struct r300_fragment_program *rp, GLuint r)
  *  of the fragment program (actually, up until the next time the fragment
  *  program is translated).
  */
-static GLuint emit_const4fv(struct r300_fragment_program *rp,
+static GLuint emit_const4fv(struct r300_fragment_program *fp,
 			    const GLfloat * cp)
 {
 	GLuint reg = undef;
 	int index;
 
-	for (index = 0; index < rp->const_nr; ++index) {
-		if (rp->constant[index] == cp)
+	for (index = 0; index < fp->const_nr; ++index) {
+		if (fp->constant[index] == cp)
 			break;
 	}
 
-	if (index >= rp->const_nr) {
+	if (index >= fp->const_nr) {
 		if (index >= PFS_NUM_CONST_REGS) {
 			ERROR("Out of hw constants!\n");
 			return reg;
 		}
 
-		rp->const_nr++;
-		rp->constant[index] = cp;
+		fp->const_nr++;
+		fp->constant[index] = cp;
 	}
 
 	REG_SET_TYPE(reg, REG_TYPE_CONST);
@@ -530,7 +530,7 @@ static inline GLuint absolute(GLuint r)
 	return r;
 }
 
-static int swz_native(struct r300_fragment_program *rp,
+static int swz_native(struct r300_fragment_program *fp,
 		      GLuint src, GLuint * r, GLuint arbneg)
 {
 	/* Native swizzle, handle negation */
@@ -544,13 +544,13 @@ static int swz_native(struct r300_fragment_program *rp,
 		*r = src;
 	} else {
 		if (!REG_GET_VALID(*r))
-			*r = get_temp_reg(rp);
+			*r = get_temp_reg(fp);
 		src |= REG_NEGV_MASK;
-		emit_arith(rp,
+		emit_arith(fp,
 			   PFS_OP_MAD,
 			   *r, arbneg & 0x7, keep(src), pfs_one, pfs_zero, 0);
 		src = src & ~REG_NEGV_MASK;
-		emit_arith(rp,
+		emit_arith(fp,
 			   PFS_OP_MAD,
 			   *r,
 			   (arbneg ^ 0x7) | WRITEMASK_W,
@@ -560,7 +560,7 @@ static int swz_native(struct r300_fragment_program *rp,
 	return 3;
 }
 
-static int swz_emit_partial(struct r300_fragment_program *rp,
+static int swz_emit_partial(struct r300_fragment_program *fp,
 			    GLuint src,
 			    GLuint * r, int mask, int mc, GLuint arbneg)
 {
@@ -568,7 +568,7 @@ static int swz_emit_partial(struct r300_fragment_program *rp,
 	GLuint wmask = 0;
 
 	if (!REG_GET_VALID(*r))
-		*r = get_temp_reg(rp);
+		*r = get_temp_reg(fp);
 
 	/* A partial match, VSWZ/mask define what parts of the
 	 * desired swizzle we match
@@ -582,7 +582,7 @@ static int swz_emit_partial(struct r300_fragment_program *rp,
 	if (tmp) {
 		tmp = tmp ^ s_mask[mask].mask;
 		if (tmp) {
-			emit_arith(rp,
+			emit_arith(fp,
 				   PFS_OP_MAD,
 				   *r,
 				   arbneg & s_mask[mask].mask,
@@ -593,7 +593,7 @@ static int swz_emit_partial(struct r300_fragment_program *rp,
 			} else {
 				REG_SET_NO_USE(src, GL_FALSE);
 			}
-			emit_arith(rp,
+			emit_arith(fp,
 				   PFS_OP_MAD,
 				   *r, tmp | wmask, src, pfs_one, pfs_zero, 0);
 		} else {
@@ -602,7 +602,7 @@ static int swz_emit_partial(struct r300_fragment_program *rp,
 			} else {
 				REG_SET_NO_USE(src, GL_FALSE);
 			}
-			emit_arith(rp,
+			emit_arith(fp,
 				   PFS_OP_MAD,
 				   *r,
 				   (arbneg & s_mask[mask].mask) | wmask,
@@ -614,7 +614,7 @@ static int swz_emit_partial(struct r300_fragment_program *rp,
 		} else {
 			REG_SET_NO_USE(src, GL_FALSE);
 		}
-		emit_arith(rp, PFS_OP_MAD,
+		emit_arith(fp, PFS_OP_MAD,
 			   *r,
 			   s_mask[mask].mask | wmask,
 			   src, pfs_one, pfs_zero, 0);
@@ -623,7 +623,7 @@ static int swz_emit_partial(struct r300_fragment_program *rp,
 	return s_mask[mask].count;
 }
 
-static GLuint do_swizzle(struct r300_fragment_program *rp,
+static GLuint do_swizzle(struct r300_fragment_program *fp,
 			 GLuint src, GLuint arbswz, GLuint arbneg)
 {
 	GLuint r = undef;
@@ -636,8 +636,8 @@ static GLuint do_swizzle(struct r300_fragment_program *rp,
 	 */
 #if 0
 	if (REG_GET_VSWZ(src) != SWIZZLE_XYZ || REG_GET_SSWZ(src) != SWIZZLE_W) {
-		GLuint temp = get_temp_reg(rp);
-		emit_arith(rp,
+		GLuint temp = get_temp_reg(fp);
+		emit_arith(fp,
 			   PFS_OP_MAD,
 			   temp, WRITEMASK_XYZW, src, pfs_one, pfs_zero, 0);
 		src = temp;
@@ -680,10 +680,10 @@ static GLuint do_swizzle(struct r300_fragment_program *rp,
 
 			if (chash == (arbswz & s_mask[c_mask].hash)) {
 				if (s_mask[c_mask].count == 3) {
-					v_match += swz_native(rp,
+					v_match += swz_native(fp,
 							      src, &r, arbneg);
 				} else {
-					v_match += swz_emit_partial(rp,
+					v_match += swz_emit_partial(fp,
 								    src,
 								    &r,
 								    c_mask,
@@ -708,7 +708,7 @@ static GLuint do_swizzle(struct r300_fragment_program *rp,
 	return r;
 }
 
-static GLuint t_src(struct r300_fragment_program *rp,
+static GLuint t_src(struct r300_fragment_program *fp,
 		    struct prog_src_register fpsrc)
 {
 	GLuint r = undef;
@@ -725,19 +725,19 @@ static GLuint t_src(struct r300_fragment_program *rp,
 		REG_SET_TYPE(r, REG_TYPE_INPUT);
 		break;
 	case PROGRAM_LOCAL_PARAM:
-		r = emit_const4fv(rp,
-				  rp->mesa_program.Base.LocalParams[fpsrc.
+		r = emit_const4fv(fp,
+				  fp->mesa_program.Base.LocalParams[fpsrc.
 								    Index]);
 		break;
 	case PROGRAM_ENV_PARAM:
-		r = emit_const4fv(rp,
-				  rp->ctx->FragmentProgram.Parameters[fpsrc.
+		r = emit_const4fv(fp,
+				  fp->ctx->FragmentProgram.Parameters[fpsrc.
 								      Index]);
 		break;
 	case PROGRAM_STATE_VAR:
 	case PROGRAM_NAMED_PARAM:
-		r = emit_const4fv(rp,
-				  rp->mesa_program.Base.Parameters->
+		r = emit_const4fv(fp,
+				  fp->mesa_program.Base.Parameters->
 				  ParameterValues[fpsrc.Index]);
 		break;
 	default:
@@ -747,11 +747,11 @@ static GLuint t_src(struct r300_fragment_program *rp,
 
 	/* no point swizzling ONE/ZERO/HALF constants... */
 	if (REG_GET_VSWZ(r) < SWIZZLE_111 || REG_GET_SSWZ(r) < SWIZZLE_ZERO)
-		r = do_swizzle(rp, r, fpsrc.Swizzle, fpsrc.NegateBase);
+		r = do_swizzle(fp, r, fpsrc.Swizzle, fpsrc.NegateBase);
 	return r;
 }
 
-static GLuint t_scalar_src(struct r300_fragment_program *rp,
+static GLuint t_scalar_src(struct r300_fragment_program *fp,
 			   struct prog_src_register fpsrc)
 {
 	struct prog_src_register src = fpsrc;
@@ -759,10 +759,10 @@ static GLuint t_scalar_src(struct r300_fragment_program *rp,
 
 	src.Swizzle = ((sc << 0) | (sc << 3) | (sc << 6) | (sc << 9));
 
-	return t_src(rp, src);
+	return t_src(fp, src);
 }
 
-static GLuint t_dst(struct r300_fragment_program *rp,
+static GLuint t_dst(struct r300_fragment_program *fp,
 		    struct prog_dst_register dest)
 {
 	GLuint r = undef;
@@ -791,7 +791,7 @@ static GLuint t_dst(struct r300_fragment_program *rp,
 	}
 }
 
-static int t_hw_src(struct r300_fragment_program *rp, GLuint src, GLboolean tex)
+static int t_hw_src(struct r300_fragment_program *fp, GLuint src, GLboolean tex)
 {
 	COMPILE_STATE;
 	int idx;
@@ -803,18 +803,18 @@ static int t_hw_src(struct r300_fragment_program *rp, GLuint src, GLboolean tex)
 		 *       hasn't been written to. Undefined results.
 		 */
 		if (cs->temps[index].reg == -1)
-			cs->temps[index].reg = get_hw_temp(rp, cs->nrslots);
+			cs->temps[index].reg = get_hw_temp(fp, cs->nrslots);
 
 		idx = cs->temps[index].reg;
 
 		if (!REG_GET_NO_USE(src) && (--cs->temps[index].refcount == 0))
-			free_temp(rp, src);
+			free_temp(fp, src);
 		break;
 	case REG_TYPE_INPUT:
 		idx = cs->inputs[index].reg;
 
 		if (!REG_GET_NO_USE(src) && (--cs->inputs[index].refcount == 0))
-			free_hw_temp(rp, cs->inputs[index].reg);
+			free_hw_temp(fp, cs->inputs[index].reg);
 		break;
 	case REG_TYPE_CONST:
 		return (index | SRC_CONST);
@@ -829,7 +829,7 @@ static int t_hw_src(struct r300_fragment_program *rp, GLuint src, GLboolean tex)
 	return idx;
 }
 
-static int t_hw_dst(struct r300_fragment_program *rp,
+static int t_hw_dst(struct r300_fragment_program *fp,
 		    GLuint dest, GLboolean tex, int slot)
 {
 	COMPILE_STATE;
@@ -841,15 +841,15 @@ static int t_hw_dst(struct r300_fragment_program *rp,
 	case REG_TYPE_TEMP:
 		if (cs->temps[REG_GET_INDEX(dest)].reg == -1) {
 			if (!tex) {
-				cs->temps[index].reg = get_hw_temp(rp, slot);
+				cs->temps[index].reg = get_hw_temp(fp, slot);
 			} else {
-				cs->temps[index].reg = get_hw_temp_tex(rp);
+				cs->temps[index].reg = get_hw_temp_tex(fp);
 			}
 		}
 		idx = cs->temps[index].reg;
 
 		if (!REG_GET_NO_USE(dest) && (--cs->temps[index].refcount == 0))
-			free_temp(rp, dest);
+			free_temp(fp, dest);
 
 		cs->dest_in_node |= (1 << idx);
 		cs->used_in_node |= (1 << idx);
@@ -857,11 +857,11 @@ static int t_hw_dst(struct r300_fragment_program *rp,
 	case REG_TYPE_OUTPUT:
 		switch (index) {
 		case FRAG_RESULT_COLR:
-			rp->node[rp->cur_node].flags |=
+			fp->node[fp->cur_node].flags |=
 			    R300_PFS_NODE_OUTPUT_COLOR;
 			break;
 		case FRAG_RESULT_DEPR:
-			rp->node[rp->cur_node].flags |=
+			fp->node[fp->cur_node].flags |=
 			    R300_PFS_NODE_OUTPUT_DEPTH;
 			break;
 		}
@@ -875,7 +875,7 @@ static int t_hw_dst(struct r300_fragment_program *rp,
 	return idx;
 }
 
-static void emit_nop(struct r300_fragment_program *rp)
+static void emit_nop(struct r300_fragment_program *fp)
 {
 	COMPILE_STATE;
 
@@ -884,18 +884,18 @@ static void emit_nop(struct r300_fragment_program *rp)
 		return;
 	}
 
-	rp->alu.inst[cs->nrslots].inst0 = NOP_INST0;
-	rp->alu.inst[cs->nrslots].inst1 = NOP_INST1;
-	rp->alu.inst[cs->nrslots].inst2 = NOP_INST2;
-	rp->alu.inst[cs->nrslots].inst3 = NOP_INST3;
+	fp->alu.inst[cs->nrslots].inst0 = NOP_INST0;
+	fp->alu.inst[cs->nrslots].inst1 = NOP_INST1;
+	fp->alu.inst[cs->nrslots].inst2 = NOP_INST2;
+	fp->alu.inst[cs->nrslots].inst3 = NOP_INST3;
 	cs->nrslots++;
 }
 
-static void emit_tex(struct r300_fragment_program *rp,
+static void emit_tex(struct r300_fragment_program *fp,
 		     struct prog_instruction *fpi, int opcode)
 {
 	COMPILE_STATE;
-	GLuint coord = t_src(rp, fpi->SrcReg[0]);
+	GLuint coord = t_src(fp, fpi->SrcReg[0]);
 	GLuint dest = undef, rdest = undef;
 	GLuint din, uin;
 	int unit = fpi->TexSrcUnit;
@@ -925,49 +925,49 @@ static void emit_tex(struct r300_fragment_program *rp,
 
 			tokens[2] = unit;
 			factor_index =
-			    _mesa_add_state_reference(rp->mesa_program.Base.
+			    _mesa_add_state_reference(fp->mesa_program.Base.
 						      Parameters, tokens);
 			factorreg =
-			    emit_const4fv(rp,
-					  rp->mesa_program.Base.Parameters->
+			    emit_const4fv(fp,
+					  fp->mesa_program.Base.Parameters->
 					  ParameterValues[factor_index]);
-			tempreg = keep(get_temp_reg(rp));
+			tempreg = keep(get_temp_reg(fp));
 
-			emit_arith(rp, PFS_OP_MAD, tempreg, WRITEMASK_XYZW,
+			emit_arith(fp, PFS_OP_MAD, tempreg, WRITEMASK_XYZW,
 				   coord, factorreg, pfs_zero, 0);
 
 			/* Ensure correct node indirection */
 			uin = cs->used_in_node;
 			din = cs->dest_in_node;
 
-			hwsrc = t_hw_src(rp, tempreg, GL_TRUE);
+			hwsrc = t_hw_src(fp, tempreg, GL_TRUE);
 		} else {
-			hwsrc = t_hw_src(rp, coord, GL_TRUE);
+			hwsrc = t_hw_src(fp, coord, GL_TRUE);
 		}
 
-		dest = t_dst(rp, fpi->DstReg);
+		dest = t_dst(fp, fpi->DstReg);
 
 		/* r300 doesn't seem to be able to do TEX->output reg */
 		if (REG_GET_TYPE(dest) == REG_TYPE_OUTPUT) {
 			rdest = dest;
-			dest = get_temp_reg_tex(rp);
+			dest = get_temp_reg_tex(fp);
 		}
 		hwdest =
-		    t_hw_dst(rp, dest, GL_TRUE,
-			     rp->node[rp->cur_node].alu_offset);
+		    t_hw_dst(fp, dest, GL_TRUE,
+			     fp->node[fp->cur_node].alu_offset);
 
 		/* Use a temp that hasn't been used in this node, rather
 		 * than causing an indirection
 		 */
 		if (uin & (1 << hwdest)) {
-			free_hw_temp(rp, hwdest);
-			hwdest = get_hw_temp_tex(rp);
+			free_hw_temp(fp, hwdest);
+			hwdest = get_hw_temp_tex(fp);
 			cs->temps[REG_GET_INDEX(dest)].reg = hwdest;
 		}
 	} else {
 		hwdest = 0;
 		unit = 0;
-		hwsrc = t_hw_src(rp, coord, GL_TRUE);
+		hwsrc = t_hw_src(fp, coord, GL_TRUE);
 	}
 
 	/* Indirection if source has been written in this node, or if the
@@ -977,32 +977,32 @@ static void emit_tex(struct r300_fragment_program *rp,
 	     (din & (1 << hwsrc))) || (uin & (1 << hwdest))) {
 
 		/* Finish off current node */
-		if (rp->node[rp->cur_node].alu_offset == cs->nrslots)
-			emit_nop(rp);
+		if (fp->node[fp->cur_node].alu_offset == cs->nrslots)
+			emit_nop(fp);
 
-		rp->node[rp->cur_node].alu_end =
-		    cs->nrslots - rp->node[rp->cur_node].alu_offset - 1;
-		assert(rp->node[rp->cur_node].alu_end >= 0);
+		fp->node[fp->cur_node].alu_end =
+		    cs->nrslots - fp->node[fp->cur_node].alu_offset - 1;
+		assert(fp->node[fp->cur_node].alu_end >= 0);
 
-		if (++rp->cur_node >= PFS_MAX_TEX_INDIRECT) {
+		if (++fp->cur_node >= PFS_MAX_TEX_INDIRECT) {
 			ERROR("too many levels of texture indirection\n");
 			return;
 		}
 
 		/* Start new node */
-		rp->node[rp->cur_node].tex_offset = rp->tex.length;
-		rp->node[rp->cur_node].alu_offset = cs->nrslots;
-		rp->node[rp->cur_node].tex_end = -1;
-		rp->node[rp->cur_node].alu_end = -1;
-		rp->node[rp->cur_node].flags = 0;
+		fp->node[fp->cur_node].tex_offset = fp->tex.length;
+		fp->node[fp->cur_node].alu_offset = cs->nrslots;
+		fp->node[fp->cur_node].tex_end = -1;
+		fp->node[fp->cur_node].alu_end = -1;
+		fp->node[fp->cur_node].flags = 0;
 		cs->used_in_node = 0;
 		cs->dest_in_node = 0;
 	}
 
-	if (rp->cur_node == 0)
-		rp->first_node_has_tex = 1;
+	if (fp->cur_node == 0)
+		fp->first_node_has_tex = 1;
 
-	rp->tex.inst[rp->tex.length++] = 0 | (hwsrc << R300_FPITX_SRC_SHIFT)
+	fp->tex.inst[fp->tex.length++] = 0 | (hwsrc << R300_FPITX_SRC_SHIFT)
 	    | (hwdest << R300_FPITX_DST_SHIFT)
 	    | (unit << R300_FPITX_IMAGE_SHIFT)
 	    /* not entirely sure about this */
@@ -1012,25 +1012,25 @@ static void emit_tex(struct r300_fragment_program *rp,
 	if (REG_GET_TYPE(coord) != REG_TYPE_CONST)
 		cs->used_in_node |= (1 << hwsrc);
 
-	rp->node[rp->cur_node].tex_end++;
+	fp->node[fp->cur_node].tex_end++;
 
 	/* Copy from temp to output if needed */
 	if (REG_GET_VALID(rdest)) {
-		emit_arith(rp, PFS_OP_MAD, rdest, WRITEMASK_XYZW, dest,
+		emit_arith(fp, PFS_OP_MAD, rdest, WRITEMASK_XYZW, dest,
 			   pfs_one, pfs_zero, 0);
-		free_temp(rp, dest);
+		free_temp(fp, dest);
 	}
 
 	/* Free temp register */
 	if (tempreg != 0)
-		free_temp(rp, tempreg);
+		free_temp(fp, tempreg);
 }
 
 /**
  * Returns the first slot where we could possibly allow writing to dest,
  * according to register allocation.
  */
-static int get_earliest_allowed_write(struct r300_fragment_program *rp,
+static int get_earliest_allowed_write(struct r300_fragment_program *fp,
 				      GLuint dest, int mask)
 {
 	COMPILE_STATE;
@@ -1080,7 +1080,7 @@ static int get_earliest_allowed_write(struct r300_fragment_program *rp,
  *
  * @return the index of the slot
  */
-static int find_and_prepare_slot(struct r300_fragment_program *rp,
+static int find_and_prepare_slot(struct r300_fragment_program *fp,
 				 GLboolean emit_vop,
 				 GLboolean emit_sop,
 				 int argc, GLuint * src, GLuint dest, int mask)
@@ -1105,10 +1105,10 @@ static int find_and_prepare_slot(struct r300_fragment_program *rp,
 	if (emit_sop)
 		used |= SLOT_OP_SCALAR;
 
-	pos = get_earliest_allowed_write(rp, dest, mask);
+	pos = get_earliest_allowed_write(fp, dest, mask);
 
-	if (rp->node[rp->cur_node].alu_offset > pos)
-		pos = rp->node[rp->cur_node].alu_offset;
+	if (fp->node[fp->cur_node].alu_offset > pos)
+		pos = fp->node[fp->cur_node].alu_offset;
 	for (i = 0; i < argc; ++i) {
 		if (!REG_GET_BUILTIN(src[i])) {
 			if (emit_vop)
@@ -1117,7 +1117,7 @@ static int find_and_prepare_slot(struct r300_fragment_program *rp,
 				used |= s_swiz[REG_GET_SSWZ(src[i])].flags << i;
 		}
 
-		hwsrc[i] = t_hw_src(rp, src[i], GL_FALSE);	/* Note: sideeffects wrt refcounting! */
+		hwsrc[i] = t_hw_src(fp, src[i], GL_FALSE);	/* Note: sideeffects wrt refcounting! */
 		regnr = hwsrc[i] & 31;
 
 		if (REG_GET_TYPE(src[i]) == REG_TYPE_TEMP) {
@@ -1143,10 +1143,10 @@ static int find_and_prepare_slot(struct r300_fragment_program *rp,
 				return -1;
 			}
 
-			rp->alu.inst[pos].inst0 = NOP_INST0;
-			rp->alu.inst[pos].inst1 = NOP_INST1;
-			rp->alu.inst[pos].inst2 = NOP_INST2;
-			rp->alu.inst[pos].inst3 = NOP_INST3;
+			fp->alu.inst[pos].inst0 = NOP_INST0;
+			fp->alu.inst[pos].inst1 = NOP_INST1;
+			fp->alu.inst[pos].inst2 = NOP_INST2;
+			fp->alu.inst[pos].inst3 = NOP_INST3;
 
 			cs->nrslots++;
 		}
@@ -1223,14 +1223,14 @@ static int find_and_prepare_slot(struct r300_fragment_program *rp,
 	}
 
 	// Emit the source fetch code
-	rp->alu.inst[pos].inst1 &= ~R300_FPI1_SRC_MASK;
-	rp->alu.inst[pos].inst1 |=
+	fp->alu.inst[pos].inst1 &= ~R300_FPI1_SRC_MASK;
+	fp->alu.inst[pos].inst1 |=
 	    ((cs->slot[pos].vsrc[0] << R300_FPI1_SRC0C_SHIFT) |
 	     (cs->slot[pos].vsrc[1] << R300_FPI1_SRC1C_SHIFT) |
 	     (cs->slot[pos].vsrc[2] << R300_FPI1_SRC2C_SHIFT));
 
-	rp->alu.inst[pos].inst3 &= ~R300_FPI3_SRC_MASK;
-	rp->alu.inst[pos].inst3 |=
+	fp->alu.inst[pos].inst3 &= ~R300_FPI3_SRC_MASK;
+	fp->alu.inst[pos].inst3 |=
 	    ((cs->slot[pos].ssrc[0] << R300_FPI3_SRC0A_SHIFT) |
 	     (cs->slot[pos].ssrc[1] << R300_FPI3_SRC1A_SHIFT) |
 	     (cs->slot[pos].ssrc[2] << R300_FPI3_SRC2A_SHIFT));
@@ -1256,10 +1256,10 @@ static int find_and_prepare_slot(struct r300_fragment_program *rp,
 			}
 		}
 
-		rp->alu.inst[pos].inst0 &=
+		fp->alu.inst[pos].inst0 &=
 		    ~(R300_FPI0_ARG0C_MASK | R300_FPI0_ARG1C_MASK |
 		      R300_FPI0_ARG2C_MASK);
-		rp->alu.inst[pos].inst0 |=
+		fp->alu.inst[pos].inst0 |=
 		    (swz[0] << R300_FPI0_ARG0C_SHIFT) | (swz[1] <<
 							 R300_FPI0_ARG1C_SHIFT)
 		    | (swz[2] << R300_FPI0_ARG2C_SHIFT);
@@ -1285,10 +1285,10 @@ static int find_and_prepare_slot(struct r300_fragment_program *rp,
 			}
 		}
 
-		rp->alu.inst[pos].inst2 &=
+		fp->alu.inst[pos].inst2 &=
 		    ~(R300_FPI2_ARG0A_MASK | R300_FPI2_ARG1A_MASK |
 		      R300_FPI2_ARG2A_MASK);
-		rp->alu.inst[pos].inst2 |=
+		fp->alu.inst[pos].inst2 |=
 		    (swz[0] << R300_FPI2_ARG0A_SHIFT) | (swz[1] <<
 							 R300_FPI2_ARG1A_SHIFT)
 		    | (swz[2] << R300_FPI2_ARG2A_SHIFT);
@@ -1300,7 +1300,7 @@ static int find_and_prepare_slot(struct r300_fragment_program *rp,
 /**
  * Append an ALU instruction to the instruction list.
  */
-static void emit_arith(struct r300_fragment_program *rp,
+static void emit_arith(struct r300_fragment_program *fp,
 		       int op,
 		       GLuint dest,
 		       int mask,
@@ -1334,12 +1334,12 @@ static void emit_arith(struct r300_fragment_program *rp,
 		emit_sop = GL_TRUE;
 
 	pos =
-	    find_and_prepare_slot(rp, emit_vop, emit_sop, argc, src, dest,
+	    find_and_prepare_slot(fp, emit_vop, emit_sop, argc, src, dest,
 				  mask);
 	if (pos < 0)
 		return;
 
-	hwdest = t_hw_dst(rp, dest, GL_FALSE, pos);	/* Note: Side effects wrt register allocation */
+	hwdest = t_hw_dst(fp, dest, GL_FALSE, pos);	/* Note: Side effects wrt register allocation */
 
 	if (flags & PFS_FLAG_SAT) {
 		vop |= R300_FPI0_OUTC_SAT;
@@ -1348,19 +1348,19 @@ static void emit_arith(struct r300_fragment_program *rp,
 
 	/* Throw the pieces together and get FPI0/1 */
 	if (emit_vop) {
-		rp->alu.inst[pos].inst0 |= vop;
+		fp->alu.inst[pos].inst0 |= vop;
 
-		rp->alu.inst[pos].inst1 |= hwdest << R300_FPI1_DSTC_SHIFT;
+		fp->alu.inst[pos].inst1 |= hwdest << R300_FPI1_DSTC_SHIFT;
 
 		if (REG_GET_TYPE(dest) == REG_TYPE_OUTPUT) {
 			if (REG_GET_INDEX(dest) == FRAG_RESULT_COLR) {
-				rp->alu.inst[pos].inst1 |=
+				fp->alu.inst[pos].inst1 |=
 				    (mask & WRITEMASK_XYZ) <<
 				    R300_FPI1_DSTC_OUTPUT_MASK_SHIFT;
 			} else
 				assert(0);
 		} else {
-			rp->alu.inst[pos].inst1 |=
+			fp->alu.inst[pos].inst1 |=
 			    (mask & WRITEMASK_XYZ) <<
 			    R300_FPI1_DSTC_REG_MASK_SHIFT;
 
@@ -1370,22 +1370,22 @@ static void emit_arith(struct r300_fragment_program *rp,
 
 	/* And now FPI2/3 */
 	if (emit_sop) {
-		rp->alu.inst[pos].inst2 |= sop;
+		fp->alu.inst[pos].inst2 |= sop;
 
 		if (mask & WRITEMASK_W) {
 			if (REG_GET_TYPE(dest) == REG_TYPE_OUTPUT) {
 				if (REG_GET_INDEX(dest) == FRAG_RESULT_COLR) {
-					rp->alu.inst[pos].inst3 |=
+					fp->alu.inst[pos].inst3 |=
 					    (hwdest << R300_FPI3_DSTA_SHIFT) |
 					    R300_FPI3_DSTA_OUTPUT;
 				} else if (REG_GET_INDEX(dest) ==
 					   FRAG_RESULT_DEPR) {
-					rp->alu.inst[pos].inst3 |=
+					fp->alu.inst[pos].inst3 |=
 					    R300_FPI3_DSTA_DEPTH;
 				} else
 					assert(0);
 			} else {
-				rp->alu.inst[pos].inst3 |=
+				fp->alu.inst[pos].inst3 |=
 				    (hwdest << R300_FPI3_DSTA_SHIFT) |
 				    R300_FPI3_DSTA_REG;
 
@@ -1398,9 +1398,9 @@ static void emit_arith(struct r300_fragment_program *rp,
 }
 
 #if 0
-static GLuint get_attrib(struct r300_fragment_program *rp, GLuint attr)
+static GLuint get_attrib(struct r300_fragment_program *fp, GLuint attr)
 {
-	struct gl_fragment_program *mp = &rp->mesa_program;
+	struct gl_fragment_program *mp = &fp->mesa_program;
 	GLuint r = undef;
 
 	if (!(mp->Base.InputsRead & (1 << attr))) {
@@ -1455,7 +1455,7 @@ static GLfloat SinCosConsts[2][4] = {
 static const GLfloat LitConst[4] =
     { 127.999999, 127.999999, 127.999999, -127.999999 };
 
-static void emit_lit(struct r300_fragment_program *rp,
+static void emit_lit(struct r300_fragment_program *fp,
 		     GLuint dest, int mask, GLuint src, int flags)
 {
 	COMPILE_STATE;
@@ -1463,7 +1463,7 @@ static void emit_lit(struct r300_fragment_program *rp,
 	int needTemporary;
 	GLuint temp;
 
-	cnst = emit_const4fv(rp, LitConst);
+	cnst = emit_const4fv(fp, LitConst);
 
 	needTemporary = 0;
 	if ((mask & WRITEMASK_XYZW) != WRITEMASK_XYZW) {
@@ -1475,7 +1475,7 @@ static void emit_lit(struct r300_fragment_program *rp,
 	}
 
 	if (needTemporary) {
-		temp = keep(get_temp_reg(rp));
+		temp = keep(get_temp_reg(fp));
 	} else {
 		temp = keep(dest);
 	}
@@ -1486,49 +1486,49 @@ static void emit_lit(struct r300_fragment_program *rp,
 	// so swizzling between the two parts can create fake dependencies.
 
 	// First slot
-	emit_arith(rp, PFS_OP_MAX, temp, WRITEMASK_XY,
+	emit_arith(fp, PFS_OP_MAX, temp, WRITEMASK_XY,
 		   keep(src), pfs_zero, undef, 0);
-	emit_arith(rp, PFS_OP_MAX, temp, WRITEMASK_W, src, cnst, undef, 0);
+	emit_arith(fp, PFS_OP_MAX, temp, WRITEMASK_W, src, cnst, undef, 0);
 
 	// Second slot
-	emit_arith(rp, PFS_OP_MIN, temp, WRITEMASK_Z,
+	emit_arith(fp, PFS_OP_MIN, temp, WRITEMASK_Z,
 		   swizzle(temp, W, W, W, W), cnst, undef, 0);
-	emit_arith(rp, PFS_OP_LG2, temp, WRITEMASK_W,
+	emit_arith(fp, PFS_OP_LG2, temp, WRITEMASK_W,
 		   swizzle(temp, Y, Y, Y, Y), undef, undef, 0);
 
 	// Third slot
 	// If desired, we saturate the y result here.
 	// This does not affect the use as a condition variable in the CMP later
-	emit_arith(rp, PFS_OP_MAD, temp, WRITEMASK_W,
+	emit_arith(fp, PFS_OP_MAD, temp, WRITEMASK_W,
 		   temp, swizzle(temp, Z, Z, Z, Z), pfs_zero, 0);
-	emit_arith(rp, PFS_OP_MAD, temp, WRITEMASK_Y,
+	emit_arith(fp, PFS_OP_MAD, temp, WRITEMASK_Y,
 		   swizzle(temp, X, X, X, X), pfs_one, pfs_zero, flags);
 
 	// Fourth slot
-	emit_arith(rp, PFS_OP_MAD, temp, WRITEMASK_X,
+	emit_arith(fp, PFS_OP_MAD, temp, WRITEMASK_X,
 		   pfs_one, pfs_one, pfs_zero, 0);
-	emit_arith(rp, PFS_OP_EX2, temp, WRITEMASK_W, temp, undef, undef, 0);
+	emit_arith(fp, PFS_OP_EX2, temp, WRITEMASK_W, temp, undef, undef, 0);
 
 	// Fifth slot
-	emit_arith(rp, PFS_OP_CMP, temp, WRITEMASK_Z,
+	emit_arith(fp, PFS_OP_CMP, temp, WRITEMASK_Z,
 		   pfs_zero, swizzle(temp, W, W, W, W),
 		   negate(swizzle(temp, Y, Y, Y, Y)), flags);
-	emit_arith(rp, PFS_OP_MAD, temp, WRITEMASK_W, pfs_one, pfs_one,
+	emit_arith(fp, PFS_OP_MAD, temp, WRITEMASK_W, pfs_one, pfs_one,
 		   pfs_zero, 0);
 
 	if (needTemporary) {
-		emit_arith(rp, PFS_OP_MAD, dest, mask,
+		emit_arith(fp, PFS_OP_MAD, dest, mask,
 			   temp, pfs_one, pfs_zero, flags);
-		free_temp(rp, temp);
+		free_temp(fp, temp);
 	} else {
 		// Decrease refcount of the destination
-		t_hw_dst(rp, dest, GL_FALSE, cs->nrslots);
+		t_hw_dst(fp, dest, GL_FALSE, cs->nrslots);
 	}
 }
 
-static GLboolean parse_program(struct r300_fragment_program *rp)
+static GLboolean parse_program(struct r300_fragment_program *fp)
 {
-	struct gl_fragment_program *mp = &rp->mesa_program;
+	struct gl_fragment_program *mp = &fp->mesa_program;
 	const struct prog_instruction *inst = mp->Base.Instructions;
 	struct prog_instruction *fpi;
 	GLuint src[3], dest, temp[2];
@@ -1547,30 +1547,30 @@ static GLboolean parse_program(struct r300_fragment_program *rp)
 			flags = 0;
 
 		if (fpi->Opcode != OPCODE_KIL) {
-			dest = t_dst(rp, fpi->DstReg);
+			dest = t_dst(fp, fpi->DstReg);
 			mask = fpi->DstReg.WriteMask;
 		}
 
 		switch (fpi->Opcode) {
 		case OPCODE_ABS:
-			src[0] = t_src(rp, fpi->SrcReg[0]);
-			emit_arith(rp, PFS_OP_MAD, dest, mask,
+			src[0] = t_src(fp, fpi->SrcReg[0]);
+			emit_arith(fp, PFS_OP_MAD, dest, mask,
 				   absolute(src[0]), pfs_one, pfs_zero, flags);
 			break;
 		case OPCODE_ADD:
-			src[0] = t_src(rp, fpi->SrcReg[0]);
-			src[1] = t_src(rp, fpi->SrcReg[1]);
-			emit_arith(rp, PFS_OP_MAD, dest, mask,
+			src[0] = t_src(fp, fpi->SrcReg[0]);
+			src[1] = t_src(fp, fpi->SrcReg[1]);
+			emit_arith(fp, PFS_OP_MAD, dest, mask,
 				   src[0], pfs_one, src[1], flags);
 			break;
 		case OPCODE_CMP:
-			src[0] = t_src(rp, fpi->SrcReg[0]);
-			src[1] = t_src(rp, fpi->SrcReg[1]);
-			src[2] = t_src(rp, fpi->SrcReg[2]);
+			src[0] = t_src(fp, fpi->SrcReg[0]);
+			src[1] = t_src(fp, fpi->SrcReg[1]);
+			src[2] = t_src(fp, fpi->SrcReg[2]);
 			/* ARB_f_p - if src0.c < 0.0 ? src1.c : src2.c
 			 *    r300 - if src2.c < 0.0 ? src1.c : src0.c
 			 */
-			emit_arith(rp, PFS_OP_CMP, dest, mask,
+			emit_arith(fp, PFS_OP_CMP, dest, mask,
 				   src[2], src[1], src[0], flags);
 			break;
 		case OPCODE_COS:
@@ -1582,206 +1582,206 @@ static GLboolean parse_program(struct r300_fragment_program *rp)
 			 *   x = (x*2*PI)-PI
 			 *   result = sin(x)
 			 */
-			temp[0] = get_temp_reg(rp);
-			const_sin[0] = emit_const4fv(rp, SinCosConsts[0]);
-			const_sin[1] = emit_const4fv(rp, SinCosConsts[1]);
-			src[0] = t_scalar_src(rp, fpi->SrcReg[0]);
+			temp[0] = get_temp_reg(fp);
+			const_sin[0] = emit_const4fv(fp, SinCosConsts[0]);
+			const_sin[1] = emit_const4fv(fp, SinCosConsts[1]);
+			src[0] = t_scalar_src(fp, fpi->SrcReg[0]);
 
 			/* add 0.5*PI and do range reduction */
 
-			emit_arith(rp, PFS_OP_MAD, temp[0], WRITEMASK_X,
+			emit_arith(fp, PFS_OP_MAD, temp[0], WRITEMASK_X,
 				   swizzle(src[0], X, X, X, X),
 				   swizzle(const_sin[1], Z, Z, Z, Z),
 				   swizzle(const_sin[1], X, X, X, X), 0);
 
-			emit_arith(rp, PFS_OP_FRC, temp[0], WRITEMASK_X,
+			emit_arith(fp, PFS_OP_FRC, temp[0], WRITEMASK_X,
 				   swizzle(temp[0], X, X, X, X),
 				   undef, undef, 0);
 
-			emit_arith(rp, PFS_OP_MAD, temp[0], WRITEMASK_Z, swizzle(temp[0], X, X, X, X), swizzle(const_sin[1], W, W, W, W),	//2*PI
+			emit_arith(fp, PFS_OP_MAD, temp[0], WRITEMASK_Z, swizzle(temp[0], X, X, X, X), swizzle(const_sin[1], W, W, W, W),	//2*PI
 				   negate(swizzle(const_sin[0], Z, Z, Z, Z)),	//-PI
 				   0);
 
 			/* SIN */
 
-			emit_arith(rp, PFS_OP_MAD, temp[0],
+			emit_arith(fp, PFS_OP_MAD, temp[0],
 				   WRITEMASK_X | WRITEMASK_Y, swizzle(temp[0],
 								      Z, Z, Z,
 								      Z),
 				   const_sin[0], pfs_zero, 0);
 
-			emit_arith(rp, PFS_OP_MAD, temp[0], WRITEMASK_X,
+			emit_arith(fp, PFS_OP_MAD, temp[0], WRITEMASK_X,
 				   swizzle(temp[0], Y, Y, Y, Y),
 				   absolute(swizzle(temp[0], Z, Z, Z, Z)),
 				   swizzle(temp[0], X, X, X, X), 0);
 
-			emit_arith(rp, PFS_OP_MAD, temp[0], WRITEMASK_Y,
+			emit_arith(fp, PFS_OP_MAD, temp[0], WRITEMASK_Y,
 				   swizzle(temp[0], X, X, X, X),
 				   absolute(swizzle(temp[0], X, X, X, X)),
 				   negate(swizzle(temp[0], X, X, X, X)), 0);
 
-			emit_arith(rp, PFS_OP_MAD, dest, mask,
+			emit_arith(fp, PFS_OP_MAD, dest, mask,
 				   swizzle(temp[0], Y, Y, Y, Y),
 				   swizzle(const_sin[0], W, W, W, W),
 				   swizzle(temp[0], X, X, X, X), flags);
 
-			free_temp(rp, temp[0]);
+			free_temp(fp, temp[0]);
 			break;
 		case OPCODE_DP3:
-			src[0] = t_src(rp, fpi->SrcReg[0]);
-			src[1] = t_src(rp, fpi->SrcReg[1]);
-			emit_arith(rp, PFS_OP_DP3, dest, mask,
+			src[0] = t_src(fp, fpi->SrcReg[0]);
+			src[1] = t_src(fp, fpi->SrcReg[1]);
+			emit_arith(fp, PFS_OP_DP3, dest, mask,
 				   src[0], src[1], undef, flags);
 			break;
 		case OPCODE_DP4:
-			src[0] = t_src(rp, fpi->SrcReg[0]);
-			src[1] = t_src(rp, fpi->SrcReg[1]);
-			emit_arith(rp, PFS_OP_DP4, dest, mask,
+			src[0] = t_src(fp, fpi->SrcReg[0]);
+			src[1] = t_src(fp, fpi->SrcReg[1]);
+			emit_arith(fp, PFS_OP_DP4, dest, mask,
 				   src[0], src[1], undef, flags);
 			break;
 		case OPCODE_DPH:
-			src[0] = t_src(rp, fpi->SrcReg[0]);
-			src[1] = t_src(rp, fpi->SrcReg[1]);
+			src[0] = t_src(fp, fpi->SrcReg[0]);
+			src[1] = t_src(fp, fpi->SrcReg[1]);
 			/* src0.xyz1 -> temp
 			 * DP4 dest, temp, src1
 			 */
 #if 0
-			temp[0] = get_temp_reg(rp);
+			temp[0] = get_temp_reg(fp);
 			src[0].s_swz = SWIZZLE_ONE;
-			emit_arith(rp, PFS_OP_MAD, temp[0], mask,
+			emit_arith(fp, PFS_OP_MAD, temp[0], mask,
 				   src[0], pfs_one, pfs_zero, 0);
-			emit_arith(rp, PFS_OP_DP4, dest, mask,
+			emit_arith(fp, PFS_OP_DP4, dest, mask,
 				   temp[0], src[1], undef, flags);
-			free_temp(rp, temp[0]);
+			free_temp(fp, temp[0]);
 #else
-			emit_arith(rp, PFS_OP_DP4, dest, mask,
+			emit_arith(fp, PFS_OP_DP4, dest, mask,
 				   swizzle(src[0], X, Y, Z, ONE), src[1],
 				   undef, flags);
 #endif
 			break;
 		case OPCODE_DST:
-			src[0] = t_src(rp, fpi->SrcReg[0]);
-			src[1] = t_src(rp, fpi->SrcReg[1]);
+			src[0] = t_src(fp, fpi->SrcReg[0]);
+			src[1] = t_src(fp, fpi->SrcReg[1]);
 			/* dest.y = src0.y * src1.y */
 			if (mask & WRITEMASK_Y)
-				emit_arith(rp, PFS_OP_MAD, dest, WRITEMASK_Y,
+				emit_arith(fp, PFS_OP_MAD, dest, WRITEMASK_Y,
 					   keep(src[0]), keep(src[1]),
 					   pfs_zero, flags);
 			/* dest.z = src0.z */
 			if (mask & WRITEMASK_Z)
-				emit_arith(rp, PFS_OP_MAD, dest, WRITEMASK_Z,
+				emit_arith(fp, PFS_OP_MAD, dest, WRITEMASK_Z,
 					   src[0], pfs_one, pfs_zero, flags);
 			/* result.x = 1.0
 			 * result.w = src1.w */
 			if (mask & WRITEMASK_XW) {
 				REG_SET_VSWZ(src[1], SWIZZLE_111);	/*Cheat */
-				emit_arith(rp, PFS_OP_MAD, dest,
+				emit_arith(fp, PFS_OP_MAD, dest,
 					   mask & WRITEMASK_XW,
 					   src[1], pfs_one, pfs_zero, flags);
 			}
 			break;
 		case OPCODE_EX2:
-			src[0] = t_scalar_src(rp, fpi->SrcReg[0]);
-			emit_arith(rp, PFS_OP_EX2, dest, mask,
+			src[0] = t_scalar_src(fp, fpi->SrcReg[0]);
+			emit_arith(fp, PFS_OP_EX2, dest, mask,
 				   src[0], undef, undef, flags);
 			break;
 		case OPCODE_FLR:
-			src[0] = t_src(rp, fpi->SrcReg[0]);
-			temp[0] = get_temp_reg(rp);
+			src[0] = t_src(fp, fpi->SrcReg[0]);
+			temp[0] = get_temp_reg(fp);
 			/* FRC temp, src0
 			 * MAD dest, src0, 1.0, -temp
 			 */
-			emit_arith(rp, PFS_OP_FRC, temp[0], mask,
+			emit_arith(fp, PFS_OP_FRC, temp[0], mask,
 				   keep(src[0]), undef, undef, 0);
-			emit_arith(rp, PFS_OP_MAD, dest, mask,
+			emit_arith(fp, PFS_OP_MAD, dest, mask,
 				   src[0], pfs_one, negate(temp[0]), flags);
-			free_temp(rp, temp[0]);
+			free_temp(fp, temp[0]);
 			break;
 		case OPCODE_FRC:
-			src[0] = t_src(rp, fpi->SrcReg[0]);
-			emit_arith(rp, PFS_OP_FRC, dest, mask,
+			src[0] = t_src(fp, fpi->SrcReg[0]);
+			emit_arith(fp, PFS_OP_FRC, dest, mask,
 				   src[0], undef, undef, flags);
 			break;
 		case OPCODE_KIL:
-			emit_tex(rp, fpi, R300_FPITX_OP_KIL);
+			emit_tex(fp, fpi, R300_FPITX_OP_KIL);
 			break;
 		case OPCODE_LG2:
-			src[0] = t_scalar_src(rp, fpi->SrcReg[0]);
-			emit_arith(rp, PFS_OP_LG2, dest, mask,
+			src[0] = t_scalar_src(fp, fpi->SrcReg[0]);
+			emit_arith(fp, PFS_OP_LG2, dest, mask,
 				   src[0], undef, undef, flags);
 			break;
 		case OPCODE_LIT:
-			src[0] = t_src(rp, fpi->SrcReg[0]);
-			emit_lit(rp, dest, mask, src[0], flags);
+			src[0] = t_src(fp, fpi->SrcReg[0]);
+			emit_lit(fp, dest, mask, src[0], flags);
 			break;
 		case OPCODE_LRP:
-			src[0] = t_src(rp, fpi->SrcReg[0]);
-			src[1] = t_src(rp, fpi->SrcReg[1]);
-			src[2] = t_src(rp, fpi->SrcReg[2]);
+			src[0] = t_src(fp, fpi->SrcReg[0]);
+			src[1] = t_src(fp, fpi->SrcReg[1]);
+			src[2] = t_src(fp, fpi->SrcReg[2]);
 			/* result = tmp0tmp1 + (1 - tmp0)tmp2
 			 *        = tmp0tmp1 + tmp2 + (-tmp0)tmp2
 			 *     MAD temp, -tmp0, tmp2, tmp2
 			 *     MAD result, tmp0, tmp1, temp
 			 */
-			temp[0] = get_temp_reg(rp);
-			emit_arith(rp, PFS_OP_MAD, temp[0], mask,
+			temp[0] = get_temp_reg(fp);
+			emit_arith(fp, PFS_OP_MAD, temp[0], mask,
 				   negate(keep(src[0])), keep(src[2]), src[2],
 				   0);
-			emit_arith(rp, PFS_OP_MAD, dest, mask,
+			emit_arith(fp, PFS_OP_MAD, dest, mask,
 				   src[0], src[1], temp[0], flags);
-			free_temp(rp, temp[0]);
+			free_temp(fp, temp[0]);
 			break;
 		case OPCODE_MAD:
-			src[0] = t_src(rp, fpi->SrcReg[0]);
-			src[1] = t_src(rp, fpi->SrcReg[1]);
-			src[2] = t_src(rp, fpi->SrcReg[2]);
-			emit_arith(rp, PFS_OP_MAD, dest, mask,
+			src[0] = t_src(fp, fpi->SrcReg[0]);
+			src[1] = t_src(fp, fpi->SrcReg[1]);
+			src[2] = t_src(fp, fpi->SrcReg[2]);
+			emit_arith(fp, PFS_OP_MAD, dest, mask,
 				   src[0], src[1], src[2], flags);
 			break;
 		case OPCODE_MAX:
-			src[0] = t_src(rp, fpi->SrcReg[0]);
-			src[1] = t_src(rp, fpi->SrcReg[1]);
-			emit_arith(rp, PFS_OP_MAX, dest, mask,
+			src[0] = t_src(fp, fpi->SrcReg[0]);
+			src[1] = t_src(fp, fpi->SrcReg[1]);
+			emit_arith(fp, PFS_OP_MAX, dest, mask,
 				   src[0], src[1], undef, flags);
 			break;
 		case OPCODE_MIN:
-			src[0] = t_src(rp, fpi->SrcReg[0]);
-			src[1] = t_src(rp, fpi->SrcReg[1]);
-			emit_arith(rp, PFS_OP_MIN, dest, mask,
+			src[0] = t_src(fp, fpi->SrcReg[0]);
+			src[1] = t_src(fp, fpi->SrcReg[1]);
+			emit_arith(fp, PFS_OP_MIN, dest, mask,
 				   src[0], src[1], undef, flags);
 			break;
 		case OPCODE_MOV:
 		case OPCODE_SWZ:
-			src[0] = t_src(rp, fpi->SrcReg[0]);
-			emit_arith(rp, PFS_OP_MAD, dest, mask,
+			src[0] = t_src(fp, fpi->SrcReg[0]);
+			emit_arith(fp, PFS_OP_MAD, dest, mask,
 				   src[0], pfs_one, pfs_zero, flags);
 			break;
 		case OPCODE_MUL:
-			src[0] = t_src(rp, fpi->SrcReg[0]);
-			src[1] = t_src(rp, fpi->SrcReg[1]);
-			emit_arith(rp, PFS_OP_MAD, dest, mask,
+			src[0] = t_src(fp, fpi->SrcReg[0]);
+			src[1] = t_src(fp, fpi->SrcReg[1]);
+			emit_arith(fp, PFS_OP_MAD, dest, mask,
 				   src[0], src[1], pfs_zero, flags);
 			break;
 		case OPCODE_POW:
-			src[0] = t_scalar_src(rp, fpi->SrcReg[0]);
-			src[1] = t_scalar_src(rp, fpi->SrcReg[1]);
-			temp[0] = get_temp_reg(rp);
-			emit_arith(rp, PFS_OP_LG2, temp[0], WRITEMASK_W,
+			src[0] = t_scalar_src(fp, fpi->SrcReg[0]);
+			src[1] = t_scalar_src(fp, fpi->SrcReg[1]);
+			temp[0] = get_temp_reg(fp);
+			emit_arith(fp, PFS_OP_LG2, temp[0], WRITEMASK_W,
 				   src[0], undef, undef, 0);
-			emit_arith(rp, PFS_OP_MAD, temp[0], WRITEMASK_W,
+			emit_arith(fp, PFS_OP_MAD, temp[0], WRITEMASK_W,
 				   temp[0], src[1], pfs_zero, 0);
-			emit_arith(rp, PFS_OP_EX2, dest, fpi->DstReg.WriteMask,
+			emit_arith(fp, PFS_OP_EX2, dest, fpi->DstReg.WriteMask,
 				   temp[0], undef, undef, 0);
-			free_temp(rp, temp[0]);
+			free_temp(fp, temp[0]);
 			break;
 		case OPCODE_RCP:
-			src[0] = t_scalar_src(rp, fpi->SrcReg[0]);
-			emit_arith(rp, PFS_OP_RCP, dest, mask,
+			src[0] = t_scalar_src(fp, fpi->SrcReg[0]);
+			emit_arith(fp, PFS_OP_RCP, dest, mask,
 				   src[0], undef, undef, flags);
 			break;
 		case OPCODE_RSQ:
-			src[0] = t_scalar_src(rp, fpi->SrcReg[0]);
-			emit_arith(rp, PFS_OP_RSQ, dest, mask,
+			src[0] = t_scalar_src(fp, fpi->SrcReg[0]);
+			emit_arith(fp, PFS_OP_RSQ, dest, mask,
 				   absolute(src[0]), pfs_zero, pfs_zero, flags);
 			break;
 		case OPCODE_SCS:
@@ -1792,51 +1792,51 @@ static GLboolean parse_program(struct r300_fragment_program *rp)
 			 *   result.y = sin(x)               (sin)
 			 *
 			 */
-			temp[0] = get_temp_reg(rp);
-			temp[1] = get_temp_reg(rp);
-			const_sin[0] = emit_const4fv(rp, SinCosConsts[0]);
-			const_sin[1] = emit_const4fv(rp, SinCosConsts[1]);
-			src[0] = t_scalar_src(rp, fpi->SrcReg[0]);
+			temp[0] = get_temp_reg(fp);
+			temp[1] = get_temp_reg(fp);
+			const_sin[0] = emit_const4fv(fp, SinCosConsts[0]);
+			const_sin[1] = emit_const4fv(fp, SinCosConsts[1]);
+			src[0] = t_scalar_src(fp, fpi->SrcReg[0]);
 
 			/* x = -abs(x)+0.5*PI */
-			emit_arith(rp, PFS_OP_MAD, temp[0], WRITEMASK_Z, swizzle(const_sin[0], Z, Z, Z, Z),	//PI
+			emit_arith(fp, PFS_OP_MAD, temp[0], WRITEMASK_Z, swizzle(const_sin[0], Z, Z, Z, Z),	//PI
 				   pfs_half,
 				   negate(abs
 					  (swizzle(keep(src[0]), X, X, X, X))),
 				   0);
 
 			/* C*x (sin) */
-			emit_arith(rp, PFS_OP_MAD, temp[0], WRITEMASK_W,
+			emit_arith(fp, PFS_OP_MAD, temp[0], WRITEMASK_W,
 				   swizzle(const_sin[0], Y, Y, Y, Y),
 				   swizzle(keep(src[0]), X, X, X, X),
 				   pfs_zero, 0);
 
 			/* B*x, C*x (cos) */
-			emit_arith(rp, PFS_OP_MAD, temp[0],
+			emit_arith(fp, PFS_OP_MAD, temp[0],
 				   WRITEMASK_X | WRITEMASK_Y, swizzle(temp[0],
 								      Z, Z, Z,
 								      Z),
 				   const_sin[0], pfs_zero, 0);
 
 			/* B*x (sin) */
-			emit_arith(rp, PFS_OP_MAD, temp[1], WRITEMASK_W,
+			emit_arith(fp, PFS_OP_MAD, temp[1], WRITEMASK_W,
 				   swizzle(const_sin[0], X, X, X, X),
 				   keep(src[0]), pfs_zero, 0);
 
 			/* y = B*x + C*x*abs(x) (sin) */
-			emit_arith(rp, PFS_OP_MAD, temp[1], WRITEMASK_Z,
+			emit_arith(fp, PFS_OP_MAD, temp[1], WRITEMASK_Z,
 				   absolute(src[0]),
 				   swizzle(temp[0], W, W, W, W),
 				   swizzle(temp[1], W, W, W, W), 0);
 
 			/* y = B*x + C*x*abs(x) (cos) */
-			emit_arith(rp, PFS_OP_MAD, temp[1], WRITEMASK_W,
+			emit_arith(fp, PFS_OP_MAD, temp[1], WRITEMASK_W,
 				   swizzle(temp[0], Y, Y, Y, Y),
 				   absolute(swizzle(temp[0], Z, Z, Z, Z)),
 				   swizzle(temp[0], X, X, X, X), 0);
 
 			/* y*abs(y) - y (cos), y*abs(y) - y (sin) */
-			emit_arith(rp, PFS_OP_MAD, temp[0],
+			emit_arith(fp, PFS_OP_MAD, temp[0],
 				   WRITEMASK_X | WRITEMASK_Y, swizzle(temp[1],
 								      W, Z, Y,
 								      X),
@@ -1844,26 +1844,26 @@ static GLboolean parse_program(struct r300_fragment_program *rp)
 				   negate(swizzle(temp[1], W, Z, Y, X)), 0);
 
 			/* dest.xy = mad(temp.xy, P, temp2.wz) */
-			emit_arith(rp, PFS_OP_MAD, dest,
+			emit_arith(fp, PFS_OP_MAD, dest,
 				   mask & (WRITEMASK_X | WRITEMASK_Y), temp[0],
 				   swizzle(const_sin[0], W, W, W, W),
 				   swizzle(temp[1], W, Z, Y, X), flags);
 
-			free_temp(rp, temp[0]);
-			free_temp(rp, temp[1]);
+			free_temp(fp, temp[0]);
+			free_temp(fp, temp[1]);
 			break;
 		case OPCODE_SGE:
-			src[0] = t_src(rp, fpi->SrcReg[0]);
-			src[1] = t_src(rp, fpi->SrcReg[1]);
-			temp[0] = get_temp_reg(rp);
+			src[0] = t_src(fp, fpi->SrcReg[0]);
+			src[1] = t_src(fp, fpi->SrcReg[1]);
+			temp[0] = get_temp_reg(fp);
 			/* temp = src0 - src1
 			 * dest.c = (temp.c < 0.0) ? 0 : 1
 			 */
-			emit_arith(rp, PFS_OP_MAD, temp[0], mask,
+			emit_arith(fp, PFS_OP_MAD, temp[0], mask,
 				   src[0], pfs_one, negate(src[1]), 0);
-			emit_arith(rp, PFS_OP_CMP, dest, mask,
+			emit_arith(fp, PFS_OP_CMP, dest, mask,
 				   pfs_one, pfs_zero, temp[0], 0);
-			free_temp(rp, temp[0]);
+			free_temp(fp, temp[0]);
 			break;
 		case OPCODE_SIN:
 			/*
@@ -1873,85 +1873,85 @@ static GLboolean parse_program(struct r300_fragment_program *rp)
 			 * itself squared.
 			 */
 
-			temp[0] = get_temp_reg(rp);
-			const_sin[0] = emit_const4fv(rp, SinCosConsts[0]);
-			const_sin[1] = emit_const4fv(rp, SinCosConsts[1]);
-			src[0] = t_scalar_src(rp, fpi->SrcReg[0]);
+			temp[0] = get_temp_reg(fp);
+			const_sin[0] = emit_const4fv(fp, SinCosConsts[0]);
+			const_sin[1] = emit_const4fv(fp, SinCosConsts[1]);
+			src[0] = t_scalar_src(fp, fpi->SrcReg[0]);
 
 			/* do range reduction */
 
-			emit_arith(rp, PFS_OP_MAD, temp[0], WRITEMASK_X,
+			emit_arith(fp, PFS_OP_MAD, temp[0], WRITEMASK_X,
 				   swizzle(keep(src[0]), X, X, X, X),
 				   swizzle(const_sin[1], Z, Z, Z, Z),
 				   pfs_half, 0);
 
-			emit_arith(rp, PFS_OP_FRC, temp[0], WRITEMASK_X,
+			emit_arith(fp, PFS_OP_FRC, temp[0], WRITEMASK_X,
 				   swizzle(temp[0], X, X, X, X),
 				   undef, undef, 0);
 
-			emit_arith(rp, PFS_OP_MAD, temp[0], WRITEMASK_Z, swizzle(temp[0], X, X, X, X), swizzle(const_sin[1], W, W, W, W),	//2*PI
+			emit_arith(fp, PFS_OP_MAD, temp[0], WRITEMASK_Z, swizzle(temp[0], X, X, X, X), swizzle(const_sin[1], W, W, W, W),	//2*PI
 				   negate(swizzle(const_sin[0], Z, Z, Z, Z)),	//PI
 				   0);
 
 			/* SIN */
 
-			emit_arith(rp, PFS_OP_MAD, temp[0],
+			emit_arith(fp, PFS_OP_MAD, temp[0],
 				   WRITEMASK_X | WRITEMASK_Y, swizzle(temp[0],
 								      Z, Z, Z,
 								      Z),
 				   const_sin[0], pfs_zero, 0);
 
-			emit_arith(rp, PFS_OP_MAD, temp[0], WRITEMASK_X,
+			emit_arith(fp, PFS_OP_MAD, temp[0], WRITEMASK_X,
 				   swizzle(temp[0], Y, Y, Y, Y),
 				   absolute(swizzle(temp[0], Z, Z, Z, Z)),
 				   swizzle(temp[0], X, X, X, X), 0);
 
-			emit_arith(rp, PFS_OP_MAD, temp[0], WRITEMASK_Y,
+			emit_arith(fp, PFS_OP_MAD, temp[0], WRITEMASK_Y,
 				   swizzle(temp[0], X, X, X, X),
 				   absolute(swizzle(temp[0], X, X, X, X)),
 				   negate(swizzle(temp[0], X, X, X, X)), 0);
 
-			emit_arith(rp, PFS_OP_MAD, dest, mask,
+			emit_arith(fp, PFS_OP_MAD, dest, mask,
 				   swizzle(temp[0], Y, Y, Y, Y),
 				   swizzle(const_sin[0], W, W, W, W),
 				   swizzle(temp[0], X, X, X, X), flags);
 
-			free_temp(rp, temp[0]);
+			free_temp(fp, temp[0]);
 			break;
 		case OPCODE_SLT:
-			src[0] = t_src(rp, fpi->SrcReg[0]);
-			src[1] = t_src(rp, fpi->SrcReg[1]);
-			temp[0] = get_temp_reg(rp);
+			src[0] = t_src(fp, fpi->SrcReg[0]);
+			src[1] = t_src(fp, fpi->SrcReg[1]);
+			temp[0] = get_temp_reg(fp);
 			/* temp = src0 - src1
 			 * dest.c = (temp.c < 0.0) ? 1 : 0
 			 */
-			emit_arith(rp, PFS_OP_MAD, temp[0], mask,
+			emit_arith(fp, PFS_OP_MAD, temp[0], mask,
 				   src[0], pfs_one, negate(src[1]), 0);
-			emit_arith(rp, PFS_OP_CMP, dest, mask,
+			emit_arith(fp, PFS_OP_CMP, dest, mask,
 				   pfs_zero, pfs_one, temp[0], 0);
-			free_temp(rp, temp[0]);
+			free_temp(fp, temp[0]);
 			break;
 		case OPCODE_SUB:
-			src[0] = t_src(rp, fpi->SrcReg[0]);
-			src[1] = t_src(rp, fpi->SrcReg[1]);
-			emit_arith(rp, PFS_OP_MAD, dest, mask,
+			src[0] = t_src(fp, fpi->SrcReg[0]);
+			src[1] = t_src(fp, fpi->SrcReg[1]);
+			emit_arith(fp, PFS_OP_MAD, dest, mask,
 				   src[0], pfs_one, negate(src[1]), flags);
 			break;
 		case OPCODE_TEX:
-			emit_tex(rp, fpi, R300_FPITX_OP_TEX);
+			emit_tex(fp, fpi, R300_FPITX_OP_TEX);
 			break;
 		case OPCODE_TXB:
-			emit_tex(rp, fpi, R300_FPITX_OP_TXB);
+			emit_tex(fp, fpi, R300_FPITX_OP_TXB);
 			break;
 		case OPCODE_TXP:
-			emit_tex(rp, fpi, R300_FPITX_OP_TXP);
+			emit_tex(fp, fpi, R300_FPITX_OP_TXP);
 			break;
 		case OPCODE_XPD:{
-				src[0] = t_src(rp, fpi->SrcReg[0]);
-				src[1] = t_src(rp, fpi->SrcReg[1]);
-				temp[0] = get_temp_reg(rp);
+				src[0] = t_src(fp, fpi->SrcReg[0]);
+				src[1] = t_src(fp, fpi->SrcReg[1]);
+				temp[0] = get_temp_reg(fp);
 				/* temp = src0.zxy * src1.yzx */
-				emit_arith(rp, PFS_OP_MAD, temp[0],
+				emit_arith(fp, PFS_OP_MAD, temp[0],
 					   WRITEMASK_XYZ, swizzle(keep(src[0]),
 								  Z, X, Y, W),
 					   swizzle(keep(src[1]), Y, Z, X, W),
@@ -1959,14 +1959,14 @@ static GLboolean parse_program(struct r300_fragment_program *rp)
 				/* dest.xyz = src0.yzx * src1.zxy - temp
 				 * dest.w       = undefined
 				 * */
-				emit_arith(rp, PFS_OP_MAD, dest,
+				emit_arith(fp, PFS_OP_MAD, dest,
 					   mask & WRITEMASK_XYZ, swizzle(src[0],
 									 Y, Z,
 									 X, W),
 					   swizzle(src[1], Z, X, Y, W),
 					   negate(temp[0]), flags);
 				/* cleanup */
-				free_temp(rp, temp[0]);
+				free_temp(fp, temp[0]);
 				break;
 			}
 		default:
@@ -1974,7 +1974,7 @@ static GLboolean parse_program(struct r300_fragment_program *rp)
 			break;
 		}
 
-		if (rp->error)
+		if (fp->error)
 			return GL_FALSE;
 
 	}
@@ -2077,30 +2077,30 @@ static void insert_wpos(struct gl_program *prog)
 /* - Init structures
  * - Determine what hwregs each input corresponds to
  */
-static void init_program(r300ContextPtr r300, struct r300_fragment_program *rp)
+static void init_program(r300ContextPtr r300, struct r300_fragment_program *fp)
 {
 	struct r300_pfs_compile_state *cs = NULL;
-	struct gl_fragment_program *mp = &rp->mesa_program;
+	struct gl_fragment_program *mp = &fp->mesa_program;
 	struct prog_instruction *fpi;
 	GLuint InputsRead = mp->Base.InputsRead;
-	GLuint temps_used = 0;	/* for rp->temps[] */
+	GLuint temps_used = 0;	/* for fp->temps[] */
 	int i, j;
 
 	/* New compile, reset tracking data */
-	rp->optimization =
+	fp->optimization =
 	    driQueryOptioni(&r300->radeon.optionCache, "fp_optimization");
-	rp->translated = GL_FALSE;
-	rp->error = GL_FALSE;
-	rp->cs = cs = &(R300_CONTEXT(rp->ctx)->state.pfs_compile);
-	rp->tex.length = 0;
-	rp->cur_node = 0;
-	rp->first_node_has_tex = 0;
-	rp->const_nr = 0;
-	rp->max_temp_idx = 0;
-	rp->node[0].alu_end = -1;
-	rp->node[0].tex_end = -1;
+	fp->translated = GL_FALSE;
+	fp->error = GL_FALSE;
+	fp->cs = cs = &(R300_CONTEXT(fp->ctx)->state.pfs_compile);
+	fp->tex.length = 0;
+	fp->cur_node = 0;
+	fp->first_node_has_tex = 0;
+	fp->const_nr = 0;
+	fp->max_temp_idx = 0;
+	fp->node[0].alu_end = -1;
+	fp->node[0].tex_end = -1;
 
-	_mesa_memset(cs, 0, sizeof(*rp->cs));
+	_mesa_memset(cs, 0, sizeof(*fp->cs));
 	for (i = 0; i < PFS_MAX_ALU_INST; i++) {
 		for (j = 0; j < 3; j++) {
 			cs->slot[i].vsrc[j] = SRC_CONST;
@@ -2117,11 +2117,11 @@ static void init_program(r300ContextPtr r300, struct r300_fragment_program *rp)
 	 */
 
 	/* Texcoords come first */
-	for (i = 0; i < rp->ctx->Const.MaxTextureUnits; i++) {
+	for (i = 0; i < fp->ctx->Const.MaxTextureUnits; i++) {
 		if (InputsRead & (FRAG_BIT_TEX0 << i)) {
 			cs->inputs[FRAG_ATTRIB_TEX0 + i].refcount = 0;
 			cs->inputs[FRAG_ATTRIB_TEX0 + i].reg =
-			    get_hw_temp(rp, 0);
+			    get_hw_temp(fp, 0);
 		}
 	}
 	InputsRead &= ~FRAG_BITS_TEX_ANY;
@@ -2129,7 +2129,7 @@ static void init_program(r300ContextPtr r300, struct r300_fragment_program *rp)
 	/* fragment position treated as a texcoord */
 	if (InputsRead & FRAG_BIT_WPOS) {
 		cs->inputs[FRAG_ATTRIB_WPOS].refcount = 0;
-		cs->inputs[FRAG_ATTRIB_WPOS].reg = get_hw_temp(rp, 0);
+		cs->inputs[FRAG_ATTRIB_WPOS].reg = get_hw_temp(fp, 0);
 		insert_wpos(&mp->Base);
 	}
 	InputsRead &= ~FRAG_BIT_WPOS;
@@ -2137,14 +2137,14 @@ static void init_program(r300ContextPtr r300, struct r300_fragment_program *rp)
 	/* Then primary colour */
 	if (InputsRead & FRAG_BIT_COL0) {
 		cs->inputs[FRAG_ATTRIB_COL0].refcount = 0;
-		cs->inputs[FRAG_ATTRIB_COL0].reg = get_hw_temp(rp, 0);
+		cs->inputs[FRAG_ATTRIB_COL0].reg = get_hw_temp(fp, 0);
 	}
 	InputsRead &= ~FRAG_BIT_COL0;
 
 	/* Secondary color */
 	if (InputsRead & FRAG_BIT_COL1) {
 		cs->inputs[FRAG_ATTRIB_COL1].refcount = 0;
-		cs->inputs[FRAG_ATTRIB_COL1].reg = get_hw_temp(rp, 0);
+		cs->inputs[FRAG_ATTRIB_COL1].reg = get_hw_temp(fp, 0);
 	}
 	InputsRead &= ~FRAG_BIT_COL1;
 
@@ -2200,53 +2200,53 @@ static void init_program(r300ContextPtr r300, struct r300_fragment_program *rp)
 	cs->temp_in_use = temps_used;
 }
 
-static void update_params(struct r300_fragment_program *rp)
+static void update_params(struct r300_fragment_program *fp)
 {
-	struct gl_fragment_program *mp = &rp->mesa_program;
+	struct gl_fragment_program *mp = &fp->mesa_program;
 
 	/* Ask Mesa nicely to fill in ParameterValues for us */
 	if (mp->Base.Parameters)
-		_mesa_load_state_parameters(rp->ctx, mp->Base.Parameters);
+		_mesa_load_state_parameters(fp->ctx, mp->Base.Parameters);
 }
 
 void r300TranslateFragmentShader(r300ContextPtr r300,
-				 struct r300_fragment_program *rp)
+				 struct r300_fragment_program *fp)
 {
 	struct r300_pfs_compile_state *cs = NULL;
 
-	if (!rp->translated) {
+	if (!fp->translated) {
 
-		init_program(r300, rp);
-		cs = rp->cs;
+		init_program(r300, fp);
+		cs = fp->cs;
 
-		if (parse_program(rp) == GL_FALSE) {
-			dump_program(rp);
+		if (parse_program(fp) == GL_FALSE) {
+			dump_program(fp);
 			return;
 		}
 
 		/* Finish off */
-		rp->node[rp->cur_node].alu_end =
-		    cs->nrslots - rp->node[rp->cur_node].alu_offset - 1;
-		if (rp->node[rp->cur_node].tex_end < 0)
-			rp->node[rp->cur_node].tex_end = 0;
-		rp->alu_offset = 0;
-		rp->alu_end = cs->nrslots - 1;
-		rp->tex_offset = 0;
-		rp->tex_end = rp->tex.length ? rp->tex.length - 1 : 0;
-		assert(rp->node[rp->cur_node].alu_end >= 0);
-		assert(rp->alu_end >= 0);
+		fp->node[fp->cur_node].alu_end =
+		    cs->nrslots - fp->node[fp->cur_node].alu_offset - 1;
+		if (fp->node[fp->cur_node].tex_end < 0)
+			fp->node[fp->cur_node].tex_end = 0;
+		fp->alu_offset = 0;
+		fp->alu_end = cs->nrslots - 1;
+		fp->tex_offset = 0;
+		fp->tex_end = fp->tex.length ? fp->tex.length - 1 : 0;
+		assert(fp->node[fp->cur_node].alu_end >= 0);
+		assert(fp->alu_end >= 0);
 
-		rp->translated = GL_TRUE;
+		fp->translated = GL_TRUE;
 		if (RADEON_DEBUG & DEBUG_PIXEL)
-			dump_program(rp);
-		r300UpdateStateParameters(rp->ctx, _NEW_PROGRAM);
+			dump_program(fp);
+		r300UpdateStateParameters(fp->ctx, _NEW_PROGRAM);
 	}
 
-	update_params(rp);
+	update_params(fp);
 }
 
 /* just some random things... */
-static void dump_program(struct r300_fragment_program *rp)
+static void dump_program(struct r300_fragment_program *fp)
 {
 	int n, i, j;
 	static int pc = 0;
@@ -2255,27 +2255,27 @@ static void dump_program(struct r300_fragment_program *rp)
 
 	fprintf(stderr, "Mesa program:\n");
 	fprintf(stderr, "-------------\n");
-	_mesa_print_program(&rp->mesa_program.Base);
+	_mesa_print_program(&fp->mesa_program.Base);
 	fflush(stdout);
 
 	fprintf(stderr, "Hardware program\n");
 	fprintf(stderr, "----------------\n");
 
-	for (n = 0; n < (rp->cur_node + 1); n++) {
+	for (n = 0; n < (fp->cur_node + 1); n++) {
 		fprintf(stderr, "NODE %d: alu_offset: %d, tex_offset: %d, "
 			"alu_end: %d, tex_end: %d\n", n,
-			rp->node[n].alu_offset,
-			rp->node[n].tex_offset,
-			rp->node[n].alu_end, rp->node[n].tex_end);
+			fp->node[n].alu_offset,
+			fp->node[n].tex_offset,
+			fp->node[n].alu_end, fp->node[n].tex_end);
 
-		if (rp->tex.length) {
+		if (fp->tex.length) {
 			fprintf(stderr, "  TEX:\n");
-			for (i = rp->node[n].tex_offset;
-			     i <= rp->node[n].tex_offset + rp->node[n].tex_end;
+			for (i = fp->node[n].tex_offset;
+			     i <= fp->node[n].tex_offset + fp->node[n].tex_end;
 			     ++i) {
 				const char *instr;
 
-				switch ((rp->tex.
+				switch ((fp->tex.
 					 inst[i] >> R300_FPITX_OPCODE_SHIFT) &
 					15) {
 				case R300_FPITX_OP_TEX:
@@ -2297,22 +2297,22 @@ static void dump_program(struct r300_fragment_program *rp)
 				fprintf(stderr,
 					"    %s t%i, %c%i, texture[%i]   (%08x)\n",
 					instr,
-					(rp->tex.
+					(fp->tex.
 					 inst[i] >> R300_FPITX_DST_SHIFT) & 31,
-					(rp->tex.
+					(fp->tex.
 					 inst[i] & R300_FPITX_SRC_CONST) ? 'c' :
 					't',
-					(rp->tex.
+					(fp->tex.
 					 inst[i] >> R300_FPITX_SRC_SHIFT) & 31,
-					(rp->tex.
+					(fp->tex.
 					 inst[i] & R300_FPITX_IMAGE_MASK) >>
 					R300_FPITX_IMAGE_SHIFT,
-					rp->tex.inst[i]);
+					fp->tex.inst[i]);
 			}
 		}
 
-		for (i = rp->node[n].alu_offset;
-		     i <= rp->node[n].alu_offset + rp->node[n].alu_end; ++i) {
+		for (i = fp->node[n].alu_offset;
+		     i <= fp->node[n].alu_offset + fp->node[n].alu_end; ++i) {
 			char srcc[3][10], dstc[20];
 			char srca[3][10], dsta[20];
 			char argc[3][20];
@@ -2320,8 +2320,8 @@ static void dump_program(struct r300_fragment_program *rp)
 			char flags[5], tmp[10];
 
 			for (j = 0; j < 3; ++j) {
-				int regc = rp->alu.inst[i].inst1 >> (j * 6);
-				int rega = rp->alu.inst[i].inst3 >> (j * 6);
+				int regc = fp->alu.inst[i].inst1 >> (j * 6);
+				int rega = fp->alu.inst[i].inst3 >> (j * 6);
 
 				sprintf(srcc[j], "%c%i",
 					(regc & 32) ? 'c' : 't', regc & 31);
@@ -2331,46 +2331,46 @@ static void dump_program(struct r300_fragment_program *rp)
 
 			dstc[0] = 0;
 			sprintf(flags, "%s%s%s",
-				(rp->alu.inst[i].
+				(fp->alu.inst[i].
 				 inst1 & R300_FPI1_DSTC_REG_X) ? "x" : "",
-				(rp->alu.inst[i].
+				(fp->alu.inst[i].
 				 inst1 & R300_FPI1_DSTC_REG_Y) ? "y" : "",
-				(rp->alu.inst[i].
+				(fp->alu.inst[i].
 				 inst1 & R300_FPI1_DSTC_REG_Z) ? "z" : "");
 			if (flags[0] != 0) {
 				sprintf(dstc, "t%i.%s ",
-					(rp->alu.inst[i].
+					(fp->alu.inst[i].
 					 inst1 >> R300_FPI1_DSTC_SHIFT) & 31,
 					flags);
 			}
 			sprintf(flags, "%s%s%s",
-				(rp->alu.inst[i].
+				(fp->alu.inst[i].
 				 inst1 & R300_FPI1_DSTC_OUTPUT_X) ? "x" : "",
-				(rp->alu.inst[i].
+				(fp->alu.inst[i].
 				 inst1 & R300_FPI1_DSTC_OUTPUT_Y) ? "y" : "",
-				(rp->alu.inst[i].
+				(fp->alu.inst[i].
 				 inst1 & R300_FPI1_DSTC_OUTPUT_Z) ? "z" : "");
 			if (flags[0] != 0) {
 				sprintf(tmp, "o%i.%s",
-					(rp->alu.inst[i].
+					(fp->alu.inst[i].
 					 inst1 >> R300_FPI1_DSTC_SHIFT) & 31,
 					flags);
 				strcat(dstc, tmp);
 			}
 
 			dsta[0] = 0;
-			if (rp->alu.inst[i].inst3 & R300_FPI3_DSTA_REG) {
+			if (fp->alu.inst[i].inst3 & R300_FPI3_DSTA_REG) {
 				sprintf(dsta, "t%i.w ",
-					(rp->alu.inst[i].
+					(fp->alu.inst[i].
 					 inst3 >> R300_FPI3_DSTA_SHIFT) & 31);
 			}
-			if (rp->alu.inst[i].inst3 & R300_FPI3_DSTA_OUTPUT) {
+			if (fp->alu.inst[i].inst3 & R300_FPI3_DSTA_OUTPUT) {
 				sprintf(tmp, "o%i.w ",
-					(rp->alu.inst[i].
+					(fp->alu.inst[i].
 					 inst3 >> R300_FPI3_DSTA_SHIFT) & 31);
 				strcat(dsta, tmp);
 			}
-			if (rp->alu.inst[i].inst3 & R300_FPI3_DSTA_DEPTH) {
+			if (fp->alu.inst[i].inst3 & R300_FPI3_DSTA_DEPTH) {
 				strcat(dsta, "Z");
 			}
 
@@ -2378,12 +2378,12 @@ static void dump_program(struct r300_fragment_program *rp)
 				"%3i: xyz: %3s %3s %3s -> %-20s (%08x)\n"
 				"       w: %3s %3s %3s -> %-20s (%08x)\n", i,
 				srcc[0], srcc[1], srcc[2], dstc,
-				rp->alu.inst[i].inst1, srca[0], srca[1],
-				srca[2], dsta, rp->alu.inst[i].inst3);
+				fp->alu.inst[i].inst1, srca[0], srca[1],
+				srca[2], dsta, fp->alu.inst[i].inst3);
 
 			for (j = 0; j < 3; ++j) {
-				int regc = rp->alu.inst[i].inst0 >> (j * 7);
-				int rega = rp->alu.inst[i].inst2 >> (j * 7);
+				int regc = fp->alu.inst[i].inst0 >> (j * 7);
+				int rega = fp->alu.inst[i].inst2 >> (j * 7);
 				int d;
 				char buf[20];
 
@@ -2465,8 +2465,8 @@ static void dump_program(struct r300_fragment_program *rp)
 			fprintf(stderr, "     xyz: %8s %8s %8s    op: %08x\n"
 				"       w: %8s %8s %8s    op: %08x\n",
 				argc[0], argc[1], argc[2],
-				rp->alu.inst[i].inst0, arga[0], arga[1],
-				arga[2], rp->alu.inst[i].inst2);
+				fp->alu.inst[i].inst0, arga[0], arga[1],
+				arga[2], fp->alu.inst[i].inst2);
 		}
 	}
 }
