@@ -246,9 +246,6 @@ fire_AOS(r300ContextPtr rmesa, int vertex_count, int type)
 	check_space(9);
 
 	start_packet3(RADEON_CP_PACKET3_3D_DRAW_VBUF_2, 0);
-#ifdef NOTNEEDED_ANYMORE
-	e32(0x840c0024);
-#endif
 	e32(R300_VAP_VF_CNTL__PRIM_WALK_VERTEX_LIST | (vertex_count << 16)
 	    | type);
 }
