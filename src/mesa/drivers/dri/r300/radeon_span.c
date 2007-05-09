@@ -40,9 +40,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  *
  */
 
-#include <unistd.h>
 #include "glheader.h"
-#include "imports.h"
 #include "swrast/swrast.h"
 
 #include "r300_state.h"

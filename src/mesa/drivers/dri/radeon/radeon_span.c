@@ -179,6 +179,9 @@ radeon_mba_z16(const driRenderbuffer * drb, GLint x, GLint y)
 #include "depthtmp.h"
 
 /* 24 bit depth, 8 bit stencil depthbuffer functions
+ *
+ * Careful: It looks like the R300 uses ZZZS byte order while the R200
+ * uses SZZZ for 24 bit depth, 8 bit stencil mode.
  */
 #define WRITE_DEPTH( _x, _y, d )					\
 do {									\
