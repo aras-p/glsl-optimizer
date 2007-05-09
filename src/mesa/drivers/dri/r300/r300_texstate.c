@@ -590,15 +590,13 @@ static GLboolean r300UpdateTextureUnit(GLcontext * ctx, int unit)
 
 void r300UpdateTextureState(GLcontext * ctx)
 {
-	GLboolean ok;
+	int i;
 
-	ok = (r300UpdateTextureUnit(ctx, 0) &&
-	      r300UpdateTextureUnit(ctx, 1) &&
-	      r300UpdateTextureUnit(ctx, 2) &&
-	      r300UpdateTextureUnit(ctx, 3) &&
-	      r300UpdateTextureUnit(ctx, 4) &&
-	      r300UpdateTextureUnit(ctx, 5) &&
-	      r300UpdateTextureUnit(ctx, 6) &&
-	      r300UpdateTextureUnit(ctx, 7)
-	      );
+	for (i = 0; i < 8; i++) {
+		if (!r300UpdateTextureUnit(ctx, i)) {
+			_mesa_warning(ctx,
+				      "failed to update texture state for unit %d.\n",
+				      i);
+		}
+	}
 }
