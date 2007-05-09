@@ -326,9 +326,6 @@ static void r300EmitClearState(GLcontext * ctx)
 		e32(VP_ZERO());
 		e32(0);
 	}
-
-	/*reg_start(0x4500,0);
-	   e32(2560-1); */
 }
 
 /**
