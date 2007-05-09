@@ -31,13 +31,13 @@
  *   Jerome Glisse <j.glisse@gmail.com>
  */
 
-/*TODO'S
+/**
+ * \todo Depth write, WPOS/FOGC inputs
  *
- * - Depth write, WPOS/FOGC inputs
- * - FogOption
- * - Verify results of opcodes for accuracy, I've only checked them
- *   in specific cases.
- * - and more...
+ * \todo FogOption
+ *
+ * \todo Verify results of opcodes for accuracy, I've only checked them in
+ * specific cases.
  */
 
 #include "glheader.h"

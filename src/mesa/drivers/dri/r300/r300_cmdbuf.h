@@ -27,9 +27,10 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 **************************************************************************/
 
-/*
- * Authors:
- *   Nicolai Haehnle <prefect_@gmx.net>
+/**
+ * \file
+ *
+ * \author Nicolai Haehnle <prefect_@gmx.net>
  */
 
 #ifndef __R300_CMDBUF_H__
@@ -50,6 +51,8 @@ extern void r300EmitAOS(r300ContextPtr rmesa, GLuint nr, GLuint offset);
 /**
  * Make sure that enough space is available in the command buffer
  * by flushing if necessary.
+ *
+ * \param dwords The number of dwords we need to be free on the command buffer
  */
 static __inline__ void r300EnsureCmdBufSpace(r300ContextPtr r300,
 					     int dwords, const char *caller)
