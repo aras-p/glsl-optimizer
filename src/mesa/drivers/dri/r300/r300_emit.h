@@ -160,7 +160,7 @@ static __inline__ uint32_t cmdpacify(void)
 				"cmd_written=%d cmd_reserved=%d\n",	\
 				__FILE__, __FUNCTION__, __LINE__,	\
 				cmd_written, cmd_reserved);		\
-			exit(-1);					\
+			_mesa_exit(-1);					\
 		}							\
 	} while(0)
 
@@ -195,7 +195,7 @@ static __inline__ uint32_t cmdpacify(void)
 			fprintf(stderr,"Too big packet3 %08x: cannot "	\
 				"store %d dwords\n",			\
 				_p, _n);				\
-			exit(-1);					\
+			_mesa_exit(-1);					\
 		}							\
 		cmd[0].i = cmdpacket3(R300_CMD_PACKET3_RAW);		\
 		cmd[1].i = _p | ((_n & 0x3fff)<<16);			\

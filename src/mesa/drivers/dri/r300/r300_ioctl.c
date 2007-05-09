@@ -465,7 +465,7 @@ static void r300RefillCurrentDmaRegion(r300ContextPtr rmesa, int size)
 		if (dmabuf->id == 0) {
 			fprintf(stderr,
 				"Error: Could not get dma buffer... exiting\n");
-			exit(-1);
+			_mesa_exit(-1);
 		}
 	}
 
@@ -591,7 +591,7 @@ static void r300RefillCurrentDmaRegion(r300ContextPtr rmesa)
 			UNLOCK_HARDWARE(&rmesa->radeon);
 			fprintf(stderr,
 				"Error: Could not get dma buffer... exiting\n");
-			exit(-1);
+			_mesa_exit(-1);
 		}
 	}
 

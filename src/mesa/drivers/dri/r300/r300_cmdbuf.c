@@ -122,7 +122,7 @@ int r300FlushCmdBuf(r300ContextPtr r300, const char *caller)
 
 	if (ret) {
 		fprintf(stderr, "drmRadeonCmdBuffer: %d (exiting)\n", ret);
-		exit(ret);
+		_mesa_exit(ret);
 	}
 
 	return ret;

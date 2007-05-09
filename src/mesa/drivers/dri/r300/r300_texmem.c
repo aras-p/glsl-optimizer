@@ -485,7 +485,7 @@ static void uploadSubImage( r300ContextPtr rmesa, r300TexObjPtr t,
 		fprintf( stderr, "    blit width=%d height=%d data=%p\n",
 				t->image[face][hwlevel].width, t->image[face][hwlevel].height,
 				t->image[face][hwlevel].data );
-		exit( 1 );
+		_mesa_exit( 1 );
 	}
 }
 

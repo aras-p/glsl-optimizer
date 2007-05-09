@@ -1330,7 +1330,7 @@ void r300_setup_textures(GLcontext * ctx)
 		fprintf(stderr,
 			"Aiiee ! mtu=%d is greater than R300_MAX_TEXTURE_UNITS=%d\n",
 			mtu, R300_MAX_TEXTURE_UNITS);
-		exit(-1);
+		_mesa_exit(-1);
 	}
 
 	/* We cannot let disabled tmu offsets pass DRM */
@@ -1514,7 +1514,7 @@ void r300_setup_rs_unit(GLcontext * ctx)
 
 		if (i == ctx->Const.MaxTextureUnits) {
 			fprintf(stderr, "\tno free texcoord found...\n");
-			exit(0);
+			_mesa_exit(0);
 		}
 
 		InputsRead |= (FRAG_BIT_TEX0 << i);
@@ -1542,7 +1542,7 @@ void r300_setup_rs_unit(GLcontext * ctx)
 				    ("fragprog wants coords for tex%d, vp doesn't provide them!\n",
 				     i);
 				//_mesa_print_program(&CURRENT_VERTEX_SHADER(ctx)->Base);
-				//exit(-1);
+				//_mesa_exit(-1);
 			}
 			InputsRead &= ~(FRAG_BIT_TEX0 << i);
 			fp_reg++;
@@ -1562,7 +1562,7 @@ void r300_setup_rs_unit(GLcontext * ctx)
 			    ("fragprog wants col0, vp doesn't provide it\n");
 			goto out;	/* FIXME */
 			//_mesa_print_program(&CURRENT_VERTEX_SHADER(ctx)->Base);
-			//exit(-1);
+			//_mesa_exit(-1);
 		}
 
 		r300->hw.rr.cmd[R300_RR_ROUTE_0] |= 0
@@ -1579,7 +1579,7 @@ void r300_setup_rs_unit(GLcontext * ctx)
 		     _TNL_ATTRIB_COLOR1)) {
 			WARN_ONCE
 			    ("fragprog wants col1, vp doesn't provide it\n");
-			//exit(-1);
+			//_mesa_exit(-1);
 		}
 
 		r300->hw.rr.cmd[R300_RR_ROUTE_1] |=
@@ -1637,7 +1637,7 @@ void static inline setup_vertex_shader_fragment(r300ContextPtr r300,
 	if (vsf->length & 0x3) {
 		fprintf(stderr,
 			"VERTEX_SHADER_FRAGMENT must have length divisible by 4\n");
-		exit(-1);
+		_mesa_exit(-1);
 	}
 
 	switch ((dest >> 8) & 0xf) {
@@ -1672,7 +1672,7 @@ void static inline setup_vertex_shader_fragment(r300ContextPtr r300,
 		fprintf(stderr,
 			"%s:%s don't know how to handle dest %04x\n",
 			__FILE__, __FUNCTION__, dest);
-		exit(-1);
+		_mesa_exit(-1);
 	}
 }
 
@@ -2277,7 +2277,7 @@ void r300ResetHwState(r300ContextPtr r300)
 	default:
 		fprintf(stderr, "Error: Unsupported depth %d... exiting\n",
 			ctx->Visual.depthBits);
-		exit(-1);
+		_mesa_exit(-1);
 
 	}
 	/* z compress? */
@@ -2347,7 +2347,7 @@ void r300InitState(r300ContextPtr r300)
 	default:
 		fprintf(stderr, "Error: Unsupported depth %d... exiting\n",
 			ctx->Visual.depthBits);
-		exit(-1);
+		_mesa_exit(-1);
 	}
 
 	/* Only have hw stencil when depth buffer is 24 bits deep */

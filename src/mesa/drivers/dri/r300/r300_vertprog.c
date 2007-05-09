@@ -121,7 +121,7 @@ int r300VertexProgUpdateParams(GLcontext *ctx, struct r300_vertex_program_cont *
 
 	if(mesa_vp->Base.Parameters->NumParameters * 4 > VSF_MAX_FRAGMENT_LENGTH){
 		fprintf(stderr, "%s:Params exhausted\n", __FUNCTION__);
-		exit(-1);
+		_mesa_exit(-1);
 	}
 
         paramList = mesa_vp->Base.Parameters;
@@ -173,7 +173,7 @@ static unsigned long t_dst_class(enum register_file file)
 		*/
 		default:
 			fprintf(stderr, "problem in %s", __FUNCTION__);
-			exit(0);
+			_mesa_exit(0);
 	}
 }
 
@@ -207,7 +207,7 @@ static unsigned long t_src_class(enum register_file file)
 		*/
 		default:
 			fprintf(stderr, "problem in %s", __FUNCTION__);
-			exit(0);
+			_mesa_exit(0);
 	}
 }
 
@@ -311,7 +311,7 @@ static unsigned long t_opcode(enum prog_opcode opcode)
 		default:
 			fprintf(stderr, "%s: Should not be called with opcode %d!", __FUNCTION__, opcode);
 	}
-	exit(-1);
+	_mesa_exit(-1);
 	return 0;
 }
 
@@ -325,7 +325,7 @@ static unsigned long op_operands(enum prog_opcode opcode)
 			return op_names[i].ip;
 
 	fprintf(stderr, "op %d not found in op_names\n", opcode);
-	exit(-1);
+	_mesa_exit(-1);
 	return 0;
 }
 
@@ -796,7 +796,7 @@ static void r300_translate_vertex_shader(struct r300_vertex_program *vp, struct 
 
 		case OPCODE_RCC:
 			fprintf(stderr, "Dont know how to handle op %d yet\n", vpi->Opcode);
-			exit(-1);
+			_mesa_exit(-1);
 		break;
 		case OPCODE_END:
 			break;
@@ -829,7 +829,7 @@ static void r300_translate_vertex_shader(struct r300_vertex_program *vp, struct 
 
 				default:
 					fprintf(stderr, "scalars and op RCC not handled yet");
-					exit(-1);
+					_mesa_exit(-1);
 				break;
 			}
 		}else{
@@ -854,7 +854,7 @@ static void r300_translate_vertex_shader(struct r300_vertex_program *vp, struct 
 
 				default:
 					fprintf(stderr, "scalars and op RCC not handled yet");
-					exit(-1);
+					_mesa_exit(-1);
 				break;
 			}
 		}
@@ -1080,7 +1080,7 @@ void r300_select_vertex_shader(r300ContextPtr r300)
 
 		if(i == ctx->Const.MaxTextureUnits){
 			fprintf(stderr, "\tno free texcoord found\n");
-			exit(0);
+			_mesa_exit(0);
 		}
 
 		InputsRead |= (FRAG_BIT_TEX0 << i);
