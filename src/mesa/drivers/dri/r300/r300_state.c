@@ -1514,7 +1514,7 @@ void r300_setup_rs_unit(GLcontext * ctx)
 
 		if (i == ctx->Const.MaxTextureUnits) {
 			fprintf(stderr, "\tno free texcoord found...\n");
-			_mesa_exit(0);
+			_mesa_exit(-1);
 		}
 
 		InputsRead |= (FRAG_BIT_TEX0 << i);

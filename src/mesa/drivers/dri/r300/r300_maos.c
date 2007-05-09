@@ -217,7 +217,7 @@ static void emit_vector(GLcontext * ctx,
 		break;
 	default:
 		assert(0);
-		_mesa_exit(1);
+		_mesa_exit(-1);
 		break;
 	}
 
@@ -243,7 +243,7 @@ void r300EmitElts(GLcontext * ctx, void *elts, unsigned long n_elts,
 		return;
 	} else if (r300IsGartMemory(rmesa, elts, 1)) {
 		WARN_ONCE("Pointer not within GART memory!\n");
-		_mesa_exit(1);
+		_mesa_exit(-1);
 	}
 
 	r300AllocDmaRegion(rmesa, rvb, n_elts * elt_size, elt_size);

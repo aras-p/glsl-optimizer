@@ -121,7 +121,7 @@ int r300FlushCmdBuf(r300ContextPtr r300, const char *caller)
 	UNLOCK_HARDWARE(&r300->radeon);
 
 	if (ret) {
-		fprintf(stderr, "drmRadeonCmdBuffer: %d (exiting)\n", ret);
+		fprintf(stderr, "drmRadeonCmdBuffer: %d\n", ret);
 		_mesa_exit(ret);
 	}
 

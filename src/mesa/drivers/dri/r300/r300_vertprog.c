@@ -173,7 +173,7 @@ static unsigned long t_dst_class(enum register_file file)
 		*/
 		default:
 			fprintf(stderr, "problem in %s", __FUNCTION__);
-			_mesa_exit(0);
+			_mesa_exit(-1);
 	}
 }
 
@@ -207,7 +207,7 @@ static unsigned long t_src_class(enum register_file file)
 		*/
 		default:
 			fprintf(stderr, "problem in %s", __FUNCTION__);
-			_mesa_exit(0);
+			_mesa_exit(-1);
 	}
 }
 
@@ -1080,7 +1080,7 @@ void r300_select_vertex_shader(r300ContextPtr r300)
 
 		if(i == ctx->Const.MaxTextureUnits){
 			fprintf(stderr, "\tno free texcoord found\n");
-			_mesa_exit(0);
+			_mesa_exit(-1);
 		}
 
 		InputsRead |= (FRAG_BIT_TEX0 << i);
