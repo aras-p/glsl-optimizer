@@ -20,7 +20,6 @@ typedef struct {
 #define VSF_OUT_CLASS_ADDR	1
 #define VSF_OUT_CLASS_RESULT	2
 
-
 /* first DWORD of an instruction */
 
 /* possible operations: 
@@ -57,7 +56,7 @@ typedef struct {
 	   | ((comp_z)<<R300_VPI_IN_Z_SHIFT) \
 	   | ((comp_w)<<R300_VPI_IN_W_SHIFT) \
 	   | ((negate)<<25) | ((class)))
-	   
+
 #define EASY_VSF_SOURCE(in_reg_index, comp_x, comp_y, comp_z, comp_w, class, negate) \
 	MAKE_VSF_SOURCE(in_reg_index, \
 		VSF_IN_COMPONENT_##comp_x, \
@@ -69,8 +68,8 @@ typedef struct {
 /* special sources: */
 
 /* (1.0,1.0,1.0,1.0) vector (ATTR, plain ) */
-#define VSF_ATTR_UNITY(reg) 	EASY_VSF_SOURCE(reg, ONE, ONE, ONE, ONE, ATTR, NONE)  
-#define VSF_UNITY(reg) 	EASY_VSF_SOURCE(reg, ONE, ONE, ONE, ONE, NONE, NONE)  
+#define VSF_ATTR_UNITY(reg) 	EASY_VSF_SOURCE(reg, ONE, ONE, ONE, ONE, ATTR, NONE)
+#define VSF_UNITY(reg) 	EASY_VSF_SOURCE(reg, ONE, ONE, ONE, ONE, NONE, NONE)
 
 /* contents of unmodified register */
 #define VSF_REG(reg) 	EASY_VSF_SOURCE(reg, X, Y, Z, W, ATTR, NONE)
