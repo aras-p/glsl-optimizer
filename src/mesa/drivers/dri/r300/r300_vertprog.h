@@ -1,7 +1,5 @@
-#ifndef __VERTEX_SHADER_H__
-#define __VERTEX_SHADER_H__
-
-#include "r300_reg.h"
+#ifndef __R300_VERTPROG_H_
+#define __R300_VERTPROG_H_
 
 typedef struct {
 	CARD32 op;

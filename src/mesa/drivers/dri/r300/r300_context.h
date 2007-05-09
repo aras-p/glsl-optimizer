@@ -95,7 +95,7 @@ typedef struct r300_context *r300ContextPtr;
   /* We should probably change types within vertex_shader
       and pixel_shader structure later on */
 #define CARD32 GLuint
-#include "vertex_shader.h"
+#include "r300_vertprog.h"
 #include "r300_fragprog.h"
 #undef CARD32
 
