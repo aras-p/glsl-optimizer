@@ -258,6 +258,7 @@ static void r300RunRenderPrimitive(r300ContextPtr rmesa, GLcontext * ctx,
 	if (rmesa->state.VB.Elts) {
 		r300EmitAOS(rmesa, rmesa->state.aos_count, start);
 		if (num_verts > 65535) {
+			/* not implemented yet */
 			WARN_ONCE("Too many elts\n");
 			return;
 		}
