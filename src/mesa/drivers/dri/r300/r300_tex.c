@@ -158,11 +158,6 @@ static void r300SetTexWrap(r300TexObjPtr t, GLenum swrap, GLenum twrap,
 	t->filter |= hw_swrap << R300_TX_WRAP_S_SHIFT;
 	t->filter |= hw_twrap << R300_TX_WRAP_T_SHIFT;
 	t->filter |= hw_qwrap << R300_TX_WRAP_Q_SHIFT;
-
-#if 0
-	t->format_x &= ~R200_CLAMP_Q_MASK;
-	t->border_fallback = (is_clamp && is_clamp_to_border);
-#endif
 }
 
 static void r300SetTexMaxAnisotropy(r300TexObjPtr t, GLfloat max)
@@ -196,9 +191,6 @@ static void r300SetTexFilter(r300TexObjPtr t, GLenum minf, GLenum magf)
 	GLuint anisotropy = (t->filter & R300_TX_MAX_ANISO_MASK);
 
 	t->filter &= ~(R300_TX_MIN_FILTER_MASK | R300_TX_MAG_FILTER_MASK);
-#if 0
-	//t->format_x &= ~R200_VOLUME_FILTER_MASK;
-#endif
 
 	if (anisotropy == R300_TX_MAX_ANISO_1_TO_1) {
 		switch (minf) {
@@ -1173,18 +1165,4 @@ void r300InitTextureFuncs(struct dd_function_table *functions)
 	functions->CompressedTexSubImage2D	= r300CompressedTexSubImage2D;
 
 	driInitTextureFormats();
-
-#if 0
-	/* moved or obsolete code */
-	r300ContextPtr rmesa = R300_CONTEXT(ctx);
-	driInitTextureObjects(ctx, &rmesa->swapped,
-			      DRI_TEXMGR_DO_TEXTURE_1D
-			      | DRI_TEXMGR_DO_TEXTURE_2D);
-
-	/* Hack: r300NewTextureObject is not yet installed when the
-	 * default textures are created. Therefore set MaxAnisotropy of the
-	 * default 2D texture now. */
-	ctx->Shared->Default2D->MaxAnisotropy =
-	    driQueryOptionf(&rmesa->optionCache, "def_max_anisotropy");
-#endif
 }
