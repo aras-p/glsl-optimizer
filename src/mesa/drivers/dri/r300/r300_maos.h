@@ -39,8 +39,9 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #include "r300_context.h"
 
-extern void r300EmitElts(GLcontext * ctx, void *elts, unsigned long n_elts, int elt_size);
-extern int r300EmitArrays(GLcontext *ctx);
+extern void r300EmitElts(GLcontext * ctx, void *elts, unsigned long n_elts,
+			 int elt_size);
+extern int r300EmitArrays(GLcontext * ctx);
 
 #ifdef USER_BUFFERS
 void r300UseArrays(GLcontext * ctx);
@@ -50,4 +51,3 @@ extern void r300ReleaseArrays(GLcontext * ctx);
 
 #endif
 #endif
-
