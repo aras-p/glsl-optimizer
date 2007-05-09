@@ -244,7 +244,6 @@ static void radeonSpanRenderStart(GLcontext * ctx)
 			fprintf(stderr,
 				"Try R300_SPAN_DISABLE_LOCKING env var if this hangs.\n");
 			fflush(stderr);
-			sleep(1);
 		}
 		first = 0;
 	}
