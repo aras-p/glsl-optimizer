@@ -35,8 +35,6 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #ifndef __R300_MAOS_H__
 #define __R300_MAOS_H__
 
-#ifdef GLX_DIRECT_RENDERING
-
 #include "r300_context.h"
 
 extern void r300EmitElts(GLcontext * ctx, void *elts, unsigned long n_elts,
@@ -49,5 +47,4 @@ void r300UseArrays(GLcontext * ctx);
 
 extern void r300ReleaseArrays(GLcontext * ctx);
 
-#endif
 #endif
