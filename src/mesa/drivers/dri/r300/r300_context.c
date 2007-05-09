@@ -200,8 +200,6 @@ GLboolean r300CreateContext(const __GLcontextModes * glVisual,
 	r300->initialMaxAnisotropy = driQueryOptionf(&r300->radeon.optionCache,
 						     "def_max_anisotropy");
 
-	//r300->texmicrotile = GL_TRUE;
-
 	/* Init default driver functions then plug in our R300-specific functions
 	 * (the texture functions are especially important)
 	 */

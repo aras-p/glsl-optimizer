@@ -221,8 +221,7 @@ static void r300SetTexImages(r300ContextPtr rmesa,
 	/* figure out if this texture is suitable for tiling. */
 #if 0				/* Disabled for now */
 	if (texelBytes) {
-		if (rmesa->texmicrotile
-		    && (tObj->Target != GL_TEXTURE_RECTANGLE_NV) &&
+		if ((tObj->Target != GL_TEXTURE_RECTANGLE_NV) &&
 		    /* texrect might be able to use micro tiling too in theory? */
 		    (baseImage->Height > 1)) {
 

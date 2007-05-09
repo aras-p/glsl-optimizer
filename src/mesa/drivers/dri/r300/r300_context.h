@@ -869,7 +869,6 @@ struct r300_context {
 	GLvector4f *temp_attrib[_TNL_ATTRIB_MAX];
 #endif
 
-	GLboolean texmicrotile;
 	GLboolean disable_lowimpact_fallback;
 };
 
