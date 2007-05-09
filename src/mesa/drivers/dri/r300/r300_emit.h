@@ -209,8 +209,7 @@ void static inline end_3d(r300ContextPtr rmesa)
 	drm_radeon_cmd_header_t *cmd = NULL;
 
 	cmd =
-	    (drm_radeon_cmd_header_t *) r300AllocCmdBuf(rmesa, 1,
-							__FUNCTION__);
+	    (drm_radeon_cmd_header_t *) r300AllocCmdBuf(rmesa, 1, __FUNCTION__);
 	cmd[0].header.cmd_type = R300_CMD_END3D;
 }
 
@@ -219,8 +218,7 @@ void static inline cp_delay(r300ContextPtr rmesa, unsigned short count)
 	drm_radeon_cmd_header_t *cmd = NULL;
 
 	cmd =
-	    (drm_radeon_cmd_header_t *) r300AllocCmdBuf(rmesa, 1,
-							__FUNCTION__);
+	    (drm_radeon_cmd_header_t *) r300AllocCmdBuf(rmesa, 1, __FUNCTION__);
 	cmd[0].i = cmdcpdelay(count);
 }
 
@@ -229,16 +227,14 @@ void static inline cp_wait(r300ContextPtr rmesa, unsigned char flags)
 	drm_radeon_cmd_header_t *cmd = NULL;
 
 	cmd =
-	    (drm_radeon_cmd_header_t *) r300AllocCmdBuf(rmesa, 1,
-							__FUNCTION__);
+	    (drm_radeon_cmd_header_t *) r300AllocCmdBuf(rmesa, 1, __FUNCTION__);
 	cmd[0].i = cmdwait(flags);
 }
 
 /**
  * fire vertex buffer
  */
-static void inline
-fire_AOS(r300ContextPtr rmesa, int vertex_count, int type)
+static void inline fire_AOS(r300ContextPtr rmesa, int vertex_count, int type)
 {
 	int cmd_reserved = 0;
 	int cmd_written = 0;

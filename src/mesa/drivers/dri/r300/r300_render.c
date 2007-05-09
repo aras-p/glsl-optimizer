@@ -73,8 +73,7 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "r300_emit.h"
 extern int future_hw_tcl_on;
 
-static int r300PrimitiveType(r300ContextPtr rmesa, GLcontext * ctx,
-			     int prim)
+static int r300PrimitiveType(r300ContextPtr rmesa, GLcontext * ctx, int prim)
 {
 	int type = -1;
 
@@ -309,8 +308,7 @@ static GLboolean r300RunRender(GLcontext * ctx,
 		GLuint start = VB->Primitive[i].start;
 		GLuint length = VB->Primitive[i].count;
 
-		r300RunRenderPrimitive(rmesa, ctx, start, start + length,
-				       prim);
+		r300RunRenderPrimitive(rmesa, ctx, start, start + length, prim);
 	}
 
 	reg_start(R300_RB3D_DSTCACHE_CTLSTAT, 0);
@@ -359,8 +357,7 @@ int r300Fallback(GLcontext * ctx)
 
 	FALLBACK_IF(ctx->Color.ColorLogicOpEnabled);
 
-	if (ctx->Extensions.NV_point_sprite
-	    || ctx->Extensions.ARB_point_sprite)
+	if (ctx->Extensions.NV_point_sprite || ctx->Extensions.ARB_point_sprite)
 		FALLBACK_IF(ctx->Point.PointSprite);
 
 	if (!r300->disable_lowimpact_fallback) {

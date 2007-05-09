@@ -127,8 +127,7 @@ static void r300ClearBuffer(r300ContextPtr r300, int flags, int buffer)
 		if (flags & CLEARBUFFER_DEPTH) {
 			t1 |= R300_RB3D_Z_WRITE_ONLY;
 			t2 |=
-			    (R300_ZS_ALWAYS <<
-			     R300_RB3D_ZS1_DEPTH_FUNC_SHIFT);
+			    (R300_ZS_ALWAYS << R300_RB3D_ZS1_DEPTH_FUNC_SHIFT);
 		} else {
 			t1 |= R300_RB3D_Z_DISABLED_1;	// disable
 		}
@@ -159,9 +158,7 @@ static void r300ClearBuffer(r300ContextPtr r300, int flags, int buffer)
 		e32(r300->state.stencil.clear);
 	}
 
-	cmd2 =
-	    (drm_r300_cmd_header_t *) r300AllocCmdBuf(r300, 9,
-						      __FUNCTION__);
+	cmd2 = (drm_r300_cmd_header_t *) r300AllocCmdBuf(r300, 9, __FUNCTION__);
 	cmd2[0].packet3.cmd_type = R300_CMD_PACKET3;
 	cmd2[0].packet3.packet = R300_CMD_PACKET3_CLEAR;
 	cmd2[1].u = r300PackFloat32(dPriv->w / 2.0);
@@ -297,8 +294,7 @@ static void r300EmitClearState(GLcontext * ctx)
 	R300_STATECHANGE(r300, fpi[3]);
 
 	reg_start(R300_PFS_INSTR0_0, 0);
-	e32(FP_INSTRC
-	    (MAD, FP_ARGC(SRC0C_XYZ), FP_ARGC(ONE), FP_ARGC(ZERO)));
+	e32(FP_INSTRC(MAD, FP_ARGC(SRC0C_XYZ), FP_ARGC(ONE), FP_ARGC(ZERO)));
 
 	reg_start(R300_PFS_INSTR1_0, 0);
 	e32(FP_SELC(0, NO, XYZ, FP_TMP(0), 0, 0));
@@ -396,8 +392,7 @@ static void r300Clear(GLcontext * ctx, GLbitfield mask)
 	}
 
 	if (flags & BUFFER_BIT_BACK_LEFT) {
-		r300ClearBuffer(r300, bits | CLEARBUFFER_COLOR,
-				swapped ^ 1);
+		r300ClearBuffer(r300, bits | CLEARBUFFER_COLOR, swapped ^ 1);
 		bits = 0;
 	}
 
@@ -433,8 +428,7 @@ static void r300RefillCurrentDmaRegion(r300ContextPtr rmesa, int size)
 	}
 
 	if (rmesa->dma.current.buf)
-		r300ReleaseDmaRegion(rmesa, &rmesa->dma.current,
-				     __FUNCTION__);
+		r300ReleaseDmaRegion(rmesa, &rmesa->dma.current, __FUNCTION__);
 
 	if (rmesa->dma.nr_released_bufs > 4)
 		r300FlushCmdBuf(rmesa, __FUNCTION__);
@@ -477,8 +471,7 @@ static void r300RefillCurrentDmaRegion(r300ContextPtr rmesa, int size)
 }
 
 void r300ReleaseDmaRegion(r300ContextPtr rmesa,
-			  struct r300_dma_region *region,
-			  const char *caller)
+			  struct r300_dma_region *region, const char *caller)
 {
 	if (RADEON_DEBUG & DEBUG_IOCTL)
 		fprintf(stderr, "%s from %s\n", __FUNCTION__, caller);
@@ -554,8 +547,7 @@ static void r300RefillCurrentDmaRegion(r300ContextPtr rmesa)
 	}
 
 	if (rmesa->dma.current.buf)
-		r300ReleaseDmaRegion(rmesa, &rmesa->dma.current,
-				     __FUNCTION__);
+		r300ReleaseDmaRegion(rmesa, &rmesa->dma.current, __FUNCTION__);
 
 	if (rmesa->dma.nr_released_bufs > 4)
 		r300FlushCmdBuf(rmesa, __FUNCTION__);
@@ -612,8 +604,7 @@ static void r300RefillCurrentDmaRegion(r300ContextPtr rmesa)
 }
 
 void r300ReleaseDmaRegion(r300ContextPtr rmesa,
-			  struct r300_dma_region *region,
-			  const char *caller)
+			  struct r300_dma_region *region, const char *caller)
 {
 	if (RADEON_DEBUG & DEBUG_IOCTL)
 		fprintf(stderr, "%s from %s\n", __FUNCTION__, caller);
@@ -723,8 +714,7 @@ GLboolean r300IsGartMemory(r300ContextPtr rmesa, const GLvoid * pointer,
 	return valid;
 }
 
-GLuint r300GartOffsetFromVirtual(r300ContextPtr rmesa,
-				 const GLvoid * pointer)
+GLuint r300GartOffsetFromVirtual(r300ContextPtr rmesa, const GLvoid * pointer)
 {
 	int offset =
 	    (char *)pointer -
@@ -736,8 +726,7 @@ GLuint r300GartOffsetFromVirtual(r300ContextPtr rmesa,
 	    || offset > rmesa->radeon.radeonScreen->gartTextures.size)
 		return ~0;
 	else
-		return rmesa->radeon.radeonScreen->gart_texture_offset +
-		    offset;
+		return rmesa->radeon.radeonScreen->gart_texture_offset + offset;
 }
 
 void r300InitIoctlFuncs(struct dd_function_table *functions)

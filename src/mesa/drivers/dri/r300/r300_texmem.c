@@ -441,10 +441,9 @@ static void uploadSubImage(r300ContextPtr rmesa, r300TexObjPtr t,
 #if 1
 		if ((t->tile_bits & R300_TXO_MACRO_TILE) &&
 		    (texImage->Width * texImage->TexFormat->TexelBytes >= 256)
-		    &&
-		    ((!(t->tile_bits & R300_TXO_MICRO_TILE)
-		      && (texImage->Height >= 8))
-		     || (texImage->Height >= 16))) {
+		    && ((!(t->tile_bits & R300_TXO_MICRO_TILE)
+			 && (texImage->Height >= 8))
+			|| (texImage->Height >= 16))) {
 			/* weird: R200 disables macro tiling if mip width is smaller than 256 bytes,
 			   OR if height is smaller than 8 automatically, but if micro tiling is active
 			   the limit is height 16 instead ? */

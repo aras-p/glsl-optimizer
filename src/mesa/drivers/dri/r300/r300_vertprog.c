@@ -1215,8 +1215,7 @@ static void pos_as_texcoord(struct r300_vertex_program *vp,
 }
 
 static struct r300_vertex_program *build_program(struct r300_vertex_program_key
-						 *wanted_key,
-						 struct gl_vertex_program
+						 *wanted_key, struct gl_vertex_program
 						 *mesa_vp, GLint wpos_idx)
 {
 	struct r300_vertex_program *vp;

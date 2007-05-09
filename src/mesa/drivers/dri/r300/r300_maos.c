@@ -137,8 +137,7 @@ static void emit_vec12(GLcontext * ctx,
 
 	if (RADEON_DEBUG & DEBUG_VERTS)
 		fprintf(stderr, "%s count %d stride %d out %p data %p\n",
-			__FUNCTION__, count, stride, (void *)out,
-			(void *)data);
+			__FUNCTION__, count, stride, (void *)out, (void *)data);
 
 	if (stride == 12)
 		COPY_DWORDS(out, data, count * 3);
@@ -233,8 +232,7 @@ void r300EmitElts(GLcontext * ctx, void *elts, unsigned long n_elts,
 	assert(elt_size == 2 || elt_size == 4);
 
 	if (r300IsGartMemory(rmesa, elts, n_elts * elt_size)) {
-		rvb->address =
-		    rmesa->radeon.radeonScreen->gartTextures.map;
+		rvb->address = rmesa->radeon.radeonScreen->gartTextures.map;
 		rvb->start = ((char *)elts) - rvb->address;
 		rvb->aos_offset =
 		    rmesa->radeon.radeonScreen->gart_texture_offset +
@@ -357,8 +355,7 @@ static GLuint t_vir1(uint32_t * dst, int swizzle[][4], GLuint nr)
 	GLuint i;
 
 	for (i = 0; i + 1 < nr; i += 2) {
-		dst[i >> 1] =
-		    t_swizzle(swizzle[i]) | R300_INPUT_ROUTE_ENABLE;
+		dst[i >> 1] = t_swizzle(swizzle[i]) | R300_INPUT_ROUTE_ENABLE;
 		dst[i >> 1] |=
 		    (t_swizzle(swizzle[i + 1]) | R300_INPUT_ROUTE_ENABLE)
 		    << 16;
@@ -425,8 +422,7 @@ int r300EmitArrays(GLcontext * ctx)
 		    CURRENT_VERTEX_SHADER(ctx);
 		inputs = prog->inputs;
 		InputsRead = CURRENT_VERTEX_SHADER(ctx)->key.InputsRead;
-		OutputsWritten =
-		    CURRENT_VERTEX_SHADER(ctx)->key.OutputsWritten;
+		OutputsWritten = CURRENT_VERTEX_SHADER(ctx)->key.OutputsWritten;
 	} else {
 		DECLARE_RENDERINPUTS(inputs_bitset);
 		inputs = r300->state.sw_tcl_inputs;
@@ -441,8 +437,7 @@ int r300EmitArrays(GLcontext * ctx)
 		assert(RENDERINPUTS_TEST(inputs_bitset, _TNL_ATTRIB_NORMAL)
 		       == 0);
 
-		assert(RENDERINPUTS_TEST
-		       (inputs_bitset, _TNL_ATTRIB_COLOR0));
+		assert(RENDERINPUTS_TEST(inputs_bitset, _TNL_ATTRIB_COLOR0));
 		InputsRead |= 1 << VERT_ATTRIB_COLOR0;
 		OutputsWritten |= 1 << VERT_RESULT_COL0;
 
@@ -455,8 +450,7 @@ int r300EmitArrays(GLcontext * ctx)
 			if (RENDERINPUTS_TEST
 			    (inputs_bitset, _TNL_ATTRIB_TEX(i))) {
 				InputsRead |= 1 << (VERT_ATTRIB_TEX0 + i);
-				OutputsWritten |=
-				    1 << (VERT_RESULT_TEX0 + i);
+				OutputsWritten |= 1 << (VERT_RESULT_TEX0 + i);
 			}
 
 		for (i = 0, nr = 0; i < VERT_ATTRIB_MAX; i++)
@@ -482,11 +476,9 @@ int r300EmitArrays(GLcontext * ctx)
 			if (InputsRead & (1 << VERT_ATTRIB_COLOR1))
 				inputs[VERT_ATTRIB_COLOR1] = 3;
 
-			for (i = VERT_ATTRIB_TEX0; i <= VERT_ATTRIB_TEX7;
-			     i++)
+			for (i = VERT_ATTRIB_TEX0; i <= VERT_ATTRIB_TEX7; i++)
 				if (InputsRead & (1 << i))
-					inputs[i] =
-					    6 + (i - VERT_ATTRIB_TEX0);
+					inputs[i] = 6 + (i - VERT_ATTRIB_TEX0);
 		}
 
 		RENDERINPUTS_COPY(rmesa->state.render_inputs_bitset,
@@ -528,9 +520,8 @@ int r300EmitArrays(GLcontext * ctx)
 		}
 #endif				/* MESA_BIG_ENDIAN */
 
-		if (r300IsGartMemory
-		    (rmesa, VB->AttribPtr[tab[i]].data,
-		     /*(count-1)*stride */ 4)) {
+		if (r300IsGartMemory(rmesa, VB->AttribPtr[tab[i]].data,
+				     /*(count-1)*stride */ 4)) {
 			if (VB->AttribPtr[tab[i]].stride % 4)
 				return R300_FALLBACK_TCL;
 
@@ -540,8 +531,7 @@ int r300EmitArrays(GLcontext * ctx)
 			rmesa->state.aos[i].aos_offset =
 			    r300GartOffsetFromVirtual(rmesa,
 						      VB->
-						      AttribPtr[tab[i]].
-						      data);
+						      AttribPtr[tab[i]].data);
 			rmesa->state.aos[i].aos_stride =
 			    VB->AttribPtr[tab[i]].stride / 4;
 
@@ -639,8 +629,7 @@ int r300EmitArrays(GLcontext * ctx)
 
 	for (i = 0; i < ctx->Const.MaxTextureUnits; i++)
 		if (OutputsWritten & (1 << (VERT_RESULT_TEX0 + i)))
-			r300->hw.vof.cmd[R300_VOF_CNTL_1] |=
-			    (4 << (3 * i));
+			r300->hw.vof.cmd[R300_VOF_CNTL_1] |= (4 << (3 * i));
 
 	rmesa->state.aos_count = nr;
 
@@ -696,7 +685,6 @@ void r300ReleaseArrays(GLcontext * ctx)
 
 	r300ReleaseDmaRegion(rmesa, &rmesa->state.elt_dma, __FUNCTION__);
 	for (i = 0; i < rmesa->state.aos_count; i++) {
-		r300ReleaseDmaRegion(rmesa, &rmesa->state.aos[i],
-				     __FUNCTION__);
+		r300ReleaseDmaRegion(rmesa, &rmesa->state.aos[i], __FUNCTION__);
 	}
 }

@@ -918,7 +918,7 @@ static void emit_tex(struct r300_fragment_program *rp,
 			 */
 			gl_state_index tokens[STATE_LENGTH] = {
 				STATE_INTERNAL, STATE_R300_TEXRECT_FACTOR, 0, 0,
-				    0
+				0
 			};
 			int factor_index;
 			GLuint factorreg;

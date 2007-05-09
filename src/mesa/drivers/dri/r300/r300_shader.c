@@ -54,12 +54,10 @@ static void r300DeleteProgram(GLcontext * ctx, struct gl_program *prog)
 }
 
 static void
-r300ProgramStringNotify(GLcontext * ctx, GLenum target,
-			struct gl_program *prog)
+r300ProgramStringNotify(GLcontext * ctx, GLenum target, struct gl_program *prog)
 {
 	struct r300_vertex_program_cont *vp = (void *)prog;
-	struct r300_fragment_program *fp =
-	    (struct r300_fragment_program *)prog;
+	struct r300_fragment_program *fp = (struct r300_fragment_program *)prog;
 
 	switch (target) {
 	case GL_VERTEX_PROGRAM_ARB:
@@ -77,8 +75,7 @@ r300ProgramStringNotify(GLcontext * ctx, GLenum target,
 }
 
 static GLboolean
-r300IsProgramNative(GLcontext * ctx, GLenum target,
-		    struct gl_program *prog)
+r300IsProgramNative(GLcontext * ctx, GLenum target, struct gl_program *prog)
 {
 	return 1;
 }
