@@ -921,8 +921,10 @@ post_vs_emit( struct brw_vs_compile *c, struct brw_instruction *end_inst )
        inst1 = &c->vp->program.Base.Instructions[insn];
        brw_inst1 = inst1->Data;
        switch (inst1->Opcode) {
-	   case OPCODE_CAL:
 	   case OPCODE_BRA:
+	   case OPCODE_BRK:
+	   case OPCODE_CAL:
+	   case OPCODE_ENDLOOP:
 	       target_insn = inst1->BranchTarget;
 	       inst2 = &c->vp->program.Base.Instructions[target_insn];
 	       brw_inst2 = inst2->Data;
@@ -943,12 +945,12 @@ post_vs_emit( struct brw_vs_compile *c, struct brw_instruction *end_inst )
  */
 void brw_vs_emit(struct brw_vs_compile *c )
 {
-#define MAX_IFSN 32
+#define MAX_IF_DEPTH 32
    struct brw_compile *p = &c->func;
    GLuint nr_insns = c->vp->program.Base.NumInstructions;
    GLuint insn, if_insn = 0;
    struct brw_instruction *end_inst;
-   struct brw_instruction *if_inst[MAX_IFSN];
+   struct brw_instruction *if_inst[MAX_IF_DEPTH];
    struct brw_indirect stack_index = brw_indirect(0, 0);   
 
    if (INTEL_DEBUG & DEBUG_VS) {
@@ -1083,8 +1085,13 @@ void brw_vs_emit(struct brw_vs_compile *c )
       case OPCODE_XPD:
 	 emit_xpd(p, dst, args[0], args[1]);
 	 break;
+
+      case OPCODE_INT:
+	 /* XXX TODO track type information in shader program */
+	 brw_MOV(p, dst, args[0]);
+	 break;
       case OPCODE_IF:
-	 assert(if_insn < MAX_IFSN);
+	 assert(if_insn < MAX_IF_DEPTH);
          if_inst[if_insn++] = brw_IF(p, BRW_EXECUTE_8);
 	 break;
       case OPCODE_ELSE:
@@ -1094,11 +1101,6 @@ void brw_vs_emit(struct brw_vs_compile *c )
          assert(if_insn > 0);
 	 brw_ENDIF(p, if_inst[--if_insn]);
 	 break;			
-      case OPCODE_BRA:
-         brw_set_predicate_control(p, BRW_PREDICATE_NORMAL);
-         brw_ADD(p, brw_ip_reg(), brw_ip_reg(), brw_imm_d(1*16));
-         brw_set_predicate_control_flag_value(p, 0xFF);
-        break;
       case OPCODE_CAL:
 	 brw_set_access_mode(p, BRW_ALIGN_1);
 	 brw_ADD(p, deref_1uw(stack_index, 0), brw_ip_reg(), brw_imm_d(3*16));
@@ -1114,9 +1116,13 @@ void brw_vs_emit(struct brw_vs_compile *c )
 	 brw_set_access_mode(p, BRW_ALIGN_1);
          brw_MOV(p, brw_ip_reg(), deref_1uw(stack_index, 0));
 	 brw_set_access_mode(p, BRW_ALIGN_16);
+      case OPCODE_ENDLOOP:
+      case OPCODE_BRK:
+      case OPCODE_BRA:
       case OPCODE_END:	
          brw_ADD(p, brw_ip_reg(), brw_ip_reg(), brw_imm_d(1*16));
         break;
+      case OPCODE_BGNLOOP:
       case OPCODE_PRINT:
       case OPCODE_BGNSUB:
       case OPCODE_ENDSUB:
@@ -1125,7 +1131,8 @@ void brw_vs_emit(struct brw_vs_compile *c )
 	 _mesa_printf("Unsupport opcode %d in vertex shader\n", inst->Opcode);
 	 break;
       }
-
+      brw_set_predicate_control(p,
+		 inst->CondUpdate?BRW_PREDICATE_NORMAL:BRW_PREDICATE_NONE);
       release_tmps(c);
    }
 
