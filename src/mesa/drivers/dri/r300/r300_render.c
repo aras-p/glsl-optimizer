@@ -424,7 +424,7 @@ static int r300Fallback(GLcontext * ctx)
 	return R300_FALLBACK_NONE;
 }
 
-static GLboolean r300RunNonTNLRender(GLcontext * ctx,
+static GLboolean r300RunNonTCLRender(GLcontext * ctx,
 				     struct tnl_pipeline_stage *stage)
 {
 	if (RADEON_DEBUG & DEBUG_PRIMS)
@@ -472,7 +472,7 @@ const struct tnl_pipeline_stage _r300_render_stage = {
 	NULL,
 	NULL,
 	NULL,
-	r300RunNonTNLRender
+	r300RunNonTCLRender
 };
 
 const struct tnl_pipeline_stage _r300_tcl_stage = {
