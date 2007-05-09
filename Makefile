@@ -7,7 +7,9 @@ SUBDIRS = src progs
 
 default: $(TOP)/configs/current
 	@for dir in $(SUBDIRS) ; do \
-		(cd $$dir ; $(MAKE)) || exit 1 ; \
+		if [ -d $$dir ] ; then \
+			(cd $$dir && $(MAKE)) || exit 1 ; \
+		fi \
 	done
 
 
@@ -16,7 +18,9 @@ doxygen:
 
 clean:
 	@for dir in $(SUBDIRS) ; do \
-		(cd $$dir ; $(MAKE) clean) ; \
+		if [ -d $$dir ] ; then \
+			(cd $$dir && $(MAKE) clean) ; \
+		fi \
 	done
 
 
@@ -34,8 +38,11 @@ realclean:
 
 install:
 	@for dir in $(SUBDIRS) ; do \
-		(cd $$dir ; $(MAKE) install) || exit 1 ; \
+		if [ -d $$dir ] ; then \
+			(cd $$dir && $(MAKE) install) || exit 1 ; \
+		fi \
 	done
+
 
 # DirectFBGL module installation
 linux-directfb-install:
