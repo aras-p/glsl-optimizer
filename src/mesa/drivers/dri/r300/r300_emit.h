@@ -272,19 +272,4 @@ fire_AOS(r300ContextPtr rmesa, int vertex_count, int type)
 		    type);						\
 	} while (0);
 
-/**
- * Interestingly enough this ones needs the call to setup_AOS, even thought
- * some of the data so setup is not needed and some is not as arbitrary
- * as when used by DRAW_VBUF_2 or DRAW_INDX_2
- */
-#define start_immediate_packet(vertex_count, type, vertex_size)		\
-	do {								\
-		int _vc;						\
-		_vc = (vertex_count);					\
-		start_packet3(RADEON_CP_PACKET3_3D_DRAW_IMMD_2,		\
-			      _vc*(vertex_size));			\
-		e32(R300_VAP_VF_CNTL__PRIM_WALK_VERTEX_EMBEDDED |	\
-		    (_vc<<16) | type);					\
-	} while (0);
-
 #endif
