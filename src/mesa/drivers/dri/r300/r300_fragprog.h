@@ -41,26 +41,6 @@
 
 #include "r300_context.h"
 
-
-#if 0
-/* representation of a register for emit_arith/swizzle */
-typedef struct _pfs_reg_t {
-	enum {
-		REG_TYPE_INPUT,
-		REG_TYPE_OUTPUT,
-		REG_TYPE_TEMP,
-		REG_TYPE_CONST
-	} type:2;
-	GLuint index:6;
-	GLuint v_swz:5;
-	GLuint s_swz:5;
-	GLuint negate_v:1;
-	GLuint negate_s:1;
-	GLuint absolute:1;
-	GLboolean no_use:1;
-	GLboolean valid:1;
-} pfs_reg_t;
-#endif
 typedef struct r300_fragment_program_swizzle {
 	GLuint length;
 	GLuint src[4];
