@@ -169,23 +169,22 @@ static int r300NumVerts(r300ContextPtr rmesa, int num_verts, int prim)
 		fprintf(stderr,
 			"%s:%s Do not know how to handle primitive 0x%04x - help me !\n",
 			__FILE__, __FUNCTION__, prim & PRIM_MODE_MASK);
-		return -1;
+		return 0;
 		break;
 	}
 
-	if (RADEON_DEBUG & DEBUG_VERTS) {
-		if (num_verts - verts_off == 0) {
-			WARN_ONCE
-			    ("user error: Need more than %d vertices to draw primitive 0x%04x !\n",
-			     num_verts, prim & PRIM_MODE_MASK);
-			return 0;
-		}
+	if (num_verts - verts_off == 0) {
+		WARN_ONCE
+		    ("user error: Need more than %d vertices to draw primitive 0x%04x !\n",
+		     num_verts, prim & PRIM_MODE_MASK);
+		return 0;
+	}
 
-		if (verts_off > 0) {
-			WARN_ONCE
-			    ("user error: %d is not a valid number of vertices for primitive 0x%04x !\n",
-			     num_verts, prim & PRIM_MODE_MASK);
-		}
+	if (verts_off > 0) {
+		WARN_ONCE
+		    ("user error: %d is not a valid number of vertices for primitive 0x%04x !\n",
+		     num_verts, prim & PRIM_MODE_MASK);
+		return 0;
 	}
 
 	return num_verts - verts_off;
