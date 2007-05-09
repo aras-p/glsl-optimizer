@@ -39,7 +39,6 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "tnl/tnl.h"
 
 #include "r300_context.h"
-#include "r300_program.h"
 
 #if SWIZZLE_X != VSF_IN_COMPONENT_X || \
     SWIZZLE_Y != VSF_IN_COMPONENT_Y || \
