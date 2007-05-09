@@ -46,7 +46,6 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "macros.h"
 #include "mtypes.h"
 #include "colormac.h"
-#include "radeon_context.h"
 
 #define USER_BUFFERS
 

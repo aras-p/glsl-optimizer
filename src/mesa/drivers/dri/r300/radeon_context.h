@@ -1,9 +1,14 @@
-/*
+/**************************************************************************
+
+Copyright 2000, 2001 ATI Technologies Inc., Ontario, Canada, and
+                     VA Linux Systems Inc., Fremont, California.
 Copyright (C) The Weather Channel, Inc.  2002.  All Rights Reserved.
 
 The Weather Channel (TM) funded Tungsten Graphics to develop the
 initial release of the Radeon 8500 driver under the XFree86 license.
 This notice must be preserved.
+
+All Rights Reserved.
 
 Permission is hereby granted, free of charge, to any person obtaining
 a copy of this software and associated documentation files (the
@@ -29,7 +34,9 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 /*
  * Authors:
+ *   Gareth Hughes <gareth@valinux.com>
  *   Keith Whitwell <keith@tungstengraphics.com>
+ *   Kevin E. Martin <martin@valinux.com>
  *   Nicolai Haehnle <prefect_@gmx.net>
  */
 
@@ -44,7 +51,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 struct radeon_context;
 typedef struct radeon_context radeonContextRec;
-typedef struct radeon_context* radeonContextPtr;
+typedef struct radeon_context *radeonContextPtr;
 
 #define TEX_0   0x1
 #define TEX_1   0x2
@@ -56,17 +63,16 @@ typedef struct radeon_context* radeonContextPtr;
 #define TEX_7	0x80
 #define TEX_ALL 0xff
 
-
 /* Rasterizing fallbacks */
 /* See correponding strings in r200_swtcl.c */
-#define RADEON_FALLBACK_TEXTURE		0x01
-#define RADEON_FALLBACK_DRAW_BUFFER	0x02
-#define RADEON_FALLBACK_STENCIL		0x04
-#define RADEON_FALLBACK_RENDER_MODE	0x08
-#define RADEON_FALLBACK_BLEND_EQ	0x10
-#define RADEON_FALLBACK_BLEND_FUNC	0x20
-#define RADEON_FALLBACK_DISABLE		0x40
-#define RADEON_FALLBACK_BORDER_MODE	0x80
+#define RADEON_FALLBACK_TEXTURE		0x0001
+#define RADEON_FALLBACK_DRAW_BUFFER	0x0002
+#define RADEON_FALLBACK_STENCIL		0x0004
+#define RADEON_FALLBACK_RENDER_MODE	0x0008
+#define RADEON_FALLBACK_BLEND_EQ	0x0010
+#define RADEON_FALLBACK_BLEND_FUNC	0x0020
+#define RADEON_FALLBACK_DISABLE		0x0040
+#define RADEON_FALLBACK_BORDER_MODE	0x0080
 
 #if R200_MERGED
 extern void radeonFallback(GLcontext * ctx, GLuint bit, GLboolean mode);
@@ -103,19 +109,18 @@ extern void radeonTclFallback(GLcontext * ctx, GLuint bit, GLboolean mode);
 #define TCL_FALLBACK( ctx, bit, mode )	;
 #endif
 
-
 struct radeon_dri_mirror {
 	__DRIcontextPrivate *context;	/* DRI context */
 	__DRIscreenPrivate *screen;	/* DRI screen */
 	/**
 	 * DRI drawable bound to this context for drawing.
 	 */
-	__DRIdrawablePrivate	*drawable;	
+	__DRIdrawablePrivate *drawable;
 
 	/**
 	 * DRI drawable bound to this context for reading.
 	 */
-	__DRIdrawablePrivate	*readable;
+	__DRIdrawablePrivate *readable;
 
 	drm_context_t hwContext;
 	drm_hw_lock_t *hwLock;
@@ -151,7 +156,7 @@ struct radeon_state {
  * structure.
  */
 struct radeon_context {
-	GLcontext *glCtx;		/* Mesa context */
+	GLcontext *glCtx;	/* Mesa context */
 	radeonScreenPtr radeonScreen;	/* Screen private DRI data */
 
 	/* Fallback state */
@@ -187,7 +192,6 @@ struct radeon_context {
 	GLuint swap_count;
 	GLuint swap_missed_count;
 
-
 	/* Derived state */
 	struct radeon_state state;
 
@@ -202,7 +206,7 @@ extern void radeonSwapBuffers(__DRIdrawablePrivate * dPriv);
 extern void radeonCopySubBuffer(__DRIdrawablePrivate * dPriv,
 				int x, int y, int w, int h);
 extern GLboolean radeonInitContext(radeonContextPtr radeon,
-				   struct dd_function_table* functions,
+				   struct dd_function_table *functions,
 				   const __GLcontextModes * glVisual,
 				   __DRIcontextPrivate * driContextPriv,
 				   void *sharedContextPrivate);
@@ -239,4 +243,4 @@ extern int RADEON_DEBUG;
 #define DEBUG_PIXEL     0x2000
 #define DEBUG_MEMORY    0x4000
 
-#endif /* __RADEON_CONTEXT_H__ */
+#endif				/* __RADEON_CONTEXT_H__ */
