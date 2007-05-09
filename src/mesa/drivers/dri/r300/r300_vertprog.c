@@ -255,7 +255,7 @@ static unsigned long t_src_index(struct r300_vertex_program *vp, struct prog_src
 		return vp->inputs[src->Index];
 	}else{
 		if (src->Index < 0) {
-			fprintf(stderr, "WARNING negative offsets for indirect addressing do not work\n");
+			_mesa_warning ("negative offsets for indirect addressing do not work.\n");
 			return 0;
 		}
 		return src->Index;
