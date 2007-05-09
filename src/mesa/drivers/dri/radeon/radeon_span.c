@@ -129,7 +129,11 @@ static GLuint radeon_mba_z32(const driRenderbuffer * drb, GLint x, GLint y)
 	} else {
 		GLuint ba, address = 0;	/* a[0..1] = 0           */
 
+#ifdef COMPILE_R300
+		ba = (y / 8) * (pitch / 8) + (x / 8);
+#else
 		ba = (y / 16) * (pitch / 16) + (x / 16);
+#endif
 
 		address |= (x & 0x7) << 2;	/* a[2..4] = x[0..2]     */
 		address |= (y & 0x3) << 5;	/* a[5..6] = y[0..1]     */
@@ -183,6 +187,16 @@ radeon_mba_z16(const driRenderbuffer * drb, GLint x, GLint y)
  * Careful: It looks like the R300 uses ZZZS byte order while the R200
  * uses SZZZ for 24 bit depth, 8 bit stencil mode.
  */
+#ifdef COMPILE_R300
+#define WRITE_DEPTH( _x, _y, d )					\
+do {									\
+   GLuint offset = radeon_mba_z32( drb, _x + xo, _y + yo );		\
+   GLuint tmp = *(GLuint *)(buf + offset);				\
+   tmp &= 0x000000ff;							\
+   tmp |= ((d << 8) & 0xffffff00);					\
+   *(GLuint *)(buf + offset) = tmp;					\
+} while (0)
+#else
 #define WRITE_DEPTH( _x, _y, d )					\
 do {									\
    GLuint offset = radeon_mba_z32( drb, _x + xo, _y + yo );		\
@@ -191,10 +205,19 @@ do {									\
    tmp |= ((d) & 0x00ffffff);						\
    *(GLuint *)(buf + offset) = tmp;					\
 } while (0)
+#endif
 
+#ifdef COMPILE_R300
+#define READ_DEPTH( d, _x, _y )						\
+  do { \
+    d = (*(GLuint *)(buf + radeon_mba_z32( drb, _x + xo,		\
+					 _y + yo )) & 0xffffff00) >> 8; \
+  }while(0)
+#else
 #define READ_DEPTH( d, _x, _y )						\
    d = *(GLuint *)(buf + radeon_mba_z32( drb, _x + xo,			\
 					 _y + yo )) & 0x00ffffff;
+#endif
 
 #define TAG(x) radeon##x##_z24_s8
 #include "depthtmp.h"
@@ -205,6 +228,16 @@ do {									\
 
 /* 24 bit depth, 8 bit stencil depthbuffer functions
  */
+#ifdef COMPILE_R300
+#define WRITE_STENCIL( _x, _y, d )					\
+do {									\
+   GLuint offset = radeon_mba_z32( drb, _x + xo, _y + yo );		\
+   GLuint tmp = *(GLuint *)(buf + offset);				\
+   tmp &= 0xffffff00;							\
+   tmp |= (d) & 0xff;							\
+   *(GLuint *)(buf + offset) = tmp;					\
+} while (0)
+#else
 #define WRITE_STENCIL( _x, _y, d )					\
 do {									\
    GLuint offset = radeon_mba_z32( drb, _x + xo, _y + yo );		\
@@ -213,14 +246,23 @@ do {									\
    tmp |= (((d) & 0xff) << 24);						\
    *(GLuint *)(buf + offset) = tmp;					\
 } while (0)
+#endif
 
+#ifdef COMPILE_R300
 #define READ_STENCIL( d, _x, _y )					\
 do {									\
    GLuint offset = radeon_mba_z32( drb, _x + xo, _y + yo );		\
    GLuint tmp = *(GLuint *)(buf + offset);				\
-   tmp &= 0xff000000;							\
-   d = tmp >> 24;							\
+   d = tmp & 0x000000ff;						\
 } while (0)
+#else
+#define READ_STENCIL( d, _x, _y )					\
+do {									\
+   GLuint offset = radeon_mba_z32( drb, _x + xo, _y + yo );		\
+   GLuint tmp = *(GLuint *)(buf + offset);				\
+   d = (tmp & 0xff000000) >> 24;					\
+} while (0)
+#endif
 
 #define TAG(x) radeon##x##_z24_s8
 #include "stenciltmp.h"
@@ -233,7 +275,12 @@ do {									\
 static void radeonSpanRenderStart(GLcontext * ctx)
 {
 	radeonContextPtr rmesa = RADEON_CONTEXT(ctx);
+#ifdef COMPILE_R300
+	r300ContextPtr r300 = (r300ContextPtr) rmesa;
+	R300_FIREVERTICES(r300);
+#else
 	RADEON_FIREVERTICES(rmesa);
+#endif
 	LOCK_HARDWARE(rmesa);
 	radeonWaitForIdleLocked(rmesa);
 }
