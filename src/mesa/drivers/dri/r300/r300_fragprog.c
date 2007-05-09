@@ -2210,7 +2210,7 @@ static void update_params(struct r300_fragment_program *rp)
 }
 
 void r300TranslateFragmentShader(r300ContextPtr r300,
-				    struct r300_fragment_program *rp)
+				 struct r300_fragment_program *rp)
 {
 	struct r300_pfs_compile_state *cs = NULL;
 

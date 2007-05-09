@@ -73,6 +73,6 @@ extern void r300UpdateShaders(r300ContextPtr rmesa);
 extern void r300UpdateShaderStates(r300ContextPtr rmesa);
 
 extern void r300PrintStateAtom(r300ContextPtr r300,
-				  struct r300_state_atom *state);
+			       struct r300_state_atom *state);
 
 #endif				/* __R300_STATE_H__ */

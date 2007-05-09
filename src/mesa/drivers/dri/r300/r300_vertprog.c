@@ -411,7 +411,7 @@ static GLboolean valid_dst(struct r300_vertex_program *vp,
 	} while (0)
 
 static void r300TranslateVertexShader(struct r300_vertex_program *vp,
-					 struct prog_instruction *vpi)
+				      struct prog_instruction *vpi)
 {
 	int i, cur_reg = 0;
 	VERTEX_SHADER_INSTRUCTION *o_inst;

@@ -167,7 +167,7 @@ static int blend_factor(GLenum factor, GLboolean is_src)
 
 /* helper function */
 static void r300SetBlendCntl(r300ContextPtr r300, int func, int eqn,
-				int cbits, int funcA, int eqnA)
+			     int cbits, int funcA, int eqnA)
 {
 	GLuint new_ablend, new_cblend;
 
@@ -292,9 +292,8 @@ static void r300SetBlendState(GLcontext * ctx)
 	}
 
 	r300SetBlendCntl(r300,
-			    func, eqn,
-			    R300_BLEND_UNKNOWN | R300_BLEND_ENABLE, funcA,
-			    eqnA);
+			 func, eqn,
+			 R300_BLEND_UNKNOWN | R300_BLEND_ENABLE, funcA, eqnA);
 }
 
 static void r300BlendEquationSeparate(GLcontext * ctx,
