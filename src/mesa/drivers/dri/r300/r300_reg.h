@@ -1555,6 +1555,7 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #define R300_PRIM_COLOR_ORDER_BGRA              (0 << 6)
 #define R300_PRIM_COLOR_ORDER_RGBA              (1 << 6)
 #define R300_PRIM_NUM_VERTICES_SHIFT            16
+#define R300_PRIM_NUM_VERTICES_MASK             0xffff
 
 /* Draw a primitive from vertex data in arrays loaded via 3D_LOAD_VBPNTR.
  * Two parameter dwords:
