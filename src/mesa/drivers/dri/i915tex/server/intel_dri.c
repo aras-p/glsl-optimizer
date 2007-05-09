@@ -483,12 +483,14 @@ static unsigned long AllocFromAGP(const DRIDriverContext *ctx, I830Rec *pI830, l
 }
 
 unsigned long
-I830AllocVidMem(const DRIDriverContext *ctx, I830Rec *pI830, I830MemRange *result, I830MemPool *pool, long size, unsigned long alignment, int flags)
+I830AllocVidMem(const DRIDriverContext *ctx, I830Rec *pI830,
+                I830MemRange *result, I830MemPool *pool, long size,
+                unsigned long alignment, int flags)
 {
-  int ret;
+   unsigned long ret;
 
-  if (!result)
-    return 0;
+   if (!result)
+      return 0;
 
    /* Make sure these are initialised. */
    result->Size = 0;
@@ -498,16 +500,15 @@ I830AllocVidMem(const DRIDriverContext *ctx, I830Rec *pI830, I830MemRange *resul
       return 0;
    }
 
-   if (pool->Free.Size < size)
-     return AllocFromAGP(ctx, pI830, size, alignment, result);
-   else
-   {
-     ret = AllocFromPool(ctx, pI830, result, pool, size, alignment, flags);
-
-     if (ret==0)
-       return AllocFromAGP(ctx, pI830, size, alignment, result);
-     return ret;
+   if (pool->Free.Size < size) {
+      ret = AllocFromAGP(ctx, pI830, size, alignment, result);
    }
+   else {
+      ret = AllocFromPool(ctx, pI830, result, pool, size, alignment, flags);
+      if (ret == 0)
+         ret = AllocFromAGP(ctx, pI830, size, alignment, result);
+   }
+   return ret;
 }
 
 static Bool BindAgpRange(const DRIDriverContext *ctx, I830MemRange *mem)
