@@ -27,10 +27,11 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 **************************************************************************/
 
-/*
- * Authors:
- *   Keith Whitwell <keith@tungstengraphics.com>
- *   Nicolai Haehnle <prefect_@gmx.net>
+/**
+ * \file
+ *
+ * \author Keith Whitwell <keith@tungstengraphics.com>
+ * \author Nicolai Haehnle <prefect_@gmx.net>
  */
 
 #ifndef __R300_CONTEXT_H__
@@ -88,6 +89,9 @@ typedef struct r300_context *r300ContextPtr;
 #include "r300_vertprog.h"
 #include "r300_fragprog.h"
 
+/**
+ * This function takes a float and packs it into a uint32_t
+ */
 static __inline__ uint32_t r300PackFloat32(float fl)
 {
 	union {
@@ -104,7 +108,7 @@ static __inline__ uint32_t r300PackFloat32(float fl)
 /* Need refcounting on dma buffers:
  */
 struct r300_dma_buffer {
-	int refcount;		/* the number of retained regions in buf */
+	int refcount;		/**< the number of retained regions in buf */
 	drmBufPtr buf;
 	int id;
 };
@@ -831,7 +835,7 @@ struct r300_state {
 #define R300_FALLBACK_RAST 2
 
 /**
- * R300 context structure.
+ * \brief R300 context structure.
  */
 struct r300_context {
 	struct radeon_context radeon;	/* parent class, must be first */
@@ -878,18 +882,6 @@ struct r300_buffer_object {
 
 #define R300_CONTEXT(ctx)		((r300ContextPtr)(ctx->DriverCtx))
 
-static __inline GLuint r300PackColor(GLuint cpp,
-				     GLubyte r, GLubyte g, GLubyte b, GLubyte a)
-{
-	switch (cpp) {
-	case 2:
-		return PACK_COLOR_565(r, g, b);
-	case 4:
-		return PACK_COLOR_8888(r, g, b, a);
-	default:
-		return 0;
-	}
-}
 extern void r300DestroyContext(__DRIcontextPrivate * driContextPriv);
 extern GLboolean r300CreateContext(const __GLcontextModes * glVisual,
 				   __DRIcontextPrivate * driContextPriv,

@@ -46,19 +46,6 @@ struct radeon_context;
 typedef struct radeon_context radeonContextRec;
 typedef struct radeon_context* radeonContextPtr;
 
-static __inline GLuint radeonPackColor(GLuint cpp,
-				     GLubyte r, GLubyte g, GLubyte b, GLubyte a)
-{
-	switch (cpp) {
-	case 2:
-		return PACK_COLOR_565(r, g, b);
-	case 4:
-		return PACK_COLOR_8888(a, r, g, b);
-	default:
-		return 0;
-	}
-}
-
 #define TEX_0   0x1
 #define TEX_1   0x2
 #define TEX_2	0x4

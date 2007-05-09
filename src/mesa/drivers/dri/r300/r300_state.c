@@ -78,7 +78,7 @@ static void r300BlendColor(GLcontext * ctx, const GLfloat cf[4])
 	CLAMPED_FLOAT_TO_UBYTE(color[2], cf[2]);
 	CLAMPED_FLOAT_TO_UBYTE(color[3], cf[3]);
 
-	rmesa->hw.blend_color.cmd[1] = r300PackColor(4, color[3], color[0],
+	rmesa->hw.blend_color.cmd[1] = PACK_COLOR_8888(color[3], color[0],
 						     color[1], color[2]);
 }
 
