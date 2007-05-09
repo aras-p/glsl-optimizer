@@ -2,11 +2,11 @@
 #define __R300_VERTPROG_H_
 
 typedef struct {
-	CARD32 op;
-	CARD32 src1;
-	CARD32 src2;
-	CARD32 src3;
-	} VERTEX_SHADER_INSTRUCTION;
+	GLuint op;
+	GLuint src1;
+	GLuint src2;
+	GLuint src3;
+} VERTEX_SHADER_INSTRUCTION;
 
 #define VSF_FLAG_X	1
 #define VSF_FLAG_Y	2
@@ -21,7 +21,7 @@ typedef struct {
 #define VSF_OUT_CLASS_RESULT	2
 
 
-/* first CARD32 of an instruction */
+/* first DWORD of an instruction */
 
 /* possible operations: 
     DOT, MUL, ADD, MAD, FRC, MAX, MIN, SGE, SLT, EXP, LOG, LIT, POW, RCP, RSQ, EX2,
@@ -36,7 +36,7 @@ typedef struct {
 #define EASY_VSF_OP(op, out_reg_index, out_reg_fields, class) \
 	MAKE_VSF_OP(R300_VPI_OUT_OP_##op, out_reg_index, VSF_FLAG_##out_reg_fields, VSF_OUT_CLASS_##class) \
 
-/* according to Nikolai, the subsequent 3 CARD32 are sources, use same define for each */
+/* according to Nikolai, the subsequent 3 DWORDs are sources, use same define for each */
 
 #define VSF_IN_CLASS_TMP	0
 #define VSF_IN_CLASS_ATTR	1
