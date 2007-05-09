@@ -337,7 +337,7 @@ static void radeonDrawRangeElements(GLcontext *ctx,
 	rmesa->state.VB.elt_min = min;
 	rmesa->state.VB.elt_max = max;
 	
-	if (r300_run_vb_render(ctx, NULL)) {
+	if (r300RunRender(ctx, NULL)) {
 		r300ReleaseDmaRegion(rmesa, &rvb, __FUNCTION__);
 		return GL_FALSE;
 	}
@@ -398,7 +398,7 @@ static GLboolean radeonDrawArrays( GLcontext *ctx,
 	rmesa->state.VB.elt_min = 0;
 	rmesa->state.VB.elt_max = 0;
 	
-	if (r300_run_vb_render(ctx, NULL))
+	if (r300RunRender(ctx, NULL))
 	   return GL_FALSE;
 
 	return GL_TRUE;

@@ -914,8 +914,8 @@ extern int r300Fallback(GLcontext * ctx);
 extern void radeon_vb_to_rvb(r300ContextPtr rmesa,
 			     struct radeon_vertex_buffer *rvb,
 			     struct vertex_buffer *vb);
-extern GLboolean r300_run_vb_render(GLcontext * ctx,
-				    struct tnl_pipeline_stage *stage);
+extern GLboolean r300RunRender(GLcontext * ctx,
+			       struct tnl_pipeline_stage *stage);
 
 #ifdef RADEON_VTXFMT_A
 extern void radeon_init_vtxfmt_a(r300ContextPtr rmesa);
