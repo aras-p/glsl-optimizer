@@ -343,7 +343,7 @@ int r300Fallback(GLcontext * ctx)
 
 	if (fp) {
 		if (!fp->translated)
-			r300_translate_fragment_shader(r300, fp);
+			r300TranslateFragmentShader(r300, fp);
 		FALLBACK_IF(!fp->translated);
 	}
 

@@ -205,7 +205,7 @@ static void radeonDrawRangeElements(GLcontext *ctx,
 		    mode == GL_TRIANGLES) {
 			
 			while (count) {
-				i = r300_get_num_verts(rmesa, MIN2(count, 65535), mode);
+				i = r300NumVerts(rmesa, MIN2(count, 65535), mode);
 				
 				radeonDrawRangeElements(mode, min, max, i, type, indices);
 				

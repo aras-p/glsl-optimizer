@@ -410,7 +410,7 @@ static GLboolean valid_dst(struct r300_vertex_program *vp,
 		u_temp_i=VSF_MAX_FRAGMENT_TEMPS-1; \
 	} while (0)
 
-static void r300_translate_vertex_shader(struct r300_vertex_program *vp,
+static void r300TranslateVertexShader(struct r300_vertex_program *vp,
 					 struct prog_instruction *vpi)
 {
 	int i, cur_reg = 0;
@@ -1236,12 +1236,12 @@ static struct r300_vertex_program *build_program(struct r300_vertex_program_key
 
 	vp->num_temporaries = mesa_vp->Base.NumTemporaries;
 
-	r300_translate_vertex_shader(vp, mesa_vp->Base.Instructions);
+	r300TranslateVertexShader(vp, mesa_vp->Base.Instructions);
 
 	return vp;
 }
 
-void r300_select_vertex_shader(r300ContextPtr r300)
+void r300SelectVertexShader(r300ContextPtr r300)
 {
 	GLcontext *ctx = ctx = r300->radeon.glCtx;
 	GLuint InputsRead;

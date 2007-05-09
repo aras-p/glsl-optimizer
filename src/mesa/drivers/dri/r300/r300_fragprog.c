@@ -2209,7 +2209,7 @@ static void update_params(struct r300_fragment_program *rp)
 		_mesa_load_state_parameters(rp->ctx, mp->Base.Parameters);
 }
 
-void r300_translate_fragment_shader(r300ContextPtr r300,
+void r300TranslateFragmentShader(r300ContextPtr r300,
 				    struct r300_fragment_program *rp)
 {
 	struct r300_pfs_compile_state *cs = NULL;

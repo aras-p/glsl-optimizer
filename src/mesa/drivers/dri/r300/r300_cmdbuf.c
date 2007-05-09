@@ -127,7 +127,7 @@ int r300FlushCmdBuf(r300ContextPtr r300, const char *caller)
 	return ret;
 }
 
-void r300_print_state_atom(r300ContextPtr r300, struct r300_state_atom *state)
+void r300PrintStateAtom(r300ContextPtr r300, struct r300_state_atom *state)
 {
 	int i;
 	int dwords = (*state->check) (r300, state);
@@ -160,7 +160,7 @@ static __inline__ void r300DoEmitState(r300ContextPtr r300, GLboolean dirty)
 				int dwords = (*atom->check) (r300, atom);
 
 				if (dwords)
-					r300_print_state_atom(r300, atom);
+					r300PrintStateAtom(r300, atom);
 				else
 					fprintf(stderr,
 						"  skip state %s\n",

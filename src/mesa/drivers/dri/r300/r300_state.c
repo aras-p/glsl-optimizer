@@ -166,7 +166,7 @@ static int blend_factor(GLenum factor, GLboolean is_src)
  */
 
 /* helper function */
-static void r300_set_blend_cntl(r300ContextPtr r300, int func, int eqn,
+static void r300SetBlendCntl(r300ContextPtr r300, int func, int eqn,
 				int cbits, int funcA, int eqnA)
 {
 	GLuint new_ablend, new_cblend;
@@ -200,7 +200,7 @@ static void r300_set_blend_cntl(r300ContextPtr r300, int func, int eqn,
 	}
 }
 
-static void r300_set_blend_state(GLcontext * ctx)
+static void r300SetBlendState(GLcontext * ctx)
 {
 	r300ContextPtr r300 = R300_CONTEXT(ctx);
 	int func = (R300_BLEND_GL_ONE << R300_SRC_BLEND_SHIFT) |
@@ -211,7 +211,7 @@ static void r300_set_blend_state(GLcontext * ctx)
 	int eqnA = R300_COMB_FCN_ADD_CLAMP;
 
 	if (RGBA_LOGICOP_ENABLED(ctx) || !ctx->Color.BlendEnabled) {
-		r300_set_blend_cntl(r300, func, eqn, 0, func, eqn);
+		r300SetBlendCntl(r300, func, eqn, 0, func, eqn);
 		return;
 	}
 
@@ -291,7 +291,7 @@ static void r300_set_blend_state(GLcontext * ctx)
 		return;
 	}
 
-	r300_set_blend_cntl(r300,
+	r300SetBlendCntl(r300,
 			    func, eqn,
 			    R300_BLEND_UNKNOWN | R300_BLEND_ENABLE, funcA,
 			    eqnA);
@@ -300,14 +300,14 @@ static void r300_set_blend_state(GLcontext * ctx)
 static void r300BlendEquationSeparate(GLcontext * ctx,
 				      GLenum modeRGB, GLenum modeA)
 {
-	r300_set_blend_state(ctx);
+	r300SetBlendState(ctx);
 }
 
 static void r300BlendFuncSeparate(GLcontext * ctx,
 				  GLenum sfactorRGB, GLenum dfactorRGB,
 				  GLenum sfactorA, GLenum dfactorA)
 {
-	r300_set_blend_state(ctx);
+	r300SetBlendState(ctx);
 }
 
 /**
@@ -510,7 +510,7 @@ static void r300Enable(GLcontext * ctx, GLenum cap, GLboolean state)
 
 	case GL_BLEND:
 	case GL_COLOR_LOGIC_OP:
-		r300_set_blend_state(ctx);
+		r300SetBlendState(ctx);
 		break;
 
 	case GL_DEPTH_TEST:
@@ -1280,7 +1280,7 @@ static unsigned long gen_fixed_filter(unsigned long f)
 	return f;
 }
 
-void r300_setup_textures(GLcontext * ctx)
+static void r300SetupTextures(GLcontext * ctx)
 {
 	int i, mtu;
 	struct r300_tex_obj *t;
@@ -1442,7 +1442,7 @@ union r300_outputs_written {
 	((hw_tcl_on) ? (ow).vp_outputs & (1 << (vp_result)) : \
 	RENDERINPUTS_TEST( (ow.index_bitset), (tnl_attrib) ))
 
-void r300_setup_rs_unit(GLcontext * ctx)
+void r300SetupRSUnit(GLcontext * ctx)
 {
 	r300ContextPtr r300 = R300_CONTEXT(ctx);
 	/* I'm still unsure if these are needed */
@@ -1844,11 +1844,11 @@ void r300UpdateShaders(r300ContextPtr rmesa)
 			    rmesa->temp_attrib[i];
 		}
 
-		r300_select_vertex_shader(rmesa);
+		r300SelectVertexShader(rmesa);
 		vp = (struct r300_vertex_program *)
 		    CURRENT_VERTEX_SHADER(ctx);
 		/*if (vp->translated == GL_FALSE)
-		   r300_translate_vertex_shader(vp); */
+		   r300TranslateVertexShader(vp); */
 		if (vp->translated == GL_FALSE) {
 			fprintf(stderr, "Failing back to sw-tcl\n");
 			hw_tcl_on = future_hw_tcl_on = 0;
@@ -1869,11 +1869,11 @@ void r300UpdateShaderStates(r300ContextPtr rmesa)
 	r300UpdateTextureState(ctx);
 
 	r300SetupPixelShader(rmesa);
-	r300_setup_textures(ctx);
+	r300SetupTextures(ctx);
 
 	if ((rmesa->radeon.radeonScreen->chip_flags & RADEON_CHIPSET_TCL))
 		r300SetupVertexShader(rmesa);
-	r300_setup_rs_unit(ctx);
+	r300SetupRSUnit(ctx);
 }
 
 /* This is probably wrong for some values, I need to test this
@@ -1917,7 +1917,7 @@ void r300SetupPixelShader(r300ContextPtr rmesa)
 	if (!rp)		/* should only happenen once, just after context is created */
 		return;
 
-	r300_translate_fragment_shader(rmesa, rp);
+	r300TranslateFragmentShader(rmesa, rp);
 	if (!rp->translated) {
 		fprintf(stderr, "%s: No valid fragment shader, exiting\n",
 			__func__);
@@ -2051,7 +2051,7 @@ void r300ResetHwState(r300ContextPtr r300)
 
 	r300UpdateTextureState(ctx);
 
-	r300_set_blend_state(ctx);
+	r300SetBlendState(ctx);
 
 	r300AlphaFunc(ctx, ctx->Color.AlphaFunc, ctx->Color.AlphaRef);
 	r300Enable(ctx, GL_ALPHA_TEST, ctx->Color.AlphaEnabled);

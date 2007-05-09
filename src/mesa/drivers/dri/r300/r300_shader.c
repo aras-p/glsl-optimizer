@@ -64,7 +64,7 @@ r300ProgramStringNotify(GLcontext * ctx, GLenum target, struct gl_program *prog)
 		vp->progs = NULL;
 		/*vp->translated = GL_FALSE;
 		   memset(&vp->translated, 0, sizeof(struct r300_vertex_program) - sizeof(struct gl_vertex_program)); */
-		/*r300_translate_vertex_shader(vp); */
+		/*r300TranslateVertexShader(vp); */
 		break;
 	case GL_FRAGMENT_PROGRAM_ARB:
 		fp->translated = GL_FALSE;
