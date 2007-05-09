@@ -174,6 +174,7 @@ static unsigned long t_dst_class(enum register_file file)
 		default:
 			fprintf(stderr, "problem in %s", __FUNCTION__);
 			_mesa_exit(-1);
+			return -1;
 	}
 }
 
@@ -208,6 +209,7 @@ static unsigned long t_src_class(enum register_file file)
 		default:
 			fprintf(stderr, "problem in %s", __FUNCTION__);
 			_mesa_exit(-1);
+			return -1;
 	}
 }
 
