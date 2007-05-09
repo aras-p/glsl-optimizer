@@ -59,10 +59,6 @@
 
 #define CP_PACKET0(reg, n)	(RADEON_CP_PACKET0 | ((n)<<16) | ((reg)>>2))
 
-void static inline check_space(int dwords)
-{
-}
-
 static __inline__ uint32_t cmdpacket0(int reg, int count)
 {
 	drm_r300_cmd_header_t cmd;
@@ -239,7 +235,6 @@ static void inline fire_AOS(r300ContextPtr rmesa, int vertex_count, int type)
 	int cmd_reserved = 0;
 	int cmd_written = 0;
 	drm_radeon_cmd_header_t *cmd = NULL;
-	check_space(9);
 
 	start_packet3(RADEON_CP_PACKET3_3D_DRAW_VBUF_2, 0);
 	e32(R300_VAP_VF_CNTL__PRIM_WALK_VERTEX_LIST | (vertex_count << 16)

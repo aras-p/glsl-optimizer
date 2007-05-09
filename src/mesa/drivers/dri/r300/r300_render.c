@@ -207,8 +207,6 @@ static void inline r300FireEB(r300ContextPtr rmesa, unsigned long addr,
 	t_addr = addr & ~0x1d;
 	magic_2 = (vertex_count + 1 + (t_addr & 0x2)) / 2 + magic_1;
 
-	check_space(6);
-
 	start_packet3(RADEON_CP_PACKET3_3D_DRAW_INDX_2, 0);
 	if (elt_size == 4) {
 		e32(R300_VAP_VF_CNTL__PRIM_WALK_INDICES |
