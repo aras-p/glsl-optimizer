@@ -296,7 +296,7 @@ static void r300SetTexImages(r300ContextPtr rmesa,
 		}
 		assert(size > 0);
 
-		if (0)
+		if (RADEON_DEBUG & DEBUG_TEXTURE)
 			fprintf(stderr, "w=%d h=%d d=%d tb=%d intFormat=%d\n",
 				texImage->Width, texImage->Height,
 				texImage->Depth,
@@ -325,7 +325,7 @@ static void r300SetTexImages(r300ContextPtr rmesa,
 			t->image[0][i].height = size / t->image[0][i].width;
 		}
 
-		if (0)
+		if (RADEON_DEBUG & DEBUG_TEXTURE)
 			fprintf(stderr,
 				"level %d: %dx%d x=%d y=%d w=%d h=%d size=%d at %d\n",
 				i, texImage->Width, texImage->Height,

@@ -255,7 +255,7 @@ static void r300UploadRectSubImage(r300ContextPtr rmesa,
 
 			/* Copy texdata to dma:
 			 */
-			if (0)
+			if (RADEON_DEBUG & DEBUG_TEXTURE)
 				fprintf(stderr,
 					"%s: src_pitch %d dst_pitch %d\n",
 					__FUNCTION__, src_pitch, dstPitch);

@@ -510,7 +510,7 @@ r300ValidateClientStorage(GLcontext * ctx, GLenum target,
 {
 	r300ContextPtr rmesa = R300_CONTEXT(ctx);
 
-	if (0)
+	if (RADEON_DEBUG & DEBUG_TEXTURE)
 		fprintf(stderr, "intformat %s format %s type %s\n",
 			_mesa_lookup_enum_by_nr(internalFormat),
 			_mesa_lookup_enum_by_nr(format),
@@ -567,7 +567,7 @@ r300ValidateClientStorage(GLcontext * ctx, GLenum target,
 		GLint srcRowStride = _mesa_image_row_stride(packing, srcWidth,
 							    format, type);
 
-		if (0)
+		if (RADEON_DEBUG & DEBUG_TEXTURE)
 			fprintf(stderr, "%s: srcRowStride %d/%x\n",
 				__FUNCTION__, srcRowStride, srcRowStride);
 
