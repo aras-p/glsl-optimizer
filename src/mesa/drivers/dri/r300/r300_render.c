@@ -24,7 +24,8 @@ OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
 USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 **************************************************************************/
-/*
+
+/**
  * \file
  *
  * \brief R300 Render (Vertex Buffer Implementation)
@@ -45,6 +46,7 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
  *
  * \author Nicolai Haehnle <prefect_@gmx.net>
  */
+
 #include "glheader.h"
 #include "state.h"
 #include "imports.h"
@@ -72,6 +74,9 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "r300_emit.h"
 extern int future_hw_tcl_on;
 
+/**
+ * \brief Convert a OpenGL primitive type into a R300 primitive type.
+ */
 static int r300PrimitiveType(r300ContextPtr rmesa, GLcontext * ctx, int prim)
 {
 	int type = -1;
@@ -117,7 +122,7 @@ static int r300PrimitiveType(r300ContextPtr rmesa, GLcontext * ctx, int prim)
 	return type;
 }
 
-int r300NumVerts(r300ContextPtr rmesa, int num_verts, int prim)
+static int r300NumVerts(r300ContextPtr rmesa, int num_verts, int prim)
 {
 	int verts_off = 0;
 
@@ -274,46 +279,49 @@ static void r300RunRenderPrimitive(r300ContextPtr rmesa, GLcontext * ctx,
 			rvb->AttribPtr[(a)].stride = vb->b->stride, \
 			rvb->AttribPtr[(a)].data = vb->b->data
 
-static void radeon_vb_to_rvb(r300ContextPtr rmesa, struct radeon_vertex_buffer *rvb, struct vertex_buffer *vb)
+static void radeon_vb_to_rvb(r300ContextPtr rmesa,
+			     struct radeon_vertex_buffer *rvb,
+			     struct vertex_buffer *vb)
 {
 	int i;
 	GLcontext *ctx;
 	ctx = rmesa->radeon.glCtx;
-	
+
 	memset(rvb, 0, sizeof(*rvb));
-	
+
 	rvb->Elts = vb->Elts;
 	rvb->elt_size = 4;
 	rvb->elt_min = 0;
 	rvb->elt_max = vb->Count;
-	
+
 	rvb->Count = vb->Count;
-	
+
 	if (hw_tcl_on) {
 		CONV_VB(VERT_ATTRIB_POS, ObjPtr);
 	} else {
 		assert(vb->ClipPtr);
 		CONV_VB(VERT_ATTRIB_POS, ClipPtr);
-	}	
-	
+	}
+
 	CONV_VB(VERT_ATTRIB_NORMAL, NormalPtr);
 	CONV_VB(VERT_ATTRIB_COLOR0, ColorPtr[0]);
 	CONV_VB(VERT_ATTRIB_COLOR1, SecondaryColorPtr[0]);
 	CONV_VB(VERT_ATTRIB_FOG, FogCoordPtr);
-	
-	for (i=0; i < ctx->Const.MaxTextureCoordUnits; i++)
+
+	for (i = 0; i < ctx->Const.MaxTextureCoordUnits; i++)
 		CONV_VB(VERT_ATTRIB_TEX0 + i, TexCoordPtr[i]);
 
-	for (i=0; i < MAX_VERTEX_PROGRAM_ATTRIBS; i++)
-		CONV_VB(VERT_ATTRIB_GENERIC0 + i, AttribPtr[VERT_ATTRIB_GENERIC0 + i]);
-	
+	for (i = 0; i < MAX_VERTEX_PROGRAM_ATTRIBS; i++)
+		CONV_VB(VERT_ATTRIB_GENERIC0 + i,
+			AttribPtr[VERT_ATTRIB_GENERIC0 + i]);
+
 	rvb->Primitive = vb->Primitive;
 	rvb->PrimitiveCount = vb->PrimitiveCount;
 	rvb->LockFirst = rvb->LockCount = 0;
 	rvb->lock_uptodate = GL_FALSE;
 }
 
-GLboolean r300RunRender(GLcontext * ctx,
+static GLboolean r300RunRender(GLcontext * ctx,
 			       struct tnl_pipeline_stage *stage)
 {
 	r300ContextPtr rmesa = R300_CONTEXT(ctx);
@@ -349,8 +357,8 @@ GLboolean r300RunRender(GLcontext * ctx,
 		GLuint prim = _tnl_translate_prim(&VB->Primitive[i]);
 		GLuint start = VB->Primitive[i].start;
 		GLuint length = VB->Primitive[i].count;
-
-		r300RunRenderPrimitive(rmesa, ctx, start, start + length, prim);
+		GLuint end = VB->Primitive[i].start + VB->Primitive[i].count;
+		r300RunRenderPrimitive(rmesa, ctx, start, end, prim);
 	}
 
 	reg_start(R300_RB3D_DSTCACHE_CTLSTAT, 0);
@@ -362,7 +370,9 @@ GLboolean r300RunRender(GLcontext * ctx,
 #ifdef USER_BUFFERS
 	r300UseArrays(ctx);
 #endif
+
 	r300ReleaseArrays(ctx);
+
 	return GL_FALSE;
 }
 
@@ -376,7 +386,7 @@ GLboolean r300RunRender(GLcontext * ctx,
 		}							\
 	} while(0)
 
-int r300Fallback(GLcontext * ctx)
+static int r300Fallback(GLcontext * ctx)
 {
 	r300ContextPtr r300 = R300_CONTEXT(ctx);
 	struct r300_fragment_program *fp = (struct r300_fragment_program *)

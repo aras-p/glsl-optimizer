@@ -884,17 +884,11 @@ extern GLboolean r300CreateContext(const __GLcontextModes * glVisual,
 				   __DRIcontextPrivate * driContextPriv,
 				   void *sharedContextPrivate);
 
-extern int r300NumVerts(r300ContextPtr rmesa, int num_verts, int prim);
-
 extern void r300SelectVertexShader(r300ContextPtr r300);
 extern void r300InitShaderFuncs(struct dd_function_table *functions);
 extern int r300VertexProgUpdateParams(GLcontext * ctx,
 				      struct r300_vertex_program_cont *vp,
 				      float *dst);
-extern int r300Fallback(GLcontext * ctx);
-
-extern GLboolean r300RunRender(GLcontext * ctx,
-			       struct tnl_pipeline_stage *stage);
 
 #define RADEON_D_CAPTURE 0
 #define RADEON_D_PLAYBACK 1

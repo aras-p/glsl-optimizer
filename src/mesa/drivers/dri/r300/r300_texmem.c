@@ -28,11 +28,12 @@ SOFTWARE.
 
 **************************************************************************/
 
-/*
- * Authors:
- *   Kevin E. Martin <martin@valinux.com>
- *   Gareth Hughes <gareth@valinux.com>
+/**
+ * \file
  *
+ * \author Gareth Hughes <gareth@valinux.com>
+ *
+ * \author Kevin E. Martin <martin@valinux.com>
  */
 
 #include <errno.h>

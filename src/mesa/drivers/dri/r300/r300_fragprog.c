@@ -25,13 +25,13 @@
  *
  */
 
-/*
- * Authors:
- *   Ben Skeggs <darktama@iinet.net.au>
- *   Jerome Glisse <j.glisse@gmail.com>
- */
-
 /**
+ * \file
+ *
+ * \author Ben Skeggs <darktama@iinet.net.au>
+ *
+ * \author Jerome Glisse <j.glisse@gmail.com>
+ *
  * \todo Depth write, WPOS/FOGC inputs
  *
  * \todo FogOption

@@ -24,11 +24,13 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  *
  */
- 
-/*
- * Authors:
- *   Aapo Tahkola <aet@rasterburn.org>
+
+/**
+ * \file
+ *
+ * \author Aapo Tahkola <aet@rasterburn.org>
  */
+
 #include <unistd.h>
 
 #include "r300_context.h"

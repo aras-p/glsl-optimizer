@@ -27,11 +27,14 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 **************************************************************************/
 
-/*
- * Authors:
- *   Keith Whitwell <keith@tungstengraphics.com>
- *   Nicolai Haehnle <prefect_@gmx.net>
+/**
+ * \file
+ *
+ * \author Keith Whitwell <keith@tungstengraphics.com>
+ *
+ * \author Nicolai Haehnle <prefect_@gmx.net>
  */
+
 #include "glheader.h"
 #include "api_arrayelt.h"
 #include "context.h"

@@ -25,10 +25,12 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 **************************************************************************/
 
-/*
- * Authors:
- *   Aapo Tahkola <aet@rasterburn.org>
+/**
+ * \file
+ *
+ * \author Aapo Tahkola <aet@rasterburn.org>
  */
+
 #include "glheader.h"
 #include "macros.h"
 #include "enums.h"
