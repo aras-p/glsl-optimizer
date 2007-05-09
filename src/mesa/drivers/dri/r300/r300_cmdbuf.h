@@ -52,8 +52,7 @@ extern void r300EmitAOS(r300ContextPtr rmesa, GLuint nr, GLuint offset);
  * by flushing if necessary.
  */
 static __inline__ void r300EnsureCmdBufSpace(r300ContextPtr r300,
-					     int dwords,
-					     const char *caller)
+					     int dwords, const char *caller)
 {
 	assert(dwords < r300->cmdbuf.size);
 
@@ -69,8 +68,7 @@ static __inline__ void r300EnsureCmdBufSpace(r300ContextPtr r300,
  * correct hardware state after an unlock.
  */
 static __inline__ uint32_t *r300RawAllocCmdBuf(r300ContextPtr r300,
-					       int dwords,
-					       const char *caller)
+					       int dwords, const char *caller)
 {
 	uint32_t *ptr;
 
@@ -91,8 +89,7 @@ static __inline__ uint32_t *r300AllocCmdBuf(r300ContextPtr r300,
 	if (!r300->cmdbuf.count_used) {
 		if (RADEON_DEBUG & DEBUG_IOCTL)
 			fprintf(stderr,
-				"Reemit state after flush (from %s)\n",
-				caller);
+				"Reemit state after flush (from %s)\n", caller);
 		r300EmitState(r300);
 	}
 
