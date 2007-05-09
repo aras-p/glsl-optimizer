@@ -56,7 +56,7 @@ SOFTWARE.
 #include <unistd.h>		/* for usleep() */
 
 #ifdef USER_BUFFERS
-#include "radeon_mm.h"
+#include "r300_mem.h"
 #endif
 
 /**
@@ -285,7 +285,7 @@ static void r300UploadRectSubImage(r300ContextPtr rmesa,
 
 			r300EmitWait(rmesa, R300_WAIT_2D);
 #ifdef USER_BUFFERS
-			radeon_mm_use(rmesa, region.buf->id);
+			r300_mem_use(rmesa, region.buf->id);
 #endif
 
 			r300ReleaseDmaRegion(rmesa, &region, __FUNCTION__);

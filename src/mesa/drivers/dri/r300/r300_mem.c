@@ -34,7 +34,7 @@
 #include "r300_context.h"
 #include "r300_cmdbuf.h"
 #include "r300_ioctl.h"
-#include "radeon_mm.h"
+#include "r300_mem.h"
 #include "radeon_ioctl.h"
 
 #ifdef USER_BUFFERS
@@ -60,16 +60,16 @@ static void resize_u_list(r300ContextPtr rmesa)
 	rmesa->rmm->u_size = nsize;
 }
 
-void radeon_mm_init(r300ContextPtr rmesa)
+void r300_mem_init(r300ContextPtr rmesa)
 {
-	rmesa->rmm = malloc(sizeof(struct radeon_memory_manager));
-	memset(rmesa->rmm, 0, sizeof(struct radeon_memory_manager));
+	rmesa->rmm = malloc(sizeof(struct r300_memory_manager));
+	memset(rmesa->rmm, 0, sizeof(struct r300_memory_manager));
 	
 	rmesa->rmm->u_size = 128;
 	resize_u_list(rmesa);
 }
 
-void radeon_mm_destroy(r300ContextPtr rmesa)
+void r300_mem_destroy(r300ContextPtr rmesa)
 {
 	_mesa_free(rmesa->rmm->u_list);
 	rmesa->rmm->u_list = NULL;
@@ -78,13 +78,13 @@ void radeon_mm_destroy(r300ContextPtr rmesa)
 	rmesa->rmm = NULL;
 }
 
-void *radeon_mm_ptr(r300ContextPtr rmesa, int id)
+void *r300_mem_ptr(r300ContextPtr rmesa, int id)
 {
 	assert(id <= rmesa->rmm->u_last);
 	return rmesa->rmm->u_list[id].ptr;
 }
 
-int radeon_mm_find(r300ContextPtr rmesa, void *ptr)
+int r300_mem_find(r300ContextPtr rmesa, void *ptr)
 {
 	int i;
 	
@@ -102,7 +102,7 @@ int radeon_mm_find(r300ContextPtr rmesa, void *ptr)
 }
 
 //#define MM_DEBUG
-int radeon_mm_alloc(r300ContextPtr rmesa, int alignment, int size)
+int r300_mem_alloc(r300ContextPtr rmesa, int alignment, int size)
 {
 	drm_radeon_mem_alloc_t alloc;
 	int offset = 0, ret;
@@ -293,7 +293,7 @@ static void emit_lin_cp(r300ContextPtr rmesa, unsigned long dst, unsigned long s
 	e32(0x00010000);
 }
 
-void radeon_mm_use(r300ContextPtr rmesa, int id)
+void r300_mem_use(r300ContextPtr rmesa, int id)
 {
 	uint64_t ull;
 #ifdef MM_DEBUG
@@ -341,7 +341,7 @@ void radeon_mm_use(r300ContextPtr rmesa, int id)
 		
 	cmd = (drm_r300_cmd_header_t *)r300AllocCmdBuf(rmesa, 2 + sizeof(ull) / 4, __FUNCTION__);
 	cmd[0].scratch.cmd_type = R300_CMD_SCRATCH;
-	cmd[0].scratch.reg = RADEON_MM_SCRATCH;
+	cmd[0].scratch.reg = R300_MEM_SCRATCH;
 	cmd[0].scratch.n_bufs = 1;
 	cmd[0].scratch.flags = 0;
 	cmd ++;
@@ -357,7 +357,7 @@ void radeon_mm_use(r300ContextPtr rmesa, int id)
 	UNLOCK_HARDWARE(&rmesa->radeon);
 }
 
-unsigned long radeon_mm_offset(r300ContextPtr rmesa, int id)
+unsigned long r300_mem_offset(r300ContextPtr rmesa, int id)
 {
 	unsigned long offset;
 	
@@ -374,7 +374,7 @@ unsigned long radeon_mm_offset(r300ContextPtr rmesa, int id)
 	return offset;
 }
 
-int radeon_mm_on_card(r300ContextPtr rmesa, int id)
+int r300_mem_on_card(r300ContextPtr rmesa, int id)
 {
 	assert(id <= rmesa->rmm->u_last);
 	
@@ -384,7 +384,7 @@ int radeon_mm_on_card(r300ContextPtr rmesa, int id)
 	return GL_FALSE;
 }
 		
-void *radeon_mm_map(r300ContextPtr rmesa, int id, int access)
+void *r300_mem_map(r300ContextPtr rmesa, int id, int access)
 {
 #ifdef MM_DEBUG
 	fprintf(stderr, "%s: %d at age %x\n", __FUNCTION__, id, radeonGetAge((radeonContextPtr)rmesa));
@@ -405,18 +405,18 @@ void *radeon_mm_map(r300ContextPtr rmesa, int id, int access)
 			WARN_ONCE("buffer %d already mapped\n", id);
 	
 		rmesa->rmm->u_list[id].mapped = 1;
-		ptr = radeon_mm_ptr(rmesa, id);
+		ptr = r300_mem_ptr(rmesa, id);
 		
 		return ptr;
 	}
 	
-	if (access == RADEON_MM_R) {
+	if (access == R300_MEM_R) {
 		
 		if(rmesa->rmm->u_list[id].mapped == 1)
 			WARN_ONCE("buffer %d already mapped\n", id);
 	
 		rmesa->rmm->u_list[id].mapped = 1;
-		ptr = radeon_mm_ptr(rmesa, id);
+		ptr = r300_mem_ptr(rmesa, id);
 		
 		return ptr;
 	}
@@ -442,12 +442,12 @@ void *radeon_mm_map(r300ContextPtr rmesa, int id, int access)
 		WARN_ONCE("buffer %d already mapped\n", id);
 	
 	rmesa->rmm->u_list[id].mapped = 1;
-	ptr = radeon_mm_ptr(rmesa, id);
+	ptr = r300_mem_ptr(rmesa, id);
 	
 	return ptr;
 }
 
-void radeon_mm_unmap(r300ContextPtr rmesa, int id)
+void r300_mem_unmap(r300ContextPtr rmesa, int id)
 {
 #ifdef MM_DEBUG
 	fprintf(stderr, "%s: %d at age %x\n", __FUNCTION__, id, radeonGetAge((radeonContextPtr)rmesa));
@@ -466,7 +466,7 @@ void radeon_mm_unmap(r300ContextPtr rmesa, int id)
 				rmesa->rmm->u_list[id].size);
 }
 
-void radeon_mm_free(r300ContextPtr rmesa, int id)
+void r300_mem_free(r300ContextPtr rmesa, int id)
 {
 #ifdef MM_DEBUG
 	fprintf(stderr, "%s: %d at age %x\n", __FUNCTION__, id, radeonGetAge((radeonContextPtr)rmesa));

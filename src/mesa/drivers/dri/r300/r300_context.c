@@ -62,7 +62,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "r300_maos.h"
 
 #ifdef USER_BUFFERS
-#include "radeon_mm.h"
+#include "r300_mem.h"
 #endif
 
 #include "vblank.h"
@@ -212,7 +212,7 @@ GLboolean r300CreateContext(const __GLcontextModes * glVisual,
 	r300InitShaderFuncs(&functions);
 
 #ifdef USER_BUFFERS
-	radeon_mm_init(r300);
+	r300_mem_init(r300);
 #endif
 
 	if (!radeonInitContext(&r300->radeon, &functions,
@@ -529,7 +529,7 @@ void r300DestroyContext(__DRIcontextPrivate * driContextPriv)
 		/* the memory manager might be accessed when Mesa frees the shared
 		 * state, so don't destroy it earlier
 		 */
-		radeon_mm_destroy(r300);
+		r300_mem_destroy(r300);
 #endif
 
 		/* free the option cache */

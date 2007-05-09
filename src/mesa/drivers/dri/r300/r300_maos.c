@@ -51,7 +51,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "r300_ioctl.h"
 
 #ifdef USER_BUFFERS
-#include "radeon_mm.h"
+#include "r300_mem.h"
 #endif
 
 #if SWIZZLE_X != R300_INPUT_ROUTE_SELECT_X || \
@@ -643,11 +643,11 @@ void r300UseArrays(GLcontext * ctx)
 	int i;
 
 	if (rmesa->state.elt_dma.buf)
-		radeon_mm_use(rmesa, rmesa->state.elt_dma.buf->id);
+		r300_mem_use(rmesa, rmesa->state.elt_dma.buf->id);
 
 	for (i = 0; i < rmesa->state.aos_count; i++) {
 		if (rmesa->state.aos[i].buf)
-			radeon_mm_use(rmesa, rmesa->state.aos[i].buf->id);
+			r300_mem_use(rmesa, rmesa->state.aos[i].buf->id);
 	}
 }
 #endif

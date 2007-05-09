@@ -865,7 +865,7 @@ struct r300_context {
 	GLuint prefer_gart_client_texturing;
 
 #ifdef USER_BUFFERS
-	struct radeon_memory_manager *rmm;
+	struct r300_memory_manager *rmm;
 	GLvector4f dummy_attrib[_TNL_ATTRIB_MAX];
 	GLvector4f *temp_attrib[_TNL_ATTRIB_MAX];
 #endif

@@ -27,7 +27,7 @@ DRIVER_SOURCES = \
 		 radeon_lock.c \
 		 radeon_span.c \
 		 radeon_state.c \
-		 radeon_mm.c \
+		 r300_mem.c \
 		 \
 		 r300_context.c \
 		 r300_ioctl.c \
