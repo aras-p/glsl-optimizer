@@ -1999,10 +1999,6 @@ static void r300InvalidateState(GLcontext * ctx, GLuint new_state)
 
 	r300UpdateStateParameters(ctx, new_state);
 
-#ifdef HW_VBOS
-	if (new_state & _NEW_ARRAY)
-		r300->state.VB.lock_uptodate = GL_FALSE;
-#endif
 	r300->NewGLState |= new_state;
 }
 

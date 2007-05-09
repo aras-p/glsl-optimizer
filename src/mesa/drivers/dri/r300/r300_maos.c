@@ -649,32 +649,6 @@ void r300UseArrays(GLcontext * ctx)
 		if (rmesa->state.aos[i].buf)
 			radeon_mm_use(rmesa, rmesa->state.aos[i].buf->id);
 	}
-
-#ifdef HW_VBOS
-
-#define USE_VBO(a) \
-    do { \
-	if (ctx->Array.ArrayObj->a.BufferObj->Name \
-	    && ctx->Array.ArrayObj->a.Enabled) \
-	    radeon_mm_use(rmesa, ((struct r300_buffer_object *)ctx->Array.ArrayObj->a.BufferObj)->id); \
-    } while(0)
-
-	if (ctx->Array.ElementArrayBufferObj->Name
-	    && ctx->Array.ElementArrayBufferObj->OnCard)
-		radeon_mm_use(rmesa,
-			      ((struct r300_buffer_object *)ctx->Array.
-			       ElementArrayBufferObj)->id);
-
-	USE_VBO(Vertex);
-	USE_VBO(Normal);
-	USE_VBO(Color);
-	USE_VBO(SecondaryColor);
-	USE_VBO(FogCoord);
-
-	for (i = 0; i < MAX_TEXTURE_COORD_UNITS; i++)
-		USE_VBO(TexCoord[i]);
-#endif
-
 }
 #endif
 

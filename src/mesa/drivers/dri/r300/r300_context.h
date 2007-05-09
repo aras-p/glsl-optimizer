@@ -48,13 +48,6 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "radeon_context.h"
 
 #define USER_BUFFERS
-/* KW: Disable this code.  Driver should hook into vbo module
- * directly, see i965 driver for example.
- */
-/* #define RADEON_VTXFMT_A */
-#ifdef RADEON_VTXFMT_A
-#define HW_VBOS
-#endif
 
 /* We don't handle 16 bits elts swapping yet */
 #ifdef MESA_BIG_ENDIAN
@@ -911,20 +904,8 @@ extern int r300VertexProgUpdateParams(GLcontext * ctx,
 				      float *dst);
 extern int r300Fallback(GLcontext * ctx);
 
-extern void radeon_vb_to_rvb(r300ContextPtr rmesa,
-			     struct radeon_vertex_buffer *rvb,
-			     struct vertex_buffer *vb);
 extern GLboolean r300RunRender(GLcontext * ctx,
 			       struct tnl_pipeline_stage *stage);
-
-#ifdef RADEON_VTXFMT_A
-extern void radeon_init_vtxfmt_a(r300ContextPtr rmesa);
-#endif
-
-#ifdef HW_VBOS
-extern void r300InitVBOFuncs(struct dd_function_table *functions);
-extern void r300EvictVBOs(GLcontext * ctx, int amount);
-#endif
 
 #define RADEON_D_CAPTURE 0
 #define RADEON_D_PLAYBACK 1

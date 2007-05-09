@@ -214,11 +214,7 @@ GLboolean r300CreateContext(const __GLcontextModes * glVisual,
 #ifdef USER_BUFFERS
 	radeon_mm_init(r300);
 #endif
-#ifdef HW_VBOS
-	if (hw_tcl_on) {
-		r300InitVBOFuncs(&functions);
-	}
-#endif
+
 	if (!radeonInitContext(&r300->radeon, &functions,
 			       glVisual, driContextPriv,
 			       sharedContextPrivate)) {
@@ -366,10 +362,6 @@ GLboolean r300CreateContext(const __GLcontextModes * glVisual,
 	radeonInitSpanFuncs(ctx);
 	r300InitCmdBuf(r300);
 	r300InitState(r300);
-
-#ifdef RADEON_VTXFMT_A
-	radeon_init_vtxfmt_a(r300);
-#endif
 
 	TNL_CONTEXT(ctx)->Driver.RunPipeline = _tnl_run_pipeline;
 
