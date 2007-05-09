@@ -1573,9 +1573,9 @@ static void r300GenerateSimpleVertexShader(r300ContextPtr r300)
 
 #define WRITE_OP(oper,source1,source2,source3)	{\
 	r300->state.vertex_shader.program.body.i[r300->state.vertex_shader.program_end].op=(oper); \
-	r300->state.vertex_shader.program.body.i[r300->state.vertex_shader.program_end].src1=(source1); \
-	r300->state.vertex_shader.program.body.i[r300->state.vertex_shader.program_end].src2=(source2); \
-	r300->state.vertex_shader.program.body.i[r300->state.vertex_shader.program_end].src3=(source3); \
+	r300->state.vertex_shader.program.body.i[r300->state.vertex_shader.program_end].src[0]=(source1); \
+	r300->state.vertex_shader.program.body.i[r300->state.vertex_shader.program_end].src[1]=(source2); \
+	r300->state.vertex_shader.program.body.i[r300->state.vertex_shader.program_end].src[2]=(source3); \
 	r300->state.vertex_shader.program_end++; \
 	}
 

@@ -1,11 +1,11 @@
 #ifndef __R300_VERTPROG_H_
 #define __R300_VERTPROG_H_
 
+#include "r300_reg.h"
+
 typedef struct {
 	GLuint op;
-	GLuint src1;
-	GLuint src2;
-	GLuint src3;
+	GLuint src[3];
 } VERTEX_SHADER_INSTRUCTION;
 
 #define VSF_FLAG_X	1
