@@ -340,37 +340,6 @@ static void r300SetTexImages(r300ContextPtr rmesa,
 		t->base.totalSize *= 6;	/* total texmem needed */
 	}
 
-	/* Hardware state:
-	 */
-#if 0
-	t->format &= ~(R200_TXFORMAT_WIDTH_MASK |
-			    R200_TXFORMAT_HEIGHT_MASK |
-			    R200_TXFORMAT_CUBIC_MAP_ENABLE |
-			    R200_TXFORMAT_F5_WIDTH_MASK |
-			    R200_TXFORMAT_F5_HEIGHT_MASK);
-	t->format |= ((log2Width << R200_TXFORMAT_WIDTH_SHIFT) |
-			   (log2Height << R200_TXFORMAT_HEIGHT_SHIFT));
-#endif
-#if 0
-	t->format_x &= ~(R200_DEPTH_LOG2_MASK | R200_TEXCOORD_MASK);
-	if (tObj->Target == GL_TEXTURE_3D) {
-		t->format_x |= (log2Depth << R200_DEPTH_LOG2_SHIFT);
-		t->format_x |= R200_TEXCOORD_VOLUME;
-	} else if (tObj->Target == GL_TEXTURE_CUBE_MAP) {
-		ASSERT(log2Width == log2Height);
-		t->format |= R300_TX_FORMAT_CUBIC_MAP;
-
-		t->format_x |= R200_TEXCOORD_CUBIC_ENV;
-		t->pp_cubic_faces = ((log2Width << R200_FACE_WIDTH_1_SHIFT) |
-				     (log2Height << R200_FACE_HEIGHT_1_SHIFT) |
-				     (log2Width << R200_FACE_WIDTH_2_SHIFT) |
-				     (log2Height << R200_FACE_HEIGHT_2_SHIFT) |
-				     (log2Width << R200_FACE_WIDTH_3_SHIFT) |
-				     (log2Height << R200_FACE_HEIGHT_3_SHIFT) |
-				     (log2Width << R200_FACE_WIDTH_4_SHIFT) |
-				     (log2Height << R200_FACE_HEIGHT_4_SHIFT));
-	}
-#endif
 	if (tObj->Target == GL_TEXTURE_CUBE_MAP) {
 		ASSERT(log2Width == log2Height);
 		t->format |= R300_TX_FORMAT_CUBIC_MAP;
@@ -439,18 +408,9 @@ static GLboolean enable_tex_3d(GLcontext * ctx, int unit)
 	struct gl_texture_object *tObj = texUnit->_Current;
 	r300TexObjPtr t = (r300TexObjPtr) tObj->DriverData;
 
-	/* Need to load the 3d images associated with this unit.
-	 */
-#if 0
-	if (t->format & R200_TXFORMAT_NON_POWER2) {
-		t->format &= ~R200_TXFORMAT_NON_POWER2;
-		t->base.dirty_images[0] = ~0;
-	}
-#endif
 	ASSERT(tObj->Target == GL_TEXTURE_3D);
 
-	/* R100 & R200 do not support mipmaps for 3D textures.
-	 */
+	/* r300 does not support mipmaps for 3D textures. */
 	if ((tObj->MinFilter != GL_NEAREST) && (tObj->MinFilter != GL_LINEAR)) {
 		return GL_FALSE;
 	}
@@ -475,15 +435,6 @@ static GLboolean enable_tex_cube(GLcontext * ctx, int unit)
 	r300TexObjPtr t = (r300TexObjPtr) tObj->DriverData;
 	GLuint face;
 
-	/* Need to load the 2d images associated with this unit.
-	 */
-#if 0
-	if (t->format & R200_TXFORMAT_NON_POWER2) {
-		t->format &= ~R200_TXFORMAT_NON_POWER2;
-		for (face = 0; face < 6; face++)
-			t->base.dirty_images[face] = ~0;
-	}
-#endif
 	ASSERT(tObj->Target == GL_TEXTURE_CUBE_MAP);
 
 	if (t->base.dirty_images[0] || t->base.dirty_images[1] ||

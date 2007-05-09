@@ -240,11 +240,9 @@ static void r300SetTexFilter(r300TexObjPtr t, GLenum minf, GLenum magf)
 	switch (magf) {
 	case GL_NEAREST:
 		t->filter |= R300_TX_MAG_FILTER_NEAREST;
-		/*t->format_x |= R200_VOLUME_FILTER_NEAREST;*/
 		break;
 	case GL_LINEAR:
 		t->filter |= R300_TX_MAG_FILTER_LINEAR;
-		/*t->format_x |= R200_VOLUME_FILTER_LINEAR;*/
 		break;
 	}
 }
