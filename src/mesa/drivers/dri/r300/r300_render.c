@@ -118,7 +118,7 @@ static int r300PrimitiveType(r300ContextPtr rmesa, GLcontext * ctx, int prim)
 	return type;
 }
 
-static int r300NumVerts(r300ContextPtr rmesa, int num_verts, int prim)
+int r300NumVerts(r300ContextPtr rmesa, int num_verts, int prim)
 {
 	int verts_off = 0;
 
@@ -272,7 +272,7 @@ static void r300RunRenderPrimitive(r300ContextPtr rmesa, GLcontext * ctx,
 	}
 }
 
-static GLboolean r300RunRender(GLcontext * ctx,
+GLboolean r300RunRender(GLcontext * ctx,
 			       struct tnl_pipeline_stage *stage)
 {
 	r300ContextPtr rmesa = R300_CONTEXT(ctx);
