@@ -1,8 +1,12 @@
-/* $XFree86: xc/lib/GL/mesa/src/drv/radeon/radeon_span.h,v 1.2 2002/02/22 21:45:01 dawes Exp $ */
 /**************************************************************************
 
 Copyright 2000, 2001 ATI Technologies Inc., Ontario, Canada, and
                      VA Linux Systems Inc., Fremont, California.
+Copyright (C) The Weather Channel, Inc.  2002.  All Rights Reserved.
+
+The Weather Channel (TM) funded Tungsten Graphics to develop the
+initial release of the Radeon 8500 driver under the XFree86 license.
+This notice must be preserved.
 
 All Rights Reserved.
 
@@ -30,8 +34,9 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 /*
  * Authors:
- *   Kevin E. Martin <martin@valinux.com>
  *   Gareth Hughes <gareth@valinux.com>
+ *   Keith Whitwell <keith@tungstengraphics.com>
+ *   Kevin E. Martin <martin@valinux.com>
  */
 
 #ifndef __RADEON_SPAN_H__
@@ -40,7 +45,6 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "drirenderbuffer.h"
 
 extern void radeonInitSpanFuncs( GLcontext *ctx );
-
 extern void radeonSetSpanFunctions(driRenderbuffer *rb, const GLvisual *vis);
 
 #endif

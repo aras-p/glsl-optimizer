@@ -39,6 +39,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  *   Keith Whitwell <keith@tungstengraphics.com>
  *
  */
+
 #include <unistd.h>
 #include "glheader.h"
 #include "imports.h"
@@ -51,9 +52,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #include "drirenderbuffer.h"
 
-
 #define DBG 0
-
 
 /*
  * Note that all information needed to access pixels in a renderbuffer
@@ -85,8 +84,6 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #define HW_UNLOCK()
 
-
-
 /* ================================================================
  * Color buffer
  */
@@ -101,7 +98,6 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #define GET_PTR(X,Y) (buf + ((Y) * drb->flippedPitch + (X)) * 2)
 #include "spantmp2.h"
 
-
 /* 32 bit, ARGB8888 color spanline and pixel functions
  */
 #define SPANTMP_PIXEL_FMT GL_BGRA
@@ -111,7 +107,6 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #define TAG2(x,y) radeon##x##_ARGB8888##y
 #define GET_PTR(X,Y) (buf + ((Y) * drb->flippedPitch + (X)) * 4)
 #include "spantmp2.h"
-
 
 /* ================================================================
  * Depth buffer
@@ -127,58 +122,51 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  * too...
  */
 
-static GLuint
-radeon_mba_z32( const driRenderbuffer *drb, GLint x, GLint y )
+static GLuint radeon_mba_z32(const driRenderbuffer * drb, GLint x, GLint y)
 {
-   GLuint pitch = drb->pitch;
-   if (1 /*|| drb->depthHasSurface */) {
-      return 4 * (x + y * pitch);
-   }
-   else {
-      GLuint ba, address = 0;			/* a[0..1] = 0           */
+	GLuint pitch = drb->pitch;
+	if (1 /*|| drb->depthHasSurface */ ) {
+		return 4 * (x + y * pitch);
+	} else {
+		GLuint ba, address = 0;	/* a[0..1] = 0           */
 
-      ba = (y / 8) * (pitch / 8) + (x / 8);
+		ba = (y / 8) * (pitch / 8) + (x / 8);
 
-      address |= (x & 0x7) << 2;		/* a[2..4] = x[0..2]     */
-      address |= (y & 0x3) << 5;		/* a[5..6] = y[0..1]     */
-      address |=
-         (((x & 0x10) >> 2) ^ (y & 0x4)) << 5;	/* a[7]    = x[4] ^ y[2] */
-      address |= (ba & 0x3) << 8;		/* a[8..9] = ba[0..1]    */
+		address |= (x & 0x7) << 2;	/* a[2..4] = x[0..2]     */
+		address |= (y & 0x3) << 5;	/* a[5..6] = y[0..1]     */
+		address |= (((x & 0x10) >> 2) ^ (y & 0x4)) << 5;	/* a[7]    = x[4] ^ y[2] */
+		address |= (ba & 0x3) << 8;	/* a[8..9] = ba[0..1]    */
 
-      address |= (y & 0x8) << 7;		/* a[10]   = y[3]        */
-      address |=
-         (((x & 0x8) << 1) ^ (y & 0x10)) << 7;	/* a[11]   = x[3] ^ y[4] */
-      address |= (ba & ~0x3) << 10;		/* a[12..] = ba[2..]     */
+		address |= (y & 0x8) << 7;	/* a[10]   = y[3]        */
+		address |= (((x & 0x8) << 1) ^ (y & 0x10)) << 7;	/* a[11]   = x[3] ^ y[4] */
+		address |= (ba & ~0x3) << 10;	/* a[12..] = ba[2..]     */
 
-      return address;
-   }
+		return address;
+	}
 }
-
 
 static INLINE GLuint
-radeon_mba_z16( const driRenderbuffer *drb, GLint x, GLint y )
+radeon_mba_z16(const driRenderbuffer * drb, GLint x, GLint y)
 {
-   GLuint pitch = drb->pitch;
-   if (1 /*|| drb->depthHasSurface */) {
-      return 2 * (x + y * pitch);
-   }
-   else {
-      GLuint ba, address = 0;			/* a[0]    = 0           */
+	GLuint pitch = drb->pitch;
+	if (1 /*|| drb->depthHasSurface */ ) {
+		return 2 * (x + y * pitch);
+	} else {
+		GLuint ba, address = 0;	/* a[0]    = 0           */
 
-      ba = (y / 16) * (pitch / 32) + (x / 32);
+		ba = (y / 16) * (pitch / 32) + (x / 32);
 
-      address |= (x & 0x7) << 1;		/* a[1..3] = x[0..2]     */
-      address |= (y & 0x7) << 4;		/* a[4..6] = y[0..2]     */
-      address |= (x & 0x8) << 4;		/* a[7]    = x[3]        */
-      address |= (ba & 0x3) << 8;		/* a[8..9] = ba[0..1]    */
-      address |= (y & 0x8) << 7;		/* a[10]   = y[3]        */
-      address |= ((x & 0x10) ^ (y & 0x10)) << 7;/* a[11]   = x[4] ^ y[4] */
-      address |= (ba & ~0x3) << 10;		/* a[12..] = ba[2..]     */
+		address |= (x & 0x7) << 1;	/* a[1..3] = x[0..2]     */
+		address |= (y & 0x7) << 4;	/* a[4..6] = y[0..2]     */
+		address |= (x & 0x8) << 4;	/* a[7]    = x[3]        */
+		address |= (ba & 0x3) << 8;	/* a[8..9] = ba[0..1]    */
+		address |= (y & 0x8) << 7;	/* a[10]   = y[3]        */
+		address |= ((x & 0x10) ^ (y & 0x10)) << 7;	/* a[11]   = x[4] ^ y[4] */
+		address |= (ba & ~0x3) << 10;	/* a[12..] = ba[2..]     */
 
-      return address;
-   }
+		return address;
+	}
 }
-
 
 /* 16-bit depth buffer functions
  */
@@ -190,7 +178,6 @@ radeon_mba_z16( const driRenderbuffer *drb, GLint x, GLint y )
 
 #define TAG(x) radeon##x##_z16
 #include "depthtmp.h"
-
 
 /* 24 bit depth, 8 bit stencil depthbuffer functions
  *
@@ -214,7 +201,6 @@ do {									\
 
 #define TAG(x) radeon##x##_z24_s8
 #include "depthtmp.h"
-
 
 /* ================================================================
  * Stencil buffer
@@ -241,84 +227,79 @@ do {									\
 #define TAG(x) radeon##x##_z24_s8
 #include "stenciltmp.h"
 
-
-
 /* Move locking out to get reasonable span performance (10x better
  * than doing this in HW_LOCK above).  WaitForIdle() is the main
  * culprit.
  */
 
-static void radeonSpanRenderStart( GLcontext *ctx )
+static void radeonSpanRenderStart(GLcontext * ctx)
 {
-   radeonContextPtr rmesa = RADEON_CONTEXT( ctx );
-   {
+	radeonContextPtr rmesa = RADEON_CONTEXT(ctx);
+
 	static int first = 1;
-	r300ContextPtr r300 = (r300ContextPtr)rmesa;
-	
+	r300ContextPtr r300 = (r300ContextPtr) rmesa;
+
 	if (first) {
-		r300->span_dlocking = getenv("R300_SPAN_DISABLE_LOCKING") ? 1 : 0;
+		r300->span_dlocking =
+		    getenv("R300_SPAN_DISABLE_LOCKING") ? 1 : 0;
 		if (r300->span_dlocking == 0) {
-			fprintf(stderr, "Try R300_SPAN_DISABLE_LOCKING env var if this hangs.\n");
+			fprintf(stderr,
+				"Try R300_SPAN_DISABLE_LOCKING env var if this hangs.\n");
 			fflush(stderr);
 			sleep(1);
 		}
 		first = 0;
 	}
-	
+
 	if (r300->span_dlocking) {
 		r300Flush(ctx);
-		LOCK_HARDWARE( rmesa );
-		radeonWaitForIdleLocked( rmesa );
-		UNLOCK_HARDWARE( rmesa );
-		
+		LOCK_HARDWARE(rmesa);
+		radeonWaitForIdleLocked(rmesa);
+		UNLOCK_HARDWARE(rmesa);
+
 		return;
 	}
-   }
-   //   R300_FIREVERTICES( rmesa );
-   // old code has flush
-   r300Flush(ctx);
-   LOCK_HARDWARE( rmesa );
-   radeonWaitForIdleLocked( rmesa );
+	//   R300_FIREVERTICES( rmesa );
+	// old code has flush
+	r300Flush(ctx);
+	LOCK_HARDWARE(rmesa);
+	radeonWaitForIdleLocked(rmesa);
 }
 
-static void radeonSpanRenderFinish( GLcontext *ctx )
+static void radeonSpanRenderFinish(GLcontext * ctx)
 {
-   radeonContextPtr rmesa = RADEON_CONTEXT( ctx );
-   r300ContextPtr r300 = (r300ContextPtr)rmesa;
-   _swrast_flush( ctx );
-   if (r300->span_dlocking == 0)
-	UNLOCK_HARDWARE( rmesa );
+	radeonContextPtr rmesa = RADEON_CONTEXT(ctx);
+	r300ContextPtr r300 = (r300ContextPtr) rmesa;
+	_swrast_flush(ctx);
+	if (r300->span_dlocking == 0)
+		UNLOCK_HARDWARE(rmesa);
 }
 
-void radeonInitSpanFuncs( GLcontext *ctx )
+void radeonInitSpanFuncs(GLcontext * ctx)
 {
-   struct swrast_device_driver *swdd = _swrast_GetDeviceDriverReference(ctx);
-   swdd->SpanRenderStart          = radeonSpanRenderStart;
-   swdd->SpanRenderFinish         = radeonSpanRenderFinish; 
+	struct swrast_device_driver *swdd =
+	    _swrast_GetDeviceDriverReference(ctx);
+	swdd->SpanRenderStart = radeonSpanRenderStart;
+	swdd->SpanRenderFinish = radeonSpanRenderFinish;
 }
-
 
 /**
  * Plug in the Get/Put routines for the given driRenderbuffer.
  */
-void
-radeonSetSpanFunctions(driRenderbuffer *drb, const GLvisual *vis)
+void radeonSetSpanFunctions(driRenderbuffer * drb, const GLvisual * vis)
 {
-   if (drb->Base.InternalFormat == GL_RGBA) {
-      if (vis->redBits == 5 && vis->greenBits == 6 && vis->blueBits == 5) {
-         radeonInitPointers_RGB565(&drb->Base);
-      }
-      else {
-         radeonInitPointers_ARGB8888(&drb->Base);
-      }
-   }
-   else if (drb->Base.InternalFormat == GL_DEPTH_COMPONENT16) {
-      radeonInitDepthPointers_z16(&drb->Base);
-   }
-   else if (drb->Base.InternalFormat == GL_DEPTH_COMPONENT24) {
-      radeonInitDepthPointers_z24_s8(&drb->Base);
-   }
-   else if (drb->Base.InternalFormat == GL_STENCIL_INDEX8_EXT) {
-      radeonInitStencilPointers_z24_s8(&drb->Base);
-   }
+	if (drb->Base.InternalFormat == GL_RGBA) {
+		if (vis->redBits == 5 && vis->greenBits == 6
+		    && vis->blueBits == 5) {
+			radeonInitPointers_RGB565(&drb->Base);
+		} else {
+			radeonInitPointers_ARGB8888(&drb->Base);
+		}
+	} else if (drb->Base.InternalFormat == GL_DEPTH_COMPONENT16) {
+		radeonInitDepthPointers_z16(&drb->Base);
+	} else if (drb->Base.InternalFormat == GL_DEPTH_COMPONENT24) {
+		radeonInitDepthPointers_z24_s8(&drb->Base);
+	} else if (drb->Base.InternalFormat == GL_STENCIL_INDEX8_EXT) {
+		radeonInitStencilPointers_z24_s8(&drb->Base);
+	}
 }

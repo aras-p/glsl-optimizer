@@ -1,9 +1,14 @@
-/*
+/**************************************************************************
+
+Copyright 2000, 2001 ATI Technologies Inc., Ontario, Canada, and
+                     VA Linux Systems Inc., Fremont, California.
 Copyright (C) The Weather Channel, Inc.  2002.  All Rights Reserved.
 
 The Weather Channel (TM) funded Tungsten Graphics to develop the
 initial release of the Radeon 8500 driver under the XFree86 license.
 This notice must be preserved.
+
+All Rights Reserved.
 
 Permission is hereby granted, free of charge, to any person obtaining
 a copy of this software and associated documentation files (the
@@ -29,18 +34,17 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 /*
  * Authors:
+ *   Gareth Hughes <gareth@valinux.com>
  *   Keith Whitwell <keith@tungstengraphics.com>
+ *   Kevin E. Martin <martin@valinux.com>
  */
 
 #ifndef __RADEON_SPAN_H__
 #define __RADEON_SPAN_H__
-
-#ifdef GLX_DIRECT_RENDERING
 
 #include "drirenderbuffer.h"
 
 extern void radeonInitSpanFuncs(GLcontext * ctx);
 extern void radeonSetSpanFunctions(driRenderbuffer *rb, const GLvisual *vis);
 
-#endif
 #endif
