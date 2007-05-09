@@ -1,7 +1,8 @@
-*~
 *.a
 *.o
 *.so
+*.sw[a-z]
+*~
 depend
 depend.bak
 lib
