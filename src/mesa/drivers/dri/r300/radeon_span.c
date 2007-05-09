@@ -123,7 +123,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 static GLuint radeon_mba_z32(const driRenderbuffer * drb, GLint x, GLint y)
 {
 	GLuint pitch = drb->pitch;
-	if (1 /*|| drb->depthHasSurface */ ) {
+	if (drb->depthHasSurface) {
 		return 4 * (x + y * pitch);
 	} else {
 		GLuint ba, address = 0;	/* a[0..1] = 0           */
@@ -147,7 +147,7 @@ static INLINE GLuint
 radeon_mba_z16(const driRenderbuffer * drb, GLint x, GLint y)
 {
 	GLuint pitch = drb->pitch;
-	if (1 /*|| drb->depthHasSurface */ ) {
+	if (drb->depthHasSurface) {
 		return 2 * (x + y * pitch);
 	} else {
 		GLuint ba, address = 0;	/* a[0]    = 0           */
