@@ -31,6 +31,8 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  * \file
  *
  * \author Keith Whitwell <keith@tungstengraphics.com>
+ *
+ * \todo Enable R300 texture tiling code?
  */
 
 #include "glheader.h"
