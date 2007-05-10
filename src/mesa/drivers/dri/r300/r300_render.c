@@ -190,8 +190,8 @@ static int r300NumVerts(r300ContextPtr rmesa, int num_verts, int prim)
 	return num_verts - verts_off;
 }
 
-static void inline r300FireEB(r300ContextPtr rmesa, unsigned long addr,
-			      int vertex_count, int type, int elt_size)
+static void r300FireEB(r300ContextPtr rmesa, unsigned long addr,
+		       int vertex_count, int type, int elt_size)
 {
 	int cmd_reserved = 0;
 	int cmd_written = 0;
@@ -243,6 +243,52 @@ static void inline r300FireEB(r300ContextPtr rmesa, unsigned long addr,
 		e32((vertex_count + 1) / 2);
 #endif
 	}
+}
+
+static void r300EmitAOS(r300ContextPtr rmesa, GLuint nr, GLuint offset)
+{
+	int sz = 1 + (nr >> 1) * 3 + (nr & 1) * 2;
+	int i;
+	int cmd_reserved = 0;
+	int cmd_written = 0;
+	drm_radeon_cmd_header_t *cmd = NULL;
+
+	if (RADEON_DEBUG & DEBUG_VERTS)
+		fprintf(stderr, "%s: nr=%d, ofs=0x%08x\n", __func__, nr,
+			offset);
+
+	start_packet3(RADEON_CP_PACKET3_3D_LOAD_VBPNTR, sz - 1);
+	e32(nr);
+	for (i = 0; i + 1 < nr; i += 2) {
+		e32((rmesa->state.aos[i].aos_size << 0)
+		    | (rmesa->state.aos[i].aos_stride << 8)
+		    | (rmesa->state.aos[i + 1].aos_size << 16)
+		    | (rmesa->state.aos[i + 1].aos_stride << 24)
+		    );
+		e32(rmesa->state.aos[i].aos_offset +
+		    offset * 4 * rmesa->state.aos[i].aos_stride);
+		e32(rmesa->state.aos[i + 1].aos_offset +
+		    offset * 4 * rmesa->state.aos[i + 1].aos_stride);
+	}
+
+	if (nr & 1) {
+		e32((rmesa->state.aos[nr - 1].aos_size << 0)
+		    | (rmesa->state.aos[nr - 1].aos_stride << 8)
+		    );
+		e32(rmesa->state.aos[nr - 1].aos_offset +
+		    offset * 4 * rmesa->state.aos[nr - 1].aos_stride);
+	}
+}
+
+static void fire_AOS(r300ContextPtr rmesa, int vertex_count, int type)
+{
+	int cmd_reserved = 0;
+	int cmd_written = 0;
+	drm_radeon_cmd_header_t *cmd = NULL;
+
+	start_packet3(RADEON_CP_PACKET3_3D_DRAW_VBUF_2, 0);
+	e32(R300_VAP_VF_CNTL__PRIM_WALK_VERTEX_LIST | (vertex_count << 16)
+	    | type);
 }
 
 static void r300RunRenderPrimitive(r300ContextPtr rmesa, GLcontext * ctx,
@@ -355,7 +401,6 @@ static GLboolean r300RunRender(GLcontext * ctx,
 	for (i = 0; i < VB->PrimitiveCount; i++) {
 		GLuint prim = _tnl_translate_prim(&VB->Primitive[i]);
 		GLuint start = VB->Primitive[i].start;
-		GLuint length = VB->Primitive[i].count;
 		GLuint end = VB->Primitive[i].start + VB->Primitive[i].count;
 		r300RunRenderPrimitive(rmesa, ctx, start, end, prim);
 	}

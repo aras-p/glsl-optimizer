@@ -228,20 +228,6 @@ void static inline cp_wait(r300ContextPtr rmesa, unsigned char flags)
 }
 
 /**
- * fire vertex buffer
- */
-static void inline fire_AOS(r300ContextPtr rmesa, int vertex_count, int type)
-{
-	int cmd_reserved = 0;
-	int cmd_written = 0;
-	drm_radeon_cmd_header_t *cmd = NULL;
-
-	start_packet3(RADEON_CP_PACKET3_3D_DRAW_VBUF_2, 0);
-	e32(R300_VAP_VF_CNTL__PRIM_WALK_VERTEX_LIST | (vertex_count << 16)
-	    | type);
-}
-
-/**
  * These are followed by the corresponding data
  */
 #define start_index32_packet(vertex_count, type)			\
