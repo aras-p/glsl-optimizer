@@ -1,6 +1,6 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.5.3
+ * Version:  7.0
  *
  * Copyright (C) 1999-2007  Brian Paul   All Rights Reserved.
  *
@@ -4263,60 +4263,68 @@ _mesa_unpack_image( GLuint dimensions,
             const GLvoid *src = _mesa_image_address(dimensions, unpack, pixels,
                                width, height, format, type, img, row, 0);
 
-                if ((type == GL_BITMAP) && (unpack->SkipPixels & 0x7)) {
-                    GLint i;
-                    flipBytes = GL_FALSE;
-                    if (unpack->LsbFirst) {
-                            GLubyte srcMask = 1 << (unpack->SkipPixels & 0x7);
-                            GLubyte dstMask = 128;
-                            const GLubyte *s = src;
-                            GLubyte *d = dst;
-                            *d = 0;
-                            for (i = 0; i < width; i++) {
-                                if (*s & srcMask) {
-                                    *d |= dstMask;
-                                }      
-                                if (srcMask == 128) {
-                                    srcMask = 1;
-                                    s++;
-                                } else {
-                                    srcMask = srcMask << 1;
-                                }
-                                if (dstMask == 1) {
-                                    dstMask = 128;
-                                    d++;
-                                    *d = 0;
-                                } else {
-                                    dstMask = dstMask >> 1;
-                                }
-                            }
-                    } else {
-                        GLubyte srcMask = 128 >> (unpack->SkipPixels & 0x7);
-                        GLubyte dstMask = 128;
-                        const GLubyte *s = src;
-                        GLubyte *d = dst;
+            if ((type == GL_BITMAP) && (unpack->SkipPixels & 0x7)) {
+               GLint i;
+               flipBytes = GL_FALSE;
+               if (unpack->LsbFirst) {
+                  GLubyte srcMask = 1 << (unpack->SkipPixels & 0x7);
+                  GLubyte dstMask = 128;
+                  const GLubyte *s = src;
+                  GLubyte *d = dst;
+                  *d = 0;
+                  for (i = 0; i < width; i++) {
+                     if (*s & srcMask) {
+                        *d |= dstMask;
+                     }      
+                     if (srcMask == 128) {
+                        srcMask = 1;
+                        s++;
+                     }
+                     else {
+                        srcMask = srcMask << 1;
+                     }
+                     if (dstMask == 1) {
+                        dstMask = 128;
+                        d++;
                         *d = 0;
-                        for (i = 0; i < width; i++) {
-                            if (*s & srcMask) {
-                                *d |= dstMask;
-                            }
-                            if (srcMask == 1) {
-                                srcMask = 128;
-                                s++;
-                            } else {
-                                srcMask = srcMask >> 1;
-                            }
-                            if (dstMask == 1) {
-                                dstMask = 128;
-                                d++;
-                                *d = 0;
-                            } else {
-                                dstMask = dstMask >> 1;
-                            }      
-                        }
-                    }
-                } else
-                    _mesa_memcpy(dst, src, bytesPerRow);
+                     }
+                     else {
+                        dstMask = dstMask >> 1;
+                     }
+                  }
+               }
+               else {
+                  GLubyte srcMask = 128 >> (unpack->SkipPixels & 0x7);
+                  GLubyte dstMask = 128;
+                  const GLubyte *s = src;
+                  GLubyte *d = dst;
+                  *d = 0;
+                  for (i = 0; i < width; i++) {
+                     if (*s & srcMask) {
+                        *d |= dstMask;
+                     }
+                     if (srcMask == 1) {
+                        srcMask = 128;
+                        s++;
+                     }
+                     else {
+                        srcMask = srcMask >> 1;
+                     }
+                     if (dstMask == 1) {
+                        dstMask = 128;
+                        d++;
+                        *d = 0;
+                     }
+                     else {
+                        dstMask = dstMask >> 1;
+                     }      
+                  }
+               }
+            }
+            else {
+               _mesa_memcpy(dst, src, bytesPerRow);
+            }
+
             /* byte flipping/swapping */
             if (flipBytes) {
                flip_bytes((GLubyte *) dst, bytesPerRow);
