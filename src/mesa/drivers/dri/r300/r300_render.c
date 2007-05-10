@@ -245,6 +245,36 @@ static void r300FireEB(r300ContextPtr rmesa, unsigned long addr,
 	}
 }
 
+static void r300EmitElts(GLcontext * ctx, void *elts, unsigned long n_elts,
+		  int elt_size)
+{
+	r300ContextPtr rmesa = R300_CONTEXT(ctx);
+	struct r300_dma_region *rvb = &rmesa->state.elt_dma;
+	void *out;
+
+	assert(elt_size == 2 || elt_size == 4);
+
+	if (r300IsGartMemory(rmesa, elts, n_elts * elt_size)) {
+		rvb->address = rmesa->radeon.radeonScreen->gartTextures.map;
+		rvb->start = ((char *)elts) - rvb->address;
+		rvb->aos_offset =
+		    rmesa->radeon.radeonScreen->gart_texture_offset +
+		    rvb->start;
+
+		return;
+	} else if (r300IsGartMemory(rmesa, elts, 1)) {
+		WARN_ONCE("Pointer not within GART memory!\n");
+		_mesa_exit(-1);
+	}
+
+	r300AllocDmaRegion(rmesa, rvb, n_elts * elt_size, elt_size);
+	rvb->aos_offset = GET_START(rvb);
+
+	out = rvb->address + rvb->start;
+	memcpy(out, elts, n_elts * elt_size);
+}
+
+
 static void r300EmitAOS(r300ContextPtr rmesa, GLuint nr, GLuint offset)
 {
 	int sz = 1 + (nr >> 1) * 3 + (nr & 1) * 2;
@@ -280,7 +310,7 @@ static void r300EmitAOS(r300ContextPtr rmesa, GLuint nr, GLuint offset)
 	}
 }
 
-static void fire_AOS(r300ContextPtr rmesa, int vertex_count, int type)
+static void r300FireAOS(r300ContextPtr rmesa, int vertex_count, int type)
 {
 	int cmd_reserved = 0;
 	int cmd_written = 0;
@@ -315,7 +345,7 @@ static void r300RunRenderPrimitive(r300ContextPtr rmesa, GLcontext * ctx,
 			   num_verts, type, rmesa->state.VB.elt_size);
 	} else {
 		r300EmitAOS(rmesa, rmesa->state.aos_count, start);
-		fire_AOS(rmesa, num_verts, type);
+		r300FireAOS(rmesa, num_verts, type);
 	}
 }
 

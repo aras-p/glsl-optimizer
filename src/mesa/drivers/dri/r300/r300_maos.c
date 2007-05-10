@@ -223,35 +223,6 @@ static void emit_vector(GLcontext * ctx,
 
 }
 
-void r300EmitElts(GLcontext * ctx, void *elts, unsigned long n_elts,
-		  int elt_size)
-{
-	r300ContextPtr rmesa = R300_CONTEXT(ctx);
-	struct r300_dma_region *rvb = &rmesa->state.elt_dma;
-	void *out;
-
-	assert(elt_size == 2 || elt_size == 4);
-
-	if (r300IsGartMemory(rmesa, elts, n_elts * elt_size)) {
-		rvb->address = rmesa->radeon.radeonScreen->gartTextures.map;
-		rvb->start = ((char *)elts) - rvb->address;
-		rvb->aos_offset =
-		    rmesa->radeon.radeonScreen->gart_texture_offset +
-		    rvb->start;
-
-		return;
-	} else if (r300IsGartMemory(rmesa, elts, 1)) {
-		WARN_ONCE("Pointer not within GART memory!\n");
-		_mesa_exit(-1);
-	}
-
-	r300AllocDmaRegion(rmesa, rvb, n_elts * elt_size, elt_size);
-	rvb->aos_offset = GET_START(rvb);
-
-	out = rvb->address + rvb->start;
-	memcpy(out, elts, n_elts * elt_size);
-}
-
 static GLuint t_type(struct dt *dt)
 {
 	switch (dt->type) {
