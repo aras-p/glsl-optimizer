@@ -198,7 +198,7 @@ enable_texture(GLcontext *ctx, GLboolean state, GLbitfield bit)
 {
    const GLuint curr = ctx->Texture.CurrentUnit;
    struct gl_texture_unit *texUnit = &ctx->Texture.Unit[curr];
-   const GLuint newenabled = (state) 
+   const GLuint newenabled = (!state)
        ? (texUnit->Enabled & ~bit) :  (texUnit->Enabled | bit);
 
    if (!ctx->DrawBuffer->Visual.rgbMode || texUnit->Enabled == newenabled)
