@@ -6,6 +6,7 @@
 	define gl [---.include.gl]
 	define math [-.math]
 	define tnl [-.tnl]
+	define vbo [-.vbo]
 	define swrast [-.swrast]
 	define array_cache [-.array_cache]
 

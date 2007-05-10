@@ -1,11 +1,12 @@
 # Makefile for core library for VMS
-# contributed by Jouk Jansen  joukj@hrem.stm.tudelft.nl
-# Last revision : 16 June 2003
+# contributed by Jouk Jansen  joukj@hrem.nano.tudelft.nl
+# Last revision : 8 May 2007
 
 .first
 	define gl [----.include.gl]
 	define math [--.math]
 	define tnl [--.tnl]
+	define vbo [--.vbo]
 	define swrast [--.swrast]
 	define swrast_setup [--.swrast_setup]
 	define array_cache [--.array_cache]
@@ -17,7 +18,7 @@
 
 VPATH = RCS
 
-INCDIR = [----.include],[--.main],[--.glapi]
+INCDIR = [----.include],[--.main],[--.glapi],[--.shader]
 LIBDIR = [----.lib]
 CFLAGS =/include=($(INCDIR),[])/define=(PTHREADS=1)/name=(as_is,short)/float=ieee/ieee=denorm
 
