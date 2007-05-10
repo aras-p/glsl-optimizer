@@ -471,28 +471,32 @@ vec4 pow(const vec4 a, const vec4 b)
 
 float exp(const float a)
 {
-   __asm float_exp __retVal.x, a;
+   const float e = 2.71828;
+   __asm float_power __retVal, e, a;
 }
 
 vec2 exp(const vec2 a)
 {
-   __asm float_exp __retVal.x, a.x;
-   __asm float_exp __retVal.y, a.y;
+   const float e = 2.71828;
+   __asm float_power __retVal.x, e, a.x;
+   __asm float_power __retVal.y, e, a.y;
 }
 
 vec3 exp(const vec3 a)
 {
-   __asm float_exp __retVal.x, a.x;
-   __asm float_exp __retVal.y, a.y;
-   __asm float_exp __retVal.z, a.z;
+   const float e = 2.71828;
+   __asm float_power __retVal.x, e, a.x;
+   __asm float_power __retVal.y, e, a.y;
+   __asm float_power __retVal.z, e, a.z;
 }
 
 vec4 exp(const vec4 a)
 {
-   __asm float_exp __retVal.x, a.x;
-   __asm float_exp __retVal.y, a.y;
-   __asm float_exp __retVal.z, a.z;
-   __asm float_exp __retVal.w, a.w;
+   const float e = 2.71828;
+   __asm float_power __retVal.x, e, a.x;
+   __asm float_power __retVal.y, e, a.y;
+   __asm float_power __retVal.z, e, a.z;
+   __asm float_power __retVal.w, e, a.w;
 }
 
 
@@ -894,7 +898,7 @@ vec4 mod(const vec4 a, const vec4 b)
     __retVal.x = a.x - b.x * floor(a.x * oneOverBx);
     __retVal.y = a.y - b.y * floor(a.y * oneOverBy);
     __retVal.z = a.z - b.z * floor(a.z * oneOverBz);
-    __retVal.w = a.w - b.w * floor(a.w * oneOverBz);
+    __retVal.w = a.w - b.w * floor(a.w * oneOverBw);
 }
 
 
