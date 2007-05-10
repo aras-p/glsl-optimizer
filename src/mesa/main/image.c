@@ -64,27 +64,27 @@
  */
 static GLboolean
 _mesa_type_is_packed(GLenum type)
-    {
-        switch (type) {
-            case GL_UNSIGNED_BYTE_3_3_2:
-            case GL_UNSIGNED_BYTE_2_3_3_REV:
-            case GL_UNSIGNED_SHORT_5_6_5:
-            case GL_UNSIGNED_SHORT_5_6_5_REV:
-            case GL_UNSIGNED_SHORT_4_4_4_4:
-            case GL_UNSIGNED_SHORT_4_4_4_4_REV:
-            case GL_UNSIGNED_SHORT_5_5_5_1:
-            case GL_UNSIGNED_SHORT_1_5_5_5_REV:
-            case GL_UNSIGNED_INT_8_8_8_8:
-            case GL_UNSIGNED_INT_8_8_8_8_REV:
-            case GL_UNSIGNED_INT_10_10_10_2:
-            case GL_UNSIGNED_INT_2_10_10_10_REV:
-            case GL_UNSIGNED_SHORT_8_8_MESA:
-            case GL_UNSIGNED_SHORT_8_8_REV_MESA:
-            case GL_UNSIGNED_INT_24_8_EXT:
-                return GL_TRUE;
-         }
+{
+   switch (type) {
+   case GL_UNSIGNED_BYTE_3_3_2:
+   case GL_UNSIGNED_BYTE_2_3_3_REV:
+   case GL_UNSIGNED_SHORT_5_6_5:
+   case GL_UNSIGNED_SHORT_5_6_5_REV:
+   case GL_UNSIGNED_SHORT_4_4_4_4:
+   case GL_UNSIGNED_SHORT_4_4_4_4_REV:
+   case GL_UNSIGNED_SHORT_5_5_5_1:
+   case GL_UNSIGNED_SHORT_1_5_5_5_REV:
+   case GL_UNSIGNED_INT_8_8_8_8:
+   case GL_UNSIGNED_INT_8_8_8_8_REV:
+   case GL_UNSIGNED_INT_10_10_10_2:
+   case GL_UNSIGNED_INT_2_10_10_10_REV:
+   case GL_UNSIGNED_SHORT_8_8_MESA:
+   case GL_UNSIGNED_SHORT_8_8_REV_MESA:
+   case GL_UNSIGNED_INT_24_8_EXT:
+      return GL_TRUE;
+   }
 
-        return GL_FALSE;
+   return GL_FALSE;
 }
 
 /**
@@ -103,9 +103,8 @@ _mesa_type_is_packed(GLenum type)
 static void
 flip_bytes( GLubyte *p, GLuint n )
 {
-   register GLuint i, a, b;
-
-   for (i=0;i<n;i++) {
+   GLuint i, a, b;
+   for (i = 0; i < n; i++) {
       b = (GLuint) p[i];        /* words are often faster than bytes */
       a = ((b & 0x01) << 7) |
 	  ((b & 0x02) << 5) |
@@ -129,9 +128,8 @@ flip_bytes( GLubyte *p, GLuint n )
 void
 _mesa_swap2( GLushort *p, GLuint n )
 {
-   register GLuint i;
-
-   for (i=0;i<n;i++) {
+   GLuint i;
+   for (i = 0; i < n; i++) {
       p[i] = (p[i] >> 8) | ((p[i] << 8) & 0xff00);
    }
 }
@@ -144,9 +142,8 @@ _mesa_swap2( GLushort *p, GLuint n )
 void
 _mesa_swap4( GLuint *p, GLuint n )
 {
-   register GLuint i, a, b;
-
-   for (i=0;i<n;i++) {
+   GLuint i, a, b;
+   for (i = 0; i < n; i++) {
       b = p[i];
       a =  (b >> 24)
 	| ((b >> 8) & 0xff00)
