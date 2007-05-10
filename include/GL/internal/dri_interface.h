@@ -184,17 +184,6 @@ struct __DRIinterfaceMethodsRec {
     /*@{*/
 
     /**
-     * Create the server-side portion of the GL context.
-     */
-    GLboolean (* createContext)( __DRIscreen *screen,
-        int configID, void * contextID, drm_context_t * hw_context );
-
-    /**
-     * Destroy the server-side portion of the GL context.
-     */
-    GLboolean (* destroyContext)( __DRIscreen *screen, __DRIid context );
-
-    /**
      * This function is used to get information about the position, size, and
      * clip rects of a drawable.
      */
@@ -345,7 +334,8 @@ struct __DRIscreenRec {
     void * (*createNewContext)(__DRIscreen *screen,
 			       const __GLcontextModes *modes,
 			       int render_type,
-			       void *sharedPrivate, __DRIcontext *pctx);
+			       void *sharedPrivate,
+			       drm_context_t hwContext, __DRIcontext *pctx);
 
     /**
      * Method to override base texture image with a driver specific 'offset'.

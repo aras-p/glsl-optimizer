@@ -552,8 +552,6 @@ driDestroyContext(void *contextPrivate)
 
     if (pcp) {
 	(*pcp->driScreenPriv->DriverAPI.DestroyContext)(pcp);
-	(void) (*dri_interface->destroyContext)(pcp->driScreenPriv->psc,
-						pcp->contextID);
 	_mesa_free(pcp);
     }
 }
@@ -582,7 +580,8 @@ driDestroyContext(void *contextPrivate)
  */
 static void *
 driCreateNewContext(__DRIscreen *screen, const __GLcontextModes *modes,
-		    int render_type, void *sharedPrivate, __DRIcontext *pctx)
+		    int render_type, void *sharedPrivate, 
+		    drm_context_t hwContext, __DRIcontext *pctx)
 {
     __DRIcontextPrivate *pcp;
     __DRIcontextPrivate *pshare = (__DRIcontextPrivate *) sharedPrivate;
@@ -596,12 +595,7 @@ driCreateNewContext(__DRIscreen *screen, const __GLcontextModes *modes,
 	return NULL;
     }
 
-    if (! (*dri_interface->createContext)(screen, modes->fbconfigID,
-					  &pcp->contextID, &pcp->hHWContext)) {
-	_mesa_free(pcp);
-	return NULL;
-    }
-
+    pcp->hHWContext = hwContext;
     pcp->driScreenPriv = psp;
     pcp->driDrawablePriv = NULL;
 
@@ -610,7 +604,6 @@ driCreateNewContext(__DRIscreen *screen, const __GLcontextModes *modes,
      */
 
     if (!psp->dummyContextPriv.driScreenPriv) {
-        psp->dummyContextPriv.contextID = 0;
         psp->dummyContextPriv.hHWContext = psp->pSAREA->dummy_context;
         psp->dummyContextPriv.driScreenPriv = psp;
         psp->dummyContextPriv.driDrawablePriv = NULL;
@@ -623,7 +616,6 @@ driCreateNewContext(__DRIscreen *screen, const __GLcontextModes *modes,
     pctx->unbindContext  = driUnbindContext;
 
     if ( !(*psp->DriverAPI.CreateContext)(modes, pcp, shareCtx) ) {
-        (void) (*dri_interface->destroyContext)(screen, pcp->contextID);
         _mesa_free(pcp);
         return NULL;
     }

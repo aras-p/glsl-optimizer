@@ -329,11 +329,6 @@ struct __DRIcontextPrivateRec {
     /**
      * Kernel context handle used to access the device lock.
      */
-    __DRIid contextID;
-
-    /**
-     * Kernel context handle used to access the device lock.
-     */
     drm_context_t hHWContext;
 
     /**

@@ -774,28 +774,6 @@ static void __glXReportDamage(__DRIdrawable *driDraw,
 }
 
 static GLboolean
-__glXDRICreateContext(__DRIscreen *screen, int configID,
-		      void *pid, drm_context_t *hHWContext)
-{
-    __GLXscreenConfigs *psc =
-	containerOf(screen, __GLXscreenConfigs, driScreen);
-    Display *dpy = psc->dpy;
-
-    return XF86DRICreateContextWithConfig(dpy, psc->scr,
-					  configID, pid, hHWContext);
-}
-
-static GLboolean
-__glXDRIDestroyContext(__DRIscreen  *screen, __DRIid context_id)
-{
-    __GLXscreenConfigs *psc =
-	containerOf(screen, __GLXscreenConfigs, driScreen);
-    Display *dpy = psc->dpy;
-
-    return XF86DRIDestroyContext(dpy, psc->scr, context_id);
-}
-
-static GLboolean
 __glXDRIGetDrawableInfo(__DRIdrawable *drawable,
 			unsigned int *index, unsigned int *stamp, 
 			int *X, int *Y, int *W, int *H,
@@ -824,9 +802,6 @@ static const __DRIinterfaceMethods interface_methods = {
 
     _gl_context_modes_create,
     _gl_context_modes_destroy,
-      
-    __glXDRICreateContext,
-    __glXDRIDestroyContext,
 
     __glXDRIGetDrawableInfo,
 
@@ -1816,6 +1791,9 @@ USED static Bool MakeContextCurrent(Display *dpy, GLXDrawable draw,
 		    if (oldGC->driContext.private) {
 			(*oldGC->driContext.destroyContext)
 			    (oldGC->driContext.private);
+			XF86DRIDestroyContext(oldGC->createDpy,
+					      oldGC->psc->scr,
+					      gc->hwContextID);
 			oldGC->driContext.private = NULL;
 		    }
 		}

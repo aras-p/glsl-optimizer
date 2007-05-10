@@ -361,6 +361,11 @@ struct __GLXcontextRec {
      * Pointer to the mode used to create this context.
      */
     const __GLcontextModes * mode;
+
+    /**
+     * XID for the server side drm_context_t
+     */
+    XID hwContextID;
 #endif
     
     /**

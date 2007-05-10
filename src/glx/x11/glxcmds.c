@@ -382,6 +382,7 @@ CreateContext(Display *dpy, XVisualInfo *vis,
 	    int screen = (fbconfig == NULL) ? vis->screen : fbconfig->screen;
 	    __GLXscreenConfigs * const psc = GetGLXScreenConfigs(dpy, screen);
 	    const __GLcontextModes * mode;
+	    drm_context_t hwContext;
 
 	    /* The value of fbconfig cannot change because it is tested
 	     * later in the function.
@@ -402,10 +403,19 @@ CreateContext(Display *dpy, XVisualInfo *vis,
 	    if (psc && psc->driScreen.private) {
 		void * const shared = (shareList != NULL)
 		    ? shareList->driContext.private : NULL;
+
+
+		if (!XF86DRICreateContextWithConfig(dpy, psc->scr,
+						    mode->fbconfigID,
+						    &gc->hwContextID, &hwContext))
+		    /* gah, handle this better */
+		    return NULL;
+
 		gc->driContext.private = 
 		  (*psc->driScreen.createNewContext)( &psc->driScreen,
 						      mode, renderType,
 						      shared,
+						      hwContext,
 						      &gc->driContext );
 		if (gc->driContext.private) {
 		    gc->isDirect = GL_TRUE;
@@ -414,6 +424,9 @@ CreateContext(Display *dpy, XVisualInfo *vis,
 		    gc->vid = mode->visualID;
 		    gc->fbconfigID = mode->fbconfigID;
 		    gc->mode = mode;
+		}
+		else {
+		    XF86DRIDestroyContext(dpy, psc->scr, gc->hwContextID);
 		}
 	    }
 	}
@@ -524,6 +537,7 @@ DestroyContext(Display *dpy, GLXContext gc)
     if (gc->isDirect) {
 	if (gc->driContext.private) {
 	    (*gc->driContext.destroyContext)(gc->driContext.private);
+	    XF86DRIDestroyContext(dpy, gc->psc->scr, gc->hwContextID);
 	    gc->driContext.private = NULL;
 	}
 	GarbageCollectDRIDrawables(dpy, gc->screen);
