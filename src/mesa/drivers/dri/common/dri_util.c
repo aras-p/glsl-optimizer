@@ -59,7 +59,8 @@ static int driQueryFrameTracking( void *priv,
 
 static void *driCreateNewDrawable(__DRIscreen *screen,
 				  const __GLcontextModes *modes,
-                                  __DRIid draw, __DRIdrawable *pdraw,
+                                  __DRIdrawable *pdraw,
+				  drm_drawable_t hwDrawable,
                                   int renderType, const int *attrs);
 
 static void driDestroyDrawable(void *drawablePrivate);
@@ -286,7 +287,7 @@ __driUtilUpdateDrawableInfo(__DRIdrawablePrivate *pdp)
 
     DRM_SPINUNLOCK(&psp->pSAREA->drawable_lock, psp->drawLockID);
 
-    if (! (*dri_interface->getDrawableInfo)(pdp->driScreenPriv->psc, pdp->draw,
+    if (! (*dri_interface->getDrawableInfo)(pdp->pdraw,
 			  &pdp->index, &pdp->lastStamp,
 			  &pdp->x, &pdp->y, &pdp->w, &pdp->h,
 			  &pdp->numClipRects, &pdp->pClipRects,
@@ -435,8 +436,8 @@ static void driCopySubBuffer( void *drawablePrivate,
  */
 static void *driCreateNewDrawable(__DRIscreen *screen,
 				  const __GLcontextModes *modes,
-				  __DRIid draw,
 				  __DRIdrawable *pdraw,
+				  drm_drawable_t hwDrawable,
 				  int renderType,
 				  const int *attrs)
 {
@@ -456,14 +457,7 @@ static void *driCreateNewDrawable(__DRIscreen *screen,
 	return NULL;
     }
 
-    /* Ensure that modes->screen and screen are the same screen? */
-
-    if (!(*dri_interface->createDrawable)(screen, draw, &pdp->hHWDrawable)) {
-	_mesa_free(pdp);
-	return NULL;
-    }
-
-    pdp->draw = draw;
+    pdp->hHWDrawable = hwDrawable;
     pdp->pdraw = pdraw;
     pdp->refcount = 0;
     pdp->pStamp = NULL;
@@ -484,7 +478,6 @@ static void *driCreateNewDrawable(__DRIscreen *screen,
 
     if (!(*psp->DriverAPI.CreateBuffer)(psp, pdp, modes,
 					renderType == GLX_PIXMAP_BIT)) {
-       (void)(*dri_interface->destroyDrawable)(screen, pdp->draw);
        _mesa_free(pdp);
        return NULL;
     }
@@ -523,7 +516,6 @@ driDestroyDrawable(void *drawablePrivate)
     if (pdp) {
 	psp = pdp->driScreenPriv;
         (*psp->DriverAPI.DestroyBuffer)(pdp);
-	(void)(*dri_interface->destroyDrawable)(psp->psc, pdp->draw);
 	if (pdp->pClipRects) {
 	    _mesa_free(pdp->pClipRects);
 	    pdp->pClipRects = NULL;

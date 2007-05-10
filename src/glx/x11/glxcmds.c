@@ -85,7 +85,7 @@ static void GarbageCollectDRIDrawables(Display *dpy, int screen)
     __GLXdisplayPrivate * const priv = __glXInitialize(dpy);
     __GLXscreenConfigs *sc;
     __DRIid draw;
-    __DRIdrawable *pdraw;
+    __GLXdrawable *pdraw;
     XWindowAttributes xwa;
     int (*oldXErrorHandler)(Display *, XErrorEvent *);
 
@@ -105,7 +105,8 @@ static void GarbageCollectDRIDrawables(Display *dpy, int screen)
 	    if (!windowExistsFlag) {
 		/* Destroy the local drawable data, if the drawable no
 		   longer exists in the Xserver */
-		(*pdraw->destroyDrawable)(pdraw->private);
+		(*pdraw->driDrawable.destroyDrawable)(pdraw->driDrawable.private);
+		XF86DRIDestroyDrawable(dpy, sc->scr, draw);
 		Xfree(pdraw);
 	    }
 	} while (__glxHashNext(sc->drawHash, &draw, (void *)&pdraw) == 1);

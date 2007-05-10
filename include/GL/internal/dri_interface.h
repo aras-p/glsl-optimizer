@@ -195,21 +195,10 @@ struct __DRIinterfaceMethodsRec {
     GLboolean (* destroyContext)( __DRIscreen *screen, __DRIid context );
 
     /**
-     * Create the server-side portion of the drawable.
-     */
-    GLboolean (*createDrawable)( __DRIscreen *screen,
-        __DRIid drawable, drm_drawable_t * hHWDrawable );
-
-    /**
-     * Destroy the server-side portion of the drawable.
-     */
-    GLboolean (*destroyDrawable)( __DRIscreen *screen, __DRIid drawable );
-
-    /**
      * This function is used to get information about the position, size, and
      * clip rects of a drawable.
      */
-    GLboolean (* getDrawableInfo) ( __DRIscreen *screen, __DRIid drawable,
+    GLboolean (* getDrawableInfo) ( __DRIdrawable *drawable,
 	unsigned int * index, unsigned int * stamp,
         int * x, int * y, int * width, int * height,
         int * numClipRects, drm_clip_rect_t ** pClipRects,
@@ -303,7 +292,8 @@ struct __DRIscreenRec {
      */
     void *(*createNewDrawable)(__DRIscreen *screen,
 			       const __GLcontextModes *modes,
-			       __DRIid draw, __DRIdrawable *pdraw,
+			       __DRIdrawable *pdraw,
+			       drm_drawable_t hwDrawable,
 			       int renderType, const int *attrs);
 
     /**

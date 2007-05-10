@@ -248,7 +248,6 @@ struct __DRIdrawablePrivateRec {
     /**
      * X's drawable ID associated with this private drawable.
      */
-    __DRIid draw;
     __DRIdrawable *pdraw;
 
     /**
