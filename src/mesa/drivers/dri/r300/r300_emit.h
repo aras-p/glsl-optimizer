@@ -227,26 +227,4 @@ void static inline cp_wait(r300ContextPtr rmesa, unsigned char flags)
 	cmd[0].i = cmdwait(flags);
 }
 
-/**
- * These are followed by the corresponding data
- */
-#define start_index32_packet(vertex_count, type)			\
-	do {								\
-		int _vc;						\
-		_vc = (vertex_count);					\
-		start_packet3(RADEON_CP_PACKET3_3D_DRAW_INDX_2, _vc);	\
-		e32(R300_VAP_VF_CNTL__PRIM_WALK_INDICES | (_vc<<16) |	\
-		    type | R300_VAP_VF_CNTL__INDEX_SIZE_32bit);		\
-	} while (0);
-
-#define start_index16_packet(vertex_count, type)			\
-	do {								\
-		int _vc, _n;						\
-		_vc = (vertex_count);					\
-		_n = (vertex_count+1)>>1;				\
-		start_packet3(RADEON_CP_PACKET3_3D_DRAW_INDX_2, _n);	\
-		e32(R300_VAP_VF_CNTL__PRIM_WALK_INDICES | (_vc<<16) |	\
-		    type);						\
-	} while (0);
-
 #endif
