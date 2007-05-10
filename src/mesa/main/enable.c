@@ -194,7 +194,7 @@ _mesa_DisableClientState( GLenum cap )
  * Helper function to enable or disable a texture target.
  */
 static GLboolean
-enable_texture(GLcontext *ctx, GLboolean state, GLuint bit)
+enable_texture(GLcontext *ctx, GLboolean state, GLbitfield bit)
 {
    const GLuint curr = ctx->Texture.CurrentUnit;
    struct gl_texture_unit *texUnit = &ctx->Texture.Unit[curr];
@@ -981,7 +981,7 @@ _mesa_Disable( GLenum cap )
  * Helper function to determine whether a texture target is enabled.
  */
 static GLboolean
-is_texture_enabled(GLcontext *ctx, GLuint bit)
+is_texture_enabled(GLcontext *ctx, GLbitfield bit)
 {
    const struct gl_texture_unit *const texUnit =
        &ctx->Texture.Unit[ctx->Texture.CurrentUnit];
@@ -1109,7 +1109,7 @@ _mesa_IsEnabled( GLenum cap )
       case GL_TEXTURE_2D:
          return is_texture_enabled(ctx, TEXTURE_2D_BIT);
       case GL_TEXTURE_3D:
-         return is_texture_enabled(ctx, TEXTURE_2D_BIT);
+         return is_texture_enabled(ctx, TEXTURE_3D_BIT);
       case GL_TEXTURE_GEN_Q:
          {
             const struct gl_texture_unit *texUnit;
