@@ -318,17 +318,6 @@ struct __DRIdrawablePrivateRec {
     __DRIscreenPrivate *driScreenPriv;
 
     /**
-     * \name Display and screen information.
-     * 
-     * Basically just need these for when the locking code needs to call
-     * \c __driUtilUpdateDrawableInfo.
-     */
-    /*@{*/
-    __DRInativeDisplay *display;
-    int screen;
-    /*@}*/
-
-    /**
      * Called via glXSwapBuffers().
      */
     void (*swapBuffers)( __DRIdrawablePrivate *dPriv );
@@ -354,9 +343,9 @@ struct __DRIcontextPrivateRec {
     void *driverPrivate;
 
     /**
-     * This context's display pointer.
+     * Pointer back to the \c __DRIcontext that contains this structure.
      */
-    __DRInativeDisplay *display;
+    __DRIcontext *pctx;
 
     /**
      * Pointer to drawable currently bound to this context for drawing.
@@ -378,11 +367,6 @@ struct __DRIcontextPrivateRec {
  * Per-screen private driver information.
  */
 struct __DRIscreenPrivateRec {
-    /**
-     * Display for this screen
-     */
-    __DRInativeDisplay *display;
-
     /**
      * Current screen's number
      */
@@ -535,8 +519,8 @@ extern void
 __driUtilUpdateDrawableInfo(__DRIdrawablePrivate *pdp);
 
 
-extern __DRIscreenPrivate * __driUtilCreateNewScreen( __DRInativeDisplay *dpy,
-    int scrn, __DRIscreen *psc, __GLcontextModes * modes,
+extern __DRIscreenPrivate * __driUtilCreateNewScreen( int scr, __DRIscreen *psc,
+    __GLcontextModes * modes,
     const __DRIversion * ddx_version, const __DRIversion * dri_version,
     const __DRIversion * drm_version, const __DRIframebuffer * frame_buffer,
     drm_sarea_t *pSAREA, int fd, int internal_api_version,

@@ -857,7 +857,7 @@ void r200Finish( GLcontext *ctx )
  * the kernel data structures, and the current context to get the
  * device fd.
  */
-void *r200AllocateMemoryMESA(__DRInativeDisplay *dpy, int scrn, GLsizei size,
+void *r200AllocateMemoryMESA(__DRIscreen *screen, GLsizei size,
 			     GLfloat readfreq, GLfloat writefreq, 
 			     GLfloat priority)
 {
@@ -899,7 +899,7 @@ void *r200AllocateMemoryMESA(__DRInativeDisplay *dpy, int scrn, GLsizei size,
 
 
 /* Called via glXFreeMemoryMESA() */
-void r200FreeMemoryMESA(__DRInativeDisplay *dpy, int scrn, GLvoid *pointer)
+void r200FreeMemoryMESA(__DRIscreen *screen, GLvoid *pointer)
 {
    GET_CURRENT_CONTEXT(ctx);
    r200ContextPtr rmesa;
@@ -936,7 +936,7 @@ void r200FreeMemoryMESA(__DRInativeDisplay *dpy, int scrn, GLvoid *pointer)
 }
 
 /* Called via glXGetMemoryOffsetMESA() */
-GLuint r200GetMemoryOffsetMESA(__DRInativeDisplay *dpy, int scrn, const GLvoid *pointer)
+GLuint r200GetMemoryOffsetMESA(__DRIscreen *screen, const GLvoid *pointer)
 {
    GET_CURRENT_CONTEXT(ctx);
    r200ContextPtr rmesa;

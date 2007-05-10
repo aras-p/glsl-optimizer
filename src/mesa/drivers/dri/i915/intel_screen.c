@@ -886,18 +886,18 @@ intelFillInModes(unsigned pixel_bits, unsigned depth_bits,
  * \return A pointer to a \c __DRIscreenPrivate on success, or \c NULL on 
  *         failure.
  */
-PUBLIC void *
-__driCreateNewScreen_20050727(__DRInativeDisplay * dpy, int scrn,
-                              __DRIscreen * psc,
-                              const __GLcontextModes * modes,
-                              const __DRIversion * ddx_version,
-                              const __DRIversion * dri_version,
-                              const __DRIversion * drm_version,
-                              const __DRIframebuffer * frame_buffer,
-                              drmAddress pSAREA, int fd,
-                              int internal_api_version,
-                              const __DRIinterfaceMethods * interface,
-                              __GLcontextModes ** driver_modes)
+PUBLIC
+void * __DRI_CREATE_NEW_SCREEN(int scrn,
+			       __DRIscreen * psc,
+			       const __GLcontextModes * modes,
+			       const __DRIversion * ddx_version,
+			       const __DRIversion * dri_version,
+			       const __DRIversion * drm_version,
+			       const __DRIframebuffer * frame_buffer,
+			       drmAddress pSAREA, int fd,
+			       int internal_api_version,
+			       const __DRIinterfaceMethods * interface,
+			       __GLcontextModes ** driver_modes)
 {
    __DRIscreenPrivate *psp;
    static const __DRIversion ddx_expected = { 1, 5, 0 };
@@ -913,11 +913,10 @@ __driCreateNewScreen_20050727(__DRInativeDisplay * dpy, int scrn,
       return NULL;
    }
 
-   psp = __driUtilCreateNewScreen(dpy, scrn, psc, NULL,
-                                  ddx_version, dri_version, drm_version,
-                                  frame_buffer, pSAREA, fd,
-                                  internal_api_version, &intelAPI);
-
+   psp = __driUtilCreateNewScreen(scrn, psc, NULL,
+				  ddx_version, dri_version, drm_version,
+				  frame_buffer, pSAREA, fd,
+				  internal_api_version, &intelAPI);
    if (psp != NULL) {
       I830DRIPtr dri_priv = (I830DRIPtr) psp->pDevPriv;
       *driver_modes = intelFillInModes(dri_priv->cpp * 8,

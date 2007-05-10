@@ -57,7 +57,6 @@ typedef struct __DRIframebufferRec	__DRIframebuffer;
 typedef struct __DRIversionRec		__DRIversion;
 typedef struct __DRIinterfaceMethodsRec	__DRIinterfaceMethods;
 typedef unsigned long			__DRIid;
-typedef void				__DRInativeDisplay;
 /*@}*/
 
 
@@ -73,7 +72,7 @@ typedef void				__DRInativeDisplay;
  *
  * \sa glXGetScreenDriver, glXGetProcAddress, glXGetDriverConfig
  */
-typedef const char * (* PFNGLXGETSCREENDRIVERPROC) (__DRInativeDisplay *dpy, int scrNum);
+typedef const char * (* PFNGLXGETSCREENDRIVERPROC) (__DRIscreen *screen);
 
 /**
  * Type of a pointer to \c glXGetDriverConfig, as returned by
@@ -115,8 +114,8 @@ typedef void (* PFNGLXSCRENABLEEXTENSIONPROC) ( void *psc, const char * name );
 
 #define __DRI_INTERFACE_VERSION 20070105
 
-typedef void *(CREATENEWSCREENFUNC)(__DRInativeDisplay *dpy, int scrn,
-    __DRIscreen *psc, const __GLcontextModes * modes,
+typedef void *(CREATENEWSCREENFUNC)(int scr, __DRIscreen *psc,
+    const __GLcontextModes * modes,
     const __DRIversion * ddx_version, const __DRIversion * dri_version,
     const __DRIversion * drm_version, const __DRIframebuffer * frame_buffer,
     void * pSAREA, int fd, int internal_api_version,
@@ -174,11 +173,6 @@ struct __DRIinterfaceMethodsRec {
      */
     void (*destroyContextModes)( __GLcontextModes * modes );
 
-    /**
-     * Get the \c __DRIscreen for a given display and screen number.
-     */
-    __DRIscreen *(*getScreen)(__DRInativeDisplay *dpy, int screenNum);
-
 
     /**
      * \name Client/server protocol functions.
@@ -192,33 +186,31 @@ struct __DRIinterfaceMethodsRec {
     /**
      * Create the server-side portion of the GL context.
      */
-    GLboolean (* createContext)( __DRInativeDisplay *dpy, int screenNum,
+    GLboolean (* createContext)( __DRIscreen *screen,
         int configID, void * contextID, drm_context_t * hw_context );
 
     /**
      * Destroy the server-side portion of the GL context.
      */
-    GLboolean (* destroyContext)( __DRInativeDisplay *dpy, int screenNum,
-        __DRIid context );
+    GLboolean (* destroyContext)( __DRIscreen *screen, __DRIid context );
 
     /**
      * Create the server-side portion of the drawable.
      */
-    GLboolean (*createDrawable)( __DRInativeDisplay * ndpy, int screen,
+    GLboolean (*createDrawable)( __DRIscreen *screen,
         __DRIid drawable, drm_drawable_t * hHWDrawable );
 
     /**
      * Destroy the server-side portion of the drawable.
      */
-    GLboolean (*destroyDrawable)( __DRInativeDisplay * ndpy, int screen,
-        __DRIid drawable );
+    GLboolean (*destroyDrawable)( __DRIscreen *screen, __DRIid drawable );
 
     /**
      * This function is used to get information about the position, size, and
      * clip rects of a drawable.
      */
-    GLboolean (* getDrawableInfo) ( __DRInativeDisplay *dpy, int scrn,
-        __DRIid draw, unsigned int * index, unsigned int * stamp,
+    GLboolean (* getDrawableInfo) ( __DRIscreen *screen, __DRIid drawable,
+	unsigned int * index, unsigned int * stamp,
         int * x, int * y, int * width, int * height,
         int * numClipRects, drm_clip_rect_t ** pClipRects,
         int * backX, int * backY,
@@ -242,8 +234,8 @@ struct __DRIinterfaceMethodsRec {
      * the rate of the "media stream counter".  In practical terms, this is
      * the frame refresh rate of the display.
      */
-    GLboolean (*getMSCRate)(__DRInativeDisplay * dpy, __DRIid drawable,
-        int32_t * numerator, int32_t * denominator);
+    GLboolean (*getMSCRate)(__DRIdrawable *draw,
+			    int32_t * numerator, int32_t * denominator);
     /*@}*/
 
     /**
@@ -260,11 +252,10 @@ struct __DRIinterfaceMethodsRec {
      * 	      drawable was actually done directly to the front buffer (instead
      *	      of backing storage, for example)
      */
-    void (*reportDamage)(__DRInativeDisplay * dpy, int screen,
-			 __DRIid drawable,
+    void (*reportDamage)(__DRIdrawable *draw,
 			 int x, int y,
 			 drm_clip_rect_t *rects, int num_rects,
-			 int front_buffer);
+			 GLboolean front_buffer);
 };
 
    
@@ -304,13 +295,14 @@ struct __DRIscreenRec {
     /**
      * Method to destroy the private DRI screen data.
      */
-    void (*destroyScreen)(__DRInativeDisplay *dpy, int scrn, void *screenPrivate);
+    void (*destroyScreen)(void *screenPrivate);
 
     /**
      * Method to create the private DRI drawable data and initialize the
      * drawable dependent methods.
      */
-    void *(*createNewDrawable)(__DRInativeDisplay *dpy, const __GLcontextModes *modes,
+    void *(*createNewDrawable)(__DRIscreen *screen,
+			       const __GLcontextModes *modes,
 			       __DRIid draw, __DRIdrawable *pdraw,
 			       int renderType, const int *attrs);
 
@@ -345,13 +337,13 @@ struct __DRIscreenRec {
      * \since Internal API version 20030815.
      */
     /*@{*/
-    void *(*allocateMemory)(__DRInativeDisplay *dpy, int scrn, GLsizei size,
+    void *(*allocateMemory)(__DRIscreen *screen, GLsizei size,
 			    GLfloat readfreq, GLfloat writefreq,
 			    GLfloat priority);
    
-    void (*freeMemory)(__DRInativeDisplay *dpy, int scrn, GLvoid *pointer);
+    void (*freeMemory)(__DRIscreen *screen, GLvoid *pointer);
    
-    GLuint (*memoryOffset)(__DRInativeDisplay *dpy, int scrn, const GLvoid *pointer);
+    GLuint (*memoryOffset)(__DRIscreen *screen, const GLvoid *pointer);
     /*@}*/
 
     /**
@@ -360,7 +352,8 @@ struct __DRIscreenRec {
      *
      * \since Internal API version 20031201.
      */
-    void * (*createNewContext)(__DRInativeDisplay *dpy, const __GLcontextModes *modes,
+    void * (*createNewContext)(__DRIscreen *screen,
+			       const __GLcontextModes *modes,
 			       int render_type,
 			       void *sharedPrivate, __DRIcontext *pctx);
 
@@ -385,7 +378,7 @@ struct __DRIcontextRec {
     /**
      * Method to destroy the private DRI context data.
      */
-    void (*destroyContext)(__DRInativeDisplay *dpy, int scrn, void *contextPrivate);
+    void (*destroyContext)(void *contextPrivate);
 
     /**
      * Opaque pointer to private per context direct rendering data.
@@ -399,8 +392,7 @@ struct __DRIcontextRec {
      *
      * \since Internal API version 20050727.
      */
-    GLboolean (*bindContext)(__DRInativeDisplay *dpy, int scrn,
-			     __DRIdrawable *pdraw,
+    GLboolean (*bindContext)(__DRIdrawable *pdraw,
 			     __DRIdrawable *pread,
 			     __DRIcontext *ctx);
 
@@ -409,8 +401,7 @@ struct __DRIcontextRec {
      *
      * \since Internal API version 20050727.
      */
-    GLboolean (*unbindContext)(__DRInativeDisplay *dpy, int scrn,
-			       __DRIcontext *ctx);
+    GLboolean (*unbindContext)(__DRIcontext *ctx);
 };
 
 /**
@@ -423,12 +414,12 @@ struct __DRIdrawableRec {
     /**
      * Method to destroy the private DRI drawable data.
      */
-    void (*destroyDrawable)(__DRInativeDisplay *dpy, void *drawablePrivate);
+    void (*destroyDrawable)(void *drawablePrivate);
 
     /**
      * Method to swap the front and back buffers.
      */
-    void (*swapBuffers)(__DRInativeDisplay *dpy, void *drawablePrivate);
+    void (*swapBuffers)(void *drawablePrivate);
 
     /**
      * Opaque pointer to private per drawable direct rendering data.
@@ -442,14 +433,14 @@ struct __DRIdrawableRec {
      *
      * \since Internal API version 20030317.
      */
-    int (*getSBC)(__DRInativeDisplay *dpy, void *drawablePrivate, int64_t *sbc );
+    int (*getSBC)(void *drawablePrivate, int64_t *sbc );
 
     /**
      * Wait for the SBC to be greater than or equal target_sbc.
      *
      * \since Internal API version 20030317.
      */
-    int (*waitForSBC)( __DRInativeDisplay * dpy, void *drawablePriv,
+    int (*waitForSBC)( void *drawablePriv,
 		       int64_t target_sbc,
 		       int64_t * msc, int64_t * sbc );
 
@@ -461,7 +452,7 @@ struct __DRIdrawableRec {
      * 
      * \since Internal API version 20030317.
      */
-    int (*waitForMSC)( __DRInativeDisplay * dpy, void *drawablePriv,
+    int (*waitForMSC)( void *drawablePriv,
 		       int64_t target_msc, int64_t divisor, int64_t remainder,
 		       int64_t * msc, int64_t * sbc );
 
@@ -474,7 +465,7 @@ struct __DRIdrawableRec {
      * 
      * \since Internal API version 20030317.
      */
-    int64_t (*swapBuffersMSC)(__DRInativeDisplay *dpy, void *drawablePrivate,
+    int64_t (*swapBuffersMSC)(void *drawablePrivate,
 			      int64_t target_msc,
 			      int64_t divisor, int64_t remainder);
 
@@ -483,14 +474,14 @@ struct __DRIdrawableRec {
      * 
      * \since Internal API version 20030317.
      */
-    int (*frameTracking)(__DRInativeDisplay *dpy, void *drawablePrivate, GLboolean enable);
+    int (*frameTracking)(void *drawablePrivate, GLboolean enable);
 
     /**
      * Retrieve frame usage information.
      * 
      * \since Internal API version 20030317.
      */
-    int (*queryFrameTracking)(__DRInativeDisplay *dpy, void *drawablePrivate,
+    int (*queryFrameTracking)(void *drawablePrivate,
 			      int64_t * sbc, int64_t * missedFrames,
 			      float * lastMissedUsage, float * usage );
 
@@ -507,7 +498,7 @@ struct __DRIdrawableRec {
      *
      * \since Internal API version 20060314.
      */
-    void (*copySubBuffer)(__DRInativeDisplay *dpy, void *drawablePrivate,
+    void (*copySubBuffer)(void *drawablePrivate,
 			  int x, int y, int w, int h);
 };
 

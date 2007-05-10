@@ -289,7 +289,6 @@ struct via_context {
    drm_context_t hHWContext;
    drm_hw_lock_t *driHwLock;
    int driFd;
-   __DRInativeDisplay *display;
 
    /**
     * DRI drawable bound to this context for drawing.

@@ -431,17 +431,16 @@ static const struct __DriverAPIRec i810API = {
  *         failure.
  */
 PUBLIC
-void * __driCreateNewScreen_20070105( __DRInativeDisplay *dpy, int scrn, __DRIscreen *psc,
-			     const __GLcontextModes * modes,
-			     const __DRIversion * ddx_version,
-			     const __DRIversion * dri_version,
-			     const __DRIversion * drm_version,
-			     const __DRIframebuffer * frame_buffer,
-			     drmAddress pSAREA, int fd,
-			     int internal_api_version,
-			     const __DRIinterfaceMethods * interface,
-			     __GLcontextModes ** driver_modes )
-
+void *__DRI_CREATE_NEW_SCREEN(int scrn, __DRIscreen *psc,
+			      const __GLcontextModes * modes,
+			      const __DRIversion * ddx_version,
+			      const __DRIversion * dri_version,
+			      const __DRIversion * drm_version,
+			      const __DRIframebuffer * frame_buffer,
+			      drmAddress pSAREA, int fd,
+			      int internal_api_version,
+			      const __DRIinterfaceMethods * interface,
+			      __GLcontextModes ** driver_modes)
 {
    __DRIscreenPrivate *psp;
    static const __DRIversion ddx_expected = { 1, 0, 0 };
@@ -457,7 +456,7 @@ void * __driCreateNewScreen_20070105( __DRInativeDisplay *dpy, int scrn, __DRIsc
       return NULL;
    }
 
-   psp = __driUtilCreateNewScreen(dpy, scrn, psc, NULL,
+   psp = __driUtilCreateNewScreen(scrn, psc, NULL,
 				  ddx_version, dri_version, drm_version,
 				  frame_buffer, pSAREA, fd,
 				  internal_api_version, &i810API);
