@@ -56,7 +56,6 @@ typedef struct __DRIdriverRec		__DRIdriver;
 typedef struct __DRIframebufferRec	__DRIframebuffer;
 typedef struct __DRIversionRec		__DRIversion;
 typedef struct __DRIinterfaceMethodsRec	__DRIinterfaceMethods;
-typedef unsigned long			__DRIid;
 /*@}*/
 
 

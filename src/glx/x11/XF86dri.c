@@ -376,7 +376,7 @@ PUBLIC Bool XF86DRICreateContext(dpy, screen, visual, context, hHWContext)
 }
 
 PUBLIC GLboolean XF86DRIDestroyContext(Display *dpy, int screen, 
-    __DRIid context )
+    XID context )
 {
     XExtDisplayInfo *info = find_display (dpy);
     xXF86DRIDestroyContextReq *req;
@@ -397,7 +397,7 @@ PUBLIC GLboolean XF86DRIDestroyContext(Display *dpy, int screen,
 }
 
 PUBLIC GLboolean XF86DRICreateDrawable(Display *dpy, int screen, 
-    __DRIid drawable, drm_drawable_t * hHWDrawable )
+    XID drawable, drm_drawable_t * hHWDrawable )
 {
     XExtDisplayInfo *info = find_display (dpy);
     xXF86DRICreateDrawableReply rep;
@@ -431,7 +431,7 @@ static int noopErrorHandler(Display *dpy, XErrorEvent *xerr)
 }
 
 PUBLIC GLboolean XF86DRIDestroyDrawable(Display *dpy, int screen,
-    __DRIid drawable )
+    XID drawable )
 {
     XExtDisplayInfo *info = find_display (dpy);
     xXF86DRIDestroyDrawableReq *req;

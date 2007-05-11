@@ -82,7 +82,7 @@ static int windowExistsErrorHandler(Display *dpy, XErrorEvent *xerr)
  */
 static void GarbageCollectDRIDrawables(Display *dpy, __GLXscreenConfigs *sc)
 {
-    __DRIid draw;
+    XID draw;
     __GLXdrawable *pdraw;
     XWindowAttributes xwa;
     int (*oldXErrorHandler)(Display *, XErrorEvent *);
