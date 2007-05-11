@@ -356,6 +356,7 @@ __glXProcessServerString( const struct extension_info * ext,
    }
 }
 
+#ifdef GLX_DIRECT_RENDERING
 
 /**
  * Enable a named GLX extension on a given screen.
@@ -370,14 +371,18 @@ __glXProcessServerString( const struct extension_info * ext,
  * \since Internal API version 20030813.
  */
 void
-__glXScrEnableExtension( __GLXscreenConfigs *psc, const char * name )
+__glXScrEnableExtension( __DRIscreen *driScreen, const char * name )
 {
+    __GLXscreenConfigs *psc =
+	containerOf(driScreen, __GLXscreenConfigs, driScreen);
+
    __glXExtensionsCtr();
    __glXExtensionsCtrScreen(psc);
    set_glx_extension( known_glx_extensions, name, strlen( name ), GL_TRUE,
 		      psc->direct_support );
 }
 
+#endif
 
 /**
  * Initialize global extension support tables.

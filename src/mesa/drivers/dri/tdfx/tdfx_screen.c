@@ -75,7 +75,6 @@ tdfxCreateScreen( __DRIscreenPrivate *sPriv )
    TDFXDRIPtr fxDRIPriv = (TDFXDRIPtr) sPriv->pDevPriv;
    PFNGLXSCRENABLEEXTENSIONPROC glx_enable_extension =
      (PFNGLXSCRENABLEEXTENSIONPROC) (*dri_interface->getProcAddress("glxEnableExtension"));
-   void *const psc = sPriv->psc->screenConfigs;
 
    if (sPriv->devPrivSize != sizeof(TDFXDRIRec)) {
       fprintf(stderr,"\nERROR!  sizeof(TDFXDRIRec) does not match passed size from device driver\n");
@@ -117,7 +116,7 @@ tdfxCreateScreen( __DRIscreenPrivate *sPriv )
    }
 
    if (glx_enable_extension != NULL) {
-      (*glx_enable_extension)(psc, "GLX_SGI_make_current_read");
+      (*glx_enable_extension)(sPriv->psc, "GLX_SGI_make_current_read");
    }
 
    return GL_TRUE;

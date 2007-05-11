@@ -210,7 +210,6 @@ mach64CreateScreen( __DRIscreenPrivate *sPriv )
    ATIDRIPtr serverInfo = (ATIDRIPtr)sPriv->pDevPriv;
    PFNGLXSCRENABLEEXTENSIONPROC glx_enable_extension =
      (PFNGLXSCRENABLEEXTENSIONPROC) (*dri_interface->getProcAddress("glxEnableExtension"));
-   void * const psc = sPriv->psc->screenConfigs;
 
    if (sPriv->devPrivSize != sizeof(ATIDRIRec)) {
       fprintf(stderr,"\nERROR!  sizeof(ATIDRIRec) does not match passed size from device driver\n");
@@ -321,12 +320,12 @@ mach64CreateScreen( __DRIscreenPrivate *sPriv )
 
    if ( glx_enable_extension != NULL ) {
       if ( mach64Screen->irq != 0 ) {
-	 (*glx_enable_extension)( psc, "GLX_SGI_swap_control" );
-	 (*glx_enable_extension)( psc, "GLX_SGI_video_sync" );
-	 (*glx_enable_extension)( psc, "GLX_MESA_swap_control" );
+	 (*glx_enable_extension)( sPriv->psc, "GLX_SGI_swap_control" );
+	 (*glx_enable_extension)( sPriv->psc, "GLX_SGI_video_sync" );
+	 (*glx_enable_extension)( sPriv->psc, "GLX_MESA_swap_control" );
       }
 
-      (*glx_enable_extension)( psc, "GLX_MESA_swap_frame_usage" );
+      (*glx_enable_extension)( sPriv->psc, "GLX_MESA_swap_frame_usage" );
    }
 
    return mach64Screen;

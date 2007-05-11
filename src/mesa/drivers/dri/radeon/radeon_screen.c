@@ -343,7 +343,6 @@ radeonCreateScreen( __DRIscreenPrivate *sPriv )
    unsigned char *RADEONMMIO;
    PFNGLXSCRENABLEEXTENSIONPROC glx_enable_extension =
      (PFNGLXSCRENABLEEXTENSIONPROC) (*dri_interface->getProcAddress("glxEnableExtension"));
-   void * const psc = sPriv->psc->screenConfigs;
 
    if (sPriv->devPrivSize != sizeof(RADEONDRIRec)) {
       fprintf(stderr,"\nERROR!  sizeof(RADEONDRIRec) does not match passed size from device driver\n");
@@ -734,17 +733,17 @@ radeonCreateScreen( __DRIscreenPrivate *sPriv )
 
    if ( glx_enable_extension != NULL ) {
       if ( screen->irq != 0 ) {
-	 (*glx_enable_extension)( psc, "GLX_SGI_swap_control" );
-	 (*glx_enable_extension)( psc, "GLX_SGI_video_sync" );
-	 (*glx_enable_extension)( psc, "GLX_MESA_swap_control" );
+	 (*glx_enable_extension)( sPriv->psc, "GLX_SGI_swap_control" );
+	 (*glx_enable_extension)( sPriv->psc, "GLX_SGI_video_sync" );
+	 (*glx_enable_extension)( sPriv->psc, "GLX_MESA_swap_control" );
       }
 
-      (*glx_enable_extension)( psc, "GLX_MESA_swap_frame_usage" );
+      (*glx_enable_extension)( sPriv->psc, "GLX_MESA_swap_frame_usage" );
       if (IS_R200_CLASS(screen))
-	 (*glx_enable_extension)( psc, "GLX_MESA_allocate_memory" );
+	 (*glx_enable_extension)( sPriv->psc, "GLX_MESA_allocate_memory" );
 
-      (*glx_enable_extension)( psc, "GLX_MESA_copy_sub_buffer" );
-      (*glx_enable_extension)( psc, "GLX_SGI_make_current_read" );
+      (*glx_enable_extension)( sPriv->psc, "GLX_MESA_copy_sub_buffer" );
+      (*glx_enable_extension)( sPriv->psc, "GLX_SGI_make_current_read" );
    }
 
 #if RADEON_COMMON && defined(RADEON_COMMON_FOR_R200)

@@ -1203,7 +1203,6 @@ static Bool AllocAndFetchScreenConfigs(Display *dpy, __GLXdisplayPrivate *priv)
 	    if (priv->driDisplay.createNewScreen &&
 		priv->driDisplay.createNewScreen[i]) {
 
-		psc->driScreen.screenConfigs = (void *)psc;
 		psc->driScreen.private =
 		    CallCreateNewScreen(dpy, i, psc,
 					& priv->driDisplay,

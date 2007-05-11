@@ -87,7 +87,8 @@ typedef const char * (* PFNGLXGETDRIVERCONFIGPROC) (const char *driverName);
  * \c __DRIinterfaceMethods::getProcAddress.  This function is used to enable
  * a GLX extension on the specified screen.
  */
-typedef void (* PFNGLXSCRENABLEEXTENSIONPROC) ( void *psc, const char * name );
+typedef void (* PFNGLXSCRENABLEEXTENSIONPROC) (__DRIscreen *screen,
+					       const char *name);
 /*@}*/
 
 
@@ -298,16 +299,6 @@ struct __DRIscreenRec {
      * \since Internal API version 20030317.
      */
     int (*getMSC)( void *screenPrivate, int64_t *msc );
-
-    /**
-     * Opaque pointer that points back to the containing 
-     * \c __GLXscreenConfigs.  This data structure is shared with DRI drivers
-     * but \c __GLXscreenConfigs is not. However, they are needed by some GLX
-     * functions called by DRI drivers.
-     *
-     * \since Internal API version 20030813.
-     */
-    void *screenConfigs;
 
     /**
      * Functions associated with MESA_allocate_memory.

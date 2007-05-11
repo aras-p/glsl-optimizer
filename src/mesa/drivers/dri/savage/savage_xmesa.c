@@ -266,8 +266,7 @@ savageInitDriver(__DRIscreenPrivate *sPriv)
 		       __driConfigOptions, __driNConfigOptions);
 
    if (glx_enable_extension != NULL) {
-      (*glx_enable_extension)(sPriv->psc->screenConfigs,
-			      "GLX_SGI_make_current_read");
+      (*glx_enable_extension)(sPriv->psc, "GLX_SGI_make_current_read");
    }
 
 #if 0

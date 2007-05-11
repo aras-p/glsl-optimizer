@@ -234,7 +234,14 @@ extern GLboolean __glXExtensionBitIsEnabled( struct __GLXscreenConfigsRec *psc, 
 extern const char * __glXGetClientExtensions( void );
 extern void __glXCalculateUsableExtensions( struct __GLXscreenConfigsRec *psc,
     GLboolean display_is_direct_capable, int server_minor_version );
-extern void __glXScrEnableExtension( struct __GLXscreenConfigsRec *psc, const char * name );
+
+#ifdef GLX_DIRECT_RENDERING
+
+struct __DRIscreenRec;
+extern void __glXScrEnableExtension( struct __DRIscreenRec *driScreen, const char * name );
+
+#endif
+
 extern void __glXCalculateUsableGLExtensions( struct __GLXcontextRec * gc,
     const char * server_string, int major_version, int minor_version );
 extern void __glXGetGLVersion( int * major_version, int * minor_version );
