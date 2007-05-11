@@ -86,9 +86,9 @@ do {						\
 } while (0)
 #endif
 
-static void emit_vec4(GLcontext * ctx,
-		      struct r300_dma_region *rvb,
-		      GLvoid * data, int stride, int count)
+static void r300EmitVec4(GLcontext * ctx,
+			 struct r300_dma_region *rvb,
+			 GLvoid * data, int stride, int count)
 {
 	int i;
 	int *out = (int *)(rvb->address + rvb->start);
@@ -107,9 +107,9 @@ static void emit_vec4(GLcontext * ctx,
 		}
 }
 
-static void emit_vec8(GLcontext * ctx,
-		      struct r300_dma_region *rvb,
-		      GLvoid * data, int stride, int count)
+static void r300EmitVec8(GLcontext * ctx,
+			 struct r300_dma_region *rvb,
+			 GLvoid * data, int stride, int count)
 {
 	int i;
 	int *out = (int *)(rvb->address + rvb->start);
@@ -129,9 +129,9 @@ static void emit_vec8(GLcontext * ctx,
 		}
 }
 
-static void emit_vec12(GLcontext * ctx,
-		       struct r300_dma_region *rvb,
-		       GLvoid * data, int stride, int count)
+static void r300EmitVec12(GLcontext * ctx,
+			  struct r300_dma_region *rvb,
+			  GLvoid * data, int stride, int count)
 {
 	int i;
 	int *out = (int *)(rvb->address + rvb->start);
@@ -152,9 +152,9 @@ static void emit_vec12(GLcontext * ctx,
 		}
 }
 
-static void emit_vec16(GLcontext * ctx,
-		       struct r300_dma_region *rvb,
-		       GLvoid * data, int stride, int count)
+static void r300EmitVec16(GLcontext * ctx,
+			  struct r300_dma_region *rvb,
+			  GLvoid * data, int stride, int count)
 {
 	int i;
 	int *out = (int *)(rvb->address + rvb->start);
@@ -176,7 +176,7 @@ static void emit_vec16(GLcontext * ctx,
 		}
 }
 
-static void emit_vector(GLcontext * ctx,
+static void r300EmitVec(GLcontext * ctx,
 			struct r300_dma_region *rvb,
 			GLvoid * data, int size, int stride, int count)
 {
@@ -204,16 +204,16 @@ static void emit_vector(GLcontext * ctx,
 	 */
 	switch (size) {
 	case 1:
-		emit_vec4(ctx, rvb, data, stride, count);
+		r300EmitVec4(ctx, rvb, data, stride, count);
 		break;
 	case 2:
-		emit_vec8(ctx, rvb, data, stride, count);
+		r300EmitVec8(ctx, rvb, data, stride, count);
 		break;
 	case 3:
-		emit_vec12(ctx, rvb, data, stride, count);
+		r300EmitVec12(ctx, rvb, data, stride, count);
 		break;
 	case 4:
-		emit_vec16(ctx, rvb, data, stride, count);
+		r300EmitVec16(ctx, rvb, data, stride, count);
 		break;
 	default:
 		assert(0);
@@ -228,13 +228,10 @@ static GLuint t_type(struct dt *dt)
 	switch (dt->type) {
 	case GL_UNSIGNED_BYTE:
 		return AOS_FORMAT_UBYTE;
-
 	case GL_SHORT:
 		return AOS_FORMAT_USHORT;
-
 	case GL_FLOAT:
 		return AOS_FORMAT_FLOAT;
-
 	default:
 		assert(0);
 		break;
@@ -248,13 +245,10 @@ static GLuint t_vir0_size(struct dt *dt)
 	switch (dt->type) {
 	case GL_UNSIGNED_BYTE:
 		return 4;
-
 	case GL_SHORT:
 		return 7;
-
 	case GL_FLOAT:
 		return dt->size - 1;
-
 	default:
 		assert(0);
 		break;
@@ -268,13 +262,10 @@ static GLuint t_aos_size(struct dt *dt)
 	switch (dt->type) {
 	case GL_UNSIGNED_BYTE:
 		return 1;
-
 	case GL_SHORT:
 		return 2;
-
 	case GL_FLOAT:
 		return dt->size;
-
 	default:
 		assert(0);
 		break;
@@ -510,11 +501,11 @@ int r300EmitArrays(GLcontext * ctx)
 			rmesa->state.aos[i].aos_size =
 			    t_emit_size(&VB->AttribPtr[tab[i]]);
 		} else {
-			/* TODO: emit_vector can only handle 4 byte vectors */
+			/* TODO: r300EmitVec can only handle 4 byte vectors */
 			if (VB->AttribPtr[tab[i]].type != GL_FLOAT)
 				return R300_FALLBACK_TCL;
 
-			emit_vector(ctx, &rmesa->state.aos[i],
+			r300EmitVec(ctx, &rmesa->state.aos[i],
 				    VB->AttribPtr[tab[i]].data,
 				    t_emit_size(&VB->AttribPtr[tab[i]]),
 				    VB->AttribPtr[tab[i]].stride, count);
