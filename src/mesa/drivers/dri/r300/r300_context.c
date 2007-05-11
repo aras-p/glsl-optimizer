@@ -447,15 +447,6 @@ static void r300FreeGartAllocations(r300ContextPtr r300)
 
 			r300->rmm->u_list[i].pending = 0;
 			r300->rmm->u_list[i].ptr = NULL;
-			if (r300->rmm->u_list[i].fb) {
-				LOCK_HARDWARE(&(r300->radeon));
-				ret = mmFreeMem(r300->rmm->u_list[i].fb);
-				UNLOCK_HARDWARE(&(r300->radeon));
-				if (ret)
-					fprintf(stderr, "failed to free!\n");
-				r300->rmm->u_list[i].fb = NULL;
-			}
-			r300->rmm->u_list[i].ref_count = 0;
 		}
 	}
 	r300->rmm->u_head = i;

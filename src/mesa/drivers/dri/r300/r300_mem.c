@@ -181,19 +181,6 @@ int r300_mem_alloc(r300ContextPtr rmesa, int alignment, int size)
 				allocated -= rmesa->rmm->u_list[i].size;
 				rmesa->rmm->u_list[i].pending = 0;
 				rmesa->rmm->u_list[i].ptr = NULL;
-
-				if (rmesa->rmm->u_list[i].fb) {
-					LOCK_HARDWARE(&(rmesa->radeon));
-					ret =
-					    mmFreeMem(rmesa->rmm->u_list[i].fb);
-					UNLOCK_HARDWARE(&(rmesa->radeon));
-
-					if (ret != 0)
-						fprintf(stderr,
-							"failed to free!\n");
-					rmesa->rmm->u_list[i].fb = NULL;
-				}
-				rmesa->rmm->u_list[i].ref_count = 0;
 				free = i;
 			}
 		}
@@ -249,7 +236,6 @@ int r300_mem_alloc(r300ContextPtr rmesa, int alignment, int size)
 	    ((GLubyte *) rmesa->radeon.radeonScreen->gartTextures.map) + offset;
 	rmesa->rmm->u_list[i].size = size;
 	rmesa->rmm->u_list[i].age = 0;
-	rmesa->rmm->u_list[i].fb = NULL;
 	//fprintf(stderr, "alloc %p at id %d\n", rmesa->rmm->u_list[i].ptr, i);
 
 #ifdef MM_DEBUG
@@ -258,63 +244,6 @@ int r300_mem_alloc(r300ContextPtr rmesa, int alignment, int size)
 #endif
 
 	return i;
-}
-
-#include "r300_emit.h"
-static void emit_lin_cp(r300ContextPtr rmesa, unsigned long dst,
-			unsigned long src, unsigned long size)
-{
-	int cmd_reserved = 0;
-	int cmd_written = 0;
-	drm_radeon_cmd_header_t *cmd = NULL;
-	int cp_size;
-
-	while (size > 0) {
-		cp_size = size;
-		if (cp_size > /*8190 */ 4096)
-			cp_size = /*8190 */ 4096;
-
-		reg_start(0x146c, 1);
-		e32(0x52cc32fb);
-
-		reg_start(0x15ac, 1);
-		e32(src);
-		e32(cp_size);
-
-		reg_start(0x1704, 0);
-		e32(0x0);
-
-		reg_start(0x1404, 1);
-		e32(dst);
-		e32(cp_size);
-
-		reg_start(0x1700, 0);
-		e32(0x0);
-
-		reg_start(0x1640, 3);
-		e32(0x00000000);
-		e32(0x00001fff);
-		e32(0x00000000);
-		e32(0x00001fff);
-
-		start_packet3(RADEON_CP_PACKET3_UNK1B, 2);
-		e32(0 << 16 | 0);
-		e32(0 << 16 | 0);
-		e32(cp_size << 16 | 0x1);
-
-		dst += cp_size;
-		src += cp_size;
-		size -= cp_size;
-	}
-
-	reg_start(R300_RB3D_DSTCACHE_CTLSTAT, 0);
-	e32(R300_RB3D_DSTCACHE_UNKNOWN_0A);
-
-	reg_start(0x342c, 0);
-	e32(0x00000005);
-
-	reg_start(0x1720, 0);
-	e32(0x00010000);
 }
 
 void r300_mem_use(r300ContextPtr rmesa, int id)
@@ -330,47 +259,6 @@ void r300_mem_use(r300ContextPtr rmesa, int id)
 
 	if (id == 0)
 		return;
-
-#if 0				/* FB VBOs. Needs further changes... */
-	rmesa->rmm->u_list[id].ref_count++;
-	if (rmesa->rmm->u_list[id].ref_count > 100
-	    && rmesa->rmm->u_list[id].fb == NULL
-	    && rmesa->rmm->u_list[id].size !=
-	    RADEON_BUFFER_SIZE * 16 /*&& rmesa->rmm->u_list[id].size > 40 */ ) {
-		driTexHeap *heap;
-		struct mem_block *mb;
-
-		LOCK_HARDWARE(&(rmesa->radeon));
-
-		heap = rmesa->texture_heaps[0];
-
-		mb = mmAllocMem(heap->memory_heap, rmesa->rmm->u_list[id].size,
-				heap->alignmentShift, 0);
-
-		UNLOCK_HARDWARE(&(rmesa->radeon));
-
-		if (mb) {
-			rmesa->rmm->u_list[id].fb = mb;
-
-			emit_lin_cp(rmesa,
-				    rmesa->radeon.radeonScreen->texOffset[0] +
-				    rmesa->rmm->u_list[id].fb->ofs,
-				    r300GartOffsetFromVirtual(rmesa,
-							      rmesa->rmm->
-							      u_list[id].ptr),
-				    rmesa->rmm->u_list[id].size);
-		} else {
-			WARN_ONCE("Upload to fb failed, %d, %d\n",
-				  rmesa->rmm->u_list[id].size, id);
-		}
-		//fprintf(stderr, "Upload to fb! %d, %d\n", rmesa->rmm->u_list[id].ref_count, id);
-	}
-	/*if (rmesa->rmm->u_list[id].fb) {
-	   emit_lin_cp(rmesa, rmesa->radeon.radeonScreen->texOffset[0] + rmesa->rmm->u_list[id].fb->ofs,
-	   r300GartOffsetFromVirtual(rmesa, rmesa->rmm->u_list[id].ptr),
-	   rmesa->rmm->u_list[id].size);
-	   } */
-#endif
 
 	cmd =
 	    (drm_r300_cmd_header_t *) r300AllocCmdBuf(rmesa,
@@ -399,27 +287,11 @@ unsigned long r300_mem_offset(r300ContextPtr rmesa, int id)
 
 	assert(id <= rmesa->rmm->u_last);
 
-	if (rmesa->rmm->u_list[id].fb) {
-		offset =
-		    rmesa->radeon.radeonScreen->texOffset[0] +
-		    rmesa->rmm->u_list[id].fb->ofs;
-	} else {
-		offset = (char *)rmesa->rmm->u_list[id].ptr -
-		    (char *)rmesa->radeon.radeonScreen->gartTextures.map;
-		offset += rmesa->radeon.radeonScreen->gart_texture_offset;
-	}
+	offset = (char *)rmesa->rmm->u_list[id].ptr -
+	    (char *)rmesa->radeon.radeonScreen->gartTextures.map;
+	offset += rmesa->radeon.radeonScreen->gart_texture_offset;
 
 	return offset;
-}
-
-int r300_mem_on_card(r300ContextPtr rmesa, int id)
-{
-	assert(id <= rmesa->rmm->u_last);
-
-	if (rmesa->rmm->u_list[id].fb)
-		return GL_TRUE;
-
-	return GL_FALSE;
 }
 
 void *r300_mem_map(r300ContextPtr rmesa, int id, int access)
@@ -432,21 +304,6 @@ void *r300_mem_map(r300ContextPtr rmesa, int id, int access)
 	int tries = 0;
 
 	assert(id <= rmesa->rmm->u_last);
-
-	rmesa->rmm->u_list[id].ref_count = 0;
-	if (rmesa->rmm->u_list[id].fb) {
-		WARN_ONCE("Mapping fb!\n");
-		/* Idle gart only and do upload on unmap */
-		//rmesa->rmm->u_list[id].fb = NULL;
-
-		if (rmesa->rmm->u_list[id].mapped == 1)
-			WARN_ONCE("buffer %d already mapped\n", id);
-
-		rmesa->rmm->u_list[id].mapped = 1;
-		ptr = r300_mem_ptr(rmesa, id);
-
-		return ptr;
-	}
 
 	if (access == R300_MEM_R) {
 
@@ -499,15 +356,6 @@ void r300_mem_unmap(r300ContextPtr rmesa, int id)
 		WARN_ONCE("buffer %d not mapped\n", id);
 
 	rmesa->rmm->u_list[id].mapped = 0;
-
-	if (rmesa->rmm->u_list[id].fb)
-		emit_lin_cp(rmesa,
-			    rmesa->radeon.radeonScreen->texOffset[0] +
-			    rmesa->rmm->u_list[id].fb->ofs,
-			    r300GartOffsetFromVirtual(rmesa,
-						      rmesa->rmm->u_list[id].
-						      ptr),
-			    rmesa->rmm->u_list[id].size);
 }
 
 void r300_mem_free(r300ContextPtr rmesa, int id)
