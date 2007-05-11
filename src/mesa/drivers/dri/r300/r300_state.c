@@ -97,60 +97,58 @@ static void r300BlendColor(GLcontext * ctx, const GLfloat cf[4])
  */
 static int blend_factor(GLenum factor, GLboolean is_src)
 {
-	int func;
-
 	switch (factor) {
 	case GL_ZERO:
-		func = R300_BLEND_GL_ZERO;
+		return R300_BLEND_GL_ZERO;
 		break;
 	case GL_ONE:
-		func = R300_BLEND_GL_ONE;
+		return R300_BLEND_GL_ONE;
 		break;
 	case GL_DST_COLOR:
-		func = R300_BLEND_GL_DST_COLOR;
+		return R300_BLEND_GL_DST_COLOR;
 		break;
 	case GL_ONE_MINUS_DST_COLOR:
-		func = R300_BLEND_GL_ONE_MINUS_DST_COLOR;
+		return R300_BLEND_GL_ONE_MINUS_DST_COLOR;
 		break;
 	case GL_SRC_COLOR:
-		func = R300_BLEND_GL_SRC_COLOR;
+		return R300_BLEND_GL_SRC_COLOR;
 		break;
 	case GL_ONE_MINUS_SRC_COLOR:
-		func = R300_BLEND_GL_ONE_MINUS_SRC_COLOR;
+		return R300_BLEND_GL_ONE_MINUS_SRC_COLOR;
 		break;
 	case GL_SRC_ALPHA:
-		func = R300_BLEND_GL_SRC_ALPHA;
+		return R300_BLEND_GL_SRC_ALPHA;
 		break;
 	case GL_ONE_MINUS_SRC_ALPHA:
-		func = R300_BLEND_GL_ONE_MINUS_SRC_ALPHA;
+		return R300_BLEND_GL_ONE_MINUS_SRC_ALPHA;
 		break;
 	case GL_DST_ALPHA:
-		func = R300_BLEND_GL_DST_ALPHA;
+		return R300_BLEND_GL_DST_ALPHA;
 		break;
 	case GL_ONE_MINUS_DST_ALPHA:
-		func = R300_BLEND_GL_ONE_MINUS_DST_ALPHA;
+		return R300_BLEND_GL_ONE_MINUS_DST_ALPHA;
 		break;
 	case GL_SRC_ALPHA_SATURATE:
-		func = (is_src) ? R300_BLEND_GL_SRC_ALPHA_SATURATE :
+		return (is_src) ? R300_BLEND_GL_SRC_ALPHA_SATURATE :
 		    R300_BLEND_GL_ZERO;
 		break;
 	case GL_CONSTANT_COLOR:
-		func = R300_BLEND_GL_CONST_COLOR;
+		return R300_BLEND_GL_CONST_COLOR;
 		break;
 	case GL_ONE_MINUS_CONSTANT_COLOR:
-		func = R300_BLEND_GL_ONE_MINUS_CONST_COLOR;
+		return R300_BLEND_GL_ONE_MINUS_CONST_COLOR;
 		break;
 	case GL_CONSTANT_ALPHA:
-		func = R300_BLEND_GL_CONST_ALPHA;
+		return R300_BLEND_GL_CONST_ALPHA;
 		break;
 	case GL_ONE_MINUS_CONSTANT_ALPHA:
-		func = R300_BLEND_GL_ONE_MINUS_CONST_ALPHA;
+		return R300_BLEND_GL_ONE_MINUS_CONST_ALPHA;
 		break;
 	default:
 		fprintf(stderr, "unknown blend factor %x\n", factor);
-		func = (is_src) ? R300_BLEND_GL_ONE : R300_BLEND_GL_ZERO;
+		return (is_src) ? R300_BLEND_GL_ONE : R300_BLEND_GL_ZERO;
+		break;
 	}
-	return func;
 }
 
 /**
