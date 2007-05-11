@@ -78,38 +78,36 @@ extern int future_hw_tcl_on;
  */
 static int r300PrimitiveType(r300ContextPtr rmesa, GLcontext * ctx, int prim)
 {
-	int type = -1;
-
 	switch (prim & PRIM_MODE_MASK) {
 	case GL_POINTS:
-		type = R300_VAP_VF_CNTL__PRIM_POINTS;
+		return R300_VAP_VF_CNTL__PRIM_POINTS;
 		break;
 	case GL_LINES:
-		type = R300_VAP_VF_CNTL__PRIM_LINES;
+		return R300_VAP_VF_CNTL__PRIM_LINES;
 		break;
 	case GL_LINE_STRIP:
-		type = R300_VAP_VF_CNTL__PRIM_LINE_STRIP;
+		return R300_VAP_VF_CNTL__PRIM_LINE_STRIP;
 		break;
 	case GL_LINE_LOOP:
-		type = R300_VAP_VF_CNTL__PRIM_LINE_LOOP;
+		return R300_VAP_VF_CNTL__PRIM_LINE_LOOP;
 		break;
 	case GL_TRIANGLES:
-		type = R300_VAP_VF_CNTL__PRIM_TRIANGLES;
+		return R300_VAP_VF_CNTL__PRIM_TRIANGLES;
 		break;
 	case GL_TRIANGLE_STRIP:
-		type = R300_VAP_VF_CNTL__PRIM_TRIANGLE_STRIP;
+		return R300_VAP_VF_CNTL__PRIM_TRIANGLE_STRIP;
 		break;
 	case GL_TRIANGLE_FAN:
-		type = R300_VAP_VF_CNTL__PRIM_TRIANGLE_FAN;
+		return R300_VAP_VF_CNTL__PRIM_TRIANGLE_FAN;
 		break;
 	case GL_QUADS:
-		type = R300_VAP_VF_CNTL__PRIM_QUADS;
+		return R300_VAP_VF_CNTL__PRIM_QUADS;
 		break;
 	case GL_QUAD_STRIP:
-		type = R300_VAP_VF_CNTL__PRIM_QUAD_STRIP;
+		return R300_VAP_VF_CNTL__PRIM_QUAD_STRIP;
 		break;
 	case GL_POLYGON:
-		type = R300_VAP_VF_CNTL__PRIM_POLYGON;
+		return R300_VAP_VF_CNTL__PRIM_POLYGON;
 		break;
 	default:
 		fprintf(stderr,
@@ -118,7 +116,6 @@ static int r300PrimitiveType(r300ContextPtr rmesa, GLcontext * ctx, int prim)
 		return -1;
 		break;
 	}
-	return type;
 }
 
 static int r300NumVerts(r300ContextPtr rmesa, int num_verts, int prim)
@@ -175,6 +172,34 @@ static int r300NumVerts(r300ContextPtr rmesa, int num_verts, int prim)
 	return num_verts - verts_off;
 }
 
+static void r300EmitElts(GLcontext * ctx, void *elts, unsigned long n_elts,
+			 int elt_size)
+{
+	r300ContextPtr rmesa = R300_CONTEXT(ctx);
+	struct r300_dma_region *rvb = &rmesa->state.elt_dma;
+	void *out;
+
+	assert(elt_size == 2 || elt_size == 4);
+
+	if (r300IsGartMemory(rmesa, elts, n_elts * elt_size)) {
+		rvb->address = rmesa->radeon.radeonScreen->gartTextures.map;
+		rvb->start = ((char *)elts) - rvb->address;
+		rvb->aos_offset =
+		    rmesa->radeon.radeonScreen->gart_texture_offset +
+		    rvb->start;
+		return;
+	} else if (r300IsGartMemory(rmesa, elts, 1)) {
+		WARN_ONCE("Pointer not within GART memory!\n");
+		_mesa_exit(-1);
+	}
+
+	r300AllocDmaRegion(rmesa, rvb, n_elts * elt_size, elt_size);
+	rvb->aos_offset = GET_START(rvb);
+
+	out = rvb->address + rvb->start;
+	memcpy(out, elts, n_elts * elt_size);
+}
+
 static void r300FireEB(r300ContextPtr rmesa, unsigned long addr,
 		       int vertex_count, int type, int elt_size)
 {
@@ -229,35 +254,6 @@ static void r300FireEB(r300ContextPtr rmesa, unsigned long addr,
 #endif
 	}
 }
-
-static void r300EmitElts(GLcontext * ctx, void *elts, unsigned long n_elts,
-		  int elt_size)
-{
-	r300ContextPtr rmesa = R300_CONTEXT(ctx);
-	struct r300_dma_region *rvb = &rmesa->state.elt_dma;
-	void *out;
-
-	assert(elt_size == 2 || elt_size == 4);
-
-	if (r300IsGartMemory(rmesa, elts, n_elts * elt_size)) {
-		rvb->address = rmesa->radeon.radeonScreen->gartTextures.map;
-		rvb->start = ((char *)elts) - rvb->address;
-		rvb->aos_offset =
-		    rmesa->radeon.radeonScreen->gart_texture_offset +
-		    rvb->start;
-		return;
-	} else if (r300IsGartMemory(rmesa, elts, 1)) {
-		WARN_ONCE("Pointer not within GART memory!\n");
-		_mesa_exit(-1);
-	}
-
-	r300AllocDmaRegion(rmesa, rvb, n_elts * elt_size, elt_size);
-	rvb->aos_offset = GET_START(rvb);
-
-	out = rvb->address + rvb->start;
-	memcpy(out, elts, n_elts * elt_size);
-}
-
 
 static void r300EmitAOS(r300ContextPtr rmesa, GLuint nr, GLuint offset)
 {
