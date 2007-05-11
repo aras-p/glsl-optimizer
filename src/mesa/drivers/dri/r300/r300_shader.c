@@ -7,19 +7,6 @@
 #include "r300_context.h"
 #include "r300_fragprog.h"
 
-static void
-r300BindProgram(GLcontext * ctx, GLenum target, struct gl_program *prog)
-{
-	switch (target) {
-	case GL_VERTEX_PROGRAM_ARB:
-	case GL_FRAGMENT_PROGRAM_ARB:
-		break;
-	default:
-		WARN_ONCE("Target not supported yet!\n");
-		break;
-	}
-}
-
 static struct gl_program *r300NewProgram(GLcontext * ctx, GLenum target,
 					 GLuint id)
 {
@@ -62,9 +49,7 @@ r300ProgramStringNotify(GLcontext * ctx, GLenum target, struct gl_program *prog)
 	switch (target) {
 	case GL_VERTEX_PROGRAM_ARB:
 		vp->progs = NULL;
-		/*vp->translated = GL_FALSE;
-		   memset(&vp->translated, 0, sizeof(struct r300_vertex_program) - sizeof(struct gl_vertex_program)); */
-		/*r300TranslateVertexShader(vp); */
+		vp->translated = GL_FALSE;
 		break;
 	case GL_FRAGMENT_PROGRAM_ARB:
 		fp->translated = GL_FALSE;
@@ -83,7 +68,6 @@ r300IsProgramNative(GLcontext * ctx, GLenum target, struct gl_program *prog)
 void r300InitShaderFuncs(struct dd_function_table *functions)
 {
 	functions->NewProgram = r300NewProgram;
-	functions->BindProgram = r300BindProgram;
 	functions->DeleteProgram = r300DeleteProgram;
 	functions->ProgramStringNotify = r300ProgramStringNotify;
 	functions->IsProgramNative = r300IsProgramNative;
