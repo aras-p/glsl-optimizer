@@ -43,11 +43,10 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "glheader.h"
 #include "swrast/swrast.h"
 
-#include "radeon_context.h"
+#include "r300_state.h"
 #include "radeon_ioctl.h"
-#include "radeon_state.h"
+#include "r300_ioctl.h"
 #include "radeon_span.h"
-#include "radeon_tex.h"
 
 #include "drirenderbuffer.h"
 

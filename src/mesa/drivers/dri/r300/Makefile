@@ -25,6 +25,7 @@ DRIVER_SOURCES = \
 		 radeon_context.c \
 		 radeon_ioctl.c \
 		 radeon_lock.c \
+		 radeon_span.c \
 		 radeon_state.c \
 		 r300_mem.c \
 		 \
@@ -59,7 +60,6 @@ COMMON_SYMLINKS = \
 	radeon_chipset.h \
 	radeon_screen.c \
 	radeon_screen.h \
-	radeon_span.c \
 	radeon_span.h
 
 ##### TARGETS #####
