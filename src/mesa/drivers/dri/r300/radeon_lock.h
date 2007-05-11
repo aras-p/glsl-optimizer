@@ -47,8 +47,8 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #endif
 #include "radeon_context.h"
 
-extern void radeonGetLock(radeonContextPtr radeon, GLuint flags);
-extern void radeonUpdatePageFlipping(radeonContextPtr radeon);
+extern void radeonGetLock(radeonContextPtr rmesa, GLuint flags);
+extern void radeonUpdatePageFlipping(radeonContextPtr rmesa);
 
 /* Turn DEBUG_LOCKING on to find locking conflicts.
  */
@@ -72,11 +72,11 @@ extern int prevLockLine;
 
 #define DEBUG_CHECK_LOCK()						\
    do {									\
-      if ( prevLockFile ) {						\
-	 fprintf( stderr,						\
+      if (prevLockFile) {						\
+	 fprintf(stderr,						\
 		  "LOCK SET!\n\tPrevious %s:%d\n\tCurrent: %s:%d\n",	\
-		  prevLockFile, prevLockLine, __FILE__, __LINE__ );	\
-	 exit( 1 );							\
+		  prevLockFile, prevLockLine, __FILE__, __LINE__);	\
+	 exit(1);							\
       }									\
    } while (0)
 
@@ -96,37 +96,37 @@ extern int prevLockLine;
 
 /* Lock the hardware and validate our state.
  */
-#define LOCK_HARDWARE( radeon )						\
+#define LOCK_HARDWARE( rmesa )						\
 	do {								\
 		char __ret = 0;						\
 		DEBUG_CHECK_LOCK();					\
-		DRM_CAS( (radeon)->dri.hwLock, (radeon)->dri.hwContext,	\
-			(DRM_LOCK_HELD | (radeon)->dri.hwContext), __ret ); \
-		if ( __ret )						\
-			radeonGetLock( (radeon), 0 );			\
+		DRM_CAS(rmesa->dri.hwLock, rmesa->dri.hwContext,	\
+			(DRM_LOCK_HELD | rmesa->dri.hwContext), __ret); \
+		if (__ret)						\
+			radeonGetLock(rmesa, 0);			\
 		DEBUG_LOCK();						\
 	} while (0)
 
 #if R200_MERGED
-#define UNLOCK_HARDWARE( radeon )					\
+#define UNLOCK_HARDWARE( rmesa )					\
 	do {								\
-		DRM_UNLOCK( (radeon)->dri.fd,				\
-			(radeon)->dri.hwLock,				\
-			(radeon)->dri.hwContext );			\
+		DRM_UNLOCK(rmesa->dri.fd,				\
+			rmesa->dri.hwLock,				\
+			rmesa->dri.hwContext);			\
 		DEBUG_RESET();						\
-		if (IS_R200_CLASS(radeon->radeonScreen)) {		\
-			r200ContextPtr __r200 = (r200ContextPtr)(radeon); \
+		if (IS_R200_CLASS(rmesa->radeonScreen)) {		\
+			r200ContextPtr __r200 = (r200ContextPtr)rmesa; \
 			if (__r200->save_on_next_unlock)		\
-				r200SaveHwState( __r200 );		\
+				r200SaveHwState(__r200);		\
 			__r200->save_on_next_unlock = GL_FALSE;		\
 		}							\
 	} while (0)
 #else
-#define UNLOCK_HARDWARE( radeon )					\
+#define UNLOCK_HARDWARErmesa					\
 	do {								\
-		DRM_UNLOCK( (radeon)->dri.fd,				\
-			(radeon)->dri.hwLock,				\
-			(radeon)->dri.hwContext );			\
+		DRM_UNLOCK(rmesa->dri.fd,				\
+			rmesa->dri.hwLock,				\
+			rmesa->dri.hwContext);			\
 		DEBUG_RESET();						\
 	} while (0)
 #endif

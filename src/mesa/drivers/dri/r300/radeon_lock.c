@@ -84,36 +84,6 @@ void radeonUpdatePageFlipping(radeonContextPtr rmesa)
 	}
 }
 
-/**
- * Called by radeonGetLock() after the lock has been obtained.
- */
-static void r300RegainedLock(radeonContextPtr rmesa)
-{
-	int i;
-	__DRIdrawablePrivate *const drawable = rmesa->dri.drawable;
-	r300ContextPtr r300 = (r300ContextPtr) rmesa;
-	drm_radeon_sarea_t *sarea = rmesa->sarea;
-
-	if (rmesa->lastStamp != drawable->lastStamp) {
-		radeonUpdatePageFlipping(rmesa);
-		radeonSetCliprects(rmesa);
-#if 1
-		r300UpdateViewportOffset(rmesa->glCtx);
-		driUpdateFramebufferSize(rmesa->glCtx, drawable);
-#else
-		radeonUpdateScissor(rmesa->glCtx);
-#endif
-	}
-
-	if (sarea->ctx_owner != rmesa->dri.hwContext) {
-		sarea->ctx_owner = rmesa->dri.hwContext;
-
-		for (i = 0; i < r300->nr_heaps; i++) {
-			DRI_AGE_TEXTURES(r300->texture_heaps[i]);
-		}
-	}
-}
-
 /* Update the hardware state.  This is called if another context has
  * grabbed the hardware lock, which includes the X server.  This
  * function also updates the driver's window state after the X server
@@ -127,6 +97,8 @@ void radeonGetLock(radeonContextPtr rmesa, GLuint flags)
 	__DRIdrawablePrivate *const drawable = rmesa->dri.drawable;
 	__DRIdrawablePrivate *const readable = rmesa->dri.readable;
 	__DRIscreenPrivate *sPriv = rmesa->dri.screen;
+	drm_radeon_sarea_t *sarea = rmesa->sarea;
+	r300ContextPtr r300 = (r300ContextPtr) rmesa;
 
 	assert(drawable != NULL);
 
@@ -145,8 +117,21 @@ void radeonGetLock(radeonContextPtr rmesa, GLuint flags)
 		DRI_VALIDATE_DRAWABLE_INFO(sPriv, readable);
 	}
 
-	if (IS_R300_CLASS(rmesa->radeonScreen))
-		r300RegainedLock(rmesa);
+	if (rmesa->lastStamp != drawable->lastStamp) {
+		radeonUpdatePageFlipping(rmesa);
+		radeonSetCliprects(rmesa);
+		r300UpdateViewportOffset(rmesa->glCtx);
+		driUpdateFramebufferSize(rmesa->glCtx, drawable);
+	}
+
+	if (sarea->ctx_owner != rmesa->dri.hwContext) {
+		int i;
+
+		sarea->ctx_owner = rmesa->dri.hwContext;
+		for (i = 0; i < r300->nr_heaps; i++) {
+			DRI_AGE_TEXTURES(r300->texture_heaps[i]);
+		}
+	}
 
 	rmesa->lost_context = GL_TRUE;
 }
