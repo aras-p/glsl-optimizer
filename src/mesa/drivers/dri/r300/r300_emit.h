@@ -227,4 +227,12 @@ void static inline cp_wait(r300ContextPtr rmesa, unsigned char flags)
 	cmd[0].i = cmdwait(flags);
 }
 
+extern int r300EmitArrays(GLcontext * ctx);
+
+#ifdef USER_BUFFERS
+void r300UseArrays(GLcontext * ctx);
+#endif
+
+extern void r300ReleaseArrays(GLcontext * ctx);
+
 #endif
