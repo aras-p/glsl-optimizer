@@ -49,7 +49,6 @@ r300ProgramStringNotify(GLcontext * ctx, GLenum target, struct gl_program *prog)
 	switch (target) {
 	case GL_VERTEX_PROGRAM_ARB:
 		vp->progs = NULL;
-		vp->translated = GL_FALSE;
 		break;
 	case GL_FRAGMENT_PROGRAM_ARB:
 		fp->translated = GL_FALSE;
