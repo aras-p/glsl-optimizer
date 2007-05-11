@@ -400,7 +400,7 @@ static void r300SetTexImages(r300ContextPtr rmesa,
  * Texture unit state management
  */
 
-static GLboolean enable_tex_2d(GLcontext * ctx, int unit)
+static GLboolean r300EnableTexture2D(GLcontext * ctx, int unit)
 {
 	r300ContextPtr rmesa = R300_CONTEXT(ctx);
 	struct gl_texture_unit *texUnit = &ctx->Texture.Unit[unit];
@@ -420,7 +420,7 @@ static GLboolean enable_tex_2d(GLcontext * ctx, int unit)
 	return GL_TRUE;
 }
 
-static GLboolean enable_tex_3d(GLcontext * ctx, int unit)
+static GLboolean r300EnableTexture3D(GLcontext * ctx, int unit)
 {
 	r300ContextPtr rmesa = R300_CONTEXT(ctx);
 	struct gl_texture_unit *texUnit = &ctx->Texture.Unit[unit];
@@ -445,7 +445,7 @@ static GLboolean enable_tex_3d(GLcontext * ctx, int unit)
 	return GL_TRUE;
 }
 
-static GLboolean enable_tex_cube(GLcontext * ctx, int unit)
+static GLboolean r300EnableTextureCube(GLcontext * ctx, int unit)
 {
 	r300ContextPtr rmesa = R300_CONTEXT(ctx);
 	struct gl_texture_unit *texUnit = &ctx->Texture.Unit[unit];
@@ -481,7 +481,7 @@ static GLboolean enable_tex_cube(GLcontext * ctx, int unit)
 	return GL_TRUE;
 }
 
-static GLboolean enable_tex_rect(GLcontext * ctx, int unit)
+static GLboolean r300EnableTextureRect(GLcontext * ctx, int unit)
 {
 	r300ContextPtr rmesa = R300_CONTEXT(ctx);
 	struct gl_texture_unit *texUnit = &ctx->Texture.Unit[unit];
@@ -501,7 +501,7 @@ static GLboolean enable_tex_rect(GLcontext * ctx, int unit)
 	return GL_TRUE;
 }
 
-static GLboolean update_tex_common(GLcontext * ctx, int unit)
+static GLboolean r300UpdateTexture(GLcontext * ctx, int unit)
 {
 	r300ContextPtr rmesa = R300_CONTEXT(ctx);
 	struct gl_texture_unit *texUnit = &ctx->Texture.Unit[unit];
@@ -539,17 +539,17 @@ static GLboolean r300UpdateTextureUnit(GLcontext * ctx, int unit)
 	struct gl_texture_unit *texUnit = &ctx->Texture.Unit[unit];
 
 	if (texUnit->_ReallyEnabled & (TEXTURE_RECT_BIT)) {
-		return (enable_tex_rect(ctx, unit) &&
-			update_tex_common(ctx, unit));
+		return (r300EnableTextureRect(ctx, unit) &&
+			r300UpdateTexture(ctx, unit));
 	} else if (texUnit->_ReallyEnabled & (TEXTURE_1D_BIT | TEXTURE_2D_BIT)) {
-		return (enable_tex_2d(ctx, unit) &&
-			update_tex_common(ctx, unit));
+		return (r300EnableTexture2D(ctx, unit) &&
+			r300UpdateTexture(ctx, unit));
 	} else if (texUnit->_ReallyEnabled & (TEXTURE_3D_BIT)) {
-		return (enable_tex_3d(ctx, unit) &&
-			update_tex_common(ctx, unit));
+		return (r300EnableTexture3D(ctx, unit) &&
+			r300UpdateTexture(ctx, unit));
 	} else if (texUnit->_ReallyEnabled & (TEXTURE_CUBE_BIT)) {
-		return (enable_tex_cube(ctx, unit) &&
-			update_tex_common(ctx, unit));
+		return (r300EnableTextureCube(ctx, unit) &&
+			r300UpdateTexture(ctx, unit));
 	} else if (texUnit->_ReallyEnabled) {
 		return GL_FALSE;
 	} else {
