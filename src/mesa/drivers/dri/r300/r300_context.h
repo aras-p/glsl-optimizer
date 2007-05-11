@@ -63,13 +63,10 @@ typedef struct r300_context *r300ContextPtr;
 #include "radeon_lock.h"
 #include "mm.h"
 
-/* Checkpoint.. for convenience */
-#define CPT	{ fprintf(stderr, "%s:%s line %d\n", __FILE__, __FUNCTION__, __LINE__); }
 /* From http://gcc.gnu.org/onlinedocs/gcc-3.2.3/gcc/Variadic-Macros.html .
    I suppose we could inline this and use macro to fetch out __LINE__ and stuff in case we run into trouble
    with other compilers ... GLUE!
 */
-#if 1
 #define WARN_ONCE(a, ...)	{ \
 	static int warn##__LINE__=1; \
 	if(warn##__LINE__){ \
@@ -81,9 +78,6 @@ typedef struct r300_context *r300ContextPtr;
 		warn##__LINE__=0;\
 		} \
 	}
-#else
-#define WARN_ONCE(a, ...) {}
-#endif
 
 #include "r300_vertprog.h"
 #include "r300_fragprog.h"
