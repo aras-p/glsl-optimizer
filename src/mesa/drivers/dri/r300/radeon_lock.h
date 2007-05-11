@@ -107,27 +107,12 @@ extern int prevLockLine;
 		DEBUG_LOCK();						\
 	} while (0)
 
-#if R200_MERGED
 #define UNLOCK_HARDWARE( rmesa )					\
 	do {								\
 		DRM_UNLOCK((rmesa)->dri.fd,				\
 			(rmesa)->dri.hwLock,				\
 			(rmesa)->dri.hwContext);			\
 		DEBUG_RESET();						\
-		if (IS_R200_CLASS((rmesa)->radeonScreen)) {		\
-			r200ContextPtr __r200 = (r200ContextPtr)(rmesa); \
-			if (__r200->save_on_next_unlock)		\
-				r200SaveHwState(__r200);		\
-			__r200->save_on_next_unlock = GL_FALSE;		\
-		}							\
 	} while (0)
-#else
-#define UNLOCK_HARDWARErmesa					\
-	do {								\
-		DRM_UNLOCK((rmesa)->dri.fd,				\
-			(rmesa)->dri.hwLock,				\
-			(rmesa)->dri.hwContext);			\
-		DEBUG_RESET();						\
-	} while (0)
-#endif
+
 #endif				/* __RADEON_LOCK_H__ */
