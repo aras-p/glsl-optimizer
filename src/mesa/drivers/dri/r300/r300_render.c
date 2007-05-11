@@ -110,9 +110,7 @@ static int r300PrimitiveType(r300ContextPtr rmesa, GLcontext * ctx, int prim)
 		return R300_VAP_VF_CNTL__PRIM_POLYGON;
 		break;
 	default:
-		fprintf(stderr,
-			"%s:%s Do not know how to handle primitive 0x%04x - help me !\n",
-			__FILE__, __FUNCTION__, prim & PRIM_MODE_MASK);
+		assert (0);
 		return -1;
 		break;
 	}
@@ -162,9 +160,7 @@ static int r300NumVerts(r300ContextPtr rmesa, int num_verts, int prim)
 			verts_off = num_verts;
 		break;
 	default:
-		fprintf(stderr,
-			"%s:%s Do not know how to handle primitive 0x%04x - help me !\n",
-			__FILE__, __FUNCTION__, prim & PRIM_MODE_MASK);
+		assert (0);
 		return -1;
 		break;
 	}
