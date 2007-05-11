@@ -299,10 +299,10 @@ static void r300UploadRectSubImage(r300ContextPtr rmesa,
  * Upload the texture image associated with texture \a t at the specified
  * level at the address relative to \a start.
  */
-static void uploadSubImage(r300ContextPtr rmesa, r300TexObjPtr t,
-			   GLint hwlevel,
-			   GLint x, GLint y, GLint width, GLint height,
-			   GLuint face)
+static void r300UploadSubImage(r300ContextPtr rmesa, r300TexObjPtr t,
+			       GLint hwlevel,
+			       GLint x, GLint y, GLint width, GLint height,
+			       GLuint face)
 {
 	struct gl_texture_image *texImage = NULL;
 	GLuint offset;
@@ -566,9 +566,10 @@ int r300UploadTexImages(r300ContextPtr rmesa, r300TexObjPtr t, GLuint face)
 			     dirty_images[face] & (1 <<
 						   (i + t->base.firstLevel))) !=
 			    0) {
-				uploadSubImage(rmesa, t, i, 0, 0,
-					       t->image[face][i].width,
-					       t->image[face][i].height, face);
+				r300UploadSubImage(rmesa, t, i, 0, 0,
+						   t->image[face][i].width,
+						   t->image[face][i].height,
+						   face);
 			}
 		}
 		t->base.dirty_images[face] = 0;
