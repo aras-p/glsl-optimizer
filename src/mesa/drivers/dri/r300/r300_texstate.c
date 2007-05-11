@@ -420,7 +420,6 @@ static GLboolean enable_tex_2d(GLcontext * ctx, int unit)
 	return GL_TRUE;
 }
 
-#if ENABLE_HW_3D_TEXTURE
 static GLboolean enable_tex_3d(GLcontext * ctx, int unit)
 {
 	r300ContextPtr rmesa = R300_CONTEXT(ctx);
@@ -445,7 +444,6 @@ static GLboolean enable_tex_3d(GLcontext * ctx, int unit)
 
 	return GL_TRUE;
 }
-#endif
 
 static GLboolean enable_tex_cube(GLcontext * ctx, int unit)
 {
@@ -546,14 +544,10 @@ static GLboolean r300UpdateTextureUnit(GLcontext * ctx, int unit)
 	} else if (texUnit->_ReallyEnabled & (TEXTURE_1D_BIT | TEXTURE_2D_BIT)) {
 		return (enable_tex_2d(ctx, unit) &&
 			update_tex_common(ctx, unit));
-	}
-#if ENABLE_HW_3D_TEXTURE
-	else if (texUnit->_ReallyEnabled & (TEXTURE_3D_BIT)) {
+	} else if (texUnit->_ReallyEnabled & (TEXTURE_3D_BIT)) {
 		return (enable_tex_3d(ctx, unit) &&
 			update_tex_common(ctx, unit));
-	}
-#endif
-	else if (texUnit->_ReallyEnabled & (TEXTURE_CUBE_BIT)) {
+	} else if (texUnit->_ReallyEnabled & (TEXTURE_CUBE_BIT)) {
 		return (enable_tex_cube(ctx, unit) &&
 			update_tex_common(ctx, unit));
 	} else if (texUnit->_ReallyEnabled) {

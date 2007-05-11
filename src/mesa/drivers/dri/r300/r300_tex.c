@@ -876,7 +876,6 @@ static void r300CompressedTexSubImage2D(GLcontext * ctx, GLenum target,
 	t->dirty_images[face] |= (1 << level);
 }
 
-#if ENABLE_HW_3D_TEXTURE
 static void r300TexImage3D(GLcontext * ctx, GLenum target, GLint level,
 			   GLint internalFormat,
 			   GLint width, GLint height, GLint depth,
@@ -930,9 +929,7 @@ static void r300TexImage3D(GLcontext * ctx, GLenum target, GLint level,
 		t->dirty_images[0] |= (1 << level);
 	}
 }
-#endif
 
-#if ENABLE_HW_3D_TEXTURE
 static void
 r300TexSubImage3D(GLcontext * ctx, GLenum target, GLint level,
 		  GLint xoffset, GLint yoffset, GLint zoffset,
@@ -966,7 +963,6 @@ r300TexSubImage3D(GLcontext * ctx, GLenum target, GLint level,
 
 	t->dirty_images[0] |= (1 << level);
 }
-#endif
 
 static void r300TexEnv(GLcontext * ctx, GLenum target,
 		       GLenum pname, const GLfloat * param)
@@ -1087,9 +1083,7 @@ static void r300BindTexture(GLcontext * ctx, GLenum target,
 
 	if ((target == GL_TEXTURE_1D)
 	    || (target == GL_TEXTURE_2D)
-#if ENABLE_HW_3D_TEXTURE
 	    || (target == GL_TEXTURE_3D)
-#endif
 	    || (target == GL_TEXTURE_CUBE_MAP)
 	    || (target == GL_TEXTURE_RECTANGLE_NV)) {
 		assert(texObj->DriverData != NULL);
@@ -1150,18 +1144,10 @@ void r300InitTextureFuncs(struct dd_function_table *functions)
 	functions->ChooseTextureFormat = r300ChooseTextureFormat;
 	functions->TexImage1D = r300TexImage1D;
 	functions->TexImage2D = r300TexImage2D;
-#if ENABLE_HW_3D_TEXTURE
 	functions->TexImage3D = r300TexImage3D;
-#else
-	functions->TexImage3D = _mesa_store_teximage3d;
-#endif
 	functions->TexSubImage1D = r300TexSubImage1D;
 	functions->TexSubImage2D = r300TexSubImage2D;
-#if ENABLE_HW_3D_TEXTURE
 	functions->TexSubImage3D = r300TexSubImage3D;
-#else
-	functions->TexSubImage3D = _mesa_store_texsubimage3d;
-#endif
 	functions->NewTextureObject = r300NewTextureObject;
 	functions->BindTexture = r300BindTexture;
 	functions->DeleteTexture = r300DeleteTexture;
