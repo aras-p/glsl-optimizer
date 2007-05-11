@@ -1873,37 +1873,6 @@ void r300UpdateShaderStates(r300ContextPtr rmesa)
 	r300SetupRSUnit(ctx);
 }
 
-/* This is probably wrong for some values, I need to test this
- * some more.  Range checking would be a good idea also..
- *
- * But it works for most things.  I'll fix it later if someone
- * else with a better clue doesn't
- */
-static unsigned int r300PackFloat24(float f)
-{
-	float mantissa;
-	int exponent;
-	unsigned int float24 = 0;
-
-	if (f == 0.0)
-		return 0;
-
-	mantissa = frexpf(f, &exponent);
-
-	/* Handle -ve */
-	if (mantissa < 0) {
-		float24 |= (1 << 23);
-		mantissa = mantissa * -1.0;
-	}
-	/* Handle exponent, bias of 63 */
-	exponent += 62;
-	float24 |= (exponent << 16);
-	/* Kill 7 LSB of mantissa */
-	float24 |= (r300PackFloat32(mantissa) & 0x7FFFFF) >> 7;
-
-	return float24;
-}
-
 void r300SetupPixelShader(r300ContextPtr rmesa)
 {
 	GLcontext *ctx = rmesa->radeon.glCtx;

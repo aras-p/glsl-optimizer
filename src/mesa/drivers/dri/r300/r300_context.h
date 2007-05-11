@@ -102,6 +102,37 @@ static __inline__ uint32_t r300PackFloat32(float fl)
 	return u.u;
 }
 
+/* This is probably wrong for some values, I need to test this
+ * some more.  Range checking would be a good idea also..
+ *
+ * But it works for most things.  I'll fix it later if someone
+ * else with a better clue doesn't
+ */
+static __inline__ uint32_t r300PackFloat24(float f)
+{
+	float mantissa;
+	int exponent;
+	uint32_t float24 = 0;
+
+	if (f == 0.0)
+		return 0;
+
+	mantissa = frexpf(f, &exponent);
+
+	/* Handle -ve */
+	if (mantissa < 0) {
+		float24 |= (1 << 23);
+		mantissa = mantissa * -1.0;
+	}
+	/* Handle exponent, bias of 63 */
+	exponent += 62;
+	float24 |= (exponent << 16);
+	/* Kill 7 LSB of mantissa */
+	float24 |= (r300PackFloat32(mantissa) & 0x7FFFFF) >> 7;
+
+	return float24;
+}
+
 /************ DMA BUFFERS **************/
 
 /* Need refcounting on dma buffers:
