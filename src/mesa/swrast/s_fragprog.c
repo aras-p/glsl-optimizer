@@ -99,11 +99,6 @@ init_machine(GLcontext *ctx, struct gl_program_machine *machine,
              const struct gl_fragment_program *program,
              const SWspan *span, GLuint col)
 {
-   GLuint inputsRead = program->Base.InputsRead;
-
-   if (ctx->FragmentProgram.CallbackEnabled)
-      inputsRead = ~0;
-
    if (program->Base.Target == GL_FRAGMENT_PROGRAM_NV) {
       /* Clear temporary registers (undefined for ARB_f_p) */
       _mesa_bzero(machine->Temporaries,
