@@ -1,8 +1,8 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.3
+ * Version:  7.0
  *
- * Copyright (C) 1999-2005  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2007  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -48,7 +48,6 @@ static void feedback_vertex( GLcontext *ctx,
 {
    GLfloat win[4];
    GLfloat color[4];
-   GLfloat tc[4];
    const GLfloat *vtc = v->attrib[FRAG_ATTRIB_TEX0];
 
    win[0] = v->win[0];
@@ -61,18 +60,7 @@ static void feedback_vertex( GLcontext *ctx,
    color[2] = CHAN_TO_FLOAT(pv->color[2]);
    color[3] = CHAN_TO_FLOAT(pv->color[3]);
 
-   if (vtc[3] != 1.0 && vtc[3] != 0.0) {
-      GLfloat invq = 1.0F / vtc[3];
-      tc[0] = vtc[0] * invq;
-      tc[1] = vtc[1] * invq;
-      tc[2] = vtc[2] * invq;
-      tc[3] = vtc[3];
-   }
-   else {
-      COPY_4V(tc, vtc);
-   }
-
-   _mesa_feedback_vertex( ctx, win, color, (GLfloat) v->index, tc );
+   _mesa_feedback_vertex( ctx, win, color, (GLfloat) v->index, vtc );
 }
 
 
