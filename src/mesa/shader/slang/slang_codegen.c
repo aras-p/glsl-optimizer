@@ -2866,6 +2866,19 @@ _slang_codegen_global_variable(slang_assemble_ctx *A, slang_variable *var,
          if (datatype == GL_NONE) {
             if (var->type.specifier.type == SLANG_SPEC_STRUCT) {
                _mesa_problem(NULL, "user-declared uniform structs not supported yet");
+               /* XXX what we need to do is unroll the struct into its
+                * basic types, creating a uniform variable for each.
+                * For example:
+                * struct foo {
+                *   vec3 a;
+                *   vec4 b;
+                * };
+                * uniform foo f;
+                *
+                * Should produce uniforms:
+                * "f.a"  (GL_FLOAT_VEC3)
+                * "f.b"  (GL_FLOAT_VEC4)
+                */
             }
             else {
                slang_info_log_error(A->log,
