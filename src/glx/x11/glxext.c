@@ -360,7 +360,7 @@ static void FreeScreenConfigs(__GLXdisplayPrivate *priv)
 #ifdef GLX_DIRECT_RENDERING
 	/* Free the direct rendering per screen data */
 	if (psc->driScreen.private)
-	    (*psc->driScreen.destroyScreen)(psc->driScreen.private);
+	    (*psc->driScreen.destroyScreen)(&psc->driScreen);
 	psc->driScreen.private = NULL;
 	__glxHashDestroy(psc->drawHash);
 #endif
@@ -1656,7 +1656,7 @@ FetchDRIDrawable( Display *dpy, GLXDrawable drawable, GLXContext gc)
     }
 
     if (__glxHashInsert(sc->drawHash, drawable, pdraw)) {
-	(*pdraw->driDrawable.destroyDrawable)(pdraw->driDrawable.private);
+	(*pdraw->driDrawable.destroyDrawable)(&pdraw->driDrawable);
 	XF86DRIDestroyDrawable(dpy, sc->scr, drawable);
 	Xfree(pdraw);
 	return NULL;
@@ -1671,7 +1671,7 @@ static Bool BindContextWrapper( Display *dpy, GLXContext gc,
     __DRIdrawable *pdraw = FetchDRIDrawable(dpy, draw, gc);
     __DRIdrawable *pread = FetchDRIDrawable(dpy, read, gc);
 
-    return (*gc->driContext.bindContext)(pdraw, pread, &gc->driContext);
+    return (*gc->driContext.bindContext)(&gc->driContext, pdraw, pread);
 }
 
 
@@ -1789,7 +1789,7 @@ USED static Bool MakeContextCurrent(Display *dpy, GLXDrawable draw,
 		if (oldGC->isDirect) {
 		    if (oldGC->driContext.private) {
 			(*oldGC->driContext.destroyContext)
-			    (oldGC->driContext.private);
+			    (&oldGC->driContext);
 			XF86DRIDestroyContext(oldGC->createDpy,
 					      oldGC->psc->scr,
 					      gc->hwContextID);

@@ -99,7 +99,7 @@ static void GarbageCollectDRIDrawables(Display *dpy, __GLXscreenConfigs *sc)
 	    if (!windowExistsFlag) {
 		/* Destroy the local drawable data, if the drawable no
 		   longer exists in the Xserver */
-		(*pdraw->driDrawable.destroyDrawable)(pdraw->driDrawable.private);
+		(*pdraw->driDrawable.destroyDrawable)(&pdraw->driDrawable);
 		XF86DRIDestroyDrawable(dpy, sc->scr, draw);
 		Xfree(pdraw);
 	    }
@@ -530,7 +530,7 @@ DestroyContext(Display *dpy, GLXContext gc)
     /* Destroy the direct rendering context */
     if (gc->isDirect) {
 	if (gc->driContext.private) {
-	    (*gc->driContext.destroyContext)(gc->driContext.private);
+	    (*gc->driContext.destroyContext)(&gc->driContext);
 	    XF86DRIDestroyContext(dpy, gc->psc->scr, gc->hwContextID);
 	    gc->driContext.private = NULL;
 	}
@@ -859,7 +859,7 @@ PUBLIC void glXSwapBuffers(Display *dpy, GLXDrawable drawable)
     __DRIdrawable *pdraw = GetDRIDrawable( dpy, drawable, NULL );
 
     if ( pdraw != NULL ) {
-	(*pdraw->swapBuffers)(pdraw->private);
+	(*pdraw->swapBuffers)(pdraw);
 	return;
     }
 #endif
@@ -1845,7 +1845,7 @@ static GLint __glXBeginFrameTrackingMESA(Display *dpy, GLXDrawable drawable)
 
    if ( (pdraw != NULL) && (pdraw->frameTracking != NULL)
 	&& __glXExtensionBitIsEnabled( psc, MESA_swap_frame_usage_bit ) ) {
-      status = pdraw->frameTracking( pdraw->private, GL_TRUE );
+      status = pdraw->frameTracking(pdraw, GL_TRUE);
    }
 #else
    (void) dpy;
@@ -1865,7 +1865,7 @@ static GLint __glXEndFrameTrackingMESA(Display *dpy, GLXDrawable drawable)
 
    if ( (pdraw != NULL) && (pdraw->frameTracking != NULL)
 	&& __glXExtensionBitIsEnabled( psc, MESA_swap_frame_usage_bit ) ) {
-      status = pdraw->frameTracking( pdraw->private, GL_FALSE );
+      status = pdraw->frameTracking(pdraw, GL_FALSE);
    }
 #else
    (void) dpy;
@@ -1889,9 +1889,8 @@ static GLint __glXGetFrameUsageMESA(Display *dpy, GLXDrawable drawable,
       int64_t sbc, missedFrames;
       float   lastMissedUsage;
 
-      status = pdraw->queryFrameTracking( pdraw->private, &sbc,
-					  &missedFrames, &lastMissedUsage,
-					  usage );
+      status = pdraw->queryFrameTracking(pdraw, &sbc, &missedFrames,
+					 &lastMissedUsage, usage);
    }
 #else
    (void) dpy;
@@ -1916,9 +1915,8 @@ static GLint __glXQueryFrameTrackingMESA(Display *dpy, GLXDrawable drawable,
 	&& __glXExtensionBitIsEnabled( psc, MESA_swap_frame_usage_bit ) ) {
       float   usage;
 
-      status = pdraw->queryFrameTracking( pdraw->private, sbc,
-					  missedFrames, lastMissedUsage,
-					  & usage );
+      status = pdraw->queryFrameTracking(pdraw, sbc, missedFrames,
+					 lastMissedUsage, &usage);
    }
 #else
    (void) dpy;
@@ -1952,7 +1950,7 @@ static int __glXGetVideoSyncSGI(unsigned int *count)
 	 int       ret;
 	 int64_t   temp;
 
-	 ret = psc->driScreen.getMSC( psc->driScreen.private, & temp );
+	 ret = psc->driScreen.getMSC(&psc->driScreen, &temp);
 	 *count = (unsigned) temp;
 	 return (ret == 0) ? 0 : GLX_BAD_CONTEXT;
       }
@@ -1983,9 +1981,8 @@ static int __glXWaitVideoSyncSGI(int divisor, int remainder, unsigned int *count
 	    int64_t   msc;
 	    int64_t   sbc;
 
-	    ret = (*pdraw->waitForMSC)( pdraw->private,
-					0, divisor, remainder,
-					& msc, & sbc );
+	    ret = (*pdraw->waitForMSC)(pdraw, 0,
+				       divisor, remainder, &msc, &sbc);
 	    *count = (unsigned) msc;
 	    return (ret == 0) ? 0 : GLX_BAD_CONTEXT;
 	 }
@@ -2151,8 +2148,8 @@ static Bool __glXGetSyncValuesOML(Display *dpy, GLXDrawable drawable,
 	assert( (pdraw == NULL) || (i != -1) );
 	return ( (pdraw && pdraw->getSBC && psc->driScreen.getMSC)
 		 && __glXExtensionBitIsEnabled( psc, OML_sync_control_bit )
-		 && ((*psc->driScreen.getMSC)( psc->driScreen.private, msc ) == 0)
-		 && ((*pdraw->getSBC)( psc->driScreen.private, sbc ) == 0)
+		 && ((*psc->driScreen.getMSC)(&psc->driScreen, msc) == 0)
+		 && ((*pdraw->getSBC)(pdraw, sbc ) == 0)
 		 && (__glXGetUST( ust ) == 0) );
     }
 #else
@@ -2275,8 +2272,7 @@ static int64_t __glXSwapBuffersMscOML(Display *dpy, GLXDrawable drawable,
 
    if ( (pdraw != NULL) && (pdraw->swapBuffersMSC != NULL)
        && __glXExtensionBitIsEnabled( psc, OML_sync_control_bit ) ) {
-      return (*pdraw->swapBuffersMSC)(pdraw->private, target_msc,
-				      divisor, remainder);
+      return (*pdraw->swapBuffersMSC)(pdraw, target_msc, divisor, remainder);
    }
 #else
    (void) dpy;
@@ -2310,8 +2306,8 @@ static Bool __glXWaitForMscOML(Display * dpy, GLXDrawable drawable,
 
    if ( (pdraw != NULL) && (pdraw->waitForMSC != NULL)
 	&& __glXExtensionBitIsEnabled( psc, OML_sync_control_bit ) ) {
-      ret = (*pdraw->waitForMSC)( pdraw->private, target_msc,
-				  divisor, remainder, msc, sbc );
+      ret = (*pdraw->waitForMSC)(pdraw, target_msc,
+				 divisor, remainder, msc, sbc);
 
       /* __glXGetUST returns zero on success and non-zero on failure.
        * This function returns True on success and False on failure.
@@ -2350,7 +2346,7 @@ static Bool __glXWaitForSbcOML(Display * dpy, GLXDrawable drawable,
 
    if ( (pdraw != NULL) && (pdraw->waitForSBC != NULL)
 	&& __glXExtensionBitIsEnabled( psc, OML_sync_control_bit )) {
-      ret = (*pdraw->waitForSBC)( pdraw->private, target_sbc, msc, sbc );
+      ret = (*pdraw->waitForSBC)(pdraw, target_sbc, msc, sbc);
 
       /* __glXGetUST returns zero on success and non-zero on failure.
        * This function returns True on success and False on failure.
@@ -2508,7 +2504,7 @@ static void __glXCopySubBufferMESA(Display *dpy, GLXDrawable drawable,
     if ( pdraw != NULL ) {
 	__GLXscreenConfigs * const psc = GetGLXScreenConfigs( dpy, screen );
 	if ( __glXExtensionBitIsEnabled( psc, MESA_copy_sub_buffer_bit ) ) {
-	    (*pdraw->copySubBuffer)(pdraw->private, x, y, width, height);
+	    (*pdraw->copySubBuffer)(pdraw, x, y, width, height);
 	}
 
 	return;

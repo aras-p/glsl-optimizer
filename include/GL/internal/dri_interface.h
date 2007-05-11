@@ -273,7 +273,7 @@ struct __DRIscreenRec {
     /**
      * Method to destroy the private DRI screen data.
      */
-    void (*destroyScreen)(void *screenPrivate);
+    void (*destroyScreen)(__DRIscreen *screen);
 
     /**
      * Method to create the private DRI drawable data and initialize the
@@ -298,7 +298,7 @@ struct __DRIscreenRec {
      * 
      * \since Internal API version 20030317.
      */
-    int (*getMSC)( void *screenPrivate, int64_t *msc );
+    int (*getMSC)(__DRIscreen *screen, int64_t *msc);
 
     /**
      * Functions associated with MESA_allocate_memory.
@@ -348,7 +348,7 @@ struct __DRIcontextRec {
     /**
      * Method to destroy the private DRI context data.
      */
-    void (*destroyContext)(void *contextPrivate);
+    void (*destroyContext)(__DRIcontext *context);
 
     /**
      * Opaque pointer to private per context direct rendering data.
@@ -362,9 +362,9 @@ struct __DRIcontextRec {
      *
      * \since Internal API version 20050727.
      */
-    GLboolean (*bindContext)(__DRIdrawable *pdraw,
-			     __DRIdrawable *pread,
-			     __DRIcontext *ctx);
+    GLboolean (*bindContext)(__DRIcontext *ctx,
+			     __DRIdrawable *pdraw,
+			     __DRIdrawable *pread);
 
     /**
      * Method to unbind a DRI drawable from a DRI graphics context.
@@ -384,12 +384,12 @@ struct __DRIdrawableRec {
     /**
      * Method to destroy the private DRI drawable data.
      */
-    void (*destroyDrawable)(void *drawablePrivate);
+    void (*destroyDrawable)(__DRIdrawable *drawable);
 
     /**
      * Method to swap the front and back buffers.
      */
-    void (*swapBuffers)(void *drawablePrivate);
+    void (*swapBuffers)(__DRIdrawable *drawable);
 
     /**
      * Opaque pointer to private per drawable direct rendering data.
@@ -403,16 +403,16 @@ struct __DRIdrawableRec {
      *
      * \since Internal API version 20030317.
      */
-    int (*getSBC)(void *drawablePrivate, int64_t *sbc );
+    int (*getSBC)(__DRIdrawable *drawable, int64_t *sbc);
 
     /**
      * Wait for the SBC to be greater than or equal target_sbc.
      *
      * \since Internal API version 20030317.
      */
-    int (*waitForSBC)( void *drawablePriv,
-		       int64_t target_sbc,
-		       int64_t * msc, int64_t * sbc );
+    int (*waitForSBC)(__DRIdrawable *drawable,
+		      int64_t target_sbc,
+		      int64_t * msc, int64_t * sbc);
 
     /**
      * Wait for the MSC to equal target_msc, or, if that has already passed,
@@ -422,9 +422,9 @@ struct __DRIdrawableRec {
      * 
      * \since Internal API version 20030317.
      */
-    int (*waitForMSC)( void *drawablePriv,
-		       int64_t target_msc, int64_t divisor, int64_t remainder,
-		       int64_t * msc, int64_t * sbc );
+    int (*waitForMSC)(__DRIdrawable *drawable,
+		      int64_t target_msc, int64_t divisor, int64_t remainder,
+		      int64_t * msc, int64_t * sbc);
 
     /**
      * Like \c swapBuffers, but does NOT have an implicit \c glFlush.  Once
@@ -435,7 +435,7 @@ struct __DRIdrawableRec {
      * 
      * \since Internal API version 20030317.
      */
-    int64_t (*swapBuffersMSC)(void *drawablePrivate,
+    int64_t (*swapBuffersMSC)(__DRIdrawable *drawable,
 			      int64_t target_msc,
 			      int64_t divisor, int64_t remainder);
 
@@ -444,16 +444,16 @@ struct __DRIdrawableRec {
      * 
      * \since Internal API version 20030317.
      */
-    int (*frameTracking)(void *drawablePrivate, GLboolean enable);
+    int (*frameTracking)(__DRIdrawable *drawable, GLboolean enable);
 
     /**
      * Retrieve frame usage information.
      * 
      * \since Internal API version 20030317.
      */
-    int (*queryFrameTracking)(void *drawablePrivate,
+    int (*queryFrameTracking)(__DRIdrawable *drawable,
 			      int64_t * sbc, int64_t * missedFrames,
-			      float * lastMissedUsage, float * usage );
+			      float * lastMissedUsage, float * usage);
 
     /**
      * Used by drivers that implement the GLX_SGI_swap_control or
@@ -468,7 +468,7 @@ struct __DRIdrawableRec {
      *
      * \since Internal API version 20060314.
      */
-    void (*copySubBuffer)(void *drawablePrivate,
+    void (*copySubBuffer)(__DRIdrawable *drawable,
 			  int x, int y, int w, int h);
 };
 
