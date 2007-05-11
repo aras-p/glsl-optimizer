@@ -78,7 +78,7 @@ static void r300BlendColor(GLcontext * ctx, const GLfloat cf[4])
 	CLAMPED_FLOAT_TO_UBYTE(color[3], cf[3]);
 
 	rmesa->hw.blend_color.cmd[1] = PACK_COLOR_8888(color[3], color[0],
-						     color[1], color[2]);
+						       color[1], color[2]);
 }
 
 /**
@@ -333,7 +333,7 @@ static void r300UpdateCulling(GLcontext * ctx)
 	r300->hw.cul.cmd[R300_CUL_CULL] = val;
 }
 
-static void update_early_z(GLcontext * ctx)
+static void r300SetEarlyZState(GLcontext * ctx)
 {
 	/* updates register R300_RB3D_EARLY_Z (0x4F14)
 	   if depth test is not enabled it should be R300_EARLY_Z_DISABLE
@@ -356,7 +356,7 @@ static void update_early_z(GLcontext * ctx)
 	}
 }
 
-static void update_alpha(GLcontext * ctx)
+static void r300SetAlphaState(GLcontext * ctx)
 {
 	r300ContextPtr r300 = R300_CONTEXT(ctx);
 	GLubyte refByte;
@@ -402,14 +402,15 @@ static void update_alpha(GLcontext * ctx)
 
 	R300_STATECHANGE(r300, at);
 	r300->hw.at.cmd[R300_AT_ALPHA_TEST] = pp_misc;
-	update_early_z(ctx);
+
+	r300SetEarlyZState(ctx);
 }
 
 static void r300AlphaFunc(GLcontext * ctx, GLenum func, GLfloat ref)
 {
 	(void)func;
 	(void)ref;
-	update_alpha(ctx);
+	r300SetAlphaState(ctx);
 }
 
 static int translate_func(int func)
@@ -435,7 +436,7 @@ static int translate_func(int func)
 	return 0;
 }
 
-static void update_depth(GLcontext * ctx)
+static void r300SetDepthState(GLcontext * ctx)
 {
 	r300ContextPtr r300 = R300_CONTEXT(ctx);
 
@@ -460,7 +461,7 @@ static void update_depth(GLcontext * ctx)
 		    translate_func(GL_NEVER) << R300_RB3D_ZS1_DEPTH_FUNC_SHIFT;
 	}
 
-	update_early_z(ctx);
+	r300SetEarlyZState(ctx);
 }
 
 /**
@@ -503,7 +504,7 @@ static void r300Enable(GLcontext * ctx, GLenum cap, GLboolean state)
 		break;
 
 	case GL_ALPHA_TEST:
-		update_alpha(ctx);
+		r300SetAlphaState(ctx);
 		break;
 
 	case GL_BLEND:
@@ -512,7 +513,7 @@ static void r300Enable(GLcontext * ctx, GLenum cap, GLboolean state)
 		break;
 
 	case GL_DEPTH_TEST:
-		update_depth(ctx);
+		r300SetDepthState(ctx);
 		break;
 
 	case GL_STENCIL_TEST:
@@ -637,7 +638,7 @@ static void r300FrontFace(GLcontext * ctx, GLenum mode)
 static void r300DepthFunc(GLcontext * ctx, GLenum func)
 {
 	(void)func;
-	update_depth(ctx);
+	r300SetDepthState(ctx);
 }
 
 /**
@@ -648,7 +649,7 @@ static void r300DepthFunc(GLcontext * ctx, GLenum func)
 static void r300DepthMask(GLcontext * ctx, GLboolean mask)
 {
 	(void)mask;
-	update_depth(ctx);
+	r300SetDepthState(ctx);
 }
 
 /**
