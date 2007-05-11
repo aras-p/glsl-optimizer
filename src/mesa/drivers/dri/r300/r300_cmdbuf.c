@@ -270,6 +270,7 @@ CHECK(always, atom->cmd_size)
       r300->hw.ATOM.check = check_##CHK;				\
       r300->hw.ATOM.dirty = GL_FALSE;					\
       r300->hw.max_state_size += (SZ);					\
+      insert_at_tail(&r300->hw.atomlist, &r300->hw.ATOM);		\
    } while (0)
 /**
  * Allocate memory for the command buffer and initialize the state atom
@@ -290,6 +291,10 @@ void r300InitCmdBuf(r300ContextPtr r300)
 		fprintf(stderr, "Using %d maximum texture units..\n", mtu);
 	}
 
+	/* Setup the atom linked list */
+	make_empty_list(&r300->hw.atomlist);
+	r300->hw.atomlist.name = "atom-list";
+
 	/* Initialize state atoms */
 	ALLOC_STATE(vpt, always, R300_VPT_CMDSIZE, "vpt", 0);
 	r300->hw.vpt.cmd[R300_VPT_CMD_0] = cmdpacket0(R300_SE_VPORT_XSCALE, 6);
@@ -301,10 +306,10 @@ void r300InitCmdBuf(r300ContextPtr r300)
 	r300->hw.unk2134.cmd[0] = cmdpacket0(0x2134, 2);
 	ALLOC_STATE(vap_cntl_status, always, 2, "vap_cntl_status", 0);
 	r300->hw.vap_cntl_status.cmd[0] = cmdpacket0(R300_VAP_CNTL_STATUS, 1);
-	ALLOC_STATE(vir[0], variable, R300_VIR_CMDSIZE, "vir/0", 0);
+	ALLOC_STATE(vir[0], variable, R300_VIR_CMDSIZE, "vir[0]", 0);
 	r300->hw.vir[0].cmd[R300_VIR_CMD_0] =
 	    cmdpacket0(R300_VAP_INPUT_ROUTE_0_0, 1);
-	ALLOC_STATE(vir[1], variable, R300_VIR_CMDSIZE, "vir/1", 1);
+	ALLOC_STATE(vir[1], variable, R300_VIR_CMDSIZE, "vir[1]", 1);
 	r300->hw.vir[1].cmd[R300_VIR_CMD_0] =
 	    cmdpacket0(R300_VAP_INPUT_ROUTE_1_0, 1);
 	ALLOC_STATE(vic, always, R300_VIC_CMDSIZE, "vic", 0);
@@ -379,13 +384,13 @@ void r300InitCmdBuf(r300ContextPtr r300)
 	r300->hw.fpt.cmd[R300_FPT_CMD_0] = cmdpacket0(R300_PFS_TEXI_0, 0);
 	ALLOC_STATE(unk46A4, always, 6, "unk46A4", 0);
 	r300->hw.unk46A4.cmd[0] = cmdpacket0(0x46A4, 5);
-	ALLOC_STATE(fpi[0], variable, R300_FPI_CMDSIZE, "fpi/0", 0);
+	ALLOC_STATE(fpi[0], variable, R300_FPI_CMDSIZE, "fpi[0]", 0);
 	r300->hw.fpi[0].cmd[R300_FPI_CMD_0] = cmdpacket0(R300_PFS_INSTR0_0, 1);
-	ALLOC_STATE(fpi[1], variable, R300_FPI_CMDSIZE, "fpi/1", 1);
+	ALLOC_STATE(fpi[1], variable, R300_FPI_CMDSIZE, "fpi[1]", 1);
 	r300->hw.fpi[1].cmd[R300_FPI_CMD_0] = cmdpacket0(R300_PFS_INSTR1_0, 1);
-	ALLOC_STATE(fpi[2], variable, R300_FPI_CMDSIZE, "fpi/2", 2);
+	ALLOC_STATE(fpi[2], variable, R300_FPI_CMDSIZE, "fpi[2]", 2);
 	r300->hw.fpi[2].cmd[R300_FPI_CMD_0] = cmdpacket0(R300_PFS_INSTR2_0, 1);
-	ALLOC_STATE(fpi[3], variable, R300_FPI_CMDSIZE, "fpi/3", 3);
+	ALLOC_STATE(fpi[3], variable, R300_FPI_CMDSIZE, "fpi[3]", 3);
 	r300->hw.fpi[3].cmd[R300_FPI_CMD_0] = cmdpacket0(R300_PFS_INSTR3_0, 1);
 	ALLOC_STATE(fogs, always, R300_FOGS_CMDSIZE, "fogs", 0);
 	r300->hw.fogs.cmd[R300_FOGS_CMD_0] = cmdpacket0(R300_RE_FOG_STATE, 1);
@@ -474,91 +479,6 @@ void r300InitCmdBuf(r300ContextPtr r300)
 	ALLOC_STATE(tex.border_color, variable, mtu + 1, "tex_border_color", 0);
 	r300->hw.tex.border_color.cmd[R300_TEX_CMD_0] =
 	    cmdpacket0(R300_TX_BORDER_COLOR_0, 0);
-
-	/* Setup the atom linked list */
-	make_empty_list(&r300->hw.atomlist);
-	r300->hw.atomlist.name = "atom-list";
-
-	insert_at_tail(&r300->hw.atomlist, &r300->hw.vpt);
-	insert_at_tail(&r300->hw.atomlist, &r300->hw.vap_cntl);
-	insert_at_tail(&r300->hw.atomlist, &r300->hw.vte);
-	insert_at_tail(&r300->hw.atomlist, &r300->hw.unk2134);
-	insert_at_tail(&r300->hw.atomlist, &r300->hw.vap_cntl_status);
-	insert_at_tail(&r300->hw.atomlist, &r300->hw.vir[0]);
-	insert_at_tail(&r300->hw.atomlist, &r300->hw.vir[1]);
-	insert_at_tail(&r300->hw.atomlist, &r300->hw.vic);
-	insert_at_tail(&r300->hw.atomlist, &r300->hw.unk21DC);
-	insert_at_tail(&r300->hw.atomlist, &r300->hw.unk221C);
-	insert_at_tail(&r300->hw.atomlist, &r300->hw.unk2220);
-	insert_at_tail(&r300->hw.atomlist, &r300->hw.unk2288);
-	insert_at_tail(&r300->hw.atomlist, &r300->hw.vof);
-
-	if (has_tcl)
-		insert_at_tail(&r300->hw.atomlist, &r300->hw.pvs);
-	insert_at_tail(&r300->hw.atomlist, &r300->hw.gb_enable);
-	insert_at_tail(&r300->hw.atomlist, &r300->hw.gb_misc);
-	insert_at_tail(&r300->hw.atomlist, &r300->hw.txe);
-	insert_at_tail(&r300->hw.atomlist, &r300->hw.unk4200);
-	insert_at_tail(&r300->hw.atomlist, &r300->hw.unk4214);
-	insert_at_tail(&r300->hw.atomlist, &r300->hw.ps);
-	insert_at_tail(&r300->hw.atomlist, &r300->hw.unk4230);
-	insert_at_tail(&r300->hw.atomlist, &r300->hw.lcntl);
-	insert_at_tail(&r300->hw.atomlist, &r300->hw.unk4260);
-	insert_at_tail(&r300->hw.atomlist, &r300->hw.shade);
-	insert_at_tail(&r300->hw.atomlist, &r300->hw.polygon_mode);
-	insert_at_tail(&r300->hw.atomlist, &r300->hw.fogp);
-	insert_at_tail(&r300->hw.atomlist, &r300->hw.zbias_cntl);
-	insert_at_tail(&r300->hw.atomlist, &r300->hw.zbs);
-	insert_at_tail(&r300->hw.atomlist, &r300->hw.occlusion_cntl);
-	insert_at_tail(&r300->hw.atomlist, &r300->hw.cul);
-	insert_at_tail(&r300->hw.atomlist, &r300->hw.unk42C0);
-	insert_at_tail(&r300->hw.atomlist, &r300->hw.rc);
-	insert_at_tail(&r300->hw.atomlist, &r300->hw.ri);
-	insert_at_tail(&r300->hw.atomlist, &r300->hw.rr);
-	insert_at_tail(&r300->hw.atomlist, &r300->hw.unk43A4);
-	insert_at_tail(&r300->hw.atomlist, &r300->hw.unk43E8);
-	insert_at_tail(&r300->hw.atomlist, &r300->hw.fp);
-	insert_at_tail(&r300->hw.atomlist, &r300->hw.fpt);
-	insert_at_tail(&r300->hw.atomlist, &r300->hw.unk46A4);
-	insert_at_tail(&r300->hw.atomlist, &r300->hw.fpi[0]);
-	insert_at_tail(&r300->hw.atomlist, &r300->hw.fpi[1]);
-	insert_at_tail(&r300->hw.atomlist, &r300->hw.fpi[2]);
-	insert_at_tail(&r300->hw.atomlist, &r300->hw.fpi[3]);
-	insert_at_tail(&r300->hw.atomlist, &r300->hw.fogs);
-	insert_at_tail(&r300->hw.atomlist, &r300->hw.fogc);
-	insert_at_tail(&r300->hw.atomlist, &r300->hw.at);
-	insert_at_tail(&r300->hw.atomlist, &r300->hw.unk4BD8);
-	insert_at_tail(&r300->hw.atomlist, &r300->hw.fpp);
-	insert_at_tail(&r300->hw.atomlist, &r300->hw.unk4E00);
-	insert_at_tail(&r300->hw.atomlist, &r300->hw.bld);
-	insert_at_tail(&r300->hw.atomlist, &r300->hw.cmk);
-	insert_at_tail(&r300->hw.atomlist, &r300->hw.blend_color);
-	insert_at_tail(&r300->hw.atomlist, &r300->hw.cb);
-	insert_at_tail(&r300->hw.atomlist, &r300->hw.unk4E50);
-	insert_at_tail(&r300->hw.atomlist, &r300->hw.unk4E88);
-	insert_at_tail(&r300->hw.atomlist, &r300->hw.unk4EA0);
-	insert_at_tail(&r300->hw.atomlist, &r300->hw.zs);
-	insert_at_tail(&r300->hw.atomlist, &r300->hw.zstencil_format);
-	insert_at_tail(&r300->hw.atomlist, &r300->hw.zb);
-	insert_at_tail(&r300->hw.atomlist, &r300->hw.unk4F28);
-	insert_at_tail(&r300->hw.atomlist, &r300->hw.unk4F30);
-	insert_at_tail(&r300->hw.atomlist, &r300->hw.unk4F44);
-	insert_at_tail(&r300->hw.atomlist, &r300->hw.unk4F54);
-
-	if (has_tcl) {
-		insert_at_tail(&r300->hw.atomlist, &r300->hw.vpi);
-		insert_at_tail(&r300->hw.atomlist, &r300->hw.vpp);
-		insert_at_tail(&r300->hw.atomlist, &r300->hw.vps);
-	}
-
-	insert_at_tail(&r300->hw.atomlist, &r300->hw.tex.filter);
-	insert_at_tail(&r300->hw.atomlist, &r300->hw.tex.filter_1);
-	insert_at_tail(&r300->hw.atomlist, &r300->hw.tex.size);
-	insert_at_tail(&r300->hw.atomlist, &r300->hw.tex.format);
-	insert_at_tail(&r300->hw.atomlist, &r300->hw.tex.pitch);
-	insert_at_tail(&r300->hw.atomlist, &r300->hw.tex.offset);
-	insert_at_tail(&r300->hw.atomlist, &r300->hw.tex.chroma_key);
-	insert_at_tail(&r300->hw.atomlist, &r300->hw.tex.border_color);
 
 	r300->hw.is_dirty = GL_TRUE;
 	r300->hw.all_dirty = GL_TRUE;
