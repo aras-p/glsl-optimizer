@@ -2863,9 +2863,22 @@ _slang_codegen_global_variable(slang_assemble_ctx *A, slang_variable *var,
                          * MAX2(var->array_len, 1);
       if (prog) {
          /* user-defined uniform */
-         GLint uniformLoc = _mesa_add_uniform(prog->Parameters, varName,
-                                              size, datatype);
-         store = _slang_new_ir_storage(PROGRAM_UNIFORM, uniformLoc, size);
+         if (datatype == GL_NONE) {
+            if (var->type.specifier.type == SLANG_SPEC_STRUCT) {
+               _mesa_problem(NULL, "user-declared uniform structs not supported yet");
+            }
+            else {
+               slang_info_log_error(A->log,
+                                    "invalid datatype for uniform variable %s",
+                                    (char *) var->a_name);
+            }
+            return GL_FALSE;
+         }
+         else {
+            GLint uniformLoc = _mesa_add_uniform(prog->Parameters, varName,
+                                                 size, datatype);
+            store = _slang_new_ir_storage(PROGRAM_UNIFORM, uniformLoc, size);
+         }
       }
       else {
          /* pre-defined uniform, like gl_ModelviewMatrix */
