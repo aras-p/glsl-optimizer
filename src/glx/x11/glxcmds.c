@@ -80,24 +80,18 @@ static int windowExistsErrorHandler(Display *dpy, XErrorEvent *xerr)
  * \param dpy    Display to destroy drawables for
  * \param screen Screen number to destroy drawables for
  */
-static void GarbageCollectDRIDrawables(Display *dpy, int screen)
+static void GarbageCollectDRIDrawables(Display *dpy, __GLXscreenConfigs *sc)
 {
-    __GLXdisplayPrivate * const priv = __glXInitialize(dpy);
-    __GLXscreenConfigs *sc;
     __DRIid draw;
     __GLXdrawable *pdraw;
     XWindowAttributes xwa;
     int (*oldXErrorHandler)(Display *, XErrorEvent *);
-
-    if (priv == NULL || priv->driDisplay.private == NULL)
-	return;
 
     /* Set no-op error handler so Xlib doesn't bail out if the windows
      * has alreay been destroyed on the server. */
     XSync(dpy, GL_FALSE);
     oldXErrorHandler = XSetErrorHandler(windowExistsErrorHandler);
 
-    sc = &priv->screenConfigs[screen];
     if (__glxHashFirst(sc->drawHash, &draw, (void *)&pdraw) == 1) {
 	do {
 	    windowExistsFlag = GL_TRUE;
@@ -540,7 +534,7 @@ DestroyContext(Display *dpy, GLXContext gc)
 	    XF86DRIDestroyContext(dpy, gc->psc->scr, gc->hwContextID);
 	    gc->driContext.private = NULL;
 	}
-	GarbageCollectDRIDrawables(dpy, gc->screen);
+	GarbageCollectDRIDrawables(dpy, gc->psc);
     }
 #endif
 
