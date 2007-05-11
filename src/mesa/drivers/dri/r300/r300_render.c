@@ -172,20 +172,6 @@ static int r300NumVerts(r300ContextPtr rmesa, int num_verts, int prim)
 		break;
 	}
 
-	if (num_verts - verts_off == 0) {
-		WARN_ONCE
-		    ("user error: Need more than %d vertices to draw primitive 0x%04x !\n",
-		     num_verts, prim & PRIM_MODE_MASK);
-		return -1;
-	}
-
-	if (verts_off > 0) {
-		WARN_ONCE
-		    ("user error: %d is not a valid number of vertices for primitive 0x%04x !\n",
-		     num_verts, prim & PRIM_MODE_MASK);
-		return -1;
-	}
-
 	return num_verts - verts_off;
 }
 
@@ -259,7 +245,6 @@ static void r300EmitElts(GLcontext * ctx, void *elts, unsigned long n_elts,
 		rvb->aos_offset =
 		    rmesa->radeon.radeonScreen->gart_texture_offset +
 		    rvb->start;
-
 		return;
 	} else if (r300IsGartMemory(rmesa, elts, 1)) {
 		WARN_ONCE("Pointer not within GART memory!\n");
