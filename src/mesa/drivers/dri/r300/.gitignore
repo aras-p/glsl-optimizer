@@ -1,4 +1,4 @@
 radeon_chipset.h
 radeon_screen.[ch]
-radeon_span.h
+radeon_span.[ch]
 server
