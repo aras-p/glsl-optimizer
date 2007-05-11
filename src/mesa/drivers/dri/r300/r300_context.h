@@ -49,11 +49,6 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #define USER_BUFFERS
 
-/* We don't handle 16 bits elts swapping yet */
-#ifdef MESA_BIG_ENDIAN
-#define FORCE_32BITS_ELTS
-#endif
-
 //#define OPTIMIZE_ELTS
 
 struct r300_context;
