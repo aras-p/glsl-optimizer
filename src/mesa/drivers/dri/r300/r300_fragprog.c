@@ -57,7 +57,7 @@
  */
 #define ERROR(fmt, args...) do {			\
 		fprintf(stderr, "%s::%s(): " fmt "\n",	\
-			__FILE__, __func__, ##args);	\
+			__FILE__, __FUNCTION__, ##args);	\
 		fp->error = GL_TRUE;			\
 	} while(0)
 

@@ -134,7 +134,7 @@ static __inline__ uint32_t cmdpacify(void)
 		cmd = (drm_radeon_cmd_header_t*)			\
 			r300AllocCmdBuf(rmesa,				\
 					(_n+2),				\
-					__func__);			\
+					__FUNCTION__);			\
 		cmd_reserved=_n+2;					\
 		cmd_written=1;						\
 		cmd[0].i=cmdpacket0((reg), _n+1);			\
@@ -169,7 +169,7 @@ static __inline__ uint32_t cmdpacify(void)
 		cmd = (drm_radeon_cmd_header_t*)			\
 			r300AllocCmdBuf(rmesa,				\
 					(_n+1),				\
-					__func__);			\
+					__FUNCTION__);			\
 		cmd_reserved = _n+2;					\
 		cmd_written =1;						\
 		cmd[0].i = cmdvpu((dest), _n/4);			\
@@ -184,7 +184,7 @@ static __inline__ uint32_t cmdpacify(void)
 		cmd = (drm_radeon_cmd_header_t*)			\
 			r300AllocCmdBuf(rmesa,				\
 					(_n+3),				\
-					__func__);			\
+					__FUNCTION__);			\
 		cmd_reserved = _n+3;					\
 		cmd_written = 2;					\
 		if(_n > 0x3fff) {					\

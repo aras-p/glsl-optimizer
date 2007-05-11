@@ -248,7 +248,7 @@ static void r300SetBlendState(GLcontext * ctx)
 	default:
 		fprintf(stderr,
 			"[%s:%u] Invalid RGB blend equation (0x%04x).\n",
-			__func__, __LINE__, ctx->Color.BlendEquationRGB);
+			__FUNCTION__, __LINE__, ctx->Color.BlendEquationRGB);
 		return;
 	}
 
@@ -286,7 +286,7 @@ static void r300SetBlendState(GLcontext * ctx)
 	default:
 		fprintf(stderr,
 			"[%s:%u] Invalid A blend equation (0x%04x).\n",
-			__func__, __LINE__, ctx->Color.BlendEquationA);
+			__FUNCTION__, __LINE__, ctx->Color.BlendEquationA);
 		return;
 	}
 
@@ -1919,7 +1919,7 @@ void r300SetupPixelShader(r300ContextPtr rmesa)
 	r300TranslateFragmentShader(rmesa, fp);
 	if (!fp->translated) {
 		fprintf(stderr, "%s: No valid fragment shader, exiting\n",
-			__func__);
+			__FUNCTION__);
 		return;
 	}
 #define OUTPUT_FIELD(st, reg, field)  \

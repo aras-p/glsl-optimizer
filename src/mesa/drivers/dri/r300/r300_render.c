@@ -260,7 +260,7 @@ static void r300EmitAOS(r300ContextPtr rmesa, GLuint nr, GLuint offset)
 	drm_radeon_cmd_header_t *cmd = NULL;
 
 	if (RADEON_DEBUG & DEBUG_VERTS)
-		fprintf(stderr, "%s: nr=%d, ofs=0x%08x\n", __func__, nr,
+		fprintf(stderr, "%s: nr=%d, ofs=0x%08x\n", __FUNCTION__, nr,
 			offset);
 
 	start_packet3(RADEON_CP_PACKET3_3D_LOAD_VBPNTR, sz - 1);
