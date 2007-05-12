@@ -469,14 +469,12 @@ static void r300UploadSubImage(r300ContextPtr rmesa, r300TexObjPtr t,
 		}
 	}
 
+	LOCK_HARDWARE(&rmesa->radeon);
 	do {
-		LOCK_HARDWARE(&rmesa->radeon);
 		ret =
 		    drmCommandWriteRead(rmesa->radeon.dri.fd,
 					DRM_RADEON_TEXTURE, &tex,
 					sizeof(drm_radeon_texture_t));
-		UNLOCK_HARDWARE(&rmesa->radeon);
-
 		if (ret) {
 			if (RADEON_DEBUG & DEBUG_IOCTL)
 				fprintf(stderr,
@@ -484,6 +482,8 @@ static void r300UploadSubImage(r300ContextPtr rmesa, r300TexObjPtr t,
 			usleep(1);
 		}
 	} while (ret == -EAGAIN);
+
+	UNLOCK_HARDWARE(&rmesa->radeon);
 
 	if (ret) {
 		fprintf(stderr, "DRM_RADEON_TEXTURE: return = %d\n", ret);
