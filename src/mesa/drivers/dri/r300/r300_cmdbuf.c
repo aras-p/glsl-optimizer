@@ -148,7 +148,7 @@ void r300PrintStateAtom(r300ContextPtr r300, struct r300_state_atom *state)
  * The caller must have ensured that there is enough space in the command
  * buffer.
  */
-static __inline__ void r300DoEmitState(r300ContextPtr r300, GLboolean dirty)
+static __inline__ void r300EmitAtoms(r300ContextPtr r300, GLboolean dirty)
 {
 	struct r300_state_atom *atom;
 	uint32_t *dest;
@@ -230,14 +230,14 @@ void r300EmitState(r300ContextPtr r300)
 		if (RADEON_DEBUG & DEBUG_STATE)
 			fprintf(stderr, "Begin reemit state\n");
 
-		r300DoEmitState(r300, GL_FALSE);
+		r300EmitAtoms(r300, GL_FALSE);
 		r300->cmdbuf.count_reemit = r300->cmdbuf.count_used;
 	}
 
 	if (RADEON_DEBUG & DEBUG_STATE)
 		fprintf(stderr, "Begin dirty state\n");
 
-	r300DoEmitState(r300, GL_TRUE);
+	r300EmitAtoms(r300, GL_TRUE);
 
 	assert(r300->cmdbuf.count_used < r300->cmdbuf.size);
 
