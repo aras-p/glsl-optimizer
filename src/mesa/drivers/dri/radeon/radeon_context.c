@@ -604,7 +604,6 @@ radeonMakeCurrent( __DRIcontextPrivate *driContextPriv,
 	 newCtx->dri.drawable = driDrawPriv;
 
 	 radeonSetCliprects(newCtx);
-	 radeonUpdateWindow( newCtx->glCtx );
 	 radeonUpdateViewportOffset( newCtx->glCtx );
       }
 
@@ -612,6 +611,7 @@ radeonMakeCurrent( __DRIcontextPrivate *driContextPriv,
 			  (GLframebuffer *) driDrawPriv->driverPrivate,
 			  (GLframebuffer *) driReadPriv->driverPrivate );
 
+      _mesa_update_state( newCtx->glCtx );
    } else {
       if (RADEON_DEBUG & DEBUG_DRI)
 	 fprintf(stderr, "%s ctx is null\n", __FUNCTION__);
