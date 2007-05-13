@@ -812,19 +812,6 @@ struct radeon_vertex_buffer {
 	int lock_uptodate;
 };
 
-struct r300_aos_rec {
-	GLuint offset;
-	int element_size;	/* in dwords */
-	int stride;		/* distance between elements, in dwords */
-
-	int format;
-
-	int ncomponents;	/* number of components - between 1 and 4, inclusive */
-
-	int reg;		/* which register they are assigned to. */
-
-};
-
 struct r300_state {
 	struct r300_depthbuffer_state depth;
 	struct r300_texture_state texture;
