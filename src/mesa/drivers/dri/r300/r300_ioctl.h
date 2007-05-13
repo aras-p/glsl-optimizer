@@ -39,9 +39,6 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "r300_context.h"
 #include "radeon_drm.h"
 
-extern GLuint r300GetMemoryOffsetMESA(__DRInativeDisplay * dpy, int scrn,
-				      const GLvoid * pointer);
-
 extern GLboolean r300IsGartMemory(r300ContextPtr rmesa,
 				  const GLvoid * pointer, GLint size);
 

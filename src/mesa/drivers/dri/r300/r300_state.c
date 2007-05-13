@@ -976,7 +976,7 @@ static void r300ClearStencil(GLcontext * ctx, GLint s)
 #define SUBPIXEL_X 0.125
 #define SUBPIXEL_Y 0.125
 
-void r300UpdateWindow(GLcontext * ctx)
+static void r300UpdateWindow(GLcontext * ctx)
 {
 	r300ContextPtr rmesa = R300_CONTEXT(ctx);
 	__DRIdrawablePrivate *dPriv = rmesa->radeon.dri.drawable;
@@ -1642,8 +1642,6 @@ void static inline setup_vertex_shader_fragment(r300ContextPtr r300, int dest, s
 	}
 }
 
-void r300SetupVertexProgram(r300ContextPtr rmesa);
-
 /* just a skeleton for now.. */
 
 /* Generate a vertex shader that simply transforms vertex and texture coordinates,
@@ -1699,7 +1697,62 @@ static void r300GenerateSimpleVertexShader(r300ContextPtr r300)
 
 }
 
-void r300SetupVertexShader(r300ContextPtr rmesa)
+static void r300SetupVertexProgram(r300ContextPtr rmesa)
+{
+	GLcontext *ctx = rmesa->radeon.glCtx;
+	int inst_count;
+	int param_count;
+	struct r300_vertex_program *prog =
+	    (struct r300_vertex_program *)CURRENT_VERTEX_SHADER(ctx);
+
+	((drm_r300_cmd_header_t *) rmesa->hw.vpp.cmd)->vpu.count = 0;
+	R300_STATECHANGE(rmesa, vpp);
+	param_count =
+	    r300VertexProgUpdateParams(ctx, (struct r300_vertex_program_cont *)
+				       ctx->VertexProgram._Current /*prog */ ,
+				       (float *)&rmesa->hw.vpp.
+				       cmd[R300_VPP_PARAM_0]);
+	bump_vpu_count(rmesa->hw.vpp.cmd, param_count);
+	param_count /= 4;
+
+	/* Reset state, in case we don't use something */
+	((drm_r300_cmd_header_t *) rmesa->hw.vpi.cmd)->vpu.count = 0;
+	((drm_r300_cmd_header_t *) rmesa->hw.vps.cmd)->vpu.count = 0;
+
+	setup_vertex_shader_fragment(rmesa, VSF_DEST_PROGRAM, &(prog->program));
+
+#if 0
+	setup_vertex_shader_fragment(rmesa, VSF_DEST_UNKNOWN1,
+				     &(rmesa->state.vertex_shader.unknown1));
+	setup_vertex_shader_fragment(rmesa, VSF_DEST_UNKNOWN2,
+				     &(rmesa->state.vertex_shader.unknown2));
+#endif
+
+	inst_count = prog->program.length / 4 - 1;
+
+	R300_STATECHANGE(rmesa, pvs);
+	rmesa->hw.pvs.cmd[R300_PVS_CNTL_1] =
+	    (0 << R300_PVS_CNTL_1_PROGRAM_START_SHIFT)
+	    | (inst_count /*pos_end */  << R300_PVS_CNTL_1_POS_END_SHIFT)
+	    | (inst_count << R300_PVS_CNTL_1_PROGRAM_END_SHIFT);
+	rmesa->hw.pvs.cmd[R300_PVS_CNTL_2] =
+	    (0 << R300_PVS_CNTL_2_PARAM_OFFSET_SHIFT)
+	    | (param_count << R300_PVS_CNTL_2_PARAM_COUNT_SHIFT);
+	rmesa->hw.pvs.cmd[R300_PVS_CNTL_3] =
+	    (0 /*rmesa->state.vertex_shader.unknown_ptr2 */  <<
+	     R300_PVS_CNTL_3_PROGRAM_UNKNOWN_SHIFT)
+	    | (inst_count /*rmesa->state.vertex_shader.unknown_ptr3 */  <<
+	       0);
+
+	/* This is done for vertex shader fragments, but also needs to be done for vap_pvs,
+	   so I leave it as a reminder */
+#if 0
+	reg_start(R300_VAP_PVS_WAITIDLE, 0);
+	e32(0x00000000);
+#endif
+}
+
+static void r300SetupVertexShader(r300ContextPtr rmesa)
 {
 	GLcontext *ctx = rmesa->radeon.glCtx;
 
@@ -1758,221 +1811,10 @@ void r300SetupVertexShader(r300ContextPtr rmesa)
 #endif
 }
 
-void r300SetupVertexProgram(r300ContextPtr rmesa)
-{
-	GLcontext *ctx = rmesa->radeon.glCtx;
-	int inst_count;
-	int param_count;
-	struct r300_vertex_program *prog =
-	    (struct r300_vertex_program *)CURRENT_VERTEX_SHADER(ctx);
-
-	((drm_r300_cmd_header_t *) rmesa->hw.vpp.cmd)->vpu.count = 0;
-	R300_STATECHANGE(rmesa, vpp);
-	param_count =
-	    r300VertexProgUpdateParams(ctx, (struct r300_vertex_program_cont *)
-				       ctx->VertexProgram._Current /*prog */ ,
-				       (float *)&rmesa->hw.vpp.
-				       cmd[R300_VPP_PARAM_0]);
-	bump_vpu_count(rmesa->hw.vpp.cmd, param_count);
-	param_count /= 4;
-
-	/* Reset state, in case we don't use something */
-	((drm_r300_cmd_header_t *) rmesa->hw.vpi.cmd)->vpu.count = 0;
-	((drm_r300_cmd_header_t *) rmesa->hw.vps.cmd)->vpu.count = 0;
-
-	setup_vertex_shader_fragment(rmesa, VSF_DEST_PROGRAM, &(prog->program));
-
-#if 0
-	setup_vertex_shader_fragment(rmesa, VSF_DEST_UNKNOWN1,
-				     &(rmesa->state.vertex_shader.unknown1));
-	setup_vertex_shader_fragment(rmesa, VSF_DEST_UNKNOWN2,
-				     &(rmesa->state.vertex_shader.unknown2));
-#endif
-
-	inst_count = prog->program.length / 4 - 1;
-
-	R300_STATECHANGE(rmesa, pvs);
-	rmesa->hw.pvs.cmd[R300_PVS_CNTL_1] =
-	    (0 << R300_PVS_CNTL_1_PROGRAM_START_SHIFT)
-	    | (inst_count /*pos_end */  << R300_PVS_CNTL_1_POS_END_SHIFT)
-	    | (inst_count << R300_PVS_CNTL_1_PROGRAM_END_SHIFT);
-	rmesa->hw.pvs.cmd[R300_PVS_CNTL_2] =
-	    (0 << R300_PVS_CNTL_2_PARAM_OFFSET_SHIFT)
-	    | (param_count << R300_PVS_CNTL_2_PARAM_COUNT_SHIFT);
-	rmesa->hw.pvs.cmd[R300_PVS_CNTL_3] =
-	    (0 /*rmesa->state.vertex_shader.unknown_ptr2 */  <<
-	     R300_PVS_CNTL_3_PROGRAM_UNKNOWN_SHIFT)
-	    | (inst_count /*rmesa->state.vertex_shader.unknown_ptr3 */  <<
-	       0);
-
-	/* This is done for vertex shader fragments, but also needs to be done for vap_pvs,
-	   so I leave it as a reminder */
-#if 0
-	reg_start(R300_VAP_PVS_WAITIDLE, 0);
-	e32(0x00000000);
-#endif
-}
-
-extern void _tnl_UpdateFixedFunctionProgram(GLcontext * ctx);
-
-extern int future_hw_tcl_on;
-void r300UpdateShaders(r300ContextPtr rmesa)
-{
-	GLcontext *ctx;
-	struct r300_vertex_program *vp;
-	int i;
-
-	ctx = rmesa->radeon.glCtx;
-
-	if (rmesa->NewGLState && hw_tcl_on) {
-		rmesa->NewGLState = 0;
-
-		for (i = _TNL_FIRST_MAT; i <= _TNL_LAST_MAT; i++) {
-			rmesa->temp_attrib[i] =
-			    TNL_CONTEXT(ctx)->vb.AttribPtr[i];
-			TNL_CONTEXT(ctx)->vb.AttribPtr[i] =
-			    &rmesa->dummy_attrib[i];
-		}
-
-		_tnl_UpdateFixedFunctionProgram(ctx);
-
-		for (i = _TNL_FIRST_MAT; i <= _TNL_LAST_MAT; i++) {
-			TNL_CONTEXT(ctx)->vb.AttribPtr[i] =
-			    rmesa->temp_attrib[i];
-		}
-
-		r300SelectVertexShader(rmesa);
-		vp = (struct r300_vertex_program *)
-		    CURRENT_VERTEX_SHADER(ctx);
-		/*if (vp->translated == GL_FALSE)
-		   r300TranslateVertexShader(vp); */
-		if (vp->translated == GL_FALSE) {
-			fprintf(stderr, "Failing back to sw-tcl\n");
-			hw_tcl_on = future_hw_tcl_on = 0;
-			r300ResetHwState(rmesa);
-
-			return;
-		}
-		r300UpdateStateParameters(ctx, _NEW_PROGRAM);
-	}
-
-}
-
-static void r300SetupPixelShader(r300ContextPtr rmesa)
-{
-	GLcontext *ctx = rmesa->radeon.glCtx;
-	struct r300_fragment_program *fp = (struct r300_fragment_program *)
-	    (char *)ctx->FragmentProgram._Current;
-	int i, k;
-
-	if (!fp)		/* should only happenen once, just after context is created */
-		return;
-
-	r300TranslateFragmentShader(rmesa, fp);
-	if (!fp->translated) {
-		fprintf(stderr, "%s: No valid fragment shader, exiting\n",
-			__FUNCTION__);
-		return;
-	}
-#define OUTPUT_FIELD(st, reg, field)  \
-		R300_STATECHANGE(rmesa, st); \
-		for(i=0;i<=fp->alu_end;i++) \
-			rmesa->hw.st.cmd[R300_FPI_INSTR_0+i]=fp->alu.inst[i].field;\
-		rmesa->hw.st.cmd[R300_FPI_CMD_0]=cmdpacket0(reg, fp->alu_end+1);
-
-	OUTPUT_FIELD(fpi[0], R300_PFS_INSTR0_0, inst0);
-	OUTPUT_FIELD(fpi[1], R300_PFS_INSTR1_0, inst1);
-	OUTPUT_FIELD(fpi[2], R300_PFS_INSTR2_0, inst2);
-	OUTPUT_FIELD(fpi[3], R300_PFS_INSTR3_0, inst3);
-#undef OUTPUT_FIELD
-
-	R300_STATECHANGE(rmesa, fp);
-	/* I just want to say, the way these nodes are stored.. weird.. */
-	for (i = 0, k = (4 - (fp->cur_node + 1)); i < 4; i++, k++) {
-		if (i < (fp->cur_node + 1)) {
-			rmesa->hw.fp.cmd[R300_FP_NODE0 + k] =
-			    (fp->node[i].
-			     alu_offset << R300_PFS_NODE_ALU_OFFSET_SHIFT)
-			    | (fp->node[i].
-			       alu_end << R300_PFS_NODE_ALU_END_SHIFT)
-			    | (fp->node[i].
-			       tex_offset << R300_PFS_NODE_TEX_OFFSET_SHIFT)
-			    | (fp->node[i].
-			       tex_end << R300_PFS_NODE_TEX_END_SHIFT)
-			    | fp->node[i].flags;	/*  ( (k==3) ? R300_PFS_NODE_LAST_NODE : 0); */
-		} else {
-			rmesa->hw.fp.cmd[R300_FP_NODE0 + (3 - i)] = 0;
-		}
-	}
-
-	/*  PFS_CNTL_0 */
-	rmesa->hw.fp.cmd[R300_FP_CNTL0] =
-	    fp->cur_node | (fp->first_node_has_tex << 3);
-	/* PFS_CNTL_1 */
-	rmesa->hw.fp.cmd[R300_FP_CNTL1] = fp->max_temp_idx;
-	/* PFS_CNTL_2 */
-	rmesa->hw.fp.cmd[R300_FP_CNTL2] =
-	    (fp->alu_offset << R300_PFS_CNTL_ALU_OFFSET_SHIFT)
-	    | (fp->alu_end << R300_PFS_CNTL_ALU_END_SHIFT)
-	    | (fp->tex_offset << R300_PFS_CNTL_TEX_OFFSET_SHIFT)
-	    | (fp->tex_end << R300_PFS_CNTL_TEX_END_SHIFT);
-
-	R300_STATECHANGE(rmesa, fpp);
-	for (i = 0; i < fp->const_nr; i++) {
-		rmesa->hw.fpp.cmd[R300_FPP_PARAM_0 + 4 * i + 0] =
-		    r300PackFloat24(fp->constant[i][0]);
-		rmesa->hw.fpp.cmd[R300_FPP_PARAM_0 + 4 * i + 1] =
-		    r300PackFloat24(fp->constant[i][1]);
-		rmesa->hw.fpp.cmd[R300_FPP_PARAM_0 + 4 * i + 2] =
-		    r300PackFloat24(fp->constant[i][2]);
-		rmesa->hw.fpp.cmd[R300_FPP_PARAM_0 + 4 * i + 3] =
-		    r300PackFloat24(fp->constant[i][3]);
-	}
-	rmesa->hw.fpp.cmd[R300_FPP_CMD_0] =
-	    cmdpacket0(R300_PFS_PARAM_0_X, fp->const_nr * 4);
-}
-
-void r300UpdateShaderStates(r300ContextPtr rmesa)
-{
-	GLcontext *ctx;
-	ctx = rmesa->radeon.glCtx;
-
-	r300UpdateTextureState(ctx);
-
-	r300SetupPixelShader(rmesa);
-	r300SetupTextures(ctx);
-
-	if ((rmesa->radeon.radeonScreen->chip_flags & RADEON_CHIPSET_TCL))
-		r300SetupVertexShader(rmesa);
-	r300SetupRSUnit(ctx);
-}
-
-/**
- * Called by Mesa after an internal state update.
- */
-static void r300InvalidateState(GLcontext * ctx, GLuint new_state)
-{
-	r300ContextPtr r300 = R300_CONTEXT(ctx);
-
-	_swrast_InvalidateState(ctx, new_state);
-	_swsetup_InvalidateState(ctx, new_state);
-	_vbo_InvalidateState(ctx, new_state);
-	_tnl_InvalidateState(ctx, new_state);
-	_ae_invalidate_state(ctx, new_state);
-
-	if (new_state & (_NEW_BUFFERS | _NEW_COLOR | _NEW_PIXEL)) {
-		r300UpdateDrawBuffer(ctx);
-	}
-
-	r300UpdateStateParameters(ctx, new_state);
-
-	r300->NewGLState |= new_state;
-}
-
 /**
  * Completely recalculates hardware state based on the Mesa state.
  */
-void r300ResetHwState(r300ContextPtr r300)
+static void r300ResetHwState(r300ContextPtr r300)
 {
 	GLcontext *ctx = r300->radeon.glCtx;
 	int has_tcl = 1;
@@ -2230,6 +2072,163 @@ void r300ResetHwState(r300ContextPtr r300)
 	}
 //END: TODO
 	r300->hw.all_dirty = GL_TRUE;
+}
+
+
+extern void _tnl_UpdateFixedFunctionProgram(GLcontext * ctx);
+
+extern int future_hw_tcl_on;
+void r300UpdateShaders(r300ContextPtr rmesa)
+{
+	GLcontext *ctx;
+	struct r300_vertex_program *vp;
+	int i;
+
+	ctx = rmesa->radeon.glCtx;
+
+	if (rmesa->NewGLState && hw_tcl_on) {
+		rmesa->NewGLState = 0;
+
+		for (i = _TNL_FIRST_MAT; i <= _TNL_LAST_MAT; i++) {
+			rmesa->temp_attrib[i] =
+			    TNL_CONTEXT(ctx)->vb.AttribPtr[i];
+			TNL_CONTEXT(ctx)->vb.AttribPtr[i] =
+			    &rmesa->dummy_attrib[i];
+		}
+
+		_tnl_UpdateFixedFunctionProgram(ctx);
+
+		for (i = _TNL_FIRST_MAT; i <= _TNL_LAST_MAT; i++) {
+			TNL_CONTEXT(ctx)->vb.AttribPtr[i] =
+			    rmesa->temp_attrib[i];
+		}
+
+		r300SelectVertexShader(rmesa);
+		vp = (struct r300_vertex_program *)
+		    CURRENT_VERTEX_SHADER(ctx);
+		/*if (vp->translated == GL_FALSE)
+		   r300TranslateVertexShader(vp); */
+		if (vp->translated == GL_FALSE) {
+			fprintf(stderr, "Failing back to sw-tcl\n");
+			hw_tcl_on = future_hw_tcl_on = 0;
+			r300ResetHwState(rmesa);
+
+			return;
+		}
+		r300UpdateStateParameters(ctx, _NEW_PROGRAM);
+	}
+
+}
+
+static void r300SetupPixelShader(r300ContextPtr rmesa)
+{
+	GLcontext *ctx = rmesa->radeon.glCtx;
+	struct r300_fragment_program *fp = (struct r300_fragment_program *)
+	    (char *)ctx->FragmentProgram._Current;
+	int i, k;
+
+	if (!fp)		/* should only happenen once, just after context is created */
+		return;
+
+	r300TranslateFragmentShader(rmesa, fp);
+	if (!fp->translated) {
+		fprintf(stderr, "%s: No valid fragment shader, exiting\n",
+			__FUNCTION__);
+		return;
+	}
+#define OUTPUT_FIELD(st, reg, field)  \
+		R300_STATECHANGE(rmesa, st); \
+		for(i=0;i<=fp->alu_end;i++) \
+			rmesa->hw.st.cmd[R300_FPI_INSTR_0+i]=fp->alu.inst[i].field;\
+		rmesa->hw.st.cmd[R300_FPI_CMD_0]=cmdpacket0(reg, fp->alu_end+1);
+
+	OUTPUT_FIELD(fpi[0], R300_PFS_INSTR0_0, inst0);
+	OUTPUT_FIELD(fpi[1], R300_PFS_INSTR1_0, inst1);
+	OUTPUT_FIELD(fpi[2], R300_PFS_INSTR2_0, inst2);
+	OUTPUT_FIELD(fpi[3], R300_PFS_INSTR3_0, inst3);
+#undef OUTPUT_FIELD
+
+	R300_STATECHANGE(rmesa, fp);
+	/* I just want to say, the way these nodes are stored.. weird.. */
+	for (i = 0, k = (4 - (fp->cur_node + 1)); i < 4; i++, k++) {
+		if (i < (fp->cur_node + 1)) {
+			rmesa->hw.fp.cmd[R300_FP_NODE0 + k] =
+			    (fp->node[i].
+			     alu_offset << R300_PFS_NODE_ALU_OFFSET_SHIFT)
+			    | (fp->node[i].
+			       alu_end << R300_PFS_NODE_ALU_END_SHIFT)
+			    | (fp->node[i].
+			       tex_offset << R300_PFS_NODE_TEX_OFFSET_SHIFT)
+			    | (fp->node[i].
+			       tex_end << R300_PFS_NODE_TEX_END_SHIFT)
+			    | fp->node[i].flags;	/*  ( (k==3) ? R300_PFS_NODE_LAST_NODE : 0); */
+		} else {
+			rmesa->hw.fp.cmd[R300_FP_NODE0 + (3 - i)] = 0;
+		}
+	}
+
+	/*  PFS_CNTL_0 */
+	rmesa->hw.fp.cmd[R300_FP_CNTL0] =
+	    fp->cur_node | (fp->first_node_has_tex << 3);
+	/* PFS_CNTL_1 */
+	rmesa->hw.fp.cmd[R300_FP_CNTL1] = fp->max_temp_idx;
+	/* PFS_CNTL_2 */
+	rmesa->hw.fp.cmd[R300_FP_CNTL2] =
+	    (fp->alu_offset << R300_PFS_CNTL_ALU_OFFSET_SHIFT)
+	    | (fp->alu_end << R300_PFS_CNTL_ALU_END_SHIFT)
+	    | (fp->tex_offset << R300_PFS_CNTL_TEX_OFFSET_SHIFT)
+	    | (fp->tex_end << R300_PFS_CNTL_TEX_END_SHIFT);
+
+	R300_STATECHANGE(rmesa, fpp);
+	for (i = 0; i < fp->const_nr; i++) {
+		rmesa->hw.fpp.cmd[R300_FPP_PARAM_0 + 4 * i + 0] =
+		    r300PackFloat24(fp->constant[i][0]);
+		rmesa->hw.fpp.cmd[R300_FPP_PARAM_0 + 4 * i + 1] =
+		    r300PackFloat24(fp->constant[i][1]);
+		rmesa->hw.fpp.cmd[R300_FPP_PARAM_0 + 4 * i + 2] =
+		    r300PackFloat24(fp->constant[i][2]);
+		rmesa->hw.fpp.cmd[R300_FPP_PARAM_0 + 4 * i + 3] =
+		    r300PackFloat24(fp->constant[i][3]);
+	}
+	rmesa->hw.fpp.cmd[R300_FPP_CMD_0] =
+	    cmdpacket0(R300_PFS_PARAM_0_X, fp->const_nr * 4);
+}
+
+void r300UpdateShaderStates(r300ContextPtr rmesa)
+{
+	GLcontext *ctx;
+	ctx = rmesa->radeon.glCtx;
+
+	r300UpdateTextureState(ctx);
+
+	r300SetupPixelShader(rmesa);
+	r300SetupTextures(ctx);
+
+	if ((rmesa->radeon.radeonScreen->chip_flags & RADEON_CHIPSET_TCL))
+		r300SetupVertexShader(rmesa);
+	r300SetupRSUnit(ctx);
+}
+
+/**
+ * Called by Mesa after an internal state update.
+ */
+static void r300InvalidateState(GLcontext * ctx, GLuint new_state)
+{
+	r300ContextPtr r300 = R300_CONTEXT(ctx);
+
+	_swrast_InvalidateState(ctx, new_state);
+	_swsetup_InvalidateState(ctx, new_state);
+	_vbo_InvalidateState(ctx, new_state);
+	_tnl_InvalidateState(ctx, new_state);
+	_ae_invalidate_state(ctx, new_state);
+
+	if (new_state & (_NEW_BUFFERS | _NEW_COLOR | _NEW_PIXEL)) {
+		r300UpdateDrawBuffer(ctx);
+	}
+
+	r300UpdateStateParameters(ctx, new_state);
+
+	r300->NewGLState |= new_state;
 }
 
 /**

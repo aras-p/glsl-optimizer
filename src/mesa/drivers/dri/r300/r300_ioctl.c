@@ -668,27 +668,6 @@ void r300AllocDmaRegion(r300ContextPtr rmesa,
 
 #endif
 
-/* Called via glXGetMemoryOffsetMESA() */
-GLuint r300GetMemoryOffsetMESA(__DRInativeDisplay * dpy, int scrn,
-			       const GLvoid * pointer)
-{
-	GET_CURRENT_CONTEXT(ctx);
-	r300ContextPtr rmesa;
-	GLuint card_offset;
-
-	if (!ctx || !(rmesa = R300_CONTEXT(ctx))) {
-		fprintf(stderr, "%s: no context\n", __FUNCTION__);
-		return ~0;
-	}
-
-	if (!r300IsGartMemory(rmesa, pointer, 0))
-		return ~0;
-
-	card_offset = r300GartOffsetFromVirtual(rmesa, pointer);
-
-	return card_offset - rmesa->radeon.radeonScreen->gart_base;
-}
-
 GLboolean r300IsGartMemory(r300ContextPtr rmesa, const GLvoid * pointer,
 			   GLint size)
 {

@@ -128,7 +128,7 @@ int r300FlushCmdBuf(r300ContextPtr r300, const char *caller)
 	return ret;
 }
 
-void r300PrintStateAtom(r300ContextPtr r300, struct r300_state_atom *state)
+static void r300PrintStateAtom(r300ContextPtr r300, struct r300_state_atom *state)
 {
 	int i;
 	int dwords = (*state->check) (r300, state);
