@@ -110,7 +110,7 @@ static int r300PrimitiveType(r300ContextPtr rmesa, GLcontext * ctx, int prim)
 		return R300_VAP_VF_CNTL__PRIM_POLYGON;
 		break;
 	default:
-		assert (0);
+		assert(0);
 		return -1;
 		break;
 	}
@@ -160,7 +160,7 @@ static int r300NumVerts(r300ContextPtr rmesa, int num_verts, int prim)
 			verts_off = num_verts;
 		break;
 	default:
-		assert (0);
+		assert(0);
 		return -1;
 		break;
 	}

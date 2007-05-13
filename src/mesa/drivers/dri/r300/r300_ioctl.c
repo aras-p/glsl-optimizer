@@ -216,7 +216,6 @@ static void r300EmitClearState(GLcontext * ctx)
 	e32(R300_INPUT_CNTL_0_COLOR);
 	e32(R300_INPUT_CNTL_POS | R300_INPUT_CNTL_COLOR | R300_INPUT_CNTL_TC0);
 
-
 	if (!has_tcl) {
 		R300_STATECHANGE(r300, vte);
 		/* comes from fglrx startup of clear */

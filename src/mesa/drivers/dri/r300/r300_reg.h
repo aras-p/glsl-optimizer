@@ -23,10 +23,10 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 **************************************************************************/
 
+/* *INDENT-OFF* */
+
 #ifndef _R300_REG_H
 #define _R300_REG_H
-
-/* *INDENT-OFF* */
 
 #define R300_MC_INIT_MISC_LAT_TIMER	0x180
 #	define R300_MC_MISC__MC_CPR_INIT_LAT_SHIFT	0
@@ -1606,6 +1606,6 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 #define R300_CP_CMD_BITBLT_MULTI	0xC0009B00
 
-/* *INDENT-ON* */
-
 #endif /* _R300_REG_H */
+
+/* *INDENT-ON* */

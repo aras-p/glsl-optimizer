@@ -20,7 +20,7 @@ struct r300_memory_manager {
 		int mapped;
 	} *u_list;
 	int u_head, u_size, u_last;
-	
+
 };
 
 extern void r300_mem_init(r300ContextPtr rmesa);
