@@ -228,7 +228,10 @@ static void r300EmitClearState(GLcontext * ctx)
 		R300_STATECHANGE(r300, vte);
 		/* comes from fglrx startup of clear */
 		reg_start(R300_SE_VTE_CNTL, 1);
-		e32(0x043f);
+		e32(R300_VTX_W0_FMT | R300_VPORT_X_SCALE_ENA |
+		    R300_VPORT_X_OFFSET_ENA | R300_VPORT_Y_SCALE_ENA |
+		    R300_VPORT_Y_OFFSET_ENA | R300_VPORT_Z_SCALE_ENA |
+		    R300_VPORT_Z_OFFSET_ENA);
 		e32(0x8);
 
 		reg_start(0x21dc, 0);
