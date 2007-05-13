@@ -114,7 +114,7 @@ static void r300ClearBuffer(r300ContextPtr r300, int flags, int buffer)
 		    (ctx->Color.ColorMask[RCOMP] ? R300_COLORMASK0_R : 0) |
 		    (ctx->Color.ColorMask[ACOMP] ? R300_COLORMASK0_A : 0));
 	} else {
-		e32(0);
+		e32(0x0);
 	}
 
 	R300_STATECHANGE(r300, zs);
@@ -242,11 +242,11 @@ static void r300EmitClearState(GLcontext * ctx)
 	reg_start(R300_VAP_OUTPUT_VTX_FMT_0, 1);
 	e32(R300_VAP_OUTPUT_VTX_FMT_0__POS_PRESENT |
 	    R300_VAP_OUTPUT_VTX_FMT_0__COLOR_PRESENT);
-	e32(0);			/* no textures */
+	e32(0x0);			/* no textures */
 
 	R300_STATECHANGE(r300, txe);
 	reg_start(R300_TX_ENABLE, 0);
-	e32(0);
+	e32(0x0);
 
 	R300_STATECHANGE(r300, vpt);
 	reg_start(R300_SE_VPORT_XSCALE, 5);
@@ -259,12 +259,12 @@ static void r300EmitClearState(GLcontext * ctx)
 
 	R300_STATECHANGE(r300, at);
 	reg_start(R300_PP_ALPHA_TEST, 0);
-	e32(0);
+	e32(0x0);
 
 	R300_STATECHANGE(r300, bld);
 	reg_start(R300_RB3D_CBLEND, 1);
-	e32(0);
-	e32(0);
+	e32(0x0);
+	e32(0x0);
 
 	R300_STATECHANGE(r300, unk221C);
 	reg_start(R300_VAP_UNKNOWN_221C, 0);
@@ -285,7 +285,7 @@ static void r300EmitClearState(GLcontext * ctx)
 	/* The second constant is needed to get glxgears display anything .. */
 	reg_start(R300_RS_CNTL_0, 1);
 	e32((1 << R300_RS_CNTL_CI_CNT_SHIFT) | R300_RS_CNTL_0_UNKNOWN_18);
-	e32(0);
+	e32(0x0);
 
 	R300_STATECHANGE(r300, rr);
 	reg_start(R300_RS_ROUTE_0, 0);
@@ -293,13 +293,13 @@ static void r300EmitClearState(GLcontext * ctx)
 
 	R300_STATECHANGE(r300, fp);
 	reg_start(R300_PFS_CNTL_0, 2);
-	e32(0);
-	e32(0);
-	e32(0);
+	e32(0x0);
+	e32(0x0);
+	e32(0x0);
 	reg_start(R300_PFS_NODE_0, 3);
-	e32(0);
-	e32(0);
-	e32(0);
+	e32(0x0);
+	e32(0x0);
+	e32(0x0);
 	e32(R300_PFS_NODE_OUTPUT_COLOR);
 
 	R300_STATECHANGE(r300, fpi[0]);
@@ -325,7 +325,7 @@ static void r300EmitClearState(GLcontext * ctx)
 		e32((0 << R300_PVS_CNTL_1_PROGRAM_START_SHIFT) |
 		    (0 << R300_PVS_CNTL_1_POS_END_SHIFT) |
 		    (1 << R300_PVS_CNTL_1_PROGRAM_END_SHIFT));
-		e32(0);
+		e32(0x0);
 		e32(1 << R300_PVS_CNTL_3_PROGRAM_UNKNOWN_SHIFT);
 
 		R300_STATECHANGE(r300, vpi);
@@ -333,12 +333,12 @@ static void r300EmitClearState(GLcontext * ctx)
 		e32(VP_OUT(ADD, OUT, 0, XYZW));
 		e32(VP_IN(IN, 0));
 		e32(VP_ZERO());
-		e32(0);
+		e32(0x0);
 
 		e32(VP_OUT(ADD, OUT, 1, XYZW));
 		e32(VP_IN(IN, 1));
 		e32(VP_ZERO());
-		e32(0);
+		e32(0x0);
 	}
 }
 
