@@ -194,6 +194,14 @@ static void r300EmitClearState(GLcontext * ctx)
 	if (!(r300->radeon.radeonScreen->chip_flags & RADEON_CHIPSET_TCL))
 		has_tcl = 0;
 
+	/* FIXME: the values written to R300_VAP_INPUT_ROUTE_0_0 and
+	 * R300_VAP_INPUT_ROUTE_0_1 are in fact known, however, the values are
+	 * quite complex; see the functions in r300_emit.c.
+	 *
+	 * I believe it would be a good idea to extend the functions in
+	 * r300_emit.c so that they can be used to setup the default values for
+	 * these registers, as well as the actual values used for rendering.
+	 */
 	R300_STATECHANGE(r300, vir[0]);
 	reg_start(R300_VAP_INPUT_ROUTE_0_0, 0);
 	if (!has_tcl)
