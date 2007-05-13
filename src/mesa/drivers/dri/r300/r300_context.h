@@ -872,9 +872,10 @@ struct r300_context {
 
 #ifdef USER_BUFFERS
 	struct r300_memory_manager *rmm;
+#endif
+
 	GLvector4f dummy_attrib[_TNL_ATTRIB_MAX];
 	GLvector4f *temp_attrib[_TNL_ATTRIB_MAX];
-#endif
 
 	GLboolean disable_lowimpact_fallback;
 };
