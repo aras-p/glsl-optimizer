@@ -1439,7 +1439,7 @@ union r300_outputs_written {
 	((hw_tcl_on) ? (ow).vp_outputs & (1 << (vp_result)) : \
 	RENDERINPUTS_TEST( (ow.index_bitset), (tnl_attrib) ))
 
-void r300SetupRSUnit(GLcontext * ctx)
+static void r300SetupRSUnit(GLcontext * ctx)
 {
 	r300ContextPtr r300 = R300_CONTEXT(ctx);
 	/* I'm still unsure if these are needed */
@@ -1858,22 +1858,7 @@ void r300UpdateShaders(r300ContextPtr rmesa)
 
 }
 
-void r300UpdateShaderStates(r300ContextPtr rmesa)
-{
-	GLcontext *ctx;
-	ctx = rmesa->radeon.glCtx;
-
-	r300UpdateTextureState(ctx);
-
-	r300SetupPixelShader(rmesa);
-	r300SetupTextures(ctx);
-
-	if ((rmesa->radeon.radeonScreen->chip_flags & RADEON_CHIPSET_TCL))
-		r300SetupVertexShader(rmesa);
-	r300SetupRSUnit(ctx);
-}
-
-void r300SetupPixelShader(r300ContextPtr rmesa)
+static void r300SetupPixelShader(r300ContextPtr rmesa)
 {
 	GLcontext *ctx = rmesa->radeon.glCtx;
 	struct r300_fragment_program *fp = (struct r300_fragment_program *)
@@ -1945,6 +1930,21 @@ void r300SetupPixelShader(r300ContextPtr rmesa)
 	}
 	rmesa->hw.fpp.cmd[R300_FPP_CMD_0] =
 	    cmdpacket0(R300_PFS_PARAM_0_X, fp->const_nr * 4);
+}
+
+void r300UpdateShaderStates(r300ContextPtr rmesa)
+{
+	GLcontext *ctx;
+	ctx = rmesa->radeon.glCtx;
+
+	r300UpdateTextureState(ctx);
+
+	r300SetupPixelShader(rmesa);
+	r300SetupTextures(ctx);
+
+	if ((rmesa->radeon.radeonScreen->chip_flags & RADEON_CHIPSET_TCL))
+		r300SetupVertexShader(rmesa);
+	r300SetupRSUnit(ctx);
 }
 
 /**
