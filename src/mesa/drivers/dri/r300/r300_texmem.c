@@ -49,9 +49,6 @@ SOFTWARE.
 #include "r300_state.h"
 #include "r300_cmdbuf.h"
 #include "radeon_ioctl.h"
-/*
-#include "r300_swtcl.h"
-*/
 #include "r300_tex.h"
 #include "r300_ioctl.h"
 #include <unistd.h>		/* for usleep() */
