@@ -800,16 +800,20 @@ static void r300CompressedTexImage2D(GLcontext * ctx, GLenum target,
 	}
 
 	texImage->IsClientData = GL_FALSE;
-/* can't call this, different parameters. Would never evaluate to true anyway currently
-   if (r300ValidateClientStorage( ctx, target, 
-				  internalFormat,
-				  width, height,
-				  format, type, pixels,
-				  packing, texObj, texImage)) {
-      if (RADEON_DEBUG & DEBUG_TEXTURE)
-	 fprintf(stderr, "%s: Using client storage\n", __FUNCTION__);
-   }
-   else */  {
+
+	/* can't call this, different parameters. Would never evaluate to true anyway currently */
+#if 0
+	if (r300ValidateClientStorage(ctx, target,
+				      internalFormat,
+				      width, height,
+				      format, type, pixels,
+				      packing, texObj, texImage)) {
+		if (RADEON_DEBUG & DEBUG_TEXTURE)
+			fprintf(stderr, "%s: Using client storage\n",
+				__FUNCTION__);
+	} else
+#endif
+	{
 		if (RADEON_DEBUG & DEBUG_TEXTURE)
 			fprintf(stderr, "%s: Using normal storage\n",
 				__FUNCTION__);
