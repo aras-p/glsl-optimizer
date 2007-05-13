@@ -1445,9 +1445,9 @@ void r300SetupRSUnit(GLcontext * ctx)
 	/* I'm still unsure if these are needed */
 	GLuint interp_magic[8] = {
 		0x00,
-		0x40,
-		0x80,
-		0xC0,
+		R300_RS_INTERP_1_UNKNOWN,
+		R300_RS_INTERP_2_UNKNOWN,
+		R300_RS_INTERP_3_UNKNOWN,
 		0x00,
 		0x00,
 		0x00,
