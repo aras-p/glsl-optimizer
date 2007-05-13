@@ -673,6 +673,11 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 /* Special handling for color: When the fragment program uses color,
  * the ROUTE_0_COLOR bit is set and ROUTE_0_COLOR_DEST contains the
  * color register index.
+ *
+ * Apperently you may set the R300_RS_ROUTE_0_COLOR bit, but not provide any
+ * R300_RS_ROUTE_0_COLOR_DEST value; this setup is used for clearing the state.
+ * See r300_ioctl.c:r300EmitClearState. I'm not sure if this setup is strictly
+ * correct or not. - Oliver.
  */
 #       define R300_RS_ROUTE_0_COLOR             (1 << 14)
 #       define R300_RS_ROUTE_0_COLOR_DEST_SHIFT  17
