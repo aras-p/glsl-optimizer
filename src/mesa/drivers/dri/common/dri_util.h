@@ -459,17 +459,6 @@ struct __DRIscreenPrivateRec {
     void *private;
 
     /**
-     * GLX visuals / FBConfigs for this screen.  These are stored as a
-     * linked list.
-     * 
-     * \note
-     * This field is \b only used in conjunction with the old interfaces.  If
-     * the new interfaces are used, this field will be set to \c NULL and will
-     * not be dereferenced.
-     */
-    __GLcontextModes *modes;
-
-    /**
      * Pointer back to the \c __DRIscreen that contains this structure.
      */
 

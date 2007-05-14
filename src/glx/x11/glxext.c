@@ -957,7 +957,6 @@ CallCreateNewScreen(Display *dpy, int scrn, __GLXscreenConfigs *psc,
 				    err_extra = NULL;
 				    psp = (*createNewScreen)(scrn,
 							     &psc->driScreen,
-							     psc->configs,
 							     & ddx_version,
 							     & dri_version,
 							     & drm_version,
@@ -968,8 +967,7 @@ CallCreateNewScreen(Display *dpy, int scrn, __GLXscreenConfigs *psc,
 							     & interface_methods,
 							     & driver_modes );
 
-				    filter_modes( & psc->configs,
-						  driver_modes );
+				    filter_modes(&psc->configs, driver_modes);
 				    _gl_context_modes_destroy( driver_modes );
 				}
 			    }

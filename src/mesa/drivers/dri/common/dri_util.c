@@ -657,9 +657,6 @@ static void driDestroyScreen(__DRIscreen *screen)
 	(void)drmUnmap((drmAddress)psp->pSAREA, SAREA_MAX);
 	(void)drmUnmap((drmAddress)psp->pFB, psp->fbSize);
 	(void)drmCloseOnce(psp->fd);
-	if ( psp->modes != NULL ) {
-	    (*dri_interface->destroyContextModes)( psp->modes );
-	}
 
 	_mesa_free(psp);
     }
@@ -699,7 +696,6 @@ static void driDestroyScreen(__DRIscreen *screen)
  */
 PUBLIC
 void * __DRI_CREATE_NEW_SCREEN( int scrn, __DRIscreen *psc,
-				const __GLcontextModes * modes,
 				const __DRIversion * ddx_version,
 				const __DRIversion * dri_version,
 				const __DRIversion * drm_version,
@@ -720,7 +716,6 @@ void * __DRI_CREATE_NEW_SCREEN( int scrn, __DRIscreen *psc,
 	return NULL;
 
     psp->psc = psc;
-    psp->modes = NULL;
 
     /*
     ** NOT_DONE: This is used by the X server to detect when the client

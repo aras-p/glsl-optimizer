@@ -115,7 +115,6 @@ typedef void (* PFNGLXSCRENABLEEXTENSIONPROC) (__DRIscreen *screen,
 #define __DRI_INTERFACE_VERSION 20070105
 
 typedef void *(CREATENEWSCREENFUNC)(int scr, __DRIscreen *psc,
-    const __GLcontextModes * modes,
     const __DRIversion * ddx_version, const __DRIversion * dri_version,
     const __DRIversion * drm_version, const __DRIframebuffer * frame_buffer,
     void * pSAREA, int fd, int internal_api_version,
