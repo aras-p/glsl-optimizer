@@ -938,7 +938,6 @@ static void radeonDestroyContext(__DRIcontextPrivate * driContextPriv)
 
 #if !RADEON_COMMON || (RADEON_COMMON && defined(RADEON_COMMON_FOR_R300))
 static struct __DriverAPIRec radeonAPI = {
-   .InitDriver      = radeonInitDriver,
    .DestroyScreen   = radeonDestroyScreen,
    .CreateContext   = radeonCreateContext,
    .DestroyContext  = radeonDestroyContext,
@@ -959,7 +958,6 @@ static struct __DriverAPIRec radeonAPI = {
 };
 #else
 static const struct __DriverAPIRec r200API = {
-   .InitDriver      = radeonInitDriver,
    .DestroyScreen   = radeonDestroyScreen,
    .CreateContext   = r200CreateContext,
    .DestroyContext  = r200DestroyContext,
@@ -978,29 +976,16 @@ static const struct __DriverAPIRec r200API = {
 };
 #endif
 
+
 /**
- * This is the bootstrap function for the driver.  libGL supplies all of the
- * requisite information about the system, and the driver initializes itself.
- * This routine also fills in the linked list pointed to by \c driver_modes
- * with the \c __GLcontextModes that the driver can support for windows or
- * pbuffers.
+ * This is the driver specific part of the createNewScreen entry point.
+ * 
+ * \todo maybe fold this into intelInitDriver
  *
- * \return A pointer to a \c __DRIscreenPrivate on success, or \c NULL on 
- *         failure.
+ * \return the __GLcontextModes supported by this driver
  */
-PUBLIC void *
-__DRI_CREATE_NEW_SCREEN(int scrn, __DRIscreen *psc,
-			const __GLcontextModes * modes,
-			const __DRIversion * ddx_version,
-			const __DRIversion * dri_version,
-			const __DRIversion * drm_version,
-			const __DRIframebuffer * frame_buffer,
-			drmAddress pSAREA, int fd,
-			int internal_api_version,
-			const __DRIinterfaceMethods * interface,
-			__GLcontextModes ** driver_modes)
+__GLcontextModes *__driDriverInitScreen(__DRIscreenPrivate *psp)
 {
-   __DRIscreenPrivate *psp;
 #if !RADEON_COMMON
    static const char *driver_name = "Radeon";
    static const __DRIutilversion2 ddx_expected = { 4, 5, 0, 0 };
@@ -1017,57 +1002,46 @@ __DRI_CREATE_NEW_SCREEN(int scrn, __DRIscreen *psc,
    static const __DRIversion dri_expected = { 4, 0, 0 };
    static const __DRIversion drm_expected = { 1, 24, 0 };
 #endif
-
-   dri_interface = interface;
+   RADEONDRIPtr dri_priv = (RADEONDRIPtr) psp->pDevPriv;
 
    if ( ! driCheckDriDdxDrmVersions3( driver_name,
-				      dri_version, & dri_expected,
-				      ddx_version, & ddx_expected,
-				      drm_version, & drm_expected ) ) {
+				      &psp->dri_version, & dri_expected,
+				      &psp->ddx_version, & ddx_expected,
+				      &psp->drm_version, & drm_expected ) ) {
       return NULL;
    }
 #if !RADEON_COMMON || (RADEON_COMMON && defined(RADEON_COMMON_FOR_R300))
-   psp = __driUtilCreateNewScreen(scrn, psc, NULL,
-				  ddx_version, dri_version, drm_version,
-				  frame_buffer, pSAREA, fd,
-				  internal_api_version, &radeonAPI);
+   psp->DriverAPI = radeonAPI;
 #elif RADEON_COMMON && defined(RADEON_COMMON_FOR_R200)
-   psp = __driUtilCreateNewScreen(scrn, psc, NULL,
-				  ddx_version, dri_version, drm_version,
-				  frame_buffer, pSAREA, fd,
-				  internal_api_version, &r200API);
+   psp->DriverAPI = r200API;
 #endif
 
-   if ( psp != NULL ) {
-      RADEONDRIPtr dri_priv = (RADEONDRIPtr) psp->pDevPriv;
-      if (driver_modes) {
-         *driver_modes = radeonFillInModes( dri_priv->bpp,
-                                            (dri_priv->bpp == 16) ? 16 : 24,
-                                            (dri_priv->bpp == 16) ? 0  : 8,
-                                            (dri_priv->backOffset != dri_priv->depthOffset) );
-      }
-
-      /* Calling driInitExtensions here, with a NULL context pointer,
-       * does not actually enable the extensions.  It just makes sure
-       * that all the dispatch offsets for all the extensions that
-       * *might* be enables are known.  This is needed because the
-       * dispatch offsets need to be known when _mesa_context_create
-       * is called, but we can't enable the extensions until we have a
-       * context pointer.
-       *
-       * Hello chicken.  Hello egg.  How are you two today?
-       */
-      driInitExtensions( NULL, card_extensions, GL_FALSE );
+   /* Calling driInitExtensions here, with a NULL context pointer,
+    * does not actually enable the extensions.  It just makes sure
+    * that all the dispatch offsets for all the extensions that
+    * *might* be enables are known.  This is needed because the
+    * dispatch offsets need to be known when _mesa_context_create
+    * is called, but we can't enable the extensions until we have a
+    * context pointer.
+    *
+    * Hello chicken.  Hello egg.  How are you two today?
+    */
+   driInitExtensions( NULL, card_extensions, GL_FALSE );
 #if RADEON_COMMON && defined(RADEON_COMMON_FOR_R200)
-      driInitExtensions( NULL, blend_extensions, GL_FALSE );
-      driInitSingleExtension( NULL, ARB_vp_extension );
-      driInitSingleExtension( NULL, NV_vp_extension );
-      driInitSingleExtension( NULL, ATI_fs_extension );
-      driInitExtensions( NULL, point_extensions, GL_FALSE );
+   driInitExtensions( NULL, blend_extensions, GL_FALSE );
+   driInitSingleExtension( NULL, ARB_vp_extension );
+   driInitSingleExtension( NULL, NV_vp_extension );
+   driInitSingleExtension( NULL, ATI_fs_extension );
+   driInitExtensions( NULL, point_extensions, GL_FALSE );
 #endif
-   }
 
-   return (void *) psp;
+   if (!radeonInitDriver(psp))
+       return NULL;
+
+   return radeonFillInModes( dri_priv->bpp,
+			     (dri_priv->bpp == 16) ? 16 : 24,
+			     (dri_priv->bpp == 16) ? 0  : 8,
+			     (dri_priv->backOffset != dri_priv->depthOffset) );
 }
 
 

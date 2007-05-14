@@ -476,7 +476,6 @@ mach64InitDriver( __DRIscreenPrivate *driScreen )
 
 
 static struct __DriverAPIRec mach64API = {
-   .InitDriver      = mach64InitDriver,
    .DestroyScreen   = mach64DestroyScreen,
    .CreateContext   = mach64CreateContext,
    .DestroyContext  = mach64DestroyContext,
@@ -494,63 +493,41 @@ static struct __DriverAPIRec mach64API = {
 
 
 /**
- * This is the bootstrap function for the driver.  libGL supplies all of the
- * requisite information about the system, and the driver initializes itself.
- * This routine also fills in the linked list pointed to by \c driver_modes
- * with the \c __GLcontextModes that the driver can support for windows or
- * pbuffers.
+ * This is the driver specific part of the createNewScreen entry point.
  * 
- * \return A pointer to a \c __DRIscreenPrivate on success, or \c NULL on 
- *         failure.
+ * \todo maybe fold this into intelInitDriver
+ *
+ * \return the __GLcontextModes supported by this driver
  */
-PUBLIC
-void * __DRI_CREATE_NEW_SCREEN(int scrn, __DRIscreen *psc,
-			       const __GLcontextModes * modes,
-			       const __DRIversion * ddx_version,
-			       const __DRIversion * dri_version,
-			       const __DRIversion * drm_version,
-			       const __DRIframebuffer * frame_buffer,
-			       drmAddress pSAREA, int fd, 
-			       int internal_api_version,
-			       const __DRIinterfaceMethods * interface,
-			       __GLcontextModes ** driver_modes)
-			     
+__GLcontextModes *__driDriverInitScreen(__DRIscreenPrivate *psp)
 {
-   __DRIscreenPrivate *psp;
    static const __DRIversion ddx_expected = { 6, 4, 0 };
    static const __DRIversion dri_expected = { 4, 0, 0 };
    static const __DRIversion drm_expected = { 2, 0, 0 };
+   ATIDRIPtr dri_priv = (ATIDRIPtr) psp->pDevPriv;
 
-   dri_interface = interface;
-
+   psp->DriverAPI = mach64API;
    if ( ! driCheckDriDdxDrmVersions2( "Mach64",
-				      dri_version, & dri_expected,
-				      ddx_version, & ddx_expected,
-				      drm_version, & drm_expected ) ) {
+				      &psp->dri_version, & dri_expected,
+				      &psp->ddx_version, & ddx_expected,
+				      &psp->drm_version, & drm_expected ) ) {
       return NULL;
    }
+   
+   /* Calling driInitExtensions here, with a NULL context pointer,
+    * does not actually enable the extensions.  It just makes sure
+    * that all the dispatch offsets for all the extensions that
+    * *might* be enables are known.  This is needed because the
+    * dispatch offsets need to be known when _mesa_context_create is
+    * called, but we can't enable the extensions until we have a
+    * context pointer.
+    *
+    * Hello chicken.  Hello egg.  How are you two today?
+    */
+   driInitExtensions( NULL, card_extensions, GL_FALSE );
 
-   psp = __driUtilCreateNewScreen(scrn, psc, NULL,
-				  ddx_version, dri_version, drm_version,
-				  frame_buffer, pSAREA, fd,
-				  internal_api_version, &mach64API);
-   if ( psp != NULL ) {
-      ATIDRIPtr dri_priv = (ATIDRIPtr) psp->pDevPriv;
-      *driver_modes = mach64FillInModes( dri_priv->cpp * 8,
-					 16,
-					 0,
-					 1);
+   if (!mach64InitDriver(psp))
+      return NULL;
 
-      /* Calling driInitExtensions here, with a NULL context pointer, does not actually
-       * enable the extensions.  It just makes sure that all the dispatch offsets for all
-       * the extensions that *might* be enables are known.  This is needed because the
-       * dispatch offsets need to be known when _mesa_context_create is called, but we can't
-       * enable the extensions until we have a context pointer.
-       *
-       * Hello chicken.  Hello egg.  How are you two today?
-       */
-      driInitExtensions( NULL, card_extensions, GL_FALSE );
-   }
-
-   return (void *) psp;
+   return  mach64FillInModes( dri_priv->cpp * 8, 16, 0, 1);
 }

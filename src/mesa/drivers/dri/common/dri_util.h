@@ -67,6 +67,13 @@ typedef struct __DRIutilversionRec2    __DRIutilversion2;
 
 
 /**
+ * Driver specific entry point.  Implemented by the driver.  Called
+ * from the top level createNewScreen entry point to initialize the
+ * __DRIscreenPrivate struct.
+ */
+extern __GLcontextModes *__driDriverInitScreen(__DRIscreenPrivate *psp);
+
+/**
  * Used by DRI_VALIDATE_DRAWABLE_INFO
  */
 #define DRI_VALIDATE_DRAWABLE_INFO_ONCE(pDrawPriv)              \
@@ -109,11 +116,6 @@ do {                                                                    \
  * this structure.
  */
 struct __DriverAPIRec {
-    /** 
-     * Driver initialization callback
-     */
-    GLboolean (*InitDriver)(__DRIscreenPrivate *driScrnPriv);
-    
     /**
      * Screen destruction callback
      */

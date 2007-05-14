@@ -667,9 +667,12 @@ static void driDestroyScreen(__DRIscreen *screen)
 
 
 /**
- * Utility function used to create a new driver-private screen structure.
+ * This is the bootstrap function for the driver.  libGL supplies all of the
+ * requisite information about the system, and the driver initializes itself.
+ * This routine also fills in the linked list pointed to by \c driver_modes
+ * with the \c __GLcontextModes that the driver can support for windows or
+ * pbuffers.
  * 
- * \param dpy   Display pointer
  * \param scrn  Index of the screen
  * \param psc   DRI screen data (not driver private)
  * \param modes Linked list of known display modes.  This list is, at a
@@ -690,35 +693,34 @@ static void driDestroyScreen(__DRIscreen *screen)
  *                              driver and libGL.
  * \param driverAPI Driver API functions used by other routines in dri_util.c.
  * 
- * \note
- * There is no need to check the minimum API version in this function.  Since
- * the \c __driCreateNewScreen function is versioned, it is impossible for a
- * loader that is too old to even load this driver.
+ * \note There is no need to check the minimum API version in this
+ * function.  Since the name of this function is versioned, it is
+ * impossible for a loader that is too old to even load this driver.
  */
-__DRIscreenPrivate *
-__driUtilCreateNewScreen(int scr, __DRIscreen *psc,
-			 __GLcontextModes * modes,
-			 const __DRIversion * ddx_version,
-			 const __DRIversion * dri_version,
-			 const __DRIversion * drm_version,
-			 const __DRIframebuffer * frame_buffer,
-			 drm_sarea_t *pSAREA,
-			 int fd,
-			 int internal_api_version,
-			 const struct __DriverAPIRec *driverAPI)
+PUBLIC
+void * __DRI_CREATE_NEW_SCREEN( int scrn, __DRIscreen *psc,
+				const __GLcontextModes * modes,
+				const __DRIversion * ddx_version,
+				const __DRIversion * dri_version,
+				const __DRIversion * drm_version,
+				const __DRIframebuffer * frame_buffer,
+				drmAddress pSAREA, int fd, 
+				int internal_api_version,
+				const __DRIinterfaceMethods * interface,
+				__GLcontextModes ** driver_modes )
+			     
 {
     __DRIscreenPrivate *psp;
 
-
+    dri_interface = interface;
     api_ver = internal_api_version;
 
-    psp = (__DRIscreenPrivate *)_mesa_malloc(sizeof(__DRIscreenPrivate));
-    if (!psp) {
+    psp = _mesa_malloc(sizeof(*psp));
+    if (!psp)
 	return NULL;
-    }
 
     psp->psc = psc;
-    psp->modes = modes;
+    psp->modes = NULL;
 
     /*
     ** NOT_DONE: This is used by the X server to detect when the client
@@ -730,9 +732,6 @@ __driUtilCreateNewScreen(int scr, __DRIscreen *psc,
     psp->drm_version = *drm_version;
     psp->ddx_version = *ddx_version;
     psp->dri_version = *dri_version;
-
-    /* install driver's callback functions */
-    memcpy( &psp->DriverAPI, driverAPI, sizeof(struct __DriverAPIRec) );
 
     psp->pSAREA = pSAREA;
 
@@ -746,7 +745,7 @@ __driUtilCreateNewScreen(int scr, __DRIscreen *psc,
     psp->fbBPP = psp->fbStride * 8 / frame_buffer->width;
 
     psp->fd = fd;
-    psp->myNum = scr;
+    psp->myNum = scrn;
 
     /*
     ** Do not init dummy context here; actual initialization will be
@@ -763,16 +762,14 @@ __driUtilCreateNewScreen(int scr, __DRIscreen *psc,
     if (internal_api_version >= 20070121)
 	psc->setTexOffset  = psp->DriverAPI.setTexOffset;
 
-    if ( (psp->DriverAPI.InitDriver != NULL)
-	 && !(*psp->DriverAPI.InitDriver)(psp) ) {
-	_mesa_free( psp );
+    *driver_modes = __driDriverInitScreen(psp);
+    if (*driver_modes == NULL) {
+	_mesa_free(psp);
 	return NULL;
     }
 
-
     return psp;
 }
-
 
 /**
  * Compare the current GLX API version with a driver supplied required version.
