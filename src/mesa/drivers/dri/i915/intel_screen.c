@@ -217,7 +217,7 @@ intel_recreate_static_regions(intelScreenPrivate *intelScreen)
    /* The rotated region is only used for old DDXes that didn't handle rotation
 \    * on their own.
     */
-   if (intelScreen->driScrnPriv->ddxMinor < 8) {
+   if (intelScreen->driScrnPriv->ddx_version.minor < 8) {
       intelScreen->rotated_region =
 	 intel_recreate_static(intelScreen,
 			       intelScreen->rotated_region,
@@ -377,7 +377,7 @@ intelUpdateScreenFromSAREA(intelScreenPrivate * intelScreen,
    intelScreen->back.handle = sarea->back_handle;
    intelScreen->back.size = sarea->back_size;
 
-   if (intelScreen->driScrnPriv->ddxMinor >= 8) {
+   if (intelScreen->driScrnPriv->ddx_version.minor >= 8) {
       intelScreen->third.offset = sarea->third_offset;
       intelScreen->third.pitch = sarea->pitch * intelScreen->cpp;
       intelScreen->third.handle = sarea->third_handle;
@@ -389,7 +389,7 @@ intelUpdateScreenFromSAREA(intelScreenPrivate * intelScreen,
    intelScreen->depth.handle = sarea->depth_handle;
    intelScreen->depth.size = sarea->depth_size;
 
-   if (intelScreen->driScrnPriv->ddxMinor >= 9) {
+   if (intelScreen->driScrnPriv->ddx_version.minor >= 9) {
       intelScreen->front.bo_handle = sarea->front_bo_handle;
       intelScreen->back.bo_handle = sarea->back_bo_handle;
       intelScreen->third.bo_handle = sarea->third_bo_handle;
@@ -488,7 +488,7 @@ intelInitDriver(__DRIscreenPrivate * sPriv)
    if (0)
       intelPrintDRIInfo(intelScreen, sPriv, gDRIPriv);
 
-   intelScreen->drmMinor = sPriv->drmMinor;
+   intelScreen->drmMinor = sPriv->drm_version.minor;
 
    /* Determine if IRQs are active? */
    {
@@ -535,7 +535,7 @@ intelInitDriver(__DRIscreenPrivate * sPriv)
     */
    intelScreen->ttm = GL_FALSE;
    if (getenv("INTEL_NO_TTM") == NULL &&
-       intelScreen->driScrnPriv->ddxMinor >= 9 &&
+       intelScreen->driScrnPriv->ddx_version.minor >= 9 &&
        intelScreen->front.bo_handle != -1) {
       intelScreen->bufmgr = dri_bufmgr_ttm_init(sPriv->fd,
 						DRM_FENCE_TYPE_EXE,

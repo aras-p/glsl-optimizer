@@ -120,7 +120,7 @@ r128CreateScreen( __DRIscreenPrivate *sPriv )
    r128Screen->IsPCI = r128DRIPriv->IsPCI;
    r128Screen->sarea_priv_offset = r128DRIPriv->sarea_priv_offset;
    
-   if (sPriv->drmMinor >= 3) {
+   if (sPriv->drm_version.minor >= 3) {
       drm_r128_getparam_t gp;
       int ret;
 

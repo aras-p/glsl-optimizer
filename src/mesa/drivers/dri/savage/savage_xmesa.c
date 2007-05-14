@@ -524,7 +524,7 @@ savageCreateContext( const __GLcontextModes *mesaVis,
 					    "enable_fastpath");
    /* DRM versions before 2.1.3 would only render triangle lists. ELTS
     * support was added in 2.2.0. */
-   if (imesa->enable_fastpath && sPriv->drmMinor < 2) {
+   if (imesa->enable_fastpath && sPriv->drm_version.minor < 2) {
       fprintf (stderr,
 	       "*** Disabling fast path because your DRM version is buggy "
 	       "or doesn't\n*** support ELTS. You need at least Savage DRM "

@@ -727,15 +727,9 @@ __driUtilCreateNewScreen(int scr, __DRIscreen *psc,
     */
     psp->drawLockID = 1;
 
-    psp->drmMajor = drm_version->major;
-    psp->drmMinor = drm_version->minor;
-    psp->drmPatch = drm_version->patch;
-    psp->ddxMajor = ddx_version->major;
-    psp->ddxMinor = ddx_version->minor;
-    psp->ddxPatch = ddx_version->patch;
-    psp->driMajor = dri_version->major;
-    psp->driMinor = dri_version->minor;
-    psp->driPatch = dri_version->patch;
+    psp->drm_version = *drm_version;
+    psp->ddx_version = *ddx_version;
+    psp->dri_version = *dri_version;
 
     /* install driver's callback functions */
     memcpy( &psp->DriverAPI, driverAPI, sizeof(struct __DriverAPIRec) );

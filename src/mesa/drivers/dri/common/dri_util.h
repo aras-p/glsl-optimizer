@@ -372,37 +372,19 @@ struct __DRIscreenPrivateRec {
     struct __DriverAPIRec DriverAPI;
 
     /**
-     * \name DDX version
      * DDX / 2D driver version information.
-     * \todo Replace these fields with a \c __DRIversionRec.
      */
-    /*@{*/
-    int ddxMajor;
-    int ddxMinor;
-    int ddxPatch;
-    /*@}*/
+    __DRIversion ddx_version;
 
     /**
-     * \name DRI version
      * DRI X extension version information.
-     * \todo Replace these fields with a \c __DRIversionRec.
      */
-    /*@{*/
-    int driMajor;
-    int driMinor;
-    int driPatch;
-    /*@}*/
+    __DRIversion dri_version;
 
     /**
-     * \name DRM version
      * DRM (kernel module) version information.
-     * \todo Replace these fields with a \c __DRIversionRec.
      */
-    /*@{*/
-    int drmMajor;
-    int drmMinor;
-    int drmPatch;
-    /*@}*/
+    __DRIversion drm_version;
 
     /**
      * ID used when the client sets the drawable lock.

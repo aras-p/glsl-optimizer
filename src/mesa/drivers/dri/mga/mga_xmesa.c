@@ -216,7 +216,7 @@ mgaInitDriver(__DRIscreenPrivate *sPriv)
    mgaScreen->sPriv = sPriv;
    sPriv->private = (void *)mgaScreen;
 
-   if (sPriv->drmMinor >= 1) {
+   if (sPriv->drm_version.minor >= 1) {
       int ret;
       drm_mga_getparam_t gp;
 
@@ -273,7 +273,7 @@ mgaInitDriver(__DRIscreenPrivate *sPriv)
     * there is a new, in-kernel mechanism for handling the wait.
     */
 
-   if (mgaScreen->sPriv->drmMinor < 2) {
+   if (mgaScreen->sPriv->drm_version.minor < 2) {
       mgaScreen->mmio.handle = serverInfo->registers.handle;
       mgaScreen->mmio.size = serverInfo->registers.size;
       if ( drmMap( sPriv->fd,

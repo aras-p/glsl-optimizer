@@ -395,13 +395,13 @@ radeonCreateScreen( __DRIscreenPrivate *sPriv )
 	 fprintf(stderr, "drm_radeon_getparam_t (RADEON_PARAM_IRQ_NR): %d\n", ret);
 	 return NULL;
       }
-      screen->drmSupportsCubeMapsR200 = (sPriv->drmMinor >= 7);
-      screen->drmSupportsBlendColor = (sPriv->drmMinor >= 11);
-      screen->drmSupportsTriPerf = (sPriv->drmMinor >= 16);
-      screen->drmSupportsFragShader = (sPriv->drmMinor >= 18);
-      screen->drmSupportsPointSprites = (sPriv->drmMinor >= 13);
-      screen->drmSupportsCubeMapsR100 = (sPriv->drmMinor >= 15);
-      screen->drmSupportsVertexProgram = (sPriv->drmMinor >= 25);
+      screen->drmSupportsCubeMapsR200 = (sPriv->drm_version.minor >= 7);
+      screen->drmSupportsBlendColor = (sPriv->drm_version.minor >= 11);
+      screen->drmSupportsTriPerf = (sPriv->drm_version.minor >= 16);
+      screen->drmSupportsFragShader = (sPriv->drm_version.minor >= 18);
+      screen->drmSupportsPointSprites = (sPriv->drm_version.minor >= 13);
+      screen->drmSupportsCubeMapsR100 = (sPriv->drm_version.minor >= 15);
+      screen->drmSupportsVertexProgram = (sPriv->drm_version.minor >= 25);
    }
 
    screen->mmio.handle = dri_priv->registerHandle;
@@ -666,7 +666,7 @@ radeonCreateScreen( __DRIscreenPrivate *sPriv )
       return NULL;
    }
    if ((screen->chip_family == CHIP_FAMILY_R350 || screen->chip_family == CHIP_FAMILY_R300) &&
-       sPriv->ddxMinor < 2) {
+       sPriv->ddx_version.minor < 2) {
       fprintf(stderr, "xf86-video-ati-6.6.2 or newer needed for Radeon 9500/9700/9800 cards.\n");
       return NULL;
    }
@@ -683,7 +683,7 @@ radeonCreateScreen( __DRIscreenPrivate *sPriv )
 
    screen->fbLocation	= ( INREG( RADEON_MC_FB_LOCATION ) & 0xffff ) << 16;
 
-   if ( sPriv->drmMinor >= 10 ) {
+   if ( sPriv->drm_version.minor >= 10 ) {
       drm_radeon_setparam_t sp;
 
       sp.param = RADEON_SETPARAM_FB_LOCATION;
@@ -701,7 +701,7 @@ radeonCreateScreen( __DRIscreenPrivate *sPriv )
    screen->depthPitch	= dri_priv->depthPitch;
 
    /* Check if ddx has set up a surface reg to cover depth buffer */
-   screen->depthHasSurface = ((sPriv->ddxMajor > 4) &&
+   screen->depthHasSurface = ((sPriv->ddx_version.major > 4) &&
       (screen->chip_flags & RADEON_CHIPSET_TCL));
 
    if ( dri_priv->textureSize == 0 ) {

@@ -316,7 +316,7 @@ static GLboolean intelInitDriver(__DRIscreenPrivate *sPriv)
       return GL_FALSE;
    }
 
-   intelScreen->drmMinor = sPriv->drmMinor;
+   intelScreen->drmMinor = sPriv->drm_version.minor;
 
    /* Determine if IRQs are active? */
    {
