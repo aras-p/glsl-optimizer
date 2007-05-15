@@ -1019,7 +1019,15 @@ static void queryExtensions(__GLXscreenConfigs *psc)
 
     extensions = psc->driScreen.getExtensions(&psc->driScreen);
     for (i = 0; extensions[i]; i++) {
-	/* Unknown extension, just ignore... */
+#ifdef __DRI_COPY_SUB_BUFFER
+	if (strcmp(extensions[i]->name, __DRI_COPY_SUB_BUFFER) == 0) {
+	    psc->copySubBuffer = (__DRIcopySubBufferExtension *) extensions[i];
+	    __glXScrEnableExtension(&psc->driScreen,
+				    "GLX_MESA_copy_sub_buffer");
+	    
+	}
+#endif
+	/* Ignore unknown extensions */
     }
 }
 

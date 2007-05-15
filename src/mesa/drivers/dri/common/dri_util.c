@@ -431,6 +431,10 @@ static void driCopySubBuffer(__DRIdrawable *drawable,
     dPriv->driScreenPriv->DriverAPI.CopySubBuffer(dPriv, x, y, w, h);
 }
 
+const __DRIcopySubBufferExtension driCopySubBufferExtension = {
+    { __DRI_COPY_SUB_BUFFER }, driCopySubBuffer
+};
+
 /**
  * This is called via __DRIscreenRec's createNewDrawable pointer.
  */
@@ -492,9 +496,6 @@ static void *driCreateNewDrawable(__DRIscreen *screen,
     pdraw->swapBuffersMSC = driSwapBuffersMSC;
     pdraw->frameTracking = NULL;
     pdraw->queryFrameTracking = driQueryFrameTracking;
-
-    if (driCompareGLXAPIVersion (20060314) >= 0)
-	pdraw->copySubBuffer = driCopySubBuffer;
 
     /* This special default value is replaced with the configured
      * default value when the drawable is first bound to a direct
@@ -624,13 +625,13 @@ driCreateNewContext(__DRIscreen *screen, const __GLcontextModes *modes,
 }
 /*@}*/
 
+
 static const __DRIextension **
 driGetExtensions(__DRIscreen *screen)
 {
     __DRIscreenPrivate *psp = screen->private;
-    static const __DRIextension *extensions[1];
 
-    return extensions;
+    return psp->extensions;
 }
 
 /*****************************************************************/
@@ -715,7 +716,7 @@ void * __DRI_CREATE_NEW_SCREEN( int scrn, __DRIscreen *psc,
 			     
 {
     __DRIscreenPrivate *psp;
-
+    static const __DRIextension emptyExtensionList[] = { NULL };
     dri_interface = interface;
     api_ver = internal_api_version;
 
@@ -747,6 +748,7 @@ void * __DRI_CREATE_NEW_SCREEN( int scrn, __DRIscreen *psc,
     psp->pDevPriv = frame_buffer->dev_priv;
     psp->fbBPP = psp->fbStride * 8 / frame_buffer->width;
 
+    psp->extensions = emptyExtensionList;
     psp->fd = fd;
     psp->myNum = scrn;
 

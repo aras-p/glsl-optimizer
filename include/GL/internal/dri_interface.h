@@ -58,6 +58,7 @@ typedef struct __DRIversionRec		__DRIversion;
 typedef struct __DRIinterfaceMethodsRec	__DRIinterfaceMethods;
 
 typedef struct __DRIextensionRec	__DRIextension;
+typedef struct __DRIcopySubBufferExtensionRec	__DRIcopySubBufferExtension;
 /*@}*/
 
 
@@ -71,6 +72,15 @@ typedef struct __DRIextensionRec	__DRIextension;
  */
 struct __DRIextensionRec {
     const char *name;
+};
+
+/**
+ * Used by drivers that implement the GLX_MESA_copy_sub_buffer extension.
+ */
+#define __DRI_COPY_SUB_BUFFER "DRI_CopySubBuffer"
+struct __DRIcopySubBufferExtensionRec {
+    __DRIextension base;
+    void (*copySubBuffer)(__DRIdrawable *drawable, int x, int y, int w, int h);
 };
 
 
@@ -481,14 +491,6 @@ struct __DRIdrawableRec {
      * \since Internal API version 20030317.
      */
     unsigned swap_interval;
-
-    /**
-     * Used by drivers that implement the GLX_MESA_copy_sub_buffer extension.
-     *
-     * \since Internal API version 20060314.
-     */
-    void (*copySubBuffer)(__DRIdrawable *drawable,
-			  int x, int y, int w, int h);
 };
 
 #endif

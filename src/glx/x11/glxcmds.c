@@ -2498,13 +2498,13 @@ static void __glXCopySubBufferMESA(Display *dpy, GLXDrawable drawable,
     INT32 *x_ptr, *y_ptr, *w_ptr, *h_ptr;
     CARD8 opcode;
 
-#ifdef GLX_DIRECT_RENDERING
+#ifdef __DRI_COPY_SUB_BUFFER
     int screen;
     __DRIdrawable *pdraw = GetDRIDrawable( dpy, drawable, & screen );
     if ( pdraw != NULL ) {
 	__GLXscreenConfigs * const psc = GetGLXScreenConfigs( dpy, screen );
-	if ( __glXExtensionBitIsEnabled( psc, MESA_copy_sub_buffer_bit ) ) {
-	    (*pdraw->copySubBuffer)(pdraw, x, y, width, height);
+	if (psc->copySubBuffer != NULL) {
+	    (*psc->copySubBuffer->copySubBuffer)(pdraw, x, y, width, height);
 	}
 
 	return;

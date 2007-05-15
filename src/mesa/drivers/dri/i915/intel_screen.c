@@ -419,9 +419,13 @@ intelUpdateScreenFromSAREA(intelScreenPrivate * intelScreen,
       intelPrintSAREA(sarea);
 }
 
+static const __DRIextension *intelExtensions[] = {
+    &driCopySubBufferExtension.base,
+    NULL
+};
 
-static GLboolean
-intelInitDriver(__DRIscreenPrivate * sPriv)
+
+static GLboolean intelInitDriver(__DRIscreenPrivate *sPriv)
 {
    intelScreenPrivate *intelScreen;
    I830DRIPtr gDRIPriv = (I830DRIPtr) sPriv->pDevPriv;
@@ -521,6 +525,8 @@ intelInitDriver(__DRIscreenPrivate * sPriv)
          return GL_FALSE;
       }
    }
+
+   sPriv->extensions = intelExtensions;
 
    if (glx_enable_extension != NULL) {
       (*glx_enable_extension) (sPriv->psc, "GLX_SGI_swap_control");

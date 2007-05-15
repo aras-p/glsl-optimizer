@@ -476,6 +476,11 @@ struct __GLXscreenConfigsRec {
     __glxHashTable *drawHash;
     Display *dpy;
     int scr;
+
+#ifdef __DRI_COPY_SUB_BUFFER
+    __DRIcopySubBufferExtension *copySubBuffer;
+#endif
+
 #endif
 
     /**

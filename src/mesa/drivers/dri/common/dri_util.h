@@ -74,6 +74,11 @@ typedef struct __DRIutilversionRec2    __DRIutilversion2;
 extern __GLcontextModes *__driDriverInitScreen(__DRIscreenPrivate *psp);
 
 /**
+ * Extensions.
+ */
+extern const __DRIcopySubBufferExtension driCopySubBufferExtension;
+
+/**
  * Used by DRI_VALIDATE_DRAWABLE_INFO
  */
 #define DRI_VALIDATE_DRAWABLE_INFO_ONCE(pDrawPriv)              \
@@ -461,8 +466,12 @@ struct __DRIscreenPrivateRec {
     /**
      * Pointer back to the \c __DRIscreen that contains this structure.
      */
-
     __DRIscreen *psc;
+
+    /**
+     * Extensions provided by this driver.
+     */
+    const __DRIextension **extensions;
 };
 
 

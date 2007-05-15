@@ -332,6 +332,10 @@ radeonFillInModes( unsigned pixel_bits, unsigned depth_bits,
     return modes;
 }
 
+static const __DRIextension *radeonExtensions[] = {
+    &driCopySubBufferExtension.base,
+    NULL
+};
 
 /* Create the device specific screen private data struct.
  */
@@ -731,6 +735,8 @@ radeonCreateScreen( __DRIscreenPrivate *sPriv )
 	 dri_priv->log2GARTTexGran;
    }
 
+   sPriv->extensions = radeonExtensions;
+
    if ( glx_enable_extension != NULL ) {
       if ( screen->irq != 0 ) {
 	 (*glx_enable_extension)( sPriv->psc, "GLX_SGI_swap_control" );
@@ -742,7 +748,6 @@ radeonCreateScreen( __DRIscreenPrivate *sPriv )
       if (IS_R200_CLASS(screen))
 	 (*glx_enable_extension)( sPriv->psc, "GLX_MESA_allocate_memory" );
 
-      (*glx_enable_extension)( sPriv->psc, "GLX_MESA_copy_sub_buffer" );
       (*glx_enable_extension)( sPriv->psc, "GLX_SGI_make_current_read" );
    }
 
