@@ -624,6 +624,14 @@ driCreateNewContext(__DRIscreen *screen, const __GLcontextModes *modes,
 }
 /*@}*/
 
+static const __DRIextension **
+driGetExtensions(__DRIscreen *screen)
+{
+    __DRIscreenPrivate *psp = screen->private;
+    static const __DRIextension *extensions[1];
+
+    return extensions;
+}
 
 /*****************************************************************/
 /** \name Screen handling functions                              */
@@ -750,6 +758,7 @@ void * __DRI_CREATE_NEW_SCREEN( int scrn, __DRIscreen *psc,
     psp->dummyContextPriv.driScreenPriv = NULL;
 
     psc->destroyScreen     = driDestroyScreen;
+    psc->getExtensions     = driGetExtensions;
     psc->createNewDrawable = driCreateNewDrawable;
     psc->getMSC            = driGetMSC;
     psc->createNewContext  = driCreateNewContext;

@@ -56,7 +56,22 @@ typedef struct __DRIdriverRec		__DRIdriver;
 typedef struct __DRIframebufferRec	__DRIframebuffer;
 typedef struct __DRIversionRec		__DRIversion;
 typedef struct __DRIinterfaceMethodsRec	__DRIinterfaceMethods;
+
+typedef struct __DRIextensionRec	__DRIextension;
 /*@}*/
+
+
+/**
+ * Extension struct.  Drivers 'inherit' from this struct by embedding
+ * it as the first element in the extension struct.  The
+ * __DRIscreen::getExtensions entry point will return a list of these
+ * structs and the loader can use the extensions it knows about by
+ * casting it to a more specific extension and optionally advertising
+ * the GLX extension.  See below for examples.
+ */
+struct __DRIextensionRec {
+    const char *name;
+};
 
 
 /**
@@ -273,6 +288,11 @@ struct __DRIscreenRec {
      * Method to destroy the private DRI screen data.
      */
     void (*destroyScreen)(__DRIscreen *screen);
+
+    /**
+     * Method to get screen extensions.
+     */
+    const __DRIextension **(*getExtensions)(__DRIscreen *screen);
 
     /**
      * Method to create the private DRI drawable data and initialize the

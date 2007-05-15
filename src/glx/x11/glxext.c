@@ -1011,6 +1011,18 @@ CallCreateNewScreen(Display *dpy, int scrn, __GLXscreenConfigs *psc,
 
     return psp;
 }
+
+static void queryExtensions(__GLXscreenConfigs *psc)
+{
+    const __DRIextension **extensions;
+    int i;
+
+    extensions = psc->driScreen.getExtensions(&psc->driScreen);
+    for (i = 0; extensions[i]; i++) {
+	/* Unknown extension, just ignore... */
+    }
+}
+
 #endif /* GLX_DIRECT_RENDERING */
 
 
@@ -1205,6 +1217,8 @@ static Bool AllocAndFetchScreenConfigs(Display *dpy, __GLXdisplayPrivate *priv)
 		    CallCreateNewScreen(dpy, i, psc,
 					& priv->driDisplay,
 					priv->driDisplay.createNewScreen[i] );
+		if (psc->driScreen.private != NULL)
+		    queryExtensions(psc);
 	    }
 	}
 #endif
