@@ -481,6 +481,10 @@ struct __GLXscreenConfigsRec {
     __DRIcopySubBufferExtension *copySubBuffer;
 #endif
 
+#ifdef __DRI_SWAP_CONTROL
+    __DRIswapControlExtension *swapControl;
+#endif
+
 #endif
 
     /**

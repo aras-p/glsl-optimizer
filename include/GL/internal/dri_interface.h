@@ -59,6 +59,7 @@ typedef struct __DRIinterfaceMethodsRec	__DRIinterfaceMethods;
 
 typedef struct __DRIextensionRec	__DRIextension;
 typedef struct __DRIcopySubBufferExtensionRec	__DRIcopySubBufferExtension;
+typedef struct __DRIswapControlExtensionRec	__DRIswapControlExtension;
 /*@}*/
 
 
@@ -83,6 +84,16 @@ struct __DRIcopySubBufferExtensionRec {
     void (*copySubBuffer)(__DRIdrawable *drawable, int x, int y, int w, int h);
 };
 
+/**
+ * Used by drivers that implement the GLX_SGI_swap_control or
+ * GLX_MESA_swap_control extension.
+ */
+#define __DRI_SWAP_CONTROL "DRI_SwapControl"
+struct __DRIswapControlExtensionRec {
+    __DRIextension base;
+    void (*setSwapInterval)(__DRIdrawable *drawable, unsigned int inteval);
+    unsigned int (*getSwapInterval)(__DRIdrawable *drawable);
+};
 
 /**
  * \name Functions provided by the driver loader.
@@ -483,14 +494,6 @@ struct __DRIdrawableRec {
     int (*queryFrameTracking)(__DRIdrawable *drawable,
 			      int64_t * sbc, int64_t * missedFrames,
 			      float * lastMissedUsage, float * usage);
-
-    /**
-     * Used by drivers that implement the GLX_SGI_swap_control or
-     * GLX_MESA_swap_control extension.
-     *
-     * \since Internal API version 20030317.
-     */
-    unsigned swap_interval;
 };
 
 #endif

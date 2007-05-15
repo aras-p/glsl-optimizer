@@ -77,6 +77,7 @@ extern __GLcontextModes *__driDriverInitScreen(__DRIscreenPrivate *psp);
  * Extensions.
  */
 extern const __DRIcopySubBufferExtension driCopySubBufferExtension;
+extern const __DRIswapControlExtension driSwapControlExtension;
 
 /**
  * Used by DRI_VALIDATE_DRAWABLE_INFO
@@ -327,6 +328,12 @@ struct __DRIdrawablePrivateRec {
      * Called via glXSwapBuffers().
      */
     void (*swapBuffers)( __DRIdrawablePrivate *dPriv );
+
+    /**
+     * Controls swap interval as used by GLX_SGI_swap_control and
+     * GLX_MESA_swap_control.
+     */
+    unsigned int swap_interval;
 };
 
 /**

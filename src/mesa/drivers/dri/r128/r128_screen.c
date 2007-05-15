@@ -100,6 +100,7 @@ r128CreateScreen( __DRIscreenPrivate *sPriv )
    R128DRIPtr r128DRIPriv = (R128DRIPtr)sPriv->pDevPriv;
    PFNGLXSCRENABLEEXTENSIONPROC glx_enable_extension =
      (PFNGLXSCRENABLEEXTENSIONPROC) (*dri_interface->getProcAddress("glxEnableExtension"));
+   int i;
 
    if (sPriv->devPrivSize != sizeof(R128DRIRec)) {
       fprintf(stderr,"\nERROR!  sizeof(R128DRIRec) does not match passed size from device driver\n");
@@ -225,15 +226,17 @@ r128CreateScreen( __DRIscreenPrivate *sPriv )
 
    r128Screen->driScreen = sPriv;
 
+   i = 0;
    if ( glx_enable_extension != NULL ) {
       if ( r128Screen->irq != 0 ) {
-	 (*glx_enable_extension)( sPriv->psc, "GLX_SGI_swap_control" );
+	  r128Screen->extensions[i++] = &driSwapControlExtension.base;
 	 (*glx_enable_extension)( sPriv->psc, "GLX_SGI_video_sync" );
-	 (*glx_enable_extension)( sPriv->psc, "GLX_MESA_swap_control" );
       }
 
       (*glx_enable_extension)( sPriv->psc, "GLX_MESA_swap_frame_usage" );
    }
+   r128Screen->extensions[i++] = NULL;
+   sPriv->extensions = r128Screen->extensions;
 
    return r128Screen;
 }

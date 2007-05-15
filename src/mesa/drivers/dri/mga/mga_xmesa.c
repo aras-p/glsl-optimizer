@@ -193,6 +193,11 @@ mgaFillInModes( unsigned pixel_bits, unsigned depth_bits,
 }
 
 
+static const __DRIextension *mgaExtensions[] = {
+    &driSwapControlExtension.base,
+    NULL
+};
+
 static GLboolean
 mgaInitDriver(__DRIscreenPrivate *sPriv)
 {
@@ -234,11 +239,11 @@ mgaInitDriver(__DRIscreenPrivate *sPriv)
       }
    }
 
+   sPriv->extensions = mgaExtensions;
+
    if ( glx_enable_extension != NULL ) {
-      (*glx_enable_extension)( sPriv->psc, "GLX_MESA_swap_control" );
       (*glx_enable_extension)( sPriv->psc, "GLX_MESA_swap_frame_usage" );
       (*glx_enable_extension)( sPriv->psc, "GLX_SGI_make_current_read" );
-      (*glx_enable_extension)( sPriv->psc, "GLX_SGI_swap_control" );
       (*glx_enable_extension)( sPriv->psc, "GLX_SGI_video_sync" );
    }
 

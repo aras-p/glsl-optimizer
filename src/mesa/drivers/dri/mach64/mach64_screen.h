@@ -73,6 +73,8 @@ typedef struct {
    __DRIscreenPrivate *driScreen;
 
    driOptionCache optionCache;
+
+   const __DRIextension *extensions[2];
 } mach64ScreenRec, *mach64ScreenPtr;
 
 #endif /* __MACH64_SCREEN_H__ */

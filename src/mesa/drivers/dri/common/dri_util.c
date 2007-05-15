@@ -435,6 +435,27 @@ const __DRIcopySubBufferExtension driCopySubBufferExtension = {
     { __DRI_COPY_SUB_BUFFER }, driCopySubBuffer
 };
 
+static void driSetSwapInterval(__DRIdrawable *drawable, unsigned int interval)
+{
+    __DRIdrawablePrivate *dpriv = drawable->private;
+
+    dpriv->swap_interval = interval;
+}
+
+static unsigned int driGetSwapInterval(__DRIdrawable *drawable)
+{
+    __DRIdrawablePrivate *dpriv = drawable->private;
+
+    return dpriv->swap_interval;
+}
+
+const __DRIswapControlExtension driSwapControlExtension = {
+    { __DRI_SWAP_CONTROL },
+    driSetSwapInterval,
+    driGetSwapInterval
+};
+
+
 /**
  * This is called via __DRIscreenRec's createNewDrawable pointer.
  */
@@ -501,7 +522,7 @@ static void *driCreateNewDrawable(__DRIscreen *screen,
      * default value when the drawable is first bound to a direct
      * rendering context. 
      */
-    pdraw->swap_interval = (unsigned)-1;
+    pdp->swap_interval = (unsigned)-1;
 
     pdp->swapBuffers = psp->DriverAPI.SwapBuffers;
 
@@ -716,7 +737,7 @@ void * __DRI_CREATE_NEW_SCREEN( int scrn, __DRIscreen *psc,
 			     
 {
     __DRIscreenPrivate *psp;
-    static const __DRIextension emptyExtensionList[] = { NULL };
+    static const __DRIextension *emptyExtensionList[] = { NULL };
     dri_interface = interface;
     api_ver = internal_api_version;
 
@@ -868,8 +889,7 @@ driCalculateSwapUsage( __DRIdrawablePrivate *dPriv, int64_t last_swap_ust,
 
 
    if ( (*dri_interface->getMSCRate)(dPriv->pdraw, &n, &d) ) {
-      interval = (dPriv->pdraw->swap_interval != 0)
-	  ? dPriv->pdraw->swap_interval : 1;
+      interval = (dPriv->swap_interval != 0) ? dPriv->swap_interval : 1;
 
 
       /* We want to calculate

@@ -1731,16 +1731,15 @@ static int __glXSwapIntervalSGI(int interval)
       return GLX_BAD_VALUE;
    }
 
-#ifdef GLX_DIRECT_RENDERING
+#ifdef __DRI_SWAP_CONTROL
    if ( gc->isDirect ) {
        __GLXscreenConfigs * const psc = GetGLXScreenConfigs( gc->currentDpy,
 							     gc->screen );
        __DRIdrawable * const pdraw = GetDRIDrawable( gc->currentDpy,
 						     gc->currentDrawable,
 						     NULL );
-       if ( __glXExtensionBitIsEnabled( psc, SGI_swap_control_bit )
-	    && (pdraw != NULL) ) {
-	   pdraw->swap_interval = interval;
+       if (psc->swapControl != NULL && pdraw != NULL) {
+	   psc->swapControl->setSwapInterval(pdraw, interval);
 	   return 0;
        }
        else {
@@ -1778,7 +1777,7 @@ static int __glXSwapIntervalSGI(int interval)
 */
 static int __glXSwapIntervalMESA(unsigned int interval)
 {
-#ifdef GLX_DIRECT_RENDERING
+#ifdef __DRI_SWAP_CONTROL
    GLXContext gc = __glXGetCurrentContext();
 
    if ( interval < 0 ) {
@@ -1789,12 +1788,11 @@ static int __glXSwapIntervalMESA(unsigned int interval)
       __GLXscreenConfigs * const psc = GetGLXScreenConfigs( gc->currentDpy,
 							    gc->screen );
       
-      if ( (psc != NULL) && (psc->driScreen.private != NULL)
-	   && __glXExtensionBitIsEnabled( psc, MESA_swap_control_bit ) ) {
+      if ( (psc != NULL) && (psc->driScreen.private != NULL) ) {
 	 __DRIdrawable * const pdraw = 
 	     GetDRIDrawable(gc->currentDpy, gc->currentDrawable, NULL);
-	 if ( pdraw != NULL ) {
-	    pdraw->swap_interval = interval;
+	 if (psc->swapControl != NULL && pdraw != NULL) {
+	    psc->swapControl->setSwapInterval(pdraw, interval);
 	    return 0;
 	 }
       }
@@ -1809,19 +1807,18 @@ static int __glXSwapIntervalMESA(unsigned int interval)
 
 static int __glXGetSwapIntervalMESA(void)
 {
-#ifdef GLX_DIRECT_RENDERING
+#ifdef __DRI_SWAP_CONTROL
    GLXContext gc = __glXGetCurrentContext();
 
    if ( (gc != NULL) && gc->isDirect ) {
       __GLXscreenConfigs * const psc = GetGLXScreenConfigs( gc->currentDpy,
 							    gc->screen );
       
-      if ( (psc != NULL) && (psc->driScreen.private != NULL)
-	   && __glXExtensionBitIsEnabled( psc, MESA_swap_control_bit ) ) {
+      if ( (psc != NULL) && (psc->driScreen.private != NULL) ) {
 	 __DRIdrawable * const pdraw = 
 	     GetDRIDrawable(gc->currentDpy, gc->currentDrawable, NULL);
-	 if ( pdraw != NULL ) {
-	    return pdraw->swap_interval;
+	 if (psc->swapControl != NULL && pdraw != NULL) {
+	    return psc->swapControl->getSwapInterval(pdraw);
 	 }
       }
    }

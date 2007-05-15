@@ -332,11 +332,6 @@ radeonFillInModes( unsigned pixel_bits, unsigned depth_bits,
     return modes;
 }
 
-static const __DRIextension *radeonExtensions[] = {
-    &driCopySubBufferExtension.base,
-    NULL
-};
-
 /* Create the device specific screen private data struct.
  */
 static radeonScreenPtr
@@ -347,6 +342,7 @@ radeonCreateScreen( __DRIscreenPrivate *sPriv )
    unsigned char *RADEONMMIO;
    PFNGLXSCRENABLEEXTENSIONPROC glx_enable_extension =
      (PFNGLXSCRENABLEEXTENSIONPROC) (*dri_interface->getProcAddress("glxEnableExtension"));
+   int i;
 
    if (sPriv->devPrivSize != sizeof(RADEONDRIRec)) {
       fprintf(stderr,"\nERROR!  sizeof(RADEONDRIRec) does not match passed size from device driver\n");
@@ -735,13 +731,13 @@ radeonCreateScreen( __DRIscreenPrivate *sPriv )
 	 dri_priv->log2GARTTexGran;
    }
 
-   sPriv->extensions = radeonExtensions;
+   i = 0;
+   screen->extensions[i++] = &driCopySubBufferExtension.base;
 
    if ( glx_enable_extension != NULL ) {
       if ( screen->irq != 0 ) {
-	 (*glx_enable_extension)( sPriv->psc, "GLX_SGI_swap_control" );
+	  screen->extensions[i++] = &driSwapControlExtension.base;
 	 (*glx_enable_extension)( sPriv->psc, "GLX_SGI_video_sync" );
-	 (*glx_enable_extension)( sPriv->psc, "GLX_MESA_swap_control" );
       }
 
       (*glx_enable_extension)( sPriv->psc, "GLX_MESA_swap_frame_usage" );
@@ -750,6 +746,8 @@ radeonCreateScreen( __DRIscreenPrivate *sPriv )
 
       (*glx_enable_extension)( sPriv->psc, "GLX_SGI_make_current_read" );
    }
+   screen->extensions[i++] = NULL;
+   sPriv->extensions = screen->extensions;
 
 #if RADEON_COMMON && defined(RADEON_COMMON_FOR_R200)
    if (IS_R200_CLASS(screen)) {

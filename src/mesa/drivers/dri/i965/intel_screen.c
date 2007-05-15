@@ -266,6 +266,7 @@ intelUpdateScreenFromSAREA(intelScreenPrivate *intelScreen,
 
 static const __DRIextension *intelExtensions[] = {
     &driCopySubBufferExtension.base,
+    &driSwapControlExtension.base,
     NULL
 };
 
@@ -357,9 +358,7 @@ static GLboolean intelInitDriver(__DRIscreenPrivate *sPriv)
    sPriv->extensions = intelExtensions;
 
    if (glx_enable_extension != NULL) {
-      (*glx_enable_extension)( sPriv->psc, "GLX_SGI_swap_control" );
       (*glx_enable_extension)( sPriv->psc, "GLX_SGI_video_sync" );
-      (*glx_enable_extension)( sPriv->psc, "GLX_MESA_swap_control" );
       (*glx_enable_extension)( sPriv->psc, "GLX_MESA_swap_frame_usage" );
       (*glx_enable_extension)( sPriv->psc, "GLX_SGI_make_current_read" );
    }

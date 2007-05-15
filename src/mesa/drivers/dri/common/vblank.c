@@ -255,13 +255,13 @@ static int do_wait( drmVBlank * vbl, GLuint * vbl_seq, int fd )
 void driDrawableInitVBlank( __DRIdrawablePrivate *priv, GLuint flags,
 			    GLuint *vbl_seq )
 {
-   if ( priv->pdraw->swap_interval == (unsigned)-1 ) {
+   if ( priv->swap_interval == (unsigned)-1 ) {
       /* Get current vertical blank sequence */
       drmVBlank vbl = { .request={ .type = DRM_VBLANK_RELATIVE, .sequence = 0 } };
       do_wait( &vbl, vbl_seq, priv->driScreenPriv->fd );
 
-      priv->pdraw->swap_interval = (flags & (VBLANK_FLAG_THROTTLE |
-					     VBLANK_FLAG_SYNC)) != 0 ? 1 : 0;
+      priv->swap_interval = (flags & (VBLANK_FLAG_THROTTLE |
+				      VBLANK_FLAG_SYNC)) != 0 ? 1 : 0;
    }
 }
 
@@ -277,9 +277,9 @@ driGetVBlankInterval( const  __DRIdrawablePrivate *priv, GLuint flags )
    if ( (flags & VBLANK_FLAG_INTERVAL) != 0 ) {
       /* this must have been initialized when the drawable was first bound
        * to a direct rendering context. */
-      assert ( priv->pdraw->swap_interval != (unsigned)-1 );
+      assert ( priv->swap_interval != (unsigned)-1 );
 
-      return priv->pdraw->swap_interval;
+      return priv->swap_interval;
    }
    else if ( (flags & (VBLANK_FLAG_THROTTLE | VBLANK_FLAG_SYNC)) != 0 ) {
       return 1;

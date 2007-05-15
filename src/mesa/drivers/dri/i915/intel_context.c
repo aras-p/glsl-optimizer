@@ -613,7 +613,7 @@ intelMakeCurrent(__DRIcontextPrivate * driContextPriv,
       if (intel->ctx.DrawBuffer == &intel_fb->Base) {
 
 	 if (intel->driDrawable != driDrawPriv) {
-	    if (driDrawPriv->pdraw->swap_interval == (unsigned)-1) {
+	    if (driDrawPriv->swap_interval == (unsigned)-1) {
 	       int i;
 
 	       intel_fb->vblank_flags = (intel->intelScreen->irq_active != 0)

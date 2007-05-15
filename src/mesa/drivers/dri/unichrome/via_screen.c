@@ -100,6 +100,7 @@ viaInitDriver(__DRIscreenPrivate *sPriv)
     VIADRIPtr gDRIPriv = (VIADRIPtr)sPriv->pDevPriv;
     PFNGLXSCRENABLEEXTENSIONPROC glx_enable_extension =
       (PFNGLXSCRENABLEEXTENSIONPROC) (*dri_interface->getProcAddress("glxEnableExtension"));
+    int i;
 
     if (sPriv->devPrivSize != sizeof(VIADRIRec)) {
       fprintf(stderr,"\nERROR!  sizeof(VIADRIRec) does not match passed size from device driver\n");
@@ -174,16 +175,18 @@ viaInitDriver(__DRIscreenPrivate *sPriv)
 
     viaScreen->sareaPrivOffset = gDRIPriv->sarea_priv_offset;
 
+    i = 0;
     if ( glx_enable_extension != NULL ) {
        if ( viaScreen->irqEnabled ) {
-	  (*glx_enable_extension)( sPriv->psc, "GLX_SGI_swap_control" );
+	  viaScreen->extensions[i++] = &driSwapControlExtension.base;
 	  (*glx_enable_extension)( sPriv->psc, "GLX_SGI_video_sync" );
-	  (*glx_enable_extension)( sPriv->psc, "GLX_MESA_swap_control" );
        }
 
        (*glx_enable_extension)( sPriv->psc, "GLX_SGI_make_current_read" );
        (*glx_enable_extension)( sPriv->psc, "GLX_MESA_swap_frame_usage" );
     }
+    viaScreen->extensions[i++] = NULL;
+    sPriv->extensions = viaScreen->extensions;
 
     return GL_TRUE;
 }
