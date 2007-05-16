@@ -1039,6 +1039,17 @@ static void queryExtensions(__GLXscreenConfigs *psc)
 	}
 #endif
 
+#ifdef __DRI_ALLOCATE
+	if (strcmp(extensions[i]->name, __DRI_ALLOCATE) == 0) {
+	    psc->allocate = (__DRIallocateExtension *) extensions[i];
+	    __glXScrEnableExtension(&psc->driScreen,
+				    "GLX_SGI_swap_control");
+	    __glXScrEnableExtension(&psc->driScreen,
+				    "GLX_MESA_swap_control");
+	    
+	}
+#endif
+
 	/* Ignore unknown extensions */
     }
 }

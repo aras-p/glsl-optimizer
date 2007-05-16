@@ -2371,16 +2371,14 @@ PUBLIC void *glXAllocateMemoryMESA(Display *dpy, int scrn,
 				   size_t size, float readFreq,
 				   float writeFreq, float priority)
 {
-#ifdef GLX_DIRECT_RENDERING
+#ifdef __DRI_ALLOCATE
    __GLXscreenConfigs * const psc = GetGLXScreenConfigs( dpy, scrn );
 
-   if ( __glXExtensionBitIsEnabled( psc, MESA_allocate_memory_bit ) ) {
-      if (psc && psc->driScreen.private && psc->driScreen.allocateMemory) {
-	 return (*psc->driScreen.allocateMemory)( &psc->driScreen, size,
-						  readFreq, writeFreq,
-						  priority );
-      }
-   }
+   if (psc && psc->allocate)
+       return (*psc->allocate->allocateMemory)( &psc->driScreen, size,
+						readFreq, writeFreq,
+						priority );
+
 #else
    (void) dpy;
    (void) scrn;
@@ -2396,14 +2394,12 @@ PUBLIC void *glXAllocateMemoryMESA(Display *dpy, int scrn,
 
 PUBLIC void glXFreeMemoryMESA(Display *dpy, int scrn, void *pointer)
 {
-#ifdef GLX_DIRECT_RENDERING
+#ifdef __DRI_ALLOCATE
    __GLXscreenConfigs * const psc = GetGLXScreenConfigs( dpy, scrn );
 
-   if ( __glXExtensionBitIsEnabled( psc, MESA_allocate_memory_bit ) ) {
-      if (psc && psc->driScreen.private && psc->driScreen.freeMemory) {
-	 (*psc->driScreen.freeMemory)( &psc->driScreen, pointer );
-      }
-   }
+   if (psc && psc->allocate)
+	 (*psc->allocate->freeMemory)( &psc->driScreen, pointer );
+
 #else
    (void) dpy;
    (void) scrn;
@@ -2415,14 +2411,12 @@ PUBLIC void glXFreeMemoryMESA(Display *dpy, int scrn, void *pointer)
 PUBLIC GLuint glXGetMemoryOffsetMESA( Display *dpy, int scrn,
 				      const void *pointer )
 {
-#ifdef GLX_DIRECT_RENDERING
+#ifdef __DRI_ALLOCATE
    __GLXscreenConfigs * const psc = GetGLXScreenConfigs( dpy, scrn );
 
-   if ( __glXExtensionBitIsEnabled( psc, MESA_allocate_memory_bit ) ) {
-      if (psc && psc->driScreen.private && psc->driScreen.memoryOffset) {
-	 return (*psc->driScreen.memoryOffset)( &psc->driScreen, pointer );
-      }
-   }
+   if (psc && psc->allocate)
+       return (*psc->allocate->memoryOffset)( &psc->driScreen, pointer );
+
 #else
    (void) dpy;
    (void) scrn;

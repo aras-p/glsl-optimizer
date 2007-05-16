@@ -332,6 +332,17 @@ radeonFillInModes( unsigned pixel_bits, unsigned depth_bits,
     return modes;
 }
 
+#if RADEON_COMMON && defined(RADEON_COMMON_FOR_R200)
+
+static const __DRIallocateExtension r200AllocateExtension = {
+    { __DRI_ALLOCATE },
+    r200AllocateMemoryMESA,
+    r200FreeMemoryMESA,
+    r200GetMemoryOffsetMESA
+};
+
+#endif
+
 /* Create the device specific screen private data struct.
  */
 static radeonScreenPtr
@@ -741,21 +752,16 @@ radeonCreateScreen( __DRIscreenPrivate *sPriv )
       }
 
       (*glx_enable_extension)( sPriv->psc, "GLX_MESA_swap_frame_usage" );
-      if (IS_R200_CLASS(screen))
-	 (*glx_enable_extension)( sPriv->psc, "GLX_MESA_allocate_memory" );
-
       (*glx_enable_extension)( sPriv->psc, "GLX_SGI_make_current_read" );
    }
-   screen->extensions[i++] = NULL;
-   sPriv->extensions = screen->extensions;
 
 #if RADEON_COMMON && defined(RADEON_COMMON_FOR_R200)
-   if (IS_R200_CLASS(screen)) {
-      sPriv->psc->allocateMemory = (void *) r200AllocateMemoryMESA;
-      sPriv->psc->freeMemory     = (void *) r200FreeMemoryMESA;
-      sPriv->psc->memoryOffset   = (void *) r200GetMemoryOffsetMESA;
-   }
+   if (IS_R200_CLASS(screen))
+       screen->extensions[i++] = &r200AllocateExtension.base;
 #endif
+
+   screen->extensions[i++] = NULL;
+   sPriv->extensions = screen->extensions;
 
    screen->driScreen = sPriv;
    screen->sarea_priv_offset = dri_priv->sarea_priv_offset;

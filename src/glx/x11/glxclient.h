@@ -485,6 +485,10 @@ struct __GLXscreenConfigsRec {
     __DRIswapControlExtension *swapControl;
 #endif
 
+#ifdef __DRI_ALLOCATE
+    __DRIallocateExtension *allocate;
+#endif
+
 #endif
 
     /**

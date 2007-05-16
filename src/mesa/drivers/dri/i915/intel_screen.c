@@ -419,9 +419,17 @@ intelUpdateScreenFromSAREA(intelScreenPrivate * intelScreen,
       intelPrintSAREA(sarea);
 }
 
+static const __DRIallocateExtension intelAllocateExtension = {
+    { __DRI_ALLOCATE },
+    intelAllocateMemoryMESA,
+    intelFreeMemoryMESA,
+    intelGetMemoryOffsetMESA
+};
+
 static const __DRIextension *intelExtensions[] = {
     &driCopySubBufferExtension.base,
     &driSwapControlExtension.base,
+    &intelAllocateExtension.base,
     NULL
 };
 
