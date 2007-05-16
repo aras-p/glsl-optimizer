@@ -1051,10 +1051,23 @@ static void queryExtensions(__GLXscreenConfigs *psc)
 	if (strcmp(extensions[i]->name, __DRI_FRAME_TRACKING) == 0) {
 	    psc->frameTracking = (__DRIframeTrackingExtension *) extensions[i];
 	    __glXScrEnableExtension(&psc->driScreen,
-				    "GLX_MESA_swap_frame_usage");	    
+				    "GLX_MESA_swap_frame_usage");
 	}
 #endif
 
+#ifdef __DRI_MEDIA_STREAM_COUNTER
+	if (strcmp(extensions[i]->name, __DRI_MEDIA_STREAM_COUNTER) == 0) {
+	    psc->msc = (__DRImediaStreamCounterExtension *) extensions[i];
+	    __glXScrEnableExtension(&psc->driScreen,
+				    "GLX_SGI_video_sync");
+	}
+#endif
+
+#ifdef __DRI_SWAP_BUFFER_COUNTER
+	/* No driver supports this at this time and the extension is
+	 * not defined in dri_interface.h.  Will enable
+	 * GLX_OML_sync_control if implemented. */
+#endif
 	/* Ignore unknown extensions */
     }
 }

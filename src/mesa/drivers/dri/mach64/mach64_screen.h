@@ -74,7 +74,7 @@ typedef struct {
 
    driOptionCache optionCache;
 
-   const __DRIextension *extensions[3];
+   const __DRIextension *extensions[4];
 } mach64ScreenRec, *mach64ScreenPtr;
 
 #endif /* __MACH64_SCREEN_H__ */

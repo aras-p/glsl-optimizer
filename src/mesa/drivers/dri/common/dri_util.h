@@ -79,6 +79,7 @@ extern __GLcontextModes *__driDriverInitScreen(__DRIscreenPrivate *psp);
 extern const __DRIcopySubBufferExtension driCopySubBufferExtension;
 extern const __DRIswapControlExtension driSwapControlExtension;
 extern const __DRIframeTrackingExtension driFrameTrackingExtension;
+extern const __DRImediaStreamCounterExtension driMediaStreamCounterExtension;
 
 /**
  * Used by DRI_VALIDATE_DRAWABLE_INFO

@@ -98,8 +98,6 @@ r128CreateScreen( __DRIscreenPrivate *sPriv )
 {
    r128ScreenPtr r128Screen;
    R128DRIPtr r128DRIPriv = (R128DRIPtr)sPriv->pDevPriv;
-   PFNGLXSCRENABLEEXTENSIONPROC glx_enable_extension =
-     (PFNGLXSCRENABLEEXTENSIONPROC) (*dri_interface->getProcAddress("glxEnableExtension"));
    int i;
 
    if (sPriv->devPrivSize != sizeof(R128DRIRec)) {
@@ -228,11 +226,9 @@ r128CreateScreen( __DRIscreenPrivate *sPriv )
 
    i = 0;
    r128Screen->extensions[i++] = &driFrameTrackingExtension.base;
-   if ( glx_enable_extension != NULL ) {
-      if ( r128Screen->irq != 0 ) {
-	  r128Screen->extensions[i++] = &driSwapControlExtension.base;
-	 (*glx_enable_extension)( sPriv->psc, "GLX_SGI_video_sync" );
-      }
+   if ( r128Screen->irq != 0 ) {
+       r128Screen->extensions[i++] = &driSwapControlExtension.base;
+       r128Screen->extensions[i++] = &driMediaStreamCounterExtension.base;
    }
    r128Screen->extensions[i++] = NULL;
    sPriv->extensions = r128Screen->extensions;

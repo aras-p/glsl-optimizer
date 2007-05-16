@@ -208,8 +208,6 @@ mach64CreateScreen( __DRIscreenPrivate *sPriv )
 {
    mach64ScreenPtr mach64Screen;
    ATIDRIPtr serverInfo = (ATIDRIPtr)sPriv->pDevPriv;
-   PFNGLXSCRENABLEEXTENSIONPROC glx_enable_extension =
-     (PFNGLXSCRENABLEEXTENSIONPROC) (*dri_interface->getProcAddress("glxEnableExtension"));
    int i;
 
    if (sPriv->devPrivSize != sizeof(ATIDRIRec)) {
@@ -321,12 +319,9 @@ mach64CreateScreen( __DRIscreenPrivate *sPriv )
 
    i = 0;
    mach64Screen->extensions[i++] = &driFrameTrackingExtension.base;
-   if ( glx_enable_extension != NULL ) {
-      if ( mach64Screen->irq != 0 ) {
-	 mach64Screen->extensions[i++] = &driSwapControlExtension.base;
-
-	 (*glx_enable_extension)( sPriv->psc, "GLX_SGI_video_sync" );
-      }
+   if ( mach64Screen->irq != 0 ) {
+      mach64Screen->extensions[i++] = &driSwapControlExtension.base;
+      mach64Screen->extensions[i++] = &driMediaStreamCounterExtension.base;
    }
    mach64Screen->extensions[i++] = NULL;
    sPriv->extensions = mach64Screen->extensions;

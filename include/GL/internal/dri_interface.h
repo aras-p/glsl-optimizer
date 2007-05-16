@@ -62,6 +62,7 @@ typedef struct __DRIcopySubBufferExtensionRec	__DRIcopySubBufferExtension;
 typedef struct __DRIswapControlExtensionRec	__DRIswapControlExtension;
 typedef struct __DRIallocateExtensionRec	__DRIallocateExtension;
 typedef struct __DRIframeTrackingExtensionRec	__DRIframeTrackingExtension;
+typedef struct __DRImediaStreamCounterExtensionRec	__DRImediaStreamCounterExtension;
 /*@}*/
 
 
@@ -136,6 +137,32 @@ struct __DRIframeTrackingExtensionRec {
 			      int64_t * sbc, int64_t * missedFrames,
 			      float * lastMissedUsage, float * usage);
 };
+
+
+/**
+ * Used by drivers that implement the GLX_SGI_video_sync extension.
+ */
+#define __DRI_MEDIA_STREAM_COUNTER "DRI_MediaStreamCounter"
+struct __DRImediaStreamCounterExtensionRec {
+    __DRIextension base;
+
+    /**
+     * Get the number of vertical refreshes since some point in time before
+     * this function was first called (i.e., system start up).
+     */
+    int (*getMSC)(__DRIscreen *screen, int64_t *msc);
+
+    /**
+     * Wait for the MSC to equal target_msc, or, if that has already passed,
+     * the next time (MSC % divisor) is equal to remainder.  If divisor is
+     * zero, the function will return as soon as MSC is greater than or equal
+     * to target_msc.
+     */
+    int (*waitForMSC)(__DRIdrawable *drawable,
+		      int64_t target_msc, int64_t divisor, int64_t remainder,
+		      int64_t * msc, int64_t * sbc);
+};
+
 
 /**
  * \name Functions provided by the driver loader.
@@ -375,14 +402,6 @@ struct __DRIscreenRec {
     void *private;
 
     /**
-     * Get the number of vertical refreshes since some point in time before
-     * this function was first called (i.e., system start up).
-     * 
-     * \since Internal API version 20030317.
-     */
-    int (*getMSC)(__DRIscreen *screen, int64_t *msc);
-
-    /**
      * Method to create the private DRI context data and initialize the
      * context dependent methods.
      *
@@ -464,47 +483,6 @@ struct __DRIdrawableRec {
      * screen used to create this drawable.  Never dereferenced in libGL.
      */
     void *private;
-
-    /**
-     * Get the number of completed swap buffers for this drawable.
-     *
-     * \since Internal API version 20030317.
-     */
-    int (*getSBC)(__DRIdrawable *drawable, int64_t *sbc);
-
-    /**
-     * Wait for the SBC to be greater than or equal target_sbc.
-     *
-     * \since Internal API version 20030317.
-     */
-    int (*waitForSBC)(__DRIdrawable *drawable,
-		      int64_t target_sbc,
-		      int64_t * msc, int64_t * sbc);
-
-    /**
-     * Wait for the MSC to equal target_msc, or, if that has already passed,
-     * the next time (MSC % divisor) is equal to remainder.  If divisor is
-     * zero, the function will return as soon as MSC is greater than or equal
-     * to target_msc.
-     * 
-     * \since Internal API version 20030317.
-     */
-    int (*waitForMSC)(__DRIdrawable *drawable,
-		      int64_t target_msc, int64_t divisor, int64_t remainder,
-		      int64_t * msc, int64_t * sbc);
-
-    /**
-     * Like \c swapBuffers, but does NOT have an implicit \c glFlush.  Once
-     * rendering is complete, waits until MSC is equal to target_msc, or
-     * if that has already passed, waits until (MSC % divisor) is equal
-     * to remainder.  If divisor is zero, the swap will happen as soon as
-     * MSC is greater than or equal to target_msc.
-     * 
-     * \since Internal API version 20030317.
-     */
-    int64_t (*swapBuffersMSC)(__DRIdrawable *drawable,
-			      int64_t target_msc,
-			      int64_t divisor, int64_t remainder);
 };
 
 #endif

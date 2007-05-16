@@ -196,6 +196,7 @@ mgaFillInModes( unsigned pixel_bits, unsigned depth_bits,
 static const __DRIextension *mgaExtensions[] = {
     &driSwapControlExtension.base,
     &driFrameTrackingExtension.base,
+    &driMediaStreamCounterExtension.base,
     NULL
 };
 
@@ -242,10 +243,8 @@ mgaInitDriver(__DRIscreenPrivate *sPriv)
 
    sPriv->extensions = mgaExtensions;
 
-   if ( glx_enable_extension != NULL ) {
+   if ( glx_enable_extension != NULL )
       (*glx_enable_extension)( sPriv->psc, "GLX_SGI_make_current_read" );
-      (*glx_enable_extension)( sPriv->psc, "GLX_SGI_video_sync" );
-   }
 
    if (serverInfo->chipset != MGA_CARD_TYPE_G200 &&
        serverInfo->chipset != MGA_CARD_TYPE_G400) {

@@ -268,6 +268,7 @@ static const __DRIextension *intelExtensions[] = {
     &driCopySubBufferExtension.base,
     &driSwapControlExtension.base,
     &driFrameTrackingExtension.base,
+    &driMediaStreamCounterExtension.base,
     NULL
 };
 
@@ -358,10 +359,8 @@ static GLboolean intelInitDriver(__DRIscreenPrivate *sPriv)
 
    sPriv->extensions = intelExtensions;
 
-   if (glx_enable_extension != NULL) {
-      (*glx_enable_extension)( sPriv->psc, "GLX_SGI_video_sync" );
+   if (glx_enable_extension != NULL)
       (*glx_enable_extension)( sPriv->psc, "GLX_SGI_make_current_read" );
-   }
    
    return GL_TRUE;
 }

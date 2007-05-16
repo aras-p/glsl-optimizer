@@ -493,6 +493,10 @@ struct __GLXscreenConfigsRec {
     __DRIframeTrackingExtension *frameTracking;
 #endif
 
+#ifdef __DRI_MEDIA_STREAM_COUNTER
+    __DRImediaStreamCounterExtension *msc;
+#endif
+
 #endif
 
     /**

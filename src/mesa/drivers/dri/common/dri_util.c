@@ -358,31 +358,6 @@ static int driGetMSC( __DRIscreen *screen, int64_t *msc )
     return sPriv->DriverAPI.GetMSC( sPriv, msc );
 }
 
-/**
- * Called directly from a number of higher-level GLX functions.
- */
-static int driGetSBC(__DRIdrawable *drawable, int64_t *sbc)
-{
-   __DRIdrawablePrivate *dPriv = drawable->private;
-   __DRIswapInfo  sInfo;
-   int  status;
-
-
-   status = dPriv->driScreenPriv->DriverAPI.GetSwapInfo( dPriv, & sInfo );
-   *sbc = sInfo.swap_count;
-
-   return status;
-}
-
-static int driWaitForSBC(__DRIdrawable *drawable, int64_t target_sbc,
-			 int64_t * msc, int64_t * sbc)
-{
-    __DRIdrawablePrivate *dPriv = drawable->private;
-
-    return dPriv->driScreenPriv->DriverAPI.WaitForSBC( dPriv, target_sbc,
-                                                       msc, sbc );
-}
-
 static int driWaitForMSC(__DRIdrawable *drawable, int64_t target_msc,
 			 int64_t divisor, int64_t remainder,
 			 int64_t * msc, int64_t * sbc)
@@ -409,15 +384,11 @@ static int driWaitForMSC(__DRIdrawable *drawable, int64_t target_msc,
     return status;
 }
 
-static int64_t driSwapBuffersMSC(__DRIdrawable *drawable, int64_t target_msc,
-				 int64_t divisor, int64_t remainder)
-{
-    __DRIdrawablePrivate *dPriv = drawable->private;
-
-    return dPriv->driScreenPriv->DriverAPI.SwapBuffersMSC( dPriv, target_msc,
-                                                           divisor, 
-                                                           remainder );
-}
+const __DRImediaStreamCounterExtension driMediaStreamCounterExtension = {
+    { __DRI_MEDIA_STREAM_COUNTER },
+    driGetMSC,
+    driWaitForMSC,
+};
 
 static void driCopySubBuffer(__DRIdrawable *drawable,
 			      int x, int y, int w, int h)
@@ -505,11 +476,6 @@ static void *driCreateNewDrawable(__DRIscreen *screen,
     pdraw->private = pdp;
     pdraw->destroyDrawable = driDestroyDrawable;
     pdraw->swapBuffers = driSwapBuffers;  /* called by glXSwapBuffers() */
-
-    pdraw->getSBC = driGetSBC;
-    pdraw->waitForSBC = driWaitForSBC;
-    pdraw->waitForMSC = driWaitForMSC;
-    pdraw->swapBuffersMSC = driSwapBuffersMSC;
 
     /* This special default value is replaced with the configured
      * default value when the drawable is first bound to a direct
@@ -776,7 +742,6 @@ void * __DRI_CREATE_NEW_SCREEN( int scrn, __DRIscreen *psc,
     psc->destroyScreen     = driDestroyScreen;
     psc->getExtensions     = driGetExtensions;
     psc->createNewDrawable = driCreateNewDrawable;
-    psc->getMSC            = driGetMSC;
     psc->createNewContext  = driCreateNewContext;
 
     if (internal_api_version >= 20070121)

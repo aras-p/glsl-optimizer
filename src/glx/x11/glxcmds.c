@@ -1931,19 +1931,18 @@ static int __glXGetVideoSyncSGI(unsigned int *count)
     * FIXME: there should be a GLX encoding for this call.  I can find no
     * FIXME: documentation for the GLX encoding.
     */
-#ifdef GLX_DIRECT_RENDERING
+#ifdef __DRI_MEDIA_STREAM_COUNTER
    GLXContext gc = __glXGetCurrentContext();
 
 
    if ( (gc != NULL) && gc->isDirect ) {
       __GLXscreenConfigs * const psc = GetGLXScreenConfigs( gc->currentDpy,
 							    gc->screen );
-      if ( __glXExtensionBitIsEnabled( psc, SGI_video_sync_bit )
-	   && psc->driScreen.private && psc->driScreen.getMSC) {
+      if (psc->msc != NULL && psc->driScreen.private != NULL) {
 	 int       ret;
 	 int64_t   temp;
 
-	 ret = psc->driScreen.getMSC(&psc->driScreen, &temp);
+	 ret = psc->msc->getMSC(&psc->driScreen, &temp);
 	 *count = (unsigned) temp;
 	 return (ret == 0) ? 0 : GLX_BAD_CONTEXT;
       }
@@ -1956,7 +1955,7 @@ static int __glXGetVideoSyncSGI(unsigned int *count)
 
 static int __glXWaitVideoSyncSGI(int divisor, int remainder, unsigned int *count)
 {
-#ifdef GLX_DIRECT_RENDERING
+#ifdef __DRI_MEDIA_STREAM_COUNTER
    GLXContext gc = __glXGetCurrentContext();
 
    if ( divisor <= 0 || remainder < 0 )
@@ -1965,17 +1964,16 @@ static int __glXWaitVideoSyncSGI(int divisor, int remainder, unsigned int *count
    if ( (gc != NULL) && gc->isDirect ) {
       __GLXscreenConfigs * const psc = GetGLXScreenConfigs( gc->currentDpy,
 							    gc->screen );
-      if ( __glXExtensionBitIsEnabled( psc, SGI_video_sync_bit )
-	   && psc->driScreen.private ) {
+      if (psc->msc != NULL && psc->driScreen.private ) {
 	 __DRIdrawable * const pdraw = 
 	     GetDRIDrawable(gc->currentDpy, gc->currentDrawable, NULL);
-	 if ( (pdraw != NULL) && (pdraw->waitForMSC != NULL) ) {
+	 if (pdraw != NULL) {
 	    int       ret;
 	    int64_t   msc;
 	    int64_t   sbc;
 
-	    ret = (*pdraw->waitForMSC)(pdraw, 0,
-				       divisor, remainder, &msc, &sbc);
+	    ret = (*psc->msc->waitForMSC)(pdraw, 0,
+					  divisor, remainder, &msc, &sbc);
 	    *count = (unsigned) msc;
 	    return (ret == 0) ? 0 : GLX_BAD_CONTEXT;
 	 }
@@ -2130,7 +2128,7 @@ static Bool __glXQueryMaxSwapBarriersSGIX(Display *dpy, int screen, int *max)
 static Bool __glXGetSyncValuesOML(Display *dpy, GLXDrawable drawable,
 				  int64_t *ust, int64_t *msc, int64_t *sbc)
 {
-#ifdef GLX_DIRECT_RENDERING
+#if defined(__DRI_SWAP_BUFFER_COUNTER) && defined(__DRI_MEDIA_STREAM_COUNTER)
     __GLXdisplayPrivate * const priv = __glXInitialize(dpy);
 
     if ( priv != NULL ) {
@@ -2139,11 +2137,10 @@ static Bool __glXGetSyncValuesOML(Display *dpy, GLXDrawable drawable,
 	__GLXscreenConfigs * const psc = &priv->screenConfigs[i];
 
 	assert( (pdraw == NULL) || (i != -1) );
-	return ( (pdraw && pdraw->getSBC && psc->driScreen.getMSC)
-		 && __glXExtensionBitIsEnabled( psc, OML_sync_control_bit )
-		 && ((*psc->driScreen.getMSC)(&psc->driScreen, msc) == 0)
-		 && ((*pdraw->getSBC)(pdraw, sbc ) == 0)
-		 && (__glXGetUST( ust ) == 0) );
+	return ( (pdraw && psc->sbc && psc->msc)
+		 && ((*psc->msc->getMSC)(&psc->driScreen, msc) == 0)
+		 && ((*psc->sbc->getSBC)(pdraw, sbc) == 0)
+		 && (__glXGetUST(ust) == 0) );
     }
 #else
    (void) dpy;
@@ -2248,7 +2245,7 @@ static int64_t __glXSwapBuffersMscOML(Display *dpy, GLXDrawable drawable,
 				      int64_t target_msc, int64_t divisor,
 				      int64_t remainder)
 {
-#ifdef GLX_DIRECT_RENDERING
+#ifdef __DRI_SWAP_BUFFER_COUNTER
    int screen;
    __DRIdrawable *pdraw = GetDRIDrawable( dpy, drawable, & screen );
    __GLXscreenConfigs * const psc = GetGLXScreenConfigs( dpy, screen );
@@ -2263,10 +2260,10 @@ static int64_t __glXSwapBuffersMscOML(Display *dpy, GLXDrawable drawable,
    if ( divisor > 0 && remainder >= divisor )
       return -1;
 
-   if ( (pdraw != NULL) && (pdraw->swapBuffersMSC != NULL)
-       && __glXExtensionBitIsEnabled( psc, OML_sync_control_bit ) ) {
-      return (*pdraw->swapBuffersMSC)(pdraw, target_msc, divisor, remainder);
-   }
+   if (pdraw != NULL && psc->counters != NULL)
+      return (*psc->sbc->swapBuffersMSC)(pdraw, target_msc,
+					 divisor, remainder);
+
 #else
    (void) dpy;
    (void) drawable;
@@ -2283,7 +2280,7 @@ static Bool __glXWaitForMscOML(Display * dpy, GLXDrawable drawable,
 			       int64_t remainder, int64_t *ust,
 			       int64_t *msc, int64_t *sbc)
 {
-#ifdef GLX_DIRECT_RENDERING
+#ifdef __DRI_MEDIA_STREAM_COUNTER
    int screen;
    __DRIdrawable *pdraw = GetDRIDrawable( dpy, drawable, & screen );
    __GLXscreenConfigs * const psc = GetGLXScreenConfigs( dpy, screen );
@@ -2297,10 +2294,9 @@ static Bool __glXWaitForMscOML(Display * dpy, GLXDrawable drawable,
    if ( divisor > 0 && remainder >= divisor )
       return False;
 
-   if ( (pdraw != NULL) && (pdraw->waitForMSC != NULL)
-	&& __glXExtensionBitIsEnabled( psc, OML_sync_control_bit ) ) {
-      ret = (*pdraw->waitForMSC)(pdraw, target_msc,
-				 divisor, remainder, msc, sbc);
+   if (pdraw != NULL && psc->msc != NULL) {
+      ret = (*psc->msc->waitForMSC)(pdraw, target_msc,
+				    divisor, remainder, msc, sbc);
 
       /* __glXGetUST returns zero on success and non-zero on failure.
        * This function returns True on success and False on failure.
@@ -2325,7 +2321,7 @@ static Bool __glXWaitForSbcOML(Display * dpy, GLXDrawable drawable,
 			       int64_t target_sbc, int64_t *ust,
 			       int64_t *msc, int64_t *sbc )
 {
-#ifdef GLX_DIRECT_RENDERING
+#ifdef __DRI_SWAP_BUFFER_COUNTER
    int screen;
    __DRIdrawable *pdraw = GetDRIDrawable( dpy, drawable, & screen );
    __GLXscreenConfigs * const psc = GetGLXScreenConfigs( dpy, screen );
@@ -2337,9 +2333,8 @@ static Bool __glXWaitForSbcOML(Display * dpy, GLXDrawable drawable,
    if ( target_sbc < 0 )
       return False;
 
-   if ( (pdraw != NULL) && (pdraw->waitForSBC != NULL)
-	&& __glXExtensionBitIsEnabled( psc, OML_sync_control_bit )) {
-      ret = (*pdraw->waitForSBC)(pdraw, target_sbc, msc, sbc);
+   if (pdraw != NULL && psc->sbc != NULL) {
+      ret = (*psc->sbc->waitForSBC)(pdraw, target_sbc, msc, sbc);
 
       /* __glXGetUST returns zero on success and non-zero on failure.
        * This function returns True on success and False on failure.

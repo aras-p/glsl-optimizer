@@ -177,14 +177,14 @@ viaInitDriver(__DRIscreenPrivate *sPriv)
 
     i = 0;
     viaScreen->extensions[i++] = &driFrameTrackingExtension.base;
-    if ( glx_enable_extension != NULL ) {
-       if ( viaScreen->irqEnabled ) {
-	  viaScreen->extensions[i++] = &driSwapControlExtension.base;
-	  (*glx_enable_extension)( sPriv->psc, "GLX_SGI_video_sync" );
-       }
-
-       (*glx_enable_extension)( sPriv->psc, "GLX_SGI_make_current_read" );
+    if ( viaScreen->irqEnabled ) {
+	viaScreen->extensions[i++] = &driSwapControlExtension.base;
+	viaScreen->extensions[i++] = &driMediaStreamCounterExtension.base;
     }
+
+    if ( glx_enable_extension != NULL )
+       (*glx_enable_extension)( sPriv->psc, "GLX_SGI_make_current_read" );
+
     viaScreen->extensions[i++] = NULL;
     sPriv->extensions = viaScreen->extensions;
 
