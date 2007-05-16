@@ -922,6 +922,22 @@ _mesa_set_enable(GLcontext *ctx, GLenum cap, GLboolean state)
 	ctx->ATIFragmentShader.Enabled = state;
         break;
 #endif
+
+      /* GL_MESA_texture_array */
+      case GL_TEXTURE_1D_ARRAY_EXT:
+         CHECK_EXTENSION(MESA_texture_array, cap);
+         if (!enable_texture(ctx, state, TEXTURE_1D_ARRAY_BIT)) {
+            return;
+         }
+         break;
+
+      case GL_TEXTURE_2D_ARRAY_EXT:
+         CHECK_EXTENSION(MESA_texture_array, cap);
+         if (!enable_texture(ctx, state, TEXTURE_2D_ARRAY_BIT)) {
+            return;
+         }
+         break;
+
       default:
          _mesa_error(ctx, GL_INVALID_ENUM,
                      "%s(0x%x)", state ? "glEnable" : "glDisable", cap);

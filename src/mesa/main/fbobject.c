@@ -1179,9 +1179,16 @@ framebuffer_texture(GLcontext *ctx, const char *caller, GLenum target,
 
       texObj = _mesa_lookup_texture(ctx, texture);
       if (texObj != NULL) {
-         err = (texObj->Target == GL_TEXTURE_CUBE_MAP)
-             ? !IS_CUBE_FACE(textarget)
-             : (texObj->Target != textarget);
+         if (textarget == 0) {
+            err = (texObj->Target != GL_TEXTURE_3D) &&
+                (texObj->Target != GL_TEXTURE_1D_ARRAY_EXT) &&
+                (texObj->Target != GL_TEXTURE_2D_ARRAY_EXT);
+         }
+         else {
+            err = (texObj->Target == GL_TEXTURE_CUBE_MAP)
+                ? !IS_CUBE_FACE(textarget)
+                : (texObj->Target != textarget);
+         }
       }
 
       if (err) {
@@ -1195,11 +1202,19 @@ framebuffer_texture(GLcontext *ctx, const char *caller, GLenum target,
          const GLint maxSize = 1 << (ctx->Const.Max3DTextureLevels - 1);
          if (zoffset < 0 || zoffset >= maxSize) {
             _mesa_error(ctx, GL_INVALID_VALUE,
-                        "glFramebufferTexture%sEXT(zoffset)", 
-                        caller);
+                        "glFramebufferTexture%sEXT(zoffset)", caller);
             return;
          }
       }
+      else if ((texObj->Target == GL_TEXTURE_1D_ARRAY_EXT) ||
+               (texObj->Target == GL_TEXTURE_2D_ARRAY_EXT)) {
+         if (zoffset < 0 || zoffset >= ctx->Const.MaxArrayTextureLayers) {
+            _mesa_error(ctx, GL_INVALID_VALUE,
+                        "glFramebufferTexture%sEXT(layer)", caller);
+            return;
+         }
+      }
+
 
       if ((level < 0) || 
           (level >= _mesa_max_texture_levels(ctx, texObj->Target))) {
@@ -1288,6 +1303,17 @@ _mesa_FramebufferTexture3DEXT(GLenum target, GLenum attachment,
 
    framebuffer_texture(ctx, "3D", target, attachment, textarget, texture,
                        level, zoffset);
+}
+
+
+void GLAPIENTRY
+_mesa_FramebufferTextureLayerEXT(GLenum target, GLenum attachment,
+                                 GLuint texture, GLint level, GLint layer)
+{
+   GET_CURRENT_CONTEXT(ctx);
+
+   framebuffer_texture(ctx, "Layer", target, attachment, 0, texture,
+                       level, layer);
 }
 
 

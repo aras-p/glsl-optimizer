@@ -36,7 +36,7 @@
    compares the value with its REVISION value. If they do not match, the loader is not up
    to date.
 */
-.emtcode REVISION                                   0x09
+.emtcode REVISION                                   0x0a
 
 /* program type */
 .emtcode FRAGMENT_PROGRAM                           0x01
@@ -63,6 +63,9 @@
 
 /* GL_ARB_draw_buffers option */
 .emtcode ARB_DRAW_BUFFERS                           0x07
+
+/* GL_MESA_texture_array option */
+.emtcode MESA_TEXTURE_ARRAY                         0x08
 
 /* GL_ARB_fragment_program instruction class */
 .emtcode OP_ALU_INST                                0x00
@@ -223,6 +226,8 @@
 .emtcode TEXTARGET_SHADOW1D                         0x06
 .emtcode TEXTARGET_SHADOW2D                         0x07
 .emtcode TEXTARGET_SHADOWRECT                       0x08
+.emtcode TEXTARGET_1D_ARRAY                         0x09
+.emtcode TEXTARGET_2D_ARRAY                         0x0a
 
 /* face type */
 .emtcode FACE_FRONT                                 0x00
@@ -436,6 +441,9 @@
 /* GL_ARB_draw_buffers */
 .regbyte draw_buffers                               0x00
 
+/* GL_MESA_texture_array */
+.regbyte texture_array                              0x00
+
 /* option presence condition registers */
 /* they are all initially set to zero - when a particular OPTION is encountered, the appropriate */
 /* register is set to 1 to indicate that the OPTION was specified. */
@@ -455,6 +463,9 @@
 
 /* GL_ARB_draw_buffers */
 .regbyte ARB_draw_buffers                           0x00
+
+/* GL_MESA_texture_array */
+.regbyte MESA_texture_array                         0x00
 
 /* program target condition register */
 /* this syntax script deals with two program targets - VERTEX_PROGRAM and FRAGMENT_PROGRAM. */
@@ -523,7 +534,9 @@ fp_optionString
     .if (fragment_program_shadow != 0x00) "ARB_fragment_program_shadow"
         .emit ARB_FRAGMENT_PROGRAM_SHADOW .load ARB_fragment_program_shadow 0x01 .or
     .if (draw_buffers != 0x00) "ARB_draw_buffers" .emit ARB_DRAW_BUFFERS
-        .load ARB_draw_buffers 0x01;
+        .load ARB_draw_buffers 0x01 .or
+    .if (texture_array != 0x00) "MESA_texture_array" .emit MESA_TEXTURE_ARRAY
+        .load MESA_texture_array 0x01;
 vp_optionString
     "ARB_position_invariant" .emit ARB_POSITION_INVARIANT .load ARB_position_invariant 0x01;
 fp_ARB_fog_exp
@@ -906,7 +919,9 @@ texTarget
     "3D" .emit TEXTARGET_3D .or
     .if (texture_rectangle != 0x00) "RECT" .emit TEXTARGET_RECT .or
     "CUBE" .emit TEXTARGET_CUBE .or
-    .if (ARB_fragment_program_shadow != 0x00) shadowTarget;
+    .if (ARB_fragment_program_shadow != 0x00) shadowTarget .or
+    .if (MESA_texture_array != 0x00) "ARRAY1D" .emit TEXTARGET_1D_ARRAY .or
+    .if (MESA_texture_array != 0x00) "ARRAY2D" .emit TEXTARGET_2D_ARRAY;
 
 /*
 GL_ARB_fragment_program_shadow

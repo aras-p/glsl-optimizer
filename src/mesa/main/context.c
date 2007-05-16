@@ -467,12 +467,22 @@ alloc_shared_state( GLcontext *ctx )
    if (!ss->DefaultRect)
       goto cleanup;
 
+   ss->Default1DArray = (*ctx->Driver.NewTextureObject)(ctx, 0, GL_TEXTURE_1D_ARRAY_EXT);
+   if (!ss->Default1DArray)
+      goto cleanup;
+
+   ss->Default2DArray = (*ctx->Driver.NewTextureObject)(ctx, 0, GL_TEXTURE_2D_ARRAY_EXT);
+   if (!ss->Default2DArray)
+      goto cleanup;
+
    /* Effectively bind the default textures to all texture units */
    ss->Default1D->RefCount += MAX_TEXTURE_IMAGE_UNITS;
    ss->Default2D->RefCount += MAX_TEXTURE_IMAGE_UNITS;
    ss->Default3D->RefCount += MAX_TEXTURE_IMAGE_UNITS;
    ss->DefaultCubeMap->RefCount += MAX_TEXTURE_IMAGE_UNITS;
    ss->DefaultRect->RefCount += MAX_TEXTURE_IMAGE_UNITS;
+   ss->Default1DArray->RefCount += MAX_TEXTURE_IMAGE_UNITS;
+   ss->Default2DArray->RefCount += MAX_TEXTURE_IMAGE_UNITS;
 
    _glthread_INIT_MUTEX(ss->TexMutex);
    ss->TextureStateStamp = 0;
@@ -772,6 +782,7 @@ _mesa_init_constants(GLcontext *ctx)
    ctx->Const.Max3DTextureLevels = MAX_3D_TEXTURE_LEVELS;
    ctx->Const.MaxCubeTextureLevels = MAX_CUBE_TEXTURE_LEVELS;
    ctx->Const.MaxTextureRectSize = MAX_TEXTURE_RECT_SIZE;
+   ctx->Const.MaxArrayTextureLayers = MAX_ARRAY_TEXTURE_LAYERS;
    ctx->Const.MaxTextureCoordUnits = MAX_TEXTURE_COORD_UNITS;
    ctx->Const.MaxTextureImageUnits = MAX_TEXTURE_IMAGE_UNITS;
    ctx->Const.MaxTextureUnits = MIN2(ctx->Const.MaxTextureCoordUnits,

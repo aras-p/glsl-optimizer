@@ -551,7 +551,7 @@ make_2d_mipmap(const struct gl_texture_format *format, GLint border,
 
    /* Compute src and dst pointers, skipping any border */
    srcA = srcPtr + border * ((srcWidth + 1) * bpt);
-   if (srcHeight > 1)
+   if (srcHeight > 1) 
       srcB = srcA + srcRowStride;
    else
       srcB = srcA;
@@ -796,6 +796,136 @@ make_3d_mipmap(const struct gl_texture_format *format, GLint border,
 }
 
 
+static void
+make_1d_stack_mipmap(const struct gl_texture_format *format, GLint border,
+                     GLint srcWidth, GLubyte *srcPtr,
+                     GLint dstWidth, GLint dstHeight, GLubyte *dstPtr)
+{
+   const GLint bpt = format->TexelBytes;
+   const GLint srcWidthNB = srcWidth - 2 * border;  /* sizes w/out border */
+   const GLint dstWidthNB = dstWidth - 2 * border;
+   const GLint dstHeightNB = dstHeight - 2 * border;
+   const GLint srcRowStride = bpt * srcWidth;
+   const GLint dstRowStride = bpt * dstWidth;
+   const GLubyte *src;
+   GLubyte *dst;
+   GLint row;
+
+   /* Compute src and dst pointers, skipping any border */
+   src = srcPtr + border * ((srcWidth + 1) * bpt);
+   dst = dstPtr + border * ((dstWidth + 1) * bpt);
+
+   for (row = 0; row < dstHeightNB; row++) {
+      do_row(format, srcWidthNB, src, src,
+             dstWidthNB, dst);
+      src += srcRowStride;
+      dst += dstRowStride;
+   }
+
+   if (border) {
+      /* copy left-most pixel from source */
+      MEMCPY(dstPtr, srcPtr, bpt);
+      /* copy right-most pixel from source */
+      MEMCPY(dstPtr + (dstWidth - 1) * bpt,
+             srcPtr + (srcWidth - 1) * bpt,
+             bpt);
+   }
+}
+
+
+/**
+ * \bugs
+ * There is quite a bit of refactoring that could be done with this function
+ * and \c make_2d_mipmap.
+ */
+static void
+make_2d_stack_mipmap(const struct gl_texture_format *format, GLint border,
+                     GLint srcWidth, GLint srcHeight, const GLubyte *srcPtr,
+                     GLint dstWidth, GLint dstHeight, GLint dstDepth,
+                     GLubyte *dstPtr)
+{
+   const GLint bpt = format->TexelBytes;
+   const GLint srcWidthNB = srcWidth - 2 * border;  /* sizes w/out border */
+   const GLint dstWidthNB = dstWidth - 2 * border;
+   const GLint dstHeightNB = dstHeight - 2 * border;
+   const GLint dstDepthNB = dstDepth - 2 * border;
+   const GLint srcRowStride = bpt * srcWidth;
+   const GLint dstRowStride = bpt * dstWidth;
+   const GLubyte *srcA, *srcB;
+   GLubyte *dst;
+   GLint layer;
+   GLint row;
+
+   /* Compute src and dst pointers, skipping any border */
+   srcA = srcPtr + border * ((srcWidth + 1) * bpt);
+   if (srcHeight > 1) 
+      srcB = srcA + srcRowStride;
+   else
+      srcB = srcA;
+   dst = dstPtr + border * ((dstWidth + 1) * bpt);
+
+   for (layer = 0; layer < dstDepthNB; layer++) {
+      for (row = 0; row < dstHeightNB; row++) {
+         do_row(format, srcWidthNB, srcA, srcB,
+                dstWidthNB, dst);
+         srcA += 2 * srcRowStride;
+         srcB += 2 * srcRowStride;
+         dst += dstRowStride;
+      }
+
+      /* This is ugly but probably won't be used much */
+      if (border > 0) {
+         /* fill in dest border */
+         /* lower-left border pixel */
+         MEMCPY(dstPtr, srcPtr, bpt);
+         /* lower-right border pixel */
+         MEMCPY(dstPtr + (dstWidth - 1) * bpt,
+                srcPtr + (srcWidth - 1) * bpt, bpt);
+         /* upper-left border pixel */
+         MEMCPY(dstPtr + dstWidth * (dstHeight - 1) * bpt,
+                srcPtr + srcWidth * (srcHeight - 1) * bpt, bpt);
+         /* upper-right border pixel */
+         MEMCPY(dstPtr + (dstWidth * dstHeight - 1) * bpt,
+                srcPtr + (srcWidth * srcHeight - 1) * bpt, bpt);
+         /* lower border */
+         do_row(format, srcWidthNB,
+                srcPtr + bpt,
+                srcPtr + bpt,
+                dstWidthNB, dstPtr + bpt);
+         /* upper border */
+         do_row(format, srcWidthNB,
+                srcPtr + (srcWidth * (srcHeight - 1) + 1) * bpt,
+                srcPtr + (srcWidth * (srcHeight - 1) + 1) * bpt,
+                dstWidthNB,
+                dstPtr + (dstWidth * (dstHeight - 1) + 1) * bpt);
+         /* left and right borders */
+         if (srcHeight == dstHeight) {
+            /* copy border pixel from src to dst */
+            for (row = 1; row < srcHeight; row++) {
+               MEMCPY(dstPtr + dstWidth * row * bpt,
+                      srcPtr + srcWidth * row * bpt, bpt);
+               MEMCPY(dstPtr + (dstWidth * row + dstWidth - 1) * bpt,
+                      srcPtr + (srcWidth * row + srcWidth - 1) * bpt, bpt);
+            }
+         }
+         else {
+            /* average two src pixels each dest pixel */
+            for (row = 0; row < dstHeightNB; row += 2) {
+               do_row(format, 1,
+                      srcPtr + (srcWidth * (row * 2 + 1)) * bpt,
+                      srcPtr + (srcWidth * (row * 2 + 2)) * bpt,
+                      1, dstPtr + (dstWidth * row + 1) * bpt);
+               do_row(format, 1,
+                      srcPtr + (srcWidth * (row * 2 + 1) + srcWidth - 1) * bpt,
+                      srcPtr + (srcWidth * (row * 2 + 2) + srcWidth - 1) * bpt,
+                      1, dstPtr + (dstWidth * row + 1 + dstWidth - 1) * bpt);
+            }
+         }
+      }
+   }
+}
+
+
 /**
  * For GL_SGIX_generate_mipmap:
  * Generate a complete set of mipmaps from texObj's base-level image.
@@ -897,13 +1027,15 @@ _mesa_generate_mipmap(GLcontext *ctx, GLenum target,
       else {
          dstWidth = srcWidth; /* can't go smaller */
       }
-      if (srcHeight - 2 * border > 1) {
+      if ((srcHeight - 2 * border > 1) && 
+          (texObj->Target != GL_TEXTURE_1D_ARRAY_EXT)) {
          dstHeight = (srcHeight - 2 * border) / 2 + 2 * border;
       }
       else {
          dstHeight = srcHeight; /* can't go smaller */
       }
-      if (srcDepth - 2 * border > 1) {
+      if ((srcDepth - 2 * border > 1) &&
+               (texObj->Target != GL_TEXTURE_2D_ARRAY_EXT)) {
          dstDepth = (srcDepth - 2 * border) / 2 + 2 * border;
       }
       else {
@@ -1006,6 +1138,16 @@ _mesa_generate_mipmap(GLcontext *ctx, GLenum target,
             make_3d_mipmap(convertFormat, border,
                            srcWidth, srcHeight, srcDepth, srcData,
                            dstWidth, dstHeight, dstDepth, dstData);
+            break;
+         case GL_TEXTURE_1D_ARRAY_EXT:
+            make_1d_stack_mipmap(convertFormat, border,
+                                 srcWidth, srcData,
+                                 dstWidth, dstHeight, dstData);
+            break;
+         case GL_TEXTURE_2D_ARRAY_EXT:
+            make_2d_stack_mipmap(convertFormat, border,
+                                 srcWidth, srcHeight, srcData,
+                                 dstWidth, dstHeight, dstDepth, dstData);
             break;
          case GL_TEXTURE_RECTANGLE_NV:
             /* no mipmaps, do nothing */

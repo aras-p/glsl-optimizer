@@ -154,6 +154,10 @@ _mesa_copy_texture_state( const GLcontext *src, GLcontext *dst )
                            src->Texture.Unit[i].CurrentCubeMap);
       copy_texture_binding(src, &dst->Texture.Unit[i].CurrentRect,
                            src->Texture.Unit[i].CurrentRect);
+      copy_texture_binding(src, &dst->Texture.Unit[i].Current1DArray,
+                           src->Texture.Unit[i].Current1DArray);
+      copy_texture_binding(src, &dst->Texture.Unit[i].Current2DArray,
+                           src->Texture.Unit[i].Current2DArray);
 
       _mesa_unlock_context_textures(dst);
    }
@@ -1221,6 +1225,20 @@ _mesa_TexParameterfv( GLenum target, GLenum pname, const GLfloat *params )
          }
          texObj = texUnit->CurrentRect;
          break;
+      case GL_TEXTURE_1D_ARRAY_EXT:
+         if (!ctx->Extensions.MESA_texture_array) {
+            _mesa_error( ctx, GL_INVALID_ENUM, "glTexParameter(target)" );
+            return;
+         }
+         texObj = texUnit->Current1DArray;
+         break;
+      case GL_TEXTURE_2D_ARRAY_EXT:
+         if (!ctx->Extensions.MESA_texture_array) {
+            _mesa_error( ctx, GL_INVALID_ENUM, "glTexParameter(target)" );
+            return;
+         }
+         texObj = texUnit->Current2DArray;
+         break;
       default:
          _mesa_error( ctx, GL_INVALID_ENUM, "glTexParameter(target)" );
          return;
@@ -1574,6 +1592,12 @@ tex_image_dimensions(GLcontext *ctx, GLenum target)
       case GL_TEXTURE_RECTANGLE_NV:
       case GL_PROXY_TEXTURE_RECTANGLE_NV:
          return ctx->Extensions.NV_texture_rectangle ? 2 : 0;
+      case GL_TEXTURE_1D_ARRAY_EXT:
+      case GL_PROXY_TEXTURE_1D_ARRAY_EXT:
+         return ctx->Extensions.MESA_texture_array ? 2 : 0;
+      case GL_TEXTURE_2D_ARRAY_EXT:
+      case GL_PROXY_TEXTURE_2D_ARRAY_EXT:
+         return ctx->Extensions.MESA_texture_array ? 3 : 0;
       default:
          _mesa_problem(ctx, "bad target in _mesa_tex_target_dimensions()");
          return 0;
@@ -2865,6 +2889,10 @@ update_texture_state( GLcontext *ctx )
        * a fragment program we're guaranteed that bitcount(enabledBits) <= 1.
        */
       texture_override(ctx, texUnit, enableBits,
+                       texUnit->Current2DArray, TEXTURE_2D_ARRAY_BIT);
+      texture_override(ctx, texUnit, enableBits,
+                       texUnit->Current1DArray, TEXTURE_1D_ARRAY_BIT);
+      texture_override(ctx, texUnit, enableBits,
                        texUnit->CurrentCubeMap, TEXTURE_CUBE_BIT);
       texture_override(ctx, texUnit, enableBits,
                        texUnit->Current3D, TEXTURE_3D_BIT);
@@ -3032,6 +3060,14 @@ alloc_proxy_textures( GLcontext *ctx )
    if (!ctx->Texture.ProxyRect)
       goto cleanup;
 
+   ctx->Texture.Proxy1DArray = (*ctx->Driver.NewTextureObject)(ctx, 0, GL_TEXTURE_1D_ARRAY_EXT);
+   if (!ctx->Texture.Proxy1DArray)
+      goto cleanup;
+
+   ctx->Texture.Proxy2DArray = (*ctx->Driver.NewTextureObject)(ctx, 0, GL_TEXTURE_2D_ARRAY_EXT);
+   if (!ctx->Texture.Proxy2DArray)
+      goto cleanup;
+
    return GL_TRUE;
 
  cleanup:
@@ -3045,6 +3081,10 @@ alloc_proxy_textures( GLcontext *ctx )
       (ctx->Driver.DeleteTexture)(ctx, ctx->Texture.ProxyCubeMap);
    if (ctx->Texture.ProxyRect)
       (ctx->Driver.DeleteTexture)(ctx, ctx->Texture.ProxyRect);
+   if (ctx->Texture.Proxy1DArray)
+      (ctx->Driver.DeleteTexture)(ctx, ctx->Texture.Proxy1DArray);
+   if (ctx->Texture.Proxy2DArray)
+      (ctx->Driver.DeleteTexture)(ctx, ctx->Texture.Proxy2DArray);
    return GL_FALSE;
 }
 
@@ -3092,6 +3132,8 @@ init_texture_unit( GLcontext *ctx, GLuint unit )
    texUnit->Current3D = ctx->Shared->Default3D;
    texUnit->CurrentCubeMap = ctx->Shared->DefaultCubeMap;
    texUnit->CurrentRect = ctx->Shared->DefaultRect;
+   texUnit->Current1DArray = ctx->Shared->Default1DArray;
+   texUnit->Current2DArray = ctx->Shared->Default2DArray;
 }
 
 
@@ -3112,6 +3154,8 @@ _mesa_init_texture(GLcontext *ctx)
    ctx->Shared->Default3D->RefCount += MAX_TEXTURE_UNITS;
    ctx->Shared->DefaultCubeMap->RefCount += MAX_TEXTURE_UNITS;
    ctx->Shared->DefaultRect->RefCount += MAX_TEXTURE_UNITS;
+   ctx->Shared->Default1DArray->RefCount += MAX_TEXTURE_UNITS;
+   ctx->Shared->Default2DArray->RefCount += MAX_TEXTURE_UNITS;
 
    /* Texture group */
    ctx->Texture.CurrentUnit = 0;      /* multitexture */
@@ -3145,6 +3189,8 @@ _mesa_free_texture_data(GLcontext *ctx)
    (ctx->Driver.DeleteTexture)(ctx,  ctx->Texture.Proxy3D );
    (ctx->Driver.DeleteTexture)(ctx,  ctx->Texture.ProxyCubeMap );
    (ctx->Driver.DeleteTexture)(ctx,  ctx->Texture.ProxyRect );
+   (ctx->Driver.DeleteTexture)(ctx,  ctx->Texture.Proxy1DArray );
+   (ctx->Driver.DeleteTexture)(ctx,  ctx->Texture.Proxy2DArray );
 
    for (i = 0; i < MAX_TEXTURE_IMAGE_UNITS; i++)
       _mesa_free_colortable_data( &ctx->Texture.Unit[i].ColorTable );
