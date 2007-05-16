@@ -489,6 +489,10 @@ struct __GLXscreenConfigsRec {
     __DRIallocateExtension *allocate;
 #endif
 
+#ifdef __DRI_FRAME_TRACKING
+    __DRIframeTrackingExtension *frameTracking;
+#endif
+
 #endif
 
     /**

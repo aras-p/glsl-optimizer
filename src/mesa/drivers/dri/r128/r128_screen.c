@@ -227,13 +227,12 @@ r128CreateScreen( __DRIscreenPrivate *sPriv )
    r128Screen->driScreen = sPriv;
 
    i = 0;
+   r128Screen->extensions[i++] = &driFrameTrackingExtension.base;
    if ( glx_enable_extension != NULL ) {
       if ( r128Screen->irq != 0 ) {
 	  r128Screen->extensions[i++] = &driSwapControlExtension.base;
 	 (*glx_enable_extension)( sPriv->psc, "GLX_SGI_video_sync" );
       }
-
-      (*glx_enable_extension)( sPriv->psc, "GLX_MESA_swap_frame_usage" );
    }
    r128Screen->extensions[i++] = NULL;
    sPriv->extensions = r128Screen->extensions;

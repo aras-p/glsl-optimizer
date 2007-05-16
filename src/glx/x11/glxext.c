@@ -1024,7 +1024,6 @@ static void queryExtensions(__GLXscreenConfigs *psc)
 	    psc->copySubBuffer = (__DRIcopySubBufferExtension *) extensions[i];
 	    __glXScrEnableExtension(&psc->driScreen,
 				    "GLX_MESA_copy_sub_buffer");
-	    
 	}
 #endif
 
@@ -1035,7 +1034,6 @@ static void queryExtensions(__GLXscreenConfigs *psc)
 				    "GLX_SGI_swap_control");
 	    __glXScrEnableExtension(&psc->driScreen,
 				    "GLX_MESA_swap_control");
-	    
 	}
 #endif
 
@@ -1046,7 +1044,14 @@ static void queryExtensions(__GLXscreenConfigs *psc)
 				    "GLX_SGI_swap_control");
 	    __glXScrEnableExtension(&psc->driScreen,
 				    "GLX_MESA_swap_control");
-	    
+	}
+#endif
+
+#ifdef __DRI_FRAME_TRACKING
+	if (strcmp(extensions[i]->name, __DRI_FRAME_TRACKING) == 0) {
+	    psc->frameTracking = (__DRIframeTrackingExtension *) extensions[i];
+	    __glXScrEnableExtension(&psc->driScreen,
+				    "GLX_MESA_swap_frame_usage");	    
 	}
 #endif
 

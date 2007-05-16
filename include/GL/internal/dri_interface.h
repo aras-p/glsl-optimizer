@@ -61,6 +61,7 @@ typedef struct __DRIextensionRec		__DRIextension;
 typedef struct __DRIcopySubBufferExtensionRec	__DRIcopySubBufferExtension;
 typedef struct __DRIswapControlExtensionRec	__DRIswapControlExtension;
 typedef struct __DRIallocateExtensionRec	__DRIallocateExtension;
+typedef struct __DRIframeTrackingExtensionRec	__DRIframeTrackingExtension;
 /*@}*/
 
 
@@ -110,6 +111,30 @@ struct __DRIallocateExtensionRec {
     void (*freeMemory)(__DRIscreen *screen, GLvoid *pointer);
    
     GLuint (*memoryOffset)(__DRIscreen *screen, const GLvoid *pointer);
+};
+
+/**
+ * Used by drivers that implement the GLX_MESA_swap_frame_usage extension.
+ */
+#define __DRI_FRAME_TRACKING "DRI_FrameTracking"
+struct __DRIframeTrackingExtensionRec {
+    __DRIextension base;
+
+    /**
+     * Enable or disable frame usage tracking.
+     * 
+     * \since Internal API version 20030317.
+     */
+    int (*frameTracking)(__DRIdrawable *drawable, GLboolean enable);
+
+    /**
+     * Retrieve frame usage information.
+     * 
+     * \since Internal API version 20030317.
+     */
+    int (*queryFrameTracking)(__DRIdrawable *drawable,
+			      int64_t * sbc, int64_t * missedFrames,
+			      float * lastMissedUsage, float * usage);
 };
 
 /**
@@ -480,22 +505,6 @@ struct __DRIdrawableRec {
     int64_t (*swapBuffersMSC)(__DRIdrawable *drawable,
 			      int64_t target_msc,
 			      int64_t divisor, int64_t remainder);
-
-    /**
-     * Enable or disable frame usage tracking.
-     * 
-     * \since Internal API version 20030317.
-     */
-    int (*frameTracking)(__DRIdrawable *drawable, GLboolean enable);
-
-    /**
-     * Retrieve frame usage information.
-     * 
-     * \since Internal API version 20030317.
-     */
-    int (*queryFrameTracking)(__DRIdrawable *drawable,
-			      int64_t * sbc, int64_t * missedFrames,
-			      float * lastMissedUsage, float * usage);
 };
 
 #endif

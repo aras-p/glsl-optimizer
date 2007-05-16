@@ -1835,15 +1835,13 @@ static int __glXGetSwapIntervalMESA(void)
 static GLint __glXBeginFrameTrackingMESA(Display *dpy, GLXDrawable drawable)
 {
    int   status = GLX_BAD_CONTEXT;
-#ifdef GLX_DIRECT_RENDERING
+#ifdef __DRI_FRAME_TRACKING
    int screen;
    __DRIdrawable * const pdraw = GetDRIDrawable(dpy, drawable, & screen);
    __GLXscreenConfigs * const psc = GetGLXScreenConfigs(dpy, screen);
 
-   if ( (pdraw != NULL) && (pdraw->frameTracking != NULL)
-	&& __glXExtensionBitIsEnabled( psc, MESA_swap_frame_usage_bit ) ) {
-      status = pdraw->frameTracking(pdraw, GL_TRUE);
-   }
+   if (pdraw != NULL && psc->frameTracking != NULL)
+       status = psc->frameTracking->frameTracking(pdraw, GL_TRUE);
 #else
    (void) dpy;
    (void) drawable;
@@ -1855,15 +1853,13 @@ static GLint __glXBeginFrameTrackingMESA(Display *dpy, GLXDrawable drawable)
 static GLint __glXEndFrameTrackingMESA(Display *dpy, GLXDrawable drawable)
 {
    int   status = GLX_BAD_CONTEXT;
-#ifdef GLX_DIRECT_RENDERING
+#ifdef __DRI_FRAME_TRACKING
    int screen;
    __DRIdrawable * const pdraw = GetDRIDrawable(dpy, drawable, & screen);
    __GLXscreenConfigs * const psc = GetGLXScreenConfigs(dpy, screen);
 
-   if ( (pdraw != NULL) && (pdraw->frameTracking != NULL)
-	&& __glXExtensionBitIsEnabled( psc, MESA_swap_frame_usage_bit ) ) {
-      status = pdraw->frameTracking(pdraw, GL_FALSE);
-   }
+   if (pdraw != NULL && psc->frameTracking != NULL)
+       status = psc->frameTracking->frameTracking(pdraw, GL_FALSE);
 #else
    (void) dpy;
    (void) drawable;
@@ -1876,18 +1872,19 @@ static GLint __glXGetFrameUsageMESA(Display *dpy, GLXDrawable drawable,
 				    GLfloat *usage)
 {
    int   status = GLX_BAD_CONTEXT;
-#ifdef GLX_DIRECT_RENDERING
+#ifdef __DRI_FRAME_TRACKING
    int screen;
    __DRIdrawable * const pdraw = GetDRIDrawable(dpy, drawable, & screen);
    __GLXscreenConfigs * const psc = GetGLXScreenConfigs(dpy, screen);
 
-   if ( (pdraw != NULL ) && (pdraw->queryFrameTracking != NULL)
-	&& __glXExtensionBitIsEnabled( psc, MESA_swap_frame_usage_bit ) ) {
-      int64_t sbc, missedFrames;
-      float   lastMissedUsage;
+   if (pdraw != NULL && psc->frameTracking != NULL) {
+       int64_t sbc, missedFrames;
+       float   lastMissedUsage;
 
-      status = pdraw->queryFrameTracking(pdraw, &sbc, &missedFrames,
-					 &lastMissedUsage, usage);
+       status = psc->frameTracking->queryFrameTracking(pdraw, &sbc,
+						       &missedFrames,
+						       &lastMissedUsage,
+						       usage);
    }
 #else
    (void) dpy;
@@ -1903,17 +1900,16 @@ static GLint __glXQueryFrameTrackingMESA(Display *dpy, GLXDrawable drawable,
 					 GLfloat *lastMissedUsage)
 {
    int   status = GLX_BAD_CONTEXT;
-#ifdef GLX_DIRECT_RENDERING
+#ifdef __DRI_FRAME_TRACKING
    int screen;
    __DRIdrawable * const pdraw = GetDRIDrawable(dpy, drawable, & screen);
    __GLXscreenConfigs * const psc = GetGLXScreenConfigs(dpy, screen);
 
-   if ( (pdraw != NULL ) && (pdraw->queryFrameTracking != NULL)
-	&& __glXExtensionBitIsEnabled( psc, MESA_swap_frame_usage_bit ) ) {
+   if (pdraw != NULL && psc->frameTracking != NULL) {
       float   usage;
 
-      status = pdraw->queryFrameTracking(pdraw, sbc, missedFrames,
-					 lastMissedUsage, &usage);
+      status = psc->frameTracking->queryFrameTracking(pdraw, sbc, missedFrames,
+						      lastMissedUsage, &usage);
    }
 #else
    (void) dpy;

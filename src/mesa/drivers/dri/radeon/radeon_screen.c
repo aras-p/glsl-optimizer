@@ -744,6 +744,7 @@ radeonCreateScreen( __DRIscreenPrivate *sPriv )
 
    i = 0;
    screen->extensions[i++] = &driCopySubBufferExtension.base;
+   screen->extensions[i++] = &driFrameTrackingExtension.base;
 
    if ( glx_enable_extension != NULL ) {
       if ( screen->irq != 0 ) {
@@ -751,7 +752,6 @@ radeonCreateScreen( __DRIscreenPrivate *sPriv )
 	 (*glx_enable_extension)( sPriv->psc, "GLX_SGI_video_sync" );
       }
 
-      (*glx_enable_extension)( sPriv->psc, "GLX_MESA_swap_frame_usage" );
       (*glx_enable_extension)( sPriv->psc, "GLX_SGI_make_current_read" );
    }
 

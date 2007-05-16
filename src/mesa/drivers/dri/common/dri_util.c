@@ -52,11 +52,6 @@ static const int empty_attribute_list[1] = { None };
  */
 static int api_ver = 0;
 
-/* forward declarations */
-static int driQueryFrameTracking( __DRIdrawable *drawable,
-                                  int64_t *sbc, int64_t *missedFrames,
-                                  float *lastMissedUsage, float *usage );
-
 static void *driCreateNewDrawable(__DRIscreen *screen,
 				  const __GLcontextModes *modes,
                                   __DRIdrawable *pdraw,
@@ -515,8 +510,6 @@ static void *driCreateNewDrawable(__DRIscreen *screen,
     pdraw->waitForSBC = driWaitForSBC;
     pdraw->waitForMSC = driWaitForMSC;
     pdraw->swapBuffersMSC = driSwapBuffersMSC;
-    pdraw->frameTracking = NULL;
-    pdraw->queryFrameTracking = driQueryFrameTracking;
 
     /* This special default value is replaced with the configured
      * default value when the drawable is first bound to a direct
@@ -826,6 +819,12 @@ int driCompareGLXAPIVersion( GLint required_version )
 
 
 static int
+driFrameTracking(__DRIdrawable *drawable, GLboolean enable)
+{
+    return GLX_BAD_CONTEXT;
+}
+
+static int
 driQueryFrameTracking(__DRIdrawable *drawable,
 		      int64_t * sbc, int64_t * missedFrames,
 		      float * lastMissedUsage, float * usage)
@@ -849,6 +848,11 @@ driQueryFrameTracking(__DRIdrawable *drawable,
    return status;
 }
 
+const __DRIframeTrackingExtension driFrameTrackingExtension = {
+    { __DRI_FRAME_TRACKING },
+    driFrameTracking,
+    driQueryFrameTracking    
+};
 
 /**
  * Calculate amount of swap interval used between GLX buffer swaps.

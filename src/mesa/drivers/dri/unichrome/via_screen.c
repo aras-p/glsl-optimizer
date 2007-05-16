@@ -176,6 +176,7 @@ viaInitDriver(__DRIscreenPrivate *sPriv)
     viaScreen->sareaPrivOffset = gDRIPriv->sarea_priv_offset;
 
     i = 0;
+    viaScreen->extensions[i++] = &driFrameTrackingExtension.base;
     if ( glx_enable_extension != NULL ) {
        if ( viaScreen->irqEnabled ) {
 	  viaScreen->extensions[i++] = &driSwapControlExtension.base;
@@ -183,7 +184,6 @@ viaInitDriver(__DRIscreenPrivate *sPriv)
        }
 
        (*glx_enable_extension)( sPriv->psc, "GLX_SGI_make_current_read" );
-       (*glx_enable_extension)( sPriv->psc, "GLX_MESA_swap_frame_usage" );
     }
     viaScreen->extensions[i++] = NULL;
     sPriv->extensions = viaScreen->extensions;
