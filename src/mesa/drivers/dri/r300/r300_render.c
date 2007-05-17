@@ -301,6 +301,8 @@ static void r300RunRenderPrimitive(r300ContextPtr rmesa, GLcontext * ctx,
 				   int start, int end, int prim)
 {
 	int type, num_verts;
+	TNLcontext *tnl = TNL_CONTEXT(ctx);
+	struct vertex_buffer *vb = &tnl->vb;
 
 	type = r300PrimitiveType(rmesa, ctx, prim);
 	num_verts = r300NumVerts(rmesa, end - start, prim);
@@ -308,87 +310,35 @@ static void r300RunRenderPrimitive(r300ContextPtr rmesa, GLcontext * ctx,
 	if (type < 0 || num_verts <= 0)
 		return;
 
-	if (rmesa->state.VB.Elts) {
+	if (vb->Elts) {
 		r300EmitAOS(rmesa, rmesa->state.aos_count, start);
 		if (num_verts > 65535) {
 			/* not implemented yet */
 			WARN_ONCE("Too many elts\n");
 			return;
 		}
-		r300EmitElts(ctx, rmesa->state.VB.Elts, num_verts,
-			     rmesa->state.VB.elt_size);
+		r300EmitElts(ctx, vb->Elts, num_verts, 4);
 		r300FireEB(rmesa, rmesa->state.elt_dma.aos_offset,
-			   num_verts, type, rmesa->state.VB.elt_size);
+			   num_verts, type, 4);
 	} else {
 		r300EmitAOS(rmesa, rmesa->state.aos_count, start);
 		r300FireAOS(rmesa, num_verts, type);
 	}
 }
 
-#define CONV_VB(a, b) rvb->AttribPtr[(a)].size = vb->b->size, \
-			rvb->AttribPtr[(a)].type = GL_FLOAT, \
-			rvb->AttribPtr[(a)].stride = vb->b->stride, \
-			rvb->AttribPtr[(a)].data = vb->b->data
-
-static void radeon_vb_to_rvb(r300ContextPtr rmesa,
-			     struct radeon_vertex_buffer *rvb,
-			     struct vertex_buffer *vb)
-{
-	int i;
-	GLcontext *ctx;
-	ctx = rmesa->radeon.glCtx;
-
-	memset(rvb, 0, sizeof(*rvb));
-
-	rvb->Elts = vb->Elts;
-	rvb->elt_size = 4;
-	rvb->elt_min = 0;
-	rvb->elt_max = vb->Count;
-
-	rvb->Count = vb->Count;
-
-	if (hw_tcl_on) {
-		CONV_VB(VERT_ATTRIB_POS, ObjPtr);
-	} else {
-		assert(vb->ClipPtr);
-		CONV_VB(VERT_ATTRIB_POS, ClipPtr);
-	}
-
-	CONV_VB(VERT_ATTRIB_NORMAL, NormalPtr);
-	CONV_VB(VERT_ATTRIB_COLOR0, ColorPtr[0]);
-	CONV_VB(VERT_ATTRIB_COLOR1, SecondaryColorPtr[0]);
-	CONV_VB(VERT_ATTRIB_FOG, FogCoordPtr);
-
-	for (i = 0; i < ctx->Const.MaxTextureCoordUnits; i++)
-		CONV_VB(VERT_ATTRIB_TEX0 + i, TexCoordPtr[i]);
-
-	for (i = 0; i < MAX_VERTEX_PROGRAM_ATTRIBS; i++)
-		CONV_VB(VERT_ATTRIB_GENERIC0 + i,
-			AttribPtr[VERT_ATTRIB_GENERIC0 + i]);
-
-	rvb->Primitive = vb->Primitive;
-	rvb->PrimitiveCount = vb->PrimitiveCount;
-	rvb->LockFirst = rvb->LockCount = 0;
-	rvb->lock_uptodate = GL_FALSE;
-}
-
 static GLboolean r300RunRender(GLcontext * ctx,
 			       struct tnl_pipeline_stage *stage)
 {
 	r300ContextPtr rmesa = R300_CONTEXT(ctx);
-	struct radeon_vertex_buffer *VB = &rmesa->state.VB;
 	int i;
 	int cmd_reserved = 0;
 	int cmd_written = 0;
 	drm_radeon_cmd_header_t *cmd = NULL;
+	TNLcontext *tnl = TNL_CONTEXT(ctx);
+	struct vertex_buffer *vb = &tnl->vb;
 
 	if (RADEON_DEBUG & DEBUG_PRIMS)
 		fprintf(stderr, "%s\n", __FUNCTION__);
-
-	if (stage) {
-		TNLcontext *tnl = TNL_CONTEXT(ctx);
-		radeon_vb_to_rvb(rmesa, VB, &tnl->vb);
-	}
 
 	r300UpdateShaders(rmesa);
 	if (r300EmitArrays(ctx))
@@ -404,10 +354,10 @@ static GLboolean r300RunRender(GLcontext * ctx,
 
 	r300EmitState(rmesa);
 
-	for (i = 0; i < VB->PrimitiveCount; i++) {
-		GLuint prim = _tnl_translate_prim(&VB->Primitive[i]);
-		GLuint start = VB->Primitive[i].start;
-		GLuint end = VB->Primitive[i].start + VB->Primitive[i].count;
+	for (i = 0; i < vb->PrimitiveCount; i++) {
+		GLuint prim = _tnl_translate_prim(&vb->Primitive[i]);
+		GLuint start = vb->Primitive[i].start;
+		GLuint end = vb->Primitive[i].start + vb->Primitive[i].count;
 		r300RunRenderPrimitive(rmesa, ctx, start, end, prim);
 	}
 

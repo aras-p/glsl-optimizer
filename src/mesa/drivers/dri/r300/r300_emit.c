@@ -223,86 +223,48 @@ static void r300EmitVec(GLcontext * ctx,
 
 }
 
-static GLuint t_type(struct dt *dt)
-{
-	switch (dt->type) {
-	case GL_UNSIGNED_BYTE:
-		return AOS_FORMAT_UBYTE;
-	case GL_SHORT:
-		return AOS_FORMAT_USHORT;
-	case GL_FLOAT:
-		return AOS_FORMAT_FLOAT;
-	default:
-		assert(0);
-		break;
-	}
+#define R300_VIR0_AOS_SIZE_SHIFT 0
+#define R300_VIR0_AOS_INPUT_SHIFT 8
+#define R300_VIR0_AOS_STOP_SHIFT 13
+#define R300_VIR0_AOS_TYPE_SHIFT 14
+#define R300_VIR0_HIGH_SHIFT 16
 
-	return AOS_FORMAT_FLOAT;
+// Pack 4 elemets in a 16 bit (aos_size first 8, input next 5, 1 stop bit(Whild gues), aos_type last 2);
+static inline GLuint t_vir_pack(GLvector4f ** dt, int *inputs, int i)
+{
+	GLuint dw;
+	dw = (dt[i]->size - 1) << R300_VIR0_AOS_SIZE_SHIFT;
+	dw |= inputs[i] << R300_VIR0_AOS_INPUT_SHIFT;
+	//dw |= t_type(&dt[i]) << R300_VIR0_AOS_TYPE_SHIFT;
+	return dw;
 }
 
-static GLuint t_vir0_size(struct dt *dt)
-{
-	switch (dt->type) {
-	case GL_UNSIGNED_BYTE:
-		return 4;
-	case GL_SHORT:
-		return 7;
-	case GL_FLOAT:
-		return dt->size - 1;
-	default:
-		assert(0);
-		break;
-	}
-
-	return 0;
-}
-
-static GLuint t_aos_size(struct dt *dt)
-{
-	switch (dt->type) {
-	case GL_UNSIGNED_BYTE:
-		return 1;
-	case GL_SHORT:
-		return 2;
-	case GL_FLOAT:
-		return dt->size;
-	default:
-		assert(0);
-		break;
-	}
-
-	return 0;
-}
-
-static GLuint t_vir0(uint32_t * dst, struct dt *dt, int *inputs,
+static GLuint t_vir0(uint32_t * dst, GLvector4f ** dt, int *inputs,
 		     GLint * tab, GLuint nr)
 {
-	GLuint i, dw;
+	GLuint i, dw, dwInternel;
 
 	for (i = 0; i + 1 < nr; i += 2) {
-		dw = t_vir0_size(&dt[tab[i]]) | (inputs[tab[i]] << 8) |
-		    (t_type(&dt[tab[i]]) << 14);
-		dw |=
-		    (t_vir0_size(&dt[tab[i + 1]]) |
-		     (inputs[tab[i + 1]] << 8) | (t_type(&dt[tab[i + 1]])
-						  << 14)) << 16;
+		dw = t_vir_pack(dt, inputs, tab[i]);
+		dwInternel = t_vir_pack(dt, inputs, tab[i + 1]);
+		dw |= dwInternel << R300_VIR0_HIGH_SHIFT;
 
 		if (i + 2 == nr) {
-			dw |= (1 << (13 + 16));
+			dw |=
+			    (1 <<
+			     (R300_VIR0_AOS_STOP_SHIFT + R300_VIR0_HIGH_SHIFT));
 		}
-		dst[i >> 1] = dw;
+		dst[i >> 1] = dw;	// Is the same as i/2
 	}
 
 	if (nr & 1) {
-		dw = t_vir0_size(&dt[tab[nr - 1]]) | (inputs[tab[nr - 1]]
-						      << 8) |
-		    (t_type(&dt[tab[nr - 1]]) << 14);
-		dw |= 1 << 13;
+		dw = t_vir_pack(dt, inputs, tab[nr - 1]);
+		dw |= 1 << R300_VIR0_AOS_STOP_SHIFT;
 
 		dst[nr >> 1] = dw;
 	}
 
-	return (nr + 1) >> 1;
+	return (nr + 1) >> 1;	// Is the same as (nr+1)/2
 }
 
 static GLuint t_swizzle(int swizzle[4])
@@ -329,11 +291,6 @@ static GLuint t_vir1(uint32_t * dst, int swizzle[][4], GLuint nr)
 		    t_swizzle(swizzle[nr - 1]) | R300_INPUT_ROUTE_ENABLE;
 
 	return (nr + 1) >> 1;
-}
-
-static GLuint t_emit_size(struct dt *dt)
-{
-	return dt->size;
 }
 
 static GLuint t_vic(GLcontext * ctx, GLuint InputsRead)
@@ -369,9 +326,10 @@ int r300EmitArrays(GLcontext * ctx)
 {
 	r300ContextPtr rmesa = R300_CONTEXT(ctx);
 	r300ContextPtr r300 = rmesa;
-	struct radeon_vertex_buffer *VB = &rmesa->state.VB;
+	TNLcontext *tnl = TNL_CONTEXT(ctx);
+	struct vertex_buffer *vb = &tnl->vb;
 	GLuint nr;
-	GLuint count = VB->Count;
+	GLuint count = vb->Count;
 	GLuint i;
 	GLuint InputsRead = 0, OutputsWritten = 0;
 	int *inputs = NULL;
@@ -466,57 +424,38 @@ int r300EmitArrays(GLcontext * ctx)
 		swizzle[i][2] = SWIZZLE_ZERO;
 		swizzle[i][3] = SWIZZLE_ONE;
 
-		for (ci = 0; ci < VB->AttribPtr[tab[i]].size; ci++)
+		for (ci = 0; ci < vb->AttribPtr[tab[i]]->size; ci++)
 			swizzle[i][ci] = ci;
 
-#if MESA_BIG_ENDIAN
-#define SWAP_INT(a, b) do { \
-	int __temp; \
-	__temp = a;\
-	a = b; \
-	b = __temp; \
-} while (0)
-
-		if (VB->AttribPtr[tab[i]].type == GL_UNSIGNED_BYTE) {
-			SWAP_INT(swizzle[i][0], swizzle[i][3]);
-			SWAP_INT(swizzle[i][1], swizzle[i][2]);
-		}
-#endif				/* MESA_BIG_ENDIAN */
-
-		if (r300IsGartMemory(rmesa, VB->AttribPtr[tab[i]].data,
+		if (r300IsGartMemory(rmesa, vb->AttribPtr[tab[i]]->data,
 				     /*(count-1)*stride */ 4)) {
-			if (VB->AttribPtr[tab[i]].stride % 4)
+			if (vb->AttribPtr[tab[i]]->stride % 4)
 				return R300_FALLBACK_TCL;
 
 			rmesa->state.aos[i].address =
-			    VB->AttribPtr[tab[i]].data;
+			    (void *)(vb->AttribPtr[tab[i]]->data);
 			rmesa->state.aos[i].start = 0;
 			rmesa->state.aos[i].aos_offset =
 			    r300GartOffsetFromVirtual(rmesa,
-						      VB->
-						      AttribPtr[tab[i]].data);
+						      vb->
+						      AttribPtr[tab[i]]->data);
 			rmesa->state.aos[i].aos_stride =
-			    VB->AttribPtr[tab[i]].stride / 4;
+			    vb->AttribPtr[tab[i]]->stride / 4;
 
 			rmesa->state.aos[i].aos_size =
-			    t_emit_size(&VB->AttribPtr[tab[i]]);
+			    vb->AttribPtr[tab[i]]->size;
 		} else {
-			/* TODO: r300EmitVec can only handle 4 byte vectors */
-			if (VB->AttribPtr[tab[i]].type != GL_FLOAT)
-				return R300_FALLBACK_TCL;
-
 			r300EmitVec(ctx, &rmesa->state.aos[i],
-				    VB->AttribPtr[tab[i]].data,
-				    t_emit_size(&VB->AttribPtr[tab[i]]),
-				    VB->AttribPtr[tab[i]].stride, count);
+				    vb->AttribPtr[tab[i]]->data,
+				    vb->AttribPtr[tab[i]]->size,
+				    vb->AttribPtr[tab[i]]->stride, count);
 		}
 
-		rmesa->state.aos[i].aos_size =
-		    t_aos_size(&VB->AttribPtr[tab[i]]);
+		rmesa->state.aos[i].aos_size = vb->AttribPtr[tab[i]]->size;
 
-		comp_size = _mesa_sizeof_type(VB->AttribPtr[tab[i]].type);
+		comp_size = _mesa_sizeof_type(GL_FLOAT);
 
-		for (fix = 0; fix <= 4 - VB->AttribPtr[tab[i]].size; fix++) {
+		for (fix = 0; fix <= 4 - vb->AttribPtr[tab[i]]->size; fix++) {
 			if ((rmesa->state.aos[i].aos_offset -
 			     comp_size * fix) % 4)
 				continue;
@@ -532,14 +471,14 @@ int r300EmitArrays(GLcontext * ctx)
 
 			rmesa->state.aos[i].aos_offset -= comp_size * fix;
 
-			for (ci = 0; ci < VB->AttribPtr[tab[i]].size; ci++)
+			for (ci = 0; ci < vb->AttribPtr[tab[i]]->size; ci++)
 				swizzle[i][ci] += fix;
 		} else {
 			WARN_ONCE
 			    ("Cannot handle offset %x with stride %d, comp %d\n",
 			     rmesa->state.aos[i].aos_offset,
 			     rmesa->state.aos[i].aos_stride,
-			     VB->AttribPtr[tab[i]].size);
+			     vb->AttribPtr[tab[i]]->size);
 			return R300_FALLBACK_TCL;
 		}
 	}
@@ -547,7 +486,7 @@ int r300EmitArrays(GLcontext * ctx)
 	/* setup INPUT_ROUTE */
 	R300_STATECHANGE(r300, vir[0]);
 	((drm_r300_cmd_header_t *) r300->hw.vir[0].cmd)->packet0.count =
-	    t_vir0(&r300->hw.vir[0].cmd[R300_VIR_CNTL_0], VB->AttribPtr,
+	    t_vir0(&r300->hw.vir[0].cmd[R300_VIR_CNTL_0], vb->AttribPtr,
 		   inputs, tab, nr);
 
 	R300_STATECHANGE(r300, vir[1]);

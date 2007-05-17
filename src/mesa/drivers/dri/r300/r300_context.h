@@ -790,28 +790,6 @@ struct r300_fragment_program {
 #define REG_COLOR0	1
 #define REG_TEX0	2
 
-struct dt {
-	GLint size;
-	GLenum type;
-	GLsizei stride;
-	void *data;
-};
-
-struct radeon_vertex_buffer {
-	int Count;
-	void *Elts;
-	int elt_size;
-	int elt_min, elt_max;	/* debug */
-
-	struct dt AttribPtr[VERT_ATTRIB_MAX];
-
-	const struct _mesa_prim *Primitive;
-	GLuint PrimitiveCount;
-	GLint LockFirst;
-	GLsizei LockCount;
-	int lock_uptodate;
-};
-
 struct r300_state {
 	struct r300_depthbuffer_state depth;
 	struct r300_texture_state texture;
@@ -820,7 +798,6 @@ struct r300_state {
 	struct r300_pfs_compile_state pfs_compile;
 	struct r300_dma_region aos[R300_MAX_AOS_ARRAYS];
 	int aos_count;
-	struct radeon_vertex_buffer VB;
 
 	GLuint *Elts;
 	struct r300_dma_region elt_dma;
