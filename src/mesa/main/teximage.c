@@ -1387,6 +1387,20 @@ _mesa_test_proxy_teximage(GLcontext *ctx, GLenum target, GLint level,
 
 
 /**
+ * Helper function to determine whether a target supports compressed textures
+ */
+static GLboolean
+target_can_be_compressed(GLcontext *ctx, GLenum target)
+{
+   return (((target == GL_TEXTURE_2D || target == GL_PROXY_TEXTURE_2D))
+           || ((ctx->Extensions.ARB_texture_cube_map &&
+                (target == GL_PROXY_TEXTURE_CUBE_MAP ||
+                 (target >= GL_TEXTURE_CUBE_MAP_POSITIVE_X &&
+                  target <= GL_TEXTURE_CUBE_MAP_NEGATIVE_Z)))));
+}
+
+
+/**
  * Test the glTexImage[123]D() parameters for errors.
  * 
  * \param ctx GL context.
@@ -1610,21 +1624,10 @@ texture_error_check( GLcontext *ctx, GLenum target,
 
    /* additional checks for compressed textures */
    if (is_compressed_format(ctx, internalFormat)) {
-      if (target == GL_TEXTURE_2D || target == GL_PROXY_TEXTURE_2D) {
-         /* OK */
-      }
-      else if (ctx->Extensions.ARB_texture_cube_map &&
-               (target == GL_PROXY_TEXTURE_CUBE_MAP ||
-                (target >= GL_TEXTURE_CUBE_MAP_POSITIVE_X &&
-                 target <= GL_TEXTURE_CUBE_MAP_NEGATIVE_Z))) {
-         /* OK */
-      }
-      else {
-         if (!isProxy) {
-            _mesa_error(ctx, GL_INVALID_ENUM,
-                        "glTexImage%d(target)", dimensions);
-            return GL_TRUE;
-         }
+      if (!target_can_be_compressed(ctx, target) && !isProxy) {
+         _mesa_error(ctx, GL_INVALID_ENUM,
+                     "glTexImage%d(target)", dimensions);
+         return GL_TRUE;
       }
       if (border != 0) {
          if (!isProxy) {
@@ -1811,16 +1814,7 @@ subtexture_error_check2( GLcontext *ctx, GLuint dimensions,
 #endif
 
    if (destTex->IsCompressed) {
-      if (target == GL_TEXTURE_2D || target == GL_PROXY_TEXTURE_2D) {
-         /* OK */
-      }
-      else if (ctx->Extensions.ARB_texture_cube_map &&
-               (target == GL_PROXY_TEXTURE_CUBE_MAP ||
-                (target >= GL_TEXTURE_CUBE_MAP_POSITIVE_X &&
-                 target <= GL_TEXTURE_CUBE_MAP_NEGATIVE_Z))) {
-         /* OK */
-      }
-      else {
+      if (!target_can_be_compressed(ctx, target)) {
          _mesa_error(ctx, GL_INVALID_ENUM,
                      "glTexSubImage%D(target)", dimensions);
          return GL_TRUE;
