@@ -1398,8 +1398,8 @@ target_can_be_compressed(GLcontext *ctx, GLenum target)
                  (target >= GL_TEXTURE_CUBE_MAP_POSITIVE_X &&
                   target <= GL_TEXTURE_CUBE_MAP_NEGATIVE_Z))))
            || ((ctx->Extensions.MESA_texture_array &&
-                ((target == GL_PROXY_TEXTURE_2D_ARRAY) ||
-                 (target == GL_TEXTURE_2D_ARRAY)))));
+                ((target == GL_PROXY_TEXTURE_2D_ARRAY_EXT) ||
+                 (target == GL_TEXTURE_2D_ARRAY_EXT)))));
 }
 
 
