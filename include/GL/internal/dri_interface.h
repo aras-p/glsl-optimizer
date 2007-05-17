@@ -170,39 +170,6 @@ struct __DRImediaStreamCounterExtensionRec {
 
 
 /**
- * \name Functions provided by the driver loader.
- */
-/*@{*/
-/**
- * Type of a pointer to \c glXGetScreenDriver, as returned by
- * \c glXGetProcAddress.  This function is used to get the name of the DRI
- * driver for the specified screen of the specified display.  The driver
- * name is typically used with \c glXGetDriverConfig.
- *
- * \sa glXGetScreenDriver, glXGetProcAddress, glXGetDriverConfig
- */
-typedef const char * (* PFNGLXGETSCREENDRIVERPROC) (__DRIscreen *screen);
-
-/**
- * Type of a pointer to \c glXGetDriverConfig, as returned by
- * \c glXGetProcAddress.  This function is used to get the XML document
- * describing the configuration options available for the specified driver.
- *
- * \sa glXGetDriverConfig, glXGetProcAddress, glXGetScreenDriver
- */
-typedef const char * (* PFNGLXGETDRIVERCONFIGPROC) (const char *driverName);
-
-/**
- * Type of a pointer to \c glxEnableExtension, as returned by
- * \c __DRIinterfaceMethods::getProcAddress.  This function is used to enable
- * a GLX extension on the specified screen.
- */
-typedef void (* PFNGLXSCRENABLEEXTENSIONPROC) (__DRIscreen *screen,
-					       const char *name);
-/*@}*/
-
-
-/**
  * Macros for building symbol and strings.  Standard CPP two step...
  */
 
@@ -263,11 +230,6 @@ struct __DRIversionRec {
 typedef void (*__DRIfuncPtr)(void);
 
 struct __DRIinterfaceMethodsRec {
-    /**
-     * Get pointer to named function.
-     */
-    __DRIfuncPtr (*getProcAddress)( const char * proc_name );
-
     /**
      * Create a list of \c __GLcontextModes structures.
      */

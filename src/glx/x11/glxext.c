@@ -691,19 +691,6 @@ filter_modes( __GLcontextModes ** server_modes,
     return modes_count;
 }
 
-
-/**
- * Implement \c __DRIinterfaceMethods::getProcAddress.
- */
-static __DRIfuncPtr get_proc_address( const char * proc_name )
-{
-    if (strcmp( proc_name, "glxEnableExtension" ) == 0) {
-	return (__DRIfuncPtr) __glXScrEnableExtension;
-    }
-    
-    return NULL;
-}
-
 #ifdef XDAMAGE_1_1_INTERFACE
 static GLboolean has_damage_post(Display *dpy)
 {
@@ -798,8 +785,6 @@ __glXDRIGetDrawableInfo(__DRIdrawable *drawable,
  * Table of functions exported by the loader to the driver.
  */
 static const __DRIinterfaceMethods interface_methods = {
-    get_proc_address,
-
     _gl_context_modes_create,
     _gl_context_modes_destroy,
 
