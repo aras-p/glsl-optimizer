@@ -553,7 +553,7 @@ driDestroyContext(__DRIcontext *context)
  * \param modes         Mode used to create the new context.
  * \param render_type   Type of rendering target.  \c GLX_RGBA is the only
  *                      type likely to ever be supported for direct-rendering.
- * \param sharedPrivate The shared context dependent methods or \c NULL if
+ * \param shared        The shared context dependent methods or \c NULL if
  *                      non-existent.
  * \param pctx          DRI context to receive the context dependent methods.
  *
@@ -569,11 +569,11 @@ driDestroyContext(__DRIcontext *context)
  */
 static void *
 driCreateNewContext(__DRIscreen *screen, const __GLcontextModes *modes,
-		    int render_type, void *sharedPrivate, 
+		    int render_type, __DRIcontext *shared, 
 		    drm_context_t hwContext, __DRIcontext *pctx)
 {
     __DRIcontextPrivate *pcp;
-    __DRIcontextPrivate *pshare = (__DRIcontextPrivate *) sharedPrivate;
+    __DRIcontextPrivate *pshare = (shared != NULL) ? shared->private : NULL;
     __DRIscreenPrivate *psp;
     void * const shareCtx = (pshare != NULL) ? pshare->driverPrivate : NULL;
 

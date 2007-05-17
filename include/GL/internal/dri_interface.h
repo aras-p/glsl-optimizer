@@ -377,7 +377,7 @@ struct __DRIscreenRec {
     void * (*createNewContext)(__DRIscreen *screen,
 			       const __GLcontextModes *modes,
 			       int render_type,
-			       void *sharedPrivate,
+			       __DRIcontext *shared,
 			       drm_context_t hwContext, __DRIcontext *pctx);
 
     /**

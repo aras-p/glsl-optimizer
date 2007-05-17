@@ -395,8 +395,8 @@ CreateContext(Display *dpy, XVisualInfo *vis,
 	    }
 
 	    if (psc && psc->driScreen.private) {
-		void * const shared = (shareList != NULL)
-		    ? shareList->driContext.private : NULL;
+		__DRIcontext *shared = (shareList != NULL)
+		    ? &shareList->driContext : NULL;
 
 
 		if (!XF86DRICreateContextWithConfig(dpy, psc->scr,
