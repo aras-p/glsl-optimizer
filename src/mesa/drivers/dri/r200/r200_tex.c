@@ -482,7 +482,7 @@ r200ValidateClientStorage( GLcontext *ctx, GLenum target,
 {
    r200ContextPtr rmesa = R200_CONTEXT(ctx);
 
-   if (0)
+   if ( R200_DEBUG & DEBUG_TEXTURE )
       fprintf(stderr, "intformat %s format %s type %s\n",
 	      _mesa_lookup_enum_by_nr( internalFormat ),
 	      _mesa_lookup_enum_by_nr( format ),
@@ -548,7 +548,7 @@ r200ValidateClientStorage( GLcontext *ctx, GLenum target,
 						  format, type);
 
       
-      if (0)
+      if ( R200_DEBUG & DEBUG_TEXTURE )
 	 fprintf(stderr, "%s: srcRowStride %d/%x\n", 
 		 __FUNCTION__, srcRowStride, srcRowStride);
 
