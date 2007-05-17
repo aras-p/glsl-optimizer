@@ -150,7 +150,7 @@ DestroyPbuffer( Display * dpy, GLXDrawable drawable )
    if ( (priv->majorVersion > 1) || (priv->minorVersion >= 3) ) {
       xGLXDestroyPbufferReq * req;
 
-      GetReqExtra( GLXDestroyPbuffer, 4, req );
+      GetReq( GLXDestroyPbuffer, req );
       req->reqType = opcode;
       req->glxCode = X_GLXDestroyPbuffer;
       req->pbuffer = (GLXPbuffer) drawable;
