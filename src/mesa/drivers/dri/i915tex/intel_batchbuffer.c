@@ -80,12 +80,16 @@ intel_dump_batchbuffer(GLuint offset, GLuint * ptr, GLuint count)
 /*======================================================================
  * Public functions
  */
-struct intel_batchbuffer *
-intel_batchbuffer_alloc(struct intel_context *intel)
+void
+intel_batchbuffer_reset(struct intel_batchbuffer *batch)
 {
-   struct intel_batchbuffer *batch = calloc(sizeof(*batch), 1);
+   struct intel_context *intel = batch->intel;
 
-   batch->intel = intel;
+   if (batch->buf != NULL) {
+      dri_bo_unreference(batch->buf);
+      batch->buf = NULL;
+   }
+
    batch->buf = dri_bo_alloc(intel->intelScreen->bufmgr, "batchbuffer",
 			     intel->intelScreen->maxBatchSize, 4096,
 			     DRM_BO_FLAG_MEM_TT |
@@ -94,9 +98,17 @@ intel_batchbuffer_alloc(struct intel_context *intel)
    batch->map = batch->buf->virtual;
    batch->size = intel->intelScreen->maxBatchSize;
    batch->ptr = batch->map;
+}
 
+struct intel_batchbuffer *
+intel_batchbuffer_alloc(struct intel_context *intel)
+{
+   struct intel_batchbuffer *batch = calloc(sizeof(*batch), 1);
+
+   batch->intel = intel;
    batch->last_fence = NULL;
    intel_batchbuffer_reset(batch);
+
    return batch;
 }
 
