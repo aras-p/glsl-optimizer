@@ -798,7 +798,7 @@ make_3d_mipmap(const struct gl_texture_format *format, GLint border,
 
 static void
 make_1d_stack_mipmap(const struct gl_texture_format *format, GLint border,
-                     GLint srcWidth, GLubyte *srcPtr,
+                     GLint srcWidth, const GLubyte *srcPtr,
                      GLint dstWidth, GLint dstHeight, GLubyte *dstPtr)
 {
    const GLint bpt = format->TexelBytes;
