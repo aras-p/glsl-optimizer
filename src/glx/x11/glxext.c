@@ -997,73 +997,6 @@ CallCreateNewScreen(Display *dpy, int scrn, __GLXscreenConfigs *psc,
     return psp;
 }
 
-static void queryExtensions(__GLXscreenConfigs *psc)
-{
-    const __DRIextension **extensions;
-    int i;
-
-    extensions = psc->driScreen.getExtensions(&psc->driScreen);
-    for (i = 0; extensions[i]; i++) {
-#ifdef __DRI_COPY_SUB_BUFFER
-	if (strcmp(extensions[i]->name, __DRI_COPY_SUB_BUFFER) == 0) {
-	    psc->copySubBuffer = (__DRIcopySubBufferExtension *) extensions[i];
-	    __glXScrEnableExtension(&psc->driScreen,
-				    "GLX_MESA_copy_sub_buffer");
-	}
-#endif
-
-#ifdef __DRI_SWAP_CONTROL
-	if (strcmp(extensions[i]->name, __DRI_SWAP_CONTROL) == 0) {
-	    psc->swapControl = (__DRIswapControlExtension *) extensions[i];
-	    __glXScrEnableExtension(&psc->driScreen,
-				    "GLX_SGI_swap_control");
-	    __glXScrEnableExtension(&psc->driScreen,
-				    "GLX_MESA_swap_control");
-	}
-#endif
-
-#ifdef __DRI_ALLOCATE
-	if (strcmp(extensions[i]->name, __DRI_ALLOCATE) == 0) {
-	    psc->allocate = (__DRIallocateExtension *) extensions[i];
-	    __glXScrEnableExtension(&psc->driScreen,
-				    "GLX_SGI_swap_control");
-	    __glXScrEnableExtension(&psc->driScreen,
-				    "GLX_MESA_swap_control");
-	}
-#endif
-
-#ifdef __DRI_FRAME_TRACKING
-	if (strcmp(extensions[i]->name, __DRI_FRAME_TRACKING) == 0) {
-	    psc->frameTracking = (__DRIframeTrackingExtension *) extensions[i];
-	    __glXScrEnableExtension(&psc->driScreen,
-				    "GLX_MESA_swap_frame_usage");
-	}
-#endif
-
-#ifdef __DRI_MEDIA_STREAM_COUNTER
-	if (strcmp(extensions[i]->name, __DRI_MEDIA_STREAM_COUNTER) == 0) {
-	    psc->msc = (__DRImediaStreamCounterExtension *) extensions[i];
-	    __glXScrEnableExtension(&psc->driScreen,
-				    "GLX_SGI_video_sync");
-	}
-#endif
-
-#ifdef __DRI_SWAP_BUFFER_COUNTER
-	/* No driver supports this at this time and the extension is
-	 * not defined in dri_interface.h.  Will enable
-	 * GLX_OML_sync_control if implemented. */
-#endif
-
-#ifdef __DRI_READ_DRAWABLE
-	if (strcmp(extensions[i]->name, __DRI_READ_DRAWABLE) == 0) {
-	    __glXScrEnableExtension(&psc->driScreen,
-				    "GLX_SGI_make_current_read");
-	}
-#endif
-	/* Ignore unknown extensions */
-    }
-}
-
 #endif /* GLX_DIRECT_RENDERING */
 
 
@@ -1259,7 +1192,7 @@ static Bool AllocAndFetchScreenConfigs(Display *dpy, __GLXdisplayPrivate *priv)
 					& priv->driDisplay,
 					priv->driDisplay.createNewScreen[i] );
 		if (psc->driScreen.private != NULL)
-		    queryExtensions(psc);
+		    __glXScrEnableDRIExtension(psc);
 	    }
 	}
 #endif

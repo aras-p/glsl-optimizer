@@ -236,10 +236,7 @@ extern void __glXCalculateUsableExtensions( struct __GLXscreenConfigsRec *psc,
     GLboolean display_is_direct_capable, int server_minor_version );
 
 #ifdef GLX_DIRECT_RENDERING
-
-struct __DRIscreenRec;
-extern void __glXScrEnableExtension( struct __DRIscreenRec *driScreen, const char * name );
-
+extern void __glXScrEnableDRIExtension( struct __GLXscreenConfigsRec *psc );
 #endif
 
 extern void __glXCalculateUsableGLExtensions( struct __GLXcontextRec * gc,

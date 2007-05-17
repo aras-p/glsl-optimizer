@@ -358,28 +358,66 @@ __glXProcessServerString( const struct extension_info * ext,
 
 #ifdef GLX_DIRECT_RENDERING
 
-/**
- * Enable a named GLX extension on a given screen.
- * Drivers should not call this function directly.  They should instead use
- * \c glXGetProcAddress to obtain a pointer to the function.
- *
- * \param psc   Pointer to GLX per-screen record.
- * \param name  Name of the extension to enable.
- *
- * \sa glXGetProcAddress
- *
- * \since Internal API version 20030813.
- */
 void
-__glXScrEnableExtension( __DRIscreen *driScreen, const char * name )
+__glXScrEnableDRIExtension(__GLXscreenConfigs *psc)
 {
-    __GLXscreenConfigs *psc =
-	containerOf(driScreen, __GLXscreenConfigs, driScreen);
+    const __DRIextension **extensions;
+    int i;
 
-   __glXExtensionsCtr();
-   __glXExtensionsCtrScreen(psc);
-   set_glx_extension( known_glx_extensions, name, strlen( name ), GL_TRUE,
-		      psc->direct_support );
+    __glXExtensionsCtr();
+    __glXExtensionsCtrScreen(psc);
+
+    extensions = psc->driScreen.getExtensions(&psc->driScreen);
+    for (i = 0; extensions[i]; i++) {
+#ifdef __DRI_COPY_SUB_BUFFER
+	if (strcmp(extensions[i]->name, __DRI_COPY_SUB_BUFFER) == 0) {
+	    psc->copySubBuffer = (__DRIcopySubBufferExtension *) extensions[i];
+	    SET_BIT(psc->direct_support, MESA_copy_sub_buffer_bit);
+	}
+#endif
+
+#ifdef __DRI_SWAP_CONTROL
+	if (strcmp(extensions[i]->name, __DRI_SWAP_CONTROL) == 0) {
+	    psc->swapControl = (__DRIswapControlExtension *) extensions[i];
+	    SET_BIT(psc->direct_support, SGI_swap_control_bit);
+	    SET_BIT(psc->direct_support, MESA_swap_control_bit);
+	}
+#endif
+
+#ifdef __DRI_ALLOCATE
+	if (strcmp(extensions[i]->name, __DRI_ALLOCATE) == 0) {
+	    psc->allocate = (__DRIallocateExtension *) extensions[i];
+	    SET_BIT(psc->direct_support, MESA_allocate_memory_bit);
+	}
+#endif
+
+#ifdef __DRI_FRAME_TRACKING
+	if (strcmp(extensions[i]->name, __DRI_FRAME_TRACKING) == 0) {
+	    psc->frameTracking = (__DRIframeTrackingExtension *) extensions[i];
+	    SET_BIT(psc->direct_support, MESA_swap_frame_usage_bit);
+	}
+#endif
+
+#ifdef __DRI_MEDIA_STREAM_COUNTER
+	if (strcmp(extensions[i]->name, __DRI_MEDIA_STREAM_COUNTER) == 0) {
+	    psc->msc = (__DRImediaStreamCounterExtension *) extensions[i];
+	    SET_BIT(psc->direct_support, SGI_video_sync_bit);
+	}
+#endif
+
+#ifdef __DRI_SWAP_BUFFER_COUNTER
+	/* No driver supports this at this time and the extension is
+	 * not defined in dri_interface.h.  Will enable
+	 * GLX_OML_sync_control if implemented. */
+#endif
+
+#ifdef __DRI_READ_DRAWABLE
+	if (strcmp(extensions[i]->name, __DRI_READ_DRAWABLE) == 0) {
+	    SET_BIT(psc->direct_support, SGI_make_current_read_bit);
+	}
+#endif
+	/* Ignore unknown extensions */
+    }
 }
 
 #endif
