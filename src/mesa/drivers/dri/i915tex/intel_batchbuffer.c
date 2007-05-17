@@ -77,49 +77,6 @@ intel_dump_batchbuffer(GLuint offset, GLuint * ptr, GLuint count)
    fprintf(stderr, "END BATCH\n\n\n");
 }
 
-void
-intel_batchbuffer_reset(struct intel_batchbuffer *batch)
-{
-
-   int i;
-
-   /*
-    * Get a new, free batchbuffer.
-    */
-
-   batch->size =  batch->intel->intelScreen->maxBatchSize;
-   driBOData(batch->buffer, batch->size, NULL, 0);
-
-   driBOResetList(&batch->list);
-
-   /*
-    * Unreference buffers previously on the relocation list.
-    */
-
-   for (i = 0; i < batch->nr_relocs; i++) {
-      struct buffer_reloc *r = &batch->reloc[i];
-      driBOUnReference(r->buf);
-   }
-
-   batch->list_count = 0;
-   batch->nr_relocs = 0;
-   batch->flags = 0;
-
-   /*
-    * We don't refcount the batchbuffer itself since we can't destroy it
-    * while it's on the list.
-    */
-
-
-   driBOAddListItem(&batch->list, batch->buffer,
-                    DRM_BO_FLAG_MEM_TT | DRM_BO_FLAG_EXE,
-                    DRM_BO_MASK_MEM | DRM_BO_FLAG_EXE);
-
-
-   batch->map = driBOMap(batch->buffer, DRM_BO_FLAG_WRITE, 0);
-   batch->ptr = batch->map;
-}
-
 /*======================================================================
  * Public functions
  */
@@ -129,12 +86,16 @@ intel_batchbuffer_alloc(struct intel_context *intel)
    struct intel_batchbuffer *batch = calloc(sizeof(*batch), 1);
 
    batch->intel = intel;
+   batch->buf = dri_bo_alloc(intel->intelScreen->bufmgr, "batchbuffer",
+			     intel->intelScreen->maxBatchSize, 4096,
+			     DRM_BO_FLAG_MEM_TT |
+			     DRM_BO_FLAG_EXE, 0);
+   dri_bo_map(batch->buf, GL_TRUE);
+   batch->map = batch->buf->virtual;
+   batch->size = intel->intelScreen->maxBatchSize;
+   batch->ptr = batch->map;
 
-   driGenBuffers(intel->intelScreen->batchPool, "batchbuffer", 1,
-                 &batch->buffer, 4096,
-                 DRM_BO_FLAG_MEM_TT | DRM_BO_FLAG_EXE, 0);
    batch->last_fence = NULL;
-   driBOCreateList(20, &batch->list);
    intel_batchbuffer_reset(batch);
    return batch;
 }
@@ -143,17 +104,16 @@ void
 intel_batchbuffer_free(struct intel_batchbuffer *batch)
 {
    if (batch->last_fence) {
-      driFenceFinish(batch->last_fence,
-      DRM_FENCE_TYPE_EXE | DRM_I915_FENCE_TYPE_RW, GL_FALSE);
-      driFenceUnReference(batch->last_fence);
+      dri_fence_wait(batch->last_fence);
+      dri_fence_unreference(batch->last_fence);
       batch->last_fence = NULL;
    }
    if (batch->map) {
-      driBOUnmap(batch->buffer);
+      dri_bo_unmap(batch->buf);
       batch->map = NULL;
    }
-   driBOUnReference(batch->buffer);
-   batch->buffer = NULL;
+   dri_bo_unreference(batch->buf);
+   batch->buf = NULL;
    free(batch);
 }
 
@@ -167,30 +127,35 @@ do_flush_locked(struct intel_batchbuffer *batch,
    GLuint *ptr;
    GLuint i;
    struct intel_context *intel = batch->intel;
-   unsigned fenceFlags;
-   struct _DriFenceObject *fo;
+   dri_fence *fo;
+   GLboolean performed_rendering = GL_FALSE;
 
-   driBOValidateList(batch->intel->driFd, &batch->list);
-
-   /* Apply the relocations.  This nasty map indicates to me that the
-    * whole task should be done internally by the memory manager, and
-    * that dma buffers probably need to be pinned within agp space.
-    */
-   ptr = (GLuint *) driBOMap(batch->buffer, DRM_BO_FLAG_WRITE,
-                             DRM_BO_HINT_ALLOW_UNFENCED_MAP);
-
+   assert(batch->buf->virtual != NULL);
+   ptr = batch->buf->virtual;
 
    for (i = 0; i < batch->nr_relocs; i++) {
       struct buffer_reloc *r = &batch->reloc[i];
 
-      ptr[r->offset / 4] = driBOOffset(r->buf) + r->delta;
+      if (r->validate_flags & DRM_BO_FLAG_WRITE)
+	 performed_rendering = GL_TRUE;
+
+      dri_bo_validate(r->buf, r->validate_flags);
+      ptr[r->offset / 4] = r->buf->offset + r->delta;
+      dri_bo_unreference(r->buf);
    }
 
    if (INTEL_DEBUG & DEBUG_BATCH)
       intel_dump_batchbuffer(0, ptr, used);
 
-   driBOUnmap(batch->buffer);
+   dri_bo_unmap(batch->buf);
    batch->map = NULL;
+   batch->ptr = NULL;
+
+   dri_bo_validate(batch->buf, DRM_BO_FLAG_MEM_TT | DRM_BO_FLAG_EXE);
+
+   batch->list_count = 0;
+   batch->nr_relocs = 0;
+   batch->flags = 0;
 
    /* Throw away non-effective packets.  Won't work once we have
     * hardware contexts which would preserve statechanges beyond a
@@ -199,45 +164,32 @@ do_flush_locked(struct intel_batchbuffer *batch,
 
    if (!(intel->numClipRects == 0 && !ignore_cliprects)) {
       intel_batch_ioctl(batch->intel,
-                        driBOOffset(batch->buffer),
+                        batch->buf->offset,
                         used, ignore_cliprects, allow_unlock);
    }
 
-
-   /*
-    * Kernel fencing. The flags tells the kernel that we've 
-    * programmed an MI_FLUSH.
+   /* Associate a fence with the validated buffers, and note that we included
+    * a flush at the end.
     */
-   
-   fenceFlags = DRM_I915_FENCE_FLAG_FLUSHED;
-   fo = driFenceBuffers(batch->intel->driFd,
-			"Batch fence", fenceFlags);
+   fo = dri_fence_validated(intel->intelScreen->bufmgr,
+			    "Batch fence", GL_TRUE);
 
-   /*
-    * User space fencing.
-    */
-
-   driBOFence(batch->buffer, fo);
-
-   if (driFenceType(fo) == DRM_FENCE_TYPE_EXE) {
-
-     /*
-      * Oops. We only validated a batch buffer. This means we
-      * didn't do any proper rendering. Discard this fence object.
-      */
-
-      driFenceUnReference(fo);
-   } else {
-      driFenceUnReference(batch->last_fence);
+   if (performed_rendering) {
+      dri_fence_unreference(batch->last_fence);
       batch->last_fence = fo;
-      for (i = 0; i < batch->nr_relocs; i++) {
-	struct buffer_reloc *r = &batch->reloc[i];
-	driBOFence(r->buf, fo);
-      }
+   } else {
+     /* If we didn't validate any buffers for writing by the card, we don't
+      * need to track the fence for glFinish().
+      */
+      dri_fence_unreference(fo);
    }
 
    if (intel->numClipRects == 0 && !ignore_cliprects) {
       if (allow_unlock) {
+	 /* If we are not doing any actual user-visible rendering,
+	  * do a sched_yield to keep the app from pegging the cpu while
+	  * achieving nothing.
+	  */
          UNLOCK_HARDWARE(intel);
          sched_yield();
          LOCK_HARDWARE(intel);
@@ -247,7 +199,7 @@ do_flush_locked(struct intel_batchbuffer *batch,
 }
 
 
-struct _DriFenceObject *
+void
 intel_batchbuffer_flush(struct intel_batchbuffer *batch)
 {
    struct intel_context *intel = batch->intel;
@@ -255,7 +207,7 @@ intel_batchbuffer_flush(struct intel_batchbuffer *batch)
    GLboolean was_locked = intel->locked;
 
    if (used == 0)
-      return batch->last_fence;
+      return;
 
    /* Add the MI_BATCH_BUFFER_END.  Always add an MI_FLUSH - this is a
     * performance drain that we would like to avoid.
@@ -272,10 +224,6 @@ intel_batchbuffer_flush(struct intel_batchbuffer *batch)
       used += 8;
    }
 
-   driBOUnmap(batch->buffer);
-   batch->ptr = NULL;
-   batch->map = NULL;
-
    /* TODO: Just pass the relocation list and dma buffer up to the
     * kernel.
     */
@@ -291,16 +239,14 @@ intel_batchbuffer_flush(struct intel_batchbuffer *batch)
    /* Reset the buffer:
     */
    intel_batchbuffer_reset(batch);
-   return batch->last_fence;
 }
 
 void
 intel_batchbuffer_finish(struct intel_batchbuffer *batch)
 {
-   struct _DriFenceObject *fence = intel_batchbuffer_flush(batch);
-   driFenceReference(fence);
-   driFenceFinish(fence, 3, GL_FALSE);
-   driFenceUnReference(fence);
+   intel_batchbuffer_flush(batch);
+   if (batch->last_fence != NULL)
+      dri_fence_wait(batch->last_fence);
 }
 
 
@@ -308,20 +254,18 @@ intel_batchbuffer_finish(struct intel_batchbuffer *batch)
  */
 GLboolean
 intel_batchbuffer_emit_reloc(struct intel_batchbuffer *batch,
-                             struct _DriBufferObject *buffer,
-                             GLuint flags, GLuint mask, GLuint delta)
+                             dri_bo *buffer,
+                             GLuint flags, GLuint delta)
 {
-   assert(batch->nr_relocs < MAX_RELOCS);
+   struct buffer_reloc *r = &batch->reloc[batch->nr_relocs++];
 
-   driBOAddListItem(&batch->list, buffer, flags, mask);
+   assert(batch->nr_relocs <= MAX_RELOCS);
 
-   {
-      struct buffer_reloc *r = &batch->reloc[batch->nr_relocs++];
-      driBOReference(buffer);
-      r->buf = buffer;
-      r->offset = batch->ptr - batch->map;
-      r->delta = delta;
-   }
+   dri_bo_reference(buffer);
+   r->buf = buffer;
+   r->offset = batch->ptr - batch->map;
+   r->delta = delta;
+   r->validate_flags = flags;
 
    batch->ptr += 4;
    return GL_TRUE;

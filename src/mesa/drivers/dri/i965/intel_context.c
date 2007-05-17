@@ -656,7 +656,7 @@ void LOCK_HARDWARE( struct intel_context *intel )
    intel->locked = 1;
 
    if (intel->aub_wrap) {
-      bm_fake_NotifyContendedLockTake( intel ); 
+      bm_fake_NotifyContendedLockTake( intel );
       intel->vtbl.lost_hardware( intel );
       intel->vtbl.aub_wrap(intel);
       intel->aub_wrap = 0;
@@ -667,7 +667,7 @@ void LOCK_HARDWARE( struct intel_context *intel )
       intel->vtbl.lost_hardware( intel );
    }
 
-   /* Make sure nothing has been emitted prior to getting the lock: 
+   /* Make sure nothing has been emitted prior to getting the lock:
     */
    assert(intel->batch->map == 0);
 
@@ -699,8 +699,6 @@ void UNLOCK_HARDWARE( struct intel_context *intel )
    intel_batchbuffer_unmap(intel->batch);
    intel->vtbl.note_unlock( intel );
    intel->locked = 0;
-
-
 
    DRM_UNLOCK(intel->driFd, intel->driHwLock, intel->hHWContext);
    _glthread_UNLOCK_MUTEX(lockMutex); 

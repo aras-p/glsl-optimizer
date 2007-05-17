@@ -326,7 +326,6 @@ i915_emit_state(struct intel_context *intel)
       OUT_BATCH(state->Buffer[I915_DESTREG_CBUFADDR1]);
       OUT_RELOC(state->draw_region->buffer,
                 DRM_BO_FLAG_MEM_TT | DRM_BO_FLAG_WRITE,
-                DRM_BO_MASK_MEM | DRM_BO_FLAG_WRITE,
                 state->draw_region->draw_offset);
 
       if (state->depth_region) {
@@ -334,7 +333,6 @@ i915_emit_state(struct intel_context *intel)
          OUT_BATCH(state->Buffer[I915_DESTREG_DBUFADDR1]);
          OUT_RELOC(state->depth_region->buffer,
                    DRM_BO_FLAG_MEM_TT | DRM_BO_FLAG_WRITE,
-                   DRM_BO_MASK_MEM | DRM_BO_FLAG_WRITE,
                    state->depth_region->draw_offset);
       }
 
@@ -378,7 +376,6 @@ i915_emit_state(struct intel_context *intel)
             if (state->tex_buffer[i]) {
                OUT_RELOC(state->tex_buffer[i],
                          DRM_BO_FLAG_MEM_TT | DRM_BO_FLAG_READ,
-                         DRM_BO_MASK_MEM | DRM_BO_FLAG_READ,
                          state->tex_offset[i]);
             }
             else {

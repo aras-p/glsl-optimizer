@@ -217,7 +217,7 @@ do_blit_drawpixels(GLcontext * ctx,
    struct intel_buffer_object *src = intel_buffer_object(unpack->BufferObj);
    GLuint src_offset;
    GLuint rowLength;
-   struct _DriFenceObject *fence = NULL;
+   dri_fence *fence = NULL;
 
    if (INTEL_DEBUG & DEBUG_PIXEL)
       _mesa_printf("%s\n", __FUNCTION__);
@@ -298,8 +298,7 @@ do_blit_drawpixels(GLcontext * ctx,
       drm_clip_rect_t *box = dPriv->pClipRects;
       drm_clip_rect_t rect;
       drm_clip_rect_t dest_rect;
-      struct _DriBufferObject *src_buffer =
-         intel_bufferobj_buffer(intel, src, INTEL_READ);
+      dri_bo *src_buffer = intel_bufferobj_buffer(intel, src, INTEL_READ);
       int i;
 
       dest_rect.x1 = dPriv->x + x;
@@ -324,14 +323,15 @@ do_blit_drawpixels(GLcontext * ctx,
 			   ctx->Color.ColorLogicOpEnabled ?
 			   ctx->Color.LogicOp : GL_COPY);
       }
-      fence = intel_batchbuffer_flush(intel->batch);
-      driFenceReference(fence);
+      intel_batchbuffer_flush(intel->batch);
+      fence = intel->batch->last_fence;
+      dri_fence_reference(fence);
    }
    UNLOCK_HARDWARE(intel);
 
    if (fence) {
-      driFenceFinish(fence, DRM_FENCE_TYPE_EXE | DRM_I915_FENCE_TYPE_RW, GL_FALSE);
-      driFenceUnReference(fence);
+      dri_fence_wait(fence);
+      dri_fence_unreference(fence);
    }
 
    if (INTEL_DEBUG & DEBUG_PIXEL)

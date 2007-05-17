@@ -35,6 +35,17 @@
 #include "intel_regions.h"
 #include "dri_bufmgr.h"
 
+/** Allocates a new dri_bo to store the data for the buffer object. */
+static void
+intel_bufferobj_alloc_buffer(struct intel_context *intel,
+			     struct intel_buffer_object *intel_obj)
+{
+   intel_obj->buffer = dri_bo_alloc(intel->intelScreen->bufmgr, "bufferobj",
+				    intel_obj->Base.Size, 64,
+				    DRM_BO_FLAG_MEM_LOCAL |
+				    DRM_BO_FLAG_READ | DRM_BO_FLAG_WRITE, 0);
+}
+
 /**
  * There is some duplication between mesa's bufferobjects and our
  * bufmgr buffers.  Both have an integer handle and a hashtable to
@@ -44,20 +55,14 @@
 static struct gl_buffer_object *
 intel_bufferobj_alloc(GLcontext * ctx, GLuint name, GLenum target)
 {
-   struct intel_context *intel = intel_context(ctx);
    struct intel_buffer_object *obj = CALLOC_STRUCT(intel_buffer_object);
 
    _mesa_initialize_buffer_object(&obj->Base, name, target);
 
-   driGenBuffers(intel->intelScreen->regionPool,
-                 "bufferobj", 1, &obj->buffer, 64,
-		 DRM_BO_FLAG_MEM_LOCAL |
-		 DRM_BO_FLAG_READ | DRM_BO_FLAG_WRITE,
-		 0);
+   obj->buffer = NULL;
 
    return &obj->Base;
 }
-
 
 /* Break the COW tie to the region.  The region gets to keep the data.
  */
@@ -68,15 +73,9 @@ intel_bufferobj_release_region(struct intel_context *intel,
    assert(intel_obj->region->buffer == intel_obj->buffer);
    intel_obj->region->pbo = NULL;
    intel_obj->region = NULL;
-   driBOUnReference(intel_obj->buffer);
-   intel_obj->buffer = NULL;
 
-   /* This leads to a large number of buffer deletion/creation events.
-    * Currently the drm doesn't like that:
-    */
-   driGenBuffers(intel->intelScreen->regionPool,
-                 "buffer object", 1, &intel_obj->buffer, 64, 0, 0);
-   driBOData(intel_obj->buffer, intel_obj->Base.Size, NULL, 0);
+   dri_bo_unreference(intel_obj->buffer);
+   intel_obj->buffer = NULL;
 }
 
 /* Break the COW tie to the region.  Both the pbo and the region end
@@ -107,7 +106,7 @@ intel_bufferobj_free(GLcontext * ctx, struct gl_buffer_object *obj)
       intel_bufferobj_release_region(intel, intel_obj);
    }
    else if (intel_obj->buffer) {
-      driDeleteBuffers(1, &intel_obj->buffer);
+      dri_bo_unreference(intel_obj->buffer);
    }
 
    _mesa_free(intel_obj);
@@ -137,7 +136,15 @@ intel_bufferobj_data(GLcontext * ctx,
    if (intel_obj->region)
       intel_bufferobj_release_region(intel, intel_obj);
 
-   driBOData(intel_obj->buffer, size, data, 0);
+   if (intel_obj->buffer != NULL && intel_obj->buffer->size != size) {
+      dri_bo_unreference(intel_obj->buffer);
+      intel_obj->buffer = NULL;
+   }
+
+   intel_bufferobj_alloc_buffer(intel, intel_obj);
+
+   if (data != NULL)
+      dri_bo_subdata(intel_obj->buffer, 0, size, data);
 }
 
 
@@ -162,7 +169,7 @@ intel_bufferobj_subdata(GLcontext * ctx,
    if (intel_obj->region)
       intel_bufferobj_cow(intel, intel_obj);
 
-   driBOSubData(intel_obj->buffer, offset, size, data);
+   dri_bo_subdata(intel_obj->buffer, offset, size, data);
 }
 
 
@@ -179,7 +186,7 @@ intel_bufferobj_get_subdata(GLcontext * ctx,
    struct intel_buffer_object *intel_obj = intel_buffer_object(obj);
 
    assert(intel_obj);
-   driBOGetSubData(intel_obj->buffer, offset, size, data);
+   dri_bo_subdata(intel_obj->buffer, offset, size, data);
 }
 
 
@@ -202,8 +209,13 @@ intel_bufferobj_map(GLcontext * ctx,
    if (intel_obj->region)
       intel_bufferobj_cow(intel, intel_obj);
 
-   obj->Pointer = driBOMap(intel_obj->buffer,
-                           DRM_BO_FLAG_READ | DRM_BO_FLAG_WRITE, 0);
+   if (intel_obj->buffer == NULL) {
+      obj->Pointer = NULL;
+      return NULL;
+   }
+
+   dri_bo_map(intel_obj->buffer, GL_TRUE);
+   obj->Pointer = intel_obj->buffer->virtual;
    return obj->Pointer;
 }
 
@@ -218,21 +230,25 @@ intel_bufferobj_unmap(GLcontext * ctx,
    struct intel_buffer_object *intel_obj = intel_buffer_object(obj);
 
    assert(intel_obj);
-   assert(obj->Pointer);
-   driBOUnmap(intel_obj->buffer);
-   obj->Pointer = NULL;
+   if (intel_obj->buffer != NULL) {
+      assert(obj->Pointer);
+      dri_bo_unmap(intel_obj->buffer);
+      obj->Pointer = NULL;
+   }
    return GL_TRUE;
 }
 
-struct _DriBufferObject *
+dri_bo *
 intel_bufferobj_buffer(struct intel_context *intel,
                        struct intel_buffer_object *intel_obj, GLuint flag)
 {
    if (intel_obj->region) {
       if (flag == INTEL_WRITE_PART)
          intel_bufferobj_cow(intel, intel_obj);
-      else if (flag == INTEL_WRITE_FULL)
+      else if (flag == INTEL_WRITE_FULL) {
          intel_bufferobj_release_region(intel, intel_obj);
+	 intel_bufferobj_alloc_buffer(intel, intel_obj);
+      }
    }
 
    return intel_obj->buffer;

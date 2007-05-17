@@ -44,7 +44,7 @@ struct intel_buffer_object;
  */
 struct intel_region
 {
-   struct _DriBufferObject *buffer;   /**< buffer manager's buffer ID */
+   dri_bo *buffer;  /**< buffer manager's buffer */
    GLuint refcount; /**< Reference count for region */
    GLuint cpp;      /**< bytes per pixel */
    GLuint pitch;    /**< in pixels */
@@ -134,8 +134,8 @@ void intel_region_release_pbo(intelScreenPrivate *intelScreen,
 void intel_region_cow(intelScreenPrivate *intelScreen,
                       struct intel_region *region);
 
-struct _DriBufferObject *intel_region_buffer(intelScreenPrivate *intelScreen,
-                                             struct intel_region *region,
-                                             GLuint flag);
+dri_bo *intel_region_buffer(intelScreenPrivate *intelScreen,
+			    struct intel_region *region,
+			    GLuint flag);
 
 #endif

@@ -67,8 +67,8 @@ intelCopyBuffer(const __DRIdrawablePrivate * dPriv,
    intelScreen = intel->intelScreen;
 
    if (intel->last_swap_fence) {
-      driFenceFinish(intel->last_swap_fence, DRM_FENCE_TYPE_EXE, GL_TRUE);
-      driFenceUnReference(intel->last_swap_fence);
+      dri_fence_wait(intel->last_swap_fence);
+      dri_fence_unreference(intel->last_swap_fence);
       intel->last_swap_fence = NULL;
    }
    intel->last_swap_fence = intel->first_swap_fence;
@@ -140,19 +140,20 @@ intelCopyBuffer(const __DRIdrawablePrivate * dPriv,
 	 OUT_BATCH((pbox->y2 << 16) | pbox->x2);
 
 	 OUT_RELOC(frontRegion->buffer, DRM_BO_FLAG_MEM_TT | DRM_BO_FLAG_WRITE,
-		   DRM_BO_MASK_MEM | DRM_BO_FLAG_WRITE, 0);
+		   0);
 	 OUT_BATCH((pbox->y1 << 16) | pbox->x1);
 	 OUT_BATCH(BR13 & 0xffff);
 	 OUT_RELOC(backRegion->buffer, DRM_BO_FLAG_MEM_TT | DRM_BO_FLAG_READ,
-		   DRM_BO_MASK_MEM | DRM_BO_FLAG_READ, 0);
+		   0);
 
 	 ADVANCE_BATCH();
       }
 
       if (intel->first_swap_fence)
-	 driFenceUnReference(intel->first_swap_fence);
-      intel->first_swap_fence = intel_batchbuffer_flush(intel->batch);
-      driFenceReference(intel->first_swap_fence);
+	 dri_fence_unreference(intel->first_swap_fence);
+      intel_batchbuffer_flush(intel->batch);
+      dri_fence_reference(intel->first_swap_fence);
+      intel->first_swap_fence = intel->batch->last_fence;
    }
 
    UNLOCK_HARDWARE(intel);
@@ -165,7 +166,7 @@ void
 intelEmitFillBlit(struct intel_context *intel,
                   GLuint cpp,
                   GLshort dst_pitch,
-                  struct _DriBufferObject *dst_buffer,
+                  dri_bo *dst_buffer,
                   GLuint dst_offset,
                   GLshort x, GLshort y, GLshort w, GLshort h, GLuint color)
 {
@@ -199,8 +200,7 @@ intelEmitFillBlit(struct intel_context *intel,
    OUT_BATCH(BR13);
    OUT_BATCH((y << 16) | x);
    OUT_BATCH(((y + h) << 16) | (x + w));
-   OUT_RELOC(dst_buffer, DRM_BO_FLAG_MEM_TT | DRM_BO_FLAG_WRITE,
-             DRM_BO_MASK_MEM | DRM_BO_FLAG_WRITE, dst_offset);
+   OUT_RELOC(dst_buffer, DRM_BO_FLAG_MEM_TT | DRM_BO_FLAG_WRITE, dst_offset);
    OUT_BATCH(color);
    ADVANCE_BATCH();
 }
@@ -236,10 +236,10 @@ void
 intelEmitCopyBlit(struct intel_context *intel,
                   GLuint cpp,
                   GLshort src_pitch,
-                  struct _DriBufferObject *src_buffer,
+                  dri_bo *src_buffer,
                   GLuint src_offset,
                   GLshort dst_pitch,
-                  struct _DriBufferObject *dst_buffer,
+                  dri_bo *dst_buffer,
                   GLuint dst_offset,
                   GLshort src_x, GLshort src_y,
                   GLshort dst_x, GLshort dst_y, 
@@ -297,12 +297,10 @@ intelEmitCopyBlit(struct intel_context *intel,
       OUT_BATCH(BR13);
       OUT_BATCH((dst_y << 16) | dst_x);
       OUT_BATCH((dst_y2 << 16) | dst_x2);
-      OUT_RELOC(dst_buffer, DRM_BO_FLAG_MEM_TT | DRM_BO_FLAG_WRITE,
-                DRM_BO_MASK_MEM | DRM_BO_FLAG_WRITE, dst_offset);
+      OUT_RELOC(dst_buffer, DRM_BO_FLAG_MEM_TT | DRM_BO_FLAG_WRITE, dst_offset);
       OUT_BATCH((src_y << 16) | src_x);
       OUT_BATCH(((GLint) src_pitch & 0xffff));
-      OUT_RELOC(src_buffer, DRM_BO_FLAG_MEM_TT | DRM_BO_FLAG_READ,
-                DRM_BO_MASK_MEM | DRM_BO_FLAG_READ, src_offset);
+      OUT_RELOC(src_buffer, DRM_BO_FLAG_MEM_TT | DRM_BO_FLAG_READ, src_offset);
       ADVANCE_BATCH();
    }
    else {
@@ -312,12 +310,10 @@ intelEmitCopyBlit(struct intel_context *intel,
       OUT_BATCH((0 << 16) | dst_x);
       OUT_BATCH((h << 16) | dst_x2);
       OUT_RELOC(dst_buffer, DRM_BO_FLAG_MEM_TT | DRM_BO_FLAG_WRITE,
-                DRM_BO_MASK_MEM | DRM_BO_FLAG_WRITE,
                 dst_offset + dst_y * dst_pitch);
       OUT_BATCH((0 << 16) | src_x);
       OUT_BATCH(((GLint) src_pitch & 0xffff));
       OUT_RELOC(src_buffer, DRM_BO_FLAG_MEM_TT | DRM_BO_FLAG_READ,
-                DRM_BO_MASK_MEM | DRM_BO_FLAG_READ,
                 src_offset + src_y * src_pitch);
       ADVANCE_BATCH();
    }
@@ -420,7 +416,7 @@ intelClearWithBlit(GLcontext * ctx, GLbitfield mask)
                /* OK, clear this renderbuffer */
                struct intel_region *irb_region =
 		  intel_get_rb_region(fb, buf);
-               struct _DriBufferObject *write_buffer =
+               dri_bo *write_buffer =
                   intel_region_buffer(intel->intelScreen, irb_region,
                                       all ? INTEL_WRITE_FULL :
                                       INTEL_WRITE_PART);
@@ -483,7 +479,6 @@ intelClearWithBlit(GLcontext * ctx, GLbitfield mask)
                OUT_BATCH((b.y1 << 16) | b.x1);
                OUT_BATCH((b.y2 << 16) | b.x2);
                OUT_RELOC(write_buffer, DRM_BO_FLAG_MEM_TT | DRM_BO_FLAG_WRITE,
-                         DRM_BO_MASK_MEM | DRM_BO_FLAG_WRITE,
                          irb_region->draw_offset);
                OUT_BATCH(clearVal);
                ADVANCE_BATCH();

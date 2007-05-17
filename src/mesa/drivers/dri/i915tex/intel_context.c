@@ -303,9 +303,8 @@ intelFinish(GLcontext * ctx)
    struct intel_context *intel = intel_context(ctx);
    intelFlush(ctx);
    if (intel->batch->last_fence) {
-      driFenceFinish(intel->batch->last_fence,
-                     0, GL_FALSE);
-      driFenceUnReference(intel->batch->last_fence);
+      dri_fence_wait(intel->batch->last_fence);
+      dri_fence_unreference(intel->batch->last_fence);
       intel->batch->last_fence = NULL;
    }
    intelCheckFrontRotate(ctx);
@@ -441,7 +440,6 @@ intelInitContext(struct intel_context *intel,
    intel->RenderIndex = ~0;
 
    fthrottle_mode = driQueryOptioni(&intel->optionCache, "fthrottle_mode");
-   intel->iw.irq_seq = -1;
    intel->irqsEmitted = 0;
 
    intel->do_irqs = (intel->intelScreen->irq_active &&
@@ -514,13 +512,13 @@ intelDestroyContext(__DRIcontextPrivate * driContextPriv)
       intel_batchbuffer_free(intel->batch);
 
       if (intel->last_swap_fence) {
-	 driFenceFinish(intel->last_swap_fence, DRM_FENCE_TYPE_EXE, GL_TRUE);
-	 driFenceUnReference(intel->last_swap_fence);
+	 dri_fence_wait(intel->last_swap_fence);
+	 dri_fence_unreference(intel->last_swap_fence);
 	 intel->last_swap_fence = NULL;
       }
       if (intel->first_swap_fence) {
-	 driFenceFinish(intel->first_swap_fence, DRM_FENCE_TYPE_EXE, GL_TRUE);
-	 driFenceUnReference(intel->first_swap_fence);
+	 dri_fence_wait(intel->first_swap_fence);
+	 dri_fence_unreference(intel->first_swap_fence);
 	 intel->first_swap_fence = NULL;
       }
 
@@ -664,14 +662,14 @@ intelContendedLock(struct intel_context *intel, GLuint flags)
        */
 
       if (batchMap != NULL) {
-	 driBOUnmap(intel->batch->buffer);
+	 dri_bo_unmap(intel->batch->buf);
 	 intel->batch->map = NULL;
       }
 
       intel_batchbuffer_reset(intel->batch);
 
       if (batchMap == NULL) {
-	 driBOUnmap(intel->batch->buffer);
+	 dri_bo_unmap(intel->batch->buf);
 	 intel->batch->map = NULL;
       }
 

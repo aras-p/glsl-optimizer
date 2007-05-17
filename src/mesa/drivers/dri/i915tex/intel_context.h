@@ -50,7 +50,6 @@
 
 struct intel_region;
 struct intel_context;
-struct _DriBufferObject;
 
 typedef void (*intel_tri_func) (struct intel_context *, intelVertex *,
                                 intelVertex *, intelVertex *);
@@ -164,12 +163,12 @@ struct intel_context
 
       void (*meta_import_pixel_state) (struct intel_context * intel);
 
-        GLboolean(*meta_tex_rect_source) (struct intel_context * intel,
-                                          struct _DriBufferObject * buffer,
-                                          GLuint offset,
-                                          GLuint pitch,
-                                          GLuint height,
-                                          GLenum format, GLenum type);
+      GLboolean(*meta_tex_rect_source) (struct intel_context * intel,
+					dri_bo * buffer,
+					GLuint offset,
+					GLuint pitch,
+					GLuint height,
+					GLenum format, GLenum type);
       void (*rotate_window) (struct intel_context * intel,
                              __DRIdrawablePrivate * dPriv, GLuint srcBuf);
 
@@ -181,8 +180,8 @@ struct intel_context
    GLuint Fallback;
    GLuint NewGLState;
 
-   struct _DriFenceObject *last_swap_fence;
-   struct _DriFenceObject *first_swap_fence;
+   dri_fence *last_swap_fence;
+   dri_fence *first_swap_fence;
 
    struct intel_batchbuffer *batch;
 
@@ -256,7 +255,6 @@ struct intel_context
    GLuint do_usleeps;
    int do_irqs;
    GLuint irqsEmitted;
-   drm_i915_irq_wait_t iw;
 
    drm_context_t hHWContext;
    drmLock *driHwLock;

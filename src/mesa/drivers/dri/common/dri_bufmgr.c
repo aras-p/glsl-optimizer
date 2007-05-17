@@ -86,6 +86,12 @@ dri_fence_validated(dri_bufmgr *bufmgr, const char *name, GLboolean flushed)
 }
 
 void
+dri_fence_wait(dri_fence *fence)
+{
+   fence->bufmgr->fence_wait(fence);
+}
+
+void
 dri_fence_reference(dri_fence *fence)
 {
    fence->bufmgr->fence_reference(fence);

@@ -114,10 +114,10 @@ struct i830_hw_state
    struct intel_region *depth_region;
 
    /* Regions aren't actually that appropriate here as the memory may
-    * be from a PBO or FBO.  Just use the buffer id.  Will have to do
-    * this for draw and depth for FBO's...
+    * be from a PBO or FBO.  Will have to do this for draw and depth for
+    * FBO's...
     */
-   struct _DriBufferObject *tex_buffer[I830_TEX_UNITS];
+   dri_bo *tex_buffer[I830_TEX_UNITS];
    GLuint tex_offset[I830_TEX_UNITS];
 
    GLuint emitted;              /* I810_UPLOAD_* */

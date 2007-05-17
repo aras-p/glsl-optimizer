@@ -164,17 +164,6 @@ struct _dri_bufmgr {
     */
 };
 
-/*
-extern void driBOData(struct _DriBufferObject *r_buf,
-                      unsigned size, const void *data, unsigned flags);
-extern void driBOSubData(struct _DriBufferObject *buf,
-                         unsigned long offset, unsigned long size,
-                         const void *data);
-extern void driBOGetSubData(struct _DriBufferObject *buf,
-                            unsigned long offset, unsigned long size,
-                            void *data);
-*/
-
 dri_bo *dri_bo_alloc(dri_bufmgr *bufmgr, const char *name, unsigned long size,
 		     unsigned int alignment, unsigned int flags,
 		     unsigned int hint);
@@ -189,6 +178,7 @@ int dri_bo_unmap(dri_bo *buf);
 int dri_bo_validate(dri_bo *buf, unsigned int flags);
 dri_fence *dri_fence_validated(dri_bufmgr *bufmgr, const char *name,
 			       GLboolean flushed);
+void dri_fence_wait(dri_fence *fence);
 void dri_fence_reference(dri_fence *fence);
 void dri_fence_unreference(dri_fence *fence);
 

@@ -219,10 +219,10 @@ struct i915_hw_state
 /*    struct intel_region *tex_region[I915_TEX_UNITS]; */
 
    /* Regions aren't actually that appropriate here as the memory may
-    * be from a PBO or FBO.  Just use the buffer id.  Will have to do
-    * this for draw and depth for FBO's...
+    * be from a PBO or FBO.  Will have to do this for draw and depth for
+    * FBO's...
     */
-   struct _DriBufferObject *tex_buffer[I915_TEX_UNITS];
+   dri_bo *tex_buffer[I915_TEX_UNITS];
    GLuint tex_offset[I915_TEX_UNITS];
 
 

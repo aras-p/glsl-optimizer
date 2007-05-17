@@ -238,7 +238,7 @@ set_texture_blend_replace(struct intel_context *intel)
  */
 static GLboolean
 set_tex_rect_source(struct intel_context *intel,
-                    struct _DriBufferObject *buffer,
+                    dri_bo *buffer,
                     GLuint offset,
                     GLuint pitch, GLuint height, GLenum format, GLenum type)
 {

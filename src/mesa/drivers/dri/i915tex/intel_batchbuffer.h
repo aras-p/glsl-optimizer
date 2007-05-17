@@ -16,9 +16,10 @@ struct intel_context;
 
 struct buffer_reloc
 {
-   struct _DriBufferObject *buf;
+   dri_bo *buf;
    GLuint offset;
    GLuint delta;                /* not needed? */
+   GLuint validate_flags;
 };
 
 struct intel_batchbuffer
@@ -26,8 +27,8 @@ struct intel_batchbuffer
    struct bufmgr *bm;
    struct intel_context *intel;
 
-   struct _DriBufferObject *buffer;
-   struct _DriFenceObject *last_fence;
+   dri_bo *buf;
+   dri_fence *last_fence;
    GLuint flags;
 
    drmBOList list;
@@ -48,8 +49,7 @@ void intel_batchbuffer_free(struct intel_batchbuffer *batch);
 
 void intel_batchbuffer_finish(struct intel_batchbuffer *batch);
 
-struct _DriFenceObject *intel_batchbuffer_flush(struct intel_batchbuffer
-                                                *batch);
+void intel_batchbuffer_flush(struct intel_batchbuffer *batch);
 
 void intel_batchbuffer_reset(struct intel_batchbuffer *batch);
 
@@ -65,9 +65,8 @@ void intel_batchbuffer_release_space(struct intel_batchbuffer *batch,
                                      GLuint bytes);
 
 GLboolean intel_batchbuffer_emit_reloc(struct intel_batchbuffer *batch,
-                                       struct _DriBufferObject *buffer,
-                                       GLuint flags,
-                                       GLuint mask, GLuint offset);
+                                       dri_bo *buffer,
+                                       GLuint flags, GLuint offset);
 
 /* Inline functions - might actually be better off with these
  * non-inlined.  Certainly better off switching all command packets to
@@ -113,9 +112,9 @@ intel_batchbuffer_require_space(struct intel_batchbuffer *batch,
 
 #define OUT_BATCH(d)  intel_batchbuffer_emit_dword(intel->batch, d)
 
-#define OUT_RELOC(buf,flags,mask,delta) do { 				\
-   assert((delta) >= 0);							\
-   intel_batchbuffer_emit_reloc(intel->batch, buf, flags, mask, delta);	\
+#define OUT_RELOC(buf, flags, delta) do { 				\
+   assert((delta) >= 0);						\
+   intel_batchbuffer_emit_reloc(intel->batch, buf, flags, delta);	\
 } while (0)
 
 #define ADVANCE_BATCH() do { } while(0)

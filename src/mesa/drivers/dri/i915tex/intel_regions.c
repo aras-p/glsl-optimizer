@@ -52,8 +52,17 @@ void
 intel_region_idle(intelScreenPrivate *intelScreen, struct intel_region *region)
 {
    DBG("%s\n", __FUNCTION__);
-   if (region && region->buffer)
-      driBOWaitIdle(region->buffer, GL_FALSE);
+   /* XXX: Using this function is likely bogus -- it ought to only have been
+    * used before a map, anyway, but leave this cheap implementation of it
+    * for now.
+    */
+   if (region && region->buffer) {
+      /* Mapping it for read will ensure that any acceleration to the region
+       * would have landed already.
+       */
+      dri_bo_map(region->buffer, GL_TRUE);
+      dri_bo_unmap(region->buffer);
+   }
 }
 
 /* XXX: Thread safety?
@@ -66,8 +75,8 @@ intel_region_map(intelScreenPrivate *intelScreen, struct intel_region *region)
       if (region->pbo)
          intel_region_cow(intelScreen, region);
 
-      region->map = driBOMap(region->buffer,
-                             DRM_BO_FLAG_READ | DRM_BO_FLAG_WRITE, 0);
+      dri_bo_map(region->buffer, GL_TRUE);
+      region->map = region->buffer->virtual;
    }
 
    return region->map;
@@ -78,12 +87,10 @@ intel_region_unmap(intelScreenPrivate *intelScreen, struct intel_region *region)
 {
    DBG("%s\n", __FUNCTION__);
    if (!--region->map_refcount) {
-      driBOUnmap(region->buffer);
+      dri_bo_unmap(region->buffer);
       region->map = NULL;
    }
 }
-
-#undef TEST_CACHED_TEXTURES
 
 struct intel_region *
 intel_region_alloc(intelScreenPrivate *intelScreen,
@@ -98,16 +105,8 @@ intel_region_alloc(intelScreenPrivate *intelScreen,
    region->height = height;     /* needed? */
    region->refcount = 1;
 
-   driGenBuffers(intelScreen->regionPool,
-                 "region", 1, &region->buffer, 64,
-#ifdef TEST_CACHED_TEXTURES		 
-		 DRM_BO_FLAG_MEM_TT | DRM_BO_FLAG_BIND_CACHED |
-		 DRM_BO_FLAG_READ | DRM_BO_FLAG_WRITE, 
-#else
-		 0,
-#endif
-		 0);
-   driBOData(region->buffer, pitch * cpp * height, NULL, 0);
+   region->buffer = dri_bo_alloc(intelScreen->bufmgr, "region",
+				 pitch * cpp * height, 64, 0, 0);
    return region;
 }
 
@@ -138,7 +137,7 @@ intel_region_release(struct intel_region **region)
       if ((*region)->pbo)
 	 (*region)->pbo->region = NULL;
       (*region)->pbo = NULL;
-      driBOUnReference((*region)->buffer);
+      dri_bo_unreference((*region)->buffer);
       free(*region);
    }
    *region = NULL;
@@ -160,16 +159,13 @@ intel_region_create_static(intelScreenPrivate *intelScreen,
    region->height = height;     /* needed? */
    region->refcount = 1;
 
-   /*
-    * We use a "shared" buffer type to indicate buffers created and
-    * shared by others.
-    */
-
-   driGenBuffers(intelScreen->staticPool, "static region", 1,
-                 &region->buffer, 64,
-                 DRM_BO_FLAG_MEM_TT | DRM_BO_FLAG_NO_MOVE |
-                 DRM_BO_FLAG_READ | DRM_BO_FLAG_WRITE, 0);
-   driBOSetStatic(region->buffer, offset, pitch * cpp * height, virtual, 0);
+   /* XXX: questionable flags */
+   region->buffer = dri_bo_alloc_static(intelScreen->bufmgr, "static region",
+					offset, pitch * cpp * height, virtual,
+					DRM_BO_FLAG_MEM_TT |
+					DRM_BO_FLAG_NO_MOVE |
+					DRM_BO_FLAG_READ |
+					DRM_BO_FLAG_WRITE, 0);
 
    return region;
 }
@@ -195,13 +191,14 @@ intel_region_update_static(intelScreenPrivate *intelScreen,
     * shared by others.
     */
 
-   driDeleteBuffers(1, &region->buffer);
-   driGenBuffers(intelScreen->staticPool, "static region", 1,
-                 &region->buffer, 64,
-                 DRM_BO_FLAG_MEM_TT | DRM_BO_FLAG_NO_MOVE |
-                 DRM_BO_FLAG_READ | DRM_BO_FLAG_WRITE, 0);
-   driBOSetStatic(region->buffer, offset, pitch * cpp * height, virtual, 0);
-
+   dri_bo_unreference(region->buffer);
+   /* XXX: questionable flags */
+   region->buffer = dri_bo_alloc_static(intelScreen->bufmgr, "static region",
+					offset, pitch * cpp * height, virtual,
+					DRM_BO_FLAG_MEM_TT |
+					DRM_BO_FLAG_NO_MOVE |
+					DRM_BO_FLAG_READ |
+					DRM_BO_FLAG_WRITE, 0);
 }
 
 
@@ -376,17 +373,19 @@ intel_region_attach_pbo(intelScreenPrivate *intelScreen,
    }
 
    if (region->buffer) {
-      driDeleteBuffers(1, &region->buffer);
+      dri_bo_unreference(region->buffer);
       region->buffer = NULL;
    }
 
    region->pbo = pbo;
    region->pbo->region = region;
-   region->buffer = driBOReference(pbo->buffer);
+   dri_bo_reference(pbo->buffer);
+   region->buffer = pbo->buffer;
 }
 
 
-/* Break the COW tie to the pbo.  The pbo gets to keep the data.
+/* Break the COW tie to the pbo and allocate a new buffer.
+ * The pbo gets to keep the data.
  */
 void
 intel_region_release_pbo(intelScreenPrivate *intelScreen,
@@ -395,13 +394,12 @@ intel_region_release_pbo(intelScreenPrivate *intelScreen,
    assert(region->buffer == region->pbo->buffer);
    region->pbo->region = NULL;
    region->pbo = NULL;
-   driBOUnReference(region->buffer);
+   dri_bo_unreference(region->buffer);
    region->buffer = NULL;
 
-   driGenBuffers(intelScreen->regionPool,
-                 "region", 1, &region->buffer, 64, 0, 0);
-   driBOData(region->buffer,
-             region->cpp * region->pitch * region->height, NULL, 0);
+   region->buffer = dri_bo_alloc(intelScreen->bufmgr, "region",
+				 region->pitch * region->cpp * region->height,
+				 64, 0, 0);
 }
 
 /* Break the COW tie to the pbo.  Both the pbo and the region end up
@@ -457,7 +455,7 @@ intel_region_cow(intelScreenPrivate *intelScreen, struct intel_region *region)
    }
 }
 
-struct _DriBufferObject *
+dri_bo *
 intel_region_buffer(intelScreenPrivate *intelScreen,
                     struct intel_region *region, GLuint flag)
 {
