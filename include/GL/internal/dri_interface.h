@@ -79,6 +79,11 @@ struct __DRIextensionRec {
 };
 
 /**
+ * Used by drivers to indicate support for setting the read drawable.
+ */
+#define __DRI_READ_DRAWABLE "DRI_ReadDrawable"
+
+/**
  * Used by drivers that implement the GLX_MESA_copy_sub_buffer extension.
  */
 #define __DRI_COPY_SUB_BUFFER "DRI_CopySubBuffer"

@@ -47,6 +47,14 @@ static const int empty_attribute_list[1] = { None };
 
 
 /**
+ * This is just a token extension used to signal that the driver
+ * supports setting a read drawable.
+ */
+const __DRIextension driReadDrawableExtension = {
+    __DRI_READ_DRAWABLE
+};
+
+/**
  * Cached copy of the internal API version used by libGL and the client-side
  * DRI driver.
  */

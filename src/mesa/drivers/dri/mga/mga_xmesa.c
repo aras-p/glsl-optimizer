@@ -194,6 +194,7 @@ mgaFillInModes( unsigned pixel_bits, unsigned depth_bits,
 
 
 static const __DRIextension *mgaExtensions[] = {
+    &driReadDrawableExtension,
     &driSwapControlExtension.base,
     &driFrameTrackingExtension.base,
     &driMediaStreamCounterExtension.base,
@@ -205,8 +206,6 @@ mgaInitDriver(__DRIscreenPrivate *sPriv)
 {
    mgaScreenPrivate *mgaScreen;
    MGADRIPtr         serverInfo = (MGADRIPtr)sPriv->pDevPriv;
-   PFNGLXSCRENABLEEXTENSIONPROC glx_enable_extension =
-       (PFNGLXSCRENABLEEXTENSIONPROC) (*dri_interface->getProcAddress("glxEnableExtension"));
 
    if (sPriv->devPrivSize != sizeof(MGADRIRec)) {
       fprintf(stderr,"\nERROR!  sizeof(MGADRIRec) does not match passed size from device driver\n");
@@ -242,9 +241,6 @@ mgaInitDriver(__DRIscreenPrivate *sPriv)
    }
 
    sPriv->extensions = mgaExtensions;
-
-   if ( glx_enable_extension != NULL )
-      (*glx_enable_extension)( sPriv->psc, "GLX_SGI_make_current_read" );
 
    if (serverInfo->chipset != MGA_CARD_TYPE_G200 &&
        serverInfo->chipset != MGA_CARD_TYPE_G400) {

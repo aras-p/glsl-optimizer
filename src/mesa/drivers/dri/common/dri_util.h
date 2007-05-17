@@ -76,6 +76,7 @@ extern __GLcontextModes *__driDriverInitScreen(__DRIscreenPrivate *psp);
 /**
  * Extensions.
  */
+extern const __DRIextension driReadDrawableExtension;
 extern const __DRIcopySubBufferExtension driCopySubBufferExtension;
 extern const __DRIswapControlExtension driSwapControlExtension;
 extern const __DRIframeTrackingExtension driFrameTrackingExtension;

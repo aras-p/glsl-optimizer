@@ -427,6 +427,7 @@ static const __DRIallocateExtension intelAllocateExtension = {
 };
 
 static const __DRIextension *intelExtensions[] = {
+    &driReadDrawableExtension,
     &driCopySubBufferExtension.base,
     &driSwapControlExtension.base,
     &intelAllocateExtension.base,
@@ -441,10 +442,6 @@ static GLboolean intelInitDriver(__DRIscreenPrivate *sPriv)
    intelScreenPrivate *intelScreen;
    I830DRIPtr gDRIPriv = (I830DRIPtr) sPriv->pDevPriv;
    drmI830Sarea *sarea;
-
-   PFNGLXSCRENABLEEXTENSIONPROC glx_enable_extension =
-      (PFNGLXSCRENABLEEXTENSIONPROC) (*dri_interface->
-                                      getProcAddress("glxEnableExtension"));
 
    if (sPriv->devPrivSize != sizeof(I830DRIRec)) {
       fprintf(stderr,
@@ -538,10 +535,6 @@ static GLboolean intelInitDriver(__DRIscreenPrivate *sPriv)
    }
 
    sPriv->extensions = intelExtensions;
-
-   if (glx_enable_extension != NULL) {
-      (*glx_enable_extension) (sPriv->psc, "GLX_SGI_make_current_read");
-   }
 
    /* If we've got a new enough DDX that's initializing TTM and giving us
     * object handles for the shared buffers, use that.

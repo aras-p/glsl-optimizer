@@ -168,6 +168,10 @@ static const struct tnl_pipeline_stage *savage_pipeline[] = {
 };
 
 
+static const __DRIextension *savageExtensions[] = {
+    &driReadDrawableExtension,
+};
+
 /* this is first function called in dirver*/
 
 static GLboolean
@@ -175,9 +179,6 @@ savageInitDriver(__DRIscreenPrivate *sPriv)
 {
   savageScreenPrivate *savageScreen;
   SAVAGEDRIPtr         gDRIPriv = (SAVAGEDRIPtr)sPriv->pDevPriv;
-   PFNGLXSCRENABLEEXTENSIONPROC glx_enable_extension =
-     (PFNGLXSCRENABLEEXTENSIONPROC) (*dri_interface->getProcAddress("glxEnableExtension"));
-
 
    if (sPriv->devPrivSize != sizeof(SAVAGEDRIRec)) {
       fprintf(stderr,"\nERROR!  sizeof(SAVAGEDRIRec) does not match passed size from device driver\n");
@@ -265,9 +266,7 @@ savageInitDriver(__DRIscreenPrivate *sPriv)
    driParseOptionInfo (&savageScreen->optionCache,
 		       __driConfigOptions, __driNConfigOptions);
 
-   if (glx_enable_extension != NULL) {
-      (*glx_enable_extension)(sPriv->psc, "GLX_SGI_make_current_read");
-   }
+   sPriv->extensions = savageExtensions;
 
 #if 0
    savageDDFastPathInit();

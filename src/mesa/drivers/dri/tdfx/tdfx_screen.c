@@ -63,6 +63,10 @@ DRI_CONF_BEGIN
     DRI_CONF_SECTION_END
 DRI_CONF_END;
 
+static const __DRIextension *tdfxExtensions[] = {
+    &driReadDrawableExtension,
+};
+
 static const GLuint __driNConfigOptions = 1;
 
 extern const struct dri_extension card_extensions[];
@@ -73,8 +77,6 @@ tdfxCreateScreen( __DRIscreenPrivate *sPriv )
 {
    tdfxScreenPrivate *fxScreen;
    TDFXDRIPtr fxDRIPriv = (TDFXDRIPtr) sPriv->pDevPriv;
-   PFNGLXSCRENABLEEXTENSIONPROC glx_enable_extension =
-     (PFNGLXSCRENABLEEXTENSIONPROC) (*dri_interface->getProcAddress("glxEnableExtension"));
 
    if (sPriv->devPrivSize != sizeof(TDFXDRIRec)) {
       fprintf(stderr,"\nERROR!  sizeof(TDFXDRIRec) does not match passed size from device driver\n");
@@ -115,9 +117,7 @@ tdfxCreateScreen( __DRIscreenPrivate *sPriv )
       return GL_FALSE;
    }
 
-   if (glx_enable_extension != NULL) {
-      (*glx_enable_extension)(sPriv->psc, "GLX_SGI_make_current_read");
-   }
+   sPriv->extensions = tdfxExtensions;
 
    return GL_TRUE;
 }

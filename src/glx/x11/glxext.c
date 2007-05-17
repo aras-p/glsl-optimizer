@@ -1068,6 +1068,13 @@ static void queryExtensions(__GLXscreenConfigs *psc)
 	 * not defined in dri_interface.h.  Will enable
 	 * GLX_OML_sync_control if implemented. */
 #endif
+
+#ifdef __DRI_READ_DRAWABLE
+	if (strcmp(extensions[i]->name, __DRI_READ_DRAWABLE) == 0) {
+	    __glXScrEnableExtension(&psc->driScreen,
+				    "GLX_SGI_make_current_read");
+	}
+#endif
 	/* Ignore unknown extensions */
     }
 }

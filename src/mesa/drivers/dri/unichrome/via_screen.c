@@ -98,8 +98,6 @@ viaInitDriver(__DRIscreenPrivate *sPriv)
 {
     viaScreenPrivate *viaScreen;
     VIADRIPtr gDRIPriv = (VIADRIPtr)sPriv->pDevPriv;
-    PFNGLXSCRENABLEEXTENSIONPROC glx_enable_extension =
-      (PFNGLXSCRENABLEEXTENSIONPROC) (*dri_interface->getProcAddress("glxEnableExtension"));
     int i;
 
     if (sPriv->devPrivSize != sizeof(VIADRIRec)) {
@@ -177,13 +175,11 @@ viaInitDriver(__DRIscreenPrivate *sPriv)
 
     i = 0;
     viaScreen->extensions[i++] = &driFrameTrackingExtension.base;
+    viaScreen->extensions[i++] = &driReadDrawableExtension;
     if ( viaScreen->irqEnabled ) {
 	viaScreen->extensions[i++] = &driSwapControlExtension.base;
 	viaScreen->extensions[i++] = &driMediaStreamCounterExtension.base;
     }
-
-    if ( glx_enable_extension != NULL )
-       (*glx_enable_extension)( sPriv->psc, "GLX_SGI_make_current_read" );
 
     viaScreen->extensions[i++] = NULL;
     sPriv->extensions = viaScreen->extensions;

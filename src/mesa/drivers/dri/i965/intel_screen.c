@@ -265,6 +265,7 @@ intelUpdateScreenFromSAREA(intelScreenPrivate *intelScreen,
 }
 
 static const __DRIextension *intelExtensions[] = {
+    &driReadDrawableExtension,
     &driCopySubBufferExtension.base,
     &driSwapControlExtension.base,
     &driFrameTrackingExtension.base,
@@ -276,8 +277,6 @@ static GLboolean intelInitDriver(__DRIscreenPrivate *sPriv)
 {
    intelScreenPrivate *intelScreen;
    I830DRIPtr         gDRIPriv = (I830DRIPtr)sPriv->pDevPriv;
-   PFNGLXSCRENABLEEXTENSIONPROC glx_enable_extension =
-     (PFNGLXSCRENABLEEXTENSIONPROC) (*dri_interface->getProcAddress("glxEnableExtension"));
    volatile drmI830Sarea *sarea;
 
    if (sPriv->devPrivSize != sizeof(I830DRIRec)) {
@@ -358,9 +357,6 @@ static GLboolean intelInitDriver(__DRIscreenPrivate *sPriv)
    }
 
    sPriv->extensions = intelExtensions;
-
-   if (glx_enable_extension != NULL)
-      (*glx_enable_extension)( sPriv->psc, "GLX_SGI_make_current_read" );
    
    return GL_TRUE;
 }
