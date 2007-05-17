@@ -5416,30 +5416,35 @@ KEYWORD1_ALT void KEYWORD2 NAME(_dispatch_stub_767)(GLint srcX0, GLint srcY0, GL
    DISPATCH(BlitFramebufferEXT, (srcX0, srcY0, srcX1, srcY1, dstX0, dstY0, dstX1, dstY1, mask, filter), (F, "glBlitFramebufferEXT(%d, %d, %d, %d, %d, %d, %d, %d, %d, 0x%x);\n", srcX0, srcY0, srcX1, srcY1, dstX0, dstY0, dstX1, dstY1, mask, filter));
 }
 
-KEYWORD1_ALT void KEYWORD2 NAME(_dispatch_stub_768)(GLenum target, GLuint index, GLsizei count, const GLfloat * params);
-
-KEYWORD1_ALT void KEYWORD2 NAME(_dispatch_stub_768)(GLenum target, GLuint index, GLsizei count, const GLfloat * params)
+KEYWORD1 void KEYWORD2 NAME(FramebufferTextureLayerEXT)(GLenum target, GLenum attachment, GLuint texture, GLint level, GLint layer)
 {
-   DISPATCH(ProgramEnvParameters4fvEXT, (target, index, count, params), (F, "glProgramEnvParameters4fvEXT(0x%x, %d, %d, %p);\n", target, index, count, (const void *) params));
+   DISPATCH(FramebufferTextureLayerEXT, (target, attachment, texture, level, layer), (F, "glFramebufferTextureLayerEXT(0x%x, 0x%x, %d, %d, %d);\n", target, attachment, texture, level, layer));
 }
 
 KEYWORD1_ALT void KEYWORD2 NAME(_dispatch_stub_769)(GLenum target, GLuint index, GLsizei count, const GLfloat * params);
 
 KEYWORD1_ALT void KEYWORD2 NAME(_dispatch_stub_769)(GLenum target, GLuint index, GLsizei count, const GLfloat * params)
 {
+   DISPATCH(ProgramEnvParameters4fvEXT, (target, index, count, params), (F, "glProgramEnvParameters4fvEXT(0x%x, %d, %d, %p);\n", target, index, count, (const void *) params));
+}
+
+KEYWORD1_ALT void KEYWORD2 NAME(_dispatch_stub_770)(GLenum target, GLuint index, GLsizei count, const GLfloat * params);
+
+KEYWORD1_ALT void KEYWORD2 NAME(_dispatch_stub_770)(GLenum target, GLuint index, GLsizei count, const GLfloat * params)
+{
    DISPATCH(ProgramLocalParameters4fvEXT, (target, index, count, params), (F, "glProgramLocalParameters4fvEXT(0x%x, %d, %d, %p);\n", target, index, count, (const void *) params));
 }
 
-KEYWORD1_ALT void KEYWORD2 NAME(_dispatch_stub_770)(GLuint id, GLenum pname, GLint64EXT * params);
+KEYWORD1_ALT void KEYWORD2 NAME(_dispatch_stub_771)(GLuint id, GLenum pname, GLint64EXT * params);
 
-KEYWORD1_ALT void KEYWORD2 NAME(_dispatch_stub_770)(GLuint id, GLenum pname, GLint64EXT * params)
+KEYWORD1_ALT void KEYWORD2 NAME(_dispatch_stub_771)(GLuint id, GLenum pname, GLint64EXT * params)
 {
    DISPATCH(GetQueryObjecti64vEXT, (id, pname, params), (F, "glGetQueryObjecti64vEXT(%d, 0x%x, %p);\n", id, pname, (const void *) params));
 }
 
-KEYWORD1_ALT void KEYWORD2 NAME(_dispatch_stub_771)(GLuint id, GLenum pname, GLuint64EXT * params);
+KEYWORD1_ALT void KEYWORD2 NAME(_dispatch_stub_772)(GLuint id, GLenum pname, GLuint64EXT * params);
 
-KEYWORD1_ALT void KEYWORD2 NAME(_dispatch_stub_771)(GLuint id, GLenum pname, GLuint64EXT * params)
+KEYWORD1_ALT void KEYWORD2 NAME(_dispatch_stub_772)(GLuint id, GLenum pname, GLuint64EXT * params)
 {
    DISPATCH(GetQueryObjectui64vEXT, (id, pname, params), (F, "glGetQueryObjectui64vEXT(%d, 0x%x, %p);\n", id, pname, (const void *) params));
 }
@@ -6226,10 +6231,11 @@ static _glapi_proc DISPATCH_TABLE_NAME[] = {
    TABLE_ENTRY(IsRenderbufferEXT),
    TABLE_ENTRY(RenderbufferStorageEXT),
    TABLE_ENTRY(_dispatch_stub_767),
-   TABLE_ENTRY(_dispatch_stub_768),
+   TABLE_ENTRY(FramebufferTextureLayerEXT),
    TABLE_ENTRY(_dispatch_stub_769),
    TABLE_ENTRY(_dispatch_stub_770),
    TABLE_ENTRY(_dispatch_stub_771),
+   TABLE_ENTRY(_dispatch_stub_772),
    /* A whole bunch of no-op functions.  These might be called
     * when someone tries to call a dynamically-registered
     * extension function without a current rendering context.

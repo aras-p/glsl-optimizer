@@ -744,6 +744,18 @@ pop_texture_group(GLcontext *ctx, const struct gl_texture_attrib *texAttrib)
             target = GL_TEXTURE_RECTANGLE_NV;
             obj = &unit->SavedRect;
             break;
+         case 5:
+            if (!ctx->Extensions.MESA_texture_array)
+               continue;
+            target = GL_TEXTURE_1D_ARRAY_EXT;
+            obj = &unit->Saved1DArray;
+            break;
+         case 6:
+            if (!ctx->Extensions.MESA_texture_array)
+               continue;
+            target = GL_TEXTURE_2D_ARRAY_EXT;
+            obj = &unit->Saved2DArray;
+            break;
          default:
             ; /* silence warnings */
          }

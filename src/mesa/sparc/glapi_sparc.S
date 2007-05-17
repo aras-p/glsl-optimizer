@@ -833,10 +833,11 @@ __glapi_sparc_icache_flush: /* %o0 = insn_addr */
 		.globl glIsRenderbufferEXT ; .type glIsRenderbufferEXT,#function
 		.globl glRenderbufferStorageEXT ; .type glRenderbufferStorageEXT,#function
 		.globl gl_dispatch_stub_767 ; .type gl_dispatch_stub_767,#function
-		.globl gl_dispatch_stub_768 ; .type gl_dispatch_stub_768,#function
+		.globl glFramebufferTextureLayerEXT ; .type glFramebufferTextureLayerEXT,#function
 		.globl gl_dispatch_stub_769 ; .type gl_dispatch_stub_769,#function
 		.globl gl_dispatch_stub_770 ; .type gl_dispatch_stub_770,#function
 		.globl gl_dispatch_stub_771 ; .type gl_dispatch_stub_771,#function
+		.globl gl_dispatch_stub_772 ; .type gl_dispatch_stub_772,#function
 		.globl _mesa_sparc_glapi_begin ; .type _mesa_sparc_glapi_begin,#function
 _mesa_sparc_glapi_begin:
 
@@ -1608,10 +1609,11 @@ _mesa_sparc_glapi_begin:
 	GL_STUB(glIsRenderbufferEXT, _gloffset_IsRenderbufferEXT)
 	GL_STUB(glRenderbufferStorageEXT, _gloffset_RenderbufferStorageEXT)
 	GL_STUB(gl_dispatch_stub_767, _gloffset__dispatch_stub_767)
-	GL_STUB(gl_dispatch_stub_768, _gloffset__dispatch_stub_768)
+	GL_STUB(glFramebufferTextureLayerEXT, _gloffset_FramebufferTextureLayerEXT)
 	GL_STUB(gl_dispatch_stub_769, _gloffset__dispatch_stub_769)
 	GL_STUB(gl_dispatch_stub_770, _gloffset__dispatch_stub_770)
 	GL_STUB(gl_dispatch_stub_771, _gloffset__dispatch_stub_771)
+	GL_STUB(gl_dispatch_stub_772, _gloffset__dispatch_stub_772)
 
 		.globl _mesa_sparc_glapi_end ; .type _mesa_sparc_glapi_end,#function
 _mesa_sparc_glapi_end:

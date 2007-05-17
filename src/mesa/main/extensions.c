@@ -145,6 +145,7 @@ static const struct {
    { OFF, "GL_MESA_packed_depth_stencil",      F(MESA_packed_depth_stencil) },
    { OFF, "GL_MESA_program_debug",             F(MESA_program_debug) },
    { OFF, "GL_MESA_resize_buffers",            F(MESA_resize_buffers) },
+   { OFF, "GL_MESA_texture_array",             F(MESA_texture_array) },
    { OFF, "GL_MESA_ycbcr_texture",             F(MESA_ycbcr_texture) },
    { ON,  "GL_MESA_window_pos",                F(ARB_window_pos) },
    { OFF, "GL_NV_blend_square",                F(NV_blend_square) },
@@ -270,6 +271,7 @@ _mesa_enable_sw_extensions(GLcontext *ctx)
    ctx->Extensions.MESA_program_debug = GL_TRUE;
 #endif
    ctx->Extensions.MESA_resize_buffers = GL_TRUE;
+   ctx->Extensions.MESA_texture_array = GL_TRUE;
    ctx->Extensions.MESA_ycbcr_texture = GL_TRUE;
    ctx->Extensions.NV_blend_square = GL_TRUE;
    /*ctx->Extensions.NV_light_max_exponent = GL_TRUE;*/
