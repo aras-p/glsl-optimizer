@@ -58,6 +58,9 @@ dri_bo_reference(dri_bo *bo)
 void
 dri_bo_unreference(dri_bo *bo)
 {
+   if (bo == NULL)
+      return;
+
    bo->bufmgr->bo_unreference(bo);
 }
 
@@ -100,6 +103,9 @@ dri_fence_reference(dri_fence *fence)
 void
 dri_fence_unreference(dri_fence *fence)
 {
+   if (fence == NULL)
+      return;
+
    fence->bufmgr->fence_unreference(fence);
 }
 
