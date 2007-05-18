@@ -825,7 +825,7 @@ dri_fake_fence_wait(dri_fence *fence)
    dri_bufmgr_fake *bufmgr_fake = (dri_bufmgr_fake *)fence->bufmgr;
 
    _glthread_LOCK_MUTEX(bufmgr_fake->mutex);
-   _fence_wait_internal(bufmgr_fake->driver_priv, fence_fake->fence_cookie);
+   _fence_wait_internal(bufmgr_fake, fence_fake->fence_cookie);
    _glthread_UNLOCK_MUTEX(bufmgr_fake->mutex);
 }
 
