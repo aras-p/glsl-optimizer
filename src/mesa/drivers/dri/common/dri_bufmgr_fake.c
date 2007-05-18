@@ -846,6 +846,7 @@ dri_bufmgr_fake_init(unsigned long low_offset, void *low_virtual,
    make_empty_list(&bufmgr_fake->referenced);
    make_empty_list(&bufmgr_fake->fenced);
    make_empty_list(&bufmgr_fake->on_hardware);
+   make_empty_list(&bufmgr_fake->lru);
 
    bufmgr_fake->low_offset = low_offset;
    bufmgr_fake->virtual = low_virtual;
@@ -866,6 +867,10 @@ dri_bufmgr_fake_init(unsigned long low_offset, void *low_virtual,
    bufmgr_fake->bufmgr.fence_wait = dri_fake_fence_wait;
    bufmgr_fake->bufmgr.fence_reference = dri_fake_fence_reference;
    bufmgr_fake->bufmgr.fence_unreference = dri_fake_fence_unreference;
+
+   bufmgr_fake->fence_emit = fence_emit;
+   bufmgr_fake->fence_wait = fence_wait;
+   bufmgr_fake->driver_priv = driver_priv;
 
    return &bufmgr_fake->bufmgr;
 }
