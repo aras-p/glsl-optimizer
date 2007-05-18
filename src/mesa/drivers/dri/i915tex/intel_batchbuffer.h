@@ -24,7 +24,6 @@ struct buffer_reloc
 
 struct intel_batchbuffer
 {
-   struct bufmgr *bm;
    struct intel_context *intel;
 
    dri_bo *buf;

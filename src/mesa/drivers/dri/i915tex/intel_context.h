@@ -215,11 +215,6 @@ struct intel_context
    GLboolean hw_stipple;
    GLboolean strict_conformance;
 
-   /* AGP memory buffer manager:
-    */
-   struct bufmgr *bm;
-
-
    /* State for intelvb.c and inteltris.c.
     */
    GLuint RenderIndex;
