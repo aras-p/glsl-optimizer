@@ -214,7 +214,8 @@ alloc_block(dri_bo *bo)
     */
    insert_at_tail(&bufmgr_fake->lru, block);
 
-   block->virtual = bufmgr_fake->virtual + block->mem->ofs;
+   block->virtual = bufmgr_fake->virtual +
+      block->mem->ofs - bufmgr_fake->low_offset;
    block->bo = bo;
 
    bo_fake->block = block;
