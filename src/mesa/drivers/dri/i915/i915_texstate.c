@@ -172,12 +172,8 @@ static void i915LayoutTextureImages( i915ContextPtr i915,
 	 
 	 t->intel.image[0][i].offset = total_height * pitch;
 	 t->intel.image[0][i].internalFormat = baseImage->_BaseFormat;
-	 if (t->intel.image[0][i].image->IsCompressed)
-	 {
-	   if (t->intel.image[0][i].image->Height > 4)
-	     total_height += t->intel.image[0][i].image->Height/4;
-	   else
-	     total_height += 1;
+	 if (t->intel.image[0][i].image->IsCompressed) {
+	    total_height += (t->intel.image[0][i].image->Height + 3) / 4;
 	 }
 	 else
 	   total_height += MAX2(2, t->intel.image[0][i].image->Height);
