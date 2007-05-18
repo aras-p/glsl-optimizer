@@ -44,7 +44,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 	} while(0)
 
 #define R300_PRINT_STATE(r300, atom) \
-		r300_print_state_atom(r300, &r300->hw.atom)
+		r300PrintStateAtom(r300, &r300->hw.atom)
 
 /* Fire the buffered vertices no matter what.
    TODO: This has not been implemented yet
@@ -58,23 +58,13 @@ do {							\
     \
 } while (0)
 
-	
-extern void r300ResetHwState(r300ContextPtr r300);
-
 extern void r300UpdateStateParameters(GLcontext * ctx, GLuint new_state);
 extern void r300InitState(r300ContextPtr r300);
-extern void r300InitStateFuncs(struct dd_function_table* functions);
-extern void r300UpdateViewportOffset( GLcontext *ctx );
-extern void r300UpdateWindow(GLcontext * ctx);
-extern void r300UpdateDrawBuffer(GLcontext *ctx);
-extern void r300SetupVertexShader(r300ContextPtr rmesa);
-extern void r300SetupPixelShader(r300ContextPtr rmesa);
+extern void r300InitStateFuncs(struct dd_function_table *functions);
+extern void r300UpdateViewportOffset(GLcontext * ctx);
+extern void r300UpdateDrawBuffer(GLcontext * ctx);
 
-extern void r300_setup_textures(GLcontext *ctx);
-extern void r300_setup_rs_unit(GLcontext *ctx);
 extern void r300UpdateShaders(r300ContextPtr rmesa);
 extern void r300UpdateShaderStates(r300ContextPtr rmesa);
 
-extern void r300_print_state_atom(r300ContextPtr r300, struct r300_state_atom *state);
-
-#endif /* __R300_STATE_H__ */
+#endif				/* __R300_STATE_H__ */

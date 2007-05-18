@@ -251,7 +251,10 @@ static void bind_inputs( GLcontext *ctx,
 					   VB->AttribPtr[_TNL_ATTRIB_EDGEFLAG],
 					   VB->Count );
    }
-
+   else {
+      /* the data previously pointed to by EdgeFlag may have been freed */
+      VB->EdgeFlag = NULL;
+   }
 }
 
 

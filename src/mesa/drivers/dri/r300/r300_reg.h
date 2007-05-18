@@ -23,6 +23,8 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 **************************************************************************/
 
+/* *INDENT-OFF* */
+
 #ifndef _R300_REG_H
 #define _R300_REG_H
 
@@ -488,6 +490,7 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #	define R300_GB_W_SELECT_1		(1<<4)
 
 #define R300_GB_AA_CONFIG		0x4020
+#	define R300_AA_DISABLE			0x00
 #	define R300_AA_ENABLE			0x01
 #	define R300_AA_SUBSAMPLES_2		0
 #	define R300_AA_SUBSAMPLES_3		(1<<1)
@@ -670,6 +673,11 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 /* Special handling for color: When the fragment program uses color,
  * the ROUTE_0_COLOR bit is set and ROUTE_0_COLOR_DEST contains the
  * color register index.
+ *
+ * Apperently you may set the R300_RS_ROUTE_0_COLOR bit, but not provide any
+ * R300_RS_ROUTE_0_COLOR_DEST value; this setup is used for clearing the state.
+ * See r300_ioctl.c:r300EmitClearState. I'm not sure if this setup is strictly
+ * correct or not. - Oliver.
  */
 #       define R300_RS_ROUTE_0_COLOR             (1 << 14)
 #       define R300_RS_ROUTE_0_COLOR_DEST_SHIFT  17
@@ -1554,6 +1562,7 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #define R300_PRIM_COLOR_ORDER_BGRA              (0 << 6)
 #define R300_PRIM_COLOR_ORDER_RGBA              (1 << 6)
 #define R300_PRIM_NUM_VERTICES_SHIFT            16
+#define R300_PRIM_NUM_VERTICES_MASK             0xffff
 
 /* Draw a primitive from vertex data in arrays loaded via 3D_LOAD_VBPNTR.
  * Two parameter dwords:
@@ -1602,5 +1611,6 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 #define R300_CP_CMD_BITBLT_MULTI	0xC0009B00
 
-
 #endif /* _R300_REG_H */
+
+/* *INDENT-ON* */

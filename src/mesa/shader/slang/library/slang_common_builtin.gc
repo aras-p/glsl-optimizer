@@ -311,96 +311,98 @@ vec4 tan(const vec4 angle)
 
 
 
-float asin (float x) {
-    float y;
-    __asm float_arcsine y, x;
-    return y;
+float asin(const float x)
+{
+   const float a0 = 1.5707288;  // PI/2?
+   const float a1 = -0.2121144;
+   const float a2 = 0.0742610;
+   //const float a3 = -0.0187293;
+   const float halfPi = 3.1415926 * 0.5;
+   const float y = abs(x);
+   // three terms seem to be enough:
+   __retVal = (halfPi - sqrt(1.0 - y) * (a0 + y * (a1 + a2 * y))) * sign(x);
+   // otherwise, try four:
+   //__retVal = (halfPi - sqrt(1.0 - y) * (a0 + y * (a1 + y * (a2 + y * a3)))) * sign(x);
 }
 
-vec2 asin (vec2 v) {
-    return vec2 (
-        asin (v.x),
-        asin (v.y)
-    );
+vec2 asin(const vec2 v)
+{
+   __retVal.x = asin(v.x);
+   __retVal.y = asin(v.y);
 }
 
-vec3 asin (vec3 v) {
-    return vec3 (
-        asin (v.x),
-        asin (v.y),
-        asin (v.z)
-    );
+vec3 asin(const vec3 v)
+{
+   __retVal.x = asin(v.x);
+   __retVal.y = asin(v.y);
+   __retVal.z = asin(v.z);
 }
 
-vec4 asin (vec4 v) {
-    return vec4 (
-        asin (v.x),
-        asin (v.y),
-        asin (v.z),
-        asin (v.w)
-    );
+vec4 asin(const vec4 v)
+{
+   __retVal.x = asin(v.x);
+   __retVal.y = asin(v.y);
+   __retVal.z = asin(v.z);
 }
 
-float acos (float x) {
-    return 1.5708 - asin (x);
+float acos(const float x)
+{
+   const float halfPi = 3.1415926 * 0.5;
+   __retVal = halfPi - asin(x);
 }
 
-vec2 acos (vec2 v) {
-    return vec2 (
-        acos (v.x),
-        acos (v.y)
-    );
+vec2 acos(const vec2 v)
+{
+   __retVal.x = acos(v.x);
+   __retVal.y = acos(v.y);
 }
 
-vec3 acos (vec3 v) {
-    return vec3 (
-        acos (v.x),
-        acos (v.y),
-        acos (v.z)
-    );
+vec3 acos(const vec3 v)
+{
+   __retVal.x = acos(v.x);
+   __retVal.y = acos(v.y);
+   __retVal.z = acos(v.z);
 }
 
-vec4 acos (vec4 v) {
-    return vec4 (
-        acos (v.x),
-        acos (v.y),
-        acos (v.z),
-        acos (v.w)
-    );
+vec4 acos(const vec4 v)
+{
+   __retVal.x = acos(v.x);
+   __retVal.y = acos(v.y);
+   __retVal.z = acos(v.z);
+   __retVal.w = acos(v.w);
 }
 
-float atan (float y_over_x) {
-    float z;
-    __asm float_arctan z, y_over_x;
-    return z;
+float atan(const float x)
+{
+   __retVal = asin(x * inversesqrt(x * x + 1.0));
 }
 
-vec2 atan (vec2 y_over_x) {
-    return vec2 (
-        atan (y_over_x.x),
-        atan (y_over_x.y)
-    );
+vec2 atan(const vec2 y_over_x)
+{
+   __retVal.x = atan(y_over_x.x);
+   __retVal.y = atan(y_over_x.y);
 }
 
-vec3 atan (vec3 y_over_x) {
-    return vec3 (
-        atan (y_over_x.x),
-        atan (y_over_x.y),
-        atan (y_over_x.z)
-    );
+vec3 atan(const vec3 y_over_x)
+{
+   __retVal.x = atan(y_over_x.x);
+   __retVal.y = atan(y_over_x.y);
+   __retVal.z = atan(y_over_x.z);
 }
 
-vec4 atan (vec4 y_over_x) {
-    return vec4 (
-        atan (y_over_x.x),
-        atan (y_over_x.y),
-        atan (y_over_x.z),
-        atan (y_over_x.w)
-    );
+vec4 atan(const vec4 y_over_x)
+{
+   __retVal.x = atan(y_over_x.x);
+   __retVal.y = atan(y_over_x.y);
+   __retVal.z = atan(y_over_x.z);
+   __retVal.w = atan(y_over_x.w);
 }
 
-float atan (float y, float x) {
-    float z = atan (y / x);
+float atan(const float y, const float x)
+{
+    if (x == 0.0)
+       return 0.0;
+    float z = atan(y / x);
     if (x < 0.0)
     {
         if (y < 0.0)
@@ -410,29 +412,27 @@ float atan (float y, float x) {
     return z;
 }
 
-vec2 atan (vec2 u, vec2 v) {
-    return vec2 (
-        atan (u.x, v.x),
-        atan (u.y, v.y)
-    );
+vec2 atan(const vec2 u, const vec2 v)
+{
+   __retVal.x = atan(u.x, v.x);
+   __retVal.y = atan(u.y, v.y);
 }
 
-vec3 atan (vec3 u, vec3 v) {
-    return vec3 (
-        atan (u.x, v.x),
-        atan (u.y, v.y),
-        atan (u.z, v.z)
-    );
+vec3 atan(const vec3 u, const vec3 v)
+{
+   __retVal.x = atan(u.x, v.x);
+   __retVal.y = atan(u.y, v.y);
+   __retVal.z = atan(u.z, v.z);
 }
 
-vec4 atan (vec4 u, vec4 v) {
-    return vec4 (
-        atan (u.x, v.x),
-        atan (u.y, v.y),
-        atan (u.z, v.z),
-        atan (u.w, v.w)
-    );
+vec4 atan(const vec4 u, const vec4 v)
+{
+   __retVal.x = atan(u.x, v.x);
+   __retVal.y = atan(u.y, v.y);
+   __retVal.z = atan(u.z, v.z);
+   __retVal.w = atan(u.w, v.w);
 }
+
 
 //
 // 8.2 Exponential Functions
@@ -471,28 +471,32 @@ vec4 pow(const vec4 a, const vec4 b)
 
 float exp(const float a)
 {
-   __asm float_exp __retVal.x, a;
+   const float e = 2.71828;
+   __asm float_power __retVal, e, a;
 }
 
 vec2 exp(const vec2 a)
 {
-   __asm float_exp __retVal.x, a.x;
-   __asm float_exp __retVal.y, a.y;
+   const float e = 2.71828;
+   __asm float_power __retVal.x, e, a.x;
+   __asm float_power __retVal.y, e, a.y;
 }
 
 vec3 exp(const vec3 a)
 {
-   __asm float_exp __retVal.x, a.x;
-   __asm float_exp __retVal.y, a.y;
-   __asm float_exp __retVal.z, a.z;
+   const float e = 2.71828;
+   __asm float_power __retVal.x, e, a.x;
+   __asm float_power __retVal.y, e, a.y;
+   __asm float_power __retVal.z, e, a.z;
 }
 
 vec4 exp(const vec4 a)
 {
-   __asm float_exp __retVal.x, a.x;
-   __asm float_exp __retVal.y, a.y;
-   __asm float_exp __retVal.z, a.z;
-   __asm float_exp __retVal.w, a.w;
+   const float e = 2.71828;
+   __asm float_power __retVal.x, e, a.x;
+   __asm float_power __retVal.y, e, a.y;
+   __asm float_power __retVal.z, e, a.z;
+   __asm float_power __retVal.w, e, a.w;
 }
 
 
@@ -894,7 +898,7 @@ vec4 mod(const vec4 a, const vec4 b)
     __retVal.x = a.x - b.x * floor(a.x * oneOverBx);
     __retVal.y = a.y - b.y * floor(a.y * oneOverBy);
     __retVal.z = a.z - b.z * floor(a.z * oneOverBz);
-    __retVal.w = a.w - b.w * floor(a.w * oneOverBz);
+    __retVal.w = a.w - b.w * floor(a.w * oneOverBw);
 }
 
 
@@ -1609,11 +1613,8 @@ vec4 texture1D(const sampler1D sampler, const float coord)
 
 vec4 texture1DProj(const sampler1D sampler, const vec2 coord)
 {
-   // new coord with .z moved to .w
-   vec4 coord4;
-   coord4.x = coord.x;
-   coord4.w = coord.y;
-   __asm vec4_texp1d __retVal, sampler, coord4;
+   // need to swizzle .y into .w
+   __asm vec4_texp1d __retVal, sampler, coord.xyyy;
 }
 
 vec4 texture1DProj(const sampler1D sampler, const vec4 coord)
@@ -1629,11 +1630,8 @@ vec4 texture2D(const sampler2D sampler, const vec2 coord)
 
 vec4 texture2DProj(const sampler2D sampler, const vec3 coord)
 {
-   // new coord with .z moved to .w
-   vec4 coord4;
-   coord4.xy = coord.xy;
-   coord4.w = coord.z;
-    __asm vec4_texp2d __retVal, sampler, coord4;
+   // need to swizzle 'z' into 'w'.
+   __asm vec4_texp2d __retVal, sampler, coord.xyzz;
 }
 
 vec4 texture2DProj(const sampler2D sampler, const vec4 coord)
@@ -1660,25 +1658,57 @@ vec4 textureCube(const samplerCube sampler, const vec3 coord)
 
 
 
-vec4 shadow1D (sampler1DShadow sampler, vec3 coord) {
-    vec4 texel;
-    __asm vec4_shad1d texel, sampler, coord, 0.0;
-    return texel;
+vec4 shadow1D(const sampler1DShadow sampler, const vec3 coord)
+{
+   __asm vec4_tex1d __retVal, sampler, coord;
 }
 
-vec4 shadow1DProj (sampler1DShadow sampler, vec4 coord) {
-    return shadow1D (sampler, vec3 (coord.s / coord.q, 0.0, coord.p / coord.q));
+vec4 shadow1DProj(const sampler1DShadow sampler, const vec4 coord)
+{
+   // .s and .p will be divided by .q
+   __asm vec4_texp1d __retVal, sampler, coord;
 }
 
-vec4 shadow2D (sampler2DShadow sampler, vec3 coord) {
-    vec4 texel;
-    __asm vec4_shad2d texel, sampler, coord, 0.0;
-    return texel;
+vec4 shadow2D(const sampler2DShadow sampler, const vec3 coord)
+{
+   __asm vec4_tex2d __retVal, sampler, coord;
 }
 
-vec4 shadow2DProj (sampler2DShadow sampler, vec4 coord) {
-    return shadow2D (sampler, vec3 (coord.s / coord.q, coord.t / coord.q, coord.p / coord.q));
+vec4 shadow2DProj(const sampler2DShadow sampler, const vec4 coord)
+{
+   // .s, .t and .p will be divided by .q
+   __asm vec4_texp2d __retVal, sampler, coord;
 }
+
+
+//// GL_ARB_texture_rectangle:
+vec4 texture2DRect(const sampler2DRect sampler, const vec2 coord)
+{
+   __asm vec4_tex_rect __retVal, sampler, coord;
+}
+
+vec4 texture2DRectProj(const sampler2DRect sampler, const vec3 coord)
+{
+   // need to swizzle .y into .w
+   __asm vec4_texp_rect __retVal, sampler, coord.xyzz;
+}
+
+vec4 texture2DRectProj(const sampler2DRect sampler, const vec4 coord)
+{
+   __asm vec4_texp_rect __retVal, sampler, ccoord;
+}
+
+vec4 shadow2DRect(const sampler2DRectShadow sampler, const vec3 coord)
+{
+   __asm vec4_tex_rect __retVal, sampler, coord;
+}
+
+vec4 shadow2DRectProj(const sampler2DRectShadow sampler, const vec4 coord)
+{
+   __asm vec4_texp_rect __retVal, sampler, coord;
+}
+
+
 
 //
 // 8.9 Noise Functions

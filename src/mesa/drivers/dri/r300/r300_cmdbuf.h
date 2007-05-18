@@ -27,9 +27,10 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 **************************************************************************/
 
-/*
- * Authors:
- *   Nicolai Haehnle <prefect_@gmx.net>
+/**
+ * \file
+ *
+ * \author Nicolai Haehnle <prefect_@gmx.net>
  */
 
 #ifndef __R300_CMDBUF_H__
@@ -37,31 +38,28 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #include "r300_context.h"
 
-
-extern int r300FlushCmdBufLocked(r300ContextPtr r300, const char* caller);
-extern int r300FlushCmdBuf(r300ContextPtr r300, const char* caller);
+extern int r300FlushCmdBufLocked(r300ContextPtr r300, const char *caller);
+extern int r300FlushCmdBuf(r300ContextPtr r300, const char *caller);
 
 extern void r300EmitState(r300ContextPtr r300);
 
 extern void r300InitCmdBuf(r300ContextPtr r300);
 extern void r300DestroyCmdBuf(r300ContextPtr r300);
 
-extern void r300EmitAOS(r300ContextPtr rmesa, GLuint nr, GLuint offset);
-
-
 /**
  * Make sure that enough space is available in the command buffer
  * by flushing if necessary.
+ *
+ * \param dwords The number of dwords we need to be free on the command buffer
  */
 static __inline__ void r300EnsureCmdBufSpace(r300ContextPtr r300,
-					     int dwords, const char* caller)
+					     int dwords, const char *caller)
 {
 	assert(dwords < r300->cmdbuf.size);
 
 	if (r300->cmdbuf.count_used + dwords > r300->cmdbuf.size)
 		r300FlushCmdBuf(r300, caller);
 }
-
 
 /**
  * Allocate the given number of dwords in the command buffer and return
@@ -70,10 +68,10 @@ static __inline__ void r300EnsureCmdBufSpace(r300ContextPtr r300,
  * causes state reemission after a flush. This is necessary to ensure
  * correct hardware state after an unlock.
  */
-static __inline__ uint32_t* r300RawAllocCmdBuf(r300ContextPtr r300,
-					       int dwords, const char* caller)
+static __inline__ uint32_t *r300RawAllocCmdBuf(r300ContextPtr r300,
+					       int dwords, const char *caller)
 {
-	uint32_t* ptr;
+	uint32_t *ptr;
 
 	r300EnsureCmdBufSpace(r300, dwords, caller);
 
@@ -82,17 +80,17 @@ static __inline__ uint32_t* r300RawAllocCmdBuf(r300ContextPtr r300,
 	return ptr;
 }
 
-static __inline__ uint32_t* r300AllocCmdBuf(r300ContextPtr r300,
-					    int dwords, const char* caller)
+static __inline__ uint32_t *r300AllocCmdBuf(r300ContextPtr r300,
+					    int dwords, const char *caller)
 {
-	uint32_t* ptr;
+	uint32_t *ptr;
 
 	r300EnsureCmdBufSpace(r300, dwords, caller);
 
 	if (!r300->cmdbuf.count_used) {
 		if (RADEON_DEBUG & DEBUG_IOCTL)
-			fprintf(stderr, "Reemit state after flush (from %s)\n",
-				caller);
+			fprintf(stderr,
+				"Reemit state after flush (from %s)\n", caller);
 		r300EmitState(r300);
 	}
 
@@ -102,17 +100,17 @@ static __inline__ uint32_t* r300AllocCmdBuf(r300ContextPtr r300,
 }
 
 extern void r300EmitBlit(r300ContextPtr rmesa,
-		  GLuint color_fmt,
-		  GLuint src_pitch,
-		  GLuint src_offset,
-		  GLuint dst_pitch,
-		  GLuint dst_offset,
-		  GLint srcx, GLint srcy,
-		  GLint dstx, GLint dsty, GLuint w, GLuint h);
+			 GLuint color_fmt,
+			 GLuint src_pitch,
+			 GLuint src_offset,
+			 GLuint dst_pitch,
+			 GLuint dst_offset,
+			 GLint srcx, GLint srcy,
+			 GLint dstx, GLint dsty, GLuint w, GLuint h);
 
 extern void r300EmitWait(r300ContextPtr rmesa, GLuint flags);
 extern void r300EmitLOAD_VBPNTR(r300ContextPtr rmesa, int start);
 extern void r300EmitVertexShader(r300ContextPtr rmesa);
 extern void r300EmitPixelShader(r300ContextPtr rmesa);
 
-#endif /* __R300_CMDBUF_H__ */
+#endif				/* __R300_CMDBUF_H__ */

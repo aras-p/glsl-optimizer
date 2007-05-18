@@ -1009,8 +1009,6 @@ stencil_and_ztest_pixels( GLcontext *ctx, SWspan *span, GLuint face )
 GLboolean
 _swrast_stencil_and_ztest_span(GLcontext *ctx, SWspan *span)
 {
-   /* span->facing can only be non-zero if using two-sided stencil */
-   ASSERT(ctx->Stencil._TestTwoSide || span->facing == 0);
    if (span->arrayMask & SPAN_XY)
       return stencil_and_ztest_pixels(ctx, span, span->facing);
    else
@@ -1154,7 +1152,7 @@ _swrast_clear_stencil_buffer( GLcontext *ctx, struct gl_renderbuffer *rb )
    const GLuint stencilMax = (1 << stencilBits) - 1;
    GLint x, y, width, height;
 
-   if (!rb || mask == 0 || !rb->Data)
+   if (!rb || mask == 0)
       return;
 
    ASSERT(rb->DataType == GL_UNSIGNED_BYTE ||

@@ -155,7 +155,7 @@ _swrast_update_polygon( GLcontext *ctx )
 
 /**
  * Update the _PreferPixelFog field to indicate if we need to compute
- * fog factors per-fragment.
+ * fog blend factors (from the fog coords) per-fragment.
  */
 static void
 _swrast_update_fog_hint( GLcontext *ctx )
@@ -488,7 +488,7 @@ _swrast_invalidate_state( GLcontext *ctx, GLbitfield new_state )
 }
 
 
-static void
+void
 _swrast_update_texture_samplers(GLcontext *ctx)
 {
    SWcontext *swrast = SWRAST_CONTEXT(ctx);
@@ -505,45 +505,52 @@ _swrast_update_texture_samplers(GLcontext *ctx)
 
 
 /**
- * Update the swrast->_FragmentAttribs field.
+ * Update swrast->_ActiveAttribs and swrast->_NumActiveAttribs
  */
 static void
 _swrast_update_fragment_attribs(GLcontext *ctx)
 {
    SWcontext *swrast = SWRAST_CONTEXT(ctx);
+   GLuint attribsMask;
    
    if (ctx->FragmentProgram._Current) {
-      swrast->_FragmentAttribs
-         = ctx->FragmentProgram._Current->Base.InputsRead;
+      attribsMask = ctx->FragmentProgram._Current->Base.InputsRead;
    }
    else {
       GLuint u;
-      swrast->_FragmentAttribs = 0x0;
+      attribsMask = 0x0;
 
+#if 0 /* not yet */
       if (ctx->Depth.Test)
-         swrast->_FragmentAttribs |= FRAG_BIT_WPOS;
+         attribsMask |= FRAG_BIT_WPOS;
       if (NEED_SECONDARY_COLOR(ctx))
-         swrast->_FragmentAttribs |= FRAG_BIT_COL1;
+         attribsMask |= FRAG_BIT_COL1;
+#endif
       if (swrast->_FogEnabled)
-         swrast->_FragmentAttribs |= FRAG_BIT_FOGC;
+         attribsMask |= FRAG_BIT_FOGC;
 
       for (u = 0; u < ctx->Const.MaxTextureUnits; u++) {
          if (ctx->Texture.Unit[u]._ReallyEnabled) {
-            swrast->_FragmentAttribs |= FRAG_BIT_TEX(u);
+            attribsMask |= FRAG_BIT_TEX(u);
          }
       }
    }
 
-   /* Find lowest, highest bit set in _FragmentAttribs */
+   /* don't want to interpolate these generic attribs just yet */
+   /* XXX temporary */
+   attribsMask &= ~(FRAG_BIT_WPOS |
+                    FRAG_BIT_COL0 |
+                    FRAG_BIT_COL1 |
+                    FRAG_BIT_FOGC);
+
+   /* Update _ActiveAttribs[] list */
    {
-      GLuint bits = swrast->_FragmentAttribs;
-      GLuint i = 0;;
-      while (bits) {
-         i++;
-         bits = bits >> 1;
+      GLuint i, num = 0;
+      for (i = 0; i < FRAG_ATTRIB_MAX; i++) {
+         if (attribsMask & (1 << i))
+            swrast->_ActiveAttribs[num++] = i;
       }
-      swrast->_MaxFragmentAttrib = i;
-      swrast->_MinFragmentAttrib = FRAG_ATTRIB_TEX0; /* XXX temporary */
+      swrast->_NumActiveAttribs = num;
    }
 }
 
@@ -617,7 +624,7 @@ _swrast_validate_derived( GLcontext *ctx )
                               _NEW_PROGRAM))
 	 _swrast_update_fragment_program( ctx, swrast->NewState );
 
-      if (swrast->NewState & _NEW_TEXTURE)
+      if (swrast->NewState & (_NEW_TEXTURE | _NEW_PROGRAM))
          _swrast_update_texture_samplers( ctx );
 
       if (swrast->NewState & (_NEW_TEXTURE | _NEW_PROGRAM))
@@ -912,7 +919,7 @@ _swrast_print_vertex( GLcontext *ctx, const SWvertex *v )
                   v->specular[0], v->specular[1],
                   v->specular[2], v->specular[3]);
 #endif
-      _mesa_debug(ctx, "fog %f\n", v->fog);
+      _mesa_debug(ctx, "fog %f\n", v->attrib[FRAG_ATTRIB_FOGC][0]);
       _mesa_debug(ctx, "index %d\n", v->index);
       _mesa_debug(ctx, "pointsize %f\n", v->pointSize);
       _mesa_debug(ctx, "\n");

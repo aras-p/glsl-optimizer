@@ -121,7 +121,6 @@ dri_bo_subdata(dri_bo *bo, unsigned long offset,
    dri_bo_unmap(bo);
 }
 
-
 void
 dri_bo_get_subdata(dri_bo *bo, unsigned long offset,
 		   unsigned long size, void *data)

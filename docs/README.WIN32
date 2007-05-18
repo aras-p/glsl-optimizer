@@ -1,6 +1,6 @@
 File: docs/README.WIN32
 
-Last updated: Mar 31, 2006 - Karl Schultz - kschultz@users.sourceforge.net
+Last updated: Apr 25, 2007 - Karl Schultz - kschultz@users.sourceforge.net
 
 Quick Start
 ----- -----
@@ -13,18 +13,25 @@ directory.  Don't worry, you will not overwrite anything.
 
 The Windows build system uses Microsoft Visual Studio.  Project files
 for a specific version of Visual Studio are in their own directory in
-the top-level "windows" directory.  For example, Visual Studio 6 files
-are in windows/VC6.  If a directory does not exist for your version of
-Visual Studio, you can try importing the project files from an earlier
-version of Visual Studio.  At this time, project files exist for
-Version 6 and Version 7.  The code has been built with a beta version
-of Version 8 and it runs on 64-bit Windows.  If you want to try this,
-start by importing the VC7 files and create the 64-bit targets in the
-configuration manager.
+the top-level "windows" directory.  For example, Visual Studio 8 files
+are in windows/VC8.
 
-It is likely that the new and free Visual Studio Express can be used
-to build Mesa, but it hasn't been tried yet.  Start with the VC7
-project files.
+Support has been dropped for versions of Visual Studio prior to 8. The
+main reason is because Microsoft now provides a free compiler and
+developer environment.  Visual Studio Express can be found at
+
+http://msdn.microsoft.com/vstudio/express/visualc/default.aspx
+
+You'll also need the Platform SDK.  Instructions for obtaining and
+using the SDK with Visual Studio Express can be found at
+
+http://msdn.microsoft.com/vstudio/express/visualc/usingpsdk/
+
+If you are stuck using VC6 or VC7, you may start with these project
+files, but you may need to modify them to reflect changes in the
+Mesa source code tree.  If you sucessfully update the project files,
+please submit them to the author of this document so that they may
+be included in the next distribution. 
 
 The project files to build the core Mesa library, Windows Mesa
 drivers, OSMesa, and GLU are in the mesa directory.  The project files
@@ -52,9 +59,7 @@ be useful in figuring out any problems, or report them to me.
 To build Mesa with the GDI driver, build the mesa, gdi, and glu
 projects in the Visual Studio workspace found at
 
-	windows/VC6/mesa/mesa.dsw
-or
-	windows/VC7/mesa/mesa.sln
+	windows/VC8/mesa/mesa.sln
 
 The osmesa DLL can also be built with the osmesa project.
 
@@ -74,9 +79,7 @@ GLUT and Demos
 
 A Visual Studio workspace can be found at 
 
-	windows/VC6/progs/progs.dsw
-or
-	windows/VC7/progs/progs.sln
+	windows/VC8/progs/progs.sln
 
 It can be used to build GLUT and a few demos.  The GLUT lib and DLL
 are copied to the top-level lib directory, along with the Mesa libs.
@@ -103,7 +106,7 @@ should build all the demos.
 Build System Notes
 ----- ------ -----
 
-VC6
+VC6 (not actively supported)
 ---
 
 Visual Studio 6 does not recognize files with the .cc extension as C++
@@ -115,10 +118,15 @@ Two additional configurations are provided, Debug x86 and Release x86
 that activate the shader code compilation by defining SLANG_86.  It is
 unknown if and how this works.
 
-VC7
+VC7 (not actively supported)
 ---
 
 The above-mentioned .cc problem does not exist in this version.
+
+VC8
+---
+
+No notes.
 
 
 General

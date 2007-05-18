@@ -181,7 +181,7 @@ LONGSTRING static char arb_grammar_text[] =
     - changed and merged V_* and F_* opcode values to OP_*.
     - added GL_ARB_fragment_program_shadow specific tokens (michal)
 */
-#define  REVISION                                   0x09
+#define  REVISION                                   0x0a
 
 /* program type */
 #define  FRAGMENT_PROGRAM                           0x01
@@ -208,6 +208,9 @@ LONGSTRING static char arb_grammar_text[] =
 
 /* GL_ARB_draw_buffers option */
 #define  ARB_DRAW_BUFFERS                           0x07
+
+/* GL_MESA_texture_array option */
+#define  MESA_TEXTURE_ARRAY                        0x08
 
 /* GL_ARB_fragment_program instruction class */
 #define  OP_ALU_INST                                0x00
@@ -368,6 +371,9 @@ LONGSTRING static char arb_grammar_text[] =
 #define  TEXTARGET_SHADOW1D                         0x06
 #define  TEXTARGET_SHADOW2D                         0x07
 #define  TEXTARGET_SHADOWRECT                       0x08
+/* GL_MESA_texture_array */
+#define  TEXTARGET_1D_ARRAY                         0x09
+#define  TEXTARGET_2D_ARRAY                         0x0a
 
 /* face type */
 #define  FACE_FRONT                                 0x00
@@ -2990,6 +2996,12 @@ parse_fp_instruction (GLcontext * ctx, const GLubyte ** inst,
 	    case TEXTARGET_SHADOWRECT:
 	       /* TODO ARB_fragment_program_shadow code */
 	       break;
+            case TEXTARGET_1D_ARRAY:
+               fp->TexSrcTarget = TEXTURE_1D_ARRAY_INDEX;
+               break;
+            case TEXTARGET_2D_ARRAY:
+               fp->TexSrcTarget = TEXTURE_2D_ARRAY_INDEX;
+               break;
          }
          Program->TexturesUsed[texcoord] |= (1 << fp->TexSrcTarget);
          /* Check that both "2D" and "CUBE" (for example) aren't both used */
@@ -3464,6 +3476,10 @@ parse_instructions(GLcontext * ctx, const GLubyte * inst,
                      /* do nothing for now */
                   }
                   break;
+
+               case MESA_TEXTURE_ARRAY:
+		  /* do nothing for now */
+                  break;
             }
             break;
 
@@ -3603,7 +3619,9 @@ enable_parser_extensions(GLcontext *ctx, grammar id)
    if (ctx->Extensions.ARB_draw_buffers
        && !enable_ext(ctx, id, "draw_buffers"))
       return GL_FALSE;
-
+   if (ctx->Extensions.MESA_texture_array
+       && !enable_ext(ctx, id, "texture_array"))
+      return GL_FALSE;
 #if 1
    /* hack for Warcraft (see bug 8060) */
    enable_ext(ctx, id, "vertex_blend");

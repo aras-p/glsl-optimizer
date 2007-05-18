@@ -1667,7 +1667,7 @@ __glXGetArrayType( const __GLXattribute * const state,
 						    key, index );
 
     if ( a != NULL ) {
-	*dest = (GLintptr) a->enabled;
+	*dest = (GLintptr) a->data_type;
     }
 
     return (a != NULL);

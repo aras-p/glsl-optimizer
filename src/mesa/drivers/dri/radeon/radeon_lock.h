@@ -1,8 +1,12 @@
-/* $XFree86: xc/lib/GL/mesa/src/drv/radeon/radeon_lock.h,v 1.3 2002/10/30 12:51:55 alanh Exp $ */
 /**************************************************************************
 
 Copyright 2000, 2001 ATI Technologies Inc., Ontario, Canada, and
                      VA Linux Systems Inc., Fremont, California.
+Copyright (C) The Weather Channel, Inc.  2002.  All Rights Reserved.
+
+The Weather Channel (TM) funded Tungsten Graphics to develop the
+initial release of the Radeon 8500 driver under the XFree86 license.
+This notice must be preserved.
 
 All Rights Reserved.
 
@@ -30,14 +34,15 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 /*
  * Authors:
- *   Kevin E. Martin <martin@valinux.com>
  *   Gareth Hughes <gareth@valinux.com>
+ *   Keith Whitwell <keith@tungstengraphics.com>
+ *   Kevin E. Martin <martin@valinux.com>
  */
 
 #ifndef __RADEON_LOCK_H__
 #define __RADEON_LOCK_H__
 
-extern void radeonGetLock( radeonContextPtr rmesa, GLuint flags );
+extern void radeonGetLock(radeonContextPtr rmesa, GLuint flags);
 
 /* Turn DEBUG_LOCKING on to find locking conflicts.
  */
@@ -83,26 +88,25 @@ extern int prevLockLine;
  * do not do any drawing !!!
  */
 
-
 /* Lock the hardware and validate our state.
  */
 #define LOCK_HARDWARE( rmesa )					\
    do {								\
       char __ret = 0;						\
       DEBUG_CHECK_LOCK();					\
-      DRM_CAS( rmesa->dri.hwLock, rmesa->dri.hwContext,		\
-	       (DRM_LOCK_HELD | rmesa->dri.hwContext), __ret );	\
+      DRM_CAS( (rmesa)->dri.hwLock, (rmesa)->dri.hwContext,		\
+	       (DRM_LOCK_HELD | (rmesa)->dri.hwContext), __ret );	\
       if ( __ret )						\
-	 radeonGetLock( rmesa, 0 );				\
+	 radeonGetLock( (rmesa), 0 );				\
       DEBUG_LOCK();						\
    } while (0)
 
 #define UNLOCK_HARDWARE( rmesa )					\
    do {									\
-      DRM_UNLOCK( rmesa->dri.fd,					\
-		  rmesa->dri.hwLock,					\
-		  rmesa->dri.hwContext );				\
+      DRM_UNLOCK( (rmesa)->dri.fd,					\
+		  (rmesa)->dri.hwLock,					\
+		  (rmesa)->dri.hwContext );				\
       DEBUG_RESET();							\
    } while (0)
 
-#endif /* __RADEON_LOCK_H__ */
+#endif				/* __RADEON_LOCK_H__ */

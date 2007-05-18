@@ -165,12 +165,6 @@ static const struct tnl_pipeline_stage *tdfx_pipeline[] = {
    &_tnl_texgen_stage, 
    &_tnl_texture_transform_stage, 
    &_tnl_point_attenuation_stage,
-#if 0
-#if defined(FEATURE_NV_vertex_program) || defined(FEATURE_ARB_vertex_program)
-   &_tnl_arb_vertex_program_stage,
-   &_tnl_vertex_program_stage,
-#endif
-#endif
    &_tnl_render_stage,		
    0,
 };

@@ -1,4 +1,3 @@
-/* $XFree86$ */
 /**************************************************************************
 
 Copyright (C) The Weather Channel, Inc.  2002.  All Rights Reserved.

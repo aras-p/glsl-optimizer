@@ -1,8 +1,8 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.5
+ * Version:  6.5.3
  *
- * Copyright (C) 1999-2006  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2007  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -69,14 +69,23 @@ _swrast_span_default_z( GLcontext *ctx, SWspan *span )
 
 
 /**
- * Init span's fog interpolation values to the RasterPos fog.
+ * Init span's fogcoord interpolation values to the RasterPos fog.
  * Used during setup for glDraw/CopyPixels.
  */
 void
 _swrast_span_default_fog( GLcontext *ctx, SWspan *span )
 {
-   span->attrStart[FRAG_ATTRIB_FOGC][0]
-      = _swrast_z_to_fogfactor(ctx, ctx->Current.RasterDistance);
+   const SWcontext *swrast = SWRAST_CONTEXT(ctx);
+   GLfloat fogVal; /* a coord or a blend factor */
+   if (swrast->_PreferPixelFog) {
+      /* fog blend factors will be computed from fog coordinates per pixel */
+      fogVal = ctx->Current.RasterDistance;
+   }
+   else {
+      /* fog blend factor should be computed from fogcoord now */
+      fogVal = _swrast_z_to_fogfactor(ctx, ctx->Current.RasterDistance);
+   }
+   span->attrStart[FRAG_ATTRIB_FOGC][0] = fogVal;
    span->attrStepX[FRAG_ATTRIB_FOGC][0] = 0.0;
    span->attrStepY[FRAG_ATTRIB_FOGC][0] = 0.0;
    span->interpMask |= SPAN_FOG;
@@ -121,10 +130,15 @@ _swrast_span_default_color( GLcontext *ctx, SWspan *span )
 }
 
 
+/**
+ * Set the span's secondary color info to the current raster position's
+ * secondary color, when needed (lighting enabled or colorsum enabled).
+ */
 void
 _swrast_span_default_secondary_color(GLcontext *ctx, SWspan *span)
 {
-   if (ctx->Visual.rgbMode) {
+   if (ctx->Visual.rgbMode && (ctx->Light.Enabled || ctx->Fog.ColorSumEnabled))
+   {
       GLchan r, g, b, a;
       UNCLAMPED_FLOAT_TO_CHAN(r, ctx->Current.RasterSecondaryColor[0]);
       UNCLAMPED_FLOAT_TO_CHAN(g, ctx->Current.RasterSecondaryColor[1]);
@@ -767,6 +781,9 @@ interpolate_wpos(GLcontext *ctx, SWspan *span)
 {
    GLfloat (*wpos)[4] = span->array->attribs[FRAG_ATTRIB_WPOS];
    GLuint i;
+   const GLfloat zScale = 1.0 / ctx->DrawBuffer->_DepthMaxF;
+   GLfloat w, dw;
+
    if (span->arrayMask & SPAN_XY) {
       for (i = 0; i < span->end; i++) {
          wpos[i][0] = (GLfloat) span->array->x[i];
@@ -779,10 +796,13 @@ interpolate_wpos(GLcontext *ctx, SWspan *span)
          wpos[i][1] = (GLfloat) span->y;
       }
    }
+
+   w = span->attrStart[FRAG_ATTRIB_WPOS][3];
+   dw = span->attrStepX[FRAG_ATTRIB_WPOS][3];
    for (i = 0; i < span->end; i++) {
-      wpos[i][2] = (GLfloat) span->array->z[i] / ctx->DrawBuffer->_DepthMaxF;
-      wpos[i][3] = span->attrStart[FRAG_ATTRIB_WPOS][3]
-                 + i * span->attrStepX[FRAG_ATTRIB_WPOS][3];
+      wpos[i][2] = (GLfloat) span->array->z[i] * zScale;
+      wpos[i][3] = w;
+      w += dw;
    }
 }
 
@@ -1337,7 +1357,11 @@ shade_texture_span(GLcontext *ctx, SWspan *span)
       if ((inputsRead >= FRAG_BIT_VAR0) && (span->interpMask & SPAN_VARYING))
          interpolate_varying(ctx, span);
 
+#if 0
       if (inputsRead & FRAG_BIT_WPOS)
+#else
+      /* XXX always interpolate wpos so that DDX/DDY work */
+#endif
          interpolate_wpos(ctx, span);
 
       /* Run fragment program/shader now */
@@ -1392,7 +1416,10 @@ _swrast_write_rgba_span( GLcontext *ctx, SWspan *span)
    ASSERT((span->interpMask & span->arrayMask) == 0);
    ASSERT((span->interpMask & SPAN_RGBA) ^ (span->arrayMask & SPAN_RGBA));
 
-   /* check for conditions that prevent deferred shading */
+   /* check for conditions that prevent deferred shading (doing shading
+    * after stencil/ztest).
+    * XXX move this code into state validation.
+    */
    if (ctx->Color.AlphaEnabled) {
       /* alpha test depends on post-texture/shader colors */
       deferredTexture = GL_FALSE;
@@ -1402,6 +1429,10 @@ _swrast_write_rgba_span( GLcontext *ctx, SWspan *span)
          if (ctx->FragmentProgram._Current->Base.OutputsWritten
              & (1 << FRAG_RESULT_DEPR)) {
             /* Z comes from fragment program/shader */
+            deferredTexture = GL_FALSE;
+         }
+         else if (ctx->Query.CurrentOcclusionObject) {
+            /* occlusion query depends on shader discard/kill results */
             deferredTexture = GL_FALSE;
          }
          else {

@@ -1,4 +1,3 @@
-/* $XFree86: xc/lib/GL/mesa/src/drv/r200/r200_tex.c,v 1.2 2002/11/05 17:46:08 tsi Exp $ */
 /*
 Copyright (C) The Weather Channel, Inc.  2002.  All Rights Reserved.
 
@@ -182,7 +181,7 @@ static void r200SetTexMaxAnisotropy( r200TexObjPtr t, GLfloat max )
 {
    t->pp_txfilter &= ~R200_MAX_ANISO_MASK;
 
-   if ( max == 1.0 ) {
+   if ( max <= 1.0 ) {
       t->pp_txfilter |= R200_MAX_ANISO_1_TO_1;
    } else if ( max <= 2.0 ) {
       t->pp_txfilter |= R200_MAX_ANISO_2_TO_1;
@@ -483,7 +482,7 @@ r200ValidateClientStorage( GLcontext *ctx, GLenum target,
 {
    r200ContextPtr rmesa = R200_CONTEXT(ctx);
 
-   if (0)
+   if ( R200_DEBUG & DEBUG_TEXTURE )
       fprintf(stderr, "intformat %s format %s type %s\n",
 	      _mesa_lookup_enum_by_nr( internalFormat ),
 	      _mesa_lookup_enum_by_nr( format ),
@@ -549,7 +548,7 @@ r200ValidateClientStorage( GLcontext *ctx, GLenum target,
 						  format, type);
 
       
-      if (0)
+      if ( R200_DEBUG & DEBUG_TEXTURE )
 	 fprintf(stderr, "%s: srcRowStride %d/%x\n", 
 		 __FUNCTION__, srcRowStride, srcRowStride);
 

@@ -58,6 +58,8 @@ static void _playback_copy_to_current( GLcontext *ctx,
 				 node->vertex_size * sizeof(GLfloat), 
 				 data, node->vertex_store->bufferobj );
 
+   data += node->attrsz[0]; /* skip vertex position */
+
    for (i = VBO_ATTRIB_POS+1 ; i < VBO_ATTRIB_MAX ; i++) {
       if (node->attrsz[i]) {
 	 GLfloat *current = (GLfloat *)vbo->currval[i].Ptr;

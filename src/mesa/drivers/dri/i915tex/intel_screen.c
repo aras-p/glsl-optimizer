@@ -894,6 +894,7 @@ __driCreateNewScreen_20050727(__DRInativeDisplay * dpy, int scrn,
                                   ddx_version, dri_version, drm_version,
                                   frame_buffer, pSAREA, fd,
                                   internal_api_version, &intelAPI);
+
    if (psp != NULL) {
       I830DRIPtr dri_priv = (I830DRIPtr) psp->pDevPriv;
       *driver_modes = intelFillInModes(dri_priv->cpp * 8,

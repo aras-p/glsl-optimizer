@@ -26,6 +26,7 @@
 #include "imports.h"
 #include "context.h"
 #include "slang_ir.h"
+#include "slang_mem.h"
 #include "prog_print.h"
 
 
@@ -62,7 +63,7 @@ static const slang_ir_info IrInfo[] = {
    { IR_ABS, "IR_ABS", OPCODE_ABS, 4, 1 },
    { IR_NEG, "IR_NEG", OPCODE_NOP, 4, 1 }, /* special case: emit_negation() */
    { IR_DDX, "IR_DDX", OPCODE_DDX, 4, 1 },
-   { IR_DDX, "IR_DDY", OPCODE_DDX, 4, 1 },
+   { IR_DDY, "IR_DDY", OPCODE_DDY, 4, 1 },
    { IR_SIN, "IR_SIN", OPCODE_SIN, 1, 1 },
    { IR_COS, "IR_COS", OPCODE_COS, 1, 1 },
    { IR_NOISE1, "IR_NOISE1", OPCODE_NOISE1, 1, 1 },
@@ -113,6 +114,7 @@ _slang_ir_name(slang_ir_opcode opcode)
 }
 
 
+#if 0 /* no longer needed with mempool */
 /**
  * Since many IR nodes might point to the same IR storage info, we need
  * to be careful when deleting things.
@@ -131,6 +133,7 @@ _slang_refcount_storage(slang_ir_node *n)
    for (i = 0; i < 3; i++)
       _slang_refcount_storage(n->Children[i]);
 }
+#endif
 
 
 static void
@@ -140,20 +143,20 @@ _slang_free_ir(slang_ir_node *n)
    if (!n)
       return;
 
+#if 0
    if (n->Store) {
       n->Store->RefCount--;
       if (n->Store->RefCount == 0) {
-#if 0
-         free(n->Store);
-#endif
+         _slang_free(n->Store);
          n->Store = NULL;
       }
    }
+#endif
 
    for (i = 0; i < 3; i++)
       _slang_free_ir(n->Children[i]);
    /* Do not free n->List since it's a child elsewhere */
-   free(n);
+   _slang_free(n);
 }
 
 
@@ -163,7 +166,9 @@ _slang_free_ir(slang_ir_node *n)
 void
 _slang_free_ir_tree(slang_ir_node *n)
 {
+#if 0
    _slang_refcount_storage(n);
+#endif
    _slang_free_ir(n);
 }
 

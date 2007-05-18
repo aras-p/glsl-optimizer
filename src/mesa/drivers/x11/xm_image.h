@@ -81,11 +81,4 @@ extern void XMesaPutPixel(XMesaImage *image, int x, int y,
 			  unsigned long pixel);
 #endif
 
-extern void XMesaPutImageHelper(ScreenPtr display,
-				DrawablePtr d, GCPtr gc,
-				XMesaImage *image,
-				int src_x, int src_y,
-				int dest_x, int dest_y,
-				unsigned int width, unsigned int height);
-
 #endif /* _XM_IMAGE_H_ */

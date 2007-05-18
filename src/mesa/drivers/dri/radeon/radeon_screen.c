@@ -656,8 +656,7 @@ radeonCreateScreen( __DRIscreenPrivate *sPriv )
    case PCI_CHIP_RC410_5A61:
    case PCI_CHIP_RC410_5A62:
       screen->chip_family = CHIP_FAMILY_RS400;
-      fprintf(stderr, "Warning, xpress200 detected. Won't work.\n");
-      return NULL;
+      fprintf(stderr, "Warning, xpress200 detected.\n");
       break;
 
    default:

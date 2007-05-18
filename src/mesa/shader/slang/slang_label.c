@@ -8,14 +8,16 @@
 
 
 #include "slang_label.h"
+#include "slang_mem.h"
+
 
 
 slang_label *
 _slang_label_new(const char *name)
 {
-   slang_label *l = (slang_label *) _mesa_calloc(sizeof(slang_label));
+   slang_label *l = (slang_label *) _slang_alloc(sizeof(slang_label));
    if (l) {
-      l->Name = _mesa_strdup(name);
+      l->Name = _slang_strdup(name);
       l->Location = -1;
    }
    return l;
@@ -28,9 +30,9 @@ slang_label *
 _slang_label_new_unique(const char *name)
 {
    static int id = 1;
-   slang_label *l = (slang_label *) _mesa_calloc(sizeof(slang_label));
+   slang_label *l = (slang_label *) _slang_alloc(sizeof(slang_label));
    if (l) {
-      l->Name = (char *) _mesa_malloc(_mesa_strlen(name) + 10);
+      l->Name = (char *) _slang_alloc(_mesa_strlen(name) + 10);
       if (!l->Name) {
          _mesa_free(l);
          return NULL;
@@ -45,11 +47,15 @@ _slang_label_new_unique(const char *name)
 void
 _slang_label_delete(slang_label *l)
 {
-   if (l->Name)
-      _mesa_free(l->Name);
-   if (l->References)
-      _mesa_free(l->References);
-   _mesa_free(l);
+   if (l->Name) {
+      _slang_free(l->Name);
+      l->Name = NULL;
+   }
+   if (l->References) {
+      _slang_free(l->References);
+      l->References = NULL;
+   }
+   _slang_free(l);
 }
 
 
@@ -58,8 +64,8 @@ _slang_label_add_reference(slang_label *l, GLuint inst)
 {
    const GLuint oldSize = l->NumReferences * sizeof(GLuint);
    assert(l->Location < 0);
-   l->References = _mesa_realloc(l->References,
-                                 oldSize, oldSize + sizeof(GLuint));
+   l->References = _slang_realloc(l->References,
+                                  oldSize, oldSize + sizeof(GLuint));
    if (l->References) {
       l->References[l->NumReferences] = inst;
       l->NumReferences++;
@@ -92,7 +98,7 @@ _slang_label_set_location(slang_label *l, GLint location,
    }
 
    if (l->References) {
-      _mesa_free(l->References);
+      _slang_free(l->References);
       l->References = NULL;
    }
 }

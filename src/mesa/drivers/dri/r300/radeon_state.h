@@ -31,8 +31,6 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #ifndef __RADEON_STATE_H__
 #define __RADEON_STATE_H__
 
-#include "radeon_context.h"
-
 extern void radeonRecalcScissorRects(radeonContextPtr radeon);
 extern void radeonSetCliprects(radeonContextPtr radeon);
 extern void radeonUpdateScissor(GLcontext* ctx);

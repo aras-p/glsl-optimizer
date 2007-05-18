@@ -40,18 +40,6 @@
 #include "glcontextmodes.h"
 #include "glheader.h"
 
-static void ChangeDrawableAttribute( Display * dpy, GLXDrawable drawable,
-    const CARD32 * attribs, size_t num_attribs );
-
-static void DestroyPbuffer( Display * dpy, GLXDrawable drawable );
-
-static GLXDrawable CreatePbuffer( Display *dpy,
-    const __GLcontextModes * fbconfig, unsigned int width, unsigned int height,
-    const int *attrib_list, GLboolean size_in_attribs );
-
-static int GetDrawableAttribute( Display *dpy, GLXDrawable drawable,
-    int attribute, unsigned int *value );
-
 
 /**
  * Change a drawable's attribute.
@@ -150,7 +138,7 @@ DestroyPbuffer( Display * dpy, GLXDrawable drawable )
    if ( (priv->majorVersion > 1) || (priv->minorVersion >= 3) ) {
       xGLXDestroyPbufferReq * req;
 
-      GetReqExtra( GLXDestroyPbuffer, 4, req );
+      GetReq( GLXDestroyPbuffer, req );
       req->reqType = opcode;
       req->glxCode = X_GLXDestroyPbuffer;
       req->pbuffer = (GLXPbuffer) drawable;

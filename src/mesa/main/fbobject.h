@@ -113,6 +113,10 @@ _mesa_FramebufferTexture3DEXT(GLenum target, GLenum attachment,
                               GLint level, GLint zoffset);
 
 extern void GLAPIENTRY
+_mesa_FramebufferTextureLayerEXT(GLenum target, GLenum attachment,
+                                 GLuint texture, GLint level, GLint layer);
+
+extern void GLAPIENTRY
 _mesa_FramebufferRenderbufferEXT(GLenum target, GLenum attachment,
                                  GLenum renderbuffertarget,
                                  GLuint renderbuffer);

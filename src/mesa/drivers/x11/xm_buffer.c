@@ -383,18 +383,18 @@ xmesa_delete_framebuffer(struct gl_framebuffer *fb)
    }
 
    if (b->gc)
-      XMesaFreeGC(b->xm_visual->display, b->gc);
+      XMesaFreeGC(b->display, b->gc);
    if (b->cleargc)
-      XMesaFreeGC(b->xm_visual->display, b->cleargc);
+      XMesaFreeGC(b->display, b->cleargc);
    if (b->swapgc)
-      XMesaFreeGC(b->xm_visual->display, b->swapgc);
+      XMesaFreeGC(b->display, b->swapgc);
 
-   if (b->xm_visual->mesa_visual.doubleBufferMode) {
+   if (fb->Visual.doubleBufferMode) {
       /* free back ximage/pixmap/shmregion */
       if (b->backxrb->ximage) {
 #if defined(USE_XSHM) && !defined(XFree86Server)
          if (b->shm) {
-            XShmDetach( b->xm_visual->display, &b->shminfo );
+            XShmDetach( b->display, &b->shminfo );
             XDestroyImage( b->backxrb->ximage );
             shmdt( b->shminfo.shmaddr );
          }
@@ -404,9 +404,9 @@ xmesa_delete_framebuffer(struct gl_framebuffer *fb)
          b->backxrb->ximage = NULL;
       }
       if (b->backxrb->pixmap) {
-         XMesaFreePixmap( b->xm_visual->display, b->backxrb->pixmap );
+         XMesaFreePixmap( b->display, b->backxrb->pixmap );
          if (b->xm_visual->hpcr_clear_flag) {
-            XMesaFreePixmap( b->xm_visual->display,
+            XMesaFreePixmap( b->display,
                              b->xm_visual->hpcr_clear_pixmap );
             XMesaDestroyImage( b->xm_visual->hpcr_clear_ximage );
          }

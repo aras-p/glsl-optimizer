@@ -1440,11 +1440,14 @@ Fake_glXMakeContextCurrent( Display *dpy, GLXDrawable draw,
       }
       if (!drawBuffer) {
          /* drawable must be a new window! */
-         drawBuffer = XMesaCreateWindowBuffer2( xmctx->xm_visual, draw, xmctx);
+         drawBuffer = XMesaCreateWindowBuffer( xmctx->xm_visual, draw );
          if (!drawBuffer) {
             /* Out of memory, or context/drawable depth mismatch */
             return False;
          }
+#ifdef FX
+         FXcreateContext( xmctx->xm_visual, draw, xmctx, drawBuffer );
+#endif
       }
 
       /* Find the XMesaBuffer which corresponds to the GLXDrawable 'read' */
@@ -1457,12 +1460,14 @@ Fake_glXMakeContextCurrent( Display *dpy, GLXDrawable draw,
       }
       if (!readBuffer) {
          /* drawable must be a new window! */
-         readBuffer = XMesaCreateWindowBuffer2(glxCtx->xmesaContext->xm_visual,
-                                               read, xmctx);
+         readBuffer = XMesaCreateWindowBuffer( xmctx->xm_visual, read );
          if (!readBuffer) {
             /* Out of memory, or context/drawable depth mismatch */
             return False;
          }
+#ifdef FX
+         FXcreateContext( xmctx->xm_visual, read, xmctx, readBuffer );
+#endif
       }
 
       MakeCurrent_PrevContext = ctx;
@@ -2107,9 +2112,14 @@ Fake_glXCreateWindow( Display *dpy, GLXFBConfig config, Window win,
    if (!xmvis)
       return 0;
 
-   xmbuf = XMesaCreateWindowBuffer2(xmvis, win, NULL);
+   xmbuf = XMesaCreateWindowBuffer(xmvis, win);
    if (!xmbuf)
       return 0;
+
+#ifdef FX
+   /* XXX this will segfault if actually called */
+   FXcreateContext(xmvis, win, NULL, xmbuf);
+#endif
 
    (void) dpy;
    (void) attribList;  /* Ignored in GLX 1.3 */

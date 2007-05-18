@@ -107,13 +107,13 @@
 #include "lines.h"
 #include "macros.h"
 #include "matrix.h"
-#include "occlude.h"
 #include "pixel.h"
 #include "points.h"
 #include "polygon.h"
 #if FEATURE_NV_vertex_program || FEATURE_NV_fragment_program
 #include "program.h"
 #endif
+#include "queryobj.h"
 #include "rastpos.h"
 #include "simple_list.h"
 #include "state.h"
@@ -467,12 +467,22 @@ alloc_shared_state( GLcontext *ctx )
    if (!ss->DefaultRect)
       goto cleanup;
 
+   ss->Default1DArray = (*ctx->Driver.NewTextureObject)(ctx, 0, GL_TEXTURE_1D_ARRAY_EXT);
+   if (!ss->Default1DArray)
+      goto cleanup;
+
+   ss->Default2DArray = (*ctx->Driver.NewTextureObject)(ctx, 0, GL_TEXTURE_2D_ARRAY_EXT);
+   if (!ss->Default2DArray)
+      goto cleanup;
+
    /* Effectively bind the default textures to all texture units */
    ss->Default1D->RefCount += MAX_TEXTURE_IMAGE_UNITS;
    ss->Default2D->RefCount += MAX_TEXTURE_IMAGE_UNITS;
    ss->Default3D->RefCount += MAX_TEXTURE_IMAGE_UNITS;
    ss->DefaultCubeMap->RefCount += MAX_TEXTURE_IMAGE_UNITS;
    ss->DefaultRect->RefCount += MAX_TEXTURE_IMAGE_UNITS;
+   ss->Default1DArray->RefCount += MAX_TEXTURE_IMAGE_UNITS;
+   ss->Default2DArray->RefCount += MAX_TEXTURE_IMAGE_UNITS;
 
    _glthread_INIT_MUTEX(ss->TexMutex);
    ss->TextureStateStamp = 0;
@@ -629,7 +639,7 @@ delete_shader_cb(GLuint id, void *data, void *userData)
    }
    else {
       struct gl_shader_program *shProg = (struct gl_shader_program *) data;
-      ASSERT(shProg->Type == GL_SHADER_PROGRAM);
+      ASSERT(shProg->Type == GL_SHADER_PROGRAM_MESA);
       _mesa_free_shader_program(ctx, shProg);
    }
 }
@@ -772,6 +782,7 @@ _mesa_init_constants(GLcontext *ctx)
    ctx->Const.Max3DTextureLevels = MAX_3D_TEXTURE_LEVELS;
    ctx->Const.MaxCubeTextureLevels = MAX_CUBE_TEXTURE_LEVELS;
    ctx->Const.MaxTextureRectSize = MAX_TEXTURE_RECT_SIZE;
+   ctx->Const.MaxArrayTextureLayers = MAX_ARRAY_TEXTURE_LAYERS;
    ctx->Const.MaxTextureCoordUnits = MAX_TEXTURE_COORD_UNITS;
    ctx->Const.MaxTextureImageUnits = MAX_TEXTURE_IMAGE_UNITS;
    ctx->Const.MaxTextureUnits = MIN2(ctx->Const.MaxTextureCoordUnits,
@@ -805,10 +816,10 @@ _mesa_init_constants(GLcontext *ctx)
    ctx->Const.VertexProgram.MaxTexInstructions = 0;
    ctx->Const.VertexProgram.MaxTexIndirections = 0;
    ctx->Const.VertexProgram.MaxAttribs = MAX_NV_VERTEX_PROGRAM_INPUTS;
-   ctx->Const.VertexProgram.MaxTemps = MAX_NV_VERTEX_PROGRAM_TEMPS;
+   ctx->Const.VertexProgram.MaxTemps = MAX_PROGRAM_TEMPS;
    ctx->Const.VertexProgram.MaxParameters = MAX_NV_VERTEX_PROGRAM_PARAMS;
    ctx->Const.VertexProgram.MaxLocalParams = MAX_PROGRAM_LOCAL_PARAMS;
-   ctx->Const.VertexProgram.MaxEnvParams = MAX_NV_VERTEX_PROGRAM_PARAMS;
+   ctx->Const.VertexProgram.MaxEnvParams = MAX_PROGRAM_ENV_PARAMS;
    ctx->Const.VertexProgram.MaxAddressRegs = MAX_VERTEX_PROGRAM_ADDRESS_REGS;
    ctx->Const.VertexProgram.MaxUniformComponents = 4 * MAX_UNIFORMS;
    init_natives(&ctx->Const.VertexProgram);
@@ -820,10 +831,10 @@ _mesa_init_constants(GLcontext *ctx)
    ctx->Const.FragmentProgram.MaxTexInstructions = MAX_FRAGMENT_PROGRAM_TEX_INSTRUCTIONS;
    ctx->Const.FragmentProgram.MaxTexIndirections = MAX_FRAGMENT_PROGRAM_TEX_INDIRECTIONS;
    ctx->Const.FragmentProgram.MaxAttribs = MAX_NV_FRAGMENT_PROGRAM_INPUTS;
-   ctx->Const.FragmentProgram.MaxTemps = MAX_NV_FRAGMENT_PROGRAM_TEMPS;
+   ctx->Const.FragmentProgram.MaxTemps = MAX_PROGRAM_TEMPS;
    ctx->Const.FragmentProgram.MaxParameters = MAX_NV_FRAGMENT_PROGRAM_PARAMS;
    ctx->Const.FragmentProgram.MaxLocalParams = MAX_PROGRAM_LOCAL_PARAMS;
-   ctx->Const.FragmentProgram.MaxEnvParams = MAX_NV_FRAGMENT_PROGRAM_PARAMS;
+   ctx->Const.FragmentProgram.MaxEnvParams = MAX_PROGRAM_ENV_PARAMS;
    ctx->Const.FragmentProgram.MaxAddressRegs = MAX_FRAGMENT_PROGRAM_ADDRESS_REGS;
    ctx->Const.FragmentProgram.MaxUniformComponents = 4 * MAX_UNIFORMS;
    init_natives(&ctx->Const.FragmentProgram);
@@ -1450,30 +1461,6 @@ _mesa_make_current( GLcontext *newCtx, GLframebuffer *drawBuffer,
       }
    }
 
-#if 0 /** XXX enable this someday */
-   if (oldCtx && oldCtx != newCtx) {
-      /* unbind old context's draw/read buffers */
-      if (oldCtx->DrawBuffer && oldCtx->DrawBuffer->Name == 0) {
-         oldCtx->DrawBuffer->RefCount--;
-         oldCtx->DrawBuffer = NULL;
-      }
-      if (oldCtx->ReadBuffer && oldCtx->ReadBuffer->Name == 0) {
-         oldCtx->ReadBuffer->RefCount--;
-         oldCtx->ReadBuffer = NULL;
-      }
-      if (oldCtx->WinSysDrawBuffer) {
-         ASSERT(oldCtx->WinSysDrawBuffer->Name == 0);
-         oldCtx->WinSysDrawBuffer->RefCount--;
-         oldCtx->WinSysDrawBuffer = NULL;
-      }
-      if (oldCtx->WinSysReadBuffer) {
-         ASSERT(oldCtx->WinSysReadBuffer->Name == 0);
-         oldCtx->WinSysReadBuffer->RefCount--;
-         oldCtx->WinSysReadBuffer = NULL;
-      }
-   }
-#endif
-
    /* We used to call _glapi_check_multithread() here.  Now do it in drivers */
    _glapi_set_context((void *) newCtx);
    ASSERT(_mesa_get_current_context() == newCtx);
@@ -1481,6 +1468,8 @@ _mesa_make_current( GLcontext *newCtx, GLframebuffer *drawBuffer,
    if (oldCtx) {
       _mesa_unreference_framebuffer(&oldCtx->WinSysDrawBuffer);
       _mesa_unreference_framebuffer(&oldCtx->WinSysReadBuffer);
+      _mesa_unreference_framebuffer(&oldCtx->DrawBuffer);
+      _mesa_unreference_framebuffer(&oldCtx->ReadBuffer);
    }
          
    if (!newCtx) {

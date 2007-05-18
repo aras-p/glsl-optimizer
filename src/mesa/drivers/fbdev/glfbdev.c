@@ -682,9 +682,16 @@ glFBDevDestroyBuffer( GLFBDevBufferPtr buffer )
       if (buffer == curDraw || buffer == curRead) {
          glFBDevMakeCurrent( NULL, NULL, NULL);
       }
+#if 0
       /* free the software depth, stencil, accum buffers */
       _mesa_free_framebuffer_data(&buffer->glframebuffer);
       _mesa_free(buffer);
+#else
+      {
+         struct gl_framebuffer *fb = &buffer->glframebuffer;
+         _mesa_unreference_framebuffer(&fb);
+      }
+#endif
    }
 }
 
@@ -799,10 +806,16 @@ glFBDevDestroyContext( GLFBDevContextPtr context )
    GLFBDevContextPtr fbdevctx = glFBDevGetCurrentContext();
 
    if (context) {
+      GLcontext *mesaCtx = &context->glcontext;
+
+      _swsetup_DestroyContext( mesaCtx );
+      _swrast_DestroyContext( mesaCtx );
+      _tnl_DestroyContext( mesaCtx );
+      _vbo_DestroyContext( mesaCtx );
+
       if (fbdevctx == context) {
          /* destroying current context */
          _mesa_make_current(NULL, NULL, NULL);
-         _mesa_notifyDestroy(&context->glcontext);
       }
       _mesa_free_context_data(&context->glcontext);
       _mesa_free(context);

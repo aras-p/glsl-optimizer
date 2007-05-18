@@ -541,17 +541,19 @@ void i915_update_fog( GLcontext *ctx )
    else {
       enabled = ctx->Fog.Enabled;
       mode = ctx->Fog.Mode;
-
-      try_pixel_fog = (ctx->Fog.FogCoordinateSource == GL_FRAGMENT_DEPTH_EXT &&
-		       ctx->Hint.Fog == GL_NICEST && 
-		       0);	/* XXX - DISABLE -- Need ortho fallback */
+#if 0
+      /* XXX - DISABLED -- Need ortho fallback */
+      try_pixel_fog = (ctx->Fog.FogCoordinateSource == GL_FRAGMENT_DEPTH_EXT
+                       &&ctx->Hint.Fog == GL_NICEST);
+#else
+      try_pixel_fog = 0;
+#endif
    }
 
    if (!enabled) {
       i915->vertex_fog = I915_FOG_NONE;
    }
    else if (try_pixel_fog) {
-
       I915_STATECHANGE(i915, I915_UPLOAD_FOG);
       i915->state.Fog[I915_FOGREG_MODE1] &= ~FMC1_FOGFUNC_MASK;
       i915->vertex_fog = I915_FOG_PIXEL;
@@ -567,8 +569,8 @@ void i915_update_fog( GLcontext *ctx )
 	    i915->vertex_fog = I915_FOG_VERTEX;
 	 }
 	 else {
-	    GLfloat c1 = ctx->Fog.End/(ctx->Fog.End-ctx->Fog.Start);
-	    GLfloat c2 = 1.0/(ctx->Fog.End-ctx->Fog.Start);
+            GLfloat c2 = 1.0 / (ctx->Fog.End - ctx->Fog.Start);
+            GLfloat c1 = ctx->Fog.End * c2;
 
 	    i915->state.Fog[I915_FOGREG_MODE1] &= ~FMC1_C1_MASK;
 	    i915->state.Fog[I915_FOGREG_MODE1] |= FMC1_FOGFUNC_PIXEL_LINEAR;
@@ -576,10 +578,11 @@ void i915_update_fog( GLcontext *ctx )
 	       ((GLuint)(c1 * FMC1_C1_ONE)) & FMC1_C1_MASK;
 
 	    if (i915->state.Fog[I915_FOGREG_MODE1] & FMC1_FOGINDEX_Z) {
-	       i915->state.Fog[I915_FOGREG_MODE2] = (GLuint)(c2 * FMC2_C2_ONE);
+	       i915->state.Fog[I915_FOGREG_MODE2]
+                  = (GLuint)(c2 * FMC2_C2_ONE);
 	    }
 	    else {
-	       union { float f; int i; } fi;
+	       fi_type fi;
 	       fi.f = c2; 
 	       i915->state.Fog[I915_FOGREG_MODE2] = fi.i; 
 	    }
@@ -602,24 +605,22 @@ void i915_update_fog( GLcontext *ctx )
       i915->vertex_fog = I915_FOG_VERTEX;
    }
 
-   {
-      I915_STATECHANGE(i915, I915_UPLOAD_CTX);
-      I915_ACTIVESTATE(i915, I915_UPLOAD_FOG, enabled);
-      if (enabled)
-	 i915->state.Ctx[I915_CTXREG_LIS5] |= S5_FOG_ENABLE;
-      else
-	 i915->state.Ctx[I915_CTXREG_LIS5] &= ~S5_FOG_ENABLE;
-   }
+   I915_STATECHANGE(i915, I915_UPLOAD_CTX);
+   I915_ACTIVESTATE(i915, I915_UPLOAD_FOG, enabled);
+   if (enabled)
+      i915->state.Ctx[I915_CTXREG_LIS5] |= S5_FOG_ENABLE;
+   else
+      i915->state.Ctx[I915_CTXREG_LIS5] &= ~S5_FOG_ENABLE;
 
-   /* always enbale pixel fog
-    * vertex fog use precaculted fog coord will conflict with appended
-    * fog program
+   /* Always enable pixel fog.  Vertex fog using fog coord will conflict
+    * with fog code appended onto fragment program.
     */
     _tnl_allow_vertex_fog( ctx, 0 );
     _tnl_allow_pixel_fog( ctx, 1 );
 }
 
-static void i915Fogfv(GLcontext *ctx, GLenum pname, const GLfloat *param)
+static void
+i915Fogfv(GLcontext *ctx, GLenum pname, const GLfloat *param)
 {
    i915ContextPtr i915 = I915_CONTEXT(ctx);
 
@@ -634,8 +635,8 @@ static void i915Fogfv(GLcontext *ctx, GLenum pname, const GLfloat *param)
       I915_STATECHANGE(i915, I915_UPLOAD_FOG);
 
       if (i915->state.Fog[I915_FOGREG_MODE1] & FMC1_FOGINDEX_Z) {
-	 i915->state.Fog[I915_FOGREG_MODE3] = (GLuint)(ctx->Fog.Density *
-						     FMC3_D_ONE);
+	 i915->state.Fog[I915_FOGREG_MODE3]
+            = (GLuint)(ctx->Fog.Density * FMC3_D_ONE);
       }
       else {
 	 union { float f; int i; } fi;

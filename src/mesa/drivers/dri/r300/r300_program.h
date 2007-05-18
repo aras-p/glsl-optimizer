@@ -145,6 +145,6 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 	((arg1) << R300_FPI2_ARG1A_SHIFT) |	\
 	((arg2) << R300_FPI2_ARG2A_SHIFT))
 
-extern void debug_vp(GLcontext *ctx, struct gl_vertex_program *vp);
-	
-#endif /* __R300_PROGRAM_H__ */
+extern void debug_vp(GLcontext * ctx, struct gl_vertex_program *vp);
+
+#endif				/* __R300_PROGRAM_H__ */

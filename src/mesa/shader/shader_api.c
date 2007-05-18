@@ -1,6 +1,6 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.5.3
+ * Version:  7.0
  *
  * Copyright (C) 2004-2007  Brian Paul   All Rights Reserved.
  *
@@ -38,6 +38,7 @@
 #include "glheader.h"
 #include "context.h"
 #include "hash.h"
+#include "macros.h"
 #include "program.h"
 #include "prog_parameter.h"
 #include "prog_print.h"
@@ -58,7 +59,7 @@ _mesa_new_shader_program(GLcontext *ctx, GLuint name)
    struct gl_shader_program *shProg;
    shProg = CALLOC_STRUCT(gl_shader_program);
    if (shProg) {
-      shProg->Type = GL_SHADER_PROGRAM;
+      shProg->Type = GL_SHADER_PROGRAM_MESA;
       shProg->Name = name;
       shProg->RefCount = 1;
       shProg->Attributes = _mesa_new_parameter_list();
@@ -68,15 +69,12 @@ _mesa_new_shader_program(GLcontext *ctx, GLuint name)
 
 
 /**
- * Free the data that hangs off a shader program object, but not the object
- * itself.
+ * Clear (free) the shader program state that gets produced by linking.
  */
 void
-_mesa_free_shader_program_data(GLcontext *ctx,
-                               struct gl_shader_program *shProg)
+_mesa_clear_shader_program_data(GLcontext *ctx,
+                                struct gl_shader_program *shProg)
 {
-   assert(shProg->Type == GL_SHADER_PROGRAM);
-
    if (shProg->VertexProgram) {
       if (shProg->VertexProgram->Base.Parameters == shProg->Uniforms) {
          /* to prevent a double-free in the next call */
@@ -95,7 +93,6 @@ _mesa_free_shader_program_data(GLcontext *ctx,
       shProg->FragmentProgram = NULL;
    }
 
-
    if (shProg->Uniforms) {
       _mesa_free_parameter_list(shProg->Uniforms);
       shProg->Uniforms = NULL;
@@ -104,6 +101,36 @@ _mesa_free_shader_program_data(GLcontext *ctx,
    if (shProg->Varying) {
       _mesa_free_parameter_list(shProg->Varying);
       shProg->Varying = NULL;
+   }
+}
+
+
+/**
+ * Free all the data that hangs off a shader program object, but not the
+ * object itself.
+ */
+void
+_mesa_free_shader_program_data(GLcontext *ctx,
+                               struct gl_shader_program *shProg)
+{
+   GLuint i;
+
+   assert(shProg->Type == GL_SHADER_PROGRAM_MESA);
+
+   _mesa_clear_shader_program_data(ctx, shProg);
+
+   if (shProg->Attributes) {
+      _mesa_free_parameter_list(shProg->Attributes);
+      shProg->Attributes = NULL;
+   }
+
+   /* detach shaders */
+   for (i = 0; i < shProg->NumShaders; i++) {
+      _mesa_reference_shader(ctx, &shProg->Shaders[i], NULL);
+   }
+   if (shProg->Shaders) {
+      _mesa_free(shProg->Shaders);
+      shProg->Shaders = NULL;
    }
 }
 
@@ -124,6 +151,52 @@ _mesa_free_shader_program(GLcontext *ctx, struct gl_shader_program *shProg)
 
 
 /**
+ * Set ptr to point to shProg.
+ * If ptr is pointing to another object, decrement its refcount (and delete
+ * if refcount hits zero).
+ * Then set ptr to point to shProg, incrementing its refcount.
+ */
+/* XXX this could be static */
+void
+_mesa_reference_shader_program(GLcontext *ctx,
+                               struct gl_shader_program **ptr,
+                               struct gl_shader_program *shProg)
+{
+   assert(ptr);
+   if (*ptr == shProg) {
+      /* no-op */
+      return;
+   }
+   if (*ptr) {
+      /* Unreference the old shader program */
+      GLboolean deleteFlag = GL_FALSE;
+      struct gl_shader_program *old = *ptr;
+
+      ASSERT(old->RefCount > 0);
+      old->RefCount--;
+      /*printf("SHPROG DECR %p (%d) to %d\n",
+        (void*) old, old->Name, old->RefCount);*/
+      deleteFlag = (old->RefCount == 0);
+
+      if (deleteFlag) {
+         _mesa_HashRemove(ctx->Shared->ShaderObjects, old->Name);
+         _mesa_free_shader_program(ctx, old);
+      }
+
+      *ptr = NULL;
+   }
+   assert(!*ptr);
+
+   if (shProg) {
+      shProg->RefCount++;
+      /*printf("SHPROG INCR %p (%d) to %d\n",
+        (void*) shProg, shProg->Name, shProg->RefCount);*/
+      *ptr = shProg;
+   }
+}
+
+
+/**
  * Lookup a GLSL program object.
  */
 struct gl_shader_program *
@@ -137,7 +210,7 @@ _mesa_lookup_shader_program(GLcontext *ctx, GLuint name)
        * in the same hash table.  Check the object's type to be sure it's
        * what we're expecting.
        */
-      if (shProg && shProg->Type != GL_SHADER_PROGRAM) {
+      if (shProg && shProg->Type != GL_SHADER_PROGRAM_MESA) {
          return NULL;
       }
       return shProg;
@@ -183,6 +256,52 @@ _mesa_free_shader(GLcontext *ctx, struct gl_shader *sh)
 
 
 /**
+ * Set ptr to point to sh.
+ * If ptr is pointing to another shader, decrement its refcount (and delete
+ * if refcount hits zero).
+ * Then set ptr to point to sh, incrementing its refcount.
+ */
+/* XXX this could be static */
+void
+_mesa_reference_shader(GLcontext *ctx, struct gl_shader **ptr,
+                       struct gl_shader *sh)
+{
+   assert(ptr);
+   if (*ptr == sh) {
+      /* no-op */
+      return;
+   }
+   if (*ptr) {
+      /* Unreference the old shader */
+      GLboolean deleteFlag = GL_FALSE;
+      struct gl_shader *old = *ptr;
+
+      ASSERT(old->RefCount > 0);
+      old->RefCount--;
+      /*printf("SHADER DECR %p (%d) to %d\n",
+        (void*) old, old->Name, old->RefCount);*/
+      deleteFlag = (old->RefCount == 0);
+
+      if (deleteFlag) {
+         _mesa_HashRemove(ctx->Shared->ShaderObjects, old->Name);
+         _mesa_free_shader(ctx, old);
+      }
+
+      *ptr = NULL;
+   }
+   assert(!*ptr);
+
+   if (sh) {
+      /* reference new */
+      sh->RefCount++;
+      /*printf("SHADER INCR %p (%d) to %d\n",
+        (void*) sh, sh->Name, sh->RefCount);*/
+      *ptr = sh;
+   }
+}
+
+
+/**
  * Lookup a GLSL shader object.
  */
 struct gl_shader *
@@ -195,9 +314,7 @@ _mesa_lookup_shader(GLcontext *ctx, GLuint name)
        * in the same hash table.  Check the object's type to be sure it's
        * what we're expecting.
        */
-      if (sh && sh->Type == GL_SHADER_PROGRAM) {
-         assert(sh->Type == GL_VERTEX_SHADER ||
-                sh->Type == GL_FRAGMENT_SHADER);
+      if (sh && sh->Type == GL_SHADER_PROGRAM_MESA) {
          return NULL;
       }
       return sh;
@@ -227,13 +344,7 @@ _mesa_init_shader_state(GLcontext * ctx)
 void
 _mesa_free_shader_state(GLcontext *ctx)
 {
-   if (ctx->Shader.CurrentProgram) {
-      ctx->Shader.CurrentProgram->RefCount--;
-      if (ctx->Shader.CurrentProgram->RefCount <= 0) {
-         _mesa_free_shader_program(ctx, ctx->Shader.CurrentProgram);
-         ctx->Shader.CurrentProgram = NULL;
-      }
-   }
+   _mesa_reference_shader_program(ctx, &ctx->Shader.CurrentProgram, NULL);
 }
 
 
@@ -294,8 +405,8 @@ _mesa_attach_shader(GLcontext *ctx, GLuint program, GLuint shader)
    }
 
    /* append */
-   shProg->Shaders[n] = sh;
-   sh->RefCount++;
+   shProg->Shaders[n] = NULL; /* since realloc() didn't zero the new space */
+   _mesa_reference_shader(ctx, &shProg->Shaders[n], sh);
    shProg->NumShaders++;
 }
 
@@ -323,7 +434,13 @@ _mesa_bind_attrib_location(GLcontext *ctx, GLuint program, GLuint index,
       return;
    }
 
-   oldIndex = _mesa_get_attrib_location(ctx, program, name);
+   if (shProg->LinkStatus) {
+      /* get current index/location for the attribute */
+      oldIndex = _mesa_get_attrib_location(ctx, program, name);
+   }
+   else {
+      oldIndex = -1;
+   }
 
    /* this will replace the current value if it's already in the list */
    i = _mesa_add_attribute(shProg->Attributes, name, size, index);
@@ -331,14 +448,12 @@ _mesa_bind_attrib_location(GLcontext *ctx, GLuint program, GLuint index,
       _mesa_error(ctx, GL_OUT_OF_MEMORY, "glBindAttribLocation");
    }
 
-   if (shProg->VertexProgram && oldIndex >= 0) {
+   if (shProg->VertexProgram && oldIndex >= 0 && oldIndex != index) {
+      /* If the index changed, need to search/replace references to that attribute
+       * in the vertex program.
+       */
       _slang_remap_attribute(&shProg->VertexProgram->Base, oldIndex, index);
    }
-
-#if 0
-   printf("===== post BindAttrib:\n");
-   _mesa_print_program(&shProg->VertexProgram->Base);
-#endif
 }
 
 
@@ -377,13 +492,27 @@ _mesa_create_program(GLcontext *ctx)
 
    _mesa_HashInsert(ctx->Shared->ShaderObjects, name, shProg);
 
+   assert(shProg->RefCount == 1);
+
    return name;
 }
 
 
+/**
+ * Named w/ "2" to indicate OpenGL 2.x vs GL_ARB_fragment_programs's
+ * DeleteProgramARB.
+ */
 void
 _mesa_delete_program2(GLcontext *ctx, GLuint name)
 {
+   /*
+    * NOTE: deleting shaders/programs works a bit differently than
+    * texture objects (and buffer objects, etc).  Shader/program
+    * handles/IDs exist in the hash table until the object is really
+    * deleted (refcount==0).  With texture objects, the handle/ID is
+    * removed from the hash table in glDeleteTextures() while the tex
+    * object itself might linger until its refcount goes to zero.
+    */
    struct gl_shader_program *shProg;
 
    shProg = _mesa_lookup_shader_program(ctx, name);
@@ -392,16 +521,10 @@ _mesa_delete_program2(GLcontext *ctx, GLuint name)
       return;
    }
 
-   /* always remove from hash table */
-   _mesa_HashRemove(ctx->Shared->ShaderObjects, name);
-
    shProg->DeletePending = GL_TRUE;
 
-   /* decrement refcount, delete if zero */
-   shProg->RefCount--;
-   if (shProg->RefCount <= 0) {
-      _mesa_free_shader_program(ctx, shProg);
-   }
+   /* effectively, decr shProg's refcount */
+   _mesa_reference_shader_program(ctx, &shProg, NULL);
 }
 
 
@@ -414,10 +537,9 @@ _mesa_delete_shader(GLcontext *ctx, GLuint shader)
    }
 
    sh->DeletePending = GL_TRUE;
-   sh->RefCount--;
-   if (sh->RefCount <= 0) {
-      _mesa_free_shader(ctx, sh);
-   }
+
+   /* effectively, decr sh's refcount */
+   _mesa_reference_shader(ctx, &sh, NULL);
 }
 
 
@@ -437,14 +559,11 @@ _mesa_detach_shader(GLcontext *ctx, GLuint program, GLuint shader)
 
    for (i = 0; i < n; i++) {
       if (shProg->Shaders[i]->Name == shader) {
-         struct gl_shader **newList;
          /* found it */
+         struct gl_shader **newList;
 
-         shProg->Shaders[i]->RefCount--;
-         if (shProg->Shaders[i]->RefCount == 0) {
-            /* delete now */
-            _mesa_free_shader(ctx, shProg->Shaders[i]);
-         }
+         /* derefernce */
+         _mesa_reference_shader(ctx, &shProg->Shaders[i], NULL);
 
          /* alloc new, smaller array */
          newList = (struct gl_shader **)
@@ -461,6 +580,19 @@ _mesa_detach_shader(GLcontext *ctx, GLuint program, GLuint shader)
          _mesa_free(shProg->Shaders);
 
          shProg->Shaders = newList;
+         shProg->NumShaders = n - 1;
+
+#ifdef DEBUG
+         /* sanity check */
+         {
+            for (j = 0; j < shProg->NumShaders; j++) {
+               assert(shProg->Shaders[j]->Type == GL_VERTEX_SHADER ||
+                      shProg->Shaders[j]->Type == GL_FRAGMENT_SHADER);
+               assert(shProg->Shaders[j]->RefCount > 0);
+            }
+         }
+#endif
+
          return;
       }
    }
@@ -484,12 +616,12 @@ _mesa_get_active_attrib(GLcontext *ctx, GLuint program, GLuint index,
    GLint sz;
 
    if (!shProg) {
-      _mesa_error(ctx, GL_INVALID_VALUE, "glGetActiveUniform");
+      _mesa_error(ctx, GL_INVALID_VALUE, "glGetActiveAttrib");
       return;
    }
 
    if (!shProg->Attributes || index >= shProg->Attributes->NumParameters) {
-      _mesa_error(ctx, GL_INVALID_VALUE, "glGetActiveUniform(index)");
+      _mesa_error(ctx, GL_INVALID_VALUE, "glGetActiveAttrib(index)");
       return;
    }
 
@@ -511,12 +643,9 @@ _mesa_get_active_uniform(GLcontext *ctx, GLuint program, GLuint index,
                          GLsizei maxLength, GLsizei *length, GLint *size,
                          GLenum *type, GLchar *nameOut)
 {
-   static const GLenum vec_types[] = {
-      GL_FLOAT, GL_FLOAT_VEC2, GL_FLOAT_VEC3, GL_FLOAT_VEC4
-   };
    struct gl_shader_program *shProg
       = _mesa_lookup_shader_program(ctx, program);
-   GLint sz;
+   GLuint ind, j;
 
    if (!shProg) {
       _mesa_error(ctx, GL_INVALID_VALUE, "glGetActiveUniform");
@@ -528,13 +657,25 @@ _mesa_get_active_uniform(GLcontext *ctx, GLuint program, GLuint index,
       return;
    }
 
-   copy_string(nameOut, maxLength, length,
-               shProg->Uniforms->Parameters[index].Name);
-   sz = shProg->Uniforms->Parameters[index].Size;
-   if (size)
-      *size = sz;
-   if (type)
-      *type = vec_types[sz]; /* XXX this is a temporary hack */
+   ind = 0;
+   for (j = 0; j < shProg->Uniforms->NumParameters; j++) {
+      if (shProg->Uniforms->Parameters[j].Type == PROGRAM_UNIFORM ||
+          shProg->Uniforms->Parameters[j].Type == PROGRAM_SAMPLER) {
+         if (ind == index) {
+            /* found it */
+            copy_string(nameOut, maxLength, length,
+                        shProg->Uniforms->Parameters[j].Name);
+            if (size)
+               *size = shProg->Uniforms->Parameters[j].Size;
+            if (type)
+               *type = shProg->Uniforms->Parameters[j].DataType;
+            return;
+         }
+         ind++;
+      }
+   }
+
+   _mesa_error(ctx, GL_INVALID_VALUE, "glGetActiveUniform(index)");
 }
 
 
@@ -648,13 +789,20 @@ _mesa_get_programiv(GLcontext *ctx, GLuint program,
       *params = shProg->Attributes ? shProg->Attributes->NumParameters : 0;
       break;
    case GL_ACTIVE_ATTRIBUTE_MAX_LENGTH:
-      *params = _mesa_parameter_longest_name(shProg->Attributes);
+      *params = _mesa_longest_parameter_name(shProg->Attributes,
+                                             PROGRAM_INPUT) + 1;
       break;
    case GL_ACTIVE_UNIFORMS:
-      *params = shProg->Uniforms ? shProg->Uniforms->NumParameters : 0;
+      *params
+         = _mesa_num_parameters_of_type(shProg->Uniforms, PROGRAM_UNIFORM)
+         + _mesa_num_parameters_of_type(shProg->Uniforms, PROGRAM_SAMPLER);
       break;
    case GL_ACTIVE_UNIFORM_MAX_LENGTH:
-      *params = _mesa_parameter_longest_name(shProg->Uniforms);
+      *params = MAX2(
+             _mesa_longest_parameter_name(shProg->Uniforms, PROGRAM_UNIFORM),
+             _mesa_longest_parameter_name(shProg->Uniforms, PROGRAM_SAMPLER));
+      if (*params > 0)
+         (*params)++;  /* add one for terminating zero */
       break;
    default:
       _mesa_error(ctx, GL_INVALID_ENUM, "glGetProgramiv(pname)");
@@ -872,6 +1020,8 @@ _mesa_link_program(GLcontext *ctx, GLuint program)
 void
 _mesa_use_program(GLcontext *ctx, GLuint program)
 {
+   struct gl_shader_program *shProg;
+
    if (ctx->Shader.CurrentProgram &&
        ctx->Shader.CurrentProgram->Name == program) {
       /* no-op */
@@ -880,30 +1030,19 @@ _mesa_use_program(GLcontext *ctx, GLuint program)
 
    FLUSH_VERTICES(ctx, _NEW_PROGRAM);
 
-   /* unbind old */
-   if (ctx->Shader.CurrentProgram) {
-      ctx->Shader.CurrentProgram->RefCount--;
-      if (ctx->Shader.CurrentProgram->RefCount <= 0) {
-         _mesa_free_shader_program(ctx, ctx->Shader.CurrentProgram);
-      }
-      ctx->Shader.CurrentProgram = NULL;
-   }
-
    if (program) {
-      struct gl_shader_program *shProg;
       shProg = _mesa_lookup_shader_program(ctx, program);
       if (!shProg) {
          _mesa_error(ctx, GL_INVALID_VALUE,
                      "glUseProgramObjectARB(programObj)");
          return;
       }
-      ctx->Shader.CurrentProgram = shProg;
-      shProg->RefCount++;
    }
    else {
-      /* don't use a shader program */
-      ctx->Shader.CurrentProgram = NULL;
-   }      
+      shProg = NULL;
+   }
+
+   _mesa_reference_shader_program(ctx, &ctx->Shader.CurrentProgram, shProg);
 }
 
 
@@ -933,10 +1072,18 @@ _mesa_uniform(GLcontext *ctx, GLint location, GLsizei count,
     * If we're setting a sampler, we must use glUniformi1()!
     */
    if (shProg->Uniforms->Parameters[location].Type == PROGRAM_SAMPLER) {
+      GLint unit;
       if (type != GL_INT || count != 1) {
          _mesa_error(ctx, GL_INVALID_OPERATION,
                      "glUniform(only glUniform1i can be used "
                      "to set sampler uniforms)");
+         return;
+      }
+      /* check that the sampler (tex unit index) is legal */
+      unit = ((GLint *) values)[0];
+      if (unit >= ctx->Const.MaxTextureImageUnits) {
+         _mesa_error(ctx, GL_INVALID_VALUE,
+                     "glUniform1(invalid sampler/tex unit index)");
          return;
       }
    }

@@ -90,7 +90,7 @@ int APIENTRY glutCreateWindow (const char *title)
    attr.event_mask = StructureNotifyMask | ExposureMask;
    mask = CWBackPixel | CWBorderPixel | CWColormap | CWEventMask;
 
-   win = XCreateWindow( dpy, root, 0, 0, g_width, g_height,
+   win = XCreateWindow( dpy, root, g_xpos, g_ypos, g_width, g_height,
 		        0, visinfo->depth, InputOutput,
 		        visinfo->visual, mask, &attr );
    if (!win) {

@@ -25,12 +25,13 @@
 
 /**
  * \file tnl/t_vb_program.c
- * \brief Pipeline stage for executing NVIDIA vertex programs.
+ * \brief Pipeline stage for executing vertex programs.
  * \author Brian Paul,  Keith Whitwell
  */
 
 
 #include "glheader.h"
+#include "colormac.h"
 #include "context.h"
 #include "macros.h"
 #include "imports.h"
@@ -42,6 +43,46 @@
 #include "t_context.h"
 #include "t_pipeline.h"
 
+#include "swrast/s_context.h"
+#include "swrast/s_texfilter.h"
+
+/**
+ * XXX the texture sampling code in this module is a bit of a hack.
+ * The texture sampling code is in swrast, though it doesn't have any
+ * real dependencies on the rest of swrast.  It should probably be
+ * moved into main/ someday.
+ */
+
+static void
+vp_fetch_texel(GLcontext *ctx, const GLfloat texcoord[4], GLfloat lambda,
+               GLuint unit, GLfloat color[4])
+{
+   GLchan rgba[4];
+   SWcontext *swrast = SWRAST_CONTEXT(ctx);
+
+   /* XXX use a float-valued TextureSample routine here!!! */
+   swrast->TextureSample[unit](ctx, ctx->Texture.Unit[unit]._Current,
+                               1, (const GLfloat (*)[4]) texcoord,
+                               &lambda, &rgba);
+   color[0] = CHAN_TO_FLOAT(rgba[0]);
+   color[1] = CHAN_TO_FLOAT(rgba[1]);
+   color[2] = CHAN_TO_FLOAT(rgba[2]);
+   color[3] = CHAN_TO_FLOAT(rgba[3]);
+}
+
+
+/**
+ * Called via ctx->Driver.ProgramStringNotify() after a new vertex program
+ * string has been parsed.
+ */
+void
+_tnl_program_string(GLcontext *ctx, GLenum target, struct gl_program *program)
+{
+   /* No-op.
+    * If we had derived anything from the program that was private to this
+    * stage we'd recompute/validate it here.
+    */
+}
 
 
 /*!
@@ -70,7 +111,7 @@ init_machine(GLcontext *ctx, struct gl_program_machine *machine)
    MEMCPY(machine->VertAttribs, ctx->Current.Attrib,
           MAX_VERTEX_PROGRAM_ATTRIBS * 4 * sizeof(GLfloat));
 
-   if (ctx->VertexProgram.Current->IsNVProgram) {
+   if (ctx->VertexProgram._Current->IsNVProgram) {
       GLuint i;
       /* Output/result regs are initialized to [0,0,0,1] */
       for (i = 0; i < MAX_NV_VERTEX_PROGRAM_OUTPUTS; i++) {
@@ -85,6 +126,8 @@ init_machine(GLcontext *ctx, struct gl_program_machine *machine)
       }
    }
 
+   machine->NumDeriv = 0;
+
    /* init condition codes */
    machine->CondCodes[0] = COND_EQ;
    machine->CondCodes[1] = COND_EQ;
@@ -93,6 +136,9 @@ init_machine(GLcontext *ctx, struct gl_program_machine *machine)
 
    /* init call stack */
    machine->StackDepth = 0;
+
+   machine->FetchTexelLod = vp_fetch_texel;
+   machine->FetchTexelDeriv = NULL; /* not used by vertex programs */
 }
 
 
@@ -202,19 +248,14 @@ run_vp( GLcontext *ctx, struct tnl_pipeline_stage *stage )
    GLuint outputs[VERT_RESULT_MAX], numOutputs;
    GLuint i, j;
 
-#define FORCE_PROG_EXECUTE_C 1
-#if FORCE_PROG_EXECUTE_C
    if (!program)
       return GL_TRUE;
-#else
-   if (!program || !program->IsNVProgram)
-      return GL_TRUE;
-#endif
 
-   if (ctx->VertexProgram.Current->IsNVProgram) {
+   if (program->IsNVProgram) {
       _mesa_load_tracked_matrices(ctx);
    }
    else {
+      /* ARB program or vertex shader */
       _mesa_load_state_parameters(ctx, program->Base.Parameters);
    }
 
@@ -262,17 +303,6 @@ run_vp( GLcontext *ctx, struct tnl_pipeline_stage *stage )
       /* execute the program */
       _mesa_execute_program(ctx, &program->Base, &machine);
 
-      /* Fixup fog an point size results if needed */
-      if (ctx->Fog.Enabled &&
-          (program->Base.OutputsWritten & (1 << VERT_RESULT_FOGC)) == 0) {
-         machine.Outputs[VERT_RESULT_FOGC][0] = 1.0;
-      }
-
-      if (ctx->VertexProgram.PointSizeEnabled &&
-          (program->Base.OutputsWritten & (1 << VERT_RESULT_PSIZ)) == 0) {
-         machine.Outputs[VERT_RESULT_PSIZ][0] = ctx->Point.Size;
-      }
-
       /* copy the output registers into the VB->attribs arrays */
       for (j = 0; j < numOutputs; j++) {
          const GLuint attr = outputs[j];
@@ -285,6 +315,23 @@ run_vp( GLcontext *ctx, struct tnl_pipeline_stage *stage )
              machine.Outputs[0][2], 
              machine.Outputs[0][3]);
 #endif
+   }
+
+   /* Fixup fog and point size results if needed */
+   if (program->IsNVProgram) {
+      if (ctx->Fog.Enabled &&
+          (program->Base.OutputsWritten & (1 << VERT_RESULT_FOGC)) == 0) {
+         for (i = 0; i < VB->Count; i++) {
+            store->results[VERT_RESULT_FOGC].data[i][0] = 1.0;
+         }
+      }
+
+      if (ctx->VertexProgram.PointSizeEnabled &&
+          (program->Base.OutputsWritten & (1 << VERT_RESULT_PSIZ)) == 0) {
+         for (i = 0; i < VB->Count; i++) {
+            store->results[VERT_RESULT_PSIZ].data[i][0] = ctx->Point.Size;
+         }
+      }
    }
 
    /* Setup the VB pointers so that the next pipeline stages get
@@ -360,8 +407,8 @@ run_vp( GLcontext *ctx, struct tnl_pipeline_stage *stage )
  * Called the first time stage->run is called.  In effect, don't
  * allocate data until the first time the stage is run.
  */
-static GLboolean init_vp( GLcontext *ctx,
-			  struct tnl_pipeline_stage *stage )
+static GLboolean
+init_vp(GLcontext *ctx, struct tnl_pipeline_stage *stage)
 {
    TNLcontext *tnl = TNL_CONTEXT(ctx);
    struct vertex_buffer *VB = &(tnl->vb);
@@ -391,7 +438,8 @@ static GLboolean init_vp( GLcontext *ctx,
 /**
  * Destructor for this pipeline stage.
  */
-static void dtr( struct tnl_pipeline_stage *stage )
+static void
+dtr(struct tnl_pipeline_stage *stage)
 {
    struct vp_stage_data *store = VP_STAGE_DATA(stage);
 
@@ -412,6 +460,16 @@ static void dtr( struct tnl_pipeline_stage *stage )
 }
 
 
+static void
+validate_vp_stage(GLcontext *ctx, struct tnl_pipeline_stage *stage)
+{
+   if (ctx->VertexProgram._Current) {
+      _swrast_update_texture_samplers(ctx);
+   }
+}
+
+
+
 /**
  * Public description of this pipeline stage.
  */
@@ -421,6 +479,6 @@ const struct tnl_pipeline_stage _tnl_vertex_program_stage =
    NULL,			/* private_data */
    init_vp,			/* create */
    dtr,				/* destroy */
-   NULL, 			/* validate */
+   validate_vp_stage, 		/* validate */
    run_vp			/* run -- initially set to ctr */
 };

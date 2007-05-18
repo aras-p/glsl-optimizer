@@ -1,4 +1,4 @@
-DESCRIPTION 'Mesa OSMesa lib for Win32'
+;DESCRIPTION 'Mesa OSMesa lib for Win32'
 VERSION 4.1
 
 EXPORTS

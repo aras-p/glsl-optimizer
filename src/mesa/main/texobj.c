@@ -104,7 +104,9 @@ _mesa_initialize_texture_object( struct gl_texture_object *obj,
           target == GL_TEXTURE_2D ||
           target == GL_TEXTURE_3D ||
           target == GL_TEXTURE_CUBE_MAP_ARB ||
-          target == GL_TEXTURE_RECTANGLE_NV);
+          target == GL_TEXTURE_RECTANGLE_NV ||
+          target == GL_TEXTURE_1D_ARRAY_EXT ||
+          target == GL_TEXTURE_2D_ARRAY_EXT);
 
    _mesa_bzero(obj, sizeof(*obj));
    /* init the non-zero fields */
@@ -279,11 +281,13 @@ _mesa_test_texobj_completeness( const GLcontext *ctx,
    }
 
    /* Compute _MaxLevel */
-   if (t->Target == GL_TEXTURE_1D) {
+   if ((t->Target == GL_TEXTURE_1D) ||
+       (t->Target == GL_TEXTURE_1D_ARRAY_EXT)) {
       maxLog2 = t->Image[0][baseLevel]->WidthLog2;
       maxLevels = ctx->Const.MaxTextureLevels;
    }
-   else if (t->Target == GL_TEXTURE_2D) {
+   else if ((t->Target == GL_TEXTURE_2D) ||
+	    (t->Target == GL_TEXTURE_2D_ARRAY_EXT)) {
       maxLog2 = MAX2(t->Image[0][baseLevel]->WidthLog2,
                      t->Image[0][baseLevel]->HeightLog2);
       maxLevels = ctx->Const.MaxTextureLevels;
@@ -365,7 +369,8 @@ _mesa_test_texobj_completeness( const GLcontext *ctx,
       }
 
       /* Test things which depend on number of texture image dimensions */
-      if (t->Target == GL_TEXTURE_1D) {
+      if ((t->Target == GL_TEXTURE_1D) ||
+          (t->Target == GL_TEXTURE_1D_ARRAY_EXT)) {
          /* Test 1-D mipmaps */
          GLuint width = t->Image[0][baseLevel]->Width2;
          for (i = baseLevel + 1; i < maxLevels; i++) {
@@ -389,7 +394,8 @@ _mesa_test_texobj_completeness( const GLcontext *ctx,
             }
          }
       }
-      else if (t->Target == GL_TEXTURE_2D) {
+      else if ((t->Target == GL_TEXTURE_2D) ||
+               (t->Target == GL_TEXTURE_2D_ARRAY_EXT)) {
          /* Test 2-D mipmaps */
          GLuint width = t->Image[0][baseLevel]->Width2;
          GLuint height = t->Image[0][baseLevel]->Height2;
@@ -630,40 +636,42 @@ unbind_texobj_from_texunits(GLcontext *ctx, struct gl_texture_object *texObj)
 
    for (u = 0; u < MAX_TEXTURE_IMAGE_UNITS; u++) {
       struct gl_texture_unit *unit = &ctx->Texture.Unit[u];
+      struct gl_texture_object **curr = NULL;
+
       if (texObj == unit->Current1D) {
+         curr = &unit->Current1D;
          unit->Current1D = ctx->Shared->Default1D;
-         ctx->Shared->Default1D->RefCount++;
-         texObj->RefCount--;
-         if (texObj == unit->_Current)
-            unit->_Current = unit->Current1D;
       }
       else if (texObj == unit->Current2D) {
+         curr = &unit->Current2D;
          unit->Current2D = ctx->Shared->Default2D;
-         ctx->Shared->Default2D->RefCount++;
-         texObj->RefCount--;
-         if (texObj == unit->_Current)
-            unit->_Current = unit->Current2D;
       }
       else if (texObj == unit->Current3D) {
+         curr = &unit->Current3D;
          unit->Current3D = ctx->Shared->Default3D;
-         ctx->Shared->Default3D->RefCount++;
-         texObj->RefCount--;
-         if (texObj == unit->_Current)
-            unit->_Current = unit->Current3D;
       }
       else if (texObj == unit->CurrentCubeMap) {
+         curr = &unit->CurrentCubeMap;
          unit->CurrentCubeMap = ctx->Shared->DefaultCubeMap;
-         ctx->Shared->DefaultCubeMap->RefCount++;
-         texObj->RefCount--;
-         if (texObj == unit->_Current)
-            unit->_Current = unit->CurrentCubeMap;
       }
       else if (texObj == unit->CurrentRect) {
+         curr = &unit->CurrentRect;
          unit->CurrentRect = ctx->Shared->DefaultRect;
-         ctx->Shared->DefaultRect->RefCount++;
+      }
+      else if (texObj == unit->Current1DArray) {
+         curr = &unit->Current1DArray;
+         unit->CurrentRect = ctx->Shared->Default1DArray;
+      }
+      else if (texObj == unit->Current2DArray) {
+         curr = &unit->Current1DArray;
+         unit->CurrentRect = ctx->Shared->Default2DArray;
+      }
+
+      if (curr) {
+         (*curr)->RefCount++;
          texObj->RefCount--;
          if (texObj == unit->_Current)
-            unit->_Current = unit->CurrentRect;
+            unit->_Current = *curr;
       }
    }
 }
@@ -802,6 +810,20 @@ _mesa_BindTexture( GLenum target, GLuint texName )
          }
          oldTexObj = texUnit->CurrentRect;
          break;
+      case GL_TEXTURE_1D_ARRAY_EXT:
+         if (!ctx->Extensions.MESA_texture_array) {
+            _mesa_error( ctx, GL_INVALID_ENUM, "glBindTexture(target)" );
+            return;
+         }
+         oldTexObj = texUnit->Current1DArray;
+         break;
+      case GL_TEXTURE_2D_ARRAY_EXT:
+         if (!ctx->Extensions.MESA_texture_array) {
+            _mesa_error( ctx, GL_INVALID_ENUM, "glBindTexture(target)" );
+            return;
+         }
+         oldTexObj = texUnit->Current2DArray;
+         break;
       default:
          _mesa_error( ctx, GL_INVALID_ENUM, "glBindTexture(target)" );
          return;
@@ -837,6 +859,12 @@ _mesa_BindTexture( GLenum target, GLuint texName )
             break;
          case GL_TEXTURE_RECTANGLE_NV:
             newTexObj = ctx->Shared->DefaultRect;
+            break;
+         case GL_TEXTURE_1D_ARRAY_EXT:
+            newTexObj = ctx->Shared->Default1DArray;
+            break;
+         case GL_TEXTURE_2D_ARRAY_EXT:
+            newTexObj = ctx->Shared->Default2DArray;
             break;
          default:
             ; /* Bad targets are caught above */
@@ -907,6 +935,12 @@ _mesa_BindTexture( GLenum target, GLuint texName )
          break;
       case GL_TEXTURE_RECTANGLE_NV:
          texUnit->CurrentRect = newTexObj;
+         break;
+      case GL_TEXTURE_1D_ARRAY_EXT:
+         texUnit->Current1DArray = newTexObj;
+         break;
+      case GL_TEXTURE_2D_ARRAY_EXT:
+         texUnit->Current2DArray = newTexObj;
          break;
       default:
          _mesa_problem(ctx, "bad target in BindTexture");

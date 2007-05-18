@@ -1239,6 +1239,7 @@ WMesaContext WMesaCreateContext(HDC hDC,
     _mesa_enable_1_4_extensions(ctx);
     _mesa_enable_1_5_extensions(ctx);
     _mesa_enable_2_0_extensions(ctx);
+    _mesa_enable_2_1_extensions(ctx);
   
     /* Initialize the software rasterizer and helper modules. */
     if (!_swrast_CreateContext(ctx) ||
@@ -1448,3 +1449,25 @@ void gl_dispatch_stub_761(void){};
 void gl_dispatch_stub_766(void){};
 void gl_dispatch_stub_767(void){};
 void gl_dispatch_stub_768(void){};
+
+void gl_dispatch_stub_562(void){};
+void gl_dispatch_stub_563(void){};
+void gl_dispatch_stub_564(void){};
+void gl_dispatch_stub_567(void){};
+void gl_dispatch_stub_568(void){};
+void gl_dispatch_stub_569(void){};
+void gl_dispatch_stub_580(void){};
+void gl_dispatch_stub_581(void){};
+void gl_dispatch_stub_606(void){};
+void gl_dispatch_stub_654(void){};
+void gl_dispatch_stub_655(void){};
+void gl_dispatch_stub_656(void){};
+void gl_dispatch_stub_739(void){};
+void gl_dispatch_stub_740(void){};
+void gl_dispatch_stub_741(void){};
+void gl_dispatch_stub_748(void){};
+void gl_dispatch_stub_749(void){};
+void gl_dispatch_stub_769(void){};
+void gl_dispatch_stub_770(void){};
+void gl_dispatch_stub_771(void){};
+

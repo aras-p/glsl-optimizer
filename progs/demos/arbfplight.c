@@ -24,6 +24,7 @@ static GLuint VertProg;
 static GLboolean Anim = GL_TRUE;
 static GLboolean Wire = GL_FALSE;
 static GLboolean PixelLight = GL_TRUE;
+static GLint Win;
 
 static GLint T0 = 0;
 static GLint Frames = 0;
@@ -148,6 +149,7 @@ static void Key( unsigned char key, int x, int y )
       case 27:
          glDeleteProgramsARB_func(1, &VertProg);
          glDeleteProgramsARB_func(1, &FragProg);
+         glutDestroyWindow(Win);
          exit(0);
          break;
    }
@@ -382,7 +384,7 @@ int main( int argc, char *argv[] )
    glutInitWindowPosition( 0, 0 );
    glutInitWindowSize( 200, 200 );
    glutInitDisplayMode( GLUT_RGB | GLUT_DOUBLE | GLUT_DEPTH );
-   glutCreateWindow(argv[0]);
+   Win = glutCreateWindow(argv[0]);
    glutReshapeFunc( Reshape );
    glutKeyboardFunc( Key );
    glutSpecialFunc( SpecialKey );

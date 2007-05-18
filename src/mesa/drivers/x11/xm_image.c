@@ -130,21 +130,4 @@ void XMesaPutPixel(XMesaImage *image, int x, int y, unsigned long pixel)
 }
 #endif
 
-void XMesaPutImageHelper(ScreenPtr display,
-			 DrawablePtr d, GCPtr gc,
-			 XMesaImage *image,
-			 int src_x, int src_y,
-			 int dest_x, int dest_y,
-			 unsigned int width, unsigned int height)
-{
-    /* NOT_DONE: Verify that the following works for all depths */
-    char *src = (image->data +
-		 src_y * image->bytes_per_line +
-		 ((src_x * image->bits_per_pixel) >> 3));
-
-    ValidateGC(d, gc);
-    (*gc->ops->PutImage)(d, gc, d->depth, dest_x, dest_y, width, height,
-			 0, ZPixmap, src);
-}
-
 #endif /* XFree86Server */

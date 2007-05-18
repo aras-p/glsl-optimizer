@@ -2,6 +2,7 @@
 #include "imports.h"
 #include "slang_compile.h"
 #include "slang_compile_variable.h"
+#include "slang_mem.h"
 #include "slang_vartable.h"
 #include "slang_ir.h"
 #include "prog_instruction.h"
@@ -49,7 +50,7 @@ slang_var_table *
 _slang_new_var_table(GLuint maxRegisters)
 {
    slang_var_table *vt
-      = (slang_var_table *) _mesa_calloc(sizeof(slang_var_table));
+      = (slang_var_table *) _slang_alloc(sizeof(slang_var_table));
    if (vt) {
       vt->MaxRegisters = maxRegisters;
    }
@@ -64,7 +65,7 @@ _slang_delete_var_table(slang_var_table *vt)
       _mesa_problem(NULL, "non-empty var table in _slang_delete_var_table()");
       return;
    }
-   _mesa_free(vt);
+   _slang_free(vt);
 }
 
 
@@ -77,7 +78,7 @@ _slang_delete_var_table(slang_var_table *vt)
 void
 _slang_push_var_table(slang_var_table *vt)
 {
-   struct table *t = (struct table *) _mesa_calloc(sizeof(struct table));
+   struct table *t = (struct table *) _slang_alloc(sizeof(struct table));
    if (t) {
       t->Level = vt->CurLevel++;
       t->Parent = vt->Top;
@@ -136,11 +137,13 @@ _slang_pop_var_table(slang_var_table *vt)
       }
    }
 
-   if (t->Vars)
-      free(t->Vars);
+   if (t->Vars) {
+      _slang_free(t->Vars);
+      t->Vars = NULL;
+   }
 
    vt->Top = t->Parent;
-   free(t);
+   _slang_free(t);
    vt->CurLevel--;
 }
 
@@ -156,7 +159,10 @@ _slang_add_variable(slang_var_table *vt, slang_variable *v)
    t = vt->Top;
    assert(t);
    if (dbg) printf("Adding var %s\n", (char *) v->a_name);
-   t->Vars = realloc(t->Vars, (t->NumVars + 1) * sizeof(slang_variable *));
+   t->Vars = (slang_variable **)
+      _slang_realloc(t->Vars,
+                     t->NumVars * sizeof(slang_variable *),
+                     (t->NumVars + 1) * sizeof(slang_variable *));
    t->Vars[t->NumVars] = v;
    t->NumVars++;
 }
@@ -313,9 +319,9 @@ GLboolean
 _slang_is_temp(const slang_var_table *vt, const slang_ir_storage *store)
 {
    struct table *t = vt->Top;
+   GLuint comp;
    assert(store->Index >= 0);
    assert(store->Index < vt->MaxRegisters);
-   GLuint comp;
    if (store->Swizzle == SWIZZLE_NOOP)
       comp = 0;
    else

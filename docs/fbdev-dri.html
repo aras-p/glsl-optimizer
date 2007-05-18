@@ -12,161 +12,77 @@
 <H1>1. Introduction</H1>
 
 <p>
-The fbdev/DRI sub-project within Mesa brings hardware accelerated OpenGL
-rendering to the Linux fbdev environment.
-The X Window System / XFree86 is not needed.
+The fbdev/DRI environment supports hardware-accelerated 3D rendering without
+the X window system.  This is typically used for embedded applications.
 </p>
 
 <p>
-Basically, the <a href="http://dri.sf.net/">DRI</a> drivers for hardware
-accelerated OpenGL for XFree86 have been ported to fbdev so that X is
-not needed.
-This means fbdev/DRI works in full-screen mode only.
+Contributors to this project include Jon Smirl, Keith Whitwell and Dave Airlie.
 </p>
 
 <p>
-DRI driver writers may find this simplified environment easier to work in,
-compared to the full XFree86/DRI environment.
+Applications in the fbdev/DRI environment use
+the <a href="MiniGXL.html"> MiniGLX</a> interface to choose pixel
+formats, create rendering contexts, etc.  It's a subset of the GLX and
+Xlib interfaces allowing some degree of application portability between
+the X and X-less environments.
 </p>
-
-<p>
-Much of the work for this project has been done by Jon Smirl and
-Keith Whitwell.
-</p>
-
-<p>
-To use fbdev/DRI, you'll need a Linux 2.4 or 2.6 kernel.
-</p>
-
-<h3>Background Info</h3>
-
-<p>
-The Mesa-based DRI drivers used to be hosted in the DRI tree (which is
-basically a copy of the XFree86 tree).
-Since the Mesa-based DRI drivers are moreso "Mesa drivers" than "XFree86
-drivers" and the fact that with some work, the drivers could be used
-without X, the driver code was moved into the Mesa tree.
-</p>
-
-<p>
-So now the DRI drivers can be compiled for two different environments:
-fbdev and XFree86.
-To build the drivers for XFree86, one has to download/build the DRI
-source tree.
-Eventually, we'd like to be able to build the drivers for XFree86 outside
-of the XFree86/DRI trees.
-</p>
-
-
 
 
 <h1>2. Compilation</h1>
 
-<h2>2.1 Compiling the DRM modules</h2>
-
 <p>
-First, you'll need the DRM (Direct Rendering Manager) kernel module sources.
-They're found in a module of the DRI CVS tree.
-To obtain the code do the following:
+You'll need the DRM and pciaccess libraries.  Check with:
 </p>
 <pre>
-   cvs -d:pserver:anonymous@anoncvs.freedesktop.org:/cvs/dri login
-</pre>
-<p>
-Press Enter/Return when prompted for a password.  Then,
-</p>
-<pre>
-   cvs -d:pserver:anonymous@anoncvs.freedesktop.org:/cvs/dri co drm
+   pkg-config --modversion libdrm
+   pkg-config --modversion pciaccess
 </pre>
 
 <p>
-Compile the DRM kernel modules:
+You can get them from the git repository with:
 </p>
 <pre>
-  cd drm/linux
-  make
+   git clone git://anongit.freedesktop.org/git/mesa/drm
+   git clone git://anongit.freedesktop.org/git/xorg/lib/libpciaccess
 </pre>
 
 <p>
-Note: you may need to be root in order to make a few symlinks.
+See the README files in those projects for build/install instructions.
 </p>
+
+
 <p>
-When compilation is done, you should have at least the following
-kernel modules:
+You'll need fbdev header files.  Check with:
 </p>
 <pre>
-  gamma.o
-  i810.o
-  i830.o
-  mach64.o
-  mga.o
-  r128.o
-  radeon.o
-  savage.o
-  sis.o
-  tdfx.o
-  via.o
+   ls -l /usr/include/linux/fb.h
 </pre>
-<p>
-You'll probably want to copy/move them into your kernel module directory
-(for example: <code>/lib/modules/2.4.18-14/kernel/drivers/char/drm/</code>).
-</p>
-
-
-
-<h2>2.2 Compiling the Mesa drivers</h2>
 
 <p>
-Begin by editing the <code>Mesa/configs/default</code> file to set
-the <code>DRM_SOURCE_PATH</code> variable.
-Set it to the location where the DRM module sources are located.
-For example, if your current directory in step 2.1 was <code>/home/fred/</code>
-set DRM_SOURCE_PATH to <code>/home/fred/drm</code>
-</p>
-
-<p>
-Next, assuming you're starting with a fresh Mesa CVS checkout,
-do the following:
+Compile Mesa with the 'linux-solo' configuration:
 </p>
 <pre>
    make linux-solo
 </pre>
 
 <p>
-If you previously built the source tree, run <code>make realclean</code>
-first to remove the old object files.
+When complete you should have the following:
 </p>
-
-<p>
-When this is finished, check the <code>Mesa/lib/</code> directory
-to verify that the following files were made:
-</p>
-
 <ul>
-<li><code>libGL.so.1.2</code> - the client-side OpenGL library
-    (and a few symlinks to it).
-<li><code>libGLU.so.1.1</code> - the GLU library (and a few symlinks to it).
-<li><code>libglut.so.3.7</code> - the GLUT library (and a few symlinks to it).
-<li><code>mga_dri.so</code> - DRI driver for Matrox G200/G400 cards.
-<li><code>r128_dri.so</code> - DRI driver for ATI Rage 128 cards.
-<li><code>r200_dri.so</code> - DRI driver for ATI R200 Radeon cards.
-<li><code>radeon_dri.so</code> - DRI driver for original ATI Radeon cards.
-<li><code>i810_dri.so</code> - DRI driver for Intel i810/i815 chips.
-<li><code>i830_dri.so</code> - DRI driver for Intel i830/i845 chips.
-<li><code>mga_dri.so</code> - DRI driver for Matrox G200/G400 cards.
-<li><code>sis_dri.so</code> - DRI driver for SIS cards.
-<li><code>tdfx_dri.so</code> - DRI driver for 3dfx Voodoo 3/4/5 cards.
-<li><code>gamma_dri.so</code> - DRI driver for 3Dlabs gamma cards.
-<li><code>fb_dri.so</code> - software-only fbdev driver.
-<li><code>miniglx.conf</code> - configuration file for the MiniGLX interface
+<li>lib/libGL.so - the GL library which applications link with
+<li>lib/*_dri_so - DRI drivers
+<li>lib/miniglx.conf - sample MiniGLX config file
+<li>progs/miniglx/* - several MiniGLX sample programs
 </ul>
+
 
 
 <h1>3. Using fbdev/DRI</h1>
 
 <p>
-If XFree86 is currently running, exit/stop the X server so you're
-working from the console.
+If an X server currently running, exit/stop it so you're working from
+the console.
 </p>
 
 
@@ -175,12 +91,23 @@ working from the console.
 <p>
 You'll need to load the kernel modules specific to your graphics hardware.
 Typically, this consists of the agpgart module, an fbdev driver module
-and the DRM kernel module (from step 2.1).
+and the DRM kernel module.
+</p>
+<p>
+As root, the kernel modules can be loaded as follows:
 </p>
 
+<p>
+If you have Intel i915/i945 hardware:
+</p>
+<pre>
+   modprobe agpgart            # the AGP GART module
+   modprobe intelfb            # the Intel fbdev driver
+   modprobe i915               # the i915/945 DRI kernel module
+</pre>
 
 <p>
-If you have ATI Radeon/R200 hardware, run as root:
+If you have ATI Radeon/R200 hardware:
 </p>
 <pre>
    modprobe agpgart            # the AGP GART module
@@ -189,7 +116,7 @@ If you have ATI Radeon/R200 hardware, run as root:
 </pre>
 
 <p>
-If you have ATI Rage 128 hardware, run as root:
+If you have ATI Rage 128 hardware:
 </p>
 <pre>
    modprobe agpgart            # the AGP GART module
@@ -198,7 +125,7 @@ If you have ATI Rage 128 hardware, run as root:
 </pre>
 
 <p>
-If you have Matrox G200/G400 hardware, run as root:
+If you have Matrox G200/G400 hardware:
 </p>
 <pre>
    modprobe agpgart            # the AGP GART module
@@ -207,37 +134,46 @@ If you have Matrox G200/G400 hardware, run as root:
 </pre>
 
 <p>
-Then run <code>lsmod</code> to be sure the modules are loaded.
-For a Radeon card, you should see something like this:
+To verify that the agpgart, fbdev and drm modules are loaded:
 </p>
 <pre>
-Module                  Size  Used by    Not tainted
-radeon                110308   0  (unused)
-radeonfb               21900   0  (unused)
-agpgart                43072   1 
+   ls -l /dev/agpgart /dev/fb* /dev/dri
 </pre>
-
+<p>
+Alternately, use lsmod to inspect the currently installed modules.
+If you have problems, look at the output of dmesg.
+</p>
 
 
 <h2>3.2 Configuration File</h2>
 
 <p>
-The <code>Mesa/lib/miniglx.conf</code> file should be installed
-in <code>/etc/</code>.
+Copy the sample miniglx.conf to /etc/miniglx.conf and review/edit its contents.
+Alternately, the MINIGLX_CONF environment variable can be used to
+indicate the location of miniglx.conf
 </p>
 
-<p>
-Edit <code>/etc/miniglx.conf</code> to be sure it's set up correctly
-for your hardware.
-Comments in the file explain the options.
+To determine the pciBusID value, run lspci and examine the output.
+For example:
 </p>
+<pre>
+   /sbin/lspci:
+   00:02.0 VGA compatible controller: Intel Corporation 82915G/GV/910GL Express Chipset Family Graphics Controller (rev 04)
+</pre>
+<p>
+00:02.0 indicates that pciBusID should be PCI:0:2:0
+</p>
+
+
 
 
 <h2>3.3 Running fbdev/DRI Programs</h2>
 
 <p>
 Make sure your LD_LIBRARY_PATH environment variable is set to the
-<code>Mesa/lib/</code> directory.
+location of the libGL.so library.  You may need to append other paths
+to LD_LIBRARY_PATH if libpciaccess.so is in a non-standard location,
+for example.
 </p>
 
 <p>
@@ -245,7 +181,7 @@ Change to the <code>Mesa/progs/miniglx/</code> directory and
 start the sample_server program in the background:
 </p>
 <pre>
-   ./sample_server &
+   ./sample_server &amp;
 </pre>
 
 <p>
@@ -268,26 +204,23 @@ them from a remote shell so that you can stop them with ctrl-C.
 
 <h1>4.0 Troubleshooting</h1>
 
-<p>
+<ol>
+<li>
 If you try to run miniglxtest and get the following:
-</p>
+<br>
 <pre>
    [miniglx] failed to probe chipset
    connect: Connection refused
    server connection lost
 </pre>
-<p>
 It means that the sample_server process is not running.
-</p>
-
-
+<br>
+<br>
+</li>
+</ol>
 
 
 <h1>5.0 Programming Information</h1>
-
-<p>
-The full OpenGL API is available with fbdev/DRI.
-</p>
 
 <p>
 OpenGL/Mesa is interfaced to fbdev via the <a href="MiniGLX.html">MiniGLX</a>

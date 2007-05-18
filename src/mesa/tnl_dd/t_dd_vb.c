@@ -135,7 +135,7 @@ void TAG(translate_vertex)(GLcontext *ctx,
       dst->specular[1] = src->v.specular.green;
       dst->specular[2] = src->v.specular.blue;
 
-      dst->fog = src->v.specular.alpha/255.0;
+      dst->attrib[FRAG_ATTRIB_FOGC][0] = src->v.specular.alpha/255.0;
 
       if (HAVE_PTEX_VERTICES &&
 	  ((HAVE_TEX2_VERTICES && format == PROJ_TEX3_VERTEX_FORMAT) ||

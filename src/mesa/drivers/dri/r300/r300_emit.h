@@ -59,10 +59,6 @@
 
 #define CP_PACKET0(reg, n)	(RADEON_CP_PACKET0 | ((n)<<16) | ((reg)>>2))
 
-void static inline check_space(int dwords)
-{
-}
-
 static __inline__ uint32_t cmdpacket0(int reg, int count)
 {
 	drm_r300_cmd_header_t cmd;
@@ -138,7 +134,7 @@ static __inline__ uint32_t cmdpacify(void)
 		cmd = (drm_radeon_cmd_header_t*)			\
 			r300AllocCmdBuf(rmesa,				\
 					(_n+2),				\
-					__func__);			\
+					__FUNCTION__);			\
 		cmd_reserved=_n+2;					\
 		cmd_written=1;						\
 		cmd[0].i=cmdpacket0((reg), _n+1);			\
@@ -160,9 +156,9 @@ static __inline__ uint32_t cmdpacify(void)
 				"cmd_written=%d cmd_reserved=%d\n",	\
 				__FILE__, __FUNCTION__, __LINE__,	\
 				cmd_written, cmd_reserved);		\
-			exit(-1);					\
+			_mesa_exit(-1);					\
 		}							\
-	} while(0);
+	} while(0)
 
 #define	efloat(f) e32(r300PackFloat32(f))
 
@@ -173,7 +169,7 @@ static __inline__ uint32_t cmdpacify(void)
 		cmd = (drm_radeon_cmd_header_t*)			\
 			r300AllocCmdBuf(rmesa,				\
 					(_n+1),				\
-					__func__);			\
+					__FUNCTION__);			\
 		cmd_reserved = _n+2;					\
 		cmd_written =1;						\
 		cmd[0].i = cmdvpu((dest), _n/4);			\
@@ -188,14 +184,14 @@ static __inline__ uint32_t cmdpacify(void)
 		cmd = (drm_radeon_cmd_header_t*)			\
 			r300AllocCmdBuf(rmesa,				\
 					(_n+3),				\
-					__func__);			\
+					__FUNCTION__);			\
 		cmd_reserved = _n+3;					\
 		cmd_written = 2;					\
 		if(_n > 0x3fff) {					\
 			fprintf(stderr,"Too big packet3 %08x: cannot "	\
 				"store %d dwords\n",			\
 				_p, _n);				\
-			exit(-1);					\
+			_mesa_exit(-1);					\
 		}							\
 		cmd[0].i = cmdpacket3(R300_CMD_PACKET3_RAW);		\
 		cmd[1].i = _p | ((_n & 0x3fff)<<16);			\
@@ -208,85 +204,35 @@ void static inline end_3d(r300ContextPtr rmesa)
 {
 	drm_radeon_cmd_header_t *cmd = NULL;
 
-	cmd = (drm_radeon_cmd_header_t*)r300AllocCmdBuf(rmesa,
-							1,
-							__FUNCTION__);
-	cmd[0].header.cmd_type=R300_CMD_END3D;
+	cmd =
+	    (drm_radeon_cmd_header_t *) r300AllocCmdBuf(rmesa, 1, __FUNCTION__);
+	cmd[0].header.cmd_type = R300_CMD_END3D;
 }
 
 void static inline cp_delay(r300ContextPtr rmesa, unsigned short count)
 {
 	drm_radeon_cmd_header_t *cmd = NULL;
 
-	cmd = (drm_radeon_cmd_header_t*)r300AllocCmdBuf(rmesa,
-							1,
-							__FUNCTION__);
-	cmd[0].i=cmdcpdelay(count);
+	cmd =
+	    (drm_radeon_cmd_header_t *) r300AllocCmdBuf(rmesa, 1, __FUNCTION__);
+	cmd[0].i = cmdcpdelay(count);
 }
 
 void static inline cp_wait(r300ContextPtr rmesa, unsigned char flags)
 {
 	drm_radeon_cmd_header_t *cmd = NULL;
 
-	cmd = (drm_radeon_cmd_header_t*)r300AllocCmdBuf(rmesa,
-							1,
-							__FUNCTION__);
+	cmd =
+	    (drm_radeon_cmd_header_t *) r300AllocCmdBuf(rmesa, 1, __FUNCTION__);
 	cmd[0].i = cmdwait(flags);
 }
 
-/**
- * fire vertex buffer
- */
-static void inline fire_AOS(r300ContextPtr rmesa, int vertex_count, int type)
-{
-	int cmd_reserved = 0;
-	int cmd_written = 0;
-	drm_radeon_cmd_header_t *cmd = NULL;
-	check_space(9);
+extern int r300EmitArrays(GLcontext * ctx);
 
-	start_packet3(RADEON_CP_PACKET3_3D_DRAW_VBUF_2, 0);
-#ifdef NOTNEEDED_ANYMORE
-	e32(0x840c0024);
+#ifdef USER_BUFFERS
+void r300UseArrays(GLcontext * ctx);
 #endif
-	e32(R300_VAP_VF_CNTL__PRIM_WALK_VERTEX_LIST |
-	    (vertex_count<<16) | type);
-}
 
-/**
- * These are followed by the corresponding data
- */
-#define start_index32_packet(vertex_count, type)			\
-	do {								\
-		int _vc;						\
-		_vc = (vertex_count);					\
-		start_packet3(RADEON_CP_PACKET3_3D_DRAW_INDX_2, _vc);	\
-		e32(R300_VAP_VF_CNTL__PRIM_WALK_INDICES | (_vc<<16) |	\
-		    type | R300_VAP_VF_CNTL__INDEX_SIZE_32bit);		\
-	} while (0);
-
-#define start_index16_packet(vertex_count, type)			\
-	do {								\
-		int _vc, _n;						\
-		_vc = (vertex_count);					\
-		_n = (vertex_count+1)>>1;				\
-		start_packet3(RADEON_CP_PACKET3_3D_DRAW_INDX_2, _n);	\
-		e32(R300_VAP_VF_CNTL__PRIM_WALK_INDICES | (_vc<<16) |	\
-		    type);						\
-	} while (0);
-
-/**
- * Interestingly enough this ones needs the call to setup_AOS, even thought
- * some of the data so setup is not needed and some is not as arbitrary
- * as when used by DRAW_VBUF_2 or DRAW_INDX_2
- */
-#define start_immediate_packet(vertex_count, type, vertex_size)		\
-	do {								\
-		int _vc;						\
-		_vc = (vertex_count);					\
-		start_packet3(RADEON_CP_PACKET3_3D_DRAW_IMMD_2,		\
-			      _vc*(vertex_size));			\
-		e32(R300_VAP_VF_CNTL__PRIM_WALK_VERTEX_EMBEDDED |	\
-		    (_vc<<16) | type);					\
-	} while (0);
+extern void r300ReleaseArrays(GLcontext * ctx);
 
 #endif

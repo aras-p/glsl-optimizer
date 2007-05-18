@@ -67,24 +67,9 @@ _swrast_culltriangle( GLcontext *ctx,
 
 
 /*
- * Render a flat-shaded color index triangle.
+ * Render a smooth or flat-shaded color index triangle.
  */
-#define NAME flat_ci_triangle
-#define INTERP_Z 1
-#define INTERP_FOG 1
-#define SETUP_CODE			\
-   span.interpMask |= SPAN_INDEX;	\
-   span.index = FloatToFixed(v2->index);\
-   span.indexStep = 0;
-#define RENDER_SPAN( span )  _swrast_write_index_span(ctx, &span);
-#include "s_tritemp.h"
-
-
-
-/*
- * Render a smooth-shaded color index triangle.
- */
-#define NAME smooth_ci_triangle
+#define NAME ci_triangle
 #define INTERP_Z 1
 #define INTERP_FOG 1
 #define INTERP_INDEX 1
@@ -139,7 +124,7 @@ _swrast_culltriangle( GLcontext *ctx,
  * Render an RGB, GL_DECAL, textured triangle.
  * Interpolate S,T only w/out mipmapping or perspective correction.
  *
- * No fog.
+ * No fog.  No depth testing.
  */
 #define NAME simple_textured_triangle
 #define INTERP_INT_TEX 1
@@ -803,7 +788,7 @@ fast_persp_span(GLcontext *ctx, SWspan *span,
 #define INTERP_FOG 1
 #define INTERP_RGB 1
 #define INTERP_ALPHA 1
-#define INTERP_TEX 1
+#define INTERP_ATTRIBS 1
 
 #define SETUP_CODE							\
    struct persp_info info;						\
@@ -865,16 +850,16 @@ fast_persp_span(GLcontext *ctx, SWspan *span,
 
 
 /*
- * Render a smooth-shaded, textured, RGBA triangle.
+ * Render an RGBA triangle with arbitrary attributes.
  */
-#define NAME general_textured_triangle
+#define NAME general_triangle
 #define INTERP_Z 1
 #define INTERP_W 1
 #define INTERP_FOG 1
 #define INTERP_RGB 1
 #define INTERP_SPEC 1
 #define INTERP_ALPHA 1
-#define INTERP_TEX 1
+#define INTERP_ATTRIBS 1
 #define RENDER_SPAN( span )   _swrast_write_rgba_span(ctx, &span);
 #include "s_tritemp.h"
 
@@ -1054,6 +1039,11 @@ _swrast_choose_triangle( GLcontext *ctx )
          }
       }
 
+      if (!rgbmode) {
+         USE(ci_triangle);
+         return;
+      }
+
       if (ctx->Texture._EnabledCoordUnits ||
           ctx->FragmentProgram._Current ||
           ctx->ATIFragmentShader._Enabled) {
@@ -1102,7 +1092,7 @@ _swrast_choose_triangle( GLcontext *ctx )
 	       }
 	       else {
 #if (CHAN_BITS == 16 || CHAN_BITS == 32)
-                  USE(general_textured_triangle);
+                  USE(general_triangle);
 #else
                   USE(affine_textured_triangle);
 #endif
@@ -1110,7 +1100,7 @@ _swrast_choose_triangle( GLcontext *ctx )
 	    }
 	    else {
 #if (CHAN_BITS == 16 || CHAN_BITS == 32)
-               USE(general_textured_triangle);
+               USE(general_triangle);
 #else
                USE(persp_textured_triangle);
 #endif
@@ -1118,28 +1108,18 @@ _swrast_choose_triangle( GLcontext *ctx )
 	 }
          else {
             /* general case textured triangles */
-            USE(general_textured_triangle);
+            USE(general_triangle);
          }
       }
       else {
          ASSERT(!ctx->Texture._EnabledCoordUnits);
 	 if (ctx->Light.ShadeModel==GL_SMOOTH) {
 	    /* smooth shaded, no texturing, stippled or some raster ops */
-            if (rgbmode) {
-	       USE(smooth_rgba_triangle);
-            }
-            else {
-               USE(smooth_ci_triangle);
-            }
+            USE(smooth_rgba_triangle);
 	 }
 	 else {
 	    /* flat shaded, no texturing, stippled or some raster ops */
-            if (rgbmode) {
-	       USE(flat_rgba_triangle);
-            }
-            else {
-               USE(flat_ci_triangle);
-            }
+            USE(flat_rgba_triangle);
 	 }
       }
    }

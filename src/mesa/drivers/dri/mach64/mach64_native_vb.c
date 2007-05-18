@@ -81,7 +81,7 @@ void TAG(translate_vertex)(GLcontext *ctx,
 	 dst->specular[2] = ((GLubyte *)p)[0];
 	 dst->specular[1] = ((GLubyte *)p)[1];
 	 dst->specular[0] = ((GLubyte *)p)[2];
-	 dst->fog = ((GLubyte *)p)[3];
+	 dst->attrib[FRAG_ATTRIB_FOGC][0] = ((GLubyte *)p)[3];
 	 p++;
 
       case TINY_VERTEX_FORMAT:

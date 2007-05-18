@@ -1,8 +1,8 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.6
+ * Version:  6.5.3
  *
- * Copyright (C) 2005-2006  Brian Paul   All Rights Reserved.
+ * Copyright (C) 2005-2007  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -22,7 +22,7 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#if !defined SLANG_UTILITY_H
+#ifndef SLANG_UTILITY_H
 #define SLANG_UTILITY_H
 
 
@@ -31,12 +31,9 @@
  */
 #define static_assert(expr) do { int _array[(expr) ? 1 : -1]; (void) _array[0]; } while (0)
 
-#define slang_alloc_free(ptr) _mesa_free (ptr)
-#define slang_alloc_malloc(size) _mesa_malloc (size)
-#define slang_alloc_realloc(ptr, old_size, size) _mesa_realloc (ptr, old_size, size)
+
 #define slang_string_compare(str1, str2) _mesa_strcmp (str1, str2)
 #define slang_string_copy(dst, src) _mesa_strcpy (dst, src)
-#define slang_string_duplicate(src) _mesa_strdup (src)
 #define slang_string_length(str) _mesa_strlen (str)
 
 char *slang_string_concat (char *, const char *);
@@ -101,4 +98,3 @@ const char *slang_atom_pool_id (slang_atom_pool *, slang_atom);
 
 
 #endif
-

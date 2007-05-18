@@ -1,14 +1,12 @@
-#ifndef __VERTEX_SHADER_H__
-#define __VERTEX_SHADER_H__
+#ifndef __R300_VERTPROG_H_
+#define __R300_VERTPROG_H_
 
 #include "r300_reg.h"
 
 typedef struct {
-	CARD32 op;
-	CARD32 src1;
-	CARD32 src2;
-	CARD32 src3;
-	} VERTEX_SHADER_INSTRUCTION;
+	GLuint op;
+	GLuint src[3];
+} VERTEX_SHADER_INSTRUCTION;
 
 #define VSF_FLAG_X	1
 #define VSF_FLAG_Y	2
@@ -22,8 +20,7 @@ typedef struct {
 #define VSF_OUT_CLASS_ADDR	1
 #define VSF_OUT_CLASS_RESULT	2
 
-
-/* first CARD32 of an instruction */
+/* first DWORD of an instruction */
 
 /* possible operations: 
     DOT, MUL, ADD, MAD, FRC, MAX, MIN, SGE, SLT, EXP, LOG, LIT, POW, RCP, RSQ, EX2,
@@ -38,7 +35,7 @@ typedef struct {
 #define EASY_VSF_OP(op, out_reg_index, out_reg_fields, class) \
 	MAKE_VSF_OP(R300_VPI_OUT_OP_##op, out_reg_index, VSF_FLAG_##out_reg_fields, VSF_OUT_CLASS_##class) \
 
-/* according to Nikolai, the subsequent 3 CARD32 are sources, use same define for each */
+/* according to Nikolai, the subsequent 3 DWORDs are sources, use same define for each */
 
 #define VSF_IN_CLASS_TMP	0
 #define VSF_IN_CLASS_ATTR	1
@@ -59,7 +56,7 @@ typedef struct {
 	   | ((comp_z)<<R300_VPI_IN_Z_SHIFT) \
 	   | ((comp_w)<<R300_VPI_IN_W_SHIFT) \
 	   | ((negate)<<25) | ((class)))
-	   
+
 #define EASY_VSF_SOURCE(in_reg_index, comp_x, comp_y, comp_z, comp_w, class, negate) \
 	MAKE_VSF_SOURCE(in_reg_index, \
 		VSF_IN_COMPONENT_##comp_x, \
@@ -71,8 +68,8 @@ typedef struct {
 /* special sources: */
 
 /* (1.0,1.0,1.0,1.0) vector (ATTR, plain ) */
-#define VSF_ATTR_UNITY(reg) 	EASY_VSF_SOURCE(reg, ONE, ONE, ONE, ONE, ATTR, NONE)  
-#define VSF_UNITY(reg) 	EASY_VSF_SOURCE(reg, ONE, ONE, ONE, ONE, NONE, NONE)  
+#define VSF_ATTR_UNITY(reg) 	EASY_VSF_SOURCE(reg, ONE, ONE, ONE, ONE, ATTR, NONE)
+#define VSF_UNITY(reg) 	EASY_VSF_SOURCE(reg, ONE, ONE, ONE, ONE, NONE, NONE)
 
 /* contents of unmodified register */
 #define VSF_REG(reg) 	EASY_VSF_SOURCE(reg, X, Y, Z, W, ATTR, NONE)

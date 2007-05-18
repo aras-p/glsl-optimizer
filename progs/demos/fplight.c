@@ -24,7 +24,7 @@ static GLuint VertProg;
 static GLboolean Anim = GL_TRUE;
 static GLboolean Wire = GL_FALSE;
 static GLboolean PixelLight = GL_TRUE;
-
+static GLint Win;
 static GLfloat Xrot = 0, Yrot = 0;
 
 
@@ -136,8 +136,8 @@ static void Key( unsigned char key, int x, int y )
          }
          break;
       case 27:
+         glutDestroyWindow(Win);
          exit(0);
-         break;
    }
    glutPostRedisplay();
 }
@@ -272,7 +272,7 @@ int main( int argc, char *argv[] )
    glutInitWindowPosition( 0, 0 );
    glutInitWindowSize( 200, 200 );
    glutInitDisplayMode( GLUT_RGB | GLUT_DOUBLE | GLUT_DEPTH );
-   glutCreateWindow(argv[0]);
+   Win = glutCreateWindow(argv[0]);
    glutReshapeFunc( Reshape );
    glutKeyboardFunc( Key );
    glutSpecialFunc( SpecialKey );

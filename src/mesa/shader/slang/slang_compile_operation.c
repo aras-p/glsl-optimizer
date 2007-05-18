@@ -30,6 +30,7 @@
 
 #include "imports.h"
 #include "slang_compile.h"
+#include "slang_mem.h"
 
 
 /**
@@ -60,9 +61,9 @@ slang_operation_destruct(slang_operation * oper)
 
    for (i = 0; i < oper->num_children; i++)
       slang_operation_destruct(oper->children + i);
-   slang_alloc_free(oper->children);
+   _slang_free(oper->children);
    slang_variable_scope_destruct(oper->locals);
-   slang_alloc_free(oper->locals);
+   _slang_free(oper->locals);
    oper->children = NULL;
    oper->num_children = 0;
    oper->locals = NULL;
@@ -82,7 +83,7 @@ slang_operation_copy(slang_operation * x, const slang_operation * y)
       return GL_FALSE;
    z.type = y->type;
    z.children = (slang_operation *)
-      slang_alloc_malloc(y->num_children * sizeof(slang_operation));
+      _slang_alloc(y->num_children * sizeof(slang_operation));
    if (z.children == NULL) {
       slang_operation_destruct(&z);
       return GL_FALSE;
@@ -128,7 +129,7 @@ slang_operation *
 slang_operation_new(GLuint count)
 {
    slang_operation *ops
-       = (slang_operation *) _mesa_malloc(count * sizeof(slang_operation));
+       = (slang_operation *) _slang_alloc(count * sizeof(slang_operation));
    assert(count > 0);
    if (ops) {
       GLuint i;
@@ -146,7 +147,7 @@ void
 slang_operation_delete(slang_operation *oper)
 {
    slang_operation_destruct(oper);
-   _mesa_free(oper);
+   _slang_free(oper);
 }
 
 
@@ -156,13 +157,13 @@ slang_operation_grow(GLuint *numChildren, slang_operation **children)
    slang_operation *ops;
 
    ops = (slang_operation *)
-      slang_alloc_realloc(*children,
-                          *numChildren * sizeof(slang_operation),
-                          (*numChildren + 1) * sizeof(slang_operation));
+      _slang_realloc(*children,
+                     *numChildren * sizeof(slang_operation),
+                     (*numChildren + 1) * sizeof(slang_operation));
    if (ops) {
       slang_operation *newOp = ops + *numChildren;
       if (!slang_operation_construct(newOp)) {
-         _mesa_free(ops);
+         _slang_free(ops);
          *children = NULL;
          return NULL;
       }
@@ -175,38 +176,40 @@ slang_operation_grow(GLuint *numChildren, slang_operation **children)
 
 /**
  * Insert a new slang_operation into an array.
- * \param numChildren  pointer to current number of children (in/out)
- * \param children  address of array (in/out)
- * \param pos  position to insert
- * \return  pointer to the new operation
+ * \param numElements  pointer to current array size (in/out)
+ * \param array  address of the array (in/out)
+ * \param pos  position to insert new element
+ * \return  pointer to the new operation/element
  */
 slang_operation *
-slang_operation_insert(GLuint *numChildren, slang_operation **children,
+slang_operation_insert(GLuint *numElements, slang_operation **array,
                        GLuint pos)
 {
    slang_operation *ops;
 
-   assert(pos <= *numChildren);
+   assert(pos <= *numElements);
 
    ops = (slang_operation *)
-      _mesa_malloc((*numChildren + 1) * sizeof(slang_operation));
+      _slang_alloc((*numElements + 1) * sizeof(slang_operation));
    if (ops) {
       slang_operation *newOp;
       newOp = ops + pos;
       if (pos > 0)
-         _mesa_memcpy(ops, *children, pos * sizeof(slang_operation));
-      if (pos < *numChildren)
-         _mesa_memcpy(newOp + 1, (*children) + pos,
-                      (*numChildren - pos) * sizeof(slang_operation));
+         _mesa_memcpy(ops, *array, pos * sizeof(slang_operation));
+      if (pos < *numElements)
+         _mesa_memcpy(newOp + 1, (*array) + pos,
+                      (*numElements - pos) * sizeof(slang_operation));
 
       if (!slang_operation_construct(newOp)) {
-         _mesa_free(ops);
-         *numChildren = 0;
-         *children = NULL;
+         _slang_free(ops);
+         *numElements = 0;
+         *array = NULL;
          return NULL;
       }
-      *children = ops;
-      (*numChildren)++;
+      if (*array)
+         _slang_free(*array);
+      *array = ops;
+      (*numElements)++;
       return newOp;
    }
    return NULL;

@@ -80,32 +80,27 @@ NAME(plot)(GLcontext *ctx, struct LineInfo *line, int ix, int iy)
    line->span.array->spec[i][GCOMP] = solve_plane_chan(fx, fy, line->sgPlane);
    line->span.array->spec[i][BCOMP] = solve_plane_chan(fx, fy, line->sbPlane);
 #endif
-#if defined(DO_TEXVAR)
-   {
-      GLuint attr;
-      for (attr = swrast->_MinFragmentAttrib; attr < swrast->_MaxFragmentAttrib; attr++) {
-         if (swrast->_FragmentAttribs & (1 << attr)) {
-            GLfloat (*attribArray)[4] = line->span.array->attribs[attr];
-            GLfloat invQ;
-            if (ctx->FragmentProgram._Active) {
-               invQ = 1.0F;
-            }
-            else {
-               invQ = solve_plane_recip(fx, fy, line->vPlane[attr]);
-            }
-            attribArray[i][0] = solve_plane(fx, fy, line->sPlane[attr]) * invQ;
-            attribArray[i][1] = solve_plane(fx, fy, line->tPlane[attr]) * invQ;
-            attribArray[i][2] = solve_plane(fx, fy, line->uPlane[attr]) * invQ;
-            if (attr < FRAG_ATTRIB_VAR0) {
-               const GLuint unit = attr - FRAG_ATTRIB_TEX0;
-               line->span.array->lambda[unit][i]
-                  = compute_lambda(line->sPlane[attr],
-                                   line->tPlane[attr], invQ,
-                                   line->texWidth[attr], line->texHeight[attr]);
-            }
-         }
+#if defined(DO_ATTRIBS)
+   ATTRIB_LOOP_BEGIN
+      GLfloat (*attribArray)[4] = line->span.array->attribs[attr];
+      GLfloat invQ;
+      if (ctx->FragmentProgram._Active) {
+         invQ = 1.0F;
       }
-   }
+      else {
+         invQ = solve_plane_recip(fx, fy, line->vPlane[attr]);
+      }
+      attribArray[i][0] = solve_plane(fx, fy, line->sPlane[attr]) * invQ;
+      attribArray[i][1] = solve_plane(fx, fy, line->tPlane[attr]) * invQ;
+      attribArray[i][2] = solve_plane(fx, fy, line->uPlane[attr]) * invQ;
+      if (attr < FRAG_ATTRIB_VAR0 && attr >= FRAG_ATTRIB_TEX0) {
+         const GLuint unit = attr - FRAG_ATTRIB_TEX0;
+         line->span.array->lambda[unit][i]
+            = compute_lambda(line->sPlane[attr],
+                             line->tPlane[attr], invQ,
+                             line->texWidth[attr], line->texHeight[attr]);
+      }
+   ATTRIB_LOOP_END
 #endif
 
    if (line->span.end == MAX_WIDTH) {
@@ -158,7 +153,9 @@ NAME(line)(GLcontext *ctx, const SWvertex *v0, const SWvertex *v1)
 #ifdef DO_FOG
    line.span.arrayMask |= SPAN_FOG;
    compute_plane(line.x0, line.y0, line.x1, line.y1,
-                 v0->fog, v1->fog, line.fPlane);
+                 v0->attrib[FRAG_ATTRIB_FOGC][0],
+                 v1->attrib[FRAG_ATTRIB_FOGC][0],
+                 line.fPlane);
 #endif
 #ifdef DO_RGBA
    line.span.arrayMask |= SPAN_RGBA;
@@ -205,35 +202,32 @@ NAME(line)(GLcontext *ctx, const SWvertex *v0, const SWvertex *v1)
       constant_plane(v1->index, line.iPlane);
    }
 #endif
-#if defined(DO_TEXVAR)
+#if defined(DO_ATTRIBS)
    {
-      GLuint attr;
       const GLfloat invW0 = v0->win[3];
       const GLfloat invW1 = v1->win[3];
       line.span.arrayMask |= (SPAN_TEXTURE | SPAN_LAMBDA | SPAN_VARYING);
-      for (attr = swrast->_MinFragmentAttrib; attr < swrast->_MaxFragmentAttrib; attr++) {
-         if (swrast->_FragmentAttribs & (1 << attr)) {
-            const GLfloat s0 = v0->attrib[attr][0] * invW0;
-            const GLfloat s1 = v1->attrib[attr][0] * invW1;
-            const GLfloat t0 = v0->attrib[attr][1] * invW0;
-            const GLfloat t1 = v1->attrib[attr][1] * invW1;
-            const GLfloat r0 = v0->attrib[attr][2] * invW0;
-            const GLfloat r1 = v1->attrib[attr][2] * invW1;
-            const GLfloat q0 = v0->attrib[attr][3] * invW0;
-            const GLfloat q1 = v1->attrib[attr][3] * invW1;
-            compute_plane(line.x0, line.y0, line.x1, line.y1, s0, s1, line.sPlane[attr]);
-            compute_plane(line.x0, line.y0, line.x1, line.y1, t0, t1, line.tPlane[attr]);
-            compute_plane(line.x0, line.y0, line.x1, line.y1, r0, r1, line.uPlane[attr]);
-            compute_plane(line.x0, line.y0, line.x1, line.y1, q0, q1, line.vPlane[attr]);
-            if (attr < FRAG_ATTRIB_VAR0) {
-               const GLuint u = attr - FRAG_ATTRIB_TEX0;
-               const struct gl_texture_object *obj = ctx->Texture.Unit[u]._Current;
-               const struct gl_texture_image *texImage = obj->Image[0][obj->BaseLevel];
-               line.texWidth[attr]  = (GLfloat) texImage->Width;
-               line.texHeight[attr] = (GLfloat) texImage->Height;
-            }
+      ATTRIB_LOOP_BEGIN
+         const GLfloat s0 = v0->attrib[attr][0] * invW0;
+         const GLfloat s1 = v1->attrib[attr][0] * invW1;
+         const GLfloat t0 = v0->attrib[attr][1] * invW0;
+         const GLfloat t1 = v1->attrib[attr][1] * invW1;
+         const GLfloat r0 = v0->attrib[attr][2] * invW0;
+         const GLfloat r1 = v1->attrib[attr][2] * invW1;
+         const GLfloat q0 = v0->attrib[attr][3] * invW0;
+         const GLfloat q1 = v1->attrib[attr][3] * invW1;
+         compute_plane(line.x0, line.y0, line.x1, line.y1, s0, s1, line.sPlane[attr]);
+         compute_plane(line.x0, line.y0, line.x1, line.y1, t0, t1, line.tPlane[attr]);
+         compute_plane(line.x0, line.y0, line.x1, line.y1, r0, r1, line.uPlane[attr]);
+         compute_plane(line.x0, line.y0, line.x1, line.y1, q0, q1, line.vPlane[attr]);
+         if (attr < FRAG_ATTRIB_VAR0 && attr >= FRAG_ATTRIB_TEX0) {
+            const GLuint u = attr - FRAG_ATTRIB_TEX0;
+            const struct gl_texture_object *obj = ctx->Texture.Unit[u]._Current;
+            const struct gl_texture_image *texImage = obj->Image[0][obj->BaseLevel];
+            line.texWidth[attr]  = (GLfloat) texImage->Width;
+            line.texHeight[attr] = (GLfloat) texImage->Height;
          }
-      }
+      ATTRIB_LOOP_END
    }
 #endif
 
@@ -296,5 +290,5 @@ NAME(line)(GLcontext *ctx, const SWvertex *v0, const SWvertex *v1)
 #undef DO_RGBA
 #undef DO_INDEX
 #undef DO_SPEC
-#undef DO_TEXVAR
+#undef DO_ATTRIBS
 #undef NAME
