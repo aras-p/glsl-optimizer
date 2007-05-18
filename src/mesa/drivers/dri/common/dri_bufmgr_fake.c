@@ -501,7 +501,7 @@ dri_bufmgr_fake_wait_idle(dri_bufmgr_fake *bufmgr_fake)
    unsigned int cookie;
 
    cookie = bufmgr_fake->fence_emit(bufmgr_fake->driver_priv);
-   _fence_wait_internal(bufmgr_fake->driver_priv, cookie);
+   _fence_wait_internal(bufmgr_fake, cookie);
 }
 
 /* Specifically ignore texture memory sharing.
@@ -688,7 +688,6 @@ dri_fake_bo_map(dri_bo *bo, GLboolean write_enable)
 static int
 dri_fake_bo_unmap(dri_bo *bo)
 {
-   dri_bufmgr_fake *bufmgr_fake;
    dri_bo_fake *bo_fake = (dri_bo_fake *)bo;
 
    /* Static buffers are always mapped. */
@@ -697,8 +696,6 @@ dri_fake_bo_unmap(dri_bo *bo)
 
    if (bo == NULL)
       return 0;
-
-   bufmgr_fake = (dri_bufmgr_fake *)bo->bufmgr;
 
    bo->virtual = NULL;
 
