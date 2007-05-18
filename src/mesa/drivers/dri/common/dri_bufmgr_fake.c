@@ -837,7 +837,7 @@ dri_bufmgr_fake_init(unsigned long low_offset, void *low_virtual,
 {
    dri_bufmgr_fake *bufmgr_fake;
 
-   bufmgr_fake = malloc(sizeof(*bufmgr_fake));
+   bufmgr_fake = calloc(1, sizeof(*bufmgr_fake));
 
    /* Initialize allocator */
    make_empty_list(&bufmgr_fake->referenced);
