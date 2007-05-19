@@ -363,6 +363,10 @@ _mesa_PushAttrib(GLbitfield mask)
                                    attr->Unit[u].CurrentCubeMap);
          _mesa_copy_texture_object(&attr->Unit[u].SavedRect,
                                    attr->Unit[u].CurrentRect);
+         _mesa_copy_texture_object(&attr->Unit[u].Saved1DArray,
+                                   attr->Unit[u].Current1DArray);
+         _mesa_copy_texture_object(&attr->Unit[u].Saved2DArray,
+                                   attr->Unit[u].Current2DArray);
       }
 
       _mesa_unlock_context_textures(ctx);
