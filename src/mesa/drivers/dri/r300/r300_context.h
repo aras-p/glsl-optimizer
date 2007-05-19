@@ -80,7 +80,7 @@ typedef struct r300_context *r300ContextPtr;
 /**
  * This function takes a float and packs it into a uint32_t
  */
-static __inline__ uint32_t r300PackFloat32(float fl)
+static inline uint32_t r300PackFloat32(float fl)
 {
 	union {
 		float fl;
@@ -97,7 +97,7 @@ static __inline__ uint32_t r300PackFloat32(float fl)
  * But it works for most things.  I'll fix it later if someone
  * else with a better clue doesn't
  */
-static __inline__ uint32_t r300PackFloat24(float f)
+static inline uint32_t r300PackFloat24(float f)
 {
 	float mantissa;
 	int exponent;
