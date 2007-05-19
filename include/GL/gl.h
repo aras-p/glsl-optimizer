@@ -2221,8 +2221,13 @@ GLAPI void APIENTRY glFramebufferTextureLayerEXT(GLenum target,
     GLenum attachment, GLuint texture, GLint level, GLint layer);
 #endif /* GL_GLEXT_PROTOTYPES */
 
+#if 0
+/* (temporarily) disabled because of collision with typedef in glext.h
+ * that happens if apps include both gl.h and glext.h
+ */
 typedef void (APIENTRYP PFNGLFRAMEBUFFERTEXTURELAYEREXTPROC) (GLenum target,
     GLenum attachment, GLuint texture, GLint level, GLint layer);
+#endif
 
 #define GL_TEXTURE_1D_ARRAY_EXT         0x8C18
 #define GL_PROXY_TEXTURE_1D_ARRAY_EXT   0x8C19
