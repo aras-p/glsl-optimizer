@@ -652,6 +652,7 @@ static void intelUploadTexImage( intelContextPtr intel,
 	case GL_RGBA_S3TC:
 	case GL_RGBA4_S3TC:
 	case GL_COMPRESSED_RGBA_S3TC_DXT3_EXT:
+	case GL_COMPRESSED_RGBA_S3TC_DXT5_EXT:
 	  row_len = (image->Width * 4 + 15) & ~15;
 	  break;
 	default:
