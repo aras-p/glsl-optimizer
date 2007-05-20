@@ -120,16 +120,25 @@ setup_vertex_format(GLcontext *ctx)
 
       RENDERINPUTS_COPY( index_bitset, tnl->render_inputs_bitset );
 
-      EMIT_ATTR( _TNL_ATTRIB_POS, EMIT_4F_VIEWPORT, win );
+      EMIT_ATTR( _TNL_ATTRIB_POS, EMIT_4F_VIEWPORT, attrib[FRAG_ATTRIB_WPOS] );
 
-      if (RENDERINPUTS_TEST( index_bitset, _TNL_ATTRIB_COLOR0 ))
-         EMIT_ATTR( _TNL_ATTRIB_COLOR0, EMIT_4CHAN_4F_RGBA, color );
+      if (RENDERINPUTS_TEST( index_bitset, _TNL_ATTRIB_COLOR0 )) {
+         if (ctx->FragmentProgram._Current
+             || ctx->ATIFragmentShader._Enabled
+             || CHAN_TYPE == GL_FLOAT)
+            EMIT_ATTR( _TNL_ATTRIB_COLOR0, EMIT_4F, attrib[FRAG_ATTRIB_COL0]);
+         else
+            EMIT_ATTR( _TNL_ATTRIB_COLOR0, EMIT_4CHAN_4F_RGBA, color );
+      }
 
-      if (RENDERINPUTS_TEST( index_bitset, _TNL_ATTRIB_COLOR1 ))
-         EMIT_ATTR( _TNL_ATTRIB_COLOR1, EMIT_4CHAN_4F_RGBA, specular);
+      if (RENDERINPUTS_TEST( index_bitset, _TNL_ATTRIB_COLOR1 )) {
+         EMIT_ATTR( _TNL_ATTRIB_COLOR1, EMIT_4F, attrib[FRAG_ATTRIB_COL1]);
+      }
 
-      if (RENDERINPUTS_TEST( index_bitset, _TNL_ATTRIB_COLOR_INDEX ))
-         EMIT_ATTR( _TNL_ATTRIB_COLOR_INDEX, EMIT_1F, index );
+      if (RENDERINPUTS_TEST( index_bitset, _TNL_ATTRIB_COLOR_INDEX )) {
+         EMIT_ATTR( _TNL_ATTRIB_COLOR_INDEX, EMIT_1F,
+                    attrib[FRAG_ATTRIB_CI][0] );
+      }
 
       if (RENDERINPUTS_TEST( index_bitset, _TNL_ATTRIB_FOG )) {
          const GLint emit = ctx->FragmentProgram._Current ? EMIT_4F : EMIT_1F;
@@ -182,6 +191,10 @@ _swsetup_RenderStart( GLcontext *ctx )
 
    if (swsetup->NewState & _SWSETUP_NEW_RENDERINDEX) {
       _swsetup_choose_trifuncs(ctx);
+   }
+
+   if (swsetup->NewState & _NEW_PROGRAM) {
+      RENDERINPUTS_ZERO( swsetup->last_index_bitset );
    }
 
    swsetup->NewState = 0;
@@ -258,10 +271,10 @@ _swsetup_Translate( GLcontext *ctx, const void *vertex, SWvertex *dest )
 
    _tnl_get_attr( ctx, vertex, _TNL_ATTRIB_POS, tmp );
 
-   dest->win[0] = m[0]  * tmp[0] + m[12];
-   dest->win[1] = m[5]  * tmp[1] + m[13];
-   dest->win[2] = m[10] * tmp[2] + m[14];
-   dest->win[3] =         tmp[3];
+   dest->attrib[FRAG_ATTRIB_WPOS][0] = m[0]  * tmp[0] + m[12];
+   dest->attrib[FRAG_ATTRIB_WPOS][1] = m[5]  * tmp[1] + m[13];
+   dest->attrib[FRAG_ATTRIB_WPOS][2] = m[10] * tmp[2] + m[14];
+   dest->attrib[FRAG_ATTRIB_WPOS][3] =         tmp[3];
 
    /** XXX try to limit these loops someday */
    for (i = 0 ; i < ctx->Const.MaxTextureCoordUnits ; i++)
@@ -276,13 +289,16 @@ _swsetup_Translate( GLcontext *ctx, const void *vertex, SWvertex *dest )
    UNCLAMPED_FLOAT_TO_RGBA_CHAN( dest->color, tmp );
 
    _tnl_get_attr( ctx, vertex, _TNL_ATTRIB_COLOR1, tmp );
+   COPY_4V(dest->attrib[FRAG_ATTRIB_COL1], tmp);
+   /*
    UNCLAMPED_FLOAT_TO_RGBA_CHAN( dest->specular, tmp );
+   */
 
    _tnl_get_attr( ctx, vertex, _TNL_ATTRIB_FOG, tmp );
    dest->attrib[FRAG_ATTRIB_FOGC][0] = tmp[0];
 
    _tnl_get_attr( ctx, vertex, _TNL_ATTRIB_COLOR_INDEX, tmp );
-   dest->index = tmp[0];
+   dest->attrib[FRAG_ATTRIB_CI][0] = tmp[0];
 
    /* XXX See _tnl_get_attr about pointsize ... */
    _tnl_get_attr( ctx, vertex, _TNL_ATTRIB_POINTSIZE, tmp );

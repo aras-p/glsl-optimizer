@@ -36,7 +36,7 @@ static void TAG(triangle)(GLcontext *ctx, GLuint e0, GLuint e1, GLuint e2 )
    GLenum mode = GL_FILL;
    GLuint facing = 0;
    GLchan saved_color[3][4];
-   GLchan saved_spec[3][4];
+   GLfloat saved_spec[3][4];
    GLfloat saved_index[3];
 
    v[0] = &verts[e0];
@@ -46,10 +46,10 @@ static void TAG(triangle)(GLcontext *ctx, GLuint e0, GLuint e1, GLuint e2 )
 
    if (IND & (SS_TWOSIDE_BIT | SS_OFFSET_BIT | SS_UNFILLED_BIT))
    {
-      GLfloat ex = v[0]->win[0] - v[2]->win[0];
-      GLfloat ey = v[0]->win[1] - v[2]->win[1];
-      GLfloat fx = v[1]->win[0] - v[2]->win[0];
-      GLfloat fy = v[1]->win[1] - v[2]->win[1];
+      GLfloat ex = v[0]->attrib[FRAG_ATTRIB_WPOS][0] - v[2]->attrib[FRAG_ATTRIB_WPOS][0];
+      GLfloat ey = v[0]->attrib[FRAG_ATTRIB_WPOS][1] - v[2]->attrib[FRAG_ATTRIB_WPOS][1];
+      GLfloat fx = v[1]->attrib[FRAG_ATTRIB_WPOS][0] - v[2]->attrib[FRAG_ATTRIB_WPOS][0];
+      GLfloat fy = v[1]->attrib[FRAG_ATTRIB_WPOS][1] - v[2]->attrib[FRAG_ATTRIB_WPOS][1];
       GLfloat cc  = ex*fy - ey*fx;
 
       if (IND & (SS_TWOSIDE_BIT | SS_UNFILLED_BIT))
@@ -85,30 +85,30 @@ static void TAG(triangle)(GLcontext *ctx, GLuint e0, GLuint e1, GLuint e2 )
 		  if (VB->SecondaryColorPtr[1]) {
 		     GLfloat (*vbspec)[4] = VB->SecondaryColorPtr[1]->data;
 
-		     COPY_CHAN4(saved_spec[0], v[0]->specular);
-		     COPY_CHAN4(saved_spec[1], v[1]->specular);
-		     COPY_CHAN4(saved_spec[2], v[2]->specular);
+		     COPY_4V(saved_spec[0], v[0]->attrib[FRAG_ATTRIB_COL1]);
+		     COPY_4V(saved_spec[1], v[1]->attrib[FRAG_ATTRIB_COL1]);
+		     COPY_4V(saved_spec[2], v[2]->attrib[FRAG_ATTRIB_COL1]);
 
 		     if (VB->SecondaryColorPtr[1]->stride) {
-			SS_SPEC(v[0]->specular, vbspec[e0]);
-			SS_SPEC(v[1]->specular, vbspec[e1]);
-			SS_SPEC(v[2]->specular, vbspec[e2]);
+			SS_SPEC(v[0]->attrib[FRAG_ATTRIB_COL1], vbspec[e0]);
+			SS_SPEC(v[1]->attrib[FRAG_ATTRIB_COL1], vbspec[e1]);
+			SS_SPEC(v[2]->attrib[FRAG_ATTRIB_COL1], vbspec[e2]);
 		     }
 		     else {
-			SS_SPEC(v[0]->specular, vbspec[0]);
-			SS_SPEC(v[1]->specular, vbspec[0]);
-			SS_SPEC(v[2]->specular, vbspec[0]);
+			SS_SPEC(v[0]->attrib[FRAG_ATTRIB_COL1], vbspec[0]);
+			SS_SPEC(v[1]->attrib[FRAG_ATTRIB_COL1], vbspec[0]);
+			SS_SPEC(v[2]->attrib[FRAG_ATTRIB_COL1], vbspec[0]);
 		     }
 		  }
 	       } else {
 		  GLfloat *vbindex = (GLfloat *)VB->IndexPtr[1]->data;
-		  saved_index[0] = v[0]->index;
-		  saved_index[1] = v[1]->index;
-		  saved_index[2] = v[2]->index;
+		  saved_index[0] = v[0]->attrib[FRAG_ATTRIB_CI][0];
+		  saved_index[1] = v[1]->attrib[FRAG_ATTRIB_CI][0];
+		  saved_index[2] = v[2]->attrib[FRAG_ATTRIB_CI][0];
 		  
-		  SS_IND(v[0]->index, (GLuint) vbindex[e0]);
-		  SS_IND(v[1]->index, (GLuint) vbindex[e1]);
-		  SS_IND(v[2]->index, (GLuint) vbindex[e2]);
+		  SS_IND(v[0]->attrib[FRAG_ATTRIB_CI][0], (GLuint) vbindex[e0]);
+		  SS_IND(v[1]->attrib[FRAG_ATTRIB_CI][0], (GLuint) vbindex[e1]);
+		  SS_IND(v[2]->attrib[FRAG_ATTRIB_CI][0], (GLuint) vbindex[e2]);
 	       }
 	    }
 	 }
@@ -117,9 +117,9 @@ static void TAG(triangle)(GLcontext *ctx, GLuint e0, GLuint e1, GLuint e2 )
       if (IND & SS_OFFSET_BIT)
       {
 	 offset = ctx->Polygon.OffsetUnits * ctx->DrawBuffer->_MRD;
-	 z[0] = v[0]->win[2];
-	 z[1] = v[1]->win[2];
-	 z[2] = v[2]->win[2];
+	 z[0] = v[0]->attrib[FRAG_ATTRIB_WPOS][2];
+	 z[1] = v[1]->attrib[FRAG_ATTRIB_WPOS][2];
+	 z[2] = v[2]->attrib[FRAG_ATTRIB_WPOS][2];
 	 if (cc * cc > 1e-16) {
 	    const GLfloat ez = z[0] - z[2];
 	    const GLfloat fz = z[1] - z[2];
@@ -130,40 +130,40 @@ static void TAG(triangle)(GLcontext *ctx, GLuint e0, GLuint e1, GLuint e2 )
             /* Unfortunately, we need to clamp to prevent negative Zs below.
              * Technically, we should do the clamping per-fragment.
              */
-            offset = MAX2(offset, -v[0]->win[2]);
-            offset = MAX2(offset, -v[1]->win[2]);
-            offset = MAX2(offset, -v[2]->win[2]);
+            offset = MAX2(offset, -v[0]->attrib[FRAG_ATTRIB_WPOS][2]);
+            offset = MAX2(offset, -v[1]->attrib[FRAG_ATTRIB_WPOS][2]);
+            offset = MAX2(offset, -v[2]->attrib[FRAG_ATTRIB_WPOS][2]);
 	 }
       }
    }
 
    if (mode == GL_POINT) {
       if ((IND & SS_OFFSET_BIT) && ctx->Polygon.OffsetPoint) {
-	 v[0]->win[2] += offset;
-	 v[1]->win[2] += offset;
-	 v[2]->win[2] += offset;
+	 v[0]->attrib[FRAG_ATTRIB_WPOS][2] += offset;
+	 v[1]->attrib[FRAG_ATTRIB_WPOS][2] += offset;
+	 v[2]->attrib[FRAG_ATTRIB_WPOS][2] += offset;
       }
       _swsetup_render_point_tri( ctx, e0, e1, e2, facing );
    } else if (mode == GL_LINE) {
       if ((IND & SS_OFFSET_BIT) && ctx->Polygon.OffsetLine) {
-	 v[0]->win[2] += offset;
-	 v[1]->win[2] += offset;
-	 v[2]->win[2] += offset;
+	 v[0]->attrib[FRAG_ATTRIB_WPOS][2] += offset;
+	 v[1]->attrib[FRAG_ATTRIB_WPOS][2] += offset;
+	 v[2]->attrib[FRAG_ATTRIB_WPOS][2] += offset;
       }
       _swsetup_render_line_tri( ctx, e0, e1, e2, facing );
    } else {
       if ((IND & SS_OFFSET_BIT) && ctx->Polygon.OffsetFill) {
-	 v[0]->win[2] += offset;
-	 v[1]->win[2] += offset;
-	 v[2]->win[2] += offset;
+	 v[0]->attrib[FRAG_ATTRIB_WPOS][2] += offset;
+	 v[1]->attrib[FRAG_ATTRIB_WPOS][2] += offset;
+	 v[2]->attrib[FRAG_ATTRIB_WPOS][2] += offset;
       }
       _swrast_Triangle( ctx, v[0], v[1], v[2] );
    }
 
    if (IND & SS_OFFSET_BIT) {
-      v[0]->win[2] = z[0];
-      v[1]->win[2] = z[1];
-      v[2]->win[2] = z[2];
+      v[0]->attrib[FRAG_ATTRIB_WPOS][2] = z[0];
+      v[1]->attrib[FRAG_ATTRIB_WPOS][2] = z[1];
+      v[2]->attrib[FRAG_ATTRIB_WPOS][2] = z[2];
    }
 
    if (IND & SS_TWOSIDE_BIT) {
@@ -176,14 +176,14 @@ static void TAG(triangle)(GLcontext *ctx, GLuint e0, GLuint e1, GLuint e2 )
             }
 
 	    if (VB->SecondaryColorPtr[1]) {
-	       COPY_CHAN4(v[0]->specular, saved_spec[0]);
-	       COPY_CHAN4(v[1]->specular, saved_spec[1]);
-	       COPY_CHAN4(v[2]->specular, saved_spec[2]);
+	       COPY_4V(v[0]->attrib[FRAG_ATTRIB_COL1], saved_spec[0]);
+	       COPY_4V(v[1]->attrib[FRAG_ATTRIB_COL1], saved_spec[1]);
+	       COPY_4V(v[2]->attrib[FRAG_ATTRIB_COL1], saved_spec[2]);
 	    }
 	 } else {
-	    v[0]->index = saved_index[0];
-	    v[1]->index = saved_index[1];
-	    v[2]->index = saved_index[2];
+	    v[0]->attrib[FRAG_ATTRIB_CI][0] = saved_index[0];
+	    v[1]->attrib[FRAG_ATTRIB_CI][0] = saved_index[1];
+	    v[2]->attrib[FRAG_ATTRIB_CI][0] = saved_index[2];
 	 }
       }
    }

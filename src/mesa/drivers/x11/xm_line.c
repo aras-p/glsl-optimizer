@@ -556,10 +556,10 @@ xor_line(GLcontext *ctx, const SWvertex *vert0, const SWvertex *vert1)
                                               vert1->color[0], vert1->color[1],
                                               vert1->color[2], vert1->color[3],
                                               xmesa->pixelformat);
-   int x0 = (int) vert0->win[0];
-   int y0 = YFLIP(xrb, (GLint) vert0->win[1]);
-   int x1 = (int) vert1->win[0];
-   int y1 = YFLIP(xrb, (GLint) vert1->win[1]);
+   int x0 =            (GLint) vert0->attrib[FRAG_ATTRIB_WPOS][0];
+   int y0 = YFLIP(xrb, (GLint) vert0->attrib[FRAG_ATTRIB_WPOS][1]);
+   int x1 =            (GLint) vert1->attrib[FRAG_ATTRIB_WPOS][0];
+   int y1 = YFLIP(xrb, (GLint) vert1->attrib[FRAG_ATTRIB_WPOS][1]);
    XMesaSetForeground(dpy, gc, pixel);
    XMesaSetFunction(dpy, gc, GXxor);
    XSetLineAttributes(dpy, gc, (int) ctx->Line.Width,

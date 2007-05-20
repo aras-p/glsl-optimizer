@@ -138,10 +138,10 @@ static void ffb_translate_vertex(GLcontext *ctx, const ffb_vertex *src,
 	const GLfloat ty = m[13];
 	const GLfloat tz = m[14];
 
-	dst->win[0] = sx * src->x + tx;
-	dst->win[1] = sy * src->y + ty;
-	dst->win[2] = sz * src->z + tz;
-	dst->win[3] = 1.0;
+	dst->attrib[FRAG_ATTRIB_WPOS][0] = sx * src->x + tx;
+	dst->attrib[FRAG_ATTRIB_WPOS][1] = sy * src->y + ty;
+	dst->attrib[FRAG_ATTRIB_WPOS][2] = sz * src->z + tz;
+	dst->attrib[FRAG_ATTRIB_WPOS][3] = 1.0;
       
 	dst->color[0] = FFB_UBYTE_FROM_COLOR(src->color[0].red);
 	dst->color[1] = FFB_UBYTE_FROM_COLOR(src->color[0].green);
