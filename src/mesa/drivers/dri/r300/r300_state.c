@@ -1442,17 +1442,6 @@ union r300_outputs_written {
 static void r300SetupRSUnit(GLcontext * ctx)
 {
 	r300ContextPtr r300 = R300_CONTEXT(ctx);
-	/* I'm still unsure if these are needed */
-	GLuint interp_magic[8] = {
-		0x00,
-		R300_RS_INTERP_1_UNKNOWN,
-		R300_RS_INTERP_2_UNKNOWN,
-		R300_RS_INTERP_3_UNKNOWN,
-		0x00,
-		0x00,
-		0x00,
-		0x00
-	};
 	union r300_outputs_written OutputsWritten;
 	GLuint InputsRead;
 	int fp_reg, high_rr;
@@ -1498,8 +1487,7 @@ static void r300SetupRSUnit(GLcontext * ctx)
 	for (i = 0; i < ctx->Const.MaxTextureUnits; i++) {
 		r300->hw.ri.cmd[R300_RI_INTERP_0 + i] = 0
 		    | R300_RS_INTERP_USED
-		    | (in_texcoords << R300_RS_INTERP_SRC_SHIFT)
-		    | interp_magic[i];
+		    | (in_texcoords << R300_RS_INTERP_SRC_SHIFT);
 
 		r300->hw.rr.cmd[R300_RR_ROUTE_0 + fp_reg] = 0;
 		if (InputsRead & (FRAG_BIT_TEX0 << i)) {
