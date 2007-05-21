@@ -638,6 +638,16 @@ intelContendedLock(struct intel_context *intel, GLuint flags)
    if (dPriv)
       DRI_VALIDATE_DRAWABLE_INFO(sPriv, dPriv);
 
+   /* If the last consumer of the texture memory wasn't us, notify the fake
+    * bufmgr and record the new owner.  We should have the memory shared
+    * between contexts of a single fake bufmgr, but this will at least make
+    * things correct for now.
+    */
+   if (!intel->intelScreen->ttm && sarea->texAge != intel->hHWContext) {
+      sarea->texAge = intel->hHWContext;
+      dri_bufmgr_fake_contended_lock_take(intel->intelScreen->bufmgr);
+   }
+
    if (sarea->width != intelScreen->width ||
        sarea->height != intelScreen->height ||
        sarea->rotation != intelScreen->current_rotation) {
