@@ -141,6 +141,7 @@ _mesa_initialize_texture_object( struct gl_texture_object *obj,
 /**
  * Deallocate a texture object struct.  It should have already been
  * removed from the texture object pool.
+ * Called via ctx->Driver.DeleteTexture() if not overriden by a driver.
  *
  * \param shared the shared GL state to which the object belongs.
  * \param texOjb the texture object to delete.
@@ -523,13 +524,6 @@ _mesa_test_texobj_completeness( const GLcontext *ctx,
 /** \name API functions */
 /*@{*/
 
-/**
- * Texture name generation lock.
- *
- * Used by _mesa_GenTextures() to guarantee that the generation and allocation
- * of texture IDs is atomic.
- */
-_glthread_DECLARE_STATIC_MUTEX(GenTexturesLock);
 
 /**
  * Generate texture names.
@@ -539,9 +533,9 @@ _glthread_DECLARE_STATIC_MUTEX(GenTexturesLock);
  *
  * \sa glGenTextures().
  *
- * While holding the GenTexturesLock lock, calls _mesa_HashFindFreeKeyBlock()
- * to find a block of free texture IDs which are stored in \p textures.
- * Corresponding empty texture objects are also generated.
+ * Calls _mesa_HashFindFreeKeyBlock() to find a block of free texture
+ * IDs which are stored in \p textures.  Corresponding empty texture
+ * objects are also generated.
  */ 
 void GLAPIENTRY
 _mesa_GenTextures( GLsizei n, GLuint *textures )
@@ -562,7 +556,7 @@ _mesa_GenTextures( GLsizei n, GLuint *textures )
    /*
     * This must be atomic (generation and allocation of texture IDs)
     */
-   _glthread_LOCK_MUTEX(GenTexturesLock);
+   _glthread_LOCK_MUTEX(ctx->Shared->Mutex);
 
    first = _mesa_HashFindFreeKeyBlock(ctx->Shared->TexObjects, n);
 
@@ -573,20 +567,18 @@ _mesa_GenTextures( GLsizei n, GLuint *textures )
       GLenum target = 0;
       texObj = (*ctx->Driver.NewTextureObject)( ctx, name, target);
       if (!texObj) {
-         _glthread_UNLOCK_MUTEX(GenTexturesLock);
+         _glthread_UNLOCK_MUTEX(ctx->Shared->Mutex);
          _mesa_error(ctx, GL_OUT_OF_MEMORY, "glGenTextures");
          return;
       }
 
       /* insert into hash table */
-      _glthread_LOCK_MUTEX(ctx->Shared->Mutex);
       _mesa_HashInsert(ctx->Shared->TexObjects, texObj->Name, texObj);
-      _glthread_UNLOCK_MUTEX(ctx->Shared->Mutex);
 
       textures[i] = name;
    }
 
-   _glthread_UNLOCK_MUTEX(GenTexturesLock);
+   _glthread_UNLOCK_MUTEX(ctx->Shared->Mutex);
 }
 
 
