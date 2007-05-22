@@ -41,6 +41,9 @@
 #include <unistd.h>
 
 
+static float top, bottom;
+
+
 static Display *
 OpenDisplay(void)
 {
@@ -71,7 +74,6 @@ ChoosePixmapFBConfig(Display *display)
    int screen = DefaultScreen(display);
    GLXFBConfig *fbconfigs;
    int i, nfbconfigs, value;
-   float top, bottom;
 
    fbconfigs = glXGetFBConfigs(display, screen, &nfbconfigs);
    for (i = 0; i < nfbconfigs; i++) {
@@ -273,13 +275,13 @@ Redraw(Display *dpy, Window win, float rot)
    glRotatef(2.0 * rot, 1, 0, 0);
 
    glBegin(GL_QUADS);
-   glTexCoord2d(0.0, 0.0);
+   glTexCoord2d(0.0, bottom);
    glVertex2f(-1, -1);
-   glTexCoord2d(1.0, 0.0);
+   glTexCoord2d(1.0, bottom);
    glVertex2f( 1, -1);
-   glTexCoord2d(1.0, 1.0);
+   glTexCoord2d(1.0, top);
    glVertex2d(1.0, 1.0);
-   glTexCoord2d(0.0, 1.0);
+   glTexCoord2d(0.0, top);
    glVertex2f(-1.0, 1.0);
    glEnd();
 
