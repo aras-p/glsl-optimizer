@@ -191,6 +191,8 @@ struct r300_tex_obj {
 	drm_radeon_tex_image_t image[6][RADEON_MAX_TEXTURE_LEVELS];
 	/* Six, for the cube faces */
 
+	GLboolean image_override;	/* Image overridden by GLX_EXT_tfp */
+
 	GLuint pitch;		/* this isn't sent to hardware just used in calculations */
 	/* hardware register values */
 	/* Note that R200 has 8 registers per texture and R300 only 7 */

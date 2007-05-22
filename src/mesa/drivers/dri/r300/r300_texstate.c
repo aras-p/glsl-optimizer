@@ -40,6 +40,8 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "context.h"
 #include "macros.h"
 #include "texformat.h"
+#include "teximage.h"
+#include "texobj.h"
 #include "enums.h"
 
 #include "r300_context.h"
@@ -66,7 +68,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  * identically.  -- paulus
  */
 
-static const struct {
+static const struct tx_table {
 	GLuint format, filter, flag;
 } tx_table_be[] = {
 	/* *INDENT-OFF* */
@@ -109,15 +111,13 @@ static const struct {
 	/* *INDENT-ON* */
 };
 
-static const struct {
-	GLuint format, filter, flag;
-} tx_table_le[] = {
+static const struct tx_table tx_table_le[] = {
 	/* *INDENT-OFF* */
 	_ASSIGN(RGBA8888, R300_EASY_TX_FORMAT(Y, Z, W, X, W8Z8Y8X8)),
 	_ASSIGN(RGBA8888_REV, R300_EASY_TX_FORMAT(Z, Y, X, W, W8Z8Y8X8)),
 	_ASSIGN(ARGB8888, R300_EASY_TX_FORMAT(X, Y, Z, W, W8Z8Y8X8)),
 	_ASSIGN(ARGB8888_REV, R300_EASY_TX_FORMAT(W, Z, Y, X, W8Z8Y8X8)),
-	_ASSIGN(RGB888, 0xffffffff),
+	_ASSIGN(RGB888, R300_EASY_TX_FORMAT(X, Y, Z, ONE, W8Z8Y8X8)),
 	_ASSIGN(RGB565, R300_EASY_TX_FORMAT(X, Y, Z, ONE, Z5Y6X5)),
 	_ASSIGN(RGB565_REV, R300_EASY_TX_FORMAT(X, Y, Z, ONE, Z5Y6X5)),
 	_ASSIGN(ARGB4444, R300_EASY_TX_FORMAT(X, Y, Z, W, W4Z4Y4X4)),
@@ -178,7 +178,7 @@ static void r300SetTexImages(r300ContextPtr rmesa,
 
 	/* Set the hardware texture format
 	 */
-	if (VALID_FORMAT(baseImage->TexFormat->MesaFormat)) {
+	if (!t->image_override && VALID_FORMAT(baseImage->TexFormat->MesaFormat)) {
 		if (_mesa_little_endian()) {
 			t->format =
 			    tx_table_le[baseImage->TexFormat->MesaFormat].
@@ -194,7 +194,7 @@ static void r300SetTexImages(r300ContextPtr rmesa,
 			    tx_table_be[baseImage->TexFormat->MesaFormat].
 			    filter;
 		}
-	} else {
+	} else if (!t->image_override) {
 		_mesa_problem(NULL, "unexpected texture format in %s",
 			      __FUNCTION__);
 		return;
@@ -382,9 +382,10 @@ static void r300SetTexImages(r300ContextPtr rmesa,
 		t->pitch = ((tObj->Image[0][t->base.firstLevel]->Width *
 			     texelBytes) + 63) & ~(63);
 		t->size |= R300_TX_SIZE_TXPITCH_EN;
-		t->pitch_reg =
-		    (((tObj->Image[0][t->base.firstLevel]->Width) +
-		      align) & ~align) - 1;
+		if (!t->image_override)
+			t->pitch_reg =
+			    (((tObj->Image[0][t->base.firstLevel]->Width) +
+			      align) & ~align) - 1;
 	} else {
 		t->pitch =
 		    ((tObj->Image[0][t->base.firstLevel]->Width *
@@ -411,9 +412,10 @@ static GLboolean r300EnableTexture2D(GLcontext * ctx, int unit)
 
 	if (t->base.dirty_images[0]) {
 		R300_FIREVERTICES(rmesa);
+
 		r300SetTexImages(rmesa, tObj);
 		r300UploadTexImages(rmesa, (r300TexObjPtr) tObj->DriverData, 0);
-		if (!t->base.memBlock)
+		if (!t->base.memBlock && !t->image_override)
 			return GL_FALSE;
 	}
 
@@ -492,9 +494,11 @@ static GLboolean r300EnableTextureRect(GLcontext * ctx, int unit)
 
 	if (t->base.dirty_images[0]) {
 		R300_FIREVERTICES(rmesa);
+
 		r300SetTexImages(rmesa, tObj);
 		r300UploadTexImages(rmesa, (r300TexObjPtr) tObj->DriverData, 0);
-		if (!t->base.memBlock && !rmesa->prefer_gart_client_texturing)
+		if (!t->base.memBlock && !t->image_override &&
+		    !rmesa->prefer_gart_client_texturing)
 			return GL_FALSE;
 	}
 
@@ -532,6 +536,51 @@ static GLboolean r300UpdateTexture(GLcontext * ctx, int unit)
 	}
 
 	return !t->border_fallback;
+}
+
+void r300SetTexOffset(__DRIcontext *pDRICtx, GLint texname,
+		      unsigned long long offset, GLint depth, GLuint pitch)
+{
+	r300ContextPtr rmesa =
+		(r300ContextPtr)((__DRIcontextPrivate*)pDRICtx->private)->driverPrivate;
+	struct gl_texture_object *tObj =
+		_mesa_lookup_texture(rmesa->radeon.glCtx, texname);
+	r300TexObjPtr t;
+	int idx;
+
+	if (!tObj)
+		return;
+
+	t = (r300TexObjPtr) tObj->DriverData;
+
+	t->image_override = GL_TRUE;
+
+	if (!offset)
+		return;
+
+	t->offset = offset;
+	t->pitch_reg = pitch;
+
+	switch (depth) {
+	case 32:
+		idx = 2;
+		t->pitch_reg /= 4;
+		break;
+	case 24:
+	default:
+		idx = 4;
+		t->pitch_reg /= 4;
+		break;
+	case 16:
+		idx = 5;
+		t->pitch_reg /= 2;
+		break;
+	}
+
+	t->pitch_reg--;
+
+	t->format = tx_table_le[idx].format;
+	t->filter |= tx_table_le[idx].filter;
 }
 
 static GLboolean r300UpdateTextureUnit(GLcontext * ctx, int unit)
