@@ -473,7 +473,6 @@ extern void intelSetBackClipRects(intelContextPtr intel);
 extern void intelSetFrontClipRects(intelContextPtr intel);
 extern void intelWindowMoved( intelContextPtr intel );
 
-extern void intelInitState( GLcontext *ctx );
 extern const GLubyte *intelGetString( GLcontext *ctx, GLenum name );
 
 

@@ -36,6 +36,8 @@
 
 #include "texmem.h"
 
+#include "drivers/common/driverfuncs.h"
+
 #include "intel_screen.h"
 #include "intel_batchbuffer.h"
 
@@ -961,15 +963,8 @@ void i915InitState( i915ContextPtr i915 )
 
    i915_init_packets( i915 );
 
-   intelInitState( ctx );
+   _mesa_init_driver_state(ctx);
 
    memcpy( &i915->initial, &i915->state, sizeof(i915->state) );
    i915->current = &i915->state;
 }
-
-
-
-
-
-
-

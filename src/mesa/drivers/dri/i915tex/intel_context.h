@@ -399,7 +399,6 @@ extern GLboolean intelInitContext(struct intel_context *intel,
 
 extern void intelGetLock(struct intel_context *intel, GLuint flags);
 
-extern void intelInitState(GLcontext * ctx);
 extern void intelFinish(GLcontext * ctx);
 extern void intelFlush(GLcontext * ctx);
 
