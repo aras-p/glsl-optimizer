@@ -63,6 +63,7 @@ typedef struct __DRIswapControlExtensionRec	__DRIswapControlExtension;
 typedef struct __DRIallocateExtensionRec	__DRIallocateExtension;
 typedef struct __DRIframeTrackingExtensionRec	__DRIframeTrackingExtension;
 typedef struct __DRImediaStreamCounterExtensionRec	__DRImediaStreamCounterExtension;
+typedef struct __DRItexOffsetExtensionRec	__DRItexOffsetExtension;
 /*@}*/
 
 
@@ -166,6 +167,22 @@ struct __DRImediaStreamCounterExtensionRec {
     int (*waitForMSC)(__DRIdrawable *drawable,
 		      int64_t target_msc, int64_t divisor, int64_t remainder,
 		      int64_t * msc, int64_t * sbc);
+};
+
+
+#define __DRI_TEX_OFFSET "DRI_TexOffset"
+struct __DRItexOffsetExtensionRec {
+    __DRIextension base;
+
+    /**
+     * Method to override base texture image with a driver specific 'offset'.
+     * The depth passed in allows e.g. to ignore the alpha channel of texture
+     * images where the non-alpha components don't occupy a whole texel.
+     *
+     * For GLX_EXT_texture_from_pixmap with AIGLX.
+     */
+    void (*setTexOffset)(__DRIcontext *pDRICtx, GLint texname,
+			 unsigned long long offset, GLint depth, GLuint pitch);
 };
 
 
@@ -379,18 +396,6 @@ struct __DRIscreenRec {
 			       int render_type,
 			       __DRIcontext *shared,
 			       drm_context_t hwContext, __DRIcontext *pctx);
-
-    /**
-     * Method to override base texture image with a driver specific 'offset'.
-     * The depth passed in allows e.g. to ignore the alpha channel of texture
-     * images where the non-alpha components don't occupy a whole texel.
-     *
-     * For GLX_EXT_texture_from_pixmap with AIGLX.
-     *
-     * \since Internal API version 20070121.
-     */
-    void (*setTexOffset)(__DRIcontext *pDRICtx, GLint texname,
-			 unsigned long long offset, GLint depth, GLuint pitch);
 };
 
 /**

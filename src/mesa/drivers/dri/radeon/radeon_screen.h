@@ -104,7 +104,7 @@ typedef struct {
    /* Configuration cache with default values for all contexts */
    driOptionCache optionCache;
 
-   const __DRIextension *extensions[7];
+   const __DRIextension *extensions[8];
 } radeonScreenRec, *radeonScreenPtr;
 
 #define IS_R100_CLASS(screen) \

@@ -333,14 +333,19 @@ radeonFillInModes( unsigned pixel_bits, unsigned depth_bits,
 }
 
 #if RADEON_COMMON && defined(RADEON_COMMON_FOR_R200)
-
 static const __DRIallocateExtension r200AllocateExtension = {
     { __DRI_ALLOCATE },
     r200AllocateMemoryMESA,
     r200FreeMemoryMESA,
     r200GetMemoryOffsetMESA
 };
+#endif
 
+#if RADEON_COMMON && defined(RADEON_COMMON_FOR_R300)
+static const __DRItexOffsetExtension r300texOffsetExtension = {
+    { __DRI_TEX_OFFSET },
+   r300SetTexOffset,
+};
 #endif
 
 /* Create the device specific screen private data struct.
@@ -755,6 +760,10 @@ radeonCreateScreen( __DRIscreenPrivate *sPriv )
        screen->extensions[i++] = &r200AllocateExtension.base;
 #endif
 
+#if RADEON_COMMON && defined(RADEON_COMMON_FOR_R300)
+   screen->extensions[i++] = &r300texOffsetExtension.base;
+#endif
+
    screen->extensions[i++] = NULL;
    sPriv->extensions = screen->extensions;
 
@@ -956,9 +965,6 @@ static struct __DriverAPIRec radeonAPI = {
    .WaitForSBC      = NULL,
    .SwapBuffersMSC  = NULL,
    .CopySubBuffer   = radeonCopySubBuffer,
-#if RADEON_COMMON && defined(RADEON_COMMON_FOR_R300)
-   .setTexOffset    = r300SetTexOffset,
-#endif
 };
 #else
 static const struct __DriverAPIRec r200API = {

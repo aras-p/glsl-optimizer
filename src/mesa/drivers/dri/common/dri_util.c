@@ -752,9 +752,6 @@ void * __DRI_CREATE_NEW_SCREEN( int scrn, __DRIscreen *psc,
     psc->createNewDrawable = driCreateNewDrawable;
     psc->createNewContext  = driCreateNewContext;
 
-    if (internal_api_version >= 20070121)
-	psc->setTexOffset  = psp->DriverAPI.setTexOffset;
-
     *driver_modes = __driDriverInitScreen(psp);
     if (*driver_modes == NULL) {
 	_mesa_free(psp);
