@@ -1920,7 +1920,7 @@ get_config( XMesaVisual xmvis, int attrib, int *value, GLboolean fbconfig )
                    GLX_TEXTURE_RECTANGLE_BIT_EXT); /*XXX*/
          break;
       case GLX_Y_INVERTED_EXT:
-         *value = False; /*XXX*/
+         *value = True; /*XXX*/
          break;
 #endif
 
