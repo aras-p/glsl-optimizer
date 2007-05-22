@@ -381,10 +381,12 @@ i915_emit_state(struct intel_context *intel)
                          DRM_BO_MASK_MEM | DRM_BO_FLAG_READ,
                          state->tex_offset[i]);
             }
-            else {
+            else if (state == &i915->meta) {
                assert(i == 0);
-               assert(state == &i915->meta);
                OUT_BATCH(0);
+            }
+            else {
+               OUT_BATCH(state->tex_offset[i]);
             }
 
             OUT_BATCH(state->Tex[i][I915_TEXREG_MS3]);
