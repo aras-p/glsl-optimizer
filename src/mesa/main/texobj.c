@@ -1097,14 +1097,21 @@ _mesa_IsTexture( GLuint texture )
    return t && t->Target;
 }
 
-/* Simplest implementation of texture locking: Grab the a new mutex in
+
+/**
+ * Simplest implementation of texture locking: Grab the a new mutex in
  * the shared context.  Examine the shared context state timestamp and
  * if there has been a change, set the appropriate bits in
  * ctx->NewState.
  *
- * See also _mesa_lock/unlock_texture in texobj.h
+ * This is used to deal with synchronizing things when a texture object
+ * is used/modified by different contexts (or threads) which are sharing
+ * the texture.
+ *
+ * See also _mesa_lock/unlock_texture() in teximage.h
  */
-void _mesa_lock_context_textures( GLcontext *ctx )
+void
+_mesa_lock_context_textures( GLcontext *ctx )
 {
    _glthread_LOCK_MUTEX(ctx->Shared->TexMutex);
 
@@ -1115,7 +1122,8 @@ void _mesa_lock_context_textures( GLcontext *ctx )
 }
 
 
-void _mesa_unlock_context_textures( GLcontext *ctx )
+void
+_mesa_unlock_context_textures( GLcontext *ctx )
 {
    assert(ctx->Shared->TextureStateStamp == ctx->TextureStateTimestamp);
    _glthread_UNLOCK_MUTEX(ctx->Shared->TexMutex);
