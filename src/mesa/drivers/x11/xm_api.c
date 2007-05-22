@@ -63,6 +63,7 @@
 #endif
 
 #include "glxheader.h"
+#include "GL/glxtokens.h"
 #include "GL/xmesa.h"
 #include "xmesaP.h"
 #include "context.h"
@@ -293,11 +294,9 @@ static GLboolean window_exists( XMesaDisplay *dpy, Window win )
    XSetErrorHandler(old_handler);
    return WindowExistsFlag;
 }
-#endif
-
 
 static Status
-get_drawable_size(Display *dpy, Drawable d, GLuint *width, GLuint *height)
+get_drawable_size( XMesaDisplay *dpy, Drawable d, GLuint *width, GLuint *height )
 {
    Window root;
    Status stat;
@@ -308,6 +307,7 @@ get_drawable_size(Display *dpy, Drawable d, GLuint *width, GLuint *height)
    *height = h;
    return stat;
 }
+#endif
 
 
 /**
@@ -1703,7 +1703,7 @@ XMesaCreatePixmapTextureBuffer(XMesaVisual v, XMesaPixmap p,
       return NULL;
 
    /* get pixmap size, update framebuffer/renderbuffer dims */
-   get_drawable_size(v->display, p, &width, &height);
+   xmesa_get_window_size(v->display, b, &width, &height);
    _mesa_resize_framebuffer(NULL, &(b->mesa_buffer), width, height);
 
    if (target == 0) {
@@ -2363,7 +2363,7 @@ xbuffer_to_renderbuffer(int buffer)
 
 
 PUBLIC void
-XMesaBindTexImage(Display *dpy, XMesaBuffer drawable, int buffer,
+XMesaBindTexImage(XMesaDisplay *dpy, XMesaBuffer drawable, int buffer,
                   const int *attrib_list)
 {
 #if 0
@@ -2375,7 +2375,7 @@ XMesaBindTexImage(Display *dpy, XMesaBuffer drawable, int buffer,
    struct gl_renderbuffer *rb;
    struct xmesa_renderbuffer *xrb;
    GLint b;
-   XMesaImage *img;
+   XMesaImage *img = NULL;
    GLboolean freeImg = GL_FALSE;
 
    b = xbuffer_to_renderbuffer(buffer);
@@ -2412,15 +2412,15 @@ XMesaBindTexImage(Display *dpy, XMesaBuffer drawable, int buffer,
     * The following is a quick and simple way to implement
     * BindTexImage.  The better way is to write some new FetchTexel()
     * functions which would extract texels from XImages.  We'd still
-    * need to use XGetImage when texturing from a Pixmap (front buffer)
+    * need to use GetImage when texturing from a Pixmap (front buffer)
     * but texturing from a back buffer (XImage) would avoid an image
     * copy.
     */
 
    /* get XImage */
    if (xrb->pixmap) {
-      img = XGetImage(dpy, xrb->pixmap, 0, 0, rb->Width, rb->Height,
-                      AllPlanes, ZPixmap );
+      img = XMesaGetImage(dpy, xrb->pixmap, 0, 0, rb->Width, rb->Height, ~0L,
+			  ZPixmap);
       freeImg = GL_TRUE;
    }
    else if (xrb->ximage) {
@@ -2468,7 +2468,7 @@ XMesaBindTexImage(Display *dpy, XMesaBuffer drawable, int buffer,
 
 
 PUBLIC void
-XMesaReleaseTexImage(Display *dpy, XMesaBuffer drawable, int buffer)
+XMesaReleaseTexImage(XMesaDisplay *dpy, XMesaBuffer drawable, int buffer)
 {
    const GLint b = xbuffer_to_renderbuffer(buffer);
    if (b < 0)

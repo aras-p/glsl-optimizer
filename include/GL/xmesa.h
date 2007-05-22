@@ -402,11 +402,11 @@ extern XMesaBuffer XMesaCreatePBuffer(XMesaVisual v, XMesaColormap cmap,
  * New in Mesa 7.1
  */
 extern void
-XMesaBindTexImage(Display *dpy, XMesaBuffer drawable, int buffer,
+XMesaBindTexImage(XMesaDisplay *dpy, XMesaBuffer drawable, int buffer,
                   const int *attrib_list);
 
 extern void
-XMesaReleaseTexImage(Display *dpy, XMesaBuffer drawable, int buffer);
+XMesaReleaseTexImage(XMesaDisplay *dpy, XMesaBuffer drawable, int buffer);
 
 
 extern XMesaBuffer
