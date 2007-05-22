@@ -106,7 +106,6 @@ _mesa_initialize_texture_object( struct gl_texture_object *obj,
 
    _mesa_bzero(obj, sizeof(*obj));
    /* init the non-zero fields */
-   _glthread_INIT_MUTEX(obj->Mutex);
    obj->RefCount = 1;
    obj->Name = name;
    obj->Target = target;
@@ -136,7 +135,6 @@ _mesa_initialize_texture_object( struct gl_texture_object *obj,
    obj->CompareFunc = GL_LEQUAL;       /* ARB_shadow */
    obj->DepthMode = GL_LUMINANCE;      /* ARB_depth_texture */
    obj->ShadowAmbient = 0.0F;          /* ARB/SGIX_shadow_ambient */
-   _mesa_init_colortable(&obj->Palette);
 }
 
 
@@ -164,9 +162,6 @@ _mesa_delete_texture_object( GLcontext *ctx, struct gl_texture_object *texObj )
 	 }
       }
    }
-
-   /* destroy the mutex -- it may have allocated memory (eg on bsd) */
-   _glthread_DESTROY_MUTEX(texObj->Mutex);
 
    /* free this object */
    _mesa_free(texObj);
