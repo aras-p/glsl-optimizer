@@ -42,10 +42,6 @@
 #include "mtypes.h"
 
 
-#ifdef __VMS
-#define _mesa_sprintf sprintf
-#endif
-
 /**********************************************************************/
 /** \name Internal functions */
 /*@{*/
