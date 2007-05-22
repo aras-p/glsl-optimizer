@@ -549,6 +549,7 @@ _swrast_update_fragment_attribs(GLcontext *ctx)
    if (ctx->FragmentProgram._Current) {
       /* fragment program/shader */
       attribsMask = ctx->FragmentProgram._Current->Base.InputsRead;
+      attribsMask &= ~FRAG_BIT_WPOS; /* WPOS is always handled specially */
    }
    else if (ctx->ATIFragmentShader._Enabled) {
       attribsMask = ~0;  /* XXX fix me */
