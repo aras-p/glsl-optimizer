@@ -1813,12 +1813,6 @@ static void r300ResetHwState(r300ContextPtr r300)
 	if (RADEON_DEBUG & DEBUG_STATE)
 		fprintf(stderr, "%s\n", __FUNCTION__);
 
-	/* This is a place to initialize registers which
-	   have bitfields accessed by different functions
-	   and not all bits are used */
-
-	/* go and compute register values from GL state */
-
 	r300UpdateWindow(ctx);
 
 	r300ColorMask(ctx,
@@ -1848,13 +1842,11 @@ static void r300ResetHwState(r300ContextPtr r300)
 	r300AlphaFunc(ctx, ctx->Color.AlphaFunc, ctx->Color.AlphaRef);
 	r300Enable(ctx, GL_ALPHA_TEST, ctx->Color.AlphaEnabled);
 
-	/* Initialize magic registers
-	   TODO : learn what they really do, or get rid of
-	   those we don't have to touch */
 	if (!has_tcl)
 		r300->hw.vap_cntl.cmd[1] = 0x0014045a;
 	else
 		r300->hw.vap_cntl.cmd[1] = 0x0030045A;	//0x0030065a /* Dangerous */
+
 	r300->hw.vte.cmd[1] = R300_VPORT_X_SCALE_ENA
 	    | R300_VPORT_X_OFFSET_ENA
 	    | R300_VPORT_Y_SCALE_ENA
@@ -1883,11 +1875,15 @@ static void r300ResetHwState(r300ContextPtr r300)
 	r300->hw.unk2220.cmd[3] = r300PackFloat32(1.0);
 	r300->hw.unk2220.cmd[4] = r300PackFloat32(1.0);
 
-	/* what about other chips than r300 or rv350??? */
-	if (r300->radeon.radeonScreen->chip_family == CHIP_FAMILY_R300)
+	/* XXX: Other families? */
+	switch (r300->radeon.radeonScreen->chip_family) {
+	case CHIP_FAMILY_R300:
 		r300->hw.unk2288.cmd[1] = R300_2288_R300;
-	else
+		break;
+	default:
 		r300->hw.unk2288.cmd[1] = R300_2288_RV350;
+		break;
+	}
 
 	r300->hw.gb_enable.cmd[1] = R300_GB_POINT_STUFF_ENABLE
 	    | R300_GB_LINE_STUFF_ENABLE
@@ -1895,26 +1891,35 @@ static void r300ResetHwState(r300ContextPtr r300)
 
 	r300->hw.gb_misc.cmd[R300_GB_MISC_MSPOS_0] = 0x66666666;
 	r300->hw.gb_misc.cmd[R300_GB_MISC_MSPOS_1] = 0x06666666;
-	if ((r300->radeon.radeonScreen->chip_family == CHIP_FAMILY_R300) ||
-	    (r300->radeon.radeonScreen->chip_family == CHIP_FAMILY_R350))
-		r300->hw.gb_misc.cmd[R300_GB_MISC_TILE_CONFIG] =
-		    R300_GB_TILE_ENABLE | R300_GB_TILE_PIPE_COUNT_R300 |
-		    R300_GB_TILE_SIZE_16;
-	else if (r300->radeon.radeonScreen->chip_family == CHIP_FAMILY_RV410)
-		r300->hw.gb_misc.cmd[R300_GB_MISC_TILE_CONFIG] =
-		    R300_GB_TILE_ENABLE | R300_GB_TILE_PIPE_COUNT_RV410 |
-		    R300_GB_TILE_SIZE_16;
-	else if (r300->radeon.radeonScreen->chip_family == CHIP_FAMILY_R420)
-		r300->hw.gb_misc.cmd[R300_GB_MISC_TILE_CONFIG] =
-		    R300_GB_TILE_ENABLE | R300_GB_TILE_PIPE_COUNT_R420 |
-		    R300_GB_TILE_SIZE_16;
-	else
-		r300->hw.gb_misc.cmd[R300_GB_MISC_TILE_CONFIG] =
-		    R300_GB_TILE_ENABLE | R300_GB_TILE_PIPE_COUNT_RV300 |
-		    R300_GB_TILE_SIZE_16;
-	/* set to 0 when fog is disabled? */
+
+	/* XXX: Other families? */
+	r300->hw.gb_misc.cmd[R300_GB_MISC_TILE_CONFIG] =
+	    R300_GB_TILE_ENABLE | R300_GB_TILE_SIZE_16;
+	switch (r300->radeon.radeonScreen->chip_family) {
+	case CHIP_FAMILY_R300:
+	case CHIP_FAMILY_R350:
+		r300->hw.gb_misc.cmd[R300_GB_MISC_TILE_CONFIG] |=
+		    R300_GB_TILE_PIPE_COUNT_R300;
+		break;
+	case CHIP_FAMILY_RV410:
+		r300->hw.gb_misc.cmd[R300_GB_MISC_TILE_CONFIG] |=
+		    R300_GB_TILE_PIPE_COUNT_RV410;
+		break;
+	case CHIP_FAMILY_R420:
+		r300->hw.gb_misc.cmd[R300_GB_MISC_TILE_CONFIG] |=
+		    R300_GB_TILE_PIPE_COUNT_R420;
+		break;
+	default:
+		r300->hw.gb_misc.cmd[R300_GB_MISC_TILE_CONFIG] |=
+		    R300_GB_TILE_PIPE_COUNT_RV300;
+		break;
+	}
+
+	/* XXX: set to 0 when fog is disabled? */
 	r300->hw.gb_misc.cmd[R300_GB_MISC_SELECT] = R300_GB_FOG_SELECT_1_1_W;
-	r300->hw.gb_misc.cmd[R300_GB_MISC_AA_CONFIG] = R300_AA_DISABLE;	/* No antialiasing */
+
+	/* XXX: Enable anti-aliasing? */
+	r300->hw.gb_misc.cmd[R300_GB_MISC_AA_CONFIG] = R300_AA_DISABLE;
 
 	r300->hw.unk4200.cmd[1] = r300PackFloat32(0.0);
 	r300->hw.unk4200.cmd[2] = r300PackFloat32(0.0);
@@ -2035,7 +2040,7 @@ static void r300ResetHwState(r300ContextPtr r300)
 	r300->hw.zb.cmd[R300_ZB_PITCH] = r300->radeon.radeonScreen->depthPitch;
 
 	if (r300->radeon.sarea->tiling_enabled) {
-		/* Turn off when clearing buffers ? */
+		/* XXX: Turn off when clearing buffers ? */
 		r300->hw.zb.cmd[R300_ZB_PITCH] |= R300_DEPTH_TILE_ENABLE;
 
 		if (ctx->Visual.depthBits == 24)
@@ -2058,7 +2063,7 @@ static void r300ResetHwState(r300ContextPtr r300)
 		r300->hw.vps.cmd[R300_VPS_POINTSIZE] = r300PackFloat32(1.0);
 		r300->hw.vps.cmd[R300_VPS_ZERO_3] = 0;
 	}
-//END: TODO
+
 	r300->hw.all_dirty = GL_TRUE;
 }
 
