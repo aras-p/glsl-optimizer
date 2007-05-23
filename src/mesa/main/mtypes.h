@@ -1290,15 +1290,22 @@ struct gl_texture_format
 				 *   GL_DEPTH_COMPONENT.
 				 */
    GLenum DataType;		/**< GL_FLOAT or GL_UNSIGNED_NORMALIZED_ARB */
-   GLubyte RedBits;		/**< Bits per texel component */
-   GLubyte GreenBits;		/**< These are just rough approximations for */
-   GLubyte BlueBits;		/**< compressed texture formats. */
+
+   /**
+    * Bits per texel component.  These are just rough approximations
+    * for compressed texture formats.
+    */
+   /*@{*/
+   GLubyte RedBits;
+   GLubyte GreenBits;
+   GLubyte BlueBits;
    GLubyte AlphaBits;
    GLubyte LuminanceBits;
    GLubyte IntensityBits;
    GLubyte IndexBits;
    GLubyte DepthBits;
    GLubyte StencilBits; 	/**< GL_EXT_packed_depth_stencil */
+   /*@}*/
 
    GLuint TexelBytes;		/**< Bytes per texel, 0 if compressed format */
 
@@ -1490,7 +1497,7 @@ struct gl_texture_unit
    GLbitfield _GenBitT;
    GLbitfield _GenBitR;
    GLbitfield _GenBitQ;
-   GLbitfield _GenFlags;	/**< bitwise or of GenBit[STRQ] */
+   GLbitfield _GenFlags;	/**< bitwise or of _GenBit[STRQ] */
    GLfloat ObjectPlaneS[4];
    GLfloat ObjectPlaneT[4];
    GLfloat ObjectPlaneR[4];
@@ -1528,18 +1535,23 @@ struct gl_texture_unit
 
    struct gl_texture_object *_Current; /**< Points to really enabled tex obj */
 
-   struct gl_texture_object Saved1D;  /**< only used by glPush/PopAttrib */
+   /** These are used for glPush/PopAttrib */
+   /*@{*/
+   struct gl_texture_object Saved1D;
    struct gl_texture_object Saved2D;
    struct gl_texture_object Saved3D;
    struct gl_texture_object SavedCubeMap;
    struct gl_texture_object SavedRect;
    struct gl_texture_object Saved1DArray;
    struct gl_texture_object Saved2DArray;
+   /*@}*/
 
-   /* GL_SGI_texture_color_table */
+   /** GL_SGI_texture_color_table */
+   /*@{*/
    struct gl_color_table ColorTable;
    struct gl_color_table ProxyColorTable;
    GLboolean ColorTableEnabled;
+   /*@}*/
 };
 
 struct texenvprog_cache_item {
