@@ -1,6 +1,6 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.5.3
+ * Version:  7.1
  *
  * Copyright (C) 1999-2007  Brian Paul   All Rights Reserved.
  *
@@ -348,6 +348,8 @@ _mesa_PushAttrib(GLbitfield mask)
 	 ctx->Texture.Unit[u].Current3D->RefCount++;
 	 ctx->Texture.Unit[u].CurrentCubeMap->RefCount++;
 	 ctx->Texture.Unit[u].CurrentRect->RefCount++;
+	 ctx->Texture.Unit[u].Current1DArray->RefCount++;
+	 ctx->Texture.Unit[u].Current2DArray->RefCount++;
       }
       attr = MALLOC_STRUCT( gl_texture_attrib );
       MEMCPY( attr, &ctx->Texture, sizeof(struct gl_texture_attrib) );
@@ -813,6 +815,8 @@ pop_texture_group(GLcontext *ctx, const struct gl_texture_attrib *texAttrib)
       ctx->Texture.Unit[u].Current3D->RefCount--;
       ctx->Texture.Unit[u].CurrentCubeMap->RefCount--;
       ctx->Texture.Unit[u].CurrentRect->RefCount--;
+      ctx->Texture.Unit[u].Current1DArray->RefCount--;
+      ctx->Texture.Unit[u].Current2DArray->RefCount--;
    }
 }
 
