@@ -1,8 +1,8 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.1
+ * Version:  7.1
  *
- * Copyright (C) 1999-2004  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2007  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -26,9 +26,14 @@
  */
 
 
+/**
+ * This is where we handle assigning vertex colors based on front/back
+ * facing, compute polygon offset and handle glPolygonMode().
+ */
 static void TAG(triangle)(GLcontext *ctx, GLuint e0, GLuint e1, GLuint e2 )
 {
    struct vertex_buffer *VB = &TNL_CONTEXT(ctx)->vb;
+   SScontext *swsetup = SWSETUP_CONTEXT(ctx);
    SWvertex *verts = SWSETUP_CONTEXT(ctx)->verts;
    SWvertex *v[3];
    GLfloat z[3];
@@ -36,6 +41,7 @@ static void TAG(triangle)(GLcontext *ctx, GLuint e0, GLuint e1, GLuint e2 )
    GLenum mode = GL_FILL;
    GLuint facing = 0;
    GLchan saved_color[3][4];
+   GLfloat saved_col0[3][4];
    GLfloat saved_spec[3][4];
    GLfloat saved_index[3];
 
@@ -66,19 +72,41 @@ static void TAG(triangle)(GLcontext *ctx, GLuint e0, GLuint e1, GLuint e2 )
                   if (VB->ColorPtr[1]) {
                      GLfloat (*vbcolor)[4] = VB->ColorPtr[1]->data;
 
-                     COPY_CHAN4(saved_color[0], v[0]->color);
-                     COPY_CHAN4(saved_color[1], v[1]->color);
-                     COPY_CHAN4(saved_color[2], v[2]->color);
-
-                     if (VB->ColorPtr[1]->stride) {
-                        SS_COLOR(v[0]->color, vbcolor[e0]);
-                        SS_COLOR(v[1]->color, vbcolor[e1]);
-                        SS_COLOR(v[2]->color, vbcolor[e2]);
+                     if (swsetup->intColors) {
+                        COPY_CHAN4(saved_color[0], v[0]->color);
+                        COPY_CHAN4(saved_color[1], v[1]->color);
+                        COPY_CHAN4(saved_color[2], v[2]->color);
                      }
                      else {
-                        SS_COLOR(v[0]->color, vbcolor[0]);
-                        SS_COLOR(v[1]->color, vbcolor[0]);
-                        SS_COLOR(v[2]->color, vbcolor[0]);
+                        COPY_4V(saved_col0[0], v[0]->attrib[FRAG_ATTRIB_COL0]);
+                        COPY_4V(saved_col0[1], v[1]->attrib[FRAG_ATTRIB_COL0]);
+                        COPY_4V(saved_col0[2], v[2]->attrib[FRAG_ATTRIB_COL0]);
+                     }
+
+                     if (VB->ColorPtr[1]->stride) {
+                        if (swsetup->intColors) {
+                           SS_COLOR(v[0]->color, vbcolor[e0]);
+                           SS_COLOR(v[1]->color, vbcolor[e1]);
+                           SS_COLOR(v[2]->color, vbcolor[e2]);
+                        }
+                        else {
+                           COPY_4V(v[0]->attrib[FRAG_ATTRIB_COL0], vbcolor[e0]);
+                           COPY_4V(v[1]->attrib[FRAG_ATTRIB_COL0], vbcolor[e1]);
+                           COPY_4V(v[2]->attrib[FRAG_ATTRIB_COL0], vbcolor[e2]);
+                        }
+                     }
+                     else {
+                        /* flat shade */
+                        if (swsetup->intColors) {
+                           SS_COLOR(v[0]->color, vbcolor[0]);
+                           SS_COLOR(v[1]->color, vbcolor[0]);
+                           SS_COLOR(v[2]->color, vbcolor[0]);
+                        }
+                        else {
+                           COPY_4V(v[0]->attrib[FRAG_ATTRIB_COL0], vbcolor[0]);
+                           COPY_4V(v[1]->attrib[FRAG_ATTRIB_COL0], vbcolor[0]);
+                           COPY_4V(v[2]->attrib[FRAG_ATTRIB_COL0], vbcolor[0]);
+                        }
                      }
                   }
 
@@ -160,6 +188,9 @@ static void TAG(triangle)(GLcontext *ctx, GLuint e0, GLuint e1, GLuint e2 )
       _swrast_Triangle( ctx, v[0], v[1], v[2] );
    }
 
+   /*
+    * Restore original vertex colors, etc.
+    */
    if (IND & SS_OFFSET_BIT) {
       v[0]->attrib[FRAG_ATTRIB_WPOS][2] = z[0];
       v[1]->attrib[FRAG_ATTRIB_WPOS][2] = z[1];
@@ -170,9 +201,16 @@ static void TAG(triangle)(GLcontext *ctx, GLuint e0, GLuint e1, GLuint e2 )
       if (facing == 1) {
 	 if (IND & SS_RGBA_BIT) {
             if (VB->ColorPtr[1]) {
-               COPY_CHAN4(v[0]->color, saved_color[0]);
-               COPY_CHAN4(v[1]->color, saved_color[1]);
-               COPY_CHAN4(v[2]->color, saved_color[2]);
+               if (swsetup->intColors) {
+                  COPY_CHAN4(v[0]->color, saved_color[0]);
+                  COPY_CHAN4(v[1]->color, saved_color[1]);
+                  COPY_CHAN4(v[2]->color, saved_color[2]);
+               }
+               else {
+                  COPY_4V(v[0]->attrib[FRAG_ATTRIB_COL0], saved_col0[0]);
+                  COPY_4V(v[1]->attrib[FRAG_ATTRIB_COL0], saved_col0[1]);
+                  COPY_4V(v[2]->attrib[FRAG_ATTRIB_COL0], saved_col0[2]);
+               }
             }
 
 	    if (VB->SecondaryColorPtr[1]) {

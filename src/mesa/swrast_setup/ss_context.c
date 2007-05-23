@@ -1,6 +1,6 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.5.3
+ * Version:  7.1
  *
  * Copyright (C) 1999-2007  Brian Paul   All Rights Reserved.
  *
@@ -123,12 +123,13 @@ setup_vertex_format(GLcontext *ctx)
       EMIT_ATTR( _TNL_ATTRIB_POS, EMIT_4F_VIEWPORT, attrib[FRAG_ATTRIB_WPOS] );
 
       if (RENDERINPUTS_TEST( index_bitset, _TNL_ATTRIB_COLOR0 )) {
-         if (ctx->FragmentProgram._Current
-             || ctx->ATIFragmentShader._Enabled
-             || CHAN_TYPE == GL_FLOAT)
-            EMIT_ATTR( _TNL_ATTRIB_COLOR0, EMIT_4F, attrib[FRAG_ATTRIB_COL0]);
-         else
+         swsetup->intColors = !ctx->FragmentProgram._Current
+                           && !ctx->ATIFragmentShader._Enabled
+                           && CHAN_TYPE == GL_UNSIGNED_BYTE;
+         if (swsetup->intColors)
             EMIT_ATTR( _TNL_ATTRIB_COLOR0, EMIT_4CHAN_4F_RGBA, color );
+         else
+            EMIT_ATTR( _TNL_ATTRIB_COLOR0, EMIT_4F, attrib[FRAG_ATTRIB_COL0]);
       }
 
       if (RENDERINPUTS_TEST( index_bitset, _TNL_ATTRIB_COLOR1 )) {
