@@ -65,6 +65,9 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #include "drirenderbuffer.h"
 
+extern int future_hw_tcl_on;
+extern void _tnl_UpdateFixedFunctionProgram(GLcontext * ctx);
+
 static void r300BlendColor(GLcontext * ctx, const GLfloat cf[4])
 {
 	GLubyte color[4];
@@ -460,97 +463,6 @@ static void r300SetDepthState(GLcontext * ctx)
 	}
 
 	r300SetEarlyZState(ctx);
-}
-
-/**
- * Handle glEnable()/glDisable().
- *
- * \note Mesa already filters redundant calls to glEnable/glDisable.
- */
-static void r300Enable(GLcontext * ctx, GLenum cap, GLboolean state)
-{
-	r300ContextPtr r300 = R300_CONTEXT(ctx);
-
-	if (RADEON_DEBUG & DEBUG_STATE)
-		fprintf(stderr, "%s( %s = %s )\n", __FUNCTION__,
-			_mesa_lookup_enum_by_nr(cap),
-			state ? "GL_TRUE" : "GL_FALSE");
-
-	switch (cap) {
-		/* Fast track this one...
-		 */
-	case GL_TEXTURE_1D:
-	case GL_TEXTURE_2D:
-	case GL_TEXTURE_3D:
-		break;
-
-	case GL_FOG:
-		R300_STATECHANGE(r300, fogs);
-		if (state) {
-			r300->hw.fogs.cmd[R300_FOGS_STATE] |= R300_FOG_ENABLE;
-
-			ctx->Driver.Fogfv(ctx, GL_FOG_MODE, NULL);
-			ctx->Driver.Fogfv(ctx, GL_FOG_DENSITY,
-					  &ctx->Fog.Density);
-			ctx->Driver.Fogfv(ctx, GL_FOG_START, &ctx->Fog.Start);
-			ctx->Driver.Fogfv(ctx, GL_FOG_END, &ctx->Fog.End);
-			ctx->Driver.Fogfv(ctx, GL_FOG_COLOR, ctx->Fog.Color);
-		} else {
-			r300->hw.fogs.cmd[R300_FOGS_STATE] &= ~R300_FOG_ENABLE;
-		}
-
-		break;
-
-	case GL_ALPHA_TEST:
-		r300SetAlphaState(ctx);
-		break;
-
-	case GL_BLEND:
-	case GL_COLOR_LOGIC_OP:
-		r300SetBlendState(ctx);
-		break;
-
-	case GL_DEPTH_TEST:
-		r300SetDepthState(ctx);
-		break;
-
-	case GL_STENCIL_TEST:
-		if (r300->state.stencil.hw_stencil) {
-			R300_STATECHANGE(r300, zs);
-			if (state) {
-				r300->hw.zs.cmd[R300_ZS_CNTL_0] |=
-				    R300_RB3D_STENCIL_ENABLE;
-			} else {
-				r300->hw.zs.cmd[R300_ZS_CNTL_0] &=
-				    ~R300_RB3D_STENCIL_ENABLE;
-			}
-		} else {
-#if R200_MERGED
-			FALLBACK(&r300->radeon, RADEON_FALLBACK_STENCIL, state);
-#endif
-		}
-		break;
-
-	case GL_CULL_FACE:
-		r300UpdateCulling(ctx);
-		break;
-
-	case GL_POLYGON_OFFSET_POINT:
-	case GL_POLYGON_OFFSET_LINE:
-		break;
-
-	case GL_POLYGON_OFFSET_FILL:
-		R300_STATECHANGE(r300, occlusion_cntl);
-		if (state) {
-			r300->hw.occlusion_cntl.cmd[1] |= (3 << 0);
-		} else {
-			r300->hw.occlusion_cntl.cmd[1] &= ~(3 << 0);
-		}
-		break;
-	default:
-		radeonEnable(ctx, cap, state);
-		return;
-	}
 }
 
 static void r300UpdatePolygonMode(GLcontext * ctx)
@@ -1800,6 +1712,96 @@ static void r300SetupVertexShader(r300ContextPtr rmesa)
 }
 
 /**
+ * Enable/Disable states.
+ *
+ * \note Mesa already filters redundant calls to this function.
+ */
+static void r300Enable(GLcontext * ctx, GLenum cap, GLboolean state)
+{
+	r300ContextPtr r300 = R300_CONTEXT(ctx);
+
+	if (RADEON_DEBUG & DEBUG_STATE)
+		fprintf(stderr, "%s( %s = %s )\n", __FUNCTION__,
+			_mesa_lookup_enum_by_nr(cap),
+			state ? "GL_TRUE" : "GL_FALSE");
+
+	switch (cap) {
+		/* Fast track this one...
+		 */
+	case GL_TEXTURE_1D:
+	case GL_TEXTURE_2D:
+	case GL_TEXTURE_3D:
+		break;
+
+	case GL_FOG:
+		R300_STATECHANGE(r300, fogs);
+		if (state) {
+			r300->hw.fogs.cmd[R300_FOGS_STATE] |= R300_FOG_ENABLE;
+
+			r300Fogfv(ctx, GL_FOG_MODE, NULL);
+			r300Fogfv(ctx, GL_FOG_DENSITY, &ctx->Fog.Density);
+			r300Fogfv(ctx, GL_FOG_START, &ctx->Fog.Start);
+			r300Fogfv(ctx, GL_FOG_END, &ctx->Fog.End);
+			r300Fogfv(ctx, GL_FOG_COLOR, ctx->Fog.Color);
+		} else {
+			r300->hw.fogs.cmd[R300_FOGS_STATE] &= ~R300_FOG_ENABLE;
+		}
+
+		break;
+
+	case GL_ALPHA_TEST:
+		r300SetAlphaState(ctx);
+		break;
+
+	case GL_BLEND:
+	case GL_COLOR_LOGIC_OP:
+		r300SetBlendState(ctx);
+		break;
+
+	case GL_DEPTH_TEST:
+		r300SetDepthState(ctx);
+		break;
+
+	case GL_STENCIL_TEST:
+		if (r300->state.stencil.hw_stencil) {
+			R300_STATECHANGE(r300, zs);
+			if (state) {
+				r300->hw.zs.cmd[R300_ZS_CNTL_0] |=
+				    R300_RB3D_STENCIL_ENABLE;
+			} else {
+				r300->hw.zs.cmd[R300_ZS_CNTL_0] &=
+				    ~R300_RB3D_STENCIL_ENABLE;
+			}
+		} else {
+#if R200_MERGED
+			FALLBACK(&r300->radeon, RADEON_FALLBACK_STENCIL, state);
+#endif
+		}
+		break;
+
+	case GL_CULL_FACE:
+		r300UpdateCulling(ctx);
+		break;
+
+	case GL_POLYGON_OFFSET_POINT:
+	case GL_POLYGON_OFFSET_LINE:
+		break;
+
+	case GL_POLYGON_OFFSET_FILL:
+		R300_STATECHANGE(r300, occlusion_cntl);
+		if (state) {
+			r300->hw.occlusion_cntl.cmd[1] |= (3 << 0);
+		} else {
+			r300->hw.occlusion_cntl.cmd[1] &= ~(3 << 0);
+		}
+		break;
+	default:
+		radeonEnable(ctx, cap, state);
+		return;
+	}
+}
+
+/**
  * Completely recalculates hardware state based on the Mesa state.
  */
 static void r300ResetHwState(r300ContextPtr r300)
@@ -1970,12 +1972,12 @@ static void r300ResetHwState(r300ContextPtr r300)
 	r300->hw.unk46A4.cmd[5] = 0x00000001;
 
 	r300Enable(ctx, GL_FOG, ctx->Fog.Enabled);
-	ctx->Driver.Fogfv(ctx, GL_FOG_MODE, NULL);
-	ctx->Driver.Fogfv(ctx, GL_FOG_DENSITY, &ctx->Fog.Density);
-	ctx->Driver.Fogfv(ctx, GL_FOG_START, &ctx->Fog.Start);
-	ctx->Driver.Fogfv(ctx, GL_FOG_END, &ctx->Fog.End);
-	ctx->Driver.Fogfv(ctx, GL_FOG_COLOR, ctx->Fog.Color);
-	ctx->Driver.Fogfv(ctx, GL_FOG_COORDINATE_SOURCE_EXT, NULL);
+	r300Fogfv(ctx, GL_FOG_MODE, NULL);
+	r300Fogfv(ctx, GL_FOG_DENSITY, &ctx->Fog.Density);
+	r300Fogfv(ctx, GL_FOG_START, &ctx->Fog.Start);
+	r300Fogfv(ctx, GL_FOG_END, &ctx->Fog.End);
+	r300Fogfv(ctx, GL_FOG_COLOR, ctx->Fog.Color);
+	r300Fogfv(ctx, GL_FOG_COORDINATE_SOURCE_EXT, NULL);
 
 	r300->hw.at.cmd[R300_AT_UNKNOWN] = 0;
 	r300->hw.unk4BD8.cmd[1] = 0;
@@ -2067,10 +2069,6 @@ static void r300ResetHwState(r300ContextPtr r300)
 	r300->hw.all_dirty = GL_TRUE;
 }
 
-
-extern void _tnl_UpdateFixedFunctionProgram(GLcontext * ctx);
-
-extern int future_hw_tcl_on;
 void r300UpdateShaders(r300ContextPtr rmesa)
 {
 	GLcontext *ctx;
