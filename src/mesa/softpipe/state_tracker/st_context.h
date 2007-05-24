@@ -73,6 +73,7 @@ struct st_context
       struct softpipe_clip_state   clip;
       struct softpipe_scissor_rect scissor;
       struct softpipe_poly_stipple poly_stipple;
+      struct softpipe_stencil_state stencil;
    } state;
 
    struct {

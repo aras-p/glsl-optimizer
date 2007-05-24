@@ -52,6 +52,9 @@ struct softpipe_context {
    void (*set_scissor_rect)( struct softpipe_context *,
 			     const struct softpipe_scissor_rect * );
 
+   void (*set_stencil_state)( struct softpipe_context *,
+                              const struct softpipe_stencil_state * );
+
    void (*set_blend_state)( struct softpipe_context *,
                             const struct softpipe_blend_state * );
 

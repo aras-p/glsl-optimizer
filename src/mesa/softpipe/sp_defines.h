@@ -71,4 +71,22 @@
 #define SP_LOGICOP_OR               14
 #define SP_LOGICOP_SET              15  
 
+#define SP_STENCIL_FUNC_NEVER    0
+#define SP_STENCIL_FUNC_LESS     1
+#define SP_STENCIL_FUNC_EQUAL    2
+#define SP_STENCIL_FUNC_LEQUAL   3
+#define SP_STENCIL_FUNC_GREATER  4
+#define SP_STENCIL_FUNC_NOTEQUAL 5
+#define SP_STENCIL_FUNC_GEQUAL   6
+#define SP_STENCIL_FUNC_ALWAYS   7
+
+#define SP_STENCIL_OP_KEEP       0
+#define SP_STENCIL_OP_ZERO       1
+#define SP_STENCIL_OP_REPLACE    2
+#define SP_STENCIL_OP_INCR       3
+#define SP_STENCIL_OP_DECR       4
+#define SP_STENCIL_OP_INCR_WRAP  5
+#define SP_STENCIL_OP_DECR_WRAP  6
+#define SP_STENCIL_OP_INVERT     7
+
 #endif

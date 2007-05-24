@@ -49,6 +49,7 @@ static const struct st_tracked_state *atoms[] =
    &st_update_viewport,
    &st_update_scissor,
    &st_update_blend,
+   &st_update_stencil,
    /* will be patched out at runtime */
 /*    &st_update_constants */
 };

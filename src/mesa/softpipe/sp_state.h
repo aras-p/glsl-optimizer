@@ -120,6 +120,24 @@ struct softpipe_blend_color {
 };
 
 
+struct softpipe_stencil_state {
+   GLuint front_enabled:1;
+   GLuint front_func:3;     /**< SP_STENCIL_FUNC_x */
+   GLuint front_fail_op:3;  /**< SP_STENCIL_OP_x */
+   GLuint front_zpass_op:3; /**< SP_STENCIL_OP_x */
+   GLuint front_zfail_op:3; /**< SP_STENCIL_OP_x */
+   GLuint back_enabled:1;
+   GLuint back_func:3;
+   GLuint back_fail_op:3;
+   GLuint back_zpass_op:3;
+   GLuint back_zfail_op:3;
+   GLint ref_value[2];      /**< [0] = front, [1] = back */
+   GLuint value_mask[2];
+   GLuint write_mask[2];
+   GLuint clear_value;
+};
+
+
 /* This will change for hardware softpipes...
  */
 struct softpipe_surface {
