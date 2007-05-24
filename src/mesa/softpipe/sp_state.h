@@ -81,8 +81,10 @@ struct softpipe_scissor_rect {
 };
 
 
+#define SP_MAX_CLIP_PLANES 6
+
 struct softpipe_clip_state {
-   GLfloat ucp[6][4];
+   GLfloat ucp[SP_MAX_CLIP_PLANES][4];
    GLuint nr;
 };
 

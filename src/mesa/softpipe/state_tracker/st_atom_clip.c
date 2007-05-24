@@ -45,7 +45,7 @@ static void update_clip( struct st_context *st )
 
    memset(&clip, 0, sizeof(clip));
 
-   for (i = 0; i < 6; i++) {
+   for (i = 0; i < SP_MAX_CLIP_PLANES; i++) {
       if (st->ctx->Transform.ClipPlanesEnabled & (1 << i)) {
 	 memcpy(clip.ucp[clip.nr], 
 		st->ctx->Transform._ClipUserPlane[i], 
