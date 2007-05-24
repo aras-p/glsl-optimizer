@@ -102,18 +102,17 @@ struct softpipe_constant_buffer {
 
 struct softpipe_blend_state {   
    GLuint blend_enable:1; 
-   GLuint ia_blend_enable:1;
 
-   GLuint ia_dest_blend_factor:5; 
-   GLuint ia_src_blend_factor:5; 
-   GLuint ia_blend_function:3; 
+   GLuint rgb_func:3; 
+   GLuint rgb_src_factor:5; 
+   GLuint rgb_dst_factor:5; 
 
-   GLuint dest_blend_factor:5; 
-   GLuint src_blend_factor:5; 
-   GLuint blend_function:3; 
+   GLuint alpha_func:3;
+   GLuint alpha_src_factor:5;
+   GLuint alpha_dst_factor:5;
 
    GLuint logicop_enable:1; 
-   GLuint logicop_func:4; 
+   GLuint logicop_func:4;
 };
 
 struct softpipe_blend_color {
