@@ -578,4 +578,11 @@ extern void xmesa_register_swrast_functions( GLcontext *ctx );
 #define ENABLE_EXT_timer_query 0 /* may not have 64-bit GLuint64EXT */
 #endif
 
+
+GLboolean xmesa_get_cbuf_details( GLcontext *ctx,
+				  void **ptr,
+				  GLuint *cpp,
+				  GLint *stride,
+				  GLuint *format );
+
 #endif

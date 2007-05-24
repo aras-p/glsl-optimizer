@@ -1303,6 +1303,17 @@ static void put_row_rgb_TRUEDITHER_ximage( RGB_SPAN_ARGS )
 }
 
 
+
+static void *get_pointer_4_ximage( GLcontext *ctx, 
+				   struct gl_renderbuffer *rb, 
+				   GLint x, GLint y )
+{
+   GET_XRB(xrb);
+   return PIXEL_ADDR4(xrb, x, y);
+}
+
+
+
 /*
  * Write a span of PF_8A8B8G8R-format pixels to an ximage.
  */
@@ -4593,6 +4604,7 @@ xmesa_set_renderbuffer_funcs(struct xmesa_renderbuffer *xrb,
          xrb->Base.PutMonoRow    = put_mono_row_8A8B8G8R_ximage;
          xrb->Base.PutValues     = put_values_8A8B8G8R_ximage;
          xrb->Base.PutMonoValues = put_mono_values_8A8B8G8R_ximage;
+	 xrb->Base.GetPointer    = get_pointer_4_ximage;
       }
       break;
    case PF_8A8R8G8B:
@@ -4609,6 +4621,7 @@ xmesa_set_renderbuffer_funcs(struct xmesa_renderbuffer *xrb,
          xrb->Base.PutMonoRow    = put_mono_row_8A8R8G8B_ximage;
          xrb->Base.PutValues     = put_values_8A8R8G8B_ximage;
          xrb->Base.PutMonoValues = put_mono_values_8A8R8G8B_ximage;
+	 xrb->Base.GetPointer    = get_pointer_4_ximage;
       }
       break;
    case PF_8R8G8B:

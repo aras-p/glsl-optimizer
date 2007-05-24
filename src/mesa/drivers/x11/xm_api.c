@@ -80,6 +80,9 @@
 #include "tnl/t_pipeline.h"
 #include "drivers/common/driverfuncs.h"
 
+#include "softpipe/state_tracker/st_public.h"
+#include "softpipe/generic/g_context.h"
+
 /**
  * Global X driver lock
  */
@@ -1556,6 +1559,10 @@ XMesaContext XMesaCreateContext( XMesaVisual v, XMesaContext share_list )
    xmesa_register_swrast_functions( mesaCtx );
    _swsetup_Wakeup(mesaCtx);
 
+
+   st_create_context( mesaCtx,
+		      generic_create() );
+   
    return c;
 }
 
@@ -1758,6 +1765,8 @@ PUBLIC
 GLboolean XMesaMakeCurrent2( XMesaContext c, XMesaBuffer drawBuffer,
                              XMesaBuffer readBuffer )
 {
+   _mesa_printf("%s %p %p %p\n", __FUNCTION__, drawBuffer, readBuffer );
+   
    if (c) {
       if (!drawBuffer || !readBuffer)
          return GL_FALSE;  /* must specify buffers! */

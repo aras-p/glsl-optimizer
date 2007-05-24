@@ -1443,6 +1443,46 @@ do {                                   \
 #endif
 
 
+
+GLboolean xmesa_get_cbuf_details( GLcontext *ctx,
+				  void **ptr,
+				  GLuint *cpp,
+				  GLint *stride,
+				  GLuint *format )
+{
+   XMesaContext xmesa = XMESA_CONTEXT(ctx);
+   struct gl_framebuffer *fb = ctx->DrawBuffer;
+   struct gl_renderbuffer *crb = fb->_ColorDrawBuffers[0][0];
+   struct xmesa_renderbuffer *xrb = xmesa_renderbuffer(crb->Wrapped);
+
+   *ptr = crb->GetPointer(ctx, crb, 0, 0);
+   *stride = ((GLubyte *)crb->GetPointer(ctx, crb, 0, 1) - 
+	      (GLubyte *)crb->GetPointer(ctx, crb, 0, 0));
+
+   if (!ptr) 
+      goto bad;
+
+   switch (xmesa->pixelformat) {
+   case PF_8A8B8G8R:
+   case PF_8A8R8G8B:
+      *format = 1;		/* whatever */
+      *cpp = 4;
+      break;
+   default:
+      goto bad;
+   }
+
+   return GL_TRUE;
+
+ bad:
+   *ptr = NULL;
+   *stride = 0;
+   *format = 0;
+   return GL_FALSE;   
+}
+
+
+
 /**
  * Return pointer to line drawing function, or NULL if we should use a
  * swrast fallback.

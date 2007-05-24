@@ -53,6 +53,8 @@
 #include "tnl/tnl.h"
 #include "tnl/t_context.h"
 
+#include "softpipe/generic/g_context.h"
+#include "softpipe/state_tracker/st_public.h"
 
 
 /*
@@ -827,6 +829,9 @@ xmesa_update_state( GLcontext *ctx, GLbitfield new_state )
    _tnl_InvalidateState( ctx, new_state );
    _vbo_InvalidateState( ctx, new_state );
    _swsetup_InvalidateState( ctx, new_state );
+
+   st_invalidate_state( ctx, new_state );
+
 
    if (ctx->DrawBuffer->Name != 0)
       return;

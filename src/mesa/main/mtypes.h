@@ -126,6 +126,7 @@ struct gl_pixelstore_attrib;
 struct gl_texture_format;
 struct gl_texture_image;
 struct gl_texture_object;
+struct st_context;
 typedef struct __GLcontextRec GLcontext;
 typedef struct __GLcontextModesRec GLvisual;
 typedef struct gl_framebuffer GLframebuffer;
@@ -3069,7 +3070,7 @@ struct __GLcontextRec
    void *swsetup_context;
    void *swtnl_context;
    void *swtnl_im;
-   void *acache_context;
+   struct st_context *st;
    void *aelt_context;
    /*@}*/
 };
