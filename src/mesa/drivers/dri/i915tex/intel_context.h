@@ -91,6 +91,10 @@ struct intel_texture_object
     * regions will be copied to this region and the old storage freed.
     */
    struct intel_mipmap_tree *mt;
+
+   GLboolean imageOverride;
+   GLint depthOverride;
+   GLuint pitchOverride;
 };
 
 
@@ -388,7 +392,6 @@ extern GLboolean intelInitContext(struct intel_context *intel,
 
 extern void intelGetLock(struct intel_context *intel, GLuint flags);
 
-extern void intelInitState(GLcontext * ctx);
 extern void intelFinish(GLcontext * ctx);
 extern void intelFlush(GLcontext * ctx);
 

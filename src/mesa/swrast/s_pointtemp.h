@@ -40,7 +40,6 @@
  *   RGBA = do rgba instead of color index
  *   SMOOTH = do antialiasing
  *   ATTRIBS = general attributes (texcoords, etc)
- *   SPECULAR = do separate specular color
  *   LARGE = do points with diameter > 1 pixel
  *   ATTENUATE = compute point size attenuation
  *   SPRITE = GL_ARB_point_sprite / GL_NV_point_sprite
@@ -78,13 +77,8 @@ NAME ( GLcontext *ctx, const SWvertex *vert )
    const GLchan blue  = vert->color[2];
    const GLchan alpha = vert->color[3];
 #endif
-#if FLAGS & SPECULAR
-   const GLchan specRed   = vert->specular[0];
-   const GLchan specGreen = vert->specular[1];
-   const GLchan specBlue  = vert->specular[2];
-#endif
 #if FLAGS & INDEX
-   const GLuint colorIndex = (GLuint) vert->index; /* XXX round? */
+   const GLuint colorIndex = (GLuint) vert->attrib[FRAG_ATTRIB_CI][0]; /* XXX round? */
 #endif
 #if FLAGS & ATTRIBS
    GLfloat attrib[FRAG_ATTRIB_MAX][4]; /* texture & varying */
@@ -92,10 +86,22 @@ NAME ( GLcontext *ctx, const SWvertex *vert )
    SWcontext *swrast = SWRAST_CONTEXT(ctx);
    SWspan *span = &(swrast->PointSpan);
 
+   /*
+   printf("%s  %g %g %g %g\n", __FUNCTION__,
+          vert->attrib[FRAG_ATTRIB_COL1][0],
+          vert->attrib[FRAG_ATTRIB_COL1][1],
+          vert->attrib[FRAG_ATTRIB_COL1][2],
+          vert->attrib[FRAG_ATTRIB_COL1][3]);
+   if ( vert->attrib[FRAG_ATTRIB_COL1][0] == 0.0 &&
+        vert->attrib[FRAG_ATTRIB_COL1][1] == 1.0 &&
+        vert->attrib[FRAG_ATTRIB_COL1][2] == 0.0)
+      foo();
+   */
+
    /* Cull primitives with malformed coordinates.
     */
    {
-      float tmp = vert->win[0] + vert->win[1];
+      float tmp = vert->attrib[FRAG_ATTRIB_WPOS][0] + vert->attrib[FRAG_ATTRIB_WPOS][1];
       if (IS_INF_OR_NAN(tmp))
 	 return;
    }
@@ -103,49 +109,37 @@ NAME ( GLcontext *ctx, const SWvertex *vert )
    /*
     * Span init
     */
-   span->interpMask = SPAN_FOG;
+   span->interpMask = 0;
    span->arrayMask = SPAN_XY | SPAN_Z;
-   span->attrStart[FRAG_ATTRIB_FOGC][0] = vert->attrib[FRAG_ATTRIB_FOGC][0];
-   span->attrStepX[FRAG_ATTRIB_FOGC][0] = 0.0;
-   span->attrStepY[FRAG_ATTRIB_FOGC][0] = 0.0;
 #if FLAGS & RGBA
    span->arrayMask |= SPAN_RGBA;
-#endif
-#if FLAGS & SPECULAR
-   span->arrayMask |= SPAN_SPEC;
 #endif
 #if FLAGS & INDEX
    span->arrayMask |= SPAN_INDEX;
 #endif
 #if FLAGS & ATTRIBS
-   span->arrayMask |= (SPAN_TEXTURE | SPAN_LAMBDA);
-   if (ctx->FragmentProgram._Active) {
-      /* Don't divide texture s,t,r by q (use TXP to do that) */
-      ATTRIB_LOOP_BEGIN
-         COPY_4V(attrib[attr], vert->attrib[attr]);
-      ATTRIB_LOOP_END
-   }
-   else {
-      /* Divide texture s,t,r by q here */
-      ATTRIB_LOOP_BEGIN
-         const GLfloat q = vert->attrib[attr][3];
-         const GLfloat invQ = (q == 0.0F || q == 1.0F) ? 1.0F : (1.0F / q);
-         attrib[attr][0] = vert->attrib[attr][0] * invQ;
-         attrib[attr][1] = vert->attrib[attr][1] * invQ;
-         attrib[attr][2] = vert->attrib[attr][2] * invQ;
-         attrib[attr][3] = q;
-      ATTRIB_LOOP_END
-   }
+   span->arrayMask |= SPAN_LAMBDA;
+
+   /* we're filling in the attrib arrays: */
+   span->arrayAttribs = swrast->_ActiveAttribMask;
+
+   ATTRIB_LOOP_BEGIN
+      COPY_4V(attrib[attr], vert->attrib[attr]);
+   ATTRIB_LOOP_END
+
    /* need these for fragment programs */
    span->attrStart[FRAG_ATTRIB_WPOS][3] = 1.0F;
    span->attrStepX[FRAG_ATTRIB_WPOS][3] = 0.0F;
    span->attrStepY[FRAG_ATTRIB_WPOS][3] = 0.0F;
+#else
+   assert((swrast->_ActiveAttribMask & FRAG_BIT_COL1) == 0);
 #endif
+
 #if FLAGS & SMOOTH
    span->arrayMask |= SPAN_COVERAGE;
 #endif
 #if FLAGS & SPRITE
-   span->arrayMask |= (SPAN_TEXTURE | SPAN_LAMBDA);
+   span->arrayMask |= SPAN_LAMBDA;
 #endif
 
    /* Compute point size if not known to be one */
@@ -189,7 +183,7 @@ NAME ( GLcontext *ctx, const SWvertex *vert )
    {{
       GLint x, y;
       const GLfloat radius = 0.5F * size;
-      const GLuint z = (GLuint) (vert->win[2] + 0.5F);
+      const GLuint z = (GLuint) (vert->attrib[FRAG_ATTRIB_WPOS][2] + 0.5F);
       GLuint count;
 #if FLAGS & SMOOTH
       const GLfloat rmin = radius - 0.7071F;  /* 0.7071 = sqrt(2)/2 */
@@ -197,10 +191,10 @@ NAME ( GLcontext *ctx, const SWvertex *vert )
       const GLfloat rmin2 = MAX2(0.0F, rmin * rmin);
       const GLfloat rmax2 = rmax * rmax;
       const GLfloat cscale = 1.0F / (rmax2 - rmin2);
-      const GLint xmin = (GLint) (vert->win[0] - radius);
-      const GLint xmax = (GLint) (vert->win[0] + radius);
-      const GLint ymin = (GLint) (vert->win[1] - radius);
-      const GLint ymax = (GLint) (vert->win[1] + radius);
+      const GLint xmin = (GLint) (vert->attrib[FRAG_ATTRIB_WPOS][0] - radius);
+      const GLint xmax = (GLint) (vert->attrib[FRAG_ATTRIB_WPOS][0] + radius);
+      const GLint ymin = (GLint) (vert->attrib[FRAG_ATTRIB_WPOS][1] - radius);
+      const GLint ymax = (GLint) (vert->attrib[FRAG_ATTRIB_WPOS][1] + radius);
 #else
       /* non-smooth */
       GLint xmin, xmax, ymin, ymax;
@@ -210,16 +204,16 @@ NAME ( GLcontext *ctx, const SWvertex *vert )
       iRadius = iSize / 2;
       if (iSize & 1) {
          /* odd size */
-         xmin = (GLint) (vert->win[0] - iRadius);
-         xmax = (GLint) (vert->win[0] + iRadius);
-         ymin = (GLint) (vert->win[1] - iRadius);
-         ymax = (GLint) (vert->win[1] + iRadius);
+         xmin = (GLint) (vert->attrib[FRAG_ATTRIB_WPOS][0] - iRadius);
+         xmax = (GLint) (vert->attrib[FRAG_ATTRIB_WPOS][0] + iRadius);
+         ymin = (GLint) (vert->attrib[FRAG_ATTRIB_WPOS][1] - iRadius);
+         ymax = (GLint) (vert->attrib[FRAG_ATTRIB_WPOS][1] + iRadius);
       }
       else {
          /* even size */
-         xmin = (GLint) vert->win[0] - iRadius + 1;
+         xmin = (GLint) vert->attrib[FRAG_ATTRIB_WPOS][0] - iRadius + 1;
          xmax = xmin + iSize - 1;
-         ymin = (GLint) vert->win[1] - iRadius + 1;
+         ymin = (GLint) vert->attrib[FRAG_ATTRIB_WPOS][1] - iRadius + 1;
          ymax = ymin + iSize - 1;
       }
 #endif /*SMOOTH*/
@@ -264,29 +258,26 @@ NAME ( GLcontext *ctx, const SWvertex *vert )
             span->array->rgba[count][BCOMP] = blue;
             span->array->rgba[count][ACOMP] = alpha;
 #endif
-#if FLAGS & SPECULAR
-            span->array->spec[count][RCOMP] = specRed;
-            span->array->spec[count][GCOMP] = specGreen;
-            span->array->spec[count][BCOMP] = specBlue;
-#endif
 #if FLAGS & INDEX
             span->array->index[count] = colorIndex;
 #endif
 #if FLAGS & ATTRIBS
             ATTRIB_LOOP_BEGIN
                COPY_4V(span->array->attribs[attr][count], attrib[attr]);
-               if (attr < FRAG_ATTRIB_VAR0 && attr >= FRAG_ATTRIB_TEX0) {
+            /**
+               if (attr < FRAG_ATTRIB_VAR0) {
                   const GLuint u = attr - FRAG_ATTRIB_TEX0;
                   span->array->lambda[u][count] = 0.0;
                }
+            **/
             ATTRIB_LOOP_END
 #endif
 
 #if FLAGS & SMOOTH
             /* compute coverage */
             {
-               const GLfloat dx = x - vert->win[0] + 0.5F;
-               const GLfloat dy = y - vert->win[1] + 0.5F;
+               const GLfloat dx = x - vert->attrib[FRAG_ATTRIB_WPOS][0] + 0.5F;
+               const GLfloat dy = y - vert->attrib[FRAG_ATTRIB_WPOS][1] + 0.5F;
                const GLfloat dist2 = dx * dx + dy * dy;
                if (dist2 < rmax2) {
                   if (dist2 >= rmin2) {
@@ -327,12 +318,12 @@ NAME ( GLcontext *ctx, const SWvertex *vert )
                GLuint attr = FRAG_ATTRIB_TEX0 + u;
                if (ctx->Texture.Unit[u]._ReallyEnabled) {
                   if (ctx->Point.CoordReplace[u]) {
-                     GLfloat s = 0.5F + (x + 0.5F - vert->win[0]) / size;
+                     GLfloat s = 0.5F + (x + 0.5F - vert->attrib[FRAG_ATTRIB_WPOS][0]) / size;
                      GLfloat t, r;
                      if (ctx->Point.SpriteOrigin == GL_LOWER_LEFT)
-                        t = 0.5F + (y + 0.5F - vert->win[1]) / size;
+                        t = 0.5F + (y + 0.5F - vert->attrib[FRAG_ATTRIB_WPOS][1]) / size;
                      else /* GL_UPPER_LEFT */
-                        t = 0.5F - (y + 0.5F - vert->win[1]) / size;
+                        t = 0.5F - (y + 0.5F - vert->attrib[FRAG_ATTRIB_WPOS][1]) / size;
                      if (ctx->Point.SpriteRMode == GL_ZERO)
                         r = 0.0F;
                      else if (ctx->Point.SpriteRMode == GL_S)
@@ -389,11 +380,6 @@ NAME ( GLcontext *ctx, const SWvertex *vert )
       span->array->rgba[count][BCOMP] = blue;
       span->array->rgba[count][ACOMP] = alpha;
 #endif
-#if FLAGS & SPECULAR
-      span->array->spec[count][RCOMP] = specRed;
-      span->array->spec[count][GCOMP] = specGreen;
-      span->array->spec[count][BCOMP] = specBlue;
-#endif
 #if FLAGS & INDEX
       span->array->index[count] = colorIndex;
 #endif
@@ -403,9 +389,10 @@ NAME ( GLcontext *ctx, const SWvertex *vert )
       ATTRIB_LOOP_END
 #endif
 
-      span->array->x[count] = (GLint) vert->win[0];
-      span->array->y[count] = (GLint) vert->win[1];
-      span->array->z[count] = (GLint) (vert->win[2] + 0.5F);
+      span->array->x[count] = (GLint) vert->attrib[FRAG_ATTRIB_WPOS][0];
+      span->array->y[count] = (GLint) vert->attrib[FRAG_ATTRIB_WPOS][1];
+      span->array->z[count] = (GLint) (vert->attrib[FRAG_ATTRIB_WPOS][2] + 0.5F);
+
       span->end = count + 1;
    }}
 

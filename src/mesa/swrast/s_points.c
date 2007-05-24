@@ -34,7 +34,6 @@
 #include "s_span.h"
 
 
-
 #define RGBA       0x1
 #define INDEX      0x2
 #define SMOOTH     0x4
@@ -154,16 +153,26 @@
 #include "s_pointtemp.h"
 
 
-
-void _swrast_add_spec_terms_point( GLcontext *ctx,
-				   const SWvertex *v0 )
+void
+_swrast_add_spec_terms_point(GLcontext *ctx, const SWvertex *v0)
 {
-   SWvertex *ncv0 = (SWvertex *)v0;
-   GLchan c[1][4];
-   COPY_CHAN4( c[0], ncv0->color );
-   ACC_3V( ncv0->color, ncv0->specular );
-   SWRAST_CONTEXT(ctx)->SpecPoint( ctx, ncv0 );
-   COPY_CHAN4( ncv0->color, c[0] );
+   SWvertex *ncv0 = (SWvertex *) v0;
+   GLfloat rSum, gSum, bSum;
+   GLchan cSave[4];
+
+   /* save */
+   COPY_CHAN4( cSave, ncv0->color );
+   /* sum */
+   rSum = CHAN_TO_FLOAT(ncv0->color[0]) + ncv0->attrib[FRAG_ATTRIB_COL1][0];
+   gSum = CHAN_TO_FLOAT(ncv0->color[1]) + ncv0->attrib[FRAG_ATTRIB_COL1][1];
+   bSum = CHAN_TO_FLOAT(ncv0->color[2]) + ncv0->attrib[FRAG_ATTRIB_COL1][2];
+   UNCLAMPED_FLOAT_TO_CHAN(ncv0->color[0], rSum);
+   UNCLAMPED_FLOAT_TO_CHAN(ncv0->color[1], gSum);
+   UNCLAMPED_FLOAT_TO_CHAN(ncv0->color[2], bSum);
+   /* draw */
+   SWRAST_CONTEXT(ctx)->SpecPoint(ctx, ncv0);
+   /* restore */
+   COPY_CHAN4(ncv0->color, cSave);
 }
 
 
@@ -196,6 +205,9 @@ _swrast_choose_point( GLcontext *ctx )
 {
    SWcontext *swrast = SWRAST_CONTEXT(ctx);
    GLboolean rgbMode = ctx->Visual.rgbMode;
+   GLboolean specular = (ctx->Fog.ColorSumEnabled ||
+                         (ctx->Light.Enabled &&
+                          ctx->Light.Model.ColorControl == GL_SEPARATE_SPECULAR_COLOR));
 
    if (ctx->RenderMode==GL_RENDER) {
       if (ctx->Point.PointSprite) {
@@ -242,8 +254,10 @@ _swrast_choose_point( GLcontext *ctx )
             USE(atten_general_ci_point);
          }
       }
-      else if (ctx->Texture._EnabledCoordUnits && rgbMode) {
-         /* textured */
+      else if ((ctx->Texture._EnabledCoordUnits
+                || specular
+                || swrast->_FogEnabled) && rgbMode) {
+         /* textured, fogged */
          USE(textured_rgba_point);
       }
       else if (ctx->Point._Size != 1.0) {
@@ -258,6 +272,7 @@ _swrast_choose_point( GLcontext *ctx )
       else {
          /* single pixel points */
          if (rgbMode) {
+            assert((swrast->_ActiveAttribMask & FRAG_BIT_COL1) == 0);
             USE(size1_rgba_point);
          }
          else {

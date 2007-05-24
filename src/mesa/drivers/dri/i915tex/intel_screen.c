@@ -764,7 +764,8 @@ static const struct __DriverAPIRec intelAPI = {
    .WaitForMSC = driWaitForMSC32,
    .WaitForSBC = NULL,
    .SwapBuffersMSC = NULL,
-   .CopySubBuffer = intelCopySubBuffer
+   .CopySubBuffer = intelCopySubBuffer,
+   .setTexOffset = intelSetTexOffset,
 };
 
 

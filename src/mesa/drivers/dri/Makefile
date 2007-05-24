@@ -32,7 +32,7 @@ install:
 clean:
 	@for dir in $(DRI_DIRS) ; do \
 		if [ -d $$dir ] ; then \
-			(cd $$dir && $(MAKE) clean ; \
+			(cd $$dir && $(MAKE) clean) ; \
 		fi \
 	done
 	-rm -f common/*.o

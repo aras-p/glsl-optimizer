@@ -132,6 +132,7 @@ typedef struct
    GLboolean _PreferPixelFog;    /* Compute fog blend factor per fragment? */
    GLboolean _AnyTextureCombine;
    GLboolean _FogEnabled;
+   GLboolean _DeferredTexture;
    GLenum _FogMode;  /* either GL_FOG_MODE or fragment program's fog mode */
 
    /** Multiple render targets */
@@ -140,8 +141,12 @@ typedef struct
 
    /** List/array of the fragment attributes to interpolate */
    GLuint _ActiveAttribs[FRAG_ATTRIB_MAX];
+   /** Same info, but as a bitmask */
+   GLbitfield _ActiveAttribMask;
    /** Number of fragment attributes to interpolate */
    GLuint _NumActiveAttribs;
+   /** Indicates how each attrib is to be interpolated (lines/tris) */
+   GLenum _InterpMode[FRAG_ATTRIB_MAX]; /* GL_FLAT or GL_SMOOTH (for now) */
 
    /* Accum buffer temporaries.
     */

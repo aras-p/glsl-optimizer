@@ -47,6 +47,7 @@
 #include "tnl/tnl.h"
 #include "vbo/vbo_context.h"
 #include "swrast/swrast.h"
+#include "swrast_setup/swrast_setup.h"
 
 
 

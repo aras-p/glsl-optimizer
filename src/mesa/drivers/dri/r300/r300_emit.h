@@ -59,7 +59,7 @@
 
 #define CP_PACKET0(reg, n)	(RADEON_CP_PACKET0 | ((n)<<16) | ((reg)>>2))
 
-static __inline__ uint32_t cmdpacket0(int reg, int count)
+static inline uint32_t cmdpacket0(int reg, int count)
 {
 	drm_r300_cmd_header_t cmd;
 
@@ -71,7 +71,7 @@ static __inline__ uint32_t cmdpacket0(int reg, int count)
 	return cmd.u;
 }
 
-static __inline__ uint32_t cmdvpu(int addr, int count)
+static inline uint32_t cmdvpu(int addr, int count)
 {
 	drm_r300_cmd_header_t cmd;
 
@@ -83,7 +83,7 @@ static __inline__ uint32_t cmdvpu(int addr, int count)
 	return cmd.u;
 }
 
-static __inline__ uint32_t cmdpacket3(int packet)
+static inline uint32_t cmdpacket3(int packet)
 {
 	drm_r300_cmd_header_t cmd;
 
@@ -93,7 +93,7 @@ static __inline__ uint32_t cmdpacket3(int packet)
 	return cmd.u;
 }
 
-static __inline__ uint32_t cmdcpdelay(unsigned short count)
+static inline uint32_t cmdcpdelay(unsigned short count)
 {
 	drm_r300_cmd_header_t cmd;
 
@@ -103,7 +103,7 @@ static __inline__ uint32_t cmdcpdelay(unsigned short count)
 	return cmd.u;
 }
 
-static __inline__ uint32_t cmdwait(unsigned char flags)
+static inline uint32_t cmdwait(unsigned char flags)
 {
 	drm_r300_cmd_header_t cmd;
 
@@ -113,7 +113,7 @@ static __inline__ uint32_t cmdwait(unsigned char flags)
 	return cmd.u;
 }
 
-static __inline__ uint32_t cmdpacify(void)
+static inline uint32_t cmdpacify(void)
 {
 	drm_r300_cmd_header_t cmd;
 

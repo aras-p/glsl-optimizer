@@ -65,6 +65,9 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #include "drirenderbuffer.h"
 
+extern int future_hw_tcl_on;
+extern void _tnl_UpdateFixedFunctionProgram(GLcontext * ctx);
+
 static void r300BlendColor(GLcontext * ctx, const GLfloat cf[4])
 {
 	GLubyte color[4];
@@ -460,97 +463,6 @@ static void r300SetDepthState(GLcontext * ctx)
 	}
 
 	r300SetEarlyZState(ctx);
-}
-
-/**
- * Handle glEnable()/glDisable().
- *
- * \note Mesa already filters redundant calls to glEnable/glDisable.
- */
-static void r300Enable(GLcontext * ctx, GLenum cap, GLboolean state)
-{
-	r300ContextPtr r300 = R300_CONTEXT(ctx);
-
-	if (RADEON_DEBUG & DEBUG_STATE)
-		fprintf(stderr, "%s( %s = %s )\n", __FUNCTION__,
-			_mesa_lookup_enum_by_nr(cap),
-			state ? "GL_TRUE" : "GL_FALSE");
-
-	switch (cap) {
-		/* Fast track this one...
-		 */
-	case GL_TEXTURE_1D:
-	case GL_TEXTURE_2D:
-	case GL_TEXTURE_3D:
-		break;
-
-	case GL_FOG:
-		R300_STATECHANGE(r300, fogs);
-		if (state) {
-			r300->hw.fogs.cmd[R300_FOGS_STATE] |= R300_FOG_ENABLE;
-
-			ctx->Driver.Fogfv(ctx, GL_FOG_MODE, NULL);
-			ctx->Driver.Fogfv(ctx, GL_FOG_DENSITY,
-					  &ctx->Fog.Density);
-			ctx->Driver.Fogfv(ctx, GL_FOG_START, &ctx->Fog.Start);
-			ctx->Driver.Fogfv(ctx, GL_FOG_END, &ctx->Fog.End);
-			ctx->Driver.Fogfv(ctx, GL_FOG_COLOR, ctx->Fog.Color);
-		} else {
-			r300->hw.fogs.cmd[R300_FOGS_STATE] &= ~R300_FOG_ENABLE;
-		}
-
-		break;
-
-	case GL_ALPHA_TEST:
-		r300SetAlphaState(ctx);
-		break;
-
-	case GL_BLEND:
-	case GL_COLOR_LOGIC_OP:
-		r300SetBlendState(ctx);
-		break;
-
-	case GL_DEPTH_TEST:
-		r300SetDepthState(ctx);
-		break;
-
-	case GL_STENCIL_TEST:
-		if (r300->state.stencil.hw_stencil) {
-			R300_STATECHANGE(r300, zs);
-			if (state) {
-				r300->hw.zs.cmd[R300_ZS_CNTL_0] |=
-				    R300_RB3D_STENCIL_ENABLE;
-			} else {
-				r300->hw.zs.cmd[R300_ZS_CNTL_0] &=
-				    ~R300_RB3D_STENCIL_ENABLE;
-			}
-		} else {
-#if R200_MERGED
-			FALLBACK(&r300->radeon, RADEON_FALLBACK_STENCIL, state);
-#endif
-		}
-		break;
-
-	case GL_CULL_FACE:
-		r300UpdateCulling(ctx);
-		break;
-
-	case GL_POLYGON_OFFSET_POINT:
-	case GL_POLYGON_OFFSET_LINE:
-		break;
-
-	case GL_POLYGON_OFFSET_FILL:
-		R300_STATECHANGE(r300, occlusion_cntl);
-		if (state) {
-			r300->hw.occlusion_cntl.cmd[1] |= (3 << 0);
-		} else {
-			r300->hw.occlusion_cntl.cmd[1] &= ~(3 << 0);
-		}
-		break;
-	default:
-		radeonEnable(ctx, cap, state);
-		return;
-	}
 }
 
 static void r300UpdatePolygonMode(GLcontext * ctx)
@@ -1442,17 +1354,6 @@ union r300_outputs_written {
 static void r300SetupRSUnit(GLcontext * ctx)
 {
 	r300ContextPtr r300 = R300_CONTEXT(ctx);
-	/* I'm still unsure if these are needed */
-	GLuint interp_magic[8] = {
-		0x00,
-		R300_RS_INTERP_1_UNKNOWN,
-		R300_RS_INTERP_2_UNKNOWN,
-		R300_RS_INTERP_3_UNKNOWN,
-		0x00,
-		0x00,
-		0x00,
-		0x00
-	};
 	union r300_outputs_written OutputsWritten;
 	GLuint InputsRead;
 	int fp_reg, high_rr;
@@ -1498,8 +1399,7 @@ static void r300SetupRSUnit(GLcontext * ctx)
 	for (i = 0; i < ctx->Const.MaxTextureUnits; i++) {
 		r300->hw.ri.cmd[R300_RI_INTERP_0 + i] = 0
 		    | R300_RS_INTERP_USED
-		    | (in_texcoords << R300_RS_INTERP_SRC_SHIFT)
-		    | interp_magic[i];
+		    | (in_texcoords << R300_RS_INTERP_SRC_SHIFT);
 
 		r300->hw.rr.cmd[R300_RR_ROUTE_0 + fp_reg] = 0;
 		if (InputsRead & (FRAG_BIT_TEX0 << i)) {
@@ -1812,6 +1712,96 @@ static void r300SetupVertexShader(r300ContextPtr rmesa)
 }
 
 /**
+ * Enable/Disable states.
+ *
+ * \note Mesa already filters redundant calls to this function.
+ */
+static void r300Enable(GLcontext * ctx, GLenum cap, GLboolean state)
+{
+	r300ContextPtr r300 = R300_CONTEXT(ctx);
+
+	if (RADEON_DEBUG & DEBUG_STATE)
+		fprintf(stderr, "%s( %s = %s )\n", __FUNCTION__,
+			_mesa_lookup_enum_by_nr(cap),
+			state ? "GL_TRUE" : "GL_FALSE");
+
+	switch (cap) {
+		/* Fast track this one...
+		 */
+	case GL_TEXTURE_1D:
+	case GL_TEXTURE_2D:
+	case GL_TEXTURE_3D:
+		break;
+
+	case GL_FOG:
+		R300_STATECHANGE(r300, fogs);
+		if (state) {
+			r300->hw.fogs.cmd[R300_FOGS_STATE] |= R300_FOG_ENABLE;
+
+			r300Fogfv(ctx, GL_FOG_MODE, NULL);
+			r300Fogfv(ctx, GL_FOG_DENSITY, &ctx->Fog.Density);
+			r300Fogfv(ctx, GL_FOG_START, &ctx->Fog.Start);
+			r300Fogfv(ctx, GL_FOG_END, &ctx->Fog.End);
+			r300Fogfv(ctx, GL_FOG_COLOR, ctx->Fog.Color);
+		} else {
+			r300->hw.fogs.cmd[R300_FOGS_STATE] &= ~R300_FOG_ENABLE;
+		}
+
+		break;
+
+	case GL_ALPHA_TEST:
+		r300SetAlphaState(ctx);
+		break;
+
+	case GL_BLEND:
+	case GL_COLOR_LOGIC_OP:
+		r300SetBlendState(ctx);
+		break;
+
+	case GL_DEPTH_TEST:
+		r300SetDepthState(ctx);
+		break;
+
+	case GL_STENCIL_TEST:
+		if (r300->state.stencil.hw_stencil) {
+			R300_STATECHANGE(r300, zs);
+			if (state) {
+				r300->hw.zs.cmd[R300_ZS_CNTL_0] |=
+				    R300_RB3D_STENCIL_ENABLE;
+			} else {
+				r300->hw.zs.cmd[R300_ZS_CNTL_0] &=
+				    ~R300_RB3D_STENCIL_ENABLE;
+			}
+		} else {
+#if R200_MERGED
+			FALLBACK(&r300->radeon, RADEON_FALLBACK_STENCIL, state);
+#endif
+		}
+		break;
+
+	case GL_CULL_FACE:
+		r300UpdateCulling(ctx);
+		break;
+
+	case GL_POLYGON_OFFSET_POINT:
+	case GL_POLYGON_OFFSET_LINE:
+		break;
+
+	case GL_POLYGON_OFFSET_FILL:
+		R300_STATECHANGE(r300, occlusion_cntl);
+		if (state) {
+			r300->hw.occlusion_cntl.cmd[1] |= (3 << 0);
+		} else {
+			r300->hw.occlusion_cntl.cmd[1] &= ~(3 << 0);
+		}
+		break;
+	default:
+		radeonEnable(ctx, cap, state);
+		return;
+	}
+}
+
+/**
  * Completely recalculates hardware state based on the Mesa state.
  */
 static void r300ResetHwState(r300ContextPtr r300)
@@ -1824,12 +1814,6 @@ static void r300ResetHwState(r300ContextPtr r300)
 
 	if (RADEON_DEBUG & DEBUG_STATE)
 		fprintf(stderr, "%s\n", __FUNCTION__);
-
-	/* This is a place to initialize registers which
-	   have bitfields accessed by different functions
-	   and not all bits are used */
-
-	/* go and compute register values from GL state */
 
 	r300UpdateWindow(ctx);
 
@@ -1860,13 +1844,11 @@ static void r300ResetHwState(r300ContextPtr r300)
 	r300AlphaFunc(ctx, ctx->Color.AlphaFunc, ctx->Color.AlphaRef);
 	r300Enable(ctx, GL_ALPHA_TEST, ctx->Color.AlphaEnabled);
 
-	/* Initialize magic registers
-	   TODO : learn what they really do, or get rid of
-	   those we don't have to touch */
 	if (!has_tcl)
 		r300->hw.vap_cntl.cmd[1] = 0x0014045a;
 	else
 		r300->hw.vap_cntl.cmd[1] = 0x0030045A;	//0x0030065a /* Dangerous */
+
 	r300->hw.vte.cmd[1] = R300_VPORT_X_SCALE_ENA
 	    | R300_VPORT_X_OFFSET_ENA
 	    | R300_VPORT_Y_SCALE_ENA
@@ -1895,11 +1877,15 @@ static void r300ResetHwState(r300ContextPtr r300)
 	r300->hw.unk2220.cmd[3] = r300PackFloat32(1.0);
 	r300->hw.unk2220.cmd[4] = r300PackFloat32(1.0);
 
-	/* what about other chips than r300 or rv350??? */
-	if (r300->radeon.radeonScreen->chip_family == CHIP_FAMILY_R300)
+	/* XXX: Other families? */
+	switch (r300->radeon.radeonScreen->chip_family) {
+	case CHIP_FAMILY_R300:
 		r300->hw.unk2288.cmd[1] = R300_2288_R300;
-	else
+		break;
+	default:
 		r300->hw.unk2288.cmd[1] = R300_2288_RV350;
+		break;
+	}
 
 	r300->hw.gb_enable.cmd[1] = R300_GB_POINT_STUFF_ENABLE
 	    | R300_GB_LINE_STUFF_ENABLE
@@ -1907,26 +1893,35 @@ static void r300ResetHwState(r300ContextPtr r300)
 
 	r300->hw.gb_misc.cmd[R300_GB_MISC_MSPOS_0] = 0x66666666;
 	r300->hw.gb_misc.cmd[R300_GB_MISC_MSPOS_1] = 0x06666666;
-	if ((r300->radeon.radeonScreen->chip_family == CHIP_FAMILY_R300) ||
-	    (r300->radeon.radeonScreen->chip_family == CHIP_FAMILY_R350))
-		r300->hw.gb_misc.cmd[R300_GB_MISC_TILE_CONFIG] =
-		    R300_GB_TILE_ENABLE | R300_GB_TILE_PIPE_COUNT_R300 |
-		    R300_GB_TILE_SIZE_16;
-	else if (r300->radeon.radeonScreen->chip_family == CHIP_FAMILY_RV410)
-		r300->hw.gb_misc.cmd[R300_GB_MISC_TILE_CONFIG] =
-		    R300_GB_TILE_ENABLE | R300_GB_TILE_PIPE_COUNT_RV410 |
-		    R300_GB_TILE_SIZE_16;
-	else if (r300->radeon.radeonScreen->chip_family == CHIP_FAMILY_R420)
-		r300->hw.gb_misc.cmd[R300_GB_MISC_TILE_CONFIG] =
-		    R300_GB_TILE_ENABLE | R300_GB_TILE_PIPE_COUNT_R420 |
-		    R300_GB_TILE_SIZE_16;
-	else
-		r300->hw.gb_misc.cmd[R300_GB_MISC_TILE_CONFIG] =
-		    R300_GB_TILE_ENABLE | R300_GB_TILE_PIPE_COUNT_RV300 |
-		    R300_GB_TILE_SIZE_16;
-	/* set to 0 when fog is disabled? */
+
+	/* XXX: Other families? */
+	r300->hw.gb_misc.cmd[R300_GB_MISC_TILE_CONFIG] =
+	    R300_GB_TILE_ENABLE | R300_GB_TILE_SIZE_16;
+	switch (r300->radeon.radeonScreen->chip_family) {
+	case CHIP_FAMILY_R300:
+	case CHIP_FAMILY_R350:
+		r300->hw.gb_misc.cmd[R300_GB_MISC_TILE_CONFIG] |=
+		    R300_GB_TILE_PIPE_COUNT_R300;
+		break;
+	case CHIP_FAMILY_RV410:
+		r300->hw.gb_misc.cmd[R300_GB_MISC_TILE_CONFIG] |=
+		    R300_GB_TILE_PIPE_COUNT_RV410;
+		break;
+	case CHIP_FAMILY_R420:
+		r300->hw.gb_misc.cmd[R300_GB_MISC_TILE_CONFIG] |=
+		    R300_GB_TILE_PIPE_COUNT_R420;
+		break;
+	default:
+		r300->hw.gb_misc.cmd[R300_GB_MISC_TILE_CONFIG] |=
+		    R300_GB_TILE_PIPE_COUNT_RV300;
+		break;
+	}
+
+	/* XXX: set to 0 when fog is disabled? */
 	r300->hw.gb_misc.cmd[R300_GB_MISC_SELECT] = R300_GB_FOG_SELECT_1_1_W;
-	r300->hw.gb_misc.cmd[R300_GB_MISC_AA_CONFIG] = R300_AA_DISABLE;	/* No antialiasing */
+
+	/* XXX: Enable anti-aliasing? */
+	r300->hw.gb_misc.cmd[R300_GB_MISC_AA_CONFIG] = R300_AA_DISABLE;
 
 	r300->hw.unk4200.cmd[1] = r300PackFloat32(0.0);
 	r300->hw.unk4200.cmd[2] = r300PackFloat32(0.0);
@@ -1977,12 +1972,12 @@ static void r300ResetHwState(r300ContextPtr r300)
 	r300->hw.unk46A4.cmd[5] = 0x00000001;
 
 	r300Enable(ctx, GL_FOG, ctx->Fog.Enabled);
-	ctx->Driver.Fogfv(ctx, GL_FOG_MODE, NULL);
-	ctx->Driver.Fogfv(ctx, GL_FOG_DENSITY, &ctx->Fog.Density);
-	ctx->Driver.Fogfv(ctx, GL_FOG_START, &ctx->Fog.Start);
-	ctx->Driver.Fogfv(ctx, GL_FOG_END, &ctx->Fog.End);
-	ctx->Driver.Fogfv(ctx, GL_FOG_COLOR, ctx->Fog.Color);
-	ctx->Driver.Fogfv(ctx, GL_FOG_COORDINATE_SOURCE_EXT, NULL);
+	r300Fogfv(ctx, GL_FOG_MODE, NULL);
+	r300Fogfv(ctx, GL_FOG_DENSITY, &ctx->Fog.Density);
+	r300Fogfv(ctx, GL_FOG_START, &ctx->Fog.Start);
+	r300Fogfv(ctx, GL_FOG_END, &ctx->Fog.End);
+	r300Fogfv(ctx, GL_FOG_COLOR, ctx->Fog.Color);
+	r300Fogfv(ctx, GL_FOG_COORDINATE_SOURCE_EXT, NULL);
 
 	r300->hw.at.cmd[R300_AT_UNKNOWN] = 0;
 	r300->hw.unk4BD8.cmd[1] = 0;
@@ -2047,7 +2042,7 @@ static void r300ResetHwState(r300ContextPtr r300)
 	r300->hw.zb.cmd[R300_ZB_PITCH] = r300->radeon.radeonScreen->depthPitch;
 
 	if (r300->radeon.sarea->tiling_enabled) {
-		/* Turn off when clearing buffers ? */
+		/* XXX: Turn off when clearing buffers ? */
 		r300->hw.zb.cmd[R300_ZB_PITCH] |= R300_DEPTH_TILE_ENABLE;
 
 		if (ctx->Visual.depthBits == 24)
@@ -2070,14 +2065,10 @@ static void r300ResetHwState(r300ContextPtr r300)
 		r300->hw.vps.cmd[R300_VPS_POINTSIZE] = r300PackFloat32(1.0);
 		r300->hw.vps.cmd[R300_VPS_ZERO_3] = 0;
 	}
-//END: TODO
+
 	r300->hw.all_dirty = GL_TRUE;
 }
 
-
-extern void _tnl_UpdateFixedFunctionProgram(GLcontext * ctx);
-
-extern int future_hw_tcl_on;
 void r300UpdateShaders(r300ContextPtr rmesa)
 {
 	GLcontext *ctx;

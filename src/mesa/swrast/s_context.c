@@ -189,6 +189,37 @@ _swrast_update_texture_env( GLcontext *ctx )
 
 
 /**
+ * Determine if we can defer texturing/shading until after Z/stencil
+ * testing.  This potentially allows us to skip texturing/shading for
+ * lots of fragments.
+ */
+static void
+_swrast_update_deferred_texture(GLcontext *ctx)
+{
+   SWcontext *swrast = SWRAST_CONTEXT(ctx);
+   if (ctx->Color.AlphaEnabled) {
+      /* alpha test depends on post-texture/shader colors */
+      swrast->_DeferredTexture = GL_FALSE;
+   }
+   else {
+      const struct gl_fragment_program *fprog
+         = ctx->FragmentProgram._Current;
+      if (fprog && (fprog->Base.OutputsWritten & (1 << FRAG_RESULT_DEPR))) {
+         /* Z comes from fragment program/shader */
+         swrast->_DeferredTexture = GL_FALSE;
+      }
+      else if (ctx->Query.CurrentOcclusionObject) {
+         /* occlusion query depends on shader discard/kill results */
+         swrast->_DeferredTexture = GL_FALSE;
+      }
+      else {
+         swrast->_DeferredTexture = GL_TRUE;
+      }
+   }
+}
+
+
+/**
  * Update swrast->_FogColor and swrast->_FogEnable values.
  */
 static void
@@ -323,7 +354,6 @@ _swrast_validate_line( GLcontext *ctx, const SWvertex *v0, const SWvertex *v1 )
       swrast->SpecLine = swrast->Line;
       swrast->Line = _swrast_add_spec_terms_line;
    }
-
 
    swrast->Line( ctx, v0, v1 );
 }
@@ -505,50 +535,59 @@ _swrast_update_texture_samplers(GLcontext *ctx)
 
 
 /**
- * Update swrast->_ActiveAttribs and swrast->_NumActiveAttribs
+ * Update swrast->_ActiveAttribs, swrast->_NumActiveAttribs, swrast->_ActiveAtttribMask.
  */
 static void
 _swrast_update_fragment_attribs(GLcontext *ctx)
 {
    SWcontext *swrast = SWRAST_CONTEXT(ctx);
    GLuint attribsMask;
-   
+
+   /*
+    * Compute _ActiveAttribsMask = which fragment attributes are needed.
+    */
    if (ctx->FragmentProgram._Current) {
+      /* fragment program/shader */
       attribsMask = ctx->FragmentProgram._Current->Base.InputsRead;
+      attribsMask &= ~FRAG_BIT_WPOS; /* WPOS is always handled specially */
+   }
+   else if (ctx->ATIFragmentShader._Enabled) {
+      attribsMask = ~0;  /* XXX fix me */
    }
    else {
-      GLuint u;
+      /* fixed function */
       attribsMask = 0x0;
 
-#if 0 /* not yet */
-      if (ctx->Depth.Test)
-         attribsMask |= FRAG_BIT_WPOS;
-      if (NEED_SECONDARY_COLOR(ctx))
-         attribsMask |= FRAG_BIT_COL1;
+#if CHAN_TYPE == GL_FLOAT
+      attribsMask |= FRAG_BIT_COL0;
 #endif
+
+      if (ctx->Fog.ColorSumEnabled ||
+          (ctx->Light.Enabled &&
+           ctx->Light.Model.ColorControl == GL_SEPARATE_SPECULAR_COLOR)) {
+         attribsMask |= FRAG_BIT_COL1;
+      }
+
       if (swrast->_FogEnabled)
          attribsMask |= FRAG_BIT_FOGC;
 
-      for (u = 0; u < ctx->Const.MaxTextureUnits; u++) {
-         if (ctx->Texture.Unit[u]._ReallyEnabled) {
-            attribsMask |= FRAG_BIT_TEX(u);
-         }
-      }
+      attribsMask |= (ctx->Texture._EnabledUnits << FRAG_ATTRIB_TEX0);
    }
 
-   /* don't want to interpolate these generic attribs just yet */
-   /* XXX temporary */
-   attribsMask &= ~(FRAG_BIT_WPOS |
-                    FRAG_BIT_COL0 |
-                    FRAG_BIT_COL1 |
-                    FRAG_BIT_FOGC);
+   swrast->_ActiveAttribMask = attribsMask;
 
    /* Update _ActiveAttribs[] list */
    {
       GLuint i, num = 0;
       for (i = 0; i < FRAG_ATTRIB_MAX; i++) {
-         if (attribsMask & (1 << i))
+         if (attribsMask & (1 << i)) {
             swrast->_ActiveAttribs[num++] = i;
+            /* how should this attribute be interpolated? */
+            if (i == FRAG_ATTRIB_COL0 || i == FRAG_ATTRIB_COL1)
+               swrast->_InterpMode[i] = ctx->Light.ShadeModel;
+            else
+               swrast->_InterpMode[i] = GL_SMOOTH;
+         }
       }
       swrast->_NumActiveAttribs = num;
    }
@@ -627,14 +666,19 @@ _swrast_validate_derived( GLcontext *ctx )
       if (swrast->NewState & (_NEW_TEXTURE | _NEW_PROGRAM))
          _swrast_update_texture_samplers( ctx );
 
-      if (swrast->NewState & (_NEW_TEXTURE | _NEW_PROGRAM))
-         _swrast_validate_texture_images( ctx );
+      if (swrast->NewState & (_NEW_TEXTURE | _NEW_PROGRAM)) {
+         _swrast_validate_texture_images(ctx);
+         if (swrast->NewState & (_NEW_COLOR)) {
+            _swrast_update_deferred_texture(ctx);
+         }
+      }
 
       if (swrast->NewState & _SWRAST_NEW_RASTERMASK)
  	 _swrast_update_rasterflags( ctx );
 
       if (swrast->NewState & (_NEW_DEPTH |
                               _NEW_FOG |
+                              _NEW_LIGHT |
                               _NEW_PROGRAM |
                               _NEW_TEXTURE))
          _swrast_update_fragment_attribs(ctx);
@@ -787,14 +831,11 @@ _swrast_CreateContext( GLcontext *ctx )
    }
    swrast->SpanArrays->ChanType = CHAN_TYPE;
 #if CHAN_TYPE == GL_UNSIGNED_BYTE
-   swrast->SpanArrays->rgba = swrast->SpanArrays->color.sz1.rgba;
-   swrast->SpanArrays->spec = swrast->SpanArrays->color.sz1.spec;
+   swrast->SpanArrays->rgba = swrast->SpanArrays->rgba8;
 #elif CHAN_TYPE == GL_UNSIGNED_SHORT
-   swrast->SpanArrays->rgba = swrast->SpanArrays->color.sz2.rgba;
-   swrast->SpanArrays->spec = swrast->SpanArrays->color.sz2.spec;
+   swrast->SpanArrays->rgba = swrast->SpanArrays->rgba16;
 #else
    swrast->SpanArrays->rgba = swrast->SpanArrays->attribs[FRAG_ATTRIB_COL0];
-   swrast->SpanArrays->spec = swrast->SpanArrays->attribs[FRAG_ATTRIB_COL1];
 #endif
 
    /* init point span buffer */
@@ -896,7 +937,10 @@ _swrast_print_vertex( GLcontext *ctx, const SWvertex *v )
 
    if (SWRAST_DEBUG_VERTICES) {
       _mesa_debug(ctx, "win %f %f %f %f\n",
-                  v->win[0], v->win[1], v->win[2], v->win[3]);
+                  v->attrib[FRAG_ATTRIB_WPOS][0],
+                  v->attrib[FRAG_ATTRIB_WPOS][1],
+                  v->attrib[FRAG_ATTRIB_WPOS][2],
+                  v->attrib[FRAG_ATTRIB_WPOS][3]);
 
       for (i = 0 ; i < ctx->Const.MaxTextureCoordUnits ; i++)
 	 if (ctx->Texture.Unit[i]._ReallyEnabled)
@@ -909,18 +953,17 @@ _swrast_print_vertex( GLcontext *ctx, const SWvertex *v )
 #if CHAN_TYPE == GL_FLOAT
       _mesa_debug(ctx, "color %f %f %f %f\n",
                   v->color[0], v->color[1], v->color[2], v->color[3]);
-      _mesa_debug(ctx, "spec %f %f %f %f\n",
-                  v->specular[0], v->specular[1],
-                  v->specular[2], v->specular[3]);
 #else
       _mesa_debug(ctx, "color %d %d %d %d\n",
                   v->color[0], v->color[1], v->color[2], v->color[3]);
-      _mesa_debug(ctx, "spec %d %d %d %d\n",
-                  v->specular[0], v->specular[1],
-                  v->specular[2], v->specular[3]);
 #endif
+      _mesa_debug(ctx, "spec %g %g %g %g\n",
+                  v->attrib[FRAG_ATTRIB_COL1][0],
+                  v->attrib[FRAG_ATTRIB_COL1][1],
+                  v->attrib[FRAG_ATTRIB_COL1][2],
+                  v->attrib[FRAG_ATTRIB_COL1][3]);
       _mesa_debug(ctx, "fog %f\n", v->attrib[FRAG_ATTRIB_FOGC][0]);
-      _mesa_debug(ctx, "index %d\n", v->index);
+      _mesa_debug(ctx, "index %d\n", v->attrib[FRAG_ATTRIB_CI][0]);
       _mesa_debug(ctx, "pointsize %f\n", v->pointSize);
       _mesa_debug(ctx, "\n");
    }

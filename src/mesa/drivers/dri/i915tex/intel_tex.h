@@ -135,6 +135,9 @@ void intelGetCompressedTexImage(GLcontext *ctx, GLenum target, GLint level,
 				const struct gl_texture_object *texObj,
 				const struct gl_texture_image *texImage);
 
+void intelSetTexOffset(__DRIcontext *pDRICtx, GLint texname,
+		       unsigned long long offset, GLint depth, GLuint pitch);
+
 GLuint intel_finalize_mipmap_tree(struct intel_context *intel, GLuint unit);
 
 void intel_tex_map_images(struct intel_context *intel,

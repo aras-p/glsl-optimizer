@@ -6596,9 +6596,6 @@ execute_list(GLcontext *ctx, GLuint list)
             CALL_EvalPoint2(ctx->Exec, (n[1].i, n[2].i));
             break;
 
-
-
-
          case OPCODE_CONTINUE:
             n = (Node *) n[1].next;
             break;
@@ -8406,8 +8403,6 @@ print_list(GLcontext *ctx, GLuint list)
          case OPCODE_EVAL_P2:
             _mesa_printf("EVAL_P2 %d %d\n", n[1].i, n[2].i);
             break;
-
-
 
             /*
              * meta opcodes/commands

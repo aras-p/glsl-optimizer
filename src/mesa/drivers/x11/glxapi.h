@@ -196,6 +196,11 @@ struct _glxapi_table {
 
    /*** GLX_MESA_agp_offset ***/
    GLuint (*GetAGPOffsetMESA)( const GLvoid *pointer );
+
+   /*** GLX_EXT_texture_from_pixmap ***/
+   void (*BindTexImageEXT)(Display *dpy, GLXDrawable drawable, int buffer,
+                           const int *attrib_list);
+   void (*ReleaseTexImageEXT)(Display *dpy, GLXDrawable drawable, int buffer);
 };
 
 

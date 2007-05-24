@@ -42,10 +42,6 @@
 #include "mtypes.h"
 
 
-#ifdef __VMS
-#define _mesa_sprintf sprintf
-#endif
-
 /**********************************************************************/
 /** \name Internal functions */
 /*@{*/
@@ -110,7 +106,6 @@ _mesa_initialize_texture_object( struct gl_texture_object *obj,
 
    _mesa_bzero(obj, sizeof(*obj));
    /* init the non-zero fields */
-   _glthread_INIT_MUTEX(obj->Mutex);
    obj->RefCount = 1;
    obj->Name = name;
    obj->Target = target;
@@ -140,13 +135,13 @@ _mesa_initialize_texture_object( struct gl_texture_object *obj,
    obj->CompareFunc = GL_LEQUAL;       /* ARB_shadow */
    obj->DepthMode = GL_LUMINANCE;      /* ARB_depth_texture */
    obj->ShadowAmbient = 0.0F;          /* ARB/SGIX_shadow_ambient */
-   _mesa_init_colortable(&obj->Palette);
 }
 
 
 /**
  * Deallocate a texture object struct.  It should have already been
  * removed from the texture object pool.
+ * Called via ctx->Driver.DeleteTexture() if not overriden by a driver.
  *
  * \param shared the shared GL state to which the object belongs.
  * \param texOjb the texture object to delete.
@@ -168,9 +163,6 @@ _mesa_delete_texture_object( GLcontext *ctx, struct gl_texture_object *texObj )
 	 }
       }
    }
-
-   /* destroy the mutex -- it may have allocated memory (eg on bsd) */
-   _glthread_DESTROY_MUTEX(texObj->Mutex);
 
    /* free this object */
    _mesa_free(texObj);
@@ -532,13 +524,6 @@ _mesa_test_texobj_completeness( const GLcontext *ctx,
 /** \name API functions */
 /*@{*/
 
-/**
- * Texture name generation lock.
- *
- * Used by _mesa_GenTextures() to guarantee that the generation and allocation
- * of texture IDs is atomic.
- */
-_glthread_DECLARE_STATIC_MUTEX(GenTexturesLock);
 
 /**
  * Generate texture names.
@@ -548,9 +533,9 @@ _glthread_DECLARE_STATIC_MUTEX(GenTexturesLock);
  *
  * \sa glGenTextures().
  *
- * While holding the GenTexturesLock lock, calls _mesa_HashFindFreeKeyBlock()
- * to find a block of free texture IDs which are stored in \p textures.
- * Corresponding empty texture objects are also generated.
+ * Calls _mesa_HashFindFreeKeyBlock() to find a block of free texture
+ * IDs which are stored in \p textures.  Corresponding empty texture
+ * objects are also generated.
  */ 
 void GLAPIENTRY
 _mesa_GenTextures( GLsizei n, GLuint *textures )
@@ -571,7 +556,7 @@ _mesa_GenTextures( GLsizei n, GLuint *textures )
    /*
     * This must be atomic (generation and allocation of texture IDs)
     */
-   _glthread_LOCK_MUTEX(GenTexturesLock);
+   _glthread_LOCK_MUTEX(ctx->Shared->Mutex);
 
    first = _mesa_HashFindFreeKeyBlock(ctx->Shared->TexObjects, n);
 
@@ -582,20 +567,18 @@ _mesa_GenTextures( GLsizei n, GLuint *textures )
       GLenum target = 0;
       texObj = (*ctx->Driver.NewTextureObject)( ctx, name, target);
       if (!texObj) {
-         _glthread_UNLOCK_MUTEX(GenTexturesLock);
+         _glthread_UNLOCK_MUTEX(ctx->Shared->Mutex);
          _mesa_error(ctx, GL_OUT_OF_MEMORY, "glGenTextures");
          return;
       }
 
       /* insert into hash table */
-      _glthread_LOCK_MUTEX(ctx->Shared->Mutex);
       _mesa_HashInsert(ctx->Shared->TexObjects, texObj->Name, texObj);
-      _glthread_UNLOCK_MUTEX(ctx->Shared->Mutex);
 
       textures[i] = name;
    }
 
-   _glthread_UNLOCK_MUTEX(GenTexturesLock);
+   _glthread_UNLOCK_MUTEX(ctx->Shared->Mutex);
 }
 
 
@@ -1097,14 +1080,21 @@ _mesa_IsTexture( GLuint texture )
    return t && t->Target;
 }
 
-/* Simplest implementation of texture locking: Grab the a new mutex in
+
+/**
+ * Simplest implementation of texture locking: Grab the a new mutex in
  * the shared context.  Examine the shared context state timestamp and
  * if there has been a change, set the appropriate bits in
  * ctx->NewState.
  *
- * See also _mesa_lock/unlock_texture in texobj.h
+ * This is used to deal with synchronizing things when a texture object
+ * is used/modified by different contexts (or threads) which are sharing
+ * the texture.
+ *
+ * See also _mesa_lock/unlock_texture() in teximage.h
  */
-void _mesa_lock_context_textures( GLcontext *ctx )
+void
+_mesa_lock_context_textures( GLcontext *ctx )
 {
    _glthread_LOCK_MUTEX(ctx->Shared->TexMutex);
 
@@ -1115,7 +1105,8 @@ void _mesa_lock_context_textures( GLcontext *ctx )
 }
 
 
-void _mesa_unlock_context_textures( GLcontext *ctx )
+void
+_mesa_unlock_context_textures( GLcontext *ctx )
 {
    assert(ctx->Shared->TextureStateStamp == ctx->TextureStateTimestamp);
    _glthread_UNLOCK_MUTEX(ctx->Shared->TexMutex);

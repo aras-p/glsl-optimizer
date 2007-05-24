@@ -45,6 +45,9 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
  * obviously this does work... Further investigation is needed.
  *
  * \author Nicolai Haehnle <prefect_@gmx.net>
+ *
+ * \todo Add immediate implementation back? Perhaps this is useful if there are
+ * no bugs...
  */
 
 #include "glheader.h"

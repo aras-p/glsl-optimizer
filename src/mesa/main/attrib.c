@@ -1,6 +1,6 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.5.3
+ * Version:  7.1
  *
  * Copyright (C) 1999-2007  Brian Paul   All Rights Reserved.
  *
@@ -348,6 +348,8 @@ _mesa_PushAttrib(GLbitfield mask)
 	 ctx->Texture.Unit[u].Current3D->RefCount++;
 	 ctx->Texture.Unit[u].CurrentCubeMap->RefCount++;
 	 ctx->Texture.Unit[u].CurrentRect->RefCount++;
+	 ctx->Texture.Unit[u].Current1DArray->RefCount++;
+	 ctx->Texture.Unit[u].Current2DArray->RefCount++;
       }
       attr = MALLOC_STRUCT( gl_texture_attrib );
       MEMCPY( attr, &ctx->Texture, sizeof(struct gl_texture_attrib) );
@@ -363,6 +365,10 @@ _mesa_PushAttrib(GLbitfield mask)
                                    attr->Unit[u].CurrentCubeMap);
          _mesa_copy_texture_object(&attr->Unit[u].SavedRect,
                                    attr->Unit[u].CurrentRect);
+         _mesa_copy_texture_object(&attr->Unit[u].Saved1DArray,
+                                   attr->Unit[u].Current1DArray);
+         _mesa_copy_texture_object(&attr->Unit[u].Saved2DArray,
+                                   attr->Unit[u].Current2DArray);
       }
 
       _mesa_unlock_context_textures(ctx);
@@ -776,6 +782,7 @@ pop_texture_group(GLcontext *ctx, const struct gl_texture_attrib *texAttrib)
          _mesa_TexParameteri(target, GL_TEXTURE_MAG_FILTER, obj->MagFilter);
          _mesa_TexParameterf(target, GL_TEXTURE_MIN_LOD, obj->MinLod);
          _mesa_TexParameterf(target, GL_TEXTURE_MAX_LOD, obj->MaxLod);
+         _mesa_TexParameterf(target, GL_TEXTURE_LOD_BIAS, obj->LodBias);
          _mesa_TexParameteri(target, GL_TEXTURE_BASE_LEVEL, obj->BaseLevel);
          if (target != GL_TEXTURE_RECTANGLE_ARB)
             _mesa_TexParameteri(target, GL_TEXTURE_MAX_LEVEL, obj->MaxLevel);
@@ -809,6 +816,8 @@ pop_texture_group(GLcontext *ctx, const struct gl_texture_attrib *texAttrib)
       ctx->Texture.Unit[u].Current3D->RefCount--;
       ctx->Texture.Unit[u].CurrentCubeMap->RefCount--;
       ctx->Texture.Unit[u].CurrentRect->RefCount--;
+      ctx->Texture.Unit[u].Current1DArray->RefCount--;
+      ctx->Texture.Unit[u].Current2DArray->RefCount--;
    }
 }
 

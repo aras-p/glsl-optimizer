@@ -508,6 +508,9 @@ int r300UploadTexImages(r300ContextPtr rmesa, r300TexObjPtr t, GLuint face)
 {
 	const int numLevels = t->base.lastLevel - t->base.firstLevel + 1;
 
+	if (t->image_override)
+		return 0;
+
 	if (RADEON_DEBUG & (DEBUG_TEXTURE | DEBUG_IOCTL)) {
 		fprintf(stderr, "%s( %p, %p ) sz=%d lvls=%d-%d\n", __FUNCTION__,
 			(void *)rmesa->radeon.glCtx, (void *)t->base.tObj,
