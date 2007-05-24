@@ -47,6 +47,7 @@ static const struct st_tracked_state *atoms[] =
    &st_update_fs,
    &st_update_setup,
    &st_update_viewport,
+   &st_update_scissor,
    /* will be patched out at runtime */
 /*    &st_update_constants */
 };
@@ -58,7 +59,7 @@ void st_init_atoms( struct st_context *st )
 
    st->atoms = _mesa_malloc(sizeof(atoms));
    st->nr_atoms = sizeof(atoms)/sizeof(*atoms);
-   _mesa_memcpy(st->atoms, atoms, sizeof(atoms));
+   memcpy(st->atoms, atoms, sizeof(atoms));
 
    /* Patch in a pointer to the dynamic state atom:
     */
@@ -66,9 +67,9 @@ void st_init_atoms( struct st_context *st )
       if (st->atoms[i] == &st_update_constants)
 	 st->atoms[i] = &st->constants.tracked_state;
 
-   _mesa_memcpy(&st->constants.tracked_state, 
-		&st_update_constants,
-		sizeof(st_update_constants));
+   memcpy(&st->constants.tracked_state, 
+          &st_update_constants,
+          sizeof(st_update_constants));
 }
 
 

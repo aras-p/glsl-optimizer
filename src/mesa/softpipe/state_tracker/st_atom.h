@@ -50,6 +50,7 @@ const struct st_tracked_state st_update_fs;
 const struct st_tracked_state st_update_setup;
 const struct st_tracked_state st_update_viewport;
 const struct st_tracked_state st_update_constants;
+const struct st_tracked_state st_update_scissor;
 
 
 #endif
