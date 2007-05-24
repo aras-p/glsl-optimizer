@@ -1,6 +1,6 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.5.3
+ * Version:  7.1
  *
  * Copyright (C) 1999-2007  Brian Paul   All Rights Reserved.
  *
@@ -663,15 +663,13 @@ _swrast_validate_derived( GLcontext *ctx )
                               _NEW_PROGRAM))
 	 _swrast_update_fragment_program( ctx, swrast->NewState );
 
-      if (swrast->NewState & (_NEW_TEXTURE | _NEW_PROGRAM))
-         _swrast_update_texture_samplers( ctx );
-
       if (swrast->NewState & (_NEW_TEXTURE | _NEW_PROGRAM)) {
+         _swrast_update_texture_samplers( ctx );
          _swrast_validate_texture_images(ctx);
-         if (swrast->NewState & (_NEW_COLOR)) {
-            _swrast_update_deferred_texture(ctx);
-         }
       }
+
+      if (swrast->NewState & (_NEW_COLOR | _NEW_PROGRAM))
+         _swrast_update_deferred_texture(ctx);
 
       if (swrast->NewState & _SWRAST_NEW_RASTERMASK)
  	 _swrast_update_rasterflags( ctx );
