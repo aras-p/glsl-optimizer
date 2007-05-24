@@ -173,10 +173,12 @@ SOFTPIPE_SOURCES = \
 	softpipe/generic/g_tile_fs.c \
 	softpipe/generic/g_tile_output.c \
 	softpipe/state_tracker/st_atom.c \
+	softpipe/state_tracker/st_atom_blend.c \
+	softpipe/state_tracker/st_atom_cbuf.c \
 	softpipe/state_tracker/st_atom_clip.c \
 	softpipe/state_tracker/st_atom_fs.c \
+	softpipe/state_tracker/st_atom_scissor.c \
 	softpipe/state_tracker/st_atom_setup.c \
-	softpipe/state_tracker/st_atom_cbuf.c \
 	softpipe/state_tracker/st_atom_viewport.c \
 	softpipe/state_tracker/st_cb_program.c \
 	softpipe/state_tracker/st_draw.c \
