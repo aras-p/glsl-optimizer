@@ -1484,8 +1484,6 @@ static void r300SetupRSUnit(GLcontext * ctx)
 			  InputsRead);
 }
 
-#define vpucount(ptr) (((drm_r300_cmd_header_t*)(ptr))->vpu.count)
-
 #define bump_vpu_count(ptr, new_count)   do{\
 	drm_r300_cmd_header_t* _p=((drm_r300_cmd_header_t*)(ptr));\
 	int _nc=(new_count)/4; \
