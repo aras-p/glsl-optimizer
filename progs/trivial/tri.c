@@ -32,7 +32,7 @@
 #define CI_OFFSET_2 32
 
 
-GLenum doubleBuffer;
+GLenum doubleBuffer = 1;
 
 static void Init(void)
 {
@@ -40,7 +40,7 @@ static void Init(void)
    fprintf(stderr, "GL_VERSION    = %s\n", (char *) glGetString(GL_VERSION));
    fprintf(stderr, "GL_VENDOR     = %s\n", (char *) glGetString(GL_VENDOR));
 
-    glClearColor(0.0, 0.0, 1.0, 0.0);
+    glClearColor(0.3, 0.1, 0.3, 0.0);
 }
 
 static void Reshape(int width, int height)
@@ -91,8 +91,6 @@ static GLenum Args(int argc, char **argv)
 {
     GLint i;
 
-    doubleBuffer = GL_FALSE;
-
     for (i = 1; i < argc; i++) {
         if (strcmp(argv[i], "-sb") == 0) {
 	    doubleBuffer = GL_FALSE;
@@ -118,7 +116,7 @@ int main(int argc, char **argv)
 
     glutInitWindowPosition(0, 0); glutInitWindowSize( 250, 250);
 
-    type = GLUT_RGB;
+    type = GLUT_RGB | GLUT_ALPHA;
     type |= (doubleBuffer) ? GLUT_DOUBLE : GLUT_SINGLE;
     glutInitDisplayMode(type);
 
