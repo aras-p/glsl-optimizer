@@ -35,18 +35,30 @@
 
 dri_bo *
 dri_bo_alloc(dri_bufmgr *bufmgr, const char *name, unsigned long size,
-	     unsigned int alignment, unsigned int flags, unsigned int hint)
+	     unsigned int alignment, unsigned int location_mask)
 {
-   return bufmgr->bo_alloc(bufmgr, name, size, alignment, flags, hint);
+   assert((location_mask & ~(DRM_BO_FLAG_MEM_LOCAL | DRM_BO_FLAG_MEM_TT |
+			     DRM_BO_FLAG_MEM_VRAM | DRM_BO_FLAG_MEM_PRIV0 |
+			     DRM_BO_FLAG_MEM_PRIV1 | DRM_BO_FLAG_MEM_PRIV2 |
+			     DRM_BO_FLAG_MEM_PRIV3 |
+			     DRM_BO_FLAG_MEM_PRIV4)) == 0);
+
+   return bufmgr->bo_alloc(bufmgr, name, size, alignment, location_mask);
 }
 
 dri_bo *
 dri_bo_alloc_static(dri_bufmgr *bufmgr, const char *name, unsigned long offset,
-		    unsigned long size, void *virtual, unsigned int flags,
-		    unsigned int hint)
+		    unsigned long size, void *virtual,
+		    unsigned int location_mask)
 {
+   assert((location_mask & ~(DRM_BO_FLAG_MEM_LOCAL | DRM_BO_FLAG_MEM_TT |
+			     DRM_BO_FLAG_MEM_VRAM | DRM_BO_FLAG_MEM_PRIV0 |
+			     DRM_BO_FLAG_MEM_PRIV1 | DRM_BO_FLAG_MEM_PRIV2 |
+			     DRM_BO_FLAG_MEM_PRIV3 |
+			     DRM_BO_FLAG_MEM_PRIV4)) == 0);
+
    return bufmgr->bo_alloc_static(bufmgr, name, offset, size, virtual,
-				  flags, hint);
+				  location_mask);
 }
 
 void

@@ -541,9 +541,9 @@ dri_bufmgr_fake_contended_lock_take(dri_bufmgr *bufmgr)
 }
 
 static dri_bo *
-dri_fake_alloc(dri_bufmgr *bufmgr, const char *name,
-	      unsigned long size, unsigned int alignment, unsigned int flags,
-	      unsigned int hint)
+dri_fake_bo_alloc(dri_bufmgr *bufmgr, const char *name,
+		  unsigned long size, unsigned int alignment,
+		  unsigned int location_mask)
 {
    dri_bufmgr_fake *bufmgr_fake;
    dri_bo_fake *bo_fake;
@@ -567,16 +567,16 @@ dri_fake_alloc(dri_bufmgr *bufmgr, const char *name,
    bo_fake->alignment = alignment;
    bo_fake->id = ++bufmgr_fake->buf_nr;
    bo_fake->name = name;
-   bo_fake->flags = flags;
+   bo_fake->flags = 0;
    bo_fake->is_static = GL_FALSE;
 
    return &bo_fake->bo;
 }
 
 static dri_bo *
-dri_fake_alloc_static(dri_bufmgr *bufmgr, const char *name,
-		     unsigned long offset, unsigned long size, void *virtual,
-		     unsigned int flags, unsigned int hint)
+dri_fake_bo_alloc_static(dri_bufmgr *bufmgr, const char *name,
+			 unsigned long offset, unsigned long size,
+			 void *virtual, unsigned int location_mask)
 {
    dri_bufmgr_fake *bufmgr_fake;
    dri_bo_fake *bo_fake;
@@ -593,7 +593,7 @@ dri_fake_alloc_static(dri_bufmgr *bufmgr, const char *name,
    bo_fake->bo.bufmgr = bufmgr;
    bo_fake->refcount = 1;
    bo_fake->name = name;
-   bo_fake->flags = flags;
+   bo_fake->flags = DRM_BO_FLAG_NO_EVICT | DRM_BO_FLAG_NO_MOVE;
    bo_fake->is_static = GL_TRUE;
 
    return &bo_fake->bo;
@@ -854,8 +854,8 @@ dri_bufmgr_fake_init(unsigned long low_offset, void *low_virtual,
    _glthread_INIT_MUTEX(bufmgr_fake->mutex);
 
    /* Hook in methods */
-   bufmgr_fake->bufmgr.bo_alloc = dri_fake_alloc;
-   bufmgr_fake->bufmgr.bo_alloc_static = dri_fake_alloc_static;
+   bufmgr_fake->bufmgr.bo_alloc = dri_fake_bo_alloc;
+   bufmgr_fake->bufmgr.bo_alloc_static = dri_fake_bo_alloc_static;
    bufmgr_fake->bufmgr.bo_reference = dri_fake_bo_reference;
    bufmgr_fake->bufmgr.bo_unreference = dri_fake_bo_unreference;
    bufmgr_fake->bufmgr.bo_map = dri_fake_bo_map;

@@ -89,19 +89,29 @@ driFenceSignaled(DriFenceObject * fence, unsigned type)
 
 static dri_bo *
 dri_ttm_alloc(dri_bufmgr *bufmgr, const char *name,
-	      unsigned long size, unsigned int alignment, unsigned int flags,
-	      unsigned int hint)
+	      unsigned long size, unsigned int alignment,
+	      unsigned int location_mask)
 {
    dri_bufmgr_ttm *ttm_bufmgr;
    dri_bo_ttm *ttm_buf;
    unsigned int pageSize = getpagesize();
    int ret;
+   unsigned int flags, hint;
 
    ttm_bufmgr = (dri_bufmgr_ttm *)bufmgr;
 
    ttm_buf = malloc(sizeof(*ttm_buf));
    if (!ttm_buf)
       return NULL;
+
+   /* The mask argument doesn't do anything for us that we want other than
+    * determine which pool (TTM or local) the buffer is allocated into, so just
+    * pass all of the allocation class flags.
+    */
+   flags = location_mask | DRM_BO_FLAG_READ | DRM_BO_FLAG_WRITE |
+      DRM_BO_FLAG_EXE;
+   /* No hints we want to use. */
+   hint = 0;
 
    ret = drmBOCreate(ttm_bufmgr->fd, 0, size, alignment / pageSize,
 		     NULL, drm_bo_type_dc,
@@ -122,11 +132,12 @@ dri_ttm_alloc(dri_bufmgr *bufmgr, const char *name,
 static dri_bo *
 dri_ttm_alloc_static(dri_bufmgr *bufmgr, const char *name,
 		     unsigned long offset, unsigned long size, void *virtual,
-		     unsigned int flags, unsigned int hint)
+		     unsigned int location_mask)
 {
    dri_bufmgr_ttm *ttm_bufmgr;
    dri_bo_ttm *ttm_buf;
    int ret;
+   unsigned int flags, hint;
 
    ttm_bufmgr = (dri_bufmgr_ttm *)bufmgr;
 
@@ -134,9 +145,18 @@ dri_ttm_alloc_static(dri_bufmgr *bufmgr, const char *name,
    if (!ttm_buf)
       return NULL;
 
+   /* The mask argument doesn't do anything for us that we want other than
+    * determine which pool (TTM or local) the buffer is allocated into, so just
+    * pass all of the allocation class flags.
+    */
+   flags = location_mask | DRM_BO_FLAG_READ | DRM_BO_FLAG_WRITE |
+      DRM_BO_FLAG_EXE | DRM_BO_FLAG_NO_EVICT | DRM_BO_FLAG_NO_MOVE;
+   /* No hints we want to use. */
+   hint = 0;
+
    ret = drmBOCreate(ttm_bufmgr->fd, offset, size, 0,
 		     NULL, drm_bo_type_fake,
-                     flags, 0, &ttm_buf->drm_bo);
+                     flags, hint, &ttm_buf->drm_bo);
    if (ret != 0) {
       free(ttm_buf);
       return NULL;

@@ -81,25 +81,20 @@ struct _dri_bufmgr {
     * address space or graphics device aperture.  They must be mapped using
     * bo_map() to be used by the CPU, and validated for use using bo_validate()
     * to be used from the graphics device.
-    *
-    * XXX: flags/hint reason to live?
     */
    dri_bo *(*bo_alloc)(dri_bufmgr *bufmgr_ctx, const char *name,
 		       unsigned long size, unsigned int alignment,
-		       unsigned int flags, unsigned int hint);
+		       unsigned int location_mask);
 
    /**
     * Allocates a buffer object for a static allocation.
     *
     * Static allocations are ones such as the front buffer that are offered by
     * the X Server, which are never evicted and never moved.
-    *
-    * XXX: flags/hint reason to live?
     */
    dri_bo *(*bo_alloc_static)(dri_bufmgr *bufmgr_ctx, const char *name,
 			      unsigned long offset, unsigned long size,
-			      void *virtual, unsigned int flags,
-			      unsigned int hint);
+			      void *virtual, unsigned int location_mask);
 
    /** Takes a reference on a buffer object */
    void (*bo_reference)(dri_bo *bo);
@@ -165,12 +160,10 @@ struct _dri_bufmgr {
 };
 
 dri_bo *dri_bo_alloc(dri_bufmgr *bufmgr, const char *name, unsigned long size,
-		     unsigned int alignment, unsigned int flags,
-		     unsigned int hint);
+		     unsigned int alignment, unsigned int location_mask);
 dri_bo *dri_bo_alloc_static(dri_bufmgr *bufmgr, const char *name,
 			    unsigned long offset, unsigned long size,
-			    void *virtual, unsigned int flags,
-			    unsigned int hint);
+			    void *virtual, unsigned int location_mask);
 void dri_bo_reference(dri_bo *bo);
 void dri_bo_unreference(dri_bo *bo);
 int dri_bo_map(dri_bo *buf, GLboolean write_enable);
