@@ -1,0 +1,188 @@
+/*
+ * Mesa 3-D graphics library
+ * Version:  6.5
+ *
+ * Copyright (C) 1999-2005  Brian Paul   All Rights Reserved.
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
+ * to deal in the Software without restriction, including without limitation
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * and/or sell copies of the Software, and to permit persons to whom the
+ * Software is furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included
+ * in all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+ * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
+ * BRIAN PAUL BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN
+ * AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+ * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ */
+
+/* Vertices are just an array of floats, with all the attributes
+ * packed.  We currently assume a layout like:
+ *
+ * attr[0][0..3] - window position
+ * attr[1..n][0..3] - remaining attributes.
+ *
+ * Attributes are assumed to be 4 floats wide but are packed so that
+ * all the enabled attributes run contiguously.
+ */
+
+#include "glheader.h"
+#include "g_context.h"
+#include "g_headers.h"
+#include "g_tile.h"
+
+struct exec_machine {
+   const struct setup_coefficient *coef;
+
+   GLfloat attr[FRAG_ATTRIB_MAX][4][QUAD_SIZE];
+};
+
+
+static void INLINE cinterp( struct exec_machine *exec,
+			    GLuint attrib,
+			    GLuint i )
+{
+   GLuint j;
+
+   for (j = 0; j < QUAD_SIZE; j++) {
+      exec->attr[attrib][i][j] = exec->coef[attrib].a0[i];
+   }
+}
+
+
+/* Push into the fp:
+ * 
+ *   INPUT[attr] = MAD COEF_A0[attr], COEF_DADX[attr], INPUT_WPOS.xxxx
+ *   INPUT[attr] = MAD INPUT[attr],   COEF_DADY[attr], INPUT_WPOS.yyyy
+ */
+static INLINE void linterp( struct exec_machine *exec,
+			    GLuint attrib,
+			    GLuint i )
+{
+   GLuint j;
+
+   for (j = 0; j < QUAD_SIZE; j++) {
+      exec->attr[attrib][i][j] = (exec->coef[attrib].a0[i] +
+				  exec->coef[attrib].dadx[i] * exec->attr[0][0][j] + 
+				  exec->coef[attrib].dady[i] * exec->attr[0][1][j]);
+   }
+}
+
+
+/* Push into the fp:
+ * 
+ *   INPUT[attr] = MAD COEF_A0[attr], COEF_DADX[attr], INPUT_WPOS.xxxx
+ *   INPUT[attr] = MAD INPUT[attr],   COEF_DADY[attr], INPUT_WPOS.yyyy
+ *   INPUT[attr] = MUL INPUT[attr],   INPUT_WPOS.wwww
+ *
+ * (Or should that be 1/w ???)
+ */
+static INLINE void pinterp( struct exec_machine *exec,
+			    GLuint attrib,
+			    GLuint i )
+{
+   GLuint j;
+
+   for (j = 0; j < QUAD_SIZE; j++) {
+      exec->attr[attrib][i][j] = ((exec->coef[attrib].a0[i] +
+				   exec->coef[attrib].dadx[i] * exec->attr[0][0][j] + 
+				   exec->coef[attrib].dady[i] * exec->attr[0][1][j]) *
+				  exec->attr[0][3][j]);
+   }
+}
+
+
+
+/* This should be done by the fragment shader execution unit (code
+ * generated from the decl instructions).  Do it here for now.
+ */
+void quad_shade( struct generic_context *generic,
+		 struct quad_header *quad )
+{
+   struct exec_machine exec;
+   GLfloat fx = quad->x0;
+   GLfloat fy = quad->y0;
+   GLuint i, j;
+
+   exec.coef = quad->coef;
+
+   /* Position:
+    */
+   exec.attr[FRAG_ATTRIB_WPOS][0][0] = fx;
+   exec.attr[FRAG_ATTRIB_WPOS][0][1] = fx + 1.0;
+   exec.attr[FRAG_ATTRIB_WPOS][0][2] = fx;
+   exec.attr[FRAG_ATTRIB_WPOS][0][3] = fx + 1.0;
+
+   exec.attr[FRAG_ATTRIB_WPOS][1][0] = fy;
+   exec.attr[FRAG_ATTRIB_WPOS][1][1] = fy;
+   exec.attr[FRAG_ATTRIB_WPOS][1][2] = fy + 1.0;
+   exec.attr[FRAG_ATTRIB_WPOS][1][3] = fy + 1.0;
+
+   /* Z and W are done by linear interpolation:
+    */
+   if (generic->need_z) {
+      linterp(&exec, 0, 2);
+   }
+
+   if (generic->need_w) {
+      linterp(&exec, 0, 3);
+//      invert(&exec, 0, 3);
+   }
+
+   /* Interpolate all the remaining attributes.  This will get pushed
+    * into the fragment program's responsibilities at some point.
+    */
+   for (i = 1; i < quad->nr_attrs; i++) {
+#if 1
+      for (j = 0; j < NUM_CHANNELS; j++)
+	 linterp(&exec, i, j);
+#else
+      switch (quad->interp[i]) {
+      case INTERP_CONSTANT:
+	 for (j = 0; j < NUM_CHANNELS; j++)
+	    cinterp(&exec, i, j);
+	 break;
+      
+      case INTERP_LINEAR:
+	 for (j = 0; j < NUM_CHANNELS; j++)
+	    linterp(&exec, i, j);
+	 break;
+
+      case INTERP_PERSPECTIVE:
+	 for (j = 0; j < NUM_CHANNELS; j++)
+	    pinterp(&exec, i, j);
+	 break;
+      }
+#endif
+   }
+
+#if 0
+   generic->run_fs( tri->fp, quad, &tri->outputs );
+#else
+   {
+      GLuint attr = generic->fp_attr_to_slot[FRAG_ATTRIB_COL0];
+      assert(attr);
+
+      memcpy(quad->outputs.color, 
+	     exec.attr[attr], 
+	     sizeof(quad->outputs.color));
+   }
+#endif
+
+
+   if (quad->mask)
+      quad_output( generic, quad );
+}
+
+
+
+
+
+
+

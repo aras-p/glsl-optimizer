@@ -1,0 +1,175 @@
+/**************************************************************************
+ * 
+ * Copyright 2007 Tungsten Graphics, Inc., Cedar Park, Texas.
+ * All Rights Reserved.
+ * 
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the
+ * "Software"), to deal in the Software without restriction, including
+ * without limitation the rights to use, copy, modify, merge, publish,
+ * distribute, sub license, and/or sell copies of the Software, and to
+ * permit persons to whom the Software is furnished to do so, subject to
+ * the following conditions:
+ * 
+ * The above copyright notice and this permission notice (including the
+ * next paragraph) shall be included in all copies or substantial portions
+ * of the Software.
+ * 
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+ * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+ * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT.
+ * IN NO EVENT SHALL TUNGSTEN GRAPHICS AND/OR ITS SUPPLIERS BE LIABLE FOR
+ * ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
+ * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
+ * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ * 
+ **************************************************************************/
+
+ /*
+  * Authors:
+  *   Keith Whitwell <keith@tungstengraphics.com>
+  */
+ 
+
+#include "st_context.h"
+#include "softpipe/sp_context.h"
+#include "st_atom.h"
+
+static GLuint translate_fill( GLenum mode )
+{
+   switch (mode) {
+   case GL_POINT: return FILL_POINT;
+   case GL_LINE: return FILL_LINE;
+   case GL_FILL: return FILL_TRI;
+   default: assert(0); return 0;
+   }
+}
+
+static GLboolean get_offset_flag( GLuint fill_mode, 
+				  const struct gl_polygon_attrib *Polygon )
+{
+   switch (fill_mode) {
+   case FILL_POINT: return Polygon->OffsetPoint;
+   case FILL_LINE: return Polygon->OffsetLine;
+   case FILL_TRI: return Polygon->OffsetFill;
+   default: assert(0); return 0;
+   }
+}
+
+
+static void update_setup_state( struct st_context *st )
+{
+   GLcontext *ctx = st->ctx;
+   struct softpipe_setup_state setup;
+
+   memset(&setup, 0, sizeof(setup));
+   
+   /* _NEW_POLYGON, _NEW_BUFFERS
+    */
+   {
+      setup.front_winding = WINDING_CW;
+	
+      if (ctx->DrawBuffer && ctx->DrawBuffer->Name != 0)
+	 setup.front_winding ^= WINDING_BOTH;
+
+      if (ctx->Polygon.FrontFace != GL_CCW)
+	 setup.front_winding ^= WINDING_BOTH;
+   }
+
+   /* _NEW_LIGHT
+    */
+   if (ctx->Light.ShadeModel == GL_FLAT)
+      setup.flatshade = 1;
+
+   /* _NEW_LIGHT 
+    *
+    * Not sure about the light->enabled requirement - does this still
+    * apply??
+    */
+   if (ctx->Light.Enabled && 
+       ctx->Light.Model.TwoSide)
+      setup.light_twoside = 1;
+
+
+   /* _NEW_POLYGON
+    */
+   if (ctx->Polygon.CullFlag) {
+      if (ctx->Polygon.CullFaceMode == GL_FRONT_AND_BACK) {
+	 setup.cull_mode = WINDING_BOTH;
+      }
+      else if (ctx->Polygon.CullFaceMode == GL_FRONT) {
+	 setup.cull_mode = setup.front_winding;
+      }
+      else {
+	 setup.cull_mode = setup.front_winding ^ WINDING_BOTH;
+      }
+   }
+
+   /* _NEW_POLYGON
+    */
+   {
+      GLuint fill_front = translate_fill( ctx->Polygon.FrontMode );
+      GLuint fill_back = translate_fill( ctx->Polygon.BackMode );
+      
+      if (setup.front_winding == WINDING_CW) {
+	 setup.fill_cw = fill_front;
+	 setup.fill_ccw = fill_back;
+      }
+      else {
+	 setup.fill_cw = fill_back;
+	 setup.fill_ccw = fill_front;
+      }
+
+      /* Simplify when culling is active:
+       */
+      if (setup.cull_mode & WINDING_CW) {
+	 setup.fill_cw = setup.fill_ccw;
+      }
+      
+      if (setup.cull_mode & WINDING_CCW) {
+	 setup.fill_ccw = setup.fill_cw;
+      }
+   }
+
+   /* Hardware does offset for filled prims, but need to do it in
+    * software for unfilled.
+    *
+    * _NEW_POLYGON 
+    */
+   if (setup.fill_cw != FILL_TRI)
+      setup.offset_cw = get_offset_flag( setup.fill_cw, 
+					 &ctx->Polygon );
+   
+   if (setup.fill_ccw != FILL_TRI)
+      setup.offset_ccw = get_offset_flag( setup.fill_ccw, 
+					  &ctx->Polygon );
+
+
+   /* _NEW_BUFFERS, _NEW_POLYGON
+    */
+   if (setup.fill_cw != FILL_TRI ||
+       setup.fill_ccw != FILL_TRI)
+   {
+      GLfloat mrd = (ctx->DrawBuffer ? 
+		     ctx->DrawBuffer->_MRD : 
+		     1.0);
+
+      setup.offset_units = ctx->Polygon.OffsetFactor * mrd;
+      setup.offset_scale = (ctx->Polygon.OffsetUnits * mrd *
+			    st->polygon_offset_scale);
+   }
+      
+
+   if (memcmp(&setup, &st->state.setup, sizeof(setup)) != 0) {
+      st->state.setup = setup;
+      st->softpipe->set_setup_state( st->softpipe, &setup );
+   }
+}
+
+const struct st_tracked_state st_update_setup = {
+   .dirty = {
+      .mesa = (_NEW_LIGHT | _NEW_POLYGON | _NEW_BUFFERS),
+      .st  = 0,
+   },
+   .update = update_setup_state
+};
