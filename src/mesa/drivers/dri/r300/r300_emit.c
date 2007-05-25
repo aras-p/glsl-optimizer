@@ -94,8 +94,8 @@ static void r300EmitVec4(GLcontext * ctx,
 	int *out = (int *)(rvb->address + rvb->start);
 
 	if (RADEON_DEBUG & DEBUG_VERTS)
-		fprintf(stderr, "%s count %d stride %d\n",
-			__FUNCTION__, count, stride);
+		fprintf(stderr, "%s count %d stride %d out %p data %p\n",
+			__FUNCTION__, count, stride, (void *)out, (void *)data);
 
 	if (stride == 4)
 		COPY_DWORDS(out, data, count);
@@ -115,8 +115,8 @@ static void r300EmitVec8(GLcontext * ctx,
 	int *out = (int *)(rvb->address + rvb->start);
 
 	if (RADEON_DEBUG & DEBUG_VERTS)
-		fprintf(stderr, "%s count %d stride %d\n",
-			__FUNCTION__, count, stride);
+		fprintf(stderr, "%s count %d stride %d out %p data %p\n",
+			__FUNCTION__, count, stride, (void *)out, (void *)data);
 
 	if (stride == 8)
 		COPY_DWORDS(out, data, count * 2);
@@ -160,8 +160,8 @@ static void r300EmitVec16(GLcontext * ctx,
 	int *out = (int *)(rvb->address + rvb->start);
 
 	if (RADEON_DEBUG & DEBUG_VERTS)
-		fprintf(stderr, "%s count %d stride %d\n",
-			__FUNCTION__, count, stride);
+		fprintf(stderr, "%s count %d stride %d out %p data %p\n",
+			__FUNCTION__, count, stride, (void *)out, (void *)data);
 
 	if (stride == 16)
 		COPY_DWORDS(out, data, count * 4);
@@ -181,10 +181,6 @@ static void r300EmitVec(GLcontext * ctx,
 			GLvoid * data, int size, int stride, int count)
 {
 	r300ContextPtr rmesa = R300_CONTEXT(ctx);
-
-	if (RADEON_DEBUG & DEBUG_VERTS)
-		fprintf(stderr, "%s count %d size %d stride %d\n",
-			__FUNCTION__, count, size, stride);
 
 	/* Gets triggered when playing with future_hw_tcl_on ... */
 	//assert(!rvb->buf);
