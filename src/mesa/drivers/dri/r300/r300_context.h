@@ -785,7 +785,7 @@ struct r300_fragment_program {
 
 #define AOS_FORMAT_USHORT	0
 #define AOS_FORMAT_FLOAT	1
-#define AOS_FORMAT_UBYTE	2
+#define AOS_FORMAT_UNSIGNED_BYTE	2
 #define AOS_FORMAT_FLOAT_COLOR	3
 
 #define REG_COORDS	0

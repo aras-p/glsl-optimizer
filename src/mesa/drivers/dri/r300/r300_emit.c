@@ -243,29 +243,24 @@ static inline GLuint t_vir_pack(GLvector4f ** dt, int *inputs, int i)
 static GLuint t_vir0(uint32_t * dst, GLvector4f ** dt, int *inputs,
 		     GLint * tab, GLuint nr)
 {
-	GLuint i, dw, dwInternel;
+	GLuint i, dw;
 
 	for (i = 0; i + 1 < nr; i += 2) {
 		dw = t_vir_pack(dt, inputs, tab[i]);
-		dwInternel = t_vir_pack(dt, inputs, tab[i + 1]);
-		dw |= dwInternel << R300_VIR0_HIGH_SHIFT;
-
+		dw |= t_vir_pack(dt, inputs, tab[i + 1]) << R300_VIR0_HIGH_SHIFT;
 		if (i + 2 == nr) {
-			dw |=
-			    (1 <<
-			     (R300_VIR0_AOS_STOP_SHIFT + R300_VIR0_HIGH_SHIFT));
+			dw |= (1 << (R300_VIR0_AOS_STOP_SHIFT + R300_VIR0_HIGH_SHIFT));
 		}
-		dst[i >> 1] = dw;	/* i / 2 */
+		dst[i >> 1] = dw;
 	}
 
 	if (nr & 1) {
 		dw = t_vir_pack(dt, inputs, tab[nr - 1]);
 		dw |= 1 << R300_VIR0_AOS_STOP_SHIFT;
-
 		dst[nr >> 1] = dw;
 	}
 
-	return (nr + 1) >> 1;	/* (nr + 1) / 2 */
+	return (nr + 1) >> 1;
 }
 
 static GLuint t_swizzle(int swizzle[4])
@@ -282,14 +277,12 @@ static GLuint t_vir1(uint32_t * dst, int swizzle[][4], GLuint nr)
 
 	for (i = 0; i + 1 < nr; i += 2) {
 		dst[i >> 1] = t_swizzle(swizzle[i]) | R300_INPUT_ROUTE_ENABLE;
-		dst[i >> 1] |=
-		    (t_swizzle(swizzle[i + 1]) | R300_INPUT_ROUTE_ENABLE)
-		    << 16;
+		dst[i >> 1] |= (t_swizzle(swizzle[i + 1]) | R300_INPUT_ROUTE_ENABLE) << 16;
 	}
 
-	if (nr & 1)
-		dst[nr >> 1] =
-		    t_swizzle(swizzle[nr - 1]) | R300_INPUT_ROUTE_ENABLE;
+	if (nr & 1) {
+		dst[nr >> 1] = t_swizzle(swizzle[nr - 1]) | R300_INPUT_ROUTE_ENABLE;
+	}
 
 	return (nr + 1) >> 1;
 }
