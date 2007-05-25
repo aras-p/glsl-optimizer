@@ -221,13 +221,22 @@ static void r300EmitVec(GLcontext * ctx,
 #define R300_VIR0_AOS_TYPE_SHIFT 14
 #define R300_VIR0_HIGH_SHIFT 16
 
-// Pack 4 elemets in a 16 bit (aos_size first 8, input next 5, 1 stop bit(Whild gues), aos_type last 2);
+/*
+ * pack 4 elemets in a 16 bit integer.
+ *
+ * aos_size first 8
+ * input next 5
+ * 1 stop bit (whild gues)
+ * aos_type last 2
+ */
 static inline GLuint t_vir_pack(GLvector4f ** dt, int *inputs, int i)
 {
 	GLuint dw;
 	dw = (dt[i]->size - 1) << R300_VIR0_AOS_SIZE_SHIFT;
 	dw |= inputs[i] << R300_VIR0_AOS_INPUT_SHIFT;
-	//dw |= t_type(&dt[i]) << R300_VIR0_AOS_TYPE_SHIFT;
+#if 0
+	dw |= t_type(&dt[i]) << R300_VIR0_AOS_TYPE_SHIFT;
+#endif
 	return dw;
 }
 
@@ -246,7 +255,7 @@ static GLuint t_vir0(uint32_t * dst, GLvector4f ** dt, int *inputs,
 			    (1 <<
 			     (R300_VIR0_AOS_STOP_SHIFT + R300_VIR0_HIGH_SHIFT));
 		}
-		dst[i >> 1] = dw;	// Is the same as i/2
+		dst[i >> 1] = dw;	/* i / 2 */
 	}
 
 	if (nr & 1) {
@@ -256,7 +265,7 @@ static GLuint t_vir0(uint32_t * dst, GLvector4f ** dt, int *inputs,
 		dst[nr >> 1] = dw;
 	}
 
-	return (nr + 1) >> 1;	// Is the same as (nr+1)/2
+	return (nr + 1) >> 1;	/* (nr + 1) / 2 */
 }
 
 static GLuint t_swizzle(int swizzle[4])
