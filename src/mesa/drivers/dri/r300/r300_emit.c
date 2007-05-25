@@ -214,49 +214,27 @@ static void r300EmitVec(GLcontext * ctx,
 
 }
 
-/* TODO: explain this... */
-#define R300_VIR0_AOS_SIZE_SHIFT 0
-#define R300_VIR0_AOS_INPUT_SHIFT 8
-#define R300_VIR0_AOS_STOP_SHIFT 13
-#define R300_VIR0_AOS_TYPE_SHIFT 14
-#define R300_VIR0_HIGH_SHIFT 16
-
-/*
- * pack 4 elemets in a 16 bit integer.
+/* dw: size, inputs, stop bit, type
  *
- * aos_size first 8
- * input next 5
- * 1 stop bit (whild gues)
- * aos_type last 2
+ * I'll create some documentation for t_vir0 and t_vir1 tomorrow and probably
+ * add the shifts as defines in r300_reg.h.
  */
-static inline GLuint t_vir_pack(GLvector4f ** dt, int *inputs, int i)
-{
-	GLuint dw;
-	dw = (dt[i]->size - 1) << R300_VIR0_AOS_SIZE_SHIFT;
-	dw |= inputs[i] << R300_VIR0_AOS_INPUT_SHIFT;
-#if 0
-	dw |= t_type(&dt[i]) << R300_VIR0_AOS_TYPE_SHIFT;
-#endif
-	return dw;
-}
-
-static GLuint t_vir0(uint32_t * dst, GLvector4f ** dt, int *inputs,
-		     GLint * tab, GLuint nr)
+static GLuint t_vir0(uint32_t * dst, GLvector4f ** dt, int *inputs, GLint * tab, GLuint nr)
 {
 	GLuint i, dw;
 
 	for (i = 0; i + 1 < nr; i += 2) {
-		dw = t_vir_pack(dt, inputs, tab[i]);
-		dw |= t_vir_pack(dt, inputs, tab[i + 1]) << R300_VIR0_HIGH_SHIFT;
+		dw = (dt[tab[i]]->size - 1) | (inputs[tab[i]] << 8) | (AOS_FORMAT_FLOAT << 14);
+		dw |= ((dt[tab[i + 1]]->size - 1) | (inputs[tab[i + 1]] << 8) | (AOS_FORMAT_FLOAT << 14)) << 16;
 		if (i + 2 == nr) {
-			dw |= (1 << (R300_VIR0_AOS_STOP_SHIFT + R300_VIR0_HIGH_SHIFT));
+			dw |= (1 << (13 + 16));
 		}
 		dst[i >> 1] = dw;
 	}
 
 	if (nr & 1) {
-		dw = t_vir_pack(dt, inputs, tab[nr - 1]);
-		dw |= 1 << R300_VIR0_AOS_STOP_SHIFT;
+		dw = (dt[tab[nr - 1]]->size - 1) | (inputs[tab[nr - 1]] << 8) | (AOS_FORMAT_FLOAT << 14);
+		dw |= 1 << 13;
 		dst[nr >> 1] = dw;
 	}
 
