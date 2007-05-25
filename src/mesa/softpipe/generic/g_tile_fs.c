@@ -47,7 +47,7 @@ struct exec_machine {
 /**
  * Compute quad's attributes values, as constants (GL_FLAT shading).
  */
-static void INLINE cinterp( struct exec_machine *exec,
+static INLINE void cinterp( struct exec_machine *exec,
 			    GLuint attrib,
 			    GLuint i )
 {
