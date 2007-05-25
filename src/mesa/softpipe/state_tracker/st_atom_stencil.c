@@ -102,20 +102,20 @@ update_stencil( struct st_context *st )
       stencil.front_fail_op = gl_stencil_op_to_sp(st->ctx->Stencil.FailFunc[0]);
       stencil.front_zfail_op = gl_stencil_op_to_sp(st->ctx->Stencil.ZFailFunc[0]);
       stencil.front_zpass_op = gl_stencil_op_to_sp(st->ctx->Stencil.ZPassFunc[0]);
-      stencil.ref_value[0] = st->ctx->Stencil.Ref[0];
-      stencil.value_mask[0] = st->ctx->Stencil.ValueMask[0];
-      stencil.write_mask[0] = st->ctx->Stencil.WriteMask[0];
+      stencil.ref_value[0] = st->ctx->Stencil.Ref[0] & 0xff;
+      stencil.value_mask[0] = st->ctx->Stencil.ValueMask[0] & 0xff;
+      stencil.write_mask[0] = st->ctx->Stencil.WriteMask[0] & 0xff;
       if (st->ctx->Stencil.TestTwoSide) {
          stencil.back_enabled = 1;
          stencil.back_func = gl_stencil_func_to_sp(st->ctx->Stencil.Function[1]);
          stencil.back_fail_op = gl_stencil_op_to_sp(st->ctx->Stencil.FailFunc[1]);
          stencil.back_zfail_op = gl_stencil_op_to_sp(st->ctx->Stencil.ZFailFunc[1]);
          stencil.back_zpass_op = gl_stencil_op_to_sp(st->ctx->Stencil.ZPassFunc[1]);
-         stencil.ref_value[1] = st->ctx->Stencil.Ref[1];
-         stencil.value_mask[1] = st->ctx->Stencil.ValueMask[1];
-         stencil.write_mask[1] = st->ctx->Stencil.WriteMask[1];
+         stencil.ref_value[1] = st->ctx->Stencil.Ref[1] & 0xff;
+         stencil.value_mask[1] = st->ctx->Stencil.ValueMask[1] & 0xff;
+         stencil.write_mask[1] = st->ctx->Stencil.WriteMask[1] & 0xff;
       }
-      stencil.clear_value = st->ctx->Stencil.Clear;
+      stencil.clear_value = st->ctx->Stencil.Clear & 0xff;
    }
 
    if (memcmp(&stencil, &st->state.stencil, sizeof(stencil)) != 0) {
