@@ -182,22 +182,17 @@ static void r300EmitVec(GLcontext * ctx,
 {
 	r300ContextPtr rmesa = R300_CONTEXT(ctx);
 
-	/* Gets triggered when playing with future_hw_tcl_on ... */
-	//assert(!rvb->buf);
-
 	if (stride == 0) {
 		r300AllocDmaRegion(rmesa, rvb, size * 4, 4);
 		count = 1;
 		rvb->aos_offset = GET_START(rvb);
 		rvb->aos_stride = 0;
 	} else {
-		r300AllocDmaRegion(rmesa, rvb, size * count * 4, 4);	/* alignment? */
+		r300AllocDmaRegion(rmesa, rvb, size * count * 4, 4);
 		rvb->aos_offset = GET_START(rvb);
 		rvb->aos_stride = size;
 	}
 
-	/* Emit the data
-	 */
 	switch (size) {
 	case 1:
 		r300EmitVec4(ctx, rvb, data, stride, count);
