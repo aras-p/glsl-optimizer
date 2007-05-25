@@ -219,13 +219,13 @@ static void r300EmitVec(GLcontext * ctx,
  * I'll create some documentation for t_vir0 and t_vir1 tomorrow and probably
  * add the shifts as defines in r300_reg.h.
  */
-static GLuint t_vir0(uint32_t * dst, GLvector4f ** dt, int *inputs, GLint * tab, GLuint nr)
+static GLuint t_vir0(uint32_t * dst, GLvector4f ** attribptr, int *inputs, GLint * tab, GLuint nr)
 {
 	GLuint i, dw;
 
 	for (i = 0; i + 1 < nr; i += 2) {
-		dw = (dt[tab[i]]->size - 1) | (inputs[tab[i]] << 8) | (AOS_FORMAT_FLOAT << 14);
-		dw |= ((dt[tab[i + 1]]->size - 1) | (inputs[tab[i + 1]] << 8) | (AOS_FORMAT_FLOAT << 14)) << 16;
+		dw = (attribptr[tab[i]]->size - 1) | (inputs[tab[i]] << 8) | (AOS_FORMAT_FLOAT << 14);
+		dw |= ((attribptr[tab[i + 1]]->size - 1) | (inputs[tab[i + 1]] << 8) | (AOS_FORMAT_FLOAT << 14)) << 16;
 		if (i + 2 == nr) {
 			dw |= (1 << (13 + 16));
 		}
@@ -233,7 +233,7 @@ static GLuint t_vir0(uint32_t * dst, GLvector4f ** dt, int *inputs, GLint * tab,
 	}
 
 	if (nr & 1) {
-		dw = (dt[tab[nr - 1]]->size - 1) | (inputs[tab[nr - 1]] << 8) | (AOS_FORMAT_FLOAT << 14);
+		dw = (attribptr[tab[nr - 1]]->size - 1) | (inputs[tab[nr - 1]] << 8) | (AOS_FORMAT_FLOAT << 14);
 		dw |= 1 << 13;
 		dst[nr >> 1] = dw;
 	}
