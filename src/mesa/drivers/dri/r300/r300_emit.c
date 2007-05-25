@@ -223,6 +223,7 @@ static void r300EmitVec(GLcontext * ctx,
 
 }
 
+/* TODO: explain this... */
 #define R300_VIR0_AOS_SIZE_SHIFT 0
 #define R300_VIR0_AOS_INPUT_SHIFT 8
 #define R300_VIR0_AOS_STOP_SHIFT 13
@@ -405,6 +406,7 @@ int r300EmitArrays(GLcontext * ctx)
 		RENDERINPUTS_COPY(rmesa->state.render_inputs_bitset,
 				  inputs_bitset);
 	}
+
 	assert(InputsRead);
 	assert(OutputsWritten);
 
@@ -427,8 +429,7 @@ int r300EmitArrays(GLcontext * ctx)
 		for (ci = 0; ci < vb->AttribPtr[tab[i]]->size; ci++)
 			swizzle[i][ci] = ci;
 
-		if (r300IsGartMemory(rmesa, vb->AttribPtr[tab[i]]->data,
-				     /*(count-1)*stride */ 4)) {
+		if (r300IsGartMemory(rmesa, vb->AttribPtr[tab[i]]->data, 4)) {
 			if (vb->AttribPtr[tab[i]]->stride % 4)
 				return R300_FALLBACK_TCL;
 
