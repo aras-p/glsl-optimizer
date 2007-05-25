@@ -93,6 +93,7 @@ struct quad_header {
    GLint x0;
    GLint y0;
    GLuint mask;
+   GLuint facing;   /**< Front or back facing? */
 
    struct {
       GLfloat color[4][QUAD_SIZE];	/* rrrr, gggg, bbbb, aaaa */

@@ -44,6 +44,9 @@ struct exec_machine {
 };
 
 
+/**
+ * Compute quad's attributes values, as constants (GL_FLAT shading).
+ */
 static void INLINE cinterp( struct exec_machine *exec,
 			    GLuint attrib,
 			    GLuint i )
@@ -56,7 +59,10 @@ static void INLINE cinterp( struct exec_machine *exec,
 }
 
 
-/* Push into the fp:
+/**
+ * Compute quad's attribute values by linear interpolation.
+ *
+ * Push into the fp:
  * 
  *   INPUT[attr] = MAD COEF_A0[attr], COEF_DADX[attr], INPUT_WPOS.xxxx
  *   INPUT[attr] = MAD INPUT[attr],   COEF_DADY[attr], INPUT_WPOS.yyyy
@@ -68,14 +74,20 @@ static INLINE void linterp( struct exec_machine *exec,
    GLuint j;
 
    for (j = 0; j < QUAD_SIZE; j++) {
+      const GLfloat x = exec->attr[FRAG_ATTRIB_WPOS][0][j];
+      const GLfloat y = exec->attr[FRAG_ATTRIB_WPOS][1][j];
       exec->attr[attrib][i][j] = (exec->coef[attrib].a0[i] +
-				  exec->coef[attrib].dadx[i] * exec->attr[0][0][j] + 
-				  exec->coef[attrib].dady[i] * exec->attr[0][1][j]);
+				  exec->coef[attrib].dadx[i] * x + 
+				  exec->coef[attrib].dady[i] * y);
    }
 }
 
 
-/* Push into the fp:
+/**
+ * Compute quad's attribute values by linear interpolation with
+ * perspective correction.
+ *
+ * Push into the fp:
  * 
  *   INPUT[attr] = MAD COEF_A0[attr], COEF_DADX[attr], INPUT_WPOS.xxxx
  *   INPUT[attr] = MAD INPUT[attr],   COEF_DADY[attr], INPUT_WPOS.yyyy
@@ -90,10 +102,12 @@ static INLINE void pinterp( struct exec_machine *exec,
    GLuint j;
 
    for (j = 0; j < QUAD_SIZE; j++) {
+      const GLfloat x = exec->attr[FRAG_ATTRIB_WPOS][0][j];
+      const GLfloat y = exec->attr[FRAG_ATTRIB_WPOS][1][j];
+      const GLfloat invW = exec->attr[FRAG_ATTRIB_WPOS][3][j];
       exec->attr[attrib][i][j] = ((exec->coef[attrib].a0[i] +
-				   exec->coef[attrib].dadx[i] * exec->attr[0][0][j] + 
-				   exec->coef[attrib].dady[i] * exec->attr[0][1][j]) *
-				  exec->attr[0][3][j]);
+				   exec->coef[attrib].dadx[i] * x + 
+				   exec->coef[attrib].dady[i] * y) * invW);
    }
 }
 
@@ -125,6 +139,7 @@ void quad_shade( struct generic_context *generic,
    exec.attr[FRAG_ATTRIB_WPOS][1][3] = fy + 1.0;
 
    /* Z and W are done by linear interpolation:
+    * XXX we'll probably have to use integers for Z
     */
    if (generic->need_z) {
       linterp(&exec, 0, 2);

@@ -68,35 +68,30 @@ struct setup_stage {
    struct quad_header quad; 
 
    struct {
-      GLint left[2];
+      GLint left[2];   /**< [0] = row0, [1] = row1 */
       GLint right[2];
       GLint y;
       GLuint y_flags;
-      GLuint mask;
+      GLuint mask;     /**< mask of MASK_BOTTOM/TOP_LEFT/RIGHT bits */
    } span;
 
 };
 
 
 
-
+/**
+ * Basically a cast wrapper.
+ */
 static inline struct setup_stage *setup_stage( struct prim_stage *stage )
 {
    return (struct setup_stage *)stage;
 }
 
 
-
-static inline GLint _min(GLint x, GLint y) 
-{
-   return x < y ? x : y;
-}
-
-static inline GLint _max(GLint x, GLint y) 
-{
-   return x > y ? x : y;
-}
-
+/**
+ * Given an X or Y coordinate, return the block/quad coordinate that it
+ * belongs to.
+ */
 static inline GLint block( GLint x )
 {
    return x & ~1;
@@ -110,7 +105,9 @@ static void setup_begin( struct prim_stage *stage )
 }
 
 
-
+/**
+ * Run shader on a quad/block.
+ */
 static void run_shader_block( struct setup_stage *setup, 
 			      GLint x, GLint y, GLuint mask )
 {
@@ -122,7 +119,11 @@ static void run_shader_block( struct setup_stage *setup,
 }
 
 
-/* this is pretty nasty...  may need to rework flush_spans again to
+/**
+ * Compute mask which indicates which pixels in the 2x2 quad are actually inside
+ * the triangle's bounds.
+ *
+ * this is pretty nasty...  may need to rework flush_spans again to
  * fix it, if possible.
  */
 static GLuint calculate_mask( struct setup_stage *setup,
@@ -146,6 +147,9 @@ static GLuint calculate_mask( struct setup_stage *setup,
 }
 
 
+/**
+ * Render a horizontal span of quads
+ */
 static void flush_spans( struct setup_stage *setup )
 {
    GLint minleft, maxright;
@@ -153,10 +157,8 @@ static void flush_spans( struct setup_stage *setup )
 
    switch (setup->span.y_flags) {      
    case 3:
-      minleft = _min(setup->span.left[0],
-		    setup->span.left[1]);
-      maxright = _max(setup->span.right[0],
-		     setup->span.right[1]);
+      minleft = MIN2(setup->span.left[0], setup->span.left[1]);
+      maxright = MAX2(setup->span.right[0], setup->span.right[1]);
       break;
 
    case 1:
@@ -188,8 +190,10 @@ static void flush_spans( struct setup_stage *setup )
    setup->span.right[1] = 0;
 }
 
-
      
+/**
+ * Do setup for point rasterization, then render the point.
+ */
 static void
 setup_point( struct prim_stage *stage, 
 	     struct prim_header *header )
@@ -197,15 +201,14 @@ setup_point( struct prim_stage *stage,
 }
 
 
+/**
+ * Do setup for line rasterization, then render the line.
+ */
 static void
 setup_line( struct prim_stage *stage,
 	    struct prim_header *header )
 {
 }
-
-
-
-
 
 
 static GLboolean setup_sort_vertices( struct setup_stage *setup,
@@ -288,6 +291,11 @@ static GLboolean setup_sort_vertices( struct setup_stage *setup,
       setup->oneoverarea = 1.0 / area;
    }
 
+   /* XXX need to know if this is a front or back-facing triangle:
+    *  - the GLSL gl_FrontFacing fragment attribute (bool)
+    *  - two-sided stencil test
+    */
+   setup->quad.facing = 0;
 
    _mesa_printf("%s one-over-area %f\n", __FUNCTION__, setup->oneoverarea );
 
@@ -296,6 +304,9 @@ static GLboolean setup_sort_vertices( struct setup_stage *setup,
 }
 
 
+/**
+ * Compute a0 for a constant-valued coefficient (GL_FLAT shading).
+ */
 static void const_coeff( struct setup_stage *setup,
 			 GLuint slot,
 			 GLuint i )
@@ -309,6 +320,9 @@ static void const_coeff( struct setup_stage *setup,
 }
 
 
+/**
+ * Compute a0, dadx and dady for a linearly interpolated coefficient.
+ */
 static void linear_coeff( struct setup_stage *setup,
 			  GLuint slot,
 			  GLuint i)
@@ -345,6 +359,9 @@ static void linear_coeff( struct setup_stage *setup,
 }
 
 
+/**
+ * Compute a0, dadx and dady for a perspective-corrected interpolant.
+ */
 static void persp_coeff( struct setup_stage *setup,
 			 GLuint slot,
 			 GLuint i )
@@ -430,10 +447,10 @@ static void setup_edges( struct setup_stage *setup )
 }
 
 
-
-
-
-
+/**
+ * Render the upper or lower half of a triangle.
+ * Scissoring is applied here too.
+ */
 static void subtriangle( struct setup_stage *setup,
 			 struct edge *eleft,
 			 struct edge *eright,
@@ -511,6 +528,9 @@ static void subtriangle( struct setup_stage *setup,
 }
 
 
+/**
+ * Do setup for triangle rasterization, then render the triangle.
+ */
 static void setup_tri( struct prim_stage *stage,
 		       struct prim_header *prim )
 {
