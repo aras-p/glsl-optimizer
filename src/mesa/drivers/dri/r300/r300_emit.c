@@ -212,10 +212,10 @@ static GLuint r300VAPInputRoute0(uint32_t * dst, GLvector4f ** attribptr,
 {
 	GLuint i, dw;
 
-	/* dw: size, inputs, stop bit, type */
+	/* type, inputs, stop bit, size */
 	for (i = 0; i + 1 < nr; i += 2) {
-		dw = (attribptr[tab[i]]->size - 1) | (inputs[tab[i]] << 8) | R300_INPUT_ROUTE_FLOAT;
-		dw |= ((attribptr[tab[i + 1]]->size - 1) | (inputs[tab[i + 1]] << 8) | R300_INPUT_ROUTE_FLOAT) << 16;
+		dw = R300_INPUT_ROUTE_FLOAT | (inputs[tab[i]] << 8) | (attribptr[tab[i]]->size - 1);
+		dw |= (R300_INPUT_ROUTE_FLOAT | (inputs[tab[i + 1]] << 8) | (attribptr[tab[i + 1]]->size - 1)) << 16;
 		if (i + 2 == nr) {
 			dw |= (1 << (13 + 16));
 		}
@@ -223,7 +223,7 @@ static GLuint r300VAPInputRoute0(uint32_t * dst, GLvector4f ** attribptr,
 	}
 
 	if (nr & 1) {
-		dw = (attribptr[tab[nr - 1]]->size - 1) | (inputs[tab[nr - 1]] << 8) | R300_INPUT_ROUTE_FLOAT;
+		dw = R300_INPUT_ROUTE_FLOAT | (inputs[tab[nr - 1]] << 8) | (attribptr[tab[nr - 1]]->size - 1);
 		dw |= 1 << 13;
 		dst[nr >> 1] = dw;
 	}
