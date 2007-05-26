@@ -782,11 +782,6 @@ struct r300_fragment_program {
 
 #define R300_MAX_AOS_ARRAYS		16
 
-#define AOS_FORMAT_USHORT	0
-#define AOS_FORMAT_FLOAT	1
-#define AOS_FORMAT_UNSIGNED_BYTE	2
-#define AOS_FORMAT_FLOAT_COLOR	3
-
 #define REG_COORDS	0
 #define REG_COLOR0	1
 #define REG_TEX0	2
