@@ -149,7 +149,6 @@ struct r300_dma_region {
 	int aos_offset;		/* address in GART memory */
 	int aos_stride;		/* distance between elements, in dwords */
 	int aos_size;		/* number of components (1-4) */
-	int aos_reg;		/* VAP register assignment */
 };
 
 struct r300_dma {
