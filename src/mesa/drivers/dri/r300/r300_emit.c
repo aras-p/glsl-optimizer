@@ -260,6 +260,12 @@ static GLuint r300VAPInputRoute1(uint32_t * dst, int swizzle[][4], GLuint nr)
 	return (nr + 1) >> 1;
 }
 
+static GLuint r300VAPInputCntl0(GLcontext * ctx, GLuint InputsRead)
+{
+	/* Hard coded value, no idea what it means */
+	return 0x5555;
+}
+
 static GLuint r300VAPInputCntl1(GLcontext * ctx, GLuint InputsRead)
 {
 	r300ContextPtr r300 = R300_CONTEXT(ctx);
@@ -505,7 +511,7 @@ int r300EmitArrays(GLcontext * ctx)
 	/* Setup INPUT_CNTL. */
 	/* I don't think this is needed for vertex buffers, but it doesn't hurt anything */
 	R300_STATECHANGE(r300, vic);
-	r300->hw.vic.cmd[R300_VIC_CNTL_0] = 0x5555;	/* Hard coded value, no idea what it means */
+	r300->hw.vic.cmd[R300_VIC_CNTL_0] = r300VAPInputCntl0(ctx, InputsRead);
 	r300->hw.vic.cmd[R300_VIC_CNTL_1] = r300VAPInputCntl1(ctx, InputsRead);
 
 	/* Setup OUTPUT_VTX_FMT. */
