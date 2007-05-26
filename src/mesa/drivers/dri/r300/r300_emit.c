@@ -216,10 +216,10 @@ static void r300EmitVec(GLcontext * ctx,
 
 /* dw: size, inputs, stop bit, type
  *
- * I'll create some documentation for t_vir0 and t_vir1 tomorrow and probably
- * add the shifts as defines in r300_reg.h.
+ * I'll create some documentation for r300VAPInputRoute0 and r300VAPInputRoute1
+ * tomorrow and probably add the shifts as defines in r300_reg.h.
  */
-static GLuint t_vir0(uint32_t * dst, GLvector4f ** attribptr, int *inputs, GLint * tab, GLuint nr)
+static GLuint r300VAPInputRoute0(uint32_t * dst, GLvector4f ** attribptr, int *inputs, GLint * tab, GLuint nr)
 {
 	GLuint i, dw;
 
@@ -241,7 +241,7 @@ static GLuint t_vir0(uint32_t * dst, GLvector4f ** attribptr, int *inputs, GLint
 	return (nr + 1) >> 1;
 }
 
-static GLuint t_swizzle(int swizzle[4])
+static GLuint r300VAPInputRoute1Swizzle(int swizzle[4])
 {
 	return (swizzle[0] << R300_INPUT_ROUTE_X_SHIFT) |
 	    (swizzle[1] << R300_INPUT_ROUTE_Y_SHIFT) |
@@ -249,17 +249,17 @@ static GLuint t_swizzle(int swizzle[4])
 	    (swizzle[3] << R300_INPUT_ROUTE_W_SHIFT);
 }
 
-static GLuint t_vir1(uint32_t * dst, int swizzle[][4], GLuint nr)
+static GLuint r300VAPInputRoute1(uint32_t * dst, int swizzle[][4], GLuint nr)
 {
 	GLuint i;
 
 	for (i = 0; i + 1 < nr; i += 2) {
-		dst[i >> 1] = t_swizzle(swizzle[i]) | R300_INPUT_ROUTE_ENABLE;
-		dst[i >> 1] |= (t_swizzle(swizzle[i + 1]) | R300_INPUT_ROUTE_ENABLE) << 16;
+		dst[i >> 1] = r300VAPInputRoute1Swizzle(swizzle[i]) | R300_INPUT_ROUTE_ENABLE;
+		dst[i >> 1] |= (r300VAPInputRoute1Swizzle(swizzle[i + 1]) | R300_INPUT_ROUTE_ENABLE) << 16;
 	}
 
 	if (nr & 1) {
-		dst[nr >> 1] = t_swizzle(swizzle[nr - 1]) | R300_INPUT_ROUTE_ENABLE;
+		dst[nr >> 1] = r300VAPInputRoute1Swizzle(swizzle[nr - 1]) | R300_INPUT_ROUTE_ENABLE;
 	}
 
 	return (nr + 1) >> 1;
@@ -458,12 +458,12 @@ int r300EmitArrays(GLcontext * ctx)
 	/* setup INPUT_ROUTE */
 	R300_STATECHANGE(r300, vir[0]);
 	((drm_r300_cmd_header_t *) r300->hw.vir[0].cmd)->packet0.count =
-	    t_vir0(&r300->hw.vir[0].cmd[R300_VIR_CNTL_0], vb->AttribPtr,
+	    r300VAPInputRoute0(&r300->hw.vir[0].cmd[R300_VIR_CNTL_0], vb->AttribPtr,
 		   inputs, tab, nr);
 
 	R300_STATECHANGE(r300, vir[1]);
 	((drm_r300_cmd_header_t *) r300->hw.vir[1].cmd)->packet0.count =
-	    t_vir1(&r300->hw.vir[1].cmd[R300_VIR_CNTL_0], swizzle, nr);
+	    r300VAPInputRoute1(&r300->hw.vir[1].cmd[R300_VIR_CNTL_0], swizzle, nr);
 
 	/* Set up input_cntl */
 	/* I don't think this is needed for vertex buffers, but it doesn't hurt anything */
