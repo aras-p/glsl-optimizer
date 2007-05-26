@@ -208,21 +208,16 @@ static void r300EmitVec(GLcontext * ctx,
 		break;
 	default:
 		assert(0);
-		_mesa_exit(-1);
 		break;
 	}
-
 }
 
-/* dw: size, inputs, stop bit, type
- *
- * I'll create some documentation for r300VAPInputRoute0 and r300VAPInputRoute1
- * tomorrow and probably add the shifts as defines in r300_reg.h.
- */
-static GLuint r300VAPInputRoute0(uint32_t * dst, GLvector4f ** attribptr, int *inputs, GLint * tab, GLuint nr)
+static GLuint r300VAPInputRoute0(uint32_t * dst, GLvector4f ** attribptr,
+				 int *inputs, GLint * tab, GLuint nr)
 {
 	GLuint i, dw;
 
+	/* dw: size, inputs, stop bit, type */
 	for (i = 0; i + 1 < nr; i += 2) {
 		dw = (attribptr[tab[i]]->size - 1) | (inputs[tab[i]] << 8) | (AOS_FORMAT_FLOAT << 14);
 		dw |= ((attribptr[tab[i + 1]]->size - 1) | (inputs[tab[i + 1]] << 8) | (AOS_FORMAT_FLOAT << 14)) << 16;
@@ -289,11 +284,52 @@ static GLuint r300VAPInputCntl1(GLcontext * ctx, GLuint InputsRead)
 	return vic_1;
 }
 
+static GLuint r300VAPOutputCntl0(GLcontext * ctx, GLuint OutputsWritten)
+{
+	GLuint ret = 0;
+
+	if (OutputsWritten & (1 << VERT_RESULT_HPOS))
+		ret |= R300_VAP_OUTPUT_VTX_FMT_0__POS_PRESENT;
+
+	if (OutputsWritten & (1 << VERT_RESULT_COL0))
+		ret |= R300_VAP_OUTPUT_VTX_FMT_0__COLOR_PRESENT;
+
+	if (OutputsWritten & (1 << VERT_RESULT_COL1))
+		ret |= R300_VAP_OUTPUT_VTX_FMT_0__COLOR_1_PRESENT;
+
+#if 0
+	if (OutputsWritten & (1 << VERT_RESULT_BFC0))
+		ret |= R300_VAP_OUTPUT_VTX_FMT_0__COLOR_2_PRESENT;
+
+	if (OutputsWritten & (1 << VERT_RESULT_BFC1))
+		ret |= R300_VAP_OUTPUT_VTX_FMT_0__COLOR_3_PRESENT;
+
+	if (OutputsWritten & (1 << VERT_RESULT_FOGC)) ;
+#endif
+
+	if (OutputsWritten & (1 << VERT_RESULT_PSIZ))
+		ret |= R300_VAP_OUTPUT_VTX_FMT_0__PT_SIZE_PRESENT;
+
+	return ret;
+}
+
+static GLuint r300VAPOutputCntl1(GLcontext * ctx, GLuint OutputsWritten)
+{
+	GLuint i, ret = 0;
+
+	for (i = 0; i < ctx->Const.MaxTextureUnits; i++) {
+		if (OutputsWritten & (1 << (VERT_RESULT_TEX0 + i))) {
+			ret |= (4 << (3 * i));
+		}
+	}
+
+	return ret;
+}
+
 /* Emit vertex data to GART memory
  * Route inputs to the vertex processor
  * This function should never return R300_FALLBACK_TCL when using software tcl.
  */
-
 int r300EmitArrays(GLcontext * ctx)
 {
 	r300ContextPtr rmesa = R300_CONTEXT(ctx);
@@ -455,60 +491,29 @@ int r300EmitArrays(GLcontext * ctx)
 		}
 	}
 
-	/* setup INPUT_ROUTE */
+	/* Setup INPUT_ROUTE. */
 	R300_STATECHANGE(r300, vir[0]);
 	((drm_r300_cmd_header_t *) r300->hw.vir[0].cmd)->packet0.count =
-	    r300VAPInputRoute0(&r300->hw.vir[0].cmd[R300_VIR_CNTL_0], vb->AttribPtr,
-		   inputs, tab, nr);
+	    r300VAPInputRoute0(&r300->hw.vir[0].cmd[R300_VIR_CNTL_0],
+			       vb->AttribPtr, inputs, tab, nr);
 
 	R300_STATECHANGE(r300, vir[1]);
 	((drm_r300_cmd_header_t *) r300->hw.vir[1].cmd)->packet0.count =
-	    r300VAPInputRoute1(&r300->hw.vir[1].cmd[R300_VIR_CNTL_0], swizzle, nr);
+	    r300VAPInputRoute1(&r300->hw.vir[1].cmd[R300_VIR_CNTL_0], swizzle,
+			       nr);
 
-	/* Set up input_cntl */
+	/* Setup INPUT_CNTL. */
 	/* I don't think this is needed for vertex buffers, but it doesn't hurt anything */
 	R300_STATECHANGE(r300, vic);
 	r300->hw.vic.cmd[R300_VIC_CNTL_0] = 0x5555;	/* Hard coded value, no idea what it means */
 	r300->hw.vic.cmd[R300_VIC_CNTL_1] = r300VAPInputCntl1(ctx, InputsRead);
 
-	/* Stage 3: VAP output */
-
+	/* Setup OUTPUT_VTX_FMT. */
 	R300_STATECHANGE(r300, vof);
-
-	r300->hw.vof.cmd[R300_VOF_CNTL_0] = 0;
-	r300->hw.vof.cmd[R300_VOF_CNTL_1] = 0;
-
-	if (OutputsWritten & (1 << VERT_RESULT_HPOS))
-		r300->hw.vof.cmd[R300_VOF_CNTL_0] |=
-		    R300_VAP_OUTPUT_VTX_FMT_0__POS_PRESENT;
-
-	if (OutputsWritten & (1 << VERT_RESULT_COL0))
-		r300->hw.vof.cmd[R300_VOF_CNTL_0] |=
-		    R300_VAP_OUTPUT_VTX_FMT_0__COLOR_PRESENT;
-
-	if (OutputsWritten & (1 << VERT_RESULT_COL1))
-		r300->hw.vof.cmd[R300_VOF_CNTL_0] |=
-		    R300_VAP_OUTPUT_VTX_FMT_0__COLOR_1_PRESENT;
-
-#if 0
-	if (OutputsWritten & (1 << VERT_RESULT_BFC0))
-		r300->hw.vof.cmd[R300_VOF_CNTL_0] |=
-		    R300_VAP_OUTPUT_VTX_FMT_0__COLOR_2_PRESENT;
-
-	if (OutputsWritten & (1 << VERT_RESULT_BFC1))
-		r300->hw.vof.cmd[R300_VOF_CNTL_0] |=
-		    R300_VAP_OUTPUT_VTX_FMT_0__COLOR_3_PRESENT;
-
-	if (OutputsWritten & (1 << VERT_RESULT_FOGC)) ;
-#endif
-
-	if (OutputsWritten & (1 << VERT_RESULT_PSIZ))
-		r300->hw.vof.cmd[R300_VOF_CNTL_0] |=
-		    R300_VAP_OUTPUT_VTX_FMT_0__PT_SIZE_PRESENT;
-
-	for (i = 0; i < ctx->Const.MaxTextureUnits; i++)
-		if (OutputsWritten & (1 << (VERT_RESULT_TEX0 + i)))
-			r300->hw.vof.cmd[R300_VOF_CNTL_1] |= (4 << (3 * i));
+	r300->hw.vof.cmd[R300_VOF_CNTL_0] =
+	    r300VAPOutputCntl0(ctx, OutputsWritten);
+	r300->hw.vof.cmd[R300_VOF_CNTL_1] =
+	    r300VAPOutputCntl1(ctx, OutputsWritten);
 
 	rmesa->state.aos_count = nr;
 
