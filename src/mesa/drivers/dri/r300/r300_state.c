@@ -2150,7 +2150,7 @@ static void r300SetupPixelShader(r300ContextPtr rmesa)
 			       tex_offset << R300_PFS_NODE_TEX_OFFSET_SHIFT)
 			    | (fp->node[i].
 			       tex_end << R300_PFS_NODE_TEX_END_SHIFT)
-			    | fp->node[i].flags;	/*  ( (k==3) ? R300_PFS_NODE_LAST_NODE : 0); */
+			    | fp->node[i].flags;
 		} else {
 			rmesa->hw.fp.cmd[R300_FP_NODE0 + (3 - i)] = 0;
 		}

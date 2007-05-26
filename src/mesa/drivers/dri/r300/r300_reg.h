@@ -961,7 +961,6 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
  * first node is stored in NODE_2, the second node is stored in NODE_3.
  *
  * Offsets are relative to the master offset from PFS_CNTL_2.
- * LAST_NODE is set for the last node, and only for the last node.
  */
 #define R300_PFS_NODE_0                     0x4610
 #define R300_PFS_NODE_1                     0x4614
@@ -975,7 +974,6 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #       define R300_PFS_NODE_TEX_OFFSET_MASK     (31 << 12)
 #       define R300_PFS_NODE_TEX_END_SHIFT       17
 #       define R300_PFS_NODE_TEX_END_MASK        (31 << 17)
-/*#       define R300_PFS_NODE_LAST_NODE           (1 << 22) */
 #		define R300_PFS_NODE_OUTPUT_COLOR        (1 << 22)
 #		define R300_PFS_NODE_OUTPUT_DEPTH        (1 << 23)
 
