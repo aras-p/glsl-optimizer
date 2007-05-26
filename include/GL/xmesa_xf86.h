@@ -39,6 +39,7 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #ifndef _XMESA_XF86_H_
 #define _XMESA_XF86_H_
 
+#include "GL/glxtokens.h"
 #include "scrnintstr.h"
 #include "pixmapstr.h"
 #include "gcstruct.h"
