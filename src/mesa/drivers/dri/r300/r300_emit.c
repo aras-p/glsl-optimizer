@@ -345,99 +345,104 @@ int r300EmitArrays(GLcontext * ctx)
 	int vir_inputs[VERT_ATTRIB_MAX];
 	GLint tab[VERT_ATTRIB_MAX];
 	int swizzle[VERT_ATTRIB_MAX][4];
+	struct r300_vertex_program *prog =
+	    (struct r300_vertex_program *)CURRENT_VERTEX_SHADER(ctx);
 
 	if (hw_tcl_on) {
-		struct r300_vertex_program *prog = (struct r300_vertex_program *)
-		    CURRENT_VERTEX_SHADER(ctx);
 		inputs = prog->inputs;
-		InputsRead = CURRENT_VERTEX_SHADER(ctx)->key.InputsRead;
-		OutputsWritten = CURRENT_VERTEX_SHADER(ctx)->key.OutputsWritten;
+		InputsRead = prog->key.InputsRead;
+		OutputsWritten = prog->key.OutputsWritten;
 	} else {
-		DECLARE_RENDERINPUTS(inputs_bitset);
 		inputs = r300->state.sw_tcl_inputs;
 
-		RENDERINPUTS_COPY(inputs_bitset, TNL_CONTEXT(ctx)->render_inputs_bitset);
+		DECLARE_RENDERINPUTS(render_inputs_bitset);
+		RENDERINPUTS_COPY(render_inputs_bitset, tnl->render_inputs_bitset);
 
-		assert(RENDERINPUTS_TEST(inputs_bitset, _TNL_ATTRIB_POS));
-		InputsRead |= 1 << VERT_ATTRIB_POS;
-		OutputsWritten |= 1 << VERT_RESULT_HPOS;
+		assert(RENDERINPUTS_TEST(render_inputs_bitset, _TNL_ATTRIB_POS));
+		assert(RENDERINPUTS_TEST(render_inputs_bitset, _TNL_ATTRIB_NORMAL) == 0);
+		assert(RENDERINPUTS_TEST(render_inputs_bitset, _TNL_ATTRIB_COLOR0));
 
-		assert(RENDERINPUTS_TEST(inputs_bitset, _TNL_ATTRIB_NORMAL) == 0);
+		if (RENDERINPUTS_TEST(render_inputs_bitset, _TNL_ATTRIB_POS)) {
+			InputsRead |= 1 << VERT_ATTRIB_POS;
+			OutputsWritten |= 1 << VERT_RESULT_HPOS;
+		}
 
-		assert(RENDERINPUTS_TEST(inputs_bitset, _TNL_ATTRIB_COLOR0));
-		InputsRead |= 1 << VERT_ATTRIB_COLOR0;
-		OutputsWritten |= 1 << VERT_RESULT_COL0;
+		if (RENDERINPUTS_TEST(render_inputs_bitset, _TNL_ATTRIB_COLOR0)) {
+			InputsRead |= 1 << VERT_ATTRIB_COLOR0;
+			OutputsWritten |= 1 << VERT_RESULT_COL0;
+		}
 
-		if (RENDERINPUTS_TEST(inputs_bitset, _TNL_ATTRIB_COLOR1)) {
+		if (RENDERINPUTS_TEST(render_inputs_bitset, _TNL_ATTRIB_COLOR1)) {
 			InputsRead |= 1 << VERT_ATTRIB_COLOR1;
 			OutputsWritten |= 1 << VERT_RESULT_COL1;
 		}
 
-		for (i = 0; i < ctx->Const.MaxTextureUnits; i++)
-			if (RENDERINPUTS_TEST(inputs_bitset, _TNL_ATTRIB_TEX(i))) {
+		for (i = 0; i < ctx->Const.MaxTextureUnits; i++) {
+			if (RENDERINPUTS_TEST(render_inputs_bitset, _TNL_ATTRIB_TEX(i))) {
 				InputsRead |= 1 << (VERT_ATTRIB_TEX0 + i);
 				OutputsWritten |= 1 << (VERT_RESULT_TEX0 + i);
 			}
+		}
 
-		for (i = 0, nr = 0; i < VERT_ATTRIB_MAX; i++)
-			if (InputsRead & (1 << i))
+		for (i = 0, nr = 0; i < VERT_ATTRIB_MAX; i++) {
+			if (InputsRead & (1 << i)) {
 				inputs[i] = nr++;
-			else
+			} else {
 				inputs[i] = -1;
+			}
+		}
 
 		if (!(r300->radeon.radeonScreen->chip_flags & RADEON_CHIPSET_TCL)) {
 			/* Fixed, apply to vir0 only */
 			memcpy(vir_inputs, inputs, VERT_ATTRIB_MAX * sizeof(int));
 			inputs = vir_inputs;
-
 			if (InputsRead & VERT_ATTRIB_POS)
 				inputs[VERT_ATTRIB_POS] = 0;
-
 			if (InputsRead & (1 << VERT_ATTRIB_COLOR0))
 				inputs[VERT_ATTRIB_COLOR0] = 2;
-
 			if (InputsRead & (1 << VERT_ATTRIB_COLOR1))
 				inputs[VERT_ATTRIB_COLOR1] = 3;
-
 			for (i = VERT_ATTRIB_TEX0; i <= VERT_ATTRIB_TEX7; i++)
 				if (InputsRead & (1 << i))
 					inputs[i] = 6 + (i - VERT_ATTRIB_TEX0);
 		}
 
-		RENDERINPUTS_COPY(rmesa->state.render_inputs_bitset, inputs_bitset);
+		RENDERINPUTS_COPY(rmesa->state.render_inputs_bitset, render_inputs_bitset);
 	}
 
 	assert(InputsRead);
 	assert(OutputsWritten);
 
-	for (i = 0, nr = 0; i < VERT_ATTRIB_MAX; i++)
-		if (InputsRead & (1 << i))
+	for (i = 0, nr = 0; i < VERT_ATTRIB_MAX; i++) {
+		if (InputsRead & (1 << i)) {
 			tab[nr++] = i;
+		}
+	}
 
-	if (nr > R300_MAX_AOS_ARRAYS)
+	if (nr > R300_MAX_AOS_ARRAYS) {
 		return R300_FALLBACK_TCL;
+	}
 
 	for (i = 0; i < nr; i++) {
-		int ci;
-		int comp_size, fix, found = 0;
+		int ci, fix, found = 0;
 
 		swizzle[i][0] = SWIZZLE_ZERO;
 		swizzle[i][1] = SWIZZLE_ZERO;
 		swizzle[i][2] = SWIZZLE_ZERO;
 		swizzle[i][3] = SWIZZLE_ONE;
 
-		for (ci = 0; ci < vb->AttribPtr[tab[i]]->size; ci++)
+		for (ci = 0; ci < vb->AttribPtr[tab[i]]->size; ci++) {
 			swizzle[i][ci] = ci;
+		}
 
 		if (r300IsGartMemory(rmesa, vb->AttribPtr[tab[i]]->data, 4)) {
-			if (vb->AttribPtr[tab[i]]->stride % 4)
+			if (vb->AttribPtr[tab[i]]->stride % 4) {
 				return R300_FALLBACK_TCL;
-
+			}
 			rmesa->state.aos[i].address = (void *)(vb->AttribPtr[tab[i]]->data);
 			rmesa->state.aos[i].start = 0;
 			rmesa->state.aos[i].aos_offset = r300GartOffsetFromVirtual(rmesa, vb->AttribPtr[tab[i]]->data);
 			rmesa->state.aos[i].aos_stride = vb->AttribPtr[tab[i]]->stride / 4;
-
 			rmesa->state.aos[i].aos_size = vb->AttribPtr[tab[i]]->size;
 		} else {
 			r300EmitVec(ctx, &rmesa->state.aos[i],
@@ -448,11 +453,10 @@ int r300EmitArrays(GLcontext * ctx)
 
 		rmesa->state.aos[i].aos_size = vb->AttribPtr[tab[i]]->size;
 
-		comp_size = _mesa_sizeof_type(GL_FLOAT);
-
 		for (fix = 0; fix <= 4 - vb->AttribPtr[tab[i]]->size; fix++) {
-			if ((rmesa->state.aos[i].aos_offset - comp_size * fix) % 4)
+			if ((rmesa->state.aos[i].aos_offset - _mesa_sizeof_type(GL_FLOAT) * fix) % 4) {
 				continue;
+			}
 			found = 1;
 			break;
 		}
@@ -461,9 +465,10 @@ int r300EmitArrays(GLcontext * ctx)
 			if (fix > 0) {
 				WARN_ONCE("Feeling lucky?\n");
 			}
-			rmesa->state.aos[i].aos_offset -= comp_size * fix;
-			for (ci = 0; ci < vb->AttribPtr[tab[i]]->size; ci++)
+			rmesa->state.aos[i].aos_offset -= _mesa_sizeof_type(GL_FLOAT) * fix;
+			for (ci = 0; ci < vb->AttribPtr[tab[i]]->size; ci++) {
 				swizzle[i][ci] += fix;
+			}
 		} else {
 			WARN_ONCE
 			    ("Cannot handle offset %x with stride %d, comp %d\n",
