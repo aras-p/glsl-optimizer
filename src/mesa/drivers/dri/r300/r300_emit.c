@@ -86,8 +86,7 @@ do {						\
 } while (0)
 #endif
 
-static void r300EmitVec4(GLcontext * ctx,
-			 struct r300_dma_region *rvb,
+static void r300EmitVec4(GLcontext * ctx, struct r300_dma_region *rvb,
 			 GLvoid * data, int stride, int count)
 {
 	int i;
@@ -107,8 +106,7 @@ static void r300EmitVec4(GLcontext * ctx,
 		}
 }
 
-static void r300EmitVec8(GLcontext * ctx,
-			 struct r300_dma_region *rvb,
+static void r300EmitVec8(GLcontext * ctx, struct r300_dma_region *rvb,
 			 GLvoid * data, int stride, int count)
 {
 	int i;
@@ -129,8 +127,7 @@ static void r300EmitVec8(GLcontext * ctx,
 		}
 }
 
-static void r300EmitVec12(GLcontext * ctx,
-			  struct r300_dma_region *rvb,
+static void r300EmitVec12(GLcontext * ctx, struct r300_dma_region *rvb,
 			  GLvoid * data, int stride, int count)
 {
 	int i;
@@ -152,8 +149,7 @@ static void r300EmitVec12(GLcontext * ctx,
 		}
 }
 
-static void r300EmitVec16(GLcontext * ctx,
-			  struct r300_dma_region *rvb,
+static void r300EmitVec16(GLcontext * ctx, struct r300_dma_region *rvb,
 			  GLvoid * data, int stride, int count)
 {
 	int i;
@@ -176,8 +172,7 @@ static void r300EmitVec16(GLcontext * ctx,
 		}
 }
 
-static void r300EmitVec(GLcontext * ctx,
-			struct r300_dma_region *rvb,
+static void r300EmitVec(GLcontext * ctx, struct r300_dma_region *rvb,
 			GLvoid * data, int size, int stride, int count)
 {
 	r300ContextPtr rmesa = R300_CONTEXT(ctx);
@@ -352,8 +347,7 @@ int r300EmitArrays(GLcontext * ctx)
 	int swizzle[VERT_ATTRIB_MAX][4];
 
 	if (hw_tcl_on) {
-		struct r300_vertex_program *prog =
-		    (struct r300_vertex_program *)
+		struct r300_vertex_program *prog = (struct r300_vertex_program *)
 		    CURRENT_VERTEX_SHADER(ctx);
 		inputs = prog->inputs;
 		InputsRead = CURRENT_VERTEX_SHADER(ctx)->key.InputsRead;
@@ -362,15 +356,13 @@ int r300EmitArrays(GLcontext * ctx)
 		DECLARE_RENDERINPUTS(inputs_bitset);
 		inputs = r300->state.sw_tcl_inputs;
 
-		RENDERINPUTS_COPY(inputs_bitset,
-				  TNL_CONTEXT(ctx)->render_inputs_bitset);
+		RENDERINPUTS_COPY(inputs_bitset, TNL_CONTEXT(ctx)->render_inputs_bitset);
 
 		assert(RENDERINPUTS_TEST(inputs_bitset, _TNL_ATTRIB_POS));
 		InputsRead |= 1 << VERT_ATTRIB_POS;
 		OutputsWritten |= 1 << VERT_RESULT_HPOS;
 
-		assert(RENDERINPUTS_TEST(inputs_bitset, _TNL_ATTRIB_NORMAL)
-		       == 0);
+		assert(RENDERINPUTS_TEST(inputs_bitset, _TNL_ATTRIB_NORMAL) == 0);
 
 		assert(RENDERINPUTS_TEST(inputs_bitset, _TNL_ATTRIB_COLOR0));
 		InputsRead |= 1 << VERT_ATTRIB_COLOR0;
@@ -382,8 +374,7 @@ int r300EmitArrays(GLcontext * ctx)
 		}
 
 		for (i = 0; i < ctx->Const.MaxTextureUnits; i++)
-			if (RENDERINPUTS_TEST
-			    (inputs_bitset, _TNL_ATTRIB_TEX(i))) {
+			if (RENDERINPUTS_TEST(inputs_bitset, _TNL_ATTRIB_TEX(i))) {
 				InputsRead |= 1 << (VERT_ATTRIB_TEX0 + i);
 				OutputsWritten |= 1 << (VERT_RESULT_TEX0 + i);
 			}
@@ -394,12 +385,9 @@ int r300EmitArrays(GLcontext * ctx)
 			else
 				inputs[i] = -1;
 
-		if (!
-		    (r300->radeon.radeonScreen->
-		     chip_flags & RADEON_CHIPSET_TCL)) {
+		if (!(r300->radeon.radeonScreen->chip_flags & RADEON_CHIPSET_TCL)) {
 			/* Fixed, apply to vir0 only */
-			memcpy(vir_inputs, inputs,
-			       VERT_ATTRIB_MAX * sizeof(int));
+			memcpy(vir_inputs, inputs, VERT_ATTRIB_MAX * sizeof(int));
 			inputs = vir_inputs;
 
 			if (InputsRead & VERT_ATTRIB_POS)
@@ -416,8 +404,7 @@ int r300EmitArrays(GLcontext * ctx)
 					inputs[i] = 6 + (i - VERT_ATTRIB_TEX0);
 		}
 
-		RENDERINPUTS_COPY(rmesa->state.render_inputs_bitset,
-				  inputs_bitset);
+		RENDERINPUTS_COPY(rmesa->state.render_inputs_bitset, inputs_bitset);
 	}
 
 	assert(InputsRead);
@@ -446,18 +433,12 @@ int r300EmitArrays(GLcontext * ctx)
 			if (vb->AttribPtr[tab[i]]->stride % 4)
 				return R300_FALLBACK_TCL;
 
-			rmesa->state.aos[i].address =
-			    (void *)(vb->AttribPtr[tab[i]]->data);
+			rmesa->state.aos[i].address = (void *)(vb->AttribPtr[tab[i]]->data);
 			rmesa->state.aos[i].start = 0;
-			rmesa->state.aos[i].aos_offset =
-			    r300GartOffsetFromVirtual(rmesa,
-						      vb->
-						      AttribPtr[tab[i]]->data);
-			rmesa->state.aos[i].aos_stride =
-			    vb->AttribPtr[tab[i]]->stride / 4;
+			rmesa->state.aos[i].aos_offset = r300GartOffsetFromVirtual(rmesa, vb->AttribPtr[tab[i]]->data);
+			rmesa->state.aos[i].aos_stride = vb->AttribPtr[tab[i]]->stride / 4;
 
-			rmesa->state.aos[i].aos_size =
-			    vb->AttribPtr[tab[i]]->size;
+			rmesa->state.aos[i].aos_size = vb->AttribPtr[tab[i]]->size;
 		} else {
 			r300EmitVec(ctx, &rmesa->state.aos[i],
 				    vb->AttribPtr[tab[i]]->data,
@@ -470,10 +451,8 @@ int r300EmitArrays(GLcontext * ctx)
 		comp_size = _mesa_sizeof_type(GL_FLOAT);
 
 		for (fix = 0; fix <= 4 - vb->AttribPtr[tab[i]]->size; fix++) {
-			if ((rmesa->state.aos[i].aos_offset -
-			     comp_size * fix) % 4)
+			if ((rmesa->state.aos[i].aos_offset - comp_size * fix) % 4)
 				continue;
-
 			found = 1;
 			break;
 		}
@@ -482,9 +461,7 @@ int r300EmitArrays(GLcontext * ctx)
 			if (fix > 0) {
 				WARN_ONCE("Feeling lucky?\n");
 			}
-
 			rmesa->state.aos[i].aos_offset -= comp_size * fix;
-
 			for (ci = 0; ci < vb->AttribPtr[tab[i]]->size; ci++)
 				swizzle[i][ci] += fix;
 		} else {
