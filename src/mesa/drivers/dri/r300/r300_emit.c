@@ -263,7 +263,7 @@ static GLuint r300VAPInputCntl0(GLcontext * ctx, GLuint InputsRead)
 
 static GLuint r300VAPInputCntl1(GLcontext * ctx, GLuint InputsRead)
 {
-	r300ContextPtr r300 = R300_CONTEXT(ctx);
+	r300ContextPtr rmesa = R300_CONTEXT(ctx);
 	GLuint i, vic_1 = 0;
 
 	if (InputsRead & (1 << VERT_ATTRIB_POS))
@@ -275,10 +275,10 @@ static GLuint r300VAPInputCntl1(GLcontext * ctx, GLuint InputsRead)
 	if (InputsRead & (1 << VERT_ATTRIB_COLOR0))
 		vic_1 |= R300_INPUT_CNTL_COLOR;
 
-	r300->state.texture.tc_count = 0;
+	rmesa->state.texture.tc_count = 0;
 	for (i = 0; i < ctx->Const.MaxTextureUnits; i++)
 		if (InputsRead & (1 << (VERT_ATTRIB_TEX0 + i))) {
-			r300->state.texture.tc_count++;
+			rmesa->state.texture.tc_count++;
 			vic_1 |= R300_INPUT_CNTL_TC0 << i;
 		}
 
@@ -334,7 +334,6 @@ static GLuint r300VAPOutputCntl1(GLcontext * ctx, GLuint OutputsWritten)
 int r300EmitArrays(GLcontext * ctx)
 {
 	r300ContextPtr rmesa = R300_CONTEXT(ctx);
-	r300ContextPtr r300 = rmesa;
 	TNLcontext *tnl = TNL_CONTEXT(ctx);
 	struct vertex_buffer *vb = &tnl->vb;
 	GLuint nr;
@@ -353,7 +352,7 @@ int r300EmitArrays(GLcontext * ctx)
 		InputsRead = prog->key.InputsRead;
 		OutputsWritten = prog->key.OutputsWritten;
 	} else {
-		inputs = r300->state.sw_tcl_inputs;
+		inputs = rmesa->state.sw_tcl_inputs;
 
 		DECLARE_RENDERINPUTS(render_inputs_bitset);
 		RENDERINPUTS_COPY(render_inputs_bitset, tnl->render_inputs_bitset);
@@ -392,7 +391,7 @@ int r300EmitArrays(GLcontext * ctx)
 			}
 		}
 
-		if (!(r300->radeon.radeonScreen->chip_flags & RADEON_CHIPSET_TCL)) {
+		if (!(rmesa->radeon.radeonScreen->chip_flags & RADEON_CHIPSET_TCL)) {
 			/* Fixed, apply to vir0 only */
 			memcpy(vir_inputs, inputs, VERT_ATTRIB_MAX * sizeof(int));
 			inputs = vir_inputs;
@@ -480,27 +479,27 @@ int r300EmitArrays(GLcontext * ctx)
 	}
 
 	/* Setup INPUT_ROUTE. */
-	R300_STATECHANGE(r300, vir[0]);
-	((drm_r300_cmd_header_t *) r300->hw.vir[0].cmd)->packet0.count =
-	    r300VAPInputRoute0(&r300->hw.vir[0].cmd[R300_VIR_CNTL_0],
+	R300_STATECHANGE(rmesa, vir[0]);
+	((drm_r300_cmd_header_t *) rmesa->hw.vir[0].cmd)->packet0.count =
+	    r300VAPInputRoute0(&rmesa->hw.vir[0].cmd[R300_VIR_CNTL_0],
 			       vb->AttribPtr, inputs, tab, nr);
 
-	R300_STATECHANGE(r300, vir[1]);
-	((drm_r300_cmd_header_t *) r300->hw.vir[1].cmd)->packet0.count =
-	    r300VAPInputRoute1(&r300->hw.vir[1].cmd[R300_VIR_CNTL_0], swizzle,
+	R300_STATECHANGE(rmesa, vir[1]);
+	((drm_r300_cmd_header_t *) rmesa->hw.vir[1].cmd)->packet0.count =
+	    r300VAPInputRoute1(&rmesa->hw.vir[1].cmd[R300_VIR_CNTL_0], swizzle,
 			       nr);
 
 	/* Setup INPUT_CNTL. */
 	/* I don't think this is needed for vertex buffers, but it doesn't hurt anything */
-	R300_STATECHANGE(r300, vic);
-	r300->hw.vic.cmd[R300_VIC_CNTL_0] = r300VAPInputCntl0(ctx, InputsRead);
-	r300->hw.vic.cmd[R300_VIC_CNTL_1] = r300VAPInputCntl1(ctx, InputsRead);
+	R300_STATECHANGE(rmesa, vic);
+	rmesa->hw.vic.cmd[R300_VIC_CNTL_0] = r300VAPInputCntl0(ctx, InputsRead);
+	rmesa->hw.vic.cmd[R300_VIC_CNTL_1] = r300VAPInputCntl1(ctx, InputsRead);
 
 	/* Setup OUTPUT_VTX_FMT. */
-	R300_STATECHANGE(r300, vof);
-	r300->hw.vof.cmd[R300_VOF_CNTL_0] =
+	R300_STATECHANGE(rmesa, vof);
+	rmesa->hw.vof.cmd[R300_VOF_CNTL_0] =
 	    r300VAPOutputCntl0(ctx, OutputsWritten);
-	r300->hw.vof.cmd[R300_VOF_CNTL_1] =
+	rmesa->hw.vof.cmd[R300_VOF_CNTL_1] =
 	    r300VAPOutputCntl1(ctx, OutputsWritten);
 
 	rmesa->state.aos_count = nr;
