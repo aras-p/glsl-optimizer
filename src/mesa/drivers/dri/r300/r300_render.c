@@ -205,8 +205,6 @@ static void r300FireEB(r300ContextPtr rmesa, unsigned long addr,
 	int cmd_reserved = 0;
 	int cmd_written = 0;
 	drm_radeon_cmd_header_t *cmd = NULL;
-	unsigned long t_addr;
-	unsigned long magic_1, magic_2;
 
 	assert(elt_size == 2 || elt_size == 4);
 
@@ -214,10 +212,6 @@ static void r300FireEB(r300ContextPtr rmesa, unsigned long addr,
 		WARN_ONCE("Badly aligned buffer\n");
 		return;
 	}
-
-	magic_1 = (addr % 32) / 4;
-	t_addr = addr & ~0x1d;
-	magic_2 = (vertex_count + 1 + (t_addr & 0x2)) / 2 + magic_1;
 
 	start_packet3(RADEON_CP_PACKET3_3D_DRAW_INDX_2, 0);
 	if (elt_size == 4) {
@@ -227,27 +221,13 @@ static void r300FireEB(r300ContextPtr rmesa, unsigned long addr,
 	}
 
 	start_packet3(RADEON_CP_PACKET3_INDX_BUFFER, 2);
-#ifdef OPTIMIZE_ELTS
-	if (elt_size == 4) {
-		e32(R300_EB_UNK1 | (0 << 16) | R300_EB_UNK2);
-		e32(addr);
-	} else {
-		e32(R300_EB_UNK1 | (magic_1 << 16) | R300_EB_UNK2);
-		e32(t_addr);
-	}
-#else
 	e32(R300_EB_UNK1 | (0 << 16) | R300_EB_UNK2);
 	e32(addr);
-#endif
 
 	if (elt_size == 4) {
 		e32(vertex_count);
 	} else {
-#ifdef OPTIMIZE_ELTS
-		e32(magic_2);
-#else
 		e32((vertex_count + 1) / 2);
-#endif
 	}
 }
 
