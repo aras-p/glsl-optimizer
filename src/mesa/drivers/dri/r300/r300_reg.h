@@ -628,11 +628,17 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
  * Set INTERP_USED on all interpolators that produce data used by
  * the fragment program. INTERP_USED looks like a swizzling mask,
  * but I haven't seen it used that way.
+ *
+ * Note: The _UNKNOWN constants are always set in their respective
+ * register. I don't know if this is necessary.
  */
 #define R300_RS_INTERP_0                    0x4310
 #define R300_RS_INTERP_1                    0x4314
+#       define R300_RS_INTERP_1_UNKNOWN          0x40
 #define R300_RS_INTERP_2                    0x4318
+#       define R300_RS_INTERP_2_UNKNOWN          0x80
 #define R300_RS_INTERP_3                    0x431C
+#       define R300_RS_INTERP_3_UNKNOWN          0xC0
 #define R300_RS_INTERP_4                    0x4320
 #define R300_RS_INTERP_5                    0x4324
 #define R300_RS_INTERP_6                    0x4328
