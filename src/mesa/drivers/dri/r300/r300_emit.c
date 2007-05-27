@@ -257,7 +257,8 @@ static GLuint r300VAPInputRoute1(uint32_t * dst, int swizzle[][4], GLuint nr)
 
 static GLuint r300VAPInputCntl0(GLcontext * ctx, GLuint InputsRead)
 {
-	/* Hard coded value, no idea what it means */
+	/* No idea what this value means. I have seen other values written to
+	 * this register... */
 	return 0x5555;
 }
 
