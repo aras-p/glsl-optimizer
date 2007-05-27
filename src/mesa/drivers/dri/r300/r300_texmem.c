@@ -63,29 +63,16 @@ SOFTWARE.
  */
 void r300DestroyTexObj(r300ContextPtr rmesa, r300TexObjPtr t)
 {
+	int i;
+
 	if (RADEON_DEBUG & DEBUG_TEXTURE) {
 		fprintf(stderr, "%s( %p, %p )\n", __FUNCTION__,
 			(void *)t, (void *)t->base.tObj);
 	}
 
-	if (rmesa != NULL) {
-		unsigned i;
-
-		for (i = 0; i < rmesa->radeon.glCtx->Const.MaxTextureUnits; i++) {
-			if (t == rmesa->state.texture.unit[i].texobj) {
-				rmesa->state.texture.unit[i].texobj = NULL;
-				/* This code below is meant to shorten state
-				   pushed to the hardware by not programming
-				   unneeded units.
-
-				   This does not appear to be worthwhile on R300 */
-#if 0
-				remove_from_list(&rmesa->hw.tex[i]);
-				make_empty_list(&rmesa->hw.tex[i]);
-				remove_from_list(&rmesa->hw.cube[i]);
-				make_empty_list(&rmesa->hw.cube[i]);
-#endif
-			}
+	for (i = 0; i < rmesa->radeon.glCtx->Const.MaxTextureUnits; i++) {
+		if (rmesa->state.texture.unit[i].texobj == t) {
+			rmesa->state.texture.unit[i].texobj = NULL;
 		}
 	}
 }
