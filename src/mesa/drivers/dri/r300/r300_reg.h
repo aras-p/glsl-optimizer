@@ -1589,6 +1589,7 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #    define R300_EB_UNK1_SHIFT                      24
 #    define R300_EB_UNK1                    (0x80<<24)
 #    define R300_EB_UNK2                        0x0810
+#define R300_PACKET3_3D_DRAW_VBUF_2         0x00003400
 #define R300_PACKET3_3D_DRAW_INDX_2         0x00003600
 
 /* END: Packet 3 commands */

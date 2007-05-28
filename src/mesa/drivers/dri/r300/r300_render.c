@@ -213,14 +213,14 @@ static void r300FireEB(r300ContextPtr rmesa, unsigned long addr,
 		return;
 	}
 
-	start_packet3(RADEON_CP_PACKET3_3D_DRAW_INDX_2, 0);
+	start_packet3(CP_PACKET3(R300_PACKET3_3D_DRAW_INDX_2, 0), 0);
 	if (elt_size == 4) {
 		e32(R300_VAP_VF_CNTL__PRIM_WALK_INDICES | (vertex_count << 16) | type | R300_VAP_VF_CNTL__INDEX_SIZE_32bit);
 	} else {
 		e32(R300_VAP_VF_CNTL__PRIM_WALK_INDICES | (vertex_count << 16) | type);
 	}
 
-	start_packet3(RADEON_CP_PACKET3_INDX_BUFFER, 2);
+	start_packet3(CP_PACKET3(R300_PACKET3_INDX_BUFFER, 2), 2);
 	e32(R300_EB_UNK1 | (0 << 16) | R300_EB_UNK2);
 	e32(addr);
 
@@ -243,7 +243,7 @@ static void r300EmitAOS(r300ContextPtr rmesa, GLuint nr, GLuint offset)
 		fprintf(stderr, "%s: nr=%d, ofs=0x%08x\n", __FUNCTION__, nr,
 			offset);
 
-	start_packet3(RADEON_CP_PACKET3_3D_LOAD_VBPNTR, sz - 1);
+	start_packet3(CP_PACKET3(R300_PACKET3_3D_LOAD_VBPNTR, sz - 1), sz - 1);
 	e32(nr);
 
 	for (i = 0; i + 1 < nr; i += 2) {
@@ -269,7 +269,7 @@ static void r300FireAOS(r300ContextPtr rmesa, int vertex_count, int type)
 	int cmd_written = 0;
 	drm_radeon_cmd_header_t *cmd = NULL;
 
-	start_packet3(RADEON_CP_PACKET3_3D_DRAW_VBUF_2, 0);
+	start_packet3(CP_PACKET3(R300_PACKET3_3D_DRAW_VBUF_2, 0), 0);
 	e32(R300_VAP_VF_CNTL__PRIM_WALK_VERTEX_LIST | (vertex_count << 16) | type);
 }
 

@@ -44,20 +44,11 @@
 #include "r300_cmdbuf.h"
 #include "radeon_reg.h"
 
-/*
- * CP type-3 packets
- */
-#define RADEON_CP_PACKET3_UNK1B                     0xC0001B00
-#define RADEON_CP_PACKET3_INDX_BUFFER               0xC0003300
-#define RADEON_CP_PACKET3_3D_DRAW_VBUF_2            0xC0003400
-#define RADEON_CP_PACKET3_3D_DRAW_IMMD_2            0xC0003500
-#define RADEON_CP_PACKET3_3D_DRAW_INDX_2            0xC0003600
-#define RADEON_CP_PACKET3_3D_LOAD_VBPNTR            0xC0002F00
-#define RADEON_CP_PACKET3_3D_CLEAR_ZMASK            0xC0003202
-#define RADEON_CP_PACKET3_3D_CLEAR_CMASK            0xC0003802
-#define RADEON_CP_PACKET3_3D_CLEAR_HIZ              0xC0003702
-
+/* TODO: move these defines (and the ones from DRM) into r300_reg.h and sync up
+ * with DRM */
 #define CP_PACKET0(reg, n)	(RADEON_CP_PACKET0 | ((n)<<16) | ((reg)>>2))
+#define CP_PACKET3( pkt, n )						\
+	(RADEON_CP_PACKET3 | (pkt) | ((n) << 16))
 
 static inline uint32_t cmdpacket0(int reg, int count)
 {
