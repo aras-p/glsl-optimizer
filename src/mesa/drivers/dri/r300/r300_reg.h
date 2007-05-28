@@ -299,6 +299,16 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #       define R300_221C_NORMAL                  0x00000000
 #       define R300_221C_CLEAR                   0x0001C000
 
+/* These seem to be per-pixel and per-vertex X and Y clipping planes. The first
+ * plane is per-pixel and the second plane is per-vertex.
+ *
+ * This was determined by experimentation alone but I believe it is correct.
+ */
+#define R300_VAP_CLIP_X_0                   0x2220
+#define R300_VAP_CLIP_X_1                   0x2224
+#define R300_VAP_CLIP_Y_0                   0x2228
+#define R300_VAP_CLIP_Y_1                   0x2230
+
 /* gap */
 
 /* Sometimes, END_OF_PKT and 0x2284=0 are the only commands sent between

@@ -1882,10 +1882,10 @@ static void r300ResetHwState(r300ContextPtr r300)
 
 	r300->hw.unk221C.cmd[1] = R300_221C_NORMAL;
 
-	r300->hw.unk2220.cmd[1] = r300PackFloat32(1.0);
-	r300->hw.unk2220.cmd[2] = r300PackFloat32(1.0);
-	r300->hw.unk2220.cmd[3] = r300PackFloat32(1.0);
-	r300->hw.unk2220.cmd[4] = r300PackFloat32(1.0);
+	r300->hw.vap_clip.cmd[1] = r300PackFloat32(1.0); /* X */
+	r300->hw.vap_clip.cmd[2] = r300PackFloat32(1.0); /* X */
+	r300->hw.vap_clip.cmd[3] = r300PackFloat32(1.0); /* Y */
+	r300->hw.vap_clip.cmd[4] = r300PackFloat32(1.0); /* Y */
 
 	/* XXX: Other families? */
 	switch (r300->radeon.radeonScreen->chip_family) {

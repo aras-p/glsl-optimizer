@@ -452,7 +452,7 @@ struct r300_hw_state {
 	struct r300_state_atom vic;	/* vap input control (2180) */
 	struct r300_state_atom unk21DC;	/* (21DC) */
 	struct r300_state_atom unk221C;	/* (221C) */
-	struct r300_state_atom unk2220;	/* (2220) */
+	struct r300_state_atom vap_clip;
 	struct r300_state_atom unk2288;	/* (2288) */
 	struct r300_state_atom pvs;	/* pvs_cntl (22D0) */
 	struct r300_state_atom gb_enable;	/* (4008) */
