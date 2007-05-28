@@ -171,16 +171,13 @@ static int r300NumVerts(r300ContextPtr rmesa, int num_verts, int prim)
 	return num_verts - verts_off;
 }
 
-static void r300EmitElts(GLcontext * ctx, void *elts, unsigned long n_elts,
-			 int elt_size)
+static void r300EmitElts(GLcontext * ctx, void *elts, unsigned long n_elts)
 {
 	r300ContextPtr rmesa = R300_CONTEXT(ctx);
 	struct r300_dma_region *rvb = &rmesa->state.elt_dma;
 	void *out;
 
-	assert(elt_size == 2 || elt_size == 4);
-
-	if (r300IsGartMemory(rmesa, elts, n_elts * elt_size)) {
+	if (r300IsGartMemory(rmesa, elts, n_elts * 4)) {
 		rvb->address = rmesa->radeon.radeonScreen->gartTextures.map;
 		rvb->start = ((char *)elts) - rvb->address;
 		rvb->aos_offset =
@@ -192,43 +189,27 @@ static void r300EmitElts(GLcontext * ctx, void *elts, unsigned long n_elts,
 		_mesa_exit(-1);
 	}
 
-	r300AllocDmaRegion(rmesa, rvb, n_elts * elt_size, elt_size);
+	r300AllocDmaRegion(rmesa, rvb, n_elts * 4, 4);
 	rvb->aos_offset = GET_START(rvb);
 
 	out = rvb->address + rvb->start;
-	memcpy(out, elts, n_elts * elt_size);
+	memcpy(out, elts, n_elts * 4);
 }
 
 static void r300FireEB(r300ContextPtr rmesa, unsigned long addr,
-		       int vertex_count, int type, int elt_size)
+		       int vertex_count, int type)
 {
 	int cmd_reserved = 0;
 	int cmd_written = 0;
 	drm_radeon_cmd_header_t *cmd = NULL;
 
-	assert(elt_size == 2 || elt_size == 4);
-
-	if (addr & (elt_size - 1)) {
-		WARN_ONCE("Badly aligned buffer\n");
-		return;
-	}
-
 	start_packet3(CP_PACKET3(R300_PACKET3_3D_DRAW_INDX_2, 0), 0);
-	if (elt_size == 4) {
-		e32(R300_VAP_VF_CNTL__PRIM_WALK_INDICES | (vertex_count << 16) | type | R300_VAP_VF_CNTL__INDEX_SIZE_32bit);
-	} else {
-		e32(R300_VAP_VF_CNTL__PRIM_WALK_INDICES | (vertex_count << 16) | type);
-	}
+	e32(R300_VAP_VF_CNTL__PRIM_WALK_INDICES | (vertex_count << 16) | type | R300_VAP_VF_CNTL__INDEX_SIZE_32bit);
 
 	start_packet3(CP_PACKET3(R300_PACKET3_INDX_BUFFER, 2), 2);
 	e32(R300_EB_UNK1 | (0 << 16) | R300_EB_UNK2);
 	e32(addr);
-
-	if (elt_size == 4) {
-		e32(vertex_count);
-	} else {
-		e32((vertex_count + 1) / 2);
-	}
+	e32(vertex_count);
 }
 
 static void r300EmitAOS(r300ContextPtr rmesa, GLuint nr, GLuint offset)
@@ -293,9 +274,8 @@ static void r300RunRenderPrimitive(r300ContextPtr rmesa, GLcontext * ctx,
 			WARN_ONCE("Too many elts\n");
 			return;
 		}
-		r300EmitElts(ctx, vb->Elts, num_verts, 4);
-		r300FireEB(rmesa, rmesa->state.elt_dma.aos_offset,
-			   num_verts, type, 4);
+		r300EmitElts(ctx, vb->Elts, num_verts);
+		r300FireEB(rmesa, rmesa->state.elt_dma.aos_offset, num_verts, type);
 	} else {
 		r300EmitAOS(rmesa, rmesa->state.aos_count, start);
 		r300FireAOS(rmesa, num_verts, type);
