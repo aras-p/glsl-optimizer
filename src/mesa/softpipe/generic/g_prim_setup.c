@@ -74,7 +74,6 @@ struct setup_stage {
       GLuint y_flags;
       GLuint mask;     /**< mask of MASK_BOTTOM/TOP_LEFT/RIGHT bits */
    } span;
-
 };
 
 
@@ -188,16 +187,6 @@ static void flush_spans( struct setup_stage *setup )
    setup->span.y_flags = 0;
    setup->span.right[0] = 0;
    setup->span.right[1] = 0;
-}
-
-     
-/**
- * Do setup for point rasterization, then render the point.
- */
-static void
-setup_point( struct prim_stage *stage, 
-	     struct prim_header *header )
-{
 }
 
 
@@ -386,7 +375,10 @@ static void persp_coeff( struct setup_stage *setup,
 
 
 
-
+/**
+ * Compute the setup->coef[] array dadx, dady, a0 values.
+ * Must be called after setup->vmin,vmid,vmax,vprovoke are initialized.
+ */
 static void setup_coefficients( struct setup_stage *setup )
 {
    const enum interp_mode *interp = setup->stage.generic->interp;
@@ -565,6 +557,103 @@ static void setup_tri( struct prim_stage *stage,
 
    flush_spans( setup );
 }
+
+
+/**
+ * Do setup for point rasterization, then render the point.
+ * Round or square points...
+ * XXX could optimize a lot for 1-pixel points.
+ */
+static void
+setup_point( struct prim_stage *stage, 
+	     struct prim_header *prim )
+{
+   struct setup_stage *setup = setup_stage( stage );
+   GLfloat halfSize = 7.3; /*XXX this is a vertex attrib */
+   GLfloat halfSizeSquared = halfSize * halfSize;
+   const struct vertex_header *v0 = prim->v[0];
+   const GLfloat x = v0->data[FRAG_ATTRIB_WPOS][0];
+   const GLfloat y = v0->data[FRAG_ATTRIB_WPOS][1];
+   const GLint ixmin = block((GLint) (x - halfSize));
+   const GLint ixmax = block((GLint) (x + halfSize));
+   const GLint iymin = block((GLint) (y - halfSize));
+   const GLint iymax = block((GLint) (y + halfSize));
+   GLboolean round = GL_TRUE;
+   GLint ix, iy;
+   GLuint slot, j;
+
+   /* For points, all interpolants are constant-valued.
+    * However, for point sprites, we'll need to setup texcoords appropriately.
+    * XXX: which coefficients are the texcoords???
+    * We may do point sprites as textured quads...
+    */
+   setup->vprovoke = prim->v[0];
+   const_coeff(setup, 0, 2);
+   const_coeff(setup, 0, 3);
+   for (slot = 1; slot < setup->quad.nr_attrs; slot++) {
+      for (j = 0; j < NUM_CHANNELS; j++)
+         const_coeff(setup, slot, j);
+   }
+
+   /* XXX need to clip against scissor bounds too */
+
+   for (iy = iymin; iy <= iymax; iy += 2) {
+      for (ix = ixmin; ix <= ixmax; ix += 2) {
+
+         if (round) {
+            /* rounded points */
+            /* XXX for GL_SMOOTH, need to compute per-fragment coverage too */
+            GLfloat dx, dy;
+
+            setup->quad.mask = 0x0;
+
+            dx = (ix + 0.5) - x;
+            dy = (iy + 0.5) - y;
+            if (dx * dx + dy * dy <= halfSizeSquared)
+               setup->quad.mask |= MASK_BOTTOM_LEFT;
+
+            dx = (ix + 1.5) - x;
+            dy = (iy + 0.5) - y;
+            if (dx * dx + dy * dy <= halfSizeSquared)
+               setup->quad.mask |= MASK_BOTTOM_RIGHT;
+
+            dx = (ix + 0.5) - x;
+            dy = (iy + 1.5) - y;
+            if (dx * dx + dy * dy <= halfSizeSquared)
+               setup->quad.mask |= MASK_TOP_LEFT;
+
+            dx = (ix + 1.5) - x;
+            dy = (iy + 1.5) - y;
+            if (dx * dx + dy * dy <= halfSizeSquared)
+               setup->quad.mask |= MASK_TOP_RIGHT;
+         }
+         else {
+            /* square points */
+            setup->quad.mask = 0xf;
+
+            if (ix + 0.5 < x - halfSize)
+               setup->quad.mask &= (MASK_BOTTOM_RIGHT | MASK_TOP_RIGHT);
+
+            if (ix + 1.5 > x + halfSize)
+               setup->quad.mask &= (MASK_BOTTOM_LEFT | MASK_TOP_LEFT);
+
+            if (iy + 0.5 < y - halfSize)
+               setup->quad.mask &= (MASK_TOP_LEFT | MASK_TOP_RIGHT);
+
+            if (iy + 1.5 > y + halfSize)
+               setup->quad.mask &= (MASK_BOTTOM_LEFT | MASK_BOTTOM_RIGHT);
+         }
+
+         if (setup->quad.mask) {
+            setup->quad.x0 = ix;
+            setup->quad.y0 = iy;
+            quad_shade( setup->stage.generic, &setup->quad );
+         }
+      }
+   }
+}
+
+
 
 static void setup_end( struct prim_stage *stage )
 {
