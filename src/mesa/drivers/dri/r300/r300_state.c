@@ -1869,10 +1869,12 @@ static void r300ResetHwState(r300ContextPtr r300)
 
 	r300->hw.unk2134.cmd[1] = 0x00FFFFFF;
 	r300->hw.unk2134.cmd[2] = 0x00000000;
-	if (_mesa_little_endian())
-		r300->hw.vap_cntl_status.cmd[1] = R300_VC_NO_SWAP;
-	else
-		r300->hw.vap_cntl_status.cmd[1] = R300_VC_32BIT_SWAP;
+
+#ifdef MESA_LITTLE_ENDIAN
+	r300->hw.vap_cntl_status.cmd[1] = R300_VC_NO_SWAP;
+#else
+	r300->hw.vap_cntl_status.cmd[1] = R300_VC_32BIT_SWAP;
+#endif
 
 	/* disable VAP/TCL on non-TCL capable chips */
 	if (!has_tcl)
