@@ -240,22 +240,28 @@ void r300EmitState(r300ContextPtr r300)
 	r300->hw.all_dirty = GL_FALSE;
 }
 
-#define CHECK( NM, COUNT )				\
-static int check_##NM( r300ContextPtr r300, 		\
-			struct r300_state_atom* atom )	\
-{							\
-   (void) atom;	(void) r300;				\
-   return (COUNT);					\
-}
-
 #define packet0_count(ptr) (((drm_r300_cmd_header_t*)(ptr))->packet0.count)
 #define vpu_count(ptr) (((drm_r300_cmd_header_t*)(ptr))->vpu.count)
 
-CHECK(always, atom->cmd_size)
-    CHECK(variable, packet0_count(atom->cmd) ? (1 + packet0_count(atom->cmd)) : 0)
-    CHECK(vpu, vpu_count(atom->cmd) ? (1 + vpu_count(atom->cmd) * 4) : 0)
-#undef packet0_count
-#undef vpu_count
+static int check_always(r300ContextPtr r300, struct r300_state_atom *atom)
+{
+	return atom->cmd_size;
+}
+
+static int check_variable(r300ContextPtr r300, struct r300_state_atom *atom)
+{
+	int cnt;
+	cnt = packet0_count(atom->cmd);
+	return cnt ? cnt + 1 : 0;
+}
+
+static int check_vpu(r300ContextPtr r300, struct r300_state_atom *atom)
+{
+	int cnt;
+	cnt = vpu_count(atom->cmd);
+	return cnt ? (cnt * 4) + 1 : 0;
+}
+
 #define ALLOC_STATE( ATOM, CHK, SZ, IDX )				\
    do {									\
       r300->hw.ATOM.cmd_size = (SZ);					\
