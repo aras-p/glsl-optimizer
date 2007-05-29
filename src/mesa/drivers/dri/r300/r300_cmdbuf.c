@@ -133,13 +133,15 @@ static void r300PrintStateAtom(r300ContextPtr r300, struct r300_state_atom *stat
 	int i;
 	int dwords = (*state->check) (r300, state);
 
-	fprintf(stderr, "  emit %s/%d/%d\n", state->name, dwords,
+	fprintf(stderr, "  emit %s %d/%d\n", state->name, dwords,
 		state->cmd_size);
 
-	if (RADEON_DEBUG & DEBUG_VERBOSE)
-		for (i = 0; i < dwords; i++)
-			fprintf(stderr, "      %s[%d]: %08X\n",
+	if (RADEON_DEBUG & DEBUG_VERBOSE) {
+		for (i = 0; i < dwords; i++) {
+			fprintf(stderr, "      %s[%d]: %08x\n",
 				state->name, i, state->cmd[i]);
+		}
+	}
 }
 
 /**
@@ -152,23 +154,9 @@ static inline void r300EmitAtoms(r300ContextPtr r300, GLboolean dirty)
 {
 	struct r300_state_atom *atom;
 	uint32_t *dest;
+	int dwords;
 
 	dest = r300->cmdbuf.cmd_buf + r300->cmdbuf.count_used;
-
-	if (DEBUG_CMDBUF && RADEON_DEBUG & DEBUG_STATE) {
-		foreach(atom, &r300->hw.atomlist) {
-			if ((atom->dirty || r300->hw.all_dirty) == dirty) {
-				int dwords = (*atom->check) (r300, atom);
-
-				if (dwords)
-					r300PrintStateAtom(r300, atom);
-				else
-					fprintf(stderr,
-						"  skip state %s\n",
-						atom->name);
-			}
-		}
-	}
 
 	/* Emit WAIT */
 	*dest = cmdwait(R300_WAIT_3D | R300_WAIT_3D_CLEAN);
@@ -193,13 +181,20 @@ static inline void r300EmitAtoms(r300ContextPtr r300, GLboolean dirty)
 
 	foreach(atom, &r300->hw.atomlist) {
 		if ((atom->dirty || r300->hw.all_dirty) == dirty) {
-			int dwords = (*atom->check) (r300, atom);
-
+			dwords = (*atom->check) (r300, atom);
 			if (dwords) {
+				if (DEBUG_CMDBUF && RADEON_DEBUG & DEBUG_STATE) {
+					r300PrintStateAtom(r300, atom);
+				}
 				memcpy(dest, atom->cmd, dwords * 4);
 				dest += dwords;
 				r300->cmdbuf.count_used += dwords;
 				atom->dirty = GL_FALSE;
+			} else {
+				if (DEBUG_CMDBUF && RADEON_DEBUG & DEBUG_STATE) {
+					fprintf(stderr, "  skip state %s\n",
+						atom->name);
+				}
 			}
 		}
 	}
