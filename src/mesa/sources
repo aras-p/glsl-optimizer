@@ -176,6 +176,7 @@ SOFTPIPE_SOURCES = \
 	softpipe/state_tracker/st_atom_blend.c \
 	softpipe/state_tracker/st_atom_cbuf.c \
 	softpipe/state_tracker/st_atom_clip.c \
+	softpipe/state_tracker/st_atom_depth.c \
 	softpipe/state_tracker/st_atom_fs.c \
 	softpipe/state_tracker/st_atom_scissor.c \
 	softpipe/state_tracker/st_atom_stencil.c \
