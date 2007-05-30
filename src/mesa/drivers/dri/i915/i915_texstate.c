@@ -493,7 +493,8 @@ static void i915SetTexImages( i915ContextPtr i915,
 
 
    if (i915->intel.intelScreen->deviceID == PCI_CHIP_I945_G ||
-       i915->intel.intelScreen->deviceID == PCI_CHIP_I945_GM)
+       i915->intel.intelScreen->deviceID == PCI_CHIP_I945_GM ||
+       i915->intel.intelScreen->deviceID == PCI_CHIP_I945_GME)
       i945LayoutTextureImages( i915, tObj );	 
    else
       i915LayoutTextureImages( i915, tObj );

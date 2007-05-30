@@ -123,6 +123,8 @@ const GLubyte *intelGetString( GLcontext *ctx, GLenum name )
 	 chipset = "Intel(R) 945G"; break;
       case PCI_CHIP_I945_GM:
 	 chipset = "Intel(R) 945GM"; break;
+      case PCI_CHIP_I945_GME:
+	 chipset = "Intel(R) 945GME"; break;
       default:
 	 chipset = "Unknown Intel Chipset"; break;
       }

@@ -454,6 +454,7 @@ extern int INTEL_DEBUG;
 #define PCI_CHIP_I915_GM		0x2592
 #define PCI_CHIP_I945_G			0x2772
 #define PCI_CHIP_I945_GM		0x27A2
+#define PCI_CHIP_I945_GME		0x27AE
 
 
 /* ================================================================
