@@ -715,8 +715,8 @@ static void r300LineWidth(GLcontext * ctx, GLfloat widthf)
 	widthf = ctx->Line._Width;
 
 	R300_STATECHANGE(r300, lcntl);
-	r300->hw.lcntl.cmd[1] = (int)(widthf * 6.0);
-	r300->hw.lcntl.cmd[1] |= R300_LINE_CNT_VE;
+	r300->hw.lcntl.cmd[1] |=
+	    R300_LINE_CNT_HO | R300_LINE_CNT_VE | (int)(widthf * 6.0);
 }
 
 static void r300PolygonMode(GLcontext * ctx, GLenum face, GLenum mode)
@@ -1922,7 +1922,7 @@ static void r300ResetHwState(r300ContextPtr r300)
 	r300->hw.unk4230.cmd[2] = 0x00020006;
 	r300->hw.unk4230.cmd[3] = r300PackFloat32(1.0 / 192.0);
 
-	r300LineWidth(ctx, 0.0);
+	r300LineWidth(ctx, 1.0);
 
 	r300->hw.unk4260.cmd[1] = 0;
 	r300->hw.unk4260.cmd[2] = r300PackFloat32(0.0);
