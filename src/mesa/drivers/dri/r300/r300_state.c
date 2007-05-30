@@ -1916,7 +1916,7 @@ static void r300ResetHwState(r300ContextPtr r300)
 
 	r300->hw.unk4214.cmd[1] = 0x00050005;
 
-	r300PointSize(ctx, 0.0);
+	r300PointSize(ctx, 1.0);
 
 	r300->hw.unk4230.cmd[1] = 0x18000006;
 	r300->hw.unk4230.cmd[2] = 0x00020006;
