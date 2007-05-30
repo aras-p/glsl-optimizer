@@ -71,6 +71,7 @@ struct st_context
       struct softpipe_blend_state  blend;
       struct softpipe_surface      cbuf;
       struct softpipe_clip_state   clip;
+      struct softpipe_depth_state  depth;
       struct softpipe_scissor_rect scissor;
       struct softpipe_poly_stipple poly_stipple;
       struct softpipe_stencil_state stencil;

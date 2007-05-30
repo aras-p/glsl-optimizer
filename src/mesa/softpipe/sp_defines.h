@@ -89,4 +89,14 @@
 #define SP_STENCIL_OP_DECR_WRAP  6
 #define SP_STENCIL_OP_INVERT     7
 
+#define SP_DEPTH_FUNC_NEVER    0
+#define SP_DEPTH_FUNC_LESS     1
+#define SP_DEPTH_FUNC_EQUAL    2
+#define SP_DEPTH_FUNC_LEQUAL   3
+#define SP_DEPTH_FUNC_GREATER  4
+#define SP_DEPTH_FUNC_NOTEQUAL 5
+#define SP_DEPTH_FUNC_GEQUAL   6
+#define SP_DEPTH_FUNC_ALWAYS   7
+
+
 #endif

@@ -100,6 +100,15 @@ struct softpipe_constant_buffer {
 };
 
 
+struct softpipe_depth_state
+{
+   GLuint enabled:1;   /**< depth test enabled? */
+   GLuint writemask:1; /**< allow depth buffer writes? */
+   GLuint func:3;      /**< depth test func */
+   GLfloat clear;      /**< Clear value in [0,1] (XXX correct place?) */
+};
+
+
 struct softpipe_blend_state {   
    GLuint blend_enable:1; 
 

@@ -43,6 +43,9 @@ struct softpipe_context {
    void (*set_clip_state)( struct softpipe_context *,
 			   const struct softpipe_clip_state * );
 
+   void (*set_depth_state)( struct softpipe_context *,
+                              const struct softpipe_depth_state * );
+
    void (*set_viewport)( struct softpipe_context *,
 			 const struct softpipe_viewport * );
 
