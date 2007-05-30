@@ -30,15 +30,35 @@
 
 #include "mtypes.h"
 
-struct softpipe_context *generic_create( void );
+extern struct softpipe_context *generic_create( void );
 				      
 /* Drawing currently kludged up via the existing tnl/ module.  
  */
 struct vertex_buffer;
 
+
+/**
+ * Software pipeline rendering context.  Basically a collection of
+ * state setting functions, plus VBO drawing entrypoint.
+ */
 struct softpipe_context {
 
    void (*destroy)( struct softpipe_context * );
+
+   /*
+    * Drawing
+    */
+   void (*draw_vb)( struct softpipe_context *softpipe,
+		    struct vertex_buffer *VB );
+
+   /*
+    * State functions
+    */
+   void (*set_blend_state)( struct softpipe_context *,
+                            const struct softpipe_blend_state * );
+
+   void (*set_cbuf_state)( struct softpipe_context *,
+			   const struct softpipe_surface * );
 
    void (*set_clip_state)( struct softpipe_context *,
 			   const struct softpipe_clip_state * );
@@ -46,8 +66,11 @@ struct softpipe_context {
    void (*set_depth_state)( struct softpipe_context *,
                               const struct softpipe_depth_state * );
 
-   void (*set_viewport)( struct softpipe_context *,
-			 const struct softpipe_viewport * );
+   void (*set_fs_state)( struct softpipe_context *,
+			 const struct softpipe_fs_state * );
+
+   void (*set_polygon_stipple)( struct softpipe_context *,
+				const struct softpipe_poly_stipple * );
 
    void (*set_setup_state)( struct softpipe_context *,
 			    const struct softpipe_setup_state * );
@@ -58,24 +81,9 @@ struct softpipe_context {
    void (*set_stencil_state)( struct softpipe_context *,
                               const struct softpipe_stencil_state * );
 
-   void (*set_blend_state)( struct softpipe_context *,
-                            const struct softpipe_blend_state * );
-
-   void (*set_fs_state)( struct softpipe_context *,
-			 const struct softpipe_fs_state * );
-
-   void (*set_polygon_stipple)( struct softpipe_context *,
-				const struct softpipe_poly_stipple * );
-
-   void (*set_cbuf_state)( struct softpipe_context *,
-			   const struct softpipe_surface * );
-
-
-   void (*draw_vb)( struct softpipe_context *softpipe,
-		    struct vertex_buffer *VB );
+   void (*set_viewport)( struct softpipe_context *,
+			 const struct softpipe_viewport * );
 };
-
-
 
 
 #endif
