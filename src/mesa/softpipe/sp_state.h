@@ -157,4 +157,28 @@ struct softpipe_surface {
 };
 
 
+/**
+ * Texture sampler state.
+ */
+struct softpipe_sampler_state
+{
+   GLuint wrap_s:3;        /**< SP_TEX_WRAP_x */
+   GLuint wrap_t:3;        /**< SP_TEX_WRAP_x */
+   GLuint wrap_r:3;        /**< SP_TEX_WRAP_x */
+   GLuint min_filter:3;    /**< SP_TEX_FILTER_x */
+   GLuint mag_filter:1;    /**< SP_TEX_FILTER_LINEAR or _NEAREST */
+   GLfloat min_lod;
+   GLfloat max_lod;
+   GLfloat lod_bias;
+#if 0 /* need these? */
+   GLint BaseLevel;     /**< min mipmap level, OpenGL 1.2 */
+   GLint MaxLevel;      /**< max mipmap level, OpenGL 1.2 */
+#endif
+   GLfloat max_anisotropy;
+   GLuint compare:1;       /**< shadow/depth compare enabled? */
+   GLenum compare_mode:1;  /**< SP_TEX_COMPARE_x */
+   GLenum compare_func:3;  /**< SP_DEPTH_FUNC_x */
+   GLfloat shadow_ambient; /**< shadow test fail color/intensity */
+};
+
 #endif

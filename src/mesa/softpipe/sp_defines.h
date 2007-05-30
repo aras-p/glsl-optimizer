@@ -89,6 +89,7 @@
 #define SP_STENCIL_OP_DECR_WRAP  6
 #define SP_STENCIL_OP_INVERT     7
 
+/* Note: same as stencil funcs.  Also used for shadow/depth compare */
 #define SP_DEPTH_FUNC_NEVER    0
 #define SP_DEPTH_FUNC_LESS     1
 #define SP_DEPTH_FUNC_EQUAL    2
@@ -98,5 +99,23 @@
 #define SP_DEPTH_FUNC_GEQUAL   6
 #define SP_DEPTH_FUNC_ALWAYS   7
 
+#define SP_TEX_WRAP_REPEAT                   0
+#define SP_TEX_WRAP_CLAMP                    1
+#define SP_TEX_WRAP_CLAMP_TO_EDGE            2
+#define SP_TEX_WRAP_CLAMP_TO_BORDER          3
+#define SP_TEX_WRAP_MIRROR_REPEAT            4
+#define SP_TEX_WRAP_MIRROR_CLAMP             5
+#define SP_TEX_WRAP_MIRROR_CLAMP_TO_EDGE     6
+#define SP_TEX_WRAP_MIRROR_CLAMP_TO_BORDER   7
+
+#define SP_TEX_FILTER_NEAREST                0
+#define SP_TEX_FILTER_LINEAR                 1
+#define SP_TEX_FILTER_NEAREST_MIPMAP_NEAREST 2
+#define SP_TEX_FILTER_NEAREST_MIPMAP_LINEAR  3
+#define SP_TEX_FILTER_LINEAR_MIPMAP_NEAREST  4
+#define SP_TEX_FILTER_LINEAR_MIPMAP_LINEAR   5
+
+#define SP_TEX_COMPARE_NONE          0
+#define SP_TEX_COMPARE_R_TO_TEXTURE  1
 
 #endif
