@@ -752,6 +752,7 @@ intelCreateContext(const __GLcontextModes * mesaVis,
    case PCI_CHIP_I915_GM:
    case PCI_CHIP_I945_G:
    case PCI_CHIP_I945_GM:
+   case PCI_CHIP_I945_GME:
       return i915CreateContext(mesaVis, driContextPriv, sharedContextPrivate);
 
    default:

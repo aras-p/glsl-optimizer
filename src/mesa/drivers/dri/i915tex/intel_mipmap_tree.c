@@ -79,6 +79,7 @@ intel_miptree_create(struct intel_context *intel,
    switch (intel->intelScreen->deviceID) {
    case PCI_CHIP_I945_G:
    case PCI_CHIP_I945_GM:
+   case PCI_CHIP_I945_GME:
       ok = i945_miptree_layout(mt);
       break;
    case PCI_CHIP_I915_G:
