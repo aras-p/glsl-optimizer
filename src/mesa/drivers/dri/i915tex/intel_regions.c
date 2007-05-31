@@ -159,7 +159,6 @@ intel_region_create_static(intelScreenPrivate *intelScreen,
    region->height = height;     /* needed? */
    region->refcount = 1;
 
-   /* XXX: questionable flags */
    region->buffer = dri_bo_alloc_static(intelScreen->bufmgr, "static region",
 					offset, pitch * cpp * height, virtual,
 					DRM_BO_FLAG_MEM_TT);
@@ -189,7 +188,6 @@ intel_region_update_static(intelScreenPrivate *intelScreen,
     */
 
    dri_bo_unreference(region->buffer);
-   /* XXX: questionable flags */
    region->buffer = dri_bo_alloc_static(intelScreen->bufmgr, "static region",
 					offset, pitch * cpp * height, virtual,
 					DRM_BO_FLAG_MEM_TT);
