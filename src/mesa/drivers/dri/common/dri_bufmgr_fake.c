@@ -829,6 +829,16 @@ dri_fake_fence_wait(dri_fence *fence)
    _glthread_UNLOCK_MUTEX(bufmgr_fake->mutex);
 }
 
+static void
+dri_fake_destroy(dri_bufmgr *bufmgr)
+{
+   dri_bufmgr_fake *bufmgr_fake = (dri_bufmgr_fake *)bufmgr;
+
+   _glthread_DESTROY_MUTEX(bufmgr_fake->mutex);
+   mmDestroy(bufmgr_fake->heap);
+   free(bufmgr);
+}
+
 dri_bufmgr *
 dri_bufmgr_fake_init(unsigned long low_offset, void *low_virtual,
 		     unsigned long size,
@@ -865,6 +875,7 @@ dri_bufmgr_fake_init(unsigned long low_offset, void *low_virtual,
    bufmgr_fake->bufmgr.fence_wait = dri_fake_fence_wait;
    bufmgr_fake->bufmgr.fence_reference = dri_fake_fence_reference;
    bufmgr_fake->bufmgr.fence_unreference = dri_fake_fence_unreference;
+   bufmgr_fake->bufmgr.destroy = dri_fake_destroy;
 
    bufmgr_fake->fence_emit = fence_emit;
    bufmgr_fake->fence_wait = fence_wait;

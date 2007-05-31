@@ -339,6 +339,15 @@ dri_ttm_fence_wait(dri_fence *fence)
    }
 }
 
+static void
+dri_fake_destroy(dri_bufmgr *bufmgr)
+{
+   dri_bufmgr_ttm *bufmgr_ttm = (dri_bufmgr_ttm *)bufmgr;
+
+   _glthread_DESTROY_MUTEX(bufmgr_ttm->mutex);
+   free(bufmgr);
+}
+
 /**
  * Initializes the TTM buffer manager, which uses the kernel to allocate, map,
  * and manage map buffer objections.

@@ -557,7 +557,7 @@ intelDestroyScreen(__DRIscreenPrivate * sPriv)
 
    intelUnmapScreenRegions(intelScreen);
 
-   /* XXX: bufmgr teardown */
+   dri_bufmgr_destroy(intelScreen->bufmgr);
    FREE(intelScreen);
    sPriv->private = NULL;
 }

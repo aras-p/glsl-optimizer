@@ -155,8 +155,9 @@ struct _dri_bufmgr {
    void (*fence_wait)(dri_fence *fence);
 
    /**
-    * Checks and returns whether the given fence is signaled.
+    * Tears down the buffer manager instance.
     */
+   void (*destroy)(dri_bufmgr *bufmgr);
 };
 
 dri_bo *dri_bo_alloc(dri_bufmgr *bufmgr, const char *name, unsigned long size,
@@ -190,6 +191,6 @@ dri_bufmgr *dri_bufmgr_fake_init(unsigned long low_offset, void *low_virtual,
 				 int (*fence_wait)(void *private,
 						   unsigned int cookie),
 				 void *driver_priv);
-void dri_bufmgr_fake_contended_lock_take(dri_bufmgr *bufmgr);
+void dri_bufmgr_destroy(dri_bufmgr *bufmgr);
 
 #endif

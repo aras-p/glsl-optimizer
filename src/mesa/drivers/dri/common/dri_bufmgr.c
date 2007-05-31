@@ -144,3 +144,9 @@ dri_bo_get_subdata(dri_bo *bo, unsigned long offset,
    memcpy(data, (unsigned char *)bo->virtual + offset, size);
    dri_bo_unmap(bo);
 }
+
+void
+dri_bufmgr_destroy(dri_bufmgr *bufmgr)
+{
+   bufmgr->destroy(bufmgr);
+}
