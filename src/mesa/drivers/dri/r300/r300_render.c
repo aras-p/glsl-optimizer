@@ -296,6 +296,8 @@ static GLboolean r300RunRender(GLcontext * ctx,
 	if (RADEON_DEBUG & DEBUG_PRIMS)
 		fprintf(stderr, "%s\n", __FUNCTION__);
 
+	if (hw_tcl_on == GL_FALSE)
+	  vb->AttribPtr[VERT_ATTRIB_POS] = vb->ClipPtr;
 	r300UpdateShaders(rmesa);
 	if (r300EmitArrays(ctx))
 		return GL_TRUE;
