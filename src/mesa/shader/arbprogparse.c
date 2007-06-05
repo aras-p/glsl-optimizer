@@ -374,6 +374,8 @@ LONGSTRING static char arb_grammar_text[] =
 /* GL_MESA_texture_array */
 #define  TEXTARGET_1D_ARRAY                         0x09
 #define  TEXTARGET_2D_ARRAY                         0x0a
+#define  TEXTARGET_SHADOW1D_ARRAY                   0x0b
+#define  TEXTARGET_SHADOW2D_ARRAY                   0x0c
 
 /* face type */
 #define  FACE_FRONT                                 0x00
@@ -2991,11 +2993,13 @@ parse_fp_instruction (GLcontext * ctx, const GLubyte ** inst,
             case TEXTARGET_CUBE:
                fp->TexSrcTarget = TEXTURE_CUBE_INDEX;
                break;
-	    case TEXTARGET_SHADOW1D:
-	    case TEXTARGET_SHADOW2D:
-	    case TEXTARGET_SHADOWRECT:
-	       /* TODO ARB_fragment_program_shadow code */
-	       break;
+            case TEXTARGET_SHADOW1D:
+            case TEXTARGET_SHADOW2D:
+            case TEXTARGET_SHADOW1D_ARRAY:
+            case TEXTARGET_SHADOW2D_ARRAY:
+            case TEXTARGET_SHADOWRECT:
+               /* TODO ARB_fragment_program_shadow code */
+               break;
             case TEXTARGET_1D_ARRAY:
                fp->TexSrcTarget = TEXTURE_1D_ARRAY_INDEX;
                break;
