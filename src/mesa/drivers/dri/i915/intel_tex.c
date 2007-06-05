@@ -678,7 +678,10 @@ static void intelUploadTexImage( intelContextPtr intel,
     */
    else if (intel->intelScreen->deviceID == PCI_CHIP_I945_G ||
             intel->intelScreen->deviceID == PCI_CHIP_I945_GM ||
-            intel->intelScreen->deviceID == PCI_CHIP_I945_GME) {
+            intel->intelScreen->deviceID == PCI_CHIP_I945_GME ||
+            intel->intelScreen->deviceID == PCI_CHIP_G33_G ||
+            intel->intelScreen->deviceID == PCI_CHIP_Q33_G ||
+            intel->intelScreen->deviceID == PCI_CHIP_Q35_G) {
       GLuint row_len = image->Width * image->TexFormat->TexelBytes;
       GLubyte *dst = (GLubyte *)(t->BufAddr + offset);
       GLubyte *src = (GLubyte *)image->Data;
