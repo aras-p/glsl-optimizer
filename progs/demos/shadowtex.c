@@ -9,6 +9,7 @@
  * Added GL_EXT_packed_depth_stencil support on 15 March 2006.
  * Added GL_EXT_framebuffer_object support on 27 March 2006.
  * Removed old SGIX extension support on 5 April 2006.
+ * Added vertex / fragment program support on 7 June 2007 (Ian Romanick).
  *
  * Copyright (C) 1999-2006  Brian Paul   All Rights Reserved.
  *
@@ -34,6 +35,7 @@
 #include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <math.h>
 #include <GL/glut.h>
 #include "showbuffer.h"
@@ -70,8 +72,24 @@ static GLuint ShadowFBO;
 static GLfloat lightModelview[16];
 static GLfloat lightProjection[16];
 
+static GLuint vert_prog;
+static GLuint frag_progs[3];
+static GLuint curr_frag = 0;
+static GLuint max_frag = 1;
+
+#define NUM_FRAG_MODES 3
+static const char *FragProgNames[] = {
+   "fixed-function",
+   "program without \"OPTION ARB_fragment_program_shadow\"",
+   "program with \"OPTION ARB_fragment_program_shadow\"",
+};
+
 static GLboolean HaveFBO = GL_FALSE;
 static GLboolean UseFBO = GL_FALSE;
+static GLboolean HaveVP = GL_FALSE;
+static GLboolean HaveFP = GL_FALSE;
+static GLboolean HaveFP_Shadow = GL_FALSE;
+static GLboolean UseVP = GL_FALSE;
 static GLboolean HavePackedDepthStencil = GL_FALSE;
 static GLboolean UsePackedDepthStencil = GL_FALSE;
 static GLboolean HaveEXTshadowFuncs = GL_FALSE;
@@ -93,6 +111,103 @@ static GLuint DisplayMode;
 #define SHOW_DISTANCE       3
 
 
+
+#define MAT4_MUL(dest_vec, src_mat, src_vec) \
+    "DP4	" dest_vec ".x, " src_mat "[0], " src_vec ";\n" \
+    "DP4	" dest_vec ".y, " src_mat "[1], " src_vec ";\n" \
+    "DP4	" dest_vec ".z, " src_mat "[2], " src_vec ";\n" \
+    "DP4	" dest_vec ".w, " src_mat "[3], " src_vec ";\n"
+
+#define MAT3_MUL(dest_vec, src_mat, src_vec) \
+    "DP3	" dest_vec ".x, " src_mat "[0], " src_vec ";\n" \
+    "DP3	" dest_vec ".y, " src_mat "[1], " src_vec ";\n" \
+    "DP3	" dest_vec ".z, " src_mat "[2], " src_vec ";\n"
+
+#define NORMALIZE(dest, src) \
+    "DP3	" dest ".w, " src ", " src ";\n" \
+    "RSQ	" dest ".w, " dest ".w;\n" \
+    "MUL	" dest ", " src ", " dest ".w;\n"
+   
+/**
+ * Vertex program for shadow mapping.
+ */
+static const char vert_code[] =
+    "!!ARBvp1.0\n"
+    "ATTRIB iPos        = vertex.position;\n"
+    "ATTRIB iNorm       = vertex.normal;\n"
+
+    "PARAM  mvinv[4]    = { state.matrix.modelview.invtrans };\n"
+    "PARAM  mvp[4]      = { state.matrix.mvp };\n"
+    "PARAM  mv[4]       = { state.matrix.modelview };\n"
+    "PARAM  texmat[4]   = { state.matrix.texture[0] };\n"
+    "PARAM  lightPos    = state.light[0].position;\n"
+    "PARAM  ambientCol  = state.lightprod[0].ambient;\n"
+    "PARAM  diffuseCol  = state.lightprod[0].diffuse;\n"
+
+    "TEMP   n, lightVec;\n"
+    "ALIAS  V = lightVec;\n"
+    "ALIAS  NdotL = n;\n"
+
+    "OUTPUT oPos = result.position;\n"
+    "OUTPUT oColor = result.color;\n"
+    "OUTPUT oTex = result.texcoord[0];\n"
+
+    /* Transform the vertex to clip coordinates. */
+    MAT4_MUL("oPos", "mvp",    "iPos")
+
+    /* Transform the vertex to eye coordinates. */
+    MAT4_MUL("V",    "mv",     "iPos")
+
+    /* Transform the vertex to projected light coordinates. */
+    MAT4_MUL("oTex", "texmat", "iPos")
+
+    /* Transform the normal to eye coordinates. */
+    MAT3_MUL("n",    "mvinv",  "iNorm")
+
+    /* Calculate the vector from the vertex to the light in eye
+     * coordinates.
+     */
+    "SUB	lightVec, lightPos, V;\n"
+    NORMALIZE("lightVec", "lightVec")
+
+    /* Compute diffuse lighting coefficient.
+     */
+    "DP3	NdotL.x, n, lightVec;\n"
+    "MAX	NdotL.x, NdotL.x, {0.0};\n"
+    "MIN	NdotL.x, NdotL.x, {1.0};\n"
+
+    /* Accumulate color contributions.
+     */
+    "MOV	oColor, diffuseCol;\n"
+    "MAD	oColor.xyz, NdotL.x, diffuseCol, ambientCol;\n"
+    "END\n"
+    ;
+
+static const char frag_code[] =
+    "!!ARBfp1.0\n"
+
+    "TEMP   shadow, temp;\n"
+
+    "TXP	shadow, fragment.texcoord[0], texture[0], 2D;\n"
+    "RCP	temp.x, fragment.texcoord[0].w;\n"
+    "MUL	temp.x, temp.x, fragment.texcoord[0].z;\n"
+    "SGE	shadow, shadow.x, temp.x;\n"
+    "MUL	result.color.rgb, fragment.color, shadow.x;\n"
+    "MOV	result.color.a, fragment.color;\n"
+    "END\n"
+    ;
+
+static const char frag_shadow_code[] =
+    "!!ARBfp1.0\n"
+    "OPTION ARB_fragment_program_shadow;\n"
+
+    "TEMP   shadow;\n"
+
+    "TXP	shadow, fragment.texcoord[0], texture[0], SHADOW2D;\n"
+    "MUL	result.color.rgb, fragment.color, shadow.x;\n"
+    "MOV	result.color.a, fragment.color.a;\n"
+    "END\n"
+    ;
 
 static void
 DrawScene(void)
@@ -501,17 +616,40 @@ Display(void)
          assert(DisplayMode == SHOW_SHADOWS);
          glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE_ARB,
                          GL_COMPARE_R_TO_TEXTURE_ARB);
-         glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+
+         if (curr_frag > 0) {
+            glEnable(GL_FRAGMENT_PROGRAM_ARB);
+         }
+         else {
+            glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+         }
          glEnable(GL_TEXTURE_2D);
 
          SetShadowTextureMatrix();
-         EnableIdentityTexgen();
+
+         if (UseVP) {
+            glEnable(GL_VERTEX_PROGRAM_ARB);
+         }
+         else {
+            glEnable(GL_LIGHTING);
+            EnableIdentityTexgen();
+         }
       }
 
       DrawScene();
 
-      DisableTexgen();
-      glDisable(GL_TEXTURE_1D);
+      if (UseVP) {
+         glDisable(GL_VERTEX_PROGRAM_ARB);
+      }
+      else {
+         DisableTexgen();
+         glDisable(GL_LIGHTING);
+      }
+
+      if (curr_frag > 0) {
+         glDisable(GL_FRAGMENT_PROGRAM_ARB);
+      }
+
       glDisable(GL_TEXTURE_2D);
    }
 
@@ -583,6 +721,14 @@ Key(unsigned char key, int x, int y)
       case 'm':
          DisplayMode = SHOW_DEPTH_MAPPING;
          break;
+      case 'M':
+         curr_frag = (1 + curr_frag) % max_frag;
+         printf("Using fragment %s\n", FragProgNames[curr_frag]);
+
+         if (HaveFP) {
+            glBindProgramARB(GL_FRAGMENT_PROGRAM_ARB, frag_progs[curr_frag]);
+         }
+         break;
       case 'n':
       case 's':
       case ' ':
@@ -611,6 +757,11 @@ Key(unsigned char key, int x, int y)
              */
             NeedNewShadowMap = GL_TRUE;
          }
+         break;
+      case 'v':
+         UseVP = !UseVP && HaveVP;
+         printf("Using vertex %s mode.\n",
+                UseVP ? "program" : "fixed-function");
          break;
       case 'z':
          Zrot -= step;
@@ -666,6 +817,42 @@ SpecialKey(int key, int x, int y)
 }
 
 
+/* A helper for finding errors in program strings */
+static int FindLine( const char *program, int position )
+{
+   int i, line = 1;
+   for (i = 0; i < position; i++) {
+      if (program[i] == '\n')
+         line++;
+   }
+   return line;
+}
+
+
+static GLuint
+compile_program(GLenum target, const char *code)
+{
+   GLuint p;
+   GLint errorPos;
+
+
+   glGenProgramsARB(1, & p);
+
+   glBindProgramARB(target, p);
+   glProgramStringARB(target, GL_PROGRAM_FORMAT_ASCII_ARB,
+                      strlen(code), code);
+   glGetIntegerv(GL_PROGRAM_ERROR_POSITION_ARB, &errorPos);
+   if (glGetError() != GL_NO_ERROR || errorPos != -1) {
+      int l = FindLine(code, errorPos);
+      printf("Fragment Program Error (pos=%d line=%d): %s\n", errorPos, l,
+             (char *) glGetString(GL_PROGRAM_ERROR_STRING_ARB));
+      exit(0);
+   }
+
+   glBindProgramARB(target, 0);
+   return p;
+}
+
 static void
 Init(void)
 {
@@ -677,6 +864,10 @@ Init(void)
       exit(1);
    }
    printf("Using GL_ARB_depth_texture and GL_ARB_shadow\n");
+
+   HaveVP = glutExtensionSupported("GL_ARB_vertex_program");
+   HaveFP = glutExtensionSupported("GL_ARB_fragment_program");
+   HaveFP_Shadow = glutExtensionSupported("GL_ARB_fragment_program_shadow");
 
    HaveShadowAmbient = glutExtensionSupported("GL_ARB_shadow_ambient");
    if (HaveShadowAmbient) {
@@ -744,6 +935,25 @@ Init(void)
                    256, 0, GL_LUMINANCE, GL_UNSIGNED_BYTE, image);
    }
 
+   if (HaveVP) {
+      vert_prog = compile_program(GL_VERTEX_PROGRAM_ARB, vert_code);
+      glBindProgramARB(GL_VERTEX_PROGRAM_ARB, vert_prog);
+   }
+
+   max_frag = 1;
+   frag_progs[0] = 0;
+
+   if (HaveFP) {
+      frag_progs[1] = compile_program(GL_FRAGMENT_PROGRAM_ARB, frag_code);
+      max_frag = 2;
+   }
+   
+   if (HaveFP && HaveFP_Shadow) {
+      frag_progs[2] = compile_program(GL_FRAGMENT_PROGRAM_ARB, 
+                                      frag_shadow_code);
+      max_frag = 3;
+   }
+
    glEnable(GL_DEPTH_TEST);
    glEnable(GL_LIGHTING);
    glEnable(GL_LIGHT0);
@@ -762,6 +972,8 @@ PrintHelp(void)
    printf("  f = toggle nearest/bilinear texture filtering\n");
    printf("  b/B = decrease/increase shadow map Z bias\n");
    printf("  p = toggle use of packed depth/stencil\n");
+   printf("  M = cycle through fragment program modes\n");
+   printf("  v = toggle vertex program modes\n");
    printf("  cursor keys = rotate scene\n");
    printf("  <shift> + cursor keys = rotate light source\n");
    if (HaveEXTshadowFuncs)
