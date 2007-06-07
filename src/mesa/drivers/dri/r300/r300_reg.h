@@ -305,6 +305,8 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
  * plane is per-pixel and the second plane is per-vertex.
  *
  * This was determined by experimentation alone but I believe it is correct.
+ *
+ * These registers are called X_QUAD0_1_FL to X_QUAD0_4_FL by glxtest.
  */
 #define R300_VAP_CLIP_X_0                   0x2220
 #define R300_VAP_CLIP_X_1                   0x2224
