@@ -67,6 +67,9 @@ static GLboolean NeedNewShadowMap = GL_FALSE;
 static GLuint ShadowTexture, GrayTexture;
 static GLuint ShadowFBO;
 
+static GLfloat lightModelview[16];
+static GLfloat lightProjection[16];
+
 static GLboolean HaveFBO = GL_FALSE;
 static GLboolean UseFBO = GL_FALSE;
 static GLboolean HavePackedDepthStencil = GL_FALSE;
@@ -134,27 +137,56 @@ DrawScene(void)
 }
 
 
-/*
- * Load the GL_TEXTURE matrix with the projection from the light
- * source's point of view.
+/**
+ * Calculate modelview and project matrices for the light
+ * 
+ * Stores the results in \c lightProjection (projection matrix) and
+ * \c lightModelview (modelview matrix).
  */
 static void
 MakeShadowMatrix(const GLfloat lightPos[4], const GLfloat spotDir[3],
                  GLfloat spotAngle, GLfloat shadowNear, GLfloat shadowFar)
 {
-   GLfloat d;
-   
-   glMatrixMode(GL_TEXTURE);
+   /* compute frustum to enclose spot light cone */
+   const GLfloat d = shadowNear * tan(spotAngle);
+
+   glMatrixMode(GL_PROJECTION);
+   glPushMatrix();
    glLoadIdentity();
-   glTranslatef(0.5, 0.5, 0.5 + Bias);
-   glScalef(0.5, 0.5, 0.5);
-   d = shadowNear * tan(spotAngle);
    glFrustum(-d, d, -d, d, shadowNear, shadowFar);
+   glGetFloatv(GL_PROJECTION_MATRIX, lightProjection);
+   glPopMatrix();
+
+   glMatrixMode(GL_MODELVIEW);
+   glPushMatrix();
+   glLoadIdentity();
    gluLookAt(lightPos[0], lightPos[1], lightPos[2],
              lightPos[0] + spotDir[0],
              lightPos[1] + spotDir[1],
              lightPos[2] + spotDir[2],
-             0, 1, 0);
+             0.0, 1.0, 0.0);
+   glGetFloatv(GL_MODELVIEW_MATRIX, lightModelview);
+   glPopMatrix();
+}
+
+
+/**
+ * Load \c GL_TEXTURE matrix with light's MVP matrix.
+ */
+static void SetShadowTextureMatrix(void)
+{
+   static const GLfloat biasMatrix[16] = {
+      0.5, 0.0, 0.0, 0.0,
+      0.0, 0.5, 0.0, 0.0,
+      0.0, 0.0, 0.5, 0.0,
+      0.5, 0.5, 0.5, 1.0,
+   };
+
+   glMatrixMode(GL_TEXTURE);
+   glLoadMatrixf(biasMatrix);
+   glTranslatef(0.0, 0.0, Bias);
+   glMultMatrixf(lightProjection);
+   glMultMatrixf(lightModelview);
    glMatrixMode(GL_MODELVIEW);
 }
 
@@ -258,7 +290,6 @@ RenderShadowMap(void)
 {
    GLenum depthFormat; /* GL_DEPTH_COMPONENT or GL_DEPTH_STENCIL_EXT */
    GLenum depthType; /* GL_UNSIGNED_INT_24_8_EXT or GL_UNSIGNED_INT */
-   float d;
 
    if (WindowWidth >= 1024 && WindowHeight >= 1024) {
       ShadowTexWidth = ShadowTexHeight = 1024;
@@ -283,17 +314,11 @@ RenderShadowMap(void)
       depthType = GL_UNSIGNED_INT;
    }
 
-   /* compute frustum to enclose spot light cone */
-   d = ShadowNear * tan(SpotAngle);
-
    glMatrixMode(GL_PROJECTION);
-   glLoadIdentity();
-   glFrustum(-d, d, -d, d, ShadowNear, ShadowFar);
+   glLoadMatrixf(lightProjection);
+
    glMatrixMode(GL_MODELVIEW);
-   glLoadIdentity();
-   gluLookAt(LightPos[0], LightPos[1], LightPos[2], /* from */
-             0, 0, 0, /* target */
-             0, 1, 0); /* up */
+   glLoadMatrixf(lightModelview);
 
    if (UseFBO) {
       GLenum fbo_status;
@@ -418,6 +443,7 @@ Display(void)
                    LightPos, SpotDir);
 
    if (NeedNewShadowMap) {
+      MakeShadowMatrix(LightPos, SpotDir, SpotAngle, ShadowNear, ShadowFar);
       RenderShadowMap();
       NeedNewShadowMap = GL_FALSE;
    }
@@ -458,7 +484,8 @@ Display(void)
          glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE_ARB, GL_NONE);
          glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
          glEnable(GL_TEXTURE_2D);
-         MakeShadowMatrix(LightPos, SpotDir, SpotAngle, ShadowNear, ShadowFar);
+
+         SetShadowTextureMatrix();
          EnableIdentityTexgen();
       }
       else if (DisplayMode == SHOW_DISTANCE) {
@@ -476,7 +503,8 @@ Display(void)
                          GL_COMPARE_R_TO_TEXTURE_ARB);
          glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
          glEnable(GL_TEXTURE_2D);
-         MakeShadowMatrix(LightPos, SpotDir, SpotAngle, ShadowNear, ShadowFar);
+
+         SetShadowTextureMatrix();
          EnableIdentityTexgen();
       }
 
