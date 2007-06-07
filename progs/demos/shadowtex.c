@@ -389,10 +389,8 @@ ShowShadowMap(void)
    DisableTexgen();
 
    /* interpret texture's depth values as luminance values */
-#if defined(GL_ARB_shadow)
    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE_ARB, GL_NONE);
    glTexParameteri(GL_TEXTURE_2D, GL_DEPTH_TEXTURE_MODE_ARB, GL_LUMINANCE);
-#endif
    glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
 
    glBegin(GL_POLYGON);
@@ -457,9 +455,7 @@ Display(void)
       }
 
       if (DisplayMode == SHOW_DEPTH_MAPPING) {
-#if defined(GL_ARB_shadow)
          glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE_ARB, GL_NONE);
-#endif
          glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
          glEnable(GL_TEXTURE_2D);
          MakeShadowMatrix(LightPos, SpotDir, SpotAngle, ShadowNear, ShadowFar);
@@ -476,10 +472,8 @@ Display(void)
       }
       else {
          assert(DisplayMode == SHOW_SHADOWS);
-#if defined(GL_ARB_shadow)
          glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE_ARB,
                          GL_COMPARE_R_TO_TEXTURE_ARB);
-#endif
          glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
          glEnable(GL_TEXTURE_2D);
          MakeShadowMatrix(LightPos, SpotDir, SpotAngle, ShadowNear, ShadowFar);
@@ -572,10 +566,8 @@ Key(unsigned char key, int x, int y)
             if (Operator >= 8)
                Operator = 0;
             printf("Operator: %s\n", OperatorName[Operator]);
-#if defined(GL_ARB_shadow)
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_FUNC_ARB,
                             OperatorFunc[Operator]);
-#endif
          }
          break;
       case 'p':
@@ -651,23 +643,17 @@ Init(void)
 {
    static const GLfloat borderColor[4] = {1.0, 0.0, 0.0, 0.0};
 
-#if defined(GL_ARB_depth_texture) && defined(GL_ARB_shadow)
    if (!glutExtensionSupported("GL_ARB_depth_texture") ||
        !glutExtensionSupported("GL_ARB_shadow")) {
-#else
-   if (1) {
-#endif
       printf("Sorry, this demo requires the GL_ARB_depth_texture and GL_ARB_shadow extensions\n");
       exit(1);
    }
    printf("Using GL_ARB_depth_texture and GL_ARB_shadow\n");
 
-#if defined(GL_ARB_shadow_ambient)
    HaveShadowAmbient = glutExtensionSupported("GL_ARB_shadow_ambient");
    if (HaveShadowAmbient) {
       printf("and GL_ARB_shadow_ambient\n");
    }
-#endif
 
    HaveEXTshadowFuncs = glutExtensionSupported("GL_EXT_shadow_funcs");
 
@@ -690,15 +676,12 @@ Init(void)
    glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, borderColor);
    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
-#if defined(GL_ARB_shadow)
    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE_ARB,
                    GL_COMPARE_R_TO_TEXTURE_ARB);
    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_FUNC_ARB, GL_LEQUAL);
-#endif
+
    if (HaveShadowAmbient) {
-#if defined(GL_ARB_shadow_ambient)
       glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_FAIL_VALUE_ARB, 0.3);
-#endif
    }
 
 #if defined(GL_EXT_framebuffer_object)
