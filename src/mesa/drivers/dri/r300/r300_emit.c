@@ -484,14 +484,12 @@ int r300EmitArrays(GLcontext * ctx)
 	((drm_r300_cmd_header_t *) rmesa->hw.vir[0].cmd)->packet0.count =
 	    r300VAPInputRoute0(&rmesa->hw.vir[0].cmd[R300_VIR_CNTL_0],
 			       vb->AttribPtr, inputs, tab, nr);
-
 	R300_STATECHANGE(rmesa, vir[1]);
 	((drm_r300_cmd_header_t *) rmesa->hw.vir[1].cmd)->packet0.count =
 	    r300VAPInputRoute1(&rmesa->hw.vir[1].cmd[R300_VIR_CNTL_0], swizzle,
 			       nr);
 
 	/* Setup INPUT_CNTL. */
-	/* I don't think this is needed for vertex buffers, but it doesn't hurt anything */
 	R300_STATECHANGE(rmesa, vic);
 	rmesa->hw.vic.cmd[R300_VIC_CNTL_0] = r300VAPInputCntl0(ctx, InputsRead);
 	rmesa->hw.vic.cmd[R300_VIC_CNTL_1] = r300VAPInputCntl1(ctx, InputsRead);
