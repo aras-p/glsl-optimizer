@@ -1178,6 +1178,36 @@ _mesa_TexParameterf( GLenum target, GLenum pname, GLfloat param )
 }
 
 
+/**
+ * Update derrived compare function state.
+ */
+void
+_mesa_update_texture_compare_function(struct gl_texture_object *tObj,
+				      GLboolean in_frag_prog)
+{
+   if (in_frag_prog) {
+      tObj->_Function = GL_NONE;
+   }
+   else if (tObj->CompareFlag) {
+      /* GL_SGIX_shadow */
+      if (tObj->CompareOperator == GL_TEXTURE_LEQUAL_R_SGIX) {
+         tObj->_Function = GL_LEQUAL;
+      }
+      else {
+         ASSERT(tObj->CompareOperator == GL_TEXTURE_GEQUAL_R_SGIX);
+         tObj->_Function = GL_GEQUAL;
+      }
+   }
+   else if (tObj->CompareMode == GL_COMPARE_R_TO_TEXTURE_ARB) {
+      /* GL_ARB_shadow */
+      tObj->_Function = tObj->CompareFunc;
+   }
+   else {
+      tObj->_Function = GL_NONE;  /* pass depth through as grayscale */
+   }
+}
+
+
 void GLAPIENTRY
 _mesa_TexParameterfv( GLenum target, GLenum pname, const GLfloat *params )
 {
@@ -1385,6 +1415,7 @@ _mesa_TexParameterfv( GLenum target, GLenum pname, const GLfloat *params )
          if (ctx->Extensions.SGIX_shadow) {
             FLUSH_VERTICES(ctx, _NEW_TEXTURE);
             texObj->CompareFlag = params[0] ? GL_TRUE : GL_FALSE;
+	    _mesa_update_texture_compare_function(texObj, GL_FALSE);
          }
          else {
             _mesa_error(ctx, GL_INVALID_ENUM,
@@ -1399,6 +1430,7 @@ _mesa_TexParameterfv( GLenum target, GLenum pname, const GLfloat *params )
                 op == GL_TEXTURE_GEQUAL_R_SGIX) {
                FLUSH_VERTICES(ctx, _NEW_TEXTURE);
                texObj->CompareOperator = op;
+	       _mesa_update_texture_compare_function(texObj, GL_FALSE);
             }
             else {
                _mesa_error(ctx, GL_INVALID_ENUM, "glTexParameter(param)");
@@ -1437,6 +1469,7 @@ _mesa_TexParameterfv( GLenum target, GLenum pname, const GLfloat *params )
             if (mode == GL_NONE || mode == GL_COMPARE_R_TO_TEXTURE_ARB) {
                FLUSH_VERTICES(ctx, _NEW_TEXTURE);
                texObj->CompareMode = mode;
+	       _mesa_update_texture_compare_function(texObj, GL_FALSE);
             }
             else {
                _mesa_error(ctx, GL_INVALID_ENUM,
@@ -1472,6 +1505,8 @@ _mesa_TexParameterfv( GLenum target, GLenum pname, const GLfloat *params )
                            "glTexParameter(bad GL_TEXTURE_COMPARE_FUNC_ARB)");
                return;
             }
+
+	    _mesa_update_texture_compare_function(texObj, GL_FALSE);
          }
          else {
             _mesa_error(ctx, GL_INVALID_ENUM,

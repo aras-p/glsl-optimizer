@@ -1426,6 +1426,10 @@ struct gl_texture_object
    GLfloat ShadowAmbient;       /**< GL_ARB_shadow_ambient */
    GLenum CompareMode;		/**< GL_ARB_shadow */
    GLenum CompareFunc;		/**< GL_ARB_shadow */
+   GLenum _Function;		/**< Comparison function derrived from 
+				 * \c CompareOperator, \c CompareMode, and
+				 * \c CompareFunc.
+				 */
    GLenum DepthMode;		/**< GL_ARB_depth_texture */
    GLint _MaxLevel;		/**< actual max mipmap level (q in the spec) */
    GLfloat _MaxLambda;		/**< = _MaxLevel - BaseLevel (q - b in spec) */

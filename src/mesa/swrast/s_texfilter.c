@@ -2893,25 +2893,7 @@ sample_depth_texture( GLcontext *ctx,
 
    /* XXXX if tObj->MinFilter != tObj->MagFilter, we're ignoring lambda */
 
-   /* XXX this could be precomputed and saved in the texture object */
-   if (tObj->CompareFlag) {
-      /* GL_SGIX_shadow */
-      if (tObj->CompareOperator == GL_TEXTURE_LEQUAL_R_SGIX) {
-         function = GL_LEQUAL;
-      }
-      else {
-         ASSERT(tObj->CompareOperator == GL_TEXTURE_GEQUAL_R_SGIX);
-         function = GL_GEQUAL;
-      }
-   }
-   else if (tObj->CompareMode == GL_COMPARE_R_TO_TEXTURE_ARB) {
-      /* GL_ARB_shadow */
-      function = tObj->CompareFunc;
-   }
-   else {
-      function = GL_NONE;  /* pass depth through as grayscale */
-   }
-
+   function = tObj->_Function;
    if (tObj->MagFilter == GL_NEAREST) {
       GLuint i;
       for (i = 0; i < n; i++) {
