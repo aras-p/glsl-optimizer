@@ -71,6 +71,7 @@ struct arb_program
 
    /* ARB_fragment_program specifics */
    GLbitfield TexturesUsed[MAX_TEXTURE_IMAGE_UNITS]; 
+   GLbitfield ShadowSamplers;
    GLuint NumAluInstructions; 
    GLuint NumTexInstructions;
    GLuint NumTexIndirections;
@@ -2661,6 +2662,7 @@ parse_fp_instruction (GLcontext * ctx, const GLubyte ** inst,
    GLuint texcoord;
    GLubyte instClass, type, code;
    GLboolean rel;
+   GLuint shadow_tex = 0;
 
    _mesa_init_instructions(fp, 1);
 
@@ -2978,35 +2980,54 @@ parse_fp_instruction (GLcontext * ctx, const GLubyte ** inst,
 
          /* texTarget */
          switch (*(*inst)++) {
+            case TEXTARGET_SHADOW1D:
+               shadow_tex = 1 << texcoord;
+               /* FALLTHROUGH */
             case TEXTARGET_1D:
                fp->TexSrcTarget = TEXTURE_1D_INDEX;
                break;
+            case TEXTARGET_SHADOW2D:
+               shadow_tex = 1 << texcoord;
+               /* FALLTHROUGH */
             case TEXTARGET_2D:
                fp->TexSrcTarget = TEXTURE_2D_INDEX;
                break;
             case TEXTARGET_3D:
                fp->TexSrcTarget = TEXTURE_3D_INDEX;
                break;
+            case TEXTARGET_SHADOWRECT:
+               shadow_tex = 1 << texcoord;
+               /* FALLTHROUGH */
             case TEXTARGET_RECT:
                fp->TexSrcTarget = TEXTURE_RECT_INDEX;
                break;
             case TEXTARGET_CUBE:
                fp->TexSrcTarget = TEXTURE_CUBE_INDEX;
                break;
-            case TEXTARGET_SHADOW1D:
-            case TEXTARGET_SHADOW2D:
             case TEXTARGET_SHADOW1D_ARRAY:
-            case TEXTARGET_SHADOW2D_ARRAY:
-            case TEXTARGET_SHADOWRECT:
-               /* TODO ARB_fragment_program_shadow code */
-               break;
+               shadow_tex = 1 << texcoord;
+               /* FALLTHROUGH */
             case TEXTARGET_1D_ARRAY:
                fp->TexSrcTarget = TEXTURE_1D_ARRAY_INDEX;
                break;
+            case TEXTARGET_SHADOW2D_ARRAY:
+               shadow_tex = 1 << texcoord;
+               /* FALLTHROUGH */
             case TEXTARGET_2D_ARRAY:
                fp->TexSrcTarget = TEXTURE_2D_ARRAY_INDEX;
                break;
          }
+
+         /* Don't test the first time a particular sampler is seen.  Each time
+          * after that, make sure the shadow state is the same.
+          */
+         if ((_mesa_bitcount(Program->TexturesUsed[texcoord]) > 0)
+             && ((Program->ShadowSamplers & (1 << texcoord)) != shadow_tex)) {
+            program_error(ctx, Program->Position,
+                          "texture image unit used for shadow sampling and non-shadow sampling");
+            return 1;
+         }
+
          Program->TexturesUsed[texcoord] |= (1 << fp->TexSrcTarget);
          /* Check that both "2D" and "CUBE" (for example) aren't both used */
          if (_mesa_bitcount(Program->TexturesUsed[texcoord]) > 1) {
@@ -3014,6 +3035,9 @@ parse_fp_instruction (GLcontext * ctx, const GLubyte ** inst,
                           "multiple targets used on one texture image unit");
             return 1;
          }
+      
+
+         Program->ShadowSamplers |= shadow_tex;
          break;
 
       case OP_TEX_KIL:
@@ -3604,10 +3628,10 @@ enable_parser_extensions(GLcontext *ctx, grammar id)
    if (ctx->Extensions.ARB_matrix_palette
        && !enable_ext(ctx, id, "matrix_palette"))
       return GL_FALSE;
+#endif
    if (ctx->Extensions.ARB_fragment_program_shadow
        && !enable_ext(ctx, id, "fragment_program_shadow"))
       return GL_FALSE;
-#endif
    if (ctx->Extensions.EXT_point_parameters
        && !enable_ext(ctx, id, "point_parameters"))
       return GL_FALSE;
@@ -3804,6 +3828,7 @@ _mesa_parse_arb_program(GLcontext *ctx, GLenum target,
    program->HintPositionInvariant = GL_FALSE;
    for (a = 0; a < MAX_TEXTURE_IMAGE_UNITS; a++)
       program->TexturesUsed[a] = 0x0;
+   program->ShadowSamplers = 0x0;
    program->NumAluInstructions =
    program->NumTexInstructions =
    program->NumTexIndirections = 0;
@@ -3884,6 +3909,7 @@ _mesa_parse_arb_fragment_program(GLcontext* ctx, GLenum target,
    program->Base.OutputsWritten  = ap.Base.OutputsWritten;
    for (i = 0; i < MAX_TEXTURE_IMAGE_UNITS; i++)
       program->Base.TexturesUsed[i] = ap.TexturesUsed[i];
+   program->Base.ShadowSamplers = ap.ShadowSamplers;
    program->FogOption          = ap.FogOption;
    program->UsesKill          = ap.UsesKill;
 

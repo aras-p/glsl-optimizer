@@ -1527,6 +1527,8 @@ _mesa_TexParameterfv( GLenum target, GLenum pname, const GLfloat *params )
                           "glTexParameter(bad GL_DEPTH_TEXTURE_MODE_ARB)");
                return;
             }
+
+	    _mesa_update_texture_compare_function(texObj, GL_FALSE);
          }
          else {
             _mesa_error(ctx, GL_INVALID_ENUM,

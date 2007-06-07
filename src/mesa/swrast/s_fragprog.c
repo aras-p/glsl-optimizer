@@ -211,8 +211,9 @@ _swrast_exec_fragment_program( GLcontext *ctx, SWspan *span )
 
    for (i = 0; i < ctx->Const.MaxTextureImageUnits; i++) {
       if (ctx->Texture.Unit[i]._Current != NULL) {
+         const GLboolean enable_shadow = ((1 << i) & program->Base.ShadowSamplers);
          _mesa_update_texture_compare_function(ctx->Texture.Unit[i]._Current,
-                                               GL_TRUE);
+                                               !enable_shadow);
       }
    }
 
