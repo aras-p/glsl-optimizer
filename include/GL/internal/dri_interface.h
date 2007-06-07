@@ -74,20 +74,38 @@ typedef struct __DRItexOffsetExtensionRec	__DRItexOffsetExtension;
  * structs and the loader can use the extensions it knows about by
  * casting it to a more specific extension and optionally advertising
  * the GLX extension.  See below for examples.
+ *
+ * We never break API in for a DRI extension.  If we need to change
+ * the way things work in a non-backwards compatible manner, we
+ * introduce a new extension.  During a transition period, we can
+ * leave both the old and the new extension in the driver, which
+ * allows us to move to the new interface without having to update the
+ * loader(s) in lock step.
+ *
+ * However, we can add entry points to an extension over time as long
+ * as we don't break the old ones.  As we add entry points to an
+ * extension, we increase the version number.  The corresponding
+ * #define can be used to guard code that accesses the new entry
+ * points at compile time and the version field in the extension
+ * struct can be used at run-time to determine how to use the
+ * extension.
  */
 struct __DRIextensionRec {
     const char *name;
+    int version;
 };
 
 /**
  * Used by drivers to indicate support for setting the read drawable.
  */
 #define __DRI_READ_DRAWABLE "DRI_ReadDrawable"
+#define __DRI_READ_DRAWABLE_VERSION 1
 
 /**
  * Used by drivers that implement the GLX_MESA_copy_sub_buffer extension.
  */
 #define __DRI_COPY_SUB_BUFFER "DRI_CopySubBuffer"
+#define __DRI_COPY_SUB_BUFFER_VERSION 1
 struct __DRIcopySubBufferExtensionRec {
     __DRIextension base;
     void (*copySubBuffer)(__DRIdrawable *drawable, int x, int y, int w, int h);
@@ -98,6 +116,7 @@ struct __DRIcopySubBufferExtensionRec {
  * GLX_MESA_swap_control extension.
  */
 #define __DRI_SWAP_CONTROL "DRI_SwapControl"
+#define __DRI_SWAP_CONTROL_VERSION 1
 struct __DRIswapControlExtensionRec {
     __DRIextension base;
     void (*setSwapInterval)(__DRIdrawable *drawable, unsigned int inteval);
@@ -108,6 +127,7 @@ struct __DRIswapControlExtensionRec {
  * Used by drivers that implement the GLX_MESA_allocate_memory.
  */
 #define __DRI_ALLOCATE "DRI_Allocate"
+#define __DRI_ALLOCATE_VERSION 1
 struct __DRIallocateExtensionRec {
     __DRIextension base;
 
@@ -124,6 +144,7 @@ struct __DRIallocateExtensionRec {
  * Used by drivers that implement the GLX_MESA_swap_frame_usage extension.
  */
 #define __DRI_FRAME_TRACKING "DRI_FrameTracking"
+#define __DRI_FRAME_TRACKING_VERSION 1
 struct __DRIframeTrackingExtensionRec {
     __DRIextension base;
 
@@ -149,6 +170,7 @@ struct __DRIframeTrackingExtensionRec {
  * Used by drivers that implement the GLX_SGI_video_sync extension.
  */
 #define __DRI_MEDIA_STREAM_COUNTER "DRI_MediaStreamCounter"
+#define __DRI_MEDIA_STREAM_COUNTER_VERSION 1
 struct __DRImediaStreamCounterExtensionRec {
     __DRIextension base;
 
@@ -171,6 +193,7 @@ struct __DRImediaStreamCounterExtensionRec {
 
 
 #define __DRI_TEX_OFFSET "DRI_TexOffset"
+#define __DRI_TEX_OFFSET_VERSION 1
 struct __DRItexOffsetExtensionRec {
     __DRIextension base;
 

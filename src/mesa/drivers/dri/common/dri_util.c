@@ -51,7 +51,7 @@ static const int empty_attribute_list[1] = { None };
  * supports setting a read drawable.
  */
 const __DRIextension driReadDrawableExtension = {
-    __DRI_READ_DRAWABLE
+    __DRI_READ_DRAWABLE, __DRI_READ_DRAWABLE_VERSION
 };
 
 /**
@@ -393,7 +393,7 @@ static int driWaitForMSC(__DRIdrawable *drawable, int64_t target_msc,
 }
 
 const __DRImediaStreamCounterExtension driMediaStreamCounterExtension = {
-    { __DRI_MEDIA_STREAM_COUNTER },
+    { __DRI_MEDIA_STREAM_COUNTER, __DRI_MEDIA_STREAM_COUNTER_VERSION },
     driGetMSC,
     driWaitForMSC,
 };
@@ -406,7 +406,8 @@ static void driCopySubBuffer(__DRIdrawable *drawable,
 }
 
 const __DRIcopySubBufferExtension driCopySubBufferExtension = {
-    { __DRI_COPY_SUB_BUFFER }, driCopySubBuffer
+    { __DRI_COPY_SUB_BUFFER, __DRI_COPY_SUB_BUFFER_VERSION },
+    driCopySubBuffer
 };
 
 static void driSetSwapInterval(__DRIdrawable *drawable, unsigned int interval)
@@ -424,7 +425,7 @@ static unsigned int driGetSwapInterval(__DRIdrawable *drawable)
 }
 
 const __DRIswapControlExtension driSwapControlExtension = {
-    { __DRI_SWAP_CONTROL },
+    { __DRI_SWAP_CONTROL, __DRI_SWAP_CONTROL_VERSION },
     driSetSwapInterval,
     driGetSwapInterval
 };
@@ -819,7 +820,7 @@ driQueryFrameTracking(__DRIdrawable *drawable,
 }
 
 const __DRIframeTrackingExtension driFrameTrackingExtension = {
-    { __DRI_FRAME_TRACKING },
+    { __DRI_FRAME_TRACKING, __DRI_FRAME_TRACKING_VERSION },
     driFrameTracking,
     driQueryFrameTracking    
 };

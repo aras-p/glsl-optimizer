@@ -334,7 +334,7 @@ radeonFillInModes( unsigned pixel_bits, unsigned depth_bits,
 
 #if RADEON_COMMON && defined(RADEON_COMMON_FOR_R200)
 static const __DRIallocateExtension r200AllocateExtension = {
-    { __DRI_ALLOCATE },
+    { __DRI_ALLOCATE, __DRI_ALLOCATE_VERSION },
     r200AllocateMemoryMESA,
     r200FreeMemoryMESA,
     r200GetMemoryOffsetMESA
@@ -343,7 +343,7 @@ static const __DRIallocateExtension r200AllocateExtension = {
 
 #if RADEON_COMMON && defined(RADEON_COMMON_FOR_R300)
 static const __DRItexOffsetExtension r300texOffsetExtension = {
-    { __DRI_TEX_OFFSET },
+    { __DRI_TEX_OFFSET, __DRI_TEX_OFFSET_VERSION },
    r300SetTexOffset,
 };
 #endif

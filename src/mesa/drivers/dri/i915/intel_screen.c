@@ -420,7 +420,7 @@ intelUpdateScreenFromSAREA(intelScreenPrivate * intelScreen,
 }
 
 static const __DRIallocateExtension intelAllocateExtension = {
-    { __DRI_ALLOCATE },
+    { __DRI_ALLOCATE, __DRI_ALLOCATE_VERSION },
     intelAllocateMemoryMESA,
     intelFreeMemoryMESA,
     intelGetMemoryOffsetMESA
