@@ -480,11 +480,11 @@ static GLboolean r300UpdateTexture(GLcontext * ctx, int unit)
 			 */
 
 			rmesa->state.texture.unit[unit].texobj->base.bound &=
-			    ~(1UL << unit);
+			    ~(1 << unit);
 		}
 
 		rmesa->state.texture.unit[unit].texobj = t;
-		t->base.bound |= (1UL << unit);
+		t->base.bound |= (1 << unit);
 		t->dirty_state |= 1 << unit;
 		driUpdateTextureLRU((driTextureObject *) t);	/* XXX: should be locked! */
 	}
