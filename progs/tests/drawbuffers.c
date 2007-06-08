@@ -19,6 +19,7 @@ static int Win;
 static int Width = 400, Height = 400;
 static GLuint FBobject, RBobjects[3];
 static GLfloat Xrot = 0.0, Yrot = 0.0;
+static GLuint Program;
 
 
 static void
@@ -39,6 +40,8 @@ Display(void)
       GL_COLOR_ATTACHMENT0_EXT,
       GL_COLOR_ATTACHMENT1_EXT
    };
+
+   glUseProgram_func(Program);
 
    /* draw to user framebuffer */
    glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, FBobject);
@@ -75,6 +78,7 @@ Display(void)
                 buffer + Width * Height / 2 * 4);
 
    /* draw to window */
+   glUseProgram_func(0);
    glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, 0);
    glWindowPos2iARB(0, 0);
    glDrawPixels(Width, Height, GL_RGBA, GL_UNSIGNED_BYTE, buffer);
@@ -243,15 +247,15 @@ SetupShaders(void)
       "   gl_FragData[1] = vec4(1.0) - gl_Color; \n"
       "}\n";
 
-   GLuint fragShader, program;
+   GLuint fragShader;
 
    fragShader = LoadAndCompileShader(GL_FRAGMENT_SHADER, fragShaderText);
-   program = glCreateProgram_func();
+   Program = glCreateProgram_func();
 
-   glAttachShader_func(program, fragShader);
-   glLinkProgram_func(program);
-   CheckLink(program);
-   glUseProgram_func(program);
+   glAttachShader_func(Program, fragShader);
+   glLinkProgram_func(Program);
+   CheckLink(Program);
+   glUseProgram_func(Program);
 }
 
 
