@@ -74,8 +74,9 @@ Display(void)
                 buffer);
    /* top half = colorbuffer 1 */
    glReadBuffer(GL_COLOR_ATTACHMENT1_EXT);
-   glReadPixels(0, Height/2, Width, Height / 2, GL_RGBA, GL_UNSIGNED_BYTE,
-                buffer + Width * Height / 2 * 4);
+   glReadPixels(0, Height/2, Width, Height - Height / 2,
+                GL_RGBA, GL_UNSIGNED_BYTE,
+                buffer + Width * (Height / 2) * 4);
 
    /* draw to window */
    glUseProgram_func(0);
