@@ -299,6 +299,8 @@ nouveau_cliprects_drawable_set(nouveauContextPtr nmesa,
    nmesa->pClipRects	= dPriv->pClipRects;
    nmesa->drawX		= dPriv->x;
    nmesa->drawY		= dPriv->y;
+   nmesa->drawW		= dPriv->w;
+   nmesa->drawH		= dPriv->h;
 }
 
 static void
@@ -313,6 +315,8 @@ nouveau_cliprects_renderbuffer_set(nouveauContextPtr nmesa,
    nmesa->osClipRect.y2	= nrb->mesa.Height;
    nmesa->drawX		= 0;
    nmesa->drawY		= 0;
+   nmesa->drawW		= nrb->mesa.Width;
+   nmesa->drawH		= nrb->mesa.Height;
 }
 
 void

@@ -150,7 +150,7 @@ typedef struct nouveau_context {
 	GLuint numClipRects;
 	drm_clip_rect_t *pClipRects;
 	drm_clip_rect_t osClipRect;
-	GLuint drawX, drawY;
+	GLuint drawX, drawY, drawW, drawH;
 
 	/* The rendering context information */
 	GLenum current_primitive; /* the current primitive enum */
