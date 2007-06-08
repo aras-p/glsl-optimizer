@@ -56,6 +56,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #elif RADEON_COMMON && defined(RADEON_COMMON_FOR_R300)
 #include "r300_context.h"
 #include "r300_fragprog.h"
+#include "r300_tex.h"
 #include "radeon_span.h"
 #endif
 
@@ -952,6 +953,9 @@ static struct __DriverAPIRec radeonAPI = {
    .WaitForSBC      = NULL,
    .SwapBuffersMSC  = NULL,
    .CopySubBuffer   = radeonCopySubBuffer,
+#if RADEON_COMMON && defined(RADEON_COMMON_FOR_R300)
+   .setTexOffset    = r300SetTexOffset,
+#endif
 };
 #else
 static const struct __DriverAPIRec r200API = {

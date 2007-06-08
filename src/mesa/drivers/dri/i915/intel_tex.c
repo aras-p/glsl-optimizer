@@ -634,10 +634,31 @@ static void intelUploadTexImage( intelContextPtr intel,
 			       image->Height);
    }
    else if (image->IsCompressed) {
-      GLuint row_len = image->Width * 2;
+      GLuint row_len = 0;
       GLubyte *dst = (GLubyte *)(t->BufAddr + offset);
       GLubyte *src = (GLubyte *)image->Data;
       GLuint j;
+
+      /* must always copy whole blocks (8/16 bytes) */
+      switch (image->InternalFormat) {
+	case GL_COMPRESSED_RGB_FXT1_3DFX:
+	case GL_COMPRESSED_RGBA_FXT1_3DFX:
+	case GL_RGB_S3TC:
+	case GL_RGB4_S3TC:
+	case GL_COMPRESSED_RGB_S3TC_DXT1_EXT:
+	case GL_COMPRESSED_RGBA_S3TC_DXT1_EXT:
+	  row_len = (image->Width * 2 + 7) & ~7;
+	  break;
+	case GL_RGBA_S3TC:
+	case GL_RGBA4_S3TC:
+	case GL_COMPRESSED_RGBA_S3TC_DXT3_EXT:
+	case GL_COMPRESSED_RGBA_S3TC_DXT5_EXT:
+	  row_len = (image->Width * 4 + 15) & ~15;
+	  break;
+	default:
+	  fprintf(stderr,"Internal Compressed format not supported %d\n", image->InternalFormat);
+	  break;
+      }
 
       if (INTEL_DEBUG & DEBUG_TEXTURE)
 	 fprintf(stderr, 
@@ -646,36 +667,21 @@ static void intelUploadTexImage( intelContextPtr intel,
 		 image->Width, image->Height, image->Depth, offset,
 		 row_len, t->Pitch, t->depth_pitch);
 
-      switch (image->InternalFormat) {
-	case GL_COMPRESSED_RGB_FXT1_3DFX:
-	case GL_COMPRESSED_RGBA_FXT1_3DFX:
-	case GL_RGB_S3TC:
-	case GL_RGB4_S3TC:
-	case GL_COMPRESSED_RGB_S3TC_DXT1_EXT:
-	case GL_COMPRESSED_RGBA_S3TC_DXT1_EXT:
-	  for (j = 0 ; j < image->Height/4 ; j++, dst += (t->Pitch)) {
-	    __memcpy(dst, src, row_len );
-	    src += row_len;
-	  }
-	  break;
-	case GL_RGBA_S3TC:
-	case GL_RGBA4_S3TC:
-	case GL_COMPRESSED_RGBA_S3TC_DXT3_EXT:
-	case GL_COMPRESSED_RGBA_S3TC_DXT5_EXT:
-	  for (j = 0 ; j < image->Height/4 ; j++, dst += (t->Pitch)) {
-	    __memcpy(dst, src, (image->Width*4) );
-	    src += image->Width*4;
-	  }
-	  break;
-	default:
-	  fprintf(stderr,"Internal Compressed format not supported %d\n", image->InternalFormat);
-	  break;
+      if (row_len) {
+	 for (j = 0 ; j < (image->Height + 3)/4 ; j++, dst += (t->Pitch)) {
+	   __memcpy(dst, src, row_len );
+	   src += row_len;
+	 }
       }
    }
    /* Time for another vtbl entry:
     */
    else if (intel->intelScreen->deviceID == PCI_CHIP_I945_G ||
-            intel->intelScreen->deviceID == PCI_CHIP_I945_GM) {
+            intel->intelScreen->deviceID == PCI_CHIP_I945_GM ||
+            intel->intelScreen->deviceID == PCI_CHIP_I945_GME ||
+            intel->intelScreen->deviceID == PCI_CHIP_G33_G ||
+            intel->intelScreen->deviceID == PCI_CHIP_Q33_G ||
+            intel->intelScreen->deviceID == PCI_CHIP_Q35_G) {
       GLuint row_len = image->Width * image->TexFormat->TexelBytes;
       GLubyte *dst = (GLubyte *)(t->BufAddr + offset);
       GLubyte *src = (GLubyte *)image->Data;

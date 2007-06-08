@@ -172,12 +172,8 @@ static void i915LayoutTextureImages( i915ContextPtr i915,
 	 
 	 t->intel.image[0][i].offset = total_height * pitch;
 	 t->intel.image[0][i].internalFormat = baseImage->_BaseFormat;
-	 if (t->intel.image[0][i].image->IsCompressed)
-	 {
-	   if (t->intel.image[0][i].image->Height > 4)
-	     total_height += t->intel.image[0][i].image->Height/4;
-	   else
-	     total_height += 1;
+	 if (t->intel.image[0][i].image->IsCompressed) {
+	    total_height += (t->intel.image[0][i].image->Height + 3) / 4;
 	 }
 	 else
 	   total_height += MAX2(2, t->intel.image[0][i].image->Height);
@@ -495,12 +491,19 @@ static void i915SetTexImages( i915ContextPtr i915,
       abort();
    }
 
-
-   if (i915->intel.intelScreen->deviceID == PCI_CHIP_I945_G ||
-       i915->intel.intelScreen->deviceID == PCI_CHIP_I945_GM)
-      i945LayoutTextureImages( i915, tObj );	 
-   else
-      i915LayoutTextureImages( i915, tObj );
+   switch (i915->intel.intelScreen->deviceID) {
+   case PCI_CHIP_I945_G:
+   case PCI_CHIP_I945_GM:
+   case PCI_CHIP_I945_GME:
+   case PCI_CHIP_G33_G:
+   case PCI_CHIP_Q33_G:
+   case PCI_CHIP_Q35_G:
+       i945LayoutTextureImages( i915, tObj );
+       break;
+   default:
+       i915LayoutTextureImages( i915, tObj );
+       break;
+   }
 
    t->Setup[I915_TEXREG_MS3] = 
       (((tObj->Image[0][t->intel.base.firstLevel]->Height - 1) << MS3_HEIGHT_SHIFT) |

@@ -62,7 +62,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "r300_state.h"
 #include "r300_ioctl.h"
 #include "r300_tex.h"
-#include "r300_maos.h"
+#include "r300_emit.h"
 
 #ifdef USER_BUFFERS
 #include "r300_mem.h"
@@ -447,15 +447,6 @@ static void r300FreeGartAllocations(r300ContextPtr r300)
 
 			r300->rmm->u_list[i].pending = 0;
 			r300->rmm->u_list[i].ptr = NULL;
-			if (r300->rmm->u_list[i].fb) {
-				LOCK_HARDWARE(&(r300->radeon));
-				ret = mmFreeMem(r300->rmm->u_list[i].fb);
-				UNLOCK_HARDWARE(&(r300->radeon));
-				if (ret)
-					fprintf(stderr, "failed to free!\n");
-				r300->rmm->u_list[i].fb = NULL;
-			}
-			r300->rmm->u_list[i].ref_count = 0;
 		}
 	}
 	r300->rmm->u_head = i;

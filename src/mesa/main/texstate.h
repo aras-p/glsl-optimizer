@@ -41,6 +41,10 @@ _mesa_copy_texture_state( const GLcontext *src, GLcontext *dst );
 extern void
 _mesa_print_texunit_state( GLcontext *ctx, GLuint unit );
 
+extern void
+_mesa_update_texture_compare_function(struct gl_texture_object *tObj,
+				      GLboolean in_frag_prog);
+
 
 /**
  * \name Called from API

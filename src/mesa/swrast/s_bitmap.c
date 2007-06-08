@@ -83,15 +83,7 @@ _swrast_Bitmap( GLcontext *ctx, GLint px, GLint py,
       _swrast_validate_derived( ctx );
 
    INIT_SPAN(span, GL_BITMAP, width, 0, SPAN_XY);
-
-   _swrast_span_default_color(ctx, &span);
-   _swrast_span_default_secondary_color(ctx, &span);
-   if (ctx->Depth.Test)
-      _swrast_span_default_z(ctx, &span);
-   if (swrast->_FogEnabled)
-      _swrast_span_default_fog(ctx, &span);
-   if (ctx->Texture._EnabledCoordUnits)
-      _swrast_span_default_texcoords(ctx, &span);
+   _swrast_span_default_attribs(ctx, &span);
 
    for (row = 0; row < height; row++) {
       const GLubyte *src = (const GLubyte *) _mesa_image_address2d(unpack,
@@ -189,19 +181,12 @@ _swrast_Bitmap( GLcontext *ctx, GLint px, GLint py,
       _swrast_validate_derived( ctx );
 
    INIT_SPAN(span, GL_BITMAP, width, 0, SPAN_MASK);
+   _swrast_span_default_attribs(ctx, &span);
 
    /*span.arrayMask |= SPAN_MASK;*/  /* we'll init span.mask[] */
    span.x = px;
    span.y = py;
    /*span.end = width;*/
-
-   _swrast_span_default_color(ctx, &span);
-   if (ctx->Depth.Test)
-      _swrast_span_default_z(ctx, &span);
-   if (swrast->_FogEnabled)
-      _swrast_span_default_fog(ctx, &span);
-   if (ctx->Texture._EnabledCoordUnits)
-      _swrast_span_default_texcoords(ctx, &span);
 
    for (row=0; row<height; row++, span.y++) {
       const GLubyte *src = (const GLubyte *) _mesa_image_address2d(unpack,

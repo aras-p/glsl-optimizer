@@ -46,15 +46,13 @@ extern void r300EmitState(r300ContextPtr r300);
 extern void r300InitCmdBuf(r300ContextPtr r300);
 extern void r300DestroyCmdBuf(r300ContextPtr r300);
 
-extern void r300EmitAOS(r300ContextPtr rmesa, GLuint nr, GLuint offset);
-
 /**
  * Make sure that enough space is available in the command buffer
  * by flushing if necessary.
  *
  * \param dwords The number of dwords we need to be free on the command buffer
  */
-static __inline__ void r300EnsureCmdBufSpace(r300ContextPtr r300,
+static inline void r300EnsureCmdBufSpace(r300ContextPtr r300,
 					     int dwords, const char *caller)
 {
 	assert(dwords < r300->cmdbuf.size);
@@ -70,7 +68,7 @@ static __inline__ void r300EnsureCmdBufSpace(r300ContextPtr r300,
  * causes state reemission after a flush. This is necessary to ensure
  * correct hardware state after an unlock.
  */
-static __inline__ uint32_t *r300RawAllocCmdBuf(r300ContextPtr r300,
+static inline uint32_t *r300RawAllocCmdBuf(r300ContextPtr r300,
 					       int dwords, const char *caller)
 {
 	uint32_t *ptr;
@@ -82,7 +80,7 @@ static __inline__ uint32_t *r300RawAllocCmdBuf(r300ContextPtr r300,
 	return ptr;
 }
 
-static __inline__ uint32_t *r300AllocCmdBuf(r300ContextPtr r300,
+static inline uint32_t *r300AllocCmdBuf(r300ContextPtr r300,
 					    int dwords, const char *caller)
 {
 	uint32_t *ptr;

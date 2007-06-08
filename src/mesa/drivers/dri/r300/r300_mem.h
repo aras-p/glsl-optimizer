@@ -18,11 +18,9 @@ struct r300_memory_manager {
 		uint32_t h_pending;
 		int pending;
 		int mapped;
-		int ref_count;
-		struct mem_block *fb;
 	} *u_list;
-	int u_head, u_tail, u_size, u_last;
-	
+	int u_head, u_size, u_last;
+
 };
 
 extern void r300_mem_init(r300ContextPtr rmesa);
@@ -32,7 +30,6 @@ extern int r300_mem_find(r300ContextPtr rmesa, void *ptr);
 extern int r300_mem_alloc(r300ContextPtr rmesa, int alignment, int size);
 extern void r300_mem_use(r300ContextPtr rmesa, int id);
 extern unsigned long r300_mem_offset(r300ContextPtr rmesa, int id);
-extern int r300_mem_on_card(r300ContextPtr rmesa, int id);
 extern void *r300_mem_map(r300ContextPtr rmesa, int id, int access);
 extern void r300_mem_unmap(r300ContextPtr rmesa, int id);
 extern void r300_mem_free(r300ContextPtr rmesa, int id);

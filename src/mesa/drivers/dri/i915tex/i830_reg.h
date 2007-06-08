@@ -575,6 +575,7 @@
 #define    MT_16BIT_DIB_RGB565_8888	   (7<<3)
 #define    MT_32BIT_ARGB8888		   (0<<3)       /* SURFACE_32BIT */
 #define    MT_32BIT_ABGR8888		   (1<<3)
+#define    MT_32BIT_XRGB8888		   (2<<3)       /* XXX: Guess from i915_reg.h */
 #define    MT_32BIT_BUMP_XLDVDU_8888	   (6<<3)
 #define    MT_32BIT_DIB_8888		   (7<<3)
 #define    MT_411_YUV411		   (0<<3)       /* SURFACE_411 */

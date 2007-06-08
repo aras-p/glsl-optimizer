@@ -440,6 +440,13 @@ static const char Color4ubVertex3fvSUN_names[] =
     "";
 #endif
 
+#if defined(need_GL_EXT_texture_array)
+static const char FramebufferTextureLayerEXT_names[] = 
+    "iiiii\0" /* Parameter signature */
+    "glFramebufferTextureLayerEXT\0"
+    "";
+#endif
+
 #if defined(need_GL_SGIX_list_priority)
 static const char GetListParameterivSGIX_names[] = 
     "iip\0" /* Parameter signature */
@@ -5475,6 +5482,13 @@ static const struct dri_extension_function GL_EXT_subtexture_functions[] = {
 static const struct dri_extension_function GL_EXT_texture3D_functions[] = {
     { TexImage3D_names, -1, 371 },
     { TexSubImage3D_names, -1, 372 },
+    { NULL, 0, 0 }
+};
+#endif
+
+#if defined(need_GL_EXT_texture_array)
+static const struct dri_extension_function GL_EXT_texture_array_functions[] = {
+    { FramebufferTextureLayerEXT_names, FramebufferTextureLayerEXT_remap_index, -1 },
     { NULL, 0, 0 }
 };
 #endif

@@ -995,6 +995,9 @@ __driUtilCreateNewScreen(__DRInativeDisplay *dpy, int scrn, __DRIscreen *psc,
     psc->getMSC            = driGetMSC;
     psc->createNewContext  = driCreateNewContext;
 
+    if (internal_api_version >= 20070121)
+	psc->setTexOffset  = psp->DriverAPI.setTexOffset;
+
     if ( (psp->DriverAPI.InitDriver != NULL)
 	 && !(*psp->DriverAPI.InitDriver)(psp) ) {
 	_mesa_free( psp );

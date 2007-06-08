@@ -108,6 +108,9 @@
 /** Maximum rectangular texture size - GL_NV_texture_rectangle */
 #define MAX_TEXTURE_RECT_SIZE 2048
 
+/** Maximum number of layers in a 1D or 2D array texture - GL_MESA_texture_array */
+#define MAX_ARRAY_TEXTURE_LAYERS 64
+
 /** Number of texture units - GL_ARB_multitexture
  * This needs to be the larger of MAX_TEXTURE_COORD_UNITS and
  * MAX_TEXTURE_IMAGE_UNITS seen below, since MAX_TEXTURE_UNITS is used
