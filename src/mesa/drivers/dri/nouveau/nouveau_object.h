@@ -14,7 +14,7 @@ enum DMAObjects {
 	NvMemFormat		= 0x80000022,
 	NvCtxSurf3D		= 0x80000023,
 	NvDmaFB			= 0xD0FB0001,
-	NvDmaAGP		= 0xD0AA0001,
+	NvDmaTT			= 0xD0AA0001,
 	NvSyncNotify		= 0xD0000001,
 	NvQueryNotify		= 0xD0000002
 };
@@ -31,17 +31,5 @@ extern void nouveauObjectOnSubchannel(nouveauContextPtr nmesa, int subchannel, i
 
 extern GLboolean nouveauCreateContextObject(nouveauContextPtr nmesa,
       					    uint32_t handle, int class);
-extern GLboolean nouveauCreateDmaObject(nouveauContextPtr nmesa,
-      					uint32_t handle,
-					int      class,
-					uint32_t offset,
-					uint32_t size,
-					int      target,
-					int      access);
-extern GLboolean nouveauCreateDmaObjectFromMem(nouveauContextPtr nmesa,
-					       uint32_t     handle,
-					       int          class,
-					       nouveau_mem *mem,
-					       int          access);
 
 #endif

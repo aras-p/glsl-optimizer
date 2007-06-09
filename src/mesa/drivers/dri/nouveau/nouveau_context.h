@@ -99,19 +99,22 @@ typedef struct nouveau_context {
 	/* The read-only regs */
 	volatile unsigned char* mmio;
 
+	/* The per-channel notifier block */
+	volatile void *notifier_block;
+
 	/* Physical addresses of AGP/VRAM apertures */
 	uint64_t vram_phys;
 	uint64_t vram_size;
-	uint64_t agp_phys;
-	uint64_t agp_size;
+	uint64_t gart_phys;
+	uint64_t gart_size;
 
 	/* Channel synchronisation */
-	nouveau_notifier *syncNotifier;
+	drm_nouveau_notifier_alloc_t *syncNotifier;
 
 	/* ARB_occlusion_query / EXT_timer_query */
 	GLuint		  query_object_max;
 	GLboolean *	  query_alloc;
-	nouveau_notifier *queryNotifier;
+	drm_nouveau_notifier_alloc_t *queryNotifier;
 
 	/* Additional hw-specific functions */
 	nouveau_hw_func hw_func;

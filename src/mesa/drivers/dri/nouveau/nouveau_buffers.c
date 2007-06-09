@@ -32,8 +32,8 @@ nouveau_memformat_flat_emit(GLcontext *ctx,
       return GL_FALSE;
    }
 
-   src_handle = (src->type & NOUVEAU_MEM_FB) ? NvDmaFB : NvDmaAGP;
-   dst_handle = (dst->type & NOUVEAU_MEM_FB) ? NvDmaFB : NvDmaAGP;
+   src_handle = (src->type & NOUVEAU_MEM_FB) ? NvDmaFB : NvDmaTT;
+   dst_handle = (dst->type & NOUVEAU_MEM_FB) ? NvDmaFB : NvDmaTT;
    src_offset += nouveau_mem_gpu_offset_get(ctx, src);
    dst_offset += nouveau_mem_gpu_offset_get(ctx, dst);
 
@@ -138,7 +138,7 @@ nouveau_mem_gpu_offset_get(GLcontext *ctx, nouveau_mem *mem)
    if (mem->type & NOUVEAU_MEM_FB)
       return (uint32_t)mem->offset - nmesa->vram_phys;
    else if (mem->type & NOUVEAU_MEM_AGP)
-      return (uint32_t)mem->offset - nmesa->agp_phys;
+      return (uint32_t)mem->offset - nmesa->gart_phys;
    else
       return 0xDEADF00D;
 }
