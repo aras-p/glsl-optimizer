@@ -371,8 +371,6 @@ static int r300Fallback(GLcontext * ctx)
 		FALLBACK_IF(ctx->Point.PointSprite);
 
 	if (!r300->disable_lowimpact_fallback) {
-		FALLBACK_IF(ctx->Polygon.OffsetPoint);
-		FALLBACK_IF(ctx->Polygon.OffsetLine);
 		FALLBACK_IF(ctx->Polygon.StippleFlag);
 		FALLBACK_IF(ctx->Multisample.Enabled);
 		FALLBACK_IF(ctx->Line.StippleFlag);

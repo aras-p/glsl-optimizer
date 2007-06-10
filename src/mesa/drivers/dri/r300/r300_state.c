@@ -1769,8 +1769,6 @@ static void r300Enable(GLcontext * ctx, GLenum cap, GLboolean state)
 
 	case GL_POLYGON_OFFSET_POINT:
 	case GL_POLYGON_OFFSET_LINE:
-		break;
-
 	case GL_POLYGON_OFFSET_FILL:
 		R300_STATECHANGE(r300, occlusion_cntl);
 		if (state) {
