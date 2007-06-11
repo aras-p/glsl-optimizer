@@ -2463,7 +2463,7 @@ _mesa_TexImage1D( GLenum target, GLint level, GLint internalFormat,
 	 update_fbo_texture(ctx, texObj, face, level);
 	 
 	 /* state update */
-	 texObj->Complete = GL_FALSE;
+	 texObj->_Complete = GL_FALSE;
 	 ctx->NewState |= _NEW_TEXTURE;
       }
    out:
@@ -2566,7 +2566,7 @@ _mesa_TexImage2D( GLenum target, GLint level, GLint internalFormat,
 	 update_fbo_texture(ctx, texObj, face, level);
 
 	 /* state update */
-	 texObj->Complete = GL_FALSE;
+	 texObj->_Complete = GL_FALSE;
 	 ctx->NewState |= _NEW_TEXTURE;
       }
    out:
@@ -2667,7 +2667,7 @@ _mesa_TexImage3D( GLenum target, GLint level, GLint internalFormat,
 	 update_fbo_texture(ctx, texObj, face, level);
 
 	 /* state update */
-	 texObj->Complete = GL_FALSE;
+	 texObj->_Complete = GL_FALSE;
 	 ctx->NewState |= _NEW_TEXTURE;
       }
    out:
@@ -2938,7 +2938,7 @@ _mesa_CopyTexImage1D( GLenum target, GLint level,
       update_fbo_texture(ctx, texObj, face, level);
 
       /* state update */
-      texObj->Complete = GL_FALSE;
+      texObj->_Complete = GL_FALSE;
       ctx->NewState |= _NEW_TEXTURE;
    }
  out:
@@ -3004,7 +3004,7 @@ _mesa_CopyTexImage2D( GLenum target, GLint level, GLenum internalFormat,
       update_fbo_texture(ctx, texObj, face, level);
 
       /* state update */
-      texObj->Complete = GL_FALSE;
+      texObj->_Complete = GL_FALSE;
       ctx->NewState |= _NEW_TEXTURE;
    }
  out:
@@ -3398,7 +3398,7 @@ _mesa_CompressedTexImage1DARB(GLenum target, GLint level,
 					     texObj, texImage);
 
 	 /* state update */
-	 texObj->Complete = GL_FALSE;
+	 texObj->_Complete = GL_FALSE;
 	 ctx->NewState |= _NEW_TEXTURE;
       }
    out:
@@ -3495,7 +3495,7 @@ _mesa_CompressedTexImage2DARB(GLenum target, GLint level,
 					     texObj, texImage);
 	 
 	 /* state update */
-	 texObj->Complete = GL_FALSE;
+	 texObj->_Complete = GL_FALSE;
 	 ctx->NewState |= _NEW_TEXTURE;
       }
    out:
@@ -3591,7 +3591,7 @@ _mesa_CompressedTexImage3DARB(GLenum target, GLint level,
 					     texObj, texImage);
 	 
 	 /* state update */
-	 texObj->Complete = GL_FALSE;
+	 texObj->_Complete = GL_FALSE;
 	 ctx->NewState |= _NEW_TEXTURE;
       }
    out:

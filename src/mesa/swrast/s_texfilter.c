@@ -3347,7 +3347,7 @@ texture_sample_func
 _swrast_choose_texture_sample_func( GLcontext *ctx,
 				    const struct gl_texture_object *t )
 {
-   if (!t || !t->Complete) {
+   if (!t || !t->_Complete) {
       return &null_sample_func;
    }
    else {

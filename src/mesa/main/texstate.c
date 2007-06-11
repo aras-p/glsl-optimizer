@@ -1552,7 +1552,7 @@ _mesa_TexParameterfv( GLenum target, GLenum pname, const GLfloat *params )
          return;
    }
 
-   texObj->Complete = GL_FALSE;
+   texObj->_Complete = GL_FALSE;
 
    if (ctx->Driver.TexParameter) {
       (*ctx->Driver.TexParameter)( ctx, target, texObj, pname, params );
@@ -2839,10 +2839,10 @@ texture_override(GLcontext *ctx,
                  struct gl_texture_object *texObj, GLuint textureBit)
 {
    if (!texUnit->_ReallyEnabled && (enableBits & textureBit)) {
-      if (!texObj->Complete) {
+      if (!texObj->_Complete) {
          _mesa_test_texobj_completeness(ctx, texObj);
       }
-      if (texObj->Complete) {
+      if (texObj->_Complete) {
          texUnit->_ReallyEnabled = textureBit;
          texUnit->_Current = texObj;
       }
