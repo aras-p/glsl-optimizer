@@ -978,7 +978,7 @@ init_attrib_groups(GLcontext *ctx)
 static int
 generic_nop(void)
 {
-   _mesa_problem(NULL, "User called no-op dispatch function (an unsupported extension function?)");
+   _mesa_warning(NULL, "User called no-op dispatch function (an unsupported extension function?)");
    return 0;
 }
 
