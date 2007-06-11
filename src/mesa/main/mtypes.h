@@ -1426,7 +1426,7 @@ struct gl_texture_object
    GLfloat ShadowAmbient;       /**< GL_ARB_shadow_ambient */
    GLenum CompareMode;		/**< GL_ARB_shadow */
    GLenum CompareFunc;		/**< GL_ARB_shadow */
-   GLenum _Function;		/**< Comparison function derrived from 
+   GLenum _Function;		/**< Comparison function derived from 
 				 * \c CompareOperator, \c CompareMode, and
 				 * \c CompareFunc.
 				 */
