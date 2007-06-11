@@ -209,6 +209,7 @@ _swrast_exec_fragment_program( GLcontext *ctx, SWspan *span )
 
    ctx->_CurrentProgram = GL_FRAGMENT_PROGRAM_ARB; /* or NV, doesn't matter */
 
+#if 0
    for (i = 0; i < ctx->Const.MaxTextureImageUnits; i++) {
       if (ctx->Texture.Unit[i]._Current != NULL) {
          const GLboolean enable_shadow = ((1 << i) & program->Base.ShadowSamplers);
@@ -216,15 +217,18 @@ _swrast_exec_fragment_program( GLcontext *ctx, SWspan *span )
                                                !enable_shadow);
       }
    }
+#endif
 
    run_program(ctx, span, 0, span->end);
 
+#if 0
    for (i = 0; i < ctx->Const.MaxTextureImageUnits; i++) {
       if (ctx->Texture.Unit[i]._Current != NULL) {
          _mesa_update_texture_compare_function(ctx->Texture.Unit[i]._Current,
                                                GL_FALSE);
       }
    }
+#endif
 
    if (program->Base.OutputsWritten & (1 << FRAG_RESULT_COLR)) {
       span->interpMask &= ~SPAN_RGBA;
