@@ -1181,39 +1181,6 @@ _mesa_TexParameterf( GLenum target, GLenum pname, GLfloat param )
 }
 
 
-/**
- * Update derived compare function state.
- */
-void
-_mesa_update_texture_compare_function(struct gl_texture_object *tObj,
-				      GLboolean in_frag_prog)
-{
-   if (in_frag_prog) {
-      /* Texel/coordinate comparison is ignored for programs.
-       * See GL_ARB_fragment_program/shader spec for details.
-       */
-      tObj->_Function = GL_NONE;
-   }
-   else if (tObj->CompareFlag) {
-      /* GL_SGIX_shadow */
-      if (tObj->CompareOperator == GL_TEXTURE_LEQUAL_R_SGIX) {
-         tObj->_Function = GL_LEQUAL;
-      }
-      else {
-         ASSERT(tObj->CompareOperator == GL_TEXTURE_GEQUAL_R_SGIX);
-         tObj->_Function = GL_GEQUAL;
-      }
-   }
-   else if (tObj->CompareMode == GL_COMPARE_R_TO_TEXTURE_ARB) {
-      /* GL_ARB_shadow */
-      tObj->_Function = tObj->CompareFunc;
-   }
-   else {
-      tObj->_Function = GL_NONE;  /* pass depth through as grayscale */
-   }
-}
-
-
 void GLAPIENTRY
 _mesa_TexParameterfv( GLenum target, GLenum pname, const GLfloat *params )
 {
@@ -1421,7 +1388,6 @@ _mesa_TexParameterfv( GLenum target, GLenum pname, const GLfloat *params )
          if (ctx->Extensions.SGIX_shadow) {
             FLUSH_VERTICES(ctx, _NEW_TEXTURE);
             texObj->CompareFlag = params[0] ? GL_TRUE : GL_FALSE;
-	    _mesa_update_texture_compare_function(texObj, GL_FALSE);
          }
          else {
             _mesa_error(ctx, GL_INVALID_ENUM,
@@ -1436,7 +1402,6 @@ _mesa_TexParameterfv( GLenum target, GLenum pname, const GLfloat *params )
                 op == GL_TEXTURE_GEQUAL_R_SGIX) {
                FLUSH_VERTICES(ctx, _NEW_TEXTURE);
                texObj->CompareOperator = op;
-	       _mesa_update_texture_compare_function(texObj, GL_FALSE);
             }
             else {
                _mesa_error(ctx, GL_INVALID_ENUM, "glTexParameter(param)");
@@ -1475,7 +1440,6 @@ _mesa_TexParameterfv( GLenum target, GLenum pname, const GLfloat *params )
             if (mode == GL_NONE || mode == GL_COMPARE_R_TO_TEXTURE_ARB) {
                FLUSH_VERTICES(ctx, _NEW_TEXTURE);
                texObj->CompareMode = mode;
-	       _mesa_update_texture_compare_function(texObj, GL_FALSE);
             }
             else {
                _mesa_error(ctx, GL_INVALID_ENUM,
@@ -1511,8 +1475,6 @@ _mesa_TexParameterfv( GLenum target, GLenum pname, const GLfloat *params )
                            "glTexParameter(bad GL_TEXTURE_COMPARE_FUNC_ARB)");
                return;
             }
-
-	    _mesa_update_texture_compare_function(texObj, GL_FALSE);
          }
          else {
             _mesa_error(ctx, GL_INVALID_ENUM,
@@ -1533,8 +1495,6 @@ _mesa_TexParameterfv( GLenum target, GLenum pname, const GLfloat *params )
                           "glTexParameter(bad GL_DEPTH_TEXTURE_MODE_ARB)");
                return;
             }
-
-	    _mesa_update_texture_compare_function(texObj, GL_FALSE);
          }
          else {
             _mesa_error(ctx, GL_INVALID_ENUM,
@@ -2836,6 +2796,47 @@ update_texture_matrices( GLcontext *ctx )
 
 
 /**
+ * Update texture object's _Function field.  We need to do this
+ * whenever any of the texture object's shadow-related fields change
+ * or when we start/stop using a fragment program.
+ *
+ * This function could be expanded someday to update additional per-object
+ * fields that depend on assorted state changes.
+ */
+static void
+update_texture_compare_function(GLcontext *ctx,
+                                struct gl_texture_object *tObj)
+{
+   /* XXX temporarily disable this test since it breaks the GLSL
+    * shadow2D(), etc. functions.
+    */
+   if (0 /*ctx->FragmentProgram._Current*/) {
+      /* Texel/coordinate comparison is ignored for programs.
+       * See GL_ARB_fragment_program/shader spec for details.
+       */
+      tObj->_Function = GL_NONE;
+   }
+   else if (tObj->CompareFlag) {
+      /* GL_SGIX_shadow */
+      if (tObj->CompareOperator == GL_TEXTURE_LEQUAL_R_SGIX) {
+         tObj->_Function = GL_LEQUAL;
+      }
+      else {
+         ASSERT(tObj->CompareOperator == GL_TEXTURE_GEQUAL_R_SGIX);
+         tObj->_Function = GL_GEQUAL;
+      }
+   }
+   else if (tObj->CompareMode == GL_COMPARE_R_TO_TEXTURE_ARB) {
+      /* GL_ARB_shadow */
+      tObj->_Function = tObj->CompareFunc;
+   }
+   else {
+      tObj->_Function = GL_NONE;  /* pass depth through as grayscale */
+   }
+}
+
+
+/**
  * Helper function for determining which texture object (1D, 2D, cube, etc)
  * should actually be used.
  */
@@ -2851,6 +2852,7 @@ texture_override(GLcontext *ctx,
       if (texObj->_Complete) {
          texUnit->_ReallyEnabled = textureBit;
          texUnit->_Current = texObj;
+         update_texture_compare_function(ctx, texObj);
       }
    }
 }

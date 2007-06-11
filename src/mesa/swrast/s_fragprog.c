@@ -200,7 +200,6 @@ void
 _swrast_exec_fragment_program( GLcontext *ctx, SWspan *span )
 {
    const struct gl_fragment_program *program = ctx->FragmentProgram._Current;
-   GLuint i;
 
    /* incoming colors should be floats */
    if (program->Base.InputsRead & FRAG_BIT_COL0) {
@@ -209,26 +208,7 @@ _swrast_exec_fragment_program( GLcontext *ctx, SWspan *span )
 
    ctx->_CurrentProgram = GL_FRAGMENT_PROGRAM_ARB; /* or NV, doesn't matter */
 
-#if 0
-   for (i = 0; i < ctx->Const.MaxTextureImageUnits; i++) {
-      if (ctx->Texture.Unit[i]._Current != NULL) {
-         const GLboolean enable_shadow = ((1 << i) & program->Base.ShadowSamplers);
-         _mesa_update_texture_compare_function(ctx->Texture.Unit[i]._Current,
-                                               !enable_shadow);
-      }
-   }
-#endif
-
    run_program(ctx, span, 0, span->end);
-
-#if 0
-   for (i = 0; i < ctx->Const.MaxTextureImageUnits; i++) {
-      if (ctx->Texture.Unit[i]._Current != NULL) {
-         _mesa_update_texture_compare_function(ctx->Texture.Unit[i]._Current,
-                                               GL_FALSE);
-      }
-   }
-#endif
 
    if (program->Base.OutputsWritten & (1 << FRAG_RESULT_COLR)) {
       span->interpMask &= ~SPAN_RGBA;
