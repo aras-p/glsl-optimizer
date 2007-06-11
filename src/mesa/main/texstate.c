@@ -1,6 +1,6 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.5.3
+ * Version:  7.1
  *
  * Copyright (C) 1999-2007  Brian Paul   All Rights Reserved.
  *
@@ -1179,13 +1179,16 @@ _mesa_TexParameterf( GLenum target, GLenum pname, GLfloat param )
 
 
 /**
- * Update derrived compare function state.
+ * Update derived compare function state.
  */
 void
 _mesa_update_texture_compare_function(struct gl_texture_object *tObj,
 				      GLboolean in_frag_prog)
 {
    if (in_frag_prog) {
+      /* Texel/coordinate comparison is ignored for programs.
+       * See GL_ARB_fragment_program/shader spec for details.
+       */
       tObj->_Function = GL_NONE;
    }
    else if (tObj->CompareFlag) {
