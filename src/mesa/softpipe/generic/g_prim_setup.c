@@ -36,6 +36,9 @@
 #include "g_tile.h"
 
 
+/**
+ * Triangle edge info
+ */
 struct edge {
    GLfloat dx;			/* X(v1) - X(v0), used only during setup */
    GLfloat dy;			/* Y(v1) - Y(v0), used only during setup */
@@ -46,9 +49,13 @@ struct edge {
 };
 
 
+/**
+ * Triangle setup info (derived from prim_stage).
+ * Also used for line drawing (taking some liberties).
+ */
 struct setup_stage {
-   struct prim_stage stage;
-   
+   struct prim_stage stage; /**< This must be first */
+
    /* Vertices are just an array of floats making up each attribute in
     * turn.  Currently fixed at 4 floats, but should change in time.
     * Codegen will help cope with this.
@@ -57,7 +64,7 @@ struct setup_stage {
    const struct vertex_header *vmid;
    const struct vertex_header *vmin;
    const struct vertex_header *vprovoke;
-   
+
    struct edge ebot;
    struct edge etop;
    struct edge emaj;
@@ -190,20 +197,9 @@ static void flush_spans( struct setup_stage *setup )
 }
 
 
-/**
- * Do setup for line rasterization, then render the line.
- */
-static void
-setup_line( struct prim_stage *stage,
-	    struct prim_header *header )
-{
-}
-
-
 static GLboolean setup_sort_vertices( struct setup_stage *setup,
 				      const struct prim_header *prim )
 {
-   
    const struct vertex_header *v0 = prim->v[0];
    const struct vertex_header *v1 = prim->v[1];
    const struct vertex_header *v2 = prim->v[2];
@@ -310,11 +306,12 @@ static void const_coeff( struct setup_stage *setup,
 
 
 /**
- * Compute a0, dadx and dady for a linearly interpolated coefficient.
+ * Compute a0, dadx and dady for a linearly interpolated coefficient,
+ * for a triangle.
  */
-static void linear_coeff( struct setup_stage *setup,
-			  GLuint slot,
-			  GLuint i)
+static void tri_linear_coeff( struct setup_stage *setup,
+                              GLuint slot,
+                              GLuint i)
 {
    GLfloat botda = setup->vmid->data[slot][i] - setup->vmin->data[slot][i];
    GLfloat majda = setup->vmax->data[slot][i] - setup->vmin->data[slot][i];
@@ -349,11 +346,12 @@ static void linear_coeff( struct setup_stage *setup,
 
 
 /**
- * Compute a0, dadx and dady for a perspective-corrected interpolant.
+ * Compute a0, dadx and dady for a perspective-corrected interpolant,
+ * for a triangle.
  */
-static void persp_coeff( struct setup_stage *setup,
-			 GLuint slot,
-			 GLuint i )
+static void tri_persp_coeff( struct setup_stage *setup,
+                             GLuint slot,
+                             GLuint i )
 {
    /* premultiply by 1/w:
     */
@@ -379,15 +377,15 @@ static void persp_coeff( struct setup_stage *setup,
  * Compute the setup->coef[] array dadx, dady, a0 values.
  * Must be called after setup->vmin,vmid,vmax,vprovoke are initialized.
  */
-static void setup_coefficients( struct setup_stage *setup )
+static void setup_tri_coefficients( struct setup_stage *setup )
 {
    const enum interp_mode *interp = setup->stage.generic->interp;
    GLuint slot, j;
 
    /* z and w are done by linear interpolation:
     */
-   linear_coeff(setup, 0, 2);
-   linear_coeff(setup, 0, 3);
+   tri_linear_coeff(setup, 0, 2);
+   tri_linear_coeff(setup, 0, 3);
 
    /* setup interpolation for all the remaining attributes:
     */
@@ -400,12 +398,12 @@ static void setup_coefficients( struct setup_stage *setup )
       
       case INTERP_LINEAR:
 	 for (j = 0; j < NUM_CHANNELS; j++)
-	    linear_coeff(setup, slot, j);
+	    tri_linear_coeff(setup, slot, j);
 	 break;
 
       case INTERP_PERSPECTIVE:
 	 for (j = 0; j < NUM_CHANNELS; j++)
-	    persp_coeff(setup, slot, j);
+	    tri_persp_coeff(setup, slot, j);
 	 break;
       }
    }
@@ -413,7 +411,7 @@ static void setup_coefficients( struct setup_stage *setup )
 
 
 
-static void setup_edges( struct setup_stage *setup )
+static void setup_tri_edges( struct setup_stage *setup )
 {
    GLfloat vmin_x = setup->vmin->data[0][0] + 0.5;
    GLfloat vmid_x = setup->vmid->data[0][0] + 0.5;
@@ -531,8 +529,8 @@ static void setup_tri( struct prim_stage *stage,
    _mesa_printf("%s\n", __FUNCTION__ );
 
    setup_sort_vertices( setup, prim );
-   setup_coefficients( setup );
-   setup_edges( setup );
+   setup_tri_coefficients( setup );
+   setup_tri_edges( setup );
 
    setup->span.y = 0;
    setup->span.y_flags = 0;
@@ -559,14 +557,224 @@ static void setup_tri( struct prim_stage *stage,
 }
 
 
+
+/**
+ * Compute a0, dadx and dady for a linearly interpolated coefficient,
+ * for a line.
+ */
+static void
+line_linear_coeff(struct setup_stage *setup, GLuint slot, GLuint i)
+{
+   const GLfloat dz = setup->vmax->data[slot][i] - setup->vmin->data[slot][i];
+   const GLfloat dadx = dz * setup->emaj.dx * setup->oneoverarea;
+   const GLfloat dady = dz * setup->emaj.dy * setup->oneoverarea;
+   setup->coef[slot].dadx[i] = dadx;
+   setup->coef[slot].dady[i] = dady;
+   setup->coef[slot].a0[i]
+      = (setup->vmin->data[slot][i] - 
+         (dadx * (setup->vmin->data[0][0] - 0.5) + 
+          dady * (setup->vmin->data[0][1] - 0.5)));
+}
+
+
+/**
+ * Compute a0, dadx and dady for a perspective-corrected interpolant,
+ * for a line.
+ */
+static void
+line_persp_coeff(struct setup_stage *setup, GLuint slot, GLuint i)
+{
+   /* XXX to do */
+   line_linear_coeff(setup, slot, i); /* XXX temporary */
+}
+
+
+/**
+ * Compute the setup->coef[] array dadx, dady, a0 values.
+ * Must be called after setup->vmin,vmax are initialized.
+ */
+static INLINE void
+setup_line_coefficients(struct setup_stage *setup, struct prim_header *prim)
+{
+   const enum interp_mode *interp = setup->stage.generic->interp;
+   GLuint slot, j;
+
+   /* use setup->vmin, vmax to point to vertices */
+   setup->vprovoke = prim->v[1];
+   setup->vmin = prim->v[0];
+   setup->vmax = prim->v[1];
+
+   setup->emaj.dx = setup->vmax->data[0][0] - setup->vmin->data[0][0];
+   setup->emaj.dy = setup->vmax->data[0][1] - setup->vmin->data[0][1];
+   /* NOTE: this is not really 1/area */
+   setup->oneoverarea = 1.0 / (setup->emaj.dx * setup->emaj.dx +
+                               setup->emaj.dy * setup->emaj.dy);
+
+   /* z and w are done by linear interpolation:
+    */
+   line_linear_coeff(setup, 0, 2);
+   line_linear_coeff(setup, 0, 3);
+
+   /* setup interpolation for all the remaining attributes:
+    */
+   for (slot = 1; slot < setup->quad.nr_attrs; slot++) {
+      switch (interp[slot]) {
+      case INTERP_CONSTANT:
+	 for (j = 0; j < NUM_CHANNELS; j++)
+	    const_coeff(setup, slot, j);
+	 break;
+      
+      case INTERP_LINEAR:
+	 for (j = 0; j < NUM_CHANNELS; j++)
+	    line_linear_coeff(setup, slot, j);
+	 break;
+
+      case INTERP_PERSPECTIVE:
+	 for (j = 0; j < NUM_CHANNELS; j++)
+	    line_persp_coeff(setup, slot, j);
+	 break;
+      }
+   }
+}
+
+
+/**
+ * Plot a pixel in a line segment.
+ */
+static INLINE void
+plot(struct setup_stage *setup, GLint x, GLint y)
+{
+   const GLint quadX = block(x);
+   const GLint quadY = block(y);
+
+   if ((quadX != setup->quad.x0 || quadY != setup->quad.y0)
+       && setup->quad.x0 != -1) {
+      /* flush prev quad, start new quad */
+      quad_shade(setup->stage.generic, &setup->quad);
+      setup->quad.mask = 0x0;
+   }
+   setup->quad.x0 = quadX;
+   setup->quad.y0 = quadY;
+
+   if (x & 1) {
+      if (y & 1)
+         setup->quad.mask |= MASK_TOP_RIGHT;
+      else
+         setup->quad.mask |= MASK_BOTTOM_RIGHT;
+   }
+   else {
+      if (y & 1)
+         setup->quad.mask |= MASK_TOP_LEFT;
+      else
+         setup->quad.mask |= MASK_BOTTOM_LEFT;
+   }
+}
+
+
+
+/**
+ * Do setup for line rasterization, then render the line.
+ * XXX single-pixel width, no stipple, etc
+ * XXX no scissoring yet.
+ */
+static void
+setup_line(struct prim_stage *stage, struct prim_header *prim)
+{
+   const struct vertex_header *v0 = prim->v[0];
+   const struct vertex_header *v1 = prim->v[1];
+   struct setup_stage *setup = setup_stage( stage );
+
+   GLint x0 = (GLint) v0->data[0][0];
+   GLint x1 = (GLint) v1->data[0][0];
+   GLint y0 = (GLint) v0->data[0][1];
+   GLint y1 = (GLint) v1->data[0][1];
+   GLint dx = x1 - x0;
+   GLint dy = y1 - y0;
+   GLint xstep, ystep;
+
+   if (dx == 0 && dy == 0)
+      return;
+
+   setup_line_coefficients(setup, prim);
+
+   if (dx < 0) {
+      dx = -dx;   /* make positive */
+      xstep = -1;
+   }
+   else {
+      xstep = 1;
+   }
+
+   if (dy < 0) {
+      dy = -dy;   /* make positive */
+      ystep = -1;
+   }
+   else {
+      ystep = 1;
+   }
+
+   assert(dx >= 0);
+   assert(dy >= 0);
+
+   setup->quad.x0 = setup->quad.y0 = -1;
+   setup->quad.mask = 0x0;
+
+   if (dx > dy) {
+      /*** X-major line ***/
+      GLint i;
+      const GLint errorInc = dy + dy;
+      GLint error = errorInc - dx;
+      const GLint errorDec = error - dx;
+
+      for (i = 0; i < dx; i++) {
+         plot(setup, x0, y0);
+
+         x0 += xstep;
+         if (error < 0) {
+            error += errorInc;
+         }
+         else {
+            error += errorDec;
+            y0 += ystep;
+         }
+      }
+   }
+   else {
+      /*** Y-major line ***/
+      GLint i;
+      const GLint errorInc = dx + dx;
+      GLint error = errorInc - dy;
+      const GLint errorDec = error - dy;
+
+      for (i = 0; i < dy; i++) {
+         plot(setup, x0, y0);
+
+         y0 += ystep;
+
+         if (error < 0) {
+            error += errorInc;
+         }
+         else {
+            error += errorDec;
+            x0 += xstep;
+         }
+      }
+   }
+
+   /* draw final quad */
+   if (setup->quad.mask) {
+      quad_shade(setup->stage.generic, &setup->quad);
+   }
+}
+
+
 /**
  * Do setup for point rasterization, then render the point.
  * Round or square points...
  * XXX could optimize a lot for 1-pixel points.
  */
 static void
-setup_point( struct prim_stage *stage, 
-	     struct prim_header *prim )
+setup_point(struct prim_stage *stage, struct prim_header *prim)
 {
    struct setup_stage *setup = setup_stage( stage );
    GLfloat halfSize = 7.3; /*XXX this is a vertex attrib */
