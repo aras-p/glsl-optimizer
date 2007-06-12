@@ -176,9 +176,9 @@ clean:
 	-rm -f */*/*.o
 	-rm -f depend depend.bak libmesa.a
 	-rm -f drivers/*/*.o
-	(cd drivers/dri ; $(MAKE) clean)
-	(cd x86 ; $(MAKE) clean)
-	(cd x86-64 ; $(MAKE) clean)
+	(cd drivers/dri && $(MAKE) clean)
+	(cd x86 && $(MAKE) clean)
+	(cd x86-64 && $(MAKE) clean)
 
 
 include depend
