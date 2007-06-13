@@ -358,9 +358,11 @@ int r300EmitArrays(GLcontext * ctx)
 		DECLARE_RENDERINPUTS(render_inputs_bitset);
 		RENDERINPUTS_COPY(render_inputs_bitset, tnl->render_inputs_bitset);
 
+		vb->AttribPtr[VERT_ATTRIB_POS] = vb->ClipPtr;
+
 		assert(RENDERINPUTS_TEST(render_inputs_bitset, _TNL_ATTRIB_POS));
 		assert(RENDERINPUTS_TEST(render_inputs_bitset, _TNL_ATTRIB_NORMAL) == 0);
-		assert(RENDERINPUTS_TEST(render_inputs_bitset, _TNL_ATTRIB_COLOR0));
+		//assert(RENDERINPUTS_TEST(render_inputs_bitset, _TNL_ATTRIB_COLOR0));
 
 		if (RENDERINPUTS_TEST(render_inputs_bitset, _TNL_ATTRIB_POS)) {
 			InputsRead |= 1 << VERT_ATTRIB_POS;

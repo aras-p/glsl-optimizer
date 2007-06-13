@@ -293,11 +293,10 @@ static GLboolean r300RunRender(GLcontext * ctx,
 	TNLcontext *tnl = TNL_CONTEXT(ctx);
 	struct vertex_buffer *vb = &tnl->vb;
 
+
 	if (RADEON_DEBUG & DEBUG_PRIMS)
 		fprintf(stderr, "%s\n", __FUNCTION__);
 
-	if (hw_tcl_on == GL_FALSE)
-	  vb->AttribPtr[VERT_ATTRIB_POS] = vb->ClipPtr;
 	r300UpdateShaders(rmesa);
 	if (r300EmitArrays(ctx))
 		return GL_TRUE;
