@@ -205,7 +205,6 @@ static GLboolean setup_sort_vertices( struct setup_stage *setup,
    const struct vertex_header *v2 = prim->v[2];
 
    setup->vprovoke = v2;
-//   setup->oneoverarea = -1.0 / prim->det;
 
    /* determine bottom to top order of vertices */
    {
@@ -230,7 +229,6 @@ static GLboolean setup_sort_vertices( struct setup_stage *setup,
 	    setup->vmin = v0;   
 	    setup->vmid = v2;   
 	    setup->vmax = v1;  
-//	    setup->oneoverarea = -setup->oneoverarea;
 	 }
       }
       else {
@@ -239,14 +237,12 @@ static GLboolean setup_sort_vertices( struct setup_stage *setup,
 	    setup->vmin = v1;   
 	    setup->vmid = v0;   
 	    setup->vmax = v2;  
-//	    setup->oneoverarea = -setup->oneoverarea;
 	 }
 	 else if (y2 <= y1) {
 	    /* y2<=y1<=y0 */
 	    setup->vmin = v2;   
 	    setup->vmid = v1;   
 	    setup->vmax = v0;  
-//	    setup->oneoverarea = -setup->oneoverarea;
 	 }
 	 else {
 	    /* y1<=y2<=y0 */
