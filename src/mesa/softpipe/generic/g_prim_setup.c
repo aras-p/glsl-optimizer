@@ -640,30 +640,26 @@ setup_line_coefficients(struct setup_stage *setup, struct prim_header *prim)
 static INLINE void
 plot(struct setup_stage *setup, GLint x, GLint y)
 {
-   const GLint quadX = block(x);
-   const GLint quadY = block(y);
+   const GLint iy = y & 1;
+   const GLint ix = x & 1;
+   const GLint quadX = x - ix;
+   const GLint quadY = y - iy;
+   const GLint mask = (1 << ix) << (2 * iy);
 
-   if ((quadX != setup->quad.x0 || quadY != setup->quad.y0)
-       && setup->quad.x0 != -1) {
+   if (quadX != setup->quad.x0 || 
+       quadY != setup->quad.y0) 
+   {
       /* flush prev quad, start new quad */
-      quad_shade(setup->stage.generic, &setup->quad);
+
+      if (setup->quad.x0 != -1) 
+	 quad_shade(setup->stage.generic, &setup->quad);
+
+      setup->quad.x0 = quadX;
+      setup->quad.y0 = quadY;
       setup->quad.mask = 0x0;
    }
-   setup->quad.x0 = quadX;
-   setup->quad.y0 = quadY;
 
-   if (x & 1) {
-      if (y & 1)
-         setup->quad.mask |= MASK_TOP_RIGHT;
-      else
-         setup->quad.mask |= MASK_BOTTOM_RIGHT;
-   }
-   else {
-      if (y & 1)
-         setup->quad.mask |= MASK_TOP_LEFT;
-      else
-         setup->quad.mask |= MASK_BOTTOM_LEFT;
-   }
+   setup->quad.mask |= mask;
 }
 
 
@@ -790,6 +786,17 @@ setup_point(struct prim_stage *stage, struct prim_header *prim)
     * However, for point sprites, we'll need to setup texcoords appropriately.
     * XXX: which coefficients are the texcoords???
     * We may do point sprites as textured quads...
+    *
+    * KW: We don't know which coefficients are texcoords - ultimately
+    * the choice of what interpolation mode to use for each attribute
+    * should be determined by the fragment program, using
+    * per-attribute declaration statements that include interpolation
+    * mode as a parameter.  So either the fragment program will have
+    * to be adjusted for pointsprite vs normal point behaviour, or
+    * otherwise a special interpolation mode will have to be defined
+    * which matches the required behaviour for point sprites.  But -
+    * the latter is not a feature of normal hardware, and as such
+    * probably should be ruled out on that basis.
     */
    setup->vprovoke = prim->v[0];
    const_coeff(setup, 0, 2);
