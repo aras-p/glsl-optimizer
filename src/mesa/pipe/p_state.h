@@ -25,8 +25,8 @@
  * 
  **************************************************************************/
 
-#ifndef SP_STATE_H
-#define SP_STATE_H
+#ifndef PIPE_STATE_H
+#define PIPE_STATE_H
 
 #include "mtypes.h"
 #include "vf/vf.h"
@@ -40,7 +40,7 @@
 #define FILL_LINE  2
 #define FILL_TRI   3
 
-struct softpipe_setup_state {
+struct pipe_setup_state {
    GLuint flatshade:1;
    GLuint light_twoside:1;
 
@@ -63,17 +63,17 @@ struct softpipe_setup_state {
    GLfloat offset_scale;
 };
 
-struct softpipe_poly_stipple {
+struct pipe_poly_stipple {
    GLuint stipple[32];
 };
 
 
-struct softpipe_viewport {
+struct pipe_viewport {
    GLfloat scale[4];
    GLfloat translate[4];
 };
 
-struct softpipe_scissor_rect {
+struct pipe_scissor_rect {
    GLshort minx;
    GLshort miny;
    GLshort maxx;
@@ -81,26 +81,26 @@ struct softpipe_scissor_rect {
 };
 
 
-#define SP_MAX_CLIP_PLANES 6
+#define PIPE_MAX_CLIP_PLANES 6
 
-struct softpipe_clip_state {
-   GLfloat ucp[SP_MAX_CLIP_PLANES][4];
+struct pipe_clip_state {
+   GLfloat ucp[PIPE_MAX_CLIP_PLANES][4];
    GLuint nr;
 };
 
-struct softpipe_fs_state {
+struct pipe_fs_state {
    struct gl_fragment_program *fp;
 };
 
-#define SP_MAX_CONSTANT 32
+#define PIPE_MAX_CONSTANT 32
 
-struct softpipe_constant_buffer {
-   GLfloat constant[SP_MAX_CONSTANT][4];
+struct pipe_constant_buffer {
+   GLfloat constant[PIPE_MAX_CONSTANT][4];
    GLuint nr_constants;
 };
 
 
-struct softpipe_depth_state
+struct pipe_depth_state
 {
    GLuint enabled:1;   /**< depth test enabled? */
    GLuint writemask:1; /**< allow depth buffer writes? */
@@ -109,7 +109,7 @@ struct softpipe_depth_state
 };
 
 
-struct softpipe_blend_state {   
+struct pipe_blend_state {   
    GLuint blend_enable:1; 
 
    GLuint rgb_func:3; 
@@ -124,17 +124,17 @@ struct softpipe_blend_state {
    GLuint logicop_func:4;
 };
 
-struct softpipe_blend_color {
+struct pipe_blend_color {
    GLfloat color[4];  
 };
 
 
-struct softpipe_stencil_state {
+struct pipe_stencil_state {
    GLuint front_enabled:1;
-   GLuint front_func:3;     /**< SP_STENCIL_FUNC_x */
-   GLuint front_fail_op:3;  /**< SP_STENCIL_OP_x */
-   GLuint front_zpass_op:3; /**< SP_STENCIL_OP_x */
-   GLuint front_zfail_op:3; /**< SP_STENCIL_OP_x */
+   GLuint front_func:3;     /**< PIPE_STENCIL_FUNC_x */
+   GLuint front_fail_op:3;  /**< PIPE_STENCIL_OP_x */
+   GLuint front_zpass_op:3; /**< PIPE_STENCIL_OP_x */
+   GLuint front_zfail_op:3; /**< PIPE_STENCIL_OP_x */
    GLuint back_enabled:1;
    GLuint back_func:3;
    GLuint back_fail_op:3;
@@ -147,9 +147,9 @@ struct softpipe_stencil_state {
 };
 
 
-/* This will change for hardware softpipes...
+/* This will change for hardware pipes...
  */
-struct softpipe_surface {
+struct pipe_surface {
    GLubyte *ptr;
    GLint stride;
    GLuint cpp;
@@ -160,13 +160,13 @@ struct softpipe_surface {
 /**
  * Texture sampler state.
  */
-struct softpipe_sampler_state
+struct pipe_sampler_state
 {
-   GLuint wrap_s:3;        /**< SP_TEX_WRAP_x */
-   GLuint wrap_t:3;        /**< SP_TEX_WRAP_x */
-   GLuint wrap_r:3;        /**< SP_TEX_WRAP_x */
-   GLuint min_filter:3;    /**< SP_TEX_FILTER_x */
-   GLuint mag_filter:1;    /**< SP_TEX_FILTER_LINEAR or _NEAREST */
+   GLuint wrap_s:3;        /**< PIPE_TEX_WRAP_x */
+   GLuint wrap_t:3;        /**< PIPE_TEX_WRAP_x */
+   GLuint wrap_r:3;        /**< PIPE_TEX_WRAP_x */
+   GLuint min_filter:3;    /**< PIPE_TEX_FILTER_x */
+   GLuint mag_filter:1;    /**< PIPE_TEX_FILTER_LINEAR or _NEAREST */
    GLfloat min_lod;
    GLfloat max_lod;
    GLfloat lod_bias;
@@ -176,8 +176,8 @@ struct softpipe_sampler_state
 #endif
    GLfloat max_anisotropy;
    GLuint compare:1;       /**< shadow/depth compare enabled? */
-   GLenum compare_mode:1;  /**< SP_TEX_COMPARE_x */
-   GLenum compare_func:3;  /**< SP_DEPTH_FUNC_x */
+   GLenum compare_mode:1;  /**< PIPE_TEX_COMPARE_x */
+   GLenum compare_func:3;  /**< PIPE_DEPTH_FUNC_x */
    GLfloat shadow_ambient; /**< shadow test fail color/intensity */
 };
 

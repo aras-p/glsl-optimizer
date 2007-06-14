@@ -34,25 +34,25 @@
 
 #include "st_context.h"
 #include "st_atom.h"
-#include "softpipe/sp_context.h"
-#include "softpipe/sp_defines.h"
+#include "pipe/p_context.h"
+#include "pipe/p_defines.h"
 
 
 /**
- * Convert GLenum stencil func tokens to softpipe tokens.
+ * Convert GLenum stencil func tokens to pipe tokens.
  */
 static GLuint
 gl_stencil_func_to_sp(GLenum func)
 {
    /* Same values, just biased */
-   assert(SP_STENCIL_FUNC_NEVER == GL_NEVER - GL_NEVER);
-   assert(SP_STENCIL_FUNC_LESS == GL_LESS - GL_NEVER);
-   assert(SP_STENCIL_FUNC_EQUAL == GL_EQUAL - GL_NEVER);
-   assert(SP_STENCIL_FUNC_LEQUAL == GL_LEQUAL - GL_NEVER);
-   assert(SP_STENCIL_FUNC_GREATER == GL_GREATER - GL_NEVER);
-   assert(SP_STENCIL_FUNC_NOTEQUAL == GL_NOTEQUAL - GL_NEVER);
-   assert(SP_STENCIL_FUNC_GEQUAL == GL_GEQUAL - GL_NEVER);
-   assert(SP_STENCIL_FUNC_ALWAYS == GL_ALWAYS - GL_NEVER);
+   assert(PIPE_STENCIL_FUNC_NEVER == GL_NEVER - GL_NEVER);
+   assert(PIPE_STENCIL_FUNC_LESS == GL_LESS - GL_NEVER);
+   assert(PIPE_STENCIL_FUNC_EQUAL == GL_EQUAL - GL_NEVER);
+   assert(PIPE_STENCIL_FUNC_LEQUAL == GL_LEQUAL - GL_NEVER);
+   assert(PIPE_STENCIL_FUNC_GREATER == GL_GREATER - GL_NEVER);
+   assert(PIPE_STENCIL_FUNC_NOTEQUAL == GL_NOTEQUAL - GL_NEVER);
+   assert(PIPE_STENCIL_FUNC_GEQUAL == GL_GEQUAL - GL_NEVER);
+   assert(PIPE_STENCIL_FUNC_ALWAYS == GL_ALWAYS - GL_NEVER);
    assert(func >= GL_NEVER);
    assert(func <= GL_ALWAYS);
    return func - GL_NEVER;
@@ -60,28 +60,28 @@ gl_stencil_func_to_sp(GLenum func)
 
 
 /**
- * Convert GLenum stencil op tokens to softpipe tokens.
+ * Convert GLenum stencil op tokens to pipe tokens.
  */
 static GLuint
 gl_stencil_op_to_sp(GLenum func)
 {
    switch (func) {
    case GL_KEEP:
-      return SP_STENCIL_OP_KEEP;
+      return PIPE_STENCIL_OP_KEEP;
    case GL_ZERO:
-      return SP_STENCIL_OP_ZERO;
+      return PIPE_STENCIL_OP_ZERO;
    case GL_REPLACE:
-      return SP_STENCIL_OP_REPLACE;
+      return PIPE_STENCIL_OP_REPLACE;
    case GL_INCR:
-      return SP_STENCIL_OP_INCR;
+      return PIPE_STENCIL_OP_INCR;
    case GL_DECR:
-      return SP_STENCIL_OP_DECR;
+      return PIPE_STENCIL_OP_DECR;
    case GL_INCR_WRAP:
-      return SP_STENCIL_OP_INCR_WRAP;
+      return PIPE_STENCIL_OP_INCR_WRAP;
    case GL_DECR_WRAP:
-      return SP_STENCIL_OP_DECR_WRAP;
+      return PIPE_STENCIL_OP_DECR_WRAP;
    case GL_INVERT:
-      return SP_STENCIL_OP_INVERT;
+      return PIPE_STENCIL_OP_INVERT;
    default:
       assert("invalid GL token in gl_stencil_op_to_sp()" == NULL);
       return 0;
@@ -92,7 +92,7 @@ gl_stencil_op_to_sp(GLenum func)
 static void 
 update_stencil( struct st_context *st )
 {
-   struct softpipe_stencil_state stencil;
+   struct pipe_stencil_state stencil;
 
    memset(&stencil, 0, sizeof(stencil));
 
@@ -121,7 +121,7 @@ update_stencil( struct st_context *st )
    if (memcmp(&stencil, &st->state.stencil, sizeof(stencil)) != 0) {
       /* state has changed */
       st->state.stencil = stencil;  /* struct copy */
-      st->softpipe->set_stencil_state(st->softpipe, &stencil); /* set new state */
+      st->pipe->set_stencil_state(st->pipe, &stencil); /* set new state */
    }
 }
 

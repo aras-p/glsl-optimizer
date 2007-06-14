@@ -31,7 +31,7 @@
 #include "st_atom.h"
 #include "st_draw.h"
 #include "st_program.h"
-#include "softpipe/sp_context.h"
+#include "pipe/p_context.h"
 
 void st_invalidate_state(GLcontext * ctx, GLuint new_state)
 {
@@ -43,14 +43,14 @@ void st_invalidate_state(GLcontext * ctx, GLuint new_state)
 
 
 struct st_context *st_create_context( GLcontext *ctx,
-				      struct softpipe_context *softpipe )
+				      struct pipe_context *pipe )
 {
    struct st_context *st = CALLOC_STRUCT( st_context );
    
    ctx->st = st;
 
    st->ctx = ctx;
-   st->softpipe = softpipe;
+   st->pipe = pipe;
 
    st->dirty.mesa = ~0;
    st->dirty.st = ~0;
@@ -68,7 +68,7 @@ void st_destroy_context( struct st_context *st )
    st_destroy_atoms( st );
    st_destroy_draw( st );
    st_destroy_cb_program( st );
-   st->softpipe->destroy( st->softpipe );
+   st->pipe->destroy( st->pipe );
    FREE( st );
 }
 

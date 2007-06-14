@@ -30,19 +30,19 @@
   */
                    
 #include "st_context.h"
-#include "softpipe/sp_context.h"
+#include "pipe/p_context.h"
 #include "st_atom.h"
 
 
 static void update_fs( struct st_context *st )
 {
-   struct softpipe_fs_state fs;
+   struct pipe_fs_state fs;
 
    fs.fp = st->ctx->FragmentProgram._Current;
    
    if (memcmp(&fs, &st->state.fs, sizeof(fs)) != 0) {
       st->state.fs = fs;
-      st->softpipe->set_fs_state(st->softpipe, &fs);
+      st->pipe->set_fs_state(st->pipe, &fs);
    }
 }
 

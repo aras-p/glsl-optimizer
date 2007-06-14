@@ -29,7 +29,7 @@
 #define ST_CONTEXT_H
 
 #include "mtypes.h"
-#include "softpipe/sp_state.h"
+#include "pipe/p_state.h"
 
 
 struct st_context;
@@ -58,23 +58,23 @@ struct st_context
 {
    GLcontext *ctx;
 
-   struct softpipe_context *softpipe;
+   struct pipe_context *pipe;
 
-   /* Eventually will use a cache to feed the softpipe with
+   /* Eventually will use a cache to feed the pipe with
     * create/bind/delete calls to constant state objects.  Not yet
     * though, we just shove random objects across the interface.  
     */
    struct {
-      struct softpipe_viewport     viewport;
-      struct softpipe_setup_state  setup;
-      struct softpipe_fs_state     fs;
-      struct softpipe_blend_state  blend;
-      struct softpipe_surface      cbuf;
-      struct softpipe_clip_state   clip;
-      struct softpipe_depth_state  depth;
-      struct softpipe_scissor_rect scissor;
-      struct softpipe_poly_stipple poly_stipple;
-      struct softpipe_stencil_state stencil;
+      struct pipe_viewport     viewport;
+      struct pipe_setup_state  setup;
+      struct pipe_fs_state     fs;
+      struct pipe_blend_state  blend;
+      struct pipe_surface      cbuf;
+      struct pipe_clip_state   clip;
+      struct pipe_depth_state  depth;
+      struct pipe_scissor_rect scissor;
+      struct pipe_poly_stipple poly_stipple;
+      struct pipe_stencil_state stencil;
    } state;
 
    struct {

@@ -25,97 +25,97 @@
  * 
  **************************************************************************/
 
-#ifndef SP_DEFINES_H
-#define SP_DEFINES_H
+#ifndef PIPE_DEFINES_H
+#define PIPE_DEFINES_H
 
-#define SP_BLENDFACTOR_ONE                 0x1
-#define SP_BLENDFACTOR_SRC_COLOR           0x2
-#define SP_BLENDFACTOR_SRC_ALPHA           0x3
-#define SP_BLENDFACTOR_DST_ALPHA           0x4
-#define SP_BLENDFACTOR_DST_COLOR           0x5
-#define SP_BLENDFACTOR_SRC_ALPHA_SATURATE  0x6
-#define SP_BLENDFACTOR_CONST_COLOR         0x7
-#define SP_BLENDFACTOR_CONST_ALPHA         0x8
-#define SP_BLENDFACTOR_SRC1_COLOR          0x9
-#define SP_BLENDFACTOR_SRC1_ALPHA          0x0A
-#define SP_BLENDFACTOR_ZERO                0x11
-#define SP_BLENDFACTOR_INV_SRC_COLOR       0x12
-#define SP_BLENDFACTOR_INV_SRC_ALPHA       0x13
-#define SP_BLENDFACTOR_INV_DST_ALPHA       0x14
-#define SP_BLENDFACTOR_INV_DST_COLOR       0x15
-#define SP_BLENDFACTOR_INV_CONST_COLOR     0x17
-#define SP_BLENDFACTOR_INV_CONST_ALPHA     0x18
-#define SP_BLENDFACTOR_INV_SRC1_COLOR      0x19
-#define SP_BLENDFACTOR_INV_SRC1_ALPHA      0x1A
+#define PIPE_BLENDFACTOR_ONE                 0x1
+#define PIPE_BLENDFACTOR_SRC_COLOR           0x2
+#define PIPE_BLENDFACTOR_SRC_ALPHA           0x3
+#define PIPE_BLENDFACTOR_DST_ALPHA           0x4
+#define PIPE_BLENDFACTOR_DST_COLOR           0x5
+#define PIPE_BLENDFACTOR_SRC_ALPHA_SATURATE  0x6
+#define PIPE_BLENDFACTOR_CONST_COLOR         0x7
+#define PIPE_BLENDFACTOR_CONST_ALPHA         0x8
+#define PIPE_BLENDFACTOR_SRC1_COLOR          0x9
+#define PIPE_BLENDFACTOR_SRC1_ALPHA          0x0A
+#define PIPE_BLENDFACTOR_ZERO                0x11
+#define PIPE_BLENDFACTOR_INV_SRC_COLOR       0x12
+#define PIPE_BLENDFACTOR_INV_SRC_ALPHA       0x13
+#define PIPE_BLENDFACTOR_INV_DST_ALPHA       0x14
+#define PIPE_BLENDFACTOR_INV_DST_COLOR       0x15
+#define PIPE_BLENDFACTOR_INV_CONST_COLOR     0x17
+#define PIPE_BLENDFACTOR_INV_CONST_ALPHA     0x18
+#define PIPE_BLENDFACTOR_INV_SRC1_COLOR      0x19
+#define PIPE_BLENDFACTOR_INV_SRC1_ALPHA      0x1A
 
-#define SP_BLEND_ADD               0
-#define SP_BLEND_SUBTRACT          1
-#define SP_BLEND_REVERSE_SUBTRACT  2
-#define SP_BLEND_MIN               3
-#define SP_BLEND_MAX               4
+#define PIPE_BLEND_ADD               0
+#define PIPE_BLEND_SUBTRACT          1
+#define PIPE_BLEND_REVERSE_SUBTRACT  2
+#define PIPE_BLEND_MIN               3
+#define PIPE_BLEND_MAX               4
 
-#define SP_LOGICOP_CLEAR            0
-#define SP_LOGICOP_NOR              1
-#define SP_LOGICOP_AND_INVERTED     2
-#define SP_LOGICOP_COPY_INVERTED    3
-#define SP_LOGICOP_AND_REVERSE      4
-#define SP_LOGICOP_INVERT           5
-#define SP_LOGICOP_XOR              6
-#define SP_LOGICOP_NAND             7
-#define SP_LOGICOP_AND              8
-#define SP_LOGICOP_EQUIV            9
-#define SP_LOGICOP_NOOP             10
-#define SP_LOGICOP_OR_INVERTED      11
-#define SP_LOGICOP_COPY             12
-#define SP_LOGICOP_OR_REVERSE       13
-#define SP_LOGICOP_OR               14
-#define SP_LOGICOP_SET              15  
+#define PIPE_LOGICOP_CLEAR            0
+#define PIPE_LOGICOP_NOR              1
+#define PIPE_LOGICOP_AND_INVERTED     2
+#define PIPE_LOGICOP_COPY_INVERTED    3
+#define PIPE_LOGICOP_AND_REVERSE      4
+#define PIPE_LOGICOP_INVERT           5
+#define PIPE_LOGICOP_XOR              6
+#define PIPE_LOGICOP_NAND             7
+#define PIPE_LOGICOP_AND              8
+#define PIPE_LOGICOP_EQUIV            9
+#define PIPE_LOGICOP_NOOP             10
+#define PIPE_LOGICOP_OR_INVERTED      11
+#define PIPE_LOGICOP_COPY             12
+#define PIPE_LOGICOP_OR_REVERSE       13
+#define PIPE_LOGICOP_OR               14
+#define PIPE_LOGICOP_SET              15  
 
-#define SP_STENCIL_FUNC_NEVER    0
-#define SP_STENCIL_FUNC_LESS     1
-#define SP_STENCIL_FUNC_EQUAL    2
-#define SP_STENCIL_FUNC_LEQUAL   3
-#define SP_STENCIL_FUNC_GREATER  4
-#define SP_STENCIL_FUNC_NOTEQUAL 5
-#define SP_STENCIL_FUNC_GEQUAL   6
-#define SP_STENCIL_FUNC_ALWAYS   7
+#define PIPE_STENCIL_FUNC_NEVER    0
+#define PIPE_STENCIL_FUNC_LESS     1
+#define PIPE_STENCIL_FUNC_EQUAL    2
+#define PIPE_STENCIL_FUNC_LEQUAL   3
+#define PIPE_STENCIL_FUNC_GREATER  4
+#define PIPE_STENCIL_FUNC_NOTEQUAL 5
+#define PIPE_STENCIL_FUNC_GEQUAL   6
+#define PIPE_STENCIL_FUNC_ALWAYS   7
 
-#define SP_STENCIL_OP_KEEP       0
-#define SP_STENCIL_OP_ZERO       1
-#define SP_STENCIL_OP_REPLACE    2
-#define SP_STENCIL_OP_INCR       3
-#define SP_STENCIL_OP_DECR       4
-#define SP_STENCIL_OP_INCR_WRAP  5
-#define SP_STENCIL_OP_DECR_WRAP  6
-#define SP_STENCIL_OP_INVERT     7
+#define PIPE_STENCIL_OP_KEEP       0
+#define PIPE_STENCIL_OP_ZERO       1
+#define PIPE_STENCIL_OP_REPLACE    2
+#define PIPE_STENCIL_OP_INCR       3
+#define PIPE_STENCIL_OP_DECR       4
+#define PIPE_STENCIL_OP_INCR_WRAP  5
+#define PIPE_STENCIL_OP_DECR_WRAP  6
+#define PIPE_STENCIL_OP_INVERT     7
 
 /* Note: same as stencil funcs.  Also used for shadow/depth compare */
-#define SP_DEPTH_FUNC_NEVER    0
-#define SP_DEPTH_FUNC_LESS     1
-#define SP_DEPTH_FUNC_EQUAL    2
-#define SP_DEPTH_FUNC_LEQUAL   3
-#define SP_DEPTH_FUNC_GREATER  4
-#define SP_DEPTH_FUNC_NOTEQUAL 5
-#define SP_DEPTH_FUNC_GEQUAL   6
-#define SP_DEPTH_FUNC_ALWAYS   7
+#define PIPE_DEPTH_FUNC_NEVER    0
+#define PIPE_DEPTH_FUNC_LESS     1
+#define PIPE_DEPTH_FUNC_EQUAL    2
+#define PIPE_DEPTH_FUNC_LEQUAL   3
+#define PIPE_DEPTH_FUNC_GREATER  4
+#define PIPE_DEPTH_FUNC_NOTEQUAL 5
+#define PIPE_DEPTH_FUNC_GEQUAL   6
+#define PIPE_DEPTH_FUNC_ALWAYS   7
 
-#define SP_TEX_WRAP_REPEAT                   0
-#define SP_TEX_WRAP_CLAMP                    1
-#define SP_TEX_WRAP_CLAMP_TO_EDGE            2
-#define SP_TEX_WRAP_CLAMP_TO_BORDER          3
-#define SP_TEX_WRAP_MIRROR_REPEAT            4
-#define SP_TEX_WRAP_MIRROR_CLAMP             5
-#define SP_TEX_WRAP_MIRROR_CLAMP_TO_EDGE     6
-#define SP_TEX_WRAP_MIRROR_CLAMP_TO_BORDER   7
+#define PIPE_TEX_WRAP_REPEAT                   0
+#define PIPE_TEX_WRAP_CLAMP                    1
+#define PIPE_TEX_WRAP_CLAMP_TO_EDGE            2
+#define PIPE_TEX_WRAP_CLAMP_TO_BORDER          3
+#define PIPE_TEX_WRAP_MIRROR_REPEAT            4
+#define PIPE_TEX_WRAP_MIRROR_CLAMP             5
+#define PIPE_TEX_WRAP_MIRROR_CLAMP_TO_EDGE     6
+#define PIPE_TEX_WRAP_MIRROR_CLAMP_TO_BORDER   7
 
-#define SP_TEX_FILTER_NEAREST                0
-#define SP_TEX_FILTER_LINEAR                 1
-#define SP_TEX_FILTER_NEAREST_MIPMAP_NEAREST 2
-#define SP_TEX_FILTER_NEAREST_MIPMAP_LINEAR  3
-#define SP_TEX_FILTER_LINEAR_MIPMAP_NEAREST  4
-#define SP_TEX_FILTER_LINEAR_MIPMAP_LINEAR   5
+#define PIPE_TEX_FILTER_NEAREST                0
+#define PIPE_TEX_FILTER_LINEAR                 1
+#define PIPE_TEX_FILTER_NEAREST_MIPMAP_NEAREST 2
+#define PIPE_TEX_FILTER_NEAREST_MIPMAP_LINEAR  3
+#define PIPE_TEX_FILTER_LINEAR_MIPMAP_NEAREST  4
+#define PIPE_TEX_FILTER_LINEAR_MIPMAP_LINEAR   5
 
-#define SP_TEX_COMPARE_NONE          0
-#define SP_TEX_COMPARE_R_TO_TEXTURE  1
+#define PIPE_TEX_COMPARE_NONE          0
+#define PIPE_TEX_COMPARE_R_TO_TEXTURE  1
 
 #endif

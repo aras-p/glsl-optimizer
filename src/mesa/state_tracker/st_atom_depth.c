@@ -34,25 +34,25 @@
 
 #include "st_context.h"
 #include "st_atom.h"
-#include "softpipe/sp_context.h"
-#include "softpipe/sp_defines.h"
+#include "pipe/p_context.h"
+#include "pipe/p_defines.h"
 
 
 /**
- * Convert GLenum depth func tokens to softpipe tokens.
+ * Convert GLenum depth func tokens to pipe tokens.
  */
 static GLuint
 gl_depth_func_to_sp(GLenum func)
 {
    /* Same values, just biased */
-   assert(SP_DEPTH_FUNC_NEVER == GL_NEVER - GL_NEVER);
-   assert(SP_DEPTH_FUNC_LESS == GL_LESS - GL_NEVER);
-   assert(SP_DEPTH_FUNC_EQUAL == GL_EQUAL - GL_NEVER);
-   assert(SP_DEPTH_FUNC_LEQUAL == GL_LEQUAL - GL_NEVER);
-   assert(SP_DEPTH_FUNC_GREATER == GL_GREATER - GL_NEVER);
-   assert(SP_DEPTH_FUNC_NOTEQUAL == GL_NOTEQUAL - GL_NEVER);
-   assert(SP_DEPTH_FUNC_GEQUAL == GL_GEQUAL - GL_NEVER);
-   assert(SP_DEPTH_FUNC_ALWAYS == GL_ALWAYS - GL_NEVER);
+   assert(PIPE_DEPTH_FUNC_NEVER == GL_NEVER - GL_NEVER);
+   assert(PIPE_DEPTH_FUNC_LESS == GL_LESS - GL_NEVER);
+   assert(PIPE_DEPTH_FUNC_EQUAL == GL_EQUAL - GL_NEVER);
+   assert(PIPE_DEPTH_FUNC_LEQUAL == GL_LEQUAL - GL_NEVER);
+   assert(PIPE_DEPTH_FUNC_GREATER == GL_GREATER - GL_NEVER);
+   assert(PIPE_DEPTH_FUNC_NOTEQUAL == GL_NOTEQUAL - GL_NEVER);
+   assert(PIPE_DEPTH_FUNC_GEQUAL == GL_GEQUAL - GL_NEVER);
+   assert(PIPE_DEPTH_FUNC_ALWAYS == GL_ALWAYS - GL_NEVER);
    assert(func >= GL_NEVER);
    assert(func <= GL_ALWAYS);
    return func - GL_NEVER;
@@ -62,7 +62,7 @@ gl_depth_func_to_sp(GLenum func)
 static void 
 update_depth( struct st_context *st )
 {
-   struct softpipe_depth_state depth;
+   struct pipe_depth_state depth;
 
    memset(&depth, 0, sizeof(depth));
 
@@ -74,7 +74,7 @@ update_depth( struct st_context *st )
    if (memcmp(&depth, &st->state.depth, sizeof(depth)) != 0) {
       /* state has changed */
       st->state.depth = depth;  /* struct copy */
-      st->softpipe->set_depth_state(st->softpipe, &depth); /* set new state */
+      st->pipe->set_depth_state(st->pipe, &depth); /* set new state */
    }
 }
 

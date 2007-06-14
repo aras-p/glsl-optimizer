@@ -32,7 +32,7 @@
  
 
 #include "st_context.h"
-#include "softpipe/sp_context.h"
+#include "pipe/p_context.h"
 #include "st_atom.h"
 
 static GLuint translate_fill( GLenum mode )
@@ -60,7 +60,7 @@ static GLboolean get_offset_flag( GLuint fill_mode,
 static void update_setup_state( struct st_context *st )
 {
    GLcontext *ctx = st->ctx;
-   struct softpipe_setup_state setup;
+   struct pipe_setup_state setup;
 
    memset(&setup, 0, sizeof(setup));
    
@@ -162,7 +162,7 @@ static void update_setup_state( struct st_context *st )
 
    if (memcmp(&setup, &st->state.setup, sizeof(setup)) != 0) {
       st->state.setup = setup;
-      st->softpipe->set_setup_state( st->softpipe, &setup );
+      st->pipe->set_setup_state( st->pipe, &setup );
    }
 }
 

@@ -34,12 +34,12 @@
 
 #include "st_context.h"
 #include "st_atom.h"
-#include "softpipe/sp_context.h"
-#include "softpipe/sp_defines.h"
+#include "pipe/p_context.h"
+#include "pipe/p_defines.h"
 
 
 /**
- * Convert GLenum blend tokens to softpipe tokens.
+ * Convert GLenum blend tokens to pipe tokens.
  * Both blend factors and blend funcs are accepted.
  */
 static GLuint
@@ -48,54 +48,54 @@ gl_blend_to_sp(GLenum blend)
    switch (blend) {
    /* blend functions */
    case GL_FUNC_ADD:
-      return SP_BLEND_ADD;
+      return PIPE_BLEND_ADD;
    case GL_FUNC_SUBTRACT:
-      return SP_BLEND_SUBTRACT;
+      return PIPE_BLEND_SUBTRACT;
    case GL_FUNC_REVERSE_SUBTRACT:
-      return SP_BLEND_REVERSE_SUBTRACT;
+      return PIPE_BLEND_REVERSE_SUBTRACT;
    case GL_MIN:
-      return SP_BLEND_MIN;
+      return PIPE_BLEND_MIN;
    case GL_MAX:
-      return SP_BLEND_MAX;
+      return PIPE_BLEND_MAX;
 
    /* blend factors */
    case GL_ONE:
-      return SP_BLENDFACTOR_ONE;
+      return PIPE_BLENDFACTOR_ONE;
    case GL_SRC_COLOR:
-      return SP_BLENDFACTOR_SRC_COLOR;
+      return PIPE_BLENDFACTOR_SRC_COLOR;
    case GL_SRC_ALPHA:
-      return SP_BLENDFACTOR_SRC_ALPHA;
+      return PIPE_BLENDFACTOR_SRC_ALPHA;
    case GL_DST_ALPHA:
-      return SP_BLENDFACTOR_DST_ALPHA;
+      return PIPE_BLENDFACTOR_DST_ALPHA;
    case GL_DST_COLOR:
-      return SP_BLENDFACTOR_DST_COLOR;
+      return PIPE_BLENDFACTOR_DST_COLOR;
    case GL_SRC_ALPHA_SATURATE:
-      return SP_BLENDFACTOR_SRC_ALPHA_SATURATE;
+      return PIPE_BLENDFACTOR_SRC_ALPHA_SATURATE;
    case GL_CONSTANT_COLOR:
-      return SP_BLENDFACTOR_CONST_COLOR;
+      return PIPE_BLENDFACTOR_CONST_COLOR;
    case GL_CONSTANT_ALPHA:
-      return SP_BLENDFACTOR_CONST_ALPHA;
+      return PIPE_BLENDFACTOR_CONST_ALPHA;
       /*
-      return SP_BLENDFACTOR_SRC1_COLOR;
-      return SP_BLENDFACTOR_SRC1_ALPHA;
+      return PIPE_BLENDFACTOR_SRC1_COLOR;
+      return PIPE_BLENDFACTOR_SRC1_ALPHA;
       */
    case GL_ZERO:
-      return SP_BLENDFACTOR_ZERO;
+      return PIPE_BLENDFACTOR_ZERO;
    case GL_ONE_MINUS_SRC_COLOR:
-      return SP_BLENDFACTOR_INV_SRC_COLOR;
+      return PIPE_BLENDFACTOR_INV_SRC_COLOR;
    case GL_ONE_MINUS_SRC_ALPHA:
-      return SP_BLENDFACTOR_INV_SRC_ALPHA;
+      return PIPE_BLENDFACTOR_INV_SRC_ALPHA;
    case GL_ONE_MINUS_DST_COLOR:
-      return SP_BLENDFACTOR_INV_DST_ALPHA;
+      return PIPE_BLENDFACTOR_INV_DST_ALPHA;
    case GL_ONE_MINUS_DST_ALPHA:
-      return SP_BLENDFACTOR_INV_DST_COLOR;
+      return PIPE_BLENDFACTOR_INV_DST_COLOR;
    case GL_ONE_MINUS_CONSTANT_COLOR:
-      return SP_BLENDFACTOR_INV_CONST_COLOR;
+      return PIPE_BLENDFACTOR_INV_CONST_COLOR;
    case GL_ONE_MINUS_CONSTANT_ALPHA:
-      return SP_BLENDFACTOR_INV_CONST_ALPHA;
+      return PIPE_BLENDFACTOR_INV_CONST_ALPHA;
       /*
-      return SP_BLENDFACTOR_INV_SRC1_COLOR;
-      return SP_BLENDFACTOR_INV_SRC1_ALPHA;
+      return PIPE_BLENDFACTOR_INV_SRC1_COLOR;
+      return PIPE_BLENDFACTOR_INV_SRC1_ALPHA;
       */
    default:
       assert("invalid GL token in gl_blend_to_sp()" == NULL);
@@ -105,44 +105,44 @@ gl_blend_to_sp(GLenum blend)
 
 
 /**
- * Convert GLenum logicop tokens to softpipe tokens.
+ * Convert GLenum logicop tokens to pipe tokens.
  */
 static GLuint
 gl_logicop_to_sp(GLenum logicop)
 {
    switch (logicop) {
    case GL_CLEAR:
-      return SP_LOGICOP_CLEAR;
+      return PIPE_LOGICOP_CLEAR;
    case GL_NOR:
-      return SP_LOGICOP_NOR;
+      return PIPE_LOGICOP_NOR;
    case GL_AND_INVERTED:
-      return SP_LOGICOP_AND_INVERTED;
+      return PIPE_LOGICOP_AND_INVERTED;
    case GL_COPY_INVERTED:
-      return SP_LOGICOP_COPY_INVERTED;
+      return PIPE_LOGICOP_COPY_INVERTED;
    case GL_AND_REVERSE:
-      return SP_LOGICOP_AND_REVERSE;
+      return PIPE_LOGICOP_AND_REVERSE;
    case GL_INVERT:
-      return SP_LOGICOP_INVERT;
+      return PIPE_LOGICOP_INVERT;
    case GL_XOR:
-      return SP_LOGICOP_XOR;
+      return PIPE_LOGICOP_XOR;
    case GL_NAND:
-      return SP_LOGICOP_NAND;
+      return PIPE_LOGICOP_NAND;
    case GL_AND:
-      return SP_LOGICOP_AND;
+      return PIPE_LOGICOP_AND;
    case GL_EQUIV:
-      return SP_LOGICOP_EQUIV;
+      return PIPE_LOGICOP_EQUIV;
    case GL_NOOP:
-      return SP_LOGICOP_NOOP;
+      return PIPE_LOGICOP_NOOP;
    case GL_OR_INVERTED:
-      return SP_LOGICOP_OR_INVERTED;
+      return PIPE_LOGICOP_OR_INVERTED;
    case GL_COPY:
-      return SP_LOGICOP_COPY;
+      return PIPE_LOGICOP_COPY;
    case GL_OR_REVERSE:
-      return SP_LOGICOP_OR_REVERSE;
+      return PIPE_LOGICOP_OR_REVERSE;
    case GL_OR:
-      return SP_LOGICOP_OR;
+      return PIPE_LOGICOP_OR;
    case GL_SET:
-      return SP_LOGICOP_SET;
+      return PIPE_LOGICOP_SET;
    default:
       assert("invalid GL token in gl_logicop_to_sp()" == NULL);
       return 0;
@@ -153,7 +153,7 @@ gl_logicop_to_sp(GLenum logicop)
 static void 
 update_blend( struct st_context *st )
 {
-   struct softpipe_blend_state blend;
+   struct pipe_blend_state blend;
 
    memset(&blend, 0, sizeof(blend));
 
@@ -183,7 +183,7 @@ update_blend( struct st_context *st )
    if (memcmp(&blend, &st->state.blend, sizeof(blend)) != 0) {
       /* state has changed */
       st->state.blend = blend;  /* struct copy */
-      st->softpipe->set_blend_state(st->softpipe, &blend); /* set new state */
+      st->pipe->set_blend_state(st->pipe, &blend); /* set new state */
    }
 }
 

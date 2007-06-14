@@ -53,8 +53,8 @@
 #include "tnl/tnl.h"
 #include "tnl/t_context.h"
 
-#include "softpipe/generic/g_context.h"
-#include "softpipe/state_tracker/st_public.h"
+#include "pipe/softpipe/sp_context.h"
+#include "state_tracker/st_public.h"
 
 
 /*

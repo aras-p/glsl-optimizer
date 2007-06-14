@@ -38,7 +38,7 @@
 #include "st_context.h"
 #include "st_atom.h"
 #include "st_draw.h"
-#include "softpipe/sp_context.h"
+#include "pipe/p_context.h"
 
 /*
  * TNL stage which feedsinto the above.
@@ -52,13 +52,13 @@ static GLboolean draw( GLcontext * ctx, struct tnl_pipeline_stage *stage )
    struct st_context *st = st_context(ctx);
    struct vertex_buffer *VB = &TNL_CONTEXT(ctx)->vb;
 
-   /* Validate driver and softpipe state:
+   /* Validate driver and pipe state:
     */
    st_validate_state( st );
 
    /* Call into the new draw code to handle the VB:
     */
-   st->softpipe->draw_vb( st->softpipe, VB );
+   st->pipe->draw_vb( st->pipe, VB );
    
    /* Finished 
     */
@@ -84,7 +84,7 @@ static const struct tnl_pipeline_stage *intel_pipeline[] = {
    &_tnl_texture_transform_stage,
    &_tnl_point_attenuation_stage,
    &_tnl_vertex_program_stage,
-   &st_draw,     /* ADD: escape to softpipe */
+   &st_draw,     /* ADD: escape to pipe */
    0,
 };
 

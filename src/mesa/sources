@@ -155,36 +155,38 @@ VF_SOURCES = \
 	vf/vf_sse.c
 
 SOFTPIPE_SOURCES = \
-	softpipe/generic/g_context.c \
-	softpipe/generic/g_draw.c \
-	softpipe/generic/g_prim_clip.c \
-	softpipe/generic/g_prim_cull.c \
-	softpipe/generic/g_prim_flatshade.c \
-	softpipe/generic/g_prim_offset.c \
-	softpipe/generic/g_prim_setup.c \
-	softpipe/generic/g_prim_twoside.c \
-	softpipe/generic/g_prim_unfilled.c \
-	softpipe/generic/g_state_clip.c \
-	softpipe/generic/g_state_derived.c \
-	softpipe/generic/g_state_fs.c \
-	softpipe/generic/g_state_setup.c \
-	softpipe/generic/g_state_surface.c \
-	softpipe/generic/g_surface.c \
-	softpipe/generic/g_tile_fs.c \
-	softpipe/generic/g_tile_output.c \
-	softpipe/state_tracker/st_atom.c \
-	softpipe/state_tracker/st_atom_blend.c \
-	softpipe/state_tracker/st_atom_cbuf.c \
-	softpipe/state_tracker/st_atom_clip.c \
-	softpipe/state_tracker/st_atom_depth.c \
-	softpipe/state_tracker/st_atom_fs.c \
-	softpipe/state_tracker/st_atom_scissor.c \
-	softpipe/state_tracker/st_atom_stencil.c \
-	softpipe/state_tracker/st_atom_setup.c \
-	softpipe/state_tracker/st_atom_viewport.c \
-	softpipe/state_tracker/st_cb_program.c \
-	softpipe/state_tracker/st_draw.c \
-	softpipe/state_tracker/st_context.c 
+	pipe/softpipe/sp_context.c \
+	pipe/softpipe/sp_draw.c \
+	pipe/softpipe/sp_prim_clip.c \
+	pipe/softpipe/sp_prim_cull.c \
+	pipe/softpipe/sp_prim_flatshade.c \
+	pipe/softpipe/sp_prim_offset.c \
+	pipe/softpipe/sp_prim_setup.c \
+	pipe/softpipe/sp_prim_twoside.c \
+	pipe/softpipe/sp_prim_unfilled.c \
+	pipe/softpipe/sp_state_clip.c \
+	pipe/softpipe/sp_state_derived.c \
+	pipe/softpipe/sp_state_fs.c \
+	pipe/softpipe/sp_state_setup.c \
+	pipe/softpipe/sp_state_surface.c \
+	pipe/softpipe/sp_surface.c \
+	pipe/softpipe/sp_tile_fs.c \
+	pipe/softpipe/sp_tile_output.c 
+
+STATETRACKER_SOURCES = \
+	state_tracker/st_atom.c \
+	state_tracker/st_atom_blend.c \
+	state_tracker/st_atom_cbuf.c \
+	state_tracker/st_atom_clip.c \
+	state_tracker/st_atom_depth.c \
+	state_tracker/st_atom_fs.c \
+	state_tracker/st_atom_scissor.c \
+	state_tracker/st_atom_stencil.c \
+	state_tracker/st_atom_setup.c \
+	state_tracker/st_atom_viewport.c \
+	state_tracker/st_cb_program.c \
+	state_tracker/st_draw.c \
+	state_tracker/st_context.c 
 
 
 
@@ -334,6 +336,7 @@ SOLO_SOURCES = \
 	$(VBO_SOURCES)		\
 	$(VF_SOURCES)		\
 	$(SOFTPIPE_SOURCES)		\
+	$(STATETRACKER_SOURCES)		\
 	$(TNL_SOURCES)		\
 	$(SHADER_SOURCES)	\
 	$(SWRAST_SOURCES)	\

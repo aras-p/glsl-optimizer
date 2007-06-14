@@ -31,10 +31,10 @@
 #include "mtypes.h"
 
 struct st_context;
-struct softpipe_context;
+struct pipe_context;
 
 struct st_context *st_create_context( GLcontext *ctx,
-				      struct softpipe_context *softpipe);
+				      struct pipe_context *pipe);
 
 void st_destroy_context( struct st_context *st );
 

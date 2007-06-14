@@ -31,7 +31,7 @@
   */
  
 #include "st_context.h"
-#include "softpipe/sp_context.h"
+#include "pipe/p_context.h"
 #include "st_atom.h"
 
 extern GLboolean xmesa_get_cbuf_details( GLcontext *ctx,
@@ -45,7 +45,7 @@ extern GLboolean xmesa_get_cbuf_details( GLcontext *ctx,
  */
 static void update_cbuf_state( struct st_context *st )
 {
-   struct softpipe_surface cbuf;
+   struct pipe_surface cbuf;
    GLboolean ok;
 
    ok = xmesa_get_cbuf_details( st->ctx,
@@ -58,7 +58,7 @@ static void update_cbuf_state( struct st_context *st )
 
    if (memcmp(&cbuf, &st->state.cbuf, sizeof(cbuf)) != 0) {
       st->state.cbuf = cbuf;
-      st->softpipe->set_cbuf_state( st->softpipe, &cbuf );
+      st->pipe->set_cbuf_state( st->pipe, &cbuf );
    }
 }
 

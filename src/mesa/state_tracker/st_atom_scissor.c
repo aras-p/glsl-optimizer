@@ -32,7 +32,7 @@
  
 
 #include "st_context.h"
-#include "softpipe/sp_context.h"
+#include "pipe/p_context.h"
 #include "st_atom.h"
 
 
@@ -42,7 +42,7 @@
 static void
 update_scissor( struct st_context *st )
 {
-   struct softpipe_scissor_rect scissor;
+   struct pipe_scissor_rect scissor;
    const struct gl_framebuffer *fb = st->ctx->DrawBuffer;
 
    scissor.minx = 0;
@@ -69,7 +69,7 @@ update_scissor( struct st_context *st )
    if (memcmp(&scissor, &st->state.scissor, sizeof(scissor)) != 0) {
       /* state has changed */
       st->state.scissor = scissor;  /* struct copy */
-      st->softpipe->set_scissor_rect(st->softpipe, &scissor); /* activate */
+      st->pipe->set_scissor_rect(st->pipe, &scissor); /* activate */
    }
 }
 

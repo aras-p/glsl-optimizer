@@ -80,8 +80,8 @@
 #include "tnl/t_pipeline.h"
 #include "drivers/common/driverfuncs.h"
 
-#include "softpipe/state_tracker/st_public.h"
-#include "softpipe/generic/g_context.h"
+#include "state_tracker/st_public.h"
+#include "pipe/softpipe/sp_context.h"
 
 /**
  * Global X driver lock
@@ -1561,7 +1561,7 @@ XMesaContext XMesaCreateContext( XMesaVisual v, XMesaContext share_list )
 
 
    st_create_context( mesaCtx,
-		      generic_create() );
+		      softpipe_create() );
    
    return c;
 }

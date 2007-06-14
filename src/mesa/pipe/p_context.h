@@ -25,12 +25,14 @@
  * 
  **************************************************************************/
 
-#ifndef SP_CONTEXT_H
-#define SP_CONTEXT_H
+#ifndef PIPE_CONTEXT_H
+#define PIPE_CONTEXT_H
 
 #include "mtypes.h"
 
-extern struct softpipe_context *generic_create( void );
+/* Kludge:
+ */
+extern struct pipe_context *softpipe_create( void );
 				      
 /* Drawing currently kludged up via the existing tnl/ module.  
  */
@@ -41,48 +43,48 @@ struct vertex_buffer;
  * Software pipeline rendering context.  Basically a collection of
  * state setting functions, plus VBO drawing entrypoint.
  */
-struct softpipe_context {
+struct pipe_context {
 
-   void (*destroy)( struct softpipe_context * );
+   void (*destroy)( struct pipe_context * );
 
    /*
     * Drawing
     */
-   void (*draw_vb)( struct softpipe_context *softpipe,
+   void (*draw_vb)( struct pipe_context *pipe,
 		    struct vertex_buffer *VB );
 
    /*
     * State functions
     */
-   void (*set_blend_state)( struct softpipe_context *,
-                            const struct softpipe_blend_state * );
+   void (*set_blend_state)( struct pipe_context *,
+                            const struct pipe_blend_state * );
 
-   void (*set_cbuf_state)( struct softpipe_context *,
-			   const struct softpipe_surface * );
+   void (*set_cbuf_state)( struct pipe_context *,
+			   const struct pipe_surface * );
 
-   void (*set_clip_state)( struct softpipe_context *,
-			   const struct softpipe_clip_state * );
+   void (*set_clip_state)( struct pipe_context *,
+			   const struct pipe_clip_state * );
 
-   void (*set_depth_state)( struct softpipe_context *,
-                              const struct softpipe_depth_state * );
+   void (*set_depth_state)( struct pipe_context *,
+                              const struct pipe_depth_state * );
 
-   void (*set_fs_state)( struct softpipe_context *,
-			 const struct softpipe_fs_state * );
+   void (*set_fs_state)( struct pipe_context *,
+			 const struct pipe_fs_state * );
 
-   void (*set_polygon_stipple)( struct softpipe_context *,
-				const struct softpipe_poly_stipple * );
+   void (*set_polygon_stipple)( struct pipe_context *,
+				const struct pipe_poly_stipple * );
 
-   void (*set_setup_state)( struct softpipe_context *,
-			    const struct softpipe_setup_state * );
+   void (*set_setup_state)( struct pipe_context *,
+			    const struct pipe_setup_state * );
 
-   void (*set_scissor_rect)( struct softpipe_context *,
-			     const struct softpipe_scissor_rect * );
+   void (*set_scissor_rect)( struct pipe_context *,
+			     const struct pipe_scissor_rect * );
 
-   void (*set_stencil_state)( struct softpipe_context *,
-                              const struct softpipe_stencil_state * );
+   void (*set_stencil_state)( struct pipe_context *,
+                              const struct pipe_stencil_state * );
 
-   void (*set_viewport)( struct softpipe_context *,
-			 const struct softpipe_viewport * );
+   void (*set_viewport)( struct pipe_context *,
+			 const struct pipe_viewport * );
 };
 
 

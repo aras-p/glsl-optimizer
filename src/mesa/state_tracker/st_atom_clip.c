@@ -32,7 +32,7 @@
  
 
 #include "st_context.h"
-#include "softpipe/sp_context.h"
+#include "pipe/p_context.h"
 #include "st_atom.h"
 
 
@@ -40,12 +40,12 @@
  */
 static void update_clip( struct st_context *st )
 {
-   struct softpipe_clip_state clip;
+   struct pipe_clip_state clip;
    GLuint i;
 
    memset(&clip, 0, sizeof(clip));
 
-   for (i = 0; i < SP_MAX_CLIP_PLANES; i++) {
+   for (i = 0; i < PIPE_MAX_CLIP_PLANES; i++) {
       if (st->ctx->Transform.ClipPlanesEnabled & (1 << i)) {
 	 memcpy(clip.ucp[clip.nr], 
 		st->ctx->Transform._ClipUserPlane[i], 
@@ -56,7 +56,7 @@ static void update_clip( struct st_context *st )
       
    if (memcmp(&clip, &st->state.clip, sizeof(clip)) != 0) {
       st->state.clip = clip;
-      st->softpipe->set_clip_state(st->softpipe, &clip);
+      st->pipe->set_clip_state(st->pipe, &clip);
    }
 }
 
