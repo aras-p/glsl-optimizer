@@ -63,6 +63,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "r300_ioctl.h"
 #include "r300_tex.h"
 #include "r300_emit.h"
+#include "r300_swtcl.h"
 
 #ifdef USER_BUFFERS
 #include "r300_mem.h"
@@ -164,7 +165,7 @@ static const struct tnl_pipeline_stage *r300_pipeline[] = {
 
 	/* Else do them here.
 	 */
-	&_r300_render_stage,
+	//	&_r300_render_stage,
 	&_tnl_render_stage,	/* FALLBACK  */
 	0,
 };
@@ -363,6 +364,7 @@ GLboolean r300CreateContext(const __GLcontextModes * glVisual,
 	radeonInitSpanFuncs(ctx);
 	r300InitCmdBuf(r300);
 	r300InitState(r300);
+	r300InitSwtcl(ctx);
 
 	TNL_CONTEXT(ctx)->Driver.RunPipeline = _tnl_run_pipeline;
 
