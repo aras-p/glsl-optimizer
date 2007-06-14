@@ -149,7 +149,7 @@ int main(int argc, char **argv)
 
     glutInitWindowPosition(0, 0); glutInitWindowSize( 250, 250);
 
-    type = GLUT_RGB | GLUT_DEPTH;
+    type = GLUT_RGB | GLUT_ALPHA | GLUT_DEPTH;
     type |= (doubleBuffer) ? GLUT_DOUBLE : GLUT_SINGLE;
     glutInitDisplayMode(type);
 
