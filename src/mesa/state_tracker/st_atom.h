@@ -44,6 +44,7 @@ void st_destroy_atoms( struct st_context *st );
 void st_validate_state( struct st_context *st );
 
 
+const struct st_tracked_state st_update_framebuffer;
 const struct st_tracked_state st_update_cbuf;
 const struct st_tracked_state st_update_clip;
 const struct st_tracked_state st_update_depth;
