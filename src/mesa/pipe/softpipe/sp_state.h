@@ -35,6 +35,9 @@
 #include "pipe/p_state.h"
 
 
+void softpipe_set_framebuffer_state( struct pipe_context *,
+			     const struct pipe_framebuffer_state * );
+
 void softpipe_set_clip_state( struct pipe_context *,
 			     const struct pipe_clip_state * );
 

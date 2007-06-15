@@ -51,3 +51,17 @@ void softpipe_set_cbuf_state( struct pipe_context *pipe,
 }
 
 
+/*
+ * XXX this might get moved someday
+ */
+void softpipe_set_framebuffer_state( struct pipe_context *pipe,
+                                     const struct pipe_framebuffer_state *fb )
+{
+   struct softpipe_context *softpipe = softpipe_context(pipe);
+
+   softpipe->framebuffer = *fb; /* struct copy */
+
+   softpipe->dirty |= G_NEW_FRAMEBUFFER;
+}
+
+

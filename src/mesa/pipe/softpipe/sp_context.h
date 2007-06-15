@@ -58,7 +58,7 @@ enum interp_mode {
 #define G_NEW_CLIP      0x20
 #define G_NEW_SCISSOR   0x40
 #define G_NEW_STIPPLE   0x80
-
+#define G_NEW_FRAMEBUFFER 0x100
 
 
 struct softpipe_context {     
