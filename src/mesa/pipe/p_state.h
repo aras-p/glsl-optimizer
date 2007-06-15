@@ -149,11 +149,24 @@ struct pipe_stencil_state {
 
 /* This will change for hardware pipes...
  */
-struct pipe_surface {
+struct pipe_surface
+{
+   GLuint width, height;
    GLubyte *ptr;
    GLint stride;
    GLuint cpp;
    GLuint format;
+};
+
+
+struct pipe_framebuffer_state
+{
+   GLuint num_cbufs;               /**< Number of color bufs to draw to */
+   struct pipe_surface *cbufs[4];  /**< OpenGL can write to as many as
+                                        4 color buffers at once */
+   struct pipe_surface *zbuf;      /**< Z buffer */
+   struct pipe_surface *sbuf;      /**< Stencil buffer */
+   struct pipe_surface *abuf;      /**< Accum buffer */
 };
 
 

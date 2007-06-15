@@ -59,6 +59,9 @@ struct pipe_context {
    void (*set_blend_state)( struct pipe_context *,
                             const struct pipe_blend_state * );
 
+   void (*set_framebuffer_state)( struct pipe_context *,
+                                  const struct pipe_framebuffer_state * );
+
    void (*set_cbuf_state)( struct pipe_context *,
 			   const struct pipe_surface * );
 

@@ -67,6 +67,7 @@ struct softpipe_context {
 
    /* The most recent drawing state as set by the driver:
     */
+   struct pipe_framebuffer_state framebuffer;
    struct pipe_viewport     viewport;
    struct pipe_setup_state  setup;
    struct pipe_fs_state     fs;

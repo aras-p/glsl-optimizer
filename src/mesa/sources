@@ -180,6 +180,7 @@ STATETRACKER_SOURCES = \
 	state_tracker/st_atom_clip.c \
 	state_tracker/st_atom_depth.c \
 	state_tracker/st_atom_fs.c \
+	state_tracker/st_atom_framebuffer.c \
 	state_tracker/st_atom_scissor.c \
 	state_tracker/st_atom_stencil.c \
 	state_tracker/st_atom_setup.c \

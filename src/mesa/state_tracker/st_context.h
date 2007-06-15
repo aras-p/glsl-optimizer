@@ -65,6 +65,7 @@ struct st_context
     * though, we just shove random objects across the interface.  
     */
    struct {
+      struct pipe_framebuffer_state framebuffer;
       struct pipe_viewport     viewport;
       struct pipe_setup_state  setup;
       struct pipe_fs_state     fs;
