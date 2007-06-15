@@ -28,8 +28,8 @@
 /* Authors:  Keith Whitwell <keith@tungstengraphics.com>
  */
 
-#ifndef PRIM_H
-#define PRIM_H
+#ifndef SP_STATE_H
+#define SP_STATE_H
 
 #include "glheader.h"
 #include "pipe/p_state.h"
