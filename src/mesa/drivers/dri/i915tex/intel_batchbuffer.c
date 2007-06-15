@@ -66,27 +66,6 @@
  * modifying cliprects ???
  */
 
-static void
-intel_dump_batchbuffer(GLuint offset, GLuint * ptr, GLuint size)
-{
-   int i;
-   fprintf(stderr, "\n\n\nSTART BATCH (%d dwords):\n", size / 4);
-   for (i = 0; i < size / 4; i += 4) {
-      char dw1[11], dw2[11] = "", dw3[11] = "", dw4[11] = "";
-
-      sprintf(dw1, "0x%08x", ptr[i]);
-      if (i + 1 < size / 4)
-	 sprintf(dw2, "0x%08x", ptr[i + 1]);
-      if (i + 2 < size / 4)
-	 sprintf(dw3, "0x%08x", ptr[i + 2]);
-      if (i + 3 < size / 4)
-	 sprintf(dw4, "0x%08x", ptr[i + 3]);
-      fprintf(stderr, "0x%x:\t%s %s %s %s\n", offset + i * 4,
-	      dw1, dw2, dw3, dw4);
-   }
-   fprintf(stderr, "END BATCH\n\n\n");
-}
-
 /*======================================================================
  * Public functions
  */
@@ -166,7 +145,7 @@ do_flush_locked(struct intel_batchbuffer *batch,
    }
 
    if (INTEL_DEBUG & DEBUG_BATCH)
-      intel_dump_batchbuffer(0, ptr, used);
+      i915_disasm(ptr, used / 4, 0);
 
    dri_bo_unmap(batch->buf);
    batch->map = NULL;
