@@ -56,7 +56,7 @@ void softpipe_set_viewport( struct pipe_context *pipe,
 {
    struct softpipe_context *softpipe = softpipe_context(pipe);
 
-   memcpy(&softpipe->viewport, viewport, sizeof(viewport));
+   softpipe->viewport = *viewport; /* struct copy */
 
    /* Using tnl/ and vf/ modules is temporary while getting started.
     * Full pipe will have vertex shader, vertex fetch of its own.
