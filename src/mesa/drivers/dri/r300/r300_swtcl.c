@@ -231,7 +231,8 @@ static void flush_last_swtcl_prim( r300ContextPtr rmesa  )
      struct r300_dma_region *current = &rmesa->dma.current;
      //     GLuint current_offset = rmesa->state.swtcl_dma.aos_offset;
 
-     GLuint current_offset = r300_mem_offset(rmesa,current->buf->id);
+     GLuint current_offset;
+     current_offset = GET_START(current);
      //      assert (!(rmesa->swtcl.hw_primitive & R200_VF_PRIM_WALK_IND));
 
       assert (current->start + 
@@ -669,6 +670,7 @@ void r300EmitVbufPrim(r300ContextPtr rmesa, GLuint primitive, GLuint vertex_nr)
 	num_verts = r300NumVerts(rmesa, vertex_nr, primitive);
 	r300EmitState(rmesa);
 	
+	fprintf(stderr, "num verts is %d, type is %d\n", num_verts, type);
 	start_packet3(CP_PACKET3(R300_PACKET3_3D_DRAW_VBUF_2, 0), 0);
 	e32(R300_VAP_VF_CNTL__PRIM_WALK_VERTEX_LIST | (num_verts << 16) | type);
 }
