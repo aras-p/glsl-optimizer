@@ -79,7 +79,7 @@ extern int future_hw_tcl_on;
 /**
  * \brief Convert a OpenGL primitive type into a R300 primitive type.
  */
-static int r300PrimitiveType(r300ContextPtr rmesa, GLcontext * ctx, int prim)
+int r300PrimitiveType(r300ContextPtr rmesa, int prim)
 {
 	switch (prim & PRIM_MODE_MASK) {
 	case GL_POINTS:
@@ -119,7 +119,7 @@ static int r300PrimitiveType(r300ContextPtr rmesa, GLcontext * ctx, int prim)
 	}
 }
 
-static int r300NumVerts(r300ContextPtr rmesa, int num_verts, int prim)
+int r300NumVerts(r300ContextPtr rmesa, int num_verts, int prim)
 {
 	int verts_off = 0;
 
@@ -261,7 +261,7 @@ static void r300RunRenderPrimitive(r300ContextPtr rmesa, GLcontext * ctx,
 	TNLcontext *tnl = TNL_CONTEXT(ctx);
 	struct vertex_buffer *vb = &tnl->vb;
 
-	type = r300PrimitiveType(rmesa, ctx, prim);
+	type = r300PrimitiveType(rmesa, prim);
 	num_verts = r300NumVerts(rmesa, end - start, prim);
 
 	if (type < 0 || num_verts <= 0)

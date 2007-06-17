@@ -637,15 +637,15 @@ void r300EmitVertexAOS(r300ContextPtr rmesa, GLuint vertex_size, GLuint offset)
 	int cmd_reserved = 0;
 	int cmd_written = 0;
 
-  drm_radeon_cmd_header_t *cmd = NULL;
-  if (1)//RADEON_DEBUG & DEBUG_VERTS)
-      fprintf(stderr, "%s:  vertex_size %d, offset 0x%x \n",
-	      __FUNCTION__, vertex_size, offset);
-
-  start_packet3(CP_PACKET3(R300_PACKET3_3D_LOAD_VBPNTR, 2), 2);
-  e32(1);
-  e32(vertex_size | (vertex_size << 8));
-  e32(offset);
+	drm_radeon_cmd_header_t *cmd = NULL;
+	if (1)//RADEON_DEBUG & DEBUG_VERTS)
+	  fprintf(stderr, "%s:  vertex_size %d, offset 0x%x \n",
+		  __FUNCTION__, vertex_size, offset);
+	
+	start_packet3(CP_PACKET3(R300_PACKET3_3D_LOAD_VBPNTR, 2), 2);
+	e32(1);
+	e32(vertex_size | (vertex_size << 8));
+	e32(offset);
 }
 
 void r300EmitVbufPrim(r300ContextPtr rmesa, GLuint primitive, GLuint vertex_nr)
@@ -653,10 +653,13 @@ void r300EmitVbufPrim(r300ContextPtr rmesa, GLuint primitive, GLuint vertex_nr)
 
 	int cmd_reserved = 0;
 	int cmd_written = 0;
+	int type, num_verts;
+	drm_radeon_cmd_header_t *cmd = NULL;
 
-  drm_radeon_cmd_header_t *cmd = NULL;
-  r300EmitState(rmesa);
-  
-  start_packet3(CP_PACKET3(R300_PACKET3_3D_DRAW_VBUF_2, 0), 0);
-  e32(R300_VAP_VF_CNTL__PRIM_WALK_VERTEX_LIST | (vertex_nr << 16) | primitive);
+	type = r300PrimitiveType(rmesa, primitive);
+	num_verts = r300NumVerts(rmesa, vertex_nr, primitive);
+	r300EmitState(rmesa);
+	
+	start_packet3(CP_PACKET3(R300_PACKET3_3D_DRAW_VBUF_2, 0), 0);
+	e32(R300_VAP_VF_CNTL__PRIM_WALK_VERTEX_LIST | (num_verts << 16) | type);
 }
