@@ -54,7 +54,13 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "r300_swtcl.h"
 #include "r300_state.h"
 #include "r300_ioctl.h"
+#include "r300_emit.h"
+#include "r300_mem.h"
 
+static void flush_last_swtcl_prim( r300ContextPtr rmesa  );
+
+void r300EmitVertexAOS(r300ContextPtr rmesa, GLuint vertex_size, GLuint offset);
+void r300EmitVbufPrim(r300ContextPtr rmesa, GLuint primitive, GLuint vertex_nr);
 #define EMIT_ATTR( ATTR, STYLE, F0 )					\
 do {									\
    rmesa->swtcl.vertex_attrs[rmesa->swtcl.vertex_attr_count].attrib = (ATTR);	\
@@ -204,6 +210,45 @@ static void r300SetVertexFormat( GLcontext *ctx )
    }
 }
 
+
+/* Flush vertices in the current dma region.
+ */
+static void flush_last_swtcl_prim( r300ContextPtr rmesa  )
+{
+   if (RADEON_DEBUG & DEBUG_IOCTL)
+      fprintf(stderr, "%s\n", __FUNCTION__);
+
+   rmesa->dma.flush = NULL;
+
+   if (rmesa->dma.current.buf) {
+     struct r300_dma_region *current = &rmesa->dma.current;
+     //     GLuint current_offset = rmesa->state.swtcl_dma.aos_offset;
+
+     GLuint current_offset = r300_mem_offset(rmesa,current->buf->id);
+     //      assert (!(rmesa->swtcl.hw_primitive & R200_VF_PRIM_WALK_IND));
+
+      assert (current->start + 
+	      rmesa->swtcl.numverts * rmesa->swtcl.vertex_size * 4 ==
+	      current->ptr);
+
+      if (rmesa->dma.current.start != rmesa->dma.current.ptr) {
+	//	 r200EnsureCmdBufSpace( rmesa, VERT_AOS_BUFSZ +
+	//			        rmesa->hw.max_state_size + VBUF_BUFSZ );
+	r300EmitVertexAOS( rmesa,
+			   rmesa->swtcl.vertex_size,
+			   current_offset);
+	
+	r300EmitVbufPrim( rmesa,
+			  rmesa->swtcl.hw_primitive,
+			  rmesa->swtcl.numverts);
+      }
+
+      rmesa->swtcl.numverts = 0;
+      current->start = current->ptr;
+   }
+}
+
+
 static void *
 r300AllocDmaLowVerts( r300ContextPtr rmesa, int nverts, int vsize )
 {
@@ -211,9 +256,14 @@ r300AllocDmaLowVerts( r300ContextPtr rmesa, int nverts, int vsize )
 
   r300AllocDmaRegion(rmesa, &rmesa->state.swtcl_dma, bytes, 0);
 
-  rmesa->radeon.glCtx->Driver.NeedFlush |= FLUSH_STORED_VERTICES;
-  rmesa->swtcl.numverts += nverts;
+  if (!rmesa->dma.flush) {
+    rmesa->dma.flush = flush_last_swtcl_prim;
+    rmesa->radeon.glCtx->Driver.NeedFlush |= FLUSH_STORED_VERTICES;
+  }
 
+
+  rmesa->swtcl.numverts += nverts;
+  rmesa->dma.current.ptr += bytes;
   return (rmesa->dma.current.address + rmesa->dma.current.ptr);
 }
 
@@ -221,6 +271,11 @@ static void r300RasterPrimitive( GLcontext *ctx, GLuint hwprim );
 static void r300RenderPrimitive( GLcontext *ctx, GLenum prim );
 //static void r300ResetLineStipple( GLcontext *ctx );
 
+static void r300PrintVertex(r300Vertex *v)
+{
+  fprintf(stderr,"Vertex %p\n", v);
+
+}
 
 static const GLenum reduced_prim[GL_POLYGON+1] = {
    GL_POINTS,
@@ -264,7 +319,7 @@ static const GLenum reduced_prim[GL_POLYGON+1] = {
 #define VERT(x) (r300Vertex *)(r300verts + ((x) * vertsize * sizeof(int)))
 #define VERTEX r300Vertex 
 #define DO_DEBUG_VERTS (1 && (RADEON_DEBUG & DEBUG_VERTS))
-
+#define PRINT_VERTEX(x) r300PrintVertex(x)
 #undef TAG
 #define TAG(x) r300_##x
 #include "tnl_dd/t_dd_triemit.h"
@@ -466,8 +521,8 @@ void r300ChooseRenderState( GLcontext *ctx )
    // if (!rmesa->TclFallback || rmesa->Fallback) 
 //      return;
 
-//   if (flags & DD_TRI_LIGHT_TWOSIDE) index |= R200_TWOSIDE_BIT;
-//   if (flags & DD_TRI_UNFILLED)      index |= R200_UNFILLED_BIT;
+   if (flags & DD_TRI_LIGHT_TWOSIDE) index |= R300_TWOSIDE_BIT;
+   if (flags & DD_TRI_UNFILLED)      index |= R300_UNFILLED_BIT;
 
    if (index != rmesa->swtcl.RenderIndex) {
       tnl->Driver.Render.Points = rast_tab[index].points;
@@ -493,9 +548,13 @@ void r300ChooseRenderState( GLcontext *ctx )
 
 static void r300RenderStart(GLcontext *ctx)
 {
+  r300ContextPtr rmesa = R300_CONTEXT( ctx );
 	fprintf(stderr, "%s\n", __FUNCTION__);
 
 	r300SetVertexFormat(ctx);
+	if (rmesa->dma.flush != 0 && 
+	    rmesa->dma.flush != flush_last_swtcl_prim)
+	  rmesa->dma.flush( rmesa );
 }
 
 static void r300RenderFinish(GLcontext *ctx)
@@ -558,6 +617,10 @@ void r300InitSwtcl(GLcontext *ctx)
 	rmesa->swtcl.render_primitive = GL_TRIANGLES;
 	rmesa->swtcl.hw_primitive = 0;	
 
+	_tnl_invalidate_vertex_state( ctx, ~0 );
+	_tnl_invalidate_vertices( ctx, ~0 );
+	RENDERINPUTS_ZERO( rmesa->tnl_index_bitset );
+
 	r300ChooseRenderState(ctx);
 }
 
@@ -567,4 +630,33 @@ void r300DestroySwtcl(GLcontext *ctx)
 //	if (rmesa->swtcl.indexed_verts.buf) 
 //		r200ReleaseDmaRegion( rmesa, &rmesa->swtcl.indexed_verts, __FUNCTION__ );
 
+}
+
+void r300EmitVertexAOS(r300ContextPtr rmesa, GLuint vertex_size, GLuint offset)
+{
+	int cmd_reserved = 0;
+	int cmd_written = 0;
+
+  drm_radeon_cmd_header_t *cmd = NULL;
+  if (1)//RADEON_DEBUG & DEBUG_VERTS)
+      fprintf(stderr, "%s:  vertex_size %d, offset 0x%x \n",
+	      __FUNCTION__, vertex_size, offset);
+
+  start_packet3(CP_PACKET3(R300_PACKET3_3D_LOAD_VBPNTR, 2), 2);
+  e32(1);
+  e32(vertex_size | (vertex_size << 8));
+  e32(offset);
+}
+
+void r300EmitVbufPrim(r300ContextPtr rmesa, GLuint primitive, GLuint vertex_nr)
+{
+
+	int cmd_reserved = 0;
+	int cmd_written = 0;
+
+  drm_radeon_cmd_header_t *cmd = NULL;
+  r300EmitState(rmesa);
+  
+  start_packet3(CP_PACKET3(R300_PACKET3_3D_DRAW_VBUF_2, 0), 0);
+  e32(R300_VAP_VF_CNTL__PRIM_WALK_VERTEX_LIST | (vertex_nr << 16) | primitive);
 }

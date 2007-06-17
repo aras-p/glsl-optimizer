@@ -412,13 +412,16 @@ static void r300Clear(GLcontext * ctx, GLbitfield mask)
 
 void r300Flush(GLcontext * ctx)
 {
-	r300ContextPtr r300 = R300_CONTEXT(ctx);
+	r300ContextPtr rmesa = R300_CONTEXT(ctx);
 
 	if (RADEON_DEBUG & DEBUG_IOCTL)
 		fprintf(stderr, "%s\n", __FUNCTION__);
 
-	if (r300->cmdbuf.count_used > r300->cmdbuf.count_reemit)
-		r300FlushCmdBuf(r300, __FUNCTION__);
+	if (rmesa->dma.flush)
+	  rmesa->dma.flush( rmesa );
+
+	if (rmesa->cmdbuf.count_used > rmesa->cmdbuf.count_reemit)
+		r300FlushCmdBuf(rmesa, __FUNCTION__);
 }
 
 #ifdef USER_BUFFERS
