@@ -57,7 +57,14 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "r300_emit.h"
 #include "r300_mem.h"
 
+#define R300_NEWPRIM( rmesa )			\
+  do {						\
+    if ( rmesa->dma.flush )			\
+      rmesa->dma.flush( rmesa );		\
+  } while (0)
+
 static void flush_last_swtcl_prim( r300ContextPtr rmesa  );
+
 
 void r300EmitVertexAOS(r300ContextPtr rmesa, GLuint vertex_size, GLuint offset);
 void r300EmitVbufPrim(r300ContextPtr rmesa, GLuint primitive, GLuint vertex_nr);
@@ -193,7 +200,7 @@ static void r300SetVertexFormat( GLcontext *ctx )
    if (!RENDERINPUTS_EQUAL( rmesa->tnl_index_bitset, index_bitset ) ||
 	(rmesa->hw.vof.cmd[R300_VOF_CNTL_0] != vap_fmt_0) ||
 	(rmesa->hw.vof.cmd[R300_VOF_CNTL_1] != vap_fmt_1) ) {
-//      R200_NEWPRIM(rmesa);
+      R300_NEWPRIM(rmesa);
       R300_STATECHANGE(rmesa, vof);
       rmesa->hw.vof.cmd[R300_VOF_CNTL_0] =
 	      vap_fmt_0;
@@ -267,6 +274,26 @@ r300AllocDmaLowVerts( r300ContextPtr rmesa, int nverts, int vsize )
   return (rmesa->dma.current.address + rmesa->dma.current.ptr);
 }
 
+
+static INLINE GLuint reduced_hw_prim( GLcontext *ctx, GLuint prim)
+{
+   switch (prim) {
+   case GL_POINTS:
+      return R300_VAP_VF_CNTL__PRIM_POINTS;
+   case GL_LINES:
+      return R300_VAP_VF_CNTL__PRIM_LINES;
+   /* fallthrough */
+   case GL_LINE_LOOP:
+      return R300_VAP_VF_CNTL__PRIM_LINE_LOOP;
+   /* fallthrough */
+   case GL_LINE_STRIP:
+      return R300_VAP_VF_CNTL__PRIM_LINE_STRIP;
+   default:
+   /* all others reduced to triangles */
+      return R300_VAP_VF_CNTL__PRIM_TRIANGLES;
+   }
+}
+
 static void r300RasterPrimitive( GLcontext *ctx, GLuint hwprim );
 static void r300RenderPrimitive( GLcontext *ctx, GLenum prim );
 //static void r300ResetLineStipple( GLcontext *ctx );
@@ -276,20 +303,6 @@ static void r300PrintVertex(r300Vertex *v)
   fprintf(stderr,"Vertex %p\n", v);
 
 }
-
-static const GLenum reduced_prim[GL_POLYGON+1] = {
-   GL_POINTS,
-   GL_LINES,
-   GL_LINES,
-   GL_LINES,
-   GL_TRIANGLES,
-   GL_TRIANGLES,
-   GL_TRIANGLES,
-   GL_TRIANGLES,
-   GL_TRIANGLES,
-   GL_TRIANGLES
-};
-
 
 /***********************************************************************
  *                    Emit primitives as inline vertices               *
@@ -430,7 +443,7 @@ do {							\
  *                Helpers for rendering unfilled primitives            *
  ***********************************************************************/
 
-#define RASTERIZE(x) r300RasterPrimitive( ctx, reduced_prim[x] )
+#define RASTERIZE(x) r300RasterPrimitive( ctx, reduced_hw_prim(ctx, x) )
 #define RENDER_PRIMITIVE rmesa->swtcl.render_primitive
 #undef TAG
 #define TAG(x) x
@@ -567,7 +580,7 @@ static void r300RasterPrimitive( GLcontext *ctx, GLuint hwprim )
 	r300ContextPtr rmesa = R300_CONTEXT(ctx);
 	
 	if (rmesa->swtcl.hw_primitive != hwprim) {
-//		R300_NEWPRIM( rmesa );
+	        R300_NEWPRIM( rmesa );
 		rmesa->swtcl.hw_primitive = hwprim;
 	}
 }
@@ -578,7 +591,7 @@ static void r300RenderPrimitive(GLcontext *ctx, GLenum prim)
 	r300ContextPtr rmesa = R300_CONTEXT(ctx);
 	rmesa->swtcl.render_primitive = prim;
 	if (prim < GL_TRIANGLES || !(ctx->_TriangleCaps & DD_TRI_UNFILLED)) 
-		r300RasterPrimitive( ctx, reduced_prim[prim] );
+	  r300RasterPrimitive( ctx, reduced_hw_prim(ctx, prim) );
 	fprintf(stderr, "%s\n", __FUNCTION__);
 	
 }
@@ -626,10 +639,6 @@ void r300InitSwtcl(GLcontext *ctx)
 
 void r300DestroySwtcl(GLcontext *ctx)
 {
-	r300ContextPtr rmesa = R300_CONTEXT(ctx);
-//	if (rmesa->swtcl.indexed_verts.buf) 
-//		r200ReleaseDmaRegion( rmesa, &rmesa->swtcl.indexed_verts, __FUNCTION__ );
-
 }
 
 void r300EmitVertexAOS(r300ContextPtr rmesa, GLuint vertex_size, GLuint offset)
