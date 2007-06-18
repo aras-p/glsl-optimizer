@@ -71,14 +71,18 @@
 #define PIPE_LOGICOP_OR               14
 #define PIPE_LOGICOP_SET              15  
 
-#define PIPE_STENCIL_FUNC_NEVER    0
-#define PIPE_STENCIL_FUNC_LESS     1
-#define PIPE_STENCIL_FUNC_EQUAL    2
-#define PIPE_STENCIL_FUNC_LEQUAL   3
-#define PIPE_STENCIL_FUNC_GREATER  4
-#define PIPE_STENCIL_FUNC_NOTEQUAL 5
-#define PIPE_STENCIL_FUNC_GEQUAL   6
-#define PIPE_STENCIL_FUNC_ALWAYS   7
+/**
+ * Inequality functions.  Used for depth test, stencil compare, alpha
+ * test, shadow compare, etc.
+ */
+#define PIPE_FUNC_NEVER    0
+#define PIPE_FUNC_LESS     1
+#define PIPE_FUNC_EQUAL    2
+#define PIPE_FUNC_LEQUAL   3
+#define PIPE_FUNC_GREATER  4
+#define PIPE_FUNC_NOTEQUAL 5
+#define PIPE_FUNC_GEQUAL   6
+#define PIPE_FUNC_ALWAYS   7
 
 #define PIPE_STENCIL_OP_KEEP       0
 #define PIPE_STENCIL_OP_ZERO       1
@@ -88,16 +92,6 @@
 #define PIPE_STENCIL_OP_INCR_WRAP  5
 #define PIPE_STENCIL_OP_DECR_WRAP  6
 #define PIPE_STENCIL_OP_INVERT     7
-
-/* Note: same as stencil funcs.  Also used for shadow/depth compare */
-#define PIPE_DEPTH_FUNC_NEVER    0
-#define PIPE_DEPTH_FUNC_LESS     1
-#define PIPE_DEPTH_FUNC_EQUAL    2
-#define PIPE_DEPTH_FUNC_LEQUAL   3
-#define PIPE_DEPTH_FUNC_GREATER  4
-#define PIPE_DEPTH_FUNC_NOTEQUAL 5
-#define PIPE_DEPTH_FUNC_GEQUAL   6
-#define PIPE_DEPTH_FUNC_ALWAYS   7
 
 #define PIPE_TEX_WRAP_REPEAT                   0
 #define PIPE_TEX_WRAP_CLAMP                    1

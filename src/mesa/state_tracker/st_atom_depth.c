@@ -45,14 +45,14 @@ static GLuint
 gl_depth_func_to_sp(GLenum func)
 {
    /* Same values, just biased */
-   assert(PIPE_DEPTH_FUNC_NEVER == GL_NEVER - GL_NEVER);
-   assert(PIPE_DEPTH_FUNC_LESS == GL_LESS - GL_NEVER);
-   assert(PIPE_DEPTH_FUNC_EQUAL == GL_EQUAL - GL_NEVER);
-   assert(PIPE_DEPTH_FUNC_LEQUAL == GL_LEQUAL - GL_NEVER);
-   assert(PIPE_DEPTH_FUNC_GREATER == GL_GREATER - GL_NEVER);
-   assert(PIPE_DEPTH_FUNC_NOTEQUAL == GL_NOTEQUAL - GL_NEVER);
-   assert(PIPE_DEPTH_FUNC_GEQUAL == GL_GEQUAL - GL_NEVER);
-   assert(PIPE_DEPTH_FUNC_ALWAYS == GL_ALWAYS - GL_NEVER);
+   assert(PIPE_FUNC_NEVER == GL_NEVER - GL_NEVER);
+   assert(PIPE_FUNC_LESS == GL_LESS - GL_NEVER);
+   assert(PIPE_FUNC_EQUAL == GL_EQUAL - GL_NEVER);
+   assert(PIPE_FUNC_LEQUAL == GL_LEQUAL - GL_NEVER);
+   assert(PIPE_FUNC_GREATER == GL_GREATER - GL_NEVER);
+   assert(PIPE_FUNC_NOTEQUAL == GL_NOTEQUAL - GL_NEVER);
+   assert(PIPE_FUNC_GEQUAL == GL_GEQUAL - GL_NEVER);
+   assert(PIPE_FUNC_ALWAYS == GL_ALWAYS - GL_NEVER);
    assert(func >= GL_NEVER);
    assert(func <= GL_ALWAYS);
    return func - GL_NEVER;
