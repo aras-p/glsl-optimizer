@@ -150,7 +150,7 @@ dri_ttm_alloc_static(dri_bufmgr *bufmgr, const char *name,
     * pass all of the allocation class flags.
     */
    flags = location_mask | DRM_BO_FLAG_READ | DRM_BO_FLAG_WRITE |
-      DRM_BO_FLAG_EXE | DRM_BO_FLAG_NO_EVICT | DRM_BO_FLAG_NO_MOVE;
+      DRM_BO_FLAG_EXE | DRM_BO_FLAG_NO_MOVE;
    /* No hints we want to use. */
    hint = 0;
 
