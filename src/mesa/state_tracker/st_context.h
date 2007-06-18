@@ -69,6 +69,7 @@ struct st_context
       struct pipe_viewport     viewport;
       struct pipe_setup_state  setup;
       struct pipe_fs_state     fs;
+      struct pipe_alpha_test_state  alpha_test;
       struct pipe_blend_state  blend;
       struct pipe_surface      cbuf;
       struct pipe_clip_state   clip;

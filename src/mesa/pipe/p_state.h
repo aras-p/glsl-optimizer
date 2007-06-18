@@ -104,34 +104,39 @@ struct pipe_depth_state
 {
    GLuint enabled:1;   /**< depth test enabled? */
    GLuint writemask:1; /**< allow depth buffer writes? */
-   GLuint func:3;      /**< depth test func */
+   GLuint func:3;      /**< depth test func (PIPE_FUNC_x) */
    GLfloat clear;      /**< Clear value in [0,1] (XXX correct place?) */
 };
 
+struct pipe_alpha_test_state {
+   GLuint enable:1;
+   GLuint func:3;    /**< PIPE_FUNC_x */
+   GLfloat ref;      /**< reference value */
+};
 
-struct pipe_blend_state {   
-   GLuint blend_enable:1; 
+struct pipe_blend_state {
+   GLuint blend_enable:1;
 
-   GLuint rgb_func:3; 
-   GLuint rgb_src_factor:5; 
-   GLuint rgb_dst_factor:5; 
+   GLuint rgb_func:3;
+   GLuint rgb_src_factor:5;
+   GLuint rgb_dst_factor:5;
 
    GLuint alpha_func:3;
    GLuint alpha_src_factor:5;
    GLuint alpha_dst_factor:5;
 
-   GLuint logicop_enable:1; 
+   GLuint logicop_enable:1;
    GLuint logicop_func:4;
 };
 
 struct pipe_blend_color {
-   GLfloat color[4];  
+   GLfloat color[4];
 };
 
 
 struct pipe_stencil_state {
    GLuint front_enabled:1;
-   GLuint front_func:3;     /**< PIPE_STENCIL_FUNC_x */
+   GLuint front_func:3;     /**< PIPE_FUNC_x */
    GLuint front_fail_op:3;  /**< PIPE_STENCIL_OP_x */
    GLuint front_zpass_op:3; /**< PIPE_STENCIL_OP_x */
    GLuint front_zfail_op:3; /**< PIPE_STENCIL_OP_x */
@@ -190,7 +195,7 @@ struct pipe_sampler_state
    GLfloat max_anisotropy;
    GLuint compare:1;       /**< shadow/depth compare enabled? */
    GLenum compare_mode:1;  /**< PIPE_TEX_COMPARE_x */
-   GLenum compare_func:3;  /**< PIPE_DEPTH_FUNC_x */
+   GLenum compare_func:3;  /**< PIPE_FUNC_x */
    GLfloat shadow_ambient; /**< shadow test fail color/intensity */
 };
 
