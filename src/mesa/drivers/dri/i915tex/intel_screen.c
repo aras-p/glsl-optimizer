@@ -123,8 +123,6 @@ intelMapScreenRegions(__DRIscreenPrivate * sPriv)
    if (0)
       _mesa_printf("TEX 0x%08x ", intelScreen->tex.handle);
    if (intelScreen->tex.size != 0) {
-      intelScreen->ttm = GL_FALSE;
-
       if (drmMap(sPriv->fd,
 		 intelScreen->tex.handle,
 		 intelScreen->tex.size,
@@ -132,8 +130,6 @@ intelMapScreenRegions(__DRIscreenPrivate * sPriv)
 	 intelUnmapScreenRegions(intelScreen);
 	 return GL_FALSE;
       }
-   } else {
-      intelScreen->ttm = GL_TRUE;
    }
 
    if (0)
@@ -530,12 +526,16 @@ intelInitDriver(__DRIscreenPrivate * sPriv)
       (*glx_enable_extension) (psc, "GLX_SGI_make_current_read");
    }
 
-   if (intelScreen->ttm) {
-      intelScreen->bufmgr = dri_bufmgr_ttm_init(sPriv->fd,
-						DRM_FENCE_TYPE_EXE,
-						DRM_FENCE_TYPE_EXE |
-						DRM_I915_FENCE_TYPE_RW);
-   } else {
+   intelScreen->bufmgr = dri_bufmgr_ttm_init(sPriv->fd,
+					     DRM_FENCE_TYPE_EXE,
+					     DRM_FENCE_TYPE_EXE |
+					     DRM_I915_FENCE_TYPE_RW);
+   if (intelScreen->bufmgr == NULL) {
+      if (intelScreen->tex.size == 0) {
+	 fprintf(stderr, "[%s:%u] Error initializing buffer manager.\n",
+		 __func__, __LINE__);
+	 return GL_FALSE;
+      }
       intelScreen->bufmgr = dri_bufmgr_fake_init(intelScreen->tex.offset,
 						 intelScreen->tex.map,
 						 intelScreen->tex.size,
