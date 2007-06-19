@@ -84,6 +84,21 @@
 #define PIPE_FUNC_GEQUAL   6
 #define PIPE_FUNC_ALWAYS   7
 
+/** Polygon fill mode */
+#define PIPE_POLYGON_MODE_FILL  0
+#define PIPE_POLYGON_MODE_LINE  1
+#define PIPE_POLYGON_MODE_POINT 2
+
+/** Polygon cull mode */
+#define PIPE_POLYGON_CULL_NONE  0
+#define PIPE_POLYGON_CULL_FRONT 1
+#define PIPE_POLYGON_CULL_BACK  2
+#define PIPE_POLYGON_CULL_BOTH  3
+
+/** Polygon front winding order */
+#define PIPE_POLYGON_FRONT_CW   0
+#define PIPE_POLYGON_FRONT_CCW  1
+
 #define PIPE_STENCIL_OP_KEEP       0
 #define PIPE_STENCIL_OP_ZERO       1
 #define PIPE_STENCIL_OP_REPLACE    2

@@ -133,6 +133,32 @@ struct pipe_blend_color {
    GLfloat color[4];
 };
 
+struct pipe_line_state
+{
+   GLuint smooth:1;
+   GLuint stipple:1;
+   GLushort stipple_pattern;
+   GLint stipple_factor;
+   GLfloat width;
+};
+
+struct pipe_point_state
+{
+   GLuint smooth:1;
+   GLfloat size;
+   GLfloat min_size, max_size;
+   GLfloat attenuation[3];
+};
+
+struct pipe_polygon_state {
+   GLuint cull_mode:2;     /**< PIPE_POLYGON_CULL_x */
+   GLuint front_winding:1; /**< PIPE_POLYGON_FRONT_CCW,CW */
+   GLuint front_mode:2;    /**< PIPE_POLYGON_MODE_x */
+   GLuint back_mode:2;     /**< PIPE_POLYGON_MODE_x */
+   GLuint stipple:1;       /**< enable */
+   GLuint smooth:1;        /**< enable */
+   /* XXX Polygon offset? */
+};
 
 struct pipe_stencil_state {
    GLuint front_enabled:1;
