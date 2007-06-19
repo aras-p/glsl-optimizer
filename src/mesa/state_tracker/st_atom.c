@@ -60,7 +60,7 @@ void st_init_atoms( struct st_context *st )
 {
    GLuint i;
 
-   st->atoms = _mesa_malloc(sizeof(atoms));
+   st->atoms = malloc(sizeof(atoms));
    st->nr_atoms = sizeof(atoms)/sizeof(*atoms);
    memcpy(st->atoms, atoms, sizeof(atoms));
 
@@ -79,7 +79,7 @@ void st_init_atoms( struct st_context *st )
 void st_destroy_atoms( struct st_context *st )
 {
    if (st->atoms) {
-      _mesa_free(st->atoms);
+      free(st->atoms);
       st->atoms = NULL;
    }
 }
@@ -130,7 +130,7 @@ void st_validate_state( struct st_context *st )
        * state atoms are ordered correctly in the list.
        */
       struct st_state_flags examined, prev;      
-      _mesa_memset(&examined, 0, sizeof(examined));
+      memset(&examined, 0, sizeof(examined));
       prev = *state;
 
       for (i = 0; i < st->nr_atoms; i++) {	 
