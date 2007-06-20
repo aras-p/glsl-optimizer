@@ -1169,9 +1169,16 @@ shade_texture_span(GLcontext *ctx, SWspan *span)
    if (ctx->FragmentProgram._Current ||
        ctx->ATIFragmentShader._Enabled) {
       /* programmable shading */
+      if (span->primitive == GL_BITMAP) {
+         if (span->array->ChanType != GL_FLOAT)
+            convert_color_type(span, GL_FLOAT, 0);
+         interpolate_active_attribs(ctx, span, ~FRAG_ATTRIB_COL0);
+      }
+      else {
+         /* point, line, triangle */
+         interpolate_active_attribs(ctx, span, ~0);
+      }
       span->array->ChanType = GL_FLOAT;
-
-      interpolate_active_attribs(ctx, span, ~0);
 
       if (!(span->arrayMask & SPAN_Z))
          _swrast_span_interpolate_z (ctx, span);
