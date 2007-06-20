@@ -1521,53 +1521,67 @@ static inline void setup_vertex_shader_fragment(r300ContextPtr r300, int dest, s
    while leaving colors intact. Nothing fancy (like lights)
 
    If implementing lights make a copy first, so it is easy to switch between the two versions */
-static void r300GenerateSimpleVertexShader(r300ContextPtr r300)
+
+#define WRITE_OP(oper,source1,source2,source3)	{\
+	rmesa->state.vertex_shader.program.body.i[rmesa->state.vertex_shader.program_end].op=(oper); \
+	rmesa->state.vertex_shader.program.body.i[rmesa->state.vertex_shader.program_end].src[0]=(source1); \
+	rmesa->state.vertex_shader.program.body.i[rmesa->state.vertex_shader.program_end].src[1]=(source2); \
+	rmesa->state.vertex_shader.program.body.i[rmesa->state.vertex_shader.program_end].src[2]=(source3); \
+	rmesa->state.vertex_shader.program_end++; \
+	}
+
+static void r300GenerateSimpleVertexShader(r300ContextPtr rmesa)
 {
 	int i;
 	GLuint o_reg = 0;
 
 	/* Allocate parameters */
-	r300->state.vertex_shader.param_offset = 0x0;
-	r300->state.vertex_shader.param_count = 0x4;	/* 4 vector values - 4x4 matrix */
-
-	r300->state.vertex_shader.program_start = 0x0;
-	r300->state.vertex_shader.program_pos_end = 0x4;
-	r300->state.vertex_shader.program_end = 0x0;
-
-	r300->state.vertex_shader.unknown_ptr2 = 0x0;	/* magic value */
-	r300->state.vertex_shader.unknown_ptr3 = 0x4;	/* magic value */
-
-	r300->state.vertex_shader.unknown1.length = 0;
-	r300->state.vertex_shader.unknown2.length = 0;
-
-#define WRITE_OP(oper,source1,source2,source3)	{\
-	r300->state.vertex_shader.program.body.i[r300->state.vertex_shader.program_end].op=(oper); \
-	r300->state.vertex_shader.program.body.i[r300->state.vertex_shader.program_end].src[0]=(source1); \
-	r300->state.vertex_shader.program.body.i[r300->state.vertex_shader.program_end].src[1]=(source2); \
-	r300->state.vertex_shader.program.body.i[r300->state.vertex_shader.program_end].src[2]=(source3); \
-	r300->state.vertex_shader.program_end++; \
-	}
+	rmesa->state.vertex_shader.param_offset = 0x0;
+	rmesa->state.vertex_shader.param_count = 0x4;	/* 4 vector values - 4x4 matrix */
+	rmesa->state.vertex_shader.program_start = 0x0;
+	rmesa->state.vertex_shader.program_pos_end = 0x4;
+	rmesa->state.vertex_shader.program_end = 0x0;
+	rmesa->state.vertex_shader.unknown_ptr2 = 0x0;	/* magic value */
+	rmesa->state.vertex_shader.unknown_ptr3 = 0x4;	/* magic value */
+	rmesa->state.vertex_shader.unknown1.length = 0;
+	rmesa->state.vertex_shader.unknown2.length = 0;
 
 	for (i = VERT_ATTRIB_POS; i < VERT_ATTRIB_MAX; i++)
-		if (r300->state.sw_tcl_inputs[i] != -1) {
+		if (rmesa->state.sw_tcl_inputs[i] != -1) {
 			WRITE_OP(EASY_VSF_OP(MUL, o_reg++, ALL, RESULT),
-				 VSF_REG(r300->state.sw_tcl_inputs[i]),
-				 VSF_ATTR_UNITY(r300->state.
+				 VSF_REG(rmesa->state.sw_tcl_inputs[i]),
+				 VSF_ATTR_UNITY(rmesa->state.
 						sw_tcl_inputs[i]),
-				 VSF_UNITY(r300->state.sw_tcl_inputs[i])
+				 VSF_UNITY(rmesa->state.sw_tcl_inputs[i])
 			    )
-
 		}
 
-	r300->state.vertex_shader.program_end--;	/* r300 wants program length to be one more - no idea why */
-	r300->state.vertex_shader.program.length =
-	    (r300->state.vertex_shader.program_end + 1) * 4;
+	rmesa->state.vertex_shader.program_end--;	/* rmesa wants program length to be one more - no idea why */
+	rmesa->state.vertex_shader.program.length = (rmesa->state.vertex_shader.program_end + 1) * 4;
+	rmesa->state.vertex_shader.program_pos_end = rmesa->state.vertex_shader.program_end;
+	rmesa->state.vertex_shader.unknown_ptr2 = rmesa->state.vertex_shader.program_end;	/* magic value ? */
+	rmesa->state.vertex_shader.unknown_ptr3 = rmesa->state.vertex_shader.program_end;	/* magic value ? */
 
-	r300->state.vertex_shader.program_pos_end = r300->state.vertex_shader.program_end;
-	r300->state.vertex_shader.unknown_ptr2 = r300->state.vertex_shader.program_end;	/* magic value ? */
-	r300->state.vertex_shader.unknown_ptr3 = r300->state.vertex_shader.program_end;	/* magic value ? */
+	setup_vertex_shader_fragment(rmesa, VSF_DEST_PROGRAM, &(rmesa->state.vertex_shader.program));
+#if 0
+	setup_vertex_shader_fragment(rmesa, VSF_DEST_UNKNOWN1, &(rmesa->state.vertex_shader.unknown1));
+	setup_vertex_shader_fragment(rmesa, VSF_DEST_UNKNOWN2, &(rmesa->state.vertex_shader.unknown2));
+#endif
 
+	R300_STATECHANGE(rmesa, pvs);
+	rmesa->hw.pvs.cmd[R300_PVS_CNTL_1] =
+	  (rmesa->state.vertex_shader.program_start << R300_PVS_CNTL_1_PROGRAM_START_SHIFT) |
+	  (rmesa->state.vertex_shader.program_pos_end << R300_PVS_CNTL_1_POS_END_SHIFT) |
+	  (rmesa->state.vertex_shader.program_end << R300_PVS_CNTL_1_PROGRAM_END_SHIFT);
+	rmesa->hw.pvs.cmd[R300_PVS_CNTL_2] =
+	  (rmesa->state.vertex_shader.param_offset << R300_PVS_CNTL_2_PARAM_OFFSET_SHIFT) |
+	  (rmesa->state.vertex_shader.param_count << R300_PVS_CNTL_2_PARAM_COUNT_SHIFT);
+	rmesa->hw.pvs.cmd[R300_PVS_CNTL_3] =
+	  (rmesa->state.vertex_shader.unknown_ptr2 << R300_PVS_CNTL_3_PROGRAM_UNKNOWN_SHIFT) |
+	  (rmesa->state.vertex_shader.unknown_ptr3 << R300_PVS_CNTL_3_PROGRAM_UNKNOWN2_SHIFT);
 }
+
+#undef WRITE_OP
 
 static void r300SetupVertexProgram(r300ContextPtr rmesa)
 {
@@ -1589,7 +1603,6 @@ static void r300SetupVertexProgram(r300ContextPtr rmesa)
 	((drm_r300_cmd_header_t *) rmesa->hw.vps.cmd)->vpu.count = 0;
 
 	setup_vertex_shader_fragment(rmesa, VSF_DEST_PROGRAM, &(prog->program));
-
 #if 0
 	setup_vertex_shader_fragment(rmesa, VSF_DEST_UNKNOWN1, &(rmesa->state.vertex_shader.unknown1));
 	setup_vertex_shader_fragment(rmesa, VSF_DEST_UNKNOWN2, &(rmesa->state.vertex_shader.unknown2));
@@ -1608,13 +1621,6 @@ static void r300SetupVertexProgram(r300ContextPtr rmesa)
 	rmesa->hw.pvs.cmd[R300_PVS_CNTL_3] =
 	  (0 << R300_PVS_CNTL_3_PROGRAM_UNKNOWN_SHIFT) |
 	  (inst_count << R300_PVS_CNTL_3_PROGRAM_UNKNOWN2_SHIFT);
-
-	/* This is done for vertex shader fragments, but also needs to be done for vap_pvs,
-	   so I leave it as a reminder */
-#if 0
-	reg_start(R300_VAP_PVS_WAITIDLE, 0);
-	e32(0x00000000);
-#endif
 }
 
 static void r300SetupVertexShader(r300ContextPtr rmesa)
@@ -1632,33 +1638,14 @@ static void r300SetupVertexShader(r300ContextPtr rmesa)
 	//setup_vertex_shader_fragment(rmesa, 0x406, &unk4);
 	if (hw_tcl_on && ((struct r300_vertex_program *)CURRENT_VERTEX_SHADER(ctx))->translated) {
 		r300SetupVertexProgram(rmesa);
-		return;
+	} else {
+		/* FIXME: This needs to be replaced by vertex shader generation code. */
+		r300GenerateSimpleVertexShader(rmesa);
 	}
 
-	/* This needs to be replaced by vertex shader generation code */
-	r300GenerateSimpleVertexShader(rmesa);
 
-	setup_vertex_shader_fragment(rmesa, VSF_DEST_PROGRAM, &(rmesa->state.vertex_shader.program));
-
-#if 0
-	setup_vertex_shader_fragment(rmesa, VSF_DEST_UNKNOWN1, &(rmesa->state.vertex_shader.unknown1));
-	setup_vertex_shader_fragment(rmesa, VSF_DEST_UNKNOWN2, &(rmesa->state.vertex_shader.unknown2));
-#endif
-
-	R300_STATECHANGE(rmesa, pvs);
-	rmesa->hw.pvs.cmd[R300_PVS_CNTL_1] =
-	  (rmesa->state.vertex_shader.program_start << R300_PVS_CNTL_1_PROGRAM_START_SHIFT) |
-	  (rmesa->state.vertex_shader.program_pos_end << R300_PVS_CNTL_1_POS_END_SHIFT) |
-	  (rmesa->state.vertex_shader.program_end << R300_PVS_CNTL_1_PROGRAM_END_SHIFT);
-	rmesa->hw.pvs.cmd[R300_PVS_CNTL_2] =
-	  (rmesa->state.vertex_shader.param_offset << R300_PVS_CNTL_2_PARAM_OFFSET_SHIFT) |
-	  (rmesa->state.vertex_shader.param_count << R300_PVS_CNTL_2_PARAM_COUNT_SHIFT);
-	rmesa->hw.pvs.cmd[R300_PVS_CNTL_3] =
-	  (rmesa->state.vertex_shader.unknown_ptr2 << R300_PVS_CNTL_3_PROGRAM_UNKNOWN_SHIFT) |
-	  (rmesa->state.vertex_shader.unknown_ptr3 << R300_PVS_CNTL_3_PROGRAM_UNKNOWN2_SHIFT);
-
-	/* This is done for vertex shader fragments, but also needs to be done for vap_pvs,
-	   so I leave it as a reminder */
+	/* FIXME: This is done for vertex shader fragments, but also needs to be
+	 * done for vap_pvs, so I leave it as a reminder. */
 #if 0
 	reg_start(R300_VAP_PVS_WAITIDLE, 0);
 	e32(0x00000000);
