@@ -1928,6 +1928,8 @@ static void r300ResetHwState(r300ContextPtr r300)
 
 	r300PolygonOffset(ctx, ctx->Polygon.OffsetFactor,
 			  ctx->Polygon.OffsetUnits);
+	r300Enable(ctx, GL_POLYGON_OFFSET_POINT, ctx->Polygon.OffsetPoint);
+	r300Enable(ctx, GL_POLYGON_OFFSET_LINE, ctx->Polygon.OffsetLine);
 	r300Enable(ctx, GL_POLYGON_OFFSET_FILL, ctx->Polygon.OffsetFill);
 
 	r300->hw.unk42C0.cmd[1] = 0x4B7FFFFF;
