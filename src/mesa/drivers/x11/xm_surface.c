@@ -167,6 +167,16 @@ write_quad_ub(struct softpipe_surface *gs, GLint x, GLint y,
    xrb->Base.GetRow(ctx, &xrb->Base, 2, x, y + 1, rgba + 2);
 }
 
+static void
+write_mono_row_ub(struct softpipe_surface *gs, GLuint count, GLint x, GLint y,
+                  GLubyte rgba[NUM_CHANNELS])
+{
+   struct xmesa_surface *xmsurf = xmesa_surface(gs);
+   struct xmesa_renderbuffer *xrb = xmsurf->xrb;
+   GET_CURRENT_CONTEXT(ctx);
+   xrb->Base.PutMonoRow(ctx, &xrb->Base, count, x, y, rgba, NULL);
+}
+
 
 static struct xmesa_surface *
 create_surface(XMesaContext xmctx, struct xmesa_renderbuffer *xrb)
@@ -185,6 +195,8 @@ create_surface(XMesaContext xmctx, struct xmesa_renderbuffer *xrb)
       xmsurf->sps.write_quad_f = write_quad_f;
       xmsurf->sps.write_quad_f_swz = write_quad_f_swz;
       xmsurf->sps.write_quad_ub = write_quad_ub;
+      xmsurf->sps.write_mono_row_ub = write_mono_row_ub;
+
 #if 0
       if (xrb->ximage) {
          xmsurf->sps.surface.ptr = (GLubyte *) xrb->ximage->data;
