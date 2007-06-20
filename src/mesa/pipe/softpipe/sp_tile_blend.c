@@ -64,101 +64,106 @@ blend_quad(struct quad_stage *qs, struct quad_header *quad)
        * for all four pixels in the quad at once.
        */
       for (j = 0; j < QUAD_SIZE; j++) {
-         switch (softpipe->blend.rgb_src_factor) {
-         case PIPE_BLENDFACTOR_ONE:
-            srcTerm[0] = srcTerm[1] = srcTerm[2] = 1.0;
-            break;
-         case PIPE_BLENDFACTOR_SRC_ALPHA:
-            srcTerm[0] = srcTerm[1] = srcTerm[2] = quad->outputs.color[3][j];
-            break;
-         case PIPE_BLENDFACTOR_ZERO:
-            srcTerm[0] = srcTerm[1] = srcTerm[2] = 0.0;
-            break;
-            /* XXX fill in remaining terms */
-         default:
-            abort();
-         }
 
-         switch (softpipe->blend.alpha_src_factor) {
-         case PIPE_BLENDFACTOR_ONE:
-            srcTerm[3] = 1.0;
-            break;
-         case PIPE_BLENDFACTOR_SRC_ALPHA:
-            srcTerm[3] = quad->outputs.color[3][j];
-            break;
-         case PIPE_BLENDFACTOR_ZERO:
-            srcTerm[3] = 0.0;
-            break;
-            /* XXX fill in remaining terms */
-         default:
-            abort();
-         }
+         /* if this pixel in the quad is alive */
+         if (quad->mask & (1 << j)) {
 
-         switch (softpipe->blend.rgb_dst_factor) {
-         case PIPE_BLENDFACTOR_ONE:
-            dstTerm[0] = dstTerm[1] = dstTerm[2] = 1.0;
-            break;
-         case PIPE_BLENDFACTOR_INV_SRC_ALPHA:
-            dstTerm[0] = dstTerm[1] = dstTerm[2] = 1.0 - quad->outputs.color[3][j];
-            break;
-         case PIPE_BLENDFACTOR_ZERO:
-            dstTerm[0] = dstTerm[1] = dstTerm[2] = 0.0;
-            break;
-            /* XXX fill in remaining terms */
-         default:
-            abort();
-         }
+            switch (softpipe->blend.rgb_src_factor) {
+            case PIPE_BLENDFACTOR_ONE:
+               srcTerm[0] = srcTerm[1] = srcTerm[2] = 1.0;
+               break;
+            case PIPE_BLENDFACTOR_SRC_ALPHA:
+               srcTerm[0] = srcTerm[1] = srcTerm[2] = quad->outputs.color[3][j];
+               break;
+            case PIPE_BLENDFACTOR_ZERO:
+               srcTerm[0] = srcTerm[1] = srcTerm[2] = 0.0;
+               break;
+               /* XXX fill in remaining terms */
+            default:
+               abort();
+            }
 
-         switch (softpipe->blend.alpha_dst_factor) {
-         case PIPE_BLENDFACTOR_ONE:
-            dstTerm[3] = 1.0;
-            break;
-         case PIPE_BLENDFACTOR_INV_SRC_ALPHA:
-            dstTerm[3] = 1.0 - quad->outputs.color[3][j];
-            break;
-         case PIPE_BLENDFACTOR_ZERO:
-            dstTerm[3] = 0.0;
-            break;
-            /* XXX fill in remaining terms */
-         default:
-            abort();
-         }
+            switch (softpipe->blend.alpha_src_factor) {
+            case PIPE_BLENDFACTOR_ONE:
+               srcTerm[3] = 1.0;
+               break;
+            case PIPE_BLENDFACTOR_SRC_ALPHA:
+               srcTerm[3] = quad->outputs.color[3][j];
+               break;
+            case PIPE_BLENDFACTOR_ZERO:
+               srcTerm[3] = 0.0;
+               break;
+               /* XXX fill in remaining terms */
+            default:
+               abort();
+            }
 
-         switch (softpipe->blend.rgb_func) {
-         case PIPE_BLEND_ADD:
-            quad->outputs.color[0][j] = source[0][j] * srcTerm[0] + dest[0][j] * dstTerm[0];
-            quad->outputs.color[1][j] = source[1][j] * srcTerm[1] + dest[1][j] * dstTerm[1];
-            quad->outputs.color[2][j] = source[2][j] * srcTerm[2] + dest[2][j] * dstTerm[2];
-            quad->outputs.color[3][j] = source[3][j] * srcTerm[3] + dest[3][j] * dstTerm[3];
-            break;
-         case PIPE_BLEND_SUBTRACT:
-            quad->outputs.color[0][j] = source[0][j] * srcTerm[0] - dest[0][j] * dstTerm[0];
-            quad->outputs.color[1][j] = source[1][j] * srcTerm[1] - dest[1][j] * dstTerm[1];
-            quad->outputs.color[2][j] = source[2][j] * srcTerm[2] - dest[2][j] * dstTerm[2];
-            quad->outputs.color[3][j] = source[3][j] * srcTerm[3] - dest[3][j] * dstTerm[3];
-            break;
-         case PIPE_BLEND_REVERSE_SUBTRACT:
-            quad->outputs.color[0][j] = dest[0][j] * dstTerm[0] - source[0][j] * srcTerm[0];
-            quad->outputs.color[1][j] = dest[1][j] * dstTerm[1] - source[1][j] * srcTerm[1];
-            quad->outputs.color[2][j] = dest[2][j] * dstTerm[2] - source[2][j] * srcTerm[2];
-            quad->outputs.color[3][j] = dest[3][j] * dstTerm[3] - source[3][j] * srcTerm[3];
-            break;
-         case PIPE_BLEND_MIN:
-            quad->outputs.color[0][j] = MIN2(dest[0][j], source[0][j]);
-            quad->outputs.color[1][j] = MIN2(dest[1][j], source[1][j]);
-            quad->outputs.color[2][j] = MIN2(dest[2][j], source[2][j]);
-            quad->outputs.color[3][j] = MIN2(dest[3][j], source[3][j]);
-            break;
-         case PIPE_BLEND_MAX:
-            quad->outputs.color[0][j] = MAX2(dest[0][j], source[0][j]);
-            quad->outputs.color[1][j] = MAX2(dest[1][j], source[1][j]);
-            quad->outputs.color[2][j] = MAX2(dest[2][j], source[2][j]);
-            quad->outputs.color[3][j] = MAX2(dest[3][j], source[3][j]);
-            break;
-         default:
-            abort();
+            switch (softpipe->blend.rgb_dst_factor) {
+            case PIPE_BLENDFACTOR_ONE:
+               dstTerm[0] = dstTerm[1] = dstTerm[2] = 1.0;
+               break;
+            case PIPE_BLENDFACTOR_INV_SRC_ALPHA:
+               dstTerm[0] = dstTerm[1] = dstTerm[2] = 1.0 - quad->outputs.color[3][j];
+               break;
+            case PIPE_BLENDFACTOR_ZERO:
+               dstTerm[0] = dstTerm[1] = dstTerm[2] = 0.0;
+               break;
+               /* XXX fill in remaining terms */
+            default:
+               abort();
+            }
+
+            switch (softpipe->blend.alpha_dst_factor) {
+            case PIPE_BLENDFACTOR_ONE:
+               dstTerm[3] = 1.0;
+               break;
+            case PIPE_BLENDFACTOR_INV_SRC_ALPHA:
+               dstTerm[3] = 1.0 - quad->outputs.color[3][j];
+               break;
+            case PIPE_BLENDFACTOR_ZERO:
+               dstTerm[3] = 0.0;
+               break;
+               /* XXX fill in remaining terms */
+            default:
+               abort();
+            }
+
+            switch (softpipe->blend.rgb_func) {
+            case PIPE_BLEND_ADD:
+               quad->outputs.color[0][j] = source[0][j] * srcTerm[0] + dest[0][j] * dstTerm[0];
+               quad->outputs.color[1][j] = source[1][j] * srcTerm[1] + dest[1][j] * dstTerm[1];
+               quad->outputs.color[2][j] = source[2][j] * srcTerm[2] + dest[2][j] * dstTerm[2];
+               quad->outputs.color[3][j] = source[3][j] * srcTerm[3] + dest[3][j] * dstTerm[3];
+               break;
+            case PIPE_BLEND_SUBTRACT:
+               quad->outputs.color[0][j] = source[0][j] * srcTerm[0] - dest[0][j] * dstTerm[0];
+               quad->outputs.color[1][j] = source[1][j] * srcTerm[1] - dest[1][j] * dstTerm[1];
+               quad->outputs.color[2][j] = source[2][j] * srcTerm[2] - dest[2][j] * dstTerm[2];
+               quad->outputs.color[3][j] = source[3][j] * srcTerm[3] - dest[3][j] * dstTerm[3];
+               break;
+            case PIPE_BLEND_REVERSE_SUBTRACT:
+               quad->outputs.color[0][j] = dest[0][j] * dstTerm[0] - source[0][j] * srcTerm[0];
+               quad->outputs.color[1][j] = dest[1][j] * dstTerm[1] - source[1][j] * srcTerm[1];
+               quad->outputs.color[2][j] = dest[2][j] * dstTerm[2] - source[2][j] * srcTerm[2];
+               quad->outputs.color[3][j] = dest[3][j] * dstTerm[3] - source[3][j] * srcTerm[3];
+               break;
+            case PIPE_BLEND_MIN:
+               quad->outputs.color[0][j] = MIN2(dest[0][j], source[0][j]);
+               quad->outputs.color[1][j] = MIN2(dest[1][j], source[1][j]);
+               quad->outputs.color[2][j] = MIN2(dest[2][j], source[2][j]);
+               quad->outputs.color[3][j] = MIN2(dest[3][j], source[3][j]);
+               break;
+            case PIPE_BLEND_MAX:
+               quad->outputs.color[0][j] = MAX2(dest[0][j], source[0][j]);
+               quad->outputs.color[1][j] = MAX2(dest[1][j], source[1][j]);
+               quad->outputs.color[2][j] = MAX2(dest[2][j], source[2][j]);
+               quad->outputs.color[3][j] = MAX2(dest[3][j], source[3][j]);
+               break;
+            default:
+               abort();
+            }
          }
-      } /* loop over quads */
+      } /* loop over quad's pixels*/
 
       /* pass blended quad to next stage */
       qs->next->run(qs->next, quad);
