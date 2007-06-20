@@ -60,6 +60,10 @@
 #include "intel_buffer_objects.h"
 #include "intel_fbo.h"
 
+#include "pipe/softpipe/sp_context.h"
+#include "state_tracker/st_public.h"
+
+
 #include "drirenderbuffer.h"
 #include "vblank.h"
 #include "utils.h"
@@ -244,6 +248,9 @@ intelInvalidateState(GLcontext * ctx, GLuint new_state)
    _vbo_InvalidateState(ctx, new_state);
    _tnl_InvalidateState(ctx, new_state);
    _tnl_invalidate_vertex_state(ctx, new_state);
+
+   st_invalidate_state( ctx, new_state );
+
    intel_context(ctx)->NewGLState |= new_state;
 }
 
@@ -492,6 +499,11 @@ intelInitContext(struct intel_context *intel,
       fprintf(stderr, "disabling 3D rasterization\n");
       FALLBACK(intel, INTEL_FALLBACK_USER, 1);
    }
+
+
+   st_create_context( &intel->ctx,
+		      softpipe_create() );
+   
 
    return GL_TRUE;
 }
