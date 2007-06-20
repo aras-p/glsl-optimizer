@@ -155,6 +155,7 @@ VF_SOURCES = \
 	vf/vf_sse.c
 
 SOFTPIPE_SOURCES = \
+	pipe/softpipe/sp_clear.c \
 	pipe/softpipe/sp_context.c \
 	pipe/softpipe/sp_draw.c \
 	pipe/softpipe/sp_prim_clip.c \
@@ -177,6 +178,7 @@ STATETRACKER_SOURCES = \
 	state_tracker/st_atom.c \
 	state_tracker/st_atom_alphatest.c \
 	state_tracker/st_atom_blend.c \
+	state_tracker/st_atom_clear_color.c \
 	state_tracker/st_atom_clip.c \
 	state_tracker/st_atom_depth.c \
 	state_tracker/st_atom_fs.c \

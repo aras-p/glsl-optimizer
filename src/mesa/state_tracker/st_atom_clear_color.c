@@ -2,7 +2,7 @@
  * 
  * Copyright 2007 Tungsten Graphics, Inc., Cedar Park, Texas.
  * All Rights Reserved.
- *
+ * 
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the
  * "Software"), to deal in the Software without restriction, including
@@ -25,37 +25,38 @@
  * 
  **************************************************************************/
 
-/* Authors:  Keith Whitwell <keith@tungstengraphics.com>
- */
-#include "imports.h"
+ /*
+  * Authors:
+  *   Keith Whitwell <keith@tungstengraphics.com>
+  *   Brian Paul
+  */
+ 
+#include "st_context.h"
+#include "st_atom.h"
+#include "pipe/p_context.h"
 
-#include "sp_context.h"
-#include "sp_state.h"
-#include "sp_surface.h"
 
-
-/*
- * XXX this might get moved someday
- */
-void
-softpipe_set_framebuffer_state(struct pipe_context *pipe,
-                               const struct pipe_framebuffer_state *fb)
+static void
+update_clear_color_state( struct st_context *st )
 {
-   struct softpipe_context *softpipe = softpipe_context(pipe);
+   struct pipe_clear_color_state clear;
 
-   softpipe->framebuffer = *fb; /* struct copy */
+   clear.color[0] = st->ctx->Color.ClearColor[0];
+   clear.color[1] = st->ctx->Color.ClearColor[1];
+   clear.color[2] = st->ctx->Color.ClearColor[2];
+   clear.color[3] = st->ctx->Color.ClearColor[3];
 
-   softpipe->dirty |= G_NEW_FRAMEBUFFER;
+   if (memcmp(&clear, &st->state.clear_color, sizeof(clear)) != 0) {
+      st->state.clear_color = clear;
+      st->pipe->set_clear_color_state( st->pipe, &clear );
+   }
 }
 
 
-
-
-void
-softpipe_set_clear_color_state(struct pipe_context *pipe,
-                               const struct pipe_clear_color_state *clear)
-{
-   struct softpipe_context *softpipe = softpipe_context(pipe);
-
-   softpipe->clear_color = *clear; /* struct copy */
-}
+const struct st_tracked_state st_update_clear_color = {
+   .dirty = {
+      .mesa = _NEW_COLOR,
+      .st  = 0,
+   },
+   .update = update_clear_color_state
+};

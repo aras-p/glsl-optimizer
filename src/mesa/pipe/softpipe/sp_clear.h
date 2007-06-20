@@ -2,7 +2,7 @@
  * 
  * Copyright 2007 Tungsten Graphics, Inc., Cedar Park, Texas.
  * All Rights Reserved.
- *
+ * 
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the
  * "Software"), to deal in the Software without restriction, including
@@ -25,37 +25,19 @@
  * 
  **************************************************************************/
 
-/* Authors:  Keith Whitwell <keith@tungstengraphics.com>
+/* Author:
+ *    Brian Paul
  */
-#include "imports.h"
 
-#include "sp_context.h"
-#include "sp_state.h"
-#include "sp_surface.h"
+#ifndef SP_CLEAR_H
+#define SP_CLEAR_H
 
+#include "pipe/p_state.h"
+struct pipe_context;
 
-/*
- * XXX this might get moved someday
- */
-void
-softpipe_set_framebuffer_state(struct pipe_context *pipe,
-                               const struct pipe_framebuffer_state *fb)
-{
-   struct softpipe_context *softpipe = softpipe_context(pipe);
-
-   softpipe->framebuffer = *fb; /* struct copy */
-
-   softpipe->dirty |= G_NEW_FRAMEBUFFER;
-}
+extern void
+softpipe_clear(struct pipe_context *pipe, GLboolean color, GLboolean depth,
+               GLboolean stencil, GLboolean accum);
 
 
-
-
-void
-softpipe_set_clear_color_state(struct pipe_context *pipe,
-                               const struct pipe_clear_color_state *clear)
-{
-   struct softpipe_context *softpipe = softpipe_context(pipe);
-
-   softpipe->clear_color = *clear; /* struct copy */
-}
+#endif /* SP_CLEAR_H */

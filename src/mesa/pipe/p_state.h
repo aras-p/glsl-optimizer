@@ -133,6 +133,11 @@ struct pipe_blend_color {
    GLfloat color[4];
 };
 
+struct pipe_clear_color_state
+{
+   GLfloat color[4];
+};
+
 struct pipe_line_state
 {
    GLuint smooth:1;

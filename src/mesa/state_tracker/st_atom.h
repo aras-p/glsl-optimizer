@@ -46,6 +46,7 @@ void st_validate_state( struct st_context *st );
 
 const struct st_tracked_state st_update_framebuffer;
 const struct st_tracked_state st_update_clip;
+const struct st_tracked_state st_update_clear_color;
 const struct st_tracked_state st_update_depth;
 const struct st_tracked_state st_update_fs;
 const struct st_tracked_state st_update_point;

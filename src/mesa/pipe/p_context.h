@@ -53,6 +53,10 @@ struct pipe_context {
    void (*draw_vb)( struct pipe_context *pipe,
 		    struct vertex_buffer *VB );
 
+   /** Clear framebuffer */
+   void (*clear)(struct pipe_context *pipe, GLboolean color, GLboolean depth,
+                 GLboolean stencil, GLboolean accum);
+
    /*
     * State functions
     */
@@ -62,11 +66,11 @@ struct pipe_context {
    void (*set_blend_state)( struct pipe_context *,
                             const struct pipe_blend_state * );
 
-   void (*set_cbuf_state)( struct pipe_context *,
-			   const struct pipe_surface * );
-
    void (*set_clip_state)( struct pipe_context *,
 			   const struct pipe_clip_state * );
+
+   void (*set_clear_color_state)( struct pipe_context *,
+                                  const struct pipe_clear_color_state * );
 
    void (*set_depth_state)( struct pipe_context *,
                               const struct pipe_depth_state * );

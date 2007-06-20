@@ -36,6 +36,7 @@
 #include "vf/vf.h"
 
 #include "sp_context.h"
+#include "sp_clear.h"
 #include "sp_prim.h"
 #include "sp_state.h"
 #include "sp_draw.h"
@@ -68,6 +69,7 @@ struct pipe_context *softpipe_create( void )
    softpipe->pipe.destroy = softpipe_destroy;
    softpipe->pipe.set_framebuffer_state = softpipe_set_framebuffer_state;
    softpipe->pipe.set_clip_state = softpipe_set_clip_state;
+   softpipe->pipe.set_clear_color_state = softpipe_set_clear_color_state;
    softpipe->pipe.set_point_state = softpipe_set_point_state;
    softpipe->pipe.set_viewport = softpipe_set_viewport;
    softpipe->pipe.set_setup_state = softpipe_set_setup_state;
@@ -75,7 +77,7 @@ struct pipe_context *softpipe_create( void )
    softpipe->pipe.set_fs_state = softpipe_set_fs_state;
    softpipe->pipe.set_polygon_stipple = softpipe_set_polygon_stipple;
    softpipe->pipe.draw_vb = softpipe_draw_vb;
-
+   softpipe->pipe.clear = softpipe_clear;
 
 
    softpipe->prim.setup     = prim_setup( softpipe );
