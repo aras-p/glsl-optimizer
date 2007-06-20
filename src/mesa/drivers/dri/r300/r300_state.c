@@ -1477,7 +1477,7 @@ static void r300SetupRSUnit(GLcontext * ctx)
 	if(_nc>_p->vpu.count)_p->vpu.count=_nc;\
 	}while(0)
 
-static inline void setup_vertex_shader_fragment(r300ContextPtr r300, int dest, struct r300_vertex_shader_fragment *vsf)
+static inline void r300SetupVertexProgramFragment(r300ContextPtr r300, int dest, struct r300_vertex_shader_fragment *vsf)
 {
 	int i;
 
@@ -1515,95 +1515,29 @@ static inline void setup_vertex_shader_fragment(r300ContextPtr r300, int dest, s
 	}
 }
 
-/* just a skeleton for now.. */
+static void r300SetupDefaultVertexProgram(r300ContextPtr rmesa)
+{
+	struct r300_vertex_shader_state *prog = &(rmesa->state.vertex_shader);
+	GLuint o_reg = 0;
+	int i;
+	int inst_count = 0;
+	int param_count = 0;
+	int program_end = 0;
 
-/* Generate a vertex shader that simply transforms vertex and texture coordinates,
-   while leaving colors intact. Nothing fancy (like lights)
-
-   If implementing lights make a copy first, so it is easy to switch between the two versions */
-
-#define WRITE_OP(oper,source1,source2,source3)	{\
-	rmesa->state.vertex_shader.program.body.i[rmesa->state.vertex_shader.program_end].op=(oper); \
-	rmesa->state.vertex_shader.program.body.i[rmesa->state.vertex_shader.program_end].src[0]=(source1); \
-	rmesa->state.vertex_shader.program.body.i[rmesa->state.vertex_shader.program_end].src[1]=(source2); \
-	rmesa->state.vertex_shader.program.body.i[rmesa->state.vertex_shader.program_end].src[2]=(source3); \
-	rmesa->state.vertex_shader.program_end++; \
+	for (i = VERT_ATTRIB_POS; i < VERT_ATTRIB_MAX; i++) {
+		if (rmesa->state.sw_tcl_inputs[i] != -1) {
+			prog->program.body.i[program_end].op = EASY_VSF_OP(MUL, o_reg++, ALL, RESULT);
+			prog->program.body.i[program_end].src[0] = VSF_REG(rmesa->state.sw_tcl_inputs[i]);
+			prog->program.body.i[program_end].src[1] = VSF_ATTR_UNITY(rmesa->state.sw_tcl_inputs[i]);
+			prog->program.body.i[program_end].src[2] = VSF_UNITY(rmesa->state.sw_tcl_inputs[i]);
+			program_end++;
+		}
 	}
 
-static void r300GenerateSimpleVertexShader(r300ContextPtr rmesa)
-{
-	int i;
-	GLuint o_reg = 0;
+	prog->program.length = program_end * 4;
 
-	/* Allocate parameters */
-	rmesa->state.vertex_shader.param_offset = 0x0;
-	rmesa->state.vertex_shader.param_count = 0x4;	/* 4 vector values - 4x4 matrix */
-	rmesa->state.vertex_shader.program_start = 0x0;
-	rmesa->state.vertex_shader.program_pos_end = 0x4;
-	rmesa->state.vertex_shader.program_end = 0x0;
-	rmesa->state.vertex_shader.unknown_ptr2 = 0x0;	/* magic value */
-	rmesa->state.vertex_shader.unknown_ptr3 = 0x4;	/* magic value */
-	rmesa->state.vertex_shader.unknown1.length = 0;
-	rmesa->state.vertex_shader.unknown2.length = 0;
-
-	for (i = VERT_ATTRIB_POS; i < VERT_ATTRIB_MAX; i++)
-		if (rmesa->state.sw_tcl_inputs[i] != -1) {
-			WRITE_OP(EASY_VSF_OP(MUL, o_reg++, ALL, RESULT),
-				 VSF_REG(rmesa->state.sw_tcl_inputs[i]),
-				 VSF_ATTR_UNITY(rmesa->state.
-						sw_tcl_inputs[i]),
-				 VSF_UNITY(rmesa->state.sw_tcl_inputs[i])
-			    )
-		}
-
-	rmesa->state.vertex_shader.program_end--;	/* rmesa wants program length to be one more - no idea why */
-	rmesa->state.vertex_shader.program.length = (rmesa->state.vertex_shader.program_end + 1) * 4;
-	rmesa->state.vertex_shader.program_pos_end = rmesa->state.vertex_shader.program_end;
-	rmesa->state.vertex_shader.unknown_ptr2 = rmesa->state.vertex_shader.program_end;	/* magic value ? */
-	rmesa->state.vertex_shader.unknown_ptr3 = rmesa->state.vertex_shader.program_end;	/* magic value ? */
-
-	setup_vertex_shader_fragment(rmesa, VSF_DEST_PROGRAM, &(rmesa->state.vertex_shader.program));
-#if 0
-	setup_vertex_shader_fragment(rmesa, VSF_DEST_UNKNOWN1, &(rmesa->state.vertex_shader.unknown1));
-	setup_vertex_shader_fragment(rmesa, VSF_DEST_UNKNOWN2, &(rmesa->state.vertex_shader.unknown2));
-#endif
-
-	R300_STATECHANGE(rmesa, pvs);
-	rmesa->hw.pvs.cmd[R300_PVS_CNTL_1] =
-	  (rmesa->state.vertex_shader.program_start << R300_PVS_CNTL_1_PROGRAM_START_SHIFT) |
-	  (rmesa->state.vertex_shader.program_pos_end << R300_PVS_CNTL_1_POS_END_SHIFT) |
-	  (rmesa->state.vertex_shader.program_end << R300_PVS_CNTL_1_PROGRAM_END_SHIFT);
-	rmesa->hw.pvs.cmd[R300_PVS_CNTL_2] =
-	  (rmesa->state.vertex_shader.param_offset << R300_PVS_CNTL_2_PARAM_OFFSET_SHIFT) |
-	  (rmesa->state.vertex_shader.param_count << R300_PVS_CNTL_2_PARAM_COUNT_SHIFT);
-	rmesa->hw.pvs.cmd[R300_PVS_CNTL_3] =
-	  (rmesa->state.vertex_shader.unknown_ptr2 << R300_PVS_CNTL_3_PROGRAM_UNKNOWN_SHIFT) |
-	  (rmesa->state.vertex_shader.unknown_ptr3 << R300_PVS_CNTL_3_PROGRAM_UNKNOWN2_SHIFT);
-}
-
-#undef WRITE_OP
-
-static void r300SetupVertexProgram(r300ContextPtr rmesa)
-{
-	GLcontext *ctx = rmesa->radeon.glCtx;
-	int inst_count;
-	int param_count;
-	struct r300_vertex_program *prog = (struct r300_vertex_program *)CURRENT_VERTEX_SHADER(ctx);
-
-	R300_STATECHANGE(rmesa, vpp);
-	param_count = r300VertexProgUpdateParams(ctx, (struct r300_vertex_program_cont *)
-						 ctx->VertexProgram._Current /*prog */ ,
-						 (float *)&rmesa->hw.vpp.cmd[R300_VPP_PARAM_0]);
-	bump_vpu_count(rmesa->hw.vpp.cmd, param_count);
-	param_count /= 4;
-
-	setup_vertex_shader_fragment(rmesa, VSF_DEST_PROGRAM, &(prog->program));
-#if 0
-	setup_vertex_shader_fragment(rmesa, VSF_DEST_UNKNOWN1, &(rmesa->state.vertex_shader.unknown1));
-	setup_vertex_shader_fragment(rmesa, VSF_DEST_UNKNOWN2, &(rmesa->state.vertex_shader.unknown2));
-#endif
-
-	inst_count = prog->program.length / 4 - 1;
+	r300SetupVertexProgramFragment(rmesa, VSF_DEST_PROGRAM, &(prog->program));
+	inst_count = (prog->program.length / 4) - 1;
 
 	R300_STATECHANGE(rmesa, pvs);
 	rmesa->hw.pvs.cmd[R300_PVS_CNTL_1] =
@@ -1618,7 +1552,41 @@ static void r300SetupVertexProgram(r300ContextPtr rmesa)
 	  (inst_count << R300_PVS_CNTL_3_PROGRAM_UNKNOWN2_SHIFT);
 }
 
-static void r300SetupVertexShader(r300ContextPtr rmesa)
+static void r300SetupRealVertexProgram(r300ContextPtr rmesa)
+{
+	GLcontext *ctx = rmesa->radeon.glCtx;
+	struct r300_vertex_program *prog = (struct r300_vertex_program *)CURRENT_VERTEX_SHADER(ctx);
+	int inst_count = 0;
+	int param_count = 0;
+
+	/* FIXME: r300SetupVertexProgramFragment */
+	R300_STATECHANGE(rmesa, vpp);
+	param_count =
+	    r300VertexProgUpdateParams(ctx,
+				       (struct r300_vertex_program_cont *)
+				       ctx->VertexProgram._Current,
+				       (float *)&rmesa->hw.vpp.
+				       cmd[R300_VPP_PARAM_0]);
+	bump_vpu_count(rmesa->hw.vpp.cmd, param_count);
+	param_count /= 4;
+
+	r300SetupVertexProgramFragment(rmesa, VSF_DEST_PROGRAM, &(prog->program));
+	inst_count = (prog->program.length / 4) - 1;
+
+	R300_STATECHANGE(rmesa, pvs);
+	rmesa->hw.pvs.cmd[R300_PVS_CNTL_1] =
+	  (0 << R300_PVS_CNTL_1_PROGRAM_START_SHIFT) |
+	  (inst_count << R300_PVS_CNTL_1_POS_END_SHIFT) |
+	  (inst_count << R300_PVS_CNTL_1_PROGRAM_END_SHIFT);
+	rmesa->hw.pvs.cmd[R300_PVS_CNTL_2] =
+	  (0 << R300_PVS_CNTL_2_PARAM_OFFSET_SHIFT) |
+	  (param_count << R300_PVS_CNTL_2_PARAM_COUNT_SHIFT);
+	rmesa->hw.pvs.cmd[R300_PVS_CNTL_3] =
+	  (inst_count << R300_PVS_CNTL_3_PROGRAM_UNKNOWN_SHIFT) |
+	  (inst_count << R300_PVS_CNTL_3_PROGRAM_UNKNOWN2_SHIFT);
+}
+
+static void r300SetupVertexProgram(r300ContextPtr rmesa)
 {
 	GLcontext *ctx = rmesa->radeon.glCtx;
 
@@ -1632,10 +1600,10 @@ static void r300SetupVertexShader(r300ContextPtr rmesa)
 	   0x406 is set to { 0.0, 0.0, 1.0, 0.0 } most of the time but should change with smooth points and in other rare cases. */
 	//setup_vertex_shader_fragment(rmesa, 0x406, &unk4);
 	if (hw_tcl_on && ((struct r300_vertex_program *)CURRENT_VERTEX_SHADER(ctx))->translated) {
-		r300SetupVertexProgram(rmesa);
+		r300SetupRealVertexProgram(rmesa);
 	} else {
 		/* FIXME: This needs to be replaced by vertex shader generation code. */
-		r300GenerateSimpleVertexShader(rmesa);
+		r300SetupDefaultVertexProgram(rmesa);
 	}
 
 
@@ -2046,7 +2014,6 @@ void r300UpdateShaders(r300ContextPtr rmesa)
 		}
 		r300UpdateStateParameters(ctx, _NEW_PROGRAM);
 	}
-
 }
 
 static void r300SetupPixelShader(r300ContextPtr rmesa)
@@ -2133,7 +2100,7 @@ void r300UpdateShaderStates(r300ContextPtr rmesa)
 	r300SetupTextures(ctx);
 
 	if ((rmesa->radeon.radeonScreen->chip_flags & RADEON_CHIPSET_TCL))
-		r300SetupVertexShader(rmesa);
+		r300SetupVertexProgram(rmesa);
 	r300SetupRSUnit(ctx);
 }
 

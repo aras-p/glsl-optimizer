@@ -583,19 +583,6 @@ struct r300_vertex_shader_fragment {
 
 struct r300_vertex_shader_state {
 	struct r300_vertex_shader_fragment program;
-
-	struct r300_vertex_shader_fragment unknown1;
-	struct r300_vertex_shader_fragment unknown2;
-
-	int program_start;
-	int program_pos_end;
-	int program_end;
-
-	int param_offset;
-	int param_count;
-
-	int unknown_ptr2;	/* pointer within program space */
-	int unknown_ptr3;	/* pointer within program space */
 };
 
 extern int hw_tcl_on;
