@@ -73,6 +73,19 @@ struct softpipe_surface {
    void (*write_quad_ub)( struct softpipe_surface *,
 			  GLint x, GLint y,
 			  GLubyte (*rgba)[NUM_CHANNELS] );
+
+   void (*write_mono_row_ub)( struct softpipe_surface *,
+                              GLuint count, GLint x, GLint y,
+                              GLubyte rgba[NUM_CHANNELS] );
 };
+
+
+/** Cast wrapper */
+static INLINE struct softpipe_surface *
+softpipe_surface(struct pipe_surface *ps)
+{
+   return (struct softpipe_surface *) ps;
+}
+
 
 #endif

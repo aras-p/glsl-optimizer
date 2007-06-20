@@ -31,16 +31,40 @@
 
 
 #include "sp_clear.h"
+#include "sp_context.h"
+#include "sp_surface.h"
+#include "colormac.h"
 
 
 void
 softpipe_clear(struct pipe_context *pipe, GLboolean color, GLboolean depth,
                GLboolean stencil, GLboolean accum)
 {
-   /* validate state (scissor)? */
+   struct softpipe_context *softpipe = softpipe_context(pipe);
 
    if (color) {
+      GLuint i;
+      const GLint x = softpipe->scissor.minx;
+      const GLint y = softpipe->scissor.miny;
+      const GLint w = softpipe->scissor.maxx - x;
+      const GLint h = softpipe->scissor.maxy - y;
+      GLubyte clr[4];
+
+      UNCLAMPED_FLOAT_TO_UBYTE(clr[0], softpipe->clear_color.color[0]);
+      UNCLAMPED_FLOAT_TO_UBYTE(clr[1], softpipe->clear_color.color[1]);
+      UNCLAMPED_FLOAT_TO_UBYTE(clr[2], softpipe->clear_color.color[2]);
+      UNCLAMPED_FLOAT_TO_UBYTE(clr[3], softpipe->clear_color.color[3]);
+
+      for (i = 0; i < softpipe->framebuffer.num_cbufs; i++) {
+         struct pipe_surface *ps = softpipe->framebuffer.cbufs[i];
+         struct softpipe_surface *sps = softpipe_surface(ps);
+         GLint j;
+         for (j = 0; j < h; j++) {
+            sps->write_mono_row_ub(sps, w, x, y + j, clr);
+         }
+      }
    }
+
    if (depth) {
    }
 

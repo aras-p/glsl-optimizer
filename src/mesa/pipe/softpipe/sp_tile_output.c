@@ -67,7 +67,7 @@ void quad_output( struct softpipe_context *softpipe,
 
    for (i = 0; i < softpipe->framebuffer.num_cbufs; i++) {
       struct softpipe_surface *sps
-         = (struct softpipe_surface *) softpipe->framebuffer.cbufs[i];
+         = softpipe_surface(softpipe->framebuffer.cbufs[i]);
 
       if (quad->mask != MASK_ALL) {
          GLfloat tmp[4][QUAD_SIZE];
