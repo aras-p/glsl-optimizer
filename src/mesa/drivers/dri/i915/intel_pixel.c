@@ -440,9 +440,21 @@ intelDrawPixels( GLcontext *ctx,
       fprintf(stderr, "%s\n", __FUNCTION__);
 
    if (!intelTryDrawPixels( ctx, x, y, width, height, format, type,
-                            unpack, pixels ))
-      _swrast_DrawPixels( ctx, x, y, width, height, format, type,
-			  unpack, pixels );
+                            unpack, pixels )) {
+      if (ctx->FragmentProgram._Current == 
+          ctx->FragmentProgram._TexEnvProgram) {
+         /* don't want the i915 texenv program to be applied to DrawPixels */
+         struct gl_fragment_program *fpSave = ctx->FragmentProgram._Current;
+         ctx->FragmentProgram._Current = NULL;
+         _swrast_DrawPixels( ctx, x, y, width, height, format, type,
+                             unpack, pixels );
+         ctx->FragmentProgram._Current = fpSave;
+      }
+      else {
+         _swrast_DrawPixels( ctx, x, y, width, height, format, type,
+                             unpack, pixels );
+      }
+   }
 }
 
 
