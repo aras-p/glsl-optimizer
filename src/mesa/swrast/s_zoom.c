@@ -162,12 +162,14 @@ zoom_span( GLcontext *ctx, GLint imgX, GLint imgY, const SWspan *span,
    zoomed_arrays.rgba = zoomed_arrays.attribs[FRAG_ATTRIB_COL0];
 #endif
 
+   /* copy attribute info (XXX copy all attribs?) */
+   COPY_4V(zoomed.attrStart[FRAG_ATTRIB_WPOS], span->attrStart[FRAG_ATTRIB_WPOS]);
+   COPY_4V(zoomed.attrStepX[FRAG_ATTRIB_WPOS], span->attrStepX[FRAG_ATTRIB_WPOS]);
+   COPY_4V(zoomed.attrStepY[FRAG_ATTRIB_WPOS], span->attrStepY[FRAG_ATTRIB_WPOS]);
 
-   /* copy fog interp info */
    zoomed.attrStart[FRAG_ATTRIB_FOGC][0] = span->attrStart[FRAG_ATTRIB_FOGC][0];
    zoomed.attrStepX[FRAG_ATTRIB_FOGC][0] = span->attrStepX[FRAG_ATTRIB_FOGC][0];
    zoomed.attrStepY[FRAG_ATTRIB_FOGC][0] = span->attrStepY[FRAG_ATTRIB_FOGC][0];
-   /* XXX copy texcoord info? */
 
    if (format == GL_RGBA || format == GL_RGB) {
       /* copy Z info */
