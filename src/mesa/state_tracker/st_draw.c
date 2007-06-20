@@ -41,7 +41,7 @@
 #include "pipe/p_context.h"
 
 /*
- * TNL stage which feedsinto the above.
+ * TNL stage which feeds into the above.
  *
  * XXX: this needs to go into each driver using this code, because we
  * cannot make the leap from ctx->draw_context in this file.  The
