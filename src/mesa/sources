@@ -171,6 +171,9 @@ SOFTPIPE_SOURCES = \
 	pipe/softpipe/sp_state_point.c \
 	pipe/softpipe/sp_state_setup.c \
 	pipe/softpipe/sp_state_surface.c \
+	pipe/softpipe/sp_tile.c \
+	pipe/softpipe/sp_tile_blend.c \
+	pipe/softpipe/sp_tile_depth_test.c \
 	pipe/softpipe/sp_tile_fs.c \
 	pipe/softpipe/sp_tile_output.c 
 

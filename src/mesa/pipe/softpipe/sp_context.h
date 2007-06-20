@@ -36,6 +36,7 @@
 #include "pipe/p_state.h"
 #include "pipe/p_context.h"
 
+#include "sp_tile.h"
 
 
 struct softpipe_surface;
@@ -129,6 +130,18 @@ struct softpipe_context {
       GLuint vertex_size;
    } prim;
 
+   /*
+    * Software quad rendering pipeline
+    */
+   struct {
+      struct quad_stage *shade;
+      struct quad_stage *depth_test;
+      struct quad_stage *blend;
+      struct quad_stage *output;
+
+      struct quad_stage *first; /**< points to one of the above stages */
+   } quad;
+
    /* Temp kludge:
     */
    struct draw_context *draw;
@@ -142,8 +155,6 @@ softpipe_context( struct pipe_context *pipe )
 {
    return (struct softpipe_context *)pipe;
 }
-
-
 
 
 #endif

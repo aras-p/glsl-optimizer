@@ -33,6 +33,7 @@
  */
 
 #include "glheader.h"
+#include "imports.h"
 #include "sp_context.h"
 #include "sp_headers.h"
 #include "sp_tile.h"
@@ -116,9 +117,10 @@ static INLINE void pinterp( struct exec_machine *exec,
 /* This should be done by the fragment shader execution unit (code
  * generated from the decl instructions).  Do it here for now.
  */
-void quad_shade( struct softpipe_context *softpipe,
-		 struct quad_header *quad )
+static void
+shade_quad( struct quad_stage *qs, struct quad_header *quad )
 {
+   struct softpipe_context *softpipe = qs->softpipe;
    struct exec_machine exec;
    GLfloat fx = quad->x0;
    GLfloat fy = quad->y0;
@@ -190,14 +192,17 @@ void quad_shade( struct softpipe_context *softpipe,
    }
 #endif
 
-
-   if (quad->mask)
-      quad_output( softpipe, quad );
+   qs->next->run(qs->next, quad);
 }
 
 
 
+struct quad_stage *sp_quad_shade_stage( struct softpipe_context *softpipe )
+{
+   struct quad_stage *stage = CALLOC_STRUCT(quad_stage);
 
+   stage->softpipe = softpipe;
+   stage->run = shade_quad;
 
-
-
+   return stage;
+}

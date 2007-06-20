@@ -22,14 +22,8 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-/* Vertices are just an array of floats, with all the attributes
- * packed.  We currently assume a layout like:
- *
- * attr[0][0..3] - window position
- * attr[1..n][0..3] - remaining attributes.
- *
- * Attributes are assumed to be 4 floats wide but are packed so that
- * all the enabled attributes run contiguously.
+/**
+ * quad blending
  */
 
 #include "glheader.h"
@@ -40,64 +34,40 @@
 #include "sp_tile.h"
 
 
-static void mask_copy( GLfloat (*dest)[4],
-		       GLfloat (*src)[4],
-		       GLuint mask )
-{
-   GLuint i, j;
 
-   for (i = 0; i < 4; i++) {
-      if (mask & (1<<i)) {
-	 for (j = 0; j < 4; j++) {
-	    dest[j][i] = src[j][i];
-	 }
-      }
-   }
-}
-
-
-/**
- * Write quad to framebuffer, taking mask into account.
- *
- * Note that surfaces support only full quad reads and writes.
- */
 static void
-output_quad(struct quad_stage *qs, struct quad_header *quad)
+depth_test_quad(struct quad_stage *qs, struct quad_header *quad)
 {
+#if 0
    struct softpipe_context *softpipe = qs->softpipe;
+   GLfloat dest[4][QUAD_SIZE], result[4][QUAD_SIZE];
    GLuint i;
+
+   /* XXX we're also looping in output_quad() !?! */
 
    for (i = 0; i < softpipe->framebuffer.num_cbufs; i++) {
       struct softpipe_surface *sps
          = softpipe_surface(softpipe->framebuffer.cbufs[i]);
+   
+      sps->read_quad_f_swz(sps, quad->x0, quad->y0, dest);
 
-      if (quad->mask != MASK_ALL) {
-         GLfloat tmp[4][QUAD_SIZE];
+      /* XXX do blend here */
 
-         /* Yes, we'll probably have a masked write as well, but this is
-          * how blend will be done at least.
-          */
-
-         sps->read_quad_f_swz(sps, quad->x0, quad->y0, tmp);
-
-         mask_copy( tmp, quad->outputs.color, quad->mask );
-
-         sps->write_quad_f_swz(sps, quad->x0, quad->y0, tmp);
-      }
-      else {
-         sps->write_quad_f_swz(sps, quad->x0, quad->y0, quad->outputs.color);
-      }
    }
+#endif
+
+   qs->next->run(qs->next, quad);
 }
 
 
-struct quad_stage *sp_quad_output_stage( struct softpipe_context *softpipe )
+
+
+struct quad_stage *sp_quad_depth_test_stage( struct softpipe_context *softpipe )
 {
    struct quad_stage *stage = CALLOC_STRUCT(quad_stage);
 
    stage->softpipe = softpipe;
-   stage->run = output_quad;
+   stage->run = depth_test_quad;
 
    return stage;
 }
-

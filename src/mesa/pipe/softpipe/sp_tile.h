@@ -33,10 +33,24 @@
 struct softpipe_context;
 struct quad_header;
 
-void quad_shade( struct softpipe_context *softpipe,
-		 struct quad_header *quad );
 
-void quad_output( struct softpipe_context *softpipe,
-		  struct quad_header *quad );
+struct quad_stage {
+   struct softpipe_context *softpipe;
+
+   struct quad_stage *next;
+
+   /** the stage action */
+   void (*run)(struct quad_stage *qs, struct quad_header *quad);
+};
+
+
+
+struct quad_stage *sp_quad_shade_stage( struct softpipe_context *softpipe );
+struct quad_stage *sp_quad_depth_test_stage( struct softpipe_context *softpipe );
+struct quad_stage *sp_quad_blend_stage( struct softpipe_context *softpipe );
+struct quad_stage *sp_quad_output_stage( struct softpipe_context *softpipe );
+
+void
+sp_build_quad_pipeline(struct softpipe_context *sp);
 
 #endif

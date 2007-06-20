@@ -36,6 +36,18 @@
 #include "sp_tile.h"
 
 
+
+/**
+ * Emit/render a quad.
+ * This passes the quad to the first stage of per-fragment operations.
+ */
+static INLINE void
+quad_emit(struct softpipe_context *sp, struct quad_header *quad)
+{
+   sp->quad.first->run(sp->quad.first, quad);
+}
+
+
 /**
  * Triangle edge info
  */
@@ -121,7 +133,7 @@ static void run_shader_block( struct setup_stage *setup,
    setup->quad.y0 = y;
    setup->quad.mask = mask;
 
-   quad_shade( setup->stage.softpipe, &setup->quad );
+   quad_emit(setup->stage.softpipe, &setup->quad);
 }
 
 
@@ -652,7 +664,7 @@ plot(struct setup_stage *setup, GLint x, GLint y)
       /* flush prev quad, start new quad */
 
       if (setup->quad.x0 != -1) 
-	 quad_shade(setup->stage.softpipe, &setup->quad);
+	 quad_emit(setup->stage.softpipe, &setup->quad);
 
       setup->quad.x0 = quadX;
       setup->quad.y0 = quadY;
@@ -755,7 +767,7 @@ setup_line(struct prim_stage *stage, struct prim_header *prim)
 
    /* draw final quad */
    if (setup->quad.mask) {
-      quad_shade(setup->stage.softpipe, &setup->quad);
+      quad_emit(setup->stage.softpipe, &setup->quad);
    }
 }
 
@@ -810,7 +822,7 @@ setup_point(struct prim_stage *stage, struct prim_header *prim)
       setup->quad.x0 = x - ix;
       setup->quad.y0 = y - iy;
       setup->quad.mask = (1 << ix) << (2 * iy);
-      quad_shade(setup->stage.softpipe, &setup->quad);
+      quad_emit(setup->stage.softpipe, &setup->quad);
    }
    else {
       const GLint ixmin = block((GLint) (x - halfSize));
@@ -870,7 +882,7 @@ setup_point(struct prim_stage *stage, struct prim_header *prim)
             if (setup->quad.mask) {
                setup->quad.x0 = ix;
                setup->quad.y0 = iy;
-               quad_shade( setup->stage.softpipe, &setup->quad );
+               quad_emit( setup->stage.softpipe, &setup->quad );
             }
          }
       }

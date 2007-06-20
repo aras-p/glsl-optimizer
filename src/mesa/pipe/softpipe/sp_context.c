@@ -32,9 +32,6 @@
 #include "imports.h"
 #include "macros.h"
 
-#include "tnl/t_context.h"
-#include "vf/vf.h"
-
 #include "sp_context.h"
 #include "sp_clear.h"
 #include "sp_prim.h"
@@ -88,6 +85,9 @@ struct pipe_context *softpipe_create( void )
    softpipe->prim.flatshade = prim_flatshade( softpipe );
    softpipe->prim.cull      = prim_cull( softpipe );
 
+   softpipe->quad.blend = sp_quad_blend_stage(softpipe);
+   softpipe->quad.shade = sp_quad_shade_stage(softpipe);
+   softpipe->quad.output = sp_quad_output_stage(softpipe);
 
    softpipe->draw = draw_create( softpipe );
 
