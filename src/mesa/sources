@@ -165,18 +165,18 @@ SOFTPIPE_SOURCES = \
 	pipe/softpipe/sp_prim_setup.c \
 	pipe/softpipe/sp_prim_twoside.c \
 	pipe/softpipe/sp_prim_unfilled.c \
+	pipe/softpipe/sp_quad.c \
+	pipe/softpipe/sp_quad_blend.c \
+	pipe/softpipe/sp_quad_depth_test.c \
+	pipe/softpipe/sp_quad_fs.c \
+	pipe/softpipe/sp_quad_output.c \
 	pipe/softpipe/sp_state_blend.c \
 	pipe/softpipe/sp_state_clip.c \
 	pipe/softpipe/sp_state_derived.c \
 	pipe/softpipe/sp_state_fs.c \
 	pipe/softpipe/sp_state_point.c \
 	pipe/softpipe/sp_state_setup.c \
-	pipe/softpipe/sp_state_surface.c \
-	pipe/softpipe/sp_tile.c \
-	pipe/softpipe/sp_tile_blend.c \
-	pipe/softpipe/sp_tile_depth_test.c \
-	pipe/softpipe/sp_tile_fs.c \
-	pipe/softpipe/sp_tile_output.c 
+	pipe/softpipe/sp_state_surface.c
 
 STATETRACKER_SOURCES = \
 	state_tracker/st_atom.c \
