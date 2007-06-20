@@ -68,6 +68,7 @@ struct pipe_context *softpipe_create( void )
    softpipe->pipe.destroy = softpipe_destroy;
    softpipe->pipe.set_framebuffer_state = softpipe_set_framebuffer_state;
    softpipe->pipe.set_clip_state = softpipe_set_clip_state;
+   softpipe->pipe.set_point_state = softpipe_set_point_state;
    softpipe->pipe.set_viewport = softpipe_set_viewport;
    softpipe->pipe.set_setup_state = softpipe_set_setup_state;
    softpipe->pipe.set_scissor_rect = softpipe_set_scissor_rect;

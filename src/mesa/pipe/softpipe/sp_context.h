@@ -54,11 +54,13 @@ enum interp_mode {
 #define G_NEW_SETUP     0x2
 #define G_NEW_FS        0x4
 #define G_NEW_BLEND     0x8
+#define G_NEW_POINT     0x10
 #define G_NEW_CLIP      0x20
 #define G_NEW_SCISSOR   0x40
 #define G_NEW_STIPPLE   0x80
 #define G_NEW_FRAMEBUFFER 0x100
 #define G_NEW_ALPHA_TEST  0x200
+#define G_NEW_DEPTH_TEST  0x400
 
 
 struct softpipe_context {     
@@ -74,6 +76,7 @@ struct softpipe_context {
    struct pipe_blend_state  blend;
    struct pipe_alpha_test_state alpha_test;
    struct pipe_clip_state   clip;
+   struct pipe_point_state  point;
    struct pipe_scissor_rect scissor;
    struct pipe_poly_stipple poly_stipple;
    GLuint dirty;

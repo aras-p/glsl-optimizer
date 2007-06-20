@@ -769,17 +769,12 @@ static void
 setup_point(struct prim_stage *stage, struct prim_header *prim)
 {
    struct setup_stage *setup = setup_stage( stage );
-   GLfloat halfSize = 7.3; /*XXX this is a vertex attrib */
-   GLfloat halfSizeSquared = halfSize * halfSize;
+   /*XXX this should be a vertex attrib! */
+   GLfloat halfSize = 0.5 * setup->stage.softpipe->point.size;
+   GLboolean round = setup->stage.softpipe->point.smooth;
    const struct vertex_header *v0 = prim->v[0];
    const GLfloat x = v0->data[FRAG_ATTRIB_WPOS][0];
    const GLfloat y = v0->data[FRAG_ATTRIB_WPOS][1];
-   const GLint ixmin = block((GLint) (x - halfSize));
-   const GLint ixmax = block((GLint) (x + halfSize));
-   const GLint iymin = block((GLint) (y - halfSize));
-   const GLint iymax = block((GLint) (y + halfSize));
-   GLboolean round = GL_TRUE;
-   GLint ix, iy;
    GLuint slot, j;
 
    /* For points, all interpolants are constant-valued.
@@ -808,57 +803,75 @@ setup_point(struct prim_stage *stage, struct prim_header *prim)
 
    /* XXX need to clip against scissor bounds too */
 
-   for (iy = iymin; iy <= iymax; iy += 2) {
-      for (ix = ixmin; ix <= ixmax; ix += 2) {
+   if (halfSize <= 0.5 && !round) {
+      /* special case for 1-pixel points */
+      const GLint ix = ((GLint) x) & 1;
+      const GLint iy = ((GLint) y) & 1;
+      setup->quad.x0 = x - ix;
+      setup->quad.y0 = y - iy;
+      setup->quad.mask = (1 << ix) << (2 * iy);
+      quad_shade(setup->stage.softpipe, &setup->quad);
+   }
+   else {
+      const GLint ixmin = block((GLint) (x - halfSize));
+      const GLint ixmax = block((GLint) (x + halfSize));
+      const GLint iymin = block((GLint) (y - halfSize));
+      const GLint iymax = block((GLint) (y + halfSize));
+      GLfloat halfSizeSquared = halfSize * halfSize;
+      GLint ix, iy;
 
-         if (round) {
-            /* rounded points */
-            /* XXX for GL_SMOOTH, need to compute per-fragment coverage too */
-            GLfloat dx, dy;
+      for (iy = iymin; iy <= iymax; iy += 2) {
+         for (ix = ixmin; ix <= ixmax; ix += 2) {
 
-            setup->quad.mask = 0x0;
+            if (round) {
+               /* rounded points */
+               /* XXX for GL_SMOOTH, need to compute per-fragment coverage too */
+               GLfloat dx, dy;
 
-            dx = (ix + 0.5) - x;
-            dy = (iy + 0.5) - y;
-            if (dx * dx + dy * dy <= halfSizeSquared)
-               setup->quad.mask |= MASK_BOTTOM_LEFT;
+               setup->quad.mask = 0x0;
 
-            dx = (ix + 1.5) - x;
-            dy = (iy + 0.5) - y;
-            if (dx * dx + dy * dy <= halfSizeSquared)
-               setup->quad.mask |= MASK_BOTTOM_RIGHT;
+               dx = (ix + 0.5) - x;
+               dy = (iy + 0.5) - y;
+               if (dx * dx + dy * dy <= halfSizeSquared)
+                  setup->quad.mask |= MASK_BOTTOM_LEFT;
 
-            dx = (ix + 0.5) - x;
-            dy = (iy + 1.5) - y;
-            if (dx * dx + dy * dy <= halfSizeSquared)
-               setup->quad.mask |= MASK_TOP_LEFT;
+               dx = (ix + 1.5) - x;
+               dy = (iy + 0.5) - y;
+               if (dx * dx + dy * dy <= halfSizeSquared)
+                  setup->quad.mask |= MASK_BOTTOM_RIGHT;
 
-            dx = (ix + 1.5) - x;
-            dy = (iy + 1.5) - y;
-            if (dx * dx + dy * dy <= halfSizeSquared)
-               setup->quad.mask |= MASK_TOP_RIGHT;
-         }
-         else {
-            /* square points */
-            setup->quad.mask = 0xf;
+               dx = (ix + 0.5) - x;
+               dy = (iy + 1.5) - y;
+               if (dx * dx + dy * dy <= halfSizeSquared)
+                  setup->quad.mask |= MASK_TOP_LEFT;
 
-            if (ix + 0.5 < x - halfSize)
-               setup->quad.mask &= (MASK_BOTTOM_RIGHT | MASK_TOP_RIGHT);
+               dx = (ix + 1.5) - x;
+               dy = (iy + 1.5) - y;
+               if (dx * dx + dy * dy <= halfSizeSquared)
+                  setup->quad.mask |= MASK_TOP_RIGHT;
+            }
+            else {
+               /* square points */
+               setup->quad.mask = 0xf;
 
-            if (ix + 1.5 > x + halfSize)
-               setup->quad.mask &= (MASK_BOTTOM_LEFT | MASK_TOP_LEFT);
+               if (ix + 0.5 < x - halfSize)
+                  setup->quad.mask &= (MASK_BOTTOM_RIGHT | MASK_TOP_RIGHT);
 
-            if (iy + 0.5 < y - halfSize)
-               setup->quad.mask &= (MASK_TOP_LEFT | MASK_TOP_RIGHT);
+               if (ix + 1.5 > x + halfSize)
+                  setup->quad.mask &= (MASK_BOTTOM_LEFT | MASK_TOP_LEFT);
 
-            if (iy + 1.5 > y + halfSize)
-               setup->quad.mask &= (MASK_BOTTOM_LEFT | MASK_BOTTOM_RIGHT);
-         }
+               if (iy + 0.5 < y - halfSize)
+                  setup->quad.mask &= (MASK_TOP_LEFT | MASK_TOP_RIGHT);
 
-         if (setup->quad.mask) {
-            setup->quad.x0 = ix;
-            setup->quad.y0 = iy;
-            quad_shade( setup->stage.softpipe, &setup->quad );
+               if (iy + 1.5 > y + halfSize)
+                  setup->quad.mask &= (MASK_BOTTOM_LEFT | MASK_BOTTOM_RIGHT);
+            }
+
+            if (setup->quad.mask) {
+               setup->quad.x0 = ix;
+               setup->quad.y0 = iy;
+               quad_shade( setup->stage.softpipe, &setup->quad );
+            }
          }
       }
    }

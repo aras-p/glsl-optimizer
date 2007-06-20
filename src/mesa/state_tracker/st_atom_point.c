@@ -2,7 +2,7 @@
  * 
  * Copyright 2007 Tungsten Graphics, Inc., Cedar Park, Texas.
  * All Rights Reserved.
- *
+ * 
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the
  * "Software"), to deal in the Software without restriction, including
@@ -25,40 +25,46 @@
  * 
  **************************************************************************/
 
-/* Authors:  Keith Whitwell <keith@tungstengraphics.com>
- */
+ /*
+  * Authors:
+  *   Keith Whitwell <keith@tungstengraphics.com>
+  *   Brian Paul
+  */
+ 
 
-#ifndef SP_STATE_H
-#define SP_STATE_H
+#include "st_context.h"
+#include "st_atom.h"
+#include "pipe/p_context.h"
+#include "pipe/p_defines.h"
 
-#include "glheader.h"
-#include "pipe/p_state.h"
+
+static void 
+update_point( struct st_context *st )
+{
+   struct pipe_point_state point;
+
+   memset(&point, 0, sizeof(point));
+
+   point.smooth = st->ctx->Point.SmoothFlag;
+   point.size = st->ctx->Point.Size;
+   point.min_size = st->ctx->Point.MinSize;
+   point.max_size = st->ctx->Point.MaxSize;
+   point.attenuation[0] = st->ctx->Point.Params[0];
+   point.attenuation[1] = st->ctx->Point.Params[1];
+   point.attenuation[2] = st->ctx->Point.Params[2];
+
+   if (memcmp(&point, &st->state.point, sizeof(point)) != 0) {
+      /* state has changed */
+      st->state.point = point;  /* struct copy */
+      st->pipe->set_point_state(st->pipe, &point); /* set new state */
+   }
+}
 
 
-void softpipe_set_framebuffer_state( struct pipe_context *,
-			     const struct pipe_framebuffer_state * );
-
-void softpipe_set_clip_state( struct pipe_context *,
-			     const struct pipe_clip_state * );
-
-void softpipe_set_viewport( struct pipe_context *,
-			   const struct pipe_viewport * );
-
-void softpipe_set_setup_state( struct pipe_context *,
-			      const struct pipe_setup_state * );
-
-void softpipe_set_scissor_rect( struct pipe_context *,
-			       const struct pipe_scissor_rect * );
-
-void softpipe_set_fs_state( struct pipe_context *,
-			   const struct pipe_fs_state * );
-
-void softpipe_set_point_state( struct pipe_context *,
-                               const struct pipe_point_state * );
-
-void softpipe_set_polygon_stipple( struct pipe_context *,
-				  const struct pipe_poly_stipple * );
-
-void softpipe_update_derived( struct softpipe_context *softpipe );
-
-#endif
+const struct st_tracked_state st_update_point = {
+   .dirty = {
+      .mesa = (_NEW_POINT),
+      .st  = 0,
+   },
+   .update = update_point
+};
