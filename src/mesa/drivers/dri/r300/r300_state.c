@@ -1590,17 +1590,12 @@ static void r300SetupVertexProgram(r300ContextPtr rmesa)
 	int param_count;
 	struct r300_vertex_program *prog = (struct r300_vertex_program *)CURRENT_VERTEX_SHADER(ctx);
 
-	((drm_r300_cmd_header_t *) rmesa->hw.vpp.cmd)->vpu.count = 0;
 	R300_STATECHANGE(rmesa, vpp);
 	param_count = r300VertexProgUpdateParams(ctx, (struct r300_vertex_program_cont *)
 						 ctx->VertexProgram._Current /*prog */ ,
 						 (float *)&rmesa->hw.vpp.cmd[R300_VPP_PARAM_0]);
 	bump_vpu_count(rmesa->hw.vpp.cmd, param_count);
 	param_count /= 4;
-
-	/* Reset state, in case we don't use something */
-	((drm_r300_cmd_header_t *) rmesa->hw.vpi.cmd)->vpu.count = 0;
-	((drm_r300_cmd_header_t *) rmesa->hw.vps.cmd)->vpu.count = 0;
 
 	setup_vertex_shader_fragment(rmesa, VSF_DEST_PROGRAM, &(prog->program));
 #if 0
