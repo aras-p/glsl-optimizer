@@ -64,6 +64,8 @@ enum interp_mode {
 #define G_NEW_DEPTH_TEST  0x400
 
 
+#define PIPE_ATTRIB_MAX 32
+
 struct softpipe_context {     
    struct pipe_context pipe;
 
@@ -94,13 +96,13 @@ struct softpipe_context {
     * For now we just set colors to CONST on flatshade, textures to
     * perspective always and everything else to linear.
     */
-   enum interp_mode interp[VF_ATTRIB_MAX];
+   enum interp_mode interp[PIPE_ATTRIB_MAX];
 
 
    /* FS + setup derived state:
     */
-   GLuint fp_attr_to_slot[VF_ATTRIB_MAX];
-   GLuint vf_attr_to_slot[VF_ATTRIB_MAX];
+   GLuint fp_attr_to_slot[PIPE_ATTRIB_MAX];
+   GLuint vf_attr_to_slot[PIPE_ATTRIB_MAX];
    GLuint nr_attrs;
    GLuint nr_frag_attrs;
    GLuint attr_mask;

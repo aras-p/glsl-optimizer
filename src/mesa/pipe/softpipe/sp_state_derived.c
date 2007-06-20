@@ -30,6 +30,8 @@
 #include "enums.h"
 #include "program.h"
 
+#include "vf/vf.h"
+
 #include "sp_context.h"
 #include "sp_draw.h"
 #include "sp_state.h"

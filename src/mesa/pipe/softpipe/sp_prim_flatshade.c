@@ -29,6 +29,8 @@
  */
 #include "imports.h"
 
+#include "vf/vf.h"
+
 #include "sp_context.h"
 #include "sp_prim.h"
 

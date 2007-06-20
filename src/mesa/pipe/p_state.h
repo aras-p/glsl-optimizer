@@ -29,7 +29,6 @@
 #define PIPE_STATE_H
 
 #include "mtypes.h"
-#include "vf/vf.h"
 
 #define WINDING_NONE 0
 #define WINDING_CW   1
