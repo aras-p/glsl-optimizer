@@ -427,7 +427,7 @@ void r300Flush(GLcontext * ctx)
 #ifdef USER_BUFFERS
 #include "r300_mem.h"
 
-static void r300RefillCurrentDmaRegion(r300ContextPtr rmesa, int size)
+void r300RefillCurrentDmaRegion(r300ContextPtr rmesa, int size)
 {
 	struct r300_dma_buffer *dmabuf;
 	size = MAX2(size, RADEON_BUFFER_SIZE * 16);

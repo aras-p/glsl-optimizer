@@ -68,12 +68,11 @@ static void flush_last_swtcl_prim( r300ContextPtr rmesa  );
 
 void r300EmitVertexAOS(r300ContextPtr rmesa, GLuint vertex_size, GLuint offset);
 void r300EmitVbufPrim(r300ContextPtr rmesa, GLuint primitive, GLuint vertex_nr);
-#define EMIT_ATTR( ATTR, STYLE, F0 )					\
+#define EMIT_ATTR( ATTR, STYLE )					\
 do {									\
    rmesa->swtcl.vertex_attrs[rmesa->swtcl.vertex_attr_count].attrib = (ATTR);	\
    rmesa->swtcl.vertex_attrs[rmesa->swtcl.vertex_attr_count].format = (STYLE);	\
    rmesa->swtcl.vertex_attr_count++;					\
-   vap_fmt_0 |= F0;								\
 } while (0)
 
 #define EMIT_PAD( N )							\
@@ -92,10 +91,18 @@ static void r300SetVertexFormat( GLcontext *ctx )
    DECLARE_RENDERINPUTS(index_bitset);
    int vap_fmt_0 = 0;
    int vap_fmt_1 = 0;
+   int vic_0 = 0, vic_1 = 0;
    int vap_vte_cntl = 0;
    int offset = 0;
+   int vte = 0;
+
+   DECLARE_RENDERINPUTS(render_inputs_bitset);
+
+   RENDERINPUTS_COPY(render_inputs_bitset, tnl->render_inputs_bitset);
 
    RENDERINPUTS_COPY( index_bitset, tnl->render_inputs_bitset );
+
+   RENDERINPUTS_COPY(rmesa->state.render_inputs_bitset, render_inputs_bitset);
 
    /* Important:
     */
@@ -112,23 +119,30 @@ static void r300SetVertexFormat( GLcontext *ctx )
    /* EMIT_ATTR's must be in order as they tell t_vertex.c how to
     * build up a hardware vertex.
     */
-   EMIT_ATTR( _TNL_ATTRIB_POS, EMIT_4F, R300_VAP_OUTPUT_VTX_FMT_0__POS_PRESENT);
-   //   vap_vte_cntl |= R300_VTX_XY_FMT | R300_VTX_Z_FMT | R300_VTX_W0_FMT;
-   
+   EMIT_ATTR( _TNL_ATTRIB_POS, EMIT_4F );
+   vap_fmt_0 |= R300_VAP_OUTPUT_VTX_FMT_0__POS_PRESENT;
+   vap_vte_cntl |= R300_VTX_W0_FMT;
+   vic_1 |= R300_INPUT_CNTL_POS;
+
    offset = 4;
 
    if (RENDERINPUTS_TEST( index_bitset, _TNL_ATTRIB_POINTSIZE )) {
-      EMIT_ATTR( _TNL_ATTRIB_POINTSIZE, EMIT_1F, R300_VAP_OUTPUT_VTX_FMT_0__PT_SIZE_PRESENT);
-      offset += 1;
+     EMIT_ATTR( _TNL_ATTRIB_POINTSIZE, EMIT_1F );
+     vap_fmt_0 |=  R300_VAP_OUTPUT_VTX_FMT_0__PT_SIZE_PRESENT;
+     offset += 1;
    }
 
    rmesa->swtcl.coloroffset = offset;
 #if MESA_LITTLE_ENDIAN 
-   EMIT_ATTR( _TNL_ATTRIB_COLOR0, EMIT_4UB_4F_RGBA, R300_VAP_OUTPUT_VTX_FMT_0__COLOR_PRESENT );
+   EMIT_ATTR( _TNL_ATTRIB_COLOR0, EMIT_4F );
 #else
-   EMIT_ATTR( _TNL_ATTRIB_COLOR0, EMIT_4UB_4F_ABGR, R300_VAP_OUTPUT_VTX_FMT_0__COLOR_PRESENT );
+   EMIT_ATTR( _TNL_ATTRIB_COLOR0, EMIT_4F );
 #endif
-   offset += 1;
+
+   vap_fmt_0 |= R300_VAP_OUTPUT_VTX_FMT_0__COLOR_PRESENT;
+   vic_1 |= R300_INPUT_CNTL_COLOR;
+   vic_0 |= 1;
+   offset += 4;
 
    rmesa->swtcl.specoffset = 0;
    if (RENDERINPUTS_TEST( index_bitset, _TNL_ATTRIB_COLOR1 ) ||
@@ -137,21 +151,25 @@ static void r300SetVertexFormat( GLcontext *ctx )
 #if MESA_LITTLE_ENDIAN 
       if (RENDERINPUTS_TEST( index_bitset, _TNL_ATTRIB_COLOR1 )) {
 	 rmesa->swtcl.specoffset = offset;
-	 EMIT_ATTR( _TNL_ATTRIB_COLOR1, EMIT_3UB_3F_RGB, R300_VAP_OUTPUT_VTX_FMT_0__COLOR_1_PRESENT );
+	 EMIT_ATTR( _TNL_ATTRIB_COLOR1, EMIT_3F );
+	 vap_fmt_0 |= R300_VAP_OUTPUT_VTX_FMT_0__COLOR_1_PRESENT;
+	 vic_0 |= (1<<2);
       }
       else {
 	 EMIT_PAD( 3 );
       }
 
       if (RENDERINPUTS_TEST( index_bitset, _TNL_ATTRIB_FOG )) {
-	 EMIT_ATTR( _TNL_ATTRIB_FOG, EMIT_1UB_1F, R300_VAP_OUTPUT_VTX_FMT_0__COLOR_1_PRESENT );
+ 	 EMIT_ATTR( _TNL_ATTRIB_FOG, EMIT_1UB_1F );
+	 vap_fmt_0 |= R300_VAP_OUTPUT_VTX_FMT_0__COLOR_1_PRESENT;
       }
       else {
 	 EMIT_PAD( 1 );
       }
 #else
       if (RENDERINPUTS_TEST( index_bitset, _TNL_ATTRIB_FOG )) {
-	 EMIT_ATTR( _TNL_ATTRIB_FOG, EMIT_1UB_1F, R300_VAP_OUTPUT_VTX_FMT_0__COLOR_1_PRESENT );
+ 	 EMIT_ATTR( _TNL_ATTRIB_FOG, EMIT_1UB_1F );
+	 vap_fmt_0 |= R300_VAP_OUTPUT_VTX_FMT_0__COLOR_1_PRESENT;
       }
       else {
 	 EMIT_PAD( 1 );
@@ -159,7 +177,8 @@ static void r300SetVertexFormat( GLcontext *ctx )
 
       if (RENDERINPUTS_TEST( index_bitset, _TNL_ATTRIB_COLOR1 )) {
 	 rmesa->swtcl.specoffset = offset;
-	 EMIT_ATTR( _TNL_ATTRIB_COLOR1, EMIT_3UB_3F_BGR, R300_VAP_OUTPUT_VTX_FMT_0__COLOR_1_PRESENT );
+	 EMIT_ATTR( _TNL_ATTRIB_COLOR1, EMIT_3UB_3F_BGR );
+	 vap_fmt_0 |= R300_VAP_OUTPUT_VTX_FMT_0__COLOR_1_PRESENT;
       }
       else {
 	 EMIT_PAD( 3 );
@@ -175,7 +194,8 @@ static void r300SetVertexFormat( GLcontext *ctx )
 	    GLuint sz = VB->TexCoordPtr[i]->size;
 
 	    vap_fmt_1 |= sz << (3 * i);
-	    EMIT_ATTR( _TNL_ATTRIB_TEX0+i, EMIT_1F + sz - 1, 0 );
+	    vic_1 |= 0x400 << i;
+	    EMIT_ATTR( _TNL_ATTRIB_TEX0+i, EMIT_1F + sz - 1 );
 	 }
       }
    }
@@ -189,25 +209,30 @@ static void r300SetVertexFormat( GLcontext *ctx )
    }
 #endif
 
-   if (!RENDERINPUTS_EQUAL( rmesa->tnl_index_bitset, index_bitset ) ||
-	(rmesa->hw.vof.cmd[R300_VOF_CNTL_0] != vap_fmt_0) ||
-	(rmesa->hw.vof.cmd[R300_VOF_CNTL_1] != vap_fmt_1) ) {
-      R300_NEWPRIM(rmesa);
-      R300_STATECHANGE(rmesa, vof);
-      rmesa->hw.vof.cmd[R300_VOF_CNTL_0] =
-	      vap_fmt_0;
-      rmesa->hw.vof.cmd[R300_VOF_CNTL_1] =
-	      vap_fmt_1;
 
+   R300_STATECHANGE(rmesa, vic);
+   rmesa->hw.vic.cmd[R300_VIC_CNTL_0] = 0x1;
+   rmesa->hw.vic.cmd[R300_VIC_CNTL_1] = vic_1;
+
+   R300_STATECHANGE(rmesa, vof);
+   rmesa->hw.vof.cmd[R300_VOF_CNTL_0] = vap_fmt_0;
+   rmesa->hw.vof.cmd[R300_VOF_CNTL_1] = vap_fmt_1;
+
+   if (!RENDERINPUTS_EQUAL( rmesa->tnl_index_bitset, index_bitset)) {
+      
       rmesa->swtcl.vertex_size =
 	  _tnl_install_attrs( ctx,
 			      rmesa->swtcl.vertex_attrs, 
 			      rmesa->swtcl.vertex_attr_count,
 			      NULL, 0 );
-      fprintf(stderr,"Vap fmt 0 %08X, 1 %08X %d \n", vap_fmt_0, vap_fmt_1, rmesa->swtcl.vertex_size);
 
       rmesa->swtcl.vertex_size /= 4;
       RENDERINPUTS_COPY( rmesa->tnl_index_bitset, index_bitset );
+
+      vte = rmesa->hw.vte.cmd[1];
+      R300_STATECHANGE(rmesa, vte);
+      rmesa->hw.vte.cmd[1] = vte;
+      rmesa->hw.vte.cmd[2] = rmesa->swtcl.vertex_size;
    }
 }
 
@@ -223,19 +248,14 @@ static void flush_last_swtcl_prim( r300ContextPtr rmesa  )
 
    if (rmesa->dma.current.buf) {
      struct r300_dma_region *current = &rmesa->dma.current;
-     //     GLuint current_offset = rmesa->state.swtcl_dma.aos_offset;
-
-     GLuint current_offset;
-     current_offset = GET_START(current);
-     //      assert (!(rmesa->swtcl.hw_primitive & R200_VF_PRIM_WALK_IND));
+     GLuint current_offset = GET_START(current);
 
       assert (current->start + 
 	      rmesa->swtcl.numverts * rmesa->swtcl.vertex_size * 4 ==
 	      current->ptr);
 
       if (rmesa->dma.current.start != rmesa->dma.current.ptr) {
-	//	 r200EnsureCmdBufSpace( rmesa, VERT_AOS_BUFSZ +
-	//			        rmesa->hw.max_state_size + VBUF_BUFSZ );
+
 	r300EmitVertexAOS( rmesa,
 			   rmesa->swtcl.vertex_size,
 			   current_offset);
@@ -250,55 +270,53 @@ static void flush_last_swtcl_prim( r300ContextPtr rmesa  )
    }
 }
 
-
+/* Alloc space in the current dma region.
+ */
 static void *
 r300AllocDmaLowVerts( r300ContextPtr rmesa, int nverts, int vsize )
 {
-  GLuint bytes = vsize * nverts;
-  GLubyte *head;
-  r300AllocDmaRegion(rmesa, &rmesa->state.swtcl_dma, bytes, 0);
-  
-  fprintf(stderr, "Alloc DMA region %d\n", bytes);
-  if (!rmesa->dma.flush) {
-    rmesa->dma.flush = flush_last_swtcl_prim;
-    rmesa->radeon.glCtx->Driver.NeedFlush |= FLUSH_STORED_VERTICES;
-  }
+   GLuint bytes = vsize * nverts;
 
-  head = (GLubyte *)(rmesa->dma.current.address + rmesa->dma.current.ptr);
-  rmesa->swtcl.numverts += nverts;
-  rmesa->dma.current.ptr += bytes;
-  return head;
-}
+   if ( rmesa->dma.current.ptr + bytes > rmesa->dma.current.end ) 
+       r300RefillCurrentDmaRegion( rmesa, bytes);
 
-
-static INLINE GLuint reduced_hw_prim( GLcontext *ctx, GLuint prim)
-{
-   switch (prim) {
-   case GL_POINTS:
-      return R300_VAP_VF_CNTL__PRIM_POINTS;
-   case GL_LINES:
-      return R300_VAP_VF_CNTL__PRIM_LINES;
-   /* fallthrough */
-   case GL_LINE_LOOP:
-      return R300_VAP_VF_CNTL__PRIM_LINE_LOOP;
-   /* fallthrough */
-   case GL_LINE_STRIP:
-      return R300_VAP_VF_CNTL__PRIM_LINE_STRIP;
-   default:
-   /* all others reduced to triangles */
-      return R300_VAP_VF_CNTL__PRIM_TRIANGLES;
+   if (!rmesa->dma.flush) {
+      rmesa->radeon.glCtx->Driver.NeedFlush |= FLUSH_STORED_VERTICES;
+      rmesa->dma.flush = flush_last_swtcl_prim;
    }
+
+   ASSERT( vsize == rmesa->swtcl.vertex_size * 4 );
+   ASSERT( rmesa->dma.flush == flush_last_swtcl_prim );
+   ASSERT( rmesa->dma.current.start + 
+	   rmesa->swtcl.numverts * rmesa->swtcl.vertex_size * 4 ==
+	   rmesa->dma.current.ptr );
+
+
+   {
+      GLubyte *head = (GLubyte *) (rmesa->dma.current.address + rmesa->dma.current.ptr);
+      rmesa->dma.current.ptr += bytes;
+      rmesa->swtcl.numverts += nverts;
+      return head;
+   }
+
 }
 
-static void r300RasterPrimitive( GLcontext *ctx, GLuint hwprim );
+static GLuint reduced_prim[] = {
+  GL_POINTS,
+  GL_LINES,
+  GL_LINES,
+  GL_LINES,
+  GL_TRIANGLES,
+  GL_TRIANGLES,
+  GL_TRIANGLES,
+  GL_TRIANGLES,
+  GL_TRIANGLES,
+  GL_TRIANGLES,
+};
+
+static void r300RasterPrimitive( GLcontext *ctx, GLuint prim );
 static void r300RenderPrimitive( GLcontext *ctx, GLenum prim );
 //static void r300ResetLineStipple( GLcontext *ctx );
-
-static void r300PrintVertex(r300Vertex *v)
-{
-  fprintf(stderr,"Vertex %p\n", v);
-
-}
 
 /***********************************************************************
  *                    Emit primitives as inline vertices               *
@@ -313,7 +331,7 @@ static void r300PrintVertex(r300Vertex *v)
 #define HAVE_TRI_STRIP_1 0
 #define HAVE_TRI_FANS    1
 #define HAVE_QUADS       0
-#define HAVE_QUAD_STRIPS 0
+#define HAVE_QUAD_STRIPS 1
 #define HAVE_POLYGONS    1
 #define HAVE_ELTS        1
 
@@ -328,7 +346,7 @@ static void r300PrintVertex(r300Vertex *v)
 #define VERT(x) (r300Vertex *)(r300verts + ((x) * vertsize * sizeof(int)))
 #define VERTEX r300Vertex 
 #define DO_DEBUG_VERTS (1 && (RADEON_DEBUG & DEBUG_VERTS))
-#define PRINT_VERTEX(x) r300PrintVertex(x)
+#define PRINT_VERTEX(x)
 #undef TAG
 #define TAG(x) r300_##x
 #include "tnl_dd/t_dd_triemit.h"
@@ -385,42 +403,31 @@ static struct {
 #define AREA_IS_CCW( a ) (a < 0)
 #define GET_VERTEX(e) (rmesa->swtcl.verts + (e*rmesa->swtcl.vertex_size*sizeof(int)))
 
-#define VERT_SET_RGBA( v, c )  					\
-do {								\
-   r300_color_t *color = (r300_color_t *)&((v)->ui[coloroffset]);	\
-   UNCLAMPED_FLOAT_TO_UBYTE(color->red, (c)[0]);		\
-   UNCLAMPED_FLOAT_TO_UBYTE(color->green, (c)[1]);		\
-   UNCLAMPED_FLOAT_TO_UBYTE(color->blue, (c)[2]);		\
-   UNCLAMPED_FLOAT_TO_UBYTE(color->alpha, (c)[3]);		\
-} while (0)
-
-#define VERT_COPY_RGBA( v0, v1 ) v0->ui[coloroffset] = v1->ui[coloroffset]
-
-#define VERT_SET_SPEC( v, c )					\
-do {								\
-   if (specoffset) {						\
-      r300_color_t *spec = (r300_color_t *)&((v)->ui[specoffset]);	\
-      UNCLAMPED_FLOAT_TO_UBYTE(spec->red, (c)[0]);	\
-      UNCLAMPED_FLOAT_TO_UBYTE(spec->green, (c)[1]);	\
-      UNCLAMPED_FLOAT_TO_UBYTE(spec->blue, (c)[2]);	\
-   }								\
-} while (0)
-#define VERT_COPY_SPEC( v0, v1 )			\
-do {							\
-   if (specoffset) {					\
-      r300_color_t *spec0 = (r300_color_t *)&((v0)->ui[specoffset]);	\
-      r300_color_t *spec1 = (r300_color_t *)&((v1)->ui[specoffset]);	\
-      spec0->red   = spec1->red;	\
-      spec0->green = spec1->green;	\
-      spec0->blue  = spec1->blue; 	\
-   }							\
-} while (0)
-
-/* These don't need LE32_TO_CPU() as they used to save and restore
- * colors which are already in the correct format.
+/* Only used to pull back colors into vertices (ie, we know color is
+ * floating point).
  */
-#define VERT_SAVE_RGBA( idx )    color[idx] = v[idx]->ui[coloroffset]
-#define VERT_RESTORE_RGBA( idx ) v[idx]->ui[coloroffset] = color[idx]
+#define R300_COLOR( dst, src )				\
+do {							\
+   UNCLAMPED_FLOAT_TO_UBYTE((dst)[0], (src)[2]);	\
+   UNCLAMPED_FLOAT_TO_UBYTE((dst)[1], (src)[1]);	\
+   UNCLAMPED_FLOAT_TO_UBYTE((dst)[2], (src)[0]);	\
+   UNCLAMPED_FLOAT_TO_UBYTE((dst)[3], (src)[3]);	\
+} while (0)
+
+#define VERT_SET_RGBA( v, c )    if (coloroffset) R300_COLOR( v->ub4[coloroffset], c )
+#define VERT_COPY_RGBA( v0, v1 ) if (coloroffset) v0->ui[coloroffset] = v1->ui[coloroffset]
+#define VERT_SAVE_RGBA( idx )    if (coloroffset) color[idx] = v[idx]->ui[coloroffset]
+#define VERT_RESTORE_RGBA( idx ) if (coloroffset) v[idx]->ui[coloroffset] = color[idx]
+
+#define R300_SPEC( dst, src )				\
+do {							\
+   UNCLAMPED_FLOAT_TO_UBYTE((dst)[0], (src)[2]);	\
+   UNCLAMPED_FLOAT_TO_UBYTE((dst)[1], (src)[1]);	\
+   UNCLAMPED_FLOAT_TO_UBYTE((dst)[2], (src)[0]);	\
+} while (0)
+
+#define VERT_SET_SPEC( v, c )    if (specoffset) R300_SPEC( v->ub4[specoffset], c )
+#define VERT_COPY_SPEC( v0, v1 ) if (specoffset) COPY_3V(v0->ub4[specoffset], v1->ub4[specoffset])
 #define VERT_SAVE_SPEC( idx )    if (specoffset) spec[idx] = v[idx]->ui[specoffset]
 #define VERT_RESTORE_SPEC( idx ) if (specoffset) v[idx]->ui[specoffset] = spec[idx]
 
@@ -439,7 +446,7 @@ do {							\
  *                Helpers for rendering unfilled primitives            *
  ***********************************************************************/
 
-#define RASTERIZE(x) r300RasterPrimitive( ctx, reduced_hw_prim(ctx, x) )
+#define RASTERIZE(x) r300RasterPrimitive( ctx, reduced_prim[x] )
 #define RENDER_PRIMITIVE rmesa->swtcl.render_primitive
 #undef TAG
 #define TAG(x) x
@@ -469,6 +476,7 @@ do {							\
 #include "tnl_dd/t_dd_tritmp.h"
 
 
+
 static void init_rast_tab( void )
 {
    init();
@@ -491,7 +499,7 @@ static void init_rast_tab( void )
 #define RENDER_QUAD( v0, v1, v2, v3 ) \
    r300_quad( rmesa, VERT(v0), VERT(v1), VERT(v2), VERT(v3) )
 #define INIT(x) do {					\
-   r300RenderPrimitive( ctx, x );			\
+   r300RenderPrimitive( ctx, reduced_prim[x] );			\
 } while (0)
 #undef LOCAL_VARS
 #define LOCAL_VARS						\
@@ -519,21 +527,7 @@ static void init_rast_tab( void )
 /**********************************************************************/
 /*                    Choose render functions                         */
 /**********************************************************************/
-
-void r300ChooseVertexState( GLcontext *ctx )
-{
-   TNLcontext *tnl = TNL_CONTEXT(ctx);
-   r300ContextPtr rmesa = R300_CONTEXT(ctx);
-   GLuint vte[2];
-   _tnl_need_projected_coords( ctx, GL_FALSE );
-   
-   vte[0] = rmesa->hw.vte.cmd[0];
-   vte[1] = rmesa->hw.vte.cmd[1];
-
-
-}
-
-void r300ChooseRenderState( GLcontext *ctx )
+static void r300ChooseRenderState( GLcontext *ctx )
 {
    TNLcontext *tnl = TNL_CONTEXT(ctx);
    r300ContextPtr rmesa = R300_CONTEXT(ctx);
@@ -571,9 +565,23 @@ void r300ChooseRenderState( GLcontext *ctx )
 static void r300RenderStart(GLcontext *ctx)
 {
   r300ContextPtr rmesa = R300_CONTEXT( ctx );
-	fprintf(stderr, "%s\n", __FUNCTION__);
+	int cmd_reserved = 0;
+	int cmd_written = 0;
+	drm_radeon_cmd_header_t *cmd = NULL;
 
+	//	fprintf(stderr, "%s\n", __FUNCTION__);
+	
 	r300SetVertexFormat(ctx);
+
+	r300UpdateShaderStates(rmesa);
+
+	reg_start(R300_RB3D_DSTCACHE_CTLSTAT, 0);
+	e32(R300_RB3D_DSTCACHE_UNKNOWN_0A);
+	
+	reg_start(R300_RB3D_ZCACHE_CTLSTAT, 0);
+	e32(R300_RB3D_ZCACHE_UNKNOWN_03);
+	
+
 	if (rmesa->dma.flush != 0 && 
 	    rmesa->dma.flush != flush_last_swtcl_prim)
 	  rmesa->dma.flush( rmesa );
@@ -581,7 +589,16 @@ static void r300RenderStart(GLcontext *ctx)
 
 static void r300RenderFinish(GLcontext *ctx)
 {
-	fprintf(stderr, "%s\n", __FUNCTION__);
+        r300ContextPtr rmesa = R300_CONTEXT( ctx );
+	int cmd_reserved = 0;
+	int cmd_written = 0;
+	drm_radeon_cmd_header_t *cmd = NULL;
+
+	reg_start(R300_RB3D_DSTCACHE_CTLSTAT, 0);
+	e32(R300_RB3D_DSTCACHE_UNKNOWN_0A);
+
+	reg_start(R300_RB3D_ZCACHE_CTLSTAT, 0);
+	e32(R300_RB3D_ZCACHE_UNKNOWN_03);
 }
 
 static void r300RasterPrimitive( GLcontext *ctx, GLuint hwprim )
@@ -600,8 +617,8 @@ static void r300RenderPrimitive(GLcontext *ctx, GLenum prim)
 	r300ContextPtr rmesa = R300_CONTEXT(ctx);
 	rmesa->swtcl.render_primitive = prim;
 	if (prim < GL_TRIANGLES || !(ctx->_TriangleCaps & DD_TRI_UNFILLED)) 
-	  r300RasterPrimitive( ctx, reduced_hw_prim(ctx, prim) );
-	fprintf(stderr, "%s\n", __FUNCTION__);
+	  r300RasterPrimitive( ctx, prim );
+	//	fprintf(stderr, "%s\n", __FUNCTION__);
 	
 }
 
@@ -632,7 +649,7 @@ void r300InitSwtcl(GLcontext *ctx)
 	
 	/* FIXME: what are these numbers? */
 	_tnl_init_vertices( ctx, ctx->Const.MaxArrayLockSize + 12, 
-			    36 * sizeof(GLfloat) );
+			    48 * sizeof(GLfloat) );
 	
 	rmesa->swtcl.verts = (GLubyte *)tnl->clipspace.vertex_buf;
 	rmesa->swtcl.RenderIndex = ~0;
@@ -643,8 +660,8 @@ void r300InitSwtcl(GLcontext *ctx)
 	_tnl_invalidate_vertices( ctx, ~0 );
 	RENDERINPUTS_ZERO( rmesa->tnl_index_bitset );
 
+	_tnl_need_projected_coords( ctx, GL_FALSE );
 	r300ChooseRenderState(ctx);
-	//	r300ChooseVertexState(ctx);
 }
 
 void r300DestroySwtcl(GLcontext *ctx)
@@ -656,21 +673,28 @@ void r300EmitVertexAOS(r300ContextPtr rmesa, GLuint vertex_size, GLuint offset)
 	int cmd_reserved = 0;
 	int cmd_written = 0;
 	int vte;
+	int route0;
 
 	drm_radeon_cmd_header_t *cmd = NULL;
-	if (1)//RADEON_DEBUG & DEBUG_VERTS)
+	if (RADEON_DEBUG & DEBUG_VERTS)
 	  fprintf(stderr, "%s:  vertex_size %d, offset 0x%x \n",
 		  __FUNCTION__, vertex_size, offset);
 
 	/* emit vte */
-	vte = rmesa->hw.vte.cmd[1];
-	if (vertex_size == 5) {
-	  vte &= ~R300_VTX_W0_FMT;
-	  vte |= R300_VTX_XY_FMT;
-	}
-	R300_STATECHANGE(rmesa, vte);
-	rmesa->hw.vte.cmd[1] = vte;
-	rmesa->hw.vte.cmd[2] = vertex_size;
+
+	R300_STATECHANGE(rmesa, vir[0]);
+	((drm_r300_cmd_header_t *)rmesa->hw.vir[0].cmd)->packet0.count = 1;
+	rmesa->hw.vir[0].cmd[1] = 0x22030003;
+
+	R300_STATECHANGE(rmesa, vir[1]);
+	((drm_r300_cmd_header_t *)rmesa->hw.vir[1].cmd)->packet0.count = 1;
+	
+	route0 = (R300_INPUT_ROUTE_SELECT_X |
+		  (R300_INPUT_ROUTE_SELECT_Y << R300_INPUT_ROUTE_Y_SHIFT) |
+		  (R300_INPUT_ROUTE_SELECT_Z << R300_INPUT_ROUTE_Z_SHIFT) |
+		  (R300_INPUT_ROUTE_SELECT_W << R300_INPUT_ROUTE_W_SHIFT) |(R300_INPUT_ROUTE_ENABLE));
+
+	rmesa->hw.vir[1].cmd[1] = route0 | (route0 << 16);
 
 	start_packet3(CP_PACKET3(R300_PACKET3_3D_LOAD_VBPNTR, 2), 2);
 	e32(1);
@@ -691,7 +715,6 @@ void r300EmitVbufPrim(r300ContextPtr rmesa, GLuint primitive, GLuint vertex_nr)
 	
 	r300EmitState(rmesa);
 	
-	fprintf(stderr, "num verts is %d, type is %d\n", num_verts, type);
 	start_packet3(CP_PACKET3(R300_PACKET3_3D_DRAW_VBUF_2, 0), 0);
 	e32(R300_VAP_VF_CNTL__PRIM_WALK_VERTEX_LIST | (num_verts << 16) | type);
 }
