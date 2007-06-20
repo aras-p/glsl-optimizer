@@ -196,6 +196,8 @@ struct xmesa_renderbuffer
    GLint bottom;	/* used for FLIP macro, equals height - 1 */
 
    ClearFunc clearFunc;
+
+   void *pSurface;      /** pipe surface */
 };
 
 
@@ -584,5 +586,10 @@ GLboolean xmesa_get_cbuf_details( GLcontext *ctx,
 				  GLuint *cpp,
 				  GLint *stride,
 				  GLuint *format );
+
+
+struct pipe_surface;
+struct pipe_surface *
+xmesa_get_color_surface(GLcontext *ctx, GLuint buf);
 
 #endif

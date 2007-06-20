@@ -34,23 +34,6 @@
 #include "sp_surface.h"
 
 
-/* This is all a total hack.
- */
-void softpipe_set_cbuf_state( struct pipe_context *pipe,
-			     const struct pipe_surface *surface )
-{
-   struct softpipe_context *softpipe = softpipe_context(pipe);
-
-   if (softpipe->cbuf_surface == NULL) {
-      softpipe->cbuf_surface = CALLOC_STRUCT(softpipe_surface);
-      softpipe->cbuf_surface->type = &gs_rgba8;
-   }
-
-   softpipe->cbuf_surface->surface = *surface;
-   softpipe->dirty |= G_NEW_CBUF;
-}
-
-
 /*
  * XXX this might get moved someday
  */

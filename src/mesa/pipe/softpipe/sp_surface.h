@@ -38,12 +38,16 @@ struct softpipe_surface;
 
 #define G_SURFACE_RGBA_8888  0x1
 
-/* Internal structs and helpers for the primitive clip/setup pipeline:
- */
-struct softpipe_surface_type {
-   
-   GLuint format;
 
+/**
+ * Softpipe surface is derived from pipe_surface.
+ */
+struct softpipe_surface {
+   struct pipe_surface surface;
+
+   /**
+    * Functions for read/writing surface data
+    */
    void (*read_quad_f)( struct softpipe_surface *,
 			GLint x, GLint y,
 			GLfloat (*rgba)[NUM_CHANNELS] );
@@ -69,47 +73,6 @@ struct softpipe_surface_type {
    void (*write_quad_ub)( struct softpipe_surface *,
 			  GLint x, GLint y,
 			  GLubyte (*rgba)[NUM_CHANNELS] );
-
-
 };
-
-
-struct softpipe_surface {
-   struct softpipe_surface_type *type;
-   struct pipe_surface surface;
-};
-
-
-static INLINE void gs_read_quad_f( struct softpipe_surface *gs,
-				   GLint x, GLint y,
-				   GLfloat (*rgba)[NUM_CHANNELS] )
-{
-   gs->type->read_quad_f(gs, x, y, rgba);
-}
-
-static INLINE void gs_read_quad_f_swz( struct softpipe_surface *gs,
-				       GLint x, GLint y,
-				       GLfloat (*rrrr)[QUAD_SIZE] )
-{
-   gs->type->read_quad_f_swz(gs, x, y, rrrr);
-}
-
-static INLINE void gs_write_quad_f( struct softpipe_surface *gs,
-				    GLint x, GLint y,
-				    GLfloat (*rgba)[NUM_CHANNELS] )
-{
-   gs->type->write_quad_f(gs, x, y, rgba);
-}
-
-static INLINE void gs_write_quad_f_swz( struct softpipe_surface *gs,
-					GLint x, GLint y,
-					GLfloat (*rrrr)[QUAD_SIZE] )
-{
-   gs->type->write_quad_f_swz(gs, x, y, rrrr);
-}
-
-/* Like this, or hidden?
- */
-struct softpipe_surface_type gs_rgba8;
 
 #endif

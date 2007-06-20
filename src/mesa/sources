@@ -169,7 +169,6 @@ SOFTPIPE_SOURCES = \
 	pipe/softpipe/sp_state_fs.c \
 	pipe/softpipe/sp_state_setup.c \
 	pipe/softpipe/sp_state_surface.c \
-	pipe/softpipe/sp_surface.c \
 	pipe/softpipe/sp_tile_fs.c \
 	pipe/softpipe/sp_tile_output.c 
 
@@ -177,7 +176,6 @@ STATETRACKER_SOURCES = \
 	state_tracker/st_atom.c \
 	state_tracker/st_atom_alphatest.c \
 	state_tracker/st_atom_blend.c \
-	state_tracker/st_atom_cbuf.c \
 	state_tracker/st_atom_clip.c \
 	state_tracker/st_atom_depth.c \
 	state_tracker/st_atom_fs.c \
@@ -189,8 +187,6 @@ STATETRACKER_SOURCES = \
 	state_tracker/st_cb_program.c \
 	state_tracker/st_draw.c \
 	state_tracker/st_context.c 
-
-
 
 SHADER_SOURCES = \
 	shader/arbprogparse.c \

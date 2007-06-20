@@ -36,11 +36,8 @@
 #include "pipe/p_context.h"
 
 
-static struct pipe_surface *
-xmesa_get_color_surface(GLcontext *ctx, GLuint i)
-{
-   return NULL;
-}
+extern struct pipe_surface *
+xmesa_get_color_surface(GLcontext *ctx, GLuint i);
 
 
 /**

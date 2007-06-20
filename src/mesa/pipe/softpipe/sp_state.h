@@ -56,9 +56,6 @@ void softpipe_set_fs_state( struct pipe_context *,
 void softpipe_set_polygon_stipple( struct pipe_context *,
 				  const struct pipe_poly_stipple * );
 
-void softpipe_set_cbuf_state( struct pipe_context *,
-			     const struct pipe_surface * );
-
 void softpipe_update_derived( struct softpipe_context *softpipe );
 
 #endif
