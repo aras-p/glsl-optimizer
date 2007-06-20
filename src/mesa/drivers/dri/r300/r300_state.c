@@ -1649,9 +1649,7 @@ static void r300SetupVertexShader(r300ContextPtr rmesa)
 	   0x400 area might have something to do with pixel shaders as it appears right after pfs programming.
 	   0x406 is set to { 0.0, 0.0, 1.0, 0.0 } most of the time but should change with smooth points and in other rare cases. */
 	//setup_vertex_shader_fragment(rmesa, 0x406, &unk4);
-	if (hw_tcl_on
-	    && ((struct r300_vertex_program *)CURRENT_VERTEX_SHADER(ctx))->
-	    translated) {
+	if (hw_tcl_on && ((struct r300_vertex_program *)CURRENT_VERTEX_SHADER(ctx))->translated) {
 		r300SetupVertexProgram(rmesa);
 		return;
 	}
@@ -1659,33 +1657,24 @@ static void r300SetupVertexShader(r300ContextPtr rmesa)
 	/* This needs to be replaced by vertex shader generation code */
 	r300GenerateSimpleVertexShader(rmesa);
 
-	setup_vertex_shader_fragment(rmesa, VSF_DEST_PROGRAM,
-				     &(rmesa->state.vertex_shader.program));
+	setup_vertex_shader_fragment(rmesa, VSF_DEST_PROGRAM, &(rmesa->state.vertex_shader.program));
 
 #if 0
-	setup_vertex_shader_fragment(rmesa, VSF_DEST_UNKNOWN1,
-				     &(rmesa->state.vertex_shader.unknown1));
-	setup_vertex_shader_fragment(rmesa, VSF_DEST_UNKNOWN2,
-				     &(rmesa->state.vertex_shader.unknown2));
+	setup_vertex_shader_fragment(rmesa, VSF_DEST_UNKNOWN1, &(rmesa->state.vertex_shader.unknown1));
+	setup_vertex_shader_fragment(rmesa, VSF_DEST_UNKNOWN2, &(rmesa->state.vertex_shader.unknown2));
 #endif
 
 	R300_STATECHANGE(rmesa, pvs);
 	rmesa->hw.pvs.cmd[R300_PVS_CNTL_1] =
-	    (rmesa->state.vertex_shader.
-	     program_start << R300_PVS_CNTL_1_PROGRAM_START_SHIFT)
-	    | (rmesa->state.vertex_shader.
-	       unknown_ptr1 << R300_PVS_CNTL_1_POS_END_SHIFT)
-	    | (rmesa->state.vertex_shader.
-	       program_end << R300_PVS_CNTL_1_PROGRAM_END_SHIFT);
+	  (rmesa->state.vertex_shader.program_start << R300_PVS_CNTL_1_PROGRAM_START_SHIFT) |
+	  (rmesa->state.vertex_shader.unknown_ptr1 << R300_PVS_CNTL_1_POS_END_SHIFT) |
+	  (rmesa->state.vertex_shader.program_end << R300_PVS_CNTL_1_PROGRAM_END_SHIFT);
 	rmesa->hw.pvs.cmd[R300_PVS_CNTL_2] =
-	    (rmesa->state.vertex_shader.
-	     param_offset << R300_PVS_CNTL_2_PARAM_OFFSET_SHIFT)
-	    | (rmesa->state.vertex_shader.
-	       param_count << R300_PVS_CNTL_2_PARAM_COUNT_SHIFT);
+	  (rmesa->state.vertex_shader.param_offset << R300_PVS_CNTL_2_PARAM_OFFSET_SHIFT) |
+	  (rmesa->state.vertex_shader.param_count << R300_PVS_CNTL_2_PARAM_COUNT_SHIFT);
 	rmesa->hw.pvs.cmd[R300_PVS_CNTL_3] =
-	    (rmesa->state.vertex_shader.
-	     unknown_ptr2 << R300_PVS_CNTL_3_PROGRAM_UNKNOWN_SHIFT)
-	    | (rmesa->state.vertex_shader.unknown_ptr3 << 0);
+	  (rmesa->state.vertex_shader.unknown_ptr2 << R300_PVS_CNTL_3_PROGRAM_UNKNOWN_SHIFT) |
+	  (rmesa->state.vertex_shader.unknown_ptr3 << 0);
 
 	/* This is done for vertex shader fragments, but also needs to be done for vap_pvs,
 	   so I leave it as a reminder */
