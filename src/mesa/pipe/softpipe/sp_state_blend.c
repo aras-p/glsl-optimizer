@@ -45,3 +45,29 @@ void softpipe_set_blend_state( struct pipe_context *pipe,
    softpipe->dirty |= G_NEW_BLEND;
 }
 
+
+/** XXX move someday?  Or consolidate all these simple state setters
+ * into one file.
+ */
+void
+softpipe_set_depth_test_state(struct pipe_context *pipe,
+                              const struct pipe_depth_state *depth)
+{
+   struct softpipe_context *softpipe = softpipe_context(pipe);
+
+   softpipe->depth_test = *depth;
+
+   softpipe->dirty |= G_NEW_DEPTH_TEST;
+}
+
+void
+softpipe_set_alpha_test_state(struct pipe_context *pipe,
+                              const struct pipe_alpha_test_state *alpha)
+{
+   struct softpipe_context *softpipe = softpipe_context(pipe);
+
+   softpipe->alpha_test = *alpha;
+
+   softpipe->dirty |= G_NEW_ALPHA_TEST;
+}
+

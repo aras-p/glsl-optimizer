@@ -134,7 +134,7 @@ void softpipe_update_derived( struct softpipe_context *softpipe )
    if (softpipe->dirty & (G_NEW_SETUP | G_NEW_FS))
       calculate_vertex_layout( softpipe );
 
-   if (softpipe->dirty & (G_NEW_BLEND | G_NEW_FS))
+   if (softpipe->dirty & (G_NEW_BLEND | G_NEW_DEPTH_TEST | G_NEW_ALPHA_TEST | G_NEW_FS))
       sp_build_quad_pipeline(softpipe);
 
    softpipe->dirty = 0;

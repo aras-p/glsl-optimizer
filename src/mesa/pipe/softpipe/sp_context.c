@@ -65,9 +65,11 @@ struct pipe_context *softpipe_create( void )
 
    softpipe->pipe.destroy = softpipe_destroy;
    softpipe->pipe.set_framebuffer_state = softpipe_set_framebuffer_state;
+   softpipe->pipe.set_alpha_test_state = softpipe_set_alpha_test_state;
    softpipe->pipe.set_blend_state = softpipe_set_blend_state;
    softpipe->pipe.set_clip_state = softpipe_set_clip_state;
    softpipe->pipe.set_clear_color_state = softpipe_set_clear_color_state;
+   softpipe->pipe.set_depth_state = softpipe_set_depth_test_state;
    softpipe->pipe.set_point_state = softpipe_set_point_state;
    softpipe->pipe.set_viewport = softpipe_set_viewport;
    softpipe->pipe.set_setup_state = softpipe_set_setup_state;
@@ -87,6 +89,7 @@ struct pipe_context *softpipe_create( void )
    softpipe->prim.cull      = prim_cull( softpipe );
 
    softpipe->quad.blend = sp_quad_blend_stage(softpipe);
+   softpipe->quad.depth_test = sp_quad_depth_test_stage(softpipe);
    softpipe->quad.shade = sp_quad_shade_stage(softpipe);
    softpipe->quad.output = sp_quad_output_stage(softpipe);
 

@@ -1443,7 +1443,7 @@ do {                                   \
 #endif
 
 
-
+#if 0
 GLboolean xmesa_get_cbuf_details( GLcontext *ctx,
 				  void **ptr,
 				  GLuint *cpp,
@@ -1480,7 +1480,7 @@ GLboolean xmesa_get_cbuf_details( GLcontext *ctx,
    *format = 0;
    return GL_FALSE;   
 }
-
+#endif
 
 
 /**

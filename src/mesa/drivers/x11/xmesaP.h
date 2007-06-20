@@ -580,16 +580,23 @@ extern void xmesa_register_swrast_functions( GLcontext *ctx );
 #define ENABLE_EXT_timer_query 0 /* may not have 64-bit GLuint64EXT */
 #endif
 
-
+#if 0
 GLboolean xmesa_get_cbuf_details( GLcontext *ctx,
 				  void **ptr,
 				  GLuint *cpp,
 				  GLint *stride,
 				  GLuint *format );
-
+#endif
 
 struct pipe_surface;
 struct pipe_surface *
 xmesa_get_color_surface(GLcontext *ctx, GLuint buf);
+
+struct pipe_surface *
+xmesa_get_z_surface(GLcontext *ctx, GLuint i);
+
+struct pipe_surface *
+xmesa_get_stencil_surface(GLcontext *ctx, GLuint i);
+
 
 #endif

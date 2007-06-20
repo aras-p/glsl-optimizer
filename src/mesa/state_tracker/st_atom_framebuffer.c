@@ -39,6 +39,12 @@
 extern struct pipe_surface *
 xmesa_get_color_surface(GLcontext *ctx, GLuint i);
 
+extern struct pipe_surface *
+xmesa_get_z_surface(GLcontext *ctx, GLuint i);
+
+extern struct pipe_surface *
+xmesa_get_stencil_surface(GLcontext *ctx, GLuint i);
+
 
 /**
  * Update framebuffer state (color, depth, stencil, etc. buffers)
@@ -56,6 +62,14 @@ update_framebuffer_state( struct st_context *st )
    framebuffer.num_cbufs = st->ctx->DrawBuffer->_NumColorDrawBuffers[0];
    for (i = 0; i < framebuffer.num_cbufs; i++) {
       framebuffer.cbufs[i] = xmesa_get_color_surface(st->ctx, i);
+   }
+
+   if (st->ctx->DrawBuffer->Attachment[BUFFER_DEPTH].Renderbuffer) {
+      framebuffer.zbuf = xmesa_get_z_surface(st->ctx, i);
+   }
+
+   if (st->ctx->DrawBuffer->Attachment[BUFFER_STENCIL].Renderbuffer) {
+      framebuffer.sbuf = xmesa_get_stencil_surface(st->ctx, i);
    }
 
    if (memcmp(&framebuffer, &st->state.framebuffer, sizeof(framebuffer)) != 0) {

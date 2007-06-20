@@ -241,3 +241,17 @@ xmesa_get_color_surface(GLcontext *ctx, GLuint buf)
    return (struct pipe_surface *) xrb->pSurface;
 }
 
+
+struct pipe_surface *
+xmesa_get_z_surface(GLcontext *ctx, GLuint i)
+{
+   return NULL;
+}
+
+
+struct pipe_surface *
+xmesa_get_stencil_surface(GLcontext *ctx, GLuint i)
+{
+   return NULL;
+}
+

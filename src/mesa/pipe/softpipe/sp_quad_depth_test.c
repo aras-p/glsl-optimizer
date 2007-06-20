@@ -32,29 +32,80 @@
 #include "sp_headers.h"
 #include "sp_surface.h"
 #include "sp_quad.h"
-
+#include "pipe/p_defines.h"
 
 
 static void
 depth_test_quad(struct quad_stage *qs, struct quad_header *quad)
 {
-#if 0
    struct softpipe_context *softpipe = qs->softpipe;
-   GLfloat dest[4][QUAD_SIZE], result[4][QUAD_SIZE];
-   GLuint i;
+   GLuint j;
+   struct softpipe_surface *sps = softpipe_surface(softpipe->framebuffer.zbuf);
+   GLfloat zzzz[QUAD_SIZE];  /**< Z for four pixels in quad */
 
-   /* XXX we're also looping in output_quad() !?! */
-
-   for (i = 0; i < softpipe->framebuffer.num_cbufs; i++) {
-      struct softpipe_surface *sps
-         = softpipe_surface(softpipe->framebuffer.cbufs[i]);
-   
-      sps->read_quad_f_swz(sps, quad->x0, quad->y0, dest);
-
-      /* XXX do blend here */
-
-   }
+#if 0
+   assert(sps); /* shouldn't get here if there's no zbuffer */
+#else
+   if (!sps)
+      return;
 #endif
+
+   /* XXX get zquad from zbuffer */
+   sps->read_quad_z(sps, quad->x0, quad->y0, zzzz);
+
+   switch (softpipe->depth_test.func) {
+   case PIPE_FUNC_NEVER:
+      quad->mask = 0x0;
+      break;
+   case PIPE_FUNC_LESS:
+      for (j = 0; j < QUAD_SIZE; j++) {
+         if (quad->mask & (1 << j)) {
+            if (quad->outputs.depth[j] >= zzzz[j]) {
+               /* fail */
+               quad->mask &= (1 << j);
+            }
+            else if (softpipe->depth_test.writemask) {
+               /* pass, and update Z buffer */
+               zzzz[j] = quad->outputs.depth[j];
+            }
+         }
+      }
+      break;
+   case PIPE_FUNC_EQUAL:
+      for (j = 0; j < QUAD_SIZE; j++) {
+         if (quad->mask & (1 << j)) {
+            if (quad->outputs.depth[j] != zzzz[j]) {
+               /* fail */
+               quad->mask &= (1 << j);
+            }
+            else if (softpipe->depth_test.writemask) {
+               /* pass, and update Z buffer */
+               zzzz[j] = quad->outputs.depth[j];
+            }
+         }
+      }
+      break;
+   case PIPE_FUNC_LEQUAL:
+      for (j = 0; j < QUAD_SIZE; j++) {
+         if (quad->mask & (1 << j)) {
+            if (quad->outputs.depth[j] > zzzz[j]) {
+               /* fail */
+               quad->mask &= (1 << j);
+            }
+            else if (softpipe->depth_test.writemask) {
+               /* pass, and update Z buffer */
+               zzzz[j] = quad->outputs.depth[j];
+            }
+         }
+      }
+      break;
+      /* XXX fill in remaining cases */
+   default:
+      abort();
+   }
+
+   /* XXX write updated zquad to zbuffer */
+   sps->write_quad_z(sps, quad->x0, quad->y0, zzzz);
 
    qs->next->run(qs->next, quad);
 }

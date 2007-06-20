@@ -80,6 +80,7 @@ struct softpipe_context {
    struct pipe_alpha_test_state alpha_test;
    struct pipe_clip_state   clip;
    struct pipe_clear_color_state   clear_color;
+   struct pipe_depth_state depth_test;
    struct pipe_point_state  point;
    struct pipe_scissor_rect scissor;
    struct pipe_poly_stipple poly_stipple;
