@@ -33,7 +33,7 @@
 
 #include "sp_context.h"
 #include "sp_prim.h"
-#include "sp_tile.h"
+#include "sp_quad.h"
 
 
 

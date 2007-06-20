@@ -36,7 +36,7 @@
 #include "pipe/p_state.h"
 #include "pipe/p_context.h"
 
-#include "sp_tile.h"
+#include "sp_quad.h"
 
 
 struct softpipe_surface;

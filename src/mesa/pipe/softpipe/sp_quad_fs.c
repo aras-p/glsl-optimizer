@@ -36,7 +36,7 @@
 #include "imports.h"
 #include "sp_context.h"
 #include "sp_headers.h"
-#include "sp_tile.h"
+#include "sp_quad.h"
 
 struct exec_machine {
    const struct setup_coefficient *coef;
