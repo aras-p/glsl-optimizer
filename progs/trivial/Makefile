@@ -63,6 +63,7 @@ SOURCES = \
 	tri-unfilled.c \
 	tri-userclip.c \
 	tri-dlist.c \
+	tri-z.c \
 	tri.c \
 	tristrip-clip.c \
 	tristrip.c \
