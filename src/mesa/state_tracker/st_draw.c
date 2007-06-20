@@ -105,3 +105,17 @@ void st_destroy_draw( struct st_context *st )
    /* Nothing to do. 
     */
 }
+
+
+/** XXX temporary here */
+void
+st_clear(struct st_context *st, GLboolean color, GLboolean depth,
+         GLboolean stencil, GLboolean accum)
+{
+   /* Validate driver and pipe state:
+    */
+   st_validate_state( st );
+
+   st->pipe->clear(st->pipe, color, depth, stencil, accum);
+}
+

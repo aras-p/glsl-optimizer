@@ -37,4 +37,8 @@
 void st_init_draw( struct st_context *st );
 void st_destroy_draw( struct st_context *st );
 
+/** XXX temporary here */
+void st_clear(struct st_context *st, GLboolean color, GLboolean depth,
+              GLboolean stencil, GLboolean accum);
+
 #endif

@@ -40,14 +40,14 @@ void
 softpipe_clear(struct pipe_context *pipe, GLboolean color, GLboolean depth,
                GLboolean stencil, GLboolean accum)
 {
-   struct softpipe_context *softpipe = softpipe_context(pipe);
+   const struct softpipe_context *softpipe = softpipe_context(pipe);
+   const GLint x = softpipe->scissor.minx;
+   const GLint y = softpipe->scissor.miny;
+   const GLint w = softpipe->scissor.maxx - x;
+   const GLint h = softpipe->scissor.maxy - y;
 
    if (color) {
       GLuint i;
-      const GLint x = softpipe->scissor.minx;
-      const GLint y = softpipe->scissor.miny;
-      const GLint w = softpipe->scissor.maxx - x;
-      const GLint h = softpipe->scissor.maxy - y;
       GLubyte clr[4];
 
       UNCLAMPED_FLOAT_TO_UBYTE(clr[0], softpipe->clear_color.color[0]);

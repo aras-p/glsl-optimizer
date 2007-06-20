@@ -55,6 +55,8 @@
 
 #include "pipe/softpipe/sp_context.h"
 #include "state_tracker/st_public.h"
+#include "state_tracker/st_context.h"
+#include "state_tracker/st_draw.h"
 
 
 /*
@@ -393,6 +395,7 @@ clear_buffers(GLcontext *ctx, GLbitfield buffers)
 
       /* we can't handle color or index masking */
       if (*colorMask == 0xffffffff && ctx->Color.IndexMask == 0xffffffff) {
+#if 0
          if (buffers & BUFFER_BIT_FRONT_LEFT) {
             /* clear front color buffer */
             struct gl_renderbuffer *frontRb
@@ -416,6 +419,15 @@ clear_buffers(GLcontext *ctx, GLbitfield buffers)
                buffers &= ~BUFFER_BIT_BACK_LEFT;
             }
          }
+#else
+         /* Clear with state-tracker/pipe interface */
+         struct st_context *st = st_context(ctx);
+         GLboolean color = (buffers & (BUFFER_BIT_FRONT_LEFT | BUFFER_BIT_BACK_LEFT)) ? 1: 0;
+         GLboolean depth = (buffers & BUFFER_BIT_DEPTH) ? 1 : 0;
+         GLboolean stencil = (buffers & BUFFER_BIT_STENCIL) ? 1 : 0;
+         GLboolean accum = (buffers & BUFFER_BIT_ACCUM) ? 1 : 0;
+         st_clear(st, color, depth, stencil, accum);
+#endif
       }
    }
    if (buffers)
