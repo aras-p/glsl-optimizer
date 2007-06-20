@@ -165,6 +165,7 @@ SOFTPIPE_SOURCES = \
 	pipe/softpipe/sp_prim_setup.c \
 	pipe/softpipe/sp_prim_twoside.c \
 	pipe/softpipe/sp_prim_unfilled.c \
+	pipe/softpipe/sp_state_blend.c \
 	pipe/softpipe/sp_state_clip.c \
 	pipe/softpipe/sp_state_derived.c \
 	pipe/softpipe/sp_state_fs.c \

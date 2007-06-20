@@ -27,44 +27,21 @@
 
 /* Authors:  Keith Whitwell <keith@tungstengraphics.com>
  */
+#include "imports.h"
 
-#ifndef SP_STATE_H
-#define SP_STATE_H
-
-#include "glheader.h"
-#include "pipe/p_state.h"
+#include "sp_context.h"
+#include "sp_state.h"
+#include "sp_draw.h"
 
 
-void softpipe_set_framebuffer_state( struct pipe_context *,
-			     const struct pipe_framebuffer_state * );
 
-void softpipe_set_blend_state( struct pipe_context *,
-                               const struct pipe_blend_state * );
+void softpipe_set_blend_state( struct pipe_context *pipe,
+			     const struct pipe_blend_state *blend )
+{
+   struct softpipe_context *softpipe = softpipe_context(pipe);
 
-void softpipe_set_clear_color_state( struct pipe_context *,
-                                     const struct pipe_clear_color_state * );
+   softpipe->blend = *blend;
 
-void softpipe_set_clip_state( struct pipe_context *,
-			     const struct pipe_clip_state * );
+   softpipe->dirty |= G_NEW_BLEND;
+}
 
-void softpipe_set_viewport( struct pipe_context *,
-			   const struct pipe_viewport * );
-
-void softpipe_set_setup_state( struct pipe_context *,
-			      const struct pipe_setup_state * );
-
-void softpipe_set_scissor_rect( struct pipe_context *,
-			       const struct pipe_scissor_rect * );
-
-void softpipe_set_fs_state( struct pipe_context *,
-			   const struct pipe_fs_state * );
-
-void softpipe_set_point_state( struct pipe_context *,
-                               const struct pipe_point_state * );
-
-void softpipe_set_polygon_stipple( struct pipe_context *,
-				  const struct pipe_poly_stipple * );
-
-void softpipe_update_derived( struct softpipe_context *softpipe );
-
-#endif
