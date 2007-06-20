@@ -74,7 +74,7 @@ const struct tnl_pipeline_stage st_draw = {
    draw
 };
 
-static const struct tnl_pipeline_stage *intel_pipeline[] = {
+static const struct tnl_pipeline_stage *st_pipeline[] = {
    &_tnl_vertex_transform_stage,
    &_tnl_vertex_cull_stage,
    &_tnl_normal_transform_stage,
@@ -96,7 +96,7 @@ void st_init_draw( struct st_context *st )
    GLcontext *ctx = st->ctx;
 
    _tnl_destroy_pipeline( ctx );
-   _tnl_install_pipeline( ctx, intel_pipeline );
+   _tnl_install_pipeline( ctx, st_pipeline );
 }
 
 
