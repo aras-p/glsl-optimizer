@@ -2111,62 +2111,61 @@ static void r300SetupPixelShader(r300ContextPtr rmesa)
 			__FUNCTION__);
 		return;
 	}
-#define OUTPUT_FIELD(st, reg, field)  \
-		R300_STATECHANGE(rmesa, st); \
-		for(i=0;i<=fp->alu_end;i++) \
-			rmesa->hw.st.cmd[R300_FPI_INSTR_0+i]=fp->alu.inst[i].field;\
-		rmesa->hw.st.cmd[R300_FPI_CMD_0]=cmdpacket0(reg, fp->alu_end+1);
 
-	OUTPUT_FIELD(fpi[0], R300_PFS_INSTR0_0, inst0);
-	OUTPUT_FIELD(fpi[1], R300_PFS_INSTR1_0, inst1);
-	OUTPUT_FIELD(fpi[2], R300_PFS_INSTR2_0, inst2);
-	OUTPUT_FIELD(fpi[3], R300_PFS_INSTR3_0, inst3);
-#undef OUTPUT_FIELD
+	R300_STATECHANGE(rmesa, fpi[0]);
+	rmesa->hw.fpi[0].cmd[R300_FPI_CMD_0] = cmdpacket0(R300_PFS_INSTR0_0, fp->alu_end + 1);
+	for (i = 0; i <= fp->alu_end; i++) {
+		rmesa->hw.fpi[0].cmd[R300_FPI_INSTR_0 + i] = fp->alu.inst[i].inst0;
+	}
+
+	R300_STATECHANGE(rmesa, fpi[1]);
+	rmesa->hw.fpi[1].cmd[R300_FPI_CMD_0] = cmdpacket0(R300_PFS_INSTR1_0, fp->alu_end + 1);
+	for (i = 0; i <= fp->alu_end; i++) {
+		rmesa->hw.fpi[1].cmd[R300_FPI_INSTR_0 + i] = fp->alu.inst[i].inst1;
+	}
+
+	R300_STATECHANGE(rmesa, fpi[2]);
+	rmesa->hw.fpi[2].cmd[R300_FPI_CMD_0] = cmdpacket0(R300_PFS_INSTR2_0, fp->alu_end + 1);
+	for (i = 0; i <= fp->alu_end; i++) {
+		rmesa->hw.fpi[2].cmd[R300_FPI_INSTR_0 + i] = fp->alu.inst[i].inst2;
+	}
+
+	R300_STATECHANGE(rmesa, fpi[3]);
+	rmesa->hw.fpi[3].cmd[R300_FPI_CMD_0] = cmdpacket0(R300_PFS_INSTR3_0, fp->alu_end + 1);
+	for (i = 0; i <= fp->alu_end; i++) {
+		rmesa->hw.fpi[3].cmd[R300_FPI_INSTR_0 + i] = fp->alu.inst[i].inst3;
+	}
 
 	R300_STATECHANGE(rmesa, fp);
+	rmesa->hw.fp.cmd[R300_FP_CNTL0] = fp->cur_node | (fp->first_node_has_tex << 3);
+	rmesa->hw.fp.cmd[R300_FP_CNTL1] = fp->max_temp_idx;
+	rmesa->hw.fp.cmd[R300_FP_CNTL2] =
+	  (fp->alu_offset << R300_PFS_CNTL_ALU_OFFSET_SHIFT) |
+	  (fp->alu_end << R300_PFS_CNTL_ALU_END_SHIFT) |
+	  (fp->tex_offset << R300_PFS_CNTL_TEX_OFFSET_SHIFT) |
+	  (fp->tex_end << R300_PFS_CNTL_TEX_END_SHIFT);
 	/* I just want to say, the way these nodes are stored.. weird.. */
 	for (i = 0, k = (4 - (fp->cur_node + 1)); i < 4; i++, k++) {
 		if (i < (fp->cur_node + 1)) {
 			rmesa->hw.fp.cmd[R300_FP_NODE0 + k] =
-			    (fp->node[i].
-			     alu_offset << R300_PFS_NODE_ALU_OFFSET_SHIFT)
-			    | (fp->node[i].
-			       alu_end << R300_PFS_NODE_ALU_END_SHIFT)
-			    | (fp->node[i].
-			       tex_offset << R300_PFS_NODE_TEX_OFFSET_SHIFT)
-			    | (fp->node[i].
-			       tex_end << R300_PFS_NODE_TEX_END_SHIFT)
-			    | fp->node[i].flags;
+			  (fp->node[i].alu_offset << R300_PFS_NODE_ALU_OFFSET_SHIFT) |
+			  (fp->node[i].alu_end << R300_PFS_NODE_ALU_END_SHIFT) |
+			  (fp->node[i].tex_offset << R300_PFS_NODE_TEX_OFFSET_SHIFT) |
+			  (fp->node[i].tex_end << R300_PFS_NODE_TEX_END_SHIFT) |
+			  fp->node[i].flags;
 		} else {
 			rmesa->hw.fp.cmd[R300_FP_NODE0 + (3 - i)] = 0;
 		}
 	}
 
-	/*  PFS_CNTL_0 */
-	rmesa->hw.fp.cmd[R300_FP_CNTL0] =
-	    fp->cur_node | (fp->first_node_has_tex << 3);
-	/* PFS_CNTL_1 */
-	rmesa->hw.fp.cmd[R300_FP_CNTL1] = fp->max_temp_idx;
-	/* PFS_CNTL_2 */
-	rmesa->hw.fp.cmd[R300_FP_CNTL2] =
-	    (fp->alu_offset << R300_PFS_CNTL_ALU_OFFSET_SHIFT)
-	    | (fp->alu_end << R300_PFS_CNTL_ALU_END_SHIFT)
-	    | (fp->tex_offset << R300_PFS_CNTL_TEX_OFFSET_SHIFT)
-	    | (fp->tex_end << R300_PFS_CNTL_TEX_END_SHIFT);
-
 	R300_STATECHANGE(rmesa, fpp);
+	rmesa->hw.fpp.cmd[R300_FPP_CMD_0] = cmdpacket0(R300_PFS_PARAM_0_X, fp->const_nr * 4);
 	for (i = 0; i < fp->const_nr; i++) {
-		rmesa->hw.fpp.cmd[R300_FPP_PARAM_0 + 4 * i + 0] =
-		    r300PackFloat24(fp->constant[i][0]);
-		rmesa->hw.fpp.cmd[R300_FPP_PARAM_0 + 4 * i + 1] =
-		    r300PackFloat24(fp->constant[i][1]);
-		rmesa->hw.fpp.cmd[R300_FPP_PARAM_0 + 4 * i + 2] =
-		    r300PackFloat24(fp->constant[i][2]);
-		rmesa->hw.fpp.cmd[R300_FPP_PARAM_0 + 4 * i + 3] =
-		    r300PackFloat24(fp->constant[i][3]);
+		rmesa->hw.fpp.cmd[R300_FPP_PARAM_0 + 4 * i + 0] = r300PackFloat24(fp->constant[i][0]);
+		rmesa->hw.fpp.cmd[R300_FPP_PARAM_0 + 4 * i + 1] = r300PackFloat24(fp->constant[i][1]);
+		rmesa->hw.fpp.cmd[R300_FPP_PARAM_0 + 4 * i + 2] = r300PackFloat24(fp->constant[i][2]);
+		rmesa->hw.fpp.cmd[R300_FPP_PARAM_0 + 4 * i + 3] = r300PackFloat24(fp->constant[i][3]);
 	}
-	rmesa->hw.fpp.cmd[R300_FPP_CMD_0] =
-	    cmdpacket0(R300_PFS_PARAM_0_X, fp->const_nr * 4);
 }
 
 void r300UpdateShaderStates(r300ContextPtr rmesa)
