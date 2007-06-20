@@ -588,7 +588,7 @@ struct r300_vertex_shader_state {
 	struct r300_vertex_shader_fragment unknown2;
 
 	int program_start;
-	int unknown_ptr1;	/* pointer within program space */
+	int program_pos_end;
 	int program_end;
 
 	int param_offset;

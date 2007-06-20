@@ -1531,7 +1531,7 @@ static void r300GenerateSimpleVertexShader(r300ContextPtr r300)
 	r300->state.vertex_shader.param_count = 0x4;	/* 4 vector values - 4x4 matrix */
 
 	r300->state.vertex_shader.program_start = 0x0;
-	r300->state.vertex_shader.unknown_ptr1 = 0x4;	/* magic value ? */
+	r300->state.vertex_shader.program_pos_end = 0x4;
 	r300->state.vertex_shader.program_end = 0x0;
 
 	r300->state.vertex_shader.unknown_ptr2 = 0x0;	/* magic value */
@@ -1563,7 +1563,7 @@ static void r300GenerateSimpleVertexShader(r300ContextPtr r300)
 	r300->state.vertex_shader.program.length =
 	    (r300->state.vertex_shader.program_end + 1) * 4;
 
-	r300->state.vertex_shader.unknown_ptr1 = r300->state.vertex_shader.program_end;	/* magic value ? */
+	r300->state.vertex_shader.program_pos_end = r300->state.vertex_shader.program_end;
 	r300->state.vertex_shader.unknown_ptr2 = r300->state.vertex_shader.program_end;	/* magic value ? */
 	r300->state.vertex_shader.unknown_ptr3 = r300->state.vertex_shader.program_end;	/* magic value ? */
 
@@ -1607,7 +1607,7 @@ static void r300SetupVertexProgram(r300ContextPtr rmesa)
 	  (param_count << R300_PVS_CNTL_2_PARAM_COUNT_SHIFT);
 	rmesa->hw.pvs.cmd[R300_PVS_CNTL_3] =
 	  (0 << R300_PVS_CNTL_3_PROGRAM_UNKNOWN_SHIFT) |
-	  (inst_count << 0);
+	  (inst_count << R300_PVS_CNTL_3_PROGRAM_UNKNOWN2_SHIFT);
 
 	/* This is done for vertex shader fragments, but also needs to be done for vap_pvs,
 	   so I leave it as a reminder */
@@ -1648,14 +1648,14 @@ static void r300SetupVertexShader(r300ContextPtr rmesa)
 	R300_STATECHANGE(rmesa, pvs);
 	rmesa->hw.pvs.cmd[R300_PVS_CNTL_1] =
 	  (rmesa->state.vertex_shader.program_start << R300_PVS_CNTL_1_PROGRAM_START_SHIFT) |
-	  (rmesa->state.vertex_shader.unknown_ptr1 << R300_PVS_CNTL_1_POS_END_SHIFT) |
+	  (rmesa->state.vertex_shader.program_pos_end << R300_PVS_CNTL_1_POS_END_SHIFT) |
 	  (rmesa->state.vertex_shader.program_end << R300_PVS_CNTL_1_PROGRAM_END_SHIFT);
 	rmesa->hw.pvs.cmd[R300_PVS_CNTL_2] =
 	  (rmesa->state.vertex_shader.param_offset << R300_PVS_CNTL_2_PARAM_OFFSET_SHIFT) |
 	  (rmesa->state.vertex_shader.param_count << R300_PVS_CNTL_2_PARAM_COUNT_SHIFT);
 	rmesa->hw.pvs.cmd[R300_PVS_CNTL_3] =
 	  (rmesa->state.vertex_shader.unknown_ptr2 << R300_PVS_CNTL_3_PROGRAM_UNKNOWN_SHIFT) |
-	  (rmesa->state.vertex_shader.unknown_ptr3 << 0);
+	  (rmesa->state.vertex_shader.unknown_ptr3 << R300_PVS_CNTL_3_PROGRAM_UNKNOWN2_SHIFT);
 
 	/* This is done for vertex shader fragments, but also needs to be done for vap_pvs,
 	   so I leave it as a reminder */

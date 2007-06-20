@@ -336,13 +336,15 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
  * The meaning of the two UNKNOWN fields is obviously not known. However,
  * experiments so far have shown that both *must* point to an instruction
  * inside the vertex program, otherwise the GPU locks up.
+ *
  * fglrx usually sets CNTL_3_UNKNOWN to the end of the program and
- * CNTL_1_UNKNOWN points to instruction where last write to position takes
- * place.
+ * R300_PVS_CNTL_1_POS_END_SHIFT points to instruction where last write to
+ * position takes place.
+ *
  * Most likely this is used to ignore rest of the program in cases
  * where group of verts arent visible. For some reason this "section"
  * is sometimes accepted other instruction that have no relationship with
- *position calculations.
+ * position calculations.
  */
 #define R300_VAP_PVS_CNTL_1                 0x22D0
 #       define R300_PVS_CNTL_1_PROGRAM_START_SHIFT   0
