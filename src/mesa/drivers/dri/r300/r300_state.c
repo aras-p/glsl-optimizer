@@ -1477,9 +1477,7 @@ static void r300SetupRSUnit(GLcontext * ctx)
 	if(_nc>_p->vpu.count)_p->vpu.count=_nc;\
 	}while(0)
 
-void static inline setup_vertex_shader_fragment(r300ContextPtr r300, int dest, struct
-						r300_vertex_shader_fragment
-						*vsf)
+static inline void setup_vertex_shader_fragment(r300ContextPtr r300, int dest, struct r300_vertex_shader_fragment *vsf)
 {
 	int i;
 
@@ -1487,8 +1485,7 @@ void static inline setup_vertex_shader_fragment(r300ContextPtr r300, int dest, s
 		return;
 
 	if (vsf->length & 0x3) {
-		fprintf(stderr,
-			"VERTEX_SHADER_FRAGMENT must have length divisible by 4\n");
+		fprintf(stderr, "VERTEX_SHADER_FRAGMENT must have length divisible by 4\n");
 		_mesa_exit(-1);
 	}
 
@@ -1496,32 +1493,24 @@ void static inline setup_vertex_shader_fragment(r300ContextPtr r300, int dest, s
 	case 0:
 		R300_STATECHANGE(r300, vpi);
 		for (i = 0; i < vsf->length; i++)
-			r300->hw.vpi.cmd[R300_VPI_INSTR_0 + i +
-					 4 * (dest & 0xff)] = (vsf->body.d[i]);
-		bump_vpu_count(r300->hw.vpi.cmd,
-			       vsf->length + 4 * (dest & 0xff));
+			r300->hw.vpi.cmd[R300_VPI_INSTR_0 + i + 4 * (dest & 0xff)] = (vsf->body.d[i]);
+		bump_vpu_count(r300->hw.vpi.cmd, vsf->length + 4 * (dest & 0xff));
 		break;
 
 	case 2:
 		R300_STATECHANGE(r300, vpp);
 		for (i = 0; i < vsf->length; i++)
-			r300->hw.vpp.cmd[R300_VPP_PARAM_0 + i +
-					 4 * (dest & 0xff)] = (vsf->body.d[i]);
-		bump_vpu_count(r300->hw.vpp.cmd,
-			       vsf->length + 4 * (dest & 0xff));
+			r300->hw.vpp.cmd[R300_VPP_PARAM_0 + i + 4 * (dest & 0xff)] = (vsf->body.d[i]);
+		bump_vpu_count(r300->hw.vpp.cmd, vsf->length + 4 * (dest & 0xff));
 		break;
 	case 4:
 		R300_STATECHANGE(r300, vps);
 		for (i = 0; i < vsf->length; i++)
-			r300->hw.vps.cmd[1 + i + 4 * (dest & 0xff)] =
-			    (vsf->body.d[i]);
-		bump_vpu_count(r300->hw.vps.cmd,
-			       vsf->length + 4 * (dest & 0xff));
+			r300->hw.vps.cmd[1 + i + 4 * (dest & 0xff)] = (vsf->body.d[i]);
+		bump_vpu_count(r300->hw.vps.cmd, vsf->length + 4 * (dest & 0xff));
 		break;
 	default:
-		fprintf(stderr,
-			"%s:%s don't know how to handle dest %04x\n",
-			__FILE__, __FUNCTION__, dest);
+		fprintf(stderr, "%s:%s don't know how to handle dest %04x\n", __FILE__, __FUNCTION__, dest);
 		_mesa_exit(-1);
 	}
 }
@@ -1586,16 +1575,13 @@ static void r300SetupVertexProgram(r300ContextPtr rmesa)
 	GLcontext *ctx = rmesa->radeon.glCtx;
 	int inst_count;
 	int param_count;
-	struct r300_vertex_program *prog =
-	    (struct r300_vertex_program *)CURRENT_VERTEX_SHADER(ctx);
+	struct r300_vertex_program *prog = (struct r300_vertex_program *)CURRENT_VERTEX_SHADER(ctx);
 
 	((drm_r300_cmd_header_t *) rmesa->hw.vpp.cmd)->vpu.count = 0;
 	R300_STATECHANGE(rmesa, vpp);
-	param_count =
-	    r300VertexProgUpdateParams(ctx, (struct r300_vertex_program_cont *)
-				       ctx->VertexProgram._Current /*prog */ ,
-				       (float *)&rmesa->hw.vpp.
-				       cmd[R300_VPP_PARAM_0]);
+	param_count = r300VertexProgUpdateParams(ctx, (struct r300_vertex_program_cont *)
+						 ctx->VertexProgram._Current /*prog */ ,
+						 (float *)&rmesa->hw.vpp.cmd[R300_VPP_PARAM_0]);
 	bump_vpu_count(rmesa->hw.vpp.cmd, param_count);
 	param_count /= 4;
 
@@ -1606,27 +1592,23 @@ static void r300SetupVertexProgram(r300ContextPtr rmesa)
 	setup_vertex_shader_fragment(rmesa, VSF_DEST_PROGRAM, &(prog->program));
 
 #if 0
-	setup_vertex_shader_fragment(rmesa, VSF_DEST_UNKNOWN1,
-				     &(rmesa->state.vertex_shader.unknown1));
-	setup_vertex_shader_fragment(rmesa, VSF_DEST_UNKNOWN2,
-				     &(rmesa->state.vertex_shader.unknown2));
+	setup_vertex_shader_fragment(rmesa, VSF_DEST_UNKNOWN1, &(rmesa->state.vertex_shader.unknown1));
+	setup_vertex_shader_fragment(rmesa, VSF_DEST_UNKNOWN2, &(rmesa->state.vertex_shader.unknown2));
 #endif
 
 	inst_count = prog->program.length / 4 - 1;
 
 	R300_STATECHANGE(rmesa, pvs);
 	rmesa->hw.pvs.cmd[R300_PVS_CNTL_1] =
-	    (0 << R300_PVS_CNTL_1_PROGRAM_START_SHIFT)
-	    | (inst_count /*pos_end */  << R300_PVS_CNTL_1_POS_END_SHIFT)
-	    | (inst_count << R300_PVS_CNTL_1_PROGRAM_END_SHIFT);
+	  (0 << R300_PVS_CNTL_1_PROGRAM_START_SHIFT) |
+	  (inst_count << R300_PVS_CNTL_1_POS_END_SHIFT) |
+	  (inst_count << R300_PVS_CNTL_1_PROGRAM_END_SHIFT);
 	rmesa->hw.pvs.cmd[R300_PVS_CNTL_2] =
-	    (0 << R300_PVS_CNTL_2_PARAM_OFFSET_SHIFT)
-	    | (param_count << R300_PVS_CNTL_2_PARAM_COUNT_SHIFT);
+	  (0 << R300_PVS_CNTL_2_PARAM_OFFSET_SHIFT) |
+	  (param_count << R300_PVS_CNTL_2_PARAM_COUNT_SHIFT);
 	rmesa->hw.pvs.cmd[R300_PVS_CNTL_3] =
-	    (0 /*rmesa->state.vertex_shader.unknown_ptr2 */  <<
-	     R300_PVS_CNTL_3_PROGRAM_UNKNOWN_SHIFT)
-	    | (inst_count /*rmesa->state.vertex_shader.unknown_ptr3 */  <<
-	       0);
+	  (0 << R300_PVS_CNTL_3_PROGRAM_UNKNOWN_SHIFT) |
+	  (inst_count << 0);
 
 	/* This is done for vertex shader fragments, but also needs to be done for vap_pvs,
 	   so I leave it as a reminder */
