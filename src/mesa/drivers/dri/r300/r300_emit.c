@@ -217,14 +217,14 @@ static GLuint r300VAPInputRoute0(uint32_t * dst, GLvector4f ** attribptr,
 		dw = R300_INPUT_ROUTE_FLOAT | (inputs[tab[i]] << 8) | (attribptr[tab[i]]->size - 1);
 		dw |= (R300_INPUT_ROUTE_FLOAT | (inputs[tab[i + 1]] << 8) | (attribptr[tab[i + 1]]->size - 1)) << 16;
 		if (i + 2 == nr) {
-			dw |= (1 << (13 + 16));
+			dw |= (R300_VAP_INPUT_ROUTE_END << 16);
 		}
 		dst[i >> 1] = dw;
 	}
 
 	if (nr & 1) {
 		dw = R300_INPUT_ROUTE_FLOAT | (inputs[tab[nr - 1]] << 8) | (attribptr[tab[nr - 1]]->size - 1);
-		dw |= 1 << 13;
+		dw |= R300_VAP_INPUT_ROUTE_END;
 		dst[nr >> 1] = dw;
 	}
 
@@ -394,20 +394,18 @@ int r300EmitArrays(GLcontext * ctx)
 			}
 		}
 
-		if (!(rmesa->radeon.radeonScreen->chip_flags & RADEON_CHIPSET_TCL)) {
-			/* Fixed, apply to vir0 only */
-			memcpy(vir_inputs, inputs, VERT_ATTRIB_MAX * sizeof(int));
-			inputs = vir_inputs;
-			if (InputsRead & VERT_ATTRIB_POS)
-				inputs[VERT_ATTRIB_POS] = 0;
-			if (InputsRead & (1 << VERT_ATTRIB_COLOR0))
-				inputs[VERT_ATTRIB_COLOR0] = 2;
-			if (InputsRead & (1 << VERT_ATTRIB_COLOR1))
-				inputs[VERT_ATTRIB_COLOR1] = 3;
-			for (i = VERT_ATTRIB_TEX0; i <= VERT_ATTRIB_TEX7; i++)
-				if (InputsRead & (1 << i))
-					inputs[i] = 6 + (i - VERT_ATTRIB_TEX0);
-		}
+		/* Fixed, apply to vir0 only */
+		memcpy(vir_inputs, inputs, VERT_ATTRIB_MAX * sizeof(int));
+		inputs = vir_inputs;
+		if (InputsRead & VERT_ATTRIB_POS)
+			inputs[VERT_ATTRIB_POS] = 0;
+		if (InputsRead & (1 << VERT_ATTRIB_COLOR0))
+			inputs[VERT_ATTRIB_COLOR0] = 2;
+		if (InputsRead & (1 << VERT_ATTRIB_COLOR1))
+			inputs[VERT_ATTRIB_COLOR1] = 3;
+		for (i = VERT_ATTRIB_TEX0; i <= VERT_ATTRIB_TEX7; i++)
+			if (InputsRead & (1 << i))
+				inputs[i] = 6 + (i - VERT_ATTRIB_TEX0);
 
 		RENDERINPUTS_COPY(rmesa->state.render_inputs_bitset, render_inputs_bitset);
 	}
