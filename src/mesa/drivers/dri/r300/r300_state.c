@@ -1527,7 +1527,6 @@ static void r300GenerateSimpleVertexShader(r300ContextPtr r300)
 	GLuint o_reg = 0;
 
 	/* Allocate parameters */
-	r300->state.vap_param.transform_offset = 0x0;	/* transform matrix */
 	r300->state.vertex_shader.param_offset = 0x0;
 	r300->state.vertex_shader.param_count = 0x4;	/* 4 vector values - 4x4 matrix */
 
