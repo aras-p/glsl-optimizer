@@ -26,3 +26,4 @@
  */
 
 int i915_disasm(uint32_t *data, int count, uint32_t hw_offset);
+void i915_disasm_context_reset();

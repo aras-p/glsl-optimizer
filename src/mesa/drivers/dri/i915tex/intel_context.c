@@ -59,6 +59,7 @@
 #include "intel_regions.h"
 #include "intel_buffer_objects.h"
 #include "intel_fbo.h"
+#include "i915_disasm.h"
 
 #include "drirenderbuffer.h"
 #include "vblank.h"
@@ -646,6 +647,8 @@ intelContendedLock(struct intel_context *intel, GLuint flags)
    if (!intel->intelScreen->ttm && sarea->texAge != intel->hHWContext) {
       sarea->texAge = intel->hHWContext;
       dri_bufmgr_fake_contended_lock_take(intel->intelScreen->bufmgr);
+      if (INTEL_DEBUG & DEBUG_BATCH)
+	 i915_disasm_context_reset();
    }
 
    if (sarea->width != intelScreen->width ||

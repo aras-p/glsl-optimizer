@@ -731,3 +731,10 @@ i915_disasm(uint32_t *data, int count, uint32_t hw_offset)
 
     return failures;
 }
+
+void i915_disasm_context_reset()
+{
+    saved_s2_set = 0;
+    saved_s4_set = 1;
+}
+
