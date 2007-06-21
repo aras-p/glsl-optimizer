@@ -171,6 +171,11 @@ interpolate_active_attribs(GLcontext *ctx, SWspan *span, GLbitfield attrMask)
 {
    const SWcontext *swrast = SWRAST_CONTEXT(ctx);
 
+   /* for glDraw/CopyPixels() we may have turned off some bits in
+    * the _ActiveAttribMask - be sure to obey that mask now.
+    */
+   attrMask &= swrast->_ActiveAttribMask;
+
    ATTRIB_LOOP_BEGIN
       if (attrMask & (1 << attr)) {
          const GLfloat dwdx = span->attrStepX[FRAG_ATTRIB_WPOS][3];
@@ -1169,15 +1174,10 @@ shade_texture_span(GLcontext *ctx, SWspan *span)
    if (ctx->FragmentProgram._Current ||
        ctx->ATIFragmentShader._Enabled) {
       /* programmable shading */
-      if (span->primitive == GL_BITMAP) {
-         if (span->array->ChanType != GL_FLOAT)
-            convert_color_type(span, GL_FLOAT, 0);
-         interpolate_active_attribs(ctx, span, ~FRAG_ATTRIB_COL0);
+      if (span->primitive == GL_BITMAP && span->array->ChanType != GL_FLOAT) {
+         convert_color_type(span, GL_FLOAT, 0);
       }
-      else {
-         /* point, line, triangle */
-         interpolate_active_attribs(ctx, span, ~0);
-      }
+      interpolate_active_attribs(ctx, span, ~0);
       span->array->ChanType = GL_FLOAT;
 
       if (!(span->arrayMask & SPAN_Z))

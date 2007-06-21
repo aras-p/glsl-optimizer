@@ -188,6 +188,8 @@ static void
 copy_rgba_pixels(GLcontext *ctx, GLint srcx, GLint srcy,
                  GLint width, GLint height, GLint destx, GLint desty)
 {
+   SWcontext *swrast = SWRAST_CONTEXT(ctx);
+   const GLbitfield prevActiveAttribs = swrast->_ActiveAttribMask;
    GLfloat *tmpImage, *p;
    GLint sy, dy, stepy, row;
    const GLboolean zoom = ctx->Pixel.ZoomX != 1.0F || ctx->Pixel.ZoomY != 1.0F;
@@ -197,12 +199,15 @@ copy_rgba_pixels(GLcontext *ctx, GLint srcx, GLint srcy,
 
    if (!ctx->ReadBuffer->_ColorReadBuffer) {
       /* no readbuffer - OK */
-      return;
+      goto end;
    }
+
+   /* don't interpolate COL0 and overwrite the glDrawPixel colors! */
+   swrast->_ActiveAttribMask &= ~FRAG_BIT_COL0;
 
    if (ctx->Pixel.Convolution2DEnabled || ctx->Pixel.Separable2DEnabled) {
       copy_conv_rgba_pixels(ctx, srcx, srcy, width, height, destx, desty);
-      return;
+      goto end;
    }
    else if (ctx->Pixel.Convolution1DEnabled) {
       /* make sure we don't apply 1D convolution */
@@ -239,7 +244,7 @@ copy_rgba_pixels(GLcontext *ctx, GLint srcx, GLint srcy,
       tmpImage = (GLfloat *) _mesa_malloc(width * height * sizeof(GLfloat) * 4);
       if (!tmpImage) {
          _mesa_error( ctx, GL_OUT_OF_MEMORY, "glCopyPixels" );
-         return;
+         goto end;
       }
       /* read the source image as RGBA/float */
       p = tmpImage;
@@ -294,6 +299,9 @@ copy_rgba_pixels(GLcontext *ctx, GLint srcx, GLint srcy,
 
    if (overlapping)
       _mesa_free(tmpImage);
+
+end:
+   swrast->_ActiveAttribMask = prevActiveAttribs;
 }
 
 

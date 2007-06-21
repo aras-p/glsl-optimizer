@@ -439,21 +439,25 @@ intelDrawPixels( GLcontext *ctx,
    if (INTEL_DEBUG & DEBUG_PIXEL)
       fprintf(stderr, "%s\n", __FUNCTION__);
 
-   if (!intelTryDrawPixels( ctx, x, y, width, height, format, type,
-                            unpack, pixels )) {
-      if (ctx->FragmentProgram._Current == 
-          ctx->FragmentProgram._TexEnvProgram) {
-         /* don't want the i915 texenv program to be applied to DrawPixels */
-         struct gl_fragment_program *fpSave = ctx->FragmentProgram._Current;
-         ctx->FragmentProgram._Current = NULL;
-         _swrast_DrawPixels( ctx, x, y, width, height, format, type,
-                             unpack, pixels );
-         ctx->FragmentProgram._Current = fpSave;
-      }
-      else {
-         _swrast_DrawPixels( ctx, x, y, width, height, format, type,
-                             unpack, pixels );
-      }
+   if (intelTryDrawPixels( ctx, x, y, width, height, format, type,
+                           unpack, pixels ))
+      return;
+
+   if (ctx->FragmentProgram._Current == ctx->FragmentProgram._TexEnvProgram) {
+      /*
+       * We don't want the i915 texenv program to be applied to DrawPixels.
+       * This is really just a performance optimization (mesa will other-
+       * wise happily run the fragment program on each pixel in the image).
+       */
+      struct gl_fragment_program *fpSave = ctx->FragmentProgram._Current;
+      ctx->FragmentProgram._Current = NULL;
+      _swrast_DrawPixels( ctx, x, y, width, height, format, type,
+                          unpack, pixels );
+      ctx->FragmentProgram._Current = fpSave;
+   }
+   else {
+      _swrast_DrawPixels( ctx, x, y, width, height, format, type,
+                          unpack, pixels );
    }
 }
 
