@@ -372,25 +372,25 @@ static void r300SetVertexFormat( GLcontext *ctx )
      }
    }
 
-   R300_STATECHANGE(rmesa, vir[0]);
-   ((drm_r300_cmd_header_t *) rmesa->hw.vir[0].cmd)->packet0.count =
-     r300VAPInputRoute0(&rmesa->hw.vir[0].cmd[R300_VIR_CNTL_0],
-			VB->AttribPtr, inputs, tab, nr);
-   R300_STATECHANGE(rmesa, vir[1]);
-   ((drm_r300_cmd_header_t *) rmesa->hw.vir[1].cmd)->packet0.count =
-     r300VAPInputRoute1(&rmesa->hw.vir[1].cmd[R300_VIR_CNTL_0], swizzle,
-			nr);
-
-   R300_STATECHANGE(rmesa, vic);
-   rmesa->hw.vic.cmd[R300_VIC_CNTL_0] = r300VAPInputCntl0(ctx, InputsRead);
-   rmesa->hw.vic.cmd[R300_VIC_CNTL_1] = r300VAPInputCntl1(ctx, InputsRead);
-
-   R300_STATECHANGE(rmesa, vof);
-   rmesa->hw.vof.cmd[R300_VOF_CNTL_0] = r300VAPOutputCntl0(ctx, OutputsWritten);
-   rmesa->hw.vof.cmd[R300_VOF_CNTL_1] = r300VAPOutputCntl1(ctx, OutputsWritten);
-
    if (!RENDERINPUTS_EQUAL( rmesa->tnl_index_bitset, index_bitset)) {
-      
+     R300_NEWPRIM(rmesa);
+     R300_STATECHANGE(rmesa, vir[0]);
+     ((drm_r300_cmd_header_t *) rmesa->hw.vir[0].cmd)->packet0.count =
+       r300VAPInputRoute0(&rmesa->hw.vir[0].cmd[R300_VIR_CNTL_0],
+			  VB->AttribPtr, inputs, tab, nr);
+     R300_STATECHANGE(rmesa, vir[1]);
+     ((drm_r300_cmd_header_t *) rmesa->hw.vir[1].cmd)->packet0.count =
+       r300VAPInputRoute1(&rmesa->hw.vir[1].cmd[R300_VIR_CNTL_0], swizzle,
+			  nr);
+     
+     R300_STATECHANGE(rmesa, vic);
+     rmesa->hw.vic.cmd[R300_VIC_CNTL_0] = r300VAPInputCntl0(ctx, InputsRead);
+     rmesa->hw.vic.cmd[R300_VIC_CNTL_1] = r300VAPInputCntl1(ctx, InputsRead);
+     
+     R300_STATECHANGE(rmesa, vof);
+     rmesa->hw.vof.cmd[R300_VOF_CNTL_0] = r300VAPOutputCntl0(ctx, OutputsWritten);
+     rmesa->hw.vof.cmd[R300_VOF_CNTL_1] = r300VAPOutputCntl1(ctx, OutputsWritten);
+     
       rmesa->swtcl.vertex_size =
 	  _tnl_install_attrs( ctx,
 			      rmesa->swtcl.vertex_attrs, 
@@ -398,6 +398,7 @@ static void r300SetVertexFormat( GLcontext *ctx )
 			      NULL, 0 );
 
       rmesa->swtcl.vertex_size /= 4;
+
       RENDERINPUTS_COPY( rmesa->tnl_index_bitset, index_bitset );
 
       vte = rmesa->hw.vte.cmd[1];
@@ -752,10 +753,10 @@ static void r300RenderStart(GLcontext *ctx)
 	reg_start(R300_RB3D_ZCACHE_CTLSTAT, 0);
 	e32(R300_RB3D_ZCACHE_UNKNOWN_03);
 	
-
 	if (rmesa->dma.flush != 0 && 
 	    rmesa->dma.flush != flush_last_swtcl_prim)
 	  rmesa->dma.flush( rmesa );
+
 }
 
 static void r300RenderFinish(GLcontext *ctx)
