@@ -439,9 +439,12 @@ void r300RefillCurrentDmaRegion(r300ContextPtr rmesa, int size)
 		rmesa->dma.flush(rmesa);
 	}
 
-	if (rmesa->dma.current.buf)
+	if (rmesa->dma.current.buf) {
+#ifdef USER_BUFFERS
+		r300_mem_use(rmesa, rmesa->dma.current.buf->id);
+#endif
 		r300ReleaseDmaRegion(rmesa, &rmesa->dma.current, __FUNCTION__);
-
+	}
 	if (rmesa->dma.nr_released_bufs > 4)
 		r300FlushCmdBuf(rmesa, __FUNCTION__);
 
