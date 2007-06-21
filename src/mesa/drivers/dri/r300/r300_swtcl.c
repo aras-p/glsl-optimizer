@@ -256,11 +256,10 @@ static void r300SetVertexFormat( GLcontext *ctx )
    }
 
    rmesa->swtcl.coloroffset = offset;
-#if MESA_LITTLE_ENDIAN 
-   EMIT_ATTR( _TNL_ATTRIB_COLOR0, EMIT_4F );
-#else
-   EMIT_ATTR( _TNL_ATTRIB_COLOR0, EMIT_4F );
-#endif
+   if (_mesa_little_endian())
+     EMIT_ATTR( _TNL_ATTRIB_COLOR0, EMIT_4F );
+   else
+     EMIT_ATTR( _TNL_ATTRIB_COLOR0, EMIT_4F );
 
    InputsRead |= 1 << VERT_ATTRIB_COLOR0;
    OutputsWritten |= 1 << VERT_RESULT_COL0;
@@ -270,45 +269,22 @@ static void r300SetVertexFormat( GLcontext *ctx )
    if (RENDERINPUTS_TEST( index_bitset, _TNL_ATTRIB_COLOR1 ) ||
        RENDERINPUTS_TEST( index_bitset, _TNL_ATTRIB_FOG )) {
 
-#if MESA_LITTLE_ENDIAN 
+     if (_mesa_little_endian()) {
       if (RENDERINPUTS_TEST( index_bitset, _TNL_ATTRIB_COLOR1 )) {
 	 rmesa->swtcl.specoffset = offset;
-	 EMIT_ATTR( _TNL_ATTRIB_COLOR1, EMIT_3F );
+	 EMIT_ATTR( _TNL_ATTRIB_COLOR1, EMIT_4F );
 	 InputsRead |= 1 << VERT_ATTRIB_COLOR1;
 	 OutputsWritten |= 1 << VERT_RESULT_COL1;
-      }
-      else {
-	 EMIT_PAD( 3 );
       }
 
-      if (RENDERINPUTS_TEST( index_bitset, _TNL_ATTRIB_FOG )) {
- 	 EMIT_ATTR( _TNL_ATTRIB_FOG, EMIT_1UB_1F );
-	 InputsRead |= 1 << VERT_ATTRIB_COLOR1;
-	 OutputsWritten |= 1 << VERT_RESULT_COL1;
-      }
-      else {
-	 EMIT_PAD( 1 );
-      }
-#else
-      if (RENDERINPUTS_TEST( index_bitset, _TNL_ATTRIB_FOG )) {
- 	 EMIT_ATTR( _TNL_ATTRIB_FOG, EMIT_1UB_1F );
-	 InputsRead |= 1 << VERT_ATTRIB_COLOR1;
-	 OutputsWritten |= 1 << VERT_RESULT_COL1;
-      }
-      else {
-	 EMIT_PAD( 1 );
-      }
-
+     } else {
       if (RENDERINPUTS_TEST( index_bitset, _TNL_ATTRIB_COLOR1 )) {
 	 rmesa->swtcl.specoffset = offset;
-	 EMIT_ATTR( _TNL_ATTRIB_COLOR1, EMIT_3UB_3F_BGR );
+	 EMIT_ATTR( _TNL_ATTRIB_COLOR1, EMIT_4F );
 	 InputsRead |= 1 << VERT_ATTRIB_COLOR1;
 	 OutputsWritten |= 1 << VERT_RESULT_COL1;
       }
-      else {
-	 EMIT_PAD( 3 );
-      }
-#endif
+     }
    }
 
    if (RENDERINPUTS_TEST_RANGE( index_bitset, _TNL_FIRST_TEX, _TNL_LAST_TEX )) {
@@ -324,15 +300,6 @@ static void r300SetVertexFormat( GLcontext *ctx )
 	 }
       }
    }
-
-#if 0
-   if ( (rmesa->hw.ctx.cmd[CTX_PP_FOG_COLOR] & R200_FOG_USE_MASK)
-      != R200_FOG_USE_SPEC_ALPHA ) {
-      R200_STATECHANGE( rmesa, ctx );
-      rmesa->hw.ctx.cmd[CTX_PP_FOG_COLOR] &= ~R200_FOG_USE_MASK;
-      rmesa->hw.ctx.cmd[CTX_PP_FOG_COLOR] |= R200_FOG_USE_SPEC_ALPHA;
-   }
-#endif
 
    for (i = 0, nr = 0; i < VERT_ATTRIB_MAX; i++) {
      if (InputsRead & (1 << i)) {
