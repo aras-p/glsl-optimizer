@@ -502,7 +502,7 @@ static void r300RenderPrimitive( GLcontext *ctx, GLenum prim );
 #define HAVE_TRI_STRIP_1 0
 #define HAVE_TRI_FANS    1
 #define HAVE_QUADS       0
-#define HAVE_QUAD_STRIPS 1
+#define HAVE_QUAD_STRIPS 0
 #define HAVE_POLYGONS    1
 #define HAVE_ELTS        1
 
@@ -670,7 +670,7 @@ static void init_rast_tab( void )
 #define RENDER_QUAD( v0, v1, v2, v3 ) \
    r300_quad( rmesa, VERT(v0), VERT(v1), VERT(v2), VERT(v3) )
 #define INIT(x) do {					\
-   r300RenderPrimitive( ctx, reduced_prim[x] );			\
+   r300RenderPrimitive( ctx, x );			\
 } while (0)
 #undef LOCAL_VARS
 #define LOCAL_VARS						\
@@ -788,7 +788,7 @@ static void r300RenderPrimitive(GLcontext *ctx, GLenum prim)
 	r300ContextPtr rmesa = R300_CONTEXT(ctx);
 	rmesa->swtcl.render_primitive = prim;
 	if (prim < GL_TRIANGLES || !(ctx->_TriangleCaps & DD_TRI_UNFILLED)) 
-	  r300RasterPrimitive( ctx, prim );
+	  r300RasterPrimitive( ctx, reduced_prim[prim] );
 	//	fprintf(stderr, "%s\n", __FUNCTION__);
 	
 }
