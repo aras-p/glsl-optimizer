@@ -153,16 +153,13 @@ zoom_span( GLcontext *ctx, GLint imgX, GLint imgY, const SWspan *span,
    zoomed.end = zoomedWidth;
    zoomed.array = &zoomed_arrays;
    zoomed_arrays.ChanType = span->array->ChanType;
-   /* XXX temporary */
-#if CHAN_TYPE == GL_UNSIGNED_BYTE
-   zoomed_arrays.rgba = zoomed_arrays.rgba8;
-#elif CHAN_TYPE == GL_UNSIGNED_SHORT
-   zoomed_arrays.rgba = zoomed_arrays.rgba16;
-#else
-   zoomed_arrays.rgba = zoomed_arrays.attribs[FRAG_ATTRIB_COL0];
-#endif
+   if (zoomed_arrays.ChanType == GL_UNSIGNED_BYTE)
+      zoomed_arrays.rgba = (GLchan (*)[4]) zoomed_arrays.rgba8;
+   else if (zoomed_arrays.ChanType == GL_UNSIGNED_SHORT)
+      zoomed_arrays.rgba = (GLchan (*)[4]) zoomed_arrays.rgba16;
+   else
+      zoomed_arrays.rgba = (GLchan (*)[4]) zoomed_arrays.attribs[FRAG_ATTRIB_COL0];
 
-   /* copy attribute info (XXX copy all attribs?) */
    COPY_4V(zoomed.attrStart[FRAG_ATTRIB_WPOS], span->attrStart[FRAG_ATTRIB_WPOS]);
    COPY_4V(zoomed.attrStepX[FRAG_ATTRIB_WPOS], span->attrStepX[FRAG_ATTRIB_WPOS]);
    COPY_4V(zoomed.attrStepY[FRAG_ATTRIB_WPOS], span->attrStepY[FRAG_ATTRIB_WPOS]);

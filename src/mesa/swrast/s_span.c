@@ -1150,6 +1150,7 @@ convert_color_type(SWspan *span, GLenum newType, GLuint output)
                         span->end, span->array->mask);
 
    span->array->ChanType = newType;
+   span->array->rgba = dst;
 }
 
 
@@ -1234,7 +1235,8 @@ _swrast_write_rgba_span( GLcontext *ctx, SWspan *span)
    const GLbitfield origInterpMask = span->interpMask;
    const GLbitfield origArrayMask = span->arrayMask;
    const GLbitfield origArrayAttribs = span->arrayAttribs;
-   const GLenum chanType = span->array->ChanType;
+   const GLenum origChanType = span->array->ChanType;
+   void * const origRgba = span->array->rgba;
    const GLboolean shader = (ctx->FragmentProgram._Current
                              || ctx->ATIFragmentShader._Enabled);
    const GLboolean shaderOrTexture = shader || ctx->Texture._EnabledUnits;
@@ -1456,7 +1458,8 @@ end:
    span->interpMask = origInterpMask;
    span->arrayMask = origArrayMask;
    span->arrayAttribs = origArrayAttribs;
-   span->array->ChanType = chanType;
+   span->array->ChanType = origChanType;
+   span->array->rgba = origRgba;
 }
 
 
