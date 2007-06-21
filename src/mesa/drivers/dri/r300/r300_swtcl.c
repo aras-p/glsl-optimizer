@@ -384,6 +384,7 @@ static void flush_last_swtcl_prim( r300ContextPtr rmesa  )
 
       if (rmesa->dma.current.start != rmesa->dma.current.ptr) {
 
+	r300EnsureCmdBufSpace( rmesa, rmesa->hw.max_state_size + (8*sizeof(int)), __FUNCTION__);
 	r300EmitVertexAOS( rmesa,
 			   rmesa->swtcl.vertex_size,
 			   current_offset);
