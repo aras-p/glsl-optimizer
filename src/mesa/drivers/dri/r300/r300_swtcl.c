@@ -699,7 +699,8 @@ static void r300RenderStart(GLcontext *ctx)
 	drm_radeon_cmd_header_t *cmd = NULL;
 
 	//	fprintf(stderr, "%s\n", __FUNCTION__);
-	
+
+	r300ChooseRenderState(ctx);	
 	r300SetVertexFormat(ctx);
 
 	r300UpdateShaderStates(rmesa);
@@ -745,8 +746,11 @@ static void r300RenderPrimitive(GLcontext *ctx, GLenum prim)
 
 	r300ContextPtr rmesa = R300_CONTEXT(ctx);
 	rmesa->swtcl.render_primitive = prim;
-	if (prim < GL_TRIANGLES || !(ctx->_TriangleCaps & DD_TRI_UNFILLED)) 
-	  r300RasterPrimitive( ctx, reduced_prim[prim] );
+
+	if ((prim == GL_TRIANGLES) && (ctx->_TriangleCaps & DD_TRI_UNFILLED))
+	  return;
+
+	r300RasterPrimitive( ctx, reduced_prim[prim] );
 	//	fprintf(stderr, "%s\n", __FUNCTION__);
 	
 }
