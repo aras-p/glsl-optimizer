@@ -43,6 +43,9 @@
 
 static float top, bottom;
 
+static PFNGLXBINDTEXIMAGEEXTPROC glXBindTexImageEXT_func = NULL;
+static PFNGLXRELEASETEXIMAGEEXTPROC glXReleaseTexImageEXT_func = NULL;
+
 
 static Display *
 OpenDisplay(void)
@@ -60,10 +63,20 @@ OpenDisplay(void)
    screen = DefaultScreen(dpy);
    ext = glXQueryExtensionsString(dpy, screen);
    if (!strstr(ext, "GLX_EXT_texture_from_pixmap")) {
-      printf("GLX_EXT_texture_from_pixmap not supported by GLX\n");
+      fprintf(stderr, "GLX_EXT_texture_from_pixmap not supported.\n");
       exit(1);
    }
 
+   glXBindTexImageEXT_func = (PFNGLXBINDTEXIMAGEEXTPROC)
+      glXGetProcAddress((GLubyte *) "glXBindTexImageEXT");
+   glXReleaseTexImageEXT_func = (PFNGLXRELEASETEXIMAGEEXTPROC)
+      glXGetProcAddress((GLubyte*) "glXReleaseTexImageEXT");
+
+   if (!glXBindTexImageEXT_func || !glXReleaseTexImageEXT_func) {
+      fprintf(stderr, "glXGetProcAddress failed!\n");
+      exit(1);
+   }
+      
    return dpy;
 }
 
@@ -241,14 +254,14 @@ BindPixmapTexture(Display *dpy, GLXPixmap gp)
    glGenTextures(1, &texture);
    glBindTexture(GL_TEXTURE_2D, texture);
 
-   glXBindTexImageEXT(dpy, gp, GLX_FRONT_LEFT_EXT, NULL);
+   glXBindTexImageEXT_func(dpy, gp, GLX_FRONT_LEFT_EXT, NULL);
 
    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
    glEnable(GL_TEXTURE_2D);
    /*
-     glXReleaseTexImageEXT (display, glxpixmap, GLX_FRONT_LEFT_EXT);
+     glXReleaseTexImageEXT_func(display, glxpixmap, GLX_FRONT_LEFT_EXT);
    */
 }
 

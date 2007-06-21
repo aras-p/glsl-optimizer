@@ -63,7 +63,6 @@
 #endif
 
 #include "glxheader.h"
-#include "GL/glxtokens.h"
 #include "GL/xmesa.h"
 #include "xmesaP.h"
 #include "context.h"

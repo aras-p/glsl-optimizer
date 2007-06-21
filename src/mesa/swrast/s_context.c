@@ -1,6 +1,6 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.5.3
+ * Version:  7.1
  *
  * Copyright (C) 1999-2007  Brian Paul   All Rights Reserved.
  *
@@ -535,10 +535,11 @@ _swrast_update_texture_samplers(GLcontext *ctx)
 
 
 /**
- * Update swrast->_ActiveAttribs, swrast->_NumActiveAttribs, swrast->_ActiveAtttribMask.
+ * Update swrast->_ActiveAttribs, swrast->_NumActiveAttribs,
+ * swrast->_ActiveAtttribMask.
  */
 static void
-_swrast_update_fragment_attribs(GLcontext *ctx)
+_swrast_update_active_attribs(GLcontext *ctx)
 {
    SWcontext *swrast = SWRAST_CONTEXT(ctx);
    GLuint attribsMask;
@@ -663,15 +664,13 @@ _swrast_validate_derived( GLcontext *ctx )
                               _NEW_PROGRAM))
 	 _swrast_update_fragment_program( ctx, swrast->NewState );
 
-      if (swrast->NewState & (_NEW_TEXTURE | _NEW_PROGRAM))
-         _swrast_update_texture_samplers( ctx );
-
       if (swrast->NewState & (_NEW_TEXTURE | _NEW_PROGRAM)) {
+         _swrast_update_texture_samplers( ctx );
          _swrast_validate_texture_images(ctx);
-         if (swrast->NewState & (_NEW_COLOR)) {
-            _swrast_update_deferred_texture(ctx);
-         }
       }
+
+      if (swrast->NewState & (_NEW_COLOR | _NEW_PROGRAM))
+         _swrast_update_deferred_texture(ctx);
 
       if (swrast->NewState & _SWRAST_NEW_RASTERMASK)
  	 _swrast_update_rasterflags( ctx );
@@ -681,7 +680,7 @@ _swrast_validate_derived( GLcontext *ctx )
                               _NEW_LIGHT |
                               _NEW_PROGRAM |
                               _NEW_TEXTURE))
-         _swrast_update_fragment_attribs(ctx);
+         _swrast_update_active_attribs(ctx);
 
       if (swrast->NewState & (_NEW_PROGRAM | _NEW_BUFFERS))
          _swrast_update_color_outputs(ctx);

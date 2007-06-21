@@ -2434,6 +2434,7 @@ void (*glXGetProcAddress(const GLubyte *procname))( void )
    return _glapi_get_proc_address((const char *) procname);
 }
 
+void (*glXGetProcAddressARB(const GLubyte *procName))( void ) __attribute__ ((alias ("glXGetProcAddress")));
 
 /**
  * \brief Query the Mini GLX version.

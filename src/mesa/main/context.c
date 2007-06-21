@@ -978,7 +978,7 @@ init_attrib_groups(GLcontext *ctx)
 static int
 generic_nop(void)
 {
-   _mesa_problem(NULL, "User called no-op dispatch function (an unsupported extension function?)");
+   _mesa_warning(NULL, "User called no-op dispatch function (an unsupported extension function?)");
    return 0;
 }
 
@@ -1357,9 +1357,9 @@ _mesa_copy_context( const GLcontext *src, GLcontext *dst, GLuint mask )
  * Check if the given context can render into the given framebuffer
  * by checking visual attributes.
  *
- * XXX this may go away someday because we're moving toward more freedom
- * in binding contexts to drawables with different visual attributes.
- * The GL_EXT_f_b_o extension is prompting some of that.
+ * Most of these tests could go away because Mesa is now pretty flexible
+ * in terms of mixing rendering contexts with framebuffers.  As long
+ * as RGB vs. CI mode agree, we're probably good.
  *
  * \return GL_TRUE if compatible, GL_FALSE otherwise.
  */
@@ -1393,8 +1393,11 @@ check_compatible(const GLcontext *ctx, const GLframebuffer *buffer)
       return GL_FALSE;
    if (ctxvis->blueMask && ctxvis->blueMask != bufvis->blueMask)
       return GL_FALSE;
+#if 0
+   /* disabled (see bug 11161) */
    if (ctxvis->depthBits && ctxvis->depthBits != bufvis->depthBits)
       return GL_FALSE;
+#endif
    if (ctxvis->stencilBits && ctxvis->stencilBits != bufvis->stencilBits)
       return GL_FALSE;
 

@@ -141,7 +141,7 @@ static void
 SetCurrentContext(GLXContext c)
 {
 #if defined(GLX_USE_TLS)
-   CurrentContext = context;
+   CurrentContext = c;
 #elif defined(THREADS)
    _glthread_SetTSD(&ContextTSD, c);
 #else
@@ -1169,7 +1169,7 @@ _glxapi_get_extensions(void)
 #ifdef GLX_SGIX_pbuffer
       "GLX_SGIX_pbuffer",
 #endif
-#ifdef GLX_EXT_texture_from_pixmap,
+#ifdef GLX_EXT_texture_from_pixmap
       "GLX_EXT_texture_from_pixmap",
 #endif
       NULL

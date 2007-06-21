@@ -26,6 +26,7 @@
 #include "colormac.h"
 #include "context.h"
 #include "prog_instruction.h"
+#include "texstate.h"
 
 #include "s_fragprog.h"
 #include "s_span.h"
