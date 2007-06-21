@@ -532,16 +532,22 @@ draw_rgba_pixels( GLcontext *ctx, GLint x, GLint y,
                   const struct gl_pixelstore_attrib *unpack,
                   const GLvoid *pixels )
 {
+   SWcontext *swrast = SWRAST_CONTEXT(ctx);
+   const GLbitfield prevActiveAttribs = swrast->_ActiveAttribMask;
    const GLint imgX = x, imgY = y;
    const GLboolean zoom = ctx->Pixel.ZoomX!=1.0 || ctx->Pixel.ZoomY!=1.0;
    GLfloat *convImage = NULL;
    GLbitfield transferOps = ctx->_ImageTransferState;
    SWspan span;
 
+   /* don't interpolate COL0 and overwrite the glDrawPixel colors! */
+   swrast->_ActiveAttribMask &= ~FRAG_BIT_COL0;
+
    /* Try an optimized glDrawPixels first */
    if (fast_draw_rgba_pixels(ctx, x, y, width, height, format, type,
-                             unpack, pixels))
-      return;
+                             unpack, pixels)) {
+      goto end;
+   }
 
    INIT_SPAN(span, GL_BITMAP, 0, 0x0, SPAN_RGBA);
    _swrast_span_default_attribs(ctx, &span);
@@ -559,13 +565,13 @@ draw_rgba_pixels( GLcontext *ctx, GLint x, GLint y,
       tmpImage = (GLfloat *) _mesa_malloc(width * height * 4 * sizeof(GLfloat));
       if (!tmpImage) {
          _mesa_error(ctx, GL_OUT_OF_MEMORY, "glDrawPixels");
-         return;
+         goto end;
       }
       convImage = (GLfloat *) _mesa_malloc(width * height * 4 * sizeof(GLfloat));
       if (!convImage) {
          _mesa_free(tmpImage);
          _mesa_error(ctx, GL_OUT_OF_MEMORY, "glDrawPixels");
-         return;
+         goto end;
       }
 
       /* Unpack the image and apply transfer ops up to convolution */
@@ -669,6 +675,9 @@ draw_rgba_pixels( GLcontext *ctx, GLint x, GLint y,
    if (convImage) {
       _mesa_free(convImage);
    }
+
+end:
+   swrast->_ActiveAttribMask = prevActiveAttribs;
 }
 
 
