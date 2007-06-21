@@ -668,7 +668,10 @@ static __inline struct brw_indirect brw_indirect( GLuint addr_subnr, GLint offse
    return ptr;
 }
 
-
+static __inline struct brw_instruction *current_insn( struct brw_compile *p)
+{
+	return &p->store[p->nr_insn];
+}
 
 void brw_pop_insn_state( struct brw_compile *p );
 void brw_push_insn_state( struct brw_compile *p );
@@ -808,9 +811,10 @@ void brw_ENDIF(struct brw_compile *p,
 struct brw_instruction *brw_DO(struct brw_compile *p,
 			       GLuint execute_size);
 
-void brw_WHILE(struct brw_compile *p, 
+struct brw_instruction *brw_WHILE(struct brw_compile *p, 
 	       struct brw_instruction *patch_insn);
 
+struct brw_instruction *brw_BREAK(struct brw_compile *p);
 /* Forward jumps:
  */
 void brw_land_fwd_jump(struct brw_compile *p, 

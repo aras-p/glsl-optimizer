@@ -229,20 +229,20 @@ static void emit_cinterp( struct brw_compile *p,
 			 GLuint mask,
 			 const struct brw_reg *arg0 )
 {
-   struct brw_reg interp[4];
-   GLuint nr = arg0[0].nr;
-   GLuint i;
+	struct brw_reg interp[4];
+	GLuint nr = arg0[0].nr;
+	GLuint i;
 
-   interp[0] = brw_vec1_grf(nr, 0);
-   interp[1] = brw_vec1_grf(nr, 4);
-   interp[2] = brw_vec1_grf(nr+1, 0);
-   interp[3] = brw_vec1_grf(nr+1, 4);
+	interp[0] = brw_vec1_grf(nr, 0);
+	interp[1] = brw_vec1_grf(nr, 4);
+	interp[2] = brw_vec1_grf(nr+1, 0);
+	interp[3] = brw_vec1_grf(nr+1, 4);
 
-   for(i = 0; i < 4; i++ ) {
-      if (mask & (1<<i)) {
-	 brw_MOV(p, dst[i], suboffset(interp[i],3));	/* TODO: optimize away like other moves */
-      }
-   }
+	for(i = 0; i < 4; i++ ) {
+		if (mask & (1<<i)) {
+			brw_MOV(p, dst[i], suboffset(interp[i],3));	/* TODO: optimize away like other moves */
+		}
+	}
 }
 
 

@@ -135,6 +135,13 @@ static void brw_vs_alloc_regs( struct brw_vs_compile *c )
       reg++;
    }
 
+   for (i = 0; i < 128; i++) {
+       if (c->output_regs[i].used_in_src) {
+            c->regs[PROGRAM_OUTPUT][i] = brw_vec8_grf(reg, 0);
+            reg++;
+        }
+   }
+
    c->stack =  brw_uw16_reg(BRW_GENERAL_REGISTER_FILE, reg, 0);
    reg += 2;
  
@@ -686,28 +693,28 @@ static void emit_arl( struct brw_vs_compile *c,
  * account.
  */
 static struct brw_reg get_arg( struct brw_vs_compile *c,
-			       struct prog_src_register src )
+			       struct prog_src_register *src )
 {
    struct brw_reg reg;
 
-   if (src.File == PROGRAM_UNDEFINED)
+   if (src->File == PROGRAM_UNDEFINED)
       return brw_null_reg();
 
-   if (src.RelAddr) 
-      reg = deref(c, c->regs[PROGRAM_STATE_VAR][0], src.Index);
+   if (src->RelAddr) 
+      reg = deref(c, c->regs[PROGRAM_STATE_VAR][0], src->Index);
    else
-      reg = get_reg(c, src.File, src.Index);
+      reg = get_reg(c, src->File, src->Index);
 
    /* Convert 3-bit swizzle to 2-bit.  
     */
-   reg.dw1.bits.swizzle = BRW_SWIZZLE4(GET_SWZ(src.Swizzle, 0),
-				       GET_SWZ(src.Swizzle, 1),
-				       GET_SWZ(src.Swizzle, 2),
-				       GET_SWZ(src.Swizzle, 3));
+   reg.dw1.bits.swizzle = BRW_SWIZZLE4(GET_SWZ(src->Swizzle, 0),
+				       GET_SWZ(src->Swizzle, 1),
+				       GET_SWZ(src->Swizzle, 2),
+				       GET_SWZ(src->Swizzle, 3));
 
    /* Note this is ok for non-swizzle instructions: 
     */
-   reg.negate = src.NegateBase ? 1 : 0;   
+   reg.negate = src->NegateBase ? 1 : 0;   
 
    return reg;
 }
@@ -921,10 +928,8 @@ post_vs_emit( struct brw_vs_compile *c, struct brw_instruction *end_inst )
        inst1 = &c->vp->program.Base.Instructions[insn];
        brw_inst1 = inst1->Data;
        switch (inst1->Opcode) {
-	   case OPCODE_BRA:
-	   case OPCODE_BRK:
 	   case OPCODE_CAL:
-	   case OPCODE_ENDLOOP:
+	   case OPCODE_BRA:
 	       target_insn = inst1->BranchTarget;
 	       inst2 = &c->vp->program.Base.Instructions[target_insn];
 	       brw_inst2 = inst2->Data;
@@ -945,12 +950,12 @@ post_vs_emit( struct brw_vs_compile *c, struct brw_instruction *end_inst )
  */
 void brw_vs_emit(struct brw_vs_compile *c )
 {
-#define MAX_IF_DEPTH 32
+#define MAX_IFSN 32
    struct brw_compile *p = &c->func;
    GLuint nr_insns = c->vp->program.Base.NumInstructions;
    GLuint insn, if_insn = 0;
    struct brw_instruction *end_inst;
-   struct brw_instruction *if_inst[MAX_IF_DEPTH];
+   struct brw_instruction *if_inst[MAX_IFSN];
    struct brw_indirect stack_index = brw_indirect(0, 0);   
 
    if (INTEL_DEBUG & DEBUG_VS) {
@@ -962,6 +967,20 @@ void brw_vs_emit(struct brw_vs_compile *c )
    brw_set_compression_control(p, BRW_COMPRESSION_NONE);
    brw_set_access_mode(p, BRW_ALIGN_16);
    
+   /* Message registers can't be read, so copy the output into GRF register
+      if they are used in source registers */
+   for (insn = 0; insn < nr_insns; insn++) {
+       GLuint i;
+       struct prog_instruction *inst = &c->vp->program.Base.Instructions[insn];
+       for (i = 0; i < 3; i++) {
+	   struct prog_src_register *src = &inst->SrcReg[i];
+	   GLuint index = src->Index;
+	   GLuint file = src->File;	
+	   if (file == PROGRAM_OUTPUT && index != VERT_RESULT_HPOS)
+	       c->output_regs[index].used_in_src = GL_TRUE;
+       }
+   }
+
    /* Static register allocation
     */
    brw_vs_alloc_regs(c);
@@ -977,8 +996,15 @@ void brw_vs_emit(struct brw_vs_compile *c )
        */
       inst->Data = &p->store[p->nr_insn];
       if (inst->Opcode != OPCODE_SWZ)
-	 for (i = 0; i < 3; i++) 
-	    args[i] = get_arg(c, inst->SrcReg[i]);
+	  for (i = 0; i < 3; i++) {
+	      struct prog_src_register *src = &inst->SrcReg[i];
+	      GLuint index = src->Index;
+	      GLuint file = src->File;	
+	      if (file == PROGRAM_OUTPUT&&c->output_regs[index].used_in_src)
+		  args[i] = c->output_regs[index].reg;
+	      else
+		  args[i] = get_arg(c, src);
+	  }
 
       /* Get dest regs.  Note that it is possible for a reg to be both
        * dst and arg, given the static allocation of registers.  So
@@ -1085,13 +1111,8 @@ void brw_vs_emit(struct brw_vs_compile *c )
       case OPCODE_XPD:
 	 emit_xpd(p, dst, args[0], args[1]);
 	 break;
-
-      case OPCODE_INT:
-	 /* XXX TODO track type information in shader program */
-	 brw_MOV(p, dst, args[0]);
-	 break;
       case OPCODE_IF:
-	 assert(if_insn < MAX_IF_DEPTH);
+	 assert(if_insn < MAX_IFSN);
          if_inst[if_insn++] = brw_IF(p, BRW_EXECUTE_8);
 	 break;
       case OPCODE_ELSE:
@@ -1101,6 +1122,11 @@ void brw_vs_emit(struct brw_vs_compile *c )
          assert(if_insn > 0);
 	 brw_ENDIF(p, if_inst[--if_insn]);
 	 break;			
+      case OPCODE_BRA:
+         brw_set_predicate_control(p, BRW_PREDICATE_NORMAL);
+         brw_ADD(p, brw_ip_reg(), brw_ip_reg(), brw_imm_d(1*16));
+         brw_set_predicate_control_flag_value(p, 0xff);
+        break;
       case OPCODE_CAL:
 	 brw_set_access_mode(p, BRW_ALIGN_1);
 	 brw_ADD(p, deref_1uw(stack_index, 0), brw_ip_reg(), brw_imm_d(3*16));
@@ -1116,13 +1142,9 @@ void brw_vs_emit(struct brw_vs_compile *c )
 	 brw_set_access_mode(p, BRW_ALIGN_1);
          brw_MOV(p, brw_ip_reg(), deref_1uw(stack_index, 0));
 	 brw_set_access_mode(p, BRW_ALIGN_16);
-      case OPCODE_ENDLOOP:
-      case OPCODE_BRK:
-      case OPCODE_BRA:
       case OPCODE_END:	
          brw_ADD(p, brw_ip_reg(), brw_ip_reg(), brw_imm_d(1*16));
         break;
-      case OPCODE_BGNLOOP:
       case OPCODE_PRINT:
       case OPCODE_BGNSUB:
       case OPCODE_ENDSUB:
@@ -1131,8 +1153,12 @@ void brw_vs_emit(struct brw_vs_compile *c )
 	 _mesa_printf("Unsupport opcode %d in vertex shader\n", inst->Opcode);
 	 break;
       }
-      brw_set_predicate_control(p,
-		 inst->CondUpdate?BRW_PREDICATE_NORMAL:BRW_PREDICATE_NONE);
+
+      if (inst->DstReg.File == PROGRAM_OUTPUT
+	      &&inst->DstReg.Index != VERT_RESULT_HPOS
+	      &&c->output_regs[inst->DstReg.Index].used_in_src)
+	  brw_MOV(p, get_dst(c, inst->DstReg), dst);
+
       release_tmps(c);
    }
 

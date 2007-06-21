@@ -31,8 +31,9 @@ void main()
     v.z = dot(LightPosition, n);
     LightDir = normalize(v);
 
-    v.x = dot(EyeDir, t);
-    v.y = dot(EyeDir, b);
-    v.z = dot(EyeDir, n);
-    EyeDir = normalize(v);
+/*  v.x = dot(EyeDir, t);
+  v.y = dot(EyeDir, b);
+  v.z = dot(EyeDir, n);
+    EyeDir = normalize(EyeDir);
+*/
 }

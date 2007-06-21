@@ -186,7 +186,7 @@ void brw_set_src1( struct brw_instruction *insn,
        * in the future:
        */
       assert (reg.address_mode == BRW_ADDRESS_DIRECT);
-      assert (reg.file == BRW_GENERAL_REGISTER_FILE);
+      //assert (reg.file == BRW_GENERAL_REGISTER_FILE);
 
       if (insn->header.access_mode == BRW_ALIGN_1) {
 	 insn->bits3.da1.src1_subreg_nr = reg.subnr;
@@ -597,6 +597,20 @@ void brw_ENDIF(struct brw_compile *p,
    }
 }
 
+struct brw_instruction *brw_BREAK(struct brw_compile *p)
+{
+   struct brw_instruction *insn;
+   insn = next_insn(p, BRW_OPCODE_BREAK);
+   brw_set_dest(insn, brw_ip_reg());
+   brw_set_src0(insn, brw_ip_reg());
+   brw_set_src1(insn, brw_imm_d(0x0));
+   insn->header.compression_control = BRW_COMPRESSION_NONE;
+   insn->header.execution_size = BRW_EXECUTE_8;
+   insn->header.mask_control = BRW_MASK_DISABLE;
+   insn->bits3.if_else.pad0 = 0;
+   return insn;
+}
+
 /* DO/WHILE loop:
  */
 struct brw_instruction *brw_DO(struct brw_compile *p, GLuint execute_size)
@@ -608,13 +622,15 @@ struct brw_instruction *brw_DO(struct brw_compile *p, GLuint execute_size)
 
       /* Override the defaults for this instruction:
        */
-      brw_set_dest(insn, retype(brw_vec1_grf(0,0), BRW_REGISTER_TYPE_UD));
-      brw_set_src0(insn, retype(brw_vec1_grf(0,0), BRW_REGISTER_TYPE_UD));
-      brw_set_src1(insn, retype(brw_vec1_grf(0,0), BRW_REGISTER_TYPE_UD));
+      brw_set_dest(insn, brw_null_reg());
+      brw_set_src0(insn, brw_null_reg());
+      brw_set_src1(insn, brw_null_reg());
 
       insn->header.compression_control = BRW_COMPRESSION_NONE;
       insn->header.execution_size = execute_size;
+      insn->header.predicate_control = BRW_PREDICATE_NONE;
       /* insn->header.mask_control = BRW_MASK_ENABLE; */
+      insn->header.mask_control = BRW_MASK_DISABLE;
 
       return insn;
    }
@@ -622,7 +638,7 @@ struct brw_instruction *brw_DO(struct brw_compile *p, GLuint execute_size)
 
 
 
-void brw_WHILE(struct brw_compile *p, 
+struct brw_instruction *brw_WHILE(struct brw_compile *p, 
 	       struct brw_instruction *do_insn)
 {
    struct brw_instruction *insn;
@@ -653,7 +669,9 @@ void brw_WHILE(struct brw_compile *p,
 
 /*    insn->header.mask_control = BRW_MASK_ENABLE; */
 
+   insn->header.mask_control = BRW_MASK_DISABLE;
    p->current->header.predicate_control = BRW_PREDICATE_NONE;   
+   return insn;
 }
 
 

@@ -231,6 +231,14 @@ struct brw_wm_compile {
    GLuint grf_limit;
    GLuint max_wm_grf;
    GLuint last_scratch;
+
+   struct {
+	GLboolean inited;
+	struct brw_reg reg;
+   } wm_regs[PROGRAM_PAYLOAD+1][256][4];
+   struct brw_reg ret_reg;
+   GLuint reg_index;
+   GLuint tmp_index;
 };
 
 
@@ -259,4 +267,6 @@ void brw_wm_lookup_iz( GLuint line_aa,
 		       GLuint lookup,
 		       struct brw_wm_prog_key *key );
 
+GLboolean brw_wm_is_glsl(struct gl_fragment_program *fp);
+void brw_wm_glsl_emit(struct brw_wm_compile *c);
 #endif

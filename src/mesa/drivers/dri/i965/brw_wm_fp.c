@@ -176,6 +176,7 @@ static struct prog_instruction *emit_insn(struct brw_wm_compile *c,
 {
    struct prog_instruction *inst = get_fp_inst(c);
    *inst = *inst0;
+   inst->Data = (void *)inst0;
    return inst;
 }
 
@@ -201,7 +202,6 @@ static struct prog_instruction * emit_op(struct brw_wm_compile *c,
    inst->SrcReg[0] = src0;
    inst->SrcReg[1] = src1;
    inst->SrcReg[2] = src2;
-   
    return inst;
 }
    
@@ -907,8 +907,10 @@ void brw_wm_pass_fp( struct brw_wm_compile *c )
 	  */
 	 out->DstReg.WriteMask = 0;
 	 break;
-
       case OPCODE_END:
+	 emit_fog(c);
+	 emit_fb_write(c);
+	 break;
       case OPCODE_PRINT:
 	 break;
 	 
@@ -917,15 +919,11 @@ void brw_wm_pass_fp( struct brw_wm_compile *c )
 	 break;
       }
    }
-   
-   emit_fog(c);
-   emit_fb_write(c);
-
 
    if (INTEL_DEBUG & DEBUG_WM) {
-      _mesa_printf("\n\n\npass_fp:\n");
-      print_insns( c->prog_instructions, c->nr_fp_insns );
-      _mesa_printf("\n");
+	   _mesa_printf("\n\n\npass_fp:\n");
+	   print_insns( c->prog_instructions, c->nr_fp_insns );
+	   _mesa_printf("\n");
    }
 }
 

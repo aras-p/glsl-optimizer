@@ -154,47 +154,49 @@ static void do_wm_prog( struct brw_context *brw,
    c->fp = fp;
    c->env_param = brw->intel.ctx.FragmentProgram.Parameters;
 
-
-   /* Augment fragment program.  Add instructions for pre- and
-    * post-fragment-program tasks such as interpolation and fogging.
-    */
-   brw_wm_pass_fp(c);
-   
-   /* Translate to intermediate representation.  Build register usage
-    * chains.
-    */
-   brw_wm_pass0(c);
-
-   /* Dead code removal.
-    */
-   brw_wm_pass1(c);
-
-   /* Hal optimization
-    */
-   brw_wm_pass_hal (c);
-   
-   /* Register allocation.
-    */
-   c->grf_limit = BRW_WM_MAX_GRF/2;
-
-   /* This is where we start emitting gen4 code:
-    */
-   brw_init_compile(&c->func);    
-
-   brw_wm_pass2(c);
-
-   c->prog_data.total_grf = c->max_wm_grf;
-   if (c->last_scratch) {
-      c->prog_data.total_scratch =
-	 c->last_scratch + 0x40;
+   if (brw_wm_is_glsl(&c->fp->program)) {
+       brw_wm_glsl_emit(c);
    } else {
-      c->prog_data.total_scratch = 0;
+       /* Augment fragment program.  Add instructions for pre- and
+	* post-fragment-program tasks such as interpolation and fogging.
+	*/
+       brw_wm_pass_fp(c);
+
+       /* Translate to intermediate representation.  Build register usage
+	* chains.
+	*/
+       brw_wm_pass0(c);
+
+       /* Dead code removal.
+	*/
+       brw_wm_pass1(c);
+
+       /* Hal optimization
+	*/
+       brw_wm_pass_hal (c);
+
+       /* Register allocation.
+	*/
+       c->grf_limit = BRW_WM_MAX_GRF/2;
+
+       /* This is where we start emitting gen4 code:
+	*/
+       brw_init_compile(&c->func);    
+
+       brw_wm_pass2(c);
+
+       c->prog_data.total_grf = c->max_wm_grf;
+       if (c->last_scratch) {
+	   c->prog_data.total_scratch =
+	       c->last_scratch + 0x40;
+       } else {
+	   c->prog_data.total_scratch = 0;
+       }
+
+       /* Emit GEN4 code.
+	*/
+       brw_wm_emit(c);
    }
-
-   /* Emit GEN4 code.
-    */
-   brw_wm_emit(c);
-
    /* get the program
     */
    program = brw_get_program(&c->func, &program_size);

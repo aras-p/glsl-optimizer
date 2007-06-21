@@ -33,7 +33,7 @@ void main()
     litColor = SurfaceColor * max(dot(normDelta, LightDir), 0.0);
     vec3 reflectDir = reflect(LightDir, normDelta);
     
-    float spec = max(dot(EyeDir, reflectDir), 0.0);
+    float spec = max(dot(normalize(EyeDir), reflectDir), 0.0);
     spec *= SpecularFactor;
     litColor = min(litColor + spec, vec3(1.0));
 
