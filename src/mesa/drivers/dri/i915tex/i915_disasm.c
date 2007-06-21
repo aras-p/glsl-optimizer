@@ -40,7 +40,9 @@
     return count;						\
 } while (0)
 
-FILE *out;
+static FILE *out;
+static uint32_t saved_s2 = 0, saved_s4 = 0;
+static char saved_s2_set = 0, saved_s4_set = 0;
 
 static float
 int_as_float(uint32_t intval)
@@ -303,6 +305,17 @@ decode_3d_1d(uint32_t *data, int count, uint32_t hw_offset, int *failures)
 	    if (data[0] & (1 << (4 + word))) {
 		if (i >= count)
 		    BUFFER_FAIL(count, len, "3DSTATE_LOAD_STATE_IMMEDIATE_1");
+
+		/* save vertex state for decode */
+		if (word == 2) {
+		    saved_s2_set = 1;
+		    saved_s2 = data[i];
+		}
+		if (word == 4) {
+		    saved_s4_set = 1;
+		    saved_s4 = data[i];
+		}
+
 		instr_out(data, hw_offset, i++, "S%d\n", word);
 	    }
 	}
@@ -437,17 +450,122 @@ decode_3d_primitive(uint32_t *data, int count, uint32_t hw_offset,
 {
     char immediate = (data[0] & (1 << 23)) == 0;
     unsigned int len, i;
+    char *primtype;
+
+    switch ((data[0] >> 18) & 0xf) {
+    case 0x0: primtype = "TRILIST"; break;
+    case 0x1: primtype = "TRISTRIP"; break;
+    case 0x2: primtype = "TRISTRIP_REVERSE"; break;
+    case 0x3: primtype = "TRIFAN"; break;
+    case 0x4: primtype = "POLYGON"; break;
+    case 0x5: primtype = "LINELIST"; break;
+    case 0x6: primtype = "LINESTRIP"; break;
+    case 0x7: primtype = "RECTLIST"; break;
+    case 0x8: primtype = "POINTLIST"; break;
+    case 0x9: primtype = "DIB"; break;
+    case 0xa: primtype = "CLEAR_RECT"; break;
+    default: primtype = "unknown"; break;
+    }
 
     /* XXX: 3DPRIM_DIB not supported */
     if (immediate) {
 	len = (data[0] & 0x0003ffff) + 2;
-	instr_out(data, hw_offset, 0, "3DPRIMITIVE inline\n");
+	instr_out(data, hw_offset, 0, "3DPRIMITIVE inline %s\n", primtype);
 	if (count < len)
 	    BUFFER_FAIL(count, len,  "3DPRIMITIVE inline");
-	for (i = 1; i < len; i++) {
-	    instr_out(data, hw_offset, i,
-		      "           vertex data (%f float)\n",
-		      int_as_float(data[i]));
+	if (!saved_s2_set || !saved_s4_set) {
+	    fprintf(out, "unknown vertex format\n");
+	    for (i = 1; i < len; i++) {
+		instr_out(data, hw_offset, i,
+			  "           vertex data (%f float)\n",
+			  int_as_float(data[i]));
+	    }
+	} else {
+	    unsigned int vertex = 0;
+	    for (i = 1; i < len;) {
+		unsigned int tc;
+
+#define VERTEX_OUT(fmt, ...) do {					\
+    if (i < len)							\
+	instr_out(data, hw_offset, i, " V%d."fmt"\n", vertex, __VA_ARGS__); \
+    else								\
+	fprintf(out, " missing data in V%d\n", vertex);			\
+    i++;								\
+} while (0)
+
+		VERTEX_OUT("X = %f", int_as_float(data[i]));
+		VERTEX_OUT("Y = %f", int_as_float(data[i]));
+	        switch (saved_s4 >> 6 & 0x7) {
+		case 0x1:
+		    VERTEX_OUT("Z = %f", int_as_float(data[i]));
+		    break;
+		case 0x2:
+		    VERTEX_OUT("Z = %f", int_as_float(data[i]));
+		    VERTEX_OUT("W = %f", int_as_float(data[i]));
+		    break;
+		case 0x3:
+		    break;
+		case 0x4:
+		    VERTEX_OUT("W = %f", int_as_float(data[i]));
+		    break;
+		default:
+		    fprintf(out, "bad S4 position mask\n");
+		}
+
+		if (saved_s4 & (1 << 10)) {
+		    VERTEX_OUT("color = (A=0x%02x, R=0x%02x, G=0x%02x, "
+			       "B=0x%02x)",
+			       data[i] >> 24,
+			       (data[i] >> 16) & 0xff,
+			       (data[i] >> 8) & 0xff,
+			       data[i] & 0xff);
+		}
+		if (saved_s4 & (1 << 11)) {
+		    VERTEX_OUT("spec = (A=0x%02x, R=0x%02x, G=0x%02x, "
+			       "B=0x%02x)",
+			       data[i] >> 24,
+			       (data[i] >> 16) & 0xff,
+			       (data[i] >> 8) & 0xff,
+			       data[i] & 0xff);
+		}
+		if (saved_s4 & (1 << 12))
+		    VERTEX_OUT("width = 0x%08x)", data[i]);
+
+		for (tc = 0; tc <= 7; tc++) {
+		    switch ((saved_s2 >> (tc * 4)) & 0xf) {
+		    case 0x0:
+			VERTEX_OUT("T%d.X = %f", tc, int_as_float(data[i]));
+			VERTEX_OUT("T%d.Y = %f", tc, int_as_float(data[i]));
+			break;
+		    case 0x1:
+			VERTEX_OUT("T%d.X = %f", tc, int_as_float(data[i]));
+			VERTEX_OUT("T%d.Y = %f", tc, int_as_float(data[i]));
+			VERTEX_OUT("T%d.Z = %f", tc, int_as_float(data[i]));
+			break;
+		    case 0x2:
+			VERTEX_OUT("T%d.X = %f", tc, int_as_float(data[i]));
+			VERTEX_OUT("T%d.Y = %f", tc, int_as_float(data[i]));
+			VERTEX_OUT("T%d.Z = %f", tc, int_as_float(data[i]));
+			VERTEX_OUT("T%d.W = %f", tc, int_as_float(data[i]));
+			break;
+		    case 0x3:
+			VERTEX_OUT("T%d.X = %f", tc, int_as_float(data[i]));
+			break;
+		    case 0x4:
+			VERTEX_OUT("T%d.XY = 0x%08x half-float", tc, data[i]);
+			break;
+		    case 0x5:
+			VERTEX_OUT("T%d.XY = 0x%08x half-float", tc, data[i]);
+			VERTEX_OUT("T%d.ZW = 0x%08x half-float", tc, data[i]);
+			break;
+		    case 0xf:
+			break;
+		    default:
+			fprintf(out, "bad S2.T%d format\n", tc);
+		    }
+		}
+		vertex++;
+	    }
 	}
     } else {
 	/* indirect vertices */
@@ -459,7 +577,7 @@ decode_3d_primitive(uint32_t *data, int count, uint32_t hw_offset,
 			    "3DPRIMITIVE random indirect");
 	    }
 	    instr_out(data, hw_offset, 0,
-		      "3DPRIMITIVE random indirect (%d)\n", len);
+		      "3DPRIMITIVE random indirect %s (%d)\n", primtype, len);
 	    if (len == 0) {
 		/* vertex indices continue until 0xffff is found */
 		for (i = 1; i < count; i++) {
@@ -503,14 +621,12 @@ decode_3d_primitive(uint32_t *data, int count, uint32_t hw_offset,
 	    if (count < 2)
 		BUFFER_FAIL(count, 2, "3DPRIMITIVE seq indirect");
 	    instr_out(data, hw_offset, 0,
-		      "3DPRIMITIVE sequential indirect, %d starting from %d\n",
-		      len, data[1] & 0xffff);
+		      "3DPRIMITIVE sequential indirect %s, %d starting from "
+		      "%d\n", primtype, len, data[1] & 0xffff);
 	    instr_out(data, hw_offset, 1, "           start\n");
 	    return 2;
 	}
     }
-
-
 
     return len;
 }
