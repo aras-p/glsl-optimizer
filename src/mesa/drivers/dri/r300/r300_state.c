@@ -715,7 +715,7 @@ static void r300LineWidth(GLcontext * ctx, GLfloat widthf)
 	widthf = ctx->Line._Width;
 
 	R300_STATECHANGE(r300, lcntl);
-	r300->hw.lcntl.cmd[1] |=
+	r300->hw.lcntl.cmd[1] =
 	    R300_LINE_CNT_HO | R300_LINE_CNT_VE | (int)(widthf * 6.0);
 }
 
