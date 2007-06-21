@@ -57,12 +57,6 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "r300_emit.h"
 #include "r300_mem.h"
 
-#define R300_NEWPRIM( rmesa )			\
-  do {						\
-    if ( rmesa->dma.flush )			\
-      rmesa->dma.flush( rmesa );		\
-  } while (0)
-
 static void flush_last_swtcl_prim( r300ContextPtr rmesa  );
 
 
@@ -215,7 +209,7 @@ static void r300SetVertexFormat( GLcontext *ctx )
    int vap_vte_cntl = 0;
    int offset = 0;
    int vte = 0;
-   GLuint inputs[VERT_ATTRIB_MAX];
+   GLint inputs[VERT_ATTRIB_MAX];
    GLint tab[VERT_ATTRIB_MAX];
    int swizzle[VERT_ATTRIB_MAX][4];
    GLuint i, nr;
@@ -256,10 +250,7 @@ static void r300SetVertexFormat( GLcontext *ctx )
    }
 
    rmesa->swtcl.coloroffset = offset;
-   if (_mesa_little_endian())
-     EMIT_ATTR( _TNL_ATTRIB_COLOR0, EMIT_4F );
-   else
-     EMIT_ATTR( _TNL_ATTRIB_COLOR0, EMIT_4F );
+   EMIT_ATTR( _TNL_ATTRIB_COLOR0, EMIT_4F );
 
    InputsRead |= 1 << VERT_ATTRIB_COLOR0;
    OutputsWritten |= 1 << VERT_RESULT_COL0;
@@ -292,8 +283,6 @@ static void r300SetVertexFormat( GLcontext *ctx )
 
       for (i = 0; i < ctx->Const.MaxTextureUnits; i++) {
 	 if (RENDERINPUTS_TEST( index_bitset, _TNL_ATTRIB_TEX(i) )) {
-	    GLuint sz = VB->TexCoordPtr[i]->size;
-
 	    InputsRead |= 1 << (VERT_ATTRIB_TEX0 + i);
 	    OutputsWritten |= 1 << (VERT_RESULT_TEX0 + i);
 	    EMIT_ATTR( _TNL_ATTRIB_TEX0+i, EMIT_4F );
@@ -327,8 +316,8 @@ static void r300SetVertexFormat( GLcontext *ctx )
    }
 
    for (i = 0; i < nr; i++) {
-     int ci, fix, found = 0;
-     
+     int ci;
+
      swizzle[i][0] = SWIZZLE_ZERO;
      swizzle[i][1] = SWIZZLE_ZERO;
      swizzle[i][2] = SWIZZLE_ZERO;
@@ -811,15 +800,11 @@ void r300EmitVertexAOS(r300ContextPtr rmesa, GLuint vertex_size, GLuint offset)
 {
 	int cmd_reserved = 0;
 	int cmd_written = 0;
-	int vte;
-	int route0;
 
 	drm_radeon_cmd_header_t *cmd = NULL;
 	if (RADEON_DEBUG & DEBUG_VERTS)
 	  fprintf(stderr, "%s:  vertex_size %d, offset 0x%x \n",
 		  __FUNCTION__, vertex_size, offset);
-
-	/* emit vte */
 
 	start_packet3(CP_PACKET3(R300_PACKET3_3D_LOAD_VBPNTR, 2), 2);
 	e32(1);
