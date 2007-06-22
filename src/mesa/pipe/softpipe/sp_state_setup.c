@@ -25,6 +25,7 @@
  * 
  **************************************************************************/
 
+#include "pipe/p_defines.h"
 #include "sp_context.h"
 #include "sp_state.h"
 #include "sp_prim.h"
@@ -39,8 +40,8 @@ static void validate_prim_pipe( struct softpipe_context *softpipe )
    /* TODO: make the current primitive part of the state and build
     * shorter pipelines for lines & points.
     */
-   if (softpipe->setup.fill_cw != FILL_TRI ||
-       softpipe->setup.fill_ccw != FILL_TRI) {
+   if (softpipe->setup.fill_cw != PIPE_POLYGON_MODE_FILL ||
+       softpipe->setup.fill_ccw != PIPE_POLYGON_MODE_FILL) {
 
       softpipe->prim.unfilled->next = next;
       next = softpipe->prim.unfilled;

@@ -29,6 +29,7 @@
  */
 #include "imports.h"
 
+#include "pipe/p_defines.h"
 #include "sp_context.h"
 #include "sp_prim.h"
 
@@ -75,8 +76,8 @@ static void cull_tri( struct prim_stage *stage,
    _mesa_printf("%s %f\n", __FUNCTION__, header->det );
 
    if (header->det != 0) {
-      GLuint mode = (header->det < 0) ? WINDING_CW : WINDING_CCW;
-   
+      GLuint mode = (header->det < 0) ? PIPE_WINDING_CW : PIPE_WINDING_CCW;
+
       if ((mode & cull_stage(stage)->mode) == 0)
 	 stage->next->tri( stage->next, header );
    }

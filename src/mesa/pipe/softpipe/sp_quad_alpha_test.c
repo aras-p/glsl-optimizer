@@ -16,15 +16,7 @@ alpha_test_quad(struct quad_stage *qs, struct quad_header *quad)
 {
    struct softpipe_context *softpipe = qs->softpipe;
    GLuint j;
-   struct softpipe_surface *sps = softpipe_surface(softpipe->framebuffer.zbuf);
    const GLfloat ref = softpipe->alpha_test.ref;
-
-#if 0
-   assert(sps); /* shouldn't get here if there's no zbuffer */
-#else
-   if (!sps)
-      return;
-#endif
 
    switch (softpipe->alpha_test.func) {
    case PIPE_FUNC_NEVER:

@@ -33,15 +33,21 @@
 
 #include "st_context.h"
 #include "pipe/p_context.h"
+#include "pipe/p_defines.h"
 #include "st_atom.h"
 
 static GLuint translate_fill( GLenum mode )
 {
    switch (mode) {
-   case GL_POINT: return FILL_POINT;
-   case GL_LINE: return FILL_LINE;
-   case GL_FILL: return FILL_TRI;
-   default: assert(0); return 0;
+   case GL_POINT:
+      return PIPE_POLYGON_MODE_POINT;
+   case GL_LINE:
+      return PIPE_POLYGON_MODE_LINE;
+   case GL_FILL:
+      return PIPE_POLYGON_MODE_FILL;
+   default:
+      assert(0);
+      return 0;
    }
 }
 
@@ -49,10 +55,15 @@ static GLboolean get_offset_flag( GLuint fill_mode,
 				  const struct gl_polygon_attrib *Polygon )
 {
    switch (fill_mode) {
-   case FILL_POINT: return Polygon->OffsetPoint;
-   case FILL_LINE: return Polygon->OffsetLine;
-   case FILL_TRI: return Polygon->OffsetFill;
-   default: assert(0); return 0;
+   case PIPE_POLYGON_MODE_POINT:
+      return Polygon->OffsetPoint;
+   case PIPE_POLYGON_MODE_LINE:
+      return Polygon->OffsetLine;
+   case PIPE_POLYGON_MODE_FILL:
+      return Polygon->OffsetFill;
+   default:
+      assert(0);
+      return 0;
    }
 }
 
@@ -67,13 +78,13 @@ static void update_setup_state( struct st_context *st )
    /* _NEW_POLYGON, _NEW_BUFFERS
     */
    {
-      setup.front_winding = WINDING_CW;
+      setup.front_winding = PIPE_WINDING_CW;
 	
       if (ctx->DrawBuffer && ctx->DrawBuffer->Name != 0)
-	 setup.front_winding ^= WINDING_BOTH;
+	 setup.front_winding ^= PIPE_WINDING_BOTH;
 
       if (ctx->Polygon.FrontFace != GL_CCW)
-	 setup.front_winding ^= WINDING_BOTH;
+	 setup.front_winding ^= PIPE_WINDING_BOTH;
    }
 
    /* _NEW_LIGHT
@@ -90,18 +101,23 @@ static void update_setup_state( struct st_context *st )
        ctx->Light.Model.TwoSide)
       setup.light_twoside = 1;
 
+   if (ctx->Polygon.SmoothFlag)
+      setup.poly_smooth = 1;
+
+   if (ctx->Polygon.StippleFlag)
+      setup.poly_stipple = 1;
 
    /* _NEW_POLYGON
     */
    if (ctx->Polygon.CullFlag) {
       if (ctx->Polygon.CullFaceMode == GL_FRONT_AND_BACK) {
-	 setup.cull_mode = WINDING_BOTH;
+	 setup.cull_mode = PIPE_WINDING_BOTH;
       }
       else if (ctx->Polygon.CullFaceMode == GL_FRONT) {
 	 setup.cull_mode = setup.front_winding;
       }
       else {
-	 setup.cull_mode = setup.front_winding ^ WINDING_BOTH;
+	 setup.cull_mode = setup.front_winding ^ PIPE_WINDING_BOTH;
       }
    }
 
@@ -111,7 +127,7 @@ static void update_setup_state( struct st_context *st )
       GLuint fill_front = translate_fill( ctx->Polygon.FrontMode );
       GLuint fill_back = translate_fill( ctx->Polygon.BackMode );
       
-      if (setup.front_winding == WINDING_CW) {
+      if (setup.front_winding == PIPE_WINDING_CW) {
 	 setup.fill_cw = fill_front;
 	 setup.fill_ccw = fill_back;
       }
@@ -122,11 +138,11 @@ static void update_setup_state( struct st_context *st )
 
       /* Simplify when culling is active:
        */
-      if (setup.cull_mode & WINDING_CW) {
+      if (setup.cull_mode & PIPE_WINDING_CW) {
 	 setup.fill_cw = setup.fill_ccw;
       }
       
-      if (setup.cull_mode & WINDING_CCW) {
+      if (setup.cull_mode & PIPE_WINDING_CCW) {
 	 setup.fill_ccw = setup.fill_cw;
       }
    }
@@ -136,19 +152,17 @@ static void update_setup_state( struct st_context *st )
     *
     * _NEW_POLYGON 
     */
-   if (setup.fill_cw != FILL_TRI)
-      setup.offset_cw = get_offset_flag( setup.fill_cw, 
-					 &ctx->Polygon );
+   if (setup.fill_cw != PIPE_POLYGON_MODE_FILL)
+      setup.offset_cw = get_offset_flag( setup.fill_cw, &ctx->Polygon );
    
-   if (setup.fill_ccw != FILL_TRI)
-      setup.offset_ccw = get_offset_flag( setup.fill_ccw, 
-					  &ctx->Polygon );
+   if (setup.fill_ccw != PIPE_POLYGON_MODE_FILL)
+      setup.offset_ccw = get_offset_flag( setup.fill_ccw, &ctx->Polygon );
 
 
    /* _NEW_BUFFERS, _NEW_POLYGON
     */
-   if (setup.fill_cw != FILL_TRI ||
-       setup.fill_ccw != FILL_TRI)
+   if (setup.fill_cw != PIPE_POLYGON_MODE_FILL ||
+       setup.fill_ccw != PIPE_POLYGON_MODE_FILL)
    {
       GLfloat mrd = (ctx->DrawBuffer ? 
 		     ctx->DrawBuffer->_MRD : 

@@ -89,16 +89,13 @@
 #define PIPE_POLYGON_MODE_LINE  1
 #define PIPE_POLYGON_MODE_POINT 2
 
-/** Polygon cull mode */
-#define PIPE_POLYGON_CULL_NONE  0
-#define PIPE_POLYGON_CULL_FRONT 1
-#define PIPE_POLYGON_CULL_BACK  2
-#define PIPE_POLYGON_CULL_BOTH  3
+/** Polygon front/back window, also for culling */
+#define PIPE_WINDING_NONE 0
+#define PIPE_WINDING_CW   1
+#define PIPE_WINDING_CCW  2
+#define PIPE_WINDING_BOTH (PIPE_WINDING_CW | PIPE_WINDING_CCW)
 
-/** Polygon front winding order */
-#define PIPE_POLYGON_FRONT_CW   0
-#define PIPE_POLYGON_FRONT_CCW  1
-
+/** Stencil ops */
 #define PIPE_STENCIL_OP_KEEP       0
 #define PIPE_STENCIL_OP_ZERO       1
 #define PIPE_STENCIL_OP_REPLACE    2

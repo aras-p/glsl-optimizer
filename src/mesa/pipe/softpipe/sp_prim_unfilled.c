@@ -31,7 +31,7 @@
 
 #include "sp_context.h"
 #include "sp_prim.h"
-
+#include "pipe/p_defines.h"
 
 
 struct unfilled_stage {
@@ -113,17 +113,17 @@ static void unfilled_tri( struct prim_stage *stage,
    GLuint mode = unfilled->mode[header->det < 0];
   
    switch (mode) {
-   case FILL_TRI:
+   case PIPE_POLYGON_MODE_FILL:
       stage->next->tri( stage->next, header );
       break;
-
-   case FILL_LINE:
+   case PIPE_POLYGON_MODE_LINE:
       lines( stage, header );
       break;
-
-   case GL_POINT:
+   case PIPE_POLYGON_MODE_POINT:
       points( stage, header );
       break;
+   default:
+      abort();
    }   
 }
 

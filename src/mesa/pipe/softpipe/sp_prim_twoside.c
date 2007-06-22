@@ -30,6 +30,7 @@
 #include "imports.h"
 #include "vf/vf.h"
 
+#include "pipe/p_defines.h"
 #include "sp_context.h"
 #include "sp_prim.h"
 
@@ -52,7 +53,7 @@ static void twoside_begin( struct prim_stage *stage )
 {
    struct twoside_stage *twoside = twoside_stage(stage);
 
-   twoside->facing = (stage->softpipe->setup.front_winding == WINDING_CW) ? -1 : 1;
+   twoside->facing = (stage->softpipe->setup.front_winding == PIPE_WINDING_CW) ? -1 : 1;
 
    stage->next->begin( stage->next );
 }

@@ -25,38 +25,43 @@
  * 
  **************************************************************************/
 
+
+/**
+ * Abstract graphics pipe state objects.
+ *
+ * Basic notes:
+ *   1. Want compact representations, so we use bitfields.
+ *   2. Put bitfields before other (GLfloat) fields.
+ */
+
+
 #ifndef PIPE_STATE_H
 #define PIPE_STATE_H
 
 #include "mtypes.h"
 
-#define WINDING_NONE 0
-#define WINDING_CW   1
-#define WINDING_CCW  2
-#define WINDING_BOTH (WINDING_CW | WINDING_CCW)
 
-#define FILL_POINT 1
-#define FILL_LINE  2
-#define FILL_TRI   3
-
-struct pipe_setup_state {
+/**
+ * Primitive (point/line/tri) setup info
+ */
+struct pipe_setup_state
+{
    GLuint flatshade:1;
    GLuint light_twoside:1;
 
-   GLuint front_winding:2;
+   GLuint front_winding:2;  /**< PIPE_WINDING_x */
 
-   GLuint cull_mode:2;
+   GLuint cull_mode:2;      /**< PIPE_WINDING_x */
 
-   GLuint fill_cw:2;
-   GLuint fill_ccw:2;
+   GLuint fill_cw:2;        /**< PIPE_POLYGON_MODE_x */
+   GLuint fill_ccw:2;       /**< PIPE_POLYGON_MODE_x */
 
    GLuint offset_cw:1;
    GLuint offset_ccw:1;
 
    GLuint scissor:1;
    GLuint poly_stipple:1;
-
-   GLuint pad:18;
+   GLuint poly_smooth:1;
 
    GLfloat offset_units;
    GLfloat offset_scale;
@@ -137,6 +142,7 @@ struct pipe_clear_color_state
    GLfloat color[4];
 };
 
+/** XXXX probably merge into pipe_setup_state */
 struct pipe_line_state
 {
    GLuint smooth:1;
@@ -146,22 +152,13 @@ struct pipe_line_state
    GLfloat width;
 };
 
+/** XXXX probably merge into pipe_setup_state */
 struct pipe_point_state
 {
    GLuint smooth:1;
    GLfloat size;
    GLfloat min_size, max_size;
    GLfloat attenuation[3];
-};
-
-struct pipe_polygon_state {
-   GLuint cull_mode:2;     /**< PIPE_POLYGON_CULL_x */
-   GLuint front_winding:1; /**< PIPE_POLYGON_FRONT_CCW,CW */
-   GLuint front_mode:2;    /**< PIPE_POLYGON_MODE_x */
-   GLuint back_mode:2;     /**< PIPE_POLYGON_MODE_x */
-   GLuint stipple:1;       /**< enable */
-   GLuint smooth:1;        /**< enable */
-   /* XXX Polygon offset? */
 };
 
 struct pipe_stencil_state {
@@ -215,6 +212,10 @@ struct pipe_sampler_state
    GLuint wrap_r:3;        /**< PIPE_TEX_WRAP_x */
    GLuint min_filter:3;    /**< PIPE_TEX_FILTER_x */
    GLuint mag_filter:1;    /**< PIPE_TEX_FILTER_LINEAR or _NEAREST */
+   GLuint compare:1;       /**< shadow/depth compare enabled? */
+   GLenum compare_mode:1;  /**< PIPE_TEX_COMPARE_x */
+   GLenum compare_func:3;  /**< PIPE_FUNC_x */
+   GLfloat shadow_ambient; /**< shadow test fail color/intensity */
    GLfloat min_lod;
    GLfloat max_lod;
    GLfloat lod_bias;
@@ -223,10 +224,6 @@ struct pipe_sampler_state
    GLint MaxLevel;      /**< max mipmap level, OpenGL 1.2 */
 #endif
    GLfloat max_anisotropy;
-   GLuint compare:1;       /**< shadow/depth compare enabled? */
-   GLenum compare_mode:1;  /**< PIPE_TEX_COMPARE_x */
-   GLenum compare_func:3;  /**< PIPE_FUNC_x */
-   GLfloat shadow_ambient; /**< shadow test fail color/intensity */
 };
 
 #endif
