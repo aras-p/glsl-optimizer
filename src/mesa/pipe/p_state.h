@@ -108,7 +108,7 @@ struct pipe_depth_state
 };
 
 struct pipe_alpha_test_state {
-   GLuint enable:1;
+   GLuint enabled:1;
    GLuint func:3;    /**< PIPE_FUNC_x */
    GLfloat ref;      /**< reference value */
 };

@@ -166,6 +166,7 @@ SOFTPIPE_SOURCES = \
 	pipe/softpipe/sp_prim_twoside.c \
 	pipe/softpipe/sp_prim_unfilled.c \
 	pipe/softpipe/sp_quad.c \
+	pipe/softpipe/sp_quad_alpha_test.c \
 	pipe/softpipe/sp_quad_blend.c \
 	pipe/softpipe/sp_quad_depth_test.c \
 	pipe/softpipe/sp_quad_fs.c \

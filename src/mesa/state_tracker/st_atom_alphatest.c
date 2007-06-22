@@ -67,7 +67,7 @@ update_alpha_test( struct st_context *st )
    memset(&alpha, 0, sizeof(alpha));
 
    if (st->ctx->Color.AlphaEnabled) {
-      alpha.enable = 1;
+      alpha.enabled = 1;
       alpha.func = gl_alpha_func_to_sp(st->ctx->Color.AlphaFunc);
       alpha.ref = st->ctx->Color.AlphaRef;
    }
