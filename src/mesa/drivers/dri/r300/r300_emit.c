@@ -532,3 +532,19 @@ void r300ReleaseArrays(GLcontext * ctx)
 		r300ReleaseDmaRegion(rmesa, &rmesa->state.aos[i], __FUNCTION__);
 	}
 }
+
+void r300EmitCacheFlush(r300ContextPtr rmesa)
+{
+        int cmd_reserved = 0;
+	int cmd_written = 0;
+
+	drm_radeon_cmd_header_t *cmd = NULL;
+
+	reg_start(R300_RB3D_DSTCACHE_CTLSTAT, 0);
+	e32(R300_RB3D_DSTCACHE_UNKNOWN_0A);
+
+	reg_start(R300_RB3D_ZCACHE_CTLSTAT, 0);
+	e32(R300_RB3D_ZCACHE_UNKNOWN_03);
+
+
+}

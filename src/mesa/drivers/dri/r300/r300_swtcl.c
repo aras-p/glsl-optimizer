@@ -370,7 +370,7 @@ static void flush_last_swtcl_prim( r300ContextPtr rmesa  )
 
       if (rmesa->dma.current.start != rmesa->dma.current.ptr) {
 
-	r300EnsureCmdBufSpace( rmesa, rmesa->hw.max_state_size + (8*sizeof(int)), __FUNCTION__);
+	r300EnsureCmdBufSpace( rmesa, rmesa->hw.max_state_size + (12*sizeof(int)), __FUNCTION__);
 	r300EmitVertexAOS( rmesa,
 			   rmesa->swtcl.vertex_size,
 			   current_offset);
@@ -378,6 +378,8 @@ static void flush_last_swtcl_prim( r300ContextPtr rmesa  )
 	r300EmitVbufPrim( rmesa,
 			  rmesa->swtcl.hw_primitive,
 			  rmesa->swtcl.numverts);
+
+	r300EmitCacheFlush(rmesa);
       }
 
       rmesa->swtcl.numverts = 0;
@@ -679,11 +681,7 @@ static void r300ChooseRenderState( GLcontext *ctx )
 
 static void r300RenderStart(GLcontext *ctx)
 {
-  r300ContextPtr rmesa = R300_CONTEXT( ctx );
-	int cmd_reserved = 0;
-	int cmd_written = 0;
-	drm_radeon_cmd_header_t *cmd = NULL;
-
+        r300ContextPtr rmesa = R300_CONTEXT( ctx );
 	//	fprintf(stderr, "%s\n", __FUNCTION__);
 
 	r300ChooseRenderState(ctx);	
@@ -691,11 +689,7 @@ static void r300RenderStart(GLcontext *ctx)
 
 	r300UpdateShaderStates(rmesa);
 
-	reg_start(R300_RB3D_DSTCACHE_CTLSTAT, 0);
-	e32(R300_RB3D_DSTCACHE_UNKNOWN_0A);
-	
-	reg_start(R300_RB3D_ZCACHE_CTLSTAT, 0);
-	e32(R300_RB3D_ZCACHE_UNKNOWN_03);
+	r300EmitCacheFlush(rmesa);
 	
 	if (rmesa->dma.flush != 0 && 
 	    rmesa->dma.flush != flush_last_swtcl_prim)
@@ -705,16 +699,6 @@ static void r300RenderStart(GLcontext *ctx)
 
 static void r300RenderFinish(GLcontext *ctx)
 {
-        r300ContextPtr rmesa = R300_CONTEXT( ctx );
-	int cmd_reserved = 0;
-	int cmd_written = 0;
-	drm_radeon_cmd_header_t *cmd = NULL;
-
-	reg_start(R300_RB3D_DSTCACHE_CTLSTAT, 0);
-	e32(R300_RB3D_DSTCACHE_UNKNOWN_0A);
-
-	reg_start(R300_RB3D_ZCACHE_CTLSTAT, 0);
-	e32(R300_RB3D_ZCACHE_UNKNOWN_03);
 }
 
 static void r300RasterPrimitive( GLcontext *ctx, GLuint hwprim )

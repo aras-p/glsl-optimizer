@@ -287,9 +287,6 @@ static GLboolean r300RunRender(GLcontext * ctx,
 {
 	r300ContextPtr rmesa = R300_CONTEXT(ctx);
 	int i;
-	int cmd_reserved = 0;
-	int cmd_written = 0;
-	drm_radeon_cmd_header_t *cmd = NULL;
 	TNLcontext *tnl = TNL_CONTEXT(ctx);
 	struct vertex_buffer *vb = &tnl->vb;
 
@@ -303,12 +300,7 @@ static GLboolean r300RunRender(GLcontext * ctx,
 
 	r300UpdateShaderStates(rmesa);
 
-	reg_start(R300_RB3D_DSTCACHE_CTLSTAT, 0);
-	e32(R300_RB3D_DSTCACHE_UNKNOWN_0A);
-
-	reg_start(R300_RB3D_ZCACHE_CTLSTAT, 0);
-	e32(R300_RB3D_ZCACHE_UNKNOWN_03);
-
+	r300EmitCacheFlush(rmesa);
 	r300EmitState(rmesa);
 
 	for (i = 0; i < vb->PrimitiveCount; i++) {
@@ -318,11 +310,7 @@ static GLboolean r300RunRender(GLcontext * ctx,
 		r300RunRenderPrimitive(rmesa, ctx, start, end, prim);
 	}
 
-	reg_start(R300_RB3D_DSTCACHE_CTLSTAT, 0);
-	e32(R300_RB3D_DSTCACHE_UNKNOWN_0A);
-
-	reg_start(R300_RB3D_ZCACHE_CTLSTAT, 0);
-	e32(R300_RB3D_ZCACHE_UNKNOWN_03);
+	r300EmitCacheFlush(rmesa);
 
 #ifdef USER_BUFFERS
 	r300UseArrays(ctx);
