@@ -125,6 +125,7 @@ setup_vertex_format(GLcontext *ctx)
       if (RENDERINPUTS_TEST( index_bitset, _TNL_ATTRIB_COLOR0 )) {
          swsetup->intColors = !ctx->FragmentProgram._Current
                            && !ctx->ATIFragmentShader._Enabled
+                           && ctx->RenderMode == GL_RENDER
                            && CHAN_TYPE == GL_UNSIGNED_BYTE;
          if (swsetup->intColors)
             EMIT_ATTR( _TNL_ATTRIB_COLOR0, EMIT_4CHAN_4F_RGBA, color );
