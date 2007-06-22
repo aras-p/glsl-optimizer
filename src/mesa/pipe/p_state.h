@@ -121,16 +121,16 @@ struct pipe_alpha_test_state {
 struct pipe_blend_state {
    GLuint blend_enable:1;
 
-   GLuint rgb_func:3;
-   GLuint rgb_src_factor:5;
-   GLuint rgb_dst_factor:5;
+   GLuint rgb_func:3;          /**< PIPE_BLEND_x */
+   GLuint rgb_src_factor:5;    /**< PIPE_BLENDFACTOR_x */
+   GLuint rgb_dst_factor:5;    /**< PIPE_BLENDFACTOR_x */
 
-   GLuint alpha_func:3;
-   GLuint alpha_src_factor:5;
-   GLuint alpha_dst_factor:5;
+   GLuint alpha_func:3;        /**< PIPE_BLEND_x */
+   GLuint alpha_src_factor:5;  /**< PIPE_BLENDFACTOR_x */
+   GLuint alpha_dst_factor:5;  /**< PIPE_BLENDFACTOR_x */
 
    GLuint logicop_enable:1;
-   GLuint logicop_func:4;
+   GLuint logicop_func:4;      /**< PIPE_LOGICOP_x */
 };
 
 struct pipe_blend_color {
