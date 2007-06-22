@@ -1,6 +1,6 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.5.3
+ * Version:  7.1
  *
  * Copyright (C) 1999-2007  Brian Paul   All Rights Reserved.
  *
@@ -1178,7 +1178,10 @@ shade_texture_span(GLcontext *ctx, SWspan *span)
       if (span->primitive == GL_BITMAP && span->array->ChanType != GL_FLOAT) {
          convert_color_type(span, GL_FLOAT, 0);
       }
-      interpolate_active_attribs(ctx, span, ~0);
+      if (span->primitive != GL_POINT) {
+         /* for points, we populated the arrays already */
+         interpolate_active_attribs(ctx, span, ~0);
+      }
       span->array->ChanType = GL_FLOAT;
 
       if (!(span->arrayMask & SPAN_Z))

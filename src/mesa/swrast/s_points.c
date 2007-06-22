@@ -1,8 +1,8 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.1
+ * Version:  7.1
  *
- * Copyright (C) 1999-2004  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2007  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -208,6 +208,14 @@ _swrast_choose_point( GLcontext *ctx )
    GLboolean specular = (ctx->Fog.ColorSumEnabled ||
                          (ctx->Light.Enabled &&
                           ctx->Light.Model.ColorControl == GL_SEPARATE_SPECULAR_COLOR));
+   GLboolean attribs = (ctx->FragmentProgram._Current ||
+                        ctx->Texture._EnabledCoordUnits ||
+                        swrast->_FogEnabled ||
+                        specular);
+
+   /*
+    * XXX this is a mess that should be cleaned up someday
+    */
 
    if (ctx->RenderMode==GL_RENDER) {
       if (ctx->Point.PointSprite) {
@@ -218,7 +226,7 @@ _swrast_choose_point( GLcontext *ctx )
          else
             USE(sprite_point);
       }
-      else if (ctx->Point.SmoothFlag) {
+      else if (ctx->Point.SmoothFlag && !attribs) {
          /* Smooth points */
          if (rgbMode) {
             if (ctx->Point._Attenuated || ctx->VertexProgram.PointSizeEnabled) {
@@ -237,7 +245,7 @@ _swrast_choose_point( GLcontext *ctx )
       }
       else if (ctx->Point._Attenuated || ctx->VertexProgram.PointSizeEnabled) {
          if (rgbMode) {
-            if (ctx->Texture._EnabledCoordUnits) {
+            if (attribs) {
                if (ctx->Point.SmoothFlag) {
                   USE(atten_antialiased_rgba_point);
                }
@@ -254,9 +262,7 @@ _swrast_choose_point( GLcontext *ctx )
             USE(atten_general_ci_point);
          }
       }
-      else if ((ctx->Texture._EnabledCoordUnits
-                || specular
-                || swrast->_FogEnabled) && rgbMode) {
+      else if (attribs && rgbMode) {
          /* textured, fogged */
          USE(textured_rgba_point);
       }
