@@ -77,6 +77,7 @@ struct pipe_context *softpipe_create( void )
    softpipe->pipe.set_fs_state = softpipe_set_fs_state;
    softpipe->pipe.set_polygon_stipple = softpipe_set_polygon_stipple;
    softpipe->pipe.set_sampler_state = softpipe_set_sampler_state;
+   softpipe->pipe.set_texture_state = softpipe_set_texture_state;
    softpipe->pipe.draw_vb = softpipe_draw_vb;
    softpipe->pipe.clear = softpipe_clear;
 

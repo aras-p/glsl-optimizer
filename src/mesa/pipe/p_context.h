@@ -100,6 +100,10 @@ struct pipe_context {
                               GLuint unit,
                               const struct pipe_sampler_state * );
 
+   void (*set_texture_state)( struct pipe_context *,
+                              GLuint unit,
+                              struct pipe_texture_object * );
+
    void (*set_viewport)( struct pipe_context *,
 			 const struct pipe_viewport * );
 };

@@ -43,7 +43,22 @@ softpipe_set_sampler_state(struct pipe_context *pipe,
 {
    struct softpipe_context *softpipe = softpipe_context(pipe);
 
+   assert(unit < PIPE_MAX_SAMPLERS);
    softpipe->sampler[unit] = *sampler;
 
    softpipe->dirty |= G_NEW_SAMPLER;
+}
+
+
+void
+softpipe_set_texture_state(struct pipe_context *pipe,
+                           GLuint unit,
+                           struct pipe_texture_object *texture)
+{
+   struct softpipe_context *softpipe = softpipe_context(pipe);
+
+   assert(unit < PIPE_MAX_SAMPLERS);
+   softpipe->texture[unit] = texture;  /* ptr, not struct */
+
+   softpipe->dirty |= G_NEW_TEXTURE;
 }

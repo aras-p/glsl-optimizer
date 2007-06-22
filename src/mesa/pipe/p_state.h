@@ -231,4 +231,18 @@ struct pipe_sampler_state
    GLfloat max_anisotropy;
 };
 
+
+/**
+ * XXX rough approximation...
+ */
+struct pipe_texture_object
+{
+   GLuint format:5;    /**< PIPE_FORMAT_x */
+   GLuint width:13;    /**< 13 bits = 8K max size */
+   GLuint height:13;
+   GLuint depth:13;
+   GLubyte *data;      /**< only valid while buffer mapped? */
+};
+
+
 #endif

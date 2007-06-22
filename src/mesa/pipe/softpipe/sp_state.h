@@ -63,6 +63,10 @@ void softpipe_set_sampler_state( struct pipe_context *,
                                  GLuint unit,
                                  const struct pipe_sampler_state * );
 
+void softpipe_set_texture_state( struct pipe_context *,
+                                 GLuint unit,
+                                 struct pipe_texture_object * );
+
 void softpipe_set_scissor_rect( struct pipe_context *,
 			       const struct pipe_scissor_rect * );
 
