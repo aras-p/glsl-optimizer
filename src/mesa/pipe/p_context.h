@@ -96,6 +96,10 @@ struct pipe_context {
    void (*set_stencil_state)( struct pipe_context *,
                               const struct pipe_stencil_state * );
 
+   void (*set_sampler_state)( struct pipe_context *,
+                              GLuint unit,
+                              const struct pipe_sampler_state * );
+
    void (*set_viewport)( struct pipe_context *,
 			 const struct pipe_viewport * );
 };

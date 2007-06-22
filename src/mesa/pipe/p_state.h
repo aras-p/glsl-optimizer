@@ -41,6 +41,16 @@
 #include "mtypes.h"
 
 
+
+/**
+ * Implementation limits
+ */
+#define PIPE_MAX_SAMPLERS     8
+#define PIPE_MAX_CLIP_PLANES  6
+#define PIPE_MAX_CONSTANT    32
+
+
+
 /**
  * Primitive (point/line/tri) setup info
  */
@@ -84,9 +94,6 @@ struct pipe_scissor_rect {
    GLshort maxy;
 };
 
-
-#define PIPE_MAX_CLIP_PLANES 6
-
 struct pipe_clip_state {
    GLfloat ucp[PIPE_MAX_CLIP_PLANES][4];
    GLuint nr;
@@ -95,8 +102,6 @@ struct pipe_clip_state {
 struct pipe_fs_state {
    struct gl_fragment_program *fp;
 };
-
-#define PIPE_MAX_CONSTANT 32
 
 struct pipe_constant_buffer {
    GLfloat constant[PIPE_MAX_CONSTANT][4];

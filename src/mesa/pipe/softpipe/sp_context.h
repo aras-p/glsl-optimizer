@@ -62,6 +62,7 @@ enum interp_mode {
 #define G_NEW_FRAMEBUFFER 0x100
 #define G_NEW_ALPHA_TEST  0x200
 #define G_NEW_DEPTH_TEST  0x400
+#define G_NEW_SAMPLER     0x800
 
 
 #define PIPE_ATTRIB_MAX 32
@@ -84,6 +85,7 @@ struct softpipe_context {
    struct pipe_point_state  point;
    struct pipe_scissor_rect scissor;
    struct pipe_poly_stipple poly_stipple;
+   struct pipe_sampler_state sampler[PIPE_MAX_SAMPLERS];
    GLuint dirty;
 
    /* Clip derived state:
