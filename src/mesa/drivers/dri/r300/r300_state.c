@@ -1862,13 +1862,15 @@ static void r300ResetHwState(r300ContextPtr r300)
 	r300->hw.vap_clip.cmd[4] = r300PackFloat32(1.0); /* Y */
 
 	/* XXX: Other families? */
-	switch (r300->radeon.radeonScreen->chip_family) {
-	case CHIP_FAMILY_R300:
-		r300->hw.unk2288.cmd[1] = R300_2288_R300;
-		break;
-	default:
-		r300->hw.unk2288.cmd[1] = R300_2288_RV350;
-		break;
+	if (has_tcl) {
+		switch (r300->radeon.radeonScreen->chip_family) {
+		case CHIP_FAMILY_R300:
+			r300->hw.unk2288.cmd[1] = R300_2288_R300;
+			break;
+		default:
+			r300->hw.unk2288.cmd[1] = R300_2288_RV350;
+			break;
+		}
 	}
 
 	r300->hw.gb_enable.cmd[1] = R300_GB_POINT_STUFF_ENABLE

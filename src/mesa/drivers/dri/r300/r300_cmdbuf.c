@@ -321,8 +321,12 @@ void r300InitCmdBuf(r300ContextPtr r300)
 	r300->hw.unk221C.cmd[0] = cmdpacket0(R300_VAP_UNKNOWN_221C, 1);
 	ALLOC_STATE(vap_clip, always, 5, 0);
 	r300->hw.vap_clip.cmd[0] = cmdpacket0(R300_VAP_CLIP_X_0, 4);
-	ALLOC_STATE(unk2288, always, 2, 0);
-	r300->hw.unk2288.cmd[0] = cmdpacket0(R300_VAP_UNKNOWN_2288, 1);
+
+	if (has_tcl) {
+		ALLOC_STATE(unk2288, always, 2, 0);
+		r300->hw.unk2288.cmd[0] = cmdpacket0(R300_VAP_UNKNOWN_2288, 1);
+	}
+
 	ALLOC_STATE(vof, always, R300_VOF_CMDSIZE, 0);
 	r300->hw.vof.cmd[R300_VOF_CMD_0] =
 	    cmdpacket0(R300_VAP_OUTPUT_VTX_FMT_0, 2);
