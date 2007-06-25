@@ -125,6 +125,7 @@ shade_quad( struct quad_stage *qs, struct quad_header *quad )
    GLfloat fx = quad->x0;
    GLfloat fy = quad->y0;
    GLuint i, j;
+   GLboolean need_z = softpipe->depth_test.enabled; /* XXX hack */
 
    exec.coef = quad->coef;
 
@@ -143,12 +144,12 @@ shade_quad( struct quad_stage *qs, struct quad_header *quad )
    /* Z and W are done by linear interpolation:
     * XXX we'll probably have to use integers for Z
     */
-   if (softpipe->need_z) {
-      linterp(&exec, 0, 2);
+   if (/*softpipe->*/need_z) {
+      linterp(&exec, 0, 2);   /* attr[0].z */
    }
 
    if (softpipe->need_w) {
-      linterp(&exec, 0, 3);
+      linterp(&exec, 0, 3);  /* attr[0].w */
 //      invert(&exec, 0, 3);
    }
 
@@ -189,6 +190,13 @@ shade_quad( struct quad_stage *qs, struct quad_header *quad )
       memcpy(quad->outputs.color, 
 	     exec.attr[attr], 
 	     sizeof(quad->outputs.color));
+
+      if (need_z) {
+         quad->outputs.depth[0] = exec.attr[0][2][0];
+         quad->outputs.depth[1] = exec.attr[0][2][1];
+         quad->outputs.depth[2] = exec.attr[0][2][2];
+         quad->outputs.depth[3] = exec.attr[0][2][3];
+      }
    }
 #endif
 
