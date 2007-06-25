@@ -593,10 +593,10 @@ struct pipe_surface *
 xmesa_get_color_surface(GLcontext *ctx, GLuint buf);
 
 struct pipe_surface *
-xmesa_get_z_surface(GLcontext *ctx, GLuint i);
+xmesa_get_z_surface(GLcontext *ctx);
 
 struct pipe_surface *
-xmesa_get_stencil_surface(GLcontext *ctx, GLuint i);
+xmesa_get_stencil_surface(GLcontext *ctx);
 
 
 #endif

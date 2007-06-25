@@ -54,6 +54,7 @@ struct xmesa_surface
 {
    struct softpipe_surface sps;
    struct xmesa_renderbuffer *xrb;  /** ptr back to matching xmesa_renderbuffer */
+   struct gl_renderbuffer *rb; /* ptr to matching gl_renderbuffer */
 };
 
 
@@ -242,15 +243,85 @@ xmesa_get_color_surface(GLcontext *ctx, GLuint buf)
 }
 
 
-struct pipe_surface *
-xmesa_get_z_surface(GLcontext *ctx, GLuint i)
+static void
+read_quad_z(struct softpipe_surface *sps,
+            GLint x, GLint y, GLfloat zzzz[QUAD_SIZE])
 {
-   return NULL;
+   struct xmesa_surface *xmsurf = xmesa_surface(sps);
+   struct gl_renderbuffer *rb = xmsurf->rb;
+   GLushort temp[4];
+   GLuint i;
+   GET_CURRENT_CONTEXT(ctx);
+   rb->GetRow(ctx, rb, 2, x, y,     temp);
+   rb->GetRow(ctx, rb, 2, x, y + 1, temp + 2);
+   for (i = 0; i < 4; i++) {
+      zzzz[i] = USHORT_TO_FLOAT(temp[i]);
+   }
+}
+
+static void
+write_quad_z(struct softpipe_surface *sps,
+             GLint x, GLint y, const GLfloat zzzz[QUAD_SIZE])
+{
+   struct xmesa_surface *xmsurf = xmesa_surface(sps);
+   struct gl_renderbuffer *rb = xmsurf->rb;
+   GLushort temp[4];
+   GLuint i;
+   GET_CURRENT_CONTEXT(ctx);
+   for (i = 0; i < 4; i++) {
+      CLAMPED_FLOAT_TO_USHORT(temp[i], zzzz[i]);
+   }
+   rb->PutRow(ctx, rb, 2, x, y,     temp,     NULL);
+   rb->PutRow(ctx, rb, 2, x, y + 1, temp + 2, NULL);
+}
+
+
+static struct xmesa_surface *
+create_z_surface(XMesaContext xmctx, struct gl_renderbuffer *rb)
+{
+   struct xmesa_surface *xmsurf;
+
+   xmsurf = CALLOC_STRUCT(xmesa_surface);
+   if (xmsurf) {
+      xmsurf->sps.surface.width = rb->Width;
+      xmsurf->sps.surface.height = rb->Height;
+      xmsurf->sps.read_quad_z = read_quad_z;
+      xmsurf->sps.write_quad_z = write_quad_z;
+      xmsurf->rb = rb;
+   }
+   return xmsurf;
+}
+
+/**
+ * Return a pipe_surface that wraps the current Z/depth buffer.
+ * XXX this is pretty much a total hack until gl_renderbuffers and
+ * pipe_surfaces are merged...
+ */
+struct pipe_surface *
+xmesa_get_z_surface(GLcontext *ctx)
+{
+   XMesaContext xmctx = XMESA_CONTEXT(ctx);
+   struct gl_renderbuffer *rb = ctx->DrawBuffer->_DepthBuffer;
+   static struct xmesa_surface *xms = NULL;
+
+   if (!rb)
+      return NULL;
+
+   if (!xms) {
+      xms = create_z_surface(xmctx, rb);
+   }
+   else if (xms->sps.surface.width != rb->Width ||
+            xms->sps.surface.height != rb->Height) {
+      free_surface(&xms->sps);
+      xms = create_z_surface(xmctx, rb);
+   }
+
+   return (struct pipe_surface *) &xms->sps.surface;
 }
 
 
 struct pipe_surface *
-xmesa_get_stencil_surface(GLcontext *ctx, GLuint i)
+xmesa_get_stencil_surface(GLcontext *ctx)
 {
    return NULL;
 }

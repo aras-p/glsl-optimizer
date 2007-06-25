@@ -40,10 +40,10 @@ extern struct pipe_surface *
 xmesa_get_color_surface(GLcontext *ctx, GLuint i);
 
 extern struct pipe_surface *
-xmesa_get_z_surface(GLcontext *ctx, GLuint i);
+xmesa_get_z_surface(GLcontext *ctx);
 
 extern struct pipe_surface *
-xmesa_get_stencil_surface(GLcontext *ctx, GLuint i);
+xmesa_get_stencil_surface(GLcontext *ctx);
 
 
 /**
@@ -64,12 +64,12 @@ update_framebuffer_state( struct st_context *st )
       framebuffer.cbufs[i] = xmesa_get_color_surface(st->ctx, i);
    }
 
-   if (st->ctx->DrawBuffer->Attachment[BUFFER_DEPTH].Renderbuffer) {
-      framebuffer.zbuf = xmesa_get_z_surface(st->ctx, i);
+   if (st->ctx->DrawBuffer->_DepthBuffer/*Attachment[BUFFER_DEPTH].Renderbuffer*/) {
+      framebuffer.zbuf = xmesa_get_z_surface(st->ctx);
    }
 
    if (st->ctx->DrawBuffer->Attachment[BUFFER_STENCIL].Renderbuffer) {
-      framebuffer.sbuf = xmesa_get_stencil_surface(st->ctx, i);
+      framebuffer.sbuf = xmesa_get_stencil_surface(st->ctx);
    }
 
    if (memcmp(&framebuffer, &st->state.framebuffer, sizeof(framebuffer)) != 0) {
