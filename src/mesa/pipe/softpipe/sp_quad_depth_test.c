@@ -44,14 +44,9 @@ depth_test_quad(struct quad_stage *qs, struct quad_header *quad)
    GLfloat zzzz[QUAD_SIZE];  /**< Z for four pixels in quad */
    GLuint zmask = 0;
 
-#if 0
    assert(sps); /* shouldn't get here if there's no zbuffer */
-#else
-   if (!sps)
-      return;
-#endif
 
-   /* XXX get zquad from zbuffer */
+   /* get zquad from zbuffer */
    sps->read_quad_z(sps, quad->x0, quad->y0, zzzz);
 
    switch (softpipe->depth_test.func) {
@@ -94,7 +89,7 @@ depth_test_quad(struct quad_stage *qs, struct quad_header *quad)
 	 }
       }
 
-      /* XXX write updated zquad to zbuffer */
+      /* write updated zquad to zbuffer */
       sps->write_quad_z(sps, quad->x0, quad->y0, zzzz);
    }
 
