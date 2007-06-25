@@ -84,7 +84,7 @@ depth_test_quad(struct quad_stage *qs, struct quad_header *quad)
       /* This is also efficient with sse / spe instructions: 
        */
       for (j = 0; j < QUAD_SIZE; j++) {
-	 if (zmask & (1 << j)) {
+	 if (quad->mask & (1 << j)) {
 	    zzzz[j] = quad->outputs.depth[j];
 	 }
       }
