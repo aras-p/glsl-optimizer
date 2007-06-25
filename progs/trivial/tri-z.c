@@ -51,9 +51,9 @@ static void drawLeftTriangle(void)
    /* draw yellow triangle on LHS of screen */
    glBegin (GL_TRIANGLES);
       glColor4f(1.0, 1.0, 0.0, 0.75);
-      glVertex3f(0.1, 0.9, 0.0); 
-      glVertex3f(0.1, 0.1, 0.0); 
-      glVertex3f(0.7, 0.5, 0.0); 
+      glVertex3f(0.1, 0.9, -1.0); 
+      glVertex3f(0.1, 0.1, -1.0); 
+      glVertex3f(0.8, 0.5,  1.0); 
    glEnd();
 }
 
@@ -63,7 +63,7 @@ static void drawRightTriangle(void)
    glBegin (GL_TRIANGLES);
       glColor4f(0.0, 1.0, 1.0, 0.75);
       glVertex3f(0.9, 0.9, 0.0); 
-      glVertex3f(0.3, 0.5, 0.0); 
+      glVertex3f(0.2, 0.5, 0.0); 
       glVertex3f(0.9, 0.1, 0.0); 
    glEnd();
 }
