@@ -75,9 +75,6 @@ struct pipe_context {
    void (*set_depth_state)( struct pipe_context *,
                               const struct pipe_depth_state * );
 
-   void (*set_point_state)( struct pipe_context *,
-                            const struct pipe_point_state * );
-
    void (*set_framebuffer_state)( struct pipe_context *,
                                   const struct pipe_framebuffer_state * );
 

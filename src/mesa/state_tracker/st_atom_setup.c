@@ -101,12 +101,6 @@ static void update_setup_state( struct st_context *st )
        ctx->Light.Model.TwoSide)
       setup.light_twoside = 1;
 
-   if (ctx->Polygon.SmoothFlag)
-      setup.poly_smooth = 1;
-
-   if (ctx->Polygon.StippleFlag)
-      setup.poly_stipple = 1;
-
    /* _NEW_POLYGON
     */
    if (ctx->Polygon.CullFlag) {
@@ -158,6 +152,12 @@ static void update_setup_state( struct st_context *st )
    if (setup.fill_ccw != PIPE_POLYGON_MODE_FILL)
       setup.offset_ccw = get_offset_flag( setup.fill_ccw, &ctx->Polygon );
 
+   if (ctx->Polygon.SmoothFlag)
+      setup.poly_smooth = 1;
+
+   if (ctx->Polygon.StippleFlag)
+      setup.poly_stipple_enable = 1;
+
 
    /* _NEW_BUFFERS, _NEW_POLYGON
     */
@@ -173,6 +173,19 @@ static void update_setup_state( struct st_context *st )
 			    st->polygon_offset_scale);
    }
       
+   /* _NEW_POINT
+    */
+   setup.point_size = ctx->Point.Size;
+   setup.point_smooth = ctx->Point.SmoothFlag;
+
+   /* _NEW_LINE
+    */
+   setup.line_width = ctx->Line.Width;
+   setup.line_smooth = ctx->Line.SmoothFlag;
+   setup.line_stipple_enable = ctx->Line.StippleFlag;
+   setup.line_stipple_pattern = ctx->Line.StipplePattern;
+   setup.line_stipple_factor = ctx->Line.StippleFactor;
+
 
    if (memcmp(&setup, &st->state.setup, sizeof(setup)) != 0) {
       st->state.setup = setup;
@@ -182,7 +195,8 @@ static void update_setup_state( struct st_context *st )
 
 const struct st_tracked_state st_update_setup = {
    .dirty = {
-      .mesa = (_NEW_LIGHT | _NEW_POLYGON | _NEW_BUFFERS),
+      .mesa = (_NEW_LIGHT | _NEW_POLYGON | _NEW_LINE |
+               _NEW_POINT | _NEW_BUFFERS),
       .st  = 0,
    },
    .update = update_setup_state

@@ -70,9 +70,19 @@ struct pipe_setup_state
    GLuint offset_ccw:1;
 
    GLuint scissor:1;
-   GLuint poly_stipple:1;
-   GLuint poly_smooth:1;
 
+   GLuint poly_smooth:1;
+   GLuint poly_stipple_enable:1;
+
+   GLuint line_smooth:1;
+   GLuint line_stipple_enable:1;
+
+   GLuint point_smooth:1;
+
+   GLubyte line_stipple_factor;  /**< [1..255] only */
+   GLushort line_stipple_pattern;
+   GLfloat line_width;
+   GLfloat point_size;           /**< used when no per-vertex size */
    GLfloat offset_units;
    GLfloat offset_scale;
 };
@@ -145,25 +155,6 @@ struct pipe_blend_color {
 struct pipe_clear_color_state
 {
    GLfloat color[4];
-};
-
-/** XXXX probably merge into pipe_setup_state */
-struct pipe_line_state
-{
-   GLuint smooth:1;
-   GLuint stipple:1;
-   GLushort stipple_pattern;
-   GLint stipple_factor;
-   GLfloat width;
-};
-
-/** XXXX probably merge into pipe_setup_state */
-struct pipe_point_state
-{
-   GLuint smooth:1;
-   GLfloat size;
-   GLfloat min_size, max_size;
-   GLfloat attenuation[3];
 };
 
 struct pipe_stencil_state {

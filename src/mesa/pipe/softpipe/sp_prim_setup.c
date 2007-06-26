@@ -782,8 +782,8 @@ setup_point(struct prim_stage *stage, struct prim_header *prim)
 {
    struct setup_stage *setup = setup_stage( stage );
    /*XXX this should be a vertex attrib! */
-   GLfloat halfSize = 0.5 * setup->stage.softpipe->point.size;
-   GLboolean round = setup->stage.softpipe->point.smooth;
+   GLfloat halfSize = 0.5 * setup->stage.softpipe->setup.point_size;
+   GLboolean round = setup->stage.softpipe->setup.point_smooth;
    const struct vertex_header *v0 = prim->v[0];
    const GLfloat x = v0->data[FRAG_ATTRIB_WPOS][0];
    const GLfloat y = v0->data[FRAG_ATTRIB_WPOS][1];

@@ -73,9 +73,6 @@ void softpipe_set_scissor_rect( struct pipe_context *,
 void softpipe_set_fs_state( struct pipe_context *,
 			   const struct pipe_fs_state * );
 
-void softpipe_set_point_state( struct pipe_context *,
-                               const struct pipe_point_state * );
-
 void softpipe_set_polygon_stipple( struct pipe_context *,
 				  const struct pipe_poly_stipple * );
 

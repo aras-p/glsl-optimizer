@@ -49,7 +49,6 @@ const struct st_tracked_state st_update_clip;
 const struct st_tracked_state st_update_clear_color;
 const struct st_tracked_state st_update_depth;
 const struct st_tracked_state st_update_fs;
-const struct st_tracked_state st_update_point;
 const struct st_tracked_state st_update_setup;
 const struct st_tracked_state st_update_viewport;
 const struct st_tracked_state st_update_constants;
