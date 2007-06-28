@@ -82,7 +82,7 @@
 /** Minimum point size */
 #define MIN_POINT_SIZE 1.0
 /** Maximum point size */
-#define MAX_POINT_SIZE 20.0
+#define MAX_POINT_SIZE 60.0
 /** Point size granularity */
 #define POINT_SIZE_GRANULARITY 0.1
 
