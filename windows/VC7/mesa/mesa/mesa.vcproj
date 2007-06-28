@@ -510,21 +510,6 @@
 				RelativePath="..\..\..\..\src\mesa\tnl\t_pipeline.c">
 			</File>
 			<File
-				RelativePath="..\..\..\..\src\mesa\tnl\t_save_api.c">
-			</File>
-			<File
-				RelativePath="..\..\..\..\src\mesa\tnl\t_save_loopback.c">
-			</File>
-			<File
-				RelativePath="..\..\..\..\src\mesa\tnl\t_save_playback.c">
-			</File>
-			<File
-				RelativePath="..\..\..\..\src\mesa\tnl\t_vb_arbprogram.c">
-			</File>
-			<File
-				RelativePath="..\..\..\..\src\mesa\tnl\t_vb_arbshader.c">
-			</File>
-			<File
 				RelativePath="..\..\..\..\src\mesa\tnl\t_vb_cull.c">
 			</File>
 			<File
