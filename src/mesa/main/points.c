@@ -57,6 +57,7 @@ _mesa_PointSize( GLfloat size )
 
    FLUSH_VERTICES(ctx, _NEW_POINT);
    ctx->Point.Size = size;
+   /* XXX correct clamp limits? */
    ctx->Point._Size = CLAMP(ctx->Point.Size,
 			    ctx->Point.MinSize,
 			    ctx->Point.MaxSize);
