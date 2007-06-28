@@ -6,6 +6,9 @@
    implied. This program is -not- in the public domain. */
 
 #ifdef _WIN32
+#ifdef __MINGW32__
+#include <GL/gl.h>
+#endif
 #include <windows.h>
 #ifndef __CYGWIN32__
 #include <mmsystem.h>  /* Win32 Multimedia API header. */

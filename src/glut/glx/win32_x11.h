@@ -6,16 +6,14 @@
 /* This program is freely distributable without licensing fees 
    and is provided without guarantee or warrantee expressed or 
    implied. This program is -not- in the public domain. */
-
+#ifdef __MINGW32__
+#include <GL/gl.h>
+#endif
 #include <stdlib.h>
 #include <windows.h>
 
 /* These definitions are missing from windows.h */
-WINGDIAPI int WINAPI wglChoosePixelFormat(HDC, PIXELFORMATDESCRIPTOR *);
-WINGDIAPI int WINAPI wglDescribePixelFormat(HDC, int, UINT, LPPIXELFORMATDESCRIPTOR);
-WINGDIAPI int WINAPI wglGetPixelFormat(HDC);
-WINGDIAPI BOOL WINAPI wglSetPixelFormat(HDC, int, PIXELFORMATDESCRIPTOR *);
-WINGDIAPI BOOL WINAPI wglSwapBuffers(HDC);
+
 
 /* Type definitions (conversions) */
 typedef int Visual;			/* Win32 equivalent of X11 type */
