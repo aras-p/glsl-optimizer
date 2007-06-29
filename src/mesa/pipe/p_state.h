@@ -229,6 +229,9 @@ struct pipe_sampler_state
  */
 struct pipe_buffer
 {
+   void (*buffer_data)(struct pipe_buffer *pb, GLuint size, const void *src);
+   void (*buffer_sub_data)(struct pipe_buffer *pb, GLuint offset, GLuint size,
+                           const void *src);
    void *(*map)(struct pipe_buffer *pb, GLuint access_mode);
    void (*unmap)(struct pipe_buffer *pb);
    void *ptr;        /**< address, only valid while mapped */
