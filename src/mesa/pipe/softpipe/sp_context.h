@@ -28,8 +28,8 @@
 /* Authors:  Keith Whitwell <keith@tungstengraphics.com>
  */
 
-#ifndef G_CONTEXT_H
-#define G_CONTEXT_H
+#ifndef SP_CONTEXT_H
+#define SP_CONTEXT_H
 
 #include "glheader.h"
 
@@ -164,4 +164,4 @@ softpipe_context( struct pipe_context *pipe )
 }
 
 
-#endif
+#endif /* SP_CONTEXT_H */
