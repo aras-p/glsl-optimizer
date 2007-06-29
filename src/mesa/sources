@@ -195,7 +195,8 @@ STATETRACKER_SOURCES = \
 	state_tracker/st_atom_viewport.c \
 	state_tracker/st_cb_program.c \
 	state_tracker/st_draw.c \
-	state_tracker/st_context.c 
+	state_tracker/st_context.c \
+	state_tracker/st_texobj.c
 
 SHADER_SOURCES = \
 	shader/arbprogparse.c \
