@@ -134,10 +134,24 @@
 #define PIPE_FORMAT_U_A8            4  /**< ubyte alpha */
 #define PIPE_FORMAT_U_I8            5  /**< ubyte intensity */
 #define PIPE_FORMAT_U_L8_A8         6  /**< ubyte luminance, alpha */
-
 #define PIPE_FORMAT_U_Z16           7  /**< ushort Z/depth */
 #define PIPE_FORMAT_F_Z32           8  /**< float Z/depth */
 #define PIPE_FORMAT_YCBCR           9
 #define PIPE_FORMAT_YCBCR_REV      10
+
+/**
+ * Texture typess
+ */
+#define PIPE_TEXTURE_1D   0
+#define PIPE_TEXTURE_2D   1
+#define PIPE_TEXTURE_3D   2
+#define PIPE_TEXTURE_CUBE 3
+
+/**
+ * Buffer mapping access modes
+ */
+#define PIPE_MAP_READ         1
+#define PIPE_MAP_WRITE        2
+#define PIPE_MAP_READ_WRITE   3
 
 #endif
