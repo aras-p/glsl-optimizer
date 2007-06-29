@@ -50,6 +50,14 @@
 #define PIPE_MAX_CONSTANT    32
 
 
+/* fwd decl */
+struct pipe_surface;
+
+
+/***
+ *** State objects
+ ***/
+
 
 /**
  * Primitive (point/line/tri) setup info
@@ -164,26 +172,14 @@ struct pipe_stencil_state {
    GLuint front_zpass_op:3; /**< PIPE_STENCIL_OP_x */
    GLuint front_zfail_op:3; /**< PIPE_STENCIL_OP_x */
    GLuint back_enabled:1;
-   GLuint back_func:3;
-   GLuint back_fail_op:3;
-   GLuint back_zpass_op:3;
-   GLuint back_zfail_op:3;
-   GLubyte ref_value[2];      /**< [0] = front, [1] = back */
+   GLuint back_func:3;      /**< PIPE_FUNC_x */
+   GLuint back_fail_op:3;   /**< PIPE_STENCIL_OP_x */
+   GLuint back_zpass_op:3;  /**< PIPE_STENCIL_OP_x */
+   GLuint back_zfail_op:3;  /**< PIPE_STENCIL_OP_x */
+   GLubyte ref_value[2];    /**< [0] = front, [1] = back */
    GLubyte value_mask[2];
    GLubyte write_mask[2];
    GLubyte clear_value;
-};
-
-
-/* This will change for hardware pipes...
- */
-struct pipe_surface
-{
-   GLuint width, height;
-   GLubyte *ptr;
-   GLint stride;
-   GLuint cpp;
-   GLuint format;
 };
 
 
@@ -223,16 +219,66 @@ struct pipe_sampler_state
 };
 
 
+/***
+ *** Non-state Objects
+ ***/
+
+
 /**
- * XXX rough approximation...
+ * A mappable buffer (vertex data, pixel data, etc)
+ */
+struct pipe_buffer
+{
+   void *(*map)(struct pipe_buffer *pb, GLuint access_mode);
+   void (*unmap)(struct pipe_buffer *pb);
+   void *ptr;        /**< address, only valid while mapped */
+   GLuint mode;      /**< PIPE_MAP_x, only valid while mapped */
+};
+
+
+/**
+ * 2D surface.
+ * May be a renderbuffer, texture mipmap level, etc.
+ */
+struct pipe_surface
+{
+   struct pipe_buffer buffer;  /**< surfaces can be mapped */
+   GLuint format:5;            /**< PIPE_FORMAT_x */
+   GLuint width, height;
+#if 0
+   GLubyte *ptr;
+   GLint stride;
+   GLuint cpp;
+   GLuint format;
+#endif
+};
+
+
+/**
+ * Texture object.
+ * Mipmap levels, cube faces, 3D slices can be accessed as surfaces.
  */
 struct pipe_texture_object
 {
+   GLuint type:2;      /**< PIPE_TEXTURE_x */
    GLuint format:5;    /**< PIPE_FORMAT_x */
    GLuint width:13;    /**< 13 bits = 8K max size */
    GLuint height:13;
    GLuint depth:13;
-   GLubyte *data;      /**< only valid while buffer mapped? */
+   GLuint mipmapped:1;
+
+   /** to access a 1D or 2D texture object as a surface */
+   struct pipe_surface *(*get_2d_surface)(struct pipe_texture_object *pto,
+                                          GLuint level);
+   /** to access a 3D texture object as a surface */
+   struct pipe_surface *(*get_3d_surface)(struct pipe_texture_object *pto,
+                                          GLuint level, GLuint slice);
+   /** to access a cube texture object as a surface */
+   struct pipe_surface *(*get_cube_surface)(struct pipe_texture_object *pto,
+                                            GLuint face, GLuint level);
+   /** when finished with surface: */
+   void (*release_surface)(struct pipe_texture_object *pto,
+                           struct pipe_surface *ps);
 };
 
 
