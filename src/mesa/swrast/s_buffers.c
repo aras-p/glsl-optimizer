@@ -119,7 +119,7 @@ clear_ci_buffer_with_masking(GLcontext *ctx, struct gl_renderbuffer *rb)
    ASSERT(rb->DataType == GL_UNSIGNED_INT);
 
    /* Initialize index span with clear index */
-   INIT_SPAN(span, GL_BITMAP, width, 0, SPAN_RGBA);
+   INIT_SPAN(span, GL_BITMAP, width, 0, SPAN_INDEX);
    for (i = 0; i < width;i++) {
       span.array->index[i] = ctx->Color.ClearIndex;
    }
