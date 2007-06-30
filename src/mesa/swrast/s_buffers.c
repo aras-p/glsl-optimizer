@@ -55,7 +55,9 @@ clear_rgba_buffer_with_masking(GLcontext *ctx, struct gl_renderbuffer *rb)
 
    /* Initialize color span with clear color */
    /* XXX optimize for clearcolor == black/zero (bzero) */
-   INIT_SPAN(span, GL_BITMAP, width, 0, SPAN_RGBA);
+   INIT_SPAN(span, GL_BITMAP);
+   span.end = width;
+   span.arrayMask = SPAN_RGBA;
    span.array->ChanType = rb->DataType;
    if (span.array->ChanType == GL_UNSIGNED_BYTE) {
       GLubyte clearColor[4];
@@ -119,7 +121,9 @@ clear_ci_buffer_with_masking(GLcontext *ctx, struct gl_renderbuffer *rb)
    ASSERT(rb->DataType == GL_UNSIGNED_INT);
 
    /* Initialize index span with clear index */
-   INIT_SPAN(span, GL_BITMAP, width, 0, SPAN_INDEX);
+   INIT_SPAN(span, GL_BITMAP);
+   span.end = width;
+   span.arrayMask = SPAN_INDEX;
    for (i = 0; i < width;i++) {
       span.array->index[i] = ctx->Color.ClearIndex;
    }

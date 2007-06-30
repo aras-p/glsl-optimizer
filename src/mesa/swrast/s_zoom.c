@@ -148,7 +148,7 @@ zoom_span( GLcontext *ctx, GLint imgX, GLint imgY, const SWspan *span,
    ASSERT((span->arrayMask & SPAN_XY) == 0);
    ASSERT(span->primitive == GL_BITMAP);
 
-   INIT_SPAN(zoomed, GL_BITMAP, 0, 0, 0);
+   INIT_SPAN(zoomed, GL_BITMAP);
    zoomed.x = x0;
    zoomed.end = zoomedWidth;
    zoomed.array = &zoomed_arrays;

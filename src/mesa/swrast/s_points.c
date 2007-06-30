@@ -82,7 +82,7 @@ sprite_point(GLcontext *ctx, const SWvertex *vert)
    size = CLAMP(size, ctx->Const.MinPointSize, ctx->Const.MaxPointSize);
 
    /* span init */
-   INIT_SPAN(span, GL_POINT, 0, 0, 0);
+   INIT_SPAN(span, GL_POINT);
    span.interpMask = SPAN_Z | SPAN_RGBA;
 
    span.red   = ChanToFixed(vert->color[0]);
@@ -248,7 +248,7 @@ smooth_point(GLcontext *ctx, const SWvertex *vert)
    (void) alphaAtten; /* not used */
 
    /* span init */
-   INIT_SPAN(span, GL_POINT, 0, 0, 0);
+   INIT_SPAN(span, GL_POINT);
    span.interpMask = SPAN_Z | SPAN_RGBA;
    span.arrayMask = SPAN_COVERAGE | SPAN_MASK;
 
@@ -367,7 +367,7 @@ large_point(GLcontext *ctx, const SWvertex *vert)
    size = CLAMP(size, ctx->Const.MinPointSize, ctx->Const.MaxPointSize);
 
    /* span init */
-   INIT_SPAN(span, GL_POINT, 0, 0, 0);
+   INIT_SPAN(span, GL_POINT);
    span.arrayMask = SPAN_XY;
 
    if (ciMode) {

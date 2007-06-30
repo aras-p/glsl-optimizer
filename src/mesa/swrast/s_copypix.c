@@ -102,8 +102,10 @@ copy_conv_rgba_pixels(GLcontext *ctx, GLint srcx, GLint srcy,
    GLfloat *dest, *tmpImage, *convImage;
    SWspan span;
 
-   INIT_SPAN(span, GL_BITMAP, 0, 0, SPAN_RGBA);
+   INIT_SPAN(span, GL_BITMAP);
    _swrast_span_default_attribs(ctx, &span);
+   span.arrayMask = SPAN_RGBA;
+   span.arrayAttribs = FRAG_BIT_COL0;
 
    /* allocate space for GLfloat image */
    tmpImage = (GLfloat *) _mesa_malloc(width * height * 4 * sizeof(GLfloat));
@@ -232,8 +234,9 @@ copy_rgba_pixels(GLcontext *ctx, GLint srcx, GLint srcy,
       stepy = 1;
    }
 
-   INIT_SPAN(span, GL_BITMAP, 0, 0, SPAN_RGBA);
+   INIT_SPAN(span, GL_BITMAP);
    _swrast_span_default_attribs(ctx, &span);
+   span.arrayMask = SPAN_RGBA;
    span.arrayAttribs = FRAG_BIT_COL0; /* we'll fill in COL0 attrib values */
 
    if (overlapping) {
@@ -315,8 +318,9 @@ copy_ci_pixels( GLcontext *ctx, GLint srcx, GLint srcy,
       return;
    }
 
-   INIT_SPAN(span, GL_BITMAP, 0, 0, SPAN_INDEX);
+   INIT_SPAN(span, GL_BITMAP);
    _swrast_span_default_attribs(ctx, &span);
+   span.arrayMask = SPAN_INDEX;
 
    if (ctx->DrawBuffer == ctx->ReadBuffer) {
       overlapping = regions_overlap(srcx, srcy, destx, desty, width, height,
@@ -449,8 +453,9 @@ copy_depth_pixels( GLcontext *ctx, GLint srcx, GLint srcy,
       return;
    }
 
-   INIT_SPAN(span, GL_BITMAP, 0, 0, SPAN_Z);
+   INIT_SPAN(span, GL_BITMAP);
    _swrast_span_default_attribs(ctx, &span);
+   span.arrayMask = SPAN_Z;
 
    if (ctx->DrawBuffer == ctx->ReadBuffer) {
       overlapping = regions_overlap(srcx, srcy, destx, desty, width, height,

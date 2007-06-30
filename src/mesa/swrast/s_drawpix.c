@@ -70,7 +70,9 @@ fast_draw_rgba_pixels(GLcontext *ctx, GLint x, GLint y,
       return GL_FALSE;
    }
 
-   INIT_SPAN(span, GL_BITMAP, 0, 0, SPAN_RGBA);
+   INIT_SPAN(span, GL_BITMAP);
+   span.arrayMask = SPAN_RGBA;
+   span.arrayAttribs = FRAG_BIT_COL0;
    _swrast_span_default_attribs(ctx, &span);
 
    /* copy input params since clipping may change them */
@@ -332,7 +334,8 @@ draw_index_pixels( GLcontext *ctx, GLint x, GLint y,
    GLint row, skipPixels;
    SWspan span;
 
-   INIT_SPAN(span, GL_BITMAP, 0, 0, SPAN_INDEX);
+   INIT_SPAN(span, GL_BITMAP);
+   span.arrayMask = SPAN_INDEX;
    _swrast_span_default_attribs(ctx, &span);
 
    /*
@@ -427,7 +430,8 @@ draw_depth_pixels( GLcontext *ctx, GLint x, GLint y,
    const GLboolean zoom = ctx->Pixel.ZoomX != 1.0 || ctx->Pixel.ZoomY != 1.0;
    SWspan span;
 
-   INIT_SPAN(span, GL_BITMAP, 0, 0, SPAN_Z);
+   INIT_SPAN(span, GL_BITMAP);
+   span.arrayMask = SPAN_Z;
    _swrast_span_default_attribs(ctx, &span);
 
    if (type == GL_UNSIGNED_SHORT
@@ -544,8 +548,9 @@ draw_rgba_pixels( GLcontext *ctx, GLint x, GLint y,
       return;
    }
 
-   INIT_SPAN(span, GL_BITMAP, 0, 0x0, SPAN_RGBA);
+   INIT_SPAN(span, GL_BITMAP);
    _swrast_span_default_attribs(ctx, &span);
+   span.arrayMask = SPAN_RGBA;
    span.arrayAttribs = FRAG_BIT_COL0; /* we're fill in COL0 attrib values */
 
    if (ctx->Pixel.Convolution2DEnabled || ctx->Pixel.Separable2DEnabled) {
