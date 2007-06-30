@@ -175,6 +175,7 @@ zoom_span( GLcontext *ctx, GLint imgX, GLint imgY, const SWspan *span,
       /* we'll generate an array of colorss */
       zoomed.interpMask = span->interpMask & ~SPAN_RGBA;
       zoomed.arrayMask |= SPAN_RGBA;
+      zoomed.arrayAttribs |= FRAG_BIT_COL0;  /* we'll produce these values */
       ASSERT(span->arrayMask & SPAN_RGBA);
    }
    else if (format == GL_COLOR_INDEX) {

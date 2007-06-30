@@ -171,10 +171,11 @@ interpolate_active_attribs(GLcontext *ctx, SWspan *span, GLbitfield attrMask)
 {
    const SWcontext *swrast = SWRAST_CONTEXT(ctx);
 
-   /* for glDraw/CopyPixels() we may have turned off some bits in
-    * the _ActiveAttribMask - be sure to obey that mask now.
+   /*
+    * Don't overwrite existing array values, such as colors that may have
+    * been produced by glDraw/CopyPixels.
     */
-   attrMask &= swrast->_ActiveAttribMask;
+   attrMask &= ~span->arrayAttribs;
 
    ATTRIB_LOOP_BEGIN
       if (attrMask & (1 << attr)) {
@@ -201,6 +202,7 @@ interpolate_active_attribs(GLcontext *ctx, SWspan *span, GLbitfield attrMask)
             v3 += dv3dx;
             w += dwdx;
          }
+         ASSERT((span->arrayAttribs & (1 << attr)) == 0);
          span->arrayAttribs |= (1 << attr);
       }
    ATTRIB_LOOP_END
