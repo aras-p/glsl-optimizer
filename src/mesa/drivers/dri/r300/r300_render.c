@@ -379,7 +379,7 @@ static GLboolean r300RunNonTCLRender(GLcontext * ctx,
 	if (r300Fallback(ctx) >= R300_FALLBACK_RAST)
 		return GL_TRUE;
 
-	if (rmesa->radeon.radeonScreen->chip_flags & RADEON_CHIPSET_TCL)
+	if (!(rmesa->radeon.radeonScreen->chip_flags & RADEON_CHIPSET_TCL))
  	        return GL_TRUE;
 
 	return r300RunRender(ctx, stage);
