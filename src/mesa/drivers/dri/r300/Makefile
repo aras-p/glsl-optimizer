@@ -41,6 +41,7 @@ DRIVER_SOURCES = \
 		 r300_fragprog.c \
 		 r300_shader.c \
 		 r300_emit.c \
+		 r300_swtcl.c \
 		 $(EGL_SOURCES)
 
 C_SOURCES = $(COMMON_SOURCES) $(DRIVER_SOURCES)

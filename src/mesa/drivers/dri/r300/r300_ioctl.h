@@ -56,4 +56,5 @@ extern void r300AllocDmaRegion(r300ContextPtr rmesa,
 
 extern void r300InitIoctlFuncs(struct dd_function_table *functions);
 
+extern void r300RefillCurrentDmaRegion(r300ContextPtr rmesa, int size);
 #endif				/* __R300_IOCTL_H__ */

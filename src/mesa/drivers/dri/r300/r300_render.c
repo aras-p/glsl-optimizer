@@ -79,7 +79,7 @@ extern int future_hw_tcl_on;
 /**
  * \brief Convert a OpenGL primitive type into a R300 primitive type.
  */
-static int r300PrimitiveType(r300ContextPtr rmesa, GLcontext * ctx, int prim)
+int r300PrimitiveType(r300ContextPtr rmesa, int prim)
 {
 	switch (prim & PRIM_MODE_MASK) {
 	case GL_POINTS:
@@ -119,7 +119,7 @@ static int r300PrimitiveType(r300ContextPtr rmesa, GLcontext * ctx, int prim)
 	}
 }
 
-static int r300NumVerts(r300ContextPtr rmesa, int num_verts, int prim)
+int r300NumVerts(r300ContextPtr rmesa, int num_verts, int prim)
 {
 	int verts_off = 0;
 
@@ -261,7 +261,7 @@ static void r300RunRenderPrimitive(r300ContextPtr rmesa, GLcontext * ctx,
 	TNLcontext *tnl = TNL_CONTEXT(ctx);
 	struct vertex_buffer *vb = &tnl->vb;
 
-	type = r300PrimitiveType(rmesa, ctx, prim);
+	type = r300PrimitiveType(rmesa, prim);
 	num_verts = r300NumVerts(rmesa, end - start, prim);
 
 	if (type < 0 || num_verts <= 0)
@@ -287,29 +287,20 @@ static GLboolean r300RunRender(GLcontext * ctx,
 {
 	r300ContextPtr rmesa = R300_CONTEXT(ctx);
 	int i;
-	int cmd_reserved = 0;
-	int cmd_written = 0;
-	drm_radeon_cmd_header_t *cmd = NULL;
 	TNLcontext *tnl = TNL_CONTEXT(ctx);
 	struct vertex_buffer *vb = &tnl->vb;
+
 
 	if (RADEON_DEBUG & DEBUG_PRIMS)
 		fprintf(stderr, "%s\n", __FUNCTION__);
 
-	if (hw_tcl_on == GL_FALSE)
-	  vb->AttribPtr[VERT_ATTRIB_POS] = vb->ClipPtr;
 	r300UpdateShaders(rmesa);
 	if (r300EmitArrays(ctx))
 		return GL_TRUE;
 
 	r300UpdateShaderStates(rmesa);
 
-	reg_start(R300_RB3D_DSTCACHE_CTLSTAT, 0);
-	e32(R300_RB3D_DSTCACHE_UNKNOWN_0A);
-
-	reg_start(R300_RB3D_ZCACHE_CTLSTAT, 0);
-	e32(R300_RB3D_ZCACHE_UNKNOWN_03);
-
+	r300EmitCacheFlush(rmesa);
 	r300EmitState(rmesa);
 
 	for (i = 0; i < vb->PrimitiveCount; i++) {
@@ -319,11 +310,7 @@ static GLboolean r300RunRender(GLcontext * ctx,
 		r300RunRenderPrimitive(rmesa, ctx, start, end, prim);
 	}
 
-	reg_start(R300_RB3D_DSTCACHE_CTLSTAT, 0);
-	e32(R300_RB3D_DSTCACHE_UNKNOWN_0A);
-
-	reg_start(R300_RB3D_ZCACHE_CTLSTAT, 0);
-	e32(R300_RB3D_ZCACHE_UNKNOWN_03);
+	r300EmitCacheFlush(rmesa);
 
 #ifdef USER_BUFFERS
 	r300UseArrays(ctx);
@@ -384,11 +371,16 @@ static int r300Fallback(GLcontext * ctx)
 static GLboolean r300RunNonTCLRender(GLcontext * ctx,
 				     struct tnl_pipeline_stage *stage)
 {
+	r300ContextPtr rmesa = R300_CONTEXT(ctx);
+
 	if (RADEON_DEBUG & DEBUG_PRIMS)
 		fprintf(stderr, "%s\n", __FUNCTION__);
 
 	if (r300Fallback(ctx) >= R300_FALLBACK_RAST)
 		return GL_TRUE;
+
+	if (rmesa->radeon.radeonScreen->chip_flags & RADEON_CHIPSET_TCL)
+ 	        return GL_TRUE;
 
 	return r300RunRender(ctx, stage);
 }

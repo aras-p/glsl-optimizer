@@ -587,6 +587,11 @@ struct r300_vertex_shader_state {
 
 extern int hw_tcl_on;
 
+#define COLOR_IS_RGBA
+#define TAG(x) r300##x
+#include "tnl_dd/t_dd_vertex.h"
+#undef TAG
+
 //#define CURRENT_VERTEX_SHADER(ctx) (ctx->VertexProgram._Current)
 #define CURRENT_VERTEX_SHADER(ctx) (R300_CONTEXT(ctx)->selected_vp)
 
@@ -783,7 +788,8 @@ struct r300_state {
 	GLuint *Elts;
 	struct r300_dma_region elt_dma;
 
-	 DECLARE_RENDERINPUTS(render_inputs_bitset);	/* actual render inputs that R300 was configured for.
+	struct r300_dma_region swtcl_dma;
+	DECLARE_RENDERINPUTS(render_inputs_bitset);	/* actual render inputs that R300 was configured for.
 							   They are the same as tnl->render_inputs for fixed pipeline */
 
 	struct r300_stencilbuffer_state stencil;
@@ -793,6 +799,62 @@ struct r300_state {
 #define R300_FALLBACK_NONE 0
 #define R300_FALLBACK_TCL 1
 #define R300_FALLBACK_RAST 2
+
+/* r300_swtcl.c
+ */
+struct r300_swtcl_info {
+   GLuint RenderIndex;
+   
+   /**
+    * Size of a hardware vertex.  This is calculated when \c ::vertex_attrs is
+    * installed in the Mesa state vector.
+    */
+   GLuint vertex_size;
+
+   /**
+    * Attributes instructing the Mesa TCL pipeline where / how to put vertex
+    * data in the hardware buffer.
+    */
+   struct tnl_attr_map vertex_attrs[VERT_ATTRIB_MAX];
+
+   /**
+    * Number of elements of \c ::vertex_attrs that are actually used.
+    */
+   GLuint vertex_attr_count;
+
+   /**
+    * Cached pointer to the buffer where Mesa will store vertex data.
+    */
+   GLubyte *verts;
+
+   /* Fallback rasterization functions
+    */
+  //   r200_point_func draw_point;
+  //   r200_line_func draw_line;
+  //   r200_tri_func draw_tri;
+
+   GLuint hw_primitive;
+   GLenum render_primitive;
+   GLuint numverts;
+
+   /**
+    * Offset of the 4UB color data within a hardware (swtcl) vertex.
+    */
+   GLuint coloroffset;
+
+   /**
+    * Offset of the 3UB specular color data within a hardware (swtcl) vertex.
+    */
+   GLuint specoffset;
+
+   /**
+    * Should Mesa project vertex data or will the hardware do it?
+    */
+   GLboolean needproj;
+
+   struct r300_dma_region indexed_verts;
+};
+
 
 /**
  * \brief R300 context structure.
@@ -832,6 +894,9 @@ struct r300_context {
 	GLvector4f *temp_attrib[_TNL_ATTRIB_MAX];
 
 	GLboolean disable_lowimpact_fallback;
+
+	DECLARE_RENDERINPUTS(tnl_index_bitset);	/* index of bits for last tnl_install_attrs */
+	struct r300_swtcl_info swtcl;
 };
 
 struct r300_buffer_object {
