@@ -414,7 +414,7 @@ void r300Flush(GLcontext * ctx)
 		fprintf(stderr, "%s\n", __FUNCTION__);
 
 	if (rmesa->dma.flush)
-	  rmesa->dma.flush( rmesa );
+		rmesa->dma.flush( rmesa );
 
 	if (rmesa->cmdbuf.count_used > rmesa->cmdbuf.count_reemit)
 		r300FlushCmdBuf(rmesa, __FUNCTION__);
