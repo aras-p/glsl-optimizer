@@ -371,11 +371,16 @@ static int r300Fallback(GLcontext * ctx)
 static GLboolean r300RunNonTCLRender(GLcontext * ctx,
 				     struct tnl_pipeline_stage *stage)
 {
+	r300ContextPtr rmesa = R300_CONTEXT(ctx);
+
 	if (RADEON_DEBUG & DEBUG_PRIMS)
 		fprintf(stderr, "%s\n", __FUNCTION__);
 
 	if (r300Fallback(ctx) >= R300_FALLBACK_RAST)
 		return GL_TRUE;
+
+	if (rmesa->radeon.radeonScreen->chip_flags & RADEON_CHIPSET_TCL)
+ 	        return GL_TRUE;
 
 	return r300RunRender(ctx, stage);
 }

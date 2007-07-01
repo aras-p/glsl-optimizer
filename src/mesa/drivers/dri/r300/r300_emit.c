@@ -239,7 +239,7 @@ static GLuint r300VAPInputRoute1Swizzle(int swizzle[4])
 	    (swizzle[3] << R300_INPUT_ROUTE_W_SHIFT);
 }
 
-static GLuint r300VAPInputRoute1(uint32_t * dst, int swizzle[][4], GLuint nr)
+GLuint r300VAPInputRoute1(uint32_t * dst, int swizzle[][4], GLuint nr)
 {
 	GLuint i;
 
@@ -255,14 +255,14 @@ static GLuint r300VAPInputRoute1(uint32_t * dst, int swizzle[][4], GLuint nr)
 	return (nr + 1) >> 1;
 }
 
-static GLuint r300VAPInputCntl0(GLcontext * ctx, GLuint InputsRead)
+GLuint r300VAPInputCntl0(GLcontext * ctx, GLuint InputsRead)
 {
 	/* No idea what this value means. I have seen other values written to
 	 * this register... */
 	return 0x5555;
 }
 
-static GLuint r300VAPInputCntl1(GLcontext * ctx, GLuint InputsRead)
+GLuint r300VAPInputCntl1(GLcontext * ctx, GLuint InputsRead)
 {
 	r300ContextPtr rmesa = R300_CONTEXT(ctx);
 	GLuint i, vic_1 = 0;
@@ -286,7 +286,7 @@ static GLuint r300VAPInputCntl1(GLcontext * ctx, GLuint InputsRead)
 	return vic_1;
 }
 
-static GLuint r300VAPOutputCntl0(GLcontext * ctx, GLuint OutputsWritten)
+GLuint r300VAPOutputCntl0(GLcontext * ctx, GLuint OutputsWritten)
 {
 	GLuint ret = 0;
 
@@ -315,7 +315,7 @@ static GLuint r300VAPOutputCntl0(GLcontext * ctx, GLuint OutputsWritten)
 	return ret;
 }
 
-static GLuint r300VAPOutputCntl1(GLcontext * ctx, GLuint OutputsWritten)
+GLuint r300VAPOutputCntl1(GLcontext * ctx, GLuint OutputsWritten)
 {
 	GLuint i, ret = 0;
 

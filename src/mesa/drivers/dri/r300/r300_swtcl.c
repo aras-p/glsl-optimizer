@@ -77,6 +77,7 @@ do {									\
    rmesa->swtcl.vertex_attr_count++;					\
 } while (0)
 
+/* this differs from the VIR0 in emit.c - TODO merge them using another option */
 static GLuint r300VAPInputRoute0(uint32_t * dst, GLvector4f ** attribptr,
 				 int *inputs, GLint * tab, GLuint nr)
 {
@@ -99,103 +100,6 @@ static GLuint r300VAPInputRoute0(uint32_t * dst, GLvector4f ** attribptr,
 	}
 
 	return (nr + 1) >> 1;
-}
-
-static GLuint r300VAPInputRoute1Swizzle(int swizzle[4])
-{
-	return (swizzle[0] << R300_INPUT_ROUTE_X_SHIFT) |
-		(swizzle[1] << R300_INPUT_ROUTE_Y_SHIFT) |
-		(swizzle[2] << R300_INPUT_ROUTE_Z_SHIFT) |
-		(swizzle[3] << R300_INPUT_ROUTE_W_SHIFT);
-}
-
-static GLuint r300VAPInputRoute1(uint32_t * dst, int swizzle[][4], GLuint nr)
-{
-	GLuint i;
-
-	for (i = 0; i + 1 < nr; i += 2) {
-		dst[i >> 1] = r300VAPInputRoute1Swizzle(swizzle[i]) | R300_INPUT_ROUTE_ENABLE;
-		dst[i >> 1] |= (r300VAPInputRoute1Swizzle(swizzle[i + 1]) | R300_INPUT_ROUTE_ENABLE) << 16;
-	}
-
-	if (nr & 1) {
-		dst[nr >> 1] = r300VAPInputRoute1Swizzle(swizzle[nr - 1]) | R300_INPUT_ROUTE_ENABLE;
-	}
-
-	return (nr + 1) >> 1;
-}
-
-static GLuint r300VAPInputCntl0(GLcontext * ctx, GLuint InputsRead)
-{
-	/* No idea what this value means. I have seen other values written to
-	 * this register... */
-	return 0x5555;
-}
-
-static GLuint r300VAPInputCntl1(GLcontext * ctx, GLuint InputsRead)
-{
-	r300ContextPtr rmesa = R300_CONTEXT(ctx);
-	GLuint i, vic_1 = 0;
-
-	if (InputsRead & (1 << VERT_ATTRIB_POS))
-		vic_1 |= R300_INPUT_CNTL_POS;
-
-	if (InputsRead & (1 << VERT_ATTRIB_NORMAL))
-		vic_1 |= R300_INPUT_CNTL_NORMAL;
-
-	if (InputsRead & (1 << VERT_ATTRIB_COLOR0))
-		vic_1 |= R300_INPUT_CNTL_COLOR;
-
-	rmesa->state.texture.tc_count = 0;
-	for (i = 0; i < ctx->Const.MaxTextureUnits; i++)
-		if (InputsRead & (1 << (VERT_ATTRIB_TEX0 + i))) {
-			rmesa->state.texture.tc_count++;
-			vic_1 |= R300_INPUT_CNTL_TC0 << i;
-		}
-
-	return vic_1;
-}
-
-static GLuint r300VAPOutputCntl0(GLcontext * ctx, GLuint OutputsWritten)
-{
-	GLuint ret = 0;
-
-	if (OutputsWritten & (1 << VERT_RESULT_HPOS))
-		ret |= R300_VAP_OUTPUT_VTX_FMT_0__POS_PRESENT;
-
-	if (OutputsWritten & (1 << VERT_RESULT_COL0))
-		ret |= R300_VAP_OUTPUT_VTX_FMT_0__COLOR_PRESENT;
-
-	if (OutputsWritten & (1 << VERT_RESULT_COL1))
-		ret |= R300_VAP_OUTPUT_VTX_FMT_0__COLOR_1_PRESENT;
-
-#if 0
-	if (OutputsWritten & (1 << VERT_RESULT_BFC0))
-		ret |= R300_VAP_OUTPUT_VTX_FMT_0__COLOR_2_PRESENT;
-
-	if (OutputsWritten & (1 << VERT_RESULT_BFC1))
-		ret |= R300_VAP_OUTPUT_VTX_FMT_0__COLOR_3_PRESENT;
-
-	if (OutputsWritten & (1 << VERT_RESULT_FOGC)) ;
-#endif
-
-	if (OutputsWritten & (1 << VERT_RESULT_PSIZ))
-		ret |= R300_VAP_OUTPUT_VTX_FMT_0__PT_SIZE_PRESENT;
-
-	return ret;
-}
-
-static GLuint r300VAPOutputCntl1(GLcontext * ctx, GLuint OutputsWritten)
-{
-	GLuint i, ret = 0;
-
-	for (i = 0; i < ctx->Const.MaxTextureUnits; i++) {
-		if (OutputsWritten & (1 << (VERT_RESULT_TEX0 + i))) {
-			ret |= (4 << (3 * i));
-		}
-	}
-
-	return ret;
 }
 
 static void r300SetVertexFormat( GLcontext *ctx )
@@ -658,9 +562,6 @@ static void r300ChooseRenderState( GLcontext *ctx )
    r300ContextPtr rmesa = R300_CONTEXT(ctx);
    GLuint index = 0;
    GLuint flags = ctx->_TriangleCaps;
-
-   // if (!rmesa->TclFallback || rmesa->Fallback) 
-//      return;
 
    if (flags & DD_TRI_LIGHT_TWOSIDE) index |= R300_TWOSIDE_BIT;
    if (flags & DD_TRI_UNFILLED)      index |= R300_UNFILLED_BIT;

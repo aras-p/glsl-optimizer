@@ -165,7 +165,7 @@ static const struct tnl_pipeline_stage *r300_pipeline[] = {
 
 	/* Else do them here.
 	 */
-	//	&_r300_render_stage,
+	&_r300_render_stage,
 	&_tnl_render_stage,	/* FALLBACK  */
 	0,
 };

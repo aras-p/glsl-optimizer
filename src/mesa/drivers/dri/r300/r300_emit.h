@@ -229,4 +229,11 @@ extern int r300PrimitiveType(r300ContextPtr rmesa, int prim);
 extern int r300NumVerts(r300ContextPtr rmesa, int num_verts, int prim);
 
 extern void r300EmitCacheFlush(r300ContextPtr rmesa);
+
+extern GLuint r300VAPInputRoute1(uint32_t * dst, int swizzle[][4], GLuint nr);
+extern GLuint r300VAPInputCntl0(GLcontext * ctx, GLuint InputsRead);
+extern GLuint r300VAPInputCntl1(GLcontext * ctx, GLuint InputsRead);
+extern GLuint r300VAPOutputCntl0(GLcontext * ctx, GLuint OutputsWritten);
+extern GLuint r300VAPOutputCntl1(GLcontext * ctx, GLuint OutputsWritten);
+
 #endif
