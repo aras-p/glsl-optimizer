@@ -104,9 +104,9 @@ static GLuint r300VAPInputRoute0(uint32_t * dst, GLvector4f ** attribptr,
 static GLuint r300VAPInputRoute1Swizzle(int swizzle[4])
 {
 	return (swizzle[0] << R300_INPUT_ROUTE_X_SHIFT) |
-	    (swizzle[1] << R300_INPUT_ROUTE_Y_SHIFT) |
-	    (swizzle[2] << R300_INPUT_ROUTE_Z_SHIFT) |
-	    (swizzle[3] << R300_INPUT_ROUTE_W_SHIFT);
+		(swizzle[1] << R300_INPUT_ROUTE_Y_SHIFT) |
+		(swizzle[2] << R300_INPUT_ROUTE_Z_SHIFT) |
+		(swizzle[3] << R300_INPUT_ROUTE_W_SHIFT);
 }
 
 static GLuint r300VAPInputRoute1(uint32_t * dst, int swizzle[][4], GLuint nr)
@@ -237,10 +237,14 @@ static void r300SetVertexFormat( GLcontext *ctx )
    /* EMIT_ATTR's must be in order as they tell t_vertex.c how to
     * build up a hardware vertex.
     */
-   EMIT_ATTR( _TNL_ATTRIB_POS, EMIT_4F );
-   vap_vte_cntl |= R300_VTX_W0_FMT;
-   InputsRead |= 1 << VERT_ATTRIB_POS;
-   OutputsWritten |= 1 << VERT_RESULT_HPOS;
+   if (RENDERINPUTS_TEST( index_bitset, _TNL_ATTRIB_POS)) {
+      vap_vte_cntl |= R300_VTX_W0_FMT;
+      InputsRead |= 1 << VERT_ATTRIB_POS;
+      OutputsWritten |= 1 << VERT_RESULT_HPOS;
+      EMIT_ATTR( _TNL_ATTRIB_POS, EMIT_4F );
+   } else
+      EMIT_PAD(4 * sizeof(float));
+
    offset = 4;
 
    if (RENDERINPUTS_TEST( index_bitset, _TNL_ATTRIB_POINTSIZE )) {
@@ -250,10 +254,13 @@ static void r300SetVertexFormat( GLcontext *ctx )
    }
 
    rmesa->swtcl.coloroffset = offset;
-   EMIT_ATTR( _TNL_ATTRIB_COLOR0, EMIT_4F );
+   if (RENDERINPUTS_TEST(index_bitset, _TNL_ATTRIB_COLOR0)) {
+      InputsRead |= 1 << VERT_ATTRIB_COLOR0;
+      OutputsWritten |= 1 << VERT_RESULT_COL0;
+      EMIT_ATTR( _TNL_ATTRIB_COLOR0, EMIT_4F );
+   } else
+      EMIT_PAD(4*sizeof(float));
 
-   InputsRead |= 1 << VERT_ATTRIB_COLOR0;
-   OutputsWritten |= 1 << VERT_RESULT_COL0;
    offset += 4;
 
    rmesa->swtcl.specoffset = 0;
@@ -314,40 +321,38 @@ static void r300SetVertexFormat( GLcontext *ctx )
      }
    }
 
-   if (!RENDERINPUTS_EQUAL( rmesa->tnl_index_bitset, index_bitset)) {
-     R300_NEWPRIM(rmesa);
-     R300_STATECHANGE(rmesa, vir[0]);
-     ((drm_r300_cmd_header_t *) rmesa->hw.vir[0].cmd)->packet0.count =
-       r300VAPInputRoute0(&rmesa->hw.vir[0].cmd[R300_VIR_CNTL_0],
-			  VB->AttribPtr, inputs, tab, nr);
-     R300_STATECHANGE(rmesa, vir[1]);
-     ((drm_r300_cmd_header_t *) rmesa->hw.vir[1].cmd)->packet0.count =
-       r300VAPInputRoute1(&rmesa->hw.vir[1].cmd[R300_VIR_CNTL_0], swizzle,
-			  nr);
-     
-     R300_STATECHANGE(rmesa, vic);
-     rmesa->hw.vic.cmd[R300_VIC_CNTL_0] = r300VAPInputCntl0(ctx, InputsRead);
-     rmesa->hw.vic.cmd[R300_VIC_CNTL_1] = r300VAPInputCntl1(ctx, InputsRead);
-     
-     R300_STATECHANGE(rmesa, vof);
-     rmesa->hw.vof.cmd[R300_VOF_CNTL_0] = r300VAPOutputCntl0(ctx, OutputsWritten);
-     rmesa->hw.vof.cmd[R300_VOF_CNTL_1] = r300VAPOutputCntl1(ctx, OutputsWritten);
-     
-      rmesa->swtcl.vertex_size =
-	  _tnl_install_attrs( ctx,
-			      rmesa->swtcl.vertex_attrs, 
-			      rmesa->swtcl.vertex_attr_count,
-			      NULL, 0 );
-
-      rmesa->swtcl.vertex_size /= 4;
-
-      RENDERINPUTS_COPY( rmesa->tnl_index_bitset, index_bitset );
-
-      vte = rmesa->hw.vte.cmd[1];
-      R300_STATECHANGE(rmesa, vte);
-      rmesa->hw.vte.cmd[1] = vte;
-      rmesa->hw.vte.cmd[2] = rmesa->swtcl.vertex_size;
-   }
+   R300_NEWPRIM(rmesa);
+   R300_STATECHANGE(rmesa, vir[0]);
+   ((drm_r300_cmd_header_t *) rmesa->hw.vir[0].cmd)->packet0.count =
+     r300VAPInputRoute0(&rmesa->hw.vir[0].cmd[R300_VIR_CNTL_0],
+			VB->AttribPtr, inputs, tab, nr);
+   R300_STATECHANGE(rmesa, vir[1]);
+   ((drm_r300_cmd_header_t *) rmesa->hw.vir[1].cmd)->packet0.count =
+     r300VAPInputRoute1(&rmesa->hw.vir[1].cmd[R300_VIR_CNTL_0], swizzle,
+			nr);
+   
+   R300_STATECHANGE(rmesa, vic);
+   rmesa->hw.vic.cmd[R300_VIC_CNTL_0] = r300VAPInputCntl0(ctx, InputsRead);
+   rmesa->hw.vic.cmd[R300_VIC_CNTL_1] = r300VAPInputCntl1(ctx, InputsRead);
+   
+   R300_STATECHANGE(rmesa, vof);
+   rmesa->hw.vof.cmd[R300_VOF_CNTL_0] = r300VAPOutputCntl0(ctx, OutputsWritten);
+   rmesa->hw.vof.cmd[R300_VOF_CNTL_1] = r300VAPOutputCntl1(ctx, OutputsWritten);
+   
+   rmesa->swtcl.vertex_size =
+     _tnl_install_attrs( ctx,
+			 rmesa->swtcl.vertex_attrs, 
+			 rmesa->swtcl.vertex_attr_count,
+			 NULL, 0 );
+   
+   rmesa->swtcl.vertex_size /= 4;
+   
+   RENDERINPUTS_COPY( rmesa->tnl_index_bitset, index_bitset );
+   
+   vte = rmesa->hw.vte.cmd[1];
+   R300_STATECHANGE(rmesa, vte);
+   rmesa->hw.vte.cmd[1] = vte;
+   rmesa->hw.vte.cmd[2] = rmesa->swtcl.vertex_size;
 }
 
 
@@ -371,6 +376,9 @@ static void flush_last_swtcl_prim( r300ContextPtr rmesa  )
       if (rmesa->dma.current.start != rmesa->dma.current.ptr) {
 
 	r300EnsureCmdBufSpace( rmesa, rmesa->hw.max_state_size + (12*sizeof(int)), __FUNCTION__);
+
+	r300EmitState(rmesa);
+
 	r300EmitVertexAOS( rmesa,
 			   rmesa->swtcl.vertex_size,
 			   current_offset);
@@ -797,8 +805,6 @@ void r300EmitVbufPrim(r300ContextPtr rmesa, GLuint primitive, GLuint vertex_nr)
 
 	type = r300PrimitiveType(rmesa, primitive);
 	num_verts = r300NumVerts(rmesa, vertex_nr, primitive);
-	
-	r300EmitState(rmesa);
 	
 	start_packet3(CP_PACKET3(R300_PACKET3_3D_DRAW_VBUF_2, 0), 0);
 	e32(R300_VAP_VF_CNTL__PRIM_WALK_VERTEX_LIST | (num_verts << 16) | type);
