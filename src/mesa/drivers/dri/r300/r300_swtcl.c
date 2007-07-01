@@ -104,159 +104,156 @@ static GLuint r300VAPInputRoute0(uint32_t * dst, GLvector4f ** attribptr,
 
 static void r300SetVertexFormat( GLcontext *ctx )
 {
-   r300ContextPtr rmesa = R300_CONTEXT( ctx );
-   TNLcontext *tnl = TNL_CONTEXT(ctx);
-   struct vertex_buffer *VB = &tnl->vb;
-   DECLARE_RENDERINPUTS(index_bitset);
-   GLuint InputsRead = 0, OutputsWritten = 0;
-   int vap_fmt_0 = 0;
-   int vap_vte_cntl = 0;
-   int offset = 0;
-   int vte = 0;
-   GLint inputs[VERT_ATTRIB_MAX];
-   GLint tab[VERT_ATTRIB_MAX];
-   int swizzle[VERT_ATTRIB_MAX][4];
-   GLuint i, nr;
+	r300ContextPtr rmesa = R300_CONTEXT( ctx );
+	TNLcontext *tnl = TNL_CONTEXT(ctx);
+	struct vertex_buffer *VB = &tnl->vb;
+	DECLARE_RENDERINPUTS(index_bitset);
+	GLuint InputsRead = 0, OutputsWritten = 0;
+	int vap_fmt_0 = 0;
+	int vap_vte_cntl = 0;
+	int offset = 0;
+	int vte = 0;
+	GLint inputs[VERT_ATTRIB_MAX];
+	GLint tab[VERT_ATTRIB_MAX];
+	int swizzle[VERT_ATTRIB_MAX][4];
+	GLuint i, nr;
 
-   DECLARE_RENDERINPUTS(render_inputs_bitset);
+	DECLARE_RENDERINPUTS(render_inputs_bitset);
+	RENDERINPUTS_COPY(render_inputs_bitset, tnl->render_inputs_bitset);
+	RENDERINPUTS_COPY( index_bitset, tnl->render_inputs_bitset );
+	RENDERINPUTS_COPY(rmesa->state.render_inputs_bitset, render_inputs_bitset);
 
-   RENDERINPUTS_COPY(render_inputs_bitset, tnl->render_inputs_bitset);
+	/* Important:
+	 */
+	if ( VB->NdcPtr != NULL ) {
+		VB->AttribPtr[VERT_ATTRIB_POS] = VB->NdcPtr;
+	}
+	else {
+		VB->AttribPtr[VERT_ATTRIB_POS] = VB->ClipPtr;
+	}
 
-   RENDERINPUTS_COPY( index_bitset, tnl->render_inputs_bitset );
+	assert( VB->AttribPtr[VERT_ATTRIB_POS] != NULL );
+	rmesa->swtcl.vertex_attr_count = 0;
 
-   RENDERINPUTS_COPY(rmesa->state.render_inputs_bitset, render_inputs_bitset);
+	/* EMIT_ATTR's must be in order as they tell t_vertex.c how to
+	 * build up a hardware vertex.
+	 */
+	if (RENDERINPUTS_TEST( index_bitset, _TNL_ATTRIB_POS)) {
+		vap_vte_cntl |= R300_VTX_W0_FMT;
+		InputsRead |= 1 << VERT_ATTRIB_POS;
+		OutputsWritten |= 1 << VERT_RESULT_HPOS;
+		EMIT_ATTR( _TNL_ATTRIB_POS, EMIT_4F );
+	} else
+		EMIT_PAD(4 * sizeof(float));
 
-   /* Important:
-    */
-   if ( VB->NdcPtr != NULL ) {
-      VB->AttribPtr[VERT_ATTRIB_POS] = VB->NdcPtr;
-   }
-   else {
-      VB->AttribPtr[VERT_ATTRIB_POS] = VB->ClipPtr;
-   }
+	offset = 4;
 
-   assert( VB->AttribPtr[VERT_ATTRIB_POS] != NULL );
-   rmesa->swtcl.vertex_attr_count = 0;
+	if (RENDERINPUTS_TEST( index_bitset, _TNL_ATTRIB_POINTSIZE )) {
+		EMIT_ATTR( _TNL_ATTRIB_POINTSIZE, EMIT_1F );
+		vap_fmt_0 |=  R300_VAP_OUTPUT_VTX_FMT_0__PT_SIZE_PRESENT;
+		offset += 1;
+	}
 
-   /* EMIT_ATTR's must be in order as they tell t_vertex.c how to
-    * build up a hardware vertex.
-    */
-   if (RENDERINPUTS_TEST( index_bitset, _TNL_ATTRIB_POS)) {
-      vap_vte_cntl |= R300_VTX_W0_FMT;
-      InputsRead |= 1 << VERT_ATTRIB_POS;
-      OutputsWritten |= 1 << VERT_RESULT_HPOS;
-      EMIT_ATTR( _TNL_ATTRIB_POS, EMIT_4F );
-   } else
-      EMIT_PAD(4 * sizeof(float));
+	rmesa->swtcl.coloroffset = offset;
+	if (RENDERINPUTS_TEST(index_bitset, _TNL_ATTRIB_COLOR0)) {
+		InputsRead |= 1 << VERT_ATTRIB_COLOR0;
+		OutputsWritten |= 1 << VERT_RESULT_COL0;
+		EMIT_ATTR( _TNL_ATTRIB_COLOR0, EMIT_4F );
+	} else
+		EMIT_PAD(4*sizeof(float));
 
-   offset = 4;
+	offset += 4;
 
-   if (RENDERINPUTS_TEST( index_bitset, _TNL_ATTRIB_POINTSIZE )) {
-     EMIT_ATTR( _TNL_ATTRIB_POINTSIZE, EMIT_1F );
-     vap_fmt_0 |=  R300_VAP_OUTPUT_VTX_FMT_0__PT_SIZE_PRESENT;
-     offset += 1;
-   }
+	rmesa->swtcl.specoffset = 0;
+	if (RENDERINPUTS_TEST( index_bitset, _TNL_ATTRIB_COLOR1 )) {
+		rmesa->swtcl.specoffset = offset;
+		EMIT_ATTR( _TNL_ATTRIB_COLOR1, EMIT_4F );
+		InputsRead |= 1 << VERT_ATTRIB_COLOR1;
+		OutputsWritten |= 1 << VERT_RESULT_COL1;
+	}
 
-   rmesa->swtcl.coloroffset = offset;
-   if (RENDERINPUTS_TEST(index_bitset, _TNL_ATTRIB_COLOR0)) {
-      InputsRead |= 1 << VERT_ATTRIB_COLOR0;
-      OutputsWritten |= 1 << VERT_RESULT_COL0;
-      EMIT_ATTR( _TNL_ATTRIB_COLOR0, EMIT_4F );
-   } else
-      EMIT_PAD(4*sizeof(float));
+	if (RENDERINPUTS_TEST_RANGE( index_bitset, _TNL_FIRST_TEX, _TNL_LAST_TEX )) {
+		int i;
 
-   offset += 4;
+		for (i = 0; i < ctx->Const.MaxTextureUnits; i++) {
+			if (RENDERINPUTS_TEST( index_bitset, _TNL_ATTRIB_TEX(i) )) {
+				InputsRead |= 1 << (VERT_ATTRIB_TEX0 + i);
+				OutputsWritten |= 1 << (VERT_RESULT_TEX0 + i);
+				EMIT_ATTR( _TNL_ATTRIB_TEX0+i, EMIT_4F );
+			}
+		}
+	}
 
-   rmesa->swtcl.specoffset = 0;
-   if (RENDERINPUTS_TEST( index_bitset, _TNL_ATTRIB_COLOR1 )) {
-	 rmesa->swtcl.specoffset = offset;
-	 EMIT_ATTR( _TNL_ATTRIB_COLOR1, EMIT_4F );
-	 InputsRead |= 1 << VERT_ATTRIB_COLOR1;
-	 OutputsWritten |= 1 << VERT_RESULT_COL1;
-   }
+	for (i = 0, nr = 0; i < VERT_ATTRIB_MAX; i++) {
+		if (InputsRead & (1 << i)) {
+			inputs[i] = nr++;
+		} else {
+			inputs[i] = -1;
+		}
+	}
+	
+	/* Fixed, apply to vir0 only */
+	if (InputsRead & VERT_ATTRIB_POS)
+		inputs[VERT_ATTRIB_POS] = 0;
+	if (InputsRead & (1 << VERT_ATTRIB_COLOR0))
+		inputs[VERT_ATTRIB_COLOR0] = 2;
+	if (InputsRead & (1 << VERT_ATTRIB_COLOR1))
+		inputs[VERT_ATTRIB_COLOR1] = 3;
+	for (i = VERT_ATTRIB_TEX0; i <= VERT_ATTRIB_TEX7; i++)
+		if (InputsRead & (1 << i))
+			inputs[i] = 6 + (i - VERT_ATTRIB_TEX0);
+	
+	for (i = 0, nr = 0; i < VERT_ATTRIB_MAX; i++) {
+		if (InputsRead & (1 << i)) {
+			tab[nr++] = i;
+		}
+	}
+	
+	for (i = 0; i < nr; i++) {
+		int ci;
+		
+		swizzle[i][0] = SWIZZLE_ZERO;
+		swizzle[i][1] = SWIZZLE_ZERO;
+		swizzle[i][2] = SWIZZLE_ZERO;
+		swizzle[i][3] = SWIZZLE_ONE;
 
-   if (RENDERINPUTS_TEST_RANGE( index_bitset, _TNL_FIRST_TEX, _TNL_LAST_TEX )) {
-      int i;
+		for (ci = 0; ci < VB->AttribPtr[tab[i]]->size; ci++) {
+			swizzle[i][ci] = ci;
+		}
+	}
 
-      for (i = 0; i < ctx->Const.MaxTextureUnits; i++) {
-	 if (RENDERINPUTS_TEST( index_bitset, _TNL_ATTRIB_TEX(i) )) {
-	    InputsRead |= 1 << (VERT_ATTRIB_TEX0 + i);
-	    OutputsWritten |= 1 << (VERT_RESULT_TEX0 + i);
-	    EMIT_ATTR( _TNL_ATTRIB_TEX0+i, EMIT_4F );
-	 }
-      }
-   }
-
-   for (i = 0, nr = 0; i < VERT_ATTRIB_MAX; i++) {
-     if (InputsRead & (1 << i)) {
-       inputs[i] = nr++;
-     } else {
-       inputs[i] = -1;
-     }
-   }
-
-   /* Fixed, apply to vir0 only */
-   if (InputsRead & VERT_ATTRIB_POS)
-     inputs[VERT_ATTRIB_POS] = 0;
-   if (InputsRead & (1 << VERT_ATTRIB_COLOR0))
-     inputs[VERT_ATTRIB_COLOR0] = 2;
-   if (InputsRead & (1 << VERT_ATTRIB_COLOR1))
-     inputs[VERT_ATTRIB_COLOR1] = 3;
-   for (i = VERT_ATTRIB_TEX0; i <= VERT_ATTRIB_TEX7; i++)
-     if (InputsRead & (1 << i))
-       inputs[i] = 6 + (i - VERT_ATTRIB_TEX0);
+	R300_NEWPRIM(rmesa);
+	R300_STATECHANGE(rmesa, vir[0]);
+	((drm_r300_cmd_header_t *) rmesa->hw.vir[0].cmd)->packet0.count =
+		r300VAPInputRoute0(&rmesa->hw.vir[0].cmd[R300_VIR_CNTL_0],
+				   VB->AttribPtr, inputs, tab, nr);
+	R300_STATECHANGE(rmesa, vir[1]);
+	((drm_r300_cmd_header_t *) rmesa->hw.vir[1].cmd)->packet0.count =
+		r300VAPInputRoute1(&rmesa->hw.vir[1].cmd[R300_VIR_CNTL_0], swizzle,
+				   nr);
    
-   for (i = 0, nr = 0; i < VERT_ATTRIB_MAX; i++) {
-     if (InputsRead & (1 << i)) {
-       tab[nr++] = i;
-     }
-   }
+	R300_STATECHANGE(rmesa, vic);
+	rmesa->hw.vic.cmd[R300_VIC_CNTL_0] = r300VAPInputCntl0(ctx, InputsRead);
+	rmesa->hw.vic.cmd[R300_VIC_CNTL_1] = r300VAPInputCntl1(ctx, InputsRead);
+   
+	R300_STATECHANGE(rmesa, vof);
+	rmesa->hw.vof.cmd[R300_VOF_CNTL_0] = r300VAPOutputCntl0(ctx, OutputsWritten);
+	rmesa->hw.vof.cmd[R300_VOF_CNTL_1] = r300VAPOutputCntl1(ctx, OutputsWritten);
+   
+	rmesa->swtcl.vertex_size =
+		_tnl_install_attrs( ctx,
+				    rmesa->swtcl.vertex_attrs, 
+				    rmesa->swtcl.vertex_attr_count,
+				    NULL, 0 );
+	
+	rmesa->swtcl.vertex_size /= 4;
 
-   for (i = 0; i < nr; i++) {
-     int ci;
+	RENDERINPUTS_COPY( rmesa->tnl_index_bitset, index_bitset );
 
-     swizzle[i][0] = SWIZZLE_ZERO;
-     swizzle[i][1] = SWIZZLE_ZERO;
-     swizzle[i][2] = SWIZZLE_ZERO;
-     swizzle[i][3] = SWIZZLE_ONE;
-
-     for (ci = 0; ci < VB->AttribPtr[tab[i]]->size; ci++) {
-       swizzle[i][ci] = ci;
-     }
-   }
-
-   R300_NEWPRIM(rmesa);
-   R300_STATECHANGE(rmesa, vir[0]);
-   ((drm_r300_cmd_header_t *) rmesa->hw.vir[0].cmd)->packet0.count =
-     r300VAPInputRoute0(&rmesa->hw.vir[0].cmd[R300_VIR_CNTL_0],
-			VB->AttribPtr, inputs, tab, nr);
-   R300_STATECHANGE(rmesa, vir[1]);
-   ((drm_r300_cmd_header_t *) rmesa->hw.vir[1].cmd)->packet0.count =
-     r300VAPInputRoute1(&rmesa->hw.vir[1].cmd[R300_VIR_CNTL_0], swizzle,
-			nr);
-   
-   R300_STATECHANGE(rmesa, vic);
-   rmesa->hw.vic.cmd[R300_VIC_CNTL_0] = r300VAPInputCntl0(ctx, InputsRead);
-   rmesa->hw.vic.cmd[R300_VIC_CNTL_1] = r300VAPInputCntl1(ctx, InputsRead);
-   
-   R300_STATECHANGE(rmesa, vof);
-   rmesa->hw.vof.cmd[R300_VOF_CNTL_0] = r300VAPOutputCntl0(ctx, OutputsWritten);
-   rmesa->hw.vof.cmd[R300_VOF_CNTL_1] = r300VAPOutputCntl1(ctx, OutputsWritten);
-   
-   rmesa->swtcl.vertex_size =
-     _tnl_install_attrs( ctx,
-			 rmesa->swtcl.vertex_attrs, 
-			 rmesa->swtcl.vertex_attr_count,
-			 NULL, 0 );
-   
-   rmesa->swtcl.vertex_size /= 4;
-   
-   RENDERINPUTS_COPY( rmesa->tnl_index_bitset, index_bitset );
-   
-   vte = rmesa->hw.vte.cmd[1];
-   R300_STATECHANGE(rmesa, vte);
-   rmesa->hw.vte.cmd[1] = vte;
-   rmesa->hw.vte.cmd[2] = rmesa->swtcl.vertex_size;
+	vte = rmesa->hw.vte.cmd[1];
+	R300_STATECHANGE(rmesa, vte);
+	rmesa->hw.vte.cmd[1] = vte;
+	rmesa->hw.vte.cmd[2] = rmesa->swtcl.vertex_size;
 }
 
 
@@ -264,39 +261,39 @@ static void r300SetVertexFormat( GLcontext *ctx )
  */
 static void flush_last_swtcl_prim( r300ContextPtr rmesa  )
 {
-   if (RADEON_DEBUG & DEBUG_IOCTL)
-      fprintf(stderr, "%s\n", __FUNCTION__);
-
-   rmesa->dma.flush = NULL;
-
-   if (rmesa->dma.current.buf) {
-     struct r300_dma_region *current = &rmesa->dma.current;
-     GLuint current_offset = GET_START(current);
-
-      assert (current->start + 
-	      rmesa->swtcl.numverts * rmesa->swtcl.vertex_size * 4 ==
-	      current->ptr);
-
-      if (rmesa->dma.current.start != rmesa->dma.current.ptr) {
-
-	r300EnsureCmdBufSpace( rmesa, rmesa->hw.max_state_size + (12*sizeof(int)), __FUNCTION__);
-
-	r300EmitState(rmesa);
-
-	r300EmitVertexAOS( rmesa,
-			   rmesa->swtcl.vertex_size,
-			   current_offset);
+	if (RADEON_DEBUG & DEBUG_IOCTL)
+		fprintf(stderr, "%s\n", __FUNCTION__);
 	
-	r300EmitVbufPrim( rmesa,
-			  rmesa->swtcl.hw_primitive,
-			  rmesa->swtcl.numverts);
+	rmesa->dma.flush = NULL;
 
-	r300EmitCacheFlush(rmesa);
-      }
+	if (rmesa->dma.current.buf) {
+		struct r300_dma_region *current = &rmesa->dma.current;
+		GLuint current_offset = GET_START(current);
 
-      rmesa->swtcl.numverts = 0;
-      current->start = current->ptr;
-   }
+		assert (current->start + 
+			rmesa->swtcl.numverts * rmesa->swtcl.vertex_size * 4 ==
+			current->ptr);
+
+		if (rmesa->dma.current.start != rmesa->dma.current.ptr) {
+
+			r300EnsureCmdBufSpace( rmesa, rmesa->hw.max_state_size + (12*sizeof(int)), __FUNCTION__);
+			
+			r300EmitState(rmesa);
+			
+			r300EmitVertexAOS( rmesa,
+					   rmesa->swtcl.vertex_size,
+					   current_offset);
+			
+			r300EmitVbufPrim( rmesa,
+					  rmesa->swtcl.hw_primitive,
+					  rmesa->swtcl.numverts);
+			
+			r300EmitCacheFlush(rmesa);
+		}
+		
+		rmesa->swtcl.numverts = 0;
+		current->start = current->ptr;
+	}
 }
 
 /* Alloc space in the current dma region.
@@ -304,30 +301,28 @@ static void flush_last_swtcl_prim( r300ContextPtr rmesa  )
 static void *
 r300AllocDmaLowVerts( r300ContextPtr rmesa, int nverts, int vsize )
 {
-   GLuint bytes = vsize * nverts;
+	GLuint bytes = vsize * nverts;
 
-   if ( rmesa->dma.current.ptr + bytes > rmesa->dma.current.end ) 
-       r300RefillCurrentDmaRegion( rmesa, bytes);
+	if ( rmesa->dma.current.ptr + bytes > rmesa->dma.current.end ) 
+		r300RefillCurrentDmaRegion( rmesa, bytes);
 
-   if (!rmesa->dma.flush) {
-      rmesa->radeon.glCtx->Driver.NeedFlush |= FLUSH_STORED_VERTICES;
-      rmesa->dma.flush = flush_last_swtcl_prim;
-   }
+	if (!rmesa->dma.flush) {
+		rmesa->radeon.glCtx->Driver.NeedFlush |= FLUSH_STORED_VERTICES;
+		rmesa->dma.flush = flush_last_swtcl_prim;
+	}
 
-   ASSERT( vsize == rmesa->swtcl.vertex_size * 4 );
-   ASSERT( rmesa->dma.flush == flush_last_swtcl_prim );
-   ASSERT( rmesa->dma.current.start + 
-	   rmesa->swtcl.numverts * rmesa->swtcl.vertex_size * 4 ==
-	   rmesa->dma.current.ptr );
+	ASSERT( vsize == rmesa->swtcl.vertex_size * 4 );
+	ASSERT( rmesa->dma.flush == flush_last_swtcl_prim );
+	ASSERT( rmesa->dma.current.start + 
+		rmesa->swtcl.numverts * rmesa->swtcl.vertex_size * 4 ==
+		rmesa->dma.current.ptr );
 
-
-   {
-      GLubyte *head = (GLubyte *) (rmesa->dma.current.address + rmesa->dma.current.ptr);
-      rmesa->dma.current.ptr += bytes;
-      rmesa->swtcl.numverts += nverts;
-      return head;
-   }
-
+	{
+		GLubyte *head = (GLubyte *) (rmesa->dma.current.address + rmesa->dma.current.ptr);
+		rmesa->dma.current.ptr += bytes;
+		rmesa->swtcl.numverts += nverts;
+		return head;
+	}
 }
 
 static GLuint reduced_prim[] = {
@@ -558,33 +553,33 @@ static void init_rast_tab( void )
 /**********************************************************************/
 static void r300ChooseRenderState( GLcontext *ctx )
 {
-   TNLcontext *tnl = TNL_CONTEXT(ctx);
-   r300ContextPtr rmesa = R300_CONTEXT(ctx);
-   GLuint index = 0;
-   GLuint flags = ctx->_TriangleCaps;
+	TNLcontext *tnl = TNL_CONTEXT(ctx);
+	r300ContextPtr rmesa = R300_CONTEXT(ctx);
+	GLuint index = 0;
+	GLuint flags = ctx->_TriangleCaps;
 
-   if (flags & DD_TRI_LIGHT_TWOSIDE) index |= R300_TWOSIDE_BIT;
-   if (flags & DD_TRI_UNFILLED)      index |= R300_UNFILLED_BIT;
+	if (flags & DD_TRI_LIGHT_TWOSIDE) index |= R300_TWOSIDE_BIT;
+	if (flags & DD_TRI_UNFILLED)      index |= R300_UNFILLED_BIT;
 
-   if (index != rmesa->swtcl.RenderIndex) {
-      tnl->Driver.Render.Points = rast_tab[index].points;
-      tnl->Driver.Render.Line = rast_tab[index].line;
-      tnl->Driver.Render.ClippedLine = rast_tab[index].line;
-      tnl->Driver.Render.Triangle = rast_tab[index].triangle;
-      tnl->Driver.Render.Quad = rast_tab[index].quad;
+	if (index != rmesa->swtcl.RenderIndex) {
+		tnl->Driver.Render.Points = rast_tab[index].points;
+		tnl->Driver.Render.Line = rast_tab[index].line;
+		tnl->Driver.Render.ClippedLine = rast_tab[index].line;
+		tnl->Driver.Render.Triangle = rast_tab[index].triangle;
+		tnl->Driver.Render.Quad = rast_tab[index].quad;
 
-      if (index == 0) {
-	tnl->Driver.Render.PrimTabVerts = r300_render_tab_verts;
-	 tnl->Driver.Render.PrimTabElts = r300_render_tab_elts;
-	 tnl->Driver.Render.ClippedPolygon = r300_fast_clipped_poly;
-      } else {
-	 tnl->Driver.Render.PrimTabVerts = _tnl_render_tab_verts;
-	 tnl->Driver.Render.PrimTabElts = _tnl_render_tab_elts;
-	 tnl->Driver.Render.ClippedPolygon = _tnl_RenderClippedPolygon;
-      }
+		if (index == 0) {
+			tnl->Driver.Render.PrimTabVerts = r300_render_tab_verts;
+			tnl->Driver.Render.PrimTabElts = r300_render_tab_elts;
+			tnl->Driver.Render.ClippedPolygon = r300_fast_clipped_poly;
+		} else {
+			tnl->Driver.Render.PrimTabVerts = _tnl_render_tab_verts;
+			tnl->Driver.Render.PrimTabElts = _tnl_render_tab_elts;
+			tnl->Driver.Render.ClippedPolygon = _tnl_RenderClippedPolygon;
+		}
 
-      rmesa->swtcl.RenderIndex = index;
-   }
+		rmesa->swtcl.RenderIndex = index;
+	}
 }
 
 
@@ -602,7 +597,7 @@ static void r300RenderStart(GLcontext *ctx)
 	
 	if (rmesa->dma.flush != 0 && 
 	    rmesa->dma.flush != flush_last_swtcl_prim)
-	  rmesa->dma.flush( rmesa );
+		rmesa->dma.flush( rmesa );
 
 }
 
