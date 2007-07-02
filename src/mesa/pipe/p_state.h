@@ -100,12 +100,12 @@ struct pipe_poly_stipple {
 };
 
 
-struct pipe_viewport {
+struct pipe_viewport_state {
    GLfloat scale[4];
    GLfloat translate[4];
 };
 
-struct pipe_scissor_rect {
+struct pipe_scissor_state {
    GLshort minx;
    GLshort miny;
    GLshort maxx;

@@ -87,8 +87,8 @@ struct pipe_context {
    void (*set_setup_state)( struct pipe_context *,
 			    const struct pipe_setup_state * );
 
-   void (*set_scissor_rect)( struct pipe_context *,
-			     const struct pipe_scissor_rect * );
+   void (*set_scissor_state)( struct pipe_context *,
+                              const struct pipe_scissor_state * );
 
    void (*set_stencil_state)( struct pipe_context *,
                               const struct pipe_stencil_state * );
@@ -101,8 +101,8 @@ struct pipe_context {
                               GLuint unit,
                               struct pipe_texture_object * );
 
-   void (*set_viewport)( struct pipe_context *,
-			 const struct pipe_viewport * );
+   void (*set_viewport_state)( struct pipe_context *,
+                               const struct pipe_viewport_state * );
 };
 
 

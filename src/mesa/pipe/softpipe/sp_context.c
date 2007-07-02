@@ -70,9 +70,9 @@ struct pipe_context *softpipe_create( void )
    softpipe->pipe.set_clip_state = softpipe_set_clip_state;
    softpipe->pipe.set_clear_color_state = softpipe_set_clear_color_state;
    softpipe->pipe.set_depth_state = softpipe_set_depth_test_state;
-   softpipe->pipe.set_viewport = softpipe_set_viewport;
+   softpipe->pipe.set_viewport_state = softpipe_set_viewport_state;
    softpipe->pipe.set_setup_state = softpipe_set_setup_state;
-   softpipe->pipe.set_scissor_rect = softpipe_set_scissor_rect;
+   softpipe->pipe.set_scissor_state = softpipe_set_scissor_state;
    softpipe->pipe.set_fs_state = softpipe_set_fs_state;
    softpipe->pipe.set_polygon_stipple = softpipe_set_polygon_stipple;
    softpipe->pipe.set_sampler_state = softpipe_set_sampler_state;

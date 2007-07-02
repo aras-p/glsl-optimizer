@@ -51,8 +51,8 @@ void softpipe_set_clip_state( struct pipe_context *pipe,
 /* Called when driver state tracker notices changes to the viewport
  * matrix:
  */
-void softpipe_set_viewport( struct pipe_context *pipe,
-			   const struct pipe_viewport *viewport )
+void softpipe_set_viewport_state( struct pipe_context *pipe,
+                                  const struct pipe_viewport_state *viewport )
 {
    struct softpipe_context *softpipe = softpipe_context(pipe);
 

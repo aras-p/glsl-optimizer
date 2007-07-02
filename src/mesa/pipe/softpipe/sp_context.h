@@ -74,19 +74,19 @@ struct softpipe_context {
 
    /* The most recent drawing state as set by the driver:
     */
-   struct pipe_framebuffer_state framebuffer;
-   struct pipe_viewport     viewport;
-   struct pipe_setup_state  setup;
-   struct pipe_fs_state     fs;
-   struct pipe_blend_state  blend;
    struct pipe_alpha_test_state alpha_test;
-   struct pipe_clip_state   clip;
-   struct pipe_clear_color_state   clear_color;
+   struct pipe_blend_state blend;
+   struct pipe_clear_color_state clear_color;
+   struct pipe_clip_state clip;
    struct pipe_depth_state depth_test;
-   struct pipe_scissor_rect scissor;
+   struct pipe_framebuffer_state framebuffer;
+   struct pipe_fs_state fs;
    struct pipe_poly_stipple poly_stipple;
+   struct pipe_scissor_state scissor;
    struct pipe_sampler_state sampler[PIPE_MAX_SAMPLERS];
+   struct pipe_setup_state setup;
    struct pipe_texture_object *texture[PIPE_MAX_SAMPLERS];
+   struct pipe_viewport_state viewport;
    GLuint dirty;
 
    /* Clip derived state:

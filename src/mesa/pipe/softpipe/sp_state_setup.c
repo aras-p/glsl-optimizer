@@ -103,8 +103,8 @@ void softpipe_set_setup_state( struct pipe_context *pipe,
 
 
 
-void softpipe_set_scissor_rect( struct pipe_context *pipe,
-			       const struct pipe_scissor_rect *scissor )
+void softpipe_set_scissor_state( struct pipe_context *pipe,
+                                 const struct pipe_scissor_state *scissor )
 {
    struct softpipe_context *softpipe = softpipe_context(pipe);
 

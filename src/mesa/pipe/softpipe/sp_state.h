@@ -53,8 +53,8 @@ void softpipe_set_clip_state( struct pipe_context *,
 void softpipe_set_depth_test_state( struct pipe_context *,
                                     const struct pipe_depth_state * );
 
-void softpipe_set_viewport( struct pipe_context *,
-			   const struct pipe_viewport * );
+void softpipe_set_viewport_state( struct pipe_context *,
+                                  const struct pipe_viewport_state * );
 
 void softpipe_set_setup_state( struct pipe_context *,
 			      const struct pipe_setup_state * );
@@ -67,8 +67,8 @@ void softpipe_set_texture_state( struct pipe_context *,
                                  GLuint unit,
                                  struct pipe_texture_object * );
 
-void softpipe_set_scissor_rect( struct pipe_context *,
-			       const struct pipe_scissor_rect * );
+void softpipe_set_scissor_state( struct pipe_context *,
+                                 const struct pipe_scissor_state * );
 
 void softpipe_set_fs_state( struct pipe_context *,
 			   const struct pipe_fs_state * );

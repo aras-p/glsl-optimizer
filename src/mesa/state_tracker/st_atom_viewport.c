@@ -88,7 +88,7 @@ static void update_viewport( struct st_context *st )
       GLfloat half_height = ctx->Viewport.Height / 2.0;
       GLfloat half_depth = (ctx->Viewport.Far - ctx->Viewport.Near) / 2.0;
 
-      struct pipe_viewport vp;
+      struct pipe_viewport_state vp;
       
       vp.scale[0] = half_width;
       vp.scale[1] = half_height * yScale;
@@ -102,7 +102,7 @@ static void update_viewport( struct st_context *st )
 
       if (memcmp(&vp, &st->state.viewport, sizeof(vp)) != 0) {
 	 st->state.viewport = vp;
-	 st->pipe->set_viewport(st->pipe, &vp);
+	 st->pipe->set_viewport_state(st->pipe, &vp);
       }
    }
 }
