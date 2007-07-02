@@ -154,13 +154,12 @@ static void r300SetVertexFormat( GLcontext *ctx )
 		offset += 1;
 	}
 
-	rmesa->swtcl.coloroffset = offset;
 	if (RENDERINPUTS_TEST(index_bitset, _TNL_ATTRIB_COLOR0)) {
+	        rmesa->swtcl.coloroffset = offset;
 		InputsRead |= 1 << VERT_ATTRIB_COLOR0;
 		OutputsWritten |= 1 << VERT_RESULT_COL0;
 		EMIT_ATTR( _TNL_ATTRIB_COLOR0, EMIT_4F );
-	} else
-		EMIT_PAD(4*sizeof(float));
+	}
 
 	offset += 4;
 
@@ -193,7 +192,7 @@ static void r300SetVertexFormat( GLcontext *ctx )
 	}
 	
 	/* Fixed, apply to vir0 only */
-	if (InputsRead & VERT_ATTRIB_POS)
+	if (InputsRead & (1 << VERT_ATTRIB_POS))
 		inputs[VERT_ATTRIB_POS] = 0;
 	if (InputsRead & (1 << VERT_ATTRIB_COLOR0))
 		inputs[VERT_ATTRIB_COLOR0] = 2;
