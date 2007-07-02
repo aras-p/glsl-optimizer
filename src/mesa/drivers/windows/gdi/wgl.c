@@ -339,7 +339,7 @@ WINGDIAPI int GLAPIENTRY wglGetPixelFormat(HDC hdc)
 }
 
 WINGDIAPI BOOL GLAPIENTRY wglSetPixelFormat(HDC hdc,int iPixelFormat,
-					    PIXELFORMATDESCRIPTOR *ppfd)
+					    const PIXELFORMATDESCRIPTOR *ppfd)
 {
     (void) hdc;
     
