@@ -137,7 +137,7 @@ static void brw_vs_alloc_regs( struct brw_vs_compile *c )
 
    for (i = 0; i < 128; i++) {
        if (c->output_regs[i].used_in_src) {
-            c->regs[PROGRAM_OUTPUT][i] = brw_vec8_grf(reg, 0);
+            c->output_regs[i].reg = brw_vec8_grf(reg, 0);
             reg++;
         }
    }
@@ -958,6 +958,9 @@ void brw_vs_emit(struct brw_vs_compile *c )
    struct brw_instruction *if_inst[MAX_IFSN];
    struct brw_indirect stack_index = brw_indirect(0, 0);   
 
+   GLuint index;
+   GLuint file;
+
    if (INTEL_DEBUG & DEBUG_VS) {
       _mesa_printf("\n\n\nvs-emit:\n");
       _mesa_print_program(&c->vp->program.Base); 
@@ -998,8 +1001,8 @@ void brw_vs_emit(struct brw_vs_compile *c )
       if (inst->Opcode != OPCODE_SWZ)
 	  for (i = 0; i < 3; i++) {
 	      struct prog_src_register *src = &inst->SrcReg[i];
-	      GLuint index = src->Index;
-	      GLuint file = src->File;	
+	      index = src->Index;
+	      file = src->File;	
 	      if (file == PROGRAM_OUTPUT&&c->output_regs[index].used_in_src)
 		  args[i] = c->output_regs[index].reg;
 	      else
@@ -1009,8 +1012,13 @@ void brw_vs_emit(struct brw_vs_compile *c )
       /* Get dest regs.  Note that it is possible for a reg to be both
        * dst and arg, given the static allocation of registers.  So
        * care needs to be taken emitting multi-operation instructions.
-       */
-      dst = get_dst(c, inst->DstReg);
+       */ 
+      index = inst->DstReg.Index;
+      file = inst->DstReg.File;
+      if (file == PROGRAM_OUTPUT && c->output_regs[index].used_in_src)
+	  dst = c->output_regs[index].reg;
+      else
+	  dst = get_dst(c, inst->DstReg);
 
       switch (inst->Opcode) {
       case OPCODE_ABS:
@@ -1157,7 +1165,7 @@ void brw_vs_emit(struct brw_vs_compile *c )
       if (inst->DstReg.File == PROGRAM_OUTPUT
 	      &&inst->DstReg.Index != VERT_RESULT_HPOS
 	      &&c->output_regs[inst->DstReg.Index].used_in_src)
-	  brw_MOV(p, get_dst(c, inst->DstReg), dst);
+	  brw_MOV(p, dst, c->output_regs[inst->DstReg.Index].reg);
 
       release_tmps(c);
    }
