@@ -54,6 +54,7 @@ depth_test_quad(struct quad_stage *qs, struct quad_header *quad)
       break;
    case PIPE_FUNC_LESS:
       /* Note this is pretty much a single sse or cell instruction.  
+       * Like this:  quad->mask &= (quad->outputs.depth < zzzz);
        */
       for (j = 0; j < QUAD_SIZE; j++) {
 	 if (quad->outputs.depth[j] < zzzz[j]) 

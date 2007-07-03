@@ -23,6 +23,10 @@ alpha_test_quad(struct quad_stage *qs, struct quad_header *quad)
       quad->mask = 0x0;
       break;
    case PIPE_FUNC_LESS:
+      /*
+       * If quad->mask were an array [4] we could do this SIMD-style:
+       * quad->mask &= (quad->outputs.color[3] <= vec4(ref));
+       */
       for (j = 0; j < QUAD_SIZE; j++) {
          if (quad->mask & (1 << j)) {
             if (quad->outputs.color[3][j] >= ref) {
