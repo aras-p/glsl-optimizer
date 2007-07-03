@@ -67,6 +67,7 @@ struct pipe_context *softpipe_create( void )
    softpipe->pipe.set_framebuffer_state = softpipe_set_framebuffer_state;
    softpipe->pipe.set_alpha_test_state = softpipe_set_alpha_test_state;
    softpipe->pipe.set_blend_state = softpipe_set_blend_state;
+   softpipe->pipe.set_blend_color = softpipe_set_blend_color;
    softpipe->pipe.set_clip_state = softpipe_set_clip_state;
    softpipe->pipe.set_clear_color_state = softpipe_set_clear_color_state;
    softpipe->pipe.set_depth_state = softpipe_set_depth_test_state;

@@ -66,6 +66,9 @@ struct pipe_context {
    void (*set_blend_state)( struct pipe_context *,
                             const struct pipe_blend_state * );
 
+   void (*set_blend_color)( struct pipe_context *,
+                            const struct pipe_blend_color * );
+
    void (*set_clip_state)( struct pipe_context *,
 			   const struct pipe_clip_state * );
 

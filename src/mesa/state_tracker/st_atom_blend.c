@@ -201,6 +201,15 @@ update_blend( struct st_context *st )
       st->state.blend = blend;  /* struct copy */
       st->pipe->set_blend_state(st->pipe, &blend); /* set new state */
    }
+
+   if (memcmp(st->ctx->Color.BlendColor, &st->state.blend_color, 4 * sizeof(GLfloat)) != 0) {
+      /* state has changed */
+      st->state.blend_color.color[0] = st->ctx->Color.BlendColor[0];
+      st->state.blend_color.color[1] = st->ctx->Color.BlendColor[1];
+      st->state.blend_color.color[2] = st->ctx->Color.BlendColor[2];
+      st->state.blend_color.color[3] = st->ctx->Color.BlendColor[3];
+      st->pipe->set_blend_color(st->pipe, (struct pipe_blend_color *) st->ctx->Color.BlendColor);
+   }
 }
 
 

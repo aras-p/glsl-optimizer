@@ -46,6 +46,17 @@ void softpipe_set_blend_state( struct pipe_context *pipe,
 }
 
 
+void softpipe_set_blend_color( struct pipe_context *pipe,
+			     const struct pipe_blend_color *blend_color )
+{
+   struct softpipe_context *softpipe = softpipe_context(pipe);
+
+   softpipe->blend_color = *blend_color;
+
+   softpipe->dirty |= G_NEW_BLEND;
+}
+
+
 /** XXX move someday?  Or consolidate all these simple state setters
  * into one file.
  */

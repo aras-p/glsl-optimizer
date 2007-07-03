@@ -44,6 +44,9 @@ void softpipe_set_alpha_test_state( struct pipe_context *,
 void softpipe_set_blend_state( struct pipe_context *,
                                const struct pipe_blend_state * );
 
+void softpipe_set_blend_color( struct pipe_context *pipe,
+                               const struct pipe_blend_color *blend_color );
+
 void softpipe_set_clear_color_state( struct pipe_context *,
                                      const struct pipe_clear_color_state * );
 
