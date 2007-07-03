@@ -87,7 +87,7 @@ struct pipe_setup_state
 
    GLuint point_smooth:1;
 
-   GLubyte line_stipple_factor;  /**< [1..255] only */
+   GLubyte line_stipple_factor;  /**< [1..256] actually */
    GLushort line_stipple_pattern;
    GLfloat line_width;
    GLfloat point_size;           /**< used when no per-vertex size */

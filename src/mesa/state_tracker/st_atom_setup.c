@@ -184,7 +184,8 @@ static void update_setup_state( struct st_context *st )
    setup.line_smooth = ctx->Line.SmoothFlag;
    setup.line_stipple_enable = ctx->Line.StippleFlag;
    setup.line_stipple_pattern = ctx->Line.StipplePattern;
-   setup.line_stipple_factor = ctx->Line.StippleFactor;
+   /* GL stipple factor is in [1,256], remap to [0, 255] here */
+   setup.line_stipple_factor = ctx->Line.StippleFactor - 1;
 
 
    if (memcmp(&setup, &st->state.setup, sizeof(setup)) != 0) {
