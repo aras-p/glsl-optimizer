@@ -76,6 +76,7 @@ struct softpipe_context {
     */
    struct pipe_alpha_test_state alpha_test;
    struct pipe_blend_state blend;
+   struct pipe_blend_color blend_color;
    struct pipe_clear_color_state clear_color;
    struct pipe_clip_state clip;
    struct pipe_depth_state depth_test;
