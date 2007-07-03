@@ -169,12 +169,28 @@ update_blend( struct st_context *st )
       blend.blend_enable = 1;
 
       blend.rgb_func = gl_blend_to_sp(st->ctx->Color.BlendEquationRGB);
-      blend.rgb_src_factor = gl_blend_to_sp(st->ctx->Color.BlendSrcRGB);
-      blend.rgb_dst_factor = gl_blend_to_sp(st->ctx->Color.BlendDstRGB);
+      if (st->ctx->Color.BlendEquationRGB == GL_MIN ||
+          st->ctx->Color.BlendEquationRGB == GL_MAX) {
+         /* Min/max are special */
+         blend.rgb_src_factor = PIPE_BLENDFACTOR_ONE;
+         blend.rgb_dst_factor = PIPE_BLENDFACTOR_ONE;
+      }
+      else {
+         blend.rgb_src_factor = gl_blend_to_sp(st->ctx->Color.BlendSrcRGB);
+         blend.rgb_dst_factor = gl_blend_to_sp(st->ctx->Color.BlendDstRGB);
+      }
 
       blend.alpha_func = gl_blend_to_sp(st->ctx->Color.BlendEquationA);
-      blend.alpha_src_factor = gl_blend_to_sp(st->ctx->Color.BlendSrcA);
-      blend.alpha_dst_factor = gl_blend_to_sp(st->ctx->Color.BlendDstA);
+      if (st->ctx->Color.BlendEquationA == GL_MIN ||
+          st->ctx->Color.BlendEquationA == GL_MAX) {
+         /* Min/max are special */
+         blend.alpha_src_factor = PIPE_BLENDFACTOR_ONE;
+         blend.alpha_dst_factor = PIPE_BLENDFACTOR_ONE;
+      }
+      else {
+         blend.alpha_src_factor = gl_blend_to_sp(st->ctx->Color.BlendSrcA);
+         blend.alpha_dst_factor = gl_blend_to_sp(st->ctx->Color.BlendDstA);
+      }
    }
    else {
       /* no blending / logicop */
