@@ -30,8 +30,8 @@
 
 #include "imports.h"
 #include "slang_compile.h"
+#include "slang_mem.h"
 
-/* slang_type_specifier_type */
 
 typedef struct
 {
@@ -135,10 +135,10 @@ slang_fully_specified_type_copy(slang_fully_specified_type * x,
 static slang_variable *
 slang_variable_new(void)
 {
-   slang_variable *v = (slang_variable *) malloc(sizeof(slang_variable));
+   slang_variable *v = (slang_variable *) _slang_alloc(sizeof(slang_variable));
    if (v) {
       if (!slang_variable_construct(v)) {
-         free(v);
+         _slang_free(v);
          v = NULL;
       }
    }
@@ -150,7 +150,7 @@ static void
 slang_variable_delete(slang_variable * var)
 {
    slang_variable_destruct(var);
-   free(var);
+   _slang_free(var);
 }
 
 
@@ -162,8 +162,9 @@ slang_variable_scope *
 _slang_variable_scope_new(slang_variable_scope *parent)
 {
    slang_variable_scope *s;
-   s = (slang_variable_scope *) _mesa_calloc(sizeof(slang_variable_scope));
-   s->outer_scope = parent;
+   s = (slang_variable_scope *) _slang_alloc(sizeof(slang_variable_scope));
+   if (s)
+      s->outer_scope = parent;
    return s;
 }
 
@@ -187,7 +188,7 @@ slang_variable_scope_destruct(slang_variable_scope * scope)
       if (scope->variables[i])
          slang_variable_delete(scope->variables[i]);
    }
-   slang_alloc_free(scope->variables);
+   _slang_free(scope->variables);
    /* do not free scope->outer_scope */
 }
 
@@ -200,7 +201,7 @@ slang_variable_scope_copy(slang_variable_scope * x,
 
    _slang_variable_scope_ctr(&z);
    z.variables = (slang_variable **)
-      _mesa_calloc(y->num_variables * sizeof(slang_variable *));
+      _slang_alloc(y->num_variables * sizeof(slang_variable *));
    if (z.variables == NULL) {
       slang_variable_scope_destruct(&z);
       return 0;
@@ -235,9 +236,9 @@ slang_variable_scope_grow(slang_variable_scope *scope)
 {
    const int n = scope->num_variables;
    scope->variables = (slang_variable **)
-         slang_alloc_realloc(scope->variables,
-                             n * sizeof(slang_variable *),
-                             (n + 1) * sizeof(slang_variable *));
+         _slang_realloc(scope->variables,
+                        n * sizeof(slang_variable *),
+                        (n + 1) * sizeof(slang_variable *));
    if (!scope->variables)
       return NULL;
 
@@ -276,7 +277,7 @@ slang_variable_destruct(slang_variable * var)
    slang_fully_specified_type_destruct(&var->type);
    if (var->initializer != NULL) {
       slang_operation_destruct(var->initializer);
-      slang_alloc_free(var->initializer);
+      _slang_free(var->initializer);
    }
 #if 0
    if (var->aux) {
@@ -301,13 +302,13 @@ slang_variable_copy(slang_variable * x, const slang_variable * y)
    z.array_len = y->array_len;
    if (y->initializer != NULL) {
       z.initializer
-         = (slang_operation *) slang_alloc_malloc(sizeof(slang_operation));
+         = (slang_operation *) _slang_alloc(sizeof(slang_operation));
       if (z.initializer == NULL) {
          slang_variable_destruct(&z);
          return 0;
       }
       if (!slang_operation_construct(z.initializer)) {
-         slang_alloc_free(z.initializer);
+         _slang_free(z.initializer);
          slang_variable_destruct(&z);
          return 0;
       }
@@ -337,71 +338,3 @@ _slang_locate_variable(const slang_variable_scope * scope,
       return _slang_locate_variable(scope->outer_scope, a_name, 1);
    return NULL;
 }
-
-#if 0
-static GLenum
-gl_type_from_specifier(const slang_type_specifier * type)
-{
-   switch (type->type) {
-   case SLANG_SPEC_BOOL:
-      return GL_BOOL_ARB;
-   case SLANG_SPEC_BVEC2:
-      return GL_BOOL_VEC2_ARB;
-   case SLANG_SPEC_BVEC3:
-      return GL_BOOL_VEC3_ARB;
-   case SLANG_SPEC_BVEC4:
-      return GL_BOOL_VEC4_ARB;
-   case SLANG_SPEC_INT:
-      return GL_INT;
-   case SLANG_SPEC_IVEC2:
-      return GL_INT_VEC2_ARB;
-   case SLANG_SPEC_IVEC3:
-      return GL_INT_VEC3_ARB;
-   case SLANG_SPEC_IVEC4:
-      return GL_INT_VEC4_ARB;
-   case SLANG_SPEC_FLOAT:
-      return GL_FLOAT;
-   case SLANG_SPEC_VEC2:
-      return GL_FLOAT_VEC2_ARB;
-   case SLANG_SPEC_VEC3:
-      return GL_FLOAT_VEC3_ARB;
-   case SLANG_SPEC_VEC4:
-      return GL_FLOAT_VEC4_ARB;
-   case SLANG_SPEC_MAT2:
-      return GL_FLOAT_MAT2_ARB;
-   case SLANG_SPEC_MAT3:
-      return GL_FLOAT_MAT3_ARB;
-   case SLANG_SPEC_MAT4:
-      return GL_FLOAT_MAT4_ARB;
-   case SLANG_SPEC_MAT23:
-      return GL_FLOAT_MAT2x3_ARB;
-   case SLANG_SPEC_MAT32:
-      return GL_FLOAT_MAT3x2_ARB;
-   case SLANG_SPEC_MAT24:
-      return GL_FLOAT_MAT2x4_ARB;
-   case SLANG_SPEC_MAT42:
-      return GL_FLOAT_MAT4x2_ARB;
-   case SLANG_SPEC_MAT34:
-      return GL_FLOAT_MAT3x4_ARB;
-   case SLANG_SPEC_MAT43:
-      return GL_FLOAT_MAT4x3_ARB;
-   case SLANG_SPEC_SAMPLER1D:
-      return GL_SAMPLER_1D_ARB;
-   case SLANG_SPEC_SAMPLER2D:
-      return GL_SAMPLER_2D_ARB;
-   case SLANG_SPEC_SAMPLER3D:
-      return GL_SAMPLER_3D_ARB;
-   case SLANG_SPEC_SAMPLERCUBE:
-      return GL_SAMPLER_CUBE_ARB;
-   case SLANG_SPEC_SAMPLER1DSHADOW:
-      return GL_SAMPLER_1D_SHADOW_ARB;
-   case SLANG_SPEC_SAMPLER2DSHADOW:
-      return GL_SAMPLER_2D_SHADOW_ARB;
-   case SLANG_SPEC_ARRAy:
-      return gl_type_from_specifier(type->_array);
-   default:
-      return GL_FLOAT;
-   }
-}
-#endif
-

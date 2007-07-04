@@ -95,6 +95,7 @@ typedef struct
    struct _DriBufferPool *regionPool;
    struct _DriBufferPool *staticPool;
    unsigned int maxBatchSize;
+   GLboolean havePools;
 } intelScreenPrivate;
 
 
@@ -130,5 +131,7 @@ extern struct intel_context *intelScreenContext(intelScreenPrivate *intelScreen)
 
 extern void
 intelUpdateScreenRotation(__DRIscreenPrivate * sPriv, drmI830Sarea * sarea);
+extern GLboolean
+intelCreatePools(intelScreenPrivate *intelScreen);
 
 #endif

@@ -100,6 +100,13 @@ do
 	-L*)
 	    DEPS="$DEPS $1"
 	    ;;
+	-pthread)
+	    # this is a special case (see bugzilla 10876)
+	    DEPS="$DEPS $1"
+	    ;;
+	'-pthread')
+	    DEPS="$DEPS -pthread"
+	    ;;
 	'-cplusplus')
 	    CPLUSPLUS=1
 	    ;;

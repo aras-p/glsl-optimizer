@@ -44,6 +44,10 @@ in Mesa:
 <li>Comparison of user-defined structs
 <li>Linking of multiple shaders is not supported
 <li>gl_ClipVertex
+<li>The derivative functions such as dFdx() are not implemented
+<li>The inverse trig functions asin(), acos(), and atan() are not implemented
+<li>The gl_Color and gl_SecondaryColor varying vars are interpolated
+    without perspective correction
 </ul>
 
 <p>
@@ -66,7 +70,6 @@ All other major features of the shading language should function.
 <li>The quality of generated code is pretty good, register usage is fair.
 <li>Shader error detection and reporting of errors (InfoLog) is not
     very good yet.
-<li>There are known memory leaks in the compiler.
 <li>The ftransform() function doesn't necessarily match the results of
     fixed-function transformation.
 </ul>
@@ -294,7 +297,7 @@ A new <a href="http://glean.sf.net" target="_parent">Glean</a> test has
 been create to exercise the GLSL compiler.
 </p>
 <p>
-The <em>glsl1</em> test runs over 130 sub-tests to check that the language
+The <em>glsl1</em> test runs over 150 sub-tests to check that the language
 features and built-in functions work properly.
 This test should be run frequently while working on the compiler to catch
 regressions.

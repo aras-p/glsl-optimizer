@@ -639,25 +639,45 @@ void (*ReadBuffer)( GLcontext *ctx, GLenum buffer );
 /** Set rasterization mode */
 void (*RenderMode)(GLcontext *ctx, GLenum mode );
 
+/* Translate GL coords to window coords, clamping w/h to the
+ * dimensions of the window.
+ */
+static void nv30WindowCoords(nouveauContextPtr nmesa,
+			     GLuint x, GLuint y, GLuint w, GLuint h,
+			     GLuint *wX, GLuint *wY, GLuint *wW, GLuint *wH)
+{
+	if ((x+w) > nmesa->drawW)
+		w = nmesa->drawW - x;
+	(*wX) = x + nmesa->drawX;
+	(*wW) = w;
+
+	if ((y+h) > nmesa->drawH)
+		h = nmesa->drawH - y;
+	(*wY) = (nmesa->drawH - y) - h + nmesa->drawY;
+	(*wH) = h;
+}
+
 /** Define the scissor box */
 static void nv30Scissor(GLcontext *ctx, GLint x, GLint y, GLsizei w, GLsizei h)
 {
         nouveauContextPtr nmesa = NOUVEAU_CONTEXT(ctx);
+	GLuint wX, wY, wW, wH;
 
 	/* There's no scissor enable bit, so adjust the scissor to cover the
 	 * maximum draw buffer bounds
 	 */
 	if (!ctx->Scissor.Enabled) {
-	   x = y = 0;
-	   w = h = 4095;
+	   wX = nmesa->drawX;
+	   wY = nmesa->drawY;
+	   wW = nmesa->drawW;
+	   wH = nmesa->drawH;
 	} else {
-	   x += nmesa->drawX;
-	   y += nmesa->drawY;
+	   nv30WindowCoords(nmesa, x, y, w, h, &wX, &wY, &wW, &wH);
 	}
 
         BEGIN_RING_CACHE(NvSub3D, NV30_TCL_PRIMITIVE_3D_SCISSOR_WIDTH_XPOS, 2);
-        OUT_RING_CACHE(((w) << 16) | x);
-        OUT_RING_CACHE(((h) << 16) | y);
+        OUT_RING_CACHE  ((wW << 16) | wX);
+        OUT_RING_CACHE  ((wH << 16) | wY);
 }
 
 /** Select flat or smooth shading */
@@ -751,19 +771,21 @@ static void nv30WindowMoved(nouveauContextPtr nmesa)
 {
 	GLcontext *ctx = nmesa->glCtx;
 	GLfloat *v = nmesa->viewport.m;
-	GLuint w = ctx->Viewport.Width;
-	GLuint h = ctx->Viewport.Height;
-	GLuint x = ctx->Viewport.X + nmesa->drawX;
-	GLuint y = ctx->Viewport.Y + nmesa->drawY;
+	GLuint wX, wY, wW, wH;
 
+	nv30WindowCoords(nmesa, ctx->Viewport.X, ctx->Viewport.Y, 
+				ctx->Viewport.Width, ctx->Viewport.Height,
+				&wX, &wY, &wW, &wH);
         BEGIN_RING_CACHE(NvSub3D, NV30_TCL_PRIMITIVE_3D_VIEWPORT_DIMS_0, 2);
-        OUT_RING_CACHE((w << 16) | x);
-        OUT_RING_CACHE((h << 16) | y);
+        OUT_RING_CACHE  ((wW << 16) | wX);
+        OUT_RING_CACHE  ((wH << 16) | wY);
+
 	/* something to do with clears, possibly doesn't belong here */
 	BEGIN_RING_CACHE(NvSub3D,
 	      NV30_TCL_PRIMITIVE_3D_VIEWPORT_COLOR_BUFFER_OFS0, 2);
-        OUT_RING_CACHE(((w+x) << 16) | x);
-        OUT_RING_CACHE(((h+y) << 16) | y);
+        OUT_RING_CACHE(((nmesa->drawX + nmesa->drawW) << 16) | nmesa->drawX);
+        OUT_RING_CACHE(((nmesa->drawY + nmesa->drawH) << 16) | nmesa->drawY);
+
 	/* viewport transform */
 	BEGIN_RING_CACHE(NvSub3D, NV30_TCL_PRIMITIVE_3D_VIEWPORT_XFRM_OX, 8);
 	OUT_RING_CACHEf (v[MAT_TX]);
@@ -786,7 +808,7 @@ static GLboolean nv30InitCard(nouveauContextPtr nmesa)
 
 	BEGIN_RING_SIZE(NvSub3D, NV30_TCL_PRIMITIVE_3D_SET_OBJECT1, 3);
 	OUT_RING(NvDmaFB);
-	OUT_RING(NvDmaAGP);
+	OUT_RING(NvDmaTT);
         OUT_RING(NvDmaFB);
 	BEGIN_RING_SIZE(NvSub3D, NV30_TCL_PRIMITIVE_3D_SET_OBJECT8, 1);
 	OUT_RING(NvDmaFB);

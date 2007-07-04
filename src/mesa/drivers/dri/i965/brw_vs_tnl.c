@@ -1154,7 +1154,9 @@ static void build_fog( struct tnl_program *p )
 {
    struct ureg fog = register_output(p, VERT_RESULT_FOGC);
    struct ureg input;
-   
+   GLuint useabs = p->state->fog_source_is_depth && p->state->fog_option &&
+		   (p->state->fog_option != FOG_EXP2);
+
    if (p->state->fog_source_is_depth) {
       input = swizzle1(get_eye_position(p), Z);
    }
@@ -1171,26 +1173,30 @@ static void build_fog( struct tnl_program *p )
 
       emit_op1(p, OPCODE_MOV, fog, 0, id);
 
+      if (useabs) {
+	 emit_op1(p, OPCODE_ABS, tmp, 0, input);
+      }
+
       switch (p->state->fog_option) {
       case FOG_LINEAR: {
-	 emit_op1(p, OPCODE_ABS, tmp, 0, input);
-	 emit_op3(p, OPCODE_MAD, tmp, 0, tmp, swizzle1(params,X), swizzle1(params,Y));
+	 emit_op3(p, OPCODE_MAD, tmp, 0, useabs ? tmp : input,
+			swizzle1(params,X), swizzle1(params,Y));
 	 emit_op2(p, OPCODE_MAX, tmp, 0, tmp, swizzle1(id,X)); /* saturate */
 	 emit_op2(p, OPCODE_MIN, fog, WRITEMASK_X, tmp, swizzle1(id,W));
 	 break;
       }
       case FOG_EXP:
-	 emit_op1(p, OPCODE_ABS, tmp, 0, input); 
-	 emit_op2(p, OPCODE_MUL, tmp, 0, tmp, swizzle1(params,Z));
+	 emit_op2(p, OPCODE_MUL, tmp, 0, useabs ? tmp : input,
+			swizzle1(params,Z));
 	 emit_op1(p, OPCODE_EX2, fog, WRITEMASK_X, ureg_negate(tmp));
 	 break;
       case FOG_EXP2:
 	 emit_op2(p, OPCODE_MUL, tmp, 0, input, swizzle1(params,W));
-	 emit_op2(p, OPCODE_MUL, tmp, 0, tmp, tmp); 
+	 emit_op2(p, OPCODE_MUL, tmp, 0, tmp, tmp);
 	 emit_op1(p, OPCODE_EX2, fog, WRITEMASK_X, ureg_negate(tmp));
 	 break;
       }
-      
+
       release_temp(p, tmp);
    }
    else {
@@ -1198,7 +1204,7 @@ static void build_fog( struct tnl_program *p )
        *
        * KW:  Is it really necessary to do anything in this case?
        */
-      emit_op1(p, OPCODE_MOV, fog, 0, input);
+      emit_op1(p, useabs ? OPCODE_ABS : OPCODE_MOV, fog, 0, input);
    }
 }
  

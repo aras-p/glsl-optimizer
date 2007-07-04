@@ -30,6 +30,7 @@
 
 #include "imports.h"
 #include "slang_storage.h"
+#include "slang_mem.h"
 
 /* slang_storage_array */
 
@@ -47,7 +48,7 @@ slang_storage_array_destruct(slang_storage_array * arr)
 {
    if (arr->aggregate != NULL) {
       slang_storage_aggregate_destruct(arr->aggregate);
-      slang_alloc_free(arr->aggregate);
+      _slang_free(arr->aggregate);
    }
 }
 
@@ -68,7 +69,7 @@ slang_storage_aggregate_destruct(slang_storage_aggregate * agg)
 
    for (i = 0; i < agg->count; i++)
       slang_storage_array_destruct(agg->arrays + i);
-   slang_alloc_free(agg->arrays);
+   _slang_free(agg->arrays);
 }
 
 static slang_storage_array *
@@ -77,9 +78,9 @@ slang_storage_aggregate_push_new(slang_storage_aggregate * agg)
    slang_storage_array *arr = NULL;
 
    agg->arrays = (slang_storage_array *)
-      slang_alloc_realloc(agg->arrays,
-                          agg->count * sizeof(slang_storage_array),
-                          (agg->count + 1) * sizeof(slang_storage_array));
+      _slang_realloc(agg->arrays,
+                     agg->count * sizeof(slang_storage_array),
+                     (agg->count + 1) * sizeof(slang_storage_array));
    if (agg->arrays != NULL) {
       arr = agg->arrays + agg->count;
       if (!slang_storage_array_construct(arr))
@@ -112,13 +113,12 @@ aggregate_matrix(slang_storage_aggregate * agg, slang_storage_type basic_type,
       return GL_FALSE;
    arr->type = SLANG_STORE_AGGREGATE;
    arr->length = columns;
-   arr->aggregate =
-      (slang_storage_aggregate *)
-      slang_alloc_malloc(sizeof(slang_storage_aggregate));
+   arr->aggregate = (slang_storage_aggregate *)
+      _slang_alloc(sizeof(slang_storage_aggregate));
    if (arr->aggregate == NULL)
       return GL_FALSE;
    if (!slang_storage_aggregate_construct(arr->aggregate)) {
-      slang_alloc_free(arr->aggregate);
+      _slang_free(arr->aggregate);
       arr->aggregate = NULL;
       return GL_FALSE;
    }
@@ -219,13 +219,12 @@ _slang_aggregate_variable(slang_storage_aggregate * agg,
          if (arr == NULL)
             return GL_FALSE;
          arr->type = SLANG_STORE_AGGREGATE;
-         arr->aggregate =
-            (slang_storage_aggregate *)
-            slang_alloc_malloc(sizeof(slang_storage_aggregate));
+         arr->aggregate = (slang_storage_aggregate *)
+            _slang_alloc(sizeof(slang_storage_aggregate));
          if (arr->aggregate == NULL)
             return GL_FALSE;
          if (!slang_storage_aggregate_construct(arr->aggregate)) {
-            slang_alloc_free(arr->aggregate);
+            _slang_free(arr->aggregate);
             arr->aggregate = NULL;
             return GL_FALSE;
          }

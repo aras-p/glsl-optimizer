@@ -1,8 +1,8 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.5.2
+ * Version:  7.1
  *
- * Copyright (C) 1999-2006  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2007  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -70,15 +70,10 @@ fast_draw_rgba_pixels(GLcontext *ctx, GLint x, GLint y,
       return GL_FALSE;
    }
 
-   INIT_SPAN(span, GL_BITMAP, 0, 0, SPAN_RGBA);
-   if (ctx->Light.Model.ColorControl == GL_SEPARATE_SPECULAR_COLOR)
-      _swrast_span_default_secondary_color(ctx, &span);
-   if (ctx->Depth.Test)
-      _swrast_span_default_z(ctx, &span);
-   if (swrast->_FogEnabled)
-      _swrast_span_default_fog(ctx, &span);
-   if (ctx->Texture._EnabledCoordUnits)
-      _swrast_span_default_texcoords(ctx, &span);
+   INIT_SPAN(span, GL_BITMAP);
+   span.arrayMask = SPAN_RGBA;
+   span.arrayAttribs = FRAG_BIT_COL0;
+   _swrast_span_default_attribs(ctx, &span);
 
    /* copy input params since clipping may change them */
    unpack = *userUnpack;
@@ -275,9 +270,9 @@ fast_draw_rgba_pixels(GLcontext *ctx, GLint x, GLint y,
             for (row = 0; row < drawHeight; row++) {
                ASSERT(drawWidth <= MAX_WIDTH);
                _mesa_map_ci8_to_rgba8(ctx, drawWidth, src,
-                                      span.array->color.sz1.rgba);
+                                      span.array->rgba8);
                rb->PutRow(ctx, rb, drawWidth, destX, destY,
-                          span.array->color.sz1.rgba, NULL);
+                          span.array->rgba8, NULL);
                src += unpack.RowLength;
                destY += yStep;
             }
@@ -288,12 +283,12 @@ fast_draw_rgba_pixels(GLcontext *ctx, GLint x, GLint y,
             for (row = 0; row < drawHeight; row++) {
                ASSERT(drawWidth <= MAX_WIDTH);
                _mesa_map_ci8_to_rgba8(ctx, drawWidth, src,
-                                      span.array->color.sz1.rgba);
+                                      span.array->rgba8);
                span.x = destX;
                span.y = destY;
                span.end = drawWidth;
                _swrast_write_zoomed_rgba_span(ctx, imgX, imgY, &span,
-                                              span.array->color.sz1.rgba);
+                                              span.array->rgba8);
                src += unpack.RowLength;
                destY++;
             }
@@ -334,18 +329,14 @@ draw_index_pixels( GLcontext *ctx, GLint x, GLint y,
                    const struct gl_pixelstore_attrib *unpack,
                    const GLvoid *pixels )
 {
-   SWcontext *swrast = SWRAST_CONTEXT(ctx);
    const GLint imgX = x, imgY = y;
    const GLboolean zoom = ctx->Pixel.ZoomX!=1.0 || ctx->Pixel.ZoomY!=1.0;
    GLint row, skipPixels;
    SWspan span;
 
-   INIT_SPAN(span, GL_BITMAP, 0, 0, SPAN_INDEX);
-
-   if (ctx->Depth.Test)
-      _swrast_span_default_z(ctx, &span);
-   if (swrast->_FogEnabled)
-      _swrast_span_default_fog(ctx, &span);
+   INIT_SPAN(span, GL_BITMAP);
+   span.arrayMask = SPAN_INDEX;
+   _swrast_span_default_attribs(ctx, &span);
 
    /*
     * General solution
@@ -407,10 +398,9 @@ draw_stencil_pixels( GLcontext *ctx, GLint x, GLint y,
                                                       width, height,
                                                       GL_COLOR_INDEX, type,
                                                       row, skipPixels);
-         _mesa_unpack_index_span(ctx, spanWidth, destType, values,
-                                 type, source, unpack,
-                                 ctx->_ImageTransferState);
-         _mesa_apply_stencil_transfer_ops(ctx, spanWidth, values);
+         _mesa_unpack_stencil_span(ctx, spanWidth, destType, values,
+                                   type, source, unpack,
+                                   ctx->_ImageTransferState);
          if (zoom) {
             _swrast_write_zoomed_stencil_span(ctx, x, y, spanWidth,
                                               spanX, spanY, values);
@@ -434,21 +424,14 @@ draw_depth_pixels( GLcontext *ctx, GLint x, GLint y,
                    const struct gl_pixelstore_attrib *unpack,
                    const GLvoid *pixels )
 {
-   SWcontext *swrast = SWRAST_CONTEXT(ctx);
    const GLboolean scaleOrBias
       = ctx->Pixel.DepthScale != 1.0 || ctx->Pixel.DepthBias != 0.0;
    const GLboolean zoom = ctx->Pixel.ZoomX != 1.0 || ctx->Pixel.ZoomY != 1.0;
    SWspan span;
 
-   INIT_SPAN(span, GL_BITMAP, 0, 0, SPAN_Z);
-
-   _swrast_span_default_color(ctx, &span);
-   if (ctx->Light.Model.ColorControl == GL_SEPARATE_SPECULAR_COLOR)
-      _swrast_span_default_secondary_color(ctx, &span);
-   if (swrast->_FogEnabled)
-      _swrast_span_default_fog(ctx, &span);
-   if (ctx->Texture._EnabledCoordUnits)
-      _swrast_span_default_texcoords(ctx, &span);
+   INIT_SPAN(span, GL_BITMAP);
+   span.arrayMask = SPAN_Z;
+   _swrast_span_default_attribs(ctx, &span);
 
    if (type == GL_UNSIGNED_SHORT
        && ctx->DrawBuffer->Visual.depthBits == 16
@@ -552,7 +535,6 @@ draw_rgba_pixels( GLcontext *ctx, GLint x, GLint y,
                   const struct gl_pixelstore_attrib *unpack,
                   const GLvoid *pixels )
 {
-   SWcontext *swrast = SWRAST_CONTEXT(ctx);
    const GLint imgX = x, imgY = y;
    const GLboolean zoom = ctx->Pixel.ZoomX!=1.0 || ctx->Pixel.ZoomY!=1.0;
    GLfloat *convImage = NULL;
@@ -561,18 +543,14 @@ draw_rgba_pixels( GLcontext *ctx, GLint x, GLint y,
 
    /* Try an optimized glDrawPixels first */
    if (fast_draw_rgba_pixels(ctx, x, y, width, height, format, type,
-                             unpack, pixels))
+                             unpack, pixels)) {
       return;
+   }
 
-   INIT_SPAN(span, GL_BITMAP, 0, 0, SPAN_RGBA);
-   if (ctx->Light.Model.ColorControl == GL_SEPARATE_SPECULAR_COLOR)
-      _swrast_span_default_secondary_color(ctx, &span);
-   if (ctx->Depth.Test)
-      _swrast_span_default_z(ctx, &span);
-   if (swrast->_FogEnabled)
-      _swrast_span_default_fog(ctx, &span);
-   if (ctx->Texture._EnabledCoordUnits)
-      _swrast_span_default_texcoords(ctx, &span);
+   INIT_SPAN(span, GL_BITMAP);
+   _swrast_span_default_attribs(ctx, &span);
+   span.arrayMask = SPAN_RGBA;
+   span.arrayAttribs = FRAG_BIT_COL0; /* we're fill in COL0 attrib values */
 
    if (ctx->Pixel.Convolution2DEnabled || ctx->Pixel.Separable2DEnabled) {
       /* Convolution has to be handled specially.  We'll create an

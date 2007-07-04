@@ -1,6 +1,6 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.5.3
+ * Version:  7.0
  *
  * Copyright (C) 1999-2007  Brian Paul   All Rights Reserved.
  *
@@ -121,17 +121,17 @@ _mesa_fetch_state(GLcontext *ctx, const gl_state_index state[],
             return;
          case STATE_HALF_VECTOR:
             {
-               GLfloat eye_z[] = {0, 0, 1};
-					
+               static const GLfloat eye_z[] = {0, 0, 1};
+               GLfloat p[3];
                /* Compute infinite half angle vector:
-                *   half-vector = light_position + (0, 0, 1) 
-                * and then normalize.  w = 0
-		*
+                *   halfVector = normalize(normalize(lightPos) + (0, 0, 1))
 		* light.EyePosition.w should be 0 for infinite lights.
                 */
-	       ADD_3V(value, eye_z, ctx->Light.Light[ln].EyePosition);
+               COPY_3V(p, ctx->Light.Light[ln].EyePosition);
+               NORMALIZE_3FV(p);
+	       ADD_3V(value, p, eye_z);
 	       NORMALIZE_3FV(value);
-	       value[3] = 0;
+	       value[3] = 1.0;
             }						  
             return;
 	 case STATE_POSITION_NORMALIZED:
@@ -507,6 +507,8 @@ _mesa_program_state_flags(const gl_state_index state[STATE_LENGTH])
       switch (state[1]) {
       case STATE_TEXRECT_SCALE:
 	 return _NEW_TEXTURE;
+      case STATE_FOG_PARAMS_OPTIMIZED:
+	 return _NEW_FOG;
       default:
          /* unknown state indexes are silently ignored and
          *  no flag set, since it is handled by the driver.

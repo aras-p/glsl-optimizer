@@ -199,6 +199,7 @@ _mesa_append_fog_code(GLcontext *ctx, struct gl_fragment_program *fprog)
       inst->SrcReg[2].File = PROGRAM_STATE_VAR;
       inst->SrcReg[2].Index = fogPRefOpt;
       inst->SrcReg[2].Swizzle = SWIZZLE_Y;
+      inst->SaturateMode = SATURATE_ZERO_ONE;
       inst++;
    }
    else {

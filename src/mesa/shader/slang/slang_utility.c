@@ -1,8 +1,8 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.6
+ * Version:  6.5.3
  *
- * Copyright (C) 2005-2006  Brian Paul   All Rights Reserved.
+ * Copyright (C) 2005-2007  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -30,6 +30,7 @@
 
 #include "imports.h"
 #include "slang_utility.h"
+#include "slang_mem.h"
 
 char *
 slang_string_concat (char *dst, const char *src)
@@ -152,11 +153,9 @@ slang_atom_pool_destruct (slang_atom_pool * pool)
 		
       entry = pool->entries[i];
       while (entry != NULL) {
-         slang_atom_entry *next;
-
-         next = entry->next;
-         slang_alloc_free(entry->id);
-         slang_alloc_free(entry);
+         slang_atom_entry *next = entry->next;
+         _slang_free(entry->id);
+         _slang_free(entry);
          entry = next;
       }
    }
@@ -165,7 +164,8 @@ slang_atom_pool_destruct (slang_atom_pool * pool)
 /*
  * Search the atom pool for an atom with a given name.
  * If atom is not found, create and add it to the pool.
- * Returns ATOM_NULL if the atom was not found and the function failed to create a new atom.
+ * Returns ATOM_NULL if the atom was not found and the function failed
+ * to create a new atom.
  */
 slang_atom
 slang_atom_pool_atom(slang_atom_pool * pool, const char * id)
@@ -187,8 +187,10 @@ slang_atom_pool_atom(slang_atom_pool * pool, const char * id)
    }
    hash %= SLANG_ATOM_POOL_SIZE;
 
-   /* Now the hash points to a linked list of atoms with names that have the same hash value.
-    * Search the linked list for a given name. */
+   /* Now the hash points to a linked list of atoms with names that
+    * have the same hash value.  Search the linked list for a given
+    * name.
+    */
    entry = &pool->entries[hash];
    while (*entry != NULL) {
       /* If the same, return the associated atom. */
@@ -199,15 +201,18 @@ slang_atom_pool_atom(slang_atom_pool * pool, const char * id)
    }
 
    /* Okay, we have not found an atom. Create a new entry for it.
-    * Note that the <entry> points to the last entry's <next> field. */
-   *entry = (slang_atom_entry *) (slang_alloc_malloc(sizeof(slang_atom_entry)));
+    * Note that the <entry> points to the last entry's <next> field.
+    */
+   *entry = (slang_atom_entry *) _slang_alloc(sizeof(slang_atom_entry));
    if (*entry == NULL)
       return SLANG_ATOM_NULL;
 
-   /* Initialize a new entry. Because we'll need the actual name of the atom, we use the pointer
-    * to this string as an actual atom's value. */
+   /* Initialize a new entry. Because we'll need the actual name of
+    * the atom, we use the pointer to this string as an actual atom's
+    * value.
+    */
    (**entry).next = NULL;
-   (**entry).id = slang_string_duplicate(id);
+   (**entry).id = _slang_strdup(id);
    if ((**entry).id == NULL)
       return SLANG_ATOM_NULL;
    return (slang_atom) (**entry).id;

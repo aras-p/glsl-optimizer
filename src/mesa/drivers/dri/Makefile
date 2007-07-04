@@ -14,21 +14,25 @@ $(TOP)/$(LIB_DIR):
 
 
 subdirs:
-	echo $(DRI_DIRS)
 	@for dir in $(DRI_DIRS) ; do \
-		echo $$dir ; \
-		(cd $$dir && $(MAKE)) || exit 1; \
+		if [ -d $$dir ] ; then \
+			(cd $$dir && $(MAKE)) || exit 1 ; \
+		fi \
 	done
 
 
 install:
 	@for dir in $(DRI_DIRS) ; do \
-		(cd $$dir && $(MAKE) install) || exit 1; \
+		if [ -d $$dir ] ; then \
+			(cd $$dir && $(MAKE) install) || exit 1 ; \
+		fi \
 	done
 
 
 clean:
 	@for dir in $(DRI_DIRS) ; do \
-		(cd $$dir && $(MAKE) clean) ; \
+		if [ -d $$dir ] ; then \
+			(cd $$dir && $(MAKE) clean) ; \
+		fi \
 	done
 	-rm -f common/*.o

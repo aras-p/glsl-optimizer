@@ -1528,8 +1528,8 @@ XCreateWindow( Display *dpy, Window parent, int x, int y,
    }
 
    /* init other per-window fields */
-   win->x = 0;
-   win->y = 0;
+   win->x = x;
+   win->y = y;
    win->w = width;
    win->h = height;
    win->visual = visual;  /* ptr assignment */
@@ -1537,7 +1537,7 @@ XCreateWindow( Display *dpy, Window parent, int x, int y,
    win->bytesPerPixel = dpy->driverContext.cpp;
    win->rowStride = dpy->driverContext.shared.virtualWidth * win->bytesPerPixel;
    win->size = win->rowStride * height; 
-   win->frontStart = dpy->driverContext.FBAddress;
+   win->frontStart = dpy->driverContext.FBAddress + (win->rowStride * win->x) + (win->y * win->bytesPerPixel);
    win->frontBottom = (GLubyte *) win->frontStart + (height-1) * win->rowStride;
 
    /* This is incorrect: the hardware driver could put the backbuffer
@@ -2434,6 +2434,7 @@ void (*glXGetProcAddress(const GLubyte *procname))( void )
    return _glapi_get_proc_address((const char *) procname);
 }
 
+void (*glXGetProcAddressARB(const GLubyte *procName))( void ) __attribute__ ((alias ("glXGetProcAddress")));
 
 /**
  * \brief Query the Mini GLX version.

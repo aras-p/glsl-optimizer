@@ -196,5 +196,7 @@ _slang_type_base(slang_type_specifier_type);
 extern GLuint
 _slang_type_dim(slang_type_specifier_type);
 
+extern GLenum
+_slang_gltype_from_specifier(const slang_type_specifier *type);
 
 #endif

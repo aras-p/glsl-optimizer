@@ -76,7 +76,9 @@ intel_bufferobj_release_region(struct intel_context *intel,
     */
    driGenBuffers(intel->intelScreen->regionPool,
                  "buffer object", 1, &intel_obj->buffer, 64, 0, 0);
+   LOCK_HARDWARE(intel);
    driBOData(intel_obj->buffer, intel_obj->Base.Size, NULL, 0);
+   UNLOCK_HARDWARE(intel);
 }
 
 /* Break the COW tie to the region.  Both the pbo and the region end
@@ -137,7 +139,9 @@ intel_bufferobj_data(GLcontext * ctx,
    if (intel_obj->region)
       intel_bufferobj_release_region(intel, intel_obj);
 
+   LOCK_HARDWARE(intel);
    driBOData(intel_obj->buffer, size, data, 0);
+   UNLOCK_HARDWARE(intel);
 }
 
 

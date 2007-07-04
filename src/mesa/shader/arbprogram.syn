@@ -21,13 +21,13 @@
  * AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
- 
+
  /**
  * \file arbprogram.syn
  * ARB_fragment/vertex_program syntax
  * \author Michal Krol
  */
- 
+
 .syntax program;
 
 /*
@@ -36,7 +36,7 @@
    compares the value with its REVISION value. If they do not match, the loader is not up
    to date.
 */
-.emtcode REVISION                                   0x09
+.emtcode REVISION                                   0x0a
 
 /* program type */
 .emtcode FRAGMENT_PROGRAM                           0x01
@@ -63,6 +63,9 @@
 
 /* GL_ARB_draw_buffers option */
 .emtcode ARB_DRAW_BUFFERS                           0x07
+
+/* GL_MESA_texture_array option */
+.emtcode MESA_TEXTURE_ARRAY                         0x08
 
 /* GL_ARB_fragment_program instruction class */
 .emtcode OP_ALU_INST                                0x00
@@ -223,6 +226,11 @@
 .emtcode TEXTARGET_SHADOW1D                         0x06
 .emtcode TEXTARGET_SHADOW2D                         0x07
 .emtcode TEXTARGET_SHADOWRECT                       0x08
+/* GL_MESA_texture_array */
+.emtcode TEXTARGET_1D_ARRAY                         0x09
+.emtcode TEXTARGET_2D_ARRAY                         0x0a
+.emtcode TEXTARGET_SHADOW1D_ARRAY                   0x0b
+.emtcode TEXTARGET_SHADOW2D_ARRAY                   0x0c
 
 /* face type */
 .emtcode FACE_FRONT                                 0x00
@@ -436,6 +444,9 @@
 /* GL_ARB_draw_buffers */
 .regbyte draw_buffers                               0x00
 
+/* GL_MESA_texture_array */
+.regbyte texture_array                              0x00
+
 /* option presence condition registers */
 /* they are all initially set to zero - when a particular OPTION is encountered, the appropriate */
 /* register is set to 1 to indicate that the OPTION was specified. */
@@ -455,6 +466,9 @@
 
 /* GL_ARB_draw_buffers */
 .regbyte ARB_draw_buffers                           0x00
+
+/* GL_MESA_texture_array */
+.regbyte MESA_texture_array                         0x00
 
 /* program target condition register */
 /* this syntax script deals with two program targets - VERTEX_PROGRAM and FRAGMENT_PROGRAM. */
@@ -523,7 +537,9 @@ fp_optionString
     .if (fragment_program_shadow != 0x00) "ARB_fragment_program_shadow"
         .emit ARB_FRAGMENT_PROGRAM_SHADOW .load ARB_fragment_program_shadow 0x01 .or
     .if (draw_buffers != 0x00) "ARB_draw_buffers" .emit ARB_DRAW_BUFFERS
-        .load ARB_draw_buffers 0x01;
+        .load ARB_draw_buffers 0x01 .or
+    .if (texture_array != 0x00) "MESA_texture_array" .emit MESA_TEXTURE_ARRAY
+        .load MESA_texture_array 0x01;
 vp_optionString
     "ARB_position_invariant" .emit ARB_POSITION_INVARIANT .load ARB_position_invariant 0x01;
 fp_ARB_fog_exp
@@ -899,6 +915,7 @@ fragment program
                              | "CUBE"
                              | "RECT"
                              | <shadowTarget> (if option ARB_fragment_program_shadow present)
+                             | <arrayTarget> (if option MESA_texture_array present)
 */
 texTarget
     "1D" .emit TEXTARGET_1D .or
@@ -906,18 +923,39 @@ texTarget
     "3D" .emit TEXTARGET_3D .or
     .if (texture_rectangle != 0x00) "RECT" .emit TEXTARGET_RECT .or
     "CUBE" .emit TEXTARGET_CUBE .or
-    .if (ARB_fragment_program_shadow != 0x00) shadowTarget;
+    .if (ARB_fragment_program_shadow != 0x00) shadowTarget .or
+    .if (MESA_texture_array != 0x00) arrayTarget;
 
 /*
 GL_ARB_fragment_program_shadow
     <shadowTarget>         ::= "SHADOW1D"
                              | "SHADOW2D"
                              | "SHADOWRECT"
+                             | <shadowArrayTarget> (if option MESA_texture_array present)
 */
 shadowTarget
     "SHADOW1D" .emit TEXTARGET_SHADOW1D .or
     "SHADOW2D" .emit TEXTARGET_SHADOW2D .or
-    .if (texture_rectangle != 0x00) "SHADOWRECT" .emit TEXTARGET_SHADOWRECT;
+    .if (texture_rectangle != 0x00) "SHADOWRECT" .emit TEXTARGET_SHADOWRECT .or
+    .if (MESA_texture_array != 0x00) shadowArrayTarget;
+
+/*
+GL_MESA_texture_array
+
+    <arrayTarget>         ::= "ARRAY1D"
+                             | "ARRAY2D"
+
+    <shadowArrayTarget>   ::= "SHADOWARRAY1D"
+                             | "SHADOWARRAY2D"
+*/
+
+arrayTarget
+    "ARRAY1D" .emit TEXTARGET_1D_ARRAY .or
+    "ARRAY2D" .emit TEXTARGET_2D_ARRAY;
+
+shadowArrayTarget
+    "SHADOWARRAY1D" .emit TEXTARGET_SHADOW1D_ARRAY .or
+    "SHADOWARRAY2D" .emit TEXTARGET_SHADOW2D_ARRAY;
 
 /*
 fragment program

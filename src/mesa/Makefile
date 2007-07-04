@@ -89,9 +89,7 @@ fbdev: $(CORE_OBJECTS) $(FBDEV_DRIVER_OBJECTS) $(COMMON_DRIVER_OBJECTS)
 # Stand-alone Mesa libGL and libOSMesa
 STAND_ALONE_DRIVER_SOURCES = \
 	$(COMMON_DRIVER_SOURCES) \
-	$(X11_DRIVER_SOURCES) \
-	$(GLIDE_DRIVER_SOURCES) \
-	$(SVGA_DRIVER_SOURCES)
+	$(X11_DRIVER_SOURCES)
 
 STAND_ALONE_DRIVER_OBJECTS = $(STAND_ALONE_DRIVER_SOURCES:.c=.o)
 
@@ -178,9 +176,9 @@ clean:
 	-rm -f */*/*.o
 	-rm -f depend depend.bak libmesa.a
 	-rm -f drivers/*/*.o
-	(cd drivers/dri ; $(MAKE) clean)
-	(cd x86 ; $(MAKE) clean)
-	(cd x86-64 ; $(MAKE) clean)
+	(cd drivers/dri && $(MAKE) clean)
+	(cd x86 && $(MAKE) clean)
+	(cd x86-64 && $(MAKE) clean)
 
 
 include depend

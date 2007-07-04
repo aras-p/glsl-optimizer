@@ -114,7 +114,7 @@ compute_fog_blend_factors(GLcontext *ctx, GLvector4f *out, const GLvector4f *in)
       else
          d = 1.0F / (ctx->Fog.End - ctx->Fog.Start);
       for ( i = 0 ; i < n ; i++, STRIDE_F(v, stride)) {
-         const GLfloat z = FABSF(*v);
+         const GLfloat z = *v;
          GLfloat f = (end - z) * d;
 	 data[i][0] = CLAMP(f, 0.0F, 1.0F);
       }
@@ -122,14 +122,14 @@ compute_fog_blend_factors(GLcontext *ctx, GLvector4f *out, const GLvector4f *in)
    case GL_EXP:
       d = ctx->Fog.Density;
       for ( i = 0 ; i < n ; i++, STRIDE_F(v,stride)) {
-         const GLfloat z = FABSF(*v);
+         const GLfloat z = *v;
          NEG_EXP( data[i][0], d * z );
       }
       break;
    case GL_EXP2:
       d = ctx->Fog.Density*ctx->Fog.Density;
       for ( i = 0 ; i < n ; i++, STRIDE_F(v, stride)) {
-         const GLfloat z = FABSF(*v);
+         const GLfloat z = *v;
          NEG_EXP( data[i][0], d * z * z );
       }
       break;
@@ -153,6 +153,8 @@ run_fog_stage(GLcontext *ctx, struct tnl_pipeline_stage *stage)
 
 
    if (ctx->Fog.FogCoordinateSource == GL_FRAGMENT_DEPTH_EXT) {
+      GLuint i;
+      GLfloat *coord;
       /* Fog is computed from vertex or fragment Z values */
       /* source = VB->ObjPtr or VB->EyePtr coords */
       /* dest = VB->AttribPtr[_TNL_ATTRIB_FOG] = fog stage private storage */
@@ -168,6 +170,8 @@ run_fog_stage(GLcontext *ctx, struct tnl_pipeline_stage *stage)
 	 input = &store->fogcoord;
 
          /* NOTE: negate plane here so we get positive fog coords! */
+	 /* NOTE2: this doesn't always work (tests/fog - all frag depth fog
+	    coords will be negative). */
 	 plane[0] = -m[2];
 	 plane[1] = -m[6];
 	 plane[2] = -m[10];
@@ -180,18 +184,29 @@ run_fog_stage(GLcontext *ctx, struct tnl_pipeline_stage *stage)
 					      VB->ObjPtr, plane );
 
 	 input->count = VB->ObjPtr->count;
+
+	 /* make sure coords are really positive
+	    NOTE should avoid going through array twice */
+	 coord = input->start;
+	 for (i = 0; i < input->count; i++) {
+	    input->data[i][0] = FABSF(*coord);
+	    STRIDE_F(coord, input->stride);
+	 }
       }
       else {
          /* fog coordinates = eye Z coordinates (use ABS later) */
-	 input = &store->input;
+	 input = &store->fogcoord;
 
 	 if (VB->EyePtr->size < 2)
 	    _mesa_vector4f_clean_elem( VB->EyePtr, VB->Count, 2 );
 
-	 input->data = (GLfloat (*)[4]) &(VB->EyePtr->data[0][2]);
-	 input->start = VB->EyePtr->start+2;
-	 input->stride = VB->EyePtr->stride;
+	 input->stride = 4 * sizeof(GLfloat);
 	 input->count = VB->EyePtr->count;
+	 coord = VB->EyePtr->start;
+	 for (i = 0 ; i < VB->EyePtr->count; i++) {
+	    input->data[i][0] = FABSF(coord[2]);
+	    STRIDE_F(coord, VB->EyePtr->stride);
+	 }
       }
    }
    else {

@@ -130,6 +130,18 @@ intelGetString(GLcontext * ctx, GLenum name)
       case PCI_CHIP_I945_GM:
          chipset = "Intel(R) 945GM";
          break;
+      case PCI_CHIP_I945_GME:
+         chipset = "Intel(R) 945GME";
+         break;
+      case PCI_CHIP_G33_G:
+	 chipset = "Intel(R) G33";
+	 break;
+      case PCI_CHIP_Q35_G:
+	 chipset = "Intel(R) Q35";
+	 break;
+      case PCI_CHIP_Q33_G:
+	 chipset = "Intel(R) Q33";
+	 break;
       default:
          chipset = "Unknown Intel Chipset";
          break;
@@ -209,7 +221,6 @@ static const struct tnl_pipeline_stage *intel_pipeline[] = {
    &_tnl_texgen_stage,
    &_tnl_texture_transform_stage,
    &_tnl_point_attenuation_stage,
-   &_tnl_arb_vertex_program_stage,
    &_tnl_vertex_program_stage,
 #if 1
    &_intel_render_stage,        /* ADD: unclipped rastersetup-to-dma */
@@ -347,7 +358,15 @@ intelInitContext(struct intel_context *intel,
    drmI830Sarea *saPriv = (drmI830Sarea *)
       (((GLubyte *) sPriv->pSAREA) + intelScreen->sarea_priv_offset);
    int fthrottle_mode;
+   GLboolean havePools;
 
+   DRM_LIGHT_LOCK(sPriv->fd, &sPriv->pSAREA->lock, driContextPriv->hHWContext);
+   havePools = intelCreatePools(intelScreen);
+   DRM_UNLOCK(sPriv->fd, &sPriv->pSAREA->lock, driContextPriv->hHWContext);
+
+   if (!havePools)
+      return GL_FALSE;
+     
    if (!_mesa_initialize_context(&intel->ctx,
                                  mesaVis, shareCtx,
                                  functions, (void *) intel))

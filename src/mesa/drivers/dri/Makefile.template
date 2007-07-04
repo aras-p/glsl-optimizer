@@ -25,11 +25,13 @@ OBJECTS = $(C_SOURCES:.c=.o) \
 	  $(ASM_SOURCES:.S=.o) 
 
 else
+# miniglx
 WINOBJ=
 WINLIB=-L$(MESA)/src/glx/mini
 MINIGLX_INCLUDES = -I$(TOP)/src/glx/mini
 INCLUDES = $(MINIGLX_INCLUDES) \
-	   $(SHARED_INCLUDES)
+	   $(SHARED_INCLUDES) \
+	   $(PCIACCESS_CFLAGS)
 
 OBJECTS = $(C_SOURCES:.c=.o) \
 	  $(MINIGLX_SOURCES:.c=.o) \
@@ -54,7 +56,8 @@ SHARED_INCLUDES = \
 	-I$(TOP)/src/mesa/swrast_setup \
 	-I$(TOP)/src/egl/main \
 	-I$(TOP)/src/egl/drivers/dri \
-	`pkg-config --cflags libdrm`
+	$(LIBDRM_CFLAGS)
+
 
 ##### RULES #####
 
@@ -70,11 +73,6 @@ SHARED_INCLUDES = \
 default: depend symlinks $(LIBNAME) $(TOP)/$(LIB_DIR)/$(LIBNAME)
 
 
-#$(TOP)/$(LIB_DIR)/$(LIBNAME): $(OBJECTS) $(MESA_MODULES) $(WINOBJ) Makefile
-#	@echo BUILDING FOR: $(WINDOW_SYSTEM)
-#	$(TOP)/bin/mklib -o $(LIBNAME) -noprefix -install $(TOP)/$(LIB_DIR) \
-#		$(WINLIB) $(LIB_DEPS) $(WINOBJ) $(MESA_MODULES) $(OBJECTS)
-
 $(LIBNAME): $(OBJECTS) $(MESA_MODULES) $(WINOBJ) Makefile $(TOP)/src/mesa/drivers/dri/Makefile.template
 	$(TOP)/bin/mklib -noprefix -o $@ \
 		$(OBJECTS) $(MESA_MODULES) $(WINOBJ) $(DRI_LIB_DEPS)
@@ -84,9 +82,6 @@ $(TOP)/$(LIB_DIR)/$(LIBNAME): $(LIBNAME)
 	$(INSTALL) $(LIBNAME) $(TOP)/$(LIB_DIR) 
 
 
-
-# Run 'make depend' to update the dependencies if you change
-# what's included by any source file.
 depend: $(C_SOURCES) $(ASM_SOURCES) $(SYMLINKS)
 	touch depend
 	$(MKDEP) $(MKDEP_OPTIONS) $(DRIVER_DEFINES) $(INCLUDES) $(C_SOURCES) \
@@ -103,8 +98,10 @@ clean:
 	-rm -f *.o */*.o *~ *.so *~ server/*.o $(SYMLINKS)
 	-rm -f depend depend.bak
 
+
 install: $(LIBNAME)
 	$(INSTALL) -d $(DRI_DRIVER_INSTALL_DIR)
 	$(INSTALL) -m 755 $(LIBNAME) $(DRI_DRIVER_INSTALL_DIR)
+
 
 include depend

@@ -349,12 +349,18 @@ getVisualInfoRGB(unsigned int mode)
     __glutScreen, list);
 }
 
+#ifndef VisualIDMask
+#define VisualIDMask 0
+#endif
+
 static XVisualInfo *
 getVisualInfoID(int id)
 {
    XVisualInfo temp;
    int count;
+#if !defined(_WIN32)
    temp.visualid = id;
+#endif
    return XGetVisualInfo(__glutDisplay, VisualIDMask, &temp, &count);
 }
 

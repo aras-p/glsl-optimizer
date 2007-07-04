@@ -30,6 +30,7 @@
 
 #include "imports.h"
 #include "slang_compile.h"
+#include "slang_mem.h"
 
 /* slang_fixup_table */
 
@@ -43,7 +44,7 @@ slang_fixup_table_init(slang_fixup_table * fix)
 void
 slang_fixup_table_free(slang_fixup_table * fix)
 {
-   slang_alloc_free(fix->table);
+   _slang_free(fix->table);
    slang_fixup_table_init(fix);
 }
 
@@ -54,9 +55,9 @@ GLboolean
 slang_fixup_save(slang_fixup_table *fixups, GLuint address)
 {
    fixups->table = (GLuint *)
-      slang_alloc_realloc(fixups->table,
-                          fixups->count * sizeof(GLuint),
-                          (fixups->count + 1) * sizeof(GLuint));
+      _slang_realloc(fixups->table,
+                     fixups->count * sizeof(GLuint),
+                     (fixups->count + 1) * sizeof(GLuint));
    if (fixups->table == NULL)
       return GL_FALSE;
    fixups->table[fixups->count] = address;
@@ -76,7 +77,7 @@ slang_function_construct(slang_function * func)
       return 0;
 
    func->parameters = (slang_variable_scope *)
-      slang_alloc_malloc(sizeof(slang_variable_scope));
+      _slang_alloc(sizeof(slang_variable_scope));
    if (func->parameters == NULL) {
       slang_variable_destruct(&func->header);
       return 0;
@@ -95,10 +96,10 @@ slang_function_destruct(slang_function * func)
 {
    slang_variable_destruct(&func->header);
    slang_variable_scope_destruct(func->parameters);
-   slang_alloc_free(func->parameters);
+   _slang_free(func->parameters);
    if (func->body != NULL) {
       slang_operation_destruct(func->body);
-      slang_alloc_free(func->body);
+      _slang_free(func->body);
    }
    slang_fixup_table_free(&func->fixups);
 }
@@ -122,7 +123,7 @@ slang_function_scope_destruct(slang_function_scope * scope)
 
    for (i = 0; i < scope->num_functions; i++)
       slang_function_destruct(scope->functions + i);
-   slang_alloc_free(scope->functions);
+   _slang_free(scope->functions);
 }
 
 

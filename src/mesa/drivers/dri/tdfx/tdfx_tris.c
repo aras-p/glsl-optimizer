@@ -142,10 +142,10 @@ tdfx_translate_vertex( GLcontext *ctx, const tdfxVertex *src, SWvertex *dst)
    tdfxContextPtr fxMesa = TDFX_CONTEXT(ctx);
 
    if (fxMesa->vertexFormat == TDFX_LAYOUT_TINY) {
-      dst->win[0] = src->x - fxMesa->x_offset;
-      dst->win[1] = src->y - (fxMesa->screen_height - fxMesa->height - fxMesa->y_offset);
-      dst->win[2] = src->z;
-      dst->win[3] = 1.0;
+      dst->attrib[FRAG_ATTRIB_WPOS][0] = src->x - fxMesa->x_offset;
+      dst->attrib[FRAG_ATTRIB_WPOS][1] = src->y - (fxMesa->screen_height - fxMesa->height - fxMesa->y_offset);
+      dst->attrib[FRAG_ATTRIB_WPOS][2] = src->z;
+      dst->attrib[FRAG_ATTRIB_WPOS][3] = 1.0;
 
       dst->color[0] = src->color[2];
       dst->color[1] = src->color[1];
@@ -155,10 +155,10 @@ tdfx_translate_vertex( GLcontext *ctx, const tdfxVertex *src, SWvertex *dst)
    else {
       GLfloat w = 1.0 / src->rhw;
 
-      dst->win[0] = src->x - fxMesa->x_offset;
-      dst->win[1] = src->y - (fxMesa->screen_height - fxMesa->height - fxMesa->y_offset);
-      dst->win[2] = src->z;
-      dst->win[3] = src->rhw;
+      dst->attrib[FRAG_ATTRIB_WPOS][0] = src->x - fxMesa->x_offset;
+      dst->attrib[FRAG_ATTRIB_WPOS][1] = src->y - (fxMesa->screen_height - fxMesa->height - fxMesa->y_offset);
+      dst->attrib[FRAG_ATTRIB_WPOS][2] = src->z;
+      dst->attrib[FRAG_ATTRIB_WPOS][3] = src->rhw;
 
       dst->color[0] = src->color[2];
       dst->color[1] = src->color[1];

@@ -185,7 +185,7 @@ pool_setstatic(struct _DriBufferPool *pool, unsigned long offset,
       return NULL;
 
    ret = drmBOCreate(pool->fd, offset, size, 0, NULL, drm_bo_type_fake,
-                     flags, 0, buf);
+                     flags, DRM_BO_HINT_DONT_FENCE, buf);
 
    if (ret) {
       free(buf);

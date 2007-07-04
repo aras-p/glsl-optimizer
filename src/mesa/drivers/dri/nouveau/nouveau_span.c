@@ -37,6 +37,8 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #define HAVE_HW_STENCIL_SPANS	0
 #define HAVE_HW_STENCIL_PIXELS	0
 
+static char *fake_span[1280*1024*4];
+
 #define HW_CLIPLOOP()							\
    do {									\
       int _nc = nmesa->numClipRects;					\
@@ -52,6 +54,7 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
    GLuint height = nrb->mesa.Height;					\
    GLubyte *map = (GLubyte *)(nrb->map ? nrb->map : nrb->mem->map) +    \
 	 (nmesa->drawY * nrb->pitch) + (nmesa->drawX * nrb->cpp);       \
+   map = fake_span; \
    GLuint p;								\
    (void) p;
 
@@ -120,6 +123,6 @@ nouveauSpanSetFunctions(nouveau_renderbuffer *nrb, const GLvisual *vis)
 {
    if (nrb->mesa._ActualFormat == GL_RGBA8)
       nouveauInitPointers_ARGB8888(&nrb->mesa);
-   else if (nrb->mesa._ActualFormat == GL_RGB5)
+   else // if (nrb->mesa._ActualFormat == GL_RGB5)
       nouveauInitPointers_RGB565(&nrb->mesa);
 }

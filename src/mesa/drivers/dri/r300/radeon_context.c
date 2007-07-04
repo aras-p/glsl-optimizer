@@ -90,9 +90,15 @@ static const GLubyte *radeonGetString(GLcontext * ctx, GLenum name)
 		offset = driGetRendererString(buffer, chipname, DRIVER_DATE,
 					      agp_mode);
 
+		if (IS_R300_CLASS(radeon->radeonScreen)) {
 		sprintf(&buffer[offset], " %sTCL",
+			(radeon->radeonScreen->chip_flags & RADEON_CHIPSET_TCL)
+			? "" : "NO-");
+		} else {
+			sprintf(&buffer[offset], " %sTCL",
 			!(radeon->TclFallback & RADEON_TCL_FALLBACK_TCL_DISABLE)
 			? "" : "NO-");
+		}
 
 		return (GLubyte *) buffer;
 	}
@@ -283,7 +289,6 @@ GLboolean radeonMakeCurrent(__DRIcontextPrivate * driContextPriv,
 			radeon->dri.drawable = driDrawPriv;
 
 			radeonSetCliprects(radeon);
-			r300UpdateWindow(radeon->glCtx);
 			r300UpdateViewportOffset(radeon->glCtx);
 		}
 
@@ -293,12 +298,9 @@ GLboolean radeonMakeCurrent(__DRIcontextPrivate * driContextPriv,
 				    (GLframebuffer *) driReadPriv->
 				    driverPrivate);
 
-		if (!radeon->glCtx->Viewport.Width) {
-			_mesa_set_viewport(radeon->glCtx, 0, 0,
-					   driDrawPriv->w, driDrawPriv->h);
-		}
-
 		_mesa_update_state(radeon->glCtx);		
+
+		radeonUpdatePageFlipping(radeon);
 	} else {
 		if (RADEON_DEBUG & DEBUG_DRI)
 			fprintf(stderr, "%s ctx is null\n", __FUNCTION__);

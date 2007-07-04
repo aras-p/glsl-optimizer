@@ -25,8 +25,8 @@
 #include "glheader.h"
 #include "colormac.h"
 #include "context.h"
-#include "prog_execute.h"
 #include "prog_instruction.h"
+#include "texstate.h"
 
 #include "s_fragprog.h"
 #include "s_span.h"
@@ -100,11 +100,6 @@ init_machine(GLcontext *ctx, struct gl_program_machine *machine,
              const struct gl_fragment_program *program,
              const SWspan *span, GLuint col)
 {
-   GLuint inputsRead = program->Base.InputsRead;
-
-   if (ctx->FragmentProgram.CallbackEnabled)
-      inputsRead = ~0;
-
    if (program->Base.Target == GL_FRAGMENT_PROGRAM_NV) {
       /* Clear temporary registers (undefined for ARB_f_p) */
       _mesa_bzero(machine->Temporaries,
@@ -114,8 +109,14 @@ init_machine(GLcontext *ctx, struct gl_program_machine *machine,
    /* Setup pointer to input attributes */
    machine->Attribs = span->array->attribs;
 
-   /* Store front/back facing value in register FOGC.Y */
-   machine->Attribs[FRAG_ATTRIB_FOGC][col][1] = (GLfloat) ctx->_Facing;
+   machine->DerivX = (GLfloat (*)[4]) span->attrStepX;
+   machine->DerivY = (GLfloat (*)[4]) span->attrStepY;
+   machine->NumDeriv = FRAG_ATTRIB_MAX;
+
+   if (ctx->Shader.CurrentProgram) {
+      /* Store front/back facing value in register FOGC.Y */
+      machine->Attribs[FRAG_ATTRIB_FOGC][col][1] = (GLfloat) ctx->_Facing;
+   }
 
    machine->CurElement = col;
 
@@ -142,19 +143,19 @@ run_program(GLcontext *ctx, SWspan *span, GLuint start, GLuint end)
    SWcontext *swrast = SWRAST_CONTEXT(ctx);
    const struct gl_fragment_program *program = ctx->FragmentProgram._Current;
    const GLbitfield outputsWritten = program->Base.OutputsWritten;
-   struct gl_program_machine machine;
+   struct gl_program_machine *machine = &swrast->FragProgMachine;
    GLuint i;
 
    for (i = start; i < end; i++) {
       if (span->array->mask[i]) {
-         init_machine(ctx, &machine, program, span, i);
+         init_machine(ctx, machine, program, span, i);
 
-         if (_mesa_execute_program(ctx, &program->Base, &machine)) {
+         if (_mesa_execute_program(ctx, &program->Base, machine)) {
 
             /* Store result color */
             if (outputsWritten & (1 << FRAG_RESULT_COLR)) {
                COPY_4V(span->array->attribs[FRAG_ATTRIB_COL0][i],
-                       machine.Outputs[FRAG_RESULT_COLR]);
+                       machine->Outputs[FRAG_RESULT_COLR]);
             }
             else {
                /* Multiple drawbuffers / render targets
@@ -165,14 +166,14 @@ run_program(GLcontext *ctx, SWspan *span, GLuint start, GLuint end)
                for (output = 0; output < swrast->_NumColorOutputs; output++) {
                   if (outputsWritten & (1 << (FRAG_RESULT_DATA0 + output))) {
                      COPY_4V(span->array->attribs[FRAG_ATTRIB_COL0+output][i],
-                             machine.Outputs[FRAG_RESULT_DATA0 + output]);
+                             machine->Outputs[FRAG_RESULT_DATA0 + output]);
                   }
                }
             }
 
             /* Store result depth/z */
             if (outputsWritten & (1 << FRAG_RESULT_DEPR)) {
-               const GLfloat depth = machine.Outputs[FRAG_RESULT_DEPR][2];
+               const GLfloat depth = machine->Outputs[FRAG_RESULT_DEPR][2];
                if (depth <= 0.0)
                   span->array->z[i] = 0;
                else if (depth >= 1.0)

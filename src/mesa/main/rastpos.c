@@ -138,7 +138,7 @@ shade_rastpos(GLcontext *ctx,
    COPY_3V(diffuseColor, base[0]);
    diffuseColor[3] = CLAMP( 
       ctx->Light.Material.Attrib[MAT_ATTRIB_FRONT_DIFFUSE][3], 0.0F, 1.0F );
-   ASSIGN_4V(specularColor, 0.0, 0.0, 0.0, 0.0);
+   ASSIGN_4V(specularColor, 0.0, 0.0, 0.0, 1.0);
 
    foreach (light, &ctx->Light.EnabledList) {
       GLfloat attenuation = 1.0;

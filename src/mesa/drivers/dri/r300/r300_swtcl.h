@@ -24,30 +24,22 @@ IN NO EVENT SHALL THE COPYRIGHT OWNER(S) AND/OR ITS SUPPLIERS BE
 LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
 OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
 WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-
-**************************************************************************/
+*/
 
 /*
  * Authors:
- *   Keith Whitwell <keith@tungstengraphics.com>
+ *   Keith Whitwell <keith@tungstengraphics.com> - original r200 code
+ *   Dave Airlie <airlied@linux.ie>
  */
 
-#ifndef __R300_MAOS_H__
-#define __R300_MAOS_H__
+#ifndef __R300_SWTCL_H__
+#define __R300_SWTCL_H__
 
-#ifdef GLX_DIRECT_RENDERING
-
+#include "mtypes.h"
+#include "swrast/swrast.h"
 #include "r300_context.h"
 
-extern void r300EmitElts(GLcontext * ctx, void *elts, unsigned long n_elts, int elt_size);
-extern int r300EmitArrays(GLcontext *ctx);
-
-#ifdef USER_BUFFERS
-void r300UseArrays(GLcontext * ctx);
-#endif
-
-extern void r300ReleaseArrays(GLcontext * ctx);
+extern void r300InitSwtcl( GLcontext *ctx );
+extern void r300DestroySwtcl( GLcontext *ctx );
 
 #endif
-#endif
-

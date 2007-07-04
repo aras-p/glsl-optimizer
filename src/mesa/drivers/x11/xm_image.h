@@ -36,13 +36,6 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #define XMESA_USE_PUTPIXEL_MACRO
 
-struct _XMesaImageRec {
-    int width, height;
-    char *data;
-    int bytes_per_line; /* Padded to 32 bits */
-    int bits_per_pixel;
-};
-
 extern XMesaImage *XMesaCreateImage(int bitsPerPixel, int width, int height,
 				    char *data);
 extern void XMesaDestroyImage(XMesaImage *image);
@@ -80,12 +73,5 @@ extern unsigned long XMesaGetPixel(XMesaImage *image, int x, int y);
 extern void XMesaPutPixel(XMesaImage *image, int x, int y,
 			  unsigned long pixel);
 #endif
-
-extern void XMesaPutImageHelper(ScreenPtr display,
-				DrawablePtr d, GCPtr gc,
-				XMesaImage *image,
-				int src_x, int src_y,
-				int dest_x, int dest_y,
-				unsigned int width, unsigned int height);
 
 #endif /* _XM_IMAGE_H_ */

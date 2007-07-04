@@ -122,7 +122,7 @@ i915_update_tex_unit(struct intel_context *intel, GLuint unit, GLuint ss3)
    struct gl_texture_object *tObj = ctx->Texture.Unit[unit]._Current;
    struct intel_texture_object *intelObj = intel_texture_object(tObj);
    struct gl_texture_image *firstImage;
-   GLuint *state = i915->state.Tex[unit];
+   GLuint *state = i915->state.Tex[unit], format, pitch;
 
    memset(state, 0, sizeof(state));
 
@@ -133,7 +133,7 @@ i915_update_tex_unit(struct intel_context *intel, GLuint unit, GLuint ss3)
        i915->state.tex_buffer[unit] = NULL;
    }
 
-   if (!intel_finalize_mipmap_tree(intel, unit))
+   if (!intelObj->imageOverride && !intel_finalize_mipmap_tree(intel, unit))
       return GL_FALSE;
 
    /* Get first image here, since intelObj->firstLevel will get set in
@@ -141,24 +141,45 @@ i915_update_tex_unit(struct intel_context *intel, GLuint unit, GLuint ss3)
     */
    firstImage = tObj->Image[0][intelObj->firstLevel];
 
-   i915->state.tex_buffer[unit] = driBOReference(intelObj->mt->region->buffer);
-   i915->state.tex_offset[unit] = intel_miptree_image_offset(intelObj->mt, 0,
-                                                             intelObj->
-                                                             firstLevel);
+   if (intelObj->imageOverride) {
+      i915->state.tex_buffer[unit] = NULL;
+      i915->state.tex_offset[unit] = intelObj->textureOffset;
+
+      switch (intelObj->depthOverride) {
+      case 32:
+	 format = MAPSURF_32BIT | MT_32BIT_ARGB8888;
+	 break;
+      case 24:
+      default:
+	 format = MAPSURF_32BIT | MT_32BIT_XRGB8888;
+	 break;
+      case 16:
+	 format = MAPSURF_16BIT | MT_16BIT_RGB565;
+	 break;
+      }
+
+      pitch = intelObj->pitchOverride;
+   } else {
+      i915->state.tex_buffer[unit] = driBOReference(intelObj->mt->region->
+						    buffer);
+      i915->state.tex_offset[unit] =  intel_miptree_image_offset(intelObj->mt,
+								 0, intelObj->
+								 firstLevel);
+
+      format = translate_texture_format(firstImage->TexFormat->MesaFormat);
+      pitch = intelObj->mt->pitch * intelObj->mt->cpp;
+   }
 
    state[I915_TEXREG_MS3] =
       (((firstImage->Height - 1) << MS3_HEIGHT_SHIFT) |
-       ((firstImage->Width - 1) << MS3_WIDTH_SHIFT) |
-       translate_texture_format(firstImage->TexFormat->MesaFormat) |
+       ((firstImage->Width - 1) << MS3_WIDTH_SHIFT) | format |
        MS3_USE_FENCE_REGS);
 
    state[I915_TEXREG_MS4] =
-      (((((intelObj->mt->pitch * intelObj->mt->cpp) / 4) -
-         1) << MS4_PITCH_SHIFT) | MS4_CUBE_FACE_ENA_MASK |
-       ((((intelObj->lastLevel -
-           intelObj->firstLevel) *
-          4)) << MS4_MAX_LOD_SHIFT) | ((firstImage->Depth -
-                                        1) << MS4_VOLUME_DEPTH_SHIFT));
+     ((((pitch / 4) - 1) << MS4_PITCH_SHIFT) | MS4_CUBE_FACE_ENA_MASK |
+       ((((intelObj->lastLevel - intelObj->firstLevel) * 4)) <<
+	MS4_MAX_LOD_SHIFT) | ((firstImage->Depth - 1) <<
+			      MS4_VOLUME_DEPTH_SHIFT));
 
 
    {

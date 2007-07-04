@@ -833,10 +833,11 @@ __glapi_sparc_icache_flush: /* %o0 = insn_addr */
 		.globl glIsRenderbufferEXT ; .type glIsRenderbufferEXT,#function
 		.globl glRenderbufferStorageEXT ; .type glRenderbufferStorageEXT,#function
 		.globl gl_dispatch_stub_767 ; .type gl_dispatch_stub_767,#function
-		.globl gl_dispatch_stub_768 ; .type gl_dispatch_stub_768,#function
+		.globl glFramebufferTextureLayerEXT ; .type glFramebufferTextureLayerEXT,#function
 		.globl gl_dispatch_stub_769 ; .type gl_dispatch_stub_769,#function
 		.globl gl_dispatch_stub_770 ; .type gl_dispatch_stub_770,#function
 		.globl gl_dispatch_stub_771 ; .type gl_dispatch_stub_771,#function
+		.globl gl_dispatch_stub_772 ; .type gl_dispatch_stub_772,#function
 		.globl _mesa_sparc_glapi_begin ; .type _mesa_sparc_glapi_begin,#function
 _mesa_sparc_glapi_begin:
 
@@ -1608,10 +1609,11 @@ _mesa_sparc_glapi_begin:
 	GL_STUB(glIsRenderbufferEXT, _gloffset_IsRenderbufferEXT)
 	GL_STUB(glRenderbufferStorageEXT, _gloffset_RenderbufferStorageEXT)
 	GL_STUB(gl_dispatch_stub_767, _gloffset__dispatch_stub_767)
-	GL_STUB(gl_dispatch_stub_768, _gloffset__dispatch_stub_768)
+	GL_STUB(glFramebufferTextureLayerEXT, _gloffset_FramebufferTextureLayerEXT)
 	GL_STUB(gl_dispatch_stub_769, _gloffset__dispatch_stub_769)
 	GL_STUB(gl_dispatch_stub_770, _gloffset__dispatch_stub_770)
 	GL_STUB(gl_dispatch_stub_771, _gloffset__dispatch_stub_771)
+	GL_STUB(gl_dispatch_stub_772, _gloffset__dispatch_stub_772)
 
 		.globl _mesa_sparc_glapi_end ; .type _mesa_sparc_glapi_end,#function
 _mesa_sparc_glapi_end:
@@ -1731,12 +1733,17 @@ _mesa_sparc_glapi_end:
 	.globl glVertexAttrib4Nubv ; .type glVertexAttrib4Nubv,#function ; glVertexAttrib4Nubv = glVertexAttrib4NubvARB
 	.globl glVertexAttrib4Nuiv ; .type glVertexAttrib4Nuiv,#function ; glVertexAttrib4Nuiv = glVertexAttrib4NuivARB
 	.globl glVertexAttrib4Nusv ; .type glVertexAttrib4Nusv,#function ; glVertexAttrib4Nusv = glVertexAttrib4NusvARB
+	.globl glVertexAttrib4bv ; .type glVertexAttrib4bv,#function ; glVertexAttrib4bv = glVertexAttrib4bvARB
 	.globl glVertexAttrib4d ; .type glVertexAttrib4d,#function ; glVertexAttrib4d = glVertexAttrib4dARB
 	.globl glVertexAttrib4dv ; .type glVertexAttrib4dv,#function ; glVertexAttrib4dv = glVertexAttrib4dvARB
 	.globl glVertexAttrib4f ; .type glVertexAttrib4f,#function ; glVertexAttrib4f = glVertexAttrib4fARB
 	.globl glVertexAttrib4fv ; .type glVertexAttrib4fv,#function ; glVertexAttrib4fv = glVertexAttrib4fvARB
+	.globl glVertexAttrib4iv ; .type glVertexAttrib4iv,#function ; glVertexAttrib4iv = glVertexAttrib4ivARB
 	.globl glVertexAttrib4s ; .type glVertexAttrib4s,#function ; glVertexAttrib4s = glVertexAttrib4sARB
 	.globl glVertexAttrib4sv ; .type glVertexAttrib4sv,#function ; glVertexAttrib4sv = glVertexAttrib4svARB
+	.globl glVertexAttrib4ubv ; .type glVertexAttrib4ubv,#function ; glVertexAttrib4ubv = glVertexAttrib4ubvARB
+	.globl glVertexAttrib4uiv ; .type glVertexAttrib4uiv,#function ; glVertexAttrib4uiv = glVertexAttrib4uivARB
+	.globl glVertexAttrib4usv ; .type glVertexAttrib4usv,#function ; glVertexAttrib4usv = glVertexAttrib4usvARB
 	.globl glVertexAttribPointer ; .type glVertexAttribPointer,#function ; glVertexAttribPointer = glVertexAttribPointerARB
 	.globl glBindBuffer ; .type glBindBuffer,#function ; glBindBuffer = glBindBufferARB
 	.globl glBufferData ; .type glBufferData,#function ; glBufferData = glBufferDataARB

@@ -1103,7 +1103,9 @@ static void build_fog( struct tnl_program *p )
 {
    struct ureg fog = register_output(p, VERT_RESULT_FOGC);
    struct ureg input;
-   
+   GLuint useabs = p->state->fog_source_is_depth && p->state->fog_mode &&
+		   (p->state->fog_mode != FOG_EXP2);
+
    if (p->state->fog_source_is_depth) {
       input = swizzle1(get_eye_position(p), Z);
    }
@@ -1111,31 +1113,36 @@ static void build_fog( struct tnl_program *p )
       input = swizzle1(register_input(p, VERT_ATTRIB_FOG), X);
    }
 
-   if (p->state->tnl_do_vertex_fog) {
+   if (p->state->fog_mode && p->state->tnl_do_vertex_fog) {
       struct ureg params = register_param2(p, STATE_INTERNAL,
 					   STATE_FOG_PARAMS_OPTIMIZED);
       struct ureg tmp = get_temp(p);
 
+      if (useabs) {
+	 emit_op1(p, OPCODE_ABS, tmp, 0, input);
+      }
+
       switch (p->state->fog_mode) {
       case FOG_LINEAR: {
 	 struct ureg id = get_identity_param(p);
-	 emit_op3(p, OPCODE_MAD, tmp, 0, input, swizzle1(params,X), swizzle1(params,Y));
+	 emit_op3(p, OPCODE_MAD, tmp, 0, useabs ? tmp : input,
+			swizzle1(params,X), swizzle1(params,Y));
 	 emit_op2(p, OPCODE_MAX, tmp, 0, tmp, swizzle1(id,X)); /* saturate */
 	 emit_op2(p, OPCODE_MIN, fog, WRITEMASK_X, tmp, swizzle1(id,W));
 	 break;
       }
       case FOG_EXP:
-	 emit_op1(p, OPCODE_ABS, tmp, 0, input); 
-	 emit_op2(p, OPCODE_MUL, tmp, 0, tmp, swizzle1(params,Z));
+	 emit_op2(p, OPCODE_MUL, tmp, 0, useabs ? tmp : input,
+			swizzle1(params,Z));
 	 emit_op1(p, OPCODE_EX2, fog, WRITEMASK_X, negate(tmp));
 	 break;
       case FOG_EXP2:
 	 emit_op2(p, OPCODE_MUL, tmp, 0, input, swizzle1(params,W));
-	 emit_op2(p, OPCODE_MUL, tmp, 0, tmp, tmp); 
+	 emit_op2(p, OPCODE_MUL, tmp, 0, tmp, tmp);
 	 emit_op1(p, OPCODE_EX2, fog, WRITEMASK_X, negate(tmp));
 	 break;
       }
-      
+
       release_temp(p, tmp);
    }
    else {
@@ -1143,7 +1150,7 @@ static void build_fog( struct tnl_program *p )
        *
        * KW:  Is it really necessary to do anything in this case?
        */
-      emit_op1(p, OPCODE_MOV, fog, WRITEMASK_X, input);
+      emit_op1(p, useabs ? OPCODE_ABS : OPCODE_MOV, fog, WRITEMASK_X, input);
    }
 }
  

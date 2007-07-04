@@ -190,11 +190,16 @@ driBOKernel(struct _DriBufferObject *buf)
 void
 driBOWaitIdle(struct _DriBufferObject *buf, int lazy)
 {
-   assert(buf->private != NULL);
+   struct _DriBufferPool *pool;
+   void *priv;
 
    _glthread_LOCK_MUTEX(buf->mutex);
-   BM_CKFATAL(buf->pool->waitIdle(buf->pool, buf->private, lazy));
+   pool = buf->pool;
+   priv = buf->private;
    _glthread_UNLOCK_MUTEX(buf->mutex);
+   
+   assert(priv != NULL);
+   BM_CKFATAL(buf->pool->waitIdle(pool, priv, lazy));
 }
 
 void *
@@ -296,7 +301,8 @@ driBOData(struct _DriBufferObject *buf,
          pool->destroy(pool, buf->private);
       if (!flags)
          flags = buf->flags;
-      buf->private = pool->create(pool, size, flags, 0, buf->alignment);
+      buf->private = pool->create(pool, size, flags, DRM_BO_HINT_DONT_FENCE, 
+				  buf->alignment);
       if (!buf->private)
          BM_CKFATAL(-ENOMEM);
       BM_CKFATAL(pool->map(pool, buf->private,

@@ -70,12 +70,12 @@
 #include "lines.h"
 #include "macros.h"
 #include "matrix.h"
-#if FEATURE_ARB_occlusion_query || FEATURE_EXT_timer_query
-#include "occlude.h"
-#endif
 #include "pixel.h"
 #include "points.h"
 #include "polygon.h"
+#if FEATURE_ARB_occlusion_query || FEATURE_EXT_timer_query
+#include "queryobj.h"
+#endif
 #include "rastpos.h"
 #include "state.h"
 #include "stencil.h"
@@ -812,6 +812,11 @@ _mesa_init_exec_table(struct _glapi_table *exec)
    SET_ProgramEnvParameters4fvEXT(exec, _mesa_ProgramEnvParameters4fvEXT);
    SET_ProgramLocalParameters4fvEXT(exec, _mesa_ProgramLocalParameters4fvEXT);
 #endif
+
+   /* GL_MESA_texture_array / GL_EXT_texture_array */
+#if FEATURE_EXT_framebuffer_object
+   SET_FramebufferTextureLayerEXT(exec, _mesa_FramebufferTextureLayerEXT);
+#endif
 }
 
 
@@ -1060,7 +1065,7 @@ update_tricaps(GLcontext *ctx, GLbitfield new_state)
    /*
     * Points
     */
-   if (new_state & _NEW_POINT) {
+   if (1/*new_state & _NEW_POINT*/) {
       if (ctx->Point.SmoothFlag)
          ctx->_TriangleCaps |= DD_POINT_SMOOTH;
       if (ctx->Point._Size != 1.0F)
@@ -1072,7 +1077,7 @@ update_tricaps(GLcontext *ctx, GLbitfield new_state)
    /*
     * Lines
     */
-   if (new_state & _NEW_LINE) {
+   if (1/*new_state & _NEW_LINE*/) {
       if (ctx->Line.SmoothFlag)
          ctx->_TriangleCaps |= DD_LINE_SMOOTH;
       if (ctx->Line.StippleFlag)
@@ -1084,7 +1089,7 @@ update_tricaps(GLcontext *ctx, GLbitfield new_state)
    /*
     * Polygons
     */
-   if (new_state & _NEW_POLYGON) {
+   if (1/*new_state & _NEW_POLYGON*/) {
       if (ctx->Polygon.SmoothFlag)
          ctx->_TriangleCaps |= DD_TRI_SMOOTH;
       if (ctx->Polygon.StippleFlag)

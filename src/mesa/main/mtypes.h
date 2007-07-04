@@ -47,7 +47,7 @@
 /**
  * Special, internal token
  */
-#define GL_SHADER_PROGRAM 0x9999
+#define GL_SHADER_PROGRAM_MESA 0x9999
 
 
 /**
@@ -1127,7 +1127,7 @@ struct gl_stencil_attrib
 };
 
 
-#define NUM_TEXTURE_TARGETS 5   /* 1D, 2D, 3D, CUBE and RECT */
+#define NUM_TEXTURE_TARGETS 7   /* 1D, 2D, 3D, CUBE, RECT, 1D_STACK, and 2D_STACK */
 
 /**
  * An index for each type of texture object
@@ -1138,6 +1138,8 @@ struct gl_stencil_attrib
 #define TEXTURE_3D_INDEX    2
 #define TEXTURE_CUBE_INDEX  3
 #define TEXTURE_RECT_INDEX  4
+#define TEXTURE_1D_ARRAY_INDEX    5
+#define TEXTURE_2D_ARRAY_INDEX    6
 /*@}*/
 
 /**
@@ -1150,6 +1152,8 @@ struct gl_stencil_attrib
 #define TEXTURE_3D_BIT   (1 << TEXTURE_3D_INDEX)
 #define TEXTURE_CUBE_BIT (1 << TEXTURE_CUBE_INDEX)
 #define TEXTURE_RECT_BIT (1 << TEXTURE_RECT_INDEX)
+#define TEXTURE_1D_ARRAY_BIT   (1 << TEXTURE_1D_ARRAY_INDEX)
+#define TEXTURE_2D_ARRAY_BIT   (1 << TEXTURE_2D_ARRAY_INDEX)
 /*@}*/
 
 
@@ -1286,15 +1290,22 @@ struct gl_texture_format
 				 *   GL_DEPTH_COMPONENT.
 				 */
    GLenum DataType;		/**< GL_FLOAT or GL_UNSIGNED_NORMALIZED_ARB */
-   GLubyte RedBits;		/**< Bits per texel component */
-   GLubyte GreenBits;		/**< These are just rough approximations for */
-   GLubyte BlueBits;		/**< compressed texture formats. */
+
+   /**
+    * Bits per texel component.  These are just rough approximations
+    * for compressed texture formats.
+    */
+   /*@{*/
+   GLubyte RedBits;
+   GLubyte GreenBits;
+   GLubyte BlueBits;
    GLubyte AlphaBits;
    GLubyte LuminanceBits;
    GLubyte IntensityBits;
    GLubyte IndexBits;
    GLubyte DepthBits;
    GLubyte StencilBits; 	/**< GL_EXT_packed_depth_stencil */
+   /*@}*/
 
    GLuint TexelBytes;		/**< Bytes per texel, 0 if compressed format */
 
@@ -1393,7 +1404,6 @@ struct gl_texture_image
  */
 struct gl_texture_object
 {
-   _glthread_Mutex Mutex;	/**< for thread safety */
    GLint RefCount;		/**< reference count */
    GLuint Name;			/**< the user-visible texture object ID */
    GLenum Target;               /**< GL_TEXTURE_1D, GL_TEXTURE_2D, etc. */
@@ -1416,11 +1426,15 @@ struct gl_texture_object
    GLfloat ShadowAmbient;       /**< GL_ARB_shadow_ambient */
    GLenum CompareMode;		/**< GL_ARB_shadow */
    GLenum CompareFunc;		/**< GL_ARB_shadow */
+   GLenum _Function;		/**< Comparison function derived from 
+				 * \c CompareOperator, \c CompareMode, and
+				 * \c CompareFunc.
+				 */
    GLenum DepthMode;		/**< GL_ARB_depth_texture */
    GLint _MaxLevel;		/**< actual max mipmap level (q in the spec) */
    GLfloat _MaxLambda;		/**< = _MaxLevel - BaseLevel (q - b in spec) */
    GLboolean GenerateMipmap;    /**< GL_SGIS_generate_mipmap */
-   GLboolean Complete;		/**< Is texture object complete? */
+   GLboolean _Complete;		/**< Is texture object complete? */
 
    /** Actual texture images, indexed by [cube face] and [mipmap level] */
    struct gl_texture_image *Image[MAX_FACES][MAX_TEXTURE_LEVELS];
@@ -1487,7 +1501,7 @@ struct gl_texture_unit
    GLbitfield _GenBitT;
    GLbitfield _GenBitR;
    GLbitfield _GenBitQ;
-   GLbitfield _GenFlags;	/**< bitwise or of GenBit[STRQ] */
+   GLbitfield _GenFlags;	/**< bitwise or of _GenBit[STRQ] */
    GLfloat ObjectPlaneS[4];
    GLfloat ObjectPlaneT[4];
    GLfloat ObjectPlaneR[4];
@@ -1520,19 +1534,28 @@ struct gl_texture_unit
    struct gl_texture_object *Current3D;
    struct gl_texture_object *CurrentCubeMap; /**< GL_ARB_texture_cube_map */
    struct gl_texture_object *CurrentRect;    /**< GL_NV_texture_rectangle */
+   struct gl_texture_object *Current1DArray; /**< GL_MESA_texture_array */
+   struct gl_texture_object *Current2DArray; /**< GL_MESA_texture_array */
 
    struct gl_texture_object *_Current; /**< Points to really enabled tex obj */
 
-   struct gl_texture_object Saved1D;  /**< only used by glPush/PopAttrib */
+   /** These are used for glPush/PopAttrib */
+   /*@{*/
+   struct gl_texture_object Saved1D;
    struct gl_texture_object Saved2D;
    struct gl_texture_object Saved3D;
    struct gl_texture_object SavedCubeMap;
    struct gl_texture_object SavedRect;
+   struct gl_texture_object Saved1DArray;
+   struct gl_texture_object Saved2DArray;
+   /*@}*/
 
-   /* GL_SGI_texture_color_table */
+   /** GL_SGI_texture_color_table */
+   /*@{*/
    struct gl_color_table ColorTable;
    struct gl_color_table ProxyColorTable;
    GLboolean ColorTableEnabled;
+   /*@}*/
 };
 
 struct texenvprog_cache_item {
@@ -1572,6 +1595,8 @@ struct gl_texture_attrib
    struct gl_texture_object *Proxy3D;
    struct gl_texture_object *ProxyCubeMap;
    struct gl_texture_object *ProxyRect;
+   struct gl_texture_object *Proxy1DArray;
+   struct gl_texture_object *Proxy2DArray;
 
    /** GL_EXT_shared_texture_palette */
    GLboolean SharedPalette;
@@ -1878,6 +1903,7 @@ struct gl_program
    GLbitfield InputsRead;     /**< Bitmask of which input regs are read */
    GLbitfield OutputsWritten; /**< Bitmask of which output regs are written to */
    GLbitfield TexturesUsed[MAX_TEXTURE_IMAGE_UNITS];  /**< TEXTURE_x_BIT bitmask */
+   GLbitfield ShadowSamplers; /**< Texture units used for shadow sampling. */
 
    /** Named parameters, constants, etc. from program text */
    struct gl_program_parameter_list *Parameters;
@@ -2133,6 +2159,7 @@ struct gl_shader_state
    GLboolean EmitHighLevelInstructions; /**< IF/ELSE/ENDIF vs. BRA, etc. */
    GLboolean EmitCondCodes;             /**< Use condition codes? */
    GLboolean EmitComments;              /**< Annotated instructions */
+   void *MemPool;
 };
 
 
@@ -2155,6 +2182,8 @@ struct gl_shared_state
    struct gl_texture_object *Default3D;
    struct gl_texture_object *DefaultCubeMap;
    struct gl_texture_object *DefaultRect;
+   struct gl_texture_object *Default1DArray;
+   struct gl_texture_object *Default2DArray;
    /*@}*/
 
    /**
@@ -2321,17 +2350,24 @@ struct gl_renderbuffer
  */
 struct gl_renderbuffer_attachment
 {
-   GLenum Type;  /* GL_NONE or GL_TEXTURE or GL_RENDERBUFFER_EXT */
+   GLenum Type;  /**< \c GL_NONE or \c GL_TEXTURE or \c GL_RENDERBUFFER_EXT */
    GLboolean Complete;
 
-   /* IF Type == GL_RENDERBUFFER_EXT: */
+   /**
+    * If \c Type is \c GL_RENDERBUFFER_EXT, this stores a pointer to the
+    * application supplied renderbuffer object.
+    */
    struct gl_renderbuffer *Renderbuffer;
 
-   /* IF Type == GL_TEXTURE: */
+   /**
+    * If \c Type is \c GL_TEXTURE, this stores a pointer to the application
+    * supplied texture object.
+    */
    struct gl_texture_object *Texture;
-   GLuint TextureLevel;
-   GLuint CubeMapFace;  /* 0 .. 5, for cube map textures */
-   GLuint Zoffset;      /* for 3D textures */
+   GLuint TextureLevel; /**< Attached mipmap level. */
+   GLuint CubeMapFace;  /**< 0 .. 5, for cube map textures. */
+   GLuint Zoffset;      /**< Slice for 3D textures,  or layer for both 1D
+                         * and 2D array textures */
 };
 
 
@@ -2437,6 +2473,7 @@ struct gl_constants
    GLint MaxTextureLevels;		/**< Maximum number of allowed mipmap levels. */ 
    GLint Max3DTextureLevels;		/**< Maximum number of allowed mipmap levels for 3D texture targets. */
    GLint MaxCubeTextureLevels;          /**< Maximum number of allowed mipmap levels for GL_ARB_texture_cube_map */
+   GLint MaxArrayTextureLayers;         /**< Maximum number of layers in an array texture. */
    GLint MaxTextureRectSize;            /* GL_NV_texture_rectangle */
    GLuint MaxTextureCoordUnits;
    GLuint MaxTextureImageUnits;
@@ -2496,6 +2533,7 @@ struct gl_extensions
    GLboolean ARB_depth_texture;
    GLboolean ARB_draw_buffers;
    GLboolean ARB_fragment_program;
+   GLboolean ARB_fragment_program_shadow;
    GLboolean ARB_fragment_shader;
    GLboolean ARB_half_float_pixel;
    GLboolean ARB_imaging;
@@ -2585,6 +2623,7 @@ struct gl_extensions
    GLboolean MESA_program_debug;
    GLboolean MESA_resize_buffers;
    GLboolean MESA_ycbcr_texture;
+   GLboolean MESA_texture_array;
    GLboolean NV_blend_square;
    GLboolean NV_fragment_program;
    GLboolean NV_light_max_exponent;

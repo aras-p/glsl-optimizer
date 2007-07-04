@@ -1,8 +1,8 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.5.2
+ * Version:  6.5.3
  *
- * Copyright (C) 1999-2006  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2007  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -46,6 +46,7 @@
 #include "mtypes.h"
 #include "swrast.h"
 #include "s_span.h"
+#include "prog_execute.h"
 
 
 typedef void (*texture_sample_func)(GLcontext *ctx,
@@ -131,18 +132,21 @@ typedef struct
    GLboolean _PreferPixelFog;    /* Compute fog blend factor per fragment? */
    GLboolean _AnyTextureCombine;
    GLboolean _FogEnabled;
+   GLboolean _DeferredTexture;
    GLenum _FogMode;  /* either GL_FOG_MODE or fragment program's fog mode */
 
    /** Multiple render targets */
    GLbitfield _ColorOutputsMask;
    GLuint _NumColorOutputs;
 
-   /** Fragment attributes to compute during rasterization.
-    * Mask of FRAG_BIT_* flags.
-    */
-   GLbitfield _FragmentAttribs;
-   GLuint _MinFragmentAttrib;  /**< Lowest bit set in _FragmentAttribs */
-   GLuint _MaxFragmentAttrib;  /**< Highest bit set in _FragmentAttribs + 1 */
+   /** List/array of the fragment attributes to interpolate */
+   GLuint _ActiveAttribs[FRAG_ATTRIB_MAX];
+   /** Same info, but as a bitmask */
+   GLbitfield _ActiveAttribMask;
+   /** Number of fragment attributes to interpolate */
+   GLuint _NumActiveAttribs;
+   /** Indicates how each attrib is to be interpolated (lines/tris) */
+   GLenum _InterpMode[FRAG_ATTRIB_MAX]; /* GL_FLAT or GL_SMOOTH (for now) */
 
    /* Accum buffer temporaries.
     */
@@ -222,11 +226,17 @@ typedef struct
 
    validate_texture_image_func ValidateTextureImage;
 
+   /** State used during execution of fragment programs */
+   struct gl_program_machine FragProgMachine;
+
 } SWcontext;
 
 
 extern void
 _swrast_validate_derived( GLcontext *ctx );
+
+extern void
+_swrast_update_texture_samplers(GLcontext *ctx);
 
 
 #define SWRAST_CONTEXT(ctx) ((SWcontext *)ctx->swrast_context)
@@ -269,5 +279,20 @@ _swrast_validate_derived( GLcontext *ctx );
 #define ChanToFixed(X)  IntToFixed(X)
 #define FixedToChan(X)  FixedToInt(X)
 #endif
+
+
+/**
+ * For looping over fragment attributes in the pointe, line
+ * triangle rasterizers.
+ */
+#define ATTRIB_LOOP_BEGIN                                \
+   {                                                     \
+      GLuint a;                                          \
+      for (a = 0; a < swrast->_NumActiveAttribs; a++) {  \
+         const GLuint attr = swrast->_ActiveAttribs[a];
+
+#define ATTRIB_LOOP_END } }
+
+
 
 #endif

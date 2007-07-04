@@ -107,20 +107,23 @@ static const GLubyte *intelGetString( GLcontext *ctx, GLenum name )
    case GL_RENDERER:
       switch (intel_context(ctx)->intelScreen->deviceID) {
       case PCI_CHIP_I965_Q:
-	 chipset = "Intel(R) 965Q"; break;
+	 chipset = "Intel(R) 965Q";
          break;
       case PCI_CHIP_I965_G:
       case PCI_CHIP_I965_G_1:
-	 chipset = "Intel(R) 965G"; break;
+	 chipset = "Intel(R) 965G";
          break;
       case PCI_CHIP_I946_GZ:
-	 chipset = "Intel(R) 946GZ"; break;
+	 chipset = "Intel(R) 946GZ";
          break;
       case PCI_CHIP_I965_GM:
-	 chipset = "Intel(R) 965GM"; break;
+	 chipset = "Intel(R) 965GM";
+         break;
+      case PCI_CHIP_I965_GME:
+	 chipset = "Intel(R) 965GME/GLE";
          break;
       default:
-	 chipset = "Unknown Intel Chipset"; break;
+	 chipset = "Unknown Intel Chipset";
       }
 
       (void) driGetRendererString( buffer, chipset, DRIVER_VERSION, 0 );

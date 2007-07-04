@@ -361,6 +361,18 @@ struct __DRIscreenRec {
     void * (*createNewContext)(__DRInativeDisplay *dpy, const __GLcontextModes *modes,
 			       int render_type,
 			       void *sharedPrivate, __DRIcontext *pctx);
+
+    /**
+     * Method to override base texture image with a driver specific 'offset'.
+     * The depth passed in allows e.g. to ignore the alpha channel of texture
+     * images where the non-alpha components don't occupy a whole texel.
+     *
+     * For GLX_EXT_texture_from_pixmap with AIGLX.
+     *
+     * \since Internal API version 20070121.
+     */
+    void (*setTexOffset)(__DRIcontext *pDRICtx, GLint texname,
+			 unsigned long long offset, GLint depth, GLuint pitch);
 };
 
 /**

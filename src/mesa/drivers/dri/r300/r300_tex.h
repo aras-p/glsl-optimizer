@@ -35,7 +35,9 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #ifndef __r300_TEX_H__
 #define __r300_TEX_H__
 
-#ifdef GLX_DIRECT_RENDERING
+extern void r300SetTexOffset(__DRIcontext *pDRICtx, GLint texname,
+			     unsigned long long offset, GLint depth,
+			     GLuint pitch);
 
 extern void r300UpdateTextureState(GLcontext * ctx);
 
@@ -46,5 +48,4 @@ extern void r300DestroyTexObj(r300ContextPtr rmesa, r300TexObjPtr t);
 
 extern void r300InitTextureFuncs(struct dd_function_table *functions);
 
-#endif
 #endif				/* __r300_TEX_H__ */

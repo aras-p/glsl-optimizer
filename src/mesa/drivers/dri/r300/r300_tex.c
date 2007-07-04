@@ -26,9 +26,10 @@ OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
 WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
 
-/*
- * Authors:
- *   Keith Whitwell <keith@tungstengraphics.com>
+/**
+ * \file
+ *
+ * \author Keith Whitwell <keith@tungstengraphics.com>
  */
 
 #include "glheader.h"
@@ -47,7 +48,6 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "r300_context.h"
 #include "r300_state.h"
 #include "r300_ioctl.h"
-//#include "r300_swtcl.h"
 #include "r300_tex.h"
 
 #include "xmlpool.h"
@@ -63,7 +63,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 static void r300SetTexWrap(r300TexObjPtr t, GLenum swrap, GLenum twrap,
 			   GLenum rwrap)
 {
-	unsigned long hw_swrap=0, hw_twrap=0, hw_qwrap=0;
+	unsigned long hw_swrap = 0, hw_twrap = 0, hw_qwrap = 0;
 
 	t->filter &=
 	    ~(R300_TX_WRAP_S_MASK | R300_TX_WRAP_T_MASK | R300_TX_WRAP_Q_MASK);
@@ -158,11 +158,6 @@ static void r300SetTexWrap(r300TexObjPtr t, GLenum swrap, GLenum twrap,
 	t->filter |= hw_swrap << R300_TX_WRAP_S_SHIFT;
 	t->filter |= hw_twrap << R300_TX_WRAP_T_SHIFT;
 	t->filter |= hw_qwrap << R300_TX_WRAP_Q_SHIFT;
-
-#if 0
-	t->format_x &= ~R200_CLAMP_Q_MASK;
-	t->border_fallback = (is_clamp && is_clamp_to_border);
-#endif
 }
 
 static void r300SetTexMaxAnisotropy(r300TexObjPtr t, GLfloat max)
@@ -196,9 +191,6 @@ static void r300SetTexFilter(r300TexObjPtr t, GLenum minf, GLenum magf)
 	GLuint anisotropy = (t->filter & R300_TX_MAX_ANISO_MASK);
 
 	t->filter &= ~(R300_TX_MIN_FILTER_MASK | R300_TX_MAG_FILTER_MASK);
-#if 0
-	//t->format_x &= ~R200_VOLUME_FILTER_MASK;
-#endif
 
 	if (anisotropy == R300_TX_MAX_ANISO_1_TO_1) {
 		switch (minf) {
@@ -232,12 +224,12 @@ static void r300SetTexFilter(r300TexObjPtr t, GLenum minf, GLenum magf)
 		case GL_NEAREST_MIPMAP_NEAREST:
 		case GL_LINEAR_MIPMAP_NEAREST:
 			t->filter |=
-				R300_TX_MIN_FILTER_ANISO_NEAREST_MIP_NEAREST;
+			    R300_TX_MIN_FILTER_ANISO_NEAREST_MIP_NEAREST;
 			break;
 		case GL_NEAREST_MIPMAP_LINEAR:
 		case GL_LINEAR_MIPMAP_LINEAR:
 			t->filter |=
-				R300_TX_MIN_FILTER_ANISO_NEAREST_MIP_LINEAR;
+			    R300_TX_MIN_FILTER_ANISO_NEAREST_MIP_LINEAR;
 			break;
 		}
 	}
@@ -248,18 +240,16 @@ static void r300SetTexFilter(r300TexObjPtr t, GLenum minf, GLenum magf)
 	switch (magf) {
 	case GL_NEAREST:
 		t->filter |= R300_TX_MAG_FILTER_NEAREST;
-		/*t->format_x |= R200_VOLUME_FILTER_NEAREST;*/
 		break;
 	case GL_LINEAR:
 		t->filter |= R300_TX_MAG_FILTER_LINEAR;
-		/*t->format_x |= R200_VOLUME_FILTER_LINEAR;*/
 		break;
 	}
 }
 
 static void r300SetTexBorderColor(r300TexObjPtr t, GLubyte c[4])
 {
-	t->pp_border_color = r300PackColor(4, c[0], c[1], c[2], c[3]);
+	t->pp_border_color = PACK_COLOR_8888(c[0], c[1], c[2], c[3]);
 }
 
 /**
@@ -297,35 +287,30 @@ static r300TexObjPtr r300AllocTexObj(struct gl_texture_object *texObj)
 }
 
 /* try to find a format which will only need a memcopy */
-static const struct gl_texture_format *r300Choose8888TexFormat( GLenum srcFormat,
-								GLenum srcType )
+static const struct gl_texture_format *r300Choose8888TexFormat(GLenum srcFormat,
+							       GLenum srcType)
 {
 	const GLuint ui = 1;
-	const GLubyte littleEndian = *((const GLubyte *) &ui);
+	const GLubyte littleEndian = *((const GLubyte *)&ui);
 
 	if ((srcFormat == GL_RGBA && srcType == GL_UNSIGNED_INT_8_8_8_8) ||
 	    (srcFormat == GL_RGBA && srcType == GL_UNSIGNED_BYTE && !littleEndian) ||
 	    (srcFormat == GL_ABGR_EXT && srcType == GL_UNSIGNED_INT_8_8_8_8_REV) ||
 	    (srcFormat == GL_ABGR_EXT && srcType == GL_UNSIGNED_BYTE && littleEndian)) {
 		return &_mesa_texformat_rgba8888;
-	}
-	else if ((srcFormat == GL_RGBA && srcType == GL_UNSIGNED_INT_8_8_8_8_REV) ||
-		 (srcFormat == GL_RGBA && srcType == GL_UNSIGNED_BYTE && littleEndian) ||
-		 (srcFormat == GL_ABGR_EXT && srcType == GL_UNSIGNED_INT_8_8_8_8) ||
-		 (srcFormat == GL_ABGR_EXT && srcType == GL_UNSIGNED_BYTE && !littleEndian)) {
+	} else if ((srcFormat == GL_RGBA && srcType == GL_UNSIGNED_INT_8_8_8_8_REV) ||
+		   (srcFormat == GL_RGBA && srcType == GL_UNSIGNED_BYTE && littleEndian) ||
+		   (srcFormat == GL_ABGR_EXT && srcType == GL_UNSIGNED_INT_8_8_8_8) ||
+		   (srcFormat == GL_ABGR_EXT && srcType == GL_UNSIGNED_BYTE && !littleEndian)) {
 		return &_mesa_texformat_rgba8888_rev;
-	}
-	else if (srcFormat == GL_BGRA &&
-		((srcType == GL_UNSIGNED_BYTE && !littleEndian) ||
-		  srcType == GL_UNSIGNED_INT_8_8_8_8)) {
+	} else if (srcFormat == GL_BGRA && ((srcType == GL_UNSIGNED_BYTE && !littleEndian) ||
+					    srcType == GL_UNSIGNED_INT_8_8_8_8)) {
 		return &_mesa_texformat_argb8888_rev;
-	}
-	else if (srcFormat == GL_BGRA &&
-		((srcType == GL_UNSIGNED_BYTE && littleEndian) ||
-		  srcType == GL_UNSIGNED_INT_8_8_8_8_REV)) {
+	} else if (srcFormat == GL_BGRA && ((srcType == GL_UNSIGNED_BYTE && littleEndian) ||
+					    srcType == GL_UNSIGNED_INT_8_8_8_8_REV)) {
 		return &_mesa_texformat_argb8888;
-	}
-	else return _dri_texformat_argb8888;
+	} else
+		return _dri_texformat_argb8888;
 }
 
 static const struct gl_texture_format *r300ChooseTextureFormat(GLcontext * ctx,
@@ -344,10 +329,8 @@ static const struct gl_texture_format *r300ChooseTextureFormat(GLcontext * ctx,
 #if 0
 	fprintf(stderr, "InternalFormat=%s(%d) type=%s format=%s\n",
 		_mesa_lookup_enum_by_nr(internalFormat), internalFormat,
-		_mesa_lookup_enum_by_nr(type),
-		_mesa_lookup_enum_by_nr(format));
-	fprintf(stderr, "do32bpt=%d force16bpt=%d\n",
-		do32bpt, force16bpt);
+		_mesa_lookup_enum_by_nr(type), _mesa_lookup_enum_by_nr(format));
+	fprintf(stderr, "do32bpt=%d force16bpt=%d\n", do32bpt, force16bpt);
 #endif
 
 	switch (internalFormat) {
@@ -393,7 +376,8 @@ static const struct gl_texture_format *r300ChooseTextureFormat(GLcontext * ctx,
 	case GL_RGBA12:
 	case GL_RGBA16:
 		return !force16bpt ?
-		    r300Choose8888TexFormat(format, type) : _dri_texformat_argb4444;
+		    r300Choose8888TexFormat(format,
+					    type) : _dri_texformat_argb4444;
 
 	case GL_RGBA4:
 	case GL_RGBA2:
@@ -460,43 +444,43 @@ static const struct gl_texture_format *r300ChooseTextureFormat(GLcontext * ctx,
 	case GL_RGB_S3TC:
 	case GL_RGB4_S3TC:
 	case GL_COMPRESSED_RGB_S3TC_DXT1_EXT:
-	  return &_mesa_texformat_rgb_dxt1;
-	  
+		return &_mesa_texformat_rgb_dxt1;
+
 	case GL_COMPRESSED_RGBA_S3TC_DXT1_EXT:
-	  return &_mesa_texformat_rgba_dxt1;
-	  
+		return &_mesa_texformat_rgba_dxt1;
+
 	case GL_RGBA_S3TC:
 	case GL_RGBA4_S3TC:
 	case GL_COMPRESSED_RGBA_S3TC_DXT3_EXT:
-	  return &_mesa_texformat_rgba_dxt3;
-	  
+		return &_mesa_texformat_rgba_dxt3;
+
 	case GL_COMPRESSED_RGBA_S3TC_DXT5_EXT:
-	  return &_mesa_texformat_rgba_dxt5;
-	  
- 	case GL_ALPHA16F_ARB:
-	  return &_mesa_texformat_alpha_float16;
+		return &_mesa_texformat_rgba_dxt5;
+
+	case GL_ALPHA16F_ARB:
+		return &_mesa_texformat_alpha_float16;
 	case GL_ALPHA32F_ARB:
-	  return &_mesa_texformat_alpha_float32;
+		return &_mesa_texformat_alpha_float32;
 	case GL_LUMINANCE16F_ARB:
-	  return &_mesa_texformat_luminance_float16;
+		return &_mesa_texformat_luminance_float16;
 	case GL_LUMINANCE32F_ARB:
-	  return &_mesa_texformat_luminance_float32;
+		return &_mesa_texformat_luminance_float32;
 	case GL_LUMINANCE_ALPHA16F_ARB:
-	  return &_mesa_texformat_luminance_alpha_float16;
+		return &_mesa_texformat_luminance_alpha_float16;
 	case GL_LUMINANCE_ALPHA32F_ARB:
-	  return &_mesa_texformat_luminance_alpha_float32;
+		return &_mesa_texformat_luminance_alpha_float32;
 	case GL_INTENSITY16F_ARB:
-	  return &_mesa_texformat_intensity_float16;
+		return &_mesa_texformat_intensity_float16;
 	case GL_INTENSITY32F_ARB:
-	  return &_mesa_texformat_intensity_float32;
+		return &_mesa_texformat_intensity_float32;
 	case GL_RGB16F_ARB:
-	  return &_mesa_texformat_rgba_float16;
+		return &_mesa_texformat_rgba_float16;
 	case GL_RGB32F_ARB:
-	  return &_mesa_texformat_rgba_float32;
+		return &_mesa_texformat_rgba_float32;
 	case GL_RGBA16F_ARB:
-	  return &_mesa_texformat_rgba_float16;
+		return &_mesa_texformat_rgba_float16;
 	case GL_RGBA32F_ARB:
-	  return &_mesa_texformat_rgba_float32;
+		return &_mesa_texformat_rgba_float32;
 
 	default:
 		_mesa_problem(ctx,
@@ -519,7 +503,7 @@ r300ValidateClientStorage(GLcontext * ctx, GLenum target,
 {
 	r300ContextPtr rmesa = R300_CONTEXT(ctx);
 
-	if (0)
+	if (RADEON_DEBUG & DEBUG_TEXTURE)
 		fprintf(stderr, "intformat %s format %s type %s\n",
 			_mesa_lookup_enum_by_nr(internalFormat),
 			_mesa_lookup_enum_by_nr(format),
@@ -572,34 +556,31 @@ r300ValidateClientStorage(GLcontext * ctx, GLenum target,
 		return 0;
 	}
 
-	{
-		GLint srcRowStride = _mesa_image_row_stride(packing, srcWidth,
-							    format, type);
+	GLint srcRowStride = _mesa_image_row_stride(packing, srcWidth,
+						    format, type);
 
-		if (0)
-			fprintf(stderr, "%s: srcRowStride %d/%x\n",
-				__FUNCTION__, srcRowStride, srcRowStride);
+	if (RADEON_DEBUG & DEBUG_TEXTURE)
+		fprintf(stderr, "%s: srcRowStride %d/%x\n",
+			__FUNCTION__, srcRowStride, srcRowStride);
 
-		/* Could check this later in upload, pitch restrictions could be
-		 * relaxed, but would need to store the image pitch somewhere,
-		 * as packing details might change before image is uploaded:
-		 */
-		if (!r300IsGartMemory(rmesa, pixels, srcHeight * srcRowStride)
-		    || (srcRowStride & 63))
-			return 0;
+	/* Could check this later in upload, pitch restrictions could be
+	 * relaxed, but would need to store the image pitch somewhere,
+	 * as packing details might change before image is uploaded:
+	 */
+	if (!r300IsGartMemory(rmesa, pixels, srcHeight * srcRowStride)
+	    || (srcRowStride & 63))
+		return 0;
 
-		/* Have validated that _mesa_transfer_teximage would be a straight
-		 * memcpy at this point.  NOTE: future calls to TexSubImage will
-		 * overwrite the client data.  This is explicitly mentioned in the
-		 * extension spec.
-		 */
-		texImage->Data = (void *)pixels;
-		texImage->IsClientData = GL_TRUE;
-		texImage->RowStride =
-		    srcRowStride / texImage->TexFormat->TexelBytes;
+	/* Have validated that _mesa_transfer_teximage would be a straight
+	 * memcpy at this point.  NOTE: future calls to TexSubImage will
+	 * overwrite the client data.  This is explicitly mentioned in the
+	 * extension spec.
+	 */
+	texImage->Data = (void *)pixels;
+	texImage->IsClientData = GL_TRUE;
+	texImage->RowStride = srcRowStride / texImage->TexFormat->TexelBytes;
 
-		return 1;
-	}
+	return 1;
 }
 
 static void r300TexImage1D(GLcontext * ctx, GLenum target, GLint level,
@@ -771,116 +752,123 @@ static void r300TexSubImage2D(GLcontext * ctx, GLenum target, GLint level,
 	t->dirty_images[face] |= (1 << level);
 }
 
-static void r300CompressedTexImage2D( GLcontext *ctx, GLenum target, GLint level,
-                              GLint internalFormat,
-                              GLint width, GLint height, GLint border,
-                              GLsizei imageSize, const GLvoid *data,
-                              struct gl_texture_object *texObj,
-                              struct gl_texture_image *texImage )
+static void r300CompressedTexImage2D(GLcontext * ctx, GLenum target,
+				     GLint level, GLint internalFormat,
+				     GLint width, GLint height, GLint border,
+				     GLsizei imageSize, const GLvoid * data,
+				     struct gl_texture_object *texObj,
+				     struct gl_texture_image *texImage)
 {
-   driTextureObject * t = (driTextureObject *) texObj->DriverData;
-   GLuint face;
+	driTextureObject *t = (driTextureObject *) texObj->DriverData;
+	GLuint face;
 
-   /* which cube face or ordinary 2D image */
-   switch (target) {
-   case GL_TEXTURE_CUBE_MAP_POSITIVE_X:
-   case GL_TEXTURE_CUBE_MAP_NEGATIVE_X:
-   case GL_TEXTURE_CUBE_MAP_POSITIVE_Y:
-   case GL_TEXTURE_CUBE_MAP_NEGATIVE_Y:
-   case GL_TEXTURE_CUBE_MAP_POSITIVE_Z:
-   case GL_TEXTURE_CUBE_MAP_NEGATIVE_Z:
-      face = (GLuint) target - (GLuint) GL_TEXTURE_CUBE_MAP_POSITIVE_X;
-      ASSERT(face < 6);
-      break;
-   default:
-      face = 0;
-   }
+	/* which cube face or ordinary 2D image */
+	switch (target) {
+	case GL_TEXTURE_CUBE_MAP_POSITIVE_X:
+	case GL_TEXTURE_CUBE_MAP_NEGATIVE_X:
+	case GL_TEXTURE_CUBE_MAP_POSITIVE_Y:
+	case GL_TEXTURE_CUBE_MAP_NEGATIVE_Y:
+	case GL_TEXTURE_CUBE_MAP_POSITIVE_Z:
+	case GL_TEXTURE_CUBE_MAP_NEGATIVE_Z:
+		face =
+		    (GLuint) target - (GLuint) GL_TEXTURE_CUBE_MAP_POSITIVE_X;
+		ASSERT(face < 6);
+		break;
+	default:
+		face = 0;
+	}
 
-   if ( t != NULL ) {
-      driSwapOutTextureObject( t );
-   }
-   else {
-      t = (driTextureObject *) r300AllocTexObj( texObj );
-      if (!t) {
-         _mesa_error(ctx, GL_OUT_OF_MEMORY, "glCompressedTexImage2D");
-         return;
-      }
-   }
+	if (t != NULL) {
+		driSwapOutTextureObject(t);
+	} else {
+		t = (driTextureObject *) r300AllocTexObj(texObj);
+		if (!t) {
+			_mesa_error(ctx, GL_OUT_OF_MEMORY,
+				    "glCompressedTexImage2D");
+			return;
+		}
+	}
 
-   texImage->IsClientData = GL_FALSE;
-/* can't call this, different parameters. Would never evaluate to true anyway currently
-   if (r300ValidateClientStorage( ctx, target, 
-				  internalFormat,
-				  width, height,
-				  format, type, pixels,
-				  packing, texObj, texImage)) {
-      if (RADEON_DEBUG & DEBUG_TEXTURE)
-	 fprintf(stderr, "%s: Using client storage\n", __FUNCTION__);
-   }
-   else */{
-      if (RADEON_DEBUG & DEBUG_TEXTURE)
-	 fprintf(stderr, "%s: Using normal storage\n", __FUNCTION__);
+	texImage->IsClientData = GL_FALSE;
 
-      /* Normal path: copy (to cached memory) and eventually upload
-       * via another copy to GART memory and then a blit...  Could
-       * eliminate one copy by going straight to (permanent) GART.
-       *
-       * Note, this will call r300ChooseTextureFormat.
-       */
-      _mesa_store_compressed_teximage2d(ctx, target, level, internalFormat, width,
-                                 height, border, imageSize, data, texObj, texImage);
+	/* can't call this, different parameters. Would never evaluate to true anyway currently */
+#if 0
+	if (r300ValidateClientStorage(ctx, target,
+				      internalFormat,
+				      width, height,
+				      format, type, pixels,
+				      packing, texObj, texImage)) {
+		if (RADEON_DEBUG & DEBUG_TEXTURE)
+			fprintf(stderr, "%s: Using client storage\n",
+				__FUNCTION__);
+	} else
+#endif
+	{
+		if (RADEON_DEBUG & DEBUG_TEXTURE)
+			fprintf(stderr, "%s: Using normal storage\n",
+				__FUNCTION__);
 
-      t->dirty_images[face] |= (1 << level);
-   }
+		/* Normal path: copy (to cached memory) and eventually upload
+		 * via another copy to GART memory and then a blit...  Could
+		 * eliminate one copy by going straight to (permanent) GART.
+		 *
+		 * Note, this will call r300ChooseTextureFormat.
+		 */
+		_mesa_store_compressed_teximage2d(ctx, target, level,
+						  internalFormat, width, height,
+						  border, imageSize, data,
+						  texObj, texImage);
+
+		t->dirty_images[face] |= (1 << level);
+	}
 }
 
-
-static void r300CompressedTexSubImage2D( GLcontext *ctx, GLenum target, GLint level,
-                                 GLint xoffset, GLint yoffset,
-                                 GLsizei width, GLsizei height,
-                                 GLenum format,
-                                 GLsizei imageSize, const GLvoid *data,
-                                 struct gl_texture_object *texObj,
-                                 struct gl_texture_image *texImage )
+static void r300CompressedTexSubImage2D(GLcontext * ctx, GLenum target,
+					GLint level, GLint xoffset,
+					GLint yoffset, GLsizei width,
+					GLsizei height, GLenum format,
+					GLsizei imageSize, const GLvoid * data,
+					struct gl_texture_object *texObj,
+					struct gl_texture_image *texImage)
 {
-   driTextureObject * t = (driTextureObject *) texObj->DriverData;
-   GLuint face;
+	driTextureObject *t = (driTextureObject *) texObj->DriverData;
+	GLuint face;
 
+	/* which cube face or ordinary 2D image */
+	switch (target) {
+	case GL_TEXTURE_CUBE_MAP_POSITIVE_X:
+	case GL_TEXTURE_CUBE_MAP_NEGATIVE_X:
+	case GL_TEXTURE_CUBE_MAP_POSITIVE_Y:
+	case GL_TEXTURE_CUBE_MAP_NEGATIVE_Y:
+	case GL_TEXTURE_CUBE_MAP_POSITIVE_Z:
+	case GL_TEXTURE_CUBE_MAP_NEGATIVE_Z:
+		face =
+		    (GLuint) target - (GLuint) GL_TEXTURE_CUBE_MAP_POSITIVE_X;
+		ASSERT(face < 6);
+		break;
+	default:
+		face = 0;
+	}
 
-   /* which cube face or ordinary 2D image */
-   switch (target) {
-   case GL_TEXTURE_CUBE_MAP_POSITIVE_X:
-   case GL_TEXTURE_CUBE_MAP_NEGATIVE_X:
-   case GL_TEXTURE_CUBE_MAP_POSITIVE_Y:
-   case GL_TEXTURE_CUBE_MAP_NEGATIVE_Y:
-   case GL_TEXTURE_CUBE_MAP_POSITIVE_Z:
-   case GL_TEXTURE_CUBE_MAP_NEGATIVE_Z:
-      face = (GLuint) target - (GLuint) GL_TEXTURE_CUBE_MAP_POSITIVE_X;
-      ASSERT(face < 6);
-      break;
-   default:
-      face = 0;
-   }
+	assert(t);		/* this _should_ be true */
+	if (t) {
+		driSwapOutTextureObject(t);
+	} else {
+		t = (driTextureObject *) r300AllocTexObj(texObj);
+		if (!t) {
+			_mesa_error(ctx, GL_OUT_OF_MEMORY,
+				    "glCompressedTexSubImage3D");
+			return;
+		}
+	}
 
-   assert( t ); /* this _should_ be true */
-   if ( t ) {
-      driSwapOutTextureObject( t );
-   }
-   else {
-      t = (driTextureObject *) r300AllocTexObj( texObj );
-      if (!t) {
-         _mesa_error(ctx, GL_OUT_OF_MEMORY, "glCompressedTexSubImage3D");
-         return;
-      }
-   }
+	_mesa_store_compressed_texsubimage2d(ctx, target, level, xoffset,
+					     yoffset, width, height, format,
+					     imageSize, data, texObj, texImage);
 
-   _mesa_store_compressed_texsubimage2d(ctx, target, level, xoffset, yoffset, width,
-                            height, format, imageSize, data, texObj, texImage);
-
-   t->dirty_images[face] |= (1 << level);
+	t->dirty_images[face] |= (1 << level);
 }
 
-#if ENABLE_HW_3D_TEXTURE
 static void r300TexImage3D(GLcontext * ctx, GLenum target, GLint level,
 			   GLint internalFormat,
 			   GLint width, GLint height, GLint depth,
@@ -934,9 +922,7 @@ static void r300TexImage3D(GLcontext * ctx, GLenum target, GLint level,
 		t->dirty_images[0] |= (1 << level);
 	}
 }
-#endif
 
-#if ENABLE_HW_3D_TEXTURE
 static void
 r300TexSubImage3D(GLcontext * ctx, GLenum target, GLint level,
 		  GLint xoffset, GLint yoffset, GLint zoffset,
@@ -970,7 +956,6 @@ r300TexSubImage3D(GLcontext * ctx, GLenum target, GLint level,
 
 	t->dirty_images[0] |= (1 << level);
 }
-#endif
 
 static void r300TexEnv(GLcontext * ctx, GLenum target,
 		       GLenum pname, const GLfloat * param)
@@ -986,7 +971,7 @@ static void r300TexEnv(GLcontext * ctx, GLenum target,
 	 */
 	switch (pname) {
 	case GL_TEXTURE_LOD_BIAS_EXT:{
-#if 0 /* Needs to be relocated in order to make sure we got the right tmu */
+#if 0				/* Needs to be relocated in order to make sure we got the right tmu */
 			GLfloat bias, min;
 			GLuint b;
 
@@ -1006,10 +991,16 @@ static void r300TexEnv(GLcontext * ctx, GLenum target,
 			b = 0x1000 / 16.0 * bias;
 			b &= R300_LOD_BIAS_MASK;
 
-			if(b != (rmesa->hw.tex.unknown1.cmd[R300_TEX_VALUE_0+unit] & R300_LOD_BIAS_MASK)){
+			if (b !=
+			    (rmesa->hw.tex.unknown1.
+			     cmd[R300_TEX_VALUE_0 +
+				 unit] & R300_LOD_BIAS_MASK)) {
 				R300_STATECHANGE(rmesa, tex.unknown1);
-				rmesa->hw.tex.unknown1.cmd[R300_TEX_VALUE_0+unit] &= ~R300_LOD_BIAS_MASK;
-				rmesa->hw.tex.unknown1.cmd[R300_TEX_VALUE_0+unit] |= b;
+				rmesa->hw.tex.unknown1.cmd[R300_TEX_VALUE_0 +
+							   unit] &=
+				    ~R300_LOD_BIAS_MASK;
+				rmesa->hw.tex.unknown1.cmd[R300_TEX_VALUE_0 +
+							   unit] |= b;
 			}
 #endif
 			break;
@@ -1085,9 +1076,7 @@ static void r300BindTexture(GLcontext * ctx, GLenum target,
 
 	if ((target == GL_TEXTURE_1D)
 	    || (target == GL_TEXTURE_2D)
-#if ENABLE_HW_3D_TEXTURE
 	    || (target == GL_TEXTURE_3D)
-#endif
 	    || (target == GL_TEXTURE_CUBE_MAP)
 	    || (target == GL_TEXTURE_RECTANGLE_NV)) {
 		assert(texObj->DriverData != NULL);
@@ -1140,7 +1129,6 @@ static struct gl_texture_object *r300NewTextureObject(GLcontext * ctx,
 	return obj;
 }
 
-
 void r300InitTextureFuncs(struct dd_function_table *functions)
 {
 	/* Note: we only plug in the functions we implement in the driver
@@ -1149,18 +1137,10 @@ void r300InitTextureFuncs(struct dd_function_table *functions)
 	functions->ChooseTextureFormat = r300ChooseTextureFormat;
 	functions->TexImage1D = r300TexImage1D;
 	functions->TexImage2D = r300TexImage2D;
-#if ENABLE_HW_3D_TEXTURE
 	functions->TexImage3D = r300TexImage3D;
-#else
-	functions->TexImage3D = _mesa_store_teximage3d;
-#endif
 	functions->TexSubImage1D = r300TexSubImage1D;
 	functions->TexSubImage2D = r300TexSubImage2D;
-#if ENABLE_HW_3D_TEXTURE
 	functions->TexSubImage3D = r300TexSubImage3D;
-#else
-	functions->TexSubImage3D = _mesa_store_texsubimage3d;
-#endif
 	functions->NewTextureObject = r300NewTextureObject;
 	functions->BindTexture = r300BindTexture;
 	functions->DeleteTexture = r300DeleteTexture;
@@ -1168,23 +1148,9 @@ void r300InitTextureFuncs(struct dd_function_table *functions)
 
 	functions->TexEnv = r300TexEnv;
 	functions->TexParameter = r300TexParameter;
-	
-	functions->CompressedTexImage2D	= r300CompressedTexImage2D;
-	functions->CompressedTexSubImage2D	= r300CompressedTexSubImage2D;
+
+	functions->CompressedTexImage2D = r300CompressedTexImage2D;
+	functions->CompressedTexSubImage2D = r300CompressedTexSubImage2D;
 
 	driInitTextureFormats();
-
-#if 0
-	/* moved or obsolete code */
-	r300ContextPtr rmesa = R300_CONTEXT(ctx);
-	driInitTextureObjects(ctx, &rmesa->swapped,
-			      DRI_TEXMGR_DO_TEXTURE_1D
-			      | DRI_TEXMGR_DO_TEXTURE_2D);
-
-	/* Hack: r300NewTextureObject is not yet installed when the
-	 * default textures are created. Therefore set MaxAnisotropy of the
-	 * default 2D texture now. */
-	ctx->Shared->Default2D->MaxAnisotropy =
-	    driQueryOptionf(&rmesa->optionCache, "def_max_anisotropy");
-#endif
 }

@@ -1,8 +1,8 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.5
+ * Version:  7.1
  *
- * Copyright (C) 1999-2006  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2007  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -31,7 +31,7 @@
 #include "mtypes.h"
 #if defined(FX)
 #include "GL/fxmesa.h"
-#include "../glide/fxdrv.h"
+#include "xm_glide.h"
 #endif
 #ifdef XFree86Server
 #include "xm_image.h"
@@ -266,6 +266,11 @@ struct xmesa_buffer {
    GLboolean FXwindowHack;	/* Are we rendering into a window? */
    fxMesaContext FXctx;
 #endif
+
+   /* GLX_EXT_texture_from_pixmap */
+   GLint TextureTarget; /** GLX_TEXTURE_1D_EXT, for example */
+   GLint TextureFormat; /** GLX_TEXTURE_FORMAT_RGB_EXT, for example */
+   GLint TextureMipmap; /** 0 or 1 */
 
    struct xmesa_buffer *Next;	/* Linked list pointer: */
 };
@@ -566,22 +571,6 @@ extern void xmesa_choose_triangle( GLcontext *ctx );
 
 extern void xmesa_register_swrast_functions( GLcontext *ctx );
 
-
-
-/* XXX this is a hack to implement shared display lists with 3Dfx */
-extern XMesaBuffer XMesaCreateWindowBuffer2( XMesaVisual v,
-					     XMesaWindow w,
-					     XMesaContext c );
-
-/*
- * These are the extra routines required for integration with XFree86.
- * None of these routines should be user visible. -KEM
- */
-extern GLboolean XMesaForceCurrent(XMesaContext c);
-extern GLboolean XMesaLoseCurrent(XMesaContext c);
-extern GLboolean XMesaCopyContext( XMesaContext src,
-				   XMesaContext dst,
-				   GLuint mask );
 
 
 #define ENABLE_EXT_texure_compression_s3tc 0 /* SW texture compression */

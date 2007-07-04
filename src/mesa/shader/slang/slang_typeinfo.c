@@ -32,6 +32,7 @@
 #include "slang_typeinfo.h"
 #include "slang_compile.h"
 #include "slang_log.h"
+#include "slang_mem.h"
 #include "prog_instruction.h"
 
 
@@ -178,11 +179,11 @@ slang_type_specifier_dtr(slang_type_specifier * self)
 {
    if (self->_struct != NULL) {
       slang_struct_destruct(self->_struct);
-      slang_alloc_free(self->_struct);
+      _slang_free(self->_struct);
    }
    if (self->_array != NULL) {
       slang_type_specifier_dtr(self->_array);
-      slang_alloc_free(self->_array);
+      _slang_free(self->_array);
    }
 }
 
@@ -195,13 +196,13 @@ slang_type_specifier_copy(slang_type_specifier * x,
    slang_type_specifier_ctr(&z);
    z.type = y->type;
    if (z.type == SLANG_SPEC_STRUCT) {
-      z._struct = (slang_struct *) slang_alloc_malloc(sizeof(slang_struct));
+      z._struct = (slang_struct *) _slang_alloc(sizeof(slang_struct));
       if (z._struct == NULL) {
          slang_type_specifier_dtr(&z);
          return GL_FALSE;
       }
       if (!slang_struct_construct(z._struct)) {
-         slang_alloc_free(z._struct);
+         _slang_free(z._struct);
          slang_type_specifier_dtr(&z);
          return GL_FALSE;
       }
@@ -211,9 +212,8 @@ slang_type_specifier_copy(slang_type_specifier * x,
       }
    }
    else if (z.type == SLANG_SPEC_ARRAY) {
-      z._array =
-         (slang_type_specifier *)
-         slang_alloc_malloc(sizeof(slang_type_specifier));
+      z._array = (slang_type_specifier *)
+         _slang_alloc(sizeof(slang_type_specifier));
       if (z._array == NULL) {
          slang_type_specifier_dtr(&z);
          return GL_FALSE;
@@ -596,11 +596,11 @@ _slang_typeof_operation_(slang_operation * op,
                /* struct initializer */
                ti->spec.type = SLANG_SPEC_STRUCT;
                ti->spec._struct =
-                  (slang_struct *) slang_alloc_malloc(sizeof(slang_struct));
+                  (slang_struct *) _slang_alloc(sizeof(slang_struct));
                if (ti->spec._struct == NULL)
                   return GL_FALSE;
                if (!slang_struct_construct(ti->spec._struct)) {
-                  slang_alloc_free(ti->spec._struct);
+                  _slang_free(ti->spec._struct);
                   ti->spec._struct = NULL;
                   return GL_FALSE;
                }
@@ -944,3 +944,79 @@ _slang_type_dim(slang_type_specifier_type ty)
       return 0;
    }
 }
+
+
+/**
+ * Return the GL_* type that corresponds to a SLANG_SPEC_* type.
+ */
+GLenum
+_slang_gltype_from_specifier(const slang_type_specifier *type)
+{
+   switch (type->type) {
+   case SLANG_SPEC_BOOL:
+      return GL_BOOL;
+   case SLANG_SPEC_BVEC2:
+      return GL_BOOL_VEC2;
+   case SLANG_SPEC_BVEC3:
+      return GL_BOOL_VEC3;
+   case SLANG_SPEC_BVEC4:
+      return GL_BOOL_VEC4;
+   case SLANG_SPEC_INT:
+      return GL_INT;
+   case SLANG_SPEC_IVEC2:
+      return GL_INT_VEC2;
+   case SLANG_SPEC_IVEC3:
+      return GL_INT_VEC3;
+   case SLANG_SPEC_IVEC4:
+      return GL_INT_VEC4;
+   case SLANG_SPEC_FLOAT:
+      return GL_FLOAT;
+   case SLANG_SPEC_VEC2:
+      return GL_FLOAT_VEC2;
+   case SLANG_SPEC_VEC3:
+      return GL_FLOAT_VEC3;
+   case SLANG_SPEC_VEC4:
+      return GL_FLOAT_VEC4;
+   case SLANG_SPEC_MAT2:
+      return GL_FLOAT_MAT2;
+   case SLANG_SPEC_MAT3:
+      return GL_FLOAT_MAT3;
+   case SLANG_SPEC_MAT4:
+      return GL_FLOAT_MAT4;
+   case SLANG_SPEC_MAT23:
+      return GL_FLOAT_MAT2x3;
+   case SLANG_SPEC_MAT32:
+      return GL_FLOAT_MAT3x2;
+   case SLANG_SPEC_MAT24:
+      return GL_FLOAT_MAT2x4;
+   case SLANG_SPEC_MAT42:
+      return GL_FLOAT_MAT4x2;
+   case SLANG_SPEC_MAT34:
+      return GL_FLOAT_MAT3x4;
+   case SLANG_SPEC_MAT43:
+      return GL_FLOAT_MAT4x3;
+   case SLANG_SPEC_SAMPLER1D:
+      return GL_SAMPLER_1D;
+   case SLANG_SPEC_SAMPLER2D:
+      return GL_SAMPLER_2D;
+   case SLANG_SPEC_SAMPLER3D:
+      return GL_SAMPLER_3D;
+   case SLANG_SPEC_SAMPLERCUBE:
+      return GL_SAMPLER_CUBE;
+   case SLANG_SPEC_SAMPLER1DSHADOW:
+      return GL_SAMPLER_1D_SHADOW;
+   case SLANG_SPEC_SAMPLER2DSHADOW:
+      return GL_SAMPLER_2D_SHADOW;
+   case SLANG_SPEC_SAMPLER2DRECT:
+      return GL_SAMPLER_2D_RECT_ARB;
+   case SLANG_SPEC_SAMPLER2DRECTSHADOW:
+      return GL_SAMPLER_2D_RECT_SHADOW_ARB;
+   case SLANG_SPEC_ARRAY:
+      return _slang_gltype_from_specifier(type->_array);
+   case SLANG_SPEC_STRUCT:
+      /* fall-through */
+   default:
+      return GL_NONE;
+   }
+}
+

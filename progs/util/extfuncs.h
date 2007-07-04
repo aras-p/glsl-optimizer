@@ -11,6 +11,7 @@ static PFNGLCREATEPROGRAMPROC glCreateProgram_func = NULL;
 static PFNGLCREATESHADERPROC glCreateShader_func = NULL;
 static PFNGLDELETEPROGRAMPROC glDeleteProgram_func = NULL;
 static PFNGLDELETESHADERPROC glDeleteShader_func = NULL;
+static PFNGLGETACTIVEATTRIBPROC glGetActiveAttrib_func = NULL;
 static PFNGLGETATTACHEDSHADERSPROC glGetAttachedShaders_func = NULL;
 static PFNGLGETATTRIBLOCATIONPROC glGetAttribLocation_func = NULL;
 static PFNGLGETPROGRAMINFOLOGPROC glGetProgramInfoLog_func = NULL;
@@ -78,6 +79,7 @@ GetExtensionFuncs(void)
    glCreateShader_func = (PFNGLCREATESHADERPROC) glutGetProcAddress("glCreateShader");
    glDeleteProgram_func = (PFNGLDELETEPROGRAMPROC) glutGetProcAddress("glDeleteProgram");
    glDeleteShader_func = (PFNGLDELETESHADERPROC) glutGetProcAddress("glDeleteShader");
+   glGetActiveAttrib_func = (PFNGLGETACTIVEATTRIBPROC) glutGetProcAddress("glGetActiveAttrib");
    glGetAttachedShaders_func = (PFNGLGETATTACHEDSHADERSPROC) glutGetProcAddress("glGetAttachedShaders");
    glGetAttribLocation_func = (PFNGLGETATTRIBLOCATIONPROC) glutGetProcAddress("glGetAttribLocation");
    glGetProgramInfoLog_func = (PFNGLGETPROGRAMINFOLOGPROC) glutGetProcAddress("glGetProgramInfoLog");

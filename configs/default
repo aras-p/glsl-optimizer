@@ -8,9 +8,9 @@
 CONFIG_NAME = default
 
 # Version info
-MESA_MAJOR=6
-MESA_MINOR=5
-MESA_TINY=3
+MESA_MAJOR=7
+MESA_MINOR=1
+MESA_TINY=0
 
 # external projects.  This should be useless now that we use libdrm.
 DRM_SOURCE_PATH=$(TOP)/../drm

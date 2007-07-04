@@ -27,9 +27,10 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 **************************************************************************/
 
-/*
- * Authors:
- *   Nicolai Haehnle <prefect_@gmx.net>
+/**
+ * \file
+ *
+ * \author Nicolai Haehnle <prefect_@gmx.net>
  */
 
 #include "glheader.h"
@@ -52,15 +53,13 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "r300_emit.h"
 #include "r300_state.h"
 
-
 // Set this to 1 for extremely verbose debugging of command buffers
 #define DEBUG_CMDBUF		0
-
 
 /**
  * Send the current command buffer via ioctl to the hardware.
  */
-int r300FlushCmdBufLocked(r300ContextPtr r300, const char* caller)
+int r300FlushCmdBufLocked(r300ContextPtr r300, const char *caller)
 {
 	int ret;
 	int i;
@@ -83,22 +82,24 @@ int r300FlushCmdBufLocked(r300ContextPtr r300, const char* caller)
 					r300->cmdbuf.cmd_buf[i]);
 	}
 
-	cmd.buf = (char*)(r300->cmdbuf.cmd_buf + start);
+	cmd.buf = (char *)(r300->cmdbuf.cmd_buf + start);
 	cmd.bufsz = (r300->cmdbuf.count_used - start) * 4;
 
 	if (r300->radeon.state.scissor.enabled) {
 		cmd.nbox = r300->radeon.state.scissor.numClipRects;
-		cmd.boxes = (drm_clip_rect_t *)r300->radeon.state.scissor.pClipRects;
+		cmd.boxes =
+		    (drm_clip_rect_t *) r300->radeon.state.scissor.pClipRects;
 	} else {
 		cmd.nbox = r300->radeon.numClipRects;
-		cmd.boxes = (drm_clip_rect_t *)r300->radeon.pClipRects;
+		cmd.boxes = (drm_clip_rect_t *) r300->radeon.pClipRects;
 	}
-		
+
 	ret = drmCommandWrite(r300->radeon.dri.fd,
-			DRM_RADEON_CMDBUF, &cmd, sizeof(cmd));
-	
+			      DRM_RADEON_CMDBUF, &cmd, sizeof(cmd));
+
 	if (RADEON_DEBUG & DEBUG_SYNC) {
-		fprintf(stderr, "Syncing in %s (from %s)\n\n", __FUNCTION__, caller);
+		fprintf(stderr, "Syncing in %s (from %s)\n\n",
+			__FUNCTION__, caller);
 		radeonWaitForIdleLocked(&r300->radeon);
 	}
 
@@ -109,37 +110,38 @@ int r300FlushCmdBufLocked(r300ContextPtr r300, const char* caller)
 	return ret;
 }
 
-
-int r300FlushCmdBuf(r300ContextPtr r300, const char* caller)
+int r300FlushCmdBuf(r300ContextPtr r300, const char *caller)
 {
 	int ret;
 
 	LOCK_HARDWARE(&r300->radeon);
 
-	ret=r300FlushCmdBufLocked(r300, caller);
+	ret = r300FlushCmdBufLocked(r300, caller);
 
 	UNLOCK_HARDWARE(&r300->radeon);
 
 	if (ret) {
-		fprintf(stderr, "drmRadeonCmdBuffer: %d (exiting)\n", ret);
-		exit(ret);
+		fprintf(stderr, "drmRadeonCmdBuffer: %d\n", ret);
+		_mesa_exit(ret);
 	}
 
 	return ret;
 }
 
-
-void r300_print_state_atom(r300ContextPtr r300, struct r300_state_atom *state)
+static void r300PrintStateAtom(r300ContextPtr r300, struct r300_state_atom *state)
 {
 	int i;
-	int dwords = (*state->check)(r300, state);
+	int dwords = (*state->check) (r300, state);
 
-	fprintf(stderr, "  emit %s/%d/%d\n", state->name, dwords, state->cmd_size);
+	fprintf(stderr, "  emit %s %d/%d\n", state->name, dwords,
+		state->cmd_size);
 
-	if (RADEON_DEBUG & DEBUG_VERBOSE)
-		for (i = 0; i < dwords; i++)
-			fprintf(stderr, "      %s[%d]: %08X\n", state->name, i,
-				state->cmd[i]);
+	if (RADEON_DEBUG & DEBUG_VERBOSE) {
+		for (i = 0; i < dwords; i++) {
+			fprintf(stderr, "      %s[%d]: %08x\n",
+				state->name, i, state->cmd[i]);
+		}
+	}
 }
 
 /**
@@ -148,58 +150,51 @@ void r300_print_state_atom(r300ContextPtr r300, struct r300_state_atom *state)
  * The caller must have ensured that there is enough space in the command
  * buffer.
  */
-static __inline__ void r300DoEmitState(r300ContextPtr r300, GLboolean dirty)
+static inline void r300EmitAtoms(r300ContextPtr r300, GLboolean dirty)
 {
-	struct r300_state_atom* atom;
-	uint32_t* dest;
+	struct r300_state_atom *atom;
+	uint32_t *dest;
+	int dwords;
 
 	dest = r300->cmdbuf.cmd_buf + r300->cmdbuf.count_used;
 
-	if (DEBUG_CMDBUF && RADEON_DEBUG & DEBUG_STATE) {
-		foreach(atom, &r300->hw.atomlist) {
-			if ((atom->dirty || r300->hw.all_dirty) == dirty) {
-				int dwords = (*atom->check)(r300, atom);
-
-				if (dwords)
-					r300_print_state_atom(r300, atom);
-				else
-					fprintf(stderr, "  skip state %s\n",
-						atom->name);
-			}
-		}
-	}
-
 	/* Emit WAIT */
 	*dest = cmdwait(R300_WAIT_3D | R300_WAIT_3D_CLEAN);
-	dest ++;
-	r300->cmdbuf.count_used ++;
+	dest++;
+	r300->cmdbuf.count_used++;
 
 	/* Emit cache flush */
 	*dest = cmdpacket0(R300_TX_CNTL, 1);
-	dest ++;
-	r300->cmdbuf.count_used ++;
-	
+	dest++;
+	r300->cmdbuf.count_used++;
+
 	*dest = R300_TX_FLUSH;
-	dest ++;
-	r300->cmdbuf.count_used ++;
-	
+	dest++;
+	r300->cmdbuf.count_used++;
+
 	/* Emit END3D */
 	*dest = cmdpacify();
-	dest ++;
-	r300->cmdbuf.count_used ++;
-	
+	dest++;
+	r300->cmdbuf.count_used++;
 
 	/* Emit actual atoms */
 
 	foreach(atom, &r300->hw.atomlist) {
 		if ((atom->dirty || r300->hw.all_dirty) == dirty) {
-			int dwords = (*atom->check)(r300, atom);
-
+			dwords = (*atom->check) (r300, atom);
 			if (dwords) {
-				memcpy(dest, atom->cmd, dwords*4);
+				if (DEBUG_CMDBUF && RADEON_DEBUG & DEBUG_STATE) {
+					r300PrintStateAtom(r300, atom);
+				}
+				memcpy(dest, atom->cmd, dwords * 4);
 				dest += dwords;
 				r300->cmdbuf.count_used += dwords;
 				atom->dirty = GL_FALSE;
+			} else {
+				if (DEBUG_CMDBUF && RADEON_DEBUG & DEBUG_STATE) {
+					fprintf(stderr, "  skip state %s\n",
+						atom->name);
+				}
 			}
 		}
 	}
@@ -216,7 +211,8 @@ void r300EmitState(r300ContextPtr r300)
 	if (RADEON_DEBUG & (DEBUG_STATE | DEBUG_PRIMS))
 		fprintf(stderr, "%s\n", __FUNCTION__);
 
-	if (r300->cmdbuf.count_used && !r300->hw.is_dirty && !r300->hw.all_dirty)
+	if (r300->cmdbuf.count_used && !r300->hw.is_dirty
+	    && !r300->hw.all_dirty)
 		return;
 
 	/* To avoid going across the entire set of states multiple times, just check
@@ -229,14 +225,14 @@ void r300EmitState(r300ContextPtr r300)
 		if (RADEON_DEBUG & DEBUG_STATE)
 			fprintf(stderr, "Begin reemit state\n");
 
-		r300DoEmitState(r300, GL_FALSE);
+		r300EmitAtoms(r300, GL_FALSE);
 		r300->cmdbuf.count_reemit = r300->cmdbuf.count_used;
 	}
 
 	if (RADEON_DEBUG & DEBUG_STATE)
 		fprintf(stderr, "Begin dirty state\n");
 
-	r300DoEmitState(r300, GL_TRUE);
+	r300EmitAtoms(r300, GL_TRUE);
 
 	assert(r300->cmdbuf.count_used < r300->cmdbuf.size);
 
@@ -244,36 +240,39 @@ void r300EmitState(r300ContextPtr r300)
 	r300->hw.all_dirty = GL_FALSE;
 }
 
-#define CHECK( NM, COUNT )				\
-static int check_##NM( r300ContextPtr r300, 		\
-			struct r300_state_atom* atom )	\
-{							\
-   (void) atom;	(void) r300;				\
-   return (COUNT);					\
-}
-
 #define packet0_count(ptr) (((drm_r300_cmd_header_t*)(ptr))->packet0.count)
 #define vpu_count(ptr) (((drm_r300_cmd_header_t*)(ptr))->vpu.count)
 
-CHECK( always, atom->cmd_size )
-CHECK( variable, packet0_count(atom->cmd) ? (1 + packet0_count(atom->cmd)) : 0 )
-CHECK( vpu, vpu_count(atom->cmd) ? (1 + vpu_count(atom->cmd)*4) : 0 )
+static int check_always(r300ContextPtr r300, struct r300_state_atom *atom)
+{
+	return atom->cmd_size;
+}
 
-#undef packet0_count
-#undef vpu_count
+static int check_variable(r300ContextPtr r300, struct r300_state_atom *atom)
+{
+	int cnt;
+	cnt = packet0_count(atom->cmd);
+	return cnt ? cnt + 1 : 0;
+}
 
-#define ALLOC_STATE( ATOM, CHK, SZ, NM, IDX )				\
+static int check_vpu(r300ContextPtr r300, struct r300_state_atom *atom)
+{
+	int cnt;
+	cnt = vpu_count(atom->cmd);
+	return cnt ? (cnt * 4) + 1 : 0;
+}
+
+#define ALLOC_STATE( ATOM, CHK, SZ, IDX )				\
    do {									\
       r300->hw.ATOM.cmd_size = (SZ);					\
       r300->hw.ATOM.cmd = (uint32_t*)CALLOC((SZ) * sizeof(uint32_t));	\
-      r300->hw.ATOM.name = (NM);					\
+      r300->hw.ATOM.name = #ATOM;					\
       r300->hw.ATOM.idx = (IDX);					\
       r300->hw.ATOM.check = check_##CHK;				\
       r300->hw.ATOM.dirty = GL_FALSE;					\
       r300->hw.max_state_size += (SZ);					\
+      insert_at_tail(&r300->hw.atomlist, &r300->hw.ATOM);		\
    } while (0)
-
-
 /**
  * Allocate memory for the command buffer and initialize the state atom
  * list. Note that the initial hardware state is set by r300InitState().
@@ -281,292 +280,246 @@ CHECK( vpu, vpu_count(atom->cmd) ? (1 + vpu_count(atom->cmd)*4) : 0 )
 void r300InitCmdBuf(r300ContextPtr r300)
 {
 	int size, mtu;
-	
-	r300->hw.max_state_size = 2+2; /* reserve extra space for WAIT_IDLE and tex cache flush */
+	int has_tcl = 1;
+
+	if (!(r300->radeon.radeonScreen->chip_flags & RADEON_CHIPSET_TCL))
+		has_tcl = 0;
+
+	r300->hw.max_state_size = 2 + 2;	/* reserve extra space for WAIT_IDLE and tex cache flush */
 
 	mtu = r300->radeon.glCtx->Const.MaxTextureUnits;
 	if (RADEON_DEBUG & DEBUG_TEXTURE) {
 		fprintf(stderr, "Using %d maximum texture units..\n", mtu);
 	}
 
-	/* Initialize state atoms */
-	ALLOC_STATE( vpt, always, R300_VPT_CMDSIZE, "vpt", 0 );
-		r300->hw.vpt.cmd[R300_VPT_CMD_0] = cmdpacket0(R300_SE_VPORT_XSCALE, 6);
-	ALLOC_STATE( vap_cntl, always, 2, "vap_cntl", 0 );
-		r300->hw.vap_cntl.cmd[0] = cmdpacket0(R300_VAP_CNTL, 1);
-	ALLOC_STATE( vte, always, 3, "vte", 0 );
-		r300->hw.vte.cmd[0] = cmdpacket0(R300_SE_VTE_CNTL, 2);
-	ALLOC_STATE( unk2134, always, 3, "unk2134", 0 );
-		r300->hw.unk2134.cmd[0] = cmdpacket0(0x2134, 2);
-	ALLOC_STATE( vap_cntl_status, always, 2, "vap_cntl_status", 0 );
-		r300->hw.vap_cntl_status.cmd[0] = cmdpacket0(R300_VAP_CNTL_STATUS, 1);
-	ALLOC_STATE( vir[0], variable, R300_VIR_CMDSIZE, "vir/0", 0 );
-		r300->hw.vir[0].cmd[R300_VIR_CMD_0] = cmdpacket0(R300_VAP_INPUT_ROUTE_0_0, 1);
-	ALLOC_STATE( vir[1], variable, R300_VIR_CMDSIZE, "vir/1", 1 );
-		r300->hw.vir[1].cmd[R300_VIR_CMD_0] = cmdpacket0(R300_VAP_INPUT_ROUTE_1_0, 1);
-	ALLOC_STATE( vic, always, R300_VIC_CMDSIZE, "vic", 0 );
-		r300->hw.vic.cmd[R300_VIC_CMD_0] = cmdpacket0(R300_VAP_INPUT_CNTL_0, 2);
-	ALLOC_STATE( unk21DC, always, 2, "unk21DC", 0 );
-		r300->hw.unk21DC.cmd[0] = cmdpacket0(0x21DC, 1);
-	ALLOC_STATE( unk221C, always, 2, "unk221C", 0 );
-		r300->hw.unk221C.cmd[0] = cmdpacket0(R300_VAP_UNKNOWN_221C, 1);
-	ALLOC_STATE( unk2220, always, 5, "unk2220", 0 );
-		r300->hw.unk2220.cmd[0] = cmdpacket0(0x2220, 4);
-	ALLOC_STATE( unk2288, always, 2, "unk2288", 0 );
-		r300->hw.unk2288.cmd[0] = cmdpacket0(R300_VAP_UNKNOWN_2288, 1);
-	ALLOC_STATE( vof, always, R300_VOF_CMDSIZE, "vof", 0 );
-		r300->hw.vof.cmd[R300_VOF_CMD_0] = cmdpacket0(R300_VAP_OUTPUT_VTX_FMT_0, 2);
-	ALLOC_STATE( pvs, always, R300_PVS_CMDSIZE, "pvs", 0 );
-		r300->hw.pvs.cmd[R300_PVS_CMD_0] = cmdpacket0(R300_VAP_PVS_CNTL_1, 3);
-	ALLOC_STATE( gb_enable, always, 2, "gb_enable", 0 );
-		r300->hw.gb_enable.cmd[0] = cmdpacket0(R300_GB_ENABLE, 1);
-	ALLOC_STATE( gb_misc, always, R300_GB_MISC_CMDSIZE, "gb_misc", 0 );
-		r300->hw.gb_misc.cmd[0] = cmdpacket0(R300_GB_MSPOS0, 5);
-	ALLOC_STATE( txe, always, R300_TXE_CMDSIZE, "txe", 0 );
-		r300->hw.txe.cmd[R300_TXE_CMD_0] = cmdpacket0(R300_TX_ENABLE, 1);
-	ALLOC_STATE( unk4200, always, 5, "unk4200", 0 );
-		r300->hw.unk4200.cmd[0] = cmdpacket0(0x4200, 4);
-	ALLOC_STATE( unk4214, always, 2, "unk4214", 0 );
-		r300->hw.unk4214.cmd[0] = cmdpacket0(0x4214, 1);
-	ALLOC_STATE( ps, always, R300_PS_CMDSIZE, "ps", 0 );
-		r300->hw.ps.cmd[0] = cmdpacket0(R300_RE_POINTSIZE, 1);
-	ALLOC_STATE( unk4230, always, 4, "unk4230", 0 );
-		r300->hw.unk4230.cmd[0] = cmdpacket0(0x4230, 3);
-	ALLOC_STATE( lcntl, always, 2, "lcntl", 0 );
-		r300->hw.lcntl.cmd[0] = cmdpacket0(R300_RE_LINE_CNT, 1);
-	ALLOC_STATE( unk4260, always, 4, "unk4260", 0 );
-		r300->hw.unk4260.cmd[0] = cmdpacket0(0x4260, 3);
-	ALLOC_STATE( shade, always, 5, "shade", 0 );
-		r300->hw.shade.cmd[0] = cmdpacket0(R300_RE_SHADE, 4);
-	ALLOC_STATE( polygon_mode, always, 4, "polygon_mode", 0 );
-		r300->hw.polygon_mode.cmd[0] = cmdpacket0(R300_RE_POLYGON_MODE, 3);
-	ALLOC_STATE( fogp, always, 3, "fogp", 0 );
-		r300->hw.fogp.cmd[0] = cmdpacket0(R300_RE_FOG_SCALE, 2);
-	ALLOC_STATE( zbias_cntl, always, 2, "zbias_cntl", 0 );
-		r300->hw.zbias_cntl.cmd[0] = cmdpacket0(R300_RE_ZBIAS_CNTL, 1);
-	ALLOC_STATE( zbs, always, R300_ZBS_CMDSIZE, "zbs", 0 );
-		r300->hw.zbs.cmd[R300_ZBS_CMD_0] = cmdpacket0(R300_RE_ZBIAS_T_FACTOR, 4);
-	ALLOC_STATE( occlusion_cntl, always, 2, "occlusion_cntl", 0 );
-		r300->hw.occlusion_cntl.cmd[0] = cmdpacket0(R300_RE_OCCLUSION_CNTL, 1);
-	ALLOC_STATE( cul, always, R300_CUL_CMDSIZE, "cul", 0 );
-		r300->hw.cul.cmd[R300_CUL_CMD_0] = cmdpacket0(R300_RE_CULL_CNTL, 1);
-	ALLOC_STATE( unk42C0, always, 3, "unk42C0", 0 );
-		r300->hw.unk42C0.cmd[0] = cmdpacket0(0x42C0, 2);
-	ALLOC_STATE( rc, always, R300_RC_CMDSIZE, "rc", 0 );
-		r300->hw.rc.cmd[R300_RC_CMD_0] = cmdpacket0(R300_RS_CNTL_0, 2);
-	ALLOC_STATE( ri, always, R300_RI_CMDSIZE, "ri", 0 );
-		r300->hw.ri.cmd[R300_RI_CMD_0] = cmdpacket0(R300_RS_INTERP_0, 8);
-	ALLOC_STATE( rr, variable, R300_RR_CMDSIZE, "rr", 0 );
-		r300->hw.rr.cmd[R300_RR_CMD_0] = cmdpacket0(R300_RS_ROUTE_0, 1);
-	ALLOC_STATE( unk43A4, always, 3, "unk43A4", 0 );
-		r300->hw.unk43A4.cmd[0] = cmdpacket0(0x43A4, 2);
-	ALLOC_STATE( unk43E8, always, 2, "unk43E8", 0 );
-		r300->hw.unk43E8.cmd[0] = cmdpacket0(0x43E8, 1);
-	ALLOC_STATE( fp, always, R300_FP_CMDSIZE, "fp", 0 );
-		r300->hw.fp.cmd[R300_FP_CMD_0] = cmdpacket0(R300_PFS_CNTL_0, 3);
-		r300->hw.fp.cmd[R300_FP_CMD_1] = cmdpacket0(R300_PFS_NODE_0, 4);
-	ALLOC_STATE( fpt, variable, R300_FPT_CMDSIZE, "fpt", 0 );
-		r300->hw.fpt.cmd[R300_FPT_CMD_0] = cmdpacket0(R300_PFS_TEXI_0, 0);
-	ALLOC_STATE( unk46A4, always, 6, "unk46A4", 0 );
-		r300->hw.unk46A4.cmd[0] = cmdpacket0(0x46A4, 5);
-	ALLOC_STATE( fpi[0], variable, R300_FPI_CMDSIZE, "fpi/0", 0 );
-		r300->hw.fpi[0].cmd[R300_FPI_CMD_0] = cmdpacket0(R300_PFS_INSTR0_0, 1);
-	ALLOC_STATE( fpi[1], variable, R300_FPI_CMDSIZE, "fpi/1", 1 );
-		r300->hw.fpi[1].cmd[R300_FPI_CMD_0] = cmdpacket0(R300_PFS_INSTR1_0, 1);
-	ALLOC_STATE( fpi[2], variable, R300_FPI_CMDSIZE, "fpi/2", 2 );
-		r300->hw.fpi[2].cmd[R300_FPI_CMD_0] = cmdpacket0(R300_PFS_INSTR2_0, 1);
-	ALLOC_STATE( fpi[3], variable, R300_FPI_CMDSIZE, "fpi/3", 3 );
-		r300->hw.fpi[3].cmd[R300_FPI_CMD_0] = cmdpacket0(R300_PFS_INSTR3_0, 1);
-	ALLOC_STATE( fogs, always, R300_FOGS_CMDSIZE, "fogs", 0 );
-		r300->hw.fogs.cmd[R300_FOGS_CMD_0] = cmdpacket0(R300_RE_FOG_STATE, 1);
-	ALLOC_STATE( fogc, always, R300_FOGC_CMDSIZE, "fogc", 0 );
-		r300->hw.fogc.cmd[R300_FOGC_CMD_0] = cmdpacket0(R300_FOG_COLOR_R, 3);
-	ALLOC_STATE( at, always, R300_AT_CMDSIZE, "at", 0 );
-		r300->hw.at.cmd[R300_AT_CMD_0] = cmdpacket0(R300_PP_ALPHA_TEST, 2);
-	ALLOC_STATE( unk4BD8, always, 2, "unk4BD8", 0 );
-		r300->hw.unk4BD8.cmd[0] = cmdpacket0(0x4BD8, 1);
-	ALLOC_STATE( fpp, variable, R300_FPP_CMDSIZE, "fpp", 0 );
-		r300->hw.fpp.cmd[R300_FPP_CMD_0] = cmdpacket0(R300_PFS_PARAM_0_X, 0);
-	ALLOC_STATE( unk4E00, always, 2, "unk4E00", 0 );
-		r300->hw.unk4E00.cmd[0] = cmdpacket0(0x4E00, 1);
-	ALLOC_STATE( bld, always, R300_BLD_CMDSIZE, "bld", 0 );
-		r300->hw.bld.cmd[R300_BLD_CMD_0] = cmdpacket0(R300_RB3D_CBLEND, 2);
-	ALLOC_STATE( cmk, always, R300_CMK_CMDSIZE, "cmk", 0 );
-		r300->hw.cmk.cmd[R300_CMK_CMD_0] = cmdpacket0(R300_RB3D_COLORMASK, 1);
-	ALLOC_STATE( blend_color, always, 4, "blend_color", 0 );
-		r300->hw.blend_color.cmd[0] = cmdpacket0(R300_RB3D_BLEND_COLOR, 3);
-	ALLOC_STATE( cb, always, R300_CB_CMDSIZE, "cb", 0 );
-		r300->hw.cb.cmd[R300_CB_CMD_0] = cmdpacket0(R300_RB3D_COLOROFFSET0, 1);
-		r300->hw.cb.cmd[R300_CB_CMD_1] = cmdpacket0(R300_RB3D_COLORPITCH0, 1);
-	ALLOC_STATE( unk4E50, always, 10, "unk4E50", 0 );
-		r300->hw.unk4E50.cmd[0] = cmdpacket0(0x4E50, 9);
-	ALLOC_STATE( unk4E88, always, 2, "unk4E88", 0 );
-		r300->hw.unk4E88.cmd[0] = cmdpacket0(0x4E88, 1);
-	ALLOC_STATE( unk4EA0, always, 3, "unk4EA0 R350 only", 0 );
-		r300->hw.unk4EA0.cmd[0] = cmdpacket0(0x4EA0, 2);
-	ALLOC_STATE( zs, always, R300_ZS_CMDSIZE, "zstencil", 0 );
-		r300->hw.zs.cmd[R300_ZS_CMD_0] = cmdpacket0(R300_RB3D_ZSTENCIL_CNTL_0, 3);
-	ALLOC_STATE( zstencil_format, always, 5, "zstencil_format", 0 );
-		r300->hw.zstencil_format.cmd[0] = cmdpacket0(R300_RB3D_ZSTENCIL_FORMAT, 4);
-	ALLOC_STATE( zb, always, R300_ZB_CMDSIZE, "zb", 0 );
-		r300->hw.zb.cmd[R300_ZB_CMD_0] = cmdpacket0(R300_RB3D_DEPTHOFFSET, 2);
-	ALLOC_STATE( unk4F28, always, 2, "unk4F28", 0 );
-		r300->hw.unk4F28.cmd[0] = cmdpacket0(0x4F28, 1);
-	ALLOC_STATE( unk4F30, always, 3, "unk4F30", 0 );
-		r300->hw.unk4F30.cmd[0] = cmdpacket0(0x4F30, 2);
-	ALLOC_STATE( unk4F44, always, 2, "unk4F44", 0 );
-		r300->hw.unk4F44.cmd[0] = cmdpacket0(0x4F44, 1);
-	ALLOC_STATE( unk4F54, always, 2, "unk4F54", 0 );
-		r300->hw.unk4F54.cmd[0] = cmdpacket0(0x4F54, 1);
-
-	ALLOC_STATE( vpi, vpu, R300_VPI_CMDSIZE, "vpi", 0 );
-		r300->hw.vpi.cmd[R300_VPI_CMD_0] = cmdvpu(R300_PVS_UPLOAD_PROGRAM, 0);
-	ALLOC_STATE( vpp, vpu, R300_VPP_CMDSIZE, "vpp", 0 );
-		r300->hw.vpp.cmd[R300_VPP_CMD_0] = cmdvpu(R300_PVS_UPLOAD_PARAMETERS, 0);
-	ALLOC_STATE( vps, vpu, R300_VPS_CMDSIZE, "vps", 0 );
-		r300->hw.vps.cmd[R300_VPS_CMD_0] = cmdvpu(R300_PVS_UPLOAD_POINTSIZE, 1);
-
-	/* Textures */
-	ALLOC_STATE( tex.filter, variable, mtu+1, "tex_filter", 0 );
-		r300->hw.tex.filter.cmd[R300_TEX_CMD_0] = cmdpacket0(R300_TX_FILTER_0, 0);
-
-	ALLOC_STATE( tex.filter_1, variable, mtu+1, "tex_filter_1", 0 );
-		r300->hw.tex.filter_1.cmd[R300_TEX_CMD_0] = cmdpacket0(R300_TX_FILTER1_0, 0);
-
-	ALLOC_STATE( tex.size, variable, mtu+1, "tex_size", 0 );
-		r300->hw.tex.size.cmd[R300_TEX_CMD_0] = cmdpacket0(R300_TX_SIZE_0, 0);
-
-	ALLOC_STATE( tex.format, variable, mtu+1, "tex_format", 0 );
-		r300->hw.tex.format.cmd[R300_TEX_CMD_0] = cmdpacket0(R300_TX_FORMAT_0, 0);
-
-	ALLOC_STATE( tex.pitch, variable, mtu+1, "tex_pitch", 0 );
-		r300->hw.tex.pitch.cmd[R300_TEX_CMD_0] = cmdpacket0(R300_TX_PITCH_0, 0);
-
-	ALLOC_STATE( tex.offset, variable, mtu+1, "tex_offset", 0 );
-		r300->hw.tex.offset.cmd[R300_TEX_CMD_0] = cmdpacket0(R300_TX_OFFSET_0, 0);
-
-	ALLOC_STATE( tex.chroma_key, variable, mtu+1, "tex_chroma_key", 0 );
-		r300->hw.tex.chroma_key.cmd[R300_TEX_CMD_0] = cmdpacket0(R300_TX_CHROMA_KEY_0, 0);
-
-	ALLOC_STATE( tex.border_color, variable, mtu+1, "tex_border_color", 0 );
-		r300->hw.tex.border_color.cmd[R300_TEX_CMD_0] = cmdpacket0(R300_TX_BORDER_COLOR_0, 0);
-
-
 	/* Setup the atom linked list */
 	make_empty_list(&r300->hw.atomlist);
 	r300->hw.atomlist.name = "atom-list";
 
-	insert_at_tail(&r300->hw.atomlist, &r300->hw.vpt);
-	insert_at_tail(&r300->hw.atomlist, &r300->hw.vap_cntl);
-	insert_at_tail(&r300->hw.atomlist, &r300->hw.vte);
-	insert_at_tail(&r300->hw.atomlist, &r300->hw.unk2134);
-	insert_at_tail(&r300->hw.atomlist, &r300->hw.vap_cntl_status);
-	insert_at_tail(&r300->hw.atomlist, &r300->hw.vir[0]);
-	insert_at_tail(&r300->hw.atomlist, &r300->hw.vir[1]);
-	insert_at_tail(&r300->hw.atomlist, &r300->hw.vic);
-	insert_at_tail(&r300->hw.atomlist, &r300->hw.unk21DC);
-	insert_at_tail(&r300->hw.atomlist, &r300->hw.unk221C);
-	insert_at_tail(&r300->hw.atomlist, &r300->hw.unk2220);
-	insert_at_tail(&r300->hw.atomlist, &r300->hw.unk2288);
-	insert_at_tail(&r300->hw.atomlist, &r300->hw.vof);
-	insert_at_tail(&r300->hw.atomlist, &r300->hw.pvs);
-	insert_at_tail(&r300->hw.atomlist, &r300->hw.gb_enable);
-	insert_at_tail(&r300->hw.atomlist, &r300->hw.gb_misc);
-	insert_at_tail(&r300->hw.atomlist, &r300->hw.txe);
-	insert_at_tail(&r300->hw.atomlist, &r300->hw.unk4200);
-	insert_at_tail(&r300->hw.atomlist, &r300->hw.unk4214);
-	insert_at_tail(&r300->hw.atomlist, &r300->hw.ps);
-	insert_at_tail(&r300->hw.atomlist, &r300->hw.unk4230);
-	insert_at_tail(&r300->hw.atomlist, &r300->hw.lcntl);
-	insert_at_tail(&r300->hw.atomlist, &r300->hw.unk4260);
-	insert_at_tail(&r300->hw.atomlist, &r300->hw.shade);
-	insert_at_tail(&r300->hw.atomlist, &r300->hw.polygon_mode);
-	insert_at_tail(&r300->hw.atomlist, &r300->hw.fogp);
-	insert_at_tail(&r300->hw.atomlist, &r300->hw.zbias_cntl);
-	insert_at_tail(&r300->hw.atomlist, &r300->hw.zbs);
-	insert_at_tail(&r300->hw.atomlist, &r300->hw.occlusion_cntl);
-	insert_at_tail(&r300->hw.atomlist, &r300->hw.cul);
-	insert_at_tail(&r300->hw.atomlist, &r300->hw.unk42C0);
-	insert_at_tail(&r300->hw.atomlist, &r300->hw.rc);
-	insert_at_tail(&r300->hw.atomlist, &r300->hw.ri);
-	insert_at_tail(&r300->hw.atomlist, &r300->hw.rr);
-	insert_at_tail(&r300->hw.atomlist, &r300->hw.unk43A4);
-	insert_at_tail(&r300->hw.atomlist, &r300->hw.unk43E8);
-	insert_at_tail(&r300->hw.atomlist, &r300->hw.fp);
-	insert_at_tail(&r300->hw.atomlist, &r300->hw.fpt);
-	insert_at_tail(&r300->hw.atomlist, &r300->hw.unk46A4);
-	insert_at_tail(&r300->hw.atomlist, &r300->hw.fpi[0]);
-	insert_at_tail(&r300->hw.atomlist, &r300->hw.fpi[1]);
-	insert_at_tail(&r300->hw.atomlist, &r300->hw.fpi[2]);
-	insert_at_tail(&r300->hw.atomlist, &r300->hw.fpi[3]);
-	insert_at_tail(&r300->hw.atomlist, &r300->hw.fogs);
-	insert_at_tail(&r300->hw.atomlist, &r300->hw.fogc);
-	insert_at_tail(&r300->hw.atomlist, &r300->hw.at);
-	insert_at_tail(&r300->hw.atomlist, &r300->hw.unk4BD8);
-	insert_at_tail(&r300->hw.atomlist, &r300->hw.fpp);
-	insert_at_tail(&r300->hw.atomlist, &r300->hw.unk4E00);
-	insert_at_tail(&r300->hw.atomlist, &r300->hw.bld);
-	insert_at_tail(&r300->hw.atomlist, &r300->hw.cmk);
-	insert_at_tail(&r300->hw.atomlist, &r300->hw.blend_color);
-	insert_at_tail(&r300->hw.atomlist, &r300->hw.cb);
-	insert_at_tail(&r300->hw.atomlist, &r300->hw.unk4E50);
-	insert_at_tail(&r300->hw.atomlist, &r300->hw.unk4E88);
-	insert_at_tail(&r300->hw.atomlist, &r300->hw.unk4EA0);
-	insert_at_tail(&r300->hw.atomlist, &r300->hw.zs);
-	insert_at_tail(&r300->hw.atomlist, &r300->hw.zstencil_format);
-	insert_at_tail(&r300->hw.atomlist, &r300->hw.zb);
-	insert_at_tail(&r300->hw.atomlist, &r300->hw.unk4F28);
-	insert_at_tail(&r300->hw.atomlist, &r300->hw.unk4F30);
-	insert_at_tail(&r300->hw.atomlist, &r300->hw.unk4F44);
-	insert_at_tail(&r300->hw.atomlist, &r300->hw.unk4F54);
+	/* Initialize state atoms */
+	ALLOC_STATE(vpt, always, R300_VPT_CMDSIZE, 0);
+	r300->hw.vpt.cmd[R300_VPT_CMD_0] = cmdpacket0(R300_SE_VPORT_XSCALE, 6);
+	ALLOC_STATE(vap_cntl, always, 2, 0);
+	r300->hw.vap_cntl.cmd[0] = cmdpacket0(R300_VAP_CNTL, 1);
+	ALLOC_STATE(vte, always, 3, 0);
+	r300->hw.vte.cmd[0] = cmdpacket0(R300_SE_VTE_CNTL, 2);
+	ALLOC_STATE(unk2134, always, 3, 0);
+	r300->hw.unk2134.cmd[0] = cmdpacket0(0x2134, 2);
+	ALLOC_STATE(vap_cntl_status, always, 2, 0);
+	r300->hw.vap_cntl_status.cmd[0] = cmdpacket0(R300_VAP_CNTL_STATUS, 1);
+	ALLOC_STATE(vir[0], variable, R300_VIR_CMDSIZE, 0);
+	r300->hw.vir[0].cmd[R300_VIR_CMD_0] =
+	    cmdpacket0(R300_VAP_INPUT_ROUTE_0_0, 1);
+	ALLOC_STATE(vir[1], variable, R300_VIR_CMDSIZE, 1);
+	r300->hw.vir[1].cmd[R300_VIR_CMD_0] =
+	    cmdpacket0(R300_VAP_INPUT_ROUTE_1_0, 1);
+	ALLOC_STATE(vic, always, R300_VIC_CMDSIZE, 0);
+	r300->hw.vic.cmd[R300_VIC_CMD_0] = cmdpacket0(R300_VAP_INPUT_CNTL_0, 2);
+	ALLOC_STATE(unk21DC, always, 2, 0);
+	r300->hw.unk21DC.cmd[0] = cmdpacket0(0x21DC, 1);
+	ALLOC_STATE(unk221C, always, 2, 0);
+	r300->hw.unk221C.cmd[0] = cmdpacket0(R300_VAP_UNKNOWN_221C, 1);
+	ALLOC_STATE(vap_clip, always, 5, 0);
+	r300->hw.vap_clip.cmd[0] = cmdpacket0(R300_VAP_CLIP_X_0, 4);
 
-	insert_at_tail(&r300->hw.atomlist, &r300->hw.vpi);
-	insert_at_tail(&r300->hw.atomlist, &r300->hw.vpp);
-	insert_at_tail(&r300->hw.atomlist, &r300->hw.vps);
+	if (has_tcl) {
+		ALLOC_STATE(unk2288, always, 2, 0);
+		r300->hw.unk2288.cmd[0] = cmdpacket0(R300_VAP_UNKNOWN_2288, 1);
+	}
 
-	insert_at_tail(&r300->hw.atomlist, &r300->hw.tex.filter);
-	insert_at_tail(&r300->hw.atomlist, &r300->hw.tex.filter_1);
-	insert_at_tail(&r300->hw.atomlist, &r300->hw.tex.size);
-	insert_at_tail(&r300->hw.atomlist, &r300->hw.tex.format);
-	insert_at_tail(&r300->hw.atomlist, &r300->hw.tex.pitch);
-	insert_at_tail(&r300->hw.atomlist, &r300->hw.tex.offset);
-	insert_at_tail(&r300->hw.atomlist, &r300->hw.tex.chroma_key);
-	insert_at_tail(&r300->hw.atomlist, &r300->hw.tex.border_color);
+	ALLOC_STATE(vof, always, R300_VOF_CMDSIZE, 0);
+	r300->hw.vof.cmd[R300_VOF_CMD_0] =
+	    cmdpacket0(R300_VAP_OUTPUT_VTX_FMT_0, 2);
+
+	if (has_tcl) {
+		ALLOC_STATE(pvs, always, R300_PVS_CMDSIZE, 0);
+		r300->hw.pvs.cmd[R300_PVS_CMD_0] =
+		    cmdpacket0(R300_VAP_PVS_CNTL_1, 3);
+	}
+
+	ALLOC_STATE(gb_enable, always, 2, 0);
+	r300->hw.gb_enable.cmd[0] = cmdpacket0(R300_GB_ENABLE, 1);
+	ALLOC_STATE(gb_misc, always, R300_GB_MISC_CMDSIZE, 0);
+	r300->hw.gb_misc.cmd[0] = cmdpacket0(R300_GB_MSPOS0, 5);
+	ALLOC_STATE(txe, always, R300_TXE_CMDSIZE, 0);
+	r300->hw.txe.cmd[R300_TXE_CMD_0] = cmdpacket0(R300_TX_ENABLE, 1);
+	ALLOC_STATE(unk4200, always, 5, 0);
+	r300->hw.unk4200.cmd[0] = cmdpacket0(0x4200, 4);
+	ALLOC_STATE(unk4214, always, 2, 0);
+	r300->hw.unk4214.cmd[0] = cmdpacket0(0x4214, 1);
+	ALLOC_STATE(ps, always, R300_PS_CMDSIZE, 0);
+	r300->hw.ps.cmd[0] = cmdpacket0(R300_RE_POINTSIZE, 1);
+	ALLOC_STATE(unk4230, always, 4, 0);
+	r300->hw.unk4230.cmd[0] = cmdpacket0(0x4230, 3);
+	ALLOC_STATE(lcntl, always, 2, 0);
+	r300->hw.lcntl.cmd[0] = cmdpacket0(R300_RE_LINE_CNT, 1);
+	ALLOC_STATE(unk4260, always, 4, 0);
+	r300->hw.unk4260.cmd[0] = cmdpacket0(0x4260, 3);
+	ALLOC_STATE(shade, always, 5, 0);
+	r300->hw.shade.cmd[0] = cmdpacket0(R300_RE_SHADE, 4);
+	ALLOC_STATE(polygon_mode, always, 4, 0);
+	r300->hw.polygon_mode.cmd[0] = cmdpacket0(R300_RE_POLYGON_MODE, 3);
+	ALLOC_STATE(fogp, always, 3, 0);
+	r300->hw.fogp.cmd[0] = cmdpacket0(R300_RE_FOG_SCALE, 2);
+	ALLOC_STATE(zbias_cntl, always, 2, 0);
+	r300->hw.zbias_cntl.cmd[0] = cmdpacket0(R300_RE_ZBIAS_CNTL, 1);
+	ALLOC_STATE(zbs, always, R300_ZBS_CMDSIZE, 0);
+	r300->hw.zbs.cmd[R300_ZBS_CMD_0] =
+	    cmdpacket0(R300_RE_ZBIAS_T_FACTOR, 4);
+	ALLOC_STATE(occlusion_cntl, always, 2, 0);
+	r300->hw.occlusion_cntl.cmd[0] = cmdpacket0(R300_RE_OCCLUSION_CNTL, 1);
+	ALLOC_STATE(cul, always, R300_CUL_CMDSIZE, 0);
+	r300->hw.cul.cmd[R300_CUL_CMD_0] = cmdpacket0(R300_RE_CULL_CNTL, 1);
+	ALLOC_STATE(unk42C0, always, 3, 0);
+	r300->hw.unk42C0.cmd[0] = cmdpacket0(0x42C0, 2);
+	ALLOC_STATE(rc, always, R300_RC_CMDSIZE, 0);
+	r300->hw.rc.cmd[R300_RC_CMD_0] = cmdpacket0(R300_RS_CNTL_0, 2);
+	ALLOC_STATE(ri, always, R300_RI_CMDSIZE, 0);
+	r300->hw.ri.cmd[R300_RI_CMD_0] = cmdpacket0(R300_RS_INTERP_0, 8);
+	ALLOC_STATE(rr, variable, R300_RR_CMDSIZE, 0);
+	r300->hw.rr.cmd[R300_RR_CMD_0] = cmdpacket0(R300_RS_ROUTE_0, 1);
+	ALLOC_STATE(unk43A4, always, 3, 0);
+	r300->hw.unk43A4.cmd[0] = cmdpacket0(0x43A4, 2);
+	ALLOC_STATE(unk43E8, always, 2, 0);
+	r300->hw.unk43E8.cmd[0] = cmdpacket0(0x43E8, 1);
+	ALLOC_STATE(fp, always, R300_FP_CMDSIZE, 0);
+	r300->hw.fp.cmd[R300_FP_CMD_0] = cmdpacket0(R300_PFS_CNTL_0, 3);
+	r300->hw.fp.cmd[R300_FP_CMD_1] = cmdpacket0(R300_PFS_NODE_0, 4);
+	ALLOC_STATE(fpt, variable, R300_FPT_CMDSIZE, 0);
+	r300->hw.fpt.cmd[R300_FPT_CMD_0] = cmdpacket0(R300_PFS_TEXI_0, 0);
+	ALLOC_STATE(unk46A4, always, 6, 0);
+	r300->hw.unk46A4.cmd[0] = cmdpacket0(0x46A4, 5);
+	ALLOC_STATE(fpi[0], variable, R300_FPI_CMDSIZE, 0);
+	r300->hw.fpi[0].cmd[R300_FPI_CMD_0] = cmdpacket0(R300_PFS_INSTR0_0, 1);
+	ALLOC_STATE(fpi[1], variable, R300_FPI_CMDSIZE, 1);
+	r300->hw.fpi[1].cmd[R300_FPI_CMD_0] = cmdpacket0(R300_PFS_INSTR1_0, 1);
+	ALLOC_STATE(fpi[2], variable, R300_FPI_CMDSIZE, 2);
+	r300->hw.fpi[2].cmd[R300_FPI_CMD_0] = cmdpacket0(R300_PFS_INSTR2_0, 1);
+	ALLOC_STATE(fpi[3], variable, R300_FPI_CMDSIZE, 3);
+	r300->hw.fpi[3].cmd[R300_FPI_CMD_0] = cmdpacket0(R300_PFS_INSTR3_0, 1);
+	ALLOC_STATE(fogs, always, R300_FOGS_CMDSIZE, 0);
+	r300->hw.fogs.cmd[R300_FOGS_CMD_0] = cmdpacket0(R300_RE_FOG_STATE, 1);
+	ALLOC_STATE(fogc, always, R300_FOGC_CMDSIZE, 0);
+	r300->hw.fogc.cmd[R300_FOGC_CMD_0] = cmdpacket0(R300_FOG_COLOR_R, 3);
+	ALLOC_STATE(at, always, R300_AT_CMDSIZE, 0);
+	r300->hw.at.cmd[R300_AT_CMD_0] = cmdpacket0(R300_PP_ALPHA_TEST, 2);
+	ALLOC_STATE(unk4BD8, always, 2, 0);
+	r300->hw.unk4BD8.cmd[0] = cmdpacket0(0x4BD8, 1);
+	ALLOC_STATE(fpp, variable, R300_FPP_CMDSIZE, 0);
+	r300->hw.fpp.cmd[R300_FPP_CMD_0] = cmdpacket0(R300_PFS_PARAM_0_X, 0);
+	ALLOC_STATE(unk4E00, always, 2, 0);
+	r300->hw.unk4E00.cmd[0] = cmdpacket0(0x4E00, 1);
+	ALLOC_STATE(bld, always, R300_BLD_CMDSIZE, 0);
+	r300->hw.bld.cmd[R300_BLD_CMD_0] = cmdpacket0(R300_RB3D_CBLEND, 2);
+	ALLOC_STATE(cmk, always, R300_CMK_CMDSIZE, 0);
+	r300->hw.cmk.cmd[R300_CMK_CMD_0] = cmdpacket0(R300_RB3D_COLORMASK, 1);
+	ALLOC_STATE(blend_color, always, 4, 0);
+	r300->hw.blend_color.cmd[0] = cmdpacket0(R300_RB3D_BLEND_COLOR, 3);
+	ALLOC_STATE(cb, always, R300_CB_CMDSIZE, 0);
+	r300->hw.cb.cmd[R300_CB_CMD_0] = cmdpacket0(R300_RB3D_COLOROFFSET0, 1);
+	r300->hw.cb.cmd[R300_CB_CMD_1] = cmdpacket0(R300_RB3D_COLORPITCH0, 1);
+	ALLOC_STATE(unk4E50, always, 10, 0);
+	r300->hw.unk4E50.cmd[0] = cmdpacket0(0x4E50, 9);
+	ALLOC_STATE(unk4E88, always, 2, 0);
+	r300->hw.unk4E88.cmd[0] = cmdpacket0(0x4E88, 1);
+	ALLOC_STATE(unk4EA0, always, 3, 0);
+	r300->hw.unk4EA0.cmd[0] = cmdpacket0(0x4EA0, 2);
+	ALLOC_STATE(zs, always, R300_ZS_CMDSIZE, 0);
+	r300->hw.zs.cmd[R300_ZS_CMD_0] =
+	    cmdpacket0(R300_RB3D_ZSTENCIL_CNTL_0, 3);
+	ALLOC_STATE(zstencil_format, always, 5, 0);
+	r300->hw.zstencil_format.cmd[0] =
+	    cmdpacket0(R300_RB3D_ZSTENCIL_FORMAT, 4);
+	ALLOC_STATE(zb, always, R300_ZB_CMDSIZE, 0);
+	r300->hw.zb.cmd[R300_ZB_CMD_0] = cmdpacket0(R300_RB3D_DEPTHOFFSET, 2);
+	ALLOC_STATE(unk4F28, always, 2, 0);
+	r300->hw.unk4F28.cmd[0] = cmdpacket0(0x4F28, 1);
+	ALLOC_STATE(unk4F30, always, 3, 0);
+	r300->hw.unk4F30.cmd[0] = cmdpacket0(0x4F30, 2);
+	ALLOC_STATE(unk4F44, always, 2, 0);
+	r300->hw.unk4F44.cmd[0] = cmdpacket0(0x4F44, 1);
+	ALLOC_STATE(unk4F54, always, 2, 0);
+	r300->hw.unk4F54.cmd[0] = cmdpacket0(0x4F54, 1);
+
+	/* VPU only on TCL */
+	if (has_tcl) {
+		ALLOC_STATE(vpi, vpu, R300_VPI_CMDSIZE, 0);
+		r300->hw.vpi.cmd[R300_VPI_CMD_0] =
+		    cmdvpu(R300_PVS_UPLOAD_PROGRAM, 0);
+		ALLOC_STATE(vpp, vpu, R300_VPP_CMDSIZE, 0);
+		r300->hw.vpp.cmd[R300_VPP_CMD_0] =
+		    cmdvpu(R300_PVS_UPLOAD_PARAMETERS, 0);
+		ALLOC_STATE(vps, vpu, R300_VPS_CMDSIZE, 0);
+		r300->hw.vps.cmd[R300_VPS_CMD_0] =
+		    cmdvpu(R300_PVS_UPLOAD_POINTSIZE, 1);
+	}
+
+	/* Textures */
+	ALLOC_STATE(tex.filter, variable, mtu + 1, 0);
+	r300->hw.tex.filter.cmd[R300_TEX_CMD_0] =
+	    cmdpacket0(R300_TX_FILTER_0, 0);
+
+	ALLOC_STATE(tex.filter_1, variable, mtu + 1, 0);
+	r300->hw.tex.filter_1.cmd[R300_TEX_CMD_0] =
+	    cmdpacket0(R300_TX_FILTER1_0, 0);
+
+	ALLOC_STATE(tex.size, variable, mtu + 1, 0);
+	r300->hw.tex.size.cmd[R300_TEX_CMD_0] = cmdpacket0(R300_TX_SIZE_0, 0);
+
+	ALLOC_STATE(tex.format, variable, mtu + 1, 0);
+	r300->hw.tex.format.cmd[R300_TEX_CMD_0] =
+	    cmdpacket0(R300_TX_FORMAT_0, 0);
+
+	ALLOC_STATE(tex.pitch, variable, mtu + 1, 0);
+	r300->hw.tex.pitch.cmd[R300_TEX_CMD_0] = cmdpacket0(R300_TX_PITCH_0, 0);
+
+	ALLOC_STATE(tex.offset, variable, mtu + 1, 0);
+	r300->hw.tex.offset.cmd[R300_TEX_CMD_0] =
+	    cmdpacket0(R300_TX_OFFSET_0, 0);
+
+	ALLOC_STATE(tex.chroma_key, variable, mtu + 1, 0);
+	r300->hw.tex.chroma_key.cmd[R300_TEX_CMD_0] =
+	    cmdpacket0(R300_TX_CHROMA_KEY_0, 0);
+
+	ALLOC_STATE(tex.border_color, variable, mtu + 1, 0);
+	r300->hw.tex.border_color.cmd[R300_TEX_CMD_0] =
+	    cmdpacket0(R300_TX_BORDER_COLOR_0, 0);
 
 	r300->hw.is_dirty = GL_TRUE;
 	r300->hw.all_dirty = GL_TRUE;
 
 	/* Initialize command buffer */
-	size = 256 * driQueryOptioni(&r300->radeon.optionCache, "command_buffer_size");
-	if (size < 2*r300->hw.max_state_size) {
-		size = 2*r300->hw.max_state_size+65535;
+	size =
+	    256 * driQueryOptioni(&r300->radeon.optionCache,
+				  "command_buffer_size");
+	if (size < 2 * r300->hw.max_state_size) {
+		size = 2 * r300->hw.max_state_size + 65535;
 	}
-	if (size > 64*256)
-		size = 64*256;
+	if (size > 64 * 256)
+		size = 64 * 256;
 
-	if (RADEON_DEBUG & (DEBUG_IOCTL|DEBUG_DMA)) {
+	if (RADEON_DEBUG & (DEBUG_IOCTL | DEBUG_DMA)) {
 		fprintf(stderr, "sizeof(drm_r300_cmd_header_t)=%zd\n",
 			sizeof(drm_r300_cmd_header_t));
 		fprintf(stderr, "sizeof(drm_radeon_cmd_buffer_t)=%zd\n",
 			sizeof(drm_radeon_cmd_buffer_t));
 		fprintf(stderr,
 			"Allocating %d bytes command buffer (max state is %d bytes)\n",
-			size*4, r300->hw.max_state_size*4);
+			size * 4, r300->hw.max_state_size * 4);
 	}
 
 	r300->cmdbuf.size = size;
-	r300->cmdbuf.cmd_buf = (uint32_t*)CALLOC(size*4);
+	r300->cmdbuf.cmd_buf = (uint32_t *) CALLOC(size * 4);
 	r300->cmdbuf.count_used = 0;
 	r300->cmdbuf.count_reemit = 0;
 }
-
 
 /**
  * Destroy the command buffer and state atoms.
  */
 void r300DestroyCmdBuf(r300ContextPtr r300)
 {
-	struct r300_state_atom* atom;
+	struct r300_state_atom *atom;
 
 	FREE(r300->cmdbuf.cmd_buf);
 
@@ -599,8 +552,7 @@ void r300EmitBlit(r300ContextPtr rmesa,
 	assert(w < (1 << 16));
 	assert(h < (1 << 16));
 
-	cmd = (drm_r300_cmd_header_t *) r300AllocCmdBuf(rmesa, 8,
-							__FUNCTION__);
+	cmd = (drm_r300_cmd_header_t *) r300AllocCmdBuf(rmesa, 8, __FUNCTION__);
 
 	cmd[0].header.cmd_type = R300_CMD_PACKET3;
 	cmd[0].header.pad0 = R300_CMD_PACKET3_RAW;
@@ -627,44 +579,8 @@ void r300EmitWait(r300ContextPtr rmesa, GLuint flags)
 
 	assert(!(flags & ~(R300_WAIT_2D | R300_WAIT_3D)));
 
-	cmd = (drm_r300_cmd_header_t *) r300AllocCmdBuf(rmesa, 1,
-							__FUNCTION__);
+	cmd = (drm_r300_cmd_header_t *) r300AllocCmdBuf(rmesa, 1, __FUNCTION__);
 	cmd[0].u = 0;
 	cmd[0].wait.cmd_type = R300_CMD_WAIT;
 	cmd[0].wait.flags = flags;
 }
-
-void r300EmitAOS(r300ContextPtr rmesa, GLuint nr, GLuint offset)
-{
-	int sz = 1 + (nr >> 1) * 3 + (nr & 1) * 2;
-	int i;
-	int cmd_reserved = 0;
-	int cmd_written = 0;
-	drm_radeon_cmd_header_t *cmd = NULL;
-
-	if (RADEON_DEBUG & DEBUG_VERTS)
-	    fprintf(stderr, "%s: nr=%d, ofs=0x%08x\n", __func__, nr, offset);
-
-	start_packet3(RADEON_CP_PACKET3_3D_LOAD_VBPNTR, sz-1);
-	e32(nr);
-	for(i=0;i+1<nr;i+=2){
-		e32(  (rmesa->state.aos[i].aos_size << 0)
-		      |(rmesa->state.aos[i].aos_stride << 8)
-		      |(rmesa->state.aos[i+1].aos_size << 16)
-		      |(rmesa->state.aos[i+1].aos_stride << 24)
-			);
-		e32(rmesa->state.aos[i].aos_offset +
-		    offset*4*rmesa->state.aos[i].aos_stride);
-		e32(rmesa->state.aos[i+1].aos_offset +
-		    offset*4*rmesa->state.aos[i+1].aos_stride);
-	}
-
-	if(nr & 1){
-		e32(  (rmesa->state.aos[nr-1].aos_size << 0)
-		      |(rmesa->state.aos[nr-1].aos_stride << 8)
-			);
-		e32(rmesa->state.aos[nr-1].aos_offset + 
-		    offset*4*rmesa->state.aos[nr-1].aos_stride);
-	}
-}
-

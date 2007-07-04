@@ -386,6 +386,45 @@ intelUpdateScreenFromSAREA(intelScreenPrivate * intelScreen,
       intelPrintSAREA(sarea);
 }
 
+GLboolean
+intelCreatePools(intelScreenPrivate *intelScreen)
+{
+   unsigned batchPoolSize = 1024*1024;
+   __DRIscreenPrivate * sPriv = intelScreen->driScrnPriv;
+
+   if (intelScreen->havePools)
+      return GL_TRUE;
+
+   batchPoolSize /= intelScreen->maxBatchSize;
+   intelScreen->regionPool = driDRMPoolInit(sPriv->fd);
+
+   if (!intelScreen->regionPool)
+      return GL_FALSE;
+
+   intelScreen->staticPool = driDRMStaticPoolInit(sPriv->fd);
+
+   if (!intelScreen->staticPool)
+      return GL_FALSE;
+
+   intelScreen->texPool = intelScreen->regionPool;
+
+   intelScreen->batchPool = driBatchPoolInit(sPriv->fd,
+                                             DRM_BO_FLAG_EXE |
+                                             DRM_BO_FLAG_MEM_TT |
+                                             DRM_BO_FLAG_MEM_LOCAL,
+                                             intelScreen->maxBatchSize, 
+					     batchPoolSize, 5);
+   if (!intelScreen->batchPool) {
+      fprintf(stderr, "Failed to initialize batch pool - possible incorrect agpgart installed\n");
+      return GL_FALSE;
+   }
+   
+   intel_recreate_static_regions(intelScreen);
+   intelScreen->havePools = GL_TRUE;
+
+   return GL_TRUE;
+}
+
 
 static GLboolean
 intelInitDriver(__DRIscreenPrivate * sPriv)
@@ -393,7 +432,6 @@ intelInitDriver(__DRIscreenPrivate * sPriv)
    intelScreenPrivate *intelScreen;
    I830DRIPtr gDRIPriv = (I830DRIPtr) sPriv->pDevPriv;
    drmI830Sarea *sarea;
-   unsigned batchPoolSize = 1024*1024;
 
    PFNGLXSCRENABLEEXTENSIONPROC glx_enable_extension =
       (PFNGLXSCRENABLEEXTENSIONPROC) (*dri_interface->
@@ -426,7 +464,6 @@ intelInitDriver(__DRIscreenPrivate * sPriv)
    intelScreen->deviceID = gDRIPriv->deviceID;
    if (intelScreen->deviceID == PCI_CHIP_I865_G)
       intelScreen->maxBatchSize = 4096;
-   batchPoolSize /= intelScreen->maxBatchSize;
 
    intelScreen->mem = gDRIPriv->mem;
    intelScreen->cpp = gDRIPriv->cpp;
@@ -517,31 +554,6 @@ intelInitDriver(__DRIscreenPrivate * sPriv)
       (*glx_enable_extension) (psc, "GLX_SGI_make_current_read");
    }
 
-   intelScreen->regionPool = driDRMPoolInit(sPriv->fd);
-
-   if (!intelScreen->regionPool)
-      return GL_FALSE;
-
-   intelScreen->staticPool = driDRMStaticPoolInit(sPriv->fd);
-
-   if (!intelScreen->staticPool)
-      return GL_FALSE;
-
-   intelScreen->texPool = intelScreen->regionPool;
-
-   intelScreen->batchPool = driBatchPoolInit(sPriv->fd,
-                                             DRM_BO_FLAG_EXE |
-                                             DRM_BO_FLAG_MEM_TT |
-                                             DRM_BO_FLAG_MEM_LOCAL,
-                                             intelScreen->maxBatchSize, 
-					     batchPoolSize, 5);
-   if (!intelScreen->batchPool) {
-      fprintf(stderr, "Failed to initialize batch pool - possible incorrect agpgart installed\n");
-      return GL_FALSE;
-   }
-
-   intel_recreate_static_regions(intelScreen);
-
    return GL_TRUE;
 }
 
@@ -553,9 +565,11 @@ intelDestroyScreen(__DRIscreenPrivate * sPriv)
 
    intelUnmapScreenRegions(intelScreen);
 
-   driPoolTakeDown(intelScreen->regionPool);
-   driPoolTakeDown(intelScreen->staticPool);
-   driPoolTakeDown(intelScreen->batchPool);
+   if (intelScreen->havePools) {
+      driPoolTakeDown(intelScreen->regionPool);
+      driPoolTakeDown(intelScreen->staticPool);
+      driPoolTakeDown(intelScreen->batchPool);
+   }
    FREE(intelScreen);
    sPriv->private = NULL;
 }
@@ -738,6 +752,10 @@ intelCreateContext(const __GLcontextModes * mesaVis,
    case PCI_CHIP_I915_GM:
    case PCI_CHIP_I945_G:
    case PCI_CHIP_I945_GM:
+   case PCI_CHIP_I945_GME:
+   case PCI_CHIP_G33_G:
+   case PCI_CHIP_Q35_G:
+   case PCI_CHIP_Q33_G:
       return i915CreateContext(mesaVis, driContextPriv, sharedContextPrivate);
 
    default:
@@ -762,7 +780,8 @@ static const struct __DriverAPIRec intelAPI = {
    .WaitForMSC = driWaitForMSC32,
    .WaitForSBC = NULL,
    .SwapBuffersMSC = NULL,
-   .CopySubBuffer = intelCopySubBuffer
+   .CopySubBuffer = intelCopySubBuffer,
+   .setTexOffset = intelSetTexOffset,
 };
 
 
@@ -892,6 +911,7 @@ __driCreateNewScreen_20050727(__DRInativeDisplay * dpy, int scrn,
                                   ddx_version, dri_version, drm_version,
                                   frame_buffer, pSAREA, fd,
                                   internal_api_version, &intelAPI);
+
    if (psp != NULL) {
       I830DRIPtr dri_priv = (I830DRIPtr) psp->pDevPriv;
       *driver_modes = intelFillInModes(dri_priv->cpp * 8,

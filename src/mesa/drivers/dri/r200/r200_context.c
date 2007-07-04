@@ -1,4 +1,3 @@
-/* $XFree86: xc/lib/GL/mesa/src/drv/r200/r200_context.c,v 1.3 2003/05/06 23:52:08 daenzer Exp $ */
 /*
 Copyright (C) The Weather Channel, Inc.  2002.  All Rights Reserved.
 
@@ -192,7 +191,6 @@ static const struct tnl_pipeline_stage *r200_pipeline[] = {
    &_tnl_texgen_stage,
    &_tnl_texture_transform_stage,
    &_tnl_point_attenuation_stage,
-   &_tnl_arb_vertex_program_stage,
    &_tnl_vertex_program_stage,
    /* Try again to go to tcl? 
     *     - no good for asymmetric-twoside (do with multipass)
@@ -680,7 +678,6 @@ r200MakeCurrent( __DRIcontextPrivate *driContextPriv,
 	 newCtx->dri.drawable = driDrawPriv;
 
 	 r200SetCliprects(newCtx);
-	 r200UpdateWindow( newCtx->glCtx );
 	 r200UpdateViewportOffset( newCtx->glCtx );
       }
 

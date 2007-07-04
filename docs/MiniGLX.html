@@ -88,19 +88,6 @@ driver (such as <code>radeon_dri.so</code>) at runtime. &nbsp;The
 environment variable <code>LIBGL_DRIVERS_PATH</code> should name the
 directory where these modules are located.<br>
 <br>
-Prior to running a MiniGXL application, the following kernel modules
-must be installed:<br>
-<br>
-<div style="margin-left: 40px;"> agpgart.o<br>
-radeonfb.o &nbsp;(assuming Radeon hardware)<br>
-radeon.o &nbsp;(assuming Radeon hardware)<br>
-</div>
-<code></code> <br>
-Finally, MiniGLX reads a configuration file (by default,<code>
-/etc/miniglx.conf</code>) to determine basic configuration information.
-&nbsp;The configuration file may also be located in the directory
-specified by the <code>MINIGLX_CONF</code> environment variable).<br>
-<br>
 The remainder of this section describes the MiniGLX API functions.<br>
 <br>
 <h2>3.1 Initialization</h2>
