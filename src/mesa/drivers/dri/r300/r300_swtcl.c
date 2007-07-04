@@ -668,6 +668,11 @@ void r300InitSwtcl(GLcontext *ctx)
 
 	_tnl_need_projected_coords( ctx, GL_FALSE );
 	r300ChooseRenderState(ctx);
+
+	_mesa_validate_all_lighting_tables( ctx ); 
+
+	tnl->Driver.NotifyMaterialChange = 
+	  _mesa_validate_all_lighting_tables;
 }
 
 void r300DestroySwtcl(GLcontext *ctx)
