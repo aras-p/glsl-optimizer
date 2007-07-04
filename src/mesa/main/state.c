@@ -35,10 +35,10 @@
 #include "accum.h"
 #include "api_loopback.h"
 #if FEATURE_ARB_vertex_program || FEATURE_ARB_fragment_program
-#include "arbprogram.h"
+#include "shader/arbprogram.h"
 #endif
 #if FEATURE_ATI_fragment_shader
-#include "atifragshader.h"
+#include "shader/atifragshader.h"
 #endif
 #include "attrib.h"
 #include "blend.h"
@@ -85,18 +85,18 @@
 #include "mtypes.h"
 #include "varray.h"
 #if FEATURE_NV_vertex_program
-#include "nvprogram.h"
+#include "shader/nvprogram.h"
 #endif
 #if FEATURE_NV_fragment_program
-#include "nvprogram.h"
-#include "program.h"
+#include "shader/nvprogram.h"
+#include "shader/program.h"
 #include "texenvprogram.h"
 #endif
 #if FEATURE_ARB_shader_objects
 #include "shaders.h"
 #endif
 #include "debug.h"
-#include "dispatch.h"
+#include "glapi/dispatch.h"
 
 
 

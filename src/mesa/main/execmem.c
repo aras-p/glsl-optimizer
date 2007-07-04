@@ -32,7 +32,7 @@
 
 
 #include "imports.h"
-#include "glthread.h"
+#include "glapi/glthread.h"
 
 
 

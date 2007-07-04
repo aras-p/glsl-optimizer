@@ -97,12 +97,9 @@
 #include "fog.h"
 #include "framebuffer.h"
 #include "get.h"
-#include "glthread.h"
-#include "glapioffsets.h"
 #include "histogram.h"
 #include "hint.h"
 #include "hash.h"
-#include "atifragshader.h"
 #include "light.h"
 #include "lines.h"
 #include "macros.h"
@@ -110,9 +107,6 @@
 #include "pixel.h"
 #include "points.h"
 #include "polygon.h"
-#if FEATURE_NV_vertex_program || FEATURE_NV_fragment_program
-#include "program.h"
-#endif
 #include "queryobj.h"
 #include "rastpos.h"
 #include "simple_list.h"
@@ -126,13 +120,19 @@
 #include "varray.h"
 #include "version.h"
 #include "vtxfmt.h"
+#include "glapi/glthread.h"
+#include "glapi/glapioffsets.h"
+#if FEATURE_NV_vertex_program || FEATURE_NV_fragment_program
+#include "shader/program.h"
+#endif
+#include "shader/shader_api.h"
+#include "shader/atifragshader.h"
 #if _HAVE_FULL_GL
 #include "math/m_translate.h"
 #include "math/m_matrix.h"
 #include "math/m_xform.h"
 #include "math/mathmod.h"
 #endif
-#include "shader_api.h"
 
 #ifdef USE_SPARC_ASM
 #include "sparc/sparc.h"

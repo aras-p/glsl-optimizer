@@ -28,12 +28,12 @@
  * \author Michal Krol
  */
 
-#include "imports.h"
+#include "main/imports.h"
+#include "shader/prog_instruction.h"
 #include "slang_typeinfo.h"
 #include "slang_compile.h"
 #include "slang_log.h"
 #include "slang_mem.h"
-#include "prog_instruction.h"
 
 
 /**

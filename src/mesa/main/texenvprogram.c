@@ -28,10 +28,10 @@
 #include "glheader.h"
 #include "macros.h"
 #include "enums.h"
-#include "prog_parameter.h"
-#include "prog_instruction.h"
-#include "prog_print.h"
-#include "prog_statevars.h"
+#include "shader/prog_parameter.h"
+#include "shader/prog_instruction.h"
+#include "shader/prog_print.h"
+#include "shader/prog_statevars.h"
 #include "texenvprogram.h"
 
 /**
