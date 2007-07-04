@@ -72,6 +72,7 @@ intelEmitImmediateColorExpandBlit(struct intel_context *intel,
 				  GLuint dst_offset,
 				  GLboolean dst_tiled,
 				  GLshort dst_x, GLshort dst_y, 
-				  GLshort w, GLshort h);
+				  GLshort w, GLshort h,
+				  GLenum logic_op );
 
 #endif
