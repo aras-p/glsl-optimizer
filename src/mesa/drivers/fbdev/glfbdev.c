@@ -1,8 +1,8 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.5.1
+ * Version:  7.1
  *
- * Copyright (C) 1999-2006  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2007  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -63,6 +63,9 @@
 #include "drivers/common/driverfuncs.h"
 
 
+/**
+ * Pixel formats we support:
+ */
 #define PF_B8G8R8     1
 #define PF_B8G8R8A8   2
 #define PF_B5G6R5     3
@@ -70,7 +73,7 @@
 #define PF_CI8        5
 
 
-/*
+/**
  * Derived from Mesa's GLvisual class.
  */
 struct GLFBDevVisualRec {
@@ -80,7 +83,7 @@ struct GLFBDevVisualRec {
    int pixelFormat;
 };
 
-/*
+/**
  * Derived from Mesa's GLframebuffer class.
  */
 struct GLFBDevBufferRec {
@@ -92,7 +95,7 @@ struct GLFBDevBufferRec {
    GLuint bytesPerPixel;
 };
 
-/*
+/**
  * Derived from Mesa's GLcontext class.
  */
 struct GLFBDevContextRec {
@@ -103,7 +106,7 @@ struct GLFBDevContextRec {
    GLFBDevBufferPtr curBuffer;
 };
 
-/*
+/**
  * Derived from Mesa's gl_renderbuffer class.
  */
 struct GLFBDevRenderbufferRec {
@@ -112,11 +115,6 @@ struct GLFBDevRenderbufferRec {
    GLuint rowStride;               /* in bytes */
    GLboolean mallocedBuffer;
 };
-
-
-
-#define GLFBDEV_CONTEXT(CTX)  ((GLFBDevContextPtr) (CTX))
-#define GLFBDEV_BUFFER(BUF)  ((GLFBDevBufferPtr) (BUF))
 
 
 /**********************************************************************/
@@ -151,7 +149,7 @@ update_state( GLcontext *ctx, GLuint new_state )
 static void
 get_buffer_size( GLframebuffer *buffer, GLuint *width, GLuint *height )
 {
-   const GLFBDevBufferPtr fbdevbuffer = GLFBDEV_BUFFER(buffer);
+   const GLFBDevBufferPtr fbdevbuffer = (GLFBDevBufferPtr) buffer;
    *width = fbdevbuffer->var.xres;
    *height = fbdevbuffer->var.yres;
 }
@@ -389,8 +387,8 @@ glFBDevCreateVisual( const struct fb_fix_screeninfo *fixInfo,
          /* ignored for now */
          break;
       case GLFBDEV_MULTISAMPLE:
-	 numSamples = attrib[1];
-	 attrib++;
+         numSamples = attrib[1];
+         attrib++;
          break;
       default:
          /* unexpected token */
@@ -406,36 +404,36 @@ glFBDevCreateVisual( const struct fb_fix_screeninfo *fixInfo,
       alphaBits = varInfo->transp.length;
 
       if (fixInfo->visual == FB_VISUAL_TRUECOLOR ||
-	  fixInfo->visual == FB_VISUAL_DIRECTCOLOR) {
-	 if(varInfo->bits_per_pixel == 24
-	    && varInfo->red.offset == 16
-	    && varInfo->green.offset == 8
-	    && varInfo->blue.offset == 0)
-	    vis->pixelFormat = PF_B8G8R8;
-
-	 else if(varInfo->bits_per_pixel == 32
-		 && varInfo->red.offset == 16
-		 && varInfo->green.offset == 8
-		 && varInfo->blue.offset == 0)
-	    vis->pixelFormat = PF_B8G8R8A8;
-
-	 else if(varInfo->bits_per_pixel == 16
-		 && varInfo->red.offset == 11
-		 && varInfo->green.offset == 5
-		 && varInfo->blue.offset == 0)
-	    vis->pixelFormat = PF_B5G6R5;
-
-	 else if(varInfo->bits_per_pixel == 16
-		 && varInfo->red.offset == 10
-		 && varInfo->green.offset == 5
-		 && varInfo->blue.offset == 0)
-	    vis->pixelFormat = PF_B5G5R5;
-
-	 else {
-	    _mesa_problem(NULL, "Unsupported fbdev RGB visual/bitdepth!\n");
-	    _mesa_free(vis);
-	    return NULL;
-	 }
+          fixInfo->visual == FB_VISUAL_DIRECTCOLOR) {
+         if (varInfo->bits_per_pixel == 24
+             && varInfo->red.offset == 16
+             && varInfo->green.offset == 8
+             && varInfo->blue.offset == 0) {
+            vis->pixelFormat = PF_B8G8R8;
+         }
+         else if (varInfo->bits_per_pixel == 32
+                  && varInfo->red.offset == 16
+                  && varInfo->green.offset == 8
+                  && varInfo->blue.offset == 0) {
+            vis->pixelFormat = PF_B8G8R8A8;
+         }
+         else if (varInfo->bits_per_pixel == 16
+                  && varInfo->red.offset == 11
+                  && varInfo->green.offset == 5
+                  && varInfo->blue.offset == 0) {
+            vis->pixelFormat = PF_B5G6R5;
+         }
+         else if (varInfo->bits_per_pixel == 16
+                  && varInfo->red.offset == 10
+                  && varInfo->green.offset == 5
+                  && varInfo->blue.offset == 0) {
+            vis->pixelFormat = PF_B5G5R5;
+         }
+         else {
+            _mesa_problem(NULL, "Unsupported fbdev RGB visual/bitdepth!\n");
+            _mesa_free(vis);
+            return NULL;
+         }
       }
    }
    else {
@@ -578,7 +576,7 @@ new_glfbdev_renderbuffer(void *bufferStart, const GLFBDevVisualPtr visual)
 
       rb->rowStride = visual->var.xres_virtual * visual->var.bits_per_pixel / 8;
       rb->bottom = (GLubyte *) bufferStart
-	  + (visual->var.yres - 1) * rb->rowStride;
+                 + (visual->var.yres - 1) * rb->rowStride;
 
       rb->Base.Width = visual->var.xres;
       rb->Base.Height = visual->var.yres;
@@ -635,7 +633,7 @@ glFBDevCreateBuffer( const struct fb_fix_screeninfo *fixInfo,
                           &frontrb->Base);
    /* add back renderbuffer */
    if (visual->glvisual.doubleBufferMode) {
-      int malloced = !backBuffer;
+      const int malloced = !backBuffer;
       if (malloced) {
          /* malloc a back buffer */
          backBuffer = _mesa_malloc(size);
@@ -647,8 +645,11 @@ glFBDevCreateBuffer( const struct fb_fix_screeninfo *fixInfo,
       }
 
       backrb = new_glfbdev_renderbuffer(backBuffer, visual);
-      if(malloced)
-	 backrb->mallocedBuffer = GL_TRUE;
+      if (!backrb) {
+         /* out of mem */
+         return NULL;
+      }
+      backrb->mallocedBuffer = malloced;
 
       _mesa_add_renderbuffer(&buf->glframebuffer, BUFFER_BACK_LEFT,
                              &backrb->Base);
@@ -682,16 +683,10 @@ glFBDevDestroyBuffer( GLFBDevBufferPtr buffer )
       if (buffer == curDraw || buffer == curRead) {
          glFBDevMakeCurrent( NULL, NULL, NULL);
       }
-#if 0
-      /* free the software depth, stencil, accum buffers */
-      _mesa_free_framebuffer_data(&buffer->glframebuffer);
-      _mesa_free(buffer);
-#else
       {
          struct gl_framebuffer *fb = &buffer->glframebuffer;
          _mesa_unreference_framebuffer(&fb);
       }
-#endif
    }
 }
 
