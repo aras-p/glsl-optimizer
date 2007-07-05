@@ -132,6 +132,7 @@ static void prealloc_reg(struct brw_wm_compile *c)
     c->prog_data.urb_read_length = nr_interp_regs * 2;
     c->prog_data.curb_read_length = c->nr_creg;
     c->ret_reg = brw_uw1_reg(BRW_GENERAL_REGISTER_FILE, c->reg_index, 0);
+    c->emit_mask_reg = brw_uw1_reg(BRW_GENERAL_REGISTER_FILE, c->reg_index, 1);
     c->reg_index++;
 }
 
@@ -768,6 +769,17 @@ static void emit_lrp(struct brw_wm_compile *c,
     }
 }
 
+static void emit_kil(struct brw_wm_compile *c)
+{
+	struct brw_compile *p = &c->func;
+	struct brw_reg depth = retype(brw_vec1_grf(0, 0), BRW_REGISTER_TYPE_UW);
+	brw_push_insn_state(p);
+	brw_set_mask_control(p, BRW_MASK_DISABLE);
+	brw_NOT(p, c->emit_mask_reg, brw_mask_reg(1)); //IMASK
+	brw_AND(p, depth, c->emit_mask_reg, depth);
+	brw_pop_insn_state(p);
+}
+
 static void emit_mad(struct brw_wm_compile *c,
 		struct prog_instruction *inst)
 {
@@ -1106,6 +1118,9 @@ static void brw_wm_emit_glsl(struct brw_wm_compile *c)
 		break;
 	    case OPCODE_TXB:
 		emit_txb(c, inst);
+		break;
+	    case OPCODE_KIL_NV:
+		emit_kil(c);
 		break;
 	    case OPCODE_IF:
 		assert(if_insn < MAX_IFSN);

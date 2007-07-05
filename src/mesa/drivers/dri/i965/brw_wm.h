@@ -237,6 +237,7 @@ struct brw_wm_compile {
 	struct brw_reg reg;
    } wm_regs[PROGRAM_PAYLOAD+1][256][4];
    struct brw_reg ret_reg;
+   struct brw_reg emit_mask_reg;
    GLuint reg_index;
    GLuint tmp_index;
 };
