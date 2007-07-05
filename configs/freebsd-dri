@@ -9,7 +9,7 @@ CONFIG_NAME = freebsd-dri
 CC = gcc
 CXX = g++
 WARN_FLAGS = -Wall
-OPT_FLAGS = -O
+OPT_FLAGS = -O -g
 
 EXPAT_INCLUDES = -I/usr/local/include
 X11_INCLUDES = -I/usr/X11R6/include
