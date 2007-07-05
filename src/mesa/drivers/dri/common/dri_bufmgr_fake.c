@@ -41,7 +41,11 @@
 #include "mm.h"
 #include "imports.h"
 
+#if 0
+#define DBG(...) _mesa_printf(__VA_ARGS__)
+#else
 #define DBG(...)
+#endif
 
 /* Internal flags:
  */
@@ -570,6 +574,9 @@ dri_fake_bo_alloc(dri_bufmgr *bufmgr, const char *name,
    bo_fake->flags = 0;
    bo_fake->is_static = GL_FALSE;
 
+   DBG("drm_bo_alloc: (buf %d: %s, %d kb)\n", bo_fake->id, bo_fake->name,
+       bo_fake->bo.size / 1024);
+
    return &bo_fake->bo;
 }
 
@@ -592,9 +599,13 @@ dri_fake_bo_alloc_static(dri_bufmgr *bufmgr, const char *name,
    bo_fake->bo.virtual = virtual;
    bo_fake->bo.bufmgr = bufmgr;
    bo_fake->refcount = 1;
+   bo_fake->id = ++bufmgr_fake->buf_nr;
    bo_fake->name = name;
    bo_fake->flags = DRM_BO_FLAG_NO_EVICT | DRM_BO_FLAG_NO_MOVE;
    bo_fake->is_static = GL_TRUE;
+
+   DBG("drm_bo_alloc_static: (buf %d: %s, %d kb)\n", bo_fake->id, bo_fake->name,
+       bo_fake->bo.size / 1024);
 
    return &bo_fake->bo;
 }
@@ -648,7 +659,8 @@ dri_fake_bo_map(dri_bo *bo, GLboolean write_enable)
 
    _glthread_LOCK_MUTEX(bufmgr_fake->mutex);
    {
-      DBG("bmMapBuffer %d\n", bo_fake->id);
+      DBG("drm_bo_map: (buf %d: %s, %d kb)\n", bo_fake->id, bo_fake->name,
+	  bo_fake->bo.size / 1024);
 
       if (bo->virtual != NULL) {
 	 _mesa_printf("%s: already mapped\n", __FUNCTION__);
@@ -698,6 +710,9 @@ dri_fake_bo_unmap(dri_bo *bo)
    if (bo == NULL)
       return 0;
 
+   DBG("drm_bo_unmap: (buf %d: %s, %d kb)\n", bo_fake->id, bo_fake->name,
+       bo_fake->bo.size / 1024);
+
    bo->virtual = NULL;
 
    return 0;
@@ -713,22 +728,32 @@ dri_fake_bo_validate(dri_bo *bo, unsigned int flags)
     * different flags.  See drmAddValidateItem().
     */
 
+   DBG("drm_bo_validate: (buf %d: %s, %d kb)\n", bo_fake->id, bo_fake->name,
+       bo_fake->bo.size / 1024);
    bufmgr_fake = (dri_bufmgr_fake *)bo->bufmgr;
 
    _glthread_LOCK_MUTEX(bufmgr_fake->mutex);
    {
+      if (bo_fake->is_static) {
+	 /* Add it to the needs-fence list */
+	 bufmgr_fake->need_fence = 1;
+	 _glthread_UNLOCK_MUTEX(bufmgr_fake->mutex);
+	 return 0;
+      }
+
       /* Allocate the card memory */
       if (!bo_fake->block && !evict_and_alloc_block(bo)) {
 	 bufmgr_fake->fail = 1;
 	 _glthread_UNLOCK_MUTEX(bufmgr_fake->mutex);
+	 DBG("Failed to validate buf %d:%s\n", bo_fake->id, bo_fake->name);
 	 return -1;
       }
 
       assert(bo_fake->block);
       assert(bo_fake->block->bo == &bo_fake->bo);
 
-      DBG("Add buf %d (block %p, dirty %d) to referenced list\n",
-	  bo_fake->id, bo_fake->block, bo_fake->dirty);
+      DBG("Add buf %d:%s (block %p, dirty %d) to referenced list\n",
+	  bo_fake->id, bo_fake->name, bo_fake->block, bo_fake->dirty);
 
       move_to_tail(&bufmgr_fake->referenced, bo_fake->block);
       bo_fake->block->referenced = 1;
@@ -737,8 +762,8 @@ dri_fake_bo_validate(dri_bo *bo, unsigned int flags)
 
       /* Upload the buffer contents if necessary */
       if (bo_fake->dirty) {
-	 DBG("Upload dirty buf %d (%s) sz %d offset 0x%x\n", bo_fake->id,
-	     bo_fake->name, bo->size, block->mem->ofs);
+	 DBG("Upload dirty buf %d:%s, sz %d offset 0x%x\n", bo_fake->id,
+	     bo_fake->name, bo->size, bo_fake->block->mem->ofs);
 
 	 assert(!(bo_fake->flags &
 		  (BM_NO_BACKING_STORE|DRM_BO_FLAG_NO_EVICT)));
@@ -786,6 +811,8 @@ dri_fake_fence_validated(dri_bufmgr *bufmgr, const char *name,
    fence_blocks(bufmgr_fake, cookie);
    _glthread_UNLOCK_MUTEX(bufmgr_fake->mutex);
 
+   DBG("drm_fence_validated: 0x%08x cookie\n", fence_fake->fence_cookie);
+
    return &fence_fake->fence;
 }
 
@@ -823,6 +850,8 @@ dri_fake_fence_wait(dri_fence *fence)
 {
    dri_fence_fake *fence_fake = (dri_fence_fake *)fence;
    dri_bufmgr_fake *bufmgr_fake = (dri_bufmgr_fake *)fence->bufmgr;
+
+   DBG("drm_fence_wait: 0x%08x cookie\n", fence_fake->fence_cookie);
 
    _glthread_LOCK_MUTEX(bufmgr_fake->mutex);
    _fence_wait_internal(bufmgr_fake, fence_fake->fence_cookie);

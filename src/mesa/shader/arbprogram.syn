@@ -21,13 +21,13 @@
  * AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
- 
+
  /**
  * \file arbprogram.syn
  * ARB_fragment/vertex_program syntax
  * \author Michal Krol
  */
- 
+
 .syntax program;
 
 /*
@@ -226,8 +226,11 @@
 .emtcode TEXTARGET_SHADOW1D                         0x06
 .emtcode TEXTARGET_SHADOW2D                         0x07
 .emtcode TEXTARGET_SHADOWRECT                       0x08
+/* GL_MESA_texture_array */
 .emtcode TEXTARGET_1D_ARRAY                         0x09
 .emtcode TEXTARGET_2D_ARRAY                         0x0a
+.emtcode TEXTARGET_SHADOW1D_ARRAY                   0x0b
+.emtcode TEXTARGET_SHADOW2D_ARRAY                   0x0c
 
 /* face type */
 .emtcode FACE_FRONT                                 0x00
@@ -912,6 +915,7 @@ fragment program
                              | "CUBE"
                              | "RECT"
                              | <shadowTarget> (if option ARB_fragment_program_shadow present)
+                             | <arrayTarget> (if option MESA_texture_array present)
 */
 texTarget
     "1D" .emit TEXTARGET_1D .or
@@ -920,19 +924,38 @@ texTarget
     .if (texture_rectangle != 0x00) "RECT" .emit TEXTARGET_RECT .or
     "CUBE" .emit TEXTARGET_CUBE .or
     .if (ARB_fragment_program_shadow != 0x00) shadowTarget .or
-    .if (MESA_texture_array != 0x00) "ARRAY1D" .emit TEXTARGET_1D_ARRAY .or
-    .if (MESA_texture_array != 0x00) "ARRAY2D" .emit TEXTARGET_2D_ARRAY;
+    .if (MESA_texture_array != 0x00) arrayTarget;
 
 /*
 GL_ARB_fragment_program_shadow
     <shadowTarget>         ::= "SHADOW1D"
                              | "SHADOW2D"
                              | "SHADOWRECT"
+                             | <shadowArrayTarget> (if option MESA_texture_array present)
 */
 shadowTarget
     "SHADOW1D" .emit TEXTARGET_SHADOW1D .or
     "SHADOW2D" .emit TEXTARGET_SHADOW2D .or
-    .if (texture_rectangle != 0x00) "SHADOWRECT" .emit TEXTARGET_SHADOWRECT;
+    .if (texture_rectangle != 0x00) "SHADOWRECT" .emit TEXTARGET_SHADOWRECT .or
+    .if (MESA_texture_array != 0x00) shadowArrayTarget;
+
+/*
+GL_MESA_texture_array
+
+    <arrayTarget>         ::= "ARRAY1D"
+                             | "ARRAY2D"
+
+    <shadowArrayTarget>   ::= "SHADOWARRAY1D"
+                             | "SHADOWARRAY2D"
+*/
+
+arrayTarget
+    "ARRAY1D" .emit TEXTARGET_1D_ARRAY .or
+    "ARRAY2D" .emit TEXTARGET_2D_ARRAY;
+
+shadowArrayTarget
+    "SHADOWARRAY1D" .emit TEXTARGET_SHADOW1D_ARRAY .or
+    "SHADOWARRAY2D" .emit TEXTARGET_SHADOW2D_ARRAY;
 
 /*
 fragment program

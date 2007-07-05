@@ -1,0 +1,740 @@
+/* -*- c-basic-offset: 4 -*- */
+/*
+ * Copyright © 2007 Intel Corporation
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
+ * to deal in the Software without restriction, including without limitation
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * and/or sell copies of the Software, and to permit persons to whom the
+ * Software is furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice (including the next
+ * paragraph) shall be included in all copies or substantial portions of the
+ * Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
+ * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
+ * IN THE SOFTWARE.
+ *
+ * Authors:
+ *    Eric Anholt <eric@anholt.net>
+ *
+ */
+
+#include <stdio.h>
+#include <stdarg.h>
+#include <inttypes.h>
+
+#include "i915_disasm.h"
+#include "i915_reg.h"
+
+#define BUFFER_FAIL(_count, _len, _name) do {			\
+    fprintf(out, "Buffer size too small in %s (%d < %d)\n",	\
+	    (_name), (_count), (_len));				\
+    (*failures)++;						\
+    return count;						\
+} while (0)
+
+static FILE *out;
+static uint32_t saved_s2 = 0, saved_s4 = 0;
+static char saved_s2_set = 0, saved_s4_set = 0;
+
+static float
+int_as_float(uint32_t intval)
+{
+    union intfloat {
+	uint32_t i;
+	float f;
+    } uval;
+
+    uval.i = intval;
+    return uval.f;
+}
+
+static void
+instr_out(uint32_t *data, uint32_t hw_offset, unsigned int index,
+	  char *fmt, ...)
+{
+    va_list va;
+
+    fprintf(out, "0x%08x: 0x%08x: ", hw_offset + index * 4, data[index]);
+    va_start(va, fmt);
+    vfprintf(out, fmt, va);
+    va_end(va);
+}
+
+
+static int
+decode_mi(uint32_t *data, int count, uint32_t hw_offset, int *failures)
+{
+    unsigned int opcode;
+
+    struct {
+	uint32_t opcode;
+	int min_len;
+	int max_len;
+	char *name;
+    } opcodes_mi[] = {
+	{ 0x08, 1, 1, "MI_ARB_ON_OFF" },
+	{ 0x0a, 1, 1, "MI_BATCH_BUFFER_END" },
+	{ 0x31, 2, 2, "MI_BATCH_BUFFER_START" },
+	{ 0x14, 3, 3, "MI_DISPLAY_BUFFER_INFO" },
+	{ 0x04, 1, 1, "MI_FLUSH" },
+	{ 0x22, 3, 3, "MI_LOAD_REGISTER_IMM" },
+	{ 0x13, 2, 2, "MI_LOAD_SCAN_LINES_EXCL" },
+	{ 0x12, 2, 2, "MI_LOAD_SCAN_LINES_INCL" },
+	{ 0x00, 1, 1, "MI_NOOP" },
+	{ 0x11, 2, 2, "MI_OVERLAY_FLIP" },
+	{ 0x07, 1, 1, "MI_REPORT_HEAD" },
+	{ 0x18, 2, 2, "MI_SET_CONTEXT" },
+	{ 0x20, 3, 4, "MI_STORE_DATA_IMM" },
+	{ 0x21, 3, 4, "MI_STORE_DATA_INDEX" },
+	{ 0x24, 3, 3, "MI_STORE_REGISTER_MEM" },
+	{ 0x02, 1, 1, "MI_USER_INTERRUPT" },
+	{ 0x03, 1, 1, "MI_WAIT_FOR_EVENT" },
+    };
+
+
+    for (opcode = 0; opcode < sizeof(opcodes_mi) / sizeof(opcodes_mi[0]);
+	 opcode++) {
+	if ((data[0] & 0x1e000000) >> 23 == opcodes_mi[opcode].opcode) {
+	    unsigned int len = 1, i;
+
+	    instr_out(data, hw_offset, 0, "%s\n", opcodes_mi[opcode].name);
+	    if (opcodes_mi[opcode].max_len > 1) {
+		len = (data[0] & 0x000000ff) + 2;
+		if (len < opcodes_mi[opcode].min_len ||
+		    len > opcodes_mi[opcode].max_len)
+		{
+		    fprintf(out, "Bad length in %s\n",
+			    opcodes_mi[opcode].name);
+		}
+	    }
+
+	    for (i = 1; i < len; i++) {
+		if (i >= count)
+		    BUFFER_FAIL(count, len, opcodes_mi[opcode].name);
+		instr_out(data, hw_offset, i, "dword %d\n", i);
+	    }
+
+	    return len;
+	}
+    }
+
+    instr_out(data, hw_offset, 0, "MI UNKNOWN\n");
+    (*failures)++;
+    return 1;
+}
+
+static int
+decode_2d(uint32_t *data, int count, uint32_t hw_offset, int *failures)
+{
+    unsigned int opcode;
+
+    struct {
+	uint32_t opcode;
+	int min_len;
+	int max_len;
+	char *name;
+    } opcodes_2d[] = {
+	{ 0x40, 5, 5, "COLOR_BLT" },
+	{ 0x43, 6, 6, "SRC_COPY_BLT" },
+	{ 0x01, 8, 8, "XY_SETUP_BLT" },
+	{ 0x11, 9, 9, "XY_SETUP_MONO_PATTERN_SL_BLT" },
+	{ 0x03, 3, 3, "XY_SETUP_CLIP_BLT" },
+	{ 0x24, 2, 2, "XY_PIXEL_BLT" },
+	{ 0x25, 3, 3, "XY_SCANLINES_BLT" },
+	{ 0x26, 4, 4, "Y_TEXT_BLT" },
+	{ 0x31, 5, 134, "XY_TEXT_IMMEDIATE_BLT" },
+	{ 0x50, 6, 6, "XY_COLOR_BLT" },
+	{ 0x51, 6, 6, "XY_PAT_BLT" },
+	{ 0x76, 8, 8, "XY_PAT_CHROMA_BLT" },
+	{ 0x72, 7, 135, "XY_PAT_BLT_IMMEDIATE" },
+	{ 0x77, 9, 137, "XY_PAT_CHROMA_BLT_IMMEDIATE" },
+	{ 0x52, 9, 9, "XY_MONO_PAT_BLT" },
+	{ 0x59, 7, 7, "XY_MONO_PAT_FIXED_BLT" },
+	{ 0x53, 8, 8, "XY_SRC_COPY_BLT" },
+	{ 0x54, 8, 8, "XY_MONO_SRC_COPY_BLT" },
+	{ 0x71, 9, 137, "XY_MONO_SRC_COPY_IMMEDIATE_BLT" },
+	{ 0x55, 9, 9, "XY_FULL_BLT" },
+	{ 0x55, 9, 137, "XY_FULL_IMMEDIATE_PATTERN_BLT" },
+	{ 0x56, 9, 9, "XY_FULL_MONO_SRC_BLT" },
+	{ 0x75, 10, 138, "XY_FULL_MONO_SRC_IMMEDIATE_PATTERN_BLT" },
+	{ 0x57, 12, 12, "XY_FULL_MONO_PATTERN_BLT" },
+	{ 0x58, 12, 12, "XY_FULL_MONO_PATTERN_MONO_SRC_BLT" },
+    };
+
+    for (opcode = 0; opcode < sizeof(opcodes_2d) / sizeof(opcodes_2d[0]);
+	 opcode++) {
+	if ((data[0] & 0x1fc00000) >> 22 == opcodes_2d[opcode].opcode) {
+	    unsigned int len = 1, i;
+
+	    instr_out(data, hw_offset, 0, "%s\n", opcodes_2d[opcode].name);
+	    if (opcodes_2d[opcode].max_len > 1) {
+		len = (data[0] & 0x000000ff) + 2;
+		if (len < opcodes_2d[opcode].min_len ||
+		    len > opcodes_2d[opcode].max_len)
+		{
+		    fprintf(out, "Bad count in %s\n", opcodes_2d[opcode].name);
+		}
+	    }
+
+	    for (i = 1; i < len; i++) {
+		if (i >= count)
+		    BUFFER_FAIL(count, len, opcodes_2d[opcode].name);
+		instr_out(data, hw_offset, i, "dword %d\n", i);
+	    }
+
+	    return len;
+	}
+    }
+
+    instr_out(data, hw_offset, 0, "2D UNKNOWN\n");
+    (*failures)++;
+    return 1;
+}
+
+static int
+decode_3d_1c(uint32_t *data, int count, uint32_t hw_offset, int *failures)
+{
+    switch ((data[0] & 0x00f80000) >> 19) {
+    case 0x11:
+	instr_out(data, hw_offset, 0, "3DSTATE_DEPTH_SUBRECTANGLE_DISALBE\n");
+	return 1;
+    case 0x10:
+	instr_out(data, hw_offset, 0, "3DSTATE_SCISSOR_ENABLE\n");
+	return 1;
+    }
+
+    instr_out(data, hw_offset, 0, "3D UNKNOWN\n");
+    (*failures)++;
+    return 1;
+}
+
+static int
+decode_3d_1d(uint32_t *data, int count, uint32_t hw_offset, int *failures)
+{
+    unsigned int len, i, c, opcode, word, map, sampler, instr;
+
+    struct {
+	uint32_t opcode;
+	int min_len;
+	int max_len;
+	char *name;
+    } opcodes_3d_1d[] = {
+	{ 0x8e, 3, 3, "3DSTATE_BUFFER_INFO" },
+	{ 0x86, 4, 4, "3DSTATE_CHROMA_KEY" },
+	{ 0x9c, 1, 1, "3DSTATE_CLEAR_PARAMETERS" },
+	{ 0x88, 2, 2, "3DSTATE_CONSTANT_BLEND_COLOR" },
+	{ 0x99, 2, 2, "3DSTATE_DEFAULT_DIFFUSE" },
+	{ 0x9a, 2, 2, "3DSTATE_DEFAULT_SPECULAR" },
+	{ 0x98, 2, 2, "3DSTATE_DEFAULT_Z" },
+	{ 0x97, 2, 2, "3DSTATE_DEPTH_OFFSET_SCALE" },
+	{ 0x85, 2, 2, "3DSTATE_DEST_BUFFER_VARIABLES" },
+	{ 0x80, 5, 5, "3DSTATE_DRAWING_RECTANGLE" },
+	{ 0x8e, 3, 3, "3DSTATE_BUFFER_INFO" },
+	{ 0x9d, 65, 65, "3DSTATE_FILTER_COEFFICIENTS_4X4" },
+	{ 0x9e, 4, 4, "3DSTATE_MONO_FILTER" },
+	{ 0x89, 4, 4, "3DSTATE_FOG_MODE" },
+	{ 0x8f, 2, 16, "3DSTATE_MAP_PALLETE_LOAD_32" },
+	{ 0x81, 3, 3, "3DSTATE_SCISSOR_RECTANGLE" },
+	{ 0x83, 2, 2, "3DSTATE_SPAN_STIPPLE" },
+    };
+
+    switch ((data[0] & 0x00ff0000) >> 16) {
+    case 0x07:
+	/* This instruction is unusual.  A 0 length means just 1 DWORD instead of
+	 * 2.  The 0 length is specified in one place to be unsupported, but
+	 * stated to be required in another, and 0 length LOAD_INDIRECTs appear
+	 * to cause no harm at least.
+	 */
+	instr_out(data, hw_offset, 0, "3DSTATE_LOAD_INDIRECT\n");
+	len = (data[0] & 0x000000ff) + 1;
+	i = 1;
+	if (data[0] & (0x01 << 8)) {
+	    if (i + 2 >= count)
+		BUFFER_FAIL(count, len, "3DSTATE_LOAD_INDIRECT");
+	    instr_out(data, hw_offset, i++, "SIS.0\n");
+	    instr_out(data, hw_offset, i++, "SIS.1\n");
+	}
+	if (data[0] & (0x02 << 8)) {
+	    if (i + 1 >= count)
+		BUFFER_FAIL(count, len, "3DSTATE_LOAD_INDIRECT");
+	    instr_out(data, hw_offset, i++, "DIS.0\n");
+	}
+	if (data[0] & (0x04 << 8)) {
+	    if (i + 2 >= count)
+		BUFFER_FAIL(count, len, "3DSTATE_LOAD_INDIRECT");
+	    instr_out(data, hw_offset, i++, "SSB.0\n");
+	    instr_out(data, hw_offset, i++, "SSB.1\n");
+	}
+	if (data[0] & (0x08 << 8)) {
+	    if (i + 2 >= count)
+		BUFFER_FAIL(count, len, "3DSTATE_LOAD_INDIRECT");
+	    instr_out(data, hw_offset, i++, "MSB.0\n");
+	    instr_out(data, hw_offset, i++, "MSB.1\n");
+	}
+	if (data[0] & (0x10 << 8)) {
+	    if (i + 2 >= count)
+		BUFFER_FAIL(count, len, "3DSTATE_LOAD_INDIRECT");
+	    instr_out(data, hw_offset, i++, "PSP.0\n");
+	    instr_out(data, hw_offset, i++, "PSP.1\n");
+	}
+	if (data[0] & (0x20 << 8)) {
+	    if (i + 2 >= count)
+		BUFFER_FAIL(count, len, "3DSTATE_LOAD_INDIRECT");
+	    instr_out(data, hw_offset, i++, "PSC.0\n");
+	    instr_out(data, hw_offset, i++, "PSC.1\n");
+	}
+	if (len != i) {
+	    fprintf(out, "Bad count in 3DSTATE_LOAD_INDIRECT\n");
+	    (*failures)++;
+	    return len;
+	}
+	return len;
+    case 0x04:
+	instr_out(data, hw_offset, 0, "3DSTATE_LOAD_STATE_IMMEDIATE_1\n");
+	len = (data[0] & 0x0000000f) + 2;
+	i = 1;
+	for (word = 0; word <= 7; word++) {
+	    if (data[0] & (1 << (4 + word))) {
+		if (i >= count)
+		    BUFFER_FAIL(count, len, "3DSTATE_LOAD_STATE_IMMEDIATE_1");
+
+		/* save vertex state for decode */
+		if (word == 2) {
+		    saved_s2_set = 1;
+		    saved_s2 = data[i];
+		}
+		if (word == 4) {
+		    saved_s4_set = 1;
+		    saved_s4 = data[i];
+		}
+
+		instr_out(data, hw_offset, i++, "S%d\n", word);
+	    }
+	}
+	if (len != i) {
+	    fprintf(out, "Bad count in 3DSTATE_LOAD_INDIRECT\n");
+	    (*failures)++;
+	}
+	return len;
+    case 0x00:
+	instr_out(data, hw_offset, 0, "3DSTATE_MAP_STATE\n");
+	len = (data[0] & 0x0000003f) + 2;
+
+	i = 1;
+	for (map = 0; map <= 15; map++) {
+	    if (data[1] & (1 << map)) {
+		if (i + 3 >= count)
+		    BUFFER_FAIL(count, len, "3DSTATE_MAP_STATE");
+		instr_out(data, hw_offset, i++, "map %d MS2\n", map);
+		instr_out(data, hw_offset, i++, "map %d MS3\n", map);
+		instr_out(data, hw_offset, i++, "map %d MS4\n", map);
+	    }
+	}
+	if (len != i) {
+	    fprintf(out, "Bad count in 3DSTATE_MAP_STATE\n");
+	    (*failures)++;
+	    return len;
+	}
+	return len;
+    case 0x06:
+	instr_out(data, hw_offset, 0, "3DSTATE_PIXEL_SHADER_CONSTANTS\n");
+	len = (data[0] & 0x000000ff) + 2;
+
+	i = 1;
+	for (c = 0; c <= 31; c++) {
+	    if (data[1] & (1 << c)) {
+		if (i + 4 >= count)
+		    BUFFER_FAIL(count, len, "3DSTATE_PIXEL_SHADER_CONSTANTS");
+		instr_out(data, hw_offset, i, "C%d.X = %f\n",
+			  c, int_as_float(data[i]));
+		i++;
+		instr_out(data, hw_offset, i, "C%d.Y = %f\n",
+			  c, int_as_float(data[i]));
+		i++;
+		instr_out(data, hw_offset, i, "C%d.Z = %f\n",
+			  c, int_as_float(data[i]));
+		i++;
+		instr_out(data, hw_offset, i, "C%d.W = %f\n",
+			  c, int_as_float(data[i]));
+		i++;
+	    }
+	}
+	if (len != i) {
+	    fprintf(out, "Bad count in 3DSTATE_MAP_STATE\n");
+	    (*failures)++;
+	}
+	return len;
+    case 0x05:
+	instr_out(data, hw_offset, 0, "3DSTATE_PIXEL_SHADER_PROGRAM\n");
+	len = (data[0] & 0x000000ff) + 2;
+	if ((len - 1) % 3 != 0 || len > 370) {
+	    fprintf(out, "Bad count in 3DSTATE_PIXEL_SHADER_PROGRAM\n");
+	    (*failures)++;
+	}
+	i = 1;
+	for (instr = 0; instr < (len - 1) / 3; instr++) {
+	    if (i + 3 >= count)
+		BUFFER_FAIL(count, len, "3DSTATE_MAP_STATE");
+	    instr_out(data, hw_offset, i++, "PS%03x\n", instr);
+	    instr_out(data, hw_offset, i++, "PS%03x\n", instr);
+	    instr_out(data, hw_offset, i++, "PS%03x\n", instr);
+	}
+	return len;
+    case 0x01:
+	instr_out(data, hw_offset, 0, "3DSTATE_SAMPLER_STATE\n");
+	len = (data[0] & 0x0000003f) + 2;
+	i = 1;
+	for (sampler = 0; sampler <= 15; sampler++) {
+	    if (data[1] & (1 << sampler)) {
+		if (i + 3 >= count)
+		    BUFFER_FAIL(count, len, "3DSTATE_SAMPLER_STATE");
+		instr_out(data, hw_offset, i++, "sampler %d SS2\n",
+			  sampler);
+		instr_out(data, hw_offset, i++, "sampler %d SS3\n",
+			  sampler);
+		instr_out(data, hw_offset, i++, "sampler %d SS4\n",
+			  sampler);
+	    }
+	}
+	if (len != i) {
+	    fprintf(out, "Bad count in 3DSTATE_SAMPLER_STATE\n");
+	    (*failures)++;
+	}
+	return len;
+    }
+
+    for (opcode = 0; opcode < sizeof(opcodes_3d_1d) / sizeof(opcodes_3d_1d[0]);
+	 opcode++)
+    {
+	if (((data[0] & 0x00ff0000) >> 16) == opcodes_3d_1d[opcode].opcode) {
+	    len = 1;
+
+	    instr_out(data, hw_offset, 0, "%s\n", opcodes_3d_1d[opcode].name);
+	    if (opcodes_3d_1d[opcode].max_len > 1) {
+		len = (data[0] & 0x0000ffff) + 2;
+		if (len < opcodes_3d_1d[opcode].min_len ||
+		    len > opcodes_3d_1d[opcode].max_len)
+		{
+		    fprintf(out, "Bad count in %s\n",
+			    opcodes_3d_1d[opcode].name);
+		    (*failures)++;
+		}
+	    }
+
+	    for (i = 1; i < len; i++) {
+		if (i >= count)
+		    BUFFER_FAIL(count, len,  opcodes_3d_1d[opcode].name);
+		instr_out(data, hw_offset, i, "dword %d\n", i);
+	    }
+
+	    return len;
+	}
+    }
+
+    instr_out(data, hw_offset, 0, "3D UNKNOWN\n");
+    (*failures)++;
+    return 1;
+}
+
+static int
+decode_3d_primitive(uint32_t *data, int count, uint32_t hw_offset,
+		    int *failures)
+{
+    char immediate = (data[0] & (1 << 23)) == 0;
+    unsigned int len, i;
+    char *primtype;
+
+    switch ((data[0] >> 18) & 0xf) {
+    case 0x0: primtype = "TRILIST"; break;
+    case 0x1: primtype = "TRISTRIP"; break;
+    case 0x2: primtype = "TRISTRIP_REVERSE"; break;
+    case 0x3: primtype = "TRIFAN"; break;
+    case 0x4: primtype = "POLYGON"; break;
+    case 0x5: primtype = "LINELIST"; break;
+    case 0x6: primtype = "LINESTRIP"; break;
+    case 0x7: primtype = "RECTLIST"; break;
+    case 0x8: primtype = "POINTLIST"; break;
+    case 0x9: primtype = "DIB"; break;
+    case 0xa: primtype = "CLEAR_RECT"; break;
+    default: primtype = "unknown"; break;
+    }
+
+    /* XXX: 3DPRIM_DIB not supported */
+    if (immediate) {
+	len = (data[0] & 0x0003ffff) + 2;
+	instr_out(data, hw_offset, 0, "3DPRIMITIVE inline %s\n", primtype);
+	if (count < len)
+	    BUFFER_FAIL(count, len,  "3DPRIMITIVE inline");
+	if (!saved_s2_set || !saved_s4_set) {
+	    fprintf(out, "unknown vertex format\n");
+	    for (i = 1; i < len; i++) {
+		instr_out(data, hw_offset, i,
+			  "           vertex data (%f float)\n",
+			  int_as_float(data[i]));
+	    }
+	} else {
+	    unsigned int vertex = 0;
+	    for (i = 1; i < len;) {
+		unsigned int tc;
+
+#define VERTEX_OUT(fmt, ...) do {					\
+    if (i < len)							\
+	instr_out(data, hw_offset, i, " V%d."fmt"\n", vertex, __VA_ARGS__); \
+    else								\
+	fprintf(out, " missing data in V%d\n", vertex);			\
+    i++;								\
+} while (0)
+
+		VERTEX_OUT("X = %f", int_as_float(data[i]));
+		VERTEX_OUT("Y = %f", int_as_float(data[i]));
+	        switch (saved_s4 >> 6 & 0x7) {
+		case 0x1:
+		    VERTEX_OUT("Z = %f", int_as_float(data[i]));
+		    break;
+		case 0x2:
+		    VERTEX_OUT("Z = %f", int_as_float(data[i]));
+		    VERTEX_OUT("W = %f", int_as_float(data[i]));
+		    break;
+		case 0x3:
+		    break;
+		case 0x4:
+		    VERTEX_OUT("W = %f", int_as_float(data[i]));
+		    break;
+		default:
+		    fprintf(out, "bad S4 position mask\n");
+		}
+
+		if (saved_s4 & (1 << 10)) {
+		    VERTEX_OUT("color = (A=0x%02x, R=0x%02x, G=0x%02x, "
+			       "B=0x%02x)",
+			       data[i] >> 24,
+			       (data[i] >> 16) & 0xff,
+			       (data[i] >> 8) & 0xff,
+			       data[i] & 0xff);
+		}
+		if (saved_s4 & (1 << 11)) {
+		    VERTEX_OUT("spec = (A=0x%02x, R=0x%02x, G=0x%02x, "
+			       "B=0x%02x)",
+			       data[i] >> 24,
+			       (data[i] >> 16) & 0xff,
+			       (data[i] >> 8) & 0xff,
+			       data[i] & 0xff);
+		}
+		if (saved_s4 & (1 << 12))
+		    VERTEX_OUT("width = 0x%08x)", data[i]);
+
+		for (tc = 0; tc <= 7; tc++) {
+		    switch ((saved_s2 >> (tc * 4)) & 0xf) {
+		    case 0x0:
+			VERTEX_OUT("T%d.X = %f", tc, int_as_float(data[i]));
+			VERTEX_OUT("T%d.Y = %f", tc, int_as_float(data[i]));
+			break;
+		    case 0x1:
+			VERTEX_OUT("T%d.X = %f", tc, int_as_float(data[i]));
+			VERTEX_OUT("T%d.Y = %f", tc, int_as_float(data[i]));
+			VERTEX_OUT("T%d.Z = %f", tc, int_as_float(data[i]));
+			break;
+		    case 0x2:
+			VERTEX_OUT("T%d.X = %f", tc, int_as_float(data[i]));
+			VERTEX_OUT("T%d.Y = %f", tc, int_as_float(data[i]));
+			VERTEX_OUT("T%d.Z = %f", tc, int_as_float(data[i]));
+			VERTEX_OUT("T%d.W = %f", tc, int_as_float(data[i]));
+			break;
+		    case 0x3:
+			VERTEX_OUT("T%d.X = %f", tc, int_as_float(data[i]));
+			break;
+		    case 0x4:
+			VERTEX_OUT("T%d.XY = 0x%08x half-float", tc, data[i]);
+			break;
+		    case 0x5:
+			VERTEX_OUT("T%d.XY = 0x%08x half-float", tc, data[i]);
+			VERTEX_OUT("T%d.ZW = 0x%08x half-float", tc, data[i]);
+			break;
+		    case 0xf:
+			break;
+		    default:
+			fprintf(out, "bad S2.T%d format\n", tc);
+		    }
+		}
+		vertex++;
+	    }
+	}
+    } else {
+	/* indirect vertices */
+	len = data[0] & 0x0000ffff; /* index count */
+	if (data[0] & (1 << 17)) {
+	    /* random vertex access */
+	    if (count < (len + 1) / 2 + 1) {
+		BUFFER_FAIL(count, (len + 1) / 2 + 1,
+			    "3DPRIMITIVE random indirect");
+	    }
+	    instr_out(data, hw_offset, 0,
+		      "3DPRIMITIVE random indirect %s (%d)\n", primtype, len);
+	    if (len == 0) {
+		/* vertex indices continue until 0xffff is found */
+		for (i = 1; i < count; i++) {
+		    if ((data[i] & 0xffff) == 0xffff) {
+			instr_out(data, hw_offset, i,
+				  "            indices: (terminator)\n");
+			return i;
+		    } else if ((data[i] >> 16) == 0xffff) {
+			instr_out(data, hw_offset, i,
+				  "            indices: 0x%04x, "
+				  "(terminator)\n",
+				  data[i] & 0xffff);
+			return i;
+		    } else {
+			instr_out(data, hw_offset, i,
+				  "            indices: 0x%04x, 0x%04x\n",
+				  data[i] & 0xffff, data[i] >> 16);
+		    }
+		}
+		fprintf(out,
+			"3DPRIMITIVE: no terminator found in index buffer\n");
+		(*failures)++;
+		return count;
+	    } else {
+		/* fixed size vertex index buffer */
+		for (i = 0; i < len; i += 2) {
+		    if (i * 2 == len - 1) {
+			instr_out(data, hw_offset, i,
+				  "            indices: 0x%04x\n",
+				  data[i] & 0xffff);
+		    } else {
+			instr_out(data, hw_offset, i,
+				  "            indices: 0x%04x, 0x%04x\n",
+				  data[i] & 0xffff, data[i] >> 16);
+		    }
+		}
+	    }
+	    return (len + 1) / 2 + 1;
+	} else {
+	    /* sequential vertex access */
+	    if (count < 2)
+		BUFFER_FAIL(count, 2, "3DPRIMITIVE seq indirect");
+	    instr_out(data, hw_offset, 0,
+		      "3DPRIMITIVE sequential indirect %s, %d starting from "
+		      "%d\n", primtype, len, data[1] & 0xffff);
+	    instr_out(data, hw_offset, 1, "           start\n");
+	    return 2;
+	}
+    }
+
+    return len;
+}
+
+static int
+decode_3d(uint32_t *data, int count, uint32_t hw_offset, int *failures)
+{
+    unsigned int opcode;
+
+    struct {
+	uint32_t opcode;
+	int min_len;
+	int max_len;
+	char *name;
+    } opcodes_3d[] = {
+	{ 0x06, 1, 1, "3DSTATE_ANTI_ALIASING" },
+	{ 0x08, 1, 1, "3DSTATE_BACKFACE_STENCIL_OPS" },
+	{ 0x09, 1, 1, "3DSTATE_BACKFACE_STENCIL_MASKS" },
+	{ 0x16, 1, 1, "3DSTATE_COORD_SET_BINDINGS" },
+	{ 0x15, 1, 1, "3DSTATE_FOG_COLOR" },
+	{ 0x0b, 1, 1, "3DSTATE_INDEPENDENT_ALPHA_BLEND" },
+	{ 0x0d, 1, 1, "3DSTATE_MODES_4" },
+	{ 0x0c, 1, 1, "3DSTATE_MODES_5" },
+	{ 0x07, 1, 1, "3DSTATE_RASTERIZATION_RULES" },
+    };
+
+    switch ((data[0] & 0x1f000000) >> 24) {
+    case 0x1f:
+	return decode_3d_primitive(data, count, hw_offset, failures);
+    case 0x1d:
+	return decode_3d_1d(data, count, hw_offset, failures);
+    case 0x1c:
+	return decode_3d_1c(data, count, hw_offset, failures);
+    }
+
+    for (opcode = 0; opcode < sizeof(opcodes_3d) / sizeof(opcodes_3d[0]);
+	 opcode++) {
+	if ((data[0] & 0x1f000000) >> 24 == opcodes_3d[opcode].opcode) {
+	    unsigned int len = 1, i;
+
+	    instr_out(data, hw_offset, 0, "%s\n", opcodes_3d[opcode].name);
+	    if (opcodes_3d[opcode].max_len > 1) {
+		len = (data[0] & 0xff) + 2;
+		if (len < opcodes_3d[opcode].min_len ||
+		    len > opcodes_3d[opcode].max_len)
+		{
+		    fprintf(out, "Bad count in %s\n", opcodes_3d[opcode].name);
+		}
+	    }
+
+	    for (i = 1; i < len; i++) {
+		if (i >= count)
+		    BUFFER_FAIL(count, len, opcodes_3d[opcode].name);
+		instr_out(data, hw_offset, i, "dword %d\n", i);
+	    }
+	    return len;
+	}
+    }
+
+    instr_out(data, hw_offset, 0, "3D UNKNOWN\n");
+    (*failures)++;
+    return 1;
+}
+
+/**
+ * Decodes an i830-i915 batch buffer, writing the output to stdout.
+ *
+ * \param data batch buffer contents
+ * \param count number of DWORDs to decode in the batch buffer
+ * \param hw_offset hardware address for the buffer
+ */
+int
+i915_disasm(uint32_t *data, int count, uint32_t hw_offset)
+{
+    int index = 0;
+    int failures = 0;
+
+    out = stdout;
+
+    while (index < count) {
+	switch ((data[index] & 0xe0000000) >> 29) {
+	case 0x0:
+	    index += decode_mi(data + index, count - index,
+			       hw_offset + index * 4, &failures);
+	    break;
+	case 0x2:
+	    index += decode_2d(data + index, count - index,
+			       hw_offset + index * 4, &failures);
+	    break;
+	case 0x3:
+	    index += decode_3d(data + index, count - index,
+			       hw_offset + index * 4, &failures);
+	    break;
+	default:
+	    instr_out(data, hw_offset, index, "UNKNOWN\n");
+	    failures++;
+	    index++;
+	    break;
+	}
+	fflush(out);
+    }
+
+    return failures;
+}
+
+void i915_disasm_context_reset()
+{
+    saved_s2_set = 0;
+    saved_s4_set = 1;
+}
+

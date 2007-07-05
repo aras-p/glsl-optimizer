@@ -377,9 +377,6 @@ intelTexImage(GLcontext * ctx,
       assert(!intelObj->mt);
    }
 
-   if (!pixels)
-      return;
-
    if (!intelObj->mt) {
       guess_and_alloc_mipmap_tree(intel, intelObj, intelImage);
       if (!intelObj->mt) {
@@ -680,6 +677,9 @@ intelSetTexOffset(__DRIcontext *pDRICtx, GLint texname,
 
    if (!intelObj)
       return;
+
+   if (intelObj->mt)
+      intel_miptree_release(intel, &intelObj->mt);
 
    intelObj->imageOverride = GL_TRUE;
    intelObj->depthOverride = depth;

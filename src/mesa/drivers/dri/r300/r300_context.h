@@ -49,8 +49,6 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #define USER_BUFFERS
 
-//#define OPTIMIZE_ELTS
-
 struct r300_context;
 typedef struct r300_context r300ContextRec;
 typedef struct r300_context *r300ContextPtr;
@@ -149,7 +147,6 @@ struct r300_dma_region {
 	int aos_offset;		/* address in GART memory */
 	int aos_stride;		/* distance between elements, in dwords */
 	int aos_size;		/* number of components (1-4) */
-	int aos_reg;		/* VAP register assignment */
 };
 
 struct r300_dma {
@@ -455,7 +452,7 @@ struct r300_hw_state {
 	struct r300_state_atom vic;	/* vap input control (2180) */
 	struct r300_state_atom unk21DC;	/* (21DC) */
 	struct r300_state_atom unk221C;	/* (221C) */
-	struct r300_state_atom unk2220;	/* (2220) */
+	struct r300_state_atom vap_clip;
 	struct r300_state_atom unk2288;	/* (2288) */
 	struct r300_state_atom pvs;	/* pvs_cntl (22D0) */
 	struct r300_state_atom gb_enable;	/* (4008) */
@@ -782,11 +779,6 @@ struct r300_fragment_program {
 };
 
 #define R300_MAX_AOS_ARRAYS		16
-
-#define AOS_FORMAT_USHORT	0
-#define AOS_FORMAT_FLOAT	1
-#define AOS_FORMAT_UBYTE	2
-#define AOS_FORMAT_FLOAT_COLOR	3
 
 #define REG_COORDS	0
 #define REG_COLOR0	1

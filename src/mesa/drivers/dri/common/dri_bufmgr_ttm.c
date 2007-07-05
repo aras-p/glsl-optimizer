@@ -150,7 +150,7 @@ dri_ttm_alloc_static(dri_bufmgr *bufmgr, const char *name,
     * pass all of the allocation class flags.
     */
    flags = location_mask | DRM_BO_FLAG_READ | DRM_BO_FLAG_WRITE |
-      DRM_BO_FLAG_EXE | DRM_BO_FLAG_NO_EVICT | DRM_BO_FLAG_NO_MOVE;
+      DRM_BO_FLAG_EXE | DRM_BO_FLAG_NO_MOVE;
    /* No hints we want to use. */
    hint = 0;
 
@@ -362,6 +362,7 @@ dri_bufmgr_ttm_init(int fd, unsigned int fence_type,
 		    unsigned int fence_type_flush)
 {
    dri_bufmgr_ttm *bufmgr_ttm;
+   dri_bo *test_alloc;
 
    bufmgr_ttm = malloc(sizeof(*bufmgr_ttm));
    bufmgr_ttm->fd = fd;
@@ -380,6 +381,18 @@ dri_bufmgr_ttm_init(int fd, unsigned int fence_type,
    bufmgr_ttm->bufmgr.fence_reference = dri_ttm_fence_reference;
    bufmgr_ttm->bufmgr.fence_unreference = dri_ttm_fence_unreference;
    bufmgr_ttm->bufmgr.fence_wait = dri_ttm_fence_wait;
+
+   /* Attempt an allocation to make sure that the DRM was actually set up for
+    * TTM.
+    */
+   test_alloc = dri_bo_alloc((dri_bufmgr *)bufmgr_ttm, "test allocation",
+     4096, 4096, DRM_BO_FLAG_MEM_LOCAL | DRM_BO_FLAG_MEM_TT);
+   if (test_alloc == NULL) {
+      _glthread_DESTROY_MUTEX(bufmgr_ttm->mutex);
+      free(bufmgr_ttm);
+      return NULL;
+   }
+   dri_bo_unreference(test_alloc);
 
    return &bufmgr_ttm->bufmgr;
 }

@@ -294,27 +294,20 @@ static const struct gl_texture_format *r300Choose8888TexFormat(GLenum srcFormat,
 	const GLubyte littleEndian = *((const GLubyte *)&ui);
 
 	if ((srcFormat == GL_RGBA && srcType == GL_UNSIGNED_INT_8_8_8_8) ||
-	    (srcFormat == GL_RGBA && srcType == GL_UNSIGNED_BYTE
-	     && !littleEndian) || (srcFormat == GL_ABGR_EXT
-				   && srcType == GL_UNSIGNED_INT_8_8_8_8_REV)
-	    || (srcFormat == GL_ABGR_EXT && srcType == GL_UNSIGNED_BYTE
-		&& littleEndian)) {
+	    (srcFormat == GL_RGBA && srcType == GL_UNSIGNED_BYTE && !littleEndian) ||
+	    (srcFormat == GL_ABGR_EXT && srcType == GL_UNSIGNED_INT_8_8_8_8_REV) ||
+	    (srcFormat == GL_ABGR_EXT && srcType == GL_UNSIGNED_BYTE && littleEndian)) {
 		return &_mesa_texformat_rgba8888;
-	} else
-	    if ((srcFormat == GL_RGBA && srcType == GL_UNSIGNED_INT_8_8_8_8_REV)
-		|| (srcFormat == GL_RGBA && srcType == GL_UNSIGNED_BYTE
-		    && littleEndian) || (srcFormat == GL_ABGR_EXT
-					 && srcType == GL_UNSIGNED_INT_8_8_8_8)
-		|| (srcFormat == GL_ABGR_EXT && srcType == GL_UNSIGNED_BYTE
-		    && !littleEndian)) {
+	} else if ((srcFormat == GL_RGBA && srcType == GL_UNSIGNED_INT_8_8_8_8_REV) ||
+		   (srcFormat == GL_RGBA && srcType == GL_UNSIGNED_BYTE && littleEndian) ||
+		   (srcFormat == GL_ABGR_EXT && srcType == GL_UNSIGNED_INT_8_8_8_8) ||
+		   (srcFormat == GL_ABGR_EXT && srcType == GL_UNSIGNED_BYTE && !littleEndian)) {
 		return &_mesa_texformat_rgba8888_rev;
-	} else if (srcFormat == GL_BGRA &&
-		   ((srcType == GL_UNSIGNED_BYTE && !littleEndian) ||
-		    srcType == GL_UNSIGNED_INT_8_8_8_8)) {
+	} else if (srcFormat == GL_BGRA && ((srcType == GL_UNSIGNED_BYTE && !littleEndian) ||
+					    srcType == GL_UNSIGNED_INT_8_8_8_8)) {
 		return &_mesa_texformat_argb8888_rev;
-	} else if (srcFormat == GL_BGRA &&
-		   ((srcType == GL_UNSIGNED_BYTE && littleEndian) ||
-		    srcType == GL_UNSIGNED_INT_8_8_8_8_REV)) {
+	} else if (srcFormat == GL_BGRA && ((srcType == GL_UNSIGNED_BYTE && littleEndian) ||
+					    srcType == GL_UNSIGNED_INT_8_8_8_8_REV)) {
 		return &_mesa_texformat_argb8888;
 	} else
 		return _dri_texformat_argb8888;
@@ -563,34 +556,31 @@ r300ValidateClientStorage(GLcontext * ctx, GLenum target,
 		return 0;
 	}
 
-	{
-		GLint srcRowStride = _mesa_image_row_stride(packing, srcWidth,
-							    format, type);
+	GLint srcRowStride = _mesa_image_row_stride(packing, srcWidth,
+						    format, type);
 
-		if (RADEON_DEBUG & DEBUG_TEXTURE)
-			fprintf(stderr, "%s: srcRowStride %d/%x\n",
-				__FUNCTION__, srcRowStride, srcRowStride);
+	if (RADEON_DEBUG & DEBUG_TEXTURE)
+		fprintf(stderr, "%s: srcRowStride %d/%x\n",
+			__FUNCTION__, srcRowStride, srcRowStride);
 
-		/* Could check this later in upload, pitch restrictions could be
-		 * relaxed, but would need to store the image pitch somewhere,
-		 * as packing details might change before image is uploaded:
-		 */
-		if (!r300IsGartMemory(rmesa, pixels, srcHeight * srcRowStride)
-		    || (srcRowStride & 63))
-			return 0;
+	/* Could check this later in upload, pitch restrictions could be
+	 * relaxed, but would need to store the image pitch somewhere,
+	 * as packing details might change before image is uploaded:
+	 */
+	if (!r300IsGartMemory(rmesa, pixels, srcHeight * srcRowStride)
+	    || (srcRowStride & 63))
+		return 0;
 
-		/* Have validated that _mesa_transfer_teximage would be a straight
-		 * memcpy at this point.  NOTE: future calls to TexSubImage will
-		 * overwrite the client data.  This is explicitly mentioned in the
-		 * extension spec.
-		 */
-		texImage->Data = (void *)pixels;
-		texImage->IsClientData = GL_TRUE;
-		texImage->RowStride =
-		    srcRowStride / texImage->TexFormat->TexelBytes;
+	/* Have validated that _mesa_transfer_teximage would be a straight
+	 * memcpy at this point.  NOTE: future calls to TexSubImage will
+	 * overwrite the client data.  This is explicitly mentioned in the
+	 * extension spec.
+	 */
+	texImage->Data = (void *)pixels;
+	texImage->IsClientData = GL_TRUE;
+	texImage->RowStride = srcRowStride / texImage->TexFormat->TexelBytes;
 
-		return 1;
-	}
+	return 1;
 }
 
 static void r300TexImage1D(GLcontext * ctx, GLenum target, GLint level,

@@ -480,11 +480,11 @@ static GLboolean r300UpdateTexture(GLcontext * ctx, int unit)
 			 */
 
 			rmesa->state.texture.unit[unit].texobj->base.bound &=
-			    ~(1UL << unit);
+			    ~(1 << unit);
 		}
 
 		rmesa->state.texture.unit[unit].texobj = t;
-		t->base.bound |= (1UL << unit);
+		t->base.bound |= (1 << unit);
 		t->dirty_state |= 1 << unit;
 		driUpdateTextureLRU((driTextureObject *) t);	/* XXX: should be locked! */
 	}
@@ -501,7 +501,6 @@ void r300SetTexOffset(__DRIcontext * pDRICtx, GLint texname,
 	struct gl_texture_object *tObj =
 	    _mesa_lookup_texture(rmesa->radeon.glCtx, texname);
 	r300TexObjPtr t;
-	int idx;
 
 	if (!tObj)
 		return;
@@ -518,24 +517,24 @@ void r300SetTexOffset(__DRIcontext * pDRICtx, GLint texname,
 
 	switch (depth) {
 	case 32:
-		idx = 2;
+		t->format = R300_EASY_TX_FORMAT(X, Y, Z, W, W8Z8Y8X8);
+		t->filter |= tx_table[2].filter;
 		t->pitch_reg /= 4;
 		break;
 	case 24:
 	default:
-		idx = 4;
+		t->format = R300_EASY_TX_FORMAT(X, Y, Z, ONE, W8Z8Y8X8);
+		t->filter |= tx_table[4].filter;
 		t->pitch_reg /= 4;
 		break;
 	case 16:
-		idx = 5;
+		t->format = R300_EASY_TX_FORMAT(X, Y, Z, ONE, Z5Y6X5);
+		t->filter |= tx_table[5].filter;
 		t->pitch_reg /= 2;
 		break;
 	}
 
 	t->pitch_reg--;
-
-	t->format = tx_table[idx].format;
-	t->filter |= tx_table[idx].filter;
 }
 
 static GLboolean r300UpdateTextureUnit(GLcontext * ctx, int unit)

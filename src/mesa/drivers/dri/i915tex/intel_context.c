@@ -59,6 +59,7 @@
 #include "intel_regions.h"
 #include "intel_buffer_objects.h"
 #include "intel_fbo.h"
+#include "i915_disasm.h"
 
 #include "drirenderbuffer.h"
 #include "vblank.h"
@@ -130,6 +131,18 @@ intelGetString(GLcontext * ctx, GLenum name)
       case PCI_CHIP_I945_GM:
          chipset = "Intel(R) 945GM";
          break;
+      case PCI_CHIP_I945_GME:
+         chipset = "Intel(R) 945GME";
+         break;
+      case PCI_CHIP_G33_G:
+	 chipset = "Intel(R) G33";
+	 break;
+      case PCI_CHIP_Q35_G:
+	 chipset = "Intel(R) Q35";
+	 break;
+      case PCI_CHIP_Q33_G:
+	 chipset = "Intel(R) Q33";
+	 break;
       default:
          chipset = "Unknown Intel Chipset";
          break;
@@ -646,6 +659,8 @@ intelContendedLock(struct intel_context *intel, GLuint flags)
    if (!intel->intelScreen->ttm && sarea->texAge != intel->hHWContext) {
       sarea->texAge = intel->hHWContext;
       dri_bufmgr_fake_contended_lock_take(intel->intelScreen->bufmgr);
+      if (INTEL_DEBUG & DEBUG_BATCH)
+	 i915_disasm_context_reset();
    }
 
    if (sarea->width != intelScreen->width ||

@@ -224,25 +224,23 @@ static void r300EmitClearState(GLcontext * ctx)
 	e32(R300_INPUT_CNTL_0_COLOR);
 	e32(R300_INPUT_CNTL_POS | R300_INPUT_CNTL_COLOR | R300_INPUT_CNTL_TC0);
 
-	if (!has_tcl) {
-		R300_STATECHANGE(r300, vte);
-		/* comes from fglrx startup of clear */
-		reg_start(R300_SE_VTE_CNTL, 1);
-		e32(R300_VTX_W0_FMT | R300_VPORT_X_SCALE_ENA |
-		    R300_VPORT_X_OFFSET_ENA | R300_VPORT_Y_SCALE_ENA |
-		    R300_VPORT_Y_OFFSET_ENA | R300_VPORT_Z_SCALE_ENA |
-		    R300_VPORT_Z_OFFSET_ENA);
-		e32(0x8);
+	R300_STATECHANGE(r300, vte);
+	/* comes from fglrx startup of clear */
+	reg_start(R300_SE_VTE_CNTL, 1);
+	e32(R300_VTX_W0_FMT | R300_VPORT_X_SCALE_ENA |
+	    R300_VPORT_X_OFFSET_ENA | R300_VPORT_Y_SCALE_ENA |
+	    R300_VPORT_Y_OFFSET_ENA | R300_VPORT_Z_SCALE_ENA |
+	    R300_VPORT_Z_OFFSET_ENA);
+	e32(0x8);
 
-		reg_start(0x21dc, 0);
-		e32(0xaaaaaaaa);
-	}
+	reg_start(0x21dc, 0);
+	e32(0xaaaaaaaa);
 
 	R300_STATECHANGE(r300, vof);
 	reg_start(R300_VAP_OUTPUT_VTX_FMT_0, 1);
 	e32(R300_VAP_OUTPUT_VTX_FMT_0__POS_PRESENT |
 	    R300_VAP_OUTPUT_VTX_FMT_0__COLOR_PRESENT);
-	e32(0x0);			/* no textures */
+	e32(0x0);		/* no textures */
 
 	R300_STATECHANGE(r300, txe);
 	reg_start(R300_TX_ENABLE, 0);
