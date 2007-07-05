@@ -3648,11 +3648,13 @@ _mesa_unpack_stencil_span( const GLcontext *ctx, GLuint n,
     * Try simple cases first
     */
    if (transferOps == 0 &&
+       !ctx->Pixel.MapStencilFlag &&
        srcType == GL_UNSIGNED_BYTE &&
        dstType == GL_UNSIGNED_BYTE) {
       _mesa_memcpy(dest, source, n * sizeof(GLubyte));
    }
    else if (transferOps == 0 &&
+            !ctx->Pixel.MapStencilFlag &&
             srcType == GL_UNSIGNED_INT &&
             dstType == GL_UNSIGNED_INT &&
             !srcPacking->SwapBytes) {
@@ -3668,19 +3670,17 @@ _mesa_unpack_stencil_span( const GLcontext *ctx, GLuint n,
       extract_uint_indexes(n, indexes, GL_STENCIL_INDEX, srcType, source,
                            srcPacking);
 
-      if (transferOps) {
-         if (transferOps & IMAGE_SHIFT_OFFSET_BIT) {
-            /* shift and offset indexes */
-            shift_and_offset_ci(ctx, n, indexes);
-         }
+      if (transferOps & IMAGE_SHIFT_OFFSET_BIT) {
+         /* shift and offset indexes */
+         shift_and_offset_ci(ctx, n, indexes);
+      }
 
-         if (ctx->Pixel.MapStencilFlag) {
-            /* Apply stencil lookup table */
-            GLuint mask = ctx->PixelMaps.StoS.Size - 1;
-            GLuint i;
-            for (i=0;i<n;i++) {
-               indexes[i] = ctx->PixelMaps.StoS.Map[ indexes[i] & mask ];
-            }
+      if (ctx->Pixel.MapStencilFlag) {
+         /* Apply stencil lookup table */
+         const GLuint mask = ctx->PixelMaps.StoS.Size - 1;
+         GLuint i;
+         for (i = 0; i < n; i++) {
+            indexes[i] = ctx->PixelMaps.StoS.Map[ indexes[i] & mask ];
          }
       }
 
