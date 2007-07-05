@@ -52,7 +52,8 @@ create_texture_object(struct gl_texture_object *texObj)
    if (!pto)
       return NULL;
 
-   assert(texObj->Complete);
+   /* XXX: Member not defined. Comment-out to get it compile. */
+   /*assert(texObj->Complete);*/
 
    switch (texObj->Target) {
    case GL_TEXTURE_1D:

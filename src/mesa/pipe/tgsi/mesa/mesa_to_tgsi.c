@@ -1,0 +1,499 @@
+#include "tgsi_platform.h"
+#include "tgsi_mesa.h"
+
+/*
+ * Map mesa register file to SBIR register file.
+ */
+static GLuint
+map_register_file( enum register_file file )
+{
+   switch (file) {
+   case PROGRAM_UNDEFINED:
+      return TGSI_FILE_NULL;
+   case PROGRAM_TEMPORARY:
+      return TGSI_FILE_TEMPORARY;
+   //case PROGRAM_LOCAL_PARAM:
+   //case PROGRAM_ENV_PARAM:
+   case PROGRAM_STATE_VAR:
+   //case PROGRAM_NAMED_PARAM:
+   case PROGRAM_CONSTANT:
+      return TGSI_FILE_CONSTANT;
+   case PROGRAM_INPUT:
+      return TGSI_FILE_INPUT;
+   case PROGRAM_OUTPUT:
+      return TGSI_FILE_OUTPUT;
+   case PROGRAM_ADDRESS:
+      return TGSI_FILE_ADDRESS;
+   default:
+      assert (0);
+      return TGSI_FILE_NULL;
+   }
+}
+
+/*
+ * Map mesa register file index to SBIR index.
+ * Take special care when processing input and output indices.
+ */
+static GLuint
+map_register_file_index( GLuint processor,
+			 GLuint file,
+			 GLuint index,
+			 GLuint usage_bitmask )
+{
+   GLuint mapped_index;
+   GLuint i;
+
+   switch (file)
+   {
+   case TGSI_FILE_INPUT:
+      assert (index < 32);
+      assert (usage_bitmask & (1 << index));
+      mapped_index = 0;
+      for (i = 0; i < index; i++) {
+	 if (usage_bitmask & (1 << i))
+	    mapped_index++;
+      }
+      break;
+
+   case TGSI_FILE_OUTPUT:
+      assert (usage_bitmask == 0);
+      if (processor == TGSI_PROCESSOR_FRAGMENT) {
+	 if (index == FRAG_RESULT_DEPR) {
+	    mapped_index = 0;
+	 } else {
+	    assert (index == FRAG_RESULT_COLR);
+	    mapped_index = index + 1;
+	 }
+      } else {
+	 mapped_index = index;
+      }
+      break;
+
+   default:
+      mapped_index = index;
+   }
+
+   return mapped_index;
+}
+
+/*
+ * Map mesa texture target to SBIR texture target.
+ */
+static GLuint
+map_texture_target( GLuint textarget )
+{
+   switch (textarget) {
+   case TEXTURE_1D_INDEX:
+      return TGSI_TEXTURE_1D;
+   case TEXTURE_2D_INDEX:
+      return TGSI_TEXTURE_2D;
+   case TEXTURE_3D_INDEX:
+      return TGSI_TEXTURE_3D;
+   case TEXTURE_CUBE_INDEX:
+      return TGSI_TEXTURE_CUBE;
+   case TEXTURE_RECT_INDEX:
+      return TGSI_TEXTURE_RECT;
+   default:
+      assert (0);
+   }
+   return TGSI_TEXTURE_1D;
+}
+
+static GLuint
+convert_sat( GLuint sat )
+{
+   switch (sat) {
+   case SATURATE_OFF:
+      return TGSI_SAT_NONE;
+   case SATURATE_ZERO_ONE:
+      return TGSI_SAT_ZERO_ONE;
+   case SATURATE_PLUS_MINUS_ONE:
+      return TGSI_SAT_MINUS_PLUS_ONE;
+   default:
+      assert (0);
+      return TGSI_SAT_NONE;
+   }
+}
+
+static GLuint
+convert_writemask( GLuint writemask )
+{
+   assert (WRITEMASK_X == TGSI_WRITEMASK_X);
+   assert (WRITEMASK_Y == TGSI_WRITEMASK_Y);
+   assert (WRITEMASK_Z == TGSI_WRITEMASK_Z);
+   assert (WRITEMASK_W == TGSI_WRITEMASK_W);
+   assert ((writemask & ~TGSI_WRITEMASK_XYZW) == 0);
+
+   return writemask;
+}
+
+static GLboolean
+compile_instruction( struct prog_instruction *inst,
+		     struct tgsi_full_instruction *fullinst,
+		     GLuint inputs_read,
+		     GLuint processor )
+{
+   GLuint i;
+   struct tgsi_full_dst_register *fulldst;
+   struct tgsi_full_src_register *fullsrc;
+
+   *fullinst = tgsi_default_full_instruction ();
+
+   fullinst->Instruction.Saturate = convert_sat (inst->SaturateMode);
+   fullinst->Instruction.NumDstRegs = 1;
+   fullinst->Instruction.NumSrcRegs = _mesa_num_inst_src_regs (inst->Opcode);
+
+   fulldst = &fullinst->FullDstRegisters[0];
+   fulldst->DstRegister.File =
+      map_register_file (inst->DstReg.File);
+   fulldst->DstRegister.Index =
+      map_register_file_index (processor,
+			       fulldst->DstRegister.File,
+			       inst->DstReg.Index,
+			       0);
+   fulldst->DstRegister.WriteMask =
+      convert_writemask (inst->DstReg.WriteMask);
+
+   for (i = 0; i < fullinst->Instruction.NumSrcRegs; i++) {
+      GLuint j;
+
+      fullsrc = &fullinst->FullSrcRegisters[i];
+      fullsrc->SrcRegister.File =
+	 map_register_file (inst->SrcReg[i].File);
+      fullsrc->SrcRegister.Index =
+	 map_register_file_index (processor,
+				  fullsrc->SrcRegister.File,
+				  inst->SrcReg[i].Index,
+				  inputs_read);
+
+      for (j = 0; j < 4; j++) {
+	 GLuint swz;
+
+	 swz = GET_SWZ(inst->SrcReg[i].Swizzle, j);
+	 if (swz > SWIZZLE_W) {
+	    tgsi_util_set_src_register_extswizzle (
+	       &fullsrc->SrcRegisterExtSwz,
+	       swz,
+	       j);
+	 } else {
+	    tgsi_util_set_src_register_swizzle (
+	       &fullsrc->SrcRegister,
+	       swz,
+	       j);
+	 }
+      }
+
+      if (inst->SrcReg[i].NegateBase == NEGATE_XYZW) {
+	 fullsrc->SrcRegister.Negate = 1;
+      } else if (inst->SrcReg[i].NegateBase != NEGATE_NONE) {
+	 if (inst->SrcReg[i].NegateBase & NEGATE_X)
+	    fullsrc->SrcRegisterExtSwz.NegateX = 1;
+	 if (inst->SrcReg[i].NegateBase & NEGATE_Y)
+	    fullsrc->SrcRegisterExtSwz.NegateY = 1;
+	 if (inst->SrcReg[i].NegateBase & NEGATE_Z)
+	    fullsrc->SrcRegisterExtSwz.NegateZ = 1;
+	 if (inst->SrcReg[i].NegateBase & NEGATE_W)
+	    fullsrc->SrcRegisterExtSwz.NegateW = 1;
+      }
+
+      if (inst->SrcReg[i].Abs)
+	 fullsrc->SrcRegisterExtMod.Absolute = 1;
+
+      if (inst->SrcReg[i].NegateAbs)
+	 fullsrc->SrcRegisterExtMod.Negate = 1;
+
+      if (inst->SrcReg[i].RelAddr) {
+	 fullsrc->SrcRegister.Indirect = 1;
+
+	 fullsrc->SrcRegisterInd.File = TGSI_FILE_ADDRESS;
+	 fullsrc->SrcRegisterInd.Index = 0;
+      }
+   }
+
+   switch (inst->Opcode) {
+   case OPCODE_ARL:
+      fullinst->Instruction.Opcode = TGSI_OPCODE_ARL;
+      break;
+   case OPCODE_ABS:
+      fullinst->Instruction.Opcode = TGSI_OPCODE_ABS;
+      break;
+   case OPCODE_ADD:
+      fullinst->Instruction.Opcode = TGSI_OPCODE_ADD;
+      break;
+   case OPCODE_CMP:
+      fullinst->Instruction.Opcode = TGSI_OPCODE_CMP;
+      break;
+   case OPCODE_COS:
+      fullinst->Instruction.Opcode = TGSI_OPCODE_COS;
+      break;
+   case OPCODE_DP3:
+      fullinst->Instruction.Opcode = TGSI_OPCODE_DP3;
+      break;
+   case OPCODE_DP4:
+      fullinst->Instruction.Opcode = TGSI_OPCODE_DP4;
+      break;
+   case OPCODE_DPH:
+      fullinst->Instruction.Opcode = TGSI_OPCODE_DPH;
+      break;
+   case OPCODE_DST:
+      fullinst->Instruction.Opcode = TGSI_OPCODE_DST;
+      break;
+   case OPCODE_EX2:
+      fullinst->Instruction.Opcode = TGSI_OPCODE_EX2;
+      break;
+   case OPCODE_FLR:
+      fullinst->Instruction.Opcode = TGSI_OPCODE_FLR;
+      break;
+   case OPCODE_FRC:
+      fullinst->Instruction.Opcode = TGSI_OPCODE_FRC;
+      break;
+   case OPCODE_KIL:
+      fullinst->Instruction.Opcode = TGSI_OPCODE_KIL;
+      break;
+   case OPCODE_LG2:
+      fullinst->Instruction.Opcode = TGSI_OPCODE_LG2;
+      break;
+   case OPCODE_LIT:
+      fullinst->Instruction.Opcode = TGSI_OPCODE_LIT;
+      break;
+   case OPCODE_LRP:
+      fullinst->Instruction.Opcode = TGSI_OPCODE_LRP;
+      break;
+   case OPCODE_MAD:
+      fullinst->Instruction.Opcode = TGSI_OPCODE_MAD;
+      break;
+   case OPCODE_MAX:
+      fullinst->Instruction.Opcode = TGSI_OPCODE_MAX;
+      break;
+   case OPCODE_MIN:
+      fullinst->Instruction.Opcode = TGSI_OPCODE_MIN;
+      break;
+   case OPCODE_MOV:
+      fullinst->Instruction.Opcode = TGSI_OPCODE_MOV;
+      break;
+   case OPCODE_MUL:
+      fullinst->Instruction.Opcode = TGSI_OPCODE_MUL;
+      break;
+   case OPCODE_POW:
+      fullinst->Instruction.Opcode = TGSI_OPCODE_POW;
+      break;
+   case OPCODE_RCP:
+      fullinst->Instruction.Opcode = TGSI_OPCODE_RCP;
+      break;
+   case OPCODE_RSQ:
+      fullinst->Instruction.Opcode = TGSI_OPCODE_RSQ;
+      tgsi_util_set_full_src_register_sign_mode (&fullinst->FullSrcRegisters[0],
+						 TGSI_UTIL_SIGN_CLEAR);
+      break;
+   case OPCODE_SCS:
+      fullinst->Instruction.Opcode = TGSI_OPCODE_SCS;
+      fulldst->DstRegister.WriteMask &= TGSI_WRITEMASK_XY;
+      break;
+   case OPCODE_SGE:
+      fullinst->Instruction.Opcode = TGSI_OPCODE_SGE;
+      break;
+   case OPCODE_SIN:
+      fullinst->Instruction.Opcode = TGSI_OPCODE_SIN;
+      break;
+   case OPCODE_SLT:
+      fullinst->Instruction.Opcode = TGSI_OPCODE_SLT;
+      break;
+   case OPCODE_SUB:
+      fullinst->Instruction.Opcode = TGSI_OPCODE_SUB;
+      break;
+   case OPCODE_SWZ:
+      fullinst->Instruction.Opcode = TGSI_OPCODE_SWZ;
+      break;
+   case OPCODE_TEX:
+      fullinst->Instruction.Opcode = TGSI_OPCODE_TEX;
+      fullinst->Instruction.NumSrcRegs = 2;
+      fullinst->InstructionExtTexture.Texture = map_texture_target (inst->TexSrcTarget);
+      fullinst->FullSrcRegisters[1].SrcRegister.File = TGSI_FILE_SAMPLER;
+      fullinst->FullSrcRegisters[1].SrcRegister.Index = inst->TexSrcUnit;
+      break;
+   case OPCODE_TXB:
+      fullinst->Instruction.Opcode = TGSI_OPCODE_TXB;
+      fullinst->Instruction.NumSrcRegs = 2;
+      fullinst->InstructionExtTexture.Texture = map_texture_target (inst->TexSrcTarget);
+      fullinst->FullSrcRegisters[1].SrcRegister.File = TGSI_FILE_SAMPLER;
+      fullinst->FullSrcRegisters[1].SrcRegister.Index = inst->TexSrcUnit;
+      break;
+   case OPCODE_TXP:
+      fullinst->Instruction.Opcode = TGSI_OPCODE_TEX;
+      fullinst->Instruction.NumSrcRegs = 2;
+      fullinst->InstructionExtTexture.Texture = map_texture_target (inst->TexSrcTarget);
+      fullinst->FullSrcRegisters[0].SrcRegisterExtSwz.ExtDivide = TGSI_EXTSWIZZLE_W;
+      fullinst->FullSrcRegisters[1].SrcRegister.File = TGSI_FILE_SAMPLER;
+      fullinst->FullSrcRegisters[1].SrcRegister.Index = inst->TexSrcUnit;
+      break;
+   case OPCODE_XPD:
+      fullinst->Instruction.Opcode = TGSI_OPCODE_XPD;
+      fulldst->DstRegister.WriteMask &= TGSI_WRITEMASK_XYZ;
+      break;
+   case OPCODE_END:
+      return GL_TRUE;
+   default:
+      assert (0);
+   }
+
+   return GL_FALSE;
+}
+
+GLboolean
+tgsi_compile_fp_program( const struct gl_fragment_program *program,
+			 struct tgsi_token *tokens,
+			 GLuint max_token_count,
+			 GLuint *token_count )
+{
+   GLuint i, ti;
+   struct tgsi_header *header;
+   struct tgsi_full_declaration fulldecl;
+   struct tgsi_full_instruction fullinst;
+   struct tgsi_full_dst_register *fulldst;
+   struct tgsi_full_src_register *fullsrc;
+   GLuint inputs_read;
+
+   *(struct tgsi_version *) &tokens[0] = tgsi_build_version ();
+
+   header = (struct tgsi_header *) &tokens[1];
+   *header = tgsi_build_header ();
+
+   ti = 2;
+
+   /*
+    * Input 0 is always read, at least implicitly by the instruction generated
+    * above, so mark it as used.
+    */
+   inputs_read = program->Base.InputsRead | 1;
+
+   /*
+    * Declare input attributes.
+    */
+   fulldecl = tgsi_default_full_declaration();
+
+   fulldecl.Declaration.File = TGSI_FILE_INPUT;
+   fulldecl.Declaration.Declare = TGSI_DECLARE_RANGE;
+   fulldecl.Declaration.Interpolate = 1;
+
+   /*
+    * Do not interpolate fragment position.
+    */
+   fulldecl.u.DeclarationRange.First = 0;
+   fulldecl.u.DeclarationRange.Last = 0;
+
+   fulldecl.Interpolation.Interpolate = TGSI_INTERPOLATE_CONSTANT;
+
+   ti += tgsi_build_full_declaration(
+      &fulldecl,
+      &tokens[ti],
+      header,
+      max_token_count - ti );
+
+   /*
+    * Interpolate generic attributes.
+    */
+   fulldecl.u.DeclarationRange.First = 1;
+   fulldecl.u.DeclarationRange.Last = 1;
+   for( i = 1; i < 32; i++ ) {
+      if( inputs_read & (1 << i) ) {
+         fulldecl.u.DeclarationRange.Last++;
+      }
+   }
+
+   fulldecl.Interpolation.Interpolate = TGSI_INTERPOLATE_LINEAR;
+
+   ti += tgsi_build_full_declaration(
+      &fulldecl,
+      &tokens[ti],
+      header,
+      max_token_count - ti );
+
+   /*
+    * Copy input fragment xyz to output xyz.
+    * If the shader writes depth, do not copy the z component.
+    */
+
+   fullinst = tgsi_default_full_instruction ();
+
+   fullinst.Instruction.Opcode = TGSI_OPCODE_MOV;
+   fullinst.Instruction.NumDstRegs = 1;
+   fullinst.Instruction.NumSrcRegs = 1;
+
+   fulldst = &fullinst.FullDstRegisters[0];
+   fulldst->DstRegister.File = TGSI_FILE_OUTPUT;
+   fulldst->DstRegister.Index = 0;
+   if (program->Base.OutputsWritten & (1 << FRAG_RESULT_DEPR)) {
+      fulldst->DstRegister.WriteMask = TGSI_WRITEMASK_XY;
+   } else {
+      fulldst->DstRegister.WriteMask = TGSI_WRITEMASK_XYZ;
+   }
+
+   fullsrc = &fullinst.FullSrcRegisters[0];
+   fullsrc->SrcRegister.File = TGSI_FILE_INPUT;
+   fullsrc->SrcRegister.Index = 0;
+
+   ti += tgsi_build_full_instruction (&fullinst,
+				      &tokens[ti],
+				      header,
+				      max_token_count - ti);
+
+   for( i = 0; i < program->Base.NumInstructions; i++ ) {
+      if (compile_instruction (&program->Base.Instructions[i],
+			       &fullinst,
+			       inputs_read,
+			       TGSI_PROCESSOR_FRAGMENT)) {
+	 assert (i == program->Base.NumInstructions - 1);
+	 tgsi_dump (tokens, TGSI_DUMP_NO_IGNORED | TGSI_DUMP_NO_DEFAULT);
+	 break;
+      }
+
+      ti += tgsi_build_full_instruction (&fullinst,
+					 &tokens[ti],
+					 header,
+					 max_token_count - ti);
+   }
+
+   return GL_TRUE;
+}
+
+GLboolean
+tgsi_compile_vp_program( const struct gl_vertex_program *program,
+			 struct tgsi_token *tokens,
+			 GLuint max_token_count,
+			 GLuint *token_count )
+{
+   GLuint ii, ti;
+   struct tgsi_header *header;
+   struct tgsi_processor *processor;
+   struct tgsi_full_instruction fullinst;
+   GLuint inputs_read = ~0;
+
+   *(struct tgsi_version *) &tokens[0] = tgsi_build_version ();
+
+   header = (struct tgsi_header *) &tokens[1];
+   *header = tgsi_build_header ();
+
+   processor = (struct tgsi_processor *) &tokens[2];
+   *processor = tgsi_build_processor (TGSI_PROCESSOR_VERTEX, header);
+
+   ti = 3;
+
+   for (ii = 0; ii < program->Base.NumInstructions; ii++) {
+      if (compile_instruction (&program->Base.Instructions[ii],
+			       &fullinst,
+			       inputs_read,
+			       TGSI_PROCESSOR_VERTEX)) {
+	 assert (ii == program->Base.NumInstructions - 1);
+	 tgsi_dump (tokens, TGSI_DUMP_NO_IGNORED | TGSI_DUMP_NO_DEFAULT);
+	 break;
+      }
+
+      ti += tgsi_build_full_instruction (&fullinst,
+					 &tokens[ti],
+					 header,
+					 max_token_count - ti);
+   }
+
+   return GL_TRUE;
+}
+

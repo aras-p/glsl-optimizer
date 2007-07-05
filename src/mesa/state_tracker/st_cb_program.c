@@ -41,6 +41,7 @@
 #include "program.h"
 #include "programopt.h"
 #include "tnl/tnl.h"
+#include "pipe/tgsi/mesa/tgsi_mesa.h"
 
 
 static void st_bind_program( GLcontext *ctx,
@@ -89,7 +90,7 @@ static struct gl_program *st_new_program( GLcontext *ctx,
 
 static void st_delete_program( GLcontext *ctx,
 			       struct gl_program *prog )
-{   
+{
    _mesa_delete_program( ctx, prog );
 }
 
@@ -115,7 +116,7 @@ static void st_program_string_notify( GLcontext *ctx,
 
 	 st->dirty.st |= ST_NEW_FRAGMENT_PROGRAM;
 
-	 p->id = st->program_id++;      
+	 p->id = st->program_id++;
 #if 0
 	 p->param_state = p->Base.Base.Parameters->StateFlags; 
 	 p->translated = 0;
@@ -127,6 +128,14 @@ static void st_program_string_notify( GLcontext *ctx,
 	    /* add extra instructions to do fog, then turn off FogOption field */
 	    _mesa_append_fog_code(ctx, &p->Base);
 	    p->Base.FogOption = GL_NONE;
+	 }
+
+         /* XXX: Not hooked-up yet. */
+	 {
+	    struct tgsi_token tokens[1024];
+
+	    tgsi_mesa_compile_fp_program( prog, tokens, 1024 );
+	    tgsi_dump( tokens, TGSI_DUMP_VERBOSE );
 	 }
       }
    }
@@ -148,7 +157,6 @@ void st_init_cb_program( struct st_context *st )
     */
    st->ctx->FragmentProgram._MaintainTexEnvProgram = GL_TRUE;
    st->ctx->FragmentProgram._UseTexEnvProgram = GL_TRUE;
-      
 
    assert(functions->ProgramStringNotify == _tnl_program_string); 
    functions->BindProgram = st_bind_program;

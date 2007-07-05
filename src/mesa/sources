@@ -179,6 +179,16 @@ SOFTPIPE_SOURCES = \
 	pipe/softpipe/sp_state_setup.c \
 	pipe/softpipe/sp_state_surface.c
 
+TGSICORE_SOURCES = \
+	pipe/tgsi/core/tgsi_build.c \
+	pipe/tgsi/core/tgsi_dump.c \
+	pipe/tgsi/core/tgsi_exec.c \
+	pipe/tgsi/core/tgsi_parse.c \
+	pipe/tgsi/core/tgsi_util.c
+
+TGSIMESA_SOURCES = \
+	pipe/tgsi/mesa/mesa_to_tgsi.c
+
 STATETRACKER_SOURCES = \
 	state_tracker/st_atom.c \
 	state_tracker/st_atom_alphatest.c \
@@ -344,8 +354,10 @@ SOLO_SOURCES = \
 	$(MATH_SOURCES)		\
 	$(VBO_SOURCES)		\
 	$(VF_SOURCES)		\
-	$(SOFTPIPE_SOURCES)		\
-	$(STATETRACKER_SOURCES)		\
+	$(SOFTPIPE_SOURCES)	\
+	$(TGSICORE_SOURCES)	\
+	$(TGSIMESA_SOURCES)	\
+	$(STATETRACKER_SOURCES)	\
 	$(TNL_SOURCES)		\
 	$(SHADER_SOURCES)	\
 	$(SWRAST_SOURCES)	\
@@ -391,4 +403,5 @@ INCLUDE_DIRS = \
 	-I$(TOP)/src/mesa/shader/grammar \
 	-I$(TOP)/src/mesa/shader/slang \
 	-I$(TOP)/src/mesa/swrast \
-	-I$(TOP)/src/mesa/swrast_setup
+	-I$(TOP)/src/mesa/swrast_setup \
+	-I$(TOP)/src/mesa/pipe/tgsi
