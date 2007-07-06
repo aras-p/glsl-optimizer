@@ -56,6 +56,7 @@ typedef struct _dri_bo_ttm {
 
    int refcount;		/* Protected by bufmgr->mutex */
    drmBO drm_bo;
+   const char *name;
 } dri_bo_ttm;
 
 typedef struct _dri_fence_ttm
@@ -124,6 +125,7 @@ dri_ttm_alloc(dri_bufmgr *bufmgr, const char *name,
    ttm_buf->bo.offset = ttm_buf->drm_bo.offset;
    ttm_buf->bo.virtual = NULL;
    ttm_buf->bo.bufmgr = bufmgr;
+   ttm_buf->name = name;
    ttm_buf->refcount = 1;
 
    return &ttm_buf->bo;
@@ -165,6 +167,7 @@ dri_ttm_alloc_static(dri_bufmgr *bufmgr, const char *name,
    ttm_buf->bo.offset = ttm_buf->drm_bo.offset;
    ttm_buf->bo.virtual = virtual;
    ttm_buf->bo.bufmgr = bufmgr;
+   ttm_buf->name = name;
    ttm_buf->refcount = 1;
 
    return &ttm_buf->bo;
@@ -340,7 +343,7 @@ dri_ttm_fence_wait(dri_fence *fence)
 }
 
 static void
-dri_fake_destroy(dri_bufmgr *bufmgr)
+dri_bufmgr_ttm_destroy(dri_bufmgr *bufmgr)
 {
    dri_bufmgr_ttm *bufmgr_ttm = (dri_bufmgr_ttm *)bufmgr;
 
@@ -381,6 +384,7 @@ dri_bufmgr_ttm_init(int fd, unsigned int fence_type,
    bufmgr_ttm->bufmgr.fence_reference = dri_ttm_fence_reference;
    bufmgr_ttm->bufmgr.fence_unreference = dri_ttm_fence_unreference;
    bufmgr_ttm->bufmgr.fence_wait = dri_ttm_fence_wait;
+   bufmgr_ttm->bufmgr.destroy = dri_bufmgr_ttm_destroy;
 
    /* Attempt an allocation to make sure that the DRM was actually set up for
     * TTM.
