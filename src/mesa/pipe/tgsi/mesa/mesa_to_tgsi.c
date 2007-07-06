@@ -355,7 +355,7 @@ compile_instruction(
 }
 
 GLboolean
-tgsi_compile_fp_program(
+tgsi_mesa_compile_fp_program(
    const struct gl_fragment_program *program,
    struct tgsi_token *tokens,
    GLuint maxTokens )
@@ -478,7 +478,7 @@ tgsi_compile_fp_program(
 }
 
 GLboolean
-tgsi_compile_vp_program(
+tgsi_mesa_compile_vp_program(
    const struct gl_vertex_program *program,
    struct tgsi_token *tokens,
    GLuint maxTokens )
