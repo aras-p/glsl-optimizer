@@ -25,12 +25,12 @@
  * 
  **************************************************************************/
 
-#include "glheader.h"
-#include "context.h"
-#include "state.h"
-#include "api_validate.h"
-#include "api_noop.h"
-#include "dispatch.h"
+#include "main/glheader.h"
+#include "main/context.h"
+#include "main/state.h"
+#include "main/api_validate.h"
+#include "main/api_noop.h"
+#include "glapi/dispatch.h"
 
 #include "vbo_context.h"
 

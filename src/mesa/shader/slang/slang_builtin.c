@@ -28,14 +28,14 @@
  * \author Brian Paul
  */
 
-#include "imports.h"
-#include "slang_builtin.h"
-#include "slang_ir.h"
-#include "mtypes.h"
-#include "program.h"
-#include "prog_instruction.h"
-#include "prog_parameter.h"
-#include "prog_statevars.h"
+#include "main/imports.h"
+#include "main/mtypes.h"
+#include "shader/program.h"
+#include "shader/prog_instruction.h"
+#include "shader/prog_parameter.h"
+#include "shader/prog_statevars.h"
+#include "shader/slang/slang_ir.h"
+#include "shader/slang/slang_builtin.h"
 
 
 /**

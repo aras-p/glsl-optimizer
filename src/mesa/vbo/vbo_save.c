@@ -26,10 +26,10 @@
  */
 
 
-#include "mtypes.h"
-#include "dlist.h"
-#include "vtxfmt.h"
-#include "imports.h"
+#include "main/mtypes.h"
+#include "main/dlist.h"
+#include "main/vtxfmt.h"
+#include "main/imports.h"
 
 #include "vbo_context.h"
 

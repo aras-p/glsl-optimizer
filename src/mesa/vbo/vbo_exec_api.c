@@ -30,16 +30,16 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
  *   Keith Whitwell <keith@tungstengraphics.com>
  */
 
-#include "glheader.h"
-#include "context.h"
-#include "macros.h"
-#include "vtxfmt.h"
-#include "dlist.h"
-#include "state.h"
-#include "light.h"
-#include "api_arrayelt.h"
-#include "api_noop.h"
-#include "dispatch.h"
+#include "main/glheader.h"
+#include "main/context.h"
+#include "main/macros.h"
+#include "main/vtxfmt.h"
+#include "main/dlist.h"
+#include "main/state.h"
+#include "main/light.h"
+#include "main/api_arrayelt.h"
+#include "main/api_noop.h"
+#include "glapi/dispatch.h"
 
 #include "vbo_context.h"
 

@@ -43,10 +43,9 @@
 #include "prog_parameter.h"
 #include "prog_print.h"
 #include "prog_statevars.h"
-#include "shader_api.h"
-
-#include "slang_compile.h"
-#include "slang_link.h"
+#include "shader/shader_api.h"
+#include "shader/slang/slang_compile.h"
+#include "shader/slang/slang_link.h"
 
 
 

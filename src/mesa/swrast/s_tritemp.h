@@ -393,7 +393,7 @@ static void NAME(GLcontext *ctx, const SWvertex *v0,
 	 span.greenStep = 0;
 	 span.blueStep  = 0;
 #  ifdef INTERP_ALPHA
-         span.attrStepX[FRAG_ATTRIB_COL0][3] = span.attrStepX[FRAG_ATTRIB_COL0][3] = 0.0F;
+         span.attrStepX[FRAG_ATTRIB_COL0][3] = span.attrStepY[FRAG_ATTRIB_COL0][3] = 0.0F;
 	 span.alphaStep = 0;
 #  endif
       }

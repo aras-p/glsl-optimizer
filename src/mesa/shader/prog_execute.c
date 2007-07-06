@@ -43,7 +43,7 @@
 #include "prog_instruction.h"
 #include "prog_parameter.h"
 #include "prog_print.h"
-#include "slang_library_noise.h"
+#include "shader/slang/slang_library_noise.h"
 
 
 /* See comments below for info about this */

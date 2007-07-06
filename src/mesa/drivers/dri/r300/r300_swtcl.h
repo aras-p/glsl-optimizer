@@ -24,54 +24,22 @@ IN NO EVENT SHALL THE COPYRIGHT OWNER(S) AND/OR ITS SUPPLIERS BE
 LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
 OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
 WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-
-**************************************************************************/
+*/
 
 /*
  * Authors:
- *   Nicolai Haehnle <prefect_@gmx.net>
+ *   Keith Whitwell <keith@tungstengraphics.com> - original r200 code
+ *   Dave Airlie <airlied@linux.ie>
  */
 
-#ifndef __R300_STATE_H__
-#define __R300_STATE_H__
+#ifndef __R300_SWTCL_H__
+#define __R300_SWTCL_H__
 
+#include "mtypes.h"
+#include "swrast/swrast.h"
 #include "r300_context.h"
 
-#define R300_NEWPRIM( rmesa )			\
-  do {						\
-    if ( rmesa->dma.flush )			\
-      rmesa->dma.flush( rmesa );		\
-  } while (0)
+extern void r300InitSwtcl( GLcontext *ctx );
+extern void r300DestroySwtcl( GLcontext *ctx );
 
-#define R300_STATECHANGE(r300, atom) \
-	do {						\
-	  R300_NEWPRIM(r300);				\
-		r300->hw.atom.dirty = GL_TRUE;		\
-		r300->hw.is_dirty = GL_TRUE;		\
-	} while(0)
-
-#define R300_PRINT_STATE(r300, atom) \
-		r300PrintStateAtom(r300, &r300->hw.atom)
-
-/* Fire the buffered vertices no matter what.
-   TODO: This has not been implemented yet
- */
-#define R300_FIREVERTICES( r300 )			\
-do {							\
-    \
-   if ( (r300)->cmdbuf.count_used || (r300)->dma.flush ) {	\
-      r300Flush( (r300)->radeon.glCtx );		\
-   }							\
-    \
-} while (0)
-
-extern void r300UpdateStateParameters(GLcontext * ctx, GLuint new_state);
-extern void r300InitState(r300ContextPtr r300);
-extern void r300InitStateFuncs(struct dd_function_table *functions);
-extern void r300UpdateViewportOffset(GLcontext * ctx);
-extern void r300UpdateDrawBuffer(GLcontext * ctx);
-
-extern void r300UpdateShaders(r300ContextPtr rmesa);
-extern void r300UpdateShaderStates(r300ContextPtr rmesa);
-
-#endif				/* __R300_STATE_H__ */
+#endif
