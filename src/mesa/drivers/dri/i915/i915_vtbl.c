@@ -64,6 +64,7 @@ static void i915_reduced_primitive_state( intelContextPtr intel,
     st1 &= ~ST1_ENABLE;
 
     switch (rprim) {
+    case GL_QUADS: /* from RASTERIZE(GL_QUADS) in t_dd_tritemp.h */
     case GL_TRIANGLES:
        if (intel->ctx.Polygon.StippleFlag &&
 	   intel->hw_stipple)
