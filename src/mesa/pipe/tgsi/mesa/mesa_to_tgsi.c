@@ -5,9 +5,10 @@
  * Map mesa register file to SBIR register file.
  */
 static GLuint
-map_register_file( enum register_file file )
+map_register_file(
+   enum register_file file )
 {
-   switch (file) {
+   switch( file ) {
    case PROGRAM_UNDEFINED:
       return TGSI_FILE_NULL;
    case PROGRAM_TEMPORARY:
@@ -25,7 +26,7 @@ map_register_file( enum register_file file )
    case PROGRAM_ADDRESS:
       return TGSI_FILE_ADDRESS;
    default:
-      assert (0);
+      assert( 0 );
       return TGSI_FILE_NULL;
    }
 }
@@ -35,37 +36,40 @@ map_register_file( enum register_file file )
  * Take special care when processing input and output indices.
  */
 static GLuint
-map_register_file_index( GLuint processor,
-			 GLuint file,
-			 GLuint index,
-			 GLuint usage_bitmask )
+map_register_file_index(
+   GLuint processor,
+   GLuint file,
+   GLuint index,
+   GLuint usage_bitmask )
 {
    GLuint mapped_index;
    GLuint i;
 
-   switch (file)
-   {
+   switch( file ) {
    case TGSI_FILE_INPUT:
-      assert (index < 32);
-      assert (usage_bitmask & (1 << index));
+      assert( index < 32 );
+      assert( usage_bitmask & (1 << index) );
       mapped_index = 0;
-      for (i = 0; i < index; i++) {
-	 if (usage_bitmask & (1 << i))
-	    mapped_index++;
+      for( i = 0; i < index; i++ ) {
+         if( usage_bitmask & (1 << i) ) {
+            mapped_index++;
+         }
       }
       break;
 
    case TGSI_FILE_OUTPUT:
-      assert (usage_bitmask == 0);
-      if (processor == TGSI_PROCESSOR_FRAGMENT) {
-	 if (index == FRAG_RESULT_DEPR) {
-	    mapped_index = 0;
-	 } else {
-	    assert (index == FRAG_RESULT_COLR);
-	    mapped_index = index + 1;
-	 }
-      } else {
-	 mapped_index = index;
+      assert( usage_bitmask == 0 );
+      if( processor == TGSI_PROCESSOR_FRAGMENT ) {
+	 if( index == FRAG_RESULT_DEPR ) {
+            mapped_index = 0;
+         }
+         else {
+            assert( index == FRAG_RESULT_COLR );
+            mapped_index = index + 1;
+         }
+      }
+      else {
+         mapped_index = index;
       }
       break;
 
@@ -80,9 +84,10 @@ map_register_file_index( GLuint processor,
  * Map mesa texture target to SBIR texture target.
  */
 static GLuint
-map_texture_target( GLuint textarget )
+map_texture_target(
+   GLuint textarget )
 {
-   switch (textarget) {
+   switch( textarget ) {
    case TEXTURE_1D_INDEX:
       return TGSI_TEXTURE_1D;
    case TEXTURE_2D_INDEX:
@@ -94,15 +99,17 @@ map_texture_target( GLuint textarget )
    case TEXTURE_RECT_INDEX:
       return TGSI_TEXTURE_RECT;
    default:
-      assert (0);
+      assert( 0 );
    }
+
    return TGSI_TEXTURE_1D;
 }
 
 static GLuint
-convert_sat( GLuint sat )
+convert_sat(
+   GLuint sat )
 {
-   switch (sat) {
+   switch( sat ) {
    case SATURATE_OFF:
       return TGSI_SAT_NONE;
    case SATURATE_ZERO_ONE:
@@ -110,107 +117,114 @@ convert_sat( GLuint sat )
    case SATURATE_PLUS_MINUS_ONE:
       return TGSI_SAT_MINUS_PLUS_ONE;
    default:
-      assert (0);
+      assert( 0 );
       return TGSI_SAT_NONE;
    }
 }
 
 static GLuint
-convert_writemask( GLuint writemask )
+convert_writemask(
+   GLuint writemask )
 {
-   assert (WRITEMASK_X == TGSI_WRITEMASK_X);
-   assert (WRITEMASK_Y == TGSI_WRITEMASK_Y);
-   assert (WRITEMASK_Z == TGSI_WRITEMASK_Z);
-   assert (WRITEMASK_W == TGSI_WRITEMASK_W);
-   assert ((writemask & ~TGSI_WRITEMASK_XYZW) == 0);
+   assert( WRITEMASK_X == TGSI_WRITEMASK_X );
+   assert( WRITEMASK_Y == TGSI_WRITEMASK_Y );
+   assert( WRITEMASK_Z == TGSI_WRITEMASK_Z );
+   assert( WRITEMASK_W == TGSI_WRITEMASK_W );
+   assert( (writemask & ~TGSI_WRITEMASK_XYZW) == 0 );
 
    return writemask;
 }
 
 static GLboolean
-compile_instruction( struct prog_instruction *inst,
-		     struct tgsi_full_instruction *fullinst,
-		     GLuint inputs_read,
-		     GLuint processor )
+compile_instruction(
+   struct prog_instruction *inst,
+   struct tgsi_full_instruction *fullinst,
+   GLuint inputs_read,
+   GLuint processor )
 {
    GLuint i;
    struct tgsi_full_dst_register *fulldst;
    struct tgsi_full_src_register *fullsrc;
 
-   *fullinst = tgsi_default_full_instruction ();
+   *fullinst = tgsi_default_full_instruction();
 
-   fullinst->Instruction.Saturate = convert_sat (inst->SaturateMode);
+   fullinst->Instruction.Saturate = convert_sat( inst->SaturateMode );
    fullinst->Instruction.NumDstRegs = 1;
-   fullinst->Instruction.NumSrcRegs = _mesa_num_inst_src_regs (inst->Opcode);
+   fullinst->Instruction.NumSrcRegs = _mesa_num_inst_src_regs( inst->Opcode );
 
    fulldst = &fullinst->FullDstRegisters[0];
-   fulldst->DstRegister.File =
-      map_register_file (inst->DstReg.File);
-   fulldst->DstRegister.Index =
-      map_register_file_index (processor,
-			       fulldst->DstRegister.File,
-			       inst->DstReg.Index,
-			       0);
-   fulldst->DstRegister.WriteMask =
-      convert_writemask (inst->DstReg.WriteMask);
+   fulldst->DstRegister.File = map_register_file( inst->DstReg.File );
+   fulldst->DstRegister.Index = map_register_file_index(
+      processor,
+      fulldst->DstRegister.File,
+      inst->DstReg.Index,
+      0 );
+   fulldst->DstRegister.WriteMask = convert_writemask( inst->DstReg.WriteMask );
 
-   for (i = 0; i < fullinst->Instruction.NumSrcRegs; i++) {
+   for( i = 0; i < fullinst->Instruction.NumSrcRegs; i++ ) {
       GLuint j;
 
       fullsrc = &fullinst->FullSrcRegisters[i];
-      fullsrc->SrcRegister.File =
-	 map_register_file (inst->SrcReg[i].File);
-      fullsrc->SrcRegister.Index =
-	 map_register_file_index (processor,
-				  fullsrc->SrcRegister.File,
-				  inst->SrcReg[i].Index,
-				  inputs_read);
+      fullsrc->SrcRegister.File = map_register_file( inst->SrcReg[i].File );
+      fullsrc->SrcRegister.Index = map_register_file_index(
+         processor,
+         fullsrc->SrcRegister.File,
+         inst->SrcReg[i].Index,
+         inputs_read );
 
-      for (j = 0; j < 4; j++) {
-	 GLuint swz;
+      for( j = 0; j < 4; j++ ) {
+         GLuint swz;
 
-	 swz = GET_SWZ(inst->SrcReg[i].Swizzle, j);
-	 if (swz > SWIZZLE_W) {
-	    tgsi_util_set_src_register_extswizzle (
-	       &fullsrc->SrcRegisterExtSwz,
-	       swz,
-	       j);
-	 } else {
-	    tgsi_util_set_src_register_swizzle (
-	       &fullsrc->SrcRegister,
-	       swz,
-	       j);
-	 }
+         swz = GET_SWZ( inst->SrcReg[i].Swizzle, j );
+         if( swz > SWIZZLE_W ) {
+            tgsi_util_set_src_register_extswizzle(
+               &fullsrc->SrcRegisterExtSwz,
+               swz,
+               j );
+         }
+         else {
+            tgsi_util_set_src_register_swizzle(
+               &fullsrc->SrcRegister,
+               swz,
+               j );
+         }
       }
 
-      if (inst->SrcReg[i].NegateBase == NEGATE_XYZW) {
-	 fullsrc->SrcRegister.Negate = 1;
-      } else if (inst->SrcReg[i].NegateBase != NEGATE_NONE) {
-	 if (inst->SrcReg[i].NegateBase & NEGATE_X)
-	    fullsrc->SrcRegisterExtSwz.NegateX = 1;
-	 if (inst->SrcReg[i].NegateBase & NEGATE_Y)
-	    fullsrc->SrcRegisterExtSwz.NegateY = 1;
-	 if (inst->SrcReg[i].NegateBase & NEGATE_Z)
-	    fullsrc->SrcRegisterExtSwz.NegateZ = 1;
-	 if (inst->SrcReg[i].NegateBase & NEGATE_W)
-	    fullsrc->SrcRegisterExtSwz.NegateW = 1;
+      if( inst->SrcReg[i].NegateBase == NEGATE_XYZW ) {
+         fullsrc->SrcRegister.Negate = 1;
+      }
+      else if( inst->SrcReg[i].NegateBase != NEGATE_NONE ) {
+         if( inst->SrcReg[i].NegateBase & NEGATE_X ) {
+            fullsrc->SrcRegisterExtSwz.NegateX = 1;
+         }
+         if( inst->SrcReg[i].NegateBase & NEGATE_Y ) {
+            fullsrc->SrcRegisterExtSwz.NegateY = 1;
+         }
+         if( inst->SrcReg[i].NegateBase & NEGATE_Z ) {
+            fullsrc->SrcRegisterExtSwz.NegateZ = 1;
+         }
+         if( inst->SrcReg[i].NegateBase & NEGATE_W ) {
+            fullsrc->SrcRegisterExtSwz.NegateW = 1;
+         }
       }
 
-      if (inst->SrcReg[i].Abs)
-	 fullsrc->SrcRegisterExtMod.Absolute = 1;
+      if( inst->SrcReg[i].Abs ) {
+         fullsrc->SrcRegisterExtMod.Absolute = 1;
+      }
 
-      if (inst->SrcReg[i].NegateAbs)
-	 fullsrc->SrcRegisterExtMod.Negate = 1;
+      if( inst->SrcReg[i].NegateAbs ) {
+         fullsrc->SrcRegisterExtMod.Negate = 1;
+      }
 
-      if (inst->SrcReg[i].RelAddr) {
-	 fullsrc->SrcRegister.Indirect = 1;
+      if( inst->SrcReg[i].RelAddr ) {
+         fullsrc->SrcRegister.Indirect = 1;
 
-	 fullsrc->SrcRegisterInd.File = TGSI_FILE_ADDRESS;
-	 fullsrc->SrcRegisterInd.Index = 0;
+         fullsrc->SrcRegisterInd.File = TGSI_FILE_ADDRESS;
+         fullsrc->SrcRegisterInd.Index = 0;
       }
    }
 
-   switch (inst->Opcode) {
+   switch( inst->Opcode ) {
    case OPCODE_ARL:
       fullinst->Instruction.Opcode = TGSI_OPCODE_ARL;
       break;
@@ -282,8 +296,9 @@ compile_instruction( struct prog_instruction *inst,
       break;
    case OPCODE_RSQ:
       fullinst->Instruction.Opcode = TGSI_OPCODE_RSQ;
-      tgsi_util_set_full_src_register_sign_mode (&fullinst->FullSrcRegisters[0],
-						 TGSI_UTIL_SIGN_CLEAR);
+      tgsi_util_set_full_src_register_sign_mode(
+         &fullinst->FullSrcRegisters[0],
+         TGSI_UTIL_SIGN_CLEAR );
       break;
    case OPCODE_SCS:
       fullinst->Instruction.Opcode = TGSI_OPCODE_SCS;
@@ -307,21 +322,21 @@ compile_instruction( struct prog_instruction *inst,
    case OPCODE_TEX:
       fullinst->Instruction.Opcode = TGSI_OPCODE_TEX;
       fullinst->Instruction.NumSrcRegs = 2;
-      fullinst->InstructionExtTexture.Texture = map_texture_target (inst->TexSrcTarget);
+      fullinst->InstructionExtTexture.Texture = map_texture_target( inst->TexSrcTarget );
       fullinst->FullSrcRegisters[1].SrcRegister.File = TGSI_FILE_SAMPLER;
       fullinst->FullSrcRegisters[1].SrcRegister.Index = inst->TexSrcUnit;
       break;
    case OPCODE_TXB:
       fullinst->Instruction.Opcode = TGSI_OPCODE_TXB;
       fullinst->Instruction.NumSrcRegs = 2;
-      fullinst->InstructionExtTexture.Texture = map_texture_target (inst->TexSrcTarget);
+      fullinst->InstructionExtTexture.Texture = map_texture_target( inst->TexSrcTarget );
       fullinst->FullSrcRegisters[1].SrcRegister.File = TGSI_FILE_SAMPLER;
       fullinst->FullSrcRegisters[1].SrcRegister.Index = inst->TexSrcUnit;
       break;
    case OPCODE_TXP:
       fullinst->Instruction.Opcode = TGSI_OPCODE_TEX;
       fullinst->Instruction.NumSrcRegs = 2;
-      fullinst->InstructionExtTexture.Texture = map_texture_target (inst->TexSrcTarget);
+      fullinst->InstructionExtTexture.Texture = map_texture_target( inst->TexSrcTarget );
       fullinst->FullSrcRegisters[0].SrcRegisterExtSwz.ExtDivide = TGSI_EXTSWIZZLE_W;
       fullinst->FullSrcRegisters[1].SrcRegister.File = TGSI_FILE_SAMPLER;
       fullinst->FullSrcRegisters[1].SrcRegister.Index = inst->TexSrcUnit;
@@ -333,17 +348,17 @@ compile_instruction( struct prog_instruction *inst,
    case OPCODE_END:
       return GL_TRUE;
    default:
-      assert (0);
+      assert( 0 );
    }
 
    return GL_FALSE;
 }
 
 GLboolean
-tgsi_compile_fp_program( const struct gl_fragment_program *program,
-			 struct tgsi_token *tokens,
-			 GLuint max_token_count,
-			 GLuint *token_count )
+tgsi_compile_fp_program(
+   const struct gl_fragment_program *program,
+   struct tgsi_token *tokens,
+   GLuint maxTokens )
 {
    GLuint i, ti;
    struct tgsi_header *header;
@@ -353,10 +368,10 @@ tgsi_compile_fp_program( const struct gl_fragment_program *program,
    struct tgsi_full_src_register *fullsrc;
    GLuint inputs_read;
 
-   *(struct tgsi_version *) &tokens[0] = tgsi_build_version ();
+   *(struct tgsi_version *) &tokens[0] = tgsi_build_version();
 
    header = (struct tgsi_header *) &tokens[1];
-   *header = tgsi_build_header ();
+   *header = tgsi_build_header();
 
    ti = 2;
 
@@ -387,7 +402,7 @@ tgsi_compile_fp_program( const struct gl_fragment_program *program,
       &fulldecl,
       &tokens[ti],
       header,
-      max_token_count - ti );
+      maxTokens - ti );
 
    /*
     * Interpolate generic attributes.
@@ -406,14 +421,14 @@ tgsi_compile_fp_program( const struct gl_fragment_program *program,
       &fulldecl,
       &tokens[ti],
       header,
-      max_token_count - ti );
+      maxTokens - ti );
 
    /*
     * Copy input fragment xyz to output xyz.
     * If the shader writes depth, do not copy the z component.
     */
 
-   fullinst = tgsi_default_full_instruction ();
+   fullinst = tgsi_default_full_instruction();
 
    fullinst.Instruction.Opcode = TGSI_OPCODE_MOV;
    fullinst.Instruction.NumDstRegs = 1;
@@ -422,9 +437,10 @@ tgsi_compile_fp_program( const struct gl_fragment_program *program,
    fulldst = &fullinst.FullDstRegisters[0];
    fulldst->DstRegister.File = TGSI_FILE_OUTPUT;
    fulldst->DstRegister.Index = 0;
-   if (program->Base.OutputsWritten & (1 << FRAG_RESULT_DEPR)) {
+   if( program->Base.OutputsWritten & (1 << FRAG_RESULT_DEPR) ) {
       fulldst->DstRegister.WriteMask = TGSI_WRITEMASK_XY;
-   } else {
+   }
+   else {
       fulldst->DstRegister.WriteMask = TGSI_WRITEMASK_XYZ;
    }
 
@@ -432,35 +448,40 @@ tgsi_compile_fp_program( const struct gl_fragment_program *program,
    fullsrc->SrcRegister.File = TGSI_FILE_INPUT;
    fullsrc->SrcRegister.Index = 0;
 
-   ti += tgsi_build_full_instruction (&fullinst,
-				      &tokens[ti],
-				      header,
-				      max_token_count - ti);
+   ti += tgsi_build_full_instruction(
+      &fullinst,
+      &tokens[ti],
+      header,
+      maxTokens - ti );
 
    for( i = 0; i < program->Base.NumInstructions; i++ ) {
-      if (compile_instruction (&program->Base.Instructions[i],
-			       &fullinst,
-			       inputs_read,
-			       TGSI_PROCESSOR_FRAGMENT)) {
-	 assert (i == program->Base.NumInstructions - 1);
-	 tgsi_dump (tokens, TGSI_DUMP_NO_IGNORED | TGSI_DUMP_NO_DEFAULT);
-	 break;
+      if( compile_instruction(
+            &program->Base.Instructions[i],
+            &fullinst,
+            inputs_read,
+            TGSI_PROCESSOR_FRAGMENT ) ) {
+         assert( i == program->Base.NumInstructions - 1 );
+         tgsi_dump(
+            tokens,
+            TGSI_DUMP_NO_IGNORED | TGSI_DUMP_NO_DEFAULT );
+         break;
       }
 
-      ti += tgsi_build_full_instruction (&fullinst,
-					 &tokens[ti],
-					 header,
-					 max_token_count - ti);
+      ti += tgsi_build_full_instruction(
+         &fullinst,
+         &tokens[ti],
+         header,
+         maxTokens - ti );
    }
 
    return GL_TRUE;
 }
 
 GLboolean
-tgsi_compile_vp_program( const struct gl_vertex_program *program,
-			 struct tgsi_token *tokens,
-			 GLuint max_token_count,
-			 GLuint *token_count )
+tgsi_compile_vp_program(
+   const struct gl_vertex_program *program,
+   struct tgsi_token *tokens,
+   GLuint maxTokens )
 {
    GLuint ii, ti;
    struct tgsi_header *header;
@@ -468,30 +489,32 @@ tgsi_compile_vp_program( const struct gl_vertex_program *program,
    struct tgsi_full_instruction fullinst;
    GLuint inputs_read = ~0;
 
-   *(struct tgsi_version *) &tokens[0] = tgsi_build_version ();
+   *(struct tgsi_version *) &tokens[0] = tgsi_build_version();
 
    header = (struct tgsi_header *) &tokens[1];
-   *header = tgsi_build_header ();
+   *header = tgsi_build_header();
 
    processor = (struct tgsi_processor *) &tokens[2];
-   *processor = tgsi_build_processor (TGSI_PROCESSOR_VERTEX, header);
+   *processor = tgsi_build_processor( TGSI_PROCESSOR_VERTEX, header );
 
    ti = 3;
 
-   for (ii = 0; ii < program->Base.NumInstructions; ii++) {
-      if (compile_instruction (&program->Base.Instructions[ii],
-			       &fullinst,
-			       inputs_read,
-			       TGSI_PROCESSOR_VERTEX)) {
-	 assert (ii == program->Base.NumInstructions - 1);
-	 tgsi_dump (tokens, TGSI_DUMP_NO_IGNORED | TGSI_DUMP_NO_DEFAULT);
-	 break;
+   for( ii = 0; ii < program->Base.NumInstructions; ii++ ) {
+      if( compile_instruction(
+            &program->Base.Instructions[ii],
+            &fullinst,
+            inputs_read,
+            TGSI_PROCESSOR_VERTEX ) ) {
+         assert( ii == program->Base.NumInstructions - 1 );
+         tgsi_dump( tokens, TGSI_DUMP_NO_IGNORED | TGSI_DUMP_NO_DEFAULT );
+         break;
       }
 
-      ti += tgsi_build_full_instruction (&fullinst,
-					 &tokens[ti],
-					 header,
-					 max_token_count - ti);
+      ti += tgsi_build_full_instruction(
+         &fullinst,
+         &tokens[ti],
+         header,
+         maxTokens - ti );
    }
 
    return GL_TRUE;
