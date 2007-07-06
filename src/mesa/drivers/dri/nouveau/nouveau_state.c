@@ -162,6 +162,7 @@ void nouveauDDInitState(nouveauContextPtr nmesa)
             nv04InitStateFuncs(nmesa->glCtx, &nmesa->glCtx->Driver);
             break;
         case NV_10:
+        case NV_17:
             nv10InitStateFuncs(nmesa->glCtx, &nmesa->glCtx->Driver);
             break;
         case NV_20:
