@@ -260,7 +260,9 @@ do_blit_bitmap( GLcontext *ctx,
 	       int h = MIN2(DY, box_h - py);
 	       int w = MIN2(DX, box_w - px); 
 	       GLuint sz = align(align(w,8) * h, 64)/8;
-	    
+	       GLenum logic_op = ctx->Color.ColorLogicOpEnabled ?
+		  ctx->Color.LogicOp : GL_COPY;
+
 	       assert(sz <= sizeof(stipple));
 	       memset(stipple, 0, sz);
 
@@ -288,7 +290,8 @@ do_blit_bitmap( GLcontext *ctx,
 						  dst->tiled,
 						  rect.x1 + px,
 						  rect.y2 - (py + h),
-						  w, h);
+						  w, h,
+						  logic_op);
 	    } 
 	 } 
       }

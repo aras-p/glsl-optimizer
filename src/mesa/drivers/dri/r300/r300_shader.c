@@ -54,6 +54,7 @@ r300ProgramStringNotify(GLcontext * ctx, GLenum target, struct gl_program *prog)
 		fp->translated = GL_FALSE;
 		break;
 	}
+
 	/* need this for tcl fallbacks */
 	_tnl_program_string(ctx, target, prog);
 }
@@ -61,7 +62,7 @@ r300ProgramStringNotify(GLcontext * ctx, GLenum target, struct gl_program *prog)
 static GLboolean
 r300IsProgramNative(GLcontext * ctx, GLenum target, struct gl_program *prog)
 {
-	return 1;
+	return GL_TRUE;
 }
 
 void r300InitShaderFuncs(struct dd_function_table *functions)

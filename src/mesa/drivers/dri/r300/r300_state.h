@@ -37,8 +37,15 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #include "r300_context.h"
 
+#define R300_NEWPRIM( rmesa )			\
+  do {						\
+    if ( rmesa->dma.flush )			\
+      rmesa->dma.flush( rmesa );		\
+  } while (0)
+
 #define R300_STATECHANGE(r300, atom) \
 	do {						\
+	  R300_NEWPRIM(r300);				\
 		r300->hw.atom.dirty = GL_TRUE;		\
 		r300->hw.is_dirty = GL_TRUE;		\
 	} while(0)

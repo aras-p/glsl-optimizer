@@ -5,9 +5,9 @@
 
 /*
  * Mesa 3-D graphics library
- * Version:  6.5.2
+ * Version:  7.1
  *
- * Copyright (C) 1999-2006  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2007  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -82,7 +82,7 @@
 /** Minimum point size */
 #define MIN_POINT_SIZE 1.0
 /** Maximum point size */
-#define MAX_POINT_SIZE 20.0
+#define MAX_POINT_SIZE 60.0
 /** Point size granularity */
 #define POINT_SIZE_GRANULARITY 0.1
 
@@ -107,6 +107,9 @@
 
 /** Maximum rectangular texture size - GL_NV_texture_rectangle */
 #define MAX_TEXTURE_RECT_SIZE 2048
+
+/** Maximum number of layers in a 1D or 2D array texture - GL_MESA_texture_array */
+#define MAX_ARRAY_TEXTURE_LAYERS 64
 
 /** Number of texture units - GL_ARB_multitexture
  * This needs to be the larger of MAX_TEXTURE_COORD_UNITS and
@@ -240,10 +243,7 @@
 
 
 /**
- * Bits per depth buffer value.  
- *
- * Any reasonable value up to 31 will work.  32 doesn't work because of integer
- * overflow problems in the rasterizer code.
+ * Bits per depth buffer value (max is 32).
  */
 #ifndef DEFAULT_SOFTWARE_DEPTH_BITS
 #define DEFAULT_SOFTWARE_DEPTH_BITS 16

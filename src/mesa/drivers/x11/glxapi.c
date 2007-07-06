@@ -1,8 +1,8 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.5
+ * Version:  7.1
  * 
- * Copyright (C) 1999-2006  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2007  Brian Paul   All Rights Reserved.
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -141,7 +141,7 @@ static void
 SetCurrentContext(GLXContext c)
 {
 #if defined(GLX_USE_TLS)
-   CurrentContext = context;
+   CurrentContext = c;
 #elif defined(THREADS)
    _glthread_SetTSD(&ContextTSD, c);
 #else
@@ -1104,6 +1104,27 @@ glXGetMemoryOffsetMESA(Display *dpy, int scrn, const void *pointer)
 }
 
 
+/*** GLX_EXT_texture_from_pixmap */
+
+void
+glXBindTexImageEXT(Display *dpy, GLXDrawable drawable, int buffer,
+                   const int *attrib_list)
+{
+   struct _glxapi_table *t;
+   GET_DISPATCH(dpy, t);
+   if (t)
+      t->BindTexImageEXT(dpy, drawable, buffer, attrib_list);
+}
+
+void
+glXReleaseTexImageEXT(Display *dpy, GLXDrawable drawable, int buffer)
+{
+   struct _glxapi_table *t;
+   GET_DISPATCH(dpy, t);
+   if (t)
+      t->ReleaseTexImageEXT(dpy, drawable, buffer);
+}
+
 
 /**********************************************************************/
 /* GLX API management functions                                       */
@@ -1147,6 +1168,9 @@ _glxapi_get_extensions(void)
 #endif
 #ifdef GLX_SGIX_pbuffer
       "GLX_SGIX_pbuffer",
+#endif
+#ifdef GLX_EXT_texture_from_pixmap
+      "GLX_EXT_texture_from_pixmap",
 #endif
       NULL
    };
@@ -1332,6 +1356,10 @@ static struct name_address_pair GLX_functions[] = {
    { "glXAllocateMemoryMESA", (__GLXextFuncPtr) glXAllocateMemoryMESA },
    { "glXFreeMemoryMESA", (__GLXextFuncPtr) glXFreeMemoryMESA },
    { "glXGetMemoryOffsetMESA", (__GLXextFuncPtr) glXGetMemoryOffsetMESA },
+
+   /*** GLX_EXT_texture_from_pixmap ***/
+   { "glXBindTexImageEXT", (__GLXextFuncPtr) glXBindTexImageEXT },
+   { "glXReleaseTexImageEXT", (__GLXextFuncPtr) glXReleaseTexImageEXT },
 
    { NULL, NULL }   /* end of list */
 };

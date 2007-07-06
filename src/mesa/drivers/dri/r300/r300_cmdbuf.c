@@ -133,13 +133,15 @@ static void r300PrintStateAtom(r300ContextPtr r300, struct r300_state_atom *stat
 	int i;
 	int dwords = (*state->check) (r300, state);
 
-	fprintf(stderr, "  emit %s/%d/%d\n", state->name, dwords,
+	fprintf(stderr, "  emit %s %d/%d\n", state->name, dwords,
 		state->cmd_size);
 
-	if (RADEON_DEBUG & DEBUG_VERBOSE)
-		for (i = 0; i < dwords; i++)
-			fprintf(stderr, "      %s[%d]: %08X\n",
+	if (RADEON_DEBUG & DEBUG_VERBOSE) {
+		for (i = 0; i < dwords; i++) {
+			fprintf(stderr, "      %s[%d]: %08x\n",
 				state->name, i, state->cmd[i]);
+		}
+	}
 }
 
 /**
@@ -148,27 +150,13 @@ static void r300PrintStateAtom(r300ContextPtr r300, struct r300_state_atom *stat
  * The caller must have ensured that there is enough space in the command
  * buffer.
  */
-static __inline__ void r300EmitAtoms(r300ContextPtr r300, GLboolean dirty)
+static inline void r300EmitAtoms(r300ContextPtr r300, GLboolean dirty)
 {
 	struct r300_state_atom *atom;
 	uint32_t *dest;
+	int dwords;
 
 	dest = r300->cmdbuf.cmd_buf + r300->cmdbuf.count_used;
-
-	if (DEBUG_CMDBUF && RADEON_DEBUG & DEBUG_STATE) {
-		foreach(atom, &r300->hw.atomlist) {
-			if ((atom->dirty || r300->hw.all_dirty) == dirty) {
-				int dwords = (*atom->check) (r300, atom);
-
-				if (dwords)
-					r300PrintStateAtom(r300, atom);
-				else
-					fprintf(stderr,
-						"  skip state %s\n",
-						atom->name);
-			}
-		}
-	}
 
 	/* Emit WAIT */
 	*dest = cmdwait(R300_WAIT_3D | R300_WAIT_3D_CLEAN);
@@ -193,13 +181,20 @@ static __inline__ void r300EmitAtoms(r300ContextPtr r300, GLboolean dirty)
 
 	foreach(atom, &r300->hw.atomlist) {
 		if ((atom->dirty || r300->hw.all_dirty) == dirty) {
-			int dwords = (*atom->check) (r300, atom);
-
+			dwords = (*atom->check) (r300, atom);
 			if (dwords) {
+				if (DEBUG_CMDBUF && RADEON_DEBUG & DEBUG_STATE) {
+					r300PrintStateAtom(r300, atom);
+				}
 				memcpy(dest, atom->cmd, dwords * 4);
 				dest += dwords;
 				r300->cmdbuf.count_used += dwords;
 				atom->dirty = GL_FALSE;
+			} else {
+				if (DEBUG_CMDBUF && RADEON_DEBUG & DEBUG_STATE) {
+					fprintf(stderr, "  skip state %s\n",
+						atom->name);
+				}
 			}
 		}
 	}
@@ -245,22 +240,28 @@ void r300EmitState(r300ContextPtr r300)
 	r300->hw.all_dirty = GL_FALSE;
 }
 
-#define CHECK( NM, COUNT )				\
-static int check_##NM( r300ContextPtr r300, 		\
-			struct r300_state_atom* atom )	\
-{							\
-   (void) atom;	(void) r300;				\
-   return (COUNT);					\
-}
-
 #define packet0_count(ptr) (((drm_r300_cmd_header_t*)(ptr))->packet0.count)
 #define vpu_count(ptr) (((drm_r300_cmd_header_t*)(ptr))->vpu.count)
 
-CHECK(always, atom->cmd_size)
-    CHECK(variable, packet0_count(atom->cmd) ? (1 + packet0_count(atom->cmd)) : 0)
-    CHECK(vpu, vpu_count(atom->cmd) ? (1 + vpu_count(atom->cmd) * 4) : 0)
-#undef packet0_count
-#undef vpu_count
+static int check_always(r300ContextPtr r300, struct r300_state_atom *atom)
+{
+	return atom->cmd_size;
+}
+
+static int check_variable(r300ContextPtr r300, struct r300_state_atom *atom)
+{
+	int cnt;
+	cnt = packet0_count(atom->cmd);
+	return cnt ? cnt + 1 : 0;
+}
+
+static int check_vpu(r300ContextPtr r300, struct r300_state_atom *atom)
+{
+	int cnt;
+	cnt = vpu_count(atom->cmd);
+	return cnt ? (cnt * 4) + 1 : 0;
+}
+
 #define ALLOC_STATE( ATOM, CHK, SZ, IDX )				\
    do {									\
       r300->hw.ATOM.cmd_size = (SZ);					\
@@ -318,10 +319,14 @@ void r300InitCmdBuf(r300ContextPtr r300)
 	r300->hw.unk21DC.cmd[0] = cmdpacket0(0x21DC, 1);
 	ALLOC_STATE(unk221C, always, 2, 0);
 	r300->hw.unk221C.cmd[0] = cmdpacket0(R300_VAP_UNKNOWN_221C, 1);
-	ALLOC_STATE(unk2220, always, 5, 0);
-	r300->hw.unk2220.cmd[0] = cmdpacket0(0x2220, 4);
-	ALLOC_STATE(unk2288, always, 2, 0);
-	r300->hw.unk2288.cmd[0] = cmdpacket0(R300_VAP_UNKNOWN_2288, 1);
+	ALLOC_STATE(vap_clip, always, 5, 0);
+	r300->hw.vap_clip.cmd[0] = cmdpacket0(R300_VAP_CLIP_X_0, 4);
+
+	if (has_tcl) {
+		ALLOC_STATE(unk2288, always, 2, 0);
+		r300->hw.unk2288.cmd[0] = cmdpacket0(R300_VAP_UNKNOWN_2288, 1);
+	}
+
 	ALLOC_STATE(vof, always, R300_VOF_CMDSIZE, 0);
 	r300->hw.vof.cmd[R300_VOF_CMD_0] =
 	    cmdpacket0(R300_VAP_OUTPUT_VTX_FMT_0, 2);

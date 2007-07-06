@@ -5605,7 +5605,10 @@
         <param name="index" type="GLuint"/>
         <param name="v" type="const GLushort *"/>
     </function>
-
+    <function name="VertexAttrib4bv" alias="VertexAttrib4bvARB">
+        <param name="index" type="GLuint"/>
+        <param name="v" type="const GLbyte *" count="4"/>
+    </function>
     <function name="VertexAttrib4d" alias="VertexAttrib4dARB">
         <param name="index" type="GLuint"/>
         <param name="x" type="GLdouble"/>
@@ -5628,6 +5631,10 @@
         <param name="index" type="GLuint"/>
         <param name="v" type="const GLfloat *"/>
     </function>
+    <function name="VertexAttrib4iv" alias="VertexAttrib4ivARB">
+        <param name="index" type="GLuint"/>
+        <param name="v" type="const GLint *" count="4"/>
+    </function>
     <function name="VertexAttrib4s" alias="VertexAttrib4sARB">
         <param name="index" type="GLuint"/>
         <param name="x" type="GLshort"/>
@@ -5638,6 +5645,18 @@
     <function name="VertexAttrib4sv" alias="VertexAttrib4svARB">
         <param name="index" type="GLuint"/>
         <param name="v" type="const GLshort *"/>
+    </function>
+    <function name="VertexAttrib4ubv" alias="VertexAttrib4ubvARB">
+        <param name="index" type="GLuint"/>
+        <param name="v" type="const GLubyte *" count="4"/>
+    </function>
+    <function name="VertexAttrib4uiv" alias="VertexAttrib4uivARB">
+        <param name="index" type="GLuint"/>
+        <param name="v" type="const GLuint *" count="4"/>
+    </function>
+    <function name="VertexAttrib4usv" alias="VertexAttrib4usvARB">
+        <param name="index" type="GLuint"/>
+        <param name="v" type="const GLushort *" count="4"/>
     </function>
 
     <function name="VertexAttribPointer" alias="VertexAttribPointerARB">

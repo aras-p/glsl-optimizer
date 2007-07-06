@@ -333,13 +333,13 @@ menu(int option)
     smooth = 0;
     break;
   case 10:
-    glPointSize(4.0);
+    glPointSize(16.0);
     break;
   case 11:
-    glPointSize(8.0);
+    glPointSize(32.0);
     break;
   case 12:
-    glPointSize(16.0);
+    glPointSize(64.0);
     break;
   case 13:
     spin = 1 - spin;
@@ -411,19 +411,19 @@ key(unsigned char c, int x, int y)
     glutPostRedisplay();
     break;
   case '1':
-    glPointSize(2.0);
+    glPointSize(16.0);
     glutPostRedisplay();
     break;
   case '2':
-    glPointSize(4.0);
+    glPointSize(32.0);
     glutPostRedisplay();
     break;
   case '3':
-    glPointSize(8.0);
+    glPointSize(64.0);
     glutPostRedisplay();
     break;
   case '4':
-    glPointSize(16.0);
+    glPointSize(128.0);
     glutPostRedisplay();
     break;
   case 27:
@@ -526,9 +526,9 @@ main(int argc, char **argv)
   glutAddMenuEntry("Threshold 10", 7);
   glutAddMenuEntry("Point smooth on", 8);
   glutAddMenuEntry("Point smooth off", 9);
-  glutAddMenuEntry("Point size 4", 10);
-  glutAddMenuEntry("Point size 8", 11);
-  glutAddMenuEntry("Point size 16", 12);
+  glutAddMenuEntry("Point size 16", 10);
+  glutAddMenuEntry("Point size 32", 11);
+  glutAddMenuEntry("Point size 64", 12);
   glutAddMenuEntry("Toggle spin", 13);
   glutAddMenuEntry("200 points ", 14);
   glutAddMenuEntry("500 points ", 15);
@@ -544,7 +544,7 @@ main(int argc, char **argv)
   glEnable(GL_DEPTH_TEST);
   glEnable(GL_POINT_SMOOTH);
   glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-  glPointSize(16.0);
+  glPointSize(32.0);
 #ifdef GL_ARB_point_parameters
   glPointParameterfvARB(GL_POINT_DISTANCE_ATTENUATION_ARB, theQuad);
 #endif

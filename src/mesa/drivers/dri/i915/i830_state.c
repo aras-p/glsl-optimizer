@@ -34,6 +34,8 @@
 
 #include "texmem.h"
 
+#include "drivers/common/driverfuncs.h"
+
 #include "intel_screen.h"
 #include "intel_batchbuffer.h"
 
@@ -1074,7 +1076,7 @@ void i830InitState( i830ContextPtr i830 )
 
    i830_init_packets( i830 );
 
-   intelInitState( ctx );
+   _mesa_init_driver_state(ctx);
 
    memcpy( &i830->initial, &i830->state, sizeof(i830->state) );
 
@@ -1085,8 +1087,3 @@ void i830InitState( i830ContextPtr i830 )
 			 I830_UPLOAD_CTX |
 			 I830_UPLOAD_BUFFERS);
 }
-
-
-
-
-

@@ -385,6 +385,7 @@ extern int INTEL_DEBUG;
 #define PCI_CHIP_I965_G_1		0x2982
 #define PCI_CHIP_I946_GZ		0x2972
 #define PCI_CHIP_I965_GM                0x2A02
+#define PCI_CHIP_I965_GME               0x2A12
 
 
 /* ================================================================
@@ -399,7 +400,6 @@ extern GLboolean intelInitContext( struct intel_context *intel,
 
 extern void intelGetLock(struct intel_context *intel, GLuint flags);
 
-extern void intelInitState( GLcontext *ctx );
 extern void intelFinish( GLcontext *ctx );
 extern void intelFlush( GLcontext *ctx );
 

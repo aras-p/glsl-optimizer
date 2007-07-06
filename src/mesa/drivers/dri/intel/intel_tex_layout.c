@@ -74,7 +74,7 @@ void i945_miptree_layout_2d( struct intel_mipmap_tree *mt )
       GLuint img_height;
 
       intel_miptree_set_level_info(mt, level, 1, x, y, width, 
-				   mt->compressed ? height/4 : height, 1);
+				   height, 1);
 
       if (mt->compressed)
 	 img_height = MAX2(1, height/4);

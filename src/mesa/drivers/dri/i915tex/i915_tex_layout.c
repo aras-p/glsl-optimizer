@@ -113,7 +113,7 @@ i915_miptree_layout(struct intel_mipmap_tree * mt)
           */
          for (level = mt->first_level; level <= MAX2(8, mt->last_level);
               level++) {
-            intel_miptree_set_level_info(mt, level, 1, 0, mt->total_height,
+            intel_miptree_set_level_info(mt, level, depth, 0, mt->total_height,
                                          width, height, depth);
 
 
@@ -161,11 +161,9 @@ i915_miptree_layout(struct intel_mipmap_tree * mt)
             if (mt->compressed)
                img_height = MAX2(1, height / 4);
             else
-               img_height = MAX2(2, height);
+               img_height = (MAX2(2, height) + 1) & ~1;
 
 	    mt->total_height += img_height;
-	    mt->total_height += 1;
-	    mt->total_height &= ~1;
 
             width = minify(width);
             height = minify(height);

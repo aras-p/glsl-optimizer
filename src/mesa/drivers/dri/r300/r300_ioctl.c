@@ -172,11 +172,7 @@ static void r300ClearBuffer(r300ContextPtr r300, int flags, int buffer)
 	cmd2[7].u = r300PackFloat32(ctx->Color.ClearColor[2]);
 	cmd2[8].u = r300PackFloat32(ctx->Color.ClearColor[3]);
 
-	reg_start(R300_RB3D_DSTCACHE_CTLSTAT, 0);
-	e32(R300_RB3D_DSTCACHE_UNKNOWN_0A);
-
-	reg_start(R300_RB3D_ZCACHE_CTLSTAT, 0);
-	e32(R300_RB3D_ZCACHE_UNKNOWN_03);
+	r300EmitCacheFlush(rmesa);
 	cp_wait(rmesa, R300_WAIT_3D | R300_WAIT_3D_CLEAN);
 }
 
@@ -224,25 +220,23 @@ static void r300EmitClearState(GLcontext * ctx)
 	e32(R300_INPUT_CNTL_0_COLOR);
 	e32(R300_INPUT_CNTL_POS | R300_INPUT_CNTL_COLOR | R300_INPUT_CNTL_TC0);
 
-	if (!has_tcl) {
-		R300_STATECHANGE(r300, vte);
-		/* comes from fglrx startup of clear */
-		reg_start(R300_SE_VTE_CNTL, 1);
-		e32(R300_VTX_W0_FMT | R300_VPORT_X_SCALE_ENA |
-		    R300_VPORT_X_OFFSET_ENA | R300_VPORT_Y_SCALE_ENA |
-		    R300_VPORT_Y_OFFSET_ENA | R300_VPORT_Z_SCALE_ENA |
-		    R300_VPORT_Z_OFFSET_ENA);
-		e32(0x8);
+	R300_STATECHANGE(r300, vte);
+	/* comes from fglrx startup of clear */
+	reg_start(R300_SE_VTE_CNTL, 1);
+	e32(R300_VTX_W0_FMT | R300_VPORT_X_SCALE_ENA |
+	    R300_VPORT_X_OFFSET_ENA | R300_VPORT_Y_SCALE_ENA |
+	    R300_VPORT_Y_OFFSET_ENA | R300_VPORT_Z_SCALE_ENA |
+	    R300_VPORT_Z_OFFSET_ENA);
+	e32(0x8);
 
-		reg_start(0x21dc, 0);
-		e32(0xaaaaaaaa);
-	}
+	reg_start(0x21dc, 0);
+	e32(0xaaaaaaaa);
 
 	R300_STATECHANGE(r300, vof);
 	reg_start(R300_VAP_OUTPUT_VTX_FMT_0, 1);
 	e32(R300_VAP_OUTPUT_VTX_FMT_0__POS_PRESENT |
 	    R300_VAP_OUTPUT_VTX_FMT_0__COLOR_PRESENT);
-	e32(0x0);			/* no textures */
+	e32(0x0);		/* no textures */
 
 	R300_STATECHANGE(r300, txe);
 	reg_start(R300_TX_ENABLE, 0);
@@ -414,19 +408,22 @@ static void r300Clear(GLcontext * ctx, GLbitfield mask)
 
 void r300Flush(GLcontext * ctx)
 {
-	r300ContextPtr r300 = R300_CONTEXT(ctx);
+	r300ContextPtr rmesa = R300_CONTEXT(ctx);
 
 	if (RADEON_DEBUG & DEBUG_IOCTL)
 		fprintf(stderr, "%s\n", __FUNCTION__);
 
-	if (r300->cmdbuf.count_used > r300->cmdbuf.count_reemit)
-		r300FlushCmdBuf(r300, __FUNCTION__);
+	if (rmesa->dma.flush)
+		rmesa->dma.flush( rmesa );
+
+	if (rmesa->cmdbuf.count_used > rmesa->cmdbuf.count_reemit)
+		r300FlushCmdBuf(rmesa, __FUNCTION__);
 }
 
 #ifdef USER_BUFFERS
 #include "r300_mem.h"
 
-static void r300RefillCurrentDmaRegion(r300ContextPtr rmesa, int size)
+void r300RefillCurrentDmaRegion(r300ContextPtr rmesa, int size)
 {
 	struct r300_dma_buffer *dmabuf;
 	size = MAX2(size, RADEON_BUFFER_SIZE * 16);
@@ -438,9 +435,12 @@ static void r300RefillCurrentDmaRegion(r300ContextPtr rmesa, int size)
 		rmesa->dma.flush(rmesa);
 	}
 
-	if (rmesa->dma.current.buf)
+	if (rmesa->dma.current.buf) {
+#ifdef USER_BUFFERS
+		r300_mem_use(rmesa, rmesa->dma.current.buf->id);
+#endif
 		r300ReleaseDmaRegion(rmesa, &rmesa->dma.current, __FUNCTION__);
-
+	}
 	if (rmesa->dma.nr_released_bufs > 4)
 		r300FlushCmdBuf(rmesa, __FUNCTION__);
 

@@ -36,13 +36,13 @@
  ***/
 
 
-#include "imports.h"
-#include "context.h"
-#include "macros.h"
-#include "program.h"
-#include "prog_instruction.h"
-#include "prog_parameter.h"
-#include "prog_print.h"
+#include "main/imports.h"
+#include "main/context.h"
+#include "main/macros.h"
+#include "shader/program.h"
+#include "shader/prog_instruction.h"
+#include "shader/prog_parameter.h"
+#include "shader/prog_print.h"
 #include "slang_builtin.h"
 #include "slang_emit.h"
 #include "slang_mem.h"

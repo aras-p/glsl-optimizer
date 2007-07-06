@@ -49,8 +49,6 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #define USER_BUFFERS
 
-//#define OPTIMIZE_ELTS
-
 struct r300_context;
 typedef struct r300_context r300ContextRec;
 typedef struct r300_context *r300ContextPtr;
@@ -80,7 +78,7 @@ typedef struct r300_context *r300ContextPtr;
 /**
  * This function takes a float and packs it into a uint32_t
  */
-static __inline__ uint32_t r300PackFloat32(float fl)
+static inline uint32_t r300PackFloat32(float fl)
 {
 	union {
 		float fl;
@@ -97,7 +95,7 @@ static __inline__ uint32_t r300PackFloat32(float fl)
  * But it works for most things.  I'll fix it later if someone
  * else with a better clue doesn't
  */
-static __inline__ uint32_t r300PackFloat24(float f)
+static inline uint32_t r300PackFloat24(float f)
 {
 	float mantissa;
 	int exponent;
@@ -149,7 +147,6 @@ struct r300_dma_region {
 	int aos_offset;		/* address in GART memory */
 	int aos_stride;		/* distance between elements, in dwords */
 	int aos_size;		/* number of components (1-4) */
-	int aos_reg;		/* VAP register assignment */
 };
 
 struct r300_dma {
@@ -190,6 +187,8 @@ struct r300_tex_obj {
 
 	drm_radeon_tex_image_t image[6][RADEON_MAX_TEXTURE_LEVELS];
 	/* Six, for the cube faces */
+
+	GLboolean image_override;	/* Image overridden by GLX_EXT_tfp */
 
 	GLuint pitch;		/* this isn't sent to hardware just used in calculations */
 	/* hardware register values */
@@ -453,7 +452,7 @@ struct r300_hw_state {
 	struct r300_state_atom vic;	/* vap input control (2180) */
 	struct r300_state_atom unk21DC;	/* (21DC) */
 	struct r300_state_atom unk221C;	/* (221C) */
-	struct r300_state_atom unk2220;	/* (2220) */
+	struct r300_state_atom vap_clip;
 	struct r300_state_atom unk2288;	/* (2288) */
 	struct r300_state_atom pvs;	/* pvs_cntl (22D0) */
 	struct r300_state_atom gb_enable;	/* (4008) */
@@ -584,22 +583,14 @@ struct r300_vertex_shader_fragment {
 
 struct r300_vertex_shader_state {
 	struct r300_vertex_shader_fragment program;
-
-	struct r300_vertex_shader_fragment unknown1;
-	struct r300_vertex_shader_fragment unknown2;
-
-	int program_start;
-	int unknown_ptr1;	/* pointer within program space */
-	int program_end;
-
-	int param_offset;
-	int param_count;
-
-	int unknown_ptr2;	/* pointer within program space */
-	int unknown_ptr3;	/* pointer within program space */
 };
 
 extern int hw_tcl_on;
+
+#define COLOR_IS_RGBA
+#define TAG(x) r300##x
+#include "tnl_dd/t_dd_vertex.h"
+#undef TAG
 
 //#define CURRENT_VERTEX_SHADER(ctx) (ctx->VertexProgram._Current)
 #define CURRENT_VERTEX_SHADER(ctx) (R300_CONTEXT(ctx)->selected_vp)
@@ -781,36 +772,9 @@ struct r300_fragment_program {
 
 #define R300_MAX_AOS_ARRAYS		16
 
-#define AOS_FORMAT_USHORT	0
-#define AOS_FORMAT_FLOAT	1
-#define AOS_FORMAT_UBYTE	2
-#define AOS_FORMAT_FLOAT_COLOR	3
-
 #define REG_COORDS	0
 #define REG_COLOR0	1
 #define REG_TEX0	2
-
-struct dt {
-	GLint size;
-	GLenum type;
-	GLsizei stride;
-	void *data;
-};
-
-struct radeon_vertex_buffer {
-	int Count;
-	void *Elts;
-	int elt_size;
-	int elt_min, elt_max;	/* debug */
-
-	struct dt AttribPtr[VERT_ATTRIB_MAX];
-
-	const struct _mesa_prim *Primitive;
-	GLuint PrimitiveCount;
-	GLint LockFirst;
-	GLsizei LockCount;
-	int lock_uptodate;
-};
 
 struct r300_state {
 	struct r300_depthbuffer_state depth;
@@ -820,17 +784,13 @@ struct r300_state {
 	struct r300_pfs_compile_state pfs_compile;
 	struct r300_dma_region aos[R300_MAX_AOS_ARRAYS];
 	int aos_count;
-	struct radeon_vertex_buffer VB;
 
 	GLuint *Elts;
 	struct r300_dma_region elt_dma;
 
-	 DECLARE_RENDERINPUTS(render_inputs_bitset);	/* actual render inputs that R300 was configured for.
+	struct r300_dma_region swtcl_dma;
+	DECLARE_RENDERINPUTS(render_inputs_bitset);	/* actual render inputs that R300 was configured for.
 							   They are the same as tnl->render_inputs for fixed pipeline */
-
-	struct {
-		int transform_offset;	/* Transform matrix offset, -1 if none */
-	} vap_param;		/* vertex processor parameter allocation - tells where to write parameters */
 
 	struct r300_stencilbuffer_state stencil;
 
@@ -839,6 +799,62 @@ struct r300_state {
 #define R300_FALLBACK_NONE 0
 #define R300_FALLBACK_TCL 1
 #define R300_FALLBACK_RAST 2
+
+/* r300_swtcl.c
+ */
+struct r300_swtcl_info {
+   GLuint RenderIndex;
+   
+   /**
+    * Size of a hardware vertex.  This is calculated when \c ::vertex_attrs is
+    * installed in the Mesa state vector.
+    */
+   GLuint vertex_size;
+
+   /**
+    * Attributes instructing the Mesa TCL pipeline where / how to put vertex
+    * data in the hardware buffer.
+    */
+   struct tnl_attr_map vertex_attrs[VERT_ATTRIB_MAX];
+
+   /**
+    * Number of elements of \c ::vertex_attrs that are actually used.
+    */
+   GLuint vertex_attr_count;
+
+   /**
+    * Cached pointer to the buffer where Mesa will store vertex data.
+    */
+   GLubyte *verts;
+
+   /* Fallback rasterization functions
+    */
+  //   r200_point_func draw_point;
+  //   r200_line_func draw_line;
+  //   r200_tri_func draw_tri;
+
+   GLuint hw_primitive;
+   GLenum render_primitive;
+   GLuint numverts;
+
+   /**
+    * Offset of the 4UB color data within a hardware (swtcl) vertex.
+    */
+   GLuint coloroffset;
+
+   /**
+    * Offset of the 3UB specular color data within a hardware (swtcl) vertex.
+    */
+   GLuint specoffset;
+
+   /**
+    * Should Mesa project vertex data or will the hardware do it?
+    */
+   GLboolean needproj;
+
+   struct r300_dma_region indexed_verts;
+};
+
 
 /**
  * \brief R300 context structure.
@@ -878,6 +894,9 @@ struct r300_context {
 	GLvector4f *temp_attrib[_TNL_ATTRIB_MAX];
 
 	GLboolean disable_lowimpact_fallback;
+
+	DECLARE_RENDERINPUTS(tnl_index_bitset);	/* index of bits for last tnl_install_attrs */
+	struct r300_swtcl_info swtcl;
 };
 
 struct r300_buffer_object {

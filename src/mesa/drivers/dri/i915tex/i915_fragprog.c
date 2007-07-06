@@ -849,11 +849,6 @@ i915BindProgram(GLcontext * ctx, GLenum target, struct gl_program *prog)
       assert(p->on_hardware == 0);
       assert(p->params_uptodate == 0);
 
-      /* Hack: make sure fog is correctly enabled according to this
-       * fragment program's fog options.
-       */
-      ctx->Driver.Enable(ctx, GL_FRAGMENT_PROGRAM_ARB,
-                         ctx->FragmentProgram.Enabled);
    }
 }
 
@@ -926,9 +921,6 @@ i915ProgramStringNotify(GLcontext * ctx,
       /* Hack: make sure fog is correctly enabled according to this
        * fragment program's fog options.
        */
-      ctx->Driver.Enable(ctx, GL_FRAGMENT_PROGRAM_ARB,
-                         ctx->FragmentProgram.Enabled);
-
       if (p->FragProg.FogOption) {
          /* add extra instructions to do fog, then turn off FogOption field */
          _mesa_append_fog_code(ctx, &p->FragProg);

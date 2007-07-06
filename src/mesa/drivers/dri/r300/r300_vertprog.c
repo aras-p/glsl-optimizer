@@ -222,7 +222,7 @@ static unsigned long t_src_class(enum register_file file)
 	}
 }
 
-static __inline unsigned long t_swizzle(GLubyte swizzle)
+static inline unsigned long t_swizzle(GLubyte swizzle)
 {
 /* this is in fact a NOP as the Mesa SWIZZLE_* are all identical to VSF_IN_COMPONENT_* */
 	return swizzle;

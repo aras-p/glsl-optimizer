@@ -1,8 +1,8 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.5.2
+ * Version:  7.1
  *
- * Copyright (C) 1999-2006  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2007  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -72,6 +72,7 @@
 #include "imports.h"
 #include "macros.h"
 #include "renderbuffer.h"
+#include "teximage.h"
 #include "swrast/swrast.h"
 #include "swrast_setup/swrast_setup.h"
 #include "vbo/vbo.h"
@@ -295,8 +296,20 @@ static GLboolean window_exists( XMesaDisplay *dpy, Window win )
    XSetErrorHandler(old_handler);
    return WindowExistsFlag;
 }
-#endif
 
+static Status
+get_drawable_size( XMesaDisplay *dpy, Drawable d, GLuint *width, GLuint *height )
+{
+   Window root;
+   Status stat;
+   int xpos, ypos;
+   unsigned int w, h, bw, depth;
+   stat = XGetGeometry(dpy, d, &root, &xpos, &ypos, &w, &h, &bw, &depth);
+   *width = w;
+   *height = h;
+   return stat;
+}
+#endif
 
 
 /**
@@ -313,22 +326,14 @@ xmesa_get_window_size(XMesaDisplay *dpy, XMesaBuffer b,
    *width = MIN2(b->frontxrb->drawable->width, MAX_WIDTH);
    *height = MIN2(b->frontxrb->drawable->height, MAX_HEIGHT);
 #else
-   Window root;
    Status stat;
-   int xpos, ypos;
-   unsigned int w, h, bw, depth;
 
    _glthread_LOCK_MUTEX(_xmesa_lock);
    XSync(b->xm_visual->display, 0); /* added for Chromium */
-   stat = XGetGeometry(dpy, b->frontxrb->pixmap, &root, &xpos, &ypos,
-                       &w, &h, &bw, &depth);
+   stat = get_drawable_size(dpy, b->frontxrb->pixmap, width, height);
    _glthread_UNLOCK_MUTEX(_xmesa_lock);
 
-   if (stat) {
-      *width = w;
-      *height = h;
-   }
-   else {
+   if (!stat) {
       /* probably querying a window that's recently been destroyed */
       _mesa_warning(NULL, "XGetGeometry failed!\n");
       *width = *height = 1;
@@ -433,6 +438,11 @@ create_xmesa_buffer(XMesaDrawable d, BufferType type,
                                 vis->mesa_visual.haveAccumBuffer,
                                 b->swAlpha,
                                 vis->mesa_visual.numAuxBuffers > 0 );
+
+   /* GLX_EXT_texture_from_pixmap */
+   b->TextureTarget = 0;
+   b->TextureFormat = GLX_TEXTURE_FORMAT_NONE_EXT;
+   b->TextureMipmap = 0;
 
    /* insert buffer into linked list */
    b->Next = XMesaBufferList;
@@ -1680,6 +1690,67 @@ XMesaCreatePixmapBuffer(XMesaVisual v, XMesaPixmap p, XMesaColormap cmap)
 }
 
 
+/**
+ * For GLX_EXT_texture_from_pixmap
+ */
+XMesaBuffer
+XMesaCreatePixmapTextureBuffer(XMesaVisual v, XMesaPixmap p,
+                               XMesaColormap cmap,
+                               int format, int target, int mipmap)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   XMesaBuffer b;
+   GLuint width, height;
+
+   assert(v);
+
+   b = create_xmesa_buffer((XMesaDrawable) p, PIXMAP, v, cmap);
+   if (!b)
+      return NULL;
+
+   /* get pixmap size, update framebuffer/renderbuffer dims */
+   xmesa_get_window_size(v->display, b, &width, &height);
+   _mesa_resize_framebuffer(NULL, &(b->mesa_buffer), width, height);
+
+   if (target == 0) {
+      /* examine dims */
+      if (ctx->Extensions.ARB_texture_non_power_of_two) {
+         target = GLX_TEXTURE_2D_EXT;
+      }
+      else if (   _mesa_bitcount(width)  == 1
+               && _mesa_bitcount(height) == 1) {
+         /* power of two size */
+         if (height == 1) {
+            target = GLX_TEXTURE_1D_EXT;
+         }
+         else {
+            target = GLX_TEXTURE_2D_EXT;
+         }
+      }
+      else if (ctx->Extensions.NV_texture_rectangle) {
+         target = GLX_TEXTURE_RECTANGLE_EXT;
+      }
+      else {
+         /* non power of two textures not supported */
+         XMesaDestroyBuffer(b);
+         return 0;
+      }
+   }
+
+   b->TextureTarget = target;
+   b->TextureFormat = format;
+   b->TextureMipmap = mipmap;
+
+   if (!initialize_visual_and_buffer(v, b, v->mesa_visual.rgbMode,
+				     (XMesaDrawable) p, cmap)) {
+      xmesa_free_buffer(b);
+      return NULL;
+   }
+
+   return b;
+}
+
+
 
 XMesaBuffer
 XMesaCreatePBuffer(XMesaVisual v, XMesaColormap cmap,
@@ -2261,5 +2332,156 @@ XMesaResizeBuffers( XMesaBuffer b )
    if (!xmctx)
       return;
    xmesa_check_and_update_buffer_size(xmctx, b);
+}
+
+
+static GLint
+xbuffer_to_renderbuffer(int buffer)
+{
+   assert(MAX_AUX_BUFFERS <= 4);
+
+   switch (buffer) {
+   case GLX_FRONT_LEFT_EXT:
+      return BUFFER_FRONT_LEFT;
+   case GLX_FRONT_RIGHT_EXT:
+      return BUFFER_FRONT_RIGHT;
+   case GLX_BACK_LEFT_EXT:
+      return BUFFER_BACK_LEFT;
+   case GLX_BACK_RIGHT_EXT:
+      return BUFFER_BACK_RIGHT;
+   case GLX_AUX0_EXT:
+      return BUFFER_AUX0;
+   case GLX_AUX1_EXT:
+      return BUFFER_AUX1;
+   case GLX_AUX2_EXT:
+      return BUFFER_AUX2;
+   case GLX_AUX3_EXT:
+      return BUFFER_AUX3;
+   case GLX_AUX4_EXT:
+   case GLX_AUX5_EXT:
+   case GLX_AUX6_EXT:
+   case GLX_AUX7_EXT:
+   case GLX_AUX8_EXT:
+   case GLX_AUX9_EXT:
+   default:
+      /* BadValue error */
+      return -1;
+   }
+}
+
+
+PUBLIC void
+XMesaBindTexImage(XMesaDisplay *dpy, XMesaBuffer drawable, int buffer,
+                  const int *attrib_list)
+{
+#if 0
+   GET_CURRENT_CONTEXT(ctx);
+   const GLuint unit = ctx->Texture.CurrentUnit;
+   struct gl_texture_unit *texUnit = &ctx->Texture.Unit[unit];
+   struct gl_texture_object *texObj;
+#endif
+   struct gl_renderbuffer *rb;
+   struct xmesa_renderbuffer *xrb;
+   GLint b;
+   XMesaImage *img = NULL;
+   GLboolean freeImg = GL_FALSE;
+
+   b = xbuffer_to_renderbuffer(buffer);
+   if (b < 0)
+      return;
+
+   if (drawable->TextureFormat == GLX_TEXTURE_FORMAT_NONE_EXT)
+      return; /* BadMatch error */
+
+   rb = drawable->mesa_buffer.Attachment[b].Renderbuffer;
+   if (!rb) {
+      /* invalid buffer */
+      return;
+   }
+   xrb = xmesa_renderbuffer(rb);
+
+#if 0
+   switch (drawable->TextureTarget) {
+   case GLX_TEXTURE_1D_EXT:
+      texObj = texUnit->Current1D;
+      break;
+   case GLX_TEXTURE_2D_EXT:
+      texObj = texUnit->Current2D;
+      break;
+   case GLX_TEXTURE_RECTANGLE_EXT:
+      texObj = texUnit->CurrentRect;
+      break;
+   default:
+      return; /* BadMatch error */
+   }
+#endif
+
+   /*
+    * The following is a quick and simple way to implement
+    * BindTexImage.  The better way is to write some new FetchTexel()
+    * functions which would extract texels from XImages.  We'd still
+    * need to use GetImage when texturing from a Pixmap (front buffer)
+    * but texturing from a back buffer (XImage) would avoid an image
+    * copy.
+    */
+
+   /* get XImage */
+   if (xrb->pixmap) {
+      img = XMesaGetImage(dpy, xrb->pixmap, 0, 0, rb->Width, rb->Height, ~0L,
+			  ZPixmap);
+      freeImg = GL_TRUE;
+   }
+   else if (xrb->ximage) {
+      img = xrb->ximage;
+   }
+
+   /* store the XImage as a new texture image */
+   if (img) {
+      GLenum format, type, intFormat;
+      if (img->bits_per_pixel == 32) {
+         format = GL_BGRA;
+         type = GL_UNSIGNED_BYTE;
+         intFormat = GL_RGBA;
+      }
+      else if (img->bits_per_pixel == 24) {
+         format = GL_BGR;
+         type = GL_UNSIGNED_BYTE;
+         intFormat = GL_RGB;
+      }
+      else if (img->bits_per_pixel == 16) {
+         format = GL_BGR;
+         type = GL_UNSIGNED_SHORT_5_6_5;
+         intFormat = GL_RGB;
+      }
+      else {
+         _mesa_problem(NULL, "Unexpected XImage format in XMesaBindTexImage");
+         return;
+      }
+      if (drawable->TextureFormat == GLX_TEXTURE_FORMAT_RGBA_EXT) {
+         intFormat = GL_RGBA;
+      }
+      else if (drawable->TextureFormat == GLX_TEXTURE_FORMAT_RGB_EXT) {
+         intFormat = GL_RGB;
+      }
+
+      _mesa_TexImage2D(GL_TEXTURE_2D, 0, intFormat, rb->Width, rb->Height, 0,
+                       format, type, img->data);
+
+      if (freeImg) {
+	 XMesaDestroyImage(img);
+      }
+   }
+}
+
+
+
+PUBLIC void
+XMesaReleaseTexImage(XMesaDisplay *dpy, XMesaBuffer drawable, int buffer)
+{
+   const GLint b = xbuffer_to_renderbuffer(buffer);
+   if (b < 0)
+      return;
+
+   /* no-op for now */
 }
 

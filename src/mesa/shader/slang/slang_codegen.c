@@ -37,13 +37,13 @@
 
 
 
-#include "imports.h"
-#include "macros.h"
-#include "mtypes.h"
-#include "program.h"
-#include "prog_instruction.h"
-#include "prog_parameter.h"
-#include "prog_statevars.h"
+#include "main/imports.h"
+#include "main/macros.h"
+#include "main/mtypes.h"
+#include "shader/program.h"
+#include "shader/prog_instruction.h"
+#include "shader/prog_parameter.h"
+#include "shader/prog_statevars.h"
 #include "slang_typeinfo.h"
 #include "slang_codegen.h"
 #include "slang_compile.h"
@@ -1261,15 +1261,23 @@ make_writemask(const char *field)
    while (*field) {
       switch (*field) {
       case 'x':
+      case 's':
+      case 'r':
          mask |= WRITEMASK_X;
          break;
       case 'y':
+      case 't':
+      case 'g':
          mask |= WRITEMASK_Y;
          break;
       case 'z':
+      case 'p':
+      case 'b':
          mask |= WRITEMASK_Z;
          break;
       case 'w':
+      case 'q':
+      case 'a':
          mask |= WRITEMASK_W;
          break;
       default:

@@ -42,9 +42,6 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #ifndef __RADEON_LOCK_H__
 #define __RADEON_LOCK_H__
 
-#if 0
-#include "r200_ioctl.h"
-#endif
 #include "radeon_context.h"
 
 extern void radeonGetLock(radeonContextPtr rmesa, GLuint flags);

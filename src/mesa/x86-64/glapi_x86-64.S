@@ -29071,10 +29071,9 @@ GL_PREFIX(_dispatch_stub_767):
 	.size	GL_PREFIX(_dispatch_stub_767), .-GL_PREFIX(_dispatch_stub_767)
 
 	.p2align	4,,15
-	.globl	GL_PREFIX(_dispatch_stub_768)
-	.type	GL_PREFIX(_dispatch_stub_768), @function
-	HIDDEN(GL_PREFIX(_dispatch_stub_768))
-GL_PREFIX(_dispatch_stub_768):
+	.globl	GL_PREFIX(FramebufferTextureLayerEXT)
+	.type	GL_PREFIX(FramebufferTextureLayerEXT), @function
+GL_PREFIX(FramebufferTextureLayerEXT):
 #if defined(GLX_USE_TLS)
 	call	_x86_64_get_dispatch@PLT
 	movq	6144(%rax), %r11
@@ -29084,9 +29083,9 @@ GL_PREFIX(_dispatch_stub_768):
 	pushq	%rsi
 	pushq	%rdx
 	pushq	%rcx
-	pushq	%rbp
+	pushq	%r8
 	call	_x86_64_get_dispatch@PLT
-	popq	%rbp
+	popq	%r8
 	popq	%rcx
 	popq	%rdx
 	popq	%rsi
@@ -29104,9 +29103,9 @@ GL_PREFIX(_dispatch_stub_768):
 	pushq	%rsi
 	pushq	%rdx
 	pushq	%rcx
-	pushq	%rbp
+	pushq	%r8
 	call	_glapi_get_dispatch
-	popq	%rbp
+	popq	%r8
 	popq	%rcx
 	popq	%rdx
 	popq	%rsi
@@ -29114,7 +29113,7 @@ GL_PREFIX(_dispatch_stub_768):
 	movq	6144(%rax), %r11
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
-	.size	GL_PREFIX(_dispatch_stub_768), .-GL_PREFIX(_dispatch_stub_768)
+	.size	GL_PREFIX(FramebufferTextureLayerEXT), .-GL_PREFIX(FramebufferTextureLayerEXT)
 
 	.p2align	4,,15
 	.globl	GL_PREFIX(_dispatch_stub_769)
@@ -29175,7 +29174,11 @@ GL_PREFIX(_dispatch_stub_770):
 	pushq	%rdi
 	pushq	%rsi
 	pushq	%rdx
+	pushq	%rcx
+	pushq	%rbp
 	call	_x86_64_get_dispatch@PLT
+	popq	%rbp
+	popq	%rcx
 	popq	%rdx
 	popq	%rsi
 	popq	%rdi
@@ -29191,7 +29194,11 @@ GL_PREFIX(_dispatch_stub_770):
 	pushq	%rdi
 	pushq	%rsi
 	pushq	%rdx
+	pushq	%rcx
+	pushq	%rbp
 	call	_glapi_get_dispatch
+	popq	%rbp
+	popq	%rcx
 	popq	%rdx
 	popq	%rsi
 	popq	%rdi
@@ -29237,6 +29244,44 @@ GL_PREFIX(_dispatch_stub_771):
 	jmp	*%r11
 #endif /* defined(GLX_USE_TLS) */
 	.size	GL_PREFIX(_dispatch_stub_771), .-GL_PREFIX(_dispatch_stub_771)
+
+	.p2align	4,,15
+	.globl	GL_PREFIX(_dispatch_stub_772)
+	.type	GL_PREFIX(_dispatch_stub_772), @function
+	HIDDEN(GL_PREFIX(_dispatch_stub_772))
+GL_PREFIX(_dispatch_stub_772):
+#if defined(GLX_USE_TLS)
+	call	_x86_64_get_dispatch@PLT
+	movq	6176(%rax), %r11
+	jmp	*%r11
+#elif defined(PTHREADS)
+	pushq	%rdi
+	pushq	%rsi
+	pushq	%rdx
+	call	_x86_64_get_dispatch@PLT
+	popq	%rdx
+	popq	%rsi
+	popq	%rdi
+	movq	6176(%rax), %r11
+	jmp	*%r11
+#else
+	movq	_glapi_Dispatch(%rip), %rax
+	testq	%rax, %rax
+	je	1f
+	movq	6176(%rax), %r11
+	jmp	*%r11
+1:
+	pushq	%rdi
+	pushq	%rsi
+	pushq	%rdx
+	call	_glapi_get_dispatch
+	popq	%rdx
+	popq	%rsi
+	popq	%rdi
+	movq	6176(%rax), %r11
+	jmp	*%r11
+#endif /* defined(GLX_USE_TLS) */
+	.size	GL_PREFIX(_dispatch_stub_772), .-GL_PREFIX(_dispatch_stub_772)
 
 	.globl GL_PREFIX(ArrayElementEXT) ; .set GL_PREFIX(ArrayElementEXT), GL_PREFIX(ArrayElement)
 	.globl GL_PREFIX(BindTextureEXT) ; .set GL_PREFIX(BindTextureEXT), GL_PREFIX(BindTexture)
@@ -29353,12 +29398,17 @@ GL_PREFIX(_dispatch_stub_771):
 	.globl GL_PREFIX(VertexAttrib4Nubv) ; .set GL_PREFIX(VertexAttrib4Nubv), GL_PREFIX(VertexAttrib4NubvARB)
 	.globl GL_PREFIX(VertexAttrib4Nuiv) ; .set GL_PREFIX(VertexAttrib4Nuiv), GL_PREFIX(VertexAttrib4NuivARB)
 	.globl GL_PREFIX(VertexAttrib4Nusv) ; .set GL_PREFIX(VertexAttrib4Nusv), GL_PREFIX(VertexAttrib4NusvARB)
+	.globl GL_PREFIX(VertexAttrib4bv) ; .set GL_PREFIX(VertexAttrib4bv), GL_PREFIX(VertexAttrib4bvARB)
 	.globl GL_PREFIX(VertexAttrib4d) ; .set GL_PREFIX(VertexAttrib4d), GL_PREFIX(VertexAttrib4dARB)
 	.globl GL_PREFIX(VertexAttrib4dv) ; .set GL_PREFIX(VertexAttrib4dv), GL_PREFIX(VertexAttrib4dvARB)
 	.globl GL_PREFIX(VertexAttrib4f) ; .set GL_PREFIX(VertexAttrib4f), GL_PREFIX(VertexAttrib4fARB)
 	.globl GL_PREFIX(VertexAttrib4fv) ; .set GL_PREFIX(VertexAttrib4fv), GL_PREFIX(VertexAttrib4fvARB)
+	.globl GL_PREFIX(VertexAttrib4iv) ; .set GL_PREFIX(VertexAttrib4iv), GL_PREFIX(VertexAttrib4ivARB)
 	.globl GL_PREFIX(VertexAttrib4s) ; .set GL_PREFIX(VertexAttrib4s), GL_PREFIX(VertexAttrib4sARB)
 	.globl GL_PREFIX(VertexAttrib4sv) ; .set GL_PREFIX(VertexAttrib4sv), GL_PREFIX(VertexAttrib4svARB)
+	.globl GL_PREFIX(VertexAttrib4ubv) ; .set GL_PREFIX(VertexAttrib4ubv), GL_PREFIX(VertexAttrib4ubvARB)
+	.globl GL_PREFIX(VertexAttrib4uiv) ; .set GL_PREFIX(VertexAttrib4uiv), GL_PREFIX(VertexAttrib4uivARB)
+	.globl GL_PREFIX(VertexAttrib4usv) ; .set GL_PREFIX(VertexAttrib4usv), GL_PREFIX(VertexAttrib4usvARB)
 	.globl GL_PREFIX(VertexAttribPointer) ; .set GL_PREFIX(VertexAttribPointer), GL_PREFIX(VertexAttribPointerARB)
 	.globl GL_PREFIX(BindBuffer) ; .set GL_PREFIX(BindBuffer), GL_PREFIX(BindBufferARB)
 	.globl GL_PREFIX(BufferData) ; .set GL_PREFIX(BufferData), GL_PREFIX(BufferDataARB)

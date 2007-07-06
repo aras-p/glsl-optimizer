@@ -1,11 +1,11 @@
 
-#include "imports.h"
+#include "main/imports.h"
+#include "shader/prog_instruction.h"
 #include "slang_compile.h"
 #include "slang_compile_variable.h"
 #include "slang_mem.h"
 #include "slang_vartable.h"
 #include "slang_ir.h"
-#include "prog_instruction.h"
 
 
 static int dbg = 0;

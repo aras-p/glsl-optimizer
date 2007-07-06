@@ -40,6 +40,8 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "context.h"
 #include "macros.h"
 #include "texformat.h"
+#include "teximage.h"
+#include "texobj.h"
 #include "enums.h"
 
 #include "r300_context.h"
@@ -52,7 +54,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #define VALID_FORMAT(f) ( ((f) <= MESA_FORMAT_RGBA_DXT5			\
 			   || ((f) >= MESA_FORMAT_RGBA_FLOAT32 &&	\
 			       (f) <= MESA_FORMAT_INTENSITY_FLOAT16))	\
-			  && tx_table_le[f].flag )
+			  && tx_table[f].flag )
 
 #define _ASSIGN(entry, format)				\
 	[ MESA_FORMAT_ ## entry ] = { format, 0, 1}
@@ -66,58 +68,22 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  * identically.  -- paulus
  */
 
-static const struct {
+static const struct tx_table {
 	GLuint format, filter, flag;
-} tx_table_be[] = {
+} tx_table[] = {
 	/* *INDENT-OFF* */
-	_ASSIGN(RGBA8888, R300_EASY_TX_FORMAT(Z, Y, X, W, W8Z8Y8X8)),
-	_ASSIGN(RGBA8888_REV, R300_EASY_TX_FORMAT(Y, Z, W, X, W8Z8Y8X8)),
-	_ASSIGN(ARGB8888, R300_EASY_TX_FORMAT(W, Z, Y, X, W8Z8Y8X8)),
-	_ASSIGN(ARGB8888_REV, R300_EASY_TX_FORMAT(X, Y, Z, W, W8Z8Y8X8)),
-	_ASSIGN(RGB888, 0xffffffff),
-	_ASSIGN(RGB565, R300_EASY_TX_FORMAT(X, Y, Z, ONE, Z5Y6X5)),
-	_ASSIGN(RGB565_REV, R300_EASY_TX_FORMAT(X, Y, Z, ONE, Z5Y6X5)),
-	_ASSIGN(ARGB4444, R300_EASY_TX_FORMAT(X, Y, Z, W, W4Z4Y4X4)),
-	_ASSIGN(ARGB4444_REV, R300_EASY_TX_FORMAT(X, Y, Z, W, W4Z4Y4X4)),
-	_ASSIGN(ARGB1555, R300_EASY_TX_FORMAT(X, Y, Z, W, W1Z5Y5X5)),
-	_ASSIGN(ARGB1555_REV, R300_EASY_TX_FORMAT(X, Y, Z, W, W1Z5Y5X5)),
-	_ASSIGN(AL88, R300_EASY_TX_FORMAT(X, X, X, Y, Y8X8)),
-	_ASSIGN(AL88_REV, R300_EASY_TX_FORMAT(X, X, X, Y, Y8X8)),
-	_ASSIGN(RGB332, R300_EASY_TX_FORMAT(X, Y, Z, ONE, Z3Y3X2)),
-	_ASSIGN(A8, R300_EASY_TX_FORMAT(ZERO, ZERO, ZERO, X, X8)),
-	_ASSIGN(L8, R300_EASY_TX_FORMAT(X, X, X, ONE, X8)),
-	_ASSIGN(I8, R300_EASY_TX_FORMAT(X, X, X, X, X8)),
-	_ASSIGN(CI8, R300_EASY_TX_FORMAT(X, X, X, X, X8)),
-	_ASSIGN(YCBCR, R300_EASY_TX_FORMAT(X, Y, Z, ONE, G8R8_G8B8)|R300_TX_FORMAT_YUV_MODE ),
-	_ASSIGN(YCBCR_REV, R300_EASY_TX_FORMAT(X, Y, Z, ONE, G8R8_G8B8)|R300_TX_FORMAT_YUV_MODE),
-	_ASSIGN(RGB_DXT1, R300_EASY_TX_FORMAT(X, Y, Z, ONE, DXT1)),
-	_ASSIGN(RGBA_DXT1, R300_EASY_TX_FORMAT(X, Y, Z, W, DXT1)),
-	_ASSIGN(RGBA_DXT3, R300_EASY_TX_FORMAT(X, Y, Z, W, DXT3)),
-	_ASSIGN(RGBA_DXT5, R300_EASY_TX_FORMAT(Y, Z, W, X, DXT5)),
-	_ASSIGN(RGBA_FLOAT32, R300_EASY_TX_FORMAT(Z, Y, X, W, FL_R32G32B32A32)),
-	_ASSIGN(RGBA_FLOAT16, R300_EASY_TX_FORMAT(Z, Y, X, W, FL_R16G16B16A16)),
-	_ASSIGN(RGB_FLOAT32, 0xffffffff),
-	_ASSIGN(RGB_FLOAT16, 0xffffffff),
-	_ASSIGN(ALPHA_FLOAT32, R300_EASY_TX_FORMAT(ZERO, ZERO, ZERO, X, FL_I32)),
-	_ASSIGN(ALPHA_FLOAT16, R300_EASY_TX_FORMAT(ZERO, ZERO, ZERO, X, FL_I16)),
-	_ASSIGN(LUMINANCE_FLOAT32, R300_EASY_TX_FORMAT(X, X, X, ONE, FL_I32)),
-	_ASSIGN(LUMINANCE_FLOAT16, R300_EASY_TX_FORMAT(X, X, X, ONE, FL_I16)),
-	_ASSIGN(LUMINANCE_ALPHA_FLOAT32, R300_EASY_TX_FORMAT(X, X, X, Y, FL_I32A32)),
-	_ASSIGN(LUMINANCE_ALPHA_FLOAT16, R300_EASY_TX_FORMAT(X, X, X, Y, FL_I16A16)),
-	_ASSIGN(INTENSITY_FLOAT32, R300_EASY_TX_FORMAT(X, X, X, X, FL_I32)),
-	_ASSIGN(INTENSITY_FLOAT16, R300_EASY_TX_FORMAT(X, X, X, X, FL_I16)),
-	/* *INDENT-ON* */
-};
-
-static const struct {
-	GLuint format, filter, flag;
-} tx_table_le[] = {
-	/* *INDENT-OFF* */
+#ifdef MESA_LITTLE_ENDIAN
 	_ASSIGN(RGBA8888, R300_EASY_TX_FORMAT(Y, Z, W, X, W8Z8Y8X8)),
 	_ASSIGN(RGBA8888_REV, R300_EASY_TX_FORMAT(Z, Y, X, W, W8Z8Y8X8)),
 	_ASSIGN(ARGB8888, R300_EASY_TX_FORMAT(X, Y, Z, W, W8Z8Y8X8)),
 	_ASSIGN(ARGB8888_REV, R300_EASY_TX_FORMAT(W, Z, Y, X, W8Z8Y8X8)),
-	_ASSIGN(RGB888, 0xffffffff),
+#else
+	_ASSIGN(RGBA8888, R300_EASY_TX_FORMAT(Z, Y, X, W, W8Z8Y8X8)),
+	_ASSIGN(RGBA8888_REV, R300_EASY_TX_FORMAT(Y, Z, W, X, W8Z8Y8X8)),
+	_ASSIGN(ARGB8888, R300_EASY_TX_FORMAT(W, Z, Y, X, W8Z8Y8X8)),
+	_ASSIGN(ARGB8888_REV, R300_EASY_TX_FORMAT(X, Y, Z, W, W8Z8Y8X8)),
+#endif
+	_ASSIGN(RGB888, R300_EASY_TX_FORMAT(X, Y, Z, ONE, W8Z8Y8X8)),
 	_ASSIGN(RGB565, R300_EASY_TX_FORMAT(X, Y, Z, ONE, Z5Y6X5)),
 	_ASSIGN(RGB565_REV, R300_EASY_TX_FORMAT(X, Y, Z, ONE, Z5Y6X5)),
 	_ASSIGN(ARGB4444, R300_EASY_TX_FORMAT(X, Y, Z, W, W4Z4Y4X4)),
@@ -131,8 +97,8 @@ static const struct {
 	_ASSIGN(L8, R300_EASY_TX_FORMAT(X, X, X, ONE, X8)),
 	_ASSIGN(I8, R300_EASY_TX_FORMAT(X, X, X, X, X8)),
 	_ASSIGN(CI8, R300_EASY_TX_FORMAT(X, X, X, X, X8)),
-	_ASSIGN(YCBCR, R300_EASY_TX_FORMAT(X, Y, Z, ONE, G8R8_G8B8)|R300_TX_FORMAT_YUV_MODE ),
-	_ASSIGN(YCBCR_REV, R300_EASY_TX_FORMAT(X, Y, Z, ONE, G8R8_G8B8)|R300_TX_FORMAT_YUV_MODE),
+	_ASSIGN(YCBCR, R300_EASY_TX_FORMAT(X, Y, Z, ONE, G8R8_G8B8) | R300_TX_FORMAT_YUV_MODE),
+	_ASSIGN(YCBCR_REV, R300_EASY_TX_FORMAT(X, Y, Z, ONE, G8R8_G8B8) | R300_TX_FORMAT_YUV_MODE),
 	_ASSIGN(RGB_DXT1, R300_EASY_TX_FORMAT(X, Y, Z, ONE, DXT1)),
 	_ASSIGN(RGBA_DXT1, R300_EASY_TX_FORMAT(X, Y, Z, W, DXT1)),
 	_ASSIGN(RGBA_DXT3, R300_EASY_TX_FORMAT(X, Y, Z, W, DXT3)),
@@ -178,23 +144,11 @@ static void r300SetTexImages(r300ContextPtr rmesa,
 
 	/* Set the hardware texture format
 	 */
-	if (VALID_FORMAT(baseImage->TexFormat->MesaFormat)) {
-		if (_mesa_little_endian()) {
-			t->format =
-			    tx_table_le[baseImage->TexFormat->MesaFormat].
-			    format;
-			t->filter |=
-			    tx_table_le[baseImage->TexFormat->MesaFormat].
-			    filter;
-		} else {
-			t->format =
-			    tx_table_be[baseImage->TexFormat->MesaFormat].
-			    format;
-			t->filter |=
-			    tx_table_be[baseImage->TexFormat->MesaFormat].
-			    filter;
-		}
-	} else {
+	if (!t->image_override
+	    && VALID_FORMAT(baseImage->TexFormat->MesaFormat)) {
+		t->format = tx_table[baseImage->TexFormat->MesaFormat].format;
+		t->filter |= tx_table[baseImage->TexFormat->MesaFormat].filter;
+	} else if (!t->image_override) {
 		_mesa_problem(NULL, "unexpected texture format in %s",
 			      __FUNCTION__);
 		return;
@@ -382,9 +336,10 @@ static void r300SetTexImages(r300ContextPtr rmesa,
 		t->pitch = ((tObj->Image[0][t->base.firstLevel]->Width *
 			     texelBytes) + 63) & ~(63);
 		t->size |= R300_TX_SIZE_TXPITCH_EN;
-		t->pitch_reg =
-		    (((tObj->Image[0][t->base.firstLevel]->Width) +
-		      align) & ~align) - 1;
+		if (!t->image_override)
+			t->pitch_reg =
+			    (((tObj->Image[0][t->base.firstLevel]->Width) +
+			      align) & ~align) - 1;
 	} else {
 		t->pitch =
 		    ((tObj->Image[0][t->base.firstLevel]->Width *
@@ -411,9 +366,10 @@ static GLboolean r300EnableTexture2D(GLcontext * ctx, int unit)
 
 	if (t->base.dirty_images[0]) {
 		R300_FIREVERTICES(rmesa);
+
 		r300SetTexImages(rmesa, tObj);
 		r300UploadTexImages(rmesa, (r300TexObjPtr) tObj->DriverData, 0);
-		if (!t->base.memBlock)
+		if (!t->base.memBlock && !t->image_override)
 			return GL_FALSE;
 	}
 
@@ -492,9 +448,11 @@ static GLboolean r300EnableTextureRect(GLcontext * ctx, int unit)
 
 	if (t->base.dirty_images[0]) {
 		R300_FIREVERTICES(rmesa);
+
 		r300SetTexImages(rmesa, tObj);
 		r300UploadTexImages(rmesa, (r300TexObjPtr) tObj->DriverData, 0);
-		if (!t->base.memBlock && !rmesa->prefer_gart_client_texturing)
+		if (!t->base.memBlock && !t->image_override &&
+		    !rmesa->prefer_gart_client_texturing)
 			return GL_FALSE;
 	}
 
@@ -522,16 +480,61 @@ static GLboolean r300UpdateTexture(GLcontext * ctx, int unit)
 			 */
 
 			rmesa->state.texture.unit[unit].texobj->base.bound &=
-			    ~(1UL << unit);
+			    ~(1 << unit);
 		}
 
 		rmesa->state.texture.unit[unit].texobj = t;
-		t->base.bound |= (1UL << unit);
+		t->base.bound |= (1 << unit);
 		t->dirty_state |= 1 << unit;
 		driUpdateTextureLRU((driTextureObject *) t);	/* XXX: should be locked! */
 	}
 
 	return !t->border_fallback;
+}
+
+void r300SetTexOffset(__DRIcontext * pDRICtx, GLint texname,
+		      unsigned long long offset, GLint depth, GLuint pitch)
+{
+	r300ContextPtr rmesa =
+	    (r300ContextPtr) ((__DRIcontextPrivate *) pDRICtx->private)->
+	    driverPrivate;
+	struct gl_texture_object *tObj =
+	    _mesa_lookup_texture(rmesa->radeon.glCtx, texname);
+	r300TexObjPtr t;
+
+	if (!tObj)
+		return;
+
+	t = (r300TexObjPtr) tObj->DriverData;
+
+	t->image_override = GL_TRUE;
+
+	if (!offset)
+		return;
+
+	t->offset = offset;
+	t->pitch_reg = pitch;
+
+	switch (depth) {
+	case 32:
+		t->format = R300_EASY_TX_FORMAT(X, Y, Z, W, W8Z8Y8X8);
+		t->filter |= tx_table[2].filter;
+		t->pitch_reg /= 4;
+		break;
+	case 24:
+	default:
+		t->format = R300_EASY_TX_FORMAT(X, Y, Z, ONE, W8Z8Y8X8);
+		t->filter |= tx_table[4].filter;
+		t->pitch_reg /= 4;
+		break;
+	case 16:
+		t->format = R300_EASY_TX_FORMAT(X, Y, Z, ONE, Z5Y6X5);
+		t->filter |= tx_table[5].filter;
+		t->pitch_reg /= 2;
+		break;
+	}
+
+	t->pitch_reg--;
 }
 
 static GLboolean r300UpdateTextureUnit(GLcontext * ctx, int unit)

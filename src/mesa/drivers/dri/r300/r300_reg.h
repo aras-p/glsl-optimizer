@@ -116,6 +116,8 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #       define R300_VAP_OUTPUT_VTX_FMT_0__PT_SIZE_PRESENT (1<<16) /* GUESS */
 
 #define R300_VAP_OUTPUT_VTX_FMT_1           0x2094
+	/* each of the following is 3 bits wide, specifies number
+	   of components */
 #       define R300_VAP_OUTPUT_VTX_FMT_1__TEX_0_COMP_CNT_SHIFT 0
 #       define R300_VAP_OUTPUT_VTX_FMT_1__TEX_1_COMP_CNT_SHIFT 3
 #       define R300_VAP_OUTPUT_VTX_FMT_1__TEX_2_COMP_CNT_SHIFT 6
@@ -299,6 +301,18 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #       define R300_221C_NORMAL                  0x00000000
 #       define R300_221C_CLEAR                   0x0001C000
 
+/* These seem to be per-pixel and per-vertex X and Y clipping planes. The first
+ * plane is per-pixel and the second plane is per-vertex.
+ *
+ * This was determined by experimentation alone but I believe it is correct.
+ *
+ * These registers are called X_QUAD0_1_FL to X_QUAD0_4_FL by glxtest.
+ */
+#define R300_VAP_CLIP_X_0                   0x2220
+#define R300_VAP_CLIP_X_1                   0x2224
+#define R300_VAP_CLIP_Y_0                   0x2228
+#define R300_VAP_CLIP_Y_1                   0x2230
+
 /* gap */
 
 /* Sometimes, END_OF_PKT and 0x2284=0 are the only commands sent between
@@ -322,13 +336,15 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
  * The meaning of the two UNKNOWN fields is obviously not known. However,
  * experiments so far have shown that both *must* point to an instruction
  * inside the vertex program, otherwise the GPU locks up.
+ *
  * fglrx usually sets CNTL_3_UNKNOWN to the end of the program and
- * CNTL_1_UNKNOWN points to instruction where last write to position takes
- * place.
+ * R300_PVS_CNTL_1_POS_END_SHIFT points to instruction where last write to
+ * position takes place.
+ *
  * Most likely this is used to ignore rest of the program in cases
  * where group of verts arent visible. For some reason this "section"
  * is sometimes accepted other instruction that have no relationship with
- *position calculations.
+ * position calculations.
  */
 #define R300_VAP_PVS_CNTL_1                 0x22D0
 #       define R300_PVS_CNTL_1_PROGRAM_START_SHIFT   0
@@ -967,7 +983,6 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
  * first node is stored in NODE_2, the second node is stored in NODE_3.
  *
  * Offsets are relative to the master offset from PFS_CNTL_2.
- * LAST_NODE is set for the last node, and only for the last node.
  */
 #define R300_PFS_NODE_0                     0x4610
 #define R300_PFS_NODE_1                     0x4614
@@ -981,7 +996,6 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #       define R300_PFS_NODE_TEX_OFFSET_MASK     (31 << 12)
 #       define R300_PFS_NODE_TEX_END_SHIFT       17
 #       define R300_PFS_NODE_TEX_END_MASK        (31 << 17)
-/*#       define R300_PFS_NODE_LAST_NODE           (1 << 22) */
 #		define R300_PFS_NODE_OUTPUT_COLOR        (1 << 22)
 #		define R300_PFS_NODE_OUTPUT_DEPTH        (1 << 23)
 
@@ -1591,6 +1605,7 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #    define R300_EB_UNK1_SHIFT                      24
 #    define R300_EB_UNK1                    (0x80<<24)
 #    define R300_EB_UNK2                        0x0810
+#define R300_PACKET3_3D_DRAW_VBUF_2         0x00003400
 #define R300_PACKET3_3D_DRAW_INDX_2         0x00003600
 
 /* END: Packet 3 commands */

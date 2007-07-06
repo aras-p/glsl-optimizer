@@ -99,13 +99,14 @@ void nouveauWaitForIdle(nouveauContextPtr nmesa)
 GLboolean nouveauFifoInit(nouveauContextPtr nmesa)
 {
 	drm_nouveau_fifo_alloc_t fifo_init;
-	int i;
+	int i, ret;
 
 #ifdef NOUVEAU_RING_DEBUG
 	return GL_TRUE;
 #endif
 
-	int ret;
+	fifo_init.fb_ctxdma_handle = NvDmaFB;
+	fifo_init.tt_ctxdma_handle = NvDmaTT;
 	ret=drmCommandWriteRead(nmesa->driFd, DRM_NOUVEAU_FIFO_ALLOC, &fifo_init, sizeof(fifo_init));
 	if (ret) {
 		FATAL("Fifo initialization ioctl failed (returned %d)\n",ret);
@@ -117,9 +118,18 @@ GLboolean nouveauFifoInit(nouveauContextPtr nmesa)
 		FATAL("Unable to map the fifo (returned %d)\n",ret);
 		return GL_FALSE;
 	}
+
 	ret = drmMap(nmesa->driFd, fifo_init.ctrl, fifo_init.ctrl_size, &nmesa->fifo.mmio);
 	if (ret) {
 		FATAL("Unable to map the control regs (returned %d)\n",ret);
+		return GL_FALSE;
+	}
+
+	ret = drmMap(nmesa->driFd, fifo_init.notifier,
+				   fifo_init.notifier_size,
+				   &nmesa->notifier_block);
+	if (ret) {
+		FATAL("Unable to map the notifier block (returned %d)\n",ret);
 		return GL_FALSE;
 	}
 

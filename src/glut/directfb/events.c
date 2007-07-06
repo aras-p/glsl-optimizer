@@ -435,13 +435,14 @@ glutMainLoop( void )
 {
      __glutAssert( events != NULL );
      
+     __glutHandleWindows();
+     
      while (GL_TRUE) {
           DFBEvent evt, prev;
           
           g_idle = GL_TRUE;
           
           __glutHandleTimers();
-          __glutHandleWindows();
 
           prev.clazz = DFEC_NONE;
           
@@ -471,13 +472,19 @@ glutMainLoop( void )
                __glutHandleTimers();
           }
           
+          __glutHandleWindows();
+          
           if (g_idle) {
                if (idle_func) {
                     idle_func();
                }
                else {
+                    int msec;
                     __glutSetWindow( NULL );
-                    usleep( 500 );
+                    if (__glutGetTimeout( &msec ))
+                         events->WaitForEventWithTimeout( events, msec/1000, msec%1000 );
+                    else
+                         events->WaitForEvent( events );
                }
           }
      }

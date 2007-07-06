@@ -23,6 +23,7 @@ SOURCES = \
 	arbvptest3.c \
 	arbvptorus.c \
 	arbvpwarpmesh.c \
+	arraytexture.c \
 	blendminmax.c \
 	blendsquare.c \
 	bufferobj.c \
@@ -54,6 +55,7 @@ SOURCES = \
 	pbo.c \
 	prog_parameter.c \
 	projtex.c \
+	random.c \
 	readrate.c \
 	seccolor.c \
 	sharedtex.c \
@@ -116,6 +118,12 @@ getprocaddress: getprocaddress.c getproclist.h
 
 getproclist.h: $(TOP)/src/mesa/glapi/gl_API.xml getprocaddress.c getprocaddress.py
 	python getprocaddress.py > getproclist.h
+
+arraytexture: arraytexture.o readtex.o
+	$(CC) $(CFLAGS) arraytexture.o readtex.o $(LIBS) -o $@
+
+arraytexture.o: arraytexture.c readtex.h
+	$(CC) -c $(INCLUDES) $(CFLAGS) $(DEFINES) $< -o $@
 
 afsmultiarb: afsmultiarb.o readtex.o
 	$(CC) $(CFLAGS) afsmultiarb.o readtex.o $(LIBS) -o $@

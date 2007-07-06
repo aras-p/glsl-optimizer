@@ -32,8 +32,14 @@
 
 /* We're essentially building part of GDI here, so define this so that
  * we get the right export linkage. */
+#ifdef __MINGW32__
+#include <GL/gl.h>
+#include <stdlib.h>
+#else
 #define _GDI32_
+#endif
 #include <windows.h>
+
 #include "glapi.h"
 
 #include "GL/wmesa.h"   /* protos for wmesa* functions */
@@ -333,7 +339,7 @@ WINGDIAPI int GLAPIENTRY wglGetPixelFormat(HDC hdc)
 }
 
 WINGDIAPI BOOL GLAPIENTRY wglSetPixelFormat(HDC hdc,int iPixelFormat,
-					    PIXELFORMATDESCRIPTOR *ppfd)
+					    const PIXELFORMATDESCRIPTOR *ppfd)
 {
     (void) hdc;
     

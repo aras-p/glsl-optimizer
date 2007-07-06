@@ -92,6 +92,10 @@ struct intel_texture_object
     * regions will be copied to this region and the old storage freed.
     */
    struct intel_mipmap_tree *mt;
+
+   GLboolean imageOverride;
+   GLint depthOverride;
+   GLuint pitchOverride;
 };
 
 
@@ -381,6 +385,10 @@ extern int INTEL_DEBUG;
 #define PCI_CHIP_I915_GM		0x2592
 #define PCI_CHIP_I945_G			0x2772
 #define PCI_CHIP_I945_GM		0x27A2
+#define PCI_CHIP_I945_GME		0x27AE
+#define PCI_CHIP_G33_G			0x29C2
+#define PCI_CHIP_Q35_G			0x29B2
+#define PCI_CHIP_Q33_G			0x29D2
 
 
 /* ================================================================
@@ -395,7 +403,6 @@ extern GLboolean intelInitContext(struct intel_context *intel,
 
 extern void intelGetLock(struct intel_context *intel, GLuint flags);
 
-extern void intelInitState(GLcontext * ctx);
 extern void intelFinish(GLcontext * ctx);
 extern void intelFlush(GLcontext * ctx);
 

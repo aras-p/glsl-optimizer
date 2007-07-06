@@ -440,6 +440,13 @@ static const char Color4ubVertex3fvSUN_names[] =
     "";
 #endif
 
+#if defined(need_GL_EXT_texture_array)
+static const char FramebufferTextureLayerEXT_names[] = 
+    "iiiii\0" /* Parameter signature */
+    "glFramebufferTextureLayerEXT\0"
+    "";
+#endif
+
 #if defined(need_GL_SGIX_list_priority)
 static const char GetListParameterivSGIX_names[] = 
     "iip\0" /* Parameter signature */
@@ -1471,9 +1478,10 @@ static const char ImageTransformParameterfvHP_names[] =
     "";
 #endif
 
-#if defined(need_GL_ARB_vertex_program)
+#if defined(need_GL_VERSION_2_0) || defined(need_GL_ARB_vertex_program)
 static const char VertexAttrib4ivARB_names[] = 
     "ip\0" /* Parameter signature */
+    "glVertexAttrib4iv\0"
     "glVertexAttrib4ivARB\0"
     "";
 #endif
@@ -1579,9 +1587,10 @@ static const char PixelTransformParameterfvEXT_names[] =
     "";
 #endif
 
-#if defined(need_GL_ARB_vertex_program)
+#if defined(need_GL_VERSION_2_0) || defined(need_GL_ARB_vertex_program)
 static const char VertexAttrib4bvARB_names[] = 
     "ip\0" /* Parameter signature */
+    "glVertexAttrib4bv\0"
     "glVertexAttrib4bvARB\0"
     "";
 #endif
@@ -2384,9 +2393,10 @@ static const char GetAttribLocationARB_names[] =
     "";
 #endif
 
-#if defined(need_GL_ARB_vertex_program)
+#if defined(need_GL_VERSION_2_0) || defined(need_GL_ARB_vertex_program)
 static const char VertexAttrib4ubvARB_names[] = 
     "ip\0" /* Parameter signature */
+    "glVertexAttrib4ubv\0"
     "glVertexAttrib4ubvARB\0"
     "";
 #endif
@@ -2903,9 +2913,10 @@ static const char ReplacementCodeuiColor4ubVertex3fSUN_names[] =
     "";
 #endif
 
-#if defined(need_GL_ARB_vertex_program)
+#if defined(need_GL_VERSION_2_0) || defined(need_GL_ARB_vertex_program)
 static const char VertexAttrib4usvARB_names[] = 
     "ip\0" /* Parameter signature */
+    "glVertexAttrib4usv\0"
     "glVertexAttrib4usvARB\0"
     "";
 #endif
@@ -4386,9 +4397,10 @@ static const char WindowPos4iMESA_names[] =
     "";
 #endif
 
-#if defined(need_GL_ARB_vertex_program)
+#if defined(need_GL_VERSION_2_0) || defined(need_GL_ARB_vertex_program)
 static const char VertexAttrib4uivARB_names[] = 
     "ip\0" /* Parameter signature */
+    "glVertexAttrib4uiv\0"
     "glVertexAttrib4uivARB\0"
     "";
 #endif
@@ -5479,6 +5491,13 @@ static const struct dri_extension_function GL_EXT_texture3D_functions[] = {
 };
 #endif
 
+#if defined(need_GL_EXT_texture_array)
+static const struct dri_extension_function GL_EXT_texture_array_functions[] = {
+    { FramebufferTextureLayerEXT_names, FramebufferTextureLayerEXT_remap_index, -1 },
+    { NULL, 0, 0 }
+};
+#endif
+
 #if defined(need_GL_EXT_texture_object)
 static const struct dri_extension_function GL_EXT_texture_object_functions[] = {
     { PrioritizeTextures_names, -1, 331 },
@@ -6243,6 +6262,8 @@ static const struct dri_extension_function GL_VERSION_2_0_functions[] = {
     { GetVertexAttribivARB_names, GetVertexAttribivARB_remap_index, -1 },
     { CreateProgram_names, CreateProgram_remap_index, -1 },
     { StencilFuncSeparate_names, StencilFuncSeparate_remap_index, -1 },
+    { VertexAttrib4ivARB_names, VertexAttrib4ivARB_remap_index, -1 },
+    { VertexAttrib4bvARB_names, VertexAttrib4bvARB_remap_index, -1 },
     { VertexAttrib3dARB_names, VertexAttrib3dARB_remap_index, -1 },
     { VertexAttrib4fARB_names, VertexAttrib4fARB_remap_index, -1 },
     { VertexAttrib4fvARB_names, VertexAttrib4fvARB_remap_index, -1 },
@@ -6256,6 +6277,7 @@ static const struct dri_extension_function GL_VERSION_2_0_functions[] = {
     { VertexAttrib1dvARB_names, VertexAttrib1dvARB_remap_index, -1 },
     { GetVertexAttribfvARB_names, GetVertexAttribfvARB_remap_index, -1 },
     { GetAttribLocationARB_names, GetAttribLocationARB_remap_index, -1 },
+    { VertexAttrib4ubvARB_names, VertexAttrib4ubvARB_remap_index, -1 },
     { Uniform3ivARB_names, Uniform3ivARB_remap_index, -1 },
     { VertexAttrib4sARB_names, VertexAttrib4sARB_remap_index, -1 },
     { VertexAttrib2dvARB_names, VertexAttrib2dvARB_remap_index, -1 },
@@ -6268,6 +6290,7 @@ static const struct dri_extension_function GL_VERSION_2_0_functions[] = {
     { VertexAttrib4NuivARB_names, VertexAttrib4NuivARB_remap_index, -1 },
     { Uniform4fARB_names, Uniform4fARB_remap_index, -1 },
     { VertexAttrib1dARB_names, VertexAttrib1dARB_remap_index, -1 },
+    { VertexAttrib4usvARB_names, VertexAttrib4usvARB_remap_index, -1 },
     { LinkProgramARB_names, LinkProgramARB_remap_index, -1 },
     { ShaderSourceARB_names, ShaderSourceARB_remap_index, -1 },
     { VertexAttrib3svARB_names, VertexAttrib3svARB_remap_index, -1 },
@@ -6297,6 +6320,7 @@ static const struct dri_extension_function GL_VERSION_2_0_functions[] = {
     { DrawBuffersARB_names, DrawBuffersARB_remap_index, -1 },
     { Uniform1fvARB_names, Uniform1fvARB_remap_index, -1 },
     { EnableVertexAttribArrayARB_names, EnableVertexAttribArrayARB_remap_index, -1 },
+    { VertexAttrib4uivARB_names, VertexAttrib4uivARB_remap_index, -1 },
     { VertexAttrib4svARB_names, VertexAttrib4svARB_remap_index, -1 },
     { GetShaderiv_names, GetShaderiv_remap_index, -1 },
     { VertexAttrib2svARB_names, VertexAttrib2svARB_remap_index, -1 },

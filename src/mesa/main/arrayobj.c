@@ -46,7 +46,7 @@
 #include "bufferobj.h"
 #endif
 #include "arrayobj.h"
-#include "dispatch.h"
+#include "glapi/dispatch.h"
 
 
 /**
