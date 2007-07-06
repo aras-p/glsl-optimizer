@@ -739,11 +739,11 @@ static GLboolean nv10BindBuffers(nouveauContextPtr nmesa, int num_color,
 	OUT_RING_CACHE(depth ? depth->offset : color[0]->offset);
 
 	/* Always set to bottom left of buffer */
-	BEGIN_RING_CACHE(NvSub3D, NV10_TCL_PRIMITIVE_3D_VIEWPORT_ORIGIN_X, 4);
+	/*BEGIN_RING_CACHE(NvSub3D, NV10_TCL_PRIMITIVE_3D_VIEWPORT_ORIGIN_X, 4);
 	OUT_RING_CACHEf (0.0);
 	OUT_RING_CACHEf ((GLfloat) h);
 	OUT_RING_CACHEf (0.0);
-	OUT_RING_CACHEf (0.0);
+	OUT_RING_CACHEf (0.0);*/
 
 	return GL_TRUE;
 }
