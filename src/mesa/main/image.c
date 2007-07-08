@@ -3882,6 +3882,16 @@ _mesa_pack_stencil_span( const GLcontext *ctx, GLuint n,
         }                                                               \
     } while (0)
 
+
+/**
+ * Unpack a row of depth/z values from memory, returning GLushort, GLuint
+ * or GLfloat values.
+ * The glPixelTransfer (scale/bias) params will be applied.
+ *
+ * \param dstType  one of GL_UNSIGNED_SHORT, GL_UNSIGNED_INT, GL_FLOAT
+ * \param depthScale  scale factor (max value) for returned GLushort or
+ *                    GLuint values (ignored for GLfloat).
+ */
 void
 _mesa_unpack_depth_span( const GLcontext *ctx, GLuint n,
                          GLenum dstType, GLvoid *dest, GLfloat depthScale,
@@ -3907,7 +3917,9 @@ _mesa_unpack_depth_span( const GLcontext *ctx, GLuint n,
          }
          return;
       }
-      if (srcType == GL_UNSIGNED_SHORT && dstType == GL_UNSIGNED_INT) {
+      if (srcType == GL_UNSIGNED_SHORT
+          && dstType == GL_UNSIGNED_INT
+          && depthScale == (GLfloat) 0xffffffff) {
          const GLushort *src = (const GLushort *) source;
          GLuint *dst = (GLuint *) dest;
          GLuint i;
