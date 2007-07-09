@@ -28,8 +28,8 @@
 /* Authors:  Keith Whitwell <keith@tungstengraphics.com>
  */
 
-#ifndef G_SURFACE_H
-#define G_SURFACE_H
+#ifndef SP_SURFACE_H
+#define SP_SURFACE_H
 
 #include "glheader.h"
 #include "sp_headers.h"
@@ -93,4 +93,4 @@ softpipe_surface(struct pipe_surface *ps)
 }
 
 
-#endif
+#endif /* SP_SURFACE_H */

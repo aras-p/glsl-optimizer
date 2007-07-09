@@ -27,8 +27,10 @@
 
 /* Authors:  Keith Whitwell <keith@tungstengraphics.com>
  */
-#ifndef G_TILE_H
-#define G_TILE_H
+
+#ifndef SP_TILE_H
+#define SP_TILE_H
+
 
 struct softpipe_context;
 struct quad_header;
@@ -44,14 +46,13 @@ struct quad_stage {
 };
 
 
-
 struct quad_stage *sp_quad_shade_stage( struct softpipe_context *softpipe );
 struct quad_stage *sp_quad_alpha_test_stage( struct softpipe_context *softpipe );
 struct quad_stage *sp_quad_depth_test_stage( struct softpipe_context *softpipe );
 struct quad_stage *sp_quad_blend_stage( struct softpipe_context *softpipe );
 struct quad_stage *sp_quad_output_stage( struct softpipe_context *softpipe );
 
-void
-sp_build_quad_pipeline(struct softpipe_context *sp);
+void sp_build_quad_pipeline(struct softpipe_context *sp);
 
-#endif
+
+#endif /* SP_TILE_H */

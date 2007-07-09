@@ -27,8 +27,10 @@
 
 /* Authors:  Keith Whitwell <keith@tungstengraphics.com>
  */
-#ifndef G_HEADERS_H
-#define G_HEADERS_H
+
+#ifndef SP_HEADERS_H
+#define SP_HEADERS_H
+
 
 #define PRIM_POINT 1
 #define PRIM_LINE  2
@@ -89,7 +91,4 @@ struct quad_header {
 };
 
 
-
-
-
-#endif
+#endif /* SP_HEADERS_H */
