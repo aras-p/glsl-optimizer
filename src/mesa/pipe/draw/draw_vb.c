@@ -36,8 +36,6 @@
 #include "tnl/t_context.h"
 #include "vf/vf.h"
 
-#include "pipe/softpipe/sp_context.h"
-#include "pipe/softpipe/sp_headers.h"
 #include "draw_private.h"
 #include "draw_context.h"
 
