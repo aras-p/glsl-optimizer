@@ -103,7 +103,7 @@ void softpipe_set_setup_state( struct pipe_context *pipe,
 #if 0
    validate_prim_pipe( softpipe );
 #endif
-   softpipe->dirty |= G_NEW_SETUP;
+   softpipe->dirty |= SP_NEW_SETUP;
 }
 
 

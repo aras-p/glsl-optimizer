@@ -131,10 +131,10 @@ static void calculate_vertex_layout( struct softpipe_context *softpipe )
  */
 void softpipe_update_derived( struct softpipe_context *softpipe )
 {
-   if (softpipe->dirty & (G_NEW_SETUP | G_NEW_FS))
+   if (softpipe->dirty & (SP_NEW_SETUP | SP_NEW_FS))
       calculate_vertex_layout( softpipe );
 
-   if (softpipe->dirty & (G_NEW_BLEND | G_NEW_DEPTH_TEST | G_NEW_ALPHA_TEST | G_NEW_FS))
+   if (softpipe->dirty & (SP_NEW_BLEND | SP_NEW_DEPTH_TEST | SP_NEW_ALPHA_TEST | SP_NEW_FS))
       sp_build_quad_pipeline(softpipe);
 
    softpipe->dirty = 0;

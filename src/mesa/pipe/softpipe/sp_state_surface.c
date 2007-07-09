@@ -45,7 +45,7 @@ softpipe_set_framebuffer_state(struct pipe_context *pipe,
 
    softpipe->framebuffer = *fb; /* struct copy */
 
-   softpipe->dirty |= G_NEW_FRAMEBUFFER;
+   softpipe->dirty |= SP_NEW_FRAMEBUFFER;
 }
 
 

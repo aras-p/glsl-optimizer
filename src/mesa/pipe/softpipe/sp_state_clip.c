@@ -54,7 +54,7 @@ void softpipe_set_viewport_state( struct pipe_context *pipe,
    struct softpipe_context *softpipe = softpipe_context(pipe);
 
    softpipe->viewport = *viewport; /* struct copy */
-   softpipe->dirty |= G_NEW_VIEWPORT;
+   softpipe->dirty |= SP_NEW_VIEWPORT;
 
    /* pass the viewport info to the draw module */
    draw_set_viewport_state(softpipe->draw, viewport);
@@ -71,7 +71,7 @@ void softpipe_set_scissor_state( struct pipe_context *pipe,
    struct softpipe_context *softpipe = softpipe_context(pipe);
 
    memcpy( &softpipe->scissor, scissor, sizeof(*scissor) );
-   softpipe->dirty |= G_NEW_SCISSOR;
+   softpipe->dirty |= SP_NEW_SCISSOR;
 }
 
 
@@ -81,5 +81,5 @@ void softpipe_set_polygon_stipple( struct pipe_context *pipe,
    struct softpipe_context *softpipe = softpipe_context(pipe);
 
    memcpy( &softpipe->poly_stipple, stipple, sizeof(*stipple) );
-   softpipe->dirty |= G_NEW_STIPPLE;
+   softpipe->dirty |= SP_NEW_STIPPLE;
 }

@@ -51,18 +51,18 @@ enum interp_mode {
 };
 
 
-#define G_NEW_VIEWPORT  0x1
-#define G_NEW_SETUP     0x2
-#define G_NEW_FS        0x4
-#define G_NEW_BLEND     0x8
-#define G_NEW_CLIP      0x20
-#define G_NEW_SCISSOR   0x40
-#define G_NEW_STIPPLE   0x80
-#define G_NEW_FRAMEBUFFER 0x100
-#define G_NEW_ALPHA_TEST  0x200
-#define G_NEW_DEPTH_TEST  0x400
-#define G_NEW_SAMPLER     0x800
-#define G_NEW_TEXTURE    0x1000
+#define SP_NEW_VIEWPORT      0x1
+#define SP_NEW_SETUP         0x2
+#define SP_NEW_FS            0x4
+#define SP_NEW_BLEND         0x8
+#define SP_NEW_CLIP         0x10
+#define SP_NEW_SCISSOR      0x20
+#define SP_NEW_STIPPLE      0x40
+#define SP_NEW_FRAMEBUFFER  0x80
+#define SP_NEW_ALPHA_TEST  0x100
+#define SP_NEW_DEPTH_TEST  0x200
+#define SP_NEW_SAMPLER     0x400
+#define SP_NEW_TEXTURE     0x800
 
 
 struct softpipe_context {     

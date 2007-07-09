@@ -37,7 +37,7 @@ void softpipe_set_fs_state( struct pipe_context *pipe,
 
    memcpy(&softpipe->fs, fs, sizeof(*fs));
 
-   softpipe->dirty |= G_NEW_FS;
+   softpipe->dirty |= SP_NEW_FS;
 }
 
 

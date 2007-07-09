@@ -46,7 +46,7 @@ softpipe_set_sampler_state(struct pipe_context *pipe,
    assert(unit < PIPE_MAX_SAMPLERS);
    softpipe->sampler[unit] = *sampler;
 
-   softpipe->dirty |= G_NEW_SAMPLER;
+   softpipe->dirty |= SP_NEW_SAMPLER;
 }
 
 
@@ -60,5 +60,5 @@ softpipe_set_texture_state(struct pipe_context *pipe,
    assert(unit < PIPE_MAX_SAMPLERS);
    softpipe->texture[unit] = texture;  /* ptr, not struct */
 
-   softpipe->dirty |= G_NEW_TEXTURE;
+   softpipe->dirty |= SP_NEW_TEXTURE;
 }

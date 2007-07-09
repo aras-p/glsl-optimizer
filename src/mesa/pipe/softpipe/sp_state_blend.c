@@ -40,7 +40,7 @@ void softpipe_set_blend_state( struct pipe_context *pipe,
 
    softpipe->blend = *blend;
 
-   softpipe->dirty |= G_NEW_BLEND;
+   softpipe->dirty |= SP_NEW_BLEND;
 }
 
 
@@ -51,7 +51,7 @@ void softpipe_set_blend_color( struct pipe_context *pipe,
 
    softpipe->blend_color = *blend_color;
 
-   softpipe->dirty |= G_NEW_BLEND;
+   softpipe->dirty |= SP_NEW_BLEND;
 }
 
 
@@ -66,7 +66,7 @@ softpipe_set_depth_test_state(struct pipe_context *pipe,
 
    softpipe->depth_test = *depth;
 
-   softpipe->dirty |= G_NEW_DEPTH_TEST;
+   softpipe->dirty |= SP_NEW_DEPTH_TEST;
 }
 
 void
@@ -77,6 +77,6 @@ softpipe_set_alpha_test_state(struct pipe_context *pipe,
 
    softpipe->alpha_test = *alpha;
 
-   softpipe->dirty |= G_NEW_ALPHA_TEST;
+   softpipe->dirty |= SP_NEW_ALPHA_TEST;
 }
 
