@@ -31,8 +31,7 @@
 
 #include "sp_context.h"
 #include "sp_state.h"
-#include "sp_draw.h"
-
+#include "pipe/draw/draw_context.h"
 
 
 void softpipe_set_clip_state( struct pipe_context *pipe,
@@ -40,10 +39,8 @@ void softpipe_set_clip_state( struct pipe_context *pipe,
 {
    struct softpipe_context *softpipe = softpipe_context(pipe);
 
-   memcpy(&softpipe->plane[6], clip->ucp, clip->nr * sizeof(clip->ucp[0]));
-
-   softpipe->nr_planes = 6 + clip->nr;
-   softpipe->dirty |= G_NEW_CLIP;
+   /* pass the clip state to the draw module */
+   draw_set_clip_state(softpipe->draw, clip);
 }
 
 
@@ -57,13 +54,32 @@ void softpipe_set_viewport_state( struct pipe_context *pipe,
    struct softpipe_context *softpipe = softpipe_context(pipe);
 
    softpipe->viewport = *viewport; /* struct copy */
+   softpipe->dirty |= G_NEW_VIEWPORT;
+
+   /* pass the viewport info to the draw module */
+   draw_set_viewport_state(softpipe->draw, viewport);
 
    /* Using tnl/ and vf/ modules is temporary while getting started.
     * Full pipe will have vertex shader, vertex fetch of its own.
     */
-   draw_set_viewport( softpipe->draw, viewport->scale, viewport->translate );
-   softpipe->dirty |= G_NEW_VIEWPORT;
 }
 
 
+void softpipe_set_scissor_state( struct pipe_context *pipe,
+                                 const struct pipe_scissor_state *scissor )
+{
+   struct softpipe_context *softpipe = softpipe_context(pipe);
 
+   memcpy( &softpipe->scissor, scissor, sizeof(*scissor) );
+   softpipe->dirty |= G_NEW_SCISSOR;
+}
+
+
+void softpipe_set_polygon_stipple( struct pipe_context *pipe,
+                                   const struct pipe_poly_stipple *stipple )
+{
+   struct softpipe_context *softpipe = softpipe_context(pipe);
+
+   memcpy( &softpipe->poly_stipple, stipple, sizeof(*stipple) );
+   softpipe->dirty |= G_NEW_STIPPLE;
+}

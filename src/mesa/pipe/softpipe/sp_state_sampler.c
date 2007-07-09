@@ -28,11 +28,11 @@
 /* Authors:
  *  Brian Paul
  */
+
 #include "imports.h"
 
 #include "sp_context.h"
 #include "sp_state.h"
-#include "sp_draw.h"
 
 
 

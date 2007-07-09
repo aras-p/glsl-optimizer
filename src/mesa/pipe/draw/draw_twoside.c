@@ -27,12 +27,10 @@
 
 /* Authors:  Keith Whitwell <keith@tungstengraphics.com>
  */
-#include "imports.h"
-#include "vf/vf.h"
 
+#include "main/imports.h"
 #include "pipe/p_defines.h"
-#include "sp_context.h"
-#include "sp_prim.h"
+#include "draw_private.h"
 
 
 struct twoside_stage {
@@ -53,7 +51,7 @@ static void twoside_begin( struct prim_stage *stage )
 {
    struct twoside_stage *twoside = twoside_stage(stage);
 
-   twoside->facing = (stage->softpipe->setup.front_winding == PIPE_WINDING_CW) ? -1 : 1;
+   twoside->facing = (stage->draw->setup.front_winding == PIPE_WINDING_CW) ? -1 : 1;
 
    stage->next->begin( stage->next );
 }
@@ -97,9 +95,11 @@ static void twoside_tri( struct prim_stage *stage,
    struct twoside_stage *twoside = twoside_stage(stage);
 
    if (header->det * twoside->facing < 0) {
+      /* this is a back-facing triangle */
       struct prim_header tmp;
 
       tmp.det = header->det;
+      /* copy back colors to front color slots */
       tmp.v[0] = copy_bfc(twoside, header->v[0], 0);
       tmp.v[1] = copy_bfc(twoside, header->v[1], 1);
       tmp.v[2] = copy_bfc(twoside, header->v[2], 2);
@@ -115,6 +115,7 @@ static void twoside_tri( struct prim_stage *stage,
 static void twoside_line( struct prim_stage *stage,
 		       struct prim_header *header )
 {
+   /* pass-through */
    stage->next->line( stage->next, header );
 }
 
@@ -122,23 +123,28 @@ static void twoside_line( struct prim_stage *stage,
 static void twoside_point( struct prim_stage *stage,
 			struct prim_header *header )
 {
+   /* pass-through */
    stage->next->point( stage->next, header );
 }
 
+
 static void twoside_end( struct prim_stage *stage )
 {
+   /* pass-through */
    stage->next->end( stage->next );
 }
 
 
-
-struct prim_stage *prim_twoside( struct softpipe_context *softpipe )
+/**
+ * Create twoside pipeline stage.
+ */
+struct prim_stage *prim_twoside( struct draw_context *draw )
 {
    struct twoside_stage *twoside = CALLOC_STRUCT(twoside_stage);
 
    prim_alloc_tmps( &twoside->stage, 3 );
 
-   twoside->stage.softpipe = softpipe;
+   twoside->stage.draw = draw;
    twoside->stage.next = NULL;
    twoside->stage.begin = twoside_begin;
    twoside->stage.point = twoside_point;
@@ -146,7 +152,7 @@ struct prim_stage *prim_twoside( struct softpipe_context *softpipe )
    twoside->stage.tri = twoside_tri;
    twoside->stage.end = twoside_end;
 
-   twoside->lookup = softpipe->vf_attr_to_slot;
+   twoside->lookup = draw->vf_attr_to_slot;
 
    return &twoside->stage;
 }

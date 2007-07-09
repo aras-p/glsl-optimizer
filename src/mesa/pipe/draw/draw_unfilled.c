@@ -27,11 +27,10 @@
 
 /* Authors:  Keith Whitwell <keith@tungstengraphics.com>
  */
-#include "imports.h"
 
-#include "sp_context.h"
-#include "sp_prim.h"
+#include "main/imports.h"
 #include "pipe/p_defines.h"
+#include "draw_private.h"
 
 
 struct unfilled_stage {
@@ -51,8 +50,8 @@ static void unfilled_begin( struct prim_stage *stage )
 {
    struct unfilled_stage *unfilled = unfilled_stage(stage);
 
-   unfilled->mode[0] = stage->softpipe->setup.fill_ccw;
-   unfilled->mode[1] = stage->softpipe->setup.fill_cw;
+   unfilled->mode[0] = stage->draw->setup.fill_ccw;
+   unfilled->mode[1] = stage->draw->setup.fill_cw;
 
    stage->next->begin( stage->next );
 }
@@ -128,14 +127,14 @@ static void unfilled_tri( struct prim_stage *stage,
 }
 
 static void unfilled_line( struct prim_stage *stage,
-		       struct prim_header *header )
+                           struct prim_header *header )
 {
    stage->next->line( stage->next, header );
 }
 
 
 static void unfilled_point( struct prim_stage *stage,
-			struct prim_header *header )
+                            struct prim_header *header )
 {
    stage->next->point( stage->next, header );
 }
@@ -146,13 +145,13 @@ static void unfilled_end( struct prim_stage *stage )
    stage->next->end( stage->next );
 }
 
-struct prim_stage *prim_unfilled( struct softpipe_context *softpipe )
+struct prim_stage *prim_unfilled( struct draw_context *draw )
 {
    struct unfilled_stage *unfilled = CALLOC_STRUCT(unfilled_stage);
 
    prim_alloc_tmps( &unfilled->stage, 0 );
 
-   unfilled->stage.softpipe = softpipe;
+   unfilled->stage.draw = draw;
    unfilled->stage.next = NULL;
    unfilled->stage.tmp = NULL;
    unfilled->stage.begin = unfilled_begin;

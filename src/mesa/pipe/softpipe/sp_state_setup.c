@@ -28,11 +28,10 @@
 #include "pipe/p_defines.h"
 #include "sp_context.h"
 #include "sp_state.h"
-#include "sp_prim.h"
+#include "pipe/draw/draw_context.h"
 
 
-
-
+#if 0
 static void validate_prim_pipe( struct softpipe_context *softpipe )
 {
    struct prim_stage *next = softpipe->prim.setup;
@@ -87,6 +86,7 @@ static void validate_prim_pipe( struct softpipe_context *softpipe )
    softpipe->prim.first = next;
 }
 
+#endif
 
 
 
@@ -95,29 +95,15 @@ void softpipe_set_setup_state( struct pipe_context *pipe,
 {
    struct softpipe_context *softpipe = softpipe_context(pipe);
 
+   /* pass-through to draw module */
+   draw_set_setup_state(softpipe->draw, setup);
+
    memcpy( &softpipe->setup, setup, sizeof(*setup) );
 
+#if 0
    validate_prim_pipe( softpipe );
+#endif
    softpipe->dirty |= G_NEW_SETUP;
 }
 
 
-
-void softpipe_set_scissor_state( struct pipe_context *pipe,
-                                 const struct pipe_scissor_state *scissor )
-{
-   struct softpipe_context *softpipe = softpipe_context(pipe);
-
-   memcpy( &softpipe->scissor, scissor, sizeof(*scissor) );
-   softpipe->dirty |= G_NEW_SCISSOR;
-}
-
-
-void softpipe_set_polygon_stipple( struct pipe_context *pipe,
-				  const struct pipe_poly_stipple *stipple )
-{
-   struct softpipe_context *softpipe = softpipe_context(pipe);
-
-   memcpy( &softpipe->poly_stipple, stipple, sizeof(*stipple) );
-   softpipe->dirty |= G_NEW_STIPPLE;
-}

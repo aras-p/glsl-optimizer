@@ -29,14 +29,14 @@
  *    Keith Whitwell <keith@tungstengraphics.com>
  */
 
-#include "imports.h"
-#include "macros.h"
-
+#include "main/imports.h"
+#include "main/macros.h"
+#include "pipe/draw/draw_context.h"
 #include "sp_context.h"
 #include "sp_clear.h"
-#include "sp_prim.h"
 #include "sp_state.h"
-#include "sp_draw.h"
+#include "sp_prim_setup.h"
+
 
 static void softpipe_destroy( struct pipe_context *pipe )
 {
@@ -44,7 +44,7 @@ static void softpipe_destroy( struct pipe_context *pipe )
 
    draw_destroy( softpipe->draw );
 
-   FREE( softpipe );
+   free( softpipe );
 }
 
 
@@ -58,6 +58,7 @@ static void softpipe_draw_vb( struct pipe_context *pipe,
 
    draw_vb( softpipe->draw, VB );
 }
+
 
 struct pipe_context *softpipe_create( void )
 {
@@ -81,64 +82,17 @@ struct pipe_context *softpipe_create( void )
    softpipe->pipe.draw_vb = softpipe_draw_vb;
    softpipe->pipe.clear = softpipe_clear;
 
-
-   softpipe->prim.setup     = prim_setup( softpipe );
-   softpipe->prim.unfilled  = prim_unfilled( softpipe );
-   softpipe->prim.twoside   = prim_twoside( softpipe );
-   softpipe->prim.offset    = prim_offset( softpipe );
-   softpipe->prim.clip      = prim_clip( softpipe );
-   softpipe->prim.flatshade = prim_flatshade( softpipe );
-   softpipe->prim.cull      = prim_cull( softpipe );
-
+   softpipe->quad.shade = sp_quad_shade_stage(softpipe);
+   softpipe->quad.alpha_test = sp_quad_alpha_test_stage(softpipe);
    softpipe->quad.blend = sp_quad_blend_stage(softpipe);
    softpipe->quad.depth_test = sp_quad_depth_test_stage(softpipe);
-   softpipe->quad.shade = sp_quad_shade_stage(softpipe);
    softpipe->quad.output = sp_quad_output_stage(softpipe);
 
-   softpipe->draw = draw_create( softpipe );
-
-   ASSIGN_4V( softpipe->plane[0], -1,  0,  0, 1 );
-   ASSIGN_4V( softpipe->plane[1],  1,  0,  0, 1 );
-   ASSIGN_4V( softpipe->plane[2],  0, -1,  0, 1 );
-   ASSIGN_4V( softpipe->plane[3],  0,  1,  0, 1 );
-   ASSIGN_4V( softpipe->plane[4],  0,  0,  1, 1 ); /* yes these are correct */
-   ASSIGN_4V( softpipe->plane[5],  0,  0, -1, 1 ); /* mesa's a bit wonky */
-   softpipe->nr_planes = 6;
+   /*
+    * Create drawing context and plug our render/setup stage into it.
+    */
+   softpipe->draw = draw_create();
+   draw_set_setup_stage(softpipe->draw, prim_setup(softpipe));
 
    return &softpipe->pipe;
 }
-
-
-
-
-
-
-#define MAX_VERTEX_SIZE ((2 + FRAG_ATTRIB_MAX) * 4 * sizeof(GLfloat))
-
-void prim_alloc_tmps( struct prim_stage *stage, GLuint nr )
-{
-   stage->nr_tmps = nr;
-
-   if (nr) {
-      GLubyte *store = MALLOC(MAX_VERTEX_SIZE * nr);
-      GLuint i;
-
-      stage->tmp = MALLOC(sizeof(struct vertex_header *) * nr);
-      
-      for (i = 0; i < nr; i++)
-	 stage->tmp[i] = (struct vertex_header *)(store + i * MAX_VERTEX_SIZE);
-   }
-}
-
-void prim_free_tmps( struct prim_stage *stage )
-{
-   if (stage->tmp) {
-      FREE(stage->tmp[0]);
-      FREE(stage->tmp);
-   }
-}
-
-
-
-
-

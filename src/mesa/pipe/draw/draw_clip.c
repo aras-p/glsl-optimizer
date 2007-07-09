@@ -28,17 +28,17 @@
 /* Authors:  Keith Whitwell <keith@tungstengraphics.com>
  */
 
-#include "imports.h"
-#include "macros.h"
+#include "main/macros.h"
+#include "draw_private.h"
 
-#include "sp_context.h"
-#include "sp_prim.h"
 
 struct clipper {
-   struct prim_stage stage;
+   struct prim_stage stage;      /**< base class */
 
    GLuint active_user_planes;
+   GLfloat (*plane)[4];
 };
+
 
 /* This is a bit confusing:
  */
@@ -75,7 +75,7 @@ static void interp( struct clipper *clip,
 		    const struct vertex_header *out, 
 		    const struct vertex_header *in )
 {
-   const GLuint nr_attrs = clip->stage.softpipe->nr_attrs;
+   const GLuint nr_attrs = clip->stage.draw->nr_attrs;
    GLuint j;
 
    /* Vertex header.
@@ -96,8 +96,8 @@ static void interp( struct clipper *clip,
     */
    {
       const GLfloat *pos = dst->clip;
-      const GLfloat *scale = clip->stage.softpipe->viewport.scale;
-      const GLfloat *trans = clip->stage.softpipe->viewport.translate;
+      const GLfloat *scale = clip->stage.draw->viewport.scale;
+      const GLfloat *trans = clip->stage.draw->viewport.translate;
       GLfloat oow;
 
       oow = 1.0 / pos[3];
@@ -225,7 +225,7 @@ do_clip_tri( struct prim_stage *stage,
 
    while (clipmask && n >= 3) {
       GLuint plane_idx = ffs(clipmask)-1;
-      const GLfloat *plane = clipper->stage.softpipe->plane[plane_idx];
+      const GLfloat *plane = clipper->plane[plane_idx];
       struct vertex_header *vert_prev = inlist[0];
       GLfloat dp_prev = dot4( vert_prev->clip, plane );
       GLuint outcount = 0;
@@ -314,7 +314,7 @@ do_clip_line( struct prim_stage *stage,
 
    while (clipmask) {
       GLuint plane_idx = ffs(clipmask)-1;
-      const GLfloat *plane = clipper->stage.softpipe->plane[plane_idx];
+      const GLfloat *plane = clipper->plane[plane_idx];
 
       clipmask &= ~(1<<plane_idx);
 
@@ -353,7 +353,7 @@ do_clip_line( struct prim_stage *stage,
 static void clip_begin( struct prim_stage *stage )
 {
    struct clipper *clipper = clipper_stage(stage);
-   GLuint nr = stage->softpipe->nr_planes;
+   GLuint nr = stage->draw->nr_planes;
 
    /* Hacky bitmask to use when we hit CLIP_USER_BIT:
     */   
@@ -379,6 +379,7 @@ clip_line( struct prim_stage *stage,
 		      header->v[1]->clipmask);
    
    if (clipmask == 0) {
+      /* no clipping needed */
       stage->next->line( stage->next, header );
    }
    else if ((header->v[0]->clipmask & 
@@ -397,6 +398,7 @@ clip_tri( struct prim_stage *stage,
 		      header->v[2]->clipmask);
    
    if (clipmask == 0) {
+      /* no clipping needed */
       stage->next->tri( stage->next, header );
    }
    else if ((header->v[0]->clipmask & 
@@ -406,24 +408,31 @@ clip_tri( struct prim_stage *stage,
    }
 }
 
+
 static void clip_end( struct prim_stage *stage )
 {
    stage->next->end( stage->next );
 }
 
 
-struct prim_stage *prim_clip( struct softpipe_context *softpipe )
+/**
+ * Allocate a new clipper stage.
+ * \return pointer to new stage object
+ */
+struct prim_stage *prim_clip( struct draw_context *draw )
 {
    struct clipper *clipper = CALLOC_STRUCT(clipper);
 
    prim_alloc_tmps( &clipper->stage, MAX_CLIPPED_VERTICES );
 
-   clipper->stage.softpipe = softpipe;
+   clipper->stage.draw = draw;
    clipper->stage.begin = clip_begin;
    clipper->stage.point = clip_point;
    clipper->stage.line = clip_line;
    clipper->stage.tri = clip_tri;
    clipper->stage.end = clip_end;
+
+   clipper->plane = draw->plane;
 
    return &clipper->stage;
 }

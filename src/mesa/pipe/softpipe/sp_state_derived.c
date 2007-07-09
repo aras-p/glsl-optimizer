@@ -25,16 +25,16 @@
  * 
  **************************************************************************/
 
-#include "glheader.h"
-#include "macros.h"
-#include "enums.h"
-#include "program.h"
+#include "main/glheader.h"
+#include "main/macros.h"
+#include "main/enums.h"
+#include "shader/program.h"
 
 #include "vf/vf.h"
-
+#include "pipe/draw/draw_context.h"
 #include "sp_context.h"
-#include "sp_draw.h"
 #include "sp_state.h"
+
 
 #define EMIT_ATTR( ATTR, FRAG_ATTR, INTERP )			\
 do {							\
@@ -77,8 +77,8 @@ static void calculate_vertex_layout( struct softpipe_context *softpipe )
    softpipe->nr_attrs = 0;
    memset(slot_to_vf_attr, 0, sizeof(slot_to_vf_attr));
 
-   memset(softpipe->fp_attr_to_slot, 0, sizeof(softpipe->vf_attr_to_slot));
-   memset(softpipe->vf_attr_to_slot, 0, sizeof(softpipe->fp_attr_to_slot));
+   memset(softpipe->fp_attr_to_slot, 0, sizeof(softpipe->fp_attr_to_slot));
+   memset(softpipe->vf_attr_to_slot, 0, sizeof(softpipe->vf_attr_to_slot));
 
    /* TODO - Figure out if we need to do perspective divide, etc.
     */

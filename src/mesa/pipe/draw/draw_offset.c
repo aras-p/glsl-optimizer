@@ -27,11 +27,10 @@
 
 /* Authors:  Keith Whitwell <keith@tungstengraphics.com>
  */
-#include "imports.h"
-#include "macros.h"
 
-#include "sp_context.h"
-#include "sp_prim.h"
+#include "main/imports.h"
+#include "main/macros.h"
+#include "draw_private.h"
 
 
 
@@ -56,14 +55,15 @@ static void offset_begin( struct prim_stage *stage )
 {
    struct offset_stage *offset = offset_stage(stage);
 
-   offset->units = stage->softpipe->setup.offset_units;
-   offset->scale = stage->softpipe->setup.offset_scale;
+   offset->units = stage->draw->setup.offset_units;
+   offset->scale = stage->draw->setup.offset_scale;
 
    stage->next->begin( stage->next );
 }
 
 
-/* Offset tri.  Some hardware can handle this, but not usually when
+/**
+ * Offset tri Z.  Some hardware can handle this, but not usually when
  * doing unfilled rendering.
  */
 static void do_offset_tri( struct prim_stage *stage,
@@ -92,8 +92,8 @@ static void do_offset_tri( struct prim_stage *stage,
    GLfloat bc = b * inv_det;
    GLfloat zoffset;
 
-   if ( ac < 0.0f ) ac = -ac;
-   if ( bc < 0.0f ) bc = -bc;
+   ac = FABSF(ac);
+   bc = FABSF(bc);
 
    zoffset = offset->units + MAX2( ac, bc ) * offset->scale;
 
@@ -115,7 +115,7 @@ static void offset_tri( struct prim_stage *stage,
    tmp.v[1] = dup_vert(stage, header->v[1], 1);
    tmp.v[2] = dup_vert(stage, header->v[2], 2);
 
-   do_offset_tri( stage->next, &tmp );
+   do_offset_tri( stage, &tmp );
 }
 
 
@@ -139,13 +139,13 @@ static void offset_end( struct prim_stage *stage )
    stage->next->end( stage->next );
 }
 
-struct prim_stage *prim_offset( struct softpipe_context *softpipe )
+struct prim_stage *prim_offset( struct draw_context *draw )
 {
    struct offset_stage *offset = CALLOC_STRUCT(offset_stage);
 
    prim_alloc_tmps( &offset->stage, 3 );
 
-   offset->stage.softpipe = softpipe;
+   offset->stage.draw = draw;
    offset->stage.next = NULL;
    offset->stage.begin = offset_begin;
    offset->stage.point = offset_point;

@@ -27,12 +27,9 @@
 
 /* Authors:  Keith Whitwell <keith@tungstengraphics.com>
  */
-#include "imports.h"
 
-#include "vf/vf.h"
-
-#include "sp_context.h"
-#include "sp_prim.h"
+#include "main/imports.h"
+#include "draw_private.h"
 
 
 struct flatshade_stage {
@@ -67,11 +64,12 @@ static INLINE void copy_attr( GLuint attr,
    }
 }
 
-static void copy_colors( struct prim_stage *stage, 
-			 struct vertex_header *dst, 
-			 const struct vertex_header *src )
+
+static INLINE void copy_colors( struct prim_stage *stage, 
+                                struct vertex_header *dst, 
+                                const struct vertex_header *src )
 {
-   struct flatshade_stage *flatshade = flatshade_stage(stage);
+   const struct flatshade_stage *flatshade = flatshade_stage(stage);
    const GLuint *lookup = flatshade->lookup;
 
    copy_attr( lookup[VF_ATTRIB_COLOR0], dst, src );
@@ -81,8 +79,8 @@ static void copy_colors( struct prim_stage *stage,
 }
 
 
-
-/* Flatshade tri.  Required for clipping and when unfilled tris are
+/**
+ * Flatshade tri.  Required for clipping and when unfilled tris are
  * active, otherwise handled by hardware.
  */
 static void flatshade_tri( struct prim_stage *stage,
@@ -102,7 +100,8 @@ static void flatshade_tri( struct prim_stage *stage,
 }
 
 
-/* Flatshade line.  Required for clipping.
+/**
+ * Flatshade line.  Required for clipping.
  */
 static void flatshade_line( struct prim_stage *stage,
 			    struct prim_header *header )
@@ -124,18 +123,20 @@ static void flatshade_point( struct prim_stage *stage,
    stage->next->point( stage->next, header );
 }
 
+
 static void flatshade_end( struct prim_stage *stage )
 {
    stage->next->end( stage->next );
 }
 
-struct prim_stage *prim_flatshade( struct softpipe_context *softpipe )
+
+struct prim_stage *prim_flatshade( struct draw_context *draw )
 {
    struct flatshade_stage *flatshade = CALLOC_STRUCT(flatshade_stage);
 
    prim_alloc_tmps( &flatshade->stage, 2 );
 
-   flatshade->stage.softpipe = softpipe;
+   flatshade->stage.draw = draw;
    flatshade->stage.next = NULL;
    flatshade->stage.begin = flatshade_begin;
    flatshade->stage.point = flatshade_point;
@@ -143,7 +144,7 @@ struct prim_stage *prim_flatshade( struct softpipe_context *softpipe )
    flatshade->stage.tri = flatshade_tri;
    flatshade->stage.end = flatshade_end;
 
-   flatshade->lookup = softpipe->vf_attr_to_slot;
+   flatshade->lookup = draw->vf_attr_to_slot;
 
    return &flatshade->stage;
 }

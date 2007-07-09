@@ -31,8 +31,6 @@
 
 #include "sp_context.h"
 #include "sp_state.h"
-#include "sp_draw.h"
-
 
 
 void softpipe_set_blend_state( struct pipe_context *pipe,

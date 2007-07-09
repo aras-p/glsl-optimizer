@@ -157,14 +157,6 @@ VF_SOURCES = \
 SOFTPIPE_SOURCES = \
 	pipe/softpipe/sp_clear.c \
 	pipe/softpipe/sp_context.c \
-	pipe/softpipe/sp_draw.c \
-	pipe/softpipe/sp_prim_clip.c \
-	pipe/softpipe/sp_prim_cull.c \
-	pipe/softpipe/sp_prim_flatshade.c \
-	pipe/softpipe/sp_prim_offset.c \
-	pipe/softpipe/sp_prim_setup.c \
-	pipe/softpipe/sp_prim_twoside.c \
-	pipe/softpipe/sp_prim_unfilled.c \
 	pipe/softpipe/sp_quad.c \
 	pipe/softpipe/sp_quad_alpha_test.c \
 	pipe/softpipe/sp_quad_blend.c \
@@ -177,7 +169,18 @@ SOFTPIPE_SOURCES = \
 	pipe/softpipe/sp_state_fs.c \
 	pipe/softpipe/sp_state_sampler.c \
 	pipe/softpipe/sp_state_setup.c \
-	pipe/softpipe/sp_state_surface.c
+	pipe/softpipe/sp_state_surface.c \
+	pipe/softpipe/sp_prim_setup.c
+
+DRAW_SOURCES = \
+	pipe/draw/draw_clip.c \
+	pipe/draw/draw_context.c\
+	pipe/draw/draw_cull.c \
+	pipe/draw/draw_flatshade.c \
+	pipe/draw/draw_offset.c \
+	pipe/draw/draw_twoside.c \
+	pipe/draw/draw_unfilled.c \
+	pipe/draw/draw_vb.c
 
 TGSICORE_SOURCES = \
 	pipe/tgsi/core/tgsi_build.c \
@@ -355,6 +358,7 @@ SOLO_SOURCES = \
 	$(VBO_SOURCES)		\
 	$(VF_SOURCES)		\
 	$(SOFTPIPE_SOURCES)	\
+	$(DRAW_SOURCES)		\
 	$(TGSICORE_SOURCES)	\
 	$(TGSIMESA_SOURCES)	\
 	$(STATETRACKER_SOURCES)	\

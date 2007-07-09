@@ -55,7 +55,6 @@ enum interp_mode {
 #define G_NEW_SETUP     0x2
 #define G_NEW_FS        0x4
 #define G_NEW_BLEND     0x8
-#define G_NEW_POINT     0x10
 #define G_NEW_CLIP      0x20
 #define G_NEW_SCISSOR   0x40
 #define G_NEW_STIPPLE   0x80
@@ -66,11 +65,8 @@ enum interp_mode {
 #define G_NEW_TEXTURE    0x1000
 
 
-#define PIPE_ATTRIB_MAX 32
-
 struct softpipe_context {     
    struct pipe_context pipe;
-
 
    /* The most recent drawing state as set by the driver:
     */
@@ -89,11 +85,6 @@ struct softpipe_context {
    struct pipe_texture_object *texture[PIPE_MAX_SAMPLERS];
    struct pipe_viewport_state viewport;
    GLuint dirty;
-
-   /* Clip derived state:
-    */
-   GLfloat plane[12][4];
-   GLuint nr_planes;
 
    /* Setup derived state.  TODO: this should be passed in the program
     * tokens as parameters to DECL instructions.
@@ -118,24 +109,6 @@ struct softpipe_context {
    /* Stipple derived state:
     */
    GLubyte stipple_masks[16][16];
-
-
-   /* The software clipper/setup engine.  
-    */
-   struct {
-      struct prim_stage *setup;
-      struct prim_stage *unfilled;
-      struct prim_stage *twoside;
-      struct prim_stage *clip;
-      struct prim_stage *flatshade;
-      struct prim_stage *offset;
-      struct prim_stage *cull;
-
-      struct prim_stage *first;
-
-      GLenum prim;
-      GLuint vertex_size;
-   } prim;
 
    /*
     * Software quad rendering pipeline

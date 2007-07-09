@@ -27,11 +27,10 @@
 
 /* Authors:  Keith Whitwell <keith@tungstengraphics.com>
  */
-#include "imports.h"
 
+#include "main/imports.h"
 #include "pipe/p_defines.h"
-#include "sp_context.h"
-#include "sp_prim.h"
+#include "draw_private.h"
 
 
 
@@ -52,7 +51,7 @@ static void cull_begin( struct prim_stage *stage )
 {
    struct cull_stage *cull = cull_stage(stage);
 
-   cull->mode = stage->softpipe->setup.cull_mode;
+   cull->mode = stage->draw->setup.cull_mode;
 
    stage->next->begin( stage->next );
 }
@@ -76,10 +75,13 @@ static void cull_tri( struct prim_stage *stage,
    _mesa_printf("%s %f\n", __FUNCTION__, header->det );
 
    if (header->det != 0) {
+      /* non-zero area */
       GLuint mode = (header->det < 0) ? PIPE_WINDING_CW : PIPE_WINDING_CCW;
 
-      if ((mode & cull_stage(stage)->mode) == 0)
+      if ((mode & cull_stage(stage)->mode) == 0) {
+         /* triangle is not culled, pass to next stage */
 	 stage->next->tri( stage->next, header );
+      }
    }
 }
 
@@ -97,18 +99,23 @@ static void cull_point( struct prim_stage *stage,
    stage->next->point( stage->next, header );
 }
 
+
 static void cull_end( struct prim_stage *stage )
 {
    stage->next->end( stage->next );
 }
 
-struct prim_stage *prim_cull( struct softpipe_context *softpipe )
+
+/**
+ * Create a new polygon culling stage.
+ */
+struct prim_stage *prim_cull( struct draw_context *draw )
 {
    struct cull_stage *cull = CALLOC_STRUCT(cull_stage);
 
    prim_alloc_tmps( &cull->stage, 0 );
 
-   cull->stage.softpipe = softpipe;
+   cull->stage.draw = draw;
    cull->stage.next = NULL;
    cull->stage.begin = cull_begin;
    cull->stage.point = cull_point;

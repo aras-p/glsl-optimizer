@@ -34,27 +34,6 @@
 #define PRIM_LINE  2
 #define PRIM_TRI   3
 
-struct prim_header {
-   GLfloat det;
-   struct vertex_header *v[3];
-};
-
-/* Carry some useful information around with the vertices in the prim
- * pipe.  
- */
-struct vertex_header {
-   GLuint clipmask:12;
-   GLuint edgeflag:1;
-   GLuint pad:19;
-
-   GLfloat clip[4];
-
-   GLfloat data[][4];		/* Note variable size */
-};
-
-
-
-
 
 /* The rasterizer generates 2x2 quads of fragment and feeds them to
  * the current fp_machine (see below).  

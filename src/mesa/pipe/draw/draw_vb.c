@@ -31,39 +31,20 @@
   */
 
 #include "imports.h"
+#include "macros.h"
 
 #include "tnl/t_context.h"
 #include "vf/vf.h"
 
-#include "sp_context.h"
-#include "sp_prim.h"
-#include "sp_headers.h"
-#include "sp_draw.h"
+#include "pipe/softpipe/sp_context.h"
+#include "pipe/softpipe/sp_headers.h"
+#include "draw_private.h"
+#include "draw_context.h"
+
 
 /* This file is a temporary set of hooks to allow us to use the tnl/
  * and vf/ modules until we have replacements in pipe.
  */
-
-
-struct draw_context 
-{
-   struct softpipe_context *softpipe;
-
-   struct vf_attr_map attrs[VF_ATTRIB_MAX];
-   GLuint nr_attrs;
-   GLuint vertex_size;
-   struct vertex_fetch *vf;
-
-   GLubyte *verts;
-   GLuint nr_vertices;
-   GLboolean in_vb;
-
-   GLenum prim;
-
-   /* Helper for tnl:
-    */
-   GLvector4f header;   
-};
 
 
 static struct vertex_header *get_vertex( struct draw_context *pipe,
@@ -80,7 +61,7 @@ static void draw_allocate_vertices( struct draw_context *draw,
    draw->nr_vertices = nr_vertices;
    draw->verts = MALLOC( nr_vertices * draw->vertex_size );
 
-   draw->softpipe->prim.first->begin( draw->softpipe->prim.first );
+   draw->pipeline.first->begin( draw->pipeline.first );
 }
 
 static void draw_set_prim( struct draw_context *draw,
@@ -149,7 +130,7 @@ static void draw_indexed_prim( struct draw_context *draw,
 			       const GLuint *elts,
 			       GLuint count )
 {
-   struct prim_stage * const first = draw->softpipe->prim.first;
+   struct prim_stage * const first = draw->pipeline.first;
    struct prim_header prim;
    GLuint i;
 
@@ -299,7 +280,7 @@ static void draw_prim( struct draw_context *draw,
 		       GLuint start,
 		       GLuint count )
 {
-   struct prim_stage * const first = draw->softpipe->prim.first;
+   struct prim_stage * const first = draw->pipeline.first;
    struct prim_header prim;
    GLuint i;
 
@@ -442,7 +423,7 @@ static void draw_prim( struct draw_context *draw,
 
 static void draw_release_vertices( struct draw_context *draw )
 {
-   draw->softpipe->prim.first->end( draw->softpipe->prim.first );
+   draw->pipeline.first->end( draw->pipeline.first );
 
    FREE(draw->verts);
    draw->verts = NULL;
@@ -636,35 +617,6 @@ void draw_vb(struct draw_context *draw,
    draw->in_vb = 0;
 }
 
-void draw_set_viewport( struct draw_context *draw,
-			const GLfloat *scale,
-			const GLfloat *translate )
-{
-   assert(!draw->in_vb);
-   vf_set_vp_scale_translate( draw->vf, scale, translate );
-}
-
-
-
-struct draw_context *draw_create( struct softpipe_context *softpipe )
-{
-   struct draw_context *draw = CALLOC_STRUCT( draw_context );
-   draw->softpipe = softpipe;
-   draw->vf = vf_create( GL_TRUE );
-
-   return draw;
-}
-
-
-void draw_destroy( struct draw_context *draw )
-{
-   if (draw->header.storage)
-      ALIGN_FREE( draw->header.storage );
-
-   vf_destroy( draw->vf );
-
-   FREE( draw );
-}
 
 #define EMIT_ATTR( ATTR, STYLE )		\
 do {						\
@@ -695,3 +647,27 @@ void draw_set_vertex_attributes( struct draw_context *draw,
 }
 			    
 
+#define MAX_VERTEX_SIZE ((2 + FRAG_ATTRIB_MAX) * 4 * sizeof(GLfloat))
+
+void prim_alloc_tmps( struct prim_stage *stage, GLuint nr )
+{
+   stage->nr_tmps = nr;
+
+   if (nr) {
+      GLubyte *store = MALLOC(MAX_VERTEX_SIZE * nr);
+      GLuint i;
+
+      stage->tmp = MALLOC(sizeof(struct vertex_header *) * nr);
+      
+      for (i = 0; i < nr; i++)
+	 stage->tmp[i] = (struct vertex_header *)(store + i * MAX_VERTEX_SIZE);
+   }
+}
+
+void prim_free_tmps( struct prim_stage *stage )
+{
+   if (stage->tmp) {
+      FREE(stage->tmp[0]);
+      FREE(stage->tmp);
+   }
+}

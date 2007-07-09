@@ -25,32 +25,63 @@
  * 
  **************************************************************************/
 
-/* Authors:  Keith Whitwell <keith@tungstengraphics.com>
+/**
+ * Private data structures, etc for the draw module.
  */
 
-#ifndef G_PRIM_H
-#define G_PRIM_H
 
-#include "glheader.h"
-#include "sp_headers.h"
-
-struct softpipe_context;
-
-struct prim_stage *prim_setup( struct softpipe_context *context );
-struct prim_stage *prim_unfilled( struct softpipe_context *context );
-struct prim_stage *prim_twoside( struct softpipe_context *context );
-struct prim_stage *prim_offset( struct softpipe_context *context );
-struct prim_stage *prim_clip( struct softpipe_context *context );
-struct prim_stage *prim_flatshade( struct softpipe_context *context );
-struct prim_stage *prim_cull( struct softpipe_context *context );
-
-
-/* Internal structs and helpers for the primitive clip/setup pipeline:
+/**
+ * Authors:
+ * Keith Whitwell <keith@tungstengraphics.com>
+ * Brian Paul
  */
-struct prim_stage {
-   struct softpipe_context *softpipe;
 
-   struct prim_stage *next;
+
+#ifndef DRAW_PRIVATE_H
+#define DRAW_PRIVATE_H
+
+
+#include "main/glheader.h"
+#include "pipe/p_state.h"
+#include "pipe/p_defines.h"
+#include "vf/vf.h"
+
+
+/**
+ * Basic vertex info.
+ * Carry some useful information around with the vertices in the prim pipe.  
+ */
+struct vertex_header {
+   GLuint clipmask:12;
+   GLuint edgeflag:1;
+   GLuint pad:19;
+
+   GLfloat clip[4];
+
+   GLfloat data[][4];		/* Note variable size */
+};
+
+
+/**
+ * Basic info for a point/line/triangle primitive.
+ */
+struct prim_header {
+   GLfloat det;                 /**< front/back face determinant */
+   struct vertex_header *v[3];  /**< 1 to 3 vertex pointers */
+};
+
+
+
+struct draw_context;
+
+/**
+ * Base class for all primitive drawing stages.
+ */
+struct prim_stage
+{
+   struct draw_context *draw;   /**< parent context */
+
+   struct prim_stage *next;     /**< next stage in pipeline */
 
    struct vertex_header **tmp;
    GLuint nr_tmps;
@@ -70,8 +101,72 @@ struct prim_stage {
 };
 
 
+/**
+ * Private context for the drawing module.
+ */
+struct draw_context
+{
+   struct {
+      struct prim_stage *first;  /**< one of the following */
 
-/* Get a writeable copy of a vertex:
+      /* stages (in logical order) */
+      struct prim_stage *flatshade;
+      struct prim_stage *clip;
+      struct prim_stage *cull;
+      struct prim_stage *twoside;
+      struct prim_stage *offset;
+      struct prim_stage *unfilled;
+      struct prim_stage *setup;  /* aka render/rasterize */
+   } pipeline;
+
+   /* pipe state that we need: */
+   struct pipe_setup_state setup;
+   struct pipe_viewport_state viewport;
+
+   /* Clip derived state:
+    */
+   GLfloat plane[12][4];
+   GLuint nr_planes;
+
+   GLuint vf_attr_to_slot[PIPE_ATTRIB_MAX];
+
+   struct vf_attr_map attrs[VF_ATTRIB_MAX];
+   GLuint nr_attrs;
+   GLuint vertex_size;       /**< in bytes */
+   struct vertex_fetch *vf;
+
+   GLubyte *verts;
+   GLuint nr_vertices;
+   GLboolean in_vb;
+
+   GLenum prim;   /**< GL_POINTS, GL_LINE_STRIP, GL_QUADS, etc */
+
+   /* Helper for tnl:
+    */
+   GLvector4f header;   
+};
+
+
+
+extern struct prim_stage *prim_unfilled( struct draw_context *context );
+extern struct prim_stage *prim_twoside( struct draw_context *context );
+extern struct prim_stage *prim_offset( struct draw_context *context );
+extern struct prim_stage *prim_clip( struct draw_context *context );
+extern struct prim_stage *prim_flatshade( struct draw_context *context );
+extern struct prim_stage *prim_cull( struct draw_context *context );
+
+
+extern void prim_free_tmps( struct prim_stage *stage );
+extern void prim_alloc_tmps( struct prim_stage *stage, GLuint nr );
+
+
+
+/**
+ * Get a writeable copy of a vertex.
+ * \param stage  drawing stage info
+ * \param vert  the vertex to copy (source)
+ * \param idx  index into stage's tmp[] array to put the copy (dest)
+ * \return  pointer to the copied vertex
  */
 static INLINE struct vertex_header *
 dup_vert( struct prim_stage *stage,
@@ -79,12 +174,9 @@ dup_vert( struct prim_stage *stage,
 	  GLuint idx )
 {   
    struct vertex_header *tmp = stage->tmp[idx];
-   memcpy(tmp, vert, stage->softpipe->prim.vertex_size );
+   memcpy(tmp, vert, stage->draw->vertex_size );
    return tmp;
 }
 
-void prim_free_tmps( struct prim_stage *stage );
-void prim_alloc_tmps( struct prim_stage *stage, GLuint nr );
 
-
-#endif
+#endif /* DRAW_PRIVATE_H */

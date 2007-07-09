@@ -48,6 +48,8 @@
 #define PIPE_MAX_SAMPLERS     8
 #define PIPE_MAX_CLIP_PLANES  6
 #define PIPE_MAX_CONSTANT    32
+#define PIPE_ATTRIB_MAX      32
+
 
 
 /* fwd decl */

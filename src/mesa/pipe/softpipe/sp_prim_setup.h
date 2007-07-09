@@ -37,11 +37,16 @@
 
 #include "glheader.h"
 #include "imports.h"
+#if 0
 #include "s_tri_public.h"
+#endif
 #include "s_context.h"
 
 
+extern struct prim_stage *prim_setup( struct softpipe_context *softpipe );
 
+
+#if 0 /* UNUSED? */
 struct tri_context;
 struct fp_context;
 struct be_context;
@@ -117,5 +122,6 @@ void tri_rasterize_spans( struct tri_context *tri );
 
 
 
+#endif
 #endif
 #endif
