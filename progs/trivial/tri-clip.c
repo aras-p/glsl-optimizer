@@ -28,26 +28,21 @@
 #include <GL/glut.h>
 
 
-#define CI_OFFSET_1 16
-#define CI_OFFSET_2 32
+static GLenum doubleBuffer;
+static GLfloat Xpos = 0, Ypos = 0;
 
-
-GLenum doubleBuffer;
 
 static void Init(void)
 {
    fprintf(stderr, "GL_RENDERER   = %s\n", (char *) glGetString(GL_RENDERER));
    fprintf(stderr, "GL_VERSION    = %s\n", (char *) glGetString(GL_VERSION));
    fprintf(stderr, "GL_VENDOR     = %s\n", (char *) glGetString(GL_VENDOR));
-
-    glClearColor(0.0, 0.0, 1.0, 0.0);
+   glClearColor(0.0, 0.0, 1.0, 0.0);
 }
 
 static void Reshape(int width, int height)
 {
-
     glViewport(0, 0, (GLint)width, (GLint)height);
-
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
     glOrtho(-1.0, 1.0, -1.0, 1.0, -0.5, 1000.0);
@@ -56,20 +51,44 @@ static void Reshape(int width, int height)
 
 static void Key(unsigned char key, int x, int y)
 {
-
     switch (key) {
       case 27:
 	exit(1);
       default:
 	return;
     }
-
     glutPostRedisplay();
+}
+
+static void
+SpecialKey(int key, int x, int y)
+{
+   const GLfloat step = 0.25;
+   (void) x;
+   (void) y;
+   switch (key) {
+      case GLUT_KEY_UP:
+         Ypos += step;
+         break;
+      case GLUT_KEY_DOWN:
+         Ypos -= step;
+         break;
+      case GLUT_KEY_LEFT:
+         Xpos -= step;
+         break;
+      case GLUT_KEY_RIGHT:
+         Xpos += step;
+         break;
+   }
+   glutPostRedisplay();
 }
 
 static void Draw(void)
 {
    glClear(GL_COLOR_BUFFER_BIT); 
+
+   glPushMatrix();
+   glTranslatef(Xpos, Ypos, 0);
 
    glBegin(GL_TRIANGLES);
    glColor3f(0,0,.7); 
@@ -80,12 +99,13 @@ static void Draw(void)
    glVertex3f(-1.9,  0.0, -30.0);
    glEnd();
 
+   glPopMatrix();
+
    glFlush();
 
    if (doubleBuffer) {
       glutSwapBuffers();
    }
-
 }
 
 static GLenum Args(int argc, char **argv)
@@ -131,7 +151,8 @@ int main(int argc, char **argv)
 
     glutReshapeFunc(Reshape);
     glutKeyboardFunc(Key);
+    glutSpecialFunc(SpecialKey);
     glutDisplayFunc(Draw);
     glutMainLoop();
-	return 0;
+    return 0;
 }
