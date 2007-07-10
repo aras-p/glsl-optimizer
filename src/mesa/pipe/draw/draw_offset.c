@@ -74,32 +74,34 @@ static void do_offset_tri( struct prim_stage *stage,
 
    /* Window coords:
     */
-   GLfloat *v0 = (GLfloat *)&(header->v[0]->data[0]);
-   GLfloat *v1 = (GLfloat *)&(header->v[1]->data[0]);
-   GLfloat *v2 = (GLfloat *)&(header->v[2]->data[0]);
-   
+   GLfloat *v0 = header->v[0]->data[0];
+   GLfloat *v1 = header->v[1]->data[0];
+   GLfloat *v2 = header->v[2]->data[0];
+
+   /* edge vectors e = v0 - v2, f = v1 - v2 */
    GLfloat ex = v0[0] - v2[2];
-   GLfloat fx = v1[0] - v2[2];
    GLfloat ey = v0[1] - v2[2];
-   GLfloat fy = v1[1] - v2[2];
    GLfloat ez = v0[2] - v2[2];
+   GLfloat fx = v1[0] - v2[2];
+   GLfloat fy = v1[1] - v2[2];
    GLfloat fz = v1[2] - v2[2];
 
+   /* (a,b) = cross(e,f).xy */
    GLfloat a = ey*fz - ez*fy;
    GLfloat b = ez*fx - ex*fz;
 
-   GLfloat ac = a * inv_det;
-   GLfloat bc = b * inv_det;
-   GLfloat zoffset;
+   GLfloat dzdx = FABSF(a * inv_det);
+   GLfloat dzdy = FABSF(b * inv_det);
 
-   ac = FABSF(ac);
-   bc = FABSF(bc);
+   GLfloat zoffset = offset->units + MAX2(dzdx, dzdy) * offset->scale;
 
-   zoffset = offset->units + MAX2( ac, bc ) * offset->scale;
-
-   v0[2] += zoffset;
-   v1[2] += zoffset;
-   v2[2] += zoffset;
+   /*
+    * Note: we're applying the offset and clamping per-vertex.
+    * Ideally, the offset is applied per-fragment prior to fragment shading.
+    */
+   v0[2] = CLAMP(v0[2] + zoffset, 0.0, 1.0);
+   v1[2] = CLAMP(v1[2] + zoffset, 0.0, 1.0);
+   v2[2] = CLAMP(v2[2] + zoffset, 0.0, 1.0);
 
    stage->next->tri( stage->next, header );
 }
