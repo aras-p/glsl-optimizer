@@ -80,3 +80,14 @@ softpipe_set_alpha_test_state(struct pipe_context *pipe,
    softpipe->dirty |= SP_NEW_ALPHA_TEST;
 }
 
+void
+softpipe_set_stencil_state(struct pipe_context *pipe,
+                           const struct pipe_stencil_state *stencil)
+{
+   struct softpipe_context *softpipe = softpipe_context(pipe);
+
+   softpipe->stencil = *stencil;
+
+   softpipe->dirty |= SP_NEW_STENCIL;
+}
+

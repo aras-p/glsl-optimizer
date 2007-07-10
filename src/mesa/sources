@@ -163,6 +163,7 @@ SOFTPIPE_SOURCES = \
 	pipe/softpipe/sp_quad_depth_test.c \
 	pipe/softpipe/sp_quad_fs.c \
 	pipe/softpipe/sp_quad_output.c \
+	pipe/softpipe/sp_quad_stencil.c \
 	pipe/softpipe/sp_state_blend.c \
 	pipe/softpipe/sp_state_clip.c \
 	pipe/softpipe/sp_state_derived.c \

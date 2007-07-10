@@ -65,20 +65,21 @@ struct pipe_context *softpipe_create( void )
    struct softpipe_context *softpipe = CALLOC_STRUCT(softpipe_context);
 
    softpipe->pipe.destroy = softpipe_destroy;
-   softpipe->pipe.set_framebuffer_state = softpipe_set_framebuffer_state;
    softpipe->pipe.set_alpha_test_state = softpipe_set_alpha_test_state;
-   softpipe->pipe.set_blend_state = softpipe_set_blend_state;
    softpipe->pipe.set_blend_color = softpipe_set_blend_color;
+   softpipe->pipe.set_blend_state = softpipe_set_blend_state;
    softpipe->pipe.set_clip_state = softpipe_set_clip_state;
    softpipe->pipe.set_clear_color_state = softpipe_set_clear_color_state;
    softpipe->pipe.set_depth_state = softpipe_set_depth_test_state;
-   softpipe->pipe.set_viewport_state = softpipe_set_viewport_state;
-   softpipe->pipe.set_setup_state = softpipe_set_setup_state;
-   softpipe->pipe.set_scissor_state = softpipe_set_scissor_state;
+   softpipe->pipe.set_framebuffer_state = softpipe_set_framebuffer_state;
    softpipe->pipe.set_fs_state = softpipe_set_fs_state;
    softpipe->pipe.set_polygon_stipple = softpipe_set_polygon_stipple;
    softpipe->pipe.set_sampler_state = softpipe_set_sampler_state;
+   softpipe->pipe.set_scissor_state = softpipe_set_scissor_state;
+   softpipe->pipe.set_setup_state = softpipe_set_setup_state;
+   softpipe->pipe.set_stencil_state = softpipe_set_stencil_state;
    softpipe->pipe.set_texture_state = softpipe_set_texture_state;
+   softpipe->pipe.set_viewport_state = softpipe_set_viewport_state;
    softpipe->pipe.draw_vb = softpipe_draw_vb;
    softpipe->pipe.clear = softpipe_clear;
 

@@ -63,6 +63,7 @@ enum interp_mode {
 #define SP_NEW_DEPTH_TEST  0x200
 #define SP_NEW_SAMPLER     0x400
 #define SP_NEW_TEXTURE     0x800
+#define SP_NEW_STENCIL    0x1000
 
 
 struct softpipe_context {     
@@ -82,6 +83,7 @@ struct softpipe_context {
    struct pipe_scissor_state scissor;
    struct pipe_sampler_state sampler[PIPE_MAX_SAMPLERS];
    struct pipe_setup_state setup;
+   struct pipe_stencil_state stencil;
    struct pipe_texture_object *texture[PIPE_MAX_SAMPLERS];
    struct pipe_viewport_state viewport;
    GLuint dirty;
@@ -117,6 +119,7 @@ struct softpipe_context {
    struct {
       struct quad_stage *shade;
       struct quad_stage *alpha_test;
+      struct quad_stage *stencil_test;
       struct quad_stage *depth_test;
       struct quad_stage *blend;
       struct quad_stage *output;
