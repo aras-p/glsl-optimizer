@@ -27,11 +27,6 @@
 #include <stdlib.h>
 #include <GL/glut.h>
 
-
-#define CI_OFFSET_1 16
-#define CI_OFFSET_2 32
-
-
 GLenum doubleBuffer;
 
 static void Init(void)
@@ -45,7 +40,6 @@ static void Init(void)
 
 static void Reshape(int width, int height)
 {
-
     glViewport(0, 0, (GLint)width, (GLint)height);
 
     glMatrixMode(GL_PROJECTION);
@@ -56,7 +50,6 @@ static void Reshape(int width, int height)
 
 static void Key(unsigned char key, int x, int y)
 {
-
     switch (key) {
       case 27:
 	exit(1);
@@ -75,7 +68,6 @@ static void quad( float half )
    glVertex3f(-half/9.0,  half/9.0, -25.0 - half);
    glVertex3f(-half/9.0, -half/9.0, -25.0 - half);
    glEnd();
-
 }
 
 static void Draw(void)
@@ -83,27 +75,24 @@ static void Draw(void)
    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); 
    glEnable(GL_DEPTH_TEST);
 
-
-
+   /* red: offset back */
    glEnable(GL_POLYGON_OFFSET_FILL);
    glPolygonOffset(1, 0);
-
    glColor3f(1,0,0); 
    quad(9);
 
+   /* green: no offset */
    glDisable(GL_POLYGON_OFFSET_FILL); 
    glColor3f(0,1,0); 
    quad(6);
 
-
+   /* black: offset zero, should not be visible because of z test */
    glEnable(GL_POLYGON_OFFSET_FILL); 
    glPolygonOffset(0, 0); 
-
-   /* Black - should not be visible
-    */
    glColor3f(0,0,0); 
    quad(6);
 
+   /* blue: offset forward */
    glEnable(GL_POLYGON_OFFSET_FILL);
    glPolygonOffset(-1, 0);
    glColor3f(0,0,1); 
@@ -163,5 +152,5 @@ int main(int argc, char **argv)
     glutKeyboardFunc(Key);
     glutDisplayFunc(Draw);
     glutMainLoop();
-	return 0;
+    return 0;
 }

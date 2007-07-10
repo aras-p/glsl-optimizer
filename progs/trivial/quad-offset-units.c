@@ -27,11 +27,6 @@
 #include <stdlib.h>
 #include <GL/glut.h>
 
-
-#define CI_OFFSET_1 16
-#define CI_OFFSET_2 32
-
-
 GLenum doubleBuffer;
 
 static void Init(void)
@@ -45,7 +40,6 @@ static void Init(void)
 
 static void Reshape(int width, int height)
 {
-
     glViewport(0, 0, (GLint)width, (GLint)height);
 
     glMatrixMode(GL_PROJECTION);
@@ -56,7 +50,6 @@ static void Reshape(int width, int height)
 
 static void Key(unsigned char key, int x, int y)
 {
-
     switch (key) {
       case 27:
 	exit(1);
@@ -75,7 +68,6 @@ static void quad( float half )
    glVertex3f(-half/9.0,  half/9.0, -25.0 - half);
    glVertex3f(-half/9.0, -half/9.0, -25.0 - half);
    glEnd();
-
 }
 
 static void Draw(void)
@@ -83,27 +75,34 @@ static void Draw(void)
    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); 
    glEnable(GL_DEPTH_TEST);
 
+   /*
+    * Because of clamping, the Z values of the first polygon may
+    * be 1.0 (the same as the clear value) so nothing would be
+    * drawn if the depth func is GL_LESS.  Set it to GL_LEQUAL
+    * so we can see polygons with Z==1.
+    */
+   glDepthFunc(GL_LEQUAL);
 
-
+   /* red: offset back */
    glEnable(GL_POLYGON_OFFSET_FILL);
    glPolygonOffset(0, 4);
-
    glColor3f(1,0,0); 
    quad(9);
 
+   /* black: no offset */
    glDisable(GL_POLYGON_OFFSET_FILL); 
    glColor3f(0,0,0); 
    quad(6);
 
+   /* green: offset 0 (this should obscure the black quad) */
    glEnable(GL_POLYGON_OFFSET_FILL);
    glPolygonOffset(0, 0);
-
    glDepthFunc( GL_EQUAL );
    glColor3f(0,1,0); 
    quad(6);
+
+   /* blue: offset forward */
    glDepthFunc( GL_LESS );
-
-
    glPolygonOffset(0, -4);
    glColor3f(0,0,1); 
    quad(3);
@@ -162,5 +161,5 @@ int main(int argc, char **argv)
     glutKeyboardFunc(Key);
     glutDisplayFunc(Draw);
     glutMainLoop();
-	return 0;
+    return 0;
 }
