@@ -69,7 +69,7 @@ static void interp_attr( GLfloat *fdst,
 
 /* Interpolate between two vertices to produce a third.  
  */
-static void interp( struct clipper *clip,
+static void interp( const struct clipper *clip,
 		    struct vertex_header *dst,
 		    GLfloat t,
 		    const struct vertex_header *out, 
@@ -98,9 +98,7 @@ static void interp( struct clipper *clip,
       const GLfloat *pos = dst->clip;
       const GLfloat *scale = clip->stage.draw->viewport.scale;
       const GLfloat *trans = clip->stage.draw->viewport.translate;
-      GLfloat oow;
-
-      oow = 1.0 / pos[3];
+      const GLfloat oow = 1.0 / pos[3];
 
       dst->data[0][0] = pos[0] * oow * scale[0] + trans[0];
       dst->data[0][1] = pos[1] * oow * scale[1] + trans[1];
@@ -110,6 +108,9 @@ static void interp( struct clipper *clip,
 
    
    /* Other attributes
+    * Note: start at 1 to skip winpos (data[0]) and subtract one
+    * since there's two vertex attrib slots we want to ignore (the header
+    * and the clippos.
     */
    for (j = 1; j < nr_attrs-1; j++) {
       interp_attr(dst->data[j], t, in->data[j], out->data[j]);
@@ -295,13 +296,14 @@ do_clip_line( struct prim_stage *stage,
 	      struct prim_header *header,
 	      GLuint clipmask )
 {
-   struct clipper *clipper = clipper_stage( stage );
+   const struct clipper *clipper = clipper_stage( stage );
    struct vertex_header *v0 = header->v[0];
    struct vertex_header *v1 = header->v[1];
    const GLfloat *pos0 = v0->clip;
    const GLfloat *pos1 = v1->clip;
    GLfloat t0 = 0;
    GLfloat t1 = 0;
+   struct prim_header newprim;
 
    /* XXX: Note stupid hack to deal with tnl's 8-bit clipmask.  Remove
     * this once we correctly use 16bit masks for userclip planes.
@@ -313,41 +315,45 @@ do_clip_line( struct prim_stage *stage,
    }
 
    while (clipmask) {
-      GLuint plane_idx = ffs(clipmask)-1;
+      const GLuint plane_idx = ffs(clipmask)-1;
       const GLfloat *plane = clipper->plane[plane_idx];
-
-      clipmask &= ~(1<<plane_idx);
-
       const GLfloat dp0 = dot4( pos0, plane );
       const GLfloat dp1 = dot4( pos1, plane );
 
       if (dp1 < 0) {
 	 GLfloat t = dp1 / (dp1 - dp0);
-	 if (t > t1) t1 = t;
+         t1 = MIN2(t1, t);
       } 
 
       if (dp0 < 0) {
 	 GLfloat t = dp0 / (dp0 - dp1);
-	 if (t > t0) t0 = t;
+         t0 = MIN2(t0, t);
       }
 
       if (t0 + t1 >= 1.0)
 	 return; /* discard */
+
+      clipmask &= ~(1 << plane_idx);  /* turn off this plane's bit */
    }
 
    if (v0->clipmask) {
       interp( clipper, stage->tmp[0], t0, v0, v1 );
-      header->v[0] = stage->tmp[0];
+      newprim.v[0] = stage->tmp[0];
+   }
+   else {
+      newprim.v[0] = v0;
    }
 
    if (v1->clipmask) {
       interp( clipper, stage->tmp[1], t1, v1, v0 );
-      header->v[1] = stage->tmp[1];
+      newprim.v[1] = stage->tmp[1];
+   }
+   else {
+      newprim.v[1] = v1;
    }
 
-   stage->next->line( stage->next, header );
+   stage->next->line( stage->next, &newprim );
 }
-
 
 
 static void clip_begin( struct prim_stage *stage )
@@ -361,7 +367,8 @@ static void clip_begin( struct prim_stage *stage )
 
    stage->next->begin( stage->next );
 }
-     
+
+
 static void
 clip_point( struct prim_stage *stage, 
 	    struct prim_header *header )
