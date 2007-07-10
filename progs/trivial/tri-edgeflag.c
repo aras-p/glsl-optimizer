@@ -27,25 +27,18 @@
 #include <stdlib.h>
 #include <GL/glut.h>
 
-
-#define CI_OFFSET_1 16
-#define CI_OFFSET_2 32
-
-
-GLenum doubleBuffer;
+static GLenum doubleBuffer;
+static GLenum frontface = GL_CCW;
 
 static void Init(void)
 {
    fprintf(stderr, "GL_RENDERER   = %s\n", (char *) glGetString(GL_RENDERER));
    fprintf(stderr, "GL_VERSION    = %s\n", (char *) glGetString(GL_VERSION));
    fprintf(stderr, "GL_VENDOR     = %s\n", (char *) glGetString(GL_VENDOR));
-
-    glClearColor(0.0, 0.0, 1.0, 0.0);
 }
 
 static void Reshape(int width, int height)
 {
-
     glViewport(0, 0, (GLint)width, (GLint)height);
 
     glMatrixMode(GL_PROJECTION);
@@ -56,13 +49,16 @@ static void Reshape(int width, int height)
 
 static void Key(unsigned char key, int x, int y)
 {
-
-    switch (key) {
-      case 27:
-	exit(1);
-      default:
-	return;
-    }
+   switch (key) {
+   case 'f':
+      frontface = (frontface == GL_CCW) ? GL_CW : GL_CCW;
+      glFrontFace(frontface);
+      break;
+   case 27:
+      exit(1);
+   default:
+      return;
+   }
 
     glutPostRedisplay();
 }
@@ -75,7 +71,7 @@ static void Draw(void)
 
    glBegin(GL_TRIANGLES);
    glEdgeFlag(1);
-   glColor3f(0,0,.7); 
+   glColor3f(0.3,0.3,.9); 
    glVertex3f( 0.9, -0.9, -0.0);
    glEdgeFlag(0);
    glColor3f(.8,0,0); 
@@ -137,5 +133,5 @@ int main(int argc, char **argv)
     glutKeyboardFunc(Key);
     glutDisplayFunc(Draw);
     glutMainLoop();
-	return 0;
+    return 0;
 }
