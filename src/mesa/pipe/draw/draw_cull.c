@@ -25,20 +25,23 @@
  * 
  **************************************************************************/
 
+/**
+ * \brief  Drawing stage for polygon culling
+ */
+
 /* Authors:  Keith Whitwell <keith@tungstengraphics.com>
  */
+
 
 #include "main/imports.h"
 #include "pipe/p_defines.h"
 #include "draw_private.h"
 
 
-
 struct cull_stage {
    struct prim_stage stage;
-   GLuint mode;
+   GLuint mode;  /**< one of PIPE_WINDING_x */
 };
-
 
 
 static INLINE struct cull_stage *cull_stage( struct prim_stage *stage )
