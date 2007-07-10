@@ -27,25 +27,44 @@
 #include <stdlib.h>
 #include <GL/glut.h>
 
+static GLenum doubleBuffer;
+static GLint cullmode = 0;
 
-#define CI_OFFSET_1 16
-#define CI_OFFSET_2 32
-
-
-GLenum doubleBuffer;
+static void cull(void)
+{
+   cullmode = (cullmode + 1) % 4;
+   if (cullmode == 0) {
+      glCullFace(GL_FRONT);
+      glEnable(GL_CULL_FACE);
+      printf("cull GL_FRONT\n");
+   }
+   else if (cullmode == 1) {
+      glCullFace(GL_BACK);
+      glEnable(GL_CULL_FACE);
+      printf("cull GL_BACK\n");
+   }
+   else if (cullmode == 2) {
+      glCullFace(GL_FRONT_AND_BACK);
+      glEnable(GL_CULL_FACE);
+      printf("cull GL_FRONT_AND_BACK\n");
+   }
+   else {
+      glDisable(GL_CULL_FACE);
+      printf("cull none\n");
+   }
+}
 
 static void Init(void)
 {
    fprintf(stderr, "GL_RENDERER   = %s\n", (char *) glGetString(GL_RENDERER));
    fprintf(stderr, "GL_VERSION    = %s\n", (char *) glGetString(GL_VERSION));
    fprintf(stderr, "GL_VENDOR     = %s\n", (char *) glGetString(GL_VENDOR));
-
-    glClearColor(0.0, 0.0, 1.0, 0.0);
+   glClearColor(0.0, 0.0, 1.0, 0.0);
+   cull();
 }
 
 static void Reshape(int width, int height)
 {
-
     glViewport(0, 0, (GLint)width, (GLint)height);
 
     glMatrixMode(GL_PROJECTION);
@@ -56,15 +75,16 @@ static void Reshape(int width, int height)
 
 static void Key(unsigned char key, int x, int y)
 {
-
-    switch (key) {
-      case 27:
-	exit(1);
-      default:
-	return;
-    }
-
-    glutPostRedisplay();
+   switch (key) {
+    case 27:
+       exit(1);
+   case 'c':
+      cull();
+      break;
+   default:
+      return;
+   }
+   glutPostRedisplay();
 }
 
 static void Draw(void)
@@ -72,12 +92,22 @@ static void Draw(void)
    glClear(GL_COLOR_BUFFER_BIT); 
 
    glBegin(GL_TRIANGLES);
-   glColor3f(0,0,1); 
-   glVertex3f( -1.5, 0.5, -30.0);
-   glColor3f(1,0,0); 
-   glVertex3f( 0,  2.0, -30.0);
-   glColor3f(0,1,0); 
-   glVertex3f(-1.5, 2.0, -30.0);
+   /* back-facing */
+   glColor3f(0,0,.7); 
+   glVertex3f(-0.1, -0.9, -30.0);
+   glColor3f(.8,0,0); 
+   glVertex3f(-0.1,  0.9, -30.0);
+   glColor3f(0,.9,0); 
+   glVertex3f(-0.9,  0.0, -30.0);
+
+   /* front-facing */
+   glColor3f(0,0,.7); 
+   glVertex3f( 0.1, -0.9, -30.0);
+   glColor3f(.8,0,0); 
+   glVertex3f( 0.1,  0.9, -30.0);
+   glColor3f(0,.9,0); 
+   glVertex3f( 0.9,  0.0, -30.0);
+
    glEnd();
 
    glFlush();
@@ -132,5 +162,5 @@ int main(int argc, char **argv)
     glutKeyboardFunc(Key);
     glutDisplayFunc(Draw);
     glutMainLoop();
-	return 0;
+    return 0;
 }
