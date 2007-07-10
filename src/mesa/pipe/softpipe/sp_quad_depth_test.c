@@ -23,16 +23,16 @@
  */
 
 /**
- * quad blending
+ * \brief  Quad depth testing
  */
 
-#include "glheader.h"
-#include "imports.h"
+#include "main/glheader.h"
+#include "main/imports.h"
+#include "pipe/p_defines.h"
 #include "sp_context.h"
 #include "sp_headers.h"
 #include "sp_surface.h"
 #include "sp_quad.h"
-#include "pipe/p_defines.h"
 
 
 static void
