@@ -36,18 +36,18 @@
 #include "sp_state.h"
 
 
-#define EMIT_ATTR( ATTR, FRAG_ATTR, INTERP )			\
-do {							\
-   slot_to_vf_attr[softpipe->nr_attrs] = ATTR;	\
-   softpipe->vf_attr_to_slot[ATTR] = softpipe->nr_attrs;	\
+#define EMIT_ATTR( VF_ATTR, FRAG_ATTR, INTERP )			\
+do {								\
+   slot_to_vf_attr[softpipe->nr_attrs] = VF_ATTR;		\
+   softpipe->vf_attr_to_slot[VF_ATTR] = softpipe->nr_attrs;	\
    softpipe->fp_attr_to_slot[FRAG_ATTR] = softpipe->nr_attrs;	\
-   softpipe->interp[softpipe->nr_attrs] = INTERP;	\
-   softpipe->nr_attrs++;	\
-   attr_mask |= (1<<ATTR);	\
+   softpipe->interp[softpipe->nr_attrs] = INTERP;		\
+   softpipe->nr_attrs++;					\
+   attr_mask |= (1 << (VF_ATTR));				\
 } while (0)
 
 
-static GLuint frag_to_vf[FRAG_ATTRIB_MAX] = 
+static const GLuint frag_to_vf[FRAG_ATTRIB_MAX] = 
 {
    VF_ATTRIB_POS,
    VF_ATTRIB_COLOR0,
@@ -71,7 +71,7 @@ static void calculate_vertex_layout( struct softpipe_context *softpipe )
    struct gl_fragment_program *fp = softpipe->fs.fp;
    const GLuint inputsRead = fp->Base.InputsRead;
    GLuint slot_to_vf_attr[VF_ATTRIB_MAX];
-   GLuint attr_mask = 0;
+   GLbitfield attr_mask = 0x0;
    GLuint i;
 
    softpipe->nr_attrs = 0;
@@ -116,6 +116,9 @@ static void calculate_vertex_layout( struct softpipe_context *softpipe )
       }
    }
 
+   /* If the attributes have changed, tell the draw module (which in turn
+    * tells the vf module) about the new vertex layout.
+    */
    if (attr_mask != softpipe->attr_mask) {
       softpipe->attr_mask = attr_mask;
 
