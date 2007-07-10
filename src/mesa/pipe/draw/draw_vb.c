@@ -616,32 +616,59 @@ void draw_vb(struct draw_context *draw,
 }
 
 
-#define EMIT_ATTR( ATTR, STYLE )		\
-do {						\
-   draw->attrs[draw->nr_attrs].attrib = ATTR;	\
-   draw->attrs[draw->nr_attrs].format = STYLE;	\
-   draw->nr_attrs++;				\
+/**
+ * Accumulate another attribute's info.
+ * Note the "- 2" factor here.  We need this because the vertex->data[]
+ * array does not include the first two attributes we emit (VERTEX_HEADER
+ * and CLIP_POS).  So, the 3rd attribute actually winds up in the 1st
+ * position of the data[] array.
+ */
+#define EMIT_ATTR( VF_ATTR, STYLE )				\
+do {								\
+   if (draw->nr_attrs >= 2)					\
+      draw->vf_attr_to_slot[VF_ATTR] = draw->nr_attrs - 2;	\
+   draw->attrs[draw->nr_attrs].attrib = VF_ATTR;		\
+   draw->attrs[draw->nr_attrs].format = STYLE;			\
+   draw->nr_attrs++;						\
 } while (0)
 
 
+/**
+ * Tell the draw module about the layout of attributes in the vertex.
+ * We need this in order to know which vertex slot has color0, etc.
+ *
+ * \param slot_to_vf_attr  an array which maps slot indexes to vertex
+ *                         format tokens (VF_*).
+ * \param nr_attrs  the size of the slot_to_vf_attr array
+ *                  (and number of attributes)
+ */
 void draw_set_vertex_attributes( struct draw_context *draw,
-				 const GLuint *attrs,
+				 const GLuint *slot_to_vf_attr,
 				 GLuint nr_attrs )
 {
    GLuint i;
 
+   memset(draw->vf_attr_to_slot, 0, sizeof(draw->vf_attr_to_slot));
    draw->nr_attrs = 0;
 
+   /*
+    * First three attribs are always the same: header, clip pos, winpos
+    */
    EMIT_ATTR(VF_ATTRIB_VERTEX_HEADER, EMIT_1F);
    EMIT_ATTR(VF_ATTRIB_CLIP_POS, EMIT_4F);
 
-   assert(attrs[0] == VF_ATTRIB_POS);
-   EMIT_ATTR(attrs[0], EMIT_4F_VIEWPORT);
+   assert(slot_to_vf_attr[0] == VF_ATTRIB_POS);
+   EMIT_ATTR(slot_to_vf_attr[0], EMIT_4F_VIEWPORT);
 
+   /*
+    * Remaining attribs (color, texcoords, etc)
+    */
    for (i = 1; i < nr_attrs; i++) 
-      EMIT_ATTR(attrs[i], EMIT_4F);
+      EMIT_ATTR(slot_to_vf_attr[i], EMIT_4F);
 
-   draw->vertex_size = vf_set_vertex_attributes( draw->vf, draw->attrs, draw->nr_attrs, 0 );
+   /* tell the vertex format module how to construct vertices for us */
+   draw->vertex_size = vf_set_vertex_attributes( draw->vf, draw->attrs,
+                                                 draw->nr_attrs, 0 );
 }
 			    
 
