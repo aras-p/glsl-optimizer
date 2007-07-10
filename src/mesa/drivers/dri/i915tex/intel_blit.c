@@ -88,6 +88,7 @@ intelCopyBuffer(const __DRIdrawablePrivate * dPriv,
       const int nbox = dPriv->numClipRects;
       const drm_clip_rect_t *pbox = dPriv->pClipRects;
       const int pitch = frontRegion->pitch;
+      const int srcpitch = backRegion->pitch;
       const int cpp = frontRegion->cpp;
       int BR13, CMD;
       int i;
@@ -96,8 +97,11 @@ intelCopyBuffer(const __DRIdrawablePrivate * dPriv,
       ASSERT(intel_fb->Base.Name == 0);    /* Not a user-created FBO */
       ASSERT(frontRegion);
       ASSERT(backRegion);
-      ASSERT(frontRegion->pitch == backRegion->pitch);
+//      ASSERT(frontRegion->pitch == backRegion->pitch);
       ASSERT(frontRegion->cpp == backRegion->cpp);
+
+      DBG("copy buffer, front pitch %d back pitch %d\n",
+	 frontRegion->pitch, backRegion->pitch);
 
       if (cpp == 2) {
 	 BR13 = (pitch * cpp) | (0xCC << 16) | (1 << 24);
@@ -142,7 +146,7 @@ intelCopyBuffer(const __DRIdrawablePrivate * dPriv,
 	 OUT_RELOC(frontRegion->buffer, DRM_BO_FLAG_MEM_TT | DRM_BO_FLAG_WRITE,
 		   DRM_BO_MASK_MEM | DRM_BO_FLAG_WRITE, 0);
 	 OUT_BATCH((pbox->y1 << 16) | pbox->x1);
-	 OUT_BATCH(BR13 & 0xffff);
+	 OUT_BATCH((srcpitch * cpp) & 0xffff);
 	 OUT_RELOC(backRegion->buffer, DRM_BO_FLAG_MEM_TT | DRM_BO_FLAG_READ,
 		   DRM_BO_MASK_MEM | DRM_BO_FLAG_READ, 0);
 

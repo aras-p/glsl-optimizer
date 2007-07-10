@@ -257,7 +257,7 @@ intel_alloc_renderbuffer_storage(GLcontext * ctx, struct gl_renderbuffer *rb,
       break;
    default:
       _mesa_problem(ctx,
-                    "Unexpected format in intel_alloc_renderbuffer_storage");
+                    "Unexpected format (%x) in intel_alloc_renderbuffer_storage", internalFormat);
       return GL_FALSE;
    }
 
@@ -453,6 +453,29 @@ intel_create_renderbuffer(GLenum intFormat, GLsizei width, GLsizei height,
    return irb;
 }
 
+struct gl_renderbuffer *
+intel_new_renderbuffer_fb(GLcontext * ctx, GLuint intFormat)
+{
+   struct intel_renderbuffer *irb;
+
+   irb = CALLOC_STRUCT(intel_renderbuffer);
+   if (!irb) {
+      _mesa_error(ctx, GL_OUT_OF_MEMORY, "creating renderbuffer");
+      return NULL;
+   }
+
+   _mesa_init_renderbuffer(&irb->Base, 0);
+   irb->Base.ClassID = INTEL_RB_CLASS;
+   irb->Base.InternalFormat = intFormat;
+
+   /* intel-specific methods */
+   irb->Base.Delete = intel_delete_renderbuffer;
+   irb->Base.AllocStorage = intel_alloc_renderbuffer_storage;
+   irb->Base.GetPointer = intel_get_pointer;
+   /* span routines set in alloc_storage function */
+
+   return &irb->Base;
+}
 
 /**
  * Create a new renderbuffer object.

@@ -569,6 +569,13 @@ intelMakeCurrent(__DRIcontextPrivate * driContextPriv,
                  __DRIdrawablePrivate * driReadPriv)
 {
 
+#if 0
+   if (driDrawPriv) {
+      fprintf(stderr, "x %d, y %d, width %d, height %d\n",
+	      driDrawPriv->x, driDrawPriv->y, driDrawPriv->w, driDrawPriv->h);
+   }
+#endif
+
    if (driContextPriv) {
       struct intel_context *intel =
          (struct intel_context *) driContextPriv->driverPrivate;
@@ -576,6 +583,9 @@ intelMakeCurrent(__DRIcontextPrivate * driContextPriv,
 	 (struct intel_framebuffer *) driDrawPriv->driverPrivate;
       GLframebuffer *readFb = (GLframebuffer *) driReadPriv->driverPrivate;
 
+      /* this is a hack so we have a valid context when the region allocation
+         is done. Need a per-screen context? */
+      intel->intelScreen->dummyctxptr = intel;
 
       /* XXX FBO temporary fix-ups! */
       /* if the renderbuffers don't have regions, init them from the context */
@@ -613,6 +623,7 @@ intelMakeCurrent(__DRIcontextPrivate * driContextPriv,
       }
 
       _mesa_make_current(&intel->ctx, &intel_fb->Base, readFb);
+      intel->intelScreen->dummyctxptr = &intel->ctx;
 
       /* The drawbuffer won't always be updated by _mesa_make_current: 
        */
