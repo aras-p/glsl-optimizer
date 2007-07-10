@@ -74,6 +74,7 @@ depth_test_quad(struct quad_stage *qs, struct quad_header *quad)
 
    switch (softpipe->depth_test.func) {
    case PIPE_FUNC_NEVER:
+      /* zmask = 0 */
       break;
    case PIPE_FUNC_LESS:
       /* Note this is pretty much a single sse or cell instruction.  
@@ -96,7 +97,27 @@ depth_test_quad(struct quad_stage *qs, struct quad_header *quad)
 	    zmask |= (1 << j);
       }
       break;
-      /* XXX fill in remaining cases */
+   case PIPE_FUNC_GREATER:
+      for (j = 0; j < QUAD_SIZE; j++) {
+	 if (qzzzz[j] > bzzzz[j]) 
+	    zmask |= (1 << j);
+      }
+      break;
+   case PIPE_FUNC_NOTEQUAL:
+      for (j = 0; j < QUAD_SIZE; j++) {
+	 if (qzzzz[j] != bzzzz[j]) 
+	    zmask |= (1 << j);
+      }
+      break;
+   case PIPE_FUNC_GEQUAL:
+      for (j = 0; j < QUAD_SIZE; j++) {
+	 if (qzzzz[j] >= bzzzz[j]) 
+	    zmask |= (1 << j);
+      }
+      break;
+   case PIPE_FUNC_ALWAYS:
+      zmask = MASK_ALL;
+      break;
    default:
       abort();
    }
@@ -117,7 +138,8 @@ depth_test_quad(struct quad_stage *qs, struct quad_header *quad)
       sps->write_quad_z(sps, quad->x0, quad->y0, bzzzz);
    }
 
-   qs->next->run(qs->next, quad);
+   if (quad->mask)
+      qs->next->run(qs->next, quad);
 }
 
 
