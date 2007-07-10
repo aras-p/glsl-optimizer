@@ -140,7 +140,7 @@ static void run_shader_block( struct setup_stage *setup,
    setup->quad.y0 = y;
    setup->quad.mask = mask;
 
-   quad_emit(setup->/*stage.*/softpipe, &setup->quad);
+   quad_emit(setup->softpipe, &setup->quad);
 }
 
 
@@ -394,7 +394,7 @@ static void tri_persp_coeff( struct setup_stage *setup,
  */
 static void setup_tri_coefficients( struct setup_stage *setup )
 {
-   const enum interp_mode *interp = setup->/*stage.*/softpipe->interp;
+   const enum interp_mode *interp = setup->softpipe->interp;
    GLuint slot, j;
 
    /* z and w are done by linear interpolation:
@@ -469,15 +469,15 @@ static void subtriangle( struct setup_stage *setup,
 
    /* scissor y:
     */
-   if (setup->/*stage.*/softpipe->setup.scissor) {
+   if (setup->softpipe->setup.scissor) {
       start_y = sy;
       finish_y = start_y + lines;
 
-      if (start_y < setup->/*stage.*/softpipe->scissor.miny) 
-	 start_y = setup->/*stage.*/softpipe->scissor.miny;
+      if (start_y < setup->softpipe->scissor.miny) 
+	 start_y = setup->softpipe->scissor.miny;
 
-      if (finish_y > setup->/*stage.*/softpipe->scissor.maxy) 
-	 finish_y = setup->/*stage.*/softpipe->scissor.maxy;
+      if (finish_y > setup->softpipe->scissor.maxy) 
+	 finish_y = setup->softpipe->scissor.maxy;
 
       start_y -= sy;
       finish_y -= sy;
@@ -502,12 +502,12 @@ static void subtriangle( struct setup_stage *setup,
 
       /* scissor x: 
        */
-      if (setup->/*stage.*/softpipe->setup.scissor) {
-	 if (left  < setup->/*stage.*/softpipe->scissor.minx) 
-	    left  = setup->/*stage.*/softpipe->scissor.minx;
+      if (setup->softpipe->setup.scissor) {
+	 if (left  < setup->softpipe->scissor.minx) 
+	    left  = setup->softpipe->scissor.minx;
 
-	 if (right > setup->/*stage.*/softpipe->scissor.maxx) 
-	    right = setup->/*stage.*/softpipe->scissor.maxx;
+	 if (right > setup->softpipe->scissor.maxx) 
+	    right = setup->softpipe->scissor.maxx;
       }
 
       if (left < right) {
@@ -611,7 +611,7 @@ line_persp_coeff(struct setup_stage *setup, GLuint slot, GLuint i)
 static INLINE void
 setup_line_coefficients(struct setup_stage *setup, struct prim_header *prim)
 {
-   const enum interp_mode *interp = setup->/*stage.*/softpipe->interp;
+   const enum interp_mode *interp = setup->softpipe->interp;
    GLuint slot, j;
 
    /* use setup->vmin, vmax to point to vertices */
@@ -671,7 +671,7 @@ plot(struct setup_stage *setup, GLint x, GLint y)
       /* flush prev quad, start new quad */
 
       if (setup->quad.x0 != -1) 
-	 quad_emit(setup->/*stage.*/softpipe, &setup->quad);
+	 quad_emit(setup->softpipe, &setup->quad);
 
       setup->quad.x0 = quadX;
       setup->quad.y0 = quadY;
@@ -774,7 +774,7 @@ setup_line(struct prim_stage *stage, struct prim_header *prim)
 
    /* draw final quad */
    if (setup->quad.mask) {
-      quad_emit(setup->/*stage.*/softpipe, &setup->quad);
+      quad_emit(setup->softpipe, &setup->quad);
    }
 }
 
@@ -789,8 +789,8 @@ setup_point(struct prim_stage *stage, struct prim_header *prim)
 {
    struct setup_stage *setup = setup_stage( stage );
    /*XXX this should be a vertex attrib! */
-   GLfloat halfSize = 0.5 * setup->/*stage.*/softpipe->setup.point_size;
-   GLboolean round = setup->/*stage.*/softpipe->setup.point_smooth;
+   GLfloat halfSize = 0.5 * setup->softpipe->setup.point_size;
+   GLboolean round = setup->softpipe->setup.point_smooth;
    const struct vertex_header *v0 = prim->v[0];
    const GLfloat x = v0->data[FRAG_ATTRIB_WPOS][0];
    const GLfloat y = v0->data[FRAG_ATTRIB_WPOS][1];
@@ -829,7 +829,7 @@ setup_point(struct prim_stage *stage, struct prim_header *prim)
       setup->quad.x0 = x - ix;
       setup->quad.y0 = y - iy;
       setup->quad.mask = (1 << ix) << (2 * iy);
-      quad_emit(setup->/*stage.*/softpipe, &setup->quad);
+      quad_emit(setup->softpipe, &setup->quad);
    }
    else {
       const GLint ixmin = block((GLint) (x - halfSize));
@@ -889,7 +889,7 @@ setup_point(struct prim_stage *stage, struct prim_header *prim)
             if (setup->quad.mask) {
                setup->quad.x0 = ix;
                setup->quad.y0 = iy;
-               quad_emit( setup->/*stage.*/softpipe, &setup->quad );
+               quad_emit( setup->softpipe, &setup->quad );
             }
          }
       }
