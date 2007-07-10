@@ -25,6 +25,11 @@
  * 
  **************************************************************************/
 
+/**
+ * \brief  Drawing stage for handling glPolygonMode(line/point).
+ * Convert triangles to points or lines as needed.
+ */
+
 /* Authors:  Keith Whitwell <keith@tungstengraphics.com>
  */
 
@@ -36,6 +41,10 @@
 struct unfilled_stage {
    struct prim_stage stage;
 
+   /** [0] = front face, [1] = back face.
+    * legal values:  PIPE_POLYGON_MODE_FILL, PIPE_POLYGON_MODE_LINE,
+    * and PIPE_POLYGON_MODE_POINT,
+    */
    GLuint mode[2];
 };
 
@@ -50,8 +59,8 @@ static void unfilled_begin( struct prim_stage *stage )
 {
    struct unfilled_stage *unfilled = unfilled_stage(stage);
 
-   unfilled->mode[0] = stage->draw->setup.fill_ccw;
-   unfilled->mode[1] = stage->draw->setup.fill_cw;
+   unfilled->mode[0] = stage->draw->setup.fill_ccw; /* front */
+   unfilled->mode[1] = stage->draw->setup.fill_cw;  /* back */
 
    stage->next->begin( stage->next );
 }
@@ -87,6 +96,7 @@ static void points( struct prim_stage *stage,
    if (v2->edgeflag) point( stage, v2 );
 }
 
+
 static void lines( struct prim_stage *stage,
 		   struct prim_header *header )
 {
@@ -109,7 +119,7 @@ static void unfilled_tri( struct prim_stage *stage,
 			  struct prim_header *header )
 {
    struct unfilled_stage *unfilled = unfilled_stage(stage);
-   GLuint mode = unfilled->mode[header->det < 0];
+   GLuint mode = unfilled->mode[header->det > 0.0];
   
    switch (mode) {
    case PIPE_POLYGON_MODE_FILL:
