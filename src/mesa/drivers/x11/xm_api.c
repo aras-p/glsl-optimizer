@@ -1836,8 +1836,6 @@ PUBLIC
 GLboolean XMesaMakeCurrent2( XMesaContext c, XMesaBuffer drawBuffer,
                              XMesaBuffer readBuffer )
 {
-   _mesa_printf("%s %p %p %p\n", __FUNCTION__, drawBuffer, readBuffer );
-   
    if (c) {
       if (!drawBuffer || !readBuffer)
          return GL_FALSE;  /* must specify buffers! */
