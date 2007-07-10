@@ -43,6 +43,7 @@
 #include "renderbuffer.h"
 
 #include "pipe/p_state.h"
+#include "pipe/p_defines.h"
 #include "pipe/softpipe/sp_context.h"
 #include "pipe/softpipe/sp_surface.h"
 
@@ -245,7 +246,7 @@ xmesa_get_color_surface(GLcontext *ctx, GLuint buf)
 
 static void
 read_quad_z(struct softpipe_surface *sps,
-            GLint x, GLint y, GLfloat zzzz[QUAD_SIZE])
+            GLint x, GLint y, GLuint zzzz[QUAD_SIZE])
 {
    struct xmesa_surface *xmsurf = xmesa_surface(sps);
    struct gl_renderbuffer *rb = xmsurf->rb;
@@ -254,22 +255,24 @@ read_quad_z(struct softpipe_surface *sps,
    GET_CURRENT_CONTEXT(ctx);
    rb->GetRow(ctx, rb, 2, x, y,     temp);
    rb->GetRow(ctx, rb, 2, x, y + 1, temp + 2);
+   /* convert from GLushort to GLuint */
    for (i = 0; i < 4; i++) {
-      zzzz[i] = USHORT_TO_FLOAT(temp[i]);
+      zzzz[i] = temp[i];
    }
 }
 
 static void
 write_quad_z(struct softpipe_surface *sps,
-             GLint x, GLint y, const GLfloat zzzz[QUAD_SIZE])
+             GLint x, GLint y, const GLuint zzzz[QUAD_SIZE])
 {
    struct xmesa_surface *xmsurf = xmesa_surface(sps);
    struct gl_renderbuffer *rb = xmsurf->rb;
    GLushort temp[4];
    GLuint i;
    GET_CURRENT_CONTEXT(ctx);
+   /* convert from GLuint to GLushort */
    for (i = 0; i < 4; i++) {
-      CLAMPED_FLOAT_TO_USHORT(temp[i], zzzz[i]);
+      temp[i] = zzzz[i];
    }
    rb->PutRow(ctx, rb, 2, x, y,     temp,     NULL);
    rb->PutRow(ctx, rb, 2, x, y + 1, temp + 2, NULL);
@@ -283,6 +286,7 @@ create_z_surface(XMesaContext xmctx, struct gl_renderbuffer *rb)
 
    xmsurf = CALLOC_STRUCT(xmesa_surface);
    if (xmsurf) {
+      xmsurf->sps.surface.format = PIPE_FORMAT_U_Z16;
       xmsurf->sps.surface.width = rb->Width;
       xmsurf->sps.surface.height = rb->Height;
       xmsurf->sps.read_quad_z = read_quad_z;
