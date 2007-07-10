@@ -52,15 +52,15 @@ static GLuint translate_fill( GLenum mode )
 }
 
 static GLboolean get_offset_flag( GLuint fill_mode, 
-				  const struct gl_polygon_attrib *Polygon )
+				  const struct gl_polygon_attrib *p )
 {
    switch (fill_mode) {
    case PIPE_POLYGON_MODE_POINT:
-      return Polygon->OffsetPoint;
+      return p->OffsetPoint;
    case PIPE_POLYGON_MODE_LINE:
-      return Polygon->OffsetLine;
+      return p->OffsetLine;
    case PIPE_POLYGON_MODE_FILL:
-      return Polygon->OffsetFill;
+      return p->OffsetFill;
    default:
       assert(0);
       return 0;
@@ -141,16 +141,15 @@ static void update_setup_state( struct st_context *st )
       }
    }
 
-   /* Hardware does offset for filled prims, but need to do it in
-    * software for unfilled.
-    *
-    * _NEW_POLYGON 
+   /* _NEW_POLYGON 
     */
-   if (setup.fill_cw != PIPE_POLYGON_MODE_FILL)
+   if (ctx->Polygon.OffsetUnits != 0.0 ||
+       ctx->Polygon.OffsetFactor != 0.0) {
       setup.offset_cw = get_offset_flag( setup.fill_cw, &ctx->Polygon );
-   
-   if (setup.fill_ccw != PIPE_POLYGON_MODE_FILL)
       setup.offset_ccw = get_offset_flag( setup.fill_ccw, &ctx->Polygon );
+      setup.offset_units = ctx->Polygon.OffsetUnits;
+      setup.offset_scale = ctx->Polygon.OffsetFactor;
+   }
 
    if (ctx->Polygon.SmoothFlag)
       setup.poly_smooth = 1;
