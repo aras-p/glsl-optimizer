@@ -66,7 +66,7 @@ enum interp_mode {
 
 
 struct softpipe_context {     
-   struct pipe_context pipe;
+   struct pipe_context pipe;  /**< base class */
 
    /* The most recent drawing state as set by the driver:
     */
@@ -97,22 +97,23 @@ struct softpipe_context {
 
    /* FS + setup derived state:
     */
+
+   /** Map fragment program attribute to quad/coef array slot */
    GLuint fp_attr_to_slot[PIPE_ATTRIB_MAX];
+   /** Map vertex format attribute to a vertex attribute slot */
    GLuint vf_attr_to_slot[PIPE_ATTRIB_MAX];
    GLuint nr_attrs;
-   GLuint nr_frag_attrs;
-   GLuint attr_mask;
+   GLuint nr_frag_attrs;  /**< number of active fragment attribs */
+   GLbitfield attr_mask;  /**< bitfield of VF_ATTRIB_ indexes/bits */
 
-   GLboolean need_z;
-   GLboolean need_w;
+   GLboolean need_z;  /**< produce quad/fragment Z values? */
+   GLboolean need_w;  /**< produce quad/fragment W values? */
 
    /* Stipple derived state:
     */
    GLubyte stipple_masks[16][16];
 
-   /*
-    * Software quad rendering pipeline
-    */
+   /** Software quad rendering pipeline */
    struct {
       struct quad_stage *shade;
       struct quad_stage *alpha_test;
@@ -123,8 +124,7 @@ struct softpipe_context {
       struct quad_stage *first; /**< points to one of the above stages */
    } quad;
 
-   /* Temp kludge:
-    */
+   /** The primitive drawing context */
    struct draw_context *draw;
 };
 
