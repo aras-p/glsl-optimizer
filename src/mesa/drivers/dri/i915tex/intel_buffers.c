@@ -146,6 +146,27 @@ intelSetRenderbufferClipRects(struct intel_context *intel)
    intel->drawY = 0;
 }
 
+/**
+ * As above, but for rendering private front/back buffer of a window.
+ * \sa intelSetPrivbufClipRects
+ */
+
+static void
+intelSetPrivbufClipRects(struct intel_context *intel)
+{
+   __DRIdrawablePrivate *dPriv = intel->driDrawable;
+   if (!dPriv)
+      return;
+
+   intel->fakeClipRect.x1 = 0;
+   intel->fakeClipRect.y1 = 0;
+   intel->fakeClipRect.x2 = dPriv->w;
+   intel->fakeClipRect.y2 = dPriv->h;
+   intel->pClipRects = &intel->fakeClipRect;
+   intel->numClipRects = 1;
+   intel->drawX = 0;
+   intel->drawY = 0;
+}
 
 /**
  * As above, but for rendering to front buffer of a window.
@@ -212,7 +233,7 @@ intelWindowMoved(struct intel_context *intel)
       /* when would this happen? -BP */
       intelSetFrontClipRects(intel);
    }
-   else if (intel->ctx.DrawBuffer->Name != 0) {
+   else if (1 || intel->ctx.DrawBuffer->Name != 0) {
       /* drawing to user-created FBO - do nothing */
       /* Cliprects would be set from intelDrawBuffer() */
    }
@@ -953,10 +974,17 @@ intelCopySubBuffer(__DRIdrawablePrivate * dPriv, int x, int y, int w, int h)
 
       if (ctx->Visual.doubleBufferMode) {
          drm_clip_rect_t rect;
+#if 1
          rect.x1 = x + dPriv->x;
          rect.y1 = (dPriv->h - y - h) + dPriv->y;
          rect.x2 = rect.x1 + w;
          rect.y2 = rect.y1 + h;
+#else
+         rect.x1 = x;
+         rect.y1 = dPriv->h - y;
+         rect.x2 = rect.x1 + w;
+         rect.y2 = rect.y1 + h;
+#endif
          _mesa_notifySwapBuffers(ctx);  /* flush pending rendering comands */
          intelCopyBuffer(dPriv, &rect);
       }
@@ -991,7 +1019,7 @@ intel_draw_buffer(GLcontext * ctx, struct gl_framebuffer *fb)
       return;
    }
 
-   /* Do this here, note core Mesa, since this function is called from
+   /* Do this here, not core Mesa, since this function is called from
     * many places within the driver.
     */
    if (ctx->NewState & (_NEW_BUFFERS | _NEW_COLOR | _NEW_PIXEL)) {
@@ -1042,11 +1070,19 @@ intel_draw_buffer(GLcontext * ctx, struct gl_framebuffer *fb)
    if (fb->Name == 0) {
       /* drawing to window system buffer */
       if (front) {
+#if 0
          intelSetFrontClipRects(intel);
+#else
+         intelSetPrivbufClipRects(intel);
+#endif
          colorRegion = intel_get_rb_region(fb, BUFFER_FRONT_LEFT);
       }
       else {
+#if 0
          intelSetBackClipRects(intel);
+#else
+         intelSetPrivbufClipRects(intel);
+#endif
          colorRegion = intel_get_rb_region(fb, BUFFER_BACK_LEFT);
       }
    }

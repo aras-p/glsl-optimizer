@@ -115,6 +115,7 @@ intelCopyBuffer(const __DRIdrawablePrivate * dPriv,
 
       for (i = 0; i < nbox; i++, pbox++) {
 	 drm_clip_rect_t box;
+	 drm_clip_rect_t sbox;
 
 	 if (pbox->x1 > pbox->x2 ||
 	     pbox->y1 > pbox->y2 ||
@@ -137,6 +138,9 @@ intelCopyBuffer(const __DRIdrawablePrivate * dPriv,
 	       continue;
 	 }
 
+	 sbox.x1 = box.x1 - dPriv->x;
+	 sbox.y1 = box.y1 - dPriv->y;
+
 	 BEGIN_BATCH(8, INTEL_BATCH_NO_CLIPRECTS);
 	 OUT_BATCH(CMD);
 	 OUT_BATCH(BR13);
@@ -145,7 +149,7 @@ intelCopyBuffer(const __DRIdrawablePrivate * dPriv,
 
 	 OUT_RELOC(frontRegion->buffer, DRM_BO_FLAG_MEM_TT | DRM_BO_FLAG_WRITE,
 		   DRM_BO_MASK_MEM | DRM_BO_FLAG_WRITE, 0);
-	 OUT_BATCH((pbox->y1 << 16) | pbox->x1);
+	 OUT_BATCH((sbox.y1 << 16) | sbox.x1);
 	 OUT_BATCH((srcpitch * cpp) & 0xffff);
 	 OUT_RELOC(backRegion->buffer, DRM_BO_FLAG_MEM_TT | DRM_BO_FLAG_READ,
 		   DRM_BO_MASK_MEM | DRM_BO_FLAG_READ, 0);
