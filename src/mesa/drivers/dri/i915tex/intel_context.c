@@ -681,37 +681,27 @@ intelContendedLock(struct intel_context *intel, GLuint flags)
    if (sarea->width != intel->width ||
        sarea->height != intel->height ||
        sarea->rotation != intel->current_rotation) {
-      
-      void *batchMap = intel->batch->map;
-      
+      int numClipRects = intel->numClipRects;
+
       /*
        * FIXME: Really only need to do this when drawing to a
        * common back- or front buffer.
        */
 
       /*
-       * This will drop the outstanding batchbuffer on the floor
+       * This will essentially drop the outstanding batchbuffer on the floor.
        */
+      intel->numClipRects = 0;
 
-      if (batchMap != NULL) {
-	 driBOUnmap(intel->batch->buffer);
-	 intel->batch->map = NULL;
-      }
+      if (intel->Fallback)
+	 _swrast_flush(&intel->ctx);
 
-      intel_batchbuffer_reset(intel->batch);
+      INTEL_FIREVERTICES(intel);
 
-      if (batchMap == NULL) {
-	 driBOUnmap(intel->batch->buffer);
-	 intel->batch->map = NULL;
-      }
+      if (intel->batch->map != intel->batch->ptr)
+	 intel_batchbuffer_flush(intel->batch);
 
-      /* lose all primitives */
-      intel->prim.primitive = ~0;
-      intel->prim.start_ptr = 0;
-      intel->prim.flush = 0;
-
-      /* re-emit all state */
-      intel->vtbl.lost_hardware(intel);
+      intel->numClipRects = numClipRects;
 
       /* force window update */
       intel->lastStamp = 0;
