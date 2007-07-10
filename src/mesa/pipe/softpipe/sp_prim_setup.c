@@ -306,11 +306,18 @@ static GLboolean setup_sort_vertices( struct setup_stage *setup,
 
 /**
  * Compute a0 for a constant-valued coefficient (GL_FLAT shading).
+ * The value value comes from vertex->data[slot][i].
+ * The result will be put into setup->coef[slot].a0[i].
+ * \param slot  which attribute slot 
+ * \param i  which component of the slot (0..3)
  */
 static void const_coeff( struct setup_stage *setup,
 			 GLuint slot,
 			 GLuint i )
 {
+   assert(slot < FRAG_ATTRIB_MAX);
+   assert(i <= 3);
+
    setup->coef[slot].dadx[i] = 0;
    setup->coef[slot].dady[i] = 0;
 
@@ -333,6 +340,9 @@ static void tri_linear_coeff( struct setup_stage *setup,
    GLfloat a = setup->ebot.dy * majda - botda * setup->emaj.dy;
    GLfloat b = setup->emaj.dx * botda - majda * setup->ebot.dx;
    
+   assert(slot < FRAG_ATTRIB_MAX);
+   assert(i <= 3);
+
    setup->coef[slot].dadx[i] = a * setup->oneoverarea;
    setup->coef[slot].dady[i] = b * setup->oneoverarea;
 
@@ -379,6 +389,9 @@ static void tri_persp_coeff( struct setup_stage *setup,
    GLfloat a = setup->ebot.dy * majda - botda * setup->emaj.dy;
    GLfloat b = setup->emaj.dx * botda - majda * setup->ebot.dx;
       
+   assert(slot < FRAG_ATTRIB_MAX);
+   assert(i <= 3);
+
    setup->coef[slot].dadx[i] = a * setup->oneoverarea;
    setup->coef[slot].dady[i] = b * setup->oneoverarea;
    setup->coef[slot].a0[i] = (mina - 
