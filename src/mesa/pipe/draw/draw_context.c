@@ -81,12 +81,15 @@ static void validate_pipeline( struct draw_context *draw )
 {
    struct prim_stage *next = draw->pipeline.setup;
 
-   /* TODO: make the current primitive part of the state and build
+   /*
+    * NOTE: we build up the pipeline in end-to-start order.
+    *
+    * TODO: make the current primitive part of the state and build
     * shorter pipelines for lines & points.
     */
+
    if (draw->setup.fill_cw != PIPE_POLYGON_MODE_FILL ||
        draw->setup.fill_ccw != PIPE_POLYGON_MODE_FILL) {
-
       draw->pipeline.unfilled->next = next;
       next = draw->pipeline.unfilled;
    }
@@ -110,7 +113,6 @@ static void validate_pipeline( struct draw_context *draw )
       next = draw->pipeline.cull;
    }
 
-
    /* Clip stage
     */
    {
@@ -127,7 +129,6 @@ static void validate_pipeline( struct draw_context *draw )
       next = draw->pipeline.flatshade;
    }
    
-
    draw->pipeline.first = next;
 }
 
