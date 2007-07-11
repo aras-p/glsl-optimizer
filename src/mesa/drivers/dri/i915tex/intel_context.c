@@ -727,17 +727,6 @@ intelContendedLock(struct intel_context *intel, GLuint flags)
       intel->current_rotation = sarea->rotation;
    }
 #endif
-
-#if 0
-   /* Drawable changed?
-    */
-   if (dPriv && intel->lastStamp != dPriv->lastStamp) {
-      if (INTEL_DEBUG & DEBUG_LOCK)
-         _mesa_printf("drawable change detected but defering update\n");
-/*      intelWindowMoved(intel);
-      intel->lastStamp = dPriv->lastStamp;*/
-   }
-#endif
 }
 
 

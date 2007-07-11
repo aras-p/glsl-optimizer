@@ -162,60 +162,12 @@ intelSetPrivbufClipRects(struct intel_context *intel)
    intel->fakeClipRect.y1 = 0;
    intel->fakeClipRect.x2 = dPriv->w;
    intel->fakeClipRect.y2 = dPriv->h;
-   intel->pClipRects = &intel->fakeClipRect;
    intel->numClipRects = 1;
+   intel->pClipRects = &intel->fakeClipRect;
    intel->drawX = 0;
    intel->drawY = 0;
 }
 
-/**
- * As above, but for rendering to front buffer of a window.
- * \sa intelSetRenderbufferClipRects
- */
-static void
-intelSetFrontClipRects(struct intel_context *intel)
-{
-   __DRIdrawablePrivate *dPriv = intel->driDrawable;
-
-   if (!dPriv)
-      return;
-
-   intel->numClipRects = dPriv->numClipRects;
-   intel->pClipRects = dPriv->pClipRects;
-   intel->drawX = dPriv->x;
-   intel->drawY = dPriv->y;
-}
-
-
-/**
- * As above, but for rendering to back buffer of a window.
- */
-static void
-intelSetBackClipRects(struct intel_context *intel)
-{
-   __DRIdrawablePrivate *dPriv = intel->driDrawable;
-   struct intel_framebuffer *intel_fb;
-
-   if (!dPriv)
-      return;
-
-   intel_fb = dPriv->driverPrivate;
-
-   if (intel_fb->pf_active || dPriv->numBackClipRects == 0) {
-      /* use the front clip rects */
-      intel->numClipRects = dPriv->numClipRects;
-      intel->pClipRects = dPriv->pClipRects;
-      intel->drawX = dPriv->x;
-      intel->drawY = dPriv->y;
-   }
-   else {
-      /* use the back clip rects */
-      intel->numClipRects = dPriv->numBackClipRects;
-      intel->pClipRects = dPriv->pBackClipRects;
-      intel->drawX = dPriv->backX;
-      intel->drawY = dPriv->backY;
-   }
-}
 
 
 /**
@@ -231,26 +183,9 @@ intelWindowMoved(struct intel_context *intel)
 
    if (!intel->ctx.DrawBuffer) {
       /* when would this happen? -BP */
-      intelSetFrontClipRects(intel);
+      intel->numClipRects = 0;
    }
-   else if (1 || intel->ctx.DrawBuffer->Name != 0) {
-      /* drawing to user-created FBO - do nothing */
-      /* Cliprects would be set from intelDrawBuffer() */
-   }
-   else {
-      /* drawing to a window */
-      switch (intel_fb->Base._ColorDrawBufferMask[0]) {
-      case BUFFER_BIT_FRONT_LEFT:
-         intelSetFrontClipRects(intel);
-         break;
-      case BUFFER_BIT_BACK_LEFT:
-         intelSetBackClipRects(intel);
-         break;
-      default:
-         /* glDrawBuffer(GL_NONE or GL_FRONT_AND_BACK): software fallback */
-         intelSetFrontClipRects(intel);
-      }
-   }
+
 
    if (intel->intelScreen->driScrnPriv->ddxMinor >= 7) {
       drmI830Sarea *sarea = intel->sarea;
@@ -957,23 +892,6 @@ intelSwapBuffers(__DRIdrawablePrivate * dPriv)
 
 	 intel_fb->swap_ust = ust;
       }
-      if (intel->revalidateDrawable) {
-	 __DRIscreenPrivate *sPriv = intel->driScreen;
-	 LOCK_HARDWARE(intel);
-	 DRI_VALIDATE_DRAWABLE_INFO(sPriv, dPriv);
-	 intel->revalidateDrawable = GL_FALSE;
-	 UNLOCK_HARDWARE(intel);
-	 if (dPriv && intel->lastStamp != dPriv->lastStamp) {
-	 /* XXX this doesn't appear to work quite right.
-            And in any case, it will never get called with single buffered
-            rendering here...
-	    And if it's only a window move (not resize), don't need to do anything. */
-	    if (INTEL_DEBUG & DEBUG_LOCK)
-	       _mesa_printf("doing defered drawable update\n");
-	    intelWindowMoved(intel);
-	    intel->lastStamp = dPriv->lastStamp;
-	 }
-      }
    }
    else {
       /* XXX this shouldn't be an error but we can't handle it for now */
@@ -1061,12 +979,7 @@ intel_draw_buffer(GLcontext * ctx, struct gl_framebuffer *fb)
    /*
     * How many color buffers are we drawing into?
     */
-   if (fb->_NumColorDrawBuffers[0] != 1
-#if 0
-       /* XXX FBO temporary - always use software rendering */
-       || 1
-#endif
-      ) {
+   if (fb->_NumColorDrawBuffers[0] != 1) {
       /* writing to 0 or 2 or 4 color buffers */
       /*_mesa_debug(ctx, "Software rendering\n");*/
       FALLBACK(intel, INTEL_FALLBACK_DRAW_BUFFER, GL_TRUE);
