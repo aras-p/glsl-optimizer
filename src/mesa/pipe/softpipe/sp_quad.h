@@ -55,5 +55,6 @@ struct quad_stage *sp_quad_output_stage( struct softpipe_context *softpipe );
 
 void sp_build_quad_pipeline(struct softpipe_context *sp);
 
+void sp_depth_test_quad(struct quad_stage *qs, struct quad_header *quad);
 
 #endif /* SP_TILE_H */

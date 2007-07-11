@@ -87,6 +87,7 @@ struct pipe_context *softpipe_create( void )
    softpipe->quad.alpha_test = sp_quad_alpha_test_stage(softpipe);
    softpipe->quad.blend = sp_quad_blend_stage(softpipe);
    softpipe->quad.depth_test = sp_quad_depth_test_stage(softpipe);
+   softpipe->quad.stencil_test = sp_quad_stencil_test_stage(softpipe);
    softpipe->quad.output = sp_quad_output_stage(softpipe);
 
    /*

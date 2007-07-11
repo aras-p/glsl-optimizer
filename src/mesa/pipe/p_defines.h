@@ -125,7 +125,7 @@
 #define PIPE_TEX_COMPARE_R_TO_TEXTURE  1
 
 /**
- * Texture/surface image formats
+ * Texture/surface image formats (preliminary)
  */
 #define PIPE_FORMAT_U_R8_G8_B8_A8   0  /**< ubyte[4] RGBA */
 #define PIPE_FORMAT_U_A8_R8_G8_B8   1  /**< ubyte[4] ARGB */
@@ -138,6 +138,9 @@
 #define PIPE_FORMAT_F_Z32           8  /**< float Z/depth */
 #define PIPE_FORMAT_YCBCR           9
 #define PIPE_FORMAT_YCBCR_REV      10
+#define PIPE_FORMAT_S8             11  /**< 8-bit stencil */
+#define PIPE_FORMAT_Z24_S8         12  /**< 24-bit Z + 8-bit stencil */
+
 
 /**
  * Texture typess

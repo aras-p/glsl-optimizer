@@ -82,6 +82,11 @@ struct softpipe_surface {
                        GLint x, GLint y, GLuint zzzz[QUAD_SIZE]);
    void (*write_quad_z)(struct softpipe_surface *,
                         GLint x, GLint y, const GLuint zzzz[QUAD_SIZE]);
+
+   void (*read_quad_stencil)(struct softpipe_surface *,
+                             GLint x, GLint y, GLubyte ssss[QUAD_SIZE]);
+   void (*write_quad_stencil)(struct softpipe_surface *,
+                              GLint x, GLint y, const GLubyte ssss[QUAD_SIZE]);
 };
 
 

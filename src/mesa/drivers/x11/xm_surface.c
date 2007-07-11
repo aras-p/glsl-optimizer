@@ -244,6 +244,8 @@ xmesa_get_color_surface(GLcontext *ctx, GLuint buf)
 }
 
 
+
+
 static void
 read_quad_z(struct softpipe_surface *sps,
             GLint x, GLint y, GLuint zzzz[QUAD_SIZE])
@@ -296,6 +298,51 @@ create_z_surface(XMesaContext xmctx, struct gl_renderbuffer *rb)
    return xmsurf;
 }
 
+
+
+
+static void
+read_quad_stencil(struct softpipe_surface *sps,
+                  GLint x, GLint y, GLubyte ssss[QUAD_SIZE])
+{
+   struct xmesa_surface *xmsurf = xmesa_surface(sps);
+   struct gl_renderbuffer *rb = xmsurf->rb;
+   GET_CURRENT_CONTEXT(ctx);
+   rb->GetRow(ctx, rb, 2, x, y,     ssss);
+   rb->GetRow(ctx, rb, 2, x, y + 1, ssss + 2);
+}
+
+static void
+write_quad_stencil(struct softpipe_surface *sps,
+                   GLint x, GLint y, const GLubyte ssss[QUAD_SIZE])
+{
+   struct xmesa_surface *xmsurf = xmesa_surface(sps);
+   struct gl_renderbuffer *rb = xmsurf->rb;
+   GET_CURRENT_CONTEXT(ctx);
+   rb->PutRow(ctx, rb, 2, x, y,     ssss,     NULL);
+   rb->PutRow(ctx, rb, 2, x, y + 1, ssss + 2, NULL);
+}
+
+static struct xmesa_surface *
+create_stencil_surface(XMesaContext xmctx, struct gl_renderbuffer *rb)
+{
+   struct xmesa_surface *xmsurf;
+
+   xmsurf = CALLOC_STRUCT(xmesa_surface);
+   if (xmsurf) {
+      xmsurf->sps.surface.format = PIPE_FORMAT_S8;
+      xmsurf->sps.surface.width = rb->Width;
+      xmsurf->sps.surface.height = rb->Height;
+      xmsurf->sps.read_quad_stencil = read_quad_stencil;
+      xmsurf->sps.write_quad_stencil = write_quad_stencil;
+      xmsurf->rb = rb;
+   }
+   return xmsurf;
+}
+
+
+
+
 /**
  * Return a pipe_surface that wraps the current Z/depth buffer.
  * XXX this is pretty much a total hack until gl_renderbuffers and
@@ -327,6 +374,22 @@ xmesa_get_z_surface(GLcontext *ctx)
 struct pipe_surface *
 xmesa_get_stencil_surface(GLcontext *ctx)
 {
-   return NULL;
+   XMesaContext xmctx = XMESA_CONTEXT(ctx);
+   struct gl_renderbuffer *rb = ctx->DrawBuffer->_StencilBuffer;
+   static struct xmesa_surface *xms = NULL;
+
+   if (!rb)
+      return NULL;
+
+   if (!xms) {
+      xms = create_stencil_surface(xmctx, rb);
+   }
+   else if (xms->sps.surface.width != rb->Width ||
+            xms->sps.surface.height != rb->Height) {
+      free_surface(&xms->sps);
+      xms = create_stencil_surface(xmctx, rb);
+   }
+
+   return (struct pipe_surface *) &xms->sps.surface;
 }
 

@@ -35,8 +35,12 @@
 #include "sp_quad.h"
 
 
-static void
-depth_test_quad(struct quad_stage *qs, struct quad_header *quad)
+/**
+ * Do depth testing for a quad.
+ * Not static since it's used by the stencil code.
+ */
+void
+sp_depth_test_quad(struct quad_stage *qs, struct quad_header *quad)
 {
    struct softpipe_context *softpipe = qs->softpipe;
    struct softpipe_surface *sps = softpipe_surface(softpipe->framebuffer.zbuf);
@@ -137,6 +141,13 @@ depth_test_quad(struct quad_stage *qs, struct quad_header *quad)
       /* write updated zquad to zbuffer */
       sps->write_quad_z(sps, quad->x0, quad->y0, bzzzz);
    }
+}
+
+
+static void
+depth_test_quad(struct quad_stage *qs, struct quad_header *quad)
+{
+   sp_depth_test_quad(qs, quad);
 
    if (quad->mask)
       qs->next->run(qs->next, quad);
