@@ -500,6 +500,7 @@ void
 intelRotateWindow(struct intel_context *intel,
                   __DRIdrawablePrivate * dPriv, GLuint srcBuf)
 {
+
    intelScreenPrivate *screen = intel->intelScreen;
    drm_clip_rect_t fullRect;
    struct intel_framebuffer *intel_fb;

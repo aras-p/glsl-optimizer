@@ -88,6 +88,7 @@ intelMapScreenRegions(__DRIscreenPrivate * sPriv)
       _mesa_warning(NULL, "no front buffer handle in intelMapScreenRegions!");
    }
 
+#if 0
    if (0)
       _mesa_printf("Back 0x%08x ", intelScreen->back.handle);
    if (drmMap(sPriv->fd,
@@ -119,6 +120,7 @@ intelMapScreenRegions(__DRIscreenPrivate * sPriv)
       intelUnmapScreenRegions(intelScreen);
       return GL_FALSE;
    }
+#endif
 
 #if 0
    _mesa_printf("TEX 0x%08x ", intelScreen->tex.handle);

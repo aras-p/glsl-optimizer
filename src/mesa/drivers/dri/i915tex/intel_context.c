@@ -682,6 +682,7 @@ intelContendedLock(struct intel_context *intel, GLuint flags)
       intelUpdateScreenRotation(sPriv, sarea);
    }
 
+#if 0
    if (sarea->width != intel->width ||
        sarea->height != intel->height ||
        sarea->rotation != intel->current_rotation) {
@@ -724,6 +725,7 @@ intelContendedLock(struct intel_context *intel, GLuint flags)
       intel->height = sarea->height;
       intel->current_rotation = sarea->rotation;
    }
+#endif
 
    /* Drawable changed?
     */
