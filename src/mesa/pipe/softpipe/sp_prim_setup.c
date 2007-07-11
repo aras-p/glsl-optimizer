@@ -279,26 +279,32 @@ static GLboolean setup_sort_vertices( struct setup_stage *setup,
    setup->etop.dx = setup->vmax->data[0][0] - setup->vmid->data[0][0];
    setup->etop.dy = setup->vmax->data[0][1] - setup->vmid->data[0][1];
 
-   /* xxx: may need to adjust this sign according to the if-tree
-    * above:
+   /*
+    * Compute triangle's area.  Use 1/area to compute partial
+    * derivatives of attributes later.
     *
-    * XXX: this is like 'det', but calculated from screen coords??
+    * The area will be the same as prim->det, but the sign may be
+    * different depending on how the vertices get sorted above.
+    *
+    * To determine whether the primitive is front or back facing we
+    * use the prim->det value because its sign is correct.
     */
    {
       const GLfloat area = (setup->emaj.dx * setup->ebot.dy - 
 			    setup->ebot.dx * setup->emaj.dy);
 
       setup->oneoverarea = 1.0 / area;
+      /*
+      _mesa_printf("%s one-over-area %f  area %f  det %f\n",
+                   __FUNCTION__, setup->oneoverarea, area, prim->det );
+      */
    }
 
-   /* XXX need to know if this is a front or back-facing triangle:
+   /* We need to know if this is a front or back-facing triangle for:
     *  - the GLSL gl_FrontFacing fragment attribute (bool)
     *  - two-sided stencil test
     */
-   setup->quad.facing = 0;
-
-   _mesa_printf("%s one-over-area %f\n", __FUNCTION__, setup->oneoverarea );
-
+   setup->quad.facing = (prim->det > 0.0) ^ (setup->softpipe->setup.front_winding == PIPE_WINDING_CW);
 
    return GL_TRUE;
 }
