@@ -122,7 +122,7 @@ write_quad_f(struct softpipe_surface *gs, GLint x, GLint y,
    GLuint i;
    GET_CURRENT_CONTEXT(ctx);
    for (i = 0; i < 16; i++) {
-      temp[i] = FLOAT_TO_UBYTE(src[i]);
+      UNCLAMPED_FLOAT_TO_UBYTE(temp[i], src[i]);
    }
    xrb->Base.PutRow(ctx, &xrb->Base, 2, x, y,     temp,     NULL);
    xrb->Base.PutRow(ctx, &xrb->Base, 2, x, y + 1, temp + 8, NULL);
@@ -140,7 +140,7 @@ write_quad_f_swz(struct softpipe_surface *gs, GLint x, GLint y,
    GET_CURRENT_CONTEXT(ctx);
    for (i = 0; i < 4; i++) {
       for (j = 0; j < 4; j++) {
-         temp[j * 4 + i] = FLOAT_TO_UBYTE(src[i * 4 + j]);
+         UNCLAMPED_FLOAT_TO_UBYTE(temp[j * 4 + i], src[i * 4 + j]);
       }
    }
    xrb->Base.PutRow(ctx, &xrb->Base, 2, x, y,     temp,     NULL);
