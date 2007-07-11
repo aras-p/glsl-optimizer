@@ -25,7 +25,11 @@
  * 
  **************************************************************************/
 
-/* Authors:  Keith Whitwell <keith@tungstengraphics.com>
+/**
+ * \brief  polygon offset state
+ *
+ * \author  Keith Whitwell <keith@tungstengraphics.com>
+ * \author  Brian Paul
  */
 
 #include "main/imports.h"
@@ -37,8 +41,6 @@
 struct offset_stage {
    struct prim_stage stage;
 
-   GLuint hw_data_offset;
-
    GLfloat scale;
    GLfloat units;
 };
@@ -47,7 +49,7 @@ struct offset_stage {
 
 static INLINE struct offset_stage *offset_stage( struct prim_stage *stage )
 {
-   return (struct offset_stage *)stage;
+   return (struct offset_stage *) stage;
 }
 
 
