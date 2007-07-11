@@ -299,13 +299,13 @@ GLuint r300VAPOutputCntl0(GLcontext * ctx, GLuint OutputsWritten)
 	if (OutputsWritten & (1 << VERT_RESULT_COL1))
 		ret |= R300_VAP_OUTPUT_VTX_FMT_0__COLOR_1_PRESENT;
 
-#if 0
 	if (OutputsWritten & (1 << VERT_RESULT_BFC0))
-		ret |= R300_VAP_OUTPUT_VTX_FMT_0__COLOR_2_PRESENT;
+		ret |= (7 << 2);
 
 	if (OutputsWritten & (1 << VERT_RESULT_BFC1))
 		ret |= R300_VAP_OUTPUT_VTX_FMT_0__COLOR_3_PRESENT;
 
+#if 0
 	if (OutputsWritten & (1 << VERT_RESULT_FOGC)) ;
 #endif
 
