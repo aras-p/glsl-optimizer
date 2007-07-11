@@ -203,12 +203,12 @@ stencil_test_quad(struct quad_stage *qs, struct quad_header *quad)
    struct softpipe_context *softpipe = qs->softpipe;
    struct softpipe_surface *s_surf = softpipe_surface(softpipe->framebuffer.sbuf);
    GLuint func, zFailOp, zPassOp, failOp;
-   GLuint face = 0;
    GLubyte ref, wrtMask, valMask;
    GLubyte stencilVals[QUAD_SIZE];
 
    /* choose front or back face function, operator, etc */
-   if (softpipe->stencil.back_enabled && face == 1) {
+   /* XXX we could do these initializations once per primitive */
+   if (softpipe->stencil.back_enabled && quad->facing) {
       func = softpipe->stencil.back_func;
       failOp = softpipe->stencil.back_fail_op;
       zFailOp = softpipe->stencil.back_zfail_op;
@@ -242,29 +242,30 @@ stencil_test_quad(struct quad_stage *qs, struct quad_header *quad)
       }
    }
 
-   if (!quad->mask)
-      return;
+   if (quad->mask) {
 
-   /* now the pixels that passed the stencil test are depth tested */
-   if (softpipe->depth_test.enabled) {
-      const GLbitfield origMask = quad->mask;
+      /* now the pixels that passed the stencil test are depth tested */
+      if (softpipe->depth_test.enabled) {
+         const GLbitfield origMask = quad->mask;
 
-      sp_depth_test_quad(qs, quad);  /* quad->mask is updated */
+         sp_depth_test_quad(qs, quad);  /* quad->mask is updated */
 
-      /* update stencil buffer values according to z pass/fail result */
-      if (zFailOp != PIPE_STENCIL_OP_KEEP) {
-         const GLbitfield failMask = origMask & ~quad->mask;
-         apply_stencil_op(stencilVals, failMask, zFailOp, ref, wrtMask);
+         /* update stencil buffer values according to z pass/fail result */
+         if (zFailOp != PIPE_STENCIL_OP_KEEP) {
+            const GLbitfield failMask = origMask & ~quad->mask;
+            apply_stencil_op(stencilVals, failMask, zFailOp, ref, wrtMask);
+         }
+
+         if (zPassOp != PIPE_STENCIL_OP_KEEP) {
+            const GLbitfield passMask = origMask & quad->mask;
+            apply_stencil_op(stencilVals, passMask, zPassOp, ref, wrtMask);
+         }
+      }
+      else {
+         /* no depth test, apply Zpass operator to stencil buffer values */
+         apply_stencil_op(stencilVals, quad->mask, zPassOp, ref, wrtMask);
       }
 
-      if (zPassOp != PIPE_STENCIL_OP_KEEP) {
-         const GLbitfield passMask = origMask & quad->mask;
-         apply_stencil_op(stencilVals, passMask, zPassOp, ref, wrtMask);
-      }
-   }
-   else {
-      /* no depth test, apply Zpass operator to stencil buffer values */
-      apply_stencil_op(stencilVals, quad->mask, zPassOp, ref, wrtMask);
    }
 
    s_surf->write_quad_stencil(s_surf, quad->x0, quad->y0, stencilVals);
