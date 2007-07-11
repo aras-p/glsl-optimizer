@@ -75,14 +75,6 @@ static void Draw(void)
    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); 
    glEnable(GL_DEPTH_TEST);
 
-   /*
-    * Because of clamping, the Z values of the first polygon may
-    * be 1.0 (the same as the clear value) so nothing would be
-    * drawn if the depth func is GL_LESS.  Set it to GL_LEQUAL
-    * so we can see polygons with Z==1.
-    */
-   glDepthFunc(GL_LEQUAL);
-
    /* red: offset back */
    glEnable(GL_POLYGON_OFFSET_FILL);
    glPolygonOffset(0, 4);
