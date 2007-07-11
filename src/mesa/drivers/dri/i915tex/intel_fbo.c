@@ -176,7 +176,7 @@ intel_get_pointer(GLcontext * ctx, struct gl_renderbuffer *rb,
 
 /**
  * Called via glRenderbufferStorageEXT() to set the format and allocate
- * storage for a user-created renderbuffer.
+ * storage for a user-created (or priv buffer) renderbuffer.
  */
 static GLboolean
 intel_alloc_renderbuffer_storage(GLcontext * ctx, struct gl_renderbuffer *rb,
@@ -187,8 +187,6 @@ intel_alloc_renderbuffer_storage(GLcontext * ctx, struct gl_renderbuffer *rb,
    struct intel_renderbuffer *irb = intel_renderbuffer(rb);
    GLboolean softwareBuffer = GL_FALSE;
    int cpp;
-
-   ASSERT(rb->Name != 0);
 
    switch (internalFormat) {
    case GL_R3_G3_B2:

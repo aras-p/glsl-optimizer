@@ -273,6 +273,7 @@ struct intel_context
    drmI830Sarea *sarea;
 
    GLuint lastStamp;
+   GLuint revalidateDrawable;
 
    /**
     * Configuration cache

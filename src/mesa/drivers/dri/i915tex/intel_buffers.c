@@ -957,15 +957,22 @@ intelSwapBuffers(__DRIdrawablePrivate * dPriv)
 
 	 intel_fb->swap_ust = ust;
       }
-      if (dPriv && intel->lastStamp != dPriv->lastStamp) {
+      if (intel->revalidateDrawable) {
+	 __DRIscreenPrivate *sPriv = intel->driScreen;
+	 LOCK_HARDWARE(intel);
+	 DRI_VALIDATE_DRAWABLE_INFO(sPriv, dPriv);
+	 intel->revalidateDrawable = GL_FALSE;
+	 UNLOCK_HARDWARE(intel);
+	 if (dPriv && intel->lastStamp != dPriv->lastStamp) {
 	 /* XXX this doesn't appear to work quite right.
             And in any case, it will never get called with single buffered
             rendering here...
 	    And if it's only a window move (not resize), don't need to do anything. */
-	 if (INTEL_DEBUG & DEBUG_LOCK)
-	    _mesa_printf("doing defered drawable update\n");
-	 intelWindowMoved(intel);
-	 intel->lastStamp = dPriv->lastStamp;
+	    if (INTEL_DEBUG & DEBUG_LOCK)
+	       _mesa_printf("doing defered drawable update\n");
+	    intelWindowMoved(intel);
+	    intel->lastStamp = dPriv->lastStamp;
+	 }
       }
    }
    else {

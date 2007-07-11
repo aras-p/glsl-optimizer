@@ -673,7 +673,8 @@ intelContendedLock(struct intel_context *intel, GLuint flags)
     * checking must be done *after* this call:
     */
    if (dPriv)
-      DRI_VALIDATE_DRAWABLE_INFO(sPriv, dPriv);
+      intel->revalidateDrawable = GL_TRUE;
+//      DRI_VALIDATE_DRAWABLE_INFO(sPriv, dPriv);
 
    if (sarea->width != intelScreen->width ||
        sarea->height != intelScreen->height ||
@@ -727,6 +728,7 @@ intelContendedLock(struct intel_context *intel, GLuint flags)
    }
 #endif
 
+#if 0
    /* Drawable changed?
     */
    if (dPriv && intel->lastStamp != dPriv->lastStamp) {
@@ -735,6 +737,7 @@ intelContendedLock(struct intel_context *intel, GLuint flags)
 /*      intelWindowMoved(intel);
       intel->lastStamp = dPriv->lastStamp;*/
    }
+#endif
 }
 
 
