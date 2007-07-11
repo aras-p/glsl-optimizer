@@ -83,6 +83,7 @@ struct pipe_context *softpipe_create( void )
    softpipe->pipe.draw_vb = softpipe_draw_vb;
    softpipe->pipe.clear = softpipe_clear;
 
+   softpipe->quad.polygon_stipple = sp_quad_polygon_stipple_stage(softpipe);
    softpipe->quad.shade = sp_quad_shade_stage(softpipe);
    softpipe->quad.alpha_test = sp_quad_alpha_test_stage(softpipe);
    softpipe->quad.blend = sp_quad_blend_stage(softpipe);

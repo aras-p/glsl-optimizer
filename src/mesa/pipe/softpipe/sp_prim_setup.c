@@ -922,6 +922,9 @@ static void setup_end( struct prim_stage *stage )
 }
 
 
+/**
+ * Create a new primitive setup/render stage.
+ */
 struct prim_stage *prim_setup( struct softpipe_context *softpipe )
 {
    struct setup_stage *setup = CALLOC_STRUCT(setup_stage);

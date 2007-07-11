@@ -117,6 +117,7 @@ struct softpipe_context {
 
    /** Software quad rendering pipeline */
    struct {
+      struct quad_stage *polygon_stipple;
       struct quad_stage *shade;
       struct quad_stage *alpha_test;
       struct quad_stage *stencil_test;

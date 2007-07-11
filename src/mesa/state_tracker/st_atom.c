@@ -48,6 +48,7 @@ static const struct st_tracked_state *atoms[] =
    &st_update_clip,
    &st_update_fs,
    &st_update_setup,
+   &st_update_polygon_stipple,
    &st_update_viewport,
    &st_update_scissor,
    &st_update_blend,

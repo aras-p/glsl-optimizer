@@ -2,7 +2,7 @@
  * 
  * Copyright 2007 Tungsten Graphics, Inc., Cedar Park, Texas.
  * All Rights Reserved.
- *
+ * 
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the
  * "Software"), to deal in the Software without restriction, including
@@ -25,37 +25,38 @@
  * 
  **************************************************************************/
 
-/* Authors:  Keith Whitwell <keith@tungstengraphics.com>
- */
+ /*
+  * \brief polygon stipple state
+  *
+  * Authors:
+  *   Brian Paul
+  */
+ 
 
-#ifndef SP_TILE_H
-#define SP_TILE_H
+#include "st_context.h"
+#include "st_atom.h"
+#include "pipe/p_context.h"
+#include "pipe/p_defines.h"
 
 
-struct softpipe_context;
-struct quad_header;
+static void 
+update_stipple( struct st_context *st )
+{
+   const GLuint sz = sizeof(st->state.poly_stipple.stipple);
+   assert(sz == sizeof(st->ctx->PolygonStipple));
+
+   if (memcmp(&st->state.poly_stipple.stipple, st->ctx->PolygonStipple, sz)) {
+      /* state has changed */
+      memcpy(st->state.poly_stipple.stipple, st->ctx->PolygonStipple, sz);
+      st->pipe->set_polygon_stipple(st->pipe, &st->state.poly_stipple);
+   }
+}
 
 
-struct quad_stage {
-   struct softpipe_context *softpipe;
-
-   struct quad_stage *next;
-
-   /** the stage action */
-   void (*run)(struct quad_stage *qs, struct quad_header *quad);
+const struct st_tracked_state st_update_polygon_stipple = {
+   .dirty = {
+      .mesa = (_NEW_POLYGONSTIPPLE),
+      .st  = 0,
+   },
+   .update = update_stipple
 };
-
-
-struct quad_stage *sp_quad_polygon_stipple_stage( struct softpipe_context *softpipe );
-struct quad_stage *sp_quad_shade_stage( struct softpipe_context *softpipe );
-struct quad_stage *sp_quad_alpha_test_stage( struct softpipe_context *softpipe );
-struct quad_stage *sp_quad_stencil_test_stage( struct softpipe_context *softpipe );
-struct quad_stage *sp_quad_depth_test_stage( struct softpipe_context *softpipe );
-struct quad_stage *sp_quad_blend_stage( struct softpipe_context *softpipe );
-struct quad_stage *sp_quad_output_stage( struct softpipe_context *softpipe );
-
-void sp_build_quad_pipeline(struct softpipe_context *sp);
-
-void sp_depth_test_quad(struct quad_stage *qs, struct quad_header *quad);
-
-#endif /* SP_TILE_H */

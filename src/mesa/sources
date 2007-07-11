@@ -163,6 +163,7 @@ SOFTPIPE_SOURCES = \
 	pipe/softpipe/sp_quad_depth_test.c \
 	pipe/softpipe/sp_quad_fs.c \
 	pipe/softpipe/sp_quad_output.c \
+	pipe/softpipe/sp_quad_stipple.c \
 	pipe/softpipe/sp_quad_stencil.c \
 	pipe/softpipe/sp_state_blend.c \
 	pipe/softpipe/sp_state_clip.c \
@@ -206,6 +207,7 @@ STATETRACKER_SOURCES = \
 	state_tracker/st_atom_scissor.c \
 	state_tracker/st_atom_setup.c \
 	state_tracker/st_atom_stencil.c \
+	state_tracker/st_atom_stipple.c \
 	state_tracker/st_atom_viewport.c \
 	state_tracker/st_cb_program.c \
 	state_tracker/st_draw.c \

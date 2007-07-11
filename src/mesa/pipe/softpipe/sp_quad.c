@@ -37,4 +37,8 @@ sp_build_quad_pipeline(struct softpipe_context *sp)
       sp->quad.first = sp->quad.shade;
    }
 
+   if (sp->setup.poly_stipple_enable) {
+      sp->quad.polygon_stipple->next = sp->quad.first;
+      sp->quad.first = sp->quad.polygon_stipple;
+   }
 }
