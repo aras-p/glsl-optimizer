@@ -368,11 +368,13 @@ static void tri_linear_coeff( struct setup_stage *setup,
 			    (setup->coef[slot].dadx[i] * (setup->vmin->data[0][0] - 0.5) + 
 			     setup->coef[slot].dady[i] * (setup->vmin->data[0][1] - 0.5)));
 
+   /*
    _mesa_printf("attr[%d].%c: %f dx:%f dy:%f\n",
 		slot, "xyzw"[i], 
 		setup->coef[slot].a0[i],
 		setup->coef[slot].dadx[i],
 		setup->coef[slot].dady[i]);
+   */
 }
 
 
@@ -506,7 +508,9 @@ static void subtriangle( struct setup_stage *setup,
       finish_y = lines;
    }
 
+   /*
    _mesa_printf("%s %d %d\n", __FUNCTION__, start_y, finish_y);  
+   */
 
    for (y = start_y; y < finish_y; y++) {
 
@@ -560,7 +564,9 @@ static void setup_tri( struct prim_stage *stage,
 {
    struct setup_stage *setup = setup_stage( stage );
 
+   /*
    _mesa_printf("%s\n", __FUNCTION__ );
+   */
 
    setup_sort_vertices( setup, prim );
    setup_tri_coefficients( setup );
