@@ -325,12 +325,11 @@ static void r300UpdateCulling(GLcontext * ctx)
 			val = R300_CULL_FRONT;
 		else
 			val = R300_CULL_BACK;
-
-		if (ctx->Polygon.FrontFace == GL_CW)
-			val |= R300_FRONT_FACE_CW;
-		else
-			val |= R300_FRONT_FACE_CCW;
 	}
+	if (ctx->Polygon.FrontFace == GL_CW)
+		val |= R300_FRONT_FACE_CW;
+	else
+		val |= R300_FRONT_FACE_CCW;
 	r300->hw.cul.cmd[R300_CUL_CULL] = val;
 }
 
