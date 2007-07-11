@@ -82,9 +82,11 @@ intelCopyBuffer(const __DRIdrawablePrivate * dPriv,
    if (dPriv && dPriv->numClipRects) {
       struct intel_framebuffer *intel_fb = dPriv->driverPrivate;
       const struct intel_region *frontRegion
-	 = intel_get_rb_region(&intel_fb->Base, BUFFER_FRONT_LEFT);
+	 = intelScreen->front_region;
       const struct intel_region *backRegion
-	 = intel_get_rb_region(&intel_fb->Base, BUFFER_BACK_LEFT);
+	 = intel->ctx.DrawBuffer->_ColorDrawBufferMask[0] == BUFFER_BIT_FRONT_LEFT ?
+	   intel_get_rb_region(&intel_fb->Base, BUFFER_FRONT_LEFT) :
+	   intel_get_rb_region(&intel_fb->Base, BUFFER_BACK_LEFT);
       const int nbox = dPriv->numClipRects;
       const drm_clip_rect_t *pbox = dPriv->pClipRects;
       const int pitch = frontRegion->pitch;
@@ -100,7 +102,7 @@ intelCopyBuffer(const __DRIdrawablePrivate * dPriv,
 //      ASSERT(frontRegion->pitch == backRegion->pitch);
       ASSERT(frontRegion->cpp == backRegion->cpp);
 
-      DBG("copy buffer, front pitch %d back pitch %d\n",
+      DBG("front pitch %d back pitch %d\n",
 	 frontRegion->pitch, backRegion->pitch);
 
       if (cpp == 2) {
@@ -138,6 +140,11 @@ intelCopyBuffer(const __DRIdrawablePrivate * dPriv,
 	       continue;
 	 }
 
+	 DBG("box x1 x2 y1 y2 %d %d %d %d\n",
+	      box.x1, box.x2, box.y1, box.y2);
+
+	 /* XXX should make sure only the minimum area based on
+	    old draw buffer and new front clip rects is copied */
 	 sbox.x1 = box.x1 - dPriv->x;
 	 sbox.y1 = box.y1 - dPriv->y;
 
@@ -417,9 +424,8 @@ intelClearWithBlit(GLcontext * ctx, GLbitfield mask)
             b = *box;
          }
 
-         if (0)
-            _mesa_printf("clear %d,%d..%d,%d, mask %x\n",
-                         b.x1, b.y1, b.x2, b.y2, mask);
+         DBG("clear %d,%d..%d,%d, mask %x\n",
+                      b.x1, b.y1, b.x2, b.y2, mask);
 
          /* Loop over all renderbuffers */
          for (buf = 0; buf < BUFFER_COUNT && clearMask; buf++) {

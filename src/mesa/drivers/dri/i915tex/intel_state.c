@@ -205,25 +205,17 @@ intelCalcViewport(GLcontext * ctx)
    GLfloat *m = intel->ViewportMatrix.m;
    GLfloat yScale, yBias;
 
-   if (ctx->DrawBuffer->Name) {
-      /* User created FBO */
-      struct intel_renderbuffer *irb
+   struct intel_renderbuffer *irb
          = intel_renderbuffer(ctx->DrawBuffer->_ColorDrawBuffers[0][0]);
-      if (irb && !irb->RenderToTexture) {
-         /* y=0=top */
-         yScale = -1.0;
-         yBias = irb->Base.Height;
-      }
-      else {
-         /* y=0=bottom */
-         yScale = 1.0;
-         yBias = 0.0;
-      }
+   if (irb && !irb->RenderToTexture) {
+      /* y=0=top */
+      yScale = -1.0;
+      yBias = irb->Base.Height;
    }
    else {
-      /* window buffer, y=0=top */
-      yScale = -1.0;
-      yBias = (intel->driDrawable) ? intel->driDrawable->h : 0.0F;
+      /* y=0=bottom */
+      yScale = 1.0;
+      yBias = 0.0;
    }
 
    m[MAT_SX] = v[MAT_SX];

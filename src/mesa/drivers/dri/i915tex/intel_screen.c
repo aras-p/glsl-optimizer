@@ -172,6 +172,7 @@ intel_recreate_static(intelScreenPrivate *intelScreen,
 static void
 intel_recreate_static_regions(intelScreenPrivate *intelScreen)
 {
+/* this is the real front buffer which is only used for blitting to */
    intelScreen->front_region =
       intel_recreate_static(intelScreen,
 			    intelScreen->front_region,
@@ -601,6 +602,7 @@ intelCreateBuffer(__DRIscreenPrivate * driScrnPriv,
 
       _mesa_initialize_framebuffer(&intel_fb->Base, mesaVis);
 
+#if 0
       /* setup the hardware-based renderbuffers */
       {
          intel_fb->color_rb[0]
@@ -615,7 +617,6 @@ intelCreateBuffer(__DRIscreenPrivate * driScrnPriv,
 				&intel_fb->color_rb[0]->Base);
       }
 
-#if 0
       if (mesaVis->doubleBufferMode) {
          intel_fb->color_rb[1]
             = intel_create_renderbuffer(rgbFormat,
@@ -672,11 +673,22 @@ intelCreateBuffer(__DRIscreenPrivate * driScrnPriv,
       }
 
 #else
+      {
+	 /* fake frontbuffer */
+	 /* XXX allocation should only happen in the unusual case
+            it's actually needed */
+         intel_fb->color_rb[0]
+            = intel_new_renderbuffer_fb(NULL, rgbFormat);
+         _mesa_add_renderbuffer(&intel_fb->Base, BUFFER_FRONT_LEFT,
+				&intel_fb->color_rb[0]->Base);
+      }
+
       if (mesaVis->doubleBufferMode) {
          intel_fb->color_rb[1]
             = intel_new_renderbuffer_fb(NULL, rgbFormat);
          _mesa_add_renderbuffer(&intel_fb->Base, BUFFER_BACK_LEFT,
 				&intel_fb->color_rb[1]->Base);
+
 	 if (screen->third.handle) {
 	    struct gl_renderbuffer *tmp_rb = NULL;
 

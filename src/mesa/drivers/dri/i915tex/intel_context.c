@@ -282,17 +282,21 @@ intelFlush(GLcontext * ctx)
  * Check if we need to rotate/warp the front color buffer to the
  * rotated screen.  We generally need to do this when we get a glFlush
  * or glFinish after drawing to the front color buffer.
+ * If no rotation, just copy the private fake front buffer to the real one.
  */
 static void
-intelCheckFrontRotate(GLcontext * ctx)
+intelCheckFrontUpdate(GLcontext * ctx)
 {
    struct intel_context *intel = intel_context(ctx);
    if (intel->ctx.DrawBuffer->_ColorDrawBufferMask[0] ==
        BUFFER_BIT_FRONT_LEFT) {
       intelScreenPrivate *screen = intel->intelScreen;
+      __DRIdrawablePrivate *dPriv = intel->driDrawable;
       if (screen->current_rotation != 0) {
-         __DRIdrawablePrivate *dPriv = intel->driDrawable;
          intelRotateWindow(intel, dPriv, BUFFER_BIT_FRONT_LEFT);
+      }
+      else {
+         intelCopyBuffer(dPriv, NULL);
       }
    }
 }
@@ -305,7 +309,7 @@ static void
 intelglFlush(GLcontext * ctx)
 {
    intelFlush(ctx);
-   intelCheckFrontRotate(ctx);
+   intelCheckFrontUpdate(ctx);
 }
 
 void
@@ -319,7 +323,7 @@ intelFinish(GLcontext * ctx)
       driFenceUnReference(intel->batch->last_fence);
       intel->batch->last_fence = NULL;
    }
-   intelCheckFrontRotate(ctx);
+   intelCheckFrontUpdate(ctx);
 }
 
 
@@ -724,8 +728,10 @@ intelContendedLock(struct intel_context *intel, GLuint flags)
    /* Drawable changed?
     */
    if (dPriv && intel->lastStamp != dPriv->lastStamp) {
-      intelWindowMoved(intel);
-      intel->lastStamp = dPriv->lastStamp;
+      if (INTEL_DEBUG & DEBUG_LOCK)
+         _mesa_printf("drawable change detected but defering update\n");
+/*      intelWindowMoved(intel);
+      intel->lastStamp = dPriv->lastStamp;*/
    }
 }
 

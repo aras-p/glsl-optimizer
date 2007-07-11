@@ -930,7 +930,7 @@ intelSwapBuffers(__DRIdrawablePrivate * dPriv)
 	 GLboolean missed_target;
 	 struct intel_framebuffer *intel_fb = dPriv->driverPrivate;
 	 int64_t ust;
-         
+
 	 _mesa_notifySwapBuffers(ctx);  /* flush pending rendering comands */
 
          if (screen->current_rotation != 0 ||
@@ -955,6 +955,16 @@ intelSwapBuffers(__DRIdrawablePrivate * dPriv)
 	 }
 
 	 intel_fb->swap_ust = ust;
+      }
+      if (dPriv && intel->lastStamp != dPriv->lastStamp) {
+	 /* XXX this doesn't appear to work quite right.
+            And in any case, it will never get called with single buffered
+            rendering here...
+	    And if it's only a window move (not resize), don't need to do anything. */
+	 if (INTEL_DEBUG & DEBUG_LOCK)
+	    _mesa_printf("doing defered drawable update\n");
+	 intelWindowMoved(intel);
+	 intel->lastStamp = dPriv->lastStamp;
       }
    }
    else {
@@ -1068,21 +1078,12 @@ intel_draw_buffer(GLcontext * ctx, struct gl_framebuffer *fb)
     * And set up cliprects.
     */
    if (fb->Name == 0) {
+      intelSetPrivbufClipRects(intel);
       /* drawing to window system buffer */
       if (front) {
-#if 0
-         intelSetFrontClipRects(intel);
-#else
-         intelSetPrivbufClipRects(intel);
-#endif
          colorRegion = intel_get_rb_region(fb, BUFFER_FRONT_LEFT);
       }
       else {
-#if 0
-         intelSetBackClipRects(intel);
-#else
-         intelSetPrivbufClipRects(intel);
-#endif
          colorRegion = intel_get_rb_region(fb, BUFFER_BACK_LEFT);
       }
    }
