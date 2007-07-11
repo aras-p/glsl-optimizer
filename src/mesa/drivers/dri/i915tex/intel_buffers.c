@@ -910,17 +910,11 @@ intelCopySubBuffer(__DRIdrawablePrivate * dPriv, int x, int y, int w, int h)
 
       if (ctx->Visual.doubleBufferMode) {
          drm_clip_rect_t rect;
-#if 1
-         rect.x1 = x + dPriv->x;
-         rect.y1 = (dPriv->h - y - h) + dPriv->y;
-         rect.x2 = rect.x1 + w;
-         rect.y2 = rect.y1 + h;
-#else
+	 /* fixup cliprect (driDrawable may have changed?) later */
          rect.x1 = x;
-         rect.y1 = dPriv->h - y;
-         rect.x2 = rect.x1 + w;
-         rect.y2 = rect.y1 + h;
-#endif
+         rect.y1 = y;
+         rect.x2 = w;
+         rect.y2 = h;
          _mesa_notifySwapBuffers(ctx);  /* flush pending rendering comands */
          intelCopyBuffer(dPriv, &rect);
       }
