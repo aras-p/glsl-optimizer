@@ -54,8 +54,9 @@ static INLINE struct offset_stage *offset_stage( struct prim_stage *stage )
 static void offset_begin( struct prim_stage *stage )
 {
    struct offset_stage *offset = offset_stage(stage);
+   GLfloat mrd = 1.0 / 65535.0; /* XXX this depends on depthbuffer bits! */
 
-   offset->units = stage->draw->setup.offset_units;
+   offset->units = stage->draw->setup.offset_units * mrd;
    offset->scale = stage->draw->setup.offset_scale;
 
    stage->next->begin( stage->next );
@@ -79,11 +80,11 @@ static void do_offset_tri( struct prim_stage *stage,
    GLfloat *v2 = header->v[2]->data[0];
 
    /* edge vectors e = v0 - v2, f = v1 - v2 */
-   GLfloat ex = v0[0] - v2[2];
-   GLfloat ey = v0[1] - v2[2];
+   GLfloat ex = v0[0] - v2[0];
+   GLfloat ey = v0[1] - v2[1];
    GLfloat ez = v0[2] - v2[2];
-   GLfloat fx = v1[0] - v2[2];
-   GLfloat fy = v1[1] - v2[2];
+   GLfloat fx = v1[0] - v2[0];
+   GLfloat fy = v1[1] - v2[1];
    GLfloat fz = v1[2] - v2[2];
 
    /* (a,b) = cross(e,f).xy */
