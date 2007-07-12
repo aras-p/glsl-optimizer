@@ -127,14 +127,6 @@ static inline GLint block( GLint x )
 
 
 
-static void setup_begin( struct draw_stage *stage )
-{
-   struct setup_stage *setup = setup_stage(stage);
-
-   setup->quad.nr_attrs = setup->softpipe->nr_frag_attrs;
-}
-
-
 /**
  * Run shader on a quad/block.
  */
@@ -928,15 +920,32 @@ setup_point(struct draw_stage *stage, struct prim_header *prim)
 
 
 
+static void setup_begin( struct draw_stage *stage )
+{
+   struct setup_stage *setup = setup_stage(stage);
+
+   setup->quad.nr_attrs = setup->softpipe->nr_frag_attrs;
+
+   /*
+    * XXX this is where we might map() the renderbuffers to begin
+    * s/w rendering.
+    */
+}
+
+
 static void setup_end( struct draw_stage *stage )
 {
+   /*
+    * XXX this is where we might unmap() the renderbuffers after
+    * s/w rendering.
+    */
 }
 
 
 /**
  * Create a new primitive setup/render stage.
  */
-struct draw_stage *prim_setup( struct softpipe_context *softpipe )
+struct draw_stage *sp_draw_render_stage( struct softpipe_context *softpipe )
 {
    struct setup_stage *setup = CALLOC_STRUCT(setup_stage);
 

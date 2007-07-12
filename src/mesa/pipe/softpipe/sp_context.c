@@ -93,10 +93,10 @@ struct pipe_context *softpipe_create( void )
    softpipe->quad.output = sp_quad_output_stage(softpipe);
 
    /*
-    * Create drawing context and plug our render/setup stage into it.
+    * Create drawing context and plug our rendering stage into it.
     */
    softpipe->draw = draw_create();
-   draw_set_setup_stage(softpipe->draw, prim_setup(softpipe));
+   draw_set_setup_stage(softpipe->draw, sp_draw_render_stage(softpipe));
 
    /*
     * XXX we could plug GL selection/feedback into the drawing pipeline

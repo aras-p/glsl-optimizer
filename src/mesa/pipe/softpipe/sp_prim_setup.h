@@ -22,8 +22,10 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#ifndef S_TRI_H
-#define S_TRI_H
+
+#ifndef SP_PRIM_SETUP_H
+#define SP_PRIM_SETUP_H
+
 
 /* Vertices are just an array of floats, with all the attributes
  * packed.  We currently assume a layout like:
@@ -43,7 +45,7 @@
 #include "s_context.h"
 
 
-extern struct draw_stage *prim_setup( struct softpipe_context *softpipe );
+extern struct draw_stage *sp_draw_render_stage( struct softpipe_context *softpipe );
 
 
 #if 0 /* UNUSED? */
@@ -104,11 +106,6 @@ void tri_triangle( struct tri_context *tri,
 
 #ifdef SETUP_PRIVATE
 
-
-
-
-
-
 GLboolean tri_setup( struct tri_context *tri,
 		       const struct vertex *v0,
 		       const struct vertex *v1,
@@ -117,11 +114,9 @@ GLboolean tri_setup( struct tri_context *tri,
 void tri_rasterize( struct tri_context *tri );
 void tri_rasterize_spans( struct tri_context *tri );
 
-
-
-
+#endif
 
 
 #endif
-#endif
-#endif
+
+#endif /* SP_PRIM_SETUP_H */
