@@ -122,6 +122,7 @@ struct softpipe_context {
       struct quad_stage *alpha_test;
       struct quad_stage *stencil_test;
       struct quad_stage *depth_test;
+      struct quad_stage *bufloop;
       struct quad_stage *blend;
       struct quad_stage *colormask;
       struct quad_stage *output;
@@ -131,6 +132,8 @@ struct softpipe_context {
 
    /** The primitive drawing context */
    struct draw_context *draw;
+
+   struct pipe_surface *cbuf;      /**< current color buffer (one of cbufs) */
 };
 
 

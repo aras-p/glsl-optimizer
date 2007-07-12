@@ -51,6 +51,7 @@ struct quad_stage *sp_quad_shade_stage( struct softpipe_context *softpipe );
 struct quad_stage *sp_quad_alpha_test_stage( struct softpipe_context *softpipe );
 struct quad_stage *sp_quad_stencil_test_stage( struct softpipe_context *softpipe );
 struct quad_stage *sp_quad_depth_test_stage( struct softpipe_context *softpipe );
+struct quad_stage *sp_quad_bufloop_stage( struct softpipe_context *softpipe );
 struct quad_stage *sp_quad_blend_stage( struct softpipe_context *softpipe );
 struct quad_stage *sp_quad_colormask_stage( struct softpipe_context *softpipe );
 struct quad_stage *sp_quad_output_stage( struct softpipe_context *softpipe );

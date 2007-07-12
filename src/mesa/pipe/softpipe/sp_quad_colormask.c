@@ -45,12 +45,8 @@ static void
 colormask_quad(struct quad_stage *qs, struct quad_header *quad)
 {
    struct softpipe_context *softpipe = qs->softpipe;
+   struct softpipe_surface *sps = softpipe_surface(softpipe->cbuf);
    GLfloat dest[4][QUAD_SIZE];
-
-   /* XXX buffer looping */
-
-   struct softpipe_surface *sps
-      = softpipe_surface(softpipe->framebuffer.cbufs[0]);
    
    sps->read_quad_f_swz(sps, quad->x0, quad->y0, dest);
 

@@ -21,6 +21,16 @@ sp_build_quad_pipeline(struct softpipe_context *sp)
       sp->quad.first = sp->quad.blend;
    }
 
+   if (sp->framebuffer.num_cbufs == 1) {
+      /* the usual case: write to exactly one colorbuf */
+      sp->cbuf = sp->framebuffer.cbufs[0];
+   }
+   else {
+      /* insert bufloop stage */
+      sp->quad.bufloop->next = sp->quad.first;
+      sp->quad.first = sp->quad.bufloop;
+   }
+
    if (   sp->stencil.front_enabled
        || sp->stencil.front_enabled) {
       sp->quad.stencil_test->next = sp->quad.first;

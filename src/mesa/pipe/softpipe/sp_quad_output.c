@@ -65,28 +65,21 @@ static void
 output_quad(struct quad_stage *qs, struct quad_header *quad)
 {
    struct softpipe_context *softpipe = qs->softpipe;
-   GLuint i;
+   struct softpipe_surface *sps = softpipe_surface(softpipe->cbuf);
 
-   for (i = 0; i < softpipe->framebuffer.num_cbufs; i++) {
-      struct softpipe_surface *sps
-         = softpipe_surface(softpipe->framebuffer.cbufs[i]);
+   if (quad->mask != MASK_ALL) {
+      GLfloat tmp[4][QUAD_SIZE];
 
-      if (quad->mask != MASK_ALL) {
-         GLfloat tmp[4][QUAD_SIZE];
+      /* XXX probably add a masked-write function someday */
 
-         /* Yes, we'll probably have a masked write as well, but this is
-          * how blend will be done at least.
-          */
+      sps->read_quad_f_swz(sps, quad->x0, quad->y0, tmp);
 
-         sps->read_quad_f_swz(sps, quad->x0, quad->y0, tmp);
+      mask_copy( tmp, quad->outputs.color, quad->mask );
 
-         mask_copy( tmp, quad->outputs.color, quad->mask );
-
-         sps->write_quad_f_swz(sps, quad->x0, quad->y0, tmp);
-      }
-      else {
-         sps->write_quad_f_swz(sps, quad->x0, quad->y0, quad->outputs.color);
-      }
+      sps->write_quad_f_swz(sps, quad->x0, quad->y0, tmp);
+   }
+   else if (quad->mask) {
+      sps->write_quad_f_swz(sps, quad->x0, quad->y0, quad->outputs.color);
    }
 }
 
@@ -100,4 +93,3 @@ struct quad_stage *sp_quad_output_stage( struct softpipe_context *softpipe )
 
    return stage;
 }
-
