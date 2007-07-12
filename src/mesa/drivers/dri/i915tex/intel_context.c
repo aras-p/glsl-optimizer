@@ -370,7 +370,7 @@ intelInitContext(struct intel_context *intel,
 
    if (!havePools)
       return GL_FALSE;
-     
+
    if (!_mesa_initialize_context(&intel->ctx,
                                  mesaVis, shareCtx,
                                  functions, (void *) intel))
@@ -572,6 +572,7 @@ intelMakeCurrent(__DRIcontextPrivate * driContextPriv,
                  __DRIdrawablePrivate * driDrawPriv,
                  __DRIdrawablePrivate * driReadPriv)
 {
+   GLuint updatebufsize = GL_FALSE;
 
 #if 0
    if (driDrawPriv) {
@@ -619,19 +620,22 @@ intelMakeCurrent(__DRIcontextPrivate * driContextPriv,
          }
       }
 
-      /* set GLframebuffer size to match window, if needed */
-      driUpdateFramebufferSize(&intel->ctx, driDrawPriv);
+      /* only update GLframebuffer size to match window
+         if here for the first time */
+      if (intel->ctx.FirstTimeCurrent) {
+	 updatebufsize = GL_TRUE;
+	 driUpdateFramebufferSize(&intel->ctx, driDrawPriv);
 
-      if (driReadPriv != driDrawPriv) {
-	 driUpdateFramebufferSize(&intel->ctx, driReadPriv);
+	 if (driReadPriv != driDrawPriv) {
+	    driUpdateFramebufferSize(&intel->ctx, driReadPriv);
+	 }
       }
 
       _mesa_make_current(&intel->ctx, &intel_fb->Base, readFb);
-      intel->intelScreen->dummyctxptr = &intel->ctx;
 
       /* The drawbuffer won't always be updated by _mesa_make_current: 
        */
-      if (intel->ctx.DrawBuffer == &intel_fb->Base) {
+      if (updatebufsize && intel->ctx.DrawBuffer == &intel_fb->Base) {
 
 	 if (intel->driDrawable != driDrawPriv) {
 	    intel_fb->vblank_flags = (intel->intelScreen->irq_active != 0)

@@ -77,7 +77,6 @@ do_texture_readpixels(GLcontext * ctx,
    struct intel_context *intel = intel_context(ctx);
    intelScreenPrivate *screen = intel->intelScreen;
    GLint pitch = pack->RowLength ? pack->RowLength : width;
-   __DRIdrawablePrivate *dPriv = intel->driDrawable;
    int textureFormat;
    GLenum glTextureFormat;
    int destFormat, depthFormat, destPitch;
@@ -107,7 +106,7 @@ do_texture_readpixels(GLcontext * ctx,
 
    LOCK_HARDWARE(intel);
 
-   if (intel->driDrawable->numClipRects) {
+   if (intel->numClipRects) {
       intel->vtbl.install_meta_state(intel);
       intel->vtbl.meta_no_depth_write(intel);
       intel->vtbl.meta_no_stencil_write(intel);
@@ -120,9 +119,7 @@ do_texture_readpixels(GLcontext * ctx,
          return GL_TRUE;
       }
 
-      y = dPriv->h - y - height;
-      x += dPriv->x;
-      y += dPriv->y;
+      y = intel->pClipRects->y2 - y - height;
 
 
       /* Set the frontbuffer up as a large rectangular texture.
@@ -230,29 +227,25 @@ do_blit_readpixels(GLcontext * ctx,
    dst_offset = (GLuint) _mesa_image_address(2, pack, pixels, width, height,
                                              format, type, 0, 0, 0);
 
-
-   /* Although the blits go on the command buffer, need to do this and
-    * fire with lock held to guarentee cliprects are correct.
-    */
+   /* reading from priv buffer, cliprects should not change */
    intelFlush(&intel->ctx);
-   LOCK_HARDWARE(intel);
 
-   if (intel->driDrawable->numClipRects) {
+   if (intel->numClipRects) {
+      assert (intel->numClipRects == 1);
       GLboolean all = (width * height * src->cpp == dst->Base.Size &&
                        x == 0 && dst_offset == 0);
 
       struct _DriBufferObject *dst_buffer =
          intel_bufferobj_buffer(intel, dst, all ? INTEL_WRITE_FULL :
                                 INTEL_WRITE_PART);
-      __DRIdrawablePrivate *dPriv = intel->driDrawable;
-      int nbox = dPriv->numClipRects;
-      drm_clip_rect_t *box = dPriv->pClipRects;
+      int nbox = intel->numClipRects;
+      drm_clip_rect_t *box = intel->pClipRects;
       drm_clip_rect_t rect;
       drm_clip_rect_t src_rect;
       int i;
 
-      src_rect.x1 = dPriv->x + x;
-      src_rect.y1 = dPriv->y + dPriv->h - (y + height);
+      src_rect.x1 = x;
+      src_rect.y1 = box->y2 - (y + height);
       src_rect.x2 = src_rect.x1 + width;
       src_rect.y2 = src_rect.y1 + height;
 
@@ -279,7 +272,6 @@ do_blit_readpixels(GLcontext * ctx,
       driFenceReference(fence);
 
    }
-   UNLOCK_HARDWARE(intel);
 
    if (fence) {
       driFenceFinish(fence, DRM_FENCE_TYPE_EXE | DRM_I915_FENCE_TYPE_RW, 

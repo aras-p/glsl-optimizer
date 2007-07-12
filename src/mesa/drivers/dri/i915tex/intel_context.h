@@ -250,7 +250,6 @@ struct intel_context
 
    /* These refer to the current drawing buffer:
     */
-   int drawX, drawY;            /**< origin of drawing area within region */
    GLuint numClipRects;         /**< cliprects for drawing */
    drm_clip_rect_t *pClipRects;
    drm_clip_rect_t fboRect;     /**< cliprect for FBO rendering */

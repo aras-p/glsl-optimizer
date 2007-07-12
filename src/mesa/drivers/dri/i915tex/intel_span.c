@@ -51,8 +51,7 @@
    struct intel_renderbuffer *irb = intel_renderbuffer(rb);		\
    const GLint yScale = irb->RenderToTexture ? 1 : -1;			\
    const GLint yBias = irb->RenderToTexture ? 0 : irb->Base.Height - 1;	\
-   GLubyte *buf = (GLubyte *) irb->pfMap				\
-      + (intel->drawY * irb->pfPitch + intel->drawX) * irb->region->cpp;\
+   GLubyte *buf = (GLubyte *) irb->pfMap;				\
    GLuint p;								\
    assert(irb->pfMap);\
    (void) p;
@@ -65,10 +64,10 @@
    do {									\
       int _nc = intel->numClipRects;					\
       while ( _nc-- ) {							\
-	 int minx = intel->pClipRects[_nc].x1 - intel->drawX;		\
-	 int miny = intel->pClipRects[_nc].y1 - intel->drawY;		\
-	 int maxx = intel->pClipRects[_nc].x2 - intel->drawX;		\
-	 int maxy = intel->pClipRects[_nc].y2 - intel->drawY;
+	 int minx = intel->pClipRects[_nc].x1;		\
+	 int miny = intel->pClipRects[_nc].y1;		\
+	 int maxx = intel->pClipRects[_nc].x2;		\
+	 int maxy = intel->pClipRects[_nc].y2;
 
 
 
@@ -106,9 +105,7 @@
    const GLuint pitch = irb->pfPitch/***XXX region->pitch*/; /* in pixels */ \
    const GLint yScale = irb->RenderToTexture ? 1 : -1;			\
    const GLint yBias = irb->RenderToTexture ? 0 : irb->Base.Height - 1;	\
-   char *buf = (char *) irb->pfMap/*XXX use region->map*/ +             \
-      (intel->drawY * pitch + intel->drawX) * irb->region->cpp;
-
+   char *buf = (char *) irb->pfMap/*XXX use region->map*/ ;
 
 #define LOCAL_STENCIL_VARS LOCAL_DEPTH_VARS
 

@@ -116,8 +116,7 @@ intel_batch_ioctl(struct intel_context *intel,
    batch.cliprects = intel->pClipRects;
    batch.num_cliprects = ignore_cliprects ? 0 : intel->numClipRects;
    batch.DR1 = 0;
-   batch.DR4 = ((((GLuint) intel->drawX) & 0xffff) |
-                (((GLuint) intel->drawY) << 16));
+   batch.DR4 = 0; /* still need this ? */
 
    DBG("%s: 0x%x..0x%x DR4: %x cliprects: %d\n",
        __FUNCTION__,

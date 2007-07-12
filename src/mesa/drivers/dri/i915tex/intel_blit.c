@@ -91,7 +91,7 @@ intelCopyBuffer(__DRIdrawablePrivate * dPriv,
       const struct intel_region *frontRegion
 	 = intelScreen->front_region;
       const struct intel_region *backRegion
-	 = intel->ctx.DrawBuffer->_ColorDrawBufferMask[0] == BUFFER_BIT_FRONT_LEFT ?
+	 = intel_fb->Base._ColorDrawBufferMask[0] == BUFFER_BIT_FRONT_LEFT ?
 	   intel_get_rb_region(&intel_fb->Base, BUFFER_FRONT_LEFT) :
 	   intel_get_rb_region(&intel_fb->Base, BUFFER_BACK_LEFT);
       const int backWidth = intel_fb->Base.Width;
@@ -108,7 +108,6 @@ intelCopyBuffer(__DRIdrawablePrivate * dPriv,
       ASSERT(intel_fb->Base.Name == 0);    /* Not a user-created FBO */
       ASSERT(frontRegion);
       ASSERT(backRegion);
-//      ASSERT(frontRegion->pitch == backRegion->pitch);
       ASSERT(frontRegion->cpp == backRegion->cpp);
 
       DBG("front pitch %d back pitch %d\n",
@@ -405,6 +404,7 @@ intelClearWithBlit(GLcontext * ctx, GLbitfield mask)
    LOCK_HARDWARE(intel);
 
    if (intel->numClipRects) {
+      assert(intel->numClipRects == 1);
       GLint cx, cy, cw, ch;
       drm_clip_rect_t clear;
       int i;
@@ -417,10 +417,9 @@ intelClearWithBlit(GLcontext * ctx, GLbitfield mask)
 
       if (fb->Name == 0) {
          /* clearing a window */
-
          /* flip top to bottom */
-         clear.x1 = cx + intel->drawX;
-         clear.y1 = intel->driDrawable->y + intel->driDrawable->h - cy - ch;
+         clear.x1 = cx;
+         clear.y1 = intel->pClipRects->y2 - cy - ch;
          clear.x2 = clear.x1 + cw;
          clear.y2 = clear.y1 + ch;
       }

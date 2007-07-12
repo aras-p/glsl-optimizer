@@ -146,6 +146,8 @@ intel_delete_renderbuffer(struct gl_renderbuffer *rb)
 
    ASSERT(irb);
 
+   DBG("freeing renderbuffer\n");
+
    if (irb->PairedStencil || irb->PairedDepth) {
       intel_unpair_depth_stencil(ctx, irb);
    }

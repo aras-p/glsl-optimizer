@@ -191,14 +191,10 @@ do_texture_copypixels(GLcontext * ctx,
 
    LOCK_HARDWARE(intel);
 
-   if (intel->driDrawable->numClipRects) {
-      __DRIdrawablePrivate *dPriv = intel->driDrawable;
-
-
-      srcy = dPriv->h - srcy - height;  /* convert from gl to hardware coords */
-
-      srcx += dPriv->x;
-      srcy += dPriv->y;
+   if (intel->numClipRects) {
+      int bufHeight = intel->pClipRects->y2;
+      assert (intel->numClipRects == 1);
+      srcy = bufHeight - srcy - height;  /* convert from gl to hardware coords */
 
       /* Clip against the source region.  This is the only source
        * clipping we do.  XXX: Just set the texcord wrap mode to clamp
@@ -223,8 +219,8 @@ do_texture_copypixels(GLcontext * ctx,
       intel_meta_draw_quad(intel, 
 			   dstx, 
 			   dstx + width * ctx->Pixel.ZoomX, 
-			   dPriv->h - (dsty + height * ctx->Pixel.ZoomY), 
-			   dPriv->h - (dsty), 0,   /* XXX: what z value? */
+			   bufHeight - (dsty + height * ctx->Pixel.ZoomY), 
+			   bufHeight - (dsty), 0,   /* XXX: what z value? */
                            0x00ff00ff,
                            srcx, srcx + width, srcy, srcy + height);
 
@@ -271,11 +267,11 @@ do_blit_copypixels(GLcontext * ctx,
 
    LOCK_HARDWARE(intel);
 
-   if (intel->driDrawable->numClipRects) {
-      __DRIdrawablePrivate *dPriv = intel->driDrawable;
-      drm_clip_rect_t *box = dPriv->pClipRects;
+   if (intel->numClipRects) {
+      assert(intel->numClipRects == 1);
+      drm_clip_rect_t *box = intel->pClipRects;
       drm_clip_rect_t dest_rect;
-      GLint nbox = dPriv->numClipRects;
+      GLint nbox = intel->numClipRects;
       GLint delta_x = 0;
       GLint delta_y = 0;
       GLuint i;
@@ -299,13 +295,10 @@ do_blit_copypixels(GLcontext * ctx,
       }
 
       /* Convert from GL to hardware coordinates:
+       * cliprect should be size of buffer
        */
-      dsty = dPriv->h - dsty - height;  
-      srcy = dPriv->h - srcy - height;  
-      dstx += dPriv->x;
-      dsty += dPriv->y;
-      srcx += dPriv->x;
-      srcy += dPriv->y;
+      dsty = box->y2 - dsty - height;
+      srcy = box->y2 - srcy - height;
 
       /* Clip against the source region.  This is the only source
        * clipping we do.  Dst is clipped with cliprects below.

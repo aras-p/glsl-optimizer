@@ -128,8 +128,6 @@ intel_readbuf_region(struct intel_context *intel)
  * Update the following fields for rendering to a user-created FBO:
  *   intel->numClipRects
  *   intel->pClipRects
- *   intel->drawX
- *   intel->drawY
  */
 static void
 intelSetRenderbufferClipRects(struct intel_context *intel)
@@ -142,8 +140,6 @@ intelSetRenderbufferClipRects(struct intel_context *intel)
    intel->fboRect.y2 = intel->ctx.DrawBuffer->Height;
    intel->numClipRects = 1;
    intel->pClipRects = &intel->fboRect;
-   intel->drawX = 0;
-   intel->drawY = 0;
 }
 
 /**
@@ -154,18 +150,17 @@ intelSetRenderbufferClipRects(struct intel_context *intel)
 static void
 intelSetPrivbufClipRects(struct intel_context *intel)
 {
-   __DRIdrawablePrivate *dPriv = intel->driDrawable;
-   if (!dPriv)
+   if (!intel->ctx.DrawBuffer) {
+      fprintf(stderr, "%s: DrawBuffer not set!\n", __FUNCTION__);
       return;
+   }
 
    intel->fakeClipRect.x1 = 0;
    intel->fakeClipRect.y1 = 0;
-   intel->fakeClipRect.x2 = dPriv->w;
-   intel->fakeClipRect.y2 = dPriv->h;
+   intel->fakeClipRect.x2 = intel->ctx.DrawBuffer->Width;
+   intel->fakeClipRect.y2 = intel->ctx.DrawBuffer->Height;
    intel->numClipRects = 1;
    intel->pClipRects = &intel->fakeClipRect;
-   intel->drawX = 0;
-   intel->drawY = 0;
 }
 
 
@@ -445,7 +440,6 @@ intelRotateWindow(struct intel_context *intel,
    int i;
    GLenum format, type;
 
-   int xOrig, yOrig;
    int origNumClipRects;
    drm_clip_rect_t *origRects;
 
@@ -469,8 +463,6 @@ intelRotateWindow(struct intel_context *intel,
 
 
    /* save current drawing origin and cliprects (restored at end) */
-   xOrig = intel->drawX;
-   yOrig = intel->drawY;
    origNumClipRects = intel->numClipRects;
    origRects = intel->pClipRects;
 
@@ -481,8 +473,6 @@ intelRotateWindow(struct intel_context *intel,
    fullRect.y1 = 0;
    fullRect.x2 = screen->rotatedWidth;
    fullRect.y2 = screen->rotatedHeight;
-   intel->drawX = 0;
-   intel->drawY = 0;
    intel->numClipRects = 1;
    intel->pClipRects = &fullRect;
 
@@ -565,8 +555,6 @@ intelRotateWindow(struct intel_context *intel,
    intel_batchbuffer_flush(intel->batch);
 
    /* restore original drawing origin and cliprects */
-   intel->drawX = xOrig;
-   intel->drawY = yOrig;
    intel->numClipRects = origNumClipRects;
    intel->pClipRects = origRects;
 

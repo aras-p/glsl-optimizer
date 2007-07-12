@@ -138,13 +138,15 @@ do_texture_drawpixels(GLcontext * ctx,
 
    LOCK_HARDWARE(intel);
 
-   if (intel->driDrawable->numClipRects) {
-      __DRIdrawablePrivate *dPriv = intel->driDrawable;
+   if (intel->numClipRects) {
+      assert(intel->numClipRects == 1);
+      int bufHeight = intel->pClipRects->y2;
+
       GLint srcx, srcy;
       GLint dstx, dsty;
 
       dstx = x;
-      dsty = dPriv->h - (y + height);
+      dsty = bufHeight - (y + height);
 
       srcx = 0;                 /* skiprows/pixels already done */
       srcy = 0;
@@ -172,8 +174,8 @@ do_texture_drawpixels(GLcontext * ctx,
        */
       intel_meta_draw_quad(intel,
                            dstx, dstx + width * ctx->Pixel.ZoomX,
-                           dPriv->h - (y + height * ctx->Pixel.ZoomY),
-                           dPriv->h - (y),
+                           bufHeight - (y + height * ctx->Pixel.ZoomY),
+                           bufHeight - (y),
                            -ctx->Current.RasterPos[2] * .5,
                            0x00ff00ff,
                            srcx, srcx + width, srcy + height, srcy);
@@ -289,21 +291,21 @@ do_blit_drawpixels(GLcontext * ctx,
    src_offset = (GLuint) _mesa_image_address(2, unpack, pixels, width, height,
                                              format, type, 0, 0, 0);
 
+   /* don't need a lock as cliprects shouldn't change */
    intelFlush(&intel->ctx);
-   LOCK_HARDWARE(intel);
 
-   if (intel->driDrawable->numClipRects) {
-      __DRIdrawablePrivate *dPriv = intel->driDrawable;
-      int nbox = dPriv->numClipRects;
-      drm_clip_rect_t *box = dPriv->pClipRects;
+   if (intel->numClipRects) {
+      assert(intel->numClipRects == 1);
+      int nbox = intel->numClipRects;
+      drm_clip_rect_t *box = intel->pClipRects;
       drm_clip_rect_t rect;
       drm_clip_rect_t dest_rect;
       struct _DriBufferObject *src_buffer =
          intel_bufferobj_buffer(intel, src, INTEL_READ);
       int i;
 
-      dest_rect.x1 = dPriv->x + x;
-      dest_rect.y1 = dPriv->y + dPriv->h - (y + height);
+      dest_rect.x1 = x;
+      dest_rect.y1 = box->y2 - (y + height);
       dest_rect.x2 = dest_rect.x1 + width;
       dest_rect.y2 = dest_rect.y1 + height;
 
@@ -327,7 +329,6 @@ do_blit_drawpixels(GLcontext * ctx,
       fence = intel_batchbuffer_flush(intel->batch);
       driFenceReference(fence);
    }
-   UNLOCK_HARDWARE(intel);
 
    if (fence) {
       driFenceFinish(fence, DRM_FENCE_TYPE_EXE | DRM_I915_FENCE_TYPE_RW, GL_FALSE);

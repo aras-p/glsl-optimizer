@@ -101,6 +101,7 @@ do_copy_texsubimage(struct intel_context *intel,
    }
 
    intelFlush(ctx);
+   /* XXX still need the lock ? */
    LOCK_HARDWARE(intel);
    {
       GLuint image_offset = intel_miptree_image_offset(intelImage->mt,
@@ -117,20 +118,8 @@ do_copy_texsubimage(struct intel_context *intel,
          dstx += x - orig_x;
          dsty += y - orig_y;
 
-         if (ctx->ReadBuffer->Name == 0) {
-            /* reading from a window, adjust x, y */
-            __DRIdrawablePrivate *dPriv = intel->driDrawable;
-            GLuint window_y;
-            /* window_y = position of window on screen if y=0=bottom */
-            window_y = intel->intelScreen->height - (dPriv->y + dPriv->h);
-            y = window_y + y;
-            x += dPriv->x;
-         }
-         else {
-            /* reading from a FBO */
-            /* invert Y */
-            y = ctx->ReadBuffer->Height - y - 1;
-         }
+         /* invert Y */
+         y = ctx->ReadBuffer->Height - y - 1;
 
 
          /* A bit of fiddling to get the blitter to work with -ve
