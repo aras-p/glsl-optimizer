@@ -39,7 +39,7 @@
 
 
 struct offset_stage {
-   struct prim_stage stage;
+   struct draw_stage stage;
 
    GLfloat scale;
    GLfloat units;
@@ -47,13 +47,13 @@ struct offset_stage {
 
 
 
-static INLINE struct offset_stage *offset_stage( struct prim_stage *stage )
+static INLINE struct offset_stage *offset_stage( struct draw_stage *stage )
 {
    return (struct offset_stage *) stage;
 }
 
 
-static void offset_begin( struct prim_stage *stage )
+static void offset_begin( struct draw_stage *stage )
 {
    struct offset_stage *offset = offset_stage(stage);
    GLfloat mrd = 1.0 / 65535.0; /* XXX this depends on depthbuffer bits! */
@@ -69,7 +69,7 @@ static void offset_begin( struct prim_stage *stage )
  * Offset tri Z.  Some hardware can handle this, but not usually when
  * doing unfilled rendering.
  */
-static void do_offset_tri( struct prim_stage *stage,
+static void do_offset_tri( struct draw_stage *stage,
 			   struct prim_header *header )
 {
    struct offset_stage *offset = offset_stage(stage);   
@@ -110,7 +110,7 @@ static void do_offset_tri( struct prim_stage *stage,
 }
 
 
-static void offset_tri( struct prim_stage *stage,
+static void offset_tri( struct draw_stage *stage,
 			struct prim_header *header )
 {
    struct prim_header tmp;
@@ -125,30 +125,34 @@ static void offset_tri( struct prim_stage *stage,
 
 
 
-static void offset_line( struct prim_stage *stage,
+static void offset_line( struct draw_stage *stage,
 		       struct prim_header *header )
 {
    stage->next->line( stage->next, header );
 }
 
 
-static void offset_point( struct prim_stage *stage,
+static void offset_point( struct draw_stage *stage,
 			struct prim_header *header )
 {
    stage->next->point( stage->next, header );
 }
 
 
-static void offset_end( struct prim_stage *stage )
+static void offset_end( struct draw_stage *stage )
 {
    stage->next->end( stage->next );
 }
 
-struct prim_stage *prim_offset( struct draw_context *draw )
+
+/**
+ * Create polygon offset drawing stage.
+ */
+struct draw_stage *draw_offset_stage( struct draw_context *draw )
 {
    struct offset_stage *offset = CALLOC_STRUCT(offset_stage);
 
-   prim_alloc_tmps( &offset->stage, 3 );
+   draw_alloc_tmps( &offset->stage, 3 );
 
    offset->stage.draw = draw;
    offset->stage.next = NULL;

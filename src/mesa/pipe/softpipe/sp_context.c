@@ -98,5 +98,10 @@ struct pipe_context *softpipe_create( void )
    softpipe->draw = draw_create();
    draw_set_setup_stage(softpipe->draw, prim_setup(softpipe));
 
+   /*
+    * XXX we could plug GL selection/feedback into the drawing pipeline
+    * by specifying a different setup/render stage.
+    */
+
    return &softpipe->pipe;
 }

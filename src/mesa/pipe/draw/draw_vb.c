@@ -88,7 +88,7 @@ static void draw_set_prim( struct draw_context *draw,
 			  
 
 
-static void do_quad( struct prim_stage *first,
+static void do_quad( struct draw_stage *first,
 		     struct vertex_header *v0,
 		     struct vertex_header *v1,
 		     struct vertex_header *v2,
@@ -128,7 +128,7 @@ static void draw_indexed_prim( struct draw_context *draw,
 			       const GLuint *elts,
 			       GLuint count )
 {
-   struct prim_stage * const first = draw->pipeline.first;
+   struct draw_stage * const first = draw->pipeline.first;
    struct prim_header prim;
    GLuint i;
 
@@ -290,7 +290,7 @@ static void draw_prim( struct draw_context *draw,
 		       GLuint start,
 		       GLuint count )
 {
-   struct prim_stage * const first = draw->pipeline.first;
+   struct draw_stage * const first = draw->pipeline.first;
    struct prim_header prim;
    GLuint i;
 
@@ -698,7 +698,7 @@ void draw_set_vertex_attributes( struct draw_context *draw,
 
 #define MAX_VERTEX_SIZE ((2 + FRAG_ATTRIB_MAX) * 4 * sizeof(GLfloat))
 
-void prim_alloc_tmps( struct prim_stage *stage, GLuint nr )
+void draw_alloc_tmps( struct draw_stage *stage, GLuint nr )
 {
    stage->nr_tmps = nr;
 
@@ -713,7 +713,7 @@ void prim_alloc_tmps( struct prim_stage *stage, GLuint nr )
    }
 }
 
-void prim_free_tmps( struct prim_stage *stage )
+void draw_free_tmps( struct draw_stage *stage )
 {
    if (stage->tmp) {
       FREE(stage->tmp[0]);

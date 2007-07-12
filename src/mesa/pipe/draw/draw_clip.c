@@ -37,7 +37,7 @@
 
 
 struct clipper {
-   struct prim_stage stage;      /**< base class */
+   struct draw_stage stage;      /**< base class */
 
    GLuint active_user_planes;
    GLfloat (*plane)[4];
@@ -46,7 +46,7 @@ struct clipper {
 
 /* This is a bit confusing:
  */
-static INLINE struct clipper *clipper_stage( struct prim_stage *stage )
+static INLINE struct clipper *clipper_stage( struct draw_stage *stage )
 {
    return (struct clipper *)stage;
 }
@@ -139,7 +139,7 @@ static INLINE GLfloat dot4( const GLfloat *a,
 
 
 #if 0   
-static INLINE void do_tri( struct prim_stage *next,
+static INLINE void do_tri( struct draw_stage *next,
 			   struct prim_header *header )
 {
    GLuint i;
@@ -155,7 +155,7 @@ static INLINE void do_tri( struct prim_stage *next,
 #endif
 
 
-static void emit_poly( struct prim_stage *stage,
+static void emit_poly( struct draw_stage *stage,
 		       struct vertex_header **inlist,
 		       GLuint n )
 {
@@ -184,7 +184,7 @@ static void emit_poly( struct prim_stage *stage,
 
 
 #if 0
-static void emit_poly( struct prim_stage *stage )
+static void emit_poly( struct draw_stage *stage )
 {
    GLuint i;
 
@@ -202,7 +202,7 @@ static void emit_poly( struct prim_stage *stage )
 /* Clip a triangle against the viewport and user clip planes.
  */
 static void
-do_clip_tri( struct prim_stage *stage, 
+do_clip_tri( struct draw_stage *stage, 
 	     struct prim_header *header,
 	     GLuint clipmask )
 {
@@ -296,7 +296,7 @@ do_clip_tri( struct prim_stage *stage,
 /* Clip a line against the viewport and user clip planes.
  */
 static void
-do_clip_line( struct prim_stage *stage,
+do_clip_line( struct draw_stage *stage,
 	      struct prim_header *header,
 	      GLuint clipmask )
 {
@@ -360,7 +360,7 @@ do_clip_line( struct prim_stage *stage,
 }
 
 
-static void clip_begin( struct prim_stage *stage )
+static void clip_begin( struct draw_stage *stage )
 {
    struct clipper *clipper = clipper_stage(stage);
    GLuint nr = stage->draw->nr_planes;
@@ -374,7 +374,7 @@ static void clip_begin( struct prim_stage *stage )
 
 
 static void
-clip_point( struct prim_stage *stage, 
+clip_point( struct draw_stage *stage, 
 	    struct prim_header *header )
 {
    if (header->v[0]->clipmask == 0) 
@@ -383,7 +383,7 @@ clip_point( struct prim_stage *stage,
 
 
 static void
-clip_line( struct prim_stage *stage,
+clip_line( struct draw_stage *stage,
 	   struct prim_header *header )
 {
    GLuint clipmask = (header->v[0]->clipmask | 
@@ -401,7 +401,7 @@ clip_line( struct prim_stage *stage,
 
 
 static void
-clip_tri( struct prim_stage *stage,
+clip_tri( struct draw_stage *stage,
 	  struct prim_header *header )
 {
    GLuint clipmask = (header->v[0]->clipmask | 
@@ -420,7 +420,7 @@ clip_tri( struct prim_stage *stage,
 }
 
 
-static void clip_end( struct prim_stage *stage )
+static void clip_end( struct draw_stage *stage )
 {
    stage->next->end( stage->next );
 }
@@ -430,11 +430,11 @@ static void clip_end( struct prim_stage *stage )
  * Allocate a new clipper stage.
  * \return pointer to new stage object
  */
-struct prim_stage *prim_clip( struct draw_context *draw )
+struct draw_stage *draw_clip_stage( struct draw_context *draw )
 {
    struct clipper *clipper = CALLOC_STRUCT(clipper);
 
-   prim_alloc_tmps( &clipper->stage, MAX_CLIPPED_VERTICES );
+   draw_alloc_tmps( &clipper->stage, MAX_CLIPPED_VERTICES );
 
    clipper->stage.draw = draw;
    clipper->stage.begin = clip_begin;

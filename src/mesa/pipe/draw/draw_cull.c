@@ -39,18 +39,18 @@
 
 
 struct cull_stage {
-   struct prim_stage stage;
+   struct draw_stage stage;
    GLuint mode;  /**< one of PIPE_WINDING_x */
 };
 
 
-static INLINE struct cull_stage *cull_stage( struct prim_stage *stage )
+static INLINE struct cull_stage *cull_stage( struct draw_stage *stage )
 {
    return (struct cull_stage *)stage;
 }
 
 
-static void cull_begin( struct prim_stage *stage )
+static void cull_begin( struct draw_stage *stage )
 {
    struct cull_stage *cull = cull_stage(stage);
 
@@ -60,7 +60,7 @@ static void cull_begin( struct prim_stage *stage )
 }
 
 
-static void cull_tri( struct prim_stage *stage,
+static void cull_tri( struct draw_stage *stage,
 		      struct prim_header *header )
 {
    /* Window coords: */
@@ -89,21 +89,21 @@ static void cull_tri( struct prim_stage *stage,
 }
 
 
-static void cull_line( struct prim_stage *stage,
+static void cull_line( struct draw_stage *stage,
 		       struct prim_header *header )
 {
    stage->next->line( stage->next, header );
 }
 
 
-static void cull_point( struct prim_stage *stage,
+static void cull_point( struct draw_stage *stage,
 			struct prim_header *header )
 {
    stage->next->point( stage->next, header );
 }
 
 
-static void cull_end( struct prim_stage *stage )
+static void cull_end( struct draw_stage *stage )
 {
    stage->next->end( stage->next );
 }
@@ -112,11 +112,11 @@ static void cull_end( struct prim_stage *stage )
 /**
  * Create a new polygon culling stage.
  */
-struct prim_stage *prim_cull( struct draw_context *draw )
+struct draw_stage *draw_cull_stage( struct draw_context *draw )
 {
    struct cull_stage *cull = CALLOC_STRUCT(cull_stage);
 
-   prim_alloc_tmps( &cull->stage, 0 );
+   draw_alloc_tmps( &cull->stage, 0 );
 
    cull->stage.draw = draw;
    cull->stage.next = NULL;

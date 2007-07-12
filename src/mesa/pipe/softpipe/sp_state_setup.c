@@ -34,7 +34,7 @@
 #if 0
 static void validate_prim_pipe( struct softpipe_context *softpipe )
 {
-   struct prim_stage *next = softpipe->prim.setup;
+   struct draw_stage *next = softpipe->prim.setup;
 
    /* TODO: make the current primitive part of the state and build
     * shorter pipelines for lines & points.

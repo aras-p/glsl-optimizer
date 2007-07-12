@@ -44,7 +44,7 @@
 
 struct vertex_buffer;
 struct draw_context;
-struct prim_stage;
+struct draw_stage;
 
 
 struct draw_context *draw_create( void );
@@ -61,7 +61,7 @@ void draw_set_setup_state( struct draw_context *draw,
                            const struct pipe_setup_state *setup );
 
 void draw_set_setup_stage( struct draw_context *draw,
-                           struct prim_stage *stage );
+                           struct draw_stage *stage );
 
 void draw_set_vertex_attributes( struct draw_context *draw,
 				 const GLuint *attrs,

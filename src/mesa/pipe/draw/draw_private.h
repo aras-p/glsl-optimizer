@@ -77,27 +77,27 @@ struct draw_context;
 /**
  * Base class for all primitive drawing stages.
  */
-struct prim_stage
+struct draw_stage
 {
    struct draw_context *draw;   /**< parent context */
 
-   struct prim_stage *next;     /**< next stage in pipeline */
+   struct draw_stage *next;     /**< next stage in pipeline */
 
    struct vertex_header **tmp;
    GLuint nr_tmps;
 
-   void (*begin)( struct prim_stage * );
+   void (*begin)( struct draw_stage * );
 
-   void (*point)( struct prim_stage *,
+   void (*point)( struct draw_stage *,
 		  struct prim_header * );
 
-   void (*line)( struct prim_stage *,
+   void (*line)( struct draw_stage *,
 		 struct prim_header * );
 
-   void (*tri)( struct prim_stage *,
+   void (*tri)( struct draw_stage *,
 		struct prim_header * );
    
-   void (*end)( struct prim_stage * );
+   void (*end)( struct draw_stage * );
 };
 
 
@@ -107,16 +107,16 @@ struct prim_stage
 struct draw_context
 {
    struct {
-      struct prim_stage *first;  /**< one of the following */
+      struct draw_stage *first;  /**< one of the following */
 
       /* stages (in logical order) */
-      struct prim_stage *flatshade;
-      struct prim_stage *clip;
-      struct prim_stage *cull;
-      struct prim_stage *twoside;
-      struct prim_stage *offset;
-      struct prim_stage *unfilled;
-      struct prim_stage *setup;  /* aka render/rasterize */
+      struct draw_stage *flatshade;
+      struct draw_stage *clip;
+      struct draw_stage *cull;
+      struct draw_stage *twoside;
+      struct draw_stage *offset;
+      struct draw_stage *unfilled;
+      struct draw_stage *setup;  /* aka render/rasterize */
    } pipeline;
 
    /* pipe state that we need: */
@@ -148,16 +148,16 @@ struct draw_context
 
 
 
-extern struct prim_stage *prim_unfilled( struct draw_context *context );
-extern struct prim_stage *prim_twoside( struct draw_context *context );
-extern struct prim_stage *prim_offset( struct draw_context *context );
-extern struct prim_stage *prim_clip( struct draw_context *context );
-extern struct prim_stage *prim_flatshade( struct draw_context *context );
-extern struct prim_stage *prim_cull( struct draw_context *context );
+extern struct draw_stage *draw_unfilled_stage( struct draw_context *context );
+extern struct draw_stage *draw_twoside_stage( struct draw_context *context );
+extern struct draw_stage *draw_offset_stage( struct draw_context *context );
+extern struct draw_stage *draw_clip_stage( struct draw_context *context );
+extern struct draw_stage *draw_flatshade_stage( struct draw_context *context );
+extern struct draw_stage *draw_cull_stage( struct draw_context *context );
 
 
-extern void prim_free_tmps( struct prim_stage *stage );
-extern void prim_alloc_tmps( struct prim_stage *stage, GLuint nr );
+extern void draw_free_tmps( struct draw_stage *stage );
+extern void draw_alloc_tmps( struct draw_stage *stage, GLuint nr );
 
 
 
@@ -169,7 +169,7 @@ extern void prim_alloc_tmps( struct prim_stage *stage, GLuint nr );
  * \return  pointer to the copied vertex
  */
 static INLINE struct vertex_header *
-dup_vert( struct prim_stage *stage,
+dup_vert( struct draw_stage *stage,
 	  const struct vertex_header *vert,
 	  GLuint idx )
 {   

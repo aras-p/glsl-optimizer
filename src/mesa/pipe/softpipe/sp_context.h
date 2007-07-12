@@ -41,7 +41,7 @@
 
 struct softpipe_surface;
 struct draw_context;
-struct prim_stage;
+struct draw_stage;
 
 
 enum interp_mode {

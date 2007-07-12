@@ -43,7 +43,7 @@
 #include "s_context.h"
 
 
-extern struct prim_stage *prim_setup( struct softpipe_context *softpipe );
+extern struct draw_stage *prim_setup( struct softpipe_context *softpipe );
 
 
 #if 0 /* UNUSED? */

@@ -42,12 +42,12 @@ struct draw_context *draw_create( void )
    struct draw_context *draw = CALLOC_STRUCT( draw_context );
 
    /* create pipeline stages */
-   draw->pipeline.unfilled  = prim_unfilled( draw );
-   draw->pipeline.twoside   = prim_twoside( draw );
-   draw->pipeline.offset    = prim_offset( draw );
-   draw->pipeline.clip      = prim_clip( draw );
-   draw->pipeline.flatshade = prim_flatshade( draw );
-   draw->pipeline.cull      = prim_cull( draw );
+   draw->pipeline.unfilled  = draw_unfilled_stage( draw );
+   draw->pipeline.twoside   = draw_twoside_stage( draw );
+   draw->pipeline.offset    = draw_offset_stage( draw );
+   draw->pipeline.clip      = draw_clip_stage( draw );
+   draw->pipeline.flatshade = draw_flatshade_stage( draw );
+   draw->pipeline.cull      = draw_cull_stage( draw );
 
    ASSIGN_4V( draw->plane[0], -1,  0,  0, 1 );
    ASSIGN_4V( draw->plane[1],  1,  0,  0, 1 );
@@ -79,7 +79,7 @@ void draw_destroy( struct draw_context *draw )
  */
 static void validate_pipeline( struct draw_context *draw )
 {
-   struct prim_stage *next = draw->pipeline.setup;
+   struct draw_stage *next = draw->pipeline.setup;
 
    /*
     * NOTE: we build up the pipeline in end-to-start order.
@@ -150,7 +150,7 @@ void draw_set_setup_state( struct draw_context *draw,
  * This is provided by the device driver.
  */
 void draw_set_setup_stage( struct draw_context *draw,
-                           struct prim_stage *stage )
+                           struct draw_stage *stage )
 {
    draw->pipeline.setup = stage;
 }

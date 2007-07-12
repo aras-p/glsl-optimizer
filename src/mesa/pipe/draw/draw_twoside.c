@@ -34,20 +34,20 @@
 
 
 struct twoside_stage {
-   struct prim_stage stage;
+   struct draw_stage stage;
    
    GLfloat facing;
    const GLuint *lookup;
 };
 
 
-static INLINE struct twoside_stage *twoside_stage( struct prim_stage *stage )
+static INLINE struct twoside_stage *twoside_stage( struct draw_stage *stage )
 {
    return (struct twoside_stage *)stage;
 }
 
 
-static void twoside_begin( struct prim_stage *stage )
+static void twoside_begin( struct draw_stage *stage )
 {
    struct twoside_stage *twoside = twoside_stage(stage);
 
@@ -89,7 +89,7 @@ static struct vertex_header *copy_bfc( struct twoside_stage *twoside,
 
 /* Twoside tri:
  */
-static void twoside_tri( struct prim_stage *stage,
+static void twoside_tri( struct draw_stage *stage,
 			 struct prim_header *header )
 {
    struct twoside_stage *twoside = twoside_stage(stage);
@@ -112,7 +112,7 @@ static void twoside_tri( struct prim_stage *stage,
 }
 
 
-static void twoside_line( struct prim_stage *stage,
+static void twoside_line( struct draw_stage *stage,
 		       struct prim_header *header )
 {
    /* pass-through */
@@ -120,7 +120,7 @@ static void twoside_line( struct prim_stage *stage,
 }
 
 
-static void twoside_point( struct prim_stage *stage,
+static void twoside_point( struct draw_stage *stage,
 			struct prim_header *header )
 {
    /* pass-through */
@@ -128,7 +128,7 @@ static void twoside_point( struct prim_stage *stage,
 }
 
 
-static void twoside_end( struct prim_stage *stage )
+static void twoside_end( struct draw_stage *stage )
 {
    /* pass-through */
    stage->next->end( stage->next );
@@ -138,11 +138,11 @@ static void twoside_end( struct prim_stage *stage )
 /**
  * Create twoside pipeline stage.
  */
-struct prim_stage *prim_twoside( struct draw_context *draw )
+struct draw_stage *draw_twoside_stage( struct draw_context *draw )
 {
    struct twoside_stage *twoside = CALLOC_STRUCT(twoside_stage);
 
-   prim_alloc_tmps( &twoside->stage, 3 );
+   draw_alloc_tmps( &twoside->stage, 3 );
 
    twoside->stage.draw = draw;
    twoside->stage.next = NULL;

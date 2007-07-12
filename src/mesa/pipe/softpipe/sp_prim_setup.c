@@ -25,8 +25,13 @@
  * 
  **************************************************************************/
 
-/* Authors:  Keith Whitwell <keith@tungstengraphics.com>
+/**
+ * \brief  Primitive rasterization/rendering (points, lines, triangles)
+ *
+ * \author  Keith Whitwell <keith@tungstengraphics.com>
+ * \author  Brian Paul
  */
+
 
 #include "imports.h"
 #include "macros.h"
@@ -64,11 +69,11 @@ struct edge {
 
 
 /**
- * Triangle setup info (derived from prim_stage).
+ * Triangle setup info (derived from draw_stage).
  * Also used for line drawing (taking some liberties).
  */
 struct setup_stage {
-   struct prim_stage stage; /**< This must be first (base class) */
+   struct draw_stage stage; /**< This must be first (base class) */
 
    /*XXX NEW */
    struct softpipe_context *softpipe;
@@ -105,7 +110,7 @@ struct setup_stage {
 /**
  * Basically a cast wrapper.
  */
-static inline struct setup_stage *setup_stage( struct prim_stage *stage )
+static inline struct setup_stage *setup_stage( struct draw_stage *stage )
 {
    return (struct setup_stage *)stage;
 }
@@ -122,7 +127,7 @@ static inline GLint block( GLint x )
 
 
 
-static void setup_begin( struct prim_stage *stage )
+static void setup_begin( struct draw_stage *stage )
 {
    struct setup_stage *setup = setup_stage(stage);
 
@@ -559,7 +564,7 @@ static void subtriangle( struct setup_stage *setup,
 /**
  * Do setup for triangle rasterization, then render the triangle.
  */
-static void setup_tri( struct prim_stage *stage,
+static void setup_tri( struct draw_stage *stage,
 		       struct prim_header *prim )
 {
    struct setup_stage *setup = setup_stage( stage );
@@ -576,9 +581,9 @@ static void setup_tri( struct prim_stage *stage,
    setup->span.y_flags = 0;
    setup->span.right[0] = 0;
    setup->span.right[1] = 0;
-//   setup->span.z_mode = tri_z_mode( setup->ctx );
+   /*   setup->span.z_mode = tri_z_mode( setup->ctx ); */
 
-//   init_constant_attribs( setup );
+   /*   init_constant_attribs( setup ); */
       
    if (setup->oneoverarea < 0.0) {
       /* emaj on left:
@@ -714,7 +719,7 @@ plot(struct setup_stage *setup, GLint x, GLint y)
  * XXX no scissoring yet.
  */
 static void
-setup_line(struct prim_stage *stage, struct prim_header *prim)
+setup_line(struct draw_stage *stage, struct prim_header *prim)
 {
    const struct vertex_header *v0 = prim->v[0];
    const struct vertex_header *v1 = prim->v[1];
@@ -810,7 +815,7 @@ setup_line(struct prim_stage *stage, struct prim_header *prim)
  * XXX could optimize a lot for 1-pixel points.
  */
 static void
-setup_point(struct prim_stage *stage, struct prim_header *prim)
+setup_point(struct draw_stage *stage, struct prim_header *prim)
 {
    struct setup_stage *setup = setup_stage( stage );
    /*XXX this should be a vertex attrib! */
@@ -923,7 +928,7 @@ setup_point(struct prim_stage *stage, struct prim_header *prim)
 
 
 
-static void setup_end( struct prim_stage *stage )
+static void setup_end( struct draw_stage *stage )
 {
 }
 
@@ -931,7 +936,7 @@ static void setup_end( struct prim_stage *stage )
 /**
  * Create a new primitive setup/render stage.
  */
-struct prim_stage *prim_setup( struct softpipe_context *softpipe )
+struct draw_stage *prim_setup( struct softpipe_context *softpipe )
 {
    struct setup_stage *setup = CALLOC_STRUCT(setup_stage);
 

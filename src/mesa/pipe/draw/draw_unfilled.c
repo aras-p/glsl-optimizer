@@ -39,7 +39,7 @@
 
 
 struct unfilled_stage {
-   struct prim_stage stage;
+   struct draw_stage stage;
 
    /** [0] = front face, [1] = back face.
     * legal values:  PIPE_POLYGON_MODE_FILL, PIPE_POLYGON_MODE_LINE,
@@ -49,13 +49,13 @@ struct unfilled_stage {
 };
 
 
-static INLINE struct unfilled_stage *unfilled_stage( struct prim_stage *stage )
+static INLINE struct unfilled_stage *unfilled_stage( struct draw_stage *stage )
 {
    return (struct unfilled_stage *)stage;
 }
 
 
-static void unfilled_begin( struct prim_stage *stage )
+static void unfilled_begin( struct draw_stage *stage )
 {
    struct unfilled_stage *unfilled = unfilled_stage(stage);
 
@@ -65,7 +65,7 @@ static void unfilled_begin( struct prim_stage *stage )
    stage->next->begin( stage->next );
 }
 
-static void point( struct prim_stage *stage,
+static void point( struct draw_stage *stage,
 		   struct vertex_header *v0 )
 {
    struct prim_header tmp;
@@ -73,7 +73,7 @@ static void point( struct prim_stage *stage,
    stage->next->point( stage->next, &tmp );
 }
 
-static void line( struct prim_stage *stage,
+static void line( struct draw_stage *stage,
 		  struct vertex_header *v0,
 		  struct vertex_header *v1 )
 {
@@ -84,7 +84,7 @@ static void line( struct prim_stage *stage,
 }
 
 
-static void points( struct prim_stage *stage,
+static void points( struct draw_stage *stage,
 		    struct prim_header *header )
 {
    struct vertex_header *v0 = header->v[0];
@@ -97,7 +97,7 @@ static void points( struct prim_stage *stage,
 }
 
 
-static void lines( struct prim_stage *stage,
+static void lines( struct draw_stage *stage,
 		   struct prim_header *header )
 {
    struct vertex_header *v0 = header->v[0];
@@ -115,7 +115,7 @@ static void lines( struct prim_stage *stage,
  * Note edgeflags in the vertex struct is not sufficient as we will
  * need to manipulate them when decomposing primitives???
  */
-static void unfilled_tri( struct prim_stage *stage,
+static void unfilled_tri( struct draw_stage *stage,
 			  struct prim_header *header )
 {
    struct unfilled_stage *unfilled = unfilled_stage(stage);
@@ -136,30 +136,34 @@ static void unfilled_tri( struct prim_stage *stage,
    }   
 }
 
-static void unfilled_line( struct prim_stage *stage,
+static void unfilled_line( struct draw_stage *stage,
                            struct prim_header *header )
 {
    stage->next->line( stage->next, header );
 }
 
 
-static void unfilled_point( struct prim_stage *stage,
+static void unfilled_point( struct draw_stage *stage,
                             struct prim_header *header )
 {
    stage->next->point( stage->next, header );
 }
 
 
-static void unfilled_end( struct prim_stage *stage )
+static void unfilled_end( struct draw_stage *stage )
 {
    stage->next->end( stage->next );
 }
 
-struct prim_stage *prim_unfilled( struct draw_context *draw )
+
+/**
+ * Create unfilled triangle stage.
+ */
+struct draw_stage *draw_unfilled_stage( struct draw_context *draw )
 {
    struct unfilled_stage *unfilled = CALLOC_STRUCT(unfilled_stage);
 
-   prim_alloc_tmps( &unfilled->stage, 0 );
+   draw_alloc_tmps( &unfilled->stage, 0 );
 
    unfilled->stage.draw = draw;
    unfilled->stage.next = NULL;

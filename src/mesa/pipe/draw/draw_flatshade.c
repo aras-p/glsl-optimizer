@@ -33,20 +33,20 @@
 
 
 struct flatshade_stage {
-   struct prim_stage stage;
+   struct draw_stage stage;
 
    const GLuint *lookup;
 };
 
 
 
-static INLINE struct flatshade_stage *flatshade_stage( struct prim_stage *stage )
+static INLINE struct flatshade_stage *flatshade_stage( struct draw_stage *stage )
 {
    return (struct flatshade_stage *)stage;
 }
 
 
-static void flatshade_begin( struct prim_stage *stage )
+static void flatshade_begin( struct draw_stage *stage )
 {
    stage->next->begin( stage->next );
 }
@@ -65,7 +65,7 @@ static INLINE void copy_attr( GLuint attr,
 }
 
 
-static INLINE void copy_colors( struct prim_stage *stage, 
+static INLINE void copy_colors( struct draw_stage *stage, 
                                 struct vertex_header *dst, 
                                 const struct vertex_header *src )
 {
@@ -83,7 +83,7 @@ static INLINE void copy_colors( struct prim_stage *stage,
  * Flatshade tri.  Required for clipping and when unfilled tris are
  * active, otherwise handled by hardware.
  */
-static void flatshade_tri( struct prim_stage *stage,
+static void flatshade_tri( struct draw_stage *stage,
 			   struct prim_header *header )
 {
    struct prim_header tmp;
@@ -103,7 +103,7 @@ static void flatshade_tri( struct prim_stage *stage,
 /**
  * Flatshade line.  Required for clipping.
  */
-static void flatshade_line( struct prim_stage *stage,
+static void flatshade_line( struct draw_stage *stage,
 			    struct prim_header *header )
 {
    struct prim_header tmp;
@@ -117,24 +117,27 @@ static void flatshade_line( struct prim_stage *stage,
 }
 
 
-static void flatshade_point( struct prim_stage *stage,
-			struct prim_header *header )
+static void flatshade_point( struct draw_stage *stage,
+                             struct prim_header *header )
 {
    stage->next->point( stage->next, header );
 }
 
 
-static void flatshade_end( struct prim_stage *stage )
+static void flatshade_end( struct draw_stage *stage )
 {
    stage->next->end( stage->next );
 }
 
 
-struct prim_stage *prim_flatshade( struct draw_context *draw )
+/**
+ * Create flatshading drawing stage.
+ */
+struct draw_stage *draw_flatshade_stage( struct draw_context *draw )
 {
    struct flatshade_stage *flatshade = CALLOC_STRUCT(flatshade_stage);
 
-   prim_alloc_tmps( &flatshade->stage, 2 );
+   draw_alloc_tmps( &flatshade->stage, 2 );
 
    flatshade->stage.draw = draw;
    flatshade->stage.next = NULL;
