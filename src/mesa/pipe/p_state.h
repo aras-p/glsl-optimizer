@@ -49,7 +49,7 @@
 #define PIPE_MAX_CLIP_PLANES  6
 #define PIPE_MAX_CONSTANT    32
 #define PIPE_ATTRIB_MAX      32
-
+#define PIPE_MAX_COLOR_BUFS   8
 
 
 /* fwd decl */
@@ -192,9 +192,10 @@ struct pipe_stencil_state {
 
 struct pipe_framebuffer_state
 {
-   GLuint num_cbufs;               /**< Number of color bufs to draw to */
-   struct pipe_surface *cbufs[4];  /**< OpenGL can write to as many as
-                                        4 color buffers at once */
+   /** multiple colorbuffers for multiple render targets */
+   GLuint num_cbufs;
+   struct pipe_surface *cbufs[PIPE_MAX_COLOR_BUFS];
+
    struct pipe_surface *zbuf;      /**< Z buffer */
    struct pipe_surface *sbuf;      /**< Stencil buffer */
    struct pipe_surface *abuf;      /**< Accum buffer */
@@ -221,6 +222,7 @@ struct pipe_sampler_state
 #if 0 /* need these? */
    GLint BaseLevel;     /**< min mipmap level, OpenGL 1.2 */
    GLint MaxLevel;      /**< max mipmap level, OpenGL 1.2 */
+   GLfloat border_color[4];
 #endif
    GLfloat max_anisotropy;
 };

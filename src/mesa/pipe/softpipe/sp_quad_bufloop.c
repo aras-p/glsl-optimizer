@@ -23,8 +23,14 @@ cbuf_loop_quad(struct quad_stage *qs, struct quad_header *quad)
 
    /* make copy of original colors since they can get modified
     * by blending and masking.
+    * XXX we won't have to do this if the fragment program actually emits
+    * N separate colors and we're drawing to N color buffers (MRT).
+    * But if we emitted one color and glDrawBuffer(GL_FRONT_AND_BACK) is
+    * in effect, we need to save/restore colors like this.
     */
    memcpy(tmp, quad->outputs.color, sz);
+
+   assert(softpipe->framebuffer.num_cbufs <= PIPE_MAX_COLOR_BUFS);
 
    for (i = 0; i < softpipe->framebuffer.num_cbufs; i++) {
       /* set current cbuffer */
@@ -45,7 +51,8 @@ cbuf_loop_quad(struct quad_stage *qs, struct quad_header *quad)
 
 /**
  * Create the colorbuffer loop stage.
- * This is used to implement GL_FRONT_AND_BACK rendering.
+ * This is used to implement multiple render targets and GL_FRONT_AND_BACK
+ * rendering.
  */
 struct quad_stage *sp_quad_bufloop_stage( struct softpipe_context *softpipe )
 {
