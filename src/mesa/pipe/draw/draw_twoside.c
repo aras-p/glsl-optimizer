@@ -51,7 +51,7 @@ static void twoside_begin( struct prim_stage *stage )
 {
    struct twoside_stage *twoside = twoside_stage(stage);
 
-   twoside->facing = (stage->draw->setup.front_winding == PIPE_WINDING_CW) ? -1 : 1;
+   twoside->facing = (stage->draw->setup.front_winding == PIPE_WINDING_CW) ? 1 : -1;
 
    stage->next->begin( stage->next );
 }
