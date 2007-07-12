@@ -31,65 +31,6 @@
 #include "pipe/draw/draw_context.h"
 
 
-#if 0
-static void validate_prim_pipe( struct softpipe_context *softpipe )
-{
-   struct draw_stage *next = softpipe->prim.setup;
-
-   /* TODO: make the current primitive part of the state and build
-    * shorter pipelines for lines & points.
-    */
-   if (softpipe->setup.fill_cw != PIPE_POLYGON_MODE_FILL ||
-       softpipe->setup.fill_ccw != PIPE_POLYGON_MODE_FILL) {
-
-      softpipe->prim.unfilled->next = next;
-      next = softpipe->prim.unfilled;
-   }
-	 
-   if (softpipe->setup.offset_cw ||
-       softpipe->setup.offset_ccw) {
-      softpipe->prim.offset->next = next;
-      next = softpipe->prim.offset;
-   }
-
-   if (softpipe->setup.light_twoside) {
-      softpipe->prim.twoside->next = next;
-      next = softpipe->prim.twoside;
-   }
-
-   /* Always run the cull stage as we calculate determinant there
-    * also.  Fix this..
-    */
-   {
-      softpipe->prim.cull->next = next;
-      next = softpipe->prim.cull;
-   }
-
-
-   /* Clip stage
-    */
-   {
-      softpipe->prim.clip->next = next;
-      next = softpipe->prim.clip;
-   }
-
-   /* Do software flatshading prior to clipping.  XXX: should only do
-    * this for clipped primitives, ie it is a part of the clip
-    * routine.
-    */
-   if (softpipe->setup.flatshade) {
-      softpipe->prim.flatshade->next = next;
-      next = softpipe->prim.flatshade;
-   }
-   
-
-   softpipe->prim.first = next;
-}
-
-#endif
-
-
-
 void softpipe_set_setup_state( struct pipe_context *pipe,
 			      const struct pipe_setup_state *setup )
 {
@@ -100,9 +41,6 @@ void softpipe_set_setup_state( struct pipe_context *pipe,
 
    memcpy( &softpipe->setup, setup, sizeof(*setup) );
 
-#if 0
-   validate_prim_pipe( softpipe );
-#endif
    softpipe->dirty |= SP_NEW_SETUP;
 }
 
