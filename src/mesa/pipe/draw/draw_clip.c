@@ -25,8 +25,12 @@
  * 
  **************************************************************************/
 
-/* Authors:  Keith Whitwell <keith@tungstengraphics.com>
+/**
+ * \brief  Clipping stage
+ *
+ * \author  Keith Whitwell <keith@tungstengraphics.com>
  */
+
 
 #include "main/macros.h"
 #include "draw_private.h"
@@ -322,12 +326,12 @@ do_clip_line( struct prim_stage *stage,
 
       if (dp1 < 0) {
 	 GLfloat t = dp1 / (dp1 - dp0);
-         t1 = MIN2(t1, t);
+         t1 = MAX2(t1, t);
       } 
 
       if (dp0 < 0) {
 	 GLfloat t = dp0 / (dp0 - dp1);
-         t0 = MIN2(t0, t);
+         t0 = MAX2(t0, t);
       }
 
       if (t0 + t1 >= 1.0)
