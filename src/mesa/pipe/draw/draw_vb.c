@@ -255,16 +255,28 @@ static void draw_indexed_prim( struct draw_context *draw,
 
    case GL_POLYGON:
       if (count >= 3) {
+         int e1save, e2save;
 	 prim.v[0] = 0;
 	 prim.v[1] = get_vertex( draw, elts[1] );
 	 prim.v[2] = get_vertex( draw, elts[0] );
+	 e2save = prim.v[2]->edgeflag;
 	 
 	 for (i = 0; i+2 < count; i++) {
 	    prim.v[0] = prim.v[1];
 	    prim.v[1] = get_vertex( draw, elts[i+2] );
       
+            /* save v1 edge flag, and clear if not last triangle */
+            e1save = prim.v[1]->edgeflag;
+            if (i + 3 < count)
+               prim.v[1]->edgeflag = 0;
+
+            /* draw */
 	    first->tri( first, &prim );
+
+            prim.v[1]->edgeflag = e1save; /* restore */
+            prim.v[2]->edgeflag = 0; /* disable edge after 1st tri */
 	 }
+         prim.v[2]->edgeflag = e2save;
       }
       break;
 
@@ -399,16 +411,28 @@ static void draw_prim( struct draw_context *draw,
 
    case GL_POLYGON:
       if (count >= 3) {
+         int e1save, e2save;
 	 prim.v[0] = 0;
 	 prim.v[1] = get_vertex( draw, start + 1 );
 	 prim.v[2] = get_vertex( draw, start + 0 );
-	 
+	 e2save = prim.v[2]->edgeflag;
+
 	 for (i = 0; i+2 < count; i++) {
 	    prim.v[0] = prim.v[1];
 	    prim.v[1] = get_vertex( draw, start + i + 2 );
-      
+
+            /* save v1 edge flag, and clear if not last triangle */
+            e1save = prim.v[1]->edgeflag;
+            if (i + 3 < count)
+               prim.v[1]->edgeflag = 0;
+
+            /* draw */
 	    first->tri( first, &prim );
+
+            prim.v[1]->edgeflag = e1save; /* restore */
+            prim.v[2]->edgeflag = 0; /* disable edge after 1st tri */
 	 }
+         prim.v[2]->edgeflag = e2save;
       }
       break;
 
