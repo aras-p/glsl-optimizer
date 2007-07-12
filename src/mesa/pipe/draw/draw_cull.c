@@ -79,7 +79,7 @@ static void cull_tri( struct prim_stage *stage,
 
    if (header->det != 0) {
       /* non-zero area */
-      GLuint mode = (header->det < 0) ? PIPE_WINDING_CW : PIPE_WINDING_CCW;
+      GLuint mode = (header->det > 0) ? PIPE_WINDING_CW : PIPE_WINDING_CCW;
 
       if ((mode & cull_stage(stage)->mode) == 0) {
          /* triangle is not culled, pass to next stage */
