@@ -123,6 +123,7 @@ struct softpipe_context {
       struct quad_stage *stencil_test;
       struct quad_stage *depth_test;
       struct quad_stage *blend;
+      struct quad_stage *colormask;
       struct quad_stage *output;
 
       struct quad_stage *first; /**< points to one of the above stages */

@@ -11,6 +11,11 @@ sp_build_quad_pipeline(struct softpipe_context *sp)
 
    sp->quad.first = sp->quad.output;
 
+   if (sp->blend.colormask != 0xf) {
+      sp->quad.colormask->next = sp->quad.first;
+      sp->quad.first = sp->quad.colormask;
+   }
+
    if (sp->blend.blend_enable) {
       sp->quad.blend->next = sp->quad.first;
       sp->quad.first = sp->quad.blend;

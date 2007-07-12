@@ -186,6 +186,9 @@ static void update_setup_state( struct st_context *st )
    /* GL stipple factor is in [1,256], remap to [0, 255] here */
    setup.line_stipple_factor = ctx->Line.StippleFactor - 1;
 
+   /* _NEW_MULTISAMPLE */
+   if (ctx->Multisample.Enabled)
+      setup.multisample = 1;
 
    if (memcmp(&setup, &st->state.setup, sizeof(setup)) != 0) {
       st->state.setup = setup;
@@ -196,7 +199,7 @@ static void update_setup_state( struct st_context *st )
 const struct st_tracked_state st_update_setup = {
    .dirty = {
       .mesa = (_NEW_LIGHT | _NEW_POLYGON | _NEW_LINE |
-               _NEW_POINT | _NEW_BUFFERS),
+               _NEW_POINT | _NEW_BUFFERS | _NEW_MULTISAMPLE),
       .st  = 0,
    },
    .update = update_setup_state

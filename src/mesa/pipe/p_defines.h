@@ -71,6 +71,11 @@
 #define PIPE_LOGICOP_OR               14
 #define PIPE_LOGICOP_SET              15  
 
+#define PIPE_MASK_R  0x1
+#define PIPE_MASK_G  0x2
+#define PIPE_MASK_B  0x4
+#define PIPE_MASK_A  0x8
+
 /**
  * Inequality functions.  Used for depth test, stencil compare, alpha
  * test, shadow compare, etc.

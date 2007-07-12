@@ -196,6 +196,19 @@ update_blend( struct st_context *st )
       /* no blending / logicop */
    }
 
+   /* Colormask - maybe reverse these bits? */
+   if (st->ctx->Color.ColorMask[0])
+      blend.colormask |= PIPE_MASK_R;
+   if (st->ctx->Color.ColorMask[1])
+      blend.colormask |= PIPE_MASK_G;
+   if (st->ctx->Color.ColorMask[2])
+      blend.colormask |= PIPE_MASK_B;
+   if (st->ctx->Color.ColorMask[3])
+      blend.colormask |= PIPE_MASK_A;
+
+   if (st->ctx->Color.DitherFlag)
+      blend.dither = 1;
+
    if (memcmp(&blend, &st->state.blend, sizeof(blend)) != 0) {
       /* state has changed */
       st->state.blend = blend;  /* struct copy */

@@ -89,6 +89,8 @@ struct pipe_setup_state
 
    GLuint point_smooth:1;
 
+   GLuint multisample:1;         /* XXX maybe more ms state in future */
+
    GLubyte line_stipple_factor;  /**< [1..256] actually */
    GLushort line_stipple_pattern;
    GLfloat line_width;
@@ -156,6 +158,9 @@ struct pipe_blend_state {
 
    GLuint logicop_enable:1;
    GLuint logicop_func:4;      /**< PIPE_LOGICOP_x */
+
+   GLuint colormask:4;         /**< bitmask of PIPE_MASK_R/G/B/A */
+   GLuint dither:1;
 };
 
 struct pipe_blend_color {

@@ -2,7 +2,7 @@
  * 
  * Copyright 2007 Tungsten Graphics, Inc., Cedar Park, Texas.
  * All Rights Reserved.
- *
+ * 
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the
  * "Software"), to deal in the Software without restriction, including
@@ -25,38 +25,64 @@
  * 
  **************************************************************************/
 
-/* Authors:  Keith Whitwell <keith@tungstengraphics.com>
+/**
+ * \brief  quad colormask stage
+ * \author Brian Paul
  */
 
-#ifndef SP_TILE_H
-#define SP_TILE_H
+#include "main/glheader.h"
+#include "main/imports.h"
+#include "main/macros.h"
+#include "pipe/p_defines.h"
+#include "sp_context.h"
+#include "sp_headers.h"
+#include "sp_surface.h"
+#include "sp_quad.h"
 
 
-struct softpipe_context;
-struct quad_header;
+
+static void
+colormask_quad(struct quad_stage *qs, struct quad_header *quad)
+{
+   struct softpipe_context *softpipe = qs->softpipe;
+   GLfloat dest[4][QUAD_SIZE];
+
+   /* XXX buffer looping */
+
+   struct softpipe_surface *sps
+      = softpipe_surface(softpipe->framebuffer.cbufs[0]);
+   
+   sps->read_quad_f_swz(sps, quad->x0, quad->y0, dest);
+
+   /* R */
+   if (!(softpipe->blend.colormask & PIPE_MASK_R))
+       COPY_4FV(quad->outputs.color[0], dest[0]);
+
+   /* G */
+   if (!(softpipe->blend.colormask & PIPE_MASK_G))
+       COPY_4FV(quad->outputs.color[1], dest[1]);
+
+   /* B */
+   if (!(softpipe->blend.colormask & PIPE_MASK_B))
+       COPY_4FV(quad->outputs.color[2], dest[2]);
+
+   /* A */
+   if (!(softpipe->blend.colormask & PIPE_MASK_A))
+       COPY_4FV(quad->outputs.color[3], dest[3]);
+
+   /* pass quad to next stage */
+   qs->next->run(qs->next, quad);
+}
 
 
-struct quad_stage {
-   struct softpipe_context *softpipe;
-
-   struct quad_stage *next;
-
-   /** the stage action */
-   void (*run)(struct quad_stage *qs, struct quad_header *quad);
-};
 
 
-struct quad_stage *sp_quad_polygon_stipple_stage( struct softpipe_context *softpipe );
-struct quad_stage *sp_quad_shade_stage( struct softpipe_context *softpipe );
-struct quad_stage *sp_quad_alpha_test_stage( struct softpipe_context *softpipe );
-struct quad_stage *sp_quad_stencil_test_stage( struct softpipe_context *softpipe );
-struct quad_stage *sp_quad_depth_test_stage( struct softpipe_context *softpipe );
-struct quad_stage *sp_quad_blend_stage( struct softpipe_context *softpipe );
-struct quad_stage *sp_quad_colormask_stage( struct softpipe_context *softpipe );
-struct quad_stage *sp_quad_output_stage( struct softpipe_context *softpipe );
+struct quad_stage *sp_quad_colormask_stage( struct softpipe_context *softpipe )
+{
+   struct quad_stage *stage = CALLOC_STRUCT(quad_stage);
 
-void sp_build_quad_pipeline(struct softpipe_context *sp);
+   stage->softpipe = softpipe;
+   stage->run = colormask_quad;
 
-void sp_depth_test_quad(struct quad_stage *qs, struct quad_header *quad);
-
-#endif /* SP_TILE_H */
+   return stage;
+}
