@@ -13,6 +13,7 @@
 
 /**
  * Apply polygon stipple to quads produced by triangle rasterization
+ * XXX we need to skip this for lines and points!!!
  */
 static void
 stipple_quad(struct quad_stage *qs, struct quad_header *quad)
