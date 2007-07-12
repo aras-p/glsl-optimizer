@@ -764,11 +764,11 @@ static GLboolean nv20BindBuffers(nouveauContextPtr nmesa, int num_color,
 	}
 
 	/* Always set to bottom left of buffer */
-	BEGIN_RING_CACHE(NvSub3D, NV20_TCL_PRIMITIVE_3D_VIEWPORT_ORIGIN_X, 4);
+	/*BEGIN_RING_CACHE(NvSub3D, NV20_TCL_PRIMITIVE_3D_VIEWPORT_ORIGIN_X, 4);
 	OUT_RING_CACHEf (0.0);
 	OUT_RING_CACHEf ((GLfloat) h);
 	OUT_RING_CACHEf (0.0);
-	OUT_RING_CACHEf (0.0);
+	OUT_RING_CACHEf (0.0);*/
 
 	return GL_TRUE;
 }
