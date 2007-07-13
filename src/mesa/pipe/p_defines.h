@@ -143,7 +143,7 @@
 #define PIPE_FORMAT_F_Z32           8  /**< float Z/depth */
 #define PIPE_FORMAT_YCBCR           9
 #define PIPE_FORMAT_YCBCR_REV      10
-#define PIPE_FORMAT_S8             11  /**< 8-bit stencil */
+#define PIPE_FORMAT_U_S8           11  /**< 8-bit stencil */
 #define PIPE_FORMAT_Z24_S8         12  /**< 24-bit Z + 8-bit stencil */
 
 

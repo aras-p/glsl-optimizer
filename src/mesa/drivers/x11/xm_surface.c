@@ -330,7 +330,7 @@ create_stencil_surface(XMesaContext xmctx, struct gl_renderbuffer *rb)
 
    xmsurf = CALLOC_STRUCT(xmesa_surface);
    if (xmsurf) {
-      xmsurf->sps.surface.format = PIPE_FORMAT_S8;
+      xmsurf->sps.surface.format = PIPE_FORMAT_U_S8;
       xmsurf->sps.surface.width = rb->Width;
       xmsurf->sps.surface.height = rb->Height;
       xmsurf->sps.read_quad_stencil = read_quad_stencil;
