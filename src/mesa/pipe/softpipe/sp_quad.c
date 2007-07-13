@@ -31,6 +31,11 @@ sp_build_quad_pipeline(struct softpipe_context *sp)
       sp->quad.first = sp->quad.bufloop;
    }
 
+   if (sp->depth_test.occlusion_count) {
+      sp->quad.occlusion->next = sp->quad.first;
+      sp->quad.first = sp->quad.occlusion;
+   }
+
    if (   sp->stencil.front_enabled
        || sp->stencil.front_enabled) {
       sp->quad.stencil_test->next = sp->quad.first;

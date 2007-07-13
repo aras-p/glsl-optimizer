@@ -136,6 +136,7 @@ struct pipe_depth_state
    GLuint enabled:1;   /**< depth test enabled? */
    GLuint writemask:1; /**< allow depth buffer writes? */
    GLuint func:3;      /**< depth test func (PIPE_FUNC_x) */
+   GLuint occlusion_count:1; /**< XXX move this elsewhere? */
    GLfloat clear;      /**< Clear value in [0,1] (XXX correct place?) */
 };
 

@@ -115,6 +115,8 @@ struct softpipe_context {
     */
    GLubyte stipple_masks[16][16];
 
+   GLuint occlusion_counter;
+
    /** Software quad rendering pipeline */
    struct {
       struct quad_stage *polygon_stipple;
@@ -122,6 +124,7 @@ struct softpipe_context {
       struct quad_stage *alpha_test;
       struct quad_stage *stencil_test;
       struct quad_stage *depth_test;
+      struct quad_stage *occlusion;
       struct quad_stage *bufloop;
       struct quad_stage *blend;
       struct quad_stage *colormask;

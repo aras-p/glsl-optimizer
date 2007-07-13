@@ -71,6 +71,10 @@ update_depth( struct st_context *st )
    depth.func = gl_depth_func_to_sp(st->ctx->Depth.Func);
    depth.clear = st->ctx->Depth.Clear;
 
+   if (st->ctx->Query.CurrentOcclusionObject &&
+       st->ctx->Query.CurrentOcclusionObject->Active)
+      depth.occlusion_count = 1;
+
    if (memcmp(&depth, &st->state.depth, sizeof(depth)) != 0) {
       /* state has changed */
       st->state.depth = depth;  /* struct copy */

@@ -60,6 +60,20 @@ static void softpipe_draw_vb( struct pipe_context *pipe,
 }
 
 
+static void softpipe_reset_occlusion_counter(struct pipe_context *pipe)
+{
+   struct softpipe_context *softpipe = softpipe_context( pipe );
+   softpipe->occlusion_counter = 0;
+}
+
+/* XXX pipe param should be const */
+static GLuint softpipe_get_occlusion_counter(struct pipe_context *pipe)
+{
+   struct softpipe_context *softpipe = softpipe_context( pipe );
+   return softpipe->occlusion_counter;
+}
+
+
 struct pipe_context *softpipe_create( void )
 {
    struct softpipe_context *softpipe = CALLOC_STRUCT(softpipe_context);
@@ -82,12 +96,15 @@ struct pipe_context *softpipe_create( void )
    softpipe->pipe.set_viewport_state = softpipe_set_viewport_state;
    softpipe->pipe.draw_vb = softpipe_draw_vb;
    softpipe->pipe.clear = softpipe_clear;
+   softpipe->pipe.reset_occlusion_counter = softpipe_reset_occlusion_counter;
+   softpipe->pipe.get_occlusion_counter = softpipe_get_occlusion_counter;
 
    softpipe->quad.polygon_stipple = sp_quad_polygon_stipple_stage(softpipe);
    softpipe->quad.shade = sp_quad_shade_stage(softpipe);
    softpipe->quad.alpha_test = sp_quad_alpha_test_stage(softpipe);
    softpipe->quad.depth_test = sp_quad_depth_test_stage(softpipe);
    softpipe->quad.stencil_test = sp_quad_stencil_test_stage(softpipe);
+   softpipe->quad.occlusion = sp_quad_occlusion_stage(softpipe);
    softpipe->quad.bufloop = sp_quad_bufloop_stage(softpipe);
    softpipe->quad.blend = sp_quad_blend_stage(softpipe);
    softpipe->quad.colormask = sp_quad_colormask_stage(softpipe);

@@ -164,6 +164,7 @@ SOFTPIPE_SOURCES = \
 	pipe/softpipe/sp_quad_colormask.c \
 	pipe/softpipe/sp_quad_depth_test.c \
 	pipe/softpipe/sp_quad_fs.c \
+	pipe/softpipe/sp_quad_occlusion.c \
 	pipe/softpipe/sp_quad_output.c \
 	pipe/softpipe/sp_quad_stipple.c \
 	pipe/softpipe/sp_quad_stencil.c \

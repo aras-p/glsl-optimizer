@@ -2,7 +2,7 @@
  * 
  * Copyright 2007 Tungsten Graphics, Inc., Cedar Park, Texas.
  * All Rights Reserved.
- *
+ * 
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the
  * "Software"), to deal in the Software without restriction, including
@@ -25,40 +25,43 @@
  * 
  **************************************************************************/
 
-/* Authors:  Keith Whitwell <keith@tungstengraphics.com>
+
+/**
+ * \brief  Quad occlusion counter stage
+ * \author  Brian Paul
  */
 
-#ifndef SP_TILE_H
-#define SP_TILE_H
+
+#include "main/glheader.h"
+#include "main/imports.h"
+#include "pipe/p_defines.h"
+#include "sp_context.h"
+#include "sp_headers.h"
+#include "sp_surface.h"
+#include "sp_quad.h"
 
 
-struct softpipe_context;
-struct quad_header;
+static void
+occlusion_count_quad(struct quad_stage *qs, struct quad_header *quad)
+{
+   struct softpipe_context *softpipe = qs->softpipe;
+
+   softpipe->occlusion_counter += (quad->mask     ) & 1;
+   softpipe->occlusion_counter += (quad->mask >> 1) & 1;
+   softpipe->occlusion_counter += (quad->mask >> 2) & 1;
+   softpipe->occlusion_counter += (quad->mask >> 3) & 1;
+
+   if (quad->mask)
+      qs->next->run(qs->next, quad);
+}
 
 
-struct quad_stage {
-   struct softpipe_context *softpipe;
+struct quad_stage *sp_quad_occlusion_stage( struct softpipe_context *softpipe )
+{
+   struct quad_stage *stage = CALLOC_STRUCT(quad_stage);
 
-   struct quad_stage *next;
+   stage->softpipe = softpipe;
+   stage->run = occlusion_count_quad;
 
-   /** the stage action */
-   void (*run)(struct quad_stage *qs, struct quad_header *quad);
-};
-
-
-struct quad_stage *sp_quad_polygon_stipple_stage( struct softpipe_context *softpipe );
-struct quad_stage *sp_quad_shade_stage( struct softpipe_context *softpipe );
-struct quad_stage *sp_quad_alpha_test_stage( struct softpipe_context *softpipe );
-struct quad_stage *sp_quad_stencil_test_stage( struct softpipe_context *softpipe );
-struct quad_stage *sp_quad_depth_test_stage( struct softpipe_context *softpipe );
-struct quad_stage *sp_quad_occlusion_stage( struct softpipe_context *softpipe );
-struct quad_stage *sp_quad_bufloop_stage( struct softpipe_context *softpipe );
-struct quad_stage *sp_quad_blend_stage( struct softpipe_context *softpipe );
-struct quad_stage *sp_quad_colormask_stage( struct softpipe_context *softpipe );
-struct quad_stage *sp_quad_output_stage( struct softpipe_context *softpipe );
-
-void sp_build_quad_pipeline(struct softpipe_context *sp);
-
-void sp_depth_test_quad(struct quad_stage *qs, struct quad_header *quad);
-
-#endif /* SP_TILE_H */
+   return stage;
+}

@@ -28,7 +28,9 @@
 #ifndef PIPE_CONTEXT_H
 #define PIPE_CONTEXT_H
 
-#include "mtypes.h"
+#include "main/mtypes.h"
+#include "p_state.h"
+
 
 /* Kludge:
  */
@@ -56,6 +58,12 @@ struct pipe_context {
    /** Clear framebuffer */
    void (*clear)(struct pipe_context *pipe, GLboolean color, GLboolean depth,
                  GLboolean stencil, GLboolean accum);
+
+   /** occlusion counting (XXX this may be temporary - we should probably
+    * have generic query objects with begin/end methods)
+    */
+   void (*reset_occlusion_counter)(struct pipe_context *pipe);
+   GLuint (*get_occlusion_counter)(struct pipe_context *pipe);
 
    /*
     * State functions
