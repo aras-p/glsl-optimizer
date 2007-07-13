@@ -29,6 +29,7 @@
 
 static GLenum doubleBuffer;
 static GLint cullmode = 0;
+static GLenum front = GL_CCW; /* GL default */
 
 static void cull(void)
 {
@@ -76,10 +77,15 @@ static void Reshape(int width, int height)
 static void Key(unsigned char key, int x, int y)
 {
    switch (key) {
-    case 27:
-       exit(1);
+   case 27:
+      exit(1);
    case 'c':
       cull();
+      break;
+   case 'f':
+      front = ((front == GL_CCW) ? GL_CW : GL_CCW);
+      glFrontFace(front);
+      printf("front face = %s\n", front == GL_CCW ? "GL_CCW" : "GL_CW");
       break;
    default:
       return;
@@ -92,7 +98,7 @@ static void Draw(void)
    glClear(GL_COLOR_BUFFER_BIT); 
 
    glBegin(GL_TRIANGLES);
-   /* back-facing */
+   /* CCW / front-facing */
    glColor3f(0,0,.7); 
    glVertex3f(-0.1, -0.9, -30.0);
    glColor3f(.8,0,0); 
@@ -100,7 +106,7 @@ static void Draw(void)
    glColor3f(0,.9,0); 
    glVertex3f(-0.9,  0.0, -30.0);
 
-   /* front-facing */
+   /* CW / back-facing */
    glColor3f(0,0,.7); 
    glVertex3f( 0.1, -0.9, -30.0);
    glColor3f(.8,0,0); 
