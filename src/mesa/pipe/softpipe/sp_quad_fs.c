@@ -39,7 +39,7 @@
 #include "sp_quad.h"
 
 struct exec_machine {
-   const struct setup_coefficient *coef;
+   const struct setup_coefficient *coef; /**< will point to quad->coef */
 
    GLfloat attr[FRAG_ATTRIB_MAX][4][QUAD_SIZE];
 };
@@ -200,7 +200,9 @@ shade_quad( struct quad_stage *qs, struct quad_header *quad )
    }
 #endif
 
-   qs->next->run(qs->next, quad);
+   /* shader may cull fragments */
+   if (quad->mask)
+      qs->next->run(qs->next, quad);
 }
 
 
