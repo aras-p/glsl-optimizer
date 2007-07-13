@@ -40,7 +40,7 @@
 
 struct cull_stage {
    struct draw_stage stage;
-   GLuint mode;  /**< one of PIPE_WINDING_x */
+   GLuint winding;  /**< which winding(s) to cull (one of PIPE_WINDING_x) */
 };
 
 
@@ -54,7 +54,7 @@ static void cull_begin( struct draw_stage *stage )
 {
    struct cull_stage *cull = cull_stage(stage);
 
-   cull->mode = stage->draw->setup.cull_mode;
+   cull->winding = stage->draw->setup.cull_mode;
 
    stage->next->begin( stage->next );
 }
@@ -78,10 +78,12 @@ static void cull_tri( struct draw_stage *stage,
    header->det = ex * fy - ey * fx;
 
    if (header->det != 0) {
-      /* non-zero area */
-      GLuint mode = (header->det > 0) ? PIPE_WINDING_CW : PIPE_WINDING_CCW;
+      /* if (det > 0 then Z points toward camera and triangle is 
+       * counter-clockwise winding.
+       */
+      GLuint winding = (header->det > 0) ? PIPE_WINDING_CCW : PIPE_WINDING_CW;
 
-      if ((mode & cull_stage(stage)->mode) == 0) {
+      if ((winding & cull_stage(stage)->winding) == 0) {
          /* triangle is not culled, pass to next stage */
 	 stage->next->tri( stage->next, header );
       }

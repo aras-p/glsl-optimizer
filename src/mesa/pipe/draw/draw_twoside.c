@@ -35,8 +35,7 @@
 
 struct twoside_stage {
    struct draw_stage stage;
-   
-   GLfloat facing;
+   GLfloat sign;         /**< +1 or -1 */
    const GLuint *lookup;
 };
 
@@ -51,7 +50,12 @@ static void twoside_begin( struct draw_stage *stage )
 {
    struct twoside_stage *twoside = twoside_stage(stage);
 
-   twoside->facing = (stage->draw->setup.front_winding == PIPE_WINDING_CW) ? 1 : -1;
+   /*
+    * We'll multiply the primitive's determinant by this sign to determine
+    * if the triangle is back-facing (negative).
+    * sign = 1 for CCW, -1 for CW
+    */
+   twoside->sign = (stage->draw->setup.front_winding == PIPE_WINDING_CCW) ? 1 : -1;
 
    stage->next->begin( stage->next );
 }
@@ -94,7 +98,7 @@ static void twoside_tri( struct draw_stage *stage,
 {
    struct twoside_stage *twoside = twoside_stage(stage);
 
-   if (header->det * twoside->facing < 0) {
+   if (header->det * twoside->sign < 0.0) {
       /* this is a back-facing triangle */
       struct prim_header tmp;
 

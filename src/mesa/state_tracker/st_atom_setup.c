@@ -78,13 +78,19 @@ static void update_setup_state( struct st_context *st )
    /* _NEW_POLYGON, _NEW_BUFFERS
     */
    {
-      setup.front_winding = PIPE_WINDING_CW;
-	
-      if (ctx->DrawBuffer && ctx->DrawBuffer->Name != 0)
-	 setup.front_winding ^= PIPE_WINDING_BOTH;
+      if (ctx->Polygon.FrontFace == GL_CCW)
+         setup.front_winding = PIPE_WINDING_CCW;
+      else
+         setup.front_winding = PIPE_WINDING_CW;
 
-      if (ctx->Polygon.FrontFace != GL_CCW)
-	 setup.front_winding ^= PIPE_WINDING_BOTH;
+      /* XXX
+       * I think the intention here is that user-created framebuffer objects
+       * use Y=0=TOP layout instead of OpenGL's normal Y=0=bottom layout.
+       * Flipping Y changes CW to CCW and vice-versa.
+       * But this is an implementation/driver-specific artifact - remove...
+       */
+      if (ctx->DrawBuffer && ctx->DrawBuffer->Name != 0)
+         setup.front_winding ^= PIPE_WINDING_BOTH;
    }
 
    /* _NEW_LIGHT
