@@ -84,7 +84,7 @@ struct intel_renderbuffer
    GLuint vbl_pending;   /**< vblank sequence number of pending flip */
 };
 
-
+#if 0
 extern struct intel_renderbuffer *intel_create_renderbuffer(GLenum intFormat,
                                                             GLsizei width,
                                                             GLsizei height,
@@ -92,7 +92,9 @@ extern struct intel_renderbuffer *intel_create_renderbuffer(GLenum intFormat,
                                                             int pitch,
                                                             int cpp,
                                                             void *map);
+#endif
 
+extern struct intel_renderbuffer *intel_new_renderbuffer_fb(GLuint intFormat);
 
 extern void intel_fbo_init(struct intel_context *intel);
 

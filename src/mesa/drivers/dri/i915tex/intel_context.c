@@ -572,7 +572,6 @@ intelMakeCurrent(__DRIcontextPrivate * driContextPriv,
                  __DRIdrawablePrivate * driDrawPriv,
                  __DRIdrawablePrivate * driReadPriv)
 {
-   GLuint updatebufsize = GL_FALSE;
 
 #if 0
    if (driDrawPriv) {
@@ -620,22 +619,18 @@ intelMakeCurrent(__DRIcontextPrivate * driContextPriv,
          }
       }
 
-      /* only update GLframebuffer size to match window
-         if here for the first time */
-      if (intel->ctx.FirstTimeCurrent) {
-	 updatebufsize = GL_TRUE;
-	 driUpdateFramebufferSize(&intel->ctx, driDrawPriv);
+      /* update GLframebuffer size to match window if needed */
+      driUpdateFramebufferSize(&intel->ctx, driDrawPriv);
 
-	 if (driReadPriv != driDrawPriv) {
-	    driUpdateFramebufferSize(&intel->ctx, driReadPriv);
-	 }
+      if (driReadPriv != driDrawPriv) {
+         driUpdateFramebufferSize(&intel->ctx, driReadPriv);
       }
 
       _mesa_make_current(&intel->ctx, &intel_fb->Base, readFb);
 
       /* The drawbuffer won't always be updated by _mesa_make_current: 
        */
-      if (updatebufsize && intel->ctx.DrawBuffer == &intel_fb->Base) {
+      if (intel->ctx.DrawBuffer == &intel_fb->Base) {
 
 	 if (intel->driDrawable != driDrawPriv) {
 	    intel_fb->vblank_flags = (intel->intelScreen->irq_active != 0)
@@ -646,9 +641,11 @@ intelMakeCurrent(__DRIcontextPrivate * driContextPriv,
 				  &intel_fb->vbl_seq);
 	    intel->driDrawable = driDrawPriv;
 	    intelWindowMoved(intel);
+	    intel->lastStamp = driDrawPriv->lastStamp;
 	 }
-
-	 intel_draw_buffer(&intel->ctx, &intel_fb->Base);
+	 else if (intel->lastStamp != driDrawPriv->lastStamp) {
+	    intel_draw_buffer(&intel->ctx, &intel_fb->Base);
+	 }
       }
    }
    else {
@@ -677,8 +674,7 @@ intelContendedLock(struct intel_context *intel, GLuint flags)
     * checking must be done *after* this call:
     */
    if (dPriv)
-      intel->revalidateDrawable = GL_TRUE;
-//      DRI_VALIDATE_DRAWABLE_INFO(sPriv, dPriv);
+      DRI_VALIDATE_DRAWABLE_INFO(sPriv, dPriv);
 
    if (sarea->width != intelScreen->width ||
        sarea->height != intelScreen->height ||

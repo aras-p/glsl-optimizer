@@ -79,13 +79,6 @@ intelCopyBuffer(__DRIdrawablePrivate * dPriv,
     */
    LOCK_HARDWARE(intel);
 
-      if (intel->revalidateDrawable) {
-	 __DRIscreenPrivate *sPriv = intel->driScreen;
-	 if (dPriv) {
-	    DRI_VALIDATE_DRAWABLE_INFO(sPriv, dPriv);
-	 }
-      }
-
    if (dPriv && dPriv->numClipRects) {
       struct intel_framebuffer *intel_fb = dPriv->driverPrivate;
       const struct intel_region *frontRegion
@@ -190,9 +183,14 @@ intelCopyBuffer(__DRIdrawablePrivate * dPriv,
 
    UNLOCK_HARDWARE(intel);
 
-   if (intel->revalidateDrawable) {
-      intel->revalidateDrawable = GL_FALSE;
-      intelWindowMoved(intel);
+   /* XXX this is bogus. The context here may not even be bound to this drawable! */
+   if (intel->lastStamp != dPriv->lastStamp) {
+      GET_CURRENT_CONTEXT(currctx);
+      struct intel_context *intelcurrent = intel_context(currctx);
+      if (intelcurrent == intel && intelcurrent->driDrawable == dPriv) {
+         intelWindowMoved(intel);
+         intel->lastStamp = dPriv->lastStamp;
+      }
    }
 
 }

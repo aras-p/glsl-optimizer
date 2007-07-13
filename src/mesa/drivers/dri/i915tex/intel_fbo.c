@@ -299,7 +299,7 @@ intel_alloc_renderbuffer_storage(GLcontext * ctx, struct gl_renderbuffer *rb,
 }
 
 
-
+#if 0
 /**
  * Called for each hardware renderbuffer when a _window_ is resized.
  * Just update fields.
@@ -316,6 +316,7 @@ intel_alloc_window_storage(GLcontext * ctx, struct gl_renderbuffer *rb,
 
    return GL_TRUE;
 }
+#endif
 
 static void
 intel_resize_buffers(GLcontext *ctx, struct gl_framebuffer *fb,
@@ -352,7 +353,7 @@ intel_nop_alloc_storage(GLcontext * ctx, struct gl_renderbuffer *rb,
 }
 
 
-
+#if 0
 /**
  * Create a new intel_renderbuffer which corresponds to an on-screen window,
  * not a user-created renderbuffer.
@@ -452,15 +453,16 @@ intel_create_renderbuffer(GLenum intFormat, GLsizei width, GLsizei height,
 
    return irb;
 }
+#endif
 
-struct gl_renderbuffer *
-intel_new_renderbuffer_fb(GLcontext * ctx, GLuint intFormat)
+struct intel_renderbuffer *
+intel_new_renderbuffer_fb(GLuint intFormat)
 {
    struct intel_renderbuffer *irb;
 
    irb = CALLOC_STRUCT(intel_renderbuffer);
    if (!irb) {
-      _mesa_error(ctx, GL_OUT_OF_MEMORY, "creating renderbuffer");
+      _mesa_error(NULL, GL_OUT_OF_MEMORY, "creating renderbuffer");
       return NULL;
    }
 
@@ -474,7 +476,7 @@ intel_new_renderbuffer_fb(GLcontext * ctx, GLuint intFormat)
    irb->Base.GetPointer = intel_get_pointer;
    /* span routines set in alloc_storage function */
 
-   return &irb->Base;
+   return irb;
 }
 
 /**

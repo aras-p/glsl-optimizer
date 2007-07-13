@@ -680,14 +680,14 @@ intelCreateBuffer(__DRIscreenPrivate * driScrnPriv,
 	 /* XXX allocation should only happen in the unusual case
             it's actually needed */
          intel_fb->color_rb[0]
-            = intel_new_renderbuffer_fb(NULL, rgbFormat);
+            = intel_new_renderbuffer_fb(rgbFormat);
          _mesa_add_renderbuffer(&intel_fb->Base, BUFFER_FRONT_LEFT,
 				&intel_fb->color_rb[0]->Base);
       }
 
       if (mesaVis->doubleBufferMode) {
          intel_fb->color_rb[1]
-            = intel_new_renderbuffer_fb(NULL, rgbFormat);
+            = intel_new_renderbuffer_fb(rgbFormat);
          _mesa_add_renderbuffer(&intel_fb->Base, BUFFER_BACK_LEFT,
 				&intel_fb->color_rb[1]->Base);
 
@@ -695,14 +695,14 @@ intelCreateBuffer(__DRIscreenPrivate * driScrnPriv,
 	    struct gl_renderbuffer *tmp_rb = NULL;
 
 	    intel_fb->color_rb[2]
-	       = intel_new_renderbuffer_fb(NULL, rgbFormat);
+	       = intel_new_renderbuffer_fb(rgbFormat);
 	    _mesa_reference_renderbuffer(&tmp_rb, &intel_fb->color_rb[2]->Base);
 	 }
       }
       if (mesaVis->depthBits == 24 && mesaVis->stencilBits == 8) {
          /* combined depth/stencil buffer */
          struct intel_renderbuffer *depthStencilRb
-            = intel_new_renderbuffer_fb(NULL, GL_DEPTH24_STENCIL8_EXT);
+            = intel_new_renderbuffer_fb(GL_DEPTH24_STENCIL8_EXT);
          /* note: bind RB to two attachment points */
          _mesa_add_renderbuffer(&intel_fb->Base, BUFFER_DEPTH,
 				&depthStencilRb->Base);
@@ -712,7 +712,7 @@ intelCreateBuffer(__DRIscreenPrivate * driScrnPriv,
       else if (mesaVis->depthBits == 16) {
          /* just 16-bit depth buffer, no hw stencil */
          struct intel_renderbuffer *depthRb
-            = intel_new_renderbuffer_fb(NULL, GL_DEPTH_COMPONENT16);
+            = intel_new_renderbuffer_fb(GL_DEPTH_COMPONENT16);
          _mesa_add_renderbuffer(&intel_fb->Base, BUFFER_DEPTH, &depthRb->Base);
       }
 
@@ -987,18 +987,19 @@ struct intel_context *intelScreenContext(intelScreenPrivate *intelScreen)
    * context at screen creation. For now just use the current context.
    */
 
-/*  GET_CURRENT_CONTEXT(ctx);
+  GET_CURRENT_CONTEXT(ctx);
   if (ctx == NULL) {
-     _mesa_problem(NULL, "No current context in intelScreenContext\n");
-     return NULL;
+/*     _mesa_problem(NULL, "No current context in intelScreenContext\n");
+     return NULL; */
+     /* need a context for the first time makecurrent is called (for hw lock
+        when allocating priv buffers) */
+     if (intelScreen->dummyctxptr == NULL) {
+        _mesa_problem(NULL, "No current context in intelScreenContext\n");
+        return NULL;
+     }
+     return intelScreen->dummyctxptr;
   }
   return intel_context(ctx);
-*/
-  if (intelScreen->dummyctxptr == NULL) {
-     _mesa_problem(NULL, "No current context in intelScreenContext\n");
-     return NULL;
-  }
-  return intelScreen->dummyctxptr;
 
 }
 
