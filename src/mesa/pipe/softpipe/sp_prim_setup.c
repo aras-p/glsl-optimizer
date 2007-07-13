@@ -569,6 +569,8 @@ static void setup_tri( struct draw_stage *stage,
    setup_tri_coefficients( setup );
    setup_tri_edges( setup );
 
+   setup->quad.prim = PRIM_TRI;
+
    setup->span.y = 0;
    setup->span.y_flags = 0;
    setup->span.right[0] = 0;
@@ -751,6 +753,7 @@ setup_line(struct draw_stage *stage, struct prim_header *prim)
 
    setup->quad.x0 = setup->quad.y0 = -1;
    setup->quad.mask = 0x0;
+   setup->quad.prim = PRIM_LINE;
 
    if (dx > dy) {
       /*** X-major line ***/
@@ -841,6 +844,8 @@ setup_point(struct draw_stage *stage, struct prim_header *prim)
       for (j = 0; j < NUM_CHANNELS; j++)
          const_coeff(setup, slot, j);
    }
+
+   setup->quad.prim = PRIM_POINT;
 
    /* XXX need to clip against scissor bounds too */
 

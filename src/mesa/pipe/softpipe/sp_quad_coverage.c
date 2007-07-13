@@ -44,25 +44,20 @@
  * Multiply quad's alpha values by the fragment coverage.
  */
 static void
-apply_aa_coverage_quad(struct quad_stage *qs, struct quad_header *quad)
+coverage_quad(struct quad_stage *qs, struct quad_header *quad)
 {
-#if 0
    struct softpipe_context *softpipe = qs->softpipe;
 
-   /* XXX need to know if this quad is from a point, line or polygon! */
-   if ((softpipe->setup.poly_smooth && prim == POLYGON) ||
-       (softpipe->setup.line_smooth && prim == LINE) ||
-       (softpipe->setup.point_smooth && prim == POINT)) {
-#endif
+   if ((softpipe->setup.poly_smooth && quad->prim == PRIM_TRI) ||
+       (softpipe->setup.line_smooth && quad->prim == PRIM_LINE) ||
+       (softpipe->setup.point_smooth && quad->prim == PRIM_POINT)) {
       GLuint j;
       for (j = 0; j < QUAD_SIZE; j++) {
          assert(quad->coverage[j] >= 0.0);
          assert(quad->coverage[j] <= 1.0);
          quad->outputs.color[3][j] *= quad->coverage[j];
       }
-#if 0
    }
-#endif
 
    qs->next->run(qs->next, quad);
 }
@@ -73,7 +68,7 @@ struct quad_stage *sp_quad_coverage_stage( struct softpipe_context *softpipe )
    struct quad_stage *stage = CALLOC_STRUCT(quad_stage);
 
    stage->softpipe = softpipe;
-   stage->run = apply_aa_coverage_quad;
+   stage->run = coverage_quad;
 
    return stage;
 }

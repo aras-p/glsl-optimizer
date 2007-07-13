@@ -64,17 +64,16 @@ struct setup_coefficient {
 
 
 
-/* Encodes everything we need to know about a 2x2 pixel block.  Uses
+/**
+ * Encodes everything we need to know about a 2x2 pixel block.  Uses
  * "Channel-Serial" or "SoA" layout.  
- *
- * Will expand to include non-attribute things like AA coverage and
- * maybe prefetched depth from the depth buffer.
  */
 struct quad_header {
    GLint x0;
    GLint y0;
-   GLuint mask;
-   GLuint facing;   /**< Front (0) or back (1) facing? */
+   GLuint mask:4;
+   GLuint facing:1;   /**< Front (0) or back (1) facing? */
+   GLuint prim:2;     /**< PRIM_POINT, LINE, TRI */
 
    struct {
       GLfloat color[4][QUAD_SIZE];	/* rrrr, gggg, bbbb, aaaa */

@@ -13,44 +13,45 @@
 
 /**
  * Apply polygon stipple to quads produced by triangle rasterization
- * XXX we need to skip this for lines and points!!!
  */
 static void
 stipple_quad(struct quad_stage *qs, struct quad_header *quad)
 {
-   struct softpipe_context *softpipe = qs->softpipe;
-   const GLint col0 = quad->x0 % 32;
-   const GLint row0 = quad->y0 % 32;
-   const GLuint stipple0 = softpipe->poly_stipple.stipple[row0];
-   const GLuint stipple1 = softpipe->poly_stipple.stipple[row0 + 1];
+   if (quad->prim == PRIM_TRI) {
+      struct softpipe_context *softpipe = qs->softpipe;
+      const GLint col0 = quad->x0 % 32;
+      const GLint row0 = quad->y0 % 32;
+      const GLuint stipple0 = softpipe->poly_stipple.stipple[row0];
+      const GLuint stipple1 = softpipe->poly_stipple.stipple[row0 + 1];
 
-   /* XXX this should be acheivable without conditionals */
+      /* XXX this should be acheivable without conditionals */
 #if 1
-   GLbitfield mask = 0x0;
+      GLbitfield mask = 0x0;
 
-   if ((1 << col0) & stipple0)
-      mask |= MASK_BOTTOM_LEFT;
+      if ((1 << col0) & stipple0)
+         mask |= MASK_BOTTOM_LEFT;
 
-   if ((2 << col0) & stipple0)	/* note: col0 <= 30 */
-      mask |= MASK_BOTTOM_RIGHT;
+      if ((2 << col0) & stipple0)	/* note: col0 <= 30 */
+         mask |= MASK_BOTTOM_RIGHT;
 
-   if ((1 << col0) & stipple1)
-      mask |= MASK_TOP_LEFT;
+      if ((1 << col0) & stipple1)
+         mask |= MASK_TOP_LEFT;
 
-   if ((2 << col0) & stipple1)
-      mask |= MASK_TOP_RIGHT;
+      if ((2 << col0) & stipple1)
+         mask |= MASK_TOP_RIGHT;
 
-   quad->mask &= mask;
+      quad->mask &= mask;
 #else
-   /* XXX there may be a better way to lay out the stored stipple
-    * values to further simplify this computation.
-    */
-   quad->mask &= (((stipple0 >> col0) & 0x3) | 
-		  (((stipple1 >> col0) & 0x3) << 2));
+      /* XXX there may be a better way to lay out the stored stipple
+       * values to further simplify this computation.
+       */
+      quad->mask &= (((stipple0 >> col0) & 0x3) | 
+                     (((stipple1 >> col0) & 0x3) << 2));
 #endif
 
-   if (quad->mask)
-      qs->next->run(qs->next, quad);
+      if (quad->mask)
+         qs->next->run(qs->next, quad);
+   }
 }
 
 
