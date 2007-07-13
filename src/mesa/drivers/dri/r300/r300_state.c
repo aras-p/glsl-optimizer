@@ -317,19 +317,34 @@ static void r300UpdateCulling(GLcontext * ctx)
 	r300ContextPtr r300 = R300_CONTEXT(ctx);
 	uint32_t val = 0;
 
-	R300_STATECHANGE(r300, cul);
 	if (ctx->Polygon.CullFlag) {
-		if (ctx->Polygon.CullFaceMode == GL_FRONT_AND_BACK)
-			val = R300_CULL_FRONT | R300_CULL_BACK;
-		else if (ctx->Polygon.CullFaceMode == GL_FRONT)
+		switch (ctx->Polygon.CullFaceMode) {
+		case GL_FRONT:
 			val = R300_CULL_FRONT;
-		else
+			break;
+		case GL_BACK:
 			val = R300_CULL_BACK;
+			break;
+		case GL_FRONT_AND_BACK:
+			val = R300_CULL_FRONT | R300_CULL_BACK;
+			break;
+		default:
+			break;
+		}
 	}
-	if (ctx->Polygon.FrontFace == GL_CW)
+
+	switch (ctx->Polygon.FrontFace) {
+	case GL_CW:
 		val |= R300_FRONT_FACE_CW;
-	else
+		break;
+	case GL_CCW:
 		val |= R300_FRONT_FACE_CCW;
+		break;
+	default:
+		break;
+	}
+
+	R300_STATECHANGE(r300, cul);
 	r300->hw.cul.cmd[R300_CUL_CULL] = val;
 }
 
