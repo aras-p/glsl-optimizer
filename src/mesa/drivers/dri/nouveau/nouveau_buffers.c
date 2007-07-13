@@ -69,7 +69,7 @@ void
 nouveau_mem_free(GLcontext *ctx, nouveau_mem *mem)
 {
    nouveauContextPtr nmesa = NOUVEAU_CONTEXT(ctx);
-   drm_nouveau_mem_free_t memf;
+   struct drm_nouveau_mem_free memf;
 
    if (NOUVEAU_DEBUG & DEBUG_MEM)  {
       fprintf(stderr, "%s: type=0x%x, offset=0x%x, size=0x%x\n",
@@ -88,7 +88,7 @@ nouveau_mem *
 nouveau_mem_alloc(GLcontext *ctx, int type, GLuint size, GLuint align)
 {
    nouveauContextPtr nmesa = NOUVEAU_CONTEXT(ctx);
-   drm_nouveau_mem_alloc_t mema;
+   struct drm_nouveau_mem_alloc mema;
    nouveau_mem *mem;
    int ret;
 

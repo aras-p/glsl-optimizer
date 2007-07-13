@@ -180,7 +180,7 @@ GLboolean nouveauCreateContext( const __GLcontextModes *glVisual,
 	driParseConfigFiles (&nmesa->optionCache, &screen->optionCache,
 			screen->driScreen->myNum, "nouveau");
 
-	nmesa->sarea = (drm_nouveau_sarea_t *)((char *)sPriv->pSAREA +
+	nmesa->sarea = (struct drm_nouveau_sarea *)((char *)sPriv->pSAREA +
 			screen->sarea_priv_offset);
 
 	/* Enable any supported extensions */

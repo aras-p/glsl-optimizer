@@ -7,7 +7,7 @@
 GLboolean nouveauCreateContextObject(nouveauContextPtr nmesa,
 				     uint32_t handle, int class)
 {
-	drm_nouveau_grobj_alloc_t cto;
+	struct drm_nouveau_grobj_alloc cto;
 	int ret;
 
 	cto.channel = nmesa->fifo.channel;
