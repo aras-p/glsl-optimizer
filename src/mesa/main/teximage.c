@@ -1476,7 +1476,7 @@ texture_error_check( GLcontext *ctx, GLenum target,
       if (target == GL_PROXY_TEXTURE_1D || target == GL_TEXTURE_1D) {
          proxy_target = GL_PROXY_TEXTURE_1D;
          height = 1;
-         width = 1;
+         depth = 1;
       }
       else {
          _mesa_error( ctx, GL_INVALID_ENUM, "glTexImage1D(target)" );
