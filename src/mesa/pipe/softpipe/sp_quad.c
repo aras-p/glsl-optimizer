@@ -36,6 +36,13 @@ sp_build_quad_pipeline(struct softpipe_context *sp)
       sp->quad.first = sp->quad.occlusion;
    }
 
+   if (sp->setup.poly_smooth ||
+       sp->setup.line_smooth ||
+       sp->setup.point_smooth) {
+      sp->quad.coverage->next = sp->quad.first;
+      sp->quad.first = sp->quad.coverage;
+   }
+
    if (   sp->stencil.front_enabled
        || sp->stencil.front_enabled) {
       sp->quad.stencil_test->next = sp->quad.first;

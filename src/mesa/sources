@@ -162,6 +162,7 @@ SOFTPIPE_SOURCES = \
 	pipe/softpipe/sp_quad_blend.c \
 	pipe/softpipe/sp_quad_bufloop.c \
 	pipe/softpipe/sp_quad_colormask.c \
+	pipe/softpipe/sp_quad_coverage.c \
 	pipe/softpipe/sp_quad_depth_test.c \
 	pipe/softpipe/sp_quad_fs.c \
 	pipe/softpipe/sp_quad_occlusion.c \

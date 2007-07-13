@@ -105,6 +105,7 @@ struct pipe_context *softpipe_create( void )
    softpipe->quad.depth_test = sp_quad_depth_test_stage(softpipe);
    softpipe->quad.stencil_test = sp_quad_stencil_test_stage(softpipe);
    softpipe->quad.occlusion = sp_quad_occlusion_stage(softpipe);
+   softpipe->quad.coverage = sp_quad_coverage_stage(softpipe);
    softpipe->quad.bufloop = sp_quad_bufloop_stage(softpipe);
    softpipe->quad.blend = sp_quad_blend_stage(softpipe);
    softpipe->quad.colormask = sp_quad_colormask_stage(softpipe);

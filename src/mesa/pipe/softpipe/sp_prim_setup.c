@@ -858,60 +858,97 @@ setup_point(struct draw_stage *stage, struct prim_header *prim)
       const GLint ixmax = block((GLint) (x + halfSize));
       const GLint iymin = block((GLint) (y - halfSize));
       const GLint iymax = block((GLint) (y + halfSize));
-      GLfloat halfSizeSquared = halfSize * halfSize;
       GLint ix, iy;
 
-      for (iy = iymin; iy <= iymax; iy += 2) {
-         for (ix = ixmin; ix <= ixmax; ix += 2) {
+      if (round) {
+         /* rounded points */
+         const GLfloat rmin = halfSize - 0.7071F;  /* 0.7071 = sqrt(2)/2 */
+         const GLfloat rmax = halfSize + 0.7071F;
+         const GLfloat rmin2 = MAX2(0.0F, rmin * rmin);
+         const GLfloat rmax2 = rmax * rmax;
+         const GLfloat cscale = 1.0F / (rmax2 - rmin2);
 
-            if (round) {
-               /* rounded points */
-               /* XXX for GL_SMOOTH, need to compute per-fragment coverage too */
-               GLfloat dx, dy;
+         for (iy = iymin; iy <= iymax; iy += 2) {
+            for (ix = ixmin; ix <= ixmax; ix += 2) {
+               GLfloat dx, dy, dist2, cover;
 
                setup->quad.mask = 0x0;
 
                dx = (ix + 0.5) - x;
                dy = (iy + 0.5) - y;
-               if (dx * dx + dy * dy <= halfSizeSquared)
+               dist2 = dx * dx + dy * dy;
+               if (dist2 <= rmax2) {
+                  cover = 1.0F - (dist2 - rmin2) * cscale;
+                  setup->quad.coverage[QUAD_BOTTOM_LEFT] = MIN2(cover, 1.0);
                   setup->quad.mask |= MASK_BOTTOM_LEFT;
+               }
 
                dx = (ix + 1.5) - x;
                dy = (iy + 0.5) - y;
-               if (dx * dx + dy * dy <= halfSizeSquared)
+               dist2 = dx * dx + dy * dy;
+               if (dist2 <= rmax2) {
+                  cover = 1.0F - (dist2 - rmin2) * cscale;
+                  setup->quad.coverage[QUAD_BOTTOM_RIGHT] = MIN2(cover, 1.0);
                   setup->quad.mask |= MASK_BOTTOM_RIGHT;
+               }
 
                dx = (ix + 0.5) - x;
                dy = (iy + 1.5) - y;
-               if (dx * dx + dy * dy <= halfSizeSquared)
+               dist2 = dx * dx + dy * dy;
+               if (dist2 <= rmax2) {
+                  cover = 1.0F - (dist2 - rmin2) * cscale;
+                  setup->quad.coverage[QUAD_TOP_LEFT] = MIN2(cover, 1.0);
                   setup->quad.mask |= MASK_TOP_LEFT;
+               }
 
                dx = (ix + 1.5) - x;
                dy = (iy + 1.5) - y;
-               if (dx * dx + dy * dy <= halfSizeSquared)
+               dist2 = dx * dx + dy * dy;
+               if (dist2 <= rmax2) {
+                  cover = 1.0F - (dist2 - rmin2) * cscale;
+                  setup->quad.coverage[QUAD_TOP_RIGHT] = MIN2(cover, 1.0);
                   setup->quad.mask |= MASK_TOP_RIGHT;
+               }
+
+               if (setup->quad.mask) {
+                  setup->quad.x0 = ix;
+                  setup->quad.y0 = iy;
+                  quad_emit( setup->softpipe, &setup->quad );
+               }
             }
-            else {
-               /* square points */
+         }
+      }
+      else {
+         /* square points */
+         for (iy = iymin; iy <= iymax; iy += 2) {
+            for (ix = ixmin; ix <= ixmax; ix += 2) {
                setup->quad.mask = 0xf;
 
-               if (ix + 0.5 < x - halfSize)
-                  setup->quad.mask &= (MASK_BOTTOM_RIGHT | MASK_TOP_RIGHT);
+               if (ix + 0.5 < x - halfSize) {
+                  /* fragment is past left edge of point, turn off left bits */
+                  setup->quad.mask &= ~(MASK_BOTTOM_LEFT | MASK_TOP_LEFT);
+               }
 
-               if (ix + 1.5 > x + halfSize)
-                  setup->quad.mask &= (MASK_BOTTOM_LEFT | MASK_TOP_LEFT);
+               if (ix + 1.5 > x + halfSize) {
+                  /* past the right edge */
+                  setup->quad.mask &= ~(MASK_BOTTOM_RIGHT | MASK_TOP_RIGHT);
+               }
 
-               if (iy + 0.5 < y - halfSize)
-                  setup->quad.mask &= (MASK_TOP_LEFT | MASK_TOP_RIGHT);
+               if (iy + 0.5 < y - halfSize) {
+                  /* below the bottom edge */
+                  setup->quad.mask &= ~(MASK_BOTTOM_LEFT | MASK_BOTTOM_RIGHT);
+               }
 
-               if (iy + 1.5 > y + halfSize)
-                  setup->quad.mask &= (MASK_BOTTOM_LEFT | MASK_BOTTOM_RIGHT);
-            }
+               if (iy + 1.5 > y + halfSize) {
+                  /* above the top edge */
+                  setup->quad.mask &= ~(MASK_TOP_LEFT | MASK_TOP_RIGHT);
+               }
 
-            if (setup->quad.mask) {
-               setup->quad.x0 = ix;
-               setup->quad.y0 = iy;
-               quad_emit( setup->softpipe, &setup->quad );
+               if (setup->quad.mask) {
+                  setup->quad.x0 = ix;
+                  setup->quad.y0 = iy;
+                  quad_emit( setup->softpipe, &setup->quad );
+               }
             }
          }
       }

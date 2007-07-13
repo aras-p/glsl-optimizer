@@ -81,6 +81,8 @@ struct quad_header {
       GLfloat depth[QUAD_SIZE];
    } outputs;
 
+   GLfloat coverage[QUAD_SIZE];    /** fragment coverage for antialiasing */
+
    const struct setup_coefficient *coef;
 
    const enum interp_mode *interp; /* XXX: this information should be
