@@ -110,13 +110,15 @@ static void interp( const struct clipper *clip,
       dst->data[0][3] = oow;
    }
 
-   
    /* Other attributes
-    * Note: start at 1 to skip winpos (data[0]) and subtract one
-    * since there's two vertex attrib slots we want to ignore (the header
-    * and the clippos.
+    * Note: start at 1 to skip winpos (data[0]) since we just computed
+    * it above.
+    * Subtract two from nr_attrs since the first two attribs (always 
+    * VF_ATTRIB_VERTEX_HEADER and VF_ATTRIB_CLIP_POS, see
+    * draw_set_vertex_attributes()) are in the vertex_header struct,
+    * not in the data[] array.
     */
-   for (j = 1; j < nr_attrs-1; j++) {
+   for (j = 1; j < nr_attrs - 2; j++) {
       interp_attr(dst->data[j], t, in->data[j], out->data[j]);
    }
 }
@@ -364,6 +366,11 @@ static void clip_begin( struct draw_stage *stage )
 {
    struct clipper *clipper = clipper_stage(stage);
    GLuint nr = stage->draw->nr_planes;
+
+   /* sanity checks.  If these fail, review the clip/interp code! */
+   assert(stage->draw->nr_attrs >= 3);
+   assert(stage->draw->attrs[0].attrib == VF_ATTRIB_VERTEX_HEADER);
+   assert(stage->draw->attrs[1].attrib == VF_ATTRIB_CLIP_POS);
 
    /* Hacky bitmask to use when we hit CLIP_USER_BIT:
     */   
