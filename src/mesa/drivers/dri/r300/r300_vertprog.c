@@ -455,7 +455,7 @@ static void r300TranslateVertexShader(struct r300_vertex_program *vp,
 
 	if (vp->key.OutputsWritten & (1 << VERT_RESULT_BFC0)) {
 		vp->outputs[VERT_RESULT_BFC0] = 3;
-		cur_reg = 5;
+		cur_reg = 4;
 	}
 
 	if (vp->key.OutputsWritten & (1 << VERT_RESULT_BFC1)) {
