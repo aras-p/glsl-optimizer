@@ -90,7 +90,11 @@ static void calculate_vertex_layout( struct softpipe_context *softpipe )
     */
    for (i = 1; i < FRAG_ATTRIB_TEX0; i++) {
       if (inputsRead & (i << i)) {
-	 EMIT_ATTR(frag_to_vf[i], i, INTERP_LINEAR);
+         if (softpipe->setup.flatshade
+             && (i == FRAG_ATTRIB_COL0 || i == FRAG_ATTRIB_COL1))
+            EMIT_ATTR(frag_to_vf[i], i, INTERP_CONSTANT);
+         else
+            EMIT_ATTR(frag_to_vf[i], i, INTERP_LINEAR);
       }
    }
 
