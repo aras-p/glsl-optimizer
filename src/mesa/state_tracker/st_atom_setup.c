@@ -98,14 +98,18 @@ static void update_setup_state( struct st_context *st )
    if (ctx->Light.ShadeModel == GL_FLAT)
       setup.flatshade = 1;
 
-   /* _NEW_LIGHT 
+   /* _NEW_LIGHT | _NEW_PROGRAM
     *
-    * Not sure about the light->enabled requirement - does this still
-    * apply??
+    * Back-face colors can come from traditional lighting (when
+    * GL_LIGHT_MODEL_TWO_SIDE is set) or from vertex programs (when
+    * GL_VERTEX_PROGRAM_TWO_SIDE is set).  Note the logic here.
     */
-   if (ctx->Light.Enabled && 
-       ctx->Light.Model.TwoSide)
+   if (ctx->VertexProgram._Enabled) {
+      setup.light_twoside = ctx->VertexProgram.TwoSideEnabled;
+   }
+   else if (ctx->Light.Enabled && ctx->Light.Model.TwoSide) {
       setup.light_twoside = 1;
+   }
 
    /* _NEW_POLYGON
     */
