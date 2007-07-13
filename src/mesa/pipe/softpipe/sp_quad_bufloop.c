@@ -15,11 +15,11 @@ static void
 cbuf_loop_quad(struct quad_stage *qs, struct quad_header *quad)
 {
    struct softpipe_context *softpipe = qs->softpipe;
-   const GLuint sz = sizeof(quad->outputs.color);
    GLfloat tmp[4][QUAD_SIZE];
    GLuint i;
 
-   assert(sz == sizeof(tmp));
+   assert(sizeof(quad->outputs.color) == sizeof(tmp));
+   assert(softpipe->framebuffer.num_cbufs <= PIPE_MAX_COLOR_BUFS);
 
    /* make copy of original colors since they can get modified
     * by blending and masking.
@@ -28,9 +28,7 @@ cbuf_loop_quad(struct quad_stage *qs, struct quad_header *quad)
     * But if we emitted one color and glDrawBuffer(GL_FRONT_AND_BACK) is
     * in effect, we need to save/restore colors like this.
     */
-   memcpy(tmp, quad->outputs.color, sz);
-
-   assert(softpipe->framebuffer.num_cbufs <= PIPE_MAX_COLOR_BUFS);
+   memcpy(tmp, quad->outputs.color, sizeof(tmp));
 
    for (i = 0; i < softpipe->framebuffer.num_cbufs; i++) {
       /* set current cbuffer */
@@ -39,10 +37,8 @@ cbuf_loop_quad(struct quad_stage *qs, struct quad_header *quad)
       /* pass blended quad to next stage */
       qs->next->run(qs->next, quad);
 
-      if (i + 1 < softpipe->framebuffer.num_cbufs) {
-         /* restore quad's colors for next buffer */
-         memcpy(quad->outputs.color, tmp, sz);
-      }
+      /* restore quad's colors for next buffer */
+      memcpy(quad->outputs.color, tmp, sizeof(tmp));
    }
 
    softpipe->cbuf = NULL; /* prevent accidental use */
