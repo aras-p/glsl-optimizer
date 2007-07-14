@@ -697,8 +697,7 @@ static GLboolean nv10InitCard(nouveauContextPtr nmesa)
 	BEGIN_RING_SIZE(NvSub3D, 0x03f4, 1);
 	OUT_RING(0);
 
-	/* not for nv10, only for >= nv11 */
-	if ((nmesa->screen->card->id>>4) >= 0x11) {
+	if (nmesa->screen->card->type >= NV_11) {
 	        BEGIN_RING_SIZE(NvSub3D, 0x120, 3);
         	OUT_RING(0);
 	        OUT_RING(1);

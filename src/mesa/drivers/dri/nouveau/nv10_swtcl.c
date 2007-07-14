@@ -58,7 +58,7 @@ static void nv10ResetLineStipple( GLcontext *ctx );
 
 static inline void nv10StartPrimitive(struct nouveau_context* nmesa,uint32_t primitive,uint32_t size)
 {
-	if ((nmesa->screen->card->type==NV_10) || (nmesa->screen->card->type==NV_17))
+	if ((nmesa->screen->card->type>=NV_10) && (nmesa->screen->card->type<=NV_17))
 		BEGIN_RING_SIZE(NvSub3D,NV10_TCL_PRIMITIVE_3D_BEGIN_END,1);
 	else if (nmesa->screen->card->type==NV_20)
 		BEGIN_RING_SIZE(NvSub3D,NV20_TCL_PRIMITIVE_3D_BEGIN_END,1);
@@ -66,7 +66,7 @@ static inline void nv10StartPrimitive(struct nouveau_context* nmesa,uint32_t pri
 		BEGIN_RING_SIZE(NvSub3D,NV30_TCL_PRIMITIVE_3D_BEGIN_END,1);
 	OUT_RING(primitive);
 
-	if ((nmesa->screen->card->type==NV_10) || (nmesa->screen->card->type==NV_17))
+	if ((nmesa->screen->card->type>=NV_10) && (nmesa->screen->card->type<=NV_17))
 		BEGIN_RING_SIZE(NvSub3D,NV10_TCL_PRIMITIVE_3D_VERTEX_ARRAY_DATA|NONINC_METHOD,size);
 	else if (nmesa->screen->card->type==NV_20)
 		BEGIN_RING_SIZE(NvSub3D,NV20_TCL_PRIMITIVE_3D_VERTEX_DATA|NONINC_METHOD,size);
@@ -76,7 +76,7 @@ static inline void nv10StartPrimitive(struct nouveau_context* nmesa,uint32_t pri
 
 inline void nv10FinishPrimitive(struct nouveau_context *nmesa)
 {
-	if ((nmesa->screen->card->type==NV_10) || (nmesa->screen->card->type==NV_17))
+	if ((nmesa->screen->card->type>=NV_10) && (nmesa->screen->card->type<=NV_17))
 		BEGIN_RING_SIZE(NvSub3D,NV10_TCL_PRIMITIVE_3D_BEGIN_END,1);
 	else if (nmesa->screen->card->type==NV_20)
 		BEGIN_RING_SIZE(NvSub3D,NV20_TCL_PRIMITIVE_3D_BEGIN_END,1);
@@ -454,7 +454,7 @@ static inline void nv10OutputVertexFormat(struct nouveau_context* nmesa)
 	/* 
 	 * Tell the hardware about the vertex format
 	 */
-	if ((nmesa->screen->card->type==NV_10) || (nmesa->screen->card->type==NV_17)) {
+	if ((nmesa->screen->card->type>=NV_10) && (nmesa->screen->card->type<=NV_17)) {
 		int size;
 
 #define NV_VERTEX_ATTRIBUTE_TYPE_FLOAT 2
