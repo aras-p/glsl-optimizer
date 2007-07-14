@@ -439,41 +439,43 @@ static void r300TranslateVertexShader(struct r300_vertex_program *vp,
 
 	/* Assign outputs */
 	if (vp->key.OutputsWritten & (1 << VERT_RESULT_HPOS)) {
-		vp->outputs[VERT_RESULT_HPOS] = cur_reg;
-		cur_reg = 1;
+		vp->outputs[VERT_RESULT_HPOS] = cur_reg++;
 	}
 
 	if (vp->key.OutputsWritten & (1 << VERT_RESULT_COL0)) {
-		vp->outputs[VERT_RESULT_COL0] = 1;
-		cur_reg = 2;
+		vp->outputs[VERT_RESULT_COL0] = cur_reg++;
 	}
 
 	if (vp->key.OutputsWritten & (1 << VERT_RESULT_COL1)) {
-		vp->outputs[VERT_RESULT_COL1] = 2;
-		cur_reg = 3;
+		vp->outputs[VERT_RESULT_COL1] = vp->outputs[VERT_RESULT_COL0] + 1;
+		cur_reg = vp->outputs[VERT_RESULT_COL1] + 1;
 	}
 
 	if (vp->key.OutputsWritten & (1 << VERT_RESULT_BFC0)) {
-		vp->outputs[VERT_RESULT_BFC0] = 3;
-		cur_reg = 5;
+		vp->outputs[VERT_RESULT_BFC0] = vp->outputs[VERT_RESULT_COL0] + 2;
+		cur_reg = vp->outputs[VERT_RESULT_BFC0] + 1;
 	}
 
 	if (vp->key.OutputsWritten & (1 << VERT_RESULT_BFC1)) {
-		vp->outputs[VERT_RESULT_BFC1] = 4;
-		cur_reg = 5;
+		vp->outputs[VERT_RESULT_BFC1] = vp->outputs[VERT_RESULT_COL0] + 3;
+		cur_reg = vp->outputs[VERT_RESULT_BFC1] + 1;
 	}
-#if 0				/* Not supported yet */
-	if (vp->key.OutputsWritten & (1 << VERT_RESULT_FOGC))
+
+#if 0
+	if (vp->key.OutputsWritten & (1 << VERT_RESULT_FOGC)) {
 		vp->outputs[VERT_RESULT_FOGC] = cur_reg++;
+	}
+
+	if (vp->key.OutputsWritten & (1 << VERT_RESULT_PSIZ)) {
+		vp->outputs[VERT_RESULT_PSIZ] = cur_reg++;
+	}
 #endif
 
-	if (vp->key.OutputsWritten & (1 << VERT_RESULT_PSIZ))
-		vp->outputs[VERT_RESULT_PSIZ] = cur_reg++;
-
-	for (i = VERT_RESULT_TEX0; i <= VERT_RESULT_TEX7; i++)
+	for (i = VERT_RESULT_TEX0; i <= VERT_RESULT_TEX7; i++) {
 		if (vp->key.OutputsWritten & (1 << i)) {
 			vp->outputs[i] = cur_reg++;
 		}
+	}
 
 	vp->translated = GL_TRUE;
 	vp->native = GL_TRUE;
