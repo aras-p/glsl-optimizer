@@ -308,10 +308,10 @@ GLuint r300VAPOutputCntl0(GLcontext * ctx, GLuint OutputsWritten)
 
 #if 0
 	if (OutputsWritten & (1 << VERT_RESULT_FOGC)) ;
-#endif
 
 	if (OutputsWritten & (1 << VERT_RESULT_PSIZ))
 		ret |= R300_VAP_OUTPUT_VTX_FMT_0__PT_SIZE_PRESENT;
+#endif
 
 	return ret;
 }
