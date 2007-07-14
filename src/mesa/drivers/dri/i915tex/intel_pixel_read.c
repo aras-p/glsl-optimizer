@@ -183,7 +183,7 @@ do_blit_readpixels(GLcontext * ctx,
        */
       if (!_mesa_validate_pbo_access(2, pack, width, height, 1,
                                      format, type, pixels)) {
-         _mesa_error(ctx, GL_INVALID_OPERATION, "glDrawPixels");
+         _mesa_error(ctx, GL_INVALID_OPERATION, "glReadPixels");
          return GL_TRUE;
       }
    }

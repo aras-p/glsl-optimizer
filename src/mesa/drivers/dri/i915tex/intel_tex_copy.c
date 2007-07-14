@@ -118,9 +118,11 @@ do_copy_texsubimage(struct intel_context *intel,
          dstx += x - orig_x;
          dsty += y - orig_y;
 
-         /* invert Y */
-         y = ctx->ReadBuffer->Height - y - 1;
-
+         if (!(ctx->ReadBuffer->Name == 0)) {
+	    /* XXX this looks bogus ? */
+	    /* FBO: invert Y */
+	    y = ctx->ReadBuffer->Height - y - 1;
+         }
 
          /* A bit of fiddling to get the blitter to work with -ve
           * pitches.  But we get a nice inverted blit this way, so it's

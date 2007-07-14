@@ -264,7 +264,7 @@ intel_map_unmap_buffers(struct intel_context *intel, GLboolean map)
    /* depth buffer (Note wrapper!) */
    if (ctx->DrawBuffer->_DepthBuffer) {
       irb = intel_renderbuffer(ctx->DrawBuffer->_DepthBuffer->Wrapped);
-      if (irb && irb->region && irb->Base.Name != 0) {
+      if (irb && irb->region) {
          if (map) {
             intel_region_map(intel->intelScreen, irb->region);
             irb->pfMap = irb->region->map;
@@ -281,7 +281,7 @@ intel_map_unmap_buffers(struct intel_context *intel, GLboolean map)
    /* stencil buffer (Note wrapper!) */
    if (ctx->DrawBuffer->_StencilBuffer) {
       irb = intel_renderbuffer(ctx->DrawBuffer->_StencilBuffer->Wrapped);
-      if (irb && irb->region && irb->Base.Name != 0) {
+      if (irb && irb->region) {
          if (map) {
             intel_region_map(intel->intelScreen, irb->region);
             irb->pfMap = irb->region->map;
