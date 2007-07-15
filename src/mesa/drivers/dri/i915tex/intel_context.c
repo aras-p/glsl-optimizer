@@ -192,6 +192,7 @@ const struct dri_extension card_extensions[] = {
 #if 1                           /* XXX FBO temporary? */
    {"GL_EXT_packed_depth_stencil", NULL},
 #endif
+   {"GL_EXT_pixel_buffer_object", NULL},
    {"GL_EXT_secondary_color", GL_EXT_secondary_color_functions},
    {"GL_EXT_stencil_wrap", NULL},
    {"GL_EXT_texture_edge_clamp", NULL},
