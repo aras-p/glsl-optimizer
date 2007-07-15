@@ -208,23 +208,10 @@ int r300_mem_alloc(r300ContextPtr rmesa, int alignment, int size)
 	    drmCommandWriteRead(rmesa->radeon.dri.fd, DRM_RADEON_ALLOC, &alloc,
 				sizeof(alloc));
 	if (ret) {
-#if 0
-		WARN_ONCE("Ran out of mem!\n");
-		r300FlushCmdBuf(rmesa, __FUNCTION__);
-		//usleep(100);
-		tries2++;
-		tries = 0;
-		if (tries2 > 100) {
-			WARN_ONCE("Ran out of GART memory!\n");
-			exit(1);
-		}
-		goto again;
-#else
 		WARN_ONCE
 		    ("Ran out of GART memory (for %d)!\nPlease consider adjusting GARTSize option.\n",
 		     size);
-		return 0;
-#endif
+		exit(1);
 	}
 
 	i = free;
