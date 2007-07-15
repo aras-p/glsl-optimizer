@@ -119,6 +119,7 @@ do_texture_copypixels(GLcontext * ctx,
    struct intel_context *intel = intel_context(ctx);
    struct intel_region *dst = intel_drawbuf_region(intel);
    struct intel_region *src = copypix_src_region(intel, type);
+   struct intel_region *depthreg = NULL;
    GLenum src_format;
    GLenum src_type;
 
@@ -171,8 +172,11 @@ do_texture_copypixels(GLcontext * ctx,
 
    /* Set the 3d engine to draw into the destination region:
     */
-   intel->vtbl.meta_draw_region(intel, dst,
-	  (intel_renderbuffer(ctx->DrawBuffer->_DepthBuffer->Wrapped))->region);
+   if (ctx->DrawBuffer->_DepthBuffer &&
+       ctx->DrawBuffer->_DepthBuffer->Wrapped)
+      depthreg = (intel_renderbuffer(ctx->DrawBuffer->_DepthBuffer->Wrapped))->region;
+
+   intel->vtbl.meta_draw_region(intel, dst, depthreg);
 
    intel->vtbl.meta_import_pixel_state(intel);
 
@@ -200,8 +204,9 @@ do_texture_copypixels(GLcontext * ctx,
    LOCK_HARDWARE(intel);
 
    {
-      int bufHeight = ctx->DrawBuffer->Height;
-      srcy = bufHeight - srcy - height;  /* convert from gl to hardware coords */
+      int dstbufHeight = ctx->DrawBuffer->Height;
+      /* convert from gl to hardware coords */
+      srcy = ctx->ReadBuffer->Height - srcy - height;
 
       /* Clip against the source region.  This is the only source
        * clipping we do.  XXX: Just set the texcord wrap mode to clamp
@@ -224,11 +229,11 @@ do_texture_copypixels(GLcontext * ctx,
       /* Just use the regular cliprect mechanism...  Does this need to
        * even hold the lock???
        */
-      intel_meta_draw_quad(intel, 
-			   dstx, 
-			   dstx + width * ctx->Pixel.ZoomX, 
-			   bufHeight - (dsty + height * ctx->Pixel.ZoomY), 
-			   bufHeight - (dsty), 0,   /* XXX: what z value? */
+      intel_meta_draw_quad(intel,
+			   dstx,
+			   dstx + width * ctx->Pixel.ZoomX,
+			   dstbufHeight - (dsty + height * ctx->Pixel.ZoomY),
+			   dstbufHeight - (dsty), 0,   /* XXX: what z value? */
                            0x00ff00ff,
                            srcx, srcx + width, srcy, srcy + height);
 
