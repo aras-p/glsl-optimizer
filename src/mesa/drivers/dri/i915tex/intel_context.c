@@ -289,8 +289,9 @@ static void
 intelCheckFrontUpdate(GLcontext * ctx)
 {
    struct intel_context *intel = intel_context(ctx);
-   if (intel->ctx.DrawBuffer->_ColorDrawBufferMask[0] ==
-       BUFFER_BIT_FRONT_LEFT) {
+   /* can't use _ColorDrawBufferMask as its value
+      might change if a different drawable is bound! */
+   if (ctx->Color.DrawBuffer[0] == GL_FRONT_LEFT) {
       intelScreenPrivate *screen = intel->intelScreen;
       __DRIdrawablePrivate *dPriv = intel->driDrawable;
       if (screen->current_rotation != 0) {
