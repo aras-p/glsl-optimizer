@@ -568,7 +568,7 @@ struct r300_vertex_shader_fragment {
 	union {
 		GLuint d[VSF_MAX_FRAGMENT_LENGTH];
 		float f[VSF_MAX_FRAGMENT_LENGTH];
-		VERTEX_SHADER_INSTRUCTION i[VSF_MAX_FRAGMENT_LENGTH / 4];
+		struct r300_vertprog_instruction i[VSF_MAX_FRAGMENT_LENGTH / 4];
 	} body;
 };
 

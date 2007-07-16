@@ -415,7 +415,7 @@ static void r300TranslateVertexShader(struct r300_vertex_program *vp,
 				      struct prog_instruction *vpi)
 {
 	int i, cur_reg = 0;
-	VERTEX_SHADER_INSTRUCTION *o_inst;
+	struct r300_vertprog_instruction *o_inst;
 	unsigned long operands;
 	int are_srcs_scalar;
 	unsigned long hw_op;

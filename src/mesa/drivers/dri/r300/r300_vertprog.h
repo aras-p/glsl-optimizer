@@ -3,10 +3,10 @@
 
 #include "r300_reg.h"
 
-typedef struct {
+struct r300_vertprog_instruction {
 	GLuint op;
 	GLuint src[3];
-} VERTEX_SHADER_INSTRUCTION;
+};
 
 #define VSF_FLAG_X	1
 #define VSF_FLAG_Y	2
