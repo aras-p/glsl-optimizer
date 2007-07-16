@@ -615,10 +615,11 @@ static void t_opcode_exp(struct r300_vertex_program *vp,
 	o_inst->src[2] = ZERO_SRC_0;
 }
 
-static void t_opcode_flr(struct r300_vertex_program *vp,
-			 struct prog_instruction *vpi,
-			 struct r300_vertprog_instruction *o_inst,
-			 struct prog_src_register src[3], int *u_temp_i)
+static struct r300_vertprog_instruction *t_opcode_flr(struct r300_vertex_program *vp,
+						      struct prog_instruction *vpi,
+						      struct r300_vertprog_instruction *o_inst,
+						      struct prog_src_register src[3],
+						      int *u_temp_i)
 {
 	/* FRC TMP 0.X Y Z W PARAM 0{} {X Y Z W}
 	   ADD RESULT 1.X Y Z W PARAM 0{} {X Y Z W} TMP 0{X Y Z W } {X Y Z W} neg Xneg Yneg Zneg W */
@@ -650,6 +651,8 @@ static void t_opcode_flr(struct r300_vertex_program *vp,
 
 	o_inst->src[2] = ZERO_SRC_0;
 	(*u_temp_i)--;
+
+	return o_inst;
 }
 
 static void t_opcode_frc(struct r300_vertex_program *vp,
@@ -1013,10 +1016,11 @@ static void t_opcode_swz(struct r300_vertex_program *vp,
 #endif
 }
 
-static void t_opcode_xpd(struct r300_vertex_program *vp,
-			 struct prog_instruction *vpi,
-			 struct r300_vertprog_instruction *o_inst,
-			 struct prog_src_register src[3], int *u_temp_i)
+static struct r300_vertprog_instruction *t_opcode_xpd(struct r300_vertex_program *vp,
+						      struct prog_instruction *vpi,
+						      struct r300_vertprog_instruction *o_inst,
+						      struct prog_src_register src[3],
+						      int *u_temp_i)
 {
 	/* mul r0, r1.yzxw, r2.zxyw
 	   mad r0, -r2.yzxw, r1.zxyw, r0
@@ -1083,6 +1087,7 @@ static void t_opcode_xpd(struct r300_vertex_program *vp,
 			    VSF_IN_COMPONENT_W, VSF_IN_CLASS_TMP,
 			    VSF_FLAG_NONE);
 
+	return o_inst;
 }
 
 static void t_inputs_outputs(struct r300_vertex_program *vp)
@@ -1265,7 +1270,7 @@ static void r300TranslateVertexShader(struct r300_vertex_program *vp,
 			break;
 		case OPCODE_FLR:
 			/* FIXME */
-			t_opcode_flr(vp, vpi, o_inst, src, &u_temp_i);
+			o_inst = t_opcode_flr(vp, vpi, o_inst, src, &u_temp_i);
 			break;
 		case OPCODE_FRC:
 			t_opcode_frc(vp, vpi, o_inst, src);
@@ -1317,7 +1322,7 @@ static void r300TranslateVertexShader(struct r300_vertex_program *vp,
 			break;
 		case OPCODE_XPD:
 			/* FIXME */
-			t_opcode_xpd(vp, vpi, o_inst, src, &u_temp_i);
+			o_inst = t_opcode_xpd(vp, vpi, o_inst, src, &u_temp_i);
 			break;
 		default:
 			assert(0);
