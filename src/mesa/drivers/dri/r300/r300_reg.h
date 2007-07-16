@@ -293,6 +293,21 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #       define R300_PVS_UPLOAD_CLIP_PLANE5       0x00000405
 #       define R300_PVS_UPLOAD_POINTSIZE         0x00000406
 
+/*
+ * These are obsolete defines form r300_context.h, but they might give some
+ * clues when investigating the addresses further...
+ */
+#if 0
+#define VSF_DEST_PROGRAM        0x0
+#define VSF_DEST_MATRIX0        0x200
+#define VSF_DEST_MATRIX1        0x204
+#define VSF_DEST_MATRIX2        0x208
+#define VSF_DEST_VECTOR0        0x20c
+#define VSF_DEST_VECTOR1        0x20d
+#define VSF_DEST_UNKNOWN1       0x400
+#define VSF_DEST_UNKNOWN2       0x406
+#endif
+
 /* gap */
 
 #define R300_VAP_PVS_UPLOAD_DATA            0x2208
