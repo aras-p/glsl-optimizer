@@ -402,10 +402,8 @@ intelClearWithBlit(GLcontext * ctx, GLbitfield mask)
    LOCK_HARDWARE(intel);
 
    if (intel->numClipRects) {
-      assert(intel->numClipRects == 1);
       GLint cx, cy, cw, ch;
-      drm_clip_rect_t clear;
-      int i;
+      drm_clip_rect_t b;
 
       /* Get clear bounds after locking */
       cx = fb->_Xmin;
@@ -416,35 +414,24 @@ intelClearWithBlit(GLcontext * ctx, GLbitfield mask)
       if (fb->Name == 0) {
          /* clearing a window */
          /* flip top to bottom */
-         clear.x1 = cx;
-         clear.y1 = intel->pClipRects->y2 - cy - ch;
-         clear.x2 = clear.x1 + cw;
-         clear.y2 = clear.y1 + ch;
+         b.x1 = cx;
+         b.y1 = fb->Height - cy - ch;
+         b.x2 = b.x1 + cw;
+         b.y2 = b.y1 + ch;
       }
       else {
          /* clearing FBO */
-         assert(intel->numClipRects == 1);
-         assert(intel->pClipRects == &intel->fboRect);
-         clear.x1 = cx;
-         clear.y1 = cy;
-         clear.x2 = clear.x1 + cw;
-         clear.y2 = clear.y1 + ch;
+         b.x1 = cx;
+         b.y1 = cy;
+         b.x2 = b.x1 + cw;
+         b.y2 = b.y1 + ch;
          /* no change to mask */
       }
 
-      for (i = 0; i < intel->numClipRects; i++) {
-         const drm_clip_rect_t *box = &intel->pClipRects[i];
-         drm_clip_rect_t b;
+      {
          GLuint buf;
          GLuint clearMask = mask;      /* use copy, since we modify it below */
          GLboolean all = (cw == fb->Width && ch == fb->Height);
-
-         if (!all) {
-            intel_intersect_cliprects(&b, &clear, box);
-         }
-         else {
-            b = *box;
-         }
 
          DBG("clear %d,%d..%d,%d, mask %x\n",
                       b.x1, b.y1, b.x2, b.y2, mask);

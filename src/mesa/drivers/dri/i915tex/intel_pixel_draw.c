@@ -421,10 +421,17 @@ intelDrawPixels(GLcontext * ctx,
        * wise happily run the fragment program on each pixel in the image).
        */
       struct gl_fragment_program *fpSave = ctx->FragmentProgram._Current;
+   /* can't just set current frag prog to 0 here as on buffer resize
+      we'll get new state checks which will segfault (actually don't get them
+      with current priv buffers). Remains a hack. */
       ctx->FragmentProgram._Current = NULL;
+      ctx->FragmentProgram._UseTexEnvProgram = GL_FALSE;
+      ctx->FragmentProgram._Active = GL_FALSE;
       _swrast_DrawPixels( ctx, x, y, width, height, format, type,
                           unpack, pixels );
       ctx->FragmentProgram._Current = fpSave;
+      ctx->FragmentProgram._UseTexEnvProgram = GL_TRUE;
+      ctx->FragmentProgram._Active = GL_TRUE;
    }
    else {
       _swrast_DrawPixels( ctx, x, y, width, height, format, type,
