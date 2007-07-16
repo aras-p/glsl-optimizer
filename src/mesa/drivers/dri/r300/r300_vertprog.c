@@ -655,13 +655,13 @@ static void t_opcode_abs(struct r300_vertex_program *vp,
 static void t_opcode_flr(struct r300_vertex_program *vp,
 			 struct prog_instruction *vpi,
 			 struct r300_vertprog_instruction *o_inst,
-			 struct prog_src_register src[3], int u_temp_i)
+			 struct prog_src_register src[3], int *u_temp_i)
 {
 	/* FRC TMP 0.X Y Z W PARAM 0{} {X Y Z W}
 	   ADD RESULT 1.X Y Z W PARAM 0{} {X Y Z W} TMP 0{X Y Z W } {X Y Z W} neg Xneg Yneg Zneg W */
 
 	o_inst->opcode =
-	    MAKE_VSF_OP(R300_VPI_OUT_OP_FRC, u_temp_i,
+	    MAKE_VSF_OP(R300_VPI_OUT_OP_FRC, *u_temp_i,
 			t_dst_mask(vpi->DstReg.WriteMask),
 			VSF_OUT_CLASS_TMP);
 
@@ -677,7 +677,7 @@ static void t_opcode_flr(struct r300_vertex_program *vp,
 
 	o_inst->src[0] = t_src(vp, &src[0]);
 	o_inst->src[1] =
-	    MAKE_VSF_SOURCE(u_temp_i, VSF_IN_COMPONENT_X,
+	    MAKE_VSF_SOURCE(*u_temp_i, VSF_IN_COMPONENT_X,
 			    VSF_IN_COMPONENT_Y, VSF_IN_COMPONENT_Z,
 			    VSF_IN_COMPONENT_W, VSF_IN_CLASS_TMP,
 			    /* Not 100% sure about this */
@@ -686,7 +686,7 @@ static void t_opcode_flr(struct r300_vertex_program *vp,
 			    /*VSF_FLAG_ALL */ );
 
 	o_inst->src[2] = ZERO_SRC_0;
-	u_temp_i--;
+	(*u_temp_i)--;
 }
 
 static void t_opcode_lg2(struct r300_vertex_program *vp,
@@ -783,7 +783,7 @@ static void t_opcode_dph(struct r300_vertex_program *vp,
 static void t_opcode_xpd(struct r300_vertex_program *vp,
 			 struct prog_instruction *vpi,
 			 struct r300_vertprog_instruction *o_inst,
-			 struct prog_src_register src[3], int u_temp_i)
+			 struct prog_src_register src[3], int *u_temp_i)
 {
 	/* mul r0, r1.yzxw, r2.zxyw
 	   mad r0, -r2.yzxw, r1.zxyw, r0
@@ -791,7 +791,7 @@ static void t_opcode_xpd(struct r300_vertex_program *vp,
 	 */
 
 	o_inst->opcode =
-	    MAKE_VSF_OP(R300_VPI_OUT_OP_MAD, u_temp_i,
+	    MAKE_VSF_OP(R300_VPI_OUT_OP_MAD, *u_temp_i,
 			t_dst_mask(vpi->DstReg.WriteMask),
 			VSF_OUT_CLASS_TMP);
 
@@ -817,7 +817,7 @@ static void t_opcode_xpd(struct r300_vertex_program *vp,
 
 	o_inst->src[2] = ZERO_SRC_1;
 	o_inst++;
-	u_temp_i--;
+	(*u_temp_i)--;
 
 	o_inst->opcode =
 	    MAKE_VSF_OP(R300_VPI_OUT_OP_MAD, t_dst_index(vp, &vpi->DstReg),
@@ -845,7 +845,7 @@ static void t_opcode_xpd(struct r300_vertex_program *vp,
 							   RelAddr << 4);
 
 	o_inst->src[2] =
-	    MAKE_VSF_SOURCE(u_temp_i + 1, VSF_IN_COMPONENT_X,
+	    MAKE_VSF_SOURCE(*u_temp_i + 1, VSF_IN_COMPONENT_X,
 			    VSF_IN_COMPONENT_Y, VSF_IN_COMPONENT_Z,
 			    VSF_IN_COMPONENT_W, VSF_IN_CLASS_TMP,
 			    VSF_FLAG_NONE);
@@ -1093,8 +1093,8 @@ static void r300TranslateVertexShader(struct r300_vertex_program *vp,
 			t_opcode_abs(vp, vpi, o_inst, src);
 			break;
 		case OPCODE_FLR:
-			t_opcode_flr(vp, vpi, o_inst, src,	/* FIXME */
-				     u_temp_i);
+			/* FIXME */
+			t_opcode_flr(vp, vpi, o_inst, src, &u_temp_i);
 			break;
 		case OPCODE_LG2:
 			t_opcode_lg2(vp, vpi, o_inst, src);
@@ -1106,8 +1106,8 @@ static void r300TranslateVertexShader(struct r300_vertex_program *vp,
 			t_opcode_dph(vp, vpi, o_inst, src);
 			break;
 		case OPCODE_XPD:
-			t_opcode_xpd(vp, vpi, o_inst, src,	/* FIXME */
-				     u_temp_i);
+			/* FIXME */
+			t_opcode_xpd(vp, vpi, o_inst, src, &u_temp_i);
 			break;
 		case OPCODE_RCC:
 			t_opcode_rcc(vp, vpi, o_inst, src);
