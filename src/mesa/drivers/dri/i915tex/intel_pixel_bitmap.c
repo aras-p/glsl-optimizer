@@ -195,16 +195,17 @@ do_blit_bitmap( GLcontext *ctx,
 
    LOCK_HARDWARE(intel);
 
-   if (intel->numClipRects) {
-      assert(intel->numClipRects == 1);
-      drm_clip_rect_t *box = intel->pClipRects;
+   {
+      drm_clip_rect_t box;
       drm_clip_rect_t dest_rect;
-      GLint nbox = intel->numClipRects;
       GLint srcx = 0, srcy = 0;
       GLint orig_screen_x1, orig_screen_y2;
       GLuint i;
 
-
+      box.x1 = 0;
+      box.y1 = 0;
+      box.x2 = ctx->DrawBuffer->Width;
+      box.y2 = ctx->DrawBuffer->Height;
       orig_screen_x1 = dstx;
       orig_screen_y2 = box->y2 - dsty;
 
@@ -231,13 +232,13 @@ x      if (ctx->Scissor.Enabled)
       dest_rect.x2 = dstx + width;
       dest_rect.y2 = dsty + height;
 
-      for (i = 0; i < nbox; i++) {
+      for (i = 0; i < 1; i++) {
          drm_clip_rect_t rect;
 	 int box_w, box_h;
 	 GLint px, py;
 	 GLuint stipple[32];
 
-         if (!intel_intersect_cliprects(&rect, &dest_rect, &box[i]))
+         if (!intel_intersect_cliprects(&rect, &dest_rect, &box[0]))
             continue;
 
 	 /* Now go back to GL coordinates to figure out what subset of

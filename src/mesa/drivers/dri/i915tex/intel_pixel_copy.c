@@ -80,33 +80,6 @@ copypix_src_region(struct intel_context *intel, GLenum type)
 }
 
 
-/**
- * Check if any fragment operations are in effect which might effect
- * glCopyPixels.  Differs from intel_check_blit_fragment_ops in that
- * we allow Scissor.
- */
-static GLboolean
-intel_check_copypixel_blit_fragment_ops(GLcontext * ctx)
-{
-   if (ctx->NewState)
-      _mesa_update_state(ctx);
-
-   /* Could do logicop with the blitter: 
-    */
-   return !(ctx->_ImageTransferState ||
-            ctx->Color.AlphaEnabled ||
-            ctx->Depth.Test ||
-            ctx->Fog.Enabled ||
-            ctx->Stencil.Enabled ||
-            !ctx->Color.ColorMask[0] ||
-            !ctx->Color.ColorMask[1] ||
-            !ctx->Color.ColorMask[2] ||
-            !ctx->Color.ColorMask[3] ||
-            ctx->Texture._EnabledUnits ||
-	    ctx->FragmentProgram._Enabled ||
-	    ctx->Color.BlendEnabled);
-}
-
 /* Doesn't work for overlapping regions.  Could do a double copy or
  * just fallback.
  */
@@ -269,7 +242,7 @@ do_blit_copypixels(GLcontext * ctx,
    /* Copypixels can be more than a straight copy.  Ensure all the
     * extra operations are disabled:
     */
-   if (!intel_check_copypixel_blit_fragment_ops(ctx) ||
+   if (!intel_check_blit_fragment_ops(ctx) ||
        ctx->Pixel.ZoomX != 1.0F || ctx->Pixel.ZoomY != 1.0F)
       return GL_FALSE;
 

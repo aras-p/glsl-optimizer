@@ -43,7 +43,7 @@
 #include "intel_pixel.h"
 #include "intel_buffer_objects.h"
 #include "intel_tris.h"
-
+#include "intel_fbo.h"
 
 
 static GLboolean
@@ -138,9 +138,8 @@ do_texture_drawpixels(GLcontext * ctx,
 
    LOCK_HARDWARE(intel);
 
-   if (intel->numClipRects) {
-      assert(intel->numClipRects == 1);
-      int bufHeight = intel->pClipRects->y2;
+   {
+      int bufHeight = ctx->DrawBuffer->Height;
 
       GLint srcx, srcy;
       GLint dstx, dsty;
@@ -208,22 +207,50 @@ do_texture_drawpixels(GLcontext * ctx,
  */
 static GLboolean
 do_blit_drawpixels(GLcontext * ctx,
-                   GLint x, GLint y,
+                   GLint dstx, GLint dsty,
                    GLsizei width, GLsizei height,
                    GLenum format, GLenum type,
                    const struct gl_pixelstore_attrib *unpack,
                    const GLvoid * pixels)
 {
    struct intel_context *intel = intel_context(ctx);
-   struct intel_region *dest = intel_drawbuf_region(intel);
+   struct intel_renderbuffer *irbdraw;
+   struct intel_region *dest;
    struct intel_buffer_object *src = intel_buffer_object(unpack->BufferObj);
    GLuint src_offset;
    GLuint rowLength;
+   GLuint height_orig = height;
    struct _DriFenceObject *fence = NULL;
 
    if (INTEL_DEBUG & DEBUG_PIXEL)
       _mesa_printf("%s\n", __FUNCTION__);
 
+   if (type == GL_COLOR) {
+      irbdraw = intel_renderbuffer(ctx->DrawBuffer->_ColorDrawBuffers[0][0]);
+      if (!irbdraw || !irbdraw->region)
+	 return GL_FALSE;
+   }
+   else if (type == GL_DEPTH) {
+      /* Don't think this is really possible execpt at 16bpp, when we have no stencil.
+       */
+      irbdraw = intel_renderbuffer(ctx->DrawBuffer->_DepthBuffer->Wrapped);
+      if (!irbdraw || !irbdraw->region || !(irbdraw->region->cpp == 2))
+	 return GL_FALSE;
+   }
+   else if (GL_DEPTH_STENCIL_EXT) {
+      /* Does it matter whether it is stencil/depth or depth/stencil?
+       */
+      irbdraw = intel_renderbuffer(ctx->DrawBuffer->_DepthBuffer->Wrapped);
+      if (!irbdraw || !irbdraw->region)
+	 return GL_FALSE;
+   }
+   else if (GL_STENCIL) {
+      /* Don't think this is really possible. 
+       */
+      return GL_FALSE;
+   }
+
+   dest = irbdraw->region;
 
    if (!dest) {
       if (INTEL_DEBUG & DEBUG_PIXEL)
@@ -277,7 +304,7 @@ do_blit_drawpixels(GLcontext * ctx,
       if (INTEL_DEBUG & DEBUG_PIXEL)
          _mesa_printf("%s - bad PixelZoomY for blit\n", __FUNCTION__);
       return GL_FALSE;          /* later */
-      y -= height;
+      dsty -= height;
    }
    else if (ctx->Pixel.ZoomY == 1.0F) {
       rowLength = -rowLength;
@@ -291,38 +318,59 @@ do_blit_drawpixels(GLcontext * ctx,
    src_offset = (GLuint) _mesa_image_address(2, unpack, pixels, width, height,
                                              format, type, 0, 0, 0);
 
-   /* don't need a lock as cliprects shouldn't change */
+   /* don't need a lock as we have no cliprects ? */
    intelFlush(&intel->ctx);
 
-   if (intel->numClipRects) {
-      assert(intel->numClipRects == 1);
-      int nbox = intel->numClipRects;
-      drm_clip_rect_t *box = intel->pClipRects;
-      drm_clip_rect_t rect;
-      drm_clip_rect_t dest_rect;
+   {
+      GLuint srcx = 0;
+      GLuint srcy = 0;
+      GLint dx = dstx;
+      GLint dy = dsty;
+
+      /* Do scissoring in GL coordinates:
+       */
+      if (ctx->Scissor.Enabled)
+      {
+	 GLint x = ctx->Scissor.X;
+	 GLint y = ctx->Scissor.Y;
+	 GLuint w = ctx->Scissor.Width;
+	 GLuint h = ctx->Scissor.Height;
+	 height_orig = height;
+
+
+         if (!_mesa_clip_to_region(x, y, x+w-1, y+h-1, &dstx, &dsty, &width, &height))
+            goto out;
+
+      }
+
+      /* no need to clip against pbo src region, but clip against dest */
+      {
+         if (!_mesa_clip_to_region(0, 0, irbdraw->Base.Width - 1,
+				   irbdraw->Base.Height - 1,
+				   &dstx, &dsty, &width, &height))
+            goto out;
+
+         srcx = dstx - dx;
+         srcy = dsty - dy;
+      }
+
       struct _DriBufferObject *src_buffer =
          intel_bufferobj_buffer(intel, src, INTEL_READ);
-      int i;
 
-      dest_rect.x1 = x;
-      dest_rect.y1 = box->y2 - (y + height);
-      dest_rect.x2 = dest_rect.x1 + width;
-      dest_rect.y2 = dest_rect.y1 + height;
+      /* Convert from GL to hardware coordinates:
+       */
+      dsty = irbdraw->Base.Height - dsty - height;
+      srcy = height_orig - srcy - height;
 
-      for (i = 0; i < nbox; i++) {
-         if (!intel_intersect_cliprects(&rect, &dest_rect, &box[i]))
-            continue;
-
+      {
          intelEmitCopyBlit(intel,
                            dest->cpp,
                            rowLength,
                            src_buffer, src_offset,
                            dest->pitch,
                            dest->buffer, 0,
-                           rect.x1 - dest_rect.x1,
-                           rect.y2 - dest_rect.y2,
-                           rect.x1,
-                           rect.y1, rect.x2 - rect.x1, rect.y2 - rect.y1,
+                           srcx, srcy,
+                           dstx, dsty, width, height,
 			   ctx->Color.ColorLogicOpEnabled ?
 			   ctx->Color.LogicOp : GL_COPY);
       }
@@ -334,6 +382,8 @@ do_blit_drawpixels(GLcontext * ctx,
       driFenceFinish(fence, DRM_FENCE_TYPE_EXE | DRM_I915_FENCE_TYPE_RW, GL_FALSE);
       driFenceUnReference(fence);
    }
+
+   out:
 
    if (INTEL_DEBUG & DEBUG_PIXEL)
       _mesa_printf("%s - DONE\n", __FUNCTION__);
