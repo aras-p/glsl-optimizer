@@ -416,49 +416,68 @@ static GLboolean valid_dst(struct r300_vertex_program *vp,
 	return GL_TRUE;
 }
 
-static void t_opcode_pow(struct r300_vertex_program *vp,
+/*
+ * Instruction    Inputs  Output   Description
+ * -----------    ------  ------   --------------------------------
+ * ABS            v       v        absolute value
+ * ADD            v,v     v        add
+ * ARL            s       a        address register load
+ * DP3            v,v     ssss     3-component dot product
+ * DP4            v,v     ssss     4-component dot product
+ * DPH            v,v     ssss     homogeneous dot product
+ * DST            v,v     v        distance vector
+ * EX2            s       ssss     exponential base 2
+ * EXP            s       v        exponential base 2 (approximate)
+ * FLR            v       v        floor
+ * FRC            v       v        fraction
+ * LG2            s       ssss     logarithm base 2
+ * LIT            v       v        compute light coefficients
+ * LOG            s       v        logarithm base 2 (approximate)
+ * MAD            v,v,v   v        multiply and add
+ * MAX            v,v     v        maximum
+ * MIN            v,v     v        minimum
+ * MOV            v       v        move
+ * MUL            v,v     v        multiply
+ * POW            s,s     ssss     exponentiate
+ * RCP            s       ssss     reciprocal
+ * RSQ            s       ssss     reciprocal square root
+ * SGE            v,v     v        set on greater than or equal
+ * SLT            v,v     v        set on less than
+ * SUB            v,v     v        subtract
+ * SWZ            v       v        extended swizzle
+ * XPD            v,v     v        cross product
+ *
+ * Table X.5:  Summary of vertex program instructions.  "v" indicates a
+ * floating-point vector input or output, "s" indicates a floating-point
+ * scalar input, "ssss" indicates a scalar output replicated across a
+ * 4-component result vector, and "a" indicates a single address register
+ * component.
+ */
+
+static void t_opcode_abs(struct r300_vertex_program *vp,
 			 struct prog_instruction *vpi,
 			 struct r300_vertprog_instruction *o_inst,
 			 struct prog_src_register src[3])
 {
+	//MAX RESULT 1.X Y Z W PARAM 0{} {X Y Z W} PARAM 0{X Y Z W } {X Y Z W} neg Xneg Yneg Zneg W
+
 	o_inst->opcode =
-	    MAKE_VSF_OP(R300_VPI_OUT_OP_POW, t_dst_index(vp, &vpi->DstReg),
+	    MAKE_VSF_OP(R300_VPI_OUT_OP_MAX, t_dst_index(vp, &vpi->DstReg),
 			t_dst_mask(vpi->DstReg.WriteMask),
 			t_dst_class(vpi->DstReg.File));
-	o_inst->src[0] = t_src_scalar(vp, &src[0]);
-	o_inst->src[1] = ZERO_SRC_0;
-	o_inst->src[2] = t_src_scalar(vp, &src[1]);
-}
 
-static void t_opcode_mov(struct r300_vertex_program *vp,
-			 struct prog_instruction *vpi,
-			 struct r300_vertprog_instruction *o_inst,
-			 struct prog_src_register src[3])
-{
-	//ADD RESULT 1.X Y Z W PARAM 0{} {X Y Z W} PARAM 0{} {ZERO ZERO ZERO ZERO}
-
-#if 1
-	o_inst->opcode =
-	    MAKE_VSF_OP(R300_VPI_OUT_OP_ADD, t_dst_index(vp, &vpi->DstReg),
-			t_dst_mask(vpi->DstReg.WriteMask),
-			t_dst_class(vpi->DstReg.File));
 	o_inst->src[0] = t_src(vp, &src[0]);
-	o_inst->src[1] = ZERO_SRC_0;
-	o_inst->src[2] = ZERO_SRC_0;
-#else
-	hw_op =
-	    (src[0].File ==
-	     PROGRAM_TEMPORARY) ? R300_VPI_OUT_OP_MAD_2 :
-	    R300_VPI_OUT_OP_MAD;
-
-	o_inst->opcode =
-	    MAKE_VSF_OP(hw_op, t_dst_index(vp, &vpi->DstReg),
-			t_dst_mask(vpi->DstReg.WriteMask),
-			t_dst_class(vpi->DstReg.File));
-	o_inst->src[0] = t_src(vp, &src[0]);
-	o_inst->src[1] = ONE_SRC_0;
-	o_inst->src[2] = ZERO_SRC_0;
-#endif
+	o_inst->src[1] =
+	    MAKE_VSF_SOURCE(t_src_index(vp, &src[0]),
+			    t_swizzle(GET_SWZ(src[0].Swizzle, 0)),
+			    t_swizzle(GET_SWZ(src[0].Swizzle, 1)),
+			    t_swizzle(GET_SWZ(src[0].Swizzle, 2)),
+			    t_swizzle(GET_SWZ(src[0].Swizzle, 3)),
+			    t_src_class(src[0].File),
+			    (!src[0].
+			     NegateBase) ? VSF_FLAG_ALL : VSF_FLAG_NONE) |
+	    (src[0].RelAddr << 4);
+	o_inst->src[2] = 0;
 }
 
 static void t_opcode_add(struct r300_vertex_program *vp,
@@ -493,51 +512,7 @@ static void t_opcode_add(struct r300_vertex_program *vp,
 #endif
 }
 
-static void t_opcode_mad(struct r300_vertex_program *vp,
-			 struct prog_instruction *vpi,
-			 struct r300_vertprog_instruction *o_inst,
-			 struct prog_src_register src[3])
-{
-	unsigned long hw_op;
-
-	hw_op = (src[0].File == PROGRAM_TEMPORARY
-		 && src[1].File == PROGRAM_TEMPORARY
-		 && src[2].File ==
-		 PROGRAM_TEMPORARY) ? R300_VPI_OUT_OP_MAD_2 :
-	    R300_VPI_OUT_OP_MAD;
-
-	o_inst->opcode =
-	    MAKE_VSF_OP(hw_op, t_dst_index(vp, &vpi->DstReg),
-			t_dst_mask(vpi->DstReg.WriteMask),
-			t_dst_class(vpi->DstReg.File));
-	o_inst->src[0] = t_src(vp, &src[0]);
-	o_inst->src[1] = t_src(vp, &src[1]);
-	o_inst->src[2] = t_src(vp, &src[2]);
-}
-
-static void t_opcode_mul(struct r300_vertex_program *vp,
-			 struct prog_instruction *vpi,
-			 struct r300_vertprog_instruction *o_inst,
-			 struct prog_src_register src[3])
-{
-	unsigned long hw_op;
-
-	// HW mul can take third arg but appears to have some other limitations.
-
-	hw_op = (src[0].File == PROGRAM_TEMPORARY
-		 && src[1].File ==
-		 PROGRAM_TEMPORARY) ? R300_VPI_OUT_OP_MAD_2 :
-	    R300_VPI_OUT_OP_MAD;
-
-	o_inst->opcode =
-	    MAKE_VSF_OP(hw_op, t_dst_index(vp, &vpi->DstReg),
-			t_dst_mask(vpi->DstReg.WriteMask),
-			t_dst_class(vpi->DstReg.File));
-	o_inst->src[0] = t_src(vp, &src[0]);
-	o_inst->src[1] = t_src(vp, &src[1]);
-
-	o_inst->src[2] = ZERO_SRC_1;
-}
+/* TODO: ARL */
 
 static void t_opcode_dp3(struct r300_vertex_program *vp,
 			 struct prog_instruction *vpi,
@@ -574,83 +549,37 @@ static void t_opcode_dp3(struct r300_vertex_program *vp,
 	o_inst->src[2] = ZERO_SRC_1;
 }
 
-static void t_opcode_sub(struct r300_vertex_program *vp,
+/* TODO: DP4 */
+
+static void t_opcode_dph(struct r300_vertex_program *vp,
 			 struct prog_instruction *vpi,
 			 struct r300_vertprog_instruction *o_inst,
 			 struct prog_src_register src[3])
 {
-	unsigned long hw_op;
-
-	//ADD RESULT 1.X Y Z W TMP 0{} {X Y Z W} PARAM 1{X Y Z W } {X Y Z W} neg Xneg Yneg Zneg W
-
-#if 1
-	hw_op = (src[0].File == PROGRAM_TEMPORARY
-		 && src[1].File ==
-		 PROGRAM_TEMPORARY) ? R300_VPI_OUT_OP_MAD_2 :
-	    R300_VPI_OUT_OP_MAD;
-
+	//DOT RESULT 1.X Y Z W PARAM 0{} {X Y Z ONE} PARAM 0{} {X Y Z W}
 	o_inst->opcode =
-	    MAKE_VSF_OP(hw_op, t_dst_index(vp, &vpi->DstReg),
-			t_dst_mask(vpi->DstReg.WriteMask),
-			t_dst_class(vpi->DstReg.File));
-	o_inst->src[0] = t_src(vp, &src[0]);
-	o_inst->src[1] = ONE_SRC_0;
-	o_inst->src[2] =
-	    MAKE_VSF_SOURCE(t_src_index(vp, &src[1]),
-			    t_swizzle(GET_SWZ(src[1].Swizzle, 0)),
-			    t_swizzle(GET_SWZ(src[1].Swizzle, 1)),
-			    t_swizzle(GET_SWZ(src[1].Swizzle, 2)),
-			    t_swizzle(GET_SWZ(src[1].Swizzle, 3)),
-			    t_src_class(src[1].File),
-			    (!src[1].
-			     NegateBase) ? VSF_FLAG_ALL : VSF_FLAG_NONE) |
-	    (src[1].RelAddr << 4);
-#else
-	o_inst->opcode =
-	    MAKE_VSF_OP(R300_VPI_OUT_OP_ADD, t_dst_index(vp, &vpi->DstReg),
+	    MAKE_VSF_OP(R300_VPI_OUT_OP_DOT, t_dst_index(vp, &vpi->DstReg),
 			t_dst_mask(vpi->DstReg.WriteMask),
 			t_dst_class(vpi->DstReg.File));
 
-	o_inst->src[0] = t_src(vp, &src[0]);
-	o_inst->src[1] =
-	    MAKE_VSF_SOURCE(t_src_index(vp, &src[1]),
-			    t_swizzle(GET_SWZ(src[1].Swizzle, 0)),
-			    t_swizzle(GET_SWZ(src[1].Swizzle, 1)),
-			    t_swizzle(GET_SWZ(src[1].Swizzle, 2)),
-			    t_swizzle(GET_SWZ(src[1].Swizzle, 3)),
-			    t_src_class(src[1].File),
-			    (!src[1].
-			     NegateBase) ? VSF_FLAG_ALL : VSF_FLAG_NONE) |
-	    (src[1].RelAddr << 4);
-	o_inst->src[2] = 0;
-#endif
-}
-
-static void t_opcode_abs(struct r300_vertex_program *vp,
-			 struct prog_instruction *vpi,
-			 struct r300_vertprog_instruction *o_inst,
-			 struct prog_src_register src[3])
-{
-	//MAX RESULT 1.X Y Z W PARAM 0{} {X Y Z W} PARAM 0{X Y Z W } {X Y Z W} neg Xneg Yneg Zneg W
-
-	o_inst->opcode =
-	    MAKE_VSF_OP(R300_VPI_OUT_OP_MAX, t_dst_index(vp, &vpi->DstReg),
-			t_dst_mask(vpi->DstReg.WriteMask),
-			t_dst_class(vpi->DstReg.File));
-
-	o_inst->src[0] = t_src(vp, &src[0]);
-	o_inst->src[1] =
+	o_inst->src[0] =
 	    MAKE_VSF_SOURCE(t_src_index(vp, &src[0]),
 			    t_swizzle(GET_SWZ(src[0].Swizzle, 0)),
 			    t_swizzle(GET_SWZ(src[0].Swizzle, 1)),
 			    t_swizzle(GET_SWZ(src[0].Swizzle, 2)),
-			    t_swizzle(GET_SWZ(src[0].Swizzle, 3)),
-			    t_src_class(src[0].File),
-			    (!src[0].
-			     NegateBase) ? VSF_FLAG_ALL : VSF_FLAG_NONE) |
+			    VSF_IN_COMPONENT_ONE, t_src_class(src[0].File),
+			    src[0].
+			    NegateBase ? VSF_FLAG_XYZ : VSF_FLAG_NONE) |
 	    (src[0].RelAddr << 4);
-	o_inst->src[2] = 0;
+	o_inst->src[1] = t_src(vp, &src[1]);
+	o_inst->src[2] = ZERO_SRC_1;
 }
+
+/* TODO: DST */
+
+/* TODO: EX2 */
+
+/* TODO: EXP */
 
 static void t_opcode_flr(struct r300_vertex_program *vp,
 			 struct prog_instruction *vpi,
@@ -688,6 +617,8 @@ static void t_opcode_flr(struct r300_vertex_program *vp,
 	o_inst->src[2] = ZERO_SRC_0;
 	(*u_temp_i)--;
 }
+
+/* TODO: FRC */
 
 static void t_opcode_lg2(struct r300_vertex_program *vp,
 			 struct prog_instruction *vpi,
@@ -756,29 +687,164 @@ static void t_opcode_lit(struct r300_vertex_program *vp,
 							   RelAddr << 4);
 }
 
-static void t_opcode_dph(struct r300_vertex_program *vp,
+/* TODO: LOG */
+
+static void t_opcode_mad(struct r300_vertex_program *vp,
 			 struct prog_instruction *vpi,
 			 struct r300_vertprog_instruction *o_inst,
 			 struct prog_src_register src[3])
 {
-	//DOT RESULT 1.X Y Z W PARAM 0{} {X Y Z ONE} PARAM 0{} {X Y Z W}
+	unsigned long hw_op;
+
+	hw_op = (src[0].File == PROGRAM_TEMPORARY
+		 && src[1].File == PROGRAM_TEMPORARY
+		 && src[2].File ==
+		 PROGRAM_TEMPORARY) ? R300_VPI_OUT_OP_MAD_2 :
+	    R300_VPI_OUT_OP_MAD;
+
 	o_inst->opcode =
-	    MAKE_VSF_OP(R300_VPI_OUT_OP_DOT, t_dst_index(vp, &vpi->DstReg),
+	    MAKE_VSF_OP(hw_op, t_dst_index(vp, &vpi->DstReg),
+			t_dst_mask(vpi->DstReg.WriteMask),
+			t_dst_class(vpi->DstReg.File));
+	o_inst->src[0] = t_src(vp, &src[0]);
+	o_inst->src[1] = t_src(vp, &src[1]);
+	o_inst->src[2] = t_src(vp, &src[2]);
+}
+
+/* TODO: MAX */
+
+/* TODO: MIN */
+
+static void t_opcode_mov(struct r300_vertex_program *vp,
+			 struct prog_instruction *vpi,
+			 struct r300_vertprog_instruction *o_inst,
+			 struct prog_src_register src[3])
+{
+	//ADD RESULT 1.X Y Z W PARAM 0{} {X Y Z W} PARAM 0{} {ZERO ZERO ZERO ZERO}
+
+#if 1
+	o_inst->opcode =
+	    MAKE_VSF_OP(R300_VPI_OUT_OP_ADD, t_dst_index(vp, &vpi->DstReg),
+			t_dst_mask(vpi->DstReg.WriteMask),
+			t_dst_class(vpi->DstReg.File));
+	o_inst->src[0] = t_src(vp, &src[0]);
+	o_inst->src[1] = ZERO_SRC_0;
+	o_inst->src[2] = ZERO_SRC_0;
+#else
+	hw_op =
+	    (src[0].File ==
+	     PROGRAM_TEMPORARY) ? R300_VPI_OUT_OP_MAD_2 :
+	    R300_VPI_OUT_OP_MAD;
+
+	o_inst->opcode =
+	    MAKE_VSF_OP(hw_op, t_dst_index(vp, &vpi->DstReg),
+			t_dst_mask(vpi->DstReg.WriteMask),
+			t_dst_class(vpi->DstReg.File));
+	o_inst->src[0] = t_src(vp, &src[0]);
+	o_inst->src[1] = ONE_SRC_0;
+	o_inst->src[2] = ZERO_SRC_0;
+#endif
+}
+
+static void t_opcode_mul(struct r300_vertex_program *vp,
+			 struct prog_instruction *vpi,
+			 struct r300_vertprog_instruction *o_inst,
+			 struct prog_src_register src[3])
+{
+	unsigned long hw_op;
+
+	// HW mul can take third arg but appears to have some other limitations.
+
+	hw_op = (src[0].File == PROGRAM_TEMPORARY
+		 && src[1].File ==
+		 PROGRAM_TEMPORARY) ? R300_VPI_OUT_OP_MAD_2 :
+	    R300_VPI_OUT_OP_MAD;
+
+	o_inst->opcode =
+	    MAKE_VSF_OP(hw_op, t_dst_index(vp, &vpi->DstReg),
+			t_dst_mask(vpi->DstReg.WriteMask),
+			t_dst_class(vpi->DstReg.File));
+	o_inst->src[0] = t_src(vp, &src[0]);
+	o_inst->src[1] = t_src(vp, &src[1]);
+
+	o_inst->src[2] = ZERO_SRC_1;
+}
+
+static void t_opcode_pow(struct r300_vertex_program *vp,
+			 struct prog_instruction *vpi,
+			 struct r300_vertprog_instruction *o_inst,
+			 struct prog_src_register src[3])
+{
+	o_inst->opcode =
+	    MAKE_VSF_OP(R300_VPI_OUT_OP_POW, t_dst_index(vp, &vpi->DstReg),
+			t_dst_mask(vpi->DstReg.WriteMask),
+			t_dst_class(vpi->DstReg.File));
+	o_inst->src[0] = t_src_scalar(vp, &src[0]);
+	o_inst->src[1] = ZERO_SRC_0;
+	o_inst->src[2] = t_src_scalar(vp, &src[1]);
+}
+
+/* TODO: RCP */
+
+/* TODO: RSQ */
+
+/* TODO: SGE */
+
+/* TODO: SLT */
+
+static void t_opcode_sub(struct r300_vertex_program *vp,
+			 struct prog_instruction *vpi,
+			 struct r300_vertprog_instruction *o_inst,
+			 struct prog_src_register src[3])
+{
+	unsigned long hw_op;
+
+	//ADD RESULT 1.X Y Z W TMP 0{} {X Y Z W} PARAM 1{X Y Z W } {X Y Z W} neg Xneg Yneg Zneg W
+
+#if 1
+	hw_op = (src[0].File == PROGRAM_TEMPORARY
+		 && src[1].File ==
+		 PROGRAM_TEMPORARY) ? R300_VPI_OUT_OP_MAD_2 :
+	    R300_VPI_OUT_OP_MAD;
+
+	o_inst->opcode =
+	    MAKE_VSF_OP(hw_op, t_dst_index(vp, &vpi->DstReg),
+			t_dst_mask(vpi->DstReg.WriteMask),
+			t_dst_class(vpi->DstReg.File));
+	o_inst->src[0] = t_src(vp, &src[0]);
+	o_inst->src[1] = ONE_SRC_0;
+	o_inst->src[2] =
+	    MAKE_VSF_SOURCE(t_src_index(vp, &src[1]),
+			    t_swizzle(GET_SWZ(src[1].Swizzle, 0)),
+			    t_swizzle(GET_SWZ(src[1].Swizzle, 1)),
+			    t_swizzle(GET_SWZ(src[1].Swizzle, 2)),
+			    t_swizzle(GET_SWZ(src[1].Swizzle, 3)),
+			    t_src_class(src[1].File),
+			    (!src[1].
+			     NegateBase) ? VSF_FLAG_ALL : VSF_FLAG_NONE) |
+	    (src[1].RelAddr << 4);
+#else
+	o_inst->opcode =
+	    MAKE_VSF_OP(R300_VPI_OUT_OP_ADD, t_dst_index(vp, &vpi->DstReg),
 			t_dst_mask(vpi->DstReg.WriteMask),
 			t_dst_class(vpi->DstReg.File));
 
-	o_inst->src[0] =
-	    MAKE_VSF_SOURCE(t_src_index(vp, &src[0]),
-			    t_swizzle(GET_SWZ(src[0].Swizzle, 0)),
-			    t_swizzle(GET_SWZ(src[0].Swizzle, 1)),
-			    t_swizzle(GET_SWZ(src[0].Swizzle, 2)),
-			    VSF_IN_COMPONENT_ONE, t_src_class(src[0].File),
-			    src[0].
-			    NegateBase ? VSF_FLAG_XYZ : VSF_FLAG_NONE) |
-	    (src[0].RelAddr << 4);
-	o_inst->src[1] = t_src(vp, &src[1]);
-	o_inst->src[2] = ZERO_SRC_1;
+	o_inst->src[0] = t_src(vp, &src[0]);
+	o_inst->src[1] =
+	    MAKE_VSF_SOURCE(t_src_index(vp, &src[1]),
+			    t_swizzle(GET_SWZ(src[1].Swizzle, 0)),
+			    t_swizzle(GET_SWZ(src[1].Swizzle, 1)),
+			    t_swizzle(GET_SWZ(src[1].Swizzle, 2)),
+			    t_swizzle(GET_SWZ(src[1].Swizzle, 3)),
+			    t_src_class(src[1].File),
+			    (!src[1].
+			     NegateBase) ? VSF_FLAG_ALL : VSF_FLAG_NONE) |
+	    (src[1].RelAddr << 4);
+	o_inst->src[2] = 0;
+#endif
 }
+
+/* TODO: SWZ */
 
 static void t_opcode_xpd(struct r300_vertex_program *vp,
 			 struct prog_instruction *vpi,
@@ -1064,56 +1130,73 @@ static void r300TranslateVertexShader(struct r300_vertex_program *vp,
 		}
 
 		switch (vpi->Opcode) {
-		case OPCODE_POW:
-			t_opcode_pow(vp, vpi, o_inst, src);
-			break;
-		case OPCODE_MOV:
-			t_opcode_mov(vp, vpi, o_inst, src);
-			break;
-		case OPCODE_SWZ:
-			t_opcode_mov(vp, vpi, o_inst, src);
+		case OPCODE_ABS:
+			t_opcode_abs(vp, vpi, o_inst, src);
 			break;
 		case OPCODE_ADD:
 			t_opcode_add(vp, vpi, o_inst, src);
 			break;
-		case OPCODE_MAD:
-			t_opcode_mad(vp, vpi, o_inst, src);
-			break;
-		case OPCODE_MUL:
-			t_opcode_mul(vp, vpi, o_inst, src);
-			break;
+			/* TODO: ARL */
 		case OPCODE_DP3:
 			t_opcode_dp3(vp, vpi, o_inst, src);
 			break;
-		case OPCODE_SUB:
-			t_opcode_sub(vp, vpi, o_inst, src);
+			/* TODO: DP4 */
+		case OPCODE_DPH:
+			t_opcode_dph(vp, vpi, o_inst, src);
 			break;
-		case OPCODE_ABS:
-			t_opcode_abs(vp, vpi, o_inst, src);
-			break;
+			/* TODO: DST */
+			/* TODO: EX2 */
+			/* TODO: EXP */
 		case OPCODE_FLR:
 			/* FIXME */
 			t_opcode_flr(vp, vpi, o_inst, src, &u_temp_i);
 			break;
+			/* TODO: FRC */
 		case OPCODE_LG2:
 			t_opcode_lg2(vp, vpi, o_inst, src);
 			break;
 		case OPCODE_LIT:
 			t_opcode_lit(vp, vpi, o_inst, src);
 			break;
-		case OPCODE_DPH:
-			t_opcode_dph(vp, vpi, o_inst, src);
+			/* TODO: LOG */
+		case OPCODE_MAD:
+			t_opcode_mad(vp, vpi, o_inst, src);
 			break;
+			/* TODO: MAX */
+			/* TODO: MIN */
+		case OPCODE_MOV:
+			t_opcode_mov(vp, vpi, o_inst, src);
+			break;
+		case OPCODE_MUL:
+			t_opcode_mul(vp, vpi, o_inst, src);
+			break;
+		case OPCODE_POW:
+			t_opcode_pow(vp, vpi, o_inst, src);
+			break;
+			/* TODO: RCP */
+			/* TODO: RSQ */
+			/* TODO: SGE */
+			/* TODO: SLT */
+		case OPCODE_SUB:
+			t_opcode_sub(vp, vpi, o_inst, src);
+			break;
+		case OPCODE_SWZ:
+			t_opcode_mov(vp, vpi, o_inst, src);
+			break;
+			/* TODO: SWZ */
 		case OPCODE_XPD:
 			/* FIXME */
 			t_opcode_xpd(vp, vpi, o_inst, src, &u_temp_i);
 			break;
+
 		case OPCODE_RCC:
 			t_opcode_rcc(vp, vpi, o_inst, src);
 			break;
+
 		case OPCODE_END:
 			/* empty */
 			break;
+
 		default:
 			t_opcode_default(vp, vpi, o_inst, src,
 					 num_operands, are_srcs_scalar);
