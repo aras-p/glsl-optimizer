@@ -486,7 +486,14 @@ static void t_opcode_arl(struct r300_vertex_program *vp,
 			 struct r300_vertprog_instruction *o_inst,
 			 struct prog_src_register src[3])
 {
-	assert(0);
+	o_inst->opcode =
+	    MAKE_VSF_OP(R300_VPI_OUT_OP_ARL, t_dst_index(vp, &vpi->DstReg),
+			t_dst_mask(vpi->DstReg.WriteMask),
+			t_dst_class(vpi->DstReg.File));
+
+	o_inst->src[0] = t_src(vp, &src[0]);
+	o_inst->src[1] = ZERO_SRC_0;
+	o_inst->src[2] = ZERO_SRC_0;
 }
 
 static void t_opcode_dp3(struct r300_vertex_program *vp,
