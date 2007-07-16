@@ -106,49 +106,6 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 		u_temp_i=VSF_MAX_FRAGMENT_TEMPS-1; \
 	} while (0)
 
-#define OP_MASK	(0xf)		/* we are unlikely to have more than 15 */
-#define OPN(operator, ip) {#operator, OPCODE_##operator, ip}
-
-static struct {
-	char *name;
-	int opcode;
-	unsigned long ip;	/* number of input operands and flags */
-} op_names[] = {
-	/* *INDENT-OFF* */
-	OPN(ABS, 1),
-	OPN(ADD, 2),
-	OPN(ARL, 1),
-	OPN(DP3, 2),
-	OPN(DP4, 2),
-	OPN(DPH, 2),
-	OPN(DST, 2),
-	OPN(EX2, 1),
-	OPN(EXP, 1),
-	OPN(FLR, 1),
-	OPN(FRC, 1),
-	OPN(LG2, 1),
-	OPN(LIT, 1),
-	OPN(LOG, 1),
-	OPN(MAD, 3),
-	OPN(MAX, 2),
-	OPN(MIN, 2),
-	OPN(MOV, 1),
-	OPN(MUL, 2),
-	OPN(POW, 2),
-	OPN(RCP, 1),
-	OPN(RSQ, 1),
-	OPN(SGE, 2),
-	OPN(SLT, 2),
-	OPN(SUB, 2),
-	OPN(SWZ, 1),
-	OPN(XPD, 2),
-	OPN(PRINT, 0),
-	OPN(END, 0)
-	/* *INDENT-ON* */
-};
-
-#undef OPN
-
 int r300VertexProgUpdateParams(GLcontext * ctx,
 			       struct r300_vertex_program_cont *vp,
 			       float *dst)
@@ -357,20 +314,6 @@ static unsigned long t_src_scalar(struct r300_vertex_program *vp,
 			       src->
 			       NegateBase ? VSF_FLAG_ALL : VSF_FLAG_NONE) |
 	    (src->RelAddr << 4);
-}
-
-static unsigned long op_operands(enum prog_opcode opcode)
-{
-	int i;
-
-	/* Can we trust mesas opcodes to be in order ? */
-	for (i = 0; i < sizeof(op_names) / sizeof(*op_names); i++)
-		if (op_names[i].opcode == opcode)
-			return op_names[i].ip;
-
-	fprintf(stderr, "op %d not found in op_names\n", opcode);
-	_mesa_exit(-1);
-	return 0;
 }
 
 static GLboolean valid_dst(struct r300_vertex_program *vp,
@@ -1176,7 +1119,7 @@ static void r300TranslateVertexShader(struct r300_vertex_program *vp,
 			vpi->DstReg.Index = u_temp_i;
 		}
 
-		num_operands = op_operands(vpi->Opcode) & OP_MASK;
+		num_operands = _mesa_num_inst_src_regs(vpi->Opcode);
 
 		/* copy the sources (src) from mesa into a local variable... is this needed? */
 		for (i = 0; i < num_operands; i++) {
