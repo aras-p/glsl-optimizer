@@ -1349,6 +1349,7 @@ void r300SelectVertexShader(r300ContextPtr r300)
 	if (vpc->mesa_program.IsPositionInvariant) {
 		/* we wan't position don't we ? */
 		wanted_key.InputsRead |= (1 << VERT_ATTRIB_POS);
+		wanted_key.OutputsWritten |= (1 << VERT_RESULT_HPOS);
 	}
 
 	for (vp = vpc->progs; vp; vp = vp->next)
