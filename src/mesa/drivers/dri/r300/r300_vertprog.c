@@ -1364,5 +1364,3 @@ void r300SelectVertexShader(r300ContextPtr r300)
 	vpc->progs = vp;
 	r300->selected_vp = vp;
 }
-
-/* vim: set foldenable foldmethod=marker : */
