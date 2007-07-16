@@ -1497,6 +1497,24 @@ void r300SelectVertexShader(r300ContextPtr r300)
 	}
 	wanted_key.InputsRead = vpc->mesa_program.Base.InputsRead;
 	wanted_key.OutputsWritten = vpc->mesa_program.Base.OutputsWritten;
+
+	wanted_key.OutputsWritten |= 1 << VERT_RESULT_HPOS;
+
+	if (InputsRead & FRAG_BIT_COL0) {
+		wanted_key.OutputsWritten |= 1 << VERT_RESULT_COL0;
+	}
+
+	if ((InputsRead & FRAG_BIT_COL1)) {
+		wanted_key.OutputsWritten |= 1 << VERT_RESULT_COL1;
+	}
+
+	for (i = 0; i < ctx->Const.MaxTextureUnits; i++) {
+		if (InputsRead & (FRAG_BIT_TEX0 << i)) {
+			wanted_key.OutputsWritten |=
+			    1 << (VERT_RESULT_TEX0 + i);
+		}
+	}
+
 	if (vpc->mesa_program.IsPositionInvariant) {
 		/* we wan't position don't we ? */
 		wanted_key.InputsRead |= (1 << VERT_ATTRIB_POS);
