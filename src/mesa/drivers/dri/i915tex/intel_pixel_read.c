@@ -203,16 +203,17 @@ do_blit_readpixels(GLcontext * ctx,
       return GL_FALSE;
    }
 
-   if (pack->Alignment != 1 || pack->SwapBytes || pack->LsbFirst) {
-      if (INTEL_DEBUG & DEBUG_PIXEL)
-         _mesa_printf("%s: bad packing params\n", __FUNCTION__);
-      return GL_FALSE;
-   }
-
    if (pack->RowLength > 0)
       rowLength = pack->RowLength;
    else
       rowLength = width;
+
+   if (((rowLength * src->cpp) % pack->Alignment) ||
+      pack->SwapBytes || pack->LsbFirst) {
+      if (INTEL_DEBUG & DEBUG_PIXEL)
+         _mesa_printf("%s: bad packing params\n", __FUNCTION__);
+      return GL_FALSE;
+   }
 
    if (pack->Invert) {
       if (INTEL_DEBUG & DEBUG_PIXEL)
