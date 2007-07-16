@@ -47,7 +47,6 @@
 #define DBG 0
 
 #define LOCAL_VARS							\
-   struct intel_context *intel = intel_context(ctx);			\
    struct intel_renderbuffer *irb = intel_renderbuffer(rb);		\
    const GLint yScale = irb->RenderToTexture ? 1 : -1;			\
    const GLint yBias = irb->RenderToTexture ? 0 : irb->Base.Height - 1;	\
@@ -56,20 +55,17 @@
    assert(irb->pfMap);\
    (void) p;
 
-/* XXX FBO: this is identical to the macro in spantmp2.h except we get
- * the cliprect info from the context, not the driDrawable.
- * Move this into spantmp2.h someday.
+/* There is just a single cliploop!
  */
 #define HW_CLIPLOOP()							\
    do {									\
-      int _nc = intel->numClipRects;					\
-      while ( _nc-- ) {							\
-	 int minx = intel->pClipRects[_nc].x1;		\
-	 int miny = intel->pClipRects[_nc].y1;		\
-	 int maxx = intel->pClipRects[_nc].x2;		\
-	 int maxy = intel->pClipRects[_nc].y2;
+      int minx = 0;							\
+      int miny = 0;							\
+      int maxx = irb->Base.Width - 1;					\
+      int maxy = irb->Base.Height - 1;
 
-
+#define HW_ENDCLIPLOOP()						\
+   } while (0)
 
 
 #define Y_FLIP(_y) ((_y) * yScale + yBias)
@@ -100,7 +96,6 @@
 
 
 #define LOCAL_DEPTH_VARS						\
-   struct intel_context *intel = intel_context(ctx);			\
    struct intel_renderbuffer *irb = intel_renderbuffer(rb);		\
    const GLuint pitch = irb->pfPitch/***XXX region->pitch*/; /* in pixels */ \
    const GLint yScale = irb->RenderToTexture ? 1 : -1;			\
