@@ -125,13 +125,14 @@ intel_readbuf_region(struct intel_context *intel)
 
 
 /**
- * Update the following fields for rendering to a user-created FBO:
+ * Update the following fields for rendering:
  *   intel->numClipRects
  *   intel->pClipRects
  */
 static void
 intelSetRenderbufferClipRects(struct intel_context *intel)
 {
+   /* zero-sized buffers might be legal? */
    assert(intel->ctx.DrawBuffer->Width > 0);
    assert(intel->ctx.DrawBuffer->Height > 0);
    intel->fboRect.x1 = 0;
@@ -141,28 +142,6 @@ intelSetRenderbufferClipRects(struct intel_context *intel)
    intel->numClipRects = 1;
    intel->pClipRects = &intel->fboRect;
 }
-
-/**
- * As above, but for rendering private front/back buffer of a window.
- * \sa intelSetPrivbufClipRects
- */
-
-static void
-intelSetPrivbufClipRects(struct intel_context *intel)
-{
-   if (!intel->ctx.DrawBuffer) {
-      fprintf(stderr, "%s: DrawBuffer not set!\n", __FUNCTION__);
-      return;
-   }
-
-   intel->fakeClipRect.x1 = 0;
-   intel->fakeClipRect.y1 = 0;
-   intel->fakeClipRect.x2 = intel->ctx.DrawBuffer->Width;
-   intel->fakeClipRect.y2 = intel->ctx.DrawBuffer->Height;
-   intel->numClipRects = 1;
-   intel->pClipRects = &intel->fakeClipRect;
-}
-
 
 
 /**
@@ -327,7 +306,6 @@ intelClearWithTris(struct intel_context *intel, GLbitfield mask)
 
    LOCK_HARDWARE(intel);
 
-   /* XXX FBO: was: intel->driDrawable->numClipRects */
    if (intel->numClipRects) {
       GLint cx, cy, cw, ch;
       GLuint buf;
@@ -930,7 +908,6 @@ intel_draw_buffer(GLcontext * ctx, struct gl_framebuffer *fb)
    struct intel_context *intel = intel_context(ctx);
    struct intel_region *colorRegion, *depthRegion = NULL;
    struct intel_renderbuffer *irbDepth = NULL, *irbStencil = NULL;
-   int front = 0;               /* drawing to front color buffer? */
 
    if (!fb) {
       /* this can happen during the initial context initialization */
@@ -965,33 +942,18 @@ intel_draw_buffer(GLcontext * ctx, struct gl_framebuffer *fb)
       /* writing to 0 or 2 or 4 color buffers */
       /*_mesa_debug(ctx, "Software rendering\n");*/
       FALLBACK(intel, INTEL_FALLBACK_DRAW_BUFFER, GL_TRUE);
-      front = 1;                /* might not have back color buffer */
    }
    else {
       /* draw to exactly one color buffer */
       /*_mesa_debug(ctx, "Hardware rendering\n");*/
       FALLBACK(intel, INTEL_FALLBACK_DRAW_BUFFER, GL_FALSE);
-      if (fb->_ColorDrawBufferMask[0] == BUFFER_BIT_FRONT_LEFT) {
-         front = 1;
-      }
    }
 
    /*
     * Get the intel_renderbuffer for the colorbuffer we're drawing into.
     * And set up cliprects.
     */
-   if (fb->Name == 0) {
-      intelSetPrivbufClipRects(intel);
-      /* drawing to window system buffer */
-      if (front) {
-         colorRegion = intel_get_rb_region(fb, BUFFER_FRONT_LEFT);
-      }
-      else {
-         colorRegion = intel_get_rb_region(fb, BUFFER_BACK_LEFT);
-      }
-   }
-   else {
-      /* drawing to user-created FBO */
+   {
       struct intel_renderbuffer *irb;
       intelSetRenderbufferClipRects(intel);
       irb = intel_renderbuffer(fb->_ColorDrawBuffers[0][0]);

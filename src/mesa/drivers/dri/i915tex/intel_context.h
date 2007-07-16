@@ -252,8 +252,7 @@ struct intel_context
     */
    GLuint numClipRects;         /**< cliprects for drawing */
    drm_clip_rect_t *pClipRects;
-   drm_clip_rect_t fboRect;     /**< cliprect for FBO rendering */
-   drm_clip_rect_t fakeClipRect;     /**< cliprect for priv back/fake front buffers rendering */
+   drm_clip_rect_t fboRect;     /**< cliprect for rendering */
 
    int perf_boxes;
 
