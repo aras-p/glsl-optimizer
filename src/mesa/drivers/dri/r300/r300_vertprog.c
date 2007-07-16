@@ -1126,13 +1126,11 @@ static void r300TranslateVertexShader(struct r300_vertex_program *vp,
 		}
 	}
 
-	/* Will most likely segfault before we get here... fix later. */
-	if (o_inst - vp->program.body.i >= VSF_MAX_FRAGMENT_LENGTH / 4) {
+	vp->program.length = (o_inst - vp->program.body.i) * 4;
+	if (vp->program.length >= VSF_MAX_FRAGMENT_LENGTH) {
 		vp->program.length = 0;
 		vp->native = GL_FALSE;
-		return;
 	}
-	vp->program.length = (o_inst - vp->program.body.i) * 4;
 
 #if 0
 	fprintf(stderr, "hw program:\n");
