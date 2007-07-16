@@ -862,6 +862,55 @@ static void t_opcode_rcc(struct r300_vertex_program *vp,
 	_mesa_exit(-1);
 }
 
+static void t_opcode_default(struct r300_vertex_program *vp,
+			     struct prog_instruction *vpi,
+			     struct r300_vertprog_instruction *o_inst,
+			     struct prog_src_register src[3],
+			     int num_operands, int are_srcs_scalar)
+{
+	o_inst->opcode =
+	    MAKE_VSF_OP(t_opcode(vpi->Opcode),
+			t_dst_index(vp, &vpi->DstReg),
+			t_dst_mask(vpi->DstReg.WriteMask),
+			t_dst_class(vpi->DstReg.File));
+
+	switch (num_operands) {
+	case 1:
+		if (are_srcs_scalar) {
+			o_inst->src[0] = t_src_scalar(vp, &src[0]);
+		} else {
+			o_inst->src[0] = t_src(vp, &src[0]);
+		}
+		o_inst->src[1] = ZERO_SRC_0;
+		o_inst->src[2] = ZERO_SRC_0;
+		break;
+	case 2:
+		if (are_srcs_scalar) {
+			o_inst->src[0] = t_src_scalar(vp, &src[0]);
+			o_inst->src[1] = t_src_scalar(vp, &src[1]);
+		} else {
+			o_inst->src[0] = t_src(vp, &src[0]);
+			o_inst->src[1] = t_src(vp, &src[1]);
+		}
+		o_inst->src[2] = ZERO_SRC_1;
+		break;
+	case 3:
+		if (are_srcs_scalar) {
+			o_inst->src[0] = t_src_scalar(vp, &src[0]);
+			o_inst->src[1] = t_src_scalar(vp, &src[1]);
+			o_inst->src[2] = t_src_scalar(vp, &src[2]);
+		} else {
+			o_inst->src[0] = t_src(vp, &src[0]);
+			o_inst->src[1] = t_src(vp, &src[1]);
+			o_inst->src[2] = t_src(vp, &src[2]);
+		}
+		break;
+	default:
+		assert(0);
+		break;
+	}
+}
+
 static void t_inputs_outputs(struct r300_vertex_program *vp)
 {
 	int i;
@@ -1064,64 +1113,11 @@ static void r300TranslateVertexShader(struct r300_vertex_program *vp,
 			t_opcode_rcc(vp, vpi, o_inst, src);
 			break;
 		case OPCODE_END:
+			/* empty */
 			break;
-
-			/* all other opcodes */
 		default:
-			o_inst->opcode =
-			    MAKE_VSF_OP(t_opcode(vpi->Opcode),
-					t_dst_index(vp, &vpi->DstReg),
-					t_dst_mask(vpi->DstReg.WriteMask),
-					t_dst_class(vpi->DstReg.File));
-
-			switch (num_operands) {
-			case 1:
-				if (are_srcs_scalar) {
-					o_inst->src[0] =
-					    t_src_scalar(vp, &src[0]);
-				} else {
-					o_inst->src[0] =
-					    t_src(vp, &src[0]);
-				}
-				o_inst->src[1] = ZERO_SRC_0;
-				o_inst->src[2] = ZERO_SRC_0;
-				break;
-			case 2:
-				if (are_srcs_scalar) {
-					o_inst->src[0] =
-					    t_src_scalar(vp, &src[0]);
-					o_inst->src[1] =
-					    t_src_scalar(vp, &src[1]);
-				} else {
-					o_inst->src[0] =
-					    t_src(vp, &src[0]);
-					o_inst->src[1] =
-					    t_src(vp, &src[1]);
-				}
-				o_inst->src[2] = ZERO_SRC_1;
-				break;
-			case 3:
-				if (are_srcs_scalar) {
-					o_inst->src[0] =
-					    t_src_scalar(vp, &src[0]);
-					o_inst->src[1] =
-					    t_src_scalar(vp, &src[1]);
-					o_inst->src[2] =
-					    t_src_scalar(vp, &src[2]);
-				} else {
-					o_inst->src[0] =
-					    t_src(vp, &src[0]);
-					o_inst->src[1] =
-					    t_src(vp, &src[1]);
-					o_inst->src[2] =
-					    t_src(vp, &src[2]);
-				}
-				break;
-			default:
-				assert(0);
-				break;
-			}
-
+			t_opcode_default(vp, vpi, o_inst, src,
+					 num_operands, are_srcs_scalar);
 			break;
 		}
 	}
@@ -1131,7 +1127,6 @@ static void r300TranslateVertexShader(struct r300_vertex_program *vp,
 		vp->program.length = 0;
 		vp->native = GL_FALSE;
 	}
-
 #if 0
 	fprintf(stderr, "hw program:\n");
 	for (i = 0; i < vp->program.length; i++)
