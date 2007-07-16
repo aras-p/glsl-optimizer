@@ -924,9 +924,12 @@ static void t_inputs_outputs(struct r300_vertex_program *vp)
 
 	assert(vp->key.OutputsWritten & (1 << VERT_RESULT_HPOS));
 
-	/* Assign outputs */
 	if (vp->key.OutputsWritten & (1 << VERT_RESULT_HPOS)) {
 		vp->outputs[VERT_RESULT_HPOS] = cur_reg++;
+	}
+
+	if (vp->key.OutputsWritten & (1 << VERT_RESULT_PSIZ)) {
+		vp->outputs[VERT_RESULT_PSIZ] = cur_reg++;
 	}
 
 	if (vp->key.OutputsWritten & (1 << VERT_RESULT_COL0)) {
@@ -953,10 +956,6 @@ static void t_inputs_outputs(struct r300_vertex_program *vp)
 #if 0
 	if (vp->key.OutputsWritten & (1 << VERT_RESULT_FOGC)) {
 		vp->outputs[VERT_RESULT_FOGC] = cur_reg++;
-	}
-
-	if (vp->key.OutputsWritten & (1 << VERT_RESULT_PSIZ)) {
-		vp->outputs[VERT_RESULT_PSIZ] = cur_reg++;
 	}
 #endif
 
