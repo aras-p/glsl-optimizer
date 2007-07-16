@@ -144,7 +144,6 @@ static struct {
 	OPN(SUB, 2),
 	OPN(SWZ, 1),
 	OPN(XPD, 2),
-	OPN(RCC, 0),	//extra
 	OPN(PRINT, 0),
 	OPN(END, 0)
 	/* *INDENT-ON* */
@@ -1081,16 +1080,6 @@ static void t_opcode_xpd(struct r300_vertex_program *vp,
 
 }
 
-static void t_opcode_rcc(struct r300_vertex_program *vp,
-			 struct prog_instruction *vpi,
-			 struct r300_vertprog_instruction *o_inst,
-			 struct prog_src_register src[3])
-{
-	fprintf(stderr, "Dont know how to handle op %d yet\n",
-		vpi->Opcode);
-	_mesa_exit(-1);
-}
-
 static void t_inputs_outputs(struct r300_vertex_program *vp)
 {
 	int i;
@@ -1326,9 +1315,6 @@ static void r300TranslateVertexShader(struct r300_vertex_program *vp,
 		case OPCODE_XPD:
 			/* FIXME */
 			t_opcode_xpd(vp, vpi, o_inst, src, &u_temp_i);
-			break;
-		case OPCODE_RCC:
-			t_opcode_rcc(vp, vpi, o_inst, src);
 			break;
 		default:
 			assert(0);
