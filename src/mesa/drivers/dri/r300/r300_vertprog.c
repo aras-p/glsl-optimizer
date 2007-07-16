@@ -29,6 +29,8 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
  * \file
  *
  * \author Aapo Tahkola <aet@rasterburn.org>
+ *
+ * \author Oliver McFadden <z3ro.geek@gmail.com>
  */
 
 #include "glheader.h"
@@ -360,36 +362,6 @@ static unsigned long t_src_scalar(struct r300_vertex_program *vp,
 	    (src->RelAddr << 4);
 }
 
-static unsigned long t_opcode(enum prog_opcode opcode)
-{
-
-	switch (opcode) {
-	/* *INDENT-OFF* */
-	case OPCODE_ARL: return R300_VPI_OUT_OP_ARL;
-	case OPCODE_DST: return R300_VPI_OUT_OP_DST;
-	case OPCODE_EX2: return R300_VPI_OUT_OP_EX2;
-	case OPCODE_EXP: return R300_VPI_OUT_OP_EXP;
-	case OPCODE_FRC: return R300_VPI_OUT_OP_FRC;
-	case OPCODE_LG2: return R300_VPI_OUT_OP_LG2;
-	case OPCODE_LOG: return R300_VPI_OUT_OP_LOG;
-	case OPCODE_MAX: return R300_VPI_OUT_OP_MAX;
-	case OPCODE_MIN: return R300_VPI_OUT_OP_MIN;
-	case OPCODE_MUL: return R300_VPI_OUT_OP_MUL;
-	case OPCODE_RCP: return R300_VPI_OUT_OP_RCP;
-	case OPCODE_RSQ: return R300_VPI_OUT_OP_RSQ;
-	case OPCODE_SGE: return R300_VPI_OUT_OP_SGE;
-	case OPCODE_SLT: return R300_VPI_OUT_OP_SLT;
-	case OPCODE_DP4: return R300_VPI_OUT_OP_DOT;
-	/* *INDENT-ON* */
-
-	default:
-		fprintf(stderr, "%s: Should not be called with opcode %d!",
-			__FUNCTION__, opcode);
-	}
-	_mesa_exit(-1);
-	return 0;
-}
-
 static unsigned long op_operands(enum prog_opcode opcode)
 {
 	int i;
@@ -512,7 +484,13 @@ static void t_opcode_add(struct r300_vertex_program *vp,
 #endif
 }
 
-/* TODO: ARL */
+static void t_opcode_arl(struct r300_vertex_program *vp,
+			 struct prog_instruction *vpi,
+			 struct r300_vertprog_instruction *o_inst,
+			 struct prog_src_register src[3])
+{
+	assert(0);
+}
 
 static void t_opcode_dp3(struct r300_vertex_program *vp,
 			 struct prog_instruction *vpi,
@@ -549,7 +527,20 @@ static void t_opcode_dp3(struct r300_vertex_program *vp,
 	o_inst->src[2] = ZERO_SRC_1;
 }
 
-/* TODO: DP4 */
+static void t_opcode_dp4(struct r300_vertex_program *vp,
+			 struct prog_instruction *vpi,
+			 struct r300_vertprog_instruction *o_inst,
+			 struct prog_src_register src[3])
+{
+	o_inst->opcode =
+	    MAKE_VSF_OP(R300_VPI_OUT_OP_DOT, t_dst_index(vp, &vpi->DstReg),
+			t_dst_mask(vpi->DstReg.WriteMask),
+			t_dst_class(vpi->DstReg.File));
+
+	o_inst->src[0] = t_src(vp, &src[0]);
+	o_inst->src[1] = t_src(vp, &src[1]);
+	o_inst->src[2] = ZERO_SRC_1;
+}
 
 static void t_opcode_dph(struct r300_vertex_program *vp,
 			 struct prog_instruction *vpi,
@@ -575,11 +566,50 @@ static void t_opcode_dph(struct r300_vertex_program *vp,
 	o_inst->src[2] = ZERO_SRC_1;
 }
 
-/* TODO: DST */
+static void t_opcode_dst(struct r300_vertex_program *vp,
+			 struct prog_instruction *vpi,
+			 struct r300_vertprog_instruction *o_inst,
+			 struct prog_src_register src[3])
+{
+	o_inst->opcode =
+	    MAKE_VSF_OP(R300_VPI_OUT_OP_DST, t_dst_index(vp, &vpi->DstReg),
+			t_dst_mask(vpi->DstReg.WriteMask),
+			t_dst_class(vpi->DstReg.File));
 
-/* TODO: EX2 */
+	o_inst->src[0] = t_src(vp, &src[0]);
+	o_inst->src[1] = t_src(vp, &src[1]);
+	o_inst->src[2] = ZERO_SRC_1;
+}
 
-/* TODO: EXP */
+static void t_opcode_ex2(struct r300_vertex_program *vp,
+			 struct prog_instruction *vpi,
+			 struct r300_vertprog_instruction *o_inst,
+			 struct prog_src_register src[3])
+{
+	o_inst->opcode =
+	    MAKE_VSF_OP(R300_VPI_OUT_OP_EX2, t_dst_index(vp, &vpi->DstReg),
+			t_dst_mask(vpi->DstReg.WriteMask),
+			t_dst_class(vpi->DstReg.File));
+
+	o_inst->src[0] = t_src_scalar(vp, &src[0]);
+	o_inst->src[1] = ZERO_SRC_0;
+	o_inst->src[2] = ZERO_SRC_0;
+}
+
+static void t_opcode_exp(struct r300_vertex_program *vp,
+			 struct prog_instruction *vpi,
+			 struct r300_vertprog_instruction *o_inst,
+			 struct prog_src_register src[3])
+{
+	o_inst->opcode =
+	    MAKE_VSF_OP(R300_VPI_OUT_OP_EXP, t_dst_index(vp, &vpi->DstReg),
+			t_dst_mask(vpi->DstReg.WriteMask),
+			t_dst_class(vpi->DstReg.File));
+
+	o_inst->src[0] = t_src_scalar(vp, &src[0]);
+	o_inst->src[1] = ZERO_SRC_0;
+	o_inst->src[2] = ZERO_SRC_0;
+}
 
 static void t_opcode_flr(struct r300_vertex_program *vp,
 			 struct prog_instruction *vpi,
@@ -618,7 +648,20 @@ static void t_opcode_flr(struct r300_vertex_program *vp,
 	(*u_temp_i)--;
 }
 
-/* TODO: FRC */
+static void t_opcode_frc(struct r300_vertex_program *vp,
+			 struct prog_instruction *vpi,
+			 struct r300_vertprog_instruction *o_inst,
+			 struct prog_src_register src[3])
+{
+	o_inst->opcode =
+	    MAKE_VSF_OP(R300_VPI_OUT_OP_FRC, t_dst_index(vp, &vpi->DstReg),
+			t_dst_mask(vpi->DstReg.WriteMask),
+			t_dst_class(vpi->DstReg.File));
+
+	o_inst->src[0] = t_src(vp, &src[0]);
+	o_inst->src[1] = ZERO_SRC_0;
+	o_inst->src[2] = ZERO_SRC_0;
+}
 
 static void t_opcode_lg2(struct r300_vertex_program *vp,
 			 struct prog_instruction *vpi,
@@ -687,7 +730,20 @@ static void t_opcode_lit(struct r300_vertex_program *vp,
 							   RelAddr << 4);
 }
 
-/* TODO: LOG */
+static void t_opcode_log(struct r300_vertex_program *vp,
+			 struct prog_instruction *vpi,
+			 struct r300_vertprog_instruction *o_inst,
+			 struct prog_src_register src[3])
+{
+	o_inst->opcode =
+	    MAKE_VSF_OP(R300_VPI_OUT_OP_LOG, t_dst_index(vp, &vpi->DstReg),
+			t_dst_mask(vpi->DstReg.WriteMask),
+			t_dst_class(vpi->DstReg.File));
+
+	o_inst->src[0] = t_src_scalar(vp, &src[0]);
+	o_inst->src[1] = ZERO_SRC_0;
+	o_inst->src[2] = ZERO_SRC_0;
+}
 
 static void t_opcode_mad(struct r300_vertex_program *vp,
 			 struct prog_instruction *vpi,
@@ -711,9 +767,35 @@ static void t_opcode_mad(struct r300_vertex_program *vp,
 	o_inst->src[2] = t_src(vp, &src[2]);
 }
 
-/* TODO: MAX */
+static void t_opcode_max(struct r300_vertex_program *vp,
+			 struct prog_instruction *vpi,
+			 struct r300_vertprog_instruction *o_inst,
+			 struct prog_src_register src[3])
+{
+	o_inst->opcode =
+	    MAKE_VSF_OP(R300_VPI_OUT_OP_MAX, t_dst_index(vp, &vpi->DstReg),
+			t_dst_mask(vpi->DstReg.WriteMask),
+			t_dst_class(vpi->DstReg.File));
 
-/* TODO: MIN */
+	o_inst->src[0] = t_src(vp, &src[0]);
+	o_inst->src[1] = t_src(vp, &src[1]);
+	o_inst->src[2] = ZERO_SRC_1;
+}
+
+static void t_opcode_min(struct r300_vertex_program *vp,
+			 struct prog_instruction *vpi,
+			 struct r300_vertprog_instruction *o_inst,
+			 struct prog_src_register src[3])
+{
+	o_inst->opcode =
+	    MAKE_VSF_OP(R300_VPI_OUT_OP_MIN, t_dst_index(vp, &vpi->DstReg),
+			t_dst_mask(vpi->DstReg.WriteMask),
+			t_dst_class(vpi->DstReg.File));
+
+	o_inst->src[0] = t_src(vp, &src[0]);
+	o_inst->src[1] = t_src(vp, &src[1]);
+	o_inst->src[2] = ZERO_SRC_1;
+}
 
 static void t_opcode_mov(struct r300_vertex_program *vp,
 			 struct prog_instruction *vpi,
@@ -784,13 +866,65 @@ static void t_opcode_pow(struct r300_vertex_program *vp,
 	o_inst->src[2] = t_src_scalar(vp, &src[1]);
 }
 
-/* TODO: RCP */
+static void t_opcode_rcp(struct r300_vertex_program *vp,
+			 struct prog_instruction *vpi,
+			 struct r300_vertprog_instruction *o_inst,
+			 struct prog_src_register src[3])
+{
+	o_inst->opcode =
+	    MAKE_VSF_OP(R300_VPI_OUT_OP_RCP, t_dst_index(vp, &vpi->DstReg),
+			t_dst_mask(vpi->DstReg.WriteMask),
+			t_dst_class(vpi->DstReg.File));
 
-/* TODO: RSQ */
+	o_inst->src[0] = t_src_scalar(vp, &src[0]);
+	o_inst->src[1] = ZERO_SRC_0;
+	o_inst->src[2] = ZERO_SRC_0;
+}
 
-/* TODO: SGE */
+static void t_opcode_rsq(struct r300_vertex_program *vp,
+			 struct prog_instruction *vpi,
+			 struct r300_vertprog_instruction *o_inst,
+			 struct prog_src_register src[3])
+{
+	o_inst->opcode =
+	    MAKE_VSF_OP(R300_VPI_OUT_OP_RSQ, t_dst_index(vp, &vpi->DstReg),
+			t_dst_mask(vpi->DstReg.WriteMask),
+			t_dst_class(vpi->DstReg.File));
 
-/* TODO: SLT */
+	o_inst->src[0] = t_src_scalar(vp, &src[0]);
+	o_inst->src[1] = ZERO_SRC_0;
+	o_inst->src[2] = ZERO_SRC_0;
+}
+
+static void t_opcode_sge(struct r300_vertex_program *vp,
+			 struct prog_instruction *vpi,
+			 struct r300_vertprog_instruction *o_inst,
+			 struct prog_src_register src[3])
+{
+	o_inst->opcode =
+	    MAKE_VSF_OP(R300_VPI_OUT_OP_SGE, t_dst_index(vp, &vpi->DstReg),
+			t_dst_mask(vpi->DstReg.WriteMask),
+			t_dst_class(vpi->DstReg.File));
+
+	o_inst->src[0] = t_src(vp, &src[0]);
+	o_inst->src[1] = t_src(vp, &src[1]);
+	o_inst->src[2] = ZERO_SRC_1;
+}
+
+static void t_opcode_slt(struct r300_vertex_program *vp,
+			 struct prog_instruction *vpi,
+			 struct r300_vertprog_instruction *o_inst,
+			 struct prog_src_register src[3])
+{
+	o_inst->opcode =
+	    MAKE_VSF_OP(R300_VPI_OUT_OP_SLT, t_dst_index(vp, &vpi->DstReg),
+			t_dst_mask(vpi->DstReg.WriteMask),
+			t_dst_class(vpi->DstReg.File));
+
+	o_inst->src[0] = t_src(vp, &src[0]);
+	o_inst->src[1] = t_src(vp, &src[1]);
+	o_inst->src[2] = ZERO_SRC_1;
+}
 
 static void t_opcode_sub(struct r300_vertex_program *vp,
 			 struct prog_instruction *vpi,
@@ -844,7 +978,36 @@ static void t_opcode_sub(struct r300_vertex_program *vp,
 #endif
 }
 
-/* TODO: SWZ */
+static void t_opcode_swz(struct r300_vertex_program *vp,
+			 struct prog_instruction *vpi,
+			 struct r300_vertprog_instruction *o_inst,
+			 struct prog_src_register src[3])
+{
+	//ADD RESULT 1.X Y Z W PARAM 0{} {X Y Z W} PARAM 0{} {ZERO ZERO ZERO ZERO}
+
+#if 1
+	o_inst->opcode =
+	    MAKE_VSF_OP(R300_VPI_OUT_OP_ADD, t_dst_index(vp, &vpi->DstReg),
+			t_dst_mask(vpi->DstReg.WriteMask),
+			t_dst_class(vpi->DstReg.File));
+	o_inst->src[0] = t_src(vp, &src[0]);
+	o_inst->src[1] = ZERO_SRC_0;
+	o_inst->src[2] = ZERO_SRC_0;
+#else
+	hw_op =
+	    (src[0].File ==
+	     PROGRAM_TEMPORARY) ? R300_VPI_OUT_OP_MAD_2 :
+	    R300_VPI_OUT_OP_MAD;
+
+	o_inst->opcode =
+	    MAKE_VSF_OP(hw_op, t_dst_index(vp, &vpi->DstReg),
+			t_dst_mask(vpi->DstReg.WriteMask),
+			t_dst_class(vpi->DstReg.File));
+	o_inst->src[0] = t_src(vp, &src[0]);
+	o_inst->src[1] = ONE_SRC_0;
+	o_inst->src[2] = ZERO_SRC_0;
+#endif
+}
 
 static void t_opcode_xpd(struct r300_vertex_program *vp,
 			 struct prog_instruction *vpi,
@@ -928,55 +1091,6 @@ static void t_opcode_rcc(struct r300_vertex_program *vp,
 	_mesa_exit(-1);
 }
 
-static void t_opcode_default(struct r300_vertex_program *vp,
-			     struct prog_instruction *vpi,
-			     struct r300_vertprog_instruction *o_inst,
-			     struct prog_src_register src[3],
-			     int num_operands, int are_srcs_scalar)
-{
-	o_inst->opcode =
-	    MAKE_VSF_OP(t_opcode(vpi->Opcode),
-			t_dst_index(vp, &vpi->DstReg),
-			t_dst_mask(vpi->DstReg.WriteMask),
-			t_dst_class(vpi->DstReg.File));
-
-	switch (num_operands) {
-	case 1:
-		if (are_srcs_scalar) {
-			o_inst->src[0] = t_src_scalar(vp, &src[0]);
-		} else {
-			o_inst->src[0] = t_src(vp, &src[0]);
-		}
-		o_inst->src[1] = ZERO_SRC_0;
-		o_inst->src[2] = ZERO_SRC_0;
-		break;
-	case 2:
-		if (are_srcs_scalar) {
-			o_inst->src[0] = t_src_scalar(vp, &src[0]);
-			o_inst->src[1] = t_src_scalar(vp, &src[1]);
-		} else {
-			o_inst->src[0] = t_src(vp, &src[0]);
-			o_inst->src[1] = t_src(vp, &src[1]);
-		}
-		o_inst->src[2] = ZERO_SRC_1;
-		break;
-	case 3:
-		if (are_srcs_scalar) {
-			o_inst->src[0] = t_src_scalar(vp, &src[0]);
-			o_inst->src[1] = t_src_scalar(vp, &src[1]);
-			o_inst->src[2] = t_src_scalar(vp, &src[2]);
-		} else {
-			o_inst->src[0] = t_src(vp, &src[0]);
-			o_inst->src[1] = t_src(vp, &src[1]);
-			o_inst->src[2] = t_src(vp, &src[2]);
-		}
-		break;
-	default:
-		assert(0);
-		break;
-	}
-}
-
 static void t_inputs_outputs(struct r300_vertex_program *vp)
 {
 	int i;
@@ -1053,8 +1167,8 @@ static void r300TranslateVertexShader(struct r300_vertex_program *vp,
 
 	t_inputs_outputs(vp);
 
-	o_inst = vp->program.body.i;
-	for (; vpi->Opcode != OPCODE_END; vpi++, o_inst++) {
+	for (o_inst = vp->program.body.i; vpi->Opcode != OPCODE_END;
+	     vpi++, o_inst++) {
 
 		FREE_TEMPS();
 
@@ -1136,34 +1250,52 @@ static void r300TranslateVertexShader(struct r300_vertex_program *vp,
 		case OPCODE_ADD:
 			t_opcode_add(vp, vpi, o_inst, src);
 			break;
-			/* TODO: ARL */
+		case OPCODE_ARL:
+			t_opcode_arl(vp, vpi, o_inst, src);
+			break;
 		case OPCODE_DP3:
 			t_opcode_dp3(vp, vpi, o_inst, src);
 			break;
-			/* TODO: DP4 */
+		case OPCODE_DP4:
+			t_opcode_dp4(vp, vpi, o_inst, src);
+			break;
 		case OPCODE_DPH:
 			t_opcode_dph(vp, vpi, o_inst, src);
 			break;
-			/* TODO: DST */
-			/* TODO: EX2 */
-			/* TODO: EXP */
+		case OPCODE_DST:
+			t_opcode_dst(vp, vpi, o_inst, src);
+			break;
+		case OPCODE_EX2:
+			t_opcode_ex2(vp, vpi, o_inst, src);
+			break;
+		case OPCODE_EXP:
+			t_opcode_exp(vp, vpi, o_inst, src);
+			break;
 		case OPCODE_FLR:
 			/* FIXME */
 			t_opcode_flr(vp, vpi, o_inst, src, &u_temp_i);
 			break;
-			/* TODO: FRC */
+		case OPCODE_FRC:
+			t_opcode_frc(vp, vpi, o_inst, src);
+			break;
 		case OPCODE_LG2:
 			t_opcode_lg2(vp, vpi, o_inst, src);
 			break;
 		case OPCODE_LIT:
 			t_opcode_lit(vp, vpi, o_inst, src);
 			break;
-			/* TODO: LOG */
+		case OPCODE_LOG:
+			t_opcode_log(vp, vpi, o_inst, src);
+			break;
 		case OPCODE_MAD:
 			t_opcode_mad(vp, vpi, o_inst, src);
 			break;
-			/* TODO: MAX */
-			/* TODO: MIN */
+		case OPCODE_MAX:
+			t_opcode_max(vp, vpi, o_inst, src);
+			break;
+		case OPCODE_MIN:
+			t_opcode_min(vp, vpi, o_inst, src);
+			break;
 		case OPCODE_MOV:
 			t_opcode_mov(vp, vpi, o_inst, src);
 			break;
@@ -1173,33 +1305,33 @@ static void r300TranslateVertexShader(struct r300_vertex_program *vp,
 		case OPCODE_POW:
 			t_opcode_pow(vp, vpi, o_inst, src);
 			break;
-			/* TODO: RCP */
-			/* TODO: RSQ */
-			/* TODO: SGE */
-			/* TODO: SLT */
+		case OPCODE_RCP:
+			t_opcode_rcp(vp, vpi, o_inst, src);
+			break;
+		case OPCODE_RSQ:
+			t_opcode_rsq(vp, vpi, o_inst, src);
+			break;
+		case OPCODE_SGE:
+			t_opcode_sge(vp, vpi, o_inst, src);
+			break;
+		case OPCODE_SLT:
+			t_opcode_slt(vp, vpi, o_inst, src);
+			break;
 		case OPCODE_SUB:
 			t_opcode_sub(vp, vpi, o_inst, src);
 			break;
 		case OPCODE_SWZ:
-			t_opcode_mov(vp, vpi, o_inst, src);
+			t_opcode_swz(vp, vpi, o_inst, src);
 			break;
-			/* TODO: SWZ */
 		case OPCODE_XPD:
 			/* FIXME */
 			t_opcode_xpd(vp, vpi, o_inst, src, &u_temp_i);
 			break;
-
 		case OPCODE_RCC:
 			t_opcode_rcc(vp, vpi, o_inst, src);
 			break;
-
-		case OPCODE_END:
-			/* empty */
-			break;
-
 		default:
-			t_opcode_default(vp, vpi, o_inst, src,
-					 num_operands, are_srcs_scalar);
+			assert(0);
 			break;
 		}
 	}
