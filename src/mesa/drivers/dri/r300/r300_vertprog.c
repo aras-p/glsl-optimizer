@@ -417,9 +417,9 @@ static GLboolean valid_dst(struct r300_vertex_program *vp,
 }
 
 static void t_opcode_pow(struct r300_vertex_program *vp,
-			     struct prog_instruction *vpi,
-			     struct r300_vertprog_instruction *o_inst,
-			     struct prog_src_register src[3])
+			 struct prog_instruction *vpi,
+			 struct r300_vertprog_instruction *o_inst,
+			 struct prog_src_register src[3])
 {
 	o_inst->opcode =
 	    MAKE_VSF_OP(R300_VPI_OUT_OP_POW, t_dst_index(vp, &vpi->DstReg),
@@ -431,9 +431,9 @@ static void t_opcode_pow(struct r300_vertex_program *vp,
 }
 
 static void t_opcode_mov(struct r300_vertex_program *vp,
-			     struct prog_instruction *vpi,
-			     struct r300_vertprog_instruction *o_inst,
-			     struct prog_src_register src[3])
+			 struct prog_instruction *vpi,
+			 struct r300_vertprog_instruction *o_inst,
+			 struct prog_src_register src[3])
 {
 	//ADD RESULT 1.X Y Z W PARAM 0{} {X Y Z W} PARAM 0{} {ZERO ZERO ZERO ZERO}
 
@@ -462,9 +462,9 @@ static void t_opcode_mov(struct r300_vertex_program *vp,
 }
 
 static void t_opcode_add(struct r300_vertex_program *vp,
-			     struct prog_instruction *vpi,
-			     struct r300_vertprog_instruction *o_inst,
-			     struct prog_src_register src[3])
+			 struct prog_instruction *vpi,
+			 struct r300_vertprog_instruction *o_inst,
+			 struct prog_src_register src[3])
 {
 	unsigned long hw_op;
 
@@ -494,9 +494,9 @@ static void t_opcode_add(struct r300_vertex_program *vp,
 }
 
 static void t_opcode_mad(struct r300_vertex_program *vp,
-			     struct prog_instruction *vpi,
-			     struct r300_vertprog_instruction *o_inst,
-			     struct prog_src_register src[3])
+			 struct prog_instruction *vpi,
+			 struct r300_vertprog_instruction *o_inst,
+			 struct prog_src_register src[3])
 {
 	unsigned long hw_op;
 
@@ -516,9 +516,9 @@ static void t_opcode_mad(struct r300_vertex_program *vp,
 }
 
 static void t_opcode_mul(struct r300_vertex_program *vp,
-			     struct prog_instruction *vpi,
-			     struct r300_vertprog_instruction *o_inst,
-			     struct prog_src_register src[3])
+			 struct prog_instruction *vpi,
+			 struct r300_vertprog_instruction *o_inst,
+			 struct prog_src_register src[3])
 {
 	unsigned long hw_op;
 
@@ -540,9 +540,9 @@ static void t_opcode_mul(struct r300_vertex_program *vp,
 }
 
 static void t_opcode_dp3(struct r300_vertex_program *vp,
-			     struct prog_instruction *vpi,
-			     struct r300_vertprog_instruction *o_inst,
-			     struct prog_src_register src[3])
+			 struct prog_instruction *vpi,
+			 struct r300_vertprog_instruction *o_inst,
+			 struct prog_src_register src[3])
 {
 	//DOT RESULT 1.X Y Z W PARAM 0{} {X Y Z ZERO} PARAM 0{} {X Y Z ZERO}
 
@@ -575,9 +575,9 @@ static void t_opcode_dp3(struct r300_vertex_program *vp,
 }
 
 static void t_opcode_sub(struct r300_vertex_program *vp,
-			     struct prog_instruction *vpi,
-			     struct r300_vertprog_instruction *o_inst,
-			     struct prog_src_register src[3])
+			 struct prog_instruction *vpi,
+			 struct r300_vertprog_instruction *o_inst,
+			 struct prog_src_register src[3])
 {
 	unsigned long hw_op;
 
@@ -627,9 +627,9 @@ static void t_opcode_sub(struct r300_vertex_program *vp,
 }
 
 static void t_opcode_abs(struct r300_vertex_program *vp,
-			     struct prog_instruction *vpi,
-			     struct r300_vertprog_instruction *o_inst,
-			     struct prog_src_register src[3])
+			 struct prog_instruction *vpi,
+			 struct r300_vertprog_instruction *o_inst,
+			 struct prog_src_register src[3])
 {
 	//MAX RESULT 1.X Y Z W PARAM 0{} {X Y Z W} PARAM 0{X Y Z W } {X Y Z W} neg Xneg Yneg Zneg W
 
@@ -653,9 +653,9 @@ static void t_opcode_abs(struct r300_vertex_program *vp,
 }
 
 static void t_opcode_flr(struct r300_vertex_program *vp,
-			     struct prog_instruction *vpi,
-			     struct r300_vertprog_instruction *o_inst,
-			     struct prog_src_register src[3], int u_temp_i)
+			 struct prog_instruction *vpi,
+			 struct r300_vertprog_instruction *o_inst,
+			 struct prog_src_register src[3], int u_temp_i)
 {
 	/* FRC TMP 0.X Y Z W PARAM 0{} {X Y Z W}
 	   ADD RESULT 1.X Y Z W PARAM 0{} {X Y Z W} TMP 0{X Y Z W } {X Y Z W} neg Xneg Yneg Zneg W */
@@ -690,9 +690,9 @@ static void t_opcode_flr(struct r300_vertex_program *vp,
 }
 
 static void t_opcode_lg2(struct r300_vertex_program *vp,
-			     struct prog_instruction *vpi,
-			     struct r300_vertprog_instruction *o_inst,
-			     struct prog_src_register src[3])
+			 struct prog_instruction *vpi,
+			 struct r300_vertprog_instruction *o_inst,
+			 struct prog_src_register src[3])
 {
 	// LG2 RESULT 1.X Y Z W PARAM 0{} {X X X X}
 
@@ -716,9 +716,9 @@ static void t_opcode_lg2(struct r300_vertex_program *vp,
 }
 
 static void t_opcode_lit(struct r300_vertex_program *vp,
-			     struct prog_instruction *vpi,
-			     struct r300_vertprog_instruction *o_inst,
-			     struct prog_src_register src[3])
+			 struct prog_instruction *vpi,
+			 struct r300_vertprog_instruction *o_inst,
+			 struct prog_src_register src[3])
 {
 	//LIT TMP 1.Y Z TMP 1{} {X W Z Y} TMP 1{} {Y W Z X} TMP 1{} {Y X Z W}
 
@@ -757,9 +757,9 @@ static void t_opcode_lit(struct r300_vertex_program *vp,
 }
 
 static void t_opcode_dph(struct r300_vertex_program *vp,
-			     struct prog_instruction *vpi,
-			     struct r300_vertprog_instruction *o_inst,
-			     struct prog_src_register src[3])
+			 struct prog_instruction *vpi,
+			 struct r300_vertprog_instruction *o_inst,
+			 struct prog_src_register src[3])
 {
 	//DOT RESULT 1.X Y Z W PARAM 0{} {X Y Z ONE} PARAM 0{} {X Y Z W}
 	o_inst->opcode =
@@ -781,9 +781,9 @@ static void t_opcode_dph(struct r300_vertex_program *vp,
 }
 
 static void t_opcode_xpd(struct r300_vertex_program *vp,
-			     struct prog_instruction *vpi,
-			     struct r300_vertprog_instruction *o_inst,
-			     struct prog_src_register src[3], int u_temp_i)
+			 struct prog_instruction *vpi,
+			 struct r300_vertprog_instruction *o_inst,
+			 struct prog_src_register src[3], int u_temp_i)
 {
 	/* mul r0, r1.yzxw, r2.zxyw
 	   mad r0, -r2.yzxw, r1.zxyw, r0
@@ -853,9 +853,9 @@ static void t_opcode_xpd(struct r300_vertex_program *vp,
 }
 
 static void t_opcode_rcc(struct r300_vertex_program *vp,
-			     struct prog_instruction *vpi,
-			     struct r300_vertprog_instruction *o_inst,
-			     struct prog_src_register src[3])
+			 struct prog_instruction *vpi,
+			 struct r300_vertprog_instruction *o_inst,
+			 struct prog_src_register src[3])
 {
 	fprintf(stderr, "Dont know how to handle op %d yet\n",
 		vpi->Opcode);
@@ -885,17 +885,20 @@ static void t_inputs_outputs(struct r300_vertex_program *vp)
 	}
 
 	if (vp->key.OutputsWritten & (1 << VERT_RESULT_COL1)) {
-		vp->outputs[VERT_RESULT_COL1] = vp->outputs[VERT_RESULT_COL0] + 1;
+		vp->outputs[VERT_RESULT_COL1] =
+		    vp->outputs[VERT_RESULT_COL0] + 1;
 		cur_reg = vp->outputs[VERT_RESULT_COL1] + 1;
 	}
 
 	if (vp->key.OutputsWritten & (1 << VERT_RESULT_BFC0)) {
-		vp->outputs[VERT_RESULT_BFC0] = vp->outputs[VERT_RESULT_COL0] + 2;
+		vp->outputs[VERT_RESULT_BFC0] =
+		    vp->outputs[VERT_RESULT_COL0] + 2;
 		cur_reg = vp->outputs[VERT_RESULT_BFC0] + 1;
 	}
 
 	if (vp->key.OutputsWritten & (1 << VERT_RESULT_BFC1)) {
-		vp->outputs[VERT_RESULT_BFC1] = vp->outputs[VERT_RESULT_COL0] + 3;
+		vp->outputs[VERT_RESULT_BFC1] =
+		    vp->outputs[VERT_RESULT_COL0] + 3;
 		cur_reg = vp->outputs[VERT_RESULT_BFC1] + 1;
 	}
 #if 0
@@ -1042,7 +1045,7 @@ static void r300TranslateVertexShader(struct r300_vertex_program *vp,
 			break;
 		case OPCODE_FLR:
 			t_opcode_flr(vp, vpi, o_inst, src,	/* FIXME */
-					 u_temp_i);
+				     u_temp_i);
 			break;
 		case OPCODE_LG2:
 			t_opcode_lg2(vp, vpi, o_inst, src);
@@ -1055,7 +1058,7 @@ static void r300TranslateVertexShader(struct r300_vertex_program *vp,
 			break;
 		case OPCODE_XPD:
 			t_opcode_xpd(vp, vpi, o_inst, src,	/* FIXME */
-					 u_temp_i);
+				     u_temp_i);
 			break;
 		case OPCODE_RCC:
 			t_opcode_rcc(vp, vpi, o_inst, src);
