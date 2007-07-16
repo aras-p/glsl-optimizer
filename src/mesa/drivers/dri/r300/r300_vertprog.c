@@ -106,8 +106,6 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 		u_temp_i=VSF_MAX_FRAGMENT_TEMPS-1; \
 	} while (0)
 
-#define SCALAR_FLAG (1<<31)
-#define FLAG_MASK (1<<31)
 #define OP_MASK	(0xf)		/* we are unlikely to have more than 15 */
 #define OPN(operator, ip) {#operator, OPCODE_##operator, ip}
 
@@ -119,26 +117,26 @@ static struct {
 	/* *INDENT-OFF* */
 	OPN(ABS, 1),
 	OPN(ADD, 2),
-	OPN(ARL, 1 | SCALAR_FLAG),
+	OPN(ARL, 1),
 	OPN(DP3, 2),
 	OPN(DP4, 2),
 	OPN(DPH, 2),
 	OPN(DST, 2),
-	OPN(EX2, 1 | SCALAR_FLAG),
-	OPN(EXP, 1 | SCALAR_FLAG),
+	OPN(EX2, 1),
+	OPN(EXP, 1),
 	OPN(FLR, 1),
 	OPN(FRC, 1),
-	OPN(LG2, 1 | SCALAR_FLAG),
+	OPN(LG2, 1),
 	OPN(LIT, 1),
-	OPN(LOG, 1 | SCALAR_FLAG),
+	OPN(LOG, 1),
 	OPN(MAD, 3),
 	OPN(MAX, 2),
 	OPN(MIN, 2),
 	OPN(MOV, 1),
 	OPN(MUL, 2),
-	OPN(POW, 2 | SCALAR_FLAG),
-	OPN(RCP, 1 | SCALAR_FLAG),
-	OPN(RSQ, 1 | SCALAR_FLAG),
+	OPN(POW, 2),
+	OPN(RCP, 1),
+	OPN(RSQ, 1),
 	OPN(SGE, 2),
 	OPN(SLT, 2),
 	OPN(SUB, 2),
@@ -1141,7 +1139,6 @@ static void r300TranslateVertexShader(struct r300_vertex_program *vp,
 	int i;
 	struct r300_vertprog_instruction *o_inst;
 	unsigned long num_operands;
-	int are_srcs_scalar;
 	/* Initial value should be last tmp reg that hw supports.
 	   Strangely enough r300 doesnt mind even though these would be out of range.
 	   Smart enough to realize that it doesnt need it? */
@@ -1168,7 +1165,6 @@ static void r300TranslateVertexShader(struct r300_vertex_program *vp,
 		}
 
 		num_operands = op_operands(vpi->Opcode) & OP_MASK;
-		are_srcs_scalar = op_operands(vpi->Opcode) & SCALAR_FLAG;
 
 		/* copy the sources (src) from mesa into a local variable... is this needed? */
 		for (i = 0; i < num_operands; i++) {
