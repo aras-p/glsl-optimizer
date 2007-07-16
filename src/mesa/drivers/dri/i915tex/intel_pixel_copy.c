@@ -263,7 +263,7 @@ do_blit_copypixels(GLcontext * ctx,
 	 || !(irbread->region->cpp == 2))
 	 return GL_FALSE;
    }
-   else if (GL_DEPTH_STENCIL_EXT) {
+   else if (type == GL_DEPTH_STENCIL_EXT) {
       /* Does it matter whether it is stencil/depth or depth/stencil?
        */
       irbread = intel_renderbuffer(ctx->ReadBuffer->_DepthBuffer->Wrapped);
@@ -271,7 +271,7 @@ do_blit_copypixels(GLcontext * ctx,
       if (!irbread || !irbread->region || !irbdraw || !irbdraw->region)
 	 return GL_FALSE;
    }
-   else if (GL_STENCIL) {
+   else if (type == GL_STENCIL) {
       /* Don't think this is really possible. 
        */
       return GL_FALSE;

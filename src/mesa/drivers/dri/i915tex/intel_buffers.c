@@ -160,6 +160,9 @@ intelWindowMoved(struct intel_context *intel)
       intel->numClipRects = 0;
    }
 
+   /* Update Mesa's notion of window size */
+   driUpdateFramebufferSize(ctx, dPriv);
+   intel_fb->Base.Initialized = GL_TRUE; /* XXX remove someday */
 
    if (intel->intelScreen->driScrnPriv->ddxMinor >= 7) {
       drmI830Sarea *sarea = intel->sarea;
@@ -276,10 +279,6 @@ intelWindowMoved(struct intel_context *intel)
    } else {
       intel_fb->vblank_flags &= ~VBLANK_FLAG_SECONDARY;
    }
-
-   /* Update Mesa's notion of window size */
-   driUpdateFramebufferSize(ctx, dPriv);
-   intel_fb->Base.Initialized = GL_TRUE; /* XXX remove someday */
 
    /* Update hardware scissor */
    ctx->Driver.Scissor(ctx, ctx->Scissor.X, ctx->Scissor.Y,
@@ -706,6 +705,9 @@ intelPageFlip(const __DRIdrawablePrivate * dPriv)
 
    intel_flip_renderbuffers(intel_fb);
    intel_draw_buffer(&intel->ctx, &intel_fb->Base);
+
+   if (INTEL_DEBUG & DEBUG_IOCTL)
+      fprintf(stderr, "%s: success\n", __FUNCTION__);
 
    return GL_TRUE;
 }

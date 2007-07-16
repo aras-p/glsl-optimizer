@@ -355,6 +355,7 @@ intelUpdateScreenFromSAREA(intelScreenPrivate * intelScreen,
    intelScreen->front.handle = sarea->front_handle;
    intelScreen->front.size = sarea->front_size;
 
+#if 0
    intelScreen->back.offset = sarea->back_offset;
    intelScreen->back.pitch = sarea->pitch * intelScreen->cpp;
    intelScreen->back.handle = sarea->back_handle;
@@ -376,6 +377,7 @@ intelUpdateScreenFromSAREA(intelScreenPrivate * intelScreen,
    intelScreen->logTextureGranularity = sarea->log_tex_granularity;
    intelScreen->tex.handle = sarea->tex_handle;
    intelScreen->tex.size = sarea->tex_size;
+#endif
 
    intelScreen->rotated.offset = sarea->rotated_offset;
    intelScreen->rotated.pitch = sarea->rotated_pitch * intelScreen->cpp;

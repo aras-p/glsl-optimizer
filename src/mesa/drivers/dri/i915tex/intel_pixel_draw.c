@@ -237,14 +237,14 @@ do_blit_drawpixels(GLcontext * ctx,
       if (!irbdraw || !irbdraw->region || !(irbdraw->region->cpp == 2))
 	 return GL_FALSE;
    }
-   else if (GL_DEPTH_STENCIL_EXT) {
+   else if (type == GL_DEPTH_STENCIL_EXT) {
       /* Does it matter whether it is stencil/depth or depth/stencil?
        */
       irbdraw = intel_renderbuffer(ctx->DrawBuffer->_DepthBuffer->Wrapped);
       if (!irbdraw || !irbdraw->region)
 	 return GL_FALSE;
    }
-   else if (GL_STENCIL) {
+   else if (type == GL_STENCIL) {
       /* Don't think this is really possible. 
        */
       return GL_FALSE;
