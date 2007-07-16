@@ -1566,7 +1566,7 @@ static void r300SetupDefaultVertexProgram(r300ContextPtr rmesa)
 
 	for (i = VERT_ATTRIB_POS; i < VERT_ATTRIB_MAX; i++) {
 		if (rmesa->state.sw_tcl_inputs[i] != -1) {
-			prog->program.body.i[program_end].op = EASY_VSF_OP(MUL, o_reg++, ALL, RESULT);
+			prog->program.body.i[program_end].opcode = EASY_VSF_OP(MUL, o_reg++, ALL, RESULT);
 			prog->program.body.i[program_end].src[0] = VSF_REG(rmesa->state.sw_tcl_inputs[i]);
 			prog->program.body.i[program_end].src[1] = VSF_ATTR_UNITY(rmesa->state.sw_tcl_inputs[i]);
 			prog->program.body.i[program_end].src[2] = VSF_UNITY(rmesa->state.sw_tcl_inputs[i]);

@@ -4,7 +4,7 @@
 #include "r300_reg.h"
 
 struct r300_vertprog_instruction {
-	GLuint op;
+	GLuint opcode;
 	GLuint src[3];
 };
 
