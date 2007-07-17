@@ -59,10 +59,6 @@ typedef struct
    int mem;                     /* unused */
 
    int cpp;                     /* for front and back buffers */
-/*    int bitsPerPixel;   */
-   int fbFormat;                /* XXX FBO: this is obsolete - remove after i830 updates */
-
-   int logTextureGranularity;
 
    __DRIscreenPrivate *driScrnPriv;
    unsigned int sarea_priv_offset;

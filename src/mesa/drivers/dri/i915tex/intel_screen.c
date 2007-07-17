@@ -310,10 +310,8 @@ intelInitDriver(__DRIscreenPrivate * sPriv)
 
    switch (gDRIPriv->bitsPerPixel) {
    case 16:
-      intelScreen->fbFormat = DV_PF_565;
       break;
    case 32:
-      intelScreen->fbFormat = DV_PF_8888;
       break;
    default:
       exit(1);
