@@ -390,10 +390,6 @@ intelInitContext(struct intel_context *intel,
    intel->driScreen = sPriv;
    intel->sarea = saPriv;
 
-   intel->width = intelScreen->width;
-   intel->height = intelScreen->height;
-   intel->current_rotation = intelScreen->current_rotation;
-
    if (!lockMutexInit) {
       lockMutexInit = GL_TRUE;
       _glthread_INIT_MUTEX(lockMutex);
@@ -658,8 +654,7 @@ intelContendedLock(struct intel_context *intel, GLuint flags)
       DRI_VALIDATE_DRAWABLE_INFO(sPriv, dPriv);
 
    if (sarea->width != intelScreen->width ||
-       sarea->height != intelScreen->height ||
-       sarea->rotation != intelScreen->current_rotation) {
+       sarea->height != intelScreen->height) {
 
       intelUpdateScreenRotation(sPriv, sarea);
    }

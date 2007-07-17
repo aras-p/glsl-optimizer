@@ -650,7 +650,7 @@ intel_wait_flips(struct intel_context *intel, GLuint batch_flags)
    }
 }
 
-
+#if 0
 /* Flip the front & back buffers
  */
 static GLboolean
@@ -712,35 +712,8 @@ intelPageFlip(const __DRIdrawablePrivate * dPriv)
 
    return GL_TRUE;
 }
+#endif
 
-#if 0
-void
-intelSwapBuffers(__DRIdrawablePrivate * dPriv)
-{
-   if (dPriv->driverPrivate) {
-      const struct gl_framebuffer *fb
-         = (struct gl_framebuffer *) dPriv->driverPrivate;
-      if (fb->Visual.doubleBufferMode) {
-         GET_CURRENT_CONTEXT(ctx);
-         if (ctx && ctx->DrawBuffer == fb) {
-            _mesa_notifySwapBuffers(ctx);       /* flush pending rendering */
-         }
-         if (intel->doPageFlip) {
-            intelPageFlip(dPriv);
-         }
-         else {
-            intelCopyBuffer(dPriv);
-         }
-      }
-   }
-   else {
-      _mesa_problem(NULL,
-                    "dPriv has no gl_framebuffer pointer in intelSwapBuffers");
-   }
-}
-#else
-/* Trunk version:
- */
 
 static GLboolean
 intelScheduleSwap(const __DRIdrawablePrivate * dPriv, GLboolean *missed_target)
@@ -755,8 +728,7 @@ intelScheduleSwap(const __DRIdrawablePrivate * dPriv, GLboolean *missed_target)
    GLboolean ret;
 
    if ((intel_fb->vblank_flags & VBLANK_FLAG_NO_IRQ) ||
-       intelScreen->current_rotation != 0 ||
-       intelScreen->drmMinor < (intel_fb->pf_active ? 9 : 6))
+        intelScreen->drmMinor < (intel_fb->pf_active ? 9 : 6))
       return GL_FALSE;
 
    swap.seqtype = DRM_VBLANK_ABSOLUTE;
@@ -831,26 +803,17 @@ intelSwapBuffers(__DRIdrawablePrivate * dPriv)
       intel = intel_context(ctx);
 
       if (ctx->Visual.doubleBufferMode) {
-         intelScreenPrivate *screen = intel->intelScreen;
 	 GLboolean missed_target;
 	 struct intel_framebuffer *intel_fb = dPriv->driverPrivate;
 	 int64_t ust;
 
 	 _mesa_notifySwapBuffers(ctx);  /* flush pending rendering comands */
 
-         if (screen->current_rotation != 0 ||
-	     !intelScheduleSwap(dPriv, &missed_target)) {
+         if (!intelScheduleSwap(dPriv, &missed_target)) {
 	    driWaitForVBlank(dPriv, &intel_fb->vbl_seq, intel_fb->vblank_flags,
 			     &missed_target);
 
-	    if (screen->current_rotation != 0 || !intelPageFlip(dPriv)) {
-	       intelCopyBuffer(dPriv, NULL);
-	    }
-#if 0
-	    if (screen->current_rotation != 0) {
-	       intelRotateWindow(intel, dPriv, BUFFER_BIT_FRONT_LEFT);
-	    }
-#endif
+            intelCopyBuffer(dPriv, NULL);
 	 }
 
 	 intel_fb->swap_count++;
@@ -868,7 +831,6 @@ intelSwapBuffers(__DRIdrawablePrivate * dPriv)
       fprintf(stderr, "%s: drawable has no context!\n", __FUNCTION__);
    }
 }
-#endif
 
 void
 intelCopySubBuffer(__DRIdrawablePrivate * dPriv, int x, int y, int w, int h)

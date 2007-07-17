@@ -74,8 +74,6 @@ typedef struct
 
    struct matrix23 rotMatrix;
 
-   int current_rotation;        /* 0, 90, 180 or 270 */
-   int rotatedWidth, rotatedHeight;
 
    /**
    * Configuration cache with default values for all contexts
