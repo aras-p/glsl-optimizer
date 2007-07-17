@@ -484,7 +484,7 @@ draw_depth_pixels( GLcontext *ctx, GLint x, GLint y,
    }
    else {
       /* General case */
-      const GLfloat depthMax = ctx->DrawBuffer->_DepthMaxF;
+      const GLuint depthMax = ctx->DrawBuffer->_DepthMax;
       GLint skipPixels = 0;
 
       /* in case width > MAX_WIDTH do the copy in chunks */
@@ -695,7 +695,7 @@ draw_depth_stencil_pixels(GLcontext *ctx, GLint x, GLint y,
    const GLint imgX = x, imgY = y;
    const GLboolean scaleOrBias
       = ctx->Pixel.DepthScale != 1.0 || ctx->Pixel.DepthBias != 0.0;
-   const GLfloat depthScale = ctx->DrawBuffer->_DepthMaxF;
+   const GLuint depthMax = ctx->DrawBuffer->_DepthMax;
    const GLuint stencilMask = ctx->Stencil.WriteMask[0];
    const GLuint stencilType = (STENCIL_BITS == 8) ? 
       GL_UNSIGNED_BYTE : GL_UNSIGNED_SHORT;
@@ -783,7 +783,7 @@ draw_depth_stencil_pixels(GLcontext *ctx, GLint x, GLint y,
                /* general case */
                GLuint zValues[MAX_WIDTH];  /* 16 or 32-bit Z value storage */
                _mesa_unpack_depth_span(ctx, width,
-                                       depthRb->DataType, zValues, depthScale,
+                                       depthRb->DataType, zValues, depthMax,
                                        type, depthStencilSrc, &clippedUnpack);
                if (zoom) {
                   _swrast_write_zoomed_z_span(ctx, imgX, imgY, width, x,

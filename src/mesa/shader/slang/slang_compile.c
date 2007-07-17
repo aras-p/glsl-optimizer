@@ -28,11 +28,11 @@
  * \author Michal Krol
  */
 
-#include "imports.h"
-#include "context.h"
-#include "program.h"
-#include "prog_parameter.h"
-#include "grammar_mesa.h"
+#include "main/imports.h"
+#include "main/context.h"
+#include "shader/program.h"
+#include "shader/prog_parameter.h"
+#include "shader/grammar/grammar_mesa.h"
 #include "slang_codegen.h"
 #include "slang_compile.h"
 #include "slang_preprocess.h"

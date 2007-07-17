@@ -32,7 +32,7 @@
 #ifndef SWRAST_H
 #define SWRAST_H
 
-#include "mtypes.h"
+#include "main/mtypes.h"
 
 /**
  * \struct SWvertex

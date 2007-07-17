@@ -33,10 +33,6 @@
 #include "api_arrayelt.h"
 #include "api_loopback.h"
 #include "config.h"
-#if FEATURE_ARB_vertex_program || FEATURE_ARB_fragment_program
-#include "arbprogram.h"
-#include "program.h"
-#endif
 #include "attrib.h"
 #include "blend.h"
 #include "buffers.h"
@@ -57,7 +53,7 @@
 #include "extensions.h"
 #include "feedback.h"
 #include "get.h"
-#include "glapi.h"
+#include "glapi/glapi.h"
 #include "hash.h"
 #include "histogram.h"
 #include "image.h"
@@ -76,18 +72,22 @@
 #include "texstate.h"
 #include "mtypes.h"
 #include "varray.h"
+#if FEATURE_ARB_vertex_program || FEATURE_ARB_fragment_program
+#include "shader/arbprogram.h"
+#include "shader/program.h"
+#endif
 #if FEATURE_NV_vertex_program || FEATURE_NV_fragment_program
-#include "nvprogram.h"
-#include "program.h"
+#include "shader/nvprogram.h"
+#include "shader/program.h"
 #endif
 #if FEATURE_ATI_fragment_shader
-#include "atifragshader.h"
+#include "shader/atifragshader.h"
 #endif
 
 #include "math/m_matrix.h"
 #include "math/m_xform.h"
 
-#include "dispatch.h"
+#include "glapi/dispatch.h"
 
 
 /**

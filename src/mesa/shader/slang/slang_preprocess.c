@@ -29,7 +29,7 @@
  */
 
 #include "imports.h"
-#include "grammar_mesa.h"
+#include "shader/grammar/grammar_mesa.h"
 #include "slang_preprocess.h"
 
 LONGSTRING static const char *slang_pp_directives_syn =

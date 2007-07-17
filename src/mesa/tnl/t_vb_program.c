@@ -35,16 +35,16 @@
 #include "context.h"
 #include "macros.h"
 #include "imports.h"
-#include "prog_instruction.h"
-#include "prog_statevars.h"
-#include "prog_execute.h"
+#include "shader/prog_instruction.h"
+#include "shader/prog_statevars.h"
+#include "shader/prog_execute.h"
+#include "swrast/s_context.h"
+#include "swrast/s_texfilter.h"
 
 #include "tnl.h"
 #include "t_context.h"
 #include "t_pipeline.h"
 
-#include "swrast/s_context.h"
-#include "swrast/s_texfilter.h"
 
 /**
  * XXX the texture sampling code in this module is a bit of a hack.

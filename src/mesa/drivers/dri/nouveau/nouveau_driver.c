@@ -41,7 +41,7 @@ GLboolean nouveauDRMGetParam(nouveauContextPtr nmesa,
 			     unsigned int      param,
 			     uint64_t*         value)
 {
-	drm_nouveau_getparam_t getp;
+	struct drm_nouveau_getparam getp;
 
 	getp.param = param;
 	if (!value || drmCommandWriteRead(nmesa->driFd, DRM_NOUVEAU_GETPARAM,
@@ -56,7 +56,7 @@ GLboolean nouveauDRMSetParam(nouveauContextPtr nmesa,
 			     unsigned int      param,
 			     uint64_t          value)
 {
-	drm_nouveau_setparam_t setp;
+	struct drm_nouveau_setparam setp;
 
 	setp.param = param;
 	setp.value = value;

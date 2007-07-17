@@ -33,11 +33,11 @@
 #include "glheader.h"
 #include "macros.h"
 #include "enums.h"
-#include "program.h"
-#include "prog_instruction.h"
-#include "prog_parameter.h"
-#include "prog_print.h"
-#include "prog_statevars.h"
+#include "shader/program.h"
+#include "shader/prog_instruction.h"
+#include "shader/prog_parameter.h"
+#include "shader/prog_print.h"
+#include "shader/prog_statevars.h"
 #include "t_context.h" /* NOTE: very light dependency on this */
 #include "t_vp_build.h"
 

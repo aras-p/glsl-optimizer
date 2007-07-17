@@ -44,7 +44,7 @@ void nouveauGetLock( nouveauContextPtr nmesa, GLuint flags )
 {
    __DRIdrawablePrivate *dPriv = nmesa->driDrawable;
    __DRIscreenPrivate *sPriv = nmesa->driScreen;
-   drm_nouveau_sarea_t *sarea = nmesa->sarea;
+   struct drm_nouveau_sarea *sarea = nmesa->sarea;
 
    drmGetLock( nmesa->driFd, nmesa->hHWContext, flags );
 

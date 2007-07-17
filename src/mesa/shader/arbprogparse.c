@@ -30,10 +30,10 @@
  * \author Karl Rasche
  */
 
-#include "glheader.h"
-#include "imports.h"
+#include "main/glheader.h"
+#include "main/imports.h"
+#include "shader/grammar/grammar_mesa.h"
 #include "arbprogparse.h"
-#include "grammar_mesa.h"
 #include "program.h"
 #include "prog_parameter.h"
 #include "prog_statevars.h"
@@ -3573,7 +3573,7 @@ parse_instructions(GLcontext * ctx, const GLubyte * inst,
 
 /* XXX temporary */
 LONGSTRING static char core_grammar_text[] =
-#include "grammar_syn.h"
+#include "shader/grammar/grammar_syn.h"
 ;
 
 

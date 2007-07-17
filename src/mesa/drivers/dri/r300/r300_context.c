@@ -318,15 +318,17 @@ GLboolean r300CreateContext(const __GLcontextModes * glVisual,
 	_tnl_allow_vertex_fog(ctx, GL_TRUE);
 
 	/* currently bogus data */
-	ctx->Const.VertexProgram.MaxInstructions = VSF_MAX_FRAGMENT_LENGTH / 4;
-	ctx->Const.VertexProgram.MaxNativeInstructions =
-	    VSF_MAX_FRAGMENT_LENGTH / 4;
-	ctx->Const.VertexProgram.MaxNativeAttribs = 16;	/* r420 */
-	ctx->Const.VertexProgram.MaxTemps = 32;
-	ctx->Const.VertexProgram.MaxNativeTemps =
-	    /*VSF_MAX_FRAGMENT_TEMPS */ 32;
-	ctx->Const.VertexProgram.MaxNativeParameters = 256;	/* r420 */
-	ctx->Const.VertexProgram.MaxNativeAddressRegs = 1;
+	if (screen->chip_flags & RADEON_CHIPSET_TCL) {
+	        ctx->Const.VertexProgram.MaxInstructions = VSF_MAX_FRAGMENT_LENGTH / 4;
+		ctx->Const.VertexProgram.MaxNativeInstructions =
+		  VSF_MAX_FRAGMENT_LENGTH / 4;
+		ctx->Const.VertexProgram.MaxNativeAttribs = 16;	/* r420 */
+		ctx->Const.VertexProgram.MaxTemps = 32;
+		ctx->Const.VertexProgram.MaxNativeTemps =
+		  /*VSF_MAX_FRAGMENT_TEMPS */ 32;
+		ctx->Const.VertexProgram.MaxNativeParameters = 256;	/* r420 */
+		ctx->Const.VertexProgram.MaxNativeAddressRegs = 1;
+	}
 
 	ctx->Const.FragmentProgram.MaxNativeTemps = PFS_NUM_TEMP_REGS;
 	ctx->Const.FragmentProgram.MaxNativeAttribs = 11;	/* copy i915... */
@@ -364,7 +366,8 @@ GLboolean r300CreateContext(const __GLcontextModes * glVisual,
 	radeonInitSpanFuncs(ctx);
 	r300InitCmdBuf(r300);
 	r300InitState(r300);
-	r300InitSwtcl(ctx);
+	if (!(screen->chip_flags & RADEON_CHIPSET_TCL))
+	        r300InitSwtcl(ctx);
 
 	TNL_CONTEXT(ctx)->Driver.RunPipeline = _tnl_run_pipeline;
 

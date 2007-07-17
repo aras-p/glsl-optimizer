@@ -61,6 +61,7 @@ i915_reduced_primitive_state(struct intel_context *intel, GLenum rprim)
    st1 &= ~ST1_ENABLE;
 
    switch (rprim) {
+   case GL_QUADS: /* from RASTERIZE(GL_QUADS) in t_dd_tritemp.h */
    case GL_TRIANGLES:
       if (intel->ctx.Polygon.StippleFlag && intel->hw_stipple)
          st1 |= ST1_ENABLE;

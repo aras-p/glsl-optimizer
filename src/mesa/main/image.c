@@ -3648,11 +3648,13 @@ _mesa_unpack_stencil_span( const GLcontext *ctx, GLuint n,
     * Try simple cases first
     */
    if (transferOps == 0 &&
+       !ctx->Pixel.MapStencilFlag &&
        srcType == GL_UNSIGNED_BYTE &&
        dstType == GL_UNSIGNED_BYTE) {
       _mesa_memcpy(dest, source, n * sizeof(GLubyte));
    }
    else if (transferOps == 0 &&
+            !ctx->Pixel.MapStencilFlag &&
             srcType == GL_UNSIGNED_INT &&
             dstType == GL_UNSIGNED_INT &&
             !srcPacking->SwapBytes) {
@@ -3668,19 +3670,17 @@ _mesa_unpack_stencil_span( const GLcontext *ctx, GLuint n,
       extract_uint_indexes(n, indexes, GL_STENCIL_INDEX, srcType, source,
                            srcPacking);
 
-      if (transferOps) {
-         if (transferOps & IMAGE_SHIFT_OFFSET_BIT) {
-            /* shift and offset indexes */
-            shift_and_offset_ci(ctx, n, indexes);
-         }
+      if (transferOps & IMAGE_SHIFT_OFFSET_BIT) {
+         /* shift and offset indexes */
+         shift_and_offset_ci(ctx, n, indexes);
+      }
 
-         if (ctx->Pixel.MapStencilFlag) {
-            /* Apply stencil lookup table */
-            GLuint mask = ctx->PixelMaps.StoS.Size - 1;
-            GLuint i;
-            for (i=0;i<n;i++) {
-               indexes[i] = ctx->PixelMaps.StoS.Map[ indexes[i] & mask ];
-            }
+      if (ctx->Pixel.MapStencilFlag) {
+         /* Apply stencil lookup table */
+         const GLuint mask = ctx->PixelMaps.StoS.Size - 1;
+         GLuint i;
+         for (i = 0; i < n; i++) {
+            indexes[i] = ctx->PixelMaps.StoS.Map[ indexes[i] & mask ];
          }
       }
 
@@ -3882,9 +3882,19 @@ _mesa_pack_stencil_span( const GLcontext *ctx, GLuint n,
         }                                                               \
     } while (0)
 
+
+/**
+ * Unpack a row of depth/z values from memory, returning GLushort, GLuint
+ * or GLfloat values.
+ * The glPixelTransfer (scale/bias) params will be applied.
+ *
+ * \param dstType  one of GL_UNSIGNED_SHORT, GL_UNSIGNED_INT, GL_FLOAT
+ * \param depthMax  max value for returned GLushort or GLuint values
+ *                  (ignored for GLfloat).
+ */
 void
 _mesa_unpack_depth_span( const GLcontext *ctx, GLuint n,
-                         GLenum dstType, GLvoid *dest, GLfloat depthScale,
+                         GLenum dstType, GLvoid *dest, GLuint depthMax,
                          GLenum srcType, const GLvoid *source,
                          const struct gl_pixelstore_attrib *srcPacking )
 {
@@ -3907,7 +3917,9 @@ _mesa_unpack_depth_span( const GLcontext *ctx, GLuint n,
          }
          return;
       }
-      if (srcType == GL_UNSIGNED_SHORT && dstType == GL_UNSIGNED_INT) {
+      if (srcType == GL_UNSIGNED_SHORT
+          && dstType == GL_UNSIGNED_INT
+          && depthMax == 0xffffffff) {
          const GLushort *src = (const GLushort *) source;
          GLuint *dst = (GLuint *) dest;
          GLuint i;
@@ -3955,7 +3967,7 @@ _mesa_unpack_depth_span( const GLcontext *ctx, GLuint n,
          break;
       case GL_UNSIGNED_INT_24_8_EXT: /* GL_EXT_packed_depth_stencil */
          if (dstType == GL_UNSIGNED_INT &&
-             depthScale == (GLfloat) 0xffffff &&
+             depthMax == 0xffffff &&
              ctx->Pixel.DepthScale == 1.0 &&
              ctx->Pixel.DepthBias == 0.0) {
             const GLuint *src = (const GLuint *) source;
@@ -4033,16 +4045,16 @@ _mesa_unpack_depth_span( const GLcontext *ctx, GLuint n,
    if (dstType == GL_UNSIGNED_INT) {
       GLuint *zValues = (GLuint *) dest;
       GLuint i;
-      if (depthScale <= (GLfloat) 0xffffff) {
+      if (depthMax <= 0xffffff) {
          /* no overflow worries */
          for (i = 0; i < n; i++) {
-            zValues[i] = (GLuint) (depthValues[i] * depthScale);
+            zValues[i] = (GLuint) (depthValues[i] * (GLfloat) depthMax);
          }
       }
       else {
          /* need to use double precision to prevent overflow problems */
          for (i = 0; i < n; i++) {
-            GLdouble z = depthValues[i] * depthScale;
+            GLdouble z = depthValues[i] * (GLfloat) depthMax;
             if (z >= (GLdouble) 0xffffffff)
                zValues[i] = 0xffffffff;
             else
@@ -4053,14 +4065,14 @@ _mesa_unpack_depth_span( const GLcontext *ctx, GLuint n,
    else if (dstType == GL_UNSIGNED_SHORT) {
       GLushort *zValues = (GLushort *) dest;
       GLuint i;
-      ASSERT(depthScale <= 65535.0);
+      ASSERT(depthMax <= 0xffff);
       for (i = 0; i < n; i++) {
-         zValues[i] = (GLushort) (depthValues[i] * depthScale);
+         zValues[i] = (GLushort) (depthValues[i] * (GLfloat) depthMax);
       }
    }
    else {
       ASSERT(dstType == GL_FLOAT);
-      ASSERT(depthScale == 1.0F);
+      /*ASSERT(depthMax == 1.0F);*/
    }
 }
 

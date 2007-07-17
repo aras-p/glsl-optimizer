@@ -69,7 +69,7 @@ void
 nouveau_mem_free(GLcontext *ctx, nouveau_mem *mem)
 {
    nouveauContextPtr nmesa = NOUVEAU_CONTEXT(ctx);
-   drm_nouveau_mem_free_t memf;
+   struct drm_nouveau_mem_free memf;
 
    if (NOUVEAU_DEBUG & DEBUG_MEM)  {
       fprintf(stderr, "%s: type=0x%x, offset=0x%x, size=0x%x\n",
@@ -78,8 +78,8 @@ nouveau_mem_free(GLcontext *ctx, nouveau_mem *mem)
 
    if (mem->map)
       drmUnmap(mem->map, mem->size);
-   memf.flags         = mem->type;
-   memf.region_offset = mem->offset;
+   memf.flags  = mem->type;
+   memf.offset = mem->offset;
    drmCommandWrite(nmesa->driFd, DRM_NOUVEAU_MEM_FREE, &memf, sizeof(memf));
    FREE(mem);
 }
@@ -88,7 +88,7 @@ nouveau_mem *
 nouveau_mem_alloc(GLcontext *ctx, int type, GLuint size, GLuint align)
 {
    nouveauContextPtr nmesa = NOUVEAU_CONTEXT(ctx);
-   drm_nouveau_mem_alloc_t mema;
+   struct drm_nouveau_mem_alloc mema;
    nouveau_mem *mem;
    int ret;
 
@@ -111,7 +111,7 @@ nouveau_mem_alloc(GLcontext *ctx, int type, GLuint size, GLuint align)
       FREE(mem);
       return NULL;
    }
-   mem->offset = mema.region_offset;
+   mem->offset = mema.offset;
    mem->type   = mema.flags;
 
    if (NOUVEAU_DEBUG & DEBUG_MEM)  {
@@ -120,7 +120,7 @@ nouveau_mem_alloc(GLcontext *ctx, int type, GLuint size, GLuint align)
    }
 
    if (type & NOUVEAU_MEM_MAPPED)
-      ret = drmMap(nmesa->driFd, mem->offset, mem->size, &mem->map);
+      ret = drmMap(nmesa->driFd, mema.map_handle, mem->size, &mem->map);
    if (ret) {
       mem->map = NULL;
       nouveau_mem_free(ctx, mem);
@@ -135,12 +135,7 @@ nouveau_mem_gpu_offset_get(GLcontext *ctx, nouveau_mem *mem)
 {
    nouveauContextPtr nmesa = NOUVEAU_CONTEXT(ctx);
 
-   if (mem->type & NOUVEAU_MEM_FB)
-      return (uint32_t)mem->offset - nmesa->vram_phys;
-   else if (mem->type & NOUVEAU_MEM_AGP)
-      return (uint32_t)mem->offset - nmesa->gart_phys;
-   else
-      return 0xDEADF00D;
+   return mem->offset;
 }
 
 static GLboolean
