@@ -57,6 +57,7 @@ do_texture_drawpixels(GLcontext * ctx,
    struct intel_context *intel = intel_context(ctx);
    struct intel_region *dst = intel_drawbuf_region(intel);
    struct intel_buffer_object *src = intel_buffer_object(unpack->BufferObj);
+   struct intel_region *depthreg = NULL;
    GLuint rowLength = unpack->RowLength ? unpack->RowLength : width;
    GLuint src_offset;
 
@@ -112,7 +113,11 @@ do_texture_drawpixels(GLcontext * ctx,
 
    /* Set the 3d engine to draw into the destination region:
     */
-   intel->vtbl.meta_draw_region(intel, dst, intel->intelScreen->depth_region);
+   if (ctx->DrawBuffer->_DepthBuffer &&
+       ctx->DrawBuffer->_DepthBuffer->Wrapped)
+      depthreg = (intel_renderbuffer(ctx->DrawBuffer->_DepthBuffer->Wrapped))->region;
+
+   intel->vtbl.meta_draw_region(intel, dst, depthreg);
 
    intel->vtbl.meta_import_pixel_state(intel);
 
@@ -244,7 +249,7 @@ do_blit_drawpixels(GLcontext * ctx,
       if (!irbdraw || !irbdraw->region)
 	 return GL_FALSE;
    }
-   else if (type == GL_STENCIL) {
+   else /* GL_STENCIL */ {
       /* Don't think this is really possible. 
        */
       return GL_FALSE;

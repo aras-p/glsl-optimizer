@@ -88,55 +88,8 @@ intelMapScreenRegions(__DRIscreenPrivate * sPriv)
       _mesa_warning(NULL, "no front buffer handle in intelMapScreenRegions!");
    }
 
-#if 0
    if (0)
-      _mesa_printf("Back 0x%08x ", intelScreen->back.handle);
-   if (drmMap(sPriv->fd,
-              intelScreen->back.handle,
-              intelScreen->back.size,
-              (drmAddress *) & intelScreen->back.map) != 0) {
-      intelUnmapScreenRegions(intelScreen);
-      return GL_FALSE;
-   }
-
-   if (intelScreen->third.handle) {
-      if (0)
-	 _mesa_printf("Third 0x%08x ", intelScreen->third.handle);
-      if (drmMap(sPriv->fd,
-		 intelScreen->third.handle,
-		 intelScreen->third.size,
-		 (drmAddress *) & intelScreen->third.map) != 0) {
-	 intelUnmapScreenRegions(intelScreen);
-	 return GL_FALSE;
-      }
-   }
-
-   if (0)
-      _mesa_printf("Depth 0x%08x ", intelScreen->depth.handle);
-   if (drmMap(sPriv->fd,
-              intelScreen->depth.handle,
-              intelScreen->depth.size,
-              (drmAddress *) & intelScreen->depth.map) != 0) {
-      intelUnmapScreenRegions(intelScreen);
-      return GL_FALSE;
-   }
-#endif
-
-#if 0
-   _mesa_printf("TEX 0x%08x ", intelScreen->tex.handle);
-   if (drmMap(sPriv->fd,
-              intelScreen->tex.handle,
-              intelScreen->tex.size,
-              (drmAddress *) & intelScreen->tex.map) != 0) {
-      intelUnmapScreenRegions(intelScreen);
-      return GL_FALSE;
-   }
-#endif
-   if (0)
-      printf("Mappings:  front: %p  back: %p  third: %p  depth: %p  tex: %p\n",
-             intelScreen->front.map,
-             intelScreen->back.map, intelScreen->third.map,
-             intelScreen->depth.map, intelScreen->tex.map);
+      printf("Mappings:  front: %p\n", intelScreen->front.map);
    return GL_TRUE;
 }
 
@@ -161,12 +114,8 @@ intel_recreate_static(intelScreenPrivate *intelScreen,
 
 
 /* Create intel_region structs to describe the static front,back,depth
- * buffers created by the xserver. 
- *
- * Although FBO's mean we now no longer use these as render targets in
- * all circumstances, they won't go away until the back and depth
- * buffers become private, and the front and rotated buffers will
- * remain even then.
+ * buffers created by the xserver.
+ * Only used for real front buffer now.
  *
  * Note that these don't allocate video memory, just describe
  * allocations alread made by the X server.
@@ -185,51 +134,6 @@ intel_recreate_static_regions(intelScreenPrivate *intelScreen)
 			    intelScreen->front.pitch / intelScreen->cpp,
 			    intelScreen->height);
 
-   intelScreen->rotated_region =
-      intel_recreate_static(intelScreen,
-			    intelScreen->rotated_region,
-			    DRM_BO_FLAG_MEM_TT,
-			    intelScreen->rotated.offset,
-			    intelScreen->rotated.map,
-			    intelScreen->cpp,
-			    intelScreen->rotated.pitch /
-			    intelScreen->cpp, intelScreen->height);
-
-#if 0
-   intelScreen->back_region =
-      intel_recreate_static(intelScreen,
-			    intelScreen->back_region,
-			    DRM_BO_FLAG_MEM_TT,
-			    intelScreen->back.offset,
-			    intelScreen->back.map,
-			    intelScreen->cpp,
-			    intelScreen->back.pitch / intelScreen->cpp,
-			    intelScreen->height);
-
-   if (intelScreen->third.handle) {
-      intelScreen->third_region =
-	 intel_recreate_static(intelScreen,
-			       intelScreen->third_region,
-			       DRM_BO_FLAG_MEM_TT,
-			       intelScreen->third.offset,
-			       intelScreen->third.map,
-			       intelScreen->cpp,
-			       intelScreen->third.pitch / intelScreen->cpp,
-			       intelScreen->height);
-   }
-
-   /* Still assuming front.cpp == depth.cpp
-    */
-   intelScreen->depth_region =
-      intel_recreate_static(intelScreen,
-			    intelScreen->depth_region,
-			    DRM_BO_FLAG_MEM_TT,
-			    intelScreen->depth.offset,
-			    intelScreen->depth.map,
-			    intelScreen->cpp,
-			    intelScreen->depth.pitch / intelScreen->cpp,
-			    intelScreen->height);
-#endif
 }
 
 /**
@@ -261,32 +165,6 @@ intelUnmapScreenRegions(intelScreenPrivate * intelScreen)
 #endif
       intelScreen->front.map = NULL;
    }
-   if (intelScreen->back.map) {
-#if REALLY_UNMAP
-      if (drmUnmap(intelScreen->back.map, intelScreen->back.size) != 0)
-         printf("drmUnmap back failed!\n");
-#endif
-      intelScreen->back.map = NULL;
-   }
-   if (intelScreen->third.map) {
-#if REALLY_UNMAP
-      if (drmUnmap(intelScreen->third.map, intelScreen->third.size) != 0)
-         printf("drmUnmap third failed!\n");
-#endif
-      intelScreen->third.map = NULL;
-   }
-   if (intelScreen->depth.map) {
-#if REALLY_UNMAP
-      drmUnmap(intelScreen->depth.map, intelScreen->depth.size);
-      intelScreen->depth.map = NULL;
-#endif
-   }
-   if (intelScreen->tex.map) {
-#if REALLY_UNMAP
-      drmUnmap(intelScreen->tex.map, intelScreen->tex.size);
-      intelScreen->tex.map = NULL;
-#endif
-   }
 }
 
 
@@ -297,17 +175,6 @@ intelPrintDRIInfo(intelScreenPrivate * intelScreen,
    fprintf(stderr, "*** Front size:   0x%x  offset: 0x%x  pitch: %d\n",
            intelScreen->front.size, intelScreen->front.offset,
            intelScreen->front.pitch);
-   fprintf(stderr, "*** Back size:    0x%x  offset: 0x%x  pitch: %d\n",
-           intelScreen->back.size, intelScreen->back.offset,
-           intelScreen->back.pitch);
-   fprintf(stderr, "*** Depth size:   0x%x  offset: 0x%x  pitch: %d\n",
-           intelScreen->depth.size, intelScreen->depth.offset,
-           intelScreen->depth.pitch);
-   fprintf(stderr, "*** Rotated size: 0x%x  offset: 0x%x  pitch: %d\n",
-           intelScreen->rotated.size, intelScreen->rotated.offset,
-           intelScreen->rotated.pitch);
-   fprintf(stderr, "*** Texture size: 0x%x  offset: 0x%x\n",
-           intelScreen->tex.size, intelScreen->tex.offset);
    fprintf(stderr, "*** Memory : 0x%x\n", gDRIPriv->mem);
 }
 
@@ -354,39 +221,6 @@ intelUpdateScreenFromSAREA(intelScreenPrivate * intelScreen,
    intelScreen->front.pitch = sarea->pitch * intelScreen->cpp;
    intelScreen->front.handle = sarea->front_handle;
    intelScreen->front.size = sarea->front_size;
-
-#if 0
-   intelScreen->back.offset = sarea->back_offset;
-   intelScreen->back.pitch = sarea->pitch * intelScreen->cpp;
-   intelScreen->back.handle = sarea->back_handle;
-   intelScreen->back.size = sarea->back_size;
-
-   if (intelScreen->driScrnPriv->ddxMinor >= 8) {
-      intelScreen->third.offset = sarea->third_offset;
-      intelScreen->third.pitch = sarea->pitch * intelScreen->cpp;
-      intelScreen->third.handle = sarea->third_handle;
-      intelScreen->third.size = sarea->third_size;
-   }
-
-   intelScreen->depth.offset = sarea->depth_offset;
-   intelScreen->depth.pitch = sarea->pitch * intelScreen->cpp;
-   intelScreen->depth.handle = sarea->depth_handle;
-   intelScreen->depth.size = sarea->depth_size;
-
-   intelScreen->tex.offset = sarea->tex_offset;
-   intelScreen->logTextureGranularity = sarea->log_tex_granularity;
-   intelScreen->tex.handle = sarea->tex_handle;
-   intelScreen->tex.size = sarea->tex_size;
-#endif
-
-   intelScreen->rotated.offset = sarea->rotated_offset;
-   intelScreen->rotated.pitch = sarea->rotated_pitch * intelScreen->cpp;
-   intelScreen->rotated.size = sarea->rotated_size;
-   intelScreen->current_rotation = sarea->rotation;
-   matrix23Rotate(&intelScreen->rotMatrix,
-                  sarea->width, sarea->height, sarea->rotation);
-   intelScreen->rotatedWidth = sarea->virtualX;
-   intelScreen->rotatedHeight = sarea->virtualY;
 
    if (1)
       intelPrintSAREA(sarea);
@@ -495,23 +329,6 @@ intelInitDriver(__DRIscreenPrivate * sPriv)
       return GL_FALSE;
    }
 
-#if 0
-
-   /*
-    * FIXME: Remove this code and its references.
-    */
-
-   intelScreen->tex.offset = gDRIPriv->textureOffset;
-   intelScreen->logTextureGranularity = gDRIPriv->logTextureGranularity;
-   intelScreen->tex.handle = gDRIPriv->textures;
-   intelScreen->tex.size = gDRIPriv->textureSize;
-
-#else
-   intelScreen->tex.offset = 0;
-   intelScreen->logTextureGranularity = 0;
-   intelScreen->tex.handle = 0;
-   intelScreen->tex.size = 0;
-#endif
 
    intelScreen->sarea_priv_offset = gDRIPriv->sarea_priv_offset;
 
@@ -589,7 +406,9 @@ intelCreateBuffer(__DRIscreenPrivate * driScrnPriv,
                   __DRIdrawablePrivate * driDrawPriv,
                   const __GLcontextModes * mesaVis, GLboolean isPixmap)
 {
+#if 0
    intelScreenPrivate *screen = (intelScreenPrivate *) driScrnPriv->private;
+#endif
 
    if (isPixmap) {
       return GL_FALSE;          /* not implemented */
@@ -606,77 +425,6 @@ intelCreateBuffer(__DRIscreenPrivate * driScrnPriv,
 
       _mesa_initialize_framebuffer(&intel_fb->Base, mesaVis);
 
-#if 0
-      /* setup the hardware-based renderbuffers */
-      {
-         intel_fb->color_rb[0]
-            = intel_create_renderbuffer(rgbFormat,
-                                        screen->width, screen->height,
-                                        screen->front.offset,
-                                        screen->front.pitch,
-                                        screen->cpp,
-                                        screen->front.map);
-         intel_set_span_functions(&intel_fb->color_rb[0]->Base);
-         _mesa_add_renderbuffer(&intel_fb->Base, BUFFER_FRONT_LEFT,
-				&intel_fb->color_rb[0]->Base);
-      }
-
-      if (mesaVis->doubleBufferMode) {
-         intel_fb->color_rb[1]
-            = intel_create_renderbuffer(rgbFormat,
-                                        screen->width, screen->height,
-                                        screen->back.offset,
-                                        screen->back.pitch,
-                                        screen->cpp,
-                                        screen->back.map);
-         intel_set_span_functions(&intel_fb->color_rb[1]->Base);
-         _mesa_add_renderbuffer(&intel_fb->Base, BUFFER_BACK_LEFT,
-				&intel_fb->color_rb[1]->Base);
-
-	 if (screen->third.handle) {
-	    struct gl_renderbuffer *tmp_rb = NULL;
-
-	    intel_fb->color_rb[2]
-	       = intel_create_renderbuffer(rgbFormat,
-					   screen->width, screen->height,
-					   screen->third.offset,
-					   screen->third.pitch,
-					   screen->cpp,
-					   screen->third.map);
-	    intel_set_span_functions(&intel_fb->color_rb[2]->Base);
-	    _mesa_reference_renderbuffer(&tmp_rb, &intel_fb->color_rb[2]->Base);
-	 }
-      }
-      if (mesaVis->depthBits == 24 && mesaVis->stencilBits == 8) {
-         /* combined depth/stencil buffer */
-         struct intel_renderbuffer *depthStencilRb
-            = intel_create_renderbuffer(GL_DEPTH24_STENCIL8_EXT,
-                                        screen->width, screen->height,
-                                        screen->depth.offset,
-                                        screen->depth.pitch,
-                                        screen->cpp,    /* 4! */
-                                        screen->depth.map);
-         intel_set_span_functions(&depthStencilRb->Base);
-         /* note: bind RB to two attachment points */
-         _mesa_add_renderbuffer(&intel_fb->Base, BUFFER_DEPTH,
-				&depthStencilRb->Base);
-         _mesa_add_renderbuffer(&intel_fb->Base, BUFFER_STENCIL,
-				&depthStencilRb->Base);
-      }
-      else if (mesaVis->depthBits == 16) {
-         /* just 16-bit depth buffer, no hw stencil */
-         struct intel_renderbuffer *depthRb
-            = intel_create_renderbuffer(GL_DEPTH_COMPONENT16,
-                                        screen->width, screen->height,
-                                        screen->depth.offset,
-                                        screen->depth.pitch,
-                                        screen->cpp,    /* 2! */
-                                        screen->depth.map);
-         intel_set_span_functions(&depthRb->Base);
-         _mesa_add_renderbuffer(&intel_fb->Base, BUFFER_DEPTH, &depthRb->Base);
-      }
-
-#else
       {
 	 /* fake frontbuffer */
 	 /* XXX allocation should only happen in the unusual case
@@ -693,6 +441,7 @@ intelCreateBuffer(__DRIscreenPrivate * driScrnPriv,
          _mesa_add_renderbuffer(&intel_fb->Base, BUFFER_BACK_LEFT,
 				&intel_fb->color_rb[1]->Base);
 
+#if 0
 	 if (screen->third.handle) {
 	    struct gl_renderbuffer *tmp_rb = NULL;
 
@@ -700,7 +449,9 @@ intelCreateBuffer(__DRIscreenPrivate * driScrnPriv,
 	       = intel_new_renderbuffer_fb(rgbFormat);
 	    _mesa_reference_renderbuffer(&tmp_rb, &intel_fb->color_rb[2]->Base);
 	 }
+#endif
       }
+
       if (mesaVis->depthBits == 24 && mesaVis->stencilBits == 8) {
          /* combined depth/stencil buffer */
          struct intel_renderbuffer *depthStencilRb
@@ -718,7 +469,6 @@ intelCreateBuffer(__DRIscreenPrivate * driScrnPriv,
          _mesa_add_renderbuffer(&intel_fb->Base, BUFFER_DEPTH, &depthRb->Base);
       }
 
-#endif
 
       /* now add any/all software-based renderbuffers we may need */
       _mesa_add_soft_renderbuffers(&intel_fb->Base,

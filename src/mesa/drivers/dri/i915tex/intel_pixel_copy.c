@@ -271,7 +271,7 @@ do_blit_copypixels(GLcontext * ctx,
       if (!irbread || !irbread->region || !irbdraw || !irbdraw->region)
 	 return GL_FALSE;
    }
-   else if (type == GL_STENCIL) {
+   else /* GL_STENCIL */ {
       /* Don't think this is really possible. 
        */
       return GL_FALSE;

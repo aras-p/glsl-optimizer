@@ -668,7 +668,9 @@ update_color_read_buffer(GLcontext *ctx, struct gl_framebuffer *fb)
 void
 _mesa_update_framebuffer(GLcontext *ctx)
 {
+   /* XXX might not be quite correct for different draw/read buffers ? */
    struct gl_framebuffer *fb = ctx->DrawBuffer;
+//   struct gl_framebuffer *fbread = ctx->ReadBuffer;
 
    /* Completeness only matters for user-created framebuffers */
    if (fb->Name != 0) {

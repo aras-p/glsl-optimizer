@@ -295,14 +295,18 @@ intelCheckFrontUpdate(GLcontext * ctx)
       BUFFER_BIT_FRONT_LEFT maybe? */
    if (intel->ctx.DrawBuffer->_ColorDrawBufferMask[0] ==
        BUFFER_BIT_FRONT_LEFT) {
-      intelScreenPrivate *screen = intel->intelScreen;
       __DRIdrawablePrivate *dPriv = intel->driDrawable;
+#if 0
+      intelScreenPrivate *screen = intel->intelScreen;
       if (screen->current_rotation != 0) {
          intelRotateWindow(intel, dPriv, BUFFER_BIT_FRONT_LEFT);
       }
       else {
          intelCopyBuffer(dPriv, NULL);
       }
+#else
+      intelCopyBuffer(dPriv, NULL);
+#endif
    }
 }
 
@@ -595,34 +599,6 @@ intelMakeCurrent(__DRIcontextPrivate * driContextPriv,
       /* this is a hack so we have a valid context when the region allocation
          is done. Need a per-screen context? */
       intel->intelScreen->dummyctxptr = intel;
-
-      /* XXX FBO temporary fix-ups! */
-      /* if the renderbuffers don't have regions, init them from the context */
-      {
-         struct intel_renderbuffer *irbDepth
-            = intel_get_renderbuffer(&intel_fb->Base, BUFFER_DEPTH);
-         struct intel_renderbuffer *irbStencil
-            = intel_get_renderbuffer(&intel_fb->Base, BUFFER_STENCIL);
-
-         if (intel_fb->color_rb[0] && !intel_fb->color_rb[0]->region) {
-            intel_region_reference(&intel_fb->color_rb[0]->region,
-				   intel->intelScreen->front_region);
-         }
-         if (intel_fb->color_rb[1] && !intel_fb->color_rb[1]->region) {
-            intel_region_reference(&intel_fb->color_rb[1]->region,
-				   intel->intelScreen->back_region);
-         }
-         if (intel_fb->color_rb[2] && !intel_fb->color_rb[2]->region) {
-            intel_region_reference(&intel_fb->color_rb[2]->region,
-				   intel->intelScreen->third_region);
-         }
-         if (irbDepth && !irbDepth->region) {
-            intel_region_reference(&irbDepth->region, intel->intelScreen->depth_region);
-         }
-         if (irbStencil && !irbStencil->region) {
-            intel_region_reference(&irbStencil->region, intel->intelScreen->depth_region);
-         }
-      }
 
       /* update GLframebuffer size to match window if needed */
       driUpdateFramebufferSize(&intel->ctx, driDrawPriv);

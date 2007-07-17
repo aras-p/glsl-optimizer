@@ -193,7 +193,7 @@ intelWindowMoved(struct intel_context *intel)
       intel_fb->pf_current_page = (intel->sarea->pf_current_page >>
 				   (intel_fb->pf_pipes & 0x2)) & 0x3;
 
-      intel_fb->pf_num_pages = intel->intelScreen->third.handle ? 3 : 2;
+      intel_fb->pf_num_pages = 2 /*intel->intelScreen->third.handle ? 3 : 2*/;
 
       pf_active = pf_pipes && (pf_pipes & intel->sarea->pf_active) == pf_pipes;
 
@@ -396,8 +396,9 @@ intelClearWithTris(struct intel_context *intel, GLbitfield mask)
 }
 
 
-
-
+#if 0
+/* Xorg seems to handle that nowadays, and this code here no longer works with priv
+   buffers */
 /**
  * Copy the window contents named by dPriv to the rotated (or reflected)
  * color buffer.
@@ -537,7 +538,7 @@ intelRotateWindow(struct intel_context *intel,
 
    UNLOCK_HARDWARE(intel);
 }
-
+#endif
 
 /**
  * Called by ctx->Driver.Clear.
@@ -845,10 +846,11 @@ intelSwapBuffers(__DRIdrawablePrivate * dPriv)
 	    if (screen->current_rotation != 0 || !intelPageFlip(dPriv)) {
 	       intelCopyBuffer(dPriv, NULL);
 	    }
-
+#if 0
 	    if (screen->current_rotation != 0) {
 	       intelRotateWindow(intel, dPriv, BUFFER_BIT_FRONT_LEFT);
 	    }
+#endif
 	 }
 
 	 intel_fb->swap_count++;
