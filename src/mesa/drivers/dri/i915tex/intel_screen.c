@@ -692,7 +692,7 @@ __driCreateNewScreen_20050727(__DRInativeDisplay * dpy, int scrn,
                               __GLcontextModes ** driver_modes)
 {
    __DRIscreenPrivate *psp;
-   static const __DRIversion ddx_expected = { 1, 5, 0 };
+   static const __DRIversion ddx_expected = { 1, 7, 0 };
    static const __DRIversion dri_expected = { 4, 0, 0 };
    static const __DRIversion drm_expected = { 1, 7, 0 };
 
