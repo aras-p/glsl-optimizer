@@ -289,17 +289,21 @@ intelFlush(GLcontext * ctx)
  * Check if we need to rotate/warp the front color buffer to the
  * rotated screen.  We generally need to do this when we get a glFlush
  * or glFinish after drawing to the front color buffer.
+ * If no rotation, just copy the private fake front buffer to the real one.
  */
 static void
-intelCheckFrontRotate(GLcontext * ctx)
+intelCheckFrontUpdate(GLcontext * ctx)
 {
    struct intel_context *intel = intel_context(ctx);
    if (intel->ctx.DrawBuffer->_ColorDrawBufferMask[0] ==
        BUFFER_BIT_FRONT_LEFT) {
       intelScreenPrivate *screen = intel->intelScreen;
+      __DRIdrawablePrivate *dPriv = intel->driDrawable;
       if (screen->current_rotation != 0) {
-         __DRIdrawablePrivate *dPriv = intel->driDrawable;
          intelRotateWindow(intel, dPriv, BUFFER_BIT_FRONT_LEFT);
+      }
+      else {
+         intelCopyBuffer(dPriv, NULL);
       }
    }
 }
@@ -312,7 +316,7 @@ static void
 intelglFlush(GLcontext * ctx)
 {
    intelFlush(ctx);
-   intelCheckFrontRotate(ctx);
+   intelCheckFrontUpdate(ctx);
 }
 
 void
@@ -326,7 +330,7 @@ intelFinish(GLcontext * ctx)
       driFenceUnReference(intel->batch->last_fence);
       intel->batch->last_fence = NULL;
    }
-   intelCheckFrontRotate(ctx);
+   intelCheckFrontUpdate(ctx);
 }
 
 
@@ -581,6 +585,13 @@ intelMakeCurrent(__DRIcontextPrivate * driContextPriv,
                  __DRIdrawablePrivate * driReadPriv)
 {
 
+#if 0
+   if (driDrawPriv) {
+      fprintf(stderr, "x %d, y %d, width %d, height %d\n",
+	      driDrawPriv->x, driDrawPriv->y, driDrawPriv->w, driDrawPriv->h);
+   }
+#endif
+
    if (driContextPriv) {
       struct intel_context *intel =
          (struct intel_context *) driContextPriv->driverPrivate;
@@ -588,6 +599,9 @@ intelMakeCurrent(__DRIcontextPrivate * driContextPriv,
 	 (struct intel_framebuffer *) driDrawPriv->driverPrivate;
       GLframebuffer *readFb = (GLframebuffer *) driReadPriv->driverPrivate;
 
+      /* this is a hack so we have a valid context when the region allocation
+         is done. Need a per-screen context? */
+      intel->intelScreen->dummyctxptr = intel;
 
       /* XXX FBO temporary fix-ups! */
       /* if the renderbuffers don't have regions, init them from the context */
@@ -625,6 +639,7 @@ intelMakeCurrent(__DRIcontextPrivate * driContextPriv,
       }
 
       _mesa_make_current(&intel->ctx, &intel_fb->Base, readFb);
+      intel->intelScreen->dummyctxptr = &intel->ctx;
 
       /* The drawbuffer won't always be updated by _mesa_make_current: 
        */
@@ -670,7 +685,8 @@ intelContendedLock(struct intel_context *intel, GLuint flags)
     * checking must be done *after* this call:
     */
    if (dPriv)
-      DRI_VALIDATE_DRAWABLE_INFO(sPriv, dPriv);
+      intel->revalidateDrawable = GL_TRUE;
+//      DRI_VALIDATE_DRAWABLE_INFO(sPriv, dPriv);
 
    if (sarea->width != intelScreen->width ||
        sarea->height != intelScreen->height ||
@@ -679,6 +695,7 @@ intelContendedLock(struct intel_context *intel, GLuint flags)
       intelUpdateScreenRotation(sPriv, sarea);
    }
 
+#if 0
    if (sarea->width != intel->width ||
        sarea->height != intel->height ||
        sarea->rotation != intel->current_rotation) {
@@ -721,13 +738,7 @@ intelContendedLock(struct intel_context *intel, GLuint flags)
       intel->height = sarea->height;
       intel->current_rotation = sarea->rotation;
    }
-
-   /* Drawable changed?
-    */
-   if (dPriv && intel->lastStamp != dPriv->lastStamp) {
-      intelWindowMoved(intel);
-      intel->lastStamp = dPriv->lastStamp;
-   }
+#endif
 }
 
 

@@ -96,6 +96,7 @@ typedef struct
    struct _DriBufferPool *staticPool;
    unsigned int maxBatchSize;
    GLboolean havePools;
+   struct intel_context *dummyctxptr;
 } intelScreenPrivate;
 
 
