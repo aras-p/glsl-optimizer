@@ -513,7 +513,7 @@ intel_new_renderbuffer(GLcontext * ctx, GLuint name)
  */
 static void
 intel_bind_framebuffer(GLcontext * ctx, GLenum target,
-                       struct gl_framebuffer *fb)
+                       struct gl_framebuffer *fb, struct gl_framebuffer *fbread)
 {
    if (target == GL_FRAMEBUFFER_EXT || target == GL_DRAW_FRAMEBUFFER_EXT) {
       intel_draw_buffer(ctx, fb);

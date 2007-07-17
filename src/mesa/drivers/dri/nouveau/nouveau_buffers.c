@@ -395,9 +395,12 @@ nouveauNewRenderbuffer(GLcontext *ctx, GLuint name)
 }
 
 static void
-nouveauBindFramebuffer(GLcontext *ctx, GLenum target, struct gl_framebuffer *fb)
+nouveauBindFramebuffer(GLcontext *ctx, GLenum target,
+                       struct gl_framebuffer *fb, struct gl_framebuffer *fbread)
 {
-   nouveau_build_framebuffer(ctx, fb);
+   if (target == GL_FRAMEBUFFER_EXT || target == GL_DRAW_FRAMEBUFFER_EXT) {
+      nouveau_build_framebuffer(ctx, fb);
+   }
 }
 
 static void

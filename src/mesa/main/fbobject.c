@@ -924,7 +924,7 @@ check_end_texture_render(GLcontext *ctx, struct gl_framebuffer *fb)
 void GLAPIENTRY
 _mesa_BindFramebufferEXT(GLenum target, GLuint framebuffer)
 {
-   struct gl_framebuffer *newFb;
+   struct gl_framebuffer *newFb, *newFbread;
    GLboolean bindReadBuf, bindDrawBuf;
    GET_CURRENT_CONTEXT(ctx);
 
@@ -984,12 +984,14 @@ _mesa_BindFramebufferEXT(GLenum target, GLuint framebuffer)
 	 }
          _mesa_HashInsert(ctx->Shared->FrameBuffers, framebuffer, newFb);
       }
+      newFbread = newFb;
    }
    else {
       /* Binding the window system framebuffer (which was originally set
        * with MakeCurrent).
        */
       newFb = ctx->WinSysDrawBuffer;
+      newFbread = ctx->WinSysReadBuffer;
    }
 
    ASSERT(newFb);
@@ -1000,7 +1002,7 @@ _mesa_BindFramebufferEXT(GLenum target, GLuint framebuffer)
     */
 
    if (bindReadBuf) {
-      _mesa_reference_framebuffer(&ctx->ReadBuffer, newFb);
+      _mesa_reference_framebuffer(&ctx->ReadBuffer, newFbread);
    }
 
    if (bindDrawBuf) {
@@ -1015,7 +1017,7 @@ _mesa_BindFramebufferEXT(GLenum target, GLuint framebuffer)
    }
 
    if (ctx->Driver.BindFramebuffer) {
-      ctx->Driver.BindFramebuffer(ctx, target, newFb);
+      ctx->Driver.BindFramebuffer(ctx, target, newFb, newFbread);
    }
 }
 
