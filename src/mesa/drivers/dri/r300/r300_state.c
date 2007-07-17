@@ -82,6 +82,8 @@ static void r300BlendColor(GLcontext * ctx, const GLfloat cf[4])
 
 	rmesa->hw.blend_color.cmd[1] = PACK_COLOR_8888(color[3], color[0],
 						       color[1], color[2]);
+	rmesa->hw.blend_color.cmd[2] = 0;
+	rmesa->hw.blend_color.cmd[3] = 0;
 }
 
 /**
@@ -317,20 +319,34 @@ static void r300UpdateCulling(GLcontext * ctx)
 	r300ContextPtr r300 = R300_CONTEXT(ctx);
 	uint32_t val = 0;
 
-	R300_STATECHANGE(r300, cul);
 	if (ctx->Polygon.CullFlag) {
-		if (ctx->Polygon.CullFaceMode == GL_FRONT_AND_BACK)
-			val = R300_CULL_FRONT | R300_CULL_BACK;
-		else if (ctx->Polygon.CullFaceMode == GL_FRONT)
+		switch (ctx->Polygon.CullFaceMode) {
+		case GL_FRONT:
 			val = R300_CULL_FRONT;
-		else
+			break;
+		case GL_BACK:
 			val = R300_CULL_BACK;
-
-		if (ctx->Polygon.FrontFace == GL_CW)
-			val |= R300_FRONT_FACE_CW;
-		else
-			val |= R300_FRONT_FACE_CCW;
+			break;
+		case GL_FRONT_AND_BACK:
+			val = R300_CULL_FRONT | R300_CULL_BACK;
+			break;
+		default:
+			break;
+		}
 	}
+
+	switch (ctx->Polygon.FrontFace) {
+	case GL_CW:
+		val |= R300_FRONT_FACE_CW;
+		break;
+	case GL_CCW:
+		val |= R300_FRONT_FACE_CCW;
+		break;
+	default:
+		break;
+	}
+
+	R300_STATECHANGE(r300, cul);
 	r300->hw.cul.cmd[R300_CUL_CULL] = val;
 }
 
@@ -344,6 +360,20 @@ static void r300SetEarlyZState(GLcontext * ctx)
 	r300ContextPtr r300 = R300_CONTEXT(ctx);
 
 	R300_STATECHANGE(r300, zstencil_format);
+	switch (ctx->Visual.depthBits) {
+	case 16:
+		r300->hw.zstencil_format.cmd[1] = R300_DEPTH_FORMAT_16BIT_INT_Z;
+		break;
+	case 24:
+		r300->hw.zstencil_format.cmd[1] = R300_DEPTH_FORMAT_24BIT_INT_Z;
+		break;
+	default:
+		fprintf(stderr, "Error: Unsupported depth %d... exiting\n", ctx->Visual.depthBits);
+		_mesa_exit(-1);
+	}
+
+	// r300->hw.zstencil_format.cmd[1] |= R300_DEPTH_FORMAT_UNK32;
+
 	if (ctx->Color.AlphaEnabled && ctx->Color.AlphaFunc != GL_ALWAYS)
 		/* disable early Z */
 		r300->hw.zstencil_format.cmd[2] = R300_EARLY_Z_DISABLE;
@@ -355,6 +385,9 @@ static void r300SetEarlyZState(GLcontext * ctx)
 			/* disable early Z */
 			r300->hw.zstencil_format.cmd[2] = R300_EARLY_Z_DISABLE;
 	}
+
+	r300->hw.zstencil_format.cmd[3] = 0x00000003;
+	r300->hw.zstencil_format.cmd[4] = 0x00000000;
 }
 
 static void r300SetAlphaState(GLcontext * ctx)
@@ -403,6 +436,7 @@ static void r300SetAlphaState(GLcontext * ctx)
 
 	R300_STATECHANGE(r300, at);
 	r300->hw.at.cmd[R300_AT_ALPHA_TEST] = pp_misc;
+	r300->hw.at.cmd[R300_AT_UNKNOWN] = 0;
 
 	r300SetEarlyZState(ctx);
 }
@@ -513,6 +547,9 @@ static void r300UpdatePolygonMode(GLcontext * ctx)
 		R300_STATECHANGE(r300, polygon_mode);
 		r300->hw.polygon_mode.cmd[1] = hw_mode;
 	}
+
+	r300->hw.polygon_mode.cmd[2] = 0x00000001;
+	r300->hw.polygon_mode.cmd[3] = 0x00000000;
 }
 
 /**
@@ -762,6 +799,7 @@ static void r300ShadeModel(GLcontext * ctx, GLenum mode)
 	r300ContextPtr rmesa = R300_CONTEXT(ctx);
 
 	R300_STATECHANGE(rmesa, shade);
+	rmesa->hw.shade.cmd[1] = 0x00000002;
 	switch (mode) {
 	case GL_FLAT:
 		rmesa->hw.shade.cmd[2] = R300_RE_SHADE_MODEL_FLAT;
@@ -772,6 +810,8 @@ static void r300ShadeModel(GLcontext * ctx, GLenum mode)
 	default:
 		return;
 	}
+	rmesa->hw.shade.cmd[3] = 0x00000000;
+	rmesa->hw.shade.cmd[4] = 0x00000000;
 }
 
 static void r300StencilFuncSeparate(GLcontext * ctx, GLenum face,
@@ -1526,7 +1566,7 @@ static void r300SetupDefaultVertexProgram(r300ContextPtr rmesa)
 
 	for (i = VERT_ATTRIB_POS; i < VERT_ATTRIB_MAX; i++) {
 		if (rmesa->state.sw_tcl_inputs[i] != -1) {
-			prog->program.body.i[program_end].op = EASY_VSF_OP(MUL, o_reg++, ALL, RESULT);
+			prog->program.body.i[program_end].opcode = EASY_VSF_OP(MUL, o_reg++, ALL, RESULT);
 			prog->program.body.i[program_end].src[0] = VSF_REG(rmesa->state.sw_tcl_inputs[i]);
 			prog->program.body.i[program_end].src[1] = VSF_ATTR_UNITY(rmesa->state.sw_tcl_inputs[i]);
 			prog->program.body.i[program_end].src[2] = VSF_UNITY(rmesa->state.sw_tcl_inputs[i]);
@@ -1536,7 +1576,7 @@ static void r300SetupDefaultVertexProgram(r300ContextPtr rmesa)
 
 	prog->program.length = program_end * 4;
 
-	r300SetupVertexProgramFragment(rmesa, VSF_DEST_PROGRAM, &(prog->program));
+	r300SetupVertexProgramFragment(rmesa, R300_PVS_UPLOAD_PROGRAM, &(prog->program));
 	inst_count = (prog->program.length / 4) - 1;
 
 	R300_STATECHANGE(rmesa, pvs);
@@ -1570,7 +1610,7 @@ static void r300SetupRealVertexProgram(r300ContextPtr rmesa)
 	bump_vpu_count(rmesa->hw.vpp.cmd, param_count);
 	param_count /= 4;
 
-	r300SetupVertexProgramFragment(rmesa, VSF_DEST_PROGRAM, &(prog->program));
+	r300SetupVertexProgramFragment(rmesa, R300_PVS_UPLOAD_PROGRAM, &(prog->program));
 	inst_count = (prog->program.length / 4) - 1;
 
 	R300_STATECHANGE(rmesa, pvs);
@@ -1848,15 +1888,10 @@ static void r300ResetHwState(r300ContextPtr r300)
 	r300->hw.unk4260.cmd[2] = r300PackFloat32(0.0);
 	r300->hw.unk4260.cmd[3] = r300PackFloat32(1.0);
 
-	r300->hw.shade.cmd[1] = 0x00000002;
 	r300ShadeModel(ctx, ctx->Light.ShadeModel);
-	r300->hw.shade.cmd[3] = 0x00000000;
-	r300->hw.shade.cmd[4] = 0x00000000;
 
 	r300PolygonMode(ctx, GL_FRONT, ctx->Polygon.FrontMode);
 	r300PolygonMode(ctx, GL_BACK, ctx->Polygon.BackMode);
-	r300->hw.polygon_mode.cmd[2] = 0x00000001;
-	r300->hw.polygon_mode.cmd[3] = 0x00000000;
 	r300->hw.zbias_cntl.cmd[1] = 0x00000000;
 
 	r300PolygonOffset(ctx, ctx->Polygon.OffsetFactor,
@@ -1887,14 +1922,11 @@ static void r300ResetHwState(r300ContextPtr r300)
 	r300Fogfv(ctx, GL_FOG_COLOR, ctx->Fog.Color);
 	r300Fogfv(ctx, GL_FOG_COORDINATE_SOURCE_EXT, NULL);
 
-	r300->hw.at.cmd[R300_AT_UNKNOWN] = 0;
 	r300->hw.unk4BD8.cmd[1] = 0;
 
 	r300->hw.unk4E00.cmd[1] = 0;
 
 	r300BlendColor(ctx, ctx->Color.BlendColor);
-	r300->hw.blend_color.cmd[2] = 0;
-	r300->hw.blend_color.cmd[3] = 0;
 
 	/* Again, r300ClearBuffer uses this */
 	r300->hw.cb.cmd[R300_CB_OFFSET] =
@@ -1924,25 +1956,6 @@ static void r300ResetHwState(r300ContextPtr r300)
 
 	r300->hw.unk4EA0.cmd[1] = 0x00000000;
 	r300->hw.unk4EA0.cmd[2] = 0xffffffff;
-
-	switch (ctx->Visual.depthBits) {
-	case 16:
-		r300->hw.zstencil_format.cmd[1] = R300_DEPTH_FORMAT_16BIT_INT_Z;
-		break;
-	case 24:
-		r300->hw.zstencil_format.cmd[1] = R300_DEPTH_FORMAT_24BIT_INT_Z;
-		break;
-	default:
-		fprintf(stderr, "Error: Unsupported depth %d... exiting\n",
-			ctx->Visual.depthBits);
-		_mesa_exit(-1);
-
-	}
-	/* z compress? */
-	//r300->hw.zstencil_format.cmd[1] |= R300_DEPTH_FORMAT_UNK32;
-
-	r300->hw.zstencil_format.cmd[3] = 0x00000003;
-	r300->hw.zstencil_format.cmd[4] = 0x00000000;
 
 	r300->hw.zb.cmd[R300_ZB_OFFSET] =
 	    r300->radeon.radeonScreen->depthOffset +

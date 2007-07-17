@@ -65,7 +65,9 @@ compute_depth_max(struct gl_framebuffer *fb)
       fb->_DepthMax = 0xffffffff;
    }
    fb->_DepthMaxF = (GLfloat) fb->_DepthMax;
-   fb->_MRD = 1.0;  /* Minimum resolvable depth value, for polygon offset */
+
+   /* Minimum resolvable depth value, for polygon offset */
+   fb->_MRD = 1.0 / fb->_DepthMaxF;
 }
 
 

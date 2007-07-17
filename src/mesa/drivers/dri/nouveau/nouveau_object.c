@@ -7,7 +7,7 @@
 GLboolean nouveauCreateContextObject(nouveauContextPtr nmesa,
 				     uint32_t handle, int class)
 {
-	drm_nouveau_grobj_alloc_t cto;
+	struct drm_nouveau_grobj_alloc cto;
 	int ret;
 
 	cto.channel = nmesa->fifo.channel;
@@ -34,10 +34,13 @@ void nouveauObjectInit(nouveauContextPtr nmesa)
 	nouveauCreateContextObject(nmesa, Nv3D, nmesa->screen->card->class_3d);
 	if (nmesa->screen->card->type>=NV_10) {
 		nouveauCreateContextObject(nmesa, NvCtxSurf2D, NV10_CONTEXT_SURFACES_2D);
-		nouveauCreateContextObject(nmesa, NvImageBlit, NV10_IMAGE_BLIT);
 	} else {
 		nouveauCreateContextObject(nmesa, NvCtxSurf2D, NV04_CONTEXT_SURFACES_2D);
 		nouveauCreateContextObject(nmesa, NvCtxSurf3D, NV04_CONTEXT_SURFACES_3D);
+	}
+	if (nmesa->screen->card->type>=NV_11) {
+		nouveauCreateContextObject(nmesa, NvImageBlit, NV10_IMAGE_BLIT);
+	} else {
 		nouveauCreateContextObject(nmesa, NvImageBlit, NV_IMAGE_BLIT);
 	}
 	nouveauCreateContextObject(nmesa, NvMemFormat, NV_MEMORY_TO_MEMORY_FORMAT);

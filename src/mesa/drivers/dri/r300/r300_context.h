@@ -568,18 +568,9 @@ struct r300_vertex_shader_fragment {
 	union {
 		GLuint d[VSF_MAX_FRAGMENT_LENGTH];
 		float f[VSF_MAX_FRAGMENT_LENGTH];
-		VERTEX_SHADER_INSTRUCTION i[VSF_MAX_FRAGMENT_LENGTH / 4];
+		struct r300_vertprog_instruction i[VSF_MAX_FRAGMENT_LENGTH / 4];
 	} body;
 };
-
-#define VSF_DEST_PROGRAM	0x0
-#define VSF_DEST_MATRIX0	0x200
-#define VSF_DEST_MATRIX1	0x204
-#define VSF_DEST_MATRIX2	0x208
-#define VSF_DEST_VECTOR0	0x20c
-#define VSF_DEST_VECTOR1	0x20d
-#define VSF_DEST_UNKNOWN1	0x400
-#define VSF_DEST_UNKNOWN2	0x406
 
 struct r300_vertex_shader_state {
 	struct r300_vertex_shader_fragment program;

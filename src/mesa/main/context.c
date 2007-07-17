@@ -1495,9 +1495,20 @@ _mesa_make_current( GLcontext *newCtx, GLframebuffer *drawBuffer,
           */
          if (!newCtx->DrawBuffer || newCtx->DrawBuffer->Name == 0) {
             _mesa_reference_framebuffer(&newCtx->DrawBuffer, drawBuffer);
+         /* fix up the fb fields - these will end up wrong otherwise
+            if the DRIdrawable changes, and someone may rely on them.
+          */
+            /* What a mess!?! */
+            int i;
+            GLenum buffers[MAX_DRAW_BUFFERS];
+            for(i = 0; i < newCtx->Const.MaxDrawBuffers; i++) {
+               buffers[i] = newCtx->Color.DrawBuffer[i];
+            }
+            _mesa_drawbuffers(newCtx, newCtx->Const.MaxDrawBuffers, buffers, NULL);
          }
          if (!newCtx->ReadBuffer || newCtx->ReadBuffer->Name == 0) {
             _mesa_reference_framebuffer(&newCtx->ReadBuffer, readBuffer);
+            _mesa_ReadBuffer(newCtx->Pixel.ReadBuffer);
          }
 
 	 newCtx->NewState |= _NEW_BUFFERS;
