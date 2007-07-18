@@ -1496,14 +1496,8 @@ _mesa_make_current( GLcontext *newCtx, GLframebuffer *drawBuffer,
          if (!newCtx->DrawBuffer || newCtx->DrawBuffer->Name == 0) {
             _mesa_reference_framebuffer(&newCtx->DrawBuffer, drawBuffer);
          /* fix up the fb fields - these will end up wrong otherwise
-            if the DRIdrawable changes, and someone may rely on them.
-          */
-            /* What a mess!?! */
-            /* XXX this is still not quite correct. Imagine a user-created fbo
-               bound on a context. Now rebind with a completely new drawable.
-               Upon rebinding to the window-framebuffer, we have no idea what
-               the read and write buffers should be (front, back, ...) - that
-               information was only available in the previously used drawable... */
+            if the DRIdrawable changes, and everything relies on them.
+            This is a bit messy (same as needed in _mesa_BindFramebufferEXT) */
             int i;
             GLenum buffers[MAX_DRAW_BUFFERS];
             for(i = 0; i < newCtx->Const.MaxDrawBuffers; i++) {
@@ -1513,7 +1507,7 @@ _mesa_make_current( GLcontext *newCtx, GLframebuffer *drawBuffer,
          }
          if (!newCtx->ReadBuffer || newCtx->ReadBuffer->Name == 0) {
             _mesa_reference_framebuffer(&newCtx->ReadBuffer, readBuffer);
-            _mesa_ReadBuffer(newCtx->Pixel.ReadBuffer);
+            _mesa_readbuffer_update_fields(newCtx, newCtx->Pixel.ReadBuffer);
          }
 
 	 newCtx->NewState |= _NEW_BUFFERS;

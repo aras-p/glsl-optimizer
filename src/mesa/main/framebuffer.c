@@ -695,8 +695,7 @@ _mesa_update_framebuffer(GLcontext *ctx)
    struct gl_framebuffer *fbread = ctx->ReadBuffer;
 
    update_framebuffer(ctx, fb);
-   if (fbread != fb && fbread != NULL /* can happen at make_current -
-      core/driver circular dependencies, should be fixed up */)
+   if (fbread != fb)
       update_framebuffer(ctx, fbread);
 }
 

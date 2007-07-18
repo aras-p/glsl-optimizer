@@ -370,6 +370,14 @@ _mesa_DrawBuffer(GLenum buffer)
 
    /* if we get here, there's no error so set new state */
    _mesa_drawbuffers(ctx, 1, &buffer, &destMask);
+
+   /*
+    * Call device driver function.
+    */
+   if (ctx->Driver.DrawBuffers)
+      ctx->Driver.DrawBuffers(ctx, 1, &buffer);
+   else if (ctx->Driver.DrawBuffer)
+      ctx->Driver.DrawBuffer(ctx, buffer);
 }
 
 
@@ -435,6 +443,14 @@ _mesa_DrawBuffersARB(GLsizei n, const GLenum *buffers)
 
    /* OK, if we get here, there were no errors so set the new state */
    _mesa_drawbuffers(ctx, n, buffers, destMask);
+
+   /*
+    * Call device driver function.
+    */
+   if (ctx->Driver.DrawBuffers)
+      ctx->Driver.DrawBuffers(ctx, n, buffers);
+   else if (ctx->Driver.DrawBuffer)
+      ctx->Driver.DrawBuffer(ctx, buffers[0]);
 }
 
 
@@ -463,14 +479,15 @@ set_color_output(GLcontext *ctx, GLuint output, GLenum buffer,
    /* not really needed, will be set later */
    fb->_NumColorDrawBuffers[output] = 0;
 
+   if (fb->Name == 0)
    /* Set traditional state var */
-   ctx->Color.DrawBuffer[output] = buffer;
+      ctx->Color.DrawBuffer[output] = buffer;
 }
 
 
 /**
  * Helper routine used by _mesa_DrawBuffer, _mesa_DrawBuffersARB and
- * _mesa_PopAttrib to set drawbuffer state.
+ * other places (window fbo fixup) to set fbo (and the old ctx) fields.
  * All error checking will have been done prior to calling this function
  * so nothing should go wrong at this point.
  * \param ctx  current context
@@ -479,6 +496,7 @@ set_color_output(GLcontext *ctx, GLuint output, GLenum buffer,
  * \param destMask  array[n] of BUFFER_* bitmasks which correspond to the
  *                  colorbuffer names.  (i.e. GL_FRONT_AND_BACK =>
  *                  BUFFER_BIT_FRONT_LEFT | BUFFER_BIT_BACK_LEFT).
+ * \param callDriver call driver or not (bad idea sometimes this is called)
  */
 void
 _mesa_drawbuffers(GLcontext *ctx, GLuint n, const GLenum *buffers,
@@ -509,30 +527,15 @@ _mesa_drawbuffers(GLcontext *ctx, GLuint n, const GLenum *buffers,
    }
 
    ctx->NewState |= _NEW_COLOR;
-
-   /*
-    * Call device driver function.
-    */
-   if (ctx->Driver.DrawBuffers)
-      ctx->Driver.DrawBuffers(ctx, n, buffers);
-   else if (ctx->Driver.DrawBuffer)
-      ctx->Driver.DrawBuffer(ctx, buffers[0]);
 }
 
 
-
-/**
- * Called by glReadBuffer to set the source renderbuffer for reading pixels.
- * \param mode color buffer such as GL_FRONT, GL_BACK, etc.
- */
-void GLAPIENTRY
-_mesa_ReadBuffer(GLenum buffer)
+GLboolean
+_mesa_readbuffer_update_fields(GLcontext *ctx, GLenum buffer)
 {
    struct gl_framebuffer *fb;
    GLbitfield supportedMask;
    GLint srcBuffer;
-   GET_CURRENT_CONTEXT(ctx);
-   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
 
    fb = ctx->ReadBuffer;
 
@@ -548,19 +551,42 @@ _mesa_ReadBuffer(GLenum buffer)
       srcBuffer = read_buffer_enum_to_index(buffer);
       if (srcBuffer == -1) {
          _mesa_error(ctx, GL_INVALID_ENUM, "glReadBuffer(buffer=0x%x)", buffer);
-         return;
+         return GL_FALSE;
       }
       supportedMask = supported_buffer_bitmask(ctx, fb);
       if (((1 << srcBuffer) & supportedMask) == 0) {
          _mesa_error(ctx, GL_INVALID_OPERATION, "glReadBuffer(buffer=0x%x)", buffer);
-         return;
+         return GL_FALSE;
       }
    }
 
-   ctx->Pixel.ReadBuffer = buffer;
-
+   if (fb->Name == 0) {
+      ctx->Pixel.ReadBuffer = buffer;
+   }
    fb->ColorReadBuffer = buffer;
    fb->_ColorReadBufferIndex = srcBuffer;
+
+   return GL_TRUE;
+}
+
+
+
+/**
+ * Called by glReadBuffer to set the source renderbuffer for reading pixels.
+ * \param mode color buffer such as GL_FRONT, GL_BACK, etc.
+ * \param callDriver call driver or not (bad idea sometimes this is called)
+ */
+void GLAPIENTRY
+_mesa_ReadBuffer(GLenum buffer)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
+
+   if (MESA_VERBOSE & VERBOSE_API)
+      _mesa_debug(ctx, "glReadBuffer %s\n", _mesa_lookup_enum_by_nr(buffer));
+
+   if (!_mesa_readbuffer_update_fields(ctx, buffer))
+      return;
 
    ctx->NewState |= _NEW_PIXEL;
 
