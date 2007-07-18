@@ -557,9 +557,8 @@ _mesa_ReadBuffer(GLenum buffer)
       }
    }
 
-   if (fb->Name == 0) {
-      ctx->Pixel.ReadBuffer = buffer;
-   }
+   ctx->Pixel.ReadBuffer = buffer;
+
    fb->ColorReadBuffer = buffer;
    fb->_ColorReadBufferIndex = srcBuffer;
 
