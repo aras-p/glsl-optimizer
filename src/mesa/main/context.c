@@ -1499,6 +1499,11 @@ _mesa_make_current( GLcontext *newCtx, GLframebuffer *drawBuffer,
             if the DRIdrawable changes, and someone may rely on them.
           */
             /* What a mess!?! */
+            /* XXX this is still not quite correct. Imagine a user-created fbo
+               bound on a context. Now rebind with a completely new drawable.
+               Upon rebinding to the window-framebuffer, we have no idea what
+               the read and write buffers should be (front, back, ...) - that
+               information was only available in the previously used drawable... */
             int i;
             GLenum buffers[MAX_DRAW_BUFFERS];
             for(i = 0; i < newCtx->Const.MaxDrawBuffers; i++) {

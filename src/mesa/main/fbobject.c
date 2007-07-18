@@ -1003,13 +1003,20 @@ _mesa_BindFramebufferEXT(GLenum target, GLuint framebuffer)
 
    if (bindReadBuf) {
       _mesa_reference_framebuffer(&ctx->ReadBuffer, newFbread);
+      /* set context value */
+      ctx->Pixel.ReadBuffer = newFbread->ColorReadBuffer;
    }
 
    if (bindDrawBuf) {
+      GLuint i;
       /* check if old FB had any texture attachments */
       check_end_texture_render(ctx, ctx->DrawBuffer);
       /* check if time to delete this framebuffer */
       _mesa_reference_framebuffer(&ctx->DrawBuffer, newFb);
+      /* set context value */
+      for (i = 0; i < ctx->Const.MaxDrawBuffers; i++) {
+	 ctx->Color.DrawBuffer[i] = newFb->ColorDrawBuffer[i];
+      }
       if (newFb->Name != 0) {
          /* check if newly bound framebuffer has any texture attachments */
          check_begin_texture_render(ctx, newFb);
