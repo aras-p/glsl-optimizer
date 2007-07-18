@@ -1083,13 +1083,13 @@ static void t_inputs_outputs(struct r300_vertex_program *vp)
 	if (vp->key.OutputsWritten & (1 << VERT_RESULT_BFC0)) {
 		vp->outputs[VERT_RESULT_BFC0] =
 		    vp->outputs[VERT_RESULT_COL0] + 2;
-		cur_reg = vp->outputs[VERT_RESULT_BFC0] + 1;
+		cur_reg = vp->outputs[VERT_RESULT_BFC0] + 2;
 	}
 
 	if (vp->key.OutputsWritten & (1 << VERT_RESULT_BFC1)) {
 		vp->outputs[VERT_RESULT_BFC1] =
 		    vp->outputs[VERT_RESULT_COL0] + 3;
-		cur_reg = vp->outputs[VERT_RESULT_BFC1] + 2;
+		cur_reg = vp->outputs[VERT_RESULT_BFC1] + 1;
 	}
 #if 0
 	if (vp->key.OutputsWritten & (1 << VERT_RESULT_FOGC)) {
