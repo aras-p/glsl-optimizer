@@ -569,6 +569,9 @@ intelDestroyContext(__DRIcontextPrivate * driContextPriv)
 GLboolean
 intelUnbindContext(__DRIcontextPrivate * driContextPriv)
 {
+   struct intel_context *intel = (struct intel_context *) driContextPriv->driverPrivate;
+   FLUSH_VERTICES((&intel->ctx), 0);
+   intelFlush(&intel->ctx);
    return GL_TRUE;
 }
 
@@ -616,14 +619,16 @@ intelMakeCurrent(__DRIcontextPrivate * driContextPriv,
 	    (*dri_interface->getUST) (&intel_fb->swap_ust);
 	    driDrawableInitVBlank(driDrawPriv, intel_fb->vblank_flags,
 				  &intel_fb->vbl_seq);
+	 }
+      }
+
+      if ((intel->driDrawable != driDrawPriv) ||
+	  (intel->lastStamp != driDrawPriv->lastStamp)) {
 	    intel->driDrawable = driDrawPriv;
 	    intelWindowMoved(intel);
 	    intel->lastStamp = driDrawPriv->lastStamp;
-	 }
-	 else if (intel->lastStamp != driDrawPriv->lastStamp) {
-	    intel_draw_buffer(&intel->ctx, &intel_fb->Base);
-	 }
       }
+
    }
    else {
       _mesa_make_current(NULL, NULL, NULL);

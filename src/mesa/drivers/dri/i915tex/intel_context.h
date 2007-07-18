@@ -247,8 +247,6 @@ struct intel_context
    drm_clip_rect_t *pClipRects;
    drm_clip_rect_t fboRect;     /**< cliprect for rendering */
 
-   int perf_boxes;
-
    GLuint do_usleeps;
    int do_irqs;
    GLuint irqsEmitted;

@@ -78,6 +78,12 @@ intelCopyBuffer(__DRIdrawablePrivate * dPriv,
     * should work regardless.
     */
    LOCK_HARDWARE(intel);
+   /* if this drawable isn't currently bound the LOCK_HARDWARE done on the
+      current context (which is what intelScreenContext should return) might
+      not get a contended lock and thus cliprects not updated (tests/manywin) */
+      if ((struct intel_context *)dPriv->driContextPriv->driverPrivate != intel)
+         DRI_VALIDATE_DRAWABLE_INFO(intel->driScreen, dPriv);
+
 
    if (dPriv && dPriv->numClipRects) {
       struct intel_framebuffer *intel_fb = dPriv->driverPrivate;

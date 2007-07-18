@@ -356,7 +356,8 @@ intelClearWithTris(struct intel_context *intel, GLbitfield mask)
          /* XXX: Using INTEL_BATCH_NO_CLIPRECTS here is dangerous as the
           * drawing origin may not be correctly emitted.
           */
-         intel_meta_draw_quad(intel, clear.x1, clear.x2, clear.y1, clear.y2, intel->ctx.Depth.Clear, clearColor, 0, 0, 0, 0);   /* texcoords */
+         intel_meta_draw_quad(intel, clear.x1, clear.x2, clear.y1, clear.y2,
+                              intel->ctx.Depth.Clear, clearColor, 0, 0, 0, 0);   /* texcoords */
 
          mask &=
             ~(BUFFER_BIT_BACK_LEFT | BUFFER_BIT_STENCIL | BUFFER_BIT_DEPTH);
@@ -991,16 +992,6 @@ intel_draw_buffer(GLcontext * ctx, struct gl_framebuffer *fb)
    /**
     ** Release old regions, reference new regions
     **/
-#if 0                           /* XXX FBO: this seems to be redundant with i915_state_draw_region() */
-   if (intel->draw_region != colorRegion) {
-      intel_region_release(&intel->draw_region);
-      intel_region_reference(&intel->draw_region, colorRegion);
-   }
-   if (intel->intelScreen->depth_region != depthRegion) {
-      intel_region_release(&intel->intelScreen->depth_region);
-      intel_region_reference(&intel->intelScreen->depth_region, depthRegion);
-   }
-#endif
 
    intel->vtbl.set_draw_region(intel, colorRegion, depthRegion);
 
