@@ -3,11 +3,6 @@
 
 #include "r300_reg.h"
 
-struct r300_vertprog_instruction {
-	GLuint opcode;
-	GLuint src[3];
-};
-
 #define VSF_FLAG_X	1
 #define VSF_FLAG_Y	2
 #define VSF_FLAG_Z	4
