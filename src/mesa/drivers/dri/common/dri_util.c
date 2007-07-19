@@ -120,7 +120,7 @@ static __DRIdrawable *__driFindDrawable(void *drawHash, __DRIid draw)
  * Find drawables in the local hash that have been destroyed on the
  * server.
  * 
- * \param drawHash  Hash-table containing all know drawables.
+ * \param drawHash  Hash-table containing all known drawables.
  */
 static void __driGarbageCollectDrawables(void *drawHash)
 {
@@ -235,6 +235,12 @@ static GLboolean driUnbindContext(__DRInativeDisplay *dpy, int scrn,
 	prp->refcount--;
     }
 
+   /* destroy the drawables if they no longer exist on the server */
+   if ((pdp->refcount == 0) || (prp->refcount == 0)) {
+      /* probably shouldn't need the collector here,
+         as we know the affected drawables (or could there be others?) */
+      __driGarbageCollectDrawables(pdp->driScreenPriv->drawHash);
+   }
 
     /* XXX this is disabled so that if we call SwapBuffers on an unbound
      * window we can determine the last context bound to the window and
