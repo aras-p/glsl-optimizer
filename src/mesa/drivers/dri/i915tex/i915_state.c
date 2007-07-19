@@ -904,43 +904,8 @@ i915_init_packets(struct i915_context *i915)
 
    {
       I915_STATECHANGE(i915, I915_UPLOAD_BUFFERS);
-#if 0
-      /* color buffer offset/stride */
-      i915->state.Buffer[I915_DESTREG_CBUFADDR0] = _3DSTATE_BUF_INFO_CMD;
-      /* XXX FBO: remove this?  Also get set in i915_set_draw_region() */
-      i915->state.Buffer[I915_DESTREG_CBUFADDR1] = (BUF_3D_ID_COLOR_BACK | BUF_3D_PITCH(screen->front.pitch) |  /* pitch in bytes */
-                                                    BUF_3D_USE_FENCE);
-
-      i915->state.Buffer[I915_DESTREG_DBUFADDR0] = _3DSTATE_BUF_INFO_CMD;
-      /* XXX FBO: remove this?  Also get set in i915_set_draw_region() */
-      i915->state.Buffer[I915_DESTREG_DBUFADDR1] = (BUF_3D_ID_DEPTH | BUF_3D_PITCH(screen->depth.pitch) |       /* pitch in bytes */
-                                                    BUF_3D_USE_FENCE);
-#endif
 
       i915->state.Buffer[I915_DESTREG_DV0] = _3DSTATE_DST_BUF_VARS_CMD;
-
-      /* XXX FBO: remove this?  Also get set in i915_set_draw_region() */
-#if 0                           /* seems we don't need this */
-      switch (screen->fbFormat) {
-      case DV_PF_565:
-         i915->state.Buffer[I915_DESTREG_DV1] = (DSTORG_HORT_BIAS(0x8) |        /* .5 */
-                                                 DSTORG_VERT_BIAS(0x8) |        /* .5 */
-                                                 LOD_PRECLAMP_OGL |
-                                                 TEX_DEFAULT_COLOR_OGL |
-                                                 DITHER_FULL_ALWAYS |
-                                                 screen->fbFormat |
-                                                 DEPTH_FRMT_16_FIXED);
-         break;
-      case DV_PF_8888:
-         i915->state.Buffer[I915_DESTREG_DV1] = (DSTORG_HORT_BIAS(0x8) |        /* .5 */
-                                                 DSTORG_VERT_BIAS(0x8) |        /* .5 */
-                                                 LOD_PRECLAMP_OGL |
-                                                 TEX_DEFAULT_COLOR_OGL |
-                                                 screen->fbFormat |
-                                                 DEPTH_FRMT_24_FIXED_8_OTHER);
-         break;
-      }
-#endif
 
 
       /* scissor */
@@ -950,19 +915,6 @@ i915_init_packets(struct i915_context *i915)
       i915->state.Buffer[I915_DESTREG_SR1] = 0;
       i915->state.Buffer[I915_DESTREG_SR2] = 0;
    }
-
-
-#if 0
-   {
-      I915_STATECHANGE(i915, I915_UPLOAD_DEFAULTS);
-      i915->state.Default[I915_DEFREG_C0] = _3DSTATE_DEFAULT_DIFFUSE;
-      i915->state.Default[I915_DEFREG_C1] = 0;
-      i915->state.Default[I915_DEFREG_S0] = _3DSTATE_DEFAULT_SPECULAR;
-      i915->state.Default[I915_DEFREG_S1] = 0;
-      i915->state.Default[I915_DEFREG_Z0] = _3DSTATE_DEFAULT_Z;
-      i915->state.Default[I915_DEFREG_Z1] = 0;
-   }
-#endif
 
 
    /* These will be emitted every at the head of every buffer, unless
