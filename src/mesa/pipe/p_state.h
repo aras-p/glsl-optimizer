@@ -121,8 +121,11 @@ struct pipe_clip_state {
    GLuint nr;
 };
 
+
 struct pipe_fs_state {
-   struct gl_fragment_program *fp;
+   GLuint inputs_read;		/* FRAG_ATTRIB_* */
+   const struct tgsi_token *tokens;
+   
 };
 
 struct pipe_constant_buffer {

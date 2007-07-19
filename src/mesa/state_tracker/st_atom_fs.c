@@ -32,15 +32,38 @@
 #include "st_context.h"
 #include "pipe/p_context.h"
 #include "st_atom.h"
+#include "st_program.h"
+#include "pipe/tgsi/mesa/mesa_to_tgsi.h"
+#include "pipe/tgsi/core/tgsi_dump.h"
+
+static void compile_fs( struct st_context *st,
+			struct st_fragment_program *fs )
+{
+   /* XXX: fix static allocation of tokens:
+    */
+   tgsi_mesa_compile_fp_program( &fs->Base, fs->tokens, ST_FP_MAX_TOKENS );
+
+   tgsi_dump( fs->tokens, TGSI_DUMP_VERBOSE );
+}
 
 
 static void update_fs( struct st_context *st )
 {
    struct pipe_fs_state fs;
+   struct st_fragment_program *fp = st_fragment_program(st->ctx->FragmentProgram._Current);
 
-   fs.fp = st->ctx->FragmentProgram._Current;
+   memset( &fs, 0, sizeof(fs) );
+
+   if (fp->dirty)
+      compile_fs( st, fp );
    
-   if (memcmp(&fs, &st->state.fs, sizeof(fs)) != 0) {
+   fs.inputs_read = fp->Base.Base.InputsRead;
+   fs.tokens = &fp->tokens[0];
+   
+   if (memcmp(&fs, &st->state.fs, sizeof(fs)) != 0 ||
+       fp->dirty) 
+   {
+      fp->dirty = 0;
       st->state.fs = fs;
       st->pipe->set_fs_state(st->pipe, &fs);
    }

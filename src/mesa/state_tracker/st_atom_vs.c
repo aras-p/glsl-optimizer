@@ -24,39 +24,26 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  * 
  **************************************************************************/
-
  /*
   * Authors:
   *   Keith Whitwell <keith@tungstengraphics.com>
   */
-    
-
-#ifndef ST_ATOM_H
-#define ST_ATOM_H
-
-struct st_context;
-struct st_tracked_state;
-
-void st_init_atoms( struct st_context *st );
-void st_destroy_atoms( struct st_context *st );
+                   
+#include "st_context.h"
+#include "pipe/p_context.h"
+#include "st_atom.h"
 
 
-void st_validate_state( struct st_context *st );
+ 
+static void update_vs( struct st_context *st )
+{
+}
 
 
-const struct st_tracked_state st_update_framebuffer;
-const struct st_tracked_state st_update_clip;
-const struct st_tracked_state st_update_clear_color;
-const struct st_tracked_state st_update_depth;
-const struct st_tracked_state st_update_fs;
-const struct st_tracked_state st_update_vs;
-const struct st_tracked_state st_update_setup;
-const struct st_tracked_state st_update_polygon_stipple;
-const struct st_tracked_state st_update_viewport;
-const struct st_tracked_state st_update_constants;
-const struct st_tracked_state st_update_scissor;
-const struct st_tracked_state st_update_blend;
-const struct st_tracked_state st_update_stencil;
-
-
-#endif
+const struct st_tracked_state st_update_vs = {
+   .dirty = {
+      .mesa  = 0,
+      .st   = ST_NEW_VERTEX_PROGRAM,
+   },
+   .update = update_vs
+};

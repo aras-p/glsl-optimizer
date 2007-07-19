@@ -40,6 +40,7 @@ struct st_fragment_program;
 
 #define ST_NEW_MESA                    0x1 /* Mesa state has changed */
 #define ST_NEW_FRAGMENT_PROGRAM        0x2
+#define ST_NEW_VERTEX_PROGRAM          0x4
 
 struct st_state_flags {
    GLuint mesa;

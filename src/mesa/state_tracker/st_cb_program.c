@@ -52,6 +52,7 @@ static void st_bind_program( GLcontext *ctx,
 
    switch (target) {
    case GL_VERTEX_PROGRAM_ARB: 
+      st->dirty.st |= ST_NEW_VERTEX_PROGRAM;
       break;
    case GL_FRAGMENT_PROGRAM_ARB:
       st->dirty.st |= ST_NEW_FRAGMENT_PROGRAM;
@@ -66,16 +67,23 @@ static struct gl_program *st_new_program( GLcontext *ctx,
    struct st_context *st = st_context(ctx);
 
    switch (target) {
-   case GL_VERTEX_PROGRAM_ARB:
-      return _mesa_init_vertex_program(ctx, 
-				       CALLOC_STRUCT(gl_vertex_program),
-                                       target, 
-				       id);
+   case GL_VERTEX_PROGRAM_ARB: {
+      struct st_vertex_program *prog = CALLOC_STRUCT(st_vertex_program);
+
+      prog->id = st->program_id++;
+      prog->dirty = 1;
+
+      return _mesa_init_vertex_program( ctx, 
+					&prog->Base,
+					target, 
+					id );
+   }
 
    case GL_FRAGMENT_PROGRAM_ARB: {
       struct st_fragment_program *prog = CALLOC_STRUCT(st_fragment_program);
 
       prog->id = st->program_id++;
+      prog->dirty = 1;
 
       return _mesa_init_fragment_program( ctx, 
 					  &prog->Base,
@@ -106,40 +114,25 @@ static void st_program_string_notify( GLcontext *ctx,
 				      GLenum target,
 				      struct gl_program *prog )
 {
+   struct st_context *st = st_context(ctx);
+
    if (target == GL_FRAGMENT_PROGRAM_ARB) {
-      struct st_context *st = st_context(ctx);
+      struct st_fragment_program *p = (struct st_fragment_program *)prog;
 
-      if (prog == &st->ctx->FragmentProgram._Current->Base) 
-      {
-	 struct st_fragment_program *p = 
-	    (struct st_fragment_program *) prog;
-
+      if (prog == &ctx->FragmentProgram._Current->Base)
 	 st->dirty.st |= ST_NEW_FRAGMENT_PROGRAM;
 
-	 p->id = st->program_id++;
-#if 0
-	 p->param_state = p->Base.Base.Parameters->StateFlags; 
-	 p->translated = 0;
-#endif
-
-	 /* Gack! do this in the compiler: 
-	  */
-	 if (p->Base.FogOption) {
-	    /* add extra instructions to do fog, then turn off FogOption field */
-	    _mesa_append_fog_code(ctx, &p->Base);
-	    p->Base.FogOption = GL_NONE;
-	 }
-
-         /* XXX: Not hooked-up yet. */
-	 {
-	    struct tgsi_token tokens[1024];
-
-	    tgsi_mesa_compile_fp_program( prog, tokens, 1024 );
-	    tgsi_dump( tokens, TGSI_DUMP_VERBOSE );
-	 }
-      }
+      p->id = st->program_id++;      
+      p->param_state = p->Base.Base.Parameters->StateFlags;
    }
    else if (target == GL_VERTEX_PROGRAM_ARB) {
+      struct st_vertex_program *p = (struct st_vertex_program *)prog;
+
+      if (prog == &ctx->VertexProgram._Current->Base)
+	 st->dirty.st |= ST_NEW_VERTEX_PROGRAM;
+
+      p->id = st->program_id++;      
+      p->param_state = p->Base.Base.Parameters->StateFlags;
 
       /* Also tell tnl about it:
        */
