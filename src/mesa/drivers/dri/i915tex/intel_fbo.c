@@ -299,25 +299,6 @@ intel_alloc_renderbuffer_storage(GLcontext * ctx, struct gl_renderbuffer *rb,
 }
 
 
-#if 0
-/**
- * Called for each hardware renderbuffer when a _window_ is resized.
- * Just update fields.
- * Not used for user-created renderbuffers!
- */
-static GLboolean
-intel_alloc_window_storage(GLcontext * ctx, struct gl_renderbuffer *rb,
-                           GLenum internalFormat, GLuint width, GLuint height)
-{
-   ASSERT(rb->Name == 0);
-   rb->Width = width;
-   rb->Height = height;
-   rb->_ActualFormat = internalFormat;
-
-   return GL_TRUE;
-}
-#endif
-
 static void
 intel_resize_buffers(GLcontext *ctx, struct gl_framebuffer *fb,
 		     GLuint width, GLuint height)
@@ -353,107 +334,6 @@ intel_nop_alloc_storage(GLcontext * ctx, struct gl_renderbuffer *rb,
 }
 
 
-#if 0
-/**
- * Create a new intel_renderbuffer which corresponds to an on-screen window,
- * not a user-created renderbuffer.
- * \param width  the screen width
- * \param height  the screen height
- */
-struct intel_renderbuffer *
-intel_create_renderbuffer(GLenum intFormat, GLsizei width, GLsizei height,
-                          int offset, int pitch, int cpp, void *map)
-{
-   GET_CURRENT_CONTEXT(ctx);
-
-   struct intel_renderbuffer *irb;
-   const GLuint name = 0;
-
-   irb = CALLOC_STRUCT(intel_renderbuffer);
-   if (!irb) {
-      _mesa_error(ctx, GL_OUT_OF_MEMORY, "creating renderbuffer");
-      return NULL;
-   }
-
-   _mesa_init_renderbuffer(&irb->Base, name);
-   irb->Base.ClassID = INTEL_RB_CLASS;
-
-   switch (intFormat) {
-   case GL_RGB5:
-      irb->Base._ActualFormat = GL_RGB5;
-      irb->Base._BaseFormat = GL_RGBA;
-      irb->Base.RedBits = 5;
-      irb->Base.GreenBits = 6;
-      irb->Base.BlueBits = 5;
-      irb->Base.DataType = GL_UNSIGNED_BYTE;
-      cpp = 2;
-      break;
-   case GL_RGBA8:
-      irb->Base._ActualFormat = GL_RGBA8;
-      irb->Base._BaseFormat = GL_RGBA;
-      irb->Base.RedBits = 8;
-      irb->Base.GreenBits = 8;
-      irb->Base.BlueBits = 8;
-      irb->Base.AlphaBits = 8;
-      irb->Base.DataType = GL_UNSIGNED_BYTE;
-      cpp = 4;
-      break;
-   case GL_STENCIL_INDEX8_EXT:
-      irb->Base._ActualFormat = GL_STENCIL_INDEX8_EXT;
-      irb->Base._BaseFormat = GL_STENCIL_INDEX;
-      irb->Base.StencilBits = 8;
-      irb->Base.DataType = GL_UNSIGNED_BYTE;
-      cpp = 1;
-      break;
-   case GL_DEPTH_COMPONENT16:
-      irb->Base._ActualFormat = GL_DEPTH_COMPONENT16;
-      irb->Base._BaseFormat = GL_DEPTH_COMPONENT;
-      irb->Base.DepthBits = 16;
-      irb->Base.DataType = GL_UNSIGNED_SHORT;
-      cpp = 2;
-      break;
-   case GL_DEPTH_COMPONENT24:
-      irb->Base._ActualFormat = GL_DEPTH24_STENCIL8_EXT;
-      irb->Base._BaseFormat = GL_DEPTH_COMPONENT;
-      irb->Base.DepthBits = 24;
-      irb->Base.DataType = GL_UNSIGNED_INT;
-      cpp = 4;
-      break;
-   case GL_DEPTH24_STENCIL8_EXT:
-      irb->Base._ActualFormat = GL_DEPTH24_STENCIL8_EXT;
-      irb->Base._BaseFormat = GL_DEPTH_STENCIL_EXT;
-      irb->Base.DepthBits = 24;
-      irb->Base.StencilBits = 8;
-      irb->Base.DataType = GL_UNSIGNED_INT_24_8_EXT;
-      cpp = 4;
-      break;
-   default:
-      _mesa_problem(NULL,
-                    "Unexpected intFormat in intel_create_renderbuffer");
-      return NULL;
-   }
-
-   irb->Base.InternalFormat = intFormat;
-
-   /* intel-specific methods */
-   irb->Base.Delete = intel_delete_renderbuffer;
-   irb->Base.AllocStorage = intel_alloc_window_storage;
-   irb->Base.GetPointer = intel_get_pointer;
-   /* This sets the Get/PutRow/Value functions */
-   intel_set_span_functions(&irb->Base);
-
-   irb->pfMap = map;
-   irb->pfPitch = pitch / cpp;	/* in pixels */
-
-#if 00
-   irb->region = intel_region_create_static(intel,
-                                            DRM_MM_TT,
-                                            offset, map, cpp, width, height);
-#endif
-
-   return irb;
-}
-#endif
 
 struct intel_renderbuffer *
 intel_new_renderbuffer_fb(GLuint intFormat)

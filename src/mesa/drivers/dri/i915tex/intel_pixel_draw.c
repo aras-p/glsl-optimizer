@@ -219,33 +219,33 @@ do_blit_drawpixels(GLcontext * ctx,
                    const GLvoid * pixels)
 {
    struct intel_context *intel = intel_context(ctx);
+   struct gl_framebuffer *fb = ctx->DrawBuffer;
    struct intel_renderbuffer *irbdraw;
    struct intel_region *dest;
    struct intel_buffer_object *src = intel_buffer_object(unpack->BufferObj);
    GLuint src_offset;
    GLuint rowLength;
-   GLuint height_orig = height;
    struct _DriFenceObject *fence = NULL;
 
    if (INTEL_DEBUG & DEBUG_PIXEL)
       _mesa_printf("%s\n", __FUNCTION__);
 
    if (type == GL_COLOR) {
-      irbdraw = intel_renderbuffer(ctx->DrawBuffer->_ColorDrawBuffers[0][0]);
+      irbdraw = intel_renderbuffer(fb->_ColorDrawBuffers[0][0]);
       if (!irbdraw || !irbdraw->region)
 	 return GL_FALSE;
    }
    else if (type == GL_DEPTH) {
       /* Don't think this is really possible execpt at 16bpp, when we have no stencil.
        */
-      irbdraw = intel_renderbuffer(ctx->DrawBuffer->_DepthBuffer->Wrapped);
+      irbdraw = intel_renderbuffer(fb->_DepthBuffer->Wrapped);
       if (!irbdraw || !irbdraw->region || !(irbdraw->region->cpp == 2))
 	 return GL_FALSE;
    }
    else if (type == GL_DEPTH_STENCIL_EXT) {
       /* Does it matter whether it is stencil/depth or depth/stencil?
        */
-      irbdraw = intel_renderbuffer(ctx->DrawBuffer->_DepthBuffer->Wrapped);
+      irbdraw = intel_renderbuffer(fb->_DepthBuffer->Wrapped);
       if (!irbdraw || !irbdraw->region)
 	 return GL_FALSE;
    }
@@ -331,40 +331,26 @@ do_blit_drawpixels(GLcontext * ctx,
       GLuint srcy = 0;
       GLint dx = dstx;
       GLint dy = dsty;
+      GLuint height_orig = height;
 
-      /* Do scissoring in GL coordinates:
+      /* Do scissoring and clipping in GL coordinates, no need to clip against
+       * pbo src region (note fbo fields include scissor already):
        */
-      if (ctx->Scissor.Enabled)
-      {
-	 GLint x = ctx->Scissor.X;
-	 GLint y = ctx->Scissor.Y;
-	 GLuint w = ctx->Scissor.Width;
-	 GLuint h = ctx->Scissor.Height;
-	 height_orig = height;
+      height_orig = height;
+      if (!_mesa_clip_to_region(fb->_Xmin, fb->_Ymin,
+				fb->_Xmax - 1, fb->_Ymax - 1,
+				&dstx, &dsty, &width, &height))
+         goto out;
 
-
-         if (!_mesa_clip_to_region(x, y, x+w-1, y+h-1, &dstx, &dsty, &width, &height))
-            goto out;
-
-      }
-
-      /* no need to clip against pbo src region, but clip against dest */
-      {
-         if (!_mesa_clip_to_region(0, 0, irbdraw->Base.Width - 1,
-				   irbdraw->Base.Height - 1,
-				   &dstx, &dsty, &width, &height))
-            goto out;
-
-         srcx = dstx - dx;
-         srcy = dsty - dy;
-      }
+      srcx = dstx - dx;
+      srcy = dsty - dy;
 
       struct _DriBufferObject *src_buffer =
          intel_bufferobj_buffer(intel, src, INTEL_READ);
 
       /* Convert from GL to hardware coordinates:
        */
-      dsty = irbdraw->Base.Height - dsty - height;
+      dsty = fb->Height - dsty - height;
       srcy = height_orig - srcy - height;
 
       {

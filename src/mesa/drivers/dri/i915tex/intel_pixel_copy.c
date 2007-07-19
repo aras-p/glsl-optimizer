@@ -234,6 +234,8 @@ do_blit_copypixels(GLcontext * ctx,
                    GLint dstx, GLint dsty, GLenum type)
 {
    struct intel_context *intel = intel_context(ctx);
+   struct gl_framebuffer *fb = ctx->DrawBuffer;
+   struct gl_framebuffer *fbread = ctx->ReadBuffer;
    struct intel_renderbuffer *irbread;
    struct intel_renderbuffer *irbdraw;
    struct intel_region *dst;
@@ -249,16 +251,16 @@ do_blit_copypixels(GLcontext * ctx,
    intelFlush(&intel->ctx);
 
    if (type == GL_COLOR) {
-      irbread = intel_renderbuffer(ctx->ReadBuffer->_ColorReadBuffer);
-      irbdraw = intel_renderbuffer(ctx->DrawBuffer->_ColorDrawBuffers[0][0]);
+      irbread = intel_renderbuffer(fbread->_ColorReadBuffer);
+      irbdraw = intel_renderbuffer(fb->_ColorDrawBuffers[0][0]);
       if (!irbread || !irbread->region || !irbdraw || !irbdraw->region)
 	 return GL_FALSE;
    }
    else if (type == GL_DEPTH) {
       /* Don't think this is really possible execpt at 16bpp, when we have no stencil.
        */
-      irbread = intel_renderbuffer(ctx->ReadBuffer->_DepthBuffer->Wrapped);
-      irbdraw = intel_renderbuffer(ctx->DrawBuffer->_DepthBuffer->Wrapped);
+      irbread = intel_renderbuffer(fbread->_DepthBuffer->Wrapped);
+      irbdraw = intel_renderbuffer(fb->_DepthBuffer->Wrapped);
       if (!irbread || !irbread->region || !irbdraw || !irbdraw->region
 	 || !(irbread->region->cpp == 2))
 	 return GL_FALSE;
@@ -266,8 +268,8 @@ do_blit_copypixels(GLcontext * ctx,
    else if (type == GL_DEPTH_STENCIL_EXT) {
       /* Does it matter whether it is stencil/depth or depth/stencil?
        */
-      irbread = intel_renderbuffer(ctx->ReadBuffer->_DepthBuffer->Wrapped);
-      irbdraw = intel_renderbuffer(ctx->DrawBuffer->_DepthBuffer->Wrapped);
+      irbread = intel_renderbuffer(fbread->_DepthBuffer->Wrapped);
+      irbdraw = intel_renderbuffer(fb->_DepthBuffer->Wrapped);
       if (!irbread || !irbread->region || !irbdraw || !irbdraw->region)
 	 return GL_FALSE;
    }
@@ -281,61 +283,38 @@ do_blit_copypixels(GLcontext * ctx,
    dst = irbdraw->region;
 
    {
-      GLint delta_x = 0;
-      GLint delta_y = 0;
+      GLint dx = dstx - srcx;
+      GLint dy = dsty - srcy;
 
-      /* Do scissoring in GL coordinates:
+      /* Clip against dest, including scissor, in GL coordinates:
        */
-      if (ctx->Scissor.Enabled)
-      {
-	 GLint x = ctx->Scissor.X;
-	 GLint y = ctx->Scissor.Y;
-	 GLuint w = ctx->Scissor.Width;
-	 GLuint h = ctx->Scissor.Height;
-	 GLint dx = dstx - srcx;
-         GLint dy = dsty - srcy;
 
-         if (!_mesa_clip_to_region(x, y, x+w-1, y+h-1, &dstx, &dsty, &width, &height))
-            goto out;
+      if (!_mesa_clip_to_region(fb->_Xmin, fb->_Ymin,
+			        fb->_Xmax - 1, fb->_Ymax - 1,
+				&dstx, &dsty, &width, &height))
+         goto out;
 
-         srcx = dstx - dx;
-         srcy = dsty - dy;
-      }
+      srcx = dstx - dx;
+      srcy = dsty - dy;
 
       /* Convert from GL to hardware coordinates:
        */
-      dsty = irbdraw->Base.Height - dsty - height;
-      srcy = irbread->Base.Height - srcy - height;
+      dsty = fb->Height - dsty - height;
+      srcy = fbread->Height - srcy - height;
 
       /* Clip against the source region:
        */
-      {
-         delta_x = srcx - dstx;
-         delta_y = srcy - dsty;
+      dx = srcx - dstx;
+      dy = srcy - dsty;
 
-         if (!_mesa_clip_to_region(0, 0, irbread->Base.Width - 1,
-				   irbread->Base.Height - 1,
-				   &srcx, &srcy, &width, &height))
-            goto out;
+      if (!_mesa_clip_to_region(0, 0, irbread->Base.Width - 1,
+				irbread->Base.Height - 1,
+				&srcx, &srcy, &width, &height))
+         goto out;
 
-         dstx = srcx - delta_x;
-         dsty = srcy - delta_y;
-      }
+      dstx = srcx - dx;
+      dsty = srcy - dy;
 
-      /* Clip against the dest region:
-       */
-      {
-         delta_x = dstx - srcx;
-         delta_y = dsty - srcy;
-
-         if (!_mesa_clip_to_region(0, 0, irbdraw->Base.Width - 1,
-				   irbdraw->Base.Height - 1,
-				   &dstx, &dsty, &width, &height))
-            goto out;
-
-         srcx = dstx - delta_x;
-         srcy = dsty - delta_y;
-      }
 
       {
 

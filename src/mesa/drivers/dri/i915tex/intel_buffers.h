@@ -52,10 +52,4 @@ extern void intel_draw_buffer(GLcontext * ctx, struct gl_framebuffer *fb);
 
 extern void intelInitBufferFuncs(struct dd_function_table *functions);
 
-#if 0
-extern void
-intelRotateWindow(struct intel_context *intel,
-                  __DRIdrawablePrivate * dPriv, GLuint srcBuf);
-#endif
-
 #endif /* INTEL_BUFFERS_H */

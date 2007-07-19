@@ -296,17 +296,7 @@ intelCheckFrontUpdate(GLcontext * ctx)
    if (intel->ctx.DrawBuffer->_ColorDrawBufferMask[0] ==
        BUFFER_BIT_FRONT_LEFT) {
       __DRIdrawablePrivate *dPriv = intel->driDrawable;
-#if 0
-      intelScreenPrivate *screen = intel->intelScreen;
-      if (screen->current_rotation != 0) {
-         intelRotateWindow(intel, dPriv, BUFFER_BIT_FRONT_LEFT);
-      }
-      else {
-         intelCopyBuffer(dPriv, NULL);
-      }
-#else
       intelCopyBuffer(dPriv, NULL);
-#endif
    }
 }
 
@@ -570,6 +560,8 @@ GLboolean
 intelUnbindContext(__DRIcontextPrivate * driContextPriv)
 {
    struct intel_context *intel = (struct intel_context *) driContextPriv->driverPrivate;
+   /* XXX UnbindContext is called AFTER the new context is made current.
+      Hopefully shouldn't be a problem ? */
    FLUSH_VERTICES((&intel->ctx), 0);
    intelFlush(&intel->ctx);
    return GL_TRUE;
