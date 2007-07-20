@@ -118,7 +118,7 @@ intel_recreate_static(intelScreenPrivate *intelScreen,
  * Only used for real front buffer now.
  *
  * Note that these don't allocate video memory, just describe
- * allocations alread made by the X server.
+ * allocations already made by the X server.
  */
 static void
 intel_recreate_static_regions(intelScreenPrivate *intelScreen)
@@ -222,7 +222,7 @@ intelUpdateScreenFromSAREA(intelScreenPrivate * intelScreen,
    intelScreen->front.handle = sarea->front_handle;
    intelScreen->front.size = sarea->front_size;
 
-   if (1)
+   if (0)
       intelPrintSAREA(sarea);
 }
 

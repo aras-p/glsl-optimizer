@@ -703,8 +703,7 @@ intelContendedLock(struct intel_context *intel, GLuint flags)
 }
 
 
-
-/* Lock the hardware and validate our state.  
+/* Lock the hardware and validate our state.
  */
 void LOCK_HARDWARE( struct intel_context *intel )
 {

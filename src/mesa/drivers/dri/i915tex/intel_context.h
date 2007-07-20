@@ -335,7 +335,7 @@ __memcpy(void *to, const void *from, size_t n)
 /* ================================================================
  * Debugging:
  */
-#define DO_DEBUG		1
+#define DO_DEBUG		0
 #if DO_DEBUG
 extern int INTEL_DEBUG;
 #else

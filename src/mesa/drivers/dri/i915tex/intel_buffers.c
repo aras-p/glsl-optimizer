@@ -645,7 +645,7 @@ intelScheduleSwap(const __DRIdrawablePrivate * dPriv, GLboolean *missed_target)
 
    return ret;
 }
-  
+
 void
 intelSwapBuffers(__DRIdrawablePrivate * dPriv)
 {

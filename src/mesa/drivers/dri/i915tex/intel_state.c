@@ -194,7 +194,7 @@ intelClearColor(GLcontext * ctx, const GLfloat color[4])
  * Update the viewport transformation matrix.  Depends on:
  *  - viewport pos/size
  *  - depthrange
- *  - window pos/size or FBO size
+ *  - window size or FBO size
  */
 static void
 intelCalcViewport(GLcontext * ctx)
