@@ -496,7 +496,6 @@ set_color_output(GLcontext *ctx, GLuint output, GLenum buffer,
  * \param destMask  array[n] of BUFFER_* bitmasks which correspond to the
  *                  colorbuffer names.  (i.e. GL_FRONT_AND_BACK =>
  *                  BUFFER_BIT_FRONT_LEFT | BUFFER_BIT_BACK_LEFT).
- * \param callDriver call driver or not (bad idea sometimes this is called)
  */
 void
 _mesa_drawbuffers(GLcontext *ctx, GLuint n, const GLenum *buffers,
@@ -574,7 +573,6 @@ _mesa_readbuffer_update_fields(GLcontext *ctx, GLenum buffer)
 /**
  * Called by glReadBuffer to set the source renderbuffer for reading pixels.
  * \param mode color buffer such as GL_FRONT, GL_BACK, etc.
- * \param callDriver call driver or not (bad idea sometimes this is called)
  */
 void GLAPIENTRY
 _mesa_ReadBuffer(GLenum buffer)
