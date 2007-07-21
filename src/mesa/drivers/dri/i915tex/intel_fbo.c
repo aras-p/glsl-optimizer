@@ -350,6 +350,21 @@ intel_new_renderbuffer_fb(GLuint intFormat)
    irb->Base.ClassID = INTEL_RB_CLASS;
    irb->Base.InternalFormat = intFormat;
 
+   switch (intFormat) {
+   case GL_RGB5:
+   case GL_RGBA8:
+      irb->Base._BaseFormat = GL_RGBA;
+      break;
+   case GL_DEPTH_COMPONENT16:
+      irb->Base._BaseFormat = GL_DEPTH_COMPONENT;
+      break;
+   case GL_DEPTH24_STENCIL8_EXT:
+      irb->Base._BaseFormat = GL_DEPTH_STENCIL_EXT;
+      break;
+   default:
+      assert(0);
+   }
+
    /* intel-specific methods */
    irb->Base.Delete = intel_delete_renderbuffer;
    irb->Base.AllocStorage = intel_alloc_renderbuffer_storage;
