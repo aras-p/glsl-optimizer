@@ -288,17 +288,6 @@ MAIN_FILES = \
 	$(DIRECTORY)/vms/analyze_map.com				\
 	$(DIRECTORY)/vms/xlib.opt					\
 	$(DIRECTORY)/vms/xlib_share.opt					\
-	$(DIRECTORY)/windows/VC6/mesa/gdi/gdi.dsp			\
-	$(DIRECTORY)/windows/VC6/mesa/glu/*.txt				\
-	$(DIRECTORY)/windows/VC6/mesa/glu/glu.dsp			\
-	$(DIRECTORY)/windows/VC6/mesa/mesa.dsw				\
-	$(DIRECTORY)/windows/VC6/mesa/mesa/mesa.dsp			\
-	$(DIRECTORY)/windows/VC6/mesa/osmesa/osmesa.dsp			\
-	$(DIRECTORY)/windows/VC7/mesa/gdi/gdi.vcproj			\
-	$(DIRECTORY)/windows/VC7/mesa/glu/glu.vcproj			\
-	$(DIRECTORY)/windows/VC7/mesa/mesa.sln				\
-	$(DIRECTORY)/windows/VC7/mesa/mesa/mesa.vcproj			\
-	$(DIRECTORY)/windows/VC7/mesa/osmesa/osmesa.vcproj		\
 	$(DIRECTORY)/windows/VC8/mesa/mesa.sln				\
 	$(DIRECTORY)/windows/VC8/mesa/gdi/gdi.vcproj			\
 	$(DIRECTORY)/windows/VC8/mesa/glu/glu.vcproj			\
