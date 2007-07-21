@@ -317,6 +317,7 @@ SGI_GLU_FILES = \
 	$(DIRECTORY)/src/glu/Makefile					\
 	$(DIRECTORY)/src/glu/descrip.mms				\
 	$(DIRECTORY)/src/glu/sgi/Makefile				\
+	$(DIRECTORY)/src/glu/sgi/Makefile.mgw				\
 	$(DIRECTORY)/src/glu/sgi/Makefile.win				\
 	$(DIRECTORY)/src/glu/sgi/Makefile.DJ				\
 	$(DIRECTORY)/src/glu/sgi/glu.def				\

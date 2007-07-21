@@ -6,6 +6,7 @@
 #include "wmesadef.h"
 #include "colors.h"
 #include <GL/wmesa.h>
+#include <winuser.h>
 #include "context.h"
 #include "extensions.h"
 #include "framebuffer.h"
@@ -114,7 +115,7 @@ static void wmSetPixelFormat(WMesaFramebuffer pwfb, HDC hDC)
 {
     pwfb->cColorBits = GetDeviceCaps(hDC, BITSPIXEL);
 
-    // Only 16 and 32 bit targets are supported now
+    /* Only 16 and 32 bit targets are supported now */
     assert(pwfb->cColorBits == 0 ||
 	   pwfb->cColorBits == 16 || 
 	   pwfb->cColorBits == 32);
@@ -1171,7 +1172,7 @@ WMesaContext WMesaCreateContext(HDC hDC,
     /* I do not understand this contributed code */
     /* Support memory and device contexts */
     if(WindowFromDC(hDC) != NULL) {
-	c->hDC = GetDC(WindowFromDC(hDC)); // huh ????
+	c->hDC = GetDC(WindowFromDC(hDC)); /* huh ???? */
     }
     else {
 	c->hDC = hDC;
@@ -1404,6 +1405,7 @@ void WMesaSwapBuffers( HDC hdc )
  * table entries.  Hopefully, I'll find a better solution.  The
  * dispatch table generation scripts ought to be making these dummy
  * stubs as well. */
+#if !defined(__MINGW32__) || !defined(GL_NO_STDCALL)
 void gl_dispatch_stub_543(void){}
 void gl_dispatch_stub_544(void){}
 void gl_dispatch_stub_545(void){}
@@ -1471,3 +1473,4 @@ void gl_dispatch_stub_769(void){}
 void gl_dispatch_stub_770(void){}
 void gl_dispatch_stub_771(void){}
 
+#endif

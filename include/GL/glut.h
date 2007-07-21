@@ -10,6 +10,10 @@
 #include <GL/gl.h>
 #include <GL/glu.h>
 
+#if defined(__MINGW32__)
+#include <GL/mesa_wgl.h>
+#endif
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -108,7 +112,7 @@ extern _CRTIMP void __cdecl exit(int);
    and redifinition of Windows system defs, also removes requirement of
    pretty much any standard windows header from this file */
 
-#if (_MSC_VER >= 800) || defined(__MINGW32__) || defined(_STDCALL_SUPPORTED) || defined(__CYGWIN32__)
+#if (_MSC_VER >= 800) || defined(_STDCALL_SUPPORTED) || defined(__CYGWIN32__)
 #	define GLUTAPIENTRY __stdcall
 #else
 #	define GLUTAPIENTRY
@@ -130,8 +134,9 @@ extern _CRTIMP void __cdecl exit(int);
 #		pragma message( "----: being multiply defined you should include WINDOWS.H priot to gl/glut.h" )
 #	endif
 #	define CALLBACK __stdcall
-typedef int (GLUTAPIENTRY *PROC)();
+
 #if !defined(__MINGW32__)
+	typedef int (GLUTAPIENTRY *PROC)();
 	typedef void *HGLRC;
 	typedef void *HDC;
 #endif

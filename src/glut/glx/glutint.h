@@ -26,7 +26,10 @@
 #include <GL/glx.h>
 #endif
 
+#ifndef GLUT_BUILDING_LIB
 #define GLUT_BUILDING_LIB  /* Building the GLUT library itself. */
+#endif
+
 #include <GL/glut.h>
 
 #if defined(MESA) && defined(_WIN32) && !defined(__CYGWIN32__)

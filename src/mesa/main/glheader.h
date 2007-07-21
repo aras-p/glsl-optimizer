@@ -92,7 +92,7 @@
 #endif
 
 #ifdef WGLAPI
-#undef WGLAPI
+#	undef WGLAPI
 #endif
 
 #if !defined(OPENSTEP) && (defined(__WIN32__) && !defined(__CYGWIN__)) && !defined(BUILD_FOR_SNAP)
