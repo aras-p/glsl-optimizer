@@ -733,8 +733,8 @@ static void r300Fogfv(GLcontext * ctx, GLenum pname, const GLfloat * param)
 static void r300PointSize(GLcontext * ctx, GLfloat size)
 {
 	r300ContextPtr r300 = R300_CONTEXT(ctx);
-
-	size = ctx->Point._Size;
+        /* same size limits for AA, non-AA points */
+	size = CLAMP(size, ctx->Const.MinPointSize, ctx->Const.MaxPointSize);
 
 	R300_STATECHANGE(r300, ps);
 	r300->hw.ps.cmd[R300_PS_POINTSIZE] =
@@ -749,8 +749,9 @@ static void r300LineWidth(GLcontext * ctx, GLfloat widthf)
 {
 	r300ContextPtr r300 = R300_CONTEXT(ctx);
 
-	widthf = ctx->Line._Width;
-
+	widthf = CLAMP(widthf,
+                       ctx->Const.MinPointSize,
+                       ctx->Const.MaxPointSize);
 	R300_STATECHANGE(r300, lcntl);
 	r300->hw.lcntl.cmd[1] =
 	    R300_LINE_CNT_HO | R300_LINE_CNT_VE | (int)(widthf * 6.0);

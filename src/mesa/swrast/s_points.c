@@ -76,7 +76,7 @@ sprite_point(GLcontext *ctx, const SWvertex *vert)
    }
    else {
       /* use constant point size */
-      size = ctx->Point._Size; /* already clamped to user range */
+      size = ctx->Point.Size;
    }
    /* clamp to non-AA implementation limits */
    size = CLAMP(size, ctx->Const.MinPointSize, ctx->Const.MaxPointSize);
@@ -227,7 +227,7 @@ smooth_point(GLcontext *ctx, const SWvertex *vert)
    }
    else {
       /* use constant point size */
-      size = ctx->Point._Size; /* this is already clamped */
+      size = ctx->Point.Size;
    }
    /* clamp to AA implementation limits */
    size = CLAMP(size, ctx->Const.MinPointSizeAA, ctx->Const.MaxPointSizeAA);
@@ -361,7 +361,7 @@ large_point(GLcontext *ctx, const SWvertex *vert)
    }
    else {
       /* use constant point size */
-      size = ctx->Point._Size; /* already clamped to user range */
+      size = ctx->Point.Size;
    }
    /* clamp to non-AA implementation limits */
    size = CLAMP(size, ctx->Const.MinPointSize, ctx->Const.MaxPointSize);
@@ -550,7 +550,7 @@ _swrast_choose_point(GLcontext *ctx)
       else if (ctx->Point.SmoothFlag) {
          swrast->Point = smooth_point;
       }
-      else if (ctx->Point._Size > 1.0 ||
+      else if (ctx->Point.Size > 1.0 ||
                ctx->Point._Attenuated ||
                ctx->VertexProgram.PointSizeEnabled) {
          swrast->Point = large_point;

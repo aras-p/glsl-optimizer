@@ -1068,7 +1068,7 @@ update_tricaps(GLcontext *ctx, GLbitfield new_state)
    if (1/*new_state & _NEW_POINT*/) {
       if (ctx->Point.SmoothFlag)
          ctx->_TriangleCaps |= DD_POINT_SMOOTH;
-      if (ctx->Point._Size != 1.0F)
+      if (ctx->Point.Size != 1.0F)
          ctx->_TriangleCaps |= DD_POINT_SIZE;
       if (ctx->Point._Attenuated)
          ctx->_TriangleCaps |= DD_POINT_ATTEN;
@@ -1082,7 +1082,7 @@ update_tricaps(GLcontext *ctx, GLbitfield new_state)
          ctx->_TriangleCaps |= DD_LINE_SMOOTH;
       if (ctx->Line.StippleFlag)
          ctx->_TriangleCaps |= DD_LINE_STIPPLE;
-      if (ctx->Line._Width != 1.0)
+      if (ctx->Line.Width != 1.0)
          ctx->_TriangleCaps |= DD_LINE_WIDTH;
    }
 

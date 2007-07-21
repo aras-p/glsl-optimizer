@@ -57,10 +57,6 @@ _mesa_PointSize( GLfloat size )
 
    FLUSH_VERTICES(ctx, _NEW_POINT);
    ctx->Point.Size = size;
-   /* XXX correct clamp limits? */
-   ctx->Point._Size = CLAMP(ctx->Point.Size,
-			    ctx->Point.MinSize,
-			    ctx->Point.MaxSize);
 
    if (ctx->Driver.PointSize)
       ctx->Driver.PointSize(ctx, size);
@@ -253,7 +249,6 @@ _mesa_init_point(GLcontext *ctx)
 
    ctx->Point.SmoothFlag = GL_FALSE;
    ctx->Point.Size = 1.0;
-   ctx->Point._Size = 1.0;
    ctx->Point.Params[0] = 1.0;
    ctx->Point.Params[1] = 0.0;
    ctx->Point.Params[2] = 0.0;

@@ -917,7 +917,6 @@ struct gl_line_attrib
    GLushort StipplePattern;	/**< Stipple pattern */
    GLint StippleFactor;		/**< Stipple repeat factor */
    GLfloat Width;		/**< Line width */
-   GLfloat _Width;		/**< Clamped Line width */
 };
 
 
@@ -1063,7 +1062,6 @@ struct gl_point_attrib
 {
    GLboolean SmoothFlag;	/**< True if GL_POINT_SMOOTH is enabled */
    GLfloat Size;		/**< User-specified point size */
-   GLfloat _Size;		/**< Size clamped to Const.Min/MaxPointSize */
    GLfloat Params[3];		/**< GL_EXT_point_parameters */
    GLfloat MinSize, MaxSize;	/**< GL_EXT_point_parameters */
    GLfloat Threshold;		/**< GL_EXT_point_parameters */

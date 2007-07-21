@@ -63,11 +63,12 @@ compute_stipple_mask( GLcontext *ctx, GLuint len, GLubyte mask[] )
 static void
 draw_wide_line( GLcontext *ctx, SWspan *span, GLboolean xMajor )
 {
-   GLint width, start;
+   const GLint width = (GLint) CLAMP(ctx->Line.Width,
+                                     ctx->Const.MinLineWidth,
+                                     ctx->Const.MaxLineWidth);
+   GLint start;
 
    ASSERT(span->end < MAX_WIDTH);
-
-   width = (GLint) CLAMP( ctx->Line._Width, MIN_LINE_WIDTH, MAX_LINE_WIDTH );
 
    if (width & 1)
       start = width / 2;
@@ -143,7 +144,7 @@ draw_wide_line( GLcontext *ctx, SWspan *span, GLboolean xMajor )
       span.arrayMask |= SPAN_MASK;				\
       compute_stipple_mask(ctx, span.end, span.array->mask);    \
    }								\
-   if (ctx->Line._Width > 1.0) {				\
+   if (ctx->Line.Width > 1.0) {					\
       draw_wide_line(ctx, &span, (GLboolean)(dx > dy));		\
    }								\
    else {							\
@@ -161,7 +162,7 @@ draw_wide_line( GLcontext *ctx, SWspan *span, GLboolean xMajor )
       span.arrayMask |= SPAN_MASK;				\
       compute_stipple_mask(ctx, span.end, span.array->mask);	\
    }								\
-   if (ctx->Line._Width > 1.0) {				\
+   if (ctx->Line.Width > 1.0) {					\
       draw_wide_line(ctx, &span, (GLboolean)(dx > dy));		\
    }								\
    else {							\
@@ -180,7 +181,7 @@ draw_wide_line( GLcontext *ctx, SWspan *span, GLboolean xMajor )
       span.arrayMask |= SPAN_MASK;				\
       compute_stipple_mask(ctx, span.end, span.array->mask);	\
    }								\
-   if (ctx->Line._Width > 1.0) {				\
+   if (ctx->Line.Width > 1.0) {					\
       draw_wide_line(ctx, &span, (GLboolean)(dx > dy));		\
    }								\
    else {							\
@@ -274,7 +275,7 @@ _swrast_choose_line( GLcontext *ctx )
          USE(general_line);
       }
       else if (ctx->Depth.Test
-               || ctx->Line._Width != 1.0
+               || ctx->Line.Width != 1.0
                || ctx->Line.StippleFlag) {
          /* no texture, but Z, fog, width>1, stipple, etc. */
          if (rgbmode)
@@ -284,6 +285,7 @@ _swrast_choose_line( GLcontext *ctx )
       }
       else {
          ASSERT(!ctx->Depth.Test);
+         ASSERT(ctx->Line.Width == 1.0);
          /* simple lines */
          if (rgbmode)
             USE(simple_no_z_rgba_line);

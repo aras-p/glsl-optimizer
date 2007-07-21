@@ -132,7 +132,9 @@ NAME(line)(GLcontext *ctx, const SWvertex *v0, const SWvertex *v1)
    line.dx = line.x1 - line.x0;
    line.dy = line.y1 - line.y0;
    line.len = SQRTF(line.dx * line.dx + line.dy * line.dy);
-   line.halfWidth = 0.5F * ctx->Line._Width;
+   line.halfWidth = 0.5F * CLAMP(ctx->Line.Width,
+                                 ctx->Const.MinLineWidthAA,
+                                 ctx->Const.MaxLineWidthAA);
 
    if (line.len == 0.0 || IS_INF_OR_NAN(line.len))
       return;
