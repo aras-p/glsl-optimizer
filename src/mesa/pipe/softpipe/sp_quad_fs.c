@@ -37,6 +37,7 @@
 #include "sp_context.h"
 #include "sp_headers.h"
 #include "sp_quad.h"
+#include "core/tgsi_core.h"
 
 struct exec_machine {
    const struct setup_coefficient *coef; /**< will point to quad->coef */
@@ -180,8 +181,47 @@ shade_quad( struct quad_stage *qs, struct quad_header *quad )
 #endif
    }
 
-#if 0
-   softpipe->run_fs( tri->fp, quad, &tri->outputs );
+#if 1
+   /*softpipe->run_fs( tri->fp, quad, &tri->outputs );*/
+
+   {
+      struct tgsi_exec_machine machine;
+      struct tgsi_exec_vector inputs[FRAG_ATTRIB_MAX + 1];
+      struct tgsi_exec_vector outputs[FRAG_ATTRIB_MAX + 1];
+      struct tgsi_exec_vector *ainputs;
+      struct tgsi_exec_vector *aoutputs;
+      GLuint i, total;
+
+      ainputs = (struct tgsi_exec_vector *) tgsi_align_128bit( inputs );
+      aoutputs = (struct tgsi_exec_vector *) tgsi_align_128bit( outputs );
+
+      for( i = total = 0; i < PIPE_ATTRIB_MAX; i++ ) {
+         GLuint attr;
+
+         attr = softpipe->fp_attr_to_slot[i];
+         if( attr ) {
+            assert( total < FRAG_ATTRIB_MAX );
+            assert( attr < FRAG_ATTRIB_MAX );
+            assert( sizeof( ainputs[0] ) == sizeof( exec.attr[0] ) );
+
+            memcpy(
+               &ainputs[total],
+               exec.attr[attr],
+               sizeof( ainputs[0] ) );
+            total++;
+         }
+      }
+
+      tgsi_exec_machine_init(
+         &machine,
+         softpipe->fs.tokens );
+
+      machine.Inputs = ainputs;
+      machine.Outputs = aoutputs;
+
+      tgsi_exec_machine_run(
+         &machine );
+   }
 #else
    {
       GLuint attr = softpipe->fp_attr_to_slot[FRAG_ATTRIB_COL0];
