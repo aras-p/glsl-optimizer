@@ -129,7 +129,7 @@ struct pipe_constant_buffer {
 
 
 struct pipe_fs_state {
-   GLuint inputs_read;		/* FRAG_ATTRIB_* */
+   GLbitfield inputs_read;		/* FRAG_ATTRIB_* */
    const struct tgsi_token *tokens;
    struct pipe_constant_buffer *constants; /* XXX temporary? */
 };
