@@ -60,6 +60,14 @@ static const GLuint frag_to_vf[FRAG_ATTRIB_MAX] =
    VF_ATTRIB_TEX5,
    VF_ATTRIB_TEX6,
    VF_ATTRIB_TEX7,
+   VF_ATTRIB_VAR0,
+   VF_ATTRIB_VAR1,
+   VF_ATTRIB_VAR2,
+   VF_ATTRIB_VAR3,
+   VF_ATTRIB_VAR4,
+   VF_ATTRIB_VAR5,
+   VF_ATTRIB_VAR6,
+   VF_ATTRIB_VAR7,
 };
 
 
@@ -109,6 +117,7 @@ static void calculate_vertex_layout( struct softpipe_context *softpipe )
     */
    for (i = 1; i < FRAG_ATTRIB_TEX0; i++) {
       if (inputsRead & (1 << i)) {
+         assert(i < sizeof(frag_to_vf) / sizeof(frag_to_vf[0]));
          if (softpipe->setup.flatshade
              && (i == FRAG_ATTRIB_COL0 || i == FRAG_ATTRIB_COL1))
             EMIT_ATTR(frag_to_vf[i], i, INTERP_CONSTANT);
@@ -119,6 +128,7 @@ static void calculate_vertex_layout( struct softpipe_context *softpipe )
 
    for (i = FRAG_ATTRIB_TEX0; i < FRAG_ATTRIB_MAX; i++) {
       if (inputsRead & (1 << i)) {
+         assert(i < sizeof(frag_to_vf) / sizeof(frag_to_vf[0]));
          EMIT_ATTR(frag_to_vf[i], i, INTERP_PERSPECTIVE);
          softpipe->need_w = GL_TRUE;
       }
