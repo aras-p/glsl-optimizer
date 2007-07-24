@@ -190,16 +190,21 @@ shade_quad( struct quad_stage *qs, struct quad_header *quad )
       struct tgsi_exec_vector outputs[FRAG_ATTRIB_MAX + 1];
       struct tgsi_exec_vector *ainputs;
       struct tgsi_exec_vector *aoutputs;
-      GLuint i, total;
+      GLuint i /*, total*/;
+
+#ifdef DEBUG
+      memset(&machine, 0, sizeof(machine));
+#endif
 
       ainputs = (struct tgsi_exec_vector *) tgsi_align_128bit( inputs );
       aoutputs = (struct tgsi_exec_vector *) tgsi_align_128bit( outputs );
 
+#if 0
       for( i = total = 0; i < PIPE_ATTRIB_MAX; i++ ) {
          GLuint attr;
 
          attr = softpipe->fp_attr_to_slot[i];
-         if( attr ) {
+         if( attr || total == 0) {
             assert( total < FRAG_ATTRIB_MAX );
             assert( attr < FRAG_ATTRIB_MAX );
             assert( sizeof( ainputs[0] ) == sizeof( exec.attr[0] ) );
@@ -211,16 +216,33 @@ shade_quad( struct quad_stage *qs, struct quad_header *quad )
             total++;
          }
       }
+#else
+      /* load input registers */
+      /* XXX simpler than above, but might not be right... */
+      for (i = 0; i < softpipe->nr_attrs; i++) {
+         memcpy(
+                &ainputs[i],
+                exec.attr[i],
+                sizeof( ainputs[0] ) );
+      }
+#endif
 
+      /* init machine state */
       tgsi_exec_machine_init(
          &machine,
          softpipe->fs.tokens );
 
       machine.Inputs = ainputs;
       machine.Outputs = aoutputs;
+      machine.Consts = softpipe->fs.constants->constant; /* XXX alignment? */
 
-      tgsi_exec_machine_run(
-         &machine );
+      /* run shader */
+      tgsi_exec_machine_run( &machine );
+
+      /* store result color */
+      memcpy(quad->outputs.color,
+             &aoutputs[FRAG_ATTRIB_COL0].xyzw[0].f[0],
+             sizeof(quad->outputs.color));
    }
 #else
    {

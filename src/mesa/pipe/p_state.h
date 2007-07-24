@@ -122,17 +122,17 @@ struct pipe_clip_state {
 };
 
 
-struct pipe_fs_state {
-   GLuint inputs_read;		/* FRAG_ATTRIB_* */
-   const struct tgsi_token *tokens;
-   
-};
-
 struct pipe_constant_buffer {
    GLfloat constant[PIPE_MAX_CONSTANT][4];
    GLuint nr_constants;
 };
 
+
+struct pipe_fs_state {
+   GLuint inputs_read;		/* FRAG_ATTRIB_* */
+   const struct tgsi_token *tokens;
+   struct pipe_constant_buffer *constants; /* XXX temporary? */
+};
 
 struct pipe_depth_state
 {

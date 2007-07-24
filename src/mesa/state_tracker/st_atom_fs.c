@@ -29,6 +29,7 @@
   *   Keith Whitwell <keith@tungstengraphics.com>
   */
                    
+#include "shader/prog_parameter.h"
 #include "st_context.h"
 #include "pipe/p_context.h"
 #include "st_atom.h"
@@ -50,23 +51,37 @@ static void compile_fs( struct st_context *st,
 static void update_fs( struct st_context *st )
 {
    struct pipe_fs_state fs;
-   struct st_fragment_program *fp;
+   struct st_fragment_program *fp = NULL;
+   struct gl_program_parameter_list *params = NULL;
 
    if (st->ctx->Shader.CurrentProgram &&
-       st->ctx->Shader.CurrentProgram->LinkStatus) {
-      fp = st_fragment_program(st->ctx->Shader.CurrentProgram->FragmentProgram);
+       st->ctx->Shader.CurrentProgram->LinkStatus &&
+       st->ctx->Shader.CurrentProgram->FragmentProgram) {
+      struct gl_fragment_program *f
+         = st->ctx->Shader.CurrentProgram->FragmentProgram;
+      fp = st_fragment_program(f);
+      params = f->Base.Parameters;
    }
    else if (st->ctx->FragmentProgram._Current) {
       fp = st_fragment_program(st->ctx->FragmentProgram._Current);
+      params = st->ctx->FragmentProgram._Current->Base.Parameters;
    }
 
-   memset( &fs, 0, sizeof(fs) );
+   if (fp && params) {
+      /* load program's constants array */
+      fp->constants.nr_constants = params->NumParameters;
+      memcpy(fp->constants.constant, 
+             params->ParameterValues,
+             params->NumParameters * sizeof(GLfloat) * 4);
+   }
 
    if (fp->dirty)
       compile_fs( st, fp );
-   
+
+   memset( &fs, 0, sizeof(fs) );
    fs.inputs_read = fp->Base.Base.InputsRead;
    fs.tokens = &fp->tokens[0];
+   fs.constants = &fp->constants;
    
    if (memcmp(&fs, &st->state.fs, sizeof(fs)) != 0 ||
        fp->dirty) 

@@ -53,6 +53,7 @@ struct st_fragment_program
    struct tgsi_token tokens[ST_FP_MAX_TOKENS];
    GLboolean dirty;
    
+   struct pipe_constant_buffer constants;
 
 #if 0   
    GLfloat (*cbuffer)[4];
