@@ -16,7 +16,7 @@ map_register_file(
    //case PROGRAM_LOCAL_PARAM:
    //case PROGRAM_ENV_PARAM:
    case PROGRAM_STATE_VAR:
-   //case PROGRAM_NAMED_PARAM:
+   case PROGRAM_NAMED_PARAM:
    case PROGRAM_CONSTANT:
    case PROGRAM_UNIFORM:
       return TGSI_FILE_CONSTANT;
