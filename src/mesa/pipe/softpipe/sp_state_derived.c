@@ -142,6 +142,7 @@ void softpipe_update_derived( struct softpipe_context *softpipe )
    if (softpipe->dirty & (SP_NEW_BLEND |
                           SP_NEW_DEPTH_TEST |
                           SP_NEW_ALPHA_TEST |
+                          SP_NEW_FRAMEBUFFER |
                           SP_NEW_STENCIL |
                           SP_NEW_SETUP |
                           SP_NEW_FS))
