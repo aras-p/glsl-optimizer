@@ -75,6 +75,24 @@ static void calculate_vertex_layout( struct softpipe_context *softpipe )
    GLbitfield attr_mask = 0x0;
    GLuint i;
 
+   /* Need Z if depth test is enabled or the fragment program uses the
+    * fragment position (XYZW).
+    */
+   if (softpipe->depth_test.enabled ||
+       (inputsRead & FRAG_ATTRIB_WPOS))
+      softpipe->need_z = GL_TRUE;
+   else
+      softpipe->need_z = GL_FALSE;
+
+   /* Need W if we do any perspective-corrected interpolation or the
+    * fragment program uses the fragment position.
+    */
+   if (inputsRead & FRAG_ATTRIB_WPOS)
+      softpipe->need_w = GL_TRUE;
+   else
+      softpipe->need_w = GL_FALSE;
+
+
    softpipe->nr_attrs = 0;
    memset(slot_to_vf_attr, 0, sizeof(slot_to_vf_attr));
 
@@ -101,7 +119,8 @@ static void calculate_vertex_layout( struct softpipe_context *softpipe )
 
    for (i = FRAG_ATTRIB_TEX0; i < FRAG_ATTRIB_MAX; i++) {
       if (inputsRead & (1 << i)) {
-	 EMIT_ATTR(frag_to_vf[i], i, INTERP_PERSPECTIVE);
+         EMIT_ATTR(frag_to_vf[i], i, INTERP_PERSPECTIVE);
+         softpipe->need_w = GL_TRUE;
       }
    }
 

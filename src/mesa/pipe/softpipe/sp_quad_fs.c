@@ -121,12 +121,11 @@ static INLINE void pinterp( struct exec_machine *exec,
 static void
 shade_quad( struct quad_stage *qs, struct quad_header *quad )
 {
-   struct softpipe_context *softpipe = qs->softpipe;
+   const struct softpipe_context *softpipe = qs->softpipe;
    struct exec_machine exec;
-   GLfloat fx = quad->x0;
-   GLfloat fy = quad->y0;
+   const GLfloat fx = quad->x0;
+   const GLfloat fy = quad->y0;
    GLuint i, j;
-   GLboolean need_z = softpipe->depth_test.enabled; /* XXX hack */
 
    exec.coef = quad->coef;
 
@@ -142,27 +141,22 @@ shade_quad( struct quad_stage *qs, struct quad_header *quad )
    exec.attr[FRAG_ATTRIB_WPOS][1][2] = fy + 1.0;
    exec.attr[FRAG_ATTRIB_WPOS][1][3] = fy + 1.0;
 
-   /* Z and W are done by linear interpolation:
-    * XXX we'll probably have to use integers for Z
-    */
-   if (/*softpipe->*/need_z) {
+   /* Z and W are done by linear interpolation */
+   if (softpipe->need_z) {
       linterp(&exec, 0, 2);   /* attr[0].z */
    }
 
    if (softpipe->need_w) {
       linterp(&exec, 0, 3);  /* attr[0].w */
-//      invert(&exec, 0, 3);
+      /*invert(&exec, 0, 3);*/
    }
 
    /* Interpolate all the remaining attributes.  This will get pushed
     * into the fragment program's responsibilities at some point.
+    * Start at 1 to skip fragment position attribute (computed above).
     */
    for (i = 1; i < quad->nr_attrs; i++) {
-#if 1
-      for (j = 0; j < NUM_CHANNELS; j++)
-	 linterp(&exec, i, j);
-#else
-      switch (quad->interp[i]) {
+      switch (softpipe->interp[i]) {
       case INTERP_CONSTANT:
 	 for (j = 0; j < NUM_CHANNELS; j++)
 	    cinterp(&exec, i, j);
@@ -178,7 +172,6 @@ shade_quad( struct quad_stage *qs, struct quad_header *quad )
 	    pinterp(&exec, i, j);
 	 break;
       }
-#endif
    }
 
 #if 1
@@ -243,6 +236,13 @@ shade_quad( struct quad_stage *qs, struct quad_header *quad )
       memcpy(quad->outputs.color,
              &aoutputs[FRAG_ATTRIB_COL0].xyzw[0].f[0],
              sizeof(quad->outputs.color));
+      if (softpipe->need_z) {
+         /* XXX temporary */
+         quad->outputs.depth[0] = exec.attr[0][2][0];
+         quad->outputs.depth[1] = exec.attr[0][2][1];
+         quad->outputs.depth[2] = exec.attr[0][2][2];
+         quad->outputs.depth[3] = exec.attr[0][2][3];
+      }
    }
 #else
    {
@@ -253,7 +253,7 @@ shade_quad( struct quad_stage *qs, struct quad_header *quad )
 	     exec.attr[attr], 
 	     sizeof(quad->outputs.color));
 
-      if (need_z) {
+      if (softpipe->need_z) {
          quad->outputs.depth[0] = exec.attr[0][2][0];
          quad->outputs.depth[1] = exec.attr[0][2][1];
          quad->outputs.depth[2] = exec.attr[0][2][2];
