@@ -27,8 +27,11 @@ Redisplay(void)
    glTranslatef(xpos, ypos, 0);
 
    glBegin(GL_TRIANGLES);
+   glColor3f(1, 0, 0);
    glVertex2f(-0.9, -0.9);
+   glColor3f(0, 1, 0);
    glVertex2f( 0.9, -0.9);
+   glColor3f(0, 0, 1);
    glVertex2f( 0,  0.9);
    glEnd();
 
@@ -143,6 +146,8 @@ Init(void)
    static const char *fragShaderText =
       "void main() {\n"
       "   gl_FragColor = gl_FragCoord * vec4(0.005); \n"
+      "   //gl_FragColor = gl_Color; \n"
+      "   //gl_FragColor = vec4(1, 0, 0.5, 0); \n"
       "}\n";
 #if 0
    static const char *vertShaderText =
