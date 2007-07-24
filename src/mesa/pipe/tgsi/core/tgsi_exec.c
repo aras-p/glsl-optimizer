@@ -57,12 +57,17 @@ tgsi_exec_machine_init(
    struct tgsi_exec_machine *mach,
    struct tgsi_token *tokens )
 {
-   GLuint i;
+   GLuint i, k;
    struct tgsi_parse_context parse;
 
    mach->Tokens = tokens;
 
-   tgsi_parse_init (&parse, mach->Tokens);
+   k = tgsi_parse_init (&parse, mach->Tokens);
+   if (k != TGSI_PARSE_OK) {
+      printf("Problem parsing!\n");
+      return;
+   }
+
    mach->Processor = parse.FullHeader.Processor.Processor;
    tgsi_parse_free (&parse);
 
@@ -93,11 +98,17 @@ tgsi_exec_prepare(
    struct tgsi_exec_labels *labels )
 {
    struct tgsi_parse_context parse;
+   GLuint k;
 
    mach->ImmLimit = 0;
    labels->count = 0;
 
-   tgsi_parse_init( &parse, mach->Tokens );
+   k = tgsi_parse_init( &parse, mach->Tokens );
+   if (k != TGSI_PARSE_OK) {
+      printf("Problem parsing!\n");
+      return;
+   }
+
    while( !tgsi_parse_end_of_tokens( &parse ) ) {
       GLuint pointer = parse.Position;
       GLuint i;
@@ -2153,6 +2164,7 @@ tgsi_exec_machine_run2(
               mach->Temps);
 #else
    struct tgsi_parse_context parse;
+   GLuint k;
 
    mach->Temps[TEMP_KILMASK_I].xyzw[TEMP_KILMASK_C].u[0] = 0;
    mach->Temps[TEMP_OUTPUT_I].xyzw[TEMP_OUTPUT_C].u[0] = 0;
@@ -2162,7 +2174,12 @@ tgsi_exec_machine_run2(
       mach->Primitives[0] = 0;
    }
 
-   tgsi_parse_init( &parse, mach->Tokens );
+   k = tgsi_parse_init( &parse, mach->Tokens );
+   if (k != TGSI_PARSE_OK) {
+      printf("Problem parsing!\n");
+      return;
+   }
+
    while( !tgsi_parse_end_of_tokens( &parse ) ) {
       tgsi_parse_token( &parse );
       switch( parse.FullToken.Token.Type ) {
