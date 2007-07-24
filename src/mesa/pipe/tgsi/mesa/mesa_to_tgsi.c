@@ -31,22 +31,34 @@ map_register_file(
    }
 }
 
-/*
+/**
  * Map mesa register file index to SBIR index.
  * Take special care when processing input and output indices.
+ * \param processor  either TGSI_PROCESSOR_FRAGMENT or  TGSI_PROCESSOR_VERTEX
+ * \param file  one of TGSI_FILE_x
+ * \param index  the mesa register file index
+ * \param usage_bitmask  ???
  */
 static GLuint
 map_register_file_index(
    GLuint processor,
    GLuint file,
    GLuint index,
-   GLuint usage_bitmask )
+   GLbitfield usage_bitmask )
 {
    GLuint mapped_index;
    GLuint i;
 
    switch( file ) {
    case TGSI_FILE_INPUT:
+      /*
+       * The fragment/vertex program input indexes (FRAG/VERT_ATTRIB_x) get
+       * mapped to a packed sequence of integers.
+       * If a program uses one input attribute, the mapped index will be 1.
+       * If a program uses two input attribs, the mapped indexes will be 1,2.
+       * If a program uses 3 input attribs, the mapped indexes will be 1,2,3.
+       * etc.
+       */
       assert( index < 32 );
       assert( usage_bitmask & (1 << index) );
       mapped_index = 0;
@@ -55,11 +67,15 @@ map_register_file_index(
             mapped_index++;
          }
       }
+      printf("Map input %d to %d\n", index, mapped_index);
       break;
 
    case TGSI_FILE_OUTPUT:
-      assert( usage_bitmask == 0 );
+      assert( usage_bitmask == 0x0 );
       if( processor == TGSI_PROCESSOR_FRAGMENT ) {
+         /* depth result  -> index 0
+          * color results -> index 1, 2, ...
+          */
 	 if( index == FRAG_RESULT_DEPR ) {
             mapped_index = 0;
          }
@@ -69,6 +85,7 @@ map_register_file_index(
          }
       }
       else {
+         /* mapped_index = VERT_RESULT_x */
          mapped_index = index;
       }
       break;
@@ -137,7 +154,7 @@ convert_writemask(
 
 static GLboolean
 compile_instruction(
-   struct prog_instruction *inst,
+   const struct prog_instruction *inst,
    struct tgsi_full_instruction *fullinst,
    GLuint inputs_read,
    GLuint processor )
@@ -158,7 +175,7 @@ compile_instruction(
       processor,
       fulldst->DstRegister.File,
       inst->DstReg.Index,
-      0 );
+      0x0 );
    fulldst->DstRegister.WriteMask = convert_writemask( inst->DstReg.WriteMask );
 
    for( i = 0; i < fullinst->Instruction.NumSrcRegs; i++ ) {
