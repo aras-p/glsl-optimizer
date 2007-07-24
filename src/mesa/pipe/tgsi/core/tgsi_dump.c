@@ -179,6 +179,7 @@ static const char *TGSI_IMMS[] =
 
 static const char *TGSI_OPCODES[] =
 {
+   "OPCODE_ARL",
    "OPCODE_MOV",
    "OPCODE_LIT",
    "OPCODE_RCP",
@@ -404,7 +405,7 @@ tgsi_dump(
       static GLuint counter = 0;
       char buffer[64];
 
-      sprintf( buffer, "sbir-dump-%.4u.txt", counter++ );
+      sprintf( buffer, "tgsi-dump-%.4u.txt", counter++ );
       dump.file = fopen( buffer, "wt" );
 #else
       dump.file = stderr;
@@ -412,9 +413,12 @@ tgsi_dump(
 #endif
    }
 
+   /* sanity check */
+   assert(strcmp(TGSI_OPCODES[TGSI_OPCODE_CONT], "OPCODE_CONT") == 0);
+
    tgsi_parse_init( &parse, tokens );
 
-   TXT( "sbir-dump" );
+   TXT( "tgsi-dump begin" );
 
    CHR( '\n' );
    TXT( "\nMajorVersion: " );
@@ -867,6 +871,8 @@ tgsi_dump(
          assert( 0 );
       }
    }
+
+   TXT( "\ntgsi-dump end\n" );
 
    tgsi_parse_free( &parse );
 
