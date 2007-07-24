@@ -79,7 +79,9 @@ static struct gl_program *st_new_program( GLcontext *ctx,
 					id );
    }
 
-   case GL_FRAGMENT_PROGRAM_ARB: {
+   case GL_FRAGMENT_PROGRAM_ARB:
+   case GL_FRAGMENT_PROGRAM_NV:
+   {
       struct st_fragment_program *prog = CALLOC_STRUCT(st_fragment_program);
 
       prog->id = st->program_id++;
