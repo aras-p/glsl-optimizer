@@ -12,6 +12,7 @@ LIBS = $(APP_LIB_DEPS)
 
 SOURCES = \
 	clear.c \
+	fs-tri.c \
 	line-clip.c \
 	line-cull.c \
 	line-userclip-clip.c \
@@ -138,6 +139,11 @@ readtex.c: $(TOP)/progs/util/readtex.c
 	ln -s $(TOP)/progs/util/readtex.c .
 
 
+fs-tri: fs-tri.c extfuncs.h
+
+
+extfuncs.h:  $(TOP)/progs/util/extfuncs.h
+	cp $< .
 
 
 # Emacs tags
