@@ -1256,10 +1256,10 @@ exec_instruction(
    GLuint *programCounter )
 {
 #if MESA
-    GET_CURRENT_CONTEXT(ctx);
+   GET_CURRENT_CONTEXT(ctx);
 #endif
-    GLuint chan_index;
-    union tgsi_exec_channel r[8];
+   GLuint chan_index;
+   union tgsi_exec_channel r[8];
 
    switch (inst->Instruction.Opcode) {
    case TGSI_OPCODE_ARL:
@@ -1379,28 +1379,28 @@ exec_instruction(
 
     case TGSI_OPCODE_DP4:
     /* TGSI_OPCODE_DOT4 */
-        FETCH(&r[0], 0, CHAN_X);
-        FETCH(&r[1], 1, CHAN_X);
+       FETCH(&r[0], 0, CHAN_X);
+       FETCH(&r[1], 1, CHAN_X);
 
-        micro_mul( &r[0], &r[0], &r[1] );
+       micro_mul( &r[0], &r[0], &r[1] );
 
-        FETCH(&r[1], 0, CHAN_Y);
-        FETCH(&r[2], 1, CHAN_Y);
+       FETCH(&r[1], 0, CHAN_Y);
+       FETCH(&r[2], 1, CHAN_Y);
 
-        micro_mul( &r[1], &r[1], &r[2] );
-        micro_add( &r[0], &r[0], &r[1] );
+       micro_mul( &r[1], &r[1], &r[2] );
+       micro_add( &r[0], &r[0], &r[1] );
 
-        FETCH(&r[1], 0, CHAN_Z);
-        FETCH(&r[2], 1, CHAN_Z);
+       FETCH(&r[1], 0, CHAN_Z);
+       FETCH(&r[2], 1, CHAN_Z);
 
-        micro_mul( &r[1], &r[1], &r[2] );
-        micro_add( &r[0], &r[0], &r[1] );
+       micro_mul( &r[1], &r[1], &r[2] );
+       micro_add( &r[0], &r[0], &r[1] );
 
-        FETCH(&r[1], 0, CHAN_W);
-        FETCH(&r[2], 1, CHAN_W);
+       FETCH(&r[1], 0, CHAN_W);
+       FETCH(&r[2], 1, CHAN_W);
 
-        micro_mul( &r[1], &r[1], &r[2] );
-        micro_add( &r[0], &r[0], &r[1] );
+       micro_mul( &r[1], &r[1], &r[2] );
+       micro_add( &r[0], &r[0], &r[1] );
 
       FOR_EACH_ENABLED_CHANNEL( *inst, chan_index ) {
 	 STORE( &r[0], 0, chan_index );
@@ -1430,29 +1430,27 @@ exec_instruction(
       }
       break;
 
-    case TGSI_OPCODE_MIN:
-        FOR_EACH_ENABLED_CHANNEL( *inst, chan_index )
-        {
-            FETCH(&r[0], 0, chan_index);
-            FETCH(&r[1], 1, chan_index);
+   case TGSI_OPCODE_MIN:
+      FOR_EACH_ENABLED_CHANNEL( *inst, chan_index ) {
+         FETCH(&r[0], 0, chan_index);
+         FETCH(&r[1], 1, chan_index);
 
-            micro_lt( &r[0], &r[0], &r[1], &r[0], &r[1] );
+         micro_lt( &r[0], &r[0], &r[1], &r[0], &r[1] );
 
-            STORE(&r[0], 0, chan_index);
-        }
-        break;
+         STORE(&r[0], 0, chan_index);
+      }
+      break;
 
-    case TGSI_OPCODE_MAX:
-        FOR_EACH_ENABLED_CHANNEL( *inst, chan_index )
-        {
-            FETCH(&r[0], 0, chan_index);
-            FETCH(&r[1], 1, chan_index);
+   case TGSI_OPCODE_MAX:
+      FOR_EACH_ENABLED_CHANNEL( *inst, chan_index ) {
+         FETCH(&r[0], 0, chan_index);
+         FETCH(&r[1], 1, chan_index);
 
-            micro_lt( &r[0], &r[0], &r[1], &r[1], &r[0] );
+         micro_lt( &r[0], &r[0], &r[1], &r[1], &r[0] );
 
-            STORE(&r[0], 0, chan_index);
-        }
-        break;
+         STORE(&r[0], 0, chan_index);
+      }
+      break;
 
    case TGSI_OPCODE_SLT:
    /* TGSI_OPCODE_SETLT */
@@ -1464,18 +1462,17 @@ exec_instruction(
       }
       break;
 
-    case TGSI_OPCODE_SGE:
-    /* TGSI_OPCODE_SETGE */
-        FOR_EACH_ENABLED_CHANNEL( *inst, chan_index )
-        {
-            FETCH(&r[0], 0, chan_index);
-            FETCH(&r[1], 1, chan_index);
+   case TGSI_OPCODE_SGE:
+   /* TGSI_OPCODE_SETGE */
+      FOR_EACH_ENABLED_CHANNEL( *inst, chan_index ) {
+         FETCH(&r[0], 0, chan_index);
+         FETCH(&r[1], 1, chan_index);
 
-            micro_lt( &r[0], &r[0], &r[1], &mach->Temps[TEMP_0_I].xyzw[TEMP_0_C], &mach->Temps[TEMP_1_I].xyzw[TEMP_1_C] );
+         micro_lt( &r[0], &r[0], &r[1], &mach->Temps[TEMP_0_I].xyzw[TEMP_0_C], &mach->Temps[TEMP_1_I].xyzw[TEMP_1_C] );
 
-            STORE(&r[0], 0, chan_index);
-        }
-        break;
+         STORE(&r[0], 0, chan_index);
+      }
+      break;
 
    case TGSI_OPCODE_MAD:
    /* TGSI_OPCODE_MADD */
@@ -1490,53 +1487,51 @@ exec_instruction(
       break;
 
     case TGSI_OPCODE_SUB:
-        FOR_EACH_ENABLED_CHANNEL( *inst, chan_index )
-        {
-            FETCH(&r[0], 0, chan_index);
-            FETCH(&r[1], 1, chan_index);
+       FOR_EACH_ENABLED_CHANNEL( *inst, chan_index ) {
+          FETCH(&r[0], 0, chan_index);
+          FETCH(&r[1], 1, chan_index);
 
-            micro_sub( &r[0], &r[0], &r[1] );
+          micro_sub( &r[0], &r[0], &r[1] );
 
-            STORE(&r[0], 0, chan_index);
-        }
-        break;
+          STORE(&r[0], 0, chan_index);
+       }
+       break;
 
-    case TGSI_OPCODE_LERP:
-    /* TGSI_OPCODE_LRP */
-        FOR_EACH_ENABLED_CHANNEL( *inst, chan_index )
-        {
-            FETCH(&r[0], 0, chan_index);
-            FETCH(&r[1], 1, chan_index);
-            FETCH(&r[2], 2, chan_index);
+   case TGSI_OPCODE_LERP:
+   /* TGSI_OPCODE_LRP */
+      FOR_EACH_ENABLED_CHANNEL( *inst, chan_index ) {
+         FETCH(&r[0], 0, chan_index);
+         FETCH(&r[1], 1, chan_index);
+         FETCH(&r[2], 2, chan_index);
 
-            micro_sub( &r[1], &r[1], &r[2] );
-            micro_mul( &r[0], &r[0], &r[1] );
-            micro_add( &r[0], &r[0], &r[2] );
+         micro_sub( &r[1], &r[1], &r[2] );
+         micro_mul( &r[0], &r[0], &r[1] );
+         micro_add( &r[0], &r[0], &r[2] );
 
-            STORE(&r[0], 0, chan_index);
-        }
-        break;
+         STORE(&r[0], 0, chan_index);
+      }
+      break;
 
-    case TGSI_OPCODE_CND:
-        assert (0);
-        break;
+   case TGSI_OPCODE_CND:
+      assert (0);
+      break;
 
-    case TGSI_OPCODE_CND0:
-        assert (0);
-        break;
+   case TGSI_OPCODE_CND0:
+      assert (0);
+      break;
 
-    case TGSI_OPCODE_DOT2ADD:
-    /* TGSI_OPCODE_DP2A */
-        assert (0);
-        break;
+   case TGSI_OPCODE_DOT2ADD:
+      /* TGSI_OPCODE_DP2A */
+      assert (0);
+      break;
 
-    case TGSI_OPCODE_INDEX:
-        assert (0);
-        break;
+   case TGSI_OPCODE_INDEX:
+      assert (0);
+      break;
 
-    case TGSI_OPCODE_NEGATE:
-        assert (0);
-        break;
+   case TGSI_OPCODE_NEGATE:
+      assert (0);
+      break;
 
    case TGSI_OPCODE_FRAC:
    /* TGSI_OPCODE_FRC */
@@ -1547,9 +1542,9 @@ exec_instruction(
       }
       break;
 
-    case TGSI_OPCODE_CLAMP:
-        assert (0);
-        break;
+   case TGSI_OPCODE_CLAMP:
+      assert (0);
+      break;
 
    case TGSI_OPCODE_FLOOR:
    /* TGSI_OPCODE_FLR */
@@ -1568,11 +1563,11 @@ exec_instruction(
       }
       break;
 
-    case TGSI_OPCODE_EXPBASE2:
+   case TGSI_OPCODE_EXPBASE2:
     /* TGSI_OPCODE_EX2 */
-        FETCH(&r[0], 0, CHAN_X);
+      FETCH(&r[0], 0, CHAN_X);
 
-        micro_pow( &r[0], &mach->Temps[TEMP_2_I].xyzw[TEMP_2_C], &r[0] );
+      micro_pow( &r[0], &mach->Temps[TEMP_2_I].xyzw[TEMP_2_C], &r[0] );
 
       FOR_EACH_ENABLED_CHANNEL( *inst, chan_index ) {
 	 STORE( &r[0], 0, chan_index );
@@ -1588,51 +1583,51 @@ exec_instruction(
       }
       break;
 
-    case TGSI_OPCODE_POWER:
-    /* TGSI_OPCODE_POW */
-        FETCH(&r[0], 0, CHAN_X);
-        FETCH(&r[1], 1, CHAN_X);
+   case TGSI_OPCODE_POWER:
+      /* TGSI_OPCODE_POW */
+      FETCH(&r[0], 0, CHAN_X);
+      FETCH(&r[1], 1, CHAN_X);
 
-        micro_pow( &r[0], &r[0], &r[1] );
+      micro_pow( &r[0], &r[0], &r[1] );
 
       FOR_EACH_ENABLED_CHANNEL( *inst, chan_index ) {
 	 STORE( &r[0], 0, chan_index );
       }
       break;
 
-    case TGSI_OPCODE_CROSSPRODUCT:
-    /* TGSI_OPCODE_XPD */
-        FETCH(&r[0], 0, CHAN_Y);
-        FETCH(&r[1], 1, CHAN_Z);
+   case TGSI_OPCODE_CROSSPRODUCT:
+      /* TGSI_OPCODE_XPD */
+      FETCH(&r[0], 0, CHAN_Y);
+      FETCH(&r[1], 1, CHAN_Z);
 
-        micro_mul( &r[2], &r[0], &r[1] );
+      micro_mul( &r[2], &r[0], &r[1] );
 
-        FETCH(&r[3], 0, CHAN_Z);
-        FETCH(&r[4], 1, CHAN_Y);
+      FETCH(&r[3], 0, CHAN_Z);
+      FETCH(&r[4], 1, CHAN_Y);
 
-        micro_mul( &r[5], &r[3], &r[4] );
-        micro_sub( &r[2], &r[2], &r[5] );
+      micro_mul( &r[5], &r[3], &r[4] );
+      micro_sub( &r[2], &r[2], &r[5] );
 
       if (IS_CHANNEL_ENABLED( *inst, CHAN_X )) {
 	 STORE( &r[2], 0, CHAN_X );
       }
 
-        FETCH(&r[2], 1, CHAN_X);
+      FETCH(&r[2], 1, CHAN_X);
 
-        micro_mul( &r[3], &r[3], &r[2] );
+      micro_mul( &r[3], &r[3], &r[2] );
 
-        FETCH(&r[5], 0, CHAN_X);
+      FETCH(&r[5], 0, CHAN_X);
 
-        micro_mul( &r[1], &r[1], &r[5] );
-        micro_sub( &r[3], &r[3], &r[1] );
+      micro_mul( &r[1], &r[1], &r[5] );
+      micro_sub( &r[3], &r[3], &r[1] );
 
       if (IS_CHANNEL_ENABLED( *inst, CHAN_Y )) {
 	 STORE( &r[3], 0, CHAN_Y );
       }
 
-        micro_mul( &r[5], &r[5], &r[4] );
-        micro_mul( &r[0], &r[0], &r[2] );
-        micro_sub( &r[5], &r[5], &r[0] );
+      micro_mul( &r[5], &r[5], &r[4] );
+      micro_mul( &r[0], &r[0], &r[2] );
+      micro_sub( &r[5], &r[5], &r[0] );
 
       if (IS_CHANNEL_ENABLED( *inst, CHAN_Z )) {
 	 STORE( &r[5], 0, CHAN_Z );
@@ -1641,292 +1636,285 @@ exec_instruction(
       if (IS_CHANNEL_ENABLED( *inst, CHAN_W )) {
 	 STORE( &mach->Temps[TEMP_1_I].xyzw[TEMP_1_C], 0, CHAN_W );
       }
-        break;
+      break;
 
     case TGSI_OPCODE_MULTIPLYMATRIX:
-        assert (0);
-        break;
+       assert (0);
+       break;
 
     case TGSI_OPCODE_ABS:
-        FOR_EACH_ENABLED_CHANNEL( *inst, chan_index )
-        {
-            FETCH(&r[0], 0, chan_index);
+       FOR_EACH_ENABLED_CHANNEL( *inst, chan_index ) {
+          FETCH(&r[0], 0, chan_index);
 
-            micro_abs( &r[0], &r[0] );
+          micro_abs( &r[0], &r[0] );
 
-            STORE(&r[0], 0, chan_index);
-        }
-        break;
+          STORE(&r[0], 0, chan_index);
+       }
+       break;
 
-    case TGSI_OPCODE_RCC:
-        assert (0);
-        break;
+   case TGSI_OPCODE_RCC:
+      assert (0);
+      break;
 
-    case TGSI_OPCODE_DPH:
-        FETCH(&r[0], 0, CHAN_X);
-        FETCH(&r[1], 1, CHAN_X);
+   case TGSI_OPCODE_DPH:
+      FETCH(&r[0], 0, CHAN_X);
+      FETCH(&r[1], 1, CHAN_X);
 
-        micro_mul( &r[0], &r[0], &r[1] );
+      micro_mul( &r[0], &r[0], &r[1] );
 
-        FETCH(&r[1], 0, CHAN_Y);
-        FETCH(&r[2], 1, CHAN_Y);
+      FETCH(&r[1], 0, CHAN_Y);
+      FETCH(&r[2], 1, CHAN_Y);
 
-        micro_mul( &r[1], &r[1], &r[2] );
-        micro_add( &r[0], &r[0], &r[1] );
+      micro_mul( &r[1], &r[1], &r[2] );
+      micro_add( &r[0], &r[0], &r[1] );
 
-        FETCH(&r[1], 0, CHAN_Z);
-        FETCH(&r[2], 1, CHAN_Z);
+      FETCH(&r[1], 0, CHAN_Z);
+      FETCH(&r[2], 1, CHAN_Z);
 
-        micro_mul( &r[1], &r[1], &r[2] );
-        micro_add( &r[0], &r[0], &r[1] );
+      micro_mul( &r[1], &r[1], &r[2] );
+      micro_add( &r[0], &r[0], &r[1] );
 
-        FETCH(&r[1], 1, CHAN_W);
+      FETCH(&r[1], 1, CHAN_W);
 
-        micro_add( &r[0], &r[0], &r[1] );
+      micro_add( &r[0], &r[0], &r[1] );
 
       FOR_EACH_ENABLED_CHANNEL( *inst, chan_index ) {
 	 STORE( &r[0], 0, chan_index );
       }
       break;
 
-    case TGSI_OPCODE_COS:
-        FETCH(&r[0], 0, CHAN_X);
+   case TGSI_OPCODE_COS:
+      FETCH(&r[0], 0, CHAN_X);
 
-        micro_cos( &r[0], &r[0] );
-
-      FOR_EACH_ENABLED_CHANNEL( *inst, chan_index ) {
-	 STORE( &r[0], 0, chan_index );
-      }
-      break;
-
-    case TGSI_OPCODE_DDX:
-        assert (0);
-        break;
-
-    case TGSI_OPCODE_DDY:
-        assert (0);
-        break;
-
-    case TGSI_OPCODE_KIL:
-        exec_kil (mach, inst);
-        break;
-
-    case TGSI_OPCODE_PK2H:
-        assert (0);
-        break;
-
-    case TGSI_OPCODE_PK2US:
-        assert (0);
-        break;
-
-    case TGSI_OPCODE_PK4B:
-        assert (0);
-        break;
-
-    case TGSI_OPCODE_PK4UB:
-        assert (0);
-        break;
-
-    case TGSI_OPCODE_RFL:
-        assert (0);
-        break;
-
-    case TGSI_OPCODE_SEQ:
-        assert (0);
-        break;
-
-    case TGSI_OPCODE_SFL:
-        assert (0);
-        break;
-
-    case TGSI_OPCODE_SGT:
-        assert (0);
-        break;
-
-    case TGSI_OPCODE_SIN:
-        FETCH(&r[0], 0, CHAN_X);
-
-        micro_sin( &r[0], &r[0] );
+      micro_cos( &r[0], &r[0] );
 
       FOR_EACH_ENABLED_CHANNEL( *inst, chan_index ) {
 	 STORE( &r[0], 0, chan_index );
       }
       break;
 
-    case TGSI_OPCODE_SLE:
-        assert (0);
-        break;
+   case TGSI_OPCODE_DDX:
+      assert (0);
+      break;
 
-    case TGSI_OPCODE_SNE:
-        assert (0);
-        break;
+   case TGSI_OPCODE_DDY:
+      assert (0);
+      break;
 
-    case TGSI_OPCODE_STR:
-        assert (0);
-        break;
+   case TGSI_OPCODE_KIL:
+       exec_kil (mach, inst);
+       break;
 
-    case TGSI_OPCODE_TEX:
+   case TGSI_OPCODE_PK2H:
+      assert (0);
+      break;
 
-        switch (inst->InstructionExtTexture.Texture)
-        {
-        case TGSI_TEXTURE_1D:
+   case TGSI_OPCODE_PK2US:
+      assert (0);
+      break;
 
-            FETCH(&r[0], 0, CHAN_X);
+   case TGSI_OPCODE_PK4B:
+      assert (0);
+      break;
 
-            switch (inst->FullSrcRegisters[0].SrcRegisterExtSwz.ExtDivide)
-            {
-            case TGSI_EXTSWIZZLE_W:
-                FETCH(&r[1], 0, CHAN_W);
-                micro_div( &r[0], &r[0], &r[1] );
-                break;
+   case TGSI_OPCODE_PK4UB:
+      assert (0);
+      break;
 
-            case TGSI_EXTSWIZZLE_ONE:
-                break;
+   case TGSI_OPCODE_RFL:
+      assert (0);
+      break;
 
-            default:
-                assert (0);
-            }
-#if MESA
-            fetch_texel_1d (ctx,
-                            &mach->Samplers[inst->FullSrcRegisters[1].SrcRegister.Index],
-                            &r[0],
-                            inst->FullSrcRegisters[1].SrcRegister.Index,
-                            &r[0], &r[1], &r[2], &r[3]);
-#endif
+   case TGSI_OPCODE_SEQ:
+      assert (0);
+      break;
+
+   case TGSI_OPCODE_SFL:
+      assert (0);
+      break;
+
+   case TGSI_OPCODE_SGT:
+      assert (0);
+      break;
+
+   case TGSI_OPCODE_SIN:
+      FETCH(&r[0], 0, CHAN_X);
+
+      micro_sin( &r[0], &r[0] );
+
+      FOR_EACH_ENABLED_CHANNEL( *inst, chan_index ) {
+	 STORE( &r[0], 0, chan_index );
+      }
+      break;
+
+   case TGSI_OPCODE_SLE:
+      assert (0);
+      break;
+
+   case TGSI_OPCODE_SNE:
+      assert (0);
+      break;
+
+   case TGSI_OPCODE_STR:
+      assert (0);
+      break;
+
+   case TGSI_OPCODE_TEX:
+      switch (inst->InstructionExtTexture.Texture) {
+      case TGSI_TEXTURE_1D:
+
+         FETCH(&r[0], 0, CHAN_X);
+
+         switch (inst->FullSrcRegisters[0].SrcRegisterExtSwz.ExtDivide) {
+         case TGSI_EXTSWIZZLE_W:
+            FETCH(&r[1], 0, CHAN_W);
+            micro_div( &r[0], &r[0], &r[1] );
             break;
 
-        case TGSI_TEXTURE_2D:
-        case TGSI_TEXTURE_RECT:
-
-            FETCH(&r[0], 0, CHAN_X);
-            FETCH(&r[1], 0, CHAN_Y);
-
-            switch (inst->FullSrcRegisters[0].SrcRegisterExtSwz.ExtDivide)
-            {
-            case TGSI_EXTSWIZZLE_W:
-                FETCH(&r[2], 0, CHAN_W);
-                micro_div( &r[0], &r[0], &r[2] );
-                micro_div( &r[1], &r[1], &r[2] );
-                break;
-
-            case TGSI_EXTSWIZZLE_ONE:
-                break;
-
-            default:
-                assert (0);
-            }
-
-#if MESA
-            fetch_texel_2d (ctx,
-                            &mach->Samplers[inst->FullSrcRegisters[1].SrcRegister.Index],
-                            &r[0], &r[1],
-                            inst->FullSrcRegisters[1].SrcRegister.Index,
-                            &r[0], &r[1], &r[2], &r[3]);
-#endif
+         case TGSI_EXTSWIZZLE_ONE:
             break;
 
-        case TGSI_TEXTURE_3D:
-        case TGSI_TEXTURE_CUBE:
-
-            FETCH(&r[0], 0, CHAN_X);
-            FETCH(&r[1], 0, CHAN_Y);
-            FETCH(&r[2], 0, CHAN_Z);
-
-            switch (inst->FullSrcRegisters[0].SrcRegisterExtSwz.ExtDivide)
-            {
-            case TGSI_EXTSWIZZLE_W:
-                FETCH(&r[3], 0, CHAN_W);
-                micro_div( &r[0], &r[0], &r[3] );
-                micro_div( &r[1], &r[1], &r[3] );
-                micro_div( &r[2], &r[2], &r[3] );
-                break;
-
-            case TGSI_EXTSWIZZLE_ONE:
-                break;
-
-            default:
-                assert (0);
-            }
-
-#if MESA
-            fetch_texel_3d (ctx,
-                            &mach->Samplers[inst->FullSrcRegisters[1].SrcRegister.Index],
-                            &r[0], &r[1], &r[2],
-                            inst->FullSrcRegisters[1].SrcRegister.Index,
-                            &r[0], &r[1], &r[2], &r[3]);
-#endif
-            break;
-
-        default:
+         default:
             assert (0);
-        }
+         }
+#if MESA
+         fetch_texel_1d (ctx,
+                         &mach->Samplers[inst->FullSrcRegisters[1].SrcRegister.Index],
+                         &r[0],
+                         inst->FullSrcRegisters[1].SrcRegister.Index,
+                         &r[0], &r[1], &r[2], &r[3]);
+#endif
+         break;
+
+      case TGSI_TEXTURE_2D:
+      case TGSI_TEXTURE_RECT:
+
+         FETCH(&r[0], 0, CHAN_X);
+         FETCH(&r[1], 0, CHAN_Y);
+
+         switch (inst->FullSrcRegisters[0].SrcRegisterExtSwz.ExtDivide) {
+         case TGSI_EXTSWIZZLE_W:
+            FETCH(&r[2], 0, CHAN_W);
+            micro_div( &r[0], &r[0], &r[2] );
+            micro_div( &r[1], &r[1], &r[2] );
+            break;
+
+         case TGSI_EXTSWIZZLE_ONE:
+            break;
+
+         default:
+            assert (0);
+         }
+
+#if MESA
+         fetch_texel_2d (ctx,
+                         &mach->Samplers[inst->FullSrcRegisters[1].SrcRegister.Index],
+                         &r[0], &r[1],
+                         inst->FullSrcRegisters[1].SrcRegister.Index,
+                         &r[0], &r[1], &r[2], &r[3]);
+#endif
+         break;
+
+      case TGSI_TEXTURE_3D:
+      case TGSI_TEXTURE_CUBE:
+
+         FETCH(&r[0], 0, CHAN_X);
+         FETCH(&r[1], 0, CHAN_Y);
+         FETCH(&r[2], 0, CHAN_Z);
+
+         switch (inst->FullSrcRegisters[0].SrcRegisterExtSwz.ExtDivide) {
+         case TGSI_EXTSWIZZLE_W:
+            FETCH(&r[3], 0, CHAN_W);
+            micro_div( &r[0], &r[0], &r[3] );
+            micro_div( &r[1], &r[1], &r[3] );
+            micro_div( &r[2], &r[2], &r[3] );
+            break;
+
+         case TGSI_EXTSWIZZLE_ONE:
+            break;
+
+         default:
+            assert (0);
+         }
+
+#if MESA
+         fetch_texel_3d (ctx,
+                         &mach->Samplers[inst->FullSrcRegisters[1].SrcRegister.Index],
+                         &r[0], &r[1], &r[2],
+                         inst->FullSrcRegisters[1].SrcRegister.Index,
+                         &r[0], &r[1], &r[2], &r[3]);
+#endif
+         break;
+
+      default:
+         assert (0);
+      }
 
       FOR_EACH_ENABLED_CHANNEL( *inst, chan_index ) {
 	 STORE( &r[chan_index], 0, chan_index );
       }
       break;
 
-    case TGSI_OPCODE_TXD:
-        assert (0);
-        break;
+   case TGSI_OPCODE_TXD:
+      assert (0);
+      break;
 
-    case TGSI_OPCODE_UP2H:
-        assert (0);
-        break;
+   case TGSI_OPCODE_UP2H:
+      assert (0);
+      break;
 
-    case TGSI_OPCODE_UP2US:
-        assert (0);
-        break;
+   case TGSI_OPCODE_UP2US:
+      assert (0);
+      break;
 
-    case TGSI_OPCODE_UP4B:
-        assert (0);
-        break;
+   case TGSI_OPCODE_UP4B:
+      assert (0);
+      break;
 
-    case TGSI_OPCODE_UP4UB:
-        assert (0);
-        break;
+   case TGSI_OPCODE_UP4UB:
+      assert (0);
+      break;
 
-    case TGSI_OPCODE_X2D:
-        assert (0);
-        break;
+   case TGSI_OPCODE_X2D:
+      assert (0);
+      break;
 
-    case TGSI_OPCODE_ARA:
-        assert (0);
-        break;
+   case TGSI_OPCODE_ARA:
+      assert (0);
+      break;
 
-    case TGSI_OPCODE_ARR:
-        assert (0);
-        break;
+   case TGSI_OPCODE_ARR:
+      assert (0);
+      break;
 
-    case TGSI_OPCODE_BRA:
-        assert (0);
-        break;
+   case TGSI_OPCODE_BRA:
+      assert (0);
+      break;
 
-    case TGSI_OPCODE_CAL:
-        assert (0);
-        break;
+   case TGSI_OPCODE_CAL:
+      assert (0);
+      break;
 
-    case TGSI_OPCODE_RET:
-        /* XXX: end of shader! */
-        /*assert (0);*/
-        break;
+   case TGSI_OPCODE_RET:
+      /* XXX: end of shader! */
+      /*assert (0);*/
+      break;
 
-    case TGSI_OPCODE_SSG:
-        assert (0);
-        break;
+   case TGSI_OPCODE_SSG:
+      assert (0);
+      break;
 
-    case TGSI_OPCODE_CMP:
-        FOR_EACH_ENABLED_CHANNEL( *inst, chan_index )
-        {
-            FETCH(&r[0], 0, chan_index);
-            FETCH(&r[1], 1, chan_index);
-            FETCH(&r[2], 2, chan_index);
+   case TGSI_OPCODE_CMP:
+      FOR_EACH_ENABLED_CHANNEL( *inst, chan_index ) {
+         FETCH(&r[0], 0, chan_index);
+         FETCH(&r[1], 1, chan_index);
+         FETCH(&r[2], 2, chan_index);
 
-            micro_lt( &r[0], &r[0], &mach->Temps[TEMP_0_I].xyzw[TEMP_0_C], &r[1], &r[2] );
+         micro_lt( &r[0], &r[0], &mach->Temps[TEMP_0_I].xyzw[TEMP_0_C], &r[1], &r[2] );
 
-            STORE(&r[0], 0, chan_index);
-        }
-        break;
+         STORE(&r[0], 0, chan_index);
+      }
+      break;
 
    case TGSI_OPCODE_SCS:
       if( IS_CHANNEL_ENABLED( *inst, CHAN_X ) || IS_CHANNEL_ENABLED( *inst, CHAN_Y ) ) {
@@ -1948,13 +1936,13 @@ exec_instruction(
       }
       break;
 
-    case TGSI_OPCODE_TXB:
-        assert (0);
-        break;
+   case TGSI_OPCODE_TXB:
+      assert (0);
+      break;
 
-    case TGSI_OPCODE_NRM:
-        assert (0);
-        break;
+   case TGSI_OPCODE_NRM:
+      assert (0);
+      break;
 
    case TGSI_OPCODE_DIV:
       assert( 0 );
@@ -1975,49 +1963,49 @@ exec_instruction(
       }
       break;
 
-    case TGSI_OPCODE_TXL:
-        assert (0);
-        break;
+   case TGSI_OPCODE_TXL:
+      assert (0);
+      break;
 
-    case TGSI_OPCODE_BRK:
-        assert (0);
-        break;
+   case TGSI_OPCODE_BRK:
+      assert (0);
+      break;
 
-    case TGSI_OPCODE_IF:
-        assert (0);
-        break;
+   case TGSI_OPCODE_IF:
+      assert (0);
+      break;
 
-    case TGSI_OPCODE_LOOP:
-        assert (0);
-        break;
+   case TGSI_OPCODE_LOOP:
+      assert (0);
+      break;
 
-    case TGSI_OPCODE_REP:
-        assert (0);
-        break;
+   case TGSI_OPCODE_REP:
+      assert (0);
+      break;
 
-    case TGSI_OPCODE_ELSE:
-        assert (0);
-        break;
+   case TGSI_OPCODE_ELSE:
+      assert (0);
+      break;
 
-    case TGSI_OPCODE_ENDIF:
-        assert (0);
-        break;
+   case TGSI_OPCODE_ENDIF:
+       assert (0);
+       break;
 
-    case TGSI_OPCODE_ENDLOOP:
-        assert (0);
-        break;
+   case TGSI_OPCODE_ENDLOOP:
+       assert (0);
+       break;
 
-    case TGSI_OPCODE_ENDREP:
-        assert (0);
-        break;
+   case TGSI_OPCODE_ENDREP:
+       assert (0);
+       break;
 
-    case TGSI_OPCODE_PUSHA:
-        assert (0);
-        break;
+   case TGSI_OPCODE_PUSHA:
+      assert (0);
+      break;
 
-    case TGSI_OPCODE_POPA:
-        assert (0);
-        break;
+   case TGSI_OPCODE_POPA:
+      assert (0);
+      break;
 
    case TGSI_OPCODE_CEIL:
       FOR_EACH_ENABLED_CHANNEL( *inst, chan_index ) {
@@ -2043,9 +2031,9 @@ exec_instruction(
       }
       break;
 
-    case TGSI_OPCODE_TRUNC:
-        assert (0);
-        break;
+   case TGSI_OPCODE_TRUNC:
+      assert (0);
+      break;
 
    case TGSI_OPCODE_SHL:
       FOR_EACH_ENABLED_CHANNEL( *inst, chan_index ) {
@@ -2083,9 +2071,9 @@ exec_instruction(
       }
       break;
 
-    case TGSI_OPCODE_MOD:
-        assert (0);
-        break;
+   case TGSI_OPCODE_MOD:
+      assert (0);
+      break;
 
    case TGSI_OPCODE_XOR:
       FOR_EACH_ENABLED_CHANNEL( *inst, chan_index ) {
@@ -2096,21 +2084,21 @@ exec_instruction(
       }
       break;
 
-    case TGSI_OPCODE_SAD:
-        assert (0);
-        break;
+   case TGSI_OPCODE_SAD:
+      assert (0);
+      break;
 
-    case TGSI_OPCODE_TXF:
-        assert (0);
-        break;
+   case TGSI_OPCODE_TXF:
+      assert (0);
+      break;
 
-    case TGSI_OPCODE_TXQ:
-        assert (0);
-        break;
+   case TGSI_OPCODE_TXQ:
+      assert (0);
+      break;
 
-    case TGSI_OPCODE_CONT:
-        assert (0);
-        break;
+   case TGSI_OPCODE_CONT:
+      assert (0);
+      break;
 
    case TGSI_OPCODE_EMIT:
       mach->Temps[TEMP_OUTPUT_I].xyzw[TEMP_OUTPUT_C].u[0] += 16;
@@ -2124,7 +2112,7 @@ exec_instruction(
 
    default:
       assert( 0 );
-    }
+   }
 }
 
 
@@ -2147,21 +2135,21 @@ tgsi_exec_machine_run2(
    struct tgsi_exec_labels *labels )
 {
 #if MESA
-    GET_CURRENT_CONTEXT(ctx);
-    GLuint i;
+   GET_CURRENT_CONTEXT(ctx);
+   GLuint i;
 #endif
 
 #if XXX_SSE
-    fp_function function;
+   fp_function function;
 
-    mach->Temps[TEMP_KILMASK_I].xyzw[TEMP_KILMASK_C].u[0] = 0;
+   mach->Temps[TEMP_KILMASK_I].xyzw[TEMP_KILMASK_C].u[0] = 0;
+    
+   function = (fp_function) x86_get_func (&mach->Function);
 
-    function = (fp_function) x86_get_func (&mach->Function);
-
-    function (mach->Inputs,
-              mach->Outputs,
-              mach->Consts,
-              mach->Temps);
+   function (mach->Inputs,
+             mach->Outputs,
+             mach->Consts,
+             mach->Temps);
 #else
    struct tgsi_parse_context parse;
    GLuint k;
