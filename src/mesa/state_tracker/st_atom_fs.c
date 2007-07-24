@@ -50,7 +50,15 @@ static void compile_fs( struct st_context *st,
 static void update_fs( struct st_context *st )
 {
    struct pipe_fs_state fs;
-   struct st_fragment_program *fp = st_fragment_program(st->ctx->FragmentProgram._Current);
+   struct st_fragment_program *fp;
+
+   if (st->ctx->Shader.CurrentProgram &&
+       st->ctx->Shader.CurrentProgram->LinkStatus) {
+      fp = st_fragment_program(st->ctx->Shader.CurrentProgram->FragmentProgram);
+   }
+   else if (st->ctx->FragmentProgram._Current) {
+      fp = st_fragment_program(st->ctx->FragmentProgram._Current);
+   }
 
    memset( &fs, 0, sizeof(fs) );
 
@@ -72,7 +80,7 @@ static void update_fs( struct st_context *st )
 
 const struct st_tracked_state st_update_fs = {
    .dirty = {
-      .mesa  = 0,
+      .mesa  = _NEW_PROGRAM,
       .st   = ST_NEW_FRAGMENT_PROGRAM,
    },
    .update = update_fs
