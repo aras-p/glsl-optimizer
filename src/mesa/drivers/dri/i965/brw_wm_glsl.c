@@ -16,6 +16,8 @@ GLboolean brw_wm_is_glsl(struct gl_fragment_program *fp)
 	    case OPCODE_CAL:
 	    case OPCODE_BRK:
 	    case OPCODE_RET:
+	    case OPCODE_DDX:
+	    case OPCODE_DDY:
 	    case OPCODE_BGNLOOP:
 		return GL_TRUE; 
 	    default:
@@ -92,7 +94,7 @@ static void prealloc_reg(struct brw_wm_compile *c)
     int i, j;
     struct brw_reg reg;
     int nr_interp_regs = 0;
-    GLuint inputs = FRAG_BIT_WPOS | c->fp_interp_emitted;
+    GLuint inputs = FRAG_BIT_WPOS | c->fp_interp_emitted | c->fp_deriv_emitted;
 
     for (i = 0; i < 4; i++) {
 	reg = (i < c->key.nr_depth_regs) 
@@ -862,6 +864,62 @@ static void emit_sne(struct brw_wm_compile *c,
 {
     emit_sop(c, inst, BRW_CONDITIONAL_NEQ);
 }
+
+static void emit_ddx(struct brw_wm_compile *c,
+                struct prog_instruction *inst)
+{
+    struct brw_compile *p = &c->func;
+    GLuint mask = inst->DstReg.WriteMask;
+    struct brw_reg interp[4];
+    struct brw_reg dst;
+    struct brw_reg src0, w;
+    GLuint nr, i;
+    src0 = get_src_reg(c, &inst->SrcReg[0], 0, 1);
+    w = get_src_reg(c, &inst->SrcReg[1], 3, 1);
+    nr = src0.nr;
+    interp[0] = brw_vec1_grf(nr, 0);
+    interp[1] = brw_vec1_grf(nr, 4);
+    interp[2] = brw_vec1_grf(nr+1, 0);
+    interp[3] = brw_vec1_grf(nr+1, 4);
+    brw_set_saturate(p, inst->SaturateMode != SATURATE_OFF);
+    for(i = 0; i < 4; i++ ) {
+        if (mask & (1<<i)) {
+            dst = get_dst_reg(c, inst, i, 1);
+            brw_MOV(p, dst, interp[i]);
+            brw_MUL(p, dst, dst, w);
+        }
+    }
+    brw_set_saturate(p, 0);
+}
+
+static void emit_ddy(struct brw_wm_compile *c,
+                struct prog_instruction *inst)
+{
+    struct brw_compile *p = &c->func;
+    GLuint mask = inst->DstReg.WriteMask;
+    struct brw_reg interp[4];
+    struct brw_reg dst;
+    struct brw_reg src0, w;
+    GLuint nr, i;
+
+    src0 = get_src_reg(c, &inst->SrcReg[0], 0, 1);
+    nr = src0.nr;
+    w = get_src_reg(c, &inst->SrcReg[1], 3, 1);
+    interp[0] = brw_vec1_grf(nr, 0);
+    interp[1] = brw_vec1_grf(nr, 4);
+    interp[2] = brw_vec1_grf(nr+1, 0);
+    interp[3] = brw_vec1_grf(nr+1, 4);
+    brw_set_saturate(p, inst->SaturateMode != SATURATE_OFF);
+    for(i = 0; i < 4; i++ ) {
+        if (mask & (1<<i)) {
+            dst = get_dst_reg(c, inst, i, 1);
+            brw_MOV(p, dst, suboffset(interp[i], 1));
+            brw_MUL(p, dst, dst, w);
+        }
+    }
+    brw_set_saturate(p, 0);
+}
+
 /* TODO
    BIAS on SIMD8 not workind yet...
  */	
@@ -1088,6 +1146,12 @@ static void brw_wm_emit_glsl(struct brw_wm_compile *c)
 	    case OPCODE_MIN:	
 		emit_min(c, inst);
 		break;
+	    case OPCODE_DDX:
+		emit_ddx(c, inst);
+		break;
+	    case OPCODE_DDY:
+                emit_ddy(c, inst);
+                break;
 	    case OPCODE_SLT:
 		emit_slt(c, inst);
 		break;

@@ -194,6 +194,7 @@ struct brw_wm_compile {
    GLuint nr_fp_insns;
    GLuint fp_temp;
    GLuint fp_interp_emitted;
+   GLuint fp_deriv_emitted;
 
    struct prog_src_register pixel_xy;
    struct prog_src_register delta_xy;

@@ -361,6 +361,37 @@ static void emit_interp( struct brw_wm_compile *c,
    c->fp_interp_emitted |= 1<<idx;
 }
 
+static void emit_ddx( struct brw_wm_compile *c,
+        const struct prog_instruction *inst )
+{
+    GLuint idx = inst->SrcReg[0].Index;
+    struct prog_src_register interp = src_reg(PROGRAM_PAYLOAD, idx);
+
+    c->fp_deriv_emitted |= 1<<idx;
+    emit_op(c,
+            OPCODE_DDX,
+            inst->DstReg,
+            0, 0, 0,
+            interp,
+            get_pixel_w(c),
+            src_undef());
+}
+
+static void emit_ddy( struct brw_wm_compile *c,
+        const struct prog_instruction *inst )
+{
+    GLuint idx = inst->SrcReg[0].Index;
+    struct prog_src_register interp = src_reg(PROGRAM_PAYLOAD, idx);
+
+    c->fp_deriv_emitted |= 1<<idx;
+    emit_op(c,
+            OPCODE_DDY,
+            inst->DstReg,
+            0, 0, 0,
+            interp,
+            get_pixel_w(c),
+            src_undef());
+}
 
 /***********************************************************************
  * Hacks to extend the program parameter and constant lists.
@@ -907,6 +938,12 @@ void brw_wm_pass_fp( struct brw_wm_compile *c )
 	  */
 	 out->DstReg.WriteMask = 0;
 	 break;
+      case OPCODE_DDX:
+	 emit_ddx(c, inst);
+	 break;
+      case OPCODE_DDY:
+         emit_ddy(c, inst);
+	break;
       case OPCODE_END:
 	 emit_fog(c);
 	 emit_fb_write(c);
