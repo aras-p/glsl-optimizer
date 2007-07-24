@@ -63,11 +63,14 @@ static const GLuint frag_to_vf[FRAG_ATTRIB_MAX] =
 };
 
 
-/* Derived from:  fs, setup states.
+/**
+ * Determine which post-transform / pre-rasterization vertex attributes
+ * we need.
+ * Derived from:  fs, setup states.
  */
 static void calculate_vertex_layout( struct softpipe_context *softpipe )
 {
-   const GLuint inputsRead = softpipe->fs.inputs_read;
+   const GLbitfield inputsRead = softpipe->fs.inputs_read;
    GLuint slot_to_vf_attr[VF_ATTRIB_MAX];
    GLbitfield attr_mask = 0x0;
    GLuint i;
@@ -87,7 +90,7 @@ static void calculate_vertex_layout( struct softpipe_context *softpipe )
     * as fixed point or ubyte format.
     */
    for (i = 1; i < FRAG_ATTRIB_TEX0; i++) {
-      if (inputsRead & (i << i)) {
+      if (inputsRead & (1 << i)) {
          if (softpipe->setup.flatshade
              && (i == FRAG_ATTRIB_COL0 || i == FRAG_ATTRIB_COL1))
             EMIT_ATTR(frag_to_vf[i], i, INTERP_CONSTANT);
@@ -97,7 +100,7 @@ static void calculate_vertex_layout( struct softpipe_context *softpipe )
    }
 
    for (i = FRAG_ATTRIB_TEX0; i < FRAG_ATTRIB_MAX; i++) {
-      if (inputsRead & (i << i)) {
+      if (inputsRead & (1 << i)) {
 	 EMIT_ATTR(frag_to_vf[i], i, INTERP_PERSPECTIVE);
       }
    }
