@@ -1077,7 +1077,7 @@ _mesa_texstore_rgba(TEXSTORE_PARAMS)
 GLboolean
 _mesa_texstore_z32(TEXSTORE_PARAMS)
 {
-   const GLfloat depthScale = (GLfloat) 0xffffffff;
+   const GLuint depthScale = 0xffffffff;
    (void) dims;
    ASSERT(dstFormat == &_mesa_texformat_z32);
    ASSERT(dstFormat->TexelBytes == sizeof(GLuint));
@@ -1124,7 +1124,7 @@ _mesa_texstore_z32(TEXSTORE_PARAMS)
 GLboolean
 _mesa_texstore_z16(TEXSTORE_PARAMS)
 {
-   const GLfloat depthScale = 65535.0f;
+   const GLuint depthScale = 0xffff;
    (void) dims;
    ASSERT(dstFormat == &_mesa_texformat_z16);
    ASSERT(dstFormat->TexelBytes == sizeof(GLushort));
@@ -2319,6 +2319,8 @@ _mesa_texstore_ycbcr(TEXSTORE_PARAMS)
 GLboolean
 _mesa_texstore_z24_s8(TEXSTORE_PARAMS)
 {
+   const GLuint depthScale = 0xffffff;
+
    ASSERT(dstFormat == &_mesa_texformat_z24_s8);
    ASSERT(srcFormat == GL_DEPTH_STENCIL_EXT);
    ASSERT(srcType == GL_UNSIGNED_INT_24_8_EXT);
@@ -2357,7 +2359,7 @@ _mesa_texstore_z24_s8(TEXSTORE_PARAMS)
             _mesa_unpack_depth_span(ctx, srcWidth,
                                     GL_UNSIGNED_INT, /* dst type */
                                     dstRow, /* dst addr */
-                                    (GLfloat) 0xffffff, /* depthScale */
+                                    depthScale,
                                     srcType, src, srcPacking);
             /* get the 8-bit stencil values */
             _mesa_unpack_stencil_span(ctx, srcWidth,

@@ -428,10 +428,12 @@ __driUtilUpdateDrawableInfo(__DRIdrawablePrivate *pdp)
 
     if (pdp->pClipRects) {
 	_mesa_free(pdp->pClipRects); 
+	pdp->pClipRects = NULL;
     }
 
     if (pdp->pBackClipRects) {
 	_mesa_free(pdp->pBackClipRects); 
+	pdp->pBackClipRects = NULL;
     }
 
     DRM_SPINUNLOCK(&psp->pSAREA->drawable_lock, psp->drawLockID);

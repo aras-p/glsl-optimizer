@@ -34,6 +34,12 @@
 #ifndef ST_PROGRAM_H
 #define ST_PROGRAM_H
 
+#include "mtypes.h"
+#include "pipe/tgsi/core/tgsi_token.h"
+
+#define ST_FP_MAX_TOKENS 1024
+
+
 struct st_fragment_program
 {
    struct gl_fragment_program Base;
@@ -42,6 +48,11 @@ struct st_fragment_program
    GLuint    id;		/* String id, for tracking
 				 * ProgramStringNotify changes.
 				 */
+
+
+   struct tgsi_token tokens[ST_FP_MAX_TOKENS];
+   GLboolean dirty;
+   
 
 #if 0   
    GLfloat (*cbuffer)[4];
@@ -56,13 +67,38 @@ struct st_fragment_program
       const GLfloat *values;    /* Pointer to tracked values */
    } *param;
    GLuint nr_params;
+#endif
 
    GLuint param_state;
-#endif
 };
 
 
+struct st_vertex_program
+{
+   struct gl_vertex_program Base;
+   GLboolean error;             /* If program is malformed for any reason. */
+
+   GLuint    id;		/* String id, for tracking
+				 * ProgramStringNotify changes.
+				 */
+
+   GLboolean dirty;
+   GLuint param_state;
+};
+
 void st_init_cb_program( struct st_context *st );
 void st_destroy_cb_program( struct st_context *st );
+
+static inline struct st_fragment_program *
+st_fragment_program( struct gl_fragment_program *fp )
+{
+   return (struct st_fragment_program *)fp;
+}
+
+static inline struct st_vertex_program *
+st_vertex_program( struct gl_vertex_program *vp )
+{
+   return (struct st_vertex_program *)vp;
+}
 
 #endif

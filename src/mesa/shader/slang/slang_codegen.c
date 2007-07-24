@@ -1,6 +1,6 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.5.3
+ * Version:  7.1
  *
  * Copyright (C) 2005-2007  Brian Paul   All Rights Reserved.
  *
@@ -2328,7 +2328,8 @@ _slang_gen_field(slang_assemble_ctx * A, slang_operation *oper)
          n = _slang_gen_swizzle(n, swizzle);
       return n;
    }
-   else if (ti.spec.type == SLANG_SPEC_FLOAT) {
+   else if (   ti.spec.type == SLANG_SPEC_FLOAT
+            || ti.spec.type == SLANG_SPEC_INT) {
       const GLuint rows = 1;
       slang_swizzle swz;
       slang_ir_node *n;

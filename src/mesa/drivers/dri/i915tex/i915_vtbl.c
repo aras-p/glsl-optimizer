@@ -61,6 +61,7 @@ i915_reduced_primitive_state(struct intel_context *intel, GLenum rprim)
    st1 &= ~ST1_ENABLE;
 
    switch (rprim) {
+   case GL_QUADS: /* from RASTERIZE(GL_QUADS) in t_dd_tritemp.h */
    case GL_TRIANGLES:
       if (intel->ctx.Polygon.StippleFlag && intel->hw_stipple)
          st1 |= ST1_ENABLE;
@@ -463,6 +464,7 @@ i915_state_draw_region(struct intel_context *intel,
     * Set stride/cpp values
     */
    if (color_region) {
+//      fprintf(stderr, "color pitch %d\n", color_region->pitch);
       state->Buffer[I915_DESTREG_CBUFADDR0] = _3DSTATE_BUF_INFO_CMD;
       state->Buffer[I915_DESTREG_CBUFADDR1] =
          (BUF_3D_ID_COLOR_BACK |
@@ -471,6 +473,7 @@ i915_state_draw_region(struct intel_context *intel,
    }
 
    if (depth_region) {
+//      fprintf(stderr, "depth pitch %d\n", depth_region->pitch);
       state->Buffer[I915_DESTREG_DBUFADDR0] = _3DSTATE_BUF_INFO_CMD;
       state->Buffer[I915_DESTREG_DBUFADDR1] =
          (BUF_3D_ID_DEPTH |

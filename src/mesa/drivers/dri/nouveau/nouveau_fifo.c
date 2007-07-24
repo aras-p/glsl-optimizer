@@ -98,7 +98,7 @@ void nouveauWaitForIdle(nouveauContextPtr nmesa)
 // here we call the fifo initialization ioctl and fill in stuff accordingly
 GLboolean nouveauFifoInit(nouveauContextPtr nmesa)
 {
-	drm_nouveau_fifo_alloc_t fifo_init;
+	struct drm_nouveau_fifo_alloc fifo_init;
 	int i, ret;
 
 #ifdef NOUVEAU_RING_DEBUG

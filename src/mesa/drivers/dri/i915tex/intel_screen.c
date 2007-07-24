@@ -88,6 +88,7 @@ intelMapScreenRegions(__DRIscreenPrivate * sPriv)
       _mesa_warning(NULL, "no front buffer handle in intelMapScreenRegions!");
    }
 
+#if 0
    if (0)
       _mesa_printf("Back 0x%08x ", intelScreen->back.handle);
    if (drmMap(sPriv->fd,
@@ -119,6 +120,7 @@ intelMapScreenRegions(__DRIscreenPrivate * sPriv)
       intelUnmapScreenRegions(intelScreen);
       return GL_FALSE;
    }
+#endif
 
 #if 0
    _mesa_printf("TEX 0x%08x ", intelScreen->tex.handle);
@@ -156,7 +158,7 @@ intel_recreate_static(intelScreenPrivate *intelScreen,
   }
   return region;
 }
-    
+
 
 /* Create intel_region structs to describe the static front,back,depth
  * buffers created by the xserver. 
@@ -172,6 +174,7 @@ intel_recreate_static(intelScreenPrivate *intelScreen,
 static void
 intel_recreate_static_regions(intelScreenPrivate *intelScreen)
 {
+/* this is the real front buffer which is only used for blitting to */
    intelScreen->front_region =
       intel_recreate_static(intelScreen,
 			    intelScreen->front_region,
@@ -192,7 +195,7 @@ intel_recreate_static_regions(intelScreenPrivate *intelScreen)
 			    intelScreen->rotated.pitch /
 			    intelScreen->cpp, intelScreen->height);
 
-
+#if 0
    intelScreen->back_region =
       intel_recreate_static(intelScreen,
 			    intelScreen->back_region,
@@ -226,6 +229,7 @@ intel_recreate_static_regions(intelScreenPrivate *intelScreen)
 			    intelScreen->cpp,
 			    intelScreen->depth.pitch / intelScreen->cpp,
 			    intelScreen->height);
+#endif
 }
 
 /**
@@ -382,7 +386,7 @@ intelUpdateScreenFromSAREA(intelScreenPrivate * intelScreen,
    intelScreen->rotatedWidth = sarea->virtualX;
    intelScreen->rotatedHeight = sarea->virtualY;
 
-   if (0)
+   if (1)
       intelPrintSAREA(sarea);
 }
 
@@ -600,6 +604,7 @@ intelCreateBuffer(__DRIscreenPrivate * driScrnPriv,
 
       _mesa_initialize_framebuffer(&intel_fb->Base, mesaVis);
 
+#if 0
       /* setup the hardware-based renderbuffers */
       {
          intel_fb->color_rb[0]
@@ -640,7 +645,6 @@ intelCreateBuffer(__DRIscreenPrivate * driScrnPriv,
 	    _mesa_reference_renderbuffer(&tmp_rb, &intel_fb->color_rb[2]->Base);
 	 }
       }
-
       if (mesaVis->depthBits == 24 && mesaVis->stencilBits == 8) {
          /* combined depth/stencil buffer */
          struct intel_renderbuffer *depthStencilRb
@@ -669,6 +673,50 @@ intelCreateBuffer(__DRIscreenPrivate * driScrnPriv,
          intel_set_span_functions(&depthRb->Base);
          _mesa_add_renderbuffer(&intel_fb->Base, BUFFER_DEPTH, &depthRb->Base);
       }
+
+#else
+      {
+	 /* fake frontbuffer */
+	 /* XXX allocation should only happen in the unusual case
+            it's actually needed */
+         intel_fb->color_rb[0]
+            = intel_new_renderbuffer_fb(NULL, rgbFormat);
+         _mesa_add_renderbuffer(&intel_fb->Base, BUFFER_FRONT_LEFT,
+				&intel_fb->color_rb[0]->Base);
+      }
+
+      if (mesaVis->doubleBufferMode) {
+         intel_fb->color_rb[1]
+            = intel_new_renderbuffer_fb(NULL, rgbFormat);
+         _mesa_add_renderbuffer(&intel_fb->Base, BUFFER_BACK_LEFT,
+				&intel_fb->color_rb[1]->Base);
+
+	 if (screen->third.handle) {
+	    struct gl_renderbuffer *tmp_rb = NULL;
+
+	    intel_fb->color_rb[2]
+	       = intel_new_renderbuffer_fb(NULL, rgbFormat);
+	    _mesa_reference_renderbuffer(&tmp_rb, &intel_fb->color_rb[2]->Base);
+	 }
+      }
+      if (mesaVis->depthBits == 24 && mesaVis->stencilBits == 8) {
+         /* combined depth/stencil buffer */
+         struct intel_renderbuffer *depthStencilRb
+            = intel_new_renderbuffer_fb(NULL, GL_DEPTH24_STENCIL8_EXT);
+         /* note: bind RB to two attachment points */
+         _mesa_add_renderbuffer(&intel_fb->Base, BUFFER_DEPTH,
+				&depthStencilRb->Base);
+         _mesa_add_renderbuffer(&intel_fb->Base, BUFFER_STENCIL,
+				&depthStencilRb->Base);
+      }
+      else if (mesaVis->depthBits == 16) {
+         /* just 16-bit depth buffer, no hw stencil */
+         struct intel_renderbuffer *depthRb
+            = intel_new_renderbuffer_fb(NULL, GL_DEPTH_COMPONENT16);
+         _mesa_add_renderbuffer(&intel_fb->Base, BUFFER_DEPTH, &depthRb->Base);
+      }
+
+#endif
 
       /* now add any/all software-based renderbuffers we may need */
       _mesa_add_soft_renderbuffers(&intel_fb->Base,
@@ -939,11 +987,18 @@ struct intel_context *intelScreenContext(intelScreenPrivate *intelScreen)
    * context at screen creation. For now just use the current context.
    */
 
-  GET_CURRENT_CONTEXT(ctx);
+/*  GET_CURRENT_CONTEXT(ctx);
   if (ctx == NULL) {
      _mesa_problem(NULL, "No current context in intelScreenContext\n");
      return NULL;
   }
   return intel_context(ctx);
+*/
+  if (intelScreen->dummyctxptr == NULL) {
+     _mesa_problem(NULL, "No current context in intelScreenContext\n");
+     return NULL;
+  }
+  return intelScreen->dummyctxptr;
+
 }
 

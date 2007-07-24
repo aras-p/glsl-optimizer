@@ -1,15 +1,22 @@
 #include "tgsi_platform.h"
 #include "tgsi_core.h"
 
+union pointer_hack
+{
+   void *pointer;
+   unsigned long long uint64;
+};
+
 void *
 tgsi_align_128bit(
    void *unaligned )
 {
-   GLuint *ptr, addr;
+   union pointer_hack ph;
 
-   ptr = (GLuint *) unaligned;
-   addr = (*(GLuint *) &ptr + 15) & ~15;
-   return *(void **) &addr;
+   ph.uint64 = 0;
+   ph.pointer = unaligned;
+   ph.uint64 = (ph.uint64 + 15) & ~15;
+   return ph.pointer;
 }
 
 GLuint

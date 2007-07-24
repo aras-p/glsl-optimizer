@@ -254,6 +254,7 @@ struct intel_context
    GLuint numClipRects;         /**< cliprects for drawing */
    drm_clip_rect_t *pClipRects;
    drm_clip_rect_t fboRect;     /**< cliprect for FBO rendering */
+   drm_clip_rect_t fakeClipRect;     /**< cliprect for priv back/fake front buffers rendering */
 
    int perf_boxes;
 
@@ -272,6 +273,7 @@ struct intel_context
    drmI830Sarea *sarea;
 
    GLuint lastStamp;
+   GLuint revalidateDrawable;
 
    /**
     * Configuration cache
@@ -353,7 +355,7 @@ __memcpy(void *to, const void *from, size_t n)
 /* ================================================================
  * Debugging:
  */
-#define DO_DEBUG		0
+#define DO_DEBUG		1
 #if DO_DEBUG
 extern int INTEL_DEBUG;
 #else

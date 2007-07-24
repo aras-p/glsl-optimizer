@@ -289,17 +289,21 @@ intelFlush(GLcontext * ctx)
  * Check if we need to rotate/warp the front color buffer to the
  * rotated screen.  We generally need to do this when we get a glFlush
  * or glFinish after drawing to the front color buffer.
+ * If no rotation, just copy the private fake front buffer to the real one.
  */
 static void
-intelCheckFrontRotate(GLcontext * ctx)
+intelCheckFrontUpdate(GLcontext * ctx)
 {
    struct intel_context *intel = intel_context(ctx);
    if (intel->ctx.DrawBuffer->_ColorDrawBufferMask[0] ==
        BUFFER_BIT_FRONT_LEFT) {
       intelScreenPrivate *screen = intel->intelScreen;
+      __DRIdrawablePrivate *dPriv = intel->driDrawable;
       if (screen->current_rotation != 0) {
-         __DRIdrawablePrivate *dPriv = intel->driDrawable;
          intelRotateWindow(intel, dPriv, BUFFER_BIT_FRONT_LEFT);
+      }
+      else {
+         intelCopyBuffer(dPriv, NULL);
       }
    }
 }
@@ -312,7 +316,7 @@ static void
 intelglFlush(GLcontext * ctx)
 {
    intelFlush(ctx);
-   intelCheckFrontRotate(ctx);
+   intelCheckFrontUpdate(ctx);
 }
 
 void
@@ -326,7 +330,7 @@ intelFinish(GLcontext * ctx)
       driFenceUnReference(intel->batch->last_fence);
       intel->batch->last_fence = NULL;
    }
-   intelCheckFrontRotate(ctx);
+   intelCheckFrontUpdate(ctx);
 }
 
 
@@ -581,6 +585,13 @@ intelMakeCurrent(__DRIcontextPrivate * driContextPriv,
                  __DRIdrawablePrivate * driReadPriv)
 {
 
+#if 0
+   if (driDrawPriv) {
+      fprintf(stderr, "x %d, y %d, width %d, height %d\n",
+	      driDrawPriv->x, driDrawPriv->y, driDrawPriv->w, driDrawPriv->h);
+   }
+#endif
+
    if (driContextPriv) {
       struct intel_context *intel =
          (struct intel_context *) driContextPriv->driverPrivate;
@@ -588,6 +599,9 @@ intelMakeCurrent(__DRIcontextPrivate * driContextPriv,
 	 (struct intel_framebuffer *) driDrawPriv->driverPrivate;
       GLframebuffer *readFb = (GLframebuffer *) driReadPriv->driverPrivate;
 
+      /* this is a hack so we have a valid context when the region allocation
+         is done. Need a per-screen context? */
+      intel->intelScreen->dummyctxptr = intel;
 
       /* XXX FBO temporary fix-ups! */
       /* if the renderbuffers don't have regions, init them from the context */
@@ -625,18 +639,30 @@ intelMakeCurrent(__DRIcontextPrivate * driContextPriv,
       }
 
       _mesa_make_current(&intel->ctx, &intel_fb->Base, readFb);
+      intel->intelScreen->dummyctxptr = &intel->ctx;
 
       /* The drawbuffer won't always be updated by _mesa_make_current: 
        */
       if (intel->ctx.DrawBuffer == &intel_fb->Base) {
 
 	 if (intel->driDrawable != driDrawPriv) {
-	    intel_fb->vblank_flags = (intel->intelScreen->irq_active != 0)
-	       ? driGetDefaultVBlankFlags(&intel->optionCache)
-	       : VBLANK_FLAG_NO_IRQ;
-	    (*dri_interface->getUST) (&intel_fb->swap_ust);
-	    driDrawableInitVBlank(driDrawPriv, intel_fb->vblank_flags,
-				  &intel_fb->vbl_seq);
+	    if (driDrawPriv->pdraw->swap_interval == (unsigned)-1) {
+	       int i;
+
+	       intel_fb->vblank_flags = (intel->intelScreen->irq_active != 0)
+		  ? driGetDefaultVBlankFlags(&intel->optionCache)
+		 : VBLANK_FLAG_NO_IRQ;
+
+	       (*dri_interface->getUST) (&intel_fb->swap_ust);
+	       driDrawableInitVBlank(driDrawPriv, intel_fb->vblank_flags,
+				     &intel_fb->vbl_seq);
+	       intel_fb->vbl_waited = intel_fb->vbl_seq;
+
+	       for (i = 0; i < (intel->intelScreen->third.handle ? 3 : 2); i++) {
+		  if (intel_fb->color_rb[i])
+		     intel_fb->color_rb[i]->vbl_pending = intel_fb->vbl_seq;
+	       }
+	    }
 	    intel->driDrawable = driDrawPriv;
 	    intelWindowMoved(intel);
 	 }
@@ -670,7 +696,8 @@ intelContendedLock(struct intel_context *intel, GLuint flags)
     * checking must be done *after* this call:
     */
    if (dPriv)
-      DRI_VALIDATE_DRAWABLE_INFO(sPriv, dPriv);
+      intel->revalidateDrawable = GL_TRUE;
+//      DRI_VALIDATE_DRAWABLE_INFO(sPriv, dPriv);
 
    if (sarea->width != intelScreen->width ||
        sarea->height != intelScreen->height ||
@@ -679,40 +706,31 @@ intelContendedLock(struct intel_context *intel, GLuint flags)
       intelUpdateScreenRotation(sPriv, sarea);
    }
 
+#if 0
    if (sarea->width != intel->width ||
        sarea->height != intel->height ||
        sarea->rotation != intel->current_rotation) {
-      
-      void *batchMap = intel->batch->map;
-      
+      int numClipRects = intel->numClipRects;
+
       /*
        * FIXME: Really only need to do this when drawing to a
        * common back- or front buffer.
        */
 
       /*
-       * This will drop the outstanding batchbuffer on the floor
+       * This will essentially drop the outstanding batchbuffer on the floor.
        */
+      intel->numClipRects = 0;
 
-      if (batchMap != NULL) {
-	 driBOUnmap(intel->batch->buffer);
-	 intel->batch->map = NULL;
-      }
+      if (intel->Fallback)
+	 _swrast_flush(&intel->ctx);
 
-      intel_batchbuffer_reset(intel->batch);
+      INTEL_FIREVERTICES(intel);
 
-      if (batchMap == NULL) {
-	 driBOUnmap(intel->batch->buffer);
-	 intel->batch->map = NULL;
-      }
+      if (intel->batch->map != intel->batch->ptr)
+	 intel_batchbuffer_flush(intel->batch);
 
-      /* lose all primitives */
-      intel->prim.primitive = ~0;
-      intel->prim.start_ptr = 0;
-      intel->prim.flush = 0;
-
-      /* re-emit all state */
-      intel->vtbl.lost_hardware(intel);
+      intel->numClipRects = numClipRects;
 
       /* force window update */
       intel->lastStamp = 0;
@@ -721,13 +739,7 @@ intelContendedLock(struct intel_context *intel, GLuint flags)
       intel->height = sarea->height;
       intel->current_rotation = sarea->rotation;
    }
-
-   /* Drawable changed?
-    */
-   if (dPriv && intel->lastStamp != dPriv->lastStamp) {
-      intelWindowMoved(intel);
-      intel->lastStamp = dPriv->lastStamp;
-   }
+#endif
 }
 
 
@@ -753,7 +765,9 @@ void LOCK_HARDWARE( struct intel_context *intel )
 				    BUFFER_BACK_LEFT);
     }
 
-    if (intel_rb && (intel_fb->vbl_waited - intel_rb->vbl_pending) > (1<<23)) {
+    if (intel_rb && intel_fb->vblank_flags &&
+	!(intel_fb->vblank_flags & VBLANK_FLAG_NO_IRQ) &&
+	(intel_fb->vbl_waited - intel_rb->vbl_pending) > (1<<23)) {
 	drmVBlank vbl;
 
 	vbl.request.type = DRM_VBLANK_ABSOLUTE;

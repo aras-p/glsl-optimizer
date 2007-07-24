@@ -697,8 +697,7 @@ static GLboolean nv10InitCard(nouveauContextPtr nmesa)
 	BEGIN_RING_SIZE(NvSub3D, 0x03f4, 1);
 	OUT_RING(0);
 
-	/* not for nv10, only for >= nv11 */
-	if ((nmesa->screen->card->id>>4) >= 0x11) {
+	if (nmesa->screen->card->type >= NV_11) {
 	        BEGIN_RING_SIZE(NvSub3D, 0x120, 3);
         	OUT_RING(0);
 	        OUT_RING(1);
@@ -739,11 +738,11 @@ static GLboolean nv10BindBuffers(nouveauContextPtr nmesa, int num_color,
 	OUT_RING_CACHE(depth ? depth->offset : color[0]->offset);
 
 	/* Always set to bottom left of buffer */
-	BEGIN_RING_CACHE(NvSub3D, NV10_TCL_PRIMITIVE_3D_VIEWPORT_ORIGIN_X, 4);
+	/*BEGIN_RING_CACHE(NvSub3D, NV10_TCL_PRIMITIVE_3D_VIEWPORT_ORIGIN_X, 4);
 	OUT_RING_CACHEf (0.0);
 	OUT_RING_CACHEf ((GLfloat) h);
 	OUT_RING_CACHEf (0.0);
-	OUT_RING_CACHEf (0.0);
+	OUT_RING_CACHEf (0.0);*/
 
 	return GL_TRUE;
 }

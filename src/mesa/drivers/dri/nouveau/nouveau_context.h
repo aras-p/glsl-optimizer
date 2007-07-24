@@ -109,12 +109,12 @@ typedef struct nouveau_context {
 	uint64_t gart_size;
 
 	/* Channel synchronisation */
-	drm_nouveau_notifier_alloc_t *syncNotifier;
+	struct drm_nouveau_notifier_alloc *syncNotifier;
 
 	/* ARB_occlusion_query / EXT_timer_query */
 	GLuint		  query_object_max;
 	GLboolean *	  query_alloc;
-	drm_nouveau_notifier_alloc_t *queryNotifier;
+	struct drm_nouveau_notifier_alloc *queryNotifier;
 
 	/* Additional hw-specific functions */
 	nouveau_hw_func hw_func;
@@ -168,7 +168,7 @@ typedef struct nouveau_context {
 	nouveauShader *passthrough_fp;
 
 	nouveauScreenRec *screen;
-	drm_nouveau_sarea_t *sarea;
+	struct drm_nouveau_sarea *sarea;
 
 	__DRIcontextPrivate  *driContext;    /* DRI context */
 	__DRIscreenPrivate   *driScreen;     /* DRI screen */

@@ -28,7 +28,6 @@
 #include "main/glheader.h"
 #include "main/macros.h"
 #include "main/enums.h"
-#include "shader/program.h"
 
 #include "vf/vf.h"
 #include "pipe/draw/draw_context.h"
@@ -68,8 +67,7 @@ static const GLuint frag_to_vf[FRAG_ATTRIB_MAX] =
  */
 static void calculate_vertex_layout( struct softpipe_context *softpipe )
 {
-   struct gl_fragment_program *fp = softpipe->fs.fp;
-   const GLuint inputsRead = fp->Base.InputsRead;
+   const GLuint inputsRead = softpipe->fs.inputs_read;
    GLuint slot_to_vf_attr[VF_ATTRIB_MAX];
    GLbitfield attr_mask = 0x0;
    GLuint i;

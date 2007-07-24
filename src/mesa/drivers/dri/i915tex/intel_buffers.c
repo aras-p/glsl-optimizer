@@ -146,55 +146,28 @@ intelSetRenderbufferClipRects(struct intel_context *intel)
    intel->drawY = 0;
 }
 
-
 /**
- * As above, but for rendering to front buffer of a window.
- * \sa intelSetRenderbufferClipRects
+ * As above, but for rendering private front/back buffer of a window.
+ * \sa intelSetPrivbufClipRects
  */
+
 static void
-intelSetFrontClipRects(struct intel_context *intel)
+intelSetPrivbufClipRects(struct intel_context *intel)
 {
    __DRIdrawablePrivate *dPriv = intel->driDrawable;
-
    if (!dPriv)
       return;
 
-   intel->numClipRects = dPriv->numClipRects;
-   intel->pClipRects = dPriv->pClipRects;
-   intel->drawX = dPriv->x;
-   intel->drawY = dPriv->y;
+   intel->fakeClipRect.x1 = 0;
+   intel->fakeClipRect.y1 = 0;
+   intel->fakeClipRect.x2 = dPriv->w;
+   intel->fakeClipRect.y2 = dPriv->h;
+   intel->numClipRects = 1;
+   intel->pClipRects = &intel->fakeClipRect;
+   intel->drawX = 0;
+   intel->drawY = 0;
 }
 
-
-/**
- * As above, but for rendering to back buffer of a window.
- */
-static void
-intelSetBackClipRects(struct intel_context *intel)
-{
-   __DRIdrawablePrivate *dPriv = intel->driDrawable;
-   struct intel_framebuffer *intel_fb;
-
-   if (!dPriv)
-      return;
-
-   intel_fb = dPriv->driverPrivate;
-
-   if (intel_fb->pf_active || dPriv->numBackClipRects == 0) {
-      /* use the front clip rects */
-      intel->numClipRects = dPriv->numClipRects;
-      intel->pClipRects = dPriv->pClipRects;
-      intel->drawX = dPriv->x;
-      intel->drawY = dPriv->y;
-   }
-   else {
-      /* use the back clip rects */
-      intel->numClipRects = dPriv->numBackClipRects;
-      intel->pClipRects = dPriv->pBackClipRects;
-      intel->drawX = dPriv->backX;
-      intel->drawY = dPriv->backY;
-   }
-}
 
 
 /**
@@ -210,26 +183,9 @@ intelWindowMoved(struct intel_context *intel)
 
    if (!intel->ctx.DrawBuffer) {
       /* when would this happen? -BP */
-      intelSetFrontClipRects(intel);
+      intel->numClipRects = 0;
    }
-   else if (intel->ctx.DrawBuffer->Name != 0) {
-      /* drawing to user-created FBO - do nothing */
-      /* Cliprects would be set from intelDrawBuffer() */
-   }
-   else {
-      /* drawing to a window */
-      switch (intel_fb->Base._ColorDrawBufferMask[0]) {
-      case BUFFER_BIT_FRONT_LEFT:
-         intelSetFrontClipRects(intel);
-         break;
-      case BUFFER_BIT_BACK_LEFT:
-         intelSetBackClipRects(intel);
-         break;
-      default:
-         /* glDrawBuffer(GL_NONE or GL_FRONT_AND_BACK): software fallback */
-         intelSetFrontClipRects(intel);
-      }
-   }
+
 
    if (intel->intelScreen->driScrnPriv->ddxMinor >= 7) {
       drmI830Sarea *sarea = intel->sarea;
@@ -316,7 +272,8 @@ intelWindowMoved(struct intel_context *intel)
 	 flags = intel_fb->vblank_flags & ~VBLANK_FLAG_SECONDARY;
       }
 
-      if (flags != intel_fb->vblank_flags) {
+      if (flags != intel_fb->vblank_flags && intel_fb->vblank_flags &&
+	  !(intel_fb->vblank_flags & VBLANK_FLAG_NO_IRQ)) {
 	 drmVBlank vbl;
 	 int i;
 
@@ -327,7 +284,9 @@ intelWindowMoved(struct intel_context *intel)
 	 }
 
 	 for (i = 0; i < intel_fb->pf_num_pages; i++) {
-	    if (!intel_fb->color_rb[i])
+	    if (!intel_fb->color_rb[i] ||
+		(intel_fb->vbl_waited - intel_fb->color_rb[i]->vbl_pending) <=
+		(1<<23))
 	       continue;
 
 	    vbl.request.sequence = intel_fb->color_rb[i]->vbl_pending;
@@ -479,6 +438,7 @@ void
 intelRotateWindow(struct intel_context *intel,
                   __DRIdrawablePrivate * dPriv, GLuint srcBuf)
 {
+
    intelScreenPrivate *screen = intel->intelScreen;
    drm_clip_rect_t fullRect;
    struct intel_framebuffer *intel_fb;
@@ -828,7 +788,8 @@ intelScheduleSwap(const __DRIdrawablePrivate * dPriv, GLboolean *missed_target)
    drm_i915_vblank_swap_t swap;
    GLboolean ret;
 
-   if ((intel_fb->vblank_flags & VBLANK_FLAG_NO_IRQ) ||
+   if (!intel_fb->vblank_flags ||
+       (intel_fb->vblank_flags & VBLANK_FLAG_NO_IRQ) ||
        intelScreen->current_rotation != 0 ||
        intelScreen->drmMinor < (intel_fb->pf_active ? 9 : 6))
       return GL_FALSE;
@@ -909,7 +870,7 @@ intelSwapBuffers(__DRIdrawablePrivate * dPriv)
 	 GLboolean missed_target;
 	 struct intel_framebuffer *intel_fb = dPriv->driverPrivate;
 	 int64_t ust;
-         
+
 	 _mesa_notifySwapBuffers(ctx);  /* flush pending rendering comands */
 
          if (screen->current_rotation != 0 ||
@@ -953,10 +914,17 @@ intelCopySubBuffer(__DRIdrawablePrivate * dPriv, int x, int y, int w, int h)
 
       if (ctx->Visual.doubleBufferMode) {
          drm_clip_rect_t rect;
+#if 1
          rect.x1 = x + dPriv->x;
          rect.y1 = (dPriv->h - y - h) + dPriv->y;
          rect.x2 = rect.x1 + w;
          rect.y2 = rect.y1 + h;
+#else
+         rect.x1 = x;
+         rect.y1 = dPriv->h - y;
+         rect.x2 = rect.x1 + w;
+         rect.y2 = rect.y1 + h;
+#endif
          _mesa_notifySwapBuffers(ctx);  /* flush pending rendering comands */
          intelCopyBuffer(dPriv, &rect);
       }
@@ -991,7 +959,7 @@ intel_draw_buffer(GLcontext * ctx, struct gl_framebuffer *fb)
       return;
    }
 
-   /* Do this here, note core Mesa, since this function is called from
+   /* Do this here, not core Mesa, since this function is called from
     * many places within the driver.
     */
    if (ctx->NewState & (_NEW_BUFFERS | _NEW_COLOR | _NEW_PIXEL)) {
@@ -1015,12 +983,7 @@ intel_draw_buffer(GLcontext * ctx, struct gl_framebuffer *fb)
    /*
     * How many color buffers are we drawing into?
     */
-   if (fb->_NumColorDrawBuffers[0] != 1
-#if 0
-       /* XXX FBO temporary - always use software rendering */
-       || 1
-#endif
-      ) {
+   if (fb->_NumColorDrawBuffers[0] != 1) {
       /* writing to 0 or 2 or 4 color buffers */
       /*_mesa_debug(ctx, "Software rendering\n");*/
       FALLBACK(intel, INTEL_FALLBACK_DRAW_BUFFER, GL_TRUE);
@@ -1040,13 +1003,12 @@ intel_draw_buffer(GLcontext * ctx, struct gl_framebuffer *fb)
     * And set up cliprects.
     */
    if (fb->Name == 0) {
+      intelSetPrivbufClipRects(intel);
       /* drawing to window system buffer */
       if (front) {
-         intelSetFrontClipRects(intel);
          colorRegion = intel_get_rb_region(fb, BUFFER_FRONT_LEFT);
       }
       else {
-         intelSetBackClipRects(intel);
          colorRegion = intel_get_rb_region(fb, BUFFER_BACK_LEFT);
       }
    }

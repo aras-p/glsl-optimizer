@@ -569,6 +569,7 @@ main(int ac, char **av)
    if (ac == 2)
       frontbuffer = 0;
 
+   glutInit(&ac, av);
    glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB | GLUT_DEPTH);
    glutInitWindowPosition(0, 0);
    glutInitWindowSize(640, 480);

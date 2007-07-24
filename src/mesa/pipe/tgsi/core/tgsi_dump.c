@@ -400,12 +400,16 @@ tgsi_dump(
    GLuint deflt = !(flags & TGSI_DUMP_NO_DEFAULT);
 
    {
+#if 0
       static GLuint counter = 0;
       char buffer[64];
 
       sprintf( buffer, "sbir-dump-%.4u.txt", counter++ );
       dump.file = fopen( buffer, "wt" );
+#else
+      dump.file = stderr;
       dump.tabs = 0;
+#endif
    }
 
    tgsi_parse_init( &parse, tokens );
