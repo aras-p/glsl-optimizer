@@ -392,6 +392,7 @@ dri_bufmgr_ttm_init(int fd, unsigned int fence_type,
    test_alloc = dri_bo_alloc((dri_bufmgr *)bufmgr_ttm, "test allocation",
      4096, 4096, DRM_BO_FLAG_MEM_LOCAL | DRM_BO_FLAG_MEM_TT);
    if (test_alloc == NULL) {
+      fprintf(stderr, "TTM test allocation failed\n");
       _glthread_DESTROY_MUTEX(bufmgr_ttm->mutex);
       free(bufmgr_ttm);
       return NULL;

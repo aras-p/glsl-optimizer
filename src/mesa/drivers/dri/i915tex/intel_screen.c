@@ -536,6 +536,8 @@ intelInitDriver(__DRIscreenPrivate * sPriv)
 		 __func__, __LINE__);
 	 return GL_FALSE;
       }
+      fprintf(stderr, "[%s:%u] Failed to init TTM buffer manager, falling back"
+	      " to classic.\n", __func__, __LINE__);
       intelScreen->bufmgr = dri_bufmgr_fake_init(intelScreen->tex.offset,
 						 intelScreen->tex.map,
 						 intelScreen->tex.size,
