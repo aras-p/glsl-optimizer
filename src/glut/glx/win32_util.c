@@ -15,6 +15,7 @@
 
 /* The following added by Paul Garceau <pgarceau@teleport.com> */
 #if defined(__MINGW32__)
+#include <GL/gl.h>
 #include <time.h>
 #include <windows.h>
 struct timeval;

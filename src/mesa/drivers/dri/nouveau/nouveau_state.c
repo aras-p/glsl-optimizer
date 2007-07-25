@@ -60,14 +60,14 @@ static void nouveauCalcViewport(GLcontext *ctx)
     nouveauContextPtr nmesa = NOUVEAU_CONTEXT(ctx);
     const GLfloat *v = ctx->Viewport._WindowMap.m;
     GLfloat *m = nmesa->viewport.m;
-    GLfloat xoffset = nmesa->drawX, yoffset = nmesa->drawY;
+    GLfloat xoffset = nmesa->drawX, yoffset = nmesa->drawY + nmesa->drawH;
   
     nmesa->depth_scale = 1.0 / ctx->DrawBuffer->_DepthMaxF;
 
     m[MAT_SX] =   v[MAT_SX];
     m[MAT_TX] =   v[MAT_TX] + xoffset + SUBPIXEL_X;
     m[MAT_SY] = - v[MAT_SY];
-    m[MAT_TY] =   v[MAT_TY] + yoffset + SUBPIXEL_Y;
+    m[MAT_TY] = (-v[MAT_TY]) + yoffset + SUBPIXEL_Y;
     m[MAT_SZ] =   v[MAT_SZ] * nmesa->depth_scale;
     m[MAT_TZ] =   v[MAT_TZ] * nmesa->depth_scale;
 
@@ -162,6 +162,8 @@ void nouveauDDInitState(nouveauContextPtr nmesa)
             nv04InitStateFuncs(nmesa->glCtx, &nmesa->glCtx->Driver);
             break;
         case NV_10:
+        case NV_11:
+        case NV_17:
             nv10InitStateFuncs(nmesa->glCtx, &nmesa->glCtx->Driver);
             break;
         case NV_20:

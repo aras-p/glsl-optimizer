@@ -5,7 +5,7 @@
 #include "nouveau_buffers.h"
 
 #define NOUVEAU_BO_VRAM_OK (NOUVEAU_MEM_FB | NOUVEAU_MEM_FB_ACCEPTABLE)
-#define NOUVEAU_BO_AGP_OK  (NOUVEAU_MEM_AGP | NOUVEAU_MEM_AGP_ACCEPTABLE)
+#define NOUVEAU_BO_GART_OK  (NOUVEAU_MEM_AGP | NOUVEAU_MEM_AGP_ACCEPTABLE)
 
 typedef struct nouveau_bufferobj_region_t {
 	uint32_t start;

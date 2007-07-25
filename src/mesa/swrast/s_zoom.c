@@ -148,26 +148,25 @@ zoom_span( GLcontext *ctx, GLint imgX, GLint imgY, const SWspan *span,
    ASSERT((span->arrayMask & SPAN_XY) == 0);
    ASSERT(span->primitive == GL_BITMAP);
 
-   INIT_SPAN(zoomed, GL_BITMAP, 0, 0, 0);
+   INIT_SPAN(zoomed, GL_BITMAP);
    zoomed.x = x0;
    zoomed.end = zoomedWidth;
    zoomed.array = &zoomed_arrays;
    zoomed_arrays.ChanType = span->array->ChanType;
-   /* XXX temporary */
-#if CHAN_TYPE == GL_UNSIGNED_BYTE
-   zoomed_arrays.rgba = zoomed_arrays.rgba8;
-#elif CHAN_TYPE == GL_UNSIGNED_SHORT
-   zoomed_arrays.rgba = zoomed_arrays.rgba16;
-#else
-   zoomed_arrays.rgba = zoomed_arrays.attribs[FRAG_ATTRIB_COL0];
-#endif
+   if (zoomed_arrays.ChanType == GL_UNSIGNED_BYTE)
+      zoomed_arrays.rgba = (GLchan (*)[4]) zoomed_arrays.rgba8;
+   else if (zoomed_arrays.ChanType == GL_UNSIGNED_SHORT)
+      zoomed_arrays.rgba = (GLchan (*)[4]) zoomed_arrays.rgba16;
+   else
+      zoomed_arrays.rgba = (GLchan (*)[4]) zoomed_arrays.attribs[FRAG_ATTRIB_COL0];
 
+   COPY_4V(zoomed.attrStart[FRAG_ATTRIB_WPOS], span->attrStart[FRAG_ATTRIB_WPOS]);
+   COPY_4V(zoomed.attrStepX[FRAG_ATTRIB_WPOS], span->attrStepX[FRAG_ATTRIB_WPOS]);
+   COPY_4V(zoomed.attrStepY[FRAG_ATTRIB_WPOS], span->attrStepY[FRAG_ATTRIB_WPOS]);
 
-   /* copy fog interp info */
    zoomed.attrStart[FRAG_ATTRIB_FOGC][0] = span->attrStart[FRAG_ATTRIB_FOGC][0];
    zoomed.attrStepX[FRAG_ATTRIB_FOGC][0] = span->attrStepX[FRAG_ATTRIB_FOGC][0];
    zoomed.attrStepY[FRAG_ATTRIB_FOGC][0] = span->attrStepY[FRAG_ATTRIB_FOGC][0];
-   /* XXX copy texcoord info? */
 
    if (format == GL_RGBA || format == GL_RGB) {
       /* copy Z info */
@@ -176,6 +175,7 @@ zoom_span( GLcontext *ctx, GLint imgX, GLint imgY, const SWspan *span,
       /* we'll generate an array of colorss */
       zoomed.interpMask = span->interpMask & ~SPAN_RGBA;
       zoomed.arrayMask |= SPAN_RGBA;
+      zoomed.arrayAttribs |= FRAG_BIT_COL0;  /* we'll produce these values */
       ASSERT(span->arrayMask & SPAN_RGBA);
    }
    else if (format == GL_COLOR_INDEX) {

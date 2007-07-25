@@ -28,14 +28,13 @@
 typedef void (GLUTCALLBACK *__GlutTimerCallback) ( int value );
 
 typedef struct __GlutTimer_s {
-     unsigned int          interval;
+     struct timeval        interval;
      struct timeval        expire;
      
      __GlutTimerCallback   func;
      int                   value;
      
      struct __GlutTimer_s *next;
-     struct __GlutTimer_s *prev;
 } __GlutTimer;
 
 /*****************************************************************************/
@@ -207,8 +206,7 @@ glutIdleFunc( void (GLUTCALLBACK *func) (void) )
 void GLUTAPIENTRY
 glutTimerFunc( unsigned int msec, void (GLUTCALLBACK *func) (int value), int value )
 {
-     __GlutTimer    *timer;
-     struct timeval  now;     
+     __GlutTimer *timer;
      
      if (!func)
           return;
@@ -217,24 +215,19 @@ glutTimerFunc( unsigned int msec, void (GLUTCALLBACK *func) (int value), int val
      if (!timer)
           __glutFatalError( "out of memory" );
      
-     gettimeofday( &now, NULL );
-     
-     timer->interval = msec;
-     timer->expire.tv_sec  = now.tv_sec + (now.tv_usec/1000 + msec) / 1000;
-     timer->expire.tv_usec = (now.tv_usec + msec*1000) % 1000000;
+     timer->interval.tv_sec  = msec / 1000;
+     timer->interval.tv_usec = (msec % 1000) * 1000;
+
+     gettimeofday( &timer->expire, NULL );
+     timer->expire.tv_usec += timer->interval.tv_usec;
+     timer->expire.tv_sec  += timer->interval.tv_sec + timer->expire.tv_usec/1000000;
+     timer->expire.tv_usec %= 1000000;
      
      timer->func  = func;
      timer->value = value;
      
-     if (g_timers) {
-          timer->prev = g_timers->prev;
-          g_timers->prev->next = timer;
-          g_timers->prev = timer;
-     }
-     else {
-          g_timers = timer;
-          g_timers->prev = timer;
-     }
+     timer->next = g_timers;
+     g_timers    = timer;
 }
 
 
@@ -254,12 +247,41 @@ __glutHandleTimers( void )
                g_idle = GL_FALSE;
                
                cur->func( cur->value );
-               
-               cur->expire.tv_sec += (cur->expire.tv_usec/1000 + cur->interval) / 1000;
-               cur->expire.tv_usec = (cur->expire.tv_usec + cur->interval*1000) % 1000000;
+              
+               cur->expire.tv_usec += cur->interval.tv_usec;
+               cur->expire.tv_sec  += cur->interval.tv_sec + cur->expire.tv_usec/1000000;
+               cur->expire.tv_usec %= 1000000;
           }
      }
-}    
+}
+
+
+GLboolean
+__glutGetTimeout( int *ret_msec )
+{
+     __GlutTimer    *cur;
+     struct timeval *time = NULL;
+     struct timeval  now;
+     
+     for (cur = g_timers; cur; cur = cur->next) {
+          if (time == NULL ||
+              time->tv_sec > cur->expire.tv_sec ||
+             (time->tv_sec == cur->expire.tv_sec && 
+              time->tv_usec > cur->expire.tv_usec)) {
+               time = &cur->expire;
+          }
+     }
+     
+     if (time == NULL)
+          return GL_FALSE;
+          
+     gettimeofday( &now, NULL );
+     
+     *ret_msec = (time->tv_sec  - now.tv_sec) * 1000 +
+                 (time->tv_usec - now.tv_usec + 500) / 1000;
+                 
+     return GL_TRUE;
+}
      
           
 void 
@@ -275,4 +297,4 @@ __glutFreeTimers( void )
      
      g_timers = NULL;
 }
-    
+

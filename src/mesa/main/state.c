@@ -35,10 +35,10 @@
 #include "accum.h"
 #include "api_loopback.h"
 #if FEATURE_ARB_vertex_program || FEATURE_ARB_fragment_program
-#include "arbprogram.h"
+#include "shader/arbprogram.h"
 #endif
 #if FEATURE_ATI_fragment_shader
-#include "atifragshader.h"
+#include "shader/atifragshader.h"
 #endif
 #include "attrib.h"
 #include "blend.h"
@@ -85,18 +85,18 @@
 #include "mtypes.h"
 #include "varray.h"
 #if FEATURE_NV_vertex_program
-#include "nvprogram.h"
+#include "shader/nvprogram.h"
 #endif
 #if FEATURE_NV_fragment_program
-#include "nvprogram.h"
-#include "program.h"
+#include "shader/nvprogram.h"
+#include "shader/program.h"
 #include "texenvprogram.h"
 #endif
 #if FEATURE_ARB_shader_objects
 #include "shaders.h"
 #endif
 #include "debug.h"
-#include "dispatch.h"
+#include "glapi/dispatch.h"
 
 
 
@@ -1068,7 +1068,7 @@ update_tricaps(GLcontext *ctx, GLbitfield new_state)
    if (1/*new_state & _NEW_POINT*/) {
       if (ctx->Point.SmoothFlag)
          ctx->_TriangleCaps |= DD_POINT_SMOOTH;
-      if (ctx->Point._Size != 1.0F)
+      if (ctx->Point.Size != 1.0F)
          ctx->_TriangleCaps |= DD_POINT_SIZE;
       if (ctx->Point._Attenuated)
          ctx->_TriangleCaps |= DD_POINT_ATTEN;
@@ -1082,7 +1082,7 @@ update_tricaps(GLcontext *ctx, GLbitfield new_state)
          ctx->_TriangleCaps |= DD_LINE_SMOOTH;
       if (ctx->Line.StippleFlag)
          ctx->_TriangleCaps |= DD_LINE_STIPPLE;
-      if (ctx->Line._Width != 1.0)
+      if (ctx->Line.Width != 1.0)
          ctx->_TriangleCaps |= DD_LINE_WIDTH;
    }
 

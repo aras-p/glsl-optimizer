@@ -25,11 +25,11 @@
  *    Keith Whitwell <keith@tungstengraphics.com>
  */
 
-#include "mtypes.h"
+#include "main/imports.h"
+#include "main/mtypes.h"
+#include "main/api_arrayelt.h"
 #include "vbo.h"
 #include "vbo_context.h"
-#include "imports.h"
-#include "api_arrayelt.h"
 
 /* Reach out and grab this to use as the default:
  */

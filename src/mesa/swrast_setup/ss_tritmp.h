@@ -37,7 +37,7 @@ static void TAG(triangle)(GLcontext *ctx, GLuint e0, GLuint e1, GLuint e2 )
    SWvertex *verts = SWSETUP_CONTEXT(ctx)->verts;
    SWvertex *v[3];
    GLfloat z[3];
-   GLfloat offset;
+   GLfloat offset, oz0, oz1, oz2;
    GLenum mode = GL_FILL;
    GLuint facing = 0;
    GLchan saved_color[3][4];
@@ -142,12 +142,16 @@ static void TAG(triangle)(GLcontext *ctx, GLuint e0, GLuint e1, GLuint e2 )
 	 }
       }
 
-      if (IND & SS_OFFSET_BIT)
-      {
-	 offset = ctx->Polygon.OffsetUnits * ctx->DrawBuffer->_MRD;
+      if (IND & SS_OFFSET_BIT) {
+         const GLfloat max = ctx->DrawBuffer->_DepthMaxF;
+         /* save original Z values (restored later) */
 	 z[0] = v[0]->attrib[FRAG_ATTRIB_WPOS][2];
 	 z[1] = v[1]->attrib[FRAG_ATTRIB_WPOS][2];
 	 z[2] = v[2]->attrib[FRAG_ATTRIB_WPOS][2];
+         /* Note that Z values are already scaled to [0,65535] (for example)
+          * so no MRD value is used here.
+          */
+	 offset = ctx->Polygon.OffsetUnits;
 	 if (cc * cc > 1e-16) {
 	    const GLfloat ez = z[0] - z[2];
 	    const GLfloat fz = z[1] - z[2];
@@ -155,35 +159,33 @@ static void TAG(triangle)(GLcontext *ctx, GLuint e0, GLuint e1, GLuint e2 )
 	    const GLfloat dzdx = FABSF((ey * fz - ez * fy) * oneOverArea);
 	    const GLfloat dzdy = FABSF((ez * fx - ex * fz) * oneOverArea);
 	    offset += MAX2(dzdx, dzdy) * ctx->Polygon.OffsetFactor;
-            /* Unfortunately, we need to clamp to prevent negative Zs below.
-             * Technically, we should do the clamping per-fragment.
-             */
-            offset = MAX2(offset, -v[0]->attrib[FRAG_ATTRIB_WPOS][2]);
-            offset = MAX2(offset, -v[1]->attrib[FRAG_ATTRIB_WPOS][2]);
-            offset = MAX2(offset, -v[2]->attrib[FRAG_ATTRIB_WPOS][2]);
 	 }
+         /* new Z values */
+         oz0 = CLAMP(v[0]->attrib[FRAG_ATTRIB_WPOS][2] + offset, 0.0, max);
+         oz1 = CLAMP(v[1]->attrib[FRAG_ATTRIB_WPOS][2] + offset, 0.0, max);
+         oz2 = CLAMP(v[2]->attrib[FRAG_ATTRIB_WPOS][2] + offset, 0.0, max);
       }
    }
 
    if (mode == GL_POINT) {
       if ((IND & SS_OFFSET_BIT) && ctx->Polygon.OffsetPoint) {
-	 v[0]->attrib[FRAG_ATTRIB_WPOS][2] += offset;
-	 v[1]->attrib[FRAG_ATTRIB_WPOS][2] += offset;
-	 v[2]->attrib[FRAG_ATTRIB_WPOS][2] += offset;
+	 v[0]->attrib[FRAG_ATTRIB_WPOS][2] = oz0;
+	 v[1]->attrib[FRAG_ATTRIB_WPOS][2] = oz1;
+	 v[2]->attrib[FRAG_ATTRIB_WPOS][2] = oz2;
       }
       _swsetup_render_point_tri( ctx, e0, e1, e2, facing );
    } else if (mode == GL_LINE) {
       if ((IND & SS_OFFSET_BIT) && ctx->Polygon.OffsetLine) {
-	 v[0]->attrib[FRAG_ATTRIB_WPOS][2] += offset;
-	 v[1]->attrib[FRAG_ATTRIB_WPOS][2] += offset;
-	 v[2]->attrib[FRAG_ATTRIB_WPOS][2] += offset;
+	 v[0]->attrib[FRAG_ATTRIB_WPOS][2] = oz0;
+	 v[1]->attrib[FRAG_ATTRIB_WPOS][2] = oz1;
+	 v[2]->attrib[FRAG_ATTRIB_WPOS][2] = oz2;
       }
       _swsetup_render_line_tri( ctx, e0, e1, e2, facing );
    } else {
       if ((IND & SS_OFFSET_BIT) && ctx->Polygon.OffsetFill) {
-	 v[0]->attrib[FRAG_ATTRIB_WPOS][2] += offset;
-	 v[1]->attrib[FRAG_ATTRIB_WPOS][2] += offset;
-	 v[2]->attrib[FRAG_ATTRIB_WPOS][2] += offset;
+	 v[0]->attrib[FRAG_ATTRIB_WPOS][2] = oz0;
+	 v[1]->attrib[FRAG_ATTRIB_WPOS][2] = oz1;
+	 v[2]->attrib[FRAG_ATTRIB_WPOS][2] = oz2;
       }
       _swrast_Triangle( ctx, v[0], v[1], v[2] );
    }

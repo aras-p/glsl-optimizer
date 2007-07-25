@@ -38,8 +38,8 @@
 #include "glheader.h"
 #include <GL/internal/glcore.h>	/* __GLcontextModes (GLvisual) */
 #include "config.h"		/* Hardwired parameters */
-#include "glapitable.h"
-#include "glthread.h"
+#include "glapi/glapitable.h"
+#include "glapi/glthread.h"
 #include "math/m_matrix.h"	/* GLmatrix */
 #include "bitset.h"
 
@@ -917,7 +917,6 @@ struct gl_line_attrib
    GLushort StipplePattern;	/**< Stipple pattern */
    GLint StippleFactor;		/**< Stipple repeat factor */
    GLfloat Width;		/**< Line width */
-   GLfloat _Width;		/**< Clamped Line width */
 };
 
 
@@ -1063,7 +1062,6 @@ struct gl_point_attrib
 {
    GLboolean SmoothFlag;	/**< True if GL_POINT_SMOOTH is enabled */
    GLfloat Size;		/**< User-specified point size */
-   GLfloat _Size;		/**< Size clamped to Const.Min/MaxPointSize */
    GLfloat Params[3];		/**< GL_EXT_point_parameters */
    GLfloat MinSize, MaxSize;	/**< GL_EXT_point_parameters */
    GLfloat Threshold;		/**< GL_EXT_point_parameters */
@@ -1133,13 +1131,13 @@ struct gl_stencil_attrib
  * An index for each type of texture object
  */
 /*@{*/
-#define TEXTURE_1D_INDEX    0
-#define TEXTURE_2D_INDEX    1
-#define TEXTURE_3D_INDEX    2
-#define TEXTURE_CUBE_INDEX  3
-#define TEXTURE_RECT_INDEX  4
-#define TEXTURE_1D_ARRAY_INDEX    5
-#define TEXTURE_2D_ARRAY_INDEX    6
+#define TEXTURE_1D_INDEX       0
+#define TEXTURE_2D_INDEX       1
+#define TEXTURE_3D_INDEX       2
+#define TEXTURE_CUBE_INDEX     3
+#define TEXTURE_RECT_INDEX     4
+#define TEXTURE_1D_ARRAY_INDEX 5
+#define TEXTURE_2D_ARRAY_INDEX 6
 /*@}*/
 
 /**
@@ -1147,13 +1145,13 @@ struct gl_stencil_attrib
  * Used for Texture.Unit[]._ReallyEnabled flags.
  */
 /*@{*/
-#define TEXTURE_1D_BIT   (1 << TEXTURE_1D_INDEX)
-#define TEXTURE_2D_BIT   (1 << TEXTURE_2D_INDEX)
-#define TEXTURE_3D_BIT   (1 << TEXTURE_3D_INDEX)
-#define TEXTURE_CUBE_BIT (1 << TEXTURE_CUBE_INDEX)
-#define TEXTURE_RECT_BIT (1 << TEXTURE_RECT_INDEX)
-#define TEXTURE_1D_ARRAY_BIT   (1 << TEXTURE_1D_ARRAY_INDEX)
-#define TEXTURE_2D_ARRAY_BIT   (1 << TEXTURE_2D_ARRAY_INDEX)
+#define TEXTURE_1D_BIT       (1 << TEXTURE_1D_INDEX)
+#define TEXTURE_2D_BIT       (1 << TEXTURE_2D_INDEX)
+#define TEXTURE_3D_BIT       (1 << TEXTURE_3D_INDEX)
+#define TEXTURE_CUBE_BIT     (1 << TEXTURE_CUBE_INDEX)
+#define TEXTURE_RECT_BIT     (1 << TEXTURE_RECT_INDEX)
+#define TEXTURE_1D_ARRAY_BIT (1 << TEXTURE_1D_ARRAY_INDEX)
+#define TEXTURE_2D_ARRAY_BIT (1 << TEXTURE_2D_ARRAY_INDEX)
 /*@}*/
 
 
@@ -1327,8 +1325,6 @@ struct gl_texture_format
 };
 
 
-#define MAX_3D_TEXTURE_SIZE (1 << (MAX_3D_TEXTURE_LEVELS - 1))
-
 /**
  * Texture image state.  Describes the dimensions of a texture image,
  * the texel format and pointers to Texel Fetch functions.
@@ -1393,7 +1389,7 @@ struct gl_texture_image
 #define FACE_NEG_Y   3
 #define FACE_POS_Z   4
 #define FACE_NEG_Z   5
-#define MAX_FACES  6
+#define MAX_FACES    6
 /*@}*/
 
 
@@ -1426,7 +1422,7 @@ struct gl_texture_object
    GLfloat ShadowAmbient;       /**< GL_ARB_shadow_ambient */
    GLenum CompareMode;		/**< GL_ARB_shadow */
    GLenum CompareFunc;		/**< GL_ARB_shadow */
-   GLenum _Function;		/**< Comparison function derrived from 
+   GLenum _Function;		/**< Comparison function derived from 
 				 * \c CompareOperator, \c CompareMode, and
 				 * \c CompareFunc.
 				 */
@@ -1434,7 +1430,7 @@ struct gl_texture_object
    GLint _MaxLevel;		/**< actual max mipmap level (q in the spec) */
    GLfloat _MaxLambda;		/**< = _MaxLevel - BaseLevel (q - b in spec) */
    GLboolean GenerateMipmap;    /**< GL_SGIS_generate_mipmap */
-   GLboolean Complete;		/**< Is texture object complete? */
+   GLboolean _Complete;		/**< Is texture object complete? */
 
    /** Actual texture images, indexed by [cube face] and [mipmap level] */
    struct gl_texture_image *Image[MAX_FACES][MAX_TEXTURE_LEVELS];
@@ -2193,10 +2189,9 @@ struct gl_shared_state
     * \todo Improve the granularity of locking.
     */
    /*@{*/
-   _glthread_Mutex TexMutex;		   /**< texobj thread safety */
-   GLuint TextureStateStamp;	           /**< state notification for shared tex  */
+   _glthread_Mutex TexMutex;		/**< texobj thread safety */
+   GLuint TextureStateStamp;	        /**< state notification for shared tex */
    /*@}*/
-
 
 
    /**

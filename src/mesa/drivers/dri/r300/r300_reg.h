@@ -282,8 +282,31 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 #define R300_VAP_PVS_UPLOAD_ADDRESS         0x2200
 #       define R300_PVS_UPLOAD_PROGRAM           0x00000000
+/* gap */
 #       define R300_PVS_UPLOAD_PARAMETERS        0x00000200
+/* gap */
+#       define R300_PVS_UPLOAD_CLIP_PLANE0       0x00000400
+#       define R300_PVS_UPLOAD_CLIP_PLANE1       0x00000401
+#       define R300_PVS_UPLOAD_CLIP_PLANE2       0x00000402
+#       define R300_PVS_UPLOAD_CLIP_PLANE3       0x00000403
+#       define R300_PVS_UPLOAD_CLIP_PLANE4       0x00000404
+#       define R300_PVS_UPLOAD_CLIP_PLANE5       0x00000405
 #       define R300_PVS_UPLOAD_POINTSIZE         0x00000406
+
+/*
+ * These are obsolete defines form r300_context.h, but they might give some
+ * clues when investigating the addresses further...
+ */
+#if 0
+#define VSF_DEST_PROGRAM        0x0
+#define VSF_DEST_MATRIX0        0x200
+#define VSF_DEST_MATRIX1        0x204
+#define VSF_DEST_MATRIX2        0x208
+#define VSF_DEST_VECTOR0        0x20c
+#define VSF_DEST_VECTOR1        0x20d
+#define VSF_DEST_UNKNOWN1       0x400
+#define VSF_DEST_UNKNOWN2       0x406
+#endif
 
 /* gap */
 
@@ -336,13 +359,15 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
  * The meaning of the two UNKNOWN fields is obviously not known. However,
  * experiments so far have shown that both *must* point to an instruction
  * inside the vertex program, otherwise the GPU locks up.
+ *
  * fglrx usually sets CNTL_3_UNKNOWN to the end of the program and
- * CNTL_1_UNKNOWN points to instruction where last write to position takes
- * place.
+ * R300_PVS_CNTL_1_POS_END_SHIFT points to instruction where last write to
+ * position takes place.
+ *
  * Most likely this is used to ignore rest of the program in cases
  * where group of verts arent visible. For some reason this "section"
  * is sometimes accepted other instruction that have no relationship with
- *position calculations.
+ * position calculations.
  */
 #define R300_VAP_PVS_CNTL_1                 0x22D0
 #       define R300_PVS_CNTL_1_PROGRAM_START_SHIFT   0

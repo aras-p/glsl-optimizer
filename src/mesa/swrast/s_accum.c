@@ -474,7 +474,9 @@ accum_return(GLcontext *ctx, GLfloat value,
          SWspan span;
 
          /* init color span */
-         INIT_SPAN(span, GL_BITMAP, width, 0, SPAN_RGBA);
+         INIT_SPAN(span, GL_BITMAP);
+         span.end = width;
+         span.arrayMask = SPAN_RGBA;
          span.x = xpos;
          span.y = ypos + i;
 

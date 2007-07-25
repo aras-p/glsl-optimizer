@@ -1,8 +1,8 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.5.2
+ * Version:  7.1
  *
- * Copyright (C) 1999-2006  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2007  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -70,7 +70,9 @@ fast_draw_rgba_pixels(GLcontext *ctx, GLint x, GLint y,
       return GL_FALSE;
    }
 
-   INIT_SPAN(span, GL_BITMAP, 0, 0, SPAN_RGBA);
+   INIT_SPAN(span, GL_BITMAP);
+   span.arrayMask = SPAN_RGBA;
+   span.arrayAttribs = FRAG_BIT_COL0;
    _swrast_span_default_attribs(ctx, &span);
 
    /* copy input params since clipping may change them */
@@ -332,7 +334,8 @@ draw_index_pixels( GLcontext *ctx, GLint x, GLint y,
    GLint row, skipPixels;
    SWspan span;
 
-   INIT_SPAN(span, GL_BITMAP, 0, 0, SPAN_INDEX);
+   INIT_SPAN(span, GL_BITMAP);
+   span.arrayMask = SPAN_INDEX;
    _swrast_span_default_attribs(ctx, &span);
 
    /*
@@ -395,10 +398,9 @@ draw_stencil_pixels( GLcontext *ctx, GLint x, GLint y,
                                                       width, height,
                                                       GL_COLOR_INDEX, type,
                                                       row, skipPixels);
-         _mesa_unpack_index_span(ctx, spanWidth, destType, values,
-                                 type, source, unpack,
-                                 ctx->_ImageTransferState);
-         _mesa_apply_stencil_transfer_ops(ctx, spanWidth, values);
+         _mesa_unpack_stencil_span(ctx, spanWidth, destType, values,
+                                   type, source, unpack,
+                                   ctx->_ImageTransferState);
          if (zoom) {
             _swrast_write_zoomed_stencil_span(ctx, x, y, spanWidth,
                                               spanX, spanY, values);
@@ -427,7 +429,8 @@ draw_depth_pixels( GLcontext *ctx, GLint x, GLint y,
    const GLboolean zoom = ctx->Pixel.ZoomX != 1.0 || ctx->Pixel.ZoomY != 1.0;
    SWspan span;
 
-   INIT_SPAN(span, GL_BITMAP, 0, 0, SPAN_Z);
+   INIT_SPAN(span, GL_BITMAP);
+   span.arrayMask = SPAN_Z;
    _swrast_span_default_attribs(ctx, &span);
 
    if (type == GL_UNSIGNED_SHORT
@@ -481,7 +484,7 @@ draw_depth_pixels( GLcontext *ctx, GLint x, GLint y,
    }
    else {
       /* General case */
-      const GLfloat depthMax = ctx->DrawBuffer->_DepthMaxF;
+      const GLuint depthMax = ctx->DrawBuffer->_DepthMax;
       GLint skipPixels = 0;
 
       /* in case width > MAX_WIDTH do the copy in chunks */
@@ -540,11 +543,14 @@ draw_rgba_pixels( GLcontext *ctx, GLint x, GLint y,
 
    /* Try an optimized glDrawPixels first */
    if (fast_draw_rgba_pixels(ctx, x, y, width, height, format, type,
-                             unpack, pixels))
+                             unpack, pixels)) {
       return;
+   }
 
-   INIT_SPAN(span, GL_BITMAP, 0, 0x0, SPAN_RGBA);
+   INIT_SPAN(span, GL_BITMAP);
    _swrast_span_default_attribs(ctx, &span);
+   span.arrayMask = SPAN_RGBA;
+   span.arrayAttribs = FRAG_BIT_COL0; /* we're fill in COL0 attrib values */
 
    if (ctx->Pixel.Convolution2DEnabled || ctx->Pixel.Separable2DEnabled) {
       /* Convolution has to be handled specially.  We'll create an
@@ -689,7 +695,7 @@ draw_depth_stencil_pixels(GLcontext *ctx, GLint x, GLint y,
    const GLint imgX = x, imgY = y;
    const GLboolean scaleOrBias
       = ctx->Pixel.DepthScale != 1.0 || ctx->Pixel.DepthBias != 0.0;
-   const GLfloat depthScale = ctx->DrawBuffer->_DepthMaxF;
+   const GLuint depthMax = ctx->DrawBuffer->_DepthMax;
    const GLuint stencilMask = ctx->Stencil.WriteMask[0];
    const GLuint stencilType = (STENCIL_BITS == 8) ? 
       GL_UNSIGNED_BYTE : GL_UNSIGNED_SHORT;
@@ -777,7 +783,7 @@ draw_depth_stencil_pixels(GLcontext *ctx, GLint x, GLint y,
                /* general case */
                GLuint zValues[MAX_WIDTH];  /* 16 or 32-bit Z value storage */
                _mesa_unpack_depth_span(ctx, width,
-                                       depthRb->DataType, zValues, depthScale,
+                                       depthRb->DataType, zValues, depthMax,
                                        type, depthStencilSrc, &clippedUnpack);
                if (zoom) {
                   _swrast_write_zoomed_z_span(ctx, imgX, imgY, width, x,

@@ -97,12 +97,9 @@
 #include "fog.h"
 #include "framebuffer.h"
 #include "get.h"
-#include "glthread.h"
-#include "glapioffsets.h"
 #include "histogram.h"
 #include "hint.h"
 #include "hash.h"
-#include "atifragshader.h"
 #include "light.h"
 #include "lines.h"
 #include "macros.h"
@@ -110,9 +107,6 @@
 #include "pixel.h"
 #include "points.h"
 #include "polygon.h"
-#if FEATURE_NV_vertex_program || FEATURE_NV_fragment_program
-#include "program.h"
-#endif
 #include "queryobj.h"
 #include "rastpos.h"
 #include "simple_list.h"
@@ -126,13 +120,19 @@
 #include "varray.h"
 #include "version.h"
 #include "vtxfmt.h"
+#include "glapi/glthread.h"
+#include "glapi/glapioffsets.h"
+#if FEATURE_NV_vertex_program || FEATURE_NV_fragment_program
+#include "shader/program.h"
+#endif
+#include "shader/shader_api.h"
+#include "shader/atifragshader.h"
 #if _HAVE_FULL_GL
 #include "math/m_translate.h"
 #include "math/m_matrix.h"
 #include "math/m_xform.h"
 #include "math/mathmod.h"
 #endif
-#include "shader_api.h"
 
 #ifdef USE_SPARC_ASM
 #include "sparc/sparc.h"
@@ -978,7 +978,7 @@ init_attrib_groups(GLcontext *ctx)
 static int
 generic_nop(void)
 {
-   _mesa_problem(NULL, "User called no-op dispatch function (an unsupported extension function?)");
+   _mesa_warning(NULL, "User called no-op dispatch function (an unsupported extension function?)");
    return 0;
 }
 
@@ -1357,9 +1357,9 @@ _mesa_copy_context( const GLcontext *src, GLcontext *dst, GLuint mask )
  * Check if the given context can render into the given framebuffer
  * by checking visual attributes.
  *
- * XXX this may go away someday because we're moving toward more freedom
- * in binding contexts to drawables with different visual attributes.
- * The GL_EXT_f_b_o extension is prompting some of that.
+ * Most of these tests could go away because Mesa is now pretty flexible
+ * in terms of mixing rendering contexts with framebuffers.  As long
+ * as RGB vs. CI mode agree, we're probably good.
  *
  * \return GL_TRUE if compatible, GL_FALSE otherwise.
  */
@@ -1393,8 +1393,11 @@ check_compatible(const GLcontext *ctx, const GLframebuffer *buffer)
       return GL_FALSE;
    if (ctxvis->blueMask && ctxvis->blueMask != bufvis->blueMask)
       return GL_FALSE;
+#if 0
+   /* disabled (see bug 11161) */
    if (ctxvis->depthBits && ctxvis->depthBits != bufvis->depthBits)
       return GL_FALSE;
+#endif
    if (ctxvis->stencilBits && ctxvis->stencilBits != bufvis->stencilBits)
       return GL_FALSE;
 
@@ -1492,9 +1495,19 @@ _mesa_make_current( GLcontext *newCtx, GLframebuffer *drawBuffer,
           */
          if (!newCtx->DrawBuffer || newCtx->DrawBuffer->Name == 0) {
             _mesa_reference_framebuffer(&newCtx->DrawBuffer, drawBuffer);
+         /* fix up the fb fields - these will end up wrong otherwise
+            if the DRIdrawable changes, and everything relies on them.
+            This is a bit messy (same as needed in _mesa_BindFramebufferEXT) */
+            int i;
+            GLenum buffers[MAX_DRAW_BUFFERS];
+            for(i = 0; i < newCtx->Const.MaxDrawBuffers; i++) {
+               buffers[i] = newCtx->Color.DrawBuffer[i];
+            }
+            _mesa_drawbuffers(newCtx, newCtx->Const.MaxDrawBuffers, buffers, NULL);
          }
          if (!newCtx->ReadBuffer || newCtx->ReadBuffer->Name == 0) {
             _mesa_reference_framebuffer(&newCtx->ReadBuffer, readBuffer);
+            _mesa_readbuffer_update_fields(newCtx, newCtx->Pixel.ReadBuffer);
          }
 
 	 newCtx->NewState |= _NEW_BUFFERS;

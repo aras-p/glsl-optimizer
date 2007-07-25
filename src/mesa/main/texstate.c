@@ -1,6 +1,6 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.5.3
+ * Version:  7.1
  *
  * Copyright (C) 1999-2007  Brian Paul   All Rights Reserved.
  *
@@ -1141,26 +1141,29 @@ _mesa_GetTexEnviv( GLenum target, GLenum pname, GLint *params )
 /*                       Texture Parameters                           */
 /**********************************************************************/
 
+/**
+ * Check if a coordinate wrap mode is supported for the texture target.
+ * \return GL_TRUE if legal, GL_FALSE otherwise
+ */
 static GLboolean 
-_mesa_validate_texture_wrap_mode(GLcontext * ctx,
-				 GLenum target, GLenum eparam)
+validate_texture_wrap_mode(GLcontext * ctx, GLenum target, GLenum wrap)
 {
    const struct gl_extensions * const e = & ctx->Extensions;
 
-   if (eparam == GL_CLAMP || eparam == GL_CLAMP_TO_EDGE ||
-       (eparam == GL_CLAMP_TO_BORDER && e->ARB_texture_border_clamp)) {
+   if (wrap == GL_CLAMP || wrap == GL_CLAMP_TO_EDGE ||
+       (wrap == GL_CLAMP_TO_BORDER && e->ARB_texture_border_clamp)) {
       /* any texture target */
       return GL_TRUE;
    }
    else if (target != GL_TEXTURE_RECTANGLE_NV &&
-	    (eparam == GL_REPEAT ||
-	     (eparam == GL_MIRRORED_REPEAT &&
+	    (wrap == GL_REPEAT ||
+	     (wrap == GL_MIRRORED_REPEAT &&
 	      e->ARB_texture_mirrored_repeat) ||
-	     (eparam == GL_MIRROR_CLAMP_EXT &&
+	     (wrap == GL_MIRROR_CLAMP_EXT &&
 	      (e->ATI_texture_mirror_once || e->EXT_texture_mirror_clamp)) ||
-	     (eparam == GL_MIRROR_CLAMP_TO_EDGE_EXT &&
+	     (wrap == GL_MIRROR_CLAMP_TO_EDGE_EXT &&
 	      (e->ATI_texture_mirror_once || e->EXT_texture_mirror_clamp)) ||
-	     (eparam == GL_MIRROR_CLAMP_TO_BORDER_EXT &&
+	     (wrap == GL_MIRROR_CLAMP_TO_BORDER_EXT &&
 	      (e->EXT_texture_mirror_clamp)))) {
       /* non-rectangle texture */
       return GL_TRUE;
@@ -1175,36 +1178,6 @@ void GLAPIENTRY
 _mesa_TexParameterf( GLenum target, GLenum pname, GLfloat param )
 {
    _mesa_TexParameterfv(target, pname, &param);
-}
-
-
-/**
- * Update derrived compare function state.
- */
-void
-_mesa_update_texture_compare_function(struct gl_texture_object *tObj,
-				      GLboolean in_frag_prog)
-{
-   if (in_frag_prog) {
-      tObj->_Function = GL_NONE;
-   }
-   else if (tObj->CompareFlag) {
-      /* GL_SGIX_shadow */
-      if (tObj->CompareOperator == GL_TEXTURE_LEQUAL_R_SGIX) {
-         tObj->_Function = GL_LEQUAL;
-      }
-      else {
-         ASSERT(tObj->CompareOperator == GL_TEXTURE_GEQUAL_R_SGIX);
-         tObj->_Function = GL_GEQUAL;
-      }
-   }
-   else if (tObj->CompareMode == GL_COMPARE_R_TO_TEXTURE_ARB) {
-      /* GL_ARB_shadow */
-      tObj->_Function = tObj->CompareFunc;
-   }
-   else {
-      tObj->_Function = GL_NONE;  /* pass depth through as grayscale */
-   }
 }
 
 
@@ -1313,7 +1286,7 @@ _mesa_TexParameterfv( GLenum target, GLenum pname, const GLfloat *params )
       case GL_TEXTURE_WRAP_S:
          if (texObj->WrapS == eparam)
             return;
-         if (_mesa_validate_texture_wrap_mode(ctx, texObj->Target, eparam)) {
+         if (validate_texture_wrap_mode(ctx, texObj->Target, eparam)) {
             FLUSH_VERTICES(ctx, _NEW_TEXTURE);
             texObj->WrapS = eparam;
          }
@@ -1324,7 +1297,7 @@ _mesa_TexParameterfv( GLenum target, GLenum pname, const GLfloat *params )
       case GL_TEXTURE_WRAP_T:
          if (texObj->WrapT == eparam)
             return;
-         if (_mesa_validate_texture_wrap_mode(ctx, texObj->Target, eparam)) {
+         if (validate_texture_wrap_mode(ctx, texObj->Target, eparam)) {
             FLUSH_VERTICES(ctx, _NEW_TEXTURE);
             texObj->WrapT = eparam;
          }
@@ -1335,7 +1308,7 @@ _mesa_TexParameterfv( GLenum target, GLenum pname, const GLfloat *params )
       case GL_TEXTURE_WRAP_R:
          if (texObj->WrapR == eparam)
             return;
-         if (_mesa_validate_texture_wrap_mode(ctx, texObj->Target, eparam)) {
+         if (validate_texture_wrap_mode(ctx, texObj->Target, eparam)) {
             FLUSH_VERTICES(ctx, _NEW_TEXTURE);
             texObj->WrapR = eparam;
          }
@@ -1415,7 +1388,6 @@ _mesa_TexParameterfv( GLenum target, GLenum pname, const GLfloat *params )
          if (ctx->Extensions.SGIX_shadow) {
             FLUSH_VERTICES(ctx, _NEW_TEXTURE);
             texObj->CompareFlag = params[0] ? GL_TRUE : GL_FALSE;
-	    _mesa_update_texture_compare_function(texObj, GL_FALSE);
          }
          else {
             _mesa_error(ctx, GL_INVALID_ENUM,
@@ -1430,7 +1402,6 @@ _mesa_TexParameterfv( GLenum target, GLenum pname, const GLfloat *params )
                 op == GL_TEXTURE_GEQUAL_R_SGIX) {
                FLUSH_VERTICES(ctx, _NEW_TEXTURE);
                texObj->CompareOperator = op;
-	       _mesa_update_texture_compare_function(texObj, GL_FALSE);
             }
             else {
                _mesa_error(ctx, GL_INVALID_ENUM, "glTexParameter(param)");
@@ -1469,7 +1440,6 @@ _mesa_TexParameterfv( GLenum target, GLenum pname, const GLfloat *params )
             if (mode == GL_NONE || mode == GL_COMPARE_R_TO_TEXTURE_ARB) {
                FLUSH_VERTICES(ctx, _NEW_TEXTURE);
                texObj->CompareMode = mode;
-	       _mesa_update_texture_compare_function(texObj, GL_FALSE);
             }
             else {
                _mesa_error(ctx, GL_INVALID_ENUM,
@@ -1505,8 +1475,6 @@ _mesa_TexParameterfv( GLenum target, GLenum pname, const GLfloat *params )
                            "glTexParameter(bad GL_TEXTURE_COMPARE_FUNC_ARB)");
                return;
             }
-
-	    _mesa_update_texture_compare_function(texObj, GL_FALSE);
          }
          else {
             _mesa_error(ctx, GL_INVALID_ENUM,
@@ -1527,8 +1495,6 @@ _mesa_TexParameterfv( GLenum target, GLenum pname, const GLfloat *params )
                           "glTexParameter(bad GL_DEPTH_TEXTURE_MODE_ARB)");
                return;
             }
-
-	    _mesa_update_texture_compare_function(texObj, GL_FALSE);
          }
          else {
             _mesa_error(ctx, GL_INVALID_ENUM,
@@ -1552,7 +1518,7 @@ _mesa_TexParameterfv( GLenum target, GLenum pname, const GLfloat *params )
          return;
    }
 
-   texObj->Complete = GL_FALSE;
+   texObj->_Complete = GL_FALSE;
 
    if (ctx->Driver.TexParameter) {
       (*ctx->Driver.TexParameter)( ctx, target, texObj, pname, params );
@@ -2830,6 +2796,47 @@ update_texture_matrices( GLcontext *ctx )
 
 
 /**
+ * Update texture object's _Function field.  We need to do this
+ * whenever any of the texture object's shadow-related fields change
+ * or when we start/stop using a fragment program.
+ *
+ * This function could be expanded someday to update additional per-object
+ * fields that depend on assorted state changes.
+ */
+static void
+update_texture_compare_function(GLcontext *ctx,
+                                struct gl_texture_object *tObj)
+{
+   /* XXX temporarily disable this test since it breaks the GLSL
+    * shadow2D(), etc. functions.
+    */
+   if (0 /*ctx->FragmentProgram._Current*/) {
+      /* Texel/coordinate comparison is ignored for programs.
+       * See GL_ARB_fragment_program/shader spec for details.
+       */
+      tObj->_Function = GL_NONE;
+   }
+   else if (tObj->CompareFlag) {
+      /* GL_SGIX_shadow */
+      if (tObj->CompareOperator == GL_TEXTURE_LEQUAL_R_SGIX) {
+         tObj->_Function = GL_LEQUAL;
+      }
+      else {
+         ASSERT(tObj->CompareOperator == GL_TEXTURE_GEQUAL_R_SGIX);
+         tObj->_Function = GL_GEQUAL;
+      }
+   }
+   else if (tObj->CompareMode == GL_COMPARE_R_TO_TEXTURE_ARB) {
+      /* GL_ARB_shadow */
+      tObj->_Function = tObj->CompareFunc;
+   }
+   else {
+      tObj->_Function = GL_NONE;  /* pass depth through as grayscale */
+   }
+}
+
+
+/**
  * Helper function for determining which texture object (1D, 2D, cube, etc)
  * should actually be used.
  */
@@ -2839,12 +2846,13 @@ texture_override(GLcontext *ctx,
                  struct gl_texture_object *texObj, GLuint textureBit)
 {
    if (!texUnit->_ReallyEnabled && (enableBits & textureBit)) {
-      if (!texObj->Complete) {
+      if (!texObj->_Complete) {
          _mesa_test_texobj_completeness(ctx, texObj);
       }
-      if (texObj->Complete) {
+      if (texObj->_Complete) {
          texUnit->_ReallyEnabled = textureBit;
          texUnit->_Current = texObj;
+         update_texture_compare_function(ctx, texObj);
       }
    }
 }

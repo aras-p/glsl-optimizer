@@ -58,7 +58,7 @@ static void nv10ResetLineStipple( GLcontext *ctx );
 
 static inline void nv10StartPrimitive(struct nouveau_context* nmesa,uint32_t primitive,uint32_t size)
 {
-	if (nmesa->screen->card->type==NV_10)
+	if ((nmesa->screen->card->type>=NV_10) && (nmesa->screen->card->type<=NV_17))
 		BEGIN_RING_SIZE(NvSub3D,NV10_TCL_PRIMITIVE_3D_BEGIN_END,1);
 	else if (nmesa->screen->card->type==NV_20)
 		BEGIN_RING_SIZE(NvSub3D,NV20_TCL_PRIMITIVE_3D_BEGIN_END,1);
@@ -66,7 +66,7 @@ static inline void nv10StartPrimitive(struct nouveau_context* nmesa,uint32_t pri
 		BEGIN_RING_SIZE(NvSub3D,NV30_TCL_PRIMITIVE_3D_BEGIN_END,1);
 	OUT_RING(primitive);
 
-	if (nmesa->screen->card->type==NV_10)
+	if ((nmesa->screen->card->type>=NV_10) && (nmesa->screen->card->type<=NV_17))
 		BEGIN_RING_SIZE(NvSub3D,NV10_TCL_PRIMITIVE_3D_VERTEX_ARRAY_DATA|NONINC_METHOD,size);
 	else if (nmesa->screen->card->type==NV_20)
 		BEGIN_RING_SIZE(NvSub3D,NV20_TCL_PRIMITIVE_3D_VERTEX_DATA|NONINC_METHOD,size);
@@ -76,7 +76,7 @@ static inline void nv10StartPrimitive(struct nouveau_context* nmesa,uint32_t pri
 
 inline void nv10FinishPrimitive(struct nouveau_context *nmesa)
 {
-	if (nmesa->screen->card->type==NV_10)
+	if ((nmesa->screen->card->type>=NV_10) && (nmesa->screen->card->type<=NV_17))
 		BEGIN_RING_SIZE(NvSub3D,NV10_TCL_PRIMITIVE_3D_BEGIN_END,1);
 	else if (nmesa->screen->card->type==NV_20)
 		BEGIN_RING_SIZE(NvSub3D,NV20_TCL_PRIMITIVE_3D_BEGIN_END,1);
@@ -392,15 +392,6 @@ static inline void nv10OutputVertexFormat(struct nouveau_context* nmesa)
 	int i;
 	int slots=0;
 	int total_size=0;
-	/* t_vertex_generic dereferences a NULL pointer if we
-	 * pass NULL as the vp transform...
-	 */
-	const GLfloat ident_vp[16] = {
-	   1.0, 0.0, 0.0, 0.0,
-	   0.0, 1.0, 0.0, 0.0,
-	   0.0, 0.0, 1.0, 0.0,
-	   0.0, 0.0, 0.0, 1.0
-	};
 
 	nmesa->vertex_attr_count = 0;
 	RENDERINPUTS_COPY(index, nmesa->render_inputs_bitset);
@@ -431,28 +422,20 @@ static inline void nv10OutputVertexFormat(struct nouveau_context* nmesa)
 		if (RENDERINPUTS_TEST(index, i))
 		{
 			slots=i+1;
-			if (i==_TNL_ATTRIB_POS)
+			switch(attr_size[i])
 			{
-				/* special-case POS */
-				EMIT_ATTR(_TNL_ATTRIB_POS,EMIT_3F_VIEWPORT);
-			}
-			else
-			{
-				switch(attr_size[i])
-				{
-					case 1:
-						EMIT_ATTR(i,EMIT_1F);
-						break;
-					case 2:
-						EMIT_ATTR(i,EMIT_2F);
-						break;
-					case 3:
-						EMIT_ATTR(i,EMIT_3F);
-						break;
-					case 4:
-						EMIT_ATTR(i,EMIT_4F);
-						break;
-				}
+				case 1:
+					EMIT_ATTR(i,EMIT_1F);
+					break;
+				case 2:
+					EMIT_ATTR(i,EMIT_2F);
+					break;
+				case 3:
+					EMIT_ATTR(i,EMIT_3F);
+					break;
+				case 4:
+					EMIT_ATTR(i,EMIT_4F);
+					break;
 			}
 			if (i==_TNL_ATTRIB_COLOR0)
 				nmesa->color_offset=total_size;
@@ -465,13 +448,13 @@ static inline void nv10OutputVertexFormat(struct nouveau_context* nmesa)
 	nmesa->vertex_size=_tnl_install_attrs( ctx,
 			nmesa->vertex_attrs, 
 			nmesa->vertex_attr_count,
-			ident_vp, 0 );
+			NULL, 0 );
 	assert(nmesa->vertex_size==total_size*4);
 
 	/* 
 	 * Tell the hardware about the vertex format
 	 */
-	if (nmesa->screen->card->type==NV_10) {
+	if ((nmesa->screen->card->type>=NV_10) && (nmesa->screen->card->type<=NV_17)) {
 		int size;
 
 #define NV_VERTEX_ATTRIBUTE_TYPE_FLOAT 2

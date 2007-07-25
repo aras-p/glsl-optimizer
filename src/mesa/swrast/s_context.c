@@ -31,9 +31,9 @@
 #include "context.h"
 #include "colormac.h"
 #include "mtypes.h"
-#include "prog_statevars.h"
 #include "teximage.h"
 #include "swrast.h"
+#include "shader/prog_statevars.h"
 #include "s_blend.h"
 #include "s_context.h"
 #include "s_lines.h"
@@ -535,10 +535,11 @@ _swrast_update_texture_samplers(GLcontext *ctx)
 
 
 /**
- * Update swrast->_ActiveAttribs, swrast->_NumActiveAttribs, swrast->_ActiveAtttribMask.
+ * Update swrast->_ActiveAttribs, swrast->_NumActiveAttribs,
+ * swrast->_ActiveAtttribMask.
  */
 static void
-_swrast_update_fragment_attribs(GLcontext *ctx)
+_swrast_update_active_attribs(GLcontext *ctx)
 {
    SWcontext *swrast = SWRAST_CONTEXT(ctx);
    GLuint attribsMask;
@@ -679,7 +680,7 @@ _swrast_validate_derived( GLcontext *ctx )
                               _NEW_LIGHT |
                               _NEW_PROGRAM |
                               _NEW_TEXTURE))
-         _swrast_update_fragment_attribs(ctx);
+         _swrast_update_active_attribs(ctx);
 
       if (swrast->NewState & (_NEW_PROGRAM | _NEW_BUFFERS))
          _swrast_update_color_outputs(ctx);

@@ -22,11 +22,11 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#include "glheader.h"
-#include "colormac.h"
-#include "context.h"
-#include "prog_instruction.h"
-#include "texstate.h"
+#include "main/glheader.h"
+#include "main/colormac.h"
+#include "main/context.h"
+#include "main/texstate.h"
+#include "shader/prog_instruction.h"
 
 #include "s_fragprog.h"
 #include "s_span.h"
@@ -200,7 +200,6 @@ void
 _swrast_exec_fragment_program( GLcontext *ctx, SWspan *span )
 {
    const struct gl_fragment_program *program = ctx->FragmentProgram._Current;
-   GLuint i;
 
    /* incoming colors should be floats */
    if (program->Base.InputsRead & FRAG_BIT_COL0) {
@@ -209,22 +208,7 @@ _swrast_exec_fragment_program( GLcontext *ctx, SWspan *span )
 
    ctx->_CurrentProgram = GL_FRAGMENT_PROGRAM_ARB; /* or NV, doesn't matter */
 
-   for (i = 0; i < ctx->Const.MaxTextureImageUnits; i++) {
-      if (ctx->Texture.Unit[i]._Current != NULL) {
-         const GLboolean enable_shadow = ((1 << i) & program->Base.ShadowSamplers);
-         _mesa_update_texture_compare_function(ctx->Texture.Unit[i]._Current,
-                                               !enable_shadow);
-      }
-   }
-
    run_program(ctx, span, 0, span->end);
-
-   for (i = 0; i < ctx->Const.MaxTextureImageUnits; i++) {
-      if (ctx->Texture.Unit[i]._Current != NULL) {
-         _mesa_update_texture_compare_function(ctx->Texture.Unit[i]._Current,
-                                               GL_FALSE);
-      }
-   }
 
    if (program->Base.OutputsWritten & (1 << FRAG_RESULT_COLR)) {
       span->interpMask &= ~SPAN_RGBA;

@@ -125,6 +125,7 @@ setup_vertex_format(GLcontext *ctx)
       if (RENDERINPUTS_TEST( index_bitset, _TNL_ATTRIB_COLOR0 )) {
          swsetup->intColors = !ctx->FragmentProgram._Current
                            && !ctx->ATIFragmentShader._Enabled
+                           && ctx->RenderMode == GL_RENDER
                            && CHAN_TYPE == GL_UNSIGNED_BYTE;
          if (swsetup->intColors)
             EMIT_ATTR( _TNL_ATTRIB_COLOR0, EMIT_4CHAN_4F_RGBA, color );
@@ -279,27 +280,28 @@ _swsetup_Translate( GLcontext *ctx, const void *vertex, SWvertex *dest )
 
    /** XXX try to limit these loops someday */
    for (i = 0 ; i < ctx->Const.MaxTextureCoordUnits ; i++)
-      _tnl_get_attr( ctx, vertex, _TNL_ATTRIB_TEX0+i,
+      _tnl_get_attr( ctx, vertex, _TNL_ATTRIB_TEX0 + i,
                      dest->attrib[FRAG_ATTRIB_TEX0 + i] );
 
    for (i = 0 ; i < ctx->Const.MaxVarying ; i++)
-      _tnl_get_attr( ctx, vertex, _TNL_ATTRIB_GENERIC0+i,
+      _tnl_get_attr( ctx, vertex, _TNL_ATTRIB_GENERIC0 + i,
                      dest->attrib[FRAG_ATTRIB_VAR0 + i] );
 
-   _tnl_get_attr( ctx, vertex, _TNL_ATTRIB_COLOR0, tmp );
-   UNCLAMPED_FLOAT_TO_RGBA_CHAN( dest->color, tmp );
+   if (ctx->Visual.rgbMode) {
+      _tnl_get_attr( ctx, vertex, _TNL_ATTRIB_COLOR0,
+                     dest->attrib[FRAG_ATTRIB_COL0] );
+      UNCLAMPED_FLOAT_TO_RGBA_CHAN( dest->color, tmp );
 
-   _tnl_get_attr( ctx, vertex, _TNL_ATTRIB_COLOR1, tmp );
-   COPY_4V(dest->attrib[FRAG_ATTRIB_COL1], tmp);
-   /*
-   UNCLAMPED_FLOAT_TO_RGBA_CHAN( dest->specular, tmp );
-   */
+      _tnl_get_attr( ctx, vertex, _TNL_ATTRIB_COLOR1,
+                     dest->attrib[FRAG_ATTRIB_COL1]);
+   }
+   else {
+      _tnl_get_attr( ctx, vertex, _TNL_ATTRIB_COLOR_INDEX, tmp );
+      dest->attrib[FRAG_ATTRIB_CI][0] = tmp[0];
+   }
 
    _tnl_get_attr( ctx, vertex, _TNL_ATTRIB_FOG, tmp );
    dest->attrib[FRAG_ATTRIB_FOGC][0] = tmp[0];
-
-   _tnl_get_attr( ctx, vertex, _TNL_ATTRIB_COLOR_INDEX, tmp );
-   dest->attrib[FRAG_ATTRIB_CI][0] = tmp[0];
 
    /* XXX See _tnl_get_attr about pointsize ... */
    _tnl_get_attr( ctx, vertex, _TNL_ATTRIB_POINTSIZE, tmp );

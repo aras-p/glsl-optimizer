@@ -23,11 +23,21 @@
 #include <GL/glfbdev.h>
 #include <math.h>
 
-#define DEFAULT_DEPTH 8
+
+/**
+ * Choose one of these modes
+ */
+/*static const int XRes = 1280, YRes = 1024, Hz = 75;*/
+/*static const int XRes = 1280, YRes = 1024, Hz = 70;*/
+/*static const int XRes = 1280, YRes = 1024, Hz = 60;*/
+static const int XRes = 1024, YRes = 768, Hz = 70;
+
+static int DesiredDepth = 32;
+
+static int NumFrames = 100;
 
 static struct fb_fix_screeninfo FixedInfo;
 static struct fb_var_screeninfo VarInfo, OrigVarInfo;
-static int DesiredDepth = 0;
 static int OriginalVT = -1;
 static int ConsoleFD = -1;
 static int FrameBufferFD = -1;
@@ -227,7 +237,6 @@ initialize_fbdev( void )
    VarInfo = OrigVarInfo;
 
    /* set the depth, resolution, etc */
-   DesiredDepth = 32;
    if (DesiredDepth)
       VarInfo.bits_per_pixel = DesiredDepth;
 
@@ -251,16 +260,60 @@ initialize_fbdev( void )
       VarInfo.blue.length = 8;
       VarInfo.transp.length = 8;
    }
-   /* timing values taken from /etc/fb.modes (1280x1024 @ 75Hz) */
-   VarInfo.xres_virtual = VarInfo.xres = 1280;
-   VarInfo.yres_virtual = VarInfo.yres = 1024;
-   VarInfo.pixclock = 7408;
-   VarInfo.left_margin = 248;
-   VarInfo.right_margin = 16;
-   VarInfo.upper_margin = 38;
-   VarInfo.lower_margin = 1;
-   VarInfo.hsync_len = 144;
-   VarInfo.vsync_len = 3;
+
+   /* timing values taken from /etc/fb.modes */
+   if (XRes == 1280 && YRes == 1024) {
+      VarInfo.xres_virtual = VarInfo.xres = XRes;
+      VarInfo.yres_virtual = VarInfo.yres = YRes;
+      if (Hz == 75) {
+         VarInfo.pixclock = 7408;
+         VarInfo.left_margin = 248;
+         VarInfo.right_margin = 16;
+         VarInfo.upper_margin = 38;
+         VarInfo.lower_margin = 1;
+         VarInfo.hsync_len = 144;
+         VarInfo.vsync_len = 3;
+      }
+      else if (Hz == 70) {
+         VarInfo.pixclock = 7937;
+         VarInfo.left_margin = 216;
+         VarInfo.right_margin = 80;
+         VarInfo.upper_margin = 36;
+         VarInfo.lower_margin = 1;
+         VarInfo.hsync_len = 112;
+         VarInfo.vsync_len = 5;
+      }
+      else if (Hz == 60) {
+         VarInfo.pixclock = 9260;
+         VarInfo.left_margin = 248;
+         VarInfo.right_margin = 48;
+         VarInfo.upper_margin = 38;
+         VarInfo.lower_margin = 1;
+         VarInfo.hsync_len = 112;
+         VarInfo.vsync_len = 3;
+      }
+      else {
+         fprintf(stderr, "invalid rate for 1280x1024\n");
+         exit(1);
+      }
+   }
+   else if (XRes == 1024 && YRes == 768 && Hz == 70) {
+      VarInfo.xres_virtual = VarInfo.xres = XRes;
+      VarInfo.yres_virtual = VarInfo.yres = YRes;
+      if (Hz == 70) {
+         VarInfo.pixclock = 13334;
+         VarInfo.left_margin = 144;
+         VarInfo.right_margin = 24;
+         VarInfo.upper_margin = 29;
+         VarInfo.lower_margin = 3;
+         VarInfo.hsync_len = 136;
+         VarInfo.vsync_len = 6;
+      }
+      else {
+         fprintf(stderr, "invalid rate for 1024x768\n");
+         exit(1);
+      }
+   }
 
    VarInfo.xoffset = 0;
    VarInfo.yoffset = 0;
@@ -338,7 +391,7 @@ initialize_fbdev( void )
    printf("MMIOAddress = %p\n", MMIOAddress);
 
    /* try out some simple MMIO register reads */
-   if (1)
+   if (0)
    {
       typedef unsigned int CARD32;
       typedef unsigned char CARD8;
@@ -452,6 +505,7 @@ gltest( void )
    GLFBDevVisualPtr vis;
    int bytes, r, g, b, a;
    float ang;
+   int i;
 
    printf("GLFBDEV_VENDOR = %s\n", glFBDevGetString(GLFBDEV_VENDOR));
    printf("GLFBDEV_VERSION = %s\n", glFBDevGetString(GLFBDEV_VERSION));
@@ -491,13 +545,17 @@ gltest( void )
    glEnable(GL_LIGHT0);
    glEnable(GL_DEPTH_TEST);
 
-   for (ang = 0; ang <= 180; ang += 15) {
+   printf("Drawing %d frames...\n", NumFrames);
+
+   ang = 0.0;
+   for (i = 0; i < NumFrames; i++) {
       glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
       glPushMatrix();
       glRotatef(ang, 1, 0, 0);
       doughnut(1, 3, 40, 20);
       glPopMatrix();
       glFBDevSwapBuffers(buf);
+      ang += 15.0;
    }
 
    /* clean up */
@@ -510,12 +568,29 @@ gltest( void )
 }
 
 
+static void
+parse_args(int argc, char *argv[])
+{
+   int i;
+
+   for (i = 1; i < argc; i++) {
+      if (strcmp(argv[i], "-f") == 0) {
+         NumFrames = atoi(argv[i+1]);
+         i++;
+      }
+   }
+}
+
+
 int
 main( int argc, char *argv[] )
 {
    signal(SIGUSR1, signal_handler);  /* exit if someone tries a vt switch */
    signal(SIGSEGV, signal_handler);  /* catch segfaults */
 
+   parse_args(argc, argv);
+
+   printf("Setting mode to %d x %d @ %d Hz, %d bpp\n", XRes, YRes, Hz, DesiredDepth);
    initialize_fbdev();
    gltest();
    shutdown_fbdev();

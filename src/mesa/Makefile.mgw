@@ -1,5 +1,5 @@
 # Mesa 3-D graphics library
-# Version:  5.1
+# Version:  7.0
 # 
 # Copyright (C) 1999-2003  Brian Paul   All Rights Reserved.
 # 
@@ -25,6 +25,16 @@
 #  Copyright (C) 2002 - Daniel Borca
 #  Email : dborca@users.sourceforge.net
 #  Web   : http://www.geocities.com/dborca
+
+# MinGW core-gl makefile updated for Mesa 7.0
+#
+#  updated : by Heromyth, on 2007-7-21
+#  Email   : zxpmyth@yahoo.com.cn
+#  Bugs    : 1) All the default settings work fine. But the setting X86=1 can't work. 
+#            The others havn't been tested yet.
+#            2) The generated DLLs are *not* compatible with the ones built
+#            with the other compilers like VC8, especially for GLUT. 
+#            3) Although more tests are needed, it can be used individually!
 
 
 #
@@ -52,13 +62,14 @@
 #
 
 
-
 .PHONY: all clean
 .INTERMEDIATE: x86/gen_matypes.exe
 .SUFFIXES: .rc .res
 
 # Set this to the prefix of your build tools, i.e. mingw32-
 TOOLS_PREFIX = mingw32-
+
+
 
 TOP = ../..
 GLIDE ?= $(TOP)/glide3
@@ -71,11 +82,25 @@ else
   GL_IMP = libopengl32.a
 endif
 
-LDLIBS = -lgdi32
+GL_DEF = gl.def
+
+include $(TOP)/configs/config.mgw
+GL_USING_STDCALL ?= 1
+
+MESA_LIB = libmesa.a
+
+LDLIBS = -lgdi32 -luser32 -liberty
+LDFLAGS = -Wl,--out-implib=$(LIBDIR)/$(GL_IMP) -Wl,--output-def=$(LIBDIR)/gl.def
 
 CC = $(TOOLS_PREFIX)gcc
-CFLAGS += -DBUILD_GL32 -D_OPENGL32_
-CFLAGS += $(INCLUDE_DIRS)
+CFLAGS += -DBUILD_GL32 -D_OPENGL32_ -D_DLL -DMESA_MINWARN -DNDEBUG -D_USRDLL -DGDI_EXPORTS
+
+ifeq ($(GL_USING_STDCALL),1)
+  LDFLAGS += -Wl,--add-stdcall-alias
+else
+  CFLAGS += -DGL_NO_STDCALL
+endif
+
 CFLAGS += -DUSE_EXTERNAL_DXTN_LIB=1
 ifeq ($(FX),1)
   CFLAGS += -I$(GLIDE)/include -DFX
@@ -103,6 +128,8 @@ UNLINK = $(RM) $(1)
 endif
 
 include sources
+
+CFLAGS += $(INCLUDE_DIRS) 
 
 ifeq ($(X86),1)
 CFLAGS += -DUSE_X86_ASM
@@ -140,10 +167,9 @@ RESOURCE = $(GL_RES:.rc=.res)
 
 .c.o:
 	$(CC) -o $@ $(CFLAGS) -c $<
-.S.o:
-	$(CC) -o $@ $(CFLAGS) -c $<
 .s.o:
 	$(CC) -o $@ $(CFLAGS) -x assembler-with-cpp -c $<
+
 .rc.res:
 	windres -o $@ -Irc -Ocoff $<
 
@@ -153,9 +179,8 @@ $(LIBDIR):
 	mkdir -p $(LIBDIR)
 
 $(LIBDIR)/$(GL_DLL) $(LIBDIR)/$(GL_IMP): $(OBJECTS) $(RESOURCE)
-	$(TOOLS_PREFIX)dllwrap -o $(LIBDIR)/$(GL_DLL) --output-lib $(LIBDIR)/$(GL_IMP) \
-	                       --target i386-mingw32 --def $(GL_DEF) -Wl,-enable-stdcall-fixup \
-	                       $^ $(LDLIBS)
+	$(CC) -shared -fPIC -o $(LIBDIR)/$(GL_DLL) $(LDFLAGS) \
+	$^ $(LDLIBS)
 
 $(X86_OBJECTS): x86/matypes.h
 
@@ -187,17 +212,21 @@ tnl/t_vtx_x86_gcc.o: tnl/t_vtx_x86_gcc.S
 	$(CC) -o $@ $(CFLAGS) -DSTDCALL_API -c $<
 
 clean:
-	-$(call UNLINK,array_cache/*.o)
 	-$(call UNLINK,glapi/*.o)
 	-$(call UNLINK,main/*.o)
 	-$(call UNLINK,math/*.o)
+	-$(call UNLINK,vbo/*.o)
 	-$(call UNLINK,shader/*.o)
+	-$(call UNLINK,shader/slang/*.o)
+	-$(call UNLINK,shader/grammar/*.o)
 	-$(call UNLINK,sparc/*.o)
 	-$(call UNLINK,ppc/*.o)
 	-$(call UNLINK,swrast/*.o)
 	-$(call UNLINK,swrast_setup/*.o)
 	-$(call UNLINK,tnl/*.o)
 	-$(call UNLINK,x86/*.o)
+	-$(call UNLINK,x86/rtasm/*.o)
+	-$(call UNLINK,x86-64/*.o)
 	-$(call UNLINK,drivers/common/*.o)
 	-$(call UNLINK,drivers/glide/*.o)
 	-$(call UNLINK,drivers/windows/fx/*.o)

@@ -132,13 +132,15 @@ NAME(line)(GLcontext *ctx, const SWvertex *v0, const SWvertex *v1)
    line.dx = line.x1 - line.x0;
    line.dy = line.y1 - line.y0;
    line.len = SQRTF(line.dx * line.dx + line.dy * line.dy);
-   line.halfWidth = 0.5F * ctx->Line._Width;
+   line.halfWidth = 0.5F * CLAMP(ctx->Line.Width,
+                                 ctx->Const.MinLineWidthAA,
+                                 ctx->Const.MaxLineWidthAA);
 
    if (line.len == 0.0 || IS_INF_OR_NAN(line.len))
       return;
 
-   INIT_SPAN(line.span, GL_LINE, 0, 0, SPAN_XY | SPAN_COVERAGE);
-
+   INIT_SPAN(line.span, GL_LINE);
+   line.span.arrayMask = SPAN_XY | SPAN_COVERAGE;
    line.xAdj = line.dx / line.len * line.halfWidth;
    line.yAdj = line.dy / line.len * line.halfWidth;
 

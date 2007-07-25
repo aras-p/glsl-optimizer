@@ -68,7 +68,7 @@ nouveauBeginQuery(GLcontext *ctx, GLenum target, struct gl_query_object *q)
 	nouveauContextPtr nmesa = NOUVEAU_CONTEXT(ctx);
 	nouveau_query_object *nq = (nouveau_query_object *)q;
 
-	nouveau_notifier_reset(nmesa->queryNotifier, nq->notifier_id);
+	nouveau_notifier_reset(ctx, nmesa->queryNotifier, nq->notifier_id);
 
 	switch (nmesa->screen->card->type) {
 	case NV_20:
@@ -105,12 +105,13 @@ nouveauUpdateQuery(GLcontext *ctx, GLenum target, struct gl_query_object *q)
 	nouveau_query_object *nq = (nouveau_query_object *)q;
 	int status;
 
-	status = nouveau_notifier_status(nmesa->queryNotifier,
+	status = nouveau_notifier_status(ctx, nmesa->queryNotifier,
 					 nq->notifier_id);
 
 	q->Ready = (status == NV_NOTIFY_STATE_STATUS_COMPLETED);
 	if (q->Ready)
-		q->Result = nouveau_notifier_return_val(nmesa->queryNotifier,
+		q->Result = nouveau_notifier_return_val(ctx,
+							nmesa->queryNotifier,
 							nq->notifier_id);
 }
 
@@ -120,7 +121,7 @@ nouveauWaitQueryResult(GLcontext *ctx, GLenum target, struct gl_query_object *q)
 	nouveauContextPtr nmesa = NOUVEAU_CONTEXT(ctx);
 	nouveau_query_object *nq = (nouveau_query_object *)q;
 
-	nouveau_notifier_wait_status(nmesa->queryNotifier, nq->notifier_id,
+	nouveau_notifier_wait_status(ctx, nmesa->queryNotifier, nq->notifier_id,
 				     NV_NOTIFY_STATE_STATUS_COMPLETED, 0);
 	nouveauUpdateQuery(ctx, target, q);
 }

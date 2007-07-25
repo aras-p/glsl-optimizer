@@ -1,6 +1,6 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.5.3
+ * Version:  7.1
  *
  * Copyright (C) 1999-2007  Brian Paul   All Rights Reserved.
  *
@@ -171,6 +171,12 @@ interpolate_active_attribs(GLcontext *ctx, SWspan *span, GLbitfield attrMask)
 {
    const SWcontext *swrast = SWRAST_CONTEXT(ctx);
 
+   /*
+    * Don't overwrite existing array values, such as colors that may have
+    * been produced by glDraw/CopyPixels.
+    */
+   attrMask &= ~span->arrayAttribs;
+
    ATTRIB_LOOP_BEGIN
       if (attrMask & (1 << attr)) {
          const GLfloat dwdx = span->attrStepX[FRAG_ATTRIB_WPOS][3];
@@ -196,6 +202,7 @@ interpolate_active_attribs(GLcontext *ctx, SWspan *span, GLbitfield attrMask)
             v3 += dv3dx;
             w += dwdx;
          }
+         ASSERT((span->arrayAttribs & (1 << attr)) == 0);
          span->arrayAttribs |= (1 << attr);
       }
    ATTRIB_LOOP_END
@@ -1145,6 +1152,7 @@ convert_color_type(SWspan *span, GLenum newType, GLuint output)
                         span->end, span->array->mask);
 
    span->array->ChanType = newType;
+   span->array->rgba = dst;
 }
 
 
@@ -1169,9 +1177,14 @@ shade_texture_span(GLcontext *ctx, SWspan *span)
    if (ctx->FragmentProgram._Current ||
        ctx->ATIFragmentShader._Enabled) {
       /* programmable shading */
+      if (span->primitive == GL_BITMAP && span->array->ChanType != GL_FLOAT) {
+         convert_color_type(span, GL_FLOAT, 0);
+      }
+      if (span->primitive != GL_POINT) {
+         /* for points, we populated the arrays already */
+         interpolate_active_attribs(ctx, span, ~0);
+      }
       span->array->ChanType = GL_FLOAT;
-
-      interpolate_active_attribs(ctx, span, ~0);
 
       if (!(span->arrayMask & SPAN_Z))
          _swrast_span_interpolate_z (ctx, span);
@@ -1227,7 +1240,8 @@ _swrast_write_rgba_span( GLcontext *ctx, SWspan *span)
    const GLbitfield origInterpMask = span->interpMask;
    const GLbitfield origArrayMask = span->arrayMask;
    const GLbitfield origArrayAttribs = span->arrayAttribs;
-   const GLenum chanType = span->array->ChanType;
+   const GLenum origChanType = span->array->ChanType;
+   void * const origRgba = span->array->rgba;
    const GLboolean shader = (ctx->FragmentProgram._Current
                              || ctx->ATIFragmentShader._Enabled);
    const GLboolean shaderOrTexture = shader || ctx->Texture._EnabledUnits;
@@ -1449,7 +1463,8 @@ end:
    span->interpMask = origInterpMask;
    span->arrayMask = origArrayMask;
    span->arrayAttribs = origArrayAttribs;
-   span->array->ChanType = chanType;
+   span->array->ChanType = origChanType;
+   span->array->rgba = origRgba;
 }
 
 

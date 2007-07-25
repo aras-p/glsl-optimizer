@@ -1,6 +1,6 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.5.3
+ * Version:  7.1
  *
  * Copyright (C) 2005-2007  Brian Paul   All Rights Reserved.
  *
@@ -37,13 +37,13 @@
 
 
 
-#include "imports.h"
-#include "macros.h"
-#include "mtypes.h"
-#include "program.h"
-#include "prog_instruction.h"
-#include "prog_parameter.h"
-#include "prog_statevars.h"
+#include "main/imports.h"
+#include "main/macros.h"
+#include "main/mtypes.h"
+#include "shader/program.h"
+#include "shader/prog_instruction.h"
+#include "shader/prog_parameter.h"
+#include "shader/prog_statevars.h"
 #include "slang_typeinfo.h"
 #include "slang_codegen.h"
 #include "slang_compile.h"
@@ -1261,15 +1261,23 @@ make_writemask(const char *field)
    while (*field) {
       switch (*field) {
       case 'x':
+      case 's':
+      case 'r':
          mask |= WRITEMASK_X;
          break;
       case 'y':
+      case 't':
+      case 'g':
          mask |= WRITEMASK_Y;
          break;
       case 'z':
+      case 'p':
+      case 'b':
          mask |= WRITEMASK_Z;
          break;
       case 'w':
+      case 'q':
+      case 'a':
          mask |= WRITEMASK_W;
          break;
       default:
@@ -2320,7 +2328,8 @@ _slang_gen_field(slang_assemble_ctx * A, slang_operation *oper)
          n = _slang_gen_swizzle(n, swizzle);
       return n;
    }
-   else if (ti.spec.type == SLANG_SPEC_FLOAT) {
+   else if (   ti.spec.type == SLANG_SPEC_FLOAT
+            || ti.spec.type == SLANG_SPEC_INT) {
       const GLuint rows = 1;
       slang_swizzle swz;
       slang_ir_node *n;

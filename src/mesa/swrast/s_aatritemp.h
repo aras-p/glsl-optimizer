@@ -69,7 +69,8 @@
    
    (void) swrast;
 
-   INIT_SPAN(span, GL_POLYGON, 0, 0, SPAN_COVERAGE);
+   INIT_SPAN(span, GL_POLYGON);
+   span.arrayMask = SPAN_COVERAGE;
 
    /* determine bottom to top order of vertices */
    {

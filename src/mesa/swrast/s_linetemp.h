@@ -303,7 +303,10 @@ NAME( GLcontext *ctx, const SWvertex *vert0, const SWvertex *vert1 )
    }
 #endif
 
-   INIT_SPAN(span, GL_LINE, numPixels, interpFlags, SPAN_XY);
+   INIT_SPAN(span, GL_LINE);
+   span.end = numPixels;
+   span.interpMask = interpFlags;
+   span.arrayMask = SPAN_XY;
 
    /*
     * Draw

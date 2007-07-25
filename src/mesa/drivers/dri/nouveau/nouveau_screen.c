@@ -328,7 +328,7 @@ void * __driCreateNewScreen_20050727( __DRInativeDisplay *dpy, int scrn, __DRIsc
 	static const __DRIversion ddx_expected = { 1, 2, 0 };
 	static const __DRIversion dri_expected = { 4, 0, 0 };
 	static const __DRIversion drm_expected = { 0, 0, NOUVEAU_DRM_HEADER_PATCHLEVEL };
-#if NOUVEAU_DRM_HEADER_PATCHLEVEL != 6
+#if NOUVEAU_DRM_HEADER_PATCHLEVEL != 9
 #error nouveau_drm.h version doesn't match expected version
 #endif
 	dri_interface = interface;

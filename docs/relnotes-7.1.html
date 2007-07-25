@@ -39,6 +39,10 @@ TBD
 
 <h2>To Do (someday) items</h2>
 <ul>
+<li>Remove the MEMCPY() and _mesa_memcpy() wrappers and just use memcpy().
+Probably do the same for malloc, calloc, etc.
+The wrappers were useful in the past for memory debugging but now we
+have valgrind.  Not worried about SunOS 4 support anymore either...
 <li>Switch to freeglut
 <li>Fix linux-glide target/driver.
 <li>Improved lambda and derivative calculation for frag progs.

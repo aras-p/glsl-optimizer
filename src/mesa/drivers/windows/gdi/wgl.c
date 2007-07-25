@@ -32,10 +32,31 @@
 
 /* We're essentially building part of GDI here, so define this so that
  * we get the right export linkage. */
+#ifdef __MINGW32__
+
+#include <stdarg.h>
+#include <windef.h>
+#include <wincon.h>
+#include <winbase.h>
+
+#  if defined(BUILD_GL32)
+#    define WINGDIAPI __declspec(dllexport)	
+#  else
+#    define __W32API_USE_DLLIMPORT__
+#  endif
+
+#include <wingdi.h>
+#include "GL/mesa_wgl.h"
+#include <stdlib.h>
+
+#else
+
 #define _GDI32_
 #include <windows.h>
-#include "glapi.h"
 
+#endif
+
+#include "glapi.h"
 #include "GL/wmesa.h"   /* protos for wmesa* functions */
 
 /*
@@ -333,7 +354,7 @@ WINGDIAPI int GLAPIENTRY wglGetPixelFormat(HDC hdc)
 }
 
 WINGDIAPI BOOL GLAPIENTRY wglSetPixelFormat(HDC hdc,int iPixelFormat,
-					    PIXELFORMATDESCRIPTOR *ppfd)
+					const PIXELFORMATDESCRIPTOR *ppfd)
 {
     (void) hdc;
     
@@ -386,12 +407,12 @@ static BOOL wglUseFontBitmaps_FX(HDC fontDevice, DWORD firstChar,
     
     bitDevice = CreateCompatibleDC(fontDevice);
     
-    // Swap fore and back colors so the bitmap has the right polarity
+    /* Swap fore and back colors so the bitmap has the right polarity */
     tempColor = GetBkColor(bitDevice);
     SetBkColor(bitDevice, GetTextColor(bitDevice));
     SetTextColor(bitDevice, tempColor);
     
-    // Place chars based on base line
+    /* Place chars based on base line */
     VERIFY(SetTextAlign(bitDevice, TA_BASELINE) != GDI_ERROR ? 1 : 0);
     
     for(i = 0; i < (int)numChars; i++) {
@@ -404,36 +425,36 @@ static BOOL wglUseFontBitmaps_FX(HDC fontDevice, DWORD firstChar,
 	
 	curChar = (char)(i + firstChar);
 	
-	// Find how high/wide this character is
+	/* Find how high/wide this character is */
 	VERIFY(GetTextExtentPoint32(bitDevice, &curChar, 1, &size));
 	
-	// Create the output bitmap
+	/* Create the output bitmap */
 	charWidth = size.cx;
 	charHeight = size.cy;
-	// Round up to the next multiple of 32 bits
+	/* Round up to the next multiple of 32 bits */
 	bmapWidth = ((charWidth + 31) / 32) * 32;   
 	bmapHeight = charHeight;
 	bitObject = CreateCompatibleBitmap(bitDevice,
 					   bmapWidth,
 					   bmapHeight);
-	//VERIFY(bitObject);
+	/* VERIFY(bitObject); */
 	
-	// Assign the output bitmap to the device
+	/* Assign the output bitmap to the device */
 	origBmap = SelectObject(bitDevice, bitObject);
 	(void) VERIFY(origBmap);
 	
 	VERIFY( PatBlt( bitDevice, 0, 0, bmapWidth, bmapHeight,BLACKNESS ) );
 	
-	// Use our source font on the device
+	/* Use our source font on the device */
 	VERIFY(SelectObject(bitDevice, GetCurrentObject(fontDevice,OBJ_FONT)));
 	
-	// Draw the character
+	/* Draw the character */
 	VERIFY(TextOut(bitDevice, 0, metric.tmAscent, &curChar, 1));
 	
-	// Unselect our bmap object
+	/* Unselect our bmap object */
 	VERIFY(SelectObject(bitDevice, origBmap));
 	
-	// Convert the display dependant representation to a 1 bit deep DIB
+	/* Convert the display dependant representation to a 1 bit deep DIB */
 	numBytes = (bmapWidth * bmapHeight) / 8;
 	bmap = malloc(numBytes);
 	dibInfo->bmiHeader.biWidth = bmapWidth;
@@ -441,24 +462,24 @@ static BOOL wglUseFontBitmaps_FX(HDC fontDevice, DWORD firstChar,
 	res = GetDIBits(bitDevice, bitObject, 0, bmapHeight, bmap,
 			dibInfo,
 			DIB_RGB_COLORS);
-	//VERIFY(res);
+	/* VERIFY(res); */
 	
-	// Create the GL object
+	/* Create the GL object */
 	glNewList(i + listBase, GL_COMPILE);
 	glBitmap(bmapWidth, bmapHeight, 0.0, (GLfloat)metric.tmDescent,
 		 (GLfloat)charWidth, 0.0,
 		 bmap);
 	glEndList();
-	// CheckGL();
+	/* CheckGL(); */
 	
-	// Destroy the bmap object
+	/* Destroy the bmap object */
 	DeleteObject(bitObject);
 	
-	// Deallocate the bitmap data
+	/* Deallocate the bitmap data */
 	free(bmap);
     }
     
-    // Destroy the DC
+    /* Destroy the DC */
     VERIFY(DeleteDC(bitDevice));
     
     free(dibInfo);

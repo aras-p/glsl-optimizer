@@ -217,14 +217,14 @@ static GLuint r300VAPInputRoute0(uint32_t * dst, GLvector4f ** attribptr,
 		dw = R300_INPUT_ROUTE_FLOAT | (inputs[tab[i]] << 8) | (attribptr[tab[i]]->size - 1);
 		dw |= (R300_INPUT_ROUTE_FLOAT | (inputs[tab[i + 1]] << 8) | (attribptr[tab[i + 1]]->size - 1)) << 16;
 		if (i + 2 == nr) {
-			dw |= (1 << (13 + 16));
+			dw |= (R300_VAP_INPUT_ROUTE_END << 16);
 		}
 		dst[i >> 1] = dw;
 	}
 
 	if (nr & 1) {
 		dw = R300_INPUT_ROUTE_FLOAT | (inputs[tab[nr - 1]] << 8) | (attribptr[tab[nr - 1]]->size - 1);
-		dw |= 1 << 13;
+		dw |= R300_VAP_INPUT_ROUTE_END;
 		dst[nr >> 1] = dw;
 	}
 
@@ -239,7 +239,7 @@ static GLuint r300VAPInputRoute1Swizzle(int swizzle[4])
 	    (swizzle[3] << R300_INPUT_ROUTE_W_SHIFT);
 }
 
-static GLuint r300VAPInputRoute1(uint32_t * dst, int swizzle[][4], GLuint nr)
+GLuint r300VAPInputRoute1(uint32_t * dst, int swizzle[][4], GLuint nr)
 {
 	GLuint i;
 
@@ -255,14 +255,14 @@ static GLuint r300VAPInputRoute1(uint32_t * dst, int swizzle[][4], GLuint nr)
 	return (nr + 1) >> 1;
 }
 
-static GLuint r300VAPInputCntl0(GLcontext * ctx, GLuint InputsRead)
+GLuint r300VAPInputCntl0(GLcontext * ctx, GLuint InputsRead)
 {
 	/* No idea what this value means. I have seen other values written to
 	 * this register... */
 	return 0x5555;
 }
 
-static GLuint r300VAPInputCntl1(GLcontext * ctx, GLuint InputsRead)
+GLuint r300VAPInputCntl1(GLcontext * ctx, GLuint InputsRead)
 {
 	r300ContextPtr rmesa = R300_CONTEXT(ctx);
 	GLuint i, vic_1 = 0;
@@ -286,7 +286,7 @@ static GLuint r300VAPInputCntl1(GLcontext * ctx, GLuint InputsRead)
 	return vic_1;
 }
 
-static GLuint r300VAPOutputCntl0(GLcontext * ctx, GLuint OutputsWritten)
+GLuint r300VAPOutputCntl0(GLcontext * ctx, GLuint OutputsWritten)
 {
 	GLuint ret = 0;
 
@@ -299,13 +299,14 @@ static GLuint r300VAPOutputCntl0(GLcontext * ctx, GLuint OutputsWritten)
 	if (OutputsWritten & (1 << VERT_RESULT_COL1))
 		ret |= R300_VAP_OUTPUT_VTX_FMT_0__COLOR_1_PRESENT;
 
+	if (OutputsWritten & (1 << VERT_RESULT_BFC0)
+	    || OutputsWritten & (1 << VERT_RESULT_BFC1))
+		ret |=
+		    R300_VAP_OUTPUT_VTX_FMT_0__COLOR_1_PRESENT |
+		    R300_VAP_OUTPUT_VTX_FMT_0__COLOR_2_PRESENT |
+		    R300_VAP_OUTPUT_VTX_FMT_0__COLOR_3_PRESENT;
+
 #if 0
-	if (OutputsWritten & (1 << VERT_RESULT_BFC0))
-		ret |= R300_VAP_OUTPUT_VTX_FMT_0__COLOR_2_PRESENT;
-
-	if (OutputsWritten & (1 << VERT_RESULT_BFC1))
-		ret |= R300_VAP_OUTPUT_VTX_FMT_0__COLOR_3_PRESENT;
-
 	if (OutputsWritten & (1 << VERT_RESULT_FOGC)) ;
 #endif
 
@@ -315,7 +316,7 @@ static GLuint r300VAPOutputCntl0(GLcontext * ctx, GLuint OutputsWritten)
 	return ret;
 }
 
-static GLuint r300VAPOutputCntl1(GLcontext * ctx, GLuint OutputsWritten)
+GLuint r300VAPOutputCntl1(GLcontext * ctx, GLuint OutputsWritten)
 {
 	GLuint i, ret = 0;
 
@@ -358,9 +359,11 @@ int r300EmitArrays(GLcontext * ctx)
 		DECLARE_RENDERINPUTS(render_inputs_bitset);
 		RENDERINPUTS_COPY(render_inputs_bitset, tnl->render_inputs_bitset);
 
+		vb->AttribPtr[VERT_ATTRIB_POS] = vb->ClipPtr;
+
 		assert(RENDERINPUTS_TEST(render_inputs_bitset, _TNL_ATTRIB_POS));
 		assert(RENDERINPUTS_TEST(render_inputs_bitset, _TNL_ATTRIB_NORMAL) == 0);
-		assert(RENDERINPUTS_TEST(render_inputs_bitset, _TNL_ATTRIB_COLOR0));
+		//assert(RENDERINPUTS_TEST(render_inputs_bitset, _TNL_ATTRIB_COLOR0));
 
 		if (RENDERINPUTS_TEST(render_inputs_bitset, _TNL_ATTRIB_POS)) {
 			InputsRead |= 1 << VERT_ATTRIB_POS;
@@ -392,20 +395,18 @@ int r300EmitArrays(GLcontext * ctx)
 			}
 		}
 
-		if (!(rmesa->radeon.radeonScreen->chip_flags & RADEON_CHIPSET_TCL)) {
-			/* Fixed, apply to vir0 only */
-			memcpy(vir_inputs, inputs, VERT_ATTRIB_MAX * sizeof(int));
-			inputs = vir_inputs;
-			if (InputsRead & VERT_ATTRIB_POS)
-				inputs[VERT_ATTRIB_POS] = 0;
-			if (InputsRead & (1 << VERT_ATTRIB_COLOR0))
-				inputs[VERT_ATTRIB_COLOR0] = 2;
-			if (InputsRead & (1 << VERT_ATTRIB_COLOR1))
-				inputs[VERT_ATTRIB_COLOR1] = 3;
-			for (i = VERT_ATTRIB_TEX0; i <= VERT_ATTRIB_TEX7; i++)
-				if (InputsRead & (1 << i))
-					inputs[i] = 6 + (i - VERT_ATTRIB_TEX0);
-		}
+		/* Fixed, apply to vir0 only */
+		memcpy(vir_inputs, inputs, VERT_ATTRIB_MAX * sizeof(int));
+		inputs = vir_inputs;
+		if (InputsRead & VERT_ATTRIB_POS)
+			inputs[VERT_ATTRIB_POS] = 0;
+		if (InputsRead & (1 << VERT_ATTRIB_COLOR0))
+			inputs[VERT_ATTRIB_COLOR0] = 2;
+		if (InputsRead & (1 << VERT_ATTRIB_COLOR1))
+			inputs[VERT_ATTRIB_COLOR1] = 3;
+		for (i = VERT_ATTRIB_TEX0; i <= VERT_ATTRIB_TEX7; i++)
+			if (InputsRead & (1 << i))
+				inputs[i] = 6 + (i - VERT_ATTRIB_TEX0);
 
 		RENDERINPUTS_COPY(rmesa->state.render_inputs_bitset, render_inputs_bitset);
 	}
@@ -531,4 +532,20 @@ void r300ReleaseArrays(GLcontext * ctx)
 	for (i = 0; i < rmesa->state.aos_count; i++) {
 		r300ReleaseDmaRegion(rmesa, &rmesa->state.aos[i], __FUNCTION__);
 	}
+}
+
+void r300EmitCacheFlush(r300ContextPtr rmesa)
+{
+        int cmd_reserved = 0;
+	int cmd_written = 0;
+
+	drm_radeon_cmd_header_t *cmd = NULL;
+
+	reg_start(R300_RB3D_DSTCACHE_CTLSTAT, 0);
+	e32(R300_RB3D_DSTCACHE_UNKNOWN_0A);
+
+	reg_start(R300_RB3D_ZCACHE_CTLSTAT, 0);
+	e32(R300_RB3D_ZCACHE_UNKNOWN_03);
+
+
 }

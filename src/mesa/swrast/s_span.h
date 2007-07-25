@@ -159,15 +159,15 @@ typedef struct sw_span
 
 
 
-#define INIT_SPAN(S, PRIMITIVE, END, INTERP_MASK, ARRAY_MASK)	\
-do {								\
-   (S).primitive = (PRIMITIVE);					\
-   (S).interpMask = (INTERP_MASK);				\
-   (S).arrayMask = (ARRAY_MASK);				\
-   (S).arrayAttribs = 0x0;					\
-   (S).end = (END);						\
-   (S).facing = 0;						\
-   (S).array = SWRAST_CONTEXT(ctx)->SpanArrays;			\
+#define INIT_SPAN(S, PRIMITIVE)			\
+do {						\
+   (S).primitive = (PRIMITIVE);			\
+   (S).interpMask = 0x0;			\
+   (S).arrayMask = 0x0;				\
+   (S).arrayAttribs = 0x0;			\
+   (S).end = 0;					\
+   (S).facing = 0;				\
+   (S).array = SWRAST_CONTEXT(ctx)->SpanArrays;	\
 } while (0)
 
 

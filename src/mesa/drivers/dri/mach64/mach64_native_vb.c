@@ -103,7 +103,7 @@ void TAG(translate_vertex)(GLcontext *ctx,
 
    assert( p + 1 - (CARD32 *)src == 10 );
 	 
-   dst->pointSize = ctx->Point._Size;
+   dst->pointSize = ctx->Point.Size;
 }
 
 

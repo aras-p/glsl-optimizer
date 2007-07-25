@@ -363,5 +363,26 @@ intelDrawPixels(GLcontext * ctx,
    if (INTEL_DEBUG & DEBUG_PIXEL)
       _mesa_printf("%s: fallback to swrast\n", __FUNCTION__);
 
-   _swrast_DrawPixels(ctx, x, y, width, height, format, type, unpack, pixels);
+   if (ctx->FragmentProgram._Current == ctx->FragmentProgram._TexEnvProgram) {
+      /*
+       * We don't want the i915 texenv program to be applied to DrawPixels.
+       * This is really just a performance optimization (mesa will other-
+       * wise happily run the fragment program on each pixel in the image).
+       */
+      struct gl_fragment_program *fpSave = ctx->FragmentProgram._Current;
+   /* can't just set current frag prog to 0 here as on buffer resize
+      we'll get new state checks which will segfault. Remains a hack. */
+      ctx->FragmentProgram._Current = NULL;
+      ctx->FragmentProgram._UseTexEnvProgram = GL_FALSE;
+      ctx->FragmentProgram._Active = GL_FALSE;
+      _swrast_DrawPixels( ctx, x, y, width, height, format, type,
+                          unpack, pixels );
+      ctx->FragmentProgram._Current = fpSave;
+      ctx->FragmentProgram._UseTexEnvProgram = GL_TRUE;
+      ctx->FragmentProgram._Active = GL_TRUE;
+   }
+   else {
+      _swrast_DrawPixels( ctx, x, y, width, height, format, type,
+                          unpack, pixels );
+   }
 }
