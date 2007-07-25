@@ -1,6 +1,15 @@
 #include "tgsi_platform.h"
 #include "tgsi_core.h"
 
+#define MESA 1
+#if MESA
+#include "main/context.h"
+#include "main/macros.h"
+#include "main/colormac.h"
+#include "swrast/swrast.h"
+#include "swrast/s_context.h"
+#endif
+
 #define TILE_BOTTOM_LEFT  0
 #define TILE_BOTTOM_RIGHT 1
 #define TILE_TOP_LEFT     2
@@ -1039,6 +1048,10 @@ fetch_texel_1d( GLcontext *ctx,
         lambdas[3] = lambda;
     }
 
+    if (!swrast->TextureSample[unit]) {
+       _swrast_update_texture_samplers(ctx);
+    }
+
     /* XXX use a float-valued TextureSample routine here!!! */
     swrast->TextureSample[unit] (ctx,
                                  ctx->Texture.Unit[unit]._Current,
@@ -1121,6 +1134,10 @@ fetch_texel_2d( GLcontext *ctx,
       lambdas[1] =
       lambdas[2] = 
       lambdas[3] = lambda;
+   }
+
+   if (!swrast->TextureSample[unit]) {
+      _swrast_update_texture_samplers(ctx);
    }
 
    /* XXX use a float-valued TextureSample routine here!!! */
@@ -1212,6 +1229,10 @@ fetch_texel_3d( GLcontext *ctx,
         lambdas[1] =
         lambdas[2] = 
         lambdas[3] = lambda;
+    }
+
+    if (!swrast->TextureSample[unit]) {
+       _swrast_update_texture_samplers(ctx);
     }
 
     /* XXX use a float-valued TextureSample routine here!!! */
