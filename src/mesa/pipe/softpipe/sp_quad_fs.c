@@ -126,7 +126,7 @@ shade_quad( struct quad_stage *qs, struct quad_header *quad )
    struct exec_machine exec;
    const GLfloat fx = quad->x0;
    const GLfloat fy = quad->y0;
-   GLuint i, j;
+   GLuint attr, i;
 
    exec.coef = quad->coef;
 
@@ -156,21 +156,21 @@ shade_quad( struct quad_stage *qs, struct quad_header *quad )
     * into the fragment program's responsibilities at some point.
     * Start at 1 to skip fragment position attribute (computed above).
     */
-   for (i = 1; i < quad->nr_attrs; i++) {
-      switch (softpipe->interp[i]) {
+   for (attr = 1; attr < quad->nr_attrs; attr++) {
+      switch (softpipe->interp[attr]) {
       case INTERP_CONSTANT:
-	 for (j = 0; j < NUM_CHANNELS; j++)
-	    cinterp(&exec, i, j);
+	 for (i = 0; i < NUM_CHANNELS; i++)
+	    cinterp(&exec, attr, i);
 	 break;
       
       case INTERP_LINEAR:
-	 for (j = 0; j < NUM_CHANNELS; j++)
-	    linterp(&exec, i, j);
+	 for (i = 0; i < NUM_CHANNELS; i++)
+	    linterp(&exec, attr, i);
 	 break;
 
       case INTERP_PERSPECTIVE:
-	 for (j = 0; j < NUM_CHANNELS; j++)
-	    pinterp(&exec, i, j);
+	 for (i = 0; i < NUM_CHANNELS; i++)
+	    pinterp(&exec, attr, i);
 	 break;
       }
    }
