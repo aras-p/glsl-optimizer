@@ -111,6 +111,11 @@ static void cull_end( struct draw_stage *stage )
 }
 
 
+static void cull_reset_stipple_counter( struct draw_stage *stage )
+{
+   stage->next->reset_stipple_counter( stage->next );
+}
+
 /**
  * Create a new polygon culling stage.
  */
@@ -127,6 +132,7 @@ struct draw_stage *draw_cull_stage( struct draw_context *draw )
    cull->stage.line = cull_line;
    cull->stage.tri = cull_tri;
    cull->stage.end = cull_end;
+   cull->stage.reset_stipple_counter = cull_reset_stipple_counter;
 
    return &cull->stage;
 }

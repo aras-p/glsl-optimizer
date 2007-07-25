@@ -706,6 +706,17 @@ plot(struct setup_stage *setup, GLint x, GLint y)
 }
 
 
+/**
+ * Determine whether or not to emit a line fragment by checking
+ * line stipple pattern.
+ */
+static INLINE GLuint
+stipple_test(GLint counter, GLushort pattern, GLint factor)
+{
+   GLint b = (counter / factor) & 0xf;
+   return (1 << b) & pattern;
+}
+
 
 /**
  * Do setup for line rasterization, then render the line.
@@ -718,6 +729,7 @@ setup_line(struct draw_stage *stage, struct prim_header *prim)
    const struct vertex_header *v0 = prim->v[0];
    const struct vertex_header *v1 = prim->v[1];
    struct setup_stage *setup = setup_stage( stage );
+   struct softpipe_context *sp = setup->softpipe;
 
    GLint x0 = (GLint) v0->data[0][0];
    GLint x1 = (GLint) v1->data[0][0];
@@ -763,7 +775,12 @@ setup_line(struct draw_stage *stage, struct prim_header *prim)
       const GLint errorDec = error - dx;
 
       for (i = 0; i < dx; i++) {
-         plot(setup, x0, y0);
+         if (!sp->setup.line_stipple_enable ||
+             stipple_test(sp->line_stipple_counter,
+                          sp->setup.line_stipple_pattern,
+                          sp->setup.line_stipple_factor + 1)) {
+             plot(setup, x0, y0);
+         }
 
          x0 += xstep;
          if (error < 0) {
@@ -773,6 +790,8 @@ setup_line(struct draw_stage *stage, struct prim_header *prim)
             error += errorDec;
             y0 += ystep;
          }
+
+         sp->line_stipple_counter++;
       }
    }
    else {
@@ -783,7 +802,12 @@ setup_line(struct draw_stage *stage, struct prim_header *prim)
       const GLint errorDec = error - dy;
 
       for (i = 0; i < dy; i++) {
-         plot(setup, x0, y0);
+         if (!sp->setup.line_stipple_enable ||
+             stipple_test(sp->line_stipple_counter,
+                          sp->setup.line_stipple_pattern,
+                          sp->setup.line_stipple_factor + 1)) {
+            plot(setup, x0, y0);
+         }
 
          y0 += ystep;
 
@@ -794,6 +818,8 @@ setup_line(struct draw_stage *stage, struct prim_header *prim)
             error += errorDec;
             x0 += xstep;
          }
+
+         sp->line_stipple_counter++;
       }
    }
 
@@ -984,6 +1010,13 @@ static void setup_end( struct draw_stage *stage )
 }
 
 
+static void reset_stipple_counter( struct draw_stage *stage )
+{
+   struct setup_stage *setup = setup_stage(stage);
+   setup->softpipe->line_stipple_counter = 0;
+}
+
+
 /**
  * Create a new primitive setup/render stage.
  */
@@ -998,6 +1031,7 @@ struct draw_stage *sp_draw_render_stage( struct softpipe_context *softpipe )
    setup->stage.line = setup_line;
    setup->stage.tri = setup_tri;
    setup->stage.end = setup_end;
+   setup->stage.reset_stipple_counter = reset_stipple_counter;
 
    setup->quad.coef = setup->coef;
 

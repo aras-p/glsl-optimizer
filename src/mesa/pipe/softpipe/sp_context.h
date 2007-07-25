@@ -111,11 +111,15 @@ struct softpipe_context {
    GLboolean need_z;  /**< produce quad/fragment Z values? */
    GLboolean need_w;  /**< produce quad/fragment W values? */
 
+#if 0
    /* Stipple derived state:
     */
    GLubyte stipple_masks[16][16];
+#endif
 
    GLuint occlusion_counter;
+
+   GLuint line_stipple_counter;
 
    /** Software quad rendering pipeline */
    struct {

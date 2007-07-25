@@ -433,6 +433,12 @@ static void clip_end( struct draw_stage *stage )
 }
 
 
+static void clip_reset_stipple_counter( struct draw_stage *stage )
+{
+   stage->next->reset_stipple_counter( stage->next );
+}
+
+
 /**
  * Allocate a new clipper stage.
  * \return pointer to new stage object
@@ -449,6 +455,7 @@ struct draw_stage *draw_clip_stage( struct draw_context *draw )
    clipper->stage.line = clip_line;
    clipper->stage.tri = clip_tri;
    clipper->stage.end = clip_end;
+   clipper->stage.reset_stipple_counter = clip_reset_stipple_counter;
 
    clipper->plane = draw->plane;
 

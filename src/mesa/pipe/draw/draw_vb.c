@@ -151,12 +151,14 @@ static void draw_indexed_prim( struct draw_context *draw,
 	 prim.v[0] = get_vertex( draw, elts[i + 0] );
 	 prim.v[1] = get_vertex( draw, elts[i + 1] );
       
+         first->reset_stipple_counter( first );
 	 first->line( first, &prim );
       }
       break;
 
    case GL_LINE_LOOP:  
       if (count >= 2) {
+         first->reset_stipple_counter( first );
 	 for (i = 1; i < count; i++) {
 	    prim.v[0] = get_vertex( draw, elts[i-1] );
 	    prim.v[1] = get_vertex( draw, elts[i] );	    
@@ -178,6 +180,7 @@ static void draw_indexed_prim( struct draw_context *draw,
        * require more complex code here.
        */
       if (count >= 2) {
+         first->reset_stipple_counter( first );
 	 prim.v[0] = 0;
 	 prim.v[1] = get_vertex( draw, elts[0] );
 	 
@@ -313,13 +316,15 @@ static void draw_prim( struct draw_context *draw,
       for (i = 0; i+1 < count; i += 2) {
 	 prim.v[0] = get_vertex( draw, start + i + 0 );
 	 prim.v[1] = get_vertex( draw, start + i + 1 );
-      
+
+         first->reset_stipple_counter( first );
 	 first->line( first, &prim );
       }
       break;
 
    case GL_LINE_LOOP:  
       if (count >= 2) {
+         first->reset_stipple_counter( first );
 	 for (i = 1; i < count; i++) {
 	    prim.v[0] = get_vertex( draw, start + i - 1 );
 	    prim.v[1] = get_vertex( draw, start + i );	    
@@ -334,6 +339,7 @@ static void draw_prim( struct draw_context *draw,
 
    case GL_LINE_STRIP:
       if (count >= 2) {
+         first->reset_stipple_counter( first );
 	 prim.v[0] = 0;
 	 prim.v[1] = get_vertex( draw, start + 0 );
 	 

@@ -145,6 +145,12 @@ static void offset_end( struct draw_stage *stage )
 }
 
 
+static void offset_reset_stipple_counter( struct draw_stage *stage )
+{
+   stage->next->reset_stipple_counter( stage->next );
+}
+
+
 /**
  * Create polygon offset drawing stage.
  */
@@ -161,6 +167,7 @@ struct draw_stage *draw_offset_stage( struct draw_context *draw )
    offset->stage.line = offset_line;
    offset->stage.tri = offset_tri;
    offset->stage.end = offset_end;
+   offset->stage.reset_stipple_counter = offset_reset_stipple_counter;
 
    return &offset->stage;
 }

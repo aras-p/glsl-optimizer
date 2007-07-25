@@ -139,6 +139,12 @@ static void twoside_end( struct draw_stage *stage )
 }
 
 
+static void twoside_reset_stipple_counter( struct draw_stage *stage )
+{
+   stage->next->reset_stipple_counter( stage->next );
+}
+
+
 /**
  * Create twoside pipeline stage.
  */
@@ -155,6 +161,7 @@ struct draw_stage *draw_twoside_stage( struct draw_context *draw )
    twoside->stage.line = twoside_line;
    twoside->stage.tri = twoside_tri;
    twoside->stage.end = twoside_end;
+   twoside->stage.reset_stipple_counter = twoside_reset_stipple_counter;
 
    twoside->lookup = draw->vf_attr_to_slot;
 

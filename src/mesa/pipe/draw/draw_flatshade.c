@@ -130,6 +130,12 @@ static void flatshade_end( struct draw_stage *stage )
 }
 
 
+static void flatshade_reset_stipple_counter( struct draw_stage *stage )
+{
+   stage->next->reset_stipple_counter( stage->next );
+}
+
+
 /**
  * Create flatshading drawing stage.
  */
@@ -146,6 +152,7 @@ struct draw_stage *draw_flatshade_stage( struct draw_context *draw )
    flatshade->stage.line = flatshade_line;
    flatshade->stage.tri = flatshade_tri;
    flatshade->stage.end = flatshade_end;
+   flatshade->stage.reset_stipple_counter = flatshade_reset_stipple_counter;
 
    flatshade->lookup = draw->vf_attr_to_slot;
 

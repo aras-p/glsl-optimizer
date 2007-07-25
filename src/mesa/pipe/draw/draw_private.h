@@ -98,6 +98,8 @@ struct draw_stage
 		struct prim_header * );
    
    void (*end)( struct draw_stage * );
+
+   void (*reset_stipple_counter)( struct draw_stage * );
 };
 
 
