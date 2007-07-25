@@ -91,11 +91,11 @@ static INLINE void linterp( struct exec_machine *exec,
  *
  * Push into the fp:
  * 
- *   INPUT[attr] = MAD COEF_A0[attr], COEF_DADX[attr], INPUT_WPOS.xxxx
- *   INPUT[attr] = MAD INPUT[attr],   COEF_DADY[attr], INPUT_WPOS.yyyy
- *   INPUT[attr] = MUL INPUT[attr],   INPUT_WPOS.wwww
+ *   INPUT[attr] = MAD COEF_DADX[attr], INPUT_WPOS.xxxx, COEF_A0[attr]
+ *   INPUT[attr] = MAD COEF_DADY[attr], INPUT_WPOS.yyyy, INPUT[attr]
+ *   TMP         = RCP INPUT_WPOS.w
+ *   INPUT[attr] = MUL INPUT[attr], TMP.xxxx
  *
- * (Or should that be 1/w ???)
  */
 static INLINE void pinterp( struct exec_machine *exec,
 			    GLuint attrib,
@@ -106,10 +106,11 @@ static INLINE void pinterp( struct exec_machine *exec,
    for (j = 0; j < QUAD_SIZE; j++) {
       const GLfloat x = exec->attr[FRAG_ATTRIB_WPOS][0][j];
       const GLfloat y = exec->attr[FRAG_ATTRIB_WPOS][1][j];
-      const GLfloat invW = exec->attr[FRAG_ATTRIB_WPOS][3][j];
+      /* FRAG_ATTRIB_WPOS.w here is really 1/w */
+      const GLfloat w = 1.0 / exec->attr[FRAG_ATTRIB_WPOS][3][j];
       exec->attr[attrib][i][j] = ((exec->coef[attrib].a0[i] +
 				   exec->coef[attrib].dadx[i] * x + 
-				   exec->coef[attrib].dady[i] * y) * invW);
+				   exec->coef[attrib].dady[i] * y) * w);
    }
 }
 
