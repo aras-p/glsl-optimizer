@@ -229,6 +229,28 @@ micro_cos(
 }
 
 static void
+micro_ddx(
+   union tgsi_exec_channel *dst,
+   const union tgsi_exec_channel *src )
+{
+   dst->f[0] =
+   dst->f[1] =
+   dst->f[2] =
+   dst->f[3] = src->f[TILE_BOTTOM_RIGHT] - src->f[TILE_BOTTOM_LEFT];
+}
+
+static void
+micro_ddy(
+   union tgsi_exec_channel *dst,
+   const union tgsi_exec_channel *src )
+{
+   dst->f[0] =
+   dst->f[1] =
+   dst->f[2] =
+   dst->f[3] = src->f[TILE_TOP_LEFT] - src->f[TILE_BOTTOM_LEFT];
+}
+
+static void
 micro_div(
    union tgsi_exec_channel *dst,
    const union tgsi_exec_channel *src0,
@@ -1715,11 +1737,19 @@ exec_instruction(
       break;
 
    case TGSI_OPCODE_DDX:
-      assert (0);
+      FOR_EACH_ENABLED_CHANNEL( *inst, chan_index ) {
+         FETCH( &r[0], 0, chan_index );
+         micro_ddx( &r[0], &r[0] );
+         STORE( &r[0], 0, chan_index );
+      }
       break;
 
    case TGSI_OPCODE_DDY:
-      assert (0);
+      FOR_EACH_ENABLED_CHANNEL( *inst, chan_index ) {
+         FETCH( &r[0], 0, chan_index );
+         micro_ddy( &r[0], &r[0] );
+         STORE( &r[0], 0, chan_index );
+      }
       break;
 
    case TGSI_OPCODE_KIL:

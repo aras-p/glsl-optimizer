@@ -261,6 +261,12 @@ compile_instruction(
    case OPCODE_DP3:
       fullinst->Instruction.Opcode = TGSI_OPCODE_DP3;
       break;
+   case OPCODE_DDX:
+      fullinst->Instruction.Opcode = TGSI_OPCODE_DDX;
+      break;
+   case OPCODE_DDY:
+      fullinst->Instruction.Opcode = TGSI_OPCODE_DDY;
+      break;
    case OPCODE_DP4:
       fullinst->Instruction.Opcode = TGSI_OPCODE_DP4;
       break;
