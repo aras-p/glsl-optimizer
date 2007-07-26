@@ -2236,7 +2236,9 @@ _slang_gen_assignment(slang_assemble_ctx * A, slang_operation *oper)
       }
       if (var->type.qualifier == SLANG_QUAL_CONST ||
           var->type.qualifier == SLANG_QUAL_ATTRIBUTE ||
-          var->type.qualifier == SLANG_QUAL_UNIFORM) {
+          var->type.qualifier == SLANG_QUAL_UNIFORM ||
+          (var->type.qualifier == SLANG_QUAL_VARYING &&
+           A->program->Target == GL_FRAGMENT_PROGRAM_ARB)) {
          slang_info_log_error(A->log,
                               "illegal assignment to read-only variable '%s'",
                               (char *) oper->children[0].a_id);
@@ -2264,10 +2266,11 @@ _slang_gen_assignment(slang_assemble_ctx * A, slang_operation *oper)
       lhs = _slang_gen_operation(A, &oper->children[0]);
 
       if (lhs) {
-         if (lhs->Store->File != PROGRAM_OUTPUT &&
-             lhs->Store->File != PROGRAM_TEMPORARY &&
-             lhs->Store->File != PROGRAM_VARYING &&
-             lhs->Store->File != PROGRAM_UNDEFINED) {
+         if (!(lhs->Store->File == PROGRAM_OUTPUT ||
+               lhs->Store->File == PROGRAM_TEMPORARY ||
+               (lhs->Store->File == PROGRAM_VARYING &&
+                A->program->Target == GL_VERTEX_PROGRAM_ARB) ||
+               lhs->Store->File == PROGRAM_UNDEFINED)) {
             slang_info_log_error(A->log,
                                  "illegal assignment to read-only l-value");
             return NULL;
