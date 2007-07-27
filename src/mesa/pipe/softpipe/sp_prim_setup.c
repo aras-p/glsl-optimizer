@@ -750,7 +750,6 @@ stipple_test(GLint counter, GLushort pattern, GLint factor)
 /**
  * Do setup for line rasterization, then render the line.
  * XXX single-pixel width, no stipple, etc
- * XXX no scissoring yet.
  */
 static void
 setup_line(struct draw_stage *stage, struct prim_header *prim)
@@ -908,8 +907,6 @@ setup_point(struct draw_stage *stage, struct prim_header *prim)
    }
 
    setup->quad.prim = PRIM_POINT;
-
-   /* XXX need to clip against scissor bounds too */
 
    if (halfSize <= 0.5 && !round) {
       /* special case for 1-pixel points */
