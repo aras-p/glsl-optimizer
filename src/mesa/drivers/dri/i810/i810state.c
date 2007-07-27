@@ -380,7 +380,10 @@ static void i810CullFaceFrontFace(GLcontext *ctx, GLenum unused)
 static void i810LineWidth( GLcontext *ctx, GLfloat widthf )
 {
    i810ContextPtr imesa = I810_CONTEXT( ctx );
-   int width = (int)ctx->Line._Width;
+   /* AA, non-AA limits are same */
+   const int width = (int) CLAMP(ctx->Line.Width,
+                                 ctx->Const.MinLineWidth,
+                                 ctx->Const.MaxLineWidth);
 
    imesa->LcsLineWidth = 0;
    if (width & 1) imesa->LcsLineWidth |= LCS_LINEWIDTH_1_0;
@@ -396,7 +399,10 @@ static void i810LineWidth( GLcontext *ctx, GLfloat widthf )
 static void i810PointSize( GLcontext *ctx, GLfloat sz )
 {
    i810ContextPtr imesa = I810_CONTEXT( ctx );
-   int size = (int)ctx->Point._Size;
+   /* AA, non-AA limits are same */
+   const int size = (int) CLAMP(ctx->Point.Size,
+                                ctx->Const.MinPointSize,
+                                ctx->Const.MaxPointSize);
 
    imesa->LcsPointSize = 0;
    if (size & 1) imesa->LcsPointSize |= LCS_LINEWIDTH_1_0;

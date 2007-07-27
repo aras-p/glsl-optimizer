@@ -131,7 +131,9 @@ static __inline__ void savage_draw_point (savageContextPtr imesa,
    u_int32_t *vb = savageAllocVtxBuf (imesa, 6*vertsize);
    const GLfloat x = tmp->v.x;
    const GLfloat y = tmp->v.y;
-   const GLfloat sz = imesa->glCtx->Point._Size * .5;
+   const GLfloat sz = 0.5 * CLAMP(imesa->glCtx->Point.Size,
+                                  imesa->glCtx->Const.MinPointSize,
+                                  imesa->glCtx->Const.MaxPointSize);
    GLuint j;
 
    *(float *)&vb[0] = x - sz;
@@ -164,7 +166,9 @@ static __inline__ void savage_draw_line (savageContextPtr imesa,
 					 savageVertexPtr v1 ) {
    GLuint vertsize = imesa->HwVertexSize;
    u_int32_t *vb = savageAllocVtxBuf (imesa, 6*vertsize);
-   GLfloat width = imesa->glCtx->Line._Width;
+   const GLfloat width = CLAMP(imesa->glCtx->Line.Width,
+                               imesa->glCtx->Const.MinLineWidth,
+                               imesa->glCtx->Const.MaxLineWidth);
    GLfloat dx, dy, ix, iy;
    GLuint j;
 
@@ -234,7 +238,9 @@ static __inline__ void savage_ptex_line (savageContextPtr imesa,
 					 savageVertexPtr v1 ) {
    GLuint vertsize = imesa->HwVertexSize;
    u_int32_t *vb = savageAllocVtxBuf (imesa, 6*vertsize);
-   GLfloat width = imesa->glCtx->Line._Width;
+   const GLfloat width = CLAMP(imesa->glCtx->Line.Width,
+                               imesa->glCtx->Const.MinLineWidth,
+                               imesa->glCtx->Const.MaxLineWidth);
    GLfloat dx, dy, ix, iy;
    savageVertex tmp0, tmp1;
    GLuint j;
@@ -281,7 +287,9 @@ static __inline__ void savage_ptex_point (savageContextPtr imesa,
    u_int32_t *vb = savageAllocVtxBuf (imesa, 6*vertsize);
    const GLfloat x = v0->v.x;
    const GLfloat y = v0->v.y;
-   const GLfloat sz = imesa->glCtx->Point._Size * .5;
+   const GLfloat sz = 0.5 * CLAMP(imesa->glCtx->Point.Size,
+                                  imesa->glCtx->Const.MinPointSize,
+                                  imesa->glCtx->Const.MaxPointSize);
    savageVertex tmp;
    GLuint j;
 

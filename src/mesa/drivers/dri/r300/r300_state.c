@@ -733,8 +733,8 @@ static void r300Fogfv(GLcontext * ctx, GLenum pname, const GLfloat * param)
 static void r300PointSize(GLcontext * ctx, GLfloat size)
 {
 	r300ContextPtr r300 = R300_CONTEXT(ctx);
-
-	size = ctx->Point._Size;
+        /* same size limits for AA, non-AA points */
+	size = CLAMP(size, ctx->Const.MinPointSize, ctx->Const.MaxPointSize);
 
 	R300_STATECHANGE(r300, ps);
 	r300->hw.ps.cmd[R300_PS_POINTSIZE] =
@@ -749,8 +749,9 @@ static void r300LineWidth(GLcontext * ctx, GLfloat widthf)
 {
 	r300ContextPtr r300 = R300_CONTEXT(ctx);
 
-	widthf = ctx->Line._Width;
-
+	widthf = CLAMP(widthf,
+                       ctx->Const.MinPointSize,
+                       ctx->Const.MaxPointSize);
 	R300_STATECHANGE(r300, lcntl);
 	r300->hw.lcntl.cmd[1] =
 	    R300_LINE_CNT_HO | R300_LINE_CNT_VE | (int)(widthf * 6.0);
@@ -1566,30 +1567,31 @@ static void r300SetupDefaultVertexProgram(r300ContextPtr rmesa)
 
 	for (i = VERT_ATTRIB_POS; i < VERT_ATTRIB_MAX; i++) {
 		if (rmesa->state.sw_tcl_inputs[i] != -1) {
-			prog->program.body.i[program_end].opcode = EASY_VSF_OP(MUL, o_reg++, ALL, RESULT);
-			prog->program.body.i[program_end].src[0] = VSF_REG(rmesa->state.sw_tcl_inputs[i]);
-			prog->program.body.i[program_end].src[1] = VSF_ATTR_UNITY(rmesa->state.sw_tcl_inputs[i]);
-			prog->program.body.i[program_end].src[2] = VSF_UNITY(rmesa->state.sw_tcl_inputs[i]);
-			program_end++;
+			prog->program.body.i[program_end + 0] = EASY_VSF_OP(MUL, o_reg++, ALL, RESULT);
+			prog->program.body.i[program_end + 1] = VSF_REG(rmesa->state.sw_tcl_inputs[i]);
+			prog->program.body.i[program_end + 2] = VSF_ATTR_UNITY(rmesa->state.sw_tcl_inputs[i]);
+			prog->program.body.i[program_end + 3] = VSF_UNITY(rmesa->state.sw_tcl_inputs[i]);
+			program_end += 4;
 		}
 	}
 
-	prog->program.length = program_end * 4;
+	prog->program.length = program_end;
 
-	r300SetupVertexProgramFragment(rmesa, R300_PVS_UPLOAD_PROGRAM, &(prog->program));
+	r300SetupVertexProgramFragment(rmesa, R300_PVS_UPLOAD_PROGRAM,
+				       &(prog->program));
 	inst_count = (prog->program.length / 4) - 1;
 
 	R300_STATECHANGE(rmesa, pvs);
 	rmesa->hw.pvs.cmd[R300_PVS_CNTL_1] =
-	  (0 << R300_PVS_CNTL_1_PROGRAM_START_SHIFT) |
-	  (inst_count << R300_PVS_CNTL_1_POS_END_SHIFT) |
-	  (inst_count << R300_PVS_CNTL_1_PROGRAM_END_SHIFT);
+	    (0 << R300_PVS_CNTL_1_PROGRAM_START_SHIFT) |
+	    (inst_count << R300_PVS_CNTL_1_POS_END_SHIFT) |
+	    (inst_count << R300_PVS_CNTL_1_PROGRAM_END_SHIFT);
 	rmesa->hw.pvs.cmd[R300_PVS_CNTL_2] =
-	  (0 << R300_PVS_CNTL_2_PARAM_OFFSET_SHIFT) |
-	  (param_count << R300_PVS_CNTL_2_PARAM_COUNT_SHIFT);
+	    (0 << R300_PVS_CNTL_2_PARAM_OFFSET_SHIFT) |
+	    (param_count << R300_PVS_CNTL_2_PARAM_COUNT_SHIFT);
 	rmesa->hw.pvs.cmd[R300_PVS_CNTL_3] =
-	  (inst_count << R300_PVS_CNTL_3_PROGRAM_UNKNOWN_SHIFT) |
-	  (inst_count << R300_PVS_CNTL_3_PROGRAM_UNKNOWN2_SHIFT);
+	    (inst_count << R300_PVS_CNTL_3_PROGRAM_UNKNOWN_SHIFT) |
+	    (inst_count << R300_PVS_CNTL_3_PROGRAM_UNKNOWN2_SHIFT);
 }
 
 static void r300SetupRealVertexProgram(r300ContextPtr rmesa)

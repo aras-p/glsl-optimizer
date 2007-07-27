@@ -184,7 +184,7 @@ void TAG(translate_vertex)(GLcontext *ctx,
       }
    }
 
-   dst->pointSize = ctx->Point._Size;
+   dst->pointSize = ctx->Point.Size;
 }
 
 

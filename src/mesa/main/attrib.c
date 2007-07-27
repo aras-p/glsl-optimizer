@@ -98,9 +98,13 @@ _mesa_PushAttrib(GLbitfield mask)
    }
 
    if (mask & GL_COLOR_BUFFER_BIT) {
+      GLuint i;
       struct gl_colorbuffer_attrib *attr;
       attr = MALLOC_STRUCT( gl_colorbuffer_attrib );
       MEMCPY( attr, &ctx->Color, sizeof(struct gl_colorbuffer_attrib) );
+      /* push the Draw FBO's DrawBuffer[] state, not ctx->Color.DrawBuffer[] */
+      for (i = 0; i < ctx->Const.MaxDrawBuffers; i ++)
+         attr->DrawBuffer[i] = ctx->DrawBuffer->ColorDrawBuffer[i];
       newnode = new_attrib_node( GL_COLOR_BUFFER_BIT );
       newnode->data = attr;
       newnode->next = head;

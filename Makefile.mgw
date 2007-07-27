@@ -53,11 +53,13 @@
 
 # MinGW core makefile updated for Mesa 7.0
 #
-#  updated : by Heromyth, 2007-6-25
+#  Updated : by Heromyth, on 2007-7-21
 #  Email   : zxpmyth@yahoo.com.cn
-#  Bug     : All the default settings work fine. But the setting X86=1 can't work. 
+#  Bugs    : 1) All the default settings work fine. But the setting X86=1 can't work. 
 #            The others havn't been tested yet.
-
+#            2) The generated DLLs are *not* compatible with the ones built
+#            with the other compilers like VC8, especially for GLUT. 
+#            3) MAlthough more tests are needed, it can be used individually!
 
 
 .PHONY : all libgl clean realclean
@@ -73,13 +75,14 @@ CFLAGS += -O2 -ffast-math
 
 export CFLAGS
 
+
 ifeq ($(wildcard $(addsuffix /rm.exe,$(subst ;, ,$(PATH)))),)
 UNLINK = del $(subst /,\,$(1))
 else
 UNLINK = $(RM) $(1)
 endif
 
-all: libgl libglu libglut
+all: libgl libglu libglut example
 
 libgl: lib
 	$(MAKE) -f Makefile.mgw -C src/mesa

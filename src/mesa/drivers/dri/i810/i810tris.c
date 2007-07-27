@@ -112,7 +112,9 @@ static __inline__ void i810_draw_quad( i810ContextPtr imesa,
 static __inline__ void i810_draw_point( i810ContextPtr imesa,
 					i810VertexPtr tmp )
 {
-   GLfloat sz = imesa->glCtx->Point._Size * .5;
+   GLfloat sz = 0.5 * CLAMP(imesa->glCtx->Point.Size,
+                            imesa->glCtx->Const.MinPointSize,
+                            imesa->glCtx->Const.MaxPointSize);
    int vertsize = imesa->vertex_size;
    GLuint *vb = i810AllocDmaLow( imesa, 2 * 4 * vertsize );
    int j;

@@ -772,9 +772,11 @@ static void r200LineWidth( GLcontext *ctx, GLfloat widthf )
    R200_STATECHANGE( rmesa, set );
 
    /* Line width is stored in U6.4 format.
+    * Same min/max limits for AA, non-AA lines.
     */
    rmesa->hw.lin.cmd[LIN_SE_LINE_WIDTH] &= ~0xffff;
-   rmesa->hw.lin.cmd[LIN_SE_LINE_WIDTH] |= (GLuint)(ctx->Line._Width * 16.0);
+   rmesa->hw.lin.cmd[LIN_SE_LINE_WIDTH] |= (GLuint)
+      (CLAMP(widthf, ctx->Const.MinLineWidth, ctx->Const.MaxLineWidth) * 16.0);
 
    if ( widthf > 1.0 ) {
       rmesa->hw.set.cmd[SET_SE_CNTL] |=  R200_WIDELINE_ENABLE;
