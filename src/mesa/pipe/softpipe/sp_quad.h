@@ -28,8 +28,8 @@
 /* Authors:  Keith Whitwell <keith@tungstengraphics.com>
  */
 
-#ifndef SP_TILE_H
-#define SP_TILE_H
+#ifndef SP_QUAD_H
+#define SP_QUAD_H
 
 
 struct softpipe_context;
@@ -62,4 +62,4 @@ void sp_build_quad_pipeline(struct softpipe_context *sp);
 
 void sp_depth_test_quad(struct quad_stage *qs, struct quad_header *quad);
 
-#endif /* SP_TILE_H */
+#endif /* SP_QUAD_H */
