@@ -43,18 +43,6 @@
 #include "sp_prim_setup.h"
 
 
-
-/**
- * Emit/render a quad.
- * This passes the quad to the first stage of per-fragment operations.
- */
-static INLINE void
-quad_emit(struct softpipe_context *sp, struct quad_header *quad)
-{
-   sp->quad.first->run(sp->quad.first, quad);
-}
-
-
 /**
  * Triangle edge info
  */
@@ -103,6 +91,8 @@ struct setup_stage {
       GLuint y_flags;
       GLuint mask;     /**< mask of MASK_BOTTOM/TOP_LEFT/RIGHT bits */
    } span;
+
+   struct pipe_scissor_state scissor;
 };
 
 
@@ -113,6 +103,46 @@ struct setup_stage {
 static inline struct setup_stage *setup_stage( struct draw_stage *stage )
 {
    return (struct setup_stage *)stage;
+}
+
+
+/**
+ * Clip setup->quad against the scissor/surface bounds.
+ */
+static INLINE void
+quad_clip(struct setup_stage *setup)
+{
+   if (setup->quad.x0 >= setup->scissor.maxx ||
+       setup->quad.y0 >= setup->scissor.maxy ||
+       setup->quad.x0 + 1 < setup->scissor.minx ||
+       setup->quad.y0 + 1 < setup->scissor.miny) {
+      /* totally clipped */
+      setup->quad.mask = 0x0;
+      return;
+   }
+   if (setup->quad.x0 < setup->scissor.minx)
+      setup->quad.mask &= (MASK_BOTTOM_RIGHT | MASK_TOP_RIGHT);
+   if (setup->quad.y0 < setup->scissor.miny)
+      setup->quad.mask &= (MASK_TOP_LEFT | MASK_TOP_RIGHT);
+   if (setup->quad.x0 == setup->scissor.maxx - 1)
+      setup->quad.mask &= (MASK_BOTTOM_LEFT | MASK_TOP_LEFT);
+   if (setup->quad.y0 == setup->scissor.maxy - 1)
+      setup->quad.mask &= (MASK_BOTTOM_LEFT | MASK_BOTTOM_RIGHT);
+}
+
+
+/**
+ * Emit/render a quad.
+ * This passes the quad to the first stage of per-fragment operations.
+ */
+static INLINE void
+quad_emit(struct setup_stage *setup)
+{
+   quad_clip(setup);
+   if (setup->quad.mask) {
+      struct softpipe_context *sp = setup->softpipe;
+      sp->quad.first->run(sp->quad.first, &setup->quad);
+   }
 }
 
 
@@ -137,7 +167,7 @@ static void run_shader_block( struct setup_stage *setup,
    setup->quad.y0 = y;
    setup->quad.mask = mask;
 
-   quad_emit(setup->softpipe, &setup->quad);
+   quad_emit(setup);
 }
 
 
@@ -694,8 +724,8 @@ plot(struct setup_stage *setup, GLint x, GLint y)
    {
       /* flush prev quad, start new quad */
 
-      if (setup->quad.x0 != -1) 
-	 quad_emit(setup->softpipe, &setup->quad);
+      if (setup->quad.x0 != -1)
+         quad_emit(setup);
 
       setup->quad.x0 = quadX;
       setup->quad.y0 = quadY;
@@ -832,7 +862,7 @@ setup_line(struct draw_stage *stage, struct prim_header *prim)
 
    /* draw final quad */
    if (setup->quad.mask) {
-      quad_emit(setup->softpipe, &setup->quad);
+      quad_emit(setup);
    }
 }
 
@@ -889,7 +919,7 @@ setup_point(struct draw_stage *stage, struct prim_header *prim)
       setup->quad.x0 = x - ix;
       setup->quad.y0 = y - iy;
       setup->quad.mask = (1 << ix) << (2 * iy);
-      quad_emit(setup->softpipe, &setup->quad);
+      quad_emit(setup);
    }
    else {
       const GLint ixmin = block((GLint) (x - halfSize));
@@ -951,7 +981,7 @@ setup_point(struct draw_stage *stage, struct prim_header *prim)
                if (setup->quad.mask) {
                   setup->quad.x0 = ix;
                   setup->quad.y0 = iy;
-                  quad_emit( setup->softpipe, &setup->quad );
+                  quad_emit(setup);
                }
             }
          }
@@ -985,7 +1015,7 @@ setup_point(struct draw_stage *stage, struct prim_header *prim)
                if (setup->quad.mask) {
                   setup->quad.x0 = ix;
                   setup->quad.y0 = iy;
-                  quad_emit( setup->softpipe, &setup->quad );
+                  quad_emit(setup);
                }
             }
          }
@@ -1000,6 +1030,27 @@ static void setup_begin( struct draw_stage *stage )
    struct setup_stage *setup = setup_stage(stage);
 
    setup->quad.nr_attrs = setup->softpipe->nr_frag_attrs;
+
+   /* compute scissor/drawing bounds.
+    * XXX we should probably move this into the sp_state_derived.c file
+    * and only compute when scissor or setup state changes.
+    */
+   {
+      const struct softpipe_context *sp = setup->softpipe;
+      const struct pipe_surface *surf = sp->cbuf;
+      if (sp->setup.scissor) {
+         setup->scissor.minx = MAX2(sp->scissor.minx, 0);
+         setup->scissor.miny = MAX2(sp->scissor.miny, 0);
+         setup->scissor.maxx = MIN2(sp->scissor.maxx, surf->width - 1);
+         setup->scissor.maxy = MIN2(sp->scissor.maxy, surf->height - 1);
+      }
+      else {
+         setup->scissor.minx = 0;
+         setup->scissor.miny = 0;
+         setup->scissor.maxx = surf->width - 1;
+         setup->scissor.maxy = surf->height - 1;
+      }
+   }
 
    /*
     * XXX this is where we might map() the renderbuffers to begin
