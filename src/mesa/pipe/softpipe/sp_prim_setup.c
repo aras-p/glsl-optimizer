@@ -91,8 +91,6 @@ struct setup_stage {
       GLuint y_flags;
       GLuint mask;     /**< mask of MASK_BOTTOM/TOP_LEFT/RIGHT bits */
    } span;
-
-   struct pipe_scissor_state scissor;
 };
 
 
@@ -112,21 +110,22 @@ static inline struct setup_stage *setup_stage( struct draw_stage *stage )
 static INLINE void
 quad_clip(struct setup_stage *setup)
 {
-   if (setup->quad.x0 >= setup->scissor.maxx ||
-       setup->quad.y0 >= setup->scissor.maxy ||
-       setup->quad.x0 + 1 < setup->scissor.minx ||
-       setup->quad.y0 + 1 < setup->scissor.miny) {
+   const struct softpipe_context *sp = setup->softpipe;
+   if (setup->quad.x0 >= sp->cliprect.maxx ||
+       setup->quad.y0 >= sp->cliprect.maxy ||
+       setup->quad.x0 + 1 < sp->cliprect.minx ||
+       setup->quad.y0 + 1 < sp->cliprect.miny) {
       /* totally clipped */
       setup->quad.mask = 0x0;
       return;
    }
-   if (setup->quad.x0 < setup->scissor.minx)
+   if (setup->quad.x0 < sp->cliprect.minx)
       setup->quad.mask &= (MASK_BOTTOM_RIGHT | MASK_TOP_RIGHT);
-   if (setup->quad.y0 < setup->scissor.miny)
+   if (setup->quad.y0 < sp->cliprect.miny)
       setup->quad.mask &= (MASK_TOP_LEFT | MASK_TOP_RIGHT);
-   if (setup->quad.x0 == setup->scissor.maxx - 1)
+   if (setup->quad.x0 == sp->cliprect.maxx - 1)
       setup->quad.mask &= (MASK_BOTTOM_LEFT | MASK_TOP_LEFT);
-   if (setup->quad.y0 == setup->scissor.maxy - 1)
+   if (setup->quad.y0 == sp->cliprect.maxy - 1)
       setup->quad.mask &= (MASK_BOTTOM_LEFT | MASK_BOTTOM_RIGHT);
 }
 
@@ -1030,27 +1029,6 @@ static void setup_begin( struct draw_stage *stage )
    struct setup_stage *setup = setup_stage(stage);
 
    setup->quad.nr_attrs = setup->softpipe->nr_frag_attrs;
-
-   /* compute scissor/drawing bounds.
-    * XXX we should probably move this into the sp_state_derived.c file
-    * and only compute when scissor or setup state changes.
-    */
-   {
-      const struct softpipe_context *sp = setup->softpipe;
-      const struct pipe_surface *surf = sp->cbuf;
-      if (sp->setup.scissor) {
-         setup->scissor.minx = MAX2(sp->scissor.minx, 0);
-         setup->scissor.miny = MAX2(sp->scissor.miny, 0);
-         setup->scissor.maxx = MIN2(sp->scissor.maxx, surf->width - 1);
-         setup->scissor.maxy = MIN2(sp->scissor.maxy, surf->height - 1);
-      }
-      else {
-         setup->scissor.minx = 0;
-         setup->scissor.miny = 0;
-         setup->scissor.maxx = surf->width - 1;
-         setup->scissor.maxy = surf->height - 1;
-      }
-   }
 
    /*
     * XXX this is where we might map() the renderbuffers to begin

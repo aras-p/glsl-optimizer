@@ -163,6 +163,41 @@ static void calculate_vertex_layout( struct softpipe_context *softpipe )
 }
 
 
+/**
+ * Recompute cliprect from scissor bounds, scissor enable and surface size.
+ */
+static void
+compute_cliprect(struct softpipe_context *sp)
+{
+   GLint surfWidth, surfHeight;
+
+   if (sp->framebuffer.num_cbufs > 0) {
+      surfWidth = sp->framebuffer.cbufs[0]->width;
+      surfHeight = sp->framebuffer.cbufs[0]->height;
+   }
+   else {
+      /* no surface? */
+      surfWidth = sp->scissor.maxx;
+      surfHeight = sp->scissor.maxy;
+   }
+
+   if (sp->setup.scissor) {
+      /* clip to scissor rect */
+      sp->cliprect.minx = MAX2(sp->scissor.minx, 0);
+      sp->cliprect.miny = MAX2(sp->scissor.miny, 0);
+      sp->cliprect.maxx = MIN2(sp->scissor.maxx, surfWidth - 1);
+      sp->cliprect.maxy = MIN2(sp->scissor.maxy, surfHeight - 1);
+   }
+   else {
+      /* clip to surface bounds */
+      sp->cliprect.minx = 0;
+      sp->cliprect.miny = 0;
+      sp->cliprect.maxx = surfWidth - 1;
+      sp->cliprect.maxy = surfHeight - 1;
+   }
+}
+
+
 /* Hopefully this will remain quite simple, otherwise need to pull in
  * something like the state tracker mechanism.
  */
@@ -170,6 +205,11 @@ void softpipe_update_derived( struct softpipe_context *softpipe )
 {
    if (softpipe->dirty & (SP_NEW_SETUP | SP_NEW_FS))
       calculate_vertex_layout( softpipe );
+
+   if (softpipe->dirty & (SP_NEW_SCISSOR |
+                          SP_NEW_STENCIL |
+                          SP_NEW_FRAMEBUFFER))
+      compute_cliprect(softpipe);
 
    if (softpipe->dirty & (SP_NEW_BLEND |
                           SP_NEW_DEPTH_TEST |

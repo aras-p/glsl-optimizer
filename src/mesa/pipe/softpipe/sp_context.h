@@ -117,6 +117,9 @@ struct softpipe_context {
    GLubyte stipple_masks[16][16];
 #endif
 
+   /** Derived from scissor and surface bounds: */
+   struct pipe_scissor_state cliprect;
+
    GLuint occlusion_counter;
 
    GLuint line_stipple_counter;
