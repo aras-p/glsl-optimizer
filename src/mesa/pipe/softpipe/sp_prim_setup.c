@@ -766,6 +766,13 @@ setup_line(struct draw_stage *stage, struct prim_header *prim)
    setup->quad.x0 = setup->quad.y0 = -1;
    setup->quad.mask = 0x0;
    setup->quad.prim = PRIM_LINE;
+   /* XXX temporary: set coverage to 1.0 so the line appears
+    * if AA mode happens to be enabled.
+    */
+   setup->quad.coverage[0] =
+   setup->quad.coverage[1] =
+   setup->quad.coverage[2] =
+   setup->quad.coverage[3] = 1.0;
 
    if (dx > dy) {
       /*** X-major line ***/
