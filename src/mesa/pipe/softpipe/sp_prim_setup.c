@@ -47,12 +47,11 @@
  * Triangle edge info
  */
 struct edge {
-   GLfloat dx;			/* X(v1) - X(v0), used only during setup */
-   GLfloat dy;			/* Y(v1) - Y(v0), used only during setup */
-   GLfloat dxdy;		/* dx/dy */
-   GLfloat sx;			/* first sample point x coord */
-   GLfloat sy;
-   GLint lines;			/* number of lines  on this edge */
+   GLfloat dx;			/**< X(v1) - X(v0), used only during setup */
+   GLfloat dy;			/**< Y(v1) - Y(v0), used only during setup */
+   GLfloat dxdy;		/**< dx/dy */
+   GLfloat sx, sy;		/**< first sample point coord */
+   GLint lines;			/**< number of lines on this edge */
 };
 
 
@@ -63,7 +62,6 @@ struct edge {
 struct setup_stage {
    struct draw_stage stage; /**< This must be first (base class) */
 
-   /*XXX NEW */
    struct softpipe_context *softpipe;
 
    /* Vertices are just an array of floats making up each attribute in
@@ -98,7 +96,7 @@ struct setup_stage {
 /**
  * Basically a cast wrapper.
  */
-static inline struct setup_stage *setup_stage( struct draw_stage *stage )
+static INLINE struct setup_stage *setup_stage( struct draw_stage *stage )
 {
    return (struct setup_stage *)stage;
 }
@@ -131,14 +129,10 @@ quad_clip(struct setup_stage *setup)
 
 
 /**
- * Emit/render a quad.
- * Called during point/line rendering.  For triangles, we call
- * run_shader_block() which doesn't do clipping (since clipping is
- * done at a higher level for tris).
- * This passes the quad to the first stage of per-fragment operations.
+ * Emit a quad (pass to next stage) with clipping.
  */
 static INLINE void
-quad_emit(struct setup_stage *setup)
+clip_emit_quad(struct setup_stage *setup)
 {
    quad_clip(setup);
    if (setup->quad.mask) {
@@ -149,27 +143,26 @@ quad_emit(struct setup_stage *setup)
 
 
 /**
- * Given an X or Y coordinate, return the block/quad coordinate that it
- * belongs to.
+ * Emit a quad (pass to next stage).  No clipping is done.
  */
-static inline GLint block( GLint x )
-{
-   return x & ~1;
-}
-
-
-
-/**
- * Run shader on a quad/block.
- */
-static void run_shader_block( struct setup_stage *setup, 
-			      GLint x, GLint y, GLuint mask )
+static INLINE void
+emit_quad( struct setup_stage *setup, GLint x, GLint y, GLuint mask )
 {
    struct softpipe_context *sp = setup->softpipe;
    setup->quad.x0 = x;
    setup->quad.y0 = y;
    setup->quad.mask = mask;
    sp->quad.first->run(sp->quad.first, &setup->quad);
+}
+
+
+/**
+ * Given an X or Y coordinate, return the block/quad coordinate that it
+ * belongs to.
+ */
+static INLINE GLint block( GLint x )
+{
+   return x & ~1;
 }
 
 
@@ -232,9 +225,8 @@ static void flush_spans( struct setup_stage *setup )
 
    for (x = block(minleft); x <= block(maxright); )
    {
-      run_shader_block( setup, x,
-			setup->span.y, 
-			calculate_mask( setup, x ) );
+      emit_quad( setup, x, setup->span.y, 
+                 calculate_mask( setup, x ) );
       x += 2;
    }
 
@@ -716,7 +708,7 @@ plot(struct setup_stage *setup, GLint x, GLint y)
       /* flush prev quad, start new quad */
 
       if (setup->quad.x0 != -1)
-         quad_emit(setup);
+         clip_emit_quad(setup);
 
       setup->quad.x0 = quadX;
       setup->quad.y0 = quadY;
@@ -852,7 +844,7 @@ setup_line(struct draw_stage *stage, struct prim_header *prim)
 
    /* draw final quad */
    if (setup->quad.mask) {
-      quad_emit(setup);
+      clip_emit_quad(setup);
    }
 }
 
@@ -907,7 +899,7 @@ setup_point(struct draw_stage *stage, struct prim_header *prim)
       setup->quad.x0 = x - ix;
       setup->quad.y0 = y - iy;
       setup->quad.mask = (1 << ix) << (2 * iy);
-      quad_emit(setup);
+      clip_emit_quad(setup);
    }
    else {
       const GLint ixmin = block((GLint) (x - halfSize));
@@ -969,7 +961,7 @@ setup_point(struct draw_stage *stage, struct prim_header *prim)
                if (setup->quad.mask) {
                   setup->quad.x0 = ix;
                   setup->quad.y0 = iy;
-                  quad_emit(setup);
+                  clip_emit_quad(setup);
                }
             }
          }
@@ -1003,7 +995,7 @@ setup_point(struct draw_stage *stage, struct prim_header *prim)
                if (setup->quad.mask) {
                   setup->quad.x0 = ix;
                   setup->quad.y0 = iy;
-                  quad_emit(setup);
+                  clip_emit_quad(setup);
                }
             }
          }
