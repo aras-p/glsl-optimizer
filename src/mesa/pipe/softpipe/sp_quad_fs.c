@@ -39,10 +39,20 @@
 #include "sp_quad.h"
 #include "core/tgsi_core.h"
 
+#if defined __GNUC__
+#define ALIGNED_ATTRIBS 1
+#else
+#define ALIGNED_ATTRIBS 0
+#endif
+
 struct exec_machine {
    const struct setup_coefficient *coef; /**< will point to quad->coef */
 
-   GLfloat attr[FRAG_ATTRIB_MAX][4][QUAD_SIZE];
+#if ALIGNED_ATTRIBS
+   GLfloat attr[FRAG_ATTRIB_MAX][NUM_CHANNELS][QUAD_SIZE] __attribute__(( aligned( 16 ) ));
+#else
+   GLfloat attr[FRAG_ATTRIB_MAX][NUM_CHANNELS][QUAD_SIZE];
+#endif
 };
 
 
@@ -162,7 +172,7 @@ shade_quad( struct quad_stage *qs, struct quad_header *quad )
 	 for (i = 0; i < NUM_CHANNELS; i++)
 	    cinterp(&exec, attr, i);
 	 break;
-      
+
       case INTERP_LINEAR:
 	 for (i = 0; i < NUM_CHANNELS; i++)
 	    linterp(&exec, attr, i);
@@ -180,45 +190,17 @@ shade_quad( struct quad_stage *qs, struct quad_header *quad )
 
    {
       struct tgsi_exec_machine machine;
-      struct tgsi_exec_vector inputs[FRAG_ATTRIB_MAX + 1];
       struct tgsi_exec_vector outputs[FRAG_ATTRIB_MAX + 1];
-      struct tgsi_exec_vector *ainputs;
       struct tgsi_exec_vector *aoutputs;
-      GLuint i /*, total*/;
+      GLuint i;
+
+#if !ALIGNED_ATTRIBS
+      struct tgsi_exec_vector inputs[FRAG_ATTRIB_MAX + 1];
+      struct tgsi_exec_vector *ainputs;
+#endif
 
 #ifdef DEBUG
       memset(&machine, 0, sizeof(machine));
-#endif
-
-      ainputs = (struct tgsi_exec_vector *) tgsi_align_128bit( inputs );
-      aoutputs = (struct tgsi_exec_vector *) tgsi_align_128bit( outputs );
-
-#if 0
-      for( i = total = 0; i < PIPE_ATTRIB_MAX; i++ ) {
-         GLuint attr;
-
-         attr = softpipe->fp_attr_to_slot[i];
-         if( attr || total == 0) {
-            assert( total < FRAG_ATTRIB_MAX );
-            assert( attr < FRAG_ATTRIB_MAX );
-            assert( sizeof( ainputs[0] ) == sizeof( exec.attr[0] ) );
-
-            memcpy(
-               &ainputs[total],
-               exec.attr[attr],
-               sizeof( ainputs[0] ) );
-            total++;
-         }
-      }
-#else
-      /* load input registers */
-      /* XXX simpler than above, but might not be right... */
-      for (i = 0; i < softpipe->nr_attrs; i++) {
-         memcpy(
-                &ainputs[i],
-                exec.attr[i],
-                sizeof( ainputs[0] ) );
-      }
 #endif
 
       /* init machine state */
@@ -226,9 +208,36 @@ shade_quad( struct quad_stage *qs, struct quad_header *quad )
          &machine,
          softpipe->fs.tokens );
 
-      machine.Inputs = ainputs;
+      /* Consts does not require 16 byte alignment. */
+      machine.Consts = softpipe->fs.constants->constant;
+
+      aoutputs = (struct tgsi_exec_vector *) tgsi_align_128bit( outputs );
       machine.Outputs = aoutputs;
-      machine.Consts = softpipe->fs.constants->constant; /* XXX alignment? */
+
+      assert( sizeof( struct tgsi_exec_vector ) == sizeof( exec.attr[0] ) );
+
+#if ALIGNED_ATTRIBS
+      machine.Inputs = (struct tgsi_exec_vector *) exec.attr;
+
+      for (i = 0; i < softpipe->nr_attrs; i++) {
+         /* Make sure fp_attr_to_slot[] is an identity transform. */
+         assert( softpipe->fp_attr_to_slot[i] == i );
+      }
+#else
+      ainputs = (struct tgsi_exec_vector *) tgsi_align_128bit( inputs );
+      machine.Inputs = ainputs;
+
+      /* load input registers */
+      for (i = 0; i < softpipe->nr_attrs; i++) {
+         /* Make sure fp_attr_to_slot[] is an identity transform. */
+         assert( softpipe->fp_attr_to_slot[i] == i );
+
+         memcpy(
+            &ainputs[i],
+            exec.attr[i],
+            sizeof( ainputs[0] ) );
+      }
+#endif
 
       /* run shader */
       tgsi_exec_machine_run( &machine );
