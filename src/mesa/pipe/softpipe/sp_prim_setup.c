@@ -110,28 +110,31 @@ static inline struct setup_stage *setup_stage( struct draw_stage *stage )
 static INLINE void
 quad_clip(struct setup_stage *setup)
 {
-   const struct softpipe_context *sp = setup->softpipe;
-   if (setup->quad.x0 >= sp->cliprect.maxx ||
-       setup->quad.y0 >= sp->cliprect.maxy ||
-       setup->quad.x0 + 1 < sp->cliprect.minx ||
-       setup->quad.y0 + 1 < sp->cliprect.miny) {
+   const struct pipe_scissor_state *cliprect = &setup->softpipe->cliprect;
+   if (setup->quad.x0 >= cliprect->maxx ||
+       setup->quad.y0 >= cliprect->maxy ||
+       setup->quad.x0 + 1 < cliprect->minx ||
+       setup->quad.y0 + 1 < cliprect->miny) {
       /* totally clipped */
       setup->quad.mask = 0x0;
       return;
    }
-   if (setup->quad.x0 < sp->cliprect.minx)
+   if (setup->quad.x0 < cliprect->minx)
       setup->quad.mask &= (MASK_BOTTOM_RIGHT | MASK_TOP_RIGHT);
-   if (setup->quad.y0 < sp->cliprect.miny)
+   if (setup->quad.y0 < cliprect->miny)
       setup->quad.mask &= (MASK_TOP_LEFT | MASK_TOP_RIGHT);
-   if (setup->quad.x0 == sp->cliprect.maxx - 1)
+   if (setup->quad.x0 == cliprect->maxx - 1)
       setup->quad.mask &= (MASK_BOTTOM_LEFT | MASK_TOP_LEFT);
-   if (setup->quad.y0 == sp->cliprect.maxy - 1)
+   if (setup->quad.y0 == cliprect->maxy - 1)
       setup->quad.mask &= (MASK_BOTTOM_LEFT | MASK_BOTTOM_RIGHT);
 }
 
 
 /**
  * Emit/render a quad.
+ * Called during point/line rendering.  For triangles, we call
+ * run_shader_block() which doesn't do clipping (since clipping is
+ * done at a higher level for tris).
  * This passes the quad to the first stage of per-fragment operations.
  */
 static INLINE void
@@ -162,11 +165,11 @@ static inline GLint block( GLint x )
 static void run_shader_block( struct setup_stage *setup, 
 			      GLint x, GLint y, GLuint mask )
 {
+   struct softpipe_context *sp = setup->softpipe;
    setup->quad.x0 = x;
    setup->quad.y0 = y;
    setup->quad.mask = mask;
-
-   quad_emit(setup);
+   sp->quad.first->run(sp->quad.first, &setup->quad);
 }
 
 
@@ -501,38 +504,31 @@ static void setup_tri_edges( struct setup_stage *setup )
 
 /**
  * Render the upper or lower half of a triangle.
- * Scissoring is applied here too.
+ * Scissoring/cliprect is applied here too.
  */
 static void subtriangle( struct setup_stage *setup,
 			 struct edge *eleft,
 			 struct edge *eright,
 			 GLuint lines )
 {
+   const struct pipe_scissor_state *cliprect = &setup->softpipe->cliprect;
    GLint y, start_y, finish_y;
    GLint sy = (GLint)eleft->sy;
 
    assert((GLint)eleft->sy == (GLint) eright->sy);
-   assert((GLint)eleft->sy >= 0);	/* catch bug in x64? */
 
-   /* scissor y:
-    */
-   if (setup->softpipe->setup.scissor) {
-      start_y = sy;
-      finish_y = start_y + lines;
+   /* clip top/bottom */
+   start_y = sy;
+   finish_y = sy + lines;
 
-      if (start_y < setup->softpipe->scissor.miny) 
-	 start_y = setup->softpipe->scissor.miny;
+   if (start_y < cliprect->miny)
+      start_y = cliprect->miny;
 
-      if (finish_y > setup->softpipe->scissor.maxy) 
-	 finish_y = setup->softpipe->scissor.maxy;
+   if (finish_y > cliprect->maxy)
+      finish_y = cliprect->maxy;
 
-      start_y -= sy;
-      finish_y -= sy;
-   }
-   else {
-      start_y = 0;
-      finish_y = lines;
-   }
+   start_y -= sy;
+   finish_y -= sy;
 
    /*
    _mesa_printf("%s %d %d\n", __FUNCTION__, start_y, finish_y);  
@@ -549,15 +545,11 @@ static void subtriangle( struct setup_stage *setup,
       GLint left = (GLint)(eleft->sx + y * eleft->dxdy);
       GLint right = (GLint)(eright->sx + y * eright->dxdy);
 
-      /* scissor x: 
-       */
-      if (setup->softpipe->setup.scissor) {
-	 if (left  < setup->softpipe->scissor.minx) 
-	    left  = setup->softpipe->scissor.minx;
-
-	 if (right > setup->softpipe->scissor.maxx) 
-	    right = setup->softpipe->scissor.maxx;
-      }
+      /* clip left/right */
+      if (left < cliprect->minx)
+         left = cliprect->minx;
+      if (right > cliprect->maxx)
+         right = cliprect->maxx;
 
       if (left < right) {
 	 GLint _y = sy+y;
@@ -875,8 +867,8 @@ setup_point(struct draw_stage *stage, struct prim_header *prim)
 {
    struct setup_stage *setup = setup_stage( stage );
    /*XXX this should be a vertex attrib! */
-   GLfloat halfSize = 0.5 * setup->softpipe->setup.point_size;
-   GLboolean round = setup->softpipe->setup.point_smooth;
+   const GLfloat halfSize = 0.5 * setup->softpipe->setup.point_size;
+   const GLboolean round = setup->softpipe->setup.point_smooth;
    const struct vertex_header *v0 = prim->v[0];
    const GLfloat x = v0->data[FRAG_ATTRIB_WPOS][0];
    const GLfloat y = v0->data[FRAG_ATTRIB_WPOS][1];

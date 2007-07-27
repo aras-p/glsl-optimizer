@@ -185,15 +185,15 @@ compute_cliprect(struct softpipe_context *sp)
       /* clip to scissor rect */
       sp->cliprect.minx = MAX2(sp->scissor.minx, 0);
       sp->cliprect.miny = MAX2(sp->scissor.miny, 0);
-      sp->cliprect.maxx = MIN2(sp->scissor.maxx, surfWidth - 1);
-      sp->cliprect.maxy = MIN2(sp->scissor.maxy, surfHeight - 1);
+      sp->cliprect.maxx = MIN2(sp->scissor.maxx, surfWidth);
+      sp->cliprect.maxy = MIN2(sp->scissor.maxy, surfHeight);
    }
    else {
       /* clip to surface bounds */
       sp->cliprect.minx = 0;
       sp->cliprect.miny = 0;
-      sp->cliprect.maxx = surfWidth - 1;
-      sp->cliprect.maxy = surfHeight - 1;
+      sp->cliprect.maxx = surfWidth;
+      sp->cliprect.maxy = surfHeight;
    }
 }
 
