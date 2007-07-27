@@ -70,30 +70,31 @@
 TOOLS_PREFIX = mingw32-
 
 TOP = ../../..
-
 LIBDIR = $(TOP)/lib
 
-GLU_DLL = glu32.dll
-GLU_IMP = libglu32.a
-GLU_DEF = glu.def
+LIB_NAME = glu32
+DLL_EXT = .dll
+IMP_EXT = .a
+LIB_PRE = lib
+STRIP = -s
 
-include $(TOP)/configs/config.mgw
-GL_USING_STDCALL ?= 1
+AR = ar
+ARFLAGS = crus
+DLLTOOL = dlltool
+
+GLU_DLL = $(LIB_NAME)$(DLL_EXT)
+GLU_IMP = $(LIB_PRE)$(LIB_NAME)$(IMP_EXT)
+GLU_DEF = $(LIB_NAME).def
 
 LDLIBS = -L$(LIBDIR) -lopengl32
-LDFLAGS = -Wl,--out-implib=$(LIBDIR)/$(GLU_IMP) -Wl,--output-def=$(LIBDIR)/$(GLU_DEF)
+LDFLAGS = $(STRIP) -shared -fPIC -Wl,--kill-at
 
 CFLAGS += -DBUILD_GLU32 -D_DLL
 
-ifeq ($(GL_USING_STDCALL),1)
-  LDFLAGS += -Wl,--add-stdcall-alias
-else
-  CFLAGS += -DGL_NO_STDCALL
-endif
 
-CC = gcc
+CC = $(TOOLS_PREFIX)gcc
 CFLAGS += -DNDEBUG -DLIBRARYBUILD -I$(TOP)/include -Iinclude
-CXX = g++
+CXX = $(TOOLS_PREFIX)g++
 CXXFLAGS = $(CFLAGS) -Ilibnurbs/internals -Ilibnurbs/interface -Ilibnurbs/nurbtess
 
 AR = ar
@@ -216,9 +217,9 @@ $(LIBDIR):
 	mkdir -p $(LIBDIR)
 
 $(LIBDIR)/$(GLU_DLL) $(LIBDIR)/$(GLU_IMP): $(OBJECTS)
-	g++ -shared -fPIC -o $(LIBDIR)/$(GLU_DLL) $(LDFLAGS) \
-    $^ $(LDLIBS)
-
+	$(CXX) $(LDFLAGS) -o $(LIBDIR)/$(GLU_DLL) $^ $(LDLIBS)
+	$(DLLTOOL) --as=as --dllname $(LIB_NAME) --output-def $(LIBDIR)/$(GLU_DEF) $^
+	$(DLLTOOL) --as=as -k --dllname $(LIB_NAME) --output-lib $(LIBDIR)/$(GLU_IMP) --def $(LIBDIR)/$(GLU_DEF)
 
 
 clean:
