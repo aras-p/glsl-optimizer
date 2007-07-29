@@ -304,7 +304,7 @@ static void upload_program( struct i915_fragment_program *p )
 			 A0_MUL,
 			 tmp, A0_DEST_CHANNEL_X, 0,
 			 src0, 
-			 i915_emit_const1f(p, 1.0/(M_PI * 2)),
+			 i915_emit_const1f(p, 1.0/(M_PI)),
 			 0);
 
 	 i915_emit_arith( p, 
@@ -319,7 +319,7 @@ static void upload_program( struct i915_fragment_program *p )
 			 A0_MUL,
 			 tmp, A0_DEST_CHANNEL_X, 0,
 			 tmp, 
-			 i915_emit_const1f(p, (M_PI * 2)),
+			 i915_emit_const1f(p, (M_PI)),
 			 0);
 
 	 /* 
@@ -645,7 +645,7 @@ static void upload_program( struct i915_fragment_program *p )
 			 A0_MUL,
 			 tmp, A0_DEST_CHANNEL_X, 0,
 			 src0, 
-			 i915_emit_const1f(p, 1.0/(M_PI * 2)),
+			 i915_emit_const1f(p, 1.0/(M_PI)),
 			 0);
 
 	 i915_emit_arith( p, 
@@ -660,7 +660,7 @@ static void upload_program( struct i915_fragment_program *p )
 			 A0_MUL,
 			 tmp, A0_DEST_CHANNEL_X, 0,
 			 tmp, 
-			 i915_emit_const1f(p, (M_PI * 2)),
+			 i915_emit_const1f(p, (M_PI)),
 			 0);
 
 	 /* 
