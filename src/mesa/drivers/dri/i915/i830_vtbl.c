@@ -59,6 +59,11 @@ do {									\
 #define VRTX_TEX_SET_FMT(n, x)          ((x)<<((n)*2))
 #define TEXBIND_SET(n, x) 		((x)<<((n)*4))
 
+ static void
+i830_render_prevalidate(struct intel_context *intel)
+{
+}
+
 static void i830_render_start( intelContextPtr intel )
 {
    GLcontext *ctx = &intel->ctx;
@@ -531,4 +536,5 @@ void i830InitVtbl( i830ContextPtr i830 )
    i830->intel.vtbl.update_texture_state = i830UpdateTextureState;
    i830->intel.vtbl.emit_flush = i830_emit_flush;
    i830->intel.vtbl.render_start = i830_render_start;
+   i830->intel.vtbl.render_prevalidate = i830_render_prevalidate;
 }

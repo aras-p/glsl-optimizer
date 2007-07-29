@@ -309,12 +309,6 @@ extern GLboolean i915CreateContext(const __GLcontextModes * mesaVis,
 
 
 /*======================================================================
- * i915_texprog.c
- */
-extern void i915ValidateTextureProgram(struct i915_context *i915);
-
-
-/*======================================================================
  * i915_debug.c
  */
 extern void i915_disassemble_program(const GLuint * program, GLuint sz);
