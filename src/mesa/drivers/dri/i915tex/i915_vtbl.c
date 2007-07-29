@@ -44,11 +44,16 @@
 #include "i915_context.h"
 
 static void
-i915_render_start(struct intel_context *intel)
+i915_render_prevalidate(struct intel_context *intel)
 {
    struct i915_context *i915 = i915_context(&intel->ctx);
 
    i915ValidateFragmentProgram(i915);
+}
+
+static void
+i915_render_start(struct intel_context *intel)
+{
 }
 
 
@@ -546,6 +551,7 @@ i915InitVtbl(struct i915_context *i915)
    i915->intel.vtbl.lost_hardware = i915_lost_hardware;
    i915->intel.vtbl.reduced_primitive_state = i915_reduced_primitive_state;
    i915->intel.vtbl.render_start = i915_render_start;
+   i915->intel.vtbl.render_prevalidate = i915_render_prevalidate;
    i915->intel.vtbl.set_draw_region = i915_set_draw_region;
    i915->intel.vtbl.update_texture_state = i915UpdateTextureState;
    i915->intel.vtbl.flush_cmd = i915_flush_cmd;

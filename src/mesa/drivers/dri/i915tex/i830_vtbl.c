@@ -61,6 +61,11 @@ do {									\
 #define TEXBIND_SET(n, x) 		((x)<<((n)*4))
 
 static void
+i830_render_prevalidate(struct intel_context *intel)
+{
+}
+
+static void
 i830_render_start(struct intel_context *intel)
 {
    GLcontext *ctx = &intel->ctx;
@@ -657,5 +662,6 @@ i830InitVtbl(struct i830_context *i830)
    i830->intel.vtbl.update_texture_state = i830UpdateTextureState;
    i830->intel.vtbl.flush_cmd = i830_flush_cmd;
    i830->intel.vtbl.render_start = i830_render_start;
+   i830->intel.vtbl.render_prevalidate = i830_render_prevalidate;
    i830->intel.vtbl.assert_not_dirty = i830_assert_not_dirty;
 }
