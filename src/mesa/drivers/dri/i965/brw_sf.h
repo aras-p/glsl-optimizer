@@ -50,9 +50,14 @@ struct brw_sf_prog_key {
    GLuint do_flat_shading:1;
    GLuint attrs:16;
    GLuint frontface_ccw:1;
-   GLuint pad:11;
+   GLuint do_point_sprite:1;
+   GLuint pad:10;
+   GLenum SpriteOrigin;
 };
 
+struct brw_sf_point_tex {
+	GLboolean CoordReplace;	
+};
 
 struct brw_sf_compile {
    struct brw_compile func;
@@ -94,12 +99,14 @@ struct brw_sf_compile {
 
    GLubyte attr_to_idx[VERT_RESULT_MAX];   
    GLubyte idx_to_attr[VERT_RESULT_MAX];   
+   struct brw_sf_point_tex point_attrs[VERT_RESULT_MAX];
 };
 
  
 void brw_emit_tri_setup( struct brw_sf_compile *c );
 void brw_emit_line_setup( struct brw_sf_compile *c );
 void brw_emit_point_setup( struct brw_sf_compile *c );
+void brw_emit_point_sprite_setup( struct brw_sf_compile *c );
 void brw_emit_anyprim_setup( struct brw_sf_compile *c );
 
 #endif
