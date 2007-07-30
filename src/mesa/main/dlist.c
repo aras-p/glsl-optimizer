@@ -1,8 +1,8 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.5.1
+ * Version:  7.1
  *
- * Copyright (C) 1999-2006  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2007  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -2716,9 +2716,6 @@ save_PolygonMode(GLenum face, GLenum mode)
 }
 
 
-/*
- * Polygon stipple must have been upacked already!
- */
 static void GLAPIENTRY
 save_PolygonStipple(const GLubyte * pattern)
 {
@@ -2730,10 +2727,10 @@ save_PolygonStipple(const GLubyte * pattern)
    n = ALLOC_INSTRUCTION(ctx, OPCODE_POLYGON_STIPPLE, 1);
    if (n) {
       n[1].data = image; 
-   } else if (image) {
-       _mesa_free(image);
    }
-
+   else if (image) {
+      _mesa_free(image);
+   }
    if (ctx->ExecuteFlag) {
       CALL_PolygonStipple(ctx->Exec, ((GLubyte *) pattern));
    }
