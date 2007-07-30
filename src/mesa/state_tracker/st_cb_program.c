@@ -153,7 +153,9 @@ void st_init_cb_program( struct st_context *st )
    st->ctx->FragmentProgram._MaintainTexEnvProgram = GL_TRUE;
    st->ctx->FragmentProgram._UseTexEnvProgram = GL_TRUE;
 
+#if 0
    assert(functions->ProgramStringNotify == _tnl_program_string); 
+#endif
    functions->BindProgram = st_bind_program;
    functions->NewProgram = st_new_program;
    functions->DeleteProgram = st_delete_program;

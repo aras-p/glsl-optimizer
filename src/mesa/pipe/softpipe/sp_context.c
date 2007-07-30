@@ -32,10 +32,38 @@
 #include "main/imports.h"
 #include "main/macros.h"
 #include "pipe/draw/draw_context.h"
+#include "pipe/p_defines.h"
 #include "sp_context.h"
 #include "sp_clear.h"
 #include "sp_state.h"
+#include "sp_surface.h"
 #include "sp_prim_setup.h"
+
+
+static void map_surfaces(struct softpipe_context *sp)
+{
+   GLuint i;
+
+   for (i = 0; i < sp->framebuffer.num_cbufs; i++) {
+      struct softpipe_surface *sps = softpipe_surface(sp->framebuffer.cbufs[i]);
+      struct pipe_buffer *buf = &sps->surface.buffer;
+      buf->map(buf, PIPE_MAP_READ_WRITE);
+   }
+   /* XXX depth & stencil bufs */
+}
+
+
+static void unmap_surfaces(struct softpipe_context *sp)
+{
+   GLuint i;
+
+   for (i = 0; i < sp->framebuffer.num_cbufs; i++) {
+      struct softpipe_surface *sps = softpipe_surface(sp->framebuffer.cbufs[i]);
+      struct pipe_buffer *buf = &sps->surface.buffer;
+      buf->unmap(buf);
+   }
+   /* XXX depth & stencil bufs */
+}
 
 
 static void softpipe_destroy( struct pipe_context *pipe )
@@ -56,7 +84,10 @@ static void softpipe_draw_vb( struct pipe_context *pipe,
    if (softpipe->dirty)
       softpipe_update_derived( softpipe );
 
+   /* XXX move mapping/unmapping to higher/coarser level? */
+   map_surfaces(softpipe);
    draw_vb( softpipe->draw, VB );
+   unmap_surfaces(softpipe);
 }
 
 

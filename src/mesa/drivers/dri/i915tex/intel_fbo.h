@@ -29,8 +29,24 @@
 #define INTEL_FBO_H
 
 
+#include "pipe/p_state.h"
+#include "pipe/softpipe/sp_surface.h"
+
+
 struct intel_context;
 struct intel_region;
+
+
+/**
+ * Intel "pipe" surface.  This is kind of a temporary thing as
+ * renderbuffers and surfaces should eventually become one.
+ */
+struct intel_surface
+{
+   struct softpipe_surface surface;  /**< base class */
+   struct intel_renderbuffer *rb;    /**< ptr back to matching renderbuffer */
+};
+
 
 /**
  * Intel framebuffer, derived from gl_framebuffer.
@@ -82,6 +98,8 @@ struct intel_renderbuffer
    GLuint pf_pending;  /**< sequence number of pending flip */
 
    GLuint vbl_pending;   /**< vblank sequence number of pending flip */
+
+   struct intel_surface *surface;
 };
 
 

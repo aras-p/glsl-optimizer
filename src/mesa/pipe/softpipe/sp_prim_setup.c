@@ -1010,20 +1010,11 @@ static void setup_begin( struct draw_stage *stage )
    struct setup_stage *setup = setup_stage(stage);
 
    setup->quad.nr_attrs = setup->softpipe->nr_frag_attrs;
-
-   /*
-    * XXX this is where we might map() the renderbuffers to begin
-    * s/w rendering.
-    */
 }
 
 
 static void setup_end( struct draw_stage *stage )
 {
-   /*
-    * XXX this is where we might unmap() the renderbuffers after
-    * s/w rendering.
-    */
 }
 
 

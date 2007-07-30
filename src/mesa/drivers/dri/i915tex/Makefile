@@ -48,6 +48,7 @@ DRIVER_SOURCES = \
 	intel_screen.c \
 	intel_span.c \
 	intel_state.c \
+	intel_surface.c \
 	intel_tris.c \
 	intel_fbo.c \
 	intel_depthstencil.c \
