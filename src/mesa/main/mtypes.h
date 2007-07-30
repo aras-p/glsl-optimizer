@@ -127,6 +127,7 @@ struct gl_texture_format;
 struct gl_texture_image;
 struct gl_texture_object;
 struct st_context;
+struct pipe_surface;
 typedef struct __GLcontextRec GLcontext;
 typedef struct __GLcontextModesRec GLvisual;
 typedef struct gl_framebuffer GLframebuffer;
@@ -2267,6 +2268,8 @@ struct gl_renderbuffer
    GLubyte DepthBits;
    GLubyte StencilBits;
    GLvoid *Data;        /**< This may not be used by some kinds of RBs */
+
+   struct pipe_surface *surface;
 
    /* Used to wrap one renderbuffer around another: */
    struct gl_renderbuffer *Wrapped;

@@ -289,6 +289,12 @@ intel_alloc_renderbuffer_storage(GLcontext * ctx, struct gl_renderbuffer *rb,
       rb->Width = width;
       rb->Height = height;
 
+#if 1
+      /* update the surface's size too */
+      rb->surface->width = width;
+      rb->surface->height = height;
+#endif
+
       /* This sets the Get/PutRow/Value functions */
       intel_set_span_functions(&irb->Base);
 
@@ -451,6 +457,12 @@ intel_create_renderbuffer(GLenum intFormat, GLsizei width, GLsizei height,
    return irb;
 }
 
+
+/**
+ * Create a new renderbuffer which corresponds to an X window buffer
+ * (color, depth, stencil, etc) - not a user-created GL renderbuffer.
+ * The internal format is set at creation time and does not change.
+ */
 struct gl_renderbuffer *
 intel_new_renderbuffer_fb(GLcontext * ctx, GLuint intFormat)
 {
@@ -471,6 +483,9 @@ intel_new_renderbuffer_fb(GLcontext * ctx, GLuint intFormat)
    irb->Base.AllocStorage = intel_alloc_renderbuffer_storage;
    irb->Base.GetPointer = intel_get_pointer;
    /* span routines set in alloc_storage function */
+
+   irb->Base.surface = intel_new_surface(intFormat);
+   irb->Base.surface->rb = irb;
 
    return &irb->Base;
 }
@@ -499,6 +514,9 @@ intel_new_renderbuffer(GLcontext * ctx, GLuint name)
    irb->Base.AllocStorage = intel_alloc_renderbuffer_storage;
    irb->Base.GetPointer = intel_get_pointer;
    /* span routines set in alloc_storage function */
+
+   irb->Base.surface = intel_new_surface(0 /*unknown format*/);
+   irb->Base.surface->rb = irb;
 
    return &irb->Base;
 }

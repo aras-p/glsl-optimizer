@@ -38,17 +38,6 @@ struct intel_region;
 
 
 /**
- * Intel "pipe" surface.  This is kind of a temporary thing as
- * renderbuffers and surfaces should eventually become one.
- */
-struct intel_surface
-{
-   struct softpipe_surface surface;  /**< base class */
-   struct intel_renderbuffer *rb;    /**< ptr back to matching renderbuffer */
-};
-
-
-/**
  * Intel framebuffer, derived from gl_framebuffer.
  */
 struct intel_framebuffer
@@ -128,6 +117,9 @@ extern struct intel_region *intel_get_rb_region(struct gl_framebuffer *fb,
                                                 GLuint attIndex);
 
 
+
+extern struct pipe_surface *
+intel_new_surface(GLuint intFormat);
 
 
 #endif /* INTEL_FBO_H */

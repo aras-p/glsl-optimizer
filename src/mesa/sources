@@ -176,6 +176,7 @@ SOFTPIPE_SOURCES = \
 	pipe/softpipe/sp_state_sampler.c \
 	pipe/softpipe/sp_state_setup.c \
 	pipe/softpipe/sp_state_surface.c \
+	pipe/softpipe/sp_z_surface.c \
 	pipe/softpipe/sp_prim_setup.c
 
 DRAW_SOURCES = \
