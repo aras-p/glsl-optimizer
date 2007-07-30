@@ -218,10 +218,13 @@ CheckLink(GLuint prog)
 static void
 Init(void)
 {
-   /* Fragment shader: compute distance of fragment from center of point,
-    * if dist > 1, discard
-    * if dist < k, coverage = 1
-    * else, coverage = func(dist)
+   /* Fragment shader: compute distance of fragment from center of point
+    * (we're using texcoords but another varying could be used).
+    *   if dist > 1, discard (coverage==0)
+    *   if dist < k, coverage = 1
+    *   else, coverage = func(dist)
+    * Note: length() uses sqrt() and may be expensive.  The distance could
+    * be squared instead (with adjustments to the threshold (k) test)
     */
    static const char *fragShaderText =
       "void main() {\n"
@@ -238,15 +241,16 @@ Init(void)
       "   gl_FragColor.a = cover; \n"
       "}\n";
    /* Vertex shader: compute new vertex position based on incoming vertex pos,
-    * texcoords and inverse viewport scale factor.
+    * texcoords, point size, and inverse viewport scale factor.
+    * Note: should compute point size attenuation here too.
     */
    static const char *vertShaderText =
       "uniform vec2 viewportInv; \n"
       "void main() {\n"
-      "   vec4 p = gl_ModelViewProjectionMatrix * gl_Vertex;\n"
-      "   vec2 scale2 = viewportInv * gl_Point.size; \n"
-      "   gl_Position.xy = p.xy + gl_MultiTexCoord0.xy * scale2 * p.w; \n"
-      "   gl_Position.zw = p.zw; \n"
+      "   vec4 pos = gl_ModelViewProjectionMatrix * gl_Vertex;\n"
+      "   gl_Position.xy = pos.xy + gl_MultiTexCoord0.xy * viewportInv \n"
+      "                    * gl_Point.size * pos.w; \n"
+      "   gl_Position.zw = pos.zw; \n"
       "   gl_TexCoord[0] = gl_MultiTexCoord0; \n"
       "   gl_FrontColor = gl_Color; \n"
       "}\n";
