@@ -23,17 +23,28 @@
  * XXX a lof of this is a temporary kludge
  */
 
-extern void
-intel_map_unmap_buffers(struct intel_context *intel, GLboolean map);
-
 
 
 static void
-read_quad_f_swz(struct softpipe_surface *gs, GLint x, GLint y,
+read_quad_f_swz(struct softpipe_surface *sps, GLint x, GLint y,
                 GLfloat (*rrrr)[QUAD_SIZE])
 {
+   struct intel_surface *is = (struct intel_surface *) sps;
+   struct intel_renderbuffer *irb = is->rb;
+   const GLubyte *src = (const GLubyte *) irb->region->map
+      + (y * irb->region->pitch + x) * irb->region->cpp;
+   GLfloat *dst = (GLfloat *) rrrr;
+   GLubyte temp[16];
+   GLuint i, j;
 
+   memcpy(temp, src, 8);
+   memcpy(temp + 8, src + irb->region->pitch * irb->region->cpp, 8);
 
+   for (i = 0; i < 4; i++) {
+      for (j = 0; j < 4; j++) {
+         dst[j * 4 + i] = UBYTE_TO_FLOAT(temp[i * 4 + j]);
+      }
+   }
 }
 
 
@@ -54,8 +65,6 @@ write_quad_f_swz(struct softpipe_surface *sps, GLint x, GLint y,
          UNCLAMPED_FLOAT_TO_UBYTE(temp[j * 4 + i], src[i * 4 + j]);
       }
    }
-
-   printf("intel_surface::write_quad\n");
 
    memcpy(dst, temp, 8);
    memcpy(dst + irb->region->pitch * irb->region->cpp, temp + 8, 8);
