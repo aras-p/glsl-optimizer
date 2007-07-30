@@ -69,6 +69,20 @@ xmesa_surface(struct softpipe_surface *sps)
 }
 
 
+static void *
+map_surface_buffer(struct pipe_buffer *pb, GLuint access_mode)
+{
+   /* no-op */
+}
+
+
+static void
+unmap_surface_buffer(struct pipe_buffer *pb)
+{
+   /* no-op */
+}
+
+
 /**
  * quad reading/writing
  * These functions are just wrappers around the existing renderbuffer
@@ -198,6 +212,9 @@ create_surface(XMesaContext xmctx, struct xmesa_renderbuffer *xrb)
       xmsurf->sps.write_quad_f_swz = write_quad_f_swz;
       xmsurf->sps.write_quad_ub = write_quad_ub;
       xmsurf->sps.write_mono_row_ub = write_mono_row_ub;
+
+      xmsurf->sps.surface.buffer.map = map_surface_buffer;
+      xmsurf->sps.surface.buffer.unmap = unmap_surface_buffer;
 
 #if 0
       if (xrb->ximage) {
