@@ -71,6 +71,8 @@ i915InvalidateState(GLcontext * ctx, GLuint new_state)
    _tnl_invalidate_vertex_state(ctx, new_state);
    intel_context(ctx)->NewGLState |= new_state;
 
+   st_invalidate_state(ctx, new_state);
+
    /* Todo: gather state values under which tracked parameters become
     * invalidated, add callbacks for things like
     * ProgramLocalParameters, etc.
