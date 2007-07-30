@@ -36,16 +36,6 @@
 #include "pipe/p_context.h"
 
 
-extern struct pipe_surface *
-xmesa_get_color_surface(GLcontext *ctx, GLuint i);
-
-extern struct pipe_surface *
-xmesa_get_z_surface(GLcontext *ctx);
-
-extern struct pipe_surface *
-xmesa_get_stencil_surface(GLcontext *ctx);
-
-
 /**
  * Update framebuffer state (color, depth, stencil, etc. buffers)
  * XXX someday: separate draw/read buffers.
