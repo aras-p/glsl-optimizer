@@ -850,7 +850,7 @@ _mesa_unpack_bitmap( GLint width, GLint height, const GLubyte *pixels,
          return NULL;
       }
 
-      if (packing->SkipPixels == 0) {
+      if ((packing->SkipPixels & 7) == 0) {
          _mesa_memcpy( dst, src, width_in_bytes );
          if (packing->LsbFirst) {
             flip_bytes( dst, width_in_bytes );
@@ -942,7 +942,7 @@ _mesa_pack_bitmap( GLint width, GLint height, const GLubyte *source,
       if (!dst)
          return;
 
-      if (packing->SkipPixels == 0) {
+      if ((packing->SkipPixels & 7) == 0) {
          _mesa_memcpy( dst, src, width_in_bytes );
          if (packing->LsbFirst) {
             flip_bytes( dst, width_in_bytes );
@@ -961,20 +961,20 @@ _mesa_pack_bitmap( GLint width, GLint height, const GLubyte *source,
                if (*s & srcMask) {
                   *d |= dstMask;
                }
-               if (srcMask == 128) {
-                  srcMask = 1;
+               if (srcMask == 1) {
+                  srcMask = 128;
                   s++;
                }
                else {
-                  srcMask = srcMask << 1;
+                  srcMask = srcMask >> 1;
                }
-               if (dstMask == 1) {
-                  dstMask = 128;
+               if (dstMask == 128) {
+                  dstMask = 1;
                   d++;
                   *d = 0;
                }
                else {
-                  dstMask = dstMask >> 1;
+                  dstMask = dstMask << 1;
                }
             }
          }
