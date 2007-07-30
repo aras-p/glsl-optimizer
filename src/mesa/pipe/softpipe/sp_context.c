@@ -49,6 +49,13 @@ static void map_surfaces(struct softpipe_context *sp)
       struct pipe_buffer *buf = &sps->surface.buffer;
       buf->map(buf, PIPE_MAP_READ_WRITE);
    }
+
+   if (sp->framebuffer.zbuf) {
+      struct softpipe_surface *sps = softpipe_surface(sp->framebuffer.zbuf);
+      struct pipe_buffer *buf = &sps->surface.buffer;
+      buf->map(buf, PIPE_MAP_READ_WRITE);
+   }
+
    /* XXX depth & stencil bufs */
 }
 
@@ -59,6 +66,12 @@ static void unmap_surfaces(struct softpipe_context *sp)
 
    for (i = 0; i < sp->framebuffer.num_cbufs; i++) {
       struct softpipe_surface *sps = softpipe_surface(sp->framebuffer.cbufs[i]);
+      struct pipe_buffer *buf = &sps->surface.buffer;
+      buf->unmap(buf);
+   }
+
+   if (sp->framebuffer.zbuf) {
+      struct softpipe_surface *sps = softpipe_surface(sp->framebuffer.zbuf);
       struct pipe_buffer *buf = &sps->surface.buffer;
       buf->unmap(buf);
    }

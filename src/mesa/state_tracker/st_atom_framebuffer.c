@@ -54,22 +54,31 @@ static void
 update_framebuffer_state( struct st_context *st )
 {
    struct pipe_framebuffer_state framebuffer;
+   struct gl_renderbuffer *rb;
    GLuint i;
+
+   memset(&framebuffer, 0, sizeof(framebuffer));
 
    /* Examine Mesa's ctx->DrawBuffer->_ColorDrawBuffers state
     * to determine which surfaces to draw to
     */
    framebuffer.num_cbufs = st->ctx->DrawBuffer->_NumColorDrawBuffers[0];
    for (i = 0; i < framebuffer.num_cbufs; i++) {
-      framebuffer.cbufs[i] = xmesa_get_color_surface(st->ctx, i);
+      rb = st->ctx->DrawBuffer->_ColorDrawBuffers[0][i];
+      assert(rb->surface);
+      framebuffer.cbufs[i] = rb->surface;
    }
 
-   if (st->ctx->DrawBuffer->_DepthBuffer/*Attachment[BUFFER_DEPTH].Renderbuffer*/) {
-      framebuffer.zbuf = xmesa_get_z_surface(st->ctx);
+   rb = st->ctx->DrawBuffer->_DepthBuffer;
+   if (rb) {
+      assert(rb->surface);
+      framebuffer.zbuf = rb->Wrapped->surface;
    }
 
-   if (st->ctx->DrawBuffer->Attachment[BUFFER_STENCIL].Renderbuffer) {
-      framebuffer.sbuf = xmesa_get_stencil_surface(st->ctx);
+   rb = st->ctx->DrawBuffer->_StencilBuffer;
+   if (rb) {
+      assert(rb->surface);
+      framebuffer.sbuf = rb->Wrapped->surface;
    }
 
    if (memcmp(&framebuffer, &st->state.framebuffer, sizeof(framebuffer)) != 0) {

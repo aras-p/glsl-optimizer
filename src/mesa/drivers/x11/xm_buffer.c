@@ -35,6 +35,7 @@
 #include "imports.h"
 #include "framebuffer.h"
 #include "renderbuffer.h"
+#include "pipe/p_state.h"
 
 
 #if defined(USE_XSHM) && !defined(XFree86Server)
@@ -268,6 +269,8 @@ xmesa_alloc_front_storage(GLcontext *ctx, struct gl_renderbuffer *rb,
    rb->Height = height;
    rb->InternalFormat = internalFormat;
 
+   rb->surface->resize(rb->surface, width, height);
+
    return GL_TRUE;
 }
 
@@ -317,6 +320,8 @@ xmesa_alloc_back_storage(GLcontext *ctx, struct gl_renderbuffer *rb,
       xrb->origin4 = NULL;
    }
 
+   rb->surface->resize(rb->surface, width, height);
+
    return GL_TRUE;
 }
 
@@ -352,6 +357,9 @@ xmesa_new_renderbuffer(GLcontext *ctx, GLuint name, const GLvisual *visual,
          xrb->Base.IndexBits = visual->indexBits;
       }
       /* only need to set Red/Green/EtcBits fields for user-created RBs */
+
+      xrb->Base.surface = xmesa_new_surface(xrb);
+
    }
    return xrb;
 }

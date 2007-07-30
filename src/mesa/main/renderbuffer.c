@@ -49,6 +49,9 @@
 
 #include "rbadaptors.h"
 
+#include "pipe/softpipe/sp_z_surface.h"
+#include "pipe/p_state.h"
+
 
 /* 32-bit color index format.  Not a public format. */
 #define COLOR_INDEX32 0x424243
@@ -1091,6 +1094,7 @@ _mesa_soft_renderbuffer_storage(GLcontext *ctx, struct gl_renderbuffer *rb,
       rb->PutValues = put_values_ushort;
       rb->PutMonoValues = put_mono_values_ushort;
       rb->DepthBits = 8 * sizeof(GLushort);
+      rb->surface = (struct pipe_surface *) softpipe_new_z_surface(16);
       pixelSize = sizeof(GLushort);
       break;
    case GL_DEPTH_COMPONENT24:
@@ -1193,13 +1197,27 @@ _mesa_soft_renderbuffer_storage(GLcontext *ctx, struct gl_renderbuffer *rb,
 
    /* free old buffer storage */
    if (rb->Data) {
-      _mesa_free(rb->Data);
+      if (rb->surface) {
+         /* pipe surface */
+      }
+      else {
+         /* legacy renderbuffer */
+         _mesa_free(rb->Data);
+      }
       rb->Data = NULL;
    }
 
    if (width > 0 && height > 0) {
       /* allocate new buffer storage */
-      rb->Data = _mesa_malloc(width * height * pixelSize);
+      if (rb->surface) {
+         /* pipe surface */
+         rb->surface->resize(rb->surface, width, height);
+         rb->Data = rb->surface->buffer.ptr;
+      }
+      else {
+         /* legacy renderbuffer */
+         rb->Data = _mesa_malloc(width * height * pixelSize);
+      }
       if (rb->Data == NULL) {
          rb->Width = 0;
          rb->Height = 0;

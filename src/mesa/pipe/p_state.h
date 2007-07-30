@@ -239,6 +239,7 @@ struct pipe_sampler_state
 
 /**
  * A mappable buffer (vertex data, pixel data, etc)
+ * XXX replace with "intel_region".
  */
 struct pipe_buffer
 {
@@ -247,7 +248,7 @@ struct pipe_buffer
                            const void *src);
    void *(*map)(struct pipe_buffer *pb, GLuint access_mode);
    void (*unmap)(struct pipe_buffer *pb);
-   void *ptr;        /**< address, only valid while mapped */
+   GLubyte *ptr;     /**< address, only valid while mapped */
    GLuint mode;      /**< PIPE_MAP_x, only valid while mapped */
 };
 
@@ -261,12 +262,13 @@ struct pipe_surface
    struct pipe_buffer buffer;  /**< surfaces can be mapped */
    GLuint format:5;            /**< PIPE_FORMAT_x */
    GLuint width, height;
-#if 0
-   GLubyte *ptr;
-   GLint stride;
-   GLuint cpp;
-   GLuint format;
-#endif
+
+   GLint stride, cpp;
+   GLubyte *ptr;    /**< only valid while mapped, may not equal buffer->ptr */
+
+   void *rb;  /**< Ptr back to renderbuffer (temporary?) */
+
+   void (*resize)(struct pipe_surface *ps, GLuint width, GLuint height);
 };
 
 

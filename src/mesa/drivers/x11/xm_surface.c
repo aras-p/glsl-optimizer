@@ -24,7 +24,7 @@
 
 
 /**
- * \file xm_surface.h
+ * \file xm_surface.c
  * Code to allow the softpipe code to write to X windows/buffers.
  * This is a bit of a hack for now.  We've basically got two different
  * abstractions for color buffers: gl_renderbuffer and softpipe_surface.
@@ -48,31 +48,11 @@
 #include "pipe/softpipe/sp_surface.h"
 
 
-/**
- * An xm_surface is derived from a softpipe_surface
- */
-struct xmesa_surface
-{
-   struct softpipe_surface sps;
-   struct xmesa_renderbuffer *xrb;  /** ptr back to matching xmesa_renderbuffer */
-   struct gl_renderbuffer *rb; /* ptr to matching gl_renderbuffer */
-};
-
-
-/**
- * Cast wrapper
- */
-static INLINE struct xmesa_surface *
-xmesa_surface(struct softpipe_surface *sps)
-{
-   return (struct xmesa_surface *) sps;
-}
-
-
 static void *
 map_surface_buffer(struct pipe_buffer *pb, GLuint access_mode)
 {
    /* no-op */
+   return NULL;
 }
 
 
@@ -83,6 +63,13 @@ unmap_surface_buffer(struct pipe_buffer *pb)
 }
 
 
+static INLINE struct xmesa_renderbuffer *
+xmesa_rb(struct softpipe_surface *sps)
+{
+   return (struct xmesa_renderbuffer *) sps->surface.rb;
+}
+
+
 /**
  * quad reading/writing
  * These functions are just wrappers around the existing renderbuffer
@@ -90,11 +77,10 @@ unmap_surface_buffer(struct pipe_buffer *pb)
  */
 
 static void
-read_quad_f(struct softpipe_surface *gs, GLint x, GLint y,
+read_quad_f(struct softpipe_surface *sps, GLint x, GLint y,
             GLfloat (*rgba)[NUM_CHANNELS])
 {
-   struct xmesa_surface *xmsurf = xmesa_surface(gs);
-   struct xmesa_renderbuffer *xrb = xmsurf->xrb;
+   struct xmesa_renderbuffer *xrb = xmesa_rb(sps);
    GLubyte temp[16];
    GLfloat *dst = (GLfloat *) rgba;
    GLuint i;
@@ -107,11 +93,10 @@ read_quad_f(struct softpipe_surface *gs, GLint x, GLint y,
 }
 
 static void
-read_quad_f_swz(struct softpipe_surface *gs, GLint x, GLint y,
+read_quad_f_swz(struct softpipe_surface *sps, GLint x, GLint y,
                 GLfloat (*rrrr)[QUAD_SIZE])
 {
-   struct xmesa_surface *xmsurf = xmesa_surface(gs);
-   struct xmesa_renderbuffer *xrb = xmsurf->xrb;
+   struct xmesa_renderbuffer *xrb = xmesa_rb(sps);
    GLubyte temp[16];
    GLfloat *dst = (GLfloat *) rrrr;
    GLuint i, j;
@@ -126,11 +111,10 @@ read_quad_f_swz(struct softpipe_surface *gs, GLint x, GLint y,
 }
 
 static void
-write_quad_f(struct softpipe_surface *gs, GLint x, GLint y,
+write_quad_f(struct softpipe_surface *sps, GLint x, GLint y,
              GLfloat (*rgba)[NUM_CHANNELS])
 {
-   struct xmesa_surface *xmsurf = xmesa_surface(gs);
-   struct xmesa_renderbuffer *xrb = xmsurf->xrb;
+   struct xmesa_renderbuffer *xrb = xmesa_rb(sps);
    GLubyte temp[16];
    const GLfloat *src = (const GLfloat *) rgba;
    GLuint i;
@@ -143,11 +127,10 @@ write_quad_f(struct softpipe_surface *gs, GLint x, GLint y,
 }
 
 static void
-write_quad_f_swz(struct softpipe_surface *gs, GLint x, GLint y,
+write_quad_f_swz(struct softpipe_surface *sps, GLint x, GLint y,
                  GLfloat (*rrrr)[QUAD_SIZE])
 {
-   struct xmesa_surface *xmsurf = xmesa_surface(gs);
-   struct xmesa_renderbuffer *xrb = xmsurf->xrb;
+   struct xmesa_renderbuffer *xrb = xmesa_rb(sps);
    GLubyte temp[16];
    const GLfloat *src = (const GLfloat *) rrrr;
    GLuint i, j;
@@ -162,251 +145,70 @@ write_quad_f_swz(struct softpipe_surface *gs, GLint x, GLint y,
 }
 
 static void
-read_quad_ub(struct softpipe_surface *gs, GLint x, GLint y,
+read_quad_ub(struct softpipe_surface *sps, GLint x, GLint y,
              GLubyte (*rgba)[NUM_CHANNELS])
 {
-   struct xmesa_surface *xmsurf = xmesa_surface(gs);
-   struct xmesa_renderbuffer *xrb = xmsurf->xrb;
+   struct xmesa_renderbuffer *xrb = xmesa_rb(sps);
    GET_CURRENT_CONTEXT(ctx);
    xrb->Base.GetRow(ctx, &xrb->Base, 2, x, y,     rgba);
    xrb->Base.GetRow(ctx, &xrb->Base, 2, x, y + 1, rgba + 2);
 }
 
 static void
-write_quad_ub(struct softpipe_surface *gs, GLint x, GLint y,
+write_quad_ub(struct softpipe_surface *sps, GLint x, GLint y,
               GLubyte (*rgba)[NUM_CHANNELS])
 {
-   struct xmesa_surface *xmsurf = xmesa_surface(gs);
-   struct xmesa_renderbuffer *xrb = xmsurf->xrb;
+   struct xmesa_renderbuffer *xrb = xmesa_rb(sps);
    GET_CURRENT_CONTEXT(ctx);
    xrb->Base.GetRow(ctx, &xrb->Base, 2, x, y,     rgba);
    xrb->Base.GetRow(ctx, &xrb->Base, 2, x, y + 1, rgba + 2);
 }
 
 static void
-write_mono_row_ub(struct softpipe_surface *gs, GLuint count, GLint x, GLint y,
+write_mono_row_ub(struct softpipe_surface *sps, GLuint count, GLint x, GLint y,
                   GLubyte rgba[NUM_CHANNELS])
 {
-   struct xmesa_surface *xmsurf = xmesa_surface(gs);
-   struct xmesa_renderbuffer *xrb = xmsurf->xrb;
+   struct xmesa_renderbuffer *xrb = xmesa_rb(sps);
    GET_CURRENT_CONTEXT(ctx);
    xrb->Base.PutMonoRow(ctx, &xrb->Base, count, x, y, rgba, NULL);
 }
 
 
-static struct xmesa_surface *
-create_surface(XMesaContext xmctx, struct xmesa_renderbuffer *xrb)
-{
-   struct xmesa_surface *xmsurf;
-
-   xmsurf = CALLOC_STRUCT(xmesa_surface);
-   if (xmsurf) {
-      xmsurf->xrb = xrb;
-      xmsurf->sps.surface.width = xrb->Base.Width;
-      xmsurf->sps.surface.height = xrb->Base.Height;
-
-      xmsurf->sps.read_quad_f = read_quad_f;
-      xmsurf->sps.read_quad_f_swz = read_quad_f_swz;
-      xmsurf->sps.read_quad_ub = read_quad_ub;
-      xmsurf->sps.write_quad_f = write_quad_f;
-      xmsurf->sps.write_quad_f_swz = write_quad_f_swz;
-      xmsurf->sps.write_quad_ub = write_quad_ub;
-      xmsurf->sps.write_mono_row_ub = write_mono_row_ub;
-
-      xmsurf->sps.surface.buffer.map = map_surface_buffer;
-      xmsurf->sps.surface.buffer.unmap = unmap_surface_buffer;
-
-#if 0
-      if (xrb->ximage) {
-         xmsurf->sps.surface.ptr = (GLubyte *) xrb->ximage->data;
-         xmsurf->sps.surface.stride = xrb->ximage->bytes_per_line;
-         xmsurf->sps.surface.cpp = xrb->ximage->depth;
-
-      }
-#endif
-   }
-   return xmsurf;
-}
-
-
 static void
-free_surface(struct softpipe_surface *sps)
+resize_surface(struct pipe_surface *ps, GLuint width, GLuint height)
 {
-   /* XXX may need to do more in the future */
-   free(sps);
+   ps->width = width;
+   ps->height = height;
 }
 
 
 /**
- * Return generic surface pointer corresponding to the current color buffer.
+ * Called to create a pipe_surface for each X renderbuffer.
  */
 struct pipe_surface *
-xmesa_get_color_surface(GLcontext *ctx, GLuint buf)
+xmesa_new_surface(struct xmesa_renderbuffer *xrb)
 {
-   XMesaContext xmctx = XMESA_CONTEXT(ctx);
-   struct gl_renderbuffer *rb = ctx->DrawBuffer->_ColorDrawBuffers[0][buf];   
-   struct xmesa_renderbuffer *xrb = xmesa_renderbuffer(rb);
-   struct softpipe_surface *sps = (struct softpipe_surface *) xrb->pSurface;
+   struct softpipe_surface *sps;
 
-   if (!sps) {
-      xrb->pSurface = create_surface(xmctx, xrb);
-   }
-   else if (sps->surface.width != rb->Width ||
-            sps->surface.height != rb->Height) {
-      free_surface(sps);
-      xrb->pSurface = create_surface(xmctx, xrb);
-   }
-
-   return (struct pipe_surface *) xrb->pSurface;
-}
-
-
-
-
-static void
-read_quad_z(struct softpipe_surface *sps,
-            GLint x, GLint y, GLuint zzzz[QUAD_SIZE])
-{
-   struct xmesa_surface *xmsurf = xmesa_surface(sps);
-   struct gl_renderbuffer *rb = xmsurf->rb;
-   GLushort temp[4];
-   GLuint i;
-   GET_CURRENT_CONTEXT(ctx);
-   rb->GetRow(ctx, rb, 2, x, y,     temp);
-   rb->GetRow(ctx, rb, 2, x, y + 1, temp + 2);
-   /* convert from GLushort to GLuint */
-   for (i = 0; i < 4; i++) {
-      zzzz[i] = temp[i];
-   }
-}
-
-static void
-write_quad_z(struct softpipe_surface *sps,
-             GLint x, GLint y, const GLuint zzzz[QUAD_SIZE])
-{
-   struct xmesa_surface *xmsurf = xmesa_surface(sps);
-   struct gl_renderbuffer *rb = xmsurf->rb;
-   GLushort temp[4];
-   GLuint i;
-   GET_CURRENT_CONTEXT(ctx);
-   /* convert from GLuint to GLushort */
-   for (i = 0; i < 4; i++) {
-      temp[i] = zzzz[i];
-   }
-   rb->PutRow(ctx, rb, 2, x, y,     temp,     NULL);
-   rb->PutRow(ctx, rb, 2, x, y + 1, temp + 2, NULL);
-}
-
-
-static struct xmesa_surface *
-create_z_surface(XMesaContext xmctx, struct gl_renderbuffer *rb)
-{
-   struct xmesa_surface *xmsurf;
-
-   xmsurf = CALLOC_STRUCT(xmesa_surface);
-   if (xmsurf) {
-      xmsurf->sps.surface.format = PIPE_FORMAT_U_Z16;
-      xmsurf->sps.surface.width = rb->Width;
-      xmsurf->sps.surface.height = rb->Height;
-      xmsurf->sps.read_quad_z = read_quad_z;
-      xmsurf->sps.write_quad_z = write_quad_z;
-      xmsurf->rb = rb;
-   }
-   return xmsurf;
-}
-
-
-
-
-static void
-read_quad_stencil(struct softpipe_surface *sps,
-                  GLint x, GLint y, GLubyte ssss[QUAD_SIZE])
-{
-   struct xmesa_surface *xmsurf = xmesa_surface(sps);
-   struct gl_renderbuffer *rb = xmsurf->rb;
-   GET_CURRENT_CONTEXT(ctx);
-   rb->GetRow(ctx, rb, 2, x, y,     ssss);
-   rb->GetRow(ctx, rb, 2, x, y + 1, ssss + 2);
-}
-
-static void
-write_quad_stencil(struct softpipe_surface *sps,
-                   GLint x, GLint y, const GLubyte ssss[QUAD_SIZE])
-{
-   struct xmesa_surface *xmsurf = xmesa_surface(sps);
-   struct gl_renderbuffer *rb = xmsurf->rb;
-   GET_CURRENT_CONTEXT(ctx);
-   rb->PutRow(ctx, rb, 2, x, y,     ssss,     NULL);
-   rb->PutRow(ctx, rb, 2, x, y + 1, ssss + 2, NULL);
-}
-
-static struct xmesa_surface *
-create_stencil_surface(XMesaContext xmctx, struct gl_renderbuffer *rb)
-{
-   struct xmesa_surface *xmsurf;
-
-   xmsurf = CALLOC_STRUCT(xmesa_surface);
-   if (xmsurf) {
-      xmsurf->sps.surface.format = PIPE_FORMAT_U_S8;
-      xmsurf->sps.surface.width = rb->Width;
-      xmsurf->sps.surface.height = rb->Height;
-      xmsurf->sps.read_quad_stencil = read_quad_stencil;
-      xmsurf->sps.write_quad_stencil = write_quad_stencil;
-      xmsurf->rb = rb;
-   }
-   return xmsurf;
-}
-
-
-
-
-/**
- * Return a pipe_surface that wraps the current Z/depth buffer.
- * XXX this is pretty much a total hack until gl_renderbuffers and
- * pipe_surfaces are merged...
- */
-struct pipe_surface *
-xmesa_get_z_surface(GLcontext *ctx)
-{
-   XMesaContext xmctx = XMESA_CONTEXT(ctx);
-   struct gl_renderbuffer *rb = ctx->DrawBuffer->_DepthBuffer;
-   static struct xmesa_surface *xms = NULL;
-
-   if (!rb)
+   sps = CALLOC_STRUCT(softpipe_surface);
+   if (!sps)
       return NULL;
 
-   if (!xms) {
-      xms = create_z_surface(xmctx, rb);
-   }
-   else if (xms->sps.surface.width != rb->Width ||
-            xms->sps.surface.height != rb->Height) {
-      free_surface(&xms->sps);
-      xms = create_z_surface(xmctx, rb);
-   }
+   sps->surface.rb = xrb;
+   sps->surface.width = xrb->Base.Width;
+   sps->surface.height = xrb->Base.Height;
 
-   return (struct pipe_surface *) &xms->sps.surface;
+   sps->read_quad_f = read_quad_f;
+   sps->read_quad_f_swz = read_quad_f_swz;
+   sps->read_quad_ub = read_quad_ub;
+   sps->write_quad_f = write_quad_f;
+   sps->write_quad_f_swz = write_quad_f_swz;
+   sps->write_quad_ub = write_quad_ub;
+   sps->write_mono_row_ub = write_mono_row_ub;
+
+   sps->surface.buffer.map = map_surface_buffer;
+   sps->surface.buffer.unmap = unmap_surface_buffer;
+   sps->surface.resize = resize_surface;
+
+   return &sps->surface;
 }
-
-
-struct pipe_surface *
-xmesa_get_stencil_surface(GLcontext *ctx)
-{
-   XMesaContext xmctx = XMESA_CONTEXT(ctx);
-   struct gl_renderbuffer *rb = ctx->DrawBuffer->_StencilBuffer;
-   static struct xmesa_surface *xms = NULL;
-
-   if (!rb)
-      return NULL;
-
-   if (!xms) {
-      xms = create_stencil_surface(xmctx, rb);
-   }
-   else if (xms->sps.surface.width != rb->Width ||
-            xms->sps.surface.height != rb->Height) {
-      free_surface(&xms->sps);
-      xms = create_stencil_surface(xmctx, rb);
-   }
-
-   return (struct pipe_surface *) &xms->sps.surface;
-}
-
