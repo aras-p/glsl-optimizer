@@ -2059,7 +2059,8 @@ _slang_gen_declaration(slang_assemble_ctx *A, slang_operation *oper)
       }
       /* XXX make copy of this initializer? */
       rhs = _slang_gen_operation(A, &oper->children[0]);
-      assert(rhs);
+      if (!rhs)
+         return NULL;  /* must have found an error */
       init = new_node2(IR_MOVE, var, rhs);
       /*assert(rhs->Opcode != IR_SEQ);*/
       n = new_seq(varDecl, init);
