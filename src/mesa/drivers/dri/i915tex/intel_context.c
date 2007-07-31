@@ -177,7 +177,6 @@ const struct dri_extension card_extensions[] = {
    {"GL_ARB_texture_mirrored_repeat", NULL},
    {"GL_ARB_texture_rectangle", NULL},
    {"GL_ARB_vertex_buffer_object", GL_ARB_vertex_buffer_object_functions},
-   {"GL_ARB_pixel_buffer_object", NULL},
    {"GL_ARB_vertex_program", GL_ARB_vertex_program_functions},
    {"GL_ARB_window_pos", GL_ARB_window_pos_functions},
    {"GL_EXT_blend_color", GL_EXT_blend_color_functions},
@@ -188,7 +187,6 @@ const struct dri_extension card_extensions[] = {
    {"GL_EXT_blend_subtract", NULL},
    {"GL_EXT_cull_vertex", GL_EXT_cull_vertex_functions},
    {"GL_EXT_fog_coord", GL_EXT_fog_coord_functions},
-   {"GL_EXT_framebuffer_object", GL_EXT_framebuffer_object_functions},
    {"GL_EXT_multi_draw_arrays", GL_EXT_multi_draw_arrays_functions},
 #if 1                           /* XXX FBO temporary? */
    {"GL_EXT_packed_depth_stencil", NULL},
@@ -208,6 +206,12 @@ const struct dri_extension card_extensions[] = {
    {"GL_NV_vertex_program", GL_NV_vertex_program_functions},
    {"GL_NV_vertex_program1_1", NULL},
 /*     { "GL_SGIS_generate_mipmap",           NULL }, */
+   {NULL, NULL}
+};
+
+const struct dri_extension ttm_extensions[] = {
+   {"GL_EXT_framebuffer_object", GL_EXT_framebuffer_object_functions},
+   {"GL_ARB_pixel_buffer_object", NULL},
    {NULL, NULL}
 };
 
@@ -467,6 +471,9 @@ intelInitContext(struct intel_context *intel,
    driInitExtensions(ctx, card_extensions,
 /* 		      GL_TRUE, */
                      GL_FALSE);
+
+   if (intelScreen->ttm)
+      driInitExtensions(ctx, ttm_extensions, GL_FALSE);
 
 
    intel->batch = intel_batchbuffer_alloc(intel);
