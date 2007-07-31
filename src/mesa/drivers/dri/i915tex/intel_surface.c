@@ -246,14 +246,3 @@ intel_new_surface(GLuint intFormat)
    return &sps->surface;
 }
 
-
-
-struct pipe_surface *
-xmesa_get_stencil_surface(GLcontext *ctx)
-{
-   /* XXX fix */
-   return NULL;
-}
-
-
-
