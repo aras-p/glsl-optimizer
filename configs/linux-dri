@@ -66,4 +66,4 @@ WINDOW_SYSTEM=dri
 
 # gamma are missing because they have not been converted to use the new
 # interface.
-DRI_DIRS = i915tex 
+DRI_DIRS = i915pipe 
