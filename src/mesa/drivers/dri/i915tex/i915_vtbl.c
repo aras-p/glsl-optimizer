@@ -328,13 +328,14 @@ i915_emit_state(struct intel_context *intel)
       if (INTEL_DEBUG & DEBUG_STATE)
          fprintf(stderr, "I915_UPLOAD_BUFFERS:\n");
       BEGIN_BATCH(I915_DEST_SETUP_SIZE + 2, 0);
-      OUT_BATCH(state->Buffer[I915_DESTREG_CBUFADDR0]);
-      OUT_BATCH(state->Buffer[I915_DESTREG_CBUFADDR1]);
-      OUT_RELOC(state->draw_region->buffer,
-                DRM_BO_FLAG_MEM_TT | DRM_BO_FLAG_WRITE,
-                DRM_BO_MASK_MEM | DRM_BO_FLAG_WRITE,
-                state->draw_region->draw_offset);
-
+      if (state->draw_region) {
+         OUT_BATCH(state->Buffer[I915_DESTREG_CBUFADDR0]);
+         OUT_BATCH(state->Buffer[I915_DESTREG_CBUFADDR1]);
+         OUT_RELOC(state->draw_region->buffer,
+                   DRM_BO_FLAG_MEM_TT | DRM_BO_FLAG_WRITE,
+                   DRM_BO_MASK_MEM | DRM_BO_FLAG_WRITE,
+                   state->draw_region->draw_offset);
+      }
       if (state->depth_region) {
          OUT_BATCH(state->Buffer[I915_DESTREG_DBUFADDR0]);
          OUT_BATCH(state->Buffer[I915_DESTREG_DBUFADDR1]);
