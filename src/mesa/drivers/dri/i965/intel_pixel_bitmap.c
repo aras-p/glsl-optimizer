@@ -226,10 +226,10 @@ do_blit_bitmap( GLcontext *ctx,
       dsty = dPriv->y + (dPriv->h - dsty - height);  
       dstx = dPriv->x + dstx;
 
-      dest_rect.x1 = dstx;
-      dest_rect.y1 = dsty;
-      dest_rect.x2 = dstx + width;
-      dest_rect.y2 = dsty + height;
+      dest_rect.x1 = dstx < 0 ? 0 : dstx;
+      dest_rect.y1 = dsty < 0 ? 0 : dsty;
+      dest_rect.x2 = dstx + width < 0 ? 0 : dstx + width;
+      dest_rect.y2 = dsty + height < 0 ? 0 : dsty + height;
 
       for (i = 0; i < nbox; i++) {
          drm_clip_rect_t rect;
