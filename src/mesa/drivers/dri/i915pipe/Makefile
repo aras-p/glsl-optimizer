@@ -25,7 +25,6 @@ DRIVER_SOURCES = \
 	intel_ioctl.c \
 	intel_rotate.c \
 	intel_screen.c \
-	intel_span.c \
 	intel_state.c \
 	intel_surface.c \
 	intel_fbo.c \

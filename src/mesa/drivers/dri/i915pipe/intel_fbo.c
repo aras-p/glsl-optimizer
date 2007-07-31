@@ -40,7 +40,7 @@
 #include "intel_depthstencil.h"
 #include "intel_fbo.h"
 #include "intel_mipmap_tree.h"
-#include "intel_span.h"
+#include "intel_regions.h"
 
 #include "pipe/p_context.h"
 
@@ -297,7 +297,7 @@ intel_alloc_renderbuffer_storage(GLcontext * ctx, struct gl_renderbuffer *rb,
       rb->surface->region = irb->region;
 
       /* This sets the Get/PutRow/Value functions */
-      intel_set_span_functions(&irb->Base);
+      //     intel_set_span_functions(&irb->Base);
 
       return GL_TRUE;
    }
@@ -509,7 +509,7 @@ intel_wrap_texture(GLcontext * ctx, struct gl_texture_image *texImage)
    irb->Base.Delete = intel_delete_renderbuffer;
    irb->Base.AllocStorage = intel_nop_alloc_storage;
 
-   intel_set_span_functions(&irb->Base);
+//   intel_set_span_functions(&irb->Base);
 
    irb->RenderToTexture = GL_TRUE;
 

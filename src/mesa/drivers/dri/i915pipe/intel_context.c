@@ -50,7 +50,6 @@
 
 #include "intel_buffers.h"
 #include "intel_tex.h"
-#include "intel_span.h"
 #include "intel_ioctl.h"
 #include "intel_batchbuffer.h"
 #include "intel_blit.h"
@@ -455,8 +454,6 @@ intelCreateContext(const __GLcontextModes * mesaVis,
       break;
    }
 
-   /* Initialize swrast, tnl driver tables: */
-   intelInitSpanFuncs(ctx);
 
    TNL_CONTEXT(ctx)->Driver.RunPipeline = _tnl_run_pipeline;
 
