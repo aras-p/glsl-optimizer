@@ -95,8 +95,9 @@ read_quad_z24(struct softpipe_surface *sps,
    /* extract lower three bytes */
    zzzz[0] = src[0] & mask;
    zzzz[1] = src[1] & mask;
-   zzzz[2] = src[-sps->surface.stride] & mask;
-   zzzz[3] = src[-sps->surface.stride + 1] & mask;
+   src -= sps->surface.stride;
+   zzzz[2] = src[0] & mask;
+   zzzz[3] = src[1] & mask;
 }
 
 static void
@@ -133,8 +134,9 @@ read_quad_stencil(struct softpipe_surface *sps,
    /* extract high byte */
    ssss[0] = src[0] >> 24;
    ssss[1] = src[1] >> 24;
-   ssss[2] = src[-sps->surface.width] >> 24;
-   ssss[3] = src[-sps->surface.width + 1] >> 24;
+   src -= sps->surface.stride;
+   ssss[2] = src[0] >> 24;
+   ssss[3] = src[1] >> 24;
 }
 
 static void
