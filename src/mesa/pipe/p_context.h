@@ -117,6 +117,14 @@ struct pipe_context {
 
 
    /*
+    * Surface functions
+    * This might go away...
+    */
+   struct pipe_surface *(*surface_alloc)(struct pipe_context *pipe,
+                                         GLuint format);
+
+
+   /*
     * Memory region functions
     * Some of these may go away...
     */

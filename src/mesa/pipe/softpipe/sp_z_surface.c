@@ -40,75 +40,35 @@
 #include "sp_surface.h"
 #include "sp_z_surface.h"
 
-static void*
-z_map(struct pipe_buffer *pb, GLuint access_mode)
-{
-   struct softpipe_surface *sps = (struct softpipe_surface *) pb;
-   sps->surface.ptr = pb->ptr;
-   sps->surface.stride = sps->surface.width;
-   return pb->ptr;
-}
-
-static void
-z_unmap(struct pipe_buffer *pb)
-{
-   struct softpipe_surface *sps = (struct softpipe_surface *) pb;
-   sps->surface.ptr = NULL;
-   sps->surface.stride = 0;
-}
-
-static void
-z_resize(struct pipe_surface *ps, GLuint width, GLuint height)
-{
-   struct softpipe_surface *sps = (struct softpipe_surface *) ps;
-
-   if (sps->surface.buffer.ptr)
-      free(sps->surface.buffer.ptr);
-
-   sps->surface.stride = sps->surface.width;
-   if (sps->surface.format == PIPE_FORMAT_U_Z16)
-      sps->surface.cpp = 2;
-   else if (sps->surface.format == PIPE_FORMAT_U_Z32 ||
-            sps->surface.format == PIPE_FORMAT_Z24_S8)
-      sps->surface.cpp = 4;
-   else
-      assert(0);
-
-   ps->buffer.ptr = (GLubyte *) malloc(width * height * sps->surface.cpp);
-   ps->width = width;
-   ps->height = height;
-
-}
-
 static void
 z16_read_quad_z(struct softpipe_surface *sps,
                 GLint x, GLint y, GLuint zzzz[QUAD_SIZE])
 {
    const GLushort *src
-      = (GLushort *) sps->surface.ptr + y * sps->surface.stride + x;
+      = (GLushort *) sps->surface.region->map + y * sps->surface.region->pitch + x;
 
    assert(sps->surface.format == PIPE_FORMAT_U_Z16);
 
    /* converting GLushort to GLuint: */
    zzzz[0] = src[0];
    zzzz[1] = src[1];
-   zzzz[2] = src[sps->surface.width + 0];
-   zzzz[3] = src[sps->surface.width + 1];
+   zzzz[2] = src[sps->surface.region->pitch + 0];
+   zzzz[3] = src[sps->surface.region->pitch + 1];
 }
 
 static void
 z16_write_quad_z(struct softpipe_surface *sps,
                  GLint x, GLint y, const GLuint zzzz[QUAD_SIZE])
 {
-   GLushort *dst = (GLushort *) sps->surface.ptr + y * sps->surface.stride + x;
+   GLushort *dst = (GLushort *) sps->surface.region->map + y * sps->surface.region->pitch + x;
 
    assert(sps->surface.format == PIPE_FORMAT_U_Z16);
 
    /* converting GLuint to GLushort: */
    dst[0] = zzzz[0];
    dst[1] = zzzz[1];
-   dst[sps->surface.width + 0] = zzzz[2];
-   dst[sps->surface.width + 1] = zzzz[3];
+   dst[sps->surface.region->pitch + 0] = zzzz[2];
+   dst[sps->surface.region->pitch + 1] = zzzz[3];
 }
 
 static void
@@ -116,28 +76,28 @@ z32_read_quad_z(struct softpipe_surface *sps,
                 GLint x, GLint y, GLuint zzzz[QUAD_SIZE])
 {
    const GLuint *src
-      = (GLuint *) sps->surface.ptr + y * sps->surface.stride + x;
+      = (GLuint *) sps->surface.region->map + y * sps->surface.region->pitch + x;
 
    assert(sps->surface.format == PIPE_FORMAT_U_Z32);
 
    zzzz[0] = src[0];
    zzzz[1] = src[1];
-   zzzz[2] = src[sps->surface.width + 0];
-   zzzz[3] = src[sps->surface.width + 1];
+   zzzz[2] = src[sps->surface.region->pitch + 0];
+   zzzz[3] = src[sps->surface.region->pitch + 1];
 }
 
 static void
 z32_write_quad_z(struct softpipe_surface *sps,
                  GLint x, GLint y, const GLuint zzzz[QUAD_SIZE])
 {
-   GLuint *dst = (GLuint *) sps->surface.ptr + y * sps->surface.stride + x;
+   GLuint *dst = (GLuint *) sps->surface.region->map + y * sps->surface.region->pitch + x;
 
    assert(sps->surface.format == PIPE_FORMAT_U_Z32);
 
    dst[0] = zzzz[0];
    dst[1] = zzzz[1];
-   dst[sps->surface.width + 0] = zzzz[2];
-   dst[sps->surface.width + 1] = zzzz[3];
+   dst[sps->surface.region->pitch + 0] = zzzz[2];
+   dst[sps->surface.region->pitch + 1] = zzzz[3];
 }
 
 static void
@@ -145,28 +105,28 @@ z24s8_read_quad_z(struct softpipe_surface *sps,
                   GLint x, GLint y, GLuint zzzz[QUAD_SIZE])
 {
    const GLuint *src
-      = (GLuint *) sps->surface.ptr + y * sps->surface.stride + x;
+      = (GLuint *) sps->surface.region->map + y * sps->surface.region->pitch + x;
 
    assert(sps->surface.format == PIPE_FORMAT_Z24_S8);
 
    zzzz[0] = src[0] >> 8;
    zzzz[1] = src[1] >> 8;
-   zzzz[2] = src[sps->surface.width + 0] >> 8;
-   zzzz[3] = src[sps->surface.width + 1] >> 8;
+   zzzz[2] = src[sps->surface.region->pitch + 0] >> 8;
+   zzzz[3] = src[sps->surface.region->pitch + 1] >> 8;
 }
 
 static void
 z24s8_write_quad_z(struct softpipe_surface *sps,
                    GLint x, GLint y, const GLuint zzzz[QUAD_SIZE])
 {
-   GLuint *dst = (GLuint *) sps->surface.ptr + y * sps->surface.stride + x;
+   GLuint *dst = (GLuint *) sps->surface.region->map + y * sps->surface.region->pitch + x;
 
    assert(sps->surface.format == PIPE_FORMAT_Z24_S8);
    assert(zzzz[0] <= 0xffffff);
 
    dst[0] = (dst[0] & 0xff) | (zzzz[0] << 8);
    dst[1] = (dst[1] & 0xff) | (zzzz[1] << 8);
-   dst += sps->surface.width;
+   dst += sps->surface.region->pitch;
    dst[0] = (dst[0] & 0xff) | (zzzz[2] << 8);
    dst[1] = (dst[1] & 0xff) | (zzzz[3] << 8);
 }
@@ -176,29 +136,62 @@ z24s8_read_quad_stencil(struct softpipe_surface *sps,
                         GLint x, GLint y, GLubyte ssss[QUAD_SIZE])
 {
    const GLuint *src
-      = (GLuint *) sps->surface.ptr + y * sps->surface.stride + x;
+      = (GLuint *) sps->surface.region->map + y * sps->surface.region->pitch + x;
 
    assert(sps->surface.format == PIPE_FORMAT_Z24_S8);
 
    ssss[0] = src[0] & 0xff;
    ssss[1] = src[1] & 0xff;
-   ssss[2] = src[sps->surface.width + 0] & 0xff;
-   ssss[3] = src[sps->surface.width + 1] & 0xff;
+   ssss[2] = src[sps->surface.region->pitch + 0] & 0xff;
+   ssss[3] = src[sps->surface.region->pitch + 1] & 0xff;
 }
 
 static void
 z24s8_write_quad_stencil(struct softpipe_surface *sps,
                          GLint x, GLint y, const GLubyte ssss[QUAD_SIZE])
 {
-   GLuint *dst = (GLuint *) sps->surface.ptr + y * sps->surface.stride + x;
+   GLuint *dst = (GLuint *) sps->surface.region->map + y * sps->surface.region->pitch + x;
 
    assert(sps->surface.format == PIPE_FORMAT_Z24_S8);
 
    dst[0] = (dst[0] & 0xffffff00) | ssss[0];
    dst[1] = (dst[1] & 0xffffff00) | ssss[1];
-   dst += sps->surface.width;
+   dst += sps->surface.region->pitch;
    dst[0] = (dst[0] & 0xffffff00) | ssss[2];
    dst[1] = (dst[1] & 0xffffff00) | ssss[3];
+}
+
+
+static void
+s8_read_quad_stencil(struct softpipe_surface *sps,
+                     GLint x, GLint y, GLubyte ssss[QUAD_SIZE])
+{
+   const GLubyte *src
+      = sps->surface.region->map + y * sps->surface.region->pitch + x;
+
+   assert(sps->surface.format == PIPE_FORMAT_U_S8);
+
+   ssss[0] = src[0];
+   ssss[1] = src[1];
+   src += sps->surface.region->pitch;
+   ssss[2] = src[0];
+   ssss[3] = src[1];
+}
+
+static void
+s8_write_quad_stencil(struct softpipe_surface *sps,
+                      GLint x, GLint y, const GLubyte ssss[QUAD_SIZE])
+{
+   GLubyte *dst
+      = sps->surface.region->map + y * sps->surface.region->pitch + x;
+
+   assert(sps->surface.format == PIPE_FORMAT_U_S8);
+
+   dst[0] = ssss[0];
+   dst[1] = ssss[1];
+   dst += sps->surface.region->pitch;
+   dst[0] = ssss[2];
+   dst[1] = ssss[3];
 }
 
 
@@ -215,27 +208,6 @@ softpipe_new_z_surface(GLuint format)
       return NULL;
 
    sps->surface.format = format;
-   sps->surface.resize = z_resize;
-   sps->surface.buffer.map = z_map;
-   sps->surface.buffer.unmap = z_unmap;
-
-   if (format == PIPE_FORMAT_U_Z16) {
-      sps->read_quad_z = z16_read_quad_z;
-      sps->write_quad_z = z16_write_quad_z;
-   }
-   else if (format == PIPE_FORMAT_U_Z32) {
-      sps->read_quad_z = z32_read_quad_z;
-      sps->write_quad_z = z32_write_quad_z;
-   }
-   else if (format == PIPE_FORMAT_Z24_S8) {
-      sps->read_quad_z = z24s8_read_quad_z;
-      sps->write_quad_z = z24s8_write_quad_z;
-      sps->read_quad_stencil = z24s8_read_quad_stencil;
-      sps->write_quad_stencil = z24s8_write_quad_stencil;
-   }
-   else {
-      assert(0);
-   }
 
    return sps;
 }

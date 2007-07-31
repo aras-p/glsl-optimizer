@@ -35,8 +35,7 @@
 #include "sp_headers.h"
 
 struct softpipe_surface;
-
-#define G_SURFACE_RGBA_8888  0x1
+struct softpipe_context;
 
 
 /**
@@ -96,6 +95,10 @@ softpipe_surface(struct pipe_surface *ps)
 {
    return (struct softpipe_surface *) ps;
 }
+
+
+extern void
+sp_init_surface_functions(struct softpipe_context *sp);
 
 
 #endif /* SP_SURFACE_H */

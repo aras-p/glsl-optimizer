@@ -291,11 +291,10 @@ intel_alloc_renderbuffer_storage(GLcontext * ctx, struct gl_renderbuffer *rb,
       rb->Width = width;
       rb->Height = height;
 
-#if 1
       /* update the surface's size too */
       rb->surface->width = width;
       rb->surface->height = height;
-#endif
+      rb->surface->region = irb->region;
 
       /* This sets the Get/PutRow/Value functions */
       intel_set_span_functions(&irb->Base);

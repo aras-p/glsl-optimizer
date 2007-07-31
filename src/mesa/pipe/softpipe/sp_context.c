@@ -35,6 +35,7 @@
 #include "pipe/p_defines.h"
 #include "sp_context.h"
 #include "sp_clear.h"
+#include "sp_region.h"
 #include "sp_state.h"
 #include "sp_surface.h"
 #include "sp_prim_setup.h"
@@ -42,18 +43,16 @@
 
 static void map_surfaces(struct softpipe_context *sp)
 {
+   struct pipe_context *pipe = &sp->pipe;
    GLuint i;
 
    for (i = 0; i < sp->framebuffer.num_cbufs; i++) {
-      struct softpipe_surface *sps = softpipe_surface(sp->framebuffer.cbufs[i]);
-      struct pipe_buffer *buf = &sps->surface.buffer;
-      buf->map(buf, PIPE_MAP_READ_WRITE);
+      struct softpipe_surface *sps = softpipe_surface(sp->framebuffer.cbufs[i]);      pipe->region_map(pipe, sps->surface.region);
    }
 
    if (sp->framebuffer.zbuf) {
       struct softpipe_surface *sps = softpipe_surface(sp->framebuffer.zbuf);
-      struct pipe_buffer *buf = &sps->surface.buffer;
-      buf->map(buf, PIPE_MAP_READ_WRITE);
+      pipe->region_map(pipe, sps->surface.region);
    }
 
    /* XXX depth & stencil bufs */
@@ -62,18 +61,17 @@ static void map_surfaces(struct softpipe_context *sp)
 
 static void unmap_surfaces(struct softpipe_context *sp)
 {
+   struct pipe_context *pipe = &sp->pipe;
    GLuint i;
 
    for (i = 0; i < sp->framebuffer.num_cbufs; i++) {
       struct softpipe_surface *sps = softpipe_surface(sp->framebuffer.cbufs[i]);
-      struct pipe_buffer *buf = &sps->surface.buffer;
-      buf->unmap(buf);
+      pipe->region_unmap(pipe, sps->surface.region);
    }
 
    if (sp->framebuffer.zbuf) {
       struct softpipe_surface *sps = softpipe_surface(sp->framebuffer.zbuf);
-      struct pipe_buffer *buf = &sps->surface.buffer;
-      buf->unmap(buf);
+      pipe->region_unmap(pipe, sps->surface.region);
    }
    /* XXX depth & stencil bufs */
 }
@@ -160,6 +158,9 @@ struct pipe_context *softpipe_create( void )
     */
    softpipe->draw = draw_create();
    draw_set_setup_stage(softpipe->draw, sp_draw_render_stage(softpipe));
+
+   sp_init_region_functions(softpipe);
+   sp_init_surface_functions(softpipe);
 
    /*
     * XXX we could plug GL selection/feedback into the drawing pipeline

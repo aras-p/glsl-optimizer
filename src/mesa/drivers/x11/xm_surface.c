@@ -42,25 +42,11 @@
 #include "framebuffer.h"
 #include "renderbuffer.h"
 
-#include "pipe/p_state.h"
+#include "pipe/p_context.h"
 #include "pipe/p_defines.h"
 #include "pipe/softpipe/sp_context.h"
 #include "pipe/softpipe/sp_surface.h"
-
-
-static void *
-map_surface_buffer(struct pipe_buffer *pb, GLuint access_mode)
-{
-   /* no-op */
-   return NULL;
-}
-
-
-static void
-unmap_surface_buffer(struct pipe_buffer *pb)
-{
-   /* no-op */
-}
+#include "state_tracker/st_context.h"
 
 
 static INLINE struct xmesa_renderbuffer *
@@ -174,27 +160,22 @@ write_mono_row_ub(struct softpipe_surface *sps, GLuint count, GLint x, GLint y,
 }
 
 
-static void
-resize_surface(struct pipe_surface *ps, GLuint width, GLuint height)
-{
-   ps->width = width;
-   ps->height = height;
-}
-
-
 /**
  * Called to create a pipe_surface for each X renderbuffer.
+ * Note: this is being used instead of pipe->surface_alloc() since we
+ * have special/unique quad read/write functions for X.
  */
 struct pipe_surface *
-xmesa_new_surface(struct xmesa_renderbuffer *xrb)
+xmesa_new_surface(GLcontext *ctx, struct xmesa_renderbuffer *xrb)
 {
+   struct pipe_context *pipe = ctx->st->pipe;
    struct softpipe_surface *sps;
 
    sps = CALLOC_STRUCT(softpipe_surface);
    if (!sps)
       return NULL;
 
-   sps->surface.rb = xrb;
+   sps->surface.rb = xrb; /* XXX only needed for quad funcs above */
    sps->surface.width = xrb->Base.Width;
    sps->surface.height = xrb->Base.Height;
 
@@ -206,9 +187,12 @@ xmesa_new_surface(struct xmesa_renderbuffer *xrb)
    sps->write_quad_ub = write_quad_ub;
    sps->write_mono_row_ub = write_mono_row_ub;
 
-   sps->surface.buffer.map = map_surface_buffer;
-   sps->surface.buffer.unmap = unmap_surface_buffer;
-   sps->surface.resize = resize_surface;
+   /* Note, the region we allocate doesn't actually have any storage
+    * since we're drawing into an XImage or Pixmap.
+    * The region's size will get set in the xmesa_alloc_front/back_storage()
+    * functions.
+    */
+   sps->surface.region = pipe->region_alloc(pipe, 0, 0, 0);
 
    return &sps->surface;
 }

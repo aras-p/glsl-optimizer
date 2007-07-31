@@ -33,9 +33,9 @@ static void
 read_quad_f_swz(struct softpipe_surface *sps, GLint x, GLint y,
                 GLfloat (*rrrr)[QUAD_SIZE])
 {
-   const GLint bytesPerRow = sps->surface.stride * sps->surface.cpp;
+   const GLint bytesPerRow = sps->surface.region->pitch * sps->surface.region->cpp;
    const GLint invY = sps->surface.height - y - 1;
-   const GLubyte *src = sps->surface.ptr + invY * bytesPerRow + x * sps->surface.cpp;
+   const GLubyte *src = sps->surface.region->map + invY * bytesPerRow + x * sps->surface.region->cpp;
    GLfloat *dst = (GLfloat *) rrrr;
    GLubyte temp[16];
    GLuint j;
@@ -59,9 +59,9 @@ write_quad_f_swz(struct softpipe_surface *sps, GLint x, GLint y,
                  GLfloat (*rrrr)[QUAD_SIZE])
 {
    const GLfloat *src = (const GLfloat *) rrrr;
-   const GLint bytesPerRow = sps->surface.stride * sps->surface.cpp;
+   const GLint bytesPerRow = sps->surface.region->pitch * sps->surface.region->cpp;
    const GLint invY = sps->surface.height - y - 1;
-   GLubyte *dst = sps->surface.ptr + invY * bytesPerRow + x * sps->surface.cpp;
+   GLubyte *dst = sps->surface.region->map + invY * bytesPerRow + x * sps->surface.region->cpp;
    GLubyte temp[16];
    GLuint j;
 
@@ -87,16 +87,16 @@ read_quad_z24(struct softpipe_surface *sps,
    static const GLuint mask = 0xffffff;
    const GLint invY = sps->surface.height - y - 1;
    const GLuint *src
-      = (GLuint *) (sps->surface.ptr
-                    + (invY * sps->surface.stride + x) * sps->surface.cpp);
+      = (GLuint *) (sps->surface.region->map
+                    + (invY * sps->surface.region->pitch + x) * sps->surface.region->cpp);
 
    assert(sps->surface.format == PIPE_FORMAT_Z24_S8);
 
    /* extract lower three bytes */
    zzzz[0] = src[0] & mask;
    zzzz[1] = src[1] & mask;
-   zzzz[2] = src[-sps->surface.stride] & mask;
-   zzzz[3] = src[-sps->surface.stride + 1] & mask;
+   zzzz[2] = src[-sps->surface.region->pitch] & mask;
+   zzzz[3] = src[-sps->surface.region->pitch + 1] & mask;
 }
 
 static void
@@ -106,15 +106,15 @@ write_quad_z24(struct softpipe_surface *sps,
    static const GLuint mask = 0xff000000;
    const GLint invY = sps->surface.height - y - 1;
    GLuint *dst
-      = (GLuint *) (sps->surface.ptr
-                    + (invY * sps->surface.stride + x) * sps->surface.cpp);
+      = (GLuint *) (sps->surface.region->map
+                    + (invY * sps->surface.region->pitch + x) * sps->surface.region->cpp);
 
    assert(sps->surface.format == PIPE_FORMAT_Z24_S8);
 
    /* write lower three bytes */
    dst[0] = (dst[0] & mask) | zzzz[0];
    dst[1] = (dst[1] & mask) | zzzz[1];
-   dst -= sps->surface.stride;
+   dst -= sps->surface.region->pitch;
    dst[0] = (dst[0] & mask) | zzzz[2];
    dst[1] = (dst[1] & mask) | zzzz[3];
 }
@@ -125,15 +125,15 @@ read_quad_stencil(struct softpipe_surface *sps,
                   GLint x, GLint y, GLubyte ssss[QUAD_SIZE])
 {
    const GLint invY = sps->surface.height - y - 1;
-   const GLuint *src = (const GLuint *) (sps->surface.ptr
-                     + (invY * sps->surface.stride + x) * sps->surface.cpp);
+   const GLuint *src = (const GLuint *) (sps->surface.region->map
+                     + (invY * sps->surface.region->pitch + x) * sps->surface.region->cpp);
 
    assert(sps->surface.format == PIPE_FORMAT_Z24_S8);
 
    /* extract high byte */
    ssss[0] = src[0] >> 24;
    ssss[1] = src[1] >> 24;
-   src -= sps->surface.stride;
+   src -= sps->surface.region->pitch;
    ssss[2] = src[0] >> 24;
    ssss[3] = src[1] >> 24;
 }
@@ -144,65 +144,17 @@ write_quad_stencil(struct softpipe_surface *sps,
 {
    static const GLuint mask = 0x00ffffff;
    const GLint invY = sps->surface.height - y - 1;
-   GLuint *dst = (GLuint *) (sps->surface.ptr
-               + (invY * sps->surface.stride + x) * sps->surface.cpp);
+   GLuint *dst = (GLuint *) (sps->surface.region->map
+               + (invY * sps->surface.region->pitch + x) * sps->surface.region->cpp);
 
    assert(sps->surface.format == PIPE_FORMAT_Z24_S8);
 
    /* write high byte */
    dst[0] = (dst[0] & mask) | (ssss[0] << 24);
    dst[1] = (dst[1] & mask) | (ssss[1] << 24);
-   dst -= sps->surface.stride;
+   dst -= sps->surface.region->pitch;
    dst[0] = (dst[0] & mask) | (ssss[2] << 24);
    dst[1] = (dst[1] & mask) | (ssss[3] << 24);
-}
-
-
-static void *
-map_surface_buffer(struct pipe_buffer *pb, GLuint access_mode)
-{
-   struct softpipe_surface *sps = (struct softpipe_surface *) pb;
-   struct intel_renderbuffer *irb = (struct intel_renderbuffer *) sps->surface.rb;
-   assert(access_mode == PIPE_MAP_READ_WRITE);
-
-   /*LOCK_HARDWARE(intel);*/
-
-   if (irb->region) {
-      GET_CURRENT_CONTEXT(ctx);
-      struct intel_context *intel = intel_context(ctx);
-#if 0
-      intelFinish(&intel->ctx);  /* XXX need this? */
-#endif
-      intel->pipe->region_map(intel->pipe, irb->region);
-   }
-   pb->ptr = irb->region->map;
-
-   sps->surface.stride = irb->region->pitch;
-   sps->surface.cpp = irb->region->cpp;
-   sps->surface.ptr = irb->region->map;
-
-   return pb->ptr;
-}
-
-
-static void
-unmap_surface_buffer(struct pipe_buffer *pb)
-{
-   struct softpipe_surface *sps = (struct softpipe_surface *) pb;
-   struct intel_renderbuffer *irb = (struct intel_renderbuffer *) sps->surface.rb;
-
-   if (irb->region) {
-      GET_CURRENT_CONTEXT(ctx);
-      struct intel_context *intel = intel_context(ctx);
-      intel->pipe->region_unmap(intel->pipe, irb->region);
-   }
-   pb->ptr = NULL;
-
-   sps->surface.stride = 0;
-   sps->surface.cpp = 0;
-   sps->surface.ptr = NULL;
-
-   /*UNLOCK_HARDWARE(intel);*/
 }
 
 
@@ -240,9 +192,6 @@ intel_new_surface(GLuint intFormat)
       /* TBD / unknown */
 
    }
-
-   sps->surface.buffer.map = map_surface_buffer;
-   sps->surface.buffer.unmap = unmap_surface_buffer;
 
    return &sps->surface;
 }

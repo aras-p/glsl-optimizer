@@ -589,7 +589,7 @@ extern void xmesa_register_swrast_functions( GLcontext *ctx );
 struct pipe_surface;
 
 struct pipe_surface *
-xmesa_new_surface(struct xmesa_renderbuffer *xrb);
+xmesa_new_surface(GLcontext *ctx, struct xmesa_renderbuffer *xrb);
 
 
 #endif

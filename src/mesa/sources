@@ -157,6 +157,7 @@ VF_SOURCES = \
 SOFTPIPE_SOURCES = \
 	pipe/softpipe/sp_clear.c \
 	pipe/softpipe/sp_context.c \
+	pipe/softpipe/sp_region.c \
 	pipe/softpipe/sp_quad.c \
 	pipe/softpipe/sp_quad_alpha_test.c \
 	pipe/softpipe/sp_quad_blend.c \
@@ -176,7 +177,7 @@ SOFTPIPE_SOURCES = \
 	pipe/softpipe/sp_state_sampler.c \
 	pipe/softpipe/sp_state_setup.c \
 	pipe/softpipe/sp_state_surface.c \
-	pipe/softpipe/sp_z_surface.c \
+	pipe/softpipe/sp_surface.c \
 	pipe/softpipe/sp_prim_setup.c
 
 DRAW_SOURCES = \

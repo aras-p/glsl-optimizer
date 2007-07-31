@@ -233,43 +233,8 @@ struct pipe_sampler_state
 
 
 /***
- *** Non-state Objects
+ *** Resource Objects
  ***/
-
-
-/**
- * A mappable buffer (vertex data, pixel data, etc)
- * XXX replace with "intel_region".
- */
-struct pipe_buffer
-{
-   void (*buffer_data)(struct pipe_buffer *pb, GLuint size, const void *src);
-   void (*buffer_sub_data)(struct pipe_buffer *pb, GLuint offset, GLuint size,
-                           const void *src);
-   void *(*map)(struct pipe_buffer *pb, GLuint access_mode);
-   void (*unmap)(struct pipe_buffer *pb);
-   GLubyte *ptr;     /**< address, only valid while mapped */
-   GLuint mode;      /**< PIPE_MAP_x, only valid while mapped */
-};
-
-
-/**
- * 2D surface.
- * May be a renderbuffer, texture mipmap level, etc.
- */
-struct pipe_surface
-{
-   struct pipe_buffer buffer;  /**< surfaces can be mapped */
-   GLuint format:5;            /**< PIPE_FORMAT_x */
-   GLuint width, height;
-
-   GLint stride, cpp;
-   GLubyte *ptr;    /**< only valid while mapped, may not equal buffer->ptr */
-
-   void *rb;  /**< Ptr back to renderbuffer (temporary?) */
-
-   void (*resize)(struct pipe_surface *ps, GLuint width, GLuint height);
-};
 
 
 struct _DriBufferObject;
@@ -278,6 +243,7 @@ struct intel_buffer_object;
 struct pipe_region
 {
    struct _DriBufferObject *buffer;   /**< buffer manager's buffer ID */
+
    GLuint refcount; /**< Reference count for region */
    GLuint cpp;      /**< bytes per pixel */
    GLuint pitch;    /**< in pixels */
@@ -289,6 +255,21 @@ struct pipe_region
 
    struct intel_buffer_object *pbo;     /* zero-copy uploads */
 };
+
+
+/**
+ * 2D surface.
+ * May be a renderbuffer, texture mipmap level, etc.
+ */
+struct pipe_surface
+{
+   struct pipe_region *region;
+   GLuint format:5;            /**< PIPE_FORMAT_x */
+   GLuint width, height;
+
+   void *rb;  /**< Ptr back to renderbuffer (temporary?) */
+};
+
 
 /**
  * Texture object.
