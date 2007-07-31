@@ -62,7 +62,6 @@ struct block {
    struct block *next, *prev;
    struct mem_block *mem;	/* BM_MEM_AGP */
 
-   unsigned referenced:1;
    unsigned on_hardware:1;
    unsigned fenced:1;
 
@@ -86,7 +85,6 @@ typedef struct _bufmgr_fake {
 
    unsigned buf_nr;		/* for generating ids */
 
-   struct block referenced;	/* after bmBufferOffset */
    struct block on_hardware;	/* after bmValidateBuffers */
    struct block fenced;		/* after bmFenceBuffers (mi_flush, emit irq, write dword) */
                                 /* then to bufmgr->lru or free() */
@@ -236,11 +234,7 @@ static void free_block(dri_bufmgr_fake *bufmgr_fake, struct block *block)
    if (!block)
       return;
 
-   if (block->referenced) {
-      _mesa_printf("tried to free block on referenced list\n");
-      assert(0);
-   }
-   else if (block->on_hardware) {
+   if (block->on_hardware) {
       block->bo = NULL;
    }
    else if (block->fenced) {
@@ -383,14 +377,6 @@ static int clear_fenced(dri_bufmgr_fake *bufmgr_fake,
       }
    }
 
-   /* Also check the referenced list:
-    */
-   foreach_s(block, tmp, &bufmgr_fake->referenced ) {
-      if (block->fenced && _fence_test(bufmgr_fake, block->fence)) {
-	 block->fenced = 0;
-      }
-   }
-
    DBG("%s: %d\n", __FUNCTION__, ret);
    return ret;
 }
@@ -410,19 +396,6 @@ static void fence_blocks(dri_bufmgr_fake *bufmgr_fake, unsigned fence)
       /* Move to tail of pending list here
        */
       move_to_tail(&bufmgr_fake->fenced, block);
-   }
-
-   /* Also check the referenced list:
-    */
-   foreach_s (block, tmp, &bufmgr_fake->referenced) {
-      if (block->on_hardware) {
-	 DBG("Fence block %p (sz 0x%x buf %p) with fence %d\n", block,
-	     block->mem->size, block->bo, fence);
-
-	 block->fence = fence;
-	 block->on_hardware = 0;
-	 block->fenced = 1;
-      }
    }
 
    assert(is_empty_list(&bufmgr_fake->on_hardware));
@@ -522,8 +495,6 @@ dri_bufmgr_fake_contended_lock_take(dri_bufmgr *bufmgr)
    {
       struct block *block, *tmp;
 
-      assert(is_empty_list(&bufmgr_fake->referenced));
-
       bufmgr_fake->need_fence = 1;
       bufmgr_fake->fail = 0;
 
@@ -533,6 +504,9 @@ dri_bufmgr_fake_contended_lock_take(dri_bufmgr *bufmgr)
        */
       dri_bufmgr_fake_wait_idle(bufmgr_fake);
 
+      /* Check that we hadn't released the lock without having fenced the last
+       * set of buffers.
+       */
       assert(is_empty_list(&bufmgr_fake->fenced));
       assert(is_empty_list(&bufmgr_fake->on_hardware));
 
@@ -752,12 +726,6 @@ dri_fake_bo_validate(dri_bo *bo, unsigned int flags)
       assert(bo_fake->block);
       assert(bo_fake->block->bo == &bo_fake->bo);
 
-      DBG("Add buf %d:%s (block %p, dirty %d) to referenced list\n",
-	  bo_fake->id, bo_fake->name, bo_fake->block, bo_fake->dirty);
-
-      move_to_tail(&bufmgr_fake->referenced, bo_fake->block);
-      bo_fake->block->referenced = 1;
-
       bo->offset = bo_fake->block->mem->ofs;
 
       /* Upload the buffer contents if necessary */
@@ -775,11 +743,11 @@ dri_fake_bo_validate(dri_bo *bo, unsigned int flags)
 	 dri_bufmgr_fake_wait_idle(bufmgr_fake);
 
 	 memcpy(bo_fake->block->virtual, bo_fake->backing_store, bo->size);
-
-	 bo_fake->block->referenced = 0;
-	 bo_fake->block->on_hardware = 1;
-	 move_to_tail(&bufmgr_fake->on_hardware, bo_fake->block);
+	 bo_fake->dirty = 0;
       }
+
+      bo_fake->block->on_hardware = 1;
+      move_to_tail(&bufmgr_fake->on_hardware, bo_fake->block);
 
       bufmgr_fake->need_fence = 1;
    }
@@ -880,7 +848,6 @@ dri_bufmgr_fake_init(unsigned long low_offset, void *low_virtual,
    bufmgr_fake = calloc(1, sizeof(*bufmgr_fake));
 
    /* Initialize allocator */
-   make_empty_list(&bufmgr_fake->referenced);
    make_empty_list(&bufmgr_fake->fenced);
    make_empty_list(&bufmgr_fake->on_hardware);
    make_empty_list(&bufmgr_fake->lru);
