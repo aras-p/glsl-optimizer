@@ -131,6 +131,7 @@ struct intel_context
       void (*update_texture_state) (struct intel_context * intel);
 
       void (*render_start) (struct intel_context * intel);
+      void (*render_prevalidate) (struct intel_context * intel);
       void (*set_draw_region) (struct intel_context * intel,
                                struct intel_region * draw_region,
                                struct intel_region * depth_region);
@@ -234,13 +235,6 @@ struct intel_context
    GLuint vertex_size;
    GLubyte *verts;              /* points to tnl->clipspace.vertex_buf */
 
-#if 0
-   struct intel_region *front_region;   /* XXX FBO: obsolete */
-   struct intel_region *rotated_region; /* XXX FBO: obsolete */
-   struct intel_region *back_region;    /* XXX FBO: obsolete */
-   struct intel_region *draw_region;    /* XXX FBO: rename to color_region */
-   struct intel_region *depth_region;   /**< currently bound depth/Z region */
-#endif
 
    /* Fallback rasterization functions 
     */
@@ -250,13 +244,9 @@ struct intel_context
 
    /* These refer to the current drawing buffer:
     */
-   int drawX, drawY;            /**< origin of drawing area within region */
    GLuint numClipRects;         /**< cliprects for drawing */
    drm_clip_rect_t *pClipRects;
-   drm_clip_rect_t fboRect;     /**< cliprect for FBO rendering */
-   drm_clip_rect_t fakeClipRect;     /**< cliprect for priv back/fake front buffers rendering */
-
-   int perf_boxes;
+   drm_clip_rect_t fboRect;     /**< cliprect for rendering */
 
    GLuint do_usleeps;
    int do_irqs;
@@ -273,20 +263,11 @@ struct intel_context
    drmI830Sarea *sarea;
 
    GLuint lastStamp;
-   GLuint revalidateDrawable;
 
    /**
     * Configuration cache
     */
    driOptionCache optionCache;
-
-  /* Rotation. Need to match that of the
-   * current screen.
-   */
-
-  int width;
-  int height;
-  int current_rotation;
 };
 
 /* These are functions now:
@@ -355,7 +336,7 @@ __memcpy(void *to, const void *from, size_t n)
 /* ================================================================
  * Debugging:
  */
-#define DO_DEBUG		1
+#define DO_DEBUG		0
 #if DO_DEBUG
 extern int INTEL_DEBUG;
 #else

@@ -42,6 +42,8 @@
 #include "intel_regions.h"
 #include "intel_pixel.h"
 #include "intel_buffer_objects.h"
+#include "intel_fbo.h"
+#include "intel_tris.h"
 
 /* For many applications, the new ability to pull the source buffers
  * back out of the GTT and then do the packing/conversion operations
@@ -54,6 +56,8 @@
  * an argument for blit/texture readpixels, or for blitting to a
  * temporary and then pulling that back.
  *
+ * XXX this is not true for fake frontbuffers...
+
  * When the destination is a pbo, however, it's not clear if it is
  * ever going to be pulled to main memory (though the access param
  * will be a good hint).  So it sounds like we do want to be able to
@@ -68,91 +72,105 @@
 
 static GLboolean
 do_texture_readpixels(GLcontext * ctx,
-                      GLint x, GLint y, GLsizei width, GLsizei height,
+                      GLint srcx, GLint srcy, GLsizei width, GLsizei height,
                       GLenum format, GLenum type,
                       const struct gl_pixelstore_attrib *pack,
                       struct intel_region *dest_region)
 {
 #if 0
    struct intel_context *intel = intel_context(ctx);
-   intelScreenPrivate *screen = intel->intelScreen;
-   GLint pitch = pack->RowLength ? pack->RowLength : width;
-   __DRIdrawablePrivate *dPriv = intel->driDrawable;
-   int textureFormat;
-   GLenum glTextureFormat;
-   int destFormat, depthFormat, destPitch;
-   drm_clip_rect_t tmp;
+   struct intel_region *depthreg = NULL;
+   struct intel_region *src = intel_readbuf_region(intel);
+// struct intel_region *src = copypix_src_region(intel, type);
+   GLenum src_format;
+   GLenum src_type;
 
    if (INTEL_DEBUG & DEBUG_PIXEL)
       fprintf(stderr, "%s\n", __FUNCTION__);
 
+   if (!src || type != GL_COLOR)
+      return GL_FALSE;
 
-   if (ctx->_ImageTransferState ||
-       pack->SwapBytes || pack->LsbFirst || !pack->Invert) {
-      if (INTEL_DEBUG & DEBUG_PIXEL)
-         fprintf(stderr, "%s: check_color failed\n", __FUNCTION__);
+   intelFlush(&intel->ctx);
+
+   intel->vtbl.install_meta_state(intel);
+
+   /* Is this true?  Also will need to turn depth testing on according
+    * to state:
+    */
+   intel->vtbl.meta_no_stencil_write(intel);
+   intel->vtbl.meta_no_depth_write(intel);
+
+   /* Set the 3d engine to draw into the destination region:
+    */
+   if (ctx->DrawBuffer->_DepthBuffer &&
+       ctx->DrawBuffer->_DepthBuffer->Wrapped)
+      depthreg = (intel_renderbuffer(ctx->DrawBuffer->_DepthBuffer->Wrapped))->region;
+
+   intel->vtbl.meta_draw_region(intel, dest_region, depthreg);
+
+   intel->vtbl.meta_import_pixel_state(intel);
+
+   if (src->cpp == 2) {
+      src_format = GL_RGB;
+      src_type = GL_UNSIGNED_SHORT_5_6_5;
+   }
+   else {
+      src_format = GL_BGRA;
+      src_type = GL_UNSIGNED_BYTE;
+   }
+
+   /* Set the frontbuffer up as a large rectangular texture.
+    */
+   if (!intel->vtbl.meta_tex_rect_source(intel, src->buffer, 0,
+                                         src->pitch,
+                                         src->height, src_format, src_type)) {
+      intel->vtbl.leave_meta_state(intel);
       return GL_FALSE;
    }
 
-   intel->vtbl.meta_texrect_source(intel, intel_readbuf_region(intel));
 
-   if (!intel->vtbl.meta_render_dest(intel, dest_region, type, format)) {
-      if (INTEL_DEBUG & DEBUG_PIXEL)
-         fprintf(stderr, "%s: couldn't set dest %s/%s\n",
-                 __FUNCTION__,
-                 _mesa_lookup_enum_by_nr(type),
-                 _mesa_lookup_enum_by_nr(format));
-      return GL_FALSE;
-   }
+   intel->vtbl.meta_texture_blend_replace(intel);
 
    LOCK_HARDWARE(intel);
 
-   if (intel->driDrawable->numClipRects) {
-      intel->vtbl.install_meta_state(intel);
-      intel->vtbl.meta_no_depth_write(intel);
-      intel->vtbl.meta_no_stencil_write(intel);
+   {
+      int dstbufHeight = height * ctx->Pixel.ZoomY; /* ? */
+      /* convert from gl to hardware coords */
+      srcy = ctx->ReadBuffer->Height - srcy - height;
 
-      if (!driClipRectToFramebuffer(ctx->ReadBuffer, &x, &y, &width, &height)) {
-         UNLOCK_HARDWARE(intel);
-         SET_STATE(i830, state);
-         if (INTEL_DEBUG & DEBUG_PIXEL)
-            fprintf(stderr, "%s: cliprect failed\n", __FUNCTION__);
-         return GL_TRUE;
+      /* Clip against the source region.  This is the only source
+       * clipping we do.  XXX: Just set the texcord wrap mode to clamp
+       * or similar.
+       *
+       */
+      if (0) {
+         if (!_mesa_clip_to_region(0, 0, ctx->ReadBuffer->Width - 1,
+				   ctx->ReadBuffer->Height - 1,
+                                   &srcx, &srcy, &width, &height))
+            goto out;
+
       }
 
-      y = dPriv->h - y - height;
-      x += dPriv->x;
-      y += dPriv->y;
-
-
-      /* Set the frontbuffer up as a large rectangular texture.
+      /* Just use the regular cliprect mechanism...  Does this need to
+       * even hold the lock???
        */
-      intel->vtbl.meta_tex_rect_source(intel, src_region, textureFormat);
+      intel_meta_draw_quad(intel,
+			   0,
+			   width * ctx->Pixel.ZoomX,
+			   dstbufHeight - (height * ctx->Pixel.ZoomY),
+			   dstbufHeight, 0,   /* XXX: what z value? */
+                           0x00ff00ff,
+                           srcx, srcx + width, srcy, srcy + height);
 
-
-      intel->vtbl.meta_texture_blend_replace(i830, glTextureFormat);
-
-
-      /* Set the 3d engine to draw into the destination region:
-       */
-
-      intel->vtbl.meta_draw_region(intel, dest_region);
-      intel->vtbl.meta_draw_format(intel, destFormat, depthFormat);     /* ?? */
-
-
-      /* Draw a single quad, no cliprects:
-       */
-      intel->vtbl.meta_disable_cliprects(intel);
-
-      intel->vtbl.draw_quad(intel,
-                            0, width, 0, height,
-                            0x00ff00ff, x, x + width, y, y + height);
-
+    out:
       intel->vtbl.leave_meta_state(intel);
+      intel_batchbuffer_flush(intel->batch);
    }
    UNLOCK_HARDWARE(intel);
 
-   intel_region_wait_fence(ctx, dest_region);   /* required by GL */
+   if (INTEL_DEBUG & DEBUG_PIXEL)
+      _mesa_printf("%s: success\n", __FUNCTION__);
    return GL_TRUE;
 #endif
 
@@ -169,7 +187,8 @@ do_blit_readpixels(GLcontext * ctx,
                    const struct gl_pixelstore_attrib *pack, GLvoid * pixels)
 {
    struct intel_context *intel = intel_context(ctx);
-   struct intel_region *src = intel_readbuf_region(intel);
+   struct intel_renderbuffer *irbread;
+   struct intel_region *src;
    struct intel_buffer_object *dst = intel_buffer_object(pack->BufferObj);
    GLuint dst_offset;
    GLuint rowLength;
@@ -178,15 +197,17 @@ do_blit_readpixels(GLcontext * ctx,
    if (INTEL_DEBUG & DEBUG_PIXEL)
       _mesa_printf("%s\n", __FUNCTION__);
 
-   if (!src)
+   irbread = intel_renderbuffer(ctx->ReadBuffer->_ColorReadBuffer);
+   if (!irbread || !irbread->region)
       return GL_FALSE;
+   src = irbread->region;
 
    if (dst) {
       /* XXX This validation should be done by core mesa:
        */
       if (!_mesa_validate_pbo_access(2, pack, width, height, 1,
                                      format, type, pixels)) {
-         _mesa_error(ctx, GL_INVALID_OPERATION, "glDrawPixels");
+         _mesa_error(ctx, GL_INVALID_OPERATION, "glReadPixels");
          return GL_TRUE;
       }
    }
@@ -206,16 +227,17 @@ do_blit_readpixels(GLcontext * ctx,
       return GL_FALSE;
    }
 
-   if (pack->Alignment != 1 || pack->SwapBytes || pack->LsbFirst) {
-      if (INTEL_DEBUG & DEBUG_PIXEL)
-         _mesa_printf("%s: bad packing params\n", __FUNCTION__);
-      return GL_FALSE;
-   }
-
    if (pack->RowLength > 0)
       rowLength = pack->RowLength;
    else
       rowLength = width;
+
+   if (((rowLength * src->cpp) % pack->Alignment) ||
+      pack->SwapBytes || pack->LsbFirst) {
+      if (INTEL_DEBUG & DEBUG_PIXEL)
+         _mesa_printf("%s: bad packing params\n", __FUNCTION__);
+      return GL_FALSE;
+   }
 
    if (pack->Invert) {
       if (INTEL_DEBUG & DEBUG_PIXEL)
@@ -230,48 +252,35 @@ do_blit_readpixels(GLcontext * ctx,
    dst_offset = (GLuint) _mesa_image_address(2, pack, pixels, width, height,
                                              format, type, 0, 0, 0);
 
-
-   /* Although the blits go on the command buffer, need to do this and
-    * fire with lock held to guarentee cliprects are correct.
-    */
    intelFlush(&intel->ctx);
-   LOCK_HARDWARE(intel);
 
-   if (intel->driDrawable->numClipRects) {
+   {
+      GLint srcx = x;
+      GLint srcy = irbread->Base.Height - (y + height);
+      GLint srcwidth = width;
+      GLint srcheight = height;
+
       GLboolean all = (width * height * src->cpp == dst->Base.Size &&
                        x == 0 && dst_offset == 0);
 
       struct _DriBufferObject *dst_buffer =
          intel_bufferobj_buffer(intel, dst, all ? INTEL_WRITE_FULL :
                                 INTEL_WRITE_PART);
-      __DRIdrawablePrivate *dPriv = intel->driDrawable;
-      int nbox = dPriv->numClipRects;
-      drm_clip_rect_t *box = dPriv->pClipRects;
-      drm_clip_rect_t rect;
-      drm_clip_rect_t src_rect;
-      int i;
 
-      src_rect.x1 = dPriv->x + x;
-      src_rect.y1 = dPriv->y + dPriv->h - (y + height);
-      src_rect.x2 = src_rect.x1 + width;
-      src_rect.y2 = src_rect.y1 + height;
+      /* clip to src region */
+      if (_mesa_clip_to_region(0, 0, irbread->Base.Width - 1,
+				   irbread->Base.Height - 1,
+				   &srcx, &srcy, &srcwidth, &srcheight));
 
-
-
-      for (i = 0; i < nbox; i++) {
-         if (!intel_intersect_cliprects(&rect, &src_rect, &box[i]))
-            continue;
-
+      {
          intelEmitCopyBlit(intel,
                            src->cpp,
                            src->pitch, src->buffer, 0,
                            rowLength,
                            dst_buffer, dst_offset,
-                           rect.x1,
-                           rect.y1,
-                           rect.x1 - src_rect.x1,
-                           rect.y2 - src_rect.y2,
-                           rect.x2 - rect.x1, rect.y2 - rect.y1,
+                           srcx, srcy,
+                           0, 0,
+                           width, height,
 			   GL_COPY);
       }
 
@@ -279,7 +288,6 @@ do_blit_readpixels(GLcontext * ctx,
       driFenceReference(fence);
 
    }
-   UNLOCK_HARDWARE(intel);
 
    if (fence) {
       driFenceFinish(fence, DRM_FENCE_TYPE_EXE | DRM_I915_FENCE_TYPE_RW, 

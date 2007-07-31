@@ -125,15 +125,14 @@ intel_readbuf_region(struct intel_context *intel)
 
 
 /**
- * Update the following fields for rendering to a user-created FBO:
+ * Update the following fields for rendering:
  *   intel->numClipRects
  *   intel->pClipRects
- *   intel->drawX
- *   intel->drawY
  */
 static void
 intelSetRenderbufferClipRects(struct intel_context *intel)
 {
+   /* zero-sized buffers might be legal? */
    assert(intel->ctx.DrawBuffer->Width > 0);
    assert(intel->ctx.DrawBuffer->Height > 0);
    intel->fboRect.x1 = 0;
@@ -142,32 +141,7 @@ intelSetRenderbufferClipRects(struct intel_context *intel)
    intel->fboRect.y2 = intel->ctx.DrawBuffer->Height;
    intel->numClipRects = 1;
    intel->pClipRects = &intel->fboRect;
-   intel->drawX = 0;
-   intel->drawY = 0;
 }
-
-/**
- * As above, but for rendering private front/back buffer of a window.
- * \sa intelSetPrivbufClipRects
- */
-
-static void
-intelSetPrivbufClipRects(struct intel_context *intel)
-{
-   __DRIdrawablePrivate *dPriv = intel->driDrawable;
-   if (!dPriv)
-      return;
-
-   intel->fakeClipRect.x1 = 0;
-   intel->fakeClipRect.y1 = 0;
-   intel->fakeClipRect.x2 = dPriv->w;
-   intel->fakeClipRect.y2 = dPriv->h;
-   intel->numClipRects = 1;
-   intel->pClipRects = &intel->fakeClipRect;
-   intel->drawX = 0;
-   intel->drawY = 0;
-}
-
 
 
 /**
@@ -183,11 +157,15 @@ intelWindowMoved(struct intel_context *intel)
 
    if (!intel->ctx.DrawBuffer) {
       /* when would this happen? -BP */
+      assert(0);
       intel->numClipRects = 0;
    }
 
+   /* Update Mesa's notion of window size */
+   driUpdateFramebufferSize(ctx, dPriv);
+   intel_fb->Base.Initialized = GL_TRUE; /* XXX remove someday */
 
-   if (intel->intelScreen->driScrnPriv->ddxMinor >= 7) {
+   {
       drmI830Sarea *sarea = intel->sarea;
       drm_clip_rect_t drw_rect = { .x1 = dPriv->x, .x2 = dPriv->x + dPriv->w,
 				   .y1 = dPriv->y, .y2 = dPriv->y + dPriv->h };
@@ -216,7 +194,7 @@ intelWindowMoved(struct intel_context *intel)
       intel_fb->pf_current_page = (intel->sarea->pf_current_page >>
 				   (intel_fb->pf_pipes & 0x2)) & 0x3;
 
-      intel_fb->pf_num_pages = intel->intelScreen->third.handle ? 3 : 2;
+      intel_fb->pf_num_pages = 2 /*intel->intelScreen->third.handle ? 3 : 2*/;
 
       pf_active = pf_pipes && (pf_pipes & intel->sarea->pf_active) == pf_pipes;
 
@@ -302,13 +280,7 @@ intelWindowMoved(struct intel_context *intel)
 	       intel_fb->color_rb[i]->vbl_pending = intel_fb->vbl_waited;
 	 }
       }
-   } else {
-      intel_fb->vblank_flags &= ~VBLANK_FLAG_SECONDARY;
    }
-
-   /* Update Mesa's notion of window size */
-   driUpdateFramebufferSize(ctx, dPriv);
-   intel_fb->Base.Initialized = GL_TRUE; /* XXX remove someday */
 
    /* Update hardware scissor */
    ctx->Driver.Scissor(ctx, ctx->Scissor.X, ctx->Scissor.Y,
@@ -335,7 +307,6 @@ intelClearWithTris(struct intel_context *intel, GLbitfield mask)
 
    LOCK_HARDWARE(intel);
 
-   /* XXX FBO: was: intel->driDrawable->numClipRects */
    if (intel->numClipRects) {
       GLint cx, cy, cw, ch;
       GLuint buf;
@@ -388,7 +359,8 @@ intelClearWithTris(struct intel_context *intel, GLbitfield mask)
          /* XXX: Using INTEL_BATCH_NO_CLIPRECTS here is dangerous as the
           * drawing origin may not be correctly emitted.
           */
-         intel_meta_draw_quad(intel, clear.x1, clear.x2, clear.y1, clear.y2, intel->ctx.Depth.Clear, clearColor, 0, 0, 0, 0);   /* texcoords */
+         intel_meta_draw_quad(intel, clear.x1, clear.x2, clear.y1, clear.y2,
+                              intel->ctx.Depth.Clear, clearColor, 0, 0, 0, 0);   /* texcoords */
 
          mask &=
             ~(BUFFER_BIT_BACK_LEFT | BUFFER_BIT_STENCIL | BUFFER_BIT_DEPTH);
@@ -423,156 +395,6 @@ intelClearWithTris(struct intel_context *intel, GLbitfield mask)
       intel->vtbl.leave_meta_state(intel);
       intel_batchbuffer_flush(intel->batch);
    }
-   UNLOCK_HARDWARE(intel);
-}
-
-
-
-
-/**
- * Copy the window contents named by dPriv to the rotated (or reflected)
- * color buffer.
- * srcBuf is BUFFER_BIT_FRONT_LEFT or BUFFER_BIT_BACK_LEFT to indicate the source.
- */
-void
-intelRotateWindow(struct intel_context *intel,
-                  __DRIdrawablePrivate * dPriv, GLuint srcBuf)
-{
-
-   intelScreenPrivate *screen = intel->intelScreen;
-   drm_clip_rect_t fullRect;
-   struct intel_framebuffer *intel_fb;
-   struct intel_region *src;
-   const drm_clip_rect_t *clipRects;
-   int numClipRects;
-   int i;
-   GLenum format, type;
-
-   int xOrig, yOrig;
-   int origNumClipRects;
-   drm_clip_rect_t *origRects;
-
-   /*
-    * set up hardware state
-    */
-   intelFlush(&intel->ctx);
-
-   LOCK_HARDWARE(intel);
-
-   if (!intel->numClipRects) {
-      UNLOCK_HARDWARE(intel);
-      return;
-   }
-
-   intel->vtbl.install_meta_state(intel);
-
-   intel->vtbl.meta_no_depth_write(intel);
-   intel->vtbl.meta_no_stencil_write(intel);
-   intel->vtbl.meta_color_mask(intel, GL_FALSE);
-
-
-   /* save current drawing origin and cliprects (restored at end) */
-   xOrig = intel->drawX;
-   yOrig = intel->drawY;
-   origNumClipRects = intel->numClipRects;
-   origRects = intel->pClipRects;
-
-   /*
-    * set drawing origin, cliprects for full-screen access to rotated screen
-    */
-   fullRect.x1 = 0;
-   fullRect.y1 = 0;
-   fullRect.x2 = screen->rotatedWidth;
-   fullRect.y2 = screen->rotatedHeight;
-   intel->drawX = 0;
-   intel->drawY = 0;
-   intel->numClipRects = 1;
-   intel->pClipRects = &fullRect;
-
-   intel->vtbl.meta_draw_region(intel, screen->rotated_region, NULL);    /* ? */
-
-   intel_fb = dPriv->driverPrivate;
-
-   if ((srcBuf == BUFFER_BIT_BACK_LEFT && !intel_fb->pf_active)) {
-      src = intel_get_rb_region(&intel_fb->Base, BUFFER_BACK_LEFT);
-      clipRects = dPriv->pBackClipRects;
-      numClipRects = dPriv->numBackClipRects;
-   }
-   else {
-      src = intel_get_rb_region(&intel_fb->Base, BUFFER_FRONT_LEFT);
-      clipRects = dPriv->pClipRects;
-      numClipRects = dPriv->numClipRects;
-   }
-
-   if (src->cpp == 4) {
-      format = GL_BGRA;
-      type = GL_UNSIGNED_BYTE;
-   }
-   else {
-      format = GL_BGR;
-      type = GL_UNSIGNED_SHORT_5_6_5_REV;
-   }
-
-   /* set the whole screen up as a texture to avoid alignment issues */
-   intel->vtbl.meta_tex_rect_source(intel,
-                                    src->buffer,
-                                    screen->width,
-                                    screen->height, src->pitch, format, type);
-
-   intel->vtbl.meta_texture_blend_replace(intel);
-
-   /*
-    * loop over the source window's cliprects
-    */
-   for (i = 0; i < numClipRects; i++) {
-      int srcX0 = clipRects[i].x1;
-      int srcY0 = clipRects[i].y1;
-      int srcX1 = clipRects[i].x2;
-      int srcY1 = clipRects[i].y2;
-      GLfloat verts[4][2], tex[4][2];
-      int j;
-
-      /* build vertices for four corners of clip rect */
-      verts[0][0] = srcX0;
-      verts[0][1] = srcY0;
-      verts[1][0] = srcX1;
-      verts[1][1] = srcY0;
-      verts[2][0] = srcX1;
-      verts[2][1] = srcY1;
-      verts[3][0] = srcX0;
-      verts[3][1] = srcY1;
-
-      /* .. and texcoords */
-      tex[0][0] = srcX0;
-      tex[0][1] = srcY0;
-      tex[1][0] = srcX1;
-      tex[1][1] = srcY0;
-      tex[2][0] = srcX1;
-      tex[2][1] = srcY1;
-      tex[3][0] = srcX0;
-      tex[3][1] = srcY1;
-
-      /* transform coords to rotated screen coords */
-
-      for (j = 0; j < 4; j++) {
-         matrix23TransformCoordf(&screen->rotMatrix,
-                                 &verts[j][0], &verts[j][1]);
-      }
-
-      /* draw polygon to map source image to dest region */
-      intel_meta_draw_poly(intel, 4, verts, 0, 0, tex);
-
-   }                            /* cliprect loop */
-
-   intel->vtbl.leave_meta_state(intel);
-   intel_batchbuffer_flush(intel->batch);
-
-   /* restore original drawing origin and cliprects */
-   intel->drawX = xOrig;
-   intel->drawY = yOrig;
-   intel->numClipRects = origNumClipRects;
-   intel->pClipRects = origRects;
-
    UNLOCK_HARDWARE(intel);
 }
 
@@ -687,7 +509,7 @@ intel_wait_flips(struct intel_context *intel, GLuint batch_flags)
    }
 }
 
-
+#if 0
 /* Flip the front & back buffers
  */
 static GLboolean
@@ -744,37 +566,13 @@ intelPageFlip(const __DRIdrawablePrivate * dPriv)
    intel_flip_renderbuffers(intel_fb);
    intel_draw_buffer(&intel->ctx, &intel_fb->Base);
 
+   if (INTEL_DEBUG & DEBUG_IOCTL)
+      fprintf(stderr, "%s: success\n", __FUNCTION__);
+
    return GL_TRUE;
 }
+#endif
 
-#if 0
-void
-intelSwapBuffers(__DRIdrawablePrivate * dPriv)
-{
-   if (dPriv->driverPrivate) {
-      const struct gl_framebuffer *fb
-         = (struct gl_framebuffer *) dPriv->driverPrivate;
-      if (fb->Visual.doubleBufferMode) {
-         GET_CURRENT_CONTEXT(ctx);
-         if (ctx && ctx->DrawBuffer == fb) {
-            _mesa_notifySwapBuffers(ctx);       /* flush pending rendering */
-         }
-         if (intel->doPageFlip) {
-            intelPageFlip(dPriv);
-         }
-         else {
-            intelCopyBuffer(dPriv);
-         }
-      }
-   }
-   else {
-      _mesa_problem(NULL,
-                    "dPriv has no gl_framebuffer pointer in intelSwapBuffers");
-   }
-}
-#else
-/* Trunk version:
- */
 
 static GLboolean
 intelScheduleSwap(const __DRIdrawablePrivate * dPriv, GLboolean *missed_target)
@@ -790,7 +588,6 @@ intelScheduleSwap(const __DRIdrawablePrivate * dPriv, GLboolean *missed_target)
 
    if (!intel_fb->vblank_flags ||
        (intel_fb->vblank_flags & VBLANK_FLAG_NO_IRQ) ||
-       intelScreen->current_rotation != 0 ||
        intelScreen->drmMinor < (intel_fb->pf_active ? 9 : 6))
       return GL_FALSE;
 
@@ -852,7 +649,7 @@ intelScheduleSwap(const __DRIdrawablePrivate * dPriv, GLboolean *missed_target)
 
    return ret;
 }
-  
+
 void
 intelSwapBuffers(__DRIdrawablePrivate * dPriv)
 {
@@ -866,25 +663,17 @@ intelSwapBuffers(__DRIdrawablePrivate * dPriv)
       intel = intel_context(ctx);
 
       if (ctx->Visual.doubleBufferMode) {
-         intelScreenPrivate *screen = intel->intelScreen;
 	 GLboolean missed_target;
 	 struct intel_framebuffer *intel_fb = dPriv->driverPrivate;
 	 int64_t ust;
 
 	 _mesa_notifySwapBuffers(ctx);  /* flush pending rendering comands */
 
-         if (screen->current_rotation != 0 ||
-	     !intelScheduleSwap(dPriv, &missed_target)) {
+         if (!intelScheduleSwap(dPriv, &missed_target)) {
 	    driWaitForVBlank(dPriv, &intel_fb->vbl_seq, intel_fb->vblank_flags,
 			     &missed_target);
 
-	    if (screen->current_rotation != 0 || !intelPageFlip(dPriv)) {
-	       intelCopyBuffer(dPriv, NULL);
-	    }
-
-	    if (screen->current_rotation != 0) {
-	       intelRotateWindow(intel, dPriv, BUFFER_BIT_FRONT_LEFT);
-	    }
+            intelCopyBuffer(dPriv, NULL);
 	 }
 
 	 intel_fb->swap_count++;
@@ -902,7 +691,6 @@ intelSwapBuffers(__DRIdrawablePrivate * dPriv)
       fprintf(stderr, "%s: drawable has no context!\n", __FUNCTION__);
    }
 }
-#endif
 
 void
 intelCopySubBuffer(__DRIdrawablePrivate * dPriv, int x, int y, int w, int h)
@@ -914,17 +702,11 @@ intelCopySubBuffer(__DRIdrawablePrivate * dPriv, int x, int y, int w, int h)
 
       if (ctx->Visual.doubleBufferMode) {
          drm_clip_rect_t rect;
-#if 1
-         rect.x1 = x + dPriv->x;
-         rect.y1 = (dPriv->h - y - h) + dPriv->y;
-         rect.x2 = rect.x1 + w;
-         rect.y2 = rect.y1 + h;
-#else
+	 /* fixup cliprect (driDrawable may have changed?) later */
          rect.x1 = x;
-         rect.y1 = dPriv->h - y;
-         rect.x2 = rect.x1 + w;
-         rect.y2 = rect.y1 + h;
-#endif
+         rect.y1 = y;
+         rect.x2 = w;
+         rect.y2 = h;
          _mesa_notifySwapBuffers(ctx);  /* flush pending rendering comands */
          intelCopyBuffer(dPriv, &rect);
       }
@@ -952,7 +734,6 @@ intel_draw_buffer(GLcontext * ctx, struct gl_framebuffer *fb)
    struct intel_context *intel = intel_context(ctx);
    struct intel_region *colorRegion, *depthRegion = NULL;
    struct intel_renderbuffer *irbDepth = NULL, *irbStencil = NULL;
-   int front = 0;               /* drawing to front color buffer? */
 
    if (!fb) {
       /* this can happen during the initial context initialization */
@@ -987,33 +768,18 @@ intel_draw_buffer(GLcontext * ctx, struct gl_framebuffer *fb)
       /* writing to 0 or 2 or 4 color buffers */
       /*_mesa_debug(ctx, "Software rendering\n");*/
       FALLBACK(intel, INTEL_FALLBACK_DRAW_BUFFER, GL_TRUE);
-      front = 1;                /* might not have back color buffer */
    }
    else {
       /* draw to exactly one color buffer */
       /*_mesa_debug(ctx, "Hardware rendering\n");*/
       FALLBACK(intel, INTEL_FALLBACK_DRAW_BUFFER, GL_FALSE);
-      if (fb->_ColorDrawBufferMask[0] == BUFFER_BIT_FRONT_LEFT) {
-         front = 1;
-      }
    }
 
    /*
     * Get the intel_renderbuffer for the colorbuffer we're drawing into.
     * And set up cliprects.
     */
-   if (fb->Name == 0) {
-      intelSetPrivbufClipRects(intel);
-      /* drawing to window system buffer */
-      if (front) {
-         colorRegion = intel_get_rb_region(fb, BUFFER_FRONT_LEFT);
-      }
-      else {
-         colorRegion = intel_get_rb_region(fb, BUFFER_BACK_LEFT);
-      }
-   }
-   else {
-      /* drawing to user-created FBO */
+   {
       struct intel_renderbuffer *irb;
       intelSetRenderbufferClipRects(intel);
       irb = intel_renderbuffer(fb->_ColorDrawBuffers[0][0]);
@@ -1086,16 +852,6 @@ intel_draw_buffer(GLcontext * ctx, struct gl_framebuffer *fb)
    /**
     ** Release old regions, reference new regions
     **/
-#if 0                           /* XXX FBO: this seems to be redundant with i915_state_draw_region() */
-   if (intel->draw_region != colorRegion) {
-      intel_region_release(&intel->draw_region);
-      intel_region_reference(&intel->draw_region, colorRegion);
-   }
-   if (intel->intelScreen->depth_region != depthRegion) {
-      intel_region_release(&intel->intelScreen->depth_region);
-      intel_region_reference(&intel->intelScreen->depth_region, depthRegion);
-   }
-#endif
 
    intel->vtbl.set_draw_region(intel, colorRegion, depthRegion);
 

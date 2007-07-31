@@ -879,7 +879,6 @@ i830Enable(GLcontext * ctx, GLenum cap, GLboolean state)
 static void
 i830_init_packets(struct i830_context *i830)
 {
-   intelScreenPrivate *screen = i830->intel.intelScreen;
 
    /* Zero all state */
    memset(&i830->state, 0, sizeof(i830->state));
@@ -1032,15 +1031,6 @@ i830_init_packets(struct i830_context *i830)
 
 
    i830->state.Stipple[I830_STPREG_ST0] = _3DSTATE_STIPPLE;
-
-   i830->state.Buffer[I830_DESTREG_CBUFADDR0] = _3DSTATE_BUF_INFO_CMD;
-   i830->state.Buffer[I830_DESTREG_CBUFADDR1] = (BUF_3D_ID_COLOR_BACK | BUF_3D_PITCH(screen->front.pitch) |     /* pitch in bytes */
-                                                 BUF_3D_USE_FENCE);
-
-
-   i830->state.Buffer[I830_DESTREG_DBUFADDR0] = _3DSTATE_BUF_INFO_CMD;
-   i830->state.Buffer[I830_DESTREG_DBUFADDR1] = (BUF_3D_ID_DEPTH | BUF_3D_PITCH(screen->depth.pitch) |  /* pitch in bytes */
-                                                 BUF_3D_USE_FENCE);
 
    i830->state.Buffer[I830_DESTREG_DV0] = _3DSTATE_DST_BUF_VARS_CMD;
 

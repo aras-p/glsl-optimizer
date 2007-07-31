@@ -50,17 +50,8 @@ typedef struct
 typedef struct
 {
    intelRegion front;
-   intelRegion back;
-   intelRegion third;
-   intelRegion rotated;
-   intelRegion depth;
-   intelRegion tex;
 
    struct intel_region *front_region;
-   struct intel_region *back_region;
-   struct intel_region *third_region;
-   struct intel_region *depth_region;
-   struct intel_region *rotated_region;
 
    int deviceID;
    int width;
@@ -68,10 +59,6 @@ typedef struct
    int mem;                     /* unused */
 
    int cpp;                     /* for front and back buffers */
-/*    int bitsPerPixel;   */
-   int fbFormat;                /* XXX FBO: this is obsolete - remove after i830 updates */
-
-   int logTextureGranularity;
 
    __DRIscreenPrivate *driScrnPriv;
    unsigned int sarea_priv_offset;
@@ -83,8 +70,6 @@ typedef struct
 
    struct matrix23 rotMatrix;
 
-   int current_rotation;        /* 0, 90, 180 or 270 */
-   int rotatedWidth, rotatedHeight;
 
    /**
    * Configuration cache with default values for all contexts

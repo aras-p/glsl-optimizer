@@ -43,7 +43,7 @@
 #include "intel_pixel.h"
 #include "intel_buffer_objects.h"
 #include "intel_tris.h"
-
+#include "intel_fbo.h"
 
 
 static GLboolean
@@ -57,6 +57,7 @@ do_texture_drawpixels(GLcontext * ctx,
    struct intel_context *intel = intel_context(ctx);
    struct intel_region *dst = intel_drawbuf_region(intel);
    struct intel_buffer_object *src = intel_buffer_object(unpack->BufferObj);
+   struct intel_region *depthreg = NULL;
    GLuint rowLength = unpack->RowLength ? unpack->RowLength : width;
    GLuint src_offset;
 
@@ -112,7 +113,11 @@ do_texture_drawpixels(GLcontext * ctx,
 
    /* Set the 3d engine to draw into the destination region:
     */
-   intel->vtbl.meta_draw_region(intel, dst, intel->intelScreen->depth_region);
+   if (ctx->DrawBuffer->_DepthBuffer &&
+       ctx->DrawBuffer->_DepthBuffer->Wrapped)
+      depthreg = (intel_renderbuffer(ctx->DrawBuffer->_DepthBuffer->Wrapped))->region;
+
+   intel->vtbl.meta_draw_region(intel, dst, depthreg);
 
    intel->vtbl.meta_import_pixel_state(intel);
 
@@ -138,13 +143,14 @@ do_texture_drawpixels(GLcontext * ctx,
 
    LOCK_HARDWARE(intel);
 
-   if (intel->driDrawable->numClipRects) {
-      __DRIdrawablePrivate *dPriv = intel->driDrawable;
+   {
+      int bufHeight = ctx->DrawBuffer->Height;
+
       GLint srcx, srcy;
       GLint dstx, dsty;
 
       dstx = x;
-      dsty = dPriv->h - (y + height);
+      dsty = bufHeight - (y + height);
 
       srcx = 0;                 /* skiprows/pixels already done */
       srcy = 0;
@@ -172,8 +178,8 @@ do_texture_drawpixels(GLcontext * ctx,
        */
       intel_meta_draw_quad(intel,
                            dstx, dstx + width * ctx->Pixel.ZoomX,
-                           dPriv->h - (y + height * ctx->Pixel.ZoomY),
-                           dPriv->h - (y),
+                           bufHeight - (y + height * ctx->Pixel.ZoomY),
+                           bufHeight - (y),
                            -ctx->Current.RasterPos[2] * .5,
                            0x00ff00ff,
                            srcx, srcx + width, srcy + height, srcy);
@@ -206,14 +212,16 @@ do_texture_drawpixels(GLcontext * ctx,
  */
 static GLboolean
 do_blit_drawpixels(GLcontext * ctx,
-                   GLint x, GLint y,
+                   GLint dstx, GLint dsty,
                    GLsizei width, GLsizei height,
                    GLenum format, GLenum type,
                    const struct gl_pixelstore_attrib *unpack,
                    const GLvoid * pixels)
 {
    struct intel_context *intel = intel_context(ctx);
-   struct intel_region *dest = intel_drawbuf_region(intel);
+   struct gl_framebuffer *fb = ctx->DrawBuffer;
+   struct intel_renderbuffer *irbdraw;
+   struct intel_region *dest;
    struct intel_buffer_object *src = intel_buffer_object(unpack->BufferObj);
    GLuint src_offset;
    GLuint rowLength;
@@ -222,6 +230,32 @@ do_blit_drawpixels(GLcontext * ctx,
    if (INTEL_DEBUG & DEBUG_PIXEL)
       _mesa_printf("%s\n", __FUNCTION__);
 
+   if (type == GL_COLOR) {
+      irbdraw = intel_renderbuffer(fb->_ColorDrawBuffers[0][0]);
+      if (!irbdraw || !irbdraw->region)
+	 return GL_FALSE;
+   }
+   else if (type == GL_DEPTH) {
+      /* Don't think this is really possible execpt at 16bpp, when we have no stencil.
+       */
+      irbdraw = intel_renderbuffer(fb->_DepthBuffer->Wrapped);
+      if (!irbdraw || !irbdraw->region || !(irbdraw->region->cpp == 2))
+	 return GL_FALSE;
+   }
+   else if (type == GL_DEPTH_STENCIL_EXT) {
+      /* Does it matter whether it is stencil/depth or depth/stencil?
+       */
+      irbdraw = intel_renderbuffer(fb->_DepthBuffer->Wrapped);
+      if (!irbdraw || !irbdraw->region)
+	 return GL_FALSE;
+   }
+   else /* GL_STENCIL */ {
+      /* Don't think this is really possible. 
+       */
+      return GL_FALSE;
+   }
+
+   dest = irbdraw->region;
 
    if (!dest) {
       if (INTEL_DEBUG & DEBUG_PIXEL)
@@ -275,7 +309,7 @@ do_blit_drawpixels(GLcontext * ctx,
       if (INTEL_DEBUG & DEBUG_PIXEL)
          _mesa_printf("%s - bad PixelZoomY for blit\n", __FUNCTION__);
       return GL_FALSE;          /* later */
-      y -= height;
+      dsty -= height;
    }
    else if (ctx->Pixel.ZoomY == 1.0F) {
       rowLength = -rowLength;
@@ -289,50 +323,58 @@ do_blit_drawpixels(GLcontext * ctx,
    src_offset = (GLuint) _mesa_image_address(2, unpack, pixels, width, height,
                                              format, type, 0, 0, 0);
 
+   /* don't need a lock as we have no cliprects ? */
    intelFlush(&intel->ctx);
-   LOCK_HARDWARE(intel);
 
-   if (intel->driDrawable->numClipRects) {
-      __DRIdrawablePrivate *dPriv = intel->driDrawable;
-      int nbox = dPriv->numClipRects;
-      drm_clip_rect_t *box = dPriv->pClipRects;
-      drm_clip_rect_t rect;
-      drm_clip_rect_t dest_rect;
+   {
+      GLuint srcx = 0;
+      GLuint srcy = 0;
+      GLint dx = dstx;
+      GLint dy = dsty;
+      GLuint height_orig = height;
+
+      /* Do scissoring and clipping in GL coordinates, no need to clip against
+       * pbo src region (note fbo fields include scissor already):
+       */
+      height_orig = height;
+      if (!_mesa_clip_to_region(fb->_Xmin, fb->_Ymin,
+				fb->_Xmax - 1, fb->_Ymax - 1,
+				&dstx, &dsty, &width, &height))
+         goto out;
+
+      srcx = dstx - dx;
+      srcy = dsty - dy;
+
       struct _DriBufferObject *src_buffer =
          intel_bufferobj_buffer(intel, src, INTEL_READ);
-      int i;
 
-      dest_rect.x1 = dPriv->x + x;
-      dest_rect.y1 = dPriv->y + dPriv->h - (y + height);
-      dest_rect.x2 = dest_rect.x1 + width;
-      dest_rect.y2 = dest_rect.y1 + height;
+      /* Convert from GL to hardware coordinates:
+       */
+      dsty = fb->Height - dsty - height;
+      srcy = height_orig - srcy - height;
 
-      for (i = 0; i < nbox; i++) {
-         if (!intel_intersect_cliprects(&rect, &dest_rect, &box[i]))
-            continue;
-
+      {
          intelEmitCopyBlit(intel,
                            dest->cpp,
                            rowLength,
                            src_buffer, src_offset,
                            dest->pitch,
                            dest->buffer, 0,
-                           rect.x1 - dest_rect.x1,
-                           rect.y2 - dest_rect.y2,
-                           rect.x1,
-                           rect.y1, rect.x2 - rect.x1, rect.y2 - rect.y1,
+                           srcx, srcy,
+                           dstx, dsty, width, height,
 			   ctx->Color.ColorLogicOpEnabled ?
 			   ctx->Color.LogicOp : GL_COPY);
       }
       fence = intel_batchbuffer_flush(intel->batch);
       driFenceReference(fence);
    }
-   UNLOCK_HARDWARE(intel);
 
    if (fence) {
       driFenceFinish(fence, DRM_FENCE_TYPE_EXE | DRM_I915_FENCE_TYPE_RW, GL_FALSE);
       driFenceUnReference(fence);
    }
+
+   out:
 
    if (INTEL_DEBUG & DEBUG_PIXEL)
       _mesa_printf("%s - DONE\n", __FUNCTION__);
@@ -371,7 +413,8 @@ intelDrawPixels(GLcontext * ctx,
        */
       struct gl_fragment_program *fpSave = ctx->FragmentProgram._Current;
    /* can't just set current frag prog to 0 here as on buffer resize
-      we'll get new state checks which will segfault. Remains a hack. */
+      we'll get new state checks which will segfault (actually don't get them
+      with current priv buffers). Remains a hack. */
       ctx->FragmentProgram._Current = NULL;
       ctx->FragmentProgram._UseTexEnvProgram = GL_FALSE;
       ctx->FragmentProgram._Active = GL_FALSE;

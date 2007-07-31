@@ -42,21 +42,25 @@
 #include "intel_regions.h"
 #include "intel_tris.h"
 #include "intel_pixel.h"
+#include "intel_fbo.h"
 
 #define FILE_DEBUG_FLAG DEBUG_PIXEL
 
 static struct intel_region *
 copypix_src_region(struct intel_context *intel, GLenum type)
 {
+   struct intel_renderbuffer *irb;
+
    switch (type) {
    case GL_COLOR:
       return intel_readbuf_region(intel);
    case GL_DEPTH:
       /* Don't think this is really possible execpt at 16bpp, when we have no stencil.
        */
-      if (intel->intelScreen->depth_region && 
-	  intel->intelScreen->depth_region->cpp == 2)
-         return intel->intelScreen->depth_region;
+      irb = intel_renderbuffer(intel->ctx.ReadBuffer->_DepthBuffer->Wrapped);
+         if (irb && irb->region && irb->region->cpp == 2)
+            return irb->region;
+      break;
    case GL_STENCIL:
       /* Don't think this is really possible. 
        */
@@ -64,7 +68,10 @@ copypix_src_region(struct intel_context *intel, GLenum type)
    case GL_DEPTH_STENCIL_EXT:
       /* Does it matter whether it is stencil/depth or depth/stencil?
        */
-      return intel->intelScreen->depth_region;
+      irb = intel_renderbuffer(intel->ctx.ReadBuffer->_DepthBuffer->Wrapped);
+         if (irb && irb->region)
+            return irb->region;
+      break;
    default:
       break;
    }
@@ -72,33 +79,6 @@ copypix_src_region(struct intel_context *intel, GLenum type)
    return NULL;
 }
 
-
-/**
- * Check if any fragment operations are in effect which might effect
- * glCopyPixels.  Differs from intel_check_blit_fragment_ops in that
- * we allow Scissor.
- */
-static GLboolean
-intel_check_copypixel_blit_fragment_ops(GLcontext * ctx)
-{
-   if (ctx->NewState)
-      _mesa_update_state(ctx);
-
-   /* Could do logicop with the blitter: 
-    */
-   return !(ctx->_ImageTransferState ||
-            ctx->Color.AlphaEnabled ||
-            ctx->Depth.Test ||
-            ctx->Fog.Enabled ||
-            ctx->Stencil.Enabled ||
-            !ctx->Color.ColorMask[0] ||
-            !ctx->Color.ColorMask[1] ||
-            !ctx->Color.ColorMask[2] ||
-            !ctx->Color.ColorMask[3] ||
-            ctx->Texture._EnabledUnits ||
-	    ctx->FragmentProgram._Enabled ||
-	    ctx->Color.BlendEnabled);
-}
 
 /* Doesn't work for overlapping regions.  Could do a double copy or
  * just fallback.
@@ -112,6 +92,7 @@ do_texture_copypixels(GLcontext * ctx,
    struct intel_context *intel = intel_context(ctx);
    struct intel_region *dst = intel_drawbuf_region(intel);
    struct intel_region *src = copypix_src_region(intel, type);
+   struct intel_region *depthreg = NULL;
    GLenum src_format;
    GLenum src_type;
 
@@ -164,7 +145,11 @@ do_texture_copypixels(GLcontext * ctx,
 
    /* Set the 3d engine to draw into the destination region:
     */
-   intel->vtbl.meta_draw_region(intel, dst, intel->intelScreen->depth_region);
+   if (ctx->DrawBuffer->_DepthBuffer &&
+       ctx->DrawBuffer->_DepthBuffer->Wrapped)
+      depthreg = (intel_renderbuffer(ctx->DrawBuffer->_DepthBuffer->Wrapped))->region;
+
+   intel->vtbl.meta_draw_region(intel, dst, depthreg);
 
    intel->vtbl.meta_import_pixel_state(intel);
 
@@ -191,14 +176,10 @@ do_texture_copypixels(GLcontext * ctx,
 
    LOCK_HARDWARE(intel);
 
-   if (intel->driDrawable->numClipRects) {
-      __DRIdrawablePrivate *dPriv = intel->driDrawable;
-
-
-      srcy = dPriv->h - srcy - height;  /* convert from gl to hardware coords */
-
-      srcx += dPriv->x;
-      srcy += dPriv->y;
+   {
+      int dstbufHeight = ctx->DrawBuffer->Height;
+      /* convert from gl to hardware coords */
+      srcy = ctx->ReadBuffer->Height - srcy - height;
 
       /* Clip against the source region.  This is the only source
        * clipping we do.  XXX: Just set the texcord wrap mode to clamp
@@ -209,7 +190,8 @@ do_texture_copypixels(GLcontext * ctx,
          GLint orig_x = srcx;
          GLint orig_y = srcy;
 
-         if (!_mesa_clip_to_region(0, 0, src->pitch, src->height,
+         if (!_mesa_clip_to_region(0, 0, ctx->ReadBuffer->Width - 1,
+				   ctx->ReadBuffer->Height - 1,
                                    &srcx, &srcy, &width, &height))
             goto out;
 
@@ -220,11 +202,11 @@ do_texture_copypixels(GLcontext * ctx,
       /* Just use the regular cliprect mechanism...  Does this need to
        * even hold the lock???
        */
-      intel_meta_draw_quad(intel, 
-			   dstx, 
-			   dstx + width * ctx->Pixel.ZoomX, 
-			   dPriv->h - (dsty + height * ctx->Pixel.ZoomY), 
-			   dPriv->h - (dsty), 0,   /* XXX: what z value? */
+      intel_meta_draw_quad(intel,
+			   dstx,
+			   dstx + width * ctx->Pixel.ZoomX,
+			   dstbufHeight - (dsty + height * ctx->Pixel.ZoomY),
+			   dstbufHeight - (dsty), 0,   /* XXX: what z value? */
                            0x00ff00ff,
                            srcx, srcx + width, srcy, srcy + height);
 
@@ -252,102 +234,96 @@ do_blit_copypixels(GLcontext * ctx,
                    GLint dstx, GLint dsty, GLenum type)
 {
    struct intel_context *intel = intel_context(ctx);
-   struct intel_region *dst = intel_drawbuf_region(intel);
-   struct intel_region *src = copypix_src_region(intel, type);
+   struct gl_framebuffer *fb = ctx->DrawBuffer;
+   struct gl_framebuffer *fbread = ctx->ReadBuffer;
+   struct intel_renderbuffer *irbread;
+   struct intel_renderbuffer *irbdraw;
+   struct intel_region *dst;
+   struct intel_region *src;
 
    /* Copypixels can be more than a straight copy.  Ensure all the
     * extra operations are disabled:
     */
-   if (!intel_check_copypixel_blit_fragment_ops(ctx) ||
+   if (!intel_check_blit_fragment_ops(ctx) ||
        ctx->Pixel.ZoomX != 1.0F || ctx->Pixel.ZoomY != 1.0F)
       return GL_FALSE;
 
-   if (!src || !dst)
-      return GL_FALSE;
-
-
-
    intelFlush(&intel->ctx);
 
-   LOCK_HARDWARE(intel);
-
-   if (intel->driDrawable->numClipRects) {
-      __DRIdrawablePrivate *dPriv = intel->driDrawable;
-      drm_clip_rect_t *box = dPriv->pClipRects;
-      drm_clip_rect_t dest_rect;
-      GLint nbox = dPriv->numClipRects;
-      GLint delta_x = 0;
-      GLint delta_y = 0;
-      GLuint i;
-
-      /* Do scissoring in GL coordinates:
+   if (type == GL_COLOR) {
+      irbread = intel_renderbuffer(fbread->_ColorReadBuffer);
+      irbdraw = intel_renderbuffer(fb->_ColorDrawBuffers[0][0]);
+      if (!irbread || !irbread->region || !irbdraw || !irbdraw->region)
+	 return GL_FALSE;
+   }
+   else if (type == GL_DEPTH) {
+      /* Don't think this is really possible execpt at 16bpp, when we have no stencil.
        */
-      if (ctx->Scissor.Enabled)
-      {
-	 GLint x = ctx->Scissor.X;
-	 GLint y = ctx->Scissor.Y;
-	 GLuint w = ctx->Scissor.Width;
-	 GLuint h = ctx->Scissor.Height;
-	 GLint dx = dstx - srcx;
-         GLint dy = dsty - srcy;
+      irbread = intel_renderbuffer(fbread->_DepthBuffer->Wrapped);
+      irbdraw = intel_renderbuffer(fb->_DepthBuffer->Wrapped);
+      if (!irbread || !irbread->region || !irbdraw || !irbdraw->region
+	 || !(irbread->region->cpp == 2))
+	 return GL_FALSE;
+   }
+   else if (type == GL_DEPTH_STENCIL_EXT) {
+      /* Does it matter whether it is stencil/depth or depth/stencil?
+       */
+      irbread = intel_renderbuffer(fbread->_DepthBuffer->Wrapped);
+      irbdraw = intel_renderbuffer(fb->_DepthBuffer->Wrapped);
+      if (!irbread || !irbread->region || !irbdraw || !irbdraw->region)
+	 return GL_FALSE;
+   }
+   else /* GL_STENCIL */ {
+      /* Don't think this is really possible. 
+       */
+      return GL_FALSE;
+   }
 
-         if (!_mesa_clip_to_region(x, y, x+w-1, y+h-1, &dstx, &dsty, &width, &height))
-            goto out;
-	 
-         srcx = dstx - dx;
-         srcy = dsty - dy;
-      }
+   src = irbread->region;
+   dst = irbdraw->region;
+
+   {
+      GLint dx = dstx - srcx;
+      GLint dy = dsty - srcy;
+
+      /* Clip against dest, including scissor, in GL coordinates:
+       */
+
+      if (!_mesa_clip_to_region(fb->_Xmin, fb->_Ymin,
+			        fb->_Xmax - 1, fb->_Ymax - 1,
+				&dstx, &dsty, &width, &height))
+         goto out;
+
+      srcx = dstx - dx;
+      srcy = dsty - dy;
 
       /* Convert from GL to hardware coordinates:
        */
-      dsty = dPriv->h - dsty - height;  
-      srcy = dPriv->h - srcy - height;  
-      dstx += dPriv->x;
-      dsty += dPriv->y;
-      srcx += dPriv->x;
-      srcy += dPriv->y;
+      dsty = fb->Height - dsty - height;
+      srcy = fbread->Height - srcy - height;
 
-      /* Clip against the source region.  This is the only source
-       * clipping we do.  Dst is clipped with cliprects below.
+      /* Clip against the source region:
        */
+      dx = srcx - dstx;
+      dy = srcy - dsty;
+
+      if (!_mesa_clip_to_region(0, 0, irbread->Base.Width - 1,
+				irbread->Base.Height - 1,
+				&srcx, &srcy, &width, &height))
+         goto out;
+
+      dstx = srcx - dx;
+      dsty = srcy - dy;
+
+
       {
-         delta_x = srcx - dstx;
-         delta_y = srcy - dsty;
 
-         if (!_mesa_clip_to_region(0, 0, src->pitch, src->height,
-                                   &srcx, &srcy, &width, &height))
-            goto out;
-
-         dstx = srcx - delta_x;
-         dsty = srcy - delta_y;
-      }
-
-      dest_rect.x1 = dstx;
-      dest_rect.y1 = dsty;
-      dest_rect.x2 = dstx + width;
-      dest_rect.y2 = dsty + height;
-
-      /* Could do slightly more clipping: Eg, take the intersection of
-       * the existing set of cliprects and those cliprects translated
-       * by delta_x, delta_y:
-       * 
-       * This code will not overwrite other windows, but will
-       * introduce garbage when copying from obscured window regions.
-       */
-      for (i = 0; i < nbox; i++) {
-         drm_clip_rect_t rect;
-
-         if (!intel_intersect_cliprects(&rect, &dest_rect, &box[i]))
-            continue;
-
-
-         intelEmitCopyBlit(intel, dst->cpp, 
-			   src->pitch, src->buffer, 0, 
-			   dst->pitch, dst->buffer, 0, 
-			   rect.x1 + delta_x, 
-			   rect.y1 + delta_y,       /* srcx, srcy */
-                           rect.x1, rect.y1,    /* dstx, dsty */
-                           rect.x2 - rect.x1, rect.y2 - rect.y1,
+         intelEmitCopyBlit(intel, dst->cpp,
+			   src->pitch, src->buffer, 0,
+			   dst->pitch, dst->buffer, 0,
+			   srcx, srcy,
+			   dstx, dsty,
+			   width, height,
 			   ctx->Color.ColorLogicOpEnabled ?
 			   ctx->Color.LogicOp : GL_COPY);
       }
@@ -355,7 +331,6 @@ do_blit_copypixels(GLcontext * ctx,
     out:
       intel_batchbuffer_flush(intel->batch);
    }
-   UNLOCK_HARDWARE(intel);
 
    DBG("%s: success\n", __FUNCTION__);
    return GL_TRUE;

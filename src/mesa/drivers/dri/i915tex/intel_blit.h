@@ -32,7 +32,7 @@
 #include "intel_ioctl.h"
 #include "dri_bufmgr.h"
 
-extern void intelCopyBuffer(const __DRIdrawablePrivate * dpriv,
+extern void intelCopyBuffer(__DRIdrawablePrivate * dpriv,
                             const drm_clip_rect_t * rect);
 
 extern void intelClearWithBlit(GLcontext * ctx, GLbitfield mask);
