@@ -61,13 +61,13 @@ update_framebuffer_state( struct st_context *st )
 
    rb = st->ctx->DrawBuffer->_DepthBuffer;
    if (rb) {
-      assert(rb->surface);
+      assert(rb->Wrapped->surface);
       framebuffer.zbuf = rb->Wrapped->surface;
    }
 
    rb = st->ctx->DrawBuffer->_StencilBuffer;
    if (rb) {
-      assert(rb->surface);
+      assert(rb->Wrapped->surface);
       framebuffer.sbuf = rb->Wrapped->surface;
    }
 
