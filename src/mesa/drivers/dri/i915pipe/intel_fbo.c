@@ -40,9 +40,9 @@
 #include "intel_depthstencil.h"
 #include "intel_fbo.h"
 #include "intel_mipmap_tree.h"
-#include "intel_regions.h"
 #include "intel_span.h"
 
+#include "pipe/p_context.h"
 
 #define FILE_DEBUG_FLAG DEBUG_FBO
 
@@ -111,7 +111,7 @@ intel_flip_renderbuffers(struct intel_framebuffer *intel_fb)
 }
 
 
-struct intel_region *
+struct pipe_region *
 intel_get_rb_region(struct gl_framebuffer *fb, GLuint attIndex)
 {
    struct intel_renderbuffer *irb = intel_get_renderbuffer(fb, attIndex);
@@ -153,7 +153,7 @@ intel_delete_renderbuffer(struct gl_renderbuffer *rb)
    }
 
    if (intel && irb->region) {
-      intel_region_release(&irb->region);
+      intel->pipe->region_release(intel->pipe, &irb->region);
    }
 
    _mesa_free(irb);
@@ -265,7 +265,7 @@ intel_alloc_renderbuffer_storage(GLcontext * ctx, struct gl_renderbuffer *rb,
 
    /* free old region */
    if (irb->region) {
-      intel_region_release(&irb->region);
+      intel->pipe->region_release(intel->pipe, &irb->region);
    }
 
    /* allocate new memory region/renderbuffer */
@@ -282,7 +282,7 @@ intel_alloc_renderbuffer_storage(GLcontext * ctx, struct gl_renderbuffer *rb,
       DBG("Allocating %d x %d Intel RBO (pitch %d)\n", width,
 	  height, pitch);
 
-      irb->region = intel_region_alloc(intel->intelScreen, cpp, pitch, height);
+      irb->region = intel->pipe->region_alloc(intel->pipe, cpp, pitch, height);
       if (!irb->region)
          return GL_FALSE;       /* out of memory? */
 
@@ -382,7 +382,7 @@ intel_new_renderbuffer_fb(GLuint intFormat)
    irb->Base.surface = intel_new_surface(intFormat);
    irb->Base.surface->rb = irb;
 
-   return &irb->Base;
+   return irb;
 }
 
 /**
@@ -509,6 +509,7 @@ intel_wrap_texture(GLcontext * ctx, struct gl_texture_image *texImage)
 
    irb->Base.Delete = intel_delete_renderbuffer;
    irb->Base.AllocStorage = intel_nop_alloc_storage;
+
    intel_set_span_functions(&irb->Base);
 
    irb->RenderToTexture = GL_TRUE;
@@ -528,6 +529,7 @@ intel_render_texture(GLcontext * ctx,
                      struct gl_framebuffer *fb,
                      struct gl_renderbuffer_attachment *att)
 {
+   struct intel_context *intel = intel_context(ctx);
    struct gl_texture_image *newImage
       = att->Texture->Image[att->CubeMapFace][att->TextureLevel];
    struct intel_renderbuffer *irb = intel_renderbuffer(att->Renderbuffer);
@@ -560,8 +562,8 @@ intel_render_texture(GLcontext * ctx,
    intel_image = intel_texture_image(newImage);
    if (irb->region != intel_image->mt->region) {
       if (irb->region)
-	 intel_region_release(&irb->region);
-      intel_region_reference(&irb->region, intel_image->mt->region);
+	 intel->pipe->region_release(intel->pipe, &irb->region);
+      pipe_region_reference(&irb->region, intel_image->mt->region);
    }
 
    /* compute offset of the particular 2D image within the texture region */
@@ -590,13 +592,14 @@ static void
 intel_finish_render_texture(GLcontext * ctx,
                             struct gl_renderbuffer_attachment *att)
 {
+   struct intel_context *intel = intel_context(ctx);
    struct intel_renderbuffer *irb = intel_renderbuffer(att->Renderbuffer);
 
    DBG("End render texture (tid %x) tex %u\n", _glthread_GetID(), att->Texture->Name);
 
    if (irb) {
       /* just release the region */
-      intel_region_release(&irb->region);
+      intel->pipe->region_release(intel->pipe, &irb->region);
    }
    else if (att->Renderbuffer) {
       /* software fallback */

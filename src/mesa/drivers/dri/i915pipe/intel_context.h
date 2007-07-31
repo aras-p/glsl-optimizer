@@ -48,7 +48,8 @@
 #define DV_PF_565  (2<<8)
 #define DV_PF_8888 (3<<8)
 
-struct intel_region;
+struct pipe_context;
+struct pipe_region;
 struct intel_context;
 struct _DriBufferObject;
 
@@ -121,6 +122,8 @@ struct intel_context
 {
    GLcontext ctx;               /* the parent class */
    
+   struct pipe_context *pipe;
+
    GLint refcount;
    GLuint Fallback;
    GLuint NewGLState;
@@ -421,6 +424,8 @@ intel_texture_image(struct gl_texture_image *img)
 
 extern struct intel_renderbuffer *intel_renderbuffer(struct gl_renderbuffer
                                                      *rb);
+
+extern void intel_init_region_functions(struct pipe_context *pipe);
 
 
 #endif

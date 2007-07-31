@@ -32,8 +32,11 @@
 
 #include "intel_context.h"
 #include "intel_buffer_objects.h"
-#include "intel_regions.h"
 #include "dri_bufmgr.h"
+
+#include "pipe/p_state.h"
+#include "pipe/p_context.h"
+
 
 /**
  * There is some duplication between mesa's bufferobjects and our
@@ -89,7 +92,7 @@ intel_bufferobj_cow(struct intel_context *intel,
                     struct intel_buffer_object *intel_obj)
 {
    assert(intel_obj->region);
-   intel_region_cow(intel->intelScreen, intel_obj->region);
+   intel->pipe->region_cow(intel->pipe, intel_obj->region);
 }
 
 

@@ -55,12 +55,12 @@
 #include "intel_batchbuffer.h"
 #include "intel_blit.h"
 #include "intel_pixel.h"
-#include "intel_regions.h"
 #include "intel_buffer_objects.h"
 #include "intel_fbo.h"
 
 #include "pipe/softpipe/sp_context.h"
 #include "state_tracker/st_public.h"
+#include "state_tracker/st_context.h"
 
 
 #include "drirenderbuffer.h"
@@ -90,7 +90,7 @@ int INTEL_DEBUG = (0);
 #include "extension_helper.h"
 
 
-#define DRIVER_DATE                     "20061102"
+#define DRIVER_DATE                     "20070731"
 
 _glthread_Mutex lockMutex;
 static GLboolean lockMutexInit = GL_FALSE;
@@ -355,13 +355,6 @@ intelCreateContext(const __GLcontextModes * mesaVis,
    int fthrottle_mode;
    GLboolean havePools;
 
-   DRM_LIGHT_LOCK(sPriv->fd, &sPriv->pSAREA->lock, driContextPriv->hHWContext);
-   havePools = intelCreatePools(intelScreen);
-   DRM_UNLOCK(sPriv->fd, &sPriv->pSAREA->lock, driContextPriv->hHWContext);
-
-   if (!havePools)
-      return GL_FALSE;
-
    intelInitDriverFunctions(&functions);
 
    if (!_mesa_initialize_context(&intel->ctx,
@@ -416,10 +409,30 @@ intelCreateContext(const __GLcontextModes * mesaVis,
    _tnl_CreateContext(ctx);
    _swsetup_CreateContext(ctx);
 
-
    /* Configure swrast to match hardware characteristics: */
    _swrast_allow_pixel_fog(ctx, GL_FALSE);
    _swrast_allow_vertex_fog(ctx, GL_TRUE);
+
+   /*
+    * Pipe-related setup
+    */
+   st_create_context( &intel->ctx,
+		      softpipe_create() );
+   
+   intel->pipe = intel->ctx.st->pipe;
+   intel->pipe->screen = intelScreen;
+   intelScreen->pipe = intel->pipe;
+   intel_init_region_functions(intel->pipe);
+
+   /*
+    * memory pools
+    */
+   DRM_LIGHT_LOCK(sPriv->fd, &sPriv->pSAREA->lock, driContextPriv->hHWContext);
+   havePools = intelCreatePools(intelScreen);
+   DRM_UNLOCK(sPriv->fd, &sPriv->pSAREA->lock, driContextPriv->hHWContext);
+   if (!havePools)
+      return GL_FALSE;
+
 
    /* Dri stuff */
    intel->hHWContext = driContextPriv->hHWContext;
@@ -496,10 +509,6 @@ intelCreateContext(const __GLcontextModes * mesaVis,
       FALLBACK(intel, INTEL_FALLBACK_USER, 1);
    }
 
-
-   st_create_context( &intel->ctx,
-		      softpipe_create() );
-   
 
    return GL_TRUE;
 }

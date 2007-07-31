@@ -38,8 +38,8 @@
 #include "intel_context.h"
 #include "intel_fbo.h"
 #include "intel_depthstencil.h"
-#include "intel_regions.h"
 
+#include "pipe/p_context.h"
 
 /**
  * The GL_EXT_framebuffer_object allows the user to create their own
@@ -95,12 +95,12 @@ map_regions(GLcontext * ctx,
 {
    struct intel_context *intel = intel_context(ctx);
    if (depthRb && depthRb->region) {
-      intel_region_map(intel->intelScreen, depthRb->region);
+      intel->pipe->region_map(intel->pipe, depthRb->region);
       depthRb->pfMap = depthRb->region->map;
       depthRb->pfPitch = depthRb->region->pitch;
    }
    if (stencilRb && stencilRb->region) {
-      intel_region_map(intel->intelScreen, stencilRb->region);
+      intel->pipe->region_map(intel->pipe, stencilRb->region);
       stencilRb->pfMap = stencilRb->region->map;
       stencilRb->pfPitch = stencilRb->region->pitch;
    }
@@ -113,12 +113,12 @@ unmap_regions(GLcontext * ctx,
 {
    struct intel_context *intel = intel_context(ctx);
    if (depthRb && depthRb->region) {
-      intel_region_unmap(intel->intelScreen, depthRb->region);
+      intel->pipe->region_unmap(intel->pipe, depthRb->region);
       depthRb->pfMap = NULL;
       depthRb->pfPitch = 0;
    }
    if (stencilRb && stencilRb->region) {
-      intel_region_unmap(intel->intelScreen, stencilRb->region);
+      intel->pipe->region_unmap(intel->pipe, stencilRb->region);
       stencilRb->pfMap = NULL;
       stencilRb->pfPitch = 0;
    }

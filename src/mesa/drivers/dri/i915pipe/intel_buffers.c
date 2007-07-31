@@ -31,7 +31,6 @@
 #include "intel_buffers.h"
 #include "intel_depthstencil.h"
 #include "intel_fbo.h"
-#include "intel_regions.h"
 #include "intel_batchbuffer.h"
 #include "intel_reg.h"
 #include "context.h"
@@ -96,7 +95,7 @@ intel_intersect_cliprects(drm_clip_rect_t * dst,
 /**
  * Return pointer to current color drawing region, or NULL.
  */
-struct intel_region *
+struct pipe_region *
 intel_drawbuf_region(struct intel_context *intel)
 {
    struct intel_renderbuffer *irbColor =
@@ -110,7 +109,7 @@ intel_drawbuf_region(struct intel_context *intel)
 /**
  * Return pointer to current color reading region, or NULL.
  */
-struct intel_region *
+struct pipe_region *
 intel_readbuf_region(struct intel_context *intel)
 {
    struct intel_renderbuffer *irb
@@ -325,7 +324,7 @@ intelClear(GLcontext *ctx, GLbitfield mask)
 
    /* HW stencil */
    if (mask & BUFFER_BIT_STENCIL) {
-      const struct intel_region *stencilRegion
+      const struct pipe_region *stencilRegion
          = intel_get_rb_region(fb, BUFFER_STENCIL);
       if (stencilRegion) {
          /* have hw stencil */
@@ -369,8 +368,10 @@ intelClear(GLcontext *ctx, GLbitfield mask)
    if (blit_mask)
       intelClearWithBlit(ctx, blit_mask);
 
+#if 1
    if (swrast_mask | tri_mask)
       _swrast_Clear(ctx, swrast_mask | tri_mask);
+#endif
 }
 
 
@@ -625,7 +626,7 @@ void
 intel_draw_buffer(GLcontext * ctx, struct gl_framebuffer *fb)
 {
    struct intel_context *intel = intel_context(ctx);
-   struct intel_region *colorRegion, *depthRegion = NULL;
+   struct pipe_region *colorRegion, *depthRegion = NULL;
    struct intel_renderbuffer *irbDepth = NULL, *irbStencil = NULL;
 
    if (!fb) {

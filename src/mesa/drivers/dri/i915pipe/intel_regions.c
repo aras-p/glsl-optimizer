@@ -39,17 +39,29 @@
  * last moment.
  */
 
+#include "pipe/p_state.h"
+#include "pipe/p_context.h"
+
 #include "intel_context.h"
-#include "intel_regions.h"
 #include "intel_blit.h"
 #include "intel_buffer_objects.h"
 #include "dri_bufmgr.h"
 #include "intel_batchbuffer.h"
 
+
 #define FILE_DEBUG_FLAG DEBUG_REGION
 
-void
-intel_region_idle(intelScreenPrivate *intelScreen, struct intel_region *region)
+
+/** XXX temporary helper */
+static intelScreenPrivate *
+pipe_screen(struct pipe_context *pipe)
+{
+   return (intelScreenPrivate *) pipe->screen;
+}
+
+
+static void
+intel_region_idle(struct pipe_context *pipe, struct pipe_region *region)
 {
    DBG("%s\n", __FUNCTION__);
    if (region && region->buffer)
@@ -58,13 +70,14 @@ intel_region_idle(intelScreenPrivate *intelScreen, struct intel_region *region)
 
 /* XXX: Thread safety?
  */
-GLubyte *
-intel_region_map(intelScreenPrivate *intelScreen, struct intel_region *region)
+static GLubyte *
+intel_region_map(struct pipe_context *pipe, struct pipe_region *region)
 {
    DBG("%s\n", __FUNCTION__);
    if (!region->map_refcount++) {
-      if (region->pbo)
-         intel_region_cow(intelScreen, region);
+      if (region->pbo) {
+         pipe->region_cow(pipe, region);
+      }
 
       region->map = driBOMap(region->buffer,
                              DRM_BO_FLAG_READ | DRM_BO_FLAG_WRITE, 0);
@@ -73,8 +86,8 @@ intel_region_map(intelScreenPrivate *intelScreen, struct intel_region *region)
    return region->map;
 }
 
-void
-intel_region_unmap(intelScreenPrivate *intelScreen, struct intel_region *region)
+static void
+intel_region_unmap(struct pipe_context *pipe, struct pipe_region *region)
 {
    DBG("%s\n", __FUNCTION__);
    if (!--region->map_refcount) {
@@ -85,11 +98,12 @@ intel_region_unmap(intelScreenPrivate *intelScreen, struct intel_region *region)
 
 #undef TEST_CACHED_TEXTURES
 
-struct intel_region *
-intel_region_alloc(intelScreenPrivate *intelScreen,
+static struct pipe_region *
+intel_region_alloc(struct pipe_context *pipe,
                    GLuint cpp, GLuint pitch, GLuint height)
 {
-   struct intel_region *region = calloc(sizeof(*region), 1);
+   intelScreenPrivate *intelScreen = pipe_screen(pipe);
+   struct pipe_region *region = calloc(sizeof(*region), 1);
    struct intel_context *intel = intelScreenContext(intelScreen);
 
    DBG("%s\n", __FUNCTION__);
@@ -114,18 +128,8 @@ intel_region_alloc(intelScreenPrivate *intelScreen,
    return region;
 }
 
-void
-intel_region_reference(struct intel_region **dst, struct intel_region *src)
-{
-   assert(*dst == NULL);
-   if (src) {
-      src->refcount++;
-      *dst = src;
-   }
-}
-
-void
-intel_region_release(struct intel_region **region)
+static void
+intel_region_release(struct pipe_context *pipe, struct pipe_region **region)
 {
    if (!*region)
       return;
@@ -148,14 +152,15 @@ intel_region_release(struct intel_region **region)
 }
 
 
-struct intel_region *
-intel_region_create_static(intelScreenPrivate *intelScreen,
+static struct pipe_region *
+intel_region_create_static(struct pipe_context *pipe,
                            GLuint mem_type,
                            GLuint offset,
                            void *virtual,
                            GLuint cpp, GLuint pitch, GLuint height)
 {
-   struct intel_region *region = calloc(sizeof(*region), 1);
+   intelScreenPrivate *intelScreen = pipe_screen(pipe);
+   struct pipe_region *region = calloc(sizeof(*region), 1);
    DBG("%s\n", __FUNCTION__);
 
    region->cpp = cpp;
@@ -179,14 +184,16 @@ intel_region_create_static(intelScreenPrivate *intelScreen,
 
 
 
-void
-intel_region_update_static(intelScreenPrivate *intelScreen,
-			   struct intel_region *region,
+static void
+intel_region_update_static(struct pipe_context *pipe,
+			   struct pipe_region *region,
                            GLuint mem_type,
                            GLuint offset,
                            void *virtual,
                            GLuint cpp, GLuint pitch, GLuint height)
 {
+   intelScreenPrivate *intelScreen = pipe_screen(pipe);
+
    DBG("%s\n", __FUNCTION__);
 
    region->cpp = cpp;
@@ -252,14 +259,15 @@ _mesa_copy_rect(GLubyte * dst,
  *
  * Currently always memcpy.
  */
-void
-intel_region_data(intelScreenPrivate *intelScreen,
-                  struct intel_region *dst,
+static void
+intel_region_data(struct pipe_context *pipe,
+                  struct pipe_region *dst,
                   GLuint dst_offset,
                   GLuint dstx, GLuint dsty,
                   const void *src, GLuint src_pitch,
                   GLuint srcx, GLuint srcy, GLuint width, GLuint height)
 {
+   intelScreenPrivate *intelScreen = pipe_screen(pipe);
    struct intel_context *intel = intelScreenContext(intelScreen);
 
    DBG("%s\n", __FUNCTION__);
@@ -270,20 +278,20 @@ intel_region_data(intelScreenPrivate *intelScreen,
    if (dst->pbo) {
       if (dstx == 0 &&
           dsty == 0 && width == dst->pitch && height == dst->height)
-         intel_region_release_pbo(intelScreen, dst);
+         pipe->region_release_pbo(pipe, dst);
       else
-         intel_region_cow(intelScreen, dst);
+         pipe->region_cow(pipe, dst);
    }
 
 
    LOCK_HARDWARE(intel);
 
-   _mesa_copy_rect(intel_region_map(intelScreen, dst) + dst_offset,
+   _mesa_copy_rect(pipe->region_map(pipe, dst) + dst_offset,
                    dst->cpp,
                    dst->pitch,
                    dstx, dsty, width, height, src, src_pitch, srcx, srcy);
 
-   intel_region_unmap(intelScreen, dst);
+   pipe->region_unmap(pipe, dst);
 
    UNLOCK_HARDWARE(intel);
 
@@ -292,15 +300,16 @@ intel_region_data(intelScreenPrivate *intelScreen,
 /* Copy rectangular sub-regions. Need better logic about when to
  * push buffers into AGP - will currently do so whenever possible.
  */
-void
-intel_region_copy(intelScreenPrivate *intelScreen,
-                  struct intel_region *dst,
+static void
+intel_region_copy(struct pipe_context *pipe,
+                  struct pipe_region *dst,
                   GLuint dst_offset,
                   GLuint dstx, GLuint dsty,
-                  struct intel_region *src,
+                  const struct pipe_region *src,
                   GLuint src_offset,
                   GLuint srcx, GLuint srcy, GLuint width, GLuint height)
 {
+   intelScreenPrivate *intelScreen = pipe_screen(pipe);
    struct intel_context *intel = intelScreenContext(intelScreen);
 
    DBG("%s\n", __FUNCTION__);
@@ -311,9 +320,9 @@ intel_region_copy(intelScreenPrivate *intelScreen,
    if (dst->pbo) {
       if (dstx == 0 &&
           dsty == 0 && width == dst->pitch && height == dst->height)
-         intel_region_release_pbo(intelScreen, dst);
+         pipe->region_release_pbo(pipe, dst);
       else
-         intel_region_cow(intelScreen, dst);
+         pipe->region_cow(pipe, dst);
    }
 
    assert(src->cpp == dst->cpp);
@@ -329,13 +338,14 @@ intel_region_copy(intelScreenPrivate *intelScreen,
 /* Fill a rectangular sub-region.  Need better logic about when to
  * push buffers into AGP - will currently do so whenever possible.
  */
-void
-intel_region_fill(intelScreenPrivate *intelScreen,
-                  struct intel_region *dst,
+static void
+intel_region_fill(struct pipe_context *pipe,
+                  struct pipe_region *dst,
                   GLuint dst_offset,
                   GLuint dstx, GLuint dsty,
                   GLuint width, GLuint height, GLuint color)
 {
+   intelScreenPrivate *intelScreen = pipe_screen(pipe);
    struct intel_context *intel = intelScreenContext(intelScreen);
 
    DBG("%s\n", __FUNCTION__);
@@ -346,9 +356,9 @@ intel_region_fill(intelScreenPrivate *intelScreen,
    if (dst->pbo) {
       if (dstx == 0 &&
           dsty == 0 && width == dst->pitch && height == dst->height)
-         intel_region_release_pbo(intelScreen, dst);
+         pipe->region_release_pbo(pipe, dst);
       else
-         intel_region_cow(intelScreen, dst);
+         pipe->region_cow(pipe, dst);
    }
 
    intelEmitFillBlit(intel,
@@ -360,16 +370,16 @@ intel_region_fill(intelScreenPrivate *intelScreen,
 /* Attach to a pbo, discarding our data.  Effectively zero-copy upload
  * the pbo's data.
  */
-void
-intel_region_attach_pbo(intelScreenPrivate *intelScreen,
-                        struct intel_region *region,
+static void
+intel_region_attach_pbo(struct pipe_context *pipe,
+                        struct pipe_region *region,
                         struct intel_buffer_object *pbo)
 {
    if (region->pbo == pbo)
       return;
 
    /* If there is already a pbo attached, break the cow tie now.
-    * Don't call intel_region_release_pbo() as that would
+    * Don't call pipe_region_release_pbo() as that would
     * unnecessarily allocate a new buffer we would have to immediately
     * discard.
     */
@@ -391,10 +401,11 @@ intel_region_attach_pbo(intelScreenPrivate *intelScreen,
 
 /* Break the COW tie to the pbo.  The pbo gets to keep the data.
  */
-void
-intel_region_release_pbo(intelScreenPrivate *intelScreen,
-                         struct intel_region *region)
+static void
+intel_region_release_pbo(struct pipe_context *pipe,
+                         struct pipe_region *region)
 {
+   intelScreenPrivate *intelScreen = pipe_screen(pipe);
    struct intel_context *intel = intelScreenContext(intelScreen);
 
    assert(region->buffer == region->pbo->buffer);
@@ -415,16 +426,17 @@ intel_region_release_pbo(intelScreenPrivate *intelScreen,
 /* Break the COW tie to the pbo.  Both the pbo and the region end up
  * with a copy of the data.
  */
-void
-intel_region_cow(intelScreenPrivate *intelScreen, struct intel_region *region)
+static void
+intel_region_cow(struct pipe_context *pipe, struct pipe_region *region)
 {
+   intelScreenPrivate *intelScreen = pipe_screen(pipe);
    struct intel_context *intel = intelScreenContext(intelScreen);
    struct intel_buffer_object *pbo = region->pbo;
 
    if (intel == NULL)
       return;
 
-   intel_region_release_pbo(intelScreen, region);
+   pipe->region_release_pbo(pipe, region);
 
    assert(region->cpp * region->pitch * region->height == pbo->Base.Size);
 
@@ -465,16 +477,38 @@ intel_region_cow(intelScreenPrivate *intelScreen, struct intel_region *region)
    }
 }
 
-struct _DriBufferObject *
-intel_region_buffer(intelScreenPrivate *intelScreen,
-                    struct intel_region *region, GLuint flag)
+static struct _DriBufferObject *
+intel_region_buffer(struct pipe_context *pipe,
+                    struct pipe_region *region, GLuint flag)
 {
    if (region->pbo) {
       if (flag == INTEL_WRITE_PART)
-         intel_region_cow(intelScreen, region);
+         pipe->region_cow(pipe, region);
       else if (flag == INTEL_WRITE_FULL)
-         intel_region_release_pbo(intelScreen, region);
+         pipe->region_release_pbo(pipe, region);
    }
 
    return region->buffer;
 }
+
+
+
+void
+intel_init_region_functions(struct pipe_context *pipe)
+{
+   pipe->region_idle = intel_region_idle;
+   pipe->region_map = intel_region_map;
+   pipe->region_unmap = intel_region_unmap;
+   pipe->region_alloc = intel_region_alloc;
+   pipe->region_release = intel_region_release;
+   pipe->region_create_static = intel_region_create_static;
+   pipe->region_update_static = intel_region_update_static;
+   pipe->region_data = intel_region_data;
+   pipe->region_copy = intel_region_copy;
+   pipe->region_fill = intel_region_fill;
+   pipe->region_cow = intel_region_cow;
+   pipe->region_attach_pbo = intel_region_attach_pbo;
+   pipe->region_release_pbo = intel_region_release_pbo;
+   pipe->region_buffer = intel_region_buffer;
+}
+

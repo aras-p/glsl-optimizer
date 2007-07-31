@@ -36,7 +36,7 @@ GLboolean intel_check_blit_fragment_ops(GLcontext * ctx);
 
 GLboolean intel_check_meta_tex_fragment_ops(GLcontext * ctx);
 
-GLboolean intel_check_blit_format(struct intel_region *region,
+GLboolean intel_check_blit_format(struct pipe_region *region,
                                   GLenum format, GLenum type);
 
 

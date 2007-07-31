@@ -35,6 +35,9 @@
 #include "intel_tex.h"
 #include "intel_mipmap_tree.h"
 
+#include "pipe/p_context.h"
+
+
 #define FILE_DEBUG_FLAG DEBUG_TEXTURE
 
 static void
@@ -65,7 +68,7 @@ intelTexSubimage(GLcontext * ctx,
       return;
 
    if (intelImage->mt)
-      intel_region_idle(intel->intelScreen, intelImage->mt->region);
+      intel->pipe->region_idle(intel->pipe, intelImage->mt->region);
 
    LOCK_HARDWARE(intel);
 

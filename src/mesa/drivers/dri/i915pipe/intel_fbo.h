@@ -34,7 +34,7 @@
 
 
 struct intel_context;
-struct intel_region;
+struct pipe_region;
 
 
 /**
@@ -76,7 +76,7 @@ struct intel_framebuffer
 struct intel_renderbuffer
 {
    struct gl_renderbuffer Base;
-   struct intel_region *region;
+   struct pipe_region *region;
    void *pfMap;                 /* possibly paged flipped map pointer */
    GLuint pfPitch;              /* possibly paged flipped pitch */
    GLboolean RenderToTexture;   /* RTT? */
@@ -115,7 +115,7 @@ extern void intel_flip_renderbuffers(struct intel_framebuffer *intel_fb);
 
 
 /* XXX make inline or macro */
-extern struct intel_region *intel_get_rb_region(struct gl_framebuffer *fb,
+extern struct pipe_region *intel_get_rb_region(struct gl_framebuffer *fb,
                                                 GLuint attIndex);
 
 

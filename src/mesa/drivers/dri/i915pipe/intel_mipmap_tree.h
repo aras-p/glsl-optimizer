@@ -28,14 +28,18 @@
 #ifndef INTEL_MIPMAP_TREE_H
 #define INTEL_MIPMAP_TREE_H
 
-#include "intel_regions.h"
+#include "intel_context.h"
+#include "main/glheader.h"
 
-/* A layer on top of the intel_regions code which adds:
+struct pipe_region;
+
+
+/* A layer on top of the pipe_regions code which adds:
  *
  * - Code to size and layout a region to hold a set of mipmaps.
  * - Query to determine if a new image fits in an existing tree.
  * - More refcounting 
- *     - maybe able to remove refcounting from intel_region?
+ *     - maybe able to remove refcounting from pipe_region?
  * - ?
  *
  * The fixed mipmap layout of intel hardware where one offset
@@ -45,7 +49,7 @@
  * independent offset.
  *
  * In an ideal world, each texture object would be associated with a
- * single bufmgr buffer or 2d intel_region, and all the images within
+ * single bufmgr buffer or 2d pipe_region, and all the images within
  * the texture object would slot into the tree as they arrive.  The
  * reality can be a little messier, as images can arrive from the user
  * with sizes that don't fit in the existing tree, or in an order
@@ -103,7 +107,7 @@ struct intel_mipmap_tree
 
    /* The data is held here:
     */
-   struct intel_region *region;
+   struct pipe_region *region;
 
    /* These are also refcounted:
     */

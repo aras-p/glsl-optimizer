@@ -25,19 +25,15 @@
  * 
  **************************************************************************/
 
-#ifndef _INTEL_INIT_H_
-#define _INTEL_INIT_H_
+#ifndef _INTEL_SCREEN_H_
+#define _INTEL_SCREEN_H_
 
-#include <sys/time.h>
 #include "dri_util.h"
 #include "intel_rotate.h"
 #include "i830_common.h"
 #include "xmlconfig.h"
 #include "dri_bufpool.h"
 
-/* XXX: change name or eliminate to avoid conflict with "struct
- * intel_region"!!!
- */
 typedef struct
 {
    drm_handle_t handle;
@@ -49,9 +45,10 @@ typedef struct
 
 typedef struct
 {
+   struct pipe_context *pipe;   /** for accessing region functions */
    intelRegion front;
 
-   struct intel_region *front_region;
+   struct pipe_region *front_region;
 
    int deviceID;
    int width;

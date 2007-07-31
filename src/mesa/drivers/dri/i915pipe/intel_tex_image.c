@@ -23,6 +23,8 @@
 #include "intel_ioctl.h"
 #include "intel_blit.h"
 
+#include "pipe/p_context.h"
+
 #define FILE_DEBUG_FLAG DEBUG_TEXTURE
 
 /* Functions to store texture images.  Where possible, mipmap_tree's
@@ -224,8 +226,8 @@ try_pbo_upload(struct intel_context *intel,
       struct _DriBufferObject *src_buffer =
          intel_bufferobj_buffer(intel, pbo, INTEL_READ);
       struct _DriBufferObject *dst_buffer =
-         intel_region_buffer(intel->intelScreen, intelImage->mt->region,
-                             INTEL_WRITE_FULL);
+         intel->pipe->region_buffer(intel->pipe, intelImage->mt->region,
+                                    INTEL_WRITE_FULL);
 
 
       intelEmitCopyBlit(intel,
@@ -281,7 +283,7 @@ try_pbo_zcopy(struct intel_context *intel,
       return GL_FALSE;
    }
 
-   intel_region_attach_pbo(intel->intelScreen, intelImage->mt->region, pbo);
+   intel->pipe->region_attach_pbo(intel->pipe, intelImage->mt->region, pbo);
 
    return GL_TRUE;
 }
@@ -411,7 +413,7 @@ intelTexImage(GLcontext * ctx,
       /* Attempt to texture directly from PBO data (zero copy upload).
        *
        * Currently disable as it can lead to worse as well as better
-       * performance (in particular when intel_region_cow() is
+       * performance (in particular when pipe_region_cow() is
        * required).
        */
       if (intelObj->mt == intelImage->mt &&
@@ -460,7 +462,7 @@ intelTexImage(GLcontext * ctx,
 
 
    if (intelImage->mt)
-      intel_region_idle(intel->intelScreen, intelImage->mt->region);
+      intel->pipe->region_idle(intel->pipe, intelImage->mt->region);
 
    LOCK_HARDWARE(intel);
 

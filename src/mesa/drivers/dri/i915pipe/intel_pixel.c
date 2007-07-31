@@ -25,13 +25,11 @@
  * 
  **************************************************************************/
 
-#include "enums.h"
 #include "state.h"
 #include "swrast/swrast.h"
 
 #include "intel_context.h"
 #include "intel_pixel.h"
-#include "intel_regions.h"
 
 
 void

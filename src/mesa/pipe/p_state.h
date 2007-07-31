@@ -272,6 +272,24 @@ struct pipe_surface
 };
 
 
+struct _DriBufferObject;
+struct intel_buffer_object;
+
+struct pipe_region
+{
+   struct _DriBufferObject *buffer;   /**< buffer manager's buffer ID */
+   GLuint refcount; /**< Reference count for region */
+   GLuint cpp;      /**< bytes per pixel */
+   GLuint pitch;    /**< in pixels */
+   GLuint height;   /**< in pixels */
+   GLubyte *map;    /**< only non-NULL when region is actually mapped */
+   GLuint map_refcount;  /**< Reference count for mapping */
+
+   GLuint draw_offset; /**< Offset of drawing address within the region */
+
+   struct intel_buffer_object *pbo;     /* zero-copy uploads */
+};
+
 /**
  * Texture object.
  * Mipmap levels, cube faces, 3D slices can be accessed as surfaces.

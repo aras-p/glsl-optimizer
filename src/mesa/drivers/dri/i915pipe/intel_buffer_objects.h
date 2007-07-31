@@ -31,7 +31,7 @@
 #include "mtypes.h"
 
 struct intel_context;
-struct intel_region;
+struct pipe_region;
 struct gl_buffer_object;
 
 
@@ -43,7 +43,7 @@ struct intel_buffer_object
    struct gl_buffer_object Base;
    struct _DriBufferObject *buffer;     /* the low-level buffer manager's buffer handle */
 
-   struct intel_region *region; /* Is there a zero-copy texture
+   struct pipe_region *region; /* Is there a zero-copy texture
                                    associated with this (pixel)
                                    buffer object? */
 };
@@ -75,7 +75,7 @@ intel_buffer_object(struct gl_buffer_object *obj)
       return NULL;
 }
 
-/* Helpers for zerocopy image uploads.  See also intel_regions.h:
+/* Helpers for zerocopy image uploads.  See also pipe_regions.h:
  */
 void intel_bufferobj_cow(struct intel_context *intel,
                          struct intel_buffer_object *intel_obj);

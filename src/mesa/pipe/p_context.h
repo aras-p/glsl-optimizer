@@ -114,7 +114,86 @@ struct pipe_context {
 
    void (*set_viewport_state)( struct pipe_context *,
                                const struct pipe_viewport_state * );
+
+
+   /*
+    * Memory region functions
+    * Some of these may go away...
+    */
+   struct pipe_region *(*region_alloc)(struct pipe_context *pipe,
+                                       GLuint cpp, GLuint pitch, GLuint height);
+
+   void (*region_release)(struct pipe_context *pipe, struct pipe_region **r);
+
+   struct pipe_region *(*region_create_static)(struct pipe_context *pipe,
+                                               GLuint mem_type,
+                                               GLuint offset,
+                                               void *virtual,
+                                               GLuint cpp, GLuint pitch,
+                                               GLuint height);
+
+   void (*region_update_static)(struct pipe_context *pipe,
+                                struct pipe_region *region,
+                                GLuint mem_type,
+                                GLuint offset,
+                                void *virtual,
+                                GLuint cpp, GLuint pitch, GLuint height);
+
+   void (*region_idle)(struct pipe_context *pipe, struct pipe_region *region);
+
+   GLubyte *(*region_map)(struct pipe_context *pipe, struct pipe_region *r);
+
+   void (*region_unmap)(struct pipe_context *pipe, struct pipe_region *r);
+
+   void (*region_data)(struct pipe_context *pipe,
+                       struct pipe_region *dest,
+                       GLuint dest_offset,
+                       GLuint destx, GLuint desty,
+                       const void *src, GLuint src_stride,
+                       GLuint srcx, GLuint srcy, GLuint width, GLuint height);
+
+   void (*region_copy)(struct pipe_context *pipe,
+                       struct pipe_region *dest,
+                       GLuint dest_offset,
+                       GLuint destx, GLuint desty,
+                       const struct pipe_region *src,
+                       GLuint src_offset,
+                       GLuint srcx, GLuint srcy, GLuint width, GLuint height);
+
+   void (*region_fill)(struct pipe_context *pipe,
+                       struct pipe_region *dst,
+                       GLuint dst_offset,
+                       GLuint dstx, GLuint dsty,
+                       GLuint width, GLuint height, GLuint color);
+
+   void (*region_cow)(struct pipe_context *pipe, struct pipe_region *region);
+
+   void (*region_attach_pbo)(struct pipe_context *pipe,
+                             struct pipe_region *region,
+                             struct intel_buffer_object *pbo);
+
+   void (*region_release_pbo)(struct pipe_context *pipe,
+                              struct pipe_region *region);
+
+   struct _DriBufferObject *(*region_buffer)(struct pipe_context *pipe,
+                                             struct pipe_region *region,
+                                             GLuint flag);
+
+   void *screen;  /**< temporary */
 };
 
 
-#endif
+
+static INLINE void
+pipe_region_reference(struct pipe_region **dst, struct pipe_region *src)
+{
+   assert(*dst == NULL);
+   if (src) {
+      src->refcount++;
+      *dst = src;
+   }
+}
+
+
+
+#endif /* PIPE_CONTEXT_H */

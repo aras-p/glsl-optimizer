@@ -36,7 +36,6 @@
 #include "intel_screen.h"
 #include "intel_context.h"
 #include "intel_fbo.h"
-#include "intel_regions.h"
 #include "swrast/swrast.h"
 
 int

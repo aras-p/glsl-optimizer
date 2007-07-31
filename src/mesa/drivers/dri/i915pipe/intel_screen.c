@@ -35,9 +35,8 @@
 #include "vblank.h"
 #include "xmlpool.h"
 
-
 #include "intel_screen.h"
-
+#include "intel_batchbuffer.h"
 #include "intel_buffers.h"
 #include "intel_tex.h"
 #include "intel_span.h"
@@ -46,8 +45,10 @@
 
 #include "i830_dri.h"
 #include "dri_bufpool.h"
-#include "intel_regions.h"
-#include "intel_batchbuffer.h"
+
+#include "pipe/p_context.h"
+
+
 
 PUBLIC const char __driConfigOptions[] =
    DRI_CONF_BEGIN DRI_CONF_SECTION_PERFORMANCE
@@ -93,26 +94,27 @@ intelMapScreenRegions(__DRIscreenPrivate * sPriv)
 }
 
 
-static struct intel_region *
-intel_recreate_static(intelScreenPrivate *intelScreen,
-		      struct intel_region *region,
+static struct pipe_region *
+intel_recreate_static(struct pipe_context *pipe,
+		      struct pipe_region *region,
 		      GLuint mem_type,
 		      GLuint offset,
 		      void *virtual,
 		      GLuint cpp, GLuint pitch, GLuint height)
 {
+   struct intel_context *intel = 0;
   if (region) {
-    intel_region_update_static(intelScreen, region, mem_type, offset,
-			       virtual, cpp, pitch, height);
+     pipe->region_update_static(pipe, region, mem_type, offset,
+                                virtual, cpp, pitch, height);
   } else {
-    region = intel_region_create_static(intelScreen, mem_type, offset,
-					virtual, cpp, pitch, height);
+     region = pipe->region_create_static(pipe, mem_type, offset,
+                                         virtual, cpp, pitch, height);
   }
   return region;
 }
 
 
-/* Create intel_region structs to describe the static front,back,depth
+/* Create pipe_region structs to describe the static front,back,depth
  * buffers created by the xserver.
  * Only used for real front buffer now.
  *
@@ -124,7 +126,7 @@ intel_recreate_static_regions(intelScreenPrivate *intelScreen)
 {
 /* this is the real front buffer which is only used for blitting to */
    intelScreen->front_region =
-      intel_recreate_static(intelScreen,
+      intel_recreate_static(intelScreen->pipe,
 			    intelScreen->front_region,
 			    DRM_BO_FLAG_MEM_TT,
 			    intelScreen->front.offset,

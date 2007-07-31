@@ -10,11 +10,11 @@
 
 #include "intel_context.h"
 #include "intel_buffers.h"
-#include "intel_regions.h"
 #include "intel_span.h"
 #include "intel_fbo.h"
 
 #include "pipe/p_state.h"
+#include "pipe/p_context.h"
 #include "pipe/p_defines.h"
 #include "pipe/softpipe/sp_surface.h"
 
@@ -173,7 +173,7 @@ map_surface_buffer(struct pipe_buffer *pb, GLuint access_mode)
 #if 0
       intelFinish(&intel->ctx);  /* XXX need this? */
 #endif
-      intel_region_map(intel->intelScreen, irb->region);
+      intel->pipe->region_map(intel->pipe, irb->region);
    }
    pb->ptr = irb->region->map;
 
@@ -194,7 +194,7 @@ unmap_surface_buffer(struct pipe_buffer *pb)
    if (irb->region) {
       GET_CURRENT_CONTEXT(ctx);
       struct intel_context *intel = intel_context(ctx);
-      intel_region_unmap(intel->intelScreen, irb->region);
+      intel->pipe->region_unmap(intel->pipe, irb->region);
    }
    pb->ptr = NULL;
 

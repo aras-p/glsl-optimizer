@@ -26,9 +26,6 @@
  **************************************************************************/
 
 
-#include <stdio.h>
-#include <errno.h>
-
 #include "mtypes.h"
 #include "context.h"
 #include "enums.h"
@@ -39,8 +36,10 @@
 #include "intel_context.h"
 #include "intel_fbo.h"
 #include "intel_reg.h"
-#include "intel_regions.h"
 #include "vblank.h"
+
+#include "pipe/p_context.h"
+
 
 #define FILE_DEBUG_FLAG DEBUG_BLIT
 
@@ -87,9 +86,9 @@ intelCopyBuffer(__DRIdrawablePrivate * dPriv,
 
    if (dPriv && dPriv->numClipRects) {
       struct intel_framebuffer *intel_fb = dPriv->driverPrivate;
-      const struct intel_region *frontRegion
+      const struct pipe_region *frontRegion
 	 = intelScreen->front_region;
-      const struct intel_region *backRegion
+      const struct pipe_region *backRegion
 	 = intel_fb->Base._ColorDrawBufferMask[0] == BUFFER_BIT_FRONT_LEFT ?
 	   intel_get_rb_region(&intel_fb->Base, BUFFER_FRONT_LEFT) :
 	   intel_get_rb_region(&intel_fb->Base, BUFFER_BACK_LEFT);
@@ -447,10 +446,10 @@ intelClearWithBlit(GLcontext * ctx, GLbitfield mask)
             const GLbitfield bufBit = 1 << buf;
             if ((clearMask & bufBit) && !(bufBit & skipBuffers)) {
                /* OK, clear this renderbuffer */
-               struct intel_region *irb_region =
+               struct pipe_region *irb_region =
 		  intel_get_rb_region(fb, buf);
                struct _DriBufferObject *write_buffer =
-                  intel_region_buffer(intel->intelScreen, irb_region,
+                  intel->pipe->region_buffer(intel->pipe, irb_region,
                                       all ? INTEL_WRITE_FULL :
                                       INTEL_WRITE_PART);
 

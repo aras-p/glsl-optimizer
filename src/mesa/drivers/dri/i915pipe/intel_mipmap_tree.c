@@ -27,8 +27,11 @@
 
 #include "intel_context.h"
 #include "intel_mipmap_tree.h"
-#include "intel_regions.h"
 #include "enums.h"
+
+#include "pipe/p_state.h"
+#include "pipe/p_context.h"
+
 
 #define FILE_DEBUG_FLAG DEBUG_MIPTREE
 
@@ -100,7 +103,7 @@ intel_miptree_create(struct intel_context *intel,
    ok = 0;			/* TODO */
 
    if (ok)
-      mt->region = intel_region_alloc(intel->intelScreen,
+      mt->region = intel->pipe->region_alloc(intel->pipe,
                                       mt->cpp, mt->pitch, mt->total_height);
 
    if (!mt->region) {
@@ -134,7 +137,7 @@ intel_miptree_release(struct intel_context *intel,
 
       DBG("%s deleting %p\n", __FUNCTION__, *mt);
 
-      intel_region_release(&((*mt)->region));
+      intel->pipe->region_release(intel->pipe, &((*mt)->region));
 
       for (i = 0; i < MAX_TEXTURE_LEVELS; i++)
          if ((*mt)->level[i].image_offset)
@@ -271,6 +274,7 @@ intel_miptree_image_map(struct intel_context * intel,
                         GLuint level,
                         GLuint * row_stride, GLuint * image_offsets)
 {
+   GLubyte *ptr;
    DBG("%s \n", __FUNCTION__);
 
    if (row_stride)
@@ -280,8 +284,9 @@ intel_miptree_image_map(struct intel_context * intel,
       memcpy(image_offsets, mt->level[level].image_offset,
              mt->level[level].depth * sizeof(GLuint));
 
-   return (intel_region_map(intel->intelScreen, mt->region) +
-           intel_miptree_image_offset(mt, face, level));
+   ptr = intel->pipe->region_map(intel->pipe, mt->region);
+
+   return ptr + intel_miptree_image_offset(mt, face, level);
 }
 
 void
@@ -289,7 +294,7 @@ intel_miptree_image_unmap(struct intel_context *intel,
                           struct intel_mipmap_tree *mt)
 {
    DBG("%s\n", __FUNCTION__);
-   intel_region_unmap(intel->intelScreen, mt->region);
+   intel->pipe->region_unmap(intel->pipe, mt->region);
 }
 
 
@@ -315,7 +320,7 @@ intel_miptree_image_data(struct intel_context *intel,
       height = dst->level[level].height;
       if(dst->compressed)
 	 height /= 4;
-      intel_region_data(intel->intelScreen, dst->region,
+      intel->pipe->region_data(intel->pipe, dst->region,
                         dst_offset + dst_depth_offset[i], /* dst_offset */
                         0, 0,                             /* dstx, dsty */
                         src,
@@ -347,7 +352,7 @@ intel_miptree_image_copy(struct intel_context *intel,
    if (dst->compressed)
       height /= 4;
    for (i = 0; i < depth; i++) {
-      intel_region_copy(intel->intelScreen,
+      intel->pipe->region_copy(intel->pipe,
                         dst->region, dst_offset + dst_depth_offset[i],
                         0,
                         0,

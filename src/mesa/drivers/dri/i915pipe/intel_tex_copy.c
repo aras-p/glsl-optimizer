@@ -36,7 +36,6 @@
 #include "intel_batchbuffer.h"
 #include "intel_buffers.h"
 #include "intel_mipmap_tree.h"
-#include "intel_regions.h"
 #include "intel_fbo.h"
 #include "intel_tex.h"
 #include "intel_blit.h"
@@ -45,12 +44,12 @@
 #define FILE_DEBUG_FLAG DEBUG_TEXTURE
 
 /**
- * Get the intel_region which is the source for any glCopyTex[Sub]Image call.
+ * Get the pipe_region which is the source for any glCopyTex[Sub]Image call.
  *
  * Do the best we can using the blitter.  A future project is to use
  * the texture engine and fragment programs for these copies.
  */
-static const struct intel_region *
+static const struct pipe_region *
 get_teximage_source(struct intel_context *intel, GLenum internalFormat)
 {
    struct intel_renderbuffer *irb;
@@ -92,7 +91,7 @@ do_copy_texsubimage(struct intel_context *intel,
                     GLint x, GLint y, GLsizei width, GLsizei height)
 {
    GLcontext *ctx = &intel->ctx;
-   const struct intel_region *src =
+   const struct pipe_region *src =
       get_teximage_source(intel, internalFormat);
 
    if (!intelImage->mt || !src) {
