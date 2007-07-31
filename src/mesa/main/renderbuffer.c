@@ -49,7 +49,6 @@
 
 #include "rbadaptors.h"
 
-#include "pipe/softpipe/sp_z_surface.h"
 #include "pipe/p_state.h"
 #include "pipe/p_context.h"
 #include "pipe/p_defines.h"
