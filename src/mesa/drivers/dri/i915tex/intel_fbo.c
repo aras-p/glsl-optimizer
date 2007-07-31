@@ -382,7 +382,7 @@ intel_new_renderbuffer_fb(GLuint intFormat)
    irb->Base.surface = intel_new_surface(intFormat);
    irb->Base.surface->rb = irb;
 
-   return &irb->Base;
+   return irb;
 }
 
 /**
