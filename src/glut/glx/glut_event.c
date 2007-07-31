@@ -24,7 +24,7 @@
 # ifdef __sgi
 #  include <bstring.h>    /* prototype for bzero used by FD_ZERO */
 # endif
-# if (defined(SVR4) || defined(CRAY) || defined(AIXV3)) && !defined(FD_SETSIZE)
+# if (defined(__FreeBSD__) || defined(SVR4) || defined(CRAY) || defined(AIXV3)) && !defined(FD_SETSIZE)
 #  include <sys/select.h> /* select system call interface */
 #  ifdef luna
 #   include <sysent.h>
