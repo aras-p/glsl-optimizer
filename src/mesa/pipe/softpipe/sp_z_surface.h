@@ -31,7 +31,7 @@
 
 
 extern struct softpipe_surface *
-softpipe_new_z_surface(GLuint depth);
+softpipe_new_z_surface(GLuint format);
 
 
 #endif /* SP_Z_SURFACE_H */

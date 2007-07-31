@@ -132,19 +132,21 @@
 /**
  * Texture/surface image formats (preliminary)
  */
-#define PIPE_FORMAT_U_R8_G8_B8_A8   0  /**< ubyte[4] RGBA */
-#define PIPE_FORMAT_U_A8_R8_G8_B8   1  /**< ubyte[4] ARGB */
-#define PIPE_FORMAT_U_R5_G6_B5      2  /**< 5/6/5 RGB */
-#define PIPE_FORMAT_U_L8            3  /**< ubyte luminance */
-#define PIPE_FORMAT_U_A8            4  /**< ubyte alpha */
-#define PIPE_FORMAT_U_I8            5  /**< ubyte intensity */
-#define PIPE_FORMAT_U_L8_A8         6  /**< ubyte luminance, alpha */
-#define PIPE_FORMAT_U_Z16           7  /**< ushort Z/depth */
-#define PIPE_FORMAT_F_Z32           8  /**< float Z/depth */
-#define PIPE_FORMAT_YCBCR           9
-#define PIPE_FORMAT_YCBCR_REV      10
-#define PIPE_FORMAT_U_S8           11  /**< 8-bit stencil */
-#define PIPE_FORMAT_Z24_S8         12  /**< 24-bit Z + 8-bit stencil */
+#define PIPE_FORMAT_NONE            0  /**< unstructured */
+#define PIPE_FORMAT_U_R8_G8_B8_A8   1  /**< ubyte[4] RGBA */
+#define PIPE_FORMAT_U_A8_R8_G8_B8   2  /**< ubyte[4] ARGB */
+#define PIPE_FORMAT_U_R5_G6_B5      3  /**< 5/6/5 RGB */
+#define PIPE_FORMAT_U_L8            4  /**< ubyte luminance */
+#define PIPE_FORMAT_U_A8            5  /**< ubyte alpha */
+#define PIPE_FORMAT_U_I8            6  /**< ubyte intensity */
+#define PIPE_FORMAT_U_L8_A8         7  /**< ubyte luminance, alpha */
+#define PIPE_FORMAT_YCBCR           8
+#define PIPE_FORMAT_YCBCR_REV       9
+#define PIPE_FORMAT_U_Z16          10  /**< ushort Z/depth */
+#define PIPE_FORMAT_U_Z32          11  /**< uint Z/depth */
+#define PIPE_FORMAT_F_Z32          12  /**< float Z/depth */
+#define PIPE_FORMAT_Z24_S8         13  /**< 24-bit Z + 8-bit stencil */
+#define PIPE_FORMAT_U_S8           14  /**< 8-bit stencil */
 
 
 /**

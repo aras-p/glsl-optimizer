@@ -51,6 +51,7 @@
 
 #include "pipe/softpipe/sp_z_surface.h"
 #include "pipe/p_state.h"
+#include "pipe/p_defines.h"
 
 
 /* 32-bit color index format.  Not a public format. */
@@ -1094,7 +1095,8 @@ _mesa_soft_renderbuffer_storage(GLcontext *ctx, struct gl_renderbuffer *rb,
       rb->PutValues = put_values_ushort;
       rb->PutMonoValues = put_mono_values_ushort;
       rb->DepthBits = 8 * sizeof(GLushort);
-      rb->surface = (struct pipe_surface *) softpipe_new_z_surface(16);
+      rb->surface
+         = (struct pipe_surface *) softpipe_new_z_surface(PIPE_FORMAT_U_Z16);
       pixelSize = sizeof(GLushort);
       break;
    case GL_DEPTH_COMPONENT24:
@@ -1117,6 +1119,8 @@ _mesa_soft_renderbuffer_storage(GLcontext *ctx, struct gl_renderbuffer *rb,
          rb->_ActualFormat = GL_DEPTH_COMPONENT32;
          rb->DepthBits = 32;
       }
+      rb->surface
+         = (struct pipe_surface *) softpipe_new_z_surface(PIPE_FORMAT_U_Z32);
       pixelSize = sizeof(GLuint);
       break;
    case GL_DEPTH_STENCIL_EXT:
@@ -1134,6 +1138,8 @@ _mesa_soft_renderbuffer_storage(GLcontext *ctx, struct gl_renderbuffer *rb,
       rb->PutMonoValues = put_mono_values_uint;
       rb->DepthBits = 24;
       rb->StencilBits = 8;
+      rb->surface
+         = (struct pipe_surface *) softpipe_new_z_surface(PIPE_FORMAT_Z24_S8);
       pixelSize = sizeof(GLuint);
       break;
    case GL_COLOR_INDEX8_EXT:
