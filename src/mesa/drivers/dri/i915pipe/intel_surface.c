@@ -133,8 +133,9 @@ read_quad_stencil(struct softpipe_surface *sps,
    /* extract high byte */
    ssss[0] = src[0] >> 24;
    ssss[1] = src[1] >> 24;
-   ssss[2] = src[-sps->surface.width] >> 24;
-   ssss[3] = src[-sps->surface.width + 1] >> 24;
+   src -= sps->surface.stride;
+   ssss[2] = src[0] >> 24;
+   ssss[3] = src[1] >> 24;
 }
 
 static void
@@ -245,15 +246,3 @@ intel_new_surface(GLuint intFormat)
 
    return &sps->surface;
 }
-
-
-
-struct pipe_surface *
-xmesa_get_stencil_surface(GLcontext *ctx)
-{
-   /* XXX fix */
-   return NULL;
-}
-
-
-
