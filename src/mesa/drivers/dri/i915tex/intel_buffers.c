@@ -308,22 +308,14 @@ intelClearWithTris(struct intel_context *intel, GLbitfield mask)
    LOCK_HARDWARE(intel);
 
    if (intel->numClipRects) {
-      GLint cx, cy, cw, ch;
       GLuint buf;
 
       intel->vtbl.install_meta_state(intel);
 
-      /* Get clear bounds after locking */
-      cx = fb->_Xmin;
-      cy = fb->_Ymin;
-      ch = fb->_Ymax - cx;
-      cw = fb->_Xmax - cy;
-
-      /* note: regardless of 'all', cx, cy, cw, ch are now correct */
-      clear.x1 = cx;
-      clear.y1 = cy;
-      clear.x2 = cx + cw;
-      clear.y2 = cy + ch;
+      clear.x1 = fb->_Xmin;
+      clear.y1 = fb->_Ymin;
+      clear.x2 = fb->_Xmax;
+      clear.y2 = fb->_Ymax;
 
       /* Back and stencil cliprects are the same.  Try and do both
        * buffers at once:
