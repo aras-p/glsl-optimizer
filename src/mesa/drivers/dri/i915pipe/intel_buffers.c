@@ -31,7 +31,6 @@
 #include "intel_buffers.h"
 #include "intel_depthstencil.h"
 #include "intel_fbo.h"
-#include "intel_tris.h"
 #include "intel_regions.h"
 #include "intel_batchbuffer.h"
 #include "intel_reg.h"
