@@ -11,6 +11,8 @@ GL_MINOR = 5
 GL_TINY = 0$(MESA_MAJOR)0$(MESA_MINOR)0$(MESA_TINY)
 
 
+SOFTPIPE_LIB = $(TOP)/src/mesa/pipe/softpipe/libsoftpipe.a
+
 .SUFFIXES : .cpp
 
 .c.o:
@@ -110,11 +112,12 @@ stand-alone: depend subdirs $(TOP)/$(LIB_DIR)/$(GL_LIB_NAME) $(TOP)/$(LIB_DIR)/$
 osmesa-only: depend subdirs $(TOP)/$(LIB_DIR)/$(OSMESA_LIB_NAME)
 
 # Make the GL library
-$(TOP)/$(LIB_DIR)/$(GL_LIB_NAME): $(STAND_ALONE_OBJECTS)
+$(TOP)/$(LIB_DIR)/$(GL_LIB_NAME): $(STAND_ALONE_OBJECTS) $(SOFTPIPE_LIB)
 	@ $(TOP)/bin/mklib -o $(GL_LIB) -linker '$(CC)' \
 		-major $(GL_MAJOR) -minor $(GL_MINOR) -patch $(GL_TINY) \
 		-install $(TOP)/$(LIB_DIR) \
-		$(MKLIB_OPTIONS) $(GL_LIB_DEPS) $(STAND_ALONE_OBJECTS)
+		$(MKLIB_OPTIONS) $(GL_LIB_DEPS) $(STAND_ALONE_OBJECTS) \
+		$(SOFTPIPE_LIB)
 
 # Make the OSMesa library
 $(TOP)/$(LIB_DIR)/$(OSMESA_LIB_NAME): $(OSMESA_DRIVER_OBJECTS) $(OSMESA16_OBJECTS)
@@ -146,7 +149,7 @@ depend: $(ALL_SOURCES)
 subdirs:
 	@ (cd x86 ; $(MAKE))
 	@ (cd x86-64 ; $(MAKE))
-
+	#(cd pipe/softpipe ; $(MAKE))
 
 install: default
 	$(INSTALL) -d $(INSTALL_DIR)/include/GL

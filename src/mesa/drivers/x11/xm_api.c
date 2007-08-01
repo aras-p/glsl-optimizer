@@ -82,6 +82,7 @@
 #include "drivers/common/driverfuncs.h"
 
 #include "state_tracker/st_public.h"
+#include "state_tracker/st_context.h"
 #include "pipe/softpipe/sp_context.h"
 
 /**
@@ -1572,6 +1573,7 @@ XMesaContext XMesaCreateContext( XMesaVisual v, XMesaContext share_list )
 
    st_create_context( mesaCtx,
 		      softpipe_create() );
+   mesaCtx->st->pipe->clear = xmesa_clear;
    
    return c;
 }

@@ -587,9 +587,13 @@ extern void xmesa_register_swrast_functions( GLcontext *ctx );
 
 
 struct pipe_surface;
+struct pipe_context;
 
-struct pipe_surface *
+extern struct pipe_surface *
 xmesa_new_surface(GLcontext *ctx, struct xmesa_renderbuffer *xrb);
 
+extern void
+xmesa_clear(struct pipe_context *pipe, GLboolean color, GLboolean depth,
+            GLboolean stencil, GLboolean accum);
 
 #endif

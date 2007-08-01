@@ -92,6 +92,59 @@ sp_region_unmap(struct pipe_context *pipe, struct pipe_region *region)
 }
 
 
+
+static GLubyte *
+get_pointer(struct pipe_region *dst, GLuint x, GLuint y)
+{
+   return dst->map + (y * dst->pitch + x) * dst->cpp;
+}
+
+
+static void
+sp_region_fill(struct pipe_context *pipe,
+               struct pipe_region *dst,
+               GLuint dst_offset,
+               GLuint dstx, GLuint dsty,
+               GLuint width, GLuint height, GLuint value)
+{
+   GLuint i, j;
+   switch (dst->cpp) {
+   case 1:
+      {
+         GLubyte *row = get_pointer(dst, dstx, dsty);
+         for (i = 0; i < height; i++) {
+            memset(row, value, width);
+            row += dst->pitch;
+         }
+      }
+      break;
+   case 2:
+      {
+         GLushort *row = (GLushort *) get_pointer(dst, dstx, dsty);
+         for (i = 0; i < height; i++) {
+            for (j = 0; j < width; j++)
+               row[j] = value;
+            row += dst->pitch;
+         }
+      }
+      break;
+   case 4:
+      {
+         GLuint *row = (GLuint *) get_pointer(dst, dstx, dsty);
+         for (i = 0; i < height; i++) {
+            for (j = 0; j < width; j++)
+               row[j] = value;
+            row += dst->pitch;
+         }
+      }
+      break;
+   default:
+      assert(0);
+
+   }
+}
+
+
 void
 sp_init_region_functions(struct softpipe_context *sp)
 {
@@ -100,6 +153,8 @@ sp_init_region_functions(struct softpipe_context *sp)
 
    sp->pipe.region_map = sp_region_map;
    sp->pipe.region_unmap = sp_region_unmap;
+
+   sp->pipe.region_fill = sp_region_fill;
 
    /* XXX lots of other region functions needed... */
 }

@@ -188,6 +188,7 @@ struct pipe_context {
                                              GLuint flag);
 
    void *screen;  /**< temporary */
+   void *glctx;   /**< temporary */
 };
 
 

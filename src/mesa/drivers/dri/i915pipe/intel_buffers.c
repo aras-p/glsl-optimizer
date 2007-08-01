@@ -40,6 +40,7 @@
 #include "swrast/swrast.h"
 #include "vblank.h"
 
+#include "pipe/p_context.h"
 
 /* This block can be removed when libdrm >= 2.3.1 is required */
 
@@ -298,15 +299,30 @@ intelWindowMoved(struct intel_context *intel)
 /**
  * Called by ctx->Driver.Clear.
  */
+#if 0
 static void
 intelClear(GLcontext *ctx, GLbitfield mask)
+#else
+void
+intelClear(struct pipe_context *pipe,
+           GLboolean color, GLboolean depth,
+           GLboolean stencil, GLboolean accum)
+#endif
 {
+   GLcontext *ctx = (GLcontext *) pipe->glctx;
    const GLuint colorMask = *((GLuint *) & ctx->Color.ColorMask);
    GLbitfield tri_mask = 0;
    GLbitfield blit_mask = 0;
    GLbitfield swrast_mask = 0;
    struct gl_framebuffer *fb = ctx->DrawBuffer;
    GLuint i;
+
+   GLbitfield mask;
+
+   if (color)
+      mask = ctx->DrawBuffer->_ColorDrawBufferMask[0]; /*XXX temporary*/
+   else
+      mask = 0x0;
 
    if (0)
       fprintf(stderr, "%s\n", __FUNCTION__);
@@ -323,7 +339,7 @@ intelClear(GLcontext *ctx, GLbitfield mask)
    }
 
    /* HW stencil */
-   if (mask & BUFFER_BIT_STENCIL) {
+   if (stencil) {
       const struct pipe_region *stencilRegion
          = intel_get_rb_region(fb, BUFFER_STENCIL);
       if (stencilRegion) {
@@ -340,7 +356,7 @@ intelClear(GLcontext *ctx, GLbitfield mask)
    }
 
    /* HW depth */
-   if (mask & BUFFER_BIT_DEPTH) {
+   if (depth) {
       /* clear depth with whatever method is used for stencil (see above) */
       if (tri_mask & BUFFER_BIT_STENCIL)
          tri_mask |= BUFFER_BIT_DEPTH;
@@ -368,9 +384,14 @@ intelClear(GLcontext *ctx, GLbitfield mask)
    if (blit_mask)
       intelClearWithBlit(ctx, blit_mask);
 
-#if 1
+#if 0
    if (swrast_mask | tri_mask)
       _swrast_Clear(ctx, swrast_mask | tri_mask);
+#else
+   softpipe_clear(pipe, GL_FALSE,
+                  (swrast_mask | tri_mask) & BUFFER_BIT_DEPTH,
+                  (swrast_mask | tri_mask) & BUFFER_BIT_STENCIL,
+                  (swrast_mask | tri_mask) & BUFFER_BIT_ACCUM);
 #endif
 }
 
@@ -786,7 +807,9 @@ intelReadBuffer(GLcontext * ctx, GLenum mode)
 void
 intelInitBufferFuncs(struct dd_function_table *functions)
 {
+#if 0
    functions->Clear = intelClear;
+#endif
    functions->DrawBuffer = intelDrawBuffer;
    functions->ReadBuffer = intelReadBuffer;
 }
