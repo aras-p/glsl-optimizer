@@ -59,7 +59,7 @@ sp_depth_test_quad(struct quad_stage *qs, struct quad_header *quad)
     */
    if (sps->surface.format == PIPE_FORMAT_U_Z16)
       scale = 65535.0;
-   else if (sps->surface.format == PIPE_FORMAT_Z24_S8)
+   else if (sps->surface.format == PIPE_FORMAT_S8_Z24)
       scale = (float) ((1 << 24) - 1);
    else
       assert(0);  /* XXX fix this someday */

@@ -105,7 +105,7 @@ softpipe_clear(struct pipe_context *pipe, GLboolean color, GLboolean depth,
       case PIPE_FORMAT_U_Z32:
          clearVal = (GLuint) (softpipe->depth_test.clear * 0xffffffff);
          break;
-      case PIPE_FORMAT_Z24_S8:
+      case PIPE_FORMAT_S8_Z24:
          clearVal = (GLuint) (softpipe->depth_test.clear * 0xffffff);
          break;
       default:

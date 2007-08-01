@@ -215,66 +215,69 @@ z32_write_quad_z(struct softpipe_surface *sps,
 }
 
 static void
-z24s8_read_quad_z(struct softpipe_surface *sps,
+s8z24_read_quad_z(struct softpipe_surface *sps,
                   GLint x, GLint y, GLuint zzzz[QUAD_SIZE])
 {
+   static const GLuint mask = 0x00ffffff;
    const GLuint *src
       = (GLuint *) sps->surface.region->map + y * sps->surface.region->pitch + x;
 
-   assert(sps->surface.format == PIPE_FORMAT_Z24_S8);
+   assert(sps->surface.format == PIPE_FORMAT_S8_Z24);
 
-   zzzz[0] = src[0] >> 8;
-   zzzz[1] = src[1] >> 8;
+   zzzz[0] = src[0] & mask;
+   zzzz[1] = src[1] & mask;
    src += sps->surface.region->pitch;
-   zzzz[2] = src[0] >> 8;
-   zzzz[3] = src[1] >> 8;
+   zzzz[2] = src[0] & mask;
+   zzzz[3] = src[1] & mask;
 }
 
 static void
-z24s8_write_quad_z(struct softpipe_surface *sps,
+s8z24_write_quad_z(struct softpipe_surface *sps,
                    GLint x, GLint y, const GLuint zzzz[QUAD_SIZE])
 {
+   static const GLuint mask = 0xff000000;
    GLuint *dst = (GLuint *) sps->surface.region->map + y * sps->surface.region->pitch + x;
 
-   assert(sps->surface.format == PIPE_FORMAT_Z24_S8);
+   assert(sps->surface.format == PIPE_FORMAT_S8_Z24);
    assert(zzzz[0] <= 0xffffff);
 
-   dst[0] = (dst[0] & 0xff) | (zzzz[0] << 8);
-   dst[1] = (dst[1] & 0xff) | (zzzz[1] << 8);
+   dst[0] = (dst[0] & mask) | zzzz[0];
+   dst[1] = (dst[1] & mask) | zzzz[1];
    dst += sps->surface.region->pitch;
-   dst[0] = (dst[0] & 0xff) | (zzzz[2] << 8);
-   dst[1] = (dst[1] & 0xff) | (zzzz[3] << 8);
+   dst[0] = (dst[0] & mask) | zzzz[2];
+   dst[1] = (dst[1] & mask) | zzzz[3];
 }
 
 static void
-z24s8_read_quad_stencil(struct softpipe_surface *sps,
+s8z24_read_quad_stencil(struct softpipe_surface *sps,
                         GLint x, GLint y, GLubyte ssss[QUAD_SIZE])
 {
    const GLuint *src
       = (GLuint *) sps->surface.region->map + y * sps->surface.region->pitch + x;
 
-   assert(sps->surface.format == PIPE_FORMAT_Z24_S8);
+   assert(sps->surface.format == PIPE_FORMAT_S8_Z24);
 
-   ssss[0] = src[0] & 0xff;
-   ssss[1] = src[1] & 0xff;
+   ssss[0] = src[0] >> 24;
+   ssss[1] = src[1] >> 24;
    src += sps->surface.region->pitch;
-   ssss[2] = src[0] & 0xff;
-   ssss[3] = src[1] & 0xff;
+   ssss[2] = src[0] >> 24;
+   ssss[3] = src[1] >> 24;
 }
 
 static void
-z24s8_write_quad_stencil(struct softpipe_surface *sps,
+s8z24_write_quad_stencil(struct softpipe_surface *sps,
                          GLint x, GLint y, const GLubyte ssss[QUAD_SIZE])
 {
+   static const GLuint mask = 0x00ffffff;
    GLuint *dst = (GLuint *) sps->surface.region->map + y * sps->surface.region->pitch + x;
 
-   assert(sps->surface.format == PIPE_FORMAT_Z24_S8);
+   assert(sps->surface.format == PIPE_FORMAT_S8_Z24);
 
-   dst[0] = (dst[0] & 0xffffff00) | ssss[0];
-   dst[1] = (dst[1] & 0xffffff00) | ssss[1];
+   dst[0] = (dst[0] & mask) | (ssss[0] << 24);
+   dst[1] = (dst[1] & mask) | (ssss[1] << 24);
    dst += sps->surface.region->pitch;
-   dst[0] = (dst[0] & 0xffffff00) | ssss[2];
-   dst[1] = (dst[1] & 0xffffff00) | ssss[3];
+   dst[0] = (dst[0] & mask) | (ssss[2] << 24);
+   dst[1] = (dst[1] & mask) | (ssss[3] << 24);
 }
 
 
@@ -324,11 +327,11 @@ init_quad_funcs(struct softpipe_surface *sps)
       sps->read_quad_z = z32_read_quad_z;
       sps->write_quad_z = z32_write_quad_z;
       break;
-   case PIPE_FORMAT_Z24_S8:
-      sps->read_quad_z = z24s8_read_quad_z;
-      sps->write_quad_z = z24s8_write_quad_z;
-      sps->read_quad_stencil = z24s8_read_quad_stencil;
-      sps->write_quad_stencil = z24s8_write_quad_stencil;
+   case PIPE_FORMAT_S8_Z24:
+      sps->read_quad_z = s8z24_read_quad_z;
+      sps->write_quad_z = s8z24_write_quad_z;
+      sps->read_quad_stencil = s8z24_read_quad_stencil;
+      sps->write_quad_stencil = s8z24_write_quad_stencil;
       break;
    case PIPE_FORMAT_U_S8:
       sps->read_quad_stencil = s8_read_quad_stencil;

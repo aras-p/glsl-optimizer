@@ -145,7 +145,7 @@
 #define PIPE_FORMAT_U_Z16          10  /**< ushort Z/depth */
 #define PIPE_FORMAT_U_Z32          11  /**< uint Z/depth */
 #define PIPE_FORMAT_F_Z32          12  /**< float Z/depth */
-#define PIPE_FORMAT_Z24_S8         13  /**< 24-bit Z + 8-bit stencil */
+#define PIPE_FORMAT_S8_Z24         13  /**< 8-bit stencil + 24-bit Z */
 #define PIPE_FORMAT_U_S8           14  /**< 8-bit stencil */
 
 

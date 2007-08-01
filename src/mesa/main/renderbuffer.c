@@ -1147,7 +1147,7 @@ _mesa_soft_renderbuffer_storage(GLcontext *ctx, struct gl_renderbuffer *rb,
       rb->StencilBits = 8;
       if (!rb->surface)
          rb->surface = (struct pipe_surface *)
-            pipe->surface_alloc(pipe, PIPE_FORMAT_Z24_S8);
+            pipe->surface_alloc(pipe, PIPE_FORMAT_S8_Z24);
       pixelSize = sizeof(GLuint);
       break;
    case GL_COLOR_INDEX8_EXT:
