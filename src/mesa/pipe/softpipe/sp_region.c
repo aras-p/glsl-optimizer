@@ -112,29 +112,66 @@ sp_region_fill(struct pipe_context *pipe,
    case 1:
       {
          GLubyte *row = get_pointer(dst, dstx, dsty);
-         for (i = 0; i < height; i++) {
-            memset(row, value, width);
-            row += dst->pitch;
+         if ((mask & 0xff) == 0xff) {
+            /* no masking */
+            for (i = 0; i < height; i++) {
+               memset(row, value, width);
+               row += dst->pitch;
+            }
+         }
+         else {
+            value &= mask;
+            mask = ~mask;
+            for (i = 0; i < height; i++) {
+               for (j = 0; j < width; j++) {
+                  row[j] = (row[j] & mask) | value;
+               }
+               row += dst->pitch;
+            }
          }
       }
       break;
    case 2:
       {
          GLushort *row = (GLushort *) get_pointer(dst, dstx, dsty);
-         for (i = 0; i < height; i++) {
-            for (j = 0; j < width; j++)
-               row[j] = value;
-            row += dst->pitch;
+         if ((mask & 0xffff) == 0xffff) {
+            /* no masking */
+            for (i = 0; i < height; i++) {
+               for (j = 0; j < width; j++)
+                  row[j] = value;
+               row += dst->pitch;
+            }
+         }
+         else {
+            value &= mask;
+            mask = ~mask;
+            for (i = 0; i < height; i++) {
+               for (j = 0; j < width; j++)
+                  row[j] = (row[j] & mask) | value;
+               row += dst->pitch;
+            }
          }
       }
       break;
    case 4:
       {
          GLuint *row = (GLuint *) get_pointer(dst, dstx, dsty);
-         for (i = 0; i < height; i++) {
-            for (j = 0; j < width; j++)
-               row[j] = value;
-            row += dst->pitch;
+         if (mask == 0xffffffff) {
+            /* no masking */
+            for (i = 0; i < height; i++) {
+               for (j = 0; j < width; j++)
+                  row[j] = value;
+               row += dst->pitch;
+            }
+         }
+         else {
+            value &= mask;
+            mask = ~mask;
+            for (i = 0; i < height; i++) {
+               for (j = 0; j < width; j++)
+                  row[j] = (row[j] & mask) | value;
+               row += dst->pitch;
+            }
          }
       }
       break;
