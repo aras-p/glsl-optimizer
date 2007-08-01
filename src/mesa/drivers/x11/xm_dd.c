@@ -440,10 +440,15 @@ xmesa_clear(struct pipe_context *pipe, GLboolean color, GLboolean depth,
             GLboolean stencil, GLboolean accum)
 {
    struct softpipe_context *sp = (struct softpipe_context *) pipe;
+
+   /* Clear non-color buffers first.  This will cause softpipe to
+    * re-validate the scissor/surface bounds.
+    */
+   softpipe_clear(pipe, GL_FALSE, depth, stencil, accum);
+
    if (color) {
       GET_CURRENT_CONTEXT(ctx);
       GLuint i;
-      softpipe_update_derived(sp);
       for (i = 0; i < sp->framebuffer.num_cbufs; i++) {
          struct pipe_surface *ps = sp->framebuffer.cbufs[i];
          struct xmesa_renderbuffer *xrb = (struct xmesa_renderbuffer *) ps->rb;
@@ -453,10 +458,8 @@ xmesa_clear(struct pipe_context *pipe, GLboolean color, GLboolean depth,
          const GLint h = sp->cliprect.maxy - y;
          xrb->clearFunc(ctx, xrb, x, y, w, h);
       }
-      color = GL_FALSE;
    }
 
-   softpipe_clear(pipe, color, depth, stencil, accum);
 }
 
 
