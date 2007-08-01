@@ -73,9 +73,9 @@ SHARED_INCLUDES = \
 default: depend symlinks $(LIBNAME) $(TOP)/$(LIB_DIR)/$(LIBNAME)
 
 
-$(LIBNAME): $(OBJECTS) $(MESA_MODULES) $(WINOBJ) Makefile $(TOP)/src/mesa/drivers/dri/Makefile.template
+$(LIBNAME): $(OBJECTS) $(MESA_MODULES) $(PIPE_DRIVERS) $(WINOBJ) Makefile $(TOP)/src/mesa/drivers/dri/Makefile.template
 	$(TOP)/bin/mklib -noprefix -o $@ \
-		$(OBJECTS) $(MESA_MODULES) $(WINOBJ) $(DRI_LIB_DEPS)
+		$(OBJECTS) $(PIPE_DRIVERS) $(MESA_MODULES)  $(WINOBJ) $(DRI_LIB_DEPS)
 
 
 $(TOP)/$(LIB_DIR)/$(LIBNAME): $(LIBNAME)

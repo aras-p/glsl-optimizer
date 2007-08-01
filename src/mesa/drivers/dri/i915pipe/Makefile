@@ -6,6 +6,9 @@ LIBNAME = i915tex_dri.so
 
 MINIGLX_SOURCES = server/intel_dri.c
 
+PIPE_DRIVERS = \
+	$(TOP)/src/mesa/pipe/softpipe/libsoftpipe.a
+
 DRIVER_SOURCES = \
 	intel_regions.c \
 	intel_buffer_objects.c \

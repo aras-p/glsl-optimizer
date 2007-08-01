@@ -157,6 +157,7 @@ struct pipe_context *softpipe_create( void )
     * Create drawing context and plug our rendering stage into it.
     */
    softpipe->draw = draw_create();
+   assert(softpipe->draw);
    draw_set_setup_stage(softpipe->draw, sp_draw_render_stage(softpipe));
 
    sp_init_region_functions(softpipe);

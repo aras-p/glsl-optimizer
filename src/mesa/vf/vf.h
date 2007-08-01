@@ -29,7 +29,7 @@
 #define VF_VERTEX_H
 
 #include "mtypes.h"
-#include "m_vector.h"
+#include "math/m_vector.h"
 
 enum {
    VF_ATTRIB_POS = 0,

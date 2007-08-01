@@ -1,0 +1,58 @@
+# -*-makefile-*-
+
+
+# We still have a dependency on the "dri" buffer manager.  Most likely
+# the interface can be reused in non-dri environments, and also as a
+# frontend to simpler memory managers.
+#
+COMMON_SOURCES = 
+
+OBJECTS = $(C_SOURCES:.c=.o) \
+	  $(ASM_SOURCES:.S=.o) 
+
+
+### Include directories
+INCLUDES = \
+	-I. \
+	-I$(TOP)/src/mesa/drivers/dri/common \
+	-I$(TOP)/src/mesa/main \
+	-I$(TOP)/src/mesa/pipe \
+	-I$(TOP)/src/mesa 
+
+
+##### RULES #####
+
+.c.o:
+	$(CC) -c $(INCLUDES) $(CFLAGS) $(DRIVER_DEFINES) $< -o $@
+
+.S.o:
+	$(CC) -c $(INCLUDES) $(CFLAGS) $(DRIVER_DEFINES)  $< -o $@
+
+
+##### TARGETS #####
+
+default:: depend symlinks $(LIBNAME)
+
+
+$(LIBNAME): $(OBJECTS) Makefile $(TOP)/src/mesa/pipe/Makefile.template
+	$(TOP)/bin/mklib -o $@ -static $(OBJECTS)
+
+
+depend: $(C_SOURCES) $(ASM_SOURCES) $(SYMLINKS)
+	touch depend
+	$(MKDEP) $(MKDEP_OPTIONS) $(DRIVER_DEFINES) $(INCLUDES) $(C_SOURCES) \
+		$(ASM_SOURCES) 2> /dev/null
+
+
+# Emacs tags
+tags:
+	etags `find . -name \*.[ch]` `find ../include`
+
+
+# Remove .o and backup files
+clean:
+	-rm -f *.o */*.o *~ *.so *~ server/*.o $(SYMLINKS)
+	-rm -f depend depend.bak
+
+
+include depend

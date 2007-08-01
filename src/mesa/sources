@@ -154,31 +154,6 @@ VF_SOURCES = \
 	vf/vf_generic.c \
 	vf/vf_sse.c
 
-SOFTPIPE_SOURCES = \
-	pipe/softpipe/sp_clear.c \
-	pipe/softpipe/sp_context.c \
-	pipe/softpipe/sp_region.c \
-	pipe/softpipe/sp_quad.c \
-	pipe/softpipe/sp_quad_alpha_test.c \
-	pipe/softpipe/sp_quad_blend.c \
-	pipe/softpipe/sp_quad_bufloop.c \
-	pipe/softpipe/sp_quad_colormask.c \
-	pipe/softpipe/sp_quad_coverage.c \
-	pipe/softpipe/sp_quad_depth_test.c \
-	pipe/softpipe/sp_quad_fs.c \
-	pipe/softpipe/sp_quad_occlusion.c \
-	pipe/softpipe/sp_quad_output.c \
-	pipe/softpipe/sp_quad_stipple.c \
-	pipe/softpipe/sp_quad_stencil.c \
-	pipe/softpipe/sp_state_blend.c \
-	pipe/softpipe/sp_state_clip.c \
-	pipe/softpipe/sp_state_derived.c \
-	pipe/softpipe/sp_state_fs.c \
-	pipe/softpipe/sp_state_sampler.c \
-	pipe/softpipe/sp_state_setup.c \
-	pipe/softpipe/sp_state_surface.c \
-	pipe/softpipe/sp_surface.c \
-	pipe/softpipe/sp_prim_setup.c
 
 DRAW_SOURCES = \
 	pipe/draw/draw_clip.c \
@@ -367,7 +342,6 @@ SOLO_SOURCES = \
 	$(MATH_SOURCES)		\
 	$(VBO_SOURCES)		\
 	$(VF_SOURCES)		\
-	$(SOFTPIPE_SOURCES)	\
 	$(DRAW_SOURCES)		\
 	$(TGSICORE_SOURCES)	\
 	$(TGSIMESA_SOURCES)	\

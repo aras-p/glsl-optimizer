@@ -37,7 +37,7 @@
 #include "sp_context.h"
 #include "sp_headers.h"
 #include "sp_quad.h"
-#include "core/tgsi_core.h"
+#include "tgsi/core/tgsi_core.h"
 
 #if defined __GNUC__
 #define ALIGNED_ATTRIBS 1

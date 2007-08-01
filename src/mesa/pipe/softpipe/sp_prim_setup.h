@@ -41,8 +41,8 @@
 #include "imports.h"
 #if 0
 #include "s_tri_public.h"
-#endif
 #include "s_context.h"
+#endif
 
 
 extern struct draw_stage *sp_draw_render_stage( struct softpipe_context *softpipe );
