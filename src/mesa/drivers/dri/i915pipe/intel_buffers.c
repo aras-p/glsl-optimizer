@@ -295,16 +295,16 @@ intelWindowMoved(struct intel_context *intel)
 
 
 
-
 /**
  * Called by ctx->Driver.Clear.
+ * XXX NO LONGER USED - REMOVE IN NEAR FUTURE
  */
 #if 0
 static void
 intelClear(GLcontext *ctx, GLbitfield mask)
 #else
-void
-intelClear(struct pipe_context *pipe,
+static void
+OLD_intelClear(struct pipe_context *pipe,
            GLboolean color, GLboolean depth,
            GLboolean stencil, GLboolean accum)
 #endif
@@ -394,6 +394,34 @@ intelClear(struct pipe_context *pipe,
                   (swrast_mask | tri_mask) & BUFFER_BIT_ACCUM);
 #endif
 }
+
+
+/**
+ * Clear buffers.  Called via pipe->clear().
+ */
+void
+intelClear(struct pipe_context *pipe,
+           GLboolean color, GLboolean depth,
+           GLboolean stencil, GLboolean accum)
+{
+   GLcontext *ctx = (GLcontext *) pipe->glctx;
+   struct intel_context *intel = intel_context(ctx);
+
+   /* XXX
+    * Examine stencil and color writemasks to determine if we can clear
+    * with blits.
+    */
+
+   intelFlush(&intel->ctx);
+   LOCK_HARDWARE(intel);
+
+   softpipe_clear(pipe, color, depth, stencil, accum);
+
+   intel_batchbuffer_flush(intel->batch);
+
+   UNLOCK_HARDWARE(intel);
+}
+
 
 
 /* Emit wait for pending flips */

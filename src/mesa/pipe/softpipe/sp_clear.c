@@ -90,7 +90,8 @@ color_mask(GLuint format, GLuint pipeMask)
 
 
 /**
- * XXX maybe this belongs in the GL state tracker...
+ * XXX This should probaby be renamed to something like pipe_clear_with_blits()
+ * and moved into a device-independent pipe file.
  */
 void
 softpipe_clear(struct pipe_context *pipe, GLboolean color, GLboolean depth,
@@ -157,16 +158,32 @@ softpipe_clear(struct pipe_context *pipe, GLboolean color, GLboolean depth,
       if (stencil) {
          struct pipe_surface *ps = softpipe->framebuffer.sbuf;
          GLuint clearVal = softpipe->stencil.clear_value;
-         GLuint mask = 0xff;
-         if (softpipe->stencil.write_mask[0] /*== 0xff*/) {
-            /* no masking */
-            pipe->region_fill(pipe, ps->region, 0, x, y, w, h, clearVal, mask);
-         }
-         else if (softpipe->stencil.write_mask[0] != 0x0) {
-            /* masking */
-            /* fill with quad funcs */
+         GLuint mask = softpipe->stencil.write_mask[0];
+
+         switch (ps->format) {
+         case PIPE_FORMAT_S8_Z24:
+            clearVal = clearVal << 24;
+            mask = mask << 24;
+            break;
+         case PIPE_FORMAT_U_S8:
+            /* nothing */
+            break;
+         default:
             assert(0);
          }
+
+         pipe->region_fill(pipe, ps->region, 0, x, y, w, h, clearVal, mask);
       }
+   }
+
+   if (accum) {
+      /* XXX there might be no notion of accum buffers in 'pipe'.
+       * Just implement them with a deep RGBA surface format...
+       */
+      struct pipe_surface *ps = softpipe->framebuffer.abuf;
+      GLuint clearVal = 0x0; /* XXX FIX */
+      GLuint mask = !0;
+      assert(ps);
+      pipe->region_fill(pipe, ps->region, 0, x, y, w, h, clearVal, mask);
    }
 }

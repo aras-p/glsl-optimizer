@@ -216,6 +216,10 @@ intelEmitFillBlit(struct intel_context *intel,
    GLboolean badMask = GL_FALSE;
    BATCH_LOCALS;
 
+   /*
+   printf("Emit fill blit value=0x%x  mask=0x%x\n", value, mask);
+   */
+
    dst_pitch *= cpp;
 
    switch (cpp) {

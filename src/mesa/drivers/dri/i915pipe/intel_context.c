@@ -763,6 +763,7 @@ void LOCK_HARDWARE( struct intel_context *intel )
    */
 void UNLOCK_HARDWARE( struct intel_context *intel )
 {
+   assert(intel->locked);
    intel->locked = 0;
 
    DRM_UNLOCK(intel->driFd, intel->driHwLock, intel->hHWContext);
