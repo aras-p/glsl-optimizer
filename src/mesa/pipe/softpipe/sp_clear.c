@@ -34,6 +34,7 @@
 #include "sp_clear.h"
 #include "sp_context.h"
 #include "sp_surface.h"
+#include "sp_state.h"
 #include "colormac.h"
 
 
@@ -98,10 +99,14 @@ softpipe_clear(struct pipe_context *pipe, GLboolean color, GLboolean depth,
                GLboolean stencil, GLboolean accum)
 {
    const struct softpipe_context *softpipe = softpipe_context(pipe);
-   const GLint x = softpipe->cliprect.minx;
-   const GLint y = softpipe->cliprect.miny;
-   const GLint w = softpipe->cliprect.maxx - x;
-   const GLint h = softpipe->cliprect.maxy - y;
+   GLint x, y, w, h;
+
+   softpipe_update_derived(softpipe);
+
+   x = softpipe->cliprect.minx;
+   y = softpipe->cliprect.miny;
+   w = softpipe->cliprect.maxx - x;
+   h = softpipe->cliprect.maxy - y;
 
    if (color) {
       GLuint i;
