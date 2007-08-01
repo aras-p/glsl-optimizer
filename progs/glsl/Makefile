@@ -15,8 +15,9 @@ PROGS = \
 	mandelbrot \
 	noise \
 	points \
+	texdemo1 \
 	toyball \
-	texdemo1
+	trirast
 
 
 ##### RULES #####
