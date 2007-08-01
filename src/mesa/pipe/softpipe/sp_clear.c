@@ -59,7 +59,39 @@ color_value(GLuint format, const GLfloat color[4])
    }
 }
  
+static GLuint
+color_mask(GLuint format, GLuint pipeMask)
+{
+   GLuint mask = 0x0;
+   switch (format) {
+   case PIPE_FORMAT_U_R8_G8_B8_A8:
+      if (pipeMask & PIPE_MASK_R)  mask |= 0xff000000;
+      if (pipeMask & PIPE_MASK_G)  mask |= 0x00ff0000;
+      if (pipeMask & PIPE_MASK_B)  mask |= 0x0000ff00;
+      if (pipeMask & PIPE_MASK_A)  mask |= 0x000000ff;
+      break;
+   case PIPE_FORMAT_U_A8_R8_G8_B8:
+      if (pipeMask & PIPE_MASK_R)  mask |= 0x00ff0000;
+      if (pipeMask & PIPE_MASK_G)  mask |= 0x0000ff00;
+      if (pipeMask & PIPE_MASK_B)  mask |= 0x000000ff;
+      if (pipeMask & PIPE_MASK_A)  mask |= 0xff000000;
+      break;
+   case PIPE_FORMAT_U_R5_G6_B5:
+      if (pipeMask & PIPE_MASK_R)  mask |= 0xf800;
+      if (pipeMask & PIPE_MASK_G)  mask |= 0x07e0;
+      if (pipeMask & PIPE_MASK_B)  mask |= 0x001f;
+      if (pipeMask & PIPE_MASK_A)  mask |= 0;
+      break;
+   default:
+      return 0;
+   }
+   return mask;
+}
 
+
+/**
+ * XXX maybe this belongs in the GL state tracker...
+ */
 void
 softpipe_clear(struct pipe_context *pipe, GLboolean color, GLboolean depth,
                GLboolean stencil, GLboolean accum)
@@ -74,58 +106,67 @@ softpipe_clear(struct pipe_context *pipe, GLboolean color, GLboolean depth,
       GLuint i;
       for (i = 0; i < softpipe->framebuffer.num_cbufs; i++) {
          struct pipe_surface *ps = softpipe->framebuffer.cbufs[i];
-
-         if (softpipe->blend.colormask == (PIPE_MASK_R | PIPE_MASK_G |
-                                           PIPE_MASK_B | PIPE_MASK_A)) {
-            /* no masking */
-            GLuint clearVal = color_value(ps->format,
-                                          softpipe->clear_color.color);
-            pipe->region_fill(pipe, ps->region, 0, x, y, w, h, clearVal);
-         }
-         else {
-            /* masking */
-
-            /*
-            for (j = 0; j < h; j++) {
-               sps->write_mono_row_ub(sps, w, x, y + j, clr);
-            }
-            */
-         }
+         GLuint clearVal = color_value(ps->format,
+                                       softpipe->clear_color.color);
+         GLuint mask = color_mask(ps->format, softpipe->blend.colormask);
+         pipe->region_fill(pipe, ps->region, 0, x, y, w, h, clearVal, mask);
       }
    }
 
-   if (depth) {
+   if (depth && stencil &&
+       softpipe->framebuffer.zbuf == softpipe->framebuffer.sbuf) {
+      /* clear Z and stencil together */
       struct pipe_surface *ps = softpipe->framebuffer.zbuf;
-      GLuint clearVal;
-
-      switch (ps->format) {
-      case PIPE_FORMAT_U_Z16:
-         clearVal = (GLuint) (softpipe->depth_test.clear * 65535.0);
-         break;
-      case PIPE_FORMAT_U_Z32:
-         clearVal = (GLuint) (softpipe->depth_test.clear * 0xffffffff);
-         break;
-      case PIPE_FORMAT_S8_Z24:
-         clearVal = (GLuint) (softpipe->depth_test.clear * 0xffffff);
-         break;
-      default:
+      if (ps->format == PIPE_FORMAT_S8_Z24) {
+         GLuint mask = (softpipe->stencil.write_mask[0] << 8) | 0xffffff;
+         GLuint clearVal = (GLuint) (softpipe->depth_test.clear * 0xffffff);
+         clearVal |= (softpipe->stencil.clear_value << 24);
+         pipe->region_fill(pipe, ps->region, 0, x, y, w, h, clearVal, mask);
+      }
+      else {
+         /* XXX Z24_S8 format? */
          assert(0);
       }
-
-      pipe->region_fill(pipe, ps->region, 0, x, y, w, h, clearVal);
    }
+   else {
+      /* separate Z and stencil */
+      if (depth) {
+         struct pipe_surface *ps = softpipe->framebuffer.zbuf;
+         GLuint mask, clearVal;
 
-   if (stencil) {
-      struct pipe_surface *ps = softpipe->framebuffer.sbuf;
-      GLuint clearVal = softpipe->stencil.clear_value;
-      if (softpipe->stencil.write_mask[0] /*== 0xff*/) {
-         /* no masking */
-         pipe->region_fill(pipe, ps->region, 0, x, y, w, h, clearVal);
+         switch (ps->format) {
+         case PIPE_FORMAT_U_Z16:
+            clearVal = (GLuint) (softpipe->depth_test.clear * 65535.0);
+            mask = 0xffff;
+            break;
+         case PIPE_FORMAT_U_Z32:
+            clearVal = (GLuint) (softpipe->depth_test.clear * 0xffffffff);
+            mask = 0xffffffff;
+            break;
+         case PIPE_FORMAT_S8_Z24:
+            clearVal = (GLuint) (softpipe->depth_test.clear * 0xffffff);
+            mask = 0xffffff;
+            break;
+         default:
+            assert(0);
+         }
+
+         pipe->region_fill(pipe, ps->region, 0, x, y, w, h, clearVal, mask);
       }
-      else if (softpipe->stencil.write_mask[0] != 0x0) {
-         /* masking */
-         /* fill with quad funcs */
-         assert(0);
+
+      if (stencil) {
+         struct pipe_surface *ps = softpipe->framebuffer.sbuf;
+         GLuint clearVal = softpipe->stencil.clear_value;
+         GLuint mask = 0xff;
+         if (softpipe->stencil.write_mask[0] /*== 0xff*/) {
+            /* no masking */
+            pipe->region_fill(pipe, ps->region, 0, x, y, w, h, clearVal, mask);
+         }
+         else if (softpipe->stencil.write_mask[0] != 0x0) {
+            /* masking */
+            /* fill with quad funcs */
+            assert(0);
+         }
       }
    }
 }

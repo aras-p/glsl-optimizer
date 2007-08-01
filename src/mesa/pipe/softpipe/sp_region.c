@@ -105,7 +105,7 @@ sp_region_fill(struct pipe_context *pipe,
                struct pipe_region *dst,
                GLuint dst_offset,
                GLuint dstx, GLuint dsty,
-               GLuint width, GLuint height, GLuint value)
+               GLuint width, GLuint height, GLuint value, GLuint mask)
 {
    GLuint i, j;
    switch (dst->cpp) {

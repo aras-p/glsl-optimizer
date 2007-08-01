@@ -209,9 +209,11 @@ intelEmitFillBlit(struct intel_context *intel,
                   GLshort dst_pitch,
                   struct _DriBufferObject *dst_buffer,
                   GLuint dst_offset,
-                  GLshort x, GLshort y, GLshort w, GLshort h, GLuint color)
+                  GLshort x, GLshort y, GLshort w, GLshort h,
+                  GLuint value, GLuint mask)
 {
    GLuint BR13, CMD;
+   GLboolean badMask = GL_FALSE;
    BATCH_LOCALS;
 
    dst_pitch *= cpp;
@@ -222,15 +224,31 @@ intelEmitFillBlit(struct intel_context *intel,
    case 3:
       BR13 = dst_pitch | (0xF0 << 16) | (1 << 24);
       CMD = XY_COLOR_BLT_CMD;
+      if ((mask & 0xffff) != 0xffff)
+         badMask = GL_TRUE;
       break;
    case 4:
       BR13 = dst_pitch | (0xF0 << 16) | (1 << 24) | (1 << 25);
+#if 0
       CMD = (XY_COLOR_BLT_CMD | XY_COLOR_BLT_WRITE_ALPHA |
              XY_COLOR_BLT_WRITE_RGB);
+#else
+      CMD = XY_COLOR_BLT_CMD;
+      if ((mask & 0xff000000) == 0xff000000)
+         CMD |= XY_COLOR_BLT_WRITE_ALPHA;
+      else if (mask & 0xff000000)
+         badMask = GL_TRUE;
+      if ((mask & 0x00ffffff) == 0x00ffffff)
+         CMD |= XY_COLOR_BLT_WRITE_RGB;
+      else if (mask & 0x00ffffff)
+         badMask = GL_TRUE;
+#endif
       break;
    default:
       return;
    }
+
+   assert(!badMask);
 
    DBG("%s dst:buf(%p)/%d+%d %d,%d sz:%dx%d\n",
        __FUNCTION__, dst_buffer, dst_pitch, dst_offset, x, y, w, h);
@@ -243,7 +261,7 @@ intelEmitFillBlit(struct intel_context *intel,
    OUT_BATCH(((y + h) << 16) | (x + w));
    OUT_RELOC(dst_buffer, DRM_BO_FLAG_MEM_TT | DRM_BO_FLAG_WRITE,
              DRM_BO_MASK_MEM | DRM_BO_FLAG_WRITE, dst_offset);
-   OUT_BATCH(color);
+   OUT_BATCH(value);
    ADVANCE_BATCH();
 }
 

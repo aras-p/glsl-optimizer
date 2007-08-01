@@ -343,7 +343,8 @@ intel_region_fill(struct pipe_context *pipe,
                   struct pipe_region *dst,
                   GLuint dst_offset,
                   GLuint dstx, GLuint dsty,
-                  GLuint width, GLuint height, GLuint color)
+                  GLuint width, GLuint height,
+                  GLuint value, GLuint mask)
 {
    intelScreenPrivate *intelScreen = pipe_screen(pipe);
    struct intel_context *intel = intelScreenContext(intelScreen);
@@ -364,7 +365,7 @@ intel_region_fill(struct pipe_context *pipe,
    intelEmitFillBlit(intel,
                      dst->cpp,
                      dst->pitch, dst->buffer, dst_offset,
-                     dstx, dsty, width, height, color);
+                     dstx, dsty, width, height, value, mask);
 }
 
 /* Attach to a pbo, discarding our data.  Effectively zero-copy upload

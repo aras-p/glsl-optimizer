@@ -56,7 +56,7 @@ extern void intelEmitFillBlit(struct intel_context *intel,
                               struct _DriBufferObject *dst_buffer,
                               GLuint dst_offset,
                               GLshort x, GLshort y,
-                              GLshort w, GLshort h, GLuint color);
+                              GLshort w, GLshort h, GLuint value, GLuint mask);
 
 
 #endif

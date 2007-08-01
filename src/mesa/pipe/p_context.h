@@ -172,7 +172,8 @@ struct pipe_context {
                        struct pipe_region *dst,
                        GLuint dst_offset,
                        GLuint dstx, GLuint dsty,
-                       GLuint width, GLuint height, GLuint color);
+                       GLuint width, GLuint height,
+                       GLuint value, GLuint mask);
 
    void (*region_cow)(struct pipe_context *pipe, struct pipe_region *region);
 
