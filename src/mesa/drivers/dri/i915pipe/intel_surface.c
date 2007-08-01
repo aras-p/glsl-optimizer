@@ -90,7 +90,7 @@ read_quad_z24(struct softpipe_surface *sps,
       = (GLuint *) (sps->surface.region->map
                     + (invY * sps->surface.region->pitch + x) * sps->surface.region->cpp);
 
-   assert(sps->surface.format == PIPE_FORMAT_Z24_S8);
+   assert(sps->surface.format == PIPE_FORMAT_S8_Z24);
 
    /* extract lower three bytes */
    zzzz[0] = src[0] & mask;
@@ -109,7 +109,7 @@ write_quad_z24(struct softpipe_surface *sps,
       = (GLuint *) (sps->surface.region->map
                     + (invY * sps->surface.region->pitch + x) * sps->surface.region->cpp);
 
-   assert(sps->surface.format == PIPE_FORMAT_Z24_S8);
+   assert(sps->surface.format == PIPE_FORMAT_S8_Z24);
 
    /* write lower three bytes */
    dst[0] = (dst[0] & mask) | zzzz[0];
@@ -128,7 +128,7 @@ read_quad_stencil(struct softpipe_surface *sps,
    const GLuint *src = (const GLuint *) (sps->surface.region->map
                      + (invY * sps->surface.region->pitch + x) * sps->surface.region->cpp);
 
-   assert(sps->surface.format == PIPE_FORMAT_Z24_S8);
+   assert(sps->surface.format == PIPE_FORMAT_S8_Z24);
 
    /* extract high byte */
    ssss[0] = src[0] >> 24;
@@ -147,7 +147,7 @@ write_quad_stencil(struct softpipe_surface *sps,
    GLuint *dst = (GLuint *) (sps->surface.region->map
                + (invY * sps->surface.region->pitch + x) * sps->surface.region->cpp);
 
-   assert(sps->surface.format == PIPE_FORMAT_Z24_S8);
+   assert(sps->surface.format == PIPE_FORMAT_S8_Z24);
 
    /* write high byte */
    dst[0] = (dst[0] & mask) | (ssss[0] << 24);
@@ -182,7 +182,7 @@ intel_new_surface(GLuint intFormat)
 
    }
    else if (intFormat == GL_DEPTH24_STENCIL8_EXT) {
-      sps->surface.format = PIPE_FORMAT_Z24_S8;
+      sps->surface.format = PIPE_FORMAT_S8_Z24;
       sps->read_quad_z = read_quad_z24;
       sps->write_quad_z = write_quad_z24;
       sps->read_quad_stencil = read_quad_stencil;
