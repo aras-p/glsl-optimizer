@@ -182,6 +182,7 @@ const struct dri_extension card_extensions[] =
     { "GL_EXT_texture_env_dot3",           NULL },
     { "GL_EXT_texture_filter_anisotropic", NULL },
     { "GL_EXT_texture_lod_bias",           NULL },
+    { "GL_EXT_texture_sRGB",               NULL },
     { "GL_3DFX_texture_compression_FXT1",  NULL },
     { "GL_APPLE_client_storage",           NULL },
     { "GL_MESA_pack_invert",               NULL },

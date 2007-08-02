@@ -120,6 +120,11 @@ static GLuint translate_tex_format( GLuint mesa_format )
    case MESA_FORMAT_RGB_DXT1:
       return BRW_SURFACEFORMAT_DXT1_RGB;
 
+   case MESA_FORMAT_SRGBA8:
+      return BRW_SURFACEFORMAT_R8G8B8A8_UNORM_SRGB;
+   case MESA_FORMAT_SRGB_DXT1:
+      return BRW_SURFACEFORMAT_BC1_UNORM_SRGB;
+
    default:
       assert(0);
       return 0;
