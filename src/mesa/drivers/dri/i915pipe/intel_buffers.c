@@ -296,28 +296,6 @@ intelWindowMoved(struct intel_context *intel)
 
 
 
-/* XXX - kludge required because softpipe_clear uses
- * region->fill(), which still calls intelBlit(!), but doesn't
- * flush the batchbuffer.  
- *
-    * One way or another, that behaviour should stop, and then this
-    * function can go aawy.
-    */
-void
-intelClear(struct pipe_context *pipe,
-           GLboolean color, GLboolean depth,
-           GLboolean stencil, GLboolean accum)
-{
-   GLcontext *ctx = (GLcontext *) pipe->glctx;
-   struct intel_context *intel = intel_context(ctx);
-
-   softpipe_clear(pipe, color, depth, stencil, accum);
-
-   intel_batchbuffer_flush(intel->batch);
-}
-
-
-
 /* Emit wait for pending flips */
 void
 intel_wait_flips(struct intel_context *intel, GLuint batch_flags)
@@ -729,9 +707,6 @@ intelReadBuffer(GLcontext * ctx, GLenum mode)
 void
 intelInitBufferFuncs(struct dd_function_table *functions)
 {
-#if 0
-   functions->Clear = intelClear;
-#endif
    functions->DrawBuffer = intelDrawBuffer;
    functions->ReadBuffer = intelReadBuffer;
 }

@@ -426,7 +426,6 @@ intelCreateContext(const __GLcontextModes * mesaVis,
    intel->pipe = intel->ctx.st->pipe;
    intel->pipe->screen = intelScreen;
    intel->pipe->glctx = ctx;
-   intel->pipe->clear = intelClear;
    intelScreen->pipe = intel->pipe;
    intel_init_region_functions(intel->pipe);
 

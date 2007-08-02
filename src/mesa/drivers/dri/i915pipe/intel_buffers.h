@@ -52,9 +52,4 @@ extern void intel_draw_buffer(GLcontext * ctx, struct gl_framebuffer *fb);
 
 extern void intelInitBufferFuncs(struct dd_function_table *functions);
 
-extern void
-intelClear(struct pipe_context *pipe,
-           GLboolean color, GLboolean depth,
-           GLboolean stencil, GLboolean accum);
-
 #endif /* INTEL_BUFFERS_H */
