@@ -49,8 +49,9 @@
 
 /* Internal flags:
  */
-#define BM_NO_BACKING_STORE   DRM_BO_FLAG_MEM_PRIV0
-#define BM_NO_FENCE_SUBDATA   DRM_BO_FLAG_MEM_PRIV1
+#define BM_NO_BACKING_STORE			0x00000001
+#define BM_NO_FENCE_SUBDATA			0x00000002
+#define BM_PINNED				0x00000004
 
 /* Wrapper around mm.c's mem_block, which understands that you must
  * wait for fences to expire before memory can be freed.  This is
@@ -254,7 +255,7 @@ alloc_backing_store(dri_bo *bo)
 {
    dri_bo_fake *bo_fake = (dri_bo_fake *)bo;
    assert(!bo_fake->backing_store);
-   assert(!(bo_fake->flags & (DRM_BO_FLAG_NO_EVICT|BM_NO_BACKING_STORE)));
+   assert(!(bo_fake->flags & (BM_PINNED|BM_NO_BACKING_STORE)));
 
    bo_fake->backing_store = ALIGN_MALLOC(bo->size, 64);
 }
@@ -263,7 +264,7 @@ static void
 free_backing_store(dri_bo *bo)
 {
    dri_bo_fake *bo_fake = (dri_bo_fake *)bo;
-   assert(!(bo_fake->flags & (DRM_BO_FLAG_NO_EVICT|BM_NO_BACKING_STORE)));
+   assert(!(bo_fake->flags & (BM_PINNED|BM_NO_BACKING_STORE)));
 
    if (bo_fake->backing_store) {
       ALIGN_FREE(bo_fake->backing_store);
@@ -280,7 +281,7 @@ set_dirty(dri_bo *bo)
    if (bo_fake->flags & BM_NO_BACKING_STORE)
       bo_fake->invalidate_cb(&bufmgr_fake->bufmgr, bo_fake->invalidate_ptr);
 
-   assert(!(bo_fake->flags & DRM_BO_FLAG_NO_EVICT));
+   assert(!(bo_fake->flags & BM_PINNED));
 
    DBG("set_dirty - buf %d\n", bo_fake->id);
    bo_fake->dirty = 1;
@@ -575,7 +576,7 @@ dri_fake_bo_alloc_static(dri_bufmgr *bufmgr, const char *name,
    bo_fake->refcount = 1;
    bo_fake->id = ++bufmgr_fake->buf_nr;
    bo_fake->name = name;
-   bo_fake->flags = DRM_BO_FLAG_NO_EVICT | DRM_BO_FLAG_NO_MOVE;
+   bo_fake->flags = BM_PINNED | DRM_BO_FLAG_NO_MOVE;
    bo_fake->is_static = GL_TRUE;
 
    DBG("drm_bo_alloc_static: (buf %d: %s, %d kb)\n", bo_fake->id, bo_fake->name,
@@ -619,7 +620,7 @@ dri_fake_bo_unreference(dri_bo *bo)
 
 /**
  * Map a buffer into bo->virtual, allocating either card memory space (If
- * BM_NO_BACKING_STORE or DRM_BO_FLAG_NO_EVICT) or backing store, as necessary.
+ * BM_NO_BACKING_STORE or BM_PINNED) or backing store, as necessary.
  */
 static int
 dri_fake_bo_map(dri_bo *bo, GLboolean write_enable)
@@ -640,7 +641,7 @@ dri_fake_bo_map(dri_bo *bo, GLboolean write_enable)
 	 _mesa_printf("%s: already mapped\n", __FUNCTION__);
 	 abort();
       }
-      else if (bo_fake->flags & (BM_NO_BACKING_STORE|DRM_BO_FLAG_NO_EVICT)) {
+      else if (bo_fake->flags & (BM_NO_BACKING_STORE|BM_PINNED)) {
 
 	 if (!bo_fake->block && !evict_and_alloc_block(bo)) {
 	    DBG("%s: alloc failed\n", __FUNCTION__);
@@ -734,7 +735,7 @@ dri_fake_bo_validate(dri_bo *bo, unsigned int flags)
 	     bo_fake->name, bo->size, bo_fake->block->mem->ofs);
 
 	 assert(!(bo_fake->flags &
-		  (BM_NO_BACKING_STORE|DRM_BO_FLAG_NO_EVICT)));
+		  (BM_NO_BACKING_STORE|BM_PINNED)));
 
 	 /* Actually, should be able to just wait for a fence on the memory,
 	  * which we would be tracking when we free it.  Waiting for idle is
