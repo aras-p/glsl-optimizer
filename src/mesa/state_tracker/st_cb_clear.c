@@ -49,7 +49,7 @@
 static void
 clear_with_quad(GLcontext *ctx,
                 GLboolean color, GLboolean depth,
-                GLboolean stencil, GLboolean accum)
+                GLboolean stencil)
 {
    struct st_context *st = ctx->st;
    struct pipe_blend_state blend;
@@ -119,17 +119,18 @@ static void st_clear(GLcontext *ctx, GLbitfield mask)
    GLboolean depth = (mask & BUFFER_BIT_DEPTH) ? GL_TRUE : GL_FALSE;
    GLboolean stencil = (mask & BUFFER_BIT_STENCIL) ? GL_TRUE : GL_FALSE;
    GLboolean accum = (mask & BUFFER_BIT_ACCUM) ? GL_TRUE : GL_FALSE;
+
    GLboolean maskColor, maskStencil;
    GLboolean fullscreen = 1;	/* :-) */
-   GLuint stencilMax = 1 << ctx->DrawBuffer->_StencilBuffer->StencilBits;
+   GLuint stencilMax = stencil ? (1 << ctx->DrawBuffer->_StencilBuffer->StencilBits) : 0;
 
    /* This makes sure the softpipe has the latest scissor, etc values */
    st_validate_state( st );
 
-   maskColor = st->state.blend.colormask != PIPE_MASK_RGBA;
-   maskStencil = ctx->Stencil.WriteMask[0] != stencilMax;
+   maskColor = color && st->state.blend.colormask != PIPE_MASK_RGBA;
+   maskStencil = stencil && ctx->Stencil.WriteMask[0] != stencilMax;
 
-   if (fullscreen && !maskColor) {
+   if (fullscreen && !maskColor && !maskStencil) {
       /* pipe->clear() should clear a particular surface, so that we
        * can iterate over render buffers at this level and clear the
        * ones GL is asking for.  
@@ -139,12 +140,17 @@ static void st_clear(GLcontext *ctx, GLbitfield mask)
        * buffers, though could perhaps deal with them explicitly at
        * this level.
        */
-      st->pipe->clear(st->pipe, color, depth, stencil, accum);
+      st->pipe->clear(st->pipe, color, depth, stencil);
+
+      /* And here we would do a clear on whatever surface we are using
+       * to implement accum buffers:
+       */
+      assert(!accum);
    }
    else {
       /* Convert to geometry, etc:
        */
-      clear_with_quad(ctx, color, depth, stencil, accum);
+      clear_with_quad(ctx, color, depth, stencil);
    }
 }
 

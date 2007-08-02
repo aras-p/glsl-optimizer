@@ -57,7 +57,7 @@ struct pipe_context {
 
    /** Clear framebuffer */
    void (*clear)(struct pipe_context *pipe, GLboolean color, GLboolean depth,
-                 GLboolean stencil, GLboolean accum);
+                 GLboolean stencil);
 
    /** occlusion counting (XXX this may be temporary - we should probably
     * have generic query objects with begin/end methods)

@@ -63,7 +63,7 @@ color_value(GLuint format, const GLfloat color[4])
 
 void
 softpipe_clear(struct pipe_context *pipe, GLboolean color, GLboolean depth,
-               GLboolean stencil, GLboolean accum)
+               GLboolean stencil)
 {
    struct softpipe_context *softpipe = softpipe_context(pipe);
    GLint x, y, w, h;
@@ -151,16 +151,5 @@ softpipe_clear(struct pipe_context *pipe, GLboolean color, GLboolean depth,
 
          pipe->region_fill(pipe, ps->region, 0, x, y, w, h, clearVal, mask);
       }
-   }
-
-   if (accum) {
-      /* XXX there might be no notion of accum buffers in 'pipe'.
-       * Just implement them with a deep RGBA surface format...
-       */
-      struct pipe_surface *ps = softpipe->framebuffer.abuf;
-      GLuint clearVal = 0x0; /* XXX FIX */
-      GLuint mask = ~0;
-      assert(ps);
-      pipe->region_fill(pipe, ps->region, 0, x, y, w, h, clearVal, mask);
    }
 }

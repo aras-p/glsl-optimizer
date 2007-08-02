@@ -202,7 +202,6 @@ struct pipe_framebuffer_state
 
    struct pipe_surface *zbuf;      /**< Z buffer */
    struct pipe_surface *sbuf;      /**< Stencil buffer */
-   struct pipe_surface *abuf;      /**< Accum buffer */
 };
 
 
