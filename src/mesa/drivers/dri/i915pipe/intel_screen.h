@@ -29,7 +29,6 @@
 #define _INTEL_SCREEN_H_
 
 #include "dri_util.h"
-#include "intel_rotate.h"
 #include "i830_common.h"
 #include "xmlconfig.h"
 #include "dri_bufpool.h"
@@ -65,7 +64,6 @@ typedef struct
    int irq_active;
    int allow_batchbuffer;
 
-   struct matrix23 rotMatrix;
 
 
    /**
@@ -112,8 +110,6 @@ extern struct _DriBufferPool *driBatchPoolInit(int fd, unsigned flags,
 
 extern struct intel_context *intelScreenContext(intelScreenPrivate *intelScreen);
 
-extern void
-intelUpdateScreenRotation(__DRIscreenPrivate * sPriv, drmI830Sarea * sarea);
 extern GLboolean
 intelCreatePools(intelScreenPrivate *intelScreen);
 

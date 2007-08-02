@@ -330,7 +330,6 @@ intelInitDriverFunctions(struct dd_function_table *functions)
 
    intelInitTextureFuncs(functions);
    intelInitPixelFuncs(functions);
-   intelInitStateFuncs(functions);
    intelInitBufferFuncs(functions);
 }
 
