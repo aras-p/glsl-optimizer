@@ -198,9 +198,9 @@ intel_map_unmap_buffers(struct intel_context *intel, GLboolean map)
                   intel_region_map(intel->intelScreen, irb->region);
                else
                   intel_region_unmap(intel->intelScreen, irb->region);
+               irb->pfMap = irb->region->map;
+               irb->pfPitch = irb->region->pitch;
             }
-            irb->pfMap = irb->region->map;
-            irb->pfPitch = irb->region->pitch;
          }
       }
    }
