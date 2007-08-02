@@ -60,9 +60,9 @@ struct pipe_context {
                           GLuint numVertex, const GLfloat *verts,
                           GLuint numAttribs, const GLuint attribs[]);
 
-   /** Clear framebuffer */
-   void (*clear)(struct pipe_context *pipe, GLboolean color, GLboolean depth,
-                 GLboolean stencil);
+   /** Clear a surface to given value (no scissor; clear whole surface) */
+   void (*clear)(struct pipe_context *pipe, struct pipe_surface *ps,
+                 GLuint clearValue);
 
    /** occlusion counting (XXX this may be temporary - we should probably
     * have generic query objects with begin/end methods)

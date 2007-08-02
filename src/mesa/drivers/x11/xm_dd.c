@@ -381,8 +381,8 @@ clear_nbit_ximage(GLcontext *ctx, struct xmesa_renderbuffer *xrb,
 
 
 
-static void
-clear_buffers(GLcontext *ctx, GLbitfield buffers)
+void
+xmesa_clear_buffers(GLcontext *ctx, GLbitfield buffers)
 {
    if (ctx->DrawBuffer->Name == 0) {
       /* this is a window system framebuffer */
@@ -395,7 +395,6 @@ clear_buffers(GLcontext *ctx, GLbitfield buffers)
 
       /* we can't handle color or index masking */
       if (*colorMask == 0xffffffff && ctx->Color.IndexMask == 0xffffffff) {
-#if 0
          if (buffers & BUFFER_BIT_FRONT_LEFT) {
             /* clear front color buffer */
             struct gl_renderbuffer *frontRb
@@ -419,14 +418,6 @@ clear_buffers(GLcontext *ctx, GLbitfield buffers)
                buffers &= ~BUFFER_BIT_BACK_LEFT;
             }
          }
-#else
-         /* Clear with state-tracker/pipe interface */
-         struct st_context *st = st_context(ctx);
-         GLboolean color = (buffers & (BUFFER_BIT_FRONT_LEFT | BUFFER_BIT_BACK_LEFT)) ? 1: 0;
-         GLboolean depth = (buffers & BUFFER_BIT_DEPTH) ? 1 : 0;
-         GLboolean stencil = (buffers & BUFFER_BIT_STENCIL) ? 1 : 0;
-         st_clear(st, color, depth, stencil);
-#endif
       }
    }
    if (buffers)
@@ -434,6 +425,7 @@ clear_buffers(GLcontext *ctx, GLbitfield buffers)
 }
 
 
+#if 0
 void
 xmesa_clear(struct pipe_context *pipe, GLboolean color, GLboolean depth,
             GLboolean stencil, GLboolean accum)
@@ -458,9 +450,14 @@ xmesa_clear(struct pipe_context *pipe, GLboolean color, GLboolean depth,
          xrb->clearFunc(ctx, xrb, x, y, w, h);
       }
    }
+}
+#endif
+
+void
+xmesa_clear(struct pipe_context *pipe, struct pipe_surface *ps, GLuint value)
+{
 
 }
-
 
 
 #ifndef XFree86Server
@@ -1113,7 +1110,7 @@ xmesa_init_driver_functions( XMesaVisual xmvisual,
    driver->IndexMask = index_mask;
    driver->ColorMask = color_mask;
    driver->Enable = enable;
-   driver->Clear = clear_buffers;
+   driver->Clear = xmesa_clear_buffers;
    driver->Viewport = xmesa_viewport;
 #ifndef XFree86Server
    driver->CopyPixels = xmesa_CopyPixels;

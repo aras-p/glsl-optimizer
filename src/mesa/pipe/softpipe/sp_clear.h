@@ -36,8 +36,8 @@
 struct pipe_context;
 
 extern void
-softpipe_clear(struct pipe_context *pipe, GLboolean color, GLboolean depth,
-               GLboolean stencil);
+softpipe_clear(struct pipe_context *pipe, struct pipe_surface *ps,
+               GLuint clearValue);
 
 
 #endif /* SP_CLEAR_H */

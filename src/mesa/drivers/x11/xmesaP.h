@@ -593,7 +593,10 @@ extern struct pipe_surface *
 xmesa_new_surface(GLcontext *ctx, struct xmesa_renderbuffer *xrb);
 
 extern void
-xmesa_clear(struct pipe_context *pipe, GLboolean color, GLboolean depth,
-            GLboolean stencil, GLboolean accum);
+xmesa_clear(struct pipe_context *pipe, struct pipe_surface *ps, GLuint value);
+
+extern void
+xmesa_clear_buffers(GLcontext *ctx, GLbitfield buffers);
+
 
 #endif

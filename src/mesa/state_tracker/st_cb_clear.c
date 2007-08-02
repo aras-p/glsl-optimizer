@@ -43,6 +43,65 @@
 #include "vf/vf.h"
 
 
+
+static GLuint
+color_value(GLuint pipeFormat, const GLfloat color[4])
+{
+   GLubyte r, g, b, a;
+
+   UNCLAMPED_FLOAT_TO_UBYTE(r, color[0]);
+   UNCLAMPED_FLOAT_TO_UBYTE(g, color[1]);
+   UNCLAMPED_FLOAT_TO_UBYTE(b, color[2]);
+   UNCLAMPED_FLOAT_TO_UBYTE(a, color[3]);
+
+   switch (pipeFormat) {
+   case PIPE_FORMAT_U_R8_G8_B8_A8:
+      return (r << 24) | (g << 16) | (b << 8) | a;
+   case PIPE_FORMAT_U_A8_R8_G8_B8:
+      return (a << 24) | (r << 16) | (g << 8) | b;
+   case PIPE_FORMAT_U_R5_G6_B5:
+      return ((r & 0xf8) << 8) | ((g & 0xfc) << 3) | (b >> 3);
+   default:
+      return 0;
+   }
+}
+ 
+
+static GLuint
+depth_value(GLuint pipeFormat, GLfloat value)
+{
+   GLuint val;
+   switch (pipeFormat) {
+   case PIPE_FORMAT_U_Z16:
+      val = (GLuint) (value * 0xffffff);
+      break;
+   case PIPE_FORMAT_U_Z32:
+      val = (GLuint) (value * 0xffffffff);
+      break;
+   case PIPE_FORMAT_S8_Z24:
+   /*case PIPE_FORMAT_Z24_S8:*/
+      val = (GLuint) (value * 0xffffff);
+      break;
+   default:
+      assert(0);
+   }
+   return val;
+}
+
+
+static GLboolean
+is_depth_stencil_format(GLuint pipeFormat)
+{
+   switch (pipeFormat) {
+   case PIPE_FORMAT_S8_Z24:
+   /*case PIPE_FORMAT_Z24_S8:*/
+      return GL_TRUE;
+   default:
+      return GL_FALSE;
+   }
+}
+
+
 /**
  * Draw a screen-aligned quadrilateral.
  * Coords are window coords.
@@ -92,7 +151,8 @@ draw_quad(GLcontext *ctx,
  * Do glClear by drawing a quadrilateral.
  */
 static void
-clear_with_quad(GLcontext *ctx,
+clear_with_quad(GLcontext *ctx, GLuint x0, GLuint y0,
+                GLuint x1, GLuint y1,
                 GLboolean color, GLboolean depth, GLboolean stencil)
 {
    struct st_context *st = ctx->st;
@@ -133,6 +193,8 @@ clear_with_quad(GLcontext *ctx,
 
    /* setup state: nothing */
    memset(&setup, 0, sizeof(setup));
+   if (ctx->Scissor.Enabled)
+      setup.scissor = 1;
    st->pipe->set_setup_state(st->pipe, &setup);
 
    /* stencil state: always set to ref value */
@@ -145,18 +207,14 @@ clear_with_quad(GLcontext *ctx,
       stencil_test.front_zfail_op = PIPE_STENCIL_OP_REPLACE;
       stencil_test.ref_value[0] = ctx->Stencil.Clear;
       stencil_test.value_mask[0] = 0xff;
-      stencil_test.write_mask[0] = ctx->Stencil.WriteMask[0];
+      stencil_test.write_mask[0] = ctx->Stencil.WriteMask[0] & 0xff;
    }
    st->pipe->set_stencil_state(st->pipe, &stencil_test);
 
    /* draw quad matching scissor rect (XXX verify coord round-off) */
-   draw_quad(ctx,
-             ctx->Scissor.X, ctx->Scissor.Y,
-             ctx->Scissor.X + ctx->Scissor.Width,
-             ctx->Scissor.Y + ctx->Scissor.Height,
-             ctx->Depth.Clear, ctx->Color.ClearColor);
+   draw_quad(ctx, x0, y0, x1, y1, ctx->Depth.Clear, ctx->Color.ClearColor);
 
-   /* Restore GL state */
+   /* Restore pipe state */
    st->pipe->set_alpha_test_state(st->pipe, &st->state.alpha_test);
    st->pipe->set_blend_state(st->pipe, &st->state.blend);
    st->pipe->set_depth_state(st->pipe, &st->state.depth);
@@ -168,6 +226,141 @@ clear_with_quad(GLcontext *ctx,
 }
 
 
+static void
+clear_color_buffer(GLcontext *ctx, struct gl_renderbuffer *rb)
+{
+   if (ctx->Color.ColorMask[0] &&
+       ctx->Color.ColorMask[1] &&
+       ctx->Color.ColorMask[2] &&
+       ctx->Color.ColorMask[3] &&
+       !ctx->Scissor.Enabled)
+   {
+      /* clear whole buffer w/out masking */
+      GLuint clearValue
+         = color_value(rb->surface->format, ctx->Color.ClearColor);
+      ctx->st->pipe->clear(ctx->st->pipe, rb->surface, clearValue);
+   }
+   else {
+      /* masking or scissoring */
+      clear_with_quad(ctx,
+                      ctx->DrawBuffer->_Xmin,
+                      ctx->DrawBuffer->_Xmin,
+                      ctx->DrawBuffer->_Xmax,
+                      ctx->DrawBuffer->_Ymax,
+                      GL_TRUE, GL_FALSE, GL_FALSE);
+   }
+}
+
+
+static void
+clear_accum_buffer(GLcontext *ctx, struct gl_renderbuffer *rb)
+{
+   if (!ctx->Scissor.Enabled) {
+      /* clear whole buffer w/out masking */
+      GLuint clearValue
+         = color_value(rb->surface->format, ctx->Accum.ClearColor);
+      /* Note that clearValue is 32 bits but the accum buffer will
+       * typically be 64bpp...
+       */
+      ctx->st->pipe->clear(ctx->st->pipe, rb->surface, clearValue);
+   }
+   else {
+      /* scissoring */
+      /* XXX point framebuffer.cbufs[0] at the accum buffer */
+      clear_with_quad(ctx,
+                      ctx->DrawBuffer->_Xmin,
+                      ctx->DrawBuffer->_Xmin,
+                      ctx->DrawBuffer->_Xmax,
+                      ctx->DrawBuffer->_Ymax,
+                      GL_TRUE, GL_FALSE, GL_FALSE);
+   }
+}
+
+
+static void
+clear_depth_buffer(GLcontext *ctx, struct gl_renderbuffer *rb)
+{
+   if (!ctx->Scissor.Enabled &&
+       !is_depth_stencil_format(rb->surface->format)) {
+      /* clear whole depth buffer w/out masking */
+      GLuint clearValue = depth_value(rb->surface->format, ctx->Depth.Clear);
+      ctx->st->pipe->clear(ctx->st->pipe, rb->surface, clearValue);
+   }
+   else {
+      /* masking or scissoring or combined z/stencil buffer */
+      clear_with_quad(ctx,
+                      ctx->DrawBuffer->_Xmin,
+                      ctx->DrawBuffer->_Xmin,
+                      ctx->DrawBuffer->_Xmax,
+                      ctx->DrawBuffer->_Ymax,
+                      GL_FALSE, GL_TRUE, GL_FALSE);
+   }
+}
+
+
+static void
+clear_stencil_buffer(GLcontext *ctx, struct gl_renderbuffer *rb)
+{
+   const GLuint stencilMax = (1 << rb->StencilBits) - 1;
+   GLboolean maskStencil = ctx->Stencil.WriteMask[0] != stencilMax;
+
+   if (!maskStencil && !ctx->Scissor.Enabled &&
+       !is_depth_stencil_format(rb->surface->format)) {
+      /* clear whole stencil buffer w/out masking */
+      GLuint clearValue = ctx->Stencil.Clear;
+      ctx->st->pipe->clear(ctx->st->pipe, rb->surface, clearValue);
+   }
+   else {
+      /* masking or scissoring */
+      clear_with_quad(ctx,
+                      ctx->DrawBuffer->_Xmin,
+                      ctx->DrawBuffer->_Xmin,
+                      ctx->DrawBuffer->_Xmax,
+                      ctx->DrawBuffer->_Ymax,
+                      GL_FALSE, GL_FALSE, GL_TRUE);
+   }
+}
+
+
+static void
+clear_depth_stencil_buffer(GLcontext *ctx, struct gl_renderbuffer *rb)
+{
+   const GLuint stencilMax = 1 << rb->StencilBits;
+   GLboolean maskStencil = ctx->Stencil.WriteMask[0] != stencilMax;
+
+   assert(is_depth_stencil_format(rb->surface->format));
+
+   if (!maskStencil && !ctx->Scissor.Enabled) {
+      /* clear whole buffer w/out masking */
+      GLuint clearValue = depth_value(rb->surface->format, ctx->Depth.Clear);
+
+      switch (rb->surface->format) {
+      case PIPE_FORMAT_S8_Z24:
+         clearValue |= ctx->Stencil.Clear << 24;
+         break;
+#if 0
+      case PIPE_FORMAT_Z24_S8:
+         clearValue = (clearValue << 8) | clearVal;
+         break;
+#endif
+      default:
+         assert(0);
+      }  
+
+      ctx->st->pipe->clear(ctx->st->pipe, rb->surface, clearValue);
+   }
+   else {
+      /* masking or scissoring */
+      clear_with_quad(ctx,
+                      ctx->DrawBuffer->_Xmin,
+                      ctx->DrawBuffer->_Xmin,
+                      ctx->DrawBuffer->_Xmax,
+                      ctx->DrawBuffer->_Ymax,
+                      GL_FALSE, GL_TRUE, GL_TRUE);
+   }
+}
+
+
 
 /**
  * Called via ctx->Driver.Clear()
@@ -176,41 +369,52 @@ clear_with_quad(GLcontext *ctx,
  */
 static void st_clear(GLcontext *ctx, GLbitfield mask)
 {
+   static const GLbitfield BUFFER_BITS_DS
+      = (BUFFER_BIT_DEPTH | BUFFER_BIT_STENCIL);
    struct st_context *st = ctx->st;
-   GLboolean color = (mask & BUFFER_BITS_COLOR) ? GL_TRUE : GL_FALSE;
-   GLboolean depth = (mask & BUFFER_BIT_DEPTH) ? GL_TRUE : GL_FALSE;
-   GLboolean stencil = (mask & BUFFER_BIT_STENCIL) ? GL_TRUE : GL_FALSE;
-   GLboolean accum = (mask & BUFFER_BIT_ACCUM) ? GL_TRUE : GL_FALSE;
-
-   GLboolean maskColor, maskStencil;
-   GLboolean fullscreen = !ctx->Scissor.Enabled;
-   GLuint stencilMax = stencil ? (1 << ctx->DrawBuffer->_StencilBuffer->StencilBits) : 0;
+   struct gl_renderbuffer *depthRb
+      = ctx->DrawBuffer->Attachment[BUFFER_DEPTH].Renderbuffer;
+   struct gl_renderbuffer *stencilRb
+      = ctx->DrawBuffer->Attachment[BUFFER_STENCIL].Renderbuffer;
 
    /* This makes sure the softpipe has the latest scissor, etc values */
    st_validate_state( st );
 
-   maskColor = color && st->state.blend.colormask != PIPE_MASK_RGBA;
-   maskStencil = stencil && ctx->Stencil.WriteMask[0] != stencilMax;
+   /*
+    * XXX TO-DO:
+    * If we're going to use clear_with_quad() for any reason, use it to
+    * clear as many other buffers as possible.
+    * As it is now, we sometimes call clear_with_quad() three times to clear
+    * color/depth/stencil individually...
+    */
 
-   if (fullscreen && !maskColor && !maskStencil) {
-      /* pipe->clear() should clear a particular surface, so that we
-       * can iterate over render buffers at this level and clear the
-       * ones GL is asking for.  
-       *
-       * Will probably need something like pipe->clear_z_stencil() to
-       * cope with the special case of paired and unpaired z/stencil
-       * buffers, though could perhaps deal with them explicitly at
-       * this level.
-       */
-      st->pipe->clear(st->pipe, color, depth, stencil);
+   if (mask & BUFFER_BITS_COLOR) {
+      GLuint b;
+      for (b = 0; b < BUFFER_COUNT; b++) {
+         if (BUFFER_BITS_COLOR & mask & (1 << b)) {
+            clear_color_buffer(ctx,
+                               ctx->DrawBuffer->Attachment[b].Renderbuffer);
+         }
+      }
+   }
 
-      /* And here we would do a clear on whatever surface we are using
-       * to implement accum buffers:
-       */
-      assert(!accum);
+   if (mask & BUFFER_BIT_ACCUM) {
+      clear_accum_buffer(ctx,
+                     ctx->DrawBuffer->Attachment[BUFFER_ACCUM].Renderbuffer);
+   }
+
+   if ((mask & BUFFER_BITS_DS) == BUFFER_BITS_DS && depthRb == stencilRb) {
+      /* clearing combined depth + stencil */
+      clear_depth_stencil_buffer(ctx, depthRb);
    }
    else {
-      clear_with_quad(ctx, color, depth, stencil);
+      /* separate depth/stencil clears */
+      if (mask & BUFFER_BIT_DEPTH) {
+         clear_depth_buffer(ctx, depthRb);
+      }
+      if (mask & BUFFER_BIT_STENCIL) {
+         clear_stencil_buffer(ctx, stencilRb);
+      }
    }
 }
 
