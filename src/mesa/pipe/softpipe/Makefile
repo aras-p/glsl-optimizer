@@ -40,5 +40,3 @@ include ../Makefile.template
 
 symlinks:
 
-default::
-	cd ../.. ; make
