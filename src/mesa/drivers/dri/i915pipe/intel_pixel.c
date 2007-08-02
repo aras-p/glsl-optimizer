@@ -26,7 +26,6 @@
  **************************************************************************/
 
 #include "state.h"
-#include "swrast/swrast.h"
 
 #include "intel_context.h"
 #include "intel_pixel.h"
@@ -35,9 +34,4 @@
 void
 intelInitPixelFuncs(struct dd_function_table *functions)
 {
-   functions->Accum = _swrast_Accum;
-   functions->Bitmap = _swrast_Bitmap;
-   functions->CopyPixels = _swrast_CopyPixels;
-   functions->ReadPixels = _swrast_ReadPixels;
-   functions->DrawPixels = _swrast_DrawPixels;
 }
