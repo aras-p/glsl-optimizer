@@ -185,6 +185,8 @@ static void upload_sf_unit( struct brw_context *brw )
    /* _NEW_POINT */
    sf.sf6.point_rast_rule = 1;	/* opengl conventions */
    /* XXX clamp max depends on AA vs. non-AA */
+
+   sf.sf7.sprite_point = brw->attribs.Point->PointSprite;
    sf.sf7.point_size = CLAMP(brw->attribs.Point->Size, 1.0, 255.0) * (1<<3);
    sf.sf7.use_point_size_state = !brw->attribs.Point->_Attenuated;
       
