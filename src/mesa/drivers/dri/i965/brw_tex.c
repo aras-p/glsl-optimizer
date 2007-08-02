@@ -180,7 +180,7 @@ brwChooseTextureFormat( GLcontext *ctx, GLint internalFormat,
    case GL_COMPRESSED_SRGB_ALPHA_EXT:
    case GL_COMPRESSED_SLUMINANCE_EXT:
    case GL_COMPRESSED_SLUMINANCE_ALPHA_EXT:
-	return &_mesa_texformat_srgb_dxt1;
+	return &_mesa_texformat_srgba8;
    case GL_COMPRESSED_SRGB_S3TC_DXT1_EXT:
    case GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT1_EXT:
    case GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT3_EXT:
