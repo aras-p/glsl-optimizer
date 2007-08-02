@@ -102,6 +102,25 @@ static void softpipe_draw_vb( struct pipe_context *pipe,
 }
 
 
+static void
+softpipe_draw_vertices(struct pipe_context *pipe,
+                       GLuint mode,
+                       GLuint numVertex, const GLfloat *verts,
+                       GLuint numAttribs, const GLuint attribs[])
+{
+   struct softpipe_context *softpipe = softpipe_context( pipe );
+
+   if (softpipe->dirty)
+      softpipe_update_derived( softpipe );
+
+   /* XXX move mapping/unmapping to higher/coarser level? */
+   map_surfaces(softpipe);
+   draw_vertices(softpipe->draw, mode, numVertex, verts, numAttribs, attribs);
+   unmap_surfaces(softpipe);
+}
+
+
+
 static void softpipe_reset_occlusion_counter(struct pipe_context *pipe)
 {
    struct softpipe_context *softpipe = softpipe_context( pipe );
@@ -137,6 +156,7 @@ struct pipe_context *softpipe_create( void )
    softpipe->pipe.set_texture_state = softpipe_set_texture_state;
    softpipe->pipe.set_viewport_state = softpipe_set_viewport_state;
    softpipe->pipe.draw_vb = softpipe_draw_vb;
+   softpipe->pipe.draw_vertices = softpipe_draw_vertices;
    softpipe->pipe.clear = softpipe_clear;
    softpipe->pipe.reset_occlusion_counter = softpipe_reset_occlusion_counter;
    softpipe->pipe.get_occlusion_counter = softpipe_get_occlusion_counter;

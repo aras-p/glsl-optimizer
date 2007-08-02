@@ -57,7 +57,7 @@ static void draw_allocate_vertices( struct draw_context *draw,
 				    GLuint nr_vertices )
 {
    draw->nr_vertices = nr_vertices;
-   draw->verts = MALLOC( nr_vertices * draw->vertex_size );
+   draw->verts = (GLubyte *) malloc( nr_vertices * draw->vertex_size );
 
    draw->pipeline.first->begin( draw->pipeline.first );
 }
@@ -453,7 +453,7 @@ static void draw_release_vertices( struct draw_context *draw )
 {
    draw->pipeline.first->end( draw->pipeline.first );
 
-   FREE(draw->verts);
+   free(draw->verts);
    draw->verts = NULL;
 }
 
@@ -644,6 +644,63 @@ void draw_vb(struct draw_context *draw,
    draw->verts = NULL;
    draw->in_vb = 0;
 }
+
+
+/**
+ * XXX Temporary mechanism to draw simple vertex arrays.
+ * All attribs are GLfloat[4].  Arrays are interleaved, in GL-speak.
+ */
+void
+draw_vertices(struct draw_context *draw,
+              GLuint mode,
+              GLuint numVerts, const GLfloat *vertices,
+              GLuint numAttrs, const GLuint attribs[])
+{
+   /*GLuint first, incr;*/
+   GLuint i, j;
+
+   assert(mode <= GL_POLYGON);
+
+   draw->vertex_size
+      = sizeof(struct vertex_header) + numAttrs * 4 * sizeof(GLfloat);
+
+   /*draw_prim_info(mode, &first, &incr);*/
+   draw_allocate_vertices( draw, numVerts );
+   if (draw->prim != mode) 
+      draw_set_prim( draw, mode );
+
+   /* setup attr info */
+   draw->nr_attrs = numAttrs + 2;
+   draw->attrs[0].attrib = VF_ATTRIB_VERTEX_HEADER;
+   draw->attrs[0].format = EMIT_1F;
+   draw->attrs[1].attrib = VF_ATTRIB_CLIP_POS;
+   draw->attrs[1].format = EMIT_4F;
+   for (j = 0; j < numAttrs; j++) {
+      draw->vf_attr_to_slot[attribs[j]] = 2+j;
+      draw->attrs[2+j].attrib = attribs[j];
+      draw->attrs[2+j].format = EMIT_4F;
+   }
+
+   /* build vertices */
+   for (i = 0; i < numVerts; i++) {
+      struct vertex_header *v
+         = (struct vertex_header *) (draw->verts + i * draw->vertex_size);
+      v->clipmask = 0x0;
+      v->edgeflag = 0;
+      for (j = 0; j < numAttrs; j++) {
+         COPY_4FV(v->data[j], vertices + (i * numAttrs + j) * 4);
+      }
+   }
+
+   /* draw */
+   draw_prim(draw, 0, numVerts);
+
+   /* clean up */
+   draw_release_vertices( draw );
+   draw->verts = NULL;
+   draw->in_vb = 0;
+}
+
 
 
 /**

@@ -55,6 +55,11 @@ struct pipe_context {
    void (*draw_vb)( struct pipe_context *pipe,
 		    struct vertex_buffer *VB );
 
+   void (*draw_vertices)( struct pipe_context *pipe,
+                          GLuint mode,
+                          GLuint numVertex, const GLfloat *verts,
+                          GLuint numAttribs, const GLuint attribs[]);
+
    /** Clear framebuffer */
    void (*clear)(struct pipe_context *pipe, GLboolean color, GLboolean depth,
                  GLboolean stencil);

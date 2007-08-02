@@ -40,6 +40,51 @@
 #include "st_public.h"
 #include "pipe/p_context.h"
 #include "pipe/p_defines.h"
+#include "vf/vf.h"
+
+
+/**
+ * Draw a screen-aligned quadrilateral.
+ * Coords are window coords.
+ */
+static void
+draw_quad(GLcontext *ctx,
+          float x0, float y0, float x1, float y1, GLfloat z,
+          const GLfloat color[4])
+{
+   static const GLuint attribs[2] = {
+      VF_ATTRIB_POS,
+      VF_ATTRIB_COLOR0
+   };
+   GLfloat verts[4][2][4]; /* four verts, two attribs, XYZW */
+   GLuint i;
+
+   /* positions */
+   verts[0][0][0] = x0;
+   verts[0][0][1] = y0;
+
+   verts[1][0][0] = x1;
+   verts[1][0][1] = y0;
+
+   verts[2][0][0] = x1;
+   verts[2][0][1] = y1;
+
+   verts[3][0][0] = x0;
+   verts[3][0][1] = y1;
+
+   /* same for all verts: */
+   for (i = 0; i < 4; i++) {
+      verts[i][0][2] = z;
+      verts[i][0][3] = 1.0;
+      verts[i][1][0] = color[0];
+      verts[i][1][1] = color[1];
+      verts[i][1][2] = color[2];
+      verts[i][1][3] = color[3];
+   }
+
+   ctx->st->pipe->draw_vertices(ctx->st->pipe, GL_QUADS,
+                                4, (GLfloat *) verts, 2, attribs);
+}
 
 
 
@@ -48,14 +93,12 @@
  */
 static void
 clear_with_quad(GLcontext *ctx,
-                GLboolean color, GLboolean depth,
-                GLboolean stencil)
+                GLboolean color, GLboolean depth, GLboolean stencil)
 {
    struct st_context *st = ctx->st;
    struct pipe_blend_state blend;
    struct pipe_depth_state depth_test;
    struct pipe_stencil_state stencil_test;
-   GLfloat z = ctx->Depth.Clear;
 
    /* depth state: always pass */
    memset(&depth_test, 0, sizeof(depth));
@@ -96,13 +139,19 @@ clear_with_quad(GLcontext *ctx,
    }
    st->pipe->set_blend_state(st->pipe, &blend);
 
-
-   /*
-    * XXX Render quad here
-    */
+   draw_quad(ctx,
+             ctx->Scissor.X, ctx->Scissor.Y,
+             ctx->Scissor.X + ctx->Scissor.Width,
+             ctx->Scissor.Y + ctx->Scissor.Height,
+             ctx->Depth.Clear, ctx->Color.ClearColor);
 
    /* Restore GL state */
+   st->pipe->set_blend_state(st->pipe, &st->state.blend);
+   st->pipe->set_depth_state(st->pipe, &st->state.depth);
+   st->pipe->set_stencil_state(st->pipe, &st->state.stencil);
+   /* OR:
    st_invalidate_state(ctx, _NEW_COLOR | _NEW_DEPTH | _NEW_STENCIL);
+   */
 }
 
 
@@ -121,7 +170,7 @@ static void st_clear(GLcontext *ctx, GLbitfield mask)
    GLboolean accum = (mask & BUFFER_BIT_ACCUM) ? GL_TRUE : GL_FALSE;
 
    GLboolean maskColor, maskStencil;
-   GLboolean fullscreen = 1;	/* :-) */
+   GLboolean fullscreen = !ctx->Scissor.Enabled;
    GLuint stencilMax = stencil ? (1 << ctx->DrawBuffer->_StencilBuffer->StencilBits) : 0;
 
    /* This makes sure the softpipe has the latest scissor, etc values */
@@ -148,8 +197,6 @@ static void st_clear(GLcontext *ctx, GLbitfield mask)
       assert(!accum);
    }
    else {
-      /* Convert to geometry, etc:
-       */
       clear_with_quad(ctx, color, depth, stencil);
    }
 }

@@ -70,5 +70,10 @@ void draw_set_vertex_attributes( struct draw_context *draw,
 void draw_vb(struct draw_context *draw,
 	     struct vertex_buffer *VB );
 
+void draw_vertices(struct draw_context *draw,
+                   GLuint mode,
+                   GLuint numVertex, const GLfloat *verts,
+                   GLuint numAttribs, const GLuint attribs[]);
+
 
 #endif /* DRAW_CONTEXT_H */
