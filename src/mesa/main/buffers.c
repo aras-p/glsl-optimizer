@@ -38,8 +38,6 @@
 #include "fbobject.h"
 #include "state.h"
 
-#include "state_tracker/st_draw.h"
-
 
 #define BAD_MASK ~0u
 
