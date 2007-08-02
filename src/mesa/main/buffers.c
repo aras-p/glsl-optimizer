@@ -178,15 +178,7 @@ _mesa_Clear( GLbitfield mask )
       }
 
       ASSERT(ctx->Driver.Clear);
-#if 0
       ctx->Driver.Clear(ctx, bufferMask);
-#else
-      st_clear(ctx->st, 
-               (mask & GL_COLOR_BUFFER_BIT) ? GL_TRUE : GL_FALSE,
-               (bufferMask & BUFFER_BIT_DEPTH) ? GL_TRUE : GL_FALSE,
-               (bufferMask & BUFFER_BIT_STENCIL) ? GL_TRUE : GL_FALSE,
-               (bufferMask & BUFFER_BIT_ACCUM) ? GL_TRUE : GL_FALSE);
-#endif                     
    }
 }
 

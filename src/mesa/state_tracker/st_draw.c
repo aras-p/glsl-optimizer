@@ -107,14 +107,3 @@ void st_destroy_draw( struct st_context *st )
 }
 
 
-/** XXX temporary here */
-void
-st_clear(struct st_context *st, GLboolean color, GLboolean depth,
-         GLboolean stencil, GLboolean accum)
-{
-   /* This makes sure the softpipe has the latest scissor, etc values */
-   st_validate_state( st );
-
-   st->pipe->clear(st->pipe, color, depth, stencil, accum);
-}
-

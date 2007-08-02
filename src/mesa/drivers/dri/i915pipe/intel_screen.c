@@ -101,7 +101,6 @@ intel_recreate_static(struct pipe_context *pipe,
 		      void *virtual,
 		      GLuint cpp, GLuint pitch, GLuint height)
 {
-   struct intel_context *intel = 0;
   if (region) {
      pipe->region_update_static(pipe, region, mem_type, offset,
                                 virtual, cpp, pitch, height);

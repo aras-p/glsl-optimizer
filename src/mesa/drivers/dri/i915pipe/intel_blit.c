@@ -267,6 +267,8 @@ intelEmitFillBlit(struct intel_context *intel,
              DRM_BO_MASK_MEM | DRM_BO_FLAG_WRITE, dst_offset);
    OUT_BATCH(value);
    ADVANCE_BATCH();
+
+   intel_batchbuffer_flush(intel->batch);
 }
 
 
@@ -385,6 +387,8 @@ intelEmitCopyBlit(struct intel_context *intel,
                 src_offset + src_y * src_pitch);
       ADVANCE_BATCH();
    }
+
+   intel_batchbuffer_flush( intel->batch );
 }
 
 

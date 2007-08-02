@@ -245,8 +245,6 @@ intelDepthRange(GLcontext * ctx, GLclampd nearval, GLclampd farval)
 static void
 intelRenderMode(GLcontext * ctx, GLenum mode)
 {
-   struct intel_context *intel = intel_context(ctx);
-   FALLBACK(intel, INTEL_FALLBACK_RENDERMODE, (mode != GL_RENDER));
 }
 
 

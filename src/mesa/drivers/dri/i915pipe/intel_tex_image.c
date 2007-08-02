@@ -254,38 +254,7 @@ try_pbo_zcopy(struct intel_context *intel,
               GLint width, GLint height,
               GLenum format, GLenum type, const void *pixels)
 {
-   struct intel_buffer_object *pbo = intel_buffer_object(unpack->BufferObj);
-   GLuint src_offset, src_stride;
-   GLuint dst_offset, dst_stride;
-
-   if (!pbo ||
-       intel->ctx._ImageTransferState ||
-       unpack->SkipPixels || unpack->SkipRows) {
-      _mesa_printf("%s: failure 1\n", __FUNCTION__);
-      return GL_FALSE;
-   }
-
-   src_offset = (GLuint) pixels;
-
-   if (unpack->RowLength > 0)
-      src_stride = unpack->RowLength;
-   else
-      src_stride = width;
-
-   dst_offset = intel_miptree_image_offset(intelImage->mt,
-                                           intelImage->face,
-                                           intelImage->level);
-
-   dst_stride = intelImage->mt->pitch;
-
-   if (src_stride != dst_stride || dst_offset != 0 || src_offset != 0) {
-      _mesa_printf("%s: failure 2\n", __FUNCTION__);
-      return GL_FALSE;
-   }
-
-   intel->pipe->region_attach_pbo(intel->pipe, intelImage->mt->region, pbo);
-
-   return GL_TRUE;
+   return GL_FALSE;
 }
 
 

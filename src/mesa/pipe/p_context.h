@@ -175,15 +175,6 @@ struct pipe_context {
                        GLuint width, GLuint height,
                        GLuint value, GLuint mask);
 
-   void (*region_cow)(struct pipe_context *pipe, struct pipe_region *region);
-
-   void (*region_attach_pbo)(struct pipe_context *pipe,
-                             struct pipe_region *region,
-                             struct intel_buffer_object *pbo);
-
-   void (*region_release_pbo)(struct pipe_context *pipe,
-                              struct pipe_region *region);
-
    struct _DriBufferObject *(*region_buffer)(struct pipe_context *pipe,
                                              struct pipe_region *region,
                                              GLuint flag);
