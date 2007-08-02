@@ -231,8 +231,11 @@ intelCopyTexImage2D(GLcontext * ctx, GLenum target, GLint level,
    return;
 
  fail:
+#if 0
    _swrast_copy_teximage2d(ctx, target, level, internalFormat, x, y,
                            width, height, border);
+#endif
+   assert(0);
 }
 
 
@@ -256,7 +259,10 @@ intelCopyTexSubImage1D(GLcontext * ctx, GLenum target, GLint level,
    if (!do_copy_texsubimage(intel_context(ctx),
                             intel_texture_image(texImage),
                             internalFormat, xoffset, 0, x, y, width, 1)) {
+#if 0
       _swrast_copy_texsubimage1d(ctx, target, level, xoffset, x, y, width);
+#endif
+      assert(0);
    }
 }
 
@@ -283,10 +289,10 @@ intelCopyTexSubImage2D(GLcontext * ctx, GLenum target, GLint level,
                             intel_texture_image(texImage),
                             internalFormat,
                             xoffset, yoffset, x, y, width, height)) {
-
-      DBG("%s - fallback to swrast\n", __FUNCTION__);
-
+#if 0
       _swrast_copy_texsubimage2d(ctx, target, level,
                                  xoffset, yoffset, x, y, width, height);
+#endif
+      assert(0);
    }
 }

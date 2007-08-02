@@ -35,8 +35,6 @@
 #include "imports.h"
 #include "points.h"
 
-#include "swrast/swrast.h"
-#include "swrast_setup/swrast_setup.h"
 #include "tnl/tnl.h"
 
 #include "tnl/t_pipeline.h"
@@ -237,8 +235,6 @@ static const struct dri_debug_control debug_control[] = {
 static void
 intelInvalidateState(GLcontext * ctx, GLuint new_state)
 {
-   _swrast_InvalidateState(ctx, new_state);
-   _swsetup_InvalidateState(ctx, new_state);
    _vbo_InvalidateState(ctx, new_state);
    _tnl_InvalidateState(ctx, new_state);
    _tnl_invalidate_vertex_state(ctx, new_state);
@@ -253,9 +249,6 @@ void
 intelFlush(GLcontext * ctx)
 {
    struct intel_context *intel = intel_context(ctx);
-
-   if (intel->Fallback)
-      _swrast_flush(ctx);
 
    INTEL_FIREVERTICES(intel);
 
@@ -323,10 +316,6 @@ intelInitDriverFunctions(struct dd_function_table *functions)
    functions->Finish = intelFinish;
    functions->GetString = intelGetString;
    functions->UpdateState = intelInvalidateState;
-   functions->CopyColorTable = _swrast_CopyColorTable;
-   functions->CopyColorSubTable = _swrast_CopyColorSubTable;
-   functions->CopyConvolutionFilter1D = _swrast_CopyConvolutionFilter1D;
-   functions->CopyConvolutionFilter2D = _swrast_CopyConvolutionFilter2D;
 
    intelInitTextureFuncs(functions);
    intelInitPixelFuncs(functions);
@@ -402,14 +391,8 @@ intelCreateContext(const __GLcontextModes * mesaVis,
    ctx->Const.MaxColorAttachments = 4;  /* XXX FBO: review this */
 
    /* Initialize the software rasterizer and helper modules. */
-   _swrast_CreateContext(ctx);
    _vbo_CreateContext(ctx);
    _tnl_CreateContext(ctx);
-   _swsetup_CreateContext(ctx);
-
-   /* Configure swrast to match hardware characteristics: */
-   _swrast_allow_pixel_fog(ctx, GL_FALSE);
-   _swrast_allow_vertex_fog(ctx, GL_TRUE);
 
    /*
     * Pipe-related setup
@@ -531,11 +514,9 @@ intelDestroyContext(__DRIcontextPrivate * driContextPriv)
       //intel->vtbl.destroy(intel);
 
       release_texture_heaps = (intel->ctx.Shared->RefCount == 1);
-      _swsetup_DestroyContext(&intel->ctx);
       _tnl_DestroyContext(&intel->ctx);
       _vbo_DestroyContext(&intel->ctx);
 
-      _swrast_DestroyContext(&intel->ctx);
       intel->Fallback = 0;      /* don't call _swrast_Flush later */
 
       intel_batchbuffer_free(intel->batch);
@@ -691,9 +672,6 @@ intelContendedLock(struct intel_context *intel, GLuint flags)
        * This will essentially drop the outstanding batchbuffer on the floor.
        */
       intel->numClipRects = 0;
-
-      if (intel->Fallback)
-	 _swrast_flush(&intel->ctx);
 
       INTEL_FIREVERTICES(intel);
 

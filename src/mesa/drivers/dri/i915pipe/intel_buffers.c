@@ -37,7 +37,6 @@
 #include "utils.h"
 #include "drirenderbuffer.h"
 #include "framebuffer.h"
-#include "swrast/swrast.h"
 #include "vblank.h"
 
 #include "pipe/p_context.h"

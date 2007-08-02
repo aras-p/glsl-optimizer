@@ -33,7 +33,6 @@
 
 #include "mtypes.h"
 #include "context.h"
-#include "swrast/swrast.h"
 
 #include "intel_context.h"
 #include "intel_ioctl.h"
