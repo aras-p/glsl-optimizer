@@ -29,6 +29,7 @@
 #include "st_public.h"
 #include "st_context.h"
 #include "st_cb_clear.h"
+#include "st_cb_drawpixels.h"
 #include "st_atom.h"
 #include "st_draw.h"
 #include "st_program.h"
@@ -60,6 +61,7 @@ struct st_context *st_create_context( GLcontext *ctx,
    st_init_draw( st );
    st_init_cb_program( st );
    st_init_cb_clear( st );
+   st_init_cb_drawpixels( st );
 
    return st;
 }
