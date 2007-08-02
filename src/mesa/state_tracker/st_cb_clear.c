@@ -96,32 +96,15 @@ clear_with_quad(GLcontext *ctx,
                 GLboolean color, GLboolean depth, GLboolean stencil)
 {
    struct st_context *st = ctx->st;
+   struct pipe_alpha_test_state alpha_test;
    struct pipe_blend_state blend;
    struct pipe_depth_state depth_test;
    struct pipe_stencil_state stencil_test;
+   struct pipe_setup_state setup;
 
-   /* depth state: always pass */
-   memset(&depth_test, 0, sizeof(depth));
-   if (depth) {
-      depth_test.enabled = 1;
-      depth_test.writemask = 1;
-      depth_test.func = PIPE_FUNC_ALWAYS;
-   }
-   st->pipe->set_depth_state(st->pipe, &depth_test);
-
-   /* stencil state: always set to ref value */
-   memset(&stencil_test, 0, sizeof(stencil));
-   if (stencil) {
-      stencil_test.front_enabled = 1;
-      stencil_test.front_func = PIPE_FUNC_ALWAYS;
-      stencil_test.front_fail_op = PIPE_STENCIL_OP_REPLACE;
-      stencil_test.front_zpass_op = PIPE_STENCIL_OP_REPLACE;
-      stencil_test.front_zfail_op = PIPE_STENCIL_OP_REPLACE;
-      stencil_test.ref_value[0] = ctx->Stencil.Clear;
-      stencil_test.value_mask[0] = 0xff;
-      stencil_test.write_mask[0] = ctx->Stencil.WriteMask[0];
-   }
-   st->pipe->set_stencil_state(st->pipe, &stencil_test);
+   /* alpha state: disabled */
+   memset(&alpha_test, 0, sizeof(alpha_test));
+   st->pipe->set_alpha_test_state(st->pipe, &alpha_test);
 
    /* blend state: RGBA masking */
    memset(&blend, 0, sizeof(blend));
@@ -139,6 +122,34 @@ clear_with_quad(GLcontext *ctx,
    }
    st->pipe->set_blend_state(st->pipe, &blend);
 
+   /* depth state: always pass */
+   memset(&depth_test, 0, sizeof(depth_test));
+   if (depth) {
+      depth_test.enabled = 1;
+      depth_test.writemask = 1;
+      depth_test.func = PIPE_FUNC_ALWAYS;
+   }
+   st->pipe->set_depth_state(st->pipe, &depth_test);
+
+   /* setup state: nothing */
+   memset(&setup, 0, sizeof(setup));
+   st->pipe->set_setup_state(st->pipe, &setup);
+
+   /* stencil state: always set to ref value */
+   memset(&stencil_test, 0, sizeof(stencil_test));
+   if (stencil) {
+      stencil_test.front_enabled = 1;
+      stencil_test.front_func = PIPE_FUNC_ALWAYS;
+      stencil_test.front_fail_op = PIPE_STENCIL_OP_REPLACE;
+      stencil_test.front_zpass_op = PIPE_STENCIL_OP_REPLACE;
+      stencil_test.front_zfail_op = PIPE_STENCIL_OP_REPLACE;
+      stencil_test.ref_value[0] = ctx->Stencil.Clear;
+      stencil_test.value_mask[0] = 0xff;
+      stencil_test.write_mask[0] = ctx->Stencil.WriteMask[0];
+   }
+   st->pipe->set_stencil_state(st->pipe, &stencil_test);
+
+   /* draw quad matching scissor rect (XXX verify coord round-off) */
    draw_quad(ctx,
              ctx->Scissor.X, ctx->Scissor.Y,
              ctx->Scissor.X + ctx->Scissor.Width,
@@ -146,8 +157,10 @@ clear_with_quad(GLcontext *ctx,
              ctx->Depth.Clear, ctx->Color.ClearColor);
 
    /* Restore GL state */
+   st->pipe->set_alpha_test_state(st->pipe, &st->state.alpha_test);
    st->pipe->set_blend_state(st->pipe, &st->state.blend);
    st->pipe->set_depth_state(st->pipe, &st->state.depth);
+   st->pipe->set_setup_state(st->pipe, &st->state.setup);
    st->pipe->set_stencil_state(st->pipe, &st->state.stencil);
    /* OR:
    st_invalidate_state(ctx, _NEW_COLOR | _NEW_DEPTH | _NEW_STENCIL);
