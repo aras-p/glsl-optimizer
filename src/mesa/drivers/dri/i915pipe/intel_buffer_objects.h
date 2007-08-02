@@ -42,10 +42,6 @@ struct intel_buffer_object
 {
    struct gl_buffer_object Base;
    struct _DriBufferObject *buffer;     /* the low-level buffer manager's buffer handle */
-
-   struct pipe_region *region; /* Is there a zero-copy texture
-                                   associated with this (pixel)
-                                   buffer object? */
 };
 
 

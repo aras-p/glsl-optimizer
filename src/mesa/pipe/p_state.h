@@ -238,7 +238,6 @@ struct pipe_sampler_state
 
 
 struct _DriBufferObject;
-struct intel_buffer_object;
 
 struct pipe_region
 {
@@ -252,8 +251,6 @@ struct pipe_region
    GLuint map_refcount;  /**< Reference count for mapping */
 
    GLuint draw_offset; /**< Offset of drawing address within the region */
-
-   struct intel_buffer_object *pbo;     /* zero-copy uploads */
 };
 
 

@@ -75,10 +75,6 @@ intel_region_map(struct pipe_context *pipe, struct pipe_region *region)
 {
    DBG("%s\n", __FUNCTION__);
    if (!region->map_refcount++) {
-      if (region->pbo) {
-         pipe->region_cow(pipe, region);
-      }
-
       region->map = driBOMap(region->buffer,
                              DRM_BO_FLAG_READ | DRM_BO_FLAG_WRITE, 0);
    }
@@ -95,8 +91,6 @@ intel_region_unmap(struct pipe_context *pipe, struct pipe_region *region)
       region->map = NULL;
    }
 }
-
-#undef TEST_CACHED_TEXTURES
 
 static struct pipe_region *
 intel_region_alloc(struct pipe_context *pipe,
@@ -115,13 +109,9 @@ intel_region_alloc(struct pipe_context *pipe,
 
    driGenBuffers(intelScreen->regionPool,
                  "region", 1, &region->buffer, 64,
-#ifdef TEST_CACHED_TEXTURES		 
-		 DRM_BO_FLAG_MEM_TT | DRM_BO_FLAG_BIND_CACHED |
-		 DRM_BO_FLAG_READ | DRM_BO_FLAG_WRITE, 
-#else
 		 0,
-#endif
 		 0);
+
    LOCK_HARDWARE(intel);
    driBOData(region->buffer, pitch * cpp * height, NULL, 0);
    UNLOCK_HARDWARE(intel);
@@ -142,9 +132,6 @@ intel_region_release(struct pipe_context *pipe, struct pipe_region **region)
    if ((*region)->refcount == 0) {
       assert((*region)->map_refcount == 0);
 
-      if ((*region)->pbo)
-	 (*region)->pbo->region = NULL;
-      (*region)->pbo = NULL;
       driBOUnReference((*region)->buffer);
       free(*region);
    }
@@ -275,15 +262,6 @@ intel_region_data(struct pipe_context *pipe,
    if (intel == NULL)
       return;
 
-   if (dst->pbo) {
-      if (dstx == 0 &&
-          dsty == 0 && width == dst->pitch && height == dst->height)
-         pipe->region_release_pbo(pipe, dst);
-      else
-         pipe->region_cow(pipe, dst);
-   }
-
-
    LOCK_HARDWARE(intel);
 
    _mesa_copy_rect(pipe->region_map(pipe, dst) + dst_offset,
@@ -317,14 +295,6 @@ intel_region_copy(struct pipe_context *pipe,
    if (intel == NULL)
       return;
 
-   if (dst->pbo) {
-      if (dstx == 0 &&
-          dsty == 0 && width == dst->pitch && height == dst->height)
-         pipe->region_release_pbo(pipe, dst);
-      else
-         pipe->region_cow(pipe, dst);
-   }
-
    assert(src->cpp == dst->cpp);
 
    intelEmitCopyBlit(intel,
@@ -354,141 +324,18 @@ intel_region_fill(struct pipe_context *pipe,
    if (intel == NULL)
       return;   
 
-   if (dst->pbo) {
-      if (dstx == 0 &&
-          dsty == 0 && width == dst->pitch && height == dst->height)
-         pipe->region_release_pbo(pipe, dst);
-      else
-         pipe->region_cow(pipe, dst);
-   }
-
    intelEmitFillBlit(intel,
                      dst->cpp,
                      dst->pitch, dst->buffer, dst_offset,
                      dstx, dsty, width, height, value, mask);
 }
 
-/* Attach to a pbo, discarding our data.  Effectively zero-copy upload
- * the pbo's data.
- */
-static void
-intel_region_attach_pbo(struct pipe_context *pipe,
-                        struct pipe_region *region,
-                        struct intel_buffer_object *pbo)
-{
-   if (region->pbo == pbo)
-      return;
 
-   /* If there is already a pbo attached, break the cow tie now.
-    * Don't call pipe_region_release_pbo() as that would
-    * unnecessarily allocate a new buffer we would have to immediately
-    * discard.
-    */
-   if (region->pbo) {
-      region->pbo->region = NULL;
-      region->pbo = NULL;
-   }
-
-   if (region->buffer) {
-      driDeleteBuffers(1, &region->buffer);
-      region->buffer = NULL;
-   }
-
-   region->pbo = pbo;
-   region->pbo->region = region;
-   region->buffer = driBOReference(pbo->buffer);
-}
-
-
-/* Break the COW tie to the pbo.  The pbo gets to keep the data.
- */
-static void
-intel_region_release_pbo(struct pipe_context *pipe,
-                         struct pipe_region *region)
-{
-   intelScreenPrivate *intelScreen = pipe_screen(pipe);
-   struct intel_context *intel = intelScreenContext(intelScreen);
-
-   assert(region->buffer == region->pbo->buffer);
-   region->pbo->region = NULL;
-   region->pbo = NULL;
-   driBOUnReference(region->buffer);
-   region->buffer = NULL;
-
-   driGenBuffers(intelScreen->regionPool,
-                 "region", 1, &region->buffer, 64, 0, 0);
-   
-   LOCK_HARDWARE(intel);
-   driBOData(region->buffer,
-             region->cpp * region->pitch * region->height, NULL, 0);
-   UNLOCK_HARDWARE(intel);
-}
-
-/* Break the COW tie to the pbo.  Both the pbo and the region end up
- * with a copy of the data.
- */
-static void
-intel_region_cow(struct pipe_context *pipe, struct pipe_region *region)
-{
-   intelScreenPrivate *intelScreen = pipe_screen(pipe);
-   struct intel_context *intel = intelScreenContext(intelScreen);
-   struct intel_buffer_object *pbo = region->pbo;
-
-   if (intel == NULL)
-      return;
-
-   pipe->region_release_pbo(pipe, region);
-
-   assert(region->cpp * region->pitch * region->height == pbo->Base.Size);
-
-   DBG("%s (%d bytes)\n", __FUNCTION__, pbo->Base.Size);
-
-   /* Now blit from the texture buffer to the new buffer: 
-    */
-
-   intel_batchbuffer_flush(intel->batch);
-
-   if (!intel->locked) {
-      LOCK_HARDWARE(intel);
-      intelEmitCopyBlit(intel,
-			region->cpp,
-			region->pitch,
-			region->buffer, 0,
-			region->pitch,
-			pbo->buffer, 0,
-			0, 0, 0, 0, 
-			region->pitch, region->height,
-			GL_COPY);
-      
-      intel_batchbuffer_flush(intel->batch);
-      UNLOCK_HARDWARE(intel);
-   }
-   else {
-      intelEmitCopyBlit(intel,
-			region->cpp,
-			region->pitch,
-			region->buffer, 0,
-			region->pitch,
-			pbo->buffer, 0,
-			0, 0, 0, 0, 
-			region->pitch, region->height,
-			GL_COPY);
-      
-      intel_batchbuffer_flush(intel->batch);
-   }
-}
 
 static struct _DriBufferObject *
 intel_region_buffer(struct pipe_context *pipe,
                     struct pipe_region *region, GLuint flag)
 {
-   if (region->pbo) {
-      if (flag == INTEL_WRITE_PART)
-         pipe->region_cow(pipe, region);
-      else if (flag == INTEL_WRITE_FULL)
-         pipe->region_release_pbo(pipe, region);
-   }
-
    return region->buffer;
 }
 
@@ -507,9 +354,6 @@ intel_init_region_functions(struct pipe_context *pipe)
    pipe->region_data = intel_region_data;
    pipe->region_copy = intel_region_copy;
    pipe->region_fill = intel_region_fill;
-   pipe->region_cow = intel_region_cow;
-   pipe->region_attach_pbo = intel_region_attach_pbo;
-   pipe->region_release_pbo = intel_region_release_pbo;
    pipe->region_buffer = intel_region_buffer;
 }
 
