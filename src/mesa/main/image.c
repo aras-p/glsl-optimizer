@@ -3733,7 +3733,7 @@ _mesa_pack_stencil_span( const GLcontext *ctx, GLuint n,
 
    switch (dstType) {
    case GL_UNSIGNED_BYTE:
-      if (sizeof(GLstencil) == 8) {
+      if (sizeof(GLstencil) == 1) {
          _mesa_memcpy( dest, source, n );
       }
       else {
@@ -3745,14 +3745,11 @@ _mesa_pack_stencil_span( const GLcontext *ctx, GLuint n,
       }
       break;
    case GL_BYTE:
-      if (sizeof(GLstencil) == 8) {
-         _mesa_memcpy( dest, source, n );
-      }
-      else {
+      {
          GLbyte *dst = (GLbyte *) dest;
          GLuint i;
          for (i=0;i<n;i++) {
-            dst[i] = (GLbyte) source[i];
+            dst[i] = (GLbyte) (source[i] & 0x7f);
          }
       }
       break;
