@@ -425,8 +425,7 @@ clear_buffers(GLcontext *ctx, GLbitfield buffers)
          GLboolean color = (buffers & (BUFFER_BIT_FRONT_LEFT | BUFFER_BIT_BACK_LEFT)) ? 1: 0;
          GLboolean depth = (buffers & BUFFER_BIT_DEPTH) ? 1 : 0;
          GLboolean stencil = (buffers & BUFFER_BIT_STENCIL) ? 1 : 0;
-         GLboolean accum = (buffers & BUFFER_BIT_ACCUM) ? 1 : 0;
-         st_clear(st, color, depth, stencil, accum);
+         st_clear(st, color, depth, stencil);
 #endif
       }
    }
