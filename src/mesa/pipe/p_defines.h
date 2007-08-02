@@ -75,6 +75,8 @@
 #define PIPE_MASK_G  0x2
 #define PIPE_MASK_B  0x4
 #define PIPE_MASK_A  0x8
+#define PIPE_MASK_RGBA 0xf
+
 
 /**
  * Inequality functions.  Used for depth test, stencil compare, alpha
