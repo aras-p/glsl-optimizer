@@ -422,6 +422,7 @@ intelCreateContext(const __GLcontextModes * mesaVis,
     * state_tracker.  The pipe code will need some way of talking to
     * us, eg for batchbuffer ioctls, and there will need to be a
     * buffer manager interface.  So, this is a temporary hack, right?
+    * BP: Yes, a temporary hack so we can make jumps between old/new code.
     */
    intel->pipe = intel->ctx.st->pipe;
    intel->pipe->screen = intelScreen;
