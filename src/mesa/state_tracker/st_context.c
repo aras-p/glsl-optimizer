@@ -58,6 +58,7 @@ struct st_context *st_create_context( GLcontext *ctx,
    st_init_atoms( st );
    st_init_draw( st );
    st_init_cb_program( st );
+   st_init_cb_clear( st );
 
    return st;
 }

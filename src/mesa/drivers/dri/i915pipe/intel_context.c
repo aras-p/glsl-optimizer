@@ -417,7 +417,12 @@ intelCreateContext(const __GLcontextModes * mesaVis,
     */
    st_create_context( &intel->ctx,
 		      softpipe_create() );
-   
+
+   /* KW: Not sure I like this - we should only be talking to the
+    * state_tracker.  The pipe code will need some way of talking to
+    * us, eg for batchbuffer ioctls, and there will need to be a
+    * buffer manager interface.  So, this is a temporary hack, right?
+    */
    intel->pipe = intel->ctx.st->pipe;
    intel->pipe->screen = intelScreen;
    intel->pipe->glctx = ctx;
