@@ -41,6 +41,39 @@
 #include "sp_prim_setup.h"
 
 
+
+/**
+ * Return list of supported surface/texture formats.
+ * If we find texture and drawable support differs, add a selector
+ * parameter or another function.
+ */
+static const GLuint *
+softpipe_supported_formats(struct pipe_context *pipe, GLuint *numFormats)
+{
+   static const GLuint supported[] = {
+      PIPE_FORMAT_U_R8_G8_B8_A8,
+      PIPE_FORMAT_U_A8_R8_G8_B8,
+      PIPE_FORMAT_U_R5_G6_B5,
+      PIPE_FORMAT_U_L8,
+      PIPE_FORMAT_U_A8,
+      PIPE_FORMAT_U_I8,
+      PIPE_FORMAT_U_L8_A8,
+      PIPE_FORMAT_S_R16_G16_B16_A16,
+      PIPE_FORMAT_YCBCR,
+      PIPE_FORMAT_YCBCR_REV,
+      PIPE_FORMAT_U_Z16,
+      PIPE_FORMAT_U_Z32,
+      PIPE_FORMAT_F_Z32,
+      PIPE_FORMAT_S8_Z24,
+      PIPE_FORMAT_U_S8
+   };
+
+   *numFormats = sizeof(supported)/sizeof(supported[0]);
+   return supported;
+}
+
+
+
 static void map_surfaces(struct softpipe_context *sp)
 {
    struct pipe_context *pipe = &sp->pipe;
@@ -140,6 +173,9 @@ struct pipe_context *softpipe_create( void )
    struct softpipe_context *softpipe = CALLOC_STRUCT(softpipe_context);
 
    softpipe->pipe.destroy = softpipe_destroy;
+
+   softpipe->pipe.supported_formats = softpipe_supported_formats;
+
    softpipe->pipe.set_alpha_test_state = softpipe_set_alpha_test_state;
    softpipe->pipe.set_blend_color = softpipe_set_blend_color;
    softpipe->pipe.set_blend_state = softpipe_set_blend_state;

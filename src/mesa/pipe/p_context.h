@@ -50,6 +50,12 @@ struct pipe_context {
    void (*destroy)( struct pipe_context * );
 
    /*
+    * Queries
+    */
+   const GLuint *(*supported_formats)(struct pipe_context *pipe,
+                                      GLuint *numFormats);
+
+   /*
     * Drawing
     */
    void (*draw_vb)( struct pipe_context *pipe,
