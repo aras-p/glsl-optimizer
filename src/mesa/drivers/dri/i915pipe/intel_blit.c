@@ -86,8 +86,6 @@ intelCopyBuffer(__DRIdrawablePrivate * dPriv,
 
    if (dPriv && dPriv->numClipRects) {
       struct intel_framebuffer *intel_fb = dPriv->driverPrivate;
-      const struct pipe_region *frontRegion
-	 = intelScreen->front_region;
       const struct pipe_region *backRegion
 	 = intel_fb->Base._ColorDrawBufferMask[0] == BUFFER_BIT_FRONT_LEFT ?
 	   intel_get_rb_region(&intel_fb->Base, BUFFER_FRONT_LEFT) :
@@ -96,20 +94,19 @@ intelCopyBuffer(__DRIdrawablePrivate * dPriv,
       const int backHeight = intel_fb->Base.Height;
       const int nbox = dPriv->numClipRects;
       const drm_clip_rect_t *pbox = dPriv->pClipRects;
-      const int pitch = frontRegion->pitch;
+      const int pitch = intelScreen->front.pitch / intelScreen->front.cpp;
       const int srcpitch = backRegion->pitch;
-      const int cpp = frontRegion->cpp;
+      const int cpp = intelScreen->front.cpp;
       int BR13, CMD;
       int i;
 
       ASSERT(intel_fb);
       ASSERT(intel_fb->Base.Name == 0);    /* Not a user-created FBO */
-      ASSERT(frontRegion);
       ASSERT(backRegion);
-      ASSERT(frontRegion->cpp == backRegion->cpp);
+      ASSERT(backRegion->cpp == cpp);
 
       DBG("front pitch %d back pitch %d\n",
-	 frontRegion->pitch, backRegion->pitch);
+	 pitch, backRegion->pitch);
 
       if (cpp == 2) {
 	 BR13 = (pitch * cpp) | (0xCC << 16) | (1 << 24);
@@ -127,7 +124,8 @@ intelCopyBuffer(__DRIdrawablePrivate * dPriv,
 
 	 if (pbox->x1 > pbox->x2 ||
 	     pbox->y1 > pbox->y2 ||
-	     pbox->x2 > intelScreen->width || pbox->y2 > intelScreen->height)
+	     pbox->x2 > intelScreen->front.width || 
+	     pbox->y2 > intelScreen->front.height)
 	    continue;
 
 	 box = *pbox;
@@ -170,7 +168,8 @@ intelCopyBuffer(__DRIdrawablePrivate * dPriv,
 	 OUT_BATCH((box.y1 << 16) | box.x1);
 	 OUT_BATCH((box.y2 << 16) | box.x2);
 
-	 OUT_RELOC(frontRegion->buffer, DRM_BO_FLAG_MEM_TT | DRM_BO_FLAG_WRITE,
+	 OUT_RELOC(intelScreen->front.buffer, 
+		   DRM_BO_FLAG_MEM_TT | DRM_BO_FLAG_WRITE,
 		   DRM_BO_MASK_MEM | DRM_BO_FLAG_WRITE, 0);
 	 OUT_BATCH((sbox.y1 << 16) | sbox.x1);
 	 OUT_BATCH((srcpitch * cpp) & 0xffff);

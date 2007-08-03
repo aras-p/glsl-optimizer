@@ -33,37 +33,30 @@
 #include "xmlconfig.h"
 #include "dri_bufpool.h"
 
-typedef struct
-{
-   drm_handle_t handle;
-   drmSize size;                /* region size in bytes */
-   char *map;                   /* memory map */
-   int offset;                  /* from start of video mem, in bytes */
-   int pitch;                   /* row stride, in bytes */
-} intelRegion;
 
-typedef struct
+struct intel_screen
 {
-   struct pipe_context *pipe;   /** for accessing region functions */
-   intelRegion front;
+   struct {
+      drm_handle_t handle;
 
-   struct pipe_region *front_region;
+      /* We create a static dri buffer for the frontbuffer.
+       */
+      struct _DriBufferObject *buffer;
+
+      char *map;                   /* memory map */
+      int offset;                  /* from start of video mem, in bytes */
+      int pitch;                   /* row stride, in bytes */
+      int width;
+      int height;
+      int size;
+      int cpp;                     /* for front and back buffers */   
+   } front;
 
    int deviceID;
-   int width;
-   int height;
-   int mem;                     /* unused */
-
-   int cpp;                     /* for front and back buffers */
-
-   __DRIscreenPrivate *driScrnPriv;
-   unsigned int sarea_priv_offset;
-
    int drmMinor;
 
-   int irq_active;
-   int allow_batchbuffer;
-
+   __DRIscreenPrivate *driScrnPriv;
+   drmI830Sarea *sarea;
 
 
    /**
@@ -74,20 +67,16 @@ typedef struct
    struct _DriBufferPool *texPool;
    struct _DriBufferPool *regionPool;
    struct _DriBufferPool *staticPool;
-   unsigned int maxBatchSize;
    GLboolean havePools;
+
    struct intel_context *dummyctxptr;
-} intelScreenPrivate;
+};
 
-
-
-extern GLboolean intelMapScreenRegions(__DRIscreenPrivate * sPriv);
-
-extern void intelUnmapScreenRegions(intelScreenPrivate * intelScreen);
+typedef struct intel_screen intelScreenPrivate;
 
 extern void
-intelUpdateScreenFromSAREA(intelScreenPrivate * intelScreen,
-                           drmI830Sarea * sarea);
+intelUpdateScreenRotation(__DRIscreenPrivate * sPriv, drmI830Sarea * sarea);
+
 
 extern void intelDestroyContext(__DRIcontextPrivate * driContextPriv);
 

@@ -337,8 +337,7 @@ intelCreateContext(const __GLcontextModes * mesaVis,
    GLcontext *shareCtx = (GLcontext *) sharedContextPrivate;
    __DRIscreenPrivate *sPriv = driContextPriv->driScreenPriv;
    intelScreenPrivate *intelScreen = (intelScreenPrivate *) sPriv->private;
-   drmI830Sarea *saPriv = (drmI830Sarea *)
-      (((GLubyte *) sPriv->pSAREA) + intelScreen->sarea_priv_offset);
+   drmI830Sarea *saPriv = intelScreen->sarea;
    int fthrottle_mode;
    GLboolean havePools;
 
@@ -409,7 +408,6 @@ intelCreateContext(const __GLcontextModes * mesaVis,
    intel->pipe = intel->ctx.st->pipe;
    intel->pipe->screen = intelScreen;
    intel->pipe->glctx = ctx;
-   intelScreen->pipe = intel->pipe;
    intel_init_region_functions(intel->pipe);
 
    /*
@@ -452,11 +450,6 @@ intelCreateContext(const __GLcontextModes * mesaVis,
    fthrottle_mode = driQueryOptioni(&intel->optionCache, "fthrottle_mode");
    intel->iw.irq_seq = -1;
    intel->irqsEmitted = 0;
-
-   intel->do_irqs = (intel->intelScreen->irq_active &&
-                     fthrottle_mode == DRI_CONF_FTHROTTLE_IRQS);
-
-   intel->do_usleeps = (fthrottle_mode == DRI_CONF_FTHROTTLE_USLEEPS);
 
    _math_matrix_ctr(&intel->ViewportMatrix);
 
@@ -598,9 +591,7 @@ intelMakeCurrent(__DRIcontextPrivate * driContextPriv,
 	    if (driDrawPriv->pdraw->swap_interval == (unsigned)-1) {
 	       int i;
 
-	       intel_fb->vblank_flags = (intel->intelScreen->irq_active != 0)
-		  ? driGetDefaultVBlankFlags(&intel->optionCache)
-		 : VBLANK_FLAG_NO_IRQ;
+	       intel_fb->vblank_flags = driGetDefaultVBlankFlags(&intel->optionCache);
 
 	       (*dri_interface->getUST) (&intel_fb->swap_ust);
 	       driDrawableInitVBlank(driDrawPriv, intel_fb->vblank_flags,
@@ -651,8 +642,8 @@ intelContendedLock(struct intel_context *intel, GLuint flags)
    if (dPriv)
       DRI_VALIDATE_DRAWABLE_INFO(sPriv, dPriv);
 
-   if (sarea->width != intelScreen->width ||
-       sarea->height != intelScreen->height) {
+   if (sarea->width != intelScreen->front.width ||
+       sarea->height != intelScreen->front.height) {
 
       intelUpdateScreenRotation(sPriv, sarea);
    }

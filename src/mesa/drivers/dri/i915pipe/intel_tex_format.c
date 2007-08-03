@@ -16,7 +16,7 @@ intelChooseTextureFormat(GLcontext * ctx, GLint internalFormat,
                          GLenum format, GLenum type)
 {
    struct intel_context *intel = intel_context(ctx);
-   const GLboolean do32bpt = (intel->intelScreen->cpp == 4);
+   const GLboolean do32bpt = (intel->intelScreen->front.cpp == 4);
 
    switch (internalFormat) {
    case 4:
