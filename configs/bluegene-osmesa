@@ -15,6 +15,8 @@ CXXFLAGS = -O3 -ansi -pedantic -fPIC -ffast-math -D_POSIX_SOURCE -D_POSIX_C_SOUR
 
 MKLIB_OPTIONS = -static
 
+OSMESA_LIB_NAME = libOSMesa.a
+
 # Directories
 SRC_DIRS = mesa glu
 DRIVER_DIRS = osmesa
