@@ -194,6 +194,7 @@ STATETRACKER_SOURCES = \
 	state_tracker/st_cb_clear.c \
 	state_tracker/st_cb_drawpixels.c \
 	state_tracker/st_cb_program.c \
+	state_tracker/st_cb_teximage.c \
 	state_tracker/st_draw.c \
 	state_tracker/st_context.c \
 	state_tracker/st_texobj.c

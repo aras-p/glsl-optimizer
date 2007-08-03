@@ -30,6 +30,7 @@
 #include "st_context.h"
 #include "st_cb_clear.h"
 #include "st_cb_drawpixels.h"
+#include "st_cb_teximage.h"
 #include "st_atom.h"
 #include "st_draw.h"
 #include "st_program.h"
@@ -59,9 +60,11 @@ struct st_context *st_create_context( GLcontext *ctx,
 
    st_init_atoms( st );
    st_init_draw( st );
-   st_init_cb_program( st );
+
    st_init_cb_clear( st );
+   st_init_cb_program( st );
    st_init_cb_drawpixels( st );
+   st_init_cb_teximage( st );
 
    return st;
 }
@@ -71,7 +74,12 @@ void st_destroy_context( struct st_context *st )
 {
    st_destroy_atoms( st );
    st_destroy_draw( st );
+
+   st_destroy_cb_clear( st );
    st_destroy_cb_program( st );
+   st_destroy_cb_drawpixels( st );
+   st_destroy_cb_teximage( st );
+
    st->pipe->destroy( st->pipe );
    FREE( st );
 }
