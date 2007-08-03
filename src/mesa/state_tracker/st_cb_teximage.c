@@ -33,11 +33,14 @@
 
 #include "main/imports.h"
 #include "main/context.h"
+#include "main/texstore.h"
 
 #include "pipe/p_context.h"
 #include "pipe/p_defines.h"
 #include "st_context.h"
 #include "st_cb_teximage.h"
+
+
 
 
 /**
@@ -84,11 +87,15 @@ default_depth_format(const GLuint formats[], GLuint num)
  * If we find a device that needs a more intricate selection mechanism,
  * this function _could_ get pushed down into the pipe device.
  *
+ * Note: also used for glRenderbufferStorageEXT()
+ *
+ * Note: format and type may be GL_NONE (see renderbuffers)
+ *
  * \return PIPE_FORMAT_NONE if error/problem.
  */
-static GLuint
-choose_tex_format(struct pipe_context *pipe, GLint internalFormat,
-                  GLenum format, GLenum type)
+GLuint
+st_choose_pipe_format(struct pipe_context *pipe, GLint internalFormat,
+                      GLenum format, GLenum type)
 {
    const GLuint *supported;
    GLboolean allow[PIPE_FORMAT_COUNT];
@@ -112,51 +119,54 @@ choose_tex_format(struct pipe_context *pipe, GLint internalFormat,
                return PIPE_FORMAT_U_A8_R8_G8_B8;
          }
          else if (type == GL_UNSIGNED_SHORT_4_4_4_4_REV) {
-            /*
             if (allow[PIPE_FORMAT_U_A4_R4_G4_B4])
                return PIPE_FORMAT_U_A4_R4_G4_B4;
-            */
          }
          else if (type == GL_UNSIGNED_SHORT_1_5_5_5_REV) {
-            /*
             if (allow[PIPE_FORMAT_U_A1_R5_G5_B5])
                return PIPE_FORMAT_U_A1_R5_G5_B5;
-            */
          }
       }
       return default_rgba_format(supported, n);
-#if 0
+
    case 3:
    case GL_RGB:
    case GL_COMPRESSED_RGB:
       if (format == GL_RGB && type == GL_UNSIGNED_SHORT_5_6_5) {
-         return &_mesa_texformat_rgb565;
+         if (allow[PIPE_FORMAT_U_R5_G6_B5])
+            return PIPE_FORMAT_U_R5_G6_B5;
       }
-      return do32bpt ? &_mesa_texformat_argb8888 : &_mesa_texformat_rgb565;
+      return default_rgba_format(supported, n);
 
    case GL_RGBA8:
    case GL_RGB10_A2:
    case GL_RGBA12:
    case GL_RGBA16:
-      return do32bpt ? &_mesa_texformat_argb8888 : &_mesa_texformat_argb4444;
+      return default_rgba_format(supported, n);
 
    case GL_RGBA4:
    case GL_RGBA2:
-      return &_mesa_texformat_argb4444;
+      if (allow[PIPE_FORMAT_U_A4_R4_G4_B4])
+         return PIPE_FORMAT_U_A4_R4_G4_B4;
+      return default_rgba_format(supported, n);
 
    case GL_RGB5_A1:
-      return &_mesa_texformat_argb1555;
+      if (allow[PIPE_FORMAT_U_A1_R5_G5_B5])
+         return PIPE_FORMAT_U_A1_R5_G5_B5;
+      return default_rgba_format(supported, n);
 
    case GL_RGB8:
    case GL_RGB10:
    case GL_RGB12:
    case GL_RGB16:
-      return &_mesa_texformat_argb8888;
+      return default_rgba_format(supported, n);
 
    case GL_RGB5:
    case GL_RGB4:
    case GL_R3_G3_B2:
-      return &_mesa_texformat_rgb565;
+      if (allow[PIPE_FORMAT_U_A1_R5_G5_B5])
+         return PIPE_FORMAT_U_A1_R5_G5_B5;
+      return default_rgba_format(supported, n);
 
    case GL_ALPHA:
    case GL_ALPHA4:
@@ -164,7 +174,9 @@ choose_tex_format(struct pipe_context *pipe, GLint internalFormat,
    case GL_ALPHA12:
    case GL_ALPHA16:
    case GL_COMPRESSED_ALPHA:
-      return &_mesa_texformat_a8;
+      if (allow[PIPE_FORMAT_U_A8])
+         return PIPE_FORMAT_U_A8;
+      return default_rgba_format(supported, n);
 
    case 1:
    case GL_LUMINANCE:
@@ -173,7 +185,9 @@ choose_tex_format(struct pipe_context *pipe, GLint internalFormat,
    case GL_LUMINANCE12:
    case GL_LUMINANCE16:
    case GL_COMPRESSED_LUMINANCE:
-      return &_mesa_texformat_l8;
+      if (allow[PIPE_FORMAT_U_A8])
+         return PIPE_FORMAT_U_A8;
+      return default_rgba_format(supported, n);
 
    case 2:
    case GL_LUMINANCE_ALPHA:
@@ -184,7 +198,9 @@ choose_tex_format(struct pipe_context *pipe, GLint internalFormat,
    case GL_LUMINANCE12_ALPHA12:
    case GL_LUMINANCE16_ALPHA16:
    case GL_COMPRESSED_LUMINANCE_ALPHA:
-      return &_mesa_texformat_al88;
+      if (allow[PIPE_FORMAT_U_L8_A8])
+         return PIPE_FORMAT_U_L8_A8;
+      return default_rgba_format(supported, n);
 
    case GL_INTENSITY:
    case GL_INTENSITY4:
@@ -192,14 +208,22 @@ choose_tex_format(struct pipe_context *pipe, GLint internalFormat,
    case GL_INTENSITY12:
    case GL_INTENSITY16:
    case GL_COMPRESSED_INTENSITY:
-      return &_mesa_texformat_i8;
+      if (allow[PIPE_FORMAT_U_I8])
+         return PIPE_FORMAT_U_I8;
+      return default_rgba_format(supported, n);
 
    case GL_YCBCR_MESA:
-      if (type == GL_UNSIGNED_SHORT_8_8_MESA || type == GL_UNSIGNED_BYTE)
-         return &_mesa_texformat_ycbcr;
-      else
-         return &_mesa_texformat_ycbcr_rev;
+      if (type == GL_UNSIGNED_SHORT_8_8_MESA || type == GL_UNSIGNED_BYTE) {
+         if (allow[PIPE_FORMAT_YCBCR])
+            return PIPE_FORMAT_YCBCR;
+      }
+      else {
+         if (allow[PIPE_FORMAT_YCBCR_REV])
+            return PIPE_FORMAT_YCBCR_REV;
+      }
+      return PIPE_FORMAT_NONE;
 
+#if 0
    case GL_COMPRESSED_RGB_FXT1_3DFX:
       return &_mesa_texformat_rgb_fxt1;
    case GL_COMPRESSED_RGBA_FXT1_3DFX:
@@ -237,12 +261,23 @@ choose_tex_format(struct pipe_context *pipe, GLint internalFormat,
    case GL_DEPTH_COMPONENT:
       return default_depth_format(supported, n);
 
+   case GL_STENCIL_INDEX:
+   case GL_STENCIL_INDEX1_EXT:
+   case GL_STENCIL_INDEX4_EXT:
+   case GL_STENCIL_INDEX8_EXT:
+   case GL_STENCIL_INDEX16_EXT:
+      if (allow[PIPE_FORMAT_U_S8])
+         return PIPE_FORMAT_U_S8;
+      if (allow[PIPE_FORMAT_S8_Z24])
+         return PIPE_FORMAT_S8_Z24;
+      return PIPE_FORMAT_NONE;
 
-#if 0
    case GL_DEPTH_STENCIL_EXT:
    case GL_DEPTH24_STENCIL8_EXT:
-      return &_mesa_texformat_z24_s8;
-#endif
+      if (allow[PIPE_FORMAT_S8_Z24])
+         return PIPE_FORMAT_S8_Z24;
+      return PIPE_FORMAT_NONE;
+
    default:
       return PIPE_FORMAT_NONE;
    }
@@ -250,13 +285,55 @@ choose_tex_format(struct pipe_context *pipe, GLint internalFormat,
 
 
 
+static void
+st_teximage2d(GLcontext *ctx, GLenum target, GLint level,
+              GLint internalFormat,
+              GLint width, GLint height, GLint border,
+              GLenum format, GLenum type, const void *pixels,
+              const struct gl_pixelstore_attrib *packing,
+              struct gl_texture_object *texObj,
+              struct gl_texture_image *texImage)
+{
+   /* probably nothing here: use core Mesa TexImage2D fallback to
+    * save teximage in main memory.
+    * Later, when we have a complete texobj and are ready to render,
+    * create the pipe texture object / mipmap-tree.
+    */
+
+   _mesa_store_teximage2d(ctx, target, level, internalFormat,
+                          width, height, border, format, type, pixels,
+                          packing, texObj, texImage);
+}
+
+
+static void
+st_texsubimage2d(GLcontext *ctx, GLenum target, GLint level,
+                 GLint xoffset, GLint yoffset,
+                 GLsizei width, GLsizei height,
+                 GLenum format, GLenum type,
+                 const GLvoid *pixels,
+                 const struct gl_pixelstore_attrib *packing,
+                 struct gl_texture_object *texObj,
+                 struct gl_texture_image *texImage)
+{
+#if 0
+   struct pipe_mipmap_tree *mt = texObj->DriverData;
+#endif
+   /* 1. find the region which stores this texture object.
+    * 2. convert texels to pipe format if needed.
+    * 3. replace texdata in the texture region.
+    */
+
+}
+
+
+
 void st_init_cb_teximage( struct st_context *st )
 {
-   /*
    struct dd_function_table *functions = &st->ctx->Driver;
 
    functions->TexImage2D = st_teximage2d;
-   */
+   functions->TexSubImage2D = st_texsubimage2d;
 }
 
 
