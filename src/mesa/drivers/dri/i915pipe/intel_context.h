@@ -38,11 +38,7 @@
 #include "intel_screen.h"
 #include "i915_drm.h"
 #include "i830_common.h"
-#include "tnl/t_vertex.h"
 
-#define TAG(x) intel##x
-#include "tnl_dd/t_dd_vertex.h"
-#undef TAG
 
 #define DV_PF_555  (1<<8)
 #define DV_PF_565  (2<<8)
@@ -53,67 +49,11 @@ struct pipe_region;
 struct intel_context;
 struct _DriBufferObject;
 
-typedef void (*intel_tri_func) (struct intel_context *, intelVertex *,
-                                intelVertex *, intelVertex *);
-typedef void (*intel_line_func) (struct intel_context *, intelVertex *,
-                                 intelVertex *);
-typedef void (*intel_point_func) (struct intel_context *, intelVertex *);
-
-#define INTEL_FALLBACK_DRAW_BUFFER	 0x1
-#define INTEL_FALLBACK_READ_BUFFER	 0x2
-#define INTEL_FALLBACK_DEPTH_BUFFER      0x4
-#define INTEL_FALLBACK_STENCIL_BUFFER    0x8
-#define INTEL_FALLBACK_USER		 0x10
-#define INTEL_FALLBACK_RENDERMODE	 0x20
-
-#define FALLBACK( intel, bit, mode ) _mesa_printf("intelFallback not implemented/removed\n")
-
 
 #define INTEL_WRITE_PART  0x1
 #define INTEL_WRITE_FULL  0x2
 #define INTEL_READ        0x4
 
-struct intel_texture_object
-{
-   struct gl_texture_object base;       /* The "parent" object */
-
-   /* The mipmap tree must include at least these levels once
-    * validated:
-    */
-   GLuint firstLevel;
-   GLuint lastLevel;
-
-   /* Offset for firstLevel image:
-    */
-   GLuint textureOffset;
-
-   /* On validation any active images held in main memory or in other
-    * regions will be copied to this region and the old storage freed.
-    */
-   struct intel_mipmap_tree *mt;
-
-   GLboolean imageOverride;
-   GLint depthOverride;
-   GLuint pitchOverride;
-};
-
-
-
-struct intel_texture_image
-{
-   struct gl_texture_image base;
-
-   /* These aren't stored in gl_texture_image 
-    */
-   GLuint level;
-   GLuint face;
-
-   /* If intelImage->mt != NULL, image data is stored here.
-    * Else if intelImage->base.Data != NULL, image is stored there.
-    * Else there is no image data.
-    */
-   struct intel_mipmap_tree *mt;
-};
 
 
 #define INTEL_MAX_FIXUP 64
@@ -125,21 +65,12 @@ struct intel_context
    struct pipe_context *pipe;
 
    GLint refcount;
-   GLuint Fallback;
-   GLuint NewGLState;
 
    struct _DriFenceObject *last_swap_fence;
    struct _DriFenceObject *first_swap_fence;
 
    struct intel_batchbuffer *batch;
 
-   struct
-   {
-      GLuint id;
-      GLuint primitive;
-      GLubyte *start_ptr;
-      void (*flush) (struct intel_context *);
-   } prim;
 
    GLboolean locked;
    char *prevLockFile;
@@ -148,41 +79,6 @@ struct intel_context
    GLuint ClearColor565;
    GLuint ClearColor8888;
 
-   /* Offsets of fields within the current vertex:
-    */
-   GLuint coloroffset;
-   GLuint specoffset;
-   GLuint wpos_offset;
-   GLuint wpos_size;
-
-   struct tnl_attr_map vertex_attrs[VERT_ATTRIB_MAX];
-   GLuint vertex_attr_count;
-
-   GLfloat polygon_offset_scale;        /* dependent on depth_scale, bpp */
-
-   GLboolean hw_stipple;
-   GLboolean strict_conformance;
-
-   /* AGP memory buffer manager:
-    */
-   struct bufmgr *bm;
-
-
-   /* State for intelvb.c and inteltris.c.
-    */
-   GLuint RenderIndex;
-   GLmatrix ViewportMatrix;
-   GLenum render_primitive;
-   GLenum reduced_primitive;
-   GLuint vertex_size;
-   GLubyte *verts;              /* points to tnl->clipspace.vertex_buf */
-
-
-   /* Fallback rasterization functions 
-    */
-   intel_point_func draw_point;
-   intel_line_func draw_line;
-   intel_tri_func draw_tri;
 
    /* These refer to the current drawing buffer:
     */
@@ -190,8 +86,6 @@ struct intel_context
    drm_clip_rect_t *pClipRects;
    drm_clip_rect_t fboRect;     /**< cliprect for rendering */
 
-   GLuint do_usleeps;
-   int do_irqs;
    GLuint irqsEmitted;
    drm_i915_irq_wait_t iw;
 
@@ -219,15 +113,9 @@ void UNLOCK_HARDWARE( struct intel_context *intel );
 
 extern char *__progname;
 
-
-#define SUBPIXEL_X 0.125
-#define SUBPIXEL_Y 0.125
-
-#define INTEL_FIREVERTICES(intel)		\
-do {						\
-   if ((intel)->prim.flush)			\
-      (intel)->prim.flush(intel);		\
-} while (0)
+/* Will become a call into state_tracker:
+ */
+#define INTEL_FIREVERTICES(intel)	       
 
 /* ================================================================
  * Color packing:
@@ -246,32 +134,6 @@ do {						\
 #define INTEL_PACKCOLOR8888(r,g,b,a) \
   ((a<<24) | (r<<16) | (g<<8) | b)
 
-
-
-/* ================================================================
- * From linux kernel i386 header files, copes with odd sizes better
- * than COPY_DWORDS would:
- * XXX Put this in src/mesa/main/imports.h ???
- */
-#if defined(i386) || defined(__i386__)
-static INLINE void *
-__memcpy(void *to, const void *from, size_t n)
-{
-   int d0, d1, d2;
-   __asm__ __volatile__("rep ; movsl\n\t"
-                        "testb $2,%b4\n\t"
-                        "je 1f\n\t"
-                        "movsw\n"
-                        "1:\ttestb $1,%b4\n\t"
-                        "je 2f\n\t"
-                        "movsb\n" "2:":"=&c"(d0), "=&D"(d1), "=&S"(d2)
-                        :"0"(n / 4), "q"(n), "1"((long) to), "2"((long) from)
-                        :"memory");
-   return (to);
-}
-#else
-#define __memcpy(a,b,c) memcpy(a,b,c)
-#endif
 
 
 
@@ -337,6 +199,7 @@ extern void intelInitDriverFunctions(struct dd_function_table *functions);
 
 #define MI_BATCH_BUFFER_END 	(0xA<<23)
 
+#define FALLBACK( ctx, bit, mode ) 
 
 /*======================================================================
  * Inline conversion functions.  
@@ -346,18 +209,6 @@ static INLINE struct intel_context *
 intel_context(GLcontext * ctx)
 {
    return (struct intel_context *) ctx;
-}
-
-static INLINE struct intel_texture_object *
-intel_texture_object(struct gl_texture_object *obj)
-{
-   return (struct intel_texture_object *) obj;
-}
-
-static INLINE struct intel_texture_image *
-intel_texture_image(struct gl_texture_image *img)
-{
-   return (struct intel_texture_image *) img;
 }
 
 extern struct intel_renderbuffer *intel_renderbuffer(struct gl_renderbuffer

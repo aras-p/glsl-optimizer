@@ -240,8 +240,6 @@ intelInvalidateState(GLcontext * ctx, GLuint new_state)
    _tnl_invalidate_vertex_state(ctx, new_state);
 
    st_invalidate_state( ctx, new_state );
-
-   intel_context(ctx)->NewGLState |= new_state;
 }
 
 
@@ -361,33 +359,6 @@ intelCreateContext(const __GLcontextModes * mesaVis,
    driParseConfigFiles(&intel->optionCache, &intelScreen->optionCache,
                        intel->driScreen->myNum, "i915");
 
-   ctx->Const.MaxTextureMaxAnisotropy = 2.0;
-
-   /* This doesn't yet catch all non-conformant rendering, but it's a
-    * start.
-    */
-   if (getenv("INTEL_STRICT_CONFORMANCE")) {
-      intel->strict_conformance = 1;
-   }
-
-   ctx->Const.MinLineWidth = 1.0;
-   ctx->Const.MinLineWidthAA = 1.0;
-   ctx->Const.MaxLineWidth = 3.0;
-   ctx->Const.MaxLineWidthAA = 3.0;
-   ctx->Const.LineWidthGranularity = 1.0;
-
-   ctx->Const.MinPointSize = 1.0;
-   ctx->Const.MinPointSizeAA = 1.0;
-   ctx->Const.MaxPointSize = 255.0;
-   ctx->Const.MaxPointSizeAA = 3.0;
-   ctx->Const.PointSizeGranularity = 1.0;
-
-   /* reinitialize the context point state.
-    * It depend on constants in __GLcontextRec::Const
-    */
-   _mesa_init_point(ctx);
-
-   ctx->Const.MaxColorAttachments = 4;  /* XXX FBO: review this */
 
    /* Initialize the software rasterizer and helper modules. */
    _vbo_CreateContext(ctx);
@@ -425,33 +396,13 @@ intelCreateContext(const __GLcontextModes * mesaVis,
    intel->driFd = sPriv->fd;
    intel->driHwLock = (drmLock *) & sPriv->pSAREA->lock;
 
-   intel->hw_stipple = 1;
-
-   /* XXX FBO: this doesn't seem to be used anywhere */
-   switch (mesaVis->depthBits) {
-   case 0:                     /* what to do in this case? */
-   case 16:
-      intel->polygon_offset_scale = 1.0 / 0xffff;
-      break;
-   case 24:
-      intel->polygon_offset_scale = 2.0 / 0xffffff;     /* req'd to pass glean */
-      break;
-   default:
-      assert(0);
-      break;
-   }
-
-
    TNL_CONTEXT(ctx)->Driver.RunPipeline = _tnl_run_pipeline;
 
 
-   intel->RenderIndex = ~0;
 
    fthrottle_mode = driQueryOptioni(&intel->optionCache, "fthrottle_mode");
    intel->iw.irq_seq = -1;
    intel->irqsEmitted = 0;
-
-   _math_matrix_ctr(&intel->ViewportMatrix);
 
    /* Disable imaging extension until convolution is working in
     * teximage paths:
@@ -476,17 +427,9 @@ intelCreateContext(const __GLcontextModes * mesaVis,
       _mesa_enable_extension(ctx, "GL_EXT_texture_compression_s3tc");
    }
 
-   intel->prim.primitive = ~0;
-
-
 #if DO_DEBUG
    INTEL_DEBUG = driParseDebugString(getenv("INTEL_DEBUG"), debug_control);
 #endif
-
-   if (getenv("INTEL_NO_RAST")) {
-      fprintf(stderr, "disabling 3D rasterization\n");
-      FALLBACK(intel, INTEL_FALLBACK_USER, 1);
-   }
 
 
    return GL_TRUE;
@@ -509,8 +452,6 @@ intelDestroyContext(__DRIcontextPrivate * driContextPriv)
       release_texture_heaps = (intel->ctx.Shared->RefCount == 1);
       _tnl_DestroyContext(&intel->ctx);
       _vbo_DestroyContext(&intel->ctx);
-
-      intel->Fallback = 0;      /* don't call _swrast_Flush later */
 
       intel_batchbuffer_free(intel->batch);
 

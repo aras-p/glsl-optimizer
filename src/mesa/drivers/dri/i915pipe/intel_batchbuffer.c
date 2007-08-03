@@ -337,6 +337,6 @@ intel_batchbuffer_data(struct intel_batchbuffer *batch,
 {
    assert((bytes & 3) == 0);
    intel_batchbuffer_require_space(batch, bytes, flags);
-   __memcpy(batch->ptr, data, bytes);
+   memcpy(batch->ptr, data, bytes);
    batch->ptr += bytes;
 }
