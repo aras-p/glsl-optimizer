@@ -21,7 +21,6 @@ DRIVER_SOURCES = \
 	intel_tex_validate.c \
 	intel_tex_format.c \
 	intel_tex.c \
-	intel_pixel.c \
 	intel_buffers.c \
 	intel_blit.c \
 	intel_context.c \
