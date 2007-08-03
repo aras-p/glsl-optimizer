@@ -141,8 +141,9 @@ $(TOP)/$(LIB_DIR)/$(OSMESA_LIB_NAME): $(OSMESA_DRIVER_OBJECTS) $(OSMESA16_OBJECT
 
 depend: $(ALL_SOURCES)
 	@ echo "running $(MKDEP)"
+	@ rm -f depend  # workaround oops on gutsy?!?
 	@ touch depend
-	@$(MKDEP) $(MKDEP_OPTIONS) $(DEFINES) $(INCLUDE_DIRS) $(ALL_SOURCES) \
+	@ $(MKDEP) $(MKDEP_OPTIONS) $(DEFINES) $(INCLUDE_DIRS) $(ALL_SOURCES) \
 		> /dev/null 2>/dev/null
 
 
