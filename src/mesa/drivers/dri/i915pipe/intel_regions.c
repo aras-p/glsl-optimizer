@@ -139,67 +139,8 @@ intel_region_release(struct pipe_context *pipe, struct pipe_region **region)
 }
 
 
-static struct pipe_region *
-intel_region_create_static(struct pipe_context *pipe,
-                           GLuint mem_type,
-                           GLuint offset,
-                           void *virtual,
-                           GLuint cpp, GLuint pitch, GLuint height)
-{
-   intelScreenPrivate *intelScreen = pipe_screen(pipe);
-   struct pipe_region *region = calloc(sizeof(*region), 1);
-   DBG("%s\n", __FUNCTION__);
-
-   region->cpp = cpp;
-   region->pitch = pitch;
-   region->height = height;     /* needed? */
-   region->refcount = 1;
-
-   /*
-    * We use a "shared" buffer type to indicate buffers created and
-    * shared by others.
-    */
-
-   driGenBuffers(intelScreen->staticPool, "static region", 1,
-                 &region->buffer, 64,
-                 DRM_BO_FLAG_MEM_TT | DRM_BO_FLAG_NO_MOVE |
-                 DRM_BO_FLAG_READ | DRM_BO_FLAG_WRITE, 0);
-   driBOSetStatic(region->buffer, offset, pitch * cpp * height, virtual, 0);
-
-   return region;
-}
 
 
-
-static void
-intel_region_update_static(struct pipe_context *pipe,
-			   struct pipe_region *region,
-                           GLuint mem_type,
-                           GLuint offset,
-                           void *virtual,
-                           GLuint cpp, GLuint pitch, GLuint height)
-{
-   intelScreenPrivate *intelScreen = pipe_screen(pipe);
-
-   DBG("%s\n", __FUNCTION__);
-
-   region->cpp = cpp;
-   region->pitch = pitch;
-   region->height = height;     /* needed? */
-
-   /*
-    * We use a "shared" buffer type to indicate buffers created and
-    * shared by others.
-    */
-
-   driDeleteBuffers(1, &region->buffer);
-   driGenBuffers(intelScreen->staticPool, "static region", 1,
-                 &region->buffer, 64,
-                 DRM_BO_FLAG_MEM_TT | DRM_BO_FLAG_NO_MOVE |
-                 DRM_BO_FLAG_READ | DRM_BO_FLAG_WRITE, 0);
-   driBOSetStatic(region->buffer, offset, pitch * cpp * height, virtual, 0);
-
-}
 
 
 
@@ -349,8 +290,6 @@ intel_init_region_functions(struct pipe_context *pipe)
    pipe->region_unmap = intel_region_unmap;
    pipe->region_alloc = intel_region_alloc;
    pipe->region_release = intel_region_release;
-   pipe->region_create_static = intel_region_create_static;
-   pipe->region_update_static = intel_region_update_static;
    pipe->region_data = intel_region_data;
    pipe->region_copy = intel_region_copy;
    pipe->region_fill = intel_region_fill;

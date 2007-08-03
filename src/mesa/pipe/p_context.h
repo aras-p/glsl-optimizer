@@ -144,20 +144,6 @@ struct pipe_context {
 
    void (*region_release)(struct pipe_context *pipe, struct pipe_region **r);
 
-   struct pipe_region *(*region_create_static)(struct pipe_context *pipe,
-                                               GLuint mem_type,
-                                               GLuint offset,
-                                               void *virtual,
-                                               GLuint cpp, GLuint pitch,
-                                               GLuint height);
-
-   void (*region_update_static)(struct pipe_context *pipe,
-                                struct pipe_region *region,
-                                GLuint mem_type,
-                                GLuint offset,
-                                void *virtual,
-                                GLuint cpp, GLuint pitch, GLuint height);
-
    void (*region_idle)(struct pipe_context *pipe, struct pipe_region *region);
 
    GLubyte *(*region_map)(struct pipe_context *pipe, struct pipe_region *r);
