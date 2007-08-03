@@ -51,7 +51,6 @@
 #include "intel_ioctl.h"
 #include "intel_batchbuffer.h"
 #include "intel_blit.h"
-#include "intel_pixel.h"
 #include "intel_buffer_objects.h"
 #include "intel_fbo.h"
 
@@ -316,7 +315,6 @@ intelInitDriverFunctions(struct dd_function_table *functions)
    functions->UpdateState = intelInvalidateState;
 
    intelInitTextureFuncs(functions);
-   intelInitPixelFuncs(functions);
    intelInitBufferFuncs(functions);
 }
 

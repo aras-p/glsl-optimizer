@@ -39,7 +39,6 @@
 #include "intel_fbo.h"
 #include "intel_tex.h"
 #include "intel_blit.h"
-#include "intel_pixel.h"
 
 #define FILE_DEBUG_FLAG DEBUG_TEXTURE
 
