@@ -33,7 +33,6 @@
 
 #include "glheader.h"
 #include "macros.h"
-#include "enums.h"
 #include "st_atom.h"
 #include "st_context.h"
 #include "st_cb_clear.h"

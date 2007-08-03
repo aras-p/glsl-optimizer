@@ -32,9 +32,6 @@
 
 #include "imports.h"
 
-#include "tnl/t_context.h"
-#include "tnl/t_pipeline.h"
-
 #include "st_context.h"
 #include "st_atom.h"
 #include "st_draw.h"
