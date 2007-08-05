@@ -39,6 +39,7 @@
 #include "sp_state.h"
 #include "sp_surface.h"
 #include "sp_prim_setup.h"
+#include "sp_winsys.h"
 
 
 
@@ -168,7 +169,7 @@ static GLuint softpipe_get_occlusion_counter(struct pipe_context *pipe)
 }
 
 
-struct pipe_context *softpipe_create( void )
+struct pipe_context *softpipe_create( struct softpipe_winsys *sws )
 {
    struct softpipe_context *softpipe = CALLOC_STRUCT(softpipe_context);
 
@@ -208,6 +209,8 @@ struct pipe_context *softpipe_create( void )
    softpipe->quad.blend = sp_quad_blend_stage(softpipe);
    softpipe->quad.colormask = sp_quad_colormask_stage(softpipe);
    softpipe->quad.output = sp_quad_output_stage(softpipe);
+
+   softpipe->winsys = sws;
 
    /*
     * Create drawing context and plug our rendering stage into it.

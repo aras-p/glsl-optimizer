@@ -56,5 +56,5 @@ softpipe_clear(struct pipe_context *pipe, struct pipe_surface *ps,
    w = softpipe->framebuffer.cbufs[0]->width;
    h = softpipe->framebuffer.cbufs[0]->height;
 
-   pipe->region_fill(pipe, ps->region, 0, x, y, w, h, clearValue, ~0);
+   pipe->region_fill(pipe, ps->region, 0, x, y, w, h, clearValue);
 }

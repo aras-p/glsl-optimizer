@@ -235,12 +235,9 @@ struct pipe_sampler_state
  *** Resource Objects
  ***/
 
-
-struct _DriBufferObject;
-
 struct pipe_region
 {
-   struct _DriBufferObject *buffer;   /**< buffer manager's buffer ID */
+   void *buffer;    /**< driver private buffer handle */
 
    GLuint refcount; /**< Reference count for region */
    GLuint cpp;      /**< bytes per pixel */

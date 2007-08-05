@@ -32,10 +32,6 @@
 #include "p_state.h"
 
 
-/* Kludge:
- */
-extern struct pipe_context *softpipe_create( void );
-				      
 /* Drawing currently kludged up via the existing tnl/ module.  
  */
 struct vertex_buffer;
@@ -161,7 +157,8 @@ struct pipe_context {
                        struct pipe_region *dest,
                        GLuint dest_offset,
                        GLuint destx, GLuint desty,
-                       const struct pipe_region *src,
+                       struct pipe_region *src,	/* don't make this const - 
+						   need to map/unmap */
                        GLuint src_offset,
                        GLuint srcx, GLuint srcy, GLuint width, GLuint height);
 
@@ -170,14 +167,11 @@ struct pipe_context {
                        GLuint dst_offset,
                        GLuint dstx, GLuint dsty,
                        GLuint width, GLuint height,
-                       GLuint value, GLuint mask);
+                       GLuint value);
 
    struct _DriBufferObject *(*region_buffer)(struct pipe_context *pipe,
                                              struct pipe_region *region,
                                              GLuint flag);
-
-   void *screen;  /**< temporary */
-   void *glctx;   /**< temporary */
 };
 
 

@@ -38,8 +38,8 @@
 
 #include "sp_quad.h"
 
-
 struct softpipe_surface;
+struct softpipe_winsys;
 struct draw_context;
 struct draw_stage;
 
@@ -68,6 +68,8 @@ enum interp_mode {
 
 struct softpipe_context {     
    struct pipe_context pipe;  /**< base class */
+   struct softpipe_winsys *winsys;	/**< window system interface */
+
 
    /* The most recent drawing state as set by the driver:
     */

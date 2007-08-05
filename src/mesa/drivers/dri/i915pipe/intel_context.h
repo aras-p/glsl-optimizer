@@ -196,6 +196,13 @@ extern void intelFlush(GLcontext * ctx);
 extern void intelInitDriverFunctions(struct dd_function_table *functions);
 
 
+/* ================================================================
+ * intel_softpipe.c:
+ */
+
+struct pipe_context *
+intel_create_softpipe( struct intel_context *intel );
+
 
 #define MI_BATCH_BUFFER_END 	(0xA<<23)
 

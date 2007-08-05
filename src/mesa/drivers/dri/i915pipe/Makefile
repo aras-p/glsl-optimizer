@@ -10,7 +10,7 @@ PIPE_DRIVERS = \
 	$(TOP)/src/mesa/pipe/softpipe/libsoftpipe.a
 
 DRIVER_SOURCES = \
-	intel_regions.c \
+	intel_softpipe.c \
 	intel_buffer_objects.c \
 	intel_batchbuffer.c \
 	intel_mipmap_tree.c \

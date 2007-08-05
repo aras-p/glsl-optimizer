@@ -54,10 +54,8 @@
 #include "intel_buffer_objects.h"
 #include "intel_fbo.h"
 
-#include "pipe/softpipe/sp_context.h"
 #include "state_tracker/st_public.h"
 #include "state_tracker/st_context.h"
-
 
 #include "drirenderbuffer.h"
 #include "vblank.h"
@@ -366,7 +364,7 @@ intelCreateContext(const __GLcontextModes * mesaVis,
     * Pipe-related setup
     */
    st_create_context( &intel->ctx,
-		      softpipe_create() );
+		      intel_create_softpipe( intel ) );
 
    /* KW: Not sure I like this - we should only be talking to the
     * state_tracker.  The pipe code will need some way of talking to
@@ -375,9 +373,9 @@ intelCreateContext(const __GLcontextModes * mesaVis,
     * BP: Yes, a temporary hack so we can make jumps between old/new code.
     */
    intel->pipe = intel->ctx.st->pipe;
-   intel->pipe->screen = intelScreen;
-   intel->pipe->glctx = ctx;
-   intel_init_region_functions(intel->pipe);
+//   intel->pipe->screen = intelScreen;
+//   intel->pipe->glctx = ctx;
+//   intel_init_region_functions(intel->pipe);
 
    /*
     * memory pools
