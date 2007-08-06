@@ -1,4 +1,4 @@
- /**************************************************************************
+/**************************************************************************
  * 
  * Copyright 2005 Tungsten Graphics, Inc., Cedar Park, Texas.
  * All Rights Reserved.
@@ -43,11 +43,6 @@ struct st_buffer_object
 };
 
 
-/* Hook the bufferobject implementation into mesa: 
- */
-void st_init_cb_bufferobjects( struct st_context *st );
-
-
 /* Are the obj->Name tests necessary?  Unfortunately yes, mesa
  * allocates a couple of gl_buffer_object structs statically, and the
  * Name == 0 test is the only way to identify them and avoid casting
@@ -61,6 +56,10 @@ st_buffer_object(struct gl_buffer_object *obj)
    else
       return NULL;
 }
+
+
+extern void
+st_init_bufferobject_functions(struct dd_function_table *functions);
 
 
 #endif

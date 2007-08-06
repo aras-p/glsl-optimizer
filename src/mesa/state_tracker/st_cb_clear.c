@@ -418,15 +418,7 @@ static void st_clear(GLcontext *ctx, GLbitfield mask)
 }
 
 
-void st_init_cb_clear( struct st_context *st )
+void st_init_clear_functions(struct dd_function_table *functions)
 {
-   struct dd_function_table *functions = &st->ctx->Driver;
-
    functions->Clear = st_clear;
 }
-
-
-void st_destroy_cb_clear( struct st_context *st )
-{
-}
-

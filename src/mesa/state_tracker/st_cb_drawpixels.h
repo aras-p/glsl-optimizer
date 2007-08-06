@@ -30,9 +30,7 @@
 #define ST_CB_DRAWPIXELS_H
 
 
-void st_init_cb_drawpixels( struct st_context *st );
-
-void st_destroy_cb_drawpixels( struct st_context *st );
+extern void st_init_drawpixels_functions(struct dd_function_table *functions);
 
 
 #endif /* ST_CB_DRAWPIXELS_H */

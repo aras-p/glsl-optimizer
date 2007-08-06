@@ -262,14 +262,8 @@ st_drawpixels(GLcontext *ctx, GLint x, GLint y, GLsizei width, GLsizei height,
 }
 
 
-void st_init_cb_drawpixels( struct st_context *st )
+void st_init_drawpixels_functions(struct dd_function_table *functions)
 {
-   struct dd_function_table *functions = &st->ctx->Driver;
-
    functions->DrawPixels = st_drawpixels;
 }
 
-
-void st_destroy_cb_drawpixels( struct st_context *st )
-{
-}

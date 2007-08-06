@@ -322,10 +322,8 @@ st_finish_render_texture(GLcontext *ctx,
 
 
 
-void st_init_cb_fbo( struct st_context *st )
+void st_init_fbo_functions(struct dd_function_table *functions)
 {
-   struct dd_function_table *functions = &st->ctx->Driver;
-
    functions->NewFramebuffer = st_new_framebuffer;
    functions->NewRenderbuffer = st_new_renderbuffer;
    functions->BindFramebuffer = st_bind_framebuffer;
@@ -335,9 +333,4 @@ void st_init_cb_fbo( struct st_context *st )
    /* no longer needed by core Mesa, drivers handle resizes...
    functions->ResizeBuffers = st_resize_buffers;
    */
-}
-
-
-void st_destroy_cb_fbo( struct st_context *st )
-{
 }

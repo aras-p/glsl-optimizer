@@ -9,11 +9,7 @@ st_finalize_mipmap_tree(GLcontext *ctx,
 
 
 extern void
-st_init_cb_texture( struct st_context *st );
-
-
-extern void
-st_destroy_cb_texture( struct st_context *st );
+st_init_texture_functions(struct dd_function_table *functions);
 
 
 #endif /* ST_CB_TEXTURE_H */

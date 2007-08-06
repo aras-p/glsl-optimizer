@@ -192,15 +192,13 @@ st_bufferobj_unmap(GLcontext *ctx,
 
 
 void
-st_init_cb_bufferobjects( struct st_context *st )
+st_init_bufferobject_functions(struct dd_function_table *functions)
 {
-   GLcontext *ctx = st->ctx;
-
-   ctx->Driver.NewBufferObject = st_bufferobj_alloc;
-   ctx->Driver.DeleteBuffer = st_bufferobj_free;
-   ctx->Driver.BufferData = st_bufferobj_data;
-   ctx->Driver.BufferSubData = st_bufferobj_subdata;
-   ctx->Driver.GetBufferSubData = st_bufferobj_get_subdata;
-   ctx->Driver.MapBuffer = st_bufferobj_map;
-   ctx->Driver.UnmapBuffer = st_bufferobj_unmap;
+   functions->NewBufferObject = st_bufferobj_alloc;
+   functions->DeleteBuffer = st_bufferobj_free;
+   functions->BufferData = st_bufferobj_data;
+   functions->BufferSubData = st_bufferobj_subdata;
+   functions->GetBufferSubData = st_bufferobj_get_subdata;
+   functions->MapBuffer = st_bufferobj_map;
+   functions->UnmapBuffer = st_bufferobj_unmap;
 }

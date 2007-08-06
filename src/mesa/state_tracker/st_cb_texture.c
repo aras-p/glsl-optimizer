@@ -1241,7 +1241,7 @@ do_copy_texsubimage(GLcontext *ctx,
       get_teximage_source(ctx, internalFormat);
 
    if (!stImage->mt || !src) {
-      DBG("%s fail %p %p\n", __FUNCTION__, stImage->mt, src);
+      DBG("%s fail %p %p\n", __FUNCTION__, (void *) stImage->mt, (void *) src);
       return GL_FALSE;
    }
 
@@ -1726,10 +1726,9 @@ st_tex_unmap_images(struct pipe_context *pipe,
 
 
 
-void st_init_cb_texture( struct st_context *st )
+void
+st_init_texture_functions(struct dd_function_table *functions)
 {
-   struct dd_function_table *functions = &st->ctx->Driver;
-
    functions->ChooseTextureFormat = st_ChooseTextureFormat;
    functions->TexImage1D = st_TexImage1D;
    functions->TexImage2D = st_TexImage2D;
@@ -1755,9 +1754,4 @@ void st_init_cb_texture( struct st_context *st )
    functions->IsTextureResident = st_IsTextureResident;
 
    functions->TextureMemCpy = do_memcpy;
-}
-
-
-void st_destroy_cb_texture( struct st_context *st )
-{
 }

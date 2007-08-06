@@ -32,7 +32,6 @@
 
 #include "st_context.h"
 #include "st_program.h"    
-
 #include "glheader.h"
 #include "macros.h"
 #include "enums.h"
@@ -42,6 +41,11 @@
 #include "programopt.h"
 #include "tnl/tnl.h"
 #include "pipe/tgsi/mesa/tgsi_mesa.h"
+
+
+/* Counter to track program string changes:
+ */
+static GLuint program_id = 0;
 
 
 static void st_bind_program( GLcontext *ctx,
@@ -70,7 +74,7 @@ static struct gl_program *st_new_program( GLcontext *ctx,
    case GL_VERTEX_PROGRAM_ARB: {
       struct st_vertex_program *prog = CALLOC_STRUCT(st_vertex_program);
 
-      prog->id = st->program_id++;
+      prog->id = program_id++;
       prog->dirty = 1;
 
       return _mesa_init_vertex_program( ctx, 
@@ -84,7 +88,7 @@ static struct gl_program *st_new_program( GLcontext *ctx,
    {
       struct st_fragment_program *prog = CALLOC_STRUCT(st_fragment_program);
 
-      prog->id = st->program_id++;
+      prog->id = program_id++;
       prog->dirty = 1;
 
       return _mesa_init_fragment_program( ctx, 
@@ -124,7 +128,7 @@ static void st_program_string_notify( GLcontext *ctx,
       if (prog == &ctx->FragmentProgram._Current->Base)
 	 st->dirty.st |= ST_NEW_FRAGMENT_PROGRAM;
 
-      p->id = st->program_id++;      
+      p->id = program_id++;      
       p->param_state = p->Base.Base.Parameters->StateFlags;
    }
    else if (target == GL_VERTEX_PROGRAM_ARB) {
@@ -133,7 +137,7 @@ static void st_program_string_notify( GLcontext *ctx,
       if (prog == &ctx->VertexProgram._Current->Base)
 	 st->dirty.st |= ST_NEW_VERTEX_PROGRAM;
 
-      p->id = st->program_id++;      
+      p->id = program_id++;      
       p->param_state = p->Base.Base.Parameters->StateFlags;
 
       /* Also tell tnl about it:
@@ -144,15 +148,8 @@ static void st_program_string_notify( GLcontext *ctx,
 
 
 
-void st_init_cb_program( struct st_context *st )
+void st_init_program_functions(struct dd_function_table *functions)
 {
-   struct dd_function_table *functions = &st->ctx->Driver;
-
-   /* Need these flags:
-    */
-   st->ctx->FragmentProgram._MaintainTexEnvProgram = GL_TRUE;
-   st->ctx->FragmentProgram._UseTexEnvProgram = GL_TRUE;
-
 #if 0
    assert(functions->ProgramStringNotify == _tnl_program_string); 
 #endif
@@ -162,9 +159,3 @@ void st_init_cb_program( struct st_context *st )
    functions->IsProgramNative = st_is_program_native;
    functions->ProgramStringNotify = st_program_string_notify;
 }
-
-
-void st_destroy_cb_program( struct st_context *st )
-{
-}
-

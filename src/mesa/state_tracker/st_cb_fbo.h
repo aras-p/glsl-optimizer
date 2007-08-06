@@ -30,9 +30,8 @@
 #define ST_CB_FBO_H
 
 
-extern void st_init_cb_fbo( struct st_context *st );
-
-extern void st_destroy_cb_fbo( struct st_context *st );
+extern void
+st_init_fbo_functions(struct dd_function_table *functions);
 
 
 #endif /* ST_CB_FBO_H */

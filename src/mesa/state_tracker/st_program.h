@@ -87,8 +87,9 @@ struct st_vertex_program
    GLuint param_state;
 };
 
-void st_init_cb_program( struct st_context *st );
-void st_destroy_cb_program( struct st_context *st );
+
+extern void st_init_program_functions(struct dd_function_table *functions);
+
 
 static inline struct st_fragment_program *
 st_fragment_program( struct gl_fragment_program *fp )

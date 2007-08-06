@@ -29,9 +29,10 @@
 #ifndef ST_CB_CLEAR_H
 #define ST_CB_CLEAR_H
 
-extern void st_init_cb_clear( struct st_context *st );
 
-extern void st_destroy_cb_clear( struct st_context *st );
+extern void
+st_init_clear_functions(struct dd_function_table *functions);
+
 
 #endif /* ST_CB_CLEAR_H */
 

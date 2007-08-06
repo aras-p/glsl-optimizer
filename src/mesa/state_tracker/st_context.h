@@ -97,10 +97,6 @@ struct st_context
 
    struct st_state_flags dirty;
 
-   /* Counter to track program string changes:
-    */
-   GLuint program_id;
-
    GLfloat polygon_offset_scale; /* ?? */
 };
 
@@ -111,6 +107,9 @@ static INLINE struct st_context *st_context(GLcontext *ctx)
 {
    return ctx->st;
 }
+
+
+extern void st_init_driver_functions(struct dd_function_table *functions);
 
 
 #endif
