@@ -2103,6 +2103,7 @@ exec_instruction(
       break;
 
    case TGSI_OPCODE_TRUNC:
+      /* TGSI_OPCODE_INT */
       assert (0);
       break;
 
@@ -2179,6 +2180,41 @@ exec_instruction(
    case TGSI_OPCODE_ENDPRIM:
       mach->Temps[TEMP_PRIMITIVE_I].xyzw[TEMP_PRIMITIVE_C].u[0]++;
       mach->Primitives[mach->Temps[TEMP_PRIMITIVE_I].xyzw[TEMP_PRIMITIVE_C].u[0]] = 0;
+      break;
+
+   case TGSI_OPCODE_BGNLOOP2:
+      assert( 0 );
+      break;
+
+   case TGSI_OPCODE_BGNSUB:
+      assert( 0 );
+      break;
+
+   case TGSI_OPCODE_ENDLOOP2:
+      assert( 0 );
+      break;
+
+   case TGSI_OPCODE_ENDSUB:
+      assert( 0 );
+      break;
+
+   case TGSI_OPCODE_NOISE1:
+      assert( 0 );
+      break;
+
+   case TGSI_OPCODE_NOISE2:
+      assert( 0 );
+      break;
+
+   case TGSI_OPCODE_NOISE3:
+      assert( 0 );
+      break;
+
+   case TGSI_OPCODE_NOISE4:
+      assert( 0 );
+      break;
+
+   case TGSI_OPCODE_NOP:
       break;
 
    default:
