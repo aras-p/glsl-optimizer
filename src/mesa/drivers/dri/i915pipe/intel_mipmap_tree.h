@@ -83,17 +83,6 @@ const GLuint *intel_miptree_depth_offsets(struct pipe_mipmap_tree *mt,
                                           GLuint level);
 
 
-void intel_miptree_set_level_info(struct pipe_mipmap_tree *mt,
-                                  GLuint level,
-                                  GLuint nr_images,
-                                  GLuint x, GLuint y,
-                                  GLuint w, GLuint h, GLuint d);
-
-void intel_miptree_set_image_offset(struct pipe_mipmap_tree *mt,
-                                    GLuint level,
-                                    GLuint img, GLuint x, GLuint y);
-
-
 /* Upload an image into a tree
  */
 void intel_miptree_image_data(struct intel_context *intel,
@@ -109,12 +98,6 @@ void intel_miptree_image_copy(struct intel_context *intel,
                               struct pipe_mipmap_tree *dst,
                               GLuint face, GLuint level,
                               struct pipe_mipmap_tree *src);
-
-/* i915_mipmap_tree.c:
- */
-GLboolean i915_miptree_layout(struct pipe_context *, struct pipe_mipmap_tree *);
-GLboolean i945_miptree_layout(struct pipe_context *, struct pipe_mipmap_tree *);
-
 
 
 #endif

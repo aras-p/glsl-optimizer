@@ -53,7 +53,7 @@
 #include "intel_blit.h"
 #include "intel_buffer_objects.h"
 #include "intel_fbo.h"
-#include "intel_mipmap_tree.h"
+#include "intel_tex_layout.h"
 
 #include "state_tracker/st_public.h"
 #include "state_tracker/st_context.h"

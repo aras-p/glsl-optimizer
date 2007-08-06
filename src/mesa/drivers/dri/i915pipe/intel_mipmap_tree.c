@@ -161,53 +161,6 @@ intel_miptree_match_image(struct pipe_mipmap_tree *mt,
 }
 
 
-void
-intel_miptree_set_level_info(struct pipe_mipmap_tree *mt,
-                             GLuint level,
-                             GLuint nr_images,
-                             GLuint x, GLuint y, GLuint w, GLuint h, GLuint d)
-{
-
-   mt->level[level].width = w;
-   mt->level[level].height = h;
-   mt->level[level].depth = d;
-   mt->level[level].level_offset = (x + y * mt->pitch) * mt->cpp;
-   mt->level[level].nr_images = nr_images;
-
-   DBG("%s level %d size: %d,%d,%d offset %d,%d (0x%x)\n", __FUNCTION__,
-       level, w, h, d, x, y, mt->level[level].level_offset);
-
-   /* Not sure when this would happen, but anyway: 
-    */
-   if (mt->level[level].image_offset) {
-      free(mt->level[level].image_offset);
-      mt->level[level].image_offset = NULL;
-   }
-
-   assert(nr_images);
-
-   mt->level[level].image_offset = malloc(nr_images * sizeof(GLuint));
-   mt->level[level].image_offset[0] = 0;
-}
-
-
-
-void
-intel_miptree_set_image_offset(struct pipe_mipmap_tree *mt,
-                               GLuint level, GLuint img, GLuint x, GLuint y)
-{
-   if (img == 0 && level == 0)
-      assert(x == 0 && y == 0);
-
-   assert(img < mt->level[level].nr_images);
-
-   mt->level[level].image_offset[img] = (x + y * mt->pitch);
-
-   DBG("%s level %d img %d pos %d,%d image_offset %x\n",
-       __FUNCTION__, level, img, x, y, mt->level[level].image_offset[img]);
-}
-
-
 /* Although we use the image_offset[] array to store relative offsets
  * to cube faces, Mesa doesn't know anything about this and expects
  * each cube face to be treated as a separate image.
