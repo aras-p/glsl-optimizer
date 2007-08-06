@@ -17,6 +17,7 @@ INCLUDES = \
 	-I$(TOP)/src/mesa/drivers/dri/common \
 	-I$(TOP)/src/mesa/main \
 	-I$(TOP)/src/mesa/pipe \
+	-I$(TOP)/include \
 	-I$(TOP)/src/mesa 
 
 
