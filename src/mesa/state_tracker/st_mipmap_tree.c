@@ -98,7 +98,7 @@ st_miptree_reference(struct pipe_mipmap_tree **dst,
 {
    src->refcount++;
    *dst = src;
-   DBG("%s %p refcount now %d\n", __FUNCTION__, src, src->refcount);
+   DBG("%s %p refcount now %d\n", __FUNCTION__, (void *) src, src->refcount);
 }
 
 void
@@ -108,11 +108,12 @@ st_miptree_release(struct pipe_context *pipe,
    if (!*mt)
       return;
 
-   DBG("%s %p refcount will be %d\n", __FUNCTION__, *mt, (*mt)->refcount - 1);
+   DBG("%s %p refcount will be %d\n",
+       __FUNCTION__, (void *) *mt, (*mt)->refcount - 1);
    if (--(*mt)->refcount <= 0) {
       GLuint i;
 
-      DBG("%s deleting %p\n", __FUNCTION__, *mt);
+      DBG("%s deleting %p\n", __FUNCTION__, (void *) *mt);
 
       pipe->region_release(pipe, &((*mt)->region));
 
@@ -244,17 +245,18 @@ st_miptree_image_unmap(struct pipe_context *pipe,
  */
 void
 st_miptree_image_data(struct pipe_context *pipe,
-                         struct pipe_mipmap_tree *dst,
-                         GLuint face,
-                         GLuint level,
-                         void *src,
-                         GLuint src_row_pitch, GLuint src_image_pitch)
+                      struct pipe_mipmap_tree *dst,
+                      GLuint face,
+                      GLuint level,
+                      void *src,
+                      GLuint src_row_pitch, GLuint src_image_pitch)
 {
    GLuint depth = dst->level[level].depth;
    GLuint dst_offset = st_miptree_image_offset(dst, face, level);
    const GLuint *dst_depth_offset = st_miptree_depth_offsets(dst, level);
    GLuint i;
    GLuint height = 0;
+   const GLubyte *srcUB = src;
 
    DBG("%s\n", __FUNCTION__);
    for (i = 0; i < depth; i++) {
@@ -264,12 +266,12 @@ st_miptree_image_data(struct pipe_context *pipe,
       pipe->region_data(pipe, dst->region,
                         dst_offset + dst_depth_offset[i], /* dst_offset */
                         0, 0,                             /* dstx, dsty */
-                        src,
+                        srcUB,
                         src_row_pitch,
                         0, 0,                             /* source x, y */
                         dst->level[level].width, height); /* width, height */
 
-      src += src_image_pitch * dst->cpp;
+      srcUB += src_image_pitch * dst->cpp;
    }
 }
 
