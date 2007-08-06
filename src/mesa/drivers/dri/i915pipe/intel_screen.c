@@ -38,7 +38,7 @@
 #include "intel_screen.h"
 #include "intel_batchbuffer.h"
 #include "intel_buffers.h"
-#include "intel_tex.h"
+/*#include "intel_tex.h"*/
 #include "intel_ioctl.h"
 #include "intel_fbo.h"
 
@@ -378,6 +378,31 @@ intelGetSwapInfo(__DRIdrawablePrivate * dPriv, __DRIswapInfo * sInfo)
 }
 
 
+static void
+intelSetTexOffset(__DRIcontext *pDRICtx, GLint texname,
+		  unsigned long long offset, GLint depth, GLuint pitch)
+{
+   abort();
+#if 0
+   struct intel_context *intel = (struct intel_context*)
+      ((__DRIcontextPrivate*)pDRICtx->private)->driverPrivate;
+   struct gl_texture_object *tObj = _mesa_lookup_texture(&intel->ctx, texname);
+   struct st_texture_object *stObj = st_texture_object(tObj);
+
+   if (!stObj)
+      return;
+
+   if (stObj->mt)
+      st_miptree_release(intel->pipe, &stObj->mt);
+
+   stObj->imageOverride = GL_TRUE;
+   stObj->depthOverride = depth;
+   stObj->pitchOverride = pitch;
+
+   if (offset)
+      stObj->textureOffset = offset;
+#endif
+}
 
 
 static const struct __DriverAPIRec intelAPI = {

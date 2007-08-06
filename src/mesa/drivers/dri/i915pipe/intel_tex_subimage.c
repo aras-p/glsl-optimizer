@@ -31,7 +31,9 @@
 #include "texstore.h"
 #include "enums.h"
 
+/*
 #include "intel_context.h"
+*/
 #include "intel_tex.h"
 #include "state_tracker/st_context.h"
 #include "state_tracker/st_mipmap_tree.h"

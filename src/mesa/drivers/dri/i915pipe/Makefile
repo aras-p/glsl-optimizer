@@ -14,12 +14,6 @@ DRIVER_SOURCES = \
 	intel_buffer_objects.c \
 	intel_batchbuffer.c \
 	intel_tex_layout.c \
-	intel_tex_image.c \
-	intel_tex_subimage.c \
-	intel_tex_copy.c \
-	intel_tex_validate.c \
-	intel_tex_format.c \
-	intel_tex.c \
 	intel_buffers.c \
 	intel_blit.c \
 	intel_context.c \
@@ -29,6 +23,15 @@ DRIVER_SOURCES = \
 	intel_fbo.c \
 	intel_depthstencil.c \
 	intel_batchpool.c
+
+OLD_TEX =\
+	intel_tex_image.c \
+	intel_tex_subimage.c \
+	intel_tex_copy.c \
+	intel_tex_validate.c \
+	intel_tex_format.c \
+	intel_tex.c
+
 
 C_SOURCES = \
 	$(COMMON_SOURCES) \

@@ -40,7 +40,7 @@
 #include "intel_depthstencil.h"
 #include "intel_fbo.h"
 #include "state_tracker/st_mipmap_tree.h"
-#include "intel_tex.h"
+/*#include "intel_tex.h"*/
 
 #include "pipe/p_context.h"
 
@@ -528,6 +528,7 @@ intel_render_texture(GLcontext * ctx,
                      struct gl_framebuffer *fb,
                      struct gl_renderbuffer_attachment *att)
 {
+#if 0
    struct intel_context *intel = intel_context(ctx);
    struct gl_texture_image *newImage
       = att->Texture->Image[att->CubeMapFace][att->TextureLevel];
@@ -581,6 +582,7 @@ intel_render_texture(GLcontext * ctx,
 
    /* update drawing region, etc */
    intel_draw_buffer(ctx, fb);
+#endif
 }
 
 

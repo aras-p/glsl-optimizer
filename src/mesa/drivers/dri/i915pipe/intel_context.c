@@ -47,7 +47,7 @@
 #include "i830_dri.h"
 
 #include "intel_buffers.h"
-#include "intel_tex.h"
+/*#include "intel_tex.h"*/
 #include "intel_ioctl.h"
 #include "intel_batchbuffer.h"
 #include "intel_blit.h"
@@ -318,7 +318,9 @@ intelInitDriverFunctions(struct dd_function_table *functions)
    functions->GetString = intelGetString;
    functions->UpdateState = intelInvalidateState;
 
+   /*
    intelInitTextureFuncs(functions);
+   */
    intelInitBufferFuncs(functions);
 }
 
