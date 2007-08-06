@@ -1,6 +1,30 @@
+/**************************************************************************
+ * 
+ * Copyright 2007 Tungsten Graphics, Inc., Cedar Park, Texas.
+ * All Rights Reserved.
+ * 
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the
+ * "Software"), to deal in the Software without restriction, including
+ * without limitation the rights to use, copy, modify, merge, publish,
+ * distribute, sub license, and/or sell copies of the Software, and to
+ * permit persons to whom the Software is furnished to do so, subject to
+ * the following conditions:
+ * 
+ * The above copyright notice and this permission notice (including the
+ * next paragraph) shall be included in all copies or substantial portions
+ * of the Software.
+ * 
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+ * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+ * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT.
+ * IN NO EVENT SHALL TUNGSTEN GRAPHICS AND/OR ITS SUPPLIERS BE LIABLE FOR
+ * ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
+ * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
+ * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ * 
+ **************************************************************************/
 
-#include <stdlib.h>
-#include <stdio.h>
 
 #include "glheader.h"
 #include "macros.h"
@@ -15,15 +39,12 @@
 #include "texobj.h"
 #include "texstore.h"
 
-#include "intel_context.h"
-#include "intel_buffer_objects.h"
-#include "intel_batchbuffer.h"
-#include "state_tracker/st_mipmap_tree.h"
-#include "intel_tex.h"
-#include "intel_ioctl.h"
-#include "intel_blit.h"
-
 #include "pipe/p_context.h"
+#include "state_tracker/st_mipmap_tree.h"
+
+#include "intel_tex.h"
+
+
 
 #define FILE_DEBUG_FLAG DEBUG_TEXTURE
 
@@ -158,6 +179,8 @@ target_to_face(GLenum target)
    }
 }
 
+
+
 /* There are actually quite a few combinations this will work for,
  * more than what I've listed here.
  */
@@ -196,6 +219,8 @@ try_pbo_upload(struct intel_context *intel,
                GLint width, GLint height,
                GLenum format, GLenum type, const void *pixels)
 {
+   return GL_FALSE;  /* XXX fix flushing/locking/blitting below */
+#if 000
    struct intel_buffer_object *pbo = intel_buffer_object(unpack->BufferObj);
    GLuint src_offset, src_stride;
    GLuint dst_offset, dst_stride;
@@ -244,6 +269,7 @@ try_pbo_upload(struct intel_context *intel,
    UNLOCK_HARDWARE(intel);
 
    return GL_TRUE;
+#endif
 }
 
 
@@ -371,6 +397,7 @@ intelTexImage(GLcontext * ctx,
    if (!intelImage->mt)
       DBG("XXX: Image did not fit into tree - storing in local memory!\n");
 
+#if 0 /* XXX FIX when st_buffer_objects are in place */
    /* PBO fastpaths:
     */
    if (dims <= 2 &&
@@ -412,7 +439,11 @@ intelTexImage(GLcontext * ctx,
 
       DBG("pbo upload failed\n");
    }
-
+#else
+   (void) try_pbo_upload;
+   (void) check_pbo_format;
+   (void) try_pbo_zcopy;
+#endif
 
 
    /* intelCopyTexImage calls this function with pixels == NULL, with
