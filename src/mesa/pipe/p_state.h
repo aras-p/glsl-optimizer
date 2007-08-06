@@ -309,15 +309,15 @@ struct pipe_mipmap_level
     * compute the offsets of depth/cube images within a mipmap level,
     * so have to store them as a lookup table:
     */
-   GLuint *image_offset;
+   GLuint *image_offset;   /**< array [depth] of offsets */
 };
 
 struct pipe_mipmap_tree
 {
    /* Effectively the key:
     */
-   GLenum target;
-   GLenum internal_format;
+   GLenum target;            /* XXX convert to PIPE_TEXTURE_x */
+   GLenum internal_format;   /* XXX convert to PIPE_FORMAT_x */
 
    GLuint first_level;
    GLuint last_level;
