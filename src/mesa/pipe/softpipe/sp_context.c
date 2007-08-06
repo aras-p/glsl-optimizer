@@ -33,13 +33,14 @@
 #include "main/macros.h"
 #include "pipe/draw/draw_context.h"
 #include "pipe/p_defines.h"
-#include "sp_context.h"
-#include "sp_clear.h"
-#include "sp_region.h"
 #include "sp_buffer.h"
+#include "sp_clear.h"
+#include "sp_context.h"
+#include "sp_prim_setup.h"
+#include "sp_region.h"
 #include "sp_state.h"
 #include "sp_surface.h"
-#include "sp_prim_setup.h"
+#include "sp_tex_layout.h"
 #include "sp_winsys.h"
 
 
@@ -198,6 +199,8 @@ struct pipe_context *softpipe_create( struct softpipe_winsys *sws )
    softpipe->pipe.clear = softpipe_clear;
    softpipe->pipe.reset_occlusion_counter = softpipe_reset_occlusion_counter;
    softpipe->pipe.get_occlusion_counter = softpipe_get_occlusion_counter;
+
+   softpipe->pipe.mipmap_tree_layout = softpipe_mipmap_tree_layout;
 
    softpipe->quad.polygon_stipple = sp_quad_polygon_stipple_stage(softpipe);
    softpipe->quad.shade = sp_quad_shade_stage(softpipe);
