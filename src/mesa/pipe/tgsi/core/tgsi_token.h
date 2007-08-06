@@ -680,11 +680,10 @@ struct tgsi_immediate_float32
 /*
  * GLSL
  */
-#define TGSI_OPCODE_NOP                 98
 /* TGSI_OPCODE_ABS */
 /* TGSI_OPCODE_ADD */
-#define TGSI_OPCODE_BGNLOOP2            99
-#define TGSI_OPCODE_BGNSUB              100
+#define TGSI_OPCODE_BGNLOOP2            98
+#define TGSI_OPCODE_BGNSUB              99
 /* TGSI_OPCODE_BRA */
 /* TGSI_OPCODE_BRK */
 /* TGSI_OPCODE_CONT */
@@ -695,8 +694,8 @@ struct tgsi_immediate_float32
 /* TGSI_OPCODE_DP4 */
 /* TGSI_OPCODE_ELSE */
 /* TGSI_OPCODE_ENDIF */
-#define TGSI_OPCODE_ENDLOOP2            101
-#define TGSI_OPCODE_ENDSUB              102
+#define TGSI_OPCODE_ENDLOOP2            100
+#define TGSI_OPCODE_ENDSUB              101
 /* TGSI_OPCODE_EX2 */
 /* TGSI_OPCODE_EXP */
 /* TGSI_OPCODE_FLR */
@@ -711,10 +710,11 @@ struct tgsi_immediate_float32
 /* TGSI_OPCODE_MIN */
 /* TGSI_OPCODE_MOV */
 /* TGSI_OPCODE_MUL */
-#define TGSI_OPCODE_NOISE1              103
-#define TGSI_OPCODE_NOISE2              104
-#define TGSI_OPCODE_NOISE3              105
-#define TGSI_OPCODE_NOISE4              106
+#define TGSI_OPCODE_NOISE1              102
+#define TGSI_OPCODE_NOISE2              103
+#define TGSI_OPCODE_NOISE3              104
+#define TGSI_OPCODE_NOISE4              105
+#define TGSI_OPCODE_NOP                 106
 /* TGSI_OPCODE_POW */
 /* TGSI_OPCODE_RCP */
 /* TGSI_OPCODE_RSQ */
@@ -764,7 +764,7 @@ struct tgsi_instruction
    GLuint Extended   : 1;  /* BOOL */
 };
 
-/*
+/*1
  * If tgsi_instruction::Extended is TRUE, tgsi_instruction_ext follows.
  * 
  * Then, tgsi_instruction::NumDstRegs of tgsi_dst_register follow.
