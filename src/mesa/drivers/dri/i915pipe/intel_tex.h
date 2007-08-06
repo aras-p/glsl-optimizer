@@ -49,7 +49,7 @@ struct intel_texture_object
    /* On validation any active images held in main memory or in other
     * regions will be copied to this region and the old storage freed.
     */
-   struct intel_mipmap_tree *mt;
+   struct pipe_mipmap_tree *mt;
 
    GLboolean imageOverride;
    GLint depthOverride;
@@ -71,7 +71,7 @@ struct intel_texture_image
     * Else if intelImage->base.Data != NULL, image is stored there.
     * Else there is no image data.
     */
-   struct intel_mipmap_tree *mt;
+   struct pipe_mipmap_tree *mt;
 };
 
 

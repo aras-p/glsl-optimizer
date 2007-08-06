@@ -53,6 +53,7 @@
 #include "intel_blit.h"
 #include "intel_buffer_objects.h"
 #include "intel_fbo.h"
+#include "intel_mipmap_tree.h"
 
 #include "state_tracker/st_public.h"
 #include "state_tracker/st_context.h"
@@ -61,6 +62,11 @@
 #include "vblank.h"
 #include "utils.h"
 #include "xmlpool.h"            /* for symbolic values of enum-type options */
+
+#include "pipe/p_context.h"
+
+
+
 #ifndef INTEL_DEBUG
 int INTEL_DEBUG = (0);
 #endif
@@ -376,6 +382,26 @@ intelCreateContext(const __GLcontextModes * mesaVis,
 //   intel->pipe->screen = intelScreen;
 //   intel->pipe->glctx = ctx;
 //   intel_init_region_functions(intel->pipe);
+
+   switch (intel->intelScreen->deviceID) {
+   case PCI_CHIP_I945_G:
+   case PCI_CHIP_I945_GM:
+   case PCI_CHIP_I945_GME:
+   case PCI_CHIP_G33_G:
+   case PCI_CHIP_Q33_G:
+   case PCI_CHIP_Q35_G:
+      intel->pipe->mipmap_tree_layout = i945_miptree_layout;
+      break;
+   case PCI_CHIP_I915_G:
+   case PCI_CHIP_I915_GM:
+   case PCI_CHIP_I830_M:
+   case PCI_CHIP_I855_GM:
+   case PCI_CHIP_I865_G:
+      intel->pipe->mipmap_tree_layout = i915_miptree_layout;
+   default:
+      assert(0); /*FIX*/
+   }
+
 
    /*
     * memory pools

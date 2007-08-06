@@ -207,6 +207,14 @@ struct pipe_context {
 			      unsigned long offset, 
 			      unsigned long size, 
 			      void *data);
+
+   /*
+    * Texture functions
+    */
+   GLboolean (*mipmap_tree_layout)( struct pipe_context *pipe,
+                                    struct pipe_mipmap_tree *mt );
+
+
 };
 
 

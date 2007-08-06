@@ -292,6 +292,61 @@ struct pipe_texture_object
 };
 
 
+/**
+ * Describes the location of each texture image within a texture region.
+ */
+struct pipe_mipmap_level
+{
+   GLuint level_offset;
+   GLuint width;
+   GLuint height;
+   GLuint depth;
+   GLuint nr_images;
+
+   /* Explicitly store the offset of each image for each cube face or
+    * depth value.  Pretty much have to accept that hardware formats
+    * are going to be so diverse that there is no unified way to
+    * compute the offsets of depth/cube images within a mipmap level,
+    * so have to store them as a lookup table:
+    */
+   GLuint *image_offset;
+};
+
+struct pipe_mipmap_tree
+{
+   /* Effectively the key:
+    */
+   GLenum target;
+   GLenum internal_format;
+
+   GLuint first_level;
+   GLuint last_level;
+
+   GLuint width0, height0, depth0; /**< Level zero image dimensions */
+   GLuint cpp;
+   GLboolean compressed;
+
+   /* Derived from the above:
+    */
+   GLuint pitch;
+   GLuint depth_pitch;          /* per-image on i945? */
+   GLuint total_height;
+
+   /* Includes image offset tables:
+    */
+   struct pipe_mipmap_level level[MAX_TEXTURE_LEVELS];
+
+   /* The data is held here:
+    */
+   struct pipe_region *region;
+
+   /* These are also refcounted:
+    */
+   GLuint refcount;
+};
+
+
+
 struct pipe_buffer_handle;
 
 #define PIPE_BUFFER_FLAG_READ    0x1
