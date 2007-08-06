@@ -1,6 +1,6 @@
 /**************************************************************************
  * 
- * Copyright 2006 Tungsten Graphics, Inc., Cedar Park, Texas.
+ * Copyright 2007 Tungsten Graphics, Inc., Cedar Park, Texas.
  * All Rights Reserved.
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a
@@ -25,7 +25,7 @@
  * 
  **************************************************************************/
 
-#include "intel_mipmap_tree.h"
+#include "st_mipmap_tree.h"
 #include "enums.h"
 
 #include "pipe/p_state.h"

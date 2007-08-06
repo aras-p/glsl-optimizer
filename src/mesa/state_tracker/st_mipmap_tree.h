@@ -1,6 +1,6 @@
 /**************************************************************************
  * 
- * Copyright 2006 Tungsten Graphics, Inc., Cedar Park, Texas.
+ * Copyright 2007 Tungsten Graphics, Inc., Cedar Park, Texas.
  * All Rights Reserved.
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a
@@ -25,8 +25,8 @@
  * 
  **************************************************************************/
 
-#ifndef INTEL_MIPMAP_TREE_H
-#define INTEL_MIPMAP_TREE_H
+#ifndef ST_MIPMAP_TREE_H
+#define ST_MIPMAP_TREE_H
 
 
 #include "main/mtypes.h"
