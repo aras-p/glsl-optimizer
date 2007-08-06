@@ -1,7 +1,7 @@
 #include "mtypes.h"
 #include "macros.h"
 
-#include "intel_mipmap_tree.h"
+#include "state_tracker/st_mipmap_tree.h"
 #include "intel_tex.h"
 
 #include "pipe/p_state.h"

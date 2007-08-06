@@ -13,7 +13,6 @@ DRIVER_SOURCES = \
 	intel_softpipe.c \
 	intel_buffer_objects.c \
 	intel_batchbuffer.c \
-	intel_mipmap_tree.c \
 	intel_tex_layout.c \
 	intel_tex_image.c \
 	intel_tex_subimage.c \

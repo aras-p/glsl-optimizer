@@ -39,7 +39,7 @@
 #include "intel_buffers.h"
 #include "intel_depthstencil.h"
 #include "intel_fbo.h"
-#include "intel_mipmap_tree.h"
+#include "state_tracker/st_mipmap_tree.h"
 #include "intel_tex.h"
 
 #include "pipe/p_context.h"

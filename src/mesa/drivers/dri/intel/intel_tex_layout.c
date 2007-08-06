@@ -33,7 +33,7 @@
 #include "macros.h"
 #include "pipe/p_state.h"
 #include "intel_tex_layout.h"
-#include "intel_mipmap_tree.h"
+#include "state_tracker/st_mipmap_tree.h"
 
 
 static GLuint minify( GLuint d )

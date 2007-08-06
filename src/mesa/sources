@@ -199,6 +199,7 @@ STATETRACKER_SOURCES = \
 	state_tracker/st_cb_bufferobjects.c \
 	state_tracker/st_draw.c \
 	state_tracker/st_context.c \
+	state_tracker/st_mipmap_tree.c \
 	state_tracker/st_texobj.c
 
 SHADER_SOURCES = \
