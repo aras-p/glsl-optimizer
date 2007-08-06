@@ -764,7 +764,7 @@ struct tgsi_instruction
    GLuint Extended   : 1;  /* BOOL */
 };
 
-/*1
+/*
  * If tgsi_instruction::Extended is TRUE, tgsi_instruction_ext follows.
  * 
  * Then, tgsi_instruction::NumDstRegs of tgsi_dst_register follow.
