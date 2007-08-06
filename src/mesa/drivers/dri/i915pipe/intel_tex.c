@@ -126,64 +126,6 @@ do_memcpy(void *dest, const void *src, size_t n)
 }
 
 
-#if DO_DEBUG
-
-#ifndef __x86_64__
-static unsigned
-fastrdtsc(void)
-{
-   unsigned eax;
-   __asm__ volatile ("\t"
-                     "pushl  %%ebx\n\t"
-                     "cpuid\n\t" ".byte 0x0f, 0x31\n\t"
-                     "popl %%ebx\n":"=a" (eax)
-                     :"0"(0)
-                     :"ecx", "edx", "cc");
-
-   return eax;
-}
-#else
-static unsigned
-fastrdtsc(void)
-{
-   unsigned eax;
-   __asm__ volatile ("\t" "cpuid\n\t" ".byte 0x0f, 0x31\n\t":"=a" (eax)
-                     :"0"(0)
-                     :"ecx", "edx", "ebx", "cc");
-
-   return eax;
-}
-#endif
-
-static unsigned
-time_diff(unsigned t, unsigned t2)
-{
-   return ((t < t2) ? t2 - t : 0xFFFFFFFFU - (t - t2 - 1));
-}
-
-
-static void *
-timed_memcpy(void *dest, const void *src, size_t n)
-{
-   void *ret;
-   unsigned t1, t2;
-   double rate;
-
-   if ((((unsigned) src) & 63) || (((unsigned) dest) & 63))
-      _mesa_printf("Warning - non-aligned texture copy!\n");
-
-   t1 = fastrdtsc();
-   ret = do_memcpy(dest, src, n);
-   t2 = fastrdtsc();
-
-   rate = time_diff(t1, t2);
-   rate /= (double) n;
-   _mesa_printf("timed_memcpy: %u %u --> %f clocks/byte\n", t1, t2, rate);
-   return ret;
-}
-#endif /* DO_DEBUG */
-
-
 void
 intelInitTextureFuncs(struct dd_function_table *functions)
 {
@@ -211,10 +153,5 @@ intelInitTextureFuncs(struct dd_function_table *functions)
    functions->UpdateTexturePalette = 0;
    functions->IsTextureResident = intelIsTextureResident;
 
-#if DO_DEBUG
-   if (INTEL_DEBUG & DEBUG_BUFMGR)
-      functions->TextureMemCpy = timed_memcpy;
-   else
-#endif
-      functions->TextureMemCpy = do_memcpy;
+   functions->TextureMemCpy = do_memcpy;
 }
