@@ -169,9 +169,44 @@ struct pipe_context {
                        GLuint width, GLuint height,
                        GLuint value);
 
-   struct _DriBufferObject *(*region_buffer)(struct pipe_context *pipe,
-                                             struct pipe_region *region,
-                                             GLuint flag);
+
+   /* Buffer management functions need to be exposed as well.  A pipe
+    * buffer may be used as a texture, render target or vertex/index
+    * buffer, or some combination according to flags.  
+    */
+
+   struct pipe_buffer_handle *(*create_buffer)(struct pipe_context *pipe, 
+					       unsigned alignment,
+					       unsigned flags );
+
+   void *(*buffer_map)( struct pipe_context *pipe, 
+			struct pipe_buffer_handle *buf,
+			unsigned flags );
+   
+   void (*buffer_unmap)( struct pipe_context *pipe, 
+			 struct pipe_buffer_handle *buf );
+
+   struct pipe_buffer_handle *(*buffer_reference)( struct pipe_context *pipe,
+						   struct pipe_buffer_handle *buf );
+
+   void (*buffer_unreference)( struct pipe_context *pipe, 
+			       struct pipe_buffer_handle **buf );
+
+   void (*buffer_data)(struct pipe_context *pipe, 
+		       struct pipe_buffer_handle *buf,
+		       unsigned size, const void *data );
+
+   void (*buffer_subdata)(struct pipe_context *pipe, 
+			  struct pipe_buffer_handle *buf,
+			  unsigned long offset, 
+			  unsigned long size, 
+			  const void *data);
+
+   void (*buffer_get_subdata)(struct pipe_context *pipe, 
+			      struct pipe_buffer_handle *buf,
+			      unsigned long offset, 
+			      unsigned long size, 
+			      void *data);
 };
 
 

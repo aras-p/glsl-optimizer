@@ -36,6 +36,7 @@
 #include "sp_context.h"
 #include "sp_clear.h"
 #include "sp_region.h"
+#include "sp_buffer.h"
 #include "sp_state.h"
 #include "sp_surface.h"
 #include "sp_prim_setup.h"
@@ -219,6 +220,7 @@ struct pipe_context *softpipe_create( struct softpipe_winsys *sws )
    assert(softpipe->draw);
    draw_set_setup_stage(softpipe->draw, sp_draw_render_stage(softpipe));
 
+   sp_init_buffer_functions(softpipe);
    sp_init_region_functions(softpipe);
    sp_init_surface_functions(softpipe);
 

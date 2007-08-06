@@ -54,15 +54,15 @@ struct intel_softpipe_winsys {
  * buffer pointer...
  */
 static inline struct _DriBufferObject *
-dri_bo( struct softpipe_buffer_handle *bo )
+dri_bo( struct pipe_buffer_handle *bo )
 {
    return (struct _DriBufferObject *)bo;
 }
 
-static inline struct softpipe_buffer_handle *
+static inline struct pipe_buffer_handle *
 pipe_bo( struct _DriBufferObject *bo )
 {
-   return (struct softpipe_buffer_handle *)bo;
+   return (struct pipe_buffer_handle *)bo;
 }
 
 /* Turn a softpipe winsys into an intel/softpipe winsys:
@@ -77,36 +77,39 @@ intel_softpipe_winsys( struct softpipe_winsys *sws )
 /* Most callbacks map direcly onto dri_bufmgr operations:
  */
 static void *intel_buffer_map(struct softpipe_winsys *sws, 
-			      struct softpipe_buffer_handle *buf )
+			      struct pipe_buffer_handle *buf )
 {
    return driBOMap( dri_bo(buf), 
 		    DRM_BO_FLAG_READ | DRM_BO_FLAG_WRITE, 0 );
 }
 
 static void intel_buffer_unmap(struct softpipe_winsys *sws, 
-			       struct softpipe_buffer_handle *buf)
+			       struct pipe_buffer_handle *buf)
 {
    driBOUnmap( dri_bo(buf) );
 }
 
 
-static struct softpipe_buffer_handle *
+static struct pipe_buffer_handle *
 intel_buffer_reference(struct softpipe_winsys *sws,
-		       struct softpipe_buffer_handle *buf)
+		       struct pipe_buffer_handle *buf)
 {
    return pipe_bo( driBOReference( dri_bo(buf) ) );
 }
 
 static void intel_buffer_unreference(struct softpipe_winsys *sws, 
-				     struct softpipe_buffer_handle *buf)
+				     struct pipe_buffer_handle **buf)
 {
-   driBOUnReference( dri_bo(buf) );
+   if (*buf) {
+      driBOUnReference( dri_bo(*buf) );
+      *buf = NULL;
+   }
 }
 
 /* Grabs the hardware lock!
  */
 static void intel_buffer_data(struct softpipe_winsys *sws, 
-			      struct softpipe_buffer_handle *buf,
+			      struct pipe_buffer_handle *buf,
 			      unsigned size, const void *data )
 {
    struct intel_context *intel = intel_softpipe_winsys(sws)->intel;
@@ -117,7 +120,7 @@ static void intel_buffer_data(struct softpipe_winsys *sws,
 }
 
 static void intel_buffer_subdata(struct softpipe_winsys *sws, 
-				 struct softpipe_buffer_handle *buf,
+				 struct pipe_buffer_handle *buf,
 				 unsigned long offset, 
 				 unsigned long size, 
 				 const void *data)
@@ -126,7 +129,7 @@ static void intel_buffer_subdata(struct softpipe_winsys *sws,
 }
 
 static void intel_buffer_get_subdata(struct softpipe_winsys *sws, 
-				     struct softpipe_buffer_handle *buf,
+				     struct pipe_buffer_handle *buf,
 				     unsigned long offset, 
 				     unsigned long size, 
 				     void *data)
@@ -137,9 +140,8 @@ static void intel_buffer_get_subdata(struct softpipe_winsys *sws,
 /* Softpipe has no concept of pools.  We choose the tex/region pool
  * for all buffers.
  */
-static struct softpipe_buffer_handle *
+static struct pipe_buffer_handle *
 intel_create_buffer(struct softpipe_winsys *sws, 
-		    const char *name,
 		    unsigned alignment)
 {
    struct intel_context *intel = intel_softpipe_winsys(sws)->intel;
@@ -147,7 +149,7 @@ intel_create_buffer(struct softpipe_winsys *sws,
 
    LOCK_HARDWARE( intel );
    driGenBuffers( intel->intelScreen->regionPool, 
-		  name, 1, &buffer, alignment, 0, 0 );
+		  "softpipe buffer", 1, &buffer, alignment, 0, 0 );
    UNLOCK_HARDWARE( intel );
 
    return pipe_bo(buffer);

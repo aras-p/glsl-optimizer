@@ -46,7 +46,7 @@
  * etc.
  */
 
-struct softpipe_buffer_handle;
+struct pipe_buffer_handle;
 
 struct softpipe_winsys {
 
@@ -60,34 +60,33 @@ struct softpipe_winsys {
     * Softpipe only really wants to make system memory allocations,
     * right?? 
     */
-   struct softpipe_buffer_handle *(*create_buffer)(struct softpipe_winsys *sws, 
-						   const char *name,
-						   unsigned alignment );
+   struct pipe_buffer_handle *(*create_buffer)(struct softpipe_winsys *sws, 
+					       unsigned alignment );
 
    void *(*buffer_map)( struct softpipe_winsys *sws, 
-			struct softpipe_buffer_handle *buf );
+			struct pipe_buffer_handle *buf );
    
    void (*buffer_unmap)( struct softpipe_winsys *sws, 
-			 struct softpipe_buffer_handle *buf );
+			 struct pipe_buffer_handle *buf );
 
-   struct softpipe_buffer_handle *(*buffer_reference)( struct softpipe_winsys *sws,
-						       struct softpipe_buffer_handle *buf );
+   struct pipe_buffer_handle *(*buffer_reference)( struct softpipe_winsys *sws,
+						   struct pipe_buffer_handle *buf );
 
    void (*buffer_unreference)( struct softpipe_winsys *sws, 
-			       struct softpipe_buffer_handle *buf );
+			       struct pipe_buffer_handle **buf );
 
    void (*buffer_data)(struct softpipe_winsys *sws, 
-		       struct softpipe_buffer_handle *buf,
+		       struct pipe_buffer_handle *buf,
 		       unsigned size, const void *data );
 
    void (*buffer_subdata)(struct softpipe_winsys *sws, 
-			  struct softpipe_buffer_handle *buf,
+			  struct pipe_buffer_handle *buf,
 			  unsigned long offset, 
 			  unsigned long size, 
 			  const void *data);
 
    void (*buffer_get_subdata)(struct softpipe_winsys *sws, 
-			      struct softpipe_buffer_handle *buf,
+			      struct pipe_buffer_handle *buf,
 			      unsigned long offset, 
 			      unsigned long size, 
 			      void *data);

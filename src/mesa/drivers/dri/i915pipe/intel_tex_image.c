@@ -225,9 +225,11 @@ try_pbo_upload(struct intel_context *intel,
    {
       struct _DriBufferObject *src_buffer =
          intel_bufferobj_buffer(intel, pbo, INTEL_READ);
+
+      /* Temporary hack: cast to _DriBufferObject:
+       */
       struct _DriBufferObject *dst_buffer =
-         intel->pipe->region_buffer(intel->pipe, intelImage->mt->region,
-                                    INTEL_WRITE_FULL);
+         (struct _DriBufferObject *)intelImage->mt->region->buffer;
 
 
       intelEmitCopyBlit(intel,

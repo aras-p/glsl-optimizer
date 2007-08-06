@@ -80,7 +80,7 @@ sp_region_alloc(struct pipe_context *pipe,
    region->height = height;     /* needed? */
    region->refcount = 1;
 
-   region->buffer = sp->winsys->create_buffer(sp->winsys, "region", 64 );
+   region->buffer = sp->winsys->create_buffer( sp->winsys, 64 );
 
    sp->winsys->buffer_data( sp->winsys,
 			    region->buffer, 
@@ -259,13 +259,6 @@ sp_region_fill(struct pipe_context *pipe,
 
 
 
-static struct _DriBufferObject *
-sp_region_buffer(struct pipe_context *pipe,
-                    struct pipe_region *region, GLuint flag)
-{
-   return region->buffer;
-}
-
 
 
 void
@@ -279,6 +272,5 @@ sp_init_region_functions(struct softpipe_context *sp)
    sp->pipe.region_data = sp_region_data;
    sp->pipe.region_copy = sp_region_copy;
    sp->pipe.region_fill = sp_region_fill;
-   sp->pipe.region_buffer = sp_region_buffer;
 }
 
