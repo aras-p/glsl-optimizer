@@ -276,7 +276,16 @@ static const char *TGSI_OPCODES[] =
    "OPCODE_TXQ",
    "OPCODE_CONT",
    "OPCODE_EMIT",
-   "OPCODE_ENDPRIM"
+   "OPCODE_ENDPRIM",
+   "OPCODE_BGNLOOP2",
+   "OPCODE_BGNSUB",
+   "OPCODE_ENDLOOP2",
+   "OPCODE_ENDSUB",
+   "OPCODE_NOISE1",
+   "OPCODE_NOISE2",
+   "OPCODE_NOISE3",
+   "OPCODE_NOISE4",
+   "OPCODE_NOP"
 };
 
 static const char *TGSI_SATS[] =
