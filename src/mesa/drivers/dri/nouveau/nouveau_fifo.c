@@ -98,7 +98,7 @@ void nouveauWaitForIdle(nouveauContextPtr nmesa)
 // here we call the fifo initialization ioctl and fill in stuff accordingly
 GLboolean nouveauFifoInit(nouveauContextPtr nmesa)
 {
-	struct drm_nouveau_fifo_alloc fifo_init;
+	struct drm_nouveau_channel_alloc fifo_init;
 	int i, ret;
 
 #ifdef NOUVEAU_RING_DEBUG
@@ -107,7 +107,7 @@ GLboolean nouveauFifoInit(nouveauContextPtr nmesa)
 
 	fifo_init.fb_ctxdma_handle = NvDmaFB;
 	fifo_init.tt_ctxdma_handle = NvDmaTT;
-	ret=drmCommandWriteRead(nmesa->driFd, DRM_NOUVEAU_FIFO_ALLOC, &fifo_init, sizeof(fifo_init));
+	ret=drmCommandWriteRead(nmesa->driFd, DRM_NOUVEAU_CHANNEL_ALLOC, &fifo_init, sizeof(fifo_init));
 	if (ret) {
 		FATAL("Fifo initialization ioctl failed (returned %d)\n",ret);
 		return GL_FALSE;

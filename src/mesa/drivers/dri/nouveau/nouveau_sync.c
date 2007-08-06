@@ -39,25 +39,24 @@
 	nouveauContextPtr nmesa = NOUVEAU_CONTEXT(ctx); \
 	volatile uint32_t *__v = (void*)nmesa->notifier_block + notifier->offset
 
-struct drm_nouveau_notifier_alloc *
+struct drm_nouveau_notifierobj_alloc *
 nouveau_notifier_new(GLcontext *ctx, GLuint handle, GLuint count)
 {
 	nouveauContextPtr nmesa = NOUVEAU_CONTEXT(ctx);
-	struct drm_nouveau_notifier_alloc *notifier;
+	struct drm_nouveau_notifierobj_alloc *notifier;
 	int ret;
 
 #ifdef NOUVEAU_RING_DEBUG
 	return NULL;
 #endif
-
-	notifier = CALLOC_STRUCT(drm_nouveau_notifier_alloc);
+	notifier = CALLOC_STRUCT(drm_nouveau_notifierobj_alloc);
 	if (!notifier)
 		return NULL;
 
 	notifier->channel = nmesa->fifo.channel;
 	notifier->handle  = handle;
 	notifier->count   = count;
-	ret = drmCommandWriteRead(nmesa->driFd, DRM_NOUVEAU_NOTIFIER_ALLOC,
+	ret = drmCommandWriteRead(nmesa->driFd, DRM_NOUVEAU_NOTIFIEROBJ_ALLOC,
 				  notifier, sizeof(*notifier));
 	if (ret) {
 		MESSAGE("Failed to create notifier 0x%08x: %d\n", handle, ret);
@@ -70,7 +69,7 @@ nouveau_notifier_new(GLcontext *ctx, GLuint handle, GLuint count)
 
 void
 nouveau_notifier_destroy(GLcontext *ctx,
-			 struct drm_nouveau_notifier_alloc *notifier)
+			 struct drm_nouveau_notifierobj_alloc *notifier)
 {
 	/*XXX: free notifier object.. */
 	FREE(notifier);
@@ -78,7 +77,7 @@ nouveau_notifier_destroy(GLcontext *ctx,
 
 void
 nouveau_notifier_reset(GLcontext *ctx,
-		       struct drm_nouveau_notifier_alloc *notifier,
+		       struct drm_nouveau_notifierobj_alloc *notifier,
 		       GLuint id)
 {
 	NOTIFIER(n);
@@ -96,7 +95,7 @@ nouveau_notifier_reset(GLcontext *ctx,
 
 GLuint
 nouveau_notifier_status(GLcontext *ctx,
-			struct drm_nouveau_notifier_alloc *notifier,
+			struct drm_nouveau_notifierobj_alloc *notifier,
 			GLuint id)
 {
 	NOTIFIER(n);
@@ -106,7 +105,7 @@ nouveau_notifier_status(GLcontext *ctx,
 
 GLuint
 nouveau_notifier_return_val(GLcontext *ctx,
-			    struct drm_nouveau_notifier_alloc *notifier,
+			    struct drm_nouveau_notifierobj_alloc *notifier,
 			    GLuint id)
 {
 	NOTIFIER(n);
@@ -116,7 +115,7 @@ nouveau_notifier_return_val(GLcontext *ctx,
 
 GLboolean
 nouveau_notifier_wait_status(GLcontext *ctx,
-			     struct drm_nouveau_notifier_alloc *notifier,
+			     struct drm_nouveau_notifierobj_alloc *notifier,
 			     GLuint id, GLuint status, GLuint timeout)
 {
 	NOTIFIER(n);
@@ -150,7 +149,7 @@ nouveau_notifier_wait_status(GLcontext *ctx,
 
 void
 nouveau_notifier_wait_nop(GLcontext *ctx,
-			  struct drm_nouveau_notifier_alloc *notifier,
+			  struct drm_nouveau_notifierobj_alloc *notifier,
 			  GLuint subc)
 {
 	NOTIFIER(n);
