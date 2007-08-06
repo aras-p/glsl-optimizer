@@ -308,7 +308,7 @@ intelFinish(GLcontext * ctx)
 }
 
 
-void
+static void
 intelInitDriverFunctions(struct dd_function_table *functions)
 {
    _mesa_init_driver_functions(functions);
@@ -322,6 +322,8 @@ intelInitDriverFunctions(struct dd_function_table *functions)
    intelInitTextureFuncs(functions);
    */
    intelInitBufferFuncs(functions);
+
+   st_init_driver_functions(functions);
 }
 
 

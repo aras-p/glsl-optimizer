@@ -193,8 +193,6 @@ extern void intelGetLock(struct intel_context *intel, GLuint flags);
 extern void intelFinish(GLcontext * ctx);
 extern void intelFlush(GLcontext * ctx);
 
-extern void intelInitDriverFunctions(struct dd_function_table *functions);
-
 
 /* ================================================================
  * intel_softpipe.c:
