@@ -179,7 +179,7 @@ st_miptree_depth_offsets(struct pipe_mipmap_tree *mt, GLuint level)
 
 
 GLuint
-st_miptree_image_offset(struct pipe_mipmap_tree * mt,
+st_miptree_image_offset(const struct pipe_mipmap_tree * mt,
                         GLuint face, GLuint level)
 {
    if (mt->target == GL_TEXTURE_CUBE_MAP_ARB)
@@ -187,6 +187,17 @@ st_miptree_image_offset(struct pipe_mipmap_tree * mt,
               mt->level[level].image_offset[face] * mt->cpp);
    else
       return mt->level[level].level_offset;
+}
+
+
+GLuint
+st_miptree_texel_offset(const struct pipe_mipmap_tree * mt,
+                        GLuint face, GLuint level,
+                        GLuint col, GLuint row, GLuint img)
+{
+   GLuint imgOffset = st_miptree_image_offset(mt, face, level);
+
+   return imgOffset + row * (mt->pitch + col) * mt->cpp;
 }
 
 
