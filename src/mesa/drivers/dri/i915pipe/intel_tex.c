@@ -25,8 +25,8 @@
  * 
  **************************************************************************/
 
-#include "texobj.h"
-#include "intel_context.h"
+#include "main/texobj.h"
+#include "state_tracker/st_context.h"
 #include "state_tracker/st_mipmap_tree.h"
 #include "intel_tex.h"
 
@@ -73,11 +73,11 @@ static void
 intelDeleteTextureObject(GLcontext *ctx,
 			 struct gl_texture_object *texObj)
 {
-   struct intel_context *intel = intel_context(ctx);
+   struct pipe_context *pipe = ctx->st->pipe;
    struct st_texture_object *stObj = st_texture_object(texObj);
 
    if (stObj->mt)
-      st_miptree_release(intel->pipe, &stObj->mt);
+      st_miptree_release(pipe, &stObj->mt);
 
    _mesa_delete_texture_object(ctx, texObj);
 }
@@ -86,13 +86,13 @@ intelDeleteTextureObject(GLcontext *ctx,
 static void
 intelFreeTextureImageData(GLcontext * ctx, struct gl_texture_image *texImage)
 {
-   struct intel_context *intel = intel_context(ctx);
+   struct pipe_context *pipe = ctx->st->pipe;
    struct st_texture_image *stImage = st_texture_image(texImage);
 
    DBG("%s\n", __FUNCTION__);
 
    if (stImage->mt) {
-      st_miptree_release(intel->pipe, &stImage->mt);
+      st_miptree_release(pipe, &stImage->mt);
    }
 
    if (texImage->Data) {

@@ -33,6 +33,7 @@
 
 #include "intel_context.h"
 #include "intel_tex.h"
+#include "state_tracker/st_context.h"
 #include "state_tracker/st_mipmap_tree.h"
 
 #include "pipe/p_context.h"
@@ -51,7 +52,7 @@ intelTexSubimage(GLcontext * ctx,
                  struct gl_texture_object *texObj,
                  struct gl_texture_image *texImage)
 {
-   struct intel_context *intel = intel_context(ctx);
+   struct pipe_context *pipe = ctx->st->pipe;
    struct st_texture_image *intelImage = st_texture_image(texImage);
    GLuint dstRowStride;
 
@@ -68,15 +69,17 @@ intelTexSubimage(GLcontext * ctx,
       return;
 
    if (intelImage->mt)
-      intel->pipe->region_idle(intel->pipe, intelImage->mt->region);
+      pipe->region_idle(pipe, intelImage->mt->region);
 
+#if 0
    LOCK_HARDWARE(intel);
+#endif
 
    /* Map buffer if necessary.  Need to lock to prevent other contexts
     * from uploading the buffer under us.
     */
    if (intelImage->mt) 
-      texImage->Data = st_miptree_image_map(intel->pipe,
+      texImage->Data = st_miptree_image_map(pipe,
                                                intelImage->mt,
                                                intelImage->face,
                                                intelImage->level,
@@ -108,11 +111,13 @@ intelTexSubimage(GLcontext * ctx,
    _mesa_unmap_teximage_pbo(ctx, packing);
 
    if (intelImage->mt) {
-      st_miptree_image_unmap(intel->pipe, intelImage->mt);
+      st_miptree_image_unmap(pipe, intelImage->mt);
       texImage->Data = NULL;
    }
 
+#if 0
    UNLOCK_HARDWARE(intel);
+#endif
 }
 
 
