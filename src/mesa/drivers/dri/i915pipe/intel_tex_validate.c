@@ -72,19 +72,19 @@ copy_image_data_to_tree(struct intel_context *intel,
    if (intelImage->mt) {
       /* Copy potentially with the blitter:
        */
-      intel_miptree_image_copy(intel,
+      st_miptree_image_copy(intel->pipe,
                                intelObj->mt,
                                intelImage->face,
                                intelImage->level, intelImage->mt);
 
-      intel_miptree_release(intel, &intelImage->mt);
+      st_miptree_release(intel->pipe, &intelImage->mt);
    }
    else {
       assert(intelImage->base.Data != NULL);
 
       /* More straightforward upload.  
        */
-      intel_miptree_image_data(intel,
+      st_miptree_image_data(intel->pipe,
                                intelObj->mt,
                                intelImage->face,
                                intelImage->level,
@@ -96,7 +96,7 @@ copy_image_data_to_tree(struct intel_context *intel,
       intelImage->base.Data = NULL;
    }
 
-   intel_miptree_reference(&intelImage->mt, intelObj->mt);
+   st_miptree_reference(&intelImage->mt, intelObj->mt);
 }
 
 
@@ -130,7 +130,7 @@ intel_finalize_mipmap_tree(struct intel_context *intel, GLuint unit)
     */
    if (firstImage->base.Border) {
       if (intelObj->mt) {
-         intel_miptree_release(intel, &intelObj->mt);
+         st_miptree_release(intel->pipe, &intelObj->mt);
       }
       return GL_FALSE;
    }
@@ -147,9 +147,9 @@ intel_finalize_mipmap_tree(struct intel_context *intel, GLuint unit)
        firstImage->mt->last_level >= intelObj->lastLevel) {
 
       if (intelObj->mt)
-         intel_miptree_release(intel, &intelObj->mt);
+         st_miptree_release(intel->pipe, &intelObj->mt);
 
-      intel_miptree_reference(&intelObj->mt, firstImage->mt);
+      st_miptree_reference(&intelObj->mt, firstImage->mt);
    }
 
    if (firstImage->base.IsCompressed) {
@@ -177,14 +177,14 @@ intel_finalize_mipmap_tree(struct intel_context *intel, GLuint unit)
 	intelObj->mt->depth0 != firstImage->base.Depth ||
 	intelObj->mt->cpp != cpp ||
 	intelObj->mt->compressed != firstImage->base.IsCompressed)) {
-      intel_miptree_release(intel, &intelObj->mt);
+      st_miptree_release(intel->pipe, &intelObj->mt);
    }
 
 
    /* May need to create a new tree:
     */
    if (!intelObj->mt) {
-      intelObj->mt = intel_miptree_create(intel,
+      intelObj->mt = st_miptree_create(intel->pipe,
                                           intelObj->base.Target,
                                           firstImage->base.InternalFormat,
                                           intelObj->firstLevel,
@@ -237,7 +237,7 @@ intel_tex_map_images(struct intel_context *intel,
 
          if (intelImage->mt) {
             intelImage->base.Data =
-               intel_miptree_image_map(intel,
+               st_miptree_image_map(intel->pipe,
                                        intelImage->mt,
                                        intelImage->face,
                                        intelImage->level,
@@ -266,7 +266,7 @@ intel_tex_unmap_images(struct intel_context *intel,
             intel_texture_image(intelObj->base.Image[face][i]);
 
          if (intelImage->mt) {
-            intel_miptree_image_unmap(intel, intelImage->mt);
+            st_miptree_image_unmap(intel->pipe, intelImage->mt);
             intelImage->base.Data = NULL;
          }
       }

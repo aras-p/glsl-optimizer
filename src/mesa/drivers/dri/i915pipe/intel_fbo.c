@@ -566,12 +566,12 @@ intel_render_texture(GLcontext * ctx,
    }
 
    /* compute offset of the particular 2D image within the texture region */
-   imageOffset = intel_miptree_image_offset(intel_image->mt,
+   imageOffset = st_miptree_image_offset(intel_image->mt,
                                             att->CubeMapFace,
                                             att->TextureLevel);
 
    if (att->Texture->Target == GL_TEXTURE_3D) {
-      const GLuint *offsets = intel_miptree_depth_offsets(intel_image->mt,
+      const GLuint *offsets = st_miptree_depth_offsets(intel_image->mt,
                                                           att->TextureLevel);
       imageOffset += offsets[att->Zoffset];
    }

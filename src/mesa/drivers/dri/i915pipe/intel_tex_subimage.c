@@ -76,7 +76,7 @@ intelTexSubimage(GLcontext * ctx,
     * from uploading the buffer under us.
     */
    if (intelImage->mt) 
-      texImage->Data = intel_miptree_image_map(intel,
+      texImage->Data = st_miptree_image_map(intel->pipe,
                                                intelImage->mt,
                                                intelImage->face,
                                                intelImage->level,
@@ -108,7 +108,7 @@ intelTexSubimage(GLcontext * ctx,
    _mesa_unmap_teximage_pbo(ctx, packing);
 
    if (intelImage->mt) {
-      intel_miptree_image_unmap(intel, intelImage->mt);
+      st_miptree_image_unmap(intel->pipe, intelImage->mt);
       texImage->Data = NULL;
    }
 

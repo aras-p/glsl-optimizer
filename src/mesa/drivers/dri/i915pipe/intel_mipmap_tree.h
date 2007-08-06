@@ -34,7 +34,7 @@
 struct pipe_region;
 
 
-struct pipe_mipmap_tree *intel_miptree_create(struct intel_context *intel,
+struct pipe_mipmap_tree *st_miptree_create(struct pipe_context *pipe,
                                                GLenum target,
                                                GLenum internal_format,
                                                GLuint first_level,
@@ -45,47 +45,47 @@ struct pipe_mipmap_tree *intel_miptree_create(struct intel_context *intel,
                                                GLuint cpp,
                                                GLuint compress_byte);
 
-void intel_miptree_reference(struct pipe_mipmap_tree **dst,
+void st_miptree_reference(struct pipe_mipmap_tree **dst,
                              struct pipe_mipmap_tree *src);
 
-void intel_miptree_release(struct intel_context *intel,
+void st_miptree_release(struct pipe_context *pipe,
                            struct pipe_mipmap_tree **mt);
 
 /* Check if an image fits an existing mipmap tree layout
  */
-GLboolean intel_miptree_match_image(struct pipe_mipmap_tree *mt,
+GLboolean st_miptree_match_image(struct pipe_mipmap_tree *mt,
                                     struct gl_texture_image *image,
                                     GLuint face, GLuint level);
 
 /* Return a pointer to an image within a tree.  Return image stride as
  * well.
  */
-GLubyte *intel_miptree_image_map(struct intel_context *intel,
+GLubyte *st_miptree_image_map(struct pipe_context *pipe,
                                  struct pipe_mipmap_tree *mt,
                                  GLuint face,
                                  GLuint level,
                                  GLuint * row_stride, GLuint * image_stride);
 
-void intel_miptree_image_unmap(struct intel_context *intel,
+void st_miptree_image_unmap(struct pipe_context *pipe,
                                struct pipe_mipmap_tree *mt);
 
 
 /* Return the linear offset of an image relative to the start of the
  * tree:
  */
-GLuint intel_miptree_image_offset(struct pipe_mipmap_tree *mt,
-                                  GLuint face, GLuint level);
+GLuint st_miptree_image_offset(struct pipe_mipmap_tree *mt,
+                               GLuint face, GLuint level);
 
 /* Return pointers to each 2d slice within an image.  Indexed by depth
  * value.
  */
-const GLuint *intel_miptree_depth_offsets(struct pipe_mipmap_tree *mt,
-                                          GLuint level);
+const GLuint *st_miptree_depth_offsets(struct pipe_mipmap_tree *mt,
+                                       GLuint level);
 
 
 /* Upload an image into a tree
  */
-void intel_miptree_image_data(struct intel_context *intel,
+void st_miptree_image_data(struct pipe_context *pipe,
                               struct pipe_mipmap_tree *dst,
                               GLuint face,
                               GLuint level,
@@ -94,7 +94,7 @@ void intel_miptree_image_data(struct intel_context *intel,
 
 /* Copy an image between two trees
  */
-void intel_miptree_image_copy(struct intel_context *intel,
+void st_miptree_image_copy(struct pipe_context *pipe,
                               struct pipe_mipmap_tree *dst,
                               GLuint face, GLuint level,
                               struct pipe_mipmap_tree *src);

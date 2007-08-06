@@ -50,7 +50,7 @@ intelDeleteTextureObject(GLcontext *ctx,
    struct intel_texture_object *intelObj = intel_texture_object(texObj);
 
    if (intelObj->mt)
-      intel_miptree_release(intel, &intelObj->mt);
+      st_miptree_release(intel->pipe, &intelObj->mt);
 
    _mesa_delete_texture_object(ctx, texObj);
 }
@@ -65,7 +65,7 @@ intelFreeTextureImageData(GLcontext * ctx, struct gl_texture_image *texImage)
    DBG("%s\n", __FUNCTION__);
 
    if (intelImage->mt) {
-      intel_miptree_release(intel, &intelImage->mt);
+      st_miptree_release(intel->pipe, &intelImage->mt);
    }
 
    if (texImage->Data) {

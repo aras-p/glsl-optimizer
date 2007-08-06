@@ -102,7 +102,7 @@ do_copy_texsubimage(struct intel_context *intel,
    /* XXX still need the lock ? */
    LOCK_HARDWARE(intel);
    {
-      GLuint image_offset = intel_miptree_image_offset(intelImage->mt,
+      GLuint image_offset = st_miptree_image_offset(intelImage->mt,
                                                        intelImage->face,
                                                        intelImage->level);
       const GLint orig_x = x;

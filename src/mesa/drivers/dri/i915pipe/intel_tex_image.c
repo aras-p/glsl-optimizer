@@ -125,7 +125,7 @@ guess_and_alloc_mipmap_tree(struct intel_context *intel,
    assert(!intelObj->mt);
    if (intelImage->base.IsCompressed)
       comp_byte = intel_compressed_num_bytes(intelImage->base.TexFormat->MesaFormat);
-   intelObj->mt = intel_miptree_create(intel,
+   intelObj->mt = st_miptree_create(intel->pipe,
                                        intelObj->base.Target,
                                        intelImage->base.InternalFormat,
                                        firstLevel,
@@ -214,7 +214,7 @@ try_pbo_upload(struct intel_context *intel,
    else
       src_stride = width;
 
-   dst_offset = intel_miptree_image_offset(intelImage->mt,
+   dst_offset = st_miptree_image_offset(intelImage->mt,
                                            intelImage->face,
                                            intelImage->level);
 
@@ -328,7 +328,7 @@ intelTexImage(GLcontext * ctx,
     * Release any old malloced memory.
     */
    if (intelImage->mt) {
-      intel_miptree_release(intel, &intelImage->mt);
+      st_miptree_release(intel->pipe, &intelImage->mt);
       assert(!texImage->Data);
    }
    else if (texImage->Data) {
@@ -343,11 +343,11 @@ intelTexImage(GLcontext * ctx,
        intelObj->mt->first_level == level &&
        intelObj->mt->last_level == level &&
        intelObj->mt->target != GL_TEXTURE_CUBE_MAP_ARB &&
-       !intel_miptree_match_image(intelObj->mt, &intelImage->base,
+       !st_miptree_match_image(intelObj->mt, &intelImage->base,
                                   intelImage->face, intelImage->level)) {
 
       DBG("release it\n");
-      intel_miptree_release(intel, &intelObj->mt);
+      st_miptree_release(intel->pipe, &intelObj->mt);
       assert(!intelObj->mt);
    }
 
@@ -361,10 +361,10 @@ intelTexImage(GLcontext * ctx,
    assert(!intelImage->mt);
 
    if (intelObj->mt &&
-       intel_miptree_match_image(intelObj->mt, &intelImage->base,
+       st_miptree_match_image(intelObj->mt, &intelImage->base,
                                  intelImage->face, intelImage->level)) {
 
-      intel_miptree_reference(&intelImage->mt, intelObj->mt);
+      st_miptree_reference(&intelImage->mt, intelObj->mt);
       assert(intelImage->mt);
    }
 
@@ -438,7 +438,7 @@ intelTexImage(GLcontext * ctx,
    LOCK_HARDWARE(intel);
 
    if (intelImage->mt) {
-      texImage->Data = intel_miptree_image_map(intel,
+      texImage->Data = st_miptree_image_map(intel->pipe,
                                                intelImage->mt,
                                                intelImage->face,
                                                intelImage->level,
@@ -485,7 +485,7 @@ intelTexImage(GLcontext * ctx,
    _mesa_unmap_teximage_pbo(ctx, unpack);
 
    if (intelImage->mt) {
-      intel_miptree_image_unmap(intel, intelImage->mt);
+      st_miptree_image_unmap(intel->pipe, intelImage->mt);
       texImage->Data = NULL;
    }
 
@@ -580,7 +580,7 @@ intel_get_tex_image(GLcontext * ctx, GLenum target, GLint level,
        * kernel.  Need to explicitly map and unmap it.
        */
       intelImage->base.Data =
-         intel_miptree_image_map(intel,
+         st_miptree_image_map(intel->pipe,
                                  intelImage->mt,
                                  intelImage->face,
                                  intelImage->level,
@@ -612,7 +612,7 @@ intel_get_tex_image(GLcontext * ctx, GLenum target, GLint level,
 
    /* Unmap */
    if (intelImage->mt) {
-      intel_miptree_image_unmap(intel, intelImage->mt);
+      st_miptree_image_unmap(intel->pipe, intelImage->mt);
       intelImage->base.Data = NULL;
    }
 }
@@ -653,7 +653,7 @@ intelSetTexOffset(__DRIcontext *pDRICtx, GLint texname,
       return;
 
    if (intelObj->mt)
-      intel_miptree_release(intel, &intelObj->mt);
+      st_miptree_release(intel->pipe, &intelObj->mt);
 
    intelObj->imageOverride = GL_TRUE;
    intelObj->depthOverride = depth;

@@ -25,7 +25,6 @@
  * 
  **************************************************************************/
 
-#include "intel_context.h"
 #include "intel_mipmap_tree.h"
 #include "enums.h"
 
@@ -52,7 +51,7 @@ target_to_target(GLenum target)
 }
 
 struct pipe_mipmap_tree *
-intel_miptree_create(struct intel_context *intel,
+st_miptree_create(struct pipe_context *pipe,
                      GLenum target,
                      GLenum internal_format,
                      GLuint first_level,
@@ -79,9 +78,9 @@ intel_miptree_create(struct intel_context *intel,
    mt->compressed = compress_byte ? 1 : 0;
    mt->refcount = 1; 
 
-   ok = intel->pipe->mipmap_tree_layout(intel->pipe, mt);
+   ok = pipe->mipmap_tree_layout(pipe, mt);
    if (ok)
-      mt->region = intel->pipe->region_alloc(intel->pipe,
+      mt->region = pipe->region_alloc(pipe,
                                       mt->cpp, mt->pitch, mt->total_height);
 
    if (!mt->region) {
@@ -94,7 +93,7 @@ intel_miptree_create(struct intel_context *intel,
 
 
 void
-intel_miptree_reference(struct pipe_mipmap_tree **dst,
+st_miptree_reference(struct pipe_mipmap_tree **dst,
                         struct pipe_mipmap_tree *src)
 {
    src->refcount++;
@@ -103,8 +102,8 @@ intel_miptree_reference(struct pipe_mipmap_tree **dst,
 }
 
 void
-intel_miptree_release(struct intel_context *intel,
-                      struct pipe_mipmap_tree **mt)
+st_miptree_release(struct pipe_context *pipe,
+                   struct pipe_mipmap_tree **mt)
 {
    if (!*mt)
       return;
@@ -115,7 +114,7 @@ intel_miptree_release(struct intel_context *intel,
 
       DBG("%s deleting %p\n", __FUNCTION__, *mt);
 
-      intel->pipe->region_release(intel->pipe, &((*mt)->region));
+      pipe->region_release(pipe, &((*mt)->region));
 
       for (i = 0; i < MAX_TEXTURE_LEVELS; i++)
          if ((*mt)->level[i].image_offset)
@@ -135,7 +134,7 @@ intel_miptree_release(struct intel_context *intel,
  * Not sure whether I want to pass gl_texture_image here.
  */
 GLboolean
-intel_miptree_match_image(struct pipe_mipmap_tree *mt,
+st_miptree_match_image(struct pipe_mipmap_tree *mt,
                           struct gl_texture_image *image,
                           GLuint face, GLuint level)
 {
@@ -168,7 +167,7 @@ intel_miptree_match_image(struct pipe_mipmap_tree *mt,
  * These functions present that view to mesa:
  */
 const GLuint *
-intel_miptree_depth_offsets(struct pipe_mipmap_tree *mt, GLuint level)
+st_miptree_depth_offsets(struct pipe_mipmap_tree *mt, GLuint level)
 {
    static const GLuint zero = 0;
 
@@ -180,8 +179,8 @@ intel_miptree_depth_offsets(struct pipe_mipmap_tree *mt, GLuint level)
 
 
 GLuint
-intel_miptree_image_offset(struct pipe_mipmap_tree * mt,
-                           GLuint face, GLuint level)
+st_miptree_image_offset(struct pipe_mipmap_tree * mt,
+                        GLuint face, GLuint level)
 {
    if (mt->target == GL_TEXTURE_CUBE_MAP_ARB)
       return (mt->level[level].level_offset +
@@ -199,7 +198,7 @@ intel_miptree_image_offset(struct pipe_mipmap_tree * mt,
  * \return address of mapping
  */
 GLubyte *
-intel_miptree_image_map(struct intel_context * intel,
+st_miptree_image_map(struct pipe_context *pipe,
                         struct pipe_mipmap_tree * mt,
                         GLuint face,
                         GLuint level,
@@ -215,17 +214,17 @@ intel_miptree_image_map(struct intel_context * intel,
       memcpy(image_offsets, mt->level[level].image_offset,
              mt->level[level].depth * sizeof(GLuint));
 
-   ptr = intel->pipe->region_map(intel->pipe, mt->region);
+   ptr = pipe->region_map(pipe, mt->region);
 
-   return ptr + intel_miptree_image_offset(mt, face, level);
+   return ptr + st_miptree_image_offset(mt, face, level);
 }
 
 void
-intel_miptree_image_unmap(struct intel_context *intel,
+st_miptree_image_unmap(struct pipe_context *pipe,
                           struct pipe_mipmap_tree *mt)
 {
    DBG("%s\n", __FUNCTION__);
-   intel->pipe->region_unmap(intel->pipe, mt->region);
+   pipe->region_unmap(pipe, mt->region);
 }
 
 
@@ -233,7 +232,7 @@ intel_miptree_image_unmap(struct intel_context *intel,
 /* Upload data for a particular image.
  */
 void
-intel_miptree_image_data(struct intel_context *intel,
+st_miptree_image_data(struct pipe_context *pipe,
                          struct pipe_mipmap_tree *dst,
                          GLuint face,
                          GLuint level,
@@ -241,8 +240,8 @@ intel_miptree_image_data(struct intel_context *intel,
                          GLuint src_row_pitch, GLuint src_image_pitch)
 {
    GLuint depth = dst->level[level].depth;
-   GLuint dst_offset = intel_miptree_image_offset(dst, face, level);
-   const GLuint *dst_depth_offset = intel_miptree_depth_offsets(dst, level);
+   GLuint dst_offset = st_miptree_image_offset(dst, face, level);
+   const GLuint *dst_depth_offset = st_miptree_depth_offsets(dst, level);
    GLuint i;
    GLuint height = 0;
 
@@ -251,7 +250,7 @@ intel_miptree_image_data(struct intel_context *intel,
       height = dst->level[level].height;
       if(dst->compressed)
 	 height /= 4;
-      intel->pipe->region_data(intel->pipe, dst->region,
+      pipe->region_data(pipe, dst->region,
                         dst_offset + dst_depth_offset[i], /* dst_offset */
                         0, 0,                             /* dstx, dsty */
                         src,
@@ -266,7 +265,7 @@ intel_miptree_image_data(struct intel_context *intel,
 /* Copy mipmap image between trees
  */
 void
-intel_miptree_image_copy(struct intel_context *intel,
+st_miptree_image_copy(struct pipe_context *pipe,
                          struct pipe_mipmap_tree *dst,
                          GLuint face, GLuint level,
                          struct pipe_mipmap_tree *src)
@@ -274,16 +273,16 @@ intel_miptree_image_copy(struct intel_context *intel,
    GLuint width = src->level[level].width;
    GLuint height = src->level[level].height;
    GLuint depth = src->level[level].depth;
-   GLuint dst_offset = intel_miptree_image_offset(dst, face, level);
-   GLuint src_offset = intel_miptree_image_offset(src, face, level);
-   const GLuint *dst_depth_offset = intel_miptree_depth_offsets(dst, level);
-   const GLuint *src_depth_offset = intel_miptree_depth_offsets(src, level);
+   GLuint dst_offset = st_miptree_image_offset(dst, face, level);
+   GLuint src_offset = st_miptree_image_offset(src, face, level);
+   const GLuint *dst_depth_offset = st_miptree_depth_offsets(dst, level);
+   const GLuint *src_depth_offset = st_miptree_depth_offsets(src, level);
    GLuint i;
 
    if (dst->compressed)
       height /= 4;
    for (i = 0; i < depth; i++) {
-      intel->pipe->region_copy(intel->pipe,
+      pipe->region_copy(pipe,
                         dst->region, dst_offset + dst_depth_offset[i],
                         0,
                         0,
