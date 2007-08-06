@@ -39,8 +39,12 @@
 #include "sp_quad.h"
 #include "tgsi/core/tgsi_core.h"
 
+#if 0
 #if defined __GNUC__
 #define ALIGNED_ATTRIBS 1
+#else
+#define ALIGNED_ATTRIBS 0
+#endif
 #else
 #define ALIGNED_ATTRIBS 0
 #endif
@@ -229,6 +233,7 @@ shade_quad( struct quad_stage *qs, struct quad_header *quad )
 
       /* load input registers */
       for (i = 0; i < softpipe->nr_attrs; i++) {
+#if 0
          /* Make sure fp_attr_to_slot[] is an identity transform. */
          assert( softpipe->fp_attr_to_slot[i] == i );
 
@@ -236,6 +241,12 @@ shade_quad( struct quad_stage *qs, struct quad_header *quad )
             &ainputs[i],
             exec.attr[i],
             sizeof( ainputs[0] ) );
+#else
+         memcpy(
+            &ainputs[i],
+            exec.attr[softpipe->fp_attr_to_slot[i]],
+            sizeof( ainputs[0] ) );
+#endif
       }
 #endif
 
