@@ -683,7 +683,7 @@ struct tgsi_immediate_float32
 #define TGSI_OPCODE_NOP                 98
 /* TGSI_OPCODE_ABS */
 /* TGSI_OPCODE_ADD */
-#define TGSI_OPCODE_BGNLOOP             99
+#define TGSI_OPCODE_BGNLOOP2            99
 #define TGSI_OPCODE_BGNSUB              100
 /* TGSI_OPCODE_BRA */
 /* TGSI_OPCODE_BRK */

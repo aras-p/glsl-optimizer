@@ -369,6 +369,33 @@ compile_instruction(
       fullinst->Instruction.Opcode = TGSI_OPCODE_XPD;
       fulldst->DstRegister.WriteMask &= TGSI_WRITEMASK_XYZ;
       break;
+   case OPCODE_NOP:
+      fullinst->Instruction.Opcode = TGSI_OPCODE_NOP;
+      break;
+   case OPCODE_BGNLOOP:
+      fullinst->Instruction.Opcode = TGSI_OPCODE_BGNLOOP2;
+      break;
+   case OPCODE_BGNSUB:
+      fullinst->Instruction.Opcode = TGSI_OPCODE_BGNSUB;
+      break;
+   case OPCODE_ENDLOOP:
+      fullinst->Instruction.Opcode = TGSI_OPCODE_ENDLOOP2;
+      break;
+   case OPCODE_ENDSUB:
+      fullinst->Instruction.Opcode = TGSI_OPCODE_ENDSUB;
+      break;
+   case OPCODE_NOISE1:
+      fullinst->Instruction.Opcode = TGSI_OPCODE_NOISE1;
+      break;
+   case OPCODE_NOISE2:
+      fullinst->Instruction.Opcode = TGSI_OPCODE_NOISE2;
+      break;
+   case OPCODE_NOISE3:
+      fullinst->Instruction.Opcode = TGSI_OPCODE_NOISE3;
+      break;
+   case OPCODE_NOISE4:
+      fullinst->Instruction.Opcode = TGSI_OPCODE_NOISE4;
+      break;
    case OPCODE_END:
       return GL_TRUE;
    default:
