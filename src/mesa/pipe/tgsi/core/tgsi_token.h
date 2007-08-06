@@ -268,7 +268,7 @@ struct tgsi_immediate_float32
 /* TGSI_OPCODE_RCC */
 /* TGSI_OPCODE_RCP */
 #define TGSI_OPCODE_RET                 63
-/* TGSI_OPCODE_RSQNV */
+/* TGSI_OPCODE_RSQNV - use TGSI_OPCODE_RSQ */
 /* TGSI_OPCODE_SEQ */
 /* TGSI_OPCODE_SFL */
 /* TGSI_OPCODE_SGE */
@@ -677,7 +677,62 @@ struct tgsi_immediate_float32
 #define TGSI_OPCODE_EMIT                96
 #define TGSI_OPCODE_ENDPRIM             97
 
-#define TGSI_OPCODE_LAST                98
+/*
+ * GLSL
+ */
+#define TGSI_OPCODE_NOP                 98
+/* TGSI_OPCODE_ABS */
+/* TGSI_OPCODE_ADD */
+#define TGSI_OPCODE_BGNLOOP             99
+#define TGSI_OPCODE_BGNSUB              100
+/* TGSI_OPCODE_BRA */
+/* TGSI_OPCODE_BRK */
+/* TGSI_OPCODE_CONT */
+/* TGSI_OPCODE_COS */
+/* TGSI_OPCODE_DDX */
+/* TGSI_OPCODE_DDY */
+/* TGSI_OPCODE_DP3 */
+/* TGSI_OPCODE_DP4 */
+/* TGSI_OPCODE_ELSE */
+/* TGSI_OPCODE_ENDIF */
+#define TGSI_OPCODE_ENDLOOP2            101
+#define TGSI_OPCODE_ENDSUB              102
+/* TGSI_OPCODE_EX2 */
+/* TGSI_OPCODE_EXP */
+/* TGSI_OPCODE_FLR */
+/* TGSI_OPCODE_FRC */
+/* TGSI_OPCODE_IF */
+#define TGSI_OPCODE_INT                 TGSI_OPCODE_TRUNC
+/* TGSI_OPCODE_KIL */
+/* TGSI_OPCODE_LG2 */
+/* TGSI_OPCODE_LOG */
+/* TGSI_OPCODE_MAD */
+/* TGSI_OPCODE_MAX */
+/* TGSI_OPCODE_MIN */
+/* TGSI_OPCODE_MOV */
+/* TGSI_OPCODE_MUL */
+#define TGSI_OPCODE_NOISE1              103
+#define TGSI_OPCODE_NOISE2              104
+#define TGSI_OPCODE_NOISE3              105
+#define TGSI_OPCODE_NOISE4              106
+/* TGSI_OPCODE_POW */
+/* TGSI_OPCODE_RCP */
+/* TGSI_OPCODE_RSQ */
+/* TGSI_OPCODE_SEQ */
+/* TGSI_OPCODE_SGE */
+/* TGSI_OPCODE_SGT */
+/* TGSI_OPCODE_SIN */
+/* TGSI_OPCODE_SLE */
+/* TGSI_OPCODE_SLT */
+/* TGSI_OPCODE_SNE */
+/* TGSI_OPCODE_SUB */
+/* TGSI_OPCODE_TEX */
+/* TGSI_OPCODE_TXB */
+/* TGSI_OPCODE_TXD */
+/* TGSI_OPCODE_TXL */
+/* TGSI_OPCODE_XPD */
+
+#define TGSI_OPCODE_LAST                107
 
 #define TGSI_SAT_NONE            0  /* do not saturate */
 #define TGSI_SAT_ZERO_ONE        1  /* clamp to [0,1] */
