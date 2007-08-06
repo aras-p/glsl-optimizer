@@ -252,20 +252,35 @@ compile_instruction(
    case OPCODE_ADD:
       fullinst->Instruction.Opcode = TGSI_OPCODE_ADD;
       break;
+   case OPCODE_BGNLOOP:
+      fullinst->Instruction.Opcode = TGSI_OPCODE_BGNLOOP2;
+      break;
+   case OPCODE_BGNSUB:
+      fullinst->Instruction.Opcode = TGSI_OPCODE_BGNSUB;
+      break;
+   case OPCODE_BRA:
+      fullinst->Instruction.Opcode = TGSI_OPCODE_BRA;
+      break;
+   case OPCODE_BRK:
+      fullinst->Instruction.Opcode = TGSI_OPCODE_BRK;
+      break;
    case OPCODE_CMP:
       fullinst->Instruction.Opcode = TGSI_OPCODE_CMP;
       break;
+   case OPCODE_CONT:
+      fullinst->Instruction.Opcode = TGSI_OPCODE_CONT;
+      break;
    case OPCODE_COS:
       fullinst->Instruction.Opcode = TGSI_OPCODE_COS;
-      break;
-   case OPCODE_DP3:
-      fullinst->Instruction.Opcode = TGSI_OPCODE_DP3;
       break;
    case OPCODE_DDX:
       fullinst->Instruction.Opcode = TGSI_OPCODE_DDX;
       break;
    case OPCODE_DDY:
       fullinst->Instruction.Opcode = TGSI_OPCODE_DDY;
+      break;
+   case OPCODE_DP3:
+      fullinst->Instruction.Opcode = TGSI_OPCODE_DP3;
       break;
    case OPCODE_DP4:
       fullinst->Instruction.Opcode = TGSI_OPCODE_DP4;
@@ -276,8 +291,23 @@ compile_instruction(
    case OPCODE_DST:
       fullinst->Instruction.Opcode = TGSI_OPCODE_DST;
       break;
+   case OPCODE_ELSE:
+      fullinst->Instruction.Opcode = TGSI_OPCODE_ELSE;
+      break;
+   case OPCODE_ENDIF:
+      fullinst->Instruction.Opcode = TGSI_OPCODE_ENDIF;
+      break;
+   case OPCODE_ENDLOOP:
+      fullinst->Instruction.Opcode = TGSI_OPCODE_ENDLOOP2;
+      break;
+   case OPCODE_ENDSUB:
+      fullinst->Instruction.Opcode = TGSI_OPCODE_ENDSUB;
+      break;
    case OPCODE_EX2:
       fullinst->Instruction.Opcode = TGSI_OPCODE_EX2;
+      break;
+   case OPCODE_EXP:
+      fullinst->Instruction.Opcode = TGSI_OPCODE_EXP;
       break;
    case OPCODE_FLR:
       fullinst->Instruction.Opcode = TGSI_OPCODE_FLR;
@@ -285,11 +315,20 @@ compile_instruction(
    case OPCODE_FRC:
       fullinst->Instruction.Opcode = TGSI_OPCODE_FRC;
       break;
+   case OPCODE_IF:
+      fullinst->Instruction.Opcode = TGSI_OPCODE_IF;
+      break;
+   case OPCODE_INT:
+      fullinst->Instruction.Opcode = TGSI_OPCODE_INT;
+      break;
    case OPCODE_KIL:
       fullinst->Instruction.Opcode = TGSI_OPCODE_KIL;
       break;
    case OPCODE_LG2:
       fullinst->Instruction.Opcode = TGSI_OPCODE_LG2;
+      break;
+   case OPCODE_LOG:
+      fullinst->Instruction.Opcode = TGSI_OPCODE_LOG;
       break;
    case OPCODE_LIT:
       fullinst->Instruction.Opcode = TGSI_OPCODE_LIT;
@@ -312,6 +351,21 @@ compile_instruction(
    case OPCODE_MUL:
       fullinst->Instruction.Opcode = TGSI_OPCODE_MUL;
       break;
+   case OPCODE_NOISE1:
+      fullinst->Instruction.Opcode = TGSI_OPCODE_NOISE1;
+      break;
+   case OPCODE_NOISE2:
+      fullinst->Instruction.Opcode = TGSI_OPCODE_NOISE2;
+      break;
+   case OPCODE_NOISE3:
+      fullinst->Instruction.Opcode = TGSI_OPCODE_NOISE3;
+      break;
+   case OPCODE_NOISE4:
+      fullinst->Instruction.Opcode = TGSI_OPCODE_NOISE4;
+      break;
+   case OPCODE_NOP:
+      fullinst->Instruction.Opcode = TGSI_OPCODE_NOP;
+      break;
    case OPCODE_POW:
       fullinst->Instruction.Opcode = TGSI_OPCODE_POW;
       break;
@@ -328,14 +382,26 @@ compile_instruction(
       fullinst->Instruction.Opcode = TGSI_OPCODE_SCS;
       fulldst->DstRegister.WriteMask &= TGSI_WRITEMASK_XY;
       break;
+   case OPCODE_SEQ:
+      fullinst->Instruction.Opcode = TGSI_OPCODE_SEQ;
+      break;
    case OPCODE_SGE:
       fullinst->Instruction.Opcode = TGSI_OPCODE_SGE;
+      break;
+   case OPCODE_SGT:
+      fullinst->Instruction.Opcode = TGSI_OPCODE_SGT;
       break;
    case OPCODE_SIN:
       fullinst->Instruction.Opcode = TGSI_OPCODE_SIN;
       break;
+   case OPCODE_SLE:
+      fullinst->Instruction.Opcode = TGSI_OPCODE_SLE;
+      break;
    case OPCODE_SLT:
       fullinst->Instruction.Opcode = TGSI_OPCODE_SLT;
+      break;
+   case OPCODE_SNE:
+      fullinst->Instruction.Opcode = TGSI_OPCODE_SNE;
       break;
    case OPCODE_SUB:
       fullinst->Instruction.Opcode = TGSI_OPCODE_SUB;
@@ -357,6 +423,20 @@ compile_instruction(
       fullinst->FullSrcRegisters[1].SrcRegister.File = TGSI_FILE_SAMPLER;
       fullinst->FullSrcRegisters[1].SrcRegister.Index = inst->TexSrcUnit;
       break;
+   case OPCODE_TXD:
+      fullinst->Instruction.Opcode = TGSI_OPCODE_TXD;
+      fullinst->Instruction.NumSrcRegs = 2;
+      fullinst->InstructionExtTexture.Texture = map_texture_target( inst->TexSrcTarget );
+      fullinst->FullSrcRegisters[1].SrcRegister.File = TGSI_FILE_SAMPLER;
+      fullinst->FullSrcRegisters[1].SrcRegister.Index = inst->TexSrcUnit;
+      break;
+   case OPCODE_TXL:
+      fullinst->Instruction.Opcode = TGSI_OPCODE_TXL;
+      fullinst->Instruction.NumSrcRegs = 2;
+      fullinst->InstructionExtTexture.Texture = map_texture_target( inst->TexSrcTarget );
+      fullinst->FullSrcRegisters[1].SrcRegister.File = TGSI_FILE_SAMPLER;
+      fullinst->FullSrcRegisters[1].SrcRegister.Index = inst->TexSrcUnit;
+      break;
    case OPCODE_TXP:
       fullinst->Instruction.Opcode = TGSI_OPCODE_TEX;
       fullinst->Instruction.NumSrcRegs = 2;
@@ -368,33 +448,6 @@ compile_instruction(
    case OPCODE_XPD:
       fullinst->Instruction.Opcode = TGSI_OPCODE_XPD;
       fulldst->DstRegister.WriteMask &= TGSI_WRITEMASK_XYZ;
-      break;
-   case OPCODE_NOP:
-      fullinst->Instruction.Opcode = TGSI_OPCODE_NOP;
-      break;
-   case OPCODE_BGNLOOP:
-      fullinst->Instruction.Opcode = TGSI_OPCODE_BGNLOOP2;
-      break;
-   case OPCODE_BGNSUB:
-      fullinst->Instruction.Opcode = TGSI_OPCODE_BGNSUB;
-      break;
-   case OPCODE_ENDLOOP:
-      fullinst->Instruction.Opcode = TGSI_OPCODE_ENDLOOP2;
-      break;
-   case OPCODE_ENDSUB:
-      fullinst->Instruction.Opcode = TGSI_OPCODE_ENDSUB;
-      break;
-   case OPCODE_NOISE1:
-      fullinst->Instruction.Opcode = TGSI_OPCODE_NOISE1;
-      break;
-   case OPCODE_NOISE2:
-      fullinst->Instruction.Opcode = TGSI_OPCODE_NOISE2;
-      break;
-   case OPCODE_NOISE3:
-      fullinst->Instruction.Opcode = TGSI_OPCODE_NOISE3;
-      break;
-   case OPCODE_NOISE4:
-      fullinst->Instruction.Opcode = TGSI_OPCODE_NOISE4;
       break;
    case OPCODE_END:
       return GL_TRUE;
