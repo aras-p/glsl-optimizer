@@ -32,7 +32,7 @@
 #include "pipe/p_context.h"
 
 
-#define FILE_DEBUG_FLAG DEBUG_MIPTREE
+#define DBG if(0) printf
 
 static GLenum
 target_to_target(GLenum target)

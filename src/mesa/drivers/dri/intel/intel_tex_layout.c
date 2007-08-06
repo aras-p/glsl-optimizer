@@ -32,6 +32,7 @@
 
 #include "macros.h"
 #include "pipe/p_state.h"
+#include "intel_tex_layout.h"
 #include "intel_mipmap_tree.h"
 
 
@@ -47,7 +48,7 @@ static int align(int value, int alignment)
 
 
 static void
-mipmaptree_set_level_info(struct pipe_mipmap_tree *mt,
+intel_miptree_set_level_info(struct pipe_mipmap_tree *mt,
                           GLuint level,
                           GLuint nr_images,
                           GLuint x, GLuint y, GLuint w, GLuint h, GLuint d)
@@ -76,6 +77,24 @@ mipmaptree_set_level_info(struct pipe_mipmap_tree *mt,
 
    mt->level[level].image_offset = malloc(nr_images * sizeof(GLuint));
    mt->level[level].image_offset[0] = 0;
+}
+
+
+static void
+intel_miptree_set_image_offset(struct pipe_mipmap_tree *mt,
+                               GLuint level, GLuint img, GLuint x, GLuint y)
+{
+   if (img == 0 && level == 0)
+      assert(x == 0 && y == 0);
+
+   assert(img < mt->level[level].nr_images);
+
+   mt->level[level].image_offset[img] = (x + y * mt->pitch);
+
+   /*
+   DBG("%s level %d img %d pos %d,%d image_offset %x\n",
+       __FUNCTION__, level, img, x, y, mt->level[level].image_offset[img]);
+   */
 }
 
 
@@ -113,7 +132,7 @@ i945_miptree_layout_2d( struct pipe_mipmap_tree *mt )
    for ( level = mt->first_level ; level <= mt->last_level ; level++ ) {
       GLuint img_height;
 
-      mipmaptree_set_level_info(mt, level, 1, x, y, width, height, 1);
+      intel_miptree_set_level_info(mt, level, 1, x, y, width, height, 1);
 
       if (mt->compressed)
 	 img_height = MAX2(1, height/4);

@@ -33,6 +33,10 @@
 #include "macros.h"
 
 
+struct pipe_context;
+struct pipe_mipmap_tree;
+
+
 extern void i915_miptree_layout_2d( struct pipe_context *, struct pipe_mipmap_tree *mt );
 
 extern void i945_miptree_layout_2d( struct pipe_context *, struct pipe_mipmap_tree *mt );

@@ -28,9 +28,11 @@
 #ifndef INTEL_MIPMAP_TREE_H
 #define INTEL_MIPMAP_TREE_H
 
-#include "intel_context.h"
-#include "main/glheader.h"
 
+#include "main/mtypes.h"
+
+struct pipe_context;
+struct pipe_mipmap_tree;
 struct pipe_region;
 
 
