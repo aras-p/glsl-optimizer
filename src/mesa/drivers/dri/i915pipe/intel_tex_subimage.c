@@ -52,7 +52,7 @@ intelTexSubimage(GLcontext * ctx,
                  struct gl_texture_image *texImage)
 {
    struct intel_context *intel = intel_context(ctx);
-   struct intel_texture_image *intelImage = intel_texture_image(texImage);
+   struct st_texture_image *intelImage = st_texture_image(texImage);
    GLuint dstRowStride;
 
    DBG("%s target %s level %d offset %d,%d %dx%d\n", __FUNCTION__,

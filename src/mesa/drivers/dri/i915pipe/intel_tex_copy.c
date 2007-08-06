@@ -84,7 +84,7 @@ get_teximage_source(struct intel_context *intel, GLenum internalFormat)
 
 static GLboolean
 do_copy_texsubimage(struct intel_context *intel,
-                    struct intel_texture_image *intelImage,
+                    struct st_texture_image *intelImage,
                     GLenum internalFormat,
                     GLint dstx, GLint dsty,
                     GLint x, GLint y, GLsizei width, GLsizei height)
@@ -186,7 +186,7 @@ intelCopyTexImage1D(GLcontext * ctx, GLenum target, GLint level,
                           &ctx->DefaultPacking, texObj, texImage);
 
    if (!do_copy_texsubimage(intel_context(ctx),
-                            intel_texture_image(texImage),
+                            st_texture_image(texImage),
                             internalFormat, 0, 0, x, y, width, 1))
       goto fail;
 
@@ -223,7 +223,7 @@ intelCopyTexImage2D(GLcontext * ctx, GLenum target, GLint level,
 
 
    if (!do_copy_texsubimage(intel_context(ctx),
-                            intel_texture_image(texImage),
+                            st_texture_image(texImage),
                             internalFormat, 0, 0, x, y, width, height))
       goto fail;
 
@@ -256,7 +256,7 @@ intelCopyTexSubImage1D(GLcontext * ctx, GLenum target, GLint level,
     */
 
    if (!do_copy_texsubimage(intel_context(ctx),
-                            intel_texture_image(texImage),
+                            st_texture_image(texImage),
                             internalFormat, xoffset, 0, x, y, width, 1)) {
 #if 0
       _swrast_copy_texsubimage1d(ctx, target, level, xoffset, x, y, width);
@@ -285,7 +285,7 @@ intelCopyTexSubImage2D(GLcontext * ctx, GLenum target, GLint level,
     */
 
    if (!do_copy_texsubimage(intel_context(ctx),
-                            intel_texture_image(texImage),
+                            st_texture_image(texImage),
                             internalFormat,
                             xoffset, yoffset, x, y, width, height)) {
 #if 0

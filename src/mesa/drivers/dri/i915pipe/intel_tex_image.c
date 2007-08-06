@@ -61,9 +61,9 @@ logbase2(int n)
  * saving is worth it.
  */
 static void
-guess_and_alloc_mipmap_tree(struct intel_context *intel,
-                            struct intel_texture_object *intelObj,
-                            struct intel_texture_image *intelImage)
+guess_and_alloc_mipmap_tree(struct pipe_context *pipe,
+                            struct st_texture_object *intelObj,
+                            struct st_texture_image *intelImage)
 {
    GLuint firstLevel;
    GLuint lastLevel;
@@ -125,7 +125,7 @@ guess_and_alloc_mipmap_tree(struct intel_context *intel,
    assert(!intelObj->mt);
    if (intelImage->base.IsCompressed)
       comp_byte = intel_compressed_num_bytes(intelImage->base.TexFormat->MesaFormat);
-   intelObj->mt = st_miptree_create(intel->pipe,
+   intelObj->mt = st_miptree_create(pipe,
                                        intelObj->base.Target,
                                        intelImage->base.InternalFormat,
                                        firstLevel,
@@ -190,7 +190,7 @@ check_pbo_format(GLint internalFormat,
  */
 static GLboolean
 try_pbo_upload(struct intel_context *intel,
-               struct intel_texture_image *intelImage,
+               struct st_texture_image *intelImage,
                const struct gl_pixelstore_attrib *unpack,
                GLint internalFormat,
                GLint width, GLint height,
@@ -250,7 +250,7 @@ try_pbo_upload(struct intel_context *intel,
 
 static GLboolean
 try_pbo_zcopy(struct intel_context *intel,
-              struct intel_texture_image *intelImage,
+              struct st_texture_image *intelImage,
               const struct gl_pixelstore_attrib *unpack,
               GLint internalFormat,
               GLint width, GLint height,
@@ -277,8 +277,8 @@ intelTexImage(GLcontext * ctx,
               struct gl_texture_image *texImage, GLsizei imageSize, int compressed)
 {
    struct intel_context *intel = intel_context(ctx);
-   struct intel_texture_object *intelObj = intel_texture_object(texObj);
-   struct intel_texture_image *intelImage = intel_texture_image(texImage);
+   struct st_texture_object *intelObj = st_texture_object(texObj);
+   struct st_texture_image *intelImage = st_texture_image(texImage);
    GLint postConvWidth = width;
    GLint postConvHeight = height;
    GLint texelBytes, sizeInBytes;
@@ -352,7 +352,7 @@ intelTexImage(GLcontext * ctx,
    }
 
    if (!intelObj->mt) {
-      guess_and_alloc_mipmap_tree(intel, intelObj, intelImage);
+      guess_and_alloc_mipmap_tree(intel->pipe, intelObj, intelImage);
       if (!intelObj->mt) {
 	 DBG("guess_and_alloc_mipmap_tree: failed\n");
       }
@@ -572,7 +572,7 @@ intel_get_tex_image(GLcontext * ctx, GLenum target, GLint level,
 		    struct gl_texture_image *texImage, int compressed)
 {
    struct intel_context *intel = intel_context(ctx);
-   struct intel_texture_image *intelImage = intel_texture_image(texImage);
+   struct st_texture_image *intelImage = st_texture_image(texImage);
 
    /* Map */
    if (intelImage->mt) {
@@ -647,18 +647,18 @@ intelSetTexOffset(__DRIcontext *pDRICtx, GLint texname,
    struct intel_context *intel = (struct intel_context*)
       ((__DRIcontextPrivate*)pDRICtx->private)->driverPrivate;
    struct gl_texture_object *tObj = _mesa_lookup_texture(&intel->ctx, texname);
-   struct intel_texture_object *intelObj = intel_texture_object(tObj);
+   struct st_texture_object *stObj = st_texture_object(tObj);
 
-   if (!intelObj)
+   if (!stObj)
       return;
 
-   if (intelObj->mt)
-      st_miptree_release(intel->pipe, &intelObj->mt);
+   if (stObj->mt)
+      st_miptree_release(intel->pipe, &stObj->mt);
 
-   intelObj->imageOverride = GL_TRUE;
-   intelObj->depthOverride = depth;
-   intelObj->pitchOverride = pitch;
+   stObj->imageOverride = GL_TRUE;
+   stObj->depthOverride = depth;
+   stObj->pitchOverride = pitch;
 
    if (offset)
-      intelObj->textureOffset = offset;
+      stObj->textureOffset = offset;
 }

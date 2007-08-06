@@ -532,7 +532,7 @@ intel_render_texture(GLcontext * ctx,
    struct gl_texture_image *newImage
       = att->Texture->Image[att->CubeMapFace][att->TextureLevel];
    struct intel_renderbuffer *irb = intel_renderbuffer(att->Renderbuffer);
-   struct intel_texture_image *intel_image;
+   struct st_texture_image *st_image;
    GLuint imageOffset;
 
    (void) fb;
@@ -558,26 +558,26 @@ intel_render_texture(GLcontext * ctx,
        irb->Base.RefCount);
 
    /* point the renderbufer's region to the texture image region */
-   intel_image = intel_texture_image(newImage);
-   if (irb->region != intel_image->mt->region) {
+   st_image = st_texture_image(newImage);
+   if (irb->region != st_image->mt->region) {
       if (irb->region)
 	 intel->pipe->region_release(intel->pipe, &irb->region);
-      pipe_region_reference(&irb->region, intel_image->mt->region);
+      pipe_region_reference(&irb->region, st_image->mt->region);
    }
 
    /* compute offset of the particular 2D image within the texture region */
-   imageOffset = st_miptree_image_offset(intel_image->mt,
+   imageOffset = st_miptree_image_offset(st_image->mt,
                                             att->CubeMapFace,
                                             att->TextureLevel);
 
    if (att->Texture->Target == GL_TEXTURE_3D) {
-      const GLuint *offsets = st_miptree_depth_offsets(intel_image->mt,
+      const GLuint *offsets = st_miptree_depth_offsets(st_image->mt,
                                                           att->TextureLevel);
       imageOffset += offsets[att->Zoffset];
    }
 
    /* store that offset in the region */
-   intel_image->mt->region->draw_offset = imageOffset;
+   st_image->mt->region->draw_offset = imageOffset;
 
    /* update drawing region, etc */
    intel_draw_buffer(ctx, fb);

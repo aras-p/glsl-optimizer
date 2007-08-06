@@ -10,12 +10,12 @@ intelIsTextureResident(GLcontext * ctx, struct gl_texture_object *texObj)
 {
 #if 0
    struct intel_context *intel = intel_context(ctx);
-   struct intel_texture_object *intelObj = intel_texture_object(texObj);
+   struct st_texture_object *stObj = st_texture_object(texObj);
 
    return
-      intelObj->mt &&
-      intelObj->mt->region &&
-      intel_is_region_resident(intel, intelObj->mt->region);
+      stObj->mt &&
+      stObj->mt->region &&
+      intel_is_region_resident(intel, stObj->mt->region);
 #endif
    return 1;
 }
@@ -27,14 +27,14 @@ intelNewTextureImage(GLcontext * ctx)
 {
    DBG("%s\n", __FUNCTION__);
    (void) ctx;
-   return (struct gl_texture_image *) CALLOC_STRUCT(intel_texture_image);
+   return (struct gl_texture_image *) CALLOC_STRUCT(st_texture_image);
 }
 
 
 static struct gl_texture_object *
 intelNewTextureObject(GLcontext * ctx, GLuint name, GLenum target)
 {
-   struct intel_texture_object *obj = CALLOC_STRUCT(intel_texture_object);
+   struct st_texture_object *obj = CALLOC_STRUCT(st_texture_object);
 
    DBG("%s\n", __FUNCTION__);
    _mesa_initialize_texture_object(&obj->base, name, target);
@@ -47,10 +47,10 @@ intelDeleteTextureObject(GLcontext *ctx,
 			 struct gl_texture_object *texObj)
 {
    struct intel_context *intel = intel_context(ctx);
-   struct intel_texture_object *intelObj = intel_texture_object(texObj);
+   struct st_texture_object *stObj = st_texture_object(texObj);
 
-   if (intelObj->mt)
-      st_miptree_release(intel->pipe, &intelObj->mt);
+   if (stObj->mt)
+      st_miptree_release(intel->pipe, &stObj->mt);
 
    _mesa_delete_texture_object(ctx, texObj);
 }
@@ -60,12 +60,12 @@ static void
 intelFreeTextureImageData(GLcontext * ctx, struct gl_texture_image *texImage)
 {
    struct intel_context *intel = intel_context(ctx);
-   struct intel_texture_image *intelImage = intel_texture_image(texImage);
+   struct st_texture_image *stImage = st_texture_image(texImage);
 
    DBG("%s\n", __FUNCTION__);
 
-   if (intelImage->mt) {
-      st_miptree_release(intel->pipe, &intelImage->mt);
+   if (stImage->mt) {
+      st_miptree_release(intel->pipe, &stImage->mt);
    }
 
    if (texImage->Data) {

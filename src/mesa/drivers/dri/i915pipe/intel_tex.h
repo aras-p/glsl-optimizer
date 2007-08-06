@@ -32,7 +32,7 @@
 #include "intel_context.h"
 #include "texmem.h"
 
-struct intel_texture_object
+struct st_texture_object
 {
    struct gl_texture_object base;       /* The "parent" object */
 
@@ -58,7 +58,7 @@ struct intel_texture_object
 
 
 
-struct intel_texture_image
+struct st_texture_image
 {
    struct gl_texture_image base;
 
@@ -67,8 +67,8 @@ struct intel_texture_image
    GLuint level;
    GLuint face;
 
-   /* If intelImage->mt != NULL, image data is stored here.
-    * Else if intelImage->base.Data != NULL, image is stored there.
+   /* If stImage->mt != NULL, image data is stored here.
+    * Else if stImage->base.Data != NULL, image is stored there.
     * Else there is no image data.
     */
    struct pipe_mipmap_tree *mt;
@@ -187,25 +187,25 @@ GLuint intel_finalize_mipmap_tree(GLcontext *ctx,
 
 #if 0
 void intel_tex_map_images(struct pipe_context *pipe,
-                          struct intel_texture_object *intelObj);
+                          struct st_texture_object *stObj);
 
 void intel_tex_unmap_images(struct pipe_context *pipe,
-                            struct intel_texture_object *intelObj);
+                            struct st_texture_object *stObj);
 #endif
 
 int intel_compressed_num_bytes(GLuint mesaFormat);
 
 
-static INLINE struct intel_texture_object *
-intel_texture_object(struct gl_texture_object *obj)
+static INLINE struct st_texture_object *
+st_texture_object(struct gl_texture_object *obj)
 {
-   return (struct intel_texture_object *) obj;
+   return (struct st_texture_object *) obj;
 }
 
-static INLINE struct intel_texture_image *
-intel_texture_image(struct gl_texture_image *img)
+static INLINE struct st_texture_image *
+st_texture_image(struct gl_texture_image *img)
 {
-   return (struct intel_texture_image *) img;
+   return (struct st_texture_image *) img;
 }
 
 
