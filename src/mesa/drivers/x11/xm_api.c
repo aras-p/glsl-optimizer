@@ -1572,7 +1572,8 @@ XMesaContext XMesaCreateContext( XMesaVisual v, XMesaContext share_list )
 
 
    st_create_context( mesaCtx,
-		      softpipe_create() );
+                      xmesa_create_softpipe( c ) );
+
    mesaCtx->Driver.Clear = xmesa_clear_buffers;
    /*
    mesaCtx->st->pipe->clear = xmesa_clear;
