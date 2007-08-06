@@ -180,13 +180,18 @@ void intelGetCompressedTexImage(GLcontext *ctx, GLenum target, GLint level,
 void intelSetTexOffset(__DRIcontext *pDRICtx, GLint texname,
 		       unsigned long long offset, GLint depth, GLuint pitch);
 
-GLuint intel_finalize_mipmap_tree(struct intel_context *intel, GLuint unit);
+GLuint intel_finalize_mipmap_tree(GLcontext *ctx,
+                                  struct pipe_context *pipe, GLuint unit,
+                                  GLboolean *needFlush);
 
-void intel_tex_map_images(struct intel_context *intel,
+
+#if 0
+void intel_tex_map_images(struct pipe_context *pipe,
                           struct intel_texture_object *intelObj);
 
-void intel_tex_unmap_images(struct intel_context *intel,
+void intel_tex_unmap_images(struct pipe_context *pipe,
                             struct intel_texture_object *intelObj);
+#endif
 
 int intel_compressed_num_bytes(GLuint mesaFormat);
 

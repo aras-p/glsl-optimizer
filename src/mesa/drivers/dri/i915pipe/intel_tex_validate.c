@@ -1,8 +1,6 @@
 #include "mtypes.h"
 #include "macros.h"
 
-#include "intel_context.h"
-#include "intel_batchbuffer.h"
 #include "intel_mipmap_tree.h"
 #include "intel_tex.h"
 
@@ -65,26 +63,26 @@ intel_calculate_first_last_level(struct intel_texture_object *intelObj)
 }
 
 static void
-copy_image_data_to_tree(struct intel_context *intel,
+copy_image_data_to_tree(struct pipe_context *pipe,
                         struct intel_texture_object *intelObj,
                         struct intel_texture_image *intelImage)
 {
    if (intelImage->mt) {
       /* Copy potentially with the blitter:
        */
-      st_miptree_image_copy(intel->pipe,
+      st_miptree_image_copy(pipe,
                                intelObj->mt,
                                intelImage->face,
                                intelImage->level, intelImage->mt);
 
-      st_miptree_release(intel->pipe, &intelImage->mt);
+      st_miptree_release(pipe, &intelImage->mt);
    }
    else {
       assert(intelImage->base.Data != NULL);
 
       /* More straightforward upload.  
        */
-      st_miptree_image_data(intel->pipe,
+      st_miptree_image_data(pipe,
                                intelObj->mt,
                                intelImage->face,
                                intelImage->level,
@@ -103,9 +101,11 @@ copy_image_data_to_tree(struct intel_context *intel,
 /*  
  */
 GLuint
-intel_finalize_mipmap_tree(struct intel_context *intel, GLuint unit)
+intel_finalize_mipmap_tree(GLcontext *ctx,
+                           struct pipe_context *pipe, GLuint unit,
+                           GLboolean *needFlush)
 {
-   struct gl_texture_object *tObj = intel->ctx.Texture.Unit[unit]._Current;
+   struct gl_texture_object *tObj = ctx->Texture.Unit[unit]._Current;
    struct intel_texture_object *intelObj = intel_texture_object(tObj);
    int comp_byte = 0;
    int cpp;
@@ -114,7 +114,7 @@ intel_finalize_mipmap_tree(struct intel_context *intel, GLuint unit)
    GLuint nr_faces = 0;
    struct intel_texture_image *firstImage;
 
-   GLboolean need_flush = GL_FALSE;
+   *needFlush = GL_FALSE;
 
    /* We know/require this is true by now: 
     */
@@ -130,7 +130,7 @@ intel_finalize_mipmap_tree(struct intel_context *intel, GLuint unit)
     */
    if (firstImage->base.Border) {
       if (intelObj->mt) {
-         st_miptree_release(intel->pipe, &intelObj->mt);
+         st_miptree_release(pipe, &intelObj->mt);
       }
       return GL_FALSE;
    }
@@ -147,7 +147,7 @@ intel_finalize_mipmap_tree(struct intel_context *intel, GLuint unit)
        firstImage->mt->last_level >= intelObj->lastLevel) {
 
       if (intelObj->mt)
-         st_miptree_release(intel->pipe, &intelObj->mt);
+         st_miptree_release(pipe, &intelObj->mt);
 
       st_miptree_reference(&intelObj->mt, firstImage->mt);
    }
@@ -177,14 +177,14 @@ intel_finalize_mipmap_tree(struct intel_context *intel, GLuint unit)
 	intelObj->mt->depth0 != firstImage->base.Depth ||
 	intelObj->mt->cpp != cpp ||
 	intelObj->mt->compressed != firstImage->base.IsCompressed)) {
-      st_miptree_release(intel->pipe, &intelObj->mt);
+      st_miptree_release(pipe, &intelObj->mt);
    }
 
 
    /* May need to create a new tree:
     */
    if (!intelObj->mt) {
-      intelObj->mt = st_miptree_create(intel->pipe,
+      intelObj->mt = st_miptree_create(pipe,
                                           intelObj->base.Target,
                                           firstImage->base.InternalFormat,
                                           intelObj->firstLevel,
@@ -207,22 +207,24 @@ intel_finalize_mipmap_tree(struct intel_context *intel, GLuint unit)
          /* Need to import images in main memory or held in other trees.
           */
          if (intelObj->mt != intelImage->mt) {
-            copy_image_data_to_tree(intel, intelObj, intelImage);
-	    need_flush = GL_TRUE;
+            copy_image_data_to_tree(pipe, intelObj, intelImage);
+	    *needFlush = GL_TRUE;
          }
       }
    }
 
+   /**
    if (need_flush)
       intel_batchbuffer_flush(intel->batch);
+   **/
 
    return GL_TRUE;
 }
 
 
-
+#if 0 /* unused? */
 void
-intel_tex_map_images(struct intel_context *intel,
+intel_tex_map_images(struct pipe_context *pipe,
                      struct intel_texture_object *intelObj)
 {
    GLuint nr_faces = (intelObj->base.Target == GL_TEXTURE_CUBE_MAP) ? 6 : 1;
@@ -237,7 +239,7 @@ intel_tex_map_images(struct intel_context *intel,
 
          if (intelImage->mt) {
             intelImage->base.Data =
-               st_miptree_image_map(intel->pipe,
+               st_miptree_image_map(pipe,
                                        intelImage->mt,
                                        intelImage->face,
                                        intelImage->level,
@@ -254,7 +256,7 @@ intel_tex_map_images(struct intel_context *intel,
 
 
 void
-intel_tex_unmap_images(struct intel_context *intel,
+intel_tex_unmap_images(struct pipe_context *pipe,
                        struct intel_texture_object *intelObj)
 {
    GLuint nr_faces = (intelObj->base.Target == GL_TEXTURE_CUBE_MAP) ? 6 : 1;
@@ -266,9 +268,10 @@ intel_tex_unmap_images(struct intel_context *intel,
             intel_texture_image(intelObj->base.Image[face][i]);
 
          if (intelImage->mt) {
-            st_miptree_image_unmap(intel->pipe, intelImage->mt);
+            st_miptree_image_unmap(pipe, intelImage->mt);
             intelImage->base.Data = NULL;
          }
       }
    }
 }
+#endif
