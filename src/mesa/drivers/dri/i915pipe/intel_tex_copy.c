@@ -25,20 +25,23 @@
  * 
  **************************************************************************/
 
-#include "mtypes.h"
-#include "enums.h"
-#include "image.h"
-#include "teximage.h"
-#include "swrast/swrast.h"
+#include "main/mtypes.h"
+#include "main/enums.h"
+#include "main/image.h"
+#include "main/teximage.h"
 
+#include "state_tracker/st_mipmap_tree.h"
+
+#if 0
 #include "intel_screen.h"
 #include "intel_context.h"
 #include "intel_batchbuffer.h"
 #include "intel_buffers.h"
-#include "state_tracker/st_mipmap_tree.h"
 #include "intel_fbo.h"
-#include "intel_tex.h"
 #include "intel_blit.h"
+#endif
+#include "intel_tex.h"
+
 
 #define FILE_DEBUG_FLAG DEBUG_TEXTURE
 
@@ -51,6 +54,7 @@
 static const struct pipe_region *
 get_teximage_source(struct intel_context *intel, GLenum internalFormat)
 {
+#if 00
    struct intel_renderbuffer *irb;
 
    DBG("%s %s\n", __FUNCTION__,
@@ -79,17 +83,20 @@ get_teximage_source(struct intel_context *intel, GLenum internalFormat)
    default:
       return NULL;
    }
+#else
+   return NULL;
+#endif
 }
 
 
 static GLboolean
-do_copy_texsubimage(struct intel_context *intel,
+do_copy_texsubimage(GLcontext *ctx,
                     struct st_texture_image *intelImage,
                     GLenum internalFormat,
                     GLint dstx, GLint dsty,
                     GLint x, GLint y, GLsizei width, GLsizei height)
 {
-   GLcontext *ctx = &intel->ctx;
+   struct intel_context *intel = intel_context(ctx);
    const struct pipe_region *src =
       get_teximage_source(intel, internalFormat);
 
@@ -98,9 +105,12 @@ do_copy_texsubimage(struct intel_context *intel,
       return GL_FALSE;
    }
 
+#if 00 /* XXX FIX flush/locking */
    intelFlush(ctx);
    /* XXX still need the lock ? */
    LOCK_HARDWARE(intel);
+#endif
+
    {
       GLuint image_offset = st_miptree_image_offset(intelImage->mt,
                                                        intelImage->face,
@@ -126,6 +136,7 @@ do_copy_texsubimage(struct intel_context *intel,
           * pitches.  But we get a nice inverted blit this way, so it's
           * worth it:
           */
+#if 0
          intelEmitCopyBlit(intel,
                            intelImage->mt->cpp,
                            -src->pitch,
@@ -136,13 +147,17 @@ do_copy_texsubimage(struct intel_context *intel,
                            image_offset,
                            x, y + height, dstx, dsty, width, height,
 			   GL_COPY); /* ? */
-
          intel_batchbuffer_flush(intel->batch);
+#else
+         /* XXX use pipe->region_copy() ??? */
+         (void) image_offset;
+#endif
       }
    }
 
-
+#if 0
    UNLOCK_HARDWARE(intel);
+#endif
 
 #if 0
    /* GL_SGIS_generate_mipmap -- this can be accelerated now.
@@ -185,7 +200,7 @@ intelCopyTexImage1D(GLcontext * ctx, GLenum target, GLint level,
                           GL_RGBA, CHAN_TYPE, NULL,
                           &ctx->DefaultPacking, texObj, texImage);
 
-   if (!do_copy_texsubimage(intel_context(ctx),
+   if (!do_copy_texsubimage(ctx,
                             st_texture_image(texImage),
                             internalFormat, 0, 0, x, y, width, 1))
       goto fail;
@@ -193,8 +208,11 @@ intelCopyTexImage1D(GLcontext * ctx, GLenum target, GLint level,
    return;
 
  fail:
+#if 0
    _swrast_copy_teximage1d(ctx, target, level, internalFormat, x, y,
                            width, border);
+#endif
+   ;
 }
 
 void
@@ -222,7 +240,7 @@ intelCopyTexImage2D(GLcontext * ctx, GLenum target, GLint level,
                           &ctx->DefaultPacking, texObj, texImage);
 
 
-   if (!do_copy_texsubimage(intel_context(ctx),
+   if (!do_copy_texsubimage(ctx,
                             st_texture_image(texImage),
                             internalFormat, 0, 0, x, y, width, height))
       goto fail;
@@ -255,7 +273,7 @@ intelCopyTexSubImage1D(GLcontext * ctx, GLenum target, GLint level,
    /* Need to check texture is compatible with source format. 
     */
 
-   if (!do_copy_texsubimage(intel_context(ctx),
+   if (!do_copy_texsubimage(ctx,
                             st_texture_image(texImage),
                             internalFormat, xoffset, 0, x, y, width, 1)) {
 #if 0
@@ -284,7 +302,7 @@ intelCopyTexSubImage2D(GLcontext * ctx, GLenum target, GLint level,
    /* Need to check texture is compatible with source format. 
     */
 
-   if (!do_copy_texsubimage(intel_context(ctx),
+   if (!do_copy_texsubimage(ctx,
                             st_texture_image(texImage),
                             internalFormat,
                             xoffset, yoffset, x, y, width, height)) {
