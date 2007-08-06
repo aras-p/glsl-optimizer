@@ -49,9 +49,9 @@ static int align(int value, int alignment)
 
 static void
 intel_miptree_set_level_info(struct pipe_mipmap_tree *mt,
-                          GLuint level,
-                          GLuint nr_images,
-                          GLuint x, GLuint y, GLuint w, GLuint h, GLuint d)
+                             GLuint level,
+                             GLuint nr_images,
+                             GLuint x, GLuint y, GLuint w, GLuint h, GLuint d)
 {
    assert(level < MAX_TEXTURE_LEVELS);
 
@@ -74,8 +74,9 @@ intel_miptree_set_level_info(struct pipe_mipmap_tree *mt,
    }
 
    assert(nr_images);
+   assert(!mt->level[level].image_offset);
 
-   mt->level[level].image_offset = malloc(nr_images * sizeof(GLuint));
+   mt->level[level].image_offset = (GLuint *) malloc(nr_images * sizeof(GLuint));
    mt->level[level].image_offset[0] = 0;
 }
 
