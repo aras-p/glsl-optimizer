@@ -23,6 +23,12 @@ struct tgsi_exec_vector
 
 struct tgsi_sampler_state
 {
+   const struct pipe_sampler_state *state;
+   const struct pipe_mipmap_tree *texture;
+   void (*get_sample)(const struct tgsi_sampler_state *sampler,
+                      const GLfloat strq[4], GLfloat rgba[4]);
+
+#if 0
     GLboolean   NeedLambda;
     GLboolean   NeedLodBias;        /* if NeedLambda */
     GLboolean   NeedLambdaClamp;    /* if NeedLambda */
@@ -32,6 +38,7 @@ struct tgsi_sampler_state
     GLfloat     ImageWidth;
     GLfloat     ImageHeight;
     GLfloat     ImageDepth;
+#endif
 };
 
 struct tgsi_exec_labels
@@ -94,7 +101,7 @@ struct tgsi_exec_machine
    struct tgsi_exec_vector       *Temps;
    struct tgsi_exec_vector       *Addrs;
 
-   struct tgsi_sampler_state     Samplers[16];
+   const struct tgsi_sampler_state *Samplers;
 
    GLfloat                       Imms[256][4];
    GLuint                        ImmLimit;
@@ -113,7 +120,9 @@ struct tgsi_exec_machine
 void
 tgsi_exec_machine_init(
    struct tgsi_exec_machine *mach,
-   struct tgsi_token *tokens );
+   struct tgsi_token *tokens,
+   GLuint numSamplers,
+   const struct tgsi_sampler_state *samplers);
 
 void
 tgsi_exec_prepare(

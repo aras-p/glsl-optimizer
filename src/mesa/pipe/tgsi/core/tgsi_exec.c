@@ -1,13 +1,12 @@
 #include "tgsi_platform.h"
 #include "tgsi_core.h"
+#include "pipe/p_state.h"
 
 #define MESA 1
 #if MESA
 #include "main/context.h"
 #include "main/macros.h"
 #include "main/colormac.h"
-#include "swrast/swrast.h"
-#include "swrast/s_context.h"
 #endif
 
 #define TILE_BOTTOM_LEFT  0
@@ -64,12 +63,16 @@
 void
 tgsi_exec_machine_init(
    struct tgsi_exec_machine *mach,
-   struct tgsi_token *tokens )
+   struct tgsi_token *tokens,
+   GLuint numSamplers,
+   const struct tgsi_sampler_state *samplers)
 {
    GLuint i, k;
    struct tgsi_parse_context parse;
 
    mach->Tokens = tokens;
+
+   mach->Samplers = samplers;
 
    k = tgsi_parse_init (&parse, mach->Tokens);
    if (k != TGSI_PARSE_OK) {
@@ -1032,7 +1035,7 @@ exec_kil (struct tgsi_exec_machine *mach,
  */
 static void
 fetch_texel_1d( GLcontext *ctx,
-                struct tgsi_sampler_state *sampler,
+                const struct tgsi_sampler_state *sampler,
                 const union tgsi_exec_channel *s,
                 GLuint unit,
                 union tgsi_exec_channel *r,
@@ -1040,68 +1043,48 @@ fetch_texel_1d( GLcontext *ctx,
                 union tgsi_exec_channel *b,
                 union tgsi_exec_channel *a )
 {
-    SWcontext *swrast = SWRAST_CONTEXT(ctx);
-    GLuint fragment_index;
-    GLfloat stpq[4][4];
-    GLfloat lambdas[4];
-    GLchan rgba[4][4];
+   GLuint fragment_index;
+   GLfloat stpq[4][4];
+   GLfloat lambdas[4];
 
-    for (fragment_index = 0; fragment_index < 4; fragment_index++)
-    {
-        stpq[fragment_index][0] = s->f[fragment_index];
-    }
+   for (fragment_index = 0; fragment_index < 4; fragment_index++) {
+      stpq[fragment_index][0] = s->f[fragment_index];
+   }
 
-    if (sampler->NeedLambda)
-    {
-        GLfloat dsdx = s->f[TILE_BOTTOM_RIGHT] - s->f[TILE_BOTTOM_LEFT];
-        GLfloat dsdy = s->f[TILE_TOP_LEFT]     - s->f[TILE_BOTTOM_LEFT];
+   if (sampler->state->min_filter != sampler->state->mag_filter) {
+      GLfloat dsdx = s->f[TILE_BOTTOM_RIGHT] - s->f[TILE_BOTTOM_LEFT];
+      GLfloat dsdy = s->f[TILE_TOP_LEFT]     - s->f[TILE_BOTTOM_LEFT];
+      GLfloat rho, lambda;
 
-        GLfloat rho, lambda;
+      dsdx = FABSF(dsdx);
+      dsdy = FABSF(dsdy);
 
-        dsdx = FABSF(dsdx);
-        dsdy = FABSF(dsdy);
+      rho = MAX2(dsdx, dsdy) * sampler->texture->width0;
 
-        rho = MAX2(dsdx, dsdy) * sampler->ImageWidth;
+      lambda = LOG2(rho);
+      lambda += sampler->state->lod_bias;
+      lambda = CLAMP(lambda, sampler->state->min_lod, sampler->state->max_lod);
 
-        lambda = LOG2(rho);
+      /* XXX: Use the same lambda value throughout the tile.  Could
+       * end up with four unique values by recalculating partial
+       * derivs in the other row and column, and calculating lambda
+       * using the dx and dy values appropriate for each fragment in
+       * the tile.
+       */
+      lambdas[0] =
+      lambdas[1] =
+      lambdas[2] = 
+      lambdas[3] = lambda;
+   }
 
-        if (sampler->NeedLodBias)
-            lambda += sampler->LodBias;
-
-        if (sampler->NeedLambdaClamp)
-            lambda = CLAMP(lambda, sampler->MinLod, sampler->MaxLod);
-
-        /* XXX: Use the same lambda value throughout the tile.  Could
-         * end up with four unique values by recalculating partial
-         * derivs in the other row and column, and calculating lambda
-         * using the dx and dy values appropriate for each fragment in
-         * the tile.
-         */
-        lambdas[0] =
-        lambdas[1] =
-        lambdas[2] = 
-        lambdas[3] = lambda;
-    }
-
-    if (!swrast->TextureSample[unit]) {
-       _swrast_update_texture_samplers(ctx);
-    }
-
-    /* XXX use a float-valued TextureSample routine here!!! */
-    swrast->TextureSample[unit] (ctx,
-                                 ctx->Texture.Unit[unit]._Current,
-                                 4,
-                                 (const GLfloat (*)[4])stpq,
-                                 lambdas,
-                                 rgba);
-
-    for (fragment_index = 0; fragment_index < 4; fragment_index++)
-    {
-        r->f[fragment_index] = CHAN_TO_FLOAT(rgba[fragment_index][0]);
-        g->f[fragment_index] = CHAN_TO_FLOAT(rgba[fragment_index][1]);
-        b->f[fragment_index] = CHAN_TO_FLOAT(rgba[fragment_index][2]);
-        a->f[fragment_index] = CHAN_TO_FLOAT(rgba[fragment_index][3]);
-    }
+   for (fragment_index = 0; fragment_index < 4; fragment_index++) {
+      GLfloat rgba[4];
+      sampler->get_sample(sampler, stpq[fragment_index], rgba);
+      r->f[fragment_index] = rgba[0];
+      g->f[fragment_index] = rgba[1];
+      b->f[fragment_index] = rgba[2];
+      a->f[fragment_index] = rgba[3];
+   }
 }
 
 /*
@@ -1109,7 +1092,7 @@ fetch_texel_1d( GLcontext *ctx,
  */
 static void
 fetch_texel_2d( GLcontext *ctx,
-                struct tgsi_sampler_state *sampler,
+                const struct tgsi_sampler_state *sampler,
                 const union tgsi_exec_channel *s,
                 const union tgsi_exec_channel *t,
                 GLuint unit,
@@ -1118,18 +1101,16 @@ fetch_texel_2d( GLcontext *ctx,
                 union tgsi_exec_channel *b,
                 union tgsi_exec_channel *a )
 {
-   SWcontext *swrast = SWRAST_CONTEXT( ctx );
    GLuint fragment_index;
    GLfloat stpq[4][4];
    GLfloat lambdas[4];
-   GLchan rgba[4][4];
 
    for (fragment_index = 0; fragment_index < 4; fragment_index++) {
       stpq[fragment_index][0] = s->f[fragment_index];
       stpq[fragment_index][1] = t->f[fragment_index];
    }
 
-   if (sampler->NeedLambda) {
+   if (sampler->state->min_filter != sampler->state->mag_filter) {
       GLfloat dsdx = s->f[TILE_BOTTOM_RIGHT] - s->f[TILE_BOTTOM_LEFT];
       GLfloat dsdy = s->f[TILE_TOP_LEFT]     - s->f[TILE_BOTTOM_LEFT];
 
@@ -1143,21 +1124,15 @@ fetch_texel_2d( GLcontext *ctx,
       dtdx = FABSF( dtdx );
       dtdy = FABSF( dtdy );
 
-      maxU = MAX2( dsdx, dsdy ) * sampler->ImageWidth;
-      maxV = MAX2( dtdx, dtdy ) * sampler->ImageHeight;
+      maxU = MAX2( dsdx, dsdy ) * sampler->texture->width0;
+      maxV = MAX2( dtdx, dtdy ) * sampler->texture->height0;
 
       rho = MAX2( maxU, maxV );
 
       lambda = LOG2( rho );
 
-      if (sampler->NeedLodBias)
-	 lambda += sampler->LodBias;
-
-      if (sampler->NeedLambdaClamp)
-         lambda = CLAMP(
-		     lambda,
-		     sampler->MinLod,
-		     sampler->MaxLod );
+      lambda += sampler->state->lod_bias;
+      lambda = CLAMP(lambda, sampler->state->min_lod, sampler->state->max_lod);
 
       /* XXX: Use the same lambda value throughout the tile.  Could
 	 * end up with four unique values by recalculating partial
@@ -1171,24 +1146,13 @@ fetch_texel_2d( GLcontext *ctx,
       lambdas[3] = lambda;
    }
 
-   if (!swrast->TextureSample[unit]) {
-      _swrast_update_texture_samplers(ctx);
-   }
-
-   /* XXX use a float-valued TextureSample routine here!!! */
-   swrast->TextureSample[unit](
-      ctx,
-      ctx->Texture.Unit[unit]._Current,
-      4,
-      (const GLfloat (*)[4]) stpq,
-      lambdas,
-      rgba );
-
    for (fragment_index = 0; fragment_index < 4; fragment_index++) {
-      r->f[fragment_index] = CHAN_TO_FLOAT( rgba[fragment_index][0] );
-      g->f[fragment_index] = CHAN_TO_FLOAT( rgba[fragment_index][1] );
-      b->f[fragment_index] = CHAN_TO_FLOAT( rgba[fragment_index][2] );
-      a->f[fragment_index] = CHAN_TO_FLOAT( rgba[fragment_index][3] );
+      GLfloat rgba[4];
+      sampler->get_sample(sampler, stpq[fragment_index], rgba);
+      r->f[fragment_index] = rgba[0];
+      g->f[fragment_index] = rgba[1];
+      b->f[fragment_index] = rgba[2];
+      a->f[fragment_index] = rgba[3];
    }
 }
 
@@ -1197,7 +1161,7 @@ fetch_texel_2d( GLcontext *ctx,
  */
 static void
 fetch_texel_3d( GLcontext *ctx,
-                struct tgsi_sampler_state *sampler,
+                const struct tgsi_sampler_state *sampler,
                 const union tgsi_exec_channel *s,
                 const union tgsi_exec_channel *t,
                 const union tgsi_exec_channel *p,
@@ -1207,84 +1171,65 @@ fetch_texel_3d( GLcontext *ctx,
                 union tgsi_exec_channel *b,
                 union tgsi_exec_channel *a )
 {
-    SWcontext *swrast = SWRAST_CONTEXT(ctx);
-    GLuint fragment_index;
-    GLfloat stpq[4][4];
-    GLfloat lambdas[4];
-    GLchan rgba[4][4];
+   GLuint fragment_index;
+   GLfloat stpq[4][4];
+   GLfloat lambdas[4];
 
-    for (fragment_index = 0; fragment_index < 4; fragment_index++)
-    {
-        stpq[fragment_index][0] = s->f[fragment_index];
-        stpq[fragment_index][1] = t->f[fragment_index];
-        stpq[fragment_index][2] = p->f[fragment_index];
-    }
+   for (fragment_index = 0; fragment_index < 4; fragment_index++) {
+      stpq[fragment_index][0] = s->f[fragment_index];
+      stpq[fragment_index][1] = t->f[fragment_index];
+      stpq[fragment_index][2] = p->f[fragment_index];
+   }
 
-    if (sampler->NeedLambda)
-    {
-        GLfloat dsdx = s->f[TILE_BOTTOM_RIGHT] - s->f[TILE_BOTTOM_LEFT];
-        GLfloat dsdy = s->f[TILE_TOP_LEFT]     - s->f[TILE_BOTTOM_LEFT];
+   if (sampler->state->min_filter != sampler->state->mag_filter) {
+      GLfloat dsdx = s->f[TILE_BOTTOM_RIGHT] - s->f[TILE_BOTTOM_LEFT];
+      GLfloat dsdy = s->f[TILE_TOP_LEFT]     - s->f[TILE_BOTTOM_LEFT];
 
-        GLfloat dtdx = t->f[TILE_BOTTOM_RIGHT] - t->f[TILE_BOTTOM_LEFT];
-        GLfloat dtdy = t->f[TILE_TOP_LEFT]     - t->f[TILE_BOTTOM_LEFT];
+      GLfloat dtdx = t->f[TILE_BOTTOM_RIGHT] - t->f[TILE_BOTTOM_LEFT];
+      GLfloat dtdy = t->f[TILE_TOP_LEFT]     - t->f[TILE_BOTTOM_LEFT];
 
-        GLfloat dpdx = p->f[TILE_BOTTOM_RIGHT] - p->f[TILE_BOTTOM_LEFT];
-        GLfloat dpdy = p->f[TILE_TOP_LEFT]     - p->f[TILE_BOTTOM_LEFT];
+      GLfloat dpdx = p->f[TILE_BOTTOM_RIGHT] - p->f[TILE_BOTTOM_LEFT];
+      GLfloat dpdy = p->f[TILE_TOP_LEFT]     - p->f[TILE_BOTTOM_LEFT];
 
-        GLfloat maxU, maxV, maxW, rho, lambda;
+      GLfloat maxU, maxV, maxW, rho, lambda;
 
-        dsdx = FABSF(dsdx);
-        dsdy = FABSF(dsdy);
-        dtdx = FABSF(dtdx);
-        dtdy = FABSF(dtdy);
-        dpdx = FABSF(dpdx);
-        dpdy = FABSF(dpdy);
+      dsdx = FABSF(dsdx);
+      dsdy = FABSF(dsdy);
+      dtdx = FABSF(dtdx);
+      dtdy = FABSF(dtdy);
+      dpdx = FABSF(dpdx);
+      dpdy = FABSF(dpdy);
 
-        maxU = MAX2(dsdx, dsdy) * sampler->ImageWidth;
-        maxV = MAX2(dtdx, dtdy) * sampler->ImageHeight;
-        maxW = MAX2(dpdx, dpdy) * sampler->ImageDepth;
+      maxU = MAX2(dsdx, dsdy) * sampler->texture->width0;
+      maxV = MAX2(dtdx, dtdy) * sampler->texture->height0;
+      maxW = MAX2(dpdx, dpdy) * sampler->texture->depth0;
 
-        rho = MAX2(maxU, MAX2(maxV, maxW));
+      rho = MAX2(maxU, MAX2(maxV, maxW));
 
-        lambda = LOG2(rho);
+      lambda = LOG2(rho);
+      lambda += sampler->state->lod_bias;
+      lambda = CLAMP(lambda, sampler->state->min_lod, sampler->state->max_lod);
 
-        if (sampler->NeedLodBias)
-            lambda += sampler->LodBias;
+      /* XXX: Use the same lambda value throughout the tile.  Could
+       * end up with four unique values by recalculating partial
+       * derivs in the other row and column, and calculating lambda
+       * using the dx and dy values appropriate for each fragment in
+       * the tile.
+       */
+      lambdas[0] =
+      lambdas[1] =
+      lambdas[2] = 
+      lambdas[3] = lambda;
+   }
 
-        if (sampler->NeedLambdaClamp)
-            lambda = CLAMP(lambda, sampler->MinLod, sampler->MaxLod);
-
-        /* XXX: Use the same lambda value throughout the tile.  Could
-         * end up with four unique values by recalculating partial
-         * derivs in the other row and column, and calculating lambda
-         * using the dx and dy values appropriate for each fragment in
-         * the tile.
-         */
-        lambdas[0] =
-        lambdas[1] =
-        lambdas[2] = 
-        lambdas[3] = lambda;
-    }
-
-    if (!swrast->TextureSample[unit]) {
-       _swrast_update_texture_samplers(ctx);
-    }
-
-    /* XXX use a float-valued TextureSample routine here!!! */
-    swrast->TextureSample[unit] (ctx,
-                                 ctx->Texture.Unit[unit]._Current,
-                                 4,
-                                 (const GLfloat (*)[4])stpq,
-                                 lambdas,
-                                 rgba);
-
-    for (fragment_index = 0; fragment_index < 4; fragment_index++)
-    {
-        r->f[fragment_index] = CHAN_TO_FLOAT(rgba[fragment_index][0]);
-        g->f[fragment_index] = CHAN_TO_FLOAT(rgba[fragment_index][1]);
-        b->f[fragment_index] = CHAN_TO_FLOAT(rgba[fragment_index][2]);
-        a->f[fragment_index] = CHAN_TO_FLOAT(rgba[fragment_index][3]);
-    }
+   for (fragment_index = 0; fragment_index < 4; fragment_index++) {
+      GLfloat rgba[4];
+      sampler->get_sample(sampler, stpq[fragment_index], rgba);
+      r->f[fragment_index] = rgba[0];
+      g->f[fragment_index] = rgba[1];
+      b->f[fragment_index] = rgba[2];
+      a->f[fragment_index] = rgba[3];
+   }
 }
 #endif
 
@@ -1314,7 +1259,7 @@ exec_instruction(
 #if MESA
    GET_CURRENT_CONTEXT(ctx);
 #endif
-   GLuint chan_index;
+   GLuint chan_index, unit;
    union tgsi_exec_channel r[8];
 
    switch (inst->Instruction.Opcode) {
@@ -1830,6 +1775,7 @@ exec_instruction(
       break;
 
    case TGSI_OPCODE_TEX:
+      unit = inst->FullSrcRegisters[1].SrcRegister.Index;
       switch (inst->InstructionExtTexture.Texture) {
       case TGSI_TEXTURE_1D:
 
@@ -1849,7 +1795,7 @@ exec_instruction(
          }
 #if MESA
          fetch_texel_1d (ctx,
-                         &mach->Samplers[inst->FullSrcRegisters[1].SrcRegister.Index],
+                         &mach->Samplers[unit],
                          &r[0],
                          inst->FullSrcRegisters[1].SrcRegister.Index,
                          &r[0], &r[1], &r[2], &r[3]);
@@ -1878,7 +1824,7 @@ exec_instruction(
 
 #if MESA
          fetch_texel_2d (ctx,
-                         &mach->Samplers[inst->FullSrcRegisters[1].SrcRegister.Index],
+                         &mach->Samplers[unit],
                          &r[0], &r[1],
                          inst->FullSrcRegisters[1].SrcRegister.Index,
                          &r[0], &r[1], &r[2], &r[3]);
@@ -1909,7 +1855,7 @@ exec_instruction(
 
 #if MESA
          fetch_texel_3d (ctx,
-                         &mach->Samplers[inst->FullSrcRegisters[1].SrcRegister.Index],
+                         &mach->Samplers[unit],
                          &r[0], &r[1], &r[2],
                          inst->FullSrcRegisters[1].SrcRegister.Index,
                          &r[0], &r[1], &r[2], &r[3]);

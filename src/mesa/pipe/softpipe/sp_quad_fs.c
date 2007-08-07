@@ -129,6 +129,16 @@ static INLINE void pinterp( struct exec_machine *exec,
 }
 
 
+static void
+get_sample(const struct tgsi_sampler_state *sampler,
+           const GLfloat strq[4], GLfloat rgba[4])
+{
+   rgba[0] = 1;
+   rgba[1] = 1;
+   rgba[2] = 0;
+   rgba[3] = 0;
+}
+
 
 /* This should be done by the fragment shader execution unit (code
  * generated from the decl instructions).  Do it here for now.
@@ -196,6 +206,7 @@ shade_quad( struct quad_stage *qs, struct quad_header *quad )
       struct tgsi_exec_machine machine;
       struct tgsi_exec_vector outputs[FRAG_ATTRIB_MAX + 1];
       struct tgsi_exec_vector *aoutputs;
+      struct tgsi_sampler_state samplers[8];
       GLuint i;
 
 #if !ALIGNED_ATTRIBS
@@ -207,10 +218,17 @@ shade_quad( struct quad_stage *qs, struct quad_header *quad )
       memset(&machine, 0, sizeof(machine));
 #endif
 
+#if 11 /* temp sampler setup */
+      samplers[0].state = &softpipe->sampler[0];
+      samplers[0].texture = softpipe->texture[0];
+      samplers[0].get_sample = get_sample;
+#endif
+
       /* init machine state */
       tgsi_exec_machine_init(
          &machine,
-         softpipe->fs.tokens );
+         softpipe->fs.tokens,
+         8, samplers);
 
       /* Consts does not require 16 byte alignment. */
       machine.Consts = softpipe->fs.constants->constant;
