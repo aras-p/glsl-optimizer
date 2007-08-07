@@ -190,6 +190,7 @@ STATETRACKER_SOURCES = \
 	state_tracker/st_atom_setup.c \
 	state_tracker/st_atom_stencil.c \
 	state_tracker/st_atom_stipple.c \
+	state_tracker/st_atom_texture.c \
 	state_tracker/st_atom_viewport.c \
 	state_tracker/st_cb_clear.c \
 	state_tracker/st_cb_drawpixels.c \
