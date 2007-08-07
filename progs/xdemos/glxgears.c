@@ -548,13 +548,15 @@ usage(void)
    printf("  -stereo                 run in stereo mode\n");
    printf("  -fullscreen             run in fullscreen mode\n");
    printf("  -info                   display OpenGL renderer info\n");
+   printf("  -winwidth <width>       window width (default: 300)\n");
+   printf("  -winheight <height>     window height (default: 300)\n");
 }
  
 
 int
 main(int argc, char *argv[])
 {
-   const int winWidth = 300, winHeight = 300;
+   int winWidth = 300, winHeight = 300;
    Display *dpy;
    Window win;
    GLXContext ctx;
@@ -575,6 +577,14 @@ main(int argc, char *argv[])
       }
       else if (strcmp(argv[i], "-fullscreen") == 0) {
          fullscreen = GL_TRUE;
+      }
+      else if (i < argc-1 && strcmp(argv[i], "-winwidth") == 0) {
+         winWidth = atoi(argv[i+1]);
+         i++;
+      }
+      else if (i < argc-1 && strcmp(argv[i], "-winheight") == 0) {
+         winHeight = atoi(argv[i+1]);
+         i++;
       }
       else {
          usage();
