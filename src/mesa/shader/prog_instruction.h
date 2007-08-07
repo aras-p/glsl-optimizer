@@ -440,6 +440,9 @@ _mesa_copy_instructions(struct prog_instruction *dest,
 extern GLuint
 _mesa_num_inst_src_regs(gl_inst_opcode opcode);
 
+extern GLuint
+_mesa_num_inst_dst_regs(gl_inst_opcode opcode);
+
 extern const char *
 _mesa_opcode_string(gl_inst_opcode opcode);
 

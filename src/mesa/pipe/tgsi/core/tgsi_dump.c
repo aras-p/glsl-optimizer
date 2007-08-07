@@ -788,7 +788,7 @@ dump_instruction_short(
    switch( inst->Instruction.Opcode ) {
    case TGSI_OPCODE_IF:
    case TGSI_OPCODE_ELSE:
-      TXT( " : " );
+      TXT( " :" );
       UID( inst->InstructionExtLabel.Label );
       break;
    }

@@ -111,6 +111,7 @@ tgsi_exec_prepare(
 {
    struct tgsi_parse_context parse;
    GLuint k;
+   GLuint instno = 0;
 
    mach->ImmLimit = 0;
    labels->count = 0;
@@ -124,26 +125,30 @@ tgsi_exec_prepare(
    while( !tgsi_parse_end_of_tokens( &parse ) ) {
       GLuint pointer = parse.Position;
       GLuint i;
+
       tgsi_parse_token( &parse );
       switch( parse.FullToken.Token.Type ) {
       case TGSI_TOKEN_TYPE_DECLARATION:
          break;
+
       case TGSI_TOKEN_TYPE_IMMEDIATE:
          assert( (parse.FullToken.FullImmediate.Immediate.Size - 1) % 4 == 0 );
          assert( mach->ImmLimit + (parse.FullToken.FullImmediate.Immediate.Size - 1) / 4 <= 256 );
+
          for( i = 0; i < parse.FullToken.FullImmediate.Immediate.Size - 1; i++ ) {
             mach->Imms[mach->ImmLimit + i / 4][i % 4] = parse.FullToken.FullImmediate.u.ImmediateFloat32[i].Float;
          }
          mach->ImmLimit += (parse.FullToken.FullImmediate.Immediate.Size - 1) / 4;
          break;
+
       case TGSI_TOKEN_TYPE_INSTRUCTION:
-         if( parse.FullToken.FullInstruction.InstructionExtLabel.Label ) {
-            assert( labels->count < 128 );
-            labels->labels[labels->count][0] = parse.FullToken.FullInstruction.InstructionExtLabel.Label;
-            labels->labels[labels->count][1] = pointer;
-            labels->count++;
-         }
+         assert( labels->count < 128 );
+
+         labels->labels[labels->count][0] = instno;
+         labels->labels[labels->count][1] = pointer;
+         labels->count++;
          break;
+
       default:
          assert( 0 );
       }
@@ -1233,22 +1238,6 @@ fetch_texel_3d( GLcontext *ctx,
 }
 #endif
 
-static GLuint
-map_label(
-   GLuint label,
-   struct tgsi_exec_labels *labels )
-{
-   GLuint i;
-
-   for( i = 0; i < labels->count; i++ ) {
-      if( labels->labels[i][0] == label ) {
-         return labels->labels[i][1];
-      }
-   }
-   assert( 0 );
-   return 0;
-}
-
 static void
 exec_instruction(
    struct tgsi_exec_machine *mach,
@@ -1988,7 +1977,43 @@ exec_instruction(
       break;
 
    case TGSI_OPCODE_IF:
-      assert (0);
+      {
+         GLuint cond = 0;
+         struct tgsi_exec_cond_state *state;
+
+         /* Allocate condition state. */
+         assert( mach->CondStack.Index > 0 );
+         mach->CondStack.Index--;
+
+         /* Evaluate the condition mask. */
+         FETCH( &r[0], 0, CHAN_X );
+         if( r[0].u[0] ) {
+            cond |= 1;
+         }
+         if( r[0].u[1] ) {
+            cond |= 2;
+         }
+         if( r[0].u[2] ) {
+            cond |= 4;
+         }
+         if( r[0].u[3] ) {
+            cond |= 8;
+         }
+
+         state = &mach->CondStack.States[mach->CondStack.Index];
+
+         /* Initialize the If portion of condition state. */
+         memcpy(
+            state->IfPortion.TempsAddrs,
+            mach->Temps,
+            sizeof( state->IfPortion.TempsAddrs ) );
+         memcpy(
+            state->IfPortion.Outputs,
+            mach->Outputs,
+            sizeof( state->IfPortion.Outputs ) );
+         state->Condition = cond;
+         state->WasElse = GL_FALSE;
+      }
       break;
 
    case TGSI_OPCODE_LOOP:
@@ -2000,12 +2025,107 @@ exec_instruction(
       break;
 
    case TGSI_OPCODE_ELSE:
-      assert (0);
+      {
+         struct tgsi_exec_cond_state *state;
+         struct tgsi_exec_cond_regs temp;
+
+         state = &mach->CondStack.States[mach->CondStack.Index];
+
+         /* Copy the results of the If portion to temporary storage. */
+         memcpy(
+            temp.TempsAddrs,
+            mach->Temps,
+            sizeof( temp.TempsAddrs ) );
+         memcpy(
+            temp.Outputs,
+            mach->Outputs,
+            sizeof( temp.Outputs ) );
+
+         /* Restore the state of registers from before the If statement. */
+         memcpy(
+            mach->Temps,
+            state->IfPortion.TempsAddrs,
+            sizeof( state->IfPortion.TempsAddrs ) );
+         memcpy(
+            mach->Outputs,
+            state->IfPortion.Outputs,
+            sizeof( state->IfPortion.Outputs ) );
+
+         /* Save the results of If portion. */
+         memcpy(
+            &state->IfPortion,
+            &temp,
+            sizeof( state->IfPortion ) );
+         state->WasElse = GL_TRUE;
+      }
       break;
 
    case TGSI_OPCODE_ENDIF:
-       assert (0);
-       break;
+      {
+         struct tgsi_exec_cond_state *state;
+         GLuint i;
+
+         state = &mach->CondStack.States[mach->CondStack.Index];
+
+         if( state->WasElse ) {
+            /* Save the results of Else portion. */
+            memcpy(
+               state->ElsePortion.TempsAddrs,
+               mach->Temps,
+               sizeof( state->ElsePortion.TempsAddrs ) );
+            memcpy(
+               state->ElsePortion.Outputs,
+               mach->Outputs,
+               sizeof( state->ElsePortion.Outputs ) );
+         }
+         else {
+            /* Copy the state of registers from before the If statement to Else portion. */
+            memcpy(
+               &state->ElsePortion,
+               &state->IfPortion,
+               sizeof( state->ElsePortion ) );
+
+            /* Save the results of the If portion. */
+            memcpy(
+               state->IfPortion.TempsAddrs,
+               mach->Temps,
+               sizeof( state->IfPortion.TempsAddrs ) );
+            memcpy(
+               state->IfPortion.Outputs,
+               mach->Outputs,
+               sizeof( state->IfPortion.Outputs ) );
+         }
+
+         /* Mix the If and Else portions based on condition mask. */
+         for( i = 0; i < 4; i++ ) {
+            struct tgsi_exec_cond_regs *regs;
+            GLuint j;
+
+            if( state->Condition & (1 << i) ) {
+               regs = &state->IfPortion;
+            }
+            else {
+               regs = &state->ElsePortion;
+            }
+
+            for( j = 0; j < TGSI_EXEC_NUM_TEMPS + TGSI_EXEC_NUM_ADDRS; j++ ) {
+               mach->Temps[j].xyzw[0].u[i] = regs->TempsAddrs[j].xyzw[0].u[i];
+               mach->Temps[j].xyzw[1].u[i] = regs->TempsAddrs[j].xyzw[1].u[i];
+               mach->Temps[j].xyzw[2].u[i] = regs->TempsAddrs[j].xyzw[2].u[i];
+               mach->Temps[j].xyzw[3].u[i] = regs->TempsAddrs[j].xyzw[3].u[i];
+            }
+            for( j = 0; j < 2; j++ ) {
+               mach->Outputs[j].xyzw[0].u[i] = regs->Outputs[j].xyzw[0].u[i];
+               mach->Outputs[j].xyzw[1].u[i] = regs->Outputs[j].xyzw[1].u[i];
+               mach->Outputs[j].xyzw[2].u[i] = regs->Outputs[j].xyzw[2].u[i];
+               mach->Outputs[j].xyzw[3].u[i] = regs->Outputs[j].xyzw[3].u[i];
+            }
+         }
+
+         /* Release condition state. */
+         mach->CondStack.Index++;
+      }
+      break;
 
    case TGSI_OPCODE_ENDLOOP:
        assert (0);
@@ -2213,6 +2333,8 @@ tgsi_exec_machine_run2(
       mach->Temps[TEMP_PRIMITIVE_I].xyzw[TEMP_PRIMITIVE_C].u[0] = 0;
       mach->Primitives[0] = 0;
    }
+
+   mach->CondStack.Index = 8;
 
    k = tgsi_parse_init( &parse, mach->Tokens );
    if (k != TGSI_PARSE_OK) {

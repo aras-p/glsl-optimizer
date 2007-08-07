@@ -168,7 +168,7 @@ compile_instruction(
    *fullinst = tgsi_default_full_instruction();
 
    fullinst->Instruction.Saturate = convert_sat( inst->SaturateMode );
-   fullinst->Instruction.NumDstRegs = 1;
+   fullinst->Instruction.NumDstRegs = _mesa_num_inst_dst_regs( inst->Opcode );
    fullinst->Instruction.NumSrcRegs = _mesa_num_inst_src_regs( inst->Opcode );
 
    fulldst = &fullinst->FullDstRegisters[0];
