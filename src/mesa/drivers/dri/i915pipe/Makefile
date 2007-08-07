@@ -11,7 +11,6 @@ PIPE_DRIVERS = \
 
 DRIVER_SOURCES = \
 	intel_softpipe.c \
-	intel_buffer_objects.c \
 	intel_batchbuffer.c \
 	intel_tex_layout.c \
 	intel_buffers.c \

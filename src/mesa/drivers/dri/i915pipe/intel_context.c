@@ -442,7 +442,6 @@ intelCreateContext(const __GLcontextModes * mesaVis,
    intel->last_swap_fence = NULL;
    intel->first_swap_fence = NULL;
 
-   intel_bufferobj_init(intel);
    intel_fbo_init(intel);
 
    if (intel->ctx.Mesa_DXTn) {
