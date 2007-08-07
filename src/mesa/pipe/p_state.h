@@ -273,19 +273,6 @@ struct pipe_surface
 
 
 /**
- * surface sampler object
- * XXX prototype
- */
-struct pipe_surface_sampler
-{
-   struct pipe_sampler_state state;
-   struct pipe_mipmap_tree *texture;
-   void (*get_sample)(struct pipe_surface_sampler *sampler,
-                      const GLfloat strq[4], GLfloat rgba[4]);
-};
-
-
-/**
  * Describes the location of each texture image within a texture region.
  */
 struct pipe_mipmap_level
