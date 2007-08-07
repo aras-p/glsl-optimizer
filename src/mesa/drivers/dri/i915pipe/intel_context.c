@@ -51,7 +51,9 @@
 #include "intel_ioctl.h"
 #include "intel_batchbuffer.h"
 #include "intel_blit.h"
+/*
 #include "intel_buffer_objects.h"
+*/
 #include "intel_fbo.h"
 #include "intel_tex_layout.h"
 
