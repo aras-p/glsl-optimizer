@@ -172,9 +172,9 @@ sprite_point(GLcontext *ctx, const SWvertex *vert)
       }
       else {
          /* even size */
-         xmin = (GLint) x - iRadius + 1;
+         xmin = (GLint) x - iRadius;
          xmax = xmin + iSize - 1;
-         ymin = (GLint) y - iRadius + 1;
+         ymin = (GLint) y - iRadius;
          ymax = ymin + iSize - 1;
       }
 
@@ -418,9 +418,9 @@ large_point(GLcontext *ctx, const SWvertex *vert)
       }
       else {
          /* even size */
-         xmin = (GLint) x - iRadius + 1;
+         xmin = (GLint) x - iRadius;
          xmax = xmin + iSize - 1;
-         ymin = (GLint) y - iRadius + 1;
+         ymin = (GLint) y - iRadius;
          ymax = ymin + iSize - 1;
       }
 
