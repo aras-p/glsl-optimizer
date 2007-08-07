@@ -113,6 +113,7 @@ clean:
 
 depend: $(SOURCES)
 	@ echo "running $(MKDEP)"
+	@ rm -f depend
 	@ touch depend
 	@ $(MKDEP) $(MKDEP_OPTIONS) -I$(TOP)/include $(SOURCES) \
 		> /dev/null 

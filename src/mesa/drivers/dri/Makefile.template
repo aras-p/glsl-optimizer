@@ -83,6 +83,7 @@ $(TOP)/$(LIB_DIR)/$(LIBNAME): $(LIBNAME)
 
 
 depend: $(C_SOURCES) $(ASM_SOURCES) $(SYMLINKS)
+	rm -f depend
 	touch depend
 	$(MKDEP) $(MKDEP_OPTIONS) $(DRIVER_DEFINES) $(INCLUDES) $(C_SOURCES) \
 		$(ASM_SOURCES) 2> /dev/null

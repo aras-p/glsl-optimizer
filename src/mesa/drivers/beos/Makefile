@@ -186,6 +186,7 @@ $(TOP)/$(LIB_DIR)/$(GL_LIB_NAME): $(OBJECTS) $(MESA_MODULES) $(GLU_MODULES)
 #	cd $(GLU_DIR); $(MAKE) $< ;
 
 depend: $(DRIVER_SOURCES) $(GLU_SOURCES)
+	rm -f depend
 	touch depend
 	$(MKDEP) $(MKDEP_OPTIONS) $(INCLUDES) $(DRIVER_SOURCES) $(GLU_SOURCES) > /dev/null 
 

@@ -52,6 +52,7 @@ clean:
 
 depend: $(SOURCES) $(HEADERS)
 	@ echo "running $(MKDEP)"
+	@ rm -f depend
 	@ touch depend
 	$(MKDEP) $(MKDEP_OPTIONS) $(DEFINES) $(INCLUDE_DIRS) \
 		$(SOURCES) $(HEADERS) > /dev/null 
