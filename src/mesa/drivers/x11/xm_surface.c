@@ -150,6 +150,7 @@ write_quad_ub(struct softpipe_surface *sps, GLint x, GLint y,
    xrb->Base.GetRow(ctx, &xrb->Base, 2, x, y + 1, rgba + 2);
 }
 
+#if 0
 static void
 write_mono_row_ub(struct softpipe_surface *sps, GLuint count, GLint x, GLint y,
                   GLubyte rgba[NUM_CHANNELS])
@@ -158,6 +159,7 @@ write_mono_row_ub(struct softpipe_surface *sps, GLuint count, GLint x, GLint y,
    GET_CURRENT_CONTEXT(ctx);
    xrb->Base.PutMonoRow(ctx, &xrb->Base, count, x, y, rgba, NULL);
 }
+#endif
 
 
 /**
@@ -185,7 +187,6 @@ xmesa_new_surface(GLcontext *ctx, struct xmesa_renderbuffer *xrb)
    sps->write_quad_f = write_quad_f;
    sps->write_quad_f_swz = write_quad_f_swz;
    sps->write_quad_ub = write_quad_ub;
-   sps->write_mono_row_ub = write_mono_row_ub;
 
    /* Note, the region we allocate doesn't actually have any storage
     * since we're drawing into an XImage or Pixmap.

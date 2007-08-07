@@ -73,10 +73,6 @@ struct softpipe_surface {
 			  GLint x, GLint y,
 			  GLubyte (*rgba)[NUM_CHANNELS] );
 
-   void (*write_mono_row_ub)( struct softpipe_surface *,
-                              GLuint count, GLint x, GLint y,
-                              GLubyte rgba[NUM_CHANNELS] );
-
    void (*read_quad_z)(struct softpipe_surface *,
                        GLint x, GLint y, GLuint zzzz[QUAD_SIZE]);
    void (*write_quad_z)(struct softpipe_surface *,
