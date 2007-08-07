@@ -130,6 +130,10 @@ struct pipe_context {
    struct pipe_surface *(*surface_alloc)(struct pipe_context *pipe,
                                          GLuint format);
 
+   struct pipe_surface *(*get_tex_surface)(struct pipe_context *pipe,
+                                           struct pipe_mipmap_tree *texture,
+                                           GLuint face, GLuint level,
+                                           GLuint zslice);
 
    /*
     * Memory region functions
@@ -221,6 +225,17 @@ struct pipe_context {
 
 static INLINE void
 pipe_region_reference(struct pipe_region **dst, struct pipe_region *src)
+{
+   assert(*dst == NULL);
+   if (src) {
+      src->refcount++;
+      *dst = src;
+   }
+}
+
+
+static INLINE void
+pipe_surface_reference(struct pipe_surface **dst, struct pipe_surface *src)
 {
    assert(*dst == NULL);
    if (src) {

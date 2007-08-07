@@ -578,7 +578,9 @@ intel_render_texture(GLcontext * ctx,
    }
 
    /* store that offset in the region */
+#if 0
    st_image->mt->region->draw_offset = imageOffset;
+#endif
 
    /* update drawing region, etc */
    intel_draw_buffer(ctx, fb);

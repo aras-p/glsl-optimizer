@@ -351,9 +351,51 @@ sp_surface_alloc(struct pipe_context *pipe, GLenum format)
       return NULL;
 
    sps->surface.format = format;
+   sps->surface.refcount = 1;
    init_quad_funcs(sps);
 
    return &sps->surface;
+}
+
+
+
+
+
+/**
+ * Called via pipe->get_tex_surface()
+ * XXX is this in the right place?
+ */
+struct pipe_surface *
+softpipe_get_tex_surface(struct pipe_context *pipe,
+                         struct pipe_mipmap_tree *mt,
+                         GLuint face, GLuint level, GLuint zslice)
+{
+   struct pipe_surface *ps;
+   GLuint offset;  /* in bytes */
+
+   offset = mt->level[level].level_offset;
+
+   if (mt->target == GL_TEXTURE_CUBE_MAP_ARB) {
+      offset += mt->level[level].image_offset[face] * mt->cpp;
+   }
+   else if (mt->target == GL_TEXTURE_3D) {
+      offset += mt->level[level].image_offset[zslice] * mt->cpp;
+   }
+   else {
+      assert(face == 0);
+      assert(zslice == 0);
+   }
+
+   ps = pipe->surface_alloc(pipe, mt->internal_format);
+   if (ps) {
+      assert(ps->format);
+      assert(ps->refcount);
+      ps->region = mt->region;
+      ps->width = mt->level[level].width;
+      ps->height = mt->level[level].height;
+      ps->offset = offset;
+   }
+   return ps;
 }
 
 

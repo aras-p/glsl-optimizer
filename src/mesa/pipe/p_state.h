@@ -245,13 +245,11 @@ struct pipe_region
    GLuint height;   /**< in pixels */
    GLubyte *map;    /**< only non-NULL when region is actually mapped */
    GLuint map_refcount;  /**< Reference count for mapping */
-
-   GLuint draw_offset; /**< Offset of drawing address within the region */
 };
 
 
 /**
- * 2D surface.
+ * 2D surface.  This is basically a view into a pipe_region (memory buffer).
  * May be a renderbuffer, texture mipmap level, etc.
  */
 struct pipe_surface
@@ -259,39 +257,32 @@ struct pipe_surface
    struct pipe_region *region;
    GLuint format:5;            /**< PIPE_FORMAT_x */
    GLuint width, height;
+   GLuint offset;              /**< offset from start of region, in bytes */
+   GLint refcount;
 
    void *rb;  /**< Ptr back to renderbuffer (temporary?) */
+
+   /** get block/tile of pixels from surface */
+   void (*get_tile)(struct pipe_surface *ps,
+                    GLuint x, GLuint y, GLuint w, GLuint h, GLfloat *p);
+
+   /** put block/tile of pixels into surface */
+   void (*put_tile)(struct pipe_surface *ps,
+                    GLuint x, GLuint y, GLuint w, GLuint h, const GLfloat *p);
 };
 
 
-#if 0
 /**
- * Texture object.
- * Mipmap levels, cube faces, 3D slices can be accessed as surfaces.
+ * surface sampler object
+ * XXX prototype
  */
-struct pipe_texture_object
+struct pipe_surface_sampler
 {
-   GLuint type:2;      /**< PIPE_TEXTURE_x */
-   GLuint format:5;    /**< PIPE_FORMAT_x */
-   GLuint width:13;    /**< 13 bits = 8K max size */
-   GLuint height:13;
-   GLuint depth:13;
-   GLuint mipmapped:1;
-
-   /** to access a 1D or 2D texture object as a surface */
-   struct pipe_surface *(*get_2d_surface)(struct pipe_texture_object *pto,
-                                          GLuint level);
-   /** to access a 3D texture object as a surface */
-   struct pipe_surface *(*get_3d_surface)(struct pipe_texture_object *pto,
-                                          GLuint level, GLuint slice);
-   /** to access a cube texture object as a surface */
-   struct pipe_surface *(*get_cube_surface)(struct pipe_texture_object *pto,
-                                            GLuint face, GLuint level);
-   /** when finished with surface: */
-   void (*release_surface)(struct pipe_texture_object *pto,
-                           struct pipe_surface *ps);
+   struct pipe_sampler_state state;
+   struct pipe_mipmap_tree *texture;
+   void (*get_sample)(struct pipe_surface_sampler *sampler,
+                      const GLfloat strq[4], GLfloat rgba[4]);
 };
-#endif
 
 
 /**

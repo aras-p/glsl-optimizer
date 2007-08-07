@@ -201,6 +201,7 @@ struct pipe_context *softpipe_create( struct softpipe_winsys *sws )
    softpipe->pipe.get_occlusion_counter = softpipe_get_occlusion_counter;
 
    softpipe->pipe.mipmap_tree_layout = softpipe_mipmap_tree_layout;
+   softpipe->pipe.get_tex_surface = softpipe_get_tex_surface;
 
    softpipe->quad.polygon_stipple = sp_quad_polygon_stipple_stage(softpipe);
    softpipe->quad.shade = sp_quad_shade_stage(softpipe);

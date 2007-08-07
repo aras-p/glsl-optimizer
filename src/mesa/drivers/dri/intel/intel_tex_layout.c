@@ -32,6 +32,7 @@
 
 #include "macros.h"
 #include "pipe/p_state.h"
+#include "pipe/p_context.h"
 #include "intel_tex_layout.h"
 #include "state_tracker/st_mipmap_tree.h"
 
@@ -472,3 +473,4 @@ i945_miptree_layout(struct pipe_context *pipe, struct pipe_mipmap_tree * mt)
 
    return GL_TRUE;
 }
+
