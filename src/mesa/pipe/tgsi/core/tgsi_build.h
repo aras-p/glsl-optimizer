@@ -160,7 +160,6 @@ tgsi_compare_instruction_ext_label(
 struct tgsi_instruction_ext_label
 tgsi_build_instruction_ext_label(
    GLuint label,
-   GLuint target,
    struct tgsi_token *prev_token,
    struct tgsi_instruction *instruction,
    struct tgsi_header *header );

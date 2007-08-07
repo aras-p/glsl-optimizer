@@ -618,10 +618,6 @@ tgsi_dump(
                   TXT( "\nLabel   : " );
                   UID( inst->InstructionExtLabel.Label );
                }
-               if( deflt || fi.InstructionExtLabel.Target != inst->InstructionExtLabel.Target ) {
-                  TXT( "\nTarget  : " );
-                  UID( inst->InstructionExtLabel.Target );
-               }
                if( ignored ) {
                   TXT( "\nPadding : " );
                   UIX( inst->InstructionExtLabel.Padding );

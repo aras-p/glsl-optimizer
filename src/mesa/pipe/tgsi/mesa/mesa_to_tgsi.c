@@ -293,6 +293,7 @@ compile_instruction(
       break;
    case OPCODE_ELSE:
       fullinst->Instruction.Opcode = TGSI_OPCODE_ELSE;
+      fullinst->InstructionExtLabel.Label = inst->BranchTarget;
       break;
    case OPCODE_ENDIF:
       fullinst->Instruction.Opcode = TGSI_OPCODE_ENDIF;
@@ -317,6 +318,7 @@ compile_instruction(
       break;
    case OPCODE_IF:
       fullinst->Instruction.Opcode = TGSI_OPCODE_IF;
+      fullinst->InstructionExtLabel.Label = inst->BranchTarget;
       break;
    case OPCODE_INT:
       fullinst->Instruction.Opcode = TGSI_OPCODE_INT;

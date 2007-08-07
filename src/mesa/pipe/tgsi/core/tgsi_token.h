@@ -855,8 +855,7 @@ struct tgsi_instruction_ext_label
 {
    GLuint Type     : 4;    /* TGSI_INSTRUCTION_EXT_TYPE_LABEL */
    GLuint Label    : 24;   /* UINT */
-   GLuint Target   : 1;    /* BOOL */
-   GLuint Padding  : 2;
+   GLuint Padding  : 3;
    GLuint Extended : 1;    /* BOOL */
 };
 

@@ -528,7 +528,6 @@ tgsi_build_full_instruction(
 
       *instruction_ext_label = tgsi_build_instruction_ext_label(
          full_inst->InstructionExtLabel.Label,
-         full_inst->InstructionExtLabel.Target,
          prev_token,
          instruction,
          header );
@@ -835,7 +834,6 @@ tgsi_default_instruction_ext_label( void )
 
    instruction_ext_label.Type = TGSI_INSTRUCTION_EXT_TYPE_LABEL;
    instruction_ext_label.Label = 0;
-   instruction_ext_label.Target = 0;
    instruction_ext_label.Padding = 0;
    instruction_ext_label.Extended = 0;
 
@@ -855,7 +853,6 @@ tgsi_compare_instruction_ext_label(
 struct tgsi_instruction_ext_label
 tgsi_build_instruction_ext_label(
    GLuint label,
-   GLuint target,
    struct tgsi_token  *prev_token,
    struct tgsi_instruction *instruction,
    struct tgsi_header *header )
@@ -864,7 +861,6 @@ tgsi_build_instruction_ext_label(
 
    instruction_ext_label = tgsi_default_instruction_ext_label();
    instruction_ext_label.Label = label;
-   instruction_ext_label.Target = target;
 
    prev_token->Extended = 1;
    instruction_grow( instruction, header );

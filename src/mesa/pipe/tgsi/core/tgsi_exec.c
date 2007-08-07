@@ -134,8 +134,7 @@ tgsi_exec_prepare(
          mach->ImmLimit += (parse.FullToken.FullImmediate.Immediate.Size - 1) / 4;
          break;
       case TGSI_TOKEN_TYPE_INSTRUCTION:
-         if( parse.FullToken.FullInstruction.InstructionExtLabel.Label &&
-             parse.FullToken.FullInstruction.InstructionExtLabel.Target ) {
+         if( parse.FullToken.FullInstruction.InstructionExtLabel.Label ) {
             assert( labels->count < 128 );
             labels->labels[labels->count][0] = parse.FullToken.FullInstruction.InstructionExtLabel.Label;
             labels->labels[labels->count][1] = pointer;
