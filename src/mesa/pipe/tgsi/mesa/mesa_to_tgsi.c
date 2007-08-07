@@ -569,7 +569,7 @@ tgsi_mesa_compile_fp_program(
          assert( i == program->Base.NumInstructions - 1 );
          tgsi_dump(
             tokens,
-            TGSI_DUMP_NO_IGNORED | TGSI_DUMP_NO_DEFAULT );
+            0/*TGSI_DUMP_VERBOSE | TGSI_DUMP_NO_IGNORED | TGSI_DUMP_NO_DEFAULT*/ );
          break;
       }
 
