@@ -113,7 +113,7 @@ st_get_texobj_mipmap_tree(struct gl_texture_object *texObj)
 
 
 static int
-intel_compressed_num_bytes(GLuint mesaFormat)
+compressed_num_bytes(GLuint mesaFormat)
 {
    int bytes = 0;
    switch(mesaFormat) {
@@ -443,42 +443,42 @@ logbase2(int n)
  */
 static void
 guess_and_alloc_mipmap_tree(struct pipe_context *pipe,
-                            struct st_texture_object *intelObj,
-                            struct st_texture_image *intelImage)
+                            struct st_texture_object *stObj,
+                            struct st_texture_image *stImage)
 {
    GLuint firstLevel;
    GLuint lastLevel;
-   GLuint width = intelImage->base.Width;
-   GLuint height = intelImage->base.Height;
-   GLuint depth = intelImage->base.Depth;
+   GLuint width = stImage->base.Width;
+   GLuint height = stImage->base.Height;
+   GLuint depth = stImage->base.Depth;
    GLuint l2width, l2height, l2depth;
    GLuint i, comp_byte = 0;
 
    DBG("%s\n", __FUNCTION__);
 
-   if (intelImage->base.Border)
+   if (stImage->base.Border)
       return;
 
-   if (intelImage->level > intelObj->base.BaseLevel &&
-       (intelImage->base.Width == 1 ||
-        (intelObj->base.Target != GL_TEXTURE_1D &&
-         intelImage->base.Height == 1) ||
-        (intelObj->base.Target == GL_TEXTURE_3D &&
-         intelImage->base.Depth == 1)))
+   if (stImage->level > stObj->base.BaseLevel &&
+       (stImage->base.Width == 1 ||
+        (stObj->base.Target != GL_TEXTURE_1D &&
+         stImage->base.Height == 1) ||
+        (stObj->base.Target == GL_TEXTURE_3D &&
+         stImage->base.Depth == 1)))
       return;
 
    /* If this image disrespects BaseLevel, allocate from level zero.
     * Usually BaseLevel == 0, so it's unlikely to happen.
     */
-   if (intelImage->level < intelObj->base.BaseLevel)
+   if (stImage->level < stObj->base.BaseLevel)
       firstLevel = 0;
    else
-      firstLevel = intelObj->base.BaseLevel;
+      firstLevel = stObj->base.BaseLevel;
 
 
    /* Figure out image dimensions at start level. 
     */
-   for (i = intelImage->level; i > firstLevel; i--) {
+   for (i = stImage->level; i > firstLevel; i--) {
       width <<= 1;
       if (height != 1)
          height <<= 1;
@@ -491,9 +491,9 @@ guess_and_alloc_mipmap_tree(struct pipe_context *pipe,
     * resizable buffers, or require that buffers implement lazy
     * pagetable arrangements.
     */
-   if ((intelObj->base.MinFilter == GL_NEAREST ||
-        intelObj->base.MinFilter == GL_LINEAR) &&
-       intelImage->level == firstLevel) {
+   if ((stObj->base.MinFilter == GL_NEAREST ||
+        stObj->base.MinFilter == GL_LINEAR) &&
+       stImage->level == firstLevel) {
       lastLevel = firstLevel;
    }
    else {
@@ -503,18 +503,18 @@ guess_and_alloc_mipmap_tree(struct pipe_context *pipe,
       lastLevel = firstLevel + MAX2(MAX2(l2width, l2height), l2depth);
    }
 
-   assert(!intelObj->mt);
-   if (intelImage->base.IsCompressed)
-      comp_byte = intel_compressed_num_bytes(intelImage->base.TexFormat->MesaFormat);
-   intelObj->mt = st_miptree_create(pipe,
-                                       intelObj->base.Target,
-                                       intelImage->base.InternalFormat,
+   assert(!stObj->mt);
+   if (stImage->base.IsCompressed)
+      comp_byte = compressed_num_bytes(stImage->base.TexFormat->MesaFormat);
+   stObj->mt = st_miptree_create(pipe,
+                                       stObj->base.Target,
+                                       stImage->base.InternalFormat,
                                        firstLevel,
                                        lastLevel,
                                        width,
                                        height,
                                        depth,
-                                       intelImage->base.TexFormat->TexelBytes,
+                                       stImage->base.TexFormat->TexelBytes,
                                        comp_byte);
 
    DBG("%s - success\n", __FUNCTION__);
@@ -573,7 +573,7 @@ check_pbo_format(GLint internalFormat,
  */
 static GLboolean
 try_pbo_upload(GLcontext *ctx,
-               struct st_texture_image *intelImage,
+               struct st_texture_image *stImage,
                const struct gl_pixelstore_attrib *unpack,
                GLint internalFormat,
                GLint width, GLint height,
@@ -600,11 +600,11 @@ try_pbo_upload(GLcontext *ctx,
    else
       src_stride = width;
 
-   dst_offset = st_miptree_image_offset(intelImage->mt,
-                                           intelImage->face,
-                                           intelImage->level);
+   dst_offset = st_miptree_image_offset(stImage->mt,
+                                           stImage->face,
+                                           stImage->level);
 
-   dst_stride = intelImage->mt->pitch;
+   dst_stride = stImage->mt->pitch;
 
    intelFlush(&intel->ctx);
    LOCK_HARDWARE(intel);
@@ -615,11 +615,11 @@ try_pbo_upload(GLcontext *ctx,
       /* Temporary hack: cast to _DriBufferObject:
        */
       struct _DriBufferObject *dst_buffer =
-         (struct _DriBufferObject *)intelImage->mt->region->buffer;
+         (struct _DriBufferObject *)stImage->mt->region->buffer;
 
 
       intelEmitCopyBlit(intel,
-                        intelImage->mt->cpp,
+                        stImage->mt->cpp,
                         src_stride, src_buffer, src_offset,
                         dst_stride, dst_buffer, dst_offset,
                         0, 0, 0, 0, width, height,
@@ -637,7 +637,7 @@ try_pbo_upload(GLcontext *ctx,
 
 static GLboolean
 try_pbo_zcopy(GLcontext *ctx,
-              struct st_texture_image *intelImage,
+              struct st_texture_image *stImage,
               const struct gl_pixelstore_attrib *unpack,
               GLint internalFormat,
               GLint width, GLint height,
@@ -664,8 +664,8 @@ st_TexImage(GLcontext * ctx,
               struct gl_texture_image *texImage, GLsizei imageSize, int compressed)
 {
    struct pipe_context *pipe = ctx->st->pipe;
-   struct st_texture_object *intelObj = st_texture_object(texObj);
-   struct st_texture_image *intelImage = st_texture_image(texImage);
+   struct st_texture_object *stObj = st_texture_object(texObj);
+   struct st_texture_image *stImage = st_texture_image(texImage);
    GLint postConvWidth = width;
    GLint postConvHeight = height;
    GLint texelBytes, sizeInBytes;
@@ -679,8 +679,8 @@ st_TexImage(GLcontext * ctx,
    intelFlush(ctx);
 #endif
 
-   intelImage->face = target_to_face(target);
-   intelImage->level = level;
+   stImage->face = target_to_face(target);
+   stImage->level = level;
 
    if (ctx->_ImageTransferState & IMAGE_CONVOLUTION_BIT) {
       _mesa_adjust_image_for_convolution(ctx, dims, &postConvWidth,
@@ -716,8 +716,8 @@ st_TexImage(GLcontext * ctx,
    /* Release the reference to a potentially orphaned buffer.   
     * Release any old malloced memory.
     */
-   if (intelImage->mt) {
-      st_miptree_release(pipe, &intelImage->mt);
+   if (stImage->mt) {
+      st_miptree_release(pipe, &stImage->mt);
       assert(!texImage->Data);
    }
    else if (texImage->Data) {
@@ -728,46 +728,46 @@ st_TexImage(GLcontext * ctx,
     * bmBufferData with NULL data to free the old block and avoid
     * waiting on any outstanding fences.
     */
-   if (intelObj->mt &&
-       intelObj->mt->first_level == level &&
-       intelObj->mt->last_level == level &&
-       intelObj->mt->target != GL_TEXTURE_CUBE_MAP_ARB &&
-       !st_miptree_match_image(intelObj->mt, &intelImage->base,
-                                  intelImage->face, intelImage->level)) {
+   if (stObj->mt &&
+       stObj->mt->first_level == level &&
+       stObj->mt->last_level == level &&
+       stObj->mt->target != GL_TEXTURE_CUBE_MAP_ARB &&
+       !st_miptree_match_image(stObj->mt, &stImage->base,
+                                  stImage->face, stImage->level)) {
 
       DBG("release it\n");
-      st_miptree_release(pipe, &intelObj->mt);
-      assert(!intelObj->mt);
+      st_miptree_release(pipe, &stObj->mt);
+      assert(!stObj->mt);
    }
 
-   if (!intelObj->mt) {
-      guess_and_alloc_mipmap_tree(pipe, intelObj, intelImage);
-      if (!intelObj->mt) {
+   if (!stObj->mt) {
+      guess_and_alloc_mipmap_tree(pipe, stObj, stImage);
+      if (!stObj->mt) {
 	 DBG("guess_and_alloc_mipmap_tree: failed\n");
       }
    }
 
-   assert(!intelImage->mt);
+   assert(!stImage->mt);
 
-   if (intelObj->mt &&
-       st_miptree_match_image(intelObj->mt, &intelImage->base,
-                                 intelImage->face, intelImage->level)) {
+   if (stObj->mt &&
+       st_miptree_match_image(stObj->mt, &stImage->base,
+                                 stImage->face, stImage->level)) {
 
-      st_miptree_reference(&intelImage->mt, intelObj->mt);
-      assert(intelImage->mt);
+      st_miptree_reference(&stImage->mt, stObj->mt);
+      assert(stImage->mt);
    }
 
-   if (!intelImage->mt)
+   if (!stImage->mt)
       DBG("XXX: Image did not fit into tree - storing in local memory!\n");
 
 #if 0 /* XXX FIX when st_buffer_objects are in place */
    /* PBO fastpaths:
     */
    if (dims <= 2 &&
-       intelImage->mt &&
+       stImage->mt &&
        intel_buffer_object(unpack->BufferObj) &&
        check_pbo_format(internalFormat, format,
-                        type, intelImage->base.TexFormat)) {
+                        type, stImage->base.TexFormat)) {
 
       DBG("trying pbo upload\n");
 
@@ -777,11 +777,11 @@ st_TexImage(GLcontext * ctx,
        * performance (in particular when pipe_region_cow() is
        * required).
        */
-      if (intelObj->mt == intelImage->mt &&
-          intelObj->mt->first_level == level &&
-          intelObj->mt->last_level == level) {
+      if (stObj->mt == stImage->mt &&
+          stObj->mt->first_level == level &&
+          stObj->mt->last_level == level) {
 
-         if (try_pbo_zcopy(intel, intelImage, unpack,
+         if (try_pbo_zcopy(intel, stImage, unpack,
                            internalFormat,
                            width, height, format, type, pixels)) {
 
@@ -793,7 +793,7 @@ st_TexImage(GLcontext * ctx,
 
       /* Otherwise, attempt to use the blitter for PBO image uploads.
        */
-      if (try_pbo_upload(intel, intelImage, unpack,
+      if (try_pbo_upload(intel, stImage, unpack,
                          internalFormat,
                          width, height, format, type, pixels)) {
          DBG("pbo upload succeeded\n");
@@ -826,20 +826,20 @@ st_TexImage(GLcontext * ctx,
       return;
 
 
-   if (intelImage->mt)
-      pipe->region_idle(pipe, intelImage->mt->region);
+   if (stImage->mt)
+      pipe->region_idle(pipe, stImage->mt->region);
 
 #if 0
    LOCK_HARDWARE(intel);
 #endif
 
-   if (intelImage->mt) {
+   if (stImage->mt) {
       texImage->Data = st_miptree_image_map(pipe,
-                                               intelImage->mt,
-                                               intelImage->face,
-                                               intelImage->level,
+                                               stImage->mt,
+                                               stImage->face,
+                                               stImage->level,
                                                &dstRowStride,
-                                               intelImage->base.ImageOffsets);
+                                               stImage->base.ImageOffsets);
    }
    else {
       /* Allocate regular memory and store the image there temporarily.   */
@@ -881,8 +881,8 @@ st_TexImage(GLcontext * ctx,
 
    _mesa_unmap_teximage_pbo(ctx, unpack);
 
-   if (intelImage->mt) {
-      st_miptree_image_unmap(pipe, intelImage->mt);
+   if (stImage->mt) {
+      st_miptree_image_unmap(pipe, stImage->mt);
       texImage->Data = NULL;
    }
 
@@ -1468,9 +1468,9 @@ st_CopyTexSubImage2D(GLcontext * ctx, GLenum target, GLint level,
  * GL_TEXTURE_MAX_LOD, GL_TEXTURE_BASE_LEVEL, and GL_TEXTURE_MAX_LEVEL.
  */
 static void
-intel_calculate_first_last_level(struct st_texture_object *intelObj)
+calculate_first_last_level(struct st_texture_object *stObj)
 {
-   struct gl_texture_object *tObj = &intelObj->base;
+   struct gl_texture_object *tObj = &stObj->base;
    const struct gl_texture_image *const baseImage =
       tObj->Image[0][tObj->BaseLevel];
 
@@ -1512,21 +1512,21 @@ intel_calculate_first_last_level(struct st_texture_object *intelObj)
    }
 
    /* save these values */
-   intelObj->firstLevel = firstLevel;
-   intelObj->lastLevel = lastLevel;
+   stObj->firstLevel = firstLevel;
+   stObj->lastLevel = lastLevel;
 }
 
 
 static void
 copy_image_data_to_tree(struct pipe_context *pipe,
-                        struct st_texture_object *intelObj,
+                        struct st_texture_object *stObj,
                         struct st_texture_image *stImage)
 {
    if (stImage->mt) {
       /* Copy potentially with the blitter:
        */
       st_miptree_image_copy(pipe,
-                               intelObj->mt,
+                               stObj->mt,
                                stImage->face,
                                stImage->level, stImage->mt);
 
@@ -1538,7 +1538,7 @@ copy_image_data_to_tree(struct pipe_context *pipe,
       /* More straightforward upload.  
        */
       st_miptree_image_data(pipe,
-                               intelObj->mt,
+                               stObj->mt,
                                stImage->face,
                                stImage->level,
                                stImage->base.Data,
@@ -1549,19 +1549,19 @@ copy_image_data_to_tree(struct pipe_context *pipe,
       stImage->base.Data = NULL;
    }
 
-   st_miptree_reference(&stImage->mt, intelObj->mt);
+   st_miptree_reference(&stImage->mt, stObj->mt);
 }
 
 
 /*  
  */
-GLuint
+GLboolean
 st_finalize_mipmap_tree(GLcontext *ctx,
                         struct pipe_context *pipe, GLuint unit,
                         GLboolean *needFlush)
 {
    struct gl_texture_object *tObj = ctx->Texture.Unit[unit]._Current;
-   struct st_texture_object *intelObj = st_texture_object(tObj);
+   struct st_texture_object *stObj = st_texture_object(tObj);
    int comp_byte = 0;
    int cpp;
 
@@ -1573,42 +1573,42 @@ st_finalize_mipmap_tree(GLcontext *ctx,
 
    /* We know/require this is true by now: 
     */
-   assert(intelObj->base._Complete);
+   assert(stObj->base._Complete);
 
    /* What levels must the tree include at a minimum?
     */
-   intel_calculate_first_last_level(intelObj);
+   calculate_first_last_level(stObj);
    firstImage =
-      st_texture_image(intelObj->base.Image[0][intelObj->firstLevel]);
+      st_texture_image(stObj->base.Image[0][stObj->firstLevel]);
 
    /* Fallback case:
     */
    if (firstImage->base.Border) {
-      if (intelObj->mt) {
-         st_miptree_release(pipe, &intelObj->mt);
+      if (stObj->mt) {
+         st_miptree_release(pipe, &stObj->mt);
       }
       return GL_FALSE;
    }
 
 
-   /* If both firstImage and intelObj have a tree which can contain
+   /* If both firstImage and stObj have a tree which can contain
     * all active images, favour firstImage.  Note that because of the
     * completeness requirement, we know that the image dimensions
     * will match.
     */
    if (firstImage->mt &&
-       firstImage->mt != intelObj->mt &&
-       firstImage->mt->first_level <= intelObj->firstLevel &&
-       firstImage->mt->last_level >= intelObj->lastLevel) {
+       firstImage->mt != stObj->mt &&
+       firstImage->mt->first_level <= stObj->firstLevel &&
+       firstImage->mt->last_level >= stObj->lastLevel) {
 
-      if (intelObj->mt)
-         st_miptree_release(pipe, &intelObj->mt);
+      if (stObj->mt)
+         st_miptree_release(pipe, &stObj->mt);
 
-      st_miptree_reference(&intelObj->mt, firstImage->mt);
+      st_miptree_reference(&stObj->mt, firstImage->mt);
    }
 
    if (firstImage->base.IsCompressed) {
-      comp_byte = intel_compressed_num_bytes(firstImage->base.TexFormat->MesaFormat);
+      comp_byte = compressed_num_bytes(firstImage->base.TexFormat->MesaFormat);
       cpp = comp_byte;
    }
    else cpp = firstImage->base.TexFormat->TexelBytes;
@@ -1622,28 +1622,28 @@ st_finalize_mipmap_tree(GLcontext *ctx,
     * programming minLod, maxLod, baseLevel into the hardware and
     * leaving the tree alone.
     */
-   if (intelObj->mt &&
-       (intelObj->mt->target != intelObj->base.Target ||
-	intelObj->mt->internal_format != firstImage->base.InternalFormat ||
-	intelObj->mt->first_level != intelObj->firstLevel ||
-	intelObj->mt->last_level != intelObj->lastLevel ||
-	intelObj->mt->width0 != firstImage->base.Width ||
-	intelObj->mt->height0 != firstImage->base.Height ||
-	intelObj->mt->depth0 != firstImage->base.Depth ||
-	intelObj->mt->cpp != cpp ||
-	intelObj->mt->compressed != firstImage->base.IsCompressed)) {
-      st_miptree_release(pipe, &intelObj->mt);
+   if (stObj->mt &&
+       (stObj->mt->target != stObj->base.Target ||
+	stObj->mt->internal_format != firstImage->base.InternalFormat ||
+	stObj->mt->first_level != stObj->firstLevel ||
+	stObj->mt->last_level != stObj->lastLevel ||
+	stObj->mt->width0 != firstImage->base.Width ||
+	stObj->mt->height0 != firstImage->base.Height ||
+	stObj->mt->depth0 != firstImage->base.Depth ||
+	stObj->mt->cpp != cpp ||
+	stObj->mt->compressed != firstImage->base.IsCompressed)) {
+      st_miptree_release(pipe, &stObj->mt);
    }
 
 
    /* May need to create a new tree:
     */
-   if (!intelObj->mt) {
-      intelObj->mt = st_miptree_create(pipe,
-                                          intelObj->base.Target,
+   if (!stObj->mt) {
+      stObj->mt = st_miptree_create(pipe,
+                                          stObj->base.Target,
                                           firstImage->base.InternalFormat,
-                                          intelObj->firstLevel,
-                                          intelObj->lastLevel,
+                                          stObj->firstLevel,
+                                          stObj->lastLevel,
                                           firstImage->base.Width,
                                           firstImage->base.Height,
                                           firstImage->base.Depth,
@@ -1653,16 +1653,16 @@ st_finalize_mipmap_tree(GLcontext *ctx,
 
    /* Pull in any images not in the object's tree:
     */
-   nr_faces = (intelObj->base.Target == GL_TEXTURE_CUBE_MAP) ? 6 : 1;
+   nr_faces = (stObj->base.Target == GL_TEXTURE_CUBE_MAP) ? 6 : 1;
    for (face = 0; face < nr_faces; face++) {
-      for (i = intelObj->firstLevel; i <= intelObj->lastLevel; i++) {
+      for (i = stObj->firstLevel; i <= stObj->lastLevel; i++) {
          struct st_texture_image *stImage =
-            st_texture_image(intelObj->base.Image[face][i]);
+            st_texture_image(stObj->base.Image[face][i]);
 
          /* Need to import images in main memory or held in other trees.
           */
-         if (intelObj->mt != stImage->mt) {
-            copy_image_data_to_tree(pipe, intelObj, stImage);
+         if (stObj->mt != stImage->mt) {
+            copy_image_data_to_tree(pipe, stObj, stImage);
 	    *needFlush = GL_TRUE;
          }
       }
@@ -1680,17 +1680,17 @@ st_finalize_mipmap_tree(GLcontext *ctx,
 #if 0 /* unused? */
 void
 st_tex_map_images(struct pipe_context *pipe,
-                  struct st_texture_object *intelObj)
+                  struct st_texture_object *stObj)
 {
-   GLuint nr_faces = (intelObj->base.Target == GL_TEXTURE_CUBE_MAP) ? 6 : 1;
+   GLuint nr_faces = (stObj->base.Target == GL_TEXTURE_CUBE_MAP) ? 6 : 1;
    GLuint face, i;
 
    DBG("%s\n", __FUNCTION__);
 
    for (face = 0; face < nr_faces; face++) {
-      for (i = intelObj->firstLevel; i <= intelObj->lastLevel; i++) {
+      for (i = stObj->firstLevel; i <= stObj->lastLevel; i++) {
          struct st_texture_image *stImage =
-            st_texture_image(intelObj->base.Image[face][i]);
+            st_texture_image(stObj->base.Image[face][i]);
 
          if (stImage->mt) {
             stImage->base.Data =
@@ -1712,15 +1712,15 @@ st_tex_map_images(struct pipe_context *pipe,
 
 void
 st_tex_unmap_images(struct pipe_context *pipe,
-                    struct st_texture_object *intelObj)
+                    struct st_texture_object *stObj)
 {
-   GLuint nr_faces = (intelObj->base.Target == GL_TEXTURE_CUBE_MAP) ? 6 : 1;
+   GLuint nr_faces = (stObj->base.Target == GL_TEXTURE_CUBE_MAP) ? 6 : 1;
    GLuint face, i;
 
    for (face = 0; face < nr_faces; face++) {
-      for (i = intelObj->firstLevel; i <= intelObj->lastLevel; i++) {
+      for (i = stObj->firstLevel; i <= stObj->lastLevel; i++) {
          struct st_texture_image *stImage =
-            st_texture_image(intelObj->base.Image[face][i]);
+            st_texture_image(stObj->base.Image[face][i]);
 
          if (stImage->mt) {
             st_miptree_image_unmap(pipe, stImage->mt);
