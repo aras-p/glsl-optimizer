@@ -104,6 +104,14 @@ st_texture_image(struct gl_texture_image *img)
 }
 
 
+struct pipe_mipmap_tree *
+st_get_texobj_mipmap_tree(struct gl_texture_object *texObj)
+{
+   struct st_texture_object *stObj = st_texture_object(texObj);
+   return stObj->mt;
+}
+
+
 static int
 intel_compressed_num_bytes(GLuint mesaFormat)
 {

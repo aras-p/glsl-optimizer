@@ -54,6 +54,8 @@ static const struct st_tracked_state *atoms[] =
    &st_update_scissor,
    &st_update_blend,
    &st_update_stencil,
+   &st_update_sampler,
+   &st_update_texture,
    /* will be patched out at runtime */
 /*    &st_update_constants */
 };

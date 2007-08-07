@@ -57,6 +57,8 @@ const struct st_tracked_state st_update_constants;
 const struct st_tracked_state st_update_scissor;
 const struct st_tracked_state st_update_blend;
 const struct st_tracked_state st_update_stencil;
+const struct st_tracked_state st_update_sampler;
+const struct st_tracked_state st_update_texture;
 
 
 #endif

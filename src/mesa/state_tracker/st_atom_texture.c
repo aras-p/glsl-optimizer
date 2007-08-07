@@ -39,7 +39,10 @@
 #include "pipe/p_defines.h"
 
 
-
+/**
+ * XXX This needs some work yet....
+ * Need to "upload" texture images at appropriate times.
+ */
 static void 
 update_textures(struct st_context *st)
 {

@@ -103,14 +103,16 @@ update_samplers(struct st_context *st)
 
       memset(&sampler, 0, sizeof(sampler));
 
-      sampler.wrap_s = gl_wrap_to_sp(texobj->WrapS);
-      sampler.wrap_t = gl_wrap_to_sp(texobj->WrapT);
-      sampler.wrap_r = gl_wrap_to_sp(texobj->WrapR);
+      if (texobj) {
+         sampler.wrap_s = gl_wrap_to_sp(texobj->WrapS);
+         sampler.wrap_t = gl_wrap_to_sp(texobj->WrapT);
+         sampler.wrap_r = gl_wrap_to_sp(texobj->WrapR);
 
-      sampler.min_filter = gl_filter_to_sp(texobj->MinFilter);
-      sampler.mag_filter = gl_filter_to_sp(texobj->MagFilter);
+         sampler.min_filter = gl_filter_to_sp(texobj->MinFilter);
+         sampler.mag_filter = gl_filter_to_sp(texobj->MagFilter);
 
-      /* XXX more sampler state here */
+         /* XXX more sampler state here */
+      }
 
       if (memcmp(&sampler, &st->state.sampler[u], sizeof(sampler)) != 0) {
          /* state has changed */
