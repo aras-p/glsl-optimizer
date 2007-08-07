@@ -117,7 +117,7 @@ struct pipe_context {
 
    void (*set_texture_state)( struct pipe_context *,
                               GLuint unit,
-                              struct pipe_texture_object * );
+                              struct pipe_mipmap_tree * );
 
    void (*set_viewport_state)( struct pipe_context *,
                                const struct pipe_viewport_state * );

@@ -53,7 +53,7 @@ softpipe_set_sampler_state(struct pipe_context *pipe,
 void
 softpipe_set_texture_state(struct pipe_context *pipe,
                            GLuint unit,
-                           struct pipe_texture_object *texture)
+                           struct pipe_mipmap_tree *texture)
 {
    struct softpipe_context *softpipe = softpipe_context(pipe);
 

@@ -264,6 +264,7 @@ struct pipe_surface
 };
 
 
+#if 0
 /**
  * Texture object.
  * Mipmap levels, cube faces, 3D slices can be accessed as surfaces.
@@ -290,6 +291,7 @@ struct pipe_texture_object
    void (*release_surface)(struct pipe_texture_object *pto,
                            struct pipe_surface *ps);
 };
+#endif
 
 
 /**

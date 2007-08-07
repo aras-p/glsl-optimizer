@@ -86,7 +86,7 @@ struct softpipe_context {
    struct pipe_sampler_state sampler[PIPE_MAX_SAMPLERS];
    struct pipe_setup_state setup;
    struct pipe_stencil_state stencil;
-   struct pipe_texture_object *texture[PIPE_MAX_SAMPLERS];
+   struct pipe_mipmap_tree *texture[PIPE_MAX_SAMPLERS];
    struct pipe_viewport_state viewport;
    GLuint dirty;
 
