@@ -137,7 +137,15 @@ text_dump_untab(
 static const char *TGSI_PROCESSOR_TYPES[] =
 {
    "PROCESSOR_FRAGMENT",
-   "PROCESSOR_VERTEX"
+   "PROCESSOR_VERTEX",
+   "PROCESSOR_GEOMETRY"
+};
+
+static const char *TGSI_PROCESSOR_TYPES_SHORT[] =
+{
+   "FRAG",
+   "VERT",
+   "GEOM"
 };
 
 static const char *TGSI_TOKEN_TYPES[] =
@@ -406,6 +414,7 @@ tgsi_dump(
    struct tgsi_parse_context parse;
    struct tgsi_full_instruction fi;
    struct tgsi_full_declaration fd;
+   GLuint verbose = flags & TGSI_DUMP_VERBOSE;
    GLuint ignored = !(flags & TGSI_DUMP_NO_IGNORED);
    GLuint deflt = !(flags & TGSI_DUMP_NO_DEFAULT);
 
@@ -430,18 +439,27 @@ tgsi_dump(
    TXT( "tgsi-dump begin" );
 
    CHR( '\n' );
-   TXT( "\nMajorVersion: " );
+   ENM( parse.FullHeader.Processor.Processor, TGSI_PROCESSOR_TYPES_SHORT );
+   CHR( ' ' );
    UID( parse.FullVersion.Version.MajorVersion );
-   TXT( "\nMinorVersion: " );
+   CHR( '.' );
    UID( parse.FullVersion.Version.MinorVersion );
 
-   CHR( '\n' );
-   TXT( "\nHeaderSize: " );
-   UID( parse.FullHeader.Header.HeaderSize );
-   TXT( "\nBodySize  : " );
-   UID( parse.FullHeader.Header.BodySize );
-   TXT( "\nProcessor : " );
-   ENM( parse.FullHeader.Processor.Processor, TGSI_PROCESSOR_TYPES );
+   if( verbose ) {
+      CHR( '\n' );
+      TXT( "\nMajorVersion: " );
+      UID( parse.FullVersion.Version.MajorVersion );
+      TXT( "\nMinorVersion: " );
+      UID( parse.FullVersion.Version.MinorVersion );
+
+      CHR( '\n' );
+      TXT( "\nHeaderSize: " );
+      UID( parse.FullHeader.Header.HeaderSize );
+      TXT( "\nBodySize  : " );
+      UID( parse.FullHeader.Header.BodySize );
+      TXT( "\nProcessor : " );
+      ENM( parse.FullHeader.Processor.Processor, TGSI_PROCESSOR_TYPES );
+   }
 
    fi = tgsi_default_full_instruction();
    fd = tgsi_default_full_declaration();

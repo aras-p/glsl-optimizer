@@ -5,9 +5,9 @@
 extern "C" {
 #endif // defined __cplusplus
 
-#define TGSI_DUMP_VERBOSE       0
-#define TGSI_DUMP_NO_IGNORED    1
-#define TGSI_DUMP_NO_DEFAULT    2
+#define TGSI_DUMP_VERBOSE       1
+#define TGSI_DUMP_NO_IGNORED    2
+#define TGSI_DUMP_NO_DEFAULT    4
 
 void
 tgsi_dump(
