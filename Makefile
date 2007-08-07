@@ -1,7 +1,5 @@
 # Top-level Mesa makefile
 
-SHELL = /bin/bash
-
 TOP = .
 
 SUBDIRS = src progs
@@ -156,7 +154,7 @@ sunos5-v9 \
 sunos5-v9-static \
 sunos5-v9-cc-g++ \
 ultrix-gcc:
-	@ if [ -e configs/current ] ; then \
+	@ if test -f configs/current || test -L configs/current ; then \
 		echo "Please run 'make realclean' before changing configs" ; \
 		exit 1 ; \
 	fi
