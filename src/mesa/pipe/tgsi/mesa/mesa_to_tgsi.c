@@ -158,6 +158,7 @@ compile_instruction(
    const struct prog_instruction *inst,
    struct tgsi_full_instruction *fullinst,
    GLuint inputs_read,
+   GLuint preamble_size,
    GLuint processor )
 {
    GLuint i;
@@ -293,7 +294,7 @@ compile_instruction(
       break;
    case OPCODE_ELSE:
       fullinst->Instruction.Opcode = TGSI_OPCODE_ELSE;
-      fullinst->InstructionExtLabel.Label = inst->BranchTarget;
+      fullinst->InstructionExtLabel.Label = inst->BranchTarget + preamble_size;
       break;
    case OPCODE_ENDIF:
       fullinst->Instruction.Opcode = TGSI_OPCODE_ENDIF;
@@ -318,7 +319,7 @@ compile_instruction(
       break;
    case OPCODE_IF:
       fullinst->Instruction.Opcode = TGSI_OPCODE_IF;
-      fullinst->InstructionExtLabel.Label = inst->BranchTarget;
+      fullinst->InstructionExtLabel.Label = inst->BranchTarget + preamble_size;
       break;
    case OPCODE_INT:
       fullinst->Instruction.Opcode = TGSI_OPCODE_INT;
@@ -473,6 +474,7 @@ tgsi_mesa_compile_fp_program(
    struct tgsi_full_dst_register *fulldst;
    struct tgsi_full_src_register *fullsrc;
    GLuint inputs_read;
+   GLuint preamble_size = 0;
 
    *(struct tgsi_version *) &tokens[0] = tgsi_build_version();
 
@@ -559,12 +561,14 @@ tgsi_mesa_compile_fp_program(
       &tokens[ti],
       header,
       maxTokens - ti );
+   preamble_size++;
 
    for( i = 0; i < program->Base.NumInstructions; i++ ) {
       if( compile_instruction(
             &program->Base.Instructions[i],
             &fullinst,
             inputs_read,
+            preamble_size,
             TGSI_PROCESSOR_FRAGMENT ) ) {
          assert( i == program->Base.NumInstructions - 1 );
          tgsi_dump(
@@ -610,6 +614,7 @@ tgsi_mesa_compile_vp_program(
             &program->Base.Instructions[ii],
             &fullinst,
             inputs_read,
+            0,
             TGSI_PROCESSOR_VERTEX ) ) {
          assert( ii == program->Base.NumInstructions - 1 );
          tgsi_dump( tokens, TGSI_DUMP_NO_IGNORED | TGSI_DUMP_NO_DEFAULT );

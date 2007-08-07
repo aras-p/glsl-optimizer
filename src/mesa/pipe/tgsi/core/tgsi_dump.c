@@ -686,12 +686,15 @@ dump_immediate_verbose(
 static void
 dump_instruction_short(
    struct text_dump *dump,
-   struct tgsi_full_instruction *inst )
+   struct tgsi_full_instruction *inst,
+   GLuint instno )
 {
    GLuint i;
    GLboolean first_reg = GL_TRUE;
 
    CHR( '\n' );
+   UID( instno );
+   CHR( ':' );
    ENM( inst->Instruction.Opcode, TGSI_OPCODES_SHORT );
 
    switch( inst->Instruction.Saturate ) {
@@ -780,6 +783,14 @@ dump_instruction_short(
       }
 
       first_reg = GL_FALSE;
+   }
+
+   switch( inst->Instruction.Opcode ) {
+   case TGSI_OPCODE_IF:
+   case TGSI_OPCODE_ELSE:
+      TXT( " : " );
+      UID( inst->InstructionExtLabel.Label );
+      break;
    }
 }
 
@@ -1140,6 +1151,7 @@ tgsi_dump(
    GLuint verbose = flags & TGSI_DUMP_VERBOSE;
    GLuint ignored = !(flags & TGSI_DUMP_NO_IGNORED);
    GLuint deflt = !(flags & TGSI_DUMP_NO_DEFAULT);
+   GLuint instno = 0;
 
    {
 #if 0
@@ -1206,7 +1218,9 @@ tgsi_dump(
       case TGSI_TOKEN_TYPE_INSTRUCTION:
          dump_instruction_short(
             dump,
-            &parse.FullToken.FullInstruction );
+            &parse.FullToken.FullInstruction,
+            instno );
+         instno++;
          break;
 
       default:
