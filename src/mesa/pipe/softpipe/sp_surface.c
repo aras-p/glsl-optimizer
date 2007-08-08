@@ -323,6 +323,8 @@ a8r8g8b8_get_tile(struct pipe_surface *ps,
    const GLuint *src
       = ((const GLuint *) ps->region->map) + y * ps->region->pitch + x;
    GLuint i, j;
+   assert(x + w <= ps->width);
+   assert(y + h <= ps->height);
    for (i = 0; i < h; i++) {
       for (j = 0; j < w; j++) {
          p[0] = UBYTE_TO_FLOAT((src[j] >> 16) & 0xff);
