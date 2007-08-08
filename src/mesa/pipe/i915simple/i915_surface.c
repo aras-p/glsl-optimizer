@@ -31,8 +31,32 @@
 #include "main/imports.h"
 
 
+struct i915_surface
+{
+   struct pipe_surface surface;
+   /* anything else? */
+};
+
+
+static void
+i915_get_tile(struct pipe_surface *ps,
+              GLuint x, GLuint y, GLuint w, GLuint h, GLfloat *p)
+{
+   /* any need to get tiles from i915 surfaces? */
+}
+
+
+static void
+i915_put_tile(struct pipe_surface *ps,
+              GLuint x, GLuint y, GLuint w, GLuint h, const GLfloat *p)
+{
+   /* any need to put tiles into i915 surfaces? */
+}
+
+
+
 static struct pipe_surface *
-i915_surface_alloc(struct pipe_context *pipe, GLenum format)
+i915_surface_alloc(struct pipe_context *pipe, GLuint format)
 {
    struct i915_surface *surf = CALLOC_STRUCT(i915_surface);
 
@@ -40,6 +64,10 @@ i915_surface_alloc(struct pipe_context *pipe, GLenum format)
       return NULL;
 
    surf->surface.format = format;
+   surf->surface.refcount = 1;
+
+   surf->surface.get_tile = i915_get_tile;
+   surf->surface.put_tile = i915_put_tile;
 
    return &surf->surface;
 }
