@@ -89,7 +89,7 @@ i915_region_alloc(struct pipe_context *pipe,
    region->height = height;     /* needed? */
    region->refcount = 1;
 
-   region->buffer = i915->winsys->create_buffer( i915->winsys, 64 );
+   region->buffer = i915->winsys->buffer_create( i915->winsys, 64 );
 
    i915->winsys->buffer_data( i915->winsys,
 			      region->buffer, 

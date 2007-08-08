@@ -51,16 +51,12 @@ struct pipe_buffer_handle;
 struct i915_winsys {
 
 
-   /* The buffer manager is modeled after the dri_bugmgr interface,
-    * but this is the subset that i915 cares about.  Remember that
-    * i915 gets to choose the interface it needs, and the window
-    * systems must then implement that interface (rather than the
-    * other way around...).
-    *
-    * I915 only really wants to make system memory allocations,
-    * right?? 
+   /* Many of the winsys's are probably going to have a similar
+    * buffer-manager interface, as something almost identical is
+    * currently exposed in the pipe interface.  Probably want to avoid
+    * endless repetition of this code somehow.
     */
-   struct pipe_buffer_handle *(*create_buffer)(struct i915_winsys *sws, 
+   struct pipe_buffer_handle *(*buffer_create)(struct i915_winsys *sws, 
 					       unsigned alignment );
 
    void *(*buffer_map)( struct i915_winsys *sws, 
@@ -110,6 +106,7 @@ struct i915_winsys {
 			unsigned access_flags,
 			unsigned delta );
    void (*batch_flush)( struct i915_winsys *sws );
+   void (*batch_wait_idle)( struct i915_winsys *sws );
    
 
    /* Printf???

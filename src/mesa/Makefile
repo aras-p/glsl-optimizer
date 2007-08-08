@@ -150,7 +150,7 @@ depend: $(ALL_SOURCES)
 subdirs:
 	@ (cd x86 ; $(MAKE))
 	@ (cd x86-64 ; $(MAKE))
-	(cd pipe/softpipe ; $(MAKE))
+	(cd pipe ; $(MAKE))
 
 install: default
 	$(INSTALL) -d $(INSTALL_DIR)/include/GL
@@ -183,7 +183,7 @@ clean:
 	(cd drivers/dri && $(MAKE) clean)
 	(cd x86 && $(MAKE) clean)
 	(cd x86-64 && $(MAKE) clean)
-	(cd pipe/softpipe ; $(MAKE) clean )
+	(cd pipe ; $(MAKE) clean )
 
 
 include depend

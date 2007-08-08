@@ -189,7 +189,7 @@ i915_emit_hardware_state(struct i915_context *i915 )
 
       OUT_RELOC(cbuf_region->buffer,
 		I915_BUFFER_ACCESS_WRITE,
-		/*cbuf_region->draw_offset*/0);
+		0);
    }
 
    /* What happens if no zbuf??
@@ -207,7 +207,7 @@ i915_emit_hardware_state(struct i915_context *i915 )
 
       OUT_RELOC(depth_region->buffer,
 		I915_BUFFER_ACCESS_WRITE,
-		/*depth_region->draw_offset*/0);
+		0);
    }
 
    

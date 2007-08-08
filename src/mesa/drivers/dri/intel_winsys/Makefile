@@ -10,7 +10,8 @@ PIPE_DRIVERS = \
 	$(TOP)/src/mesa/pipe/softpipe/libsoftpipe.a
 
 DRIVER_SOURCES = \
-	intel_softpipe.c \
+	intel_pipe_i915simple.c \
+	intel_pipe_softpipe.c \
 	intel_batchbuffer.c \
 	intel_tex_layout.c \
 	intel_buffers.c \

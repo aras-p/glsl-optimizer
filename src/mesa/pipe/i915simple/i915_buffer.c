@@ -40,12 +40,12 @@
  * evolve in separate directions...  Don't try and remove this yet.
  */
 static struct pipe_buffer_handle *
-i915_create_buffer(struct pipe_context *pipe, 
+i915_buffer_create(struct pipe_context *pipe, 
 		 unsigned alignment,
 		 unsigned flags)
 {
    struct i915_context *i915 = i915_context( pipe );
-   return i915->winsys->create_buffer( i915->winsys, alignment );
+   return i915->winsys->buffer_create( i915->winsys, alignment );
 }
 
 static void *i915_buffer_map(struct pipe_context *pipe, 
@@ -110,7 +110,7 @@ static void i915_buffer_get_subdata(struct pipe_context *pipe,
 void
 i915_init_buffer_functions( struct i915_context *i915 )
 {
-   i915->pipe.create_buffer = i915_create_buffer;
+   i915->pipe.create_buffer = i915_buffer_create;
    i915->pipe.buffer_map = i915_buffer_map;
    i915->pipe.buffer_unmap = i915_buffer_unmap;
    i915->pipe.buffer_reference = i915_buffer_reference;

@@ -47,13 +47,10 @@
 #include "i830_dri.h"
 
 #include "intel_buffers.h"
-/*#include "intel_tex.h"*/
+#include "intel_pipe.h"
 #include "intel_ioctl.h"
 #include "intel_batchbuffer.h"
 #include "intel_blit.h"
-/*
-#include "intel_buffer_objects.h"
-*/
 #include "intel_fbo.h"
 #include "intel_tex_layout.h"
 
@@ -375,20 +372,34 @@ intelCreateContext(const __GLcontextModes * mesaVis,
    /*
     * Pipe-related setup
     */
-   st_create_context( &intel->ctx,
-		      intel_create_softpipe( intel ) );
+   if (getenv("INTEL_SOFTPIPE")) {
+      intel->pipe = intel_create_softpipe( intel );
+   }
+   else {
+      switch (intel->intelScreen->deviceID) {
+      case PCI_CHIP_I945_G:
+      case PCI_CHIP_I945_GM:
+      case PCI_CHIP_I945_GME:
+      case PCI_CHIP_G33_G:
+      case PCI_CHIP_Q33_G:
+      case PCI_CHIP_Q35_G:
+      case PCI_CHIP_I915_G:
+      case PCI_CHIP_I915_GM:
+	 intel->pipe = intel_create_i915simple( intel );
+      default:
+	 _mesa_printf("Unknown PCIID %x in %s, using software driver\n", 
+		      intel->intelScreen->deviceID, __FUNCTION__);
 
-   /* KW: Not sure I like this - we should only be talking to the
-    * state_tracker.  The pipe code will need some way of talking to
-    * us, eg for batchbuffer ioctls, and there will need to be a
-    * buffer manager interface.  So, this is a temporary hack, right?
-    * BP: Yes, a temporary hack so we can make jumps between old/new code.
+	 intel->pipe = intel_create_softpipe( intel );
+	 break;
+      }
+   }
+
+   st_create_context( &intel->ctx, intel->pipe ); 
+
+
+   /* TODO: Push this down into the pipe driver:
     */
-   intel->pipe = intel->ctx.st->pipe;
-//   intel->pipe->screen = intelScreen;
-//   intel->pipe->glctx = ctx;
-//   intel_init_region_functions(intel->pipe);
-
    switch (intel->intelScreen->deviceID) {
    case PCI_CHIP_I945_G:
    case PCI_CHIP_I945_GM:

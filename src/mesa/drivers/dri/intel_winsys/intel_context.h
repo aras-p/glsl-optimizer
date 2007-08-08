@@ -194,14 +194,6 @@ extern void intelFinish(GLcontext * ctx);
 extern void intelFlush(GLcontext * ctx);
 
 
-/* ================================================================
- * intel_softpipe.c:
- */
-
-struct pipe_context *
-intel_create_softpipe( struct intel_context *intel );
-
-
 #define MI_BATCH_BUFFER_END 	(0xA<<23)
 
 #define FALLBACK( ctx, bit, mode ) 

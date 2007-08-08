@@ -135,12 +135,11 @@ static void i915_set_sampler_state(struct pipe_context *pipe,
 
 
 static void i915_set_texture_state(struct pipe_context *pipe,
-                           GLuint unit,
-                           struct pipe_texture_object *texture)
+				   GLuint unit,
+				   struct pipe_mipmap_tree *texture)
 {
    struct i915_context *i915 = i915_context(pipe);
 
-   assert(unit < PIPE_MAX_SAMPLERS);
    i915->texture[unit] = texture;  /* ptr, not struct */
 
    i915->dirty |= I915_NEW_TEXTURE;
