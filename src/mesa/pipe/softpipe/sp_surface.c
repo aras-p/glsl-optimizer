@@ -322,12 +322,37 @@ a8r8g8b8_get_tile(struct pipe_surface *ps,
 {
    const GLuint *src
       = ((const GLuint *) ps->region->map) + y * ps->region->pitch + x;
-   assert(w == 1);
-   assert(h == 1);
-   p[0] = UBYTE_TO_FLOAT((src[0] >> 16) & 0xff);
-   p[1] = UBYTE_TO_FLOAT((src[0] >>  8) & 0xff);
-   p[2] = UBYTE_TO_FLOAT((src[0] >>  0) & 0xff);
-   p[3] = UBYTE_TO_FLOAT((src[0] >> 24) & 0xff);
+   GLuint i, j;
+   for (i = 0; i < h; i++) {
+      for (j = 0; j < w; j++) {
+         p[0] = UBYTE_TO_FLOAT((src[j] >> 16) & 0xff);
+         p[1] = UBYTE_TO_FLOAT((src[j] >>  8) & 0xff);
+         p[2] = UBYTE_TO_FLOAT((src[j] >>  0) & 0xff);
+         p[3] = UBYTE_TO_FLOAT((src[j] >> 24) & 0xff);
+         p += 4;
+      }
+      src += ps->region->pitch;
+   }
+}
+
+
+static void
+a1r5g5b5_get_tile(struct pipe_surface *ps,
+                  GLuint x, GLuint y, GLuint w, GLuint h, GLfloat *p)
+{
+   const GLushort *src
+      = ((const GLushort *) ps->region->map) + y * ps->region->pitch + x;
+   GLuint i, j;
+   for (i = 0; i < h; i++) {
+      for (j = 0; j < w; j++) {
+         p[0] = ((src[j] >> 10) & 0x1f) * (1.0 / 31);
+         p[1] = ((src[j] >>  5) & 0x1f) * (1.0 / 31);
+         p[2] = ((src[j]      ) & 0x1f) * (1.0 / 31);
+         p[3] = src[j] >> 15;
+         p += 4;
+      }
+      src += ps->region->pitch;
+   }
 }
 
 
@@ -357,6 +382,9 @@ init_quad_funcs(struct softpipe_surface *sps)
       break;
    case PIPE_FORMAT_U_A8_R8_G8_B8:
       sps->surface.get_tile = a8r8g8b8_get_tile;
+      break;
+   case PIPE_FORMAT_U_A1_R5_G5_B5:
+      sps->surface.get_tile = a1r5g5b5_get_tile;
       break;
    default:
       /*
