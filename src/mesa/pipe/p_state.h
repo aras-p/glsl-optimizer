@@ -299,6 +299,7 @@ struct pipe_mipmap_tree
    GLenum target;            /* XXX convert to PIPE_TEXTURE_x */
    GLenum internal_format;   /* XXX convert to PIPE_FORMAT_x */
 
+   GLuint format;            /**< PIPE_FORMAT_x */
    GLuint first_level;
    GLuint last_level;
 
