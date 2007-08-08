@@ -65,7 +65,7 @@ tgsi_exec_machine_init(
    struct tgsi_exec_machine *mach,
    struct tgsi_token *tokens,
    GLuint numSamplers,
-   const struct tgsi_sampler_state *samplers)
+   const struct tgsi_sampler *samplers)
 {
    GLuint i, k;
    struct tgsi_parse_context parse;
@@ -1040,7 +1040,7 @@ exec_kil (struct tgsi_exec_machine *mach,
  */
 static void
 fetch_texel_1d( GLcontext *ctx,
-                const struct tgsi_sampler_state *sampler,
+                const struct tgsi_sampler *sampler,
                 const union tgsi_exec_channel *s,
                 GLuint unit,
                 union tgsi_exec_channel *r,
@@ -1097,7 +1097,7 @@ fetch_texel_1d( GLcontext *ctx,
  */
 static void
 fetch_texel_2d( GLcontext *ctx,
-                const struct tgsi_sampler_state *sampler,
+                const struct tgsi_sampler *sampler,
                 const union tgsi_exec_channel *s,
                 const union tgsi_exec_channel *t,
                 GLuint unit,
@@ -1166,7 +1166,7 @@ fetch_texel_2d( GLcontext *ctx,
  */
 static void
 fetch_texel_3d( GLcontext *ctx,
-                const struct tgsi_sampler_state *sampler,
+                const struct tgsi_sampler *sampler,
                 const union tgsi_exec_channel *s,
                 const union tgsi_exec_channel *t,
                 const union tgsi_exec_channel *p,
