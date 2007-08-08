@@ -321,10 +321,19 @@ a8r8g8b8_get_tile(struct pipe_surface *ps,
                   GLuint x, GLuint y, GLuint w, GLuint h, GLfloat *p)
 {
    const GLuint *src
-      = ((const GLuint *) ps->region->map) + y * ps->region->pitch + x;
+      = ((const GLuint *) (ps->region->map + ps->offset))
+      + y * ps->region->pitch + x;
    GLuint i, j;
+#if 0
    assert(x + w <= ps->width);
    assert(y + h <= ps->height);
+#else
+   /* temp hack */
+   if (x + w > ps->width)
+      w = ps->width - x;
+   if (y + h > ps->height)
+      h = ps->height -y;
+#endif
    for (i = 0; i < h; i++) {
       for (j = 0; j < w; j++) {
          p[0] = UBYTE_TO_FLOAT((src[j] >> 16) & 0xff);
@@ -343,7 +352,8 @@ a1r5g5b5_get_tile(struct pipe_surface *ps,
                   GLuint x, GLuint y, GLuint w, GLuint h, GLfloat *p)
 {
    const GLushort *src
-      = ((const GLushort *) ps->region->map) + y * ps->region->pitch + x;
+      = ((const GLushort *) (ps->region->map + ps->offset))
+      + y * ps->region->pitch + x;
    GLuint i, j;
    for (i = 0; i < h; i++) {
       for (j = 0; j < w; j++) {
