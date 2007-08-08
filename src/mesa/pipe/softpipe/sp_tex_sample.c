@@ -471,12 +471,34 @@ sp_get_sample_2d(struct tgsi_sampler *sampler,
    switch (sampler->state->min_filter) {
    case PIPE_TEX_FILTER_NEAREST:
       {
-         GLint x, y;
+         GLint x, y, cx, cy;         
+         const GLfloat *src;
          x = nearest_texcoord(sampler->state->wrap_s, strq[0],
                               sampler->texture->width0);
          y = nearest_texcoord(sampler->state->wrap_t, strq[1],
                               sampler->texture->height0);
-         ps->get_tile(ps, x, y, 1, 1, rgba);
+
+         cx = x / SAMPLER_CACHE_SIZE;
+         cy = y / SAMPLER_CACHE_SIZE;
+         if (cx != sampler->cache_x || cy != sampler->cache_y) {
+            /* cache miss, replace cache with new tile */
+            sampler->cache_x = cx;
+            sampler->cache_y = cy;
+            ps->get_tile(ps,
+                         cx * SAMPLER_CACHE_SIZE,
+                         cy * SAMPLER_CACHE_SIZE,
+                         SAMPLER_CACHE_SIZE, SAMPLER_CACHE_SIZE,
+                         (GLfloat *) sampler->cache);
+            /*printf("cache miss (%d, %d)\n", x, y);*/
+         }
+         else {
+            /*printf("cache hit (%d, %d)\n", x, y);*/
+         }
+
+         cx = x % SAMPLER_CACHE_SIZE;
+         cy = y % SAMPLER_CACHE_SIZE;
+         src = sampler->cache[cy][cx];
+         COPY_4V(rgba, src);
       }
       break;
    case PIPE_TEX_FILTER_LINEAR:
