@@ -41,6 +41,7 @@
 #include "state_tracker/st_mipmap_tree.h"
 
 #include "pipe/p_context.h"
+#include "pipe/p_defines.h"
 
 
 #define DBG if (0) printf
@@ -109,6 +110,21 @@ st_get_texobj_mipmap_tree(struct gl_texture_object *texObj)
 {
    struct st_texture_object *stObj = st_texture_object(texObj);
    return stObj->mt;
+}
+
+
+static GLuint
+mesa_format_to_pipe_format(GLuint mesaFormat)
+{
+   switch (mesaFormat) {
+      /* fix this */
+   case MESA_FORMAT_ARGB8888_REV:
+   case MESA_FORMAT_ARGB8888:
+      return PIPE_FORMAT_U_A8_R8_G8_B8;
+   default:
+      assert(0);
+      return 0;
+   }
 }
 
 
@@ -516,6 +532,9 @@ guess_and_alloc_mipmap_tree(struct pipe_context *pipe,
                                        depth,
                                        stImage->base.TexFormat->TexelBytes,
                                        comp_byte);
+
+   stObj->mt->format
+      = mesa_format_to_pipe_format(stImage->base.TexFormat->MesaFormat);
 
    DBG("%s - success\n", __FUNCTION__);
 }
@@ -1144,11 +1163,10 @@ st_TexSubImage3D(GLcontext * ctx,
                    struct gl_texture_object *texObj,
                    struct gl_texture_image *texImage)
 {
-   st_TexSubimage(ctx, 3,
-                    target, level,
-                    xoffset, yoffset, zoffset,
-                    width, height, depth,
-                    format, type, pixels, packing, texObj, texImage);
+   st_TexSubimage(ctx, 3, target, level,
+                  xoffset, yoffset, zoffset,
+                  width, height, depth,
+                  format, type, pixels, packing, texObj, texImage);
 }
 
 
@@ -1165,11 +1183,10 @@ st_TexSubImage2D(GLcontext * ctx,
                    struct gl_texture_object *texObj,
                    struct gl_texture_image *texImage)
 {
-   st_TexSubimage(ctx, 2,
-                    target, level,
-                    xoffset, yoffset, 0,
-                    width, height, 1,
-                    format, type, pixels, packing, texObj, texImage);
+   st_TexSubimage(ctx, 2, target, level,
+                  xoffset, yoffset, 0,
+                  width, height, 1,
+                  format, type, pixels, packing, texObj, texImage);
 }
 
 
@@ -1185,11 +1202,10 @@ st_TexSubImage1D(GLcontext * ctx,
                    struct gl_texture_object *texObj,
                    struct gl_texture_image *texImage)
 {
-   st_TexSubimage(ctx, 1,
-                    target, level,
-                    xoffset, 0, 0,
-                    width, 1, 1,
-                    format, type, pixels, packing, texObj, texImage);
+   st_TexSubimage(ctx, 1, target, level,
+                  xoffset, 0, 0,
+                  width, 1, 1,
+                  format, type, pixels, packing, texObj, texImage);
 }
 
 
@@ -1640,15 +1656,18 @@ st_finalize_mipmap_tree(GLcontext *ctx,
     */
    if (!stObj->mt) {
       stObj->mt = st_miptree_create(pipe,
-                                          stObj->base.Target,
-                                          firstImage->base.InternalFormat,
-                                          stObj->firstLevel,
-                                          stObj->lastLevel,
-                                          firstImage->base.Width,
-                                          firstImage->base.Height,
-                                          firstImage->base.Depth,
-                                          cpp,
-                                          comp_byte);
+                                    stObj->base.Target,
+                                    firstImage->base.InternalFormat,
+                                    stObj->firstLevel,
+                                    stObj->lastLevel,
+                                    firstImage->base.Width,
+                                    firstImage->base.Height,
+                                    firstImage->base.Depth,
+                                    cpp,
+                                    comp_byte);
+
+      stObj->mt->format
+         = mesa_format_to_pipe_format(firstImage->base.TexFormat->MesaFormat);
    }
 
    /* Pull in any images not in the object's tree:
@@ -1693,13 +1712,13 @@ st_tex_map_images(struct pipe_context *pipe,
             st_texture_image(stObj->base.Image[face][i]);
 
          if (stImage->mt) {
-            stImage->base.Data =
-               st_miptree_image_map(pipe,
-                                       stImage->mt,
-                                       stImage->face,
-                                       stImage->level,
-                                       &stImage->base.RowStride,
-                                       stImage->base.ImageOffsets);
+            stImage->base.Data
+               = st_miptree_image_map(pipe,
+                                      stImage->mt,
+                                      stImage->face,
+                                      stImage->level,
+                                      &stImage->base.RowStride,
+                                      stImage->base.ImageOffsets);
             /* convert stride to texels, not bytes */
             stImage->base.RowStride /= stImage->mt->cpp;
 /*             stImage->base.ImageStride /= stImage->mt->cpp; */
