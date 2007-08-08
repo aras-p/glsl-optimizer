@@ -25,29 +25,33 @@
  * 
  **************************************************************************/
 
-#ifndef I915_BATCH_H
-#define I915_BATCH_H
+/* Author:
+ *    Keith Whitwell <keith@tungstengraphics.com>
+ */
 
-#include "i915_winsys.h"
-#include "i915_debug.h"
 
-#define BATCH_LOCALS
+#include "pipe/p_defines.h"
+#include "sp_flush.h"
+#include "sp_context.h"
 
-#define BEGIN_BATCH( dwords, relocs ) \
-   i915->winsys->batch_start( i915->winsys, dwords, relocs )
+/* There will be actual work to do here.  In future we may want a
+ * fence-like interface instead of finish, and perhaps flush will take
+ * flags to indicate what type of flush is required.
+ */
+void
+softpipe_flush( struct pipe_context *pipe,
+		unsigned flags )
+{
+   /* - flush the quad pipeline
+    * - flush the texture cache
+    * - flush the render cache
+    */
+}
 
-#define OUT_BATCH( dword ) \
-   i915->winsys->batch_dword( i915->winsys, dword )
-
-#define OUT_RELOC( buf, flags, delta ) \
-   i915->winsys->batch_reloc( i915->winsys, buf, flags, delta )
-
-#define ADVANCE_BATCH()
-
-#define FLUSH_BATCH() do { 					\
-/*   i915_dump_batchbuffer( i915, i915->batch_start, BEGIN_BATCH(0, 0) ); */	\
-   i915->winsys->batch_flush( i915->winsys );				\
-   i915->batch_start = BEGIN_BATCH(0, 0);				\
-} while (0)
-
-#endif 
+void
+softpipe_finish(struct pipe_context *pipe)
+{
+   /* Just calls into flush()
+    */
+   softpipe_flush( pipe, 0 );
+}

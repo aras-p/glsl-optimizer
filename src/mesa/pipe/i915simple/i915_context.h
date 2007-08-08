@@ -53,12 +53,13 @@ struct i915_context
    struct pipe_sampler_state sampler[PIPE_MAX_SAMPLERS];
    struct pipe_setup_state setup;
    struct pipe_stencil_state stencil;
-   struct pipe_texture_object *texture[PIPE_MAX_SAMPLERS];
+   struct pipe_mipmap_tree *texture[PIPE_MAX_SAMPLERS];
    struct pipe_viewport_state viewport;
    GLuint dirty;
 
-   struct pipe_scissor_state cliprect;
+   GLuint *batch_start;
 
+   struct pipe_scissor_state cliprect;
 };
 
 #define I915_NEW_VIEWPORT      0x1
@@ -104,6 +105,7 @@ void i915_init_buffer_functions( struct i915_context *i915 );
 void i915_init_region_functions( struct i915_context *i915 );
 void i915_init_surface_functions( struct i915_context *i915 );
 void i915_init_state_functions( struct i915_context *i915 );
+void i915_init_flush_functions( struct i915_context *i915 );
 
 
 

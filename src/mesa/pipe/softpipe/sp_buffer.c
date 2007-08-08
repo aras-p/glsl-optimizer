@@ -32,6 +32,7 @@
 #include <stdlib.h>
 #include "sp_context.h"
 #include "sp_winsys.h"
+#include "sp_buffer.h"
 
 
 

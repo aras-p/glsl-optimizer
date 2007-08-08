@@ -25,29 +25,58 @@
  * 
  **************************************************************************/
 
-#ifndef I915_BATCH_H
-#define I915_BATCH_H
+/* Author:
+ *    Keith Whitwell <keith@tungstengraphics.com>
+ */
 
-#include "i915_winsys.h"
-#include "i915_debug.h"
 
-#define BATCH_LOCALS
+#include "pipe/p_defines.h"
+#include "i915_context.h"
+#include "i915_reg.h"
+#include "i915_batch.h"
 
-#define BEGIN_BATCH( dwords, relocs ) \
-   i915->winsys->batch_start( i915->winsys, dwords, relocs )
+/* There will be actual work to do here.  In future we may want a
+ * fence-like interface instead of finish, and perhaps flush will take
+ * flags to indicate what type of flush is required.
+ */
+static void i915_flush( struct pipe_context *pipe,
+			unsigned flags )
+{
+   struct i915_context *i915 = i915_context(pipe);
 
-#define OUT_BATCH( dword ) \
-   i915->winsys->batch_dword( i915->winsys, dword )
+   /* Do we need to emit an MI_FLUSH command to flush the hardware
+    * caches?
+    */
+   if (flags) {
+      unsigned flush = MI_FLUSH;
+      
+      if (!(flags & PIPE_FLUSH_RENDER_CACHE))
+	 flush |= INHIBIT_FLUSH_RENDER_CACHE;
 
-#define OUT_RELOC( buf, flags, delta ) \
-   i915->winsys->batch_reloc( i915->winsys, buf, flags, delta )
+      if (flags & PIPE_FLUSH_TEXTURE_CACHE)
+	 flush |= FLUSH_MAP_CACHE;
 
-#define ADVANCE_BATCH()
+      BEGIN_BATCH( 1, 0 );
+      OUT_BATCH( flush );
+      ADVANCE_BATCH();
+   }
 
-#define FLUSH_BATCH() do { 					\
-/*   i915_dump_batchbuffer( i915, i915->batch_start, BEGIN_BATCH(0, 0) ); */	\
-   i915->winsys->batch_flush( i915->winsys );				\
-   i915->batch_start = BEGIN_BATCH(0, 0);				\
-} while (0)
+   /* If there are no flags, just flush pending commands to hardware:
+    */
+   FLUSH_BATCH();
+}
 
-#endif 
+static void i915_finish(struct pipe_context *pipe)
+{
+   struct i915_context *i915 = i915_context(pipe);
+
+   i915_flush( pipe, 0 );
+   i915->winsys->batch_wait_idle( i915->winsys );
+}
+
+
+void i915_init_flush_functions( struct i915_context *i915 )
+{
+   i915->pipe.flush = i915_flush;
+   i915->pipe.finish = i915_finish;
+}

@@ -176,4 +176,11 @@
 #define PIPE_MAP_WRITE        2
 #define PIPE_MAP_READ_WRITE   3
 
+
+/** 
+ * Flush types:
+ */
+#define PIPE_FLUSH_RENDER_CACHE  0x1
+#define PIPE_FLUSH_TEXTURE_CACHE  0x2
+
 #endif

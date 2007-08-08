@@ -170,6 +170,13 @@ struct pipe_context *i915_create( struct i915_winsys *winsys )
    i915_init_region_functions(i915);
    i915_init_surface_functions(i915);
    i915_init_state_functions(i915);
+   i915_init_flush_functions(i915);
+
+
+   /* Batch stream debugging is a bit hacked up at the moment:
+    */
+   i915->batch_start = winsys->batch_start( winsys, 0, 0 );
+
 
    /*
     * XXX we could plug GL selection/feedback into the drawing pipeline

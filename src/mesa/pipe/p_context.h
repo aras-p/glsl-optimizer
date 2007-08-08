@@ -219,6 +219,10 @@ struct pipe_context {
                                     struct pipe_mipmap_tree *mt );
 
 
+   void (*flush)( struct pipe_context *pipe,
+		  unsigned flags );
+
+   void (*finish)( struct pipe_context *pipe );
 };
 
 
