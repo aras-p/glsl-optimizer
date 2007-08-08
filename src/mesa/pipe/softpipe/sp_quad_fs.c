@@ -325,6 +325,7 @@ static void shade_begin(struct quad_stage *qs)
       /* init cache info here */
       qss->samplers[i].cache_x =
       qss->samplers[i].cache_y = -1;
+      qss->samplers[i].cache_level = -1;
    }
 
    if (qs->next)

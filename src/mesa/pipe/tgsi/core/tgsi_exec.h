@@ -31,7 +31,7 @@ struct tgsi_sampler
                       const GLfloat strq[4], GLfloat lambda, GLfloat rgba[4]);
    void *pipe; /*XXX temporary*/
 
-   GLint cache_x, cache_y;
+   GLint cache_x, cache_y, cache_level;
    GLfloat cache[SAMPLER_CACHE_SIZE][SAMPLER_CACHE_SIZE][4];
 };
 

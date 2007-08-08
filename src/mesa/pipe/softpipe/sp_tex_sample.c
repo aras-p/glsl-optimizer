@@ -447,6 +447,22 @@ sp_get_sample_1d(struct tgsi_sampler *sampler,
    }
 }
 
+static GLuint
+choose_mipmap_level(struct tgsi_sampler *sampler, GLfloat lambda)
+{
+   if (sampler->state->min_filter == sampler->state->mag_filter) {
+      assert(sampler->state->min_filter == PIPE_TEX_FILTER_LINEAR ||
+	     sampler->state->min_filter == PIPE_TEX_FILTER_NEAREST);
+      return 0;
+   }
+   else {
+      GLint level = (int) lambda;
+      level = CLAMP(level, sampler->texture->first_level,
+		    sampler->texture->last_level);
+      return level;
+   }
+}
+
 
 /**
  * Called via tgsi_sampler::get_sample()
@@ -465,14 +481,22 @@ sp_get_sample_2d(struct tgsi_sampler *sampler,
                  const GLfloat strq[4], GLfloat lambda, GLfloat rgba[4])
 {
    struct pipe_context *pipe = (struct pipe_context *) sampler->pipe;
-   struct pipe_surface *ps
-      = pipe->get_tex_surface(pipe, sampler->texture, 0, 0, 0);
+   GLuint filter;
+   GLint level0;
 
-   switch (sampler->state->min_filter) {
+   if (lambda < 0.0)
+      filter = sampler->state->mag_filter;
+   else
+      filter = sampler->state->min_filter;
+
+   level0 = choose_mipmap_level(sampler, lambda);
+
+   switch (filter) {
    case PIPE_TEX_FILTER_NEAREST:
+   case PIPE_TEX_FILTER_NEAREST_MIPMAP_NEAREST:
       {
-         GLint x, y, cx, cy;         
-         const GLfloat *src;
+         GLint x, y, cx, cy;
+
          x = nearest_texcoord(sampler->state->wrap_s, strq[0],
                               sampler->texture->width0);
          y = nearest_texcoord(sampler->state->wrap_t, strq[1],
@@ -480,8 +504,12 @@ sp_get_sample_2d(struct tgsi_sampler *sampler,
 
          cx = x / SAMPLER_CACHE_SIZE;
          cy = y / SAMPLER_CACHE_SIZE;
-         if (cx != sampler->cache_x || cy != sampler->cache_y) {
+         if (cx != sampler->cache_x || cy != sampler->cache_y ||
+             level0 != sampler->cache_level) {
             /* cache miss, replace cache with new tile */
+            struct pipe_surface *ps
+               = pipe->get_tex_surface(pipe, sampler->texture, 0, level0, 0);
+            sampler->cache_level = level0;
             sampler->cache_x = cx;
             sampler->cache_y = cy;
             ps->get_tile(ps,
@@ -497,8 +525,7 @@ sp_get_sample_2d(struct tgsi_sampler *sampler,
 
          cx = x % SAMPLER_CACHE_SIZE;
          cy = y % SAMPLER_CACHE_SIZE;
-         src = sampler->cache[cy][cx];
-         COPY_4V(rgba, src);
+         COPY_4V(rgba, sampler->cache[cy][cx]);
       }
       break;
    case PIPE_TEX_FILTER_LINEAR:
@@ -506,6 +533,9 @@ sp_get_sample_2d(struct tgsi_sampler *sampler,
          GLfloat t00[4], t01[4], t10[4], t11[4];
          GLint x0, y0, x1, y1;
          GLfloat a, b;
+         struct pipe_surface *ps
+            = pipe->get_tex_surface(pipe, sampler->texture, 0, level0, 0);
+
          linear_texcoord(sampler->state->wrap_s, strq[0],
                          sampler->texture->width0, &x0, &x1, &a);
          linear_texcoord(sampler->state->wrap_t, strq[1],
@@ -521,6 +551,13 @@ sp_get_sample_2d(struct tgsi_sampler *sampler,
          rgba[3] = lerp_2d(a, b, t00[3], t10[3], t01[3], t11[3]);
       }
       break;
+      /*
+      {
+	 GLuint level0, level1;
+	 level0 = choose_mipmap_level(sampler, lambda);
+      }
+      break;
+      */
    default:
       assert(0);
    }
