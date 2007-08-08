@@ -37,6 +37,7 @@
 #include "sp_context.h"
 #include "sp_headers.h"
 #include "sp_quad.h"
+#include "sp_tex_sample.h"
 #include "tgsi/core/tgsi_core.h"
 
 #if 0
@@ -129,24 +130,13 @@ static INLINE void pinterp( struct exec_machine *exec,
 }
 
 
-static void
-get_sample(const struct tgsi_sampler_state *sampler,
-           const GLfloat strq[4], GLfloat rgba[4])
-{
-   rgba[0] = 1;
-   rgba[1] = 1;
-   rgba[2] = 0;
-   rgba[3] = 0;
-}
-
-
 /* This should be done by the fragment shader execution unit (code
  * generated from the decl instructions).  Do it here for now.
  */
 static void
 shade_quad( struct quad_stage *qs, struct quad_header *quad )
 {
-   const struct softpipe_context *softpipe = qs->softpipe;
+   struct softpipe_context *softpipe = qs->softpipe;
    struct exec_machine exec;
    const GLfloat fx = quad->x0;
    const GLfloat fy = quad->y0;
@@ -206,7 +196,7 @@ shade_quad( struct quad_stage *qs, struct quad_header *quad )
       struct tgsi_exec_machine machine;
       struct tgsi_exec_vector outputs[FRAG_ATTRIB_MAX + 1];
       struct tgsi_exec_vector *aoutputs;
-      struct tgsi_sampler_state samplers[8];
+      struct tgsi_sampler samplers[8];
       GLuint i;
 
 #if !ALIGNED_ATTRIBS
@@ -221,7 +211,8 @@ shade_quad( struct quad_stage *qs, struct quad_header *quad )
 #if 11 /* temp sampler setup */
       samplers[0].state = &softpipe->sampler[0];
       samplers[0].texture = softpipe->texture[0];
-      samplers[0].get_sample = get_sample;
+      samplers[0].get_sample = sp_get_sample;
+      samplers[0].pipe = &softpipe->pipe;
 #endif
 
       /* init machine state */
@@ -251,10 +242,11 @@ shade_quad( struct quad_stage *qs, struct quad_header *quad )
 
       /* load input registers */
       for (i = 0; i < softpipe->nr_attrs; i++) {
-#if 0
+#if 01
          /* Make sure fp_attr_to_slot[] is an identity transform. */
+         /*
          assert( softpipe->fp_attr_to_slot[i] == i );
-
+         */
          memcpy(
             &ainputs[i],
             exec.attr[i],
