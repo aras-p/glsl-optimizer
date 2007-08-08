@@ -411,7 +411,7 @@ choose_cube_face(const GLfloat texcoord[4], GLfloat newCoord[4])
 
 static void
 sp_get_sample_1d(struct tgsi_sampler *sampler,
-                 const GLfloat strq[4], GLfloat rgba[4])
+                 const GLfloat strq[4], GLfloat lambda, GLfloat rgba[4])
 {
    struct pipe_context *pipe = (struct pipe_context *) sampler->pipe;
    struct pipe_surface *ps
@@ -460,9 +460,9 @@ sp_get_sample_1d(struct tgsi_sampler *sampler,
  * The update_samplers() function in st_atom_sampler.c could create
  * a new tgsi_sampler object for each state combo it finds....
  */
-void
+static void
 sp_get_sample_2d(struct tgsi_sampler *sampler,
-                 const GLfloat strq[4], GLfloat rgba[4])
+                 const GLfloat strq[4], GLfloat lambda, GLfloat rgba[4])
 {
    struct pipe_context *pipe = (struct pipe_context *) sampler->pipe;
    struct pipe_surface *ps
@@ -507,7 +507,7 @@ sp_get_sample_2d(struct tgsi_sampler *sampler,
 
 static void
 sp_get_sample_3d(struct tgsi_sampler *sampler,
-                 const GLfloat strq[4], GLfloat rgba[4])
+                 const GLfloat strq[4], GLfloat lamba, GLfloat rgba[4])
 {
    /* get/map pipe_surfaces corresponding to 3D tex slices */
 }
@@ -515,7 +515,7 @@ sp_get_sample_3d(struct tgsi_sampler *sampler,
 
 static void
 sp_get_sample_cube(struct tgsi_sampler *sampler,
-                   const GLfloat strq[4], GLfloat rgba[4])
+                   const GLfloat strq[4], GLfloat lambda, GLfloat rgba[4])
 {
    GLfloat st[4];
    GLuint face = choose_cube_face(strq, st);
@@ -526,20 +526,20 @@ sp_get_sample_cube(struct tgsi_sampler *sampler,
 
 void
 sp_get_sample(struct tgsi_sampler *sampler,
-              const GLfloat strq[4], GLfloat rgba[4])
+              const GLfloat strq[4], GLfloat lambda, GLfloat rgba[4])
 {
    switch (sampler->texture->target) {
    case GL_TEXTURE_1D:
-      sp_get_sample_1d(sampler, strq, rgba);
+      sp_get_sample_1d(sampler, strq, lambda, rgba);
       break;
    case GL_TEXTURE_2D:
-      sp_get_sample_2d(sampler, strq, rgba);
+      sp_get_sample_2d(sampler, strq, lambda, rgba);
       break;
    case GL_TEXTURE_3D:
-      sp_get_sample_3d(sampler, strq, rgba);
+      sp_get_sample_3d(sampler, strq, lambda, rgba);
       break;
    case GL_TEXTURE_CUBE_MAP:
-      sp_get_sample_cube(sampler, strq, rgba);
+      sp_get_sample_cube(sampler, strq, lambda, rgba);
       break;
    default:
       assert(0);
