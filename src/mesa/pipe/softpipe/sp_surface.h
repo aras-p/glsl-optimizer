@@ -33,7 +33,9 @@
 
 #include "glheader.h"
 #include "sp_headers.h"
+#include "pipe/p_state.h"
 
+struct pipe_context;
 struct softpipe_surface;
 struct softpipe_context;
 
