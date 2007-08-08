@@ -30,6 +30,7 @@
 #include "sp_surface.h"
 #include "pipe/p_defines.h"
 #include "main/imports.h"
+#include "main/macros.h"
 
 
 /**
@@ -316,6 +317,23 @@ s8_write_quad_stencil(struct softpipe_surface *sps,
 
 
 static void
+a8r8g8b8_get_tile(struct pipe_surface *ps,
+                  GLuint x, GLuint y, GLuint w, GLuint h, GLfloat *p)
+{
+   const GLuint *src
+      = ((const GLuint *) ps->region->map) + y * ps->region->pitch + x;
+   assert(w == 1);
+   assert(h == 1);
+   p[0] = UBYTE_TO_FLOAT((src[0] >> 16) & 0xff);
+   p[1] = UBYTE_TO_FLOAT((src[0] >>  8) & 0xff);
+   p[2] = UBYTE_TO_FLOAT((src[0] >>  0) & 0xff);
+   p[3] = UBYTE_TO_FLOAT((src[0] >> 24) & 0xff);
+}
+
+
+
+
+static void
 init_quad_funcs(struct softpipe_surface *sps)
 {
    switch (sps->surface.format) {
@@ -337,8 +355,14 @@ init_quad_funcs(struct softpipe_surface *sps)
       sps->read_quad_stencil = s8_read_quad_stencil;
       sps->write_quad_stencil = s8_write_quad_stencil;
       break;
+   case PIPE_FORMAT_U_A8_R8_G8_B8:
+      sps->surface.get_tile = a8r8g8b8_get_tile;
+      break;
    default:
+      /*
       assert(0);
+      */
+      ;
    }
 }
 
@@ -386,7 +410,7 @@ softpipe_get_tex_surface(struct pipe_context *pipe,
       assert(zslice == 0);
    }
 
-   ps = pipe->surface_alloc(pipe, mt->internal_format);
+   ps = pipe->surface_alloc(pipe, mt->format);
    if (ps) {
       assert(ps->format);
       assert(ps->refcount);
