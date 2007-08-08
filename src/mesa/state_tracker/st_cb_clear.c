@@ -31,15 +31,19 @@
   *   Brian Paul
   */
 
-#include "glheader.h"
-#include "macros.h"
+#include "main/glheader.h"
+#include "main/macros.h"
+#include "shader/prog_instruction.h"
 #include "st_atom.h"
 #include "st_context.h"
 #include "st_cb_clear.h"
+#include "st_program.h"
 #include "st_public.h"
 #include "pipe/p_context.h"
 #include "pipe/p_defines.h"
+#include "pipe/tgsi/mesa/mesa_to_tgsi.h"
 #include "vf/vf.h"
+
 
 
 
@@ -101,6 +105,49 @@ is_depth_stencil_format(GLuint pipeFormat)
 }
 
 
+
+/**
+ * Create a simple fragment shader that just passes through the fragment color.
+ */
+static struct st_fragment_program *
+make_color_shader(struct st_context *st)
+{
+   GLcontext *ctx = st->ctx;
+   struct st_fragment_program *stfp;
+   struct gl_program *p;
+   GLboolean b;
+
+   p = ctx->Driver.NewProgram(ctx, GL_FRAGMENT_PROGRAM_ARB, 0);
+   if (!p)
+      return NULL;
+
+   p->NumInstructions = 2;
+   p->Instructions = _mesa_alloc_instructions(2);
+   if (!p->Instructions) {
+      ctx->Driver.DeleteProgram(ctx, p);
+      return NULL;
+   }
+   _mesa_init_instructions(p->Instructions, 2);
+   p->Instructions[0].Opcode = OPCODE_MOV;
+   p->Instructions[0].DstReg.File = PROGRAM_OUTPUT;
+   p->Instructions[0].DstReg.Index = 0;
+   p->Instructions[0].SrcReg[0].File = PROGRAM_INPUT;
+   p->Instructions[0].SrcReg[0].Index = FRAG_ATTRIB_COL0;
+   p->Instructions[1].Opcode = OPCODE_END;
+
+   p->InputsRead = FRAG_BIT_COL0;
+   p->OutputsWritten = (1 << FRAG_RESULT_COLR);
+
+   stfp = (struct st_fragment_program *) p;
+   /* compile into tgsi format */
+   b = tgsi_mesa_compile_fp_program(&stfp->Base,
+                                    stfp->tokens, ST_FP_MAX_TOKENS);
+   assert(b);
+
+   return stfp;
+}
+
+
 /**
  * Draw a screen-aligned quadrilateral.
  * Coords are window coords.
@@ -154,12 +201,14 @@ clear_with_quad(GLcontext *ctx, GLuint x0, GLuint y0,
                 GLuint x1, GLuint y1,
                 GLboolean color, GLboolean depth, GLboolean stencil)
 {
+   static struct st_fragment_program *stfp = NULL;
    struct st_context *st = ctx->st;
    struct pipe_alpha_test_state alpha_test;
    struct pipe_blend_state blend;
    struct pipe_depth_state depth_test;
    struct pipe_stencil_state stencil_test;
    struct pipe_setup_state setup;
+   struct pipe_fs_state fs;
 
    /* alpha state: disabled */
    memset(&alpha_test, 0, sizeof(alpha_test));
@@ -210,6 +259,16 @@ clear_with_quad(GLcontext *ctx, GLuint x0, GLuint y0,
    }
    st->pipe->set_stencil_state(st->pipe, &stencil_test);
 
+   /* fragment shader state: color pass-through program */
+   if (!stfp) {
+      stfp = make_color_shader(st);
+   }
+   memset(&fs, 0, sizeof(fs));
+   fs.inputs_read = stfp->Base.Base.InputsRead;
+   fs.tokens = &stfp->tokens[0];
+   fs.constants = NULL;
+   st->pipe->set_fs_state(st->pipe, &fs);
+
    /* draw quad matching scissor rect (XXX verify coord round-off) */
    draw_quad(ctx, x0, y0, x1, y1, ctx->Depth.Clear, ctx->Color.ClearColor);
 
@@ -217,6 +276,7 @@ clear_with_quad(GLcontext *ctx, GLuint x0, GLuint y0,
    st->pipe->set_alpha_test_state(st->pipe, &st->state.alpha_test);
    st->pipe->set_blend_state(st->pipe, &st->state.blend);
    st->pipe->set_depth_state(st->pipe, &st->state.depth);
+   st->pipe->set_fs_state(st->pipe, &st->state.fs);
    st->pipe->set_setup_state(st->pipe, &st->state.setup);
    st->pipe->set_stencil_state(st->pipe, &st->state.stencil);
    /* OR:
