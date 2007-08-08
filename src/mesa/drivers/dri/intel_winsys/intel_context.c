@@ -386,6 +386,7 @@ intelCreateContext(const __GLcontextModes * mesaVis,
       case PCI_CHIP_I915_G:
       case PCI_CHIP_I915_GM:
 	 intel->pipe = intel_create_i915simple( intel );
+	 break;
       default:
 	 _mesa_printf("Unknown PCIID %x in %s, using software driver\n", 
 		      intel->intelScreen->deviceID, __FUNCTION__);
