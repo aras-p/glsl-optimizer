@@ -26,7 +26,7 @@ struct tgsi_sampler
    const struct pipe_sampler_state *state;
    struct pipe_mipmap_tree *texture;
    void (*get_sample)(struct tgsi_sampler *sampler,
-                      const GLfloat strq[4], GLfloat rgba[4]);
+                      const GLfloat strq[4], GLfloat lambda, GLfloat rgba[4]);
    void *pipe; /*XXX temporary*/
 };
 
@@ -136,7 +136,7 @@ tgsi_exec_machine_init(
    struct tgsi_exec_machine *mach,
    struct tgsi_token *tokens,
    GLuint numSamplers,
-   const struct tgsi_sampler *samplers);
+   struct tgsi_sampler *samplers);
 
 void
 tgsi_exec_prepare(
