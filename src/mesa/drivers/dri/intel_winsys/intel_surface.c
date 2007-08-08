@@ -40,6 +40,8 @@ read_quad_f_swz(struct softpipe_surface *sps, GLint x, GLint y,
    GLuint j;
 
    assert(sps->surface.format == PIPE_FORMAT_U_A8_R8_G8_B8);
+   assert(x < sps->surface.width - 1);
+   assert(y < sps->surface.height - 1);
 
    memcpy(temp + 8, src, 8);
    memcpy(temp + 0, src + bytesPerRow, 8);
