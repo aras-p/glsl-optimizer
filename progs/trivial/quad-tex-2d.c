@@ -41,7 +41,7 @@ static void Init(void)
 
    glClearColor(0.0, 0.0, 1.0, 0.0);
 
-#define SIZE 16
+#define SIZE 32
    {
       GLubyte tex2d[SIZE][SIZE][3];
       GLint s, t;
