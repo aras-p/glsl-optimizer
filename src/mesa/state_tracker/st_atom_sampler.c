@@ -111,6 +111,10 @@ update_samplers(struct st_context *st)
          sampler.min_filter = gl_filter_to_sp(texobj->MinFilter);
          sampler.mag_filter = gl_filter_to_sp(texobj->MagFilter);
 
+         sampler.lod_bias = st->ctx->Texture.Unit[u].LodBias;
+         sampler.min_lod = texobj->MinLod;
+         sampler.max_lod = texobj->MaxLod;
+
          /* XXX more sampler state here */
       }
 
