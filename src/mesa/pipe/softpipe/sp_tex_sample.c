@@ -495,20 +495,19 @@ sp_get_sample_2d(struct tgsi_sampler *sampler,
    case PIPE_TEX_FILTER_NEAREST:
    case PIPE_TEX_FILTER_NEAREST_MIPMAP_NEAREST:
       {
-         GLint x, y, cx, cy;
-
-         x = nearest_texcoord(sampler->state->wrap_s, strq[0],
-                              sampler->texture->width0);
-         y = nearest_texcoord(sampler->state->wrap_t, strq[1],
-                              sampler->texture->height0);
-
-         cx = x / SAMPLER_CACHE_SIZE;
-         cy = y / SAMPLER_CACHE_SIZE;
+         GLint x = nearest_texcoord(sampler->state->wrap_s, strq[0],
+                                    sampler->texture->level[level0].width);
+         GLint y = nearest_texcoord(sampler->state->wrap_t, strq[1],
+                                    sampler->texture->level[level0].height);
+         GLint cx = x / SAMPLER_CACHE_SIZE;
+         GLint cy = y / SAMPLER_CACHE_SIZE;
          if (cx != sampler->cache_x || cy != sampler->cache_y ||
              level0 != sampler->cache_level) {
             /* cache miss, replace cache with new tile */
             struct pipe_surface *ps
                = pipe->get_tex_surface(pipe, sampler->texture, 0, level0, 0);
+            assert(ps->width == sampler->texture->level[level0].width);
+            assert(ps->height == sampler->texture->level[level0].height);
             sampler->cache_level = level0;
             sampler->cache_x = cx;
             sampler->cache_y = cy;
@@ -522,7 +521,7 @@ sp_get_sample_2d(struct tgsi_sampler *sampler,
          else {
             /*printf("cache hit (%d, %d)\n", x, y);*/
          }
-
+         /* get texel from cache */
          cx = x % SAMPLER_CACHE_SIZE;
          cy = y % SAMPLER_CACHE_SIZE;
          COPY_4V(rgba, sampler->cache[cy][cx]);
