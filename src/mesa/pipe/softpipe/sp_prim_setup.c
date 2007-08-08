@@ -236,6 +236,18 @@ static void flush_spans( struct setup_stage *setup )
    setup->span.right[1] = 0;
 }
 
+#if 0
+static void print_vertex(const struct setup_stage *setup,
+                         const struct vertex_header *v)
+{
+   int i;
+   printf("Vertex:\n");
+   for (i = 0; i < setup->softpipe->nr_attrs; i++) {
+      printf("  %d: %f %f %f\n",  i, 
+          v->data[i][0], v->data[i][1], v->data[i][2]);
+   }
+}
+#endif
 
 static GLboolean setup_sort_vertices( struct setup_stage *setup,
 				      const struct prim_header *prim )
@@ -243,6 +255,13 @@ static GLboolean setup_sort_vertices( struct setup_stage *setup,
    const struct vertex_header *v0 = prim->v[0];
    const struct vertex_header *v1 = prim->v[1];
    const struct vertex_header *v2 = prim->v[2];
+
+#if 0
+   printf("Triangle:\n");
+   print_vertex(setup, v0);
+   print_vertex(setup, v1);
+   print_vertex(setup, v2);
+#endif
 
    setup->vprovoke = v2;
 
@@ -427,7 +446,6 @@ static void tri_persp_coeff( struct setup_stage *setup,
 			    (setup->coef[slot].dadx[i] * (setup->vmin->data[0][0] - 0.5) + 
 			     setup->coef[slot].dady[i] * (setup->vmin->data[0][1] - 0.5)));
 }
-
 
 
 /**
