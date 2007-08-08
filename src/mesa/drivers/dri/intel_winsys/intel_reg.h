@@ -30,44 +30,6 @@
 #define _INTEL_REG_H_
 
 
-
-#define CMD_3D (0x3<<29)
-
-
-#define _3DPRIMITIVE         ((0x3<<29)|(0x1f<<24))
-#define PRIM_INDIRECT            (1<<23)
-#define PRIM_INLINE              (0<<23)
-#define PRIM_INDIRECT_SEQUENTIAL (0<<17)
-#define PRIM_INDIRECT_ELTS       (1<<17)
-
-#define PRIM3D_TRILIST		(0x0<<18)
-#define PRIM3D_TRISTRIP 	(0x1<<18)
-#define PRIM3D_TRISTRIP_RVRSE	(0x2<<18)
-#define PRIM3D_TRIFAN		(0x3<<18)
-#define PRIM3D_POLY		(0x4<<18)
-#define PRIM3D_LINELIST 	(0x5<<18)
-#define PRIM3D_LINESTRIP	(0x6<<18)
-#define PRIM3D_RECTLIST 	(0x7<<18)
-#define PRIM3D_POINTLIST	(0x8<<18)
-#define PRIM3D_DIB		(0x9<<18)
-#define PRIM3D_MASK		(0x1f<<18)
-
-#define I915PACKCOLOR4444(r,g,b,a) \
-  ((((a) & 0xf0) << 8) | (((r) & 0xf0) << 4) | ((g) & 0xf0) | ((b) >> 4))
-
-#define I915PACKCOLOR1555(r,g,b,a) \
-  ((((r) & 0xf8) << 7) | (((g) & 0xf8) << 2) | (((b) & 0xf8) >> 3) | \
-    ((a) ? 0x8000 : 0))
-
-#define I915PACKCOLOR565(r,g,b) \
-  ((((r) & 0xf8) << 8) | (((g) & 0xfc) << 3) | (((b) & 0xf8) >> 3))
-
-#define I915PACKCOLOR8888(r,g,b,a) \
-  ((a<<24) | (r<<16) | (g<<8) | b)
-
-
-
-
 #define BR00_BITBLT_CLIENT   0x40000000
 #define BR00_OP_COLOR_BLT    0x10000000
 #define BR00_OP_SRC_COPY_BLT 0x10C00000
@@ -84,5 +46,8 @@
 #define MI_WAIT_FOR_EVENT               ((0x3<<23))
 #define MI_WAIT_FOR_PLANE_B_FLIP        (1<<6)
 #define MI_WAIT_FOR_PLANE_A_FLIP        (1<<2)
+
+#define MI_BATCH_BUFFER_END 	        (0xA<<23)
+
 
 #endif

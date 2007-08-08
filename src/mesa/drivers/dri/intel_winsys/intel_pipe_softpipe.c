@@ -34,11 +34,8 @@
 #include "dri_bufpool.h"
 #include "dri_bufmgr.h"
 
-/* #include "errno.h" */
-/* #include "string.h" */
-/* #include "imports.h" */
-
 #include "intel_context.h"
+#include "intel_pipe.h"
 
 #include "pipe/softpipe/sp_winsys.h"
 

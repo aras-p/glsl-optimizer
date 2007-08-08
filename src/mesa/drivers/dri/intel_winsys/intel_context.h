@@ -40,19 +40,10 @@
 #include "i830_common.h"
 
 
-#define DV_PF_555  (1<<8)
-#define DV_PF_565  (2<<8)
-#define DV_PF_8888 (3<<8)
-
 struct pipe_context;
 struct pipe_region;
 struct intel_context;
 struct _DriBufferObject;
-
-
-#define INTEL_WRITE_PART  0x1
-#define INTEL_WRITE_FULL  0x2
-#define INTEL_READ        0x4
 
 
 
@@ -75,9 +66,6 @@ struct intel_context
    GLboolean locked;
    char *prevLockFile;
    int prevLockLine;
-
-   GLuint ClearColor565;
-   GLuint ClearColor8888;
 
 
    /* These refer to the current drawing buffer:
@@ -116,25 +104,6 @@ extern char *__progname;
 /* Will become a call into state_tracker:
  */
 #define INTEL_FIREVERTICES(intel)	       
-
-/* ================================================================
- * Color packing:
- */
-
-#define INTEL_PACKCOLOR4444(r,g,b,a) \
-  ((((a) & 0xf0) << 8) | (((r) & 0xf0) << 4) | ((g) & 0xf0) | ((b) >> 4))
-
-#define INTEL_PACKCOLOR1555(r,g,b,a) \
-  ((((r) & 0xf8) << 7) | (((g) & 0xf8) << 2) | (((b) & 0xf8) >> 3) | \
-    ((a) ? 0x8000 : 0))
-
-#define INTEL_PACKCOLOR565(r,g,b) \
-  ((((r) & 0xf8) << 8) | (((g) & 0xfc) << 3) | (((b) & 0xf8) >> 3))
-
-#define INTEL_PACKCOLOR8888(r,g,b,a) \
-  ((a<<24) | (r<<16) | (g<<8) | b)
-
-
 
 
 /* ================================================================
@@ -182,19 +151,10 @@ extern int INTEL_DEBUG;
  * intel_context.c:
  */
 
-extern GLboolean intelInitContext(struct intel_context *intel,
-                                  const __GLcontextModes * mesaVis,
-                                  __DRIcontextPrivate * driContextPriv,
-                                  void *sharedContextPrivate,
-                                  struct dd_function_table *functions);
-
 extern void intelGetLock(struct intel_context *intel, GLuint flags);
 
 extern void intelFinish(GLcontext * ctx);
 extern void intelFlush(GLcontext * ctx);
-
-
-#define MI_BATCH_BUFFER_END 	(0xA<<23)
 
 #define FALLBACK( ctx, bit, mode ) 
 
