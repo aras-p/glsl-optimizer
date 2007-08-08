@@ -76,7 +76,7 @@ static const GLuint frag_to_vf[FRAG_ATTRIB_MAX] =
 static void calculate_vertex_layout( struct i915_context *i915 )
 {
 //   const GLbitfield inputsRead = i915->fs.inputs_read;
-   const GLbitfield inputsRead = (FRAG_ATTRIB_WPOS | FRAG_ATTRIB_COL0);
+   const GLbitfield inputsRead = (FRAG_BIT_WPOS | FRAG_BIT_COL0);
    GLuint slot_to_vf_attr[VF_ATTRIB_MAX];
    GLbitfield attr_mask = 0x0;
    GLuint nr_attrs = 0;

@@ -168,7 +168,7 @@ static unsigned *intel_i915_batch_start( struct i915_winsys *sws,
 
    /* XXX: check relocs. 
     */
-   if (intel_batchbuffer_space( intel->batch ) < dwords * 4) {
+   if (intel_batchbuffer_space( intel->batch ) >= dwords * 4) {
       /* XXX: Hmm, the driver can't really do much with this pointer: 
        */
       //return intel->batch->ptr;	
@@ -191,8 +191,18 @@ static void intel_i915_batch_reloc( struct i915_winsys *sws,
 			     unsigned delta )
 {
    struct intel_context *intel = intel_i915_winsys(sws)->intel;
-   unsigned flags = 0;
-   unsigned mask = 0;
+   unsigned flags = DRM_BO_FLAG_MEM_TT;
+   unsigned mask = DRM_BO_MASK_MEM;
+
+   if (access_flags & I915_BUFFER_ACCESS_WRITE) {
+      flags |= DRM_BO_FLAG_WRITE;
+      mask |= DRM_BO_FLAG_WRITE;
+   }
+
+   if (access_flags & I915_BUFFER_ACCESS_READ) {
+      flags |= DRM_BO_FLAG_READ;
+      mask |= DRM_BO_FLAG_READ;
+   }
 
    intel_batchbuffer_emit_reloc( intel->batch, 
 				 dri_bo( buf ),

@@ -42,7 +42,7 @@
 static unsigned translate_format( unsigned format )
 {
    switch (format) {
-   case PIPE_FORMAT_U_R8_G8_B8_A8:
+   case PIPE_FORMAT_U_A8_R8_G8_B8:
       return COLOR_BUF_ARGB8888;
    case PIPE_FORMAT_U_R5_G6_B5:
       return COLOR_BUF_RGB565;
@@ -212,8 +212,11 @@ i915_emit_hardware_state(struct i915_context *i915 )
 
    
    {
-      unsigned cformat = i915->framebuffer.cbufs[0]->format;
-      unsigned zformat = i915->framebuffer.zbuf->format;
+      unsigned cformat = translate_format( i915->framebuffer.cbufs[0]->format );
+      unsigned zformat = 0;
+      
+      if (i915->framebuffer.zbuf) 
+	 zformat = translate_depth_format( i915->framebuffer.zbuf->format );
 
       OUT_BATCH(_3DSTATE_DST_BUF_VARS_CMD);
 
@@ -221,8 +224,8 @@ i915_emit_hardware_state(struct i915_context *i915 )
 		DSTORG_VERT_BIAS(0x8) | /* .5 */
 		LOD_PRECLAMP_OGL |
 		TEX_DEFAULT_COLOR_OGL |
-		translate_format( cformat ) |
-		translate_depth_format( zformat ));
+		cformat |
+		zformat );
    }
 
    {

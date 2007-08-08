@@ -119,8 +119,8 @@ static void i915_draw_vb( struct pipe_context *pipe,
 {
    struct i915_context *i915 = i915_context( pipe );
 
-//   if (i915->dirty)
-//      i915_update_derived( i915 );
+   if (i915->dirty)
+      i915_update_derived( i915 );
 
    draw_vb( i915->draw, VB );
 }

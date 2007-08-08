@@ -35,6 +35,7 @@
 #include "i915_winsys.h"
 #include "i915_reg.h"
 #include "i915_state.h"
+#include "i915_batch.h"
 
 
 
@@ -91,17 +92,17 @@ static inline unsigned char float_to_ubyte( float f )
 /* Hardcoded vertex format: xyz/rgba
  */
 static inline void
-emit_hw_vertex( unsigned *ptr,
+emit_hw_vertex( struct i915_context *i915,
 		struct vertex_header *vertex )
 {
-   ptr[0] = fui( vertex->data[0][0] );
-   ptr[1] = fui( vertex->data[0][1] );
-   ptr[2] = fui( vertex->data[0][2] );
+   OUT_BATCH( fui(vertex->data[0][0]) );
+   OUT_BATCH( fui(vertex->data[0][1]) );
+   OUT_BATCH( fui(vertex->data[0][2]) );
 
-   ptr[3] = pack_ub4( float_to_ubyte( vertex->data[1][0] ),
-		      float_to_ubyte( vertex->data[1][1] ),
-		      float_to_ubyte( vertex->data[1][2] ),
-		      float_to_ubyte( vertex->data[1][3] ) );
+   OUT_BATCH( pack_ub4(float_to_ubyte( vertex->data[1][0] ),
+		       float_to_ubyte( vertex->data[1][1] ),
+		       float_to_ubyte( vertex->data[1][2] ),
+		       float_to_ubyte( vertex->data[1][3] )) );
 }
 		
 		
@@ -134,12 +135,12 @@ emit_prim( struct draw_stage *stage,
    /* Emit each triangle as a single primitive.  I told you this was
     * simple.
     */
-   *ptr++ = (_3DPRIMITIVE | 
+   OUT_BATCH(_3DPRIMITIVE | 
 	     hwprim |
 	     ((4 + vertex_size * nr)/4 - 2));
 
    for (i = 0; i < nr; i++) {
-      emit_hw_vertex(ptr, prim->v[i]);
+      emit_hw_vertex(i915, prim->v[i]);
       ptr += vertex_size / sizeof(int);
    }
 }
