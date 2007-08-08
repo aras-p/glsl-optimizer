@@ -338,6 +338,115 @@ linear_texcoord(GLuint wrapMode, GLfloat s, GLuint size,
 }
 
 
+static GLuint
+choose_cube_face(const GLfloat texcoord[4], GLfloat newCoord[4])
+{
+   /*
+      major axis
+      direction     target                             sc     tc    ma
+      ----------    -------------------------------    ---    ---   ---
+       +rx          TEXTURE_CUBE_MAP_POSITIVE_X_EXT    -rz    -ry   rx
+       -rx          TEXTURE_CUBE_MAP_NEGATIVE_X_EXT    +rz    -ry   rx
+       +ry          TEXTURE_CUBE_MAP_POSITIVE_Y_EXT    +rx    +rz   ry
+       -ry          TEXTURE_CUBE_MAP_NEGATIVE_Y_EXT    +rx    -rz   ry
+       +rz          TEXTURE_CUBE_MAP_POSITIVE_Z_EXT    +rx    -ry   rz
+       -rz          TEXTURE_CUBE_MAP_NEGATIVE_Z_EXT    -rx    -ry   rz
+   */
+   const GLfloat rx = texcoord[0];
+   const GLfloat ry = texcoord[1];
+   const GLfloat rz = texcoord[2];
+   const GLfloat arx = FABSF(rx), ary = FABSF(ry), arz = FABSF(rz);
+   GLuint face;
+   GLfloat sc, tc, ma;
+
+   if (arx > ary && arx > arz) {
+      if (rx >= 0.0F) {
+         face = PIPE_TEX_FACE_POS_X;
+         sc = -rz;
+         tc = -ry;
+         ma = arx;
+      }
+      else {
+         face = PIPE_TEX_FACE_NEG_X;
+         sc = rz;
+         tc = -ry;
+         ma = arx;
+      }
+   }
+   else if (ary > arx && ary > arz) {
+      if (ry >= 0.0F) {
+         face = PIPE_TEX_FACE_POS_Y;
+         sc = rx;
+         tc = rz;
+         ma = ary;
+      }
+      else {
+         face = PIPE_TEX_FACE_NEG_Y;
+         sc = rx;
+         tc = -rz;
+         ma = ary;
+      }
+   }
+   else {
+      if (rz > 0.0F) {
+         face = PIPE_TEX_FACE_POS_Z;
+         sc = rx;
+         tc = -ry;
+         ma = arz;
+      }
+      else {
+         face = PIPE_TEX_FACE_NEG_Z;
+         sc = -rx;
+         tc = -ry;
+         ma = arz;
+      }
+   }
+
+   newCoord[0] = ( sc / ma + 1.0F ) * 0.5F;
+   newCoord[1] = ( tc / ma + 1.0F ) * 0.5F;
+
+   return face;
+}
+
+
+static void
+sp_get_sample_1d(struct tgsi_sampler *sampler,
+                 const GLfloat strq[4], GLfloat rgba[4])
+{
+   struct pipe_context *pipe = (struct pipe_context *) sampler->pipe;
+   struct pipe_surface *ps
+      = pipe->get_tex_surface(pipe, sampler->texture, 0, 0, 0);
+
+   switch (sampler->state->min_filter) {
+   case PIPE_TEX_FILTER_NEAREST:
+      {
+         GLint x;
+         x = nearest_texcoord(sampler->state->wrap_s, strq[0],
+                              sampler->texture->width0);
+         ps->get_tile(ps, x, 0, 1, 1, rgba);
+      }
+      break;
+   case PIPE_TEX_FILTER_LINEAR:
+      {
+         GLfloat t0[4], t1[4];
+         GLint x0, x1;
+         GLfloat a;
+         linear_texcoord(sampler->state->wrap_s, strq[0],
+                         sampler->texture->width0, &x0, &x1, &a);
+         ps->get_tile(ps, x0, 0, 1, 1, t0);
+         ps->get_tile(ps, x1, 0, 1, 1, t1);
+
+         rgba[0] = LERP(a, t0[0], t1[0]);
+         rgba[1] = LERP(a, t0[1], t1[1]);
+         rgba[2] = LERP(a, t0[2], t1[2]);
+         rgba[3] = LERP(a, t0[3], t1[3]);
+      }
+      break;
+   default:
+      assert(0);
+   }
+}
+
 
 /**
  * Called via tgsi_sampler::get_sample()
@@ -352,8 +461,8 @@ linear_texcoord(GLuint wrapMode, GLfloat s, GLuint size,
  * a new tgsi_sampler object for each state combo it finds....
  */
 void
-sp_get_sample(struct tgsi_sampler *sampler,
-              const GLfloat strq[4], GLfloat rgba[4])
+sp_get_sample_2d(struct tgsi_sampler *sampler,
+                 const GLfloat strq[4], GLfloat rgba[4])
 {
    struct pipe_context *pipe = (struct pipe_context *) sampler->pipe;
    struct pipe_surface *ps
@@ -394,3 +503,46 @@ sp_get_sample(struct tgsi_sampler *sampler,
       assert(0);
    }
 }
+
+
+static void
+sp_get_sample_3d(struct tgsi_sampler *sampler,
+                 const GLfloat strq[4], GLfloat rgba[4])
+{
+   /* get/map pipe_surfaces corresponding to 3D tex slices */
+}
+
+
+static void
+sp_get_sample_cube(struct tgsi_sampler *sampler,
+                   const GLfloat strq[4], GLfloat rgba[4])
+{
+   GLfloat st[4];
+   GLuint face = choose_cube_face(strq, st);
+
+   /* get/map surface corresponding to the face */
+}
+
+
+void
+sp_get_sample(struct tgsi_sampler *sampler,
+              const GLfloat strq[4], GLfloat rgba[4])
+{
+   switch (sampler->texture->target) {
+   case GL_TEXTURE_1D:
+      sp_get_sample_1d(sampler, strq, rgba);
+      break;
+   case GL_TEXTURE_2D:
+      sp_get_sample_2d(sampler, strq, rgba);
+      break;
+   case GL_TEXTURE_3D:
+      sp_get_sample_3d(sampler, strq, rgba);
+      break;
+   case GL_TEXTURE_CUBE_MAP:
+      sp_get_sample_cube(sampler, strq, rgba);
+      break;
+   default:
+      assert(0);
+   }
+}
+
