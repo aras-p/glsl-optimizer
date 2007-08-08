@@ -7,7 +7,8 @@ LIBNAME = i915tex_dri.so
 MINIGLX_SOURCES = server/intel_dri.c
 
 PIPE_DRIVERS = \
-	$(TOP)/src/mesa/pipe/softpipe/libsoftpipe.a
+	$(TOP)/src/mesa/pipe/softpipe/libsoftpipe.a \
+	$(TOP)/src/mesa/pipe/i915simple/libi915simple.a
 
 DRIVER_SOURCES = \
 	intel_pipe_i915simple.c \
