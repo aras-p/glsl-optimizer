@@ -185,7 +185,6 @@ sp_region_copy(struct pipe_context *pipe,
 	       GLuint src_offset,
 	       GLuint srcx, GLuint srcy, GLuint width, GLuint height)
 {
-   assert( dst != src );
    assert( dst->cpp == src->cpp );
 
    _mesa_copy_rect(pipe->region_map(pipe, dst) + dst_offset,
