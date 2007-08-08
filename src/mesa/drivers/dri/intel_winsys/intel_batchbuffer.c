@@ -324,6 +324,7 @@ intel_batchbuffer_emit_reloc(struct intel_batchbuffer *batch,
       r->buf = buffer;
       r->offset = batch->ptr - batch->map;
       r->delta = delta;
+      *(GLuint *) batch->ptr = 0x12345678;
    }
 
    batch->ptr += 4;

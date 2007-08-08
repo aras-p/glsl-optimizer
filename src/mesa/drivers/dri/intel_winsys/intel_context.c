@@ -250,13 +250,7 @@ intelFlush(GLcontext * ctx)
 {
    struct intel_context *intel = intel_context(ctx);
 
-   INTEL_FIREVERTICES(intel);
-
-   if (intel->batch->map != intel->batch->ptr)
-      intel_batchbuffer_flush(intel->batch);
-
-   /* XXX: Need to do an MI_FLUSH here.
-    */
+   intel->pipe->flush( intel->pipe, 0 );
 }
 
 
@@ -317,9 +311,6 @@ intelInitDriverFunctions(struct dd_function_table *functions)
    functions->GetString = intelGetString;
    functions->UpdateState = intelInvalidateState;
 
-   /*
-   intelInitTextureFuncs(functions);
-   */
    intelInitBufferFuncs(functions);
 
    st_init_driver_functions(functions);
@@ -368,6 +359,60 @@ intelCreateContext(const __GLcontextModes * mesaVis,
    /* Initialize the software rasterizer and helper modules. */
    _vbo_CreateContext(ctx);
    _tnl_CreateContext(ctx);
+
+
+
+   /*
+    * memory pools
+    */
+   DRM_LIGHT_LOCK(sPriv->fd, &sPriv->pSAREA->lock, driContextPriv->hHWContext);
+   havePools = intelCreatePools(intelScreen);
+   DRM_UNLOCK(sPriv->fd, &sPriv->pSAREA->lock, driContextPriv->hHWContext);
+   if (!havePools)
+      return GL_FALSE;
+
+
+   /* Dri stuff */
+   intel->hHWContext = driContextPriv->hHWContext;
+   intel->driFd = sPriv->fd;
+   intel->driHwLock = (drmLock *) & sPriv->pSAREA->lock;
+
+   TNL_CONTEXT(ctx)->Driver.RunPipeline = _tnl_run_pipeline;
+
+
+
+   fthrottle_mode = driQueryOptioni(&intel->optionCache, "fthrottle_mode");
+   intel->iw.irq_seq = -1;
+   intel->irqsEmitted = 0;
+
+   /* Disable imaging extension until convolution is working in
+    * teximage paths:
+    */
+   driInitExtensions(ctx, card_extensions,
+/* 		      GL_TRUE, */
+                     GL_FALSE);
+
+
+   intel->batch = intel_batchbuffer_alloc(intel);
+   intel->last_swap_fence = NULL;
+   intel->first_swap_fence = NULL;
+
+   intel_fbo_init(intel);
+
+   if (intel->ctx.Mesa_DXTn) {
+      _mesa_enable_extension(ctx, "GL_EXT_texture_compression_s3tc");
+      _mesa_enable_extension(ctx, "GL_S3_s3tc");
+   }
+   else if (driQueryOptionb(&intel->optionCache, "force_s3tc_enable")) {
+      _mesa_enable_extension(ctx, "GL_EXT_texture_compression_s3tc");
+   }
+
+#if DO_DEBUG
+   INTEL_DEBUG = driParseDebugString(getenv("INTEL_DEBUG"), debug_control);
+#endif
+
+
+
 
    /*
     * Pipe-related setup
@@ -419,56 +464,6 @@ intelCreateContext(const __GLcontextModes * mesaVis,
    default:
       assert(0); /*FIX*/
    }
-
-
-   /*
-    * memory pools
-    */
-   DRM_LIGHT_LOCK(sPriv->fd, &sPriv->pSAREA->lock, driContextPriv->hHWContext);
-   havePools = intelCreatePools(intelScreen);
-   DRM_UNLOCK(sPriv->fd, &sPriv->pSAREA->lock, driContextPriv->hHWContext);
-   if (!havePools)
-      return GL_FALSE;
-
-
-   /* Dri stuff */
-   intel->hHWContext = driContextPriv->hHWContext;
-   intel->driFd = sPriv->fd;
-   intel->driHwLock = (drmLock *) & sPriv->pSAREA->lock;
-
-   TNL_CONTEXT(ctx)->Driver.RunPipeline = _tnl_run_pipeline;
-
-
-
-   fthrottle_mode = driQueryOptioni(&intel->optionCache, "fthrottle_mode");
-   intel->iw.irq_seq = -1;
-   intel->irqsEmitted = 0;
-
-   /* Disable imaging extension until convolution is working in
-    * teximage paths:
-    */
-   driInitExtensions(ctx, card_extensions,
-/* 		      GL_TRUE, */
-                     GL_FALSE);
-
-
-   intel->batch = intel_batchbuffer_alloc(intel);
-   intel->last_swap_fence = NULL;
-   intel->first_swap_fence = NULL;
-
-   intel_fbo_init(intel);
-
-   if (intel->ctx.Mesa_DXTn) {
-      _mesa_enable_extension(ctx, "GL_EXT_texture_compression_s3tc");
-      _mesa_enable_extension(ctx, "GL_S3_s3tc");
-   }
-   else if (driQueryOptionb(&intel->optionCache, "force_s3tc_enable")) {
-      _mesa_enable_extension(ctx, "GL_EXT_texture_compression_s3tc");
-   }
-
-#if DO_DEBUG
-   INTEL_DEBUG = driParseDebugString(getenv("INTEL_DEBUG"), debug_control);
-#endif
 
 
    return GL_TRUE;
