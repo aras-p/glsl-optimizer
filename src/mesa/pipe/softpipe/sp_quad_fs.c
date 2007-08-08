@@ -50,6 +50,23 @@
 #define ALIGNED_ATTRIBS 0
 #endif
 
+
+struct quad_shade_stage
+{
+   struct quad_stage stage;
+   struct tgsi_sampler samplers[PIPE_MAX_SAMPLERS];
+};
+
+
+/** cast wrapper */
+static INLINE struct quad_shade_stage *
+quad_shade_stage(struct quad_stage *qs)
+{
+   return (struct quad_shade_stage *) qs;
+}
+
+
+
 struct exec_machine {
    const struct setup_coefficient *coef; /**< will point to quad->coef */
 
@@ -136,6 +153,7 @@ static INLINE void pinterp( struct exec_machine *exec,
 static void
 shade_quad( struct quad_stage *qs, struct quad_header *quad )
 {
+   struct quad_shade_stage *qss = quad_shade_stage(qs);
    struct softpipe_context *softpipe = qs->softpipe;
    struct exec_machine exec;
    const GLfloat fx = quad->x0;
@@ -196,7 +214,6 @@ shade_quad( struct quad_stage *qs, struct quad_header *quad )
       struct tgsi_exec_machine machine;
       struct tgsi_exec_vector outputs[FRAG_ATTRIB_MAX + 1];
       struct tgsi_exec_vector *aoutputs;
-      struct tgsi_sampler samplers[8];
       GLuint i;
 
 #if !ALIGNED_ATTRIBS
@@ -208,18 +225,11 @@ shade_quad( struct quad_stage *qs, struct quad_header *quad )
       memset(&machine, 0, sizeof(machine));
 #endif
 
-#if 11 /* temp sampler setup */
-      samplers[0].state = &softpipe->sampler[0];
-      samplers[0].texture = softpipe->texture[0];
-      samplers[0].get_sample = sp_get_sample;
-      samplers[0].pipe = &softpipe->pipe;
-#endif
-
       /* init machine state */
       tgsi_exec_machine_init(
          &machine,
          softpipe->fs.tokens,
-         8, samplers);
+         PIPE_MAX_SAMPLERS, qss->samplers);
 
       /* Consts does not require 16 byte alignment. */
       machine.Consts = softpipe->fs.constants->constant;
@@ -299,13 +309,33 @@ shade_quad( struct quad_stage *qs, struct quad_header *quad )
 }
 
 
+/**
+ * Per-primitive (or per-begin?) setup
+ */
+static void shade_begin(struct quad_stage *qs)
+{
+   struct quad_shade_stage *qss = quad_shade_stage(qs);
+   struct softpipe_context *softpipe = qs->softpipe;
+   GLuint i;
+   for (i = 0; i < PIPE_MAX_SAMPLERS; i++) {
+      qss->samplers[i].state = &softpipe->sampler[i];
+      qss->samplers[i].texture = softpipe->texture[i];
+      qss->samplers[i].get_sample = sp_get_sample;
+      qss->samplers[i].pipe = &softpipe->pipe;
+   }
+
+   if (qs->next->begin)
+      qs->next->begin(qs->next);
+}
+
 
 struct quad_stage *sp_quad_shade_stage( struct softpipe_context *softpipe )
 {
-   struct quad_stage *stage = CALLOC_STRUCT(quad_stage);
+   struct quad_shade_stage *stage = CALLOC_STRUCT(quad_shade_stage);
 
-   stage->softpipe = softpipe;
-   stage->run = shade_quad;
+   stage->stage.softpipe = softpipe;
+   stage->stage.begin = shade_begin;
+   stage->stage.run = shade_quad;
 
-   return stage;
+   return &stage->stage;
 }

@@ -41,6 +41,8 @@ struct quad_stage {
 
    struct quad_stage *next;
 
+   void (*begin)(struct quad_stage *qs);
+
    /** the stage action */
    void (*run)(struct quad_stage *qs, struct quad_header *quad);
 };

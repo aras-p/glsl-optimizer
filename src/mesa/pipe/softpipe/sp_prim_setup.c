@@ -1008,8 +1008,11 @@ setup_point(struct draw_stage *stage, struct prim_header *prim)
 static void setup_begin( struct draw_stage *stage )
 {
    struct setup_stage *setup = setup_stage(stage);
+   struct softpipe_context *sp = setup->softpipe;
 
    setup->quad.nr_attrs = setup->softpipe->nr_frag_attrs;
+
+   sp->quad.first->begin(sp->quad.first);
 }
 
 
