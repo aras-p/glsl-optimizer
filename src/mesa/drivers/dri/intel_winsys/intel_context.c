@@ -372,7 +372,7 @@ intelCreateContext(const __GLcontextModes * mesaVis,
    /*
     * Pipe-related setup
     */
-   if (getenv("INTEL_SOFTPIPE")) {
+   if (!getenv("INTEL_HW")) {
       intel->pipe = intel_create_softpipe( intel );
    }
    else {
