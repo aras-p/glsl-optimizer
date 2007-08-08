@@ -169,6 +169,7 @@ struct pipe_context *i915_create( struct i915_winsys *winsys )
    i915_init_buffer_functions(i915);
    i915_init_region_functions(i915);
    i915_init_surface_functions(i915);
+   i915_init_state_functions(i915);
 
    /*
     * XXX we could plug GL selection/feedback into the drawing pipeline
