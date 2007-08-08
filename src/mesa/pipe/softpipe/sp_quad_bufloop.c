@@ -45,6 +45,13 @@ cbuf_loop_quad(struct quad_stage *qs, struct quad_header *quad)
 }
 
 
+static void cbuf_loop_begin(struct quad_stage *qs)
+{
+   if (qs->next->begin)
+      qs->next->begin(qs->next);
+}
+
+
 /**
  * Create the colorbuffer loop stage.
  * This is used to implement multiple render targets and GL_FRONT_AND_BACK
@@ -55,6 +62,7 @@ struct quad_stage *sp_quad_bufloop_stage( struct softpipe_context *softpipe )
    struct quad_stage *stage = CALLOC_STRUCT(quad_stage);
 
    stage->softpipe = softpipe;
+   stage->begin = cbuf_loop_begin;
    stage->run = cbuf_loop_quad;
 
    return stage;

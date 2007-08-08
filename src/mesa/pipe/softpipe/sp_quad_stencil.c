@@ -275,6 +275,11 @@ stencil_test_quad(struct quad_stage *qs, struct quad_header *quad)
 }
 
 
+static void stencil_begin(struct quad_stage *qs)
+{
+   if (qs->next->begin)
+      qs->next->begin(qs->next);
+}
 
 
 struct quad_stage *sp_quad_stencil_test_stage( struct softpipe_context *softpipe )
@@ -282,6 +287,7 @@ struct quad_stage *sp_quad_stencil_test_stage( struct softpipe_context *softpipe
    struct quad_stage *stage = CALLOC_STRUCT(quad_stage);
 
    stage->softpipe = softpipe;
+   stage->begin = stencil_begin;
    stage->run = stencil_test_quad;
 
    return stage;

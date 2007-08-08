@@ -382,6 +382,11 @@ blend_quad(struct quad_stage *qs, struct quad_header *quad)
 }
 
 
+static void blend_begin(struct quad_stage *qs)
+{
+   if (qs->next->begin)
+      qs->next->begin(qs->next);
+}
 
 
 struct quad_stage *sp_quad_blend_stage( struct softpipe_context *softpipe )
@@ -389,6 +394,7 @@ struct quad_stage *sp_quad_blend_stage( struct softpipe_context *softpipe )
    struct quad_stage *stage = CALLOC_STRUCT(quad_stage);
 
    stage->softpipe = softpipe;
+   stage->begin = blend_begin;
    stage->run = blend_quad;
 
    return stage;

@@ -322,6 +322,7 @@ static void shade_begin(struct quad_stage *qs)
       qss->samplers[i].texture = softpipe->texture[i];
       qss->samplers[i].get_sample = sp_get_sample;
       qss->samplers[i].pipe = &softpipe->pipe;
+      /* init cache info here */
    }
 
    if (qs->next->begin)

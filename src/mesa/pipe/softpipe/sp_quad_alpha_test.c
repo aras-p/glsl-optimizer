@@ -82,12 +82,20 @@ alpha_test_quad(struct quad_stage *qs, struct quad_header *quad)
 }
 
 
+static void alpha_test_begin(struct quad_stage *qs)
+{
+   if (qs->next->begin)
+      qs->next->begin(qs->next);
+}
+
+
 struct quad_stage *
 sp_quad_alpha_test_stage( struct softpipe_context *softpipe )
 {
    struct quad_stage *stage = CALLOC_STRUCT(quad_stage);
 
    stage->softpipe = softpipe;
+   stage->begin = alpha_test_begin;
    stage->run = alpha_test_quad;
 
    return stage;

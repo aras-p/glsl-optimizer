@@ -36,12 +36,20 @@ stipple_quad(struct quad_stage *qs, struct quad_header *quad)
 }
 
 
+static void stipple_begin(struct quad_stage *qs)
+{
+   if (qs->next->begin)
+      qs->next->begin(qs->next);
+}
+
+
 struct quad_stage *
 sp_quad_polygon_stipple_stage( struct softpipe_context *softpipe )
 {
    struct quad_stage *stage = CALLOC_STRUCT(quad_stage);
 
    stage->softpipe = softpipe;
+   stage->begin = stipple_begin;
    stage->run = stipple_quad;
 
    return stage;

@@ -71,6 +71,11 @@ colormask_quad(struct quad_stage *qs, struct quad_header *quad)
 }
 
 
+static void colormask_begin(struct quad_stage *qs)
+{
+   if (qs->next->begin)
+      qs->next->begin(qs->next);
+}
 
 
 struct quad_stage *sp_quad_colormask_stage( struct softpipe_context *softpipe )
@@ -78,6 +83,7 @@ struct quad_stage *sp_quad_colormask_stage( struct softpipe_context *softpipe )
    struct quad_stage *stage = CALLOC_STRUCT(quad_stage);
 
    stage->softpipe = softpipe;
+   stage->begin = colormask_begin;
    stage->run = colormask_quad;
 
    return stage;
