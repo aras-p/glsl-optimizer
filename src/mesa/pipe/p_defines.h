@@ -112,6 +112,19 @@
 #define PIPE_STENCIL_OP_DECR_WRAP  6
 #define PIPE_STENCIL_OP_INVERT     7
 
+/** Texture types */
+#define PIPE_TEXTURE_1D   0
+#define PIPE_TEXTURE_2D   1
+#define PIPE_TEXTURE_3D   2
+#define PIPE_TEXTURE_CUBE 3
+
+#define PIPE_TEX_FACE_POS_X 0
+#define PIPE_TEX_FACE_NEG_X 1
+#define PIPE_TEX_FACE_POS_Y 2
+#define PIPE_TEX_FACE_NEG_Y 3
+#define PIPE_TEX_FACE_POS_Z 4
+#define PIPE_TEX_FACE_NEG_Z 5
+
 #define PIPE_TEX_WRAP_REPEAT                   0
 #define PIPE_TEX_WRAP_CLAMP                    1
 #define PIPE_TEX_WRAP_CLAMP_TO_EDGE            2
@@ -130,6 +143,7 @@
 
 #define PIPE_TEX_COMPARE_NONE          0
 #define PIPE_TEX_COMPARE_R_TO_TEXTURE  1
+
 
 /**
  * Texture/surface image formats (preliminary)
@@ -154,14 +168,6 @@
 #define PIPE_FORMAT_U_S8              17  /**< 8-bit stencil */
 #define PIPE_FORMAT_COUNT             18  /**< number of formats */
 
-
-/**
- * Texture typess
- */
-#define PIPE_TEXTURE_1D   0
-#define PIPE_TEXTURE_2D   1
-#define PIPE_TEXTURE_3D   2
-#define PIPE_TEXTURE_CUBE 3
 
 /**
  * Buffer mapping access modes
