@@ -109,12 +109,12 @@ typedef struct nouveau_context {
 	uint64_t gart_size;
 
 	/* Channel synchronisation */
-	struct drm_nouveau_notifier_alloc *syncNotifier;
+	struct drm_nouveau_notifierobj_alloc *syncNotifier;
 
 	/* ARB_occlusion_query / EXT_timer_query */
 	GLuint		  query_object_max;
 	GLboolean *	  query_alloc;
-	struct drm_nouveau_notifier_alloc *queryNotifier;
+	struct drm_nouveau_notifierobj_alloc *queryNotifier;
 
 	/* Additional hw-specific functions */
 	nouveau_hw_func hw_func;
