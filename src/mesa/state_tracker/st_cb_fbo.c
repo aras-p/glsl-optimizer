@@ -131,6 +131,7 @@ st_renderbuffer_alloc_storage(GLcontext * ctx, struct gl_renderbuffer *rb,
    const struct pipe_format_info *info = pipe_get_format_info(pipeFormat);
    GLuint cpp, pitch;
 
+   assert(info);
    if (!info)
       return GL_FALSE;
 
@@ -147,6 +148,7 @@ st_renderbuffer_alloc_storage(GLcontext * ctx, struct gl_renderbuffer *rb,
 
    if (!strb->surface) {
       strb->surface = pipe->surface_alloc(pipe, pipeFormat);
+      assert(strb->surface);
       if (!strb->surface)
          return GL_FALSE;
    }
