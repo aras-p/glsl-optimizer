@@ -37,6 +37,8 @@
 #include "pipe/tgsi/mesa/mesa_to_tgsi.h"
 #include "pipe/tgsi/core/tgsi_dump.h"
 
+#define TGSI_DEBUG 0
+
 static void compile_fs( struct st_context *st,
 			struct st_fragment_program *fs )
 {
@@ -44,7 +46,8 @@ static void compile_fs( struct st_context *st,
     */
    tgsi_mesa_compile_fp_program( &fs->Base, fs->tokens, ST_FP_MAX_TOKENS );
 
-   tgsi_dump( fs->tokens, TGSI_DUMP_VERBOSE );
+   if (TGSI_DEBUG)
+      tgsi_dump( fs->tokens, TGSI_DUMP_VERBOSE );
 }
 
 
