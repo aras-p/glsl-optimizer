@@ -290,7 +290,6 @@ intelCreateBuffer(__DRIscreenPrivate * driScrnPriv,
       GLenum rgbFormat = (mesaVis->redBits == 5 ? GL_RGB5 : GL_RGBA8);
 
       struct intel_framebuffer *intel_fb = CALLOC_STRUCT(intel_framebuffer);
-
       if (!intel_fb)
 	 return GL_FALSE;
 
@@ -300,14 +299,12 @@ intelCreateBuffer(__DRIscreenPrivate * driScrnPriv,
 	 /* fake frontbuffer */
 	 /* XXX allocation should only happen in the unusual case
             it's actually needed */
-         struct gl_renderbuffer *rb 
-            = st_new_renderbuffer_fb(rgbFormat);
+         struct gl_renderbuffer *rb = st_new_renderbuffer_fb(rgbFormat);
          _mesa_add_renderbuffer(&intel_fb->Base, BUFFER_FRONT_LEFT, rb);
       }
 
       if (mesaVis->doubleBufferMode) {
-         struct gl_renderbuffer *rb 
-            = st_new_renderbuffer_fb(rgbFormat);
+         struct gl_renderbuffer *rb = st_new_renderbuffer_fb(rgbFormat);
          _mesa_add_renderbuffer(&intel_fb->Base, BUFFER_BACK_LEFT, rb);
       }
 
@@ -316,10 +313,8 @@ intelCreateBuffer(__DRIscreenPrivate * driScrnPriv,
          struct gl_renderbuffer *depthStencilRb
             = st_new_renderbuffer_fb(GL_DEPTH24_STENCIL8_EXT);
          /* note: bind RB to two attachment points */
-         _mesa_add_renderbuffer(&intel_fb->Base, BUFFER_DEPTH,
-				depthStencilRb);
-         _mesa_add_renderbuffer(&intel_fb->Base, BUFFER_STENCIL,
-				depthStencilRb);
+         _mesa_add_renderbuffer(&intel_fb->Base, BUFFER_DEPTH, depthStencilRb);
+         _mesa_add_renderbuffer(&intel_fb->Base, BUFFER_STENCIL,depthStencilRb);
       }
       else if (mesaVis->depthBits == 16) {
          /* just 16-bit depth buffer, no hw stencil */
