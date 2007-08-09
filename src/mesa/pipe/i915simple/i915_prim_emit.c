@@ -59,7 +59,7 @@ static INLINE struct setup_stage *setup_stage( struct draw_stage *stage )
    return (struct setup_stage *)stage;
 }
 
-static inline unsigned pack_ub4( unsigned char b0,
+static INLINE unsigned pack_ub4( unsigned char b0,
 				 unsigned char b1,
 				 unsigned char b2,
 				 unsigned char b3 )
@@ -70,7 +70,7 @@ static inline unsigned pack_ub4( unsigned char b0,
 	   (((unsigned int)b3) << 24));
 }
 
-static inline unsigned fui( float f )
+static INLINE unsigned fui( float f )
 {
    union {
       float f;
@@ -81,7 +81,7 @@ static inline unsigned fui( float f )
    return fi.ui;
 }
 
-static inline unsigned char float_to_ubyte( float f )
+static INLINE unsigned char float_to_ubyte( float f )
 {
    unsigned char ub;
    UNCLAMPED_FLOAT_TO_UBYTE(ub, f);
@@ -91,7 +91,7 @@ static inline unsigned char float_to_ubyte( float f )
 
 /* Hardcoded vertex format: xyz/rgba
  */
-static inline void
+static INLINE void
 emit_hw_vertex( struct i915_context *i915,
 		struct vertex_header *vertex )
 {
@@ -99,16 +99,17 @@ emit_hw_vertex( struct i915_context *i915,
    OUT_BATCH( fui(vertex->data[0][1]) );
    OUT_BATCH( fui(vertex->data[0][2]) );
 
-   OUT_BATCH( pack_ub4(float_to_ubyte( vertex->data[1][0] ),
+   /* colors are ARGB (MSB to LSB) */
+   OUT_BATCH( pack_ub4(float_to_ubyte( vertex->data[1][2] ),
 		       float_to_ubyte( vertex->data[1][1] ),
-		       float_to_ubyte( vertex->data[1][2] ),
+		       float_to_ubyte( vertex->data[1][0] ),
 		       float_to_ubyte( vertex->data[1][3] )) );
 }
 		
 		
 
 
-static inline void 
+static INLINE void 
 emit_prim( struct draw_stage *stage, 
 	   struct prim_header *prim,
 	   unsigned hwprim,
