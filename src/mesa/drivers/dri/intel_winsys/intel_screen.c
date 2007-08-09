@@ -78,7 +78,7 @@ intelPrintDRIInfo(intelScreenPrivate * intelScreen,
    fprintf(stderr, "*** Memory : 0x%x\n", gDRIPriv->mem);
 }
 
-
+#if 0
 static void
 intelPrintSAREA(const drmI830Sarea * sarea)
 {
@@ -104,6 +104,7 @@ intelPrintSAREA(const drmI830Sarea * sarea)
            sarea->rotated_offset, sarea->rotated_size);
    fprintf(stderr, "SAREA: rotated pitch: %d\n", sarea->rotated_pitch);
 }
+#endif
 
 
 
