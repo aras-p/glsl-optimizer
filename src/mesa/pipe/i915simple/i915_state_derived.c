@@ -182,5 +182,8 @@ void i915_update_derived( struct i915_context *i915 )
 		      I915_NEW_FRAMEBUFFER))
       compute_cliprect(i915);
 
+   if (i915->dirty)
+      i915->hw_dirty = 1;
+
    i915->dirty = 0;
 }

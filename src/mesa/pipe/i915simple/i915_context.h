@@ -56,6 +56,7 @@ struct i915_context
    struct pipe_mipmap_tree *texture[PIPE_MAX_SAMPLERS];
    struct pipe_viewport_state viewport;
    GLuint dirty;
+   GLuint hw_dirty;
 
    GLuint *batch_start;
 

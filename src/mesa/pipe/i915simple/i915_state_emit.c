@@ -250,5 +250,7 @@ i915_emit_hardware_state(struct i915_context *i915 )
       for (i = 0; i < dwords; i++)
 	 OUT_BATCH( prog[i] );
    }
+
+   i915->hw_dirty = 0;
 }
 
