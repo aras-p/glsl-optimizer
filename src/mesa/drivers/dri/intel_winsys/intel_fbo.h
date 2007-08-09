@@ -77,6 +77,7 @@ struct intel_renderbuffer
 {
    struct gl_renderbuffer Base;
    struct pipe_region *region;
+#if 0
    void *pfMap;                 /* possibly paged flipped map pointer */
    GLuint pfPitch;              /* possibly paged flipped pitch */
    GLboolean RenderToTexture;   /* RTT? */
@@ -85,6 +86,7 @@ struct intel_renderbuffer
    GLuint PairedStencil; /**< only used if this is a stencil renderbuffer */
 
    GLuint pf_pending;  /**< sequence number of pending flip */
+#endif
 
    GLuint vbl_pending;   /**< vblank sequence number of pending flip */
 

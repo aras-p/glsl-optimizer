@@ -41,6 +41,7 @@
 
 #include "pipe/p_context.h"
 
+
 /* This block can be removed when libdrm >= 2.3.1 is required */
 
 #ifndef DRM_VBLANK_FLIP
@@ -275,6 +276,7 @@ intelWindowMoved(struct intel_context *intel)
 
 
 /* Emit wait for pending flips */
+#if 0
 void
 intel_wait_flips(struct intel_context *intel, GLuint batch_flags)
 {
@@ -301,6 +303,7 @@ intel_wait_flips(struct intel_context *intel, GLuint batch_flags)
       intel_rb->pf_pending--;
    }
 }
+#endif
 
 #if 0
 /* Flip the front & back buffers

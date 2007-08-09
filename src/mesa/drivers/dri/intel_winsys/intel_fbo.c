@@ -148,10 +148,11 @@ intel_delete_renderbuffer(struct gl_renderbuffer *rb)
 
    DBG("freeing renderbuffer\n");
 
+#if 0
    if (irb->PairedStencil || irb->PairedDepth) {
       intel_unpair_depth_stencil(ctx, irb);
    }
-
+#endif
    if (intel && irb->region) {
       intel->pipe->region_release(intel->pipe, &irb->region);
    }
@@ -511,7 +512,9 @@ intel_wrap_texture(GLcontext * ctx, struct gl_texture_image *texImage)
 
 //   intel_set_span_functions(&irb->Base);
 
+#if 0
    irb->RenderToTexture = GL_TRUE;
+#endif
 
    return irb;
 }

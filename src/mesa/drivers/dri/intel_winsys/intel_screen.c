@@ -46,6 +46,7 @@
 #include "dri_bufpool.h"
 
 #include "pipe/p_context.h"
+#include "state_tracker/st_cb_fbo.h"
 
 
 
@@ -308,10 +309,17 @@ intelCreateBuffer(__DRIscreenPrivate * driScrnPriv,
       }
 
       if (mesaVis->doubleBufferMode) {
+#if 01
          intel_fb->color_rb[1]
             = intel_new_renderbuffer_fb(rgbFormat);
          _mesa_add_renderbuffer(&intel_fb->Base, BUFFER_BACK_LEFT,
 				&intel_fb->color_rb[1]->Base);
+#else
+         intel_fb->color_rb[1]
+            = st_new_renderbuffer_fb(rgbFormat);
+         _mesa_add_renderbuffer(&intel_fb->Base, BUFFER_BACK_LEFT,
+				&intel_fb->color_rb[1]->Base);
+#endif
       }
 
       if (mesaVis->depthBits == 24 && mesaVis->stencilBits == 8) {
