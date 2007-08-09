@@ -98,7 +98,7 @@ i915_supported_formats(struct pipe_context *pipe,
       PIPE_FORMAT_U_R5_G6_B5,
       PIPE_FORMAT_S8_Z24,
    };
-   *numFormats = 2;
+   *numFormats = 3;
    return render_supported;
 #endif
 }
