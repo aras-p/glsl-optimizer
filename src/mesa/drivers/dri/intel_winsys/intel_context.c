@@ -28,15 +28,9 @@
 
 #include "glheader.h"
 #include "context.h"
-#include "matrix.h"
-#include "simple_list.h"
 #include "extensions.h"
-#include "framebuffer.h"
-#include "imports.h"
-#include "points.h"
 
 #include "tnl/tnl.h"
-
 #include "tnl/t_pipeline.h"
 #include "tnl/t_vertex.h"
 

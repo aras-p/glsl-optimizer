@@ -35,7 +35,6 @@
 #include "context.h"
 #include "utils.h"
 #include "drirenderbuffer.h"
-#include "framebuffer.h"
 #include "vblank.h"
 
 #include "pipe/p_context.h"
