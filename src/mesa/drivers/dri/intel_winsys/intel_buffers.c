@@ -102,7 +102,7 @@ intel_drawbuf_region(struct intel_context *intel)
    struct intel_renderbuffer *irbColor =
       intel_renderbuffer(intel->ctx.DrawBuffer->_ColorDrawBuffers[0][0]);
    if (irbColor)
-      return irbColor->region;
+      return irbColor->Base.surface->region;
    else
       return NULL;
 }
@@ -116,7 +116,7 @@ intel_readbuf_region(struct intel_context *intel)
    struct intel_renderbuffer *irb
       = intel_renderbuffer(intel->ctx.ReadBuffer->_ColorReadBuffer);
    if (irb)
-      return irb->region;
+      return irb->Base.surface->region;
    else
       return NULL;
 }

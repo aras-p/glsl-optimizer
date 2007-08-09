@@ -78,8 +78,9 @@ struct intel_framebuffer
 struct intel_renderbuffer
 {
    struct gl_renderbuffer Base;
-   struct pipe_region *region;
 #if 0
+   struct pipe_region *region;
+
    void *pfMap;                 /* possibly paged flipped map pointer */
    GLuint pfPitch;              /* possibly paged flipped pitch */
    GLboolean RenderToTexture;   /* RTT? */
@@ -90,9 +91,9 @@ struct intel_renderbuffer
    GLuint pf_pending;  /**< sequence number of pending flip */
 
    GLuint vbl_pending;   /**< vblank sequence number of pending flip */
-#endif
 
    struct intel_surface *surface;
+#endif
 };
 
 #if 0

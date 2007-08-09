@@ -117,7 +117,7 @@ intel_get_rb_region(struct gl_framebuffer *fb, GLuint attIndex)
    struct intel_renderbuffer *irb = intel_get_renderbuffer(fb, attIndex);
 
    if (irb)
-      return irb->region;
+      return irb->Base.surface->region;
    else
       return NULL;
 }
@@ -153,8 +153,8 @@ intel_delete_renderbuffer(struct gl_renderbuffer *rb)
       intel_unpair_depth_stencil(ctx, irb);
    }
 #endif
-   if (intel && irb->region) {
-      intel->pipe->region_release(intel->pipe, &irb->region);
+   if (intel && irb->Base.surface->region) {
+      intel->pipe->region_release(intel->pipe, &irb->Base.surface->region);
    }
 
    _mesa_free(irb);
@@ -265,8 +265,8 @@ intel_alloc_renderbuffer_storage(GLcontext * ctx, struct gl_renderbuffer *rb,
    intelFlush(ctx);
 
    /* free old region */
-   if (irb->region) {
-      intel->pipe->region_release(intel->pipe, &irb->region);
+   if (irb->Base.surface->region) {
+      intel->pipe->region_release(intel->pipe, &irb->Base.surface->region);
    }
 
    /* allocate new memory region/renderbuffer */
@@ -283,11 +283,11 @@ intel_alloc_renderbuffer_storage(GLcontext * ctx, struct gl_renderbuffer *rb,
       DBG("Allocating %d x %d Intel RBO (pitch %d)\n", width,
 	  height, pitch);
 
-      irb->region = intel->pipe->region_alloc(intel->pipe, cpp, pitch, height);
-      if (!irb->region)
+      irb->Base.surface->region = intel->pipe->region_alloc(intel->pipe, cpp, pitch, height);
+      if (!irb->Base.surface->region)
          return GL_FALSE;       /* out of memory? */
 
-      ASSERT(irb->region->buffer);
+      ASSERT(irb->Base.surface->region->buffer);
 
       rb->Width = width;
       rb->Height = height;
@@ -295,7 +295,7 @@ intel_alloc_renderbuffer_storage(GLcontext * ctx, struct gl_renderbuffer *rb,
       /* update the surface's size too */
       rb->surface->width = width;
       rb->surface->height = height;
-      rb->surface->region = irb->region;
+      rb->surface->region = irb->Base.surface->region;/*XXX no-op*/
 
       /* This sets the Get/PutRow/Value functions */
       //     intel_set_span_functions(&irb->Base);
@@ -605,7 +605,7 @@ intel_finish_render_texture(GLcontext * ctx,
 
    if (irb) {
       /* just release the region */
-      intel->pipe->region_release(intel->pipe, &irb->region);
+      intel->pipe->region_release(intel->pipe, &irb->Base.surface->region);
    }
    else if (att->Renderbuffer) {
       /* software fallback */
