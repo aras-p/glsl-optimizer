@@ -69,26 +69,48 @@ gl_wrap_to_sp(GLenum wrap)
 
 
 static GLuint
-gl_filter_to_sp(GLenum filter)
+gl_filter_to_mip_filter(GLenum filter)
 {
    switch (filter) {
    case GL_NEAREST:
-      return PIPE_TEX_FILTER_NEAREST;
    case GL_LINEAR:
-      return PIPE_TEX_FILTER_LINEAR;
+      return PIPE_TEX_MIPFILTER_NONE;
+
    case GL_NEAREST_MIPMAP_NEAREST:
-      return PIPE_TEX_FILTER_NEAREST_MIPMAP_NEAREST;
-   case GL_NEAREST_MIPMAP_LINEAR:
-      return PIPE_TEX_FILTER_NEAREST_MIPMAP_LINEAR;
    case GL_LINEAR_MIPMAP_NEAREST:
-      return PIPE_TEX_FILTER_LINEAR_MIPMAP_NEAREST;
+      return PIPE_TEX_MIPFILTER_NEAREST;
+
+   case GL_NEAREST_MIPMAP_LINEAR:
    case GL_LINEAR_MIPMAP_LINEAR:
-      return PIPE_TEX_FILTER_LINEAR_MIPMAP_LINEAR;
+      return PIPE_TEX_MIPFILTER_LINEAR;
+
    default:
-      abort();
-      return 0;
+      assert(0);
+      return PIPE_TEX_MIPFILTER_NONE;
    }
 }
+
+
+static GLuint
+gl_filter_to_img_filter(GLenum filter)
+{
+   switch (filter) {
+   case GL_NEAREST:
+   case GL_NEAREST_MIPMAP_NEAREST:
+   case GL_NEAREST_MIPMAP_LINEAR:
+      return PIPE_TEX_FILTER_NEAREST;
+
+   case GL_LINEAR:
+   case GL_LINEAR_MIPMAP_NEAREST:
+   case GL_LINEAR_MIPMAP_LINEAR:
+      return PIPE_TEX_FILTER_LINEAR;
+
+   default:
+      assert(0);
+      return PIPE_TEX_FILTER_NEAREST;
+   }
+}
+
 
 
 static void 
@@ -108,12 +130,14 @@ update_samplers(struct st_context *st)
          sampler.wrap_t = gl_wrap_to_sp(texobj->WrapT);
          sampler.wrap_r = gl_wrap_to_sp(texobj->WrapR);
 
-         sampler.min_filter = gl_filter_to_sp(texobj->MinFilter);
-         sampler.mag_filter = gl_filter_to_sp(texobj->MagFilter);
+         sampler.min_img_filter = gl_filter_to_img_filter(texobj->MinFilter);
+         sampler.min_mip_filter = gl_filter_to_mip_filter(texobj->MinFilter);
+         sampler.mag_img_filter = gl_filter_to_img_filter(texobj->MagFilter);
 
          sampler.lod_bias = st->ctx->Texture.Unit[u].LodBias;
          sampler.min_lod = texobj->MinLod;
          sampler.max_lod = texobj->MaxLod;
+	 sampler.max_anisotropy = texobj->MaxAnisotropy;
 
          /* XXX more sampler state here */
       }

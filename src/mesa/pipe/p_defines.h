@@ -134,12 +134,18 @@
 #define PIPE_TEX_WRAP_MIRROR_CLAMP_TO_EDGE     6
 #define PIPE_TEX_WRAP_MIRROR_CLAMP_TO_BORDER   7
 
-#define PIPE_TEX_FILTER_NEAREST                0
-#define PIPE_TEX_FILTER_LINEAR                 1
-#define PIPE_TEX_FILTER_NEAREST_MIPMAP_NEAREST 2
-#define PIPE_TEX_FILTER_NEAREST_MIPMAP_LINEAR  3
-#define PIPE_TEX_FILTER_LINEAR_MIPMAP_NEAREST  4
-#define PIPE_TEX_FILTER_LINEAR_MIPMAP_LINEAR   5
+/* Between mipmaps, ie mipfilter
+ */
+#define PIPE_TEX_MIPFILTER_NEAREST  0
+#define PIPE_TEX_MIPFILTER_LINEAR   1
+#define PIPE_TEX_MIPFILTER_NONE     2
+
+/* Within a mipmap, ie min/mag filter 
+ */
+#define PIPE_TEX_FILTER_NEAREST      0
+#define PIPE_TEX_FILTER_LINEAR       1
+//#define PIPE_TEX_FILTER_ANISO        2
+
 
 #define PIPE_TEX_COMPARE_NONE          0
 #define PIPE_TEX_COMPARE_R_TO_TEXTURE  1

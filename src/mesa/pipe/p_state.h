@@ -213,8 +213,9 @@ struct pipe_sampler_state
    GLuint wrap_s:3;        /**< PIPE_TEX_WRAP_x */
    GLuint wrap_t:3;        /**< PIPE_TEX_WRAP_x */
    GLuint wrap_r:3;        /**< PIPE_TEX_WRAP_x */
-   GLuint min_filter:3;    /**< PIPE_TEX_FILTER_x */
-   GLuint mag_filter:1;    /**< PIPE_TEX_FILTER_LINEAR or _NEAREST */
+   GLuint min_img_filter:2;    /**< PIPE_TEX_FILTER_x */
+   GLuint min_mip_filter:2;    /**< PIPE_TEX_MIPFILTER_x */
+   GLuint mag_img_filter:2;    /**< PIPE_TEX_FILTER_x */
    GLuint compare:1;       /**< shadow/depth compare enabled? */
    GLenum compare_mode:1;  /**< PIPE_TEX_COMPARE_x */
    GLenum compare_func:3;  /**< PIPE_FUNC_x */

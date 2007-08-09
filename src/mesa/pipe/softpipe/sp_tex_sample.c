@@ -417,7 +417,7 @@ sp_get_sample_1d(struct tgsi_sampler *sampler,
    struct pipe_surface *ps
       = pipe->get_tex_surface(pipe, sampler->texture, 0, 0, 0);
 
-   switch (sampler->state->min_filter) {
+   switch (sampler->state->min_img_filter) {
    case PIPE_TEX_FILTER_NEAREST:
       {
          GLint x;
@@ -450,9 +450,7 @@ sp_get_sample_1d(struct tgsi_sampler *sampler,
 static GLuint
 choose_mipmap_level(struct tgsi_sampler *sampler, GLfloat lambda)
 {
-   if (sampler->state->min_filter == sampler->state->mag_filter) {
-      assert(sampler->state->min_filter == PIPE_TEX_FILTER_LINEAR ||
-	     sampler->state->min_filter == PIPE_TEX_FILTER_NEAREST);
+   if (sampler->state->min_mip_filter == PIPE_TEX_MIPFILTER_NONE) {
       return 0;
    }
    else {
@@ -485,15 +483,14 @@ sp_get_sample_2d(struct tgsi_sampler *sampler,
    GLint level0;
 
    if (lambda < 0.0)
-      filter = sampler->state->mag_filter;
+      filter = sampler->state->mag_img_filter;
    else
-      filter = sampler->state->min_filter;
+      filter = sampler->state->min_img_filter;
 
    level0 = choose_mipmap_level(sampler, lambda);
 
    switch (filter) {
    case PIPE_TEX_FILTER_NEAREST:
-   case PIPE_TEX_FILTER_NEAREST_MIPMAP_NEAREST:
       {
          GLint x = nearest_texcoord(sampler->state->wrap_s, strq[0],
                                     sampler->texture->level[level0].width);
