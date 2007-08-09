@@ -351,60 +351,7 @@ intelCreateContext(const __GLcontextModes * mesaVis,
    /* Initialize the software rasterizer and helper modules. */
    _vbo_CreateContext(ctx);
    _tnl_CreateContext(ctx);
-#if 0
-   /*
-    * Pipe-related setup
-    */
-   if (!getenv("INTEL_HW")) {
-      intel->pipe = intel_create_softpipe( intel );
-      intel->pipe->surface_alloc = intel_new_surface;
-      intel->pipe->supported_formats = intel_supported_formats;
-   }
-   else {
-      switch (intel->intelScreen->deviceID) {
-      case PCI_CHIP_I945_G:
-      case PCI_CHIP_I945_GM:
-      case PCI_CHIP_I945_GME:
-      case PCI_CHIP_G33_G:
-      case PCI_CHIP_Q33_G:
-      case PCI_CHIP_Q35_G:
-      case PCI_CHIP_I915_G:
-      case PCI_CHIP_I915_GM:
-	 intel->pipe = intel_create_i915simple( intel );
-	 break;
-      default:
-	 _mesa_printf("Unknown PCIID %x in %s, using software driver\n", 
-		      intel->intelScreen->deviceID, __FUNCTION__);
 
-	 intel->pipe = intel_create_softpipe( intel );
-	 break;
-      }
-   }
-
-   st_create_context( &intel->ctx, intel->pipe ); 
-
-
-   /* TODO: Push this down into the pipe driver:
-    */
-   switch (intel->intelScreen->deviceID) {
-   case PCI_CHIP_I945_G:
-   case PCI_CHIP_I945_GM:
-   case PCI_CHIP_I945_GME:
-   case PCI_CHIP_G33_G:
-   case PCI_CHIP_Q33_G:
-   case PCI_CHIP_Q35_G:
-      intel->pipe->mipmap_tree_layout = i945_miptree_layout;
-      break;
-   case PCI_CHIP_I915_G:
-   case PCI_CHIP_I915_GM:
-   case PCI_CHIP_I830_M:
-   case PCI_CHIP_I855_GM:
-   case PCI_CHIP_I865_G:
-      intel->pipe->mipmap_tree_layout = i915_miptree_layout;
-   default:
-      assert(0); /*FIX*/
-   }
-#endif
 
    /*
     * memory pools
@@ -424,7 +371,6 @@ intelCreateContext(const __GLcontextModes * mesaVis,
    TNL_CONTEXT(ctx)->Driver.RunPipeline = _tnl_run_pipeline;
 
 
-
    fthrottle_mode = driQueryOptioni(&intel->optionCache, "fthrottle_mode");
    intel->iw.irq_seq = -1;
    intel->irqsEmitted = 0;
@@ -441,10 +387,6 @@ intelCreateContext(const __GLcontextModes * mesaVis,
    intel->last_swap_fence = NULL;
    intel->first_swap_fence = NULL;
 
-#if 00
-   intel_fbo_init(intel);
-#endif
-
    if (intel->ctx.Mesa_DXTn) {
       _mesa_enable_extension(ctx, "GL_EXT_texture_compression_s3tc");
       _mesa_enable_extension(ctx, "GL_S3_s3tc");
@@ -456,8 +398,6 @@ intelCreateContext(const __GLcontextModes * mesaVis,
 #if DO_DEBUG
    INTEL_DEBUG = driParseDebugString(getenv("INTEL_DEBUG"), debug_control);
 #endif
-
-
 
 
    /*
@@ -512,7 +452,6 @@ intelCreateContext(const __GLcontextModes * mesaVis,
    default:
       assert(0); /*FIX*/
    }
-
 
    return GL_TRUE;
 }
@@ -710,24 +649,13 @@ void LOCK_HARDWARE( struct intel_context *intel )
 {
     char __ret=0;
     struct intel_framebuffer *intel_fb = NULL;
-#if 0
-    struct intel_renderbuffer *intel_rb = NULL;
-#else
     int curbuf;
-#endif
+
     _glthread_LOCK_MUTEX(lockMutex);
     assert(!intel->locked);
 
     if (intel->driDrawable) {
        intel_fb = intel->driDrawable->driverPrivate;
-#if 0
-       if (intel_fb)
-	  intel_rb =
-	     intel_get_renderbuffer(&intel_fb->Base,
-				    intel_fb->Base._ColorDrawBufferMask[0] ==
-				    BUFFER_BIT_FRONT_LEFT ? BUFFER_FRONT_LEFT :
-				    BUFFER_BACK_LEFT);
-#endif
     }
 
     curbuf = 0; /* current draw buf: 0 = front, 1 = back */
@@ -735,24 +663,24 @@ void LOCK_HARDWARE( struct intel_context *intel )
     if (intel_fb && intel_fb->vblank_flags &&
 	!(intel_fb->vblank_flags & VBLANK_FLAG_NO_IRQ) &&
 	(intel_fb->vbl_waited - intel_fb->vbl_pending[curbuf]) > (1<<23)) {
-	drmVBlank vbl;
+       drmVBlank vbl;
 
-	vbl.request.type = DRM_VBLANK_ABSOLUTE;
+       vbl.request.type = DRM_VBLANK_ABSOLUTE;
 
-	if ( intel_fb->vblank_flags & VBLANK_FLAG_SECONDARY ) {
-	    vbl.request.type |= DRM_VBLANK_SECONDARY;
-	}
+       if ( intel_fb->vblank_flags & VBLANK_FLAG_SECONDARY ) {
+          vbl.request.type |= DRM_VBLANK_SECONDARY;
+       }
 
-	vbl.request.sequence = intel_fb->vbl_pending[curbuf];
-	drmWaitVBlank(intel->driFd, &vbl);
-	intel_fb->vbl_waited = vbl.reply.sequence;
+       vbl.request.sequence = intel_fb->vbl_pending[curbuf];
+       drmWaitVBlank(intel->driFd, &vbl);
+       intel_fb->vbl_waited = vbl.reply.sequence;
     }
 
     DRM_CAS(intel->driHwLock, intel->hHWContext,
-        (DRM_LOCK_HELD|intel->hHWContext), __ret);
+            (DRM_LOCK_HELD|intel->hHWContext), __ret);
 
     if (__ret)
-        intelContendedLock( intel, 0 );
+       intelContendedLock( intel, 0 );
 
     if (INTEL_DEBUG & DEBUG_LOCK)
       _mesa_printf("%s - locked\n", __progname);
