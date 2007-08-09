@@ -112,6 +112,7 @@ intel_flip_renderbuffers(struct intel_framebuffer *intel_fb)
 #endif
 
 
+#if 0
 struct pipe_region *
 intel_get_rb_region(struct gl_framebuffer *fb, GLuint attIndex)
 {
@@ -122,7 +123,7 @@ intel_get_rb_region(struct gl_framebuffer *fb, GLuint attIndex)
    else
       return NULL;
 }
-
+#endif
 
 
 /**
@@ -331,6 +332,8 @@ intel_resize_buffers(GLcontext *ctx, struct gl_framebuffer *fb,
 	 rb->AllocStorage(ctx, rb, rb->InternalFormat, width, height);
       }
    }
+#else
+
 #endif
 }
 
