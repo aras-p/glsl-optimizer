@@ -217,7 +217,11 @@ a8r8g8b8_get_tile(struct pipe_surface *ps,
 
 
 
-
+/**
+ * Create a new surface of the specified format.
+ * This also plugs in the quad/tile read/write functions that
+ * will be used to access the buffer for rendering/texturing/etc.
+ */
 struct pipe_surface *
 intel_new_surface(struct pipe_context *pipe, GLuint pipeFormat)
 {
@@ -225,7 +229,7 @@ intel_new_surface(struct pipe_context *pipe, GLuint pipeFormat)
    if (!sps)
       return NULL;
 
-   sps->surface.width = 0; /* set in intel_alloc_renderbuffer_storage() */
+   sps->surface.width = 0; /* set by renderbuffer::AllocStorage() */
    sps->surface.height = 0;
    sps->surface.refcount = 1;
    sps->surface.format = pipeFormat;
@@ -246,13 +250,17 @@ intel_new_surface(struct pipe_context *pipe, GLuint pipeFormat)
       sps->read_quad_stencil = read_quad_stencil;
       sps->write_quad_stencil = write_quad_stencil;
       break;
+   default:
+      assert(0);
    }
 
    return &sps->surface;
 }
 
 
-
+/**
+ * Return list of surface formats supported by this driver.
+ */
 const GLuint *
 intel_supported_formats(struct pipe_context *pipe, GLuint *numFormats)
 {
