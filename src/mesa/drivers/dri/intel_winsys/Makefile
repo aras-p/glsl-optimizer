@@ -24,9 +24,6 @@ DRIVER_SOURCES = \
 	intel_surface.c \
 	intel_batchpool.c
 
-UNUSED =	intel_depthstencil.c \
-	intel_fbo.c 
-
 C_SOURCES = \
 	$(COMMON_SOURCES) \
 	$(COMMON_BM_SOURCES) \
