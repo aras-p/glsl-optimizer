@@ -216,7 +216,6 @@ static const struct dri_debug_control debug_control[] = {
    {"ioctl", DEBUG_IOCTL},
    {"blit", DEBUG_BLIT},
    {"mip", DEBUG_MIPTREE},
-   {"fall", DEBUG_FALLBACKS},
    {"verb", DEBUG_VERBOSE},
    {"bat", DEBUG_BATCH},
    {"pix", DEBUG_PIXEL},

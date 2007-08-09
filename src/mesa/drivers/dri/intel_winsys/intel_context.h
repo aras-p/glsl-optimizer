@@ -121,7 +121,6 @@ extern int INTEL_DEBUG;
 #define DEBUG_IOCTL	0x4
 #define DEBUG_BLIT	0x8
 #define DEBUG_MIPTREE   0x10
-#define DEBUG_FALLBACKS	0x20
 #define DEBUG_VERBOSE	0x40
 #define DEBUG_BATCH     0x80
 #define DEBUG_PIXEL     0x100
@@ -155,8 +154,6 @@ extern void intelGetLock(struct intel_context *intel, GLuint flags);
 
 extern void intelFinish(GLcontext * ctx);
 extern void intelFlush(GLcontext * ctx);
-
-#define FALLBACK( ctx, bit, mode ) 
 
 /*======================================================================
  * Inline conversion functions.  
