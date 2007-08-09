@@ -183,7 +183,12 @@ void i915_update_derived( struct i915_context *i915 )
       compute_cliprect(i915);
 
    if (i915->dirty)
-      i915->hw_dirty = 1;
+      i915_update_immediate( i915 );
+
+   /* HW emit currently references framebuffer state directly:
+    */
+   if (i915->dirty & I915_NEW_FRAMEBUFFER)
+      i915->hardware_dirty = 1;
 
    i915->dirty = 0;
 }

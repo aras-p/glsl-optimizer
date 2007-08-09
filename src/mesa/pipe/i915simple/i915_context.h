@@ -32,6 +32,63 @@
 #include "pipe/p_context.h"
 #include "pipe/p_state.h"
 
+
+
+#define I915_TEX_UNITS 8
+
+#define I915_DYNAMIC_MODES4       0
+#define I915_DYNAMIC_DEPTHSCALE_0 1 /* just the header */
+#define I915_DYNAMIC_DEPTHSCALE_1 2 
+#define I915_DYNAMIC_IAB          3
+#define I915_DYNAMIC_BC_0         4 /* just the header */
+#define I915_DYNAMIC_BC_1         5
+#define I915_DYNAMIC_BFO_0        6 
+#define I915_DYNAMIC_BFO_1        7
+#define I915_DYNAMIC_STP_0        8 
+#define I915_DYNAMIC_STP_1        9 
+#define I915_DYNAMIC_SC_0         10 
+#define I915_DYNAMIC_SC_1         11 
+#define I915_DYNAMIC_SC_2         12 
+#define I915_DYNAMIC_SC_3         13 
+#define I915_MAX_DYNAMIC          14
+
+
+#define I915_IMMEDIATE_S0         0
+#define I915_IMMEDIATE_S1         1
+#define I915_IMMEDIATE_S2         2
+#define I915_IMMEDIATE_S3         3
+#define I915_IMMEDIATE_S4         4
+#define I915_IMMEDIATE_S5         5
+#define I915_IMMEDIATE_S6         6
+#define I915_IMMEDIATE_S7         7
+#define I915_MAX_IMMEDIATE        8
+
+/* These must mach the order of LI0_STATE_* bits, as they will be used
+ * to generate hardware packets:
+ */
+#define I915_CACHE_STATIC         0 
+#define I915_CACHE_DYNAMIC        1 /* handled specially */
+#define I915_CACHE_SAMPLER        2
+#define I915_CACHE_MAP            3
+#define I915_CACHE_PROGRAM        4
+#define I915_CACHE_CONSTANTS      5
+#define I915_MAX_CACHE            6
+
+
+struct i915_cache_context;
+
+/* Use to calculate differences between state emitted to hardware and
+ * current driver-calculated state.  
+ */
+struct i915_state 
+{
+   GLuint immediate[I915_MAX_IMMEDIATE];
+   
+   GLuint id;			/* track lost context events */
+};
+
+
+
 struct i915_context
 {
    struct pipe_context pipe; 
@@ -56,13 +113,19 @@ struct i915_context
    struct pipe_mipmap_tree *texture[PIPE_MAX_SAMPLERS];
    struct pipe_viewport_state viewport;
    GLuint dirty;
-   GLuint hw_dirty;
 
    GLuint *batch_start;
+
+   struct i915_state current;
+   GLuint hardware_dirty;
+   
+
 
    struct pipe_scissor_state cliprect;
 };
 
+/* A flag for each state_tracker state object:
+ */
 #define I915_NEW_VIEWPORT      0x1
 #define I915_NEW_SETUP         0x2
 #define I915_NEW_FS            0x4
@@ -76,6 +139,16 @@ struct i915_context
 #define I915_NEW_SAMPLER     0x400
 #define I915_NEW_TEXTURE     0x800
 #define I915_NEW_STENCIL    0x1000
+
+/* Driver's internally generated state flags:
+ */
+#define I915_NEW_VERTEX_FORMAT    0x10000
+
+
+/* Dirty flags for hardware emit
+ */
+#define I915_HW_INDIRECT          (1<<0)
+#define I915_HW_IMMEDIATE         (1<<1)
 
 
 /***********************************************************************

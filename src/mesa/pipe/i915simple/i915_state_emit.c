@@ -151,10 +151,10 @@ i915_emit_hardware_state(struct i915_context *i915 )
 		I1_LOAD_S(6) | 
 		(3));
       
-      OUT_BATCH(0xffffffff);
-      OUT_BATCH(0x00902440); //      OUT_BATCH(S4_VFMT_XYZ | S4_VFMT_COLOR);
-      OUT_BATCH(0x00000002);
-      OUT_BATCH(0x00020216); // OUT_BATCH( S6_COLOR_WRITE_ENABLE | (2 << S6_TRISTRIP_PV_SHIFT));
+      OUT_BATCH(i915->current.immediate[I915_IMMEDIATE_S2]);
+      OUT_BATCH(i915->current.immediate[I915_IMMEDIATE_S4]);
+      OUT_BATCH(i915->current.immediate[I915_IMMEDIATE_S5]);
+      OUT_BATCH(i915->current.immediate[I915_IMMEDIATE_S6]);
    }
 
    {
@@ -264,6 +264,6 @@ i915_emit_hardware_state(struct i915_context *i915 )
    }
 
 
-   i915->hw_dirty = 0;
+   i915->hardware_dirty = 0;
 }
 

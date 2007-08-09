@@ -123,7 +123,7 @@ emit_prim( struct draw_stage *stage,
    if (i915->dirty)
       i915_update_derived( i915 );
 
-   if (i915->hw_dirty)
+   if (i915->hardware_dirty)
       i915_emit_hardware_state( i915 );
 
    ptr = winsys->batch_start( winsys, nr * vertex_size, 0 );
