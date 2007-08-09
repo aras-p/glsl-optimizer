@@ -72,9 +72,9 @@ intel_dump_batchbuffer(GLuint offset, GLuint * ptr, GLuint count)
 {
    int i;
    fprintf(stderr, "\n\n\nSTART BATCH (%d dwords):\n", count / 4);
-   for (i = 0; i < count / 4; i += 4)
-      fprintf(stderr, "0x%x:\t0x%08x 0x%08x 0x%08x 0x%08x\n",
-              offset + i * 4, ptr[i], ptr[i + 1], ptr[i + 2], ptr[i + 3]);
+   for (i = 0; i < count / 4; i += 1)
+      fprintf(stderr, "\t0x%08x\n",
+              ptr[i]);
    fprintf(stderr, "END BATCH\n\n\n");
 }
 
@@ -83,6 +83,12 @@ intel_batchbuffer_reset(struct intel_batchbuffer *batch)
 {
 
    int i;
+
+   if (batch->map) {
+      driBOUnmap(batch->buffer);
+      batch->map = NULL;
+   }
+
 
    /*
     * Get a new, free batchbuffer.

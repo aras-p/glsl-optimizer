@@ -171,8 +171,7 @@ static unsigned *intel_i915_batch_start( struct i915_winsys *sws,
    if (intel_batchbuffer_space( intel->batch ) >= dwords * 4) {
       /* XXX: Hmm, the driver can't really do much with this pointer: 
        */
-      //return intel->batch->ptr;	
-      return (unsigned *)~0;
+      return intel->batch->ptr;	
    }
    else 
       return NULL;
@@ -210,12 +209,6 @@ static void intel_i915_batch_reloc( struct i915_winsys *sws,
 				 delta );
 }
 
-static void intel_i915_batch_flush( struct i915_winsys *sws )
-{
-   struct intel_context *intel = intel_i915_winsys(sws)->intel;
-
-   intel_batchbuffer_flush( intel->batch );
-}
 
 static void intel_i915_batch_wait_idle( struct i915_winsys *sws )
 {
@@ -228,6 +221,18 @@ static void intel_i915_batch_wait_idle( struct i915_winsys *sws )
       intel->batch->last_fence = NULL;
    }
 }
+
+
+static void intel_i915_batch_flush( struct i915_winsys *sws )
+{
+   struct intel_context *intel = intel_i915_winsys(sws)->intel;
+
+   _mesa_printf("%s: start\n");
+   intel_batchbuffer_flush( intel->batch );
+   intel_i915_batch_wait_idle( sws );
+   _mesa_printf("%s: done\n");
+}
+
 
 struct pipe_context *
 intel_create_i915simple( struct intel_context *intel )
