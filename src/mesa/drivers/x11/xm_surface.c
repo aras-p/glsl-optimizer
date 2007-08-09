@@ -45,14 +45,21 @@
 #include "pipe/p_context.h"
 #include "pipe/p_defines.h"
 #include "pipe/softpipe/sp_context.h"
-#include "pipe/softpipe/sp_surface.h"
 #include "state_tracker/st_context.h"
+
+
+static INLINE struct xmesa_surface *
+xmesa_surf(struct softpipe_surface *sps)
+{
+   return (struct xmesa_surface *) sps;
+}
 
 
 static INLINE struct xmesa_renderbuffer *
 xmesa_rb(struct softpipe_surface *sps)
 {
-   return (struct xmesa_renderbuffer *) sps->surface.rb;
+   struct xmesa_surface *xms = xmesa_surf(sps);
+   return xms->xrb;
 }
 
 
@@ -66,13 +73,14 @@ static void
 read_quad_f(struct softpipe_surface *sps, GLint x, GLint y,
             GLfloat (*rgba)[NUM_CHANNELS])
 {
+   struct xmesa_surface *xms = xmesa_surf(sps);
    struct xmesa_renderbuffer *xrb = xmesa_rb(sps);
    GLubyte temp[16];
    GLfloat *dst = (GLfloat *) rgba;
    GLuint i;
    GET_CURRENT_CONTEXT(ctx);
-   xrb->Base.GetRow(ctx, &xrb->Base, 2, x, y,     temp);
-   xrb->Base.GetRow(ctx, &xrb->Base, 2, x, y + 1, temp + 8);
+   xrb->St.Base.GetRow(ctx, &xrb->St.Base, 2, x, y,     temp);
+   xrb->St.Base.GetRow(ctx, &xrb->St.Base, 2, x, y + 1, temp + 8);
    for (i = 0; i < 16; i++) {
       dst[i] = UBYTE_TO_FLOAT(temp[i]);
    }
@@ -82,13 +90,14 @@ static void
 read_quad_f_swz(struct softpipe_surface *sps, GLint x, GLint y,
                 GLfloat (*rrrr)[QUAD_SIZE])
 {
+   struct xmesa_surface *xms = xmesa_surf(sps);
    struct xmesa_renderbuffer *xrb = xmesa_rb(sps);
    GLubyte temp[16];
    GLfloat *dst = (GLfloat *) rrrr;
    GLuint i, j;
    GET_CURRENT_CONTEXT(ctx);
-   xrb->Base.GetRow(ctx, &xrb->Base, 2, x, y,     temp);
-   xrb->Base.GetRow(ctx, &xrb->Base, 2, x, y + 1, temp + 8);
+   xrb->St.Base.GetRow(ctx, &xrb->St.Base, 2, x, y,     temp);
+   xrb->St.Base.GetRow(ctx, &xrb->St.Base, 2, x, y + 1, temp + 8);
    for (i = 0; i < 4; i++) {
       for (j = 0; j < 4; j++) {
          dst[j * 4 + i] = UBYTE_TO_FLOAT(temp[i * 4 + j]);
@@ -108,8 +117,8 @@ write_quad_f(struct softpipe_surface *sps, GLint x, GLint y,
    for (i = 0; i < 16; i++) {
       UNCLAMPED_FLOAT_TO_UBYTE(temp[i], src[i]);
    }
-   xrb->Base.PutRow(ctx, &xrb->Base, 2, x, y,     temp,     NULL);
-   xrb->Base.PutRow(ctx, &xrb->Base, 2, x, y + 1, temp + 8, NULL);
+   xrb->St.Base.PutRow(ctx, &xrb->St.Base, 2, x, y,     temp,     NULL);
+   xrb->St.Base.PutRow(ctx, &xrb->St.Base, 2, x, y + 1, temp + 8, NULL);
 }
 
 static void
@@ -126,8 +135,8 @@ write_quad_f_swz(struct softpipe_surface *sps, GLint x, GLint y,
          UNCLAMPED_FLOAT_TO_UBYTE(temp[j * 4 + i], src[i * 4 + j]);
       }
    }
-   xrb->Base.PutRow(ctx, &xrb->Base, 2, x, y,     temp,     NULL);
-   xrb->Base.PutRow(ctx, &xrb->Base, 2, x, y + 1, temp + 8, NULL);
+   xrb->St.Base.PutRow(ctx, &xrb->St.Base, 2, x, y,     temp,     NULL);
+   xrb->St.Base.PutRow(ctx, &xrb->St.Base, 2, x, y + 1, temp + 8, NULL);
 }
 
 static void
@@ -136,8 +145,8 @@ read_quad_ub(struct softpipe_surface *sps, GLint x, GLint y,
 {
    struct xmesa_renderbuffer *xrb = xmesa_rb(sps);
    GET_CURRENT_CONTEXT(ctx);
-   xrb->Base.GetRow(ctx, &xrb->Base, 2, x, y,     rgba);
-   xrb->Base.GetRow(ctx, &xrb->Base, 2, x, y + 1, rgba + 2);
+   xrb->St.Base.GetRow(ctx, &xrb->St.Base, 2, x, y,     rgba);
+   xrb->St.Base.GetRow(ctx, &xrb->St.Base, 2, x, y + 1, rgba + 2);
 }
 
 static void
@@ -146,8 +155,8 @@ write_quad_ub(struct softpipe_surface *sps, GLint x, GLint y,
 {
    struct xmesa_renderbuffer *xrb = xmesa_rb(sps);
    GET_CURRENT_CONTEXT(ctx);
-   xrb->Base.GetRow(ctx, &xrb->Base, 2, x, y,     rgba);
-   xrb->Base.GetRow(ctx, &xrb->Base, 2, x, y + 1, rgba + 2);
+   xrb->St.Base.GetRow(ctx, &xrb->St.Base, 2, x, y,     rgba);
+   xrb->St.Base.GetRow(ctx, &xrb->St.Base, 2, x, y + 1, rgba + 2);
 }
 
 #if 0
@@ -157,7 +166,7 @@ write_mono_row_ub(struct softpipe_surface *sps, GLuint count, GLint x, GLint y,
 {
    struct xmesa_renderbuffer *xrb = xmesa_rb(sps);
    GET_CURRENT_CONTEXT(ctx);
-   xrb->Base.PutMonoRow(ctx, &xrb->Base, count, x, y, rgba, NULL);
+   xrb->St.Base.PutMonoRow(ctx, &xrb->St.Base, count, x, y, rgba, NULL);
 }
 #endif
 
@@ -177,9 +186,11 @@ xmesa_new_surface(GLcontext *ctx, struct xmesa_renderbuffer *xrb)
    if (!sps)
       return NULL;
 
+#if 0
    sps->surface.rb = xrb; /* XXX only needed for quad funcs above */
-   sps->surface.width = xrb->Base.Width;
-   sps->surface.height = xrb->Base.Height;
+#endif
+   sps->surface.width = xrb->St.Base.Width;
+   sps->surface.height = xrb->St.Base.Height;
 
    sps->read_quad_f = read_quad_f;
    sps->read_quad_f_swz = read_quad_f_swz;
@@ -197,3 +208,52 @@ xmesa_new_surface(GLcontext *ctx, struct xmesa_renderbuffer *xrb)
 
    return &sps->surface;
 }
+
+
+struct pipe_surface *
+xmesa_surface_alloc(struct pipe_context *pipe, GLuint pipeFormat)
+{
+   struct xmesa_surface *xms = CALLOC_STRUCT(xmesa_surface);
+
+   assert(pipeFormat);
+
+   xms->surface.surface.format = pipeFormat;
+
+   switch (pipeFormat) {
+   case PIPE_FORMAT_U_A8_R8_G8_B8:
+      xms->surface.read_quad_f_swz = read_quad_f;
+      xms->surface.read_quad_f = read_quad_f;
+      xms->surface.read_quad_f_swz = read_quad_f_swz;
+      xms->surface.read_quad_ub = read_quad_ub;
+      xms->surface.write_quad_f = write_quad_f;
+      xms->surface.write_quad_f_swz = write_quad_f_swz;
+      xms->surface.write_quad_ub = write_quad_ub;
+      break;
+   case PIPE_FORMAT_S8_Z24:
+      softpipe_init_surface_funcs(&xms->surface);
+      /*
+      xms->surface.read_quad_z = 1;
+      xms->surface.write_quad_z = 1;
+      */
+      break;
+   default:
+      abort();
+   }
+
+   return &xms->surface.surface;
+}
+
+
+const GLuint *
+xmesa_supported_formats(struct pipe_context *pipe, GLuint *numFormats)
+{
+   static const GLuint formats[] = {
+      PIPE_FORMAT_U_A8_R8_G8_B8,
+      PIPE_FORMAT_S8_Z24
+   };
+
+   *numFormats = 2;
+
+   return formats;
+}
+

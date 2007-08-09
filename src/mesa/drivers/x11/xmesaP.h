@@ -36,6 +36,9 @@
 #ifdef XFree86Server
 #include "xm_image.h"
 #endif
+#include "state_tracker/st_cb_fbo.h"
+#include "pipe/softpipe/sp_context.h"
+#include "pipe/softpipe/sp_surface.h"
 
 
 extern _glthread_Mutex _xmesa_lock;
@@ -177,7 +180,11 @@ typedef enum {
  */
 struct xmesa_renderbuffer
 {
+#if 0
    struct gl_renderbuffer Base;  /* Base class */
+#else
+   struct st_renderbuffer St; /**< Base class */
+#endif
 
    XMesaBuffer Parent;  /**< The XMesaBuffer this renderbuffer belongs to */
    XMesaDrawable drawable;	/* Usually the X window ID */
@@ -493,8 +500,8 @@ extern const int xmesa_kernel1[16];
  */
 
 extern struct xmesa_renderbuffer *
-xmesa_new_renderbuffer(GLcontext *ctx, GLuint name, const GLvisual *visual,
-                       GLboolean backBuffer);
+xmesa_create_renderbuffer(GLcontext *ctx, GLuint name, const GLvisual *visual,
+                          GLboolean backBuffer);
 
 extern void
 xmesa_delete_framebuffer(struct gl_framebuffer *fb);
@@ -589,6 +596,13 @@ extern void xmesa_register_swrast_functions( GLcontext *ctx );
 struct pipe_surface;
 struct pipe_context;
 
+struct xmesa_surface
+{
+   struct softpipe_surface surface;
+   struct xmesa_renderbuffer *xrb;
+};
+
+
 extern struct pipe_surface *
 xmesa_new_surface(GLcontext *ctx, struct xmesa_renderbuffer *xrb);
 
@@ -600,6 +614,12 @@ xmesa_clear_buffers(GLcontext *ctx, GLbitfield buffers);
 
 extern struct pipe_context *
 xmesa_create_softpipe(XMesaContext xm);
+
+extern struct pipe_surface *
+xmesa_surface_alloc(struct pipe_context *pipe, GLuint format);
+
+extern const GLuint *
+xmesa_supported_formats(struct pipe_context *pipe, GLuint *numFormats);
 
 
 #endif

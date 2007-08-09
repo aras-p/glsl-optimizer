@@ -4539,259 +4539,260 @@ xmesa_set_renderbuffer_funcs(struct xmesa_renderbuffer *xrb,
                              enum pixel_format pixelformat, GLint depth)
 {
    const GLboolean pixmap = xrb->pixmap ? GL_TRUE : GL_FALSE;
+   struct gl_renderbuffer *rb  = &xrb->St.Base;
 
    switch (pixelformat) {
    case PF_Index:
-      ASSERT(xrb->Base.DataType == GL_UNSIGNED_INT);
+      ASSERT(rb->DataType == GL_UNSIGNED_INT);
       if (pixmap) {
-         xrb->Base.PutRow        = put_row_ci_pixmap;
-         xrb->Base.PutRowRGB     = NULL;
-         xrb->Base.PutMonoRow    = put_mono_row_ci_pixmap;
-         xrb->Base.PutValues     = put_values_ci_pixmap;
-         xrb->Base.PutMonoValues = put_mono_values_ci_pixmap;
+         rb->PutRow        = put_row_ci_pixmap;
+         rb->PutRowRGB     = NULL;
+         rb->PutMonoRow    = put_mono_row_ci_pixmap;
+         rb->PutValues     = put_values_ci_pixmap;
+         rb->PutMonoValues = put_mono_values_ci_pixmap;
       }
       else {
-         xrb->Base.PutRow        = put_row_ci_ximage;
-         xrb->Base.PutRowRGB     = NULL;
-         xrb->Base.PutMonoRow    = put_mono_row_ci_ximage;
-         xrb->Base.PutValues     = put_values_ci_ximage;
-         xrb->Base.PutMonoValues = put_mono_values_ci_ximage;
+         rb->PutRow        = put_row_ci_ximage;
+         rb->PutRowRGB     = NULL;
+         rb->PutMonoRow    = put_mono_row_ci_ximage;
+         rb->PutValues     = put_values_ci_ximage;
+         rb->PutMonoValues = put_mono_values_ci_ximage;
       }
       break;
    case PF_Truecolor:
       if (pixmap) {
-         xrb->Base.PutRow        = put_row_TRUECOLOR_pixmap;
-         xrb->Base.PutRowRGB     = put_row_rgb_TRUECOLOR_pixmap;
-         xrb->Base.PutMonoRow    = put_mono_row_pixmap;
-         xrb->Base.PutValues     = put_values_TRUECOLOR_pixmap;
-         xrb->Base.PutMonoValues = put_mono_values_pixmap;
+         rb->PutRow        = put_row_TRUECOLOR_pixmap;
+         rb->PutRowRGB     = put_row_rgb_TRUECOLOR_pixmap;
+         rb->PutMonoRow    = put_mono_row_pixmap;
+         rb->PutValues     = put_values_TRUECOLOR_pixmap;
+         rb->PutMonoValues = put_mono_values_pixmap;
       }
       else {
-         xrb->Base.PutRow        = put_row_TRUECOLOR_ximage;
-         xrb->Base.PutRowRGB     = put_row_rgb_TRUECOLOR_ximage;
-         xrb->Base.PutMonoRow    = put_mono_row_ximage;
-         xrb->Base.PutValues     = put_values_TRUECOLOR_ximage;
-         xrb->Base.PutMonoValues = put_mono_values_ximage;
+         rb->PutRow        = put_row_TRUECOLOR_ximage;
+         rb->PutRowRGB     = put_row_rgb_TRUECOLOR_ximage;
+         rb->PutMonoRow    = put_mono_row_ximage;
+         rb->PutValues     = put_values_TRUECOLOR_ximage;
+         rb->PutMonoValues = put_mono_values_ximage;
       }
       break;
    case PF_Dither_True:
       if (pixmap) {
-         xrb->Base.PutRow        = put_row_TRUEDITHER_pixmap;
-         xrb->Base.PutRowRGB     = put_row_rgb_TRUEDITHER_pixmap;
-         xrb->Base.PutMonoRow    = put_mono_row_TRUEDITHER_pixmap;
-         xrb->Base.PutValues     = put_values_TRUEDITHER_pixmap;
-         xrb->Base.PutMonoValues = put_mono_values_TRUEDITHER_pixmap;
+         rb->PutRow        = put_row_TRUEDITHER_pixmap;
+         rb->PutRowRGB     = put_row_rgb_TRUEDITHER_pixmap;
+         rb->PutMonoRow    = put_mono_row_TRUEDITHER_pixmap;
+         rb->PutValues     = put_values_TRUEDITHER_pixmap;
+         rb->PutMonoValues = put_mono_values_TRUEDITHER_pixmap;
       }
       else {
-         xrb->Base.PutRow        = put_row_TRUEDITHER_ximage;
-         xrb->Base.PutRowRGB     = put_row_rgb_TRUEDITHER_ximage;
-         xrb->Base.PutMonoRow    = put_mono_row_TRUEDITHER_ximage;
-         xrb->Base.PutValues     = put_values_TRUEDITHER_ximage;
-         xrb->Base.PutMonoValues = put_mono_values_TRUEDITHER_ximage;
+         rb->PutRow        = put_row_TRUEDITHER_ximage;
+         rb->PutRowRGB     = put_row_rgb_TRUEDITHER_ximage;
+         rb->PutMonoRow    = put_mono_row_TRUEDITHER_ximage;
+         rb->PutValues     = put_values_TRUEDITHER_ximage;
+         rb->PutMonoValues = put_mono_values_TRUEDITHER_ximage;
       }
       break;
    case PF_8A8B8G8R:
       if (pixmap) {
-         xrb->Base.PutRow        = put_row_8A8B8G8R_pixmap;
-         xrb->Base.PutRowRGB     = put_row_rgb_8A8B8G8R_pixmap;
-         xrb->Base.PutMonoRow    = put_mono_row_pixmap;
-         xrb->Base.PutValues     = put_values_8A8B8G8R_pixmap;
-         xrb->Base.PutMonoValues = put_mono_values_pixmap;
+         rb->PutRow        = put_row_8A8B8G8R_pixmap;
+         rb->PutRowRGB     = put_row_rgb_8A8B8G8R_pixmap;
+         rb->PutMonoRow    = put_mono_row_pixmap;
+         rb->PutValues     = put_values_8A8B8G8R_pixmap;
+         rb->PutMonoValues = put_mono_values_pixmap;
       }
       else {
-         xrb->Base.PutRow        = put_row_8A8B8G8R_ximage;
-         xrb->Base.PutRowRGB     = put_row_rgb_8A8B8G8R_ximage;
-         xrb->Base.PutMonoRow    = put_mono_row_8A8B8G8R_ximage;
-         xrb->Base.PutValues     = put_values_8A8B8G8R_ximage;
-         xrb->Base.PutMonoValues = put_mono_values_8A8B8G8R_ximage;
-	 xrb->Base.GetPointer    = get_pointer_4_ximage;
+         rb->PutRow        = put_row_8A8B8G8R_ximage;
+         rb->PutRowRGB     = put_row_rgb_8A8B8G8R_ximage;
+         rb->PutMonoRow    = put_mono_row_8A8B8G8R_ximage;
+         rb->PutValues     = put_values_8A8B8G8R_ximage;
+         rb->PutMonoValues = put_mono_values_8A8B8G8R_ximage;
+	 rb->GetPointer    = get_pointer_4_ximage;
       }
       break;
    case PF_8A8R8G8B:
       if (pixmap) {
-         xrb->Base.PutRow        = put_row_8A8R8G8B_pixmap;
-         xrb->Base.PutRowRGB     = put_row_rgb_8A8R8G8B_pixmap;
-         xrb->Base.PutMonoRow    = put_mono_row_pixmap;
-         xrb->Base.PutValues     = put_values_8A8R8G8B_pixmap;
-         xrb->Base.PutMonoValues = put_mono_values_pixmap;
+         rb->PutRow        = put_row_8A8R8G8B_pixmap;
+         rb->PutRowRGB     = put_row_rgb_8A8R8G8B_pixmap;
+         rb->PutMonoRow    = put_mono_row_pixmap;
+         rb->PutValues     = put_values_8A8R8G8B_pixmap;
+         rb->PutMonoValues = put_mono_values_pixmap;
       }
       else {
-         xrb->Base.PutRow        = put_row_8A8R8G8B_ximage;
-         xrb->Base.PutRowRGB     = put_row_rgb_8A8R8G8B_ximage;
-         xrb->Base.PutMonoRow    = put_mono_row_8A8R8G8B_ximage;
-         xrb->Base.PutValues     = put_values_8A8R8G8B_ximage;
-         xrb->Base.PutMonoValues = put_mono_values_8A8R8G8B_ximage;
-	 xrb->Base.GetPointer    = get_pointer_4_ximage;
+         rb->PutRow        = put_row_8A8R8G8B_ximage;
+         rb->PutRowRGB     = put_row_rgb_8A8R8G8B_ximage;
+         rb->PutMonoRow    = put_mono_row_8A8R8G8B_ximage;
+         rb->PutValues     = put_values_8A8R8G8B_ximage;
+         rb->PutMonoValues = put_mono_values_8A8R8G8B_ximage;
+	 rb->GetPointer    = get_pointer_4_ximage;
       }
       break;
    case PF_8R8G8B:
       if (pixmap) {
-         xrb->Base.PutRow        = put_row_8R8G8B_pixmap;
-         xrb->Base.PutRowRGB     = put_row_rgb_8R8G8B_pixmap;
-         xrb->Base.PutMonoRow    = put_mono_row_pixmap;
-         xrb->Base.PutValues     = put_values_8R8G8B_pixmap;
-         xrb->Base.PutMonoValues = put_mono_values_pixmap;
+         rb->PutRow        = put_row_8R8G8B_pixmap;
+         rb->PutRowRGB     = put_row_rgb_8R8G8B_pixmap;
+         rb->PutMonoRow    = put_mono_row_pixmap;
+         rb->PutValues     = put_values_8R8G8B_pixmap;
+         rb->PutMonoValues = put_mono_values_pixmap;
       }
       else {
-         xrb->Base.PutRow        = put_row_8R8G8B_ximage;
-         xrb->Base.PutRowRGB     = put_row_rgb_8R8G8B_ximage;
-         xrb->Base.PutMonoRow    = put_mono_row_8R8G8B_ximage;
-         xrb->Base.PutValues     = put_values_8R8G8B_ximage;
-         xrb->Base.PutMonoValues = put_mono_values_8R8G8B_ximage;
+         rb->PutRow        = put_row_8R8G8B_ximage;
+         rb->PutRowRGB     = put_row_rgb_8R8G8B_ximage;
+         rb->PutMonoRow    = put_mono_row_8R8G8B_ximage;
+         rb->PutValues     = put_values_8R8G8B_ximage;
+         rb->PutMonoValues = put_mono_values_8R8G8B_ximage;
       }
       break;
    case PF_8R8G8B24:
       if (pixmap) {
-         xrb->Base.PutRow        = put_row_8R8G8B24_pixmap;
-         xrb->Base.PutRowRGB     = put_row_rgb_8R8G8B24_pixmap;
-         xrb->Base.PutMonoRow    = put_mono_row_pixmap;
-         xrb->Base.PutValues     = put_values_8R8G8B24_pixmap;
-         xrb->Base.PutMonoValues = put_mono_values_pixmap;
+         rb->PutRow        = put_row_8R8G8B24_pixmap;
+         rb->PutRowRGB     = put_row_rgb_8R8G8B24_pixmap;
+         rb->PutMonoRow    = put_mono_row_pixmap;
+         rb->PutValues     = put_values_8R8G8B24_pixmap;
+         rb->PutMonoValues = put_mono_values_pixmap;
       }
       else {
-         xrb->Base.PutRow        = put_row_8R8G8B24_ximage;
-         xrb->Base.PutRowRGB     = put_row_rgb_8R8G8B24_ximage;
-         xrb->Base.PutMonoRow    = put_mono_row_8R8G8B24_ximage;
-         xrb->Base.PutValues     = put_values_8R8G8B24_ximage;
-         xrb->Base.PutMonoValues = put_mono_values_8R8G8B24_ximage;
+         rb->PutRow        = put_row_8R8G8B24_ximage;
+         rb->PutRowRGB     = put_row_rgb_8R8G8B24_ximage;
+         rb->PutMonoRow    = put_mono_row_8R8G8B24_ximage;
+         rb->PutValues     = put_values_8R8G8B24_ximage;
+         rb->PutMonoValues = put_mono_values_8R8G8B24_ximage;
       }
       break;
    case PF_5R6G5B:
       if (pixmap) {
-         xrb->Base.PutRow        = put_row_5R6G5B_pixmap;
-         xrb->Base.PutRowRGB     = put_row_rgb_5R6G5B_pixmap;
-         xrb->Base.PutMonoRow    = put_mono_row_pixmap;
-         xrb->Base.PutValues     = put_values_5R6G5B_pixmap;
-         xrb->Base.PutMonoValues = put_mono_values_pixmap;
+         rb->PutRow        = put_row_5R6G5B_pixmap;
+         rb->PutRowRGB     = put_row_rgb_5R6G5B_pixmap;
+         rb->PutMonoRow    = put_mono_row_pixmap;
+         rb->PutValues     = put_values_5R6G5B_pixmap;
+         rb->PutMonoValues = put_mono_values_pixmap;
       }
       else {
-         xrb->Base.PutRow        = put_row_5R6G5B_ximage;
-         xrb->Base.PutRowRGB     = put_row_rgb_5R6G5B_ximage;
-         xrb->Base.PutMonoRow    = put_mono_row_ximage;
-         xrb->Base.PutValues     = put_values_5R6G5B_ximage;
-         xrb->Base.PutMonoValues = put_mono_values_ximage;
+         rb->PutRow        = put_row_5R6G5B_ximage;
+         rb->PutRowRGB     = put_row_rgb_5R6G5B_ximage;
+         rb->PutMonoRow    = put_mono_row_ximage;
+         rb->PutValues     = put_values_5R6G5B_ximage;
+         rb->PutMonoValues = put_mono_values_ximage;
       }
       break;
    case PF_Dither_5R6G5B:
       if (pixmap) {
-         xrb->Base.PutRow        = put_row_DITHER_5R6G5B_pixmap;
-         xrb->Base.PutRowRGB     = put_row_rgb_DITHER_5R6G5B_pixmap;
-         xrb->Base.PutMonoRow    = put_mono_row_TRUEDITHER_pixmap;
-         xrb->Base.PutValues     = put_values_DITHER_5R6G5B_pixmap;
-         xrb->Base.PutMonoValues = put_mono_values_TRUEDITHER_pixmap;
+         rb->PutRow        = put_row_DITHER_5R6G5B_pixmap;
+         rb->PutRowRGB     = put_row_rgb_DITHER_5R6G5B_pixmap;
+         rb->PutMonoRow    = put_mono_row_TRUEDITHER_pixmap;
+         rb->PutValues     = put_values_DITHER_5R6G5B_pixmap;
+         rb->PutMonoValues = put_mono_values_TRUEDITHER_pixmap;
       }
       else {
-         xrb->Base.PutRow        = put_row_DITHER_5R6G5B_ximage;
-         xrb->Base.PutRowRGB     = put_row_rgb_DITHER_5R6G5B_ximage;
-         xrb->Base.PutMonoRow    = put_mono_row_DITHER_5R6G5B_ximage;
-         xrb->Base.PutValues     = put_values_DITHER_5R6G5B_ximage;
-         xrb->Base.PutMonoValues = put_mono_values_DITHER_5R6G5B_ximage;
+         rb->PutRow        = put_row_DITHER_5R6G5B_ximage;
+         rb->PutRowRGB     = put_row_rgb_DITHER_5R6G5B_ximage;
+         rb->PutMonoRow    = put_mono_row_DITHER_5R6G5B_ximage;
+         rb->PutValues     = put_values_DITHER_5R6G5B_ximage;
+         rb->PutMonoValues = put_mono_values_DITHER_5R6G5B_ximage;
       }
       break;
    case PF_Dither:
       if (pixmap) {
-         xrb->Base.PutRow        = put_row_DITHER_pixmap;
-         xrb->Base.PutRowRGB     = put_row_rgb_DITHER_pixmap;
-         xrb->Base.PutMonoRow    = put_mono_row_DITHER_pixmap;
-         xrb->Base.PutValues     = put_values_DITHER_pixmap;
-         xrb->Base.PutMonoValues = put_mono_values_DITHER_pixmap;
+         rb->PutRow        = put_row_DITHER_pixmap;
+         rb->PutRowRGB     = put_row_rgb_DITHER_pixmap;
+         rb->PutMonoRow    = put_mono_row_DITHER_pixmap;
+         rb->PutValues     = put_values_DITHER_pixmap;
+         rb->PutMonoValues = put_mono_values_DITHER_pixmap;
       }
       else {
          if (depth == 8) {
-            xrb->Base.PutRow        = put_row_DITHER8_ximage;
-            xrb->Base.PutRowRGB     = put_row_rgb_DITHER8_ximage;
-            xrb->Base.PutMonoRow    = put_mono_row_DITHER8_ximage;
-            xrb->Base.PutValues     = put_values_DITHER8_ximage;
-            xrb->Base.PutMonoValues = put_mono_values_DITHER8_ximage;
+            rb->PutRow        = put_row_DITHER8_ximage;
+            rb->PutRowRGB     = put_row_rgb_DITHER8_ximage;
+            rb->PutMonoRow    = put_mono_row_DITHER8_ximage;
+            rb->PutValues     = put_values_DITHER8_ximage;
+            rb->PutMonoValues = put_mono_values_DITHER8_ximage;
          }
          else {
-            xrb->Base.PutRow        = put_row_DITHER_ximage;
-            xrb->Base.PutRowRGB     = put_row_rgb_DITHER_ximage;
-            xrb->Base.PutMonoRow    = put_mono_row_DITHER_ximage;
-            xrb->Base.PutValues     = put_values_DITHER_ximage;
-            xrb->Base.PutMonoValues = put_mono_values_DITHER_ximage;
+            rb->PutRow        = put_row_DITHER_ximage;
+            rb->PutRowRGB     = put_row_rgb_DITHER_ximage;
+            rb->PutMonoRow    = put_mono_row_DITHER_ximage;
+            rb->PutValues     = put_values_DITHER_ximage;
+            rb->PutMonoValues = put_mono_values_DITHER_ximage;
          }
       }
       break;
    case PF_1Bit:
       if (pixmap) {
-         xrb->Base.PutRow        = put_row_1BIT_pixmap;
-         xrb->Base.PutRowRGB     = put_row_rgb_1BIT_pixmap;
-         xrb->Base.PutMonoRow    = put_mono_row_1BIT_pixmap;
-         xrb->Base.PutValues     = put_values_1BIT_pixmap;
-         xrb->Base.PutMonoValues = put_mono_values_1BIT_pixmap;
+         rb->PutRow        = put_row_1BIT_pixmap;
+         rb->PutRowRGB     = put_row_rgb_1BIT_pixmap;
+         rb->PutMonoRow    = put_mono_row_1BIT_pixmap;
+         rb->PutValues     = put_values_1BIT_pixmap;
+         rb->PutMonoValues = put_mono_values_1BIT_pixmap;
       }
       else {
-         xrb->Base.PutRow        = put_row_1BIT_ximage;
-         xrb->Base.PutRowRGB     = put_row_rgb_1BIT_ximage;
-         xrb->Base.PutMonoRow    = put_mono_row_1BIT_ximage;
-         xrb->Base.PutValues     = put_values_1BIT_ximage;
-         xrb->Base.PutMonoValues = put_mono_values_1BIT_ximage;
+         rb->PutRow        = put_row_1BIT_ximage;
+         rb->PutRowRGB     = put_row_rgb_1BIT_ximage;
+         rb->PutMonoRow    = put_mono_row_1BIT_ximage;
+         rb->PutValues     = put_values_1BIT_ximage;
+         rb->PutMonoValues = put_mono_values_1BIT_ximage;
       }
       break;
    case PF_HPCR:
       if (pixmap) {
-         xrb->Base.PutRow        = put_row_HPCR_pixmap;
-         xrb->Base.PutRowRGB     = put_row_rgb_HPCR_pixmap;
-         xrb->Base.PutMonoRow    = put_mono_row_pixmap;
-         xrb->Base.PutValues     = put_values_HPCR_pixmap;
-         xrb->Base.PutMonoValues = put_mono_values_pixmap;
+         rb->PutRow        = put_row_HPCR_pixmap;
+         rb->PutRowRGB     = put_row_rgb_HPCR_pixmap;
+         rb->PutMonoRow    = put_mono_row_pixmap;
+         rb->PutValues     = put_values_HPCR_pixmap;
+         rb->PutMonoValues = put_mono_values_pixmap;
       }
       else {
-         xrb->Base.PutRow        = put_row_HPCR_ximage;
-         xrb->Base.PutRowRGB     = put_row_rgb_HPCR_ximage;
-         xrb->Base.PutMonoRow    = put_mono_row_HPCR_ximage;
-         xrb->Base.PutValues     = put_values_HPCR_ximage;
-         xrb->Base.PutMonoValues = put_mono_values_HPCR_ximage;
+         rb->PutRow        = put_row_HPCR_ximage;
+         rb->PutRowRGB     = put_row_rgb_HPCR_ximage;
+         rb->PutMonoRow    = put_mono_row_HPCR_ximage;
+         rb->PutValues     = put_values_HPCR_ximage;
+         rb->PutMonoValues = put_mono_values_HPCR_ximage;
       }
       break;
    case PF_Lookup:
       if (pixmap) {
-         xrb->Base.PutRow        = put_row_LOOKUP_pixmap;
-         xrb->Base.PutRowRGB     = put_row_rgb_LOOKUP_pixmap;
-         xrb->Base.PutMonoRow    = put_mono_row_pixmap;
-         xrb->Base.PutValues     = put_values_LOOKUP_pixmap;
-         xrb->Base.PutMonoValues = put_mono_values_pixmap;
+         rb->PutRow        = put_row_LOOKUP_pixmap;
+         rb->PutRowRGB     = put_row_rgb_LOOKUP_pixmap;
+         rb->PutMonoRow    = put_mono_row_pixmap;
+         rb->PutValues     = put_values_LOOKUP_pixmap;
+         rb->PutMonoValues = put_mono_values_pixmap;
       }
       else {
          if (depth==8) {
-            xrb->Base.PutRow        = put_row_LOOKUP8_ximage;
-            xrb->Base.PutRowRGB     = put_row_rgb_LOOKUP8_ximage;
-            xrb->Base.PutMonoRow    = put_mono_row_LOOKUP8_ximage;
-            xrb->Base.PutValues     = put_values_LOOKUP8_ximage;
-            xrb->Base.PutMonoValues = put_mono_values_LOOKUP8_ximage;
+            rb->PutRow        = put_row_LOOKUP8_ximage;
+            rb->PutRowRGB     = put_row_rgb_LOOKUP8_ximage;
+            rb->PutMonoRow    = put_mono_row_LOOKUP8_ximage;
+            rb->PutValues     = put_values_LOOKUP8_ximage;
+            rb->PutMonoValues = put_mono_values_LOOKUP8_ximage;
          }
          else {
-            xrb->Base.PutRow        = put_row_LOOKUP_ximage;
-            xrb->Base.PutRowRGB     = put_row_rgb_LOOKUP_ximage;
-            xrb->Base.PutMonoRow    = put_mono_row_ximage;
-            xrb->Base.PutValues     = put_values_LOOKUP_ximage;
-            xrb->Base.PutMonoValues = put_mono_values_ximage;
+            rb->PutRow        = put_row_LOOKUP_ximage;
+            rb->PutRowRGB     = put_row_rgb_LOOKUP_ximage;
+            rb->PutMonoRow    = put_mono_row_ximage;
+            rb->PutValues     = put_values_LOOKUP_ximage;
+            rb->PutMonoValues = put_mono_values_ximage;
          }
       }
       break;
    case PF_Grayscale:
       if (pixmap) {
-         xrb->Base.PutRow        = put_row_GRAYSCALE_pixmap;
-         xrb->Base.PutRowRGB     = put_row_rgb_GRAYSCALE_pixmap;
-         xrb->Base.PutMonoRow    = put_mono_row_pixmap;
-         xrb->Base.PutValues     = put_values_GRAYSCALE_pixmap;
-         xrb->Base.PutMonoValues = put_mono_values_pixmap;
+         rb->PutRow        = put_row_GRAYSCALE_pixmap;
+         rb->PutRowRGB     = put_row_rgb_GRAYSCALE_pixmap;
+         rb->PutMonoRow    = put_mono_row_pixmap;
+         rb->PutValues     = put_values_GRAYSCALE_pixmap;
+         rb->PutMonoValues = put_mono_values_pixmap;
       }
       else {
          if (depth == 8) {
-            xrb->Base.PutRow        = put_row_GRAYSCALE8_ximage;
-            xrb->Base.PutRowRGB     = put_row_rgb_GRAYSCALE8_ximage;
-            xrb->Base.PutMonoRow    = put_mono_row_GRAYSCALE8_ximage;
-            xrb->Base.PutValues     = put_values_GRAYSCALE8_ximage;
-            xrb->Base.PutMonoValues = put_mono_values_GRAYSCALE8_ximage;
+            rb->PutRow        = put_row_GRAYSCALE8_ximage;
+            rb->PutRowRGB     = put_row_rgb_GRAYSCALE8_ximage;
+            rb->PutMonoRow    = put_mono_row_GRAYSCALE8_ximage;
+            rb->PutValues     = put_values_GRAYSCALE8_ximage;
+            rb->PutMonoValues = put_mono_values_GRAYSCALE8_ximage;
          }
          else {
-            xrb->Base.PutRow        = put_row_GRAYSCALE_ximage;
-            xrb->Base.PutRowRGB     = put_row_rgb_GRAYSCALE_ximage;
-            xrb->Base.PutMonoRow    = put_mono_row_ximage;
-            xrb->Base.PutValues     = put_values_GRAYSCALE_ximage;
-            xrb->Base.PutMonoValues = put_mono_values_ximage;
+            rb->PutRow        = put_row_GRAYSCALE_ximage;
+            rb->PutRowRGB     = put_row_rgb_GRAYSCALE_ximage;
+            rb->PutMonoRow    = put_mono_row_ximage;
+            rb->PutValues     = put_values_GRAYSCALE_ximage;
+            rb->PutMonoValues = put_mono_values_ximage;
          }
       }
       break;
@@ -4803,12 +4804,12 @@ xmesa_set_renderbuffer_funcs(struct xmesa_renderbuffer *xrb,
 
    /* Get functions */
    if (pixelformat == PF_Index) {
-      xrb->Base.GetRow = get_row_ci;
-      xrb->Base.GetValues = get_values_ci;
+      rb->GetRow = get_row_ci;
+      rb->GetValues = get_values_ci;
    }
    else {
-      xrb->Base.GetRow = get_row_rgba;
-      xrb->Base.GetValues = get_values_rgba;
+      rb->GetRow = get_row_rgba;
+      rb->GetValues = get_values_rgba;
    }
 }
 

@@ -224,7 +224,7 @@ clear_pixmap(GLcontext *ctx, struct xmesa_renderbuffer *xrb,
    assert(xmbuf->cleargc);
 
    XMesaFillRectangle( xmesa->display, xrb->pixmap, xmbuf->cleargc,
-                       x, xrb->Base.Height - y - height,
+                       x, xrb->St.Base.Height - y - height,
                        width, height );
 }
 
@@ -335,9 +335,9 @@ clear_32bit_ximage(GLcontext *ctx, struct xmesa_renderbuffer *xrb,
             | ((pixel << 24) & 0xff000000);
    }
 
-   if (width == xrb->Base.Width && height == xrb->Base.Height) {
+   if (width == xrb->St.Base.Width && height == xrb->St.Base.Height) {
       /* clearing whole buffer */
-      const GLuint n = xrb->Base.Width * xrb->Base.Height;
+      const GLuint n = xrb->St.Base.Width * xrb->St.Base.Height;
       GLuint *ptr4 = (GLuint *) xrb->ximage->data;
       if (pixel == 0) {
          /* common case */
@@ -490,7 +490,7 @@ xmesa_DrawPixels_8R8G8B( GLcontext *ctx,
        ctx->Pixel.ZoomX == 1.0 &&        /* no zooming */
        ctx->Pixel.ZoomY == 1.0 &&
        xrb->pixmap &&
-       xrb->Base.AlphaBits == 0)
+       xrb->St.Base.AlphaBits == 0)
    {
       const XMesaContext xmesa = XMESA_CONTEXT(ctx);
       XMesaBuffer xmbuf = XMESA_BUFFER(ctx->DrawBuffer);
@@ -1134,6 +1134,7 @@ xmesa_init_driver_functions( XMesaVisual xmvisual,
    driver->BeginQuery = xmesa_begin_query;
    driver->EndQuery = xmesa_end_query;
 #endif
+
 }
 
 

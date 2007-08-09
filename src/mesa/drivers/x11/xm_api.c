@@ -84,6 +84,7 @@
 #include "state_tracker/st_public.h"
 #include "state_tracker/st_context.h"
 #include "pipe/softpipe/sp_context.h"
+#include "pipe/p_defines.h"
 
 /**
  * Global X driver lock
@@ -385,7 +386,7 @@ create_xmesa_buffer(XMesaDrawable d, BufferType type,
    /*
     * Front renderbuffer
     */
-   b->frontxrb = xmesa_new_renderbuffer(NULL, 0, &vis->mesa_visual, GL_FALSE);
+   b->frontxrb = xmesa_create_renderbuffer(NULL, 0, &vis->mesa_visual, GL_FALSE);
    if (!b->frontxrb) {
       _mesa_free(b);
       return NULL;
@@ -394,13 +395,13 @@ create_xmesa_buffer(XMesaDrawable d, BufferType type,
    b->frontxrb->drawable = d;
    b->frontxrb->pixmap = (XMesaPixmap) d;
    _mesa_add_renderbuffer(&b->mesa_buffer, BUFFER_FRONT_LEFT,
-                          &b->frontxrb->Base);
+                          &b->frontxrb->St.Base);
 
    /*
     * Back renderbuffer
     */
    if (vis->mesa_visual.doubleBufferMode) {
-      b->backxrb = xmesa_new_renderbuffer(NULL, 0, &vis->mesa_visual, GL_TRUE);
+      b->backxrb = xmesa_create_renderbuffer(NULL, 0, &vis->mesa_visual, GL_TRUE);
       if (!b->backxrb) {
          /* XXX free front xrb too */
          _mesa_free(b);
@@ -411,7 +412,7 @@ create_xmesa_buffer(XMesaDrawable d, BufferType type,
       b->db_mode = vis->ximage_flag ? BACK_XIMAGE : BACK_PIXMAP;
       
       _mesa_add_renderbuffer(&b->mesa_buffer, BUFFER_BACK_LEFT,
-                             &b->backxrb->Base);
+                             &b->backxrb->St.Base);
    }
 
    /*
@@ -429,12 +430,19 @@ create_xmesa_buffer(XMesaDrawable d, BufferType type,
       b->swAlpha = GL_FALSE;
    }
 
+   if (vis->mesa_visual.depthBits > 0) {
+      struct gl_renderbuffer *rb
+         = st_new_renderbuffer_fb(GL_DEPTH_COMPONENT32);
+      _mesa_add_renderbuffer(&b->mesa_buffer, BUFFER_DEPTH, rb);
+   }
+
+
    /*
     * Other renderbuffer (depth, stencil, etc)
     */
    _mesa_add_soft_renderbuffers(&b->mesa_buffer,
                                 GL_FALSE,  /* color */
-                                vis->mesa_visual.haveDepthBuffer,
+                                GL_FALSE,/*vis->mesa_visual.haveDepthBuffer,*/
                                 vis->mesa_visual.haveStencilBuffer,
                                 vis->mesa_visual.haveAccumBuffer,
                                 b->swAlpha,
@@ -1517,6 +1525,10 @@ XMesaContext XMesaCreateContext( XMesaVisual v, XMesaContext share_list )
    xmesa_init_driver_functions(v, &functions);
    st_init_driver_functions(&functions);
 
+   /*
+   functions.NewRenderbuffer = xmesa_new_renderbuffer;
+   */
+
    if (!_mesa_initialize_context(mesaCtx, &v->mesa_visual,
                       share_list ? &(share_list->mesa) : (GLcontext *) NULL,
                       &functions, (void *) c)) {
@@ -1576,10 +1588,15 @@ XMesaContext XMesaCreateContext( XMesaVisual v, XMesaContext share_list )
    st_create_context( mesaCtx,
                       xmesa_create_softpipe( c ) );
 
+   mesaCtx->st->pipe->surface_alloc = xmesa_surface_alloc;
+   mesaCtx->st->pipe->supported_formats = xmesa_supported_formats;
+
+#if 1
    mesaCtx->Driver.Clear = xmesa_clear_buffers;
-   /*
+#endif
+#if 0
    mesaCtx->st->pipe->clear = xmesa_clear;
-   */
+#endif
 
    return c;
 }
