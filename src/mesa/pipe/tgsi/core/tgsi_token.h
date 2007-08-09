@@ -834,7 +834,9 @@ struct tgsi_immediate_float32
 /* TGSI_OPCODE_DP3 */
 /* TGSI_OPCODE_DP4 */
 /* TGSI_OPCODE_LRP */
+#define TGSI_OPCODE_TEXCRD              TGSI_OPCODE_TEXCOORD
 /* TGSI_OPCODE_TEXKILL */
+#define TGSI_OPCODE_TEXLD               TGSI_OPCODE_TEX
 /* TGSI_OPCODE_CND */
 #define TGSI_OPCODE_TEXDEPTH            122
 /* TGSI_OPCODE_CMPDX - use TGSI_OPCODE_CND0 */
@@ -870,6 +872,9 @@ struct tgsi_immediate_float32
 #define TGSI_OPCODE_NRM4                128
 #define TGSI_OPCODE_SINCOS              TGSI_OPCODE_SCS
 /* TGSI_OPCODE_TEXKILL */
+/* TGSI_OPCODE_TEXLD */
+#define TGSI_OPCODE_TEXLDB              TGSI_OPCODE_TXB
+#define TGSI_OPCODE_TEXLDP              TGSI_OPCODE_TEX
 /* TGSI_OPCODE_CMPDX - use TGSI_OPCODE_CND0 */
 #define TGSI_OPCODE_DP2ADD              TGSI_OPCODE_DP2A
 
@@ -911,14 +916,17 @@ struct tgsi_immediate_float32
 #define TGSI_OPCODE_IFC                 130
 /* TGSI_OPCODE_ELSE */
 /* TGSI_OPCODE_ENDIF */
-/* TGSI_OPCODE_BREAK */
+#define TGSI_OPCODE_BREAK               TGSI_OPCODE_BRK
 #define TGSI_OPCODE_BREAKC              131
 /* TGSI_OPCODE_TEXKILL */
+/* TGSI_OPCODE_TEXLD */
+/* TGSI_OPCODE_TEXLDB */
 /* TGSI_OPCODE_CMPDX - use TGSI_OPCODE_CND0 */
 /* TGSI_OPCODE_DP2ADD */
 #define TGSI_OPCODE_DSX                 TGSI_OPCODE_DDX
 #define TGSI_OPCODE_DSY                 TGSI_OPCODE_DDY
 #define TGSI_OPCODE_TEXLDD              TGSI_OPCODE_TXD
+/* TGSI_OPCODE_TEXLDP */
 
 /*
  * vs_1_1
@@ -985,7 +993,7 @@ struct tgsi_immediate_float32
 /* TGSI_OPCODE_ENDLOOP */
 /* TGSI_OPCODE_POW */   /* XXX: takes ABS */
 /* TGSI_OPCODE_CRS */
-/* TGSI_OPCODE_SGN */
+#define TGSI_OPCODE_SGN                 133
 /* TGSI_OPCODE_ABS */
 /* TGSI_OPCODE_NRM4 */
 /* TGSI_OPCODE_SINCOS */
@@ -1047,7 +1055,7 @@ struct tgsi_immediate_float32
 /* TGSI_OPCODE_MOVA */
 /* TGSI_OPCODE_LOGP */
 
-#define TGSI_OPCODE_LAST                133
+#define TGSI_OPCODE_LAST                134
 
 #define TGSI_SAT_NONE            0  /* do not saturate */
 #define TGSI_SAT_ZERO_ONE        1  /* clamp to [0,1] */
