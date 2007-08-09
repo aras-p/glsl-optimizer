@@ -251,6 +251,19 @@ i915_emit_hardware_state(struct i915_context *i915 )
 	 OUT_BATCH( prog[i] );
    }
 
+   {
+      int w = i915->framebuffer.cbufs[0]->width;
+      int h = i915->framebuffer.cbufs[0]->height;
+
+      OUT_BATCH(_3DSTATE_DRAW_RECT_CMD);
+      OUT_BATCH(0);
+      OUT_BATCH(0);
+      OUT_BATCH(((w - 1) & 0xffff) | ((h - 1) << 16));
+      OUT_BATCH(0);
+      OUT_BATCH(0);
+   }
+
+
    i915->hw_dirty = 0;
 }
 
