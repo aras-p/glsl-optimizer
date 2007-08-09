@@ -16,7 +16,6 @@ DRIVER_SOURCES = \
 	intel_batchbuffer.c \
 	intel_tex_layout.c \
 	intel_buffers.c \
-	intel_read_draw_buffer.c \
 	intel_blit.c \
 	intel_context.c \
 	intel_ioctl.c \
