@@ -360,6 +360,58 @@ intelCreateContext(const __GLcontextModes * mesaVis,
    _vbo_CreateContext(ctx);
    _tnl_CreateContext(ctx);
 
+   /*
+    * Pipe-related setup
+    */
+   if (!getenv("INTEL_HW")) {
+      intel->pipe = intel_create_softpipe( intel );
+      intel->pipe->surface_alloc = intel_new_surface;
+      intel->pipe->supported_formats = intel_supported_formats;
+   }
+   else {
+      switch (intel->intelScreen->deviceID) {
+      case PCI_CHIP_I945_G:
+      case PCI_CHIP_I945_GM:
+      case PCI_CHIP_I945_GME:
+      case PCI_CHIP_G33_G:
+      case PCI_CHIP_Q33_G:
+      case PCI_CHIP_Q35_G:
+      case PCI_CHIP_I915_G:
+      case PCI_CHIP_I915_GM:
+	 intel->pipe = intel_create_i915simple( intel );
+	 break;
+      default:
+	 _mesa_printf("Unknown PCIID %x in %s, using software driver\n", 
+		      intel->intelScreen->deviceID, __FUNCTION__);
+
+	 intel->pipe = intel_create_softpipe( intel );
+	 break;
+      }
+   }
+
+   st_create_context( &intel->ctx, intel->pipe ); 
+
+
+   /* TODO: Push this down into the pipe driver:
+    */
+   switch (intel->intelScreen->deviceID) {
+   case PCI_CHIP_I945_G:
+   case PCI_CHIP_I945_GM:
+   case PCI_CHIP_I945_GME:
+   case PCI_CHIP_G33_G:
+   case PCI_CHIP_Q33_G:
+   case PCI_CHIP_Q35_G:
+      intel->pipe->mipmap_tree_layout = i945_miptree_layout;
+      break;
+   case PCI_CHIP_I915_G:
+   case PCI_CHIP_I915_GM:
+   case PCI_CHIP_I830_M:
+   case PCI_CHIP_I855_GM:
+   case PCI_CHIP_I865_G:
+      intel->pipe->mipmap_tree_layout = i915_miptree_layout;
+   default:
+      assert(0); /*FIX*/
+   }
 
 
    /*
@@ -397,7 +449,9 @@ intelCreateContext(const __GLcontextModes * mesaVis,
    intel->last_swap_fence = NULL;
    intel->first_swap_fence = NULL;
 
+#if 00
    intel_fbo_init(intel);
+#endif
 
    if (intel->ctx.Mesa_DXTn) {
       _mesa_enable_extension(ctx, "GL_EXT_texture_compression_s3tc");

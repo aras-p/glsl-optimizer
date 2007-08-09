@@ -302,34 +302,32 @@ intelCreateBuffer(__DRIscreenPrivate * driScrnPriv,
 	 /* fake frontbuffer */
 	 /* XXX allocation should only happen in the unusual case
             it's actually needed */
-         struct intel_renderbuffer *irb 
-            = intel_new_renderbuffer_fb(rgbFormat);
-         _mesa_add_renderbuffer(&intel_fb->Base, BUFFER_FRONT_LEFT,
-				&irb->Base);
+         struct gl_renderbuffer *rb 
+            = st_new_renderbuffer_fb(rgbFormat);
+         _mesa_add_renderbuffer(&intel_fb->Base, BUFFER_FRONT_LEFT, rb);
       }
 
       if (mesaVis->doubleBufferMode) {
-         struct intel_renderbuffer *irb 
-            = intel_new_renderbuffer_fb(rgbFormat);
-         _mesa_add_renderbuffer(&intel_fb->Base, BUFFER_BACK_LEFT,
-				&irb->Base);
+         struct gl_renderbuffer *rb 
+            = st_new_renderbuffer_fb(rgbFormat);
+         _mesa_add_renderbuffer(&intel_fb->Base, BUFFER_BACK_LEFT, rb);
       }
 
       if (mesaVis->depthBits == 24 && mesaVis->stencilBits == 8) {
          /* combined depth/stencil buffer */
-         struct intel_renderbuffer *depthStencilRb
-            = intel_new_renderbuffer_fb(GL_DEPTH24_STENCIL8_EXT);
+         struct gl_renderbuffer *depthStencilRb
+            = st_new_renderbuffer_fb(GL_DEPTH24_STENCIL8_EXT);
          /* note: bind RB to two attachment points */
          _mesa_add_renderbuffer(&intel_fb->Base, BUFFER_DEPTH,
-				&depthStencilRb->Base);
+				depthStencilRb);
          _mesa_add_renderbuffer(&intel_fb->Base, BUFFER_STENCIL,
-				&depthStencilRb->Base);
+				depthStencilRb);
       }
       else if (mesaVis->depthBits == 16) {
          /* just 16-bit depth buffer, no hw stencil */
-         struct intel_renderbuffer *depthRb
-            = intel_new_renderbuffer_fb(GL_DEPTH_COMPONENT16);
-         _mesa_add_renderbuffer(&intel_fb->Base, BUFFER_DEPTH, &depthRb->Base);
+         struct gl_renderbuffer *depthRb
+            = st_new_renderbuffer_fb(GL_DEPTH_COMPONENT16);
+         _mesa_add_renderbuffer(&intel_fb->Base, BUFFER_DEPTH, depthRb);
       }
 
 

@@ -73,19 +73,26 @@ struct intel_framebuffer
  * not pointers because in some circumstances a deleted renderbuffer could
  * result in a dangling pointer here.
  */
+#if 0
 struct intel_renderbuffer
 {
    struct gl_renderbuffer Base;
 };
+#endif
 
-
+#if 0
 extern struct intel_renderbuffer *intel_new_renderbuffer_fb(GLuint intFormat);
+#endif
 
 extern void intel_fbo_init(struct intel_context *intel);
 
 
 extern struct pipe_surface *
-intel_new_surface(GLuint intFormat);
+intel_new_surface(struct pipe_context *pipe, GLuint pipeFormat);
+
+
+extern const GLuint *
+intel_supported_formats(struct pipe_context *pipe, GLuint *numFormats);
 
 
 #endif /* INTEL_FBO_H */

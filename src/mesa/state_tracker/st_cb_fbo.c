@@ -53,7 +53,9 @@
 struct st_renderbuffer
 {
    struct gl_renderbuffer Base;
+#if 0
    struct pipe_surface *surface;
+#endif
 };
 
 
@@ -93,14 +95,14 @@ pipe_get_format_info(GLuint format)
       {
          PIPE_FORMAT_U_R8_G8_B8_A8,  /* format */
          GL_RGBA,                    /* base_format */
-         4, 4, 4, 4, 0, 0,           /* color bits */
+         8, 8, 8, 8, 0, 0,           /* color bits */
          0, 0,                       /* depth, stencil */
          4                           /* size in bytes */
       },
       {
          PIPE_FORMAT_U_A8_R8_G8_B8,
          GL_RGBA,                    /* base_format */
-         4, 4, 4, 4, 0, 0,           /* color bits */
+         8, 8, 8, 8, 0, 0,           /* color bits */
          0, 0,                       /* depth, stencil */
          4                           /* size in bytes */
       },
@@ -166,29 +168,29 @@ st_renderbuffer_alloc_storage(GLcontext * ctx, struct gl_renderbuffer *rb,
 
    cpp = info->size;
 
-   if (!strb->surface) {
-      strb->surface = pipe->surface_alloc(pipe, pipeFormat);
-      if (!strb->surface)
+   if (!strb->Base.surface) {
+      strb->Base.surface = pipe->surface_alloc(pipe, pipeFormat);
+      if (!strb->Base.surface)
          return GL_FALSE;
    }
 
    /* free old region */
-   if (strb->surface->region) {
-      pipe->region_release(pipe, &strb->surface->region);
+   if (strb->Base.surface->region) {
+      pipe->region_release(pipe, &strb->Base.surface->region);
    }
 
    /* Choose a pitch to match hardware requirements:
     */
    pitch = ((cpp * width + 63) & ~63) / cpp; /* XXX fix: device-specific */
 
-   strb->surface->region = pipe->region_alloc(pipe, cpp, pitch, height);
-   if (!strb->surface->region)
+   strb->Base.surface->region = pipe->region_alloc(pipe, cpp, pitch, height);
+   if (!strb->Base.surface->region)
       return GL_FALSE; /* out of memory, try s/w buffer? */
 
-   ASSERT(strb->surface->region->buffer);
+   ASSERT(strb->Base.surface->region->buffer);
 
-   strb->Base.Width  = strb->surface->width  = width;
-   strb->Base.Height = strb->surface->height = height;
+   strb->Base.Width  = strb->Base.surface->width  = width;
+   strb->Base.Height = strb->Base.surface->height = height;
 
    return GL_TRUE;
 }
@@ -204,11 +206,11 @@ st_renderbuffer_delete(struct gl_renderbuffer *rb)
    struct pipe_context *pipe = ctx->st->pipe;
    struct st_renderbuffer *strb = st_renderbuffer(rb);
    ASSERT(strb);
-   if (strb && strb->surface) {
+   if (strb && strb->Base.surface) {
       if (rb->surface->region) {
-         pipe->region_release(pipe, &strb->surface->region);
+         pipe->region_release(pipe, &strb->Base.surface->region);
       }
-      free(strb->surface);
+      free(strb->Base.surface);
    }
    free(strb);
 }
@@ -256,6 +258,76 @@ st_new_renderbuffer(GLcontext *ctx, GLuint name)
    }
    return NULL;
 }
+
+
+#if 000
+struct gl_renderbuffer *
+st_new_renderbuffer_fb(struct pipe_region *region, GLuint width, GLuint height)
+{
+   struct st_renderbuffer *strb = CALLOC_STRUCT(st_renderbuffer);
+   if (!strb)
+      return;
+
+   _mesa_init_renderbuffer(&strb->Base, name);
+   strb->Base.Delete = st_renderbuffer_delete;
+   strb->Base.AllocStorage = st_renderbuffer_alloc_storage;
+   strb->Base.GetPointer = null_get_pointer;
+   strb->Base.Width = width;
+   strb->Base.Heigth = height;
+
+   strb->region = region;
+
+   return &strb->Base;
+}
+
+#else
+
+struct gl_renderbuffer *
+st_new_renderbuffer_fb(GLuint intFormat)
+{
+   struct st_renderbuffer *irb;
+
+   irb = CALLOC_STRUCT(st_renderbuffer);
+   if (!irb) {
+      _mesa_error(NULL, GL_OUT_OF_MEMORY, "creating renderbuffer");
+      return NULL;
+   }
+
+   _mesa_init_renderbuffer(&irb->Base, 0);
+   irb->Base.ClassID = 0x42; /* XXX temp */
+   irb->Base.InternalFormat = intFormat;
+
+   switch (intFormat) {
+   case GL_RGB5:
+   case GL_RGBA8:
+      irb->Base._BaseFormat = GL_RGBA;
+      break;
+   case GL_DEPTH_COMPONENT16:
+      irb->Base._BaseFormat = GL_DEPTH_COMPONENT;
+      break;
+   case GL_DEPTH24_STENCIL8_EXT:
+      irb->Base._BaseFormat = GL_DEPTH_STENCIL_EXT;
+      break;
+   default:
+      _mesa_problem(NULL,
+		    "Unexpected intFormat in st_new_renderbuffer");
+      return NULL;
+   }
+
+   /* st-specific methods */
+   irb->Base.Delete = st_renderbuffer_delete;
+   irb->Base.AllocStorage = st_renderbuffer_alloc_storage;
+   irb->Base.GetPointer = null_get_pointer;
+   /* span routines set in alloc_storage function */
+
+   irb->Base.surface = NULL;/*intel_new_surface(intFormat);*/
+   /*irb->Base.surface->rb = irb;*/
+
+   return &irb->Base;
+}
+#endif
+
+
 
 /**
  * Called via ctx->Driver.BindFramebufferEXT().

@@ -159,8 +159,43 @@ write_quad_stencil(struct softpipe_surface *sps,
 }
 
 
+
+
+static void
+a8r8g8b8_get_tile(struct pipe_surface *ps,
+                  GLuint x, GLuint y, GLuint w, GLuint h, GLfloat *p)
+{
+   const GLuint *src
+      = ((const GLuint *) (ps->region->map + ps->offset))
+      + y * ps->region->pitch + x;
+   GLuint i, j;
+#if 0
+   assert(x + w <= ps->width);
+   assert(y + h <= ps->height);
+#else
+   /* temp hack */
+   if (x + w > ps->width)
+      w = ps->width - x;
+   if (y + h > ps->height)
+      h = ps->height -y;
+#endif
+   for (i = 0; i < h; i++) {
+      for (j = 0; j < w; j++) {
+         p[0] = UBYTE_TO_FLOAT((src[j] >> 16) & 0xff);
+         p[1] = UBYTE_TO_FLOAT((src[j] >>  8) & 0xff);
+         p[2] = UBYTE_TO_FLOAT((src[j] >>  0) & 0xff);
+         p[3] = UBYTE_TO_FLOAT((src[j] >> 24) & 0xff);
+         p += 4;
+      }
+      src += ps->region->pitch;
+   }
+}
+
+
+
+
 struct pipe_surface *
-intel_new_surface(GLuint intFormat)
+intel_new_surface(struct pipe_context *pipe, GLuint pipeFormat)
 {
    struct softpipe_surface *sps = CALLOC_STRUCT(softpipe_surface);
    if (!sps)
@@ -168,31 +203,42 @@ intel_new_surface(GLuint intFormat)
 
    sps->surface.width = 0; /* set in intel_alloc_renderbuffer_storage() */
    sps->surface.height = 0;
+   sps->surface.refcount = 1;
+   sps->surface.format = pipeFormat;
 
-   if (intFormat == GL_RGBA8) {
-      sps->surface.format = PIPE_FORMAT_U_A8_R8_G8_B8;
+   switch (pipeFormat) {
+   case PIPE_FORMAT_U_A8_R8_G8_B8:
       sps->read_quad_f_swz = read_quad_f_swz;
       sps->write_quad_f_swz = write_quad_f_swz;
-   }
-   else if (intFormat == GL_RGB5) {
-      sps->surface.format = PIPE_FORMAT_U_R5_G6_B5;
-
-   }
-   else if (intFormat == GL_DEPTH_COMPONENT16) {
-      sps->surface.format = PIPE_FORMAT_U_Z16;
-
-   }
-   else if (intFormat == GL_DEPTH24_STENCIL8_EXT) {
-      sps->surface.format = PIPE_FORMAT_S8_Z24;
+      sps->surface.get_tile = a8r8g8b8_get_tile;
+      break;
+   case PIPE_FORMAT_U_R5_G6_B5:
+      break;
+   case PIPE_FORMAT_U_Z16:
+      break;
+   case PIPE_FORMAT_S8_Z24:
       sps->read_quad_z = read_quad_z24;
       sps->write_quad_z = write_quad_z24;
       sps->read_quad_stencil = read_quad_stencil;
       sps->write_quad_stencil = write_quad_stencil;
-   }
-   else {
-      /* TBD / unknown */
-
+      break;
    }
 
    return &sps->surface;
 }
+
+
+
+const GLuint *
+intel_supported_formats(struct pipe_context *pipe, GLuint *numFormats)
+{
+   static const GLuint formats[] = {
+      PIPE_FORMAT_U_A8_R8_G8_B8,
+      PIPE_FORMAT_U_R5_G6_B5,
+      PIPE_FORMAT_S8_Z24,
+   };
+
+   *numFormats = sizeof(formats) / sizeof(formats[0]);
+   return formats;
+}
+

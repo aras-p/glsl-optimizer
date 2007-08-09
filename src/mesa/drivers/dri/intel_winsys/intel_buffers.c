@@ -96,6 +96,7 @@ intel_intersect_cliprects(drm_clip_rect_t * dst,
 /**
  * Return pointer to current color drawing region, or NULL.
  */
+#if 0
 struct pipe_region *
 intel_drawbuf_region(struct intel_context *intel)
 {
@@ -120,7 +121,7 @@ intel_readbuf_region(struct intel_context *intel)
    else
       return NULL;
 }
-
+#endif
 
 /**
  * This will be called whenever the currently bound window is moved/resized.

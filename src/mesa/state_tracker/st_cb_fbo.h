@@ -30,6 +30,14 @@
 #define ST_CB_FBO_H
 
 
+/*
+extern struct gl_renderbuffer *
+st_new_renderbuffer_fb(struct pipe_region *region, GLuint width, GLuint height);
+*/
+extern struct gl_renderbuffer *
+st_new_renderbuffer_fb(GLuint intFormat);
+
+
 extern void
 st_init_fbo_functions(struct dd_function_table *functions);
 
