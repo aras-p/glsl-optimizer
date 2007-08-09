@@ -818,7 +818,7 @@ struct tgsi_immediate_float32
 /* TGSI_OPCODE_CND */
 /* TGSI_OPCODE_TEXREG2RGB */
 /* TGSI_OPCODE_TEXDP3TEX */
-#define TEXM3X2DEPTH                    121
+#define TGSI_OPCODE_TEXM3X2DEPTH        121
 /* TGSI_OPCODE_TEXDP3 */
 /* TGSI_OPCODE_TEXM3X3 */
 /* CMP - use TGSI_OPCODE_CND0 */
