@@ -368,10 +368,8 @@ a1r5g5b5_get_tile(struct pipe_surface *ps,
 }
 
 
-
-
-static void
-init_quad_funcs(struct softpipe_surface *sps)
+void
+softpipe_init_surface_funcs(struct softpipe_surface *sps)
 {
    switch (sps->surface.format) {
    case PIPE_FORMAT_U_Z16:
@@ -399,9 +397,7 @@ init_quad_funcs(struct softpipe_surface *sps)
       sps->surface.get_tile = a1r5g5b5_get_tile;
       break;
    default:
-      /*
       assert(0);
-      */
       ;
    }
 }
@@ -416,7 +412,7 @@ sp_surface_alloc(struct pipe_context *pipe, GLenum format)
 
    sps->surface.format = format;
    sps->surface.refcount = 1;
-   init_quad_funcs(sps);
+   softpipe_init_surface_funcs(sps);
 
    return &sps->surface;
 }

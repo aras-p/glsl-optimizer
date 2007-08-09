@@ -93,6 +93,10 @@ softpipe_get_tex_surface(struct pipe_context *pipe,
                          GLuint face, GLuint level, GLuint zslice);
 
 
+extern void
+softpipe_init_surface_funcs(struct softpipe_surface *sps);
+
+
 /** Cast wrapper */
 static INLINE struct softpipe_surface *
 softpipe_surface(struct pipe_surface *ps)
