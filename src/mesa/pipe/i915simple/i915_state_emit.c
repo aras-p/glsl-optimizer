@@ -66,14 +66,13 @@ i915_emit_hardware_state(struct i915_context *i915 )
 {
    BEGIN_BATCH(100, 10);
 
+   if (i915->hardware_dirty & I915_HW_INVARIENT)
    {
       OUT_BATCH(_3DSTATE_AA_CMD |
 		AA_LINE_ECAAR_WIDTH_ENABLE |
 		AA_LINE_ECAAR_WIDTH_1_0 |
 		AA_LINE_REGION_WIDTH_ENABLE | AA_LINE_REGION_WIDTH_1_0);
-   }
 
-   {
       OUT_BATCH(_3DSTATE_DFLT_DIFFUSE_CMD);
       OUT_BATCH(0);
 
@@ -82,10 +81,7 @@ i915_emit_hardware_state(struct i915_context *i915 )
       
       OUT_BATCH(_3DSTATE_DFLT_Z_CMD);
       OUT_BATCH(0);
-   }
 
-
-   {
       OUT_BATCH(_3DSTATE_COORD_SET_BINDINGS |
 		CSB_TCB(0, 0) |
 		CSB_TCB(1, 1) |
@@ -95,9 +91,7 @@ i915_emit_hardware_state(struct i915_context *i915 )
 		CSB_TCB(5, 5) | 
 		CSB_TCB(6, 6) | 
 		CSB_TCB(7, 7));
-   }
 
-   {
       OUT_BATCH(_3DSTATE_RASTER_RULES_CMD |
 		ENABLE_POINT_RASTER_RULE |
 		OGL_POINT_RASTER_RULE |
@@ -107,42 +101,25 @@ i915_emit_hardware_state(struct i915_context *i915 )
 		TRI_FAN_PROVOKE_VRTX(2) | 
 		ENABLE_TEXKILL_3D_4D | 
 		TEXKILL_4D);
-   }
 
-   /* Need to initialize this to zero.
-    */
-   {
+      /* Need to initialize this to zero.
+       */
       OUT_BATCH(_3DSTATE_LOAD_STATE_IMMEDIATE_1 | I1_LOAD_S(3) | (0));
       OUT_BATCH(0);
-   }
 
-   
-   {
-      OUT_BATCH(_3DSTATE_SCISSOR_ENABLE_CMD | DISABLE_SCISSOR_RECT);
-      
-      OUT_BATCH(_3DSTATE_SCISSOR_RECT_0_CMD);
-      OUT_BATCH(0);
-      OUT_BATCH(0);
-   }
-
-   {      
       OUT_BATCH(_3DSTATE_DEPTH_SUBRECT_DISABLE);
-   }
 
-   {
-      OUT_BATCH(_3DSTATE_LOAD_INDIRECT | 0);       /* disable indirect state */
+      /* disable indirect state for now
+       */
+      OUT_BATCH(_3DSTATE_LOAD_INDIRECT | 0);
       OUT_BATCH(0);
    }
-
    
-   {
-      /* Don't support twosided stencil yet */
-      OUT_BATCH(_3DSTATE_BACKFACE_STENCIL_OPS | BFO_ENABLE_STENCIL_TWO_SIDE | 0);
-      OUT_BATCH(0);
-   }
 
 
 
+
+   if (i915->hardware_dirty & I915_HW_IMMEDIATE)
    {
       OUT_BATCH(_3DSTATE_LOAD_STATE_IMMEDIATE_1 | 
 		I1_LOAD_S(2) |
@@ -156,92 +133,75 @@ i915_emit_hardware_state(struct i915_context *i915 )
       OUT_BATCH(i915->current.immediate[I915_IMMEDIATE_S5]);
       OUT_BATCH(i915->current.immediate[I915_IMMEDIATE_S6]);
    }
-
-   {
-      OUT_BATCH(_3DSTATE_MODES_4_CMD |
-		ENABLE_LOGIC_OP_FUNC |
-		LOGIC_OP_FUNC(LOGICOP_COPY) |
-		ENABLE_STENCIL_TEST_MASK |
-		STENCIL_TEST_MASK(0xff) |
-		ENABLE_STENCIL_WRITE_MASK |
-		STENCIL_WRITE_MASK(0xff));
-   }
    
-   if (0) {
-      OUT_BATCH(_3DSTATE_INDEPENDENT_ALPHA_BLEND_CMD |
-		IAB_MODIFY_ENABLE |
-		IAB_MODIFY_FUNC |
-		IAB_MODIFY_SRC_FACTOR |
-		IAB_MODIFY_DST_FACTOR);
-   }
 
+   if (i915->hardware_dirty & I915_HW_DYNAMIC) 
    {
-      //3DSTATE_INDEPENDENT_ALPHA_BLEND (1 dwords):
-      OUT_BATCH(0x6ba008a1);
-
-      //3DSTATE_CONSTANT_BLEND_COLOR (2 dwords):
-      OUT_BATCH(0x7d880000);
-      OUT_BATCH(0x00000000);
+      int i;
+      for (i = 0; i < I915_MAX_DYNAMIC; i++) {
+	 OUT_BATCH(i915->current.dynamic[i]);
+      }
    }
 
 
 
-   if (i915->framebuffer.cbufs[0]) {
-      struct pipe_region *cbuf_region = i915->framebuffer.cbufs[0]->region;
-      unsigned pitch = (cbuf_region->pitch *
-			cbuf_region->cpp);
+   if (i915->hardware_dirty & I915_HW_STATIC)
+   {
+      if (i915->framebuffer.cbufs[0]) {
+	 struct pipe_region *cbuf_region = i915->framebuffer.cbufs[0]->region;
+	 unsigned pitch = (cbuf_region->pitch *
+			   cbuf_region->cpp);
 
-      OUT_BATCH(_3DSTATE_BUF_INFO_CMD);
+	 OUT_BATCH(_3DSTATE_BUF_INFO_CMD);
 
-      OUT_BATCH(BUF_3D_ID_COLOR_BACK | 
-		BUF_3D_PITCH(pitch) |  /* pitch in bytes */
-		BUF_3D_USE_FENCE);
+	 OUT_BATCH(BUF_3D_ID_COLOR_BACK | 
+		   BUF_3D_PITCH(pitch) |  /* pitch in bytes */
+		   BUF_3D_USE_FENCE);
 
-      OUT_RELOC(cbuf_region->buffer,
-		I915_BUFFER_ACCESS_WRITE,
-		0);
-   }
+	 OUT_RELOC(cbuf_region->buffer,
+		   I915_BUFFER_ACCESS_WRITE,
+		   0);
+      }
 
-   /* What happens if no zbuf??
-    */
-   if (i915->framebuffer.zbuf) {
-      struct pipe_region *depth_region = i915->framebuffer.zbuf->region;
-      unsigned zpitch = (depth_region->pitch *
-			 depth_region->cpp);
+      /* What happens if no zbuf??
+       */
+      if (i915->framebuffer.zbuf) {
+	 struct pipe_region *depth_region = i915->framebuffer.zbuf->region;
+	 unsigned zpitch = (depth_region->pitch *
+			    depth_region->cpp);
 			 
-      OUT_BATCH(_3DSTATE_BUF_INFO_CMD);
+	 OUT_BATCH(_3DSTATE_BUF_INFO_CMD);
 
-      OUT_BATCH(BUF_3D_ID_DEPTH |
-		BUF_3D_PITCH(zpitch) |  /* pitch in bytes */
-		BUF_3D_USE_FENCE);
+	 OUT_BATCH(BUF_3D_ID_DEPTH |
+		   BUF_3D_PITCH(zpitch) |  /* pitch in bytes */
+		   BUF_3D_USE_FENCE);
 
-      OUT_RELOC(depth_region->buffer,
-		I915_BUFFER_ACCESS_WRITE,
-		0);
-   }
+	 OUT_RELOC(depth_region->buffer,
+		   I915_BUFFER_ACCESS_WRITE,
+		   0);
+      }
 
    
-   {
-      unsigned cformat = translate_format( i915->framebuffer.cbufs[0]->format );
-      unsigned zformat = 0;
+      {
+	 unsigned cformat = translate_format( i915->framebuffer.cbufs[0]->format );
+	 unsigned zformat = 0;
       
-      if (i915->framebuffer.zbuf) 
-	 zformat = translate_depth_format( i915->framebuffer.zbuf->format );
+	 if (i915->framebuffer.zbuf) 
+	    zformat = translate_depth_format( i915->framebuffer.zbuf->format );
 
-      OUT_BATCH(_3DSTATE_DST_BUF_VARS_CMD);
+	 OUT_BATCH(_3DSTATE_DST_BUF_VARS_CMD);
 
-      OUT_BATCH(DSTORG_HORT_BIAS(0x8) | /* .5 */
-		DSTORG_VERT_BIAS(0x8) | /* .5 */
-		LOD_PRECLAMP_OGL |
-		TEX_DEFAULT_COLOR_OGL |
-		cformat |
-		zformat );
+	 OUT_BATCH(DSTORG_HORT_BIAS(0x8) | /* .5 */
+		   DSTORG_VERT_BIAS(0x8) | /* .5 */
+		   LOD_PRECLAMP_OGL |
+		   TEX_DEFAULT_COLOR_OGL |
+		   cformat |
+		   zformat );
+      }
+
    }
 
-   {
-      OUT_BATCH(_3DSTATE_STIPPLE);
-      OUT_BATCH(0);
-   }
+
 
    {
       GLuint i, dwords;

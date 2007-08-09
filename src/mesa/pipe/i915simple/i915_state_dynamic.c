@@ -1,0 +1,429 @@
+/**************************************************************************
+ * 
+ * Copyright 2003 Tungsten Graphics, Inc., Cedar Park, Texas.
+ * All Rights Reserved.
+ * 
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the
+ * "Software"), to deal in the Software without restriction, including
+ * without limitation the rights to use, copy, modify, merge, publish,
+ * distribute, sub license, and/or sell copies of the Software, and to
+ * permit persons to whom the Software is furnished to do so, subject to
+ * the following conditions:
+ * 
+ * The above copyright notice and this permission notice (including the
+ * next paragraph) shall be included in all copies or substantial portions
+ * of the Software.
+ * 
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+ * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+ * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT.
+ * IN NO EVENT SHALL TUNGSTEN GRAPHICS AND/OR ITS SUPPLIERS BE LIABLE FOR
+ * ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
+ * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
+ * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ * 
+ **************************************************************************/
+
+#include "glheader.h"
+#include "context.h"
+#include "macros.h"
+#include "enums.h"
+
+#include "i915_batch.h"
+#include "i915_state_inlines.h"
+#include "i915_context.h"
+#include "i915_reg.h"
+#include "i915_state.h"
+
+#define FILE_DEBUG_FLAG DEBUG_STATE
+
+/* State that we have chosen to store in the DYNAMIC segment of the
+ * i915 indirect state mechanism.  
+ *
+ * Can't cache these in the way we do the static state, as there is no
+ * start/size in the command packet, instead an 'end' value that gets
+ * incremented.
+ *
+ * Additionally, there seems to be a requirement to re-issue the full
+ * (active) state every time a 4kb boundary is crossed.
+ */
+
+static inline void set_dynamic_indirect( struct i915_context *i915,
+					 GLuint offset,
+					 const GLuint *src,
+					 GLuint dwords )
+{
+   int i;
+
+   for (i = 0; i < dwords; i++)
+      i915->current.dynamic[offset + i] = src[i];
+
+   i915->hardware_dirty |= I915_HW_DYNAMIC;
+}
+
+
+/***********************************************************************
+ * Modes4: stencil masks and logicop 
+ */
+static void upload_MODES4( struct i915_context *i915 )
+{
+   GLuint modes4 = 0;
+
+   /* I915_NEW_STENCIL */
+   {
+      GLint testmask = i915->stencil.value_mask[0] & 0xff;
+      GLint writemask = i915->stencil.write_mask[0] & 0xff;
+
+      modes4 |= (_3DSTATE_MODES_4_CMD |
+		 ENABLE_STENCIL_TEST_MASK |
+		 STENCIL_TEST_MASK(testmask) |
+		 ENABLE_STENCIL_WRITE_MASK |
+		 STENCIL_WRITE_MASK(writemask));
+   }
+
+   /* I915_NEW_BLEND */
+   {
+      modes4 |= (_3DSTATE_MODES_4_CMD |
+		 ENABLE_LOGIC_OP_FUNC |
+		 LOGIC_OP_FUNC(i915_translate_logic_op(i915->blend.logicop_func)));
+   }
+   
+   /* Always, so that we know when state is in-active: 
+    */
+   set_dynamic_indirect( i915, 
+			 I915_DYNAMIC_MODES4,
+			 &modes4,
+			 1 );
+}
+
+const struct i915_tracked_state i915_upload_MODES4 = {
+   .dirty = I915_NEW_BLEND | I915_NEW_STENCIL,
+   .update = upload_MODES4
+};
+
+
+
+
+/***********************************************************************
+ */
+
+static void upload_BFO( struct i915_context *i915 )
+{
+   GLuint bf[2];
+
+   memset( bf, 0, sizeof(bf) );
+
+   /* _NEW_STENCIL 
+    */
+   if (i915->stencil.back_enabled) {
+      GLint test  = i915_translate_compare_func(i915->stencil.back_func);
+      GLint fop   = i915_translate_stencil_op(i915->stencil.back_fail_op);
+      GLint dfop  = i915_translate_stencil_op(i915->stencil.back_zfail_op);
+      GLint dpop  = i915_translate_stencil_op(i915->stencil.back_zpass_op);
+      GLint ref   = i915->stencil.ref_value[1] & 0xff;
+      GLint tmask = i915->stencil.value_mask[1] & 0xff;
+      GLint wmask = i915->stencil.write_mask[1] & 0xff;
+      
+      bf[0] = (_3DSTATE_BACKFACE_STENCIL_OPS |
+	       BFO_ENABLE_STENCIL_FUNCS |
+	       BFO_ENABLE_STENCIL_TWO_SIDE |
+	       BFO_ENABLE_STENCIL_REF |
+	       BFO_STENCIL_TWO_SIDE |
+	       (ref  << BFO_STENCIL_REF_SHIFT) |
+	       (test << BFO_STENCIL_TEST_SHIFT) |
+	       (fop  << BFO_STENCIL_FAIL_SHIFT) |
+	       (dfop << BFO_STENCIL_PASS_Z_FAIL_SHIFT) |
+	       (dpop << BFO_STENCIL_PASS_Z_PASS_SHIFT));
+
+      bf[1] = (_3DSTATE_BACKFACE_STENCIL_MASKS |
+	       BFM_ENABLE_STENCIL_TEST_MASK |
+	       BFM_ENABLE_STENCIL_WRITE_MASK |
+	       (tmask << BFM_STENCIL_TEST_MASK_SHIFT) |
+	       (wmask << BFM_STENCIL_WRITE_MASK_SHIFT));
+   }
+   else {
+      /* This actually disables two-side stencil: The bit set is a
+       * modify-enable bit to indicate we are changing the two-side
+       * setting.  Then there is a symbolic zero to show that we are
+       * setting the flag to zero/off.
+       */
+      bf[0] = (_3DSTATE_BACKFACE_STENCIL_OPS |
+	       BFO_ENABLE_STENCIL_TWO_SIDE |
+	       0);
+      bf[1] = 0;
+   }      
+
+   set_dynamic_indirect( i915, 
+			 I915_DYNAMIC_BFO_0,
+			 &bf[0],
+			 2 );
+}
+
+const struct i915_tracked_state i915_upload_BFO = {
+   .dirty = I915_NEW_STENCIL,
+   .update = upload_BFO
+};
+
+
+/***********************************************************************
+ */
+
+
+static void upload_BLENDCOLOR( struct i915_context *i915 )
+{
+   GLuint bc[2];
+
+   memset( bc, 0, sizeof(bc) );
+
+   /* I915_NEW_BLEND {_COLOR} 
+    */
+   {
+      const GLfloat *color = i915->blend_color.color;
+      GLubyte r, g, b, a;
+
+      UNCLAMPED_FLOAT_TO_UBYTE(r, color[RCOMP]);
+      UNCLAMPED_FLOAT_TO_UBYTE(g, color[GCOMP]);
+      UNCLAMPED_FLOAT_TO_UBYTE(b, color[BCOMP]);
+      UNCLAMPED_FLOAT_TO_UBYTE(a, color[ACOMP]);
+
+      bc[0] = (_3DSTATE_CONST_BLEND_COLOR_CMD);
+      bc[1] = (a << 24) | (r << 16) | (g << 8) | b;
+   }
+
+   set_dynamic_indirect( i915, 
+			 I915_DYNAMIC_BC_0,
+			 bc,
+			 2 );
+}
+
+const struct i915_tracked_state i915_upload_BLENDCOLOR = {
+   .dirty = I915_NEW_BLEND,
+   .update = upload_BLENDCOLOR
+};
+
+/***********************************************************************
+ */
+
+
+static void upload_IAB( struct i915_context *i915 )
+{
+   GLuint iab = 0;
+
+   {
+      GLuint eqRGB  = i915->blend.rgb_func;
+      GLuint srcRGB = i915->blend.rgb_src_factor;
+      GLuint dstRGB = i915->blend.rgb_dst_factor;
+
+      GLuint eqA    = i915->blend.alpha_func;
+      GLuint srcA   = i915->blend.alpha_src_factor;
+      GLuint dstA   = i915->blend.alpha_dst_factor;
+
+      if (eqA == GL_MIN || eqA == GL_MAX) {
+	 srcA = dstA = GL_ONE;
+      }
+
+      if (eqRGB == GL_MIN || eqRGB == GL_MAX) {
+	 srcRGB = dstRGB = GL_ONE;
+      }
+      
+      if (srcA != srcRGB ||
+	  dstA != dstRGB ||
+	  eqA != eqRGB) {
+
+	 iab = (_3DSTATE_INDEPENDENT_ALPHA_BLEND_CMD |    
+		IAB_MODIFY_ENABLE |
+		IAB_ENABLE |
+		IAB_MODIFY_FUNC | 
+		IAB_MODIFY_SRC_FACTOR | 
+		IAB_MODIFY_DST_FACTOR |
+		SRC_ABLND_FACT(i915_translate_blend_factor(srcA)) |
+		DST_ABLND_FACT(i915_translate_blend_factor(dstA)) |
+		(i915_translate_blend_func(eqA) << IAB_FUNC_SHIFT));
+      }	 
+      else {
+	 iab = (_3DSTATE_INDEPENDENT_ALPHA_BLEND_CMD |    
+		IAB_MODIFY_ENABLE |
+		0);
+      }
+   }
+
+
+   set_dynamic_indirect( i915, 
+			 I915_DYNAMIC_IAB,
+			 &iab,
+			 1 );
+}
+
+const struct i915_tracked_state i915_upload_IAB = {
+   .dirty = I915_NEW_BLEND,
+   .update = upload_IAB
+};
+
+
+/***********************************************************************
+ */
+
+
+
+static void upload_DEPTHSCALE( struct i915_context *i915 )
+{
+   union { GLfloat f; GLuint u; } ds[2];
+
+   memset( ds, 0, sizeof(ds) );
+   
+   /* I915_NEW_SETUP
+    */
+   ds[0].u = _3DSTATE_DEPTH_OFFSET_SCALE;
+   ds[1].f = i915->setup.offset_scale;
+
+   set_dynamic_indirect( i915, 
+			 I915_DYNAMIC_DEPTHSCALE_0,
+			 &ds[0].u,
+			 2 );
+}
+
+const struct i915_tracked_state i915_upload_DEPTHSCALE = {
+   .dirty = I915_NEW_SETUP,
+   .update = upload_DEPTHSCALE
+};
+
+
+
+/***********************************************************************
+ * Polygon stipple
+ *
+ * The i915 supports a 4x4 stipple natively, GL wants 32x32.
+ * Fortunately stipple is usually a repeating pattern.
+ *
+ * XXX: does stipple pattern need to be adjusted according to
+ * the window position?
+ *
+ * XXX: possibly need workaround for conform paths test. 
+ */
+
+static void upload_STIPPLE( struct i915_context *i915 )
+{
+   GLuint st[2];
+
+   st[0] = _3DSTATE_STIPPLE;
+   st[1] = 0;
+   
+   /* I915_NEW_SETUP 
+    */
+   if (i915->setup.poly_stipple_enable) {
+      st[1] |= ST1_ENABLE;
+   }
+
+
+   /* I915_NEW_STIPPLE
+    */
+   {
+      const GLubyte *mask = (const GLubyte *)i915->poly_stipple.stipple;
+      GLubyte p[4];
+
+      p[0] = mask[12] & 0xf;
+      p[1] = mask[8] & 0xf;
+      p[2] = mask[4] & 0xf;
+      p[3] = mask[0] & 0xf;
+
+      /* Not sure what to do about fallbacks, so for now just dont:
+       */
+      st[1] |= ((p[0] << 0) |
+		(p[1] << 4) |
+		(p[2] << 8) | 
+		(p[3] << 12));
+   }
+
+
+   set_dynamic_indirect( i915, 
+			 I915_DYNAMIC_STP_0,
+			 &st[0],
+			 2 );
+}
+
+
+const struct i915_tracked_state i915_upload_STIPPLE = {
+   .dirty = I915_NEW_SETUP | I915_NEW_STIPPLE,
+   .update = upload_STIPPLE
+};
+
+
+
+/***********************************************************************
+ * Scissor.  
+ */
+static void upload_SCISSOR_ENABLE( struct i915_context *i915 )
+{
+   unsigned sc[1];
+
+   if (i915->setup.scissor) 
+      sc[0] = _3DSTATE_SCISSOR_ENABLE_CMD | ENABLE_SCISSOR_RECT;
+   else
+      sc[0] = _3DSTATE_SCISSOR_ENABLE_CMD | DISABLE_SCISSOR_RECT;
+
+   set_dynamic_indirect( i915, 
+			 I915_DYNAMIC_SC_ENA_0,
+			 &sc[0],
+			 1 );
+}
+
+const struct i915_tracked_state i915_upload_SCISSOR_ENABLE = {
+   .dirty = I915_NEW_SETUP,
+   .update = upload_SCISSOR_ENABLE
+};
+
+
+
+static void upload_SCISSOR_RECT( struct i915_context *i915 )
+{
+   unsigned x1 = i915->scissor.minx;
+   unsigned y1 = i915->scissor.miny;
+   unsigned x2 = i915->scissor.maxx;
+   unsigned y2 = i915->scissor.maxy;
+   unsigned sc[3];
+ 
+   sc[0] = _3DSTATE_SCISSOR_RECT_0_CMD;
+   sc[1] = (y1 << 16) | (x1 & 0xffff);
+   sc[2] = (y2 << 16) | (x2 & 0xffff);
+
+   set_dynamic_indirect( i915, 
+			 I915_DYNAMIC_SC_RECT_0,
+			 &sc[0],
+			 3 );
+}
+
+
+const struct i915_tracked_state i915_upload_SCISSOR_RECT = {
+   .dirty = I915_NEW_SCISSOR,
+   .update = upload_SCISSOR_RECT
+};
+
+
+
+
+
+
+static const struct i915_tracked_state *atoms[] = {
+   &i915_upload_MODES4,
+   &i915_upload_BFO,
+   &i915_upload_BLENDCOLOR,
+   &i915_upload_IAB,
+   &i915_upload_DEPTHSCALE,
+   &i915_upload_STIPPLE,
+   &i915_upload_SCISSOR_ENABLE,
+   &i915_upload_SCISSOR_RECT
+};
+
+/* These will be dynamic indirect state commands, but for now just end
+ * up on the batch buffer with everything else.
+ */
+void i915_update_dynamic( struct i915_context *i915 )
+{
+   int i;
+
+   for (i = 0; i < Elements(atoms); i++)
+      if (i915->dirty & atoms[i]->dirty)
+	 atoms[i]->update( i915 );
+}
+

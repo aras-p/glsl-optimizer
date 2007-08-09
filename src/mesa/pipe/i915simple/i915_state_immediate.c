@@ -44,11 +44,6 @@
  */
 
 
-struct i915_tracked_state {
-   unsigned dirty;
-   void (*update)( struct i915_context * );
-};
-
 
 
 /***********************************************************************

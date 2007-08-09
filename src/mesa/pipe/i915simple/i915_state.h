@@ -33,7 +33,14 @@
 
 struct i915_context;
 
+
+struct i915_tracked_state {
+   unsigned dirty;
+   void (*update)( struct i915_context * );
+};
+
 void i915_update_immediate( struct i915_context *i915 );
+void i915_update_dynamic( struct i915_context *i915 );
 void i915_update_derived( struct i915_context *i915 );
 
 void i915_emit_hardware_state( struct i915_context *i915 );

@@ -116,7 +116,6 @@ emit_prim( struct draw_stage *stage,
 	   unsigned nr )
 {
    struct i915_context *i915 = setup_stage(stage)->i915;
-   struct i915_winsys *winsys = i915->winsys;
    unsigned vertex_size = 4 * sizeof(int);
    unsigned *ptr;
    unsigned i;
@@ -127,10 +126,16 @@ emit_prim( struct draw_stage *stage,
    if (i915->hardware_dirty)
       i915_emit_hardware_state( i915 );
 
-   ptr = winsys->batch_start( winsys, nr * vertex_size, 0 );
+   ptr = BEGIN_BATCH( nr * vertex_size, 0 );
    if (ptr == 0) {
-      winsys->batch_flush( winsys );
-      ptr = winsys->batch_start( winsys, nr * vertex_size, 0 );
+      FLUSH_BATCH();
+
+      /* Make sure state is re-emitted after a flush: 
+       */
+      i915_update_derived( i915 );
+      i915_emit_hardware_state( i915 );
+
+      ptr = BEGIN_BATCH( nr * vertex_size, 0 );
       if (ptr == 0) {
 	 assert(0);
 	 return;

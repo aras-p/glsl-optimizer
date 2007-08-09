@@ -134,40 +134,6 @@ static void calculate_vertex_layout( struct i915_context *i915 )
 }
 
 
-/**
- * Recompute cliprect from scissor bounds, scissor enable and surface size.
- */
-static void
-compute_cliprect(struct i915_context *sp)
-{
-   GLint surfWidth, surfHeight;
-
-   if (sp->framebuffer.num_cbufs > 0) {
-      surfWidth = sp->framebuffer.cbufs[0]->width;
-      surfHeight = sp->framebuffer.cbufs[0]->height;
-   }
-   else {
-      /* no surface? */
-      surfWidth = sp->scissor.maxx;
-      surfHeight = sp->scissor.maxy;
-   }
-
-   if (sp->setup.scissor) {
-      /* clip to scissor rect */
-      sp->cliprect.minx = MAX2(sp->scissor.minx, 0);
-      sp->cliprect.miny = MAX2(sp->scissor.miny, 0);
-      sp->cliprect.maxx = MIN2(sp->scissor.maxx, surfWidth);
-      sp->cliprect.maxy = MIN2(sp->scissor.maxy, surfHeight);
-   }
-   else {
-      /* clip to surface bounds */
-      sp->cliprect.minx = 0;
-      sp->cliprect.miny = 0;
-      sp->cliprect.maxx = surfWidth;
-      sp->cliprect.maxy = surfHeight;
-   }
-}
-
 
 /* Hopefully this will remain quite simple, otherwise need to pull in
  * something like the state tracker mechanism.
@@ -177,18 +143,16 @@ void i915_update_derived( struct i915_context *i915 )
    if (i915->dirty & (I915_NEW_SETUP | I915_NEW_FS))
       calculate_vertex_layout( i915 );
 
-   if (i915->dirty & (I915_NEW_SCISSOR |
-		      I915_NEW_STENCIL |
-		      I915_NEW_FRAMEBUFFER))
-      compute_cliprect(i915);
-
    if (i915->dirty)
       i915_update_immediate( i915 );
+
+   if (i915->dirty)
+      i915_update_dynamic( i915 );
 
    /* HW emit currently references framebuffer state directly:
     */
    if (i915->dirty & I915_NEW_FRAMEBUFFER)
-      i915->hardware_dirty = 1;
+      i915->hardware_dirty |= I915_HW_STATIC;
 
    i915->dirty = 0;
 }

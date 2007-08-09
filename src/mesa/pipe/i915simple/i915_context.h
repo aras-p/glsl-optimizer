@@ -46,10 +46,10 @@
 #define I915_DYNAMIC_BFO_1        7
 #define I915_DYNAMIC_STP_0        8 
 #define I915_DYNAMIC_STP_1        9 
-#define I915_DYNAMIC_SC_0         10 
-#define I915_DYNAMIC_SC_1         11 
-#define I915_DYNAMIC_SC_2         12 
-#define I915_DYNAMIC_SC_3         13 
+#define I915_DYNAMIC_SC_ENA_0     10 
+#define I915_DYNAMIC_SC_RECT_0    11 
+#define I915_DYNAMIC_SC_RECT_1    12 
+#define I915_DYNAMIC_SC_RECT_2    13 
 #define I915_MAX_DYNAMIC          14
 
 
@@ -83,6 +83,7 @@ struct i915_cache_context;
 struct i915_state 
 {
    GLuint immediate[I915_MAX_IMMEDIATE];
+   GLuint dynamic[I915_MAX_DYNAMIC];
    
    GLuint id;			/* track lost context events */
 };
@@ -147,8 +148,14 @@ struct i915_context
 
 /* Dirty flags for hardware emit
  */
-#define I915_HW_INDIRECT          (1<<0)
-#define I915_HW_IMMEDIATE         (1<<1)
+#define I915_HW_STATIC            (1<<I915_CACHE_STATIC)
+#define I915_HW_DYNAMIC           (1<<I915_CACHE_DYNAMIC)
+#define I915_HW_SAMPLER           (1<<I915_CACHE_SAMPLER)
+#define I915_HW_MAP               (1<<I915_CACHE_MAP)
+#define I915_HW_PROGRAM           (1<<I915_CACHE_PROGRAM)
+#define I915_HW_CONSTANTS         (1<<I915_CACHE_CONSTANTS)
+#define I915_HW_IMMEDIATE         (1<<(I915_MAX_CACHE+0))
+#define I915_HW_INVARIENT         (1<<(I915_MAX_CACHE+1))
 
 
 /***********************************************************************

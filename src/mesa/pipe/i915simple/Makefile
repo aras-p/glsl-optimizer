@@ -16,6 +16,7 @@ DRIVER_SOURCES = \
 	i915_regions.c \
 	i915_state.c \
 	i915_state_immediate.c \
+	i915_state_dynamic.c \
 	i915_state_derived.c \
 	i915_state_emit.c \
 	i915_state_fragprog.c \
