@@ -351,7 +351,7 @@ intelCreateContext(const __GLcontextModes * mesaVis,
    /* Initialize the software rasterizer and helper modules. */
    _vbo_CreateContext(ctx);
    _tnl_CreateContext(ctx);
-
+#if 0
    /*
     * Pipe-related setup
     */
@@ -404,7 +404,7 @@ intelCreateContext(const __GLcontextModes * mesaVis,
    default:
       assert(0); /*FIX*/
    }
-
+#endif
 
    /*
     * memory pools
@@ -465,6 +465,8 @@ intelCreateContext(const __GLcontextModes * mesaVis,
     */
    if (!getenv("INTEL_HW")) {
       intel->pipe = intel_create_softpipe( intel );
+      intel->pipe->surface_alloc = intel_new_surface;
+      intel->pipe->supported_formats = intel_supported_formats;
    }
    else {
       switch (intel->intelScreen->deviceID) {

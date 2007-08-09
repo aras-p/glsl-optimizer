@@ -90,41 +90,6 @@ intel_intersect_cliprects(drm_clip_rect_t * dst,
    return GL_TRUE;
 }
 
-<<<<<<< HEAD:src/mesa/drivers/dri/intel_winsys/intel_buffers.c
-/**
- * Return pointer to current color drawing region, or NULL.
- */
-#if 0
-struct pipe_region *
-intel_drawbuf_region(struct intel_context *intel)
-{
-   struct intel_renderbuffer *irbColor =
-      intel_renderbuffer(intel->ctx.DrawBuffer->_ColorDrawBuffers[0][0]);
-   if (irbColor)
-      return irbColor->Base.surface->region;
-   else
-      return NULL;
-}
-=======
->>>>>>> remove dead code, remove intel_fbo.h includes:src/mesa/drivers/dri/intel_winsys/intel_buffers.c
-
-<<<<<<< HEAD:src/mesa/drivers/dri/intel_winsys/intel_buffers.c
-/**
- * Return pointer to current color reading region, or NULL.
- */
-struct pipe_region *
-intel_readbuf_region(struct intel_context *intel)
-{
-   struct intel_renderbuffer *irb
-      = intel_renderbuffer(intel->ctx.ReadBuffer->_ColorReadBuffer);
-   if (irb)
-      return irb->Base.surface->region;
-   else
-      return NULL;
-}
-#endif
-=======
->>>>>>> remove dead code, remove intel_fbo.h includes:src/mesa/drivers/dri/intel_winsys/intel_buffers.c
 
 /**
  * This will be called whenever the currently bound window is moved/resized.
