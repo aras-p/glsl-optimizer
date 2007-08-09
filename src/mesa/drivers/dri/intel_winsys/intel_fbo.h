@@ -64,6 +64,8 @@ struct intel_framebuffer
 
    GLuint swap_count;
    GLuint swap_missed_count;
+
+   GLuint vbl_pending[3];  /**< [number of color buffers] */
 };
 
 
@@ -86,9 +88,9 @@ struct intel_renderbuffer
    GLuint PairedStencil; /**< only used if this is a stencil renderbuffer */
 
    GLuint pf_pending;  /**< sequence number of pending flip */
-#endif
 
    GLuint vbl_pending;   /**< vblank sequence number of pending flip */
+#endif
 
    struct intel_surface *surface;
 };

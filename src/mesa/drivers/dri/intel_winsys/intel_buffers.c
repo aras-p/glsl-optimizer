@@ -241,11 +241,11 @@ intelWindowMoved(struct intel_context *intel)
 
 	 for (i = 0; i < intel_fb->pf_num_pages; i++) {
 	    if (!intel_fb->color_rb[i] ||
-		(intel_fb->vbl_waited - intel_fb->color_rb[i]->vbl_pending) <=
+		(intel_fb->vbl_waited - intel_fb->vbl_pending[i]) <=
 		(1<<23))
 	       continue;
 
-	    vbl.request.sequence = intel_fb->color_rb[i]->vbl_pending;
+	    vbl.request.sequence = intel_fb->vbl_pending[i];
 	    drmWaitVBlank(intel->driFd, &vbl);
 	 }
 
@@ -255,7 +255,7 @@ intelWindowMoved(struct intel_context *intel)
 
 	 for (i = 0; i < intel_fb->pf_num_pages; i++) {
 	    if (intel_fb->color_rb[i])
-	       intel_fb->color_rb[i]->vbl_pending = intel_fb->vbl_waited;
+	       intel_fb->vbl_pending[i] = intel_fb->vbl_waited;
 	 }
       }
    }
@@ -420,10 +420,14 @@ intelScheduleSwap(const __DRIdrawablePrivate * dPriv, GLboolean *missed_target)
       swap.sequence -= target;
       *missed_target = swap.sequence > 0 && swap.sequence <= (1 << 23);
 
+#if 1
+      intel_fb->vbl_pending[1] = intel_fb->vbl_pending[0] = intel_fb->vbl_seq;
+#else
       intel_get_renderbuffer(&intel_fb->Base, BUFFER_BACK_LEFT)->vbl_pending =
 	 intel_get_renderbuffer(&intel_fb->Base,
 				BUFFER_FRONT_LEFT)->vbl_pending =
 	 intel_fb->vbl_seq;
+#endif
 
       if (swap.seqtype & DRM_VBLANK_FLIP) {
 	 intel_flip_renderbuffers(intel_fb);

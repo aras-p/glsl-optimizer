@@ -574,8 +574,12 @@ intelMakeCurrent(__DRIcontextPrivate * driContextPriv,
 	       intel_fb->vbl_waited = intel_fb->vbl_seq;
 
 	       for (i = 0; i < 2; i++) {
+#if 1
+                  intel_fb->vbl_pending[i] = intel_fb->vbl_seq;
+#else
 		  if (intel_fb->color_rb[i])
 		     intel_fb->color_rb[i]->vbl_pending = intel_fb->vbl_seq;
+#endif
 	       }
 	    }
 	 }
@@ -663,24 +667,31 @@ void LOCK_HARDWARE( struct intel_context *intel )
 {
     char __ret=0;
     struct intel_framebuffer *intel_fb = NULL;
+#if 0
     struct intel_renderbuffer *intel_rb = NULL;
+#else
+    int curbuf;
+#endif
     _glthread_LOCK_MUTEX(lockMutex);
     assert(!intel->locked);
 
     if (intel->driDrawable) {
        intel_fb = intel->driDrawable->driverPrivate;
-
+#if 0
        if (intel_fb)
 	  intel_rb =
 	     intel_get_renderbuffer(&intel_fb->Base,
 				    intel_fb->Base._ColorDrawBufferMask[0] ==
 				    BUFFER_BIT_FRONT_LEFT ? BUFFER_FRONT_LEFT :
 				    BUFFER_BACK_LEFT);
+#endif
     }
 
-    if (intel_rb && intel_fb->vblank_flags &&
+    curbuf = 0; /* current draw buf: 0 = front, 1 = back */
+
+    if (intel_fb && intel_fb->vblank_flags &&
 	!(intel_fb->vblank_flags & VBLANK_FLAG_NO_IRQ) &&
-	(intel_fb->vbl_waited - intel_rb->vbl_pending) > (1<<23)) {
+	(intel_fb->vbl_waited - intel_fb->vbl_pending[curbuf]) > (1<<23)) {
 	drmVBlank vbl;
 
 	vbl.request.type = DRM_VBLANK_ABSOLUTE;
@@ -689,7 +700,7 @@ void LOCK_HARDWARE( struct intel_context *intel )
 	    vbl.request.type |= DRM_VBLANK_SECONDARY;
 	}
 
-	vbl.request.sequence = intel_rb->vbl_pending;
+	vbl.request.sequence = intel_fb->vbl_pending[curbuf];
 	drmWaitVBlank(intel->driFd, &vbl);
 	intel_fb->vbl_waited = vbl.reply.sequence;
     }
