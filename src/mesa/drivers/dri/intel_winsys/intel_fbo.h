@@ -44,8 +44,6 @@ struct intel_framebuffer
 {
    struct gl_framebuffer Base;
 
-   struct intel_renderbuffer *color_rb[3];
-
    /* Drawable page flipping state */
    GLboolean pf_active;
    GLuint pf_seq;
@@ -78,51 +76,12 @@ struct intel_framebuffer
 struct intel_renderbuffer
 {
    struct gl_renderbuffer Base;
-#if 0
-   struct pipe_region *region;
-
-   void *pfMap;                 /* possibly paged flipped map pointer */
-   GLuint pfPitch;              /* possibly paged flipped pitch */
-   GLboolean RenderToTexture;   /* RTT? */
-
-   GLuint PairedDepth;   /**< only used if this is a depth renderbuffer */
-   GLuint PairedStencil; /**< only used if this is a stencil renderbuffer */
-
-   GLuint pf_pending;  /**< sequence number of pending flip */
-
-   GLuint vbl_pending;   /**< vblank sequence number of pending flip */
-
-   struct intel_surface *surface;
-#endif
 };
 
-#if 0
-extern struct intel_renderbuffer *intel_create_renderbuffer(GLenum intFormat,
-                                                            GLsizei width,
-                                                            GLsizei height,
-                                                            int offset,
-                                                            int pitch,
-                                                            int cpp,
-                                                            void *map);
-#endif
 
 extern struct intel_renderbuffer *intel_new_renderbuffer_fb(GLuint intFormat);
 
 extern void intel_fbo_init(struct intel_context *intel);
-
-
-/* XXX make inline or macro */
-extern struct intel_renderbuffer *intel_get_renderbuffer(struct gl_framebuffer
-                                                         *fb,
-                                                         GLuint attIndex);
-
-extern void intel_flip_renderbuffers(struct intel_framebuffer *intel_fb);
-
-
-/* XXX make inline or macro */
-extern struct pipe_region *intel_get_rb_region(struct gl_framebuffer *fb,
-                                                GLuint attIndex);
-
 
 
 extern struct pipe_surface *

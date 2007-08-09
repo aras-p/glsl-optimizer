@@ -242,9 +242,7 @@ intelWindowMoved(struct intel_context *intel)
 	 }
 
 	 for (i = 0; i < intel_fb->pf_num_pages; i++) {
-	    if (!intel_fb->color_rb[i] ||
-		(intel_fb->vbl_waited - intel_fb->vbl_pending[i]) <=
-		(1<<23))
+	    if ((intel_fb->vbl_waited - intel_fb->vbl_pending[i]) <= (1<<23))
 	       continue;
 
 	    vbl.request.sequence = intel_fb->vbl_pending[i];
@@ -256,8 +254,7 @@ intelWindowMoved(struct intel_context *intel)
 	 intel_fb->vbl_waited = intel_fb->vbl_seq;
 
 	 for (i = 0; i < intel_fb->pf_num_pages; i++) {
-	    if (intel_fb->color_rb[i])
-	       intel_fb->vbl_pending[i] = intel_fb->vbl_waited;
+            intel_fb->vbl_pending[i] = intel_fb->vbl_waited;
 	 }
       }
    }

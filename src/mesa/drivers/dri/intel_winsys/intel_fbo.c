@@ -68,64 +68,6 @@ intel_renderbuffer(struct gl_renderbuffer *rb)
 }
 
 
-struct intel_renderbuffer *
-intel_get_renderbuffer(struct gl_framebuffer *fb, GLuint attIndex)
-{
-   return intel_renderbuffer(fb->Attachment[attIndex].Renderbuffer);
-}
-
-#if 0
-void
-intel_flip_renderbuffers(struct intel_framebuffer *intel_fb)
-{
-   int current_page = intel_fb->pf_current_page;
-   int next_page = (current_page + 1) % intel_fb->pf_num_pages;
-   struct gl_renderbuffer *tmp_rb;
-
-   /* Exchange renderbuffers if necessary but make sure their reference counts
-    * are preserved.
-    */
-   if (intel_fb->color_rb[current_page] &&
-       intel_fb->Base.Attachment[BUFFER_FRONT_LEFT].Renderbuffer !=
-       &intel_fb->color_rb[current_page]->Base) {
-      tmp_rb = NULL;
-      _mesa_reference_renderbuffer(&tmp_rb,
-	 intel_fb->Base.Attachment[BUFFER_FRONT_LEFT].Renderbuffer);
-      tmp_rb = &intel_fb->color_rb[current_page]->Base;
-      _mesa_reference_renderbuffer(
-	 &intel_fb->Base.Attachment[BUFFER_FRONT_LEFT].Renderbuffer, tmp_rb);
-      _mesa_reference_renderbuffer(&tmp_rb, NULL);
-   }
-
-   if (intel_fb->color_rb[next_page] &&
-       intel_fb->Base.Attachment[BUFFER_BACK_LEFT].Renderbuffer !=
-       &intel_fb->color_rb[next_page]->Base) {
-      tmp_rb = NULL;
-      _mesa_reference_renderbuffer(&tmp_rb,
-	 intel_fb->Base.Attachment[BUFFER_BACK_LEFT].Renderbuffer);
-      tmp_rb = &intel_fb->color_rb[next_page]->Base;
-      _mesa_reference_renderbuffer(
-	 &intel_fb->Base.Attachment[BUFFER_BACK_LEFT].Renderbuffer, tmp_rb);
-      _mesa_reference_renderbuffer(&tmp_rb, NULL);
-   }
-}
-#endif
-
-
-#if 0
-struct pipe_region *
-intel_get_rb_region(struct gl_framebuffer *fb, GLuint attIndex)
-{
-   struct intel_renderbuffer *irb = intel_get_renderbuffer(fb, attIndex);
-
-   if (irb)
-      return irb->Base.surface->region;
-   else
-      return NULL;
-}
-#endif
-
-
 /**
  * Create a new framebuffer object.
  */

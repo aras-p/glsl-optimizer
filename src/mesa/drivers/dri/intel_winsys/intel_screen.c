@@ -302,24 +302,17 @@ intelCreateBuffer(__DRIscreenPrivate * driScrnPriv,
 	 /* fake frontbuffer */
 	 /* XXX allocation should only happen in the unusual case
             it's actually needed */
-         intel_fb->color_rb[0]
+         struct intel_renderbuffer *irb 
             = intel_new_renderbuffer_fb(rgbFormat);
          _mesa_add_renderbuffer(&intel_fb->Base, BUFFER_FRONT_LEFT,
-				&intel_fb->color_rb[0]->Base);
+				&irb->Base);
       }
 
       if (mesaVis->doubleBufferMode) {
-#if 01
-         intel_fb->color_rb[1]
+         struct intel_renderbuffer *irb 
             = intel_new_renderbuffer_fb(rgbFormat);
          _mesa_add_renderbuffer(&intel_fb->Base, BUFFER_BACK_LEFT,
-				&intel_fb->color_rb[1]->Base);
-#else
-         intel_fb->color_rb[1]
-            = st_new_renderbuffer_fb(rgbFormat);
-         _mesa_add_renderbuffer(&intel_fb->Base, BUFFER_BACK_LEFT,
-				&intel_fb->color_rb[1]->Base);
-#endif
+				&irb->Base);
       }
 
       if (mesaVis->depthBits == 24 && mesaVis->stencilBits == 8) {

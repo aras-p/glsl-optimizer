@@ -574,12 +574,7 @@ intelMakeCurrent(__DRIcontextPrivate * driContextPriv,
 	       intel_fb->vbl_waited = intel_fb->vbl_seq;
 
 	       for (i = 0; i < 2; i++) {
-#if 1
                   intel_fb->vbl_pending[i] = intel_fb->vbl_seq;
-#else
-		  if (intel_fb->color_rb[i])
-		     intel_fb->color_rb[i]->vbl_pending = intel_fb->vbl_seq;
-#endif
 	       }
 	    }
 	 }
