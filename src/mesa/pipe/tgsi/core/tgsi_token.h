@@ -231,7 +231,7 @@ struct tgsi_immediate_float32
 /* TGSI_OPCODE_SUB */
 #define TGSI_OPCODE_TEX                 52
 #define TGSI_OPCODE_TXD                 53
-/* TGSI_OPCODE_TXP - use TGSI_OPCODE_TEX */
+#define TGSI_OPCODE_TXP                 132
 #define TGSI_OPCODE_UP2H                54
 #define TGSI_OPCODE_UP2US               55
 #define TGSI_OPCODE_UP4B                56
@@ -730,6 +730,7 @@ struct tgsi_immediate_float32
 /* TGSI_OPCODE_TXB */
 /* TGSI_OPCODE_TXD */
 /* TGSI_OPCODE_TXL */
+/* TGSI_OPCODE_TXP */
 /* TGSI_OPCODE_XPD */
 
 /*
@@ -787,7 +788,7 @@ struct tgsi_immediate_float32
 #define TGSI_OPCODE_TEXDP3TEX           118
 #define TGSI_OPCODE_TEXDP3              119
 #define TGSI_OPCODE_TEXM3X3             120
-/* TGSI_OPCODE_CMPDX - use TGSI_OPCODE_CND0 */
+/* CMP - use TGSI_OPCODE_CND0 */
 
 /*
  * ps_1_3
@@ -820,7 +821,7 @@ struct tgsi_immediate_float32
 #define TEXM3X2DEPTH                    121
 /* TGSI_OPCODE_TEXDP3 */
 /* TGSI_OPCODE_TEXM3X3 */
-/* TGSI_OPCODE_CMPDX - use TGSI_OPCODE_CND0 */
+/* CMP - use TGSI_OPCODE_CND0 */
 
 /*
  * ps_1_4
@@ -839,7 +840,7 @@ struct tgsi_immediate_float32
 #define TGSI_OPCODE_TEXLD               TGSI_OPCODE_TEX
 /* TGSI_OPCODE_CND */
 #define TGSI_OPCODE_TEXDEPTH            122
-/* TGSI_OPCODE_CMPDX - use TGSI_OPCODE_CND0 */
+/* CMP - use TGSI_OPCODE_CND0 */
 #define TGSI_OPCODE_BEM                 123
 
 /*
@@ -857,8 +858,8 @@ struct tgsi_immediate_float32
 /* TGSI_OPCODE_DP4 */
 /* TGSI_OPCODE_MIN */
 /* TGSI_OPCODE_MAX */
-/* TGSI_OPCODE_EXPDX - use TGSI_OPCODE_EX2 */
-/* TGSI_OPCODE_LOGDX - use TGSI_OPCODE_LG2 */
+/* EXP - use TGSI_OPCODE_EX2 */
+/* LOG - use TGSI_OPCODE_LG2 */
 /* TGSI_OPCODE_LRP */
 /* TGSI_OPCODE_FRC */
 #define TGSI_OPCODE_M4X4                TGSI_OPCODE_MULTIPLYMATRIX
@@ -874,8 +875,8 @@ struct tgsi_immediate_float32
 /* TGSI_OPCODE_TEXKILL */
 /* TGSI_OPCODE_TEXLD */
 #define TGSI_OPCODE_TEXLDB              TGSI_OPCODE_TXB
-#define TGSI_OPCODE_TEXLDP              TGSI_OPCODE_TEX
-/* TGSI_OPCODE_CMPDX - use TGSI_OPCODE_CND0 */
+#define TGSI_OPCODE_TEXLDP              TGSI_OPCODE_TXP
+/* CMP - use TGSI_OPCODE_CND0 */
 #define TGSI_OPCODE_DP2ADD              TGSI_OPCODE_DP2A
 
 /*
@@ -893,8 +894,8 @@ struct tgsi_immediate_float32
 /* TGSI_OPCODE_DP4 */
 /* TGSI_OPCODE_MIN */
 /* TGSI_OPCODE_MAX */
-/* TGSI_OPCODE_EXPDX - use TGSI_OPCODE_EX2 */
-/* TGSI_OPCODE_LOGDX - use TGSI_OPCODE_LG2 */
+/* EXP - use TGSI_OPCODE_EX2 */
+/* LOG - use TGSI_OPCODE_LG2 */
 /* TGSI_OPCODE_LRP */
 /* TGSI_OPCODE_FRC */
 /* TGSI_OPCODE_M4X4 */
@@ -921,7 +922,7 @@ struct tgsi_immediate_float32
 /* TGSI_OPCODE_TEXKILL */
 /* TGSI_OPCODE_TEXLD */
 /* TGSI_OPCODE_TEXLDB */
-/* TGSI_OPCODE_CMPDX - use TGSI_OPCODE_CND0 */
+/* CMP - use TGSI_OPCODE_CND0 */
 /* TGSI_OPCODE_DP2ADD */
 #define TGSI_OPCODE_DSX                 TGSI_OPCODE_DDX
 #define TGSI_OPCODE_DSY                 TGSI_OPCODE_DDY
@@ -945,8 +946,8 @@ struct tgsi_immediate_float32
 /* TGSI_OPCODE_MAX */
 /* TGSI_OPCODE_SLT */
 /* TGSI_OPCODE_SGE */
-/* TGSI_OPCODE_EXPDX - use TGSI_OPCODE_EX2 */
-/* TGSI_OPCODE_LOGDX - use TGSI_OPCODE_LG2 */
+/* EXP - use TGSI_OPCODE_EX2 */
+/* LOG - use TGSI_OPCODE_LG2 */
 /* TGSI_OPCODE_LIT */
 /* TGSI_OPCODE_DST */
 /* TGSI_OPCODE_FRC */
@@ -955,7 +956,7 @@ struct tgsi_immediate_float32
 /* TGSI_OPCODE_M3X4 */
 /* TGSI_OPCODE_M3X3 */
 /* TGSI_OPCODE_M3X2 */
-#define TGSI_OPCODE_EXPP                132
+#define TGSI_OPCODE_EXPP                TGSI_OPCODE_EXP
 #define TGSI_OPCODE_LOGP                TGSI_OPCODE_LG2
 
 /*
@@ -975,8 +976,8 @@ struct tgsi_immediate_float32
 /* TGSI_OPCODE_MAX */
 /* TGSI_OPCODE_SLT */
 /* TGSI_OPCODE_SGE */
-/* TGSI_OPCODE_EXPDX - use TGSI_OPCODE_EX2 */
-/* TGSI_OPCODE_LOGDX - use TGSI_OPCODE_LG2 */
+/* EXP - use TGSI_OPCODE_EX2 */
+/* LOG - use TGSI_OPCODE_LG2 */
 /* TGSI_OPCODE_LIT */
 /* TGSI_OPCODE_DST */
 /* TGSI_OPCODE_LRP */
@@ -993,7 +994,7 @@ struct tgsi_immediate_float32
 /* TGSI_OPCODE_ENDLOOP */
 /* TGSI_OPCODE_POW */   /* XXX: takes ABS */
 /* TGSI_OPCODE_CRS */
-#define TGSI_OPCODE_SGN                 133
+#define TGSI_OPCODE_SGN                 TGSI_OPCODE_SSG
 /* TGSI_OPCODE_ABS */
 /* TGSI_OPCODE_NRM4 */
 /* TGSI_OPCODE_SINCOS */
@@ -1022,8 +1023,8 @@ struct tgsi_immediate_float32
 /* TGSI_OPCODE_MAX */
 /* TGSI_OPCODE_SLT */
 /* TGSI_OPCODE_SGE */
-/* TGSI_OPCODE_EXPDX - use TGSI_OPCODE_EX2 */
-/* TGSI_OPCODE_LOGDX - use TGSI_OPCODE_LG2 */
+/* EXP - use TGSI_OPCODE_EX2 */
+/* LOG - use TGSI_OPCODE_LG2 */
 /* TGSI_OPCODE_LIT */
 /* TGSI_OPCODE_DST */
 /* TGSI_OPCODE_LRP */
@@ -1055,7 +1056,7 @@ struct tgsi_immediate_float32
 /* TGSI_OPCODE_MOVA */
 /* TGSI_OPCODE_LOGP */
 
-#define TGSI_OPCODE_LAST                134
+#define TGSI_OPCODE_LAST                133
 
 #define TGSI_SAT_NONE            0  /* do not saturate */
 #define TGSI_SAT_ZERO_ONE        1  /* clamp to [0,1] */
