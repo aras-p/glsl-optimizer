@@ -74,7 +74,7 @@ intel_get_renderbuffer(struct gl_framebuffer *fb, GLuint attIndex)
    return intel_renderbuffer(fb->Attachment[attIndex].Renderbuffer);
 }
 
-
+#if 0
 void
 intel_flip_renderbuffers(struct intel_framebuffer *intel_fb)
 {
@@ -109,6 +109,7 @@ intel_flip_renderbuffers(struct intel_framebuffer *intel_fb)
       _mesa_reference_renderbuffer(&tmp_rb, NULL);
    }
 }
+#endif
 
 
 struct pipe_region *
@@ -321,6 +322,7 @@ intel_resize_buffers(GLcontext *ctx, struct gl_framebuffer *fb,
    }
 
    /* Make sure all window system renderbuffers are up to date */
+#if 0
    for (i = 0; i < 3; i++) {
       struct gl_renderbuffer *rb = &intel_fb->color_rb[i]->Base;
 
@@ -329,6 +331,7 @@ intel_resize_buffers(GLcontext *ctx, struct gl_framebuffer *fb,
 	 rb->AllocStorage(ctx, rb, rb->InternalFormat, width, height);
       }
    }
+#endif
 }
 
 static GLboolean

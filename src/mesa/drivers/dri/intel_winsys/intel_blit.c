@@ -86,19 +86,36 @@ intelCopyBuffer(__DRIdrawablePrivate * dPriv,
 
    if (dPriv && dPriv->numClipRects) {
       struct intel_framebuffer *intel_fb = dPriv->driverPrivate;
+#if 0
       const struct pipe_region *backRegion
 	 = intel_fb->Base._ColorDrawBufferMask[0] == BUFFER_BIT_FRONT_LEFT ?
 	   intel_get_rb_region(&intel_fb->Base, BUFFER_FRONT_LEFT) :
 	   intel_get_rb_region(&intel_fb->Base, BUFFER_BACK_LEFT);
+#endif
       const int backWidth = intel_fb->Base.Width;
       const int backHeight = intel_fb->Base.Height;
       const int nbox = dPriv->numClipRects;
       const drm_clip_rect_t *pbox = dPriv->pClipRects;
       const int pitch = intelScreen->front.pitch / intelScreen->front.cpp;
+#if 0
       const int srcpitch = backRegion->pitch;
+#endif
       const int cpp = intelScreen->front.cpp;
       int BR13, CMD;
       int i;
+
+      const struct pipe_surface *backSurf;
+      const struct pipe_region *backRegion;
+      int srcpitch;
+
+      /* blit from back color buffer if it exists, else front buffer */
+      if (intel_fb->Base.Attachment[BUFFER_BACK_LEFT].Renderbuffer)
+         backSurf = intel_fb->Base.Attachment[BUFFER_BACK_LEFT].Renderbuffer->surface;
+      else
+         backSurf = intel_fb->Base.Attachment[BUFFER_FRONT_LEFT].Renderbuffer->surface;
+
+      backRegion = backSurf->region;
+      srcpitch = backRegion->pitch;
 
       ASSERT(intel_fb);
       ASSERT(intel_fb->Base.Name == 0);    /* Not a user-created FBO */

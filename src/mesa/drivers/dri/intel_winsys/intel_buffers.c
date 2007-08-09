@@ -217,8 +217,10 @@ intelWindowMoved(struct intel_context *intel)
       }
 
       intel_fb->pf_active = pf_active;
+#if 0
       intel_flip_renderbuffers(intel_fb);
       intel_draw_buffer(&intel->ctx, intel->ctx.DrawBuffer);
+#endif
 
       /* Update vblank info
        */
@@ -359,8 +361,10 @@ intelPageFlip(const __DRIdrawablePrivate * dPriv)
 	 ++intel_fb->pf_seq;
    }
 
+#if 0
    intel_flip_renderbuffers(intel_fb);
    intel_draw_buffer(&intel->ctx, &intel_fb->Base);
+#endif
 
    if (INTEL_DEBUG & DEBUG_IOCTL)
       fprintf(stderr, "%s: success\n", __FUNCTION__);
@@ -430,8 +434,10 @@ intelScheduleSwap(const __DRIdrawablePrivate * dPriv, GLboolean *missed_target)
 #endif
 
       if (swap.seqtype & DRM_VBLANK_FLIP) {
+#if 0
 	 intel_flip_renderbuffers(intel_fb);
 	 intel_draw_buffer(&intel->ctx, intel->ctx.DrawBuffer);
+#endif
       }
 
       ret = GL_TRUE;
