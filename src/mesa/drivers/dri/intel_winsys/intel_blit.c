@@ -38,6 +38,7 @@
 #include "vblank.h"
 
 #include "pipe/p_context.h"
+#include "state_tracker/st_cb_fbo.h"
 
 
 #define FILE_DEBUG_FLAG DEBUG_BLIT
@@ -106,12 +107,17 @@ intelCopyBuffer(__DRIdrawablePrivate * dPriv,
       const struct pipe_surface *backSurf;
       const struct pipe_region *backRegion;
       int srcpitch;
+      struct st_renderbuffer *strb;
 
       /* blit from back color buffer if it exists, else front buffer */
-      if (intel_fb->Base.Attachment[BUFFER_BACK_LEFT].Renderbuffer)
-         backSurf = intel_fb->Base.Attachment[BUFFER_BACK_LEFT].Renderbuffer->surface;
-      else
-         backSurf = intel_fb->Base.Attachment[BUFFER_FRONT_LEFT].Renderbuffer->surface;
+      strb = st_renderbuffer(intel_fb->Base.Attachment[BUFFER_BACK_LEFT].Renderbuffer);
+      if (strb) {
+         backSurf = strb->surface;
+      }
+      else {
+         strb = st_renderbuffer(intel_fb->Base.Attachment[BUFFER_FRONT_LEFT].Renderbuffer);
+         backSurf = strb->surface;
+      }
 
       backRegion = backSurf->region;
       srcpitch = backRegion->pitch;

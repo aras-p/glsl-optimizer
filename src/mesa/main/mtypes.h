@@ -2269,8 +2269,6 @@ struct gl_renderbuffer
    GLubyte StencilBits;
    GLvoid *Data;        /**< This may not be used by some kinds of RBs */
 
-   struct pipe_surface *surface;
-
    /* Used to wrap one renderbuffer around another: */
    struct gl_renderbuffer *Wrapped;
 

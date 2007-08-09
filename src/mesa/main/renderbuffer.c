@@ -1067,9 +1067,11 @@ _mesa_soft_renderbuffer_storage(GLcontext *ctx, struct gl_renderbuffer *rb,
       rb->PutMonoValues = put_mono_values_ubyte;
       rb->StencilBits = 8 * sizeof(GLubyte);
       pixelSize = sizeof(GLubyte);
+#if 0
       if (!rb->surface)
          rb->surface = (struct pipe_surface *)
             pipe->surface_alloc(pipe, PIPE_FORMAT_U_S8);
+#endif
       break;
    case GL_STENCIL_INDEX16_EXT:
       rb->_ActualFormat = GL_STENCIL_INDEX16_EXT;
@@ -1100,9 +1102,11 @@ _mesa_soft_renderbuffer_storage(GLcontext *ctx, struct gl_renderbuffer *rb,
       rb->PutValues = put_values_ushort;
       rb->PutMonoValues = put_mono_values_ushort;
       rb->DepthBits = 8 * sizeof(GLushort);
+#if 0
       if (!rb->surface)
          rb->surface = (struct pipe_surface *)
             pipe->surface_alloc(pipe, PIPE_FORMAT_U_Z16);
+#endif
       pixelSize = sizeof(GLushort);
       break;
    case GL_DEPTH_COMPONENT24:
@@ -1125,9 +1129,11 @@ _mesa_soft_renderbuffer_storage(GLcontext *ctx, struct gl_renderbuffer *rb,
          rb->_ActualFormat = GL_DEPTH_COMPONENT32;
          rb->DepthBits = 32;
       }
+#if 0
       if (!rb->surface)
          rb->surface = (struct pipe_surface *)
             pipe->surface_alloc(pipe, PIPE_FORMAT_U_Z32);
+#endif
       pixelSize = sizeof(GLuint);
       break;
    case GL_DEPTH_STENCIL_EXT:
@@ -1145,9 +1151,11 @@ _mesa_soft_renderbuffer_storage(GLcontext *ctx, struct gl_renderbuffer *rb,
       rb->PutMonoValues = put_mono_values_uint;
       rb->DepthBits = 24;
       rb->StencilBits = 8;
+#if 0
       if (!rb->surface)
          rb->surface = (struct pipe_surface *)
             pipe->surface_alloc(pipe, PIPE_FORMAT_S8_Z24);
+#endif
       pixelSize = sizeof(GLuint);
       break;
    case GL_COLOR_INDEX8_EXT:
@@ -1210,7 +1218,7 @@ _mesa_soft_renderbuffer_storage(GLcontext *ctx, struct gl_renderbuffer *rb,
    ASSERT(rb->PutMonoValues);
 
    /* free old buffer storage */
-   if (rb->surface) {
+   if (0/**rb->surface**/) {
       /* pipe_surface/region */
    }
    else if (rb->Data) {
@@ -1221,8 +1229,9 @@ _mesa_soft_renderbuffer_storage(GLcontext *ctx, struct gl_renderbuffer *rb,
 
    if (width > 0 && height > 0) {
       /* allocate new buffer storage */
-      if (rb->surface) {
+      if (0/**rb->surface**/) {
          /* pipe_surface/region */
+#if 0
          if (rb->surface->region) {
             pipe->region_unmap(pipe, rb->surface->region);
             pipe->region_release(pipe, &rb->surface->region);
@@ -1231,6 +1240,7 @@ _mesa_soft_renderbuffer_storage(GLcontext *ctx, struct gl_renderbuffer *rb,
          /* XXX probably don't want to really map here */
          pipe->region_map(pipe, rb->surface->region);
          rb->Data = rb->surface->region->map;
+#endif
       }
       else {
          /* legacy renderbuffer (this will go away) */

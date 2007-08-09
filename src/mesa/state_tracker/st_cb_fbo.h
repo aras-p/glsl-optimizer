@@ -30,10 +30,25 @@
 #define ST_CB_FBO_H
 
 
-/*
-extern struct gl_renderbuffer *
-st_new_renderbuffer_fb(struct pipe_region *region, GLuint width, GLuint height);
-*/
+
+/**
+ * Derived renderbuffer class.  Just need to add a pointer to the
+ * pipe surface.
+ */
+struct st_renderbuffer
+{
+   struct gl_renderbuffer Base;
+   struct pipe_surface *surface;
+};
+
+
+static INLINE struct st_renderbuffer *
+st_renderbuffer(struct gl_renderbuffer *rb)
+{
+   return (struct st_renderbuffer *) rb;
+}
+
+
 extern struct gl_renderbuffer *
 st_new_renderbuffer_fb(GLuint intFormat);
 

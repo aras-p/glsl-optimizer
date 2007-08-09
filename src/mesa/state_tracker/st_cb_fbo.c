@@ -46,29 +46,6 @@
 #include "st_cb_teximage.h"
 
 
-/**
- * Derived renderbuffer class.  Just need to add a pointer to the
- * pipe surface.
- */
-struct st_renderbuffer
-{
-   struct gl_renderbuffer Base;
-#if 0
-   struct pipe_surface *surface;
-#endif
-};
-
-
-/**
- * Cast wrapper.
- */
-static INLINE struct st_renderbuffer *
-st_renderbuffer(struct gl_renderbuffer *rb)
-{
-   return (struct st_renderbuffer *) rb;
-}
-
-
 struct pipe_format_info
 {
    GLuint format;
@@ -168,29 +145,29 @@ st_renderbuffer_alloc_storage(GLcontext * ctx, struct gl_renderbuffer *rb,
 
    cpp = info->size;
 
-   if (!strb->Base.surface) {
-      strb->Base.surface = pipe->surface_alloc(pipe, pipeFormat);
-      if (!strb->Base.surface)
+   if (!strb->surface) {
+      strb->surface = pipe->surface_alloc(pipe, pipeFormat);
+      if (!strb->surface)
          return GL_FALSE;
    }
 
    /* free old region */
-   if (strb->Base.surface->region) {
-      pipe->region_release(pipe, &strb->Base.surface->region);
+   if (strb->surface->region) {
+      pipe->region_release(pipe, &strb->surface->region);
    }
 
    /* Choose a pitch to match hardware requirements:
     */
    pitch = ((cpp * width + 63) & ~63) / cpp; /* XXX fix: device-specific */
 
-   strb->Base.surface->region = pipe->region_alloc(pipe, cpp, pitch, height);
-   if (!strb->Base.surface->region)
+   strb->surface->region = pipe->region_alloc(pipe, cpp, pitch, height);
+   if (!strb->surface->region)
       return GL_FALSE; /* out of memory, try s/w buffer? */
 
-   ASSERT(strb->Base.surface->region->buffer);
+   ASSERT(strb->surface->region->buffer);
 
-   strb->Base.Width  = strb->Base.surface->width  = width;
-   strb->Base.Height = strb->Base.surface->height = height;
+   strb->Base.Width  = strb->surface->width  = width;
+   strb->Base.Height = strb->surface->height = height;
 
    return GL_TRUE;
 }
@@ -206,11 +183,11 @@ st_renderbuffer_delete(struct gl_renderbuffer *rb)
    struct pipe_context *pipe = ctx->st->pipe;
    struct st_renderbuffer *strb = st_renderbuffer(rb);
    ASSERT(strb);
-   if (strb && strb->Base.surface) {
-      if (rb->surface->region) {
-         pipe->region_release(pipe, &strb->Base.surface->region);
+   if (strb && strb->surface) {
+      if (strb->surface->region) {
+         pipe->region_release(pipe, &strb->surface->region);
       }
-      free(strb->Base.surface);
+      free(strb->surface);
    }
    free(strb);
 }
@@ -285,28 +262,28 @@ st_new_renderbuffer_fb(struct pipe_region *region, GLuint width, GLuint height)
 struct gl_renderbuffer *
 st_new_renderbuffer_fb(GLuint intFormat)
 {
-   struct st_renderbuffer *irb;
+   struct st_renderbuffer *strb;
 
-   irb = CALLOC_STRUCT(st_renderbuffer);
-   if (!irb) {
+   strb = CALLOC_STRUCT(st_renderbuffer);
+   if (!strb) {
       _mesa_error(NULL, GL_OUT_OF_MEMORY, "creating renderbuffer");
       return NULL;
    }
 
-   _mesa_init_renderbuffer(&irb->Base, 0);
-   irb->Base.ClassID = 0x42; /* XXX temp */
-   irb->Base.InternalFormat = intFormat;
+   _mesa_init_renderbuffer(&strb->Base, 0);
+   strb->Base.ClassID = 0x42; /* XXX temp */
+   strb->Base.InternalFormat = intFormat;
 
    switch (intFormat) {
    case GL_RGB5:
    case GL_RGBA8:
-      irb->Base._BaseFormat = GL_RGBA;
+      strb->Base._BaseFormat = GL_RGBA;
       break;
    case GL_DEPTH_COMPONENT16:
-      irb->Base._BaseFormat = GL_DEPTH_COMPONENT;
+      strb->Base._BaseFormat = GL_DEPTH_COMPONENT;
       break;
    case GL_DEPTH24_STENCIL8_EXT:
-      irb->Base._BaseFormat = GL_DEPTH_STENCIL_EXT;
+      strb->Base._BaseFormat = GL_DEPTH_STENCIL_EXT;
       break;
    default:
       _mesa_problem(NULL,
@@ -315,15 +292,14 @@ st_new_renderbuffer_fb(GLuint intFormat)
    }
 
    /* st-specific methods */
-   irb->Base.Delete = st_renderbuffer_delete;
-   irb->Base.AllocStorage = st_renderbuffer_alloc_storage;
-   irb->Base.GetPointer = null_get_pointer;
-   /* span routines set in alloc_storage function */
+   strb->Base.Delete = st_renderbuffer_delete;
+   strb->Base.AllocStorage = st_renderbuffer_alloc_storage;
+   strb->Base.GetPointer = null_get_pointer;
 
-   irb->Base.surface = NULL;/*intel_new_surface(intFormat);*/
-   /*irb->Base.surface->rb = irb;*/
+   /* surface is allocate in alloc_renderbuffer_storage() */
+   strb->surface = NULL;
 
-   return &irb->Base;
+   return &strb->Base;
 }
 #endif
 

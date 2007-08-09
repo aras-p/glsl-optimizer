@@ -260,8 +260,6 @@ struct pipe_surface
    GLuint offset;              /**< offset from start of region, in bytes */
    GLint refcount;
 
-   void *rb;  /**< Ptr back to renderbuffer (temporary?) */
-
    /** get block/tile of pixels from surface */
    void (*get_tile)(struct pipe_surface *ps,
                     GLuint x, GLuint y, GLuint w, GLuint h, GLfloat *p);

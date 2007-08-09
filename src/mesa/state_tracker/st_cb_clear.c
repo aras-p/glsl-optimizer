@@ -37,6 +37,7 @@
 #include "st_atom.h"
 #include "st_context.h"
 #include "st_cb_clear.h"
+#include "st_cb_fbo.h"
 #include "st_program.h"
 #include "st_public.h"
 #include "pipe/p_context.h"
@@ -288,6 +289,8 @@ clear_with_quad(GLcontext *ctx, GLuint x0, GLuint y0,
 static void
 clear_color_buffer(GLcontext *ctx, struct gl_renderbuffer *rb)
 {
+   struct st_renderbuffer *strb = st_renderbuffer(rb);
+
    if (ctx->Color.ColorMask[0] &&
        ctx->Color.ColorMask[1] &&
        ctx->Color.ColorMask[2] &&
@@ -296,8 +299,8 @@ clear_color_buffer(GLcontext *ctx, struct gl_renderbuffer *rb)
    {
       /* clear whole buffer w/out masking */
       GLuint clearValue
-         = color_value(rb->surface->format, ctx->Color.ClearColor);
-      ctx->st->pipe->clear(ctx->st->pipe, rb->surface, clearValue);
+         = color_value(strb->surface->format, ctx->Color.ClearColor);
+      ctx->st->pipe->clear(ctx->st->pipe, strb->surface, clearValue);
    }
    else {
       /* masking or scissoring */
@@ -314,14 +317,16 @@ clear_color_buffer(GLcontext *ctx, struct gl_renderbuffer *rb)
 static void
 clear_accum_buffer(GLcontext *ctx, struct gl_renderbuffer *rb)
 {
+   struct st_renderbuffer *strb = st_renderbuffer(rb);
+
    if (!ctx->Scissor.Enabled) {
       /* clear whole buffer w/out masking */
       GLuint clearValue
-         = color_value(rb->surface->format, ctx->Accum.ClearColor);
+         = color_value(strb->surface->format, ctx->Accum.ClearColor);
       /* Note that clearValue is 32 bits but the accum buffer will
        * typically be 64bpp...
        */
-      ctx->st->pipe->clear(ctx->st->pipe, rb->surface, clearValue);
+      ctx->st->pipe->clear(ctx->st->pipe, strb->surface, clearValue);
    }
    else {
       /* scissoring */
@@ -339,11 +344,13 @@ clear_accum_buffer(GLcontext *ctx, struct gl_renderbuffer *rb)
 static void
 clear_depth_buffer(GLcontext *ctx, struct gl_renderbuffer *rb)
 {
+   struct st_renderbuffer *strb = st_renderbuffer(rb);
+
    if (!ctx->Scissor.Enabled &&
-       !is_depth_stencil_format(rb->surface->format)) {
+       !is_depth_stencil_format(strb->surface->format)) {
       /* clear whole depth buffer w/out masking */
-      GLuint clearValue = depth_value(rb->surface->format, ctx->Depth.Clear);
-      ctx->st->pipe->clear(ctx->st->pipe, rb->surface, clearValue);
+      GLuint clearValue = depth_value(strb->surface->format, ctx->Depth.Clear);
+      ctx->st->pipe->clear(ctx->st->pipe, strb->surface, clearValue);
    }
    else {
       /* masking or scissoring or combined z/stencil buffer */
@@ -360,14 +367,15 @@ clear_depth_buffer(GLcontext *ctx, struct gl_renderbuffer *rb)
 static void
 clear_stencil_buffer(GLcontext *ctx, struct gl_renderbuffer *rb)
 {
+   struct st_renderbuffer *strb = st_renderbuffer(rb);
    const GLuint stencilMax = (1 << rb->StencilBits) - 1;
    GLboolean maskStencil = ctx->Stencil.WriteMask[0] != stencilMax;
 
    if (!maskStencil && !ctx->Scissor.Enabled &&
-       !is_depth_stencil_format(rb->surface->format)) {
+       !is_depth_stencil_format(strb->surface->format)) {
       /* clear whole stencil buffer w/out masking */
       GLuint clearValue = ctx->Stencil.Clear;
-      ctx->st->pipe->clear(ctx->st->pipe, rb->surface, clearValue);
+      ctx->st->pipe->clear(ctx->st->pipe, strb->surface, clearValue);
    }
    else {
       /* masking or scissoring */
@@ -384,16 +392,17 @@ clear_stencil_buffer(GLcontext *ctx, struct gl_renderbuffer *rb)
 static void
 clear_depth_stencil_buffer(GLcontext *ctx, struct gl_renderbuffer *rb)
 {
+   struct st_renderbuffer *strb = st_renderbuffer(rb);
    const GLuint stencilMax = 1 << rb->StencilBits;
    GLboolean maskStencil = ctx->Stencil.WriteMask[0] != stencilMax;
 
-   assert(is_depth_stencil_format(rb->surface->format));
+   assert(is_depth_stencil_format(strb->surface->format));
 
    if (!maskStencil && !ctx->Scissor.Enabled) {
       /* clear whole buffer w/out masking */
-      GLuint clearValue = depth_value(rb->surface->format, ctx->Depth.Clear);
+      GLuint clearValue = depth_value(strb->surface->format, ctx->Depth.Clear);
 
-      switch (rb->surface->format) {
+      switch (strb->surface->format) {
       case PIPE_FORMAT_S8_Z24:
          clearValue |= ctx->Stencil.Clear << 24;
          break;
@@ -406,7 +415,7 @@ clear_depth_stencil_buffer(GLcontext *ctx, struct gl_renderbuffer *rb)
          assert(0);
       }  
 
-      ctx->st->pipe->clear(ctx->st->pipe, rb->surface, clearValue);
+      ctx->st->pipe->clear(ctx->st->pipe, strb->surface, clearValue);
    }
    else {
       /* masking or scissoring */

@@ -33,6 +33,7 @@
  
 #include "st_context.h"
 #include "st_atom.h"
+#include "st_cb_fbo.h"
 #include "pipe/p_context.h"
 
 
@@ -44,7 +45,7 @@ static void
 update_framebuffer_state( struct st_context *st )
 {
    struct pipe_framebuffer_state framebuffer;
-   struct gl_renderbuffer *rb;
+   struct st_renderbuffer *strb;
    GLuint i;
 
    memset(&framebuffer, 0, sizeof(framebuffer));
@@ -54,21 +55,23 @@ update_framebuffer_state( struct st_context *st )
     */
    framebuffer.num_cbufs = st->ctx->DrawBuffer->_NumColorDrawBuffers[0];
    for (i = 0; i < framebuffer.num_cbufs; i++) {
-      rb = st->ctx->DrawBuffer->_ColorDrawBuffers[0][i];
-      assert(rb->surface);
-      framebuffer.cbufs[i] = rb->surface;
+      strb = st_renderbuffer(st->ctx->DrawBuffer->_ColorDrawBuffers[0][i]);
+      assert(strb->surface);
+      framebuffer.cbufs[i] = strb->surface;
    }
 
-   rb = st->ctx->DrawBuffer->_DepthBuffer;
-   if (rb) {
-      assert(rb->Wrapped->surface);
-      framebuffer.zbuf = rb->Wrapped->surface;
+   strb = st_renderbuffer(st->ctx->DrawBuffer->_DepthBuffer);
+   if (strb) {
+      strb = st_renderbuffer(strb->Base.Wrapped);
+      assert(strb->surface);
+      framebuffer.zbuf = strb->surface;
    }
 
-   rb = st->ctx->DrawBuffer->_StencilBuffer;
-   if (rb) {
-      assert(rb->Wrapped->surface);
-      framebuffer.sbuf = rb->Wrapped->surface;
+   strb = st_renderbuffer(st->ctx->DrawBuffer->_StencilBuffer);
+   if (strb) {
+      strb = st_renderbuffer(strb->Base.Wrapped);
+      assert(strb->surface);
+      framebuffer.sbuf = strb->surface;
    }
 
    if (memcmp(&framebuffer, &st->state.framebuffer, sizeof(framebuffer)) != 0) {
