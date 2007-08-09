@@ -135,8 +135,15 @@ st_renderbuffer_alloc_storage(GLcontext * ctx, struct gl_renderbuffer *rb,
    if (!info)
       return GL_FALSE;
 
+   switch (pipeFormat) {
+   case PIPE_FORMAT_S8_Z24:
+      strb->Base.DataType = GL_UNSIGNED_INT;
+      break;
+   default:
+      strb->Base.DataType = GL_UNSIGNED_BYTE; /* XXX fix */
+   }
+
    strb->Base._ActualFormat = info->base_format;
-   strb->Base.DataType = GL_UNSIGNED_BYTE; /* XXX fix */
    strb->Base.RedBits = info->red_bits;
    strb->Base.GreenBits = info->green_bits;
    strb->Base.BlueBits = info->blue_bits;
@@ -205,7 +212,9 @@ null_get_pointer(GLcontext * ctx, struct gl_renderbuffer *rb,
    /* By returning NULL we force all software rendering to go through
     * the span routines.
     */
+#if 0
    assert(0);  /* Should never get called with softpipe */
+#endif
    return NULL;
 }
 
@@ -262,7 +271,7 @@ st_new_renderbuffer_fb(struct pipe_region *region, GLuint width, GLuint height)
 #else
 
 struct gl_renderbuffer *
-st_new_renderbuffer_fb(GLuint intFormat)
+st_new_renderbuffer_fb(GLenum intFormat)
 {
    struct st_renderbuffer *strb;
 
@@ -282,6 +291,7 @@ st_new_renderbuffer_fb(GLuint intFormat)
       strb->Base._BaseFormat = GL_RGBA;
       break;
    case GL_DEPTH_COMPONENT16:
+   case GL_DEPTH_COMPONENT32:
       strb->Base._BaseFormat = GL_DEPTH_COMPONENT;
       break;
    case GL_DEPTH24_STENCIL8_EXT:

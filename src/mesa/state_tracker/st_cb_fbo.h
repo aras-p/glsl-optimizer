@@ -50,7 +50,7 @@ st_renderbuffer(struct gl_renderbuffer *rb)
 
 
 extern struct gl_renderbuffer *
-st_new_renderbuffer_fb(GLuint intFormat);
+st_new_renderbuffer_fb(GLenum intFormat);
 
 
 extern void
