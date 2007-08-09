@@ -50,7 +50,7 @@ static unsigned passthrough[] =
     A0_DEST_CHANNEL_ALL | 
     (REG_TYPE_T << A0_SRC0_TYPE_SHIFT) |
     (T_DIFFUSE << A0_SRC0_NR_SHIFT)),
-   0,
+   0x01230000,			/* .xyzw */
    0
 };
 

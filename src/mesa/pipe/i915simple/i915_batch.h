@@ -45,7 +45,7 @@
 #define ADVANCE_BATCH()
 
 #define FLUSH_BATCH() do { 					\
-/*   i915_dump_batchbuffer( i915, i915->batch_start, BEGIN_BATCH(0, 0) ); */	\
+   i915_dump_batchbuffer( i915, i915->batch_start, BEGIN_BATCH(0, 0) );	\
    i915->winsys->batch_flush( i915->winsys );				\
    i915->batch_start = BEGIN_BATCH(0, 0);				\
 } while (0)

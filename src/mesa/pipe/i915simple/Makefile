@@ -12,6 +12,7 @@ DRIVER_SOURCES = \
 	i915_context.c \
 	i915_context.c \
 	i915_debug.c \
+	i915_debug_fp.c \
 	i915_regions.c \
 	i915_state.c \
 	i915_state_derived.c \

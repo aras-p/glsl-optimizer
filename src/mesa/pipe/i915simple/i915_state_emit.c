@@ -112,7 +112,7 @@ i915_emit_hardware_state(struct i915_context *i915 )
    /* Need to initialize this to zero.
     */
    {
-      OUT_BATCH(_3DSTATE_LOAD_STATE_IMMEDIATE_1 | I1_LOAD_S(3) | (1));
+      OUT_BATCH(_3DSTATE_LOAD_STATE_IMMEDIATE_1 | I1_LOAD_S(3) | (0));
       OUT_BATCH(0);
    }
 
@@ -138,6 +138,7 @@ i915_emit_hardware_state(struct i915_context *i915 )
    {
       /* Don't support twosided stencil yet */
       OUT_BATCH(_3DSTATE_BACKFACE_STENCIL_OPS | BFO_ENABLE_STENCIL_TWO_SIDE | 0);
+      OUT_BATCH(0);
    }
 
 
@@ -150,11 +151,10 @@ i915_emit_hardware_state(struct i915_context *i915 )
 		I1_LOAD_S(6) | 
 		(3));
       
-      OUT_BATCH(0);
-      OUT_BATCH(S4_VFMT_XYZ | S4_VFMT_COLOR);
-      OUT_BATCH(0);
-      OUT_BATCH(S6_COLOR_WRITE_ENABLE |
-		(2 << S6_TRISTRIP_PV_SHIFT));
+      OUT_BATCH(0xffffffff);
+      OUT_BATCH(0x00902440); //      OUT_BATCH(S4_VFMT_XYZ | S4_VFMT_COLOR);
+      OUT_BATCH(0x00000002);
+      OUT_BATCH(0x00020216); // OUT_BATCH( S6_COLOR_WRITE_ENABLE | (2 << S6_TRISTRIP_PV_SHIFT));
    }
 
    {
@@ -167,13 +167,23 @@ i915_emit_hardware_state(struct i915_context *i915 )
 		STENCIL_WRITE_MASK(0xff));
    }
    
-   {
+   if (0) {
       OUT_BATCH(_3DSTATE_INDEPENDENT_ALPHA_BLEND_CMD |
 		IAB_MODIFY_ENABLE |
 		IAB_MODIFY_FUNC |
 		IAB_MODIFY_SRC_FACTOR |
 		IAB_MODIFY_DST_FACTOR);
    }
+
+   {
+      //3DSTATE_INDEPENDENT_ALPHA_BLEND (1 dwords):
+      OUT_BATCH(0x6ba008a1);
+
+      //3DSTATE_CONSTANT_BLEND_COLOR (2 dwords):
+      OUT_BATCH(0x7d880000);
+      OUT_BATCH(0x00000000);
+   }
+
 
 
    if (i915->framebuffer.cbufs[0]) {
