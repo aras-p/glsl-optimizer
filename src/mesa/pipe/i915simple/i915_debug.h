@@ -31,9 +31,26 @@
 #ifndef I915_DEBUG_H
 #define I915_DEBUG_H
 
+struct i915_context;
+
+struct debug_stream 
+{
+   unsigned offset;		/* current gtt offset */
+   char *ptr;		/* pointer to gtt offset zero */
+   char *end;		/* pointer to gtt offset zero */
+   unsigned print_addresses;
+};
+
+
 
 extern void i915_disassemble_program(const unsigned *program, unsigned sz);
 extern void i915_print_ureg(const char *msg, unsigned ureg);
+
+
+void
+i915_dump_batchbuffer( struct i915_context *i915,
+		       unsigned *start,
+		       unsigned *end );
 
 
 #endif
