@@ -32,24 +32,45 @@
 struct intel_context;
 struct intel_framebuffer;
 
+/**
+ * Intel framebuffer, derived from gl_framebuffer.
+ */
+struct intel_framebuffer
+{
+   struct gl_framebuffer Base;
+
+   /* Drawable page flipping state */
+   GLboolean pf_active;
+   GLuint pf_seq;
+   GLint pf_pipes;
+   GLint pf_current_page;
+   GLint pf_num_pages;
+
+   /* VBI
+    */
+   GLuint vbl_seq;
+   GLuint vblank_flags;
+   GLuint vbl_waited;
+
+   int64_t swap_ust;
+   int64_t swap_missed_ust;
+
+   GLuint swap_count;
+   GLuint swap_missed_count;
+
+   GLuint vbl_pending[3];  /**< [number of color buffers] */
+};
+
 
 extern GLboolean
 intel_intersect_cliprects(drm_clip_rect_t * dest,
                           const drm_clip_rect_t * a,
                           const drm_clip_rect_t * b);
 
-extern struct pipe_region *intel_readbuf_region(struct intel_context *intel);
-
-extern struct pipe_region *intel_drawbuf_region(struct intel_context *intel);
-
 extern void intel_wait_flips(struct intel_context *intel, GLuint batch_flags);
 
 extern void intelSwapBuffers(__DRIdrawablePrivate * dPriv);
 
 extern void intelWindowMoved(struct intel_context *intel);
-
-extern void intel_draw_buffer(GLcontext * ctx, struct gl_framebuffer *fb);
-
-extern void intelInitBufferFuncs(struct dd_function_table *functions);
 
 #endif /* INTEL_BUFFERS_H */

@@ -51,8 +51,8 @@
 #include "intel_ioctl.h"
 #include "intel_batchbuffer.h"
 #include "intel_blit.h"
-#include "intel_fbo.h"
 #include "intel_tex_layout.h"
+#include "intel_surface.h"
 
 #include "state_tracker/st_public.h"
 #include "state_tracker/st_context.h"
@@ -310,8 +310,6 @@ intelInitDriverFunctions(struct dd_function_table *functions)
    functions->Finish = intelFinish;
    functions->GetString = intelGetString;
    functions->UpdateState = intelInvalidateState;
-
-   intelInitBufferFuncs(functions);
 
    st_init_driver_functions(functions);
 }

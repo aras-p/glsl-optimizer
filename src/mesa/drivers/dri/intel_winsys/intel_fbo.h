@@ -36,7 +36,7 @@
 struct intel_context;
 struct pipe_region;
 
-
+#if 0
 /**
  * Intel framebuffer, derived from gl_framebuffer.
  */
@@ -65,6 +65,7 @@ struct intel_framebuffer
 
    GLuint vbl_pending[3];  /**< [number of color buffers] */
 };
+#endif
 
 
 /**

@@ -30,7 +30,6 @@
 #include "intel_blit.h"
 #include "intel_buffers.h"
 #include "intel_depthstencil.h"
-#include "intel_fbo.h"
 #include "intel_batchbuffer.h"
 #include "intel_reg.h"
 #include "context.h"
@@ -93,6 +92,7 @@ intel_intersect_cliprects(drm_clip_rect_t * dst,
    return GL_TRUE;
 }
 
+<<<<<<< HEAD:src/mesa/drivers/dri/intel_winsys/intel_buffers.c
 /**
  * Return pointer to current color drawing region, or NULL.
  */
@@ -107,7 +107,10 @@ intel_drawbuf_region(struct intel_context *intel)
    else
       return NULL;
 }
+=======
+>>>>>>> remove dead code, remove intel_fbo.h includes:src/mesa/drivers/dri/intel_winsys/intel_buffers.c
 
+<<<<<<< HEAD:src/mesa/drivers/dri/intel_winsys/intel_buffers.c
 /**
  * Return pointer to current color reading region, or NULL.
  */
@@ -122,6 +125,8 @@ intel_readbuf_region(struct intel_context *intel)
       return NULL;
 }
 #endif
+=======
+>>>>>>> remove dead code, remove intel_fbo.h includes:src/mesa/drivers/dri/intel_winsys/intel_buffers.c
 
 /**
  * This will be called whenever the currently bound window is moved/resized.
@@ -520,4 +525,3 @@ intelCopySubBuffer(__DRIdrawablePrivate * dPriv, int x, int y, int w, int h)
       fprintf(stderr, "%s: drawable has no context!\n", __FUNCTION__);
    }
 }
-
