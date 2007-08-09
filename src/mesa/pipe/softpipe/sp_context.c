@@ -84,12 +84,15 @@ static void map_surfaces(struct softpipe_context *sp)
    GLuint i;
 
    for (i = 0; i < sp->framebuffer.num_cbufs; i++) {
-      struct softpipe_surface *sps = softpipe_surface(sp->framebuffer.cbufs[i]);      pipe->region_map(pipe, sps->surface.region);
+      struct softpipe_surface *sps = softpipe_surface(sp->framebuffer.cbufs[i]);
+      if (sps->surface.region)
+         pipe->region_map(pipe, sps->surface.region);
    }
 
    if (sp->framebuffer.zbuf) {
       struct softpipe_surface *sps = softpipe_surface(sp->framebuffer.zbuf);
-      pipe->region_map(pipe, sps->surface.region);
+      if (sps->surface.region)
+         pipe->region_map(pipe, sps->surface.region);
    }
 
    /* textures */
@@ -111,12 +114,14 @@ static void unmap_surfaces(struct softpipe_context *sp)
 
    for (i = 0; i < sp->framebuffer.num_cbufs; i++) {
       struct softpipe_surface *sps = softpipe_surface(sp->framebuffer.cbufs[i]);
-      pipe->region_unmap(pipe, sps->surface.region);
+      if (sps->surface.region)
+         pipe->region_unmap(pipe, sps->surface.region);
    }
 
    if (sp->framebuffer.zbuf) {
       struct softpipe_surface *sps = softpipe_surface(sp->framebuffer.zbuf);
-      pipe->region_unmap(pipe, sps->surface.region);
+      if (sps->surface.region)
+         pipe->region_unmap(pipe, sps->surface.region);
    }
 
    /* textures */
