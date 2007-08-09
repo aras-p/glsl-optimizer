@@ -1,6 +1,8 @@
 #include "tgsi_platform.h"
 #include "tgsi_mesa.h"
 
+#define TGSI_DEBUG 0
+
 /*
  * Map mesa register file to SBIR register file.
  */
@@ -571,9 +573,11 @@ tgsi_mesa_compile_fp_program(
             preamble_size,
             TGSI_PROCESSOR_FRAGMENT ) ) {
          assert( i == program->Base.NumInstructions - 1 );
-         tgsi_dump(
-            tokens,
-            0/*TGSI_DUMP_VERBOSE | TGSI_DUMP_NO_IGNORED | TGSI_DUMP_NO_DEFAULT*/ );
+
+	 if (TGSI_DEBUG)
+	    tgsi_dump(
+	       tokens,
+	       0/*TGSI_DUMP_VERBOSE | TGSI_DUMP_NO_IGNORED | TGSI_DUMP_NO_DEFAULT*/ );
          break;
       }
 
@@ -617,7 +621,8 @@ tgsi_mesa_compile_vp_program(
             0,
             TGSI_PROCESSOR_VERTEX ) ) {
          assert( ii == program->Base.NumInstructions - 1 );
-         tgsi_dump( tokens, TGSI_DUMP_NO_IGNORED | TGSI_DUMP_NO_DEFAULT );
+	 if (TGSI_DEBUG)
+	    tgsi_dump( tokens, TGSI_DUMP_NO_IGNORED | TGSI_DUMP_NO_DEFAULT );
          break;
       }
 

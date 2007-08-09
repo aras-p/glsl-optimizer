@@ -1277,6 +1277,8 @@ tgsi_dump(
 
    tgsi_parse_free( &parse );
 
-   fclose( dump->file );
+   if (dump->file != stderr &&
+       dump->file != stdout)
+      fclose( dump->file );
 }
 
