@@ -283,26 +283,23 @@ st_render_texture(GLcontext *ctx,
                   struct gl_renderbuffer_attachment *att)
 {
    struct st_context *st = ctx->st;
+   struct st_renderbuffer *strb = st_renderbuffer(att->Renderbuffer);
    struct pipe_context *pipe = st->pipe;
    struct pipe_framebuffer_state framebuffer;
-   struct pipe_surface *texsurface;
    struct pipe_mipmap_tree *mt;
 
    mt = st_get_texobj_mipmap_tree(att->Texture);
 
-   texsurface = pipe->get_tex_surface(pipe, mt,
-                                      att->CubeMapFace,
-                                      att->TextureLevel,
-                                      att->Zoffset);
+   /* the renderbuffer's surface is inside the mipmap_tree: */
+   strb->surface = pipe->get_tex_surface(pipe, mt,
+                                         att->CubeMapFace,
+                                         att->TextureLevel,
+                                         att->Zoffset);
 
-   /*
-    * XXX basically like this... set the current color (or depth)
-    * drawing surface to be the given texture renderbuffer.
-    */
+   /* update pipe's framebuffer state */
    memset(&framebuffer, 0, sizeof(framebuffer));
    framebuffer.num_cbufs = 1;
-   framebuffer.cbufs[0] = texsurface;
-
+   framebuffer.cbufs[0] = strb->surface;
    if (memcmp(&framebuffer, &st->state.framebuffer, sizeof(framebuffer)) != 0) {
       st->state.framebuffer = framebuffer;
       st->pipe->set_framebuffer_state( st->pipe, &framebuffer );
