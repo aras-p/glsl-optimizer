@@ -740,7 +740,7 @@ get_string( GLcontext *ctx, GLenum name )
 #ifdef XFree86Server
          return (const GLubyte *) "Mesa GLX Indirect";
 #else
-         return (const GLubyte *) "Mesa X11";
+         return (const GLubyte *) "Mesa X11 (softpipe)";
 #endif
       case GL_VENDOR:
 #ifdef XFree86Server
