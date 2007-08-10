@@ -248,6 +248,17 @@ pipe_surface_reference(struct pipe_surface **dst, struct pipe_surface *src)
    }
 }
 
+static INLINE void
+pipe_surface_unreference(struct pipe_surface **ps)
+{
+   assert(*ps);
+   (*ps)->refcount--;
+   if ((*ps)->refcount <= 0) {
+      /* XXX need a proper surface->free method */
+      free(*ps);
+   }
+   *ps = NULL;
+}
 
 
 #endif /* PIPE_CONTEXT_H */
