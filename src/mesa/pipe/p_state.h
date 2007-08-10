@@ -329,15 +329,5 @@ struct pipe_mipmap_tree
 
 struct pipe_buffer_handle;
 
-#define PIPE_BUFFER_FLAG_READ    0x1
-#define PIPE_BUFFER_FLAG_WRITE   0x2
-
-#define PIPE_BUFFER_USE_TEXTURE         0x1
-#define PIPE_BUFFER_USE_VERTEX_BUFFER   0x2
-#define PIPE_BUFFER_USE_INDEX_BUFFER    0x4
-#define PIPE_BUFFER_USE_RENDER_TARGET   0x8
-
-
-
 
 #endif

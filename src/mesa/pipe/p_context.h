@@ -140,7 +140,8 @@ struct pipe_context {
     * Some of these may go away...
     */
    struct pipe_region *(*region_alloc)(struct pipe_context *pipe,
-                                       GLuint cpp, GLuint pitch, GLuint height);
+                                       GLuint cpp, GLuint width, GLuint height,
+                                       GLbitfield flags);
 
    void (*region_release)(struct pipe_context *pipe, struct pipe_region **r);
 

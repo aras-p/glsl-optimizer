@@ -62,6 +62,7 @@ st_miptree_create(struct pipe_context *pipe,
 {
    GLboolean ok;
    struct pipe_mipmap_tree *mt = calloc(sizeof(*mt), 1);
+   GLbitfield flags = 0x0;
 
    DBG("%s target %s format %s level %d..%d\n", __FUNCTION__,
        _mesa_lookup_enum_by_nr(target),
@@ -79,9 +80,11 @@ st_miptree_create(struct pipe_context *pipe,
    mt->refcount = 1; 
 
    ok = pipe->mipmap_tree_layout(pipe, mt);
-   if (ok)
-      mt->region = pipe->region_alloc(pipe,
-                                      mt->cpp, mt->pitch, mt->total_height);
+   if (ok) {
+      /* note: it's OK to pass 'pitch' as 'width' here: */
+      mt->region = pipe->region_alloc(pipe, mt->cpp, mt->pitch,
+                                      mt->total_height, flags);
+   }
 
    if (!mt->region) {
       free(mt);

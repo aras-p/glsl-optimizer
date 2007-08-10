@@ -101,12 +101,11 @@ make_mipmap_tree(struct st_context *st,
                  const GLvoid *pixels)
 {
    GLuint pipeFormat = st_choose_pipe_format(st->pipe, GL_RGBA, format, type);
-   int cpp = 4, pitch;
+   int cpp = 4;
    struct pipe_mipmap_tree *mt = CALLOC_STRUCT(pipe_mipmap_tree);
+   GLbitfield flags = PIPE_SURFACE_FLAG_TEXTURE;
 
    assert(pipeFormat);
-
-   pitch = width; /* XXX pad */
 
    if (unpack->BufferObj) {
       /*
@@ -114,7 +113,7 @@ make_mipmap_tree(struct st_context *st,
       */
    }
    else {
-      mt->region = st->pipe->region_alloc(st->pipe, cpp, pitch, height);
+      mt->region = st->pipe->region_alloc(st->pipe, cpp, width, height, flags);
       /* XXX do texstore() here */
    }
 
@@ -128,7 +127,7 @@ make_mipmap_tree(struct st_context *st,
    mt->depth0 = 1;
    mt->cpp = cpp;
    mt->compressed = 0;
-   mt->pitch = pitch;
+   mt->pitch = mt->region->pitch;
    mt->depth_pitch = 0;
    mt->total_height = height;
    mt->level[0].level_offset = 0;

@@ -62,7 +62,8 @@ st_renderbuffer_alloc_storage(GLcontext * ctx, struct gl_renderbuffer *rb,
    const GLuint pipeFormat
       = st_choose_pipe_format(pipe, internalFormat, GL_NONE, GL_NONE);
    const struct pipe_format_info *info = st_get_format_info(pipeFormat);
-   GLuint cpp, pitch;
+   GLuint cpp;
+   GLbitfield flags = PIPE_SURFACE_FLAG_RENDER; /* want to render to surface */
 
    assert(info);
    if (!info)
@@ -98,11 +99,7 @@ st_renderbuffer_alloc_storage(GLcontext * ctx, struct gl_renderbuffer *rb,
       pipe->region_release(pipe, &strb->surface->region);
    }
 
-   /* Choose a pitch to match hardware requirements:
-    */
-   pitch = ((cpp * width + 63) & ~63) / cpp; /* XXX fix: device-specific */
-
-   strb->surface->region = pipe->region_alloc(pipe, cpp, pitch, height);
+   strb->surface->region = pipe->region_alloc(pipe, cpp, width, height, flags);
    if (!strb->surface->region)
       return GL_FALSE; /* out of memory, try s/w buffer? */
 

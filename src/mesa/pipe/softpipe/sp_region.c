@@ -70,7 +70,7 @@ sp_region_unmap(struct pipe_context *pipe, struct pipe_region *region)
 
 static struct pipe_region *
 sp_region_alloc(struct pipe_context *pipe,
-		GLuint cpp, GLuint pitch, GLuint height)
+		GLuint cpp, GLuint pitch, GLuint height, GLbitfield flags)
 {
    struct softpipe_context *sp = softpipe_context( pipe );
    struct pipe_region *region = calloc(sizeof(*region), 1);

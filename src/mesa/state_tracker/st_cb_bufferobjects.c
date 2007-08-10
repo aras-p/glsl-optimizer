@@ -34,6 +34,9 @@
 #include "st_cb_bufferobjects.h"
 
 #include "pipe/p_context.h"
+#include "pipe/p_defines.h"
+
+
 
 /* Pixel buffers and Vertex/index buffers are handled through these
  * mesa callbacks.  Framebuffer/Renderbuffer objects are
@@ -160,7 +163,7 @@ st_bufferobj_map(GLcontext *ctx,
       flags = PIPE_BUFFER_FLAG_WRITE;
       break;
 
-
+   case GL_READ_ONLY:
       flags = PIPE_BUFFER_FLAG_READ;
       break;
 

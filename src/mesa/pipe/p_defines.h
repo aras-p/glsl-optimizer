@@ -176,11 +176,22 @@
 
 
 /**
- * Buffer mapping access modes
+ * Surface flags
  */
-#define PIPE_MAP_READ         1
-#define PIPE_MAP_WRITE        2
-#define PIPE_MAP_READ_WRITE   3
+#define PIPE_SURFACE_FLAG_TEXTURE 0x1
+#define PIPE_SURFACE_FLAG_RENDER  0x2
+
+
+/**
+ * Buffer flags
+ */
+#define PIPE_BUFFER_FLAG_READ    0x1
+#define PIPE_BUFFER_FLAG_WRITE   0x2
+
+#define PIPE_BUFFER_USE_TEXTURE         0x1
+#define PIPE_BUFFER_USE_VERTEX_BUFFER   0x2
+#define PIPE_BUFFER_USE_INDEX_BUFFER    0x4
+#define PIPE_BUFFER_USE_RENDER_TARGET   0x8
 
 
 /** 

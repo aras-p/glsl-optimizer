@@ -31,6 +31,7 @@
  *   - refcounting of buffer mappings.
  */
 
+#include "pipe/p_defines.h"
 #include "i915_context.h"
 #include "i915_winsys.h"
 #include "i915_blit.h"
@@ -70,7 +71,7 @@ i915_region_unmap(struct pipe_context *pipe, struct pipe_region *region)
 
 static struct pipe_region *
 i915_region_alloc(struct pipe_context *pipe,
-		  GLuint cpp, GLuint width, GLuint height)
+		  GLuint cpp, GLuint width, GLuint height, GLbitfield flags)
 {
    struct i915_context *i915 = i915_context( pipe );
    struct pipe_region *region = calloc(sizeof(*region), 1);
@@ -82,7 +83,13 @@ i915_region_alloc(struct pipe_context *pipe,
     * clearly want to be able to render to textures under some
     * circumstances, but maybe not always a requirement.
     */
-   unsigned pitch = ((cpp * width + 63) & ~63) / cpp;
+   unsigned pitch;
+
+   /* XXX is the pitch different for textures vs. drawables? */
+   if (flags & PIPE_SURFACE_FLAG_TEXTURE)  /* or PIPE_SURFACE_FLAG_RENDER? */
+      pitch = ((cpp * width + 63) & ~63) / cpp;
+   else
+      pitch = ((cpp * width + 63) & ~63) / cpp;
 
    region->cpp = cpp;
    region->pitch = pitch;
