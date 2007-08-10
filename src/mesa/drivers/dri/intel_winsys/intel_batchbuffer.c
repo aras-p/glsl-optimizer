@@ -28,6 +28,7 @@
 #include "intel_batchbuffer.h"
 #include "intel_ioctl.h"
 #include "intel_reg.h"
+#include "drm.h"
 
 /* Relocations in kernel space:
  *    - pass dma buffer seperately
@@ -162,6 +163,40 @@ intel_batchbuffer_free(struct intel_batchbuffer *batch)
    batch->buffer = NULL;
    free(batch);
 }
+
+
+
+
+static void
+intel_batch_ioctl(struct intel_context *intel,
+                  GLuint start_offset,
+                  GLuint used,
+                  GLboolean ignore_cliprects, GLboolean allow_unlock)
+{
+   drmI830BatchBuffer batch;
+
+   batch.start = start_offset;
+   batch.used = used;
+   batch.cliprects = intel->pClipRects;
+   batch.num_cliprects = ignore_cliprects ? 0 : intel->numClipRects;
+   batch.DR1 = 0;
+   batch.DR4 = 0; /* still need this ? */
+
+   DBG(IOCTL, "%s: 0x%x..0x%x DR4: %x cliprects: %d\n",
+       __FUNCTION__,
+       batch.start,
+       batch.start + batch.used * 4, batch.DR4, batch.num_cliprects);
+
+   if (drmCommandWrite(intel->driFd, DRM_I830_BATCHBUFFER, &batch,
+                       sizeof(batch))) {
+      _mesa_printf("DRM_I830_BATCHBUFFER: %d\n", -errno);
+      UNLOCK_HARDWARE(intel);
+      exit(1);
+   }
+}
+
+
+
 
 /* TODO: Push this whole function into bufmgr.
  */
