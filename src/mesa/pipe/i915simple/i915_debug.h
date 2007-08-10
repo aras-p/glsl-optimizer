@@ -39,18 +39,51 @@ struct debug_stream
    char *ptr;		/* pointer to gtt offset zero */
    char *end;		/* pointer to gtt offset zero */
    unsigned print_addresses;
+   struct i915_winsys *winsys;
 };
 
 
+/* Internal functions
+ */
+void i915_disassemble_program(struct debug_stream *stream, 
+			      const unsigned *program, unsigned sz);
 
-extern void i915_disassemble_program(const unsigned *program, unsigned sz);
-extern void i915_print_ureg(const char *msg, unsigned ureg);
+void i915_print_ureg(const char *msg, unsigned ureg);
 
 
-void
-i915_dump_batchbuffer( struct i915_context *i915,
-		       unsigned *start,
-		       unsigned *end );
+#define DEBUG_BATCH	 0x1
+#define DEBUG_BLIT       0x2
+#define DEBUG_BUFFER     0x4
+#define DEBUG_CONSTANTS  0x8
+#define DEBUG_CONTEXT    0x10
+#define DEBUG_DRAW	 0x20
+#define DEBUG_DYNAMIC	 0x40
+#define DEBUG_FLUSH      0x80
+#define DEBUG_MAP	 0x100
+#define DEBUG_PROGRAM	 0x200
+#define DEBUG_REGIONS    0x400
+#define DEBUG_SAMPLER	 0x800
+#define DEBUG_STATIC	 0x1000
+#define DEBUG_SURFACE    0x2000
+#define DEBUG_WINSYS     0x4000
+
+#ifdef DEBUG
+#include "i915_winsys.h"
+#define DBG( i915, ... ) \
+   if ((i915)->debug & FILE_DEBUG_FLAG) (i915)->winsys->printf( (i915)->winsys, __VA_ARGS__ )
+#else
+#define DBG( i915, ... ) \
+   (void)i915
+#endif
+
+
+void i915_dump_batchbuffer( struct i915_context *i915,
+			    unsigned *start,
+			    unsigned *end );
+
+
+
+void i915_debug_init( struct i915_context *i915 );
 
 
 #endif

@@ -56,8 +56,6 @@ static unsigned passthrough[] =
 
 unsigned *i915_passthrough_program( unsigned *dwords )
 {
-   i915_disassemble_program( passthrough, Elements(passthrough) );
-
    *dwords = Elements(passthrough);
    return passthrough;
 }

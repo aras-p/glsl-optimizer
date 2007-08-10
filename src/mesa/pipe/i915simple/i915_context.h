@@ -120,6 +120,7 @@ struct i915_context
    struct i915_state current;
    GLuint hardware_dirty;
    
+   GLuint debug;
 
 
    struct pipe_scissor_state cliprect;

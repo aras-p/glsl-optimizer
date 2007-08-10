@@ -50,6 +50,10 @@ struct pipe_buffer_handle;
 
 struct i915_winsys {
 
+   /* debug output 
+    */
+   void (*printf)( struct i915_winsys *sws, 
+		   const char *, ... );	
 
    /* Many of the winsys's are probably going to have a similar
     * buffer-manager interface, as something almost identical is

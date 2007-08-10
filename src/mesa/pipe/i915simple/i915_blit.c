@@ -36,6 +36,7 @@
 #include "i915_reg.h"
 #include "i915_batch.h"
 
+#define FILE_DEBUG_FLAG DEBUG_BLIT
 
 void
 i915_fill_blit(struct i915_context *i915,
@@ -102,7 +103,8 @@ i915_copy_blit( struct i915_context *i915,
    BATCH_LOCALS;
 
 
-   printf("%s src:buf(%p)/%d+%d %d,%d dst:buf(%p)/%d+%d %d,%d sz:%dx%d\n",
+   DBG(i915,
+       "%s src:buf(%p)/%d+%d %d,%d dst:buf(%p)/%d+%d %d,%d sz:%dx%d\n",
        __FUNCTION__,
        src_buffer, src_pitch, src_offset, src_x, src_y,
        dst_buffer, dst_pitch, dst_offset, dst_x, dst_y, w, h);

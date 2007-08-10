@@ -29,10 +29,18 @@
 
 #include "i915_reg.h"
 #include "i915_debug.h"
+#include "i915_winsys.h"
 //#include "i915_fpc.h"
 #include "shader/program.h"
 #include "shader/prog_instruction.h"
 #include "shader/prog_print.h"
+
+
+
+#define PRINTF( stream, ... ) (stream)->winsys->printf( (stream)->winsys, __VA_ARGS__ )
+
+
+
 
 static const char *opcodes[0x20] = {
    "NOP",
@@ -118,33 +126,33 @@ static const char *regname[0x8] = {
 };
 
 static void
-print_reg_type_nr(GLuint type, GLuint nr)
+print_reg_type_nr(struct debug_stream *stream, GLuint type, GLuint nr)
 {
    switch (type) {
    case REG_TYPE_T:
       switch (nr) {
       case T_DIFFUSE:
-         _mesa_printf("T_DIFFUSE");
+         PRINTF(stream, "T_DIFFUSE");
          return;
       case T_SPECULAR:
-         _mesa_printf("T_SPECULAR");
+         PRINTF(stream, "T_SPECULAR");
          return;
       case T_FOG_W:
-         _mesa_printf("T_FOG_W");
+         PRINTF(stream, "T_FOG_W");
          return;
       default:
-         _mesa_printf("T_TEX%d", nr);
+         PRINTF(stream, "T_TEX%d", nr);
          return;
       }
    case REG_TYPE_OC:
       if (nr == 0) {
-         _mesa_printf("oC");
+         PRINTF(stream, "oC");
          return;
       }
       break;
    case REG_TYPE_OD:
       if (nr == 0) {
-         _mesa_printf("oD");
+         PRINTF(stream, "oD");
          return;
       }
       break;
@@ -152,7 +160,7 @@ print_reg_type_nr(GLuint type, GLuint nr)
       break;
    }
 
-   _mesa_printf("%s[%d]", regname[type], nr);
+   PRINTF(stream, "%s[%d]", regname[type], nr);
 }
 
 #define REG_SWIZZLE_MASK 0x7777
@@ -165,7 +173,7 @@ print_reg_type_nr(GLuint type, GLuint nr)
 
 
 static void
-print_reg_neg_swizzle(GLuint reg)
+print_reg_neg_swizzle(struct debug_stream *stream, GLuint reg)
 {
    int i;
 
@@ -173,33 +181,33 @@ print_reg_neg_swizzle(GLuint reg)
        (reg & REG_NEGATE_MASK) == 0)
       return;
 
-   _mesa_printf(".");
+   PRINTF(stream, ".");
 
    for (i = 3; i >= 0; i--) {
       if (reg & (1 << ((i * 4) + 3)))
-         _mesa_printf("-");
+         PRINTF(stream, "-");
 
       switch ((reg >> (i * 4)) & 0x7) {
       case 0:
-         _mesa_printf("x");
+         PRINTF(stream, "x");
          break;
       case 1:
-         _mesa_printf("y");
+         PRINTF(stream, "y");
          break;
       case 2:
-         _mesa_printf("z");
+         PRINTF(stream, "z");
          break;
       case 3:
-         _mesa_printf("w");
+         PRINTF(stream, "w");
          break;
       case 4:
-         _mesa_printf("0");
+         PRINTF(stream, "0");
          break;
       case 5:
-         _mesa_printf("1");
+         PRINTF(stream, "1");
          break;
       default:
-         _mesa_printf("?");
+         PRINTF(stream, "?");
          break;
       }
    }
@@ -207,32 +215,32 @@ print_reg_neg_swizzle(GLuint reg)
 
 
 static void
-print_src_reg(GLuint dword)
+print_src_reg(struct debug_stream *stream, GLuint dword)
 {
    GLuint nr = (dword >> A2_SRC2_NR_SHIFT) & REG_NR_MASK;
    GLuint type = (dword >> A2_SRC2_TYPE_SHIFT) & REG_TYPE_MASK;
-   print_reg_type_nr(type, nr);
-   print_reg_neg_swizzle(dword);
+   print_reg_type_nr(stream, type, nr);
+   print_reg_neg_swizzle(stream, dword);
 }
 
 
 static void
-print_dest_reg(GLuint dword)
+print_dest_reg(struct debug_stream *stream, GLuint dword)
 {
    GLuint nr = (dword >> A0_DEST_NR_SHIFT) & REG_NR_MASK;
    GLuint type = (dword >> A0_DEST_TYPE_SHIFT) & REG_TYPE_MASK;
-   print_reg_type_nr(type, nr);
+   print_reg_type_nr(stream, type, nr);
    if ((dword & A0_DEST_CHANNEL_ALL) == A0_DEST_CHANNEL_ALL)
       return;
-   _mesa_printf(".");
+   PRINTF(stream, ".");
    if (dword & A0_DEST_CHANNEL_X)
-      _mesa_printf("x");
+      PRINTF(stream, "x");
    if (dword & A0_DEST_CHANNEL_Y)
-      _mesa_printf("y");
+      PRINTF(stream, "y");
    if (dword & A0_DEST_CHANNEL_Z)
-      _mesa_printf("z");
+      PRINTF(stream, "z");
    if (dword & A0_DEST_CHANNEL_W)
-      _mesa_printf("w");
+      PRINTF(stream, "w");
 }
 
 
@@ -242,70 +250,76 @@ print_dest_reg(GLuint dword)
 
 
 static void
-print_arith_op(GLuint opcode, const GLuint * program)
+print_arith_op(struct debug_stream *stream, 
+	       GLuint opcode, const GLuint * program)
 {
    if (opcode != A0_NOP) {
-      print_dest_reg(program[0]);
+      print_dest_reg(stream, program[0]);
       if (program[0] & A0_DEST_SATURATE)
-         _mesa_printf(" = SATURATE ");
+         PRINTF(stream, " = SATURATE ");
       else
-         _mesa_printf(" = ");
+         PRINTF(stream, " = ");
    }
 
-   _mesa_printf("%s ", opcodes[opcode]);
+   PRINTF(stream, "%s ", opcodes[opcode]);
 
-   print_src_reg(GET_SRC0_REG(program[0], program[1]));
+   print_src_reg(stream, GET_SRC0_REG(program[0], program[1]));
    if (args[opcode] == 1) {
-      _mesa_printf("\n");
+      PRINTF(stream, "\n");
       return;
    }
 
-   _mesa_printf(", ");
-   print_src_reg(GET_SRC1_REG(program[1], program[2]));
+   PRINTF(stream, ", ");
+   print_src_reg(stream, GET_SRC1_REG(program[1], program[2]));
    if (args[opcode] == 2) {
-      _mesa_printf("\n");
+      PRINTF(stream, "\n");
       return;
    }
 
-   _mesa_printf(", ");
-   print_src_reg(GET_SRC2_REG(program[2]));
-   _mesa_printf("\n");
+   PRINTF(stream, ", ");
+   print_src_reg(stream, GET_SRC2_REG(program[2]));
+   PRINTF(stream, "\n");
    return;
 }
 
 
 static void
-print_tex_op(GLuint opcode, const GLuint * program)
+print_tex_op(struct debug_stream *stream, 
+	     GLuint opcode, const GLuint * program)
 {
-   print_dest_reg(program[0] | A0_DEST_CHANNEL_ALL);
-   _mesa_printf(" = ");
+   print_dest_reg(stream, program[0] | A0_DEST_CHANNEL_ALL);
+   PRINTF(stream, " = ");
 
-   _mesa_printf("%s ", opcodes[opcode]);
+   PRINTF(stream, "%s ", opcodes[opcode]);
 
-   _mesa_printf("S[%d],", program[0] & T0_SAMPLER_NR_MASK);
+   PRINTF(stream, "S[%d],", program[0] & T0_SAMPLER_NR_MASK);
 
-   print_reg_type_nr((program[1] >> T1_ADDRESS_REG_TYPE_SHIFT) &
+   print_reg_type_nr(stream, 
+		     (program[1] >> T1_ADDRESS_REG_TYPE_SHIFT) &
                      REG_TYPE_MASK,
                      (program[1] >> T1_ADDRESS_REG_NR_SHIFT) & REG_NR_MASK);
-   _mesa_printf("\n");
+   PRINTF(stream, "\n");
 }
 
 static void
-print_dcl_op(GLuint opcode, const GLuint * program)
+print_dcl_op(struct debug_stream *stream, 
+	     GLuint opcode, const GLuint * program)
 {
-   _mesa_printf("%s ", opcodes[opcode]);
-   print_dest_reg(program[0] | A0_DEST_CHANNEL_ALL);
-   _mesa_printf("\n");
+   PRINTF(stream, "%s ", opcodes[opcode]);
+   print_dest_reg(stream, 
+		  program[0] | A0_DEST_CHANNEL_ALL);
+   PRINTF(stream, "\n");
 }
 
 
 void
-i915_disassemble_program(const GLuint * program, GLuint sz)
+i915_disassemble_program(struct debug_stream *stream, 
+			 const GLuint * program, GLuint sz)
 {
    GLuint size = program[0] & 0x1ff;
    GLint i;
 
-   _mesa_printf("\t\tBEGIN\n");
+   PRINTF(stream, "\t\tBEGIN\n");
 
    assert(size + 2 == sz);
 
@@ -313,19 +327,19 @@ i915_disassemble_program(const GLuint * program, GLuint sz)
    for (i = 1; i < sz; i += 3, program += 3) {
       GLuint opcode = program[0] & (0x1f << 24);
 
-      _mesa_printf("\t\t");
+      PRINTF(stream, "\t\t");
 
       if ((GLint) opcode >= A0_NOP && opcode <= A0_SLT)
-         print_arith_op(opcode >> 24, program);
+         print_arith_op(stream, opcode >> 24, program);
       else if (opcode >= T0_TEXLD && opcode <= T0_TEXKILL)
-         print_tex_op(opcode >> 24, program);
+         print_tex_op(stream, opcode >> 24, program);
       else if (opcode == D0_DCL)
-         print_dcl_op(opcode >> 24, program);
+         print_dcl_op(stream, opcode >> 24, program);
       else
-         _mesa_printf("Unknown opcode 0x%x\n", opcode);
+         PRINTF(stream, "Unknown opcode 0x%x\n", opcode);
    }
 
-   _mesa_printf("\t\tEND\n\n");
+   PRINTF(stream, "\t\tEND\n\n");
 }
 
 

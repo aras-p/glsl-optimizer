@@ -29,8 +29,10 @@
 
 #include "i915_reg.h"
 #include "i915_context.h"
+#include "i915_winsys.h"
 #include "i915_debug.h"
 
+#define PRINTF( stream, ... ) (stream)->winsys->printf( (stream)->winsys, __VA_ARGS__ )
 
 
 static GLboolean debug( struct debug_stream *stream, const char *name, GLuint len )
@@ -39,19 +41,19 @@ static GLboolean debug( struct debug_stream *stream, const char *name, GLuint le
    GLuint *ptr = (GLuint *)(stream->ptr + stream->offset);
    
    if (len == 0) {
-      _mesa_printf("Error - zero length packet (0x%08x)\n", stream->ptr[0]);
+      PRINTF( stream, "Error - zero length packet (0x%08x)\n", stream->ptr[0] );
       assert(0);
       return GL_FALSE;
    }
 
    if (stream->print_addresses)
-      _mesa_printf("%08x:  ", stream->offset);
+      PRINTF(stream, "%08x:  ", stream->offset);
 
 
-   _mesa_printf("%s (%d dwords):\n", name, len);
+   PRINTF(stream, "%s (%d dwords):\n", name, len);
    for (i = 0; i < len; i++)
-      _mesa_printf("\t\t0x%08x\n",  ptr[i]);   
-   _mesa_printf("\n");
+      PRINTF(stream, "\t\t0x%08x\n",  ptr[i]);   
+   PRINTF(stream, "\n");
 
    stream->offset += len * sizeof(GLuint);
    
@@ -88,17 +90,17 @@ static GLboolean debug_prim( struct debug_stream *stream, const char *name,
    
 
 
-   _mesa_printf("%s %s (%d dwords):\n", name, prim, len);
-   _mesa_printf("\t\t0x%08x\n",  ptr[0]);   
+   PRINTF(stream, "%s %s (%d dwords):\n", name, prim, len);
+   PRINTF(stream, "\t\t0x%08x\n",  ptr[0]);   
    for (i = 1; i < len; i++) {
       if (dump_floats)
-	 _mesa_printf("\t\t0x%08x // %f\n",  ptr[i], *(GLfloat *)&ptr[i]);   
+	 PRINTF(stream, "\t\t0x%08x // %f\n",  ptr[i], *(GLfloat *)&ptr[i]);   
       else
-	 _mesa_printf("\t\t0x%08x\n",  ptr[i]);   
+	 PRINTF(stream, "\t\t0x%08x\n",  ptr[i]);   
    }
 
       
-   _mesa_printf("\n");
+   PRINTF(stream, "\n");
 
    stream->offset += len * sizeof(GLuint);
    
@@ -113,16 +115,16 @@ static GLboolean debug_program( struct debug_stream *stream, const char *name, G
    GLuint *ptr = (GLuint *)(stream->ptr + stream->offset);
 
    if (len == 0) {
-      _mesa_printf("Error - zero length packet (0x%08x)\n", stream->ptr[0]);
+      PRINTF(stream, "Error - zero length packet (0x%08x)\n", stream->ptr[0]);
       assert(0);
       return GL_FALSE;
    }
 
    if (stream->print_addresses)
-      _mesa_printf("%08x:  ", stream->offset);
+      PRINTF(stream, "%08x:  ", stream->offset);
 
-   _mesa_printf("%s (%d dwords):\n", name, len);
-   i915_disassemble_program( ptr, len );
+   PRINTF(stream, "%s (%d dwords):\n", name, len);
+   i915_disassemble_program( stream, ptr, len );
 
    stream->offset += len * sizeof(GLuint);
    return GL_TRUE;
@@ -135,17 +137,17 @@ static GLboolean debug_chain( struct debug_stream *stream, const char *name, GLu
    GLuint old_offset = stream->offset + len * sizeof(GLuint);
    GLuint i;
 
-   _mesa_printf("%s (%d dwords):\n", name, len);
+   PRINTF(stream, "%s (%d dwords):\n", name, len);
    for (i = 0; i < len; i++)
-      _mesa_printf("\t\t0x%08x\n",  ptr[i]);
+      PRINTF(stream, "\t\t0x%08x\n",  ptr[i]);
 
    stream->offset = ptr[1] & ~0x3;
    
    if (stream->offset < old_offset)
-      _mesa_printf("\n... skipping backwards from 0x%x --> 0x%x ...\n\n", 
+      PRINTF(stream, "\n... skipping backwards from 0x%x --> 0x%x ...\n\n", 
 		   old_offset, stream->offset );
    else
-      _mesa_printf("\n... skipping from 0x%x --> 0x%x ...\n\n", 
+      PRINTF(stream, "\n... skipping from 0x%x --> 0x%x ...\n\n", 
 		   old_offset, stream->offset );
 
 
@@ -165,10 +167,10 @@ static GLboolean debug_variable_length_prim( struct debug_stream *stream )
 
    len = 1+(i+2)/2;
 
-   _mesa_printf("3DPRIM, %s variable length %d indicies (%d dwords):\n", prim, i, len);
+   PRINTF(stream, "3DPRIM, %s variable length %d indicies (%d dwords):\n", prim, i, len);
    for (i = 0; i < len; i++)
-      _mesa_printf("\t\t0x%08x\n",  ptr[i]);
-   _mesa_printf("\n");
+      PRINTF(stream, "\t\t0x%08x\n",  ptr[i]);
+   PRINTF(stream, "\n");
 
    stream->offset += len * sizeof(GLuint);
    return GL_TRUE;
@@ -183,16 +185,16 @@ static GLboolean debug_load_immediate( struct debug_stream *stream,
    GLuint bits = (ptr[0] >> 4) & 0xff;
    GLuint i, j = 0;
    
-   _mesa_printf("%s (%d dwords, flags: %x):\n", name, len, bits);
-   _mesa_printf("\t\t0x%08x\n",  ptr[j++]);
+   PRINTF(stream, "%s (%d dwords, flags: %x):\n", name, len, bits);
+   PRINTF(stream, "\t\t0x%08x\n",  ptr[j++]);
 
    for (i = 0; i < 8; i++) {
       if (bits & (1<<i)) {
-	 _mesa_printf("\t  LIS%d: 0x%08x\n", i, ptr[j++]);
+	 PRINTF(stream, "\t  LIS%d: 0x%08x\n", i, ptr[j++]);
       }
    }
 
-   _mesa_printf("\n");
+   PRINTF(stream, "\n");
 
    assert(j == len);
 
@@ -211,34 +213,34 @@ static GLboolean debug_load_indirect( struct debug_stream *stream,
    GLuint bits = (ptr[0] >> 8) & 0x3f;
    GLuint i, j = 0;
    
-   _mesa_printf("%s (%d dwords):\n", name, len);
-   _mesa_printf("\t\t0x%08x\n",  ptr[j++]);
+   PRINTF(stream, "%s (%d dwords):\n", name, len);
+   PRINTF(stream, "\t\t0x%08x\n",  ptr[j++]);
 
    for (i = 0; i < 6; i++) {
       if (bits & (1<<i)) {
 	 switch (1<<(8+i)) {
 	 case LI0_STATE_STATIC_INDIRECT:
-	    _mesa_printf("        STATIC: 0x%08x | %x\n", ptr[j]&~3, ptr[j]&3); j++;
-	    _mesa_printf("                0x%08x\n", ptr[j++]);
+	    PRINTF(stream, "        STATIC: 0x%08x | %x\n", ptr[j]&~3, ptr[j]&3); j++;
+	    PRINTF(stream, "                0x%08x\n", ptr[j++]);
 	    break;
 	 case LI0_STATE_DYNAMIC_INDIRECT:
-	    _mesa_printf("       DYNAMIC: 0x%08x | %x\n", ptr[j]&~3, ptr[j]&3); j++;
+	    PRINTF(stream, "       DYNAMIC: 0x%08x | %x\n", ptr[j]&~3, ptr[j]&3); j++;
 	    break;
 	 case LI0_STATE_SAMPLER:
-	    _mesa_printf("       SAMPLER: 0x%08x | %x\n", ptr[j]&~3, ptr[j]&3); j++;
-	    _mesa_printf("                0x%08x\n", ptr[j++]);
+	    PRINTF(stream, "       SAMPLER: 0x%08x | %x\n", ptr[j]&~3, ptr[j]&3); j++;
+	    PRINTF(stream, "                0x%08x\n", ptr[j++]);
 	    break;
 	 case LI0_STATE_MAP:
-	    _mesa_printf("           MAP: 0x%08x | %x\n", ptr[j]&~3, ptr[j]&3); j++;
-	    _mesa_printf("                0x%08x\n", ptr[j++]);
+	    PRINTF(stream, "           MAP: 0x%08x | %x\n", ptr[j]&~3, ptr[j]&3); j++;
+	    PRINTF(stream, "                0x%08x\n", ptr[j++]);
 	    break;
 	 case LI0_STATE_PROGRAM:
-	    _mesa_printf("       PROGRAM: 0x%08x | %x\n", ptr[j]&~3, ptr[j]&3); j++;
-	    _mesa_printf("                0x%08x\n", ptr[j++]);
+	    PRINTF(stream, "       PROGRAM: 0x%08x | %x\n", ptr[j]&~3, ptr[j]&3); j++;
+	    PRINTF(stream, "                0x%08x\n", ptr[j++]);
 	    break;
 	 case LI0_STATE_CONSTANTS:
-	    _mesa_printf("     CONSTANTS: 0x%08x | %x\n", ptr[j]&~3, ptr[j]&3); j++;
-	    _mesa_printf("                0x%08x\n", ptr[j++]);
+	    PRINTF(stream, "     CONSTANTS: 0x%08x | %x\n", ptr[j]&~3, ptr[j]&3); j++;
+	    PRINTF(stream, "                0x%08x\n", ptr[j++]);
 	    break;
 	 default:
 	    assert(0);
@@ -248,10 +250,10 @@ static GLboolean debug_load_indirect( struct debug_stream *stream,
    }
 
    if (bits == 0) {
-      _mesa_printf("\t  DUMMY: 0x%08x\n", ptr[j++]);
+      PRINTF(stream, "\t  DUMMY: 0x%08x\n", ptr[j++]);
    }
 
-   _mesa_printf("\n");
+   PRINTF(stream, "\n");
 
 
    assert(j == len);
@@ -421,6 +423,7 @@ i915_dump_batchbuffer( struct i915_context *i915,
    stream.offset = 0;
    stream.ptr = (char *)start;
    stream.print_addresses = 0;
+   stream.winsys = i915->winsys;
 
    while (!done &&
 	  stream.offset < bytes &&
