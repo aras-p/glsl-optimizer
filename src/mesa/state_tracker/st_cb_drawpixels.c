@@ -81,7 +81,7 @@ make_drawpixels_shader(struct st_context *st)
    /* END; */
    p->Instructions[1].Opcode = OPCODE_END;
 
-   p->InputsRead = FRAG_BIT_COL0;
+   p->InputsRead = FRAG_BIT_TEX0;
    p->OutputsWritten = (1 << FRAG_RESULT_COLR);
 
    stfp = (struct st_fragment_program *) p;
@@ -100,7 +100,7 @@ make_mipmap_tree(struct st_context *st,
                  const struct gl_pixelstore_attrib *unpack,
                  const GLvoid *pixels)
 {
-   GLuint pipeFormat = st_choose_pipe_format(st->pipe, format, type, GL_RGBA);
+   GLuint pipeFormat = st_choose_pipe_format(st->pipe, GL_RGBA, format, type);
    int cpp = 4, pitch;
    struct pipe_mipmap_tree *mt = CALLOC_STRUCT(pipe_mipmap_tree);
 
@@ -249,7 +249,7 @@ static GLboolean
 compatible_formats(GLenum format, GLenum type, GLuint pipeFormat)
 {
    static const GLuint one = 1;
-   GLubyte littleEndian = *((GLubyte *) one);
+   GLubyte littleEndian = *((GLubyte *) &one);
 
    if (pipeFormat == PIPE_FORMAT_U_R8_G8_B8_A8 &&
        format == GL_RGBA &&
