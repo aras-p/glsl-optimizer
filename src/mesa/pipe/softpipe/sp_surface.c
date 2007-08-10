@@ -36,120 +36,130 @@
 /**
  * Softpipe surface functions.
  * Basically, create surface of a particular type, then plug in default
- * read/write_quad functions.
+ * read/write_quad and get/put_tile() functions.
  * Note that these quad funcs assume the buffer/region is in a linear
- * layout with Y=0=bottom.
- * If we had swizzled/AOS buffers the read/write functions could be
+ * layout with Y=0=top.
+ * If we had swizzled/AOS buffers the read/write quad functions could be
  * simplified a lot....
  */
 
 
-#if 000 /* OLD... should be recycled... */
-static void rgba8_read_quad_f( struct softpipe_surface *gs,
-			       GLint x, GLint y,
-			       GLfloat (*rgba)[NUM_CHANNELS] )
-{
-   GLuint i, j, k = 0;
 
-   for (i = 0; i < 2; i++) {
-      for (j = 0; j < 2; j++, k++) {
-	 GLubyte *ptr = gs->surface.ptr + (y+i) * gs->surface.stride + (x+j) * 4;
-	 rgba[k][0] = ptr[0] * (1.0 / 255.0);
-	 rgba[k][1] = ptr[1] * (1.0 / 255.0);
-	 rgba[k][2] = ptr[2] * (1.0 / 255.0);
-	 rgba[k][3] = ptr[3] * (1.0 / 255.0);
+/*** PIPE_FORMAT_U_A8_R8_G8_B8 ***/
+
+static void
+a8r8g8b8_read_quad_f_swz(struct softpipe_surface *sps, GLint x, GLint y,
+                         GLfloat (*rrrr)[QUAD_SIZE])
+{
+   const GLuint *src
+      = ((const GLuint *) (sps->surface.region->map + sps->surface.offset))
+      + y * sps->surface.region->pitch + x;
+   GLuint i, j;
+
+   assert(sps->surface.format == PIPE_FORMAT_U_A8_R8_G8_B8);
+   assert(x < sps->surface.width - 1);
+   assert(y < sps->surface.height - 1);
+
+   for (i = 0; i < 2; i++) { /* loop over pixel row */
+      for (j = 0; j < 2; j++) {  /* loop over pixel column */
+         const GLuint p = src[j];
+         rrrr[0][i * 2 + j] = UBYTE_TO_FLOAT((p >> 16) & 0xff); /*R*/
+         rrrr[1][i * 2 + j] = UBYTE_TO_FLOAT((p >>  8) & 0xff); /*G*/
+         rrrr[2][i * 2 + j] = UBYTE_TO_FLOAT((p      ) & 0xff); /*B*/
+         rrrr[3][i * 2 + j] = UBYTE_TO_FLOAT((p >> 24) & 0xff); /*A*/
       }
+      src += sps->surface.region->pitch;
    }
 }
 
-static void rgba8_read_quad_f_swz( struct softpipe_surface *gs,
-				   GLint x, GLint y,
-				   GLfloat (*rrrr)[QUAD_SIZE] )
+static void
+a8r8g8b8_write_quad_f_swz(struct softpipe_surface *sps, GLint x, GLint y,
+                          GLfloat (*rrrr)[QUAD_SIZE])
 {
-   GLuint i, j, k = 0;
+   GLuint *dst
+      = ((GLuint *) (sps->surface.region->map + sps->surface.offset))
+      + y * sps->surface.region->pitch + x;
+   GLuint i, j;
 
-   for (i = 0; i < 2; i++) {
-      for (j = 0; j < 2; j++, k++) {
-	 GLubyte *ptr = gs->surface.ptr + (y+i) * gs->surface.stride + (x+j) * 4;
-	 rrrr[0][k] = ptr[0] * (1.0 / 255.0);
-	 rrrr[1][k] = ptr[1] * (1.0 / 255.0);
-	 rrrr[2][k] = ptr[2] * (1.0 / 255.0);
-	 rrrr[3][k] = ptr[3] * (1.0 / 255.0);
+   assert(sps->surface.format == PIPE_FORMAT_U_A8_R8_G8_B8);
+
+   for (i = 0; i < 2; i++) { /* loop over pixel row */
+      for (j = 0; j < 2; j++) {  /* loop over pixel column */
+         GLubyte r, g, b, a;
+         UNCLAMPED_FLOAT_TO_UBYTE(r, rrrr[0][i * 2 + j]); /*R*/
+         UNCLAMPED_FLOAT_TO_UBYTE(g, rrrr[1][i * 2 + j]); /*G*/
+         UNCLAMPED_FLOAT_TO_UBYTE(b, rrrr[2][i * 2 + j]); /*B*/
+         UNCLAMPED_FLOAT_TO_UBYTE(a, rrrr[3][i * 2 + j]); /*A*/
+         dst[j] = (a << 24) | (r << 16) | (g << 8) | b;
       }
+      dst += sps->surface.region->pitch;
    }
 }
 
-static void rgba8_write_quad_f( struct softpipe_surface *gs,
-				GLint x, GLint y,
-				GLfloat (*rgba)[NUM_CHANNELS] )
+static void
+a8r8g8b8_get_tile(struct pipe_surface *ps,
+                  GLuint x, GLuint y, GLuint w, GLuint h, GLfloat *p)
 {
-   GLuint i, j, k = 0;
+   const GLuint *src
+      = ((const GLuint *) (ps->region->map + ps->offset))
+      + y * ps->region->pitch + x;
+   GLuint i, j;
 
-   for (i = 0; i < 2; i++) {
-      for (j = 0; j < 2; j++, k++) {
-	 GLubyte *ptr = gs->surface.ptr + (y+i) * gs->surface.stride + (x+j) * 4;
-	 ptr[0] = rgba[k][0] * 255.0;
-	 ptr[1] = rgba[k][1] * 255.0;
-	 ptr[2] = rgba[k][2] * 255.0;
-	 ptr[3] = rgba[k][3] * 255.0;
-      }
-   }
-}
+   assert(ps->format == PIPE_FORMAT_U_A8_R8_G8_B8);
 
-static void rgba8_write_quad_f_swz( struct softpipe_surface *gs,
-				    GLint x, GLint y,
-				    GLfloat (*rrrr)[QUAD_SIZE] )
-{
-   GLuint i, j, k = 0;
-
-   for (i = 0; i < 2; i++) {
-      for (j = 0; j < 2; j++, k++) {
-	 GLubyte *ptr = gs->surface.ptr + (y+i) * gs->surface.stride + (x+j) * 4;
-	 ptr[0] = rrrr[0][k] * 255.0;
-	 ptr[1] = rrrr[1][k] * 255.0;
-	 ptr[2] = rrrr[2][k] * 255.0;
-	 ptr[3] = rrrr[3][k] * 255.0;
-      }
-   }
-}
-
-static void rgba8_read_quad_ub( struct softpipe_surface *gs,
-				GLint x, GLint y,
-				GLubyte (*rgba)[NUM_CHANNELS] )
-{
-   GLuint i, j, k = 0;
-
-   for (i = 0; i < 2; i++) {
-      for (j = 0; j < 2; j++, k++) {
-	 GLubyte *ptr = gs->surface.ptr + (y+i) * gs->surface.stride + (x+j) * 4;
-	 rgba[k][0] = ptr[0];
-	 rgba[k][1] = ptr[1];
-	 rgba[k][2] = ptr[2];
-	 rgba[k][3] = ptr[3];
-      }
-   }
-}
-
-static void rgba8_write_quad_ub( struct softpipe_surface *gs,
-				 GLint x, GLint y,
-				 GLubyte (*rgba)[NUM_CHANNELS] )
-{
-   GLuint i, j, k = 0;
-
-   for (i = 0; i < 2; i++) {
-      for (j = 0; j < 2; j++, k++) {
-	 GLubyte *ptr = gs->surface.ptr + (y+i) * gs->surface.stride + (x+j) * 4;
-	 ptr[0] = rgba[k][0];
-	 ptr[1] = rgba[k][1];
-	 ptr[2] = rgba[k][2];
-	 ptr[3] = rgba[k][3];
-      }
-   }
-}
-
+#if 0
+   assert(x + w <= ps->width);
+   assert(y + h <= ps->height);
+#else
+   /* temp hack */
+   if (x + w > ps->width)
+      w = ps->width - x;
+   if (y + h > ps->height)
+      h = ps->height -y;
 #endif
+   for (i = 0; i < h; i++) {
+      for (j = 0; j < w; j++) {
+         const GLuint pixel = src[j];
+         p[0] = UBYTE_TO_FLOAT((pixel >> 16) & 0xff);
+         p[1] = UBYTE_TO_FLOAT((pixel >>  8) & 0xff);
+         p[2] = UBYTE_TO_FLOAT((pixel >>  0) & 0xff);
+         p[3] = UBYTE_TO_FLOAT((pixel >> 24) & 0xff);
+         p += 4;
+      }
+      src += ps->region->pitch;
+   }
+}
 
 
+/*** PIPE_FORMAT_U_A1_R5_G5_B5 ***/
+
+static void
+a1r5g5b5_get_tile(struct pipe_surface *ps,
+                  GLuint x, GLuint y, GLuint w, GLuint h, GLfloat *p)
+{
+   const GLushort *src
+      = ((const GLushort *) (ps->region->map + ps->offset))
+      + y * ps->region->pitch + x;
+   GLuint i, j;
+
+   assert(ps->format == PIPE_FORMAT_U_A1_R5_G5_B5);
+
+   for (i = 0; i < h; i++) {
+      for (j = 0; j < w; j++) {
+         const GLushort pixel = src[j];
+         p[0] = ((pixel >> 10) & 0x1f) * (1.0 / 31);
+         p[1] = ((pixel >>  5) & 0x1f) * (1.0 / 31);
+         p[2] = ((pixel      ) & 0x1f) * (1.0 / 31);
+         p[3] = ((pixel >> 15)       );
+         p += 4;
+      }
+      src += ps->region->pitch;
+   }
+}
+
+
+
+/*** PIPE_FORMAT_U_Z16 ***/
 
 static void
 z16_read_quad_z(struct softpipe_surface *sps,
@@ -184,6 +194,9 @@ z16_write_quad_z(struct softpipe_surface *sps,
    dst[1] = zzzz[3];
 }
 
+
+/*** PIPE_FORMAT_U_Z32 ***/
+
 static void
 z32_read_quad_z(struct softpipe_surface *sps,
                 GLint x, GLint y, GLuint zzzz[QUAD_SIZE])
@@ -215,6 +228,9 @@ z32_write_quad_z(struct softpipe_surface *sps,
    dst[1] = zzzz[3];
 }
 
+
+/*** PIPE_FORMAT_S8_Z24 ***/
+
 static void
 s8z24_read_quad_z(struct softpipe_surface *sps,
                   GLint x, GLint y, GLuint zzzz[QUAD_SIZE])
@@ -225,6 +241,7 @@ s8z24_read_quad_z(struct softpipe_surface *sps,
 
    assert(sps->surface.format == PIPE_FORMAT_S8_Z24);
 
+   /* extract lower three bytes */
    zzzz[0] = src[0] & mask;
    zzzz[1] = src[1] & mask;
    src += sps->surface.region->pitch;
@@ -282,6 +299,8 @@ s8z24_write_quad_stencil(struct softpipe_surface *sps,
 }
 
 
+/*** PIPE_FORMAT_U_S8 ***/
+
 static void
 s8_read_quad_stencil(struct softpipe_surface *sps,
                      GLint x, GLint y, GLubyte ssss[QUAD_SIZE])
@@ -315,63 +334,17 @@ s8_write_quad_stencil(struct softpipe_surface *sps,
 }
 
 
-
-static void
-a8r8g8b8_get_tile(struct pipe_surface *ps,
-                  GLuint x, GLuint y, GLuint w, GLuint h, GLfloat *p)
-{
-   const GLuint *src
-      = ((const GLuint *) (ps->region->map + ps->offset))
-      + y * ps->region->pitch + x;
-   GLuint i, j;
-#if 0
-   assert(x + w <= ps->width);
-   assert(y + h <= ps->height);
-#else
-   /* temp hack */
-   if (x + w > ps->width)
-      w = ps->width - x;
-   if (y + h > ps->height)
-      h = ps->height -y;
-#endif
-   for (i = 0; i < h; i++) {
-      for (j = 0; j < w; j++) {
-         p[0] = UBYTE_TO_FLOAT((src[j] >> 16) & 0xff);
-         p[1] = UBYTE_TO_FLOAT((src[j] >>  8) & 0xff);
-         p[2] = UBYTE_TO_FLOAT((src[j] >>  0) & 0xff);
-         p[3] = UBYTE_TO_FLOAT((src[j] >> 24) & 0xff);
-         p += 4;
-      }
-      src += ps->region->pitch;
-   }
-}
-
-
-static void
-a1r5g5b5_get_tile(struct pipe_surface *ps,
-                  GLuint x, GLuint y, GLuint w, GLuint h, GLfloat *p)
-{
-   const GLushort *src
-      = ((const GLushort *) (ps->region->map + ps->offset))
-      + y * ps->region->pitch + x;
-   GLuint i, j;
-   for (i = 0; i < h; i++) {
-      for (j = 0; j < w; j++) {
-         p[0] = ((src[j] >> 10) & 0x1f) * (1.0 / 31);
-         p[1] = ((src[j] >>  5) & 0x1f) * (1.0 / 31);
-         p[2] = ((src[j]      ) & 0x1f) * (1.0 / 31);
-         p[3] = src[j] >> 15;
-         p += 4;
-      }
-      src += ps->region->pitch;
-   }
-}
-
-
 void
 softpipe_init_surface_funcs(struct softpipe_surface *sps)
 {
    switch (sps->surface.format) {
+   case PIPE_FORMAT_U_A8_R8_G8_B8:
+      sps->read_quad_f_swz = a8r8g8b8_read_quad_f_swz;
+      sps->write_quad_f_swz = a8r8g8b8_write_quad_f_swz;
+      sps->surface.get_tile = a8r8g8b8_get_tile;
+   case PIPE_FORMAT_U_A1_R5_G5_B5:
+      sps->surface.get_tile = a1r5g5b5_get_tile;
+      break;
    case PIPE_FORMAT_U_Z16:
       sps->read_quad_z = z16_read_quad_z;
       sps->write_quad_z = z16_write_quad_z;
@@ -390,27 +363,22 @@ softpipe_init_surface_funcs(struct softpipe_surface *sps)
       sps->read_quad_stencil = s8_read_quad_stencil;
       sps->write_quad_stencil = s8_write_quad_stencil;
       break;
-   case PIPE_FORMAT_U_A8_R8_G8_B8:
-      sps->surface.get_tile = a8r8g8b8_get_tile;
-      break;
-   case PIPE_FORMAT_U_A1_R5_G5_B5:
-      sps->surface.get_tile = a1r5g5b5_get_tile;
-      break;
    default:
       assert(0);
-      ;
    }
 }
 
 
 static struct pipe_surface *
-sp_surface_alloc(struct pipe_context *pipe, GLenum format)
+softpipe_surface_alloc(struct pipe_context *pipe, GLuint pipeFormat)
 {
    struct softpipe_surface *sps = CALLOC_STRUCT(softpipe_surface);
    if (!sps)
       return NULL;
 
-   sps->surface.format = format;
+   assert(pipeFormat < PIPE_FORMAT_COUNT);
+
+   sps->surface.format = pipeFormat;
    sps->surface.refcount = 1;
    softpipe_init_surface_funcs(sps);
 
@@ -462,5 +430,5 @@ softpipe_get_tex_surface(struct pipe_context *pipe,
 void
 sp_init_surface_functions(struct softpipe_context *sp)
 {
-   sp->pipe.surface_alloc = sp_surface_alloc;
+   sp->pipe.surface_alloc = softpipe_surface_alloc;
 }
