@@ -44,6 +44,7 @@ update_scissor( struct st_context *st )
 {
    struct pipe_scissor_state scissor;
    const struct gl_framebuffer *fb = st->ctx->DrawBuffer;
+   GLint miny, maxy;
 
    scissor.minx = 0;
    scissor.miny = 0;
@@ -65,6 +66,13 @@ update_scissor( struct st_context *st )
       if (scissor.minx >= scissor.maxx || scissor.miny >= scissor.maxy)
          scissor.minx = scissor.miny = scissor.maxx = scissor.maxy = 0;
    }
+
+   /* Now invert Y.  Pipe drivers use the convention Y=0=top for surfaces
+    */
+   miny = fb->Height - scissor.maxy;
+   maxy = fb->Height - scissor.miny;
+   scissor.miny = miny;
+   scissor.maxy = maxy;
 
    if (memcmp(&scissor, &st->state.scissor, sizeof(scissor)) != 0) {
       /* state has changed */
