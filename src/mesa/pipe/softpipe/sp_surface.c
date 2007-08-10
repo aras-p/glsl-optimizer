@@ -166,7 +166,8 @@ z16_read_quad_z(struct softpipe_surface *sps,
                 GLint x, GLint y, GLuint zzzz[QUAD_SIZE])
 {
    const GLushort *src
-      = (GLushort *) sps->surface.region->map + y * sps->surface.region->pitch + x;
+      = ((const GLushort *) (sps->surface.region->map + sps->surface.offset))
+      + y * sps->surface.region->pitch + x;
 
    assert(sps->surface.format == PIPE_FORMAT_U_Z16);
 
@@ -182,7 +183,9 @@ static void
 z16_write_quad_z(struct softpipe_surface *sps,
                  GLint x, GLint y, const GLuint zzzz[QUAD_SIZE])
 {
-   GLushort *dst = (GLushort *) sps->surface.region->map + y * sps->surface.region->pitch + x;
+   GLushort *dst
+      = ((GLushort *) (sps->surface.region->map + sps->surface.offset))
+      + y * sps->surface.region->pitch + x;
 
    assert(sps->surface.format == PIPE_FORMAT_U_Z16);
 
@@ -202,7 +205,8 @@ z32_read_quad_z(struct softpipe_surface *sps,
                 GLint x, GLint y, GLuint zzzz[QUAD_SIZE])
 {
    const GLuint *src
-      = (GLuint *) sps->surface.region->map + y * sps->surface.region->pitch + x;
+      = ((GLuint *) (sps->surface.region->map + sps->surface.offset))
+      + y * sps->surface.region->pitch + x;
 
    assert(sps->surface.format == PIPE_FORMAT_U_Z32);
 
@@ -217,7 +221,9 @@ static void
 z32_write_quad_z(struct softpipe_surface *sps,
                  GLint x, GLint y, const GLuint zzzz[QUAD_SIZE])
 {
-   GLuint *dst = (GLuint *) sps->surface.region->map + y * sps->surface.region->pitch + x;
+   GLuint *dst
+      = ((GLuint *) (sps->surface.region->map + sps->surface.offset))
+      + y * sps->surface.region->pitch + x;
 
    assert(sps->surface.format == PIPE_FORMAT_U_Z32);
 
@@ -237,7 +243,8 @@ s8z24_read_quad_z(struct softpipe_surface *sps,
 {
    static const GLuint mask = 0x00ffffff;
    const GLuint *src
-      = (GLuint *) sps->surface.region->map + y * sps->surface.region->pitch + x;
+      = ((GLuint *) (sps->surface.region->map + sps->surface.offset))
+      + y * sps->surface.region->pitch + x;
 
    assert(sps->surface.format == PIPE_FORMAT_S8_Z24);
 
@@ -254,7 +261,9 @@ s8z24_write_quad_z(struct softpipe_surface *sps,
                    GLint x, GLint y, const GLuint zzzz[QUAD_SIZE])
 {
    static const GLuint mask = 0xff000000;
-   GLuint *dst = (GLuint *) sps->surface.region->map + y * sps->surface.region->pitch + x;
+   GLuint *dst
+      = ((GLuint *) (sps->surface.region->map + sps->surface.offset))
+      + y * sps->surface.region->pitch + x;
 
    assert(sps->surface.format == PIPE_FORMAT_S8_Z24);
    assert(zzzz[0] <= 0xffffff);
@@ -271,7 +280,8 @@ s8z24_read_quad_stencil(struct softpipe_surface *sps,
                         GLint x, GLint y, GLubyte ssss[QUAD_SIZE])
 {
    const GLuint *src
-      = (GLuint *) sps->surface.region->map + y * sps->surface.region->pitch + x;
+      = ((GLuint *) (sps->surface.region->map + sps->surface.offset))
+      + y * sps->surface.region->pitch + x;
 
    assert(sps->surface.format == PIPE_FORMAT_S8_Z24);
 
@@ -287,7 +297,9 @@ s8z24_write_quad_stencil(struct softpipe_surface *sps,
                          GLint x, GLint y, const GLubyte ssss[QUAD_SIZE])
 {
    static const GLuint mask = 0x00ffffff;
-   GLuint *dst = (GLuint *) sps->surface.region->map + y * sps->surface.region->pitch + x;
+   GLuint *dst
+      = ((GLuint *) (sps->surface.region->map + sps->surface.offset))
+      + y * sps->surface.region->pitch + x;
 
    assert(sps->surface.format == PIPE_FORMAT_S8_Z24);
 
@@ -306,7 +318,8 @@ s8_read_quad_stencil(struct softpipe_surface *sps,
                      GLint x, GLint y, GLubyte ssss[QUAD_SIZE])
 {
    const GLubyte *src
-      = sps->surface.region->map + y * sps->surface.region->pitch + x;
+      = sps->surface.region->map + sps->surface.offset
+      + y * sps->surface.region->pitch + x;
 
    assert(sps->surface.format == PIPE_FORMAT_U_S8);
 
@@ -322,7 +335,8 @@ s8_write_quad_stencil(struct softpipe_surface *sps,
                       GLint x, GLint y, const GLubyte ssss[QUAD_SIZE])
 {
    GLubyte *dst
-      = sps->surface.region->map + y * sps->surface.region->pitch + x;
+      = sps->surface.region->map + sps->surface.offset
+      + y * sps->surface.region->pitch + x;
 
    assert(sps->surface.format == PIPE_FORMAT_U_S8);
 
