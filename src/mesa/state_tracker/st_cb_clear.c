@@ -129,11 +129,13 @@ make_color_shader(struct st_context *st)
       return NULL;
    }
    _mesa_init_instructions(p->Instructions, 2);
+   /* MOV result.color, fragment.color; */
    p->Instructions[0].Opcode = OPCODE_MOV;
    p->Instructions[0].DstReg.File = PROGRAM_OUTPUT;
-   p->Instructions[0].DstReg.Index = 0;
+   p->Instructions[0].DstReg.Index = FRAG_RESULT_COLR;
    p->Instructions[0].SrcReg[0].File = PROGRAM_INPUT;
    p->Instructions[0].SrcReg[0].Index = FRAG_ATTRIB_COL0;
+   /* END; */
    p->Instructions[1].Opcode = OPCODE_END;
 
    p->InputsRead = FRAG_BIT_COL0;
