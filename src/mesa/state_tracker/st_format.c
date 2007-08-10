@@ -40,7 +40,7 @@
 #include "pipe/p_context.h"
 #include "pipe/p_defines.h"
 #include "st_context.h"
-#include "st_cb_teximage.h"
+#include "st_format.h"
 
 
 

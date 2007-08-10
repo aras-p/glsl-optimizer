@@ -43,7 +43,7 @@
 #include "pipe/p_defines.h"
 #include "st_context.h"
 #include "st_cb_fbo.h"
-#include "st_cb_teximage.h"
+#include "st_format.h"
 
 
 

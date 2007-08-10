@@ -38,7 +38,7 @@
 
 #include "state_tracker/st_context.h"
 #include "state_tracker/st_cb_texture.h"
-#include "state_tracker/st_cb_teximage.h"
+#include "state_tracker/st_format.h"
 #include "state_tracker/st_mipmap_tree.h"
 
 #include "pipe/p_context.h"

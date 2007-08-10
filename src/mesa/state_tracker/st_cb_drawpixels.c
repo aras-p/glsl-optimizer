@@ -38,7 +38,7 @@
 #include "st_program.h"
 #include "st_cb_drawpixels.h"
 #include "st_cb_texture.h"
-#include "st_cb_teximage.h"
+#include "st_format.h"
 #include "pipe/p_context.h"
 #include "pipe/p_defines.h"
 #include "pipe/tgsi/mesa/mesa_to_tgsi.h"
