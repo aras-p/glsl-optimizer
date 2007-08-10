@@ -46,6 +46,7 @@ SOURCES = \
 	quads.c \
 	quadstrip.c \
 	quadstrip-flat.c \
+	readpixels.c \
 	dlist-edgeflag.c \
 	dlist-dangling.c \
 	dlist-edgeflag-dangling.c \
