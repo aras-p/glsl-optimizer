@@ -44,7 +44,6 @@
 #include "intel_winsys.h"
 #include "intel_ioctl.h"
 #include "intel_batchbuffer.h"
-#include "intel_blit.h"
 
 #include "state_tracker/st_public.h"
 #include "state_tracker/st_context.h"
@@ -87,68 +86,6 @@ int __intel_debug = 0;
 _glthread_Mutex lockMutex;
 static GLboolean lockMutexInit = GL_FALSE;
 
-
-static const GLubyte *
-intelGetString(GLcontext * ctx, GLenum name)
-{
-   const char *chipset;
-   static char buffer[128];
-
-   switch (name) {
-   case GL_VENDOR:
-      return (GLubyte *) "Tungsten Graphics, Inc";
-      break;
-
-   case GL_RENDERER:
-      switch (intel_context(ctx)->intelScreen->deviceID) {
-      case PCI_CHIP_845_G:
-         chipset = "Intel(R) 845G";
-         break;
-      case PCI_CHIP_I830_M:
-         chipset = "Intel(R) 830M";
-         break;
-      case PCI_CHIP_I855_GM:
-         chipset = "Intel(R) 852GM/855GM";
-         break;
-      case PCI_CHIP_I865_G:
-         chipset = "Intel(R) 865G";
-         break;
-      case PCI_CHIP_I915_G:
-         chipset = "Intel(R) 915G";
-         break;
-      case PCI_CHIP_I915_GM:
-         chipset = "Intel(R) 915GM";
-         break;
-      case PCI_CHIP_I945_G:
-         chipset = "Intel(R) 945G";
-         break;
-      case PCI_CHIP_I945_GM:
-         chipset = "Intel(R) 945GM";
-         break;
-      case PCI_CHIP_I945_GME:
-         chipset = "Intel(R) 945GME";
-         break;
-      case PCI_CHIP_G33_G:
-	 chipset = "Intel(R) G33";
-	 break;
-      case PCI_CHIP_Q35_G:
-	 chipset = "Intel(R) Q35";
-	 break;
-      case PCI_CHIP_Q33_G:
-	 chipset = "Intel(R) Q33";
-	 break;
-      default:
-         chipset = "Unknown Intel Chipset";
-         break;
-      }
-
-      (void) driGetRendererString(buffer, chipset, DRIVER_DATE, 0);
-      return (GLubyte *) buffer;
-
-   default:
-      return NULL;
-   }
-}
 
 
 /**
@@ -248,7 +185,6 @@ intelInitDriverFunctions(struct dd_function_table *functions)
 {
    _mesa_init_driver_functions(functions);
 
-   functions->GetString = intelGetString;
    functions->UpdateState = intelInvalidateState;
 
    st_init_driver_functions(functions);
