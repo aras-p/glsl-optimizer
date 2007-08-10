@@ -423,7 +423,7 @@ i915_dump_batchbuffer( struct i915_context *i915,
    stream.offset = 0;
    stream.ptr = (char *)start;
    stream.print_addresses = 0;
-   stream.winsys = i915->winsys;
+   stream.winsys = i915->pipe.winsys;
 
    while (!done &&
 	  stream.offset < bytes &&

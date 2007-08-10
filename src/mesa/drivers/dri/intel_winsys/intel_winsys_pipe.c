@@ -35,26 +35,23 @@
 #include "dri_bufmgr.h"
 
 #include "intel_context.h"
-#include "intel_pipe.h"
+#include "intel_winsys.h"
 #include "intel_batchbuffer.h"
 #include "intel_blit.h"
 
-#include "pipe/softpipe/sp_winsys.h"
+#include "pipe/p_winsys.h"
 #include "pipe/p_defines.h"
 
-/* Shouldn't really need this:
- */
-#include "pipe/p_context.h"
 
 
-struct intel_softpipe_winsys {
-   struct softpipe_winsys sws;
+struct intel_pipe_winsys {
+   struct pipe_winsys winsys;
    struct intel_context *intel;
 };
 
 
 
-/* Turn the softpipe opaque buffer pointer into a dri_bufmgr opaque
+/* Turn the pipe opaque buffer pointer into a dri_bufmgr opaque
  * buffer pointer...
  */
 static inline struct _DriBufferObject *
@@ -69,25 +66,33 @@ pipe_bo( struct _DriBufferObject *bo )
    return (struct pipe_buffer_handle *)bo;
 }
 
-/* Turn a softpipe winsys into an intel/softpipe winsys:
+/* Turn a pipe winsys into an intel/pipe winsys:
  */
-static inline struct intel_softpipe_winsys *
-intel_softpipe_winsys( struct softpipe_winsys *sws )
+static inline struct intel_pipe_winsys *
+intel_pipe_winsys( struct pipe_winsys *sws )
 {
-   return (struct intel_softpipe_winsys *)sws;
+   return (struct intel_pipe_winsys *)sws;
 }
 
 
 /* Most callbacks map direcly onto dri_bufmgr operations:
  */
-static void *intel_buffer_map(struct softpipe_winsys *sws, 
-			      struct pipe_buffer_handle *buf )
+static void *intel_buffer_map(struct pipe_winsys *sws, 
+			      struct pipe_buffer_handle *buf,
+			      unsigned flags )
 {
-   return driBOMap( dri_bo(buf), 
-		    DRM_BO_FLAG_READ | DRM_BO_FLAG_WRITE, 0 );
+   unsigned drm_flags = 0;
+   
+   if (flags & PIPE_BUFFER_FLAG_WRITE)
+      drm_flags |= DRM_BO_FLAG_WRITE;
+
+   if (flags & PIPE_BUFFER_FLAG_READ)
+      drm_flags |= DRM_BO_FLAG_READ;
+
+   return driBOMap( dri_bo(buf), drm_flags, 0 );
 }
 
-static void intel_buffer_unmap(struct softpipe_winsys *sws, 
+static void intel_buffer_unmap(struct pipe_winsys *sws, 
 			       struct pipe_buffer_handle *buf)
 {
    driBOUnmap( dri_bo(buf) );
@@ -95,13 +100,13 @@ static void intel_buffer_unmap(struct softpipe_winsys *sws,
 
 
 static struct pipe_buffer_handle *
-intel_buffer_reference(struct softpipe_winsys *sws,
+intel_buffer_reference(struct pipe_winsys *sws,
 		       struct pipe_buffer_handle *buf)
 {
    return pipe_bo( driBOReference( dri_bo(buf) ) );
 }
 
-static void intel_buffer_unreference(struct softpipe_winsys *sws, 
+static void intel_buffer_unreference(struct pipe_winsys *sws, 
 				     struct pipe_buffer_handle **buf)
 {
    if (*buf) {
@@ -112,18 +117,18 @@ static void intel_buffer_unreference(struct softpipe_winsys *sws,
 
 /* Grabs the hardware lock!
  */
-static void intel_buffer_data(struct softpipe_winsys *sws, 
+static void intel_buffer_data(struct pipe_winsys *sws, 
 			      struct pipe_buffer_handle *buf,
 			      unsigned size, const void *data )
 {
-   struct intel_context *intel = intel_softpipe_winsys(sws)->intel;
+   struct intel_context *intel = intel_pipe_winsys(sws)->intel;
 
    LOCK_HARDWARE( intel );
    driBOData( dri_bo(buf), size, data, 0 );
    UNLOCK_HARDWARE( intel );
 }
 
-static void intel_buffer_subdata(struct softpipe_winsys *sws, 
+static void intel_buffer_subdata(struct pipe_winsys *sws, 
 				 struct pipe_buffer_handle *buf,
 				 unsigned long offset, 
 				 unsigned long size, 
@@ -132,7 +137,7 @@ static void intel_buffer_subdata(struct softpipe_winsys *sws,
    driBOSubData( dri_bo(buf), offset, size, data );
 }
 
-static void intel_buffer_get_subdata(struct softpipe_winsys *sws, 
+static void intel_buffer_get_subdata(struct pipe_winsys *sws, 
 				     struct pipe_buffer_handle *buf,
 				     unsigned long offset, 
 				     unsigned long size, 
@@ -141,45 +146,28 @@ static void intel_buffer_get_subdata(struct softpipe_winsys *sws,
    driBOGetSubData( dri_bo(buf), offset, size, data );
 }
 
-/* Softpipe has no concept of pools.  We choose the tex/region pool
+/* Pipe has no concept of pools.  We choose the tex/region pool
  * for all buffers.
  */
 static struct pipe_buffer_handle *
-intel_create_buffer(struct softpipe_winsys *sws, 
+intel_buffer_create(struct pipe_winsys *sws, 
 		    unsigned alignment)
 {
-   struct intel_context *intel = intel_softpipe_winsys(sws)->intel;
+   struct intel_context *intel = intel_pipe_winsys(sws)->intel;
    struct _DriBufferObject *buffer;
 
    LOCK_HARDWARE( intel );
    driGenBuffers( intel->intelScreen->regionPool, 
-		  "softpipe buffer", 1, &buffer, alignment, 0, 0 );
+		  "pipe buffer", 1, &buffer, alignment, 0, 0 );
    UNLOCK_HARDWARE( intel );
 
    return pipe_bo(buffer);
 }
 
 
-/**
- * Return list of surface formats supported by this driver.
- */
-static const GLuint *
-intel_supported_formats(struct pipe_context *pipe, GLuint *numFormats)
+static void intel_wait_idle( struct pipe_winsys *sws )
 {
-   static const GLuint formats[] = {
-      PIPE_FORMAT_U_A8_R8_G8_B8,
-      PIPE_FORMAT_U_R5_G6_B5,
-      PIPE_FORMAT_S8_Z24,
-   };
-
-   *numFormats = sizeof(formats) / sizeof(formats[0]);
-   return formats;
-}
-
-
-static void intel_wait_idle( struct softpipe_winsys *sws )
-{
-   struct intel_context *intel = intel_softpipe_winsys(sws)->intel;
+   struct intel_context *intel = intel_pipe_winsys(sws)->intel;
 
    if (intel->batch->last_fence) {
       driFenceFinish(intel->batch->last_fence, 
@@ -195,9 +183,9 @@ static void intel_wait_idle( struct softpipe_winsys *sws )
  * we copied its contents to the real frontbuffer.  Our task is easy:
  */
 static void
-intel_flush_frontbuffer( struct softpipe_winsys *sws )
+intel_flush_frontbuffer( struct pipe_winsys *sws )
 {
-   struct intel_context *intel = intel_softpipe_winsys(sws)->intel;
+   struct intel_context *intel = intel_pipe_winsys(sws)->intel;
    __DRIdrawablePrivate *dPriv = intel->driDrawable;
    
    intelCopyBuffer(dPriv, NULL);
@@ -205,38 +193,29 @@ intel_flush_frontbuffer( struct softpipe_winsys *sws )
 
 
 
-struct pipe_context *
-intel_create_softpipe( struct intel_context *intel )
+struct pipe_winsys *
+intel_create_pipe_winsys( struct intel_context *intel )
 {
-   struct intel_softpipe_winsys *isws = CALLOC_STRUCT( intel_softpipe_winsys );
-   struct pipe_context *pipe;
+   struct intel_pipe_winsys *iws = CALLOC_STRUCT( intel_pipe_winsys );
    
-   /* Fill in this struct with callbacks that softpipe will need to
+   /* Fill in this struct with callbacks that pipe will need to
     * communicate with the window system, buffer manager, etc. 
     *
-    * Softpipe would be happy with a malloc based memory manager, but
+    * Pipe would be happy with a malloc based memory manager, but
     * the SwapBuffers implementation in this winsys driver requires
     * that rendering be done to an appropriate _DriBufferObject.  
     */
-   isws->sws.create_buffer = intel_create_buffer;
-   isws->sws.buffer_map = intel_buffer_map;
-   isws->sws.buffer_unmap = intel_buffer_unmap;
-   isws->sws.buffer_reference = intel_buffer_reference;
-   isws->sws.buffer_unreference = intel_buffer_unreference;
-   isws->sws.buffer_data = intel_buffer_data;
-   isws->sws.buffer_subdata = intel_buffer_subdata;
-   isws->sws.buffer_get_subdata = intel_buffer_get_subdata;
-   isws->sws.flush_frontbuffer = intel_flush_frontbuffer;
-   isws->sws.wait_idle = intel_wait_idle;
-   isws->intel = intel;
+   iws->winsys.buffer_create = intel_buffer_create;
+   iws->winsys.buffer_map = intel_buffer_map;
+   iws->winsys.buffer_unmap = intel_buffer_unmap;
+   iws->winsys.buffer_reference = intel_buffer_reference;
+   iws->winsys.buffer_unreference = intel_buffer_unreference;
+   iws->winsys.buffer_data = intel_buffer_data;
+   iws->winsys.buffer_subdata = intel_buffer_subdata;
+   iws->winsys.buffer_get_subdata = intel_buffer_get_subdata;
+   iws->winsys.flush_frontbuffer = intel_flush_frontbuffer;
+   iws->winsys.wait_idle = intel_wait_idle;
+   iws->intel = intel;
 
-   /* Create the softpipe context:
-    */
-   pipe = softpipe_create( &isws->sws );
-
-   /* XXX: This should probably be a parameter to softpipe_create()
-    */
-   pipe->supported_formats = intel_supported_formats;
-
-   return pipe;
+   return &iws->winsys;
 }

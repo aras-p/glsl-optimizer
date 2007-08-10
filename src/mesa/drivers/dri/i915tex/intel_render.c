@@ -129,8 +129,9 @@ do {						\
   ((intel->batch->size - 1500) / (intel->vertex_size*4))
 #define GET_CURRENT_VB_MAX_VERTS() GET_SUBSEQUENT_VB_MAX_VERTS()
 
-#define ALLOC_VERTS( nr ) \
-   intelExtendInlinePrimitive( intel, (nr) * intel->vertex_size )
+#define ALLOC_VERTS( nr ) NULL
+
+//   intelExtendInlinePrimitive( intel, (nr) * intel->vertex_size )
 
 #define EMIT_VERTS( ctx, j, nr, buf ) \
   _tnl_emit_vertices_to_buffer(ctx, j, (j)+(nr), buf )
@@ -203,6 +204,8 @@ intel_run_render(GLcontext * ctx, struct tnl_pipeline_stage *stage)
    GLuint i;
 
    intel->vtbl.render_prevalidate( intel );
+
+   return GL_TRUE;
 
    /* Don't handle clipping or indexed vertices.
     */

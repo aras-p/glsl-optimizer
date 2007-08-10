@@ -25,8 +25,8 @@
  * 
  **************************************************************************/
 
-#ifndef I915_WINSYS_H
-#define I915_WINSYS_H
+#ifndef P_WINSYS_H
+#define P_WINSYS_H
 
 #include "main/mtypes.h"
 
@@ -47,38 +47,68 @@
  */
 
 struct pipe_buffer_handle;
-struct pipe_winsys;
 
-struct i915_winsys {
+struct pipe_winsys {
 
-   /* An over-simple batchbuffer mechanism.  Will want to improve the
-    * performance of this, perhaps based on the cmdstream stuff.  It
-    * would be pretty impossible to implement swz on top of this
-    * interface.
-    *
-    * Will also need additions/changes to implement static/dynamic
-    * indirect state.
+   /* Do any special operations to ensure frontbuffer contents are
+    * displayed, eg copy fake frontbuffer.
     */
-   unsigned *(*batch_start)( struct i915_winsys *sws,
-			     unsigned dwords,
-			     unsigned relocs );
-   void (*batch_dword)( struct i915_winsys *sws,
-			unsigned dword );
-   void (*batch_reloc)( struct i915_winsys *sws,
+   void (*flush_frontbuffer)( struct pipe_winsys *sws );
+
+   /* debug output 
+    */
+   void (*printf)( struct pipe_winsys *sws,
+		   const char *, ... );	
+
+
+   /* The buffer manager is modeled after the dri_bugmgr interface,
+    * but this is the subset that softpipe cares about.  Remember that
+    * softpipe gets to choose the interface it needs, and the window
+    * systems must then implement that interface (rather than the
+    * other way around...).
+    *
+    * Softpipe only really wants to make system memory allocations,
+    * right?? 
+    */
+   struct pipe_buffer_handle *(*buffer_create)(struct pipe_winsys *sws, 
+					       unsigned alignment );
+
+   void *(*buffer_map)( struct pipe_winsys *sws, 
 			struct pipe_buffer_handle *buf,
-			unsigned access_flags,
-			unsigned delta );
-   void (*batch_flush)( struct i915_winsys *sws );
+			unsigned flags );
+   
+   void (*buffer_unmap)( struct pipe_winsys *sws, 
+			 struct pipe_buffer_handle *buf );
+
+   struct pipe_buffer_handle *(*buffer_reference)( struct pipe_winsys *sws,
+						   struct pipe_buffer_handle *buf );
+
+   void (*buffer_unreference)( struct pipe_winsys *sws, 
+			       struct pipe_buffer_handle **buf );
+
+   void (*buffer_data)(struct pipe_winsys *sws, 
+		       struct pipe_buffer_handle *buf,
+		       unsigned size, const void *data );
+
+   void (*buffer_subdata)(struct pipe_winsys *sws, 
+			  struct pipe_buffer_handle *buf,
+			  unsigned long offset, 
+			  unsigned long size, 
+			  const void *data);
+
+   void (*buffer_get_subdata)(struct pipe_winsys *sws, 
+			      struct pipe_buffer_handle *buf,
+			      unsigned long offset, 
+			      unsigned long size, 
+			      void *data);
+
+
+   /* Wait for any hw swapbuffers, etc. to finish: 
+    */
+   void (*wait_idle)( struct pipe_winsys *sws );
 
 };
 
-#define I915_BUFFER_ACCESS_WRITE   0x1 
-#define I915_BUFFER_ACCESS_READ    0x2
 
 
-struct pipe_context *i915_create( struct pipe_winsys *,
-				  struct i915_winsys *,
-				  unsigned pci_id );
-
-
-#endif 
+#endif /* SP_WINSYS_H */

@@ -29,10 +29,12 @@
 #include "i915_context.h"
 #include "i915_winsys.h"
 #include "i915_state.h"
+#include "i915_batch.h"
 #include "i915_tex_layout.h"
 
 #include "pipe/draw/draw_context.h"
 #include "pipe/p_defines.h"
+#include "pipe/p_winsys.h"
 
 #define PCI_CHIP_I915_G			0x2582
 #define PCI_CHIP_I915_GM		0x2592
@@ -152,7 +154,8 @@ i915_draw_vertices(struct pipe_context *pipe,
 
 
 
-struct pipe_context *i915_create( struct i915_winsys *winsys,
+struct pipe_context *i915_create( struct pipe_winsys *pipe_winsys,
+				  struct i915_winsys *i915_winsys,
 				  unsigned pci_id )
 {
    struct i915_context *i915;
@@ -175,14 +178,18 @@ struct pipe_context *i915_create( struct i915_winsys *winsys,
       break;
 
    default:
-      winsys->printf(winsys, "%s: unknown pci id 0x%x, cannot create context\n", 
-		     __FUNCTION__, pci_id);
+      pipe_winsys->printf(pipe_winsys, 
+			  "%s: unknown pci id 0x%x, cannot create context\n", 
+			  __FUNCTION__, pci_id);
       return NULL;
    }
 
    i915 = CALLOC_STRUCT(i915_context);
    if (i915 == NULL)
       return NULL;
+
+   i915->winsys = i915_winsys;
+   i915->pipe.winsys = pipe_winsys;
 
    i915->pipe.destroy = i915_destroy;
    i915->pipe.supported_formats = i915_supported_formats;
@@ -192,7 +199,6 @@ struct pipe_context *i915_create( struct i915_winsys *winsys,
    i915->pipe.reset_occlusion_counter = NULL; /* no support */
    i915->pipe.get_occlusion_counter = NULL;
 
-   i915->winsys = winsys;
 
    /*
     * Create drawing context and plug our rendering stage into it.
@@ -201,7 +207,6 @@ struct pipe_context *i915_create( struct i915_winsys *winsys,
    assert(i915->draw);
    draw_set_setup_stage(i915->draw, i915_draw_render_stage(i915));
 
-   i915_init_buffer_functions(i915);
    i915_init_region_functions(i915);
    i915_init_surface_functions(i915);
    i915_init_state_functions(i915);
@@ -219,7 +224,7 @@ struct pipe_context *i915_create( struct i915_winsys *winsys,
 
    /* Batch stream debugging is a bit hacked up at the moment:
     */
-   i915->batch_start = winsys->batch_start( winsys, 0, 0 );
+   i915->batch_start = BEGIN_BATCH(0, 0);
 
    /*
     * XXX we could plug GL selection/feedback into the drawing pipeline

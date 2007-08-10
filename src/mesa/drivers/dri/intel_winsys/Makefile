@@ -11,8 +11,9 @@ PIPE_DRIVERS = \
 	$(TOP)/src/mesa/pipe/i915simple/libi915simple.a
 
 DRIVER_SOURCES = \
-	intel_pipe_i915simple.c \
-	intel_pipe_softpipe.c \
+	intel_winsys_pipe.c \
+	intel_winsys_softpipe.c \
+	intel_winsys_i915.c \
 	intel_batchbuffer.c \
 	intel_buffers.c \
 	intel_blit.c \

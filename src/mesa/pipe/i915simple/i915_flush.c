@@ -66,16 +66,9 @@ static void i915_flush( struct pipe_context *pipe,
    FLUSH_BATCH();
 }
 
-static void i915_wait_idle(struct pipe_context *pipe)
-{
-   struct i915_context *i915 = i915_context(pipe);
-
-   i915->winsys->batch_wait_idle( i915->winsys );
-}
 
 
 void i915_init_flush_functions( struct i915_context *i915 )
 {
    i915->pipe.flush = i915_flush;
-   i915->pipe.wait_idle = i915_wait_idle;
 }

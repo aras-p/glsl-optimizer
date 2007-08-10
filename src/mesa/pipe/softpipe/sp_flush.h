@@ -31,6 +31,5 @@
 struct pipe_context;
 
 void softpipe_flush(struct pipe_context *pipe, unsigned flags );
-void softpipe_wait_idle(struct pipe_context *pipe);
 
 #endif

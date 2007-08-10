@@ -35,6 +35,7 @@
 
 #include "pipe/p_context.h"
 #include "pipe/p_defines.h"
+#include "pipe/p_winsys.h"
 
 
 
@@ -62,7 +63,7 @@ st_bufferobj_alloc(GLcontext *ctx, GLuint name, GLenum target)
 
    _mesa_initialize_buffer_object(&st_obj->Base, name, target);
 
-   st_obj->buffer = st->pipe->create_buffer( st->pipe, 32, 0 );
+   st_obj->buffer = st->pipe->winsys->buffer_create( st->pipe->winsys, 32 );
 
    return &st_obj->Base;
 }
@@ -80,7 +81,7 @@ st_bufferobj_free(GLcontext *ctx, struct gl_buffer_object *obj)
    struct st_buffer_object *st_obj = st_buffer_object(obj);
 
    if (st_obj->buffer) 
-      pipe->buffer_unreference(pipe, &st_obj->buffer);
+      pipe->winsys->buffer_unreference(pipe->winsys, &st_obj->buffer);
 
    free(st_obj);
 }
@@ -107,7 +108,7 @@ st_bufferobj_data(GLcontext *ctx,
    st_obj->Base.Size = size;
    st_obj->Base.Usage = usage;
 
-   pipe->buffer_data( pipe, st_obj->buffer, size, data );
+   pipe->winsys->buffer_data( pipe->winsys, st_obj->buffer, size, data );
 }
 
 
@@ -127,7 +128,7 @@ st_bufferobj_subdata(GLcontext *ctx,
    struct pipe_context *pipe = st_context(ctx)->pipe;
    struct st_buffer_object *st_obj = st_buffer_object(obj);
 
-   pipe->buffer_subdata(pipe, st_obj->buffer, offset, size, data);
+   pipe->winsys->buffer_subdata(pipe->winsys, st_obj->buffer, offset, size, data);
 }
 
 
@@ -144,7 +145,7 @@ st_bufferobj_get_subdata(GLcontext *ctx,
    struct pipe_context *pipe = st_context(ctx)->pipe;
    struct st_buffer_object *st_obj = st_buffer_object(obj);
 
-   pipe->buffer_get_subdata(pipe, st_obj->buffer, offset, size, data);
+   pipe->winsys->buffer_get_subdata(pipe->winsys, st_obj->buffer, offset, size, data);
 }
 
 
@@ -173,7 +174,7 @@ st_bufferobj_map(GLcontext *ctx, GLenum target, GLenum access,
       break;      
    }
 
-   obj->Pointer = pipe->buffer_map(pipe, st_obj->buffer, flags);
+   obj->Pointer = pipe->winsys->buffer_map(pipe->winsys, st_obj->buffer, flags);
    return obj->Pointer;
 }
 
@@ -187,7 +188,7 @@ st_bufferobj_unmap(GLcontext *ctx, GLenum target, struct gl_buffer_object *obj)
    struct pipe_context *pipe = st_context(ctx)->pipe;
    struct st_buffer_object *st_obj = st_buffer_object(obj);
 
-   pipe->buffer_unmap(pipe, st_obj->buffer);
+   pipe->winsys->buffer_unmap(pipe->winsys, st_obj->buffer);
    obj->Pointer = NULL;
    return GL_TRUE;
 }

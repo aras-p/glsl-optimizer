@@ -32,8 +32,8 @@
  */
 
 #include "pipe/p_defines.h"
+#include "pipe/p_winsys.h"
 #include "i915_context.h"
-#include "i915_winsys.h"
 #include "i915_blit.h"
 
 
@@ -50,8 +50,10 @@ i915_region_map(struct pipe_context *pipe, struct pipe_region *region)
    struct i915_context *i915 = i915_context( pipe );
 
    if (!region->map_refcount++) {
-      region->map = i915->winsys->buffer_map( i915->winsys,
-					    region->buffer );
+      region->map = i915->pipe.winsys->buffer_map( i915->pipe.winsys,
+						   region->buffer,
+						   PIPE_BUFFER_FLAG_WRITE | 
+						   PIPE_BUFFER_FLAG_READ);
    }
 
    return region->map;
@@ -63,8 +65,8 @@ i915_region_unmap(struct pipe_context *pipe, struct pipe_region *region)
    struct i915_context *i915 = i915_context( pipe );
 
    if (!--region->map_refcount) {
-      i915->winsys->buffer_unmap( i915->winsys,
-				region->buffer );
+      i915->pipe.winsys->buffer_unmap( i915->pipe.winsys,
+				       region->buffer );
       region->map = NULL;
    }
 }
@@ -97,12 +99,12 @@ i915_region_alloc(struct pipe_context *pipe,
    region->height = height;     /* needed? */
    region->refcount = 1;
 
-   region->buffer = i915->winsys->buffer_create( i915->winsys, alignment );
+   region->buffer = i915->pipe.winsys->buffer_create( i915->pipe.winsys, alignment );
 
-   i915->winsys->buffer_data( i915->winsys,
-			      region->buffer, 
-			      pitch * cpp * height, 
-			      NULL );
+   i915->pipe.winsys->buffer_data( i915->pipe.winsys,
+				   region->buffer, 
+				   pitch * cpp * height, 
+				   NULL );
 
    return region;
 }
@@ -121,8 +123,8 @@ i915_region_release(struct pipe_context *pipe, struct pipe_region **region)
    if ((*region)->refcount == 0) {
       assert((*region)->map_refcount == 0);
 
-      i915->winsys->buffer_unreference( i915->winsys,
-				      (*region)->buffer );
+      i915->pipe.winsys->buffer_unreference( i915->pipe.winsys,
+					     (*region)->buffer );
       free(*region);
    }
    *region = NULL;

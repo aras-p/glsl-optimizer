@@ -6,7 +6,6 @@ LIBNAME = i915simple
 
 DRIVER_SOURCES = \
 	i915_blit.c \
-	i915_buffer.c \
 	i915_clear.c \
 	i915_flush.c \
 	i915_context.c \

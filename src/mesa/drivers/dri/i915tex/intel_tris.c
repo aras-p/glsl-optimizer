@@ -185,6 +185,7 @@ intel_draw_quad(struct intel_context *intel,
                 intelVertexPtr v0,
                 intelVertexPtr v1, intelVertexPtr v2, intelVertexPtr v3)
 {
+#ifndef NO_REND  
    GLuint vertsize = intel->vertex_size;
    GLuint *vb = intelExtendInlinePrimitive(intel, 6 * vertsize);
    int j;
@@ -207,12 +208,14 @@ intel_draw_quad(struct intel_context *intel,
 
    COPY_DWORDS(j, vb, vertsize, v2);
    COPY_DWORDS(j, vb, vertsize, v3);
+#endif
 }
 
 static void
 intel_draw_triangle(struct intel_context *intel,
                     intelVertexPtr v0, intelVertexPtr v1, intelVertexPtr v2)
 {
+#ifndef NO_REND  
    GLuint vertsize = intel->vertex_size;
    GLuint *vb = intelExtendInlinePrimitive(intel, 3 * vertsize);
    int j;
@@ -220,6 +223,7 @@ intel_draw_triangle(struct intel_context *intel,
    COPY_DWORDS(j, vb, vertsize, v0);
    COPY_DWORDS(j, vb, vertsize, v1);
    COPY_DWORDS(j, vb, vertsize, v2);
+#endif
 }
 
 
@@ -227,18 +231,21 @@ static void
 intel_draw_line(struct intel_context *intel,
                 intelVertexPtr v0, intelVertexPtr v1)
 {
+#ifndef NO_REND  
    GLuint vertsize = intel->vertex_size;
    GLuint *vb = intelExtendInlinePrimitive(intel, 2 * vertsize);
    int j;
 
    COPY_DWORDS(j, vb, vertsize, v0);
    COPY_DWORDS(j, vb, vertsize, v1);
+#endif
 }
 
 
 static void
 intel_draw_point(struct intel_context *intel, intelVertexPtr v0)
 {
+#ifndef NO_REND  
    GLuint vertsize = intel->vertex_size;
    GLuint *vb = intelExtendInlinePrimitive(intel, vertsize);
    int j;
@@ -248,6 +255,7 @@ intel_draw_point(struct intel_context *intel, intelVertexPtr v0)
    *(float *) &vb[1] = v0->v.y - 0.125;
    for (j = 2; j < vertsize; j++)
       vb[j] = v0->ui[j];
+#endif
 }
 
 
@@ -732,6 +740,7 @@ intelRenderClippedLine(GLcontext * ctx, GLuint ii, GLuint jj)
 static void
 intelFastRenderClippedPoly(GLcontext * ctx, const GLuint * elts, GLuint n)
 {
+#ifndef NO_REND
    struct intel_context *intel = intel_context(ctx);
    const GLuint vertsize = intel->vertex_size;
    GLuint *vb = intelExtendInlinePrimitive(intel, (n - 2) * 3 * vertsize);
@@ -744,6 +753,7 @@ intelFastRenderClippedPoly(GLcontext * ctx, const GLuint * elts, GLuint n)
       COPY_DWORDS(j, vb, vertsize, V(elts[i]));
       COPY_DWORDS(j, vb, vertsize, start);
    }
+#endif
 }
 
 /**********************************************************************/
@@ -1069,6 +1079,7 @@ intel_meta_draw_poly(struct intel_context *intel,
                      GLfloat xy[][2],
                      GLfloat z, GLuint color, GLfloat tex[][2])
 {
+#ifndef NO_REND
    union fi *vb;
    GLint i;
 
@@ -1089,6 +1100,7 @@ intel_meta_draw_poly(struct intel_context *intel,
    }
 
    INTEL_FIREVERTICES(intel);
+#endif
 }
 
 void

@@ -5,7 +5,6 @@ include $(TOP)/configs/current
 LIBNAME = softpipe
 
 DRIVER_SOURCES = \
-	sp_buffer.c \
 	sp_clear.c \
 	sp_flush.c \
 	sp_context.c \

@@ -32,8 +32,9 @@
  */
 
 #include "sp_context.h"
-#include "sp_winsys.h"
 #include "sp_region.h"
+#include "pipe/p_winsys.h"
+#include "pipe/p_defines.h"
 
 
 /**
@@ -59,8 +60,10 @@ sp_region_map(struct pipe_context *pipe, struct pipe_region *region)
    struct softpipe_context *sp = softpipe_context( pipe );
 
    if (!region->map_refcount++) {
-      region->map = sp->winsys->buffer_map( sp->winsys,
-					    region->buffer );
+      region->map = sp->pipe.winsys->buffer_map( sp->pipe.winsys,
+						 region->buffer,
+						 PIPE_BUFFER_FLAG_WRITE | 
+						 PIPE_BUFFER_FLAG_READ);
    }
 
    return region->map;
@@ -72,7 +75,7 @@ sp_region_unmap(struct pipe_context *pipe, struct pipe_region *region)
    struct softpipe_context *sp = softpipe_context( pipe );
 
    if (!--region->map_refcount) {
-      sp->winsys->buffer_unmap( sp->winsys,
+      sp->pipe.winsys->buffer_unmap( sp->pipe.winsys,
 				region->buffer );
       region->map = NULL;
    }
@@ -91,13 +94,13 @@ sp_region_alloc(struct pipe_context *pipe,
    region->height = height;
    region->refcount = 1;
 
-   region->buffer = sp->winsys->create_buffer( sp->winsys, alignment );
+   region->buffer = sp->pipe.winsys->buffer_create( sp->pipe.winsys, alignment );
 
    /* NULL data --> just allocate the space */
-   sp->winsys->buffer_data( sp->winsys,
-			    region->buffer, 
-			    region->pitch * cpp * height, 
-			    NULL );
+   sp->pipe.winsys->buffer_data( sp->pipe.winsys,
+				 region->buffer, 
+				 region->pitch * cpp * height, 
+				 NULL );
    return region;
 }
 
@@ -115,7 +118,7 @@ sp_region_release(struct pipe_context *pipe, struct pipe_region **region)
    if ((*region)->refcount == 0) {
       assert((*region)->map_refcount == 0);
 
-      sp->winsys->buffer_unreference( sp->winsys,
+      sp->pipe.winsys->buffer_unreference( sp->pipe.winsys,
 				      (*region)->buffer );
       free(*region);
    }

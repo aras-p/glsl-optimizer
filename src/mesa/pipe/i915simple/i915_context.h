@@ -182,9 +182,8 @@ void i915_clear(struct pipe_context *pipe, struct pipe_surface *ps,
 
 
 /***********************************************************************
- * i915_buffer.c: 
+ * i915_region.c: 
  */
-void i915_init_buffer_functions( struct i915_context *i915 );
 void i915_init_region_functions( struct i915_context *i915 );
 void i915_init_surface_functions( struct i915_context *i915 );
 void i915_init_state_functions( struct i915_context *i915 );

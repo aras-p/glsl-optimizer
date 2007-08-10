@@ -148,7 +148,7 @@ static void i915_set_texture_state(struct pipe_context *pipe,
 
 
 static void i915_set_framebuffer_state(struct pipe_context *pipe,
-                               const struct pipe_framebuffer_state *fb)
+				       const struct pipe_framebuffer_state *fb)
 {
    struct i915_context *i915 = i915_context(pipe);
 

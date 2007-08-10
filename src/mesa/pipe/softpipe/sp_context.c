@@ -33,7 +33,6 @@
 #include "main/macros.h"
 #include "pipe/draw/draw_context.h"
 #include "pipe/p_defines.h"
-#include "sp_buffer.h"
 #include "sp_clear.h"
 #include "sp_context.h"
 #include "sp_flush.h"
@@ -194,10 +193,12 @@ static GLuint softpipe_get_occlusion_counter(struct pipe_context *pipe)
 }
 
 
-struct pipe_context *softpipe_create( struct softpipe_winsys *sws )
+struct pipe_context *softpipe_create( struct pipe_winsys *pipe_winsys,
+				      struct softpipe_winsys *softpipe_winsys )
 {
    struct softpipe_context *softpipe = CALLOC_STRUCT(softpipe_context);
 
+   softpipe->pipe.winsys = pipe_winsys;
    softpipe->pipe.destroy = softpipe_destroy;
 
    softpipe->pipe.supported_formats = softpipe_supported_formats;
@@ -221,7 +222,6 @@ struct pipe_context *softpipe_create( struct softpipe_winsys *sws )
    softpipe->pipe.draw_vertices = softpipe_draw_vertices;
    softpipe->pipe.clear = softpipe_clear;
    softpipe->pipe.flush = softpipe_flush;
-   softpipe->pipe.wait_idle = softpipe_wait_idle;
    softpipe->pipe.reset_occlusion_counter = softpipe_reset_occlusion_counter;
    softpipe->pipe.get_occlusion_counter = softpipe_get_occlusion_counter;
 
@@ -240,7 +240,7 @@ struct pipe_context *softpipe_create( struct softpipe_winsys *sws )
    softpipe->quad.colormask = sp_quad_colormask_stage(softpipe);
    softpipe->quad.output = sp_quad_output_stage(softpipe);
 
-   softpipe->winsys = sws;
+   softpipe->winsys = softpipe_winsys;
 
    /*
     * Create drawing context and plug our rendering stage into it.
@@ -249,7 +249,6 @@ struct pipe_context *softpipe_create( struct softpipe_winsys *sws )
    assert(softpipe->draw);
    draw_set_setup_stage(softpipe->draw, sp_draw_render_stage(softpipe));
 
-   sp_init_buffer_functions(softpipe);
    sp_init_region_functions(softpipe);
    sp_init_surface_functions(softpipe);
 

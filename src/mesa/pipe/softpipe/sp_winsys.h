@@ -28,86 +28,24 @@
 #ifndef SP_WINSYS_H
 #define SP_WINSYS_H
 
-#include "main/mtypes.h"
 
 /* This is the interface that softpipe requires any window system
  * hosting it to implement.  This is the only include file in softpipe
  * which is public.
  */
 
-
-/* Pipe drivers are (meant to be!) independent of both GL and the
- * window system.  The window system provides a buffer manager and a
- * set of additional hooks for things like command buffer submission,
- * etc.
- *
- * There clearly has to be some agreement between the window system
- * driver and the hardware driver about the format of command buffers,
- * etc.
- */
-
-struct pipe_buffer_handle;
-
 struct softpipe_winsys {
+   const unsigned *(*supported_formats)(struct softpipe_winsys *sws, 
+					unsigned *numFormats);
 
-   /* Do any special operations to ensure frontbuffer contents are
-    * displayed, eg copy fake frontbuffer.
-    */
-   void (*flush_frontbuffer)( struct softpipe_winsys *sws );
-
-   /* Wait for any hw swapbuffers, etc. to finish: 
-    */
-   void (*wait_idle)( struct softpipe_winsys *sws );
-
-   /* debug output 
-    */
-   void (*printf)( struct softpipe_winsys *sws,
-		   const char *, ... );	
-
-
-   /* The buffer manager is modeled after the dri_bugmgr interface,
-    * but this is the subset that softpipe cares about.  Remember that
-    * softpipe gets to choose the interface it needs, and the window
-    * systems must then implement that interface (rather than the
-    * other way around...).
-    *
-    * Softpipe only really wants to make system memory allocations,
-    * right?? 
-    */
-   struct pipe_buffer_handle *(*create_buffer)(struct softpipe_winsys *sws, 
-					       unsigned alignment );
-
-   void *(*buffer_map)( struct softpipe_winsys *sws, 
-			struct pipe_buffer_handle *buf );
-   
-   void (*buffer_unmap)( struct softpipe_winsys *sws, 
-			 struct pipe_buffer_handle *buf );
-
-   struct pipe_buffer_handle *(*buffer_reference)( struct softpipe_winsys *sws,
-						   struct pipe_buffer_handle *buf );
-
-   void (*buffer_unreference)( struct softpipe_winsys *sws, 
-			       struct pipe_buffer_handle **buf );
-
-   void (*buffer_data)(struct softpipe_winsys *sws, 
-		       struct pipe_buffer_handle *buf,
-		       unsigned size, const void *data );
-
-   void (*buffer_subdata)(struct softpipe_winsys *sws, 
-			  struct pipe_buffer_handle *buf,
-			  unsigned long offset, 
-			  unsigned long size, 
-			  const void *data);
-
-   void (*buffer_get_subdata)(struct softpipe_winsys *sws, 
-			      struct pipe_buffer_handle *buf,
-			      unsigned long offset, 
-			      unsigned long size, 
-			      void *data);
 };
 
+struct pipe_winsys;
+struct pipe_context;
 
-struct pipe_context *softpipe_create( struct softpipe_winsys * );
+
+struct pipe_context *softpipe_create( struct pipe_winsys *,
+				      struct softpipe_winsys * );
 
 
 #endif /* SP_WINSYS_H */

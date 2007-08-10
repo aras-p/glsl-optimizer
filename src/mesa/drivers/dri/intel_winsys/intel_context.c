@@ -41,7 +41,7 @@
 #include "i830_dri.h"
 
 #include "intel_buffers.h"
-#include "intel_pipe.h"
+#include "intel_winsys.h"
 #include "intel_ioctl.h"
 #include "intel_batchbuffer.h"
 #include "intel_blit.h"

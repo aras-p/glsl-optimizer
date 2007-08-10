@@ -49,22 +49,3 @@ softpipe_flush( struct pipe_context *pipe,
     */
 }
 
-void
-softpipe_wait_idle(struct pipe_context *pipe)
-{
-   /* Nothing to do.   
-    * XXX: What about swapbuffers.
-    * XXX: Even more so - what about fake frontbuffer copies??
-    */
-   struct softpipe_context *softpipe = softpipe_context(pipe);
-   softpipe->winsys->wait_idle( softpipe->winsys );
-}
-
-
-void 
-softpipe_flush_frontbuffer( struct pipe_context *pipe )
-{
-   struct softpipe_context *softpipe = softpipe_context(pipe);
-
-   softpipe->winsys->flush_frontbuffer( softpipe->winsys );
-}

@@ -37,6 +37,7 @@
 #include "st_cb_flush.h"
 #include "pipe/p_context.h"
 #include "pipe/p_defines.h"
+#include "pipe/p_winsys.h"
 
 
 static void st_flush(GLcontext *ctx)
@@ -60,7 +61,7 @@ static void st_flush(GLcontext *ctx)
    if (st->flags.frontbuffer_dirty) {
       /* Hook for copying "fake" frontbuffer if necessary:
        */
-      st->pipe->flush_frontbuffer( st->pipe );
+      st->pipe->winsys->flush_frontbuffer( st->pipe->winsys );
       st->flags.frontbuffer_dirty = 0;
    }
 }
@@ -70,7 +71,7 @@ static void st_finish(GLcontext *ctx)
    struct st_context *st = ctx->st;
 
    st_flush( ctx );
-   st->pipe->wait_idle( st->pipe );
+   st->pipe->winsys->wait_idle( st->pipe->winsys );
 }
 
 

@@ -26,13 +26,13 @@
  **************************************************************************/
 
 
-#ifndef ST_CB_CLEAR_H
-#define ST_CB_CLEAR_H
+#ifndef ST_CB_FLUSH_H
+#define ST_CB_FLUSH_H
 
 
 extern void
 st_init_flush_functions(struct dd_function_table *functions);
 
 
-#endif /* ST_CB_CLEAR_H */
+#endif /* ST_CB_FLUSH_H */
 

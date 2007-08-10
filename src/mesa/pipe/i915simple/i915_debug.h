@@ -39,7 +39,7 @@ struct debug_stream
    char *ptr;		/* pointer to gtt offset zero */
    char *end;		/* pointer to gtt offset zero */
    unsigned print_addresses;
-   struct i915_winsys *winsys;
+   struct pipe_winsys *winsys;
 };
 
 
@@ -68,9 +68,11 @@ void i915_print_ureg(const char *msg, unsigned ureg);
 #define DEBUG_WINSYS     0x4000
 
 #ifdef DEBUG
-#include "i915_winsys.h"
-#define DBG( i915, ... ) \
-   if ((i915)->debug & FILE_DEBUG_FLAG) (i915)->winsys->printf( (i915)->winsys, __VA_ARGS__ )
+#include "pipe/p_winsys.h"
+#define DBG( i915, ... ) do {						\
+   if ((i915)->debug & FILE_DEBUG_FLAG) 				\
+      (i915)->pipe.winsys->printf( (i915)->pipe.winsys, __VA_ARGS__ );	\
+} while(0)
 #else
 #define DBG( i915, ... ) \
    (void)i915

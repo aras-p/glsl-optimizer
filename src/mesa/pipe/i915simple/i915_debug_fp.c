@@ -29,7 +29,7 @@
 
 #include "i915_reg.h"
 #include "i915_debug.h"
-#include "i915_winsys.h"
+#include "pipe/p_winsys.h"
 //#include "i915_fpc.h"
 #include "shader/program.h"
 #include "shader/prog_instruction.h"
