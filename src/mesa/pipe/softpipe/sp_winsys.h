@@ -50,9 +50,19 @@ struct pipe_buffer_handle;
 
 struct softpipe_winsys {
 
+   /* Do any special operations to ensure frontbuffer contents are
+    * displayed, eg copy fake frontbuffer.
+    */
+   void (*flush_frontbuffer)( struct softpipe_winsys *sws );
+
+   /* Wait for any hw swapbuffers, etc. to finish: 
+    */
+   void (*wait_idle)( struct softpipe_winsys *sws );
+
    /* debug output 
     */
-   void (*printf)( const char *, ... );	
+   void (*printf)( struct softpipe_winsys *sws,
+		   const char *, ... );	
 
 
    /* The buffer manager is modeled after the dri_bugmgr interface,

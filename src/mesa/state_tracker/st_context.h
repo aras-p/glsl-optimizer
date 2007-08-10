@@ -90,6 +90,10 @@ struct st_context
       struct gl_fragment_program *fragment_program;
    } cb;
 
+   struct {
+      GLuint frontbuffer_dirty:1;
+   } flags;
+
    /* State to be validated:
     */
    struct st_tracked_state **atoms;

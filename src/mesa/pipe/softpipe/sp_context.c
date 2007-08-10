@@ -221,7 +221,7 @@ struct pipe_context *softpipe_create( struct softpipe_winsys *sws )
    softpipe->pipe.draw_vertices = softpipe_draw_vertices;
    softpipe->pipe.clear = softpipe_clear;
    softpipe->pipe.flush = softpipe_flush;
-   softpipe->pipe.finish = softpipe_finish;
+   softpipe->pipe.wait_idle = softpipe_wait_idle;
    softpipe->pipe.reset_occlusion_counter = softpipe_reset_occlusion_counter;
    softpipe->pipe.get_occlusion_counter = softpipe_get_occlusion_counter;
 

@@ -50,6 +50,12 @@ struct pipe_buffer_handle;
 
 struct i915_winsys {
 
+   /* Do any special operations to ensure frontbuffer contents are
+    * displayed, eg copy fake frontbuffer.
+    */
+   void (*flush_frontbuffer)( struct i915_winsys *sws );
+
+
    /* debug output 
     */
    void (*printf)( struct i915_winsys *sws, 

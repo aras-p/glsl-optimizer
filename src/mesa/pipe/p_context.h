@@ -220,10 +220,14 @@ struct pipe_context {
                                     struct pipe_mipmap_tree *mt );
 
 
+   /* Simple flush/finish support:
+    */
    void (*flush)( struct pipe_context *pipe,
 		  unsigned flags );
 
-   void (*finish)( struct pipe_context *pipe );
+   void (*wait_idle)( struct pipe_context *pipe );
+
+   void (*flush_frontbuffer)( struct pipe_context *pipe );
 };
 
 

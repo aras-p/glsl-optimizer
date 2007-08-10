@@ -25,12 +25,14 @@
  * 
  **************************************************************************/
 
-#ifndef SP_FLUSH_H
-#define SP_FLUSH_H
 
-struct pipe_context;
+#ifndef ST_CB_CLEAR_H
+#define ST_CB_CLEAR_H
 
-void softpipe_flush(struct pipe_context *pipe, unsigned flags );
-void softpipe_wait_idle(struct pipe_context *pipe);
 
-#endif
+extern void
+st_init_flush_functions(struct dd_function_table *functions);
+
+
+#endif /* ST_CB_CLEAR_H */
+

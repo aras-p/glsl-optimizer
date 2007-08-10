@@ -25,12 +25,57 @@
  * 
  **************************************************************************/
 
-#ifndef SP_FLUSH_H
-#define SP_FLUSH_H
+ /*
+  * Authors:
+  *   Keith Whitwell <keith@tungstengraphics.com>
+  *   Brian Paul
+  */
 
-struct pipe_context;
+#include "main/glheader.h"
+#include "main/macros.h"
+#include "st_context.h"
+#include "st_cb_flush.h"
+#include "pipe/p_context.h"
+#include "pipe/p_defines.h"
 
-void softpipe_flush(struct pipe_context *pipe, unsigned flags );
-void softpipe_wait_idle(struct pipe_context *pipe);
 
-#endif
+static void st_flush(GLcontext *ctx)
+{
+   struct st_context *st = ctx->st;
+
+   /* If there has been no rendering to the frontbuffer, consider
+    * short-circuiting this, or perhaps pass an "optional" flag down
+    * to the driver so that it can make the decision.
+    */
+   st->pipe->flush( st->pipe, 0 );
+
+   
+   /* XXX: temporary hack.  This flag should only be set if we do any
+    * rendering to the front buffer.
+    */
+   st->flags.frontbuffer_dirty = (ctx->DrawBuffer->_ColorDrawBufferMask[0] == 
+				  BUFFER_BIT_FRONT_LEFT);
+
+
+   if (st->flags.frontbuffer_dirty) {
+      /* Hook for copying "fake" frontbuffer if necessary:
+       */
+      st->pipe->flush_frontbuffer( st->pipe );
+      st->flags.frontbuffer_dirty = 0;
+   }
+}
+
+static void st_finish(GLcontext *ctx)
+{
+   struct st_context *st = ctx->st;
+
+   st_flush( ctx );
+   st->pipe->wait_idle( st->pipe );
+}
+
+
+void st_init_flush_functions(struct dd_function_table *functions)
+{
+   functions->Flush = st_flush;
+   functions->Finish = st_finish;
+}

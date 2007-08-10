@@ -36,6 +36,8 @@
 
 #include "intel_context.h"
 #include "intel_pipe.h"
+#include "intel_batchbuffer.h"
+#include "intel_blit.h"
 
 #include "pipe/softpipe/sp_winsys.h"
 #include "pipe/p_defines.h"
@@ -175,6 +177,33 @@ intel_supported_formats(struct pipe_context *pipe, GLuint *numFormats)
 }
 
 
+static void intel_wait_idle( struct softpipe_winsys *sws )
+{
+   struct intel_context *intel = intel_softpipe_winsys(sws)->intel;
+
+   if (intel->batch->last_fence) {
+      driFenceFinish(intel->batch->last_fence, 
+		     DRM_FENCE_TYPE_EXE | DRM_I915_FENCE_TYPE_RW, GL_FALSE);
+      driFenceUnReference(intel->batch->last_fence);
+      intel->batch->last_fence = NULL;
+   }
+}
+
+
+/* The state tracker (should!) keep track of whether the fake
+ * frontbuffer has been touched by any rendering since the last time
+ * we copied its contents to the real frontbuffer.  Our task is easy:
+ */
+static void
+intel_flush_frontbuffer( struct softpipe_winsys *sws )
+{
+   struct intel_context *intel = intel_softpipe_winsys(sws)->intel;
+   __DRIdrawablePrivate *dPriv = intel->driDrawable;
+   
+   intelCopyBuffer(dPriv, NULL);
+}
+
+
 
 struct pipe_context *
 intel_create_softpipe( struct intel_context *intel )
@@ -197,6 +226,8 @@ intel_create_softpipe( struct intel_context *intel )
    isws->sws.buffer_data = intel_buffer_data;
    isws->sws.buffer_subdata = intel_buffer_subdata;
    isws->sws.buffer_get_subdata = intel_buffer_get_subdata;
+   isws->sws.flush_frontbuffer = intel_flush_frontbuffer;
+   isws->sws.wait_idle = intel_wait_idle;
    isws->intel = intel;
 
    /* Create the softpipe context:

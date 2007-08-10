@@ -37,6 +37,7 @@
 #include "intel_context.h"
 #include "intel_batchbuffer.h"
 #include "intel_pipe.h"
+#include "intel_blit.h"
 
 #include "pipe/i915simple/i915_winsys.h"
 
@@ -171,7 +172,7 @@ static unsigned *intel_i915_batch_start( struct i915_winsys *sws,
    if (intel_batchbuffer_space( intel->batch ) >= dwords * 4) {
       /* XXX: Hmm, the driver can't really do much with this pointer: 
        */
-      return intel->batch->ptr;	
+      return (unsigned *)intel->batch->ptr;	
    }
    else 
       return NULL;
@@ -242,6 +243,16 @@ static void intel_i915_printf( struct i915_winsys *sws,
 }
 
 
+static void
+intel_i915_flush_frontbuffer( struct i915_winsys *sws )
+{
+   struct intel_context *intel = intel_i915_winsys(sws)->intel;
+   __DRIdrawablePrivate *dPriv = intel->driDrawable;
+   
+   intelCopyBuffer(dPriv, NULL);
+}
+
+
 struct pipe_context *
 intel_create_i915simple( struct intel_context *intel )
 {
@@ -264,6 +275,7 @@ intel_create_i915simple( struct intel_context *intel )
    iws->winsys.batch_reloc = intel_i915_batch_reloc;
    iws->winsys.batch_flush = intel_i915_batch_flush;
    iws->winsys.batch_wait_idle = intel_i915_batch_wait_idle;
+   iws->winsys.flush_frontbuffer = intel_i915_flush_frontbuffer;
    iws->intel = intel;
 
    /* Create the i915simple context:

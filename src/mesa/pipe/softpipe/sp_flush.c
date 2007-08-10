@@ -33,6 +33,7 @@
 #include "pipe/p_defines.h"
 #include "sp_flush.h"
 #include "sp_context.h"
+#include "sp_winsys.h"
 
 /* There will be actual work to do here.  In future we may want a
  * fence-like interface instead of finish, and perhaps flush will take
@@ -49,9 +50,21 @@ softpipe_flush( struct pipe_context *pipe,
 }
 
 void
-softpipe_finish(struct pipe_context *pipe)
+softpipe_wait_idle(struct pipe_context *pipe)
 {
-   /* Just calls into flush()
+   /* Nothing to do.   
+    * XXX: What about swapbuffers.
+    * XXX: Even more so - what about fake frontbuffer copies??
     */
-   softpipe_flush( pipe, 0 );
+   struct softpipe_context *softpipe = softpipe_context(pipe);
+   softpipe->winsys->wait_idle( softpipe->winsys );
+}
+
+
+void 
+softpipe_flush_frontbuffer( struct pipe_context *pipe )
+{
+   struct softpipe_context *softpipe = softpipe_context(pipe);
+
+   softpipe->winsys->flush_frontbuffer( softpipe->winsys );
 }

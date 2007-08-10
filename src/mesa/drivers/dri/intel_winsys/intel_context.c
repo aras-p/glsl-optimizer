@@ -240,51 +240,7 @@ intelFlush(GLcontext * ctx)
 }
 
 
-/**
- * Check if we need to rotate/warp the front color buffer to the
- * rotated screen.  We generally need to do this when we get a glFlush
- * or glFinish after drawing to the front color buffer.
- * If no rotation, just copy the private fake front buffer to the real one.
- */
-static void
-intelCheckFrontUpdate(GLcontext * ctx)
-{
-   struct intel_context *intel = intel_context(ctx);
-   /* rely on _ColorDrawBufferMask being kept up to date by mesa
-      even for window-fbos. */
-   /* not sure. Might need that for all masks including
-      BUFFER_BIT_FRONT_LEFT maybe? */
-   if (intel->ctx.DrawBuffer->_ColorDrawBufferMask[0] ==
-       BUFFER_BIT_FRONT_LEFT) {
-      __DRIdrawablePrivate *dPriv = intel->driDrawable;
-      intelCopyBuffer(dPriv, NULL);
-   }
-}
 
-
-/**
- * Called via glFlush.
- */
-static void
-intelglFlush(GLcontext * ctx)
-{
-   intelFlush(ctx);
-   intelCheckFrontUpdate(ctx);
-}
-
-void
-intelFinish(GLcontext * ctx)
-{
-   struct intel_context *intel = intel_context(ctx);
-   intelFlush(ctx);
-   if (intel->batch->last_fence) {
-      driFenceFinish(intel->batch->last_fence,
-                     0, GL_FALSE);
-      driFenceUnReference(intel->batch->last_fence);
-      intel->batch->last_fence = NULL;
-   }
-   intelCheckFrontUpdate(ctx);
-}
 
 
 static void
@@ -292,8 +248,6 @@ intelInitDriverFunctions(struct dd_function_table *functions)
 {
    _mesa_init_driver_functions(functions);
 
-   functions->Flush = intelglFlush;
-   functions->Finish = intelFinish;
    functions->GetString = intelGetString;
    functions->UpdateState = intelInvalidateState;
 
