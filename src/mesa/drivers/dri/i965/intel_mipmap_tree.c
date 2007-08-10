@@ -75,7 +75,7 @@ struct intel_mipmap_tree *intel_miptree_create( struct intel_context *intel,
    mt->width0 = width0;
    mt->height0 = height0;
    mt->depth0 = depth0;
-   mt->cpp = compressed ? 2 : cpp;
+   mt->cpp = cpp;
    mt->compressed = compressed;
 
    switch (intel->intelScreen->deviceID) {
