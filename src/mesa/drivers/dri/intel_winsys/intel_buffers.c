@@ -145,10 +145,9 @@ intelWindowMoved(struct intel_context *intel)
 
       pf_active = pf_pipes && (pf_pipes & intel->sarea->pf_active) == pf_pipes;
 
-      if (INTEL_DEBUG & DEBUG_LOCK)
-	 if (pf_active != intel_fb->pf_active)
-	    _mesa_printf("%s - Page flipping %sactive\n", __progname,
-			 pf_active ? "" : "in");
+      if (pf_active != intel_fb->pf_active)
+	 DBG(LOCK, "%s - Page flipping %sactive\n",
+	     __progname, pf_active ? "" : "in");
 
       if (pf_active) {
 	 /* Sync pages between pipes if we're flipping on both at the same time */
@@ -283,8 +282,7 @@ intelPageFlip(const __DRIdrawablePrivate * dPriv)
    int ret;
    struct intel_framebuffer *intel_fb = dPriv->driverPrivate;
 
-   if (INTEL_DEBUG & DEBUG_IOCTL)
-      fprintf(stderr, "%s\n", __FUNCTION__);
+   DBG(SWAP, "%s\n", __FUNCTION__);
 
    assert(dPriv);
    assert(dPriv->driContextPriv);
@@ -332,8 +330,7 @@ intelPageFlip(const __DRIdrawablePrivate * dPriv)
    intel_draw_buffer(&intel->ctx, &intel_fb->Base);
 #endif
 
-   if (INTEL_DEBUG & DEBUG_IOCTL)
-      fprintf(stderr, "%s: success\n", __FUNCTION__);
+   DBG(SWAP, "%s: success\n", __FUNCTION__);
 
    return GL_TRUE;
 }

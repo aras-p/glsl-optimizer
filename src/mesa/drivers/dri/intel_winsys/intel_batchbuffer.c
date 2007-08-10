@@ -71,11 +71,10 @@ static void
 intel_dump_batchbuffer(GLuint offset, GLuint * ptr, GLuint count)
 {
    int i;
-   fprintf(stderr, "\n\n\nSTART BATCH (%d dwords):\n", count / 4);
+   _mesa_printf("\n\n\nSTART BATCH (%d dwords):\n", count / 4);
    for (i = 0; i < count / 4; i += 1)
-      fprintf(stderr, "\t0x%08x\n",
-              ptr[i]);
-   fprintf(stderr, "END BATCH\n\n\n");
+      _mesa_printf("\t0x%08x\n", ptr[i]);
+   _mesa_printf("END BATCH\n\n\n");
 }
 
 void
@@ -193,7 +192,7 @@ do_flush_locked(struct intel_batchbuffer *batch,
       ptr[r->offset / 4] = driBOOffset(r->buf) + r->delta;
    }
 
-   if (INTEL_DEBUG & DEBUG_BATCH)
+   if (0)
       intel_dump_batchbuffer(0, ptr, used);
 
    driBOUnmap(batch->buffer);

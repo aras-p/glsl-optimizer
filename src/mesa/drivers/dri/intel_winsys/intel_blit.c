@@ -41,8 +41,6 @@
 #include "state_tracker/st_cb_fbo.h"
 
 
-#define FILE_DEBUG_FLAG DEBUG_BLIT
-
 /**
  * Copy the back color buffer to the front color buffer. 
  * Used for SwapBuffers().
@@ -55,7 +53,7 @@ intelCopyBuffer(__DRIdrawablePrivate * dPriv,
    struct intel_context *intel;
    const intelScreenPrivate *intelScreen;
 
-   DBG("%s\n", __FUNCTION__);
+   DBG(SWAP, "%s\n", __FUNCTION__);
 
    assert(dPriv);
 
@@ -127,8 +125,8 @@ intelCopyBuffer(__DRIdrawablePrivate * dPriv,
       ASSERT(backRegion);
       ASSERT(backRegion->cpp == cpp);
 
-      DBG("front pitch %d back pitch %d\n",
-	 pitch, backRegion->pitch);
+      DBG(SWAP, "front pitch %d back pitch %d\n",
+	  pitch, backRegion->pitch);
 
       if (cpp == 2) {
 	 BR13 = (pitch * cpp) | (0xCC << 16) | (1 << 24);
@@ -178,8 +176,8 @@ intelCopyBuffer(__DRIdrawablePrivate * dPriv,
 	 if (box.y2 - box.y1 > backHeight)
 	    box.y2 = backHeight + box.y1;
 
-	 DBG("box x1 x2 y1 y2 %d %d %d %d\n",
-	      box.x1, box.x2, box.y1, box.y2);
+	 DBG(SWAP, "box x1 x2 y1 y2 %d %d %d %d\n",
+	     box.x1, box.x2, box.y1, box.y2);
 
 	 sbox.x1 = box.x1 - dPriv->x;
 	 sbox.y1 = box.y1 - dPriv->y;

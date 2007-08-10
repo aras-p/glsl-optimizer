@@ -59,8 +59,8 @@
 
 
 
-#ifndef INTEL_DEBUG
-int INTEL_DEBUG = (0);
+#if DEBUG
+int __intel_debug = 0;
 #endif
 
 #define need_GL_ARB_multisample
@@ -210,18 +210,10 @@ const struct dri_extension card_extensions[] = {
 
 
 static const struct dri_debug_control debug_control[] = {
-   {"tex", DEBUG_TEXTURE},
-   {"state", DEBUG_STATE},
    {"ioctl", DEBUG_IOCTL},
-   {"blit", DEBUG_BLIT},
-   {"mip", DEBUG_MIPTREE},
-   {"verb", DEBUG_VERBOSE},
    {"bat", DEBUG_BATCH},
-   {"pix", DEBUG_PIXEL},
-   {"buf", DEBUG_BUFMGR},
-   {"reg", DEBUG_REGION},
-   {"fbo", DEBUG_FBO},
    {"lock", DEBUG_LOCK},
+   {"swap", DEBUG_SWAP},
    {NULL, 0}
 };
 
@@ -397,8 +389,8 @@ intelCreateContext(const __GLcontextModes * mesaVis,
       _mesa_enable_extension(ctx, "GL_EXT_texture_compression_s3tc");
    }
 
-#if DO_DEBUG
-   INTEL_DEBUG = driParseDebugString(getenv("INTEL_DEBUG"), debug_control);
+#if DEBUG
+   __intel_debug = driParseDebugString(getenv("INTEL_DEBUG"), debug_control);
 #endif
 
 
@@ -470,8 +462,6 @@ intelDestroyContext(__DRIcontextPrivate * driContextPriv)
          /* This share group is about to go away, free our private
           * texture object data.
           */
-         if (INTEL_DEBUG & DEBUG_TEXTURE)
-            fprintf(stderr, "do something to free texture heaps\n");
       }
 
       /* free the Mesa context */
@@ -570,8 +560,7 @@ intelContendedLock(struct intel_context *intel, GLuint flags)
 
    drmGetLock(intel->driFd, intel->hHWContext, flags);
 
-   if (INTEL_DEBUG & DEBUG_LOCK)
-      _mesa_printf("%s - got contended lock\n", __progname);
+   DBG(LOCK, "%s - got contended lock\n", __progname);
 
    /* If the window moved, may need to set a new cliprect now.
     *
@@ -660,8 +649,7 @@ void LOCK_HARDWARE( struct intel_context *intel )
     if (__ret)
        intelContendedLock( intel, 0 );
 
-    if (INTEL_DEBUG & DEBUG_LOCK)
-      _mesa_printf("%s - locked\n", __progname);
+    DBG(LOCK, "%s - locked\n", __progname);
 
     intel->locked = 1;
 }
@@ -678,7 +666,6 @@ void UNLOCK_HARDWARE( struct intel_context *intel )
 
    _glthread_UNLOCK_MUTEX(lockMutex);
 
-   if (INTEL_DEBUG & DEBUG_LOCK)
-      _mesa_printf("%s - unlocked\n", __progname);
+   DBG(LOCK, "%s - unlocked\n", __progname);
 } 
 

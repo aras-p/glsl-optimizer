@@ -109,27 +109,23 @@ extern char *__progname;
 /* ================================================================
  * Debugging:
  */
-#define DO_DEBUG		0
-#if DO_DEBUG
-extern int INTEL_DEBUG;
+#if DEBUG
+extern int __intel_debug;
+
+#define DEBUG_SWAP	0x1
+#define DEBUG_LOCK      0x2
+#define DEBUG_IOCTL	0x4
+#define DEBUG_BATCH     0x8
+
+#define DBG(flag, ...)  do { 			\
+   if (__intel_debug & (DEBUG_##flag)) 		\
+      _mesa_printf(__VA_ARGS__); 		\
+} while(0)
+
 #else
-#define INTEL_DEBUG		0
+#define DBG(flag, ...) 
 #endif
 
-#define DEBUG_TEXTURE	0x1
-#define DEBUG_STATE	0x2
-#define DEBUG_IOCTL	0x4
-#define DEBUG_BLIT	0x8
-#define DEBUG_MIPTREE   0x10
-#define DEBUG_VERBOSE	0x40
-#define DEBUG_BATCH     0x80
-#define DEBUG_PIXEL     0x100
-#define DEBUG_BUFMGR    0x200
-#define DEBUG_REGION    0x400
-#define DEBUG_FBO       0x800
-#define DEBUG_LOCK      0x1000
-
-#define DBG(...)  do { if (INTEL_DEBUG & FILE_DEBUG_FLAG) _mesa_printf(__VA_ARGS__); } while(0)
 
 
 #define PCI_CHIP_845_G			0x2562

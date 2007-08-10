@@ -40,7 +40,6 @@
 #include "intel_blit.h"
 #include "drm.h"
 
-#define FILE_DEBUG_FLAG DEBUG_IOCTL
 
 int
 intelEmitIrqLocked(struct intel_context *intel)
@@ -60,7 +59,7 @@ intelEmitIrqLocked(struct intel_context *intel)
       exit(1);
    }
 
-   DBG("%s -->  %d\n", __FUNCTION__, seq);
+   DBG(IOCTL, "%s -->  %d\n", __FUNCTION__, seq);
 
    return seq;
 }
@@ -70,7 +69,7 @@ intelWaitIrq(struct intel_context *intel, int seq)
 {
    int ret;
 
-   DBG("%s %d\n", __FUNCTION__, seq);
+   DBG(IOCTL, "%s %d\n", __FUNCTION__, seq);
 
    intel->iw.irq_seq = seq;
 
@@ -98,7 +97,7 @@ intel_batch_ioctl(struct intel_context *intel,
    assert(intel->locked);
    assert(used);
 
-   DBG("%s used %d offset %x..%x ignore_cliprects %d\n",
+   DBG(IOCTL, "%s used %d offset %x..%x ignore_cliprects %d\n",
        __FUNCTION__,
        used, start_offset, start_offset + used, ignore_cliprects);
 
@@ -116,7 +115,7 @@ intel_batch_ioctl(struct intel_context *intel,
    batch.DR1 = 0;
    batch.DR4 = 0; /* still need this ? */
 
-   DBG("%s: 0x%x..0x%x DR4: %x cliprects: %d\n",
+   DBG(IOCTL, "%s: 0x%x..0x%x DR4: %x cliprects: %d\n",
        __FUNCTION__,
        batch.start,
        batch.start + batch.used * 4, batch.DR4, batch.num_cliprects);
