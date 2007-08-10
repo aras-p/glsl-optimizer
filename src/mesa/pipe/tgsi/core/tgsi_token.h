@@ -894,6 +894,12 @@ struct tgsi_immediate_float32
 /* TGSI_OPCODE_DP4 */
 /* TGSI_OPCODE_MIN */
 /* TGSI_OPCODE_MAX */
+/* TGSI_OPCODE_SLT */
+/* TGSI_OPCODE_SGE */
+/* TGSI_OPCODE_SGT */
+/* TGSI_OPCODE_SLE */
+/* TGSI_OPCODE_SEQ */
+/* TGSI_OPCODE_SNE */
 /* EXP - use TGSI_OPCODE_EX2 */
 /* LOG - use TGSI_OPCODE_LG2 */
 /* TGSI_OPCODE_LRP */
@@ -1023,6 +1029,10 @@ struct tgsi_immediate_float32
 /* TGSI_OPCODE_MAX */
 /* TGSI_OPCODE_SLT */
 /* TGSI_OPCODE_SGE */
+/* TGSI_OPCODE_SGT */
+/* TGSI_OPCODE_SLE */
+/* TGSI_OPCODE_SEQ */
+/* TGSI_OPCODE_SNE */
 /* EXP - use TGSI_OPCODE_EX2 */
 /* LOG - use TGSI_OPCODE_LG2 */
 /* TGSI_OPCODE_LIT */
