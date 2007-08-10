@@ -53,6 +53,7 @@
 static const GLuint *
 softpipe_supported_formats(struct pipe_context *pipe, GLuint *numFormats)
 {
+#if 0
    static const GLuint supported[] = {
       PIPE_FORMAT_U_R8_G8_B8_A8,
       PIPE_FORMAT_U_A8_R8_G8_B8,
@@ -73,6 +74,10 @@ softpipe_supported_formats(struct pipe_context *pipe, GLuint *numFormats)
 
    *numFormats = sizeof(supported)/sizeof(supported[0]);
    return supported;
+#else
+   struct softpipe_context *softpipe = softpipe_context( pipe );
+   return softpipe->winsys->supported_formats( softpipe->winsys, numFormats );
+#endif
 }
 
 
