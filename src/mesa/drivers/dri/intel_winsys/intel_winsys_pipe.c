@@ -176,6 +176,14 @@ intel_flush_frontbuffer( struct pipe_winsys *sws )
    intelCopyBuffer(dPriv, NULL);
 }
 
+static void
+intel_printf( struct pipe_winsys *sws, const char *fmtString, ... )
+{
+   va_list args;
+   va_start( args, fmtString );  
+   vfprintf(stderr, fmtString, args);
+   va_end( args );
+}
 
 
 struct pipe_winsys *
@@ -200,6 +208,7 @@ intel_create_pipe_winsys( struct intel_context *intel )
    iws->winsys.buffer_get_subdata = intel_buffer_get_subdata;
    iws->winsys.flush_frontbuffer = intel_flush_frontbuffer;
    iws->winsys.wait_idle = intel_wait_idle;
+   iws->winsys.printf = intel_printf;
    iws->intel = intel;
 
    return &iws->winsys;
