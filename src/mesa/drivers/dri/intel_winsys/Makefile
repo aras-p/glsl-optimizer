@@ -17,6 +17,7 @@ DRIVER_SOURCES = \
 	intel_batchbuffer.c \
 	intel_buffers.c \
 	intel_context.c \
+	intel_lock.c \
 	intel_screen.c \
 	intel_batchpool.c
 
