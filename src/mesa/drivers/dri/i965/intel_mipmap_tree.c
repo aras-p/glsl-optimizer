@@ -211,7 +211,7 @@ GLuint intel_miptree_image_offset(struct intel_mipmap_tree *mt,
 
 
 
-
+extern GLuint intel_compressed_alignment(GLenum);
 /* Upload data for a particular image.
  */
 GLboolean intel_miptree_image_data(struct intel_context *intel, 
@@ -226,6 +226,16 @@ GLboolean intel_miptree_image_data(struct intel_context *intel,
    GLuint dst_offset = intel_miptree_image_offset(dst, face, level);
    const GLuint *dst_depth_offset = intel_miptree_depth_offsets(dst, level);
    GLuint i;
+   GLuint width, height, alignment;
+
+   width = dst->level[level].width;
+   height = dst->level[level].height;
+
+   if (dst->compressed) {
+       alignment = intel_compressed_alignment(dst->internal_format);
+       width = ((width + alignment - 1) & ~(alignment - 1));
+       height = (height + 3) / 4;
+   }
 
    DBG("%s\n", __FUNCTION__);
    for (i = 0; i < depth; i++) {
@@ -237,8 +247,8 @@ GLboolean intel_miptree_image_data(struct intel_context *intel,
 			     src,
 			     src_row_pitch,
 			     0, 0,	/* source x,y */
-			     dst->level[level].width,
-			     dst->level[level].height))
+			     width,
+			     height))
 	 return GL_FALSE;
       src += src_image_pitch;
    }

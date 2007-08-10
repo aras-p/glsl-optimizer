@@ -325,6 +325,7 @@ intel_miptree_image_data(struct intel_context *intel,
    }
 }
 
+extern GLuint intel_compressed_alignment(GLenum);
 /* Copy mipmap image between trees
  */
 void
@@ -342,8 +343,12 @@ intel_miptree_image_copy(struct intel_context *intel,
    const GLuint *src_depth_offset = intel_miptree_depth_offsets(src, level);
    GLuint i;
 
-   if (dst->compressed)
-      height /= 4;
+   if (dst->compressed) {
+       GLuint alignment = intel_compressed_alignment(dst->internal_format);
+       height = (height + 3) / 4;
+       width = ((width + alignment - 1) & ~(alignment - 1));
+   }
+
    for (i = 0; i < depth; i++) {
       intel_region_copy(intel->intelScreen,
                         dst->region, dst_offset + dst_depth_offset[i],
