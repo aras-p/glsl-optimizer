@@ -185,9 +185,13 @@ free_mipmap_tree(struct pipe_context *pipe, struct pipe_mipmap_tree *mt)
 }
 
 
+/**
+ * Draw textured quad.
+ * Y=0=top
+ */
 static void
-draw_quad(struct st_context *st, GLfloat x, GLfloat y, GLfloat z,
-          GLsizei width, GLsizei height)
+draw_quad(struct st_context *st, GLfloat x0, GLfloat y0, GLfloat z,
+          GLfloat x1, GLfloat y1)
 {
    static const GLuint attribs[2] = {
       VF_ATTRIB_POS,
@@ -196,29 +200,29 @@ draw_quad(struct st_context *st, GLfloat x, GLfloat y, GLfloat z,
    GLfloat verts[4][2][4]; /* four verts, two attribs, XYZW */
    GLuint i;
 
-   /* lower-left */
-   verts[0][0][0] = x;
-   verts[0][0][1] = y;
+   /* upper-left */
+   verts[0][0][0] = x0;
+   verts[0][0][1] = y0;
    verts[0][1][0] = 0.0;
-   verts[0][1][1] = 0.0;
-
-   /* lower-right */
-   verts[1][0][0] = x + width;
-   verts[1][0][1] = y;
-   verts[1][1][0] = 1.0;
-   verts[1][1][1] = 0.0;
+   verts[0][1][1] = 1.0;
 
    /* upper-right */
-   verts[2][0][0] = x + width;
-   verts[2][0][1] = y + height;
-   verts[2][1][0] = 1.0;
-   verts[2][1][1] = 1.0;
+   verts[1][0][0] = x1;
+   verts[1][0][1] = y0;
+   verts[1][1][0] = 1.0;
+   verts[1][1][1] = 1.0;
 
-   /* upper-left */
-   verts[3][0][0] = x;
-   verts[3][0][1] = y + height;
+   /* lower-right */
+   verts[2][0][0] = x1;
+   verts[2][0][1] = y1;
+   verts[2][1][0] = 1.0;
+   verts[2][1][1] = 0.0;
+
+   /* lower-left */
+   verts[3][0][0] = x0;
+   verts[3][0][1] = y1;
    verts[3][1][0] = 0.0;
-   verts[3][1][1] = 1.0;
+   verts[3][1][1] = 0.0;
 
    /* same for all verts: */
    for (i = 0; i < 4; i++) {
@@ -234,20 +238,23 @@ draw_quad(struct st_context *st, GLfloat x, GLfloat y, GLfloat z,
 
 
 static void
-draw_textured_quad(struct st_context *st, GLfloat x, GLfloat y, GLfloat z,
+draw_textured_quad(GLcontext *ctx, GLint x, GLint y, GLfloat z,
                    GLsizei width, GLsizei height, GLenum format, GLenum type,
                    const struct gl_pixelstore_attrib *unpack,
                    const GLvoid *pixels)
 {
+   const GLuint unit = 0;
+   struct pipe_context *pipe = ctx->st->pipe;
    struct pipe_mipmap_tree *mt;
+   GLfloat x0, y0, x1, y1;
 
    /* setup state: just scissor */
    {
       struct pipe_setup_state setup;
       memset(&setup, 0, sizeof(setup));
-      if (st->ctx->Scissor.Enabled)
+      if (ctx->Scissor.Enabled)
          setup.scissor = 1;
-      st->pipe->set_setup_state(st->pipe, &setup);
+      pipe->set_setup_state(pipe, &setup);
    }
 
    /* fragment shader state: color pass-through program */
@@ -255,29 +262,51 @@ draw_textured_quad(struct st_context *st, GLfloat x, GLfloat y, GLfloat z,
       static struct st_fragment_program *stfp = NULL;
       struct pipe_fs_state fs;
       if (!stfp) {
-         stfp = make_drawpixels_shader(st);
+         stfp = make_drawpixels_shader(ctx->st);
       }
       memset(&fs, 0, sizeof(fs));
       fs.inputs_read = stfp->Base.Base.InputsRead;
       fs.tokens = &stfp->tokens[0];
       fs.constants = NULL;
-      st->pipe->set_fs_state(st->pipe, &fs);
+      pipe->set_fs_state(pipe, &fs);
+   }
+
+   /* texture sampling state: */
+   {
+      struct pipe_sampler_state sampler;
+      memset(&sampler, 0, sizeof(sampler));
+      sampler.wrap_s = PIPE_TEX_WRAP_REPEAT;
+      sampler.wrap_t = PIPE_TEX_WRAP_REPEAT;
+      sampler.wrap_r = PIPE_TEX_WRAP_REPEAT;
+      sampler.min_img_filter = PIPE_TEX_FILTER_NEAREST;
+      sampler.min_mip_filter = PIPE_TEX_MIPFILTER_NONE;
+      sampler.mag_img_filter = PIPE_TEX_FILTER_NEAREST;
+      pipe->set_sampler_state(pipe, unit, &sampler);
    }
 
    /* mipmap tree state: */
    {
-      mt = make_mipmap_tree(st, width, height, format, type, unpack, pixels);
-      st->pipe->set_texture_state(st->pipe, 0, mt);
+      mt = make_mipmap_tree(ctx->st, width, height, format, type,
+                            unpack, pixels);
+      pipe->set_texture_state(pipe, unit, mt);
    }
 
+   /* compute window coords (y=0=top) with pixel zoom */
+   x0 = x;
+   y0 = ctx->DrawBuffer->Height - 1 - y;
+   x1 = x + width * ctx->Pixel.ZoomX;
+   y1 = ctx->DrawBuffer->Height - 1 - (y + height * ctx->Pixel.ZoomY);
+
    /* draw textured quad */
-   draw_quad(st, x, y, z, width, height);
+   draw_quad(ctx->st, x0, y0, z, x1, y1);
 
    /* restore GL state */
-   st->pipe->set_setup_state(st->pipe, &st->state.setup);
-   st->pipe->set_fs_state(st->pipe, &st->state.fs);
+   pipe->set_setup_state(pipe, &ctx->st->state.setup);
+   pipe->set_fs_state(pipe, &ctx->st->state.fs);
+   /* XXX FIX: pipe->set_texture_state(pipe, unit, ???); */
+   pipe->set_sampler_state(pipe, unit, &ctx->st->state.sampler[0]);
 
-   free_mipmap_tree(st->pipe, mt);
+   free_mipmap_tree(pipe, mt);
 }
 
 
@@ -420,7 +449,7 @@ st_drawpixels(GLcontext *ctx, GLint x, GLint y, GLsizei width, GLsizei height,
        any_pixel_transfer_ops(st) ||
        !compatible_formats(format, type, ps->format)) {
       /* textured quad */
-      draw_textured_quad(st, x, y, ctx->Current.RasterPos[2], width, height,
+      draw_textured_quad(ctx, x, y, ctx->Current.RasterPos[2], width, height,
                          format, type, unpack, pixels);
    }
    else {
