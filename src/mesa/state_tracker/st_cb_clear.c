@@ -198,79 +198,96 @@ draw_quad(GLcontext *ctx,
 
 /**
  * Do glClear by drawing a quadrilateral.
+ * The vertices of the quad will be computed from the
+ * ctx->DrawBuffer->_X/Ymin/max fields.
  */
 static void
-clear_with_quad(GLcontext *ctx, GLuint x0, GLuint y0,
-                GLuint x1, GLuint y1,
+clear_with_quad(GLcontext *ctx,
                 GLboolean color, GLboolean depth, GLboolean stencil)
 {
-   static struct st_fragment_program *stfp = NULL;
    struct st_context *st = ctx->st;
-   struct pipe_alpha_test_state alpha_test;
-   struct pipe_blend_state blend;
-   struct pipe_depth_state depth_test;
-   struct pipe_stencil_state stencil_test;
-   struct pipe_setup_state setup;
-   struct pipe_fs_state fs;
+   const GLfloat x0 = ctx->DrawBuffer->_Xmin;
+   const GLfloat y0 = ctx->DrawBuffer->Height - ctx->DrawBuffer->_Ymax;
+   const GLfloat x1 = ctx->DrawBuffer->_Xmax;
+   const GLfloat y1 = ctx->DrawBuffer->Height - ctx->DrawBuffer->_Ymin;
 
    /* alpha state: disabled */
-   memset(&alpha_test, 0, sizeof(alpha_test));
-   st->pipe->set_alpha_test_state(st->pipe, &alpha_test);
+   {
+      struct pipe_alpha_test_state alpha_test;
+      memset(&alpha_test, 0, sizeof(alpha_test));
+      st->pipe->set_alpha_test_state(st->pipe, &alpha_test);
+   }
 
    /* blend state: RGBA masking */
-   memset(&blend, 0, sizeof(blend));
-   if (color) {
-      if (ctx->Color.ColorMask[0])
-         blend.colormask |= PIPE_MASK_R;
-      if (ctx->Color.ColorMask[1])
-         blend.colormask |= PIPE_MASK_G;
-      if (ctx->Color.ColorMask[2])
-         blend.colormask |= PIPE_MASK_B;
-      if (ctx->Color.ColorMask[3])
-         blend.colormask |= PIPE_MASK_A;
-      if (st->ctx->Color.DitherFlag)
-         blend.dither = 1;
+   {
+      struct pipe_blend_state blend;
+      memset(&blend, 0, sizeof(blend));
+      if (color) {
+         if (ctx->Color.ColorMask[0])
+            blend.colormask |= PIPE_MASK_R;
+         if (ctx->Color.ColorMask[1])
+            blend.colormask |= PIPE_MASK_G;
+         if (ctx->Color.ColorMask[2])
+            blend.colormask |= PIPE_MASK_B;
+         if (ctx->Color.ColorMask[3])
+            blend.colormask |= PIPE_MASK_A;
+         if (st->ctx->Color.DitherFlag)
+            blend.dither = 1;
+      }
+      st->pipe->set_blend_state(st->pipe, &blend);
    }
-   st->pipe->set_blend_state(st->pipe, &blend);
 
    /* depth state: always pass */
-   memset(&depth_test, 0, sizeof(depth_test));
-   if (depth) {
-      depth_test.enabled = 1;
-      depth_test.writemask = 1;
-      depth_test.func = PIPE_FUNC_ALWAYS;
+   {
+      struct pipe_depth_state depth_test;
+      memset(&depth_test, 0, sizeof(depth_test));
+      if (depth) {
+         depth_test.enabled = 1;
+         depth_test.writemask = 1;
+         depth_test.func = PIPE_FUNC_ALWAYS;
+      }
+      st->pipe->set_depth_state(st->pipe, &depth_test);
    }
-   st->pipe->set_depth_state(st->pipe, &depth_test);
 
    /* setup state: nothing */
-   memset(&setup, 0, sizeof(setup));
-   if (ctx->Scissor.Enabled)
-      setup.scissor = 1;
-   st->pipe->set_setup_state(st->pipe, &setup);
+   {
+      struct pipe_setup_state setup;
+      memset(&setup, 0, sizeof(setup));
+      if (ctx->Scissor.Enabled)
+         setup.scissor = 1;
+      st->pipe->set_setup_state(st->pipe, &setup);
+   }
 
    /* stencil state: always set to ref value */
-   memset(&stencil_test, 0, sizeof(stencil_test));
-   if (stencil) {
-      stencil_test.front_enabled = 1;
-      stencil_test.front_func = PIPE_FUNC_ALWAYS;
-      stencil_test.front_fail_op = PIPE_STENCIL_OP_REPLACE;
-      stencil_test.front_zpass_op = PIPE_STENCIL_OP_REPLACE;
-      stencil_test.front_zfail_op = PIPE_STENCIL_OP_REPLACE;
-      stencil_test.ref_value[0] = ctx->Stencil.Clear;
-      stencil_test.value_mask[0] = 0xff;
-      stencil_test.write_mask[0] = ctx->Stencil.WriteMask[0] & 0xff;
+   {
+      struct pipe_stencil_state stencil_test;
+      memset(&stencil_test, 0, sizeof(stencil_test));
+      if (stencil) {
+         stencil_test.front_enabled = 1;
+         stencil_test.front_func = PIPE_FUNC_ALWAYS;
+         stencil_test.front_fail_op = PIPE_STENCIL_OP_REPLACE;
+         stencil_test.front_zpass_op = PIPE_STENCIL_OP_REPLACE;
+         stencil_test.front_zfail_op = PIPE_STENCIL_OP_REPLACE;
+         stencil_test.ref_value[0] = ctx->Stencil.Clear;
+         stencil_test.value_mask[0] = 0xff;
+         stencil_test.write_mask[0] = ctx->Stencil.WriteMask[0] & 0xff;
+      }
+      st->pipe->set_stencil_state(st->pipe, &stencil_test);
    }
-   st->pipe->set_stencil_state(st->pipe, &stencil_test);
 
    /* fragment shader state: color pass-through program */
-   if (!stfp) {
-      stfp = make_color_shader(st);
+   {
+      static struct st_fragment_program *stfp = NULL;
+      struct pipe_fs_state fs;
+      if (!stfp) {
+         stfp = make_color_shader(st);
+      }
+      memset(&fs, 0, sizeof(fs));
+      fs.inputs_read = stfp->Base.Base.InputsRead;
+      fs.tokens = &stfp->tokens[0];
+      fs.constants = NULL;
+      st->pipe->set_fs_state(st->pipe, &fs);
    }
-   memset(&fs, 0, sizeof(fs));
-   fs.inputs_read = stfp->Base.Base.InputsRead;
-   fs.tokens = &stfp->tokens[0];
-   fs.constants = NULL;
-   st->pipe->set_fs_state(st->pipe, &fs);
 
    /* draw quad matching scissor rect (XXX verify coord round-off) */
    draw_quad(ctx, x0, y0, x1, y1, ctx->Depth.Clear, ctx->Color.ClearColor);
@@ -306,12 +323,7 @@ clear_color_buffer(GLcontext *ctx, struct gl_renderbuffer *rb)
    }
    else {
       /* masking or scissoring */
-      clear_with_quad(ctx,
-                      ctx->DrawBuffer->_Xmin,
-                      ctx->DrawBuffer->_Xmin,
-                      ctx->DrawBuffer->_Xmax,
-                      ctx->DrawBuffer->_Ymax,
-                      GL_TRUE, GL_FALSE, GL_FALSE);
+      clear_with_quad(ctx, GL_TRUE, GL_FALSE, GL_FALSE);
    }
 }
 
@@ -333,12 +345,7 @@ clear_accum_buffer(GLcontext *ctx, struct gl_renderbuffer *rb)
    else {
       /* scissoring */
       /* XXX point framebuffer.cbufs[0] at the accum buffer */
-      clear_with_quad(ctx,
-                      ctx->DrawBuffer->_Xmin,
-                      ctx->DrawBuffer->_Xmin,
-                      ctx->DrawBuffer->_Xmax,
-                      ctx->DrawBuffer->_Ymax,
-                      GL_TRUE, GL_FALSE, GL_FALSE);
+      clear_with_quad(ctx, GL_TRUE, GL_FALSE, GL_FALSE);
    }
 }
 
@@ -356,12 +363,7 @@ clear_depth_buffer(GLcontext *ctx, struct gl_renderbuffer *rb)
    }
    else {
       /* masking or scissoring or combined z/stencil buffer */
-      clear_with_quad(ctx,
-                      ctx->DrawBuffer->_Xmin,
-                      ctx->DrawBuffer->_Xmin,
-                      ctx->DrawBuffer->_Xmax,
-                      ctx->DrawBuffer->_Ymax,
-                      GL_FALSE, GL_TRUE, GL_FALSE);
+      clear_with_quad(ctx, GL_FALSE, GL_TRUE, GL_FALSE);
    }
 }
 
@@ -381,12 +383,7 @@ clear_stencil_buffer(GLcontext *ctx, struct gl_renderbuffer *rb)
    }
    else {
       /* masking or scissoring */
-      clear_with_quad(ctx,
-                      ctx->DrawBuffer->_Xmin,
-                      ctx->DrawBuffer->_Xmin,
-                      ctx->DrawBuffer->_Xmax,
-                      ctx->DrawBuffer->_Ymax,
-                      GL_FALSE, GL_FALSE, GL_TRUE);
+      clear_with_quad(ctx, GL_FALSE, GL_FALSE, GL_TRUE);
    }
 }
 
@@ -421,12 +418,7 @@ clear_depth_stencil_buffer(GLcontext *ctx, struct gl_renderbuffer *rb)
    }
    else {
       /* masking or scissoring */
-      clear_with_quad(ctx,
-                      ctx->DrawBuffer->_Xmin,
-                      ctx->DrawBuffer->_Xmin,
-                      ctx->DrawBuffer->_Xmax,
-                      ctx->DrawBuffer->_Ymax,
-                      GL_FALSE, GL_TRUE, GL_TRUE);
+      clear_with_quad(ctx, GL_FALSE, GL_TRUE, GL_TRUE);
    }
 }
 
