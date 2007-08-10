@@ -35,6 +35,7 @@
 
 #include "main/imports.h"
 #include "main/context.h"
+#include "main/image.h"
 
 #include "pipe/p_context.h"
 #include "pipe/p_defines.h"
@@ -45,29 +46,74 @@
 #include "st_public.h"
 
 
+/**
+ * Do glReadPixels by getting rows from the framebuffer surface with
+ * get_tile().  Convert to requested format/type with Mesa image routines.
+ * Image transfer ops are done in software too.
+ */
 static void
 st_readpixels(GLcontext *ctx, GLint x, GLint y, GLsizei width, GLsizei height,
               GLenum format, GLenum type,
-              const struct gl_pixelstore_attrib *unpack,
+              const struct gl_pixelstore_attrib *pack,
               GLvoid *dest)
 {
    struct pipe_context *pipe = ctx->st->pipe;
+   GLfloat temp[MAX_WIDTH][4];
+   const GLbitfield transferOps = ctx->_ImageTransferState;
+   GLint i, yInv, dfStride;
+   GLfloat *df;
+   struct st_renderbuffer *strb;
+   struct gl_pixelstore_attrib clippedPacking = *pack;
+
+   /* XXX convolution not done yet */
+   assert((transferOps & IMAGE_CONVOLUTION_BIT) == 0);
+
+   /* Do all needed clipping here, so that we can forget about it later */
+   if (!_mesa_clip_readpixels(ctx, &x, &y, &width, &height, &clippedPacking)) {
+      /* The ReadPixels region is totally outside the window bounds */
+      return;
+   }
+
+
+   /* XXX check pack->BufferObj !!! */
+
+
+   strb = st_renderbuffer(ctx->ReadBuffer->_ColorReadBuffer);
+   if (!strb)
+      return;
+
+   pipe->region_map(pipe, strb->surface->region);
 
    if (format == GL_RGBA && type == GL_FLOAT) {
-      struct st_renderbuffer *strb
-         = st_renderbuffer(ctx->ReadBuffer->_ColorReadBuffer);
-      if (!strb)
-         return;
-
-      pipe->region_map(pipe, strb->surface->region);
-      strb->surface->get_tile(strb->surface, x, y, width, height, dest);
-      pipe->region_unmap(pipe, strb->surface->region);
+      /* write tile(row) directly into user's buffer */
+      df = (GLfloat *) _mesa_image_address2d(&clippedPacking, dest, width,
+                                             height, format, type, 0, 0);
+      dfStride = width * 4;
    }
    else {
-      assert(0);
+      /* write tile(row) into temp row buffer */
+      df = (GLfloat *) temp;
+      dfStride = 0;
    }
 
+   /* Do a row at a time to flip image data vertically */
+   yInv = strb->Base.Height - 1 - y;
+   for (i = 0; i < height; i++) {
+      strb->surface->get_tile(strb->surface, x, yInv, width, 1, df);
+      yInv--;
+      df += dfStride;
+      if (!dfStride) {
+         /* convert GLfloat to user's format/type */
+         GLvoid *dst = _mesa_image_address2d(&clippedPacking, dest, width,
+                                             height, format, type, i, 0);
+         _mesa_pack_rgba_span_float(ctx, width, temp, format, type, dst,
+                                    &clippedPacking, transferOps);
+      }
+   }
+
+   pipe->region_unmap(pipe, strb->surface->region);
 }
+
 
 void st_init_readpixels_functions(struct dd_function_table *functions)
 {
