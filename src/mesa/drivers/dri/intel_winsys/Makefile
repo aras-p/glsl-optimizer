@@ -20,7 +20,6 @@ DRIVER_SOURCES = \
 	intel_context.c \
 	intel_ioctl.c \
 	intel_screen.c \
-	intel_surface.c \
 	intel_batchpool.c
 
 C_SOURCES = \
