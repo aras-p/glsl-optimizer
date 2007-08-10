@@ -27,6 +27,7 @@
 
 #include "intel_batchbuffer.h"
 #include "intel_ioctl.h"
+#include "i915_debug.h"
 
 /* Relocations in kernel space:
  *    - pass dma buffer seperately
@@ -71,9 +72,8 @@ intel_dump_batchbuffer(GLuint offset, GLuint * ptr, GLuint count)
 {
    int i;
    fprintf(stderr, "\n\n\nSTART BATCH (%d dwords):\n", count / 4);
-   for (i = 0; i < count / 4; i += 4)
-      fprintf(stderr, "0x%x:\t0x%08x 0x%08x 0x%08x 0x%08x\n",
-              offset + i * 4, ptr[i], ptr[i + 1], ptr[i + 2], ptr[i + 3]);
+   for (i = 0; i < count / 4; i += 1)
+      fprintf(stderr, "\t0x%08x\n", ptr[i]);
    fprintf(stderr, "END BATCH\n\n\n");
 }
 
@@ -186,8 +186,10 @@ do_flush_locked(struct intel_batchbuffer *batch,
       ptr[r->offset / 4] = driBOOffset(r->buf) + r->delta;
    }
 
-   if (INTEL_DEBUG & DEBUG_BATCH)
-      intel_dump_batchbuffer(0, ptr, used);
+
+   i915_dump_batchbuffer(ptr, ptr + used/4);
+
+   intel_dump_batchbuffer(0, ptr, used);
 
    driBOUnmap(batch->buffer);
    batch->map = NULL;
