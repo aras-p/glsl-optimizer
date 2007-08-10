@@ -404,7 +404,7 @@ intelCreateContext(const __GLcontextModes * mesaVis,
     */
    if (!getenv("INTEL_HW")) {
       intel->pipe = intel_create_softpipe( intel );
-      intel->pipe->surface_alloc = intel_new_surface;
+      /* use default softpipe function for surface_alloc() */
       intel->pipe->supported_formats = intel_supported_formats;
    }
    else {
