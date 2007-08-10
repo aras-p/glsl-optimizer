@@ -50,6 +50,10 @@ struct pipe_buffer_handle;
 
 struct softpipe_winsys {
 
+   /* debug output 
+    */
+   void (*printf)( const char *, ... );	
+
 
    /* The buffer manager is modeled after the dri_bugmgr interface,
     * but this is the subset that softpipe cares about.  Remember that
