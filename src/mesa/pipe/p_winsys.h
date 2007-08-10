@@ -107,6 +107,10 @@ struct pipe_winsys {
     */
    void (*wait_idle)( struct pipe_winsys *sws );
 
+   /* Queries:
+    */
+   const char *(*get_name)( struct pipe_winsys *sws );
+
 };
 
 

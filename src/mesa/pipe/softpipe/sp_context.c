@@ -224,6 +224,16 @@ static GLuint softpipe_get_occlusion_counter(struct pipe_context *pipe)
    return softpipe->occlusion_counter;
 }
 
+static const char *softpipe_get_name( struct pipe_context *pipe )
+{
+   return "softpipe";
+}
+
+static const char *softpipe_get_vendor( struct pipe_context *pipe )
+{
+   return "Tungsten Graphics, Inc.";
+}
+
 
 struct pipe_context *softpipe_create( struct pipe_winsys *pipe_winsys,
 				      struct softpipe_winsys *softpipe_winsys )
@@ -259,6 +269,8 @@ struct pipe_context *softpipe_create( struct pipe_winsys *pipe_winsys,
    softpipe->pipe.flush = softpipe_flush;
    softpipe->pipe.reset_occlusion_counter = softpipe_reset_occlusion_counter;
    softpipe->pipe.get_occlusion_counter = softpipe_get_occlusion_counter;
+   softpipe->pipe.get_name = softpipe_get_name;
+   softpipe->pipe.get_vendor = softpipe_get_vendor;
 
    /* textures */
    softpipe->pipe.mipmap_tree_layout = softpipe_mipmap_tree_layout;

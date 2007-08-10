@@ -121,6 +121,7 @@ struct i915_context
    GLuint hardware_dirty;
    
    GLuint debug;
+   GLuint pci_id;
 
    struct {
       unsigned is_i945:1;
@@ -188,6 +189,7 @@ void i915_init_region_functions( struct i915_context *i915 );
 void i915_init_surface_functions( struct i915_context *i915 );
 void i915_init_state_functions( struct i915_context *i915 );
 void i915_init_flush_functions( struct i915_context *i915 );
+void i915_init_string_functions( struct i915_context *i915 );
 
 
 

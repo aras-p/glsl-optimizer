@@ -31,19 +31,11 @@
 #include "i915_state.h"
 #include "i915_batch.h"
 #include "i915_tex_layout.h"
+#include "i915_reg.h"
 
 #include "pipe/draw/draw_context.h"
 #include "pipe/p_defines.h"
 #include "pipe/p_winsys.h"
-
-#define PCI_CHIP_I915_G			0x2582
-#define PCI_CHIP_I915_GM		0x2592
-#define PCI_CHIP_I945_G			0x2772
-#define PCI_CHIP_I945_GM		0x27A2
-#define PCI_CHIP_I945_GME		0x27AE
-#define PCI_CHIP_G33_G			0x29C2
-#define PCI_CHIP_Q35_G			0x29B2
-#define PCI_CHIP_Q33_G			0x29D2
 
 
 /**
@@ -190,8 +182,6 @@ struct pipe_context *i915_create( struct pipe_winsys *pipe_winsys,
    struct i915_context *i915;
    unsigned is_i945 = 0;
 
-   /* TODO: Push this down into the pipe driver:
-    */
    switch (pci_id) {
    case PCI_CHIP_I915_G:
    case PCI_CHIP_I915_GM:
@@ -241,7 +231,10 @@ struct pipe_context *i915_create( struct pipe_winsys *pipe_winsys,
    i915_init_surface_functions(i915);
    i915_init_state_functions(i915);
    i915_init_flush_functions(i915);
+   i915_init_string_functions(i915);
 
+   i915->pci_id = pci_id;
+   i915->flags.is_i945 = is_i945;
 
    if (i915->flags.is_i945)
       i915->pipe.mipmap_tree_layout = i945_miptree_layout;

@@ -185,6 +185,12 @@ intel_printf( struct pipe_winsys *sws, const char *fmtString, ... )
    va_end( args );
 }
 
+static const char *
+intel_get_name( struct pipe_winsys *sws )
+{
+   return "Intel/DRI/ttm";
+}
+
 
 struct pipe_winsys *
 intel_create_pipe_winsys( struct intel_context *intel )
@@ -209,6 +215,7 @@ intel_create_pipe_winsys( struct intel_context *intel )
    iws->winsys.flush_frontbuffer = intel_flush_frontbuffer;
    iws->winsys.wait_idle = intel_wait_idle;
    iws->winsys.printf = intel_printf;
+   iws->winsys.get_name = intel_get_name;
    iws->intel = intel;
 
    return &iws->winsys;
