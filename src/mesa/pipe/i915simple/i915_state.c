@@ -189,21 +189,8 @@ static void i915_set_viewport_state( struct pipe_context *pipe,
 				     const struct pipe_viewport_state *viewport )
 {
    struct i915_context *i915 = i915_context(pipe);
-   float sy, ty;
 
    i915->viewport = *viewport; /* struct copy */
-
-   /* Negate Y scale to flip image vertically.
-    * The NDC Y coords prior to viewport transformation are in the range
-    * [y=-1=bottom, y=1=top]
-    * Intel window coords are in the range [y=0=top, y=H-1=bottom] where H
-    * is the window height.
-    * Use the viewport transformation to invert Y.
-    */
-   sy = viewport->scale[1];
-   ty = viewport->translate[1];
-   i915->viewport.scale[1] = -sy;
-   i915->viewport.translate[1] = i915->framebuffer.cbufs[0]->height - ty;
 
    /* pass the viewport info to the draw module */
    draw_set_viewport_state(i915->draw, &i915->viewport);
