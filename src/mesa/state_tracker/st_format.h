@@ -51,6 +51,10 @@ st_get_format_info(GLuint format);
 
 
 extern GLuint
+st_sizeof_format(GLuint pipeFormat);
+
+
+extern GLuint
 st_mesa_format_to_pipe_format(GLuint mesaFormat);
 
 

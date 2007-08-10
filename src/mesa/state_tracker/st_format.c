@@ -99,6 +99,15 @@ st_get_format_info(GLuint format)
 
 
 GLuint
+st_sizeof_format(GLuint pipeFormat)
+{
+   const struct pipe_format_info *info = st_get_format_info(pipeFormat);
+   assert(info);
+   return info->size;
+}
+
+
+GLuint
 st_mesa_format_to_pipe_format(GLuint mesaFormat)
 {
    switch (mesaFormat) {
