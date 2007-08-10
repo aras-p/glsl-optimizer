@@ -1102,6 +1102,7 @@ struct tgsi_instruction
 #define TGSI_INSTRUCTION_EXT_TYPE_NV        0
 #define TGSI_INSTRUCTION_EXT_TYPE_LABEL     1
 #define TGSI_INSTRUCTION_EXT_TYPE_TEXTURE   2
+#define TGSI_INSTRUCTION_EXT_TYPE_PREDICATE 3
 
 struct tgsi_instruction_ext
 {
@@ -1119,6 +1120,9 @@ struct tgsi_instruction_ext
  * 
  * If tgsi_instruction_ext::Type is TGSI_INSTRUCTION_EXT_TYPE_TEXTURE, it
  * should be cast to tgsi_instruction_ext_texture.
+ * 
+ * If tgsi_instruction_ext::Type is TGSI_INSTRUCTION_EXT_TYPE_PREDICATE, it
+ * should be cast to tgsi_instruction_ext_predicate.
  * 
  * If tgsi_instruction_ext::Extended is TRUE, another tgsi_instruction_ext
  * follows.
@@ -1199,6 +1203,32 @@ struct tgsi_instruction_ext_texture
    GLuint Texture  : 8;    /* TGSI_TEXTURE_ */
    GLuint Padding  : 19;
    GLuint Extended : 1;    /* BOOL */
+};
+
+#define TGSI_WRITEMASK_NONE     0x00
+#define TGSI_WRITEMASK_X        0x01
+#define TGSI_WRITEMASK_Y        0x02
+#define TGSI_WRITEMASK_XY       0x03
+#define TGSI_WRITEMASK_Z        0x04
+#define TGSI_WRITEMASK_XZ       0x05
+#define TGSI_WRITEMASK_YZ       0x06
+#define TGSI_WRITEMASK_XYZ      0x07
+#define TGSI_WRITEMASK_W        0x08
+#define TGSI_WRITEMASK_XW       0x09
+#define TGSI_WRITEMASK_YW       0x0A
+#define TGSI_WRITEMASK_XYW      0x0B
+#define TGSI_WRITEMASK_ZW       0x0C
+#define TGSI_WRITEMASK_XZW      0x0D
+#define TGSI_WRITEMASK_YZW      0x0E
+#define TGSI_WRITEMASK_XYZW     0x0F
+
+struct tgsi_instruction_ext_predicate
+{
+   GLuint Type             : 4;    /* TGSI_INSTRUCTION_EXT_TYPE_PREDICATE */
+   GLuint PredDstIndex     : 4;    /* UINT */
+   GLuint PredWriteMask    : 4;    /* TGSI_WRITEMASK_ */
+   GLuint Padding          : 19;
+   GLuint Extended         : 1;    /* BOOL */
 };
 
 /*
@@ -1331,23 +1361,6 @@ struct tgsi_dimension
    GLuint Extended     : 1;    /* BOOL */
 };
 
-#define TGSI_WRITEMASK_NONE     0x00
-#define TGSI_WRITEMASK_X        0x01
-#define TGSI_WRITEMASK_Y        0x02
-#define TGSI_WRITEMASK_XY       0x03
-#define TGSI_WRITEMASK_Z        0x04
-#define TGSI_WRITEMASK_XZ       0x05
-#define TGSI_WRITEMASK_YZ       0x06
-#define TGSI_WRITEMASK_XYZ      0x07
-#define TGSI_WRITEMASK_W        0x08
-#define TGSI_WRITEMASK_XW       0x09
-#define TGSI_WRITEMASK_YW       0x0A
-#define TGSI_WRITEMASK_XYW      0x0B
-#define TGSI_WRITEMASK_ZW       0x0C
-#define TGSI_WRITEMASK_XZW      0x0D
-#define TGSI_WRITEMASK_YZW      0x0E
-#define TGSI_WRITEMASK_XYZW     0x0F
-
 struct tgsi_dst_register
 {
    GLuint File         : 4;    /* TGSI_FILE_ */
@@ -1367,6 +1380,7 @@ struct tgsi_dst_register
 
 #define TGSI_DST_REGISTER_EXT_TYPE_CONDCODE     0
 #define TGSI_DST_REGISTER_EXT_TYPE_MODULATE     1
+#define TGSI_DST_REGISTER_EXT_TYPE_PREDICATE    2
 
 struct tgsi_dst_register_ext
 {
@@ -1381,6 +1395,9 @@ struct tgsi_dst_register_ext
  * 
  * If tgsi_dst_register_ext::Type is TGSI_DST_REGISTER_EXT_TYPE_MODULATE,
  * it should be cast to tgsi_dst_register_ext_modulate.
+ * 
+ * If tgsi_dst_register_ext::Type is TGSI_DST_REGISTER_EXT_TYPE_PREDICATE,
+ * it should be cast to tgsi_dst_register_ext_predicate.
  * 
  * If tgsi_dst_register_ext::Extended is TRUE, another tgsi_dst_register_ext
  * follows.
@@ -1413,6 +1430,26 @@ struct tgsi_dst_register_ext_modulate
    GLuint Modulate : 4;    /* TGSI_MODULATE_ */
    GLuint Padding  : 23;
    GLuint Extended : 1;    /* BOOL */
+};
+
+/*
+ * Currently, the following constraints apply.
+ *
+ * - PredSwizzleXYZW is either set to identity or replicate.
+ * - PredSrcIndex is 0.
+ */
+
+struct tgsi_dst_register_ext_predicate
+{
+   GLuint Type         : 4;    /* TGSI_DST_REGISTER_EXT_TYPE_PREDICATE */
+   GLuint PredSwizzleX : 2;    /* TGSI_SWIZZLE_ */
+   GLuint PredSwizzleY : 2;    /* TGSI_SWIZZLE_ */
+   GLuint PredSwizzleZ : 2;    /* TGSI_SWIZZLE_ */
+   GLuint PredSwizzleW : 2;    /* TGSI_SWIZZLE_ */
+   GLuint PredSrcIndex : 4;    /* UINT */
+   GLuint Negate       : 1;    /* BOOL */
+   GLuint Padding      : 14;
+   GLuint Extended     : 1;    /* BOOL */
 };
 
 #if defined __cplusplus
