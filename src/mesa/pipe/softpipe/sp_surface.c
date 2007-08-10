@@ -356,6 +356,7 @@ softpipe_init_surface_funcs(struct softpipe_surface *sps)
       sps->read_quad_f_swz = a8r8g8b8_read_quad_f_swz;
       sps->write_quad_f_swz = a8r8g8b8_write_quad_f_swz;
       sps->surface.get_tile = a8r8g8b8_get_tile;
+      break;
    case PIPE_FORMAT_U_A1_R5_G5_B5:
       sps->surface.get_tile = a1r5g5b5_get_tile;
       break;
