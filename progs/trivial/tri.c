@@ -59,7 +59,7 @@ static void Key(unsigned char key, int x, int y)
 
     switch (key) {
       case 27:
-	exit(1);
+	exit(0);
       default:
 	return;
     }
@@ -72,12 +72,12 @@ static void Draw(void)
    glClear(GL_COLOR_BUFFER_BIT); 
 
    glBegin(GL_TRIANGLES);
-   glColor3f(0,0,.7); 
-   glVertex3f( 0.9, -0.9, -30.0);
    glColor3f(.8,0,0); 
-   glVertex3f( 0.9,  0.9, -30.0);
+   glVertex3f(-0.9, -0.9, -30.0);
    glColor3f(0,.9,0); 
-   glVertex3f(-0.9,  0.0, -30.0);
+   glVertex3f( 0.9, -0.9, -30.0);
+   glColor3f(0,0,.7); 
+   glVertex3f( 0.0,  0.9, -30.0);
    glEnd();
 
    glFlush();
@@ -130,5 +130,5 @@ int main(int argc, char **argv)
     glutKeyboardFunc(Key);
     glutDisplayFunc(Draw);
     glutMainLoop();
-	return 0;
+    return 0;
 }
