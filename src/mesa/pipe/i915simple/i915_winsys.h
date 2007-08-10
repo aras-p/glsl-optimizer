@@ -123,7 +123,8 @@ struct i915_winsys {
 #define I915_BUFFER_ACCESS_READ    0x2
 
 
-struct pipe_context *i915_create( struct i915_winsys * );
+struct pipe_context *i915_create( struct i915_winsys *,
+				  unsigned pci_id );
 
 
 #endif 

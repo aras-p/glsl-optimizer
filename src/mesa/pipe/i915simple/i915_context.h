@@ -122,8 +122,9 @@ struct i915_context
    
    GLuint debug;
 
-
-   struct pipe_scissor_state cliprect;
+   struct {
+      unsigned is_i945:1;
+   } flags;
 };
 
 /* A flag for each state_tracker state object:
