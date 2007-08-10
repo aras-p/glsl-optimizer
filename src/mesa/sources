@@ -192,12 +192,13 @@ STATETRACKER_SOURCES = \
 	state_tracker/st_atom_stipple.c \
 	state_tracker/st_atom_texture.c \
 	state_tracker/st_atom_viewport.c \
+	state_tracker/st_cb_bufferobjects.c \
 	state_tracker/st_cb_clear.c \
 	state_tracker/st_cb_drawpixels.c \
 	state_tracker/st_cb_fbo.c \
 	state_tracker/st_cb_program.c \
+	state_tracker/st_cb_readpixels.c \
 	state_tracker/st_cb_texture.c \
-	state_tracker/st_cb_bufferobjects.c \
 	state_tracker/st_context.c \
 	state_tracker/st_draw.c \
 	state_tracker/st_format.c \
