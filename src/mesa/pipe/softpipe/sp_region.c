@@ -36,6 +36,16 @@
 #include "sp_region.h"
 
 
+/**
+ * Round n up to next multiple.
+ */
+static INLINE unsigned
+round_up(unsigned n, unsigned multiple)
+{
+   return (n + multiple - 1) & ~(multiple - 1);
+}
+
+
 static void
 sp_region_idle(struct pipe_context *pipe, struct pipe_region *region)
 {
@@ -70,23 +80,24 @@ sp_region_unmap(struct pipe_context *pipe, struct pipe_region *region)
 
 static struct pipe_region *
 sp_region_alloc(struct pipe_context *pipe,
-		GLuint cpp, GLuint pitch, GLuint height, GLbitfield flags)
+		GLuint cpp, GLuint width, GLuint height, GLbitfield flags)
 {
    struct softpipe_context *sp = softpipe_context( pipe );
    struct pipe_region *region = calloc(sizeof(*region), 1);
+   const unsigned alignment = 64;
 
    region->cpp = cpp;
-   region->pitch = pitch;
-   region->height = height;     /* needed? */
+   region->pitch = round_up(width, alignment / cpp);
+   region->height = height;
    region->refcount = 1;
 
-   region->buffer = sp->winsys->create_buffer( sp->winsys, 64 );
+   region->buffer = sp->winsys->create_buffer( sp->winsys, alignment );
 
+   /* NULL data --> just allocate the space */
    sp->winsys->buffer_data( sp->winsys,
 			    region->buffer, 
-			    pitch * cpp * height, 
+			    region->pitch * cpp * height, 
 			    NULL );
-
    return region;
 }
 

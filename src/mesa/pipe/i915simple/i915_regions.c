@@ -75,6 +75,7 @@ i915_region_alloc(struct pipe_context *pipe,
 {
    struct i915_context *i915 = i915_context( pipe );
    struct pipe_region *region = calloc(sizeof(*region), 1);
+   const unsigned alignment = 64;
 
    /* Choose a pitch to match hardware requirements - requires 64 byte
     * alignment of render targets.  
@@ -96,7 +97,7 @@ i915_region_alloc(struct pipe_context *pipe,
    region->height = height;     /* needed? */
    region->refcount = 1;
 
-   region->buffer = i915->winsys->buffer_create( i915->winsys, 64 );
+   region->buffer = i915->winsys->buffer_create( i915->winsys, alignment );
 
    i915->winsys->buffer_data( i915->winsys,
 			      region->buffer, 
