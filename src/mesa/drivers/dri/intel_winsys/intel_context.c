@@ -46,10 +46,10 @@
 #include "intel_batchbuffer.h"
 #include "intel_blit.h"
 #include "intel_tex_layout.h"
-#include "intel_surface.h"
 
 #include "state_tracker/st_public.h"
 #include "state_tracker/st_context.h"
+#include "pipe/p_defines.h"
 
 #include "drirenderbuffer.h"
 #include "vblank.h"
@@ -307,6 +307,23 @@ intelInitDriverFunctions(struct dd_function_table *functions)
    st_init_driver_functions(functions);
 }
 
+
+
+/**
+ * Return list of surface formats supported by this driver.
+ */
+static const GLuint *
+intel_supported_formats(struct pipe_context *pipe, GLuint *numFormats)
+{
+   static const GLuint formats[] = {
+      PIPE_FORMAT_U_A8_R8_G8_B8,
+      PIPE_FORMAT_U_R5_G6_B5,
+      PIPE_FORMAT_S8_Z24,
+   };
+
+   *numFormats = sizeof(formats) / sizeof(formats[0]);
+   return formats;
+}
 
 
 GLboolean
