@@ -902,12 +902,10 @@ _mesa_sprintf( char *str, const char *fmt, ... )
 void
 _mesa_printf( const char *fmtString, ... )
 {
-   char s[MAXSTRING];
    va_list args;
    va_start( args, fmtString );  
-   vsnprintf(s, MAXSTRING, fmtString, args);
+   vfprintf(stderr, fmtString, args);
    va_end( args );
-   fprintf(stderr,"%s", s);
 }
 
 /** Wrapper around vsprintf() */

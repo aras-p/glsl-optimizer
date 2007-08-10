@@ -21,6 +21,7 @@ DRIVER_SOURCES = \
 	i915_state_emit.c \
 	i915_state_fragprog.c \
 	i915_prim_emit.c \
+	i915_tex_layout.c \
 	i915_surface.c 
 
 C_SOURCES = \

@@ -14,7 +14,6 @@ DRIVER_SOURCES = \
 	intel_pipe_i915simple.c \
 	intel_pipe_softpipe.c \
 	intel_batchbuffer.c \
-	intel_tex_layout.c \
 	intel_buffers.c \
 	intel_blit.c \
 	intel_context.c \

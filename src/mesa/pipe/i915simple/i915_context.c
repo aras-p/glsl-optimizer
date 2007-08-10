@@ -29,6 +29,7 @@
 #include "i915_context.h"
 #include "i915_winsys.h"
 #include "i915_state.h"
+#include "i915_tex_layout.h"
 
 #include "pipe/draw/draw_context.h"
 #include "pipe/p_defines.h"
@@ -205,6 +206,12 @@ struct pipe_context *i915_create( struct i915_winsys *winsys,
    i915_init_surface_functions(i915);
    i915_init_state_functions(i915);
    i915_init_flush_functions(i915);
+
+
+   if (i915->flags.is_i945)
+      i915->pipe.mipmap_tree_layout = i945_miptree_layout;
+   else
+      i915->pipe.mipmap_tree_layout = i945_miptree_layout;
 
 
    i915->dirty = ~0;

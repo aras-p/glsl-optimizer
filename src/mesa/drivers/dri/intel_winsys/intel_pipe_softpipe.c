@@ -36,8 +36,13 @@
 
 #include "intel_context.h"
 #include "intel_pipe.h"
+#include "intel_surface.h"
 
 #include "pipe/softpipe/sp_winsys.h"
+
+/* Shouldn't really need this:
+ */
+#include "pipe/p_context.h"
 
 
 struct intel_softpipe_winsys {
@@ -157,6 +162,7 @@ struct pipe_context *
 intel_create_softpipe( struct intel_context *intel )
 {
    struct intel_softpipe_winsys *isws = CALLOC_STRUCT( intel_softpipe_winsys );
+   struct pipe_context *pipe;
    
    /* Fill in this struct with callbacks that softpipe will need to
     * communicate with the window system, buffer manager, etc. 
@@ -177,5 +183,11 @@ intel_create_softpipe( struct intel_context *intel )
 
    /* Create the softpipe context:
     */
-   return softpipe_create( &isws->sws );
+   pipe = softpipe_create( &isws->sws );
+
+   /* XXX: This should probably be a parameter to softpipe_create()
+    */
+   pipe->supported_formats = intel_supported_formats;
+
+   return pipe;
 }

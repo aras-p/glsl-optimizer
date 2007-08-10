@@ -227,10 +227,18 @@ static void intel_i915_batch_flush( struct i915_winsys *sws )
 {
    struct intel_context *intel = intel_i915_winsys(sws)->intel;
 
-   _mesa_printf("%s: start\n");
    intel_batchbuffer_flush( intel->batch );
-   intel_i915_batch_wait_idle( sws );
-   _mesa_printf("%s: done\n");
+   if (0) intel_i915_batch_wait_idle( sws );
+}
+
+
+static void intel_i915_printf( struct i915_winsys *sws,
+			       const char *fmtString, ... )
+{
+   va_list args;
+   va_start( args, fmtString );  
+   vfprintf(stderr, fmtString, args);
+   va_end( args );
 }
 
 
@@ -242,6 +250,7 @@ intel_create_i915simple( struct intel_context *intel )
    /* Fill in this struct with callbacks that i915simple will need to
     * communicate with the window system, buffer manager, etc. 
     */
+   iws->winsys.printf = intel_i915_printf;
    iws->winsys.buffer_create = intel_i915_buffer_create;
    iws->winsys.buffer_map = intel_i915_buffer_map;
    iws->winsys.buffer_unmap = intel_i915_buffer_unmap;
@@ -259,5 +268,5 @@ intel_create_i915simple( struct intel_context *intel )
 
    /* Create the i915simple context:
     */
-   return i915_create( &iws->winsys );
+   return i915_create( &iws->winsys, intel->intelScreen->deviceID );
 }

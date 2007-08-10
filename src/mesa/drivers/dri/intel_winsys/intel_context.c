@@ -243,6 +243,8 @@ intelFlush(GLcontext * ctx)
 {
    struct intel_context *intel = intel_context(ctx);
 
+   /* Hmm:
+    */
    intel->pipe->flush( intel->pipe, 0 );
 }
 
@@ -421,8 +423,6 @@ intelCreateContext(const __GLcontextModes * mesaVis,
     */
    if (!getenv("INTEL_HW")) {
       intel->pipe = intel_create_softpipe( intel );
-      /* use default softpipe function for surface_alloc() */
-      intel->pipe->supported_formats = intel_supported_formats;
    }
    else {
       switch (intel->intelScreen->deviceID) {
@@ -446,28 +446,6 @@ intelCreateContext(const __GLcontextModes * mesaVis,
    }
 
    st_create_context( &intel->ctx, intel->pipe ); 
-
-
-   /* TODO: Push this down into the pipe driver:
-    */
-   switch (intel->intelScreen->deviceID) {
-   case PCI_CHIP_I945_G:
-   case PCI_CHIP_I945_GM:
-   case PCI_CHIP_I945_GME:
-   case PCI_CHIP_G33_G:
-   case PCI_CHIP_Q33_G:
-   case PCI_CHIP_Q35_G:
-      intel->pipe->mipmap_tree_layout = i945_miptree_layout;
-      break;
-   case PCI_CHIP_I915_G:
-   case PCI_CHIP_I915_GM:
-   case PCI_CHIP_I830_M:
-   case PCI_CHIP_I855_GM:
-   case PCI_CHIP_I865_G:
-      intel->pipe->mipmap_tree_layout = i915_miptree_layout;
-   default:
-      assert(0); /*FIX*/
-   }
 
    return GL_TRUE;
 }
