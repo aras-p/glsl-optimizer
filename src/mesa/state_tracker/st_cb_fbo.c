@@ -43,7 +43,9 @@
 #include "pipe/p_defines.h"
 #include "st_context.h"
 #include "st_cb_fbo.h"
+#include "st_cb_texture.h"
 #include "st_format.h"
+#include "st_public.h"
 
 
 
@@ -281,10 +283,17 @@ st_render_texture(GLcontext *ctx,
                   struct gl_renderbuffer_attachment *att)
 {
    struct st_context *st = ctx->st;
+   struct pipe_context *pipe = st->pipe;
    struct pipe_framebuffer_state framebuffer;
    struct pipe_surface *texsurface;
+   struct pipe_mipmap_tree *mt;
 
-   texsurface = NULL;  /* find the mipmap level, cube face, etc */
+   mt = st_get_texobj_mipmap_tree(att->Texture);
+
+   texsurface = pipe->get_tex_surface(pipe, mt,
+                                      att->CubeMapFace,
+                                      att->TextureLevel,
+                                      att->Zoffset);
 
    /*
     * XXX basically like this... set the current color (or depth)
@@ -308,7 +317,12 @@ static void
 st_finish_render_texture(GLcontext *ctx,
                          struct gl_renderbuffer_attachment *att)
 {
-   /* restore drawing to normal framebuffer. may be a no-op */
+   struct st_renderbuffer *strb = st_renderbuffer(att->Renderbuffer);
+
+   pipe_surface_unreference(&strb->surface);
+
+   /* restore previous framebuffer state */
+   st_invalidate_state(ctx, _NEW_BUFFERS);
 }
 
 
