@@ -98,6 +98,20 @@ st_get_format_info(GLuint format)
 }
 
 
+GLuint
+st_mesa_format_to_pipe_format(GLuint mesaFormat)
+{
+   switch (mesaFormat) {
+      /* fix this */
+   case MESA_FORMAT_ARGB8888_REV:
+   case MESA_FORMAT_ARGB8888:
+      return PIPE_FORMAT_U_A8_R8_G8_B8;
+   default:
+      assert(0);
+      return 0;
+   }
+}
+
 
 /**
  * Search list of formats for first RGBA format.

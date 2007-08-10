@@ -51,6 +51,10 @@ st_get_format_info(GLuint format);
 
 
 extern GLuint
+st_mesa_format_to_pipe_format(GLuint mesaFormat);
+
+
+extern GLuint
 st_choose_pipe_format(struct pipe_context *pipe, GLint internalFormat,
                       GLenum format, GLenum type);
 
