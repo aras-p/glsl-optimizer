@@ -16,9 +16,7 @@ DRIVER_SOURCES = \
 	intel_winsys_i915.c \
 	intel_batchbuffer.c \
 	intel_buffers.c \
-	intel_blit.c \
 	intel_context.c \
-	intel_ioctl.c \
 	intel_screen.c \
 	intel_batchpool.c
 

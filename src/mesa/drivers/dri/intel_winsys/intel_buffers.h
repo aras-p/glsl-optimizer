@@ -62,10 +62,8 @@ struct intel_framebuffer
 };
 
 
-extern GLboolean
-intel_intersect_cliprects(drm_clip_rect_t * dest,
-                          const drm_clip_rect_t * a,
-                          const drm_clip_rect_t * b);
+void intelCopyBuffer(__DRIdrawablePrivate * dPriv,
+		     const drm_clip_rect_t * rect);
 
 extern void intel_wait_flips(struct intel_context *intel, GLuint batch_flags);
 

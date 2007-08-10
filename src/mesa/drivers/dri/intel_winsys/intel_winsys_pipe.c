@@ -36,8 +36,8 @@
 
 #include "intel_context.h"
 #include "intel_winsys.h"
+#include "intel_buffers.h"
 #include "intel_batchbuffer.h"
-#include "intel_blit.h"
 
 #include "pipe/p_winsys.h"
 #include "pipe/p_defines.h"
