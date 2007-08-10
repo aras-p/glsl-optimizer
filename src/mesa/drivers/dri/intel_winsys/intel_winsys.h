@@ -31,6 +31,8 @@
 struct intel_context;
 struct pipe_context;
 struct pipe_winsys;
+struct pipe_buffer_handle;
+struct _DriBufferObject;
 
 struct pipe_winsys *
 intel_create_pipe_winsys( struct intel_context *intel );
@@ -40,6 +42,24 @@ intel_create_softpipe( struct intel_context *intel );
 
 struct pipe_context *
 intel_create_i915simple( struct intel_context *intel );
+
+
+
+/* Turn the pipe opaque buffer pointer into a dri_bufmgr opaque
+ * buffer pointer...
+ */
+static INLINE struct _DriBufferObject *
+dri_bo( struct pipe_buffer_handle *bo )
+{
+   return (struct _DriBufferObject *)bo;
+}
+
+static INLINE struct pipe_buffer_handle *
+pipe_bo( struct _DriBufferObject *bo )
+{
+   return (struct pipe_buffer_handle *)bo;
+}
+
 
 
 #endif

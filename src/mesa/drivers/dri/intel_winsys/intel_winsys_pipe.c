@@ -51,21 +51,6 @@ struct intel_pipe_winsys {
 
 
 
-/* Turn the pipe opaque buffer pointer into a dri_bufmgr opaque
- * buffer pointer...
- */
-static inline struct _DriBufferObject *
-dri_bo( struct pipe_buffer_handle *bo )
-{
-   return (struct _DriBufferObject *)bo;
-}
-
-static inline struct pipe_buffer_handle *
-pipe_bo( struct _DriBufferObject *bo )
-{
-   return (struct pipe_buffer_handle *)bo;
-}
-
 /* Turn a pipe winsys into an intel/pipe winsys:
  */
 static inline struct intel_pipe_winsys *

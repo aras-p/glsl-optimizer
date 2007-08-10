@@ -116,7 +116,7 @@ static void intel_i915_batch_flush( struct i915_winsys *sws )
    struct intel_context *intel = intel_i915_winsys(sws)->intel;
 
    intel_batchbuffer_flush( intel->batch );
-   if (0) intel_i915_batch_wait_idle( sws );
+//   if (0) intel_i915_batch_wait_idle( sws );
 }
 
 
