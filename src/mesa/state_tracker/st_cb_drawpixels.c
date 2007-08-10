@@ -100,21 +100,54 @@ make_mipmap_tree(struct st_context *st,
                  const struct gl_pixelstore_attrib *unpack,
                  const GLvoid *pixels)
 {
+   struct pipe_context *pipe = st->pipe;
+   const struct gl_texture_format *mformat;
    GLuint pipeFormat = st_choose_pipe_format(st->pipe, GL_RGBA, format, type);
    int cpp = 4;
    struct pipe_mipmap_tree *mt = CALLOC_STRUCT(pipe_mipmap_tree);
    GLbitfield flags = PIPE_SURFACE_FLAG_TEXTURE;
 
+   mformat = st_ChooseTextureFormat(st->ctx, GL_RGBA, format, type);
+   assert(format);
+
+   pipeFormat = st_mesa_format_to_pipe_format(mformat->MesaFormat);
    assert(pipeFormat);
 
-   if (unpack->BufferObj) {
+   if (unpack->BufferObj && unpack->BufferObj->Name) {
       /*
       mt->region = buffer_object_region(unpack->BufferObj);
       */
    }
    else {
+      static const GLuint dstImageOffsets = 0;
+      GLboolean success;
+      GLubyte *dest;
+      GLuint pitch;
+
+      /* allocate texture region/storage */
       mt->region = st->pipe->region_alloc(st->pipe, cpp, width, height, flags);
-      /* XXX do texstore() here */
+      pitch = mt->region->pitch;
+
+      /* map texture region */
+      dest = pipe->region_map(pipe, mt->region);
+
+      /* put image into texture region */
+      success = mformat->StoreImage(st->ctx, 2,       /* dims */
+                                    GL_RGBA,          /* baseInternalFormat */
+                                    mformat,          /* gl_texture_format */
+                                    dest,             /* dest */
+                                    0, 0, 0,          /* dstX/Y/Zoffset */
+                                    pitch * cpp,      /* dstRowStride */
+                                    &dstImageOffsets, /* dstImageOffsets */
+                                    width, height, 1, /* size */
+                                    format, type,     /* src format/type */
+                                    pixels,           /* data source */
+                                    unpack);
+
+      /* unmap */
+      pipe->region_unmap(pipe, mt->region);
+
+      assert(success);
    }
 
    mt->target = GL_TEXTURE_2D;
@@ -146,8 +179,8 @@ static void
 free_mipmap_tree(struct pipe_context *pipe, struct pipe_mipmap_tree *mt)
 {
    pipe->region_release(pipe, &mt->region);
+   free(mt);
 }
-
 
 
 static void
@@ -183,7 +216,7 @@ draw_quad(struct st_context *st, GLfloat x, GLfloat y, GLfloat z,
    verts[3][0][0] = x;
    verts[3][0][1] = y + height;
    verts[3][1][0] = 0.0;
-   verts[3][1][1] = 11.0;
+   verts[3][1][1] = 1.0;
 
    /* same for all verts: */
    for (i = 0; i < 4; i++) {
@@ -204,32 +237,38 @@ draw_textured_quad(struct st_context *st, GLfloat x, GLfloat y, GLfloat z,
                    const struct gl_pixelstore_attrib *unpack,
                    const GLvoid *pixels)
 {
-   static struct st_fragment_program *stfp = NULL;
    struct pipe_mipmap_tree *mt;
-   struct pipe_setup_state setup;
-   struct pipe_fs_state fs;
 
    /* setup state: just scissor */
-   memset(&setup, 0, sizeof(setup));
-   if (st->ctx->Scissor.Enabled)
-      setup.scissor = 1;
-   st->pipe->set_setup_state(st->pipe, &setup);
+   {
+      struct pipe_setup_state setup;
+      memset(&setup, 0, sizeof(setup));
+      if (st->ctx->Scissor.Enabled)
+         setup.scissor = 1;
+      st->pipe->set_setup_state(st->pipe, &setup);
+   }
 
    /* fragment shader state: color pass-through program */
-   if (!stfp) {
-      stfp = make_drawpixels_shader(st);
+   {
+      static struct st_fragment_program *stfp = NULL;
+      struct pipe_fs_state fs;
+      if (!stfp) {
+         stfp = make_drawpixels_shader(st);
+      }
+      memset(&fs, 0, sizeof(fs));
+      fs.inputs_read = stfp->Base.Base.InputsRead;
+      fs.tokens = &stfp->tokens[0];
+      fs.constants = NULL;
+      st->pipe->set_fs_state(st->pipe, &fs);
    }
-   memset(&fs, 0, sizeof(fs));
-   fs.inputs_read = stfp->Base.Base.InputsRead;
-   fs.tokens = &stfp->tokens[0];
-   fs.constants = NULL;
-   st->pipe->set_fs_state(st->pipe, &fs);
 
    /* mipmap tree state: */
-   mt = make_mipmap_tree(st, width, height, format, type, unpack, pixels);
-   st->pipe->set_texture_state(st->pipe, 0, mt);
+   {
+      mt = make_mipmap_tree(st, width, height, format, type, unpack, pixels);
+      st->pipe->set_texture_state(st->pipe, 0, mt);
+   }
 
-   /* draw! */
+   /* draw textured quad */
    draw_quad(st, x, y, z, width, height);
 
    /* restore GL state */
