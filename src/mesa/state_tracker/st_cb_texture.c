@@ -114,21 +114,6 @@ st_get_texobj_mipmap_tree(struct gl_texture_object *texObj)
 }
 
 
-static GLuint
-mesa_format_to_pipe_format(GLuint mesaFormat)
-{
-   switch (mesaFormat) {
-      /* fix this */
-   case MESA_FORMAT_ARGB8888_REV:
-   case MESA_FORMAT_ARGB8888:
-      return PIPE_FORMAT_U_A8_R8_G8_B8;
-   default:
-      assert(0);
-      return 0;
-   }
-}
-
-
 static int
 compressed_num_bytes(GLuint mesaFormat)
 {
@@ -386,7 +371,7 @@ guess_and_alloc_mipmap_tree(struct pipe_context *pipe,
                                        comp_byte);
 
    stObj->mt->format
-      = mesa_format_to_pipe_format(stImage->base.TexFormat->MesaFormat);
+      = st_mesa_format_to_pipe_format(stImage->base.TexFormat->MesaFormat);
 
    DBG("%s - success\n", __FUNCTION__);
 }
@@ -1519,7 +1504,7 @@ st_finalize_mipmap_tree(GLcontext *ctx,
                                     comp_byte);
 
       stObj->mt->format
-         = mesa_format_to_pipe_format(firstImage->base.TexFormat->MesaFormat);
+         = st_mesa_format_to_pipe_format(firstImage->base.TexFormat->MesaFormat);
    }
 
    /* Pull in any images not in the object's tree:
