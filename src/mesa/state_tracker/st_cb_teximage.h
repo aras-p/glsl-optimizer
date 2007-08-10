@@ -30,14 +30,34 @@
 #define ST_CB_TEXIMAGE_H
 
 
+struct pipe_format_info
+{
+   GLuint format;
+   GLenum base_format;
+   GLubyte red_bits;
+   GLubyte green_bits;
+   GLubyte blue_bits;
+   GLubyte alpha_bits;
+   GLubyte luminance_bits;
+   GLubyte intensity_bits;
+   GLubyte depth_bits;
+   GLubyte stencil_bits;
+   GLubyte size;           /**< in bytes */
+};
+
+
+extern const struct pipe_format_info *
+st_get_format_info(GLuint format);
+
+
 extern GLuint
 st_choose_pipe_format(struct pipe_context *pipe, GLint internalFormat,
                       GLenum format, GLenum type);
 
 
-extern void st_init_cb_teximage( struct st_context *st );
-
-extern void st_destroy_cb_teximage( struct st_context *st );
+extern const struct gl_texture_format *
+st_ChooseTextureFormat(GLcontext * ctx, GLint internalFormat,
+                       GLenum format, GLenum type);
 
 
 #endif /* ST_CB_TEXIMAGE_H */

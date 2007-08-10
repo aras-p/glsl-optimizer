@@ -46,75 +46,6 @@
 #include "st_cb_teximage.h"
 
 
-struct pipe_format_info
-{
-   GLuint format;
-   GLenum base_format;
-   GLubyte red_bits;
-   GLubyte green_bits;
-   GLubyte blue_bits;
-   GLubyte alpha_bits;
-   GLubyte luminance_bits;
-   GLubyte intensity_bits;
-   GLubyte depth_bits;
-   GLubyte stencil_bits;
-   GLubyte size;           /**< in bytes */
-};
-
-
-/*
- * XXX temporary here
- */
-static const struct pipe_format_info *
-pipe_get_format_info(GLuint format)
-{
-   static const struct pipe_format_info info[] = {
-      {
-         PIPE_FORMAT_U_R8_G8_B8_A8,  /* format */
-         GL_RGBA,                    /* base_format */
-         8, 8, 8, 8, 0, 0,           /* color bits */
-         0, 0,                       /* depth, stencil */
-         4                           /* size in bytes */
-      },
-      {
-         PIPE_FORMAT_U_A8_R8_G8_B8,
-         GL_RGBA,                    /* base_format */
-         8, 8, 8, 8, 0, 0,           /* color bits */
-         0, 0,                       /* depth, stencil */
-         4                           /* size in bytes */
-      },
-      {
-         PIPE_FORMAT_U_A1_R5_G5_B5,
-         GL_RGBA,                    /* base_format */
-         5, 5, 5, 1, 0, 0,           /* color bits */
-         0, 0,                       /* depth, stencil */
-         2                           /* size in bytes */
-      },
-      {
-         PIPE_FORMAT_U_R5_G6_B5,
-         GL_RGBA,                    /* base_format */
-         5, 6, 5, 0, 0, 0,           /* color bits */
-         0, 0,                       /* depth, stencil */
-         2                           /* size in bytes */
-      },
-      /* XXX lots more */
-      {
-         PIPE_FORMAT_S8_Z24,
-         GL_DEPTH_STENCIL_EXT,       /* base_format */
-         0, 0, 0, 0, 0, 0,           /* color bits */
-         24, 8,                      /* depth, stencil */
-         4                           /* size in bytes */
-      }
-   };         
-   GLuint i;
-
-   for (i = 0; i < sizeof(info) / sizeof(info[0]); i++) {
-      if (info[i].format == format)
-         return info + i;
-   }
-   return NULL;
-}
-
 
 /**
  * gl_renderbuffer::AllocStorage()
@@ -128,7 +59,7 @@ st_renderbuffer_alloc_storage(GLcontext * ctx, struct gl_renderbuffer *rb,
    struct st_renderbuffer *strb = st_renderbuffer(rb);
    const GLuint pipeFormat
       = st_choose_pipe_format(pipe, internalFormat, GL_NONE, GL_NONE);
-   const struct pipe_format_info *info = pipe_get_format_info(pipeFormat);
+   const struct pipe_format_info *info = st_get_format_info(pipeFormat);
    GLuint cpp, pitch;
 
    assert(info);
