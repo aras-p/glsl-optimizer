@@ -37,53 +37,9 @@
 #include "intel_context.h"
 #include "intel_ioctl.h"
 #include "intel_batchbuffer.h"
-#include "intel_blit.h"
 #include "drm.h"
 
 
-int
-intelEmitIrqLocked(struct intel_context *intel)
-{
-   drmI830IrqEmit ie;
-   int ret, seq;
-
-   assert(((*(int *) intel->driHwLock) & ~DRM_LOCK_CONT) ==
-          (DRM_LOCK_HELD | intel->hHWContext));
-
-   ie.irq_seq = &seq;
-
-   ret = drmCommandWriteRead(intel->driFd, DRM_I830_IRQ_EMIT,
-                             &ie, sizeof(ie));
-   if (ret) {
-      fprintf(stderr, "%s: drmI830IrqEmit: %d\n", __FUNCTION__, ret);
-      exit(1);
-   }
-
-   DBG(IOCTL, "%s -->  %d\n", __FUNCTION__, seq);
-
-   return seq;
-}
-
-void
-intelWaitIrq(struct intel_context *intel, int seq)
-{
-   int ret;
-
-   DBG(IOCTL, "%s %d\n", __FUNCTION__, seq);
-
-   intel->iw.irq_seq = seq;
-
-   do {
-      ret =
-         drmCommandWrite(intel->driFd, DRM_I830_IRQ_WAIT, &intel->iw,
-                         sizeof(intel->iw));
-   } while (ret == -EAGAIN || ret == -EINTR);
-
-   if (ret) {
-      fprintf(stderr, "%s: drmI830IrqWait: %d\n", __FUNCTION__, ret);
-      exit(1);
-   }
-}
 
 
 void

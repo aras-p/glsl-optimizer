@@ -30,8 +30,6 @@
 
 #include "intel_context.h"
 
-void intelWaitIrq(struct intel_context *intel, int seq);
-int intelEmitIrqLocked(struct intel_context *intel);
 
 void intel_batch_ioctl(struct intel_context *intel,
                        GLuint start_offset,
