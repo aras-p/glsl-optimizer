@@ -1,6 +1,6 @@
 /**************************************************************************
  * 
- * Copyright 2003 Tungsten Graphics, Inc., Cedar Park, Texas.
+ * Copyright 2007 Tungsten Graphics, Inc., Cedar Park, Texas.
  * All Rights Reserved.
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a
@@ -26,9 +26,9 @@
  **************************************************************************/
 
 
-#include "imports.h"
-#include "mtypes.h"
-#include "bufferobj.h"
+#include "main/imports.h"
+#include "main/mtypes.h"
+#include "main/bufferobj.h"
 
 #include "st_context.h"
 #include "st_cb_bufferobjects.h"
@@ -57,6 +57,9 @@ st_bufferobj_alloc(GLcontext *ctx, GLuint name, GLenum target)
    struct st_context *st = st_context(ctx);
    struct st_buffer_object *st_obj = CALLOC_STRUCT(st_buffer_object);
 
+   if (!st_obj)
+      return NULL;
+
    _mesa_initialize_buffer_object(&st_obj->Base, name, target);
 
    st_obj->buffer = st->pipe->create_buffer( st->pipe, 32, 0 );
@@ -79,7 +82,7 @@ st_bufferobj_free(GLcontext *ctx, struct gl_buffer_object *obj)
    if (st_obj->buffer) 
       pipe->buffer_unreference(pipe, &st_obj->buffer);
 
-   FREE(st_obj);
+   free(st_obj);
 }
 
 
@@ -133,10 +136,10 @@ st_bufferobj_subdata(GLcontext *ctx,
  */
 static void
 st_bufferobj_get_subdata(GLcontext *ctx,
-                            GLenum target,
-                            GLintptrARB offset,
-                            GLsizeiptrARB size,
-                            GLvoid * data, struct gl_buffer_object *obj)
+                         GLenum target,
+                         GLintptrARB offset,
+                         GLsizeiptrARB size,
+                         GLvoid * data, struct gl_buffer_object *obj)
 {
    struct pipe_context *pipe = st_context(ctx)->pipe;
    struct st_buffer_object *st_obj = st_buffer_object(obj);
@@ -145,14 +148,12 @@ st_bufferobj_get_subdata(GLcontext *ctx,
 }
 
 
-
 /**
  * Called via glMapBufferARB().
  */
 static void *
-st_bufferobj_map(GLcontext *ctx,
-                    GLenum target,
-                    GLenum access, struct gl_buffer_object *obj)
+st_bufferobj_map(GLcontext *ctx, GLenum target, GLenum access,
+                 struct gl_buffer_object *obj)
 {
    struct pipe_context *pipe = st_context(ctx)->pipe;
    struct st_buffer_object *st_obj = st_buffer_object(obj);
@@ -162,12 +163,11 @@ st_bufferobj_map(GLcontext *ctx,
    case GL_WRITE_ONLY:
       flags = PIPE_BUFFER_FLAG_WRITE;
       break;
-
    case GL_READ_ONLY:
       flags = PIPE_BUFFER_FLAG_READ;
       break;
-
    case GL_READ_WRITE:
+      /* fall-through */
    default:
       flags = PIPE_BUFFER_FLAG_READ | PIPE_BUFFER_FLAG_WRITE;
       break;      
@@ -182,8 +182,7 @@ st_bufferobj_map(GLcontext *ctx,
  * Called via glMapBufferARB().
  */
 static GLboolean
-st_bufferobj_unmap(GLcontext *ctx,
-		   GLenum target, struct gl_buffer_object *obj)
+st_bufferobj_unmap(GLcontext *ctx, GLenum target, struct gl_buffer_object *obj)
 {
    struct pipe_context *pipe = st_context(ctx)->pipe;
    struct st_buffer_object *st_obj = st_buffer_object(obj);
