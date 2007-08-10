@@ -133,7 +133,10 @@ make_mipmap_tree(struct st_context *st,
       /* map texture region */
       dest = pipe->region_map(pipe, mt->region);
 
-      /* put image into texture region */
+      /* Put image into texture region.
+       * Note that the image is actually going to be upside down in
+       * the texture.  We deal with that with texcoords.
+       */
       success = mformat->StoreImage(st->ctx, 2,       /* dims */
                                     GL_RGBA,          /* baseInternalFormat */
                                     mformat,          /* gl_texture_format */
@@ -204,25 +207,25 @@ draw_quad(struct st_context *st, GLfloat x0, GLfloat y0, GLfloat z,
    verts[0][0][0] = x0;
    verts[0][0][1] = y0;
    verts[0][1][0] = 0.0;
-   verts[0][1][1] = 1.0;
+   verts[0][1][1] = 0.0;
 
    /* upper-right */
    verts[1][0][0] = x1;
    verts[1][0][1] = y0;
    verts[1][1][0] = 1.0;
-   verts[1][1][1] = 1.0;
+   verts[1][1][1] = 0.0;
 
    /* lower-right */
    verts[2][0][0] = x1;
    verts[2][0][1] = y1;
    verts[2][1][0] = 1.0;
-   verts[2][1][1] = 0.0;
+   verts[2][1][1] = 1.0;
 
    /* lower-left */
    verts[3][0][0] = x0;
    verts[3][0][1] = y1;
    verts[3][1][0] = 0.0;
-   verts[3][1][1] = 0.0;
+   verts[3][1][1] = 1.0;
 
    /* same for all verts: */
    for (i = 0; i < 4; i++) {
