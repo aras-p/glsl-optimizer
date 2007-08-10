@@ -36,9 +36,9 @@
 
 #include "intel_context.h"
 #include "intel_pipe.h"
-#include "intel_surface.h"
 
 #include "pipe/softpipe/sp_winsys.h"
+#include "pipe/p_defines.h"
 
 /* Shouldn't really need this:
  */
@@ -156,6 +156,24 @@ intel_create_buffer(struct softpipe_winsys *sws,
 
    return pipe_bo(buffer);
 }
+
+
+/**
+ * Return list of surface formats supported by this driver.
+ */
+static const GLuint *
+intel_supported_formats(struct pipe_context *pipe, GLuint *numFormats)
+{
+   static const GLuint formats[] = {
+      PIPE_FORMAT_U_A8_R8_G8_B8,
+      PIPE_FORMAT_U_R5_G6_B5,
+      PIPE_FORMAT_S8_Z24,
+   };
+
+   *numFormats = sizeof(formats) / sizeof(formats[0]);
+   return formats;
+}
+
 
 
 struct pipe_context *
