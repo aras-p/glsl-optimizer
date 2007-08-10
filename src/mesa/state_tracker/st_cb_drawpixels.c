@@ -102,16 +102,18 @@ make_mipmap_tree(struct st_context *st,
 {
    struct pipe_context *pipe = st->pipe;
    const struct gl_texture_format *mformat;
-   GLuint pipeFormat = st_choose_pipe_format(st->pipe, GL_RGBA, format, type);
-   int cpp = 4;
-   struct pipe_mipmap_tree *mt = CALLOC_STRUCT(pipe_mipmap_tree);
-   GLbitfield flags = PIPE_SURFACE_FLAG_TEXTURE;
+   const GLbitfield flags = PIPE_SURFACE_FLAG_TEXTURE;
+   struct pipe_mipmap_tree *mt;
+   GLuint pipeFormat, cpp;
 
    mformat = st_ChooseTextureFormat(st->ctx, GL_RGBA, format, type);
-   assert(format);
+   assert(mformat);
 
    pipeFormat = st_mesa_format_to_pipe_format(mformat->MesaFormat);
    assert(pipeFormat);
+   cpp = st_sizeof_format(pipeFormat);
+
+   mt = CALLOC_STRUCT(pipe_mipmap_tree);
 
    if (unpack->BufferObj && unpack->BufferObj->Name) {
       /*
@@ -137,7 +139,7 @@ make_mipmap_tree(struct st_context *st,
                                     mformat,          /* gl_texture_format */
                                     dest,             /* dest */
                                     0, 0, 0,          /* dstX/Y/Zoffset */
-                                    pitch * cpp,      /* dstRowStride */
+                                    pitch * cpp,      /* dstRowStride, bytes */
                                     &dstImageOffsets, /* dstImageOffsets */
                                     width, height, 1, /* size */
                                     format, type,     /* src format/type */
