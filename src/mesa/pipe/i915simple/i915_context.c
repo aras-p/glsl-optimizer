@@ -115,6 +115,35 @@ i915_supported_formats(struct pipe_context *pipe,
 }
 
 
+/**
+ * We might want to return max texture levels instead...
+ */
+static void
+i915_max_texture_size(struct pipe_context *pipe, GLuint textureType,
+                      GLuint *maxWidth, GLuint *maxHeight, GLuint *maxDepth)
+{
+   switch (textureType) {
+   case PIPE_TEXTURE_1D:
+      *maxWidth = 2048;
+      break; 
+   case PIPE_TEXTURE_2D:
+      *maxWidth =
+      *maxHeight = 2048;
+      break; 
+   case PIPE_TEXTURE_3D:
+      *maxWidth =
+      *maxHeight =
+      *maxDepth = 256;
+      break; 
+   case PIPE_TEXTURE_CUBE:
+      *maxWidth =
+      *maxHeight = 2048;
+      break; 
+   default:
+      assert(0);
+   }
+}
+
 
 static void i915_destroy( struct pipe_context *pipe )
 {
@@ -193,6 +222,7 @@ struct pipe_context *i915_create( struct pipe_winsys *pipe_winsys,
 
    i915->pipe.destroy = i915_destroy;
    i915->pipe.supported_formats = i915_supported_formats;
+   i915->pipe.max_texture_size = i915_max_texture_size;
    i915->pipe.draw_vb = i915_draw_vb;
    i915->pipe.draw_vertices = i915_draw_vertices;
    i915->pipe.clear = i915_clear;

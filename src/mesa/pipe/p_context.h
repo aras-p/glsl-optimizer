@@ -51,6 +51,11 @@ struct pipe_context {
     */
    const GLuint *(*supported_formats)(struct pipe_context *pipe,
                                       GLuint *numFormats);
+   void (*max_texture_size)(struct pipe_context *pipe,
+                            GLuint textureType, /* PIPE_TEXTURE_x */
+                            GLuint *maxWidth,
+                            GLuint *maxHeight,
+                            GLuint *maxDepth);
 
    /*
     * Drawing

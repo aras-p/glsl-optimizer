@@ -250,6 +250,15 @@ draw_textured_quad(GLcontext *ctx, GLint x, GLint y, GLfloat z,
    struct pipe_context *pipe = ctx->st->pipe;
    struct pipe_mipmap_tree *mt;
    GLfloat x0, y0, x1, y1;
+   GLuint maxWidth, maxHeight;
+
+   /* limit checks */
+   /* XXX if DrawPixels image is larger than max texture size, break
+    * it up into chunks.
+    */
+   pipe->max_texture_size(pipe, PIPE_TEXTURE_2D, &maxWidth, &maxHeight, NULL);
+   assert(width <= maxWidth);
+   assert(height <= maxHeight);
 
    /* setup state: just scissor */
    {

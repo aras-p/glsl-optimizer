@@ -76,6 +76,33 @@ softpipe_supported_formats(struct pipe_context *pipe, GLuint *numFormats)
 }
 
 
+static void
+softpipe_max_texture_size(struct pipe_context *pipe, GLuint textureType,
+                          GLuint *maxWidth, GLuint *maxHeight,
+                          GLuint *maxDepth)
+{
+   switch (textureType) {
+   case PIPE_TEXTURE_1D:
+      *maxWidth = 1 << (MAX_TEXTURE_LEVELS - 1);
+      break;
+   case PIPE_TEXTURE_2D:
+      *maxWidth =
+      *maxHeight = 1 << (MAX_TEXTURE_LEVELS - 1);
+      break;
+   case PIPE_TEXTURE_3D:
+      *maxWidth =
+      *maxHeight =
+      *maxDepth = 1 << (MAX_3D_TEXTURE_LEVELS - 1);
+      break;
+   case PIPE_TEXTURE_CUBE:
+      *maxWidth =
+      *maxHeight = MAX_TEXTURE_RECT_SIZE;
+      break;
+   default:
+      assert(0);
+   }
+}
+
 
 static void map_surfaces(struct softpipe_context *sp)
 {
@@ -201,8 +228,11 @@ struct pipe_context *softpipe_create( struct pipe_winsys *pipe_winsys,
    softpipe->pipe.winsys = pipe_winsys;
    softpipe->pipe.destroy = softpipe_destroy;
 
+   /* queries */
    softpipe->pipe.supported_formats = softpipe_supported_formats;
+   softpipe->pipe.max_texture_size = softpipe_max_texture_size;
 
+   /* state setters */
    softpipe->pipe.set_alpha_test_state = softpipe_set_alpha_test_state;
    softpipe->pipe.set_blend_color = softpipe_set_blend_color;
    softpipe->pipe.set_blend_state = softpipe_set_blend_state;
@@ -225,9 +255,11 @@ struct pipe_context *softpipe_create( struct pipe_winsys *pipe_winsys,
    softpipe->pipe.reset_occlusion_counter = softpipe_reset_occlusion_counter;
    softpipe->pipe.get_occlusion_counter = softpipe_get_occlusion_counter;
 
+   /* textures */
    softpipe->pipe.mipmap_tree_layout = softpipe_mipmap_tree_layout;
    softpipe->pipe.get_tex_surface = softpipe_get_tex_surface;
 
+   /* setup quad rendering stages */
    softpipe->quad.polygon_stipple = sp_quad_polygon_stipple_stage(softpipe);
    softpipe->quad.shade = sp_quad_shade_stage(softpipe);
    softpipe->quad.alpha_test = sp_quad_alpha_test_stage(softpipe);
