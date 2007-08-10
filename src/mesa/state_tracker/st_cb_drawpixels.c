@@ -35,10 +35,120 @@
 #include "st_context.h"
 #include "st_atom.h"
 #include "st_draw.h"
+#include "st_program.h"
 #include "st_cb_drawpixels.h"
+#include "st_cb_texture.h"
+#include "st_cb_teximage.h"
 #include "pipe/p_context.h"
 #include "pipe/p_defines.h"
+#include "pipe/tgsi/mesa/mesa_to_tgsi.h"
+#include "shader/prog_instruction.h"
 #include "vf/vf.h"
+
+
+
+/**
+ * Create a simple fragment shader that passes the texture color through
+ * to the fragment color.
+ */
+static struct st_fragment_program *
+make_drawpixels_shader(struct st_context *st)
+{
+   GLcontext *ctx = st->ctx;
+   struct st_fragment_program *stfp;
+   struct gl_program *p;
+   GLboolean b;
+
+   p = ctx->Driver.NewProgram(ctx, GL_FRAGMENT_PROGRAM_ARB, 0);
+   if (!p)
+      return NULL;
+
+   p->NumInstructions = 2;
+   p->Instructions = _mesa_alloc_instructions(2);
+   if (!p->Instructions) {
+      ctx->Driver.DeleteProgram(ctx, p);
+      return NULL;
+   }
+   _mesa_init_instructions(p->Instructions, 2);
+   /* TEX result.color, fragment.texcoord[0], texture[0], 2D; */
+   p->Instructions[0].Opcode = OPCODE_TEX;
+   p->Instructions[0].DstReg.File = PROGRAM_OUTPUT;
+   p->Instructions[0].DstReg.Index = FRAG_RESULT_COLR;
+   p->Instructions[0].SrcReg[0].File = PROGRAM_INPUT;
+   p->Instructions[0].SrcReg[0].Index = FRAG_ATTRIB_TEX0;
+   p->Instructions[0].TexSrcUnit = 0;
+   p->Instructions[0].TexSrcTarget = TEXTURE_2D_INDEX;
+   /* END; */
+   p->Instructions[1].Opcode = OPCODE_END;
+
+   p->InputsRead = FRAG_BIT_COL0;
+   p->OutputsWritten = (1 << FRAG_RESULT_COLR);
+
+   stfp = (struct st_fragment_program *) p;
+   /* compile into tgsi format */
+   b = tgsi_mesa_compile_fp_program(&stfp->Base,
+                                    stfp->tokens, ST_FP_MAX_TOKENS);
+   assert(b);
+
+   return stfp;
+}
+
+
+static struct pipe_mipmap_tree *
+make_mipmap_tree(struct st_context *st,
+                 GLsizei width, GLsizei height, GLenum format, GLenum type,
+                 const struct gl_pixelstore_attrib *unpack,
+                 const GLvoid *pixels)
+{
+   GLuint pipeFormat = st_choose_pipe_format(st->pipe, format, type, GL_RGBA);
+   int cpp = 4, pitch;
+   struct pipe_mipmap_tree *mt = CALLOC_STRUCT(pipe_mipmap_tree);
+
+   assert(pipeFormat);
+
+   pitch = width; /* XXX pad */
+
+   if (unpack->BufferObj) {
+      /*
+      mt->region = buffer_object_region(unpack->BufferObj);
+      */
+   }
+   else {
+      mt->region = st->pipe->region_alloc(st->pipe, cpp, pitch, height);
+      /* XXX do texstore() here */
+   }
+
+   mt->target = GL_TEXTURE_2D;
+   mt->internal_format = GL_RGBA;
+   mt->format = pipeFormat;
+   mt->first_level = 0;
+   mt->last_level = 0;
+   mt->width0 = width;
+   mt->height0 = height;
+   mt->depth0 = 1;
+   mt->cpp = cpp;
+   mt->compressed = 0;
+   mt->pitch = pitch;
+   mt->depth_pitch = 0;
+   mt->total_height = height;
+   mt->level[0].level_offset = 0;
+   mt->level[0].width = width;
+   mt->level[0].height = height;
+   mt->level[0].depth = 1;
+   mt->level[0].nr_images = 1;
+   mt->level[0].image_offset = NULL;
+   mt->refcount = 1;
+
+   return mt;
+}
+
+
+static void
+free_mipmap_tree(struct pipe_context *pipe, struct pipe_mipmap_tree *mt)
+{
+   pipe->region_release(pipe, &mt->region);
+}
+
 
 
 static void
@@ -95,7 +205,10 @@ draw_textured_quad(struct st_context *st, GLfloat x, GLfloat y, GLfloat z,
                    const struct gl_pixelstore_attrib *unpack,
                    const GLvoid *pixels)
 {
+   static struct st_fragment_program *stfp = NULL;
+   struct pipe_mipmap_tree *mt;
    struct pipe_setup_state setup;
+   struct pipe_fs_state fs;
 
    /* setup state: just scissor */
    memset(&setup, 0, sizeof(setup));
@@ -103,13 +216,28 @@ draw_textured_quad(struct st_context *st, GLfloat x, GLfloat y, GLfloat z,
       setup.scissor = 1;
    st->pipe->set_setup_state(st->pipe, &setup);
 
+   /* fragment shader state: color pass-through program */
+   if (!stfp) {
+      stfp = make_drawpixels_shader(st);
+   }
+   memset(&fs, 0, sizeof(fs));
+   fs.inputs_read = stfp->Base.Base.InputsRead;
+   fs.tokens = &stfp->tokens[0];
+   fs.constants = NULL;
+   st->pipe->set_fs_state(st->pipe, &fs);
 
-   /* XXX upload the texture image */
+   /* mipmap tree state: */
+   mt = make_mipmap_tree(st, width, height, format, type, unpack, pixels);
+   st->pipe->set_texture_state(st->pipe, 0, mt);
 
+   /* draw! */
    draw_quad(st, x, y, z, width, height);
 
    /* restore GL state */
    st->pipe->set_setup_state(st->pipe, &st->state.setup);
+   st->pipe->set_fs_state(st->pipe, &st->state.fs);
+
+   free_mipmap_tree(st->pipe, mt);
 }
 
 
