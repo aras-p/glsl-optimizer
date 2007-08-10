@@ -45,7 +45,6 @@
 #include "intel_ioctl.h"
 #include "intel_batchbuffer.h"
 #include "intel_blit.h"
-#include "intel_tex_layout.h"
 
 #include "state_tracker/st_public.h"
 #include "state_tracker/st_context.h"
