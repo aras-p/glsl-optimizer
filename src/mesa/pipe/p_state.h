@@ -55,6 +55,9 @@
 /* fwd decl */
 struct pipe_surface;
 
+/* opaque type */
+struct pipe_buffer_handle;
+
 
 /***
  *** State objects
@@ -238,7 +241,7 @@ struct pipe_sampler_state
 
 struct pipe_region
 {
-   void *buffer;    /**< driver private buffer handle */
+   struct pipe_buffer_handle *buffer; /**< driver private buffer handle */
 
    GLuint refcount; /**< Reference count for region */
    GLuint cpp;      /**< bytes per pixel */
@@ -324,10 +327,6 @@ struct pipe_mipmap_tree
     */
    GLuint refcount;
 };
-
-
-
-struct pipe_buffer_handle;
 
 
 #endif
