@@ -186,10 +186,11 @@ do_flush_locked(struct intel_batchbuffer *batch,
       ptr[r->offset / 4] = driBOOffset(r->buf) + r->delta;
    }
 
+   if (INTEL_DEBUG & DEBUG_BATCH) {
+      if (0) i915_dump_batchbuffer(ptr, ptr + used/4);
+      intel_dump_batchbuffer(0, ptr, used);
+   }
 
-   i915_dump_batchbuffer(ptr, ptr + used/4);
-
-   intel_dump_batchbuffer(0, ptr, used);
 
    driBOUnmap(batch->buffer);
    batch->map = NULL;

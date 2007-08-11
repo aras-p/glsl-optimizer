@@ -29,7 +29,7 @@
 
 #include "i915_reg.h"
 #include "i915_debug.h"
-//#include "i915_fpc.h"
+#include "main/imports.h"
 #include "shader/program.h"
 #include "shader/prog_instruction.h"
 #include "shader/prog_print.h"
