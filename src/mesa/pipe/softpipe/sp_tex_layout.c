@@ -116,6 +116,12 @@ sp_miptree_layout_2d( struct pipe_mipmap_tree *mt )
    GLuint height = mt->height0;
 
    mt->pitch = mt->width0;
+   /* XXX FIX THIS:
+    * we use alignment=64 bytes in sp_region_alloc(). If we change
+    * that, change this too.
+    */
+   if (mt->pitch < 16)
+      mt->pitch = 16;
 
    /* May need to adjust pitch to accomodate the placement of
     * the 2nd mipmap.  This occurs when the alignment
