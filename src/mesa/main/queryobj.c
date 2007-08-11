@@ -30,11 +30,6 @@
 #include "queryobj.h"
 #include "mtypes.h"
 
-#if 1 /*PIPE*/
-#include "pipe/p_context.h"
-#include "state_tracker/st_context.h"
-#endif
-
 
 /**
  * Allocate a new query object.  This is a fallback routine called via
@@ -225,10 +220,6 @@ _mesa_BeginQueryARB(GLenum target, GLuint id)
    q->Result = 0;
    q->Ready = GL_FALSE;
 
-#if 1 /*PIPE*/
-   ctx->st->pipe->reset_occlusion_counter(ctx->st->pipe);
-#endif
-
    if (target == GL_SAMPLES_PASSED_ARB) {
       ctx->Query.CurrentOcclusionObject = q;
    }
@@ -291,12 +282,6 @@ _mesa_EndQueryARB(GLenum target)
       /* if we're using software rendering/querying */
       q->Ready = GL_TRUE;
    }
-
-#if 1 /*PIPE*/
-   if (target == GL_SAMPLES_PASSED_ARB) {
-      q->Result = ctx->st->pipe->get_occlusion_counter(ctx->st->pipe);
-   }
-#endif
 }
 
 
