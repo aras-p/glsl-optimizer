@@ -168,6 +168,23 @@ write_quad_ub(struct softpipe_surface *sps, GLint x, GLint y,
 }
 
 
+static void
+get_tile(struct pipe_surface *ps,
+         GLuint x, GLuint y, GLuint w, GLuint h, GLfloat *p)
+{
+
+}
+
+
+static void
+put_tile(struct pipe_surface *ps,
+         GLuint x, GLuint y, GLuint w, GLuint h, const GLfloat *p)
+{
+
+}
+
+
+
 /**
  * Called to create a pipe_surface for each X renderbuffer.
  * Note: this is being used instead of pipe->surface_alloc() since we
@@ -186,6 +203,8 @@ xmesa_new_surface(GLcontext *ctx, struct xmesa_renderbuffer *xrb)
 #if 0
    sps->surface.rb = xrb; /* XXX only needed for quad funcs above */
 #endif
+   sps->surface.refcount = 1;
+
    sps->surface.width = xrb->St.Base.Width;
    sps->surface.height = xrb->St.Base.Height;
 
@@ -195,13 +214,15 @@ xmesa_new_surface(GLcontext *ctx, struct xmesa_renderbuffer *xrb)
    sps->write_quad_f = write_quad_f;
    sps->write_quad_f_swz = write_quad_f_swz;
    sps->write_quad_ub = write_quad_ub;
+   sps->surface.get_tile = get_tile;
+   sps->surface.put_tile = put_tile;
 
    /* Note, the region we allocate doesn't actually have any storage
     * since we're drawing into an XImage or Pixmap.
     * The region's size will get set in the xmesa_alloc_front/back_storage()
     * functions.
     */
-   sps->surface.region = pipe->region_alloc(pipe, 0, 0, 0);
+   sps->surface.region = pipe->region_alloc(pipe, 0, 0, 0, 0x0);
 
    return &sps->surface;
 }
@@ -215,6 +236,7 @@ xmesa_surface_alloc(struct pipe_context *pipe, GLuint pipeFormat)
    assert(pipeFormat);
 
    xms->surface.surface.format = pipeFormat;
+   xms->surface.surface.refcount = 1;
 
    switch (pipeFormat) {
    case PIPE_FORMAT_U_A8_R8_G8_B8:
@@ -225,6 +247,8 @@ xmesa_surface_alloc(struct pipe_context *pipe, GLuint pipeFormat)
       xms->surface.write_quad_f = write_quad_f;
       xms->surface.write_quad_f_swz = write_quad_f_swz;
       xms->surface.write_quad_ub = write_quad_ub;
+      xms->surface.surface.get_tile = get_tile;
+      xms->surface.surface.put_tile = put_tile;
       break;
    case PIPE_FORMAT_S8_Z24:
       softpipe_init_surface_funcs(&xms->surface);
@@ -236,6 +260,14 @@ xmesa_surface_alloc(struct pipe_context *pipe, GLuint pipeFormat)
    default:
       abort();
    }
+
+   /* Note, the region we allocate doesn't actually have any storage
+    * since we're drawing into an XImage or Pixmap.
+    * The region's size will get set in the xmesa_alloc_front/back_storage()
+    * functions.
+    */
+   if (pipe)
+      xms->surface.surface.region = pipe->region_alloc(pipe, 1, 0, 0, 0x0);
 
    return &xms->surface.surface;
 }

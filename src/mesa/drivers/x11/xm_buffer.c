@@ -248,6 +248,20 @@ xmesa_delete_renderbuffer(struct gl_renderbuffer *rb)
 }
 
 
+static void
+finish_surface_init(GLcontext *ctx, struct xmesa_renderbuffer *xrb)
+{
+   struct pipe_context *pipe = ctx->st->pipe;
+
+   if (!xrb->St.surface) {
+      xrb->St.surface = xmesa_new_surface(ctx, xrb);
+   }
+   if (!xrb->St.surface->region) {
+      xrb->St.surface->region = pipe->region_alloc(pipe, 1, 0, 0, 0x0);
+   }
+}
+
+
 /**
  * Reallocate renderbuffer storage for front color buffer.
  * Called via gl_renderbuffer::AllocStorage()
@@ -271,8 +285,9 @@ xmesa_alloc_front_storage(GLcontext *ctx, struct gl_renderbuffer *rb,
    rb->Height = height;
    rb->InternalFormat = internalFormat;
 
-   if (!xrb->St.surface)
-      xrb->St.surface = xmesa_new_surface(ctx, xrb);
+   if (!xrb->St.surface || !xrb->St.surface->region)
+      finish_surface_init(ctx, xrb);
+
    xrb->St.surface->width = width;
    xrb->St.surface->height = height;
 
@@ -325,8 +340,9 @@ xmesa_alloc_back_storage(GLcontext *ctx, struct gl_renderbuffer *rb,
       xrb->origin4 = NULL;
    }
 
-   if (!xrb->St.surface)
-      xrb->St.surface = xmesa_new_surface(ctx, xrb);
+   if (!xrb->St.surface || !xrb->St.surface->region)
+      finish_surface_init(ctx, xrb);
+
    xrb->St.surface->width = width;
    xrb->St.surface->height = height;
 
@@ -340,7 +356,7 @@ xmesa_alloc_back_storage(GLcontext *ctx, struct gl_renderbuffer *rb,
  */
 struct xmesa_renderbuffer *
 xmesa_create_renderbuffer(GLcontext *ctx, GLuint name, const GLvisual *visual,
-                       GLboolean backBuffer)
+                          GLboolean backBuffer)
 {
    struct xmesa_renderbuffer *xrb = CALLOC_STRUCT(xmesa_renderbuffer);
    struct pipe_context *pipe = NULL;/*ctx->st->pipe;*/
