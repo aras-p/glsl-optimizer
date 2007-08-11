@@ -28,7 +28,6 @@
 #ifndef P_WINSYS_H
 #define P_WINSYS_H
 
-#include "main/mtypes.h"
 
 /* This is the interface that softpipe requires any window system
  * hosting it to implement.  This is the only include file in softpipe
