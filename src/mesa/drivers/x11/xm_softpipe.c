@@ -130,6 +130,8 @@ xm_buffer_data(struct pipe_winsys *pws, struct pipe_buffer_handle *buf,
    struct xm_buffer *xm_buf = xm_bo(buf);
    assert(!xm_buf->data);
    xm_buf->data = malloc(size);
+   if (data)
+      memcpy(xm_buf->data, data, size);
 }
 
 static void

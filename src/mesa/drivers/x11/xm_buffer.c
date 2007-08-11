@@ -252,10 +252,6 @@ static void
 finish_surface_init(GLcontext *ctx, struct xmesa_renderbuffer *xrb)
 {
    struct pipe_context *pipe = ctx->st->pipe;
-
-   if (!xrb->St.surface) {
-      xrb->St.surface = xmesa_new_surface(ctx, xrb);
-   }
    if (!xrb->St.surface->region) {
       xrb->St.surface->region = pipe->region_alloc(pipe, 1, 0, 0, 0x0);
    }
@@ -391,10 +387,9 @@ xmesa_create_renderbuffer(GLcontext *ctx, GLuint name, const GLvisual *visual,
       }
       /* only need to set Red/Green/EtcBits fields for user-created RBs */
 
-      xrb->St.surface = xmesa_surface_alloc(pipe, pipeFormat);
+      xrb->St.surface = xmesa_new_color_surface(pipe, pipeFormat);
       xms = (struct xmesa_surface *) xrb->St.surface;
       xms->xrb = xrb;
-
    }
    return xrb;
 }

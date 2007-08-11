@@ -172,7 +172,18 @@ static void
 get_tile(struct pipe_surface *ps,
          GLuint x, GLuint y, GLuint w, GLuint h, GLfloat *p)
 {
-
+   struct xmesa_renderbuffer *xrb = xmesa_rb((struct softpipe_surface *) ps);
+   GLubyte tmp[MAX_WIDTH * 4];
+   GLuint i, j;
+   GET_CURRENT_CONTEXT(ctx);
+   FLIP(y);
+   for (i = 0; i < h; i++) {
+      xrb->St.Base.GetRow(ctx, &xrb->St.Base, w, x, y - i, tmp);
+      for (j = 0; j < w * 4; j++) {
+         p[j] = UBYTE_TO_FLOAT(tmp[j]);
+      }
+      p += w * 4;
+   }
 }
 
 
@@ -180,7 +191,7 @@ static void
 put_tile(struct pipe_surface *ps,
          GLuint x, GLuint y, GLuint w, GLuint h, const GLfloat *p)
 {
-
+   assert(0);
 }
 
 
@@ -191,45 +202,7 @@ put_tile(struct pipe_surface *ps,
  * have special/unique quad read/write functions for X.
  */
 struct pipe_surface *
-xmesa_new_surface(GLcontext *ctx, struct xmesa_renderbuffer *xrb)
-{
-   struct pipe_context *pipe = ctx->st->pipe;
-   struct softpipe_surface *sps;
-
-   sps = CALLOC_STRUCT(softpipe_surface);
-   if (!sps)
-      return NULL;
-
-#if 0
-   sps->surface.rb = xrb; /* XXX only needed for quad funcs above */
-#endif
-   sps->surface.refcount = 1;
-
-   sps->surface.width = xrb->St.Base.Width;
-   sps->surface.height = xrb->St.Base.Height;
-
-   sps->read_quad_f = read_quad_f;
-   sps->read_quad_f_swz = read_quad_f_swz;
-   sps->read_quad_ub = read_quad_ub;
-   sps->write_quad_f = write_quad_f;
-   sps->write_quad_f_swz = write_quad_f_swz;
-   sps->write_quad_ub = write_quad_ub;
-   sps->surface.get_tile = get_tile;
-   sps->surface.put_tile = put_tile;
-
-   /* Note, the region we allocate doesn't actually have any storage
-    * since we're drawing into an XImage or Pixmap.
-    * The region's size will get set in the xmesa_alloc_front/back_storage()
-    * functions.
-    */
-   sps->surface.region = pipe->region_alloc(pipe, 0, 0, 0, 0x0);
-
-   return &sps->surface;
-}
-
-
-struct pipe_surface *
-xmesa_surface_alloc(struct pipe_context *pipe, GLuint pipeFormat)
+xmesa_new_color_surface(struct pipe_context *pipe, GLuint pipeFormat)
 {
    struct xmesa_surface *xms = CALLOC_STRUCT(xmesa_surface);
 
@@ -268,6 +241,31 @@ xmesa_surface_alloc(struct pipe_context *pipe, GLuint pipeFormat)
     */
    if (pipe)
       xms->surface.surface.region = pipe->region_alloc(pipe, 1, 0, 0, 0x0);
+
+   return &xms->surface.surface;
+}
+
+
+/**
+ * Called via pipe->surface_alloc() to create new surfaces (textures,
+ * renderbuffers, etc.
+ */
+struct pipe_surface *
+xmesa_surface_alloc(struct pipe_context *pipe, GLuint pipeFormat)
+{
+   struct xmesa_surface *xms = CALLOC_STRUCT(xmesa_surface);
+
+   assert(pipeFormat);
+
+   xms->surface.surface.format = pipeFormat;
+   xms->surface.surface.refcount = 1;
+   /*
+    * This is really just a softpipe surface, not an XImage/Pixmap surface.
+    */
+   softpipe_init_surface_funcs(&xms->surface);
+
+   assert(pipe);
+   xms->surface.surface.region = pipe->region_alloc(pipe, 1, 0, 0, 0x0);
 
    return &xms->surface.surface;
 }

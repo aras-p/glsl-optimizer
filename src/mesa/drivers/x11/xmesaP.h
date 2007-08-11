@@ -603,9 +603,6 @@ struct xmesa_surface
 };
 
 
-extern struct pipe_surface *
-xmesa_new_surface(GLcontext *ctx, struct xmesa_renderbuffer *xrb);
-
 extern void
 xmesa_clear(struct pipe_context *pipe, struct pipe_surface *ps, GLuint value);
 
@@ -617,6 +614,9 @@ xmesa_create_softpipe(XMesaContext xm);
 
 extern struct pipe_surface *
 xmesa_surface_alloc(struct pipe_context *pipe, GLuint format);
+
+extern struct pipe_surface *
+xmesa_new_color_surface(struct pipe_context *pipe, GLuint format);
 
 extern const GLuint *
 xmesa_supported_formats(struct pipe_context *pipe, GLuint *numFormats);
