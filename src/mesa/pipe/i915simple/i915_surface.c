@@ -43,6 +43,8 @@ i915_get_tile(struct pipe_surface *ps,
               GLuint x, GLuint y, GLuint w, GLuint h, GLfloat *p)
 {
    /* any need to get tiles from i915 surfaces? */
+   /* Yes, for glReadPixels (for a while at least). */
+   assert(0);
 }
 
 
@@ -51,6 +53,7 @@ i915_put_tile(struct pipe_surface *ps,
               GLuint x, GLuint y, GLuint w, GLuint h, const GLfloat *p)
 {
    /* any need to put tiles into i915 surfaces? */
+   assert(0);
 }
 
 
