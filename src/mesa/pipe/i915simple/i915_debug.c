@@ -32,7 +32,7 @@
 #include "i915_winsys.h"
 #include "i915_debug.h"
 
-#define PRINTF( stream, ... ) (stream)->winsys->printf( (stream)->winsys, __VA_ARGS__ )
+#define PRINTF( ... ) (stream)->winsys->printf( (stream)->winsys, __VA_ARGS__ )
 
 
 static GLboolean debug( struct debug_stream *stream, const char *name, GLuint len )
@@ -41,19 +41,19 @@ static GLboolean debug( struct debug_stream *stream, const char *name, GLuint le
    GLuint *ptr = (GLuint *)(stream->ptr + stream->offset);
    
    if (len == 0) {
-      PRINTF( stream, "Error - zero length packet (0x%08x)\n", stream->ptr[0] );
+      PRINTF( "Error - zero length packet (0x%08x)\n", stream->ptr[0] );
       assert(0);
       return GL_FALSE;
    }
 
    if (stream->print_addresses)
-      PRINTF(stream, "%08x:  ", stream->offset);
+      PRINTF("%08x:  ", stream->offset);
 
 
-   PRINTF(stream, "%s (%d dwords):\n", name, len);
+   PRINTF("%s (%d dwords):\n", name, len);
    for (i = 0; i < len; i++)
-      PRINTF(stream, "\t\t0x%08x\n",  ptr[i]);   
-   PRINTF(stream, "\n");
+      PRINTF("\t\t0x%08x\n",  ptr[i]);   
+   PRINTF("\n");
 
    stream->offset += len * sizeof(GLuint);
    
@@ -90,17 +90,17 @@ static GLboolean debug_prim( struct debug_stream *stream, const char *name,
    
 
 
-   PRINTF(stream, "%s %s (%d dwords):\n", name, prim, len);
-   PRINTF(stream, "\t\t0x%08x\n",  ptr[0]);   
+   PRINTF("%s %s (%d dwords):\n", name, prim, len);
+   PRINTF("\t\t0x%08x\n",  ptr[0]);   
    for (i = 1; i < len; i++) {
       if (dump_floats)
-	 PRINTF(stream, "\t\t0x%08x // %f\n",  ptr[i], *(GLfloat *)&ptr[i]);   
+	 PRINTF("\t\t0x%08x // %f\n",  ptr[i], *(GLfloat *)&ptr[i]);   
       else
-	 PRINTF(stream, "\t\t0x%08x\n",  ptr[i]);   
+	 PRINTF("\t\t0x%08x\n",  ptr[i]);   
    }
 
       
-   PRINTF(stream, "\n");
+   PRINTF("\n");
 
    stream->offset += len * sizeof(GLuint);
    
@@ -115,15 +115,15 @@ static GLboolean debug_program( struct debug_stream *stream, const char *name, G
    GLuint *ptr = (GLuint *)(stream->ptr + stream->offset);
 
    if (len == 0) {
-      PRINTF(stream, "Error - zero length packet (0x%08x)\n", stream->ptr[0]);
+      PRINTF("Error - zero length packet (0x%08x)\n", stream->ptr[0]);
       assert(0);
       return GL_FALSE;
    }
 
    if (stream->print_addresses)
-      PRINTF(stream, "%08x:  ", stream->offset);
+      PRINTF("%08x:  ", stream->offset);
 
-   PRINTF(stream, "%s (%d dwords):\n", name, len);
+   PRINTF("%s (%d dwords):\n", name, len);
    i915_disassemble_program( stream, ptr, len );
 
    stream->offset += len * sizeof(GLuint);
@@ -137,17 +137,17 @@ static GLboolean debug_chain( struct debug_stream *stream, const char *name, GLu
    GLuint old_offset = stream->offset + len * sizeof(GLuint);
    GLuint i;
 
-   PRINTF(stream, "%s (%d dwords):\n", name, len);
+   PRINTF("%s (%d dwords):\n", name, len);
    for (i = 0; i < len; i++)
-      PRINTF(stream, "\t\t0x%08x\n",  ptr[i]);
+      PRINTF("\t\t0x%08x\n",  ptr[i]);
 
    stream->offset = ptr[1] & ~0x3;
    
    if (stream->offset < old_offset)
-      PRINTF(stream, "\n... skipping backwards from 0x%x --> 0x%x ...\n\n", 
+      PRINTF("\n... skipping backwards from 0x%x --> 0x%x ...\n\n", 
 		   old_offset, stream->offset );
    else
-      PRINTF(stream, "\n... skipping from 0x%x --> 0x%x ...\n\n", 
+      PRINTF("\n... skipping from 0x%x --> 0x%x ...\n\n", 
 		   old_offset, stream->offset );
 
 
@@ -167,10 +167,10 @@ static GLboolean debug_variable_length_prim( struct debug_stream *stream )
 
    len = 1+(i+2)/2;
 
-   PRINTF(stream, "3DPRIM, %s variable length %d indicies (%d dwords):\n", prim, i, len);
+   PRINTF("3DPRIM, %s variable length %d indicies (%d dwords):\n", prim, i, len);
    for (i = 0; i < len; i++)
-      PRINTF(stream, "\t\t0x%08x\n",  ptr[i]);
-   PRINTF(stream, "\n");
+      PRINTF("\t\t0x%08x\n",  ptr[i]);
+   PRINTF("\n");
 
    stream->offset += len * sizeof(GLuint);
    return GL_TRUE;
@@ -185,16 +185,16 @@ static GLboolean debug_load_immediate( struct debug_stream *stream,
    GLuint bits = (ptr[0] >> 4) & 0xff;
    GLuint i, j = 0;
    
-   PRINTF(stream, "%s (%d dwords, flags: %x):\n", name, len, bits);
-   PRINTF(stream, "\t\t0x%08x\n",  ptr[j++]);
+   PRINTF("%s (%d dwords, flags: %x):\n", name, len, bits);
+   PRINTF("\t\t0x%08x\n",  ptr[j++]);
 
    for (i = 0; i < 8; i++) {
       if (bits & (1<<i)) {
-	 PRINTF(stream, "\t  LIS%d: 0x%08x\n", i, ptr[j++]);
+	 PRINTF("\t  LIS%d: 0x%08x\n", i, ptr[j++]);
       }
    }
 
-   PRINTF(stream, "\n");
+   PRINTF("\n");
 
    assert(j == len);
 
@@ -213,34 +213,34 @@ static GLboolean debug_load_indirect( struct debug_stream *stream,
    GLuint bits = (ptr[0] >> 8) & 0x3f;
    GLuint i, j = 0;
    
-   PRINTF(stream, "%s (%d dwords):\n", name, len);
-   PRINTF(stream, "\t\t0x%08x\n",  ptr[j++]);
+   PRINTF("%s (%d dwords):\n", name, len);
+   PRINTF("\t\t0x%08x\n",  ptr[j++]);
 
    for (i = 0; i < 6; i++) {
       if (bits & (1<<i)) {
 	 switch (1<<(8+i)) {
 	 case LI0_STATE_STATIC_INDIRECT:
-	    PRINTF(stream, "        STATIC: 0x%08x | %x\n", ptr[j]&~3, ptr[j]&3); j++;
-	    PRINTF(stream, "                0x%08x\n", ptr[j++]);
+	    PRINTF("        STATIC: 0x%08x | %x\n", ptr[j]&~3, ptr[j]&3); j++;
+	    PRINTF("                0x%08x\n", ptr[j++]);
 	    break;
 	 case LI0_STATE_DYNAMIC_INDIRECT:
-	    PRINTF(stream, "       DYNAMIC: 0x%08x | %x\n", ptr[j]&~3, ptr[j]&3); j++;
+	    PRINTF("       DYNAMIC: 0x%08x | %x\n", ptr[j]&~3, ptr[j]&3); j++;
 	    break;
 	 case LI0_STATE_SAMPLER:
-	    PRINTF(stream, "       SAMPLER: 0x%08x | %x\n", ptr[j]&~3, ptr[j]&3); j++;
-	    PRINTF(stream, "                0x%08x\n", ptr[j++]);
+	    PRINTF("       SAMPLER: 0x%08x | %x\n", ptr[j]&~3, ptr[j]&3); j++;
+	    PRINTF("                0x%08x\n", ptr[j++]);
 	    break;
 	 case LI0_STATE_MAP:
-	    PRINTF(stream, "           MAP: 0x%08x | %x\n", ptr[j]&~3, ptr[j]&3); j++;
-	    PRINTF(stream, "                0x%08x\n", ptr[j++]);
+	    PRINTF("           MAP: 0x%08x | %x\n", ptr[j]&~3, ptr[j]&3); j++;
+	    PRINTF("                0x%08x\n", ptr[j++]);
 	    break;
 	 case LI0_STATE_PROGRAM:
-	    PRINTF(stream, "       PROGRAM: 0x%08x | %x\n", ptr[j]&~3, ptr[j]&3); j++;
-	    PRINTF(stream, "                0x%08x\n", ptr[j++]);
+	    PRINTF("       PROGRAM: 0x%08x | %x\n", ptr[j]&~3, ptr[j]&3); j++;
+	    PRINTF("                0x%08x\n", ptr[j++]);
 	    break;
 	 case LI0_STATE_CONSTANTS:
-	    PRINTF(stream, "     CONSTANTS: 0x%08x | %x\n", ptr[j]&~3, ptr[j]&3); j++;
-	    PRINTF(stream, "                0x%08x\n", ptr[j++]);
+	    PRINTF("     CONSTANTS: 0x%08x | %x\n", ptr[j]&~3, ptr[j]&3); j++;
+	    PRINTF("                0x%08x\n", ptr[j++]);
 	    break;
 	 default:
 	    assert(0);
@@ -250,10 +250,10 @@ static GLboolean debug_load_indirect( struct debug_stream *stream,
    }
 
    if (bits == 0) {
-      PRINTF(stream, "\t  DUMMY: 0x%08x\n", ptr[j++]);
+      PRINTF("\t  DUMMY: 0x%08x\n", ptr[j++]);
    }
 
-   PRINTF(stream, "\n");
+   PRINTF("\n");
 
 
    assert(j == len);
