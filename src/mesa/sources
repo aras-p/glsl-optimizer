@@ -198,6 +198,7 @@ STATETRACKER_SOURCES = \
 	state_tracker/st_cb_drawpixels.c \
 	state_tracker/st_cb_fbo.c \
 	state_tracker/st_cb_program.c \
+	state_tracker/st_cb_queryobj.c \
 	state_tracker/st_cb_readpixels.c \
 	state_tracker/st_cb_strings.c \
 	state_tracker/st_cb_texture.c \

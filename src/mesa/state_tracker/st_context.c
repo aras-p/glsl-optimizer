@@ -32,6 +32,7 @@
 #include "st_cb_clear.h"
 #include "st_cb_drawpixels.h"
 #include "st_cb_fbo.h"
+#include "st_cb_queryobj.h"
 #include "st_cb_readpixels.h"
 #include "st_cb_texture.h"
 #include "st_cb_flush.h"
@@ -109,6 +110,7 @@ void st_init_driver_functions(struct dd_function_table *functions)
    st_init_drawpixels_functions(functions);
    st_init_fbo_functions(functions);
    st_init_program_functions(functions);
+   st_init_query_functions(functions);
    st_init_readpixels_functions(functions);
    st_init_texture_functions(functions);
    st_init_flush_functions(functions);
