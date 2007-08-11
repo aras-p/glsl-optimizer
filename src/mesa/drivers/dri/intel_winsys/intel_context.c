@@ -40,7 +40,7 @@
 
 #include "intel_screen.h"
 #include "intel_context.h"
-#include "intel_buffers.h"
+#include "intel_swapbuffers.h"
 #include "intel_winsys.h"
 #include "intel_batchbuffer.h"
 
@@ -81,9 +81,6 @@ int __intel_debug = 0;
 
 
 #define DRIVER_DATE                     "20070731"
-
-_glthread_Mutex lockMutex;
-static GLboolean lockMutexInit = GL_FALSE;
 
 
 
@@ -221,11 +218,6 @@ intelCreateContext(const __GLcontextModes * mesaVis,
    intel->intelScreen = intelScreen;
    intel->driScreen = sPriv;
    intel->sarea = saPriv;
-
-   if (!lockMutexInit) {
-      lockMutexInit = GL_TRUE;
-      _glthread_INIT_MUTEX(lockMutex);
-   }
 
    driParseConfigFiles(&intel->optionCache, &intelScreen->optionCache,
                        intel->driScreen->myNum, "i915");

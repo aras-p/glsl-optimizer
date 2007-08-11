@@ -36,7 +36,7 @@
 
 #include "intel_context.h"
 #include "intel_winsys.h"
-#include "intel_buffers.h"
+#include "intel_swapbuffers.h"
 #include "intel_batchbuffer.h"
 
 #include "pipe/p_winsys.h"

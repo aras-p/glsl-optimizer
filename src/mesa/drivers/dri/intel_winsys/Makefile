@@ -15,7 +15,7 @@ DRIVER_SOURCES = \
 	intel_winsys_softpipe.c \
 	intel_winsys_i915.c \
 	intel_batchbuffer.c \
-	intel_buffers.c \
+	intel_swapbuffers.c \
 	intel_context.c \
 	intel_lock.c \
 	intel_screen.c \
