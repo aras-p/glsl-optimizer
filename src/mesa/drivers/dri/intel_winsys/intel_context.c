@@ -36,29 +36,28 @@
 
 #include "drivers/common/driverfuncs.h"
 
-#include "intel_screen.h"
-
 #include "i830_dri.h"
 
+#include "intel_screen.h"
+#include "intel_context.h"
 #include "intel_buffers.h"
 #include "intel_winsys.h"
-#include "intel_ioctl.h"
 #include "intel_batchbuffer.h"
 
 #include "state_tracker/st_public.h"
 #include "state_tracker/st_context.h"
 #include "pipe/p_defines.h"
+#include "pipe/p_context.h"
 
 #include "drirenderbuffer.h"
 #include "vblank.h"
 #include "utils.h"
 #include "xmlpool.h"            /* for symbolic values of enum-type options */
 
-#include "pipe/p_context.h"
 
 
 
-#if DEBUG
+#ifdef DEBUG
 int __intel_debug = 0;
 #endif
 
@@ -145,7 +144,7 @@ const struct dri_extension card_extensions[] = {
 
 
 
-
+#ifdef DEBUG
 static const struct dri_debug_control debug_control[] = {
    {"ioctl", DEBUG_IOCTL},
    {"bat", DEBUG_BATCH},
@@ -153,7 +152,7 @@ static const struct dri_debug_control debug_control[] = {
    {"swap", DEBUG_SWAP},
    {NULL, 0}
 };
-
+#endif
 
 static void
 intelInvalidateState(GLcontext * ctx, GLuint new_state)
@@ -279,7 +278,7 @@ intelCreateContext(const __GLcontextModes * mesaVis,
       _mesa_enable_extension(ctx, "GL_EXT_texture_compression_s3tc");
    }
 
-#if DEBUG
+#ifdef DEBUG
    __intel_debug = driParseDebugString(getenv("INTEL_DEBUG"), debug_control);
 #endif
 
@@ -441,4 +440,27 @@ intelMakeCurrent(__DRIcontextPrivate * driContextPriv,
 }
 
  
+
+struct intel_context *intelScreenContext(intelScreenPrivate *intelScreen)
+{
+  /*
+   * This should probably change to have the screen allocate a dummy
+   * context at screen creation. For now just use the current context.
+   */
+
+  GET_CURRENT_CONTEXT(ctx);
+  if (ctx == NULL) {
+/*     _mesa_problem(NULL, "No current context in intelScreenContext\n");
+     return NULL; */
+     /* need a context for the first time makecurrent is called (for hw lock
+        when allocating priv buffers) */
+     if (intelScreen->dummyctxptr == NULL) {
+        _mesa_problem(NULL, "No current context in intelScreenContext\n");
+        return NULL;
+     }
+     return intelScreen->dummyctxptr;
+  }
+
+  return intel_context(ctx);
+}
 

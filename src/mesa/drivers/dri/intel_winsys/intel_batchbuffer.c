@@ -25,8 +25,11 @@
  * 
  **************************************************************************/
 
+#include <errno.h>
+#include "main/imports.c"
 #include "intel_batchbuffer.h"
-#include "intel_ioctl.h"
+#include "intel_context.h"
+#include "intel_screen.h"
 #include "intel_reg.h"
 #include "drm.h"
 

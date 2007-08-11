@@ -31,11 +31,12 @@
 #include "extensions.h"
 
 #include "intel_screen.h"
+#include "intel_context.h"
+#include "intel_batchbuffer.h"
+#include "intel_buffers.h"
 
 #include "i830_dri.h"
 
-#include "intel_ioctl.h"
-#include "intel_batchbuffer.h"
 
 #include "state_tracker/st_public.h"
 #include "state_tracker/st_context.h"

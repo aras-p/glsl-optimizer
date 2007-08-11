@@ -109,7 +109,7 @@ extern char *__progname;
 /* ================================================================
  * Debugging:
  */
-#if DEBUG
+#ifdef DEBUG
 extern int __intel_debug;
 
 #define DEBUG_SWAP	0x1

@@ -38,7 +38,6 @@
 #include "intel_screen.h"
 #include "intel_batchbuffer.h"
 #include "intel_buffers.h"
-#include "intel_ioctl.h"
 
 #include "i830_dri.h"
 #include "dri_bufpool.h"
@@ -563,28 +562,5 @@ __driCreateNewScreen_20050727(__DRInativeDisplay * dpy, int scrn,
    }
 
    return (void *) psp;
-}
-
-struct intel_context *intelScreenContext(intelScreenPrivate *intelScreen)
-{
-  /*
-   * This should probably change to have the screen allocate a dummy
-   * context at screen creation. For now just use the current context.
-   */
-
-  GET_CURRENT_CONTEXT(ctx);
-  if (ctx == NULL) {
-/*     _mesa_problem(NULL, "No current context in intelScreenContext\n");
-     return NULL; */
-     /* need a context for the first time makecurrent is called (for hw lock
-        when allocating priv buffers) */
-     if (intelScreen->dummyctxptr == NULL) {
-        _mesa_problem(NULL, "No current context in intelScreenContext\n");
-        return NULL;
-     }
-     return intelScreen->dummyctxptr;
-  }
-  return intel_context(ctx);
-
 }
 
