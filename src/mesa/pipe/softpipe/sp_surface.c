@@ -104,6 +104,7 @@ a8r8g8b8_get_tile(struct pipe_surface *ps,
       = ((const GLuint *) (ps->region->map + ps->offset))
       + y * ps->region->pitch + x;
    GLuint i, j;
+   GLuint w0 = w;
 
    assert(ps->format == PIPE_FORMAT_U_A8_R8_G8_B8);
 
@@ -111,22 +112,24 @@ a8r8g8b8_get_tile(struct pipe_surface *ps,
    assert(x + w <= ps->width);
    assert(y + h <= ps->height);
 #else
-   /* temp hack */
+   /* temp clipping hack */
    if (x + w > ps->width)
       w = ps->width - x;
    if (y + h > ps->height)
       h = ps->height -y;
 #endif
    for (i = 0; i < h; i++) {
+      GLfloat *pRow = p;
       for (j = 0; j < w; j++) {
          const GLuint pixel = src[j];
-         p[0] = UBYTE_TO_FLOAT((pixel >> 16) & 0xff);
-         p[1] = UBYTE_TO_FLOAT((pixel >>  8) & 0xff);
-         p[2] = UBYTE_TO_FLOAT((pixel >>  0) & 0xff);
-         p[3] = UBYTE_TO_FLOAT((pixel >> 24) & 0xff);
-         p += 4;
+         pRow[0] = UBYTE_TO_FLOAT((pixel >> 16) & 0xff);
+         pRow[1] = UBYTE_TO_FLOAT((pixel >>  8) & 0xff);
+         pRow[2] = UBYTE_TO_FLOAT((pixel >>  0) & 0xff);
+         pRow[3] = UBYTE_TO_FLOAT((pixel >> 24) & 0xff);
+         pRow += 4;
       }
       src += ps->region->pitch;
+      p += w0 * 4;
    }
 }
 
@@ -348,9 +351,14 @@ s8_write_quad_stencil(struct softpipe_surface *sps,
 }
 
 
+/**
+ * Initialize the quad_read/write and get/put_tile() methods.
+ */
 void
 softpipe_init_surface_funcs(struct softpipe_surface *sps)
 {
+   assert(sps->surface.format);
+
    switch (sps->surface.format) {
    case PIPE_FORMAT_U_A8_R8_G8_B8:
       sps->read_quad_f_swz = a8r8g8b8_read_quad_f_swz;
