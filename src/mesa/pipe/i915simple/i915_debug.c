@@ -41,7 +41,7 @@ static GLboolean debug( struct debug_stream *stream, const char *name, GLuint le
    GLuint *ptr = (GLuint *)(stream->ptr + stream->offset);
    
    if (len == 0) {
-      PRINTF( "Error - zero length packet (0x%08x)\n", stream->ptr[0] );
+      PRINTF("Error - zero length packet (0x%08x)\n", stream->ptr[0]);
       assert(0);
       return GL_FALSE;
    }
@@ -52,7 +52,7 @@ static GLboolean debug( struct debug_stream *stream, const char *name, GLuint le
 
    PRINTF("%s (%d dwords):\n", name, len);
    for (i = 0; i < len; i++)
-      PRINTF("\t\t0x%08x\n",  ptr[i]);   
+      PRINTF("\t0x%08x\n",  ptr[i]);   
    PRINTF("\n");
 
    stream->offset += len * sizeof(GLuint);
@@ -91,12 +91,12 @@ static GLboolean debug_prim( struct debug_stream *stream, const char *name,
 
 
    PRINTF("%s %s (%d dwords):\n", name, prim, len);
-   PRINTF("\t\t0x%08x\n",  ptr[0]);   
+   PRINTF("\t0x%08x\n",  ptr[0]);   
    for (i = 1; i < len; i++) {
       if (dump_floats)
-	 PRINTF("\t\t0x%08x // %f\n",  ptr[i], *(GLfloat *)&ptr[i]);   
+	 PRINTF("\t0x%08x // %f\n",  ptr[i], *(GLfloat *)&ptr[i]);   
       else
-	 PRINTF("\t\t0x%08x\n",  ptr[i]);   
+	 PRINTF("\t0x%08x\n",  ptr[i]);   
    }
 
       
@@ -139,7 +139,7 @@ static GLboolean debug_chain( struct debug_stream *stream, const char *name, GLu
 
    PRINTF("%s (%d dwords):\n", name, len);
    for (i = 0; i < len; i++)
-      PRINTF("\t\t0x%08x\n",  ptr[i]);
+      PRINTF("\t0x%08x\n",  ptr[i]);
 
    stream->offset = ptr[1] & ~0x3;
    
@@ -169,7 +169,7 @@ static GLboolean debug_variable_length_prim( struct debug_stream *stream )
 
    PRINTF("3DPRIM, %s variable length %d indicies (%d dwords):\n", prim, i, len);
    for (i = 0; i < len; i++)
-      PRINTF("\t\t0x%08x\n",  ptr[i]);
+      PRINTF("\t0x%08x\n",  ptr[i]);
    PRINTF("\n");
 
    stream->offset += len * sizeof(GLuint);
@@ -177,22 +177,126 @@ static GLboolean debug_variable_length_prim( struct debug_stream *stream )
 }
 
 
+#define BITS( dw, hi, lo, ... )				\
+do {							\
+   unsigned himask = ~0UL >> (31 - (hi));		\
+   PRINTF("\t\t ");				\
+   PRINTF(__VA_ARGS__);			\
+   PRINTF(": 0x%x\n", ((dw) & himask) >> (lo));	\
+} while (0)
+
+#define MBZ( dw, hi, lo) do {							\
+   unsigned x = (dw) >> (lo);				\
+   unsigned lomask = (1 << (lo)) - 1;			\
+   unsigned himask;					\
+   himask = (1UL << (hi)) - 1;				\
+   assert ((x & himask & ~lomask) == 0);	\
+} while (0)
+
+#define FLAG( dw, bit, ... )			\
+do {							\
+   if (((dw) >> (bit)) & 1) {				\
+      PRINTF("\t\t ");				\
+      PRINTF(__VA_ARGS__);			\
+      PRINTF("\n");				\
+   }							\
+} while (0)
+
 static GLboolean debug_load_immediate( struct debug_stream *stream,
 				       const char *name,
 				       GLuint len )
 {
    GLuint *ptr = (GLuint *)(stream->ptr + stream->offset);
    GLuint bits = (ptr[0] >> 4) & 0xff;
-   GLuint i, j = 0;
+   GLuint j = 0;
    
    PRINTF("%s (%d dwords, flags: %x):\n", name, len, bits);
-   PRINTF("\t\t0x%08x\n",  ptr[j++]);
+   PRINTF("\t0x%08x\n",  ptr[j++]);
 
-   for (i = 0; i < 8; i++) {
-      if (bits & (1<<i)) {
-	 PRINTF("\t  LIS%d: 0x%08x\n", i, ptr[j++]);
-      }
+   if (bits & (1<<0)) {
+      PRINTF("\t  LIS0: 0x%08x\n", ptr[j]);
+      PRINTF("\t vb address: 0x%08x\n", (ptr[j] & ~0x3));
+      BITS(ptr[j], 0, 0, "vb invalidate disable");
+      j++;
    }
+   if (bits & (1<<1)) {
+      PRINTF("\t  LIS1: 0x%08x\n", ptr[j]);
+      BITS(ptr[j], 29, 24, "vb dword width");
+      BITS(ptr[j], 21, 16, "vb dword pitch");
+      BITS(ptr[j], 15, 0, "vb max index");
+      j++;
+   }
+   if (bits & (1<<2)) {
+      int i;
+      PRINTF("\t  LIS2: 0x%08x\n", ptr[j]);
+      for (i = 0; i < 8; i++) {
+	 unsigned tc = (ptr[j] >> (i * 4)) & 0xf;
+	 if (tc != 0xf)
+	    BITS(tc, 3, 0, "tex coord %d", i);
+      }
+      j++;
+   }
+   if (bits & (1<<3)) {
+      PRINTF("\t  LIS3: 0x%08x\n", ptr[j]);
+      j++;
+   }
+   if (bits & (1<<4)) {
+      PRINTF("\t  LIS4: 0x%08x\n", ptr[j]);
+      BITS(ptr[j], 31, 23, "point width");
+      BITS(ptr[j], 22, 19, "line width");
+      FLAG(ptr[j], 18, "alpha flatshade");
+      FLAG(ptr[j], 17, "fog flatshade");
+      FLAG(ptr[j], 16, "spec flatshade");
+      FLAG(ptr[j], 15, "rgb flatshade");
+      BITS(ptr[j], 14, 13, "cull mode");
+      FLAG(ptr[j], 12, "vfmt: point width");
+      FLAG(ptr[j], 11, "vfmt: specular/fog");
+      FLAG(ptr[j], 10, "vfmt: rgba");
+      FLAG(ptr[j], 9, "vfmt: depth offset");
+      BITS(ptr[j], 8, 6, "vfmt: position (2==xyzw)");
+      FLAG(ptr[j], 5, "force dflt diffuse");
+      FLAG(ptr[j], 4, "force dflt specular");
+      FLAG(ptr[j], 3, "local depth offset enable");
+      FLAG(ptr[j], 2, "vfmt: fp32 fog coord");
+      FLAG(ptr[j], 1, "sprite point");
+      FLAG(ptr[j], 0, "antialiasing");
+      j++;
+   }
+   if (bits & (1<<5)) {
+      PRINTF("\t  LIS5: 0x%08x\n", ptr[j]);
+      BITS(ptr[j], 31, 28, "rgba write disables");
+      FLAG(ptr[j], 27,     "force dflt point width");
+      FLAG(ptr[j], 26,     "last pixel enable");
+      FLAG(ptr[j], 25,     "global z offset enable");
+      FLAG(ptr[j], 24,     "fog enable");
+      BITS(ptr[j], 23, 16, "stencil ref");
+      BITS(ptr[j], 15, 13, "stencil test");
+      BITS(ptr[j], 12, 10, "stencil fail op");
+      BITS(ptr[j], 9, 7,   "stencil pass z fail op");
+      BITS(ptr[j], 6, 4,   "stencil pass z pass op");
+      FLAG(ptr[j], 3,      "stencil write enable");
+      FLAG(ptr[j], 2,      "stencil test enable");
+      FLAG(ptr[j], 1,      "color dither enable");
+      FLAG(ptr[j], 0,      "logiop enable");
+      j++;
+   }
+   if (bits & (1<<6)) {
+      PRINTF("\t  LIS6: 0x%08x\n", ptr[j]);
+      FLAG(ptr[j], 31,      "alpha test enable");
+      BITS(ptr[j], 30, 28,  "alpha func");
+      BITS(ptr[j], 27, 20,  "alpha ref");
+      FLAG(ptr[j], 19,      "depth test enable");
+      BITS(ptr[j], 18, 16,  "depth func");
+      FLAG(ptr[j], 15,      "blend enable");
+      BITS(ptr[j], 14, 12,  "blend func");
+      BITS(ptr[j], 11, 8,   "blend src factor");
+      BITS(ptr[j], 7,  4,   "blend dst factor");
+      FLAG(ptr[j], 3,       "depth write enable");
+      FLAG(ptr[j], 2,       "color write enable");
+      BITS(ptr[j], 1,  0,   "provoking vertex"); 
+      j++;
+   }
+
 
    PRINTF("\n");
 
@@ -214,7 +318,7 @@ static GLboolean debug_load_indirect( struct debug_stream *stream,
    GLuint i, j = 0;
    
    PRINTF("%s (%d dwords):\n", name, len);
-   PRINTF("\t\t0x%08x\n",  ptr[j++]);
+   PRINTF("\t0x%08x\n",  ptr[j++]);
 
    for (i = 0; i < 6; i++) {
       if (bits & (1<<i)) {
@@ -262,7 +366,308 @@ static GLboolean debug_load_indirect( struct debug_stream *stream,
    
    return GL_TRUE;
 }
- 		   
+ 	
+static void BR13( struct debug_stream *stream,
+		  GLuint val )
+{
+   PRINTF("\t0x%08x\n",  val);
+   FLAG(val, 30, "clipping enable");
+   BITS(val, 25, 24, "color depth (3==32bpp)");
+   BITS(val, 23, 16, "raster op");
+   BITS(val, 15, 0,  "dest pitch");
+}
+
+
+static void BR22( struct debug_stream *stream,
+		  GLuint val )
+{
+   PRINTF("\t0x%08x\n",  val);
+   BITS(val, 31, 16, "dest y1");
+   BITS(val, 15, 0,  "dest x1");
+}
+
+static void BR23( struct debug_stream *stream,
+		  GLuint val )
+{
+   PRINTF("\t0x%08x\n",  val);
+   BITS(val, 31, 16, "dest y2");
+   BITS(val, 15, 0,  "dest x2");
+}
+
+static void BR09( struct debug_stream *stream,
+		  GLuint val )
+{
+   PRINTF("\t0x%08x -- dest address\n",  val);
+}
+
+static void BR26( struct debug_stream *stream,
+		  GLuint val )
+{
+   PRINTF("\t0x%08x\n",  val);
+   BITS(val, 31, 16, "src y1");
+   BITS(val, 15, 0,  "src x1");
+}
+
+static void BR11( struct debug_stream *stream,
+		  GLuint val )
+{
+   PRINTF("\t0x%08x\n",  val);
+   BITS(val, 15, 0,  "src pitch");
+}
+
+static void BR12( struct debug_stream *stream,
+		  GLuint val )
+{
+   PRINTF("\t0x%08x -- src address\n",  val);
+}
+
+static void BR16( struct debug_stream *stream,
+		  GLuint val )
+{
+   PRINTF("\t0x%08x -- color\n",  val);
+}
+   
+static GLboolean debug_copy_blit( struct debug_stream *stream,
+				  const char *name,
+				  GLuint len )
+{
+   GLuint *ptr = (GLuint *)(stream->ptr + stream->offset);
+   int j = 0;
+
+   PRINTF("%s (%d dwords):\n", name, len);
+   PRINTF("\t0x%08x\n",  ptr[j++]);
+   
+   BR13(stream, ptr[j++]);
+   BR22(stream, ptr[j++]);
+   BR23(stream, ptr[j++]);
+   BR09(stream, ptr[j++]);
+   BR26(stream, ptr[j++]);
+   BR11(stream, ptr[j++]);
+   BR12(stream, ptr[j++]);
+
+   stream->offset += len * sizeof(GLuint);
+   assert(j == len);
+   return GL_TRUE;
+}
+
+static GLboolean debug_color_blit( struct debug_stream *stream,
+				  const char *name,
+				  GLuint len )
+{
+   GLuint *ptr = (GLuint *)(stream->ptr + stream->offset);
+   int j = 0;
+
+   PRINTF("%s (%d dwords):\n", name, len);
+   PRINTF("\t0x%08x\n",  ptr[j++]);
+
+   BR13(stream, ptr[j++]);
+   BR22(stream, ptr[j++]);
+   BR23(stream, ptr[j++]);
+   BR09(stream, ptr[j++]);
+   BR16(stream, ptr[j++]);
+
+   stream->offset += len * sizeof(GLuint);
+   assert(j == len);
+   return GL_TRUE;
+}
+
+static GLboolean debug_modes4( struct debug_stream *stream,
+				  const char *name,
+				  GLuint len )
+{
+   GLuint *ptr = (GLuint *)(stream->ptr + stream->offset);
+   int j = 0;
+
+   PRINTF("%s (%d dwords):\n", name, len);
+   PRINTF("\t0x%08x\n",  ptr[j]);
+   BITS(ptr[j], 21, 18, "logicop func");
+   FLAG(ptr[j], 17, "stencil test mask modify-enable");
+   FLAG(ptr[j], 16, "stencil write mask modify-enable");
+   BITS(ptr[j], 15, 8, "stencil test mask");
+   BITS(ptr[j], 7, 0,  "stencil write mask");
+   j++;
+
+   stream->offset += len * sizeof(GLuint);
+   assert(j == len);
+   return GL_TRUE;
+}
+
+static GLboolean debug_map_state( struct debug_stream *stream,
+				  const char *name,
+				  GLuint len )
+{
+   GLuint *ptr = (GLuint *)(stream->ptr + stream->offset);
+   int j = 0;
+
+   PRINTF("%s (%d dwords):\n", name, len);
+   PRINTF("\t0x%08x\n",  ptr[j++]);
+   
+   {
+      PRINTF("\t0x%08x\n",  ptr[j]);
+      BITS(ptr[j], 15, 0,   "map mask");
+      j++;
+   }
+
+   while (j < len) {
+      {
+	 PRINTF("\t  TMn.0: 0x%08x\n", ptr[j]);
+	 PRINTF("\t map address: 0x%08x\n", (ptr[j] & ~0x3));
+	 FLAG(ptr[j], 1, "vertical line stride");
+	 FLAG(ptr[j], 0, "vertical line stride offset");
+	 j++;
+      }
+
+      {
+	 PRINTF("\t  TMn.1: 0x%08x\n", ptr[j]);
+	 BITS(ptr[j], 31, 21, "height");
+	 BITS(ptr[j], 20, 10, "width");
+	 BITS(ptr[j], 9, 7, "surface format");
+	 BITS(ptr[j], 6, 3, "texel format");
+	 FLAG(ptr[j], 2, "use fence regs");
+	 FLAG(ptr[j], 1, "tiled surface");
+	 FLAG(ptr[j], 0, "tile walk ymajor");
+	 j++;
+      }
+      {
+	 PRINTF("\t  TMn.2: 0x%08x\n", ptr[j]);
+	 BITS(ptr[j], 31, 21, "dword pitch");
+	 BITS(ptr[j], 20, 15, "cube face enables");
+	 BITS(ptr[j], 14, 9, "max lod");
+	 FLAG(ptr[j], 8,     "mip layout right");
+	 BITS(ptr[j], 7, 0, "depth");
+	 j++;
+      }
+   }
+
+   stream->offset += len * sizeof(GLuint);
+   assert(j == len);
+   return GL_TRUE;
+}
+
+static GLboolean debug_sampler_state( struct debug_stream *stream,
+				  const char *name,
+				  GLuint len )
+{
+   GLuint *ptr = (GLuint *)(stream->ptr + stream->offset);
+   int j = 0;
+
+   PRINTF("%s (%d dwords):\n", name, len);
+   PRINTF("\t0x%08x\n",  ptr[j++]);
+   
+   {
+      PRINTF("\t0x%08x\n",  ptr[j]);
+      BITS(ptr[j], 15, 0,   "sampler mask");
+      j++;
+   }
+
+   while (j < len) {
+      {
+	 PRINTF("\t  TSn.0: 0x%08x\n", ptr[j]);
+	 FLAG(ptr[j], 31, "reverse gamma");
+	 FLAG(ptr[j], 30, "planar to packed");
+	 FLAG(ptr[j], 29, "yuv->rgb");
+	 BITS(ptr[j], 28, 27, "chromakey index");
+	 BITS(ptr[j], 26, 22, "base mip level");
+	 BITS(ptr[j], 21, 20, "mip mode filter");
+	 BITS(ptr[j], 19, 17, "mag mode filter");
+	 BITS(ptr[j], 16, 14, "min mode filter");
+	 BITS(ptr[j], 13, 5,  "lod bias (s4.4)");
+	 FLAG(ptr[j], 4,      "shadow enable");
+	 FLAG(ptr[j], 3,      "max-aniso-4");
+	 BITS(ptr[j], 2, 0,   "shadow func");
+	 j++;
+      }
+
+      {
+	 PRINTF("\t  TSn.1: 0x%08x\n", ptr[j]);
+	 BITS(ptr[j], 31, 24, "min lod");
+	 MBZ( ptr[j], 23, 18 );
+	 FLAG(ptr[j], 17,     "kill pixel enable");
+	 FLAG(ptr[j], 16,     "keyed tex filter mode");
+	 FLAG(ptr[j], 15,     "chromakey enable");
+	 BITS(ptr[j], 14, 12, "tcx wrap mode");
+	 BITS(ptr[j], 11, 9,  "tcy wrap mode");
+	 BITS(ptr[j], 8,  6,  "tcz wrap mode");
+	 FLAG(ptr[j], 5,      "normalized coords");
+	 BITS(ptr[j], 4,  1,  "map (surface) index");
+	 FLAG(ptr[j], 0,      "EAST deinterlacer enable");
+	 j++;
+      }
+      {
+	 PRINTF("\t  TSn.2: 0x%08x  (default color)\n", ptr[j]);
+	 j++;
+      }
+   }
+
+   stream->offset += len * sizeof(GLuint);
+   assert(j == len);
+   return GL_TRUE;
+}
+
+static GLboolean debug_dest_vars( struct debug_stream *stream,
+				  const char *name,
+				  GLuint len )
+{
+   GLuint *ptr = (GLuint *)(stream->ptr + stream->offset);
+   int j = 0;
+
+   PRINTF("%s (%d dwords):\n", name, len);
+   PRINTF("\t0x%08x\n",  ptr[j++]);
+
+   {
+      PRINTF("\t0x%08x\n",  ptr[j]);
+      FLAG(ptr[j], 31,     "early classic ztest");
+      FLAG(ptr[j], 30,     "opengl tex default color");
+      FLAG(ptr[j], 29,     "bypass iz");
+      FLAG(ptr[j], 28,     "lod preclamp");
+      BITS(ptr[j], 27, 26, "dither pattern");
+      FLAG(ptr[j], 25,     "linear gamma blend");
+      FLAG(ptr[j], 24,     "debug dither");
+      BITS(ptr[j], 23, 20, "dstorg x");
+      BITS(ptr[j], 19, 16, "dstorg y");
+      MBZ (ptr[j], 15, 15 );
+      BITS(ptr[j], 14, 12, "422 write select");
+      BITS(ptr[j], 11, 8,  "cbuf format");
+      BITS(ptr[j], 3, 2,   "zbuf format");
+      FLAG(ptr[j], 1,      "vert line stride");
+      FLAG(ptr[j], 1,      "vert line stride offset");
+      j++;
+   }
+   
+   stream->offset += len * sizeof(GLuint);
+   assert(j == len);
+   return GL_TRUE;
+}
+
+static GLboolean debug_buf_info( struct debug_stream *stream,
+				  const char *name,
+				  GLuint len )
+{
+   GLuint *ptr = (GLuint *)(stream->ptr + stream->offset);
+   int j = 0;
+
+   PRINTF("%s (%d dwords):\n", name, len);
+   PRINTF("\t0x%08x\n",  ptr[j++]);
+
+   {
+      PRINTF("\t0x%08x\n",  ptr[j]);
+      BITS(ptr[j], 28, 28, "aux buffer id");
+      BITS(ptr[j], 27, 24, "buffer id (7=depth, 3=back)");
+      FLAG(ptr[j], 23,     "use fence regs");
+      FLAG(ptr[j], 22,     "tiled surface");
+      FLAG(ptr[j], 21,     "tile walk ymajor");
+      MBZ (ptr[j], 20, 14);
+      BITS(ptr[j], 13, 2,  "dword pitch");
+      MBZ (ptr[j], 2,  0);
+      j++;
+   }
+   
+   PRINTF("\t0x%08x -- buffer base address\n",  ptr[j++]);
+
+   stream->offset += len * sizeof(GLuint);
+   assert(j == len);
+   return GL_TRUE;
+}
 
 static GLboolean i915_debug_packet( struct debug_stream *stream )
 {
@@ -294,9 +699,9 @@ static GLboolean i915_debug_packet( struct debug_stream *stream )
    case 0x2:
       switch ((cmd >> 22) & 0xff) {	 
       case 0x50:
-	 return debug(stream, "XY_COLOR_BLT", (cmd & 0xff) + 2);
+	 return debug_color_blit(stream, "XY_COLOR_BLT", (cmd & 0xff) + 2);
       case 0x53:
-	 return debug(stream, "XY_SRC_COPY_BLT", (cmd & 0xff) + 2);
+	 return debug_copy_blit(stream, "XY_SRC_COPY_BLT", (cmd & 0xff) + 2);
       default:
 	 return debug(stream, "blit command", (cmd & 0xff) + 2);
       }
@@ -316,7 +721,7 @@ static GLboolean i915_debug_packet( struct debug_stream *stream )
       case 0xc:
 	 return debug(stream, "3DSTATE_MODES5", 1);	 
       case 0xd:
-	 return debug(stream, "3DSTATE_MODES4", 1);
+	 return debug_modes4(stream, "3DSTATE_MODES4", 1);
       case 0x15:
 	 return debug(stream, "3DSTATE_FOG_COLOR", 1);
       case 0x16:
@@ -336,9 +741,9 @@ static GLboolean i915_debug_packet( struct debug_stream *stream )
 	 /* 3DStateMW */
 	 switch ((cmd >> 16) & 0xff) {
 	 case 0x0:
-	    return debug(stream, "3DSTATE_MAP_STATE", (cmd & 0x1f) + 2);
+	    return debug_map_state(stream, "3DSTATE_MAP_STATE", (cmd & 0x1f) + 2);
 	 case 0x1:
-	    return debug(stream, "3DSTATE_SAMPLER_STATE", (cmd & 0x1f) + 2);
+	    return debug_sampler_state(stream, "3DSTATE_SAMPLER_STATE", (cmd & 0x1f) + 2);
 	 case 0x4:
 	    return debug_load_immediate(stream, "3DSTATE_LOAD_STATE_IMMEDIATE", (cmd & 0xf) + 2);
 	 case 0x5:
@@ -354,13 +759,13 @@ static GLboolean i915_debug_packet( struct debug_stream *stream )
 	 case 0x83:
 	    return debug(stream, "3DSTATE_SPAN_STIPPLE", (cmd & 0xffff) + 2);
 	 case 0x85:
-	    return debug(stream, "3DSTATE_DEST_BUFFER_VARS", (cmd & 0xffff) + 2);
+	    return debug_dest_vars(stream, "3DSTATE_DEST_BUFFER_VARS", (cmd & 0xffff) + 2);
 	 case 0x88:
 	    return debug(stream, "3DSTATE_CONSTANT_BLEND_COLOR", (cmd & 0xffff) + 2);
 	 case 0x89:
 	    return debug(stream, "3DSTATE_FOG_MODE", (cmd & 0xffff) + 2);
 	 case 0x8e:
-	    return debug(stream, "3DSTATE_BUFFER_INFO", (cmd & 0xffff) + 2);
+	    return debug_buf_info(stream, "3DSTATE_BUFFER_INFO", (cmd & 0xffff) + 2);
 	 case 0x97:
 	    return debug(stream, "3DSTATE_DEPTH_OFFSET_SCALE", (cmd & 0xffff) + 2);
 	 case 0x98:
@@ -418,12 +823,13 @@ i915_dump_batchbuffer( struct i915_context *i915,
    GLuint bytes = (end - start) * 4;
    GLboolean done = GL_FALSE;
 
-   fprintf(stderr, "\n\nBATCH: (%d)\n", bytes / 4);
 
    stream.offset = 0;
    stream.ptr = (char *)start;
    stream.print_addresses = 0;
    stream.winsys = i915->pipe.winsys;
+
+   stream.winsys->printf( stream.winsys, "\n\nBATCH: (%d)\n", bytes / 4);
 
    while (!done &&
 	  stream.offset < bytes &&
@@ -436,7 +842,7 @@ i915_dump_batchbuffer( struct i915_context *i915,
 	     stream.offset >= 0);
    }
 
-   fprintf(stderr, "END-BATCH\n\n\n");
+   stream.winsys->printf( stream.winsys, "END-BATCH\n\n\n");
 }
 
 
