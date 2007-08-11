@@ -437,13 +437,15 @@ draw_blit(struct st_context *st,
  * Called via ctx->Driver.DrawPixels()
  */
 static void
-st_drawpixels(GLcontext *ctx, GLint x, GLint y, GLsizei width, GLsizei height,
+st_DrawPixels(GLcontext *ctx, GLint x, GLint y, GLsizei width, GLsizei height,
               GLenum format, GLenum type,
               const struct gl_pixelstore_attrib *unpack, const GLvoid *pixels)
 {
    struct st_context *st = ctx->st;
    struct pipe_surface *ps;
    GLuint bufferFormat;
+
+   st_validate_state(st);
 
    if (format == GL_DEPTH_COMPONENT) {
       ps = st->state.framebuffer.zbuf;
@@ -471,8 +473,21 @@ st_drawpixels(GLcontext *ctx, GLint x, GLint y, GLsizei width, GLsizei height,
 }
 
 
-void st_init_drawpixels_functions(struct dd_function_table *functions)
+static void
+st_Bitmap(GLcontext *ctx, GLint x, GLint y, GLsizei width, GLsizei height,
+          const struct gl_pixelstore_attrib *unpack, const GLubyte *bitmap )
 {
-   functions->DrawPixels = st_drawpixels;
+   struct st_context *st = ctx->st;
+
+   st_validate_state(st);
+
+   /* XXX to do */
 }
 
+
+
+void st_init_drawpixels_functions(struct dd_function_table *functions)
+{
+   functions->DrawPixels = st_DrawPixels;
+   functions->Bitmap = st_Bitmap;
+}
