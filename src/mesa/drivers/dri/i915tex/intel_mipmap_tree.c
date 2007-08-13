@@ -97,9 +97,19 @@ intel_miptree_create(struct intel_context *intel,
       break;
    }
 
-   if (ok)
+   if (ok) {
+      if (!mt->compressed) {
+	 /* XXX: Align pitch to multiple of 64 bytes for now to allow
+	  * render-to-texture to work in all cases. This should probably be
+	  * replaced at some point by some scheme to only do this when really
+	  * necessary.
+	  */
+	 mt->pitch = ((mt->pitch * cpp + 63) & ~63) / cpp;
+      }
+
       mt->region = intel_region_alloc(intel->intelScreen,
                                       mt->cpp, mt->pitch, mt->total_height);
+   }
 
    if (!mt->region) {
       free(mt);
