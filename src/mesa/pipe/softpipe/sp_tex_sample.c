@@ -489,6 +489,8 @@ sp_get_sample_2d(struct tgsi_sampler *sampler,
 
    level0 = choose_mipmap_level(sampler, lambda);
 
+   assert(sampler->texture->level[level0].width);
+
    switch (filter) {
    case PIPE_TEX_FILTER_NEAREST:
       {
