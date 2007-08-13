@@ -28,8 +28,6 @@
 #ifndef __NOUVEAU_SYNC_H__
 #define __NOUVEAU_SYNC_H__
 
-#include "nouveau_buffers.h"
-
 #define NV_NOTIFIER_SIZE                                                      32
 #define NV_NOTIFY_TIME_0                                              0x00000000
 #define NV_NOTIFY_TIME_1                                              0x00000004

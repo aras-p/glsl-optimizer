@@ -28,11 +28,11 @@
 #include "vblank.h" /* for DO_USLEEP */
 
 #include "nouveau_context.h"
-#include "nouveau_buffers.h"
-#include "nouveau_object.h"
 #include "nouveau_fifo.h"
-#include "nouveau_reg.h"
+#include "nouveau_mem.h"
 #include "nouveau_msg.h"
+#include "nouveau_object.h"
+#include "nouveau_reg.h"
 #include "nouveau_sync.h"
 
 #define NOTIFIER(__v) \

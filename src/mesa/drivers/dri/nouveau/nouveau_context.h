@@ -36,10 +36,10 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "mtypes.h"
 #include "tnl/t_vertex.h"
 
+#include "nouveau_fbo.h"
 #include "nouveau_screen.h"
-#include "nouveau_state_cache.h"
-#include "nouveau_buffers.h"
 #include "nouveau_shader.h"
+#include "nouveau_state_cache.h"
 #include "nouveau_sync.h"
 
 #include "xmlconfig.h"

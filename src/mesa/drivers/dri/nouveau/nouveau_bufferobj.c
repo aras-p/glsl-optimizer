@@ -2,11 +2,11 @@
 #include "enums.h"
 
 #include "nouveau_bufferobj.h"
-#include "nouveau_buffers.h"
 #include "nouveau_context.h"
 #include "nouveau_drm.h"
-#include "nouveau_object.h"
+#include "nouveau_mem.h"
 #include "nouveau_msg.h"
+#include "nouveau_object.h"
 
 #define NOUVEAU_MEM_FREE(mem) do {      \
 	nouveau_mem_free(ctx, (mem));   \
