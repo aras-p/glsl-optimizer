@@ -285,27 +285,48 @@ st_render_texture(GLcontext *ctx,
                   struct gl_renderbuffer_attachment *att)
 {
    struct st_context *st = ctx->st;
-   struct st_renderbuffer *strb = st_renderbuffer(att->Renderbuffer);
+   struct st_renderbuffer *strb;
+   struct gl_renderbuffer *rb;
    struct pipe_context *pipe = st->pipe;
    struct pipe_framebuffer_state framebuffer;
    struct pipe_mipmap_tree *mt;
 
+   assert(!att->Renderbuffer);
+
+   /* create new renderbuffer which wraps the texture image */
+   rb = st_new_renderbuffer(ctx, 0);
+   if (!rb) {
+      _mesa_error(ctx, GL_OUT_OF_MEMORY, "glFramebufferTexture()");
+      return;
+   }
+
+   _mesa_reference_renderbuffer(&att->Renderbuffer, rb);
+   assert(rb->RefCount == 1);
+   rb->AllocStorage = NULL; /* should not get called */
+   strb = st_renderbuffer(rb);
+
+   /* get the mipmap tree for the texture */
    mt = st_get_texobj_mipmap_tree(att->Texture);
+   assert(mt);
+   assert(mt->level[0].width);
 
    /* the renderbuffer's surface is inside the mipmap_tree: */
    strb->surface = pipe->get_tex_surface(pipe, mt,
                                          att->CubeMapFace,
                                          att->TextureLevel,
                                          att->Zoffset);
+   assert(strb->surface);
 
-   /* update pipe's framebuffer state */
-   memset(&framebuffer, 0, sizeof(framebuffer));
-   framebuffer.num_cbufs = 1;
-   framebuffer.cbufs[0] = strb->surface;
-   if (memcmp(&framebuffer, &st->state.framebuffer, sizeof(framebuffer)) != 0) {
-      st->state.framebuffer = framebuffer;
-      st->pipe->set_framebuffer_state( st->pipe, &framebuffer );
-   }
+   /*
+   printf("RENDER TO TEXTURE mt=%p surf=%p\n", mt, strb->surface);
+   */
+
+   /* Invalidate buffer state so that the pipe's framebuffer state
+    * gets updated.
+    * That's where the new renderbuffer (which we just created) gets
+    * passed to the pipe as a (color/depth) render target.
+    */
+   st_invalidate_state(ctx, _NEW_BUFFERS);
 }
 
 
@@ -318,7 +339,15 @@ st_finish_render_texture(GLcontext *ctx,
 {
    struct st_renderbuffer *strb = st_renderbuffer(att->Renderbuffer);
 
+   assert(strb);
+
+   /*
+   printf("FINISH RENDER TO TEXTURE surf=%p\n", strb->surface);
+   */
+
    pipe_surface_unreference(&strb->surface);
+
+   _mesa_reference_renderbuffer(&att->Renderbuffer, NULL);
 
    /* restore previous framebuffer state */
    st_invalidate_state(ctx, _NEW_BUFFERS);
