@@ -640,6 +640,27 @@ delete_shader_cb(GLuint id, void *data, void *userData)
    }
 }
 
+/**
+ * Callback for deleting a framebuffer object.  Called by _mesa_HashDeleteAll()
+ */
+static void
+delete_framebuffer_cb(GLuint id, void *data, void *userData)
+{
+   struct gl_framebuffer *fb = (struct gl_framebuffer *) data;
+   fb->Delete(fb);
+}
+
+/**
+ * Callback for deleting a renderbuffer object. Called by _mesa_HashDeleteAll()
+ */
+static void
+delete_renderbuffer_cb(GLuint id, void *data, void *userData)
+{
+   struct gl_renderbuffer *rb = (struct gl_renderbuffer *) data;
+   rb->Delete(rb);
+}
+
+
 
 /**
  * Deallocate a shared state object and all children structures.
@@ -710,7 +731,9 @@ free_shared_state( GLcontext *ctx, struct gl_shared_state *ss )
 #endif
 
 #if FEATURE_EXT_framebuffer_object
+   _mesa_HashDeleteAll(ss->FrameBuffers, delete_framebuffer_cb, ctx);
    _mesa_DeleteHashTable(ss->FrameBuffers);
+   _mesa_HashDeleteAll(ss->RenderBuffers, delete_renderbuffer_cb, ctx);
    _mesa_DeleteHashTable(ss->RenderBuffers);
 #endif
 
