@@ -89,7 +89,7 @@ void nouveau_mem_free(GLcontext * ctx, nouveau_mem * mem)
 	FREE(mem);
 }
 
-nouveau_mem *nouveau_mem_alloc(GLcontext * ctx, int type, GLuint size,
+nouveau_mem *nouveau_mem_alloc(GLcontext *ctx, uint32_t flags, GLuint size,
 			       GLuint align)
 {
 	nouveauContextPtr nmesa = NOUVEAU_CONTEXT(ctx);
@@ -99,15 +99,15 @@ nouveau_mem *nouveau_mem_alloc(GLcontext * ctx, int type, GLuint size,
 
 	if (NOUVEAU_DEBUG & DEBUG_MEM) {
 		fprintf(stderr,
-			"%s: requested: type=0x%x, size=0x%x, align=0x%x\n",
-			__func__, type, (GLuint) size, align);
+			"%s: requested: flags=0x%x, size=0x%x, align=0x%x\n",
+			__func__, flags, (GLuint) size, align);
 	}
 
 	mem = CALLOC(sizeof(nouveau_mem));
 	if (!mem)
 		return NULL;
 
-	mema.flags = type;
+	mema.flags = flags;
 	mema.size = mem->size = size;
 	mema.alignment = align;
 	mem->map = NULL;
@@ -127,10 +127,9 @@ nouveau_mem *nouveau_mem_alloc(GLcontext * ctx, int type, GLuint size,
 			(GLuint) mem->size);
 	}
 
-	if (type & NOUVEAU_MEM_MAPPED)
-		ret =
-		    drmMap(nmesa->driFd, mema.map_handle, mem->size,
-			   &mem->map);
+	if (flags & NOUVEAU_MEM_MAPPED)
+		ret = drmMap(nmesa->driFd, mema.map_handle, mem->size,
+			     &mem->map);
 	if (ret) {
 		mem->map = NULL;
 		nouveau_mem_free(ctx, mem);
