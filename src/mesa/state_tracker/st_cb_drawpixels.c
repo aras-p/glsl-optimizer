@@ -315,8 +315,8 @@ draw_textured_quad(GLcontext *ctx, GLint x, GLint y, GLfloat z,
    /* restore GL state */
    pipe->set_setup_state(pipe, &ctx->st->state.setup);
    pipe->set_fs_state(pipe, &ctx->st->state.fs);
-   /* XXX FIX: pipe->set_texture_state(pipe, unit, ???); */
-   pipe->set_sampler_state(pipe, unit, &ctx->st->state.sampler[0]);
+   pipe->set_texture_state(pipe, unit, ctx->st->state.texture[unit]);
+   pipe->set_sampler_state(pipe, unit, &ctx->st->state.sampler[unit]);
 
    free_mipmap_tree(pipe, mt);
 }

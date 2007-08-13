@@ -79,6 +79,7 @@ struct st_context
       struct pipe_scissor_state scissor;
       struct pipe_setup_state  setup;
       struct pipe_stencil_state stencil;
+      struct pipe_mipmap_tree *texture[PIPE_MAX_SAMPLERS];
       struct pipe_viewport_state viewport;
    } state;
 
