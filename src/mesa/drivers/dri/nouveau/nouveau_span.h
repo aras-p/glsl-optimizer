@@ -32,8 +32,8 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "drirenderbuffer.h"
 #include "nouveau_fbo.h"
 
-extern void nouveauSpanInitFunctions( GLcontext *ctx );
-extern void nouveauSpanSetFunctions(nouveau_renderbuffer *nrb, const GLvisual *vis);
+extern void nouveauSpanInitFunctions(GLcontext *ctx);
+extern void nouveauSpanSetFunctions(nouveau_renderbuffer_t *nrb);
 
 #endif /* __NOUVEAU_SPAN_H__ */
 

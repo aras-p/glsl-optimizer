@@ -11,7 +11,7 @@
 #include "nouveau_reg.h"
 
 static GLboolean
-nouveau_renderbuffer_pixelformat(nouveau_renderbuffer * nrb,
+nouveau_renderbuffer_pixelformat(nouveau_renderbuffer_t * nrb,
 				 GLenum internalFormat)
 {
 	nrb->mesa.InternalFormat = internalFormat;
@@ -84,7 +84,7 @@ nouveau_renderbuffer_storage(GLcontext * ctx, struct gl_renderbuffer *rb,
 			     GLenum internalFormat,
 			     GLuint width, GLuint height)
 {
-	nouveau_renderbuffer *nrb = (nouveau_renderbuffer *) rb;
+	nouveau_renderbuffer_t *nrb = (nouveau_renderbuffer_t *) rb;
 
 	if (!nouveau_renderbuffer_pixelformat(nrb, internalFormat)) {
 		fprintf(stderr, "%s: unknown internalFormat\n", __func__);
@@ -93,7 +93,7 @@ nouveau_renderbuffer_storage(GLcontext * ctx, struct gl_renderbuffer *rb,
 
 	/* If this buffer isn't statically alloc'd, we may need to ask the
 	 * drm for more memory */
-	if (!nrb->dPriv && (rb->Width != width || rb->Height != height)) {
+	if (rb->Width != width || rb->Height != height) {
 		GLuint pitch;
 
 		/* align pitches to 64 bytes */
@@ -116,62 +116,48 @@ nouveau_renderbuffer_storage(GLcontext * ctx, struct gl_renderbuffer *rb,
 	rb->Width = width;
 	rb->Height = height;
 	rb->InternalFormat = internalFormat;
+
+	nouveauSpanSetFunctions(nrb);
+
 	return GL_TRUE;
 }
 
-static void nouveau_renderbuffer_delete(struct gl_renderbuffer *rb)
+static void
+nouveau_renderbuffer_delete(struct gl_renderbuffer *rb)
 {
 	GET_CURRENT_CONTEXT(ctx);
-	nouveau_renderbuffer *nrb = (nouveau_renderbuffer *) rb;
+	nouveau_renderbuffer_t *nrb = (nouveau_renderbuffer_t *) rb;
 
 	if (nrb->mem)
 		nouveau_mem_free(ctx, nrb->mem);
 	FREE(nrb);
 }
 
-nouveau_renderbuffer *nouveau_renderbuffer_new(GLenum internalFormat,
-					       GLvoid * map, GLuint offset,
-					       GLuint pitch,
-					       __DRIdrawablePrivate *
-					       dPriv)
+nouveau_renderbuffer_t *
+nouveau_renderbuffer_new(GLenum internalFormat)
 {
-	nouveau_renderbuffer *nrb;
+	nouveau_renderbuffer_t *nrb;
 
-	nrb = CALLOC_STRUCT(nouveau_renderbuffer_t);
-	if (nrb) {
-		_mesa_init_renderbuffer(&nrb->mesa, 0);
+	nrb = CALLOC_STRUCT(nouveau_renderbuffer);
+	if (!nrb)
+		return NULL;
 
-		nouveau_renderbuffer_pixelformat(nrb, internalFormat);
+	_mesa_init_renderbuffer(&nrb->mesa, 0);
 
-		nrb->mesa.AllocStorage = nouveau_renderbuffer_storage;
-		nrb->mesa.Delete = nouveau_renderbuffer_delete;
-
-		nrb->dPriv = dPriv;
-		nrb->offset = offset;
-		nrb->pitch = pitch;
-		nrb->map = map;
+	if (!nouveau_renderbuffer_pixelformat(nrb, internalFormat)) {
+		fprintf(stderr, "%s: unknown internalFormat\n", __func__);
+		return GL_FALSE;
 	}
+
+	nrb->mesa.AllocStorage = nouveau_renderbuffer_storage;
+	nrb->mesa.Delete = nouveau_renderbuffer_delete;
 
 	return nrb;
 }
 
 static void
-nouveau_cliprects_drawable_set(nouveauContextPtr nmesa,
-			       nouveau_renderbuffer * nrb)
-{
-	__DRIdrawablePrivate *dPriv = nrb->dPriv;
-
-	nmesa->numClipRects = dPriv->numClipRects;
-	nmesa->pClipRects = dPriv->pClipRects;
-	nmesa->drawX = dPriv->x;
-	nmesa->drawY = dPriv->y;
-	nmesa->drawW = dPriv->w;
-	nmesa->drawH = dPriv->h;
-}
-
-static void
 nouveau_cliprects_renderbuffer_set(nouveauContextPtr nmesa,
-				   nouveau_renderbuffer * nrb)
+				   nouveau_renderbuffer_t * nrb)
 {
 	nmesa->numClipRects = 1;
 	nmesa->pClipRects = &nmesa->osClipRect;
@@ -185,19 +171,18 @@ nouveau_cliprects_renderbuffer_set(nouveauContextPtr nmesa,
 	nmesa->drawH = nrb->mesa.Height;
 }
 
-void nouveau_window_moved(GLcontext * ctx)
+void
+nouveau_window_moved(GLcontext * ctx)
 {
 	nouveauContextPtr nmesa = NOUVEAU_CONTEXT(ctx);
-	nouveau_renderbuffer *nrb;
+	nouveau_renderbuffer_t *nrb;
 
-	nrb = (nouveau_renderbuffer *)ctx->DrawBuffer->_ColorDrawBuffers[0][0];
+	nrb = (nouveau_renderbuffer_t *)
+		ctx->DrawBuffer->_ColorDrawBuffers[0][0];
 	if (!nrb)
 		return;
 
-	if (!nrb->dPriv)
-		nouveau_cliprects_renderbuffer_set(nmesa, nrb);
-	else
-		nouveau_cliprects_drawable_set(nmesa, nrb);
+	nouveau_cliprects_renderbuffer_set(nmesa, nrb);
 
 	/* Viewport depends on window size/position, nouveauCalcViewport
 	 * will take care of calling the hw-specific WindowMoved
@@ -210,20 +195,20 @@ void nouveau_window_moved(GLcontext * ctx)
 }
 
 GLboolean
-nouveau_build_framebuffer(GLcontext * ctx, struct gl_framebuffer *fb)
+nouveau_build_framebuffer(GLcontext *ctx, struct gl_framebuffer *fb)
 {
 	nouveauContextPtr nmesa = NOUVEAU_CONTEXT(ctx);
-	nouveau_renderbuffer *color[MAX_DRAW_BUFFERS];
-	nouveau_renderbuffer *depth;
+	nouveau_renderbuffer_t *color[MAX_DRAW_BUFFERS];
+	nouveau_renderbuffer_t *depth;
 
 	_mesa_update_framebuffer(ctx);
 	_mesa_update_draw_buffer_bounds(ctx);
 
-	color[0] = (nouveau_renderbuffer *) fb->_ColorDrawBuffers[0][0];
+	color[0] = (nouveau_renderbuffer_t *) fb->_ColorDrawBuffers[0][0];
 	if (fb->_DepthBuffer && fb->_DepthBuffer->Wrapped)
-		depth = (nouveau_renderbuffer *) fb->_DepthBuffer->Wrapped;
+		depth = (nouveau_renderbuffer_t *) fb->_DepthBuffer->Wrapped;
 	else
-		depth = (nouveau_renderbuffer *) fb->_DepthBuffer;
+		depth = (nouveau_renderbuffer_t *) fb->_DepthBuffer;
 
 	if (!nmesa->hw_func.BindBuffers(nmesa, 1, color, depth))
 		return GL_FALSE;
@@ -232,34 +217,36 @@ nouveau_build_framebuffer(GLcontext * ctx, struct gl_framebuffer *fb)
 	return GL_TRUE;
 }
 
-static void nouveauDrawBuffer(GLcontext * ctx, GLenum buffer)
+static void
+nouveauDrawBuffer(GLcontext *ctx, GLenum buffer)
 {
 	nouveau_build_framebuffer(ctx, ctx->DrawBuffer);
 }
 
-static struct gl_framebuffer *nouveauNewFramebuffer(GLcontext * ctx,
-						    GLuint name)
+static struct gl_framebuffer *
+nouveauNewFramebuffer(GLcontext *ctx, GLuint name)
 {
 	return _mesa_new_framebuffer(ctx, name);
 }
 
-static struct gl_renderbuffer *nouveauNewRenderbuffer(GLcontext * ctx,
-						      GLuint name)
+static struct gl_renderbuffer *
+nouveauNewRenderbuffer(GLcontext *ctx, GLuint name)
 {
-	nouveau_renderbuffer *nrb;
+	nouveau_renderbuffer_t *nrb;
 
-	nrb = CALLOC_STRUCT(nouveau_renderbuffer_t);
-	if (nrb) {
-		_mesa_init_renderbuffer(&nrb->mesa, name);
+	nrb = CALLOC_STRUCT(nouveau_renderbuffer);
+	if (!nrb)
+		return NULL;
 
-		nrb->mesa.AllocStorage = nouveau_renderbuffer_storage;
-		nrb->mesa.Delete = nouveau_renderbuffer_delete;
-	}
+	_mesa_init_renderbuffer(&nrb->mesa, name);
+
+	nrb->mesa.AllocStorage = nouveau_renderbuffer_storage;
+	nrb->mesa.Delete = nouveau_renderbuffer_delete;
 	return &nrb->mesa;
 }
 
 static void
-nouveauBindFramebuffer(GLcontext * ctx, GLenum target,
+nouveauBindFramebuffer(GLcontext *ctx, GLenum target,
 		       struct gl_framebuffer *fb,
 		       struct gl_framebuffer *fbread)
 {
@@ -269,18 +256,15 @@ nouveauBindFramebuffer(GLcontext * ctx, GLenum target,
 }
 
 static void
-nouveauFramebufferRenderbuffer(GLcontext * ctx,
-			       struct gl_framebuffer *fb,
-			       GLenum attachment,
-			       struct gl_renderbuffer *rb)
+nouveauFramebufferRenderbuffer(GLcontext *ctx, struct gl_framebuffer *fb,
+			       GLenum attachment, struct gl_renderbuffer *rb)
 {
 	_mesa_framebuffer_renderbuffer(ctx, fb, attachment, rb);
 	nouveau_build_framebuffer(ctx, fb);
 }
 
 static void
-nouveauRenderTexture(GLcontext * ctx,
-		     struct gl_framebuffer *fb,
+nouveauRenderTexture(GLcontext * ctx, struct gl_framebuffer *fb,
 		     struct gl_renderbuffer_attachment *att)
 {
 }
@@ -291,7 +275,8 @@ nouveauFinishRenderTexture(GLcontext * ctx,
 {
 }
 
-void nouveauInitBufferFuncs(struct dd_function_table *func)
+void
+nouveauInitBufferFuncs(struct dd_function_table *func)
 {
 	func->DrawBuffer = nouveauDrawBuffer;
 
@@ -302,3 +287,4 @@ void nouveauInitBufferFuncs(struct dd_function_table *func)
 	func->RenderTexture = nouveauRenderTexture;
 	func->FinishRenderTexture = nouveauFinishRenderTexture;
 }
+

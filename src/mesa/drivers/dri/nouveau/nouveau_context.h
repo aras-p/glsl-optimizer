@@ -83,8 +83,8 @@ typedef struct nouveau_hw_func_t {
 	GLboolean (*InitCard)(struct nouveau_context *);
 	/* Update buffer offset/pitch/format */
 	GLboolean (*BindBuffers)(struct nouveau_context *, int num_color,
-				 nouveau_renderbuffer **color,
-				 nouveau_renderbuffer *depth);
+				 nouveau_renderbuffer_t **color,
+				 nouveau_renderbuffer_t *depth);
 	/* Update anything that depends on the window position/size */
 	void      (*WindowMoved)(struct nouveau_context *);
 } nouveau_hw_func;
@@ -222,6 +222,9 @@ extern GLboolean nouveauMakeCurrent( __DRIcontextPrivate *driContextPriv,
 		__DRIdrawablePrivate *driReadPriv );
 
 extern GLboolean nouveauUnbindContext( __DRIcontextPrivate *driContextPriv );
+
+extern void nouveauDoSwapBuffers(nouveauContextPtr nmesa,
+				 __DRIdrawablePrivate *dPriv);
 
 extern void nouveauSwapBuffers(__DRIdrawablePrivate *dPriv);
 

@@ -132,10 +132,11 @@ nouveauCreateBuffer(__DRIscreenPrivate *driScrnPriv,
                     GLboolean isPixmap)
 {
 	nouveauScreenPtr screen = (nouveauScreenPtr) driScrnPriv->private;
-	nouveau_renderbuffer  *nrb;
+	nouveau_renderbuffer_t *nrb;
 	struct gl_framebuffer *fb;
 	const GLboolean swAccum = mesaVis->accumRedBits > 0;
-	const GLboolean swStencil = mesaVis->stencilBits > 0 && mesaVis->depthBits != 24;
+	const GLboolean swStencil = (mesaVis->stencilBits > 0 &&
+				     mesaVis->depthBits != 24);
 	GLenum color_format = screen->fbFormat == 4 ? GL_RGBA8 : GL_RGB5;
 
 	if (isPixmap)
@@ -146,37 +147,25 @@ nouveauCreateBuffer(__DRIscreenPrivate *driScrnPriv,
 		return GL_FALSE;
 
 	/* Front buffer */
-	nrb = nouveau_renderbuffer_new(color_format,
-				       driScrnPriv->pFB + screen->frontOffset,
-				       screen->frontOffset,
-				       screen->frontPitch * screen->fbFormat,
-				       driDrawPriv);
-	nouveauSpanSetFunctions(nrb, mesaVis);
+	nrb = nouveau_renderbuffer_new(color_format);
 	_mesa_add_renderbuffer(fb, BUFFER_FRONT_LEFT, &nrb->mesa);
 
 	if (mesaVis->doubleBufferMode) {
-		nrb = nouveau_renderbuffer_new(color_format, NULL, 0, 0, NULL);
-		nouveauSpanSetFunctions(nrb, mesaVis);
+		nrb = nouveau_renderbuffer_new(color_format);
 		_mesa_add_renderbuffer(fb, BUFFER_BACK_LEFT, &nrb->mesa);
 	}
 
 	if (mesaVis->depthBits == 24 && mesaVis->stencilBits == 8) {
-		nrb = nouveau_renderbuffer_new(GL_DEPTH24_STENCIL8_EXT, NULL,
-					       0, 0, NULL);
-		nouveauSpanSetFunctions(nrb, mesaVis);
+		nrb = nouveau_renderbuffer_new(GL_DEPTH24_STENCIL8_EXT);
 		_mesa_add_renderbuffer(fb, BUFFER_DEPTH, &nrb->mesa);
 		_mesa_add_renderbuffer(fb, BUFFER_STENCIL, &nrb->mesa);
 	} else
 	if (mesaVis->depthBits == 24) {
-		nrb = nouveau_renderbuffer_new(GL_DEPTH_COMPONENT24, NULL,
-					       0, 0, NULL);
-		nouveauSpanSetFunctions(nrb, mesaVis);
+		nrb = nouveau_renderbuffer_new(GL_DEPTH_COMPONENT24);
 		_mesa_add_renderbuffer(fb, BUFFER_DEPTH, &nrb->mesa);
 	} else
 	if (mesaVis->depthBits == 16) {
-		nrb = nouveau_renderbuffer_new(GL_DEPTH_COMPONENT16, NULL,
-					       0, 0, NULL);
-		nouveauSpanSetFunctions(nrb, mesaVis);
+		nrb = nouveau_renderbuffer_new(GL_DEPTH_COMPONENT16);
 		_mesa_add_renderbuffer(fb, BUFFER_DEPTH, &nrb->mesa);
 	}
 

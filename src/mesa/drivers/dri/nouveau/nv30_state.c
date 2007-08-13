@@ -905,9 +905,9 @@ static GLboolean nv40InitCard(nouveauContextPtr nmesa)
 	return GL_TRUE;
 }
 
-static GLboolean nv30BindBuffers(nouveauContextPtr nmesa, int num_color,
-		nouveau_renderbuffer **color,
-		nouveau_renderbuffer *depth)
+static GLboolean
+nv30BindBuffers(nouveauContextPtr nmesa, int num_color,
+		nouveau_renderbuffer_t **color, nouveau_renderbuffer_t *depth)
 {
 	GLuint x, y, w, h;
 

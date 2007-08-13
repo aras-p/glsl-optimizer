@@ -709,8 +709,8 @@ static GLboolean nv10InitCard(nouveauContextPtr nmesa)
 
 /* Update buffer offset/pitch/format */
 static GLboolean nv10BindBuffers(nouveauContextPtr nmesa, int num_color,
-				 nouveau_renderbuffer **color,
-				 nouveau_renderbuffer *depth)
+				 nouveau_renderbuffer_t **color,
+				 nouveau_renderbuffer_t *depth)
 {
 	GLuint x, y, w, h;
 	GLuint pitch, format, depth_pitch;
