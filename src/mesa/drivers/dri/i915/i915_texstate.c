@@ -60,6 +60,33 @@ static GLint step_offsets[6][2] = { {0,2},
 
 #define I915_TEX_UNIT_ENABLED(unit)		(1<<unit)
 
+static GLuint i915_compressed_alignment(GLint internal_fmt)
+{
+    GLuint alignment = 4;
+
+    switch (internal_fmt) {
+    case GL_COMPRESSED_RGB_FXT1_3DFX:
+    case GL_COMPRESSED_RGBA_FXT1_3DFX:
+        alignment = 8;
+        break;
+
+    default:
+        break;
+    }
+
+    return alignment;
+}
+
+static int align(int value, GLuint alignment)
+{
+    return (value + alignment - 1) & ~(alignment - 1);
+}
+
+static GLuint minify(GLuint d)
+{
+    return MAX2(1, d >> 1);
+}
+
 static void i915LayoutTextureImages( i915ContextPtr i915,
 				     struct gl_texture_object *tObj )
 {
@@ -161,8 +188,15 @@ static void i915LayoutTextureImages( i915ContextPtr i915,
       break;
    }
    default:
-      pitch = tObj->Image[0][firstLevel]->Width * t->intel.texelBytes;
-      pitch = (pitch + 3) & ~3;
+      if (baseImage->IsCompressed) {
+          GLuint alignment = i915_compressed_alignment(baseImage->InternalFormat);
+          
+          pitch = align(tObj->Image[0][firstLevel]->Width, alignment) * t->intel.texelBytes;
+      } else {
+          pitch = tObj->Image[0][firstLevel]->Width * t->intel.texelBytes;
+          pitch = (pitch + 3) & ~3;
+      }
+
       t->intel.base.dirty_images[0] = ~0;
 
       for ( total_height = i = 0 ; i < numLevels ; i++ ) {
@@ -343,8 +377,23 @@ static void i945LayoutTextureImages( i915ContextPtr i915,
       break;
    }
    default:
-      pitch = tObj->Image[0][firstLevel]->Width * t->intel.texelBytes;
-      pitch = (pitch + 3) & ~3;
+      if (baseImage->IsCompressed) {
+          GLuint alignment = i915_compressed_alignment(baseImage->InternalFormat);
+          
+          pitch = align(tObj->Image[0][firstLevel]->Width, alignment);
+          if (numLevels > 2) {
+              GLint width0 = align(minify(tObj->Image[0][firstLevel]->Width), alignment) +
+                  + align(minify(minify(tObj->Image[0][firstLevel]->Width)), alignment);
+
+              if (width0 > pitch)
+                  pitch = width0;
+          }
+          pitch = pitch * t->intel.texelBytes;
+      } else {
+          pitch = tObj->Image[0][firstLevel]->Width * t->intel.texelBytes;
+          pitch = (pitch + 3) & ~3;
+      }
+
       t->intel.base.dirty_images[0] = ~0;
       max_offset = 0;
 

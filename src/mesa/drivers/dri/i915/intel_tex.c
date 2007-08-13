@@ -643,17 +643,19 @@ static void intelUploadTexImage( intelContextPtr intel,
       switch (image->InternalFormat) {
 	case GL_COMPRESSED_RGB_FXT1_3DFX:
 	case GL_COMPRESSED_RGBA_FXT1_3DFX:
+          row_len = ((image->Width + 7) & ~7) * 2;  
+          break;
 	case GL_RGB_S3TC:
 	case GL_RGB4_S3TC:
 	case GL_COMPRESSED_RGB_S3TC_DXT1_EXT:
 	case GL_COMPRESSED_RGBA_S3TC_DXT1_EXT:
-	  row_len = (image->Width * 2 + 7) & ~7;
+	  row_len = ((image->Width + 3) & ~3) * 2;  
 	  break;
 	case GL_RGBA_S3TC:
 	case GL_RGBA4_S3TC:
 	case GL_COMPRESSED_RGBA_S3TC_DXT3_EXT:
 	case GL_COMPRESSED_RGBA_S3TC_DXT5_EXT:
-	  row_len = (image->Width * 4 + 15) & ~15;
+	  row_len = ((image->Width + 3) & ~3) * 4;  
 	  break;
 	default:
 	  fprintf(stderr,"Internal Compressed format not supported %d\n", image->InternalFormat);
