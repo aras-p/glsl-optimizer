@@ -57,6 +57,14 @@ static void Draw(void)
    glVertex3f( 0.0,  0.9, -30.0);
    glEnd();
 
+   glBegin(GL_QUADS);
+   glColor3f(1, 1, 1);
+   glVertex2f(-1.0, -1.0);
+   glVertex2f(-0.9, -1.0);
+   glVertex2f(-0.9, -0.9);
+   glVertex2f(-1.0, -0.9);
+   glEnd();
+
    glReadPixels(0, 0, Width, Height, GL_RGBA, GL_FLOAT, image);
    printf("Pixel(0,0) = %f, %f, %f, %f\n",
           image[0], image[1], image[2], image[3]);
