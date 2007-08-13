@@ -25,7 +25,7 @@
  * 
  **************************************************************************/
 
-#include "main/imports.h"	/* CALLOC */
+//#include "main/imports.h"	/* CALLOC */
 #include "i915_context.h"
 #include "i915_winsys.h"
 #include "i915_state.h"
@@ -36,6 +36,7 @@
 #include "pipe/draw/draw_context.h"
 #include "pipe/p_defines.h"
 #include "pipe/p_winsys.h"
+#include "pipe/p_util.h"
 
 
 /**
@@ -43,13 +44,13 @@
  * If we find texture and drawable support differs, add a selector
  * parameter or another function.
  */
-static const GLuint *
+static const unsigned *
 i915_supported_formats(struct pipe_context *pipe, 
-//			   GLuint type,
-			   GLuint *numFormats)
+//			   unsigned type,
+			   unsigned *numFormats)
 {
 #if 0
-   static const GLuint tex_supported[] = {
+   static const unsigned tex_supported[] = {
       PIPE_FORMAT_U_R8_G8_B8_A8,
       PIPE_FORMAT_U_A8_R8_G8_B8,
       PIPE_FORMAT_U_R5_G6_B5,
@@ -65,14 +66,14 @@ i915_supported_formats(struct pipe_context *pipe,
 
    /* Actually a lot more than this - add later:
     */
-   static const GLuint render_supported[] = {
+   static const unsigned render_supported[] = {
       PIPE_FORMAT_U_A8_R8_G8_B8,
       PIPE_FORMAT_U_R5_G6_B5,
    };
 
    /* 
     */
-   static const GLuint z_stencil_supported[] = {
+   static const unsigned z_stencil_supported[] = {
       PIPE_FORMAT_U_Z16,
       PIPE_FORMAT_U_Z32,
       PIPE_FORMAT_S8_Z24,
@@ -96,7 +97,7 @@ i915_supported_formats(struct pipe_context *pipe,
       return NULL;
    }
 #else
-   static const GLuint render_supported[] = {
+   static const unsigned render_supported[] = {
       PIPE_FORMAT_U_A8_R8_G8_B8,
       PIPE_FORMAT_U_R5_G6_B5,
       PIPE_FORMAT_S8_Z24,
@@ -111,8 +112,8 @@ i915_supported_formats(struct pipe_context *pipe,
  * We might want to return max texture levels instead...
  */
 static void
-i915_max_texture_size(struct pipe_context *pipe, GLuint textureType,
-                      GLuint *maxWidth, GLuint *maxHeight, GLuint *maxDepth)
+i915_max_texture_size(struct pipe_context *pipe, unsigned textureType,
+                      unsigned *maxWidth, unsigned *maxHeight, unsigned *maxDepth)
 {
    switch (textureType) {
    case PIPE_TEXTURE_1D:
@@ -160,9 +161,9 @@ static void i915_draw_vb( struct pipe_context *pipe,
 
 static void
 i915_draw_vertices(struct pipe_context *pipe,
-                       GLuint mode,
-                       GLuint numVertex, const GLfloat *verts,
-                       GLuint numAttribs, const GLuint attribs[])
+                       unsigned mode,
+                       unsigned numVertex, const float *verts,
+                       unsigned numAttribs, const unsigned attribs[])
 {
    struct i915_context *i915 = i915_context( pipe );
 

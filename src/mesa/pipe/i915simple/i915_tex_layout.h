@@ -6,10 +6,10 @@ struct pipe_context;
 struct pipe_mipmap_tree;
 
 
-extern GLboolean
+extern boolean
 i915_miptree_layout(struct pipe_context *, struct pipe_mipmap_tree *);
 
-extern GLboolean
+extern boolean
 i945_miptree_layout(struct pipe_context *, struct pipe_mipmap_tree *);
 
 

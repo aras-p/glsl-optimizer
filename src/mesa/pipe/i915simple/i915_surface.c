@@ -28,8 +28,8 @@
 #include "i915_context.h"
 #include "i915_state.h"
 #include "pipe/p_defines.h"
-#include "main/imports.h"
-#include "main/macros.h"
+#include "pipe/p_util.h"
+//#include "main/imports.h"
 
 
 struct i915_surface
@@ -45,13 +45,13 @@ struct i915_surface
  */
 static void
 i915_get_tile(struct pipe_surface *ps,
-              GLuint x, GLuint y, GLuint w, GLuint h, GLfloat *p)
+              unsigned x, unsigned y, unsigned w, unsigned h, float *p)
 {
-   const GLuint *src
-      = ((const GLuint *) (ps->region->map + ps->offset))
+   const unsigned *src
+      = ((const unsigned *) (ps->region->map + ps->offset))
       + y * ps->region->pitch + x;
-   GLuint i, j;
-   GLuint w0 = w;
+   unsigned i, j;
+   unsigned w0 = w;
 
    assert(ps->format == PIPE_FORMAT_U_A8_R8_G8_B8);
 
@@ -66,9 +66,9 @@ i915_get_tile(struct pipe_surface *ps,
       h = ps->height -y;
 #endif
    for (i = 0; i < h; i++) {
-      GLfloat *pRow = p;
+      float *pRow = p;
       for (j = 0; j < w; j++) {
-         const GLuint pixel = src[j];
+         const unsigned pixel = src[j];
          pRow[0] = UBYTE_TO_FLOAT((pixel >> 16) & 0xff);
          pRow[1] = UBYTE_TO_FLOAT((pixel >>  8) & 0xff);
          pRow[2] = UBYTE_TO_FLOAT((pixel >>  0) & 0xff);
@@ -83,7 +83,7 @@ i915_get_tile(struct pipe_surface *ps,
 
 static void
 i915_put_tile(struct pipe_surface *ps,
-              GLuint x, GLuint y, GLuint w, GLuint h, const GLfloat *p)
+              unsigned x, unsigned y, unsigned w, unsigned h, const float *p)
 {
    /* any need to put tiles into i915 surfaces? */
    assert(0);
@@ -92,7 +92,7 @@ i915_put_tile(struct pipe_surface *ps,
 
 
 static struct pipe_surface *
-i915_surface_alloc(struct pipe_context *pipe, GLuint format)
+i915_surface_alloc(struct pipe_context *pipe, unsigned format)
 {
    struct i915_surface *surf = CALLOC_STRUCT(i915_surface);
 

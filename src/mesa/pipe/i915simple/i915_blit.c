@@ -28,7 +28,7 @@
 
 #include <stdio.h>
 
-#include "mtypes.h"
+//#include "mtypes.h"
 
 #include "i915_context.h"
 #include "i915_winsys.h"
@@ -40,15 +40,15 @@
 
 void
 i915_fill_blit(struct i915_context *i915,
-	       GLuint cpp,
-	       GLshort dst_pitch,
+	       unsigned cpp,
+	       short dst_pitch,
 	       struct pipe_buffer_handle *dst_buffer,
-	       GLuint dst_offset,
-	       GLshort x, GLshort y, 
-	       GLshort w, GLshort h, 
-	       GLuint color)
+	       unsigned dst_offset,
+	       short x, short y, 
+	       short w, short h, 
+	       unsigned color)
 {
-   GLuint BR13, CMD;
+   unsigned BR13, CMD;
    BATCH_LOCALS;
 
    dst_pitch *= cpp;
@@ -86,18 +86,18 @@ i915_fill_blit(struct i915_context *i915,
 
 void
 i915_copy_blit( struct i915_context *i915,
-                  GLuint cpp,
-                  GLshort src_pitch,
+                  unsigned cpp,
+                  short src_pitch,
                   struct pipe_buffer_handle *src_buffer,
-                  GLuint src_offset,
-                  GLshort dst_pitch,
+                  unsigned src_offset,
+                  short dst_pitch,
                   struct pipe_buffer_handle *dst_buffer,
-                  GLuint dst_offset,
-                  GLshort src_x, GLshort src_y,
-                  GLshort dst_x, GLshort dst_y, 
-		  GLshort w, GLshort h )
+                  unsigned dst_offset,
+                  short src_x, short src_y,
+                  short dst_x, short dst_y, 
+		  short w, short h )
 {
-   GLuint CMD, BR13;
+   unsigned CMD, BR13;
    int dst_y2 = dst_y + h;
    int dst_x2 = dst_x + w;
    BATCH_LOCALS;
@@ -116,13 +116,13 @@ i915_copy_blit( struct i915_context *i915,
    case 1:
    case 2:
    case 3:
-      BR13 = (((GLint) dst_pitch) & 0xffff) | 
+      BR13 = (((int) dst_pitch) & 0xffff) | 
 	 (0xCC << 16) | (1 << 24);
       CMD = XY_SRC_COPY_BLT_CMD;
       break;
    case 4:
       BR13 =
-         (((GLint) dst_pitch) & 0xffff) | 
+         (((int) dst_pitch) & 0xffff) | 
 	 (0xCC << 16) | (1 << 24) | (1 << 25);
       CMD =
          (XY_SRC_COPY_BLT_CMD | XY_SRC_COPY_BLT_WRITE_ALPHA |
@@ -151,7 +151,7 @@ i915_copy_blit( struct i915_context *i915,
    OUT_BATCH((dst_y2 << 16) | dst_x2);
    OUT_RELOC(dst_buffer, I915_BUFFER_ACCESS_WRITE, dst_offset);
    OUT_BATCH((src_y << 16) | src_x);
-   OUT_BATCH(((GLint) src_pitch & 0xffff));
+   OUT_BATCH(((int) src_pitch & 0xffff));
    OUT_RELOC(src_buffer, I915_BUFFER_ACCESS_READ, src_offset);
    ADVANCE_BATCH();
 }

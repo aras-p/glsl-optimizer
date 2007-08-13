@@ -33,7 +33,7 @@
 #include "pipe/p_defines.h"
 #include "i915_context.h"
 #include "i915_state.h"
-#include "colormac.h"
+//#include "colormac.h"
 
 
 /**
@@ -42,9 +42,9 @@
  */
 void
 i915_clear(struct pipe_context *pipe, struct pipe_surface *ps,
-	   GLuint clearValue)
+	   unsigned clearValue)
 {
-   GLint x, y, w, h;
+   int x, y, w, h;
 
    x = 0;
    y = 0;

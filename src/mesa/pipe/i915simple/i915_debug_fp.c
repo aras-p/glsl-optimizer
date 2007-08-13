@@ -25,15 +25,12 @@
  * 
  **************************************************************************/
 
-#include <stdio.h>
 
 #include "i915_reg.h"
 #include "i915_debug.h"
 #include "pipe/p_winsys.h"
-//#include "i915_fpc.h"
-#include "shader/program.h"
-#include "shader/prog_instruction.h"
-#include "shader/prog_print.h"
+#include "pipe/p_util.h"
+
 
 
 
@@ -126,7 +123,7 @@ static const char *regname[0x8] = {
 };
 
 static void
-print_reg_type_nr(struct debug_stream *stream, GLuint type, GLuint nr)
+print_reg_type_nr(struct debug_stream *stream, unsigned type, unsigned nr)
 {
    switch (type) {
    case REG_TYPE_T:
@@ -173,7 +170,7 @@ print_reg_type_nr(struct debug_stream *stream, GLuint type, GLuint nr)
 
 
 static void
-print_reg_neg_swizzle(struct debug_stream *stream, GLuint reg)
+print_reg_neg_swizzle(struct debug_stream *stream, unsigned reg)
 {
    int i;
 
@@ -215,20 +212,20 @@ print_reg_neg_swizzle(struct debug_stream *stream, GLuint reg)
 
 
 static void
-print_src_reg(struct debug_stream *stream, GLuint dword)
+print_src_reg(struct debug_stream *stream, unsigned dword)
 {
-   GLuint nr = (dword >> A2_SRC2_NR_SHIFT) & REG_NR_MASK;
-   GLuint type = (dword >> A2_SRC2_TYPE_SHIFT) & REG_TYPE_MASK;
+   unsigned nr = (dword >> A2_SRC2_NR_SHIFT) & REG_NR_MASK;
+   unsigned type = (dword >> A2_SRC2_TYPE_SHIFT) & REG_TYPE_MASK;
    print_reg_type_nr(stream, type, nr);
    print_reg_neg_swizzle(stream, dword);
 }
 
 
 static void
-print_dest_reg(struct debug_stream *stream, GLuint dword)
+print_dest_reg(struct debug_stream *stream, unsigned dword)
 {
-   GLuint nr = (dword >> A0_DEST_NR_SHIFT) & REG_NR_MASK;
-   GLuint type = (dword >> A0_DEST_TYPE_SHIFT) & REG_TYPE_MASK;
+   unsigned nr = (dword >> A0_DEST_NR_SHIFT) & REG_NR_MASK;
+   unsigned type = (dword >> A0_DEST_TYPE_SHIFT) & REG_TYPE_MASK;
    print_reg_type_nr(stream, type, nr);
    if ((dword & A0_DEST_CHANNEL_ALL) == A0_DEST_CHANNEL_ALL)
       return;
@@ -251,7 +248,7 @@ print_dest_reg(struct debug_stream *stream, GLuint dword)
 
 static void
 print_arith_op(struct debug_stream *stream, 
-	       GLuint opcode, const GLuint * program)
+	       unsigned opcode, const unsigned * program)
 {
    if (opcode != A0_NOP) {
       print_dest_reg(stream, program[0]);
@@ -285,7 +282,7 @@ print_arith_op(struct debug_stream *stream,
 
 static void
 print_tex_op(struct debug_stream *stream, 
-	     GLuint opcode, const GLuint * program)
+	     unsigned opcode, const unsigned * program)
 {
    print_dest_reg(stream, program[0] | A0_DEST_CHANNEL_ALL);
    PRINTF(" = ");
@@ -303,7 +300,7 @@ print_tex_op(struct debug_stream *stream,
 
 static void
 print_dcl_op(struct debug_stream *stream, 
-	     GLuint opcode, const GLuint * program)
+	     unsigned opcode, const unsigned * program)
 {
    PRINTF("%s ", opcodes[opcode]);
    print_dest_reg(stream, 
@@ -314,10 +311,10 @@ print_dcl_op(struct debug_stream *stream,
 
 void
 i915_disassemble_program(struct debug_stream *stream, 
-			 const GLuint * program, GLuint sz)
+			 const unsigned * program, unsigned sz)
 {
-   GLuint size = program[0] & 0x1ff;
-   GLint i;
+   unsigned size = program[0] & 0x1ff;
+   int i;
 
    PRINTF("\t\tBEGIN\n");
 
@@ -325,11 +322,11 @@ i915_disassemble_program(struct debug_stream *stream,
 
    program++;
    for (i = 1; i < sz; i += 3, program += 3) {
-      GLuint opcode = program[0] & (0x1f << 24);
+      unsigned opcode = program[0] & (0x1f << 24);
 
       PRINTF("\t\t");
 
-      if ((GLint) opcode >= A0_NOP && opcode <= A0_SLT)
+      if ((int) opcode >= A0_NOP && opcode <= A0_SLT)
          print_arith_op(stream, opcode >> 24, program);
       else if (opcode >= T0_TEXLD && opcode <= T0_TEXKILL)
          print_tex_op(stream, opcode >> 24, program);

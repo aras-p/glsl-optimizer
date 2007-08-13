@@ -82,10 +82,10 @@ struct i915_cache_context;
  */
 struct i915_state 
 {
-   GLuint immediate[I915_MAX_IMMEDIATE];
-   GLuint dynamic[I915_MAX_DYNAMIC];
+   unsigned immediate[I915_MAX_IMMEDIATE];
+   unsigned dynamic[I915_MAX_DYNAMIC];
    
-   GLuint id;			/* track lost context events */
+   unsigned id;			/* track lost context events */
 };
 
 
@@ -113,15 +113,15 @@ struct i915_context
    struct pipe_stencil_state stencil;
    struct pipe_mipmap_tree *texture[PIPE_MAX_SAMPLERS];
    struct pipe_viewport_state viewport;
-   GLuint dirty;
+   unsigned dirty;
 
-   GLuint *batch_start;
+   unsigned *batch_start;
 
    struct i915_state current;
-   GLuint hardware_dirty;
+   unsigned hardware_dirty;
    
-   GLuint debug;
-   GLuint pci_id;
+   unsigned debug;
+   unsigned pci_id;
 
    struct {
       unsigned is_i945:1;
@@ -179,7 +179,7 @@ unsigned *i915_passthrough_program( unsigned *dwords );
  * i915_clear.c: 
  */
 void i915_clear(struct pipe_context *pipe, struct pipe_surface *ps,
-		GLuint clearValue);
+		unsigned clearValue);
 
 
 /***********************************************************************

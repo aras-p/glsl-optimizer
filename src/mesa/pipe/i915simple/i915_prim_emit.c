@@ -26,10 +26,11 @@
  **************************************************************************/
 
 
-#include "imports.h"
-#include "macros.h"
+//#include "imports.h"
+//#include "macros.h"
 
 #include "pipe/draw/draw_private.h"
+#include "pipe/p_util.h"
 
 #include "i915_context.h"
 #include "i915_winsys.h"
@@ -59,34 +60,6 @@ static INLINE struct setup_stage *setup_stage( struct draw_stage *stage )
    return (struct setup_stage *)stage;
 }
 
-static INLINE unsigned pack_ub4( unsigned char b0,
-				 unsigned char b1,
-				 unsigned char b2,
-				 unsigned char b3 )
-{
-   return ((((unsigned int)b0) << 0) |
-	   (((unsigned int)b1) << 8) |
-	   (((unsigned int)b2) << 16) |
-	   (((unsigned int)b3) << 24));
-}
-
-static INLINE unsigned fui( float f )
-{
-   union {
-      float f;
-      unsigned ui;
-   } fi;
-
-   fi.f = f;
-   return fi.ui;
-}
-
-static INLINE unsigned char float_to_ubyte( float f )
-{
-   unsigned char ub;
-   UNCLAMPED_FLOAT_TO_UBYTE(ub, f);
-   return ub;
-}
 
 
 /* Hardcoded vertex format: xyz/rgba

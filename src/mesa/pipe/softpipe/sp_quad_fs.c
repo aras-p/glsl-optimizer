@@ -32,13 +32,15 @@
  * all the enabled attributes run contiguously.
  */
 
-#include "glheader.h"
-#include "imports.h"
+#include "main/mtypes.h"
+
+#include "pipe/p_util.h"
+#include "tgsi/core/tgsi_core.h"
+
 #include "sp_context.h"
 #include "sp_headers.h"
 #include "sp_quad.h"
 #include "sp_tex_sample.h"
-#include "tgsi/core/tgsi_core.h"
 
 #if 0
 #if defined __GNUC__
@@ -71,9 +73,9 @@ struct exec_machine {
    const struct setup_coefficient *coef; /**< will point to quad->coef */
 
 #if ALIGNED_ATTRIBS
-   GLfloat attr[FRAG_ATTRIB_MAX][NUM_CHANNELS][QUAD_SIZE] __attribute__(( aligned( 16 ) ));
+   GLfloat attr[PIPE_ATTRIB_MAX][NUM_CHANNELS][QUAD_SIZE] __attribute__(( aligned( 16 ) ));
 #else
-   GLfloat attr[FRAG_ATTRIB_MAX][NUM_CHANNELS][QUAD_SIZE];
+   GLfloat attr[PIPE_ATTRIB_MAX][NUM_CHANNELS][QUAD_SIZE];
 #endif
 };
 

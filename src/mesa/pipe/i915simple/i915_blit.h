@@ -31,24 +31,24 @@
 #include "i915_context.h"
 
 extern void i915_copy_blit(struct i915_context *i915,
-			   GLuint cpp,
-			   GLshort src_pitch,
+			   unsigned cpp,
+			   short src_pitch,
 			   struct pipe_buffer_handle *src_buffer,
-			   GLuint src_offset,
-			   GLshort dst_pitch,
+			   unsigned src_offset,
+			   short dst_pitch,
 			   struct pipe_buffer_handle *dst_buffer,
-			   GLuint dst_offset,
-			   GLshort srcx, GLshort srcy,
-			   GLshort dstx, GLshort dsty,
-			   GLshort w, GLshort h );
+			   unsigned dst_offset,
+			   short srcx, short srcy,
+			   short dstx, short dsty,
+			   short w, short h );
 
 extern void i915_fill_blit(struct i915_context *i915,
-			   GLuint cpp,
-			   GLshort dst_pitch,
+			   unsigned cpp,
+			   short dst_pitch,
 			   struct pipe_buffer_handle *dst_buffer,
-			   GLuint dst_offset,
-			   GLshort x, GLshort y,
-			   GLshort w, GLshort h, GLuint color);
+			   unsigned dst_offset,
+			   short x, short y,
+			   short w, short h, unsigned color);
 
 
 #endif

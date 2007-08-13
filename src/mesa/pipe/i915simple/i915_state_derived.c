@@ -43,7 +43,7 @@ do {								\
 } while (0)
 
 
-static const GLuint frag_to_vf[FRAG_ATTRIB_MAX] = 
+static const unsigned frag_to_vf[FRAG_ATTRIB_MAX] = 
 {
    VF_ATTRIB_POS,
    VF_ATTRIB_COLOR0,
@@ -75,12 +75,12 @@ static const GLuint frag_to_vf[FRAG_ATTRIB_MAX] =
  */
 static void calculate_vertex_layout( struct i915_context *i915 )
 {
-//   const GLbitfield inputsRead = i915->fs.inputs_read;
-   const GLbitfield inputsRead = (FRAG_BIT_WPOS | FRAG_BIT_COL0);
-   GLuint slot_to_vf_attr[VF_ATTRIB_MAX];
-   GLbitfield attr_mask = 0x0;
-   GLuint nr_attrs = 0;
-   GLuint i;
+//   const unsigned inputsRead = i915->fs.inputs_read;
+   const unsigned inputsRead = (FRAG_BIT_WPOS | FRAG_BIT_COL0);
+   unsigned slot_to_vf_attr[VF_ATTRIB_MAX];
+   unsigned attr_mask = 0x0;
+   unsigned nr_attrs = 0;
+   unsigned i;
 
    memset(slot_to_vf_attr, 0, sizeof(slot_to_vf_attr));
 

@@ -25,16 +25,17 @@
  * 
  **************************************************************************/
 
-#include "glheader.h"
-#include "context.h"
-#include "macros.h"
-#include "enums.h"
+//#include "glheader.h"
+//#include "context.h"
+//#include "macros.h"
+//#include "enums.h"
 
 #include "i915_batch.h"
 #include "i915_state_inlines.h"
 #include "i915_context.h"
 #include "i915_reg.h"
 #include "i915_state.h"
+#include "pipe/p_util.h"
 
 #define FILE_DEBUG_FLAG DEBUG_STATE
 
@@ -50,9 +51,9 @@
  */
 
 static inline void set_dynamic_indirect( struct i915_context *i915,
-					 GLuint offset,
-					 const GLuint *src,
-					 GLuint dwords )
+					 unsigned offset,
+					 const unsigned *src,
+					 unsigned dwords )
 {
    int i;
 
@@ -68,12 +69,12 @@ static inline void set_dynamic_indirect( struct i915_context *i915,
  */
 static void upload_MODES4( struct i915_context *i915 )
 {
-   GLuint modes4 = 0;
+   unsigned modes4 = 0;
 
    /* I915_NEW_STENCIL */
    {
-      GLint testmask = i915->stencil.value_mask[0] & 0xff;
-      GLint writemask = i915->stencil.write_mask[0] & 0xff;
+      int testmask = i915->stencil.value_mask[0] & 0xff;
+      int writemask = i915->stencil.write_mask[0] & 0xff;
 
       modes4 |= (_3DSTATE_MODES_4_CMD |
 		 ENABLE_STENCIL_TEST_MASK |
@@ -110,20 +111,20 @@ const struct i915_tracked_state i915_upload_MODES4 = {
 
 static void upload_BFO( struct i915_context *i915 )
 {
-   GLuint bf[2];
+   unsigned bf[2];
 
    memset( bf, 0, sizeof(bf) );
 
    /* _NEW_STENCIL 
     */
    if (i915->stencil.back_enabled) {
-      GLint test  = i915_translate_compare_func(i915->stencil.back_func);
-      GLint fop   = i915_translate_stencil_op(i915->stencil.back_fail_op);
-      GLint dfop  = i915_translate_stencil_op(i915->stencil.back_zfail_op);
-      GLint dpop  = i915_translate_stencil_op(i915->stencil.back_zpass_op);
-      GLint ref   = i915->stencil.ref_value[1] & 0xff;
-      GLint tmask = i915->stencil.value_mask[1] & 0xff;
-      GLint wmask = i915->stencil.write_mask[1] & 0xff;
+      int test  = i915_translate_compare_func(i915->stencil.back_func);
+      int fop   = i915_translate_stencil_op(i915->stencil.back_fail_op);
+      int dfop  = i915_translate_stencil_op(i915->stencil.back_zfail_op);
+      int dpop  = i915_translate_stencil_op(i915->stencil.back_zpass_op);
+      int ref   = i915->stencil.ref_value[1] & 0xff;
+      int tmask = i915->stencil.value_mask[1] & 0xff;
+      int wmask = i915->stencil.write_mask[1] & 0xff;
       
       bf[0] = (_3DSTATE_BACKFACE_STENCIL_OPS |
 	       BFO_ENABLE_STENCIL_FUNCS |
@@ -172,23 +173,20 @@ const struct i915_tracked_state i915_upload_BFO = {
 
 static void upload_BLENDCOLOR( struct i915_context *i915 )
 {
-   GLuint bc[2];
+   unsigned bc[2];
 
    memset( bc, 0, sizeof(bc) );
 
    /* I915_NEW_BLEND {_COLOR} 
     */
    {
-      const GLfloat *color = i915->blend_color.color;
-      GLubyte r, g, b, a;
+      const float *color = i915->blend_color.color;
 
-      UNCLAMPED_FLOAT_TO_UBYTE(r, color[RCOMP]);
-      UNCLAMPED_FLOAT_TO_UBYTE(g, color[GCOMP]);
-      UNCLAMPED_FLOAT_TO_UBYTE(b, color[BCOMP]);
-      UNCLAMPED_FLOAT_TO_UBYTE(a, color[ACOMP]);
-
-      bc[0] = (_3DSTATE_CONST_BLEND_COLOR_CMD);
-      bc[1] = (a << 24) | (r << 16) | (g << 8) | b;
+      bc[0] = _3DSTATE_CONST_BLEND_COLOR_CMD;
+      bc[1] = pack_ui32_float4( color[0],
+				color[1],
+				color[2], 
+				color[3] );
    }
 
    set_dynamic_indirect( i915, 
@@ -208,25 +206,21 @@ const struct i915_tracked_state i915_upload_BLENDCOLOR = {
 
 static void upload_IAB( struct i915_context *i915 )
 {
-   GLuint iab = 0;
+   unsigned iab = 0;
 
    {
-      GLuint eqRGB  = i915->blend.rgb_func;
-      GLuint srcRGB = i915->blend.rgb_src_factor;
-      GLuint dstRGB = i915->blend.rgb_dst_factor;
+      unsigned eqRGB  = i915->blend.rgb_func;
+      unsigned srcRGB = i915->blend.rgb_src_factor;
+      unsigned dstRGB = i915->blend.rgb_dst_factor;
 
-      GLuint eqA    = i915->blend.alpha_func;
-      GLuint srcA   = i915->blend.alpha_src_factor;
-      GLuint dstA   = i915->blend.alpha_dst_factor;
+      unsigned eqA    = i915->blend.alpha_func;
+      unsigned srcA   = i915->blend.alpha_src_factor;
+      unsigned dstA   = i915->blend.alpha_dst_factor;
 
-      if (eqA == GL_MIN || eqA == GL_MAX) {
-	 srcA = dstA = GL_ONE;
-      }
+      /* Special handling for MIN/MAX filter modes handled at
+       * state_tracker level.
+       */
 
-      if (eqRGB == GL_MIN || eqRGB == GL_MAX) {
-	 srcRGB = dstRGB = GL_ONE;
-      }
-      
       if (srcA != srcRGB ||
 	  dstA != dstRGB ||
 	  eqA != eqRGB) {
@@ -268,7 +262,7 @@ const struct i915_tracked_state i915_upload_IAB = {
 
 static void upload_DEPTHSCALE( struct i915_context *i915 )
 {
-   union { GLfloat f; GLuint u; } ds[2];
+   union { float f; unsigned u; } ds[2];
 
    memset( ds, 0, sizeof(ds) );
    
@@ -304,7 +298,7 @@ const struct i915_tracked_state i915_upload_DEPTHSCALE = {
 
 static void upload_STIPPLE( struct i915_context *i915 )
 {
-   GLuint st[2];
+   unsigned st[2];
 
    st[0] = _3DSTATE_STIPPLE;
    st[1] = 0;
@@ -319,8 +313,8 @@ static void upload_STIPPLE( struct i915_context *i915 )
    /* I915_NEW_STIPPLE
     */
    {
-      const GLubyte *mask = (const GLubyte *)i915->poly_stipple.stipple;
-      GLubyte p[4];
+      const ubyte *mask = (const ubyte *)i915->poly_stipple.stipple;
+      ubyte p[4];
 
       p[0] = mask[12] & 0xf;
       p[1] = mask[8] & 0xf;

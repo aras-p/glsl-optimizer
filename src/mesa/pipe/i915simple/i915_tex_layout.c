@@ -30,13 +30,17 @@
   *   Michel Dänzer <michel@tungstengraphics.com>
   */
 
-#include "macros.h"
+//#include "macros.h"
 #include "pipe/p_state.h"
 #include "pipe/p_context.h"
+#include "pipe/p_defines.h"
+#include "pipe/p_util.h"
+
 #include "i915_tex_layout.h"
+#include "i915_debug.h"
 
 
-static GLuint minify( GLuint d )
+static unsigned minify( unsigned d )
 {
    return MAX2(1, d>>1);
 }
@@ -49,11 +53,11 @@ static int align(int value, int alignment)
 
 static void
 i915_miptree_set_level_info(struct pipe_mipmap_tree *mt,
-                             GLuint level,
-                             GLuint nr_images,
-                             GLuint x, GLuint y, GLuint w, GLuint h, GLuint d)
+                             unsigned level,
+                             unsigned nr_images,
+                             unsigned x, unsigned y, unsigned w, unsigned h, unsigned d)
 {
-   assert(level < MAX_TEXTURE_LEVELS);
+   assert(level < PIPE_MAX_TEXTURE_LEVELS);
 
    mt->level[level].width = w;
    mt->level[level].height = h;
@@ -76,14 +80,14 @@ i915_miptree_set_level_info(struct pipe_mipmap_tree *mt,
    assert(nr_images);
    assert(!mt->level[level].image_offset);
 
-   mt->level[level].image_offset = (GLuint *) malloc(nr_images * sizeof(GLuint));
+   mt->level[level].image_offset = (unsigned *) malloc(nr_images * sizeof(unsigned));
    mt->level[level].image_offset[0] = 0;
 }
 
 
 static void
 i915_miptree_set_image_offset(struct pipe_mipmap_tree *mt,
-                               GLuint level, GLuint img, GLuint x, GLuint y)
+                               unsigned level, unsigned img, unsigned x, unsigned y)
 {
    if (img == 0 && level == 0)
       assert(x == 0 && y == 0);
@@ -102,12 +106,12 @@ i915_miptree_set_image_offset(struct pipe_mipmap_tree *mt,
 static void
 i945_miptree_layout_2d( struct pipe_mipmap_tree *mt )
 {
-   GLint align_h = 2, align_w = 4;
-   GLuint level;
-   GLuint x = 0;
-   GLuint y = 0;
-   GLuint width = mt->width0;
-   GLuint height = mt->height0;
+   int align_h = 2, align_w = 4;
+   unsigned level;
+   unsigned x = 0;
+   unsigned y = 0;
+   unsigned width = mt->width0;
+   unsigned height = mt->height0;
 
    mt->pitch = mt->width0;
 
@@ -117,7 +121,7 @@ i945_miptree_layout_2d( struct pipe_mipmap_tree *mt )
     * 2nd mipmap out past the width of its parent.
     */
    if (mt->first_level != mt->last_level) {
-      GLuint mip1_width = align(minify(mt->width0), align_w)
+      unsigned mip1_width = align(minify(mt->width0), align_w)
 			+ minify(minify(mt->width0));
 
       if (mip1_width > mt->width0)
@@ -131,7 +135,7 @@ i945_miptree_layout_2d( struct pipe_mipmap_tree *mt )
    mt->total_height = 0;
 
    for ( level = mt->first_level ; level <= mt->last_level ; level++ ) {
-      GLuint img_height;
+      unsigned img_height;
 
       i915_miptree_set_level_info(mt, level, 1, x, y, width, height, 1);
 
@@ -161,7 +165,7 @@ i945_miptree_layout_2d( struct pipe_mipmap_tree *mt )
 }
 
 
-static const GLint initial_offsets[6][2] = {
+static const int initial_offsets[6][2] = {
    {0, 0},
    {0, 2},
    {1, 0},
@@ -170,7 +174,7 @@ static const GLint initial_offsets[6][2] = {
    {1, 3}
 };
 
-static const GLint step_offsets[6][2] = {
+static const int step_offsets[6][2] = {
    {0, 2},
    {0, 2},
    {-1, 2},
@@ -180,16 +184,16 @@ static const GLint step_offsets[6][2] = {
 };
 
 
-GLboolean
+boolean
 i915_miptree_layout(struct pipe_context *pipe, struct pipe_mipmap_tree * mt)
 {
-   GLint level;
+   int level;
 
    switch (mt->target) {
-   case GL_TEXTURE_CUBE_MAP:{
-         const GLuint dim = mt->width0;
-         GLuint face;
-         GLuint lvlWidth = mt->width0, lvlHeight = mt->height0;
+   case PIPE_TEXTURE_CUBE: {
+         const unsigned dim = mt->width0;
+         unsigned face;
+         unsigned lvlWidth = mt->width0, lvlHeight = mt->height0;
 
          assert(lvlWidth == lvlHeight); /* cubemap images are square */
 
@@ -208,17 +212,12 @@ i915_miptree_layout(struct pipe_context *pipe, struct pipe_mipmap_tree * mt)
          }
 
          for (face = 0; face < 6; face++) {
-            GLuint x = initial_offsets[face][0] * dim;
-            GLuint y = initial_offsets[face][1] * dim;
-            GLuint d = dim;
+            unsigned x = initial_offsets[face][0] * dim;
+            unsigned y = initial_offsets[face][1] * dim;
+            unsigned d = dim;
 
             for (level = mt->first_level; level <= mt->last_level; level++) {
                i915_miptree_set_image_offset(mt, level, face, x, y);
-
-               if (d == 0)
-                  _mesa_printf("cube mipmap %d/%d (%d..%d) is 0x0\n",
-                               face, level, mt->first_level, mt->last_level);
-
                d >>= 1;
                x += step_offsets[face][0] * d;
                y += step_offsets[face][1] * d;
@@ -226,11 +225,11 @@ i915_miptree_layout(struct pipe_context *pipe, struct pipe_mipmap_tree * mt)
          }
          break;
       }
-   case GL_TEXTURE_3D:{
-         GLuint width = mt->width0;
-         GLuint height = mt->height0;
-         GLuint depth = mt->depth0;
-         GLuint stack_height = 0;
+   case PIPE_TEXTURE_3D:{
+         unsigned width = mt->width0;
+         unsigned height = mt->height0;
+         unsigned depth = mt->depth0;
+         unsigned stack_height = 0;
 
          /* Calculate the size of a single slice. 
           */
@@ -255,7 +254,7 @@ i915_miptree_layout(struct pipe_context *pipe, struct pipe_mipmap_tree * mt)
           */
          depth = mt->depth0;
          for (level = mt->first_level; level <= mt->last_level; level++) {
-            GLuint i;
+            unsigned i;
             for (i = 0; i < depth; i++) 
                i915_miptree_set_image_offset(mt, level, i,
                                               0, i * stack_height);
@@ -273,9 +272,9 @@ i915_miptree_layout(struct pipe_context *pipe, struct pipe_mipmap_tree * mt)
       }
 
    default:{
-         GLuint width = mt->width0;
-         GLuint height = mt->height0;
-	 GLuint img_height;
+         unsigned width = mt->width0;
+         unsigned height = mt->height0;
+	 unsigned img_height;
 
          mt->pitch = ((mt->width0 * mt->cpp + 3) & ~3) / mt->cpp;
          mt->total_height = 0;
@@ -304,20 +303,20 @@ i915_miptree_layout(struct pipe_context *pipe, struct pipe_mipmap_tree * mt)
        mt->total_height, mt->cpp, mt->pitch * mt->total_height * mt->cpp);
    */
 
-   return GL_TRUE;
+   return TRUE;
 }
 
 
-GLboolean
+boolean
 i945_miptree_layout(struct pipe_context *pipe, struct pipe_mipmap_tree * mt)
 {
-   GLint level;
+   int level;
 
    switch (mt->target) {
-   case GL_TEXTURE_CUBE_MAP:{
-         const GLuint dim = mt->width0;
-         GLuint face;
-         GLuint lvlWidth = mt->width0, lvlHeight = mt->height0;
+   case PIPE_TEXTURE_CUBE:{
+         const unsigned dim = mt->width0;
+         unsigned face;
+         unsigned lvlWidth = mt->width0, lvlHeight = mt->height0;
 
          assert(lvlWidth == lvlHeight); /* cubemap images are square */
 
@@ -344,9 +343,9 @@ i945_miptree_layout(struct pipe_context *pipe, struct pipe_mipmap_tree * mt)
 
 
          for (face = 0; face < 6; face++) {
-            GLuint x = initial_offsets[face][0] * dim;
-            GLuint y = initial_offsets[face][1] * dim;
-            GLuint d = dim;
+            unsigned x = initial_offsets[face][0] * dim;
+            unsigned y = initial_offsets[face][1] * dim;
+            unsigned d = dim;
 
             if (dim == 4 && face >= 4) {
                y = mt->total_height - 4;
@@ -365,18 +364,18 @@ i945_miptree_layout(struct pipe_context *pipe, struct pipe_mipmap_tree * mt)
                switch (d) {
                case 4:
                   switch (face) {
-                  case FACE_POS_X:
-                  case FACE_NEG_X:
+                  case PIPE_TEX_FACE_POS_X:
+                  case PIPE_TEX_FACE_NEG_X:
                      x += step_offsets[face][0] * d;
                      y += step_offsets[face][1] * d;
                      break;
-                  case FACE_POS_Y:
-                  case FACE_NEG_Y:
+                  case PIPE_TEX_FACE_POS_Y:
+                  case PIPE_TEX_FACE_NEG_Y:
                      y += 12;
                      x -= 8;
                      break;
-                  case FACE_POS_Z:
-                  case FACE_NEG_Z:
+                  case PIPE_TEX_FACE_POS_Z:
+                  case PIPE_TEX_FACE_NEG_Z:
                      y = mt->total_height - 4;
                      x = (face - 4) * 8;
                      break;
@@ -400,13 +399,13 @@ i945_miptree_layout(struct pipe_context *pipe, struct pipe_mipmap_tree * mt)
          }
          break;
       }
-   case GL_TEXTURE_3D:{
-         GLuint width = mt->width0;
-         GLuint height = mt->height0;
-         GLuint depth = mt->depth0;
-         GLuint pack_x_pitch, pack_x_nr;
-         GLuint pack_y_pitch;
-         GLuint level;
+   case PIPE_TEXTURE_3D:{
+         unsigned width = mt->width0;
+         unsigned height = mt->height0;
+         unsigned depth = mt->depth0;
+         unsigned pack_x_pitch, pack_x_nr;
+         unsigned pack_y_pitch;
+         unsigned level;
 
          mt->pitch = ((mt->width0 * mt->cpp + 3) & ~3) / mt->cpp;
          mt->total_height = 0;
@@ -416,10 +415,10 @@ i945_miptree_layout(struct pipe_context *pipe, struct pipe_mipmap_tree * mt)
          pack_x_nr = 1;
 
          for (level = mt->first_level; level <= mt->last_level; level++) {
-            GLuint nr_images = mt->target == GL_TEXTURE_3D ? depth : 6;
-            GLint x = 0;
-            GLint y = 0;
-            GLint q, j;
+            unsigned nr_images = mt->target == PIPE_TEXTURE_3D ? depth : 6;
+            int x = 0;
+            int y = 0;
+            int q, j;
 
             i915_miptree_set_level_info(mt, level, nr_images,
                                          0, mt->total_height,
@@ -455,13 +454,14 @@ i945_miptree_layout(struct pipe_context *pipe, struct pipe_mipmap_tree * mt)
          break;
       }
 
-   case GL_TEXTURE_1D:
-   case GL_TEXTURE_2D:
-   case GL_TEXTURE_RECTANGLE_ARB:
+   case PIPE_TEXTURE_1D:
+   case PIPE_TEXTURE_2D:
+//   case PIPE_TEXTURE_RECTANGLE:
          i945_miptree_layout_2d(mt);
          break;
    default:
-      _mesa_problem(NULL, "Unexpected tex target in i945_miptree_layout()");
+      assert(0);
+      return FALSE;
    }
 
    /*
@@ -470,6 +470,6 @@ i945_miptree_layout(struct pipe_context *pipe, struct pipe_mipmap_tree * mt)
        mt->total_height, mt->cpp, mt->pitch * mt->total_height * mt->cpp);
    */
 
-   return GL_TRUE;
+   return TRUE;
 }
 

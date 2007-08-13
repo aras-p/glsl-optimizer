@@ -28,6 +28,7 @@
 #ifndef I915_STATE_INLINES_H
 #define I915_STATE_INLINES_H
 
+#include "p_compiler.h"
 #include "p_defines.h"
 #include "i915_reg.h"
 
@@ -184,9 +185,9 @@ i915_translate_logic_op(unsigned opcode)
 
 
 
-static INLINE GLboolean i915_validate_vertices( GLuint hw_prim, GLuint nr )
+static INLINE boolean i915_validate_vertices( unsigned hw_prim, unsigned nr )
 {
-   GLboolean ok;
+   boolean ok;
 
    switch (hw_prim) {
    case PRIM3D_POINTLIST:
@@ -225,6 +226,5 @@ static INLINE GLboolean i915_validate_vertices( GLuint hw_prim, GLuint nr )
 
    return ok;
 }
-
 
 #endif

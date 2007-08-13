@@ -29,12 +29,13 @@
   *   Keith Whitwell <keith@tungstengraphics.com>
   */
  
-#include "macros.h"
+//#include "macros.h"
 
 #include "i915_state_inlines.h"
 #include "i915_context.h"
 #include "i915_state.h"
 #include "i915_reg.h"
+#include "p_util.h"
 
 
 /* All state expressable with the LOAD_STATE_IMMEDIATE_1 packet.
@@ -51,7 +52,7 @@
  */
 static void upload_S2S4(struct i915_context *i915)
 {
-   GLuint LIS2, LIS4;
+   unsigned LIS2, LIS4;
    
    /* I915_NEW_VERTEX_FORMAT */
    LIS2 = 0xffffffff;
@@ -86,7 +87,7 @@ static void upload_S2S4(struct i915_context *i915)
 
    /* I915_NEW_SETUP */
    {
-      GLint point_size = CLAMP((int) i915->setup.point_size, 1, 0xff);
+      int point_size = CLAMP((int) i915->setup.point_size, 1, 0xff);
 
       LIS4 |= point_size << S4_POINT_WIDTH_SHIFT;
    }
@@ -121,15 +122,15 @@ const struct i915_tracked_state i915_upload_S2S4 = {
  */
 static void upload_S5( struct i915_context *i915 )
 {
-   GLuint LIS5 = 0;
+   unsigned LIS5 = 0;
 
    /* I915_NEW_STENCIL */
    if (i915->stencil.front_enabled) {
-      GLint test = i915_translate_compare_func(i915->stencil.front_func);
-      GLint fop = i915_translate_stencil_op(i915->stencil.front_fail_op);
-      GLint dfop = i915_translate_stencil_op(i915->stencil.front_zfail_op);
-      GLint dpop = i915_translate_stencil_op(i915->stencil.front_zpass_op);
-      GLint ref = i915->stencil.ref_value[0] & 0xff;
+      int test = i915_translate_compare_func(i915->stencil.front_func);
+      int fop = i915_translate_stencil_op(i915->stencil.front_fail_op);
+      int dfop = i915_translate_stencil_op(i915->stencil.front_zfail_op);
+      int dpop = i915_translate_stencil_op(i915->stencil.front_zpass_op);
+      int ref = i915->stencil.ref_value[0] & 0xff;
       
       LIS5 |= (S5_STENCIL_TEST_ENABLE |
 	       S5_STENCIL_WRITE_ENABLE |
@@ -184,16 +185,14 @@ const struct i915_tracked_state i915_upload_S5 = {
  */
 static void upload_S6( struct i915_context *i915 )
 {
-   GLuint LIS6 = (S6_COLOR_WRITE_ENABLE |
+   unsigned LIS6 = (S6_COLOR_WRITE_ENABLE |
 		  (2 << S6_TRISTRIP_PV_SHIFT));
 
    /* I915_NEW_ALPHA_TEST
     */
    if (i915->alpha_test.enabled) {
       int test = i915_translate_compare_func(i915->alpha_test.func);
-      GLubyte refByte;
-
-      CLAMPED_FLOAT_TO_UBYTE(refByte, i915->alpha_test.ref);
+      ubyte refByte = float_to_ubyte(i915->alpha_test.ref);
       
 
       LIS6 |= (S6_ALPHA_TEST_ENABLE |
@@ -205,9 +204,9 @@ static void upload_S6( struct i915_context *i915 )
     */
    if (i915->blend.blend_enable)
    {
-      GLuint funcRGB = i915->blend.rgb_func;
-      GLuint srcRGB = i915->blend.rgb_src_factor;
-      GLuint dstRGB = i915->blend.rgb_dst_factor;
+      unsigned funcRGB = i915->blend.rgb_func;
+      unsigned srcRGB = i915->blend.rgb_src_factor;
+      unsigned dstRGB = i915->blend.rgb_dst_factor;
       
       LIS6 |= (S6_CBUF_BLEND_ENABLE |
 	       SRC_BLND_FACT(i915_translate_blend_factor(srcRGB)) |
@@ -218,7 +217,7 @@ static void upload_S6( struct i915_context *i915 )
    /* I915_NEW_DEPTH 
     */
    if (i915->depth_test.enabled) {
-      GLint func = i915_translate_compare_func(i915->depth_test.func);
+      int func = i915_translate_compare_func(i915->depth_test.func);
 
       LIS6 |= (S6_DEPTH_TEST_ENABLE |
 	       (func << S6_DEPTH_TEST_FUNC_SHIFT));
@@ -243,7 +242,7 @@ const struct i915_tracked_state i915_upload_S6 = {
  */
 static void upload_S7( struct i915_context *i915 )
 {
-   GLfloat LIS7;
+   float LIS7;
 
    /* I915_NEW_SETUP
     */

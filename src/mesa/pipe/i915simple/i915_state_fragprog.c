@@ -28,7 +28,7 @@
 #include "i915_reg.h"
 #include "i915_context.h"
 #include "i915_debug.h"
-
+#include "pipe/p_util.h"
 
 static unsigned passthrough[] = 
 {

@@ -44,7 +44,7 @@
  */
 void
 softpipe_clear(struct pipe_context *pipe, struct pipe_surface *ps,
-               GLuint clearValue)
+               unsigned clearValue)
 {
    struct softpipe_context *softpipe = softpipe_context(pipe);
    GLint x, y, w, h;

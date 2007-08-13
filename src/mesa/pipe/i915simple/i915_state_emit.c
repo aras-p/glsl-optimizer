@@ -27,8 +27,8 @@
 
 
 
-#include "glheader.h"
-#include "mtypes.h"
+//#include "glheader.h"
+//#include "mtypes.h"
 
 #include "i915_reg.h"
 #include "i915_context.h"
@@ -204,8 +204,8 @@ i915_emit_hardware_state(struct i915_context *i915 )
 
 
    {
-      GLuint i, dwords;
-      GLuint *prog = i915_passthrough_program( &dwords );
+      unsigned i, dwords;
+      unsigned *prog = i915_passthrough_program( &dwords );
       
       for (i = 0; i < dwords; i++)
 	 OUT_BATCH( prog[i] );

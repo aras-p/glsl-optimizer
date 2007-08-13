@@ -25,7 +25,7 @@
  * 
  **************************************************************************/
 
-#include "imports.h"
+//#include "imports.h"
 
 #include "i915_reg.h"
 #include "i915_context.h"
@@ -35,15 +35,15 @@
 #define PRINTF( ... ) (stream)->winsys->printf( (stream)->winsys, __VA_ARGS__ )
 
 
-static GLboolean debug( struct debug_stream *stream, const char *name, GLuint len )
+static boolean debug( struct debug_stream *stream, const char *name, unsigned len )
 {
-   GLuint i;
-   GLuint *ptr = (GLuint *)(stream->ptr + stream->offset);
+   unsigned i;
+   unsigned *ptr = (unsigned *)(stream->ptr + stream->offset);
    
    if (len == 0) {
       PRINTF("Error - zero length packet (0x%08x)\n", stream->ptr[0]);
       assert(0);
-      return GL_FALSE;
+      return FALSE;
    }
 
    if (stream->print_addresses)
@@ -55,13 +55,13 @@ static GLboolean debug( struct debug_stream *stream, const char *name, GLuint le
       PRINTF("\t0x%08x\n",  ptr[i]);   
    PRINTF("\n");
 
-   stream->offset += len * sizeof(GLuint);
+   stream->offset += len * sizeof(unsigned);
    
-   return GL_TRUE;
+   return TRUE;
 }
 
 
-static const char *get_prim_name( GLuint val )
+static const char *get_prim_name( unsigned val )
 {
    switch (val & PRIM3D_MASK) {
    case PRIM3D_TRILIST: return "TRILIST"; break;
@@ -80,13 +80,13 @@ static const char *get_prim_name( GLuint val )
    }
 }
 
-static GLboolean debug_prim( struct debug_stream *stream, const char *name, 
-			     GLboolean dump_floats,
-			     GLuint len )
+static boolean debug_prim( struct debug_stream *stream, const char *name, 
+			     boolean dump_floats,
+			     unsigned len )
 {
-   GLuint *ptr = (GLuint *)(stream->ptr + stream->offset);
+   unsigned *ptr = (unsigned *)(stream->ptr + stream->offset);
    const char *prim = get_prim_name( ptr[0] );
-   GLuint i;
+   unsigned i;
    
 
 
@@ -94,7 +94,7 @@ static GLboolean debug_prim( struct debug_stream *stream, const char *name,
    PRINTF("\t0x%08x\n",  ptr[0]);   
    for (i = 1; i < len; i++) {
       if (dump_floats)
-	 PRINTF("\t0x%08x // %f\n",  ptr[i], *(GLfloat *)&ptr[i]);   
+	 PRINTF("\t0x%08x // %f\n",  ptr[i], *(float *)&ptr[i]);   
       else
 	 PRINTF("\t0x%08x\n",  ptr[i]);   
    }
@@ -102,22 +102,22 @@ static GLboolean debug_prim( struct debug_stream *stream, const char *name,
       
    PRINTF("\n");
 
-   stream->offset += len * sizeof(GLuint);
+   stream->offset += len * sizeof(unsigned);
    
-   return GL_TRUE;
+   return TRUE;
 }
    
 
 
 
-static GLboolean debug_program( struct debug_stream *stream, const char *name, GLuint len )
+static boolean debug_program( struct debug_stream *stream, const char *name, unsigned len )
 {
-   GLuint *ptr = (GLuint *)(stream->ptr + stream->offset);
+   unsigned *ptr = (unsigned *)(stream->ptr + stream->offset);
 
    if (len == 0) {
       PRINTF("Error - zero length packet (0x%08x)\n", stream->ptr[0]);
       assert(0);
-      return GL_FALSE;
+      return FALSE;
    }
 
    if (stream->print_addresses)
@@ -126,16 +126,16 @@ static GLboolean debug_program( struct debug_stream *stream, const char *name, G
    PRINTF("%s (%d dwords):\n", name, len);
    i915_disassemble_program( stream, ptr, len );
 
-   stream->offset += len * sizeof(GLuint);
-   return GL_TRUE;
+   stream->offset += len * sizeof(unsigned);
+   return TRUE;
 }
 
 
-static GLboolean debug_chain( struct debug_stream *stream, const char *name, GLuint len )
+static boolean debug_chain( struct debug_stream *stream, const char *name, unsigned len )
 {
-   GLuint *ptr = (GLuint *)(stream->ptr + stream->offset);
-   GLuint old_offset = stream->offset + len * sizeof(GLuint);
-   GLuint i;
+   unsigned *ptr = (unsigned *)(stream->ptr + stream->offset);
+   unsigned old_offset = stream->offset + len * sizeof(unsigned);
+   unsigned i;
 
    PRINTF("%s (%d dwords):\n", name, len);
    for (i = 0; i < len; i++)
@@ -151,17 +151,17 @@ static GLboolean debug_chain( struct debug_stream *stream, const char *name, GLu
 		   old_offset, stream->offset );
 
 
-   return GL_TRUE;
+   return TRUE;
 }
 
 
-static GLboolean debug_variable_length_prim( struct debug_stream *stream )
+static boolean debug_variable_length_prim( struct debug_stream *stream )
 {
-   GLuint *ptr = (GLuint *)(stream->ptr + stream->offset);
+   unsigned *ptr = (unsigned *)(stream->ptr + stream->offset);
    const char *prim = get_prim_name( ptr[0] );
-   GLuint i, len;
+   unsigned i, len;
 
-   GLushort *idx = (GLushort *)(ptr+1);
+   ushort *idx = (ushort *)(ptr+1);
    for (i = 0; idx[i] != 0xffff; i++)
       ;
 
@@ -172,8 +172,8 @@ static GLboolean debug_variable_length_prim( struct debug_stream *stream )
       PRINTF("\t0x%08x\n",  ptr[i]);
    PRINTF("\n");
 
-   stream->offset += len * sizeof(GLuint);
-   return GL_TRUE;
+   stream->offset += len * sizeof(unsigned);
+   return TRUE;
 }
 
 
@@ -202,13 +202,13 @@ do {							\
    }							\
 } while (0)
 
-static GLboolean debug_load_immediate( struct debug_stream *stream,
+static boolean debug_load_immediate( struct debug_stream *stream,
 				       const char *name,
-				       GLuint len )
+				       unsigned len )
 {
-   GLuint *ptr = (GLuint *)(stream->ptr + stream->offset);
-   GLuint bits = (ptr[0] >> 4) & 0xff;
-   GLuint j = 0;
+   unsigned *ptr = (unsigned *)(stream->ptr + stream->offset);
+   unsigned bits = (ptr[0] >> 4) & 0xff;
+   unsigned j = 0;
    
    PRINTF("%s (%d dwords, flags: %x):\n", name, len, bits);
    PRINTF("\t0x%08x\n",  ptr[j++]);
@@ -302,20 +302,20 @@ static GLboolean debug_load_immediate( struct debug_stream *stream,
 
    assert(j == len);
 
-   stream->offset += len * sizeof(GLuint);
+   stream->offset += len * sizeof(unsigned);
    
-   return GL_TRUE;
+   return TRUE;
 }
  
 
 
-static GLboolean debug_load_indirect( struct debug_stream *stream,
+static boolean debug_load_indirect( struct debug_stream *stream,
 				      const char *name,
-				      GLuint len )
+				      unsigned len )
 {
-   GLuint *ptr = (GLuint *)(stream->ptr + stream->offset);
-   GLuint bits = (ptr[0] >> 8) & 0x3f;
-   GLuint i, j = 0;
+   unsigned *ptr = (unsigned *)(stream->ptr + stream->offset);
+   unsigned bits = (ptr[0] >> 8) & 0x3f;
+   unsigned i, j = 0;
    
    PRINTF("%s (%d dwords):\n", name, len);
    PRINTF("\t0x%08x\n",  ptr[j++]);
@@ -362,13 +362,13 @@ static GLboolean debug_load_indirect( struct debug_stream *stream,
 
    assert(j == len);
 
-   stream->offset += len * sizeof(GLuint);
+   stream->offset += len * sizeof(unsigned);
    
-   return GL_TRUE;
+   return TRUE;
 }
  	
 static void BR13( struct debug_stream *stream,
-		  GLuint val )
+		  unsigned val )
 {
    PRINTF("\t0x%08x\n",  val);
    FLAG(val, 30, "clipping enable");
@@ -379,7 +379,7 @@ static void BR13( struct debug_stream *stream,
 
 
 static void BR22( struct debug_stream *stream,
-		  GLuint val )
+		  unsigned val )
 {
    PRINTF("\t0x%08x\n",  val);
    BITS(val, 31, 16, "dest y1");
@@ -387,7 +387,7 @@ static void BR22( struct debug_stream *stream,
 }
 
 static void BR23( struct debug_stream *stream,
-		  GLuint val )
+		  unsigned val )
 {
    PRINTF("\t0x%08x\n",  val);
    BITS(val, 31, 16, "dest y2");
@@ -395,13 +395,13 @@ static void BR23( struct debug_stream *stream,
 }
 
 static void BR09( struct debug_stream *stream,
-		  GLuint val )
+		  unsigned val )
 {
    PRINTF("\t0x%08x -- dest address\n",  val);
 }
 
 static void BR26( struct debug_stream *stream,
-		  GLuint val )
+		  unsigned val )
 {
    PRINTF("\t0x%08x\n",  val);
    BITS(val, 31, 16, "src y1");
@@ -409,29 +409,29 @@ static void BR26( struct debug_stream *stream,
 }
 
 static void BR11( struct debug_stream *stream,
-		  GLuint val )
+		  unsigned val )
 {
    PRINTF("\t0x%08x\n",  val);
    BITS(val, 15, 0,  "src pitch");
 }
 
 static void BR12( struct debug_stream *stream,
-		  GLuint val )
+		  unsigned val )
 {
    PRINTF("\t0x%08x -- src address\n",  val);
 }
 
 static void BR16( struct debug_stream *stream,
-		  GLuint val )
+		  unsigned val )
 {
    PRINTF("\t0x%08x -- color\n",  val);
 }
    
-static GLboolean debug_copy_blit( struct debug_stream *stream,
+static boolean debug_copy_blit( struct debug_stream *stream,
 				  const char *name,
-				  GLuint len )
+				  unsigned len )
 {
-   GLuint *ptr = (GLuint *)(stream->ptr + stream->offset);
+   unsigned *ptr = (unsigned *)(stream->ptr + stream->offset);
    int j = 0;
 
    PRINTF("%s (%d dwords):\n", name, len);
@@ -445,16 +445,16 @@ static GLboolean debug_copy_blit( struct debug_stream *stream,
    BR11(stream, ptr[j++]);
    BR12(stream, ptr[j++]);
 
-   stream->offset += len * sizeof(GLuint);
+   stream->offset += len * sizeof(unsigned);
    assert(j == len);
-   return GL_TRUE;
+   return TRUE;
 }
 
-static GLboolean debug_color_blit( struct debug_stream *stream,
+static boolean debug_color_blit( struct debug_stream *stream,
 				  const char *name,
-				  GLuint len )
+				  unsigned len )
 {
-   GLuint *ptr = (GLuint *)(stream->ptr + stream->offset);
+   unsigned *ptr = (unsigned *)(stream->ptr + stream->offset);
    int j = 0;
 
    PRINTF("%s (%d dwords):\n", name, len);
@@ -466,16 +466,16 @@ static GLboolean debug_color_blit( struct debug_stream *stream,
    BR09(stream, ptr[j++]);
    BR16(stream, ptr[j++]);
 
-   stream->offset += len * sizeof(GLuint);
+   stream->offset += len * sizeof(unsigned);
    assert(j == len);
-   return GL_TRUE;
+   return TRUE;
 }
 
-static GLboolean debug_modes4( struct debug_stream *stream,
+static boolean debug_modes4( struct debug_stream *stream,
 				  const char *name,
-				  GLuint len )
+				  unsigned len )
 {
-   GLuint *ptr = (GLuint *)(stream->ptr + stream->offset);
+   unsigned *ptr = (unsigned *)(stream->ptr + stream->offset);
    int j = 0;
 
    PRINTF("%s (%d dwords):\n", name, len);
@@ -487,16 +487,16 @@ static GLboolean debug_modes4( struct debug_stream *stream,
    BITS(ptr[j], 7, 0,  "stencil write mask");
    j++;
 
-   stream->offset += len * sizeof(GLuint);
+   stream->offset += len * sizeof(unsigned);
    assert(j == len);
-   return GL_TRUE;
+   return TRUE;
 }
 
-static GLboolean debug_map_state( struct debug_stream *stream,
+static boolean debug_map_state( struct debug_stream *stream,
 				  const char *name,
-				  GLuint len )
+				  unsigned len )
 {
-   GLuint *ptr = (GLuint *)(stream->ptr + stream->offset);
+   unsigned *ptr = (unsigned *)(stream->ptr + stream->offset);
    int j = 0;
 
    PRINTF("%s (%d dwords):\n", name, len);
@@ -539,16 +539,16 @@ static GLboolean debug_map_state( struct debug_stream *stream,
       }
    }
 
-   stream->offset += len * sizeof(GLuint);
+   stream->offset += len * sizeof(unsigned);
    assert(j == len);
-   return GL_TRUE;
+   return TRUE;
 }
 
-static GLboolean debug_sampler_state( struct debug_stream *stream,
+static boolean debug_sampler_state( struct debug_stream *stream,
 				  const char *name,
-				  GLuint len )
+				  unsigned len )
 {
-   GLuint *ptr = (GLuint *)(stream->ptr + stream->offset);
+   unsigned *ptr = (unsigned *)(stream->ptr + stream->offset);
    int j = 0;
 
    PRINTF("%s (%d dwords):\n", name, len);
@@ -599,16 +599,16 @@ static GLboolean debug_sampler_state( struct debug_stream *stream,
       }
    }
 
-   stream->offset += len * sizeof(GLuint);
+   stream->offset += len * sizeof(unsigned);
    assert(j == len);
-   return GL_TRUE;
+   return TRUE;
 }
 
-static GLboolean debug_dest_vars( struct debug_stream *stream,
+static boolean debug_dest_vars( struct debug_stream *stream,
 				  const char *name,
-				  GLuint len )
+				  unsigned len )
 {
-   GLuint *ptr = (GLuint *)(stream->ptr + stream->offset);
+   unsigned *ptr = (unsigned *)(stream->ptr + stream->offset);
    int j = 0;
 
    PRINTF("%s (%d dwords):\n", name, len);
@@ -634,16 +634,16 @@ static GLboolean debug_dest_vars( struct debug_stream *stream,
       j++;
    }
    
-   stream->offset += len * sizeof(GLuint);
+   stream->offset += len * sizeof(unsigned);
    assert(j == len);
-   return GL_TRUE;
+   return TRUE;
 }
 
-static GLboolean debug_buf_info( struct debug_stream *stream,
+static boolean debug_buf_info( struct debug_stream *stream,
 				  const char *name,
-				  GLuint len )
+				  unsigned len )
 {
-   GLuint *ptr = (GLuint *)(stream->ptr + stream->offset);
+   unsigned *ptr = (unsigned *)(stream->ptr + stream->offset);
    int j = 0;
 
    PRINTF("%s (%d dwords):\n", name, len);
@@ -664,15 +664,15 @@ static GLboolean debug_buf_info( struct debug_stream *stream,
    
    PRINTF("\t0x%08x -- buffer base address\n",  ptr[j++]);
 
-   stream->offset += len * sizeof(GLuint);
+   stream->offset += len * sizeof(unsigned);
    assert(j == len);
-   return GL_TRUE;
+   return TRUE;
 }
 
-static GLboolean i915_debug_packet( struct debug_stream *stream )
+static boolean i915_debug_packet( struct debug_stream *stream )
 {
-   GLuint *ptr = (GLuint *)(stream->ptr + stream->offset);
-   GLuint cmd = *ptr;
+   unsigned *ptr = (unsigned *)(stream->ptr + stream->offset);
+   unsigned cmd = *ptr;
    
    switch (((cmd >> 29) & 0x7)) {
    case 0x0:
@@ -685,7 +685,7 @@ static GLboolean i915_debug_packet( struct debug_stream *stream )
 	 return debug(stream, "MI_FLUSH", 1);
       case 0xA:
 	 debug(stream, "MI_BATCH_BUFFER_END", 1);
-	 return GL_FALSE;
+	 return FALSE;
       case 0x22:
 	 return debug(stream, "MI_LOAD_REGISTER_IMM", 3);
       case 0x31:
@@ -816,12 +816,12 @@ static GLboolean i915_debug_packet( struct debug_stream *stream )
 
 void
 i915_dump_batchbuffer( struct i915_context *i915,
-		       GLuint *start,
-		       GLuint *end )
+		       unsigned *start,
+		       unsigned *end )
 {
    struct debug_stream stream;
-   GLuint bytes = (end - start) * 4;
-   GLboolean done = GL_FALSE;
+   unsigned bytes = (end - start) * 4;
+   boolean done = FALSE;
 
 
    stream.offset = 0;

@@ -33,6 +33,7 @@
 #include "macros.h"
 #include "pipe/p_state.h"
 #include "pipe/p_context.h"
+#include "pipe/p_defines.h"
 #include "sp_tex_layout.h"
 
 
@@ -250,18 +251,18 @@ softpipe_mipmap_tree_layout(struct pipe_context *pipe, struct pipe_mipmap_tree *
                switch (d) {
                case 4:
                   switch (face) {
-                  case FACE_POS_X:
-                  case FACE_NEG_X:
+                  case PIPE_TEX_FACE_POS_X:
+                  case PIPE_TEX_FACE_NEG_X:
                      x += step_offsets[face][0] * d;
                      y += step_offsets[face][1] * d;
                      break;
-                  case FACE_POS_Y:
-                  case FACE_NEG_Y:
+                  case PIPE_TEX_FACE_POS_Y:
+                  case PIPE_TEX_FACE_NEG_Y:
                      y += 12;
                      x -= 8;
                      break;
-                  case FACE_POS_Z:
-                  case FACE_NEG_Z:
+                  case PIPE_TEX_FACE_POS_Z:
+                  case PIPE_TEX_FACE_NEG_Z:
                      y = mt->total_height - 4;
                      x = (face - 4) * 8;
                      break;

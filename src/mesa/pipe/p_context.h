@@ -28,8 +28,9 @@
 #ifndef PIPE_CONTEXT_H
 #define PIPE_CONTEXT_H
 
-#include "main/mtypes.h"
+//#include "main/mtypes.h"
 #include "p_state.h"
+#include "p_compiler.h"
 
 
 /* Drawing currently kludged up via the existing tnl/ module.  
@@ -49,14 +50,14 @@ struct pipe_context {
    /*
     * Queries
     */
-   const GLuint *(*supported_formats)(struct pipe_context *pipe,
-                                      GLuint *numFormats);
+   const unsigned *(*supported_formats)(struct pipe_context *pipe,
+                                      unsigned *numFormats);
 
    void (*max_texture_size)(struct pipe_context *pipe,
-                            GLuint textureType, /* PIPE_TEXTURE_x */
-                            GLuint *maxWidth,
-                            GLuint *maxHeight,
-                            GLuint *maxDepth);
+                            unsigned textureType, /* PIPE_TEXTURE_x */
+                            unsigned *maxWidth,
+                            unsigned *maxHeight,
+                            unsigned *maxDepth);
 
    const char *(*get_name)( struct pipe_context *pipe );
 
@@ -71,19 +72,19 @@ struct pipe_context {
 		    struct vertex_buffer *VB );
 
    void (*draw_vertices)( struct pipe_context *pipe,
-                          GLuint mode,
-                          GLuint numVertex, const GLfloat *verts,
-                          GLuint numAttribs, const GLuint attribs[]);
+                          unsigned mode,
+                          unsigned numVertex, const float *verts,
+                          unsigned numAttribs, const unsigned attribs[]);
 
    /** Clear a surface to given value (no scissor; clear whole surface) */
    void (*clear)(struct pipe_context *pipe, struct pipe_surface *ps,
-                 GLuint clearValue);
+                 unsigned clearValue);
 
    /** occlusion counting (XXX this may be temporary - we should probably
     * have generic query objects with begin/end methods)
     */
    void (*reset_occlusion_counter)(struct pipe_context *pipe);
-   GLuint (*get_occlusion_counter)(struct pipe_context *pipe);
+   unsigned (*get_occlusion_counter)(struct pipe_context *pipe);
 
    /*
     * State functions
@@ -125,11 +126,11 @@ struct pipe_context {
                               const struct pipe_stencil_state * );
 
    void (*set_sampler_state)( struct pipe_context *,
-                              GLuint unit,
+                              unsigned unit,
                               const struct pipe_sampler_state * );
 
    void (*set_texture_state)( struct pipe_context *,
-                              GLuint unit,
+                              unsigned unit,
                               struct pipe_mipmap_tree * );
 
    void (*set_viewport_state)( struct pipe_context *,
@@ -141,58 +142,58 @@ struct pipe_context {
     * This might go away...
     */
    struct pipe_surface *(*surface_alloc)(struct pipe_context *pipe,
-                                         GLuint format);
+                                         unsigned format);
 
    struct pipe_surface *(*get_tex_surface)(struct pipe_context *pipe,
                                            struct pipe_mipmap_tree *texture,
-                                           GLuint face, GLuint level,
-                                           GLuint zslice);
+                                           unsigned face, unsigned level,
+                                           unsigned zslice);
 
    /*
     * Memory region functions
     * Some of these may go away...
     */
    struct pipe_region *(*region_alloc)(struct pipe_context *pipe,
-                                       GLuint cpp, GLuint width, GLuint height,
-                                       GLbitfield flags);
+                                       unsigned cpp, unsigned width, unsigned height,
+                                       unsigned flags);
 
    void (*region_release)(struct pipe_context *pipe, struct pipe_region **r);
 
    void (*region_idle)(struct pipe_context *pipe, struct pipe_region *region);
 
-   GLubyte *(*region_map)(struct pipe_context *pipe, struct pipe_region *r);
+   ubyte *(*region_map)(struct pipe_context *pipe, struct pipe_region *r);
 
    void (*region_unmap)(struct pipe_context *pipe, struct pipe_region *r);
 
    void (*region_data)(struct pipe_context *pipe,
                        struct pipe_region *dest,
-                       GLuint dest_offset,
-                       GLuint destx, GLuint desty,
-                       const void *src, GLuint src_stride,
-                       GLuint srcx, GLuint srcy, GLuint width, GLuint height);
+                       unsigned dest_offset,
+                       unsigned destx, unsigned desty,
+                       const void *src, unsigned src_stride,
+                       unsigned srcx, unsigned srcy, unsigned width, unsigned height);
 
    void (*region_copy)(struct pipe_context *pipe,
                        struct pipe_region *dest,
-                       GLuint dest_offset,
-                       GLuint destx, GLuint desty,
+                       unsigned dest_offset,
+                       unsigned destx, unsigned desty,
                        struct pipe_region *src,	/* don't make this const - 
 						   need to map/unmap */
-                       GLuint src_offset,
-                       GLuint srcx, GLuint srcy, GLuint width, GLuint height);
+                       unsigned src_offset,
+                       unsigned srcx, unsigned srcy, unsigned width, unsigned height);
 
    void (*region_fill)(struct pipe_context *pipe,
                        struct pipe_region *dst,
-                       GLuint dst_offset,
-                       GLuint dstx, GLuint dsty,
-                       GLuint width, GLuint height,
-                       GLuint value);
+                       unsigned dst_offset,
+                       unsigned dstx, unsigned dsty,
+                       unsigned width, unsigned height,
+                       unsigned value);
 
 
    /*
     * Texture functions
     */
-   GLboolean (*mipmap_tree_layout)( struct pipe_context *pipe,
-                                    struct pipe_mipmap_tree *mt );
+   boolean (*mipmap_tree_layout)( struct pipe_context *pipe,
+				  struct pipe_mipmap_tree *mt );
 
 
    /* Flush rendering:

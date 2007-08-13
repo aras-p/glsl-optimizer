@@ -37,7 +37,7 @@ struct pipe_context;
 
 extern void
 softpipe_clear(struct pipe_context *pipe, struct pipe_surface *ps,
-               GLuint clearValue);
+               unsigned clearValue);
 
 
 #endif /* SP_CLEAR_H */

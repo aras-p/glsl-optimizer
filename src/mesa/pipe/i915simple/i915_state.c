@@ -27,7 +27,7 @@
 
 /* Authors:  Keith Whitwell <keith@tungstengraphics.com>
  */
-#include "imports.h"
+//#include "imports.h"
 
 #include "pipe/draw/draw_context.h"
 
@@ -122,7 +122,7 @@ static void i915_set_fs_state( struct pipe_context *pipe,
 
 
 static void i915_set_sampler_state(struct pipe_context *pipe,
-                           GLuint unit,
+                           unsigned unit,
                            const struct pipe_sampler_state *sampler)
 {
    struct i915_context *i915 = i915_context(pipe);
@@ -135,7 +135,7 @@ static void i915_set_sampler_state(struct pipe_context *pipe,
 
 
 static void i915_set_texture_state(struct pipe_context *pipe,
-				   GLuint unit,
+				   unsigned unit,
 				   struct pipe_mipmap_tree *texture)
 {
    struct i915_context *i915 = i915_context(pipe);

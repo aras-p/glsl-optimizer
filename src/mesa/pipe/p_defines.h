@@ -150,6 +150,14 @@
 #define PIPE_TEX_COMPARE_NONE          0
 #define PIPE_TEX_COMPARE_R_TO_TEXTURE  1
 
+#define PIPE_TEX_FACE_POS_X   0
+#define PIPE_TEX_FACE_NEG_X   1
+#define PIPE_TEX_FACE_POS_Y   2
+#define PIPE_TEX_FACE_NEG_Y   3
+#define PIPE_TEX_FACE_POS_Z   4
+#define PIPE_TEX_FACE_NEG_Z   5
+#define PIPE_TEX_FACE_MAX     6
+
 
 /**
  * Texture/surface image formats (preliminary)
@@ -199,5 +207,7 @@
  */
 #define PIPE_FLUSH_RENDER_CACHE  0x1
 #define PIPE_FLUSH_TEXTURE_CACHE  0x2
+
+
 
 #endif
