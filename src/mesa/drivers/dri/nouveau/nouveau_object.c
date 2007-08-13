@@ -45,7 +45,6 @@ void nouveauObjectInit(nouveauContextPtr nmesa)
 	}
 	nouveauCreateContextObject(nmesa, NvMemFormat, NV_MEMORY_TO_MEMORY_FORMAT);
 
-#ifdef ALLOW_MULTI_SUBCHANNEL
 	nouveauObjectOnSubchannel(nmesa, NvSubCtxSurf2D, NvCtxSurf2D);
 	BEGIN_RING_SIZE(NvSubCtxSurf2D, NV10_CONTEXT_SURFACES_2D_SET_DMA_IN_MEMORY0, 2);
 	OUT_RING(NvDmaFB);
@@ -58,7 +57,6 @@ void nouveauObjectInit(nouveauContextPtr nmesa)
 	OUT_RING(3); /* SRCCOPY */
 
 	nouveauObjectOnSubchannel(nmesa, NvSubMemFormat, NvMemFormat);
-#endif
 
 	nouveauObjectOnSubchannel(nmesa, NvSub3D, Nv3D);
 }

@@ -3,8 +3,6 @@
 
 #include "nouveau_context.h"
 
-#define ALLOW_MULTI_SUBCHANNEL
-
 void nouveauObjectInit(nouveauContextPtr nmesa);
 
 enum DMAObjects {

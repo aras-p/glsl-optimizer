@@ -333,7 +333,6 @@ nouveauDoSwapBuffers(nouveauContextPtr nmesa, __DRIdrawablePrivate *dPriv)
 			fb->Attachment[BUFFER_BACK_LEFT].Renderbuffer;
 	}
 
-#ifdef ALLOW_MULTI_SUBCHANNEL
 	LOCK_HARDWARE(nmesa);
 	nbox = dPriv->numClipRects;
 	box  = dPriv->pClipRects;
@@ -362,7 +361,6 @@ nouveauDoSwapBuffers(nouveauContextPtr nmesa, __DRIdrawablePrivate *dPriv)
 	FIRE_RING();
 
 	UNLOCK_HARDWARE(nmesa);
-#endif
 }
 
 void nouveauSwapBuffers(__DRIdrawablePrivate *dPriv)

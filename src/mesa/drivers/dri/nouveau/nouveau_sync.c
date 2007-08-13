@@ -188,11 +188,9 @@ GLboolean nouveauSyncInitFuncs(GLcontext *ctx)
 	 */
 	BEGIN_RING_CACHE(NvSub3D, 0x180, 1);
 	OUT_RING_CACHE  (NvSyncNotify);
-#ifdef ALLOW_MULTI_SUBCHANNEL
 	BEGIN_RING_SIZE(NvSubMemFormat,
 	      		NV_MEMORY_TO_MEMORY_FORMAT_DMA_NOTIFY, 1);
 	OUT_RING       (NvSyncNotify);
-#endif
 
 	return GL_TRUE;
 }
