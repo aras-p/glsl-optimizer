@@ -454,8 +454,10 @@ static void st_clear(GLcontext *ctx, GLbitfield mask)
       GLuint b;
       for (b = 0; b < BUFFER_COUNT; b++) {
          if (BUFFER_BITS_COLOR & mask & (1 << b)) {
-            clear_color_buffer(ctx,
-                               ctx->DrawBuffer->Attachment[b].Renderbuffer);
+            struct gl_renderbuffer *rb
+               = ctx->DrawBuffer->Attachment[b].Renderbuffer;
+            assert(rb);
+            clear_color_buffer(ctx, rb);
          }
       }
    }
