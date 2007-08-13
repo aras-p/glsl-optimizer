@@ -74,9 +74,17 @@ st_readpixels(GLcontext *ctx, GLint x, GLint y, GLsizei width, GLsizei height,
       return;
    }
 
+   /* make sure rendering has completed */
+   pipe->flush(pipe, 0x0);
 
-   /* XXX check pack->BufferObj !!! */
+   if (pack->BufferObj && pack->BufferObj->Name) {
+      /* reading into a PBO */
 
+   }
+   else {
+      /* reading into user memory/buffer */
+
+   }
 
    strb = st_renderbuffer(ctx->ReadBuffer->_ColorReadBuffer);
    if (!strb)
