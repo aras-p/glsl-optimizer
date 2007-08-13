@@ -48,7 +48,8 @@ sp_build_quad_pipeline(struct softpipe_context *sp)
       sp->quad.stencil_test->next = sp->quad.first;
       sp->quad.first = sp->quad.stencil_test;
    }
-   else if (sp->depth_test.enabled) {
+   else if (sp->depth_test.enabled &&
+            sp->framebuffer.zbuf) {
       sp->quad.depth_test->next = sp->quad.first;
       sp->quad.first = sp->quad.depth_test;
    }
