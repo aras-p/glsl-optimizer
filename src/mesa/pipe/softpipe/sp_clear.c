@@ -35,7 +35,7 @@
 #include "sp_context.h"
 #include "sp_surface.h"
 #include "sp_state.h"
-#include "colormac.h"
+//#include "colormac.h"
 
 
 /**
@@ -47,7 +47,7 @@ softpipe_clear(struct pipe_context *pipe, struct pipe_surface *ps,
                unsigned clearValue)
 {
    struct softpipe_context *softpipe = softpipe_context(pipe);
-   GLint x, y, w, h;
+   int x, y, w, h;
 
    softpipe_update_derived(softpipe); /* not needed?? */
 

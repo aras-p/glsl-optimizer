@@ -3,12 +3,11 @@
  * quad polygon stipple stage
  */
 
-#include "glheader.h"
-#include "imports.h"
 #include "sp_context.h"
 #include "sp_headers.h"
 #include "sp_quad.h"
 #include "pipe/p_defines.h"
+#include "pipe/p_util.h"
 
 
 /**
@@ -19,10 +18,10 @@ stipple_quad(struct quad_stage *qs, struct quad_header *quad)
 {
    if (quad->prim == PRIM_TRI) {
       struct softpipe_context *softpipe = qs->softpipe;
-      const GLint col0 = quad->x0 % 32;
-      const GLint row0 = quad->y0 % 32;
-      const GLuint stipple0 = softpipe->poly_stipple.stipple[row0];
-      const GLuint stipple1 = softpipe->poly_stipple.stipple[row0 + 1];
+      const int col0 = quad->x0 % 32;
+      const int row0 = quad->y0 % 32;
+      const unsigned stipple0 = softpipe->poly_stipple.stipple[row0];
+      const unsigned stipple1 = softpipe->poly_stipple.stipple[row0 + 1];
 
       /* XXX there may be a better way to lay out the stored stipple
        * values to further simplify this computation.

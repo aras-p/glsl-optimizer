@@ -28,24 +28,13 @@
 #define P_UTIL_H
 
 #include "p_compiler.h"
+#include <math.h>
 
 #define CALLOC_STRUCT(T)   (struct T *) calloc(1, sizeof(struct T))
 
-
-
-/** Clamp X to [MIN,MAX] */
 #define CLAMP( X, MIN, MAX )  ( (X)<(MIN) ? (MIN) : ((X)>(MAX) ? (MAX) : (X)) )
-
-/** Assign X to CLAMP(X, MIN, MAX) */
-#define CLAMP_SELF(x, mn, mx)  \
-   ( (x)<(mn) ? ((x) = (mn)) : ((x)>(mx) ? ((x)=(mx)) : (x)) )
-
-/** Minimum of two values: */
 #define MIN2( A, B )   ( (A)<(B) ? (A) : (B) )
-
-/** Maximum of two values: */
 #define MAX2( A, B )   ( (A)>(B) ? (A) : (B) )
-
 
 #define Elements(x) sizeof(x)/sizeof(*(x))
 
@@ -113,5 +102,75 @@ static INLINE unsigned pack_ui32_float4( float a,
 		    float_to_ubyte(c),
 		    float_to_ubyte(d) );
 }
+
+#define COPY_4V( DST, SRC )         \
+do {                                \
+   (DST)[0] = (SRC)[0];             \
+   (DST)[1] = (SRC)[1];             \
+   (DST)[2] = (SRC)[2];             \
+   (DST)[3] = (SRC)[3];             \
+} while (0)
+
+
+static INLINE int ifloor(float f)
+{
+   int ai, bi;
+   double af, bf;
+   union fi u;
+
+   af = (3 << 22) + 0.5 + (double)f;
+   bf = (3 << 22) + 0.5 - (double)f;
+   u.f = (float) af;  ai = u.i;
+   u.f = (float) bf;  bi = u.i;
+   return (ai - bi) >> 1;
+}
+
+
+#if defined(__GNUC__) && defined(__i386__) 
+static INLINE int iround(float f)
+{
+   int r;
+   __asm__ ("fistpl %0" : "=m" (r) : "t" (f) : "st");
+   return r;
+}
+#elif defined(__MSC__) && defined(__WIN32__)
+static INLINE int iround(float f)
+{
+   int r;
+   _asm {
+	 fld f
+	 fistp r
+	}
+   return r;
+}
+#else
+#define IROUND(f)  ((int) (((f) >= 0.0F) ? ((f) + 0.5F) : ((f) - 0.5F)))
+#endif
+
+
+/* Could maybe have an inline version of this?
+ */
+#if defined(__GNUC__)
+#define FABSF(x)   fabsf(x)
+#else
+#define FABSF(x)   ((GLfloat) fabs(x))
+#endif
+
+/* Pretty fast, and accurate.
+ * Based on code from http://www.flipcode.com/totd/
+ */
+static INLINE float LOG2(float val)
+{
+   union fi num;
+   int log_2;
+
+   num.f = val;
+   log_2 = ((num.i >> 23) & 255) - 128;
+   num.i &= ~(255 << 23);
+   num.i += 127 << 23;
+   num.f = ((-1.0f/3) * num.f + 2) * num.f - 2.0f/3;
+   return num.f + log_2;
+}
+
 
 #endif

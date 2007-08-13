@@ -32,9 +32,8 @@
  */
 
 
-#include "main/glheader.h"
-#include "main/macros.h"
 #include "pipe/p_defines.h"
+#include "pipe/p_util.h"
 #include "sp_context.h"
 #include "sp_headers.h"
 #include "sp_quad.h"
@@ -51,7 +50,7 @@ coverage_quad(struct quad_stage *qs, struct quad_header *quad)
    if ((softpipe->setup.poly_smooth && quad->prim == PRIM_TRI) ||
        (softpipe->setup.line_smooth && quad->prim == PRIM_LINE) ||
        (softpipe->setup.point_smooth && quad->prim == PRIM_POINT)) {
-      GLuint j;
+      unsigned j;
       for (j = 0; j < QUAD_SIZE; j++) {
          assert(quad->coverage[j] >= 0.0);
          assert(quad->coverage[j] <= 1.0);

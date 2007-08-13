@@ -6,7 +6,7 @@ struct pipe_context;
 struct pipe_mipmap_tree;
 
 
-extern GLboolean
+extern boolean
 softpipe_mipmap_tree_layout(struct pipe_context *pipe,
                             struct pipe_mipmap_tree *mt);
 

@@ -31,7 +31,7 @@
 #ifndef SP_CONTEXT_H
 #define SP_CONTEXT_H
 
-#include "glheader.h"
+//#include "glheader.h"
 
 #include "pipe/p_state.h"
 #include "pipe/p_context.h"
@@ -88,7 +88,7 @@ struct softpipe_context {
    struct pipe_stencil_state stencil;
    struct pipe_mipmap_tree *texture[PIPE_MAX_SAMPLERS];
    struct pipe_viewport_state viewport;
-   GLuint dirty;
+   unsigned dirty;
 
    /* Setup derived state.  TODO: this should be passed in the program
     * tokens as parameters to DECL instructions.
@@ -103,28 +103,28 @@ struct softpipe_context {
     */
 
    /** Map fragment program attribute to quad/coef array slot */
-   GLuint fp_attr_to_slot[PIPE_ATTRIB_MAX];
+   unsigned fp_attr_to_slot[PIPE_ATTRIB_MAX];
    /** Map vertex format attribute to a vertex attribute slot */
-   GLuint vf_attr_to_slot[PIPE_ATTRIB_MAX];
-   GLuint nr_attrs;
-   GLuint nr_frag_attrs;  /**< number of active fragment attribs */
-   GLbitfield attr_mask;  /**< bitfield of VF_ATTRIB_ indexes/bits */
+   unsigned vf_attr_to_slot[PIPE_ATTRIB_MAX];
+   unsigned nr_attrs;
+   unsigned nr_frag_attrs;  /**< number of active fragment attribs */
+   unsigned attr_mask;  /**< bitfield of VF_ATTRIB_ indexes/bits */
 
-   GLboolean need_z;  /**< produce quad/fragment Z values? */
-   GLboolean need_w;  /**< produce quad/fragment W values? */
+   boolean need_z;  /**< produce quad/fragment Z values? */
+   boolean need_w;  /**< produce quad/fragment W values? */
 
 #if 0
    /* Stipple derived state:
     */
-   GLubyte stipple_masks[16][16];
+   ubyte stipple_masks[16][16];
 #endif
 
    /** Derived from scissor and surface bounds: */
    struct pipe_scissor_state cliprect;
 
-   GLuint occlusion_counter;
+   unsigned occlusion_counter;
 
-   GLuint line_stipple_counter;
+   unsigned line_stipple_counter;
 
    /** Software quad rendering pipeline */
    struct {

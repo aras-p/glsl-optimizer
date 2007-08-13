@@ -1,7 +1,5 @@
 
-
-#include "main/glheader.h"
-#include "main/imports.h"
+#include "pipe/p_util.h"
 #include "sp_context.h"
 #include "sp_headers.h"
 #include "sp_surface.h"
@@ -15,8 +13,8 @@ static void
 cbuf_loop_quad(struct quad_stage *qs, struct quad_header *quad)
 {
    struct softpipe_context *softpipe = qs->softpipe;
-   GLfloat tmp[4][QUAD_SIZE];
-   GLuint i;
+   float tmp[4][QUAD_SIZE];
+   unsigned i;
 
    assert(sizeof(quad->outputs.color) == sizeof(tmp));
    assert(softpipe->framebuffer.num_cbufs <= PIPE_MAX_COLOR_BUFS);

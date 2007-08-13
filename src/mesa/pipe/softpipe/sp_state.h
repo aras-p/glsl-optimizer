@@ -31,7 +31,6 @@
 #ifndef SP_STATE_H
 #define SP_STATE_H
 
-#include "glheader.h"
 #include "pipe/p_state.h"
 
 
@@ -69,14 +68,14 @@ void softpipe_set_setup_state( struct pipe_context *,
 			      const struct pipe_setup_state * );
 
 void softpipe_set_sampler_state( struct pipe_context *,
-                                 GLuint unit,
+                                 unsigned unit,
                                  const struct pipe_sampler_state * );
 
 void softpipe_set_stencil_state( struct pipe_context *,
                                  const struct pipe_stencil_state * );
 
 void softpipe_set_texture_state( struct pipe_context *,
-                                 GLuint unit,
+                                 unsigned unit,
                                  struct pipe_mipmap_tree * );
 
 void softpipe_set_viewport_state( struct pipe_context *,

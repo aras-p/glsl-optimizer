@@ -26,9 +26,8 @@
  * \brief  Quad depth testing
  */
 
-#include "main/glheader.h"
-#include "main/imports.h"
 #include "pipe/p_defines.h"
+#include "pipe/p_util.h"
 #include "sp_context.h"
 #include "sp_headers.h"
 #include "sp_surface.h"
@@ -44,11 +43,11 @@ sp_depth_test_quad(struct quad_stage *qs, struct quad_header *quad)
 {
    struct softpipe_context *softpipe = qs->softpipe;
    struct softpipe_surface *sps = softpipe_surface(softpipe->framebuffer.zbuf);
-   GLuint bzzzz[QUAD_SIZE];  /**< Z values fetched from depth buffer */
-   GLuint qzzzz[QUAD_SIZE];  /**< Z values from the quad */
-   GLuint zmask = 0;
-   GLuint j;
-   GLfloat scale;
+   unsigned bzzzz[QUAD_SIZE];  /**< Z values fetched from depth buffer */
+   unsigned qzzzz[QUAD_SIZE];  /**< Z values from the quad */
+   unsigned zmask = 0;
+   unsigned j;
+   float scale;
 
    assert(sps); /* shouldn't get here if there's no zbuffer */
 
@@ -72,7 +71,7 @@ sp_depth_test_quad(struct quad_stage *qs, struct quad_header *quad)
     * Z-fighting errors.
     */
    for (j = 0; j < QUAD_SIZE; j++) {
-      qzzzz[j] = (GLuint) (quad->outputs.depth[j] * scale);
+      qzzzz[j] = (unsigned) (quad->outputs.depth[j] * scale);
    }
 
    /* get zquad from zbuffer */

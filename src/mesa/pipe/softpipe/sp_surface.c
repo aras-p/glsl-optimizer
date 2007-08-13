@@ -29,8 +29,7 @@
 #include "sp_state.h"
 #include "sp_surface.h"
 #include "pipe/p_defines.h"
-#include "main/imports.h"
-#include "main/macros.h"
+#include "pipe/p_util.h"
 
 
 /**
@@ -48,13 +47,13 @@
 /*** PIPE_FORMAT_U_A8_R8_G8_B8 ***/
 
 static void
-a8r8g8b8_read_quad_f_swz(struct softpipe_surface *sps, GLint x, GLint y,
-                         GLfloat (*rrrr)[QUAD_SIZE])
+a8r8g8b8_read_quad_f_swz(struct softpipe_surface *sps, int x, int y,
+                         float (*rrrr)[QUAD_SIZE])
 {
-   const GLuint *src
-      = ((const GLuint *) (sps->surface.region->map + sps->surface.offset))
+   const unsigned *src
+      = ((const unsigned *) (sps->surface.region->map + sps->surface.offset))
       + y * sps->surface.region->pitch + x;
-   GLuint i, j;
+   unsigned i, j;
 
    assert(sps->surface.format == PIPE_FORMAT_U_A8_R8_G8_B8);
    assert(x < sps->surface.width - 1);
@@ -62,7 +61,7 @@ a8r8g8b8_read_quad_f_swz(struct softpipe_surface *sps, GLint x, GLint y,
 
    for (i = 0; i < 2; i++) { /* loop over pixel row */
       for (j = 0; j < 2; j++) {  /* loop over pixel column */
-         const GLuint p = src[j];
+         const unsigned p = src[j];
          rrrr[0][i * 2 + j] = UBYTE_TO_FLOAT((p >> 16) & 0xff); /*R*/
          rrrr[1][i * 2 + j] = UBYTE_TO_FLOAT((p >>  8) & 0xff); /*G*/
          rrrr[2][i * 2 + j] = UBYTE_TO_FLOAT((p      ) & 0xff); /*B*/
@@ -73,19 +72,19 @@ a8r8g8b8_read_quad_f_swz(struct softpipe_surface *sps, GLint x, GLint y,
 }
 
 static void
-a8r8g8b8_write_quad_f_swz(struct softpipe_surface *sps, GLint x, GLint y,
-                          GLfloat (*rrrr)[QUAD_SIZE])
+a8r8g8b8_write_quad_f_swz(struct softpipe_surface *sps, int x, int y,
+                          float (*rrrr)[QUAD_SIZE])
 {
-   GLuint *dst
-      = ((GLuint *) (sps->surface.region->map + sps->surface.offset))
+   unsigned *dst
+      = ((unsigned *) (sps->surface.region->map + sps->surface.offset))
       + y * sps->surface.region->pitch + x;
-   GLuint i, j;
+   unsigned i, j;
 
    assert(sps->surface.format == PIPE_FORMAT_U_A8_R8_G8_B8);
 
    for (i = 0; i < 2; i++) { /* loop over pixel row */
       for (j = 0; j < 2; j++) {  /* loop over pixel column */
-         GLubyte r, g, b, a;
+         ubyte r, g, b, a;
          UNCLAMPED_FLOAT_TO_UBYTE(r, rrrr[0][i * 2 + j]); /*R*/
          UNCLAMPED_FLOAT_TO_UBYTE(g, rrrr[1][i * 2 + j]); /*G*/
          UNCLAMPED_FLOAT_TO_UBYTE(b, rrrr[2][i * 2 + j]); /*B*/
@@ -98,13 +97,13 @@ a8r8g8b8_write_quad_f_swz(struct softpipe_surface *sps, GLint x, GLint y,
 
 static void
 a8r8g8b8_get_tile(struct pipe_surface *ps,
-                  GLuint x, GLuint y, GLuint w, GLuint h, GLfloat *p)
+                  unsigned x, unsigned y, unsigned w, unsigned h, float *p)
 {
-   const GLuint *src
-      = ((const GLuint *) (ps->region->map + ps->offset))
+   const unsigned *src
+      = ((const unsigned *) (ps->region->map + ps->offset))
       + y * ps->region->pitch + x;
-   GLuint i, j;
-   GLuint w0 = w;
+   unsigned i, j;
+   unsigned w0 = w;
 
    assert(ps->format == PIPE_FORMAT_U_A8_R8_G8_B8);
 
@@ -119,9 +118,9 @@ a8r8g8b8_get_tile(struct pipe_surface *ps,
       h = ps->height -y;
 #endif
    for (i = 0; i < h; i++) {
-      GLfloat *pRow = p;
+      float *pRow = p;
       for (j = 0; j < w; j++) {
-         const GLuint pixel = src[j];
+         const unsigned pixel = src[j];
          pRow[0] = UBYTE_TO_FLOAT((pixel >> 16) & 0xff);
          pRow[1] = UBYTE_TO_FLOAT((pixel >>  8) & 0xff);
          pRow[2] = UBYTE_TO_FLOAT((pixel >>  0) & 0xff);
@@ -138,18 +137,18 @@ a8r8g8b8_get_tile(struct pipe_surface *ps,
 
 static void
 a1r5g5b5_get_tile(struct pipe_surface *ps,
-                  GLuint x, GLuint y, GLuint w, GLuint h, GLfloat *p)
+                  unsigned x, unsigned y, unsigned w, unsigned h, float *p)
 {
-   const GLushort *src
-      = ((const GLushort *) (ps->region->map + ps->offset))
+   const ushort *src
+      = ((const ushort *) (ps->region->map + ps->offset))
       + y * ps->region->pitch + x;
-   GLuint i, j;
+   unsigned i, j;
 
    assert(ps->format == PIPE_FORMAT_U_A1_R5_G5_B5);
 
    for (i = 0; i < h; i++) {
       for (j = 0; j < w; j++) {
-         const GLushort pixel = src[j];
+         const ushort pixel = src[j];
          p[0] = ((pixel >> 10) & 0x1f) * (1.0 / 31);
          p[1] = ((pixel >>  5) & 0x1f) * (1.0 / 31);
          p[2] = ((pixel      ) & 0x1f) * (1.0 / 31);
@@ -166,15 +165,15 @@ a1r5g5b5_get_tile(struct pipe_surface *ps,
 
 static void
 z16_read_quad_z(struct softpipe_surface *sps,
-                GLint x, GLint y, GLuint zzzz[QUAD_SIZE])
+                int x, int y, unsigned zzzz[QUAD_SIZE])
 {
-   const GLushort *src
-      = ((const GLushort *) (sps->surface.region->map + sps->surface.offset))
+   const ushort *src
+      = ((const ushort *) (sps->surface.region->map + sps->surface.offset))
       + y * sps->surface.region->pitch + x;
 
    assert(sps->surface.format == PIPE_FORMAT_U_Z16);
 
-   /* converting GLushort to GLuint: */
+   /* converting ushort to unsigned: */
    zzzz[0] = src[0];
    zzzz[1] = src[1];
    src += sps->surface.region->pitch;
@@ -184,15 +183,15 @@ z16_read_quad_z(struct softpipe_surface *sps,
 
 static void
 z16_write_quad_z(struct softpipe_surface *sps,
-                 GLint x, GLint y, const GLuint zzzz[QUAD_SIZE])
+                 int x, int y, const unsigned zzzz[QUAD_SIZE])
 {
-   GLushort *dst
-      = ((GLushort *) (sps->surface.region->map + sps->surface.offset))
+   ushort *dst
+      = ((ushort *) (sps->surface.region->map + sps->surface.offset))
       + y * sps->surface.region->pitch + x;
 
    assert(sps->surface.format == PIPE_FORMAT_U_Z16);
 
-   /* converting GLuint to GLushort: */
+   /* converting unsigned to ushort: */
    dst[0] = zzzz[0];
    dst[1] = zzzz[1];
    dst += sps->surface.region->pitch;
@@ -205,10 +204,10 @@ z16_write_quad_z(struct softpipe_surface *sps,
 
 static void
 z32_read_quad_z(struct softpipe_surface *sps,
-                GLint x, GLint y, GLuint zzzz[QUAD_SIZE])
+                int x, int y, unsigned zzzz[QUAD_SIZE])
 {
-   const GLuint *src
-      = ((GLuint *) (sps->surface.region->map + sps->surface.offset))
+   const unsigned *src
+      = ((unsigned *) (sps->surface.region->map + sps->surface.offset))
       + y * sps->surface.region->pitch + x;
 
    assert(sps->surface.format == PIPE_FORMAT_U_Z32);
@@ -222,10 +221,10 @@ z32_read_quad_z(struct softpipe_surface *sps,
 
 static void
 z32_write_quad_z(struct softpipe_surface *sps,
-                 GLint x, GLint y, const GLuint zzzz[QUAD_SIZE])
+                 int x, int y, const unsigned zzzz[QUAD_SIZE])
 {
-   GLuint *dst
-      = ((GLuint *) (sps->surface.region->map + sps->surface.offset))
+   unsigned *dst
+      = ((unsigned *) (sps->surface.region->map + sps->surface.offset))
       + y * sps->surface.region->pitch + x;
 
    assert(sps->surface.format == PIPE_FORMAT_U_Z32);
@@ -242,11 +241,11 @@ z32_write_quad_z(struct softpipe_surface *sps,
 
 static void
 s8z24_read_quad_z(struct softpipe_surface *sps,
-                  GLint x, GLint y, GLuint zzzz[QUAD_SIZE])
+                  int x, int y, unsigned zzzz[QUAD_SIZE])
 {
-   static const GLuint mask = 0x00ffffff;
-   const GLuint *src
-      = ((GLuint *) (sps->surface.region->map + sps->surface.offset))
+   static const unsigned mask = 0x00ffffff;
+   const unsigned *src
+      = ((unsigned *) (sps->surface.region->map + sps->surface.offset))
       + y * sps->surface.region->pitch + x;
 
    assert(sps->surface.format == PIPE_FORMAT_S8_Z24);
@@ -261,11 +260,11 @@ s8z24_read_quad_z(struct softpipe_surface *sps,
 
 static void
 s8z24_write_quad_z(struct softpipe_surface *sps,
-                   GLint x, GLint y, const GLuint zzzz[QUAD_SIZE])
+                   int x, int y, const unsigned zzzz[QUAD_SIZE])
 {
-   static const GLuint mask = 0xff000000;
-   GLuint *dst
-      = ((GLuint *) (sps->surface.region->map + sps->surface.offset))
+   static const unsigned mask = 0xff000000;
+   unsigned *dst
+      = ((unsigned *) (sps->surface.region->map + sps->surface.offset))
       + y * sps->surface.region->pitch + x;
 
    assert(sps->surface.format == PIPE_FORMAT_S8_Z24);
@@ -280,10 +279,10 @@ s8z24_write_quad_z(struct softpipe_surface *sps,
 
 static void
 s8z24_read_quad_stencil(struct softpipe_surface *sps,
-                        GLint x, GLint y, GLubyte ssss[QUAD_SIZE])
+                        int x, int y, ubyte ssss[QUAD_SIZE])
 {
-   const GLuint *src
-      = ((GLuint *) (sps->surface.region->map + sps->surface.offset))
+   const unsigned *src
+      = ((unsigned *) (sps->surface.region->map + sps->surface.offset))
       + y * sps->surface.region->pitch + x;
 
    assert(sps->surface.format == PIPE_FORMAT_S8_Z24);
@@ -297,11 +296,11 @@ s8z24_read_quad_stencil(struct softpipe_surface *sps,
 
 static void
 s8z24_write_quad_stencil(struct softpipe_surface *sps,
-                         GLint x, GLint y, const GLubyte ssss[QUAD_SIZE])
+                         int x, int y, const ubyte ssss[QUAD_SIZE])
 {
-   static const GLuint mask = 0x00ffffff;
-   GLuint *dst
-      = ((GLuint *) (sps->surface.region->map + sps->surface.offset))
+   static const unsigned mask = 0x00ffffff;
+   unsigned *dst
+      = ((unsigned *) (sps->surface.region->map + sps->surface.offset))
       + y * sps->surface.region->pitch + x;
 
    assert(sps->surface.format == PIPE_FORMAT_S8_Z24);
@@ -318,9 +317,9 @@ s8z24_write_quad_stencil(struct softpipe_surface *sps,
 
 static void
 s8_read_quad_stencil(struct softpipe_surface *sps,
-                     GLint x, GLint y, GLubyte ssss[QUAD_SIZE])
+                     int x, int y, ubyte ssss[QUAD_SIZE])
 {
-   const GLubyte *src
+   const ubyte *src
       = sps->surface.region->map + sps->surface.offset
       + y * sps->surface.region->pitch + x;
 
@@ -335,9 +334,9 @@ s8_read_quad_stencil(struct softpipe_surface *sps,
 
 static void
 s8_write_quad_stencil(struct softpipe_surface *sps,
-                      GLint x, GLint y, const GLubyte ssss[QUAD_SIZE])
+                      int x, int y, const ubyte ssss[QUAD_SIZE])
 {
-   GLubyte *dst
+   ubyte *dst
       = sps->surface.region->map + sps->surface.offset
       + y * sps->surface.region->pitch + x;
 
@@ -393,7 +392,7 @@ softpipe_init_surface_funcs(struct softpipe_surface *sps)
 
 
 static struct pipe_surface *
-softpipe_surface_alloc(struct pipe_context *pipe, GLuint pipeFormat)
+softpipe_surface_alloc(struct pipe_context *pipe, unsigned pipeFormat)
 {
    struct softpipe_surface *sps = CALLOC_STRUCT(softpipe_surface);
    if (!sps)
@@ -419,17 +418,17 @@ softpipe_surface_alloc(struct pipe_context *pipe, GLuint pipeFormat)
 struct pipe_surface *
 softpipe_get_tex_surface(struct pipe_context *pipe,
                          struct pipe_mipmap_tree *mt,
-                         GLuint face, GLuint level, GLuint zslice)
+                         unsigned face, unsigned level, unsigned zslice)
 {
    struct pipe_surface *ps;
-   GLuint offset;  /* in bytes */
+   unsigned offset;  /* in bytes */
 
    offset = mt->level[level].level_offset;
 
-   if (mt->target == GL_TEXTURE_CUBE_MAP_ARB) {
+   if (mt->target == PIPE_TEXTURE_CUBE) {
       offset += mt->level[level].image_offset[face] * mt->cpp;
    }
-   else if (mt->target == GL_TEXTURE_3D) {
+   else if (mt->target == PIPE_TEXTURE_3D) {
       offset += mt->level[level].image_offset[zslice] * mt->cpp;
    }
    else {

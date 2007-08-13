@@ -1,6 +1,8 @@
 #if !defined TGSI_EXEC_H
 #define TGSI_EXEC_H
 
+#include "pipe/p_compiler.h"
+
 #if 0
 #include "x86/rtasm/x86sse.h"
 #endif
@@ -11,9 +13,9 @@ extern "C" {
 
 union tgsi_exec_channel
 {
-   GLfloat  f[4];
-   GLint    i[4];
-   GLuint   u[4];
+   float  f[4];
+   int    i[4];
+   unsigned   u[4];
 };
 
 struct tgsi_exec_vector
@@ -33,7 +35,7 @@ struct tgsi_exec_vector
 struct tgsi_texture_cache_entry
 {
    int x, y, face, level, zslice;
-   GLfloat data[TEX_CACHE_TILE_SIZE][TEX_CACHE_TILE_SIZE][4];
+   float data[TEX_CACHE_TILE_SIZE][TEX_CACHE_TILE_SIZE][4];
 };
 
 struct tgsi_sampler
@@ -42,19 +44,19 @@ struct tgsi_sampler
    struct pipe_mipmap_tree *texture;
    /** Get samples for four fragments in a quad */
    void (*get_samples)(struct tgsi_sampler *sampler,
-                       const GLfloat s[QUAD_SIZE],
-                       const GLfloat t[QUAD_SIZE],
-                       const GLfloat p[QUAD_SIZE],
-                       GLfloat lodbias,
-                       GLfloat rgba[NUM_CHANNELS][QUAD_SIZE]);
+                       const float s[QUAD_SIZE],
+                       const float t[QUAD_SIZE],
+                       const float p[QUAD_SIZE],
+                       float lodbias,
+                       float rgba[NUM_CHANNELS][QUAD_SIZE]);
    void *pipe; /*XXX temporary*/
    struct tgsi_texture_cache_entry cache[TEX_CACHE_NUM_ENTRIES];
 };
 
 struct tgsi_exec_labels
 {
-   GLuint   labels[128][2];
-   GLuint   count;
+   unsigned   labels[128][2];
+   unsigned   count;
 };
 
 #define TGSI_EXEC_TEMP_00000000_I   32
@@ -107,15 +109,15 @@ struct tgsi_exec_cond_state
 {
    struct tgsi_exec_cond_regs IfPortion;
    struct tgsi_exec_cond_regs ElsePortion;
-   GLuint                     Condition;
-   GLboolean                  WasElse;
+   unsigned                     Condition;
+   boolean                  WasElse;
 };
 
 /* XXX: This is temporary */
 struct tgsi_exec_cond_stack
 {
    struct tgsi_exec_cond_state   States[8];
-   GLuint                        Index;      /* into States[] */
+   unsigned                        Index;      /* into States[] */
 };
 
 struct tgsi_exec_machine
@@ -136,15 +138,15 @@ struct tgsi_exec_machine
 
    struct tgsi_sampler           *Samplers;
 
-   GLfloat                       Imms[256][4];
-   GLuint                        ImmLimit;
-   GLfloat                       (*Consts)[4];
+   float                       Imms[256][4];
+   unsigned                        ImmLimit;
+   float                       (*Consts)[4];
    const struct tgsi_exec_vector *Inputs;
    struct tgsi_exec_vector       *Outputs;
    struct tgsi_token             *Tokens;
-   GLuint                        Processor;
+   unsigned                        Processor;
 
-   GLuint                        *Primitives;
+   unsigned                        *Primitives;
 
    struct tgsi_exec_cond_stack   CondStack;
 #if XXX_SSE
@@ -156,7 +158,7 @@ void
 tgsi_exec_machine_init(
    struct tgsi_exec_machine *mach,
    struct tgsi_token *tokens,
-   GLuint numSamplers,
+   unsigned numSamplers,
    struct tgsi_sampler *samplers);
 
 void

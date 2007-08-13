@@ -32,9 +32,8 @@
  */
 
 
-#include "main/glheader.h"
-#include "main/imports.h"
 #include "pipe/p_defines.h"
+#include "pipe/p_util.h"
 #include "sp_context.h"
 #include "sp_headers.h"
 #include "sp_surface.h"

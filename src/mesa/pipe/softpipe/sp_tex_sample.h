@@ -7,11 +7,11 @@ struct tgsi_sampler;
 
 extern void
 sp_get_samples(struct tgsi_sampler *sampler,
-               const GLfloat s[QUAD_SIZE],
-               const GLfloat t[QUAD_SIZE],
-               const GLfloat p[QUAD_SIZE],
+               const float s[QUAD_SIZE],
+               const float t[QUAD_SIZE],
+               const float p[QUAD_SIZE],
                float lodbias,
-               GLfloat rgba[NUM_CHANNELS][QUAD_SIZE]);
+               float rgba[NUM_CHANNELS][QUAD_SIZE]);
 
 
 #endif /* SP_TEX_SAMPLE_H */
