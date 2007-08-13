@@ -660,7 +660,7 @@ static GLboolean projtex( struct brw_wm_compile *c,
       return 0;  /* ut2004 gun rendering !?! */
    else if (src.File == PROGRAM_INPUT && 
 	    GET_SWZ(src.Swizzle, W) == W &&
-	    (c->key.projtex_mask & (1<<src.Index)) == 0)
+           (c->key.projtex_mask & (1<<(src.Index + FRAG_ATTRIB_WPOS - FRAG_ATTRIB_TEX0))) == 0)
       return 0;
    else
       return 1;
