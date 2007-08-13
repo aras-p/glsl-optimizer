@@ -29,6 +29,7 @@
 #include "i915_state.h"
 #include "pipe/p_defines.h"
 #include "main/imports.h"
+#include "main/macros.h"
 
 
 struct i915_surface
@@ -38,13 +39,45 @@ struct i915_surface
 };
 
 
+/**
+ * Note: this is exactly like a8r8g8b8_get_tile() in sp_surface.c
+ * Share it someday.
+ */
 static void
 i915_get_tile(struct pipe_surface *ps,
               GLuint x, GLuint y, GLuint w, GLuint h, GLfloat *p)
 {
-   /* any need to get tiles from i915 surfaces? */
-   /* Yes, for glReadPixels (for a while at least). */
-   assert(0);
+   const GLuint *src
+      = ((const GLuint *) (ps->region->map + ps->offset))
+      + y * ps->region->pitch + x;
+   GLuint i, j;
+   GLuint w0 = w;
+
+   assert(ps->format == PIPE_FORMAT_U_A8_R8_G8_B8);
+
+#if 0
+   assert(x + w <= ps->width);
+   assert(y + h <= ps->height);
+#else
+   /* temp clipping hack */
+   if (x + w > ps->width)
+      w = ps->width - x;
+   if (y + h > ps->height)
+      h = ps->height -y;
+#endif
+   for (i = 0; i < h; i++) {
+      GLfloat *pRow = p;
+      for (j = 0; j < w; j++) {
+         const GLuint pixel = src[j];
+         pRow[0] = UBYTE_TO_FLOAT((pixel >> 16) & 0xff);
+         pRow[1] = UBYTE_TO_FLOAT((pixel >>  8) & 0xff);
+         pRow[2] = UBYTE_TO_FLOAT((pixel >>  0) & 0xff);
+         pRow[3] = UBYTE_TO_FLOAT((pixel >> 24) & 0xff);
+         pRow += 4;
+      }
+      src += ps->region->pitch;
+      p += w0 * 4;
+   }
 }
 
 
