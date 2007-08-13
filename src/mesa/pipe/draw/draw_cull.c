@@ -78,10 +78,10 @@ static void cull_tri( struct draw_stage *stage,
    header->det = ex * fy - ey * fx;
 
    if (header->det != 0) {
-      /* if (det > 0 then Z points toward camera and triangle is 
+      /* if (det < 0 then Z points toward camera and triangle is 
        * counter-clockwise winding.
        */
-      GLuint winding = (header->det > 0) ? PIPE_WINDING_CCW : PIPE_WINDING_CW;
+      GLuint winding = (header->det < 0) ? PIPE_WINDING_CCW : PIPE_WINDING_CW;
 
       if ((winding & cull_stage(stage)->winding) == 0) {
          /* triangle is not culled, pass to next stage */
