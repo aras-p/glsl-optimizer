@@ -529,31 +529,27 @@ choose_mipmap_levels(struct tgsi_sampler *sampler,
 }
 
 
+
 /**
- * Load the texture cache with a new texture tile.
+ * Given the texture face, level, zslice, x and y values, compute
+ * the cache entry position/index where we'd hope to find the
+ * cached texture tile.
+ * This is basically a direct-map cache.
+ * XXX There's probably lots of ways in which we can improve
+ * texture caching....
  */
-static void
-cache_tex_tile(struct tgsi_sampler *sampler,
-               unsigned face, unsigned level, unsigned zslice, int cx, int cy)
+static unsigned
+compute_cache_pos(unsigned face, unsigned level, unsigned zslice,
+                  int tx, int ty)
 {
-   struct pipe_context *pipe = (struct pipe_context *) sampler->pipe;
-   struct pipe_surface *ps
-      = pipe->get_tex_surface(pipe, sampler->texture, face, level, zslice);
-   assert(ps->width == sampler->texture->level[level].width);
-   assert(ps->height == sampler->texture->level[level].height);
-   sampler->cache_level = level;
-   sampler->cache_x = cx;
-   sampler->cache_y = cy;
-   ps->get_tile(ps,
-                cx * SAMPLER_CACHE_SIZE,
-                cy * SAMPLER_CACHE_SIZE,
-                SAMPLER_CACHE_SIZE, SAMPLER_CACHE_SIZE,
-                (float *) sampler->cache);
+   unsigned entry = tx + ty * 2 + zslice *4 + level + face;
+   return entry % TEX_CACHE_NUM_ENTRIES;
 }
 
 
 /**
- * Get a texel from a texture.
+ * Get a texel from a texture, using the texture tile cache.
+ *
  * \param face  the cube face in 0..5
  * \param level  the mipmap level
  * \param zslize  which slice of a 3D texture
@@ -565,17 +561,36 @@ cache_tex_tile(struct tgsi_sampler *sampler,
 static void
 get_texel(struct tgsi_sampler *sampler,
           unsigned face, unsigned level, unsigned zslice, int x, int y,
-          float rgba[NUM_CHANNELS][QUAD_SIZE], GLuint j)
+          float rgba[NUM_CHANNELS][QUAD_SIZE], unsigned j)
 {
-   int cx = x / SAMPLER_CACHE_SIZE;
-   int cy = y / SAMPLER_CACHE_SIZE;
+   int tx = x / TEX_CACHE_TILE_SIZE;
+   int ty = y / TEX_CACHE_TILE_SIZE;
+   unsigned entry = compute_cache_pos(face, level, zslice, tx, ty);
 
-   if (cx != sampler->cache_x || cy != sampler->cache_y ||
-       level != sampler->cache_level) {
-      cache_tex_tile(sampler, face, level, zslice, cx, cy);
-      /*
+   if (tx != sampler->cache[entry].x ||
+       ty != sampler->cache[entry].y ||
+       face != sampler->cache[entry].face ||
+       level != sampler->cache[entry].level ||
+       zslice != sampler->cache[entry].zslice) {
+      /* entry is not what's expected */
+      struct pipe_context *pipe = (struct pipe_context *) sampler->pipe;
+      struct pipe_surface *ps
+         = pipe->get_tex_surface(pipe, sampler->texture, face, level, zslice);
+
       printf("cache miss (%d, %d)\n", x, y);
-      */
+
+      assert(ps->width == sampler->texture->level[level].width);
+      assert(ps->height == sampler->texture->level[level].height);
+      sampler->cache[entry].x = tx;
+      sampler->cache[entry].y = ty;
+      sampler->cache[entry].level = level;
+      sampler->cache[entry].face = face;
+      sampler->cache[entry].zslice = zslice;
+      ps->get_tile(ps,
+                   tx * TEX_CACHE_TILE_SIZE,
+                   ty * TEX_CACHE_TILE_SIZE,
+                   TEX_CACHE_TILE_SIZE, TEX_CACHE_TILE_SIZE,
+                   (float *) sampler->cache[entry].data);
    }
    else {
       /*
@@ -583,13 +598,13 @@ get_texel(struct tgsi_sampler *sampler,
       */
    }
 
-   /* get texel from cache */
-   cx = x % SAMPLER_CACHE_SIZE;
-   cy = y % SAMPLER_CACHE_SIZE;
-   rgba[0][j] = sampler->cache[cy][cx][0];
-   rgba[1][j] = sampler->cache[cy][cx][1];
-   rgba[2][j] = sampler->cache[cy][cx][2];
-   rgba[3][j] = sampler->cache[cy][cx][3];
+   /* get the texel from cache entry */
+   tx = x % TEX_CACHE_TILE_SIZE;
+   ty = y % TEX_CACHE_TILE_SIZE;
+   rgba[0][j] = sampler->cache[entry].data[ty][tx][0];
+   rgba[1][j] = sampler->cache[entry].data[ty][tx][1];
+   rgba[2][j] = sampler->cache[entry].data[ty][tx][2];
+   rgba[3][j] = sampler->cache[entry].data[ty][tx][3];
 }
 
 

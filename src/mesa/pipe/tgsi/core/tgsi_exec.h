@@ -21,12 +21,20 @@ struct tgsi_exec_vector
    union tgsi_exec_channel xyzw[4];
 };
 
-#define SAMPLER_CACHE_SIZE 8
 
 #define NUM_CHANNELS 4  /* R,G,B,A */
 #ifndef QUAD_SIZE
 #define QUAD_SIZE 4     /* 4 pixel/quad */
 #endif
+
+#define TEX_CACHE_TILE_SIZE 8
+#define TEX_CACHE_NUM_ENTRIES 8
+
+struct tgsi_texture_cache_entry
+{
+   int x, y, face, level, zslice;
+   GLfloat data[TEX_CACHE_TILE_SIZE][TEX_CACHE_TILE_SIZE][4];
+};
 
 struct tgsi_sampler
 {
@@ -40,9 +48,7 @@ struct tgsi_sampler
                        GLfloat lodbias,
                        GLfloat rgba[NUM_CHANNELS][QUAD_SIZE]);
    void *pipe; /*XXX temporary*/
-
-   GLint cache_x, cache_y, cache_level;
-   GLfloat cache[SAMPLER_CACHE_SIZE][SAMPLER_CACHE_SIZE][4];
+   struct tgsi_texture_cache_entry cache[TEX_CACHE_NUM_ENTRIES];
 };
 
 struct tgsi_exec_labels

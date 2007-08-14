@@ -318,16 +318,21 @@ static void shade_begin(struct quad_stage *qs)
 {
    struct quad_shade_stage *qss = quad_shade_stage(qs);
    struct softpipe_context *softpipe = qs->softpipe;
-   GLuint i;
+   GLuint i, entry;
+
    for (i = 0; i < PIPE_MAX_SAMPLERS; i++) {
       qss->samplers[i].state = &softpipe->sampler[i];
       qss->samplers[i].texture = softpipe->texture[i];
       qss->samplers[i].get_samples = sp_get_samples;
       qss->samplers[i].pipe = &softpipe->pipe;
       /* init cache info here */
-      qss->samplers[i].cache_x =
-      qss->samplers[i].cache_y = -1;
-      qss->samplers[i].cache_level = -1;
+      for (entry = 0; entry < TEX_CACHE_NUM_ENTRIES; entry++) {
+         qss->samplers[i].cache[entry].x = -1;
+         qss->samplers[i].cache[entry].y = -1;
+         qss->samplers[i].cache[entry].level = -1;
+         qss->samplers[i].cache[entry].face = -1;
+         qss->samplers[i].cache[entry].zslice = -1;
+      }
    }
 
    if (qs->next)
