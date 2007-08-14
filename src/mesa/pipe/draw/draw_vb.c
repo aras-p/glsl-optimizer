@@ -795,7 +795,7 @@ void draw_alloc_tmps( struct draw_stage *stage, GLuint nr )
    stage->nr_tmps = nr;
 
    if (nr) {
-      GLubyte *store = MALLOC(MAX_VERTEX_SIZE * nr);
+      GLubyte *store = (GLubyte *) malloc(MAX_VERTEX_SIZE * nr);
       GLuint i;
 
       stage->tmp = MALLOC(sizeof(struct vertex_header *) * nr);
@@ -808,7 +808,7 @@ void draw_alloc_tmps( struct draw_stage *stage, GLuint nr )
 void draw_free_tmps( struct draw_stage *stage )
 {
    if (stage->tmp) {
-      FREE(stage->tmp[0]);
-      FREE(stage->tmp);
+      free(stage->tmp[0]);
+      free(stage->tmp);
    }
 }

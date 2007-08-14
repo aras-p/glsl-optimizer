@@ -80,8 +80,8 @@ void draw_destroy( struct draw_context *draw )
 
    vf_destroy( draw->vf );
 
-   FREE( draw->vcache.vertex[0] ); /* Frees all the vertices. */
-   FREE( draw );
+   free( draw->vcache.vertex[0] ); /* Frees all the vertices. */
+   free( draw );
 }
 
 
