@@ -485,9 +485,23 @@ st_Bitmap(GLcontext *ctx, GLint x, GLint y, GLsizei width, GLsizei height,
 }
 
 
+static void
+st_CopyPixels(GLcontext *ctx, GLint srcx, GLint srcy,
+              GLsizei width, GLsizei height,
+              GLint dstx, GLint dsty, GLenum type)
+{
+   struct st_context *st = ctx->st;
+
+   st_validate_state(st);
+
+   /* XXX to do */
+}
+
+
 
 void st_init_drawpixels_functions(struct dd_function_table *functions)
 {
    functions->DrawPixels = st_DrawPixels;
+   functions->CopyPixels = st_CopyPixels;
    functions->Bitmap = st_Bitmap;
 }
