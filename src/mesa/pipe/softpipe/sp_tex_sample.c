@@ -555,7 +555,7 @@ compute_cache_pos(unsigned face, unsigned level, unsigned zslice,
  *
  * \param face  the cube face in 0..5
  * \param level  the mipmap level
- * \param zslize  which slice of a 3D texture
+ * \param zslice  which slice of a 3D texture
  * \param x  the x coord of texel within 2D image
  * \param y  the y coord of texel within 2D image
  * \param rgba  the quad to put the texel/color into
