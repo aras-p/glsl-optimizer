@@ -23,12 +23,21 @@ struct tgsi_exec_vector
 
 #define SAMPLER_CACHE_SIZE 8
 
+#define NUM_CHANNELS 4  /* R,G,B,A */
+#ifndef QUAD_SIZE
+#define QUAD_SIZE 4     /* 4 pixel/quad */
+#endif
+
 struct tgsi_sampler
 {
    const struct pipe_sampler_state *state;
    struct pipe_mipmap_tree *texture;
-   void (*get_sample)(struct tgsi_sampler *sampler,
-                      const GLfloat strq[4], GLfloat lambda, GLfloat rgba[4]);
+   /** Get samples for four fragments in a quad */
+   void (*get_samples)(struct tgsi_sampler *sampler,
+                       const GLfloat s[QUAD_SIZE],
+                       const GLfloat t[QUAD_SIZE],
+                       const GLfloat p[QUAD_SIZE],
+                       GLfloat rgba[NUM_CHANNELS][QUAD_SIZE]);
    void *pipe; /*XXX temporary*/
 
    GLint cache_x, cache_y, cache_level;

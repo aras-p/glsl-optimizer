@@ -1034,44 +1034,6 @@ exec_kil (struct tgsi_exec_machine *mach,
 }
 
 
-static GLfloat
-compute_lambda(struct tgsi_sampler *sampler,
-               const union tgsi_exec_channel *s,
-               const union tgsi_exec_channel *t,
-               const union tgsi_exec_channel *p)
-{
-   GLfloat rho, lambda;
-
-   assert(s);
-   {
-      GLfloat dsdx = s->f[TILE_BOTTOM_RIGHT] - s->f[TILE_BOTTOM_LEFT];
-      GLfloat dsdy = s->f[TILE_TOP_LEFT]     - s->f[TILE_BOTTOM_LEFT];
-      dsdx = FABSF(dsdx);
-      dsdy = FABSF(dsdy);
-      rho = MAX2(dsdx, dsdy) * sampler->texture->width0;
-   }
-   if (t) {
-      GLfloat dtdx = t->f[TILE_BOTTOM_RIGHT] - t->f[TILE_BOTTOM_LEFT];
-      GLfloat dtdy = t->f[TILE_TOP_LEFT]     - t->f[TILE_BOTTOM_LEFT];
-      GLfloat max;
-      dtdx = FABSF(dtdx);
-      dtdy = FABSF(dtdy);
-      max = MAX2(dtdx, dtdy) * sampler->texture->height0;
-      rho = MAX2(rho, max);
-   }
-   if (p) {
-      GLfloat dpdx = p->f[TILE_BOTTOM_RIGHT] - p->f[TILE_BOTTOM_LEFT];
-      GLfloat dpdy = p->f[TILE_TOP_LEFT]     - p->f[TILE_BOTTOM_LEFT];
-      GLfloat max;
-      dpdx = FABSF(dpdx);
-      dpdy = FABSF(dpdy);
-      max = MAX2(dpdx, dpdy) * sampler->texture->depth0;
-      rho = MAX2(rho, max);
-   }
-
-   lambda = LOG2(rho);
-   return lambda;
-}
 
 
 /*
@@ -1079,44 +1041,24 @@ compute_lambda(struct tgsi_sampler *sampler,
  */
 static void
 fetch_texel( struct tgsi_sampler *sampler,
-             GLfloat lambda,
              const union tgsi_exec_channel *s,
              const union tgsi_exec_channel *t,
              const union tgsi_exec_channel *p,
-             GLuint unit,
              union tgsi_exec_channel *r,
              union tgsi_exec_channel *g,
              union tgsi_exec_channel *b,
              union tgsi_exec_channel *a )
 {
-   GLuint fragment_index;
-   GLfloat stpq[4][4];
+   GLuint j;
+   GLfloat rgba[NUM_CHANNELS][QUAD_SIZE];
 
-   for (fragment_index = 0; fragment_index < 4; fragment_index++) {
-      stpq[fragment_index][0] = s->f[fragment_index];
-      if (t)
-         stpq[fragment_index][1] = t->f[fragment_index];
-      if (p)
-         stpq[fragment_index][2] = p->f[fragment_index];
-   }
+   sampler->get_samples(sampler, s->f, t->f, p->f, rgba);
 
-   lambda += sampler->state->lod_bias;
-   lambda = CLAMP(lambda, sampler->state->min_lod, sampler->state->max_lod);
-
-   /* XXX: Use the same lambda value throughout the tile.  Could
-    * end up with four unique values by recalculating partial
-    * derivs in the other row and column, and calculating lambda
-    * using the dx and dy values appropriate for each fragment in
-    * the tile.
-    */
-
-   for (fragment_index = 0; fragment_index < 4; fragment_index++) {
-      GLfloat rgba[4];
-      sampler->get_sample(sampler, stpq[fragment_index], lambda, rgba);
-      r->f[fragment_index] = rgba[0];
-      g->f[fragment_index] = rgba[1];
-      b->f[fragment_index] = rgba[2];
-      a->f[fragment_index] = rgba[3];
+   for (j = 0; j < 4; j++) {
+      r->f[j] = rgba[0][j];
+      g->f[j] = rgba[1][j];
+      b->f[j] = rgba[2][j];
+      a->f[j] = rgba[3][j];
    }
 }
 
@@ -1647,7 +1589,6 @@ exec_instruction(
    case TGSI_OPCODE_TEX:
       {
          const GLuint unit = inst->FullSrcRegisters[1].SrcRegister.Index;
-         GLfloat lambda;
          switch (inst->InstructionExtTexture.Texture) {
          case TGSI_TEXTURE_1D:
 
@@ -1666,10 +1607,8 @@ exec_instruction(
                assert (0);
             }
 
-            lambda = compute_lambda(&mach->Samplers[unit], &r[0], NULL, NULL);
-            fetch_texel(&mach->Samplers[unit], lambda,
+            fetch_texel(&mach->Samplers[unit],
                         &r[0], NULL, NULL,
-                        inst->FullSrcRegisters[1].SrcRegister.Index,
                         &r[0], &r[1], &r[2], &r[3]);
             break;
 
@@ -1693,11 +1632,8 @@ exec_instruction(
                assert (0);
             }
 
-            lambda = compute_lambda(&mach->Samplers[unit], &r[0], &r[1], NULL);
             fetch_texel(&mach->Samplers[unit],
-                        lambda,
                         &r[0], &r[1], NULL,
-                        inst->FullSrcRegisters[1].SrcRegister.Index,
                         &r[0], &r[1], &r[2], &r[3]);
             break;
 
@@ -1723,11 +1659,8 @@ exec_instruction(
                assert (0);
             }
 
-            lambda = compute_lambda(&mach->Samplers[unit], &r[0], &r[1], &r[2]);
             fetch_texel(&mach->Samplers[unit],
-                        lambda,
                         &r[0], &r[1], &r[2],
-                        inst->FullSrcRegisters[1].SrcRegister.Index,
                         &r[0], &r[1], &r[2], &r[3]);
             break;
 

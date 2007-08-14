@@ -66,12 +66,12 @@
  * optimization!  If we find that's not true on some systems, convert
  * to a macro.
  */
-static INLINE GLfloat
-lerp_2d(GLfloat a, GLfloat b,
-        GLfloat v00, GLfloat v10, GLfloat v01, GLfloat v11)
+static INLINE float
+lerp_2d(float a, float b,
+        float v00, float v10, float v01, float v11)
 {
-   const GLfloat temp0 = LERP(a, v00, v10);
-   const GLfloat temp1 = LERP(a, v01, v11);
+   const float temp0 = LERP(a, v00, v10);
+   const float temp1 = LERP(a, v01, v11);
    return LERP(b, temp0, temp1);
 }
 
@@ -98,7 +98,7 @@ repeat_remainder(GLint a, GLint b)
  * \return  integer texture index
  */
 static INLINE GLint
-nearest_texcoord(GLuint wrapMode, GLfloat s, GLuint size)
+nearest_texcoord(GLuint wrapMode, float s, GLuint size)
 {
    GLint i;
    switch (wrapMode) {
@@ -122,8 +122,8 @@ nearest_texcoord(GLuint wrapMode, GLfloat s, GLuint size)
       {
          /* s limited to [min,max] */
          /* i limited to [0, size-1] */
-         const GLfloat min = 1.0F / (2.0F * size);
-         const GLfloat max = 1.0F - min;
+         const float min = 1.0F / (2.0F * size);
+         const float max = 1.0F - min;
          if (s < min)
             i = 0;
          else if (s > max)
@@ -136,8 +136,8 @@ nearest_texcoord(GLuint wrapMode, GLfloat s, GLuint size)
       {
          /* s limited to [min,max] */
          /* i limited to [-1, size] */
-         const GLfloat min = -1.0F / (2.0F * size);
-         const GLfloat max = 1.0F - min;
+         const float min = -1.0F / (2.0F * size);
+         const float max = 1.0F - min;
          if (s <= min)
             i = -1;
          else if (s >= max)
@@ -148,14 +148,14 @@ nearest_texcoord(GLuint wrapMode, GLfloat s, GLuint size)
       return i;
    case PIPE_TEX_WRAP_MIRROR_REPEAT:
       {
-         const GLfloat min = 1.0F / (2.0F * size);
-         const GLfloat max = 1.0F - min;
+         const float min = 1.0F / (2.0F * size);
+         const float max = 1.0F - min;
          const GLint flr = IFLOOR(s);
-         GLfloat u;
+         float u;
          if (flr & 1)
-            u = 1.0F - (s - (GLfloat) flr);
+            u = 1.0F - (s - (float) flr);
          else
-            u = s - (GLfloat) flr;
+            u = s - (float) flr;
          if (u < min)
             i = 0;
          else if (u > max)
@@ -168,7 +168,7 @@ nearest_texcoord(GLuint wrapMode, GLfloat s, GLuint size)
       {
          /* s limited to [0,1] */
          /* i limited to [0,size-1] */
-         const GLfloat u = FABSF(s);
+         const float u = FABSF(s);
          if (u <= 0.0F)
             i = 0;
          else if (u >= 1.0F)
@@ -181,9 +181,9 @@ nearest_texcoord(GLuint wrapMode, GLfloat s, GLuint size)
       {
          /* s limited to [min,max] */
          /* i limited to [0, size-1] */
-         const GLfloat min = 1.0F / (2.0F * size);
-         const GLfloat max = 1.0F - min;
-         const GLfloat u = FABSF(s);
+         const float min = 1.0F / (2.0F * size);
+         const float max = 1.0F - min;
+         const float u = FABSF(s);
          if (u < min)
             i = 0;
          else if (u > max)
@@ -196,9 +196,9 @@ nearest_texcoord(GLuint wrapMode, GLfloat s, GLuint size)
       {
          /* s limited to [min,max] */
          /* i limited to [0, size-1] */
-         const GLfloat min = -1.0F / (2.0F * size);
-         const GLfloat max = 1.0F - min;
-         const GLfloat u = FABSF(s);
+         const float min = -1.0F / (2.0F * size);
+         const float max = 1.0F - min;
+         const float u = FABSF(s);
          if (u < min)
             i = -1;
          else if (u > max)
@@ -224,10 +224,10 @@ nearest_texcoord(GLuint wrapMode, GLfloat s, GLuint size)
  * \param a  returns blend factor/weight between texture indexes
  */
 static INLINE void
-linear_texcoord(GLuint wrapMode, GLfloat s, GLuint size,
-                GLint *i0, GLint *i1, GLfloat *a)
+linear_texcoord(GLuint wrapMode, float s, GLuint size,
+                GLint *i0, GLint *i1, float *a)
 {
-   GLfloat u;
+   float u;
    switch (wrapMode) {
    case PIPE_TEX_WRAP_REPEAT:
       u = s * size - 0.5F;
@@ -238,7 +238,7 @@ linear_texcoord(GLuint wrapMode, GLfloat s, GLuint size,
       if (s <= 0.0F)
          u = 0.0F;
       else if (s >= 1.0F)
-         u = (GLfloat) size;
+         u = (float) size;
       else
          u = s * size;
       u -= 0.5F;
@@ -249,7 +249,7 @@ linear_texcoord(GLuint wrapMode, GLfloat s, GLuint size,
       if (s <= 0.0F)
          u = 0.0F;
       else if (s >= 1.0F)
-         u = (GLfloat) size;
+         u = (float) size;
       else
          u = s * size;
       u -= 0.5F;
@@ -262,8 +262,8 @@ linear_texcoord(GLuint wrapMode, GLfloat s, GLuint size,
       break;
    case PIPE_TEX_WRAP_CLAMP_TO_BORDER:
       {
-         const GLfloat min = -1.0F / (2.0F * size);
-         const GLfloat max = 1.0F - min;
+         const float min = -1.0F / (2.0F * size);
+         const float max = 1.0F - min;
          if (s <= min)
             u = min * size;
          else if (s >= max)
@@ -279,9 +279,9 @@ linear_texcoord(GLuint wrapMode, GLfloat s, GLuint size,
       {
          const GLint flr = IFLOOR(s);
          if (flr & 1)
-            u = 1.0F - (s - (GLfloat) flr);
+            u = 1.0F - (s - (float) flr);
          else
-            u = s - (GLfloat) flr;
+            u = s - (float) flr;
          u = (u * size) - 0.5F;
          *i0 = IFLOOR(u);
          *i1 = *i0 + 1;
@@ -294,7 +294,7 @@ linear_texcoord(GLuint wrapMode, GLfloat s, GLuint size,
    case PIPE_TEX_WRAP_MIRROR_CLAMP:
       u = FABSF(s);
       if (u >= 1.0F)
-         u = (GLfloat) size;
+         u = (float) size;
       else
          u *= size;
       u -= 0.5F;
@@ -304,7 +304,7 @@ linear_texcoord(GLuint wrapMode, GLfloat s, GLuint size,
    case PIPE_TEX_WRAP_MIRROR_CLAMP_TO_EDGE:
       u = FABSF(s);
       if (u >= 1.0F)
-         u = (GLfloat) size;
+         u = (float) size;
       else
          u *= size;
       u -= 0.5F;
@@ -317,8 +317,8 @@ linear_texcoord(GLuint wrapMode, GLfloat s, GLuint size,
       break;
    case PIPE_TEX_WRAP_MIRROR_CLAMP_TO_BORDER:
       {
-         const GLfloat min = -1.0F / (2.0F * size);
-         const GLfloat max = 1.0F - min;
+         const float min = -1.0F / (2.0F * size);
+         const float max = 1.0F - min;
          u = FABSF(s);
          if (u <= min)
             u = min * size;
@@ -339,7 +339,8 @@ linear_texcoord(GLuint wrapMode, GLfloat s, GLuint size,
 
 
 static GLuint
-choose_cube_face(const GLfloat texcoord[4], GLfloat newCoord[4])
+choose_cube_face(float rx, float ry, float rz,
+                 float newCoord[4])
 {
    /*
       major axis
@@ -352,12 +353,9 @@ choose_cube_face(const GLfloat texcoord[4], GLfloat newCoord[4])
        +rz          TEXTURE_CUBE_MAP_POSITIVE_Z_EXT    +rx    -ry   rz
        -rz          TEXTURE_CUBE_MAP_NEGATIVE_Z_EXT    -rx    -ry   rz
    */
-   const GLfloat rx = texcoord[0];
-   const GLfloat ry = texcoord[1];
-   const GLfloat rz = texcoord[2];
-   const GLfloat arx = FABSF(rx), ary = FABSF(ry), arz = FABSF(rz);
+   const float arx = FABSF(rx), ary = FABSF(ry), arz = FABSF(rz);
    GLuint face;
-   GLfloat sc, tc, ma;
+   float sc, tc, ma;
 
    if (arx > ary && arx > arz) {
       if (rx >= 0.0F) {
@@ -409,9 +407,62 @@ choose_cube_face(const GLfloat texcoord[4], GLfloat newCoord[4])
 }
 
 
+/**
+ * Examine the quad's texture coordinates to compute the partial
+ * derivatives w.r.t X and Y, then compute lambda (level of detail).
+ *
+ * This is only done for fragment shaders, not vertex shaders.
+ */
+static float
+compute_lambda(struct tgsi_sampler *sampler,
+               const float s[QUAD_SIZE],
+               const float t[QUAD_SIZE],
+               const float p[QUAD_SIZE])
+{
+   float rho, lambda;
+
+   assert(s);
+   {
+      float dsdx = s[QUAD_BOTTOM_RIGHT] - s[QUAD_BOTTOM_LEFT];
+      float dsdy = s[QUAD_TOP_LEFT]     - s[QUAD_BOTTOM_LEFT];
+      dsdx = FABSF(dsdx);
+      dsdy = FABSF(dsdy);
+      rho = MAX2(dsdx, dsdy) * sampler->texture->width0;
+   }
+   if (t) {
+      float dtdx = t[QUAD_BOTTOM_RIGHT] - t[QUAD_BOTTOM_LEFT];
+      float dtdy = t[QUAD_TOP_LEFT]     - t[QUAD_BOTTOM_LEFT];
+      float max;
+      dtdx = FABSF(dtdx);
+      dtdy = FABSF(dtdy);
+      max = MAX2(dtdx, dtdy) * sampler->texture->height0;
+      rho = MAX2(rho, max);
+   }
+   if (p) {
+      float dpdx = p[QUAD_BOTTOM_RIGHT] - p[QUAD_BOTTOM_LEFT];
+      float dpdy = p[QUAD_TOP_LEFT]     - p[QUAD_BOTTOM_LEFT];
+      float max;
+      dpdx = FABSF(dpdx);
+      dpdy = FABSF(dpdy);
+      max = MAX2(dpdx, dpdy) * sampler->texture->depth0;
+      rho = MAX2(rho, max);
+   }
+
+   lambda = LOG2(rho);
+
+   lambda += sampler->state->lod_bias;
+   lambda = CLAMP(lambda, sampler->state->min_lod, sampler->state->max_lod);
+
+   return lambda;
+}
+
+
 static void
-sp_get_sample_1d(struct tgsi_sampler *sampler,
-                 const GLfloat strq[4], GLfloat lambda, GLfloat rgba[4])
+sp_get_samples_1d(struct tgsi_sampler *sampler,
+                  const float s[QUAD_SIZE],
+                  const float t[QUAD_SIZE],
+                  const float p[QUAD_SIZE],
+                  float rgba[NUM_CHANNELS][QUAD_SIZE])
 {
    struct pipe_context *pipe = (struct pipe_context *) sampler->pipe;
    struct pipe_surface *ps
@@ -420,26 +471,40 @@ sp_get_sample_1d(struct tgsi_sampler *sampler,
    switch (sampler->state->min_img_filter) {
    case PIPE_TEX_FILTER_NEAREST:
       {
-         GLint x;
-         x = nearest_texcoord(sampler->state->wrap_s, strq[0],
-                              sampler->texture->width0);
-         ps->get_tile(ps, x, 0, 1, 1, rgba);
+         GLuint j;
+         for (j = 0; j < QUAD_SIZE; j++) {
+            GLint x = nearest_texcoord(sampler->state->wrap_s, s[j],
+                                       sampler->texture->width0);
+            float texel[4];
+            ps->get_tile(ps, x, 0, 1, 1, texel);
+            rgba[0][j] = texel[0];
+            rgba[1][j] = texel[1];
+            rgba[2][j] = texel[2];
+            rgba[3][j] = texel[3];
+         }
       }
       break;
    case PIPE_TEX_FILTER_LINEAR:
       {
-         GLfloat t0[4], t1[4];
-         GLint x0, x1;
-         GLfloat a;
-         linear_texcoord(sampler->state->wrap_s, strq[0],
-                         sampler->texture->width0, &x0, &x1, &a);
-         ps->get_tile(ps, x0, 0, 1, 1, t0);
-         ps->get_tile(ps, x1, 0, 1, 1, t1);
+         GLuint j;
+         for (j = 0; j < QUAD_SIZE; j++) {
+            float t0[4], t1[4], texel[4];
+            GLint x0, x1;
+            float a;
+            linear_texcoord(sampler->state->wrap_s, s[j],
+                            sampler->texture->width0, &x0, &x1, &a);
+            ps->get_tile(ps, x0, 0, 1, 1, t0);
+            ps->get_tile(ps, x1, 0, 1, 1, t1);
 
-         rgba[0] = LERP(a, t0[0], t1[0]);
-         rgba[1] = LERP(a, t0[1], t1[1]);
-         rgba[2] = LERP(a, t0[2], t1[2]);
-         rgba[3] = LERP(a, t0[3], t1[3]);
+            texel[0] = LERP(a, t0[0], t1[0]);
+            texel[1] = LERP(a, t0[1], t1[1]);
+            texel[2] = LERP(a, t0[2], t1[2]);
+            texel[3] = LERP(a, t0[3], t1[3]);
+            rgba[0][j] = texel[0];
+            rgba[1][j] = texel[1];
+            rgba[2][j] = texel[2];
+            rgba[3][j] = texel[3];
+         }
       }
       break;
    default:
@@ -448,7 +513,7 @@ sp_get_sample_1d(struct tgsi_sampler *sampler,
 }
 
 static GLuint
-choose_mipmap_level(struct tgsi_sampler *sampler, GLfloat lambda)
+choose_mipmap_level(struct tgsi_sampler *sampler, float lambda)
 {
    if (sampler->state->min_mip_filter == PIPE_TEX_MIPFILTER_NONE) {
       return 0;
@@ -463,7 +528,68 @@ choose_mipmap_level(struct tgsi_sampler *sampler, GLfloat lambda)
 
 
 /**
- * Called via tgsi_sampler::get_sample()
+ * Load the texture cache with a new texture tile.
+ */
+static void
+cache_tex_tile(struct tgsi_sampler *sampler,
+               unsigned face, unsigned level, unsigned zslice, int cx, int cy)
+{
+   struct pipe_context *pipe = (struct pipe_context *) sampler->pipe;
+   struct pipe_surface *ps
+      = pipe->get_tex_surface(pipe, sampler->texture, face, level, zslice);
+   assert(ps->width == sampler->texture->level[level].width);
+   assert(ps->height == sampler->texture->level[level].height);
+   sampler->cache_level = level;
+   sampler->cache_x = cx;
+   sampler->cache_y = cy;
+   ps->get_tile(ps,
+                cx * SAMPLER_CACHE_SIZE,
+                cy * SAMPLER_CACHE_SIZE,
+                SAMPLER_CACHE_SIZE, SAMPLER_CACHE_SIZE,
+                (float *) sampler->cache);
+}
+
+
+/**
+ * Get a texel from a texture.
+ * \param face  the cube face in 0..5
+ * \param level  the mipmap level
+ * \param zslize  which slice of a 3D texture
+ * \param x  the x coord of texel within 2D image
+ * \param y  the y coord of texel within 2D image
+ * \param rgba  the quad to put the texel/color into
+ * \param j  which element of the rgba quad to write to
+ */
+static void
+get_texel(struct tgsi_sampler *sampler,
+          unsigned face, unsigned level, unsigned zslice, int x, int y,
+          float rgba[NUM_CHANNELS][QUAD_SIZE], GLuint j)
+{
+   int cx = x / SAMPLER_CACHE_SIZE;
+   int cy = y / SAMPLER_CACHE_SIZE;
+
+   if (cx != sampler->cache_x || cy != sampler->cache_y ||
+       level != sampler->cache_level) {
+      cache_tex_tile(sampler, face, level, zslice, cx, cy);
+      printf("cache miss (%d, %d)\n", x, y);
+   }
+   else {
+      printf("cache hit (%d, %d)\n", x, y);
+   }
+
+   /* get texel from cache */
+   cx = x % SAMPLER_CACHE_SIZE;
+   cy = y % SAMPLER_CACHE_SIZE;
+   rgba[0][j] = sampler->cache[cy][cx][0];
+   rgba[1][j] = sampler->cache[cy][cx][1];
+   rgba[2][j] = sampler->cache[cy][cx][2];
+   rgba[3][j] = sampler->cache[cy][cx][3];
+}
+
+
+
+/**
+ * Called via tgsi_sampler::get_samples()
  * Use the sampler's state setting to get a filtered RGBA value
  * from the sampler's texture (mipmap tree).
  *
@@ -475,87 +601,62 @@ choose_mipmap_level(struct tgsi_sampler *sampler, GLfloat lambda)
  * a new tgsi_sampler object for each state combo it finds....
  */
 static void
-sp_get_sample_2d(struct tgsi_sampler *sampler,
-                 const GLfloat strq[4], GLfloat lambda, GLfloat rgba[4])
+sp_get_samples_2d(struct tgsi_sampler *sampler,
+                  const float s[QUAD_SIZE],
+                  const float t[QUAD_SIZE],
+                  const float p[QUAD_SIZE],
+                  float rgba[NUM_CHANNELS][QUAD_SIZE])
 {
-   struct pipe_context *pipe = (struct pipe_context *) sampler->pipe;
-   GLuint filter;
-   GLint level0;
-
-   if (lambda < 0.0)
-      filter = sampler->state->mag_img_filter;
-   else
-      filter = sampler->state->min_img_filter;
-
-   level0 = choose_mipmap_level(sampler, lambda);
-
-   assert(sampler->texture->level[level0].width);
-
-   switch (filter) {
-   case PIPE_TEX_FILTER_NEAREST:
+   GLuint j, imgFilter;
+   int level0, width, height;
+   
+   /* compute level0 and imgFilter */
+   switch (sampler->state->min_mip_filter) {
+   case PIPE_TEX_MIPFILTER_NONE:
+      imgFilter = sampler->state->mag_img_filter;
+      level0 = 0;
+      assert(sampler->state->min_img_filter ==
+             sampler->state->mag_img_filter);
+      break;
+   default:
       {
-         GLint x = nearest_texcoord(sampler->state->wrap_s, strq[0],
-                                    sampler->texture->level[level0].width);
-         GLint y = nearest_texcoord(sampler->state->wrap_t, strq[1],
-                                    sampler->texture->level[level0].height);
-         GLint cx = x / SAMPLER_CACHE_SIZE;
-         GLint cy = y / SAMPLER_CACHE_SIZE;
-         if (cx != sampler->cache_x || cy != sampler->cache_y ||
-             level0 != sampler->cache_level) {
-            /* cache miss, replace cache with new tile */
-            struct pipe_surface *ps
-               = pipe->get_tex_surface(pipe, sampler->texture, 0, level0, 0);
-            assert(ps->width == sampler->texture->level[level0].width);
-            assert(ps->height == sampler->texture->level[level0].height);
-            sampler->cache_level = level0;
-            sampler->cache_x = cx;
-            sampler->cache_y = cy;
-            ps->get_tile(ps,
-                         cx * SAMPLER_CACHE_SIZE,
-                         cy * SAMPLER_CACHE_SIZE,
-                         SAMPLER_CACHE_SIZE, SAMPLER_CACHE_SIZE,
-                         (GLfloat *) sampler->cache);
-            /*printf("cache miss (%d, %d)\n", x, y);*/
-         }
-         else {
-            /*printf("cache hit (%d, %d)\n", x, y);*/
-         }
-         /* get texel from cache */
-         cx = x % SAMPLER_CACHE_SIZE;
-         cy = y % SAMPLER_CACHE_SIZE;
-         COPY_4V(rgba, sampler->cache[cy][cx]);
+         float lambda = compute_lambda(sampler, s, t, p);
+         if (lambda < 0.0)
+            imgFilter = sampler->state->mag_img_filter;
+         else
+            imgFilter = sampler->state->min_img_filter;
+         level0 = choose_mipmap_level(sampler, lambda);
+      }
+   }
+
+   width = sampler->texture->level[level0].width;
+   height = sampler->texture->level[level0].height;
+
+   assert(width > 0);
+
+   switch (imgFilter) {
+   case PIPE_TEX_FILTER_NEAREST:
+      for (j = 0; j < QUAD_SIZE; j++) {
+         int x = nearest_texcoord(sampler->state->wrap_s, s[j], width);
+         int y = nearest_texcoord(sampler->state->wrap_t, t[j], height);
+         get_texel(sampler, 0, level0, 0, x, y, rgba, j);
       }
       break;
    case PIPE_TEX_FILTER_LINEAR:
-      {
-         GLfloat t00[4], t01[4], t10[4], t11[4];
-         GLint x0, y0, x1, y1;
-         GLfloat a, b;
-         struct pipe_surface *ps
-            = pipe->get_tex_surface(pipe, sampler->texture, 0, level0, 0);
-
-         linear_texcoord(sampler->state->wrap_s, strq[0],
-                         sampler->texture->width0, &x0, &x1, &a);
-         linear_texcoord(sampler->state->wrap_t, strq[1],
-                         sampler->texture->height0, &y0, &y1, &b);
-         ps->get_tile(ps, x0, y0, 1, 1, t00);
-         ps->get_tile(ps, x1, y0, 1, 1, t10);
-         ps->get_tile(ps, x0, y1, 1, 1, t01);
-         ps->get_tile(ps, x1, y1, 1, 1, t11);
-
-         rgba[0] = lerp_2d(a, b, t00[0], t10[0], t01[0], t11[0]);
-         rgba[1] = lerp_2d(a, b, t00[1], t10[1], t01[1], t11[1]);
-         rgba[2] = lerp_2d(a, b, t00[2], t10[2], t01[2], t11[2]);
-         rgba[3] = lerp_2d(a, b, t00[3], t10[3], t01[3], t11[3]);
+      for (j = 0; j < QUAD_SIZE; j++) {
+         float tx[4][4], a, b;
+         int x0, y0, x1, y1, c;
+         linear_texcoord(sampler->state->wrap_s, s[j], width,  &x0, &x1, &a);
+         linear_texcoord(sampler->state->wrap_t, t[j], height, &y0, &y1, &b);
+         get_texel(sampler, 0, level0, 0, x0, y0, tx, 0);
+         get_texel(sampler, 0, level0, 0, x1, y0, tx, 1);
+         get_texel(sampler, 0, level0, 0, x0, y1, tx, 2);
+         get_texel(sampler, 0, level0, 0, x1, y1, tx, 3);
+         for (c = 0; c < 4; c++) {
+            rgba[c][j] = lerp_2d(a, b, tx[c][0], tx[c][1], tx[c][2], tx[c][3]);
+         }
       }
       break;
-      /*
-      {
-	 GLuint level0, level1;
-	 level0 = choose_mipmap_level(sampler, lambda);
-      }
-      break;
-      */
    default:
       assert(0);
    }
@@ -563,40 +664,52 @@ sp_get_sample_2d(struct tgsi_sampler *sampler,
 
 
 static void
-sp_get_sample_3d(struct tgsi_sampler *sampler,
-                 const GLfloat strq[4], GLfloat lamba, GLfloat rgba[4])
+sp_get_samples_3d(struct tgsi_sampler *sampler,
+                  const float s[QUAD_SIZE],
+                  const float t[QUAD_SIZE],
+                  const float p[QUAD_SIZE],
+                  float rgba[NUM_CHANNELS][QUAD_SIZE])
 {
    /* get/map pipe_surfaces corresponding to 3D tex slices */
 }
 
 
 static void
-sp_get_sample_cube(struct tgsi_sampler *sampler,
-                   const GLfloat strq[4], GLfloat lambda, GLfloat rgba[4])
+sp_get_samples_cube(struct tgsi_sampler *sampler,
+                    const float s[QUAD_SIZE],
+                    const float t[QUAD_SIZE],
+                    const float p[QUAD_SIZE],
+                    float rgba[NUM_CHANNELS][QUAD_SIZE])
 {
-   GLfloat st[4];
-   GLuint face = choose_cube_face(strq, st);
-
-   /* get/map surface corresponding to the face */
+   GLuint j;
+   for (j = 0; j < QUAD_SIZE; j++) {
+      float st[4];
+      GLuint face = choose_cube_face(s[j], t[j], p[j], st);
+      (void) face;
+      /* get/map surface corresponding to the face */
+   }
 }
 
 
 void
-sp_get_sample(struct tgsi_sampler *sampler,
-              const GLfloat strq[4], GLfloat lambda, GLfloat rgba[4])
+sp_get_samples(struct tgsi_sampler *sampler,
+               const float s[QUAD_SIZE],
+               const float t[QUAD_SIZE],
+               const float p[QUAD_SIZE],
+               float rgba[NUM_CHANNELS][QUAD_SIZE])
 {
    switch (sampler->texture->target) {
    case GL_TEXTURE_1D:
-      sp_get_sample_1d(sampler, strq, lambda, rgba);
+      sp_get_samples_1d(sampler, s, t, p, rgba);
       break;
    case GL_TEXTURE_2D:
-      sp_get_sample_2d(sampler, strq, lambda, rgba);
+      sp_get_samples_2d(sampler, s, t, p, rgba);
       break;
    case GL_TEXTURE_3D:
-      sp_get_sample_3d(sampler, strq, lambda, rgba);
+      sp_get_samples_3d(sampler, s, t, p, rgba);
       break;
    case GL_TEXTURE_CUBE_MAP:
-      sp_get_sample_cube(sampler, strq, lambda, rgba);
+      sp_get_samples_cube(sampler, s, t, p, rgba);
       break;
    default:
       assert(0);
