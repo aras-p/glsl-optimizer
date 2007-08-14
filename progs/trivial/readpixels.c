@@ -10,6 +10,7 @@
 #include <GL/glut.h>
 
 static int Width = 250, Height = 250;
+static GLfloat Zoom = 1.0;
 
 static void Init(void)
 {
@@ -70,6 +71,7 @@ static void Draw(void)
           image[0], image[1], image[2], image[3]);
    /* draw to right half of window */
    glWindowPos2iARB(Width, 0);
+   glPixelZoom(Zoom, Zoom);
    glDrawPixels(Width, Height, GL_RGBA, GL_FLOAT, image);
    free(image);
 
@@ -85,6 +87,9 @@ int main(int argc, char **argv)
    if (glutCreateWindow(argv[0]) == GL_FALSE) {
       exit(1);
    }
+
+   if (argc > 1)
+      Zoom = atof(argv[1]);
 
    Init();
 
