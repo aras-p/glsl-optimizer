@@ -339,8 +339,7 @@ linear_texcoord(GLuint wrapMode, float s, GLuint size,
 
 
 static GLuint
-choose_cube_face(float rx, float ry, float rz,
-                 float newCoord[4])
+choose_cube_face(float rx, float ry, float rz, float *newS, float *newT)
 {
    /*
       major axis
@@ -400,8 +399,8 @@ choose_cube_face(float rx, float ry, float rz,
       }
    }
 
-   newCoord[0] = ( sc / ma + 1.0F ) * 0.5F;
-   newCoord[1] = ( tc / ma + 1.0F ) * 0.5F;
+   *newS = ( sc / ma + 1.0F ) * 0.5F;
+   *newT = ( tc / ma + 1.0F ) * 0.5F;
 
    return face;
 }
@@ -542,8 +541,12 @@ static unsigned
 compute_cache_pos(unsigned face, unsigned level, unsigned zslice,
                   int tx, int ty)
 {
-   unsigned entry = tx + ty * 2 + zslice *4 + level + face;
+#if 01
+   unsigned entry = tx + ty * 2 + zslice * 4 + face + level;
    return entry % TEX_CACHE_NUM_ENTRIES;
+#else
+   return 0;
+#endif
 }
 
 
@@ -577,7 +580,9 @@ get_texel(struct tgsi_sampler *sampler,
       struct pipe_surface *ps
          = pipe->get_tex_surface(pipe, sampler->texture, face, level, zslice);
 
-      printf("cache miss (%d, %d)\n", x, y);
+      /*
+      printf("cache miss (%d, %d) face %u\n", tx, ty, face);
+      */
 
       assert(ps->width == sampler->texture->level[level].width);
       assert(ps->height == sampler->texture->level[level].height);
@@ -609,41 +614,23 @@ get_texel(struct tgsi_sampler *sampler,
 
 
 
-static void
-sp_get_samples_1d(struct tgsi_sampler *sampler,
-                  const float s[QUAD_SIZE],
-                  const float t[QUAD_SIZE],
-                  const float p[QUAD_SIZE],
-                  float lodbias,
-                  float rgba[NUM_CHANNELS][QUAD_SIZE])
-{
-}
-
-
 /**
- * Called via tgsi_sampler::get_samples()
- * Use the sampler's state setting to get a filtered RGBA value
- * from the sampler's texture (mipmap tree).
- *
- * XXX we can implement many versions of this function, each
- * tightly coded for a specific combination of sampler state
- * (nearest + repeat), (bilinear mipmap + clamp), etc.
- *
- * The update_samplers() function in st_atom_sampler.c could create
- * a new tgsi_sampler object for each state combo it finds....
+ * Common code for sampling 1D/2D/cube textures.
+ * Could probably extend for 3D...
  */
 static void
-sp_get_samples_2d(struct tgsi_sampler *sampler,
-                  const float s[QUAD_SIZE],
-                  const float t[QUAD_SIZE],
-                  const float p[QUAD_SIZE],
-                  float lodbias,
-                  float rgba[NUM_CHANNELS][QUAD_SIZE])
+sp_get_samples_2d_common(struct tgsi_sampler *sampler,
+                         const float s[QUAD_SIZE],
+                         const float t[QUAD_SIZE],
+                         const float p[QUAD_SIZE],
+                         float lodbias,
+                         float rgba[NUM_CHANNELS][QUAD_SIZE],
+                         const unsigned faces[4])
 {
    unsigned level0, level1, j, imgFilter;
    int width, height;
    float levelBlend;
-   
+
    choose_mipmap_levels(sampler, s, t, p, lodbias,
                         &level0, &level1, &levelBlend, &imgFilter);
 
@@ -657,7 +644,7 @@ sp_get_samples_2d(struct tgsi_sampler *sampler,
       for (j = 0; j < QUAD_SIZE; j++) {
          int x = nearest_texcoord(sampler->state->wrap_s, s[j], width);
          int y = nearest_texcoord(sampler->state->wrap_t, t[j], height);
-         get_texel(sampler, 0, level0, 0, x, y, rgba, j);
+         get_texel(sampler, faces[j], level0, 0, x, y, rgba, j);
 
          if (level0 != level1) {
             /* get texels from second mipmap level and blend */
@@ -665,7 +652,7 @@ sp_get_samples_2d(struct tgsi_sampler *sampler,
             unsigned c;
             x = x / 2;
             y = y / 2;
-            get_texel(sampler, 0, level1, 0, x, y, rgba2, j);
+            get_texel(sampler, faces[j], level1, 0, x, y, rgba2, j);
             for (c = 0; c < NUM_CHANNELS; c++) {
                rgba[c][j] = LERP(levelBlend, rgba2[c][j], rgba[c][j]);
             }
@@ -678,10 +665,10 @@ sp_get_samples_2d(struct tgsi_sampler *sampler,
          int x0, y0, x1, y1, c;
          linear_texcoord(sampler->state->wrap_s, s[j], width,  &x0, &x1, &a);
          linear_texcoord(sampler->state->wrap_t, t[j], height, &y0, &y1, &b);
-         get_texel(sampler, 0, level0, 0, x0, y0, tx, 0);
-         get_texel(sampler, 0, level0, 0, x1, y0, tx, 1);
-         get_texel(sampler, 0, level0, 0, x0, y1, tx, 2);
-         get_texel(sampler, 0, level0, 0, x1, y1, tx, 3);
+         get_texel(sampler, faces[j], level0, 0, x0, y0, tx, 0);
+         get_texel(sampler, faces[j], level0, 0, x1, y0, tx, 1);
+         get_texel(sampler, faces[j], level0, 0, x0, y1, tx, 2);
+         get_texel(sampler, faces[j], level0, 0, x1, y1, tx, 3);
          for (c = 0; c < 4; c++) {
             rgba[c][j] = lerp_2d(a, b, tx[c][0], tx[c][1], tx[c][2], tx[c][3]);
          }
@@ -694,10 +681,10 @@ sp_get_samples_2d(struct tgsi_sampler *sampler,
             y0 = y0 / 2;
             x1 = x1 / 2;
             y1 = y1 / 2;
-            get_texel(sampler, 0, level1, 0, x0, y0, tx, 0);
-            get_texel(sampler, 0, level1, 0, x1, y0, tx, 1);
-            get_texel(sampler, 0, level1, 0, x0, y1, tx, 2);
-            get_texel(sampler, 0, level1, 0, x1, y1, tx, 3);
+            get_texel(sampler, faces[j], level1, 0, x0, y0, tx, 0);
+            get_texel(sampler, faces[j], level1, 0, x1, y0, tx, 1);
+            get_texel(sampler, faces[j], level1, 0, x0, y1, tx, 2);
+            get_texel(sampler, faces[j], level1, 0, x1, y1, tx, 3);
             for (c = 0; c < 4; c++) {
                rgba2[c][j] = lerp_2d(a, b,
                                      tx[c][0], tx[c][1], tx[c][2], tx[c][3]);
@@ -712,6 +699,32 @@ sp_get_samples_2d(struct tgsi_sampler *sampler,
    default:
       assert(0);
    }
+}
+
+
+static void
+sp_get_samples_1d(struct tgsi_sampler *sampler,
+                  const float s[QUAD_SIZE],
+                  const float t[QUAD_SIZE],
+                  const float p[QUAD_SIZE],
+                  float lodbias,
+                  float rgba[NUM_CHANNELS][QUAD_SIZE])
+{
+   static const unsigned faces[4] = {0, 0, 0, 0};
+   sp_get_samples_2d_common(sampler, s, NULL, NULL, lodbias, rgba, faces);
+}
+
+
+static void
+sp_get_samples_2d(struct tgsi_sampler *sampler,
+                  const float s[QUAD_SIZE],
+                  const float t[QUAD_SIZE],
+                  const float p[QUAD_SIZE],
+                  float lodbias,
+                  float rgba[NUM_CHANNELS][QUAD_SIZE])
+{
+   static const unsigned faces[4] = {0, 0, 0, 0};
+   sp_get_samples_2d_common(sampler, s, t, NULL, lodbias, rgba, faces);
 }
 
 
@@ -735,16 +748,27 @@ sp_get_samples_cube(struct tgsi_sampler *sampler,
                     float lodbias,
                     float rgba[NUM_CHANNELS][QUAD_SIZE])
 {
-   GLuint j;
+   unsigned faces[QUAD_SIZE], j;
+   float ssss[4], tttt[4];
    for (j = 0; j < QUAD_SIZE; j++) {
-      float st[4];
-      GLuint face = choose_cube_face(s[j], t[j], p[j], st);
-      (void) face;
-      /* get/map surface corresponding to the face */
+      faces[j] = choose_cube_face(s[j], t[j], p[j], ssss + j, tttt + j);
    }
+   sp_get_samples_2d_common(sampler, ssss, tttt, NULL, lodbias, rgba, faces);
 }
 
 
+/**
+ * Called via tgsi_sampler::get_samples()
+ * Use the sampler's state setting to get a filtered RGBA value
+ * from the sampler's texture (mipmap tree).
+ *
+ * XXX we can implement many versions of this function, each
+ * tightly coded for a specific combination of sampler state
+ * (nearest + repeat), (bilinear mipmap + clamp), etc.
+ *
+ * The update_samplers() function in st_atom_sampler.c could create
+ * a new tgsi_sampler object for each state combo it finds....
+ */
 void
 sp_get_samples(struct tgsi_sampler *sampler,
                const float s[QUAD_SIZE],
