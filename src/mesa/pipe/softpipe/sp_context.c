@@ -126,6 +126,12 @@ static void map_surfaces(struct softpipe_context *sp)
          pipe->region_map(pipe, sps->surface.region);
    }
 
+   if (sp->framebuffer.sbuf) {
+      struct softpipe_surface *sps = softpipe_surface(sp->framebuffer.sbuf);
+      if (sps->surface.region)
+         pipe->region_map(pipe, sps->surface.region);
+   }
+
    /* textures */
    for (i = 0; i < PIPE_MAX_SAMPLERS; i++) {
       struct pipe_mipmap_tree *mt = sp->texture[i];
@@ -151,6 +157,12 @@ static void unmap_surfaces(struct softpipe_context *sp)
 
    if (sp->framebuffer.zbuf) {
       struct softpipe_surface *sps = softpipe_surface(sp->framebuffer.zbuf);
+      if (sps->surface.region)
+         pipe->region_unmap(pipe, sps->surface.region);
+   }
+
+   if (sp->framebuffer.sbuf) {
+      struct softpipe_surface *sps = softpipe_surface(sp->framebuffer.sbuf);
       if (sps->surface.region)
          pipe->region_unmap(pipe, sps->surface.region);
    }
