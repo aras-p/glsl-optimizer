@@ -61,12 +61,18 @@ struct vertex_header {
    GLfloat data[][4];		/* Note variable size */
 };
 
+#define MAX_VERTEX_SIZE ((2 + FRAG_ATTRIB_MAX) * 4 * sizeof(GLfloat))
+
+
 
 /**
  * Basic info for a point/line/triangle primitive.
  */
 struct prim_header {
    GLfloat det;                 /**< front/back face determinant */
+   GLuint reset_line_stipple:1;
+   GLuint edgeflags:3;
+   GLuint pad:28;
    struct vertex_header *v[3];  /**< 1 to 3 vertex pointers */
 };
 
@@ -101,6 +107,12 @@ struct draw_stage
 
    void (*reset_stipple_counter)( struct draw_stage * );
 };
+
+
+#define PRIM_QUEUE_LENGTH      16
+#define VCACHE_SIZE            32
+#define VCACHE_OVERFLOW        4
+#define VS_QUEUE_LENGTH        (VCACHE_SIZE + VCACHE_OVERFLOW + 1)	/* can never fill up */
 
 
 /**
@@ -141,7 +153,45 @@ struct draw_context
    GLuint nr_vertices;
    GLboolean in_vb;
 
+   void *elts;
+
+   struct vertex_header *(*get_vertex)( struct draw_context *draw,
+					GLuint i );
+
+   /* Post-tnl vertex cache:
+    */
+   struct {
+      GLuint referenced;
+      GLuint idx[VCACHE_SIZE + VCACHE_OVERFLOW];
+      struct vertex_header *vertex[VCACHE_SIZE + VCACHE_OVERFLOW];
+      GLuint overflow;
+   } vcache;
+
+   /* Vertex shader queue:
+    */
+   struct {
+      struct {
+	 GLuint elt;
+	 struct vertex_header *dest;
+      } queue[VS_QUEUE_LENGTH];
+      GLuint queue_nr;
+   } vs;
+
+   /* Prim pipeline queue:
+    */
+   struct {
+
+      /* Need to queue up primitives until their vertices have been
+       * transformed by a vs queue flush.
+       */
+      struct prim_header queue[PRIM_QUEUE_LENGTH];
+      GLuint queue_nr;
+   } pq;
+
+
+
    GLenum prim;   /**< GL_POINTS, GL_LINE_STRIP, GL_QUADS, etc */
+   unsigned reduced_prim;
 
    /* Helper for tnl:
     */

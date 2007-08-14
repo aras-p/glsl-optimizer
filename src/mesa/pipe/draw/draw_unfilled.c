@@ -91,9 +91,9 @@ static void points( struct draw_stage *stage,
    struct vertex_header *v1 = header->v[1];
    struct vertex_header *v2 = header->v[2];
 
-   if (v0->edgeflag) point( stage, v0 );
-   if (v1->edgeflag) point( stage, v1 );
-   if (v2->edgeflag) point( stage, v2 );
+   if (header->edgeflags & 0x1) point( stage, v0 );
+   if (header->edgeflags & 0x2) point( stage, v1 );
+   if (header->edgeflags & 0x4) point( stage, v2 );
 }
 
 
@@ -104,9 +104,9 @@ static void lines( struct draw_stage *stage,
    struct vertex_header *v1 = header->v[1];
    struct vertex_header *v2 = header->v[2];
 
-   if (v0->edgeflag) line( stage, v0, v1 );
-   if (v1->edgeflag) line( stage, v1, v2 );
-   if (v2->edgeflag) line( stage, v2, v0 );
+   if (header->edgeflags & 0x1) line( stage, v0, v1 );
+   if (header->edgeflags & 0x2) line( stage, v1, v2 );
+   if (header->edgeflags & 0x4) line( stage, v2, v0 );
 }
 
 

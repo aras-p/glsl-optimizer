@@ -59,6 +59,16 @@ struct draw_context *draw_create( void )
 
    draw->vf = vf_create( GL_TRUE );
 
+   /* Statically allocate maximum sized vertices for the cache - could be cleverer...
+    */
+   {
+      int i;
+      char *tmp = malloc(Elements(draw->vcache.vertex) * MAX_VERTEX_SIZE);
+
+      for (i = 0; i < Elements(draw->vcache.vertex); i++)
+	 draw->vcache.vertex[i] = (struct vertex_header *)(tmp + i * MAX_VERTEX_SIZE);
+   }
+
    return draw;
 }
 
@@ -70,6 +80,7 @@ void draw_destroy( struct draw_context *draw )
 
    vf_destroy( draw->vf );
 
+   FREE( draw->vcache.vertex[0] ); /* Frees all the vertices. */
    FREE( draw );
 }
 
