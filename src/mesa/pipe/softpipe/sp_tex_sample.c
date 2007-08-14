@@ -711,7 +711,8 @@ sp_get_samples_1d(struct tgsi_sampler *sampler,
                   float rgba[NUM_CHANNELS][QUAD_SIZE])
 {
    static const unsigned faces[4] = {0, 0, 0, 0};
-   sp_get_samples_2d_common(sampler, s, NULL, NULL, lodbias, rgba, faces);
+   static const float tzero[4] = {0, 0, 0, 0};
+   sp_get_samples_2d_common(sampler, s, tzero, NULL, lodbias, rgba, faces);
 }
 
 
