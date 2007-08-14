@@ -46,7 +46,7 @@ do {								\
 } while (0)
 
 
-static const GLuint frag_to_vf[FRAG_ATTRIB_MAX] = 
+static const unsigned frag_to_vf[FRAG_ATTRIB_MAX] = 
 {
    VF_ATTRIB_POS,
    VF_ATTRIB_COLOR0,
@@ -78,27 +78,27 @@ static const GLuint frag_to_vf[FRAG_ATTRIB_MAX] =
  */
 static void calculate_vertex_layout( struct softpipe_context *softpipe )
 {
-   const GLbitfield inputsRead = softpipe->fs.inputs_read;
-   GLuint slot_to_vf_attr[VF_ATTRIB_MAX];
-   GLbitfield attr_mask = 0x0;
-   GLuint i;
+   const unsigned inputsRead = softpipe->fs.inputs_read;
+   unsigned slot_to_vf_attr[VF_ATTRIB_MAX];
+   unsigned attr_mask = 0x0;
+   unsigned i;
 
    /* Need Z if depth test is enabled or the fragment program uses the
     * fragment position (XYZW).
     */
    if (softpipe->depth_test.enabled ||
        (inputsRead & FRAG_ATTRIB_WPOS))
-      softpipe->need_z = GL_TRUE;
+      softpipe->need_z = TRUE;
    else
-      softpipe->need_z = GL_FALSE;
+      softpipe->need_z = FALSE;
 
    /* Need W if we do any perspective-corrected interpolation or the
     * fragment program uses the fragment position.
     */
    if (inputsRead & FRAG_ATTRIB_WPOS)
-      softpipe->need_w = GL_TRUE;
+      softpipe->need_w = TRUE;
    else
-      softpipe->need_w = GL_FALSE;
+      softpipe->need_w = FALSE;
 
 
    softpipe->nr_attrs = 0;
@@ -130,7 +130,7 @@ static void calculate_vertex_layout( struct softpipe_context *softpipe )
       if (inputsRead & (1 << i)) {
          assert(i < sizeof(frag_to_vf) / sizeof(frag_to_vf[0]));
          EMIT_ATTR(frag_to_vf[i], i, INTERP_PERSPECTIVE);
-         softpipe->need_w = GL_TRUE;
+         softpipe->need_w = TRUE;
       }
    }
 
@@ -169,7 +169,7 @@ static void calculate_vertex_layout( struct softpipe_context *softpipe )
 static void
 compute_cliprect(struct softpipe_context *sp)
 {
-   GLint surfWidth, surfHeight;
+   int surfWidth, surfHeight;
 
    if (sp->framebuffer.num_cbufs > 0) {
       surfWidth = sp->framebuffer.cbufs[0]->width;

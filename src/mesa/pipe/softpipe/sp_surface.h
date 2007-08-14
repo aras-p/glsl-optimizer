@@ -31,7 +31,6 @@
 #ifndef SP_SURFACE_H
 #define SP_SURFACE_H
 
-#include "glheader.h"
 #include "sp_headers.h"
 #include "pipe/p_state.h"
 
@@ -50,47 +49,47 @@ struct softpipe_surface {
     * Functions for read/writing surface data
     */
    void (*read_quad_f)( struct softpipe_surface *,
-			GLint x, GLint y,
-			GLfloat (*rgba)[NUM_CHANNELS] );
+			int x, int y,
+			float (*rgba)[NUM_CHANNELS] );
 
    void (*read_quad_f_swz)( struct softpipe_surface *,
-			    GLint x, GLint y,
-			    GLfloat (*rrrr)[QUAD_SIZE] );
+			    int x, int y,
+			    float (*rrrr)[QUAD_SIZE] );
 
    void (*read_quad_ub)( struct softpipe_surface *,
-			 GLint x, GLint y,
-			 GLubyte (*rgba)[NUM_CHANNELS] );
+			 int x, int y,
+			 ubyte (*rgba)[NUM_CHANNELS] );
 
 
    void (*write_quad_f)( struct softpipe_surface *,
-			 GLint x, GLint y,
-			 GLfloat (*rgba)[NUM_CHANNELS] );
+			 int x, int y,
+			 float (*rgba)[NUM_CHANNELS] );
 
    void (*write_quad_f_swz)( struct softpipe_surface *,
-			     GLint x, GLint y,
-			     GLfloat (*rrrr)[QUAD_SIZE] );
+			     int x, int y,
+			     float (*rrrr)[QUAD_SIZE] );
 
 
    void (*write_quad_ub)( struct softpipe_surface *,
-			  GLint x, GLint y,
-			  GLubyte (*rgba)[NUM_CHANNELS] );
+			  int x, int y,
+			  ubyte (*rgba)[NUM_CHANNELS] );
 
    void (*read_quad_z)(struct softpipe_surface *,
-                       GLint x, GLint y, GLuint zzzz[QUAD_SIZE]);
+                       int x, int y, unsigned zzzz[QUAD_SIZE]);
    void (*write_quad_z)(struct softpipe_surface *,
-                        GLint x, GLint y, const GLuint zzzz[QUAD_SIZE]);
+                        int x, int y, const unsigned zzzz[QUAD_SIZE]);
 
    void (*read_quad_stencil)(struct softpipe_surface *,
-                             GLint x, GLint y, GLubyte ssss[QUAD_SIZE]);
+                             int x, int y, ubyte ssss[QUAD_SIZE]);
    void (*write_quad_stencil)(struct softpipe_surface *,
-                              GLint x, GLint y, const GLubyte ssss[QUAD_SIZE]);
+                              int x, int y, const ubyte ssss[QUAD_SIZE]);
 };
 
 
 extern struct pipe_surface *
 softpipe_get_tex_surface(struct pipe_context *pipe,
                          struct pipe_mipmap_tree *mt,
-                         GLuint face, GLuint level, GLuint zslice);
+                         unsigned face, unsigned level, unsigned zslice);
 
 
 extern void

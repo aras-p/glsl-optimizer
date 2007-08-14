@@ -33,12 +33,12 @@
  */
 
 
-#include "main/macros.h"
 #include "sp_context.h"
 #include "sp_surface.h"
 #include "sp_tex_sample.h"
 #include "pipe/p_context.h"
 #include "pipe/p_defines.h"
+#include "pipe/p_util.h"
 #include "pipe/tgsi/core/tgsi_exec.h"
 
 
@@ -49,7 +49,7 @@
  * Also note, FRAC(x) doesn't truly return the fractional part of x for x < 0.
  * Instead, if x < 0 then FRAC(x) = 1 - true_frac(x).
  */
-#define FRAC(f)  ((f) - IFLOOR(f))
+#define FRAC(f)  ((f) - ifloor(f))
 
 
 /**
@@ -80,8 +80,8 @@ lerp_2d(float a, float b,
  * Compute the remainder of a divided by b, but be careful with
  * negative values so that REPEAT mode works right.
  */
-static INLINE GLint
-repeat_remainder(GLint a, GLint b)
+static INLINE int
+repeat_remainder(int a, int b)
 {
    if (a >= 0)
       return a % b;
@@ -97,15 +97,15 @@ repeat_remainder(GLint a, GLint b)
  * \param size  the texture image size
  * \return  integer texture index
  */
-static INLINE GLint
-nearest_texcoord(GLuint wrapMode, float s, GLuint size)
+static INLINE int
+nearest_texcoord(unsigned wrapMode, float s, unsigned size)
 {
-   GLint i;
+   int i;
    switch (wrapMode) {
    case PIPE_TEX_WRAP_REPEAT:
       /* s limited to [0,1) */
       /* i limited to [0,size-1] */
-      i = IFLOOR(s * size);
+      i = ifloor(s * size);
       i = repeat_remainder(i, size);
       return i;
    case PIPE_TEX_WRAP_CLAMP:
@@ -116,7 +116,7 @@ nearest_texcoord(GLuint wrapMode, float s, GLuint size)
       else if (s >= 1.0F)
          i = size - 1;
       else
-         i = IFLOOR(s * size);
+         i = ifloor(s * size);
       return i;
    case PIPE_TEX_WRAP_CLAMP_TO_EDGE:
       {
@@ -129,7 +129,7 @@ nearest_texcoord(GLuint wrapMode, float s, GLuint size)
          else if (s > max)
             i = size - 1;
          else
-            i = IFLOOR(s * size);
+            i = ifloor(s * size);
       }
       return i;
    case PIPE_TEX_WRAP_CLAMP_TO_BORDER:
@@ -143,14 +143,14 @@ nearest_texcoord(GLuint wrapMode, float s, GLuint size)
          else if (s >= max)
             i = size;
          else
-            i = IFLOOR(s * size);
+            i = ifloor(s * size);
       }
       return i;
    case PIPE_TEX_WRAP_MIRROR_REPEAT:
       {
          const float min = 1.0F / (2.0F * size);
          const float max = 1.0F - min;
-         const GLint flr = IFLOOR(s);
+         const int flr = ifloor(s);
          float u;
          if (flr & 1)
             u = 1.0F - (s - (float) flr);
@@ -161,7 +161,7 @@ nearest_texcoord(GLuint wrapMode, float s, GLuint size)
          else if (u > max)
             i = size - 1;
          else
-            i = IFLOOR(u * size);
+            i = ifloor(u * size);
       }
       return i;
    case PIPE_TEX_WRAP_MIRROR_CLAMP:
@@ -174,7 +174,7 @@ nearest_texcoord(GLuint wrapMode, float s, GLuint size)
          else if (u >= 1.0F)
             i = size - 1;
          else
-            i = IFLOOR(u * size);
+            i = ifloor(u * size);
       }
       return i;
    case PIPE_TEX_WRAP_MIRROR_CLAMP_TO_EDGE:
@@ -189,7 +189,7 @@ nearest_texcoord(GLuint wrapMode, float s, GLuint size)
          else if (u > max)
             i = size - 1;
          else
-            i = IFLOOR(u * size);
+            i = ifloor(u * size);
       }
       return i;
    case PIPE_TEX_WRAP_MIRROR_CLAMP_TO_BORDER:
@@ -204,7 +204,7 @@ nearest_texcoord(GLuint wrapMode, float s, GLuint size)
          else if (u > max)
             i = size;
          else
-            i = IFLOOR(u * size);
+            i = ifloor(u * size);
       }
       return i;
    default:
@@ -224,14 +224,14 @@ nearest_texcoord(GLuint wrapMode, float s, GLuint size)
  * \param a  returns blend factor/weight between texture indexes
  */
 static INLINE void
-linear_texcoord(GLuint wrapMode, float s, GLuint size,
-                GLint *i0, GLint *i1, float *a)
+linear_texcoord(unsigned wrapMode, float s, unsigned size,
+                int *i0, int *i1, float *a)
 {
    float u;
    switch (wrapMode) {
    case PIPE_TEX_WRAP_REPEAT:
       u = s * size - 0.5F;
-      *i0 = repeat_remainder(IFLOOR(u), size);
+      *i0 = repeat_remainder(ifloor(u), size);
       *i1 = repeat_remainder(*i0 + 1, size);
       break;
    case PIPE_TEX_WRAP_CLAMP:
@@ -242,7 +242,7 @@ linear_texcoord(GLuint wrapMode, float s, GLuint size,
       else
          u = s * size;
       u -= 0.5F;
-      *i0 = IFLOOR(u);
+      *i0 = ifloor(u);
       *i1 = *i0 + 1;
       break;
    case PIPE_TEX_WRAP_CLAMP_TO_EDGE:
@@ -253,11 +253,11 @@ linear_texcoord(GLuint wrapMode, float s, GLuint size,
       else
          u = s * size;
       u -= 0.5F;
-      *i0 = IFLOOR(u);
+      *i0 = ifloor(u);
       *i1 = *i0 + 1;
       if (*i0 < 0)
          *i0 = 0;
-      if (*i1 >= (GLint) size)
+      if (*i1 >= (int) size)
          *i1 = size - 1;
       break;
    case PIPE_TEX_WRAP_CLAMP_TO_BORDER:
@@ -271,23 +271,23 @@ linear_texcoord(GLuint wrapMode, float s, GLuint size,
          else
             u = s * size;
          u -= 0.5F;
-         *i0 = IFLOOR(u);
+         *i0 = ifloor(u);
          *i1 = *i0 + 1;
       }
       break;
    case PIPE_TEX_WRAP_MIRROR_REPEAT:
       {
-         const GLint flr = IFLOOR(s);
+         const int flr = ifloor(s);
          if (flr & 1)
             u = 1.0F - (s - (float) flr);
          else
             u = s - (float) flr;
          u = (u * size) - 0.5F;
-         *i0 = IFLOOR(u);
+         *i0 = ifloor(u);
          *i1 = *i0 + 1;
          if (*i0 < 0)
             *i0 = 0;
-         if (*i1 >= (GLint) size)
+         if (*i1 >= (int) size)
             *i1 = size - 1;
       }
       break;
@@ -298,7 +298,7 @@ linear_texcoord(GLuint wrapMode, float s, GLuint size,
       else
          u *= size;
       u -= 0.5F;
-      *i0 = IFLOOR(u);
+      *i0 = ifloor(u);
       *i1 = *i0 + 1;
       break;
    case PIPE_TEX_WRAP_MIRROR_CLAMP_TO_EDGE:
@@ -308,11 +308,11 @@ linear_texcoord(GLuint wrapMode, float s, GLuint size,
       else
          u *= size;
       u -= 0.5F;
-      *i0 = IFLOOR(u);
+      *i0 = ifloor(u);
       *i1 = *i0 + 1;
       if (*i0 < 0)
          *i0 = 0;
-      if (*i1 >= (GLint) size)
+      if (*i1 >= (int) size)
          *i1 = size - 1;
       break;
    case PIPE_TEX_WRAP_MIRROR_CLAMP_TO_BORDER:
@@ -327,7 +327,7 @@ linear_texcoord(GLuint wrapMode, float s, GLuint size,
          else
             u *= size;
          u -= 0.5F;
-         *i0 = IFLOOR(u);
+         *i0 = ifloor(u);
          *i1 = *i0 + 1;
       }
       break;
@@ -338,7 +338,7 @@ linear_texcoord(GLuint wrapMode, float s, GLuint size,
 }
 
 
-static GLuint
+static unsigned
 choose_cube_face(float rx, float ry, float rz, float *newS, float *newT)
 {
    /*
@@ -353,7 +353,7 @@ choose_cube_face(float rx, float ry, float rz, float *newS, float *newT)
        -rz          TEXTURE_CUBE_MAP_NEGATIVE_Z_EXT    -rx    -ry   rz
    */
    const float arx = FABSF(rx), ary = FABSF(ry), arz = FABSF(rz);
-   GLuint face;
+   unsigned face;
    float sc, tc, ma;
 
    if (arx > ary && arx > arz) {
@@ -779,16 +779,16 @@ sp_get_samples(struct tgsi_sampler *sampler,
                float rgba[NUM_CHANNELS][QUAD_SIZE])
 {
    switch (sampler->texture->target) {
-   case GL_TEXTURE_1D:
+   case PIPE_TEXTURE_1D:
       sp_get_samples_1d(sampler, s, t, p, lodbias, rgba);
       break;
-   case GL_TEXTURE_2D:
+   case PIPE_TEXTURE_2D:
       sp_get_samples_2d(sampler, s, t, p, lodbias, rgba);
       break;
-   case GL_TEXTURE_3D:
+   case PIPE_TEXTURE_3D:
       sp_get_samples_3d(sampler, s, t, p, lodbias, rgba);
       break;
-   case GL_TEXTURE_CUBE_MAP:
+   case PIPE_TEXTURE_CUBE:
       sp_get_samples_cube(sampler, s, t, p, lodbias, rgba);
       break;
    default:

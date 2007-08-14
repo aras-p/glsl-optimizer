@@ -33,25 +33,26 @@
  */
 
 
-#include "imports.h"
-#include "macros.h"
+//#include "imports.h"
+//#include "macros.h"
 
 #include "sp_context.h"
 #include "sp_headers.h"
-#include "pipe/draw/draw_private.h"
 #include "sp_quad.h"
 #include "sp_prim_setup.h"
+#include "pipe/draw/draw_private.h"
+#include "pipe/p_util.h"
 
 
 /**
  * Triangle edge info
  */
 struct edge {
-   GLfloat dx;			/**< X(v1) - X(v0), used only during setup */
-   GLfloat dy;			/**< Y(v1) - Y(v0), used only during setup */
-   GLfloat dxdy;		/**< dx/dy */
-   GLfloat sx, sy;		/**< first sample point coord */
-   GLint lines;			/**< number of lines on this edge */
+   float dx;			/**< X(v1) - X(v0), used only during setup */
+   float dy;			/**< Y(v1) - Y(v0), used only during setup */
+   float dxdy;		/**< dx/dy */
+   float sx, sy;		/**< first sample point coord */
+   int lines;			/**< number of lines on this edge */
 };
 
 
@@ -77,17 +78,17 @@ struct setup_stage {
    struct edge etop;
    struct edge emaj;
 
-   GLfloat oneoverarea;
+   float oneoverarea;
 
    struct setup_coefficient coef[FRAG_ATTRIB_MAX];
    struct quad_header quad; 
 
    struct {
-      GLint left[2];   /**< [0] = row0, [1] = row1 */
-      GLint right[2];
-      GLint y;
-      GLuint y_flags;
-      GLuint mask;     /**< mask of MASK_BOTTOM/TOP_LEFT/RIGHT bits */
+      int left[2];   /**< [0] = row0, [1] = row1 */
+      int right[2];
+      int y;
+      unsigned y_flags;
+      unsigned mask;     /**< mask of MASK_BOTTOM/TOP_LEFT/RIGHT bits */
    } span;
 };
 
@@ -146,7 +147,7 @@ clip_emit_quad(struct setup_stage *setup)
  * Emit a quad (pass to next stage).  No clipping is done.
  */
 static INLINE void
-emit_quad( struct setup_stage *setup, GLint x, GLint y, GLuint mask )
+emit_quad( struct setup_stage *setup, int x, int y, unsigned mask )
 {
    struct softpipe_context *sp = setup->softpipe;
    setup->quad.x0 = x;
@@ -160,7 +161,7 @@ emit_quad( struct setup_stage *setup, GLint x, GLint y, GLuint mask )
  * Given an X or Y coordinate, return the block/quad coordinate that it
  * belongs to.
  */
-static INLINE GLint block( GLint x )
+static INLINE int block( int x )
 {
    return x & ~1;
 }
@@ -173,10 +174,10 @@ static INLINE GLint block( GLint x )
  * this is pretty nasty...  may need to rework flush_spans again to
  * fix it, if possible.
  */
-static GLuint calculate_mask( struct setup_stage *setup,
-			    GLint x )
+static unsigned calculate_mask( struct setup_stage *setup,
+			    int x )
 {
-   GLuint mask = 0;
+   unsigned mask = 0;
 
    if (x >= setup->span.left[0] && x < setup->span.right[0]) 
       mask |= MASK_BOTTOM_LEFT;
@@ -199,8 +200,8 @@ static GLuint calculate_mask( struct setup_stage *setup,
  */
 static void flush_spans( struct setup_stage *setup )
 {
-   GLint minleft, maxright;
-   GLint x;
+   int minleft, maxright;
+   int x;
 
    switch (setup->span.y_flags) {      
    case 3:
@@ -249,7 +250,7 @@ static void print_vertex(const struct setup_stage *setup,
 }
 #endif
 
-static GLboolean setup_sort_vertices( struct setup_stage *setup,
+static boolean setup_sort_vertices( struct setup_stage *setup,
 				      const struct prim_header *prim )
 {
    const struct vertex_header *v0 = prim->v[0];
@@ -267,9 +268,9 @@ static GLboolean setup_sort_vertices( struct setup_stage *setup,
 
    /* determine bottom to top order of vertices */
    {
-      GLfloat y0 = v0->data[0][1];
-      GLfloat y1 = v1->data[0][1];
-      GLfloat y2 = v2->data[0][1];
+      float y0 = v0->data[0][1];
+      float y1 = v1->data[0][1];
+      float y2 = v2->data[0][1];
       if (y0 <= y1) {
 	 if (y1 <= y2) {
 	    /* y0<=y1<=y2 */
@@ -330,7 +331,7 @@ static GLboolean setup_sort_vertices( struct setup_stage *setup,
     * use the prim->det value because its sign is correct.
     */
    {
-      const GLfloat area = (setup->emaj.dx * setup->ebot.dy - 
+      const float area = (setup->emaj.dx * setup->ebot.dy - 
 			    setup->ebot.dx * setup->emaj.dy);
 
       setup->oneoverarea = 1.0 / area;
@@ -346,7 +347,7 @@ static GLboolean setup_sort_vertices( struct setup_stage *setup,
     */
    setup->quad.facing = (prim->det > 0.0) ^ (setup->softpipe->setup.front_winding == PIPE_WINDING_CW);
 
-   return GL_TRUE;
+   return TRUE;
 }
 
 
@@ -358,8 +359,8 @@ static GLboolean setup_sort_vertices( struct setup_stage *setup,
  * \param i  which component of the slot (0..3)
  */
 static void const_coeff( struct setup_stage *setup,
-			 GLuint slot,
-			 GLuint i )
+			 unsigned slot,
+			 unsigned i )
 {
    assert(slot < FRAG_ATTRIB_MAX);
    assert(i <= 3);
@@ -378,13 +379,13 @@ static void const_coeff( struct setup_stage *setup,
  * for a triangle.
  */
 static void tri_linear_coeff( struct setup_stage *setup,
-                              GLuint slot,
-                              GLuint i)
+                              unsigned slot,
+                              unsigned i)
 {
-   GLfloat botda = setup->vmid->data[slot][i] - setup->vmin->data[slot][i];
-   GLfloat majda = setup->vmax->data[slot][i] - setup->vmin->data[slot][i];
-   GLfloat a = setup->ebot.dy * majda - botda * setup->emaj.dy;
-   GLfloat b = setup->emaj.dx * botda - majda * setup->ebot.dx;
+   float botda = setup->vmid->data[slot][i] - setup->vmin->data[slot][i];
+   float majda = setup->vmax->data[slot][i] - setup->vmin->data[slot][i];
+   float a = setup->ebot.dy * majda - botda * setup->emaj.dy;
+   float b = setup->emaj.dx * botda - majda * setup->ebot.dx;
    
    assert(slot < FRAG_ATTRIB_MAX);
    assert(i <= 3);
@@ -423,19 +424,19 @@ static void tri_linear_coeff( struct setup_stage *setup,
  * for a triangle.
  */
 static void tri_persp_coeff( struct setup_stage *setup,
-                             GLuint slot,
-                             GLuint i )
+                             unsigned slot,
+                             unsigned i )
 {
    /* premultiply by 1/w:
     */
-   GLfloat mina = setup->vmin->data[slot][i] * setup->vmin->data[0][3];
-   GLfloat mida = setup->vmid->data[slot][i] * setup->vmid->data[0][3];
-   GLfloat maxa = setup->vmax->data[slot][i] * setup->vmax->data[0][3];
+   float mina = setup->vmin->data[slot][i] * setup->vmin->data[0][3];
+   float mida = setup->vmid->data[slot][i] * setup->vmid->data[0][3];
+   float maxa = setup->vmax->data[slot][i] * setup->vmax->data[0][3];
 
-   GLfloat botda = mida - mina;
-   GLfloat majda = maxa - mina;
-   GLfloat a = setup->ebot.dy * majda - botda * setup->emaj.dy;
-   GLfloat b = setup->emaj.dx * botda - majda * setup->ebot.dx;
+   float botda = mida - mina;
+   float majda = maxa - mina;
+   float a = setup->ebot.dy * majda - botda * setup->emaj.dy;
+   float b = setup->emaj.dx * botda - majda * setup->ebot.dx;
       
    assert(slot < FRAG_ATTRIB_MAX);
    assert(i <= 3);
@@ -455,7 +456,7 @@ static void tri_persp_coeff( struct setup_stage *setup,
 static void setup_tri_coefficients( struct setup_stage *setup )
 {
    const enum interp_mode *interp = setup->softpipe->interp;
-   GLuint slot, j;
+   unsigned slot, j;
 
    /* z and w are done by linear interpolation:
     */
@@ -488,25 +489,25 @@ static void setup_tri_coefficients( struct setup_stage *setup )
 
 static void setup_tri_edges( struct setup_stage *setup )
 {
-   GLfloat vmin_x = setup->vmin->data[0][0] + 0.5;
-   GLfloat vmid_x = setup->vmid->data[0][0] + 0.5;
+   float vmin_x = setup->vmin->data[0][0] + 0.5;
+   float vmid_x = setup->vmid->data[0][0] + 0.5;
 
-   GLfloat vmin_y = setup->vmin->data[0][1] - 0.5;
-   GLfloat vmid_y = setup->vmid->data[0][1] - 0.5;
-   GLfloat vmax_y = setup->vmax->data[0][1] - 0.5;
+   float vmin_y = setup->vmin->data[0][1] - 0.5;
+   float vmid_y = setup->vmid->data[0][1] - 0.5;
+   float vmax_y = setup->vmax->data[0][1] - 0.5;
 
    setup->emaj.sy = ceilf(vmin_y);
-   setup->emaj.lines = (GLint) ceilf(vmax_y - setup->emaj.sy);
+   setup->emaj.lines = (int) ceilf(vmax_y - setup->emaj.sy);
    setup->emaj.dxdy = setup->emaj.dx / setup->emaj.dy;
    setup->emaj.sx = vmin_x + (setup->emaj.sy - vmin_y) * setup->emaj.dxdy;
 
    setup->etop.sy = ceilf(vmid_y);
-   setup->etop.lines = (GLint) ceilf(vmax_y - setup->etop.sy);
+   setup->etop.lines = (int) ceilf(vmax_y - setup->etop.sy);
    setup->etop.dxdy = setup->etop.dx / setup->etop.dy;
    setup->etop.sx = vmid_x + (setup->etop.sy - vmid_y) * setup->etop.dxdy;
 
    setup->ebot.sy = ceilf(vmin_y);
-   setup->ebot.lines = (GLint) ceilf(vmid_y - setup->ebot.sy);
+   setup->ebot.lines = (int) ceilf(vmid_y - setup->ebot.sy);
    setup->ebot.dxdy = setup->ebot.dx / setup->ebot.dy;
    setup->ebot.sx = vmin_x + (setup->ebot.sy - vmin_y) * setup->ebot.dxdy;
 }
@@ -519,13 +520,13 @@ static void setup_tri_edges( struct setup_stage *setup )
 static void subtriangle( struct setup_stage *setup,
 			 struct edge *eleft,
 			 struct edge *eright,
-			 GLuint lines )
+			 unsigned lines )
 {
    const struct pipe_scissor_state *cliprect = &setup->softpipe->cliprect;
-   GLint y, start_y, finish_y;
-   GLint sy = (GLint)eleft->sy;
+   int y, start_y, finish_y;
+   int sy = (int)eleft->sy;
 
-   assert((GLint)eleft->sy == (GLint) eright->sy);
+   assert((int)eleft->sy == (int) eright->sy);
 
    /* clip top/bottom */
    start_y = sy;
@@ -552,8 +553,8 @@ static void subtriangle( struct setup_stage *setup,
        *
        * this is all drowned out by the attribute interpolation anyway.
        */
-      GLint left = (GLint)(eleft->sx + y * eleft->dxdy);
-      GLint right = (GLint)(eright->sx + y * eright->dxdy);
+      int left = (int)(eleft->sx + y * eleft->dxdy);
+      int right = (int)(eright->sx + y * eright->dxdy);
 
       /* clip left/right */
       if (left < cliprect->minx)
@@ -562,7 +563,7 @@ static void subtriangle( struct setup_stage *setup,
          right = cliprect->maxx;
 
       if (left < right) {
-	 GLint _y = sy+y;
+	 int _y = sy+y;
 	 if (block(_y) != setup->span.y) {
 	    flush_spans(setup);
 	    setup->span.y = block(_y);
@@ -633,11 +634,11 @@ static void setup_tri( struct draw_stage *stage,
  * for a line.
  */
 static void
-line_linear_coeff(struct setup_stage *setup, GLuint slot, GLuint i)
+line_linear_coeff(struct setup_stage *setup, unsigned slot, unsigned i)
 {
-   const GLfloat dz = setup->vmax->data[slot][i] - setup->vmin->data[slot][i];
-   const GLfloat dadx = dz * setup->emaj.dx * setup->oneoverarea;
-   const GLfloat dady = dz * setup->emaj.dy * setup->oneoverarea;
+   const float dz = setup->vmax->data[slot][i] - setup->vmin->data[slot][i];
+   const float dadx = dz * setup->emaj.dx * setup->oneoverarea;
+   const float dady = dz * setup->emaj.dy * setup->oneoverarea;
    setup->coef[slot].dadx[i] = dadx;
    setup->coef[slot].dady[i] = dady;
    setup->coef[slot].a0[i]
@@ -652,7 +653,7 @@ line_linear_coeff(struct setup_stage *setup, GLuint slot, GLuint i)
  * for a line.
  */
 static void
-line_persp_coeff(struct setup_stage *setup, GLuint slot, GLuint i)
+line_persp_coeff(struct setup_stage *setup, unsigned slot, unsigned i)
 {
    /* XXX to do */
    line_linear_coeff(setup, slot, i); /* XXX temporary */
@@ -667,7 +668,7 @@ static INLINE void
 setup_line_coefficients(struct setup_stage *setup, struct prim_header *prim)
 {
    const enum interp_mode *interp = setup->softpipe->interp;
-   GLuint slot, j;
+   unsigned slot, j;
 
    /* use setup->vmin, vmax to point to vertices */
    setup->vprovoke = prim->v[1];
@@ -712,13 +713,13 @@ setup_line_coefficients(struct setup_stage *setup, struct prim_header *prim)
  * Plot a pixel in a line segment.
  */
 static INLINE void
-plot(struct setup_stage *setup, GLint x, GLint y)
+plot(struct setup_stage *setup, int x, int y)
 {
-   const GLint iy = y & 1;
-   const GLint ix = x & 1;
-   const GLint quadX = x - ix;
-   const GLint quadY = y - iy;
-   const GLint mask = (1 << ix) << (2 * iy);
+   const int iy = y & 1;
+   const int ix = x & 1;
+   const int quadX = x - ix;
+   const int quadY = y - iy;
+   const int mask = (1 << ix) << (2 * iy);
 
    if (quadX != setup->quad.x0 || 
        quadY != setup->quad.y0) 
@@ -741,10 +742,10 @@ plot(struct setup_stage *setup, GLint x, GLint y)
  * Determine whether or not to emit a line fragment by checking
  * line stipple pattern.
  */
-static INLINE GLuint
-stipple_test(GLint counter, GLushort pattern, GLint factor)
+static INLINE unsigned
+stipple_test(int counter, ushort pattern, int factor)
 {
-   GLint b = (counter / factor) & 0xf;
+   int b = (counter / factor) & 0xf;
    return (1 << b) & pattern;
 }
 
@@ -761,13 +762,13 @@ setup_line(struct draw_stage *stage, struct prim_header *prim)
    struct setup_stage *setup = setup_stage( stage );
    struct softpipe_context *sp = setup->softpipe;
 
-   GLint x0 = (GLint) v0->data[0][0];
-   GLint x1 = (GLint) v1->data[0][0];
-   GLint y0 = (GLint) v0->data[0][1];
-   GLint y1 = (GLint) v1->data[0][1];
-   GLint dx = x1 - x0;
-   GLint dy = y1 - y0;
-   GLint xstep, ystep;
+   int x0 = (int) v0->data[0][0];
+   int x1 = (int) v1->data[0][0];
+   int y0 = (int) v0->data[0][1];
+   int y1 = (int) v1->data[0][1];
+   int dx = x1 - x0;
+   int dy = y1 - y0;
+   int xstep, ystep;
 
    if (dx == 0 && dy == 0)
       return;
@@ -806,10 +807,10 @@ setup_line(struct draw_stage *stage, struct prim_header *prim)
 
    if (dx > dy) {
       /*** X-major line ***/
-      GLint i;
-      const GLint errorInc = dy + dy;
-      GLint error = errorInc - dx;
-      const GLint errorDec = error - dx;
+      int i;
+      const int errorInc = dy + dy;
+      int error = errorInc - dx;
+      const int errorDec = error - dx;
 
       for (i = 0; i < dx; i++) {
          if (!sp->setup.line_stipple_enable ||
@@ -833,10 +834,10 @@ setup_line(struct draw_stage *stage, struct prim_header *prim)
    }
    else {
       /*** Y-major line ***/
-      GLint i;
-      const GLint errorInc = dx + dx;
-      GLint error = errorInc - dy;
-      const GLint errorDec = error - dy;
+      int i;
+      const int errorInc = dx + dx;
+      int error = errorInc - dy;
+      const int errorDec = error - dy;
 
       for (i = 0; i < dy; i++) {
          if (!sp->setup.line_stipple_enable ||
@@ -877,12 +878,12 @@ setup_point(struct draw_stage *stage, struct prim_header *prim)
 {
    struct setup_stage *setup = setup_stage( stage );
    /*XXX this should be a vertex attrib! */
-   const GLfloat halfSize = 0.5 * setup->softpipe->setup.point_size;
-   const GLboolean round = setup->softpipe->setup.point_smooth;
+   const float halfSize = 0.5 * setup->softpipe->setup.point_size;
+   const boolean round = setup->softpipe->setup.point_smooth;
    const struct vertex_header *v0 = prim->v[0];
-   const GLfloat x = v0->data[FRAG_ATTRIB_WPOS][0];
-   const GLfloat y = v0->data[FRAG_ATTRIB_WPOS][1];
-   GLuint slot, j;
+   const float x = v0->data[FRAG_ATTRIB_WPOS][0];
+   const float y = v0->data[FRAG_ATTRIB_WPOS][1];
+   unsigned slot, j;
 
    /* For points, all interpolants are constant-valued.
     * However, for point sprites, we'll need to setup texcoords appropriately.
@@ -912,31 +913,31 @@ setup_point(struct draw_stage *stage, struct prim_header *prim)
 
    if (halfSize <= 0.5 && !round) {
       /* special case for 1-pixel points */
-      const GLint ix = ((GLint) x) & 1;
-      const GLint iy = ((GLint) y) & 1;
+      const int ix = ((int) x) & 1;
+      const int iy = ((int) y) & 1;
       setup->quad.x0 = x - ix;
       setup->quad.y0 = y - iy;
       setup->quad.mask = (1 << ix) << (2 * iy);
       clip_emit_quad(setup);
    }
    else {
-      const GLint ixmin = block((GLint) (x - halfSize));
-      const GLint ixmax = block((GLint) (x + halfSize));
-      const GLint iymin = block((GLint) (y - halfSize));
-      const GLint iymax = block((GLint) (y + halfSize));
-      GLint ix, iy;
+      const int ixmin = block((int) (x - halfSize));
+      const int ixmax = block((int) (x + halfSize));
+      const int iymin = block((int) (y - halfSize));
+      const int iymax = block((int) (y + halfSize));
+      int ix, iy;
 
       if (round) {
          /* rounded points */
-         const GLfloat rmin = halfSize - 0.7071F;  /* 0.7071 = sqrt(2)/2 */
-         const GLfloat rmax = halfSize + 0.7071F;
-         const GLfloat rmin2 = MAX2(0.0F, rmin * rmin);
-         const GLfloat rmax2 = rmax * rmax;
-         const GLfloat cscale = 1.0F / (rmax2 - rmin2);
+         const float rmin = halfSize - 0.7071F;  /* 0.7071 = sqrt(2)/2 */
+         const float rmax = halfSize + 0.7071F;
+         const float rmin2 = MAX2(0.0F, rmin * rmin);
+         const float rmax2 = rmax * rmax;
+         const float cscale = 1.0F / (rmax2 - rmin2);
 
          for (iy = iymin; iy <= iymax; iy += 2) {
             for (ix = ixmin; ix <= ixmax; ix += 2) {
-               GLfloat dx, dy, dist2, cover;
+               float dx, dy, dist2, cover;
 
                setup->quad.mask = 0x0;
 

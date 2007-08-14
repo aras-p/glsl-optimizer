@@ -12,7 +12,7 @@ extern "C" {
 void
 tgsi_dump(
    const struct tgsi_token *tokens,
-   GLuint flags );
+   unsigned flags );
 
 #if defined __cplusplus
 } // extern "C"

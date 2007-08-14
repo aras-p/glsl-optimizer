@@ -54,7 +54,7 @@ sp_region_idle(struct pipe_context *pipe, struct pipe_region *region)
 }
 
 
-static GLubyte *
+static ubyte *
 sp_region_map(struct pipe_context *pipe, struct pipe_region *region)
 {
    struct softpipe_context *sp = softpipe_context( pipe );
@@ -83,7 +83,7 @@ sp_region_unmap(struct pipe_context *pipe, struct pipe_region *region)
 
 static struct pipe_region *
 sp_region_alloc(struct pipe_context *pipe,
-		GLuint cpp, GLuint width, GLuint height, GLbitfield flags)
+		unsigned cpp, unsigned width, unsigned height, unsigned flags)
 {
    struct softpipe_context *sp = softpipe_context( pipe );
    struct pipe_region *region = calloc(sizeof(*region), 1);
@@ -112,7 +112,7 @@ sp_region_release(struct pipe_context *pipe, struct pipe_region **region)
    if (!*region)
       return;
 
-   ASSERT((*region)->refcount > 0);
+   assert((*region)->refcount > 0);
    (*region)->refcount--;
 
    if ((*region)->refcount == 0) {
@@ -130,19 +130,19 @@ sp_region_release(struct pipe_context *pipe, struct pipe_region **region)
  * XXX Move this into core Mesa?
  */
 static void
-_mesa_copy_rect(GLubyte * dst,
-                GLuint cpp,
-                GLuint dst_pitch,
-                GLuint dst_x,
-                GLuint dst_y,
-                GLuint width,
-                GLuint height,
-                const GLubyte * src,
-                GLuint src_pitch,
-		GLuint src_x, 
-		GLuint src_y)
+_mesa_copy_rect(ubyte * dst,
+                unsigned cpp,
+                unsigned dst_pitch,
+                unsigned dst_x,
+                unsigned dst_y,
+                unsigned width,
+                unsigned height,
+                const ubyte * src,
+                unsigned src_pitch,
+		unsigned src_x, 
+		unsigned src_y)
 {
-   GLuint i;
+   unsigned i;
 
    dst_pitch *= cpp;
    src_pitch *= cpp;
@@ -174,10 +174,10 @@ _mesa_copy_rect(GLubyte * dst,
 static void
 sp_region_data(struct pipe_context *pipe,
 	       struct pipe_region *dst,
-	       GLuint dst_offset,
-	       GLuint dstx, GLuint dsty,
-	       const void *src, GLuint src_pitch,
-	       GLuint srcx, GLuint srcy, GLuint width, GLuint height)
+	       unsigned dst_offset,
+	       unsigned dstx, unsigned dsty,
+	       const void *src, unsigned src_pitch,
+	       unsigned srcx, unsigned srcy, unsigned width, unsigned height)
 {
    _mesa_copy_rect(pipe->region_map(pipe, dst) + dst_offset,
                    dst->cpp,
@@ -193,11 +193,11 @@ sp_region_data(struct pipe_context *pipe,
 static void
 sp_region_copy(struct pipe_context *pipe,
 	       struct pipe_region *dst,
-	       GLuint dst_offset,
-	       GLuint dstx, GLuint dsty,
+	       unsigned dst_offset,
+	       unsigned dstx, unsigned dsty,
 	       struct pipe_region *src,
-	       GLuint src_offset,
-	       GLuint srcx, GLuint srcy, GLuint width, GLuint height)
+	       unsigned src_offset,
+	       unsigned srcx, unsigned srcy, unsigned width, unsigned height)
 {
    assert( dst->cpp == src->cpp );
 
@@ -217,8 +217,8 @@ sp_region_copy(struct pipe_context *pipe,
 /* Fill a rectangular sub-region.  Need better logic about when to
  * push buffers into AGP - will currently do so whenever possible.
  */
-static GLubyte *
-get_pointer(struct pipe_region *dst, GLuint x, GLuint y)
+static ubyte *
+get_pointer(struct pipe_region *dst, unsigned x, unsigned y)
 {
    return dst->map + (y * dst->pitch + x) * dst->cpp;
 }
@@ -227,17 +227,17 @@ get_pointer(struct pipe_region *dst, GLuint x, GLuint y)
 static void
 sp_region_fill(struct pipe_context *pipe,
                struct pipe_region *dst,
-               GLuint dst_offset,
-               GLuint dstx, GLuint dsty,
-               GLuint width, GLuint height, GLuint value)
+               unsigned dst_offset,
+               unsigned dstx, unsigned dsty,
+               unsigned width, unsigned height, unsigned value)
 {
-   GLuint i, j;
+   unsigned i, j;
 
    (void)pipe->region_map(pipe, dst);
 
    switch (dst->cpp) {
    case 1: {
-      GLubyte *row = get_pointer(dst, dstx, dsty);
+      ubyte *row = get_pointer(dst, dstx, dsty);
       for (i = 0; i < height; i++) {
 	 memset(row, value, width);
 	 row += dst->pitch;
@@ -245,7 +245,7 @@ sp_region_fill(struct pipe_context *pipe,
    }
    break;
    case 2: {
-      GLushort *row = (GLushort *) get_pointer(dst, dstx, dsty);
+      ushort *row = (ushort *) get_pointer(dst, dstx, dsty);
       for (i = 0; i < height; i++) {
 	 for (j = 0; j < width; j++)
 	    row[j] = value;
@@ -254,7 +254,7 @@ sp_region_fill(struct pipe_context *pipe,
    }
    break;
    case 4: {
-      GLuint *row = (GLuint *) get_pointer(dst, dstx, dsty);
+      unsigned *row = (unsigned *) get_pointer(dst, dstx, dsty);
       for (i = 0; i < height; i++) {
 	 for (j = 0; j < width; j++)
 	    row[j] = value;

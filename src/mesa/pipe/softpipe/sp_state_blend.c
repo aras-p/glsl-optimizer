@@ -27,8 +27,6 @@
 
 /* Authors:  Keith Whitwell <keith@tungstengraphics.com>
  */
-#include "imports.h"
-
 #include "sp_context.h"
 #include "sp_state.h"
 

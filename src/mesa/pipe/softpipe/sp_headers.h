@@ -57,9 +57,9 @@
 
 
 struct setup_coefficient {
-   GLfloat a0[NUM_CHANNELS];	/* in an xyzw layout */
-   GLfloat dadx[NUM_CHANNELS];
-   GLfloat dady[NUM_CHANNELS];
+   float a0[NUM_CHANNELS];	/* in an xyzw layout */
+   float dadx[NUM_CHANNELS];
+   float dady[NUM_CHANNELS];
 };
 
 
@@ -69,18 +69,18 @@ struct setup_coefficient {
  * "Channel-Serial" or "SoA" layout.  
  */
 struct quad_header {
-   GLint x0;
-   GLint y0;
-   GLuint mask:4;
-   GLuint facing:1;   /**< Front (0) or back (1) facing? */
-   GLuint prim:2;     /**< PRIM_POINT, LINE, TRI */
+   int x0;
+   int y0;
+   unsigned mask:4;
+   unsigned facing:1;   /**< Front (0) or back (1) facing? */
+   unsigned prim:2;     /**< PRIM_POINT, LINE, TRI */
 
    struct {
-      GLfloat color[4][QUAD_SIZE];	/* rrrr, gggg, bbbb, aaaa */
-      GLfloat depth[QUAD_SIZE];
+      float color[4][QUAD_SIZE];	/* rrrr, gggg, bbbb, aaaa */
+      float depth[QUAD_SIZE];
    } outputs;
 
-   GLfloat coverage[QUAD_SIZE];    /** fragment coverage for antialiasing */
+   float coverage[QUAD_SIZE];    /** fragment coverage for antialiasing */
 
    const struct setup_coefficient *coef;
 
@@ -88,7 +88,7 @@ struct quad_header {
 				    * encoded in fragment program DECL
 				    * statements. */
 
-   GLuint nr_attrs;
+   unsigned nr_attrs;
 };
 
 

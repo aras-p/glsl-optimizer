@@ -3,20 +3,19 @@
  * quad alpha test
  */
 
-#include "glheader.h"
-#include "imports.h"
 #include "sp_context.h"
 #include "sp_headers.h"
 #include "sp_quad.h"
 #include "pipe/p_defines.h"
+#include "pipe/p_util.h"
 
 
 static void
 alpha_test_quad(struct quad_stage *qs, struct quad_header *quad)
 {
    struct softpipe_context *softpipe = qs->softpipe;
-   const GLfloat ref = softpipe->alpha_test.ref;
-   GLuint passMask = 0x0, j;
+   const float ref = softpipe->alpha_test.ref;
+   unsigned passMask = 0x0, j;
 
    switch (softpipe->alpha_test.func) {
    case PIPE_FUNC_NEVER:

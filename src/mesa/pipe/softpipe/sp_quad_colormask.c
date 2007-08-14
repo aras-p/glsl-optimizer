@@ -30,10 +30,8 @@
  * \author Brian Paul
  */
 
-#include "main/glheader.h"
-#include "main/imports.h"
-#include "main/macros.h"
 #include "pipe/p_defines.h"
+#include "pipe/p_util.h"
 #include "sp_context.h"
 #include "sp_headers.h"
 #include "sp_surface.h"
@@ -46,25 +44,25 @@ colormask_quad(struct quad_stage *qs, struct quad_header *quad)
 {
    struct softpipe_context *softpipe = qs->softpipe;
    struct softpipe_surface *sps = softpipe_surface(softpipe->cbuf);
-   GLfloat dest[4][QUAD_SIZE];
+   float dest[4][QUAD_SIZE];
    
    sps->read_quad_f_swz(sps, quad->x0, quad->y0, dest);
 
    /* R */
    if (!(softpipe->blend.colormask & PIPE_MASK_R))
-       COPY_4FV(quad->outputs.color[0], dest[0]);
+       COPY_4V(quad->outputs.color[0], dest[0]);
 
    /* G */
    if (!(softpipe->blend.colormask & PIPE_MASK_G))
-       COPY_4FV(quad->outputs.color[1], dest[1]);
+       COPY_4V(quad->outputs.color[1], dest[1]);
 
    /* B */
    if (!(softpipe->blend.colormask & PIPE_MASK_B))
-       COPY_4FV(quad->outputs.color[2], dest[2]);
+       COPY_4V(quad->outputs.color[2], dest[2]);
 
    /* A */
    if (!(softpipe->blend.colormask & PIPE_MASK_A))
-       COPY_4FV(quad->outputs.color[3], dest[3]);
+       COPY_4V(quad->outputs.color[3], dest[3]);
 
    /* pass quad to next stage */
    qs->next->run(qs->next, quad);

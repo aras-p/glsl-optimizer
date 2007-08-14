@@ -37,86 +37,12 @@
  * all the enabled attributes run contiguously.
  */
 
-#include "glheader.h"
-#include "imports.h"
-#if 0
-#include "s_tri_public.h"
-#include "s_context.h"
-#endif
+struct draw_stage;
+struct softpipe_context;
 
 
 extern struct draw_stage *sp_draw_render_stage( struct softpipe_context *softpipe );
 
 
-#if 0 /* UNUSED? */
-struct tri_context;
-struct fp_context;
-struct be_context;
-
-/* Note the rasterizer does not take a GLcontext argument.  This is
- * deliberate.
- */
-struct tri_context *tri_create_context( GLcontext *ctx );
-
-void tri_destroy_context( struct tri_context *tri );
-
-void tri_set_fp_context( struct tri_context *tri,
-			 struct fp_context *fp,
-			 void (*fp_run)( struct fp_context *fp,
-					 const struct fp_inputs *,
-					 struct fp_outputs * ));
-
-
-void tri_set_be_context( struct tri_context *tri,
-			 struct be_context *be,
-			 void (*be_run)( struct be_context *be,
-					 const struct fp_outputs * ));
-
-void tri_set_attribs( struct tri_context *tri,
-		      const struct attr_info *info,
-		      GLuint nr_attrib );
-
-void tri_set_backface( struct tri_context *tri,
-		       GLfloat backface );
-					       
-void tri_set_scissor( struct tri_context *tri,
-		      GLint x,
-		      GLint y,
-		      GLuint width,
-		      GLuint height,
-		      GLboolean enabled );
-
-void tri_set_stipple( struct tri_context *tri,
-		      const GLuint *pattern,
-		      GLboolean enabled );
-
-/* Unfilled triangles will be handled elsewhere (higher in the
- * pipeline), as will things like stipple (lower in the pipeline).
- */
-
-void tri_triangle( struct tri_context *tri,
-		   const struct vertex *v0,
-		   const struct vertex *v1,
-		   const struct vertex *v2 );
-
-/* TODO: rasterize_line, rasterize_point?? 
- * How will linestipple work?
- */
-
-
-#ifdef SETUP_PRIVATE
-
-GLboolean tri_setup( struct tri_context *tri,
-		       const struct vertex *v0,
-		       const struct vertex *v1,
-		       const struct vertex *v2 );
-
-void tri_rasterize( struct tri_context *tri );
-void tri_rasterize_spans( struct tri_context *tri );
-
-#endif
-
-
-#endif
 
 #endif /* SP_PRIM_SETUP_H */

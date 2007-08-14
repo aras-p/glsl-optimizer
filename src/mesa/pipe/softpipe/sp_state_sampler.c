@@ -29,8 +29,6 @@
  *  Brian Paul
  */
 
-#include "imports.h"
-
 #include "sp_context.h"
 #include "sp_state.h"
 
@@ -38,7 +36,7 @@
 
 void
 softpipe_set_sampler_state(struct pipe_context *pipe,
-                           GLuint unit,
+                           unsigned unit,
                            const struct pipe_sampler_state *sampler)
 {
    struct softpipe_context *softpipe = softpipe_context(pipe);
@@ -52,7 +50,7 @@ softpipe_set_sampler_state(struct pipe_context *pipe,
 
 void
 softpipe_set_texture_state(struct pipe_context *pipe,
-                           GLuint unit,
+                           unsigned unit,
                            struct pipe_mipmap_tree *texture)
 {
    struct softpipe_context *softpipe = softpipe_context(pipe);

@@ -29,10 +29,9 @@
  *    Keith Whitwell <keith@tungstengraphics.com>
  */
 
-#include "main/imports.h"
-#include "main/macros.h"
 #include "pipe/draw/draw_context.h"
 #include "pipe/p_defines.h"
+#include "pipe/p_util.h"
 #include "sp_clear.h"
 #include "sp_context.h"
 #include "sp_flush.h"
@@ -50,11 +49,11 @@
  * If we find texture and drawable support differs, add a selector
  * parameter or another function.
  */
-static const GLuint *
-softpipe_supported_formats(struct pipe_context *pipe, GLuint *numFormats)
+static const unsigned *
+softpipe_supported_formats(struct pipe_context *pipe, unsigned *numFormats)
 {
 #if 0
-   static const GLuint supported[] = {
+   static const unsigned supported[] = {
       PIPE_FORMAT_U_R8_G8_B8_A8,
       PIPE_FORMAT_U_A8_R8_G8_B8,
       PIPE_FORMAT_U_R5_G6_B5,
@@ -82,9 +81,9 @@ softpipe_supported_formats(struct pipe_context *pipe, GLuint *numFormats)
 
 
 static void
-softpipe_max_texture_size(struct pipe_context *pipe, GLuint textureType,
-                          GLuint *maxWidth, GLuint *maxHeight,
-                          GLuint *maxDepth)
+softpipe_max_texture_size(struct pipe_context *pipe, unsigned textureType,
+                          unsigned *maxWidth, unsigned *maxHeight,
+                          unsigned *maxDepth)
 {
    switch (textureType) {
    case PIPE_TEXTURE_1D:
@@ -112,7 +111,7 @@ softpipe_max_texture_size(struct pipe_context *pipe, GLuint textureType,
 static void map_surfaces(struct softpipe_context *sp)
 {
    struct pipe_context *pipe = &sp->pipe;
-   GLuint i;
+   unsigned i;
 
    for (i = 0; i < sp->framebuffer.num_cbufs; i++) {
       struct softpipe_surface *sps = softpipe_surface(sp->framebuffer.cbufs[i]);
@@ -147,7 +146,7 @@ static void map_surfaces(struct softpipe_context *sp)
 static void unmap_surfaces(struct softpipe_context *sp)
 {
    struct pipe_context *pipe = &sp->pipe;
-   GLuint i;
+   unsigned i;
 
    for (i = 0; i < sp->framebuffer.num_cbufs; i++) {
       struct softpipe_surface *sps = softpipe_surface(sp->framebuffer.cbufs[i]);
@@ -206,9 +205,9 @@ static void softpipe_draw_vb( struct pipe_context *pipe,
 
 static void
 softpipe_draw_vertices(struct pipe_context *pipe,
-                       GLuint mode,
-                       GLuint numVertex, const GLfloat *verts,
-                       GLuint numAttribs, const GLuint attribs[])
+                       unsigned mode,
+                       unsigned numVertex, const float *verts,
+                       unsigned numAttribs, const unsigned attribs[])
 {
    struct softpipe_context *softpipe = softpipe_context( pipe );
 
@@ -230,7 +229,7 @@ static void softpipe_reset_occlusion_counter(struct pipe_context *pipe)
 }
 
 /* XXX pipe param should be const */
-static GLuint softpipe_get_occlusion_counter(struct pipe_context *pipe)
+static unsigned softpipe_get_occlusion_counter(struct pipe_context *pipe)
 {
    struct softpipe_context *softpipe = softpipe_context( pipe );
    return softpipe->occlusion_counter;

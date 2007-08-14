@@ -30,10 +30,10 @@
   *   Michel Dänzer <michel@tungstengraphics.com>
   */
 
-#include "macros.h"
 #include "pipe/p_state.h"
 #include "pipe/p_context.h"
 #include "pipe/p_defines.h"
+#include "pipe/p_util.h"
 #include "sp_tex_layout.h"
 
 
@@ -43,7 +43,7 @@
  * little.
  */
 
-static GLuint minify( GLuint d )
+static unsigned minify( unsigned d )
 {
    return MAX2(1, d>>1);
 }
@@ -56,11 +56,11 @@ static int align(int value, int alignment)
 
 static void
 sp_miptree_set_level_info(struct pipe_mipmap_tree *mt,
-                             GLuint level,
-                             GLuint nr_images,
-                             GLuint x, GLuint y, GLuint w, GLuint h, GLuint d)
+                             unsigned level,
+                             unsigned nr_images,
+                             unsigned x, unsigned y, unsigned w, unsigned h, unsigned d)
 {
-   assert(level < MAX_TEXTURE_LEVELS);
+   assert(level < PIPE_MAX_TEXTURE_LEVELS);
 
    mt->level[level].width = w;
    mt->level[level].height = h;
@@ -83,14 +83,14 @@ sp_miptree_set_level_info(struct pipe_mipmap_tree *mt,
    assert(nr_images);
    assert(!mt->level[level].image_offset);
 
-   mt->level[level].image_offset = (GLuint *) malloc(nr_images * sizeof(GLuint));
+   mt->level[level].image_offset = (unsigned *) malloc(nr_images * sizeof(unsigned));
    mt->level[level].image_offset[0] = 0;
 }
 
 
 static void
 sp_miptree_set_image_offset(struct pipe_mipmap_tree *mt,
-                               GLuint level, GLuint img, GLuint x, GLuint y)
+                               unsigned level, unsigned img, unsigned x, unsigned y)
 {
    if (img == 0 && level == 0)
       assert(x == 0 && y == 0);
@@ -109,12 +109,12 @@ sp_miptree_set_image_offset(struct pipe_mipmap_tree *mt,
 static void
 sp_miptree_layout_2d( struct pipe_mipmap_tree *mt )
 {
-   GLint align_h = 2, align_w = 4;
-   GLuint level;
-   GLuint x = 0;
-   GLuint y = 0;
-   GLuint width = mt->width0;
-   GLuint height = mt->height0;
+   int align_h = 2, align_w = 4;
+   unsigned level;
+   unsigned x = 0;
+   unsigned y = 0;
+   unsigned width = mt->width0;
+   unsigned height = mt->height0;
 
    mt->pitch = mt->width0;
    /* XXX FIX THIS:
@@ -130,7 +130,7 @@ sp_miptree_layout_2d( struct pipe_mipmap_tree *mt )
     * 2nd mipmap out past the width of its parent.
     */
    if (mt->first_level != mt->last_level) {
-      GLuint mip1_width = align(minify(mt->width0), align_w)
+      unsigned mip1_width = align(minify(mt->width0), align_w)
 			+ minify(minify(mt->width0));
 
       if (mip1_width > mt->width0)
@@ -144,7 +144,7 @@ sp_miptree_layout_2d( struct pipe_mipmap_tree *mt )
    mt->total_height = 0;
 
    for ( level = mt->first_level ; level <= mt->last_level ; level++ ) {
-      GLuint img_height;
+      unsigned img_height;
 
       sp_miptree_set_level_info(mt, level, 1, x, y, width, height, 1);
 
@@ -174,7 +174,7 @@ sp_miptree_layout_2d( struct pipe_mipmap_tree *mt )
 }
 
 
-static const GLint initial_offsets[6][2] = {
+static const int initial_offsets[6][2] = {
    {0, 0},
    {0, 2},
    {1, 0},
@@ -183,7 +183,7 @@ static const GLint initial_offsets[6][2] = {
    {1, 3}
 };
 
-static const GLint step_offsets[6][2] = {
+static const int step_offsets[6][2] = {
    {0, 2},
    {0, 2},
    {-1, 2},
@@ -194,16 +194,16 @@ static const GLint step_offsets[6][2] = {
 
 
 
-GLboolean
+boolean
 softpipe_mipmap_tree_layout(struct pipe_context *pipe, struct pipe_mipmap_tree * mt)
 {
-   GLint level;
+   int level;
 
    switch (mt->target) {
-   case GL_TEXTURE_CUBE_MAP:{
-         const GLuint dim = mt->width0;
-         GLuint face;
-         GLuint lvlWidth = mt->width0, lvlHeight = mt->height0;
+   case PIPE_TEXTURE_CUBE:{
+         const unsigned dim = mt->width0;
+         unsigned face;
+         unsigned lvlWidth = mt->width0, lvlHeight = mt->height0;
 
          assert(lvlWidth == lvlHeight); /* cubemap images are square */
 
@@ -230,9 +230,9 @@ softpipe_mipmap_tree_layout(struct pipe_context *pipe, struct pipe_mipmap_tree *
 
 
          for (face = 0; face < 6; face++) {
-            GLuint x = initial_offsets[face][0] * dim;
-            GLuint y = initial_offsets[face][1] * dim;
-            GLuint d = dim;
+            unsigned x = initial_offsets[face][0] * dim;
+            unsigned y = initial_offsets[face][1] * dim;
+            unsigned d = dim;
 
             if (dim == 4 && face >= 4) {
                y = mt->total_height - 4;
@@ -286,13 +286,13 @@ softpipe_mipmap_tree_layout(struct pipe_context *pipe, struct pipe_mipmap_tree *
          }
          break;
       }
-   case GL_TEXTURE_3D:{
-         GLuint width = mt->width0;
-         GLuint height = mt->height0;
-         GLuint depth = mt->depth0;
-         GLuint pack_x_pitch, pack_x_nr;
-         GLuint pack_y_pitch;
-         GLuint level;
+   case PIPE_TEXTURE_3D:{
+         unsigned width = mt->width0;
+         unsigned height = mt->height0;
+         unsigned depth = mt->depth0;
+         unsigned pack_x_pitch, pack_x_nr;
+         unsigned pack_y_pitch;
+         unsigned level;
 
          mt->pitch = ((mt->width0 * mt->cpp + 3) & ~3) / mt->cpp;
          mt->total_height = 0;
@@ -302,10 +302,10 @@ softpipe_mipmap_tree_layout(struct pipe_context *pipe, struct pipe_mipmap_tree *
          pack_x_nr = 1;
 
          for (level = mt->first_level; level <= mt->last_level; level++) {
-            GLuint nr_images = mt->target == GL_TEXTURE_3D ? depth : 6;
-            GLint x = 0;
-            GLint y = 0;
-            GLint q, j;
+            unsigned nr_images = mt->target == PIPE_TEXTURE_3D ? depth : 6;
+            int x = 0;
+            int y = 0;
+            int q, j;
 
             sp_miptree_set_level_info(mt, level, nr_images,
                                          0, mt->total_height,
@@ -341,13 +341,14 @@ softpipe_mipmap_tree_layout(struct pipe_context *pipe, struct pipe_mipmap_tree *
          break;
       }
 
-   case GL_TEXTURE_1D:
-   case GL_TEXTURE_2D:
-   case GL_TEXTURE_RECTANGLE_ARB:
+   case PIPE_TEXTURE_1D:
+   case PIPE_TEXTURE_2D:
+//   case PIPE_TEXTURE_RECTANGLE:
          sp_miptree_layout_2d(mt);
          break;
    default:
-      _mesa_problem(NULL, "Unexpected tex target in sp_miptree_layout()");
+      assert(0);
+      break;
    }
 
    /*
@@ -356,6 +357,6 @@ softpipe_mipmap_tree_layout(struct pipe_context *pipe, struct pipe_mipmap_tree *
        mt->total_height, mt->cpp, mt->pitch * mt->total_height * mt->cpp);
    */
 
-   return GL_TRUE;
+   return TRUE;
 }
 

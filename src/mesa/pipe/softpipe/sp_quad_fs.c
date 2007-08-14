@@ -32,8 +32,6 @@
  * all the enabled attributes run contiguously.
  */
 
-#include "main/mtypes.h"
-
 #include "pipe/p_util.h"
 #include "tgsi/core/tgsi_core.h"
 
@@ -41,6 +39,8 @@
 #include "sp_headers.h"
 #include "sp_quad.h"
 #include "sp_tex_sample.h"
+
+#include "main/mtypes.h"
 
 #if 0
 #if defined __GNUC__
@@ -73,9 +73,9 @@ struct exec_machine {
    const struct setup_coefficient *coef; /**< will point to quad->coef */
 
 #if ALIGNED_ATTRIBS
-   GLfloat attr[PIPE_ATTRIB_MAX][NUM_CHANNELS][QUAD_SIZE] __attribute__(( aligned( 16 ) ));
+   float attr[PIPE_ATTRIB_MAX][NUM_CHANNELS][QUAD_SIZE] __attribute__(( aligned( 16 ) ));
 #else
-   GLfloat attr[PIPE_ATTRIB_MAX][NUM_CHANNELS][QUAD_SIZE];
+   float attr[PIPE_ATTRIB_MAX][NUM_CHANNELS][QUAD_SIZE];
 #endif
 };
 
@@ -84,10 +84,10 @@ struct exec_machine {
  * Compute quad's attributes values, as constants (GL_FLAT shading).
  */
 static INLINE void cinterp( struct exec_machine *exec,
-			    GLuint attrib,
-			    GLuint i )
+			    unsigned attrib,
+			    unsigned i )
 {
-   GLuint j;
+   unsigned j;
 
    for (j = 0; j < QUAD_SIZE; j++) {
       exec->attr[attrib][i][j] = exec->coef[attrib].a0[i];
@@ -104,14 +104,14 @@ static INLINE void cinterp( struct exec_machine *exec,
  *   INPUT[attr] = MAD INPUT[attr],   COEF_DADY[attr], INPUT_WPOS.yyyy
  */
 static INLINE void linterp( struct exec_machine *exec,
-			    GLuint attrib,
-			    GLuint i )
+			    unsigned attrib,
+			    unsigned i )
 {
-   GLuint j;
+   unsigned j;
 
    for (j = 0; j < QUAD_SIZE; j++) {
-      const GLfloat x = exec->attr[FRAG_ATTRIB_WPOS][0][j];
-      const GLfloat y = exec->attr[FRAG_ATTRIB_WPOS][1][j];
+      const float x = exec->attr[FRAG_ATTRIB_WPOS][0][j];
+      const float y = exec->attr[FRAG_ATTRIB_WPOS][1][j];
       exec->attr[attrib][i][j] = (exec->coef[attrib].a0[i] +
 				  exec->coef[attrib].dadx[i] * x + 
 				  exec->coef[attrib].dady[i] * y);
@@ -132,16 +132,16 @@ static INLINE void linterp( struct exec_machine *exec,
  *
  */
 static INLINE void pinterp( struct exec_machine *exec,
-			    GLuint attrib,
-			    GLuint i )
+			    unsigned attrib,
+			    unsigned i )
 {
-   GLuint j;
+   unsigned j;
 
    for (j = 0; j < QUAD_SIZE; j++) {
-      const GLfloat x = exec->attr[FRAG_ATTRIB_WPOS][0][j];
-      const GLfloat y = exec->attr[FRAG_ATTRIB_WPOS][1][j];
+      const float x = exec->attr[FRAG_ATTRIB_WPOS][0][j];
+      const float y = exec->attr[FRAG_ATTRIB_WPOS][1][j];
       /* FRAG_ATTRIB_WPOS.w here is really 1/w */
-      const GLfloat w = 1.0 / exec->attr[FRAG_ATTRIB_WPOS][3][j];
+      const float w = 1.0 / exec->attr[FRAG_ATTRIB_WPOS][3][j];
       exec->attr[attrib][i][j] = ((exec->coef[attrib].a0[i] +
 				   exec->coef[attrib].dadx[i] * x + 
 				   exec->coef[attrib].dady[i] * y) * w);
@@ -158,9 +158,9 @@ shade_quad( struct quad_stage *qs, struct quad_header *quad )
    struct quad_shade_stage *qss = quad_shade_stage(qs);
    struct softpipe_context *softpipe = qs->softpipe;
    struct exec_machine exec;
-   const GLfloat fx = quad->x0;
-   const GLfloat fy = quad->y0;
-   GLuint attr, i;
+   const float fx = quad->x0;
+   const float fy = quad->y0;
+   unsigned attr, i;
 
    exec.coef = quad->coef;
 
@@ -216,7 +216,7 @@ shade_quad( struct quad_stage *qs, struct quad_header *quad )
       struct tgsi_exec_machine machine;
       struct tgsi_exec_vector outputs[FRAG_ATTRIB_MAX + 1];
       struct tgsi_exec_vector *aoutputs;
-      GLuint i;
+      unsigned i;
 
 #if !ALIGNED_ATTRIBS
       struct tgsi_exec_vector inputs[FRAG_ATTRIB_MAX + 1];
@@ -289,7 +289,7 @@ shade_quad( struct quad_stage *qs, struct quad_header *quad )
    }
 #else
    {
-      GLuint attr = softpipe->fp_attr_to_slot[FRAG_ATTRIB_COL0];
+      unsigned attr = softpipe->fp_attr_to_slot[FRAG_ATTRIB_COL0];
       assert(attr);
 
       memcpy(quad->outputs.color, 
@@ -318,7 +318,7 @@ static void shade_begin(struct quad_stage *qs)
 {
    struct quad_shade_stage *qss = quad_shade_stage(qs);
    struct softpipe_context *softpipe = qs->softpipe;
-   GLuint i, entry;
+   unsigned i, entry;
 
    for (i = 0; i < PIPE_MAX_SAMPLERS; i++) {
       qss->samplers[i].state = &softpipe->sampler[i];

@@ -31,20 +31,18 @@
  * Attributes are assumed to be 4 floats wide but are packed so that
  * all the enabled attributes run contiguously.
  */
-
-#include "glheader.h"
-#include "imports.h"
+#include "pipe/p_util.h"
 #include "sp_context.h"
 #include "sp_headers.h"
 #include "sp_surface.h"
 #include "sp_quad.h"
 
 
-static void mask_copy( GLfloat (*dest)[4],
-		       GLfloat (*src)[4],
-		       GLuint mask )
+static void mask_copy( float (*dest)[4],
+		       float (*src)[4],
+		       unsigned mask )
 {
-   GLuint i, j;
+   unsigned i, j;
 
    for (i = 0; i < 4; i++) {
       if (mask & (1<<i)) {
@@ -68,7 +66,7 @@ output_quad(struct quad_stage *qs, struct quad_header *quad)
    struct softpipe_surface *sps = softpipe_surface(softpipe->cbuf);
 
    if (quad->mask != MASK_ALL) {
-      GLfloat tmp[4][QUAD_SIZE];
+      float tmp[4][QUAD_SIZE];
 
       /* XXX probably add a masked-write function someday */
 

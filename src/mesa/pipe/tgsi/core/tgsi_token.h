@@ -7,15 +7,15 @@ extern "C" {
 
 struct tgsi_version
 {
-   GLuint MajorVersion  : 8;
-   GLuint MinorVersion  : 8;
-   GLuint Padding       : 16;
+   unsigned MajorVersion  : 8;
+   unsigned MinorVersion  : 8;
+   unsigned Padding       : 16;
 };
 
 struct tgsi_header
 {
-   GLuint HeaderSize : 8;
-   GLuint BodySize   : 24;
+   unsigned HeaderSize : 8;
+   unsigned BodySize   : 24;
 };
 
 #define TGSI_PROCESSOR_FRAGMENT  0
@@ -24,8 +24,8 @@ struct tgsi_header
 
 struct tgsi_processor
 {
-   GLuint Processor  : 4;  /* TGSI_PROCESSOR_ */
-   GLuint Padding    : 28;
+   unsigned Processor  : 4;  /* TGSI_PROCESSOR_ */
+   unsigned Padding    : 28;
 };
 
 #define TGSI_TOKEN_TYPE_DECLARATION    0
@@ -34,10 +34,10 @@ struct tgsi_processor
 
 struct tgsi_token
 {
-   GLuint Type       : 4;  /* TGSI_TOKEN_TYPE_ */
-   GLuint Size       : 8;  /* UINT */
-   GLuint Padding    : 19;
-   GLuint Extended   : 1;  /* BOOL */
+   unsigned Type       : 4;  /* TGSI_TOKEN_TYPE_ */
+   unsigned Size       : 8;  /* UINT */
+   unsigned Padding    : 19;
+   unsigned Extended   : 1;  /* BOOL */
 };
 
 #define TGSI_FILE_NULL        0
@@ -54,24 +54,24 @@ struct tgsi_token
 
 struct tgsi_declaration
 {
-   GLuint Type          : 4;  /* TGSI_TOKEN_TYPE_DECLARATION */
-   GLuint Size          : 8;  /* UINT */
-   GLuint File          : 4;  /* TGSI_FILE_ */
-   GLuint Declare       : 4;  /* TGSI_DECLARE_ */
-   GLuint Interpolate   : 1;  /* BOOL */
-   GLuint Padding       : 10;
-   GLuint Extended      : 1;  /* BOOL */
+   unsigned Type          : 4;  /* TGSI_TOKEN_TYPE_DECLARATION */
+   unsigned Size          : 8;  /* UINT */
+   unsigned File          : 4;  /* TGSI_FILE_ */
+   unsigned Declare       : 4;  /* TGSI_DECLARE_ */
+   unsigned Interpolate   : 1;  /* BOOL */
+   unsigned Padding       : 10;
+   unsigned Extended      : 1;  /* BOOL */
 };
 
 struct tgsi_declaration_range
 {
-   GLuint First   : 16; /* UINT */
-   GLuint Last    : 16; /* UINT */
+   unsigned First   : 16; /* UINT */
+   unsigned Last    : 16; /* UINT */
 };
 
 struct tgsi_declaration_mask
 {
-   GLuint Mask : 32; /* UINT */
+   unsigned Mask : 32; /* UINT */
 };
 
 #define TGSI_INTERPOLATE_CONSTANT      0
@@ -80,24 +80,24 @@ struct tgsi_declaration_mask
 
 struct tgsi_declaration_interpolation
 {
-   GLuint Interpolate   : 4;  /* TGSI_INTERPOLATE_ */
-   GLuint Padding       : 28;
+   unsigned Interpolate   : 4;  /* TGSI_INTERPOLATE_ */
+   unsigned Padding       : 28;
 };
 
 #define TGSI_IMM_FLOAT32   0
 
 struct tgsi_immediate
 {
-   GLuint Type       : 4;  /* TGSI_TOKEN_TYPE_IMMEDIATE */
-   GLuint Size       : 8;  /* UINT */
-   GLuint DataType   : 4;  /* TGSI_IMM_ */
-   GLuint Padding    : 15;
-   GLuint Extended   : 1;  /* BOOL */
+   unsigned Type       : 4;  /* TGSI_TOKEN_TYPE_IMMEDIATE */
+   unsigned Size       : 8;  /* UINT */
+   unsigned DataType   : 4;  /* TGSI_IMM_ */
+   unsigned Padding    : 15;
+   unsigned Extended   : 1;  /* BOOL */
 };
 
 struct tgsi_immediate_float32
 {
-   GLfloat Float;
+   float Float;
 };
 
 /*
@@ -1088,14 +1088,14 @@ struct tgsi_immediate_float32
 
 struct tgsi_instruction
 {
-   GLuint Type       : 4;  /* TGSI_TOKEN_TYPE_INSTRUCTION */
-   GLuint Size       : 8;  /* UINT */
-   GLuint Opcode     : 8;  /* TGSI_OPCODE_ */
-   GLuint Saturate   : 2;  /* TGSI_SAT_ */
-   GLuint NumDstRegs : 2;  /* UINT */
-   GLuint NumSrcRegs : 4;  /* UINT */
-   GLuint Padding    : 3;
-   GLuint Extended   : 1;  /* BOOL */
+   unsigned Type       : 4;  /* TGSI_TOKEN_TYPE_INSTRUCTION */
+   unsigned Size       : 8;  /* UINT */
+   unsigned Opcode     : 8;  /* TGSI_OPCODE_ */
+   unsigned Saturate   : 2;  /* TGSI_SAT_ */
+   unsigned NumDstRegs : 2;  /* UINT */
+   unsigned NumSrcRegs : 4;  /* UINT */
+   unsigned Padding    : 3;
+   unsigned Extended   : 1;  /* BOOL */
 };
 
 /*
@@ -1116,9 +1116,9 @@ struct tgsi_instruction
 
 struct tgsi_instruction_ext
 {
-   GLuint Type       : 4;  /* TGSI_INSTRUCTION_EXT_TYPE_ */
-   GLuint Padding    : 27;
-   GLuint Extended   : 1;  /* BOOL */
+   unsigned Type       : 4;  /* TGSI_INSTRUCTION_EXT_TYPE_ */
+   unsigned Padding    : 27;
+   unsigned Extended   : 1;  /* BOOL */
 };
 
 /*
@@ -1174,27 +1174,27 @@ struct tgsi_instruction_ext
 
 struct tgsi_instruction_ext_nv
 {
-   GLuint Type             : 4;    /* TGSI_INSTRUCTION_EXT_TYPE_NV */
-   GLuint Precision        : 4;    /* TGSI_PRECISION_ */
-   GLuint CondDstIndex     : 4;    /* UINT */
-   GLuint CondFlowIndex    : 4;    /* UINT */
-   GLuint CondMask         : 4;    /* TGSI_CC_ */
-   GLuint CondSwizzleX     : 2;    /* TGSI_SWIZZLE_ */
-   GLuint CondSwizzleY     : 2;    /* TGSI_SWIZZLE_ */
-   GLuint CondSwizzleZ     : 2;    /* TGSI_SWIZZLE_ */
-   GLuint CondSwizzleW     : 2;    /* TGSI_SWIZZLE_ */
-   GLuint CondDstUpdate    : 1;    /* BOOL */
-   GLuint CondFlowEnable   : 1;    /* BOOL */
-   GLuint Padding          : 1;
-   GLuint Extended         : 1;    /* BOOL */
+   unsigned Type             : 4;    /* TGSI_INSTRUCTION_EXT_TYPE_NV */
+   unsigned Precision        : 4;    /* TGSI_PRECISION_ */
+   unsigned CondDstIndex     : 4;    /* UINT */
+   unsigned CondFlowIndex    : 4;    /* UINT */
+   unsigned CondMask         : 4;    /* TGSI_CC_ */
+   unsigned CondSwizzleX     : 2;    /* TGSI_SWIZZLE_ */
+   unsigned CondSwizzleY     : 2;    /* TGSI_SWIZZLE_ */
+   unsigned CondSwizzleZ     : 2;    /* TGSI_SWIZZLE_ */
+   unsigned CondSwizzleW     : 2;    /* TGSI_SWIZZLE_ */
+   unsigned CondDstUpdate    : 1;    /* BOOL */
+   unsigned CondFlowEnable   : 1;    /* BOOL */
+   unsigned Padding          : 1;
+   unsigned Extended         : 1;    /* BOOL */
 };
 
 struct tgsi_instruction_ext_label
 {
-   GLuint Type     : 4;    /* TGSI_INSTRUCTION_EXT_TYPE_LABEL */
-   GLuint Label    : 24;   /* UINT */
-   GLuint Padding  : 3;
-   GLuint Extended : 1;    /* BOOL */
+   unsigned Type     : 4;    /* TGSI_INSTRUCTION_EXT_TYPE_LABEL */
+   unsigned Label    : 24;   /* UINT */
+   unsigned Padding  : 3;
+   unsigned Extended : 1;    /* BOOL */
 };
 
 #define TGSI_TEXTURE_UNKNOWN        0
@@ -1209,10 +1209,10 @@ struct tgsi_instruction_ext_label
 
 struct tgsi_instruction_ext_texture
 {
-   GLuint Type     : 4;    /* TGSI_INSTRUCTION_EXT_TYPE_TEXTURE */
-   GLuint Texture  : 8;    /* TGSI_TEXTURE_ */
-   GLuint Padding  : 19;
-   GLuint Extended : 1;    /* BOOL */
+   unsigned Type     : 4;    /* TGSI_INSTRUCTION_EXT_TYPE_TEXTURE */
+   unsigned Texture  : 8;    /* TGSI_TEXTURE_ */
+   unsigned Padding  : 19;
+   unsigned Extended : 1;    /* BOOL */
 };
 
 #define TGSI_WRITEMASK_NONE     0x00
@@ -1234,11 +1234,11 @@ struct tgsi_instruction_ext_texture
 
 struct tgsi_instruction_ext_predicate
 {
-   GLuint Type             : 4;    /* TGSI_INSTRUCTION_EXT_TYPE_PREDICATE */
-   GLuint PredDstIndex     : 4;    /* UINT */
-   GLuint PredWriteMask    : 4;    /* TGSI_WRITEMASK_ */
-   GLuint Padding          : 19;
-   GLuint Extended         : 1;    /* BOOL */
+   unsigned Type             : 4;    /* TGSI_INSTRUCTION_EXT_TYPE_PREDICATE */
+   unsigned PredDstIndex     : 4;    /* UINT */
+   unsigned PredWriteMask    : 4;    /* TGSI_WRITEMASK_ */
+   unsigned Padding          : 19;
+   unsigned Extended         : 1;    /* BOOL */
 };
 
 /*
@@ -1261,16 +1261,16 @@ struct tgsi_instruction_ext_predicate
 
 struct tgsi_src_register
 {
-   GLuint File         : 4;    /* TGSI_FILE_ */
-   GLuint SwizzleX     : 2;    /* TGSI_SWIZZLE_ */
-   GLuint SwizzleY     : 2;    /* TGSI_SWIZZLE_ */
-   GLuint SwizzleZ     : 2;    /* TGSI_SWIZZLE_ */
-   GLuint SwizzleW     : 2;    /* TGSI_SWIZZLE_ */
-   GLuint Negate       : 1;    /* BOOL */
-   GLuint Indirect     : 1;    /* BOOL */
-   GLuint Dimension    : 1;    /* BOOL */
-   GLint  Index        : 16;   /* SINT */
-   GLuint Extended     : 1;    /* BOOL */
+   unsigned File         : 4;    /* TGSI_FILE_ */
+   unsigned SwizzleX     : 2;    /* TGSI_SWIZZLE_ */
+   unsigned SwizzleY     : 2;    /* TGSI_SWIZZLE_ */
+   unsigned SwizzleZ     : 2;    /* TGSI_SWIZZLE_ */
+   unsigned SwizzleW     : 2;    /* TGSI_SWIZZLE_ */
+   unsigned Negate       : 1;    /* BOOL */
+   unsigned Indirect     : 1;    /* BOOL */
+   unsigned Dimension    : 1;    /* BOOL */
+   int  Index        : 16;   /* SINT */
+   unsigned Extended     : 1;    /* BOOL */
 };
 
 /*
@@ -1287,9 +1287,9 @@ struct tgsi_src_register
 
 struct tgsi_src_register_ext
 {
-   GLuint Type     : 4;    /* TGSI_SRC_REGISTER_EXT_TYPE_ */
-   GLuint Padding  : 27;
-   GLuint Extended : 1;    /* BOOL */
+   unsigned Type     : 4;    /* TGSI_SRC_REGISTER_EXT_TYPE_ */
+   unsigned Padding  : 27;
+   unsigned Extended : 1;    /* BOOL */
 };
 
 /*
@@ -1323,18 +1323,18 @@ struct tgsi_src_register_ext
 
 struct tgsi_src_register_ext_swz
 {
-   GLuint Type         : 4;    /* TGSI_SRC_REGISTER_EXT_TYPE_SWZ */
-   GLuint ExtSwizzleX  : 4;    /* TGSI_EXTSWIZZLE_ */
-   GLuint ExtSwizzleY  : 4;    /* TGSI_EXTSWIZZLE_ */
-   GLuint ExtSwizzleZ  : 4;    /* TGSI_EXTSWIZZLE_ */
-   GLuint ExtSwizzleW  : 4;    /* TGSI_EXTSWIZZLE_ */
-   GLuint NegateX      : 1;    /* BOOL */
-   GLuint NegateY      : 1;    /* BOOL */
-   GLuint NegateZ      : 1;    /* BOOL */
-   GLuint NegateW      : 1;    /* BOOL */
-   GLuint ExtDivide    : 4;    /* TGSI_EXTSWIZZLE_ */
-   GLuint Padding      : 3;
-   GLuint Extended     : 1;    /* BOOL */
+   unsigned Type         : 4;    /* TGSI_SRC_REGISTER_EXT_TYPE_SWZ */
+   unsigned ExtSwizzleX  : 4;    /* TGSI_EXTSWIZZLE_ */
+   unsigned ExtSwizzleY  : 4;    /* TGSI_EXTSWIZZLE_ */
+   unsigned ExtSwizzleZ  : 4;    /* TGSI_EXTSWIZZLE_ */
+   unsigned ExtSwizzleW  : 4;    /* TGSI_EXTSWIZZLE_ */
+   unsigned NegateX      : 1;    /* BOOL */
+   unsigned NegateY      : 1;    /* BOOL */
+   unsigned NegateZ      : 1;    /* BOOL */
+   unsigned NegateW      : 1;    /* BOOL */
+   unsigned ExtDivide    : 4;    /* TGSI_EXTSWIZZLE_ */
+   unsigned Padding      : 3;
+   unsigned Extended     : 1;    /* BOOL */
 };
 
 /*
@@ -1352,34 +1352,34 @@ struct tgsi_src_register_ext_swz
 
 struct tgsi_src_register_ext_mod
 {
-   GLuint Type         : 4;    /* TGSI_SRC_REGISTER_EXT_TYPE_MOD */
-   GLuint Complement   : 1;    /* BOOL */
-   GLuint Bias         : 1;    /* BOOL */
-   GLuint Scale2X      : 1;    /* BOOL */
-   GLuint Absolute     : 1;    /* BOOL */
-   GLuint Negate       : 1;    /* BOOL */
-   GLuint Padding      : 22;
-   GLuint Extended     : 1;    /* BOOL */
+   unsigned Type         : 4;    /* TGSI_SRC_REGISTER_EXT_TYPE_MOD */
+   unsigned Complement   : 1;    /* BOOL */
+   unsigned Bias         : 1;    /* BOOL */
+   unsigned Scale2X      : 1;    /* BOOL */
+   unsigned Absolute     : 1;    /* BOOL */
+   unsigned Negate       : 1;    /* BOOL */
+   unsigned Padding      : 22;
+   unsigned Extended     : 1;    /* BOOL */
 };
 
 struct tgsi_dimension
 {
-   GLuint Indirect     : 1;    /* BOOL */
-   GLuint Dimension    : 1;    /* BOOL */
-   GLuint Padding      : 13;
-   GLint  Index        : 16;   /* SINT */
-   GLuint Extended     : 1;    /* BOOL */
+   unsigned Indirect     : 1;    /* BOOL */
+   unsigned Dimension    : 1;    /* BOOL */
+   unsigned Padding      : 13;
+   int  Index        : 16;   /* SINT */
+   unsigned Extended     : 1;    /* BOOL */
 };
 
 struct tgsi_dst_register
 {
-   GLuint File         : 4;    /* TGSI_FILE_ */
-   GLuint WriteMask    : 4;    /* TGSI_WRITEMASK_ */
-   GLuint Indirect     : 1;    /* BOOL */
-   GLuint Dimension    : 1;    /* BOOL */
-   GLint  Index        : 16;   /* SINT */
-   GLuint Padding      : 5;
-   GLuint Extended     : 1;    /* BOOL */
+   unsigned File         : 4;    /* TGSI_FILE_ */
+   unsigned WriteMask    : 4;    /* TGSI_WRITEMASK_ */
+   unsigned Indirect     : 1;    /* BOOL */
+   unsigned Dimension    : 1;    /* BOOL */
+   int  Index        : 16;   /* SINT */
+   unsigned Padding      : 5;
+   unsigned Extended     : 1;    /* BOOL */
 };
 
 /*
@@ -1394,9 +1394,9 @@ struct tgsi_dst_register
 
 struct tgsi_dst_register_ext
 {
-   GLuint Type     : 4;    /* TGSI_DST_REGISTER_EXT_TYPE_ */
-   GLuint Padding  : 27;
-   GLuint Extended : 1;    /* BOOL */
+   unsigned Type     : 4;    /* TGSI_DST_REGISTER_EXT_TYPE_ */
+   unsigned Padding  : 27;
+   unsigned Extended : 1;    /* BOOL */
 };
 
 /*
@@ -1415,15 +1415,15 @@ struct tgsi_dst_register_ext
 
 struct tgsi_dst_register_ext_concode
 {
-   GLuint Type         : 4;    /* TGSI_DST_REGISTER_EXT_TYPE_CONDCODE */
-   GLuint CondMask     : 4;    /* TGSI_CC_ */
-   GLuint CondSwizzleX : 2;    /* TGSI_SWIZZLE_ */
-   GLuint CondSwizzleY : 2;    /* TGSI_SWIZZLE_ */
-   GLuint CondSwizzleZ : 2;    /* TGSI_SWIZZLE_ */
-   GLuint CondSwizzleW : 2;    /* TGSI_SWIZZLE_ */
-   GLuint CondSrcIndex : 4;    /* UINT */
-   GLuint Padding      : 11;
-   GLuint Extended     : 1;    /* BOOL */
+   unsigned Type         : 4;    /* TGSI_DST_REGISTER_EXT_TYPE_CONDCODE */
+   unsigned CondMask     : 4;    /* TGSI_CC_ */
+   unsigned CondSwizzleX : 2;    /* TGSI_SWIZZLE_ */
+   unsigned CondSwizzleY : 2;    /* TGSI_SWIZZLE_ */
+   unsigned CondSwizzleZ : 2;    /* TGSI_SWIZZLE_ */
+   unsigned CondSwizzleW : 2;    /* TGSI_SWIZZLE_ */
+   unsigned CondSrcIndex : 4;    /* UINT */
+   unsigned Padding      : 11;
+   unsigned Extended     : 1;    /* BOOL */
 };
 
 #define TGSI_MODULATE_1X        0
@@ -1436,10 +1436,10 @@ struct tgsi_dst_register_ext_concode
 
 struct tgsi_dst_register_ext_modulate
 {
-   GLuint Type     : 4;    /* TGSI_DST_REGISTER_EXT_TYPE_MODULATE */
-   GLuint Modulate : 4;    /* TGSI_MODULATE_ */
-   GLuint Padding  : 23;
-   GLuint Extended : 1;    /* BOOL */
+   unsigned Type     : 4;    /* TGSI_DST_REGISTER_EXT_TYPE_MODULATE */
+   unsigned Modulate : 4;    /* TGSI_MODULATE_ */
+   unsigned Padding  : 23;
+   unsigned Extended : 1;    /* BOOL */
 };
 
 /*
@@ -1451,15 +1451,15 @@ struct tgsi_dst_register_ext_modulate
 
 struct tgsi_dst_register_ext_predicate
 {
-   GLuint Type         : 4;    /* TGSI_DST_REGISTER_EXT_TYPE_PREDICATE */
-   GLuint PredSwizzleX : 2;    /* TGSI_SWIZZLE_ */
-   GLuint PredSwizzleY : 2;    /* TGSI_SWIZZLE_ */
-   GLuint PredSwizzleZ : 2;    /* TGSI_SWIZZLE_ */
-   GLuint PredSwizzleW : 2;    /* TGSI_SWIZZLE_ */
-   GLuint PredSrcIndex : 4;    /* UINT */
-   GLuint Negate       : 1;    /* BOOL */
-   GLuint Padding      : 14;
-   GLuint Extended     : 1;    /* BOOL */
+   unsigned Type         : 4;    /* TGSI_DST_REGISTER_EXT_TYPE_PREDICATE */
+   unsigned PredSwizzleX : 2;    /* TGSI_SWIZZLE_ */
+   unsigned PredSwizzleY : 2;    /* TGSI_SWIZZLE_ */
+   unsigned PredSwizzleZ : 2;    /* TGSI_SWIZZLE_ */
+   unsigned PredSwizzleW : 2;    /* TGSI_SWIZZLE_ */
+   unsigned PredSrcIndex : 4;    /* UINT */
+   unsigned Negate       : 1;    /* BOOL */
+   unsigned Padding      : 14;
+   unsigned Extended     : 1;    /* BOOL */
 };
 
 #if defined __cplusplus

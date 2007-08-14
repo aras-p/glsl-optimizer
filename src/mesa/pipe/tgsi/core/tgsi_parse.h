@@ -86,7 +86,7 @@ tgsi_full_token_free(
 struct tgsi_parse_context
 {
    const struct tgsi_token    *Tokens;
-   GLuint                     Position;
+   unsigned                     Position;
    struct tgsi_full_version   FullVersion;
    struct tgsi_full_header    FullHeader;
    union tgsi_full_token      FullToken;
@@ -95,7 +95,7 @@ struct tgsi_parse_context
 #define TGSI_PARSE_OK      0
 #define TGSI_PARSE_ERROR   1
 
-GLuint
+unsigned
 tgsi_parse_init(
    struct tgsi_parse_context *ctx,
    const struct tgsi_token *tokens );
@@ -104,7 +104,7 @@ void
 tgsi_parse_free(
    struct tgsi_parse_context *ctx );
 
-GLuint
+unsigned
 tgsi_parse_end_of_tokens(
    struct tgsi_parse_context *ctx );
 

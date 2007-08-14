@@ -136,7 +136,15 @@ struct pipe_context {
    void (*set_viewport_state)( struct pipe_context *,
                                const struct pipe_viewport_state * );
 
-
+   void (*set_vertex_buffer)( struct pipe_context *,
+                              unsigned index,
+                              struct pipe_vertex_buffer * );
+   
+   void (*set_vertex_element)( struct pipe_context *,
+			       unsigned index,
+			       struct pipe_vertex_element * );
+			       
+   
    /*
     * Surface functions
     * This might go away...
