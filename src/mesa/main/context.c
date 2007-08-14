@@ -647,6 +647,11 @@ static void
 delete_framebuffer_cb(GLuint id, void *data, void *userData)
 {
    struct gl_framebuffer *fb = (struct gl_framebuffer *) data;
+   /* The fact that the framebuffer is in the hashtable means its refcount
+    * is one, but we're removing from the hashtable now.  So clear refcount.
+    */
+   /*assert(fb->RefCount == 1);*/
+   fb->RefCount = 0;
    fb->Delete(fb);
 }
 
@@ -657,6 +662,7 @@ static void
 delete_renderbuffer_cb(GLuint id, void *data, void *userData)
 {
    struct gl_renderbuffer *rb = (struct gl_renderbuffer *) data;
+   rb->RefCount = 0;  /* see comment for FBOs above */
    rb->Delete(rb);
 }
 
@@ -682,23 +688,6 @@ free_shared_state( GLcontext *ctx, struct gl_shared_state *ss )
     */
    _mesa_HashDeleteAll(ss->DisplayList, delete_displaylist_cb, ctx);
    _mesa_DeleteHashTable(ss->DisplayList);
-
-   /*
-    * Free texture objects
-    */
-   ASSERT(ctx->Driver.DeleteTexture);
-   /* the default textures */
-   ctx->Driver.DeleteTexture(ctx, ss->Default1D);
-   ctx->Driver.DeleteTexture(ctx, ss->Default2D);
-   ctx->Driver.DeleteTexture(ctx, ss->Default3D);
-   ctx->Driver.DeleteTexture(ctx, ss->DefaultCubeMap);
-   ctx->Driver.DeleteTexture(ctx, ss->DefaultRect);
-   ctx->Driver.DeleteTexture(ctx, ss->Default1DArray);
-   ctx->Driver.DeleteTexture(ctx, ss->Default2DArray);
-
-   /* all other textures */
-   _mesa_HashDeleteAll(ss->TexObjects, delete_texture_cb, ctx);
-   _mesa_DeleteHashTable(ss->TexObjects);
 
 #if defined(FEATURE_NV_vertex_program) || defined(FEATURE_NV_fragment_program)
    _mesa_HashDeleteAll(ss->Programs, delete_program_cb, ctx);
@@ -736,6 +725,23 @@ free_shared_state( GLcontext *ctx, struct gl_shared_state *ss )
    _mesa_HashDeleteAll(ss->RenderBuffers, delete_renderbuffer_cb, ctx);
    _mesa_DeleteHashTable(ss->RenderBuffers);
 #endif
+
+   /*
+    * Free texture objects (after FBOs since some textures might have
+    * been bound to FBOs).
+    */
+   ASSERT(ctx->Driver.DeleteTexture);
+   /* the default textures */
+   ctx->Driver.DeleteTexture(ctx, ss->Default1D);
+   ctx->Driver.DeleteTexture(ctx, ss->Default2D);
+   ctx->Driver.DeleteTexture(ctx, ss->Default3D);
+   ctx->Driver.DeleteTexture(ctx, ss->DefaultCubeMap);
+   ctx->Driver.DeleteTexture(ctx, ss->DefaultRect);
+   ctx->Driver.DeleteTexture(ctx, ss->Default1DArray);
+   ctx->Driver.DeleteTexture(ctx, ss->Default2DArray);
+   /* all other textures */
+   _mesa_HashDeleteAll(ss->TexObjects, delete_texture_cb, ctx);
+   _mesa_DeleteHashTable(ss->TexObjects);
 
    _glthread_DESTROY_MUTEX(ss->Mutex);
 
@@ -1190,17 +1196,18 @@ _mesa_create_context(const GLvisual *visual,
 void
 _mesa_free_context_data( GLcontext *ctx )
 {
-   /* if we're destroying the current context, unbind it first */
-   if (ctx == _mesa_get_current_context()) {
-      _mesa_make_current(NULL, NULL, NULL);
+   if (!_mesa_get_current_context()){
+      /* No current context, but we may need one in order to delete
+       * texture objs, etc.  So temporarily bind the context now.
+       */
+      _mesa_make_current(ctx, NULL, NULL);
    }
-   else {
-      /* unreference WinSysDraw/Read buffers */
-      _mesa_unreference_framebuffer(&ctx->WinSysDrawBuffer);
-      _mesa_unreference_framebuffer(&ctx->WinSysReadBuffer);
-      _mesa_unreference_framebuffer(&ctx->DrawBuffer);
-      _mesa_unreference_framebuffer(&ctx->ReadBuffer);
-   }
+
+   /* unreference WinSysDraw/Read buffers */
+   _mesa_unreference_framebuffer(&ctx->WinSysDrawBuffer);
+   _mesa_unreference_framebuffer(&ctx->WinSysReadBuffer);
+   _mesa_unreference_framebuffer(&ctx->DrawBuffer);
+   _mesa_unreference_framebuffer(&ctx->ReadBuffer);
 
    _mesa_free_lighting_data( ctx );
    _mesa_free_eval_data( ctx );
@@ -1233,6 +1240,11 @@ _mesa_free_context_data( GLcontext *ctx )
 
    if (ctx->Extensions.String)
       _mesa_free((void *) ctx->Extensions.String);
+
+   /* unbind the context if it's currently bound */
+   if (ctx == _mesa_get_current_context()) {
+      _mesa_make_current(NULL, NULL, NULL);
+   }
 }
 
 

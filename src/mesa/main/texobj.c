@@ -287,7 +287,10 @@ _mesa_reference_texobj(struct gl_texture_object **ptr,
 
       if (deleteFlag) {
          GET_CURRENT_CONTEXT(ctx);
-         ctx->Driver.DeleteTexture(ctx, oldTex);
+         if (ctx)
+            ctx->Driver.DeleteTexture(ctx, oldTex);
+         else
+            _mesa_problem(NULL, "Unable to delete texture, no context");
       }
 
       *ptr = NULL;
