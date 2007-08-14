@@ -39,27 +39,19 @@
  *  - depthrange
  *  - window pos/size or FBO size
  */
-static void update_viewport( struct st_context *st )
+static void
+update_viewport( struct st_context *st )
 {
    GLcontext *ctx = st->ctx;
    GLfloat yScale, yBias;
 
-   /* Negate Y scale to flip image vertically.
-    * The NDC Y coords prior to viewport transformation are in the range
-    * [y=-1=bottom, y=1=top]
-    * Hardware window coords are in the range [y=0=top, y=H-1=bottom] where H
-    * is the window height.
-    * Use the viewport transformation to invert Y.
-    */
-
    /* _NEW_BUFFERS
     */
-   if (ctx->DrawBuffer) {
+   if (st_fb_orientation(ctx->DrawBuffer) == Y_0_TOP) {
       yScale = -1;
       yBias = ctx->DrawBuffer->Height ;
    }
    else {
-      /* we won't be rendering anything */
       yScale = 1.0;
       yBias = 0.0;
    }

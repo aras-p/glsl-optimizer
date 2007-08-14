@@ -60,7 +60,7 @@ st_readpixels(GLcontext *ctx, GLint x, GLint y, GLsizei width, GLsizei height,
    struct pipe_context *pipe = ctx->st->pipe;
    GLfloat temp[MAX_WIDTH][4];
    const GLbitfield transferOps = ctx->_ImageTransferState;
-   GLint i, yInv, dfStride;
+   GLint i, yStep, dfStride;
    GLfloat *df;
    struct st_renderbuffer *strb;
    struct gl_pixelstore_attrib clippedPacking = *pack;
@@ -104,11 +104,19 @@ st_readpixels(GLcontext *ctx, GLint x, GLint y, GLsizei width, GLsizei height,
       dfStride = 0;
    }
 
+   /* determine bottom-to-top vs. top-to-bottom order */
+   if (st_fb_orientation(ctx->ReadBuffer) == Y_0_TOP) {
+      y = strb->Base.Height - 1 - y;
+      yStep = -1;
+   }
+   else {
+      yStep = 1;
+   }
+
    /* Do a row at a time to flip image data vertically */
-   yInv = strb->Base.Height - 1 - y;
    for (i = 0; i < height; i++) {
-      strb->surface->get_tile(strb->surface, x, yInv, width, 1, df);
-      yInv--;
+      strb->surface->get_tile(strb->surface, x, y, width, 1, df);
+      y += yStep;
       df += dfStride;
       if (!dfStride) {
          /* convert GLfloat to user's format/type */
