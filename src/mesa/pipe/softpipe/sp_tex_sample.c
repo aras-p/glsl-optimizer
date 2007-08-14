@@ -417,7 +417,8 @@ static float
 compute_lambda(struct tgsi_sampler *sampler,
                const float s[QUAD_SIZE],
                const float t[QUAD_SIZE],
-               const float p[QUAD_SIZE])
+               const float p[QUAD_SIZE],
+               float lodbias)
 {
    float rho, lambda;
 
@@ -450,7 +451,7 @@ compute_lambda(struct tgsi_sampler *sampler,
 
    lambda = LOG2(rho);
 
-   lambda += sampler->state->lod_bias;
+   lambda += lodbias + sampler->state->lod_bias;
    lambda = CLAMP(lambda, sampler->state->min_lod, sampler->state->max_lod);
 
    return lambda;
@@ -462,6 +463,7 @@ sp_get_samples_1d(struct tgsi_sampler *sampler,
                   const float s[QUAD_SIZE],
                   const float t[QUAD_SIZE],
                   const float p[QUAD_SIZE],
+                  float lodbias,
                   float rgba[NUM_CHANNELS][QUAD_SIZE])
 {
    struct pipe_context *pipe = (struct pipe_context *) sampler->pipe;
@@ -512,17 +514,43 @@ sp_get_samples_1d(struct tgsi_sampler *sampler,
    }
 }
 
-static GLuint
-choose_mipmap_level(struct tgsi_sampler *sampler, float lambda)
+
+/**
+ * From lambda and the min_mip_filter setting, choose the mipmap level(s)
+ * that are to be sampled from.
+ */
+static void
+choose_mipmap_levels(struct tgsi_sampler *sampler, float lambda,
+                     unsigned *level0, unsigned *level1)
 {
-   if (sampler->state->min_mip_filter == PIPE_TEX_MIPFILTER_NONE) {
-      return 0;
-   }
-   else {
-      GLint level = (int) lambda;
-      level = CLAMP(level, sampler->texture->first_level,
-		    sampler->texture->last_level);
-      return level;
+   switch (sampler->state->min_mip_filter) {
+   case PIPE_TEX_MIPFILTER_NONE:
+      *level0 = *level1 = 0;
+      return;
+   case PIPE_TEX_MIPFILTER_NEAREST:
+      {
+         const int lvl = (int) (lambda + 0.5);
+         *level0 =
+         *level1 = CLAMP(lvl,
+                         (int) sampler->texture->first_level,
+                         (int) sampler->texture->last_level);
+      }
+      return;
+   case PIPE_TEX_MIPFILTER_LINEAR:
+      {
+         const int lvl = (int) lambda;
+         *level0 = CLAMP(lvl,
+                         (int) sampler->texture->first_level,
+                         (int) sampler->texture->last_level);
+         *level1 = CLAMP(lvl + 1,
+                         (int) sampler->texture->first_level,
+                         (int) sampler->texture->last_level);
+         assert(*level0 < 100);
+         assert(*level1 < 100);
+      }
+      return;
+   default:
+      assert(0);
    }
 }
 
@@ -571,10 +599,14 @@ get_texel(struct tgsi_sampler *sampler,
    if (cx != sampler->cache_x || cy != sampler->cache_y ||
        level != sampler->cache_level) {
       cache_tex_tile(sampler, face, level, zslice, cx, cy);
+      /*
       printf("cache miss (%d, %d)\n", x, y);
+      */
    }
    else {
+      /*
       printf("cache hit (%d, %d)\n", x, y);
+      */
    }
 
    /* get texel from cache */
@@ -605,27 +637,41 @@ sp_get_samples_2d(struct tgsi_sampler *sampler,
                   const float s[QUAD_SIZE],
                   const float t[QUAD_SIZE],
                   const float p[QUAD_SIZE],
+                  float lodbias,
                   float rgba[NUM_CHANNELS][QUAD_SIZE])
 {
-   GLuint j, imgFilter;
-   int level0, width, height;
+   unsigned level0, level1, j, imgFilter;
+   int width, height;
+   float mipBlend;
    
    /* compute level0 and imgFilter */
    switch (sampler->state->min_mip_filter) {
    case PIPE_TEX_MIPFILTER_NONE:
       imgFilter = sampler->state->mag_img_filter;
-      level0 = 0;
+      level0 = level1 = 0;
       assert(sampler->state->min_img_filter ==
              sampler->state->mag_img_filter);
       break;
    default:
       {
-         float lambda = compute_lambda(sampler, s, t, p);
-         if (lambda < 0.0)
-            imgFilter = sampler->state->mag_img_filter;
+         float lambda;
+         int fragment = 1;
+         if (fragment)
+            lambda = compute_lambda(sampler, s, t, p, lodbias);
          else
+            lambda = lodbias; /* not really a bias, but absolute LOD */
+
+         if (lambda < 0.0) {
+            /* magnifying */
+            imgFilter = sampler->state->mag_img_filter;
+            level0 = level1 = 0;
+         }
+         else {
+            /* minifying */
             imgFilter = sampler->state->min_img_filter;
-         level0 = choose_mipmap_level(sampler, lambda);
+            choose_mipmap_levels(sampler, lambda, &level0, &level1);
+            mipBlend = FRAC(lambda);  /* blending weight between levels */
+         }
       }
    }
 
@@ -640,6 +686,18 @@ sp_get_samples_2d(struct tgsi_sampler *sampler,
          int x = nearest_texcoord(sampler->state->wrap_s, s[j], width);
          int y = nearest_texcoord(sampler->state->wrap_t, t[j], height);
          get_texel(sampler, 0, level0, 0, x, y, rgba, j);
+
+         if (level0 != level1) {
+            /* get texels from second mipmap level and blend */
+            float rgba2[4][4];
+            unsigned c;
+            x = x / 2;
+            y = y / 2;
+            get_texel(sampler, 0, level1, 0, x, y, rgba2, j);
+            for (c = 0; c < NUM_CHANNELS; c++) {
+               rgba[c][j] = LERP(mipBlend, rgba2[c][j], rgba[c][j]);
+            }
+         }
       }
       break;
    case PIPE_TEX_FILTER_LINEAR:
@@ -655,6 +713,28 @@ sp_get_samples_2d(struct tgsi_sampler *sampler,
          for (c = 0; c < 4; c++) {
             rgba[c][j] = lerp_2d(a, b, tx[c][0], tx[c][1], tx[c][2], tx[c][3]);
          }
+
+         if (level0 != level1) {
+            /* get texels from second mipmap level and blend */
+            float rgba2[4][4];
+            unsigned c;
+            x0 = x0 / 2;
+            y0 = y0 / 2;
+            x1 = x1 / 2;
+            y1 = y1 / 2;
+            get_texel(sampler, 0, level1, 0, x0, y0, tx, 0);
+            get_texel(sampler, 0, level1, 0, x1, y0, tx, 1);
+            get_texel(sampler, 0, level1, 0, x0, y1, tx, 2);
+            get_texel(sampler, 0, level1, 0, x1, y1, tx, 3);
+            for (c = 0; c < 4; c++) {
+               rgba2[c][j] = lerp_2d(a, b,
+                                     tx[c][0], tx[c][1], tx[c][2], tx[c][3]);
+            }
+
+            for (c = 0; c < NUM_CHANNELS; c++) {
+               rgba[c][j] = LERP(mipBlend, rgba[c][j], rgba2[c][j]);
+            }
+         }
       }
       break;
    default:
@@ -668,6 +748,7 @@ sp_get_samples_3d(struct tgsi_sampler *sampler,
                   const float s[QUAD_SIZE],
                   const float t[QUAD_SIZE],
                   const float p[QUAD_SIZE],
+                  float lodbias,
                   float rgba[NUM_CHANNELS][QUAD_SIZE])
 {
    /* get/map pipe_surfaces corresponding to 3D tex slices */
@@ -679,6 +760,7 @@ sp_get_samples_cube(struct tgsi_sampler *sampler,
                     const float s[QUAD_SIZE],
                     const float t[QUAD_SIZE],
                     const float p[QUAD_SIZE],
+                    float lodbias,
                     float rgba[NUM_CHANNELS][QUAD_SIZE])
 {
    GLuint j;
@@ -696,20 +778,21 @@ sp_get_samples(struct tgsi_sampler *sampler,
                const float s[QUAD_SIZE],
                const float t[QUAD_SIZE],
                const float p[QUAD_SIZE],
+               float lodbias,
                float rgba[NUM_CHANNELS][QUAD_SIZE])
 {
    switch (sampler->texture->target) {
    case GL_TEXTURE_1D:
-      sp_get_samples_1d(sampler, s, t, p, rgba);
+      sp_get_samples_1d(sampler, s, t, p, lodbias, rgba);
       break;
    case GL_TEXTURE_2D:
-      sp_get_samples_2d(sampler, s, t, p, rgba);
+      sp_get_samples_2d(sampler, s, t, p, lodbias, rgba);
       break;
    case GL_TEXTURE_3D:
-      sp_get_samples_3d(sampler, s, t, p, rgba);
+      sp_get_samples_3d(sampler, s, t, p, lodbias, rgba);
       break;
    case GL_TEXTURE_CUBE_MAP:
-      sp_get_samples_cube(sampler, s, t, p, rgba);
+      sp_get_samples_cube(sampler, s, t, p, lodbias, rgba);
       break;
    default:
       assert(0);

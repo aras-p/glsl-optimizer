@@ -1044,6 +1044,7 @@ fetch_texel( struct tgsi_sampler *sampler,
              const union tgsi_exec_channel *s,
              const union tgsi_exec_channel *t,
              const union tgsi_exec_channel *p,
+             float lodbias,
              union tgsi_exec_channel *r,
              union tgsi_exec_channel *g,
              union tgsi_exec_channel *b,
@@ -1052,7 +1053,7 @@ fetch_texel( struct tgsi_sampler *sampler,
    GLuint j;
    GLfloat rgba[NUM_CHANNELS][QUAD_SIZE];
 
-   sampler->get_samples(sampler, s->f, t->f, p->f, rgba);
+   sampler->get_samples(sampler, s->f, t->f, p->f, lodbias, rgba);
 
    for (j = 0; j < 4; j++) {
       r->f[j] = rgba[0][j];
@@ -1608,7 +1609,7 @@ exec_instruction(
             }
 
             fetch_texel(&mach->Samplers[unit],
-                        &r[0], NULL, NULL,
+                        &r[0], NULL, NULL, 0.0,
                         &r[0], &r[1], &r[2], &r[3]);
             break;
 
@@ -1633,7 +1634,7 @@ exec_instruction(
             }
 
             fetch_texel(&mach->Samplers[unit],
-                        &r[0], &r[1], NULL,
+                        &r[0], &r[1], NULL, 0.0,
                         &r[0], &r[1], &r[2], &r[3]);
             break;
 
@@ -1660,7 +1661,7 @@ exec_instruction(
             }
 
             fetch_texel(&mach->Samplers[unit],
-                        &r[0], &r[1], &r[2],
+                        &r[0], &r[1], &r[2], 0.0,
                         &r[0], &r[1], &r[2], &r[3]);
             break;
 

@@ -10,6 +10,7 @@ sp_get_samples(struct tgsi_sampler *sampler,
                const GLfloat s[QUAD_SIZE],
                const GLfloat t[QUAD_SIZE],
                const GLfloat p[QUAD_SIZE],
+               float lodbias,
                GLfloat rgba[NUM_CHANNELS][QUAD_SIZE]);
 
 
