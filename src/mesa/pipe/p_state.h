@@ -320,4 +320,25 @@ struct pipe_mipmap_tree
 };
 
 
+
+struct pipe_vertex_buffer
+{
+   unsigned pitch:11; 
+   unsigned max_index;   
+   struct pipe_buffer_handle *buffer;
+   unsigned buffer_offset;
+};
+
+
+
+struct pipe_vertex_element
+{
+   unsigned src_offset:11; 
+   unsigned vertex_buffer_index:5; 
+   unsigned dst_offset:8; 
+   unsigned src_format:8; 	/* PIPE_FORMAT_* */
+};
+
+
+
 #endif
