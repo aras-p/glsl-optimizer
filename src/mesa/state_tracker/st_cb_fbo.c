@@ -288,7 +288,6 @@ st_render_texture(GLcontext *ctx,
    struct st_renderbuffer *strb;
    struct gl_renderbuffer *rb;
    struct pipe_context *pipe = st->pipe;
-   struct pipe_framebuffer_state framebuffer;
    struct pipe_mipmap_tree *mt;
 
    assert(!att->Renderbuffer);
@@ -310,6 +309,9 @@ st_render_texture(GLcontext *ctx,
    assert(mt);
    assert(mt->level[0].width);
 
+   rb->Width = mt->level[0].width;
+   rb->Height = mt->level[0].height;
+
    /* the renderbuffer's surface is inside the mipmap_tree: */
    strb->surface = pipe->get_tex_surface(pipe, mt,
                                          att->CubeMapFace,
@@ -317,9 +319,8 @@ st_render_texture(GLcontext *ctx,
                                          att->Zoffset);
    assert(strb->surface);
 
-   /*
-   printf("RENDER TO TEXTURE mt=%p surf=%p\n", mt, strb->surface);
-   */
+   printf("RENDER TO TEXTURE obj=%p mt=%p surf=%p  %d x %d\n",
+          att->Texture, mt, strb->surface, rb->Width, rb->Height);
 
    /* Invalidate buffer state so that the pipe's framebuffer state
     * gets updated.
@@ -341,9 +342,9 @@ st_finish_render_texture(GLcontext *ctx,
 
    assert(strb);
 
-   /*
+   ctx->st->pipe->flush(ctx->st->pipe, 0x0);
+
    printf("FINISH RENDER TO TEXTURE surf=%p\n", strb->surface);
-   */
 
    pipe_surface_unreference(&strb->surface);
 
