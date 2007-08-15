@@ -30,7 +30,9 @@
   *   Keith Whitwell <keith@tungstengraphics.com>
   */
 
-#include "imports.h"
+#include "main/imports.h"
+
+#include "vbo/vbo.h"
 
 #include "tnl/t_context.h"
 #include "tnl/t_pipeline.h"
@@ -38,7 +40,10 @@
 #include "st_context.h"
 #include "st_atom.h"
 #include "st_draw.h"
+#include "st_cb_bufferobjects.h"
 #include "pipe/p_context.h"
+#include "pipe/p_defines.h"
+
 
 /*
  * TNL stage which feeds into the above.
@@ -87,6 +92,57 @@ static const struct tnl_pipeline_stage *st_pipeline[] = {
    &st_draw,     /* ADD: escape to pipe */
    0,
 };
+
+
+
+/**
+ * This function gets plugged into the VBO module and is called when
+ * we have something to render.
+ * Basically, translate the information into the format expected by pipe.
+ */
+static void
+draw_vbo(GLcontext *ctx,
+         const struct gl_client_array **arrays,
+         const struct _mesa_prim *prims,
+         GLuint nr_prims,
+         const struct _mesa_index_buffer *ib,
+         GLuint min_index,
+         GLuint max_index)
+{
+   struct pipe_context *pipe = ctx->st->pipe;
+   GLuint attr;
+
+   /* tell pipe about the vertex array element/attributes */
+   for (attr = 0; attr < 16; attr++) {
+      struct gl_buffer_object *bufobj = arrays[attr]->BufferObj;
+      if (bufobj && bufobj->Name) {
+         struct st_buffer_object *stobj = st_buffer_object(bufobj);
+         struct pipe_buffer_handle *buffer = stobj->buffer;
+         GLenum type = arrays[attr]->Type;
+         GLint  size = arrays[attr]->Size;
+         struct pipe_vertex_buffer vbuffer;
+         struct pipe_vertex_element velement;
+
+         vbuffer.pitch = 0;
+         vbuffer.max_index = 0;
+         vbuffer.buffer = NULL;
+         vbuffer.buffer_offset = 0;
+
+         velement.src_offset = 0;
+         velement.vertex_buffer_index = attr;
+         velement.dst_offset = 0;
+         velement.src_format = PIPE_FORMAT_R32G32B32A32_FLOAT;
+
+         pipe->set_vertex_buffer(pipe, attr, &vbuffer);
+         pipe->set_vertex_element(pipe, attr, &velement);
+      }
+   }
+
+   /* do actual drawing */
+}
+
+
+
 
 /* This is all a hack to keep using tnl until we have vertex programs
  * up and running.
