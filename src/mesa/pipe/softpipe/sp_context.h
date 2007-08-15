@@ -31,8 +31,6 @@
 #ifndef SP_CONTEXT_H
 #define SP_CONTEXT_H
 
-//#include "glheader.h"
-
 #include "pipe/p_state.h"
 #include "pipe/p_context.h"
 

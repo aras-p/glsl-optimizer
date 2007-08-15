@@ -38,7 +38,7 @@
 #define DRAW_CONTEXT_H
 
 
-#include "glheader.h"
+#include "main/glheader.h"
 #include "pipe/p_state.h"
 
 

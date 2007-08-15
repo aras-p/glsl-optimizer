@@ -28,7 +28,7 @@
 #ifndef VF_VERTEX_H
 #define VF_VERTEX_H
 
-#include "mtypes.h"
+#include "main/mtypes.h"
 #include "math/m_vector.h"
 
 enum {

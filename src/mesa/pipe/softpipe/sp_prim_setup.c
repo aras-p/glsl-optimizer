@@ -33,9 +33,6 @@
  */
 
 
-//#include "imports.h"
-//#include "macros.h"
-
 #include "sp_context.h"
 #include "sp_headers.h"
 #include "sp_quad.h"

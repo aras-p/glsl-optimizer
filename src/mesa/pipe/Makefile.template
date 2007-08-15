@@ -14,10 +14,7 @@ OBJECTS = $(C_SOURCES:.c=.o) \
 ### Include directories
 INCLUDES = \
 	-I. \
-	-I$(TOP)/src/mesa/drivers/dri/common \
-	-I$(TOP)/src/mesa/main \
 	-I$(TOP)/src/mesa/pipe \
-	-I$(TOP)/include \
 	-I$(TOP)/src/mesa 
 
 

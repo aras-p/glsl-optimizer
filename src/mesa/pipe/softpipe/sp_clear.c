@@ -35,7 +35,6 @@
 #include "sp_context.h"
 #include "sp_surface.h"
 #include "sp_state.h"
-//#include "colormac.h"
 
 
 /**
