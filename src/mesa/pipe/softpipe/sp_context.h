@@ -64,6 +64,7 @@ enum interp_mode {
 #define SP_NEW_SAMPLER     0x400
 #define SP_NEW_TEXTURE     0x800
 #define SP_NEW_STENCIL    0x1000
+#define SP_NEW_VERTEX     0x2000
 
 
 struct softpipe_context {     
@@ -88,6 +89,8 @@ struct softpipe_context {
    struct pipe_stencil_state stencil;
    struct pipe_mipmap_tree *texture[PIPE_MAX_SAMPLERS];
    struct pipe_viewport_state viewport;
+   struct pipe_vertex_buffer vertex_buffer[PIPE_ATTRIB_MAX];
+   struct pipe_vertex_element vertex_element[PIPE_ATTRIB_MAX];
    unsigned dirty;
 
    /* Setup derived state.  TODO: this should be passed in the program

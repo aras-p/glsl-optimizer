@@ -29,6 +29,7 @@ DRIVER_SOURCES = \
 	sp_state_sampler.c \
 	sp_state_setup.c \
 	sp_state_surface.c \
+	sp_state_vertex.c \
 	sp_tex_layout.c \
 	sp_tex_sample.c \
 	sp_surface.c 
