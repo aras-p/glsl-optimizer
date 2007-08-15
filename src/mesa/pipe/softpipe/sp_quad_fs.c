@@ -42,14 +42,13 @@
 
 #include "main/mtypes.h"
 
-#if 0
+
 #if defined __GNUC__
-#define ALIGNED_ATTRIBS 1
+#define USE_ALIGNED_ATTRIBS   1
+#define ALIGN16_SUFFIX        __attribute__(( aligned( 16 ) ))
 #else
-#define ALIGNED_ATTRIBS 0
-#endif
-#else
-#define ALIGNED_ATTRIBS 0
+#define USE_ALIGNED_ATTRIBS   0
+#define ALIGN16_SUFFIX
 #endif
 
 
@@ -71,12 +70,7 @@ quad_shade_stage(struct quad_stage *qs)
 
 struct exec_machine {
    const struct setup_coefficient *coef; /**< will point to quad->coef */
-
-#if ALIGNED_ATTRIBS
-   float attr[PIPE_ATTRIB_MAX][NUM_CHANNELS][QUAD_SIZE] __attribute__(( aligned( 16 ) ));
-#else
-   float attr[PIPE_ATTRIB_MAX][NUM_CHANNELS][QUAD_SIZE];
-#endif
+   float attr[PIPE_ATTRIB_MAX][NUM_CHANNELS][QUAD_SIZE] ALIGN16_SUFFIX;
 };
 
 
@@ -161,6 +155,14 @@ shade_quad( struct quad_stage *qs, struct quad_header *quad )
    const float fx = quad->x0;
    const float fy = quad->y0;
    unsigned attr, i;
+   struct tgsi_exec_machine machine;
+
+#if USE_ALIGNED_ATTRIBS
+   struct tgsi_exec_vector outputs[FRAG_ATTRIB_MAX] ALIGN16_SUFFIX;
+#else
+   struct tgsi_exec_vector inputs[FRAG_ATTRIB_MAX + 1];
+   struct tgsi_exec_vector outputs[FRAG_ATTRIB_MAX + 1];
+#endif
 
    exec.coef = quad->coef;
 
@@ -209,105 +211,56 @@ shade_quad( struct quad_stage *qs, struct quad_header *quad )
       }
    }
 
-#if 1
-   /*softpipe->run_fs( tri->fp, quad, &tri->outputs );*/
-
-   {
-      struct tgsi_exec_machine machine;
-      struct tgsi_exec_vector outputs[FRAG_ATTRIB_MAX + 1];
-      struct tgsi_exec_vector *aoutputs;
-      unsigned i;
-
-#if !ALIGNED_ATTRIBS
-      struct tgsi_exec_vector inputs[FRAG_ATTRIB_MAX + 1];
-      struct tgsi_exec_vector *ainputs;
-#endif
-
 #ifdef DEBUG
-      memset(&machine, 0, sizeof(machine));
+   memset( &machine, 0, sizeof( machine ) );
 #endif
 
-      /* init machine state */
-      tgsi_exec_machine_init(
-         &machine,
-         softpipe->fs.tokens,
-         PIPE_MAX_SAMPLERS, qss->samplers);
+   assert( sizeof( struct tgsi_exec_vector ) == sizeof( exec.attr[0] ) );
 
-      /* Consts does not require 16 byte alignment. */
-      machine.Consts = softpipe->fs.constants->constant;
+   /* init machine state */
+   tgsi_exec_machine_init(
+      &machine,
+      softpipe->fs.tokens,
+      PIPE_MAX_SAMPLERS,
+      qss->samplers );
 
-      aoutputs = (struct tgsi_exec_vector *) tgsi_align_128bit( outputs );
-      machine.Outputs = aoutputs;
+   /* Consts does not require 16 byte alignment. */
+   machine.Consts = softpipe->fs.constants->constant;
 
-      assert( sizeof( struct tgsi_exec_vector ) == sizeof( exec.attr[0] ) );
-
-#if ALIGNED_ATTRIBS
-      machine.Inputs = (struct tgsi_exec_vector *) exec.attr;
-
-      for (i = 0; i < softpipe->nr_attrs; i++) {
-         /* Make sure fp_attr_to_slot[] is an identity transform. */
-         assert( softpipe->fp_attr_to_slot[i] == i );
-      }
+#if USE_ALIGNED_ATTRIBS
+   machine.Inputs = (struct tgsi_exec_vector *) exec.attr;
+   machine.Outputs = outputs;
 #else
-      ainputs = (struct tgsi_exec_vector *) tgsi_align_128bit( inputs );
-      machine.Inputs = ainputs;
+   machine.Inputs = (struct tgsi_exec_vector *) tgsi_align_128bit( inputs );
+   machine.Outputs = (struct tgsi_exec_vector *) tgsi_align_128bit( outputs );
 
-      /* load input registers */
-      for (i = 0; i < softpipe->nr_attrs; i++) {
-#if 01
-         /* Make sure fp_attr_to_slot[] is an identity transform. */
-         /*
-         assert( softpipe->fp_attr_to_slot[i] == i );
-         */
-         memcpy(
-            &ainputs[i],
-            exec.attr[i],
-            sizeof( ainputs[0] ) );
-#else
-         memcpy(
-            &ainputs[i],
-            exec.attr[softpipe->fp_attr_to_slot[i]],
-            sizeof( ainputs[0] ) );
-#endif
-      }
+   memcpy(
+      machine.Inputs,
+      exec.attr,
+      softpipe->nr_attrs * sizeof( struct tgsi_exec_vector ) );
 #endif
 
-      /* run shader */
-      tgsi_exec_machine_run( &machine );
+   /* run shader */
+   tgsi_exec_machine_run( &machine );
 
-      /* store result color */
-      memcpy(quad->outputs.color,
-             &aoutputs[FRAG_ATTRIB_COL0].xyzw[0].f[0],
-             sizeof(quad->outputs.color));
-      if (softpipe->need_z) {
-         /* XXX temporary */
-         quad->outputs.depth[0] = exec.attr[0][2][0];
-         quad->outputs.depth[1] = exec.attr[0][2][1];
-         quad->outputs.depth[2] = exec.attr[0][2][2];
-         quad->outputs.depth[3] = exec.attr[0][2][3];
-      }
+   /* store result color */
+   memcpy(
+      quad->outputs.color,
+      &machine.Outputs[FRAG_ATTRIB_COL0].xyzw[0].f[0],
+      sizeof( quad->outputs.color ) );
+
+   if( softpipe->need_z ) {
+      /* XXX temporary */
+      quad->outputs.depth[0] = exec.attr[0][2][0];
+      quad->outputs.depth[1] = exec.attr[0][2][1];
+      quad->outputs.depth[2] = exec.attr[0][2][2];
+      quad->outputs.depth[3] = exec.attr[0][2][3];
    }
-#else
-   {
-      unsigned attr = softpipe->fp_attr_to_slot[FRAG_ATTRIB_COL0];
-      assert(attr);
-
-      memcpy(quad->outputs.color, 
-	     exec.attr[attr], 
-	     sizeof(quad->outputs.color));
-
-      if (softpipe->need_z) {
-         quad->outputs.depth[0] = exec.attr[0][2][0];
-         quad->outputs.depth[1] = exec.attr[0][2][1];
-         quad->outputs.depth[2] = exec.attr[0][2][2];
-         quad->outputs.depth[3] = exec.attr[0][2][3];
-      }
-   }
-#endif
 
    /* shader may cull fragments */
-   if (quad->mask)
-      qs->next->run(qs->next, quad);
+   if( quad->mask ) {
+      qs->next->run( qs->next, quad );
+   }
 }
 
 
