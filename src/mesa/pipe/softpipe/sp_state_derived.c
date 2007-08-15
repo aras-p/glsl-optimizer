@@ -87,7 +87,7 @@ static void calculate_vertex_layout( struct softpipe_context *softpipe )
     * fragment position (XYZW).
     */
    if (softpipe->depth_test.enabled ||
-       (inputsRead & FRAG_ATTRIB_WPOS))
+       (inputsRead & (1 << FRAG_ATTRIB_WPOS)))
       softpipe->need_z = TRUE;
    else
       softpipe->need_z = FALSE;
@@ -95,7 +95,7 @@ static void calculate_vertex_layout( struct softpipe_context *softpipe )
    /* Need W if we do any perspective-corrected interpolation or the
     * fragment program uses the fragment position.
     */
-   if (inputsRead & FRAG_ATTRIB_WPOS)
+   if (inputsRead & (1 << FRAG_ATTRIB_WPOS))
       softpipe->need_w = TRUE;
    else
       softpipe->need_w = FALSE;

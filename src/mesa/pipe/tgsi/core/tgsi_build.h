@@ -38,6 +38,7 @@ struct tgsi_declaration
 tgsi_build_declaration(
    unsigned file,
    unsigned declare,
+   unsigned usage_mask,
    unsigned interpolate,
    unsigned semantic,
    struct tgsi_header *header );

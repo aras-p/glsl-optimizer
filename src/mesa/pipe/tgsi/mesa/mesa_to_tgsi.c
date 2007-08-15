@@ -467,13 +467,15 @@ static struct tgsi_full_declaration
 make_frag_input_decl(
    GLuint first,
    GLuint last,
-   GLuint interpolate )
+   GLuint interpolate,
+   GLuint usage_mask )
 {
    struct tgsi_full_declaration decl;
 
    decl = tgsi_default_full_declaration();
    decl.Declaration.File = TGSI_FILE_INPUT;
    decl.Declaration.Declare = TGSI_DECLARE_RANGE;
+   decl.Declaration.UsageMask = usage_mask;
    decl.Declaration.Interpolate = 1;
    decl.u.DeclarationRange.First = first;
    decl.u.DeclarationRange.Last = last;
@@ -485,13 +487,15 @@ make_frag_input_decl(
 static struct tgsi_full_declaration
 make_frag_output_decl(
    GLuint index,
-   GLuint semantic_name )
+   GLuint semantic_name,
+   GLuint usage_mask )
 {
    struct tgsi_full_declaration decl;
 
    decl = tgsi_default_full_declaration();
    decl.Declaration.File = TGSI_FILE_OUTPUT;
    decl.Declaration.Declare = TGSI_DECLARE_RANGE;
+   decl.Declaration.UsageMask = usage_mask;
    decl.Declaration.Semantic = 1;
    decl.u.DeclarationRange.First = index;
    decl.u.DeclarationRange.Last = index;
@@ -514,6 +518,7 @@ tgsi_mesa_compile_fp_program(
    struct tgsi_full_dst_register *fulldst;
    struct tgsi_full_src_register *fullsrc;
    GLuint inputs_read;
+   GLboolean reads_wpos;
    GLuint preamble_size = 0;
 
    *(struct tgsi_version *) &tokens[0] = tgsi_build_version();
@@ -523,19 +528,33 @@ tgsi_mesa_compile_fp_program(
 
    ti = 2;
 
-   /*
-    * Input 0 is always read, at least implicitly by the MOV instruction generated
-    * below, so mark it as used.
-    */
-   inputs_read = program->Base.InputsRead | 1;
+   reads_wpos = program->Base.InputsRead & (1 << FRAG_ATTRIB_WPOS);
+   inputs_read = program->Base.InputsRead | (1 << FRAG_ATTRIB_WPOS);
 
    /*
     * Declare input attributes. Note that we do not interpolate fragment position.
     */
+
+   /* Fragment position. */
+   if( reads_wpos ) {
+      fulldecl = make_frag_input_decl(
+         0,
+         0,
+         TGSI_INTERPOLATE_CONSTANT,
+         TGSI_WRITEMASK_XY );
+      ti += tgsi_build_full_declaration(
+         &fulldecl,
+         &tokens[ti],
+         header,
+         maxTokens - ti );
+   }
+
+   /* Fragment zw. */
    fulldecl = make_frag_input_decl(
       0,
       0,
-      TGSI_INTERPOLATE_CONSTANT );
+      TGSI_INTERPOLATE_LINEAR,
+      reads_wpos ? TGSI_WRITEMASK_ZW : TGSI_WRITEMASK_Z );
    ti += tgsi_build_full_declaration(
       &fulldecl,
       &tokens[ti],
@@ -552,7 +571,8 @@ tgsi_mesa_compile_fp_program(
       fulldecl = make_frag_input_decl(
          1,
          1 + count - 1,
-         TGSI_INTERPOLATE_LINEAR );
+         TGSI_INTERPOLATE_LINEAR,
+         TGSI_WRITEMASK_XYZW );
       ti += tgsi_build_full_declaration(
          &fulldecl,
          &tokens[ti],
@@ -569,7 +589,8 @@ tgsi_mesa_compile_fp_program(
 
    fulldecl = make_frag_output_decl(
       0,
-      TGSI_SEMANTIC_DEPTH );
+      TGSI_SEMANTIC_DEPTH,
+      TGSI_WRITEMASK_Z );
    ti += tgsi_build_full_declaration(
       &fulldecl,
       &tokens[ti],
@@ -579,45 +600,14 @@ tgsi_mesa_compile_fp_program(
    if( program->Base.OutputsWritten & (1 << FRAG_RESULT_COLR) ) {
       fulldecl = make_frag_output_decl(
          1,
-         TGSI_SEMANTIC_COLOR );
+         TGSI_SEMANTIC_COLOR,
+         TGSI_WRITEMASK_XYZW );
       ti += tgsi_build_full_declaration(
          &fulldecl,
          &tokens[ti],
          header,
          maxTokens - ti );
    }
-
-   /*
-    * Copy input fragment xyz to output xyz.
-    * If the shader writes depth, do not copy the z component.
-    */
-
-   fullinst = tgsi_default_full_instruction();
-
-   fullinst.Instruction.Opcode = TGSI_OPCODE_MOV;
-   fullinst.Instruction.NumDstRegs = 1;
-   fullinst.Instruction.NumSrcRegs = 1;
-
-   fulldst = &fullinst.FullDstRegisters[0];
-   fulldst->DstRegister.File = TGSI_FILE_OUTPUT;
-   fulldst->DstRegister.Index = 0;
-   if( program->Base.OutputsWritten & (1 << FRAG_RESULT_DEPR) ) {
-      fulldst->DstRegister.WriteMask = TGSI_WRITEMASK_XY;
-   }
-   else {
-      fulldst->DstRegister.WriteMask = TGSI_WRITEMASK_XYZ;
-   }
-
-   fullsrc = &fullinst.FullSrcRegisters[0];
-   fullsrc->SrcRegister.File = TGSI_FILE_INPUT;
-   fullsrc->SrcRegister.Index = 0;
-
-   ti += tgsi_build_full_instruction(
-      &fullinst,
-      &tokens[ti],
-      header,
-      maxTokens - ti );
-   preamble_size++;
 
    for( i = 0; i < program->Base.NumInstructions; i++ ) {
       if( compile_instruction(

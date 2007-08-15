@@ -33,14 +33,11 @@
  */
 
 #include "pipe/p_util.h"
-#include "tgsi/core/tgsi_core.h"
 
 #include "sp_context.h"
 #include "sp_headers.h"
 #include "sp_quad.h"
 #include "sp_tex_sample.h"
-
-#include "main/mtypes.h"
 
 
 #if defined __GNUC__
@@ -66,156 +63,32 @@ quad_shade_stage(struct quad_stage *qs)
    return (struct quad_shade_stage *) qs;
 }
 
-
-
-struct exec_machine {
-   const struct setup_coefficient *coef; /**< will point to quad->coef */
-   float attr[PIPE_ATTRIB_MAX][NUM_CHANNELS][QUAD_SIZE] ALIGN16_SUFFIX;
-};
-
-
-/**
- * Compute quad's attributes values, as constants (GL_FLAT shading).
- */
-static INLINE void cinterp( struct exec_machine *exec,
-			    unsigned attrib,
-			    unsigned i )
-{
-   unsigned j;
-
-   for (j = 0; j < QUAD_SIZE; j++) {
-      exec->attr[attrib][i][j] = exec->coef[attrib].a0[i];
-   }
-}
-
-
-/**
- * Compute quad's attribute values by linear interpolation.
- *
- * Push into the fp:
- * 
- *   INPUT[attr] = MAD COEF_A0[attr], COEF_DADX[attr], INPUT_WPOS.xxxx
- *   INPUT[attr] = MAD INPUT[attr],   COEF_DADY[attr], INPUT_WPOS.yyyy
- */
-static INLINE void linterp( struct exec_machine *exec,
-			    unsigned attrib,
-			    unsigned i )
-{
-   unsigned j;
-
-   for (j = 0; j < QUAD_SIZE; j++) {
-      const float x = exec->attr[FRAG_ATTRIB_WPOS][0][j];
-      const float y = exec->attr[FRAG_ATTRIB_WPOS][1][j];
-      exec->attr[attrib][i][j] = (exec->coef[attrib].a0[i] +
-				  exec->coef[attrib].dadx[i] * x + 
-				  exec->coef[attrib].dady[i] * y);
-   }
-}
-
-
-/**
- * Compute quad's attribute values by linear interpolation with
- * perspective correction.
- *
- * Push into the fp:
- * 
- *   INPUT[attr] = MAD COEF_DADX[attr], INPUT_WPOS.xxxx, COEF_A0[attr]
- *   INPUT[attr] = MAD COEF_DADY[attr], INPUT_WPOS.yyyy, INPUT[attr]
- *   TMP         = RCP INPUT_WPOS.w
- *   INPUT[attr] = MUL INPUT[attr], TMP.xxxx
- *
- */
-static INLINE void pinterp( struct exec_machine *exec,
-			    unsigned attrib,
-			    unsigned i )
-{
-   unsigned j;
-
-   for (j = 0; j < QUAD_SIZE; j++) {
-      const float x = exec->attr[FRAG_ATTRIB_WPOS][0][j];
-      const float y = exec->attr[FRAG_ATTRIB_WPOS][1][j];
-      /* FRAG_ATTRIB_WPOS.w here is really 1/w */
-      const float w = 1.0 / exec->attr[FRAG_ATTRIB_WPOS][3][j];
-      exec->attr[attrib][i][j] = ((exec->coef[attrib].a0[i] +
-				   exec->coef[attrib].dadx[i] * x + 
-				   exec->coef[attrib].dady[i] * y) * w);
-   }
-}
-
-
 /* This should be done by the fragment shader execution unit (code
  * generated from the decl instructions).  Do it here for now.
  */
 static void
-shade_quad( struct quad_stage *qs, struct quad_header *quad )
+shade_quad(
+   struct quad_stage *qs,
+   struct quad_header *quad )
 {
-   struct quad_shade_stage *qss = quad_shade_stage(qs);
+   struct quad_shade_stage *qss = quad_shade_stage( qs );
    struct softpipe_context *softpipe = qs->softpipe;
-   struct exec_machine exec;
    const float fx = quad->x0;
    const float fy = quad->y0;
    unsigned attr, i;
    struct tgsi_exec_machine machine;
 
 #if USE_ALIGNED_ATTRIBS
-   struct tgsi_exec_vector outputs[FRAG_ATTRIB_MAX] ALIGN16_SUFFIX;
+   struct tgsi_exec_vector inputs[PIPE_ATTRIB_MAX] ALIGN16_SUFFIX;
+   struct tgsi_exec_vector outputs[PIPE_ATTRIB_MAX] ALIGN16_SUFFIX;
 #else
-   struct tgsi_exec_vector inputs[FRAG_ATTRIB_MAX + 1];
-   struct tgsi_exec_vector outputs[FRAG_ATTRIB_MAX + 1];
+   struct tgsi_exec_vector inputs[PIPE_ATTRIB_MAX + 1];
+   struct tgsi_exec_vector outputs[PIPE_ATTRIB_MAX + 1];
 #endif
-
-   exec.coef = quad->coef;
-
-   /* Position:
-    */
-   exec.attr[FRAG_ATTRIB_WPOS][0][0] = fx;
-   exec.attr[FRAG_ATTRIB_WPOS][0][1] = fx + 1.0;
-   exec.attr[FRAG_ATTRIB_WPOS][0][2] = fx;
-   exec.attr[FRAG_ATTRIB_WPOS][0][3] = fx + 1.0;
-
-   exec.attr[FRAG_ATTRIB_WPOS][1][0] = fy;
-   exec.attr[FRAG_ATTRIB_WPOS][1][1] = fy;
-   exec.attr[FRAG_ATTRIB_WPOS][1][2] = fy + 1.0;
-   exec.attr[FRAG_ATTRIB_WPOS][1][3] = fy + 1.0;
-
-   /* Z and W are done by linear interpolation */
-   if (softpipe->need_z) {
-      linterp(&exec, 0, 2);   /* attr[0].z */
-   }
-
-   if (softpipe->need_w) {
-      linterp(&exec, 0, 3);  /* attr[0].w */
-      /*invert(&exec, 0, 3);*/
-   }
-
-   /* Interpolate all the remaining attributes.  This will get pushed
-    * into the fragment program's responsibilities at some point.
-    * Start at 1 to skip fragment position attribute (computed above).
-    */
-   for (attr = 1; attr < quad->nr_attrs; attr++) {
-      switch (softpipe->interp[attr]) {
-      case INTERP_CONSTANT:
-	 for (i = 0; i < NUM_CHANNELS; i++)
-	    cinterp(&exec, attr, i);
-	 break;
-
-      case INTERP_LINEAR:
-	 for (i = 0; i < NUM_CHANNELS; i++)
-	    linterp(&exec, attr, i);
-	 break;
-
-      case INTERP_PERSPECTIVE:
-	 for (i = 0; i < NUM_CHANNELS; i++)
-	    pinterp(&exec, attr, i);
-	 break;
-      }
-   }
 
 #ifdef DEBUG
    memset( &machine, 0, sizeof( machine ) );
 #endif
-
-   assert( sizeof( struct tgsi_exec_vector ) == sizeof( exec.attr[0] ) );
 
    /* init machine state */
    tgsi_exec_machine_init(
@@ -228,17 +101,24 @@ shade_quad( struct quad_stage *qs, struct quad_header *quad )
    machine.Consts = softpipe->fs.constants->constant;
 
 #if USE_ALIGNED_ATTRIBS
-   machine.Inputs = (struct tgsi_exec_vector *) exec.attr;
+   machine.Inputs = inputs;
    machine.Outputs = outputs;
 #else
    machine.Inputs = (struct tgsi_exec_vector *) tgsi_align_128bit( inputs );
    machine.Outputs = (struct tgsi_exec_vector *) tgsi_align_128bit( outputs );
-
-   memcpy(
-      machine.Inputs,
-      exec.attr,
-      softpipe->nr_attrs * sizeof( struct tgsi_exec_vector ) );
 #endif
+
+   machine.InterpCoefs = quad->coef;
+
+   machine.Inputs[0].xyzw[0].f[0] = fx;
+   machine.Inputs[0].xyzw[0].f[1] = fx + 1.0;
+   machine.Inputs[0].xyzw[0].f[2] = fx;
+   machine.Inputs[0].xyzw[0].f[3] = fx + 1.0;
+
+   machine.Inputs[0].xyzw[1].f[0] = fy;
+   machine.Inputs[0].xyzw[1].f[1] = fy;
+   machine.Inputs[0].xyzw[1].f[2] = fy + 1.0;
+   machine.Inputs[0].xyzw[1].f[3] = fy + 1.0;
 
    /* run shader */
    tgsi_exec_machine_run( &machine );
@@ -246,15 +126,15 @@ shade_quad( struct quad_stage *qs, struct quad_header *quad )
    /* store result color */
    memcpy(
       quad->outputs.color,
-      &machine.Outputs[FRAG_ATTRIB_COL0].xyzw[0].f[0],
+      &machine.Outputs[1].xyzw[0].f[0],
       sizeof( quad->outputs.color ) );
 
    if( softpipe->need_z ) {
       /* XXX temporary */
-      quad->outputs.depth[0] = exec.attr[0][2][0];
-      quad->outputs.depth[1] = exec.attr[0][2][1];
-      quad->outputs.depth[2] = exec.attr[0][2][2];
-      quad->outputs.depth[3] = exec.attr[0][2][3];
+      memcpy(
+         quad->outputs.depth,
+         &machine.Outputs[0].xyzw[2],
+         sizeof( quad->outputs.depth ) );
    }
 
    /* shader may cull fragments */

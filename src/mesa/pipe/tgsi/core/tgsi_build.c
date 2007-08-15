@@ -88,6 +88,7 @@ tgsi_default_declaration( void )
    declaration.Size = 1;
    declaration.File = TGSI_FILE_NULL;
    declaration.Declare = TGSI_DECLARE_RANGE;
+   declaration.UsageMask = TGSI_WRITEMASK_XYZW;
    declaration.Interpolate = 0;
    declaration.Semantic = 0;
    declaration.Padding = 0;
@@ -100,6 +101,7 @@ struct tgsi_declaration
 tgsi_build_declaration(
    unsigned file,
    unsigned declare,
+   unsigned usage_mask,
    unsigned interpolate,
    unsigned semantic,
    struct tgsi_header *header )
@@ -112,6 +114,7 @@ tgsi_build_declaration(
    declaration = tgsi_default_declaration();
    declaration.File = file;
    declaration.Declare = declare;
+   declaration.UsageMask = usage_mask;
    declaration.Interpolate = interpolate;
    declaration.Semantic = semantic;
 
@@ -162,6 +165,7 @@ tgsi_build_full_declaration(
    *declaration = tgsi_build_declaration(
       full_decl->Declaration.File,
       full_decl->Declaration.Declare,
+      full_decl->Declaration.UsageMask,
       full_decl->Declaration.Interpolate,
       full_decl->Declaration.Semantic,
       header );

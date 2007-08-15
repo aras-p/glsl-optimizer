@@ -11,23 +11,27 @@
 extern "C" {
 #endif // defined __cplusplus
 
+#define NUM_CHANNELS 4  /* R,G,B,A */
+#define QUAD_SIZE    4  /* 4 pixel/quad */
+
 union tgsi_exec_channel
 {
-   float  f[4];
-   int    i[4];
-   unsigned   u[4];
+   float    f[QUAD_SIZE];
+   int      i[QUAD_SIZE];
+   unsigned u[QUAD_SIZE];
 };
 
 struct tgsi_exec_vector
 {
-   union tgsi_exec_channel xyzw[4];
+   union tgsi_exec_channel xyzw[NUM_CHANNELS];
 };
 
-
-#define NUM_CHANNELS 4  /* R,G,B,A */
-#ifndef QUAD_SIZE
-#define QUAD_SIZE 4     /* 4 pixel/quad */
-#endif
+struct tgsi_interp_coef
+{
+   float a0[NUM_CHANNELS];	/* in an xyzw layout */
+   float dadx[NUM_CHANNELS];
+   float dady[NUM_CHANNELS];
+};
 
 #define TEX_CACHE_TILE_SIZE 8
 #define TEX_CACHE_NUM_ENTRIES 8
@@ -55,8 +59,8 @@ struct tgsi_sampler
 
 struct tgsi_exec_labels
 {
-   unsigned   labels[128][2];
-   unsigned   count;
+   unsigned labels[128][2];
+   unsigned count;
 };
 
 #define TGSI_EXEC_TEMP_00000000_I   32
@@ -109,15 +113,15 @@ struct tgsi_exec_cond_state
 {
    struct tgsi_exec_cond_regs IfPortion;
    struct tgsi_exec_cond_regs ElsePortion;
-   unsigned                     Condition;
-   boolean                  WasElse;
+   unsigned                   Condition;
+   boolean                    WasElse;
 };
 
 /* XXX: This is temporary */
 struct tgsi_exec_cond_stack
 {
    struct tgsi_exec_cond_state   States[8];
-   unsigned                        Index;      /* into States[] */
+   unsigned                      Index;      /* into States[] */
 };
 
 struct tgsi_exec_machine
@@ -138,15 +142,19 @@ struct tgsi_exec_machine
 
    struct tgsi_sampler           *Samplers;
 
-   float                       Imms[256][4];
-   unsigned                        ImmLimit;
-   float                       (*Consts)[4];
-   const struct tgsi_exec_vector *Inputs;
+   float                         Imms[256][4];
+   unsigned                      ImmLimit;
+   float                         (*Consts)[4];
+   struct tgsi_exec_vector       *Inputs;
    struct tgsi_exec_vector       *Outputs;
-   struct tgsi_token             *Tokens;
-   unsigned                        Processor;
+   const struct tgsi_token       *Tokens;
+   unsigned                      Processor;
 
-   unsigned                        *Primitives;
+   /* GEOMETRY processor only. */
+   unsigned                      *Primitives;
+
+   /* FRAGMENT processor only. */
+   const struct tgsi_interp_coef *InterpCoefs;
 
    struct tgsi_exec_cond_stack   CondStack;
 #if XXX_SSE
@@ -157,7 +165,7 @@ struct tgsi_exec_machine
 void
 tgsi_exec_machine_init(
    struct tgsi_exec_machine *mach,
-   struct tgsi_token *tokens,
+   const struct tgsi_token *tokens,
    unsigned numSamplers,
    struct tgsi_sampler *samplers);
 

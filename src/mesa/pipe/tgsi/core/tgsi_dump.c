@@ -633,6 +633,22 @@ dump_declaration_short(
       assert( 0 );
    }
 
+   if( decl->Declaration.UsageMask != TGSI_WRITEMASK_XYZW ) {
+      CHR( '.' );
+      if( decl->Declaration.UsageMask & TGSI_WRITEMASK_X ) {
+         CHR( 'x' );
+      }
+      if( decl->Declaration.UsageMask & TGSI_WRITEMASK_Y ) {
+         CHR( 'y' );
+      }
+      if( decl->Declaration.UsageMask & TGSI_WRITEMASK_Z ) {
+         CHR( 'z' );
+      }
+      if( decl->Declaration.UsageMask & TGSI_WRITEMASK_W ) {
+         CHR( 'w' );
+      }
+   }
+
    if( decl->Declaration.Interpolate ) {
       TXT( ", " );
       ENM( decl->Interpolation.Interpolate, TGSI_INTERPOLATES_SHORT );
@@ -659,6 +675,21 @@ dump_declaration_verbose(
    ENM( decl->Declaration.File, TGSI_FILES );
    TXT( "\nDeclare    : " );
    ENM( decl->Declaration.Declare, TGSI_DECLARES );
+   if( deflt || fd->Declaration.UsageMask != decl->Declaration.UsageMask ) {
+      TXT( "\nUsageMask  : " );
+      if( decl->Declaration.UsageMask & TGSI_WRITEMASK_X ) {
+         CHR( 'X' );
+      }
+      if( decl->Declaration.UsageMask & TGSI_WRITEMASK_Y ) {
+         CHR( 'Y' );
+      }
+      if( decl->Declaration.UsageMask & TGSI_WRITEMASK_Z ) {
+         CHR( 'Z' );
+      }
+      if( decl->Declaration.UsageMask & TGSI_WRITEMASK_W ) {
+         CHR( 'W' );
+      }
+   }
    if( deflt || fd->Declaration.Interpolate != decl->Declaration.Interpolate ) {
       TXT( "\nInterpolate: " );
       UID( decl->Declaration.Interpolate );

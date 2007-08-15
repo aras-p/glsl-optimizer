@@ -31,6 +31,7 @@
 #ifndef SP_HEADERS_H
 #define SP_HEADERS_H
 
+#include "../tgsi/core/tgsi_core.h"
 
 #define PRIM_POINT 1
 #define PRIM_LINE  2
@@ -44,24 +45,12 @@
 #define QUAD_BOTTOM_RIGHT 1
 #define QUAD_TOP_LEFT     2
 #define QUAD_TOP_RIGHT    3
-#define QUAD_SIZE        (2*2)
 
 #define MASK_BOTTOM_LEFT  0x1
 #define MASK_BOTTOM_RIGHT 0x2
 #define MASK_TOP_LEFT     0x4
 #define MASK_TOP_RIGHT    0x8
 #define MASK_ALL          0xf
-
-
-#define NUM_CHANNELS   4	/* avoid confusion between 4 pixels and 4 channels */
-
-
-struct setup_coefficient {
-   float a0[NUM_CHANNELS];	/* in an xyzw layout */
-   float dadx[NUM_CHANNELS];
-   float dady[NUM_CHANNELS];
-};
-
 
 
 /**
@@ -76,17 +65,13 @@ struct quad_header {
    unsigned prim:2;     /**< PRIM_POINT, LINE, TRI */
 
    struct {
-      float color[4][QUAD_SIZE];	/* rrrr, gggg, bbbb, aaaa */
+      float color[NUM_CHANNELS][QUAD_SIZE];	/* rrrr, gggg, bbbb, aaaa */
       float depth[QUAD_SIZE];
    } outputs;
 
    float coverage[QUAD_SIZE];    /** fragment coverage for antialiasing */
 
-   const struct setup_coefficient *coef;
-
-   const enum interp_mode *interp; /* XXX: this information should be
-				    * encoded in fragment program DECL
-				    * statements. */
+   const struct tgsi_interp_coef *coef;
 
    unsigned nr_attrs;
 };

@@ -62,7 +62,7 @@
 void
 tgsi_exec_machine_init(
    struct tgsi_exec_machine *mach,
-   struct tgsi_token *tokens,
+   const struct tgsi_token *tokens,
    GLuint numSamplers,
    struct tgsi_sampler *samplers)
 {
@@ -1063,7 +1063,131 @@ fetch_texel( struct tgsi_sampler *sampler,
    }
 }
 
+static void
+constant_interpolation(
+   struct tgsi_exec_machine *mach,
+   unsigned attrib,
+   unsigned chan )
+{
+   unsigned i;
 
+   for( i = 0; i < QUAD_SIZE; i++ ) {
+      mach->Inputs[attrib].xyzw[chan].f[i] = mach->InterpCoefs[attrib].a0[chan];
+   }
+}
+
+static void
+linear_interpolation(
+   struct tgsi_exec_machine *mach,
+   unsigned attrib,
+   unsigned chan )
+{
+   unsigned i;
+
+   for( i = 0; i < QUAD_SIZE; i++ ) {
+      const float x = mach->Inputs[0].xyzw[0].f[i];
+      const float y = mach->Inputs[0].xyzw[1].f[i];
+
+      mach->Inputs[attrib].xyzw[chan].f[i] =
+         mach->InterpCoefs[attrib].a0[chan] +
+         mach->InterpCoefs[attrib].dadx[chan] * x +
+         mach->InterpCoefs[attrib].dady[chan] * y;
+   }
+}
+
+static void
+perspective_interpolation(
+   struct tgsi_exec_machine *mach,
+   unsigned attrib,
+   unsigned chan )
+{
+   unsigned i;
+
+   for( i = 0; i < QUAD_SIZE; i++ ) {
+      const float x = mach->Inputs[0].xyzw[0].f[i];
+      const float y = mach->Inputs[0].xyzw[1].f[i];
+      // WPOS.w here is really 1/w
+      const float w = 1.0f / mach->Inputs[0].xyzw[3].f[i];
+
+      mach->Inputs[attrib].xyzw[chan].f[i] =
+         (mach->InterpCoefs[attrib].a0[chan] +
+         mach->InterpCoefs[attrib].dadx[chan] * x +
+         mach->InterpCoefs[attrib].dady[chan] * y) * w;
+   }
+}
+
+typedef void (* interpolation_func)(
+   struct tgsi_exec_machine *mach,
+   unsigned attrib,
+   unsigned chan );
+
+static void
+exec_declaration(
+   struct tgsi_exec_machine *mach,
+   const struct tgsi_full_declaration *decl )
+{
+   if( mach->Processor == TGSI_PROCESSOR_FRAGMENT ) {
+      if( decl->Declaration.File == TGSI_FILE_INPUT ) {
+         unsigned first, last, mask, i, j;
+         interpolation_func interp;
+
+         assert( decl->Declaration.Declare == TGSI_DECLARE_RANGE );
+
+         first = decl->u.DeclarationRange.First;
+         last = decl->u.DeclarationRange.Last;
+         mask = decl->Declaration.UsageMask;
+
+         /* Do not touch WPOS.xy */
+         if( first == 0 ) {
+            mask &= ~TGSI_WRITEMASK_XY;
+            if( mask == TGSI_WRITEMASK_NONE ) {
+               first++;
+               if( first > last ) {
+                  return;
+               }
+            }
+         }
+
+         switch( decl->Interpolation.Interpolate ) {
+         case TGSI_INTERPOLATE_CONSTANT:
+            interp = constant_interpolation;
+            break;
+
+         case TGSI_INTERPOLATE_LINEAR:
+            interp = linear_interpolation;
+            break;
+
+         case TGSI_INTERPOLATE_PERSPECTIVE:
+            interp = perspective_interpolation;
+            break;
+
+         default:
+            assert( 0 );
+         }
+
+         if( mask == TGSI_WRITEMASK_XYZW ) {
+            unsigned i, j;
+
+            for( i = first; i <= last; i++ ) {
+               for( j = 0; j < NUM_CHANNELS; j++ ) {
+                  interp( mach, i, j );
+               }
+            }
+         }
+         else {
+            unsigned i, j;
+
+            for( j = 0; j < NUM_CHANNELS; j++ ) {
+               if( mask & (1 << j) ) {
+                  for( i = first; i <= last; i++ ) {
+                     interp( mach, i, j );
+                  }
+               }
+            }
+         }
+      }
+   }
+}
 
 static void
 exec_instruction(
@@ -2161,6 +2285,7 @@ tgsi_exec_machine_run2(
       tgsi_parse_token( &parse );
       switch( parse.FullToken.Token.Type ) {
       case TGSI_TOKEN_TYPE_DECLARATION:
+         exec_declaration( mach, &parse.FullToken.FullDeclaration );
          break;
       case TGSI_TOKEN_TYPE_IMMEDIATE:
          break;

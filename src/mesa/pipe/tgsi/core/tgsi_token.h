@@ -52,15 +52,33 @@ struct tgsi_token
 #define TGSI_DECLARE_RANGE    0
 #define TGSI_DECLARE_MASK     1
 
+#define TGSI_WRITEMASK_NONE     0x00
+#define TGSI_WRITEMASK_X        0x01
+#define TGSI_WRITEMASK_Y        0x02
+#define TGSI_WRITEMASK_XY       0x03
+#define TGSI_WRITEMASK_Z        0x04
+#define TGSI_WRITEMASK_XZ       0x05
+#define TGSI_WRITEMASK_YZ       0x06
+#define TGSI_WRITEMASK_XYZ      0x07
+#define TGSI_WRITEMASK_W        0x08
+#define TGSI_WRITEMASK_XW       0x09
+#define TGSI_WRITEMASK_YW       0x0A
+#define TGSI_WRITEMASK_XYW      0x0B
+#define TGSI_WRITEMASK_ZW       0x0C
+#define TGSI_WRITEMASK_XZW      0x0D
+#define TGSI_WRITEMASK_YZW      0x0E
+#define TGSI_WRITEMASK_XYZW     0x0F
+
 struct tgsi_declaration
 {
    unsigned Type        : 4;  /* TGSI_TOKEN_TYPE_DECLARATION */
    unsigned Size        : 8;  /* UINT */
    unsigned File        : 4;  /* TGSI_FILE_ */
    unsigned Declare     : 4;  /* TGSI_DECLARE_ */
+   unsigned UsageMask   : 4;  /* TGSI_WRITEMASK_ */
    unsigned Interpolate : 1;  /* BOOL */
    unsigned Semantic    : 1;  /* BOOL */
-   unsigned Padding     : 9;
+   unsigned Padding     : 5;
    unsigned Extended    : 1;  /* BOOL */
 };
 
@@ -1225,23 +1243,6 @@ struct tgsi_instruction_ext_texture
    unsigned Padding  : 19;
    unsigned Extended : 1;    /* BOOL */
 };
-
-#define TGSI_WRITEMASK_NONE     0x00
-#define TGSI_WRITEMASK_X        0x01
-#define TGSI_WRITEMASK_Y        0x02
-#define TGSI_WRITEMASK_XY       0x03
-#define TGSI_WRITEMASK_Z        0x04
-#define TGSI_WRITEMASK_XZ       0x05
-#define TGSI_WRITEMASK_YZ       0x06
-#define TGSI_WRITEMASK_XYZ      0x07
-#define TGSI_WRITEMASK_W        0x08
-#define TGSI_WRITEMASK_XW       0x09
-#define TGSI_WRITEMASK_YW       0x0A
-#define TGSI_WRITEMASK_XYW      0x0B
-#define TGSI_WRITEMASK_ZW       0x0C
-#define TGSI_WRITEMASK_XZW      0x0D
-#define TGSI_WRITEMASK_YZW      0x0E
-#define TGSI_WRITEMASK_XYZW     0x0F
 
 struct tgsi_instruction_ext_predicate
 {

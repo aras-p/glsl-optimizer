@@ -80,7 +80,7 @@ struct setup_stage {
 
    float oneoverarea;
 
-   struct setup_coefficient coef[FRAG_ATTRIB_MAX];
+   struct tgsi_interp_coef coef[FRAG_ATTRIB_MAX];
    struct quad_header quad; 
 
    struct {
