@@ -167,7 +167,8 @@ nouveauQueryInitFuncs(GLcontext *ctx)
 	if (nmesa->screen->card->type < NV_20)
 		return;
 
-	nmesa->query_object_max = (0x4000 / 32);
+	/* Reserve half the notifier block for use as query objects */
+	nmesa->query_object_max = (nmesa->fifo.drm.notifier_size / 2) / 32;
 	nmesa->queryNotifier =
 		nouveau_notifier_new(ctx, NvQueryNotify,
 					  nmesa->query_object_max);
