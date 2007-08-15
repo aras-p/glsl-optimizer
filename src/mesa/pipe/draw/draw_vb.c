@@ -464,9 +464,13 @@ static void draw_prim( struct draw_context *draw,
 }
 
 
-static void draw_allocate_vertices( struct draw_context *draw,
-				    GLuint nr_vertices )
+/**
+ * Allocate storage for post-transformation vertices.
+ */
+static void
+draw_allocate_vertices( struct draw_context *draw, GLuint nr_vertices )
 {
+   assert(draw->vertex_size > 0);
    draw->nr_vertices = nr_vertices;
    draw->verts = (GLubyte *) malloc( nr_vertices * draw->vertex_size );
    draw_invalidate_vcache( draw );
@@ -474,7 +478,11 @@ static void draw_allocate_vertices( struct draw_context *draw,
 
 
 
-static void draw_release_vertices( struct draw_context *draw )
+/**
+ * Free storage which was allocated by draw_allocate_vertices()
+ */
+static void
+draw_release_vertices( struct draw_context *draw )
 {
    free(draw->verts);
    draw->verts = NULL;
@@ -603,7 +611,8 @@ static GLuint trim( GLuint count, GLuint first, GLuint incr )
 }
 
 
-/* This is a hack & will all go away.
+/**
+ * This is a hack & will all go away.
  */
 void draw_vb(struct draw_context *draw,
 	     struct vertex_buffer *VB )
@@ -621,9 +630,10 @@ void draw_vb(struct draw_context *draw,
 
    draw->in_vb = 1;
 
+   /* tell drawing pipeline we're beginning drawing */
    draw->pipeline.first->begin( draw->pipeline.first );
 
-   /* Allocate the vertices:
+   /* Allocate storage for the post-transform vertices:
     */
    draw_allocate_vertices( draw, VB->Count );
 
@@ -640,9 +650,8 @@ void draw_vb(struct draw_context *draw,
       draw->get_vertex = get_vertex;
 
    for (i = 0; i < VB->PrimitiveCount; i++) {
-
-      GLenum mode = VB->Primitive[i].mode;
-      GLuint start = VB->Primitive[i].start;
+      const GLenum mode = VB->Primitive[i].mode;
+      const GLuint start = VB->Primitive[i].start;
       GLuint length, first, incr;
 
       /* Trim the primitive down to a legal size.  
@@ -659,8 +668,13 @@ void draw_vb(struct draw_context *draw,
       draw_prim( draw, start, length );
    }
 
+   /* draw any left-over buffered prims */
    draw_flush(draw);
+
+   /* tell drawing pipeline we're done drawing */
    draw->pipeline.first->end( draw->pipeline.first );
+
+   /* free the post-transformed vertices */
    draw_release_vertices( draw );
    draw->verts = NULL;
    draw->in_vb = 0;
