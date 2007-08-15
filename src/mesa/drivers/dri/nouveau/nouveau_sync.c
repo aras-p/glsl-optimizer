@@ -37,7 +37,8 @@
 
 #define NOTIFIER(__v) \
 	nouveauContextPtr nmesa = NOUVEAU_CONTEXT(ctx); \
-	volatile uint32_t *__v = (void*)nmesa->notifier_block + notifier->offset
+	volatile uint32_t *__v = (void*)nmesa->fifo.notifier_block + \
+				 notifier->offset
 
 struct drm_nouveau_notifierobj_alloc *
 nouveau_notifier_new(GLcontext *ctx, GLuint handle, GLuint count)
@@ -53,7 +54,7 @@ nouveau_notifier_new(GLcontext *ctx, GLuint handle, GLuint count)
 	if (!notifier)
 		return NULL;
 
-	notifier->channel = nmesa->fifo.channel;
+	notifier->channel = nmesa->fifo.drm.channel;
 	notifier->handle  = handle;
 	notifier->count   = count;
 	ret = drmCommandWriteRead(nmesa->driFd, DRM_NOUVEAU_NOTIFIEROBJ_ALLOC,

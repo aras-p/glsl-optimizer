@@ -10,7 +10,7 @@ GLboolean nouveauCreateContextObject(nouveauContextPtr nmesa,
 	struct drm_nouveau_grobj_alloc cto;
 	int ret;
 
-	cto.channel = nmesa->fifo.channel;
+	cto.channel = nmesa->fifo.drm.channel;
 	cto.handle  = handle;
 	cto.class   = class;
 	ret = drmCommandWrite(nmesa->driFd, DRM_NOUVEAU_GROBJ_ALLOC,

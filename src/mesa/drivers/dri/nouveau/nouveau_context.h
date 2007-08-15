@@ -44,17 +44,16 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #include "xmlconfig.h"
 
-typedef struct nouveau_fifo_t{
-	int channel;
-	u_int32_t* buffer;
-	u_int32_t* mmio;
-	u_int32_t put_base;
-	u_int32_t current;
-	u_int32_t put;
-	u_int32_t free;
-	u_int32_t max;
-}
-nouveau_fifo;
+typedef struct nouveau_fifo {
+	struct drm_nouveau_channel_alloc drm;
+	uint32_t *pushbuf;
+	uint32_t *mmio;
+	uint32_t *notifier_block;
+	uint32_t  current;
+	uint32_t  put;
+	uint32_t  free;
+	uint32_t  max;
+} nouveau_fifo_t;
 
 #define TAG(x) nouveau##x
 #include "tnl_dd/t_dd_vertex.h"
@@ -94,13 +93,7 @@ typedef struct nouveau_context {
 	GLcontext *glCtx;
 
 	/* The per-context fifo */
-	nouveau_fifo fifo;
-
-	/* The read-only regs */
-	volatile unsigned char* mmio;
-
-	/* The per-channel notifier block */
-	volatile void *notifier_block;
+	nouveau_fifo_t fifo;
 
 	/* Physical addresses of AGP/VRAM apertures */
 	uint64_t vram_phys;
