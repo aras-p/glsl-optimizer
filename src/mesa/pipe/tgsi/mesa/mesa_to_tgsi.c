@@ -1,7 +1,7 @@
 #include "tgsi_platform.h"
 #include "tgsi_mesa.h"
 
-#define TGSI_DEBUG 0
+#define TGSI_DEBUG 1
 
 /*
  * Map mesa register file to SBIR register file.
@@ -463,13 +463,37 @@ compile_instruction(
    return GL_FALSE;
 }
 
+static struct tgsi_full_declaration
+make_declaration(
+   GLuint file,
+   GLuint first,
+   GLuint last,
+   GLboolean do_interpolate,
+   GLuint interpolate )
+{
+   struct tgsi_full_declaration decl;
+
+   decl = tgsi_default_full_declaration();
+   decl.Declaration.File = file;
+   decl.Declaration.Declare = TGSI_DECLARE_RANGE;
+   decl.u.DeclarationRange.First = first;
+   decl.u.DeclarationRange.Last = last;
+
+   if( do_interpolate ) {
+      decl.Declaration.Interpolate = 1;
+      decl.Interpolation.Interpolate = interpolate;
+   }
+
+   return decl;
+}
+
 GLboolean
 tgsi_mesa_compile_fp_program(
    const struct gl_fragment_program *program,
    struct tgsi_token *tokens,
    GLuint maxTokens )
 {
-   GLuint i, ti;
+   GLuint i, ti, count;
    struct tgsi_header *header;
    struct tgsi_full_declaration fulldecl;
    struct tgsi_full_instruction fullinst;
@@ -486,52 +510,78 @@ tgsi_mesa_compile_fp_program(
    ti = 2;
 
    /*
-    * Input 0 is always read, at least implicitly by the instruction generated
-    * above, so mark it as used.
+    * Input 0 is always read, at least implicitly by the MOV instruction generated
+    * below, so mark it as used.
     */
    inputs_read = program->Base.InputsRead | 1;
 
    /*
-    * Declare input attributes.
+    * Declare input attributes. Note that we do not interpolate fragment position.
     */
-   fulldecl = tgsi_default_full_declaration();
-
-   fulldecl.Declaration.File = TGSI_FILE_INPUT;
-   fulldecl.Declaration.Declare = TGSI_DECLARE_RANGE;
-   fulldecl.Declaration.Interpolate = 1;
-
-   /*
-    * Do not interpolate fragment position.
-    */
-   fulldecl.u.DeclarationRange.First = 0;
-   fulldecl.u.DeclarationRange.Last = 0;
-
-   fulldecl.Interpolation.Interpolate = TGSI_INTERPOLATE_CONSTANT;
-
+   fulldecl = make_declaration(
+      TGSI_FILE_INPUT,
+      0,
+      0,
+      GL_TRUE,
+      TGSI_INTERPOLATE_CONSTANT );
    ti += tgsi_build_full_declaration(
       &fulldecl,
       &tokens[ti],
       header,
       maxTokens - ti );
 
-   /*
-    * Interpolate generic attributes.
-    */
-   fulldecl.u.DeclarationRange.First = 1;
-   fulldecl.u.DeclarationRange.Last = 1;
+   count = 0;
    for( i = 1; i < 32; i++ ) {
       if( inputs_read & (1 << i) ) {
-         fulldecl.u.DeclarationRange.Last++;
+         count++;
       }
    }
+   if( count > 0 ) {
+      fulldecl = make_declaration(
+         TGSI_FILE_INPUT,
+         1,
+         count + 1,
+         GL_TRUE,
+         TGSI_INTERPOLATE_LINEAR );
+      ti += tgsi_build_full_declaration(
+         &fulldecl,
+         &tokens[ti],
+         header,
+         maxTokens - ti );
+   }
 
-   fulldecl.Interpolation.Interpolate = TGSI_INTERPOLATE_LINEAR;
+   /*
+    * Declare output attributes.
+    */
+   assert(
+      program->Base.OutputsWritten ==
+      (program->Base.OutputsWritten & ((1 << FRAG_RESULT_COLR) | (1 << FRAG_RESULT_DEPR))) );
 
+   fulldecl = make_declaration(
+      TGSI_FILE_OUTPUT,
+      0,
+      0,
+      GL_FALSE,
+      0 );
    ti += tgsi_build_full_declaration(
       &fulldecl,
       &tokens[ti],
       header,
       maxTokens - ti );
+
+   if( program->Base.OutputsWritten & (1 << FRAG_RESULT_COLR) ) {
+      fulldecl = make_declaration(
+         TGSI_FILE_OUTPUT,
+         1,
+         1,
+         GL_FALSE,
+         0 );
+      ti += tgsi_build_full_declaration(
+         &fulldecl,
+         &tokens[ti],
+         header,
+         maxTokens - ti );
+   }
 
    /*
     * Copy input fragment xyz to output xyz.
