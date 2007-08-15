@@ -39,6 +39,7 @@ tgsi_build_declaration(
    unsigned file,
    unsigned declare,
    unsigned interpolate,
+   unsigned semantic,
    struct tgsi_header *header );
 
 struct tgsi_full_declaration
@@ -70,6 +71,16 @@ tgsi_default_declaration_interpolation( void );
 struct tgsi_declaration_interpolation
 tgsi_build_declaration_interpolation(
    unsigned interpolate,
+   struct tgsi_declaration *declaration,
+   struct tgsi_header *header );
+
+struct tgsi_declaration_semantic
+tgsi_default_declaration_semantic( void );
+
+struct tgsi_declaration_semantic
+tgsi_build_declaration_semantic(
+   unsigned semantic_name,
+   unsigned semantic_index,
    struct tgsi_declaration *declaration,
    struct tgsi_header *header );
 

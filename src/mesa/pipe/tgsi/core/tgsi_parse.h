@@ -42,6 +42,7 @@ struct tgsi_full_declaration
       struct tgsi_declaration_mask  DeclarationMask;
    } u;
    struct tgsi_declaration_interpolation  Interpolation;
+   struct tgsi_declaration_semantic       Semantic;
 };
 
 struct tgsi_full_immediate
@@ -86,7 +87,7 @@ tgsi_full_token_free(
 struct tgsi_parse_context
 {
    const struct tgsi_token    *Tokens;
-   unsigned                     Position;
+   unsigned                   Position;
    struct tgsi_full_version   FullVersion;
    struct tgsi_full_header    FullHeader;
    union tgsi_full_token      FullToken;

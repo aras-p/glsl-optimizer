@@ -54,13 +54,14 @@ struct tgsi_token
 
 struct tgsi_declaration
 {
-   unsigned Type          : 4;  /* TGSI_TOKEN_TYPE_DECLARATION */
-   unsigned Size          : 8;  /* UINT */
-   unsigned File          : 4;  /* TGSI_FILE_ */
-   unsigned Declare       : 4;  /* TGSI_DECLARE_ */
-   unsigned Interpolate   : 1;  /* BOOL */
-   unsigned Padding       : 10;
-   unsigned Extended      : 1;  /* BOOL */
+   unsigned Type        : 4;  /* TGSI_TOKEN_TYPE_DECLARATION */
+   unsigned Size        : 8;  /* UINT */
+   unsigned File        : 4;  /* TGSI_FILE_ */
+   unsigned Declare     : 4;  /* TGSI_DECLARE_ */
+   unsigned Interpolate : 1;  /* BOOL */
+   unsigned Semantic    : 1;  /* BOOL */
+   unsigned Padding     : 9;
+   unsigned Extended    : 1;  /* BOOL */
 };
 
 struct tgsi_declaration_range
@@ -82,6 +83,16 @@ struct tgsi_declaration_interpolation
 {
    unsigned Interpolate   : 4;  /* TGSI_INTERPOLATE_ */
    unsigned Padding       : 28;
+};
+
+#define TGSI_SEMANTIC_DEPTH   0
+#define TGSI_SEMANTIC_COLOR   1
+
+struct tgsi_declaration_semantic
+{
+   unsigned SemanticName   : 8;  /* TGSI_SEMANTIC_ */
+   unsigned SemanticIndex  : 16; /* UINT */
+   unsigned Padding        : 8;
 };
 
 #define TGSI_IMM_FLOAT32   0
@@ -1261,16 +1272,16 @@ struct tgsi_instruction_ext_predicate
 
 struct tgsi_src_register
 {
-   unsigned File         : 4;    /* TGSI_FILE_ */
-   unsigned SwizzleX     : 2;    /* TGSI_SWIZZLE_ */
-   unsigned SwizzleY     : 2;    /* TGSI_SWIZZLE_ */
-   unsigned SwizzleZ     : 2;    /* TGSI_SWIZZLE_ */
-   unsigned SwizzleW     : 2;    /* TGSI_SWIZZLE_ */
-   unsigned Negate       : 1;    /* BOOL */
-   unsigned Indirect     : 1;    /* BOOL */
-   unsigned Dimension    : 1;    /* BOOL */
-   int  Index        : 16;   /* SINT */
-   unsigned Extended     : 1;    /* BOOL */
+   unsigned File        : 4;  /* TGSI_FILE_ */
+   unsigned SwizzleX    : 2;  /* TGSI_SWIZZLE_ */
+   unsigned SwizzleY    : 2;  /* TGSI_SWIZZLE_ */
+   unsigned SwizzleZ    : 2;  /* TGSI_SWIZZLE_ */
+   unsigned SwizzleW    : 2;  /* TGSI_SWIZZLE_ */
+   unsigned Negate      : 1;  /* BOOL */
+   unsigned Indirect    : 1;  /* BOOL */
+   unsigned Dimension   : 1;  /* BOOL */
+   int      Index       : 16; /* SINT */
+   unsigned Extended    : 1;  /* BOOL */
 };
 
 /*
@@ -1364,22 +1375,22 @@ struct tgsi_src_register_ext_mod
 
 struct tgsi_dimension
 {
-   unsigned Indirect     : 1;    /* BOOL */
-   unsigned Dimension    : 1;    /* BOOL */
-   unsigned Padding      : 13;
-   int  Index        : 16;   /* SINT */
-   unsigned Extended     : 1;    /* BOOL */
+   unsigned Indirect    : 1;  /* BOOL */
+   unsigned Dimension   : 1;  /* BOOL */
+   unsigned Padding     : 13;
+   int      Index       : 16; /* SINT */
+   unsigned Extended    : 1;  /* BOOL */
 };
 
 struct tgsi_dst_register
 {
-   unsigned File         : 4;    /* TGSI_FILE_ */
-   unsigned WriteMask    : 4;    /* TGSI_WRITEMASK_ */
-   unsigned Indirect     : 1;    /* BOOL */
-   unsigned Dimension    : 1;    /* BOOL */
-   int  Index        : 16;   /* SINT */
-   unsigned Padding      : 5;
-   unsigned Extended     : 1;    /* BOOL */
+   unsigned File        : 4;  /* TGSI_FILE_ */
+   unsigned WriteMask   : 4;  /* TGSI_WRITEMASK_ */
+   unsigned Indirect    : 1;  /* BOOL */
+   unsigned Dimension   : 1;  /* BOOL */
+   int      Index       : 16; /* SINT */
+   unsigned Padding     : 5;
+   unsigned Extended    : 1;  /* BOOL */
 };
 
 /*

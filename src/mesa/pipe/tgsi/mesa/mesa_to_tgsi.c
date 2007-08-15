@@ -464,25 +464,39 @@ compile_instruction(
 }
 
 static struct tgsi_full_declaration
-make_declaration(
-   GLuint file,
+make_frag_input_decl(
    GLuint first,
    GLuint last,
-   GLboolean do_interpolate,
    GLuint interpolate )
 {
    struct tgsi_full_declaration decl;
 
    decl = tgsi_default_full_declaration();
-   decl.Declaration.File = file;
+   decl.Declaration.File = TGSI_FILE_INPUT;
    decl.Declaration.Declare = TGSI_DECLARE_RANGE;
+   decl.Declaration.Interpolate = 1;
    decl.u.DeclarationRange.First = first;
    decl.u.DeclarationRange.Last = last;
+   decl.Interpolation.Interpolate = interpolate;
 
-   if( do_interpolate ) {
-      decl.Declaration.Interpolate = 1;
-      decl.Interpolation.Interpolate = interpolate;
-   }
+   return decl;
+}
+
+static struct tgsi_full_declaration
+make_frag_output_decl(
+   GLuint index,
+   GLuint semantic_name )
+{
+   struct tgsi_full_declaration decl;
+
+   decl = tgsi_default_full_declaration();
+   decl.Declaration.File = TGSI_FILE_OUTPUT;
+   decl.Declaration.Declare = TGSI_DECLARE_RANGE;
+   decl.Declaration.Semantic = 1;
+   decl.u.DeclarationRange.First = index;
+   decl.u.DeclarationRange.Last = index;
+   decl.Semantic.SemanticName = semantic_name;
+   decl.Semantic.SemanticIndex = 0;
 
    return decl;
 }
@@ -518,11 +532,9 @@ tgsi_mesa_compile_fp_program(
    /*
     * Declare input attributes. Note that we do not interpolate fragment position.
     */
-   fulldecl = make_declaration(
-      TGSI_FILE_INPUT,
+   fulldecl = make_frag_input_decl(
       0,
       0,
-      GL_TRUE,
       TGSI_INTERPOLATE_CONSTANT );
    ti += tgsi_build_full_declaration(
       &fulldecl,
@@ -537,11 +549,9 @@ tgsi_mesa_compile_fp_program(
       }
    }
    if( count > 0 ) {
-      fulldecl = make_declaration(
-         TGSI_FILE_INPUT,
+      fulldecl = make_frag_input_decl(
          1,
-         count + 1,
-         GL_TRUE,
+         1 + count - 1,
          TGSI_INTERPOLATE_LINEAR );
       ti += tgsi_build_full_declaration(
          &fulldecl,
@@ -557,12 +567,9 @@ tgsi_mesa_compile_fp_program(
       program->Base.OutputsWritten ==
       (program->Base.OutputsWritten & ((1 << FRAG_RESULT_COLR) | (1 << FRAG_RESULT_DEPR))) );
 
-   fulldecl = make_declaration(
-      TGSI_FILE_OUTPUT,
+   fulldecl = make_frag_output_decl(
       0,
-      0,
-      GL_FALSE,
-      0 );
+      TGSI_SEMANTIC_DEPTH );
    ti += tgsi_build_full_declaration(
       &fulldecl,
       &tokens[ti],
@@ -570,12 +577,9 @@ tgsi_mesa_compile_fp_program(
       maxTokens - ti );
 
    if( program->Base.OutputsWritten & (1 << FRAG_RESULT_COLR) ) {
-      fulldecl = make_declaration(
-         TGSI_FILE_OUTPUT,
+      fulldecl = make_frag_output_decl(
          1,
-         1,
-         GL_FALSE,
-         0 );
+         TGSI_SEMANTIC_COLOR );
       ti += tgsi_build_full_declaration(
          &fulldecl,
          &tokens[ti],

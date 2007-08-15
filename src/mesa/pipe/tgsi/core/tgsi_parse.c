@@ -16,7 +16,7 @@ tgsi_full_token_free(
       free( full_token->FullImmediate.u.Pointer );
 }
 
-GLuint
+unsigned
 tgsi_parse_init(
    struct tgsi_parse_context *ctx,
    const struct tgsi_token *tokens )
@@ -72,7 +72,7 @@ tgsi_parse_token(
    struct tgsi_parse_context *ctx )
 {
    struct tgsi_token token;
-   GLuint i;
+   unsigned i;
 
    tgsi_full_token_free( &ctx->FullToken );
    tgsi_full_token_init( &ctx->FullToken );
@@ -102,6 +102,10 @@ tgsi_parse_token(
 
       if( decl->Declaration.Interpolate ) {
          next_token( ctx, &decl->Interpolation );
+      }
+
+      if( decl->Declaration.Semantic ) {
+         next_token( ctx, &decl->Semantic );
       }
 
       break;
@@ -135,7 +139,7 @@ tgsi_parse_token(
    case TGSI_TOKEN_TYPE_INSTRUCTION:
    {
       struct tgsi_full_instruction *inst = &ctx->FullToken.FullInstruction;
-      GLuint extended;
+      unsigned extended;
 
       *inst = tgsi_default_full_instruction();
       inst->Instruction = *(struct tgsi_instruction *) &token;
@@ -173,7 +177,7 @@ tgsi_parse_token(
       assert( inst->Instruction.NumDstRegs <= TGSI_FULL_MAX_DST_REGISTERS );
 
       for(  i = 0; i < inst->Instruction.NumDstRegs; i++ ) {
-         GLuint extended;
+         unsigned extended;
 
          next_token( ctx, &inst->FullDstRegisters[i].DstRegister );
 
@@ -212,7 +216,7 @@ tgsi_parse_token(
       assert( inst->Instruction.NumSrcRegs <= TGSI_FULL_MAX_SRC_REGISTERS );
 
       for( i = 0; i < inst->Instruction.NumSrcRegs; i++ ) {
-         GLuint extended;
+         unsigned extended;
 
          next_token( ctx, &inst->FullSrcRegisters[i].SrcRegister );
 

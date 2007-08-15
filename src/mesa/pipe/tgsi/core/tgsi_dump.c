@@ -199,6 +199,18 @@ static const char *TGSI_INTERPOLATES_SHORT[] =
    "PERSPECTIVE"
 };
 
+static const char *TGSI_SEMANTICS[] =
+{
+   "SEMANTIC_DEPTH",
+   "SEMANTIC_COLOR"
+};
+
+static const char *TGSI_SEMANTICS_SHORT[] =
+{
+   "DEPTH",
+   "COLOR"
+};
+
 static const char *TGSI_IMMS[] =
 {
    "IMM_FLOAT32"
@@ -625,6 +637,14 @@ dump_declaration_short(
       TXT( ", " );
       ENM( decl->Interpolation.Interpolate, TGSI_INTERPOLATES_SHORT );
    }
+
+   if( decl->Declaration.Semantic ) {
+      TXT( ", " );
+      ENM( decl->Semantic.SemanticName, TGSI_SEMANTICS_SHORT );
+      CHR( '[' );
+      UID( decl->Semantic.SemanticIndex );
+      CHR( ']' );
+   }
 }
 
 static void
@@ -642,6 +662,10 @@ dump_declaration_verbose(
    if( deflt || fd->Declaration.Interpolate != decl->Declaration.Interpolate ) {
       TXT( "\nInterpolate: " );
       UID( decl->Declaration.Interpolate );
+   }
+   if( deflt || fd->Declaration.Semantic != decl->Declaration.Semantic ) {
+      TXT( "\nSemantic   : " );
+      UID( decl->Declaration.Semantic );
    }
    if( ignored ) {
       TXT( "\nPadding    : " );
@@ -673,6 +697,18 @@ dump_declaration_verbose(
       if( ignored ) {
          TXT( "\nPadding    : " );
          UIX( decl->Interpolation.Padding );
+      }
+   }
+
+   if( decl->Declaration.Semantic ) {
+      CHR( '\n' );
+      TXT( "\nSemanticName : " );
+      ENM( decl->Semantic.SemanticName, TGSI_SEMANTICS );
+      TXT( "\nSemanticIndex: " );
+      UID( decl->Semantic.SemanticIndex );
+      if( ignored ) {
+         TXT( "\nPadding      : " );
+         UIX( decl->Semantic.Padding );
       }
    }
 }
