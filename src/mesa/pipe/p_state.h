@@ -320,23 +320,35 @@ struct pipe_mipmap_tree
 };
 
 
-
+/**
+ * A vertex buffer.  Typically, all the vertex data/attributes for
+ * drawing something will be in one buffer.  But it's also possible, for
+ * example, to put colors in one buffer and texcoords in another.
+ */
 struct pipe_vertex_buffer
 {
-   unsigned pitch:11; 
-   unsigned max_index;   
-   struct pipe_buffer_handle *buffer;
-   unsigned buffer_offset;
+   unsigned pitch:11;    /**< stride to same attrib in next vertex, in bytes */
+   unsigned max_index;   /**< number of vertices in this buffer */
+   unsigned buffer_offset;  /**< offset to start of data in buffer, in bytes */
+   struct pipe_buffer_handle *buffer;  /**< the actual buffer */
 };
 
 
-
+/**
+ * Information to describe a vertex attribute (position, color, etc)
+ */
 struct pipe_vertex_element
 {
-   unsigned src_offset:11; 
-   unsigned vertex_buffer_index:5; 
+   /** Offset of this attribute, in bytes, from the start of the vertex */
+   unsigned src_offset:11;
+
+   /** Which vertex_buffer (as given to pipe->set_vertex_buffer()) does
+    * this attribute live in?
+    */
+   unsigned vertex_buffer_index:5;
+
    unsigned dst_offset:8; 
-   unsigned src_format:8; 	/* PIPE_FORMAT_* */
+   unsigned src_format:8; 	   /**< PIPE_FORMAT_* */
 };
 
 
