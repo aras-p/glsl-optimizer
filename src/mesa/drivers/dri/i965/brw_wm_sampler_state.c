@@ -54,7 +54,7 @@ static GLuint translate_wrap_mode( GLenum wrap )
    case GL_REPEAT: 
       return BRW_TEXCOORDMODE_WRAP;
    case GL_CLAMP:  
-      return BRW_TEXCOORDMODE_CLAMP_BORDER; /* conform likes it this way */
+      return BRW_TEXCOORDMODE_CLAMP;
    case GL_CLAMP_TO_EDGE: 
       return BRW_TEXCOORDMODE_CLAMP; /* conform likes it this way */
    case GL_CLAMP_TO_BORDER: 
