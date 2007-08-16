@@ -524,6 +524,9 @@ _swrast_update_texture_samplers(GLcontext *ctx)
    SWcontext *swrast = SWRAST_CONTEXT(ctx);
    GLuint u;
 
+   if (!swrast)
+      return; /* pipe hack */
+
    for (u = 0; u < ctx->Const.MaxTextureImageUnits; u++) {
       const struct gl_texture_object *tObj = ctx->Texture.Unit[u]._Current;
       /* Note: If tObj is NULL, the sample function will be a simple
