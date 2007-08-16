@@ -339,7 +339,7 @@ dri_ttm_fence_wait(dri_fence *fence)
    _glthread_UNLOCK_MUTEX(bufmgr_ttm->mutex);
    if (ret != 0) {
       _mesa_printf("%s:%d: Error %d waiting for fence %s.\n",
-		   __FILE__, __LINE__, fence_ttm->name);
+		   __FILE__, __LINE__, ret, fence_ttm->name);
       abort();
    }
 }
