@@ -137,6 +137,10 @@ struct draw_context
    struct pipe_setup_state setup;
    struct pipe_viewport_state viewport;
 
+   const struct pipe_vertex_buffer *vertex_buffer;  /**< note: pointer */
+   const struct pipe_vertex_element *vertex_element; /**< note: pointer */
+
+
    /* Clip derived state:
     */
    GLfloat plane[12][4];
@@ -196,6 +200,9 @@ struct draw_context
    /* Helper for tnl:
     */
    GLvector4f header;   
+
+   /* helper for sp_draw_arrays.c - temporary? */
+   void *mapped_vbuffer;
 };
 
 
