@@ -56,7 +56,10 @@ void softpipe_set_depth_test_state( struct pipe_context *,
                                     const struct pipe_depth_state * );
 
 void softpipe_set_fs_state( struct pipe_context *,
-			   const struct pipe_fs_state * );
+                            const struct pipe_shader_state * );
+
+void softpipe_set_vs_state( struct pipe_context *,
+                            const struct pipe_shader_state * );
 
 void softpipe_set_polygon_stipple( struct pipe_context *,
 				  const struct pipe_poly_stipple * );

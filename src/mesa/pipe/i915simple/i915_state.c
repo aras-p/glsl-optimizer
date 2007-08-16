@@ -111,7 +111,7 @@ static void i915_set_polygon_stipple( struct pipe_context *pipe,
 
 
 static void i915_set_fs_state( struct pipe_context *pipe,
-			   const struct pipe_fs_state *fs )
+                               const struct pipe_shader_state *fs )
 {
    struct i915_context *i915 = i915_context(pipe);
 

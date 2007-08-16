@@ -63,6 +63,7 @@ enum interp_mode {
 #define SP_NEW_TEXTURE     0x800
 #define SP_NEW_STENCIL    0x1000
 #define SP_NEW_VERTEX     0x2000
+#define SP_NEW_VS         0x4000
 
 
 struct softpipe_context {     
@@ -79,7 +80,8 @@ struct softpipe_context {
    struct pipe_clip_state clip;
    struct pipe_depth_state depth_test;
    struct pipe_framebuffer_state framebuffer;
-   struct pipe_fs_state fs;
+   struct pipe_shader_state fs;
+   struct pipe_shader_state vs;
    struct pipe_poly_stipple poly_stipple;
    struct pipe_scissor_state scissor;
    struct pipe_sampler_state sampler[PIPE_MAX_SAMPLERS];

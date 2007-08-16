@@ -83,7 +83,9 @@ struct st_vertex_program
 				 * ProgramStringNotify changes.
 				 */
 
+   struct tgsi_token tokens[ST_FP_MAX_TOKENS];
    GLboolean dirty;
+   struct pipe_constant_buffer constants;
    GLuint param_state;
 };
 

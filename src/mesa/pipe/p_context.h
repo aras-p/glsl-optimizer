@@ -117,7 +117,10 @@ struct pipe_context {
                                   const struct pipe_framebuffer_state * );
 
    void (*set_fs_state)( struct pipe_context *,
-			 const struct pipe_fs_state * );
+			 const struct pipe_shader_state * );
+
+   void (*set_vs_state)( struct pipe_context *,
+			 const struct pipe_shader_state * );
 
    void (*set_polygon_stipple)( struct pipe_context *,
 				const struct pipe_poly_stipple * );

@@ -73,7 +73,8 @@ struct st_context
       struct pipe_clip_state clip;
       struct pipe_depth_state depth;
       struct pipe_framebuffer_state framebuffer;
-      struct pipe_fs_state     fs;
+      struct pipe_shader_state fs;
+      struct pipe_shader_state vs;
       struct pipe_poly_stipple poly_stipple;
       struct pipe_sampler_state sampler[PIPE_MAX_SAMPLERS];
       struct pipe_scissor_state scissor;

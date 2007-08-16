@@ -278,7 +278,7 @@ clear_with_quad(GLcontext *ctx,
    /* fragment shader state: color pass-through program */
    {
       static struct st_fragment_program *stfp = NULL;
-      struct pipe_fs_state fs;
+      struct pipe_shader_state fs;
       if (!stfp) {
          stfp = make_color_shader(st);
       }

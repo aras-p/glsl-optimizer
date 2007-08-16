@@ -39,6 +39,11 @@
 
 #define TGSI_DEBUG 0
 
+
+/**
+ ** Fragment programs
+ **/
+
 static void compile_fs( struct st_context *st,
 			struct st_fragment_program *fs )
 {
@@ -53,7 +58,7 @@ static void compile_fs( struct st_context *st,
 
 static void update_fs( struct st_context *st )
 {
-   struct pipe_fs_state fs;
+   struct pipe_shader_state fs;
    struct st_fragment_program *fp = NULL;
    struct gl_program_parameter_list *params = NULL;
 
@@ -102,4 +107,80 @@ const struct st_tracked_state st_update_fs = {
       .st   = ST_NEW_FRAGMENT_PROGRAM,
    },
    .update = update_fs
+};
+
+
+
+/**
+ ** Vertex programs
+ **/
+
+
+static void compile_vs( struct st_context *st,
+			struct st_vertex_program *vs )
+{
+   /* XXX: fix static allocation of tokens:
+    */
+   tgsi_mesa_compile_vp_program( &vs->Base, vs->tokens, ST_FP_MAX_TOKENS );
+
+   if (TGSI_DEBUG)
+      tgsi_dump( vs->tokens, TGSI_DUMP_VERBOSE );
+}
+
+
+static void update_vs( struct st_context *st )
+{
+   struct pipe_shader_state vs;
+   struct st_vertex_program *vp = NULL;
+   struct gl_program_parameter_list *params = NULL;
+
+   if (st->ctx->Shader.CurrentProgram &&
+       st->ctx->Shader.CurrentProgram->LinkStatus &&
+       st->ctx->Shader.CurrentProgram->VertexProgram) {
+      struct gl_vertex_program *f
+         = st->ctx->Shader.CurrentProgram->VertexProgram;
+      vp = st_vertex_program(f);
+      params = f->Base.Parameters;
+   }
+   else if (st->ctx->VertexProgram._Current) {
+      vp = st_vertex_program(st->ctx->VertexProgram._Current);
+      params = st->ctx->VertexProgram._Current->Base.Parameters;
+   }
+
+   /* XXXX temp */
+   if (!vp)
+      return;
+
+   if (vp && params) {
+      /* load program's constants array */
+      vp->constants.nr_constants = params->NumParameters;
+      memcpy(vp->constants.constant, 
+             params->ParameterValues,
+             params->NumParameters * sizeof(GLfloat) * 4);
+   }
+
+   if (vp->dirty)
+      compile_vs( st, vp );
+
+   memset( &vs, 0, sizeof(vs) );
+   vs.inputs_read = vp->Base.Base.InputsRead;
+   vs.tokens = &vp->tokens[0];
+   vs.constants = &vp->constants;
+   
+   if (memcmp(&vs, &st->state.vs, sizeof(vs)) != 0 ||
+       vp->dirty) 
+   {
+      vp->dirty = 0;
+      st->state.vs = vs;
+      st->pipe->set_vs_state(st->pipe, &vs);
+   }
+}
+
+
+const struct st_tracked_state st_update_vs = {
+   .dirty = {
+      .mesa  = _NEW_PROGRAM,
+      .st   = ST_NEW_VERTEX_PROGRAM,
+   },
+   .update = update_vs
 };

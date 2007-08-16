@@ -31,7 +31,7 @@
 
 
 void softpipe_set_fs_state( struct pipe_context *pipe,
-			   const struct pipe_fs_state *fs )
+                            const struct pipe_shader_state *fs )
 {
    struct softpipe_context *softpipe = softpipe_context(pipe);
 
@@ -41,10 +41,12 @@ void softpipe_set_fs_state( struct pipe_context *pipe,
 }
 
 
+void softpipe_set_vs_state( struct pipe_context *pipe,
+                            const struct pipe_shader_state *vs )
+{
+   struct softpipe_context *softpipe = softpipe_context(pipe);
 
+   memcpy(&softpipe->vs, vs, sizeof(*vs));
 
-
-
-
-
-
+   softpipe->dirty |= SP_NEW_VS;
+}

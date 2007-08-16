@@ -272,7 +272,7 @@ draw_textured_quad(GLcontext *ctx, GLint x, GLint y, GLfloat z,
    /* fragment shader state: color pass-through program */
    {
       static struct st_fragment_program *stfp = NULL;
-      struct pipe_fs_state fs;
+      struct pipe_shader_state fs;
       if (!stfp) {
          stfp = make_drawpixels_shader(ctx->st);
       }
