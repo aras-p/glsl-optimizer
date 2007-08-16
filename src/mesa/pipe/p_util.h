@@ -60,7 +60,7 @@ union fi {
            else if (__tmp.i >= IEEE_0996)				\
               UB = (ubyte) 255;					\
            else {							\
-              __tmp.f = __tmp.f * (255.0F/256.0F) + 32768.0F;		\
+              __tmp.f = __tmp.f * (255.0f/256.0f) + 32768.0f;		\
               UB = (ubyte) __tmp.i;					\
            }								\
         } while (0)
