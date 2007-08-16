@@ -873,7 +873,7 @@ _swrast_write_index_span( GLcontext *ctx, SWspan *span)
 #endif
 
    /* we have to wait until after occlusion to do this test */
-   if (ctx->Color.DrawBuffer == GL_NONE || ctx->Color.IndexMask == 0) {
+   if (ctx->Color.IndexMask == 0) {
       /* write no pixels */
       span->arrayMask = origArrayMask;
       return;
