@@ -479,9 +479,12 @@ set_color_output(GLcontext *ctx, GLuint output, GLenum buffer,
    /* not really needed, will be set later */
    fb->_NumColorDrawBuffers[output] = 0;
 
-   if (fb->Name == 0)
-   /* Set traditional state var */
+   if (fb->Name == 0) {
+      /* Only set the per-context DrawBuffer state if we're currently
+       * drawing to a window system framebuffer.
+       */
       ctx->Color.DrawBuffer[output] = buffer;
+   }
 }
 
 
