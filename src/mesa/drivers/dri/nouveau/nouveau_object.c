@@ -43,6 +43,11 @@ void nouveauObjectInit(nouveauContextPtr nmesa)
 	} else {
 		nouveauCreateContextObject(nmesa, NvImageBlit, NV_IMAGE_BLIT);
 	}
+	if ((nmesa->screen->card->type>=NV_10) && (nmesa->screen->card->type<NV_20)) {
+		nouveauCreateContextObject(nmesa, NvGdiRectText, NV04_GDI_RECTANGLE_TEXT);
+		nouveauCreateContextObject(nmesa, NvRasterOp, NV03_PRIMITIVE_RASTER_OP);
+		nouveauCreateContextObject(nmesa, NvPattern, NV04_IMAGE_PATTERN);
+	}
 	nouveauCreateContextObject(nmesa, NvMemFormat, NV_MEMORY_TO_MEMORY_FORMAT);
 
 	nouveauObjectOnSubchannel(nmesa, NvSubCtxSurf2D, NvCtxSurf2D);
@@ -55,6 +60,34 @@ void nouveauObjectInit(nouveauContextPtr nmesa)
 	OUT_RING(NvCtxSurf2D);
 	BEGIN_RING_SIZE(NvSubImageBlit, NV10_IMAGE_BLIT_SET_OPERATION, 1);
 	OUT_RING(3); /* SRCCOPY */
+
+	if ((nmesa->screen->card->type>=NV_10) && (nmesa->screen->card->type<NV_20)) {
+		nouveauObjectOnSubchannel(nmesa, NvSubPattern, NvPattern);
+
+		BEGIN_RING_SIZE(NvSubPattern, NV04_IMAGE_PATTERN_COLOR_FORMAT, 4);
+		OUT_RING(1);	/* A16R5G6B5 */
+		OUT_RING(1);	/* little endian */
+		OUT_RING(0);	/* 8x8 */
+		OUT_RING(1);	/* monochrome */
+
+		nouveauObjectOnSubchannel(nmesa, NvSubRasterOp, NvRasterOp);
+
+		BEGIN_RING_SIZE(NvSubRasterOp, NV03_PRIMITIVE_RASTER_OP_DMA_NOTIFY, 1);
+		OUT_RING(NvDmaFB);
+
+		nouveauObjectOnSubchannel(nmesa, NvSubGdiRectText, NvGdiRectText);
+
+		BEGIN_RING_SIZE(NvSubGdiRectText, NV04_GDI_RECTANGLE_TEXT_SET_DMA_NOTIFY, 1);
+		OUT_RING(NvDmaFB);
+		BEGIN_RING_SIZE(NvSubGdiRectText, NV04_GDI_RECTANGLE_TEXT_PATTERN, 2);
+		OUT_RING(NvPattern);
+		OUT_RING(NvRasterOp);
+		BEGIN_RING_SIZE(NvSubGdiRectText, NV04_GDI_RECTANGLE_TEXT_SURFACE, 1);
+		OUT_RING(NvCtxSurf2D);
+		BEGIN_RING_SIZE(NvSubGdiRectText, NV04_GDI_RECTANGLE_TEXT_FORMAT, 2);
+		OUT_RING(1);	/* X1R5G5B5 */
+		OUT_RING(1);	/* little endian */
+	}
 
 	nouveauObjectOnSubchannel(nmesa, NvSubMemFormat, NvMemFormat);
 
