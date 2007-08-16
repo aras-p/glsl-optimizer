@@ -123,6 +123,10 @@ typedef struct nouveau_context {
 	struct tnl_attr_map vertex_attrs[VERT_ATTRIB_MAX];
 	GLuint vertex_attr_count;
 
+	/* Color and depth renderbuffers */
+	nouveau_renderbuffer_t *color_buffer[2];
+	nouveau_renderbuffer_t *depth_buffer;
+
 	/* Color buffer clear value */
 	uint32_t clear_color_value;
 

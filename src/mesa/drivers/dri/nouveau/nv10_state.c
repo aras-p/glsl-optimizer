@@ -715,6 +715,11 @@ static GLboolean nv10BindBuffers(nouveauContextPtr nmesa, int num_color,
 	GLuint x, y, w, h;
 	GLuint pitch, format, depth_pitch;
 
+	/* Store buffer pointers in context */
+	nmesa->color_buffer[0] = color[0];
+	nmesa->color_buffer[1] = color[1];
+	nmesa->depth_buffer = depth;
+
 	w = color[0]->mesa.Width;
 	h = color[0]->mesa.Height;
 	x = nmesa->drawX;
