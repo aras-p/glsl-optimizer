@@ -112,21 +112,26 @@ static INLINE void
 quad_clip(struct setup_stage *setup)
 {
    const struct pipe_scissor_state *cliprect = &setup->softpipe->cliprect;
-   if (setup->quad.x0 >= cliprect->maxx ||
-       setup->quad.y0 >= cliprect->maxy ||
-       setup->quad.x0 + 1 < cliprect->minx ||
-       setup->quad.y0 + 1 < cliprect->miny) {
+   const int minx = (int) cliprect->minx;
+   const int maxx = (int) cliprect->maxx;
+   const int miny = (int) cliprect->miny;
+   const int maxy = (int) cliprect->maxy;
+
+   if (setup->quad.x0 >= maxx ||
+       setup->quad.y0 >= maxy ||
+       setup->quad.x0 + 1 < minx ||
+       setup->quad.y0 + 1 < miny) {
       /* totally clipped */
       setup->quad.mask = 0x0;
       return;
    }
-   if (setup->quad.x0 < cliprect->minx)
+   if (setup->quad.x0 < minx)
       setup->quad.mask &= (MASK_BOTTOM_RIGHT | MASK_TOP_RIGHT);
-   if (setup->quad.y0 < cliprect->miny)
+   if (setup->quad.y0 < miny)
       setup->quad.mask &= (MASK_TOP_LEFT | MASK_TOP_RIGHT);
-   if (setup->quad.x0 == cliprect->maxx - 1)
+   if (setup->quad.x0 == maxx - 1)
       setup->quad.mask &= (MASK_BOTTOM_LEFT | MASK_TOP_LEFT);
-   if (setup->quad.y0 == cliprect->maxy - 1)
+   if (setup->quad.y0 == maxy - 1)
       setup->quad.mask &= (MASK_BOTTOM_LEFT | MASK_BOTTOM_RIGHT);
 }
 
@@ -336,7 +341,7 @@ static boolean setup_sort_vertices( struct setup_stage *setup,
       const float area = (setup->emaj.dx * setup->ebot.dy - 
 			    setup->ebot.dx * setup->emaj.dy);
 
-      setup->oneoverarea = 1.0 / area;
+      setup->oneoverarea = 1.0f / area;
       /*
       _mesa_printf("%s one-over-area %f  area %f  det %f\n",
                    __FUNCTION__, setup->oneoverarea, area, prim->det );
@@ -408,8 +413,8 @@ static void tri_linear_coeff( struct setup_stage *setup,
     * instead - i'll switch to this later.
     */
    setup->coef[slot].a0[i] = (setup->vmin->data[slot][i] - 
-			    (setup->coef[slot].dadx[i] * (setup->vmin->data[0][0] - 0.5) + 
-			     setup->coef[slot].dady[i] * (setup->vmin->data[0][1] - 0.5)));
+			    (setup->coef[slot].dadx[i] * (setup->vmin->data[0][0] - 0.5f) + 
+			     setup->coef[slot].dady[i] * (setup->vmin->data[0][1] - 0.5f)));
 
    /*
    _mesa_printf("attr[%d].%c: %f dx:%f dy:%f\n",
@@ -446,8 +451,8 @@ static void tri_persp_coeff( struct setup_stage *setup,
    setup->coef[slot].dadx[i] = a * setup->oneoverarea;
    setup->coef[slot].dady[i] = b * setup->oneoverarea;
    setup->coef[slot].a0[i] = (mina - 
-			    (setup->coef[slot].dadx[i] * (setup->vmin->data[0][0] - 0.5) + 
-			     setup->coef[slot].dady[i] * (setup->vmin->data[0][1] - 0.5)));
+			    (setup->coef[slot].dadx[i] * (setup->vmin->data[0][0] - 0.5f) + 
+			     setup->coef[slot].dady[i] * (setup->vmin->data[0][1] - 0.5f)));
 }
 
 
@@ -491,12 +496,12 @@ static void setup_tri_coefficients( struct setup_stage *setup )
 
 static void setup_tri_edges( struct setup_stage *setup )
 {
-   float vmin_x = setup->vmin->data[0][0] + 0.5;
-   float vmid_x = setup->vmid->data[0][0] + 0.5;
+   float vmin_x = setup->vmin->data[0][0] + 0.5f;
+   float vmid_x = setup->vmid->data[0][0] + 0.5f;
 
-   float vmin_y = setup->vmin->data[0][1] - 0.5;
-   float vmid_y = setup->vmid->data[0][1] - 0.5;
-   float vmax_y = setup->vmax->data[0][1] - 0.5;
+   float vmin_y = setup->vmin->data[0][1] - 0.5f;
+   float vmid_y = setup->vmid->data[0][1] - 0.5f;
+   float vmax_y = setup->vmax->data[0][1] - 0.5f;
 
    setup->emaj.sy = ceilf(vmin_y);
    setup->emaj.lines = (int) ceilf(vmax_y - setup->emaj.sy);
@@ -525,6 +530,10 @@ static void subtriangle( struct setup_stage *setup,
 			 unsigned lines )
 {
    const struct pipe_scissor_state *cliprect = &setup->softpipe->cliprect;
+   const int minx = (int) cliprect->minx;
+   const int maxx = (int) cliprect->maxx;
+   const int miny = (int) cliprect->miny;
+   const int maxy = (int) cliprect->maxy;
    int y, start_y, finish_y;
    int sy = (int)eleft->sy;
 
@@ -534,11 +543,11 @@ static void subtriangle( struct setup_stage *setup,
    start_y = sy;
    finish_y = sy + lines;
 
-   if (start_y < cliprect->miny)
-      start_y = cliprect->miny;
+   if (start_y < miny)
+      start_y = miny;
 
-   if (finish_y > cliprect->maxy)
-      finish_y = cliprect->maxy;
+   if (finish_y > maxy)
+      finish_y = maxy;
 
    start_y -= sy;
    finish_y -= sy;
@@ -559,23 +568,22 @@ static void subtriangle( struct setup_stage *setup,
       int right = (int)(eright->sx + y * eright->dxdy);
 
       /* clip left/right */
-      if (left < cliprect->minx)
-         left = cliprect->minx;
-      if (right > cliprect->maxx)
-         right = cliprect->maxx;
+      if (left < minx)
+         left = minx;
+      if (right > maxx)
+         right = maxx;
 
       if (left < right) {
-	 int _y = sy+y;
-	 if (block(_y) != setup->span.y) {
-	    flush_spans(setup);
-	    setup->span.y = block(_y);
-	 }
-   
-	 setup->span.left[_y&1] = left;
-	 setup->span.right[_y&1] = right;
-	 setup->span.y_flags |= 1<<(_y&1);
+         int _y = sy + y;
+         if (block(_y) != setup->span.y) {
+            flush_spans(setup);
+            setup->span.y = block(_y);
+         }
+
+         setup->span.left[_y&1] = left;setup->span.right[_y&1] = right;
+         setup->span.y_flags |= 1<<(_y&1);
       }
-   } 
+   }
 
 
    /* save the values so that emaj can be restarted:
@@ -645,8 +653,8 @@ line_linear_coeff(struct setup_stage *setup, unsigned slot, unsigned i)
    setup->coef[slot].dady[i] = dady;
    setup->coef[slot].a0[i]
       = (setup->vmin->data[slot][i] - 
-         (dadx * (setup->vmin->data[0][0] - 0.5) + 
-          dady * (setup->vmin->data[0][1] - 0.5)));
+         (dadx * (setup->vmin->data[0][0] - 0.5f) + 
+          dady * (setup->vmin->data[0][1] - 0.5f)));
 }
 
 
@@ -680,8 +688,8 @@ setup_line_coefficients(struct setup_stage *setup, struct prim_header *prim)
    setup->emaj.dx = setup->vmax->data[0][0] - setup->vmin->data[0][0];
    setup->emaj.dy = setup->vmax->data[0][1] - setup->vmin->data[0][1];
    /* NOTE: this is not really 1/area */
-   setup->oneoverarea = 1.0 / (setup->emaj.dx * setup->emaj.dx +
-                               setup->emaj.dy * setup->emaj.dy);
+   setup->oneoverarea = 1.0f / (setup->emaj.dx * setup->emaj.dx +
+                                setup->emaj.dy * setup->emaj.dy);
 
    /* z and w are done by linear interpolation:
     */
@@ -880,7 +888,7 @@ setup_point(struct draw_stage *stage, struct prim_header *prim)
 {
    struct setup_stage *setup = setup_stage( stage );
    /*XXX this should be a vertex attrib! */
-   const float halfSize = 0.5 * setup->softpipe->setup.point_size;
+   const float halfSize = 0.5f * setup->softpipe->setup.point_size;
    const boolean round = setup->softpipe->setup.point_smooth;
    const struct vertex_header *v0 = prim->v[0];
    const float x = v0->data[FRAG_ATTRIB_WPOS][0];
@@ -917,8 +925,8 @@ setup_point(struct draw_stage *stage, struct prim_header *prim)
       /* special case for 1-pixel points */
       const int ix = ((int) x) & 1;
       const int iy = ((int) y) & 1;
-      setup->quad.x0 = x - ix;
-      setup->quad.y0 = y - iy;
+      setup->quad.x0 = (int) x - ix;
+      setup->quad.y0 = (int) y - iy;
       setup->quad.mask = (1 << ix) << (2 * iy);
       clip_emit_quad(setup);
    }
@@ -943,39 +951,39 @@ setup_point(struct draw_stage *stage, struct prim_header *prim)
 
                setup->quad.mask = 0x0;
 
-               dx = (ix + 0.5) - x;
-               dy = (iy + 0.5) - y;
+               dx = (ix + 0.5f) - x;
+               dy = (iy + 0.5f) - y;
                dist2 = dx * dx + dy * dy;
                if (dist2 <= rmax2) {
                   cover = 1.0F - (dist2 - rmin2) * cscale;
-                  setup->quad.coverage[QUAD_BOTTOM_LEFT] = MIN2(cover, 1.0);
+                  setup->quad.coverage[QUAD_BOTTOM_LEFT] = MIN2(cover, 1.0f);
                   setup->quad.mask |= MASK_BOTTOM_LEFT;
                }
 
-               dx = (ix + 1.5) - x;
-               dy = (iy + 0.5) - y;
+               dx = (ix + 1.5f) - x;
+               dy = (iy + 0.5f) - y;
                dist2 = dx * dx + dy * dy;
                if (dist2 <= rmax2) {
                   cover = 1.0F - (dist2 - rmin2) * cscale;
-                  setup->quad.coverage[QUAD_BOTTOM_RIGHT] = MIN2(cover, 1.0);
+                  setup->quad.coverage[QUAD_BOTTOM_RIGHT] = MIN2(cover, 1.0f);
                   setup->quad.mask |= MASK_BOTTOM_RIGHT;
                }
 
-               dx = (ix + 0.5) - x;
-               dy = (iy + 1.5) - y;
+               dx = (ix + 0.5f) - x;
+               dy = (iy + 1.5f) - y;
                dist2 = dx * dx + dy * dy;
                if (dist2 <= rmax2) {
                   cover = 1.0F - (dist2 - rmin2) * cscale;
-                  setup->quad.coverage[QUAD_TOP_LEFT] = MIN2(cover, 1.0);
+                  setup->quad.coverage[QUAD_TOP_LEFT] = MIN2(cover, 1.0f);
                   setup->quad.mask |= MASK_TOP_LEFT;
                }
 
-               dx = (ix + 1.5) - x;
-               dy = (iy + 1.5) - y;
+               dx = (ix + 1.5f) - x;
+               dy = (iy + 1.5f) - y;
                dist2 = dx * dx + dy * dy;
                if (dist2 <= rmax2) {
                   cover = 1.0F - (dist2 - rmin2) * cscale;
-                  setup->quad.coverage[QUAD_TOP_RIGHT] = MIN2(cover, 1.0);
+                  setup->quad.coverage[QUAD_TOP_RIGHT] = MIN2(cover, 1.0f);
                   setup->quad.mask |= MASK_TOP_RIGHT;
                }
 
