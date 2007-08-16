@@ -4,7 +4,7 @@
 #define TGSI_DEBUG 1
 
 /*
- * Map mesa register file to SBIR register file.
+ * Map mesa register file to TGSI register file.
  */
 static GLuint
 map_register_file(
@@ -35,7 +35,7 @@ map_register_file(
 }
 
 /**
- * Map mesa register file index to SBIR index.
+ * Map mesa register file index to TGSI index.
  * Take special care when processing input and output indices.
  * \param processor  either TGSI_PROCESSOR_FRAGMENT or  TGSI_PROCESSOR_VERTEX
  * \param file  one of TGSI_FILE_x
@@ -101,7 +101,7 @@ map_register_file_index(
 }
 
 /*
- * Map mesa texture target to SBIR texture target.
+ * Map mesa texture target to TGSI texture target.
  */
 static GLuint
 map_texture_target(
@@ -607,6 +607,33 @@ tgsi_mesa_compile_fp_program(
          &tokens[ti],
          header,
          maxTokens - ti );
+   }
+
+   /*
+    * Copy fragment z if the shader does not write it.
+    */
+   if( !(program->Base.OutputsWritten & (1 << FRAG_RESULT_DEPR)) ) {
+      fullinst = tgsi_default_full_instruction();
+
+      fullinst.Instruction.Opcode = TGSI_OPCODE_MOV;
+      fullinst.Instruction.NumDstRegs = 1;
+      fullinst.Instruction.NumSrcRegs = 1;
+
+      fulldst = &fullinst.FullDstRegisters[0];
+      fulldst->DstRegister.File = TGSI_FILE_OUTPUT;
+      fulldst->DstRegister.Index = 0;
+      fulldst->DstRegister.WriteMask = TGSI_WRITEMASK_Z;
+
+      fullsrc = &fullinst.FullSrcRegisters[0];
+      fullsrc->SrcRegister.File = TGSI_FILE_INPUT;
+      fullsrc->SrcRegister.Index = 0;
+
+      ti += tgsi_build_full_instruction(
+         &fullinst,
+         &tokens[ti],
+         header,
+         maxTokens - ti );
+      preamble_size++;
    }
 
    for( i = 0; i < program->Base.NumInstructions; i++ ) {
