@@ -170,18 +170,26 @@ intel_fence_wait(void *private, unsigned int cookie)
 static struct intel_region *
 intel_recreate_static(intelScreenPrivate *intelScreen,
 		      struct intel_region *region,
-		      GLuint mem_type,
-		      GLuint offset,
-		      void *virtual,
-		      GLuint cpp, GLuint pitch, GLuint height)
+		      intelRegion *region_desc,
+		      GLuint mem_type)
 {
   if (region) {
-    intel_region_update_static(intelScreen, region, mem_type, offset,
-			       virtual, cpp, pitch, height);
+    intel_region_update_static(intelScreen, region, mem_type,
+			       region_desc->bo_handle, region_desc->offset,
+			       region_desc->map, intelScreen->cpp,
+			       region_desc->pitch / intelScreen->cpp,
+			       intelScreen->height);
   } else {
-    region = intel_region_create_static(intelScreen, mem_type, offset,
-					virtual, cpp, pitch, height);
+    region = intel_region_create_static(intelScreen, mem_type,
+					region_desc->bo_handle,
+					region_desc->offset,
+					region_desc->map, intelScreen->cpp,
+					region_desc->pitch / intelScreen->cpp,
+					intelScreen->height);
   }
+
+  assert(region->buffer != NULL);
+
   return region;
 }
     
@@ -203,57 +211,42 @@ intel_recreate_static_regions(intelScreenPrivate *intelScreen)
    intelScreen->front_region =
       intel_recreate_static(intelScreen,
 			    intelScreen->front_region,
-			    DRM_BO_FLAG_MEM_TT,
-			    intelScreen->front.offset,
-			    intelScreen->front.map,
-			    intelScreen->cpp,
-			    intelScreen->front.pitch / intelScreen->cpp,
-			    intelScreen->height);
+			    &intelScreen->front,
+			    DRM_BO_FLAG_MEM_TT);
 
-   intelScreen->rotated_region =
-      intel_recreate_static(intelScreen,
-			    intelScreen->rotated_region,
-			    DRM_BO_FLAG_MEM_TT,
-			    intelScreen->rotated.offset,
-			    intelScreen->rotated.map,
-			    intelScreen->cpp,
-			    intelScreen->rotated.pitch /
-			    intelScreen->cpp, intelScreen->height);
-
+   /* The rotated region is only used for old DDXes that didn't handle rotation
+\    * on their own.
+    */
+   if (intelScreen->driScrnPriv->ddxMinor < 8) {
+      intelScreen->rotated_region =
+	 intel_recreate_static(intelScreen,
+			       intelScreen->rotated_region,
+			       &intelScreen->rotated,
+			       DRM_BO_FLAG_MEM_TT);
+   }
 
    intelScreen->back_region =
       intel_recreate_static(intelScreen,
 			    intelScreen->back_region,
-			    DRM_BO_FLAG_MEM_TT,
-			    intelScreen->back.offset,
-			    intelScreen->back.map,
-			    intelScreen->cpp,
-			    intelScreen->back.pitch / intelScreen->cpp,
-			    intelScreen->height);
+			    &intelScreen->back,
+			    DRM_BO_FLAG_MEM_TT);
 
    if (intelScreen->third.handle) {
       intelScreen->third_region =
 	 intel_recreate_static(intelScreen,
 			       intelScreen->third_region,
-			       DRM_BO_FLAG_MEM_TT,
-			       intelScreen->third.offset,
-			       intelScreen->third.map,
-			       intelScreen->cpp,
-			       intelScreen->third.pitch / intelScreen->cpp,
-			       intelScreen->height);
+			       &intelScreen->third,
+			       DRM_BO_FLAG_MEM_TT);
    }
 
-   /* Still assuming front.cpp == depth.cpp
+   /* Still assumes front.cpp == depth.cpp.  We can kill this when we move to
+    * private buffers.
     */
    intelScreen->depth_region =
       intel_recreate_static(intelScreen,
 			    intelScreen->depth_region,
-			    DRM_BO_FLAG_MEM_TT,
-			    intelScreen->depth.offset,
-			    intelScreen->depth.map,
-			    intelScreen->cpp,
-			    intelScreen->depth.pitch / intelScreen->cpp,
-			    intelScreen->height);
+			    &intelScreen->depth,
+			    DRM_BO_FLAG_MEM_TT);
 }
 
 /**
@@ -396,6 +389,18 @@ intelUpdateScreenFromSAREA(intelScreenPrivate * intelScreen,
    intelScreen->depth.handle = sarea->depth_handle;
    intelScreen->depth.size = sarea->depth_size;
 
+   if (intelScreen->driScrnPriv->ddxMinor >= 9) {
+      intelScreen->front.bo_handle = sarea->front_bo_handle;
+      intelScreen->back.bo_handle = sarea->back_bo_handle;
+      intelScreen->third.bo_handle = sarea->third_bo_handle;
+      intelScreen->depth.bo_handle = sarea->depth_bo_handle;
+   } else {
+      intelScreen->front.bo_handle = -1;
+      intelScreen->back.bo_handle = -1;
+      intelScreen->third.bo_handle = -1;
+      intelScreen->depth.bo_handle = -1;
+   }
+
    intelScreen->tex.offset = sarea->tex_offset;
    intelScreen->logTextureGranularity = sarea->log_tex_granularity;
    intelScreen->tex.handle = sarea->tex_handle;
@@ -526,10 +531,21 @@ intelInitDriver(__DRIscreenPrivate * sPriv)
       (*glx_enable_extension) (psc, "GLX_SGI_make_current_read");
    }
 
-   intelScreen->bufmgr = dri_bufmgr_ttm_init(sPriv->fd,
-					     DRM_FENCE_TYPE_EXE,
-					     DRM_FENCE_TYPE_EXE |
-					     DRM_I915_FENCE_TYPE_RW);
+   /* If we've got a new enough DDX that's initializing TTM and giving us
+    * object handles for the shared buffers, use that.
+    */
+   intelScreen->ttm = GL_FALSE;
+   if (getenv("INTEL_NO_TTM") == NULL &&
+       intelScreen->driScrnPriv->ddxMinor >= 9 &&
+       intelScreen->front.bo_handle != -1) {
+      intelScreen->bufmgr = dri_bufmgr_ttm_init(sPriv->fd,
+						DRM_FENCE_TYPE_EXE,
+						DRM_FENCE_TYPE_EXE |
+						DRM_I915_FENCE_TYPE_RW);
+      if (intelScreen->bufmgr != NULL)
+	 intelScreen->ttm = GL_TRUE;
+   }
+   /* Otherwise, use the classic buffer manager. */
    if (intelScreen->bufmgr == NULL) {
       if (intelScreen->tex.size == 0) {
 	 fprintf(stderr, "[%s:%u] Error initializing buffer manager.\n",

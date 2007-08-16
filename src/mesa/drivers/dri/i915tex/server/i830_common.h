@@ -136,6 +136,15 @@ typedef struct {
 	int third_offset;
 	int third_size;
 	unsigned int third_tiled;
+
+	/* buffer object handles for the static buffers.  May change
+	 * over the lifetime of the client, though it doesn't in our current
+	 * implementation.
+	 */
+	unsigned int front_bo_handle;
+	unsigned int back_bo_handle;
+	unsigned int third_bo_handle;
+	unsigned int depth_bo_handle;
 } drmI830Sarea;
 
 /* Flags for perf_boxes

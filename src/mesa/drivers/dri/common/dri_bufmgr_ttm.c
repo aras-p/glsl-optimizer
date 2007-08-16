@@ -131,15 +131,30 @@ dri_ttm_alloc(dri_bufmgr *bufmgr, const char *name,
    return &ttm_buf->bo;
 }
 
+/* Our TTM backend doesn't allow creation of static buffers, as that requires
+ * privelege for the non-fake case, and the lock in the fake case where we were
+ * working around the X Server not creating buffers and passing handles to us.
+ */
 static dri_bo *
 dri_ttm_alloc_static(dri_bufmgr *bufmgr, const char *name,
 		     unsigned long offset, unsigned long size, void *virtual,
 		     unsigned int location_mask)
 {
+   return NULL;
+}
+
+/** Returns a dri_bo wrapping the given buffer object handle.
+ *
+ * This can be used when one application needs to pass a buffer object
+ * to another.
+ */
+dri_bo *
+dri_ttm_bo_create_from_handle(dri_bufmgr *bufmgr, const char *name,
+			      unsigned int handle)
+{
    dri_bufmgr_ttm *ttm_bufmgr;
    dri_bo_ttm *ttm_buf;
    int ret;
-   unsigned int flags, hint;
 
    ttm_bufmgr = (dri_bufmgr_ttm *)bufmgr;
 
@@ -147,25 +162,14 @@ dri_ttm_alloc_static(dri_bufmgr *bufmgr, const char *name,
    if (!ttm_buf)
       return NULL;
 
-   /* The mask argument doesn't do anything for us that we want other than
-    * determine which pool (TTM or local) the buffer is allocated into, so just
-    * pass all of the allocation class flags.
-    */
-   flags = location_mask | DRM_BO_FLAG_READ | DRM_BO_FLAG_WRITE |
-      DRM_BO_FLAG_EXE | DRM_BO_FLAG_NO_MOVE;
-   /* No hints we want to use. */
-   hint = 0;
-
-   ret = drmBOCreate(ttm_bufmgr->fd, offset, size, 0,
-		     NULL, drm_bo_type_fake,
-                     flags, hint, &ttm_buf->drm_bo);
+   ret = drmBOReference(ttm_bufmgr->fd, handle, &ttm_buf->drm_bo);
    if (ret != 0) {
       free(ttm_buf);
       return NULL;
    }
    ttm_buf->bo.size = ttm_buf->drm_bo.size;
    ttm_buf->bo.offset = ttm_buf->drm_bo.offset;
-   ttm_buf->bo.virtual = virtual;
+   ttm_buf->bo.virtual = NULL;
    ttm_buf->bo.bufmgr = bufmgr;
    ttm_buf->name = name;
    ttm_buf->refcount = 1;
@@ -367,7 +371,6 @@ dri_bufmgr_ttm_init(int fd, unsigned int fence_type,
 		    unsigned int fence_type_flush)
 {
    dri_bufmgr_ttm *bufmgr_ttm;
-   dri_bo *test_alloc;
 
    bufmgr_ttm = malloc(sizeof(*bufmgr_ttm));
    bufmgr_ttm->fd = fd;
@@ -387,19 +390,6 @@ dri_bufmgr_ttm_init(int fd, unsigned int fence_type,
    bufmgr_ttm->bufmgr.fence_unreference = dri_ttm_fence_unreference;
    bufmgr_ttm->bufmgr.fence_wait = dri_ttm_fence_wait;
    bufmgr_ttm->bufmgr.destroy = dri_bufmgr_ttm_destroy;
-
-   /* Attempt an allocation to make sure that the DRM was actually set up for
-    * TTM.
-    */
-   test_alloc = dri_bo_alloc((dri_bufmgr *)bufmgr_ttm, "test allocation",
-     4096, 4096, DRM_BO_FLAG_MEM_LOCAL | DRM_BO_FLAG_MEM_TT);
-   if (test_alloc == NULL) {
-      fprintf(stderr, "TTM test allocation failed\n");
-      _glthread_DESTROY_MUTEX(bufmgr_ttm->mutex);
-      free(bufmgr_ttm);
-      return NULL;
-   }
-   dri_bo_unreference(test_alloc);
 
    return &bufmgr_ttm->bufmgr;
 }

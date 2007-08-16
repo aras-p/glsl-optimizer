@@ -73,6 +73,7 @@ void intel_region_release(struct intel_region **ib);
 extern struct intel_region 
 *intel_region_create_static(intelScreenPrivate *intelScreen,
 			    GLuint mem_type,
+			    unsigned int bo_handle,
 			    GLuint offset,
 			    void *virtual,
 			    GLuint cpp,
@@ -81,6 +82,7 @@ extern void
 intel_region_update_static(intelScreenPrivate *intelScreen,
 			   struct intel_region *region,
 			   GLuint mem_type,
+			   unsigned int bo_handle,
 			   GLuint offset,
 			   void *virtual,
 			   GLuint cpp, GLuint pitch, GLuint height);

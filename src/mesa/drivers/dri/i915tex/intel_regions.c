@@ -147,6 +147,7 @@ intel_region_release(struct intel_region **region)
 struct intel_region *
 intel_region_create_static(intelScreenPrivate *intelScreen,
                            GLuint mem_type,
+			   unsigned int bo_handle,
                            GLuint offset,
                            void *virtual,
                            GLuint cpp, GLuint pitch, GLuint height)
@@ -159,9 +160,18 @@ intel_region_create_static(intelScreenPrivate *intelScreen,
    region->height = height;     /* needed? */
    region->refcount = 1;
 
-   region->buffer = dri_bo_alloc_static(intelScreen->bufmgr, "static region",
-					offset, pitch * cpp * height, virtual,
-					DRM_BO_FLAG_MEM_TT);
+   if (intelScreen->ttm) {
+      assert(bo_handle != -1);
+      region->buffer = dri_ttm_bo_create_from_handle(intelScreen->bufmgr,
+						     "static region",
+						     bo_handle);
+   } else {
+      region->buffer = dri_bo_alloc_static(intelScreen->bufmgr,
+					   "static region",
+					   offset, pitch * cpp * height,
+					   virtual,
+					   DRM_BO_FLAG_MEM_TT);
+   }
 
    return region;
 }
@@ -172,6 +182,7 @@ void
 intel_region_update_static(intelScreenPrivate *intelScreen,
 			   struct intel_region *region,
                            GLuint mem_type,
+			   unsigned int bo_handle,
                            GLuint offset,
                            void *virtual,
                            GLuint cpp, GLuint pitch, GLuint height)
@@ -188,9 +199,18 @@ intel_region_update_static(intelScreenPrivate *intelScreen,
     */
 
    dri_bo_unreference(region->buffer);
-   region->buffer = dri_bo_alloc_static(intelScreen->bufmgr, "static region",
-					offset, pitch * cpp * height, virtual,
-					DRM_BO_FLAG_MEM_TT);
+   if (intelScreen->ttm) {
+      assert(bo_handle != -1);
+      region->buffer = dri_ttm_bo_create_from_handle(intelScreen->bufmgr,
+						     "static region",
+						     bo_handle);
+   } else {
+      region->buffer = dri_bo_alloc_static(intelScreen->bufmgr,
+					   "static region",
+					   offset, pitch * cpp * height,
+					   virtual,
+					   DRM_BO_FLAG_MEM_TT);
+   }
 }
 
 

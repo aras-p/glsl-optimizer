@@ -45,6 +45,7 @@ typedef struct
    char *map;                   /* memory map */
    int offset;                  /* from start of video mem, in bytes */
    int pitch;                   /* row stride, in bytes */
+   unsigned int bo_handle;	/* buffer object id if available, or -1 */
 } intelRegion;
 
 typedef struct
