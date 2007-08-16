@@ -157,6 +157,8 @@ struct draw_context
    GLuint nr_vertices;
    GLboolean in_vb;
 
+   /** Pointer to vertex element/index buffer */
+   unsigned eltSize;  /**< bytes per index (0, 1, 2 or 4) */
    void *elts;
 
    struct vertex_header *(*get_vertex)( struct draw_context *draw,
@@ -196,6 +198,8 @@ struct draw_context
 
    GLenum prim;   /**< GL_POINTS, GL_LINE_STRIP, GL_QUADS, etc */
    unsigned reduced_prim;
+
+   void (*vs_flush)( struct draw_context *draw );
 
    /* Helper for tnl:
     */
