@@ -67,6 +67,16 @@ void draw_set_vertex_attributes( struct draw_context *draw,
 				 const GLuint *attrs,
 				 GLuint nr_attrs );
 
+/* XXX temporary */
+void draw_set_vertex_attributes2( struct draw_context *draw,
+				 const GLuint *attrs,
+				 GLuint nr_attrs );
+
+void draw_set_vertex_array_info(struct draw_context *draw,
+                                const struct pipe_vertex_buffer *buffers,
+                                const struct pipe_vertex_element *elements);
+
+/* XXX temporary */
 void draw_vb(struct draw_context *draw,
 	     struct vertex_buffer *VB );
 

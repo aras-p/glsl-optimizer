@@ -192,3 +192,13 @@ void draw_set_viewport_state( struct draw_context *draw,
     * Full pipe will have vertex shader, vertex fetch of its own.
     */
 }
+
+
+void draw_set_vertex_array_info(struct draw_context *draw,
+                                const struct pipe_vertex_buffer *buffers,
+                                const struct pipe_vertex_element *elements)
+{
+   draw->vertex_buffer = buffers;
+   draw->vertex_element = elements;
+}
+
