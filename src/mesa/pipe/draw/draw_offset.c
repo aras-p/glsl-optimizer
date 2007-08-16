@@ -55,7 +55,7 @@ static INLINE struct offset_stage *offset_stage( struct draw_stage *stage )
 static void offset_begin( struct draw_stage *stage )
 {
    struct offset_stage *offset = offset_stage(stage);
-   float mrd = 1.0 / 65535.0; /* XXX this depends on depthbuffer bits! */
+   float mrd = 1.0f / 65535.0f; /* XXX this depends on depthbuffer bits! */
 
    offset->units = stage->draw->setup.offset_units * mrd;
    offset->scale = stage->draw->setup.offset_scale;
@@ -72,7 +72,7 @@ static void do_offset_tri( struct draw_stage *stage,
 			   struct prim_header *header )
 {
    struct offset_stage *offset = offset_stage(stage);   
-   float inv_det = 1.0 / header->det;
+   float inv_det = 1.0f / header->det;
 
    /* Window coords:
     */
@@ -101,9 +101,9 @@ static void do_offset_tri( struct draw_stage *stage,
     * Note: we're applying the offset and clamping per-vertex.
     * Ideally, the offset is applied per-fragment prior to fragment shading.
     */
-   v0[2] = CLAMP(v0[2] + zoffset, 0.0, 1.0);
-   v1[2] = CLAMP(v1[2] + zoffset, 0.0, 1.0);
-   v2[2] = CLAMP(v2[2] + zoffset, 0.0, 1.0);
+   v0[2] = CLAMP(v0[2] + zoffset, 0.0f, 1.0f);
+   v1[2] = CLAMP(v1[2] + zoffset, 0.0f, 1.0f);
+   v2[2] = CLAMP(v2[2] + zoffset, 0.0f, 1.0f);
 
    stage->next->tri( stage->next, header );
 }
