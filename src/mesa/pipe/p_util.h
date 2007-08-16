@@ -38,6 +38,18 @@
 
 #define Elements(x) sizeof(x)/sizeof(*(x))
 
+#if defined(__MSC__) && defined(__WIN32__)
+static INLINE unsigned ffs( unsigned u )
+{
+   unsigned i;
+
+   __asm bsf eax, [u]
+   __asm mov [i], eax
+
+   return i;
+}
+#endif
+
 union fi {
    float f;
    int i;
@@ -165,7 +177,7 @@ static INLINE int iround(float f)
 #if defined(__GNUC__)
 #define FABSF(x)   fabsf(x)
 #else
-#define FABSF(x)   ((GLfloat) fabs(x))
+#define FABSF(x)   ((float) fabs(x))
 #endif
 
 /* Pretty fast, and accurate.
