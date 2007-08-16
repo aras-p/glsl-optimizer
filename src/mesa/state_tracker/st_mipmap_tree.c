@@ -30,10 +30,12 @@
 
 #include "pipe/p_state.h"
 #include "pipe/p_context.h"
+#include "pipe/p_defines.h"
 
 
 #define DBG if(0) printf
 
+#if 0
 static GLenum
 target_to_target(GLenum target)
 {
@@ -49,10 +51,11 @@ target_to_target(GLenum target)
       return target;
    }
 }
+#endif
 
 struct pipe_mipmap_tree *
 st_miptree_create(struct pipe_context *pipe,
-                     GLenum target,
+                  unsigned target,
                      GLenum internal_format,
                      GLuint first_level,
                      GLuint last_level,
@@ -64,11 +67,13 @@ st_miptree_create(struct pipe_context *pipe,
    struct pipe_mipmap_tree *mt = calloc(sizeof(*mt), 1);
    GLbitfield flags = 0x0;
 
+   assert(target <= PIPE_TEXTURE_CUBE);
+
    DBG("%s target %s format %s level %d..%d\n", __FUNCTION__,
        _mesa_lookup_enum_by_nr(target),
        _mesa_lookup_enum_by_nr(internal_format), first_level, last_level);
 
-   mt->target = target_to_target(target);
+   mt->target = target;
    mt->internal_format = internal_format;
    mt->first_level = first_level;
    mt->last_level = last_level;

@@ -114,6 +114,30 @@ st_get_texobj_mipmap_tree(struct gl_texture_object *texObj)
 }
 
 
+static unsigned
+gl_target_to_pipe(GLenum target)
+{
+   switch (target) {
+   case GL_TEXTURE_1D:
+      return PIPE_TEXTURE_1D;
+
+   case GL_TEXTURE_2D:
+   case GL_TEXTURE_RECTANGLE_NV:
+      return PIPE_TEXTURE_2D;
+
+   case GL_TEXTURE_3D:
+      return PIPE_TEXTURE_3D;
+
+   case GL_TEXTURE_CUBE_MAP_ARB:
+      return PIPE_TEXTURE_CUBE;
+
+   default:
+      assert(0);
+      return 0;
+   }
+}
+
+
 static int
 compressed_num_bytes(GLuint mesaFormat)
 {
@@ -360,15 +384,15 @@ guess_and_alloc_mipmap_tree(struct pipe_context *pipe,
    if (stImage->base.IsCompressed)
       comp_byte = compressed_num_bytes(stImage->base.TexFormat->MesaFormat);
    stObj->mt = st_miptree_create(pipe,
-                                       stObj->base.Target,
-                                       stImage->base.InternalFormat,
-                                       firstLevel,
-                                       lastLevel,
-                                       width,
-                                       height,
-                                       depth,
-                                       stImage->base.TexFormat->TexelBytes,
-                                       comp_byte);
+                                 gl_target_to_pipe(stObj->base.Target),
+                                 stImage->base.InternalFormat,
+                                 firstLevel,
+                                 lastLevel,
+                                 width,
+                                 height,
+                                 depth,
+                                 stImage->base.TexFormat->TexelBytes,
+                                 comp_byte);
 
    stObj->mt->format
       = st_mesa_format_to_pipe_format(stImage->base.TexFormat->MesaFormat);
@@ -587,7 +611,7 @@ st_TexImage(GLcontext * ctx,
    if (stObj->mt &&
        stObj->mt->first_level == level &&
        stObj->mt->last_level == level &&
-       stObj->mt->target != GL_TEXTURE_CUBE_MAP_ARB &&
+       stObj->mt->target != PIPE_TEXTURE_CUBE &&
        !st_miptree_match_image(stObj->mt, &stImage->base,
                                   stImage->face, stImage->level)) {
 
@@ -1476,7 +1500,7 @@ st_finalize_mipmap_tree(GLcontext *ctx,
     * leaving the tree alone.
     */
    if (stObj->mt &&
-       (stObj->mt->target != stObj->base.Target ||
+       (stObj->mt->target != gl_target_to_pipe(stObj->base.Target) ||
 	stObj->mt->internal_format != firstImage->base.InternalFormat ||
 	stObj->mt->first_level != stObj->firstLevel ||
 	stObj->mt->last_level != stObj->lastLevel ||
@@ -1493,7 +1517,7 @@ st_finalize_mipmap_tree(GLcontext *ctx,
     */
    if (!stObj->mt) {
       stObj->mt = st_miptree_create(pipe,
-                                    stObj->base.Target,
+                                    gl_target_to_pipe(stObj->base.Target),
                                     firstImage->base.InternalFormat,
                                     stObj->firstLevel,
                                     stObj->lastLevel,
