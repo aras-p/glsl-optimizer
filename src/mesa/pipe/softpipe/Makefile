@@ -8,6 +8,7 @@ DRIVER_SOURCES = \
 	sp_clear.c \
 	sp_flush.c \
 	sp_context.c \
+	sp_draw_arrays.c \
 	sp_prim_setup.c \
 	sp_quad.c \
 	sp_quad_alpha_test.c \

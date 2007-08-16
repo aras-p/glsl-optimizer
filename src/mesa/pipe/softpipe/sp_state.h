@@ -91,4 +91,15 @@ void softpipe_set_vertex_buffer(struct pipe_context *,
 
 void softpipe_update_derived( struct softpipe_context *softpipe );
 
+
+void softpipe_draw_arrays(struct pipe_context *pipe, unsigned mode,
+                          unsigned start, unsigned count);
+
+
+void
+softpipe_map_surfaces(struct softpipe_context *sp);
+
+void
+softpipe_unmap_surfaces(struct softpipe_context *sp);
+
 #endif
