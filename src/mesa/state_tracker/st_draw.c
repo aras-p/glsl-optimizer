@@ -44,6 +44,15 @@
 #include "pipe/p_context.h"
 #include "pipe/p_defines.h"
 
+#include "vbo/vbo_context.h"
+
+/*
+ * Enabling this causes the VBO module to call draw_vbo() below,
+ * bypassing the T&L module.  This only works with VBO-based demos,
+ * such as progs/test/bufferobj.c
+ */
+#define USE_NEW_DRAW 0
+
 
 /*
  * TNL stage which feeds into the above.
@@ -95,6 +104,31 @@ static const struct tnl_pipeline_stage *st_pipeline[] = {
 
 
 
+static GLuint
+pipe_vertex_format(GLenum format, GLuint size)
+{
+   static const GLuint float_fmts[4] = {
+      PIPE_FORMAT_R32_FLOAT,
+      PIPE_FORMAT_R32G32_FLOAT,
+      PIPE_FORMAT_R32G32B32_FLOAT,
+      PIPE_FORMAT_R32G32B32A32_FLOAT,
+   };
+
+   assert(format >= GL_BYTE);
+   assert(format <= GL_DOUBLE);
+   assert(size >= 1);
+   assert(size <= 4);
+
+   switch (format) {
+   case GL_FLOAT:
+      return float_fmts[size - 1];
+   default:
+      assert(0);
+   }
+}
+
+
+
 /**
  * This function gets plugged into the VBO module and is called when
  * we have something to render.
@@ -110,35 +144,48 @@ draw_vbo(GLcontext *ctx,
          GLuint max_index)
 {
    struct pipe_context *pipe = ctx->st->pipe;
-   GLuint attr;
+   GLuint attr, i;
 
    /* tell pipe about the vertex array element/attributes */
    for (attr = 0; attr < 16; attr++) {
       struct gl_buffer_object *bufobj = arrays[attr]->BufferObj;
+      struct pipe_vertex_buffer vbuffer;
+      struct pipe_vertex_element velement;
+
       if (bufobj && bufobj->Name) {
          struct st_buffer_object *stobj = st_buffer_object(bufobj);
-         struct pipe_buffer_handle *buffer = stobj->buffer;
-         GLenum type = arrays[attr]->Type;
-         GLint  size = arrays[attr]->Size;
-         struct pipe_vertex_buffer vbuffer;
-         struct pipe_vertex_element velement;
 
-         vbuffer.pitch = 0;
+         assert(stobj->buffer);
+
+         vbuffer.pitch = arrays[attr]->StrideB; /* in bytes */
          vbuffer.max_index = 0;
-         vbuffer.buffer = NULL;
+         vbuffer.buffer = stobj->buffer;
          vbuffer.buffer_offset = 0;
 
-         velement.src_offset = 0;
+         /* Recall that for VBOs, the gl_client_array->Ptr field is
+          * really an offset from the start of the VBO, not a pointer.
+          */
+         velement.src_offset = (unsigned) arrays[attr]->Ptr;
          velement.vertex_buffer_index = attr;
          velement.dst_offset = 0;
-         velement.src_format = PIPE_FORMAT_R32G32B32A32_FLOAT;
-
-         pipe->set_vertex_buffer(pipe, attr, &vbuffer);
-         pipe->set_vertex_element(pipe, attr, &velement);
+         velement.src_format = pipe_vertex_format(arrays[attr]->Type,
+                                                  arrays[attr]->Size);
       }
+      else {
+         /* vertex attribute data is not an a real buffer! */
+         /* XXX we'll want to handle that someday... */
+
+         vbuffer.buffer = NULL;
+      }
+
+      pipe->set_vertex_buffer(pipe, attr, &vbuffer);
+      pipe->set_vertex_element(pipe, attr, &velement);
    }
 
    /* do actual drawing */
+   for (i = 0; i < nr_prims; i++) {
+      pipe->draw_arrays(pipe, prims[i].mode, prims[i].start, prims[i].count);
+   }
 }
 
 
@@ -151,8 +198,18 @@ void st_init_draw( struct st_context *st )
 {
    GLcontext *ctx = st->ctx;
 
+#if USE_NEW_DRAW
+   struct vbo_context *vbo = (struct vbo_context *) ctx->swtnl_im;
+
+   assert(vbo);
+   assert(vbo->draw_prims);
+   vbo->draw_prims = draw_vbo;
+
+#else
    _tnl_destroy_pipeline( ctx );
    _tnl_install_pipeline( ctx, st_pipeline );
+#endif
+
 }
 
 
