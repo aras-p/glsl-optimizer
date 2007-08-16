@@ -28,21 +28,90 @@
   * Authors:
   *   Keith Whitwell <keith@tungstengraphics.com>
   */
-                   
-#include "st_context.h"
+
+#include "shader/prog_parameter.h"
+
 #include "pipe/p_context.h"
+#include "pipe/tgsi/mesa/mesa_to_tgsi.h"
+#include "pipe/tgsi/core/tgsi_dump.h"
+
+#include "st_context.h"
 #include "st_atom.h"
+#include "st_program.h"
+
+#define TGSI_DEBUG 0
+
+static void compile_vs( struct st_context *st,
+			struct st_vertex_program *vs )
+{
+   /* XXX: fix static allocation of tokens:
+    */
+   tgsi_mesa_compile_vp_program( &vs->Base, vs->tokens, ST_FP_MAX_TOKENS );
+
+   if (TGSI_DEBUG)
+      tgsi_dump( vs->tokens, TGSI_DUMP_VERBOSE );
+}
 
 
- 
 static void update_vs( struct st_context *st )
 {
+   struct pipe_shader_state vs;
+   struct st_vertex_program *vp = NULL;
+   struct gl_program_parameter_list *params = NULL;
+
+   if (st->ctx->VertexProgram._MaintainTnlProgram)
+      _tnl_UpdateFixedFunctionProgram( st->ctx );
+
+   if (st->ctx->Shader.CurrentProgram &&
+       st->ctx->Shader.CurrentProgram->LinkStatus &&
+       st->ctx->Shader.CurrentProgram->VertexProgram) {
+      struct gl_vertex_program *f
+         = st->ctx->Shader.CurrentProgram->VertexProgram;
+      vp = st_vertex_program(f);
+      params = f->Base.Parameters;
+   }
+   else if (st->ctx->VertexProgram._Current) {
+      vp = st_vertex_program(st->ctx->VertexProgram._Current);
+      params = st->ctx->VertexProgram._Current->Base.Parameters;
+   }
+
+   /* XXXX temp */
+#if 1
+   if (!vp)
+      return;
+#endif
+   if (vp && params) {
+      /* load program's constants array */
+
+      _mesa_load_state_parameters(st->ctx, params);
+
+      vp->constants.nr_constants = params->NumParameters;
+      memcpy(vp->constants.constant, 
+             params->ParameterValues,
+             params->NumParameters * sizeof(GLfloat) * 4);
+   }
+
+   if (vp->dirty)
+      compile_vs( st, vp );
+
+   memset( &vs, 0, sizeof(vs) );
+   vs.inputs_read = vp->Base.Base.InputsRead;
+   vs.tokens = &vp->tokens[0];
+   vs.constants = &vp->constants;
+
+   if (memcmp(&vs, &st->state.vs, sizeof(vs)) != 0 ||
+       vp->dirty) 
+   {
+      vp->dirty = 0;
+      st->state.vs = vs;
+      st->pipe->set_vs_state(st->pipe, &vs);
+   }
 }
 
 
 const struct st_tracked_state st_update_vs = {
    .dirty = {
-      .mesa  = 0,
+      .mesa  = _NEW_PROGRAM | _NEW_MODELVIEW,
       .st   = ST_NEW_VERTEX_PROGRAM,
    },
    .update = update_vs
