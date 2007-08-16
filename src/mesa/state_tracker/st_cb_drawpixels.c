@@ -235,7 +235,7 @@ draw_quad(struct st_context *st, GLfloat x0, GLfloat y0, GLfloat z,
       verts[i][1][3] = 1.0; /*Q*/
    }
 
-   st->pipe->draw_vertices(st->pipe, GL_QUADS,
+   st->pipe->draw_vertices(st->pipe, PIPE_PRIM_QUADS,
                            4, (GLfloat *) verts, 2, attribs);
 }
 

@@ -190,7 +190,7 @@ draw_quad(GLcontext *ctx,
       verts[i][1][3] = color[3];
    }
 
-   ctx->st->pipe->draw_vertices(ctx->st->pipe, GL_QUADS,
+   ctx->st->pipe->draw_vertices(ctx->st->pipe, PIPE_PRIM_QUADS,
                                 4, (GLfloat *) verts, 2, attribs);
 }
 

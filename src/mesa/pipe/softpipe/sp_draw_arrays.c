@@ -75,7 +75,7 @@ static unsigned reduced_prim[GL_POLYGON + 1] = {
  */
 static void
 run_vertex_program(struct draw_context *draw,
-                   const void *vbuffer, GLuint elem,
+                   const void *vbuffer, unsigned elem,
                    struct vertex_header *vOut)
 {
    const float *vIn, *cIn;
@@ -224,8 +224,8 @@ static void draw_invalidate_vcache( struct draw_context *draw )
  * vertices.  Flush primitive and/or vertex queues if necessary to
  * make space.
  */
-static struct prim_header *get_queued_prim( struct draw_context *draw,
-					    GLuint nr_verts )
+static struct prim_header *
+get_queued_prim( struct draw_context *draw, unsigned nr_verts )
 {
    if (draw->pq.queue_nr + 1 >= PRIM_QUEUE_LENGTH ||
        draw->vcache.overflow + nr_verts >= VCACHE_OVERFLOW) 
@@ -242,8 +242,8 @@ static struct prim_header *get_queued_prim( struct draw_context *draw,
 /* Check if vertex is in cache, otherwise add it.  It won't go through
  * VS yet, not until there is a flush operation or the VS queue fills up.  
  */
-static struct vertex_header *get_vertex( struct draw_context *draw,
-					 GLuint i )
+static struct vertex_header *
+get_vertex( struct draw_context *draw, unsigned i )
 {
    unsigned slot = (i + (i>>5)) & 31;
    
@@ -273,8 +273,8 @@ static struct vertex_header *get_vertex( struct draw_context *draw,
 
 
 
-static void draw_set_prim( struct draw_context *draw,
-			   GLenum prim )
+static void
+draw_set_prim( struct draw_context *draw, unsigned prim )
 {
    if (reduced_prim[prim] != draw->reduced_prim) {
       draw_flush( draw );
@@ -286,7 +286,7 @@ static void draw_set_prim( struct draw_context *draw,
 
 
 static void do_point( struct draw_context *draw,
-		      GLuint i0 )
+		      unsigned i0 )
 {
    struct prim_header *prim = get_queued_prim( draw, 1 );
    
@@ -299,8 +299,8 @@ static void do_point( struct draw_context *draw,
 
 static void do_line( struct draw_context *draw,
 		     GLboolean reset_stipple,
-		     GLuint i0,
-		     GLuint i1 )
+		     unsigned i0,
+		     unsigned i1 )
 {
    struct prim_header *prim = get_queued_prim( draw, 2 );
    
@@ -312,9 +312,9 @@ static void do_line( struct draw_context *draw,
 }
 
 static void do_triangle( struct draw_context *draw,
-			 GLuint i0,
-			 GLuint i1,
-			 GLuint i2 )
+			 unsigned i0,
+			 unsigned i1,
+			 unsigned i2 )
 {
    struct prim_header *prim = get_queued_prim( draw, 3 );
    
@@ -328,10 +328,10 @@ static void do_triangle( struct draw_context *draw,
 			  
 static void do_ef_triangle( struct draw_context *draw,
 			    GLboolean reset_stipple,
-			    GLuint ef_mask,
-			    GLuint i0,
-			    GLuint i1,
-			    GLuint i2 )
+			    unsigned ef_mask,
+			    unsigned i0,
+			    unsigned i1,
+			    unsigned i2 )
 {
    struct prim_header *prim = get_queued_prim( draw, 3 );
    struct vertex_header *v0 = draw->get_vertex( draw, i0 );
@@ -362,22 +362,22 @@ static void do_quad( struct draw_context *draw,
 
 
 static void draw_prim( struct draw_context *draw,
-		       GLuint start,
-		       GLuint count )
+		       unsigned start,
+		       unsigned count )
 {
-   GLuint i;
+   unsigned i;
 
 //   _mesa_printf("%s (%d) %d/%d\n", __FUNCTION__, draw->prim, start, count );
 
    switch (draw->prim) {
-   case GL_POINTS:
+   case PIPE_PRIM_POINTS:
       for (i = 0; i < count; i ++) {
 	 do_point( draw,
 		   start + i );
       }
       break;
 
-   case GL_LINES:
+   case PIPE_PRIM_LINES:
       for (i = 0; i+1 < count; i += 2) {
 	 do_line( draw, 
 		  TRUE,
@@ -386,7 +386,7 @@ static void draw_prim( struct draw_context *draw,
       }
       break;
 
-   case GL_LINE_LOOP:  
+   case PIPE_PRIM_LINE_LOOP:  
       if (count >= 2) {
 	 for (i = 1; i < count; i++) {
 	    do_line( draw, 
@@ -402,7 +402,7 @@ static void draw_prim( struct draw_context *draw,
       }
       break;
 
-   case GL_LINE_STRIP:
+   case PIPE_PRIM_LINE_STRIP:
       if (count >= 2) {
 	 for (i = 1; i < count; i++) {
 	    do_line( draw,
@@ -413,7 +413,7 @@ static void draw_prim( struct draw_context *draw,
       }
       break;
 
-   case GL_TRIANGLES:
+   case PIPE_PRIM_TRIANGLES:
       for (i = 0; i+2 < count; i += 3) {
 	 do_ef_triangle( draw,
 			 1, 
@@ -424,7 +424,7 @@ static void draw_prim( struct draw_context *draw,
       }
       break;
 
-   case GL_TRIANGLE_STRIP:
+   case PIPE_PRIM_TRIANGLE_STRIP:
       for (i = 0; i+2 < count; i++) {
 	 if (i & 1) {
 	    do_triangle( draw,
@@ -441,7 +441,7 @@ static void draw_prim( struct draw_context *draw,
       }
       break;
 
-   case GL_TRIANGLE_FAN:
+   case PIPE_PRIM_TRIANGLE_FAN:
       if (count >= 3) {
 	 for (i = 0; i+2 < count; i++) {
 	    do_triangle( draw,
@@ -453,7 +453,7 @@ static void draw_prim( struct draw_context *draw,
       break;
 
 
-   case GL_QUADS:
+   case PIPE_PRIM_QUADS:
       for (i = 0; i+3 < count; i += 4) {
 	 do_quad( draw,
 		  start + i + 0,
@@ -463,7 +463,7 @@ static void draw_prim( struct draw_context *draw,
       }
       break;
 
-   case GL_QUAD_STRIP:
+   case PIPE_PRIM_QUAD_STRIP:
       for (i = 0; i+3 < count; i += 2) {
 	 do_quad( draw,
 		  start + i + 2,
@@ -473,7 +473,7 @@ static void draw_prim( struct draw_context *draw,
       }
       break;
 
-   case GL_POLYGON:
+   case PIPE_PRIM_POLYGON:
       if (count >= 3) {
 	 unsigned ef_mask = (1<<2) | (1<<0);
 
@@ -502,43 +502,43 @@ static void draw_prim( struct draw_context *draw,
 
 
 
-static GLuint draw_prim_info(GLenum mode, GLuint *first, GLuint *incr)
+static unsigned draw_prim_info(unsigned mode, unsigned *first, unsigned *incr)
 {
    switch (mode) {
-   case GL_POINTS:
+   case PIPE_PRIM_POINTS:
       *first = 1;
       *incr = 1;
       return 0;
-   case GL_LINES:
+   case PIPE_PRIM_LINES:
       *first = 2;
       *incr = 2;
       return 0;
-   case GL_LINE_STRIP:
+   case PIPE_PRIM_LINE_STRIP:
       *first = 2;
       *incr = 1;
       return 0;
-   case GL_LINE_LOOP:
+   case PIPE_PRIM_LINE_LOOP:
       *first = 2;
       *incr = 1;
       return 1;
-   case GL_TRIANGLES:
+   case PIPE_PRIM_TRIANGLES:
       *first = 3;
       *incr = 3;
       return 0;
-   case GL_TRIANGLE_STRIP:
+   case PIPE_PRIM_TRIANGLE_STRIP:
       *first = 3;
       *incr = 1;
       return 0;
-   case GL_TRIANGLE_FAN:
-   case GL_POLYGON:
+   case PIPE_PRIM_TRIANGLE_FAN:
+   case PIPE_PRIM_POLYGON:
       *first = 3;
       *incr = 1;
       return 1;
-   case GL_QUADS:
+   case PIPE_PRIM_QUADS:
       *first = 4;
       *incr = 4;
       return 0;
-   case GL_QUAD_STRIP:
+   case PIPE_PRIM_QUAD_STRIP:
       *first = 4;
       *incr = 2;
       return 0;
@@ -551,7 +551,7 @@ static GLuint draw_prim_info(GLenum mode, GLuint *first, GLuint *incr)
 }
 
 
-static GLuint trim( GLuint count, GLuint first, GLuint incr )
+static unsigned trim( unsigned count, unsigned first, unsigned incr )
 {
    if (count < first)
       return 0;
@@ -627,10 +627,10 @@ do {								\
 
 
 void draw_set_vertex_attributes2( struct draw_context *draw,
-				 const GLuint *slot_to_vf_attr,
-				 GLuint nr_attrs )
+				 const unsigned *slot_to_vf_attr,
+				 unsigned nr_attrs )
 {
-   GLuint i;
+   unsigned i;
 
    memset(draw->vf_attr_to_slot, 0, sizeof(draw->vf_attr_to_slot));
    draw->nr_attrs = 0;
