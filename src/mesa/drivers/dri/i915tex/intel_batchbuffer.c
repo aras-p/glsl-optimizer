@@ -27,6 +27,7 @@
 
 #include "intel_batchbuffer.h"
 #include "intel_ioctl.h"
+#include "i915_disasm.h"
 
 /* Relocations in kernel space:
  *    - pass dma buffer seperately
@@ -144,9 +145,6 @@ do_flush_locked(struct intel_batchbuffer *batch,
       dri_bo_unreference(r->buf);
    }
 
-   if (INTEL_DEBUG & DEBUG_BATCH)
-      i915_disasm(ptr, used / 4, 0);
-
    dri_bo_unmap(batch->buf);
    batch->map = NULL;
    batch->ptr = NULL;
@@ -195,6 +193,12 @@ do_flush_locked(struct intel_batchbuffer *batch,
          LOCK_HARDWARE(intel);
       }
       intel->vtbl.lost_hardware(intel);
+   }
+
+   if (INTEL_DEBUG & DEBUG_BATCH) {
+      dri_bo_map(batch->buf, GL_FALSE);
+      i915_disasm(ptr, used / 4, batch->buf->offset);
+      dri_bo_unmap(batch->buf);
    }
 }
 
