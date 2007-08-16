@@ -119,20 +119,20 @@ _mesa_copy_texture_state( const GLcontext *src, GLcontext *dst )
       /* copy texture object bindings, not contents of texture objects */
       _mesa_lock_context_textures(dst);
 
-       _mesa_reference_texobj(&dst->Texture.Unit[i].Current1D,
-                              src->Texture.Unit[i].Current1D);
-       _mesa_reference_texobj(&dst->Texture.Unit[i].Current2D,
-                              src->Texture.Unit[i].Current2D);
-       _mesa_reference_texobj(&dst->Texture.Unit[i].Current3D,
-                              src->Texture.Unit[i].Current3D);
-       _mesa_reference_texobj(&dst->Texture.Unit[i].CurrentCubeMap,
-                              src->Texture.Unit[i].CurrentCubeMap);
-       _mesa_reference_texobj(&dst->Texture.Unit[i].CurrentRect,
-                              src->Texture.Unit[i].CurrentRect);
-       _mesa_reference_texobj(&dst->Texture.Unit[i].Current1DArray,
-                              src->Texture.Unit[i].Current1DArray);
-       _mesa_reference_texobj(&dst->Texture.Unit[i].Current2DArray,
-                              src->Texture.Unit[i].Current2DArray);
+      _mesa_reference_texobj(&dst->Texture.Unit[i].Current1D,
+                             src->Texture.Unit[i].Current1D);
+      _mesa_reference_texobj(&dst->Texture.Unit[i].Current2D,
+                             src->Texture.Unit[i].Current2D);
+      _mesa_reference_texobj(&dst->Texture.Unit[i].Current3D,
+                             src->Texture.Unit[i].Current3D);
+      _mesa_reference_texobj(&dst->Texture.Unit[i].CurrentCubeMap,
+                             src->Texture.Unit[i].CurrentCubeMap);
+      _mesa_reference_texobj(&dst->Texture.Unit[i].CurrentRect,
+                             src->Texture.Unit[i].CurrentRect);
+      _mesa_reference_texobj(&dst->Texture.Unit[i].Current1DArray,
+                             src->Texture.Unit[i].Current1DArray);
+      _mesa_reference_texobj(&dst->Texture.Unit[i].Current2DArray,
+                             src->Texture.Unit[i].Current2DArray);
 
       _mesa_unlock_context_textures(dst);
    }
@@ -3201,7 +3201,19 @@ _mesa_init_texture(GLcontext *ctx)
 void
 _mesa_free_texture_data(GLcontext *ctx)
 {
-   GLuint i;
+   GLuint u;
+
+   /* unreference current textures */
+   for (u = 0; u < MAX_TEXTURE_IMAGE_UNITS; u++) {
+      struct gl_texture_unit *unit = ctx->Texture.Unit + u;
+      _mesa_reference_texobj(&unit->Current1D, NULL);
+      _mesa_reference_texobj(&unit->Current2D, NULL);
+      _mesa_reference_texobj(&unit->Current3D, NULL);
+      _mesa_reference_texobj(&unit->CurrentCubeMap, NULL);
+      _mesa_reference_texobj(&unit->CurrentRect, NULL);
+      _mesa_reference_texobj(&unit->Current1DArray, NULL);
+      _mesa_reference_texobj(&unit->Current2DArray, NULL);
+   }
 
    /* Free proxy texture objects */
    (ctx->Driver.DeleteTexture)(ctx,  ctx->Texture.Proxy1D );
@@ -3212,8 +3224,8 @@ _mesa_free_texture_data(GLcontext *ctx)
    (ctx->Driver.DeleteTexture)(ctx,  ctx->Texture.Proxy1DArray );
    (ctx->Driver.DeleteTexture)(ctx,  ctx->Texture.Proxy2DArray );
 
-   for (i = 0; i < MAX_TEXTURE_IMAGE_UNITS; i++)
-      _mesa_free_colortable_data( &ctx->Texture.Unit[i].ColorTable );
+   for (u = 0; u < MAX_TEXTURE_IMAGE_UNITS; u++)
+      _mesa_free_colortable_data( &ctx->Texture.Unit[u].ColorTable );
 
    _mesa_TexEnvProgramCacheDestroy( ctx );
 }

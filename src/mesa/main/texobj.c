@@ -5,9 +5,9 @@
 
 /*
  * Mesa 3-D graphics library
- * Version:  6.5
+ * Version:  7.1
  *
- * Copyright (C) 1999-2006  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2007  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -152,10 +152,6 @@ _mesa_delete_texture_object( GLcontext *ctx, struct gl_texture_object *texObj )
 {
    GLuint i, face;
 
-   /*
-   printf("TEX DELETE %p (%u)\n", (void*) texObj, texObj->Name);
-   */
-
    (void) ctx;
 
    /* Set Target to an invalid value.  With some assertions elsewhere
@@ -195,6 +191,7 @@ void
 _mesa_copy_texture_object( struct gl_texture_object *dest,
                            const struct gl_texture_object *src )
 {
+   dest->Target = src->Target;
    dest->Name = src->Name;
    dest->Priority = src->Priority;
    dest->BorderColor[0] = src->BorderColor[0];
@@ -278,10 +275,7 @@ _mesa_reference_texobj(struct gl_texture_object **ptr,
       _glthread_LOCK_MUTEX(oldTex->Mutex);
       ASSERT(oldTex->RefCount > 0);
       oldTex->RefCount--;
-      /*
-      printf("TEX DECR %p (%u) to %d\n",
-             (void*) oldTex, oldTex->Name, oldTex->RefCount);
-      */
+
       deleteFlag = (oldTex->RefCount == 0);
       _glthread_UNLOCK_MUTEX(oldTex->Mutex);
 
@@ -309,10 +303,6 @@ _mesa_reference_texobj(struct gl_texture_object **ptr,
       }
       else {
          tex->RefCount++;
-         /*
-           printf("TEX INCR %p (%u) to %d\n",
-           (void*) tex, tex->Name, tex->RefCount);
-         */
          *ptr = tex;
       }
       _glthread_UNLOCK_MUTEX(tex->Mutex);
@@ -805,7 +795,7 @@ _mesa_DeleteTextures( GLsizei n, const GLuint *textures)
             _mesa_HashRemove(ctx->Shared->TexObjects, delObj->Name);
             _glthread_UNLOCK_MUTEX(ctx->Shared->Mutex);
 
-            /* Unrefernce the texobj.  If refcount hits zero, the texture
+            /* Unreference the texobj.  If refcount hits zero, the texture
              * will be deleted.
              */
             _mesa_reference_texobj(&delObj, NULL);

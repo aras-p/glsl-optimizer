@@ -6,9 +6,9 @@
 
 /*
  * Mesa 3-D graphics library
- * Version:  6.5
+ * Version:  7.1
  *
- * Copyright (C) 1999-2006  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2007  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -1209,6 +1209,7 @@ _mesa_free_context_data( GLcontext *ctx )
    _mesa_unreference_framebuffer(&ctx->DrawBuffer);
    _mesa_unreference_framebuffer(&ctx->ReadBuffer);
 
+   _mesa_free_attrib_data(ctx);
    _mesa_free_lighting_data( ctx );
    _mesa_free_eval_data( ctx );
    _mesa_free_texture_data( ctx );
