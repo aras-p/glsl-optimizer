@@ -262,6 +262,8 @@ dri_ttm_validate(dri_bo *buf, unsigned int flags)
       /* XXX: add to fence list for sanity checking */
    }
 
+   buf->offset = ttm_buf->drm_bo.offset;
+
    return err;
 }
 
