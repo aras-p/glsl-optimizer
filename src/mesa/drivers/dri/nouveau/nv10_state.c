@@ -111,9 +111,39 @@ static void nv10BlendFuncSeparate(GLcontext *ctx, GLenum sfactorRGB, GLenum dfac
 	OUT_RING_CACHE(dfactorRGB);
 }
 
+static void nv10ClearBuffer(GLcontext *ctx, nouveau_renderbuffer_t *buffer, int fill, int mask)
+{
+	nouveauContextPtr nmesa = NOUVEAU_CONTEXT(ctx);
+
+	if (!buffer) {
+		return;
+	}
+
+	/* TODO */
+}
+
 static void nv10Clear(GLcontext *ctx, GLbitfield mask)
 {
-	/* TODO */
+	nouveauContextPtr nmesa = NOUVEAU_CONTEXT(ctx);
+
+	if (mask & (BUFFER_BIT_FRONT_LEFT)) {
+		nv10ClearBuffer(ctx, nmesa->color_buffer[0],
+			nmesa->clear_color_value, 0xffffffff);
+	}
+	if (mask & (BUFFER_BIT_BACK_LEFT)) {
+		nv10ClearBuffer(ctx, nmesa->color_buffer[1],
+			nmesa->clear_color_value, 0xffffffff);
+	}
+	/* FIXME: check depth bits */
+	if (mask & (BUFFER_BIT_DEPTH)) {
+		nv10ClearBuffer(ctx, nmesa->depth_buffer,
+			nmesa->clear_value, 0xffffff00);
+	}
+	/* FIXME: check about stencil? */
+	if (mask & (BUFFER_BIT_STENCIL)) {
+		nv10ClearBuffer(ctx, nmesa->depth_buffer,
+			nmesa->clear_value, 0x000000ff);
+	}
 }
 
 static void nv10ClearColor(GLcontext *ctx, const GLfloat color[4])
