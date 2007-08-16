@@ -44,6 +44,163 @@
 #include "pipe/draw/draw_context.h"
 #include "pipe/draw/draw_prim.h"
 
+#include "pipe/tgsi/core/tgsi_exec.h"
+#include "pipe/tgsi/core/tgsi_build.h"
+#include "pipe/tgsi/core/tgsi_util.h"
+
+
+#if defined __GNUC__
+#define USE_ALIGNED_ATTRIBS   1
+#define ALIGN16_SUFFIX        __attribute__(( aligned( 16 ) ))
+#else
+#define USE_ALIGNED_ATTRIBS   0
+#define ALIGN16_SUFFIX
+#endif
+
+
+static struct softpipe_context *sp_global = NULL;
+
+
+static void
+run_vertex_program2(struct draw_context *draw,
+                   const void *vbuffer, unsigned elem,
+                   struct vertex_header *vOut)
+{
+#if 1
+   struct softpipe_context *sp = sp_global;
+#endif
+   struct tgsi_exec_machine machine;
+   int i;
+
+#if USE_ALIGNED_ATTRIBS
+   struct tgsi_exec_vector inputs[PIPE_ATTRIB_MAX] ALIGN16_SUFFIX;
+   struct tgsi_exec_vector outputs[PIPE_ATTRIB_MAX] ALIGN16_SUFFIX;
+#else
+   struct tgsi_exec_vector inputs[PIPE_ATTRIB_MAX + 1];
+   struct tgsi_exec_vector outputs[PIPE_ATTRIB_MAX + 1];
+#endif
+
+#ifdef DEBUG
+   memset( &machine, 0, sizeof( machine ) );
+#endif
+
+   /* init machine state */
+   tgsi_exec_machine_init(
+                          &machine,
+                          sp->vs.tokens,
+                          PIPE_MAX_SAMPLERS,
+                          NULL /*samplers*/ );
+
+   /* Consts does not require 16 byte alignment. */
+   machine.Consts = sp->vs.constants->constant;
+
+#if USE_ALIGNED_ATTRIBS
+   machine.Inputs = inputs;
+   machine.Outputs = outputs;
+#else
+   machine.Inputs = (struct tgsi_exec_vector *) tgsi_align_128bit( inputs );
+   machine.Outputs = (struct tgsi_exec_vector *) tgsi_align_128bit( outputs );
+#endif
+
+   {
+      const void *mapped = vbuffer;
+      const float *vIn, *cIn;
+      vIn = (const float *) ((const ubyte *) mapped
+                             + draw->vertex_buffer[0].buffer_offset
+                             + draw->vertex_element[0].src_offset
+                             + elem * draw->vertex_buffer[0].pitch);
+
+      cIn = (const float *) ((const ubyte *) mapped
+                             + draw->vertex_buffer[3].buffer_offset
+                             + draw->vertex_element[3].src_offset
+                             + elem * draw->vertex_buffer[3].pitch);
+      /*X*/
+      machine.Inputs[0].xyzw[0].f[0] = vIn[0];
+      machine.Inputs[0].xyzw[0].f[1] = vIn[0];
+      machine.Inputs[0].xyzw[0].f[2] = vIn[0];
+      machine.Inputs[0].xyzw[0].f[3] = vIn[0];
+
+      /*Y*/
+      machine.Inputs[0].xyzw[1].f[0] = vIn[1];
+      machine.Inputs[0].xyzw[1].f[1] = vIn[1];
+      machine.Inputs[0].xyzw[1].f[2] = vIn[1];
+      machine.Inputs[0].xyzw[1].f[3] = vIn[1];
+
+      /*Z*/
+      machine.Inputs[0].xyzw[2].f[0] = vIn[2];
+      machine.Inputs[0].xyzw[2].f[1] = vIn[2];
+      machine.Inputs[0].xyzw[2].f[2] = vIn[2];
+      machine.Inputs[0].xyzw[2].f[3] = vIn[2];
+
+      /*W*/
+      machine.Inputs[0].xyzw[3].f[0] = 1.0;
+      machine.Inputs[0].xyzw[3].f[1] = 1.0;
+      machine.Inputs[0].xyzw[3].f[2] = 1.0;
+      machine.Inputs[0].xyzw[3].f[3] = 1.0;
+
+      printf("VS Input: %f %f %f %f\n",
+             vIn[0], vIn[1], vIn[2], 1.0);
+   }
+
+   printf("Consts:\n");
+   for (i = 0; i < 4; i++) {
+      printf(" %d: %f %f %f %f\n", i,
+             machine.Consts[i][0],
+             machine.Consts[i][1],
+             machine.Consts[i][2],
+             machine.Consts[i][3]);
+   }
+
+
+   /* run shader */
+   tgsi_exec_machine_run( &machine );
+
+   /* store result pos */
+   printf("VS result: %f %f %f %f\n",
+          outputs[0].xyzw[0].f[0],
+          outputs[0].xyzw[1].f[0],
+          outputs[0].xyzw[2].f[0],
+          outputs[0].xyzw[3].f[0]);
+   {
+      const float *scale = draw->viewport.scale;
+      const float *trans = draw->viewport.translate;
+      float x, y, z, w;
+
+      x = outputs[0].xyzw[0].f[0];
+      y = outputs[0].xyzw[1].f[0];
+      z = outputs[0].xyzw[2].f[0];
+      w = outputs[0].xyzw[3].f[0];
+
+      /* divide by w */
+      x /= w;
+      y /= w;
+      z /= w;
+      w = 1.0 / w;
+
+      /* Viewport */
+      vOut->data[0][0] = scale[0] * x + trans[0];
+      vOut->data[0][1] = scale[1] * y + trans[1];
+      vOut->data[0][2] = scale[2] * z + trans[2];
+      vOut->data[0][3] = w;
+      printf("wincoord: %f %f %f\n",
+             vOut->data[0][0],
+             vOut->data[0][1],
+             vOut->data[0][2]);
+
+      vOut->data[1][0] = 1.0;
+      vOut->data[1][1] = 1.0;
+      vOut->data[1][2] = 1.0;
+      vOut->data[1][3] = 1.0;
+
+   }
+
+#if 0
+   memcpy(
+      quad->outputs.color,
+      &machine.Outputs[1].xyzw[0].f[0],
+      sizeof( quad->outputs.color ) );
+#endif
+}
 
 
 /**
@@ -59,6 +216,9 @@ run_vertex_program(struct draw_context *draw,
                    const void *vbuffer, unsigned elem,
                    struct vertex_header *vOut)
 {
+   run_vertex_program2(draw, vbuffer, elem, vOut);
+
+#if 0
    const float *vIn, *cIn;
    const float *scale = draw->viewport.scale;
    const float *trans = draw->viewport.translate;
@@ -110,6 +270,7 @@ run_vertex_program(struct draw_context *draw,
       vOut->data[1][2] = cIn[2];
       vOut->data[1][3] = 1.0;
    }
+#endif
 }
 
 
@@ -160,6 +321,8 @@ softpipe_draw_arrays(struct pipe_context *pipe, unsigned mode,
    struct softpipe_context *sp = softpipe_context(pipe);
    struct draw_context *draw = sp->draw;
    struct pipe_buffer_handle *buf;
+
+   sp_global = sp;
 
    softpipe_map_surfaces(sp);
 
