@@ -197,7 +197,7 @@ static const int step_offsets[6][2] = {
 boolean
 softpipe_mipmap_tree_layout(struct pipe_context *pipe, struct pipe_mipmap_tree * mt)
 {
-   int level;
+   unsigned level;
 
    switch (mt->target) {
    case PIPE_TEXTURE_CUBE:{
@@ -305,7 +305,7 @@ softpipe_mipmap_tree_layout(struct pipe_context *pipe, struct pipe_mipmap_tree *
             unsigned nr_images = mt->target == PIPE_TEXTURE_3D ? depth : 6;
             int x = 0;
             int y = 0;
-            int q, j;
+            unsigned q, j;
 
             sp_miptree_set_level_info(mt, level, nr_images,
                                          0, mt->total_height,
