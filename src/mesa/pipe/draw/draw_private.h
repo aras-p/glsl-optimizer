@@ -52,16 +52,16 @@
  * Carry some useful information around with the vertices in the prim pipe.  
  */
 struct vertex_header {
-   GLuint clipmask:12;
-   GLuint edgeflag:1;
-   GLuint pad:19;
+   unsigned clipmask:12;
+   unsigned edgeflag:1;
+   unsigned pad:19;
 
-   GLfloat clip[4];
+   float clip[4];
 
-   GLfloat data[][4];		/* Note variable size */
+   float data[][4];		/* Note variable size */
 };
 
-#define MAX_VERTEX_SIZE ((2 + FRAG_ATTRIB_MAX) * 4 * sizeof(GLfloat))
+#define MAX_VERTEX_SIZE ((2 + FRAG_ATTRIB_MAX) * 4 * sizeof(float))
 
 
 
@@ -69,10 +69,10 @@ struct vertex_header {
  * Basic info for a point/line/triangle primitive.
  */
 struct prim_header {
-   GLfloat det;                 /**< front/back face determinant */
-   GLuint reset_line_stipple:1;
-   GLuint edgeflags:3;
-   GLuint pad:28;
+   float det;                 /**< front/back face determinant */
+   unsigned reset_line_stipple:1;
+   unsigned edgeflags:3;
+   unsigned pad:28;
    struct vertex_header *v[3];  /**< 1 to 3 vertex pointers */
 };
 
@@ -90,7 +90,7 @@ struct draw_stage
    struct draw_stage *next;     /**< next stage in pipeline */
 
    struct vertex_header **tmp;
-   GLuint nr_tmps;
+   unsigned nr_tmps;
 
    void (*begin)( struct draw_stage * );
 
@@ -120,6 +120,7 @@ struct draw_stage
  */
 struct draw_context
 {
+   /** Drawing/primitive pipeline stages */
    struct {
       struct draw_stage *first;  /**< one of the following */
 
@@ -136,51 +137,54 @@ struct draw_context
    /* pipe state that we need: */
    struct pipe_setup_state setup;
    struct pipe_viewport_state viewport;
-
    const struct pipe_vertex_buffer *vertex_buffer;  /**< note: pointer */
    const struct pipe_vertex_element *vertex_element; /**< note: pointer */
 
 
    /* Clip derived state:
     */
-   GLfloat plane[12][4];
-   GLuint nr_planes;
+   float plane[12][4];
+   unsigned nr_planes;
 
-   GLuint vf_attr_to_slot[PIPE_ATTRIB_MAX];
-
+   /*
+    * Vertex attribute info
+    */
+   unsigned vf_attr_to_slot[PIPE_ATTRIB_MAX];
    struct vf_attr_map attrs[VF_ATTRIB_MAX];
-   GLuint nr_attrs;
-   GLuint vertex_size;       /**< in bytes */
-   struct vertex_fetch *vf;
+   unsigned nr_attrs;
 
-   GLubyte *verts;
-   GLuint nr_vertices;
-   GLboolean in_vb;
+   unsigned vertex_size;       /**< in bytes */
+   unsigned nr_vertices;
 
    /** Pointer to vertex element/index buffer */
    unsigned eltSize;  /**< bytes per index (0, 1, 2 or 4) */
    void *elts;
 
+   unsigned prim;   /**< current prim type: PIPE_PRIM_x */
+   unsigned reduced_prim;
+
+   void (*vs_flush)( struct draw_context *draw );
+
    struct vertex_header *(*get_vertex)( struct draw_context *draw,
-					GLuint i );
+					unsigned i );
 
    /* Post-tnl vertex cache:
     */
    struct {
-      GLuint referenced;
-      GLuint idx[VCACHE_SIZE + VCACHE_OVERFLOW];
+      unsigned referenced;
+      unsigned idx[VCACHE_SIZE + VCACHE_OVERFLOW];
       struct vertex_header *vertex[VCACHE_SIZE + VCACHE_OVERFLOW];
-      GLuint overflow;
+      unsigned overflow;
    } vcache;
 
    /* Vertex shader queue:
     */
    struct {
       struct {
-	 GLuint elt;
+	 unsigned elt;
 	 struct vertex_header *dest;
       } queue[VS_QUEUE_LENGTH];
-      GLuint queue_nr;
+      unsigned queue_nr;
    } vs;
 
    /* Prim pipeline queue:
@@ -191,21 +195,18 @@ struct draw_context
        * transformed by a vs queue flush.
        */
       struct prim_header queue[PRIM_QUEUE_LENGTH];
-      GLuint queue_nr;
+      unsigned queue_nr;
    } pq;
 
 
-
-   GLenum prim;   /**< GL_POINTS, GL_LINE_STRIP, GL_QUADS, etc */
-   unsigned reduced_prim;
-
-   void (*vs_flush)( struct draw_context *draw );
-
-   /* Helper for tnl:
+   /* Misc for draw_vb.c (XXX temporary)
     */
-   GLvector4f header;   
+   GLvector4f header;
+   ubyte *verts;
+   boolean in_vb;
+   struct vertex_fetch *vf;
 
-   /* helper for sp_draw_arrays.c - temporary? */
+   /* Misc for sp_draw_arrays.c (temporary?) */
    void *mapped_vbuffer;
 };
 
@@ -220,7 +221,7 @@ extern struct draw_stage *draw_cull_stage( struct draw_context *context );
 
 
 extern void draw_free_tmps( struct draw_stage *stage );
-extern void draw_alloc_tmps( struct draw_stage *stage, GLuint nr );
+extern void draw_alloc_tmps( struct draw_stage *stage, unsigned nr );
 
 
 
@@ -234,7 +235,7 @@ extern void draw_alloc_tmps( struct draw_stage *stage, GLuint nr );
 static INLINE struct vertex_header *
 dup_vert( struct draw_stage *stage,
 	  const struct vertex_header *vert,
-	  GLuint idx )
+	  unsigned idx )
 {   
    struct vertex_header *tmp = stage->tmp[idx];
    memcpy(tmp, vert, stage->draw->vertex_size );
