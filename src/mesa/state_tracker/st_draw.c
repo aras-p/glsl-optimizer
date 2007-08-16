@@ -36,6 +36,7 @@
 
 #include "tnl/t_context.h"
 #include "tnl/t_pipeline.h"
+#include "tnl/t_vp_build.h"  /* USE_NEW_DRAW */
 
 #include "st_context.h"
 #include "st_atom.h"
@@ -89,6 +90,9 @@ const struct tnl_pipeline_stage st_draw = {
 };
 
 static const struct tnl_pipeline_stage *st_pipeline[] = {
+#if USE_NEW_DRAW
+   &_tnl_vertex_program_stage,
+#else
    &_tnl_vertex_transform_stage,
    &_tnl_vertex_cull_stage,
    &_tnl_normal_transform_stage,
@@ -98,6 +102,7 @@ static const struct tnl_pipeline_stage *st_pipeline[] = {
    &_tnl_texture_transform_stage,
    &_tnl_point_attenuation_stage,
    &_tnl_vertex_program_stage,
+#endif
    &st_draw,     /* ADD: escape to pipe */
    0,
 };
@@ -145,6 +150,9 @@ draw_vbo(GLcontext *ctx,
 {
    struct pipe_context *pipe = ctx->st->pipe;
    GLuint attr, i;
+
+   st_validate_state(ctx->st);
+
 
    /* tell pipe about the vertex array element/attributes */
    for (attr = 0; attr < 16; attr++) {
@@ -205,11 +213,12 @@ void st_init_draw( struct st_context *st )
    assert(vbo->draw_prims);
    vbo->draw_prims = draw_vbo;
 
-#else
+#endif
    _tnl_destroy_pipeline( ctx );
    _tnl_install_pipeline( ctx, st_pipeline );
-#endif
 
+   /* USE_NEW_DRAW */
+   _tnl_ProgramCacheInit( ctx );
 }
 
 

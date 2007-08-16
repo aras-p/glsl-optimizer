@@ -134,6 +134,9 @@ static void update_vs( struct st_context *st )
    struct st_vertex_program *vp = NULL;
    struct gl_program_parameter_list *params = NULL;
 
+   if (st->ctx->VertexProgram._MaintainTnlProgram)
+      _tnl_UpdateFixedFunctionProgram( st->ctx );
+
    if (st->ctx->Shader.CurrentProgram &&
        st->ctx->Shader.CurrentProgram->LinkStatus &&
        st->ctx->Shader.CurrentProgram->VertexProgram) {
@@ -148,11 +151,15 @@ static void update_vs( struct st_context *st )
    }
 
    /* XXXX temp */
+#if 1
    if (!vp)
       return;
-
+#endif
    if (vp && params) {
       /* load program's constants array */
+
+      _mesa_load_state_parameters(st->ctx, params);
+
       vp->constants.nr_constants = params->NumParameters;
       memcpy(vp->constants.constant, 
              params->ParameterValues,
@@ -179,7 +186,7 @@ static void update_vs( struct st_context *st )
 
 const struct st_tracked_state st_update_vs = {
    .dirty = {
-      .mesa  = _NEW_PROGRAM,
+      .mesa  = _NEW_PROGRAM | _NEW_MODELVIEW,
       .st   = ST_NEW_VERTEX_PROGRAM,
    },
    .update = update_vs

@@ -73,6 +73,9 @@ struct st_context *st_create_context( GLcontext *ctx,
    st->ctx->FragmentProgram._MaintainTexEnvProgram = GL_TRUE;
    st->ctx->FragmentProgram._UseTexEnvProgram = GL_TRUE;
 
+   st->ctx->VertexProgram._MaintainTnlProgram = GL_TRUE;
+
+
 #if 0
    st_init_cb_clear( st );
    st_init_cb_program( st );
