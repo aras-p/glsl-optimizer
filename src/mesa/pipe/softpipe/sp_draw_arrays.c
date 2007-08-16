@@ -31,8 +31,6 @@
  */
 
 
-#include "main/context.h"
-
 #include "pipe/p_defines.h"
 #include "pipe/p_context.h"
 #include "pipe/p_winsys.h"
@@ -175,7 +173,7 @@ run_vertex_program2(struct draw_context *draw,
       x /= w;
       y /= w;
       z /= w;
-      w = 1.0 / w;
+      w = 1.0f / w;
 
       /* Viewport */
       vOut->data[0][0] = scale[0] * x + trans[0];
