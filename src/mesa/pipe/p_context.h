@@ -68,13 +68,19 @@ struct pipe_context {
    /*
     * Drawing
     */
+   /* XXX this is temporary */
    void (*draw_vb)( struct pipe_context *pipe,
 		    struct vertex_buffer *VB );
 
+   /* XXX this is temporary */
    void (*draw_vertices)( struct pipe_context *pipe,
                           unsigned mode,
                           unsigned numVertex, const float *verts,
                           unsigned numAttribs, const unsigned attribs[]);
+
+   /** this is basically what we want */
+   void (*draw_arrays)( struct pipe_context *pipe,
+                        unsigned mode, unsigned start, unsigned count);
 
    /** Clear a surface to given value (no scissor; clear whole surface) */
    void (*clear)(struct pipe_context *pipe, struct pipe_surface *ps,
