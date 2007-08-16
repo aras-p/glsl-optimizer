@@ -134,7 +134,8 @@ decode_mi(uint32_t *data, int count, uint32_t hw_offset, int *failures)
 static int
 decode_2d(uint32_t *data, int count, uint32_t hw_offset, int *failures)
 {
-    unsigned int opcode;
+    unsigned int opcode, len;
+    char *format;
 
     struct {
 	uint32_t opcode;
@@ -169,11 +170,93 @@ decode_2d(uint32_t *data, int count, uint32_t hw_offset, int *failures)
 	{ 0x58, 12, 12, "XY_FULL_MONO_PATTERN_MONO_SRC_BLT" },
     };
 
+    switch ((data[0] & 0x1fc00000) >> 22) {
+    case 0x50:
+	instr_out(data, hw_offset, 0,
+		  "XY_COLOR_BLT (rgb %sabled, alpha %sabled)\n",
+		  (data[0] & (1 << 20)) ? "en" : "dis",
+		  (data[0] & (1 << 21)) ? "en" : "dis");
+
+	len = (data[0] & 0x000000ff) + 2;
+	if (len != 6)
+	    fprintf(out, "Bad count in XY_COLOR_BLT\n");
+	if (count < 6)
+	    BUFFER_FAIL(count, len, "XY_COLOR_BLT");
+
+	switch ((data[1] >> 24) & 0x3) {
+	case 0:
+	    format="8";
+	    break;
+	case 1:
+	    format="565";
+	    break;
+	case 2:
+	    format="1555";
+	    break;
+	case 3:
+	    format="8888";
+	    break;
+	}
+
+	instr_out(data, hw_offset, 1, "format %s, pitch %d, "
+		  "clipping %sabled\n", format,
+		  data[1] & 0xffff, data[1] & (1 << 30) ? "en" : "dis");
+	instr_out(data, hw_offset, 2, "(%d,%d)\n",
+		  data[2] & 0xffff, data[2] >> 16);
+	instr_out(data, hw_offset, 3, "(%d,%d)\n",
+		  data[2] & 0xffff, data[2] >> 16);
+	instr_out(data, hw_offset, 4, "offset 0x%08x\n", data[4]);
+	instr_out(data, hw_offset, 5, "color\n");
+	return len;
+    case 0x53:
+	instr_out(data, hw_offset, 0,
+		  "XY_SRC_COPY_BLT (rgb %sabled, alpha %sabled)\n",
+		  (data[0] & (1 << 20)) ? "en" : "dis",
+		  (data[0] & (1 << 21)) ? "en" : "dis");
+
+	len = (data[0] & 0x000000ff) + 2;
+	if (len != 8)
+	    fprintf(out, "Bad count in XY_SRC_COPY_BLT\n");
+	if (count < 8)
+	    BUFFER_FAIL(count, len, "XY_SRC_COPY_BLT");
+
+	switch ((data[1] >> 24) & 0x3) {
+	case 0:
+	    format="8";
+	    break;
+	case 1:
+	    format="565";
+	    break;
+	case 2:
+	    format="1555";
+	    break;
+	case 3:
+	    format="8888";
+	    break;
+	}
+
+	instr_out(data, hw_offset, 1, "format %s, dst pitch %d, "
+		  "clipping %sabled\n", format,
+		  data[1] & 0xffff, data[1] & (1 << 30) ? "en" : "dis");
+	instr_out(data, hw_offset, 2, "dst (%d,%d)\n",
+		  data[2] & 0xffff, data[2] >> 16);
+	instr_out(data, hw_offset, 3, "dst (%d,%d)\n",
+		  data[2] & 0xffff, data[2] >> 16);
+	instr_out(data, hw_offset, 4, "dst offset 0x%08x\n", data[4]);
+	instr_out(data, hw_offset, 5, "src (%d,%d)\n",
+		  data[5] & 0xffff, data[5] >> 16);
+	instr_out(data, hw_offset, 6, "src pitch %d\n",
+		  data[6] & 0xffff);
+	instr_out(data, hw_offset, 7, "src offset 0x%08x\n", data[7]);
+	return len;
+    }
+
     for (opcode = 0; opcode < sizeof(opcodes_2d) / sizeof(opcodes_2d[0]);
 	 opcode++) {
 	if ((data[0] & 0x1fc00000) >> 22 == opcodes_2d[opcode].opcode) {
-	    unsigned int len = 1, i;
+	    unsigned int i;
 
+	    len = 1;
 	    instr_out(data, hw_offset, 0, "%s\n", opcodes_2d[opcode].name);
 	    if (opcodes_2d[opcode].max_len > 1) {
 		len = (data[0] & 0x000000ff) + 2;
