@@ -221,20 +221,20 @@ blend_quad(struct quad_stage *qs, struct quad_header *quad)
       {
          float inv_comp[4];
          /* R */
-         VEC4_SCALAR(inv_comp, 1.0 - softpipe->blend_color.color[0]);
+         VEC4_SCALAR(inv_comp, 1.0f - softpipe->blend_color.color[0]);
          VEC4_MUL(source[0], quad->outputs.color[0], inv_comp);
          /* G */
-         VEC4_SCALAR(inv_comp, 1.0 - softpipe->blend_color.color[1]);
+         VEC4_SCALAR(inv_comp, 1.0f - softpipe->blend_color.color[1]);
          VEC4_MUL(source[1], quad->outputs.color[1], inv_comp);
          /* B */
-         VEC4_SCALAR(inv_comp, 1.0 - softpipe->blend_color.color[2]);
+         VEC4_SCALAR(inv_comp, 1.0f - softpipe->blend_color.color[2]);
          VEC4_MUL(source[2], quad->outputs.color[2], inv_comp);
       }
       break;
    case PIPE_BLENDFACTOR_INV_CONST_ALPHA:
       {
-         float alpha[4], inv_alpha[4];
-         VEC4_SCALAR(alpha, 1.0 - softpipe->blend_color.color[3]);
+         float inv_alpha[4];
+         VEC4_SCALAR(inv_alpha, 1.0f - softpipe->blend_color.color[3]);
          VEC4_MUL(source[0], quad->outputs.color[0], inv_alpha); /* R */
          VEC4_MUL(source[1], quad->outputs.color[1], inv_alpha); /* G */
          VEC4_MUL(source[2], quad->outputs.color[2], inv_alpha); /* B */
