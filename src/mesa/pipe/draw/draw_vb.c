@@ -371,27 +371,3 @@ void draw_set_vertex_attributes( struct draw_context *draw,
    draw->vertex_size = vf_set_vertex_attributes( draw->vf, draw->attrs,
                                                  draw->nr_attrs, 0 );
 }
-
-
-void draw_alloc_tmps( struct draw_stage *stage, GLuint nr )
-{
-   stage->nr_tmps = nr;
-
-   if (nr) {
-      GLubyte *store = (GLubyte *) malloc(MAX_VERTEX_SIZE * nr);
-      GLuint i;
-
-      stage->tmp = MALLOC(sizeof(struct vertex_header *) * nr);
-      
-      for (i = 0; i < nr; i++)
-	 stage->tmp[i] = (struct vertex_header *)(store + i * MAX_VERTEX_SIZE);
-   }
-}
-
-void draw_free_tmps( struct draw_stage *stage )
-{
-   if (stage->tmp) {
-      free(stage->tmp[0]);
-      free(stage->tmp);
-   }
-}

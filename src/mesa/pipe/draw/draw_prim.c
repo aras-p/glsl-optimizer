@@ -517,3 +517,30 @@ draw_trim( unsigned count, unsigned first, unsigned incr )
    else
       return count - (count - first) % incr; 
 }
+
+
+/**
+ * Allocate space for temporary post-transform vertices, such as for clipping.
+ */
+void draw_alloc_tmps( struct draw_stage *stage, GLuint nr )
+{
+   stage->nr_tmps = nr;
+
+   if (nr) {
+      GLubyte *store = (GLubyte *) malloc(MAX_VERTEX_SIZE * nr);
+      GLuint i;
+
+      stage->tmp = (struct vertex_header **) malloc(sizeof(struct vertex_header *) * nr);
+      
+      for (i = 0; i < nr; i++)
+	 stage->tmp[i] = (struct vertex_header *)(store + i * MAX_VERTEX_SIZE);
+   }
+}
+
+void draw_free_tmps( struct draw_stage *stage )
+{
+   if (stage->tmp) {
+      free(stage->tmp[0]);
+      free(stage->tmp);
+   }
+}
