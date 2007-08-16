@@ -489,6 +489,9 @@ draw_release_vertices( struct draw_context *draw )
 }
 
 
+/**
+ * Note: this must match struct vertex_header's layout (I think).
+ */
 struct header_dword {
    GLuint clipmask:12;
    GLuint edgeflag:1;
@@ -802,7 +805,7 @@ void draw_set_vertex_attributes( struct draw_context *draw,
    draw->vertex_size = vf_set_vertex_attributes( draw->vf, draw->attrs,
                                                  draw->nr_attrs, 0 );
 }
-			    
+
 
 void draw_alloc_tmps( struct draw_stage *stage, GLuint nr )
 {
