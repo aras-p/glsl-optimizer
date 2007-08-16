@@ -73,9 +73,8 @@ shade_quad(
 {
    struct quad_shade_stage *qss = quad_shade_stage( qs );
    struct softpipe_context *softpipe = qs->softpipe;
-   const float fx = quad->x0;
-   const float fy = quad->y0;
-   unsigned attr, i;
+   const float fx = (float) quad->x0;
+   const float fy = (float) quad->y0;
    struct tgsi_exec_machine machine;
 
 #if USE_ALIGNED_ATTRIBS
@@ -111,14 +110,14 @@ shade_quad(
    machine.InterpCoefs = quad->coef;
 
    machine.Inputs[0].xyzw[0].f[0] = fx;
-   machine.Inputs[0].xyzw[0].f[1] = fx + 1.0;
+   machine.Inputs[0].xyzw[0].f[1] = fx + 1.0f;
    machine.Inputs[0].xyzw[0].f[2] = fx;
-   machine.Inputs[0].xyzw[0].f[3] = fx + 1.0;
+   machine.Inputs[0].xyzw[0].f[3] = fx + 1.0f;
 
    machine.Inputs[0].xyzw[1].f[0] = fy;
    machine.Inputs[0].xyzw[1].f[1] = fy;
-   machine.Inputs[0].xyzw[1].f[2] = fy + 1.0;
-   machine.Inputs[0].xyzw[1].f[3] = fy + 1.0;
+   machine.Inputs[0].xyzw[1].f[2] = fy + 1.0f;
+   machine.Inputs[0].xyzw[1].f[3] = fy + 1.0f;
 
    /* run shader */
    tgsi_exec_machine_run( &machine );
