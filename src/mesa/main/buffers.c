@@ -336,6 +336,20 @@ read_buffer_enum_to_index(GLenum buffer)
  * \sa _mesa_DrawBuffersARB
  *
  * \param buffer  buffer token such as GL_LEFT or GL_FRONT_AND_BACK, etc.
+ *
+ * Note that the behaviour of this function depends on whether the
+ * current ctx->DrawBuffer is a window-system framebuffer (Name=0) or
+ * a user-created framebuffer object (Name!=0).
+ *   In the former case, we update the per-context ctx->Color.DrawBuffer
+ *   state var _and_ the FB's ColorDrawBuffer state.
+ *   In the later case, we update the FB's ColorDrawBuffer state only.
+ *
+ * Furthermore, upon a MakeCurrent() or BindFramebuffer() call, if the
+ * new FB is a window system FB, we need to re-update the FB's
+ * ColorDrawBuffer state to match the context.  This is handled in
+ * _mesa_update_framebuffer().
+ *
+ * See the GL_EXT_framebuffer_object spec for more info.
  */
 void GLAPIENTRY
 _mesa_DrawBuffer(GLenum buffer)
@@ -489,10 +503,12 @@ set_color_output(GLcontext *ctx, GLuint output, GLenum buffer,
 
 
 /**
- * Helper routine used by _mesa_DrawBuffer, _mesa_DrawBuffersARB and
- * other places (window fbo fixup) to set fbo (and the old ctx) fields.
+ * Helper function to set the GL_DRAW_BUFFER state in the context and
+ * current FBO.
+ *
  * All error checking will have been done prior to calling this function
  * so nothing should go wrong at this point.
+ *
  * \param ctx  current context
  * \param n    number of color outputs to set
  * \param buffers  array[n] of colorbuffer names, like GL_LEFT.
@@ -532,6 +548,7 @@ _mesa_drawbuffers(GLcontext *ctx, GLuint n, const GLenum *buffers,
 }
 
 
+#if 0
 GLboolean
 _mesa_readbuffer_update_fields(GLcontext *ctx, GLenum buffer)
 {
@@ -563,12 +580,44 @@ _mesa_readbuffer_update_fields(GLcontext *ctx, GLenum buffer)
    }
 
    if (fb->Name == 0) {
+      /* Only update the per-context GL_READ_BUFFER state if we're bound to
+       * a window-system framebuffer.
+       */
       ctx->Pixel.ReadBuffer = buffer;
    }
+
+   /* Set the FBO's GL_READ_BUFFER state */
    fb->ColorReadBuffer = buffer;
    fb->_ColorReadBufferIndex = srcBuffer;
 
    return GL_TRUE;
+}
+#endif
+
+
+/**
+ * Like \sa _mesa_drawbuffers(), this is a helper function for setting
+ * GL_READ_BUFFER state in the context and current FBO.
+ * \param ctx  the rendering context
+ * \param buffer  GL_FRONT, GL_BACK, GL_COLOR_ATTACHMENT0, etc.
+ * \param bufferIndex  the numerical index corresponding to 'buffer'
+ */
+void
+_mesa_readbuffer(GLcontext *ctx, GLenum buffer, GLint bufferIndex)
+{
+   struct gl_framebuffer *fb = ctx->ReadBuffer;
+
+   if (fb->Name == 0) {
+      /* Only update the per-context READ_BUFFER state if we're bound to
+       * a window-system framebuffer.
+       */
+      ctx->Pixel.ReadBuffer = buffer;
+   }
+
+   fb->ColorReadBuffer = buffer;
+   fb->_ColorReadBufferIndex = bufferIndex;
+
+   ctx->NewState |= _NEW_PIXEL;
 }
 
 
@@ -580,16 +629,43 @@ _mesa_readbuffer_update_fields(GLcontext *ctx, GLenum buffer)
 void GLAPIENTRY
 _mesa_ReadBuffer(GLenum buffer)
 {
+   struct gl_framebuffer *fb;
+   GLbitfield supportedMask;
+   GLint srcBuffer;
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
 
    if (MESA_VERBOSE & VERBOSE_API)
       _mesa_debug(ctx, "glReadBuffer %s\n", _mesa_lookup_enum_by_nr(buffer));
 
-   if (!_mesa_readbuffer_update_fields(ctx, buffer))
-      return;
+   fb = ctx->ReadBuffer;
 
-   ctx->NewState |= _NEW_PIXEL;
+   if (MESA_VERBOSE & VERBOSE_API)
+      _mesa_debug(ctx, "glReadBuffer %s\n", _mesa_lookup_enum_by_nr(buffer));
+
+   if (fb->Name > 0 && buffer == GL_NONE) {
+      /* This is legal for user-created framebuffer objects */
+      srcBuffer = -1;
+   }
+   else {
+      /* general case / window-system framebuffer */
+      srcBuffer = read_buffer_enum_to_index(buffer);
+      if (srcBuffer == -1) {
+         _mesa_error(ctx, GL_INVALID_ENUM,
+                     "glReadBuffer(buffer=0x%x)", buffer);
+         return;
+      }
+      supportedMask = supported_buffer_bitmask(ctx, fb);
+      if (((1 << srcBuffer) & supportedMask) == 0) {
+         _mesa_error(ctx, GL_INVALID_OPERATION,
+                     "glReadBuffer(buffer=0x%x)", buffer);
+         return;
+      }
+   }
+
+   /* OK, all error checking has been completed now */
+
+   _mesa_readbuffer(ctx, buffer, srcBuffer);
 
    /*
     * Call device driver function.

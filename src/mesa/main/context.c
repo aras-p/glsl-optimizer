@@ -1530,6 +1530,7 @@ _mesa_make_current( GLcontext *newCtx, GLframebuffer *drawBuffer,
           */
          if (!newCtx->DrawBuffer || newCtx->DrawBuffer->Name == 0) {
             _mesa_reference_framebuffer(&newCtx->DrawBuffer, drawBuffer);
+#if 000
          /* fix up the fb fields - these will end up wrong otherwise
             if the DRIdrawable changes, and everything relies on them.
             This is a bit messy (same as needed in _mesa_BindFramebufferEXT) */
@@ -1539,12 +1540,18 @@ _mesa_make_current( GLcontext *newCtx, GLframebuffer *drawBuffer,
                buffers[i] = newCtx->Color.DrawBuffer[i];
             }
             _mesa_drawbuffers(newCtx, newCtx->Const.MaxDrawBuffers, buffers, NULL);
+#endif
          }
          if (!newCtx->ReadBuffer || newCtx->ReadBuffer->Name == 0) {
             _mesa_reference_framebuffer(&newCtx->ReadBuffer, readBuffer);
+#if 00
             _mesa_readbuffer_update_fields(newCtx, newCtx->Pixel.ReadBuffer);
+#endif
          }
 
+         /* XXX only set this flag if we're really changing the draw/read
+          * framebuffer bindings.
+          */
 	 newCtx->NewState |= _NEW_BUFFERS;
 
 #if 1

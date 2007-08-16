@@ -32,6 +32,7 @@
 
 #include "glheader.h"
 #include "imports.h"
+#include "buffers.h"
 #include "context.h"
 #include "depthstencil.h"
 #include "mtypes.h"
@@ -583,7 +584,7 @@ _mesa_update_stencil_buffer(GLcontext *ctx,
 
 
 /**
- * Update the list of color drawing renderbuffer pointers.
+ * Update the (derived) list of color drawing renderbuffer pointers.
  * Later, when we're rendering we'll loop from 0 to _NumColorDrawBuffers
  * writing colors.
  */
@@ -627,7 +628,7 @@ update_color_draw_buffers(GLcontext *ctx, struct gl_framebuffer *fb)
 
 
 /**
- * Update the color read renderbuffer pointer.
+ * Update the (derived) color read renderbuffer pointer.
  * Unlike the DrawBuffer, we can only read from one (or zero) color buffers.
  */
 static void
@@ -668,10 +669,23 @@ update_color_read_buffer(GLcontext *ctx, struct gl_framebuffer *fb)
 static void
 update_framebuffer(GLcontext *ctx, struct gl_framebuffer *fb)
 {
-   /* Completeness only matters for user-created framebuffers */
-   if (fb->Name != 0) {
-      /* XXX: EXT_framebuffer_blit:
-         framebuffer must still be complete wrt read/draw? */
+   if (fb->Name == 0) {
+      /* This is a window-system framebuffer */
+      /* Need to update the FB's GL_DRAW_BUFFER state to match the
+       * context state (GL_READ_BUFFER too).
+       */
+      if (fb->ColorDrawBuffer[0] != ctx->Color.DrawBuffer[0]) {
+         _mesa_drawbuffers(ctx, ctx->Const.MaxDrawBuffers,
+                           ctx->Color.DrawBuffer, NULL);
+      }
+      if (fb->ColorReadBuffer != ctx->Pixel.ReadBuffer) {
+         
+      }
+   }
+   else {
+      /* This is a user-created framebuffer.
+       * Completeness only matters for user-created framebuffers.
+       */
       _mesa_test_framebuffer_completeness(ctx, fb);
       _mesa_update_framebuffer_visual(fb);
    }
