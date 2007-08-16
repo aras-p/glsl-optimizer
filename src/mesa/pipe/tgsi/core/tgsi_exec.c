@@ -1128,7 +1128,7 @@ exec_declaration(
 {
    if( mach->Processor == TGSI_PROCESSOR_FRAGMENT ) {
       if( decl->Declaration.File == TGSI_FILE_INPUT ) {
-         unsigned first, last, mask, i, j;
+         unsigned first, last, mask;
          interpolation_func interp;
 
          assert( decl->Declaration.Declare == TGSI_DECLARE_RANGE );
@@ -2299,7 +2299,8 @@ tgsi_exec_machine_run2(
    tgsi_parse_free (&parse);
 #endif
 
-#if MESA
+#if 0
+   /* we scale from floats in [0,1] to Zbuffer ints in sp_quad_depth_test.c */
    if (mach->Processor == TGSI_PROCESSOR_FRAGMENT) {
       /*
        * Scale back depth component.
