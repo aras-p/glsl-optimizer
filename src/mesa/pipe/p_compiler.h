@@ -33,6 +33,12 @@
 #include <string.h>
 #include <stdio.h>
 
+
+#if defined(_WIN32) && !defined(__WIN32__)
+#define __WIN32__
+#endif
+
+
 typedef unsigned int   uint;
 typedef unsigned char  ubyte;
 typedef unsigned char  boolean;
