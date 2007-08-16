@@ -152,8 +152,62 @@ make_color_shader(struct st_context *st)
 
 
 /**
+ * Create a simple vertex shader that just passes through the
+ * vertex position and color.
+ */
+static struct st_vertex_program *
+make_vertex_shader(struct st_context *st)
+{
+   GLcontext *ctx = st->ctx;
+   struct st_vertex_program *stvp;
+   struct gl_program *p;
+   GLboolean b;
+
+   p = ctx->Driver.NewProgram(ctx, GL_VERTEX_PROGRAM_ARB, 0);
+   if (!p)
+      return NULL;
+
+   p->NumInstructions = 3;
+   p->Instructions = _mesa_alloc_instructions(3);
+   if (!p->Instructions) {
+      ctx->Driver.DeleteProgram(ctx, p);
+      return NULL;
+   }
+   _mesa_init_instructions(p->Instructions, 3);
+   /* MOV result.pos, vertex.pos; */
+   p->Instructions[0].Opcode = OPCODE_MOV;
+   p->Instructions[0].DstReg.File = PROGRAM_OUTPUT;
+   p->Instructions[0].DstReg.Index = VERT_RESULT_HPOS;
+   p->Instructions[0].SrcReg[0].File = PROGRAM_INPUT;
+   p->Instructions[0].SrcReg[0].Index = VERT_ATTRIB_POS;
+   /* MOV result.color, vertex.color; */
+   p->Instructions[1].Opcode = OPCODE_MOV;
+   p->Instructions[1].DstReg.File = PROGRAM_OUTPUT;
+   p->Instructions[1].DstReg.Index = VERT_RESULT_COL0;
+   p->Instructions[1].SrcReg[0].File = PROGRAM_INPUT;
+   p->Instructions[1].SrcReg[0].Index = VERT_ATTRIB_COLOR0;
+   /* END; */
+   p->Instructions[2].Opcode = OPCODE_END;
+
+   p->InputsRead = VERT_BIT_POS | VERT_BIT_COLOR0;
+   p->OutputsWritten = ((1 << VERT_RESULT_COL0) |
+                        (1 << VERT_RESULT_HPOS));
+
+   stvp = (struct st_vertex_program *) p;
+   /* compile into tgsi format */
+   b = tgsi_mesa_compile_vp_program(&stvp->Base,
+                                    stvp->tokens, ST_FP_MAX_TOKENS);
+   assert(b);
+
+   return stvp;
+}
+
+
+
+/**
  * Draw a screen-aligned quadrilateral.
  * Coords are window coords.
+ * XXX need to emit clip coords when using a vertex program!
  */
 static void
 draw_quad(GLcontext *ctx,
