@@ -56,8 +56,8 @@ a8r8g8b8_read_quad_f_swz(struct softpipe_surface *sps, int x, int y,
    unsigned i, j;
 
    assert(sps->surface.format == PIPE_FORMAT_U_A8_R8_G8_B8);
-   assert(x < sps->surface.width - 1);
-   assert(y < sps->surface.height - 1);
+   assert(x < (int) sps->surface.width - 1);
+   assert(y < (int) sps->surface.height - 1);
 
    for (i = 0; i < 2; i++) { /* loop over pixel row */
       for (j = 0; j < 2; j++) {  /* loop over pixel column */
@@ -149,10 +149,10 @@ a1r5g5b5_get_tile(struct pipe_surface *ps,
    for (i = 0; i < h; i++) {
       for (j = 0; j < w; j++) {
          const ushort pixel = src[j];
-         p[0] = ((pixel >> 10) & 0x1f) * (1.0 / 31);
-         p[1] = ((pixel >>  5) & 0x1f) * (1.0 / 31);
-         p[2] = ((pixel      ) & 0x1f) * (1.0 / 31);
-         p[3] = ((pixel >> 15)       );
+         p[0] = ((pixel >> 10) & 0x1f) * (1.0f / 31.0f);
+         p[1] = ((pixel >>  5) & 0x1f) * (1.0f / 31.0f);
+         p[2] = ((pixel      ) & 0x1f) * (1.0f / 31.0f);
+         p[3] = ((pixel >> 15)       ) * 1.0f;
          p += 4;
       }
       src += ps->region->pitch;
