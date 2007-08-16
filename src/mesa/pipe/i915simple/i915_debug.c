@@ -31,6 +31,7 @@
 #include "i915_context.h"
 #include "i915_winsys.h"
 #include "i915_debug.h"
+#include "pipe/p_winsys.h"
 
 #define PRINTF( ... ) (stream)->winsys->printf( (stream)->winsys, __VA_ARGS__ )
 
