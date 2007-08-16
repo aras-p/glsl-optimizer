@@ -15,7 +15,8 @@ OBJECTS = $(C_SOURCES:.c=.o) \
 INCLUDES = \
 	-I. \
 	-I$(TOP)/src/mesa/pipe \
-	-I$(TOP)/src/mesa 
+	-I$(TOP)/src/mesa \
+	-I$(TOP)/include
 
 
 ##### RULES #####
