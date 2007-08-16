@@ -513,6 +513,7 @@ tgsi_mesa_compile_fp_program(
 {
    GLuint i, ti, count;
    struct tgsi_header *header;
+   struct tgsi_processor *processor;
    struct tgsi_full_declaration fulldecl;
    struct tgsi_full_instruction fullinst;
    struct tgsi_full_dst_register *fulldst;
@@ -526,7 +527,10 @@ tgsi_mesa_compile_fp_program(
    header = (struct tgsi_header *) &tokens[1];
    *header = tgsi_build_header();
 
-   ti = 2;
+   processor = (struct tgsi_processor *) &tokens[2];
+   *processor = tgsi_build_processor( TGSI_PROCESSOR_FRAGMENT, header );
+
+   ti = 3;
 
    reads_wpos = program->Base.InputsRead & (1 << FRAG_ATTRIB_WPOS);
    inputs_read = program->Base.InputsRead | (1 << FRAG_ATTRIB_WPOS);
@@ -645,10 +649,9 @@ tgsi_mesa_compile_fp_program(
             TGSI_PROCESSOR_FRAGMENT ) ) {
          assert( i == program->Base.NumInstructions - 1 );
 
-	 if (TGSI_DEBUG)
-	    tgsi_dump(
-	       tokens,
-	       0/*TGSI_DUMP_VERBOSE | TGSI_DUMP_NO_IGNORED | TGSI_DUMP_NO_DEFAULT*/ );
+         if( TGSI_DEBUG ) {
+            tgsi_dump( tokens, 0 );
+         }
          break;
       }
 
@@ -668,7 +671,7 @@ tgsi_mesa_compile_vp_program(
    struct tgsi_token *tokens,
    GLuint maxTokens )
 {
-   GLuint ii, ti;
+   GLuint i, ti;
    struct tgsi_header *header;
    struct tgsi_processor *processor;
    struct tgsi_full_instruction fullinst;
@@ -684,16 +687,18 @@ tgsi_mesa_compile_vp_program(
 
    ti = 3;
 
-   for( ii = 0; ii < program->Base.NumInstructions; ii++ ) {
+   for( i = 0; i < program->Base.NumInstructions; i++ ) {
       if( compile_instruction(
-            &program->Base.Instructions[ii],
+            &program->Base.Instructions[i],
             &fullinst,
             inputs_read,
             0,
             TGSI_PROCESSOR_VERTEX ) ) {
-         assert( ii == program->Base.NumInstructions - 1 );
-	 if (TGSI_DEBUG)
-	    tgsi_dump( tokens, TGSI_DUMP_NO_IGNORED | TGSI_DUMP_NO_DEFAULT );
+         assert( i == program->Base.NumInstructions - 1 );
+
+	 if( TGSI_DEBUG ) {
+            tgsi_dump( tokens, 0 );
+         }
          break;
       }
 
