@@ -161,6 +161,8 @@ struct draw_context
    const struct pipe_vertex_buffer *vertex_buffer;  /**< note: pointer */
    const struct pipe_vertex_element *vertex_element; /**< note: pointer */
 
+   /** need to know the pipe for vertex flushing/transformation: */
+   struct pipe_context *pipe;
 
    /* Clip derived state:
     */

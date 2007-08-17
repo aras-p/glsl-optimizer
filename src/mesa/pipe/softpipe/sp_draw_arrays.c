@@ -61,9 +61,6 @@
 #endif
 
 
-static struct softpipe_context *sp_global = NULL;
-
-
 
 static INLINE unsigned
 compute_clipmask(float cx, float cy, float cz, float cw)
@@ -104,9 +101,7 @@ run_vertex_program(struct draw_context *draw,
                    const void *vbuffer, unsigned elts[4], unsigned count,
                    struct vertex_header *vOut[])
 {
-#if 1
-   struct softpipe_context *sp = sp_global;
-#endif
+   struct softpipe_context *sp = softpipe_context(draw->pipe);
    struct tgsi_exec_machine machine;
    unsigned int j;
 
@@ -368,8 +363,6 @@ softpipe_draw_arrays(struct pipe_context *pipe, unsigned mode,
    struct draw_context *draw = sp->draw;
    struct pipe_buffer_handle *buf;
 
-   sp_global = sp;
-
    softpipe_map_surfaces(sp);
 
    /*
@@ -384,6 +377,7 @@ softpipe_draw_arrays(struct pipe_context *pipe, unsigned mode,
    draw->pipeline.first->begin( draw->pipeline.first );
 
    draw->vs_flush = vs_flush;
+   draw->pipe = pipe;  /* XXX pass pipe to draw_create() */
 
    draw_invalidate_vcache( draw );
 
