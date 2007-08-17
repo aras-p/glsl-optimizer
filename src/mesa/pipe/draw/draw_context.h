@@ -46,6 +46,10 @@ struct draw_context;
 struct draw_stage;
 
 
+/**
+ * Clipmask flags
+ */
+/*@{*/
 #define CLIP_RIGHT_BIT   0x01
 #define CLIP_LEFT_BIT    0x02
 #define CLIP_TOP_BIT     0x04
@@ -54,7 +58,19 @@ struct draw_stage;
 #define CLIP_FAR_BIT     0x20
 #define CLIP_USER_BIT    0x40
 #define CLIP_CULL_BIT    0x80
+/*@}*/
 
+/**
+ * Bitshift for each clip flag
+ */
+/*@{*/
+#define CLIP_RIGHT_SHIFT 	0
+#define CLIP_LEFT_SHIFT 	1
+#define CLIP_TOP_SHIFT  	2
+#define CLIP_BOTTOM_SHIFT       3
+#define CLIP_NEAR_SHIFT  	4
+#define CLIP_FAR_SHIFT  	5
+/*@}*/
 
 
 struct draw_context *draw_create( void );
