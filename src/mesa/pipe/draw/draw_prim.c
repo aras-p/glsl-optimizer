@@ -258,8 +258,10 @@ static void do_quad( struct draw_context *draw,
 		     unsigned v2,
 		     unsigned v3 )
 {
-   do_ef_triangle( draw, 1, ~(1<<0), v0, v1, v3 );
-   do_ef_triangle( draw, 0, ~(1<<1), v1, v2, v3 );
+   const unsigned omitEdge2 = ~(1 << 1);
+   const unsigned omitEdge3 = ~(1 << 2);
+   do_ef_triangle( draw, 1, omitEdge2, v0, v1, v3 );
+   do_ef_triangle( draw, 0, omitEdge3, v1, v2, v3 );
 }
 
 
