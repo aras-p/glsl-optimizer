@@ -171,9 +171,12 @@ run_vertex_program(struct draw_context *draw,
 #endif
 
    /* store machine results */
+   assert(sp->vs.outputs_written & (1 << VERT_RESULT_HPOS));
    for (j = 0; j < count; j++) {
+      unsigned attr;
       float x, y, z, w;
 
+      /* Handle attr[0] (position) specially: */
       x = vOut[j]->clip[0] = outputs[0].xyzw[0].f[j];
       y = vOut[j]->clip[1] = outputs[0].xyzw[1].f[j];
       z = vOut[j]->clip[2] = outputs[0].xyzw[2].f[j];
@@ -199,10 +202,16 @@ run_vertex_program(struct draw_context *draw,
              vOut[j]->data[0][1],
              vOut[j]->data[0][2]);
 #endif
-      vOut[j]->data[1][0] = outputs[1].xyzw[0].f[j];
-      vOut[j]->data[1][1] = outputs[1].xyzw[1].f[j];
-      vOut[j]->data[1][2] = outputs[1].xyzw[2].f[j];
-      vOut[j]->data[1][3] = outputs[1].xyzw[3].f[j];
+
+      /* remaining attributes: */
+      for (attr = 1; attr < VERT_RESULT_MAX; attr++) {
+         if (sp->vs.outputs_written & (1 << attr)) {
+            vOut[j]->data[attr][0] = outputs[attr].xyzw[0].f[j];
+            vOut[j]->data[attr][1] = outputs[attr].xyzw[1].f[j];
+            vOut[j]->data[attr][2] = outputs[attr].xyzw[2].f[j];
+            vOut[j]->data[attr][3] = outputs[attr].xyzw[3].f[j];
+         }
+      }
    }
 
 #if 0
