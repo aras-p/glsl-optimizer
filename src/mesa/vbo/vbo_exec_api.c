@@ -631,6 +631,41 @@ static void vbo_exec_vtxfmt_init( struct vbo_exec_context *exec )
 }
 
 
+/**
+ * Tell the VBO module to use a real OpenGL vertex buffer object to
+ * store accumulated immediate-mode vertex data.
+ * This replaces the malloced buffer which was created in
+ * vb_exec_vtx_init() below.
+ */
+void vbo_use_buffer_objects(GLcontext *ctx)
+{
+   struct vbo_exec_context *exec = &vbo_context(ctx)->exec;
+   /* Any buffer name but 0 can be used here since this bufferobj won't
+    * go into the bufferobj hashtable.
+    */
+   GLuint bufName = 0xaabbccdd;
+   GLenum target = GL_ARRAY_BUFFER_ARB;
+   GLenum access = GL_READ_WRITE_ARB;
+   GLenum usage = GL_STREAM_DRAW_ARB;
+   GLsizei size = VBO_VERT_BUFFER_SIZE * sizeof(GLfloat);
+
+   /* Make sure this func is only used once */
+   assert(exec->vtx.bufferobj == ctx->Array.NullBufferObj);
+   if (exec->vtx.buffer_map) {
+      _mesa_align_free(exec->vtx.buffer_map);
+   }
+
+   /* Allocate a real buffer object now */
+   exec->vtx.bufferobj = ctx->Driver.NewBufferObject(ctx, bufName, target);
+   ctx->Driver.BufferData(ctx, target, size, NULL, usage, exec->vtx.bufferobj);
+
+   /* and map it */
+   exec->vtx.buffer_map
+      = ctx->Driver.MapBuffer(ctx, target, access, exec->vtx.bufferobj);
+}
+
+
+
 void vbo_exec_vtx_init( struct vbo_exec_context *exec )
 {
    GLcontext *ctx = exec->ctx;
