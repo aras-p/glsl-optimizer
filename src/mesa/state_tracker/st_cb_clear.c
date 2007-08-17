@@ -409,6 +409,8 @@ clear_depth_buffer(GLcontext *ctx, struct gl_renderbuffer *rb)
 {
    struct st_renderbuffer *strb = st_renderbuffer(rb);
 
+   assert(strb->surface->format);
+
    if (!ctx->Scissor.Enabled &&
        !is_depth_stencil_format(strb->surface->format)) {
       /* clear whole depth buffer w/out masking */

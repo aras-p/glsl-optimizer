@@ -104,6 +104,7 @@ st_renderbuffer_alloc_storage(GLcontext * ctx, struct gl_renderbuffer *rb,
       return GL_FALSE; /* out of memory, try s/w buffer? */
 
    ASSERT(strb->surface->region->buffer);
+   ASSERT(strb->surface->format);
 
    strb->Base.Width  = strb->surface->width  = width;
    strb->Base.Height = strb->surface->height = height;
@@ -319,8 +320,10 @@ st_render_texture(GLcontext *ctx,
                                          att->Zoffset);
    assert(strb->surface);
 
+   /*
    printf("RENDER TO TEXTURE obj=%p mt=%p surf=%p  %d x %d\n",
           att->Texture, mt, strb->surface, rb->Width, rb->Height);
+   */
 
    /* Invalidate buffer state so that the pipe's framebuffer state
     * gets updated.
@@ -344,7 +347,9 @@ st_finish_render_texture(GLcontext *ctx,
 
    ctx->st->pipe->flush(ctx->st->pipe, 0x0);
 
+   /*
    printf("FINISH RENDER TO TEXTURE surf=%p\n", strb->surface);
+   */
 
    pipe_surface_unreference(&strb->surface);
 
