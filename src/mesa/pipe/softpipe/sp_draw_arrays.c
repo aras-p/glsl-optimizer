@@ -144,6 +144,12 @@ run_vertex_program(struct draw_context *draw,
             machine.Inputs[attr].xyzw[1].f[j] = p[1]; /*Y*/
             machine.Inputs[attr].xyzw[2].f[j] = p[2]; /*Z*/
             machine.Inputs[attr].xyzw[3].f[j] = 1.0; /*W*/
+#if 0
+            if (attr == 0) {
+               printf("Input vertex %d: %f %f %f\n",
+                      j, p[0], p[1], p[2]);
+            }
+#endif
          }
       }
    }
@@ -173,7 +179,7 @@ run_vertex_program(struct draw_context *draw,
    /* store machine results */
    assert(sp->vs.outputs_written & (1 << VERT_RESULT_HPOS));
    for (j = 0; j < count; j++) {
-      unsigned attr;
+      unsigned attr, slot;
       float x, y, z, w;
 
       /* Handle attr[0] (position) specially: */
@@ -183,7 +189,7 @@ run_vertex_program(struct draw_context *draw,
       w = vOut[j]->clip[3] = outputs[0].xyzw[3].f[j];
 
       vOut[j]->clipmask = compute_clipmask(x, y, z, w);
-      vOut[j]->edgeflag = 0;
+      vOut[j]->edgeflag = 1;
 
       /* divide by w */
       w = 1.0 / w;
@@ -204,12 +210,16 @@ run_vertex_program(struct draw_context *draw,
 #endif
 
       /* remaining attributes: */
+      /* pack into sequential post-transform attrib slots */
+      slot = 1;
       for (attr = 1; attr < VERT_RESULT_MAX; attr++) {
          if (sp->vs.outputs_written & (1 << attr)) {
-            vOut[j]->data[attr][0] = outputs[attr].xyzw[0].f[j];
-            vOut[j]->data[attr][1] = outputs[attr].xyzw[1].f[j];
-            vOut[j]->data[attr][2] = outputs[attr].xyzw[2].f[j];
-            vOut[j]->data[attr][3] = outputs[attr].xyzw[3].f[j];
+            assert(slot < draw->nr_attrs - 2);
+            vOut[j]->data[slot][0] = outputs[attr].xyzw[0].f[j];
+            vOut[j]->data[slot][1] = outputs[attr].xyzw[1].f[j];
+            vOut[j]->data[slot][2] = outputs[attr].xyzw[2].f[j];
+            vOut[j]->data[slot][3] = outputs[attr].xyzw[3].f[j];
+            slot++;
          }
       }
    }
