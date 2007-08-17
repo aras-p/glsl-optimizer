@@ -425,41 +425,6 @@ xmesa_clear_buffers(GLcontext *ctx, GLbitfield buffers)
 }
 
 
-#if 0
-void
-xmesa_clear(struct pipe_context *pipe, GLboolean color, GLboolean depth,
-            GLboolean stencil, GLboolean accum)
-{
-   struct softpipe_context *sp = (struct softpipe_context *) pipe;
-
-   /* Clear non-color buffers first.  This will cause softpipe to
-    * re-validate the scissor/surface bounds.
-    */
-   softpipe_clear(pipe, GL_FALSE, depth, stencil, accum);
-
-   if (color) {
-      GET_CURRENT_CONTEXT(ctx);
-      GLuint i;
-      for (i = 0; i < sp->framebuffer.num_cbufs; i++) {
-         struct pipe_surface *ps = sp->framebuffer.cbufs[i];
-         struct xmesa_renderbuffer *xrb = (struct xmesa_renderbuffer *) ps->rb;
-         const GLint x = sp->cliprect.minx;
-         const GLint y = sp->cliprect.miny;
-         const GLint w = sp->cliprect.maxx - x;
-         const GLint h = sp->cliprect.maxy - y;
-         xrb->clearFunc(ctx, xrb, x, y, w, h);
-      }
-   }
-}
-#endif
-
-void
-xmesa_clear(struct pipe_context *pipe, struct pipe_surface *ps, GLuint value)
-{
-
-}
-
-
 #ifndef XFree86Server
 /* XXX this was never tested in the Xserver environment */
 

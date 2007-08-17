@@ -45,6 +45,7 @@
 #include "pipe/p_context.h"
 #include "pipe/p_defines.h"
 #include "pipe/softpipe/sp_context.h"
+#include "pipe/softpipe/sp_clear.h"
 #include "state_tracker/st_context.h"
 
 
@@ -265,7 +266,7 @@ xmesa_surface_alloc(struct pipe_context *pipe, GLuint pipeFormat)
    softpipe_init_surface_funcs(&xms->surface);
 
    assert(pipe);
-   xms->surface.surface.region = pipe->region_alloc(pipe, 1, 0, 0, 0x0);
+   xms->surface.surface.region = pipe->region_alloc(pipe, 1, 1, 1, 0x0);
 
    return &xms->surface.surface;
 }
@@ -282,5 +283,30 @@ xmesa_supported_formats(struct pipe_context *pipe, GLuint *numFormats)
    *numFormats = 2;
 
    return formats;
+}
+
+
+/**
+ * Called via pipe->clear()
+ */
+void
+xmesa_clear(struct pipe_context *pipe, struct pipe_surface *ps, GLuint value)
+{
+   struct xmesa_renderbuffer *xrb = xmesa_rb((struct softpipe_surface *) ps);
+   assert(xrb);
+   if (xrb->ximage) {
+      /* clearing back color buffer */
+      GET_CURRENT_CONTEXT(ctx);
+      xmesa_clear_buffers(ctx, BUFFER_BIT_BACK_LEFT);
+   }
+   else if (xrb->pixmap) {
+      /* clearing front color buffer */
+      GET_CURRENT_CONTEXT(ctx);
+      xmesa_clear_buffers(ctx, BUFFER_BIT_FRONT_LEFT);
+   }
+   else {
+      /* clearing other buffer */
+      softpipe_clear(pipe, ps, value);
+   }
 }
 

@@ -1591,12 +1591,8 @@ XMesaContext XMesaCreateContext( XMesaVisual v, XMesaContext share_list )
    mesaCtx->st->pipe->surface_alloc = xmesa_surface_alloc;
    mesaCtx->st->pipe->supported_formats = xmesa_supported_formats;
 
-#if 1
-   mesaCtx->Driver.Clear = xmesa_clear_buffers;
-#endif
-#if 0
+   /* special pipe->clear function */
    mesaCtx->st->pipe->clear = xmesa_clear;
-#endif
 
    return c;
 }

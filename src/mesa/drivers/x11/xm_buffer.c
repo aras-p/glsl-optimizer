@@ -253,7 +253,8 @@ finish_surface_init(GLcontext *ctx, struct xmesa_renderbuffer *xrb)
 {
    struct pipe_context *pipe = ctx->st->pipe;
    if (!xrb->St.surface->region) {
-      xrb->St.surface->region = pipe->region_alloc(pipe, 1, 0, 0, 0x0);
+      int w = 1, h = 1;
+      xrb->St.surface->region = pipe->region_alloc(pipe, 1, w, h, 0x0);
    }
 }
 

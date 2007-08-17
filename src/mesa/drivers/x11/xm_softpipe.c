@@ -113,6 +113,7 @@ xm_buffer_unreference(struct pipe_winsys *pws, struct pipe_buffer_handle **buf)
 {
    struct xm_buffer *xm_buf = xm_bo(*buf);
    xm_buf->refcount--;
+   assert(xm_buf->refcount >= 0);
    if (xm_buf->refcount == 0) {
       if (xm_buf->data) {
          free(xm_buf->data);
@@ -194,6 +195,7 @@ static struct pipe_buffer_handle *
 xm_buffer_create(struct pipe_winsys *pws, unsigned alignment)
 {
    struct xm_buffer *buffer = CALLOC_STRUCT(xm_buffer);
+   buffer->refcount = 1;
    return pipe_bo(buffer);
 }
 
