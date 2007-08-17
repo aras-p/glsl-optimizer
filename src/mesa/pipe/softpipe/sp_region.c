@@ -33,6 +33,7 @@
 
 #include "sp_context.h"
 #include "sp_region.h"
+#include "pipe/p_util.h"
 #include "pipe/p_winsys.h"
 #include "pipe/p_defines.h"
 
@@ -86,13 +87,15 @@ sp_region_alloc(struct pipe_context *pipe,
 		unsigned cpp, unsigned width, unsigned height, unsigned flags)
 {
    struct softpipe_context *sp = softpipe_context( pipe );
-   struct pipe_region *region = calloc(sizeof(*region), 1);
+   struct pipe_region *region = CALLOC_STRUCT(pipe_region);
    const unsigned alignment = 64;
 
    region->cpp = cpp;
    region->pitch = round_up(width, alignment / cpp);
    region->height = height;
    region->refcount = 1;
+
+   assert(region->pitch > 0);
 
    region->buffer = sp->pipe.winsys->buffer_create( sp->pipe.winsys, alignment );
 
@@ -232,6 +235,9 @@ sp_region_fill(struct pipe_context *pipe,
                unsigned width, unsigned height, unsigned value)
 {
    unsigned i, j;
+
+   assert(dst->pitch > 0);
+   assert(width <= dst->pitch);
 
    (void)pipe->region_map(pipe, dst);
 
