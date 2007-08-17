@@ -233,6 +233,7 @@ GLboolean intel_miptree_image_data(struct intel_context *intel,
 
    if (dst->compressed) {
        alignment = intel_compressed_alignment(dst->internal_format);
+       src_row_pitch = ((src_row_pitch + alignment - 1) & ~(alignment - 1));
        width = ((width + alignment - 1) & ~(alignment - 1));
        height = (height + 3) / 4;
    }
