@@ -30,12 +30,14 @@
   *   Keith Whitwell <keith@tungstengraphics.com>
   */
 
-#include "imports.h"
-#include "macros.h"
 
+#ifdef MESA
+#include "main/macros.h"
+#else
+#include "pipe/p_util.h"
+#endif
 #include "draw_context.h"
 #include "draw_private.h"
-
 
 struct draw_context *draw_create( void )
 {
@@ -57,7 +59,9 @@ struct draw_context *draw_create( void )
    ASSIGN_4V( draw->plane[5],  0,  0, -1, 1 ); /* mesa's a bit wonky */
    draw->nr_planes = 6;
 
+#ifdef MESA
    draw->vf = vf_create( GL_TRUE );
+#endif
 
    /* Statically allocate maximum sized vertices for the cache - could be cleverer...
     */
@@ -75,10 +79,13 @@ struct draw_context *draw_create( void )
 
 void draw_destroy( struct draw_context *draw )
 {
-   if (draw->header.storage)
+#ifdef MESA
+   if (draw->header.storage) {
       ALIGN_FREE( draw->header.storage );
+   }
 
    vf_destroy( draw->vf );
+#endif
 
    free( draw->vcache.vertex[0] ); /* Frees all the vertices. */
    free( draw );
@@ -186,7 +193,9 @@ void draw_set_viewport_state( struct draw_context *draw,
 {
    draw->viewport = *viewport; /* struct copy */
 
+#ifdef MESA
    vf_set_vp_scale_translate( draw->vf, viewport->scale, viewport->translate );
+#endif
 
    /* Using tnl/ and vf/ modules is temporary while getting started.
     * Full pipe will have vertex shader, vertex fetch of its own.

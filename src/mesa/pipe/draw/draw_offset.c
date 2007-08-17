@@ -32,8 +32,7 @@
  * \author  Brian Paul
  */
 
-#include "main/imports.h"
-#include "main/macros.h"
+#include "pipe/p_util.h"
 #include "draw_private.h"
 
 
@@ -41,8 +40,8 @@
 struct offset_stage {
    struct draw_stage stage;
 
-   GLfloat scale;
-   GLfloat units;
+   float scale;
+   float units;
 };
 
 
@@ -56,7 +55,7 @@ static INLINE struct offset_stage *offset_stage( struct draw_stage *stage )
 static void offset_begin( struct draw_stage *stage )
 {
    struct offset_stage *offset = offset_stage(stage);
-   GLfloat mrd = 1.0 / 65535.0; /* XXX this depends on depthbuffer bits! */
+   float mrd = 1.0 / 65535.0; /* XXX this depends on depthbuffer bits! */
 
    offset->units = stage->draw->setup.offset_units * mrd;
    offset->scale = stage->draw->setup.offset_scale;
@@ -73,30 +72,30 @@ static void do_offset_tri( struct draw_stage *stage,
 			   struct prim_header *header )
 {
    struct offset_stage *offset = offset_stage(stage);   
-   GLfloat inv_det = 1.0 / header->det;
+   float inv_det = 1.0 / header->det;
 
    /* Window coords:
     */
-   GLfloat *v0 = header->v[0]->data[0];
-   GLfloat *v1 = header->v[1]->data[0];
-   GLfloat *v2 = header->v[2]->data[0];
+   float *v0 = header->v[0]->data[0];
+   float *v1 = header->v[1]->data[0];
+   float *v2 = header->v[2]->data[0];
 
    /* edge vectors e = v0 - v2, f = v1 - v2 */
-   GLfloat ex = v0[0] - v2[0];
-   GLfloat ey = v0[1] - v2[1];
-   GLfloat ez = v0[2] - v2[2];
-   GLfloat fx = v1[0] - v2[0];
-   GLfloat fy = v1[1] - v2[1];
-   GLfloat fz = v1[2] - v2[2];
+   float ex = v0[0] - v2[0];
+   float ey = v0[1] - v2[1];
+   float ez = v0[2] - v2[2];
+   float fx = v1[0] - v2[0];
+   float fy = v1[1] - v2[1];
+   float fz = v1[2] - v2[2];
 
    /* (a,b) = cross(e,f).xy */
-   GLfloat a = ey*fz - ez*fy;
-   GLfloat b = ez*fx - ex*fz;
+   float a = ey*fz - ez*fy;
+   float b = ez*fx - ex*fz;
 
-   GLfloat dzdx = FABSF(a * inv_det);
-   GLfloat dzdy = FABSF(b * inv_det);
+   float dzdx = FABSF(a * inv_det);
+   float dzdy = FABSF(b * inv_det);
 
-   GLfloat zoffset = offset->units + MAX2(dzdx, dzdy) * offset->scale;
+   float zoffset = offset->units + MAX2(dzdx, dzdy) * offset->scale;
 
    /*
     * Note: we're applying the offset and clamping per-vertex.

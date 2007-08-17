@@ -112,6 +112,18 @@ do {                                \
 } while (0)
 
 
+#define COPY_4FV( DST, SRC )  COPY_4V(DST, SRC)
+
+
+#define ASSIGN_4V( DST, V0, V1, V2, V3 ) \
+do {                                     \
+   (DST)[0] = (V0);                      \
+   (DST)[1] = (V1);                      \
+   (DST)[2] = (V2);                      \
+   (DST)[3] = (V3);                      \
+} while (0)
+
+
 static INLINE int ifloor(float f)
 {
    int ai, bi;

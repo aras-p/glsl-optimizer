@@ -30,6 +30,7 @@
   *   Keith Whitwell <keith@tungstengraphics.com>
   */
 
+#include "pipe/p_util.h"
 #include "draw_private.h"
 #include "draw_context.h"
 #include "draw_prim.h"
@@ -173,7 +174,7 @@ static struct vertex_header *get_uint_elt_vertex( struct draw_context *draw,
 static struct vertex_header *get_ushort_elt_vertex( struct draw_context *draw,
 						    unsigned i )
 {
-   const GLushort *elts = (const GLushort *)draw->elts;
+   const ushort *elts = (const ushort *)draw->elts;
    return get_vertex( draw, elts[i] );
 }
 
@@ -181,7 +182,7 @@ static struct vertex_header *get_ushort_elt_vertex( struct draw_context *draw,
 static struct vertex_header *get_ubyte_elt_vertex( struct draw_context *draw,
                                                    unsigned i )
 {
-   const GLubyte *elts = (const GLubyte *)draw->elts;
+   const ubyte *elts = (const ubyte *)draw->elts;
    return get_vertex( draw, elts[i] );
 }
 
@@ -522,13 +523,13 @@ draw_trim( unsigned count, unsigned first, unsigned incr )
 /**
  * Allocate space for temporary post-transform vertices, such as for clipping.
  */
-void draw_alloc_tmps( struct draw_stage *stage, GLuint nr )
+void draw_alloc_tmps( struct draw_stage *stage, unsigned nr )
 {
    stage->nr_tmps = nr;
 
    if (nr) {
-      GLubyte *store = (GLubyte *) malloc(MAX_VERTEX_SIZE * nr);
-      GLuint i;
+      ubyte *store = (ubyte *) malloc(MAX_VERTEX_SIZE * nr);
+      unsigned i;
 
       stage->tmp = (struct vertex_header **) malloc(sizeof(struct vertex_header *) * nr);
       

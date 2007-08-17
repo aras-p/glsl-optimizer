@@ -40,6 +40,11 @@
 #include "pipe/draw/draw_private.h"
 #include "pipe/p_util.h"
 
+#ifndef MESA
+#define FRAG_ATTRIB_WPOS 0
+#define FRAG_ATTRIB_MAX 13
+#endif
+
 
 /**
  * Triangle edge info

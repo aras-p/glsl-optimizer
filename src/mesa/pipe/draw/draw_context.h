@@ -38,7 +38,6 @@
 #define DRAW_CONTEXT_H
 
 
-#include "main/glheader.h"
 #include "pipe/p_state.h"
 
 
@@ -64,13 +63,13 @@ void draw_set_setup_stage( struct draw_context *draw,
                            struct draw_stage *stage );
 
 void draw_set_vertex_attributes( struct draw_context *draw,
-				 const GLuint *attrs,
-				 GLuint nr_attrs );
+				 const unsigned *attrs,
+				 unsigned nr_attrs );
 
 /* XXX temporary */
 void draw_set_vertex_attributes2( struct draw_context *draw,
-				 const GLuint *attrs,
-				 GLuint nr_attrs );
+				 const unsigned *attrs,
+				 unsigned nr_attrs );
 
 void draw_set_vertex_array_info(struct draw_context *draw,
                                 const struct pipe_vertex_buffer *buffers,
@@ -81,9 +80,9 @@ void draw_vb(struct draw_context *draw,
 	     struct vertex_buffer *VB );
 
 void draw_vertices(struct draw_context *draw,
-                   GLuint mode,
-                   GLuint numVertex, const GLfloat *verts,
-                   GLuint numAttribs, const GLuint attribs[]);
+                   unsigned mode,
+                   unsigned numVertex, const float *verts,
+                   unsigned numAttribs, const unsigned attribs[]);
 
 
 #endif /* DRAW_CONTEXT_H */

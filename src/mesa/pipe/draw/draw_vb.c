@@ -30,11 +30,17 @@
   *   Keith Whitwell <keith@tungstengraphics.com>
   */
 
-#include "imports.h"
-#include "macros.h"
-
+#ifdef MESA
+#include "main/imports.h"
+#include "main/macros.h"
 #include "tnl/t_context.h"
 #include "vf/vf.h"
+#else
+#define VF_
+#include "pipe/p_util.h"
+
+#endif /*MESA*/
+
 
 #include "draw_private.h"
 #include "draw_context.h"
@@ -92,11 +98,11 @@ static void vs_flush( struct draw_context *draw )
  * Allocate storage for post-transformation vertices.
  */
 static void
-draw_allocate_vertices( struct draw_context *draw, GLuint nr_vertices )
+draw_allocate_vertices( struct draw_context *draw, unsigned nr_vertices )
 {
    assert(draw->vertex_size > 0);
    draw->nr_vertices = nr_vertices;
-   draw->verts = (GLubyte *) malloc( nr_vertices * draw->vertex_size );
+   draw->verts = (ubyte *) malloc( nr_vertices * draw->vertex_size );
    draw_invalidate_vcache( draw );
 }
 
@@ -117,20 +123,21 @@ draw_release_vertices( struct draw_context *draw )
  * Note: this must match struct vertex_header's layout (I think).
  */
 struct header_dword {
-   GLuint clipmask:12;
-   GLuint edgeflag:1;
-   GLuint pad:19;
+   unsigned clipmask:12;
+   unsigned edgeflag:1;
+   unsigned pad:19;
 };
 
 
+#ifdef MESA
 static void 
 build_vertex_headers( struct draw_context *draw,
 		      struct vertex_buffer *VB )
 {
    if (draw->header.storage == NULL) {
-      draw->header.stride = sizeof(GLfloat);
+      draw->header.stride = sizeof(float);
       draw->header.size = 1;
-      draw->header.storage = ALIGN_MALLOC( VB->Size * sizeof(GLfloat), 32 );
+      draw->header.storage = ALIGN_MALLOC( VB->Size * sizeof(float), 32 );
       draw->header.data = draw->header.storage;
       draw->header.count = 0;
       draw->header.flags = VEC_SIZE_1 | VEC_MALLOC;
@@ -141,12 +148,12 @@ build_vertex_headers( struct draw_context *draw,
     */
 
    {
-      GLuint i;
+      unsigned i;
       struct header_dword *header = (struct header_dword *)draw->header.storage;
 
       /* yes its a hack
        */
-      assert(sizeof(*header) == sizeof(GLfloat));
+      assert(sizeof(*header) == sizeof(float));
 
       draw->header.count = VB->Count;
 
@@ -175,16 +182,18 @@ build_vertex_headers( struct draw_context *draw,
 
    VB->AttribPtr[VF_ATTRIB_VERTEX_HEADER] = &draw->header;
 }
+#endif /*MESA*/
 
 
 
+#ifdef MESA
 /**
  * This is a hack & will all go away.
  */
 void draw_vb(struct draw_context *draw,
 	     struct vertex_buffer *VB )
 {
-   GLuint i;
+   unsigned i;
 
    VB->AttribPtr[VF_ATTRIB_POS] = VB->NdcPtr;
    VB->AttribPtr[VF_ATTRIB_BFC0] = VB->ColorPtr[1];
@@ -212,14 +221,14 @@ void draw_vb(struct draw_context *draw,
    vf_emit_vertices( draw->vf, VB->Count, draw->verts );
 
    if (VB->Elts) 
-      draw_set_element_buffer(draw, sizeof(GLuint), VB->Elts);
+      draw_set_element_buffer(draw, sizeof(unsigned), VB->Elts);
    else
       draw_set_element_buffer(draw, 0, NULL);
 
    for (i = 0; i < VB->PrimitiveCount; i++) {
       const GLenum mode = VB->Primitive[i].mode;
-      const GLuint start = VB->Primitive[i].start;
-      GLuint length, first, incr;
+      const unsigned start = VB->Primitive[i].start;
+      unsigned length, first, incr;
 
       /* Trim the primitive down to a legal size.  
        */
@@ -247,27 +256,28 @@ void draw_vb(struct draw_context *draw,
    draw->in_vb = 0;
    draw->elts = NULL;
 }
+#endif /*MESA*/
 
 
 /**
  * XXX Temporary mechanism to draw simple vertex arrays.
- * All attribs are GLfloat[4].  Arrays are interleaved, in GL-speak.
+ * All attribs are float[4].  Arrays are interleaved, in GL-speak.
  */
 void
 draw_vertices(struct draw_context *draw,
-              GLuint mode,
-              GLuint numVerts, const GLfloat *vertices,
-              GLuint numAttrs, const GLuint attribs[])
+              unsigned mode,
+              unsigned numVerts, const float *vertices,
+              unsigned numAttrs, const unsigned attribs[])
 {
-   /*GLuint first, incr;*/
-   GLuint i, j;
+   /*unsigned first, incr;*/
+   unsigned i, j;
 
-   assert(mode <= GL_POLYGON);
+   assert(mode <= PIPE_PRIM_POLYGON);
 
    draw->vs_flush = vs_flush;
 
    draw->vertex_size
-      = sizeof(struct vertex_header) + numAttrs * 4 * sizeof(GLfloat);
+      = sizeof(struct vertex_header) + numAttrs * 4 * sizeof(float);
 
 
    /* no element/index buffer */
@@ -344,10 +354,10 @@ do {								\
  *                  (and number of attributes)
  */
 void draw_set_vertex_attributes( struct draw_context *draw,
-				 const GLuint *slot_to_vf_attr,
-				 GLuint nr_attrs )
+				 const unsigned *slot_to_vf_attr,
+				 unsigned nr_attrs )
 {
-   GLuint i;
+   unsigned i;
 
    memset(draw->vf_attr_to_slot, 0, sizeof(draw->vf_attr_to_slot));
    draw->nr_attrs = 0;
@@ -368,6 +378,8 @@ void draw_set_vertex_attributes( struct draw_context *draw,
       EMIT_ATTR(slot_to_vf_attr[i], EMIT_4F);
 
    /* tell the vertex format module how to construct vertices for us */
+#if MESA
    draw->vertex_size = vf_set_vertex_attributes( draw->vf, draw->attrs,
                                                  draw->nr_attrs, 0 );
+#endif
 }

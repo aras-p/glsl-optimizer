@@ -74,7 +74,7 @@ static GLboolean draw( GLcontext * ctx, struct tnl_pipeline_stage *stage )
    /* Call into the new draw code to handle the VB:
     */
    st->pipe->draw_vb( st->pipe, VB );
-   
+
    /* Finished 
     */
    return GL_FALSE;

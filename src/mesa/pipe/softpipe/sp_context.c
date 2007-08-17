@@ -80,6 +80,11 @@ softpipe_supported_formats(struct pipe_context *pipe, unsigned *numFormats)
 }
 
 
+/** XXX remove these? */
+#define MAX_TEXTURE_LEVELS 11
+#define MAX_TEXTURE_RECT_SIZE 2048
+#define MAX_3D_TEXTURE_LEVELS 8
+
 static void
 softpipe_max_texture_size(struct pipe_context *pipe, unsigned textureType,
                           unsigned *maxWidth, unsigned *maxHeight,

@@ -28,14 +28,14 @@
 /* Authors:  Keith Whitwell <keith@tungstengraphics.com>
  */
 
-#include "main/imports.h"
+#include "pipe/p_util.h"
 #include "draw_private.h"
 
 
 struct flatshade_stage {
    struct draw_stage stage;
 
-   const GLuint *lookup;
+   const unsigned *lookup;
 };
 
 
@@ -53,7 +53,7 @@ static void flatshade_begin( struct draw_stage *stage )
 
 
 
-static INLINE void copy_attr( GLuint attr,
+static INLINE void copy_attr( unsigned attr,
 			      struct vertex_header *dst, 
 			      const struct vertex_header *src )
 {
@@ -70,7 +70,7 @@ static INLINE void copy_colors( struct draw_stage *stage,
                                 const struct vertex_header *src )
 {
    const struct flatshade_stage *flatshade = flatshade_stage(stage);
-   const GLuint *lookup = flatshade->lookup;
+   const unsigned *lookup = flatshade->lookup;
 
    copy_attr( lookup[VF_ATTRIB_COLOR0], dst, src );
    copy_attr( lookup[VF_ATTRIB_COLOR1], dst, src );

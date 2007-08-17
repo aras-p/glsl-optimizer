@@ -33,14 +33,14 @@
  */
 
 
-#include "main/imports.h"
+#include "pipe/p_util.h"
 #include "pipe/p_defines.h"
 #include "draw_private.h"
 
 
 struct cull_stage {
    struct draw_stage stage;
-   GLuint winding;  /**< which winding(s) to cull (one of PIPE_WINDING_x) */
+   unsigned winding;  /**< which winding(s) to cull (one of PIPE_WINDING_x) */
 };
 
 
@@ -64,15 +64,15 @@ static void cull_tri( struct draw_stage *stage,
 		      struct prim_header *header )
 {
    /* Window coords: */
-   const GLfloat *v0 = header->v[0]->data[0];
-   const GLfloat *v1 = header->v[1]->data[0];
-   const GLfloat *v2 = header->v[2]->data[0];
+   const float *v0 = header->v[0]->data[0];
+   const float *v1 = header->v[1]->data[0];
+   const float *v2 = header->v[2]->data[0];
 
    /* edge vectors e = v0 - v2, f = v1 - v2 */
-   GLfloat ex = v0[0] - v2[0];
-   GLfloat ey = v0[1] - v2[1];
-   GLfloat fx = v1[0] - v2[0];
-   GLfloat fy = v1[1] - v2[1];
+   const float ex = v0[0] - v2[0];
+   const float ey = v0[1] - v2[1];
+   const float fx = v1[0] - v2[0];
+   const float fy = v1[1] - v2[1];
    
    /* det = cross(e,f).z */
    header->det = ex * fy - ey * fx;
@@ -81,7 +81,7 @@ static void cull_tri( struct draw_stage *stage,
       /* if (det < 0 then Z points toward camera and triangle is 
        * counter-clockwise winding.
        */
-      GLuint winding = (header->det < 0) ? PIPE_WINDING_CCW : PIPE_WINDING_CW;
+      unsigned winding = (header->det < 0) ? PIPE_WINDING_CCW : PIPE_WINDING_CW;
 
       if ((winding & cull_stage(stage)->winding) == 0) {
          /* triangle is not culled, pass to next stage */

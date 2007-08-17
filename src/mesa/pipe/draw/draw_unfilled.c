@@ -33,7 +33,7 @@
 /* Authors:  Keith Whitwell <keith@tungstengraphics.com>
  */
 
-#include "main/imports.h"
+#include "pipe/p_util.h"
 #include "pipe/p_defines.h"
 #include "draw_private.h"
 
@@ -45,7 +45,7 @@ struct unfilled_stage {
     * legal values:  PIPE_POLYGON_MODE_FILL, PIPE_POLYGON_MODE_LINE,
     * and PIPE_POLYGON_MODE_POINT,
     */
-   GLuint mode[2];
+   unsigned mode[2];
 };
 
 
@@ -119,7 +119,7 @@ static void unfilled_tri( struct draw_stage *stage,
 			  struct prim_header *header )
 {
    struct unfilled_stage *unfilled = unfilled_stage(stage);
-   GLuint mode = unfilled->mode[header->det < 0.0];
+   unsigned mode = unfilled->mode[header->det < 0.0];
   
    switch (mode) {
    case PIPE_POLYGON_MODE_FILL:

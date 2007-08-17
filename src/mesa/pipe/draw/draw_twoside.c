@@ -28,15 +28,15 @@
 /* Authors:  Keith Whitwell <keith@tungstengraphics.com>
  */
 
-#include "main/imports.h"
+#include "pipe/p_util.h"
 #include "pipe/p_defines.h"
 #include "draw_private.h"
 
 
 struct twoside_stage {
    struct draw_stage stage;
-   GLfloat sign;         /**< +1 or -1 */
-   const GLuint *lookup;
+   float sign;         /**< +1 or -1 */
+   const unsigned *lookup;
 };
 
 
@@ -61,8 +61,8 @@ static void twoside_begin( struct draw_stage *stage )
 }
 
 
-static INLINE void copy_color( GLuint attr_dst,
-			       GLuint attr_src,
+static INLINE void copy_color( unsigned attr_dst,
+			       unsigned attr_src,
 			       struct vertex_header *v )
 {
    if (attr_dst && attr_src) {
@@ -75,7 +75,7 @@ static INLINE void copy_color( GLuint attr_dst,
 
 static struct vertex_header *copy_bfc( struct twoside_stage *twoside, 
 				       const struct vertex_header *v,
-				       GLuint idx )
+				       unsigned idx )
 {   
    struct vertex_header *tmp = dup_vert( &twoside->stage, v, idx );
    

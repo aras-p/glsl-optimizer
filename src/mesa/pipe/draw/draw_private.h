@@ -41,10 +41,31 @@
 #define DRAW_PRIVATE_H
 
 
-#include "main/glheader.h"
 #include "pipe/p_state.h"
 #include "pipe/p_defines.h"
+#ifdef MESA
 #include "vf/vf.h"
+#else
+/* XXX these are temporary */
+struct vf_attr_map {
+   unsigned attrib;
+   unsigned format;
+   unsigned offset;
+};
+#define VF_ATTRIB_POS 0
+#define VF_ATTRIB_COLOR0 3
+#define VF_ATTRIB_COLOR1 4
+#define VF_ATTRIB_BFC0 25
+#define VF_ATTRIB_BFC1 26
+
+#define VF_ATTRIB_CLIP_POS 27
+#define VF_ATTRIB_VERTEX_HEADER 28
+#define VF_ATTRIB_MAX 29
+#define EMIT_1F 0
+#define EMIT_4F 3
+#define EMIT_4F_VIEWPORT 6
+#define FRAG_ATTRIB_MAX 13
+#endif
 
 
 /**
@@ -201,7 +222,9 @@ struct draw_context
 
    /* Misc for draw_vb.c (XXX temporary)
     */
+#ifdef MESA
    GLvector4f header;
+#endif
    ubyte *verts;
    boolean in_vb;
    struct vertex_fetch *vf;

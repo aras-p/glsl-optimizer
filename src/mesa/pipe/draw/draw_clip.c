@@ -32,15 +32,27 @@
  */
 
 
-#include "main/macros.h"
+#include "pipe/p_util.h"
 #include "draw_private.h"
+
+#ifndef IS_NEGATIVE
+#define IS_NEGATIVE(X) ((X) < 0.0)
+#endif
+
+#ifndef DIFFERENT_SIGNS
+#define DIFFERENT_SIGNS(x, y) ((x) * (y) <= 0.0F && (x) - (y) != 0.0F)
+#endif
+
+#ifndef MAX_CLIPPED_VERTICES
+#define MAX_CLIPPED_VERTICES ((2 * (6 + PIPE_MAX_CLIP_PLANES))+1)
+#endif
 
 
 struct clipper {
    struct draw_stage stage;      /**< base class */
 
-   GLuint active_user_planes;
-   GLfloat (*plane)[4];
+   unsigned active_user_planes;
+   float (*plane)[4];
 };
 
 
@@ -57,10 +69,10 @@ static INLINE struct clipper *clipper_stage( struct draw_stage *stage )
 
 /* All attributes are float[4], so this is easy:
  */
-static void interp_attr( GLfloat *fdst,
-			 GLfloat t,
-			 const GLfloat *fin,
-			 const GLfloat *fout )
+static void interp_attr( float *fdst,
+			 float t,
+			 const float *fin,
+			 const float *fout )
 {  
    fdst[0] = LINTERP( t, fout[0], fin[0] );
    fdst[1] = LINTERP( t, fout[1], fin[1] );
@@ -75,12 +87,12 @@ static void interp_attr( GLfloat *fdst,
  */
 static void interp( const struct clipper *clip,
 		    struct vertex_header *dst,
-		    GLfloat t,
+		    float t,
 		    const struct vertex_header *out, 
 		    const struct vertex_header *in )
 {
-   const GLuint nr_attrs = clip->stage.draw->nr_attrs;
-   GLuint j;
+   const unsigned nr_attrs = clip->stage.draw->nr_attrs;
+   unsigned j;
 
    /* Vertex header.
     */
@@ -99,10 +111,10 @@ static void interp( const struct clipper *clip,
    /* Do the projective divide and insert window coordinates:
     */
    {
-      const GLfloat *pos = dst->clip;
-      const GLfloat *scale = clip->stage.draw->viewport.scale;
-      const GLfloat *trans = clip->stage.draw->viewport.translate;
-      const GLfloat oow = 1.0 / pos[3];
+      const float *pos = dst->clip;
+      const float *scale = clip->stage.draw->viewport.scale;
+      const float *trans = clip->stage.draw->viewport.translate;
+      const float oow = 1.0 / pos[3];
 
       dst->data[0][0] = pos[0] * oow * scale[0] + trans[0];
       dst->data[0][1] = pos[1] * oow * scale[1] + trans[1];
@@ -128,10 +140,10 @@ static void interp( const struct clipper *clip,
 #define CLIP_CULL_BIT    0x80
 
 
-static INLINE GLfloat dot4( const GLfloat *a,
-			    const GLfloat *b )
+static INLINE float dot4( const float *a,
+			    const float *b )
 {
-   GLfloat result = (a[0]*b[0] +
+   float result = (a[0]*b[0] +
 		     a[1]*b[1] +
 		     a[2]*b[2] +
 		     a[3]*b[3]);
@@ -144,9 +156,9 @@ static INLINE GLfloat dot4( const GLfloat *a,
 static INLINE void do_tri( struct draw_stage *next,
 			   struct prim_header *header )
 {
-   GLuint i;
+   unsigned i;
    for (i = 0; i < 3; i++) {
-      GLfloat *ndc = header->v[i]->data[0];
+      float *ndc = header->v[i]->data[0];
       _mesa_printf("ndc %f %f %f\n", ndc[0], ndc[1], ndc[2]);
       assert(ndc[0] >= -1 && ndc[0] <= 641);
       assert(ndc[1] >= 30 && ndc[1] <= 481);
@@ -159,10 +171,10 @@ static INLINE void do_tri( struct draw_stage *next,
 
 static void emit_poly( struct draw_stage *stage,
 		       struct vertex_header **inlist,
-		       GLuint n )
+		       unsigned n )
 {
    struct prim_header header;
-   GLuint i;
+   unsigned i;
 
    for (i = 2; i < n; i++) {
       header.v[0] = inlist[0];
@@ -170,8 +182,8 @@ static void emit_poly( struct draw_stage *stage,
       header.v[2] = inlist[i];
 	
       {
-	 GLuint tmp0 = header.v[0]->edgeflag;
-	 GLuint tmp2 = header.v[2]->edgeflag;
+	 unsigned tmp0 = header.v[0]->edgeflag;
+	 unsigned tmp2 = header.v[2]->edgeflag;
 
 	 if (i != 2)   header.v[0]->edgeflag = 0;
 	 if (i != n-1) header.v[2]->edgeflag = 0;
@@ -188,7 +200,7 @@ static void emit_poly( struct draw_stage *stage,
 #if 0
 static void emit_poly( struct draw_stage *stage )
 {
-   GLuint i;
+   unsigned i;
 
    for (i = 2; i < n; i++) {
       header->v[0] = inlist[0];
@@ -206,16 +218,16 @@ static void emit_poly( struct draw_stage *stage )
 static void
 do_clip_tri( struct draw_stage *stage, 
 	     struct prim_header *header,
-	     GLuint clipmask )
+	     unsigned clipmask )
 {
    struct clipper *clipper = clipper_stage( stage );
    struct vertex_header *a[MAX_CLIPPED_VERTICES];
    struct vertex_header *b[MAX_CLIPPED_VERTICES];
    struct vertex_header **inlist = a;
    struct vertex_header **outlist = b;
-   GLuint tmpnr = 0;
-   GLuint n = 3;
-   GLuint i;
+   unsigned tmpnr = 0;
+   unsigned n = 3;
+   unsigned i;
 
    inlist[0] = header->v[0];
    inlist[1] = header->v[1];
@@ -231,11 +243,11 @@ do_clip_tri( struct draw_stage *stage,
    }
 
    while (clipmask && n >= 3) {
-      GLuint plane_idx = ffs(clipmask)-1;
-      const GLfloat *plane = clipper->plane[plane_idx];
+      unsigned plane_idx = ffs(clipmask)-1;
+      const float *plane = clipper->plane[plane_idx];
       struct vertex_header *vert_prev = inlist[0];
-      GLfloat dp_prev = dot4( vert_prev->clip, plane );
-      GLuint outcount = 0;
+      float dp_prev = dot4( vert_prev->clip, plane );
+      unsigned outcount = 0;
 
       clipmask &= ~(1<<plane_idx);
 
@@ -244,7 +256,7 @@ do_clip_tri( struct draw_stage *stage,
       for (i = 1; i <= n; i++) {
 	 struct vertex_header *vert = inlist[i];
 
-	 GLfloat dp = dot4( vert->clip, plane );
+	 float dp = dot4( vert->clip, plane );
 
 	 if (!IS_NEGATIVE(dp_prev)) {
 	    outlist[outcount++] = vert_prev;
@@ -258,7 +270,7 @@ do_clip_tri( struct draw_stage *stage,
 	       /* Going out of bounds.  Avoid division by zero as we
 		* know dp != dp_prev from DIFFERENT_SIGNS, above.
 		*/
-	       GLfloat t = dp / (dp - dp_prev);
+	       float t = dp / (dp - dp_prev);
 	       interp( clipper, new_vert, t, vert, vert_prev );
 	       
 	       /* Force edgeflag true in this case:
@@ -267,7 +279,7 @@ do_clip_tri( struct draw_stage *stage,
 	    } else {
 	       /* Coming back in.
 		*/
-	       GLfloat t = dp_prev / (dp_prev - dp);
+	       float t = dp_prev / (dp_prev - dp);
 	       interp( clipper, new_vert, t, vert_prev, vert );
 
 	       /* Copy starting vert's edgeflag:
@@ -300,15 +312,15 @@ do_clip_tri( struct draw_stage *stage,
 static void
 do_clip_line( struct draw_stage *stage,
 	      struct prim_header *header,
-	      GLuint clipmask )
+	      unsigned clipmask )
 {
    const struct clipper *clipper = clipper_stage( stage );
    struct vertex_header *v0 = header->v[0];
    struct vertex_header *v1 = header->v[1];
-   const GLfloat *pos0 = v0->clip;
-   const GLfloat *pos1 = v1->clip;
-   GLfloat t0 = 0;
-   GLfloat t1 = 0;
+   const float *pos0 = v0->clip;
+   const float *pos1 = v1->clip;
+   float t0 = 0;
+   float t1 = 0;
    struct prim_header newprim;
 
    /* XXX: Note stupid hack to deal with tnl's 8-bit clipmask.  Remove
@@ -321,18 +333,18 @@ do_clip_line( struct draw_stage *stage,
    }
 
    while (clipmask) {
-      const GLuint plane_idx = ffs(clipmask)-1;
-      const GLfloat *plane = clipper->plane[plane_idx];
-      const GLfloat dp0 = dot4( pos0, plane );
-      const GLfloat dp1 = dot4( pos1, plane );
+      const unsigned plane_idx = ffs(clipmask)-1;
+      const float *plane = clipper->plane[plane_idx];
+      const float dp0 = dot4( pos0, plane );
+      const float dp1 = dot4( pos1, plane );
 
       if (dp1 < 0) {
-	 GLfloat t = dp1 / (dp1 - dp0);
+	 float t = dp1 / (dp1 - dp0);
          t1 = MAX2(t1, t);
       } 
 
       if (dp0 < 0) {
-	 GLfloat t = dp0 / (dp0 - dp1);
+	 float t = dp0 / (dp0 - dp1);
          t0 = MAX2(t0, t);
       }
 
@@ -365,7 +377,7 @@ do_clip_line( struct draw_stage *stage,
 static void clip_begin( struct draw_stage *stage )
 {
    struct clipper *clipper = clipper_stage(stage);
-   GLuint nr = stage->draw->nr_planes;
+   unsigned nr = stage->draw->nr_planes;
 
    /* sanity checks.  If these fail, review the clip/interp code! */
    assert(stage->draw->nr_attrs >= 3);
@@ -393,7 +405,7 @@ static void
 clip_line( struct draw_stage *stage,
 	   struct prim_header *header )
 {
-   GLuint clipmask = (header->v[0]->clipmask | 
+   unsigned clipmask = (header->v[0]->clipmask | 
 		      header->v[1]->clipmask);
    
    if (clipmask == 0) {
@@ -411,7 +423,7 @@ static void
 clip_tri( struct draw_stage *stage,
 	  struct prim_header *header )
 {
-   GLuint clipmask = (header->v[0]->clipmask | 
+   unsigned clipmask = (header->v[0]->clipmask | 
 		      header->v[1]->clipmask | 
 		      header->v[2]->clipmask);
    
