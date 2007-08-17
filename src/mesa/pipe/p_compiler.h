@@ -39,14 +39,16 @@
 #endif
 
 
-typedef unsigned int   uint;
-typedef unsigned char  ubyte;
-typedef unsigned char  boolean;
-typedef unsigned short ushort;
+typedef unsigned int       uint;
+typedef unsigned char      ubyte;
+typedef unsigned char      boolean;
+typedef unsigned short     ushort;
+typedef unsigned long long uint64;
 
 
 #define TRUE  1
 #define FALSE 0
+
 
 /* Function inlining */
 #if defined(__GNUC__)
