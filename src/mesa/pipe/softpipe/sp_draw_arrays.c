@@ -131,32 +131,21 @@ run_vertex_program(struct draw_context *draw,
 
    /* load machine inputs */
    for (j = 0; j < count; j++) {
-      const void *mapped = vbuffer;
-      const float *vIn, *cIn;
-      vIn = (const float *) ((const ubyte *) mapped
-                             + draw->vertex_buffer[0].buffer_offset
-                             + draw->vertex_element[0].src_offset
-                             + elts[j] * draw->vertex_buffer[0].pitch);
+      unsigned attr;
+      for (attr = 0; attr < 16; attr++) {
+         if (sp->vs.inputs_read & (1 << attr)) {
+            const float *p
+                = (const float *) ((const ubyte *) vbuffer
+                                   + draw->vertex_buffer[attr].buffer_offset
+                                   + draw->vertex_element[attr].src_offset
+                                   + elts[j] * draw->vertex_buffer[attr].pitch);
 
-      cIn = (const float *) ((const ubyte *) mapped
-                             + draw->vertex_buffer[3].buffer_offset
-                             + draw->vertex_element[3].src_offset
-                             + elts[j] * draw->vertex_buffer[3].pitch);
-
-      machine.Inputs[0].xyzw[0].f[j] = vIn[0]; /*X*/
-      machine.Inputs[0].xyzw[1].f[j] = vIn[1]; /*Y*/
-      machine.Inputs[0].xyzw[2].f[j] = vIn[2]; /*Z*/
-      machine.Inputs[0].xyzw[3].f[j] = 1.0; /*W*/
-
-      machine.Inputs[3].xyzw[0].f[j] = cIn[0];
-      machine.Inputs[3].xyzw[1].f[j] = cIn[1];
-      machine.Inputs[3].xyzw[2].f[j] = cIn[2];
-      machine.Inputs[3].xyzw[3].f[j] = 1.0;
-
-#if 0
-      printf("VS Input %d: %f %f %f %f\n",
-             j, vIn[0], vIn[1], vIn[2], 1.0);
-#endif
+            machine.Inputs[attr].xyzw[0].f[j] = p[0]; /*X*/
+            machine.Inputs[attr].xyzw[1].f[j] = p[1]; /*Y*/
+            machine.Inputs[attr].xyzw[2].f[j] = p[2]; /*Z*/
+            machine.Inputs[attr].xyzw[3].f[j] = 1.0; /*W*/
+         }
+      }
    }
 
 #if 0
