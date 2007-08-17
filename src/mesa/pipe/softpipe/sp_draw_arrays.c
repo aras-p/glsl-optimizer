@@ -65,6 +65,32 @@ static struct softpipe_context *sp_global = NULL;
 
 
 
+static INLINE unsigned
+compute_clipmask(float cx, float cy, float cz, float cw)
+{
+   unsigned mask;
+#if defined(macintosh) || defined(__powerpc__)
+   /* on powerpc cliptest is 17% faster in this way. */
+   mask =  (((cw <  cx) << CLIP_RIGHT_SHIFT));
+   mask |= (((cw < -cx) << CLIP_LEFT_SHIFT));
+   mask |= (((cw <  cy) << CLIP_TOP_SHIFT));
+   mask |= (((cw < -cy) << CLIP_BOTTOM_SHIFT));
+   mask |= (((cw <  cz) << CLIP_FAR_SHIFT));
+   mask |= (((cw < -cz) << CLIP_NEAR_SHIFT));
+#else /* !defined(macintosh)) */
+   mask = 0x0;
+   if (-cx + cw < 0) mask |= CLIP_RIGHT_BIT;
+   if ( cx + cw < 0) mask |= CLIP_LEFT_BIT;
+   if (-cy + cw < 0) mask |= CLIP_TOP_BIT;
+   if ( cy + cw < 0) mask |= CLIP_BOTTOM_BIT;
+   if (-cz + cw < 0) mask |= CLIP_FAR_BIT;
+   if ( cz + cw < 0) mask |= CLIP_NEAR_BIT;
+#endif /* defined(macintosh) */
+   return mask;
+}
+
+
+
 /**
  * Transform vertices with the current vertex program/shader
  * Up to four vertices can be shaded at a time.
@@ -126,6 +152,12 @@ run_vertex_program(struct draw_context *draw,
       machine.Inputs[0].xyzw[1].f[j] = vIn[1]; /*Y*/
       machine.Inputs[0].xyzw[2].f[j] = vIn[2]; /*Z*/
       machine.Inputs[0].xyzw[3].f[j] = 1.0; /*W*/
+
+      machine.Inputs[3].xyzw[0].f[j] = cIn[0];
+      machine.Inputs[3].xyzw[1].f[j] = cIn[1];
+      machine.Inputs[3].xyzw[2].f[j] = cIn[2];
+      machine.Inputs[3].xyzw[3].f[j] = 1.0;
+
 #if 0
       printf("VS Input %d: %f %f %f %f\n",
              j, vIn[0], vIn[1], vIn[2], 1.0);
@@ -158,21 +190,24 @@ run_vertex_program(struct draw_context *draw,
    for (j = 0; j < count; j++) {
       float x, y, z, w;
 
-      x = outputs[0].xyzw[0].f[j];
-      y = outputs[0].xyzw[1].f[j];
-      z = outputs[0].xyzw[2].f[j];
-      w = outputs[0].xyzw[3].f[j];
+      x = vOut[j]->clip[0] = outputs[0].xyzw[0].f[j];
+      y = vOut[j]->clip[1] = outputs[0].xyzw[1].f[j];
+      z = vOut[j]->clip[2] = outputs[0].xyzw[2].f[j];
+      w = vOut[j]->clip[3] = outputs[0].xyzw[3].f[j];
+
+      vOut[j]->clipmask = compute_clipmask(x, y, z, w);
+      vOut[j]->edgeflag = 0;
 
       /* divide by w */
-      x /= w;
-      y /= w;
-      z /= w;
       w = 1.0 / w;
+      x *= w;
+      y *= w;
+      z *= w;
 
-      /* Viewport */
-      vOut[j]->data[0][0] = scale[0] * x + trans[0];
-      vOut[j]->data[0][1] = scale[1] * y + trans[1];
-      vOut[j]->data[0][2] = scale[2] * z + trans[2];
+      /* Viewport mapping */
+      vOut[j]->data[0][0] = x * scale[0] + trans[0];
+      vOut[j]->data[0][1] = y * scale[1] + trans[1];
+      vOut[j]->data[0][2] = z * scale[2] + trans[2];
       vOut[j]->data[0][3] = w;
 #if 0
       printf("wincoord: %f %f %f\n",
@@ -180,10 +215,10 @@ run_vertex_program(struct draw_context *draw,
              vOut[j]->data[0][1],
              vOut[j]->data[0][2]);
 #endif
-      vOut[j]->data[1][0] = 1.0;
-      vOut[j]->data[1][1] = 1.0;
-      vOut[j]->data[1][2] = 1.0;
-      vOut[j]->data[1][3] = 1.0;
+      vOut[j]->data[1][0] = outputs[1].xyzw[0].f[j];
+      vOut[j]->data[1][1] = outputs[1].xyzw[1].f[j];
+      vOut[j]->data[1][2] = outputs[1].xyzw[2].f[j];
+      vOut[j]->data[1][3] = outputs[1].xyzw[3].f[j];
    }
 
 #if 0
