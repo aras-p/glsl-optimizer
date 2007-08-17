@@ -46,6 +46,17 @@ struct draw_context;
 struct draw_stage;
 
 
+#define CLIP_RIGHT_BIT   0x01
+#define CLIP_LEFT_BIT    0x02
+#define CLIP_TOP_BIT     0x04
+#define CLIP_BOTTOM_BIT  0x08
+#define CLIP_NEAR_BIT    0x10
+#define CLIP_FAR_BIT     0x20
+#define CLIP_USER_BIT    0x40
+#define CLIP_CULL_BIT    0x80
+
+
+
 struct draw_context *draw_create( void );
 
 void draw_destroy( struct draw_context *draw );

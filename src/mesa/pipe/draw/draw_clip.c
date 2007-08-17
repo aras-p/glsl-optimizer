@@ -33,7 +33,9 @@
 
 
 #include "pipe/p_util.h"
+#include "draw_context.h"
 #include "draw_private.h"
+
 
 #ifndef IS_NEGATIVE
 #define IS_NEGATIVE(X) ((X) < 0.0)
@@ -135,9 +137,6 @@ static void interp( const struct clipper *clip,
    }
 }
 
-
-#define CLIP_USER_BIT    0x40
-#define CLIP_CULL_BIT    0x80
 
 
 static INLINE float dot4( const float *a,
