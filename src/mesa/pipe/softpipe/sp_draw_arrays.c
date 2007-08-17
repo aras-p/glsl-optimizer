@@ -31,9 +31,14 @@
  */
 
 
+/** TEMP */
+#include "main/context.h"
+#include "main/macros.h"
+
 #include "pipe/p_defines.h"
 #include "pipe/p_context.h"
 #include "pipe/p_winsys.h"
+
 
 #include "sp_context.h"
 #include "sp_state.h"
@@ -48,35 +53,43 @@
 
 
 #if defined __GNUC__
-#define USE_ALIGNED_ATTRIBS   1
-#define ALIGN16_SUFFIX        __attribute__(( aligned( 16 ) ))
+#define ALIGN16_DECL(TYPE, NAME, SIZE)  TYPE NAME[SIZE] __attribute__(( aligned( 16 ) ))
+#define ALIGN16_ASSIGN(P) P
 #else
-#define USE_ALIGNED_ATTRIBS   0
-#define ALIGN16_SUFFIX
+#define ALIGN16_DECL(TYPE, NAME, SIZE)  TYPE NAME[SIZE + 1]
+#define ALIGN16_ASSIGN(P) align16(P)
 #endif
 
 
 static struct softpipe_context *sp_global = NULL;
 
 
+
+/**
+ * Transform vertices with the current vertex program/shader
+ * Up to four vertices can be shaded at a time.
+ * \param vbuffer  the input vertex data
+ * \param elts  indexes of four input vertices
+ * \param count  number of vertices to shade [1..4]
+ * \param vOut  array of pointers to four output vertices
+ */
 static void
-run_vertex_program2(struct draw_context *draw,
-                   const void *vbuffer, unsigned elem,
-                   struct vertex_header *vOut)
+run_vertex_program(struct draw_context *draw,
+                   const void *vbuffer, unsigned elts[4], unsigned count,
+                   struct vertex_header *vOut[])
 {
 #if 1
    struct softpipe_context *sp = sp_global;
 #endif
    struct tgsi_exec_machine machine;
-   int i;
+   unsigned int j;
 
-#if USE_ALIGNED_ATTRIBS
-   struct tgsi_exec_vector inputs[PIPE_ATTRIB_MAX] ALIGN16_SUFFIX;
-   struct tgsi_exec_vector outputs[PIPE_ATTRIB_MAX] ALIGN16_SUFFIX;
-#else
-   struct tgsi_exec_vector inputs[PIPE_ATTRIB_MAX + 1];
-   struct tgsi_exec_vector outputs[PIPE_ATTRIB_MAX + 1];
-#endif
+   ALIGN16_DECL(struct tgsi_exec_vector, inputs, PIPE_ATTRIB_MAX);
+   ALIGN16_DECL(struct tgsi_exec_vector, outputs, PIPE_ATTRIB_MAX);
+   const float *scale = draw->viewport.scale;
+   const float *trans = draw->viewport.translate;
+
+   assert(count <= 4);
 
 #ifdef DEBUG
    memset( &machine, 0, sizeof( machine ) );
@@ -92,54 +105,34 @@ run_vertex_program2(struct draw_context *draw,
    /* Consts does not require 16 byte alignment. */
    machine.Consts = sp->vs.constants->constant;
 
-#if USE_ALIGNED_ATTRIBS
-   machine.Inputs = inputs;
-   machine.Outputs = outputs;
-#else
-   machine.Inputs = (struct tgsi_exec_vector *) tgsi_align_128bit( inputs );
-   machine.Outputs = (struct tgsi_exec_vector *) tgsi_align_128bit( outputs );
-#endif
+   machine.Inputs = ALIGN16_ASSIGN(inputs);
+   machine.Outputs = ALIGN16_ASSIGN(outputs);
 
-   {
+   /* load machine inputs */
+   for (j = 0; j < count; j++) {
       const void *mapped = vbuffer;
       const float *vIn, *cIn;
       vIn = (const float *) ((const ubyte *) mapped
                              + draw->vertex_buffer[0].buffer_offset
                              + draw->vertex_element[0].src_offset
-                             + elem * draw->vertex_buffer[0].pitch);
+                             + elts[j] * draw->vertex_buffer[0].pitch);
 
       cIn = (const float *) ((const ubyte *) mapped
                              + draw->vertex_buffer[3].buffer_offset
                              + draw->vertex_element[3].src_offset
-                             + elem * draw->vertex_buffer[3].pitch);
-      /*X*/
-      machine.Inputs[0].xyzw[0].f[0] = vIn[0];
-      machine.Inputs[0].xyzw[0].f[1] = vIn[0];
-      machine.Inputs[0].xyzw[0].f[2] = vIn[0];
-      machine.Inputs[0].xyzw[0].f[3] = vIn[0];
+                             + elts[j] * draw->vertex_buffer[3].pitch);
 
-      /*Y*/
-      machine.Inputs[0].xyzw[1].f[0] = vIn[1];
-      machine.Inputs[0].xyzw[1].f[1] = vIn[1];
-      machine.Inputs[0].xyzw[1].f[2] = vIn[1];
-      machine.Inputs[0].xyzw[1].f[3] = vIn[1];
-
-      /*Z*/
-      machine.Inputs[0].xyzw[2].f[0] = vIn[2];
-      machine.Inputs[0].xyzw[2].f[1] = vIn[2];
-      machine.Inputs[0].xyzw[2].f[2] = vIn[2];
-      machine.Inputs[0].xyzw[2].f[3] = vIn[2];
-
-      /*W*/
-      machine.Inputs[0].xyzw[3].f[0] = 1.0;
-      machine.Inputs[0].xyzw[3].f[1] = 1.0;
-      machine.Inputs[0].xyzw[3].f[2] = 1.0;
-      machine.Inputs[0].xyzw[3].f[3] = 1.0;
-
-      printf("VS Input: %f %f %f %f\n",
-             vIn[0], vIn[1], vIn[2], 1.0);
+      machine.Inputs[0].xyzw[0].f[j] = vIn[0]; /*X*/
+      machine.Inputs[0].xyzw[1].f[j] = vIn[1]; /*Y*/
+      machine.Inputs[0].xyzw[2].f[j] = vIn[2]; /*Z*/
+      machine.Inputs[0].xyzw[3].f[j] = 1.0; /*W*/
+#if 0
+      printf("VS Input %d: %f %f %f %f\n",
+             j, vIn[0], vIn[1], vIn[2], 1.0);
+#endif
    }
 
+#if 0
    printf("Consts:\n");
    for (i = 0; i < 4; i++) {
       printf(" %d: %f %f %f %f\n", i,
@@ -148,48 +141,49 @@ run_vertex_program2(struct draw_context *draw,
              machine.Consts[i][2],
              machine.Consts[i][3]);
    }
-
+#endif
 
    /* run shader */
    tgsi_exec_machine_run( &machine );
 
-   /* store result pos */
+#if 0
    printf("VS result: %f %f %f %f\n",
           outputs[0].xyzw[0].f[0],
           outputs[0].xyzw[1].f[0],
           outputs[0].xyzw[2].f[0],
           outputs[0].xyzw[3].f[0]);
-   {
-      const float *scale = draw->viewport.scale;
-      const float *trans = draw->viewport.translate;
+#endif
+
+   /* store machine results */
+   for (j = 0; j < count; j++) {
       float x, y, z, w;
 
-      x = outputs[0].xyzw[0].f[0];
-      y = outputs[0].xyzw[1].f[0];
-      z = outputs[0].xyzw[2].f[0];
-      w = outputs[0].xyzw[3].f[0];
+      x = outputs[0].xyzw[0].f[j];
+      y = outputs[0].xyzw[1].f[j];
+      z = outputs[0].xyzw[2].f[j];
+      w = outputs[0].xyzw[3].f[j];
 
       /* divide by w */
       x /= w;
       y /= w;
       z /= w;
-      w = 1.0f / w;
+      w = 1.0 / w;
 
       /* Viewport */
-      vOut->data[0][0] = scale[0] * x + trans[0];
-      vOut->data[0][1] = scale[1] * y + trans[1];
-      vOut->data[0][2] = scale[2] * z + trans[2];
-      vOut->data[0][3] = w;
+      vOut[j]->data[0][0] = scale[0] * x + trans[0];
+      vOut[j]->data[0][1] = scale[1] * y + trans[1];
+      vOut[j]->data[0][2] = scale[2] * z + trans[2];
+      vOut[j]->data[0][3] = w;
+#if 0
       printf("wincoord: %f %f %f\n",
-             vOut->data[0][0],
-             vOut->data[0][1],
-             vOut->data[0][2]);
-
-      vOut->data[1][0] = 1.0;
-      vOut->data[1][1] = 1.0;
-      vOut->data[1][2] = 1.0;
-      vOut->data[1][3] = 1.0;
-
+             vOut[j]->data[0][0],
+             vOut[j]->data[0][1],
+             vOut[j]->data[0][2]);
+#endif
+      vOut[j]->data[1][0] = 1.0;
+      vOut[j]->data[1][1] = 1.0;
+      vOut[j]->data[1][2] = 1.0;
+      vOut[j]->data[1][3] = 1.0;
    }
 
 #if 0
@@ -209,14 +203,12 @@ run_vertex_program2(struct draw_context *draw,
  * \param elem  which element of the vertex buffer to use as input
  * \param vOut  the output vertex
  */
+#if 0
 static void
 run_vertex_program(struct draw_context *draw,
                    const void *vbuffer, unsigned elem,
                    struct vertex_header *vOut)
 {
-   run_vertex_program2(draw, vbuffer, elem, vOut);
-
-#if 0
    const float *vIn, *cIn;
    const float *scale = draw->viewport.scale;
    const float *trans = draw->viewport.translate;
@@ -268,8 +260,8 @@ run_vertex_program(struct draw_context *draw,
       vOut->data[1][2] = cIn[2];
       vOut->data[1][3] = 1.0;
    }
-#endif
 }
+#endif
 
 
 /**
@@ -278,7 +270,7 @@ run_vertex_program(struct draw_context *draw,
  */
 static void vs_flush( struct draw_context *draw )
 {
-   unsigned i;
+   unsigned i, j;
 
    /* We're not really running a vertex shader yet, so flushing the vs
     * queue is just a matter of building the vertices and returning.
@@ -286,7 +278,11 @@ static void vs_flush( struct draw_context *draw )
    /* Actually, I'm cheating even more and pre-building them still
     * with the mesa/vf module.  So it's very easy...
     */
+#if 0
    for (i = 0; i < draw->vs.queue_nr; i++) {
+#else
+   for (i = 0; i < draw->vs.queue_nr; i+=4) {
+#endif
       /* Would do the following steps here:
        *
        * 1) Loop over vertex element descriptors, fetch data from each
@@ -302,10 +298,27 @@ static void vs_flush( struct draw_context *draw )
        *
        * In this version, just do the last step:
        */
+#if 0
       const unsigned elt = draw->vs.queue[i].elt;
       struct vertex_header *dest = draw->vs.queue[i].dest;
 
       run_vertex_program(draw, draw->mapped_vbuffer, elt, dest);
+#else
+      struct vertex_header *dests[4];
+      unsigned elts[4];
+      int n;
+
+      for (j = 0; j < 4; j++) {
+         elts[j] = draw->vs.queue[i + j].elt;
+         dests[j] = draw->vs.queue[i + j].dest;
+      }
+
+      n = MIN2(4, draw->vs.queue_nr - i);
+      assert(n > 0);
+      assert(n <= 4);
+
+      run_vertex_program(draw, draw->mapped_vbuffer, elts, n, dests);
+#endif
    }
    draw->vs.queue_nr = 0;
 }
