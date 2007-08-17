@@ -293,13 +293,13 @@ void
 xmesa_clear(struct pipe_context *pipe, struct pipe_surface *ps, GLuint value)
 {
    struct xmesa_renderbuffer *xrb = xmesa_rb((struct softpipe_surface *) ps);
-   assert(xrb);
-   if (xrb->ximage) {
+
+   if (xrb && xrb->ximage) {
       /* clearing back color buffer */
       GET_CURRENT_CONTEXT(ctx);
       xmesa_clear_buffers(ctx, BUFFER_BIT_BACK_LEFT);
    }
-   else if (xrb->pixmap) {
+   else if (xrb && xrb->pixmap) {
       /* clearing front color buffer */
       GET_CURRENT_CONTEXT(ctx);
       xmesa_clear_buffers(ctx, BUFFER_BIT_FRONT_LEFT);
