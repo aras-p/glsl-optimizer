@@ -408,18 +408,19 @@ static void
 clear_depth_buffer(GLcontext *ctx, struct gl_renderbuffer *rb)
 {
    struct st_renderbuffer *strb = st_renderbuffer(rb);
+   const GLboolean isDS = is_depth_stencil_format(strb->surface->format);
 
    assert(strb->surface->format);
 
-   if (!ctx->Scissor.Enabled &&
-       !is_depth_stencil_format(strb->surface->format)) {
-      /* clear whole depth buffer w/out masking */
-      GLuint clearValue = depth_value(strb->surface->format, ctx->Depth.Clear);
-      ctx->st->pipe->clear(ctx->st->pipe, strb->surface, clearValue);
+   if (ctx->Scissor.Enabled ||
+       (isDS && ctx->DrawBuffer->Visual.stencilBits > 0)) {
+      /* scissoring or we have a combined depth/stencil buffer */
+      clear_with_quad(ctx, GL_FALSE, GL_TRUE, GL_FALSE);
    }
    else {
-      /* masking or scissoring or combined z/stencil buffer */
-      clear_with_quad(ctx, GL_FALSE, GL_TRUE, GL_FALSE);
+      /* simple clear of whole buffer */
+      GLuint clearValue = depth_value(strb->surface->format, ctx->Depth.Clear);
+      ctx->st->pipe->clear(ctx->st->pipe, strb->surface, clearValue);
    }
 }
 
@@ -428,18 +429,20 @@ static void
 clear_stencil_buffer(GLcontext *ctx, struct gl_renderbuffer *rb)
 {
    struct st_renderbuffer *strb = st_renderbuffer(rb);
+   const GLboolean isDS = is_depth_stencil_format(strb->surface->format);
    const GLuint stencilMax = (1 << rb->StencilBits) - 1;
    GLboolean maskStencil = ctx->Stencil.WriteMask[0] != stencilMax;
 
-   if (!maskStencil && !ctx->Scissor.Enabled &&
-       !is_depth_stencil_format(strb->surface->format)) {
-      /* clear whole stencil buffer w/out masking */
-      GLuint clearValue = ctx->Stencil.Clear;
-      ctx->st->pipe->clear(ctx->st->pipe, strb->surface, clearValue);
+   if (maskStencil ||
+       ctx->Scissor.Enabled ||
+       (isDS && ctx->DrawBuffer->Visual.depthBits > 0)) {
+      /* masking or scissoring or combined depth/stencil buffer */
+      clear_with_quad(ctx, GL_FALSE, GL_FALSE, GL_TRUE);
    }
    else {
-      /* masking or scissoring */
-      clear_with_quad(ctx, GL_FALSE, GL_FALSE, GL_TRUE);
+      /* simple clear of whole buffer */
+      GLuint clearValue = ctx->Stencil.Clear;
+      ctx->st->pipe->clear(ctx->st->pipe, strb->surface, clearValue);
    }
 }
 
