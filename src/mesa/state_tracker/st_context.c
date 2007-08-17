@@ -25,7 +25,8 @@
  * 
  **************************************************************************/
 
-#include "imports.h"
+#include "main/imports.h"
+#include "vbo/vbo.h"
 #include "st_public.h"
 #include "st_context.h"
 #include "st_cb_bufferobjects.h"
@@ -67,6 +68,9 @@ struct st_context *st_create_context( GLcontext *ctx,
 
    st_init_atoms( st );
    st_init_draw( st );
+
+   /* we want all vertex data to be placed in buffer objects */
+   vbo_use_buffer_objects(ctx);
 
    /* Need these flags:
     */
