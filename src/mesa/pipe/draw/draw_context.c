@@ -158,7 +158,7 @@ static void validate_pipeline( struct draw_context *draw )
 void draw_set_setup_state( struct draw_context *draw,
                            const struct pipe_setup_state *setup )
 {
-   memcpy( &draw->setup, setup, sizeof(*setup) );
+   draw->setup = *setup;  /* struct copy */
    validate_pipeline( draw );
 }
 
