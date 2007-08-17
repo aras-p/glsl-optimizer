@@ -95,6 +95,7 @@ static void update_vs( struct st_context *st )
       compile_vs( st, vp );
 
    memset( &vs, 0, sizeof(vs) );
+   vs.outputs_written = vp->Base.Base.OutputsWritten;
    vs.inputs_read = vp->Base.Base.InputsRead;
    vs.tokens = &vp->tokens[0];
    vs.constants = &vp->constants;
