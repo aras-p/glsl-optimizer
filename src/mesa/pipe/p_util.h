@@ -38,6 +38,22 @@
 
 #define Elements(x) sizeof(x)/sizeof(*(x))
 
+/**
+ * Return pointer aligned to next multiple of 16 bytes.
+ */
+static INLINE void *
+align16(void *unaligned)
+{
+   union {
+      void *p;
+      uint64 u;
+   } pu;
+   pu.p = unaligned;
+   pu.u = (pu.u + 15) & ~15;
+   return pu.p;
+}
+
+
 #if defined(__MSC__) && defined(__WIN32__)
 static INLINE unsigned ffs( unsigned u )
 {
