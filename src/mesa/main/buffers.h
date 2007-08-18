@@ -59,11 +59,6 @@ _mesa_drawbuffers(GLcontext *ctx, GLuint n, const GLenum *buffers,
 extern void
 _mesa_readbuffer(GLcontext *ctx, GLenum buffer, GLint bufferIndex);
 
-#if 0
-extern GLboolean
-_mesa_readbuffer_update_fields(GLcontext *ctx, GLenum buffer);
-#endif
-
 extern void GLAPIENTRY
 _mesa_ReadBuffer( GLenum mode );
 

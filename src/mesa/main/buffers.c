@@ -548,53 +548,6 @@ _mesa_drawbuffers(GLcontext *ctx, GLuint n, const GLenum *buffers,
 }
 
 
-#if 0
-GLboolean
-_mesa_readbuffer_update_fields(GLcontext *ctx, GLenum buffer)
-{
-   struct gl_framebuffer *fb;
-   GLbitfield supportedMask;
-   GLint srcBuffer;
-
-   fb = ctx->ReadBuffer;
-
-   if (MESA_VERBOSE & VERBOSE_API)
-      _mesa_debug(ctx, "glReadBuffer %s\n", _mesa_lookup_enum_by_nr(buffer));
-
-   if (fb->Name > 0 && buffer == GL_NONE) {
-      /* This is legal for user-created framebuffer objects */
-      srcBuffer = -1;
-   }
-   else {
-      /* general case / window-system framebuffer */
-      srcBuffer = read_buffer_enum_to_index(buffer);
-      if (srcBuffer == -1) {
-         _mesa_error(ctx, GL_INVALID_ENUM, "glReadBuffer(buffer=0x%x)", buffer);
-         return GL_FALSE;
-      }
-      supportedMask = supported_buffer_bitmask(ctx, fb);
-      if (((1 << srcBuffer) & supportedMask) == 0) {
-         _mesa_error(ctx, GL_INVALID_OPERATION, "glReadBuffer(buffer=0x%x)", buffer);
-         return GL_FALSE;
-      }
-   }
-
-   if (fb->Name == 0) {
-      /* Only update the per-context GL_READ_BUFFER state if we're bound to
-       * a window-system framebuffer.
-       */
-      ctx->Pixel.ReadBuffer = buffer;
-   }
-
-   /* Set the FBO's GL_READ_BUFFER state */
-   fb->ColorReadBuffer = buffer;
-   fb->_ColorReadBufferIndex = srcBuffer;
-
-   return GL_TRUE;
-}
-#endif
-
-
 /**
  * Like \sa _mesa_drawbuffers(), this is a helper function for setting
  * GL_READ_BUFFER state in the context and current FBO.

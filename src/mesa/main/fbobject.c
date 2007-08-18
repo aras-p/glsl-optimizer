@@ -1000,20 +1000,8 @@ _mesa_BindFramebufferEXT(GLenum target, GLuint framebuffer)
     * XXX check if re-binding same buffer and skip some of this code.
     */
 
-#if 000
-   /* for window-framebuffers, re-initialize the fbo values, as they
-      could be wrong (makecurrent with a new drawable while still a fbo
-      was bound will lead to default init fbo values).
-      note that therefore the context ReadBuffer/DrawBuffer values are not
-      valid while fbo's are bound!!! */
-#endif
    if (bindReadBuf) {
       _mesa_reference_framebuffer(&ctx->ReadBuffer, newFbread);
-#if 000
-      if (!newFbread->Name) {
-         _mesa_readbuffer_update_fields(ctx, ctx->Pixel.ReadBuffer);
-      }
-#endif
    }
 
    if (bindDrawBuf) {
@@ -1026,17 +1014,6 @@ _mesa_BindFramebufferEXT(GLenum target, GLuint framebuffer)
       if (newFb->Name != 0) {
          /* check if newly bound framebuffer has any texture attachments */
          check_begin_texture_render(ctx, newFb);
-      }
-      else {
-         /* XXX try to remove this: */
-#if 000
-         GLuint i;
-         GLenum buffers[MAX_DRAW_BUFFERS];
-         for(i = 0; i < ctx->Const.MaxDrawBuffers; i++) {
-            buffers[i] = ctx->Color.DrawBuffer[i];
-         }
-         _mesa_drawbuffers(ctx, ctx->Const.MaxDrawBuffers, buffers, NULL);
-#endif
       }
    }
 
