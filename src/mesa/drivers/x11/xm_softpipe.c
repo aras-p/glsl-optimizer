@@ -51,6 +51,7 @@ struct xm_softpipe_winsys
 struct xm_buffer
 {
    int refcount;
+   int size;
    void *data;
    void *mapped;
 };
@@ -129,8 +130,12 @@ xm_buffer_data(struct pipe_winsys *pws, struct pipe_buffer_handle *buf,
                unsigned size, const void *data )
 {
    struct xm_buffer *xm_buf = xm_bo(buf);
-   assert(!xm_buf->data);
-   xm_buf->data = malloc(size);
+   if (xm_buf->size != size) {
+      if (xm_buf->data)
+         free(xm_buf->data);
+      xm_buf->data = malloc(size);
+      xm_buf->size = size;
+   }
    if (data)
       memcpy(xm_buf->data, data, size);
 }
