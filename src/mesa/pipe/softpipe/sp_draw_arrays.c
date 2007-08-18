@@ -87,6 +87,36 @@ compute_clipmask(float cx, float cy, float cz, float cw)
 }
 
 
+/**
+ * Fetch a float[4] vertex attribute from memory, doing format/type
+ * conversion as needed.
+ * XXX this might be a temporary thing.
+ */
+static void
+fetch_attrib4(const void *ptr, unsigned format, float attrib[4])
+{
+   /* defaults */
+   attrib[1] = 0.0;
+   attrib[2] = 0.0;
+   attrib[3] = 1.0;
+   switch (format) {
+   case PIPE_FORMAT_R32G32B32A32_FLOAT:
+      attrib[3] = ((float *) ptr)[3];
+      /* fall-through */
+   case PIPE_FORMAT_R32G32B32_FLOAT:
+      attrib[2] = ((float *) ptr)[2];
+      /* fall-through */
+   case PIPE_FORMAT_R32G32_FLOAT:
+      attrib[1] = ((float *) ptr)[1];
+      /* fall-through */
+   case PIPE_FORMAT_R32_FLOAT:
+      attrib[0] = ((float *) ptr)[0];
+      break;
+   default:
+      assert(0);
+   }
+}
+
 
 /**
  * Transform vertices with the current vertex program/shader
@@ -129,21 +159,39 @@ run_vertex_program(struct draw_context *draw,
    machine.Inputs = ALIGN16_ASSIGN(inputs);
    machine.Outputs = ALIGN16_ASSIGN(outputs);
 
+
+   if (0)
+   {
+      unsigned attr;
+      for (attr = 0; attr < 16; attr++) {
+         if (sp->vs.inputs_read & (1 << attr)) {
+            printf("attr %d: buf_off %d  src_off %d  pitch %d\n",
+                   attr, 
+                   draw->vertex_buffer[attr].buffer_offset,
+                   draw->vertex_element[attr].src_offset,
+                   draw->vertex_buffer[attr].pitch);
+         }
+      }
+   }
+
    /* load machine inputs */
    for (j = 0; j < count; j++) {
       unsigned attr;
       for (attr = 0; attr < 16; attr++) {
          if (sp->vs.inputs_read & (1 << attr)) {
-            const float *p
-                = (const float *) ((const ubyte *) vbuffer
-                                   + draw->vertex_buffer[attr].buffer_offset
-                                   + draw->vertex_element[attr].src_offset
-                                   + elts[j] * draw->vertex_buffer[attr].pitch);
+            const void *src
+               = (const void *) ((const ubyte *) vbuffer
+                                 + draw->vertex_buffer[attr].buffer_offset
+                                 + draw->vertex_element[attr].src_offset
+                                 + elts[j] * draw->vertex_buffer[attr].pitch);
+            float p[4];
+
+            fetch_attrib4(src, draw->vertex_element[attr].src_format, p);
 
             machine.Inputs[attr].xyzw[0].f[j] = p[0]; /*X*/
             machine.Inputs[attr].xyzw[1].f[j] = p[1]; /*Y*/
             machine.Inputs[attr].xyzw[2].f[j] = p[2]; /*Z*/
-            machine.Inputs[attr].xyzw[3].f[j] = 1.0; /*W*/
+            machine.Inputs[attr].xyzw[3].f[j] = p[3]; /*W*/
 #if 0
             if (attr == 0) {
                printf("Input vertex %d: %f %f %f\n",
@@ -371,12 +419,16 @@ softpipe_draw_arrays(struct pipe_context *pipe, unsigned mode,
    struct draw_context *draw = sp->draw;
    struct pipe_buffer_handle *buf;
 
+   if (sp->dirty)
+      softpipe_update_derived( sp );
+
    softpipe_map_surfaces(sp);
 
    /*
     * Map vertex buffers
     */
    buf = sp->vertex_buffer[0].buffer;
+   assert(buf);
    draw->mapped_vbuffer
       = pipe->winsys->buffer_map(pipe->winsys, buf, PIPE_BUFFER_FLAG_READ);
 
