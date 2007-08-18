@@ -104,6 +104,8 @@ struct st_context
    struct st_state_flags dirty;
 
    GLfloat polygon_offset_scale; /* ?? */
+
+   struct pipe_buffer_handle *default_attrib_buffer;
 };
 
 
