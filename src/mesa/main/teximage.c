@@ -1998,7 +1998,7 @@ copytexture_error_check( GLcontext *ctx, GLuint dimensions,
    }
 
    if (is_compressed_format(ctx, internalFormat)) {
-      if (target != GL_TEXTURE_2D) {
+      if (!target_can_be_compressed(ctx, target)) {
          _mesa_error(ctx, GL_INVALID_ENUM,
                      "glCopyTexImage%d(target)", dimensions);
          return GL_TRUE;
@@ -2181,7 +2181,7 @@ copytexsubimage_error_check2( GLcontext *ctx, GLuint dimensions,
    }
 
    if (teximage->IsCompressed) {
-      if (target != GL_TEXTURE_2D) {
+      if (!target_can_be_compressed(ctx, target)) {
          _mesa_error(ctx, GL_INVALID_ENUM,
                      "glCopyTexSubImage%d(target)", dimensions);
          return GL_TRUE;
