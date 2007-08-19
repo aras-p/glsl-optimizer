@@ -149,12 +149,8 @@ static void nv10Clear(GLcontext *ctx, GLbitfield mask)
 {
 	nouveauContextPtr nmesa = NOUVEAU_CONTEXT(ctx);
 
-	if (mask & (BUFFER_BIT_FRONT_LEFT)) {
-		nv10ClearBuffer(ctx, nmesa->color_buffer[0],
-			nmesa->clear_color_value, 0xffffffff);
-	}
-	if (mask & (BUFFER_BIT_BACK_LEFT)) {
-		nv10ClearBuffer(ctx, nmesa->color_buffer[1],
+	if (mask & (BUFFER_BIT_FRONT_LEFT|BUFFER_BIT_BACK_LEFT)) {
+		nv10ClearBuffer(ctx, nmesa->color_buffer,
 			nmesa->clear_color_value, 0xffffffff);
 	}
 	/* FIXME: check depth bits */
@@ -769,8 +765,7 @@ static GLboolean nv10BindBuffers(nouveauContextPtr nmesa, int num_color,
 	GLuint pitch, format, depth_pitch;
 
 	/* Store buffer pointers in context */
-	nmesa->color_buffer[0] = color[0];
-	nmesa->color_buffer[1] = color[1];
+	nmesa->color_buffer = color[0];
 	nmesa->depth_buffer = depth;
 
 	w = color[0]->mesa.Width;

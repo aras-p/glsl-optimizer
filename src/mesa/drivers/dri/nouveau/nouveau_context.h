@@ -124,7 +124,7 @@ typedef struct nouveau_context {
 	GLuint vertex_attr_count;
 
 	/* Color and depth renderbuffers */
-	nouveau_renderbuffer_t *color_buffer[2];
+	nouveau_renderbuffer_t *color_buffer;
 	nouveau_renderbuffer_t *depth_buffer;
 
 	/* Color buffer clear value */
