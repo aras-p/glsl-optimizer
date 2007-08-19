@@ -158,8 +158,6 @@ struct draw_context
    /* pipe state that we need: */
    struct pipe_setup_state setup;
    struct pipe_viewport_state viewport;
-   const struct pipe_vertex_buffer *vertex_buffer;  /**< note: pointer */
-   const struct pipe_vertex_element *vertex_element; /**< note: pointer */
 
    /** need to know the pipe for vertex flushing/transformation: */
    struct pipe_context *pipe;
@@ -230,9 +228,6 @@ struct draw_context
    ubyte *verts;
    boolean in_vb;
    struct vertex_fetch *vf;
-
-   /* Misc for sp_draw_arrays.c (temporary?) */
-   void *mapped_vbuffer;
 };
 
 

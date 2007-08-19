@@ -101,6 +101,11 @@ struct softpipe_context {
     */
    enum interp_mode interp[PIPE_ATTRIB_MAX];
 
+   /*
+    * Mapped vertex buffers
+    */
+   ubyte *mapped_vbuffer[PIPE_ATTRIB_MAX];
+
 
    /* FS + setup derived state:
     */
