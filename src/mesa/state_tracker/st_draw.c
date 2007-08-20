@@ -249,8 +249,41 @@ draw_vbo(GLcontext *ctx,
    }
 
    /* do actual drawing */
-   for (i = 0; i < nr_prims; i++) {
-      pipe->draw_arrays(pipe, prims[i].mode, prims[i].start, prims[i].count);
+   if (ib) {
+      /* indexed primitive */
+      struct gl_buffer_object *bufobj = ib->obj;
+      struct pipe_buffer_handle *bh = NULL;
+      unsigned indexSize;
+
+      if (bufobj && bufobj->Name) {
+         /* elements/indexes are in a real VBO */
+         struct st_buffer_object *stobj = st_buffer_object(bufobj);
+         bh = stobj->buffer;
+         switch (ib->type) {
+         case GL_UNSIGNED_INT:
+            indexSize = 4;
+            break;
+         case GL_UNSIGNED_SHORT:
+            indexSize = 2;
+            break;
+         default:
+            assert(0);
+         }
+      }
+      else {
+         assert(0);
+      }
+
+      for (i = 0; i < nr_prims; i++) {
+         pipe->draw_elements(pipe, bh, indexSize,
+                              prims[i].mode, prims[i].start, prims[i].count);
+      }
+   }
+   else {
+      /* non-indexed */
+      for (i = 0; i < nr_prims; i++) {
+         pipe->draw_arrays(pipe, prims[i].mode, prims[i].start, prims[i].count);
+      }
    }
 }
 
