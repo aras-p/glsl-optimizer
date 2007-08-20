@@ -220,13 +220,6 @@ struct draw_context
       struct prim_header queue[PRIM_QUEUE_LENGTH];
       unsigned queue_nr;
    } pq;
-
-
-#if 0
-   ubyte *verts;
-   boolean in_vb;
-   struct vertex_fetch *vf;
-#endif
 };
 
 
