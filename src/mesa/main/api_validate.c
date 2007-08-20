@@ -1,6 +1,6 @@
 /*
  * Mesa 3-D graphics library
- * Version:  7.0.1
+ * Version:  7.1
  *
  * Copyright (C) 1999-2007  Brian Paul   All Rights Reserved.
  *
@@ -35,7 +35,6 @@ _mesa_validate_DrawElements(GLcontext *ctx,
 			    GLenum mode, GLsizei count, GLenum type,
 			    const GLvoid *indices)
 {
-   GLboolean mapped = GL_FALSE;
    ASSERT_OUTSIDE_BEGIN_END_WITH_RETVAL(ctx,  GL_FALSE);
 
    if (count <= 0) {
@@ -68,18 +67,13 @@ _mesa_validate_DrawElements(GLcontext *ctx,
    /* Vertex buffer object tests */
    if (ctx->Array.ElementArrayBufferObj->Name) {
       GLuint indexBytes;
-      const GLvoid *map = ctx->Driver.MapBuffer(ctx,
-                                                GL_ELEMENT_ARRAY_BUFFER_ARB,
-                                                GL_READ_ONLY,
-                                                ctx->Array.ElementArrayBufferObj);
 
       /* use indices in the buffer object */
-      if (!map) {
-         _mesa_warning(ctx, "DrawElements with empty vertex elements buffer!");
+      if (!ctx->Array.ElementArrayBufferObj->Size) {
+         _mesa_warning(ctx,
+                       "glDrawElements called with empty array elements buffer");
          return GL_FALSE;
       }
-
-      mapped = GL_TRUE;
 
       /* make sure count doesn't go outside buffer bounds */
       if (type == GL_UNSIGNED_INT) {
@@ -93,18 +87,9 @@ _mesa_validate_DrawElements(GLcontext *ctx,
          indexBytes = count * sizeof(GLushort);
       }
 
-      if (ADD_POINTERS(map, indices) + indexBytes > 
-          (GLubyte *)map + ctx->Array.ElementArrayBufferObj->Size) {
+      if (indexBytes > ctx->Array.ElementArrayBufferObj->Size) {
          _mesa_warning(ctx, "glDrawElements index out of buffer bounds");
-         ctx->Driver.UnmapBuffer(ctx,
-                                 GL_ELEMENT_ARRAY_BUFFER_ARB,
-                                 ctx->Array.ElementArrayBufferObj);
          return GL_FALSE;
-      }
-
-      /* Actual address is the sum of pointers.  Indices may be used below. */
-      if (ctx->Const.CheckArrayBounds) {
-         indices = ADD_POINTERS(map, indices);
       }
    }
    else {
@@ -115,8 +100,18 @@ _mesa_validate_DrawElements(GLcontext *ctx,
 
    if (ctx->Const.CheckArrayBounds) {
       /* find max array index */
+      const GLubyte *map;
       GLuint max = 0;
       GLint i;
+
+      map = ctx->Driver.MapBuffer(ctx,
+                                  GL_ELEMENT_ARRAY_BUFFER_ARB,
+                                  GL_READ_ONLY,
+                                  ctx->Array.ElementArrayBufferObj);
+
+      /* Actual address is the sum of pointers */
+      indices = (const GLvoid *) ADD_POINTERS(map, (const GLubyte *) indices);
+
       if (type == GL_UNSIGNED_INT) {
          for (i = 0; i < count; i++)
             if (((GLuint *) indices)[i] > max)
@@ -134,22 +129,14 @@ _mesa_validate_DrawElements(GLcontext *ctx,
                max = ((GLubyte *) indices)[i];
       }
 
-      if (max >= ctx->Array._MaxElement) {
-         /* the max element is out of bounds of one or more enabled arrays */
-         if (mapped) {
-            ctx->Driver.UnmapBuffer(ctx,
-                                    GL_ELEMENT_ARRAY_BUFFER_ARB,
-                                    ctx->Array.ElementArrayBufferObj);
-         }
-
-         return GL_FALSE;
-      }
-   }
-
-   if (mapped) {
       ctx->Driver.UnmapBuffer(ctx,
                               GL_ELEMENT_ARRAY_BUFFER_ARB,
                               ctx->Array.ElementArrayBufferObj);
+
+      if (max >= ctx->Array._MaxElement) {
+         /* the max element is out of bounds of one or more enabled arrays */
+         return GL_FALSE;
+      }
    }
 
    return GL_TRUE;
