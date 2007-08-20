@@ -49,4 +49,6 @@ void softpipe_set_vs_state( struct pipe_context *pipe,
    memcpy(&softpipe->vs, vs, sizeof(*vs));
 
    softpipe->dirty |= SP_NEW_VS;
+
+   draw_set_vertex_shader(softpipe->draw, vs);
 }

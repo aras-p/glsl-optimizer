@@ -434,8 +434,8 @@ draw_set_prim( struct draw_context *draw, unsigned prim )
  * \param elements  the element buffer ptr
  */
 void
-draw_set_element_buffer( struct draw_context *draw,
-                         unsigned eltSize, void *elements )
+draw_set_mapped_element_buffer( struct draw_context *draw,
+                                unsigned eltSize, void *elements )
 {
    /* choose the get_vertex() function to use */
    switch (eltSize) {
@@ -456,9 +456,8 @@ draw_set_element_buffer( struct draw_context *draw,
    }
    draw->elts = elements;
    draw->eltSize = eltSize;
-
-
 }
+
 
 unsigned
 draw_prim_info(unsigned prim, unsigned *first, unsigned *incr)

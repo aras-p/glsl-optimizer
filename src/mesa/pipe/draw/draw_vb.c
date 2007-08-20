@@ -221,9 +221,9 @@ void draw_vb(struct draw_context *draw,
    vf_emit_vertices( draw->vf, VB->Count, draw->verts );
 
    if (VB->Elts) 
-      draw_set_element_buffer(draw, sizeof(unsigned), VB->Elts);
+      draw_set_mapped_element_buffer(draw, sizeof(unsigned), VB->Elts);
    else
-      draw_set_element_buffer(draw, 0, NULL);
+      draw_set_mapped_element_buffer(draw, 0, NULL);
 
    for (i = 0; i < VB->PrimitiveCount; i++) {
       const GLenum mode = VB->Primitive[i].mode;
@@ -281,7 +281,7 @@ draw_vertices(struct draw_context *draw,
 
 
    /* no element/index buffer */
-   draw_set_element_buffer(draw, 0, NULL);
+   draw_set_mapped_element_buffer(draw, 0, NULL);
 
    /*draw_prim_info(mode, &first, &incr);*/
    draw_allocate_vertices( draw, numVerts );
@@ -325,7 +325,7 @@ draw_vertices(struct draw_context *draw,
    draw->in_vb = 0;
 }
 
-
+#if 000
 
 /**
  * Accumulate another attribute's info.
@@ -383,3 +383,4 @@ void draw_set_vertex_attributes( struct draw_context *draw,
                                                  draw->nr_attrs, 0 );
 #endif
 }
+#endif

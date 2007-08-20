@@ -158,9 +158,11 @@ struct draw_context
    /* pipe state that we need: */
    struct pipe_setup_state setup;
    struct pipe_viewport_state viewport;
+   struct pipe_vertex_buffer vertex_buffer[PIPE_ATTRIB_MAX];
+   struct pipe_vertex_element vertex_element[PIPE_ATTRIB_MAX];
+   struct pipe_shader_state vertex_shader;
 
-   /** need to know the pipe for vertex flushing/transformation: */
-   struct pipe_context *pipe;
+   const void *mapped_vbuffer[PIPE_ATTRIB_MAX];
 
    /* Clip derived state:
     */

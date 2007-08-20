@@ -201,3 +201,31 @@ void draw_set_viewport_state( struct draw_context *draw,
     * Full pipe will have vertex shader, vertex fetch of its own.
     */
 }
+
+
+void
+draw_set_vertex_buffer(struct draw_context *draw,
+                       unsigned attr,
+                       const struct pipe_vertex_buffer *buffer)
+{
+   assert(attr < PIPE_ATTRIB_MAX);
+   draw->vertex_buffer[attr] = *buffer;
+}
+
+
+void
+draw_set_vertex_element(struct draw_context *draw,
+                        unsigned attr,
+                        const struct pipe_vertex_element *element)
+{
+   assert(attr < PIPE_ATTRIB_MAX);
+   draw->vertex_element[attr] = *element;
+}
+
+
+void
+draw_set_vertex_shader(struct draw_context *draw,
+                       const struct pipe_shader_state *shader)
+{
+   draw->vertex_shader = *shader;
+}

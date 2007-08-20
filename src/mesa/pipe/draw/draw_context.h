@@ -93,14 +93,36 @@ void draw_set_vertex_attributes( struct draw_context *draw,
 				 const unsigned *attrs,
 				 unsigned nr_attrs );
 
-/* XXX temporary */
-void draw_set_vertex_attributes2( struct draw_context *draw,
-				 const unsigned *attrs,
-				 unsigned nr_attrs );
+unsigned draw_prim_info( unsigned prim, unsigned *first, unsigned *incr );
 
-/* XXX temporary */
-void draw_vb(struct draw_context *draw,
-	     struct vertex_buffer *VB );
+unsigned draw_trim( unsigned count, unsigned first, unsigned incr );
+
+void draw_set_mapped_element_buffer( struct draw_context *draw,
+                                     unsigned eltSize, void *elements );
+
+void draw_set_mapped_vertex_buffer(struct draw_context *draw,
+                                   unsigned attr, const void *buffer);
+
+
+void
+draw_set_vertex_buffer(struct draw_context *draw,
+                       unsigned attr,
+                       const struct pipe_vertex_buffer *buffer);
+
+void
+draw_set_vertex_element(struct draw_context *draw,
+                        unsigned attr,
+                        const struct pipe_vertex_element *element);
+
+void
+draw_set_vertex_shader(struct draw_context *draw,
+                       const struct pipe_shader_state *shader);
+
+
+void
+draw_arrays(struct draw_context *draw, unsigned prim,
+            unsigned start, unsigned count);
+
 
 void draw_vertices(struct draw_context *draw,
                    unsigned mode,

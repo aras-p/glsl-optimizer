@@ -41,6 +41,8 @@ softpipe_set_vertex_element(struct pipe_context *pipe,
    assert(index < PIPE_ATTRIB_MAX);
    softpipe->vertex_element[index] = *attrib; /* struct copy */
    softpipe->dirty |= SP_NEW_VERTEX;
+
+   draw_set_vertex_element(softpipe->draw, index, attrib);
 }
 
 
@@ -53,4 +55,6 @@ softpipe_set_vertex_buffer(struct pipe_context *pipe,
    assert(index < PIPE_ATTRIB_MAX);
    softpipe->vertex_buffer[index] = *buffer; /* struct copy */
    softpipe->dirty |= SP_NEW_VERTEX;
+
+   draw_set_vertex_buffer(softpipe->draw, index, buffer);
 }
