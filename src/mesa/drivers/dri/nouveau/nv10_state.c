@@ -736,7 +736,7 @@ static GLboolean nv10InitCard(nouveauContextPtr nmesa)
 
 	BEGIN_RING_SIZE(NvSub3D, NV10_TCL_PRIMITIVE_3D_SET_DMA_IN_MEMORY0, 2);
 	OUT_RING(NvDmaFB);	/* 184 dma_in_memory0 */
-	OUT_RING(NvDmaFB);	/* 188 dma_in_memory1 */
+	OUT_RING(NvDmaTT);	/* 188 dma_in_memory1 */
 	BEGIN_RING_SIZE(NvSub3D, NV10_TCL_PRIMITIVE_3D_SET_DMA_IN_MEMORY2, 2);
 	OUT_RING(NvDmaFB);	/* 194 dma_in_memory2 */
 	OUT_RING(NvDmaFB);	/* 198 dma_in_memory3 */
