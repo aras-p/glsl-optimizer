@@ -68,7 +68,6 @@ softpipe_draw_elements(struct pipe_context *pipe,
    struct softpipe_context *sp = softpipe_context(pipe);
    struct draw_context *draw = sp->draw;
    unsigned length, first, incr, i;
-   void *mapped_indexes = NULL;
 
    /* first, check that the primitive is not malformed */
    draw_prim_info( mode, &first, &incr );
@@ -96,18 +95,18 @@ softpipe_draw_elements(struct pipe_context *pipe,
    }
    /* Map index buffer, if present */
    if (indexBuffer) {
-      mapped_indexes = pipe->winsys->buffer_map(pipe->winsys,
-                                                indexBuffer,
-                                                PIPE_BUFFER_FLAG_READ);
+      void *mapped_indexes
+         = pipe->winsys->buffer_map(pipe->winsys, indexBuffer,
+                                    PIPE_BUFFER_FLAG_READ);
       draw_set_mapped_element_buffer(draw, indexSize, mapped_indexes);
    }
    else {
-      draw_set_mapped_element_buffer(draw, 0, NULL);  /* no index/element buffer */
+      /* no index/element buffer */
+      draw_set_mapped_element_buffer(draw, 0, NULL);
    }
 
-
+   /* draw! */
    draw_arrays(draw, mode, start, count);
-
 
    /*
     * unmap vertex/index buffers
