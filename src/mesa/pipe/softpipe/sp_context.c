@@ -195,6 +195,7 @@ static void softpipe_destroy( struct pipe_context *pipe )
 }
 
 
+#if 0
 static void softpipe_draw_vb( struct pipe_context *pipe,
 			     struct vertex_buffer *VB )
 {
@@ -208,6 +209,7 @@ static void softpipe_draw_vb( struct pipe_context *pipe,
    draw_vb( softpipe->draw, VB );
    softpipe_unmap_surfaces(softpipe);
 }
+#endif
 
 
 static void
@@ -223,7 +225,9 @@ softpipe_draw_vertices(struct pipe_context *pipe,
 
    /* XXX move mapping/unmapping to higher/coarser level? */
    softpipe_map_surfaces(softpipe);
+#if 0
    draw_vertices(softpipe->draw, mode, numVertex, verts, numAttribs, attribs);
+#endif
    softpipe_unmap_surfaces(softpipe);
 }
 
@@ -285,8 +289,10 @@ struct pipe_context *softpipe_create( struct pipe_winsys *pipe_winsys,
    softpipe->pipe.set_vertex_buffer = softpipe_set_vertex_buffer;
    softpipe->pipe.set_vertex_element = softpipe_set_vertex_element;
 
+#if 0
    softpipe->pipe.draw_vb = softpipe_draw_vb;
    softpipe->pipe.draw_vertices = softpipe_draw_vertices;
+#endif
    softpipe->pipe.draw_arrays = softpipe_draw_arrays;
    softpipe->pipe.draw_elements = softpipe_draw_elements;
 

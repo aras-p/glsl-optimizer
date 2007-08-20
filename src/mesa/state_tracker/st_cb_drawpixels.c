@@ -38,6 +38,7 @@
 #include "st_program.h"
 #include "st_cb_drawpixels.h"
 #include "st_cb_texture.h"
+#include "st_draw.h"
 #include "st_format.h"
 #include "pipe/p_context.h"
 #include "pipe/p_defines.h"
@@ -193,12 +194,12 @@ free_mipmap_tree(struct pipe_context *pipe, struct pipe_mipmap_tree *mt)
  * Y=0=top
  */
 static void
-draw_quad(struct st_context *st, GLfloat x0, GLfloat y0, GLfloat z,
+draw_quad(GLcontext *ctx, GLfloat x0, GLfloat y0, GLfloat z,
           GLfloat x1, GLfloat y1)
 {
    static const GLuint attribs[2] = {
-      VF_ATTRIB_POS,
-      VF_ATTRIB_TEX0
+      0, /* pos */
+      8  /* tex0 */
    };
    GLfloat verts[4][2][4]; /* four verts, two attribs, XYZW */
    GLuint i;
@@ -235,8 +236,7 @@ draw_quad(struct st_context *st, GLfloat x0, GLfloat y0, GLfloat z,
       verts[i][1][3] = 1.0; /*Q*/
    }
 
-   st->pipe->draw_vertices(st->pipe, PIPE_PRIM_QUADS,
-                           4, (GLfloat *) verts, 2, attribs);
+   st_draw_vertices(ctx, PIPE_PRIM_QUADS, 4, (GLfloat *) verts, 2, attribs);
 }
 
 
@@ -310,7 +310,7 @@ draw_textured_quad(GLcontext *ctx, GLint x, GLint y, GLfloat z,
    y1 = ctx->DrawBuffer->Height - 1 - (y + height * ctx->Pixel.ZoomY);
 
    /* draw textured quad */
-   draw_quad(ctx->st, x0, y0, z, x1, y1);
+   draw_quad(ctx, x0, y0, z, x1, y1);
 
    /* restore GL state */
    pipe->set_setup_state(pipe, &ctx->st->state.setup);

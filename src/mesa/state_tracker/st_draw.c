@@ -66,7 +66,9 @@
 static GLboolean draw( GLcontext * ctx, struct tnl_pipeline_stage *stage )
 {
    struct st_context *st = st_context(ctx);
+#if 0
    struct vertex_buffer *VB = &TNL_CONTEXT(ctx)->vb;
+#endif
 
    /* Validate driver and pipe state:
     */
@@ -74,7 +76,9 @@ static GLboolean draw( GLcontext * ctx, struct tnl_pipeline_stage *stage )
 
    /* Call into the new draw code to handle the VB:
     */
+#if 0
    st->pipe->draw_vb( st->pipe, VB );
+#endif
 
    /* Finished 
     */
@@ -289,6 +293,72 @@ draw_vbo(GLcontext *ctx,
 
 
 
+/**
+ * Utility function for drawing simple primitives (such as quads for
+ * glClear and glDrawPixels).  Coordinates are in screen space.
+ * \param mode  one of PIPE_PRIM_x
+ * \param numVertex  number of vertices
+ * \param verts  vertex data (all attributes are float[4])
+ * \param numAttribs  number of attributes per vertex
+ * \param attribs  index of each attribute (0=pos, 3=color, etc)
+ */
+void 
+st_draw_vertices(GLcontext *ctx, unsigned prim,
+                 unsigned numVertex, float *verts,
+                 unsigned numAttribs, const unsigned attribs[])
+{
+   const float width = ctx->DrawBuffer->Width;
+   const float height = ctx->DrawBuffer->Height;
+   const unsigned vertex_bytes = numVertex * numAttribs * 4 * sizeof(float);
+   struct pipe_context *pipe = ctx->st->pipe;
+   struct pipe_buffer_handle *vbuf;
+   struct pipe_vertex_buffer vbuffer;
+   struct pipe_vertex_element velement;
+   unsigned i;
+
+   assert(numAttribs > 0);
+   assert(attribs[0] == 0); /* position */
+
+   /* convert to clip coords */
+   for (i = 0; i < numVertex; i++) {
+      float x = verts[i * numAttribs * 4 + 0];
+      float y = verts[i * numAttribs * 4 + 1];
+      x = x / width * 2.0 - 1.0;
+      y = y / height * 2.0 - 1.0;
+      verts[i * numAttribs * 4 + 0] = x;
+      verts[i * numAttribs * 4 + 1] = y;
+   }
+
+   /* XXX create one-time */
+   vbuf = pipe->winsys->buffer_create(pipe->winsys, 32);
+   pipe->winsys->buffer_data(pipe->winsys, vbuf, vertex_bytes, verts);
+
+   /* tell pipe about the vertex buffer */
+   vbuffer.buffer = vbuf;
+   vbuffer.pitch = numAttribs * 4 * sizeof(float);  /* vertex size */
+   vbuffer.buffer_offset = 0;
+   pipe->set_vertex_buffer(pipe, 0, &vbuffer);
+
+   /* tell pipe about the vertex attributes */
+   for (i = 0; i < numAttribs; i++) {
+      velement.src_offset = i * 4 * sizeof(GLfloat);
+      velement.vertex_buffer_index = 0;
+      velement.src_format = PIPE_FORMAT_R32G32B32A32_FLOAT;
+      velement.dst_offset = 0;
+      pipe->set_vertex_element(pipe, attribs[i], &velement);
+   }
+
+   /* draw */
+   pipe->draw_arrays(pipe, prim, 0, numVertex);
+
+   /* XXX: do one-time */
+   pipe->winsys->buffer_unreference(pipe->winsys, &vbuf);
+}
+
+
+
+
+
 
 /* This is all a hack to keep using tnl until we have vertex programs
  * up and running.
@@ -307,8 +377,10 @@ void st_init_draw( struct st_context *st )
    vbo->draw_prims = draw_vbo;
 
 #endif
+#if 0
    _tnl_destroy_pipeline( ctx );
    _tnl_install_pipeline( ctx, st_pipeline );
+#endif
 
    /* USE_NEW_DRAW */
    _tnl_ProgramCacheInit( ctx );

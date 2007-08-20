@@ -155,7 +155,9 @@ static void i915_draw_vb( struct pipe_context *pipe,
    if (i915->dirty)
       i915_update_derived( i915 );
 
+#if 0
    draw_vb( i915->draw, VB );
+#endif
 }
 
 
@@ -169,8 +171,9 @@ i915_draw_vertices(struct pipe_context *pipe,
 
    if (i915->dirty)
       i915_update_derived( i915 );
-
+#if 0
    draw_vertices(i915->draw, mode, numVertex, verts, numAttribs, attribs);
+#endif
 }
 
 

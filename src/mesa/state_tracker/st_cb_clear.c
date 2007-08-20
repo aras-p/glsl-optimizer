@@ -38,11 +38,17 @@
 #include "st_context.h"
 #include "st_cb_clear.h"
 #include "st_cb_fbo.h"
+#include "st_draw.h"
 #include "st_program.h"
 #include "st_public.h"
+
 #include "pipe/p_context.h"
+#include "pipe/p_state.h"
 #include "pipe/p_defines.h"
+#include "pipe/p_winsys.h"
+
 #include "pipe/tgsi/mesa/mesa_to_tgsi.h"
+
 #include "vf/vf.h"
 
 
@@ -215,8 +221,8 @@ draw_quad(GLcontext *ctx,
           const GLfloat color[4])
 {
    static const GLuint attribs[2] = {
-      VF_ATTRIB_POS,
-      VF_ATTRIB_COLOR0
+      0, /* pos */
+      3  /* color */
    };
    GLfloat verts[4][2][4]; /* four verts, two attribs, XYZW */
    GLuint i;
@@ -244,8 +250,7 @@ draw_quad(GLcontext *ctx,
       verts[i][1][3] = color[3];
    }
 
-   ctx->st->pipe->draw_vertices(ctx->st->pipe, PIPE_PRIM_QUADS,
-                                4, (GLfloat *) verts, 2, attribs);
+   st_draw_vertices(ctx, PIPE_PRIM_QUADS, 4, (float *) verts, 2, attribs);
 }
 
 
@@ -343,6 +348,21 @@ clear_with_quad(GLcontext *ctx,
       st->pipe->set_fs_state(st->pipe, &fs);
    }
 
+   /* vertex shader state: color/position pass-through */
+   {
+      static struct st_vertex_program *stvp = NULL;
+      struct pipe_shader_state vs;
+      if (!stvp) {
+         stvp = make_vertex_shader(st);
+      }
+      memset(&vs, 0, sizeof(vs));
+      vs.inputs_read = stvp->Base.Base.InputsRead;
+      vs.outputs_written = stvp->Base.Base.OutputsWritten;
+      vs.tokens = &stvp->tokens[0];
+      vs.constants = NULL;
+      st->pipe->set_vs_state(st->pipe, &vs);
+   }
+
    /* draw quad matching scissor rect (XXX verify coord round-off) */
    draw_quad(ctx, x0, y0, x1, y1, ctx->Depth.Clear, ctx->Color.ClearColor);
 
@@ -351,6 +371,7 @@ clear_with_quad(GLcontext *ctx,
    st->pipe->set_blend_state(st->pipe, &st->state.blend);
    st->pipe->set_depth_state(st->pipe, &st->state.depth);
    st->pipe->set_fs_state(st->pipe, &st->state.fs);
+   st->pipe->set_vs_state(st->pipe, &st->state.vs);
    st->pipe->set_setup_state(st->pipe, &st->state.setup);
    st->pipe->set_stencil_state(st->pipe, &st->state.stencil);
    /* OR:

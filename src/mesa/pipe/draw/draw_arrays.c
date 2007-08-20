@@ -170,11 +170,12 @@ run_vertex_program(struct draw_context *draw,
       unsigned attr;
       for (attr = 0; attr < 16; attr++) {
          if (draw->vertex_shader.inputs_read & (1 << attr)) {
+            unsigned buf = draw->vertex_element[attr].vertex_buffer_index;
             const void *src
-               = (const void *) ((const ubyte *) draw->mapped_vbuffer[attr]
-                                 + draw->vertex_buffer[attr].buffer_offset
+               = (const void *) ((const ubyte *) draw->mapped_vbuffer[buf]
+                                 + draw->vertex_buffer[buf].buffer_offset
                                  + draw->vertex_element[attr].src_offset
-                                 + elts[j] * draw->vertex_buffer[attr].pitch);
+                                 + elts[j] * draw->vertex_buffer[buf].pitch);
             float p[4];
 
             fetch_attrib4(src, draw->vertex_element[attr].src_format, p);

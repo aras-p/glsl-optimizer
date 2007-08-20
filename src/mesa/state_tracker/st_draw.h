@@ -1,6 +1,6 @@
 /**************************************************************************
  * 
- * Copyright 2003 Tungsten Graphics, Inc., Cedar Park, Texas.
+ * Copyright 2004 Tungsten Graphics, Inc., Cedar Park, Texas.
  * All Rights Reserved.
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a
@@ -34,11 +34,15 @@
 #ifndef ST_DRAW_H
 #define ST_DRAW_H
 
+
 void st_init_draw( struct st_context *st );
+
 void st_destroy_draw( struct st_context *st );
 
-/** XXX temporary here */
-void st_clear(struct st_context *st, GLboolean color, GLboolean depth,
-              GLboolean stencil);
+void 
+st_draw_vertices(GLcontext *ctx, unsigned prim,
+                 unsigned numVertex, float *verts,
+                 unsigned numAttribs, const unsigned attribs[]);
+
 
 #endif
