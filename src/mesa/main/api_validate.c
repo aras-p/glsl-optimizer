@@ -69,8 +69,9 @@ _mesa_validate_DrawElements(GLcontext *ctx,
       GLuint indexBytes;
 
       /* use indices in the buffer object */
-      if (!ctx->Array.ElementArrayBufferObj->Data) {
-         _mesa_warning(ctx, "DrawElements with empty vertex elements buffer!");
+      if (!ctx->Array.ElementArrayBufferObj->Size) {
+         _mesa_warning(ctx,
+                       "glDrawElements called with empty array elements buffer");
          return GL_FALSE;
       }
 
@@ -86,18 +87,9 @@ _mesa_validate_DrawElements(GLcontext *ctx,
          indexBytes = count * sizeof(GLushort);
       }
 
-      if ((GLubyte *) indices + indexBytes >
-          ctx->Array.ElementArrayBufferObj->Data +
-          ctx->Array.ElementArrayBufferObj->Size) {
+      if (indexBytes > ctx->Array.ElementArrayBufferObj->Size) {
          _mesa_warning(ctx, "glDrawElements index out of buffer bounds");
          return GL_FALSE;
-      }
-
-      /* Actual address is the sum of pointers.  Indices may be used below. */
-      if (ctx->Const.CheckArrayBounds) {
-         indices = (const GLvoid *)
-            ADD_POINTERS(ctx->Array.ElementArrayBufferObj->Data,
-                         (const GLubyte *) indices);
       }
    }
    else {
@@ -108,8 +100,18 @@ _mesa_validate_DrawElements(GLcontext *ctx,
 
    if (ctx->Const.CheckArrayBounds) {
       /* find max array index */
+      const GLubyte *map;
       GLuint max = 0;
       GLint i;
+
+      map = ctx->Driver.MapBuffer(ctx,
+                                  GL_ELEMENT_ARRAY_BUFFER_ARB,
+                                  GL_READ_ONLY,
+                                  ctx->Array.ElementArrayBufferObj);
+
+      /* Actual address is the sum of pointers */
+      indices = (const GLvoid *) ADD_POINTERS(map, (const GLubyte *) indices);
+
       if (type == GL_UNSIGNED_INT) {
          for (i = 0; i < count; i++)
             if (((GLuint *) indices)[i] > max)
@@ -126,6 +128,11 @@ _mesa_validate_DrawElements(GLcontext *ctx,
             if (((GLubyte *) indices)[i] > max)
                max = ((GLubyte *) indices)[i];
       }
+
+      ctx->Driver.UnmapBuffer(ctx,
+                              GL_ELEMENT_ARRAY_BUFFER_ARB,
+                              ctx->Array.ElementArrayBufferObj);
+
       if (max >= ctx->Array._MaxElement) {
          /* the max element is out of bounds of one or more enabled arrays */
          return GL_FALSE;
