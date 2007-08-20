@@ -148,17 +148,68 @@ static void i915_destroy( struct pipe_context *pipe )
 }
 
 
-static void i915_draw_arrays( struct pipe_context *pipe,
-                              unsigned mode, unsigned start, unsigned count)
+
+static void i915_draw_elements( struct pipe_context *pipe,
+                                struct pipe_buffer_handle *indexBuffer,
+                                unsigned indexSize,
+                                unsigned prim, unsigned start, unsigned count)
 {
    struct i915_context *i915 = i915_context( pipe );
+   struct draw_context *draw = i915->draw;
+   unsigned i;
 
    if (i915->dirty)
       i915_update_derived( i915 );
 
-   draw_arrays(i915->draw, mode, start, count);
+
+  /*
+    * Map vertex buffers
+    */
+   for (i = 0; i < PIPE_ATTRIB_MAX; i++) {
+      if (i915->vertex_buffer[i].buffer) {
+         void *buf
+            = pipe->winsys->buffer_map(pipe->winsys,
+                                       i915->vertex_buffer[i].buffer,
+                                       PIPE_BUFFER_FLAG_READ);
+         draw_set_mapped_vertex_buffer(draw, i, buf);
+      }
+   }
+   /* Map index buffer, if present */
+   if (indexBuffer) {
+      void *mapped_indexes
+         = pipe->winsys->buffer_map(pipe->winsys, indexBuffer,
+                                    PIPE_BUFFER_FLAG_READ);
+      draw_set_mapped_element_buffer(draw, indexSize, mapped_indexes);
+   }
+   else {
+      /* no index/element buffer */
+      draw_set_mapped_element_buffer(draw, 0, NULL);
+   }
+
+   /* draw! */
+   draw_arrays(i915->draw, prim, start, count);
+
+   /*
+    * unmap vertex/index buffers
+    */
+   for (i = 0; i < PIPE_ATTRIB_MAX; i++) {
+      if (i915->vertex_buffer[i].buffer) {
+         pipe->winsys->buffer_unmap(pipe->winsys, i915->vertex_buffer[i].buffer);
+         draw_set_mapped_vertex_buffer(draw, i, NULL);
+      }
+   }
+   if (indexBuffer) {
+      pipe->winsys->buffer_unmap(pipe->winsys, indexBuffer);
+      draw_set_mapped_element_buffer(draw, 0, NULL);
+   }
 }
 
+
+static void i915_draw_arrays( struct pipe_context *pipe,
+                              unsigned prim, unsigned start, unsigned count)
+{
+   i915_draw_elements(pipe, NULL, 0, prim, start, count);
+}
 
 
 
@@ -205,6 +256,7 @@ struct pipe_context *i915_create( struct pipe_winsys *pipe_winsys,
    i915->pipe.get_occlusion_counter = NULL;
 
    i915->pipe.draw_arrays = i915_draw_arrays;
+   i915->pipe.draw_elements = i915_draw_elements;
 
    /*
     * Create drawing context and plug our rendering stage into it.

@@ -113,6 +113,8 @@ struct i915_context
    struct pipe_stencil_state stencil;
    struct pipe_mipmap_tree *texture[PIPE_MAX_SAMPLERS];
    struct pipe_viewport_state viewport;
+   struct pipe_vertex_buffer vertex_buffer[PIPE_ATTRIB_MAX];
+
    unsigned dirty;
 
    unsigned *batch_start;

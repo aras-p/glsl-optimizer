@@ -121,6 +121,16 @@ static void i915_set_fs_state( struct pipe_context *pipe,
 }
 
 
+static void i915_set_vs_state( struct pipe_context *pipe,
+                               const struct pipe_shader_state *vs )
+{
+   struct i915_context *i915 = i915_context(pipe);
+
+   /* just pass-through to draw module */
+   draw_set_vertex_shader(i915->draw, vs);
+}
+
+
 static void i915_set_sampler_state(struct pipe_context *pipe,
                            unsigned unit,
                            const struct pipe_sampler_state *sampler)
@@ -216,6 +226,28 @@ static void i915_set_setup_state( struct pipe_context *pipe,
 }
 
 
+static void i915_set_vertex_buffer( struct pipe_context *pipe,
+                                    unsigned index,
+                                    const struct pipe_vertex_buffer *buffer )
+{
+   struct i915_context *i915 = i915_context(pipe);
+   i915->vertex_buffer[index] = *buffer;
+   /* pass-through to draw module */
+   draw_set_vertex_buffer(i915->draw, index, buffer);
+}
+   
+
+static void i915_set_vertex_element( struct pipe_context *pipe,
+                                     unsigned index,
+                                     const struct pipe_vertex_element *element)
+{
+   struct i915_context *i915 = i915_context(pipe);
+   /* pass-through to draw module */
+   draw_set_vertex_element(i915->draw, index, element);
+}
+
+
+
 void
 i915_init_state_functions( struct i915_context *i915 )
 {
@@ -227,6 +259,7 @@ i915_init_state_functions( struct i915_context *i915 )
    i915->pipe.set_depth_state = i915_set_depth_test_state;
    i915->pipe.set_framebuffer_state = i915_set_framebuffer_state;
    i915->pipe.set_fs_state = i915_set_fs_state;
+   i915->pipe.set_vs_state = i915_set_vs_state;
    i915->pipe.set_polygon_stipple = i915_set_polygon_stipple;
    i915->pipe.set_sampler_state = i915_set_sampler_state;
    i915->pipe.set_scissor_state = i915_set_scissor_state;
@@ -234,4 +267,6 @@ i915_init_state_functions( struct i915_context *i915 )
    i915->pipe.set_stencil_state = i915_set_stencil_state;
    i915->pipe.set_texture_state = i915_set_texture_state;
    i915->pipe.set_viewport_state = i915_set_viewport_state;
+   i915->pipe.set_vertex_buffer = i915_set_vertex_buffer;
+   i915->pipe.set_vertex_element = i915_set_vertex_element;
 }
