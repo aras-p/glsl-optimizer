@@ -288,6 +288,7 @@ struct pipe_context *softpipe_create( struct pipe_winsys *pipe_winsys,
    softpipe->pipe.draw_vb = softpipe_draw_vb;
    softpipe->pipe.draw_vertices = softpipe_draw_vertices;
    softpipe->pipe.draw_arrays = softpipe_draw_arrays;
+   softpipe->pipe.draw_elements = softpipe_draw_elements;
 
    softpipe->pipe.clear = softpipe_clear;
    softpipe->pipe.flush = softpipe_flush;

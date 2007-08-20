@@ -82,6 +82,11 @@ struct pipe_context {
    void (*draw_arrays)( struct pipe_context *pipe,
                         unsigned mode, unsigned start, unsigned count);
 
+   void (*draw_elements)( struct pipe_context *pipe,
+                          struct pipe_buffer_handle *indexBuffer,
+                          unsigned indexSize,
+                          unsigned mode, unsigned start, unsigned count);
+
    /** Clear a surface to given value (no scissor; clear whole surface) */
    void (*clear)(struct pipe_context *pipe, struct pipe_surface *ps,
                  unsigned clearValue);

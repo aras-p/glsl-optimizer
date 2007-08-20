@@ -316,9 +316,32 @@ void
 softpipe_draw_arrays(struct pipe_context *pipe, unsigned mode,
                      unsigned start, unsigned count)
 {
+   softpipe_draw_elements(pipe, NULL, 0, mode, start, count);
+}
+
+
+
+/**
+ * XXX should the element buffer be specified/bound with a separate function?
+ */
+void
+softpipe_draw_elements(struct pipe_context *pipe,
+                       struct pipe_buffer_handle *indexBuffer,
+                       unsigned indexSize,
+                       unsigned mode, unsigned start, unsigned count)
+{
+
    struct softpipe_context *sp = softpipe_context(pipe);
    struct draw_context *draw = sp->draw;
    unsigned length, first, incr, i;
+   void *mapped_indexes = NULL;
+
+   /* first, check that the primitive is not malformed */
+   draw_prim_info( mode, &first, &incr );
+   length = draw_trim( count, first, incr );
+   if (!length)
+      return;
+
 
    if (sp->dirty)
       softpipe_update_derived( sp );
@@ -336,6 +359,16 @@ softpipe_draw_arrays(struct pipe_context *pipe, unsigned mode,
                                        PIPE_BUFFER_FLAG_READ);
       }
    }
+   /* Map index buffer, if present */
+   if (indexBuffer) {
+      mapped_indexes = pipe->winsys->buffer_map(pipe->winsys,
+                                                indexBuffer,
+                                                PIPE_BUFFER_FLAG_READ);
+      draw_set_element_buffer(draw, indexSize, mapped_indexes);
+   }
+   else {
+      draw_set_element_buffer(draw, 0, NULL);  /* no index/element buffer */
+   }
 
    /* tell drawing pipeline we're beginning drawing */
    draw->pipeline.first->begin( draw->pipeline.first );
@@ -345,14 +378,10 @@ softpipe_draw_arrays(struct pipe_context *pipe, unsigned mode,
 
    draw_invalidate_vcache( draw );
 
-   draw_set_element_buffer(draw, 0, NULL);  /* no index/element buffer */
+   draw_set_prim( draw, mode );
 
-   draw_prim_info( mode, &first, &incr );
-   length = draw_trim( count, first, incr );
-   if (length) {
-      draw_set_prim( draw, mode );
-      draw_prim(draw, start, count);
-   }
+   /* drawing done here: */
+   draw_prim(draw, start, count);
 
    /* draw any left-over buffered prims */
    draw_flush(draw);
@@ -361,12 +390,15 @@ softpipe_draw_arrays(struct pipe_context *pipe, unsigned mode,
    draw->pipeline.first->end( draw->pipeline.first );
 
    /*
-    * unmap vertex buffers
+    * unmap vertex/index buffers
     */
    for (i = 0; i < PIPE_ATTRIB_MAX; i++) {
       if (sp->vertex_buffer[i].buffer) {
          pipe->winsys->buffer_unmap(pipe->winsys, sp->vertex_buffer[i].buffer);
       }
+   }
+   if (indexBuffer) {
+      pipe->winsys->buffer_unmap(pipe->winsys, indexBuffer);
    }
 
    softpipe_unmap_surfaces(sp);
