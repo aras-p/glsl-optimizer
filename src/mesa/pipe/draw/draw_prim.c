@@ -167,7 +167,7 @@ static struct vertex_header *get_vertex( struct draw_context *draw,
 static struct vertex_header *get_uint_elt_vertex( struct draw_context *draw,
                                                   unsigned i )
 {
-   const unsigned *elts = (const unsigned *)draw->elts;
+   const unsigned *elts = (const unsigned *) draw->mapped_elts;
    return get_vertex( draw, elts[i] );
 }
 
@@ -175,7 +175,7 @@ static struct vertex_header *get_uint_elt_vertex( struct draw_context *draw,
 static struct vertex_header *get_ushort_elt_vertex( struct draw_context *draw,
 						    unsigned i )
 {
-   const ushort *elts = (const ushort *)draw->elts;
+   const ushort *elts = (const ushort *) draw->mapped_elts;
    return get_vertex( draw, elts[i] );
 }
 
@@ -183,7 +183,7 @@ static struct vertex_header *get_ushort_elt_vertex( struct draw_context *draw,
 static struct vertex_header *get_ubyte_elt_vertex( struct draw_context *draw,
                                                    unsigned i )
 {
-   const ubyte *elts = (const ubyte *)draw->elts;
+   const ubyte *elts = (const ubyte *) draw->mapped_elts;
    return get_vertex( draw, elts[i] );
 }
 
@@ -454,7 +454,7 @@ draw_set_mapped_element_buffer( struct draw_context *draw,
    default:
       assert(0);
    }
-   draw->elts = elements;
+   draw->mapped_elts = elements;
    draw->eltSize = eltSize;
 }
 

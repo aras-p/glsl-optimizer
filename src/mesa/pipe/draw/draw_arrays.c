@@ -45,6 +45,11 @@
 #include "pipe/tgsi/core/tgsi_util.h"
 
 
+/** XXX remove */
+#define VERT_RESULT_HPOS 0
+#define VERT_RESULT_MAX 24
+
+
 #if defined __GNUC__
 #define ALIGN16_DECL(TYPE, NAME, SIZE)  TYPE NAME[SIZE] __attribute__(( aligned( 16 ) ))
 #define ALIGN16_ASSIGN(P) P
@@ -348,7 +353,7 @@ do {								\
    if (draw->nr_attrs >= 2)					\
       draw->vf_attr_to_slot[VF_ATTR] = draw->nr_attrs - 2;	\
    draw->attrs[draw->nr_attrs].attrib = VF_ATTR;		\
-   draw->attrs[draw->nr_attrs].format = STYLE;			\
+   /*draw->attrs[draw->nr_attrs].format = STYLE*/;              \
    draw->nr_attrs++;						\
    draw->vertex_size += SIZE;					\
 } while (0)

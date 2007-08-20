@@ -43,13 +43,14 @@
 
 #include "pipe/p_state.h"
 #include "pipe/p_defines.h"
-#ifdef MESA
-#include "vf/vf.h"
-#else
+
+
 /* XXX these are temporary */
 struct vf_attr_map {
    unsigned attrib;
+   /*
    unsigned format;
+   */
    unsigned offset;
 };
 #define VF_ATTRIB_POS 0
@@ -65,7 +66,6 @@ struct vf_attr_map {
 #define EMIT_4F 3
 #define EMIT_4F_VIEWPORT 6
 #define FRAG_ATTRIB_MAX 13
-#endif
 
 
 /**
@@ -162,6 +162,10 @@ struct draw_context
    struct pipe_vertex_element vertex_element[PIPE_ATTRIB_MAX];
    struct pipe_shader_state vertex_shader;
 
+   /** The mapped vertex element/index buffer */
+   const void *mapped_elts;
+   unsigned eltSize;  /**< bytes per index (0, 1, 2 or 4) */
+   /** The mapped vertex arrays */
    const void *mapped_vbuffer[PIPE_ATTRIB_MAX];
 
    /* Clip derived state:
@@ -178,10 +182,6 @@ struct draw_context
 
    unsigned vertex_size;       /**< in bytes */
    unsigned nr_vertices;
-
-   /** Pointer to vertex element/index buffer */
-   unsigned eltSize;  /**< bytes per index (0, 1, 2 or 4) */
-   void *elts;
 
    unsigned prim;   /**< current prim type: PIPE_PRIM_x */
    unsigned reduced_prim;
