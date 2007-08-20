@@ -147,33 +147,16 @@ static void i915_destroy( struct pipe_context *pipe )
    free( i915 );
 }
 
-static void i915_draw_vb( struct pipe_context *pipe,
-			     struct vertex_buffer *VB )
+
+static void i915_draw_arrays( struct pipe_context *pipe,
+                              unsigned mode, unsigned start, unsigned count)
 {
    struct i915_context *i915 = i915_context( pipe );
 
    if (i915->dirty)
       i915_update_derived( i915 );
 
-#if 0
-   draw_vb( i915->draw, VB );
-#endif
-}
-
-
-static void
-i915_draw_vertices(struct pipe_context *pipe,
-                       unsigned mode,
-                       unsigned numVertex, const float *verts,
-                       unsigned numAttribs, const unsigned attribs[])
-{
-   struct i915_context *i915 = i915_context( pipe );
-
-   if (i915->dirty)
-      i915_update_derived( i915 );
-#if 0
-   draw_vertices(i915->draw, mode, numVertex, verts, numAttribs, attribs);
-#endif
+   draw_arrays(i915->draw, mode, start, count);
 }
 
 
@@ -217,12 +200,11 @@ struct pipe_context *i915_create( struct pipe_winsys *pipe_winsys,
    i915->pipe.destroy = i915_destroy;
    i915->pipe.supported_formats = i915_supported_formats;
    i915->pipe.max_texture_size = i915_max_texture_size;
-   i915->pipe.draw_vb = i915_draw_vb;
-   i915->pipe.draw_vertices = i915_draw_vertices;
    i915->pipe.clear = i915_clear;
    i915->pipe.reset_occlusion_counter = NULL; /* no support */
    i915->pipe.get_occlusion_counter = NULL;
 
+   i915->pipe.draw_arrays = i915_draw_arrays;
 
    /*
     * Create drawing context and plug our rendering stage into it.

@@ -60,7 +60,9 @@ struct draw_context *draw_create( void )
    draw->nr_planes = 6;
 
 #ifdef MESA
+#if 0
    draw->vf = vf_create( GL_TRUE );
+#endif
 #endif
 
    /* Statically allocate maximum sized vertices for the cache - could be cleverer...
@@ -79,7 +81,7 @@ struct draw_context *draw_create( void )
 
 void draw_destroy( struct draw_context *draw )
 {
-#ifdef MESA
+#if 0/*def MESA*/
    if (draw->header.storage) {
       ALIGN_FREE( draw->header.storage );
    }
@@ -194,7 +196,9 @@ void draw_set_viewport_state( struct draw_context *draw,
    draw->viewport = *viewport; /* struct copy */
 
 #ifdef MESA
+#if 0
    vf_set_vp_scale_translate( draw->vf, viewport->scale, viewport->translate );
+#endif
 #endif
 
    /* Using tnl/ and vf/ modules is temporary while getting started.

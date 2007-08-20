@@ -222,14 +222,11 @@ struct draw_context
    } pq;
 
 
-   /* Misc for draw_vb.c (XXX temporary)
-    */
-#ifdef MESA
-   GLvector4f header;
-#endif
+#if 0
    ubyte *verts;
    boolean in_vb;
    struct vertex_fetch *vf;
+#endif
 };
 
 

@@ -28,14 +28,8 @@
 #ifndef PIPE_CONTEXT_H
 #define PIPE_CONTEXT_H
 
-//#include "main/mtypes.h"
 #include "p_state.h"
 #include "p_compiler.h"
-
-
-/* Drawing currently kludged up via the existing tnl/ module.  
- */
-struct vertex_buffer;
 
 
 /**
@@ -68,17 +62,6 @@ struct pipe_context {
    /*
     * Drawing
     */
-   /* XXX this is temporary */
-   void (*draw_vb)( struct pipe_context *pipe,
-		    struct vertex_buffer *VB );
-
-   /* XXX this is temporary */
-   void (*draw_vertices)( struct pipe_context *pipe,
-                          unsigned mode,
-                          unsigned numVertex, const float *verts,
-                          unsigned numAttribs, const unsigned attribs[]);
-
-   /** this is basically what we want */
    void (*draw_arrays)( struct pipe_context *pipe,
                         unsigned mode, unsigned start, unsigned count);
 

@@ -33,10 +33,9 @@
 #include "main/imports.h"
 
 #include "vbo/vbo.h"
+#include "vbo/vbo_context.h"
 
-#include "tnl/t_context.h"
-#include "tnl/t_pipeline.h"
-#include "tnl/t_vp_build.h"  /* USE_NEW_DRAW */
+#include "tnl/t_vp_build.h"
 
 #include "st_context.h"
 #include "st_atom.h"
@@ -45,72 +44,6 @@
 #include "pipe/p_context.h"
 #include "pipe/p_defines.h"
 #include "pipe/p_winsys.h"
-
-#include "vbo/vbo_context.h"
-
-/*
- * Enabling this causes the VBO module to call draw_vbo() below,
- * bypassing the T&L module.  This only works with VBO-based demos,
- * such as progs/test/bufferobj.c
- */
-#define USE_NEW_DRAW 01
-
-
-/*
- * TNL stage which feeds into the above.
- *
- * XXX: this needs to go into each driver using this code, because we
- * cannot make the leap from ctx->draw_context in this file.  The
- * driver needs to customize tnl anyway, so this isn't a big deal.
- */
-static GLboolean draw( GLcontext * ctx, struct tnl_pipeline_stage *stage )
-{
-   struct st_context *st = st_context(ctx);
-#if 0
-   struct vertex_buffer *VB = &TNL_CONTEXT(ctx)->vb;
-#endif
-
-   /* Validate driver and pipe state:
-    */
-   st_validate_state( st );
-
-   /* Call into the new draw code to handle the VB:
-    */
-#if 0
-   st->pipe->draw_vb( st->pipe, VB );
-#endif
-
-   /* Finished 
-    */
-   return GL_FALSE;
-}
-
-const struct tnl_pipeline_stage st_draw = {
-   "check state and draw",
-   NULL,
-   NULL,
-   NULL,
-   NULL,
-   draw
-};
-
-static const struct tnl_pipeline_stage *st_pipeline[] = {
-#if USE_NEW_DRAW
-   &_tnl_vertex_program_stage,
-#else
-   &_tnl_vertex_transform_stage,
-   &_tnl_vertex_cull_stage,
-   &_tnl_normal_transform_stage,
-   &_tnl_lighting_stage,
-   &_tnl_fog_coordinate_stage,
-   &_tnl_texgen_stage,
-   &_tnl_texture_transform_stage,
-   &_tnl_point_attenuation_stage,
-   &_tnl_vertex_program_stage,
-#endif
-   &st_draw,     /* ADD: escape to pipe */
-   0,
-};
 
 
 
@@ -366,8 +299,6 @@ st_draw_vertices(GLcontext *ctx, unsigned prim,
 void st_init_draw( struct st_context *st )
 {
    GLcontext *ctx = st->ctx;
-
-#if USE_NEW_DRAW
    struct vbo_context *vbo = (struct vbo_context *) ctx->swtnl_im;
 
    create_default_attribs_buffer(st);
@@ -376,13 +307,6 @@ void st_init_draw( struct st_context *st )
    assert(vbo->draw_prims);
    vbo->draw_prims = draw_vbo;
 
-#endif
-#if 0
-   _tnl_destroy_pipeline( ctx );
-   _tnl_install_pipeline( ctx, st_pipeline );
-#endif
-
-   /* USE_NEW_DRAW */
    _tnl_ProgramCacheInit( ctx );
 }
 

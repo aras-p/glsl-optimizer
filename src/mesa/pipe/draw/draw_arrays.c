@@ -354,9 +354,6 @@ do {								\
 } while (0)
 
 
-/**
- * XXX very similar to same func in draw_vb.c (which will go away)
- */
 void
 draw_set_vertex_attributes( struct draw_context *draw,
                             const unsigned *slot_to_vf_attr,
