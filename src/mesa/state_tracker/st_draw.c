@@ -44,6 +44,7 @@
 #include "st_cb_bufferobjects.h"
 #include "pipe/p_context.h"
 #include "pipe/p_defines.h"
+#include "pipe/p_winsys.h"
 
 #include "vbo/vbo_context.h"
 
@@ -52,7 +53,7 @@
  * bypassing the T&L module.  This only works with VBO-based demos,
  * such as progs/test/bufferobj.c
  */
-#define USE_NEW_DRAW 0
+#define USE_NEW_DRAW 01
 
 
 /*
@@ -135,6 +136,38 @@ pipe_vertex_format(GLenum format, GLuint size)
 
 
 /**
+ * The default attribute buffer is basically a copy of the
+ * ctx->Current.Attrib[] array.  It's used when the vertex program
+ * references an attribute for which we don't have a VBO/array.
+ */
+static void
+create_default_attribs_buffer(struct st_context *st)
+{
+   struct pipe_context *pipe = st->pipe;
+   st->default_attrib_buffer = pipe->winsys->buffer_create( pipe->winsys, 32 );
+}
+
+
+static void
+destroy_default_attribs_buffer(struct st_context *st)
+{
+   struct pipe_context *pipe = st->pipe;
+   pipe->winsys->buffer_unreference(pipe->winsys, &st->default_attrib_buffer);
+}
+
+
+static void
+update_default_attribs_buffer(GLcontext *ctx)
+{
+   struct pipe_context *pipe = ctx->st->pipe;
+   struct pipe_buffer_handle *buf = ctx->st->default_attrib_buffer;
+   const unsigned size = sizeof(ctx->Current.Attrib);
+   const void *data = ctx->Current.Attrib;
+   pipe->winsys->buffer_data(pipe->winsys, buf, size, data);
+}
+
+
+/**
  * This function gets plugged into the VBO module and is called when
  * we have something to render.
  * Basically, translate the information into the format expected by pipe.
@@ -150,41 +183,66 @@ draw_vbo(GLcontext *ctx,
 {
    struct pipe_context *pipe = ctx->st->pipe;
    GLuint attr, i;
+   GLbitfield attrsNeeded;
+   const unsigned attr0_offset = (unsigned) arrays[0]->Ptr;
 
    st_validate_state(ctx->st);
+   update_default_attribs_buffer(ctx);
 
+   /* this must be after state validation */
+   attrsNeeded = ctx->st->state.vs.inputs_read;
 
    /* tell pipe about the vertex array element/attributes */
    for (attr = 0; attr < 16; attr++) {
-      struct gl_buffer_object *bufobj = arrays[attr]->BufferObj;
       struct pipe_vertex_buffer vbuffer;
       struct pipe_vertex_element velement;
 
-      if (bufobj && bufobj->Name) {
-         struct st_buffer_object *stobj = st_buffer_object(bufobj);
+      vbuffer.buffer = NULL;
+      vbuffer.pitch = 0;
+      velement.src_offset = 0;
+      velement.vertex_buffer_index = 0;
+      velement.src_format = 0;
 
-         assert(stobj->buffer);
+      if (attrsNeeded & (1 << attr)) {
+         struct gl_buffer_object *bufobj = arrays[attr]->BufferObj;
 
-         vbuffer.pitch = arrays[attr]->StrideB; /* in bytes */
-         vbuffer.max_index = 0;
-         vbuffer.buffer = stobj->buffer;
-         vbuffer.buffer_offset = 0;
+         if (bufobj && bufobj->Name) {
+            struct st_buffer_object *stobj = st_buffer_object(bufobj);
+            /* Recall that for VBOs, the gl_client_array->Ptr field is
+             * really an offset from the start of the VBO, not a pointer.
+             */
+            unsigned offset = (unsigned) arrays[attr]->Ptr;
 
-         /* Recall that for VBOs, the gl_client_array->Ptr field is
-          * really an offset from the start of the VBO, not a pointer.
-          */
-         velement.src_offset = (unsigned) arrays[attr]->Ptr;
-         velement.vertex_buffer_index = attr;
-         velement.dst_offset = 0;
-         velement.src_format = pipe_vertex_format(arrays[attr]->Type,
-                                                  arrays[attr]->Size);
+            assert(stobj->buffer);
+
+            vbuffer.buffer = stobj->buffer;
+            vbuffer.buffer_offset = attr0_offset;  /* in bytes */
+            vbuffer.pitch = arrays[attr]->StrideB; /* in bytes */
+            vbuffer.max_index = 0;  /* need this? */
+
+            velement.src_offset = offset - attr0_offset; /* bytes */
+            velement.vertex_buffer_index = attr;
+            velement.dst_offset = 0; /* need this? */
+            velement.src_format = pipe_vertex_format(arrays[attr]->Type,
+                                                     arrays[attr]->Size);
+            assert(velement.src_format);
+         }
+         else {
+            /* use the default attribute buffer */
+            vbuffer.buffer = ctx->st->default_attrib_buffer;
+            vbuffer.buffer_offset = 0;
+            vbuffer.pitch = 0; /* must be zero! */
+            vbuffer.max_index = 1;
+
+            velement.src_offset = attr * 4 * sizeof(GLfloat);
+            velement.vertex_buffer_index = attr;
+            velement.dst_offset = 0;
+            velement.src_format = PIPE_FORMAT_R32G32B32A32_FLOAT;
+         }
       }
-      else {
-         /* vertex attribute data is not an a real buffer! */
-         /* XXX we'll want to handle that someday... */
 
-         vbuffer.buffer = NULL;
-      }
+      if (attr == 0)
+         assert(vbuffer.buffer);
 
       pipe->set_vertex_buffer(pipe, attr, &vbuffer);
       pipe->set_vertex_element(pipe, attr, &velement);
@@ -209,6 +267,8 @@ void st_init_draw( struct st_context *st )
 #if USE_NEW_DRAW
    struct vbo_context *vbo = (struct vbo_context *) ctx->swtnl_im;
 
+   create_default_attribs_buffer(st);
+
    assert(vbo);
    assert(vbo->draw_prims);
    vbo->draw_prims = draw_vbo;
@@ -224,8 +284,7 @@ void st_init_draw( struct st_context *st )
 
 void st_destroy_draw( struct st_context *st )
 {
-   /* Nothing to do. 
-    */
+   destroy_default_attribs_buffer(st);
 }
 
 

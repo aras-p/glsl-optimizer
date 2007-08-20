@@ -146,7 +146,7 @@ static struct state_key *make_state_key( GLcontext *ctx )
       }
 
       for (i = _TNL_FIRST_MAT; i <= _TNL_LAST_MAT; i++) 
-	 if (VB->AttribPtr[i]->stride) 
+	 if (VB->AttribPtr[i] && VB->AttribPtr[i]->stride) 
 	    key->light_material_mask |= 1<<(i-_TNL_ATTRIB_MAT_FRONT_AMBIENT);
 
       for (i = 0; i < MAX_LIGHTS; i++) {

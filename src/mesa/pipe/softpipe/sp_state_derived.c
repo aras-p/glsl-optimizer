@@ -216,7 +216,7 @@ static void calculate_vertex_layout( struct softpipe_context *softpipe )
    if (attr_mask != softpipe->attr_mask) {
       softpipe->attr_mask = attr_mask;
 
-#define USE_NEW_DRAW 0
+#define USE_NEW_DRAW 01
 #if USE_NEW_DRAW
       draw_set_vertex_attributes2( softpipe->draw,
 				  slot_to_vf_attr,

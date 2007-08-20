@@ -74,6 +74,9 @@ static void update_fs( struct st_context *st )
 
    if (fp && params) {
       /* load program's constants array */
+
+      _mesa_load_state_parameters(st->ctx, params);
+
       fp->constants.nr_constants = params->NumParameters;
       memcpy(fp->constants.constant, 
              params->ParameterValues,

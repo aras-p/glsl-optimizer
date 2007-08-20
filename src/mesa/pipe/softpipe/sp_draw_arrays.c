@@ -87,6 +87,36 @@ compute_clipmask(float cx, float cy, float cz, float cw)
 }
 
 
+/**
+ * Fetch a float[4] vertex attribute from memory, doing format/type
+ * conversion as needed.
+ * XXX this might be a temporary thing.
+ */
+static void
+fetch_attrib4(const void *ptr, unsigned format, float attrib[4])
+{
+   /* defaults */
+   attrib[1] = 0.0;
+   attrib[2] = 0.0;
+   attrib[3] = 1.0;
+   switch (format) {
+   case PIPE_FORMAT_R32G32B32A32_FLOAT:
+      attrib[3] = ((float *) ptr)[3];
+      /* fall-through */
+   case PIPE_FORMAT_R32G32B32_FLOAT:
+      attrib[2] = ((float *) ptr)[2];
+      /* fall-through */
+   case PIPE_FORMAT_R32G32_FLOAT:
+      attrib[1] = ((float *) ptr)[1];
+      /* fall-through */
+   case PIPE_FORMAT_R32_FLOAT:
+      attrib[0] = ((float *) ptr)[0];
+      break;
+   default:
+      assert(0);
+   }
+}
+
 
 /**
  * Transform vertices with the current vertex program/shader
@@ -97,18 +127,17 @@ compute_clipmask(float cx, float cy, float cz, float cw)
  * \param vOut  array of pointers to four output vertices
  */
 static void
-run_vertex_program(struct draw_context *draw,
-                   const void *vbuffer, unsigned elts[4], unsigned count,
+run_vertex_program(struct softpipe_context *sp,
+                   unsigned elts[4], unsigned count,
                    struct vertex_header *vOut[])
 {
-   struct softpipe_context *sp = softpipe_context(draw->pipe);
    struct tgsi_exec_machine machine;
    unsigned int j;
 
    ALIGN16_DECL(struct tgsi_exec_vector, inputs, PIPE_ATTRIB_MAX);
    ALIGN16_DECL(struct tgsi_exec_vector, outputs, PIPE_ATTRIB_MAX);
-   const float *scale = draw->viewport.scale;
-   const float *trans = draw->viewport.translate;
+   const float *scale = sp->viewport.scale;
+   const float *trans = sp->viewport.translate;
 
    assert(count <= 4);
 
@@ -129,21 +158,45 @@ run_vertex_program(struct draw_context *draw,
    machine.Inputs = ALIGN16_ASSIGN(inputs);
    machine.Outputs = ALIGN16_ASSIGN(outputs);
 
+
+   if (0)
+   {
+      unsigned attr;
+      for (attr = 0; attr < 16; attr++) {
+         if (sp->vs.inputs_read & (1 << attr)) {
+            printf("attr %d: buf_off %d  src_off %d  pitch %d\n",
+                   attr, 
+                   sp->vertex_buffer[attr].buffer_offset,
+                   sp->vertex_element[attr].src_offset,
+                   sp->vertex_buffer[attr].pitch);
+         }
+      }
+   }
+
    /* load machine inputs */
    for (j = 0; j < count; j++) {
       unsigned attr;
       for (attr = 0; attr < 16; attr++) {
          if (sp->vs.inputs_read & (1 << attr)) {
-            const float *p
-                = (const float *) ((const ubyte *) vbuffer
-                                   + draw->vertex_buffer[attr].buffer_offset
-                                   + draw->vertex_element[attr].src_offset
-                                   + elts[j] * draw->vertex_buffer[attr].pitch);
+            const void *src
+               = (const void *) ((const ubyte *) sp->mapped_vbuffer[attr]
+                                 + sp->vertex_buffer[attr].buffer_offset
+                                 + sp->vertex_element[attr].src_offset
+                                 + elts[j] * sp->vertex_buffer[attr].pitch);
+            float p[4];
+
+            fetch_attrib4(src, sp->vertex_element[attr].src_format, p);
 
             machine.Inputs[attr].xyzw[0].f[j] = p[0]; /*X*/
             machine.Inputs[attr].xyzw[1].f[j] = p[1]; /*Y*/
             machine.Inputs[attr].xyzw[2].f[j] = p[2]; /*Z*/
-            machine.Inputs[attr].xyzw[3].f[j] = 1.0; /*W*/
+            machine.Inputs[attr].xyzw[3].f[j] = p[3]; /*W*/
+#if 0
+            if (attr == 0) {
+               printf("Input vertex %d: %f %f %f\n",
+                      j, p[0], p[1], p[2]);
+            }
+#endif
          }
       }
    }
@@ -173,7 +226,7 @@ run_vertex_program(struct draw_context *draw,
    /* store machine results */
    assert(sp->vs.outputs_written & (1 << VERT_RESULT_HPOS));
    for (j = 0; j < count; j++) {
-      unsigned attr;
+      unsigned attr, slot;
       float x, y, z, w;
 
       /* Handle attr[0] (position) specially: */
@@ -183,7 +236,7 @@ run_vertex_program(struct draw_context *draw,
       w = vOut[j]->clip[3] = outputs[0].xyzw[3].f[j];
 
       vOut[j]->clipmask = compute_clipmask(x, y, z, w);
-      vOut[j]->edgeflag = 0;
+      vOut[j]->edgeflag = 1;
 
       /* divide by w */
       w = 1.0 / w;
@@ -204,12 +257,16 @@ run_vertex_program(struct draw_context *draw,
 #endif
 
       /* remaining attributes: */
+      /* pack into sequential post-transform attrib slots */
+      slot = 1;
       for (attr = 1; attr < VERT_RESULT_MAX; attr++) {
          if (sp->vs.outputs_written & (1 << attr)) {
-            vOut[j]->data[attr][0] = outputs[attr].xyzw[0].f[j];
-            vOut[j]->data[attr][1] = outputs[attr].xyzw[1].f[j];
-            vOut[j]->data[attr][2] = outputs[attr].xyzw[2].f[j];
-            vOut[j]->data[attr][3] = outputs[attr].xyzw[3].f[j];
+            assert(slot < sp->nr_attrs);
+            vOut[j]->data[slot][0] = outputs[attr].xyzw[0].f[j];
+            vOut[j]->data[slot][1] = outputs[attr].xyzw[1].f[j];
+            vOut[j]->data[slot][2] = outputs[attr].xyzw[2].f[j];
+            vOut[j]->data[slot][3] = outputs[attr].xyzw[3].f[j];
+            slot++;
          }
       }
    }
@@ -224,114 +281,16 @@ run_vertex_program(struct draw_context *draw,
 
 
 /**
- * Stand-in for actual vertex program execution
- * XXX this will probably live in a new file, like "sp_vs.c"
- * \param draw  the drawing context
- * \param vbuffer  the mapped vertex buffer pointer
- * \param elem  which element of the vertex buffer to use as input
- * \param vOut  the output vertex
- */
-#if 0
-static void
-run_vertex_program(struct draw_context *draw,
-                   const void *vbuffer, unsigned elem,
-                   struct vertex_header *vOut)
-{
-   const float *vIn, *cIn;
-   const float *scale = draw->viewport.scale;
-   const float *trans = draw->viewport.translate;
-   const void *mapped = vbuffer;
-
-   /* XXX temporary hack: */
-   GET_CURRENT_CONTEXT(ctx);
-   const float *m = ctx->_ModelProjectMatrix.m;
-
-   vIn = (const float *) ((const ubyte *) mapped
-                          + draw->vertex_buffer[0].buffer_offset
-                          + draw->vertex_element[0].src_offset
-                          + elem * draw->vertex_buffer[0].pitch);
-
-   cIn = (const float *) ((const ubyte *) mapped
-                          + draw->vertex_buffer[3].buffer_offset
-                          + draw->vertex_element[3].src_offset
-                          + elem * draw->vertex_buffer[3].pitch);
-
-   {
-      float x = vIn[0];
-      float y = vIn[1];
-      float z = vIn[2];
-      float w = 1.0;
-
-      vOut->clipmask = 0x0;
-      vOut->edgeflag = 0;
-      /* MVP */
-      vOut->clip[0] = m[0] * x + m[4] * y + m[ 8] * z + m[12] * w;
-      vOut->clip[1] = m[1] * x + m[5] * y + m[ 9] * z + m[13] * w;
-      vOut->clip[2] = m[2] * x + m[6] * y + m[10] * z + m[14] * w;
-      vOut->clip[3] = m[3] * x + m[7] * y + m[11] * z + m[15] * w;
-
-      /* divide by w */
-      x = vOut->clip[0] / vOut->clip[3];
-      y = vOut->clip[1] / vOut->clip[3];
-      z = vOut->clip[2] / vOut->clip[3];
-      w = 1.0 / vOut->clip[3];
-
-      /* Viewport */
-      vOut->data[0][0] = scale[0] * x + trans[0];
-      vOut->data[0][1] = scale[1] * y + trans[1];
-      vOut->data[0][2] = scale[2] * z + trans[2];
-      vOut->data[0][3] = w;
-
-      /* color */
-      vOut->data[1][0] = cIn[0];
-      vOut->data[1][1] = cIn[1];
-      vOut->data[1][2] = cIn[2];
-      vOut->data[1][3] = 1.0;
-   }
-}
-#endif
-
-
-/**
  * Called by the draw module when the vertx cache needs to be flushed.
  * This involves running the vertex shader.
  */
 static void vs_flush( struct draw_context *draw )
 {
+   struct softpipe_context *sp = (struct softpipe_context *) draw->pipe;
    unsigned i, j;
 
-   /* We're not really running a vertex shader yet, so flushing the vs
-    * queue is just a matter of building the vertices and returning.
-    */ 
-   /* Actually, I'm cheating even more and pre-building them still
-    * with the mesa/vf module.  So it's very easy...
-    */
-#if 0
-   for (i = 0; i < draw->vs.queue_nr; i++) {
-#else
-   for (i = 0; i < draw->vs.queue_nr; i+=4) {
-#endif
-      /* Would do the following steps here:
-       *
-       * 1) Loop over vertex element descriptors, fetch data from each
-       *    to build the pre-tnl vertex.  This might require a new struct
-       *    to represent the pre-tnl vertex.
-       * 
-       * 2) Bundle groups of upto 4 pre-tnl vertices together and pass
-       *    to vertex shader.  
-       *
-       * 3) Do any necessary unswizzling, make sure vertex headers are
-       *    correctly populated, store resulting post-transformed
-       *    vertices in vcache.
-       *
-       * In this version, just do the last step:
-       */
-#if 0
-      const unsigned elt = draw->vs.queue[i].elt;
-      struct vertex_header *dest = draw->vs.queue[i].dest;
-
-      run_vertex_program(draw, draw->mapped_vbuffer, elt, dest);
-#else
+   /* run vertex shader on vertex cache entries, four per invokation */
+   for (i = 0; i < draw->vs.queue_nr; i += 4) {
       struct vertex_header *dests[4];
       unsigned elts[4];
       int n;
@@ -345,9 +304,9 @@ static void vs_flush( struct draw_context *draw )
       assert(n > 0);
       assert(n <= 4);
 
-      run_vertex_program(draw, draw->mapped_vbuffer, elts, n, dests);
-#endif
+      run_vertex_program(sp, elts, n, dests);
    }
+
    draw->vs.queue_nr = 0;
 }
 
@@ -359,17 +318,24 @@ softpipe_draw_arrays(struct pipe_context *pipe, unsigned mode,
 {
    struct softpipe_context *sp = softpipe_context(pipe);
    struct draw_context *draw = sp->draw;
-   struct pipe_buffer_handle *buf;
+   unsigned int i;
+
+   if (sp->dirty)
+      softpipe_update_derived( sp );
 
    softpipe_map_surfaces(sp);
 
    /*
     * Map vertex buffers
     */
-   buf = sp->vertex_buffer[0].buffer;
-   draw->mapped_vbuffer
-      = pipe->winsys->buffer_map(pipe->winsys, buf, PIPE_BUFFER_FLAG_READ);
-
+   for (i = 0; i < PIPE_ATTRIB_MAX; i++) {
+      if (sp->vertex_buffer[i].buffer) {
+         sp->mapped_vbuffer[i]
+            = pipe->winsys->buffer_map(pipe->winsys,
+                                       sp->vertex_buffer[i].buffer,
+                                       PIPE_BUFFER_FLAG_READ);
+      }
+   }
 
    /* tell drawing pipeline we're beginning drawing */
    draw->pipeline.first->begin( draw->pipeline.first );
@@ -392,9 +358,13 @@ softpipe_draw_arrays(struct pipe_context *pipe, unsigned mode,
    draw->pipeline.first->end( draw->pipeline.first );
 
    /*
-    * unmap vertex buffer
+    * unmap vertex buffers
     */
-   pipe->winsys->buffer_unmap(pipe->winsys, buf);
+   for (i = 0; i < PIPE_ATTRIB_MAX; i++) {
+      if (sp->vertex_buffer[i].buffer) {
+         pipe->winsys->buffer_unmap(pipe->winsys, sp->vertex_buffer[i].buffer);
+      }
+   }
 
    softpipe_unmap_surfaces(sp);
 }

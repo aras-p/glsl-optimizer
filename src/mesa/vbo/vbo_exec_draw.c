@@ -175,16 +175,27 @@ static void vbo_exec_bind_arrays( GLcontext *ctx )
     * arrays of floats.
     */
    for (attr = 0; attr < VERT_ATTRIB_MAX ; attr++) {
-      GLuint src = map[attr];
+      const GLuint src = map[attr];
 
       if (exec->vtx.attrsz[src]) {
-	 arrays[attr].Ptr = (void *)data;
+         if (exec->vtx.bufferobj->Name) {
+            /* a real buffer obj: Ptr is an offset, not a pointer*/
+            int offset;
+            assert(exec->vtx.bufferobj->Pointer);  /* buf should be mapped */
+            offset = (GLbyte *) data - (GLbyte *) exec->vtx.bufferobj->Pointer;
+            assert(offset >= 0);
+            arrays[attr].Ptr = (void *) offset;
+         }
+         else {
+            /* Ptr into ordinary app memory */
+            arrays[attr].Ptr = (void *) data;
+         }
 	 arrays[attr].Size = exec->vtx.attrsz[src];
 	 arrays[attr].StrideB = exec->vtx.vertex_size * sizeof(GLfloat);
 	 arrays[attr].Stride = exec->vtx.vertex_size * sizeof(GLfloat);
 	 arrays[attr].Type = GL_FLOAT;
 	 arrays[attr].Enabled = 1;
-	 arrays[attr].BufferObj = exec->vtx.bufferobj; /* NullBufferObj */
+	 arrays[attr].BufferObj = exec->vtx.bufferobj;
 	 arrays[attr]._MaxElement = count; /* ??? */
 
 	 data += exec->vtx.attrsz[attr] * sizeof(GLfloat);

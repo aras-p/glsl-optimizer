@@ -1,6 +1,6 @@
 /**************************************************************************
  * 
- * Copyright 2003 Tungsten Graphics, Inc., Cedar Park, Texas.
+ * Copyright 2007 Tungsten Graphics, Inc., Cedar Park, Texas.
  * All Rights Reserved.
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a
@@ -27,9 +27,11 @@
  /*
   * Authors:
   *   Keith Whitwell <keith@tungstengraphics.com>
+  *   Brian Paul
   */
 
 #include "shader/prog_parameter.h"
+#include "tnl/t_vp_build.h"
 
 #include "pipe/p_context.h"
 #include "pipe/tgsi/mesa/mesa_to_tgsi.h"
@@ -38,6 +40,7 @@
 #include "st_context.h"
 #include "st_atom.h"
 #include "st_program.h"
+
 
 #define TGSI_DEBUG 0
 
@@ -59,8 +62,10 @@ static void update_vs( struct st_context *st )
    struct st_vertex_program *vp = NULL;
    struct gl_program_parameter_list *params = NULL;
 
+#if 0
    if (st->ctx->VertexProgram._MaintainTnlProgram)
       _tnl_UpdateFixedFunctionProgram( st->ctx );
+#endif
 
    if (st->ctx->Shader.CurrentProgram &&
        st->ctx->Shader.CurrentProgram->LinkStatus &&
@@ -83,6 +88,7 @@ static void update_vs( struct st_context *st )
    if (vp && params) {
       /* load program's constants array */
 
+      /* XXX this should probably be done elsewhere/separately */
       _mesa_load_state_parameters(st->ctx, params);
 
       vp->constants.nr_constants = params->NumParameters;
@@ -116,4 +122,27 @@ const struct st_tracked_state st_update_vs = {
       .st   = ST_NEW_VERTEX_PROGRAM,
    },
    .update = update_vs
+};
+
+
+
+
+
+/**
+ * When TnL state has changed, need to generate new vertex program.
+ * This should be done before updating the vertes shader (vs) state.
+ */
+static void update_tnl( struct st_context *st )
+{
+   if (st->ctx->VertexProgram._MaintainTnlProgram)
+      _tnl_UpdateFixedFunctionProgram( st->ctx );
+}
+
+
+const struct st_tracked_state st_update_tnl = {
+   .dirty = {
+      .mesa  = _NEW_PROGRAM | _NEW_LIGHT | _NEW_TEXTURE, /* XXX more? */
+      .st   = ST_NEW_MESA,  /* XXX correct? */
+   },
+   .update = update_tnl
 };
