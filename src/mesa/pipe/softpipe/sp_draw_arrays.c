@@ -320,7 +320,6 @@ softpipe_draw_arrays(struct pipe_context *pipe, unsigned mode,
    struct draw_context *draw = sp->draw;
    unsigned length, first, incr, i;
 
-   printf("Draw arrays start %u count %u\n", start, count);
    if (sp->dirty)
       softpipe_update_derived( sp );
 
