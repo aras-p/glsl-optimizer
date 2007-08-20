@@ -318,8 +318,9 @@ softpipe_draw_arrays(struct pipe_context *pipe, unsigned mode,
 {
    struct softpipe_context *sp = softpipe_context(pipe);
    struct draw_context *draw = sp->draw;
-   unsigned int i;
+   unsigned length, first, incr, i;
 
+   printf("Draw arrays start %u count %u\n", start, count);
    if (sp->dirty)
       softpipe_update_derived( sp );
 
@@ -346,10 +347,13 @@ softpipe_draw_arrays(struct pipe_context *pipe, unsigned mode,
    draw_invalidate_vcache( draw );
 
    draw_set_element_buffer(draw, 0, NULL);  /* no index/element buffer */
-   draw_set_prim( draw, mode );
 
-   /* XXX draw_prim_info() and TRIM here */
-   draw_prim(draw, start, count);
+   draw_prim_info( mode, &first, &incr );
+   length = draw_trim( count, first, incr );
+   if (length) {
+      draw_set_prim( draw, mode );
+      draw_prim(draw, start, count);
+   }
 
    /* draw any left-over buffered prims */
    draw_flush(draw);
