@@ -43,11 +43,11 @@
 
 
 
-void
+boolean
 softpipe_draw_arrays(struct pipe_context *pipe, unsigned mode,
                      unsigned start, unsigned count)
 {
-   softpipe_draw_elements(pipe, NULL, 0, mode, start, count);
+   return softpipe_draw_elements(pipe, NULL, 0, mode, start, count);
 }
 
 
@@ -59,7 +59,7 @@ softpipe_draw_arrays(struct pipe_context *pipe, unsigned mode,
  *
  * XXX should the element buffer be specified/bound with a separate function?
  */
-void
+boolean
 softpipe_draw_elements(struct pipe_context *pipe,
                        struct pipe_buffer_handle *indexBuffer,
                        unsigned indexSize,
@@ -73,7 +73,7 @@ softpipe_draw_elements(struct pipe_context *pipe,
    draw_prim_info( mode, &first, &incr );
    length = draw_trim( count, first, incr );
    if (!length)
-      return;
+      return TRUE;
 
 
    if (sp->dirty)
@@ -123,4 +123,6 @@ softpipe_draw_elements(struct pipe_context *pipe,
    }
 
    softpipe_unmap_surfaces(sp);
+
+   return TRUE;
 }

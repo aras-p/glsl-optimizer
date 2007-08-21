@@ -95,13 +95,13 @@ void softpipe_set_vertex_buffer(struct pipe_context *,
 void softpipe_update_derived( struct softpipe_context *softpipe );
 
 
-void softpipe_draw_arrays(struct pipe_context *pipe, unsigned mode,
-                          unsigned start, unsigned count);
+boolean softpipe_draw_arrays(struct pipe_context *pipe, unsigned mode,
+			     unsigned start, unsigned count);
 
-void softpipe_draw_elements(struct pipe_context *pipe,
-                            struct pipe_buffer_handle *indexBuffer,
-                            unsigned indexSize,
-                            unsigned mode, unsigned start, unsigned count);
+boolean softpipe_draw_elements(struct pipe_context *pipe,
+			       struct pipe_buffer_handle *indexBuffer,
+			       unsigned indexSize,
+			       unsigned mode, unsigned start, unsigned count);
 
 
 void

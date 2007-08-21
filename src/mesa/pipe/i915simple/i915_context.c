@@ -149,7 +149,7 @@ static void i915_destroy( struct pipe_context *pipe )
 
 
 
-static void i915_draw_elements( struct pipe_context *pipe,
+static boolean i915_draw_elements( struct pipe_context *pipe,
                                 struct pipe_buffer_handle *indexBuffer,
                                 unsigned indexSize,
                                 unsigned prim, unsigned start, unsigned count)
@@ -202,13 +202,15 @@ static void i915_draw_elements( struct pipe_context *pipe,
       pipe->winsys->buffer_unmap(pipe->winsys, indexBuffer);
       draw_set_mapped_element_buffer(draw, 0, NULL);
    }
+
+   return TRUE;
 }
 
 
-static void i915_draw_arrays( struct pipe_context *pipe,
-                              unsigned prim, unsigned start, unsigned count)
+static boolean i915_draw_arrays( struct pipe_context *pipe,
+				 unsigned prim, unsigned start, unsigned count)
 {
-   i915_draw_elements(pipe, NULL, 0, prim, start, count);
+   return i915_draw_elements(pipe, NULL, 0, prim, start, count);
 }
 
 
