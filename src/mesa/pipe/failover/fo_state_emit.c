@@ -44,57 +44,63 @@
  * lower overheads.
  */
 
+
+/* Bring the software pipe uptodate with current state.
+ * 
+ * With constant state objects we would probably just send all state
+ * to both rasterizers all the time???
+ */
 void
 failover_state_emit( struct failover_context *failover )
 {
    unsigned i;
 
    if (failover->dirty & FO_NEW_ALPHA_TEST)
-      failover->hw->set_alpha_test_state( failover->hw, &failover->alpha_test );
+      failover->sw->set_alpha_test_state( failover->sw, &failover->alpha_test );
 
    if (failover->dirty & FO_NEW_BLEND)
-      failover->hw->set_blend_state( failover->hw, &failover->blend );
+      failover->sw->set_blend_state( failover->sw, &failover->blend );
 
    if (failover->dirty & FO_NEW_BLEND_COLOR)
-      failover->hw->set_blend_color( failover->hw, &failover->blend_color );
+      failover->sw->set_blend_color( failover->sw, &failover->blend_color );
 
    if (failover->dirty & FO_NEW_CLIP)
-      failover->hw->set_clip_state( failover->hw, &failover->clip );
+      failover->sw->set_clip_state( failover->sw, &failover->clip );
 
    if (failover->dirty & FO_NEW_CLEAR_COLOR)
-      failover->hw->set_clear_color_state( failover->hw, &failover->clear_color );
+      failover->sw->set_clear_color_state( failover->sw, &failover->clear_color );
 
    if (failover->dirty & FO_NEW_DEPTH_TEST)
-      failover->hw->set_depth_state( failover->hw, &failover->depth_test );
+      failover->sw->set_depth_state( failover->sw, &failover->depth_test );
 
    if (failover->dirty & FO_NEW_FRAMEBUFFER)
-      failover->hw->set_framebuffer_state( failover->hw, &failover->framebuffer );
+      failover->sw->set_framebuffer_state( failover->sw, &failover->framebuffer );
 
    if (failover->dirty & FO_NEW_FRAGMENT_SHADER)
-      failover->hw->set_fs_state( failover->hw, &failover->fragment_shader );
+      failover->sw->set_fs_state( failover->sw, &failover->fragment_shader );
 
    if (failover->dirty & FO_NEW_VERTEX_SHADER)
-      failover->hw->set_vs_state( failover->hw, &failover->vertex_shader );
+      failover->sw->set_vs_state( failover->sw, &failover->vertex_shader );
 
    if (failover->dirty & FO_NEW_STIPPLE)
-      failover->hw->set_polygon_stipple( failover->hw, &failover->poly_stipple );
+      failover->sw->set_polygon_stipple( failover->sw, &failover->poly_stipple );
 
    if (failover->dirty & FO_NEW_SETUP)
-      failover->hw->set_setup_state( failover->hw, &failover->setup );
+      failover->sw->set_setup_state( failover->sw, &failover->setup );
 
    if (failover->dirty & FO_NEW_SCISSOR)
-      failover->hw->set_scissor_state( failover->hw, &failover->scissor );
+      failover->sw->set_scissor_state( failover->sw, &failover->scissor );
 
    if (failover->dirty & FO_NEW_STENCIL)
-      failover->hw->set_stencil_state( failover->hw, &failover->stencil );
+      failover->sw->set_stencil_state( failover->sw, &failover->stencil );
 
    if (failover->dirty & FO_NEW_VIEWPORT)
-      failover->hw->set_viewport_state( failover->hw, &failover->viewport );
+      failover->sw->set_viewport_state( failover->sw, &failover->viewport );
 
    if (failover->dirty & FO_NEW_SAMPLER) {
       for (i = 0; i < PIPE_MAX_SAMPLERS; i++) {
 	 if (failover->dirty_sampler & (1<<i)) {
-	    failover->hw->set_sampler_state( failover->hw, i, 
+	    failover->sw->set_sampler_state( failover->sw, i, 
 					     &failover->sampler[i] );
 	 }
       }
@@ -103,7 +109,7 @@ failover_state_emit( struct failover_context *failover )
    if (failover->dirty & FO_NEW_TEXTURE) {
       for (i = 0; i < PIPE_MAX_SAMPLERS; i++) {
 	 if (failover->dirty_texture & (1<<i)) {
-	    failover->hw->set_texture_state( failover->hw, i, 
+	    failover->sw->set_texture_state( failover->sw, i, 
 					     failover->texture[i] );
 	 }
       }
@@ -112,7 +118,7 @@ failover_state_emit( struct failover_context *failover )
    if (failover->dirty & FO_NEW_VERTEX_BUFFER) {
       for (i = 0; i < PIPE_ATTRIB_MAX; i++) {
 	 if (failover->dirty_vertex_buffer & (1<<i)) {
-	    failover->hw->set_vertex_buffer( failover->hw, i, 
+	    failover->sw->set_vertex_buffer( failover->sw, i, 
 					     &failover->vertex_buffer[i] );
 	 }
       }
@@ -121,7 +127,7 @@ failover_state_emit( struct failover_context *failover )
    if (failover->dirty & FO_NEW_VERTEX_ELEMENT) {
       for (i = 0; i < PIPE_ATTRIB_MAX; i++) {
 	 if (failover->dirty_vertex_element & (1<<i)) {
-	    failover->hw->set_vertex_element( failover->hw, i, 
+	    failover->sw->set_vertex_element( failover->sw, i, 
 					      &failover->vertex_element[i] );
 	 }
       }
