@@ -35,9 +35,7 @@
 #include "draw_context.h"
 #include "draw_prim.h"
 
-#include "pipe/tgsi/core/tgsi_exec.h"
-#include "pipe/tgsi/core/tgsi_build.h"
-#include "pipe/tgsi/core/tgsi_util.h"
+#include "pipe/tgsi/core/tgsi_core.h"
 
 
 #define RP_NONE  0
@@ -138,12 +136,23 @@ run_vertex_program(struct draw_context *draw,
    struct tgsi_exec_machine machine;
    unsigned int j;
 
+#if 0
+   static FILE *file = NULL;
+   unsigned i;
+#endif
+
    ALIGN16_DECL(struct tgsi_exec_vector, inputs, PIPE_ATTRIB_MAX);
    ALIGN16_DECL(struct tgsi_exec_vector, outputs, PIPE_ATTRIB_MAX);
    const float *scale = draw->viewport.scale;
    const float *trans = draw->viewport.translate;
 
    assert(count <= 4);
+
+#if 0
+   if( file == NULL ) {
+      file = fopen( "vs-exec.txt", "wt" );
+   }
+#endif
 
 #ifdef DEBUG
    memset( &machine, 0, sizeof( machine ) );
@@ -162,19 +171,21 @@ run_vertex_program(struct draw_context *draw,
    machine.Outputs = ALIGN16_ASSIGN(outputs);
 
 
-   if (0)
+#if 0
    {
       unsigned attr;
       for (attr = 0; attr < 16; attr++) {
          if (draw->vertex_shader.inputs_read & (1 << attr)) {
-            printf("attr %d: buf_off %d  src_off %d  pitch %d\n",
+            unsigned buf = draw->vertex_element[attr].vertex_buffer_index;
+            fprintf(file, "attr %d: buf_off %d  src_off %d  pitch %d\n",
                    attr, 
-                   draw->vertex_buffer[attr].buffer_offset,
+                   draw->vertex_buffer[buf].buffer_offset,
                    draw->vertex_element[attr].src_offset,
-                   draw->vertex_buffer[attr].pitch);
+                   draw->vertex_buffer[buf].pitch);
          }
       }
    }
+#endif
 
    /* load machine inputs */
    for (j = 0; j < count; j++) {
@@ -197,8 +208,9 @@ run_vertex_program(struct draw_context *draw,
             machine.Inputs[attr].xyzw[3].f[j] = p[3]; /*W*/
 #if 0
             if (attr == 0) {
-               printf("Input vertex %d: %f %f %f\n",
+               fprintf(file, "Input vertex %d: %f %f %f\n",
                       j, p[0], p[1], p[2]);
+               fflush( file );
             }
 #endif
          }
@@ -220,11 +232,14 @@ run_vertex_program(struct draw_context *draw,
    tgsi_exec_machine_run( &machine );
 
 #if 0
-   printf("VS result: %f %f %f %f\n",
-          outputs[0].xyzw[0].f[0],
-          outputs[0].xyzw[1].f[0],
-          outputs[0].xyzw[2].f[0],
-          outputs[0].xyzw[3].f[0]);
+   for (i = 0; i < 4; i++) {
+   fprintf(file, "VS result: %f %f %f %f\n",
+          machine.Outputs[0].xyzw[0].f[i],
+          machine.Outputs[0].xyzw[1].f[i],
+          machine.Outputs[0].xyzw[2].f[i],
+          machine.Outputs[0].xyzw[3].f[i]);
+   }
+   fflush( file );
 #endif
 
    /* store machine results */
@@ -234,16 +249,16 @@ run_vertex_program(struct draw_context *draw,
       float x, y, z, w;
 
       /* Handle attr[0] (position) specially: */
-      x = vOut[j]->clip[0] = outputs[0].xyzw[0].f[j];
-      y = vOut[j]->clip[1] = outputs[0].xyzw[1].f[j];
-      z = vOut[j]->clip[2] = outputs[0].xyzw[2].f[j];
-      w = vOut[j]->clip[3] = outputs[0].xyzw[3].f[j];
+      x = vOut[j]->clip[0] = machine.Outputs[0].xyzw[0].f[j];
+      y = vOut[j]->clip[1] = machine.Outputs[0].xyzw[1].f[j];
+      z = vOut[j]->clip[2] = machine.Outputs[0].xyzw[2].f[j];
+      w = vOut[j]->clip[3] = machine.Outputs[0].xyzw[3].f[j];
 
       vOut[j]->clipmask = compute_clipmask(x, y, z, w);
       vOut[j]->edgeflag = 1;
 
       /* divide by w */
-      w = 1.0 / w;
+      w = 1.0f / w;
       x *= w;
       y *= w;
       z *= w;
@@ -254,11 +269,12 @@ run_vertex_program(struct draw_context *draw,
       vOut[j]->data[0][2] = z * scale[2] + trans[2];
       vOut[j]->data[0][3] = w;
 #if 0
-      printf("wincoord: %f %f %f %f\n",
+      fprintf(file, "wincoord: %f %f %f %f\n",
              vOut[j]->data[0][0],
              vOut[j]->data[0][1],
              vOut[j]->data[0][2],
              vOut[j]->data[0][3]);
+      fflush( file );
 #endif
 
       /* remaining attributes: */
@@ -267,10 +283,10 @@ run_vertex_program(struct draw_context *draw,
       for (attr = 1; attr < VERT_RESULT_MAX; attr++) {
          if (draw->vertex_shader.outputs_written & (1 << attr)) {
             assert(slot < draw->nr_attrs);
-            vOut[j]->data[slot][0] = outputs[attr].xyzw[0].f[j];
-            vOut[j]->data[slot][1] = outputs[attr].xyzw[1].f[j];
-            vOut[j]->data[slot][2] = outputs[attr].xyzw[2].f[j];
-            vOut[j]->data[slot][3] = outputs[attr].xyzw[3].f[j];
+            vOut[j]->data[slot][0] = machine.Outputs[attr].xyzw[0].f[j];
+            vOut[j]->data[slot][1] = machine.Outputs[attr].xyzw[1].f[j];
+            vOut[j]->data[slot][2] = machine.Outputs[attr].xyzw[2].f[j];
+            vOut[j]->data[slot][3] = machine.Outputs[attr].xyzw[3].f[j];
             slot++;
          }
       }
