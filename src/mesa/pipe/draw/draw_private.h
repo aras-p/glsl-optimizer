@@ -186,8 +186,6 @@ struct draw_context
    unsigned prim;   /**< current prim type: PIPE_PRIM_x */
    unsigned reduced_prim;
 
-   void (*vs_flush)( struct draw_context *draw );
-
    struct vertex_header *(*get_vertex)( struct draw_context *draw,
 					unsigned i );
 
