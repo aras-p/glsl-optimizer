@@ -701,15 +701,10 @@ static void nv10WindowMoved(nouveauContextPtr nmesa)
 	GLuint h = ctx->Viewport.Height;
 	GLuint x = ctx->Viewport.X + nmesa->drawX;
 	GLuint y = ctx->Viewport.Y + nmesa->drawY;
-	int i;
 
         BEGIN_RING_CACHE(NvSub3D, NV10_TCL_PRIMITIVE_3D_VIEWPORT_HORIZ, 2);
         OUT_RING_CACHE((w << 16) | x);
         OUT_RING_CACHE((h << 16) | y);
-
-	/* something to do with clears, possibly doesn't belong here */
-	BEGIN_RING_SIZE(NvSub3D, 0x02b4, 1);
-	OUT_RING(0);
 
 	BEGIN_RING_CACHE(NvSub3D,
 	      NV10_TCL_PRIMITIVE_3D_VIEWPORT_CLIP_HORIZ(0), 1);
@@ -717,14 +712,6 @@ static void nv10WindowMoved(nouveauContextPtr nmesa)
 	BEGIN_RING_CACHE(NvSub3D,
 	      NV10_TCL_PRIMITIVE_3D_VIEWPORT_CLIP_VERT(0), 1);
         OUT_RING_CACHE(((h+y-1) << 16) | y | 0x08000800);
-	for (i=1; i<8; i++) {
-		BEGIN_RING_CACHE(NvSub3D,
-		      NV10_TCL_PRIMITIVE_3D_VIEWPORT_CLIP_HORIZ(i), 1);
-        	OUT_RING_CACHE(0);
-		BEGIN_RING_CACHE(NvSub3D,
-		      NV10_TCL_PRIMITIVE_3D_VIEWPORT_CLIP_VERT(i), 1);
-	        OUT_RING_CACHE(0);
-	}
 
 	nv10ViewportScale(nmesa);
 }
@@ -732,6 +719,8 @@ static void nv10WindowMoved(nouveauContextPtr nmesa)
 /* Initialise any card-specific non-GL related state */
 static GLboolean nv10InitCard(nouveauContextPtr nmesa)
 {
+	int i;
+
 	nouveauObjectOnSubchannel(nmesa, NvSub3D, Nv3D);
 
 	BEGIN_RING_SIZE(NvSub3D, NV10_TCL_PRIMITIVE_3D_SET_DMA_IN_MEMORY0, 2);
@@ -740,6 +729,27 @@ static GLboolean nv10InitCard(nouveauContextPtr nmesa)
 	BEGIN_RING_SIZE(NvSub3D, NV10_TCL_PRIMITIVE_3D_SET_DMA_IN_MEMORY2, 2);
 	OUT_RING(NvDmaFB);	/* 194 dma_in_memory2 */
 	OUT_RING(NvDmaFB);	/* 198 dma_in_memory3 */
+
+	/* 0x0 viewport size */
+        BEGIN_RING_SIZE(NvSub3D, NV10_TCL_PRIMITIVE_3D_VIEWPORT_HORIZ, 2);
+        OUT_RING(0);
+        OUT_RING(0);
+
+	/* Clipping regions */
+	BEGIN_RING_SIZE(NvSub3D,
+	      NV10_TCL_PRIMITIVE_3D_VIEWPORT_CLIP_HORIZ(0), 1);
+        OUT_RING(0x07ff0800);
+	BEGIN_RING_SIZE(NvSub3D,
+	      NV10_TCL_PRIMITIVE_3D_VIEWPORT_CLIP_VERT(0), 1);
+        OUT_RING(0x07ff0800);
+	for (i=1; i<8; i++) {
+		BEGIN_RING_SIZE(NvSub3D,
+		      NV10_TCL_PRIMITIVE_3D_VIEWPORT_CLIP_HORIZ(i), 1);
+        	OUT_RING(0);
+		BEGIN_RING_SIZE(NvSub3D,
+		      NV10_TCL_PRIMITIVE_3D_VIEWPORT_CLIP_VERT(i), 1);
+	        OUT_RING(0);
+	}
 
 	BEGIN_RING_SIZE(NvSub3D, 0x0290, 1);
 	OUT_RING(0x00100001);
