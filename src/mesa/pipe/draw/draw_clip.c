@@ -116,7 +116,7 @@ static void interp( const struct clipper *clip,
       const float *pos = dst->clip;
       const float *scale = clip->stage.draw->viewport.scale;
       const float *trans = clip->stage.draw->viewport.translate;
-      const float oow = 1.0 / pos[3];
+      const float oow = 1.0f / pos[3];
 
       dst->data[0][0] = pos[0] * oow * scale[0] + trans[0];
       dst->data[0][1] = pos[1] * oow * scale[1] + trans[1];

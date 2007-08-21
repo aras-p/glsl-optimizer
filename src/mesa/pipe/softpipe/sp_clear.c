@@ -46,7 +46,7 @@ softpipe_clear(struct pipe_context *pipe, struct pipe_surface *ps,
                unsigned clearValue)
 {
    struct softpipe_context *softpipe = softpipe_context(pipe);
-   int x, y, w, h;
+   unsigned x, y, w, h;
 
    softpipe_update_derived(softpipe); /* not needed?? */
 
