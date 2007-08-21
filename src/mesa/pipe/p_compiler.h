@@ -38,6 +38,10 @@
 #define __WIN32__
 #endif
 
+#if defined(_MSC_VER) && !defined(__MSC__)
+#define __MSC__
+#endif
+
 
 typedef unsigned int       uint;
 typedef unsigned char      ubyte;
@@ -55,8 +59,6 @@ typedef unsigned long long uint64;
 #  define INLINE __inline__
 #elif defined(__MSC__)
 #  define INLINE __inline
-#elif defined(_MSC_VER)
-#  define INLINE __inline
 #elif defined(__ICL)
 #  define INLINE __inline
 #elif defined(__INTEL_COMPILER)
@@ -69,11 +71,11 @@ typedef unsigned long long uint64;
 
 
 #if defined __GNUC__
-#define ALIGN16_DECL(TYPE, NAME, SIZE)  TYPE NAME[SIZE] __attribute__(( aligned( 16 ) ))
-#define ALIGN16_ASSIGN(P) P
+#define ALIGN16_DECL(TYPE, NAME, SIZE)  TYPE NAME##___aligned[SIZE] __attribute__(( aligned( 16 ) ))
+#define ALIGN16_ASSIGN(NAME) NAME##___aligned
 #else
-#define ALIGN16_DECL(TYPE, NAME, SIZE)  TYPE NAME[SIZE + 1]
-#define ALIGN16_ASSIGN(P) align16(P)
+#define ALIGN16_DECL(TYPE, NAME, SIZE)  TYPE NAME##___unaligned[SIZE + 1]
+#define ALIGN16_ASSIGN(NAME) align16(NAME##___unaligned)
 #endif
 
 
