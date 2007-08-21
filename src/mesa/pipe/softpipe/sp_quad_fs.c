@@ -40,15 +40,6 @@
 #include "sp_tex_sample.h"
 
 
-#if defined __GNUC__
-#define USE_ALIGNED_ATTRIBS   1
-#define ALIGN16_SUFFIX        __attribute__(( aligned( 16 ) ))
-#else
-#define USE_ALIGNED_ATTRIBS   0
-#define ALIGN16_SUFFIX
-#endif
-
-
 struct quad_shade_stage
 {
    struct quad_stage stage;
@@ -77,13 +68,8 @@ shade_quad(
    const float fy = (float) quad->y0;
    struct tgsi_exec_machine machine;
 
-#if USE_ALIGNED_ATTRIBS
-   struct tgsi_exec_vector inputs[PIPE_ATTRIB_MAX] ALIGN16_SUFFIX;
-   struct tgsi_exec_vector outputs[PIPE_ATTRIB_MAX] ALIGN16_SUFFIX;
-#else
-   struct tgsi_exec_vector inputs[PIPE_ATTRIB_MAX + 1];
-   struct tgsi_exec_vector outputs[PIPE_ATTRIB_MAX + 1];
-#endif
+   ALIGN16_DECL(struct tgsi_exec_vector, inputs, PIPE_ATTRIB_MAX);
+   ALIGN16_DECL(struct tgsi_exec_vector, outputs, PIPE_ATTRIB_MAX);
 
 #ifdef DEBUG
    memset( &machine, 0, sizeof( machine ) );
@@ -99,13 +85,8 @@ shade_quad(
    /* Consts does not require 16 byte alignment. */
    machine.Consts = softpipe->fs.constants->constant;
 
-#if USE_ALIGNED_ATTRIBS
-   machine.Inputs = inputs;
-   machine.Outputs = outputs;
-#else
-   machine.Inputs = (struct tgsi_exec_vector *) tgsi_align_128bit( inputs );
-   machine.Outputs = (struct tgsi_exec_vector *) tgsi_align_128bit( outputs );
-#endif
+   machine.Inputs = ALIGN16_ASSIGN(inputs);
+   machine.Outputs = ALIGN16_ASSIGN(outputs);
 
    machine.InterpCoefs = quad->coef;
 

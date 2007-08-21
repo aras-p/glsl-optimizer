@@ -68,4 +68,14 @@ typedef unsigned long long uint64;
 #endif
 
 
+#if defined __GNUC__
+#define ALIGN16_DECL(TYPE, NAME, SIZE)  TYPE NAME[SIZE] __attribute__(( aligned( 16 ) ))
+#define ALIGN16_ASSIGN(P) P
+#else
+#define ALIGN16_DECL(TYPE, NAME, SIZE)  TYPE NAME[SIZE + 1]
+#define ALIGN16_ASSIGN(P) align16(P)
+#endif
+
+
+
 #endif /* P_COMPILER_H */

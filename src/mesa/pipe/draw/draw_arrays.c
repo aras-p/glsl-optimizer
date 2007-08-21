@@ -50,16 +50,6 @@
 #define VERT_RESULT_MAX 24
 
 
-#if defined __GNUC__
-#define ALIGN16_DECL(TYPE, NAME, SIZE)  TYPE NAME[SIZE] __attribute__(( aligned( 16 ) ))
-#define ALIGN16_ASSIGN(P) P
-#else
-#define ALIGN16_DECL(TYPE, NAME, SIZE)  TYPE NAME[SIZE + 1]
-#define ALIGN16_ASSIGN(P) align16(P)
-#endif
-
-
-
 static INLINE unsigned
 compute_clipmask(float cx, float cy, float cz, float cw)
 {
