@@ -212,8 +212,8 @@ make_vertex_shader(struct st_context *st)
 
 /**
  * Draw a screen-aligned quadrilateral.
- * Coords are window coords.
- * XXX need to emit clip coords when using a vertex program!
+ * Coords are window coords with y=0=bottom.  These coords will be transformed
+ * by the vertex shader and viewport transform (which will flip Y if needed).
  */
 static void
 draw_quad(GLcontext *ctx,
@@ -266,9 +266,9 @@ clear_with_quad(GLcontext *ctx,
 {
    struct st_context *st = ctx->st;
    const GLfloat x0 = ctx->DrawBuffer->_Xmin;
-   const GLfloat y0 = ctx->DrawBuffer->Height - ctx->DrawBuffer->_Ymax;
+   const GLfloat y0 = ctx->DrawBuffer->_Ymin;
    const GLfloat x1 = ctx->DrawBuffer->_Xmax;
-   const GLfloat y1 = ctx->DrawBuffer->Height - ctx->DrawBuffer->_Ymin;
+   const GLfloat y1 = ctx->DrawBuffer->_Ymax;
 
    /* alpha state: disabled */
    {
@@ -312,8 +312,13 @@ clear_with_quad(GLcontext *ctx,
    {
       struct pipe_setup_state setup;
       memset(&setup, 0, sizeof(setup));
+#if 0
+      /* don't do per-pixel scissor; we'll just draw a PIPE_PRIM_QUAD
+       * that matches the scissor bounds.
+       */
       if (ctx->Scissor.Enabled)
          setup.scissor = 1;
+#endif
       st->pipe->set_setup_state(st->pipe, &setup);
    }
 

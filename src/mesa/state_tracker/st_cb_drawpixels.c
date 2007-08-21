@@ -49,11 +49,11 @@
 
 
 /**
- * Create a simple fragment shader that passes the texture color through
- * to the fragment color.
+ * Create a simple fragment shader that does a TEX() instruction to get
+ * the fragment color.
  */
 static struct st_fragment_program *
-make_drawpixels_shader(struct st_context *st)
+make_fragment_shader(struct st_context *st)
 {
    GLcontext *ctx = st->ctx;
    struct st_fragment_program *stfp;
@@ -93,6 +93,59 @@ make_drawpixels_shader(struct st_context *st)
 
    return stfp;
 }
+
+
+/**
+ * Create a simple vertex shader that just passes through the
+ * vertex position and color.
+ */
+static struct st_vertex_program *
+make_vertex_shader(struct st_context *st)
+{
+   GLcontext *ctx = st->ctx;
+   struct st_vertex_program *stvp;
+   struct gl_program *p;
+   GLboolean b;
+
+   p = ctx->Driver.NewProgram(ctx, GL_VERTEX_PROGRAM_ARB, 0);
+   if (!p)
+      return NULL;
+
+   p->NumInstructions = 3;
+   p->Instructions = _mesa_alloc_instructions(3);
+   if (!p->Instructions) {
+      ctx->Driver.DeleteProgram(ctx, p);
+      return NULL;
+   }
+   _mesa_init_instructions(p->Instructions, 3);
+   /* MOV result.pos, vertex.pos; */
+   p->Instructions[0].Opcode = OPCODE_MOV;
+   p->Instructions[0].DstReg.File = PROGRAM_OUTPUT;
+   p->Instructions[0].DstReg.Index = VERT_RESULT_HPOS;
+   p->Instructions[0].SrcReg[0].File = PROGRAM_INPUT;
+   p->Instructions[0].SrcReg[0].Index = VERT_ATTRIB_POS;
+   /* MOV result.color, vertex.color; */
+   p->Instructions[1].Opcode = OPCODE_MOV;
+   p->Instructions[1].DstReg.File = PROGRAM_OUTPUT;
+   p->Instructions[1].DstReg.Index = VERT_RESULT_TEX0;
+   p->Instructions[1].SrcReg[0].File = PROGRAM_INPUT;
+   p->Instructions[1].SrcReg[0].Index = VERT_ATTRIB_TEX0;
+   /* END; */
+   p->Instructions[2].Opcode = OPCODE_END;
+
+   p->InputsRead = VERT_BIT_POS | VERT_BIT_TEX0;
+   p->OutputsWritten = ((1 << VERT_RESULT_TEX0) |
+                        (1 << VERT_RESULT_HPOS));
+
+   stvp = (struct st_vertex_program *) p;
+   /* compile into tgsi format */
+   b = tgsi_mesa_compile_vp_program(&stvp->Base,
+                                    stvp->tokens, ST_FP_MAX_TOKENS);
+   assert(b);
+
+   return stvp;
+}
+
 
 
 static struct pipe_mipmap_tree *
@@ -156,7 +209,7 @@ make_mipmap_tree(struct st_context *st,
       assert(success);
    }
 
-   mt->target = GL_TEXTURE_2D;
+   mt->target = PIPE_TEXTURE_2D;
    mt->internal_format = GL_RGBA;
    mt->format = pipeFormat;
    mt->first_level = 0;
@@ -191,7 +244,7 @@ free_mipmap_tree(struct pipe_context *pipe, struct pipe_mipmap_tree *mt)
 
 /**
  * Draw textured quad.
- * Y=0=top
+ * Coords are window coords with y=0=bottom.
  */
 static void
 draw_quad(GLcontext *ctx, GLfloat x0, GLfloat y0, GLfloat z,
@@ -236,7 +289,7 @@ draw_quad(GLcontext *ctx, GLfloat x0, GLfloat y0, GLfloat z,
       verts[i][1][3] = 1.0; /*Q*/
    }
 
-   st_draw_vertices(ctx, PIPE_PRIM_QUADS, 4, (GLfloat *) verts, 2, attribs);
+   st_draw_vertices(ctx, PIPE_PRIM_QUADS, 4, (float *) verts, 2, attribs);
 }
 
 
@@ -269,18 +322,33 @@ draw_textured_quad(GLcontext *ctx, GLint x, GLint y, GLfloat z,
       pipe->set_setup_state(pipe, &setup);
    }
 
-   /* fragment shader state: color pass-through program */
+   /* fragment shader state: TEX lookup program */
    {
       static struct st_fragment_program *stfp = NULL;
       struct pipe_shader_state fs;
       if (!stfp) {
-         stfp = make_drawpixels_shader(ctx->st);
+         stfp = make_fragment_shader(ctx->st);
       }
       memset(&fs, 0, sizeof(fs));
       fs.inputs_read = stfp->Base.Base.InputsRead;
       fs.tokens = &stfp->tokens[0];
       fs.constants = NULL;
       pipe->set_fs_state(pipe, &fs);
+   }
+
+   /* vertex shader state: position + texcoord pass-through */
+   {
+      static struct st_vertex_program *stvp = NULL;
+      struct pipe_shader_state vs;
+      if (!stvp) {
+         stvp = make_vertex_shader(ctx->st);
+      }
+      memset(&vs, 0, sizeof(vs));
+      vs.inputs_read = stvp->Base.Base.InputsRead;
+      vs.outputs_written = stvp->Base.Base.OutputsWritten;
+      vs.tokens = &stvp->tokens[0];
+      vs.constants = NULL;
+      pipe->set_vs_state(pipe, &vs);
    }
 
    /* texture sampling state: */
@@ -303,11 +371,14 @@ draw_textured_quad(GLcontext *ctx, GLint x, GLint y, GLfloat z,
       pipe->set_texture_state(pipe, unit, mt);
    }
 
-   /* compute window coords (y=0=top) with pixel zoom */
+   /* Compute window coords (y=0=bottom) with pixel zoom.
+    * Recall that these coords are transformed by the current
+    * vertex shader and viewport transformation.
+    */
    x0 = x;
-   y0 = ctx->DrawBuffer->Height - 1 - y;
    x1 = x + width * ctx->Pixel.ZoomX;
-   y1 = ctx->DrawBuffer->Height - 1 - (y + height * ctx->Pixel.ZoomY);
+   y0 = y;
+   y1 = y + height * ctx->Pixel.ZoomY;
 
    /* draw textured quad */
    draw_quad(ctx, x0, y0, z, x1, y1);
@@ -315,6 +386,7 @@ draw_textured_quad(GLcontext *ctx, GLint x, GLint y, GLfloat z,
    /* restore GL state */
    pipe->set_setup_state(pipe, &ctx->st->state.setup);
    pipe->set_fs_state(pipe, &ctx->st->state.fs);
+   pipe->set_vs_state(pipe, &ctx->st->state.vs);
    pipe->set_texture_state(pipe, unit, ctx->st->state.texture[unit]);
    pipe->set_sampler_state(pipe, unit, &ctx->st->state.sampler[unit]);
 
