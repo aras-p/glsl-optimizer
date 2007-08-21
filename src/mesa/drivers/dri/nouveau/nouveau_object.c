@@ -73,12 +73,12 @@ void nouveauObjectInit(nouveauContextPtr nmesa)
 		nouveauObjectOnSubchannel(nmesa, NvSubRasterOp, NvRasterOp);
 
 		BEGIN_RING_SIZE(NvSubRasterOp, NV03_PRIMITIVE_RASTER_OP_DMA_NOTIFY, 1);
-		OUT_RING(NvDmaFB);
+		OUT_RING(NvSyncNotify);
 
 		nouveauObjectOnSubchannel(nmesa, NvSubGdiRectText, NvGdiRectText);
 
 		BEGIN_RING_SIZE(NvSubGdiRectText, NV04_GDI_RECTANGLE_TEXT_SET_DMA_NOTIFY, 1);
-		OUT_RING(NvDmaFB);
+		OUT_RING(NvSyncNotify);
 		BEGIN_RING_SIZE(NvSubGdiRectText, NV04_GDI_RECTANGLE_TEXT_PATTERN, 2);
 		OUT_RING(NvPattern);
 		OUT_RING(NvRasterOp);
