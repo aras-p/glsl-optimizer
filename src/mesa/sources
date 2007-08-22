@@ -173,6 +173,9 @@ TGSICORE_SOURCES = \
 	pipe/tgsi/core/tgsi_parse.c \
 	pipe/tgsi/core/tgsi_util.c
 
+TGSIDECO_SOURCES = \
+	pipe/tgsi/deco/deco_caps.c
+
 TGSIMESA_SOURCES = \
 	pipe/tgsi/mesa/mesa_to_tgsi.c
 
@@ -357,6 +360,7 @@ SOLO_SOURCES = \
 	$(VF_SOURCES)		\
 	$(DRAW_SOURCES)		\
 	$(TGSICORE_SOURCES)	\
+	$(TGSIDECO_SOURCES)	\
 	$(TGSIMESA_SOURCES)	\
 	$(STATETRACKER_SOURCES)	\
 	$(TNL_SOURCES)		\
