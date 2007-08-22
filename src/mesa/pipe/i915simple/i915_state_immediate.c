@@ -29,8 +29,6 @@
   *   Keith Whitwell <keith@tungstengraphics.com>
   */
  
-//#include "macros.h"
-
 #include "i915_state_inlines.h"
 #include "i915_context.h"
 #include "i915_state.h"
