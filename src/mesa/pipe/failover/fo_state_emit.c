@@ -134,4 +134,8 @@ failover_state_emit( struct failover_context *failover )
    }
 
    failover->dirty = 0;
+   failover->dirty_vertex_element = 0;
+   failover->dirty_vertex_buffer = 0;
+   failover->dirty_texture = 0;
+   failover->dirty_sampler = 0;
 }
