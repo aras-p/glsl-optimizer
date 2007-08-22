@@ -213,38 +213,60 @@ struct pipe_context {
 };
 
 
-
+/**
+ * Set 'ptr' to point to 'region' and update reference counting.
+ * The old thing pointed to, if any, will be unreferenced first.
+ * 'region' may be NULL.
+ */
 static INLINE void
-pipe_region_reference(struct pipe_region **dst, struct pipe_region *src)
+pipe_region_reference(struct pipe_region **ptr, struct pipe_region *region)
 {
-   assert(*dst == NULL);
-   if (src) {
-      src->refcount++;
-      *dst = src;
+   assert(ptr);
+   if (*ptr) {
+      /* unreference the old thing */
+      struct pipe_region *oldReg = *ptr;
+      oldReg->refcount--;
+      assert(oldReg->refcount >= 0);
+      if (oldReg->refcount == 0) {
+         /* free the old region */
+         assert(oldReg->map_refcount == 0);
+         /* XXX dereference the region->buffer */
+         free(oldReg);
+      }
+      *ptr = NULL;
+   }
+   if (region) {
+      /* reference the new thing */
+      region->refcount++;
+      *ptr = region;
    }
 }
 
 
+/**
+ * \sa pipe_region_reference
+ */
 static INLINE void
-pipe_surface_reference(struct pipe_surface **dst, struct pipe_surface *src)
+pipe_surface_reference(struct pipe_surface **ptr, struct pipe_surface *surf)
 {
-   assert(*dst == NULL);
-   if (src) {
-      src->refcount++;
-      *dst = src;
+   assert(ptr);
+   if (*ptr) {
+      /* unreference the old thing */
+      struct pipe_surface *oldSurf = *ptr;
+      oldSurf->refcount--;
+      assert(oldSurf->refcount >= 0);
+      if (oldSurf->refcount == 0) {
+         /* free the old region */
+         pipe_region_reference(&oldSurf->region, NULL);
+         free(oldSurf);
+      }
+      *ptr = NULL;
    }
-}
-
-static INLINE void
-pipe_surface_unreference(struct pipe_surface **ps)
-{
-   assert(*ps);
-   (*ps)->refcount--;
-   if ((*ps)->refcount <= 0) {
-      /* XXX need a proper surface->free method */
-      free(*ps);
+   if (surf) {
+      /* reference the new thing */
+      surf->refcount++;
+      *ptr = surf;
    }
-   *ps = NULL;
 }
 
 

@@ -351,7 +351,7 @@ st_finish_render_texture(GLcontext *ctx,
    printf("FINISH RENDER TO TEXTURE surf=%p\n", strb->surface);
    */
 
-   pipe_surface_unreference(&strb->surface);
+   pipe_surface_reference(&strb->surface, NULL);
 
    _mesa_reference_renderbuffer(&att->Renderbuffer, NULL);
 
