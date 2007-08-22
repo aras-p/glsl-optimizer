@@ -178,11 +178,24 @@ src_vector(struct i915_fp_compile *p,
                  source->SrcRegister.SwizzleZ,
                  source->SrcRegister.SwizzleW);
 
-   assert(!source->SrcRegister.Negate);
-   assert(!source->SrcRegisterExtSwz.NegateX);
-   assert(!source->SrcRegisterExtSwz.NegateY);
-   assert(!source->SrcRegisterExtSwz.NegateZ);
-   assert(!source->SrcRegisterExtSwz.NegateW);
+   /* There's both negate-all-components and per-component negation.
+    * Try to handle both here.
+    */
+   {
+      int nx = source->SrcRegisterExtSwz.NegateX;
+      int ny = source->SrcRegisterExtSwz.NegateY;
+      int nz = source->SrcRegisterExtSwz.NegateZ;
+      int nw = source->SrcRegisterExtSwz.NegateW;
+      if (source->SrcRegister.Negate) {
+         nx = !nx;
+         ny = !ny;
+         nz = !nz;
+         nw = !nw;
+      }
+      src = negate(src, nx, ny, nz, nw);
+   }
+
+   /* no abs() or post-abs negation */
    assert(!source->SrcRegisterExtMod.Absolute);
    assert(!source->SrcRegisterExtMod.Negate);
 
