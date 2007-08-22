@@ -37,29 +37,43 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 static void nv10ViewportScale(nouveauContextPtr nmesa)
 {
 	GLcontext *ctx = nmesa->glCtx;
-	GLuint w = ctx->Viewport.Width;
-	GLuint h = ctx->Viewport.Height;
-
+	GLuint w = ((GLfloat) ctx->Viewport.Width) * 0.5;
+	GLuint h = ((GLfloat) ctx->Viewport.Height) * 0.5;
 	GLfloat max_depth = (ctx->Viewport.Near + ctx->Viewport.Far) * 0.5;
-/*	if (ctx->DrawBuffer) {
-		switch (ctx->DrawBuffer->_DepthBuffer->DepthBits) {
-			case 16:
-				max_depth *= 32767.0;
-				break;
-			case 24:
-				max_depth *= 16777215.0;
-				break;
-		}
-	} else {*/
-		/* Default to 24 bits range */	
-		max_depth *= 16777215.0;
-/*	}*/
+	GLfloat projection[16];
+	int i;
+
+	if (!ctx->DrawBuffer) {
+		return;
+	}
+	if (!ctx->DrawBuffer->_DepthBuffer) {
+		return;
+	}
+
+	switch (ctx->DrawBuffer->_DepthBuffer->DepthBits) {
+		case 16:
+			max_depth *= 32767.0;
+			break;
+		case 24:
+			max_depth *= 16777215.0;
+			break;
+	}
 
 	BEGIN_RING_CACHE(NvSub3D, NV10_TCL_PRIMITIVE_3D_VIEWPORT_SCALE_X, 4);
-	OUT_RING_CACHEf ((((GLfloat) w) * 0.5) - 2048.0);
-	OUT_RING_CACHEf ((((GLfloat) h) * 0.5) - 2048.0);
+	OUT_RING_CACHEf (w - 2048.0);
+	OUT_RING_CACHEf (h - 2048.0);
 	OUT_RING_CACHEf (max_depth);
 	OUT_RING_CACHEf (0.0);
+
+	memset(projection, 0, sizeof(projection));
+	projection[0*4+0] = w;
+	projection[1*4+1] = h;
+	projection[2*4+2] = max_depth;
+	projection[3*4+3] = 1.0;
+	BEGIN_RING_CACHE(NvSub3D, NV10_TCL_PRIMITIVE_3D_PROJECTION_MATRIX(0), 16);
+	for (i=0; i<16; i++) {
+		OUT_RING_CACHEf (projection[i]);
+	}
 }
 
 static void nv10AlphaFunc(GLcontext *ctx, GLenum func, GLfloat ref)
@@ -773,6 +787,7 @@ static GLboolean nv10InitCard(nouveauContextPtr nmesa)
 
 	/* Set state for stuff not initialized in nouveau_state.c */
 	BEGIN_RING_SIZE(NvSub3D, NV10_TCL_PRIMITIVE_3D_TX_ENABLE(0), 2);
+	OUT_RING  (0);
 	OUT_RING  (0);
 	BEGIN_RING_SIZE(NvSub3D, NV10_TCL_PRIMITIVE_3D_RC_IN_ALPHA(0), 12);
 	OUT_RING  (0x30141010);
