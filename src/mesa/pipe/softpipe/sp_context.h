@@ -33,6 +33,7 @@
 
 #include "pipe/p_state.h"
 #include "pipe/p_context.h"
+#include "pipe/p_defines.h"
 
 #include "sp_quad.h"
 
@@ -64,6 +65,7 @@ enum interp_mode {
 #define SP_NEW_STENCIL    0x1000
 #define SP_NEW_VERTEX     0x2000
 #define SP_NEW_VS         0x4000
+#define SP_NEW_CONSTANTS  0x8000
 
 
 struct softpipe_context {     
@@ -78,6 +80,7 @@ struct softpipe_context {
    struct pipe_blend_color blend_color;
    struct pipe_clear_color_state clear_color;
    struct pipe_clip_state clip;
+   struct pipe_constant_buffer constants[2];
    struct pipe_depth_state depth_test;
    struct pipe_framebuffer_state framebuffer;
    struct pipe_shader_state fs;
@@ -105,7 +108,9 @@ struct softpipe_context {
     * Mapped vertex buffers
     */
    ubyte *mapped_vbuffer[PIPE_ATTRIB_MAX];
-
+   
+   /** Mapped constant buffers */
+   void *mapped_constants[PIPE_SHADER_TYPES];
 
    /* FS + setup derived state:
     */

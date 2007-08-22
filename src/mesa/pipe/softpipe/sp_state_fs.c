@@ -1,6 +1,6 @@
 /**************************************************************************
  * 
- * Copyright 2003 Tungsten Graphics, Inc., Cedar Park, Texas.
+ * Copyright 2007 Tungsten Graphics, Inc., Cedar Park, Texas.
  * All Rights Reserved.
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a
@@ -28,6 +28,8 @@
 #include "sp_context.h"
 #include "sp_state.h"
 
+#include "pipe/p_defines.h"
+#include "pipe/p_winsys.h"
 #include "pipe/draw/draw_context.h"
 
 
@@ -53,3 +55,24 @@ void softpipe_set_vs_state( struct pipe_context *pipe,
 
    draw_set_vertex_shader(softpipe->draw, vs);
 }
+
+
+void softpipe_set_constant_buffer(struct pipe_context *pipe,
+                                  uint shader, uint index,
+                                  const struct pipe_constant_buffer *buf)
+{
+   struct softpipe_context *softpipe = softpipe_context(pipe);
+   struct pipe_winsys *ws = pipe->winsys;
+
+   assert(shader < PIPE_SHADER_TYPES);
+   assert(index == 0);
+
+   /* note: reference counting */
+   ws->buffer_unreference(ws, &softpipe->constants[shader].buffer);
+   softpipe->constants[shader].buffer = ws->buffer_reference(ws, buf->buffer);
+   softpipe->constants[shader].size = buf->size;
+
+   softpipe->dirty |= SP_NEW_CONSTANTS;
+}
+
+

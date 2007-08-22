@@ -30,6 +30,7 @@
 
 
 #include "pipe/draw/draw_context.h"
+#include "pipe/p_winsys.h"
 
 #include "i915_context.h"
 #include "i915_state.h"
@@ -128,6 +129,44 @@ static void i915_set_vs_state( struct pipe_context *pipe,
 
    /* just pass-through to draw module */
    draw_set_vertex_shader(i915->draw, vs);
+}
+
+
+static void i915_set_constant_buffer(struct pipe_context *pipe,
+                                     uint shader, uint index,
+                                     const struct pipe_constant_buffer *buf)
+{
+   struct i915_context *i915 = i915_context(pipe);
+   struct pipe_winsys *ws = pipe->winsys;
+
+   assert(shader < PIPE_SHADER_TYPES);
+   assert(index == 0);
+
+   /* Make a copy of shader constants.
+    * During fragment program translation we may add additional
+    * constants to the array.
+    *
+    * We want to consider the situation where some user constants
+    * (ex: a material color) may change frequently but the shader program
+    * stays the same.  In that case we should only be updating the first
+    * N constants, leaving any extras from shader translation alone.
+    */
+   {
+      void *mapped;
+      if (buf->size &&
+          (mapped = ws->buffer_map(ws, buf->buffer, PIPE_BUFFER_FLAG_READ))) {
+         memcpy(i915->current.constants[shader], mapped, buf->size);
+         fprintf(stderr, "i915 problem: map of constant buffer failed\n");
+         ws->buffer_unmap(ws, buf->buffer);
+         i915->current.num_user_constants[shader]
+            = buf->size / (4 * sizeof(float));
+      }
+      else {
+         i915->current.num_user_constants[shader] = 0;
+      }
+   }
+
+   i915->dirty |= I915_NEW_CONSTANTS;
 }
 
 
@@ -256,6 +295,7 @@ i915_init_state_functions( struct i915_context *i915 )
    i915->pipe.set_blend_state = i915_set_blend_state;
    i915->pipe.set_clip_state = i915_set_clip_state;
    i915->pipe.set_clear_color_state = i915_set_clear_color_state;
+   i915->pipe.set_constant_buffer = i915_set_constant_buffer;
    i915->pipe.set_depth_state = i915_set_depth_test_state;
    i915->pipe.set_framebuffer_state = i915_set_framebuffer_state;
    i915->pipe.set_fs_state = i915_set_fs_state;

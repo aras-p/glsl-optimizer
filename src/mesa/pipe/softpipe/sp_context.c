@@ -237,6 +237,7 @@ struct pipe_context *softpipe_create( struct pipe_winsys *pipe_winsys,
    softpipe->pipe.set_blend_state = softpipe_set_blend_state;
    softpipe->pipe.set_clip_state = softpipe_set_clip_state;
    softpipe->pipe.set_clear_color_state = softpipe_set_clear_color_state;
+   softpipe->pipe.set_constant_buffer = softpipe_set_constant_buffer;
    softpipe->pipe.set_depth_state = softpipe_set_depth_test_state;
    softpipe->pipe.set_framebuffer_state = softpipe_set_framebuffer_state;
    softpipe->pipe.set_fs_state = softpipe_set_fs_state;

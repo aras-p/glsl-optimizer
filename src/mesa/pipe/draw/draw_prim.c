@@ -165,7 +165,7 @@ run_vertex_program(struct draw_context *draw,
                           NULL /*samplers*/ );
 
    /* Consts does not require 16 byte alignment. */
-   machine.Consts = draw->vertex_shader.constants->constant;
+   machine.Consts = (float (*)[4]) draw->mapped_constants;
 
    machine.Inputs = ALIGN16_ASSIGN(inputs);
    machine.Outputs = ALIGN16_ASSIGN(outputs);
@@ -739,6 +739,13 @@ void draw_set_mapped_vertex_buffer(struct draw_context *draw,
                                    unsigned attr, const void *buffer)
 {
    draw->mapped_vbuffer[attr] = buffer;
+}
+
+
+void draw_set_mapped_constant_buffer(struct draw_context *draw,
+                                     const void *buffer)
+{
+   draw->mapped_constants = buffer;
 }
 
 

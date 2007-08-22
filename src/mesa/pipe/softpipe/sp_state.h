@@ -52,6 +52,10 @@ void softpipe_set_clear_color_state( struct pipe_context *,
 void softpipe_set_clip_state( struct pipe_context *,
 			     const struct pipe_clip_state * );
 
+void softpipe_set_constant_buffer(struct pipe_context *,
+                                  uint shader, uint index,
+                                  const struct pipe_constant_buffer *buf);
+
 void softpipe_set_depth_test_state( struct pipe_context *,
                                     const struct pipe_depth_state * );
 

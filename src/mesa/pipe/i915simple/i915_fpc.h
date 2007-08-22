@@ -37,7 +37,6 @@
 
 
 #define I915_PROGRAM_SIZE 192
-#define I915_MAX_CONSTANT  32
 
 #define MAX_VARYING 8
 
@@ -99,9 +98,10 @@ struct i915_fp_compile {
    uint declarations[I915_PROGRAM_SIZE];
    uint program[I915_PROGRAM_SIZE];
 
-   uint constant_flags[I915_MAX_CONSTANT];
-
-   struct pipe_constant_buffer *constants;
+   /** points into the i915->current.constants array: */
+   float (*constants)[4];
+   uint num_constants;
+   uint constant_flags[I915_MAX_CONSTANT]; /**< status of each constant */
 
    uint *csr;                 /* Cursor, points into program.
                                  */

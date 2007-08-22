@@ -167,6 +167,8 @@ struct draw_context
    unsigned eltSize;  /**< bytes per index (0, 1, 2 or 4) */
    /** The mapped vertex arrays */
    const void *mapped_vbuffer[PIPE_ATTRIB_MAX];
+   /** The mapped constant buffers (for vertex shader) */
+   const void *mapped_constants;
 
    /* Clip derived state:
     */

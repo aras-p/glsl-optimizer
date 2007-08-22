@@ -32,6 +32,8 @@
 #include "shader/prog_parameter.h"
 
 #include "pipe/p_context.h"
+#include "pipe/p_defines.h"
+#include "pipe/p_winsys.h"
 #include "pipe/tgsi/mesa/mesa_to_tgsi.h"
 #include "pipe/tgsi/core/tgsi_dump.h"
 
@@ -53,12 +55,36 @@ static void compile_fs( struct st_context *st,
 }
 
 
+static void
+update_fs_constants(struct st_context *st,
+                    struct gl_program_parameter_list *params)
+
+{
+   const uint paramBytes = params->NumParameters * sizeof(GLfloat) * 4;
+   struct pipe_winsys *ws = st->pipe->winsys;
+   struct pipe_constant_buffer *cbuf
+      = &st->state.constants[PIPE_SHADER_FRAGMENT];
+
+   if (!cbuf->buffer)   
+      cbuf->buffer = ws->buffer_create(ws, 1);
+
+   /* load Mesa constants into the constant buffer */
+   if (paramBytes)
+      ws->buffer_data(ws, cbuf->buffer, paramBytes, params->ParameterValues);
+
+   cbuf->size = paramBytes;
+
+   st->pipe->set_constant_buffer(st->pipe, PIPE_SHADER_FRAGMENT, 0, cbuf);
+}
+
+
 static void update_fs( struct st_context *st )
 {
    struct pipe_shader_state fs;
    struct st_fragment_program *fp = NULL;
    struct gl_program_parameter_list *params = NULL;
 
+   /* find active shader and params */
    if (st->ctx->Shader.CurrentProgram &&
        st->ctx->Shader.CurrentProgram->LinkStatus &&
        st->ctx->Shader.CurrentProgram->FragmentProgram) {
@@ -72,25 +98,21 @@ static void update_fs( struct st_context *st )
       params = st->ctx->FragmentProgram._Current->Base.Parameters;
    }
 
+   /* update constants */
    if (fp && params) {
-      /* load program's constants array */
-
       _mesa_load_state_parameters(st->ctx, params);
-
-      fp->constants.nr_constants = params->NumParameters;
-      memcpy(fp->constants.constant, 
-             params->ParameterValues,
-             params->NumParameters * sizeof(GLfloat) * 4);
+      update_fs_constants(st, params);
    }
 
+   /* translate shader to TGSI format */
    if (fp->dirty)
       compile_fs( st, fp );
 
+   /* update pipe state */
    memset( &fs, 0, sizeof(fs) );
    fs.inputs_read = fp->Base.Base.InputsRead;
    fs.outputs_written = fp->Base.Base.OutputsWritten;
    fs.tokens = &fp->tokens[0];
-   fs.constants = &fp->constants;
 
    if (memcmp(&fs, &st->state.fs, sizeof(fs)) != 0 ||
        fp->dirty) 

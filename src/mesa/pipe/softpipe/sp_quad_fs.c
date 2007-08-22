@@ -33,6 +33,7 @@
  */
 
 #include "pipe/p_util.h"
+#include "pipe/p_defines.h"
 
 #include "sp_context.h"
 #include "sp_headers.h"
@@ -83,7 +84,7 @@ shade_quad(
       qss->samplers );
 
    /* Consts does not require 16 byte alignment. */
-   machine.Consts = softpipe->fs.constants->constant;
+   machine.Consts = softpipe->mapped_constants[PIPE_SHADER_FRAGMENT];
 
    machine.Inputs = ALIGN16_ASSIGN(inputs);
    machine.Outputs = ALIGN16_ASSIGN(outputs);

@@ -34,6 +34,8 @@
 #include "tnl/t_vp_build.h"
 
 #include "pipe/p_context.h"
+#include "pipe/p_defines.h"
+#include "pipe/p_winsys.h"
 #include "pipe/tgsi/mesa/mesa_to_tgsi.h"
 #include "pipe/tgsi/core/tgsi_dump.h"
 
@@ -56,17 +58,36 @@ static void compile_vs( struct st_context *st,
 }
 
 
+static void
+update_vs_constants(struct st_context *st,
+                    struct gl_program_parameter_list *params)
+
+{
+   const uint paramBytes = params->NumParameters * sizeof(GLfloat) * 4;
+   struct pipe_winsys *ws = st->pipe->winsys;
+   struct pipe_constant_buffer *cbuf
+      = &st->state.constants[PIPE_SHADER_VERTEX];
+
+   if (!cbuf->buffer)   
+      cbuf->buffer = ws->buffer_create(ws, 1);
+
+   /* load Mesa constants into the constant buffer */
+   if (paramBytes)
+      ws->buffer_data(ws, cbuf->buffer, paramBytes, params->ParameterValues);
+
+   cbuf->size = paramBytes;
+
+   st->pipe->set_constant_buffer(st->pipe, PIPE_SHADER_VERTEX, 0, cbuf);
+}
+
+
 static void update_vs( struct st_context *st )
 {
    struct pipe_shader_state vs;
    struct st_vertex_program *vp = NULL;
    struct gl_program_parameter_list *params = NULL;
 
-#if 0
-   if (st->ctx->VertexProgram._MaintainTnlProgram)
-      _tnl_UpdateFixedFunctionProgram( st->ctx );
-#endif
-
+   /* find active shader and params */
    if (st->ctx->Shader.CurrentProgram &&
        st->ctx->Shader.CurrentProgram->LinkStatus &&
        st->ctx->Shader.CurrentProgram->VertexProgram) {
@@ -80,31 +101,21 @@ static void update_vs( struct st_context *st )
       params = st->ctx->VertexProgram._Current->Base.Parameters;
    }
 
-   /* XXXX temp */
-#if 1
-   if (!vp)
-      return;
-#endif
+   /* update constants */
    if (vp && params) {
-      /* load program's constants array */
-
-      /* XXX this should probably be done elsewhere/separately */
       _mesa_load_state_parameters(st->ctx, params);
-
-      vp->constants.nr_constants = params->NumParameters;
-      memcpy(vp->constants.constant, 
-             params->ParameterValues,
-             params->NumParameters * sizeof(GLfloat) * 4);
+      update_vs_constants(st, params);
    }
 
+   /* translate shader to TGSI format */
    if (vp->dirty)
       compile_vs( st, vp );
 
+   /* update pipe state */
    memset( &vs, 0, sizeof(vs) );
    vs.outputs_written = vp->Base.Base.OutputsWritten;
    vs.inputs_read = vp->Base.Base.InputsRead;
    vs.tokens = &vp->tokens[0];
-   vs.constants = &vp->constants;
 
    if (memcmp(&vs, &st->state.vs, sizeof(vs)) != 0 ||
        vp->dirty) 

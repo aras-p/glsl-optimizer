@@ -216,9 +216,11 @@ i915_emit_hardware_state(struct i915_context *i915 )
    /* constants */
    if (i915->hardware_dirty & I915_HW_PROGRAM)
    {
-      const uint nr = i915->current.num_constants;
+      const uint nr = i915->current.num_constants[PIPE_SHADER_FRAGMENT];
+      assert(nr <= I915_MAX_CONSTANT);
       if (nr > 0) {
-         const uint *c = (const uint *) i915->current.constants;
+         const uint *c
+            = (const uint *) i915->current.constants[PIPE_SHADER_FRAGMENT];
          uint i;
          OUT_BATCH( _3DSTATE_PIXEL_SHADER_CONSTANTS | (nr * 4) );
          OUT_BATCH( (1 << (nr - 1)) | ((1 << (nr - 1)) - 1) );

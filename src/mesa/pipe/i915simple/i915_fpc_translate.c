@@ -102,8 +102,8 @@ i915_use_passthrough_shader(struct i915_context *i915)
       i915->current.program_len = Elements(passthrough);
    }
 
-   i915->current.constants = NULL;
-   i915->current.num_constants = 0;
+   i915->current.num_constants[PIPE_SHADER_FRAGMENT] = 0;
+   i915->current.num_user_constants[PIPE_SHADER_FRAGMENT] = 0;
 }
 
 
@@ -870,11 +870,11 @@ i915_init_compile(struct i915_context *i915,
 
    p->shader = &i915->fs;
 
-   /* a bit of a hack, need to improve constant buffer infrastructure */
-   if (i915->fs.constants)
-      p->constants = i915->fs.constants;
-   else
-      p->constants = &i915->temp_constants;
+   /* new constants found during translation get appended after the
+    * user-provided constants.
+    */
+   p->constants = i915->current.constants[PIPE_SHADER_FRAGMENT];
+   p->num_constants = i915->current.num_user_constants[PIPE_SHADER_FRAGMENT];
 
    p->nr_tex_indirect = 1;      /* correct? */
    p->nr_tex_insn = 0;
@@ -960,8 +960,10 @@ i915_fini_compile(struct i915_context *i915, struct i915_fp_compile *p)
                 program_size * sizeof(uint));
       }
 
-      i915->current.constants = (uint *) p->constants->constant;
-      i915->current.num_constants = p->constants->nr_constants;
+      /* update number of constants */
+      i915->current.num_constants[PIPE_SHADER_FRAGMENT] = p->num_constants;
+      assert(i915->current.num_constants[PIPE_SHADER_FRAGMENT]
+             >= i915->current.num_user_constants[PIPE_SHADER_FRAGMENT]);
    }
 
    /* Release the compilation struct: 

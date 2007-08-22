@@ -350,7 +350,6 @@ clear_with_quad(GLcontext *ctx,
       memset(&fs, 0, sizeof(fs));
       fs.inputs_read = stfp->Base.Base.InputsRead;
       fs.tokens = &stfp->tokens[0];
-      fs.constants = NULL;
       pipe->set_fs_state(pipe, &fs);
    }
 
@@ -365,7 +364,6 @@ clear_with_quad(GLcontext *ctx,
       vs.inputs_read = stvp->Base.Base.InputsRead;
       vs.outputs_written = stvp->Base.Base.OutputsWritten;
       vs.tokens = &stvp->tokens[0];
-      vs.constants = NULL;
       pipe->set_vs_state(pipe, &vs);
    }
 

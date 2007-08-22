@@ -115,9 +115,12 @@ struct pipe_clip_state {
 };
 
 
+/**
+ * Constants for vertex/fragment shaders
+ */
 struct pipe_constant_buffer {
-   float constant[PIPE_MAX_CONSTANT][4];
-   unsigned nr_constants;
+   struct pipe_buffer_handle *buffer;
+   unsigned size;    /** in bytes */
 };
 
 
@@ -125,7 +128,6 @@ struct pipe_shader_state {
    unsigned inputs_read;                   /**< FRAG/VERT_ATTRIB_x */
    unsigned outputs_written;               /**< FRAG/VERT_RESULT_x */
    const struct tgsi_token *tokens;
-   struct pipe_constant_buffer *constants; /* XXX temporary? */
 };
 
 struct pipe_depth_state

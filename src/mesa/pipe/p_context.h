@@ -99,8 +99,12 @@ struct pipe_context {
    void (*set_clear_color_state)( struct pipe_context *,
                                   const struct pipe_clear_color_state * );
 
+   void (*set_constant_buffer)( struct pipe_context *,
+                                uint shader, uint index,
+                                const struct pipe_constant_buffer *buf );
+                              
    void (*set_depth_state)( struct pipe_context *,
-                              const struct pipe_depth_state * );
+                            const struct pipe_depth_state * );
 
    void (*set_framebuffer_state)( struct pipe_context *,
                                   const struct pipe_framebuffer_state * );

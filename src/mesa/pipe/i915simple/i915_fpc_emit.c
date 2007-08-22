@@ -244,25 +244,14 @@ i915_emit_const1f(struct i915_fp_compile * p, float c0)
       if (p->constant_flags[reg] == I915_CONSTFLAG_PARAM)
          continue;
       for (idx = 0; idx < 4; idx++) {
-#if 0
          if (!(p->constant_flags[reg] & (1 << idx)) ||
-             p->fp->constant[reg][idx] == c0) {
-            p->fp->constant[reg][idx] = c0;
+             p->constants[reg][idx] == c0) {
+            p->constants[reg][idx] = c0;
             p->constant_flags[reg] |= 1 << idx;
-            if (reg + 1 > p->fp->nr_constants)
-               p->fp->nr_constants = reg + 1;
+            if (reg + 1 > p->num_constants)
+               p->num_constants = reg + 1;
             return swizzle(UREG(REG_TYPE_CONST, reg), idx, ZERO, ZERO, ONE);
          }
-#else
-         if (!(p->constant_flags[reg] & (1 << idx)) ||
-             p->constants->constant[reg][idx] == c0) {
-            p->constants->constant[reg][idx] = c0;
-            p->constant_flags[reg] |= 1 << idx;
-            if (reg + 1 > p->constants->nr_constants)
-               p->constants->nr_constants = reg + 1;
-            return swizzle(UREG(REG_TYPE_CONST, reg), idx, ZERO, ZERO, ONE);
-         }
-#endif
       }
    }
 
@@ -291,23 +280,12 @@ i915_emit_const2f(struct i915_fp_compile * p, float c0, float c1)
          continue;
       for (idx = 0; idx < 3; idx++) {
          if (!(p->constant_flags[reg] & (3 << idx))) {
-#if 0
-            p->fp->constant[reg][idx] = c0;
-            p->fp->constant[reg][idx + 1] = c1;
+            p->constants[reg][idx + 0] = c0;
+            p->constants[reg][idx + 1] = c1;
             p->constant_flags[reg] |= 3 << idx;
-            if (reg + 1 > p->fp->nr_constants)
-               p->fp->nr_constants = reg + 1;
-            return swizzle(UREG(REG_TYPE_CONST, reg), idx, idx + 1, ZERO,
-                           ONE);
-#else
-            p->constants->constant[reg][idx + 0] = c0;
-            p->constants->constant[reg][idx + 1] = c1;
-            p->constant_flags[reg] |= 3 << idx;
-            if (reg + 1 > p->constants->nr_constants)
-               p->constants->nr_constants = reg + 1;
-            return swizzle(UREG(REG_TYPE_CONST, reg), idx, idx + 1, ZERO,
-                           ONE);
-#endif
+            if (reg + 1 > p->num_constants)
+               p->num_constants = reg + 1;
+            return swizzle(UREG(REG_TYPE_CONST, reg), idx, idx + 1, ZERO, ONE);
          }
       }
    }
@@ -326,40 +304,21 @@ i915_emit_const4f(struct i915_fp_compile * p,
 
    for (reg = 0; reg < I915_MAX_CONSTANT; reg++) {
       if (p->constant_flags[reg] == 0xf &&
-#if 0
-          p->fp->constant[reg][0] == c0 &&
-          p->fp->constant[reg][1] == c1 &&
-          p->fp->constant[reg][2] == c2 && 
-	  p->fp->constant[reg][3] == c3
-#else
-          p->constants->constant[reg][0] == c0 &&
-          p->constants->constant[reg][1] == c1 &&
-          p->constants->constant[reg][2] == c2 &&
-          p->constants->constant[reg][3] == c3
-#endif
-          ) {
+          p->constants[reg][0] == c0 &&
+          p->constants[reg][1] == c1 &&
+          p->constants[reg][2] == c2 &&
+          p->constants[reg][3] == c3) {
          return UREG(REG_TYPE_CONST, reg);
       }
       else if (p->constant_flags[reg] == 0) {
-#if 0
-         p->fp->constant[reg][0] = c0;
-         p->fp->constant[reg][1] = c1;
-         p->fp->constant[reg][2] = c2;
-         p->fp->constant[reg][3] = c3;
-#else
-         p->constants->constant[reg][0] = c0;
-         p->constants->constant[reg][1] = c1;
-         p->constants->constant[reg][2] = c2;
-         p->constants->constant[reg][3] = c3;
-#endif
+
+         p->constants[reg][0] = c0;
+         p->constants[reg][1] = c1;
+         p->constants[reg][2] = c2;
+         p->constants[reg][3] = c3;
          p->constant_flags[reg] = 0xf;
-#if 0
-         if (reg + 1 > p->fp->nr_constants)
-            p->fp->nr_constants = reg + 1;
-#else
-         if (reg + 1 > p->constants->nr_constants)
-            p->constants->nr_constants = reg + 1;
-#endif
+         if (reg + 1 > p->num_constants)
+            p->num_constants = reg + 1;
          return UREG(REG_TYPE_CONST, reg);
       }
    }

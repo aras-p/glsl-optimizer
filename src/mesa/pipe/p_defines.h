@@ -277,6 +277,14 @@
 
 
 /**
+ * Shaders
+ */
+#define PIPE_SHADER_VERTEX   0
+#define PIPE_SHADER_FRAGMENT 1
+#define PIPE_SHADER_TYPES    2
+
+
+/**
  * Primitive types:
  */
 #define PIPE_PRIM_POINTS          0

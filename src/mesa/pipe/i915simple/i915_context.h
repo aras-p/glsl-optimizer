@@ -30,8 +30,8 @@
 
 
 #include "pipe/p_context.h"
+#include "pipe/p_defines.h"
 #include "pipe/p_state.h"
-
 
 
 #define I915_TEX_UNITS 8
@@ -74,6 +74,7 @@
 #define I915_CACHE_CONSTANTS      5
 #define I915_MAX_CACHE            6
 
+#define I915_MAX_CONSTANT  32
 
 struct i915_cache_context;
 
@@ -85,10 +86,14 @@ struct i915_state
    unsigned immediate[I915_MAX_IMMEDIATE];
    unsigned dynamic[I915_MAX_DYNAMIC];
 
+   float constants[PIPE_SHADER_TYPES][I915_MAX_CONSTANT][4];
+   /** number of constants passed in through a constant buffer */
+   uint num_user_constants[PIPE_SHADER_TYPES];
+   /** user constants, plus extra constants from shader translation */
+   uint num_constants[PIPE_SHADER_TYPES];
+
    uint *program;
    uint program_len;
-   uint *constants;
-   uint num_constants;
 
    unsigned sampler[I915_TEX_UNITS][3];
    unsigned sampler_enable_flags;
@@ -112,6 +117,7 @@ struct i915_context
    struct pipe_blend_color blend_color;
    struct pipe_clear_color_state clear_color;
    struct pipe_clip_state clip;
+   struct pipe_constant_buffer constants[PIPE_SHADER_TYPES];
    struct pipe_depth_state depth_test;
    struct pipe_framebuffer_state framebuffer;
    struct pipe_shader_state fs;
@@ -123,8 +129,6 @@ struct i915_context
    struct pipe_mipmap_tree *texture[PIPE_MAX_SAMPLERS];
    struct pipe_viewport_state viewport;
    struct pipe_vertex_buffer vertex_buffer[PIPE_ATTRIB_MAX];
-
-   struct pipe_constant_buffer temp_constants; /*XXX temporary*/
 
    unsigned dirty;
 
@@ -156,6 +160,8 @@ struct i915_context
 #define I915_NEW_SAMPLER     0x400
 #define I915_NEW_TEXTURE     0x800
 #define I915_NEW_STENCIL    0x1000
+#define I915_NEW_CONSTANTS  0x2000
+
 
 /* Driver's internally generated state flags:
  */

@@ -186,6 +186,9 @@ static boolean i915_draw_elements( struct pipe_context *pipe,
       draw_set_mapped_element_buffer(draw, 0, NULL);
    }
 
+   draw_set_mapped_constant_buffer(draw,
+                                i915->current.constants[PIPE_SHADER_VERTEX]);
+
    /* draw! */
    draw_arrays(i915->draw, prim, start, count);
 

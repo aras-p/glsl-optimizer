@@ -53,8 +53,6 @@ struct st_fragment_program
    struct tgsi_token tokens[ST_FP_MAX_TOKENS];
    GLboolean dirty;
    
-   struct pipe_constant_buffer constants;
-
 #if 0   
    GLfloat (*cbuffer)[4];
    GLuint nr_constants;
@@ -85,7 +83,9 @@ struct st_vertex_program
 
    struct tgsi_token tokens[ST_FP_MAX_TOKENS];
    GLboolean dirty;
+#if 0
    struct pipe_constant_buffer constants;
+#endif
    GLuint param_state;
 };
 

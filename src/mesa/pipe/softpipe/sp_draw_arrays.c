@@ -43,6 +43,34 @@
 
 
 
+static void
+softpipe_map_constant_buffers(struct softpipe_context *sp)
+{
+   struct pipe_winsys *ws = sp->pipe.winsys;
+   uint i;
+   for (i = 0; i < 2; i++) {
+      if (sp->constants[i].size)
+         sp->mapped_constants[i] = ws->buffer_map(ws, sp->constants[i].buffer,
+                                                  PIPE_BUFFER_FLAG_READ);
+   }
+
+   draw_set_mapped_constant_buffer(sp->draw,
+                                   sp->mapped_constants[PIPE_SHADER_VERTEX]);
+}
+
+static void
+softpipe_unmap_constant_buffers(struct softpipe_context *sp)
+{
+   struct pipe_winsys *ws = sp->pipe.winsys;
+   uint i;
+   for (i = 0; i < 2; i++) {
+      if (sp->constants[i].size)
+         ws->buffer_unmap(ws, sp->constants[i].buffer);
+      sp->mapped_constants[i] = NULL;
+   }
+}
+
+
 boolean
 softpipe_draw_arrays(struct pipe_context *pipe, unsigned mode,
                      unsigned start, unsigned count)
@@ -80,6 +108,8 @@ softpipe_draw_elements(struct pipe_context *pipe,
       softpipe_update_derived( sp );
 
    softpipe_map_surfaces(sp);
+
+   softpipe_map_constant_buffers(sp);
 
    /*
     * Map vertex buffers
@@ -123,6 +153,7 @@ softpipe_draw_elements(struct pipe_context *pipe,
    }
 
    softpipe_unmap_surfaces(sp);
+   softpipe_unmap_constant_buffers(sp);
 
    return TRUE;
 }
