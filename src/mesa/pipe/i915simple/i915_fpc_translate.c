@@ -77,14 +77,30 @@ static const float cos_constants[4] = { 1.0,
 
 
 
+/**
+ * component-wise negation of ureg
+ */
+static INLINE int
+negate(int reg, int x, int y, int z, int w)
+{
+   /* Another neat thing about the UREG representation */
+   return reg ^ (((x & 1) << UREG_CHANNEL_X_NEGATE_SHIFT) |
+                 ((y & 1) << UREG_CHANNEL_Y_NEGATE_SHIFT) |
+                 ((z & 1) << UREG_CHANNEL_Z_NEGATE_SHIFT) |
+                 ((w & 1) << UREG_CHANNEL_W_NEGATE_SHIFT));
+}
+
+
 static void
 i915_use_passthrough_shader(struct i915_context *i915)
 {
    fprintf(stderr, "**** Using i915 pass-through fragment shader\n");
 
    i915->current.program = (uint *) malloc(sizeof(passthrough));
-   memcpy(i915->current.program, passthrough, sizeof(passthrough));
-   i915->current.program_len = Elements(passthrough);
+   if (i915->current.program) {
+      memcpy(i915->current.program, passthrough, sizeof(passthrough));
+      i915->current.program_len = Elements(passthrough);
+   }
 
    i915->current.constants = NULL;
    i915->current.num_constants = 0;
@@ -882,6 +898,7 @@ i915_init_compile(struct i915_context *i915,
    return p;
 }
 
+
 /* Copy compile results to the fragment program struct and destroy the
  * compilation context.
  */
@@ -903,6 +920,12 @@ i915_fini_compile(struct i915_context *i915, struct i915_fp_compile *p)
    if (p->nr_decl_insn > I915_MAX_DECL_INSN)
       i915_program_error(p, "Exceeded max DECL instructions");
 
+   /* free old program, if present */
+   if (i915->current.program) {
+      free(i915->current.program);
+      i915->current.program_len = 0;
+   }
+
    if (p->error) {
       p->NumNativeInstructions = 0;
       p->NumNativeAluInstructions = 0;
@@ -912,9 +935,8 @@ i915_fini_compile(struct i915_context *i915, struct i915_fp_compile *p)
       i915_use_passthrough_shader(i915);
    }
    else {
-      p->NumNativeInstructions = (p->nr_alu_insn +
-                                      p->nr_tex_insn +
-                                      p->nr_decl_insn);
+      p->NumNativeInstructions
+         = p->nr_alu_insn + p->nr_tex_insn + p->nr_decl_insn;
       p->NumNativeAluInstructions = p->nr_alu_insn;
       p->NumNativeTexInstructions = p->nr_tex_insn;
       p->NumNativeTexIndirections = p->nr_tex_indirect;
@@ -926,15 +948,17 @@ i915_fini_compile(struct i915_context *i915, struct i915_fp_compile *p)
        */
       i915->current.program
          = (uint *) malloc((program_size + decl_size) * sizeof(uint));
-      i915->current.program_len = program_size + decl_size;
+      if (i915->current.program) {
+         i915->current.program_len = program_size + decl_size;
 
-      memcpy(i915->current.program,
-             p->declarations, 
-             decl_size * sizeof(uint));
+         memcpy(i915->current.program,
+                p->declarations, 
+                decl_size * sizeof(uint));
 
-      memcpy(i915->current.program + decl_size, 
-             p->program, 
-             program_size * sizeof(uint));
+         memcpy(i915->current.program + decl_size, 
+                p->program, 
+                program_size * sizeof(uint));
+      }
 
       i915->current.constants = (uint *) p->constants->constant;
       i915->current.num_constants = p->constants->nr_constants;

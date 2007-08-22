@@ -198,17 +198,6 @@ swizzle(int reg, int x, int y, int z, int w)
            CHANNEL_SRC(GET_CHANNEL_SRC(reg, w), 3));
 }
 
-/* Another neat thing about the UREG representation:  
- */
-static INLINE int
-negate(int reg, int x, int y, int z, int w)
-{
-   return reg ^ (((x & 1) << UREG_CHANNEL_X_NEGATE_SHIFT) |
-                 ((y & 1) << UREG_CHANNEL_Y_NEGATE_SHIFT) |
-                 ((z & 1) << UREG_CHANNEL_Z_NEGATE_SHIFT) |
-                 ((w & 1) << UREG_CHANNEL_W_NEGATE_SHIFT));
-}
-
 
 
 /***********************************************************************
