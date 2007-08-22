@@ -149,6 +149,11 @@ void i915_update_derived( struct i915_context *i915 )
    if (i915->dirty)
       i915_update_dynamic( i915 );
 
+   if (i915->dirty & I915_NEW_FS) {
+      i915_translate_fragment_program(i915);
+      i915->hardware_dirty |= I915_HW_PROGRAM; /* XXX right? */
+   }
+
    /* HW emit currently references framebuffer state directly:
     */
    if (i915->dirty & I915_NEW_FRAMEBUFFER)

@@ -90,71 +90,10 @@ enum
 
 
 
-#if 1 /*XXX temp */
-/* Hardware version of a parsed fragment program.  "Derived" from the
- * mesa fragment_program struct.
+/**
+ * Program translation state
  */
-struct i915_fragment_program
-{
-#if 0
-   struct gl_fragment_program Base;
-#else
-   uint NumNativeInstructions;
-   uint NumNativeAluInstructions;
-   uint NumNativeTexInstructions;
-   uint NumNativeTexIndirections;
-#endif
-
-   boolean error;      /**< Set if i915_program_error() is called */
-#if 0
-   uint id;            /**< String id */
-   boolean translated;
-#endif
-
-   /* Decls + instructions: 
-    */
-   uint program[I915_PROGRAM_SIZE];
-   uint program_size;
-   
-#if 0
-   /* Constant buffer:
-    */
-   float constant[I915_MAX_CONSTANT][4];
-   uint nr_constants;
-#endif
-
-   /* Some of which are parameters: 
-    */
-   struct
-   {
-      uint reg;               /* Hardware constant idx */
-      const float *values;    /* Pointer to tracked values */
-   } param[I915_MAX_CONSTANT];
-   uint nr_params;
-
-#if 0
-   uint param_state;
-#endif
-   uint wpos_tex;
-};
-#endif
-
-
-/***********************************************************************
- * Public interface for the compiler
- */
-
-void i915_compile_fragment_program( struct i915_context *i915,
-				    struct i915_fragment_program *fp );
-
-
-/***********************************************************************
- * Private details of the compiler
- */
-
 struct i915_fp_compile {
-   struct i915_fragment_program *fp;
-
    struct pipe_shader_state *shader;
 
    uint declarations[I915_PROGRAM_SIZE];
@@ -186,9 +125,12 @@ struct i915_fp_compile {
    uint nr_alu_insn;
    uint nr_decl_insn;
 
-#if 0
-   float (*env_param)[4];
-#endif
+   boolean error;      /**< Set if i915_program_error() is called */
+   uint wpos_tex;
+   uint NumNativeInstructions;
+   uint NumNativeAluInstructions;
+   uint NumNativeTexInstructions;
+   uint NumNativeTexIndirections;
 };
 
 
@@ -268,6 +210,14 @@ negate(int reg, int x, int y, int z, int w)
 }
 
 
+
+/***********************************************************************
+ * Public interface for the compiler
+ */
+extern void i915_translate_fragment_program( struct i915_context *i915 );
+
+
+
 extern uint i915_get_temp(struct i915_fp_compile *p);
 extern uint i915_get_utemp(struct i915_fp_compile *p);
 extern void i915_release_utemps(struct i915_fp_compile *p);
@@ -302,38 +252,21 @@ extern uint i915_emit_const4f(struct i915_fp_compile *p,
                                 float c2, float c3);
 
 
-#if 0
-extern uint i915_emit_param4fv(struct i915_fp_compile *p,
-                                 const float * values);
-#endif
-
-
-
-/*======================================================================
- * i915_fpc_debug.c
- */
-extern void i915_program_error(struct i915_fp_compile *p,
-                               const char *msg);
-
-
 /*======================================================================
  * i915_fpc_debug.c
  */
 extern void i915_disassemble_program(const uint * program, uint sz);
 
-#if 0
-extern void i915_print_mesa_instructions( const struct prog_instruction *insn,
-					  uint nr );
-#endif
 
 /*======================================================================
  * i915_fpc_translate.c
  */
-void i915_fixup_depth_write(struct i915_fp_compile *p);
 
 extern void
-i915_translate_program(struct i915_fp_compile *p, const struct tgsi_token *token);
+i915_program_error(struct i915_fp_compile *p, const char *msg);
 
+extern void
+i915_translate_fragment_program(struct i915_context *i915);
 
 
 #endif

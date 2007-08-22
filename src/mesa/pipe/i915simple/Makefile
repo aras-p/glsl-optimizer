@@ -22,7 +22,6 @@ DRIVER_SOURCES = \
 	i915_strings.c \
 	i915_prim_emit.c \
 	i915_tex_layout.c \
-	i915_fpc.c \
 	i915_fpc_debug.c \
 	i915_fpc_emit.c \
 	i915_fpc_translate.c \

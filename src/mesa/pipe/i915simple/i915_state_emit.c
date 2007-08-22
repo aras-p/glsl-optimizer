@@ -26,10 +26,6 @@
  **************************************************************************/
 
 
-
-//#include "glheader.h"
-//#include "mtypes.h"
-
 #include "i915_reg.h"
 #include "i915_context.h"
 #include "i915_winsys.h"
@@ -116,9 +112,6 @@ i915_emit_hardware_state(struct i915_context *i915 )
    }
    
 
-
-
-
    if (i915->hardware_dirty & I915_HW_IMMEDIATE)
    {
       OUT_BATCH(_3DSTATE_LOAD_STATE_IMMEDIATE_1 | 
@@ -142,8 +135,6 @@ i915_emit_hardware_state(struct i915_context *i915 )
 	 OUT_BATCH(i915->current.dynamic[i]);
       }
    }
-
-
 
    if (i915->hardware_dirty & I915_HW_STATIC)
    {
@@ -180,7 +171,6 @@ i915_emit_hardware_state(struct i915_context *i915 )
 		   I915_BUFFER_ACCESS_WRITE,
 		   0);
       }
-
    
       {
 	 unsigned cformat = translate_format( i915->framebuffer.cbufs[0]->format );
@@ -198,19 +188,38 @@ i915_emit_hardware_state(struct i915_context *i915 )
 		   cformat |
 		   zformat );
       }
-
    }
 
-
-
+   /* constants */
+   if (i915->hardware_dirty & I915_HW_PROGRAM)
    {
-      unsigned i, dwords;
-      unsigned *prog = i915_passthrough_program( &dwords );
-      
-      for (i = 0; i < dwords; i++)
-	 OUT_BATCH( prog[i] );
+      const uint nr = i915->current.num_constants;
+      if (nr > 0) {
+         const uint *c = (const uint *) i915->current.constants;
+         uint i;
+         OUT_BATCH( _3DSTATE_PIXEL_SHADER_CONSTANTS | (nr * 4) );
+         OUT_BATCH( (1 << (nr - 1)) | ((1 << (nr - 1)) - 1) );
+         for (i = 0; i < nr; i++) {
+            OUT_BATCH(*c++);
+            OUT_BATCH(*c++);
+            OUT_BATCH(*c++);
+            OUT_BATCH(*c++);
+         }
+      }
    }
 
+   /* Fragment program */
+   if (i915->hardware_dirty & I915_HW_PROGRAM)
+   {
+      uint i;
+      /* we should always have, at least, a pass-through program */
+      assert(i915->current.program_len > 0);
+      for (i = 0; i < i915->current.program_len; i++) {
+         OUT_BATCH(i915->current.program[i]);
+      }
+   }
+
+   /* drawing surface size */
    {
       int w = i915->framebuffer.cbufs[0]->width;
       int h = i915->framebuffer.cbufs[0]->height;

@@ -84,6 +84,11 @@ struct i915_state
 {
    unsigned immediate[I915_MAX_IMMEDIATE];
    unsigned dynamic[I915_MAX_DYNAMIC];
+
+   uint *program;
+   uint program_len;
+   uint *constants;
+   uint num_constants;
    
    unsigned id;			/* track lost context events */
 };
@@ -114,6 +119,8 @@ struct i915_context
    struct pipe_mipmap_tree *texture[PIPE_MAX_SAMPLERS];
    struct pipe_viewport_state viewport;
    struct pipe_vertex_buffer vertex_buffer[PIPE_ATTRIB_MAX];
+
+   struct pipe_constant_buffer temp_constants; /*XXX temporary*/
 
    unsigned dirty;
 

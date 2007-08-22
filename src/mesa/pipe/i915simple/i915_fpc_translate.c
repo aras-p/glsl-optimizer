@@ -32,6 +32,34 @@
 #include "pipe/tgsi/core/tgsi_token.h"
 #include "pipe/tgsi/core/tgsi_parse.h"
 
+/**
+ * Simple pass-through fragment shader to use when we don't have
+ * a real shader (or it fails to compile for some reason).
+ */
+static unsigned passthrough[] = 
+{
+   _3DSTATE_PIXEL_SHADER_PROGRAM | ((2*3)-1),
+
+   /* declare input color:
+    */
+   (D0_DCL | 
+    (REG_TYPE_T << D0_TYPE_SHIFT) | 
+    (T_DIFFUSE << D0_NR_SHIFT) | 
+    D0_CHANNEL_ALL),
+   0,
+   0,
+
+   /* move to output color:
+    */
+   (A0_MOV | 
+    (REG_TYPE_OC << A0_DEST_TYPE_SHIFT) | 
+    A0_DEST_CHANNEL_ALL | 
+    (REG_TYPE_T << A0_SRC0_TYPE_SHIFT) |
+    (T_DIFFUSE << A0_SRC0_NR_SHIFT)),
+   0x01230000,			/* .xyzw */
+   0
+};
+
 
 /* 1, -1/3!, 1/5!, -1/7! */
 static const float sin_constants[4] = { 1.0,
@@ -48,6 +76,30 @@ static const float cos_constants[4] = { 1.0,
 };
 
 
+
+static void
+i915_use_passthrough_shader(struct i915_context *i915)
+{
+   fprintf(stderr, "**** Using i915 pass-through fragment shader\n");
+
+   i915->current.program = (uint *) malloc(sizeof(passthrough));
+   memcpy(i915->current.program, passthrough, sizeof(passthrough));
+   i915->current.program_len = Elements(passthrough);
+
+   i915->current.constants = NULL;
+   i915->current.num_constants = 0;
+}
+
+
+void
+i915_program_error(struct i915_fp_compile *p, const char *msg)
+{
+   fprintf(stderr, "i915_program_error: %s\n", msg);
+   p->error = 1;
+}
+
+
+
 /**
  * Construct a ureg for the given source register.  Will emit
  * constants, apply swizzling and negation as needed.
@@ -59,7 +111,7 @@ src_vector(struct i915_fp_compile *p,
    const uint index = source->SrcRegister.Index;
    uint src;
 
-   switch (source->SrcRegisterInd.File) {
+   switch (source->SrcRegister.File) {
    case TGSI_FILE_TEMPORARY:
       if (source->SrcRegister.Index >= I915_MAX_TEMPORARY) {
          i915_program_error(p, "Exceeded max temporary reg");
@@ -79,7 +131,7 @@ src_vector(struct i915_fp_compile *p,
        */
       switch (index) {
       case FRAG_ATTRIB_WPOS:
-         src = i915_emit_decl(p, REG_TYPE_T, p->fp->wpos_tex, D0_CHANNEL_ALL);
+         src = i915_emit_decl(p, REG_TYPE_T, p->wpos_tex, D0_CHANNEL_ALL);
          break;
       case FRAG_ATTRIB_COL0:
          src = i915_emit_decl(p, REG_TYPE_T, T_DIFFUSE, D0_CHANNEL_ALL);
@@ -111,27 +163,9 @@ src_vector(struct i915_fp_compile *p,
       }
       break;
 
-      /* Various parameters and env values.  All emitted to
-       * hardware as program constants.
-       */
-#if 0
-   case PROGRAM_LOCAL_PARAM:
-      src = i915_emit_param4fv(p, program->Base.LocalParams[index]);
-      break;
-   case PROGRAM_ENV_PARAM:
-      src = i915_emit_param4fv(p, p->env_param[index]);
-      break;
-   case PROGRAM_CONSTANT:
-   case PROGRAM_STATE_VAR:
-   case PROGRAM_NAMED_PARAM:
-      src = i915_emit_param4fv(
-	 p, program->Base.Parameters->ParameterValues[index]);
-      break;
-#else
    case TGSI_FILE_CONSTANT:
       src = UREG(REG_TYPE_CONST, index);
       break;
-#endif
 
    default:
       i915_program_error(p, "Bad source->File");
@@ -151,26 +185,14 @@ src_vector(struct i915_fp_compile *p,
    assert(!source->SrcRegisterExtSwz.NegateW);
    assert(!source->SrcRegisterExtMod.Absolute);
    assert(!source->SrcRegisterExtMod.Negate);
-#if 0
-   if (source->SrcRegister.Negate)
-      negate all 
 
-   if (extended source swiz per component)
-      src = negate(src,
-                   source->SrcRegisterExtSwz.NegateX,
-                   source->SrcRegisterExtSwz.NegateY,
-                   source->SrcRegisterExtSwz.NegateZ,
-                   source->SrcRegisterExtSwz.NegateW);
-   if (mod.abs)
-      absolute value
-
-   if (mod.negate)
-      another negate;
-#endif
    return src;
 }
 
 
+/**
+ * Construct a ureg for a destination register.
+ */
 static uint
 get_result_vector(struct i915_fp_compile *p,
                   const struct tgsi_full_dst_register *dest)
@@ -178,9 +200,9 @@ get_result_vector(struct i915_fp_compile *p,
    switch (dest->DstRegister.File) {
    case TGSI_FILE_OUTPUT:
       switch (dest->DstRegister.Index) {
-      case FRAG_RESULT_COLR:
+      case 1: /*COLOR*/  /*FRAG_RESULT_COLR:*/
          return UREG(REG_TYPE_OC, 0);
-      case FRAG_RESULT_DEPR:
+      case 0: /*DEPTH*/  /*FRAG_RESULT_DEPR:*/
          return UREG(REG_TYPE_OD, 0);
       default:
          i915_program_error(p, "Bad inst->DstReg.Index");
@@ -296,12 +318,15 @@ emit_simple_arith(struct i915_fp_compile *p,
 }
 
 
-#define EMIT_1ARG_ARITH( OP ) emit_simple_arith(p, inst, OP, 1)
-#define EMIT_2ARG_ARITH( OP ) emit_simple_arith(p, inst, OP, 2)
-#define EMIT_3ARG_ARITH( OP ) emit_simple_arith(p, inst, OP, 3)
-
-
-
+/*
+ * Translate TGSI instruction to i915 instruction.
+ *
+ * Possible concerns:
+ *
+ * SIN, COS -- could use another taylor step?
+ * LIT      -- results seem a little different to sw mesa
+ * LOG      -- different to mesa on negative numbers, but this is conformant.
+ */ 
 static void
 i915_translate_instruction(struct i915_fp_compile *p,
                            const struct tgsi_full_instruction *inst)
@@ -321,7 +346,7 @@ i915_translate_instruction(struct i915_fp_compile *p,
       break;
 
    case TGSI_OPCODE_ADD:
-      EMIT_2ARG_ARITH(A0_ADD);
+      emit_simple_arith(p, inst, A0_ADD, 2);
       break;
 
    case TGSI_OPCODE_CMP:
@@ -385,11 +410,11 @@ i915_translate_instruction(struct i915_fp_compile *p,
       break;
 
    case TGSI_OPCODE_DP3:
-      EMIT_2ARG_ARITH(A0_DP3);
+      emit_simple_arith(p, inst, A0_DP3, 2);
       break;
 
    case TGSI_OPCODE_DP4:
-      EMIT_2ARG_ARITH(A0_DP4);
+      emit_simple_arith(p, inst, A0_DP4, 2);
       break;
 
    case TGSI_OPCODE_DPH:
@@ -431,11 +456,11 @@ i915_translate_instruction(struct i915_fp_compile *p,
       break;
 
    case TGSI_OPCODE_FLR:
-      EMIT_1ARG_ARITH(A0_FLR);
+      emit_simple_arith(p, inst, A0_FLR, 1);
       break;
 
    case TGSI_OPCODE_FRC:
-      EMIT_1ARG_ARITH(A0_FRC);
+      emit_simple_arith(p, inst, A0_FRC, 1);
       break;
 
    case TGSI_OPCODE_KIL:
@@ -512,11 +537,11 @@ i915_translate_instruction(struct i915_fp_compile *p,
       break;
 
    case TGSI_OPCODE_MAD:
-      EMIT_3ARG_ARITH(A0_MAD);
+      emit_simple_arith(p, inst, A0_MAD, 3);
       break;
 
    case TGSI_OPCODE_MAX:
-      EMIT_2ARG_ARITH(A0_MAX);
+      emit_simple_arith(p, inst, A0_MAX, 2);
       break;
 
    case TGSI_OPCODE_MIN:
@@ -539,11 +564,11 @@ i915_translate_instruction(struct i915_fp_compile *p,
 
    case TGSI_OPCODE_MOV:
       /* aka TGSI_OPCODE_SWZ */
-      EMIT_1ARG_ARITH(A0_MOV);
+      emit_simple_arith(p, inst, A0_MOV, 1);
       break;
 
    case TGSI_OPCODE_MUL:
-      EMIT_2ARG_ARITH(A0_MUL);
+      emit_simple_arith(p, inst, A0_MUL, 2);
       break;
 
    case TGSI_OPCODE_POW:
@@ -652,7 +677,7 @@ i915_translate_instruction(struct i915_fp_compile *p,
       break;
 
    case TGSI_OPCODE_SGE:
-      EMIT_2ARG_ARITH(A0_SGE);
+      emit_simple_arith(p, inst, A0_SGE, 2);
       break;
 
    case TGSI_OPCODE_SIN:
@@ -706,7 +731,7 @@ i915_translate_instruction(struct i915_fp_compile *p,
       break;
 
    case TGSI_OPCODE_SLT:
-      EMIT_2ARG_ARITH(A0_SLT);
+      emit_simple_arith(p, inst, A0_SLT, 2);
       break;
 
    case TGSI_OPCODE_SUB:
@@ -769,20 +794,12 @@ i915_translate_instruction(struct i915_fp_compile *p,
 
 /**
  * Translate TGSI fragment shader into i915 hardware instructions.
- *
- * Possible concerns:
- *
- * SIN, COS -- could use another taylor step?
- * LIT      -- results seem a little different to sw mesa
- * LOG      -- different to mesa on negative numbers, but this is conformant.
- * 
- * Parse failures -- Mesa doesn't currently give a good indication
- * internally whether a particular program string parsed or not.  This
- * can lead to confusion -- hopefully we cope with it ok now.
+ * \param p  the translation state
+ * \param tokens  the TGSI token array
  */
-void
-i915_translate_program(struct i915_fp_compile *p,
-                       const struct tgsi_token *tokens)
+static void
+i915_translate_instructions(struct i915_fp_compile *p,
+                            const struct tgsi_token *tokens)
 {
    struct tgsi_parse_context parse;
 
@@ -794,10 +811,11 @@ i915_translate_program(struct i915_fp_compile *p,
 
       switch( parse.FullToken.Token.Type ) {
       case TGSI_TOKEN_TYPE_DECLARATION:
-         assert(0);
+         /* XXX no-op? */
          break;
 
       case TGSI_TOKEN_TYPE_IMMEDIATE:
+         /* XXX no-op? */
          assert(0);
          break;
 
@@ -815,13 +833,139 @@ i915_translate_program(struct i915_fp_compile *p,
 }
 
 
+static struct i915_fp_compile *
+i915_init_compile(struct i915_context *i915,
+                  struct pipe_shader_state *fs)
+{
+   struct i915_fp_compile *p = CALLOC_STRUCT(i915_fp_compile);
+
+   p->shader = &i915->fs;
+
+   /* a bit of a hack, need to improve constant buffer infrastructure */
+   if (i915->fs.constants)
+      p->constants = i915->fs.constants;
+   else
+      p->constants = &i915->temp_constants;
+
+   p->nr_tex_indirect = 1;      /* correct? */
+   p->nr_tex_insn = 0;
+   p->nr_alu_insn = 0;
+   p->nr_decl_insn = 0;
+
+   memset(p->constant_flags, 0, sizeof(p->constant_flags));
+
+   p->csr = p->program;
+   p->decl = p->declarations;
+   p->decl_s = 0;
+   p->decl_t = 0;
+   p->temp_flag = 0xffff000;
+   p->utemp_flag = ~0x7;
+
+   p->wpos_tex = -1;
+
+   /* initialize the first program word */
+   *(p->decl++) = _3DSTATE_PIXEL_SHADER_PROGRAM;
+
+   return p;
+}
+
+/* Copy compile results to the fragment program struct and destroy the
+ * compilation context.
+ */
+static void
+i915_fini_compile(struct i915_context *i915, struct i915_fp_compile *p)
+{
+   uint program_size = p->csr - p->program;
+   uint decl_size = p->decl - p->declarations;
+
+   if (p->nr_tex_indirect > I915_MAX_TEX_INDIRECT)
+      i915_program_error(p, "Exceeded max nr indirect texture lookups");
+
+   if (p->nr_tex_insn > I915_MAX_TEX_INSN)
+      i915_program_error(p, "Exceeded max TEX instructions");
+
+   if (p->nr_alu_insn > I915_MAX_ALU_INSN)
+      i915_program_error(p, "Exceeded max ALU instructions");
+
+   if (p->nr_decl_insn > I915_MAX_DECL_INSN)
+      i915_program_error(p, "Exceeded max DECL instructions");
+
+   if (p->error) {
+      p->NumNativeInstructions = 0;
+      p->NumNativeAluInstructions = 0;
+      p->NumNativeTexInstructions = 0;
+      p->NumNativeTexIndirections = 0;
+
+      i915_use_passthrough_shader(i915);
+   }
+   else {
+      p->NumNativeInstructions = (p->nr_alu_insn +
+                                      p->nr_tex_insn +
+                                      p->nr_decl_insn);
+      p->NumNativeAluInstructions = p->nr_alu_insn;
+      p->NumNativeTexInstructions = p->nr_tex_insn;
+      p->NumNativeTexIndirections = p->nr_tex_indirect;
+
+      /* patch in the program length */
+      p->declarations[0] |= program_size + decl_size - 2;
+
+      /* Copy compilation results to fragment program struct: 
+       */
+      i915->current.program
+         = (uint *) malloc((program_size + decl_size) * sizeof(uint));
+      i915->current.program_len = program_size + decl_size;
+
+      memcpy(i915->current.program,
+             p->declarations, 
+             decl_size * sizeof(uint));
+
+      memcpy(i915->current.program + decl_size, 
+             p->program, 
+             program_size * sizeof(uint));
+
+      i915->current.constants = (uint *) p->constants->constant;
+      i915->current.num_constants = p->constants->nr_constants;
+   }
+
+   /* Release the compilation struct: 
+    */
+   free(p);
+}
 
 
-/* Rather than trying to intercept and jiggle depth writes during
+/**
+ * Find an unused texture coordinate slot to use for fragment WPOS.
+ * Update p->fp->wpos_tex with the result (-1 if no used texcoord slot is found).
+ */
+static void
+i915_find_wpos_space(struct i915_fp_compile *p)
+{
+   const uint inputs = p->shader->inputs_read;
+   uint i;
+
+   p->wpos_tex = -1;
+
+   if (inputs & FRAG_BIT_WPOS) {
+      for (i = 0; i < I915_TEX_UNITS; i++) {
+	 if ((inputs & (FRAG_BIT_TEX0 << i)) == 0) {
+	    p->wpos_tex = i;
+	    return;
+	 }
+      }
+
+      i915_program_error(p, "No free texcoord for wpos value");
+   }
+}
+
+
+
+
+/**
+ * Rather than trying to intercept and jiggle depth writes during
  * emit, just move the value into its correct position at the end of
  * the program:
  */
-void
+static void
 i915_fixup_depth_write(struct i915_fp_compile *p)
 {
    if (p->shader->outputs_written & (1<<FRAG_RESULT_DEPR)) {
@@ -835,5 +979,16 @@ i915_fixup_depth_write(struct i915_fp_compile *p)
 }
 
 
+void
+i915_translate_fragment_program( struct i915_context *i915 )
+{
+   struct i915_fp_compile *p = i915_init_compile(i915, &i915->fs);
+   const struct tgsi_token *tokens = i915->fs.tokens;
 
+   i915_find_wpos_space(p);
 
+   i915_translate_instructions(p, tokens);
+   i915_fixup_depth_write(p);
+
+   i915_fini_compile(i915, p);
+}
