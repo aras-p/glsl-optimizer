@@ -720,6 +720,7 @@ static void nv10WindowMoved(nouveauContextPtr nmesa)
 static GLboolean nv10InitCard(nouveauContextPtr nmesa)
 {
 	int i;
+	GLfloat projection[16];
 
 	nouveauObjectOnSubchannel(nmesa, NvSub3D, Nv3D);
 
@@ -736,6 +737,8 @@ static GLboolean nv10InitCard(nouveauContextPtr nmesa)
         OUT_RING(0);
 
 	/* Clipping regions */
+	BEGIN_RING_SIZE(NvSub3D, 0x2b4, 1); /* clip_mode */
+	OUT_RING  (0);
 	BEGIN_RING_SIZE(NvSub3D,
 	      NV10_TCL_PRIMITIVE_3D_VIEWPORT_CLIP_HORIZ(0), 1);
         OUT_RING(0x07ff0800);
@@ -761,7 +764,105 @@ static GLboolean nv10InitCard(nouveauContextPtr nmesa)
         	OUT_RING(0);
 	        OUT_RING(1);
 	        OUT_RING(2);
+
+	        BEGIN_RING_SIZE(NvSubImageBlit, 0x120, 3);
+        	OUT_RING(0);
+	        OUT_RING(1);
+	        OUT_RING(2);
 	}
+
+	/* Set state for stuff not initialized in nouveau_state.c */
+	BEGIN_RING_SIZE(NvSub3D, NV10_TCL_PRIMITIVE_3D_TX_ENABLE(0), 2);
+	OUT_RING  (0);
+	BEGIN_RING_SIZE(NvSub3D, NV10_TCL_PRIMITIVE_3D_RC_IN_ALPHA(0), 12);
+	OUT_RING  (0x30141010);
+	OUT_RING  (0);
+	OUT_RING  (0x20040000);
+	OUT_RING  (0);
+	OUT_RING  (0);
+	OUT_RING  (0);
+	OUT_RING  (0x00000c00);
+	OUT_RING  (0);
+	OUT_RING  (0x00000c00);
+	OUT_RING  (0x18000000);
+	OUT_RING  (0x300e0300);
+	OUT_RING  (0x0c091c80);
+	BEGIN_RING_SIZE(NvSub3D, NV10_TCL_PRIMITIVE_3D_VERTEX_WEIGHT_ENABLE, 1);
+	OUT_RING  (0);
+	BEGIN_RING_SIZE(NvSub3D, NV10_TCL_PRIMITIVE_3D_NORMALIZE_ENABLE, 1);
+	OUT_RING  (0);
+	BEGIN_RING_SIZE(NvSub3D, NV10_TCL_PRIMITIVE_3D_LIGHT_MODEL, 1);
+	OUT_RING  (0);
+	BEGIN_RING_SIZE(NvSub3D, NV10_TCL_PRIMITIVE_3D_COLOR_CONTROL, 1);
+	OUT_RING  (0);
+	BEGIN_RING_SIZE(NvSub3D, NV10_TCL_PRIMITIVE_3D_POINT_SIZE, 1);
+	OUT_RING  (8);
+	BEGIN_RING_SIZE(NvSub3D, NV10_TCL_PRIMITIVE_3D_POINT_PARAMETERS_ENABLE, 1);
+	OUT_RING  (0);
+	BEGIN_RING_SIZE(NvSub3D, NV10_TCL_PRIMITIVE_3D_LINE_WIDTH, 1);
+	OUT_RING  (8);
+	BEGIN_RING_SIZE(NvSub3D, NV10_TCL_PRIMITIVE_3D_CLIP_PLANE_ENABLE(0), 8);
+	for (i=0;i<8;i++) {
+		OUT_RING  (0);
+	}
+	BEGIN_RING_SIZE(NvSub3D, NV10_TCL_PRIMITIVE_3D_FOG_EQUATION_CONSTANT, 3);
+	OUT_RINGf (-1.50);
+	OUT_RINGf (-0.09);
+	OUT_RINGf ( 0.00);
+	BEGIN_RING_SIZE(NvSub3D, NV10_TCL_PRIMITIVE_3D_FOG_MODE, 2);
+	OUT_RING  (0x802);
+	OUT_RING  (2);
+
+	/* Projection matrix */
+	memset(projection, 0, sizeof(projection));
+	projection[0*4+0] = 1.0;
+	projection[1*4+1] = 1.0;
+	projection[2*4+2] = 1.0;
+	projection[3*4+3] = 1.0;
+
+	BEGIN_RING_SIZE(NvSub3D, NV10_TCL_PRIMITIVE_3D_VIEW_MATRIX_ENABLE, 1);
+	OUT_RING  (6);	/* enable projection and modelview0 matrix */
+	BEGIN_RING_SIZE(NvSub3D, NV10_TCL_PRIMITIVE_3D_PROJECTION_MATRIX(0), 16);
+	for (i=0; i<16; i++) {
+		OUT_RINGf (projection[i]);
+	}
+	BEGIN_RING_SIZE(NvSub3D, NV10_TCL_PRIMITIVE_3D_DEPTH_RANGE_NEAR, 2);
+	OUT_RINGf  (0.0);
+	OUT_RINGf  (1.0);
+	BEGIN_RING_SIZE(NvSub3D, NV10_TCL_PRIMITIVE_3D_VIEWPORT_SCALE_X, 4);
+	OUT_RINGf  (1.0);
+	OUT_RINGf  (1.0);
+	OUT_RINGf  (1.0);
+	OUT_RINGf  (1.0);
+
+	/* Set per-vertex component */
+	BEGIN_RING_SIZE(NvSub3D, NV10_TCL_PRIMITIVE_3D_VERTEX_COL_4F_R, 4);
+	OUT_RINGf (1.0);
+	OUT_RINGf (1.0);
+	OUT_RINGf (1.0);
+	OUT_RINGf (1.0);
+	BEGIN_RING_SIZE(NvSub3D, NV10_TCL_PRIMITIVE_3D_VERTEX_COL2_3F_R, 3);
+	OUT_RING  (0);
+	OUT_RING  (0);
+	OUT_RING  (0);
+	BEGIN_RING_SIZE(NvSub3D, NV10_TCL_PRIMITIVE_3D_VERTEX_NOR_3F_X, 3);
+	OUT_RINGf (0.0);
+	OUT_RINGf (0.0);
+	OUT_RINGf (1.0);
+	BEGIN_RING_SIZE(NvSub3D, NV10_TCL_PRIMITIVE_3D_VERTEX_TX0_4F_S, 4);
+	OUT_RINGf (0.0);
+	OUT_RINGf (0.0);
+	OUT_RINGf (0.0);
+	OUT_RINGf (1.0);
+	BEGIN_RING_SIZE(NvSub3D, NV10_TCL_PRIMITIVE_3D_VERTEX_TX1_4F_S, 4);
+	OUT_RINGf (0.0);
+	OUT_RINGf (0.0);
+	OUT_RINGf (0.0);
+	OUT_RINGf (1.0);
+	BEGIN_RING_SIZE(NvSub3D, NV10_TCL_PRIMITIVE_3D_VERTEX_FOG_1F, 1);
+	OUT_RINGf (0.0);
+	BEGIN_RING_SIZE(NvSub3D, NV10_TCL_PRIMITIVE_3D_EDGEFLAG_ENABLE, 1);
+	OUT_RING  (1);
 
 	return GL_TRUE;
 }
@@ -800,6 +901,7 @@ static GLboolean nv10BindBuffers(nouveauContextPtr nmesa, int num_color,
 	OUT_RING_CACHE(color[0]->offset);
 	OUT_RING_CACHE(depth ? depth->offset : color[0]->offset);
 
+	nv10ViewportScale(nmesa);
 	return GL_TRUE;
 }
 
