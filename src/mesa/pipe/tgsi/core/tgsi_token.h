@@ -1349,7 +1349,9 @@ struct tgsi_src_register_ext_swz
    unsigned Extended     : 1;    /* BOOL */
 };
 
-/*
+/**
+ * Extra src register modifiers
+ *
  * If Complement is TRUE, the source register is modified by subtracting it
  * from 1.0.
  *
@@ -1411,7 +1413,9 @@ struct tgsi_dst_register_ext
    unsigned Extended : 1;    /* BOOL */
 };
 
-/*
+/**
+ * Extra destination register modifiers
+ *
  * If tgsi_dst_register_ext::Type is TGSI_DST_REGISTER_EXT_TYPE_CONDCODE,
  * it should be cast to tgsi_dst_register_ext_condcode.
  * 
@@ -1424,7 +1428,6 @@ struct tgsi_dst_register_ext
  * If tgsi_dst_register_ext::Extended is TRUE, another tgsi_dst_register_ext
  * follows.
  */
-
 struct tgsi_dst_register_ext_concode
 {
    unsigned Type         : 4;    /* TGSI_DST_REGISTER_EXT_TYPE_CONDCODE */
