@@ -89,6 +89,10 @@ struct i915_state
    uint program_len;
    uint *constants;
    uint num_constants;
+
+   unsigned sampler[I915_TEX_UNITS][3];
+   unsigned sampler_enable_flags;
+   unsigned sampler_enable_nr;
    
    unsigned id;			/* track lost context events */
 };

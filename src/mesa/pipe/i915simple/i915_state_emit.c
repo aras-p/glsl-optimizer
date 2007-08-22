@@ -190,6 +190,29 @@ i915_emit_hardware_state(struct i915_context *i915 )
       }
    }
 
+   /* samplers */
+   if (i915->hardware_dirty & I915_HW_SAMPLER) 
+   {
+      if (i915->current.sampler_enable_nr) {
+	 int i;
+	 
+	 OUT_BATCH( _3DSTATE_SAMPLER_STATE | 
+		    (3 * i915->current.sampler_enable_nr) );
+
+	 OUT_BATCH( i915->current.sampler_enable_flags );
+
+	 for (i = 0; i < I915_TEX_UNITS; i++) {
+	    if (i915->current.sampler_enable_flags & (1<<i)) {
+	       OUT_BATCH( i915->current.sampler[i][0] );
+	       OUT_BATCH( i915->current.sampler[i][1] );
+	       OUT_BATCH( i915->current.sampler[i][2] );
+	    }
+	 }
+      }
+   }
+   
+
+
    /* constants */
    if (i915->hardware_dirty & I915_HW_PROGRAM)
    {
