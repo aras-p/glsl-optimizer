@@ -222,8 +222,8 @@ struct pipe_sampler_state
 #if 0 /* need these? */
    int BaseLevel;     /**< min mipmap level, OpenGL 1.2 */
    int MaxLevel;      /**< max mipmap level, OpenGL 1.2 */
-   float border_color[4];
 #endif
+   float border_color[4];
    float max_anisotropy;
 };
 
