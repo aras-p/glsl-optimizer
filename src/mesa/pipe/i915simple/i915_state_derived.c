@@ -25,21 +25,21 @@
  * 
  **************************************************************************/
 
-#include "main/glheader.h"
-#include "main/macros.h"
-#include "main/enums.h"
-
 #include "vf/vf.h"
 #include "pipe/draw/draw_context.h"
 #include "i915_context.h"
 #include "i915_state.h"
 
+/* XXX should include i915_fpc.h but that causes some trouble atm */
+extern void i915_translate_fragment_program( struct i915_context *i915 );
 
-#define EMIT_ATTR( VF_ATTR, FRAG_ATTR, INTERP )			\
-do {								\
+
+
+#define EMIT_ATTR( VF_ATTR, FRAG_ATTR, INTERP )	\
+do {						\
    slot_to_vf_attr[nr_attrs] = VF_ATTR;		\
    nr_attrs++;					\
-   attr_mask |= (1 << (VF_ATTR));				\
+   attr_mask |= (1 << (VF_ATTR));		\
 } while (0)
 
 

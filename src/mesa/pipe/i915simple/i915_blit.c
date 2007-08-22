@@ -26,10 +26,6 @@
  **************************************************************************/
 
 
-#include <stdio.h>
-
-//#include "mtypes.h"
-
 #include "i915_context.h"
 #include "i915_winsys.h"
 #include "i915_blit.h"

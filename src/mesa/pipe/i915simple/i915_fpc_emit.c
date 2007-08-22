@@ -25,13 +25,6 @@
  * 
  **************************************************************************/
 
-#if 0
-#include <strings.h>
-#include "glheader.h"
-#include "macros.h"
-#include "enums.h"
-#endif
-
 #include "i915_reg.h"
 #include "i915_context.h"
 #include "i915_fpc.h"

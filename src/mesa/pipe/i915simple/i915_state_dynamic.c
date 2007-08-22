@@ -25,11 +25,6 @@
  * 
  **************************************************************************/
 
-//#include "glheader.h"
-//#include "context.h"
-//#include "macros.h"
-//#include "enums.h"
-
 #include "i915_batch.h"
 #include "i915_state_inlines.h"
 #include "i915_context.h"

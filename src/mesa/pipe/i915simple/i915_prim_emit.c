@@ -26,9 +26,6 @@
  **************************************************************************/
 
 
-//#include "imports.h"
-//#include "macros.h"
-
 #include "pipe/draw/draw_private.h"
 #include "pipe/p_util.h"
 
