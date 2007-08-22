@@ -87,6 +87,9 @@ struct st_context *st_create_context( GLcontext *ctx,
    st_init_cb_texture( st );
 #endif
 
+   /* XXXX This is temporary! */
+   _mesa_enable_sw_extensions(ctx);
+
    return st;
 }
 
