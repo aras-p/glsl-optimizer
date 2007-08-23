@@ -429,6 +429,11 @@ static struct vertex_header *get_vertex( struct draw_context *draw,
       draw->vs.queue[draw->vs.queue_nr].dest = draw->vcache.vertex[slot];
       draw->vs.queue[draw->vs.queue_nr].elt = i;
       draw->vs.queue_nr++;
+
+      /* Need to set the vertex's edge flag here.  If we're being called
+       * by do_ef_triangle(), that function needs edge flag info!
+       */
+      draw->vcache.vertex[slot]->edgeflag = 1; /*XXX use user's edge flag! */
    }
 
    /* Mark slot as in-use:
