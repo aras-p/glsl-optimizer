@@ -52,6 +52,9 @@ map_register_file_index(
    GLuint mapped_index;
    GLuint i;
 
+   assert(processor == TGSI_PROCESSOR_FRAGMENT
+          || processor == TGSI_PROCESSOR_VERTEX);
+
    switch( file ) {
    case TGSI_FILE_INPUT:
       /*
@@ -616,6 +619,7 @@ tgsi_mesa_compile_fp_program(
    /*
     * Copy fragment z if the shader does not write it.
     */
+#if 0
    if( !(program->Base.OutputsWritten & (1 << FRAG_RESULT_DEPR)) ) {
       fullinst = tgsi_default_full_instruction();
 
@@ -639,6 +643,7 @@ tgsi_mesa_compile_fp_program(
          maxTokens - ti );
       preamble_size++;
    }
+#endif
 
    for( i = 0; i < program->Base.NumInstructions; i++ ) {
       if( compile_instruction(

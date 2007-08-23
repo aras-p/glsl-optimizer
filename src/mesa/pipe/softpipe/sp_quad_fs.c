@@ -55,6 +55,34 @@ quad_shade_stage(struct quad_stage *qs)
    return (struct quad_shade_stage *) qs;
 }
 
+
+
+
+/**
+ * Compute quad's attribute values by linear interpolation.
+ *
+ * Push into the fp:
+ * 
+ *   INPUT[attr] = MAD COEF_A0[attr], COEF_DADX[attr], INPUT_WPOS.xxxx
+ *   INPUT[attr] = MAD INPUT[attr],   COEF_DADY[attr], INPUT_WPOS.yyyy
+ */
+static INLINE void
+linterp_z(const struct tgsi_interp_coef *coef,
+          struct tgsi_exec_vector *pos)
+{
+   uint ch = 2;
+   uint j;
+   for (j = 0; j < QUAD_SIZE; j++) {
+      const float x = pos->xyzw[0].f[j];
+      const float y = pos->xyzw[1].f[j];
+      pos->xyzw[ch].f[j] = (coef->a0[ch] +
+                            coef->dadx[ch] * x + 
+                            coef->dady[ch] * y);
+   }
+}
+
+
+
 /* This should be done by the fragment shader execution unit (code
  * generated from the decl instructions).  Do it here for now.
  */
@@ -101,6 +129,9 @@ shade_quad(
    machine.Inputs[0].xyzw[1].f[2] = fy + 1.0f;
    machine.Inputs[0].xyzw[1].f[3] = fy + 1.0f;
 
+   /* interp Z */
+   linterp_z(&quad->coef[0], &machine.Inputs[0]);
+
    /* run shader */
    tgsi_exec_machine_run( &machine );
 
@@ -110,6 +141,7 @@ shade_quad(
       &machine.Outputs[1].xyzw[0].f[0],
       sizeof( quad->outputs.color ) );
 
+#if 0
    if( softpipe->need_z ) {
       /* XXX temporary */
       memcpy(
@@ -117,6 +149,17 @@ shade_quad(
          &machine.Outputs[0].xyzw[2],
          sizeof( quad->outputs.depth ) );
    }
+#else
+   {
+      uint i;
+      for (i = 0; i < 4; i++) {
+         quad->outputs.depth[i] = machine.Inputs[0].xyzw[2].f[i];
+#if 0
+         printf("output z %f\n",  quad->outputs.depth[i]);
+#endif
+      }
+   }
+#endif
 
    /* shader may cull fragments */
    if( quad->mask ) {
