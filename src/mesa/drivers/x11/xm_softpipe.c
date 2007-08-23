@@ -112,17 +112,19 @@ xm_buffer_reference(struct pipe_winsys *pws, struct pipe_buffer_handle *buf)
 static void
 xm_buffer_unreference(struct pipe_winsys *pws, struct pipe_buffer_handle **buf)
 {
-   struct xm_buffer *xm_buf = xm_bo(*buf);
-   xm_buf->refcount--;
-   assert(xm_buf->refcount >= 0);
-   if (xm_buf->refcount == 0) {
-      if (xm_buf->data) {
-         free(xm_buf->data);
-         xm_buf->data = NULL;
+   if (*buf) {
+      struct xm_buffer *xm_buf = xm_bo(*buf);
+      xm_buf->refcount--;
+      assert(xm_buf->refcount >= 0);
+      if (xm_buf->refcount == 0) {
+         if (xm_buf->data) {
+            free(xm_buf->data);
+            xm_buf->data = NULL;
+         }
+         free(xm_buf);
       }
-      free(xm_buf);
+      *buf = NULL;
    }
-   *buf = NULL;
 }
 
 static void
