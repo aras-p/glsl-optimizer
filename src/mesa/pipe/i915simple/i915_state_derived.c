@@ -29,18 +29,11 @@
 #include "pipe/draw/draw_context.h"
 #include "i915_context.h"
 #include "i915_state.h"
+#include "i915_reg.h"
 
 /* XXX should include i915_fpc.h but that causes some trouble atm */
 extern void i915_translate_fragment_program( struct i915_context *i915 );
 
-
-
-#define EMIT_ATTR( VF_ATTR, FRAG_ATTR, INTERP )	\
-do {						\
-   slot_to_vf_attr[nr_attrs] = VF_ATTR;		\
-   nr_attrs++;					\
-   attr_mask |= (1 << (VF_ATTR));		\
-} while (0)
 
 
 static const unsigned frag_to_vf[FRAG_ATTRIB_MAX] = 
@@ -68,6 +61,19 @@ static const unsigned frag_to_vf[FRAG_ATTRIB_MAX] =
 };
 
 
+static INLINE void
+emit_vertex_attr(struct vertex_info *vinfo, uint vfAttr, uint format)
+{
+   const uint n = vinfo->num_attribs;
+   vinfo->attr_mask |= (1 << vfAttr);
+   vinfo->slot_to_attrib[n] = vfAttr;
+   /*vinfo->interp_mode[n] = interpMode;*/
+   vinfo->format[n] = format;
+   vinfo->num_attribs++;
+}
+
+
+
 /**
  * Determine which post-transform / pre-rasterization vertex attributes
  * we need.
@@ -75,19 +81,17 @@ static const unsigned frag_to_vf[FRAG_ATTRIB_MAX] =
  */
 static void calculate_vertex_layout( struct i915_context *i915 )
 {
-//   const unsigned inputsRead = i915->fs.inputs_read;
-   const unsigned inputsRead = (FRAG_BIT_WPOS | FRAG_BIT_COL0);
-   unsigned slot_to_vf_attr[VF_ATTRIB_MAX];
-   unsigned attr_mask = 0x0;
-   unsigned nr_attrs = 0;
+   const unsigned inputsRead = i915->fs.inputs_read;
+//   const unsigned inputsRead = (FRAG_BIT_WPOS | FRAG_BIT_COL0);
    unsigned i;
+   struct vertex_info *vinfo = &i915->current.vertex_info;
 
-   memset(slot_to_vf_attr, 0, sizeof(slot_to_vf_attr));
-
+   memset(vinfo, 0, sizeof(*vinfo));
 
    /* TODO - Figure out if we need to do perspective divide, etc.
     */
-   EMIT_ATTR(VF_ATTRIB_POS, FRAG_ATTRIB_WPOS, INTERP_LINEAR);
+   emit_vertex_attr(vinfo, VF_ATTRIB_POS, FORMAT_3F);
+   vinfo->hwfmt[0] |= S4_VFMT_XYZ;
       
    /* Pull in the rest of the attributes.  They are all in float4
     * format.  Future optimizations could be to keep some attributes
@@ -95,20 +99,29 @@ static void calculate_vertex_layout( struct i915_context *i915 )
     */
    for (i = 1; i < FRAG_ATTRIB_TEX0; i++) {
       if (inputsRead & (1 << i)) {
-         assert(i < sizeof(frag_to_vf) / sizeof(frag_to_vf[0]));
+         assert(i < Elements(frag_to_vf));
          if (i915->setup.flatshade
-             && (i == FRAG_ATTRIB_COL0 || i == FRAG_ATTRIB_COL1))
-            EMIT_ATTR(frag_to_vf[i], i, INTERP_CONSTANT);
-         else
-            EMIT_ATTR(frag_to_vf[i], i, INTERP_LINEAR);
+             && (i == FRAG_ATTRIB_COL0 || i == FRAG_ATTRIB_COL1)) {
+            emit_vertex_attr(vinfo, frag_to_vf[i], FORMAT_4UB);
+         }   
+         else {
+            emit_vertex_attr(vinfo, frag_to_vf[i], FORMAT_4UB);
+         }
+         vinfo->hwfmt[0] |= S4_VFMT_COLOR;
       }
    }
 
    for (i = FRAG_ATTRIB_TEX0; i < FRAG_ATTRIB_MAX; i++) {
+      uint hwtc;
       if (inputsRead & (1 << i)) {
+         hwtc = TEXCOORDFMT_4D;
          assert(i < sizeof(frag_to_vf) / sizeof(frag_to_vf[0]));
-         EMIT_ATTR(frag_to_vf[i], i, INTERP_PERSPECTIVE);
+         emit_vertex_attr(vinfo, frag_to_vf[i], FORMAT_4F);
       }
+      else {
+         hwtc = TEXCOORDFMT_NOT_PRESENT;
+      }
+      vinfo->hwfmt[1] |= hwtc << ((i - FRAG_ATTRIB_TEX0) * 4);
    }
 
    /* Additional attributes required for setup: Just twosided
@@ -117,21 +130,28 @@ static void calculate_vertex_layout( struct i915_context *i915 )
     */
    if (i915->setup.light_twoside) {
       if (inputsRead & FRAG_BIT_COL0) {
-	 EMIT_ATTR(VF_ATTRIB_BFC0, FRAG_ATTRIB_MAX, 0); /* XXX: mark as discarded after setup */
+         /* XXX: mark as discarded after setup */
+         emit_vertex_attr(vinfo, VF_ATTRIB_BFC0, FORMAT_OMIT);
       }
 	    
       if (inputsRead & FRAG_BIT_COL1) {
-	 EMIT_ATTR(VF_ATTRIB_BFC1, FRAG_ATTRIB_MAX, 0); /* XXX: discard after setup */
+         /* XXX: discard after setup */
+         emit_vertex_attr(vinfo, VF_ATTRIB_BFC1, FORMAT_OMIT);
       }
    }
 
-   /* If the attributes have changed, tell the draw module (which in turn
-    * tells the vf module) about the new vertex layout.
+   /* If the attributes have changed, tell the draw module about the new
+    * vertex layout.  We'll also update the hardware vertex format info.
     */
    draw_set_vertex_attributes( i915->draw,
-			       slot_to_vf_attr,
-			       nr_attrs );
+                               vinfo->slot_to_attrib,
+			       vinfo->num_attribs);
+#if 0
+   printf("VERTEX_FORMAT LIS2: 0x%x  LIS4: 0x%x\n",
+          vinfo->hwfmt[1], vinfo->hwfmt[0]);
+#endif
 }
+
 
 
 
@@ -142,6 +162,12 @@ void i915_update_derived( struct i915_context *i915 )
 {
    if (i915->dirty & (I915_NEW_SETUP | I915_NEW_FS))
       calculate_vertex_layout( i915 );
+
+   if (i915->dirty & I915_NEW_SAMPLER)
+      i915_update_samplers(i915);
+
+   if (i915->dirty & I915_NEW_TEXTURE)
+      i915_update_textures(i915);
 
    if (i915->dirty)
       i915_update_immediate( i915 );

@@ -153,8 +153,15 @@ src_vector(struct i915_fp_compile *p,
          src = i915_emit_decl(p, REG_TYPE_T, T_DIFFUSE, D0_CHANNEL_ALL);
          break;
       case FRAG_ATTRIB_COL1:
+#if 1
          src = i915_emit_decl(p, REG_TYPE_T, T_SPECULAR, D0_CHANNEL_XYZ);
          src = swizzle(src, X, Y, Z, ONE);
+#else
+         /* total hack to force texture mapping */
+         src = i915_emit_decl(p, REG_TYPE_T,
+                              T_TEX0/* + (index - FRAG_ATTRIB_TEX0)*/,
+                              D0_CHANNEL_ALL);
+#endif
          break;
       case FRAG_ATTRIB_FOGC:
          src = i915_emit_decl(p, REG_TYPE_T, T_FOG_W, D0_CHANNEL_W);
@@ -979,7 +986,7 @@ i915_fini_compile(struct i915_context *i915, struct i915_fp_compile *p)
 static void
 i915_find_wpos_space(struct i915_fp_compile *p)
 {
-   const uint inputs = p->shader->inputs_read;
+   const uint inputs = p->shader->inputs_read | FRAG_BIT_WPOS; /*XXX hack*/
    uint i;
 
    p->wpos_tex = -1;

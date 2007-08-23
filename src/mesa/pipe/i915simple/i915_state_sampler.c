@@ -39,6 +39,7 @@
 #include "i915_state_inlines.h"
 #include "i915_context.h"
 #include "i915_reg.h"
+#include "i915_state.h"
 //#include "i915_cache.h"
 
 
@@ -282,4 +283,137 @@ void i915_update_samplers( struct i915_context *i915 )
    }
 
    i915->hardware_dirty |= I915_HW_SAMPLER;
+}
+
+
+
+
+static uint
+translate_texture_format(uint pipeFormat)
+{
+   switch (pipeFormat) {
+   case PIPE_FORMAT_U_L8:
+      return MAPSURF_8BIT | MT_8BIT_L8;
+   case PIPE_FORMAT_U_I8:
+      return MAPSURF_8BIT | MT_8BIT_I8;
+   case PIPE_FORMAT_U_A8:
+      return MAPSURF_8BIT | MT_8BIT_A8;
+   case PIPE_FORMAT_U_L8_A8:
+      return MAPSURF_16BIT | MT_16BIT_AY88;
+   case PIPE_FORMAT_U_R5_G6_B5:
+      return MAPSURF_16BIT | MT_16BIT_RGB565;
+   case PIPE_FORMAT_U_A1_R5_G5_B5:
+      return MAPSURF_16BIT | MT_16BIT_ARGB1555;
+   case PIPE_FORMAT_U_A4_R4_G4_B4:
+      return MAPSURF_16BIT | MT_16BIT_ARGB4444;
+   case PIPE_FORMAT_U_A8_R8_G8_B8:
+      return MAPSURF_32BIT | MT_32BIT_ARGB8888;
+   case PIPE_FORMAT_YCBCR_REV:
+      return (MAPSURF_422 | MT_422_YCRCB_NORMAL);
+   case PIPE_FORMAT_YCBCR:
+      return (MAPSURF_422 | MT_422_YCRCB_SWAPY);
+#if 0
+   case PIPE_FORMAT_RGB_FXT1:
+   case PIPE_FORMAT_RGBA_FXT1:
+      return (MAPSURF_COMPRESSED | MT_COMPRESS_FXT1);
+#endif
+   case PIPE_FORMAT_U_Z16:
+      return (MAPSURF_16BIT | MT_16BIT_L16);
+#if 0
+   case PIPE_FORMAT_RGBA_DXT1:
+   case PIPE_FORMAT_RGB_DXT1:
+      return (MAPSURF_COMPRESSED | MT_COMPRESS_DXT1);
+   case PIPE_FORMAT_RGBA_DXT3:
+      return (MAPSURF_COMPRESSED | MT_COMPRESS_DXT2_3);
+   case PIPE_FORMAT_RGBA_DXT5:
+      return (MAPSURF_COMPRESSED | MT_COMPRESS_DXT4_5);
+#endif
+   case PIPE_FORMAT_S8_Z24:
+      return (MAPSURF_32BIT | MT_32BIT_xL824);
+   default:
+      fprintf(stderr, "i915: translate_texture_format() bad image format %x\n",
+              pipeFormat);
+      assert(0);
+      return 0;
+   }
+}
+
+
+#define I915_TEXREG_MS3        1
+#define I915_TEXREG_MS4        2
+
+
+static void
+i915_update_texture(struct i915_context *i915, uint unit,
+                    uint state[6])
+{
+   const struct pipe_mipmap_tree *mt = i915->texture[unit];
+   uint format, pitch;
+   const uint width = mt->width0, height = mt->height0, depth = mt->depth0;
+   const uint num_levels = mt->last_level - mt->first_level;
+
+   assert(mt);
+   assert(width);
+   assert(height);
+   assert(depth);
+
+#if 0
+   if (i915->state.tex_buffer[unit] != NULL) {
+       driBOUnReference(i915->state.tex_buffer[unit]);
+       i915->state.tex_buffer[unit] = NULL;
+   }
+#endif
+
+
+   {
+      struct pipe_buffer_handle *p = driBOReference(mt->region->buffer);
+   }
+
+#if 0
+   i915->state.tex_buffer[unit] = driBOReference(intelObj->mt->region->
+                                                 buffer);
+   i915->state.tex_offset[unit] =  intel_miptree_image_offset(intelObj->mt,
+                                                              0, intelObj->
+                                                              firstLevel);
+#endif
+
+   format = translate_texture_format(mt->format);
+   pitch = mt->pitch * mt->cpp;
+
+   assert(format);
+   assert(pitch);
+
+   printf("texture format = 0x%x\n", format);
+
+   /* MS3 state */
+   state[0] =
+      (((height - 1) << MS3_HEIGHT_SHIFT)
+       | ((width - 1) << MS3_WIDTH_SHIFT)
+       | format
+       | MS3_USE_FENCE_REGS);
+
+   /* MS4 state */
+   state[1] =
+      ((((pitch / 4) - 1) << MS4_PITCH_SHIFT)
+       | MS4_CUBE_FACE_ENA_MASK
+       | ((num_levels * 4) << MS4_MAX_LOD_SHIFT)
+       | ((depth - 1) << MS4_VOLUME_DEPTH_SHIFT));
+}
+
+
+
+void
+i915_update_textures(struct i915_context *i915)
+{
+   uint unit;
+
+   for (unit = 0; unit < I915_TEX_UNITS; unit++) {
+      /* determine unit enable/disable by looking for a bound mipmap tree */
+      /* could also examine the fragment program? */
+      if (i915->texture[unit]) {
+         i915_update_texture(i915, unit, i915->current.texbuffer[unit]);
+      }
+   }
+
+   i915->hardware_dirty |= I915_HW_MAP;
 }

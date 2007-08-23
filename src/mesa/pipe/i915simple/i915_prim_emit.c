@@ -71,12 +71,55 @@ emit_hw_vertex( struct i915_context *i915,
 
    /* colors are ARGB (MSB to LSB) */
    OUT_BATCH( pack_ub4(float_to_ubyte( vertex->data[1][2] ),
-		       float_to_ubyte( vertex->data[1][1] ),
-		       float_to_ubyte( vertex->data[1][0] ),
-		       float_to_ubyte( vertex->data[1][3] )) );
+                       float_to_ubyte( vertex->data[1][1] ),
+                       float_to_ubyte( vertex->data[1][0] ),
+                       float_to_ubyte( vertex->data[1][3] )) );
 }
 		
 		
+
+static INLINE void
+emit_hw_vertex2( struct i915_context *i915,
+                 const struct vertex_header *vertex)
+{
+   const struct vertex_info *vinfo = &i915->current.vertex_info;
+   uint i;
+
+   for (i = 0; i < vinfo->num_attribs; i++) {
+      switch (vinfo->format[i]) {
+      case FORMAT_OMIT:
+         /* no-op */
+         break;
+      case FORMAT_1F:
+         OUT_BATCH( fui(vertex->data[i][0]) );
+         break;
+      case FORMAT_2F:
+         OUT_BATCH( fui(vertex->data[i][0]) );
+         OUT_BATCH( fui(vertex->data[i][1]) );
+         break;
+      case FORMAT_3F:
+         OUT_BATCH( fui(vertex->data[i][0]) );
+         OUT_BATCH( fui(vertex->data[i][1]) );
+         OUT_BATCH( fui(vertex->data[i][2]) );
+         break;
+      case FORMAT_4F:
+         OUT_BATCH( fui(vertex->data[i][0]) );
+         OUT_BATCH( fui(vertex->data[i][1]) );
+         OUT_BATCH( fui(vertex->data[i][2]) );
+         OUT_BATCH( fui(vertex->data[i][3]) );
+         break;
+      case FORMAT_4UB:
+         OUT_BATCH( pack_ub4(float_to_ubyte( vertex->data[i][2] ),
+                             float_to_ubyte( vertex->data[i][1] ),
+                             float_to_ubyte( vertex->data[i][0] ),
+                             float_to_ubyte( vertex->data[i][3] )) );
+         break;
+      default:
+         assert(0);
+      }
+   }
+}
+
 
 
 static INLINE void 
@@ -120,7 +163,7 @@ emit_prim( struct draw_stage *stage,
 	     ((4 + vertex_size * nr)/4 - 2));
 
    for (i = 0; i < nr; i++) {
-      emit_hw_vertex(i915, prim->v[i]);
+      emit_hw_vertex2(i915, prim->v[i]);
       ptr += vertex_size / sizeof(int);
    }
 }

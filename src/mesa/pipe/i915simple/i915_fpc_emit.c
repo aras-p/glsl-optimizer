@@ -192,7 +192,8 @@ uint i915_emit_texld( struct i915_fp_compile *p,
 			uint coord,
 			uint op )
 {
-   if (coord != UREG(GET_UREG_TYPE(coord), GET_UREG_NR(coord))) {
+   uint k = UREG(GET_UREG_TYPE(coord), GET_UREG_NR(coord));
+   if (coord != k) {
       /* No real way to work around this in the general case - need to
        * allocate and declare a new temporary register (a utemp won't
        * do).  Will fallback for now.

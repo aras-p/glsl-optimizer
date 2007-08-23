@@ -53,8 +53,16 @@ static void upload_S2S4(struct i915_context *i915)
    unsigned LIS2, LIS4;
    
    /* I915_NEW_VERTEX_FORMAT */
+#if 01
    LIS2 = 0xffffffff;
    LIS4 = (S4_VFMT_XYZ | S4_VFMT_COLOR);
+#else
+   assert(LIS2 == i915->current.vertex_info.hwfmt[1]);
+   assert(LIS4 == i915->current.vertex_info.hwfmt[0]);
+   LIS2 = i915->current.vertex_info.hwfmt[1];
+   LIS4 = i915->current.vertex_info.hwfmt[0];
+   printf("UPLOAD FORMAT LIS2: 0x%x  LIS4: 0x%x\n", LIS2, LIS4);
+#endif
 
 
    /* I915_NEW_SETUP */

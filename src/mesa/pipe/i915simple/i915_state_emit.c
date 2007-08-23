@@ -180,7 +180,6 @@ i915_emit_hardware_state(struct i915_context *i915 )
 	    zformat = translate_depth_format( i915->framebuffer.zbuf->format );
 
 	 OUT_BATCH(_3DSTATE_DST_BUF_VARS_CMD);
-
 	 OUT_BATCH(DSTORG_HORT_BIAS(0x8) | /* .5 */
 		   DSTORG_VERT_BIAS(0x8) | /* .5 */
 		   LOD_PRECLAMP_OGL |
@@ -190,6 +189,38 @@ i915_emit_hardware_state(struct i915_context *i915 )
       }
    }
 
+
+#if 0
+      /* texture images */
+      if (i915->hardware_dirty & I915_HW_MAP)
+      {
+         const uint nr = i915->current.sampler_enable_nr;
+         const uint enabled = i915->current.sampler_enable_flags;
+         uint unit;
+         uint count = 0;
+         OUT_BATCH(_3DSTATE_MAP_STATE | (3 * nr));
+         OUT_BATCH(enabled);
+         for (unit = 0; unit < I915_TEX_UNITS; unit++) {
+            if (enabled & (1 << unit)) {
+               struct pipe_buffer_handle *buf =
+                  i915->texture[unit]->region->buffer;
+               uint offset = 0;
+               assert(buf);
+
+               count++;
+
+               OUT_RELOC(buf,
+                         I915_BUFFER_ACCESS_READ,
+                         offset);
+               OUT_BATCH(i915->current.texbuffer[unit][0]); /* MS3 */
+               OUT_BATCH(i915->current.texbuffer[unit][1]); /* MS4 */
+            }
+         }
+         assert(count == nr);
+      }
+#endif
+
+#if 0
    /* samplers */
    if (i915->hardware_dirty & I915_HW_SAMPLER) 
    {
@@ -210,8 +241,7 @@ i915_emit_hardware_state(struct i915_context *i915 )
 	 }
       }
    }
-   
-
+#endif
 
    /* constants */
    if (i915->hardware_dirty & I915_HW_PROGRAM)
