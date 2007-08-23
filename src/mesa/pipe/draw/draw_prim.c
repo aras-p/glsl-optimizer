@@ -137,8 +137,7 @@ run_vertex_program(struct draw_context *draw,
    unsigned int j;
 
 #if 0
-   static FILE *file = NULL;
-   unsigned i;
+   FILE *file = stdout;
 #endif
 
    ALIGN16_DECL(struct tgsi_exec_vector, inputs, PIPE_ATTRIB_MAX);
@@ -207,9 +206,9 @@ run_vertex_program(struct draw_context *draw,
             machine.Inputs[attr].xyzw[2].f[j] = p[2]; /*Z*/
             machine.Inputs[attr].xyzw[3].f[j] = p[3]; /*W*/
 #if 0
-            if (attr == 0) {
-               fprintf(file, "Input vertex %d: %f %f %f\n",
-                      j, p[0], p[1], p[2]);
+            if (1/*attr == 0*/) {
+               fprintf(file, "Input vertex %d: attr %d:  %f %f %f %f\n",
+                       j, attr, p[0], p[1], p[2], p[3]);
                fflush( file );
             }
 #endif
@@ -269,11 +268,12 @@ run_vertex_program(struct draw_context *draw,
       vOut[j]->data[0][2] = z * scale[2] + trans[2];
       vOut[j]->data[0][3] = w;
 #if 0
-      fprintf(file, "wincoord: %f %f %f %f\n",
-             vOut[j]->data[0][0],
-             vOut[j]->data[0][1],
-             vOut[j]->data[0][2],
-             vOut[j]->data[0][3]);
+      fprintf(file, "Vert %d: wincoord: %f %f %f %f\n",
+              j, 
+              vOut[j]->data[0][0],
+              vOut[j]->data[0][1],
+              vOut[j]->data[0][2],
+              vOut[j]->data[0][3]);
       fflush( file );
 #endif
 
@@ -287,6 +287,14 @@ run_vertex_program(struct draw_context *draw,
             vOut[j]->data[slot][1] = machine.Outputs[attr].xyzw[1].f[j];
             vOut[j]->data[slot][2] = machine.Outputs[attr].xyzw[2].f[j];
             vOut[j]->data[slot][3] = machine.Outputs[attr].xyzw[3].f[j];
+#if 0
+            fprintf(file, "output attrib %d slot %d: %f %f %f %f\n",
+                    attr, slot,
+                    vOut[j]->data[slot][0],
+                    vOut[j]->data[slot][1],
+                    vOut[j]->data[slot][2],
+                    vOut[j]->data[slot][3]);
+#endif
             slot++;
          }
       }
