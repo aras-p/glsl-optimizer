@@ -669,7 +669,7 @@ draw_prim( struct draw_context *draw, unsigned start, unsigned count )
 			    ef_mask,
 			    start + i + 1,
 			    start + i + 2,
-			    start + i + 0);
+			    start + 0);
 
 	    ef_mask &= ~(1<<2);
 	 }
