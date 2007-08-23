@@ -201,7 +201,8 @@ static void reset_stipple_counter( struct draw_stage *stage )
 
 
 /**
- * Create a new primitive setup/render stage.
+ * Create a new primitive setup/render stage.  This gets plugged into
+ * the 'draw' module's pipeline.
  */
 struct draw_stage *i915_draw_render_stage( struct i915_context *i915 )
 {

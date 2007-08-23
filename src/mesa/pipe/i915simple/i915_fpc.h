@@ -56,22 +56,15 @@ struct i915_fp_compile {
    uint num_constants;
    uint constant_flags[I915_MAX_CONSTANT]; /**< status of each constant */
 
-   uint *csr;                 /* Cursor, points into program.
-                                 */
+   uint *csr;            /**< Cursor, points into program. */
 
-   uint *decl;                /* Cursor, points into declarations.
-                                 */
+   uint *decl;           /**< Cursor, points into declarations. */
 
-   uint decl_s;               /* flags for which s regs need to be decl'd */
-   uint decl_t;               /* flags for which t regs need to be decl'd */
+   uint decl_s;          /**< flags for which s regs need to be decl'd */
+   uint decl_t;          /**< flags for which t regs need to be decl'd */
 
-   uint temp_flag;            /* Tracks temporary regs which are in
-                                 * use.
-                                 */
-
-   uint utemp_flag;           /* Tracks TYPE_U temporary regs which are in
-                                 * use.
-                                 */
+   uint temp_flag;       /**< Tracks temporary regs which are in use */
+   uint utemp_flag;      /**< Tracks TYPE_U temporary regs which are in use */
 
    uint nr_tex_indirect;
    uint nr_tex_insn;
