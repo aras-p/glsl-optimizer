@@ -25,8 +25,10 @@
  * 
  **************************************************************************/
 
-#include "vf/vf.h"
+
+#include "pipe/p_util.h"
 #include "pipe/draw/draw_context.h"
+#include "pipe/draw/draw_vertex.h"
 #include "i915_context.h"
 #include "i915_state.h"
 #include "i915_reg.h"
@@ -67,9 +69,44 @@ emit_vertex_attr(struct vertex_info *vinfo, uint vfAttr, uint format)
    const uint n = vinfo->num_attribs;
    vinfo->attr_mask |= (1 << vfAttr);
    vinfo->slot_to_attrib[n] = vfAttr;
+   printf("Vertex slot %d = vfattrib %d\n", n, vfAttr);
    /*vinfo->interp_mode[n] = interpMode;*/
    vinfo->format[n] = format;
    vinfo->num_attribs++;
+}
+
+
+/**
+ * Recompute the vinfo->size field.
+ */
+static void
+compute_vertex_size(struct vertex_info *vinfo)
+{
+   uint i;
+
+   vinfo->size = 0;
+   for (i = 0; i < vinfo->num_attribs; i++) {
+      switch (vinfo->format[i]) {
+      case FORMAT_OMIT:
+         break;
+      case FORMAT_4UB:
+         /* fall-through */
+      case FORMAT_1F:
+         vinfo->size += 1;
+         break;
+      case FORMAT_2F:
+         vinfo->size += 2;
+         break;
+      case FORMAT_3F:
+         vinfo->size += 3;
+         break;
+      case FORMAT_4F:
+         vinfo->size += 4;
+         break;
+      default:
+         assert(0);
+      }
+   }
 }
 
 
@@ -111,7 +148,7 @@ static void calculate_vertex_layout( struct i915_context *i915 )
       }
    }
 
-   for (i = FRAG_ATTRIB_TEX0; i < FRAG_ATTRIB_MAX; i++) {
+   for (i = FRAG_ATTRIB_TEX0; i <= FRAG_ATTRIB_TEX7/*MAX*/; i++) {
       uint hwtc;
       if (inputsRead & (1 << i)) {
          hwtc = TEXCOORDFMT_4D;
@@ -139,6 +176,8 @@ static void calculate_vertex_layout( struct i915_context *i915 )
          emit_vertex_attr(vinfo, VF_ATTRIB_BFC1, FORMAT_OMIT);
       }
    }
+
+   compute_vertex_size(vinfo);
 
    /* If the attributes have changed, tell the draw module about the new
     * vertex layout.  We'll also update the hardware vertex format info.

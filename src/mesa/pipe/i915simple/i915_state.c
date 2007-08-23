@@ -156,7 +156,6 @@ static void i915_set_constant_buffer(struct pipe_context *pipe,
       if (buf->size &&
           (mapped = ws->buffer_map(ws, buf->buffer, PIPE_BUFFER_FLAG_READ))) {
          memcpy(i915->current.constants[shader], mapped, buf->size);
-         fprintf(stderr, "i915 problem: map of constant buffer failed\n");
          ws->buffer_unmap(ws, buf->buffer);
          i915->current.num_user_constants[shader]
             = buf->size / (4 * sizeof(float));

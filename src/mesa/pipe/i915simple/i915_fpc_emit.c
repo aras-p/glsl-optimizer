@@ -199,6 +199,7 @@ uint i915_emit_texld( struct i915_fp_compile *p,
        * do).  Will fallback for now.
        */
       i915_program_error(p, "Can't (yet) swizzle TEX arguments");
+      assert(0);
       return 0;
    }
 

@@ -32,6 +32,9 @@
 #include "pipe/tgsi/core/tgsi_token.h"
 #include "pipe/tgsi/core/tgsi_parse.h"
 
+#include "pipe/draw/draw_vertex.h"
+
+
 /**
  * Simple pass-through fragment shader to use when we don't have
  * a real shader (or it fails to compile for some reason).
@@ -124,7 +127,7 @@ static uint
 src_vector(struct i915_fp_compile *p,
            const struct tgsi_full_src_register *source)
 {
-   const uint index = source->SrcRegister.Index;
+   uint index = source->SrcRegister.Index;
    uint src;
 
    switch (source->SrcRegister.File) {
@@ -145,23 +148,62 @@ src_vector(struct i915_fp_compile *p,
        * 
        * We also use a texture coordinate to pass wpos when possible.
        */
+#if 1
+      /* use vertex format info to remap input regs */
+      assert(index < p->vertex_info->num_attribs);
+      printf("%s map index %d to %d\n",
+             __FUNCTION__,
+             index,
+             p->vertex_info->slot_to_attrib[index]);
+
+      index = p->vertex_info->slot_to_attrib[index];
+
+      switch (index) {
+      case VF_ATTRIB_POS:
+         assert(p->wpos_tex != -1);
+         src = i915_emit_decl(p, REG_TYPE_T, p->wpos_tex, D0_CHANNEL_ALL);
+         break;
+      case VF_ATTRIB_COLOR0:
+         src = i915_emit_decl(p, REG_TYPE_T, T_DIFFUSE, D0_CHANNEL_ALL);
+         break;
+      case VF_ATTRIB_COLOR1:
+         src = i915_emit_decl(p, REG_TYPE_T, T_SPECULAR, D0_CHANNEL_XYZ);
+         src = swizzle(src, X, Y, Z, ONE);
+         break;
+      case VF_ATTRIB_FOG:
+         src = i915_emit_decl(p, REG_TYPE_T, T_FOG_W, D0_CHANNEL_W);
+         src = swizzle(src, W, W, W, W);
+         break;
+      case VF_ATTRIB_TEX0:
+      case VF_ATTRIB_TEX1:
+      case VF_ATTRIB_TEX2:
+      case VF_ATTRIB_TEX3:
+      case VF_ATTRIB_TEX4:
+      case VF_ATTRIB_TEX5:
+      case VF_ATTRIB_TEX6:
+      case VF_ATTRIB_TEX7:
+         src = i915_emit_decl(p, REG_TYPE_T,
+                              T_TEX0 + (index - VF_ATTRIB_TEX0),
+                              D0_CHANNEL_ALL);
+         break;
+
+      default:
+         i915_program_error(p, "Bad source->Index");
+         return 0;
+      }
+
+#else
       switch (index) {
       case FRAG_ATTRIB_WPOS:
+         assert(p->wpos_tex != -1);
          src = i915_emit_decl(p, REG_TYPE_T, p->wpos_tex, D0_CHANNEL_ALL);
          break;
       case FRAG_ATTRIB_COL0:
          src = i915_emit_decl(p, REG_TYPE_T, T_DIFFUSE, D0_CHANNEL_ALL);
          break;
       case FRAG_ATTRIB_COL1:
-#if 1
          src = i915_emit_decl(p, REG_TYPE_T, T_SPECULAR, D0_CHANNEL_XYZ);
          src = swizzle(src, X, Y, Z, ONE);
-#else
-         /* total hack to force texture mapping */
-         src = i915_emit_decl(p, REG_TYPE_T,
-                              T_TEX0/* + (index - FRAG_ATTRIB_TEX0)*/,
-                              D0_CHANNEL_ALL);
-#endif
          break;
       case FRAG_ATTRIB_FOGC:
          src = i915_emit_decl(p, REG_TYPE_T, T_FOG_W, D0_CHANNEL_W);
@@ -184,6 +226,8 @@ src_vector(struct i915_fp_compile *p,
          i915_program_error(p, "Bad source->Index");
          return 0;
       }
+#endif
+
       break;
 
    case TGSI_FILE_CONSTANT:
@@ -876,6 +920,8 @@ i915_init_compile(struct i915_context *i915,
    struct i915_fp_compile *p = CALLOC_STRUCT(i915_fp_compile);
 
    p->shader = &i915->fs;
+
+   p->vertex_info = &i915->current.vertex_info;
 
    /* new constants found during translation get appended after the
     * user-provided constants.

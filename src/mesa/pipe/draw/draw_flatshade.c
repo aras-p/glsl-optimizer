@@ -154,7 +154,7 @@ struct draw_stage *draw_flatshade_stage( struct draw_context *draw )
    flatshade->stage.end = flatshade_end;
    flatshade->stage.reset_stipple_counter = flatshade_reset_stipple_counter;
 
-   flatshade->lookup = draw->vf_attr_to_slot;
+   flatshade->lookup = draw->vertex_info.attrib_to_slot;
 
    return &flatshade->stage;
 }

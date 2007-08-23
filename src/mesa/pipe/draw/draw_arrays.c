@@ -70,17 +70,53 @@ draw_arrays(struct draw_context *draw, unsigned prim,
 }
 
 
-/* XXX move this into draw_context.c? */
+static INLINE void
+emit_vertex_attr(struct vertex_info *vinfo, uint vfAttr, uint format)
+{
+   const uint n = vinfo->num_attribs;
+   vinfo->attr_mask |= (1 << vfAttr);
+   vinfo->slot_to_attrib[n] = vfAttr;
+   if (n >= 2) {
+      /* the first two slots are the vertex header & clippos */
+      vinfo->attrib_to_slot[vfAttr] = n - 2;
+   }
+   /*printf("Vertex slot %d = vfattrib %d\n", n, vfAttr);*/
+   /*vinfo->interp_mode[n] = interpMode;*/
+   vinfo->format[n] = format;
+   vinfo->num_attribs++;
 
-#define EMIT_ATTR( VF_ATTR, STYLE, SIZE )			\
-do {								\
-   if (draw->nr_attrs >= 2)					\
-      draw->vf_attr_to_slot[VF_ATTR] = draw->nr_attrs - 2;	\
-   draw->attrs[draw->nr_attrs].attrib = VF_ATTR;		\
-   /*draw->attrs[draw->nr_attrs].format = STYLE*/;              \
-   draw->nr_attrs++;						\
-   draw->vertex_size += SIZE;					\
-} while (0)
+}
+
+
+static void
+compute_vertex_size(struct vertex_info *vinfo)
+{
+   uint i;
+
+   vinfo->size = 0;
+   for (i = 0; i < vinfo->num_attribs; i++) {
+      switch (vinfo->format[i]) {
+      case FORMAT_OMIT:
+         break;
+      case FORMAT_4UB:
+         /* fall-through */
+      case FORMAT_1F:
+         vinfo->size += 1;
+         break;
+      case FORMAT_2F:
+         vinfo->size += 2;
+         break;
+      case FORMAT_3F:
+         vinfo->size += 3;
+         break;
+      case FORMAT_4F:
+         vinfo->size += 4;
+         break;
+      default:
+         assert(0);
+      }
+   }
+}
 
 
 void
@@ -88,26 +124,26 @@ draw_set_vertex_attributes( struct draw_context *draw,
                             const unsigned *slot_to_vf_attr,
                             unsigned nr_attrs )
 {
+   struct vertex_info *vinfo = &draw->vertex_info;
    unsigned i;
 
-   memset(draw->vf_attr_to_slot, 0, sizeof(draw->vf_attr_to_slot));
-   draw->nr_attrs = 0;
-   draw->vertex_size = 0;
+   assert(slot_to_vf_attr[0] == VF_ATTRIB_POS);
+
+   memset(vinfo, 0, sizeof(*vinfo));
 
    /*
     * First three attribs are always the same: header, clip pos, winpos
     */
-   EMIT_ATTR(VF_ATTRIB_VERTEX_HEADER, EMIT_1F, 1);
-   EMIT_ATTR(VF_ATTRIB_CLIP_POS, EMIT_4F, 4);
-
-   assert(slot_to_vf_attr[0] == VF_ATTRIB_POS);
-   EMIT_ATTR(slot_to_vf_attr[0], EMIT_4F_VIEWPORT, 4);
+   emit_vertex_attr(vinfo, VF_ATTRIB_VERTEX_HEADER, FORMAT_1F);
+   emit_vertex_attr(vinfo, VF_ATTRIB_CLIP_POS, FORMAT_4F);
+   emit_vertex_attr(vinfo, VF_ATTRIB_POS, FORMAT_4F_VIEWPORT);
 
    /*
     * Remaining attribs (color, texcoords, etc)
     */
-   for (i = 1; i < nr_attrs; i++) 
-      EMIT_ATTR(slot_to_vf_attr[i], EMIT_4F, 4);
+   for (i = 1; i < nr_attrs; i++) {
+      emit_vertex_attr(vinfo, slot_to_vf_attr[i], FORMAT_4F);
+   }
 
-   draw->vertex_size *= 4; /* floats to bytes */
+   compute_vertex_size(vinfo);
 }

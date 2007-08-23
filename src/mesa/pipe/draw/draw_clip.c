@@ -93,7 +93,7 @@ static void interp( const struct clipper *clip,
 		    const struct vertex_header *out, 
 		    const struct vertex_header *in )
 {
-   const unsigned nr_attrs = clip->stage.draw->nr_attrs;
+   const unsigned nr_attrs = clip->stage.draw->vertex_info.num_attribs;
    unsigned j;
 
    /* Vertex header.
@@ -379,9 +379,9 @@ static void clip_begin( struct draw_stage *stage )
    unsigned nr = stage->draw->nr_planes;
 
    /* sanity checks.  If these fail, review the clip/interp code! */
-   assert(stage->draw->nr_attrs >= 3);
-   assert(stage->draw->attrs[0].attrib == VF_ATTRIB_VERTEX_HEADER);
-   assert(stage->draw->attrs[1].attrib == VF_ATTRIB_CLIP_POS);
+   assert(stage->draw->vertex_info.num_attribs >= 3);
+   assert(stage->draw->vertex_info.slot_to_attrib[0] == VF_ATTRIB_VERTEX_HEADER);
+   assert(stage->draw->vertex_info.slot_to_attrib[1] == VF_ATTRIB_CLIP_POS);
 
    /* Hacky bitmask to use when we hit CLIP_USER_BIT:
     */   

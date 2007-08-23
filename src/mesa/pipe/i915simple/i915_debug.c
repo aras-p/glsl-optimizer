@@ -692,10 +692,14 @@ static boolean i915_debug_packet( struct debug_stream *stream )
       case 0x31:
 	 return debug_chain(stream, "MI_BATCH_BUFFER_START", 2);
       default:
+         (void)debug(stream, "UNKNOWN 0x0 case!", 1);
+         assert(0);
 	 break;
       }
       break;
    case 0x1:
+      (void) debug(stream, "UNKNOWN 0x1 case!", 1);
+      assert(0);
       break;
    case 0x2:
       switch ((cmd >> 22) & 0xff) {	 
@@ -735,6 +739,8 @@ static boolean i915_debug_packet( struct debug_stream *stream )
 	 case 0x11:
 	    return debug(stream, "3DSTATE_DEPTH_SUBRECTANGLE_DISABLE", 1);
 	 default:
+            (void) debug(stream, "UNKNOWN 0x1c case!", 1);
+            assert(0);
 	    break;
 	 }
 	 break;

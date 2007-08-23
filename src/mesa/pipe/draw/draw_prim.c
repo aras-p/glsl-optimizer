@@ -282,7 +282,7 @@ run_vertex_program(struct draw_context *draw,
       slot = 1;
       for (attr = 1; attr < VERT_RESULT_MAX; attr++) {
          if (draw->vertex_shader.outputs_written & (1 << attr)) {
-            assert(slot < draw->nr_attrs);
+            assert(slot < draw->vertex_info.num_attribs);
             vOut[j]->data[slot][0] = machine.Outputs[attr].xyzw[0].f[j];
             vOut[j]->data[slot][1] = machine.Outputs[attr].xyzw[1].f[j];
             vOut[j]->data[slot][2] = machine.Outputs[attr].xyzw[2].f[j];

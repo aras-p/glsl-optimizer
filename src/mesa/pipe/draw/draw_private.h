@@ -44,28 +44,7 @@
 #include "pipe/p_state.h"
 #include "pipe/p_defines.h"
 
-
-/* XXX these are temporary */
-struct vf_attr_map {
-   unsigned attrib;
-   /*
-   unsigned format;
-   */
-   unsigned offset;
-};
-#define VF_ATTRIB_POS 0
-#define VF_ATTRIB_COLOR0 3
-#define VF_ATTRIB_COLOR1 4
-#define VF_ATTRIB_BFC0 25
-#define VF_ATTRIB_BFC1 26
-
-#define VF_ATTRIB_CLIP_POS 27
-#define VF_ATTRIB_VERTEX_HEADER 28
-#define VF_ATTRIB_MAX 29
-#define EMIT_1F 0
-#define EMIT_4F 3
-#define EMIT_4F_VIEWPORT 6
-#define FRAG_ATTRIB_MAX 13
+#include "draw_vertex.h"
 
 
 /**
@@ -175,14 +154,9 @@ struct draw_context
    float plane[12][4];
    unsigned nr_planes;
 
-   /*
-    * Vertex attribute info
-    */
-   unsigned vf_attr_to_slot[PIPE_ATTRIB_MAX];
-   struct vf_attr_map attrs[VF_ATTRIB_MAX];
-   unsigned nr_attrs;
+   /** Describes the layout of post-transformation vertices */
+   struct vertex_info vertex_info;
 
-   unsigned vertex_size;       /**< in bytes */
    unsigned nr_vertices;
 
    unsigned prim;   /**< current prim type: PIPE_PRIM_x */
@@ -250,7 +224,7 @@ dup_vert( struct draw_stage *stage,
 	  unsigned idx )
 {   
    struct vertex_header *tmp = stage->tmp[idx];
-   memcpy(tmp, vert, stage->draw->vertex_size );
+   memcpy(tmp, vert, stage->draw->vertex_info.size * sizeof(float) );
    return tmp;
 }
 

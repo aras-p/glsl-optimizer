@@ -33,6 +33,8 @@
 #include "pipe/p_defines.h"
 #include "pipe/p_state.h"
 
+#include "pipe/draw/draw_vertex.h"
+
 
 #define I915_TEX_UNITS 8
 
@@ -77,30 +79,6 @@
 #define I915_MAX_CONSTANT  32
 
 
-/**
- * New vertex format stuff...
- */
-#define MAX_VERT_ATTRIBS 12  /* OK? */
-
-#define FORMAT_OMIT 0
-#define FORMAT_1F   1
-#define FORMAT_2F   2
-#define FORMAT_3F   3
-#define FORMAT_4F   4
-#define FORMAT_4UB  5
-
-struct vertex_info
-{
-   uint num_attribs;
-   uint hwfmt[2];      /** hardware format info for this format */
-   uint attr_mask;     /** mask of VF_ATTR_ bits */
-   uint slot_to_attrib[MAX_VERT_ATTRIBS];
-   uint interp_mode[MAX_VERT_ATTRIBS];
-   uint format[MAX_VERT_ATTRIBS];   /**< FORMAT_x */
-};
-
-
-
 
 struct i915_cache_context;
 
@@ -129,7 +107,7 @@ struct i915_state
    /* texture image buffers */
    unsigned texbuffer[I915_TEX_UNITS][2];
 
-   /* vertex format registers */
+   /** Describes the current hardware vertex layout */
    struct vertex_info vertex_info;
 
    unsigned id;			/* track lost context events */

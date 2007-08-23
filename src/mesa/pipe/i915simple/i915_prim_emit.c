@@ -58,7 +58,7 @@ static INLINE struct setup_stage *setup_stage( struct draw_stage *stage )
 }
 
 
-
+#if 0
 /* Hardcoded vertex format: xyz/rgba
  */
 static INLINE void
@@ -75,15 +75,22 @@ emit_hw_vertex( struct i915_context *i915,
                        float_to_ubyte( vertex->data[1][0] ),
                        float_to_ubyte( vertex->data[1][3] )) );
 }
-		
-		
+#endif
 
+
+/**
+ * Extract the needed fields from vertex_header and emit i915 dwords.
+ * Recall that the vertices are constructed by the 'draw' module and
+ * have a couple of slots at the beginning (1-dword header, 4-dword
+ * clip pos) that we ignore here.
+ */
 static INLINE void
 emit_hw_vertex2( struct i915_context *i915,
                  const struct vertex_header *vertex)
 {
    const struct vertex_info *vinfo = &i915->current.vertex_info;
    uint i;
+   uint count = 0;  /* for debug/sanity */
 
    for (i = 0; i < vinfo->num_attribs; i++) {
       switch (vinfo->format[i]) {
@@ -92,32 +99,38 @@ emit_hw_vertex2( struct i915_context *i915,
          break;
       case FORMAT_1F:
          OUT_BATCH( fui(vertex->data[i][0]) );
+         count++;
          break;
       case FORMAT_2F:
          OUT_BATCH( fui(vertex->data[i][0]) );
          OUT_BATCH( fui(vertex->data[i][1]) );
+         count += 2;
          break;
       case FORMAT_3F:
          OUT_BATCH( fui(vertex->data[i][0]) );
          OUT_BATCH( fui(vertex->data[i][1]) );
          OUT_BATCH( fui(vertex->data[i][2]) );
+         count += 3;
          break;
       case FORMAT_4F:
          OUT_BATCH( fui(vertex->data[i][0]) );
          OUT_BATCH( fui(vertex->data[i][1]) );
          OUT_BATCH( fui(vertex->data[i][2]) );
          OUT_BATCH( fui(vertex->data[i][3]) );
+         count += 4;
          break;
       case FORMAT_4UB:
          OUT_BATCH( pack_ub4(float_to_ubyte( vertex->data[i][2] ),
                              float_to_ubyte( vertex->data[i][1] ),
                              float_to_ubyte( vertex->data[i][0] ),
                              float_to_ubyte( vertex->data[i][3] )) );
+         count += 1;
          break;
       default:
          assert(0);
       }
    }
+   assert(count == vinfo->size);
 }
 
 
@@ -129,9 +142,15 @@ emit_prim( struct draw_stage *stage,
 	   unsigned nr )
 {
    struct i915_context *i915 = setup_stage(stage)->i915;
+#if 0
    unsigned vertex_size = 4 * sizeof(int);
+#else
+   unsigned vertex_size = i915->current.vertex_info.size * 4; /* in bytes */
+#endif
    unsigned *ptr;
    unsigned i;
+
+   assert(vertex_size >= 12); /* never smaller than 12 bytes */
 
    if (i915->dirty)
       i915_update_derived( i915 );

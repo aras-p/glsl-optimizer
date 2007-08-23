@@ -163,7 +163,7 @@ struct draw_stage *draw_twoside_stage( struct draw_context *draw )
    twoside->stage.end = twoside_end;
    twoside->stage.reset_stipple_counter = twoside_reset_stipple_counter;
 
-   twoside->lookup = draw->vf_attr_to_slot;
+   twoside->lookup = draw->vertex_info.attrib_to_slot;
 
    return &twoside->stage;
 }

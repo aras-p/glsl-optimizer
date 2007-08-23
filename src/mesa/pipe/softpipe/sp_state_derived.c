@@ -28,70 +28,10 @@
 #include "pipe/p_util.h"
 
 #include "pipe/draw/draw_context.h"
+#include "pipe/draw/draw_vertex.h"
 
 #include "sp_context.h"
 #include "sp_state.h"
-
-
-/* XXX: copied from vf.h */
-enum {
-   VF_ATTRIB_POS = 0,
-   VF_ATTRIB_WEIGHT = 1,
-   VF_ATTRIB_NORMAL = 2,
-   VF_ATTRIB_COLOR0 = 3,
-   VF_ATTRIB_COLOR1 = 4,
-   VF_ATTRIB_FOG = 5,
-   VF_ATTRIB_COLOR_INDEX = 6,
-   VF_ATTRIB_EDGEFLAG = 7,
-   VF_ATTRIB_TEX0 = 8,
-   VF_ATTRIB_TEX1 = 9,
-   VF_ATTRIB_TEX2 = 10,
-   VF_ATTRIB_TEX3 = 11,
-   VF_ATTRIB_TEX4 = 12,
-   VF_ATTRIB_TEX5 = 13,
-   VF_ATTRIB_TEX6 = 14,
-   VF_ATTRIB_TEX7 = 15,
-   VF_ATTRIB_VAR0 = 16,
-   VF_ATTRIB_VAR1 = 17,
-   VF_ATTRIB_VAR2 = 18,
-   VF_ATTRIB_VAR3 = 19,
-   VF_ATTRIB_VAR4 = 20,
-   VF_ATTRIB_VAR5 = 21,
-   VF_ATTRIB_VAR6 = 22,
-   VF_ATTRIB_VAR7 = 23,
-   VF_ATTRIB_POINTSIZE = 24,
-   VF_ATTRIB_BFC0 = 25,
-   VF_ATTRIB_BFC1 = 26,
-   VF_ATTRIB_CLIP_POS = 27,
-   VF_ATTRIB_VERTEX_HEADER = 28,
-   VF_ATTRIB_MAX = 29
-};
-
-/* XXX: copied from config.h */
-#define MAX_VARYING 8
-
-/* XXX: copied from mtypes.h */
-enum
-{
-   FRAG_ATTRIB_WPOS = 0,
-   FRAG_ATTRIB_COL0 = 1,
-   FRAG_ATTRIB_COL1 = 2,
-   FRAG_ATTRIB_FOGC = 3,
-   FRAG_ATTRIB_TEX0 = 4,
-   FRAG_ATTRIB_TEX1 = 5,
-   FRAG_ATTRIB_TEX2 = 6,
-   FRAG_ATTRIB_TEX3 = 7,
-   FRAG_ATTRIB_TEX4 = 8,
-   FRAG_ATTRIB_TEX5 = 9,
-   FRAG_ATTRIB_TEX6 = 10,
-   FRAG_ATTRIB_TEX7 = 11,
-   FRAG_ATTRIB_VAR0 = 12,  /**< shader varying */
-   FRAG_ATTRIB_MAX = (FRAG_ATTRIB_VAR0 + MAX_VARYING)
-};
-
-#define FRAG_BIT_COL0  (1 << FRAG_ATTRIB_COL0)
-#define FRAG_BIT_COL1  (1 << FRAG_ATTRIB_COL1)
-
 
 
 
