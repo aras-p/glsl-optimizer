@@ -154,7 +154,11 @@ static void update_tnl( struct st_context *st )
 
 const struct st_tracked_state st_update_tnl = {
    .dirty = {
-      .mesa  = _NEW_PROGRAM | _NEW_LIGHT | _NEW_TEXTURE, /* XXX more? */
+      .mesa  = (_NEW_PROGRAM |
+                _NEW_LIGHT |
+                _NEW_TEXTURE |
+                _NEW_TRANSFORM |
+                _NEW_LIGHT), /* XXX more? */
       .st   = ST_NEW_MESA,  /* XXX correct? */
    },
    .update = update_tnl
