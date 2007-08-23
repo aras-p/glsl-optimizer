@@ -88,6 +88,7 @@ emit_vertex_attr(struct vertex_info *vinfo, uint vfAttr, uint format)
 }
 
 
+/** XXX this is duplicated in the i915 driver... */
 static void
 compute_vertex_size(struct vertex_info *vinfo)
 {
