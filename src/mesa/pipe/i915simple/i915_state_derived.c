@@ -35,32 +35,6 @@
 #include "i915_fpc.h"
 
 
-
-static const unsigned frag_to_vf[FRAG_ATTRIB_MAX] = 
-{
-   VF_ATTRIB_POS,
-   VF_ATTRIB_COLOR0,
-   VF_ATTRIB_COLOR1,
-   VF_ATTRIB_FOG,
-   VF_ATTRIB_TEX0,
-   VF_ATTRIB_TEX1,
-   VF_ATTRIB_TEX2,
-   VF_ATTRIB_TEX3,
-   VF_ATTRIB_TEX4,
-   VF_ATTRIB_TEX5,
-   VF_ATTRIB_TEX6,
-   VF_ATTRIB_TEX7,
-   VF_ATTRIB_VAR0,
-   VF_ATTRIB_VAR1,
-   VF_ATTRIB_VAR2,
-   VF_ATTRIB_VAR3,
-   VF_ATTRIB_VAR4,
-   VF_ATTRIB_VAR5,
-   VF_ATTRIB_VAR6,
-   VF_ATTRIB_VAR7,
-};
-
-
 static INLINE void
 emit_vertex_attr(struct vertex_info *vinfo, uint vfAttr, uint format)
 {
@@ -118,44 +92,45 @@ static void calculate_vertex_layout( struct i915_context *i915 )
 {
    const unsigned inputsRead = i915->fs.inputs_read;
    struct vertex_info *vinfo = &i915->current.vertex_info;
-   uint i;
 
    memset(vinfo, 0, sizeof(*vinfo));
 
    /* TODO - Figure out if we need to do perspective divide, etc.
     */
-   emit_vertex_attr(vinfo, VF_ATTRIB_POS, FORMAT_3F);
+
+   /* pos */
+   emit_vertex_attr(vinfo, TGSI_ATTRIB_POS, FORMAT_3F);
    vinfo->hwfmt[0] |= S4_VFMT_XYZ;
-      
-   /* Pull in the rest of the attributes.  They are all in float4
-    * format.  Future optimizations could be to keep some attributes
-    * as fixed point or ubyte format.
-    */
-   for (i = 1; i < FRAG_ATTRIB_TEX0; i++) {
-      if (inputsRead & (1 << i)) {
-         assert(i < Elements(frag_to_vf));
-         if (i915->setup.flatshade
-             && (i == FRAG_ATTRIB_COL0 || i == FRAG_ATTRIB_COL1)) {
-            emit_vertex_attr(vinfo, frag_to_vf[i], FORMAT_4UB);
-         }   
-         else {
-            emit_vertex_attr(vinfo, frag_to_vf[i], FORMAT_4UB);
-         }
-         vinfo->hwfmt[0] |= S4_VFMT_COLOR;
-      }
+
+   /* color0 */
+   if (inputsRead & (1 << TGSI_ATTRIB_COLOR0)) {
+      emit_vertex_attr(vinfo, TGSI_ATTRIB_COLOR0, FORMAT_4UB);
+      vinfo->hwfmt[0] |= S4_VFMT_COLOR;
    }
 
-   for (i = FRAG_ATTRIB_TEX0; i <= FRAG_ATTRIB_TEX7/*MAX*/; i++) {
-      uint hwtc;
-      if (inputsRead & (1 << i)) {
-         hwtc = TEXCOORDFMT_4D;
-         assert(i < sizeof(frag_to_vf) / sizeof(frag_to_vf[0]));
-         emit_vertex_attr(vinfo, frag_to_vf[i], FORMAT_4F);
+   /* color 1 */
+   if (inputsRead & (1 << TGSI_ATTRIB_COLOR1)) {
+      assert(0); /* untested */
+      emit_vertex_attr(vinfo, TGSI_ATTRIB_COLOR1, FORMAT_4UB);
+      vinfo->hwfmt[0] |= S4_VFMT_SPEC_FOG;
+   }
+
+   /* XXX fog? */
+
+   /* texcoords */
+   {
+      uint i;
+      for (i = TGSI_ATTRIB_TEX0; i <= TGSI_ATTRIB_TEX7; i++) {
+         uint hwtc;
+         if (inputsRead & (1 << i)) {
+            emit_vertex_attr(vinfo, i, FORMAT_4F);
+            hwtc = TEXCOORDFMT_4D;
+         }
+         else {
+            hwtc = TEXCOORDFMT_NOT_PRESENT;
+         }
+         vinfo->hwfmt[1] |= hwtc << ((i - TGSI_ATTRIB_TEX0) * 4);
       }
-      else {
-         hwtc = TEXCOORDFMT_NOT_PRESENT;
-      }
-      vinfo->hwfmt[1] |= hwtc << ((i - FRAG_ATTRIB_TEX0) * 4);
    }
 
    /* Additional attributes required for setup: Just twosided
@@ -163,12 +138,11 @@ static void calculate_vertex_layout( struct i915_context *i915 )
     * the vertex header.
     */
    if (i915->setup.light_twoside) {
-      if (inputsRead & FRAG_BIT_COL0) {
-         emit_vertex_attr(vinfo, VF_ATTRIB_BFC0, FORMAT_OMIT);
-      }
-	    
-      if (inputsRead & FRAG_BIT_COL1) {
-         emit_vertex_attr(vinfo, VF_ATTRIB_BFC1, FORMAT_OMIT);
+      if (inputsRead & (1 << TGSI_ATTRIB_COLOR0)) {
+         emit_vertex_attr(vinfo, TGSI_ATTRIB_BFC0, FORMAT_OMIT);
+      }	    
+      if (inputsRead & (1 << TGSI_ATTRIB_COLOR1)) {
+         emit_vertex_attr(vinfo, TGSI_ATTRIB_BFC1, FORMAT_OMIT);
       }
    }
 

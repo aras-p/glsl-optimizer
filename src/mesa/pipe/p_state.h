@@ -125,8 +125,8 @@ struct pipe_constant_buffer {
 
 
 struct pipe_shader_state {
-   unsigned inputs_read;                   /**< FRAG/VERT_ATTRIB_x */
-   unsigned outputs_written;               /**< FRAG/VERT_RESULT_x */
+   unsigned inputs_read;                   /**< TGSI_ATTRIB_ bits */
+   unsigned outputs_written;               /**< TGSI_ATTRIB_ bits */
    const struct tgsi_token *tokens;
 };
 

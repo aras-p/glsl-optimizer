@@ -34,6 +34,7 @@
 
 #include "pipe/p_util.h"
 #include "pipe/p_defines.h"
+#include "pipe/tgsi/core/tgsi_attribs.h"
 
 #include "sp_context.h"
 #include "sp_headers.h"
@@ -138,7 +139,7 @@ shade_quad(
    /* store result color */
    memcpy(
       quad->outputs.color,
-      &machine.Outputs[1].xyzw[0].f[0],
+      &machine.Outputs[TGSI_ATTRIB_COLOR0].xyzw[0].f[0],
       sizeof( quad->outputs.color ) );
 
 #if 0

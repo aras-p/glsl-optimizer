@@ -1,5 +1,7 @@
 #include "tgsi_platform.h"
 #include "tgsi_mesa.h"
+#include "pipe/tgsi/core/tgsi_attribs.h"
+#include "pipe/tgsi/mesa/mesa_to_tgsi.h"
 
 #define TGSI_DEBUG 1
 
@@ -7,8 +9,8 @@
 /**
  * Convert a VERT_ATTRIB_x to a TGSI_ATTRIB_y
  */
-static GLuint
-translate_vertex_input(GLuint attrib)
+uint
+tgsi_mesa_translate_vertex_input(GLuint attrib)
 {
    /* XXX these could be implemented with array lookups too.... */
    switch (attrib) {
@@ -70,8 +72,8 @@ translate_vertex_input(GLuint attrib)
 /**
  * Convert VERT_RESULT_x to TGSI_ATTRIB_y
  */
-static GLuint
-translate_vertex_ouput(GLuint attrib)
+uint
+tgsi_mesa_translate_vertex_output(GLuint attrib)
 {
    switch (attrib) {
    case VERT_RESULT_HPOS:
@@ -130,8 +132,8 @@ translate_vertex_ouput(GLuint attrib)
 /**
  * Convert a FRAG_ATTRIB_x to a TGSI_ATTRIB_y
  */
-static GLuint
-translate_fragment_input(GLuint attrib)
+uint
+tgsi_mesa_translate_fragment_input(GLuint attrib)
 {
    switch (attrib) {
    case FRAG_ATTRIB_WPOS:
@@ -184,8 +186,8 @@ translate_fragment_input(GLuint attrib)
 /**
  * Convert FRAG_RESULT_x to TGSI_ATTRIB_y
  */
-static GLuint
-translate_fragment_output(GLuint attrib)
+uint
+tgsi_mesa_translate_fragment_output(GLuint attrib)
 {
    switch (attrib) {
    case FRAG_RESULT_DEPR:
@@ -207,6 +209,68 @@ translate_fragment_output(GLuint attrib)
       return 0;
    }
 }
+
+
+uint
+tgsi_mesa_translate_vertex_input_mask(GLbitfield mask)
+{
+   uint tgsiMask = 0x0;
+   uint i;
+   for (i = 0; i < VERT_ATTRIB_MAX && mask; i++) {
+      if (mask & (1 << i)) {
+         tgsiMask |= 1 << tgsi_mesa_translate_vertex_input(i);
+      }
+      mask &= ~(1 << i);
+   }
+   return tgsiMask;
+}
+
+
+uint
+tgsi_mesa_translate_vertex_output_mask(GLbitfield mask)
+{
+   uint tgsiMask = 0x0;
+   uint i;
+   for (i = 0; i < VERT_RESULT_MAX && mask; i++) {
+      if (mask & (1 << i)) {
+         tgsiMask |= 1 << tgsi_mesa_translate_vertex_output(i);
+      }
+      mask &= ~(1 << i);
+   }
+   return tgsiMask;
+}
+
+uint
+tgsi_mesa_translate_fragment_input_mask(GLbitfield mask)
+{
+   uint tgsiMask = 0x0;
+   uint i;
+   for (i = 0; i < FRAG_ATTRIB_MAX && mask; i++) {
+      if (mask & (1 << i)) {
+         tgsiMask |= 1 << tgsi_mesa_translate_fragment_input(i);
+      }
+      mask &= ~(1 << i);
+   }
+   return tgsiMask;
+}
+
+
+uint
+tgsi_mesa_translate_fragment_output_mask(GLbitfield mask)
+{
+   uint tgsiMask = 0x0;
+   uint i;
+   for (i = 0; i < FRAG_RESULT_MAX && mask; i++) {
+      if (mask & (1 << i)) {
+         tgsiMask |= 1 << tgsi_mesa_translate_fragment_output(i);
+      }
+      mask &= ~(1 << i);
+   }
+   return tgsiMask;
+}
+
+
+
 
 
 
@@ -290,11 +354,11 @@ map_register_file_index(
           * color results -> index 1, 2, ...
           */
 	 if( index == FRAG_RESULT_DEPR ) {
-            mapped_index = 0;
+            mapped_index = TGSI_ATTRIB_POS;
          }
          else {
             assert( index == FRAG_RESULT_COLR );
-            mapped_index = index + 1;
+            mapped_index = TGSI_ATTRIB_COLOR0;
          }
       }
       else {

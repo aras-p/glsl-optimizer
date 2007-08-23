@@ -72,10 +72,10 @@ static INLINE void copy_colors( struct draw_stage *stage,
    const struct flatshade_stage *flatshade = flatshade_stage(stage);
    const unsigned *lookup = flatshade->lookup;
 
-   copy_attr( lookup[VF_ATTRIB_COLOR0], dst, src );
-   copy_attr( lookup[VF_ATTRIB_COLOR1], dst, src );
-   copy_attr( lookup[VF_ATTRIB_BFC0], dst, src );
-   copy_attr( lookup[VF_ATTRIB_BFC1], dst, src );
+   copy_attr( lookup[TGSI_ATTRIB_COLOR0], dst, src );
+   copy_attr( lookup[TGSI_ATTRIB_COLOR1], dst, src );
+   copy_attr( lookup[TGSI_ATTRIB_BFC0], dst, src );
+   copy_attr( lookup[TGSI_ATTRIB_BFC1], dst, src );
 }
 
 

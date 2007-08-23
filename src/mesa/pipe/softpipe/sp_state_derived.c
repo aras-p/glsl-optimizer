@@ -33,41 +33,43 @@
 #include "sp_context.h"
 #include "sp_state.h"
 
+#include "pipe/tgsi/core/tgsi_attribs.h"
 
 
-#define EMIT_ATTR( VF_ATTR, FRAG_ATTR, INTERP )			\
+
+#define EMIT_ATTR( ATTR, FRAG_ATTR, INTERP )			\
 do {								\
-   slot_to_vf_attr[softpipe->nr_attrs] = VF_ATTR;		\
-   softpipe->vf_attr_to_slot[VF_ATTR] = softpipe->nr_attrs;	\
+   slot_to_vf_attr[softpipe->nr_attrs] = ATTR;			\
+   softpipe->vf_attr_to_slot[ATTR] = softpipe->nr_attrs;	\
    softpipe->fp_attr_to_slot[FRAG_ATTR] = softpipe->nr_attrs;	\
    softpipe->interp[softpipe->nr_attrs] = INTERP;		\
    softpipe->nr_attrs++;					\
-   attr_mask |= (1 << (VF_ATTR));				\
+   attr_mask |= (1 << (ATTR));					\
 } while (0)
 
 
 static const unsigned frag_to_vf[PIPE_ATTRIB_MAX] = 
 {
-   VF_ATTRIB_POS,
-   VF_ATTRIB_COLOR0,
-   VF_ATTRIB_COLOR1,
-   VF_ATTRIB_FOG,
-   VF_ATTRIB_TEX0,
-   VF_ATTRIB_TEX1,
-   VF_ATTRIB_TEX2,
-   VF_ATTRIB_TEX3,
-   VF_ATTRIB_TEX4,
-   VF_ATTRIB_TEX5,
-   VF_ATTRIB_TEX6,
-   VF_ATTRIB_TEX7,
-   VF_ATTRIB_VAR0,
-   VF_ATTRIB_VAR1,
-   VF_ATTRIB_VAR2,
-   VF_ATTRIB_VAR3,
-   VF_ATTRIB_VAR4,
-   VF_ATTRIB_VAR5,
-   VF_ATTRIB_VAR6,
-   VF_ATTRIB_VAR7,
+   TGSI_ATTRIB_POS,
+   TGSI_ATTRIB_COLOR0,
+   TGSI_ATTRIB_COLOR1,
+   TGSI_ATTRIB_FOG,
+   TGSI_ATTRIB_TEX0,
+   TGSI_ATTRIB_TEX1,
+   TGSI_ATTRIB_TEX2,
+   TGSI_ATTRIB_TEX3,
+   TGSI_ATTRIB_TEX4,
+   TGSI_ATTRIB_TEX5,
+   TGSI_ATTRIB_TEX6,
+   TGSI_ATTRIB_TEX7,
+   TGSI_ATTRIB_VAR0,
+   TGSI_ATTRIB_VAR1,
+   TGSI_ATTRIB_VAR2,
+   TGSI_ATTRIB_VAR3,
+   TGSI_ATTRIB_VAR4,
+   TGSI_ATTRIB_VAR5,
+   TGSI_ATTRIB_VAR6,
+   TGSI_ATTRIB_VAR7,
 };
 
 
@@ -79,7 +81,7 @@ static const unsigned frag_to_vf[PIPE_ATTRIB_MAX] =
 static void calculate_vertex_layout( struct softpipe_context *softpipe )
 {
    const unsigned inputsRead = softpipe->fs.inputs_read;
-   unsigned slot_to_vf_attr[VF_ATTRIB_MAX];
+   unsigned slot_to_vf_attr[TGSI_ATTRIB_MAX];
    unsigned attr_mask = 0x0;
    unsigned i;
 
@@ -87,7 +89,7 @@ static void calculate_vertex_layout( struct softpipe_context *softpipe )
     * fragment position (XYZW).
     */
    if (softpipe->depth_test.enabled ||
-       (inputsRead & (1 << FRAG_ATTRIB_WPOS)))
+       (inputsRead & (1 << TGSI_ATTRIB_POS)))
       softpipe->need_z = TRUE;
    else
       softpipe->need_z = FALSE;
@@ -95,7 +97,7 @@ static void calculate_vertex_layout( struct softpipe_context *softpipe )
    /* Need W if we do any perspective-corrected interpolation or the
     * fragment program uses the fragment position.
     */
-   if (inputsRead & (1 << FRAG_ATTRIB_WPOS))
+   if (inputsRead & (1 << TGSI_ATTRIB_POS))
       softpipe->need_w = TRUE;
    else
       softpipe->need_w = FALSE;
@@ -109,24 +111,24 @@ static void calculate_vertex_layout( struct softpipe_context *softpipe )
 
    /* TODO - Figure out if we need to do perspective divide, etc.
     */
-   EMIT_ATTR(VF_ATTRIB_POS, FRAG_ATTRIB_WPOS, INTERP_LINEAR);
+   EMIT_ATTR(TGSI_ATTRIB_POS, TGSI_ATTRIB_POS, INTERP_LINEAR);
       
    /* Pull in the rest of the attributes.  They are all in float4
     * format.  Future optimizations could be to keep some attributes
     * as fixed point or ubyte format.
     */
-   for (i = 1; i < FRAG_ATTRIB_TEX0; i++) {
+   for (i = 1; i < TGSI_ATTRIB_TEX0; i++) {
       if (inputsRead & (1 << i)) {
          assert(i < sizeof(frag_to_vf) / sizeof(frag_to_vf[0]));
          if (softpipe->setup.flatshade
-             && (i == FRAG_ATTRIB_COL0 || i == FRAG_ATTRIB_COL1))
+             && (i == TGSI_ATTRIB_COLOR0 || i == TGSI_ATTRIB_COLOR1))
             EMIT_ATTR(frag_to_vf[i], i, INTERP_CONSTANT);
          else
             EMIT_ATTR(frag_to_vf[i], i, INTERP_LINEAR);
       }
    }
 
-   for (i = FRAG_ATTRIB_TEX0; i < FRAG_ATTRIB_MAX; i++) {
+   for (i = TGSI_ATTRIB_TEX0; i < TGSI_ATTRIB_MAX; i++) {
       if (inputsRead & (1 << i)) {
          assert(i < sizeof(frag_to_vf) / sizeof(frag_to_vf[0]));
          EMIT_ATTR(frag_to_vf[i], i, INTERP_PERSPECTIVE);
@@ -141,12 +143,12 @@ static void calculate_vertex_layout( struct softpipe_context *softpipe )
     * the vertex header.
     */
    if (softpipe->setup.light_twoside) {
-      if (inputsRead & FRAG_BIT_COL0) {
-	 EMIT_ATTR(VF_ATTRIB_BFC0, FRAG_ATTRIB_MAX, 0); /* XXX: mark as discarded after setup */
+      if (inputsRead & (1 << TGSI_ATTRIB_COLOR0)) {
+	 EMIT_ATTR(TGSI_ATTRIB_BFC0, TGSI_ATTRIB_MAX, 0); /* XXX: mark as discarded after setup */
       }
 	    
-      if (inputsRead & FRAG_BIT_COL1) {
-	 EMIT_ATTR(VF_ATTRIB_BFC1, FRAG_ATTRIB_MAX, 0); /* XXX: discard after setup */
+      if (inputsRead & (1 << TGSI_ATTRIB_COLOR1)) {
+	 EMIT_ATTR(TGSI_ATTRIB_BFC1, TGSI_ATTRIB_MAX, 0); /* XXX: discard after setup */
       }
    }
 

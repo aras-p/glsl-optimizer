@@ -79,12 +79,12 @@ static struct vertex_header *copy_bfc( struct twoside_stage *twoside,
 {   
    struct vertex_header *tmp = dup_vert( &twoside->stage, v, idx );
    
-   copy_color( twoside->lookup[VF_ATTRIB_COLOR0], 
-	       twoside->lookup[VF_ATTRIB_BFC0],
+   copy_color( twoside->lookup[TGSI_ATTRIB_COLOR0], 
+	       twoside->lookup[TGSI_ATTRIB_BFC0],
 	       tmp );
 
-   copy_color( twoside->lookup[VF_ATTRIB_COLOR1], 
-	       twoside->lookup[VF_ATTRIB_BFC1],
+   copy_color( twoside->lookup[TGSI_ATTRIB_COLOR1], 
+	       twoside->lookup[TGSI_ATTRIB_BFC1],
 	       tmp );
 
    return tmp;

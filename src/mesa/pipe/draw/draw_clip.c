@@ -380,8 +380,8 @@ static void clip_begin( struct draw_stage *stage )
 
    /* sanity checks.  If these fail, review the clip/interp code! */
    assert(stage->draw->vertex_info.num_attribs >= 3);
-   assert(stage->draw->vertex_info.slot_to_attrib[0] == VF_ATTRIB_VERTEX_HEADER);
-   assert(stage->draw->vertex_info.slot_to_attrib[1] == VF_ATTRIB_CLIP_POS);
+   assert(stage->draw->vertex_info.slot_to_attrib[0] == TGSI_ATTRIB_VERTEX_HEADER);
+   assert(stage->draw->vertex_info.slot_to_attrib[1] == TGSI_ATTRIB_CLIP_POS);
 
    /* Hacky bitmask to use when we hit CLIP_USER_BIT:
     */   

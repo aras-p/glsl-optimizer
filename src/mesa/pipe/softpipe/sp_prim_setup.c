@@ -40,10 +40,7 @@
 #include "pipe/draw/draw_private.h"
 #include "pipe/p_util.h"
 
-
-/** XXX remove */
-#define FRAG_ATTRIB_WPOS 0
-#define FRAG_ATTRIB_MAX 13
+#include "pipe/draw/draw_vertex.h"
 
 
 /**
@@ -82,7 +79,7 @@ struct setup_stage {
 
    float oneoverarea;
 
-   struct tgsi_interp_coef coef[FRAG_ATTRIB_MAX];
+   struct tgsi_interp_coef coef[TGSI_ATTRIB_MAX];
    struct quad_header quad; 
 
    struct {
@@ -369,7 +366,7 @@ static void const_coeff( struct setup_stage *setup,
 			 unsigned slot,
 			 unsigned i )
 {
-   assert(slot < FRAG_ATTRIB_MAX);
+   assert(slot < TGSI_ATTRIB_MAX);
    assert(i <= 3);
 
    setup->coef[slot].dadx[i] = 0;
@@ -394,7 +391,7 @@ static void tri_linear_coeff( struct setup_stage *setup,
    float a = setup->ebot.dy * majda - botda * setup->emaj.dy;
    float b = setup->emaj.dx * botda - majda * setup->ebot.dx;
    
-   assert(slot < FRAG_ATTRIB_MAX);
+   assert(slot < TGSI_ATTRIB_MAX);
    assert(i <= 3);
 
    setup->coef[slot].dadx[i] = a * setup->oneoverarea;
@@ -445,7 +442,7 @@ static void tri_persp_coeff( struct setup_stage *setup,
    float a = setup->ebot.dy * majda - botda * setup->emaj.dy;
    float b = setup->emaj.dx * botda - majda * setup->ebot.dx;
       
-   assert(slot < FRAG_ATTRIB_MAX);
+   assert(slot < TGSI_ATTRIB_MAX);
    assert(i <= 3);
 
    setup->coef[slot].dadx[i] = a * setup->oneoverarea;
@@ -891,8 +888,8 @@ setup_point(struct draw_stage *stage, struct prim_header *prim)
    const float halfSize = 0.5f * setup->softpipe->setup.point_size;
    const boolean round = setup->softpipe->setup.point_smooth;
    const struct vertex_header *v0 = prim->v[0];
-   const float x = v0->data[FRAG_ATTRIB_WPOS][0];
-   const float y = v0->data[FRAG_ATTRIB_WPOS][1];
+   const float x = v0->data[TGSI_ATTRIB_POS][0];
+   const float y = v0->data[TGSI_ATTRIB_POS][1];
    unsigned slot, j;
 
    /* For points, all interpolants are constant-valued.

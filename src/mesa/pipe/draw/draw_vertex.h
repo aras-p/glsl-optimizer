@@ -33,84 +33,7 @@
 #ifndef DRAW_VERTEX_H
 #define DRAW_VERTEX_H
 
-
-/***
- *** XXX There's a lot of legacy tokens here that'll eventually go away.
- *** (at least we don't include vf/vf.h anymore)
- ***/
-
-
-enum {
-   VF_ATTRIB_POS = 0,
-   VF_ATTRIB_WEIGHT = 1,
-   VF_ATTRIB_NORMAL = 2,
-   VF_ATTRIB_COLOR0 = 3,
-   VF_ATTRIB_COLOR1 = 4,
-   VF_ATTRIB_FOG = 5,
-   VF_ATTRIB_COLOR_INDEX = 6,
-   VF_ATTRIB_EDGEFLAG = 7,
-   VF_ATTRIB_TEX0 = 8,
-   VF_ATTRIB_TEX1 = 9,
-   VF_ATTRIB_TEX2 = 10,
-   VF_ATTRIB_TEX3 = 11,
-   VF_ATTRIB_TEX4 = 12,
-   VF_ATTRIB_TEX5 = 13,
-   VF_ATTRIB_TEX6 = 14,
-   VF_ATTRIB_TEX7 = 15,
-   VF_ATTRIB_VAR0 = 16,
-   VF_ATTRIB_VAR1 = 17,
-   VF_ATTRIB_VAR2 = 18,
-   VF_ATTRIB_VAR3 = 19,
-   VF_ATTRIB_VAR4 = 20,
-   VF_ATTRIB_VAR5 = 21,
-   VF_ATTRIB_VAR6 = 22,
-   VF_ATTRIB_VAR7 = 23,
-   VF_ATTRIB_POINTSIZE = 24,
-   VF_ATTRIB_BFC0 = 25,
-   VF_ATTRIB_BFC1 = 26,
-   VF_ATTRIB_CLIP_POS = 27,
-   VF_ATTRIB_VERTEX_HEADER = 28,
-   VF_ATTRIB_MAX = 29
-};
-
-#define MAX_VARYING 8
-enum
-{
-   FRAG_ATTRIB_WPOS = 0,
-   FRAG_ATTRIB_COL0 = 1,
-   FRAG_ATTRIB_COL1 = 2,
-   FRAG_ATTRIB_FOGC = 3,
-   FRAG_ATTRIB_TEX0 = 4,
-   FRAG_ATTRIB_TEX1 = 5,
-   FRAG_ATTRIB_TEX2 = 6,
-   FRAG_ATTRIB_TEX3 = 7,
-   FRAG_ATTRIB_TEX4 = 8,
-   FRAG_ATTRIB_TEX5 = 9,
-   FRAG_ATTRIB_TEX6 = 10,
-   FRAG_ATTRIB_TEX7 = 11,
-   FRAG_ATTRIB_VAR0 = 12,  /**< shader varying */
-   FRAG_ATTRIB_MAX = (FRAG_ATTRIB_VAR0 + MAX_VARYING)
-};
-
-#define FRAG_BIT_WPOS  (1 << FRAG_ATTRIB_WPOS)
-#define FRAG_BIT_COL0  (1 << FRAG_ATTRIB_COL0)
-#define FRAG_BIT_COL1  (1 << FRAG_ATTRIB_COL1)
-#define FRAG_BIT_FOGC  (1 << FRAG_ATTRIB_FOGC)
-#define FRAG_BIT_TEX0  (1 << FRAG_ATTRIB_TEX0)
-
-
-
-#define MAX_DRAW_BUFFERS 4
-
-enum
-{
-   FRAG_RESULT_COLR = 0,
-   FRAG_RESULT_COLH = 1,
-   FRAG_RESULT_DEPR = 2,
-   FRAG_RESULT_DATA0 = 3,
-   FRAG_RESULT_MAX = (FRAG_RESULT_DATA0 + MAX_DRAW_BUFFERS)
-};
-
+#include "pipe/tgsi/core/tgsi_attribs.h"
 
 
 #define MAX_VERT_ATTRIBS 12  /* OK? */
@@ -127,10 +50,10 @@ enum
 struct vertex_info
 {
    uint num_attribs;
-   uint hwfmt[2];      /**< hardware format info for this format */
+   uint hwfmt[4];      /**< hardware format info for this format */
    uint attr_mask;     /**< mask of VF_ATTR_ bits */
    uint slot_to_attrib[MAX_VERT_ATTRIBS];
-   uint attrib_to_slot[VF_ATTRIB_MAX];
+   uint attrib_to_slot[TGSI_ATTRIB_MAX];
    uint interp_mode[MAX_VERT_ATTRIBS];
    uint format[MAX_VERT_ATTRIBS];   /**< FORMAT_x */
    uint size;          /**< total vertex size in dwords */

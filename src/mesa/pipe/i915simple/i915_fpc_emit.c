@@ -353,23 +353,14 @@ i915_emit_param4fv(struct i915_fp_compile * p, const float * values)
          return UREG(REG_TYPE_CONST, fp->param[i].reg);
    }
 
-#if 0
-   if (fp->nr_constants == I915_MAX_CONSTANT ||
-       fp->nr_params == I915_MAX_CONSTANT) {
-#else
    if (p->constants->nr_constants == I915_MAX_CONSTANT ||
        fp->nr_params == I915_MAX_CONSTANT) {
-#endif
       i915_program_error(p, "i915_emit_param4fv: out of constants\n");
       return 0;
    }
 
    {
-#if 0
-      int reg = fp->nr_constants++;
-#else
       int reg = p->constants->nr_constants++;
-#endif
       int i = fp->nr_params++;
 
       assert (p->constant_flags[reg] == 0);

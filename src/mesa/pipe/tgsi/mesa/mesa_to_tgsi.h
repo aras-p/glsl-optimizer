@@ -19,6 +19,31 @@ tgsi_mesa_compile_vp_program(
    struct tgsi_token *tokens,
    GLuint maxTokens );
 
+uint
+tgsi_mesa_translate_vertex_input(GLuint attrib);
+
+uint
+tgsi_mesa_translate_vertex_output(GLuint attrib);
+
+uint
+tgsi_mesa_translate_fragment_input(GLuint attrib);
+
+uint
+tgsi_mesa_translate_fragment_output(GLuint attrib);
+
+uint
+tgsi_mesa_translate_vertex_input_mask(GLbitfield mask);
+
+uint
+tgsi_mesa_translate_vertex_output_mask(GLbitfield mask);
+
+uint
+tgsi_mesa_translate_fragment_input_mask(GLbitfield mask);
+
+uint
+tgsi_mesa_translate_fragment_output_mask(GLbitfield mask);
+
+
 #if defined __cplusplus
 } // extern "C"
 #endif // defined __cplusplus

@@ -154,31 +154,31 @@ src_vector(struct i915_fp_compile *p,
       index = p->vertex_info->slot_to_attrib[index];
 
       switch (index) {
-      case VF_ATTRIB_POS:
+      case TGSI_ATTRIB_POS:
          assert(p->wpos_tex != -1);
          src = i915_emit_decl(p, REG_TYPE_T, p->wpos_tex, D0_CHANNEL_ALL);
          break;
-      case VF_ATTRIB_COLOR0:
+      case TGSI_ATTRIB_COLOR0:
          src = i915_emit_decl(p, REG_TYPE_T, T_DIFFUSE, D0_CHANNEL_ALL);
          break;
-      case VF_ATTRIB_COLOR1:
+      case TGSI_ATTRIB_COLOR1:
          src = i915_emit_decl(p, REG_TYPE_T, T_SPECULAR, D0_CHANNEL_XYZ);
          src = swizzle(src, X, Y, Z, ONE);
          break;
-      case VF_ATTRIB_FOG:
+      case TGSI_ATTRIB_FOG:
          src = i915_emit_decl(p, REG_TYPE_T, T_FOG_W, D0_CHANNEL_W);
          src = swizzle(src, W, W, W, W);
          break;
-      case VF_ATTRIB_TEX0:
-      case VF_ATTRIB_TEX1:
-      case VF_ATTRIB_TEX2:
-      case VF_ATTRIB_TEX3:
-      case VF_ATTRIB_TEX4:
-      case VF_ATTRIB_TEX5:
-      case VF_ATTRIB_TEX6:
-      case VF_ATTRIB_TEX7:
+      case TGSI_ATTRIB_TEX0:
+      case TGSI_ATTRIB_TEX1:
+      case TGSI_ATTRIB_TEX2:
+      case TGSI_ATTRIB_TEX3:
+      case TGSI_ATTRIB_TEX4:
+      case TGSI_ATTRIB_TEX5:
+      case TGSI_ATTRIB_TEX6:
+      case TGSI_ATTRIB_TEX7:
          src = i915_emit_decl(p, REG_TYPE_T,
-                              T_TEX0 + (index - VF_ATTRIB_TEX0),
+                              T_TEX0 + (index - TGSI_ATTRIB_TEX0),
                               D0_CHANNEL_ALL);
          break;
       default:
@@ -237,9 +237,9 @@ get_result_vector(struct i915_fp_compile *p,
    switch (dest->DstRegister.File) {
    case TGSI_FILE_OUTPUT:
       switch (dest->DstRegister.Index) {
-      case 1: /*COLOR*/  /*FRAG_RESULT_COLR:*/
+      case TGSI_ATTRIB_COLOR0:
          return UREG(REG_TYPE_OC, 0);
-      case 0: /*DEPTH*/  /*FRAG_RESULT_DEPR:*/
+      case TGSI_ATTRIB_POS:
          return UREG(REG_TYPE_OD, 0);
       default:
          i915_program_error(p, "Bad inst->DstReg.Index");
@@ -989,14 +989,15 @@ i915_fini_compile(struct i915_context *i915, struct i915_fp_compile *p)
 static void
 i915_find_wpos_space(struct i915_fp_compile *p)
 {
-   const uint inputs = p->shader->inputs_read | FRAG_BIT_WPOS; /*XXX hack*/
+   const uint inputs
+      = p->shader->inputs_read | (1 << TGSI_ATTRIB_POS); /*XXX hack*/
    uint i;
 
    p->wpos_tex = -1;
 
-   if (inputs & FRAG_BIT_WPOS) {
+   if (inputs & (1 << TGSI_ATTRIB_POS)) {
       for (i = 0; i < I915_TEX_UNITS; i++) {
-	 if ((inputs & (FRAG_BIT_TEX0 << i)) == 0) {
+	 if ((inputs & (1 << (TGSI_ATTRIB_TEX0 + i))) == 0) {
 	    p->wpos_tex = i;
 	    return;
 	 }
@@ -1017,7 +1018,7 @@ i915_find_wpos_space(struct i915_fp_compile *p)
 static void
 i915_fixup_depth_write(struct i915_fp_compile *p)
 {
-   if (p->shader->outputs_written & (1<<FRAG_RESULT_DEPR)) {
+   if (p->shader->outputs_written & (1 << TGSI_ATTRIB_POS)) {
       uint depth = UREG(REG_TYPE_OD, 0);
 
       i915_emit_arith(p,

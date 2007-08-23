@@ -78,6 +78,7 @@ emit_vertex_attr(struct vertex_info *vinfo, uint vfAttr, uint format)
    vinfo->slot_to_attrib[n] = vfAttr;
    if (n >= 2) {
       /* the first two slots are the vertex header & clippos */
+      assert(vfAttr < Elements(vinfo->attrib_to_slot));
       vinfo->attrib_to_slot[vfAttr] = n - 2;
    }
    /*printf("Vertex slot %d = vfattrib %d\n", n, vfAttr);*/
@@ -128,16 +129,16 @@ draw_set_vertex_attributes( struct draw_context *draw,
    struct vertex_info *vinfo = &draw->vertex_info;
    unsigned i;
 
-   assert(slot_to_vf_attr[0] == VF_ATTRIB_POS);
+   assert(slot_to_vf_attr[0] == TGSI_ATTRIB_POS);
 
    memset(vinfo, 0, sizeof(*vinfo));
 
    /*
     * First three attribs are always the same: header, clip pos, winpos
     */
-   emit_vertex_attr(vinfo, VF_ATTRIB_VERTEX_HEADER, FORMAT_1F);
-   emit_vertex_attr(vinfo, VF_ATTRIB_CLIP_POS, FORMAT_4F);
-   emit_vertex_attr(vinfo, VF_ATTRIB_POS, FORMAT_4F_VIEWPORT);
+   emit_vertex_attr(vinfo, TGSI_ATTRIB_VERTEX_HEADER, FORMAT_1F);
+   emit_vertex_attr(vinfo, TGSI_ATTRIB_CLIP_POS, FORMAT_4F);
+   emit_vertex_attr(vinfo, TGSI_ATTRIB_POS, FORMAT_4F_VIEWPORT);
 
    /*
     * Remaining attribs (color, texcoords, etc)

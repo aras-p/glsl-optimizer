@@ -1478,47 +1478,6 @@ struct tgsi_dst_register_ext_predicate
 };
 
 
-/**
- * The specific values here are not important.
- */
-enum {
-   TGSI_ATTRIB_POS = 0,
-   TGSI_ATTRIB_WEIGHT = 1,
-   TGSI_ATTRIB_NORMAL = 2,
-   TGSI_ATTRIB_COLOR0 = 3,
-   TGSI_ATTRIB_COLOR1 = 4,
-   TGSI_ATTRIB_FOG = 5,
-   TGSI_ATTRIB_COLOR_INDEX = 6,  /* XXX omit? */
-   TGSI_ATTRIB_EDGEFLAG = 7,
-   TGSI_ATTRIB_TEX0 = 8,
-   TGSI_ATTRIB_TEX1 = 9,
-   TGSI_ATTRIB_TEX2 = 10,
-   TGSI_ATTRIB_TEX3 = 11,
-   TGSI_ATTRIB_TEX4 = 12,
-   TGSI_ATTRIB_TEX5 = 13,
-   TGSI_ATTRIB_TEX6 = 14,
-   TGSI_ATTRIB_TEX7 = 15,
-   TGSI_ATTRIB_VAR0 = 16,
-   TGSI_ATTRIB_VAR1 = 17,
-   TGSI_ATTRIB_VAR2 = 18,
-   TGSI_ATTRIB_VAR3 = 19,
-   TGSI_ATTRIB_VAR4 = 20,
-   TGSI_ATTRIB_VAR5 = 21,
-   TGSI_ATTRIB_VAR6 = 22,
-   TGSI_ATTRIB_VAR7 = 23,
-   TGSI_ATTRIB_POINTSIZE = 24,
-   TGSI_ATTRIB_BFC0 = 25,
-   TGSI_ATTRIB_BFC1 = 26,
-   TGSI_ATTRIB_CLIP_POS = 27,
-   TGSI_ATTRIB_VERTEX_HEADER = 28,
-   TGSI_ATTRIB_MAX = 29
-};
-
-
-#define TGSI_MAX_TEXTURE 8
-#define TGSI_MAX_VARYING 8
-
-
 #if defined __cplusplus
 } // extern "C"
 #endif // defined __cplusplus

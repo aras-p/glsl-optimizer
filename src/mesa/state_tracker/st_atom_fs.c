@@ -110,8 +110,10 @@ static void update_fs( struct st_context *st )
 
    /* update pipe state */
    memset( &fs, 0, sizeof(fs) );
-   fs.inputs_read = fp->Base.Base.InputsRead;
-   fs.outputs_written = fp->Base.Base.OutputsWritten;
+   fs.inputs_read
+      = tgsi_mesa_translate_fragment_input_mask(fp->Base.Base.InputsRead);
+   fs.outputs_written
+      = tgsi_mesa_translate_fragment_output_mask(fp->Base.Base.OutputsWritten);
    fs.tokens = &fp->tokens[0];
 
    if (memcmp(&fs, &st->state.fs, sizeof(fs)) != 0 ||

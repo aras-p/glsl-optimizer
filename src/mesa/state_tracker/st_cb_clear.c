@@ -348,7 +348,8 @@ clear_with_quad(GLcontext *ctx,
          stfp = make_color_shader(st);
       }
       memset(&fs, 0, sizeof(fs));
-      fs.inputs_read = stfp->Base.Base.InputsRead;
+      fs.inputs_read = tgsi_mesa_translate_fragment_input_mask(stfp->Base.Base.InputsRead);
+      fs.outputs_written = tgsi_mesa_translate_fragment_output_mask(stfp->Base.Base.OutputsWritten);
       fs.tokens = &stfp->tokens[0];
       pipe->set_fs_state(pipe, &fs);
    }

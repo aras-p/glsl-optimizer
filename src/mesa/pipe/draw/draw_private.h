@@ -61,7 +61,8 @@ struct vertex_header {
    float data[][4];		/* Note variable size */
 };
 
-#define MAX_VERTEX_SIZE ((2 + FRAG_ATTRIB_MAX) * 4 * sizeof(float))
+/* XXX This is too large */
+#define MAX_VERTEX_SIZE ((2 + TGSI_ATTRIB_MAX) * 4 * sizeof(float))
 
 
 
