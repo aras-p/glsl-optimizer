@@ -185,12 +185,12 @@ struct i915_fp_compile {
 /* One neat thing about the UREG representation:  
  */
 static INLINE int
-swizzle(int reg, int x, int y, int z, int w)
+swizzle(int reg, uint x, uint y, uint z, uint w)
 {
-   assert(x < 4);
-   assert(y < 4);
-   assert(z < 4);
-   assert(w < 4);
+   assert(x <= SRC_ONE);
+   assert(y <= SRC_ONE);
+   assert(z <= SRC_ONE);
+   assert(w <= SRC_ONE);
    return ((reg & ~UREG_XYZW_CHANNEL_MASK) |
            CHANNEL_SRC(GET_CHANNEL_SRC(reg, x), 0) |
            CHANNEL_SRC(GET_CHANNEL_SRC(reg, y), 1) |
