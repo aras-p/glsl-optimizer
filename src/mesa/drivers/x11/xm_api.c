@@ -436,6 +436,12 @@ create_xmesa_buffer(XMesaDrawable d, BufferType type,
       _mesa_add_renderbuffer(&b->mesa_buffer, BUFFER_DEPTH, rb);
    }
 
+   if (vis->mesa_visual.stencilBits > 0) {
+      struct gl_renderbuffer *rb
+         = st_new_renderbuffer_fb(GL_STENCIL_INDEX8_EXT);
+      _mesa_add_renderbuffer(&b->mesa_buffer, BUFFER_STENCIL, rb);
+   }
+
 
    /*
     * Other renderbuffer (depth, stencil, etc)
@@ -443,7 +449,7 @@ create_xmesa_buffer(XMesaDrawable d, BufferType type,
    _mesa_add_soft_renderbuffers(&b->mesa_buffer,
                                 GL_FALSE,  /* color */
                                 GL_FALSE,/*vis->mesa_visual.haveDepthBuffer,*/
-                                vis->mesa_visual.haveStencilBuffer,
+                                GL_FALSE,
                                 vis->mesa_visual.haveAccumBuffer,
                                 b->swAlpha,
                                 vis->mesa_visual.numAuxBuffers > 0 );
