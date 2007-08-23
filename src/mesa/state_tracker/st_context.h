@@ -97,6 +97,9 @@ struct st_context
       GLuint frontbuffer_dirty:1;
    } flags;
 
+   char vendor[100];
+   char renderer[100];
+
    /* State to be validated:
     */
    struct st_tracked_state **atoms;

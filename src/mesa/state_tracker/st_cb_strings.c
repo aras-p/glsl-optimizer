@@ -46,8 +46,6 @@ st_get_string(GLcontext * ctx, GLenum name)
 {
    struct st_context *st = st_context(ctx);
    struct pipe_context *pipe = st->pipe;
-   static char buffer[128];
-
 
    switch (name) {
    case GL_VENDOR: {
@@ -59,20 +57,20 @@ st_get_string(GLcontext * ctx, GLenum name)
        * additional string allows "and XyzCorp" to reflect this.
        */
       if (vendor && strcmp(vendor, tungsten) != 0)
-	 snprintf(buffer, sizeof(buffer), "%s and %s",	tungsten, vendor);
+	 snprintf(st->vendor, sizeof(st->vendor),
+                  "%s and %s", tungsten, vendor);
       else
-	 snprintf(buffer, sizeof(buffer), "%s",	tungsten);
+	 snprintf(st->vendor, sizeof(st->vendor), "%s", tungsten);
 
-      return (GLubyte *) buffer;
-      break;
+      return (GLubyte *) st->vendor;
    }
 
    case GL_RENDERER:
-      snprintf(buffer, sizeof(buffer), "TG3D, %s on %s", 
+      snprintf(st->renderer, sizeof(st->renderer), "TG3D, %s on %s", 
 	       pipe->get_name( pipe ),
 	       pipe->winsys->get_name( pipe->winsys ));
 
-      return (GLubyte *) buffer;
+      return (GLubyte *) st->renderer;
 
    default:
       return NULL;
