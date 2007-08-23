@@ -58,12 +58,6 @@ static unsigned reduced_prim[PIPE_PRIM_POLYGON + 1] = {
 };
 
 
-
-/** XXX remove */
-#define VERT_RESULT_HPOS 0
-#define VERT_RESULT_MAX 24
-
-
 static INLINE unsigned
 compute_clipmask(float cx, float cy, float cz, float cw)
 {
@@ -242,7 +236,7 @@ run_vertex_program(struct draw_context *draw,
 #endif
 
    /* store machine results */
-   assert(draw->vertex_shader.outputs_written & (1 << VERT_RESULT_HPOS));
+   assert(draw->vertex_shader.outputs_written & (1 << TGSI_ATTRIB_POS));
    for (j = 0; j < count; j++) {
       unsigned attr, slot;
       float x, y, z, w;
@@ -280,7 +274,7 @@ run_vertex_program(struct draw_context *draw,
       /* remaining attributes: */
       /* pack into sequential post-transform attrib slots */
       slot = 1;
-      for (attr = 1; attr < VERT_RESULT_MAX; attr++) {
+      for (attr = 1; attr < TGSI_ATTRIB_MAX; attr++) {
          if (draw->vertex_shader.outputs_written & (1 << attr)) {
             assert(slot < draw->vertex_info.num_attribs);
             vOut[j]->data[slot][0] = machine.Outputs[attr].xyzw[0].f[j];
