@@ -44,6 +44,7 @@
 #include "pipe/p_context.h"
 #include "pipe/p_defines.h"
 #include "pipe/p_winsys.h"
+#include "pipe/tgsi/core/tgsi_attribs.h"
 
 
 
@@ -67,6 +68,68 @@ pipe_vertex_format(GLenum format, GLuint size)
       return float_fmts[size - 1];
    default:
       assert(0);
+   }
+}
+
+
+/**
+ * Convert a mesa vertex attribute to a TGSI attribute
+ */
+static GLuint
+tgsi_attrib_to_mesa_attrib(GLuint attr)
+{
+   switch (attr) {
+   case TGSI_ATTRIB_POS:
+      return VERT_ATTRIB_POS;
+   case TGSI_ATTRIB_WEIGHT:
+      return VERT_ATTRIB_WEIGHT;
+   case TGSI_ATTRIB_NORMAL:
+      return VERT_ATTRIB_NORMAL;
+   case TGSI_ATTRIB_COLOR0:
+      return VERT_ATTRIB_COLOR0;
+   case TGSI_ATTRIB_COLOR1:
+      return VERT_ATTRIB_COLOR1;
+   case TGSI_ATTRIB_FOG:
+      return VERT_ATTRIB_FOG;
+   case TGSI_ATTRIB_COLOR_INDEX:
+      return VERT_ATTRIB_COLOR_INDEX;
+   case TGSI_ATTRIB_EDGEFLAG:
+      return VERT_ATTRIB_EDGEFLAG;
+   case TGSI_ATTRIB_TEX0:
+      return VERT_ATTRIB_TEX0;
+   case TGSI_ATTRIB_TEX1:
+      return VERT_ATTRIB_TEX1;
+   case TGSI_ATTRIB_TEX2:
+      return VERT_ATTRIB_TEX2;
+   case TGSI_ATTRIB_TEX3:
+      return VERT_ATTRIB_TEX3;
+   case TGSI_ATTRIB_TEX4:
+      return VERT_ATTRIB_TEX4;
+   case TGSI_ATTRIB_TEX5:
+      return VERT_ATTRIB_TEX5;
+   case TGSI_ATTRIB_TEX6:
+      return VERT_ATTRIB_TEX6;
+   case TGSI_ATTRIB_TEX7:
+      return VERT_ATTRIB_TEX7;
+   case TGSI_ATTRIB_VAR0:
+      return VERT_ATTRIB_GENERIC0;
+   case TGSI_ATTRIB_VAR1:
+      return VERT_ATTRIB_GENERIC1;
+   case TGSI_ATTRIB_VAR2:
+      return VERT_ATTRIB_GENERIC2;
+   case TGSI_ATTRIB_VAR3:
+      return VERT_ATTRIB_GENERIC3;
+   case TGSI_ATTRIB_VAR4:
+      return VERT_ATTRIB_GENERIC4;
+   case TGSI_ATTRIB_VAR5:
+      return VERT_ATTRIB_GENERIC5;
+   case TGSI_ATTRIB_VAR6:
+      return VERT_ATTRIB_GENERIC6;
+   case TGSI_ATTRIB_VAR7:
+      return VERT_ATTRIB_GENERIC7;
+   default:
+      assert(0);
+      return 0;
    }
 }
 
@@ -141,27 +204,28 @@ draw_vbo(GLcontext *ctx,
       velement.src_format = 0;
 
       if (attrsNeeded & (1 << attr)) {
-         struct gl_buffer_object *bufobj = arrays[attr]->BufferObj;
+         const GLuint mesaAttr = tgsi_attrib_to_mesa_attrib(attr);
+         struct gl_buffer_object *bufobj = arrays[mesaAttr]->BufferObj;
 
          if (bufobj && bufobj->Name) {
             struct st_buffer_object *stobj = st_buffer_object(bufobj);
             /* Recall that for VBOs, the gl_client_array->Ptr field is
              * really an offset from the start of the VBO, not a pointer.
              */
-            unsigned offset = (unsigned) arrays[attr]->Ptr;
+            unsigned offset = (unsigned) arrays[mesaAttr]->Ptr;
 
             assert(stobj->buffer);
 
             vbuffer.buffer = stobj->buffer;
             vbuffer.buffer_offset = attr0_offset;  /* in bytes */
-            vbuffer.pitch = arrays[attr]->StrideB; /* in bytes */
+            vbuffer.pitch = arrays[mesaAttr]->StrideB; /* in bytes */
             vbuffer.max_index = 0;  /* need this? */
 
             velement.src_offset = offset - attr0_offset; /* bytes */
             velement.vertex_buffer_index = attr;
             velement.dst_offset = 0; /* need this? */
-            velement.src_format = pipe_vertex_format(arrays[attr]->Type,
-                                                     arrays[attr]->Size);
+            velement.src_format = pipe_vertex_format(arrays[mesaAttr]->Type,
+                                                     arrays[mesaAttr]->Size);
             assert(velement.src_format);
          }
          else {
