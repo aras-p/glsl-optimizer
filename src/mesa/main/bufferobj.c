@@ -409,6 +409,101 @@ _mesa_init_buffer_objects( GLcontext *ctx )
    ctx->Array.ElementArrayBufferObj = ctx->Array.NullBufferObj;
 }
 
+/**
+ * Bind the specified target to buffer for the specified context.
+ */
+static void
+bind_buffer_object(GLcontext *ctx, GLenum target, GLuint buffer)
+{
+   struct gl_buffer_object *oldBufObj;
+   struct gl_buffer_object *newBufObj = NULL;
+   struct gl_buffer_object **bindTarget = NULL;
+
+   switch (target) {
+   case GL_ARRAY_BUFFER_ARB:
+      bindTarget = &ctx->Array.ArrayBufferObj;
+      break;
+   case GL_ELEMENT_ARRAY_BUFFER_ARB:
+      bindTarget = &ctx->Array.ElementArrayBufferObj;
+      break;
+   case GL_PIXEL_PACK_BUFFER_EXT:
+      bindTarget = &ctx->Pack.BufferObj;
+      break;
+   case GL_PIXEL_UNPACK_BUFFER_EXT:
+      bindTarget = &ctx->Unpack.BufferObj;
+      break;
+   default:
+      _mesa_error(ctx, GL_INVALID_ENUM, "glBindBufferARB(target)");
+      return;
+   }
+
+   /* Get pointer to old buffer object (to be unbound) */
+   oldBufObj = get_buffer(ctx, target);
+   if (oldBufObj && oldBufObj->Name == buffer)
+      return;   /* rebinding the same buffer object- no change */
+
+   /*
+    * Get pointer to new buffer object (newBufObj)
+    */
+   if (buffer == 0) {
+      /* The spec says there's not a buffer object named 0, but we use
+       * one internally because it simplifies things.
+       */
+      newBufObj = ctx->Array.NullBufferObj;
+   }
+   else {
+      /* non-default buffer object */
+      newBufObj = _mesa_lookup_bufferobj(ctx, buffer);
+      if (!newBufObj) {
+         /* if this is a new buffer object id, allocate a buffer object now */
+         ASSERT(ctx->Driver.NewBufferObject);
+         newBufObj = ctx->Driver.NewBufferObject(ctx, buffer, target);
+         if (!newBufObj) {
+            _mesa_error(ctx, GL_OUT_OF_MEMORY, "glBindBufferARB");
+            return;
+         }
+         _mesa_save_buffer_object(ctx, newBufObj);
+      }
+   }
+   
+   /* Make new binding */
+   *bindTarget = newBufObj;
+   newBufObj->RefCount++;
+
+   /* Pass BindBuffer call to device driver */
+   if (ctx->Driver.BindBuffer && newBufObj)
+      ctx->Driver.BindBuffer( ctx, target, newBufObj );
+
+   /* decr ref count on old buffer obj, delete if needed */
+   if (oldBufObj) {
+      oldBufObj->RefCount--;
+      assert(oldBufObj->RefCount >= 0);
+      if (oldBufObj->RefCount == 0) {
+         assert(oldBufObj->Name != 0);
+         ASSERT(ctx->Driver.DeleteBuffer);
+         ctx->Driver.DeleteBuffer( ctx, oldBufObj );
+      }
+   }
+}
+
+
+/**
+ * Update the default buffer objects in the given context to reference those
+ * specified in the shared state and release those referencing the old 
+ * shared state.
+ */
+void
+_mesa_update_default_objects_buffer_objects(GLcontext *ctx)
+{
+   /* Bind the NullBufferObj to remove references to those
+    * in the shared context hash table.
+    */
+   bind_buffer_object( ctx, GL_ARRAY_BUFFER_ARB, 0);
+   bind_buffer_object( ctx, GL_ELEMENT_ARRAY_BUFFER_ARB, 0);
+   bind_buffer_object( ctx, GL_PIXEL_PACK_BUFFER_ARB, 0);
+   bind_buffer_object( ctx, GL_PIXEL_UNPACK_BUFFER_ARB, 0);
+}
+
 
 /**
  * When we're about to read pixel data out of a PBO (via glDrawPixels,
@@ -493,76 +588,9 @@ void GLAPIENTRY
 _mesa_BindBufferARB(GLenum target, GLuint buffer)
 {
    GET_CURRENT_CONTEXT(ctx);
-   struct gl_buffer_object *oldBufObj;
-   struct gl_buffer_object *newBufObj = NULL;
-   struct gl_buffer_object **bindTarget = NULL;
    ASSERT_OUTSIDE_BEGIN_END(ctx);
 
-   switch (target) {
-      case GL_ARRAY_BUFFER_ARB:
-         bindTarget = &ctx->Array.ArrayBufferObj;
-         break;
-      case GL_ELEMENT_ARRAY_BUFFER_ARB:
-         bindTarget = &ctx->Array.ElementArrayBufferObj;
-         break;
-      case GL_PIXEL_PACK_BUFFER_EXT:
-         bindTarget = &ctx->Pack.BufferObj;
-         break;
-      case GL_PIXEL_UNPACK_BUFFER_EXT:
-         bindTarget = &ctx->Unpack.BufferObj;
-         break;
-      default:
-         _mesa_error(ctx, GL_INVALID_ENUM, "glBindBufferARB(target)");
-         return;
-   }
-
-   /* Get pointer to old buffer object (to be unbound) */
-   oldBufObj = get_buffer(ctx, target);
-   if (oldBufObj && oldBufObj->Name == buffer)
-      return;   /* rebinding the same buffer object- no change */
-
-   /*
-    * Get pointer to new buffer object (newBufObj)
-    */
-   if (buffer == 0) {
-      /* The spec says there's not a buffer object named 0, but we use
-       * one internally because it simplifies things.
-       */
-      newBufObj = ctx->Array.NullBufferObj;
-   }
-   else {
-      /* non-default buffer object */
-      newBufObj = _mesa_lookup_bufferobj(ctx, buffer);
-      if (!newBufObj) {
-         /* if this is a new buffer object id, allocate a buffer object now */
-         ASSERT(ctx->Driver.NewBufferObject);
-	 newBufObj = ctx->Driver.NewBufferObject(ctx, buffer, target);
-         if (!newBufObj) {
-            _mesa_error(ctx, GL_OUT_OF_MEMORY, "glBindBufferARB");
-            return;
-         }
-         _mesa_save_buffer_object(ctx, newBufObj);
-      }
-   }
-   
-   /* Make new binding */
-   *bindTarget = newBufObj;
-   newBufObj->RefCount++;
-
-   /* Pass BindBuffer call to device driver */
-   if (ctx->Driver.BindBuffer && newBufObj)
-      ctx->Driver.BindBuffer( ctx, target, newBufObj );
-
-   /* decr ref count on old buffer obj, delete if needed */
-   if (oldBufObj) {
-      oldBufObj->RefCount--;
-      assert(oldBufObj->RefCount >= 0);
-      if (oldBufObj->RefCount == 0) {
-	 assert(oldBufObj->Name != 0);
-	 ASSERT(ctx->Driver.DeleteBuffer);
-	 ctx->Driver.DeleteBuffer( ctx, oldBufObj );
-      }
-   }
+   bind_buffer_object(ctx, target, buffer);
 }
 
 
@@ -658,9 +686,9 @@ _mesa_DeleteBuffersARB(GLsizei n, const GLuint *ids)
             _mesa_BindBufferARB( GL_PIXEL_UNPACK_BUFFER_EXT, 0 );
          }
 
-	 /* The ID is immediately freed for re-use */
-	 _mesa_remove_buffer_object(ctx, bufObj);
-	 _mesa_unbind_buffer_object(ctx, bufObj);
+         /* The ID is immediately freed for re-use */
+         _mesa_remove_buffer_object(ctx, bufObj);
+         _mesa_unbind_buffer_object(ctx, bufObj);
       }
    }
 

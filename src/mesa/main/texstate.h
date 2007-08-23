@@ -148,6 +148,9 @@ _mesa_init_texture( GLcontext *ctx );
 extern void 
 _mesa_free_texture_data( GLcontext *ctx );
 
+extern void
+_mesa_update_default_objects_texture(GLcontext *ctx);
+
 /*@}*/
 
 #endif

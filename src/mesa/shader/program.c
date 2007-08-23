@@ -118,6 +118,49 @@ _mesa_free_program_data(GLcontext *ctx)
 }
 
 
+/**
+ * Update the default program objects in the given context to reference those
+ * specified in the shared state and release those referencing the old 
+ * shared state.
+ */
+void
+_mesa_update_default_objects_program(GLcontext *ctx)
+{
+#if FEATURE_NV_vertex_program || FEATURE_ARB_vertex_program
+   if (ctx->VertexProgram.Current) {
+      ctx->VertexProgram.Current->Base.RefCount--;
+      if (ctx->VertexProgram.Current->Base.RefCount <= 0)
+         ctx->Driver.DeleteProgram(ctx, &(ctx->VertexProgram.Current->Base));
+   }
+   ctx->VertexProgram.Current = (struct gl_vertex_program *) ctx->Shared->DefaultVertexProgram;
+   assert(ctx->VertexProgram.Current);
+   ctx->VertexProgram.Current->Base.RefCount++;
+#endif
+
+#if FEATURE_NV_fragment_program || FEATURE_ARB_fragment_program
+   if (ctx->FragmentProgram.Current) {
+      ctx->FragmentProgram.Current->Base.RefCount--;
+      if (ctx->FragmentProgram.Current->Base.RefCount <= 0)
+         ctx->Driver.DeleteProgram(ctx, &(ctx->FragmentProgram.Current->Base));
+   }
+   ctx->FragmentProgram.Current = (struct gl_fragment_program *) ctx->Shared->DefaultFragmentProgram;
+   assert(ctx->FragmentProgram.Current);
+   ctx->FragmentProgram.Current->Base.RefCount++;
+#endif
+
+   /* XXX probably move this stuff */
+#if FEATURE_ATI_fragment_shader
+   if (ctx->ATIFragmentShader.Current) {
+      ctx->ATIFragmentShader.Current->RefCount--;
+      if (ctx->ATIFragmentShader.Current->RefCount <= 0) {
+         _mesa_free(ctx->ATIFragmentShader.Current);
+      }
+   }
+   ctx->ATIFragmentShader.Current = (struct ati_fragment_shader *) ctx->Shared->DefaultFragmentShader;
+   assert(ctx->ATIFragmentShader.Current);
+   ctx->ATIFragmentShader.Current->RefCount++;
+#endif
+}
 
 
 /**

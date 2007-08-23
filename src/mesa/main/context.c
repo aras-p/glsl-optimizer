@@ -999,6 +999,28 @@ init_attrib_groups(GLcontext *ctx)
 
 
 /**
+ * Update default objects in a GL context with respect to shared state.
+ *
+ * \param ctx GL context.
+ *
+ * Removes references to old default objects, (texture objects, program
+ * objects, etc.) and changes to reference those from the current shared
+ * state.
+ */
+static GLboolean
+update_default_objects(GLcontext *ctx)
+{
+   assert(ctx);
+
+   _mesa_update_default_objects_program(ctx);
+   _mesa_update_default_objects_texture(ctx);
+   _mesa_update_default_objects_buffer_objects(ctx);
+
+   return GL_TRUE;
+}
+
+
+/**
  * This is the default function we plug into all dispatch table slots
  * This helps prevents a segfault when someone calls a GL function without
  * first checking if the extension's supported.
@@ -1605,12 +1627,18 @@ GLboolean
 _mesa_share_state(GLcontext *ctx, GLcontext *ctxToShare)
 {
    if (ctx && ctxToShare && ctx->Shared && ctxToShare->Shared) {
-      ctx->Shared->RefCount--;
-      if (ctx->Shared->RefCount == 0) {
-         free_shared_state(ctx, ctx->Shared);
-      }
+      struct gl_shared_state *oldSharedState = ctx->Shared;
+
       ctx->Shared = ctxToShare->Shared;
       ctx->Shared->RefCount++;
+
+      update_default_objects(ctx);
+
+      oldSharedState->RefCount--;
+      if (oldSharedState->RefCount == 0) {
+         free_shared_state(ctx, oldSharedState);
+      }
+
       return GL_TRUE;
    }
    else {

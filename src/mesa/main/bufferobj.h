@@ -38,6 +38,9 @@
 extern void
 _mesa_init_buffer_objects( GLcontext *ctx );
 
+extern void
+_mesa_update_default_objects_buffer_objects(GLcontext *ctx);
+
 extern struct gl_buffer_object *
 _mesa_new_buffer_object( GLcontext *ctx, GLuint name, GLenum target );
 

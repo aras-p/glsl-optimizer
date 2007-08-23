@@ -3202,3 +3202,27 @@ _mesa_free_texture_data(GLcontext *ctx)
 
    _mesa_TexEnvProgramCacheDestroy( ctx );
 }
+
+
+/**
+ * Update the default texture objects in the given context to reference those
+ * specified in the shared state and release those referencing the old 
+ * shared state.
+ */
+void
+_mesa_update_default_objects_texture(GLcontext *ctx)
+{
+   GLuint i;
+
+   for (i = 0; i < MAX_TEXTURE_UNITS; i++) {
+      struct gl_texture_unit *texUnit = &ctx->Texture.Unit[i];
+
+      _mesa_reference_texobj(&texUnit->Current1D, ctx->Shared->Default1D);
+      _mesa_reference_texobj(&texUnit->Current2D, ctx->Shared->Default2D);
+      _mesa_reference_texobj(&texUnit->Current3D, ctx->Shared->Default3D);
+      _mesa_reference_texobj(&texUnit->CurrentCubeMap, ctx->Shared->DefaultCubeMap);
+      _mesa_reference_texobj(&texUnit->CurrentRect, ctx->Shared->DefaultRect);
+      _mesa_reference_texobj(&texUnit->Current1DArray, ctx->Shared->Default1DArray);
+      _mesa_reference_texobj(&texUnit->Current2DArray, ctx->Shared->Default2DArray);
+   }
+}
