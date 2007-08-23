@@ -32,9 +32,7 @@
 #include "i915_context.h"
 #include "i915_state.h"
 #include "i915_reg.h"
-
-/* XXX should include i915_fpc.h but that causes some trouble atm */
-extern void i915_translate_fragment_program( struct i915_context *i915 );
+#include "i915_fpc.h"
 
 
 
@@ -119,9 +117,8 @@ compute_vertex_size(struct vertex_info *vinfo)
 static void calculate_vertex_layout( struct i915_context *i915 )
 {
    const unsigned inputsRead = i915->fs.inputs_read;
-//   const unsigned inputsRead = (FRAG_BIT_WPOS | FRAG_BIT_COL0);
-   unsigned i;
    struct vertex_info *vinfo = &i915->current.vertex_info;
+   uint i;
 
    memset(vinfo, 0, sizeof(*vinfo));
 
@@ -167,12 +164,10 @@ static void calculate_vertex_layout( struct i915_context *i915 )
     */
    if (i915->setup.light_twoside) {
       if (inputsRead & FRAG_BIT_COL0) {
-         /* XXX: mark as discarded after setup */
          emit_vertex_attr(vinfo, VF_ATTRIB_BFC0, FORMAT_OMIT);
       }
 	    
       if (inputsRead & FRAG_BIT_COL1) {
-         /* XXX: discard after setup */
          emit_vertex_attr(vinfo, VF_ATTRIB_BFC1, FORMAT_OMIT);
       }
    }
@@ -185,10 +180,6 @@ static void calculate_vertex_layout( struct i915_context *i915 )
    draw_set_vertex_attributes( i915->draw,
                                vinfo->slot_to_attrib,
 			       vinfo->num_attribs);
-#if 0
-   printf("VERTEX_FORMAT LIS2: 0x%x  LIS4: 0x%x\n",
-          vinfo->hwfmt[1], vinfo->hwfmt[0]);
-#endif
 }
 
 

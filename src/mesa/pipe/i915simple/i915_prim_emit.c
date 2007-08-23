@@ -58,26 +58,6 @@ static INLINE struct setup_stage *setup_stage( struct draw_stage *stage )
 }
 
 
-#if 0
-/* Hardcoded vertex format: xyz/rgba
- */
-static INLINE void
-emit_hw_vertex( struct i915_context *i915,
-		struct vertex_header *vertex )
-{
-   OUT_BATCH( fui(vertex->data[0][0]) );
-   OUT_BATCH( fui(vertex->data[0][1]) );
-   OUT_BATCH( fui(vertex->data[0][2]) );
-
-   /* colors are ARGB (MSB to LSB) */
-   OUT_BATCH( pack_ub4(float_to_ubyte( vertex->data[1][2] ),
-                       float_to_ubyte( vertex->data[1][1] ),
-                       float_to_ubyte( vertex->data[1][0] ),
-                       float_to_ubyte( vertex->data[1][3] )) );
-}
-#endif
-
-
 /**
  * Extract the needed fields from vertex_header and emit i915 dwords.
  * Recall that the vertices are constructed by the 'draw' module and
@@ -85,8 +65,8 @@ emit_hw_vertex( struct i915_context *i915,
  * clip pos) that we ignore here.
  */
 static INLINE void
-emit_hw_vertex2( struct i915_context *i915,
-                 const struct vertex_header *vertex)
+emit_hw_vertex( struct i915_context *i915,
+                const struct vertex_header *vertex)
 {
    const struct vertex_info *vinfo = &i915->current.vertex_info;
    uint i;
@@ -142,11 +122,7 @@ emit_prim( struct draw_stage *stage,
 	   unsigned nr )
 {
    struct i915_context *i915 = setup_stage(stage)->i915;
-#if 0
-   unsigned vertex_size = 4 * sizeof(int);
-#else
    unsigned vertex_size = i915->current.vertex_info.size * 4; /* in bytes */
-#endif
    unsigned *ptr;
    unsigned i;
 
@@ -182,7 +158,7 @@ emit_prim( struct draw_stage *stage,
 	     ((4 + vertex_size * nr)/4 - 2));
 
    for (i = 0; i < nr; i++) {
-      emit_hw_vertex2(i915, prim->v[i]);
+      emit_hw_vertex(i915, prim->v[i]);
       ptr += vertex_size / sizeof(int);
    }
 }

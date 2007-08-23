@@ -148,14 +148,9 @@ src_vector(struct i915_fp_compile *p,
        * 
        * We also use a texture coordinate to pass wpos when possible.
        */
-#if 1
-      /* use vertex format info to remap input regs */
-      assert(index < p->vertex_info->num_attribs);
-      printf("%s map index %d to %d\n",
-             __FUNCTION__,
-             index,
-             p->vertex_info->slot_to_attrib[index]);
 
+      /* use vertex format info to map a slot number to a VF attrib */
+      assert(index < p->vertex_info->num_attribs);
       index = p->vertex_info->slot_to_attrib[index];
 
       switch (index) {
@@ -186,48 +181,10 @@ src_vector(struct i915_fp_compile *p,
                               T_TEX0 + (index - VF_ATTRIB_TEX0),
                               D0_CHANNEL_ALL);
          break;
-
       default:
          i915_program_error(p, "Bad source->Index");
          return 0;
       }
-
-#else
-      switch (index) {
-      case FRAG_ATTRIB_WPOS:
-         assert(p->wpos_tex != -1);
-         src = i915_emit_decl(p, REG_TYPE_T, p->wpos_tex, D0_CHANNEL_ALL);
-         break;
-      case FRAG_ATTRIB_COL0:
-         src = i915_emit_decl(p, REG_TYPE_T, T_DIFFUSE, D0_CHANNEL_ALL);
-         break;
-      case FRAG_ATTRIB_COL1:
-         src = i915_emit_decl(p, REG_TYPE_T, T_SPECULAR, D0_CHANNEL_XYZ);
-         src = swizzle(src, X, Y, Z, ONE);
-         break;
-      case FRAG_ATTRIB_FOGC:
-         src = i915_emit_decl(p, REG_TYPE_T, T_FOG_W, D0_CHANNEL_W);
-         src = swizzle(src, W, W, W, W);
-         break;
-      case FRAG_ATTRIB_TEX0:
-      case FRAG_ATTRIB_TEX1:
-      case FRAG_ATTRIB_TEX2:
-      case FRAG_ATTRIB_TEX3:
-      case FRAG_ATTRIB_TEX4:
-      case FRAG_ATTRIB_TEX5:
-      case FRAG_ATTRIB_TEX6:
-      case FRAG_ATTRIB_TEX7:
-         src = i915_emit_decl(p, REG_TYPE_T,
-                              T_TEX0 + (index - FRAG_ATTRIB_TEX0),
-                              D0_CHANNEL_ALL);
-         break;
-
-      default:
-         i915_program_error(p, "Bad source->Index");
-         return 0;
-      }
-#endif
-
       break;
 
    case TGSI_FILE_CONSTANT:
