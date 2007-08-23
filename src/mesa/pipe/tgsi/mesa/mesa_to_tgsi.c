@@ -3,6 +3,213 @@
 
 #define TGSI_DEBUG 1
 
+
+/**
+ * Convert a VERT_ATTRIB_x to a TGSI_ATTRIB_y
+ */
+static GLuint
+translate_vertex_input(GLuint attrib)
+{
+   /* XXX these could be implemented with array lookups too.... */
+   switch (attrib) {
+   case VERT_ATTRIB_POS:
+      return TGSI_ATTRIB_POS;
+   case VERT_ATTRIB_WEIGHT:
+      return TGSI_ATTRIB_WEIGHT;
+   case VERT_ATTRIB_NORMAL:
+      return TGSI_ATTRIB_NORMAL;
+   case VERT_ATTRIB_COLOR0:
+      return TGSI_ATTRIB_COLOR0;
+   case VERT_ATTRIB_COLOR1:
+      return TGSI_ATTRIB_COLOR1;
+   case VERT_ATTRIB_FOG:
+      return TGSI_ATTRIB_FOG;
+   case VERT_ATTRIB_COLOR_INDEX:
+      return TGSI_ATTRIB_COLOR_INDEX;
+   case VERT_ATTRIB_EDGEFLAG:
+      return TGSI_ATTRIB_EDGEFLAG;
+   case VERT_ATTRIB_TEX0:
+      return TGSI_ATTRIB_TEX0;
+   case VERT_ATTRIB_TEX1:
+      return TGSI_ATTRIB_TEX1;
+   case VERT_ATTRIB_TEX2:
+      return TGSI_ATTRIB_TEX2;
+   case VERT_ATTRIB_TEX3:
+      return TGSI_ATTRIB_TEX3;
+   case VERT_ATTRIB_TEX4:
+      return TGSI_ATTRIB_TEX4;
+   case VERT_ATTRIB_TEX5:
+      return TGSI_ATTRIB_TEX5;
+   case VERT_ATTRIB_TEX6:
+      return TGSI_ATTRIB_TEX6;
+   case VERT_ATTRIB_TEX7:
+      return TGSI_ATTRIB_TEX7;
+   case VERT_ATTRIB_GENERIC0:
+      return TGSI_ATTRIB_VAR0;
+   case VERT_ATTRIB_GENERIC1:
+      return TGSI_ATTRIB_VAR1;
+   case VERT_ATTRIB_GENERIC2:
+      return TGSI_ATTRIB_VAR2;
+   case VERT_ATTRIB_GENERIC3:
+      return TGSI_ATTRIB_VAR3;
+   case VERT_ATTRIB_GENERIC4:
+      return TGSI_ATTRIB_VAR4;
+   case VERT_ATTRIB_GENERIC5:
+      return TGSI_ATTRIB_VAR5;
+   case VERT_ATTRIB_GENERIC6:
+      return TGSI_ATTRIB_VAR6;
+   case VERT_ATTRIB_GENERIC7:
+      return TGSI_ATTRIB_VAR7;
+   default:
+      assert(0);
+      return 0;
+   }
+}
+
+
+/**
+ * Convert VERT_RESULT_x to TGSI_ATTRIB_y
+ */
+static GLuint
+translate_vertex_ouput(GLuint attrib)
+{
+   switch (attrib) {
+   case VERT_RESULT_HPOS:
+      return TGSI_ATTRIB_POS;
+   case VERT_RESULT_COL0:
+      return TGSI_ATTRIB_COLOR0;
+   case VERT_RESULT_COL1:
+      return TGSI_ATTRIB_COLOR1;
+   case VERT_RESULT_FOGC:
+      return TGSI_ATTRIB_FOG;
+   case VERT_RESULT_TEX0:
+      return TGSI_ATTRIB_TEX0;
+   case VERT_RESULT_TEX1:
+      return TGSI_ATTRIB_TEX1;
+   case VERT_RESULT_TEX2:
+      return TGSI_ATTRIB_TEX2;
+   case VERT_RESULT_TEX3:
+      return TGSI_ATTRIB_TEX3;
+   case VERT_RESULT_TEX4:
+      return TGSI_ATTRIB_TEX4;
+   case VERT_RESULT_TEX5:
+      return TGSI_ATTRIB_TEX5;
+   case VERT_RESULT_TEX6:
+      return TGSI_ATTRIB_TEX6;
+   case VERT_RESULT_TEX7:
+      return TGSI_ATTRIB_TEX7;
+   case VERT_RESULT_PSIZ:
+      return TGSI_ATTRIB_POINTSIZE;
+   case VERT_RESULT_BFC0:
+      return TGSI_ATTRIB_BFC0;
+   case VERT_RESULT_BFC1:
+      return TGSI_ATTRIB_BFC1;
+   case VERT_RESULT_VAR0:
+      return TGSI_ATTRIB_VAR0;
+   case VERT_RESULT_VAR0 + 1:
+      return TGSI_ATTRIB_VAR1;
+   case VERT_RESULT_VAR0 + 2:
+      return TGSI_ATTRIB_VAR2;
+   case VERT_RESULT_VAR0 + 3:
+      return TGSI_ATTRIB_VAR3;
+   case VERT_RESULT_VAR0 + 4:
+      return TGSI_ATTRIB_VAR4;
+   case VERT_RESULT_VAR0 + 5:
+      return TGSI_ATTRIB_VAR5;
+   case VERT_RESULT_VAR0 + 6:
+      return TGSI_ATTRIB_VAR6;
+   case VERT_RESULT_VAR0 + 7:
+      return TGSI_ATTRIB_VAR7;
+   default:
+      assert(0);
+      return 0;
+   }
+}
+
+
+/**
+ * Convert a FRAG_ATTRIB_x to a TGSI_ATTRIB_y
+ */
+static GLuint
+translate_fragment_input(GLuint attrib)
+{
+   switch (attrib) {
+   case FRAG_ATTRIB_WPOS:
+      return TGSI_ATTRIB_POS;
+   case FRAG_ATTRIB_COL0:
+      return TGSI_ATTRIB_COLOR0;
+   case FRAG_ATTRIB_COL1:
+      return TGSI_ATTRIB_COLOR1;
+   case FRAG_ATTRIB_FOGC:
+      return TGSI_ATTRIB_FOG;
+   case FRAG_ATTRIB_TEX0:
+      return TGSI_ATTRIB_TEX0;
+   case FRAG_ATTRIB_TEX1:
+      return TGSI_ATTRIB_TEX1;
+   case FRAG_ATTRIB_TEX2:
+      return TGSI_ATTRIB_TEX2;
+   case FRAG_ATTRIB_TEX3:
+      return TGSI_ATTRIB_TEX3;
+   case FRAG_ATTRIB_TEX4:
+      return TGSI_ATTRIB_TEX4;
+   case FRAG_ATTRIB_TEX5:
+      return TGSI_ATTRIB_TEX5;
+   case FRAG_ATTRIB_TEX6:
+      return TGSI_ATTRIB_TEX6;
+   case FRAG_ATTRIB_TEX7:
+      return TGSI_ATTRIB_TEX7;
+   case FRAG_ATTRIB_VAR0:
+      return TGSI_ATTRIB_VAR0;
+   case FRAG_ATTRIB_VAR0 + 1:
+      return TGSI_ATTRIB_VAR1;
+   case FRAG_ATTRIB_VAR0 + 2:
+      return TGSI_ATTRIB_VAR2;
+   case FRAG_ATTRIB_VAR0 + 3:
+      return TGSI_ATTRIB_VAR3;
+   case FRAG_ATTRIB_VAR0 + 4:
+      return TGSI_ATTRIB_VAR4;
+   case FRAG_ATTRIB_VAR0 + 5:
+      return TGSI_ATTRIB_VAR5;
+   case FRAG_ATTRIB_VAR0 + 6:
+      return TGSI_ATTRIB_VAR6;
+   case FRAG_ATTRIB_VAR0 + 7:
+      return TGSI_ATTRIB_VAR7;
+   default:
+      assert(0);
+      return 0;
+   }
+}
+
+
+/**
+ * Convert FRAG_RESULT_x to TGSI_ATTRIB_y
+ */
+static GLuint
+translate_fragment_output(GLuint attrib)
+{
+   switch (attrib) {
+   case FRAG_RESULT_DEPR:
+      return TGSI_ATTRIB_POS;
+   case FRAG_RESULT_COLR:
+      /* fall-through */
+   case FRAG_RESULT_COLH:
+      /* fall-through */
+   case FRAG_RESULT_DATA0:
+      return TGSI_ATTRIB_COLOR0;
+   case FRAG_RESULT_DATA0 + 1:
+      return TGSI_ATTRIB_COLOR0 + 1;
+   case FRAG_RESULT_DATA0 + 2:
+      return TGSI_ATTRIB_COLOR0 + 2;
+   case FRAG_RESULT_DATA0 + 3:
+      return TGSI_ATTRIB_COLOR0 + 3;
+   default:
+      assert(0);
+      return 0;
+   }
+}
+
+
+
 /*
  * Map mesa register file to TGSI register file.
  */
