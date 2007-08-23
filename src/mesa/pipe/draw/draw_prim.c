@@ -421,6 +421,8 @@ static struct vertex_header *get_vertex( struct draw_context *draw,
        */
       if (draw->vcache.referenced & (1 << slot))
 	 slot = VCACHE_SIZE + draw->vcache.overflow++;
+      else
+         draw->vcache.referenced |= (1 << slot);  /* slot now in use */
 
       draw->vcache.idx[slot] = i;
 
@@ -436,10 +438,6 @@ static struct vertex_header *get_vertex( struct draw_context *draw,
       draw->vcache.vertex[slot]->edgeflag = 1; /*XXX use user's edge flag! */
    }
 
-   /* Mark slot as in-use:
-    */
-   if (slot < VCACHE_SIZE)
-      draw->vcache.referenced |= (1 << slot);
    return draw->vcache.vertex[slot];
 }
 
