@@ -126,10 +126,4 @@ draw_arrays(struct draw_context *draw, unsigned prim,
             unsigned start, unsigned count);
 
 
-void draw_vertices(struct draw_context *draw,
-                   unsigned mode,
-                   unsigned numVertex, const float *verts,
-                   unsigned numAttribs, const unsigned attribs[]);
-
-
 #endif /* DRAW_CONTEXT_H */
