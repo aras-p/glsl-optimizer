@@ -233,6 +233,9 @@ st_new_renderbuffer_fb(GLenum intFormat)
    case GL_DEPTH24_STENCIL8_EXT:
       strb->Base._BaseFormat = GL_DEPTH_STENCIL_EXT;
       break;
+   case GL_STENCIL_INDEX8_EXT:
+      strb->Base._BaseFormat = GL_STENCIL_INDEX;
+      break;
    default:
       _mesa_problem(NULL,
 		    "Unexpected intFormat in st_new_renderbuffer");
