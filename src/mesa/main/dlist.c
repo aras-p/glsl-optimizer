@@ -5737,8 +5737,6 @@ execute_list(GLcontext *ctx, GLuint list)
    if (!dlist)
       return;
 
-   ctx->ListState.CallStack[ctx->ListState.CallDepth++] = dlist;
-
    if (ctx->Driver.BeginCallList)
       ctx->Driver.BeginCallList(ctx, dlist);
 
@@ -6625,8 +6623,6 @@ execute_list(GLcontext *ctx, GLuint list)
 
    if (ctx->Driver.EndCallList)
       ctx->Driver.EndCallList(ctx);
-
-   ctx->ListState.CallStack[ctx->ListState.CallDepth--] = NULL;
 }
 
 
