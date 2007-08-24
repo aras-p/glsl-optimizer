@@ -176,7 +176,7 @@ const struct st_tracked_state st_update_tnl = {
                 _NEW_TEXTURE |
                 _NEW_TRANSFORM |
                 _NEW_LIGHT), /* XXX more? */
-      .st   = ST_NEW_MESA,  /* XXX correct? */
+      .st   = 0
    },
    .update = update_tnl
 };
