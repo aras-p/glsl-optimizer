@@ -348,7 +348,9 @@ map_register_file_index(
       break;
 
    case TGSI_FILE_OUTPUT:
+      /*
       assert( usage_bitmask == 0x0 );
+      */
       if( processor == TGSI_PROCESSOR_FRAGMENT ) {
          /* depth result  -> index 0
           * color results -> index 1, 2, ...
@@ -362,8 +364,14 @@ map_register_file_index(
          }
       }
       else {
+         /* vertex output slots are tightly packed, find mapped pos */
          /* mapped_index = VERT_RESULT_x */
-         mapped_index = index;
+         mapped_index = 0;
+         for( i = 0; i < index; i++ ) {
+            if( usage_bitmask & (1 << i) ) {
+               mapped_index++;
+            }
+         }
       }
       break;
 
@@ -434,6 +442,7 @@ compile_instruction(
    const struct prog_instruction *inst,
    struct tgsi_full_instruction *fullinst,
    GLuint inputs_read,
+   GLuint outputs_written,
    GLuint preamble_size,
    GLuint processor )
 {
@@ -453,7 +462,8 @@ compile_instruction(
       processor,
       fulldst->DstRegister.File,
       inst->DstReg.Index,
-      0x0 );
+      outputs_written
+      );
    fulldst->DstRegister.WriteMask = convert_writemask( inst->DstReg.WriteMask );
 
    for( i = 0; i < fullinst->Instruction.NumSrcRegs; i++ ) {
@@ -921,6 +931,7 @@ tgsi_mesa_compile_fp_program(
             &program->Base.Instructions[i],
             &fullinst,
             inputs_read,
+            ~0, /*outputs_written*/
             preamble_size,
             TGSI_PROCESSOR_FRAGMENT ) ) {
          assert( i == program->Base.NumInstructions - 1 );
@@ -952,6 +963,9 @@ tgsi_mesa_compile_vp_program(
    struct tgsi_processor *processor;
    struct tgsi_full_instruction fullinst;
    GLuint inputs_read = ~0;
+   GLuint outputs_written;
+
+   outputs_written = program->Base.OutputsWritten;
 
    *(struct tgsi_version *) &tokens[0] = tgsi_build_version();
 
@@ -968,6 +982,7 @@ tgsi_mesa_compile_vp_program(
             &program->Base.Instructions[i],
             &fullinst,
             inputs_read,
+            outputs_written,
             0,
             TGSI_PROCESSOR_VERTEX ) ) {
          assert( i == program->Base.NumInstructions - 1 );

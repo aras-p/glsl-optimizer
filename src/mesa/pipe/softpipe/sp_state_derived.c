@@ -48,31 +48,6 @@ do {								\
 } while (0)
 
 
-static const unsigned frag_to_vf[PIPE_ATTRIB_MAX] = 
-{
-   TGSI_ATTRIB_POS,
-   TGSI_ATTRIB_COLOR0,
-   TGSI_ATTRIB_COLOR1,
-   TGSI_ATTRIB_FOG,
-   TGSI_ATTRIB_TEX0,
-   TGSI_ATTRIB_TEX1,
-   TGSI_ATTRIB_TEX2,
-   TGSI_ATTRIB_TEX3,
-   TGSI_ATTRIB_TEX4,
-   TGSI_ATTRIB_TEX5,
-   TGSI_ATTRIB_TEX6,
-   TGSI_ATTRIB_TEX7,
-   TGSI_ATTRIB_VAR0,
-   TGSI_ATTRIB_VAR1,
-   TGSI_ATTRIB_VAR2,
-   TGSI_ATTRIB_VAR3,
-   TGSI_ATTRIB_VAR4,
-   TGSI_ATTRIB_VAR5,
-   TGSI_ATTRIB_VAR6,
-   TGSI_ATTRIB_VAR7,
-};
-
-
 /**
  * Determine which post-transform / pre-rasterization vertex attributes
  * we need.
@@ -119,19 +94,17 @@ static void calculate_vertex_layout( struct softpipe_context *softpipe )
     */
    for (i = 1; i < TGSI_ATTRIB_TEX0; i++) {
       if (inputsRead & (1 << i)) {
-         assert(i < sizeof(frag_to_vf) / sizeof(frag_to_vf[0]));
          if (softpipe->setup.flatshade
              && (i == TGSI_ATTRIB_COLOR0 || i == TGSI_ATTRIB_COLOR1))
-            EMIT_ATTR(frag_to_vf[i], i, INTERP_CONSTANT);
+            EMIT_ATTR(i, i, INTERP_CONSTANT);
          else
-            EMIT_ATTR(frag_to_vf[i], i, INTERP_LINEAR);
+            EMIT_ATTR(i, i, INTERP_LINEAR);
       }
    }
 
    for (i = TGSI_ATTRIB_TEX0; i < TGSI_ATTRIB_MAX; i++) {
       if (inputsRead & (1 << i)) {
-         assert(i < sizeof(frag_to_vf) / sizeof(frag_to_vf[0]));
-         EMIT_ATTR(frag_to_vf[i], i, INTERP_PERSPECTIVE);
+         EMIT_ATTR(i, i, INTERP_PERSPECTIVE);
          softpipe->need_w = TRUE;
       }
    }

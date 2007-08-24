@@ -200,7 +200,7 @@ run_vertex_program(struct draw_context *draw,
             machine.Inputs[attr].xyzw[2].f[j] = p[2]; /*Z*/
             machine.Inputs[attr].xyzw[3].f[j] = p[3]; /*W*/
 #if 0
-            if (1/*attr == 0*/) {
+            if (1) {
                fprintf(file, "Input vertex %d: attr %d:  %f %f %f %f\n",
                        j, attr, p[0], p[1], p[2], p[3]);
                fflush( file );
@@ -212,12 +212,15 @@ run_vertex_program(struct draw_context *draw,
 
 #if 0
    printf("Consts:\n");
-   for (i = 0; i < 4; i++) {
-      printf(" %d: %f %f %f %f\n", i,
-             machine.Consts[i][0],
-             machine.Consts[i][1],
-             machine.Consts[i][2],
-             machine.Consts[i][3]);
+   {
+      int i;
+      for (i = 0; i < 4; i++) {
+         printf(" %d: %f %f %f %f\n", i,
+                machine.Consts[i][0],
+                machine.Consts[i][1],
+                machine.Consts[i][2],
+                machine.Consts[i][3]);
+      }
    }
 #endif
 
@@ -238,7 +241,7 @@ run_vertex_program(struct draw_context *draw,
    /* store machine results */
    assert(draw->vertex_shader.outputs_written & (1 << TGSI_ATTRIB_POS));
    for (j = 0; j < count; j++) {
-      unsigned attr, slot;
+      unsigned /**attr,**/ slot;
       float x, y, z, w;
 
       /* Handle attr[0] (position) specially: */
@@ -247,7 +250,7 @@ run_vertex_program(struct draw_context *draw,
       z = vOut[j]->clip[2] = machine.Outputs[0].xyzw[2].f[j];
       w = vOut[j]->clip[3] = machine.Outputs[0].xyzw[3].f[j];
 
-      vOut[j]->clipmask = compute_clipmask(x, y, z, w);
+      vOut[j]->clipmask = 0;/*compute_clipmask(x, y, z, w);*/
       vOut[j]->edgeflag = 1;
 
       /* divide by w */
@@ -273,33 +276,47 @@ run_vertex_program(struct draw_context *draw,
 
       /* remaining attributes: */
       /* pack into sequential post-transform attrib slots */
+#if 0
       slot = 1;
       for (attr = 1; attr < TGSI_ATTRIB_MAX; attr++) {
          if (draw->vertex_shader.outputs_written & (1 << attr)) {
             assert(slot < draw->vertex_info.num_attribs);
-            vOut[j]->data[slot][0] = machine.Outputs[attr].xyzw[0].f[j];
-            vOut[j]->data[slot][1] = machine.Outputs[attr].xyzw[1].f[j];
-            vOut[j]->data[slot][2] = machine.Outputs[attr].xyzw[2].f[j];
-            vOut[j]->data[slot][3] = machine.Outputs[attr].xyzw[3].f[j];
+            vOut[j]->data[slot][0] = machine.Outputs[/*attr*/slot].xyzw[0].f[j];
+            vOut[j]->data[slot][1] = machine.Outputs[/*attr*/slot].xyzw[1].f[j];
+            vOut[j]->data[slot][2] = machine.Outputs[/*attr*/slot].xyzw[2].f[j];
+            vOut[j]->data[slot][3] = machine.Outputs[/*attr*/slot].xyzw[3].f[j];
 #if 0
-            fprintf(file, "output attrib %d slot %d: %f %f %f %f\n",
+            fprintf(file, "output attrib %d slot %d: %f %f %f %f  vert %p\n",
                     attr, slot,
                     vOut[j]->data[slot][0],
                     vOut[j]->data[slot][1],
                     vOut[j]->data[slot][2],
-                    vOut[j]->data[slot][3]);
+                    vOut[j]->data[slot][3], vOut[j]);
 #endif
             slot++;
          }
       }
-   }
 
+#else
+
+      for (slot = 1; slot < draw->vertex_info.num_attribs; slot++) {
+         vOut[j]->data[slot][0] = machine.Outputs[slot].xyzw[0].f[j];
+         vOut[j]->data[slot][1] = machine.Outputs[slot].xyzw[1].f[j];
+         vOut[j]->data[slot][2] = machine.Outputs[slot].xyzw[2].f[j];
+         vOut[j]->data[slot][3] = machine.Outputs[slot].xyzw[3].f[j];
 #if 0
-   memcpy(
-      quad->outputs.color,
-      &machine.Outputs[1].xyzw[0].f[0],
-      sizeof( quad->outputs.color ) );
+         fprintf(file, "output attrib slot %d: %f %f %f %f  vert %p\n",
+                 slot,
+                 vOut[j]->data[slot][0],
+                 vOut[j]->data[slot][1],
+                 vOut[j]->data[slot][2],
+                 vOut[j]->data[slot][3], vOut[j]);
 #endif
+      }
+
+#endif
+
+   } /* loop over vertices */
 }
 
 

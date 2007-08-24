@@ -113,8 +113,10 @@ static void update_vs( struct st_context *st )
 
    /* update pipe state */
    memset( &vs, 0, sizeof(vs) );
-   vs.outputs_written = vp->Base.Base.OutputsWritten;
-   vs.inputs_read = vp->Base.Base.InputsRead;
+   vs.inputs_read
+      = tgsi_mesa_translate_vertex_input_mask(vp->Base.Base.InputsRead);
+   vs.outputs_written
+      = tgsi_mesa_translate_vertex_output_mask(vp->Base.Base.OutputsWritten);
    vs.tokens = &vp->tokens[0];
 
    if (memcmp(&vs, &st->state.vs, sizeof(vs)) != 0 ||
@@ -129,7 +131,7 @@ static void update_vs( struct st_context *st )
 
 const struct st_tracked_state st_update_vs = {
    .dirty = {
-      .mesa  = _NEW_PROGRAM | _NEW_MODELVIEW,
+      .mesa  = _NEW_PROGRAM | _NEW_MODELVIEW | _NEW_PROJECTION, /*XXX MORE*/
       .st   = ST_NEW_VERTEX_PROGRAM,
    },
    .update = update_vs
