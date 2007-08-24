@@ -140,6 +140,7 @@ run_vertex_program(struct draw_context *draw,
    const float *trans = draw->viewport.translate;
 
    assert(count <= 4);
+   assert(draw->vertex_shader.outputs_written & (1 << TGSI_ATTRIB_POS));
 
 #if 0
    if( file == NULL ) {
@@ -200,18 +201,16 @@ run_vertex_program(struct draw_context *draw,
             machine.Inputs[attr].xyzw[2].f[j] = p[2]; /*Z*/
             machine.Inputs[attr].xyzw[3].f[j] = p[3]; /*W*/
 #if 0
-            if (1) {
-               fprintf(file, "Input vertex %d: attr %d:  %f %f %f %f\n",
-                       j, attr, p[0], p[1], p[2], p[3]);
-               fflush( file );
-            }
+            fprintf(file, "Input vertex %d: attr %d:  %f %f %f %f\n",
+                    j, attr, p[0], p[1], p[2], p[3]);
+            fflush( file );
 #endif
          }
       }
    }
 
 #if 0
-   printf("Consts:\n");
+   printf("Vertex shader Constants:\n");
    {
       int i;
       for (i = 0; i < 4; i++) {
@@ -239,9 +238,8 @@ run_vertex_program(struct draw_context *draw,
 #endif
 
    /* store machine results */
-   assert(draw->vertex_shader.outputs_written & (1 << TGSI_ATTRIB_POS));
    for (j = 0; j < count; j++) {
-      unsigned /**attr,**/ slot;
+      unsigned slot;
       float x, y, z, w;
 
       /* Handle attr[0] (position) specially: */
@@ -265,8 +263,7 @@ run_vertex_program(struct draw_context *draw,
       vOut[j]->data[0][2] = z * scale[2] + trans[2];
       vOut[j]->data[0][3] = w;
 #if 0
-      fprintf(file, "Vert %d: wincoord: %f %f %f %f\n",
-              j, 
+      fprintf(file, "Vert %d: wincoord: %f %f %f %f\n", j,
               vOut[j]->data[0][0],
               vOut[j]->data[0][1],
               vOut[j]->data[0][2],
@@ -274,31 +271,9 @@ run_vertex_program(struct draw_context *draw,
       fflush( file );
 #endif
 
-      /* remaining attributes: */
-      /* pack into sequential post-transform attrib slots */
-#if 0
-      slot = 1;
-      for (attr = 1; attr < TGSI_ATTRIB_MAX; attr++) {
-         if (draw->vertex_shader.outputs_written & (1 << attr)) {
-            assert(slot < draw->vertex_info.num_attribs);
-            vOut[j]->data[slot][0] = machine.Outputs[/*attr*/slot].xyzw[0].f[j];
-            vOut[j]->data[slot][1] = machine.Outputs[/*attr*/slot].xyzw[1].f[j];
-            vOut[j]->data[slot][2] = machine.Outputs[/*attr*/slot].xyzw[2].f[j];
-            vOut[j]->data[slot][3] = machine.Outputs[/*attr*/slot].xyzw[3].f[j];
-#if 0
-            fprintf(file, "output attrib %d slot %d: %f %f %f %f  vert %p\n",
-                    attr, slot,
-                    vOut[j]->data[slot][0],
-                    vOut[j]->data[slot][1],
-                    vOut[j]->data[slot][2],
-                    vOut[j]->data[slot][3], vOut[j]);
-#endif
-            slot++;
-         }
-      }
-
-#else
-
+      /* remaining attributes are packed into sequential post-transform
+       * vertex attrib slots.
+       */
       for (slot = 1; slot < draw->vertex_info.num_attribs; slot++) {
          vOut[j]->data[slot][0] = machine.Outputs[slot].xyzw[0].f[j];
          vOut[j]->data[slot][1] = machine.Outputs[slot].xyzw[1].f[j];
@@ -313,9 +288,6 @@ run_vertex_program(struct draw_context *draw,
                  vOut[j]->data[slot][3], vOut[j]);
 #endif
       }
-
-#endif
-
    } /* loop over vertices */
 }
 
