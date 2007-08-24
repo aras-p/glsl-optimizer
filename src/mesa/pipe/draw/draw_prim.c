@@ -248,7 +248,7 @@ run_vertex_program(struct draw_context *draw,
       z = vOut[j]->clip[2] = machine.Outputs[0].xyzw[2].f[j];
       w = vOut[j]->clip[3] = machine.Outputs[0].xyzw[3].f[j];
 
-      vOut[j]->clipmask = 0;/*compute_clipmask(x, y, z, w);*/
+      vOut[j]->clipmask = compute_clipmask(x, y, z, w);
       vOut[j]->edgeflag = 1;
 
       /* divide by w */
