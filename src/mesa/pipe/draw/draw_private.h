@@ -154,6 +154,7 @@ struct draw_context
     */
    float plane[12][4];
    unsigned nr_planes;
+   unsigned user_clipmask;
 
    /** Describes the layout of post-transformation vertices */
    struct vertex_info vertex_info;

@@ -56,8 +56,7 @@ struct draw_stage;
 #define CLIP_BOTTOM_BIT  0x08
 #define CLIP_NEAR_BIT    0x10
 #define CLIP_FAR_BIT     0x20
-#define CLIP_USER_BIT    0x40
-#define CLIP_CULL_BIT    0x80
+#define CLIP_CULL_BIT    (1 << (6 + PIPE_MAX_CLIP_PLANES)) /*unused? */
 /*@}*/
 
 /**
