@@ -568,6 +568,7 @@ st_Bitmap(GLcontext *ctx, GLint x, GLint y, GLsizei width, GLsizei height,
 
    st_validate_state(st);
 
+   fprintf(stderr, "st_Bitmap not implemented yet\n");
    /* XXX to do */
 }
 
@@ -581,6 +582,7 @@ st_CopyPixels(GLcontext *ctx, GLint srcx, GLint srcy,
 
    st_validate_state(st);
 
+   fprintf(stderr, "st_CopyPixels not implemented yet\n");
    /* XXX to do */
 }
 
