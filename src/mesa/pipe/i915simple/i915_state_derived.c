@@ -41,8 +41,6 @@ emit_vertex_attr(struct vertex_info *vinfo, uint vfAttr, uint format)
    const uint n = vinfo->num_attribs;
    vinfo->attr_mask |= (1 << vfAttr);
    vinfo->slot_to_attrib[n] = vfAttr;
-   printf("Vertex slot %d = vfattrib %d\n", n, vfAttr);
-   /*vinfo->interp_mode[n] = interpMode;*/
    vinfo->format[n] = format;
    vinfo->num_attribs++;
 }
@@ -92,15 +90,13 @@ static void calculate_vertex_layout( struct i915_context *i915 )
 {
    const unsigned inputsRead = i915->fs.inputs_read;
    struct vertex_info *vinfo = &i915->current.vertex_info;
+   boolean needW = 0;
 
    memset(vinfo, 0, sizeof(*vinfo));
 
-   /* TODO - Figure out if we need to do perspective divide, etc.
-    */
-
    /* pos */
    emit_vertex_attr(vinfo, TGSI_ATTRIB_POS, FORMAT_3F);
-   vinfo->hwfmt[0] |= S4_VFMT_XYZ;
+   /* Note: we'll set the S4_VFMT_XYZ[W] bits below */
 
    /* color0 */
    if (inputsRead & (1 << TGSI_ATTRIB_COLOR0)) {
@@ -125,12 +121,23 @@ static void calculate_vertex_layout( struct i915_context *i915 )
          if (inputsRead & (1 << i)) {
             emit_vertex_attr(vinfo, i, FORMAT_4F);
             hwtc = TEXCOORDFMT_4D;
+            needW = TRUE;
          }
          else {
             hwtc = TEXCOORDFMT_NOT_PRESENT;
          }
          vinfo->hwfmt[1] |= hwtc << ((i - TGSI_ATTRIB_TEX0) * 4);
       }
+   }
+
+   /* go back and fill in the vertex position info now that we have needW */
+   if (needW) {
+      vinfo->hwfmt[0] |= S4_VFMT_XYZW;
+      vinfo->format[0] = FORMAT_4F;
+   }
+   else {
+      vinfo->hwfmt[0] |= S4_VFMT_XYZ;
+      vinfo->format[0] == FORMAT_3F;
    }
 
    /* Additional attributes required for setup: Just twosided
