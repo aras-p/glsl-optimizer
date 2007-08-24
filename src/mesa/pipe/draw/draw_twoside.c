@@ -103,6 +103,7 @@ static void twoside_tri( struct draw_stage *stage,
       struct prim_header tmp;
 
       tmp.det = header->det;
+      tmp.edgeflags = header->edgeflags;
       /* copy back colors to front color slots */
       tmp.v[0] = copy_bfc(twoside, header->v[0], 0);
       tmp.v[1] = copy_bfc(twoside, header->v[1], 1);

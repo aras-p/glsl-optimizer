@@ -115,6 +115,7 @@ static void offset_tri( struct draw_stage *stage,
    struct prim_header tmp;
 
    tmp.det = header->det;
+   tmp.edgeflags = header->edgeflags;
    tmp.v[0] = dup_vert(stage, header->v[0], 0);
    tmp.v[1] = dup_vert(stage, header->v[1], 1);
    tmp.v[2] = dup_vert(stage, header->v[2], 2);
