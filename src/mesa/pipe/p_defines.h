@@ -178,7 +178,7 @@
 #define PIPE_FORMAT_U_L8               6  /**< ubyte luminance */
 #define PIPE_FORMAT_U_A8               7  /**< ubyte alpha */
 #define PIPE_FORMAT_U_I8               8  /**< ubyte intensity */
-#define PIPE_FORMAT_U_L8_A8            9  /**< ubyte luminance, alpha */
+#define PIPE_FORMAT_U_A8_L8            9  /**< ubyte alpha, luminance */
 #define PIPE_FORMAT_S_R16_G16_B16_A16 10  /**< signed 16-bit RGBA (accum) */
 #define PIPE_FORMAT_YCBCR             11
 #define PIPE_FORMAT_YCBCR_REV         12

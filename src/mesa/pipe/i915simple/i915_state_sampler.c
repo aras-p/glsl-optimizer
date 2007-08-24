@@ -295,7 +295,7 @@ translate_texture_format(uint pipeFormat)
       return MAPSURF_8BIT | MT_8BIT_I8;
    case PIPE_FORMAT_U_A8:
       return MAPSURF_8BIT | MT_8BIT_A8;
-   case PIPE_FORMAT_U_L8_A8:
+   case PIPE_FORMAT_U_A8_L8:
       return MAPSURF_16BIT | MT_16BIT_AY88;
    case PIPE_FORMAT_U_R5_G6_B5:
       return MAPSURF_16BIT | MT_16BIT_RGB565;

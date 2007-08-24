@@ -162,8 +162,10 @@ const struct st_tracked_state st_update_vs = {
  */
 static void update_tnl( struct st_context *st )
 {
+   uint before = st->ctx->NewState;
    if (st->ctx->VertexProgram._MaintainTnlProgram)
       _tnl_UpdateFixedFunctionProgram( st->ctx );
+   assert(before == st->ctx->NewState);
 }
 
 

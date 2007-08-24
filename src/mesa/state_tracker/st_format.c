@@ -115,6 +115,14 @@ st_mesa_format_to_pipe_format(GLuint mesaFormat)
    case MESA_FORMAT_ARGB8888_REV:
    case MESA_FORMAT_ARGB8888:
       return PIPE_FORMAT_U_A8_R8_G8_B8;
+   case MESA_FORMAT_AL88:
+      return PIPE_FORMAT_U_A8_L8;
+   case MESA_FORMAT_A8:
+      return PIPE_FORMAT_U_A8;
+   case MESA_FORMAT_L8:
+      return PIPE_FORMAT_U_L8;
+   case MESA_FORMAT_I8:
+      return PIPE_FORMAT_U_I8;
    default:
       assert(0);
       return 0;
@@ -277,8 +285,8 @@ st_choose_pipe_format(struct pipe_context *pipe, GLint internalFormat,
    case GL_LUMINANCE12_ALPHA12:
    case GL_LUMINANCE16_ALPHA16:
    case GL_COMPRESSED_LUMINANCE_ALPHA:
-      if (allow[PIPE_FORMAT_U_L8_A8])
-         return PIPE_FORMAT_U_L8_A8;
+      if (allow[PIPE_FORMAT_U_A8_L8])
+         return PIPE_FORMAT_U_A8_L8;
       return default_rgba_format(supported, n);
 
    case GL_INTENSITY:
