@@ -201,7 +201,6 @@ struct draw_stage *i915_draw_render_stage( struct i915_context *i915 );
  * i915_state_emit.c: 
  */
 void i915_emit_hardware_state(struct i915_context *i915 );
-unsigned *i915_passthrough_program( unsigned *dwords );
 
 
 
