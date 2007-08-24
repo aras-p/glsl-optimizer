@@ -142,17 +142,20 @@ void mmx_packssdw( struct x86_function *p, struct x86_reg dst, struct x86_reg sr
 void mmx_packuswb( struct x86_function *p, struct x86_reg dst, struct x86_reg src );
 
 void sse2_cvtps2dq( struct x86_function *p, struct x86_reg dst, struct x86_reg src );
+void sse2_cvttps2dq( struct x86_function *p, struct x86_reg dst, struct x86_reg src );
 void sse2_movd( struct x86_function *p, struct x86_reg dst, struct x86_reg src );
 void sse2_packssdw( struct x86_function *p, struct x86_reg dst, struct x86_reg src );
 void sse2_packsswb( struct x86_function *p, struct x86_reg dst, struct x86_reg src );
 void sse2_packuswb( struct x86_function *p, struct x86_reg dst, struct x86_reg src );
 void sse2_pshufd( struct x86_function *p, struct x86_reg dest, struct x86_reg arg0, GLubyte shuf );
+void sse2_rcpps( struct x86_function *p, struct x86_reg dst, struct x86_reg src );
 void sse2_rcpss( struct x86_function *p, struct x86_reg dst, struct x86_reg src );
 
 void sse_addps( struct x86_function *p, struct x86_reg dst, struct x86_reg src );
 void sse_addss( struct x86_function *p, struct x86_reg dst, struct x86_reg src );
 void sse_cvtps2pi( struct x86_function *p, struct x86_reg dst, struct x86_reg src );
 void sse_divss( struct x86_function *p, struct x86_reg dst, struct x86_reg src );
+void sse_andnps( struct x86_function *p, struct x86_reg dst, struct x86_reg src );
 void sse_andps( struct x86_function *p, struct x86_reg dst, struct x86_reg src );
 void sse_cmpps( struct x86_function *p, struct x86_reg dst, struct x86_reg src, GLubyte cc );
 void sse_maxps( struct x86_function *p, struct x86_reg dst, struct x86_reg src );
@@ -167,9 +170,13 @@ void sse_movss( struct x86_function *p, struct x86_reg dst, struct x86_reg src )
 void sse_movups( struct x86_function *p, struct x86_reg dst, struct x86_reg src );
 void sse_mulps( struct x86_function *p, struct x86_reg dst, struct x86_reg src );
 void sse_mulss( struct x86_function *p, struct x86_reg dst, struct x86_reg src );
+void sse_orps( struct x86_function *p, struct x86_reg dst, struct x86_reg src );
+void sse_xorps( struct x86_function *p, struct x86_reg dst, struct x86_reg src );
 void sse_subps( struct x86_function *p, struct x86_reg dst, struct x86_reg src );
+void sse_rsqrtps( struct x86_function *p, struct x86_reg dst, struct x86_reg src );
 void sse_rsqrtss( struct x86_function *p, struct x86_reg dst, struct x86_reg src );
 void sse_shufps( struct x86_function *p, struct x86_reg dest, struct x86_reg arg0, GLubyte shuf );
+void sse_pmovmskb( struct x86_function *p, struct x86_reg dest, struct x86_reg src );
 
 void x86_add( struct x86_function *p, struct x86_reg dst, struct x86_reg src );
 void x86_and( struct x86_function *p, struct x86_reg dst, struct x86_reg src );

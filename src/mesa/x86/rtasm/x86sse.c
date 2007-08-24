@@ -502,6 +502,14 @@ void sse_addss( struct x86_function *p,
    emit_modrm( p, dst, src );
 }
 
+void sse_andnps( struct x86_function *p,
+                 struct x86_reg dst,
+                 struct x86_reg src )
+{
+   emit_2ub(p, X86_TWOB, 0x55);
+   emit_modrm( p, dst, src );
+}
+
 void sse_andps( struct x86_function *p,
 		struct x86_reg dst,
 		struct x86_reg src )
@@ -510,6 +518,13 @@ void sse_andps( struct x86_function *p,
    emit_modrm( p, dst, src );
 }
 
+void sse_rsqrtps( struct x86_function *p,
+                  struct x86_reg dst,
+                  struct x86_reg src )
+{
+   emit_2ub(p, X86_TWOB, 0x52);
+   emit_modrm( p, dst, src );
+}
 
 void sse_rsqrtss( struct x86_function *p,
 		  struct x86_reg dst,
@@ -538,6 +553,21 @@ void sse_movlhps( struct x86_function *p,
    emit_modrm( p, dst, src );
 }
 
+void sse_orps( struct x86_function *p,
+               struct x86_reg dst,
+               struct x86_reg src )
+{
+   emit_2ub(p, X86_TWOB, 0x56);
+   emit_modrm( p, dst, src );
+}
+
+void sse_xorps( struct x86_function *p,
+                struct x86_reg dst,
+                struct x86_reg src )
+{
+   emit_2ub(p, X86_TWOB, 0x57);
+   emit_modrm( p, dst, src );
+}
 
 void sse_cvtps2pi( struct x86_function *p,
 		   struct x86_reg dst,
@@ -576,6 +606,14 @@ void sse_cmpps( struct x86_function *p,
    emit_1ub(p, cc); 
 }
 
+void sse_pmovmskb( struct x86_function *p,
+                   struct x86_reg dest,
+                   struct x86_reg src)
+{
+    emit_3ub(p, 0x66, X86_TWOB, 0xD7);
+    emit_modrm(p, dest, src);
+}
+
 /***********************************************************************
  * SSE2 instructions
  */
@@ -591,6 +629,14 @@ void sse2_pshufd( struct x86_function *p,
    emit_3ub(p, 0x66, X86_TWOB, 0x70);
    emit_modrm(p, dest, arg0);
    emit_1ub(p, shuf); 
+}
+
+void sse2_cvttps2dq( struct x86_function *p,
+                     struct x86_reg dst,
+                     struct x86_reg src )
+{
+   emit_3ub( p, 0xF3, X86_TWOB, 0x5B );
+   emit_modrm( p, dst, src );
 }
 
 void sse2_cvtps2dq( struct x86_function *p,
@@ -622,6 +668,14 @@ void sse2_packuswb( struct x86_function *p,
 		    struct x86_reg src )
 {
    emit_3ub(p, 0x66, X86_TWOB, 0x67);
+   emit_modrm( p, dst, src );
+}
+
+void sse2_rcpps( struct x86_function *p,
+                 struct x86_reg dst,
+                 struct x86_reg src )
+{
+   emit_2ub(p, X86_TWOB, 0x53);
    emit_modrm( p, dst, src );
 }
 
