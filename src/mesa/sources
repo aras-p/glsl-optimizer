@@ -166,11 +166,12 @@ DRAW_SOURCES = \
 	pipe/draw/draw_twoside.c \
 	pipe/draw/draw_unfilled.c
 
-TGSICORE_SOURCES = \
+TGSIEXEC_SOURCES = \
 	pipe/tgsi/exec/tgsi_build.c \
 	pipe/tgsi/exec/tgsi_dump.c \
 	pipe/tgsi/exec/tgsi_exec.c \
 	pipe/tgsi/exec/tgsi_parse.c \
+	pipe/tgsi/exec/tgsi_sse2.c \
 	pipe/tgsi/exec/tgsi_util.c
 
 TGSIDECO_SOURCES = \
@@ -359,7 +360,7 @@ SOLO_SOURCES = \
 	$(VBO_SOURCES)		\
 	$(VF_SOURCES)		\
 	$(DRAW_SOURCES)		\
-	$(TGSICORE_SOURCES)	\
+	$(TGSIEXEC_SOURCES)	\
 	$(TGSIDECO_SOURCES)	\
 	$(TGSIMESA_SOURCES)	\
 	$(STATETRACKER_SOURCES)	\

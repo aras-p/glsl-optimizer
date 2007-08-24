@@ -7,6 +7,7 @@
 #include "tgsi_exec.h"
 #include "tgsi_dump.h"
 #include "tgsi_util.h"
+#include "tgsi_sse2.h"
 
 #endif // !defined TGSI_CORE_H
 
