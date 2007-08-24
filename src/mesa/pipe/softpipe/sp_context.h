@@ -35,7 +35,10 @@
 #include "pipe/p_context.h"
 #include "pipe/p_defines.h"
 
+#include "pipe/draw/draw_vertex.h"
+
 #include "sp_quad.h"
+
 
 struct softpipe_surface;
 struct softpipe_winsys;
@@ -96,14 +99,6 @@ struct softpipe_context {
    struct pipe_vertex_element vertex_element[PIPE_ATTRIB_MAX];
    unsigned dirty;
 
-   /* Setup derived state.  TODO: this should be passed in the program
-    * tokens as parameters to DECL instructions.
-    * 
-    * For now we just set colors to CONST on flatshade, textures to
-    * perspective always and everything else to linear.
-    */
-   enum interp_mode interp[PIPE_ATTRIB_MAX];
-
    /*
     * Mapped vertex buffers
     */
@@ -112,17 +107,10 @@ struct softpipe_context {
    /** Mapped constant buffers */
    void *mapped_constants[PIPE_SHADER_TYPES];
 
-   /* FS + setup derived state:
-    */
-
-   /** Map fragment program attribute to quad/coef array slot */
-   unsigned fp_attr_to_slot[PIPE_ATTRIB_MAX];
-   /** Map vertex format attribute to a vertex attribute slot */
-   unsigned vf_attr_to_slot[PIPE_ATTRIB_MAX];
-   unsigned nr_attrs;
+   /** Vertex format */
+   struct vertex_info vertex_info;
+   unsigned attr_mask;
    unsigned nr_frag_attrs;  /**< number of active fragment attribs */
-   unsigned attr_mask;  /**< bitfield of VF_ATTRIB_ indexes/bits */
-
    boolean need_z;  /**< produce quad/fragment Z values? */
    boolean need_w;  /**< produce quad/fragment W values? */
 

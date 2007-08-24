@@ -37,15 +37,18 @@
 
 
 
-#define EMIT_ATTR( ATTR, FRAG_ATTR, INTERP )			\
-do {								\
-   slot_to_vf_attr[softpipe->nr_attrs] = ATTR;			\
-   softpipe->vf_attr_to_slot[ATTR] = softpipe->nr_attrs;	\
-   softpipe->fp_attr_to_slot[FRAG_ATTR] = softpipe->nr_attrs;	\
-   softpipe->interp[softpipe->nr_attrs] = INTERP;		\
-   softpipe->nr_attrs++;					\
-   attr_mask |= (1 << (ATTR));					\
-} while (0)
+static void
+emit_vertex_attr(struct vertex_info *vinfo, uint vfAttr, uint format,
+                 uint interp)
+{
+   const uint n = vinfo->num_attribs;
+   vinfo->attr_mask |= (1 << vfAttr);
+   vinfo->slot_to_attrib[n] = vfAttr;
+   vinfo->interp_mode[n] = interp;
+   vinfo->format[n] = format;
+   vinfo->num_attribs++;
+}
+
 
 
 /**
@@ -56,9 +59,12 @@ do {								\
 static void calculate_vertex_layout( struct softpipe_context *softpipe )
 {
    const unsigned inputsRead = softpipe->fs.inputs_read;
-   unsigned slot_to_vf_attr[TGSI_ATTRIB_MAX];
-   unsigned attr_mask = 0x0;
-   unsigned i;
+   const uint colorInterp
+      = softpipe->setup.flatshade ? INTERP_CONSTANT : INTERP_LINEAR;
+   struct vertex_info *vinfo = &softpipe->vertex_info;
+   uint i;
+
+   memset(vinfo, 0, sizeof(*vinfo));
 
    /* Need Z if depth test is enabled or the fragment program uses the
     * fragment position (XYZW).
@@ -77,39 +83,34 @@ static void calculate_vertex_layout( struct softpipe_context *softpipe )
    else
       softpipe->need_w = FALSE;
 
-
-   softpipe->nr_attrs = 0;
-   memset(slot_to_vf_attr, 0, sizeof(slot_to_vf_attr));
-
-   memset(softpipe->fp_attr_to_slot, 0, sizeof(softpipe->fp_attr_to_slot));
-   memset(softpipe->vf_attr_to_slot, 0, sizeof(softpipe->vf_attr_to_slot));
-
-   /* TODO - Figure out if we need to do perspective divide, etc.
-    */
-   EMIT_ATTR(TGSI_ATTRIB_POS, TGSI_ATTRIB_POS, INTERP_LINEAR);
-      
-   /* Pull in the rest of the attributes.  They are all in float4
-    * format.  Future optimizations could be to keep some attributes
-    * as fixed point or ubyte format.
-    */
-   for (i = 1; i < TGSI_ATTRIB_TEX0; i++) {
-      if (inputsRead & (1 << i)) {
-         if (softpipe->setup.flatshade
-             && (i == TGSI_ATTRIB_COLOR0 || i == TGSI_ATTRIB_COLOR1))
-            EMIT_ATTR(i, i, INTERP_CONSTANT);
-         else
-            EMIT_ATTR(i, i, INTERP_LINEAR);
-      }
+   /* position */
+   /* TODO - Figure out if we need to do perspective divide, etc. */
+   emit_vertex_attr(vinfo, TGSI_ATTRIB_POS, FORMAT_4F, INTERP_LINEAR);
+ 
+   /* color0 */
+   if (inputsRead & (1 << TGSI_ATTRIB_COLOR0)) {
+      emit_vertex_attr(vinfo, TGSI_ATTRIB_COLOR0, FORMAT_4F, colorInterp);
    }
 
-   for (i = TGSI_ATTRIB_TEX0; i < TGSI_ATTRIB_MAX; i++) {
+   /* color1 */
+   if (inputsRead & (1 << TGSI_ATTRIB_COLOR1)) {
+      emit_vertex_attr(vinfo, TGSI_ATTRIB_COLOR1, FORMAT_4F, colorInterp);
+   }
+
+   /* fog */
+   if (inputsRead & (1 << TGSI_ATTRIB_FOG)) {
+      emit_vertex_attr(vinfo, TGSI_ATTRIB_FOG, FORMAT_1F, INTERP_PERSPECTIVE);
+   }
+
+   /* texcoords and varying vars */
+   for (i = TGSI_ATTRIB_TEX0; i < TGSI_ATTRIB_VAR7; i++) {
       if (inputsRead & (1 << i)) {
-         EMIT_ATTR(i, i, INTERP_PERSPECTIVE);
+         emit_vertex_attr(vinfo, i, FORMAT_4F, INTERP_PERSPECTIVE);
          softpipe->need_w = TRUE;
       }
    }
 
-   softpipe->nr_frag_attrs = softpipe->nr_attrs;
+   softpipe->nr_frag_attrs = vinfo->num_attribs;
 
    /* Additional attributes required for setup: Just twosided
     * lighting.  Edgeflag is dealt with specially by setting bits in
@@ -117,23 +118,23 @@ static void calculate_vertex_layout( struct softpipe_context *softpipe )
     */
    if (softpipe->setup.light_twoside) {
       if (inputsRead & (1 << TGSI_ATTRIB_COLOR0)) {
-	 EMIT_ATTR(TGSI_ATTRIB_BFC0, TGSI_ATTRIB_MAX, 0); /* XXX: mark as discarded after setup */
+         emit_vertex_attr(vinfo, TGSI_ATTRIB_BFC0, FORMAT_OMIT, INTERP_LINEAR);
       }
 	    
       if (inputsRead & (1 << TGSI_ATTRIB_COLOR1)) {
-	 EMIT_ATTR(TGSI_ATTRIB_BFC1, TGSI_ATTRIB_MAX, 0); /* XXX: discard after setup */
+         emit_vertex_attr(vinfo, TGSI_ATTRIB_BFC1, FORMAT_OMIT, INTERP_LINEAR);
       }
    }
 
    /* If the attributes have changed, tell the draw module about
     * the new vertex layout.
     */
-   if (attr_mask != softpipe->attr_mask) {
-      softpipe->attr_mask = attr_mask;
+   if (vinfo->attr_mask != softpipe->attr_mask) {
+      softpipe->attr_mask = vinfo->attr_mask;
 
       draw_set_vertex_attributes( softpipe->draw,
-				 slot_to_vf_attr,
-				 softpipe->nr_attrs );
+                                  vinfo->slot_to_attrib,
+                                  vinfo->num_attribs);
    }
 }
 
