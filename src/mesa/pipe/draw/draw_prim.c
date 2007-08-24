@@ -35,7 +35,7 @@
 #include "draw_context.h"
 #include "draw_prim.h"
 
-#include "pipe/tgsi/core/tgsi_core.h"
+#include "pipe/tgsi/exec/tgsi_core.h"
 
 
 #define RP_NONE  0

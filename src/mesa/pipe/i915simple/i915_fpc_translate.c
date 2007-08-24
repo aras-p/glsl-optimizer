@@ -29,8 +29,8 @@
 #include "i915_context.h"
 #include "i915_fpc.h"
 
-#include "pipe/tgsi/core/tgsi_token.h"
-#include "pipe/tgsi/core/tgsi_parse.h"
+#include "pipe/tgsi/exec/tgsi_token.h"
+#include "pipe/tgsi/exec/tgsi_parse.h"
 
 #include "pipe/draw/draw_vertex.h"
 

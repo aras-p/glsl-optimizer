@@ -35,7 +35,7 @@
 #define ST_PROGRAM_H
 
 #include "mtypes.h"
-#include "pipe/tgsi/core/tgsi_token.h"
+#include "pipe/tgsi/exec/tgsi_token.h"
 
 #define ST_FP_MAX_TOKENS 1024
 

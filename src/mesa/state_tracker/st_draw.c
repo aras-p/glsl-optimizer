@@ -44,7 +44,7 @@
 #include "pipe/p_context.h"
 #include "pipe/p_defines.h"
 #include "pipe/p_winsys.h"
-#include "pipe/tgsi/core/tgsi_attribs.h"
+#include "pipe/tgsi/exec/tgsi_attribs.h"
 
 
 

@@ -39,7 +39,7 @@
 #include "pipe/p_context.h"
 #include "pipe/p_defines.h"
 #include "pipe/p_util.h"
-#include "pipe/tgsi/core/tgsi_exec.h"
+#include "pipe/tgsi/exec/tgsi_exec.h"
 
 
 /*

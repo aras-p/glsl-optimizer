@@ -167,11 +167,11 @@ DRAW_SOURCES = \
 	pipe/draw/draw_unfilled.c
 
 TGSICORE_SOURCES = \
-	pipe/tgsi/core/tgsi_build.c \
-	pipe/tgsi/core/tgsi_dump.c \
-	pipe/tgsi/core/tgsi_exec.c \
-	pipe/tgsi/core/tgsi_parse.c \
-	pipe/tgsi/core/tgsi_util.c
+	pipe/tgsi/exec/tgsi_build.c \
+	pipe/tgsi/exec/tgsi_dump.c \
+	pipe/tgsi/exec/tgsi_exec.c \
+	pipe/tgsi/exec/tgsi_parse.c \
+	pipe/tgsi/exec/tgsi_util.c
 
 TGSIDECO_SOURCES = \
 	pipe/tgsi/deco/deco_caps.c

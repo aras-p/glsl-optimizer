@@ -35,7 +35,7 @@
 #include "pipe/p_defines.h"
 #include "pipe/p_winsys.h"
 #include "pipe/tgsi/mesa/mesa_to_tgsi.h"
-#include "pipe/tgsi/core/tgsi_dump.h"
+#include "pipe/tgsi/exec/tgsi_dump.h"
 
 #include "st_context.h"
 #include "st_atom.h"

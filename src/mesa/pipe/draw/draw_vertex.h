@@ -33,7 +33,7 @@
 #ifndef DRAW_VERTEX_H
 #define DRAW_VERTEX_H
 
-#include "pipe/tgsi/core/tgsi_attribs.h"
+#include "pipe/tgsi/exec/tgsi_attribs.h"
 
 
 #define MAX_VERT_ATTRIBS 12  /* OK? */
