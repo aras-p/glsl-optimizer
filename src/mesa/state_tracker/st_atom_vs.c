@@ -31,6 +31,7 @@
   */
 
 #include "shader/prog_parameter.h"
+#include "shader/prog_print.h"
 #include "tnl/t_vp_build.h"
 
 #include "pipe/p_context.h"
@@ -104,6 +105,7 @@ static void update_vs( struct st_context *st )
    /* update constants */
    if (vp && params) {
       _mesa_load_state_parameters(st->ctx, params);
+      /*_mesa_print_parameter_list(params);*/
       update_vs_constants(st, params);
    }
 
@@ -131,7 +133,10 @@ static void update_vs( struct st_context *st )
 
 const struct st_tracked_state st_update_vs = {
    .dirty = {
-      .mesa  = _NEW_PROGRAM | _NEW_MODELVIEW | _NEW_PROJECTION, /*XXX MORE*/
+      .mesa  = (_NEW_PROGRAM |
+                _NEW_MODELVIEW |
+                _NEW_PROJECTION |
+                _NEW_LIGHT), /*XXX MORE?*/
       .st   = ST_NEW_VERTEX_PROGRAM,
    },
    .update = update_vs
