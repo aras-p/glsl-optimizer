@@ -113,6 +113,21 @@ fetch_attrib4(const void *ptr, unsigned format, float attrib[4])
    }
 }
 
+#if !defined(XSTDCALL) 
+#if defined(WIN32)
+#define XSTDCALL __stdcall
+#else
+#define XSTDCALL
+#endif
+#endif
+
+#if defined(USE_X86_ASM) || defined(SLANG_X86)
+typedef void (XSTDCALL *sse2_function)(
+   const struct tgsi_exec_vector *input,
+   struct tgsi_exec_vector *output,
+   float (*constant)[4],
+   struct tgsi_exec_vector *temporary );
+#endif
 
 /**
  * Transform vertices with the current vertex program/shader
@@ -224,7 +239,21 @@ run_vertex_program(struct draw_context *draw,
 #endif
 
    /* run shader */
-   tgsi_exec_machine_run( &machine );
+   if( draw->vertex_shader.executable != NULL ) {
+#if defined(USE_X86_ASM) || defined(SLANG_X86)
+      sse2_function func = (sse2_function) draw->vertex_shader.executable;
+      func(
+         machine.Inputs,
+         machine.Outputs,
+         machine.Consts,
+         machine.Temps );
+#else
+      assert( 0 );
+#endif
+   }
+   else {
+      tgsi_exec_machine_run( &machine );
+   }
 
 #if 0
    for (i = 0; i < 4; i++) {

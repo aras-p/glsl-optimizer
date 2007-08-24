@@ -77,6 +77,10 @@ static struct gl_program *st_new_program( GLcontext *ctx,
       prog->id = program_id++;
       prog->dirty = 1;
 
+#if defined(USE_X86_ASM) || defined(SLANG_X86)
+      x86_init_func( &prog->sse2_program );
+#endif
+
       return _mesa_init_vertex_program( ctx, 
 					&prog->Base,
 					target, 
@@ -105,6 +109,16 @@ static struct gl_program *st_new_program( GLcontext *ctx,
 static void st_delete_program( GLcontext *ctx,
 			       struct gl_program *prog )
 {
+   switch( prog->Target ) {
+   case GL_VERTEX_PROGRAM_ARB:
+   {
+      struct st_vertex_program *p = (struct st_vertex_program *) prog;
+
+      x86_release_func( &p->sse2_program );
+      break;
+   }
+
+   }
    _mesa_delete_program( ctx, prog );
 }
 

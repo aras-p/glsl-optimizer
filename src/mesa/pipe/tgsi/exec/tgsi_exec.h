@@ -3,10 +3,6 @@
 
 #include "pipe/p_compiler.h"
 
-#if 0
-#include "x86/rtasm/x86sse.h"
-#endif
-
 #if defined __cplusplus
 extern "C" {
 #endif // defined __cplusplus
@@ -157,9 +153,6 @@ struct tgsi_exec_machine
    const struct tgsi_interp_coef *InterpCoefs;
 
    struct tgsi_exec_cond_stack   CondStack;
-#if XXX_SSE
-   struct x86_function           Function;
-#endif
 };
 
 void

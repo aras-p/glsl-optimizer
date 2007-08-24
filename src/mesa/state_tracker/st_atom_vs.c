@@ -38,7 +38,7 @@
 #include "pipe/p_defines.h"
 #include "pipe/p_winsys.h"
 #include "pipe/tgsi/mesa/mesa_to_tgsi.h"
-#include "pipe/tgsi/exec/tgsi_dump.h"
+#include "pipe/tgsi/exec/tgsi_core.h"
 
 #include "st_context.h"
 #include "st_atom.h"
@@ -56,6 +56,12 @@ static void compile_vs( struct st_context *st,
 
    if (TGSI_DEBUG)
       tgsi_dump( vs->tokens, TGSI_DUMP_VERBOSE );
+
+#if defined(USE_X86_ASM) || defined(SLANG_X86)
+   tgsi_emit_sse2(
+      vs->tokens,
+      &vs->sse2_program );
+#endif
 }
 
 
@@ -120,6 +126,10 @@ static void update_vs( struct st_context *st )
    vs.outputs_written
       = tgsi_mesa_translate_vertex_output_mask(vp->Base.Base.OutputsWritten);
    vs.tokens = &vp->tokens[0];
+
+#if defined(USE_X86_ASM) || defined(SLANG_X86)
+   vs.executable = (void *) x86_get_func( &vp->sse2_program );
+#endif
 
    if (memcmp(&vs, &st->state.vs, sizeof(vs)) != 0 ||
        vp->dirty) 

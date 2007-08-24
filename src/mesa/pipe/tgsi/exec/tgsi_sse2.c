@@ -1659,13 +1659,13 @@ emit_instruction(
 }
 
 unsigned
-tgsi_emit_sse(
+tgsi_emit_sse2(
    struct tgsi_token *tokens,
    struct x86_function *func )
 {
    struct tgsi_parse_context parse;
 
-   x86_init_func( func );
+   func->csr = func->store;
 
    x86_mov(
       func,

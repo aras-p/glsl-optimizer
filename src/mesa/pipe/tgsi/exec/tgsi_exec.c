@@ -85,11 +85,6 @@ tgsi_exec_machine_init(
    mach->Temps = (struct tgsi_exec_vector *) tgsi_align_128bit( mach->_Temps);
    mach->Addrs = &mach->Temps[TGSI_EXEC_NUM_TEMPS];
 
-#if XXX_SSE
-    tgsi_emit_sse (tokens,
-                   &mach->Function);
-#endif
-
    /* Setup constants. */
    for( i = 0; i < 4; i++ ) {
       mach->Temps[TEMP_0_I].xyzw[TEMP_0_C].u[i] = 0x00000000;
@@ -967,6 +962,7 @@ store_dest(
 
    default:
       assert( 0 );
+      return;
    }
 
    switch (inst->Instruction.Saturate)
@@ -2226,20 +2222,6 @@ exec_instruction(
    }
 }
 
-
-#if !defined(XSTDCALL) 
-#if defined(WIN32)
-#define XSTDCALL __stdcall
-#else
-#define XSTDCALL
-#endif
-#endif
-
-typedef void (XSTDCALL *fp_function) (const struct tgsi_exec_vector *input,
-				     struct tgsi_exec_vector *output,
-				     GLfloat (*constant)[4],
-				     struct tgsi_exec_vector *temporary);
-
 void
 tgsi_exec_machine_run2(
    struct tgsi_exec_machine *mach,
@@ -2251,16 +2233,7 @@ tgsi_exec_machine_run2(
 #endif
 
 #if XXX_SSE
-   fp_function function;
-
    mach->Temps[TEMP_KILMASK_I].xyzw[TEMP_KILMASK_C].u[0] = 0;
-    
-   function = (fp_function) x86_get_func (&mach->Function);
-
-   function (mach->Inputs,
-             mach->Outputs,
-             mach->Consts,
-             mach->Temps);
 #else
    struct tgsi_parse_context parse;
    GLuint k;

@@ -36,6 +36,7 @@
 
 #include "mtypes.h"
 #include "pipe/tgsi/exec/tgsi_token.h"
+#include "x86/rtasm/x86sse.h"
 
 #define ST_FP_MAX_TOKENS 1024
 
@@ -83,6 +84,11 @@ struct st_vertex_program
 
    struct tgsi_token tokens[ST_FP_MAX_TOKENS];
    GLboolean dirty;
+
+#if defined(USE_X86_ASM) || defined(SLANG_X86)
+   struct x86_function  sse2_program;
+#endif
+
 #if 0
    struct pipe_constant_buffer constants;
 #endif

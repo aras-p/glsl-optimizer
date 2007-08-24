@@ -128,6 +128,7 @@ struct pipe_shader_state {
    unsigned inputs_read;                   /**< TGSI_ATTRIB_ bits */
    unsigned outputs_written;               /**< TGSI_ATTRIB_ bits */
    const struct tgsi_token *tokens;
+   void *executable;
 };
 
 struct pipe_depth_state
