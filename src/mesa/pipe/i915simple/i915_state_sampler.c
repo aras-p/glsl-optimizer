@@ -155,7 +155,6 @@ static void update_sampler(struct i915_context *i915,
                            uint unit,
 			   const struct pipe_sampler_state *sampler,
 			   const struct pipe_mipmap_tree *mt,
-			   const struct pipe_surface *surface,
 			   unsigned state[3] )
 {
    const unsigned ws = sampler->wrap_s;
@@ -187,8 +186,8 @@ static void update_sampler(struct i915_context *i915,
       state[0] |= ((b << SS2_LOD_BIAS_SHIFT) & SS2_LOD_BIAS_MASK);
    }
 
-   if (surface->format == PIPE_FORMAT_YCBCR ||
-       surface->format == PIPE_FORMAT_YCBCR_REV)
+   if (mt->format == PIPE_FORMAT_YCBCR ||
+       mt->format == PIPE_FORMAT_YCBCR_REV)
       state[0] |= SS2_COLORSPACE_CONVERSION;
 
 
@@ -259,7 +258,6 @@ static void update_sampler(struct i915_context *i915,
 
 void i915_update_samplers( struct i915_context *i915 )
 {
-   const struct pipe_surface *surface = i915->framebuffer.cbufs[0];
    uint unit;
 
    i915->current.sampler_enable_nr = 0;
@@ -273,7 +271,6 @@ void i915_update_samplers( struct i915_context *i915 )
                          unit,
                          i915->sampler + unit,       /* sampler state */
                          i915->texture[unit],        /* mipmap tree */
-                         surface,                    /* cbuffer info */
 			 i915->current.sampler[unit] /* the result */
                          );
 

@@ -174,7 +174,7 @@ void i915_update_derived( struct i915_context *i915 )
    if (i915->dirty & (I915_NEW_SETUP | I915_NEW_FS))
       calculate_vertex_layout( i915 );
 
-   if (i915->dirty & I915_NEW_SAMPLER)
+   if (i915->dirty & (I915_NEW_SAMPLER | I915_NEW_TEXTURE))
       i915_update_samplers(i915);
 
    if (i915->dirty & I915_NEW_TEXTURE)
