@@ -45,108 +45,79 @@
 #include "st_program.h"
 
 
-#define TGSI_DEBUG 0
+#define TGSI_DEBUG 1
 
-static void compile_vs( struct st_context *st,
-			struct st_vertex_program *vs )
+
+
+
+/* translate shader to TGSI format 
+*/
+static void compile_vs( struct st_context *st )
 {
+   struct st_vertex_program *vp = st->vp;
+
    /* XXX: fix static allocation of tokens:
     */
-   tgsi_mesa_compile_vp_program( &vs->Base, vs->tokens, ST_FP_MAX_TOKENS );
+   tgsi_mesa_compile_vp_program( &vp->Base, vp->tokens, ST_FP_MAX_TOKENS );
+
+   vp->vs.inputs_read
+      = tgsi_mesa_translate_vertex_input_mask(vp->Base.Base.InputsRead);
+   vp->vs.outputs_written
+      = tgsi_mesa_translate_vertex_output_mask(vp->Base.Base.OutputsWritten);
+   vp->vs.tokens = &vp->tokens[0];
 
    if (TGSI_DEBUG)
-      tgsi_dump( vs->tokens, TGSI_DUMP_VERBOSE );
+      tgsi_dump( vp->tokens, 0 );
 
 #if defined(USE_X86_ASM) || defined(SLANG_X86)
    tgsi_emit_sse2(
-      vs->tokens,
-      &vs->sse2_program );
+      vp->vs.tokens,
+      &vp->vs.sse2_program );
 #endif
+
+   vp->dirty = 0;
 }
 
-
-static void
-update_vs_constants(struct st_context *st,
-                    struct gl_program_parameter_list *params)
-
-{
-   const uint paramBytes = params->NumParameters * sizeof(GLfloat) * 4;
-   struct pipe_winsys *ws = st->pipe->winsys;
-   struct pipe_constant_buffer *cbuf
-      = &st->state.constants[PIPE_SHADER_VERTEX];
-
-   if (!cbuf->buffer)   
-      cbuf->buffer = ws->buffer_create(ws, 1);
-
-   /* load Mesa constants into the constant buffer */
-   if (paramBytes)
-      ws->buffer_data(ws, cbuf->buffer, paramBytes, params->ParameterValues);
-
-   cbuf->size = paramBytes;
-
-   st->pipe->set_constant_buffer(st->pipe, PIPE_SHADER_VERTEX, 0, cbuf);
-}
 
 
 static void update_vs( struct st_context *st )
 {
-   struct pipe_shader_state vs;
-   struct st_vertex_program *vp = NULL;
-   struct gl_program_parameter_list *params = NULL;
+   struct st_vertex_program *vp;
 
-   /* find active shader and params */
+   /* find active shader and params -- Should be covered by
+    * ST_NEW_VERTEX_PROGRAM
+    */
    if (st->ctx->Shader.CurrentProgram &&
        st->ctx->Shader.CurrentProgram->LinkStatus &&
        st->ctx->Shader.CurrentProgram->VertexProgram) {
       struct gl_vertex_program *f
          = st->ctx->Shader.CurrentProgram->VertexProgram;
       vp = st_vertex_program(f);
-      params = f->Base.Parameters;
    }
-   else if (st->ctx->VertexProgram._Current) {
+   else {
+      assert(st->ctx->VertexProgram._Current);
       vp = st_vertex_program(st->ctx->VertexProgram._Current);
-      params = st->ctx->VertexProgram._Current->Base.Parameters;
    }
 
-   /* update constants */
-   if (vp && params) {
-      _mesa_load_state_parameters(st->ctx, params);
-      /*_mesa_print_parameter_list(params);*/
-      update_vs_constants(st, params);
-   }
+   if (st->vp != vp || vp->dirty) {
+      st->vp = vp;
 
-   /* translate shader to TGSI format */
-   if (vp->dirty)
-      compile_vs( st, vp );
-
-   /* update pipe state */
-   memset( &vs, 0, sizeof(vs) );
-   vs.inputs_read
-      = tgsi_mesa_translate_vertex_input_mask(vp->Base.Base.InputsRead);
-   vs.outputs_written
-      = tgsi_mesa_translate_vertex_output_mask(vp->Base.Base.OutputsWritten);
-   vs.tokens = &vp->tokens[0];
+      if (vp->dirty) 
+	 compile_vs( st );
 
 #if defined(USE_X86_ASM) || defined(SLANG_X86)
-   vs.executable = (void *) x86_get_func( &vp->sse2_program );
+      vs.executable = (void *) x86_get_func( &vp->sse2_program );
 #endif
 
-   if (memcmp(&vs, &st->state.vs, sizeof(vs)) != 0 ||
-       vp->dirty) 
-   {
-      vp->dirty = 0;
-      st->state.vs = vs;
-      st->pipe->set_vs_state(st->pipe, &vs);
+      st->state.vs = st->vp->vs;
+      st->pipe->set_vs_state(st->pipe, &st->state.vs);
    }
 }
 
 
 const struct st_tracked_state st_update_vs = {
    .dirty = {
-      .mesa  = (_NEW_PROGRAM |
-                _NEW_MODELVIEW |
-                _NEW_PROJECTION |
-                _NEW_LIGHT), /*XXX MORE?*/
+      .mesa  = 0, 
       .st   = ST_NEW_VERTEX_PROGRAM,
    },
    .update = update_vs
@@ -155,28 +126,3 @@ const struct st_tracked_state st_update_vs = {
 
 
 
-
-/**
- * When TnL state has changed, need to generate new vertex program.
- * This should be done before updating the vertes shader (vs) state.
- */
-static void update_tnl( struct st_context *st )
-{
-   uint before = st->ctx->NewState;
-   if (st->ctx->VertexProgram._MaintainTnlProgram)
-      _tnl_UpdateFixedFunctionProgram( st->ctx );
-   assert(before == st->ctx->NewState);
-}
-
-
-const struct st_tracked_state st_update_tnl = {
-   .dirty = {
-      .mesa  = (_NEW_PROGRAM |
-                _NEW_LIGHT |
-                _NEW_TEXTURE |
-                _NEW_TRANSFORM |
-                _NEW_LIGHT), /* XXX more? */
-      .st   = 0
-   },
-   .update = update_tnl
-};

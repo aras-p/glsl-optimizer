@@ -28,6 +28,13 @@
 
 #include "mtypes.h"
 
+#define TNL_FIXED_FUNCTION_STATE_FLAGS (_NEW_PROGRAM |		\
+					_NEW_LIGHT |		\
+					_NEW_TEXTURE |		\
+					_NEW_TRANSFORM |	\
+					_NEW_FOG |		\
+					_NEW_POINT)
+
 extern void _tnl_UpdateFixedFunctionProgram( GLcontext *ctx );
 
 extern void _tnl_ProgramCacheInit( GLcontext *ctx );

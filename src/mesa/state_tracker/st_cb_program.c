@@ -64,6 +64,17 @@ static void st_bind_program( GLcontext *ctx,
    }
 }
 
+static void st_use_program( GLcontext *ctx,
+			    GLuint program )
+{
+   struct st_context *st = st_context(ctx);
+
+   st->dirty.st |= ST_NEW_VERTEX_PROGRAM;
+   st->dirty.st |= ST_NEW_FRAGMENT_PROGRAM;
+}
+
+
+
 static struct gl_program *st_new_program( GLcontext *ctx,
 					  GLenum target, 
 					  GLuint id )
@@ -132,6 +143,7 @@ static GLboolean st_is_program_native( GLcontext *ctx,
    return GL_TRUE;
 }
 
+
 static void st_program_string_notify( GLcontext *ctx,
 				      GLenum target,
 				      struct gl_program *prog )
@@ -166,10 +178,8 @@ static void st_program_string_notify( GLcontext *ctx,
 
 void st_init_program_functions(struct dd_function_table *functions)
 {
-#if 0
-   assert(functions->ProgramStringNotify == _tnl_program_string); 
-#endif
    functions->BindProgram = st_bind_program;
+   functions->UseProgram = st_use_program;
    functions->NewProgram = st_new_program;
    functions->DeleteProgram = st_delete_program;
    functions->IsProgramNative = st_is_program_native;

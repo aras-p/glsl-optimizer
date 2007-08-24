@@ -43,92 +43,64 @@
 
 #define TGSI_DEBUG 0
 
-static void compile_fs( struct st_context *st,
-			struct st_fragment_program *fs )
+static void compile_fs( struct st_context *st )
 {
+   struct st_fragment_program *fp = st->fp;
+
    /* XXX: fix static allocation of tokens:
     */
-   tgsi_mesa_compile_fp_program( &fs->Base, fs->tokens, ST_FP_MAX_TOKENS );
+   tgsi_mesa_compile_fp_program( &fp->Base, fp->tokens, ST_FP_MAX_TOKENS );
+
+   fp->fs.inputs_read
+      = tgsi_mesa_translate_vertex_input_mask(fp->Base.Base.InputsRead);
+   fp->fs.outputs_written
+      = tgsi_mesa_translate_vertex_output_mask(fp->Base.Base.OutputsWritten);
+   fp->fs.tokens = &fp->tokens[0];
 
    if (TGSI_DEBUG)
-      tgsi_dump( fs->tokens, TGSI_DUMP_VERBOSE );
+      tgsi_dump( fp->tokens, TGSI_DUMP_VERBOSE );
+
+   fp->dirty = 0;
 }
 
-
-static void
-update_fs_constants(struct st_context *st,
-                    struct gl_program_parameter_list *params)
-
-{
-   const uint paramBytes = params->NumParameters * sizeof(GLfloat) * 4;
-   struct pipe_winsys *ws = st->pipe->winsys;
-   struct pipe_constant_buffer *cbuf
-      = &st->state.constants[PIPE_SHADER_FRAGMENT];
-
-   if (!cbuf->buffer)   
-      cbuf->buffer = ws->buffer_create(ws, 1);
-
-   /* load Mesa constants into the constant buffer */
-   if (paramBytes)
-      ws->buffer_data(ws, cbuf->buffer, paramBytes, params->ParameterValues);
-
-   cbuf->size = paramBytes;
-
-   st->pipe->set_constant_buffer(st->pipe, PIPE_SHADER_FRAGMENT, 0, cbuf);
-}
 
 
 static void update_fs( struct st_context *st )
 {
-   struct pipe_shader_state fs;
    struct st_fragment_program *fp = NULL;
-   struct gl_program_parameter_list *params = NULL;
 
-   /* find active shader and params */
+   /* find active shader and params.  Changes to this Mesa state
+    * should be covered by ST_NEW_FRAGMENT_PROGRAM, thanks to the
+    * logic in st_cb_program.c
+    */
    if (st->ctx->Shader.CurrentProgram &&
        st->ctx->Shader.CurrentProgram->LinkStatus &&
        st->ctx->Shader.CurrentProgram->FragmentProgram) {
       struct gl_fragment_program *f
          = st->ctx->Shader.CurrentProgram->FragmentProgram;
       fp = st_fragment_program(f);
-      params = f->Base.Parameters;
    }
-   else if (st->ctx->FragmentProgram._Current) {
+   else {
+      assert(st->ctx->FragmentProgram._Current);
       fp = st_fragment_program(st->ctx->FragmentProgram._Current);
-      params = st->ctx->FragmentProgram._Current->Base.Parameters;
-   }
-
-   /* update constants */
-   if (fp && params) {
-      _mesa_load_state_parameters(st->ctx, params);
-      update_fs_constants(st, params);
    }
 
    /* translate shader to TGSI format */
-   if (fp->dirty)
-      compile_fs( st, fp );
+   if (st->fp != fp || fp->dirty) {
+      st->fp = fp;
 
-   /* update pipe state */
-   memset( &fs, 0, sizeof(fs) );
-   fs.inputs_read
-      = tgsi_mesa_translate_fragment_input_mask(fp->Base.Base.InputsRead);
-   fs.outputs_written
-      = tgsi_mesa_translate_fragment_output_mask(fp->Base.Base.OutputsWritten);
-   fs.tokens = &fp->tokens[0];
+      if (fp->dirty)
+	 compile_fs( st );
 
-   if (memcmp(&fs, &st->state.fs, sizeof(fs)) != 0 ||
-       fp->dirty) 
-   {
-      fp->dirty = 0;
-      st->state.fs = fs;
-      st->pipe->set_fs_state(st->pipe, &fs);
+      st->state.fs = fp->fs;
+      st->pipe->set_fs_state(st->pipe, &st->state.fs);
    }
 }
 
 
 const struct st_tracked_state st_update_fs = {
    .dirty = {
-      .mesa  = _NEW_PROGRAM,
+      .mesa  = 0,
       .st   = ST_NEW_FRAGMENT_PROGRAM,
    },
    .update = update_fs

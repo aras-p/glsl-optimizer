@@ -54,12 +54,13 @@ const struct st_tracked_state st_update_vs;
 const struct st_tracked_state st_update_setup;
 const struct st_tracked_state st_update_polygon_stipple;
 const struct st_tracked_state st_update_viewport;
-const struct st_tracked_state st_update_constants;
 const struct st_tracked_state st_update_scissor;
 const struct st_tracked_state st_update_blend;
 const struct st_tracked_state st_update_stencil;
 const struct st_tracked_state st_update_sampler;
 const struct st_tracked_state st_update_texture;
+const struct st_tracked_state st_update_fs_constants;
+const struct st_tracked_state st_update_vs_constants;
 
 
 #endif

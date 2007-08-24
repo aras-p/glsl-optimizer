@@ -86,7 +86,7 @@ struct st_context
    } state;
 
    struct {
-      struct st_tracked_state tracked_state;
+      struct st_tracked_state tracked_state[2];
    } constants;
 
    struct {
@@ -108,6 +108,9 @@ struct st_context
    struct st_state_flags dirty;
 
    GLfloat polygon_offset_scale; /* ?? */
+
+   struct st_vertex_program *vp;
+   struct st_fragment_program *fp;
 
    struct pipe_buffer_handle *default_attrib_buffer;
 };

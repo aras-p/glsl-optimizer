@@ -29,8 +29,10 @@
 #include "glheader.h"
 #include "context.h"
 
+#include "pipe/p_defines.h"
 #include "st_context.h"
 #include "st_atom.h"
+#include "st_program.h"
 
        
 
@@ -46,9 +48,11 @@ static const struct st_tracked_state *atoms[] =
    &st_update_clear_color,
    &st_update_depth,
    &st_update_clip,
+
    &st_update_tnl,
    &st_update_vs,
    &st_update_fs,
+
    &st_update_setup,
    &st_update_polygon_stipple,
    &st_update_viewport,
@@ -57,8 +61,8 @@ static const struct st_tracked_state *atoms[] =
    &st_update_stencil,
    &st_update_sampler,
    &st_update_texture,
-   /* will be patched out at runtime */
-/*    &st_update_constants */
+   &st_update_vs_constants,
+   &st_update_fs_constants,
 };
 
 
@@ -72,13 +76,17 @@ void st_init_atoms( struct st_context *st )
 
    /* Patch in a pointer to the dynamic state atom:
     */
-   for (i = 0; i < st->nr_atoms; i++)
-      if (st->atoms[i] == &st_update_constants)
-	 st->atoms[i] = &st->constants.tracked_state;
+   for (i = 0; i < st->nr_atoms; i++) {
+      if (st->atoms[i] == &st_update_vs_constants) {
+	 st->atoms[i] = &st->constants.tracked_state[PIPE_SHADER_VERTEX];
+	 st->atoms[i][0] = st_update_vs_constants;
+      }
 
-   memcpy(&st->constants.tracked_state, 
-          &st_update_constants,
-          sizeof(st_update_constants));
+      if (st->atoms[i] == &st_update_fs_constants) {
+	 st->atoms[i] = &st->constants.tracked_state[PIPE_SHADER_FRAGMENT];
+	 st->atoms[i][0] = st_update_fs_constants;
+      }
+   }
 }
 
 
@@ -118,6 +126,21 @@ static void xor_states( struct st_state_flags *result,
 }
 
 
+/* Too complex to figure out, just check every time:
+ */
+static void check_program_state( struct st_context *st )
+{
+   GLcontext *ctx = st->ctx;
+
+   if (ctx->VertexProgram._Current != &st->vp->Base)
+      st->dirty.st |= ST_NEW_VERTEX_PROGRAM;
+
+   if (ctx->FragmentProgram._Current != &st->fp->Base)
+      st->dirty.st |= ST_NEW_FRAGMENT_PROGRAM;
+
+}
+
+
 /***********************************************************************
  * Update all derived state:
  */
@@ -126,6 +149,8 @@ void st_validate_state( struct st_context *st )
 {
    struct st_state_flags *state = &st->dirty;
    GLuint i;
+
+   check_program_state( st );
 
    if (state->st == 0)
       return;
@@ -142,10 +167,12 @@ void st_validate_state( struct st_context *st )
       for (i = 0; i < st->nr_atoms; i++) {	 
 	 const struct st_tracked_state *atom = st->atoms[i];
 	 struct st_state_flags generated;
-
-	 assert(atom->dirty.mesa ||
-		atom->dirty.st);
-	 assert(atom->update);
+	 
+	 if (!(atom->dirty.mesa || atom->dirty.st) ||
+	     !atom->update) {
+	    _mesa_printf("malformed atom %d\n", i);
+	    assert(0);
+	 }
 
 	 if (check_state(state, &atom->dirty)) {
 	    st->atoms[i]->update( st );

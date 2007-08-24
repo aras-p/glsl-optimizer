@@ -54,21 +54,7 @@ struct st_fragment_program
    struct tgsi_token tokens[ST_FP_MAX_TOKENS];
    GLboolean dirty;
    
-#if 0   
-   GLfloat (*cbuffer)[4];
-   GLuint nr_constants;
-
-   /* Translate all the parameters, etc, into a constant buffer which
-    * we update on state changes.
-    */
-   struct
-   {
-      GLuint reg;               /* Constant idx */
-      const GLfloat *values;    /* Pointer to tracked values */
-   } *param;
-   GLuint nr_params;
-#endif
-
+   struct pipe_shader_state fs;
    GLuint param_state;
 };
 
@@ -89,9 +75,7 @@ struct st_vertex_program
    struct x86_function  sse2_program;
 #endif
 
-#if 0
-   struct pipe_constant_buffer constants;
-#endif
+   struct pipe_shader_state vs;
    GLuint param_state;
 };
 
