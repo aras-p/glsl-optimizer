@@ -192,8 +192,14 @@ i915_emit_hardware_state(struct i915_context *i915 )
 
 #if 01
       /* texture images */
-      if (i915->hardware_dirty & I915_HW_MAP)
+      if (i915->hardware_dirty & (I915_HW_MAP | I915_HW_SAMPLER))
       {
+	 /* XXX: we were refering to sampler state
+	  * (current.sampler_enable_nr) below, but only checking
+	  * I915_HW_MAP above.  Should probably calculate the enabled
+	  * flags separately - but there will be further rework of
+	  * state so perhaps not necessary yet.
+	  */
          const uint nr = i915->current.sampler_enable_nr;
          if (nr) {
             const uint enabled = i915->current.sampler_enable_flags;
