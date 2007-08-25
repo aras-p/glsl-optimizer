@@ -37,8 +37,8 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 static void nv10ViewportScale(nouveauContextPtr nmesa)
 {
 	GLcontext *ctx = nmesa->glCtx;
-	GLuint w = ((GLfloat) ctx->Viewport.Width) * 0.5;
-	GLuint h = ((GLfloat) ctx->Viewport.Height) * 0.5;
+	GLfloat w = ((GLfloat) ctx->Viewport.Width) * 0.5;
+	GLfloat h = ((GLfloat) ctx->Viewport.Height) * 0.5;
 	GLfloat max_depth = (ctx->Viewport.Near + ctx->Viewport.Far) * 0.5;
 	GLfloat projection[16];
 	int i;
@@ -67,7 +67,7 @@ static void nv10ViewportScale(nouveauContextPtr nmesa)
 
 	memset(projection, 0, sizeof(projection));
 	projection[0*4+0] = w;
-	projection[1*4+1] = h;
+	projection[1*4+1] = -h;
 	projection[2*4+2] = max_depth;
 	projection[3*4+3] = 1.0;
 	BEGIN_RING_CACHE(NvSub3D, NV10_TCL_PRIMITIVE_3D_PROJECTION_MATRIX(0), 16);
