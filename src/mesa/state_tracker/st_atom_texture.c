@@ -72,6 +72,7 @@ update_textures(struct st_context *st)
 
 
 const struct st_tracked_state st_update_texture = {
+   .name = "st_update_texture",
    .dirty = {
       .mesa = _NEW_TEXTURE,
       .st  = 0,

@@ -211,6 +211,7 @@ static void update_setup_state( struct st_context *st )
 }
 
 const struct st_tracked_state st_update_setup = {
+   .name = "st_update_setup",
    .dirty = {
       .mesa = (_NEW_LIGHT | _NEW_POLYGON | _NEW_LINE | _NEW_SCISSOR |
                _NEW_POINT | _NEW_BUFFERS | _NEW_MULTISAMPLE),

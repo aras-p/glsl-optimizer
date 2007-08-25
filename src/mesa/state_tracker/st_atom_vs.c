@@ -116,6 +116,7 @@ static void update_vs( struct st_context *st )
 
 
 const struct st_tracked_state st_update_vs = {
+   .name = "st_update_vs",
    .dirty = {
       .mesa  = 0, 
       .st   = ST_NEW_VERTEX_PROGRAM,

@@ -99,6 +99,7 @@ static void update_fs( struct st_context *st )
 
 
 const struct st_tracked_state st_update_fs = {
+   .name = "st_update_fs",
    .dirty = {
       .mesa  = 0,
       .st   = ST_NEW_FRAGMENT_PROGRAM,

@@ -62,6 +62,7 @@ static void update_clip( struct st_context *st )
 
 
 const struct st_tracked_state st_update_clip = {
+   .name = "st_update_clip",
    .dirty = {
       .mesa = (_NEW_TRANSFORM),
       .st  = 0,

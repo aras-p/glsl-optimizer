@@ -54,6 +54,7 @@ update_stipple( struct st_context *st )
 
 
 const struct st_tracked_state st_update_polygon_stipple = {
+   .name = "st_update_polygon_stipple",
    .dirty = {
       .mesa = (_NEW_POLYGONSTIPPLE),
       .st  = 0,

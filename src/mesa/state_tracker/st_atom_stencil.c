@@ -127,6 +127,7 @@ update_stencil( struct st_context *st )
 
 
 const struct st_tracked_state st_update_stencil = {
+   .name = "st_update_stencil",
    .dirty = {
       .mesa = (_NEW_STENCIL),
       .st  = 0,

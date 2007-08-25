@@ -84,6 +84,7 @@ update_depth( struct st_context *st )
 
 
 const struct st_tracked_state st_update_depth = {
+   .name = "st_update_depth",
    .dirty = {
       .mesa = (_NEW_DEPTH),
       .st  = 0,

@@ -54,6 +54,7 @@ update_clear_color_state( struct st_context *st )
 
 
 const struct st_tracked_state st_update_clear_color = {
+   .name = "st_update_clear_color",
    .dirty = {
       .mesa = _NEW_COLOR,
       .st  = 0,

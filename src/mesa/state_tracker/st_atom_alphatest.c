@@ -81,6 +81,7 @@ update_alpha_test( struct st_context *st )
 
 
 const struct st_tracked_state st_update_alpha_test = {
+   .name = "st_update_alpha_test",
    .dirty = {
       .mesa = (_NEW_COLOR),
       .st  = 0,
