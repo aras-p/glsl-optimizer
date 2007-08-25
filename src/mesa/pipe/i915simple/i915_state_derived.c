@@ -137,7 +137,7 @@ static void calculate_vertex_layout( struct i915_context *i915 )
    }
    else {
       vinfo->hwfmt[0] |= S4_VFMT_XYZ;
-      vinfo->format[0] == FORMAT_3F;
+      vinfo->format[0] = FORMAT_3F;
    }
 
    /* Additional attributes required for setup: Just twosided
