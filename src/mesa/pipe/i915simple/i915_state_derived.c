@@ -161,6 +161,12 @@ static void calculate_vertex_layout( struct i915_context *i915 )
    draw_set_vertex_attributes( i915->draw,
                                vinfo->slot_to_attrib,
 			       vinfo->num_attribs);
+
+   /* Need to set this flag so that the LIS2/4 registers get set.
+    * It also means the i915_update_immediate() function must be called
+    * after this one, in i915_update_derived().
+    */
+   i915->dirty |= I915_NEW_VERTEX_FORMAT;
 }
 
 
