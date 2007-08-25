@@ -52,9 +52,9 @@ static void compile_fs( struct st_context *st )
    tgsi_mesa_compile_fp_program( &fp->Base, fp->tokens, ST_FP_MAX_TOKENS );
 
    fp->fs.inputs_read
-      = tgsi_mesa_translate_vertex_input_mask(fp->Base.Base.InputsRead);
+      = tgsi_mesa_translate_fragment_input_mask(fp->Base.Base.InputsRead);
    fp->fs.outputs_written
-      = tgsi_mesa_translate_vertex_output_mask(fp->Base.Base.OutputsWritten);
+      = tgsi_mesa_translate_fragment_output_mask(fp->Base.Base.OutputsWritten);
    fp->fs.tokens = &fp->tokens[0];
 
    if (TGSI_DEBUG)
