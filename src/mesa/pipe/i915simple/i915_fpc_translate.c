@@ -237,10 +237,10 @@ get_result_vector(struct i915_fp_compile *p,
    switch (dest->DstRegister.File) {
    case TGSI_FILE_OUTPUT:
       switch (dest->DstRegister.Index) {
-      case TGSI_ATTRIB_COLOR0:
-         return UREG(REG_TYPE_OC, 0);
-      case TGSI_ATTRIB_POS:
+      case 0:  /**TGSI_ATTRIB_POS:**/
          return UREG(REG_TYPE_OD, 0);
+      case 1:  /**TGSI_ATTRIB_COLOR0:**/
+         return UREG(REG_TYPE_OC, 0);
       default:
          i915_program_error(p, "Bad inst->DstReg.Index");
          return 0;

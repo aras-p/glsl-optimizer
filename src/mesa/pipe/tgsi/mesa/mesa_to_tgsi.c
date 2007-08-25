@@ -356,11 +356,11 @@ map_register_file_index(
           * color results -> index 1, 2, ...
           */
 	 if( index == FRAG_RESULT_DEPR ) {
-            mapped_index = TGSI_ATTRIB_POS;
+            mapped_index = 0; /**TGSI_ATTRIB_POS;**/
          }
          else {
             assert( index == FRAG_RESULT_COLR );
-            mapped_index = TGSI_ATTRIB_COLOR0;
+            mapped_index = 1; /**TGSI_ATTRIB_COLOR0;**/
          }
       }
       else {

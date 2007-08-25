@@ -136,10 +136,10 @@ shade_quad(
    /* run shader */
    tgsi_exec_machine_run( &machine );
 
-   /* store result color */
+   /* store result color (always in output[1]) */
    memcpy(
       quad->outputs.color,
-      &machine.Outputs[TGSI_ATTRIB_COLOR0].xyzw[0].f[0],
+      &machine.Outputs[1].xyzw[0].f[0],
       sizeof( quad->outputs.color ) );
 
 #if 0
