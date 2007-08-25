@@ -112,9 +112,11 @@ static void st_delete_program( GLcontext *ctx,
    switch( prog->Target ) {
    case GL_VERTEX_PROGRAM_ARB:
    {
+#if defined(USE_X86_ASM) || defined(SLANG_X86)
       struct st_vertex_program *p = (struct st_vertex_program *) prog;
 
       x86_release_func( &p->sse2_program );
+#endif
       break;
    }
 
