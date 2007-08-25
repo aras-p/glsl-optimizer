@@ -93,6 +93,7 @@ depth_value(GLuint pipeFormat, GLfloat value)
       val = (GLuint) (value * 0xffffff);
       break;
    default:
+      val = 0;
       assert(0);
    }
    return val;
@@ -402,6 +403,52 @@ clear_with_quad(GLcontext *ctx,
 }
 
 
+/**
+ * Determine if we need to clear the depth buffer by drawing a quad.
+ */
+static INLINE GLboolean
+check_clear_color_with_quad(GLcontext *ctx)
+{
+   return !(ctx->Color.ColorMask[0] &&
+            ctx->Color.ColorMask[1] &&
+            ctx->Color.ColorMask[2] &&
+            ctx->Color.ColorMask[3] &&
+            !ctx->Scissor.Enabled);
+}
+
+
+/**
+ * Determine if we need to clear the depth buffer by drawing a quad.
+ */
+static INLINE GLboolean
+check_clear_depth_with_quad(GLcontext *ctx, struct gl_renderbuffer *rb)
+{
+   const struct st_renderbuffer *strb = st_renderbuffer(rb);
+   const GLboolean isDS = is_depth_stencil_format(strb->surface->format);
+   return  ctx->Scissor.Enabled
+      || (isDS && ctx->DrawBuffer->Visual.stencilBits > 0);
+}
+
+
+/**
+ * Determine if we need to clear the stencil buffer by drawing a quad.
+ */
+static INLINE GLboolean
+check_clear_stencil_with_quad(GLcontext *ctx, struct gl_renderbuffer *rb)
+{
+   const struct st_renderbuffer *strb = st_renderbuffer(rb);
+   const GLboolean isDS = is_depth_stencil_format(strb->surface->format);
+   const GLuint stencilMax = (1 << rb->StencilBits) - 1;
+   const GLboolean maskStencil
+      = (ctx->Stencil.WriteMask[0] & stencilMax) != stencilMax;
+   return maskStencil
+      || ctx->Scissor.Enabled
+      || (isDS && ctx->DrawBuffer->Visual.depthBits > 0);
+}
+
+
+
+
 static void
 clear_color_buffer(GLcontext *ctx, struct gl_renderbuffer *rb)
 {
@@ -474,7 +521,8 @@ clear_stencil_buffer(GLcontext *ctx, struct gl_renderbuffer *rb)
    struct st_renderbuffer *strb = st_renderbuffer(rb);
    const GLboolean isDS = is_depth_stencil_format(strb->surface->format);
    const GLuint stencilMax = (1 << rb->StencilBits) - 1;
-   GLboolean maskStencil = ctx->Stencil.WriteMask[0] != stencilMax;
+   GLboolean maskStencil
+      = (ctx->Stencil.WriteMask[0] & stencilMax) != stencilMax;
 
    if (maskStencil ||
        ctx->Scissor.Enabled ||
@@ -494,8 +542,9 @@ static void
 clear_depth_stencil_buffer(GLcontext *ctx, struct gl_renderbuffer *rb)
 {
    struct st_renderbuffer *strb = st_renderbuffer(rb);
-   const GLuint stencilMax = 1 << rb->StencilBits;
-   GLboolean maskStencil = ctx->Stencil.WriteMask[0] != stencilMax;
+   const GLuint stencilMax = (1 << rb->StencilBits) - 1;
+   GLboolean maskStencil
+      = (ctx->Stencil.WriteMask[0] & stencilMax) != stencilMax;
 
    assert(is_depth_stencil_format(strb->surface->format));
 
@@ -540,6 +589,7 @@ static void st_clear(GLcontext *ctx, GLbitfield mask)
       = ctx->DrawBuffer->Attachment[BUFFER_DEPTH].Renderbuffer;
    struct gl_renderbuffer *stencilRb
       = ctx->DrawBuffer->Attachment[BUFFER_STENCIL].Renderbuffer;
+   GLbitfield cmask = mask & BUFFER_BITS_COLOR;
 
    /* This makes sure the softpipe has the latest scissor, etc values */
    st_validate_state( st );
@@ -552,15 +602,17 @@ static void st_clear(GLcontext *ctx, GLbitfield mask)
     * color/depth/stencil individually...
     */
 
-   if (mask & BUFFER_BITS_COLOR) {
+   if (cmask) {
       GLuint b;
-      for (b = 0; b < BUFFER_COUNT; b++) {
-         if (BUFFER_BITS_COLOR & mask & (1 << b)) {
+      for (b = 0; cmask; b++) {
+         if (cmask & (1 << b)) {
             struct gl_renderbuffer *rb
                = ctx->DrawBuffer->Attachment[b].Renderbuffer;
             assert(rb);
             clear_color_buffer(ctx, rb);
+            cmask &= ~(1 << b); /* turn off bit */
          }
+         assert(b < BUFFER_COUNT);
       }
    }
 
