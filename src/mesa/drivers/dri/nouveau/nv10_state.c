@@ -59,20 +59,21 @@ static void nv10ViewportScale(nouveauContextPtr nmesa)
 			break;
 	}
 
-	BEGIN_RING_CACHE(NvSub3D, NV10_TCL_PRIMITIVE_3D_VIEWPORT_SCALE_X, 4);
-	OUT_RING_CACHEf (w - 2048.0);
-	OUT_RING_CACHEf (h - 2048.0);
-	OUT_RING_CACHEf (max_depth);
-	OUT_RING_CACHEf (0.0);
+	BEGIN_RING_SIZE(NvSub3D, NV10_TCL_PRIMITIVE_3D_VIEWPORT_SCALE_X, 4);
+	OUT_RINGf (w - 2048.0);
+	OUT_RINGf (h - 2048.0);
+	OUT_RINGf (max_depth);
+	OUT_RINGf (0.0);
 
+	/* FIXME: should multiply by gl projection and modelview ? */
 	memset(projection, 0, sizeof(projection));
 	projection[0*4+0] = w;
 	projection[1*4+1] = -h;
 	projection[2*4+2] = max_depth;
 	projection[3*4+3] = 1.0;
-	BEGIN_RING_CACHE(NvSub3D, NV10_TCL_PRIMITIVE_3D_PROJECTION_MATRIX(0), 16);
+	BEGIN_RING_SIZE(NvSub3D, NV10_TCL_PRIMITIVE_3D_PROJECTION_MATRIX(0), 16);
 	for (i=0; i<16; i++) {
-		OUT_RING_CACHEf (projection[i]);
+		OUT_RINGf (projection[i]);
 	}
 }
 
@@ -637,9 +638,52 @@ void (*ReadBuffer)( GLcontext *ctx, GLenum buffer );
 /** Set rasterization mode */
 void (*RenderMode)(GLcontext *ctx, GLenum mode );
 
+/* Translate GL coords to window coords, clamping w/h to the
+ * dimensions of the window.
+ */
+static void nv10WindowCoords(nouveauContextPtr nmesa,
+			     GLuint x, GLuint y, GLuint w, GLuint h,
+			     GLuint *wX, GLuint *wY, GLuint *wW, GLuint *wH)
+{
+	if ((x+w) > nmesa->drawW)
+		w = nmesa->drawW - x;
+	(*wX) = x + nmesa->drawX;
+	(*wW) = w;
+
+	if ((y+h) > nmesa->drawH)
+		h = nmesa->drawH - y;
+	(*wY) = (nmesa->drawH - y) - h + nmesa->drawY;
+	(*wH) = h;
+}
+
 /** Define the scissor box */
 static void nv10Scissor(GLcontext *ctx, GLint x, GLint y, GLsizei w, GLsizei h)
 {
+        nouveauContextPtr nmesa = NOUVEAU_CONTEXT(ctx);
+	GLuint wX, wY, wW, wH;
+
+	/* There's no scissor enable bit, so adjust the scissor to cover the
+	 * maximum draw buffer bounds
+	 */
+	if (!ctx->Scissor.Enabled) {
+	   wX = nmesa->drawX;
+	   wY = nmesa->drawY;
+	   wW = nmesa->drawW;
+	   wH = nmesa->drawH;
+	} else {
+	   nv10WindowCoords(nmesa, x, y, w, h, &wX, &wY, &wW, &wH);
+	}
+
+	if (!wW || !wH) {
+		return;
+	}
+
+	BEGIN_RING_SIZE(NvSub3D,
+	      NV10_TCL_PRIMITIVE_3D_VIEWPORT_CLIP_HORIZ(0), 1);
+        OUT_RING(((wW+wX-1) << 16) | wX | 0x08000800);
+	BEGIN_RING_SIZE(NvSub3D,
+	      NV10_TCL_PRIMITIVE_3D_VIEWPORT_CLIP_VERT(0), 1);
+        OUT_RING(((wH+wY-1) << 16) | wY | 0x08000800);
 }
 
 /** Select flat or smooth shading */
@@ -711,23 +755,20 @@ static void nv10WindowMoved(nouveauContextPtr nmesa)
 {
 	GLcontext *ctx = nmesa->glCtx;
 	GLfloat *v = nmesa->viewport.m;
-	GLuint w = ctx->Viewport.Width;
-	GLuint h = ctx->Viewport.Height;
-	GLuint x = ctx->Viewport.X + nmesa->drawX;
-	GLuint y = ctx->Viewport.Y + nmesa->drawY;
+	GLuint wX, wY, wW, wH;
 
-        BEGIN_RING_CACHE(NvSub3D, NV10_TCL_PRIMITIVE_3D_VIEWPORT_HORIZ, 2);
-        OUT_RING_CACHE((w << 16) | x);
-        OUT_RING_CACHE((h << 16) | y);
+	nv10WindowCoords(nmesa, ctx->Viewport.X, ctx->Viewport.Y, 
+				ctx->Viewport.Width, ctx->Viewport.Height,
+				&wX, &wY, &wW, &wH);
 
-	BEGIN_RING_CACHE(NvSub3D,
-	      NV10_TCL_PRIMITIVE_3D_VIEWPORT_CLIP_HORIZ(0), 1);
-        OUT_RING_CACHE(((w+x-1) << 16) | x | 0x08000800);
-	BEGIN_RING_CACHE(NvSub3D,
-	      NV10_TCL_PRIMITIVE_3D_VIEWPORT_CLIP_VERT(0), 1);
-        OUT_RING_CACHE(((h+y-1) << 16) | y | 0x08000800);
+        BEGIN_RING_SIZE(NvSub3D, NV10_TCL_PRIMITIVE_3D_VIEWPORT_HORIZ, 2);
+        OUT_RING((wW << 16) | wX);
+        OUT_RING((wH << 16) | wY);
 
 	nv10ViewportScale(nmesa);
+
+	ctx->Driver.Scissor(ctx, ctx->Scissor.X, ctx->Scissor.Y,
+	      		    ctx->Scissor.Width, ctx->Scissor.Height);
 }
 
 /* Initialise any card-specific non-GL related state */
@@ -902,21 +943,20 @@ static GLboolean nv10BindBuffers(nouveauContextPtr nmesa, int num_color,
 	if (num_color != 1)
 		return GL_FALSE;
 
-        BEGIN_RING_CACHE(NvSub3D, NV10_TCL_PRIMITIVE_3D_VIEWPORT_HORIZ, 6);
-        OUT_RING_CACHE((w << 16) | x);
-        OUT_RING_CACHE((h << 16) | y);
+        BEGIN_RING_SIZE(NvSub3D, NV10_TCL_PRIMITIVE_3D_VIEWPORT_HORIZ, 6);
+        OUT_RING((w << 16) | x);
+        OUT_RING((h << 16) | y);
 	depth_pitch = (depth ? depth->pitch : color[0]->pitch);
 	pitch = (depth_pitch<<16) | color[0]->pitch;
 	format = 0x108;
 	if (color[0]->mesa._ActualFormat != GL_RGBA8) {
 		format = 0x103; /* R5G6B5 color buffer */
 	}
-	OUT_RING_CACHE(format);
-	OUT_RING_CACHE(pitch);
-	OUT_RING_CACHE(color[0]->offset);
-	OUT_RING_CACHE(depth ? depth->offset : color[0]->offset);
+	OUT_RING(format);
+	OUT_RING(pitch);
+	OUT_RING(color[0]->offset);
+	OUT_RING(depth ? depth->offset : color[0]->offset);
 
-	nv10ViewportScale(nmesa);
 	return GL_TRUE;
 }
 
