@@ -869,7 +869,7 @@ static GLboolean nv10InitCard(nouveauContextPtr nmesa)
 	OUT_RING  (0x802);
 	OUT_RING  (2);
 
-	/* Projection matrix */
+	/* Projection and modelview matrix */
 	memset(projection, 0, sizeof(projection));
 	projection[0*4+0] = 1.0;
 	projection[1*4+1] = 1.0;
@@ -879,6 +879,10 @@ static GLboolean nv10InitCard(nouveauContextPtr nmesa)
 	BEGIN_RING_SIZE(NvSub3D, NV10_TCL_PRIMITIVE_3D_VIEW_MATRIX_ENABLE, 1);
 	OUT_RING  (6);	/* enable projection and modelview0 matrix */
 	BEGIN_RING_SIZE(NvSub3D, NV10_TCL_PRIMITIVE_3D_PROJECTION_MATRIX(0), 16);
+	for (i=0; i<16; i++) {
+		OUT_RINGf (projection[i]);
+	}
+	BEGIN_RING_SIZE(NvSub3D, NV10_TCL_PRIMITIVE_3D_MODELVIEW0_MATRIX(0), 16);
 	for (i=0; i<16; i++) {
 		OUT_RINGf (projection[i]);
 	}
