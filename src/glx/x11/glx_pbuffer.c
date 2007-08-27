@@ -460,8 +460,24 @@ glXCreateGLXPbufferSGIX(Display *dpy, GLXFBConfigSGIX config,
 PUBLIC GLXPbuffer
 glXCreatePbuffer(Display *dpy, GLXFBConfig config, const int *attrib_list)
 {
+   int i, width, height;
+
+   width = 0;
+   height = 0;
+
+   for (i = 0; attrib_list[i * 2]; i++) {
+      switch (attrib_list[i * 2]) {
+      case GLX_PBUFFER_WIDTH:
+	 width = attrib_list[i * 2 + 1];
+	 break;
+      case GLX_PBUFFER_HEIGHT:
+	 height = attrib_list[i * 2 + 1];
+	 break;
+      }
+   }
+
    return (GLXPbuffer) CreatePbuffer( dpy, (__GLcontextModes *) config,
-				      0, 0,
+				      width, height,
 				      attrib_list, GL_TRUE );
 }
 
