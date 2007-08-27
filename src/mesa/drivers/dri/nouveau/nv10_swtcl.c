@@ -455,27 +455,33 @@ static inline void nv10OutputVertexFormat(struct nouveau_context* nmesa)
 	 * Tell the hardware about the vertex format
 	 */
 	if ((nmesa->screen->card->type>=NV_10) && (nmesa->screen->card->type<=NV_17)) {
-		int size;
+		int total_stride = 0;
 
 #define NV_VERTEX_ATTRIBUTE_TYPE_FLOAT 2
 
 #define NV10_SET_VERTEX_ATTRIB(i,j) \
 	do {	\
+		int size;	\
+		int stride = attr_size[j] << 2;	\
+		if (i==0) {	\
+			stride += total_stride;	\
+		}	\
 		size = attr_size[j] << 4;	\
-		size |= (attr_size[j]*4) << 8;	\
+		size |= stride << 8;	\
 		size |= NV_VERTEX_ATTRIBUTE_TYPE_FLOAT;	\
 		BEGIN_RING_CACHE(NvSub3D, NV10_TCL_PRIMITIVE_3D_VERTEX_ATTR(i),1);	\
 		OUT_RING_CACHE(size);	\
+		total_stride += stride;	\
 	} while (0)
 
-		NV10_SET_VERTEX_ATTRIB(0, _TNL_ATTRIB_POS);
-		NV10_SET_VERTEX_ATTRIB(1, _TNL_ATTRIB_COLOR0);
-		NV10_SET_VERTEX_ATTRIB(2, _TNL_ATTRIB_COLOR1);
-		NV10_SET_VERTEX_ATTRIB(3, _TNL_ATTRIB_TEX0);
-		NV10_SET_VERTEX_ATTRIB(4, _TNL_ATTRIB_TEX1);
-		NV10_SET_VERTEX_ATTRIB(5, _TNL_ATTRIB_NORMAL);
-		NV10_SET_VERTEX_ATTRIB(6, _TNL_ATTRIB_WEIGHT);
 		NV10_SET_VERTEX_ATTRIB(7, _TNL_ATTRIB_FOG);
+		NV10_SET_VERTEX_ATTRIB(6, _TNL_ATTRIB_WEIGHT);
+		NV10_SET_VERTEX_ATTRIB(5, _TNL_ATTRIB_NORMAL);
+		NV10_SET_VERTEX_ATTRIB(4, _TNL_ATTRIB_TEX1);
+		NV10_SET_VERTEX_ATTRIB(3, _TNL_ATTRIB_TEX0);
+		NV10_SET_VERTEX_ATTRIB(2, _TNL_ATTRIB_COLOR1);
+		NV10_SET_VERTEX_ATTRIB(1, _TNL_ATTRIB_COLOR0);
+		NV10_SET_VERTEX_ATTRIB(0, _TNL_ATTRIB_POS);
 
 		BEGIN_RING_CACHE(NvSub3D, NV10_TCL_PRIMITIVE_3D_VERTEX_ARRAY_VALIDATE,1);
 		OUT_RING_CACHE(0);
