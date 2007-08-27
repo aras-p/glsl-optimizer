@@ -55,7 +55,11 @@ draw_arrays(struct draw_context *draw, unsigned prim,
    /* tell drawing pipeline we're beginning drawing */
    draw->pipeline.first->begin( draw->pipeline.first );
 
-   draw_invalidate_vcache( draw );
+   /* XXX: Shouldn't really be needed - cache should be invalidated
+    * after setting new vertex buffers, vertex elements, but not
+    * between draws.
+    */
+   draw_vertex_cache_invalidate( draw );
 
    draw_set_prim( draw, prim );
 
