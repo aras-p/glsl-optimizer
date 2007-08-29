@@ -174,6 +174,8 @@ do_blit_bitmap( GLcontext *ctx,
       GLubyte ub[4];
    } color;
 
+   if (!dst)
+       return GL_FALSE;
 
    if (unpack->BufferObj->Name) {
       bitmap = map_pbo(ctx, width, height, unpack, bitmap);
