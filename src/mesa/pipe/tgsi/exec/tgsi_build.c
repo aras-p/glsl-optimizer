@@ -393,7 +393,7 @@ immediate_grow(
 
 struct tgsi_immediate_float32
 tgsi_build_immediate_float32(
-   GLfloat value,
+   float value,
    struct tgsi_immediate *immediate,
    struct tgsi_header *header )
 {
@@ -406,14 +406,14 @@ tgsi_build_immediate_float32(
    return immediate_float32;
 }
 
-GLuint
+unsigned
 tgsi_build_full_immediate(
    const struct tgsi_full_immediate *full_imm,
    struct tgsi_token *tokens,
    struct tgsi_header *header,
-   GLuint maxsize )
+   unsigned maxsize )
 {
-   GLuint size = 0,  i;
+   unsigned size = 0,  i;
    struct tgsi_immediate *immediate;
 
    if( maxsize <= size )
@@ -463,10 +463,10 @@ tgsi_default_instruction( void )
 
 struct tgsi_instruction
 tgsi_build_instruction(
-   GLuint opcode,
-   GLuint saturate,
-   GLuint num_dst_regs,
-   GLuint num_src_regs,
+   unsigned opcode,
+   unsigned saturate,
+   unsigned num_dst_regs,
+   unsigned num_src_regs,
    struct tgsi_header *header )
 {
    struct tgsi_instruction instruction;
@@ -503,7 +503,7 @@ struct tgsi_full_instruction
 tgsi_default_full_instruction( void )
 {
    struct tgsi_full_instruction full_instruction;
-   GLuint i;
+   unsigned i;
 
    full_instruction.Instruction = tgsi_default_instruction();
    full_instruction.InstructionExtNv = tgsi_default_instruction_ext_nv();
@@ -519,15 +519,15 @@ tgsi_default_full_instruction( void )
    return full_instruction;
 }
 
-GLuint
+unsigned
 tgsi_build_full_instruction(
    const struct tgsi_full_instruction *full_inst,
    struct  tgsi_token *tokens,
    struct  tgsi_header *header,
-   GLuint  maxsize )
+   unsigned  maxsize )
 {
-   GLuint size = 0;
-   GLuint i;
+   unsigned size = 0;
+   unsigned i;
    struct tgsi_instruction *instruction;
    struct tgsi_token *prev_token;
 
@@ -835,10 +835,10 @@ tgsi_default_instruction_ext_nv( void )
 
 union token_u32
 {
-   GLuint   u32;
+   unsigned u32;
 };
 
-GLuint
+unsigned
 tgsi_compare_instruction_ext_nv(
    struct tgsi_instruction_ext_nv a,
    struct tgsi_instruction_ext_nv b )
@@ -850,16 +850,16 @@ tgsi_compare_instruction_ext_nv(
 
 struct tgsi_instruction_ext_nv
 tgsi_build_instruction_ext_nv(
-   GLuint precision,
-   GLuint cond_dst_index,
-   GLuint cond_flow_index,
-   GLuint cond_mask,
-   GLuint cond_swizzle_x,
-   GLuint cond_swizzle_y,
-   GLuint cond_swizzle_z,
-   GLuint cond_swizzle_w,
-   GLuint cond_dst_update,
-   GLuint cond_flow_update,
+   unsigned precision,
+   unsigned cond_dst_index,
+   unsigned cond_flow_index,
+   unsigned cond_mask,
+   unsigned cond_swizzle_x,
+   unsigned cond_swizzle_y,
+   unsigned cond_swizzle_z,
+   unsigned cond_swizzle_w,
+   unsigned cond_dst_update,
+   unsigned cond_flow_update,
    struct tgsi_token *prev_token,
    struct tgsi_instruction *instruction,
    struct tgsi_header *header )
@@ -897,19 +897,19 @@ tgsi_default_instruction_ext_label( void )
    return instruction_ext_label;
 }
 
-GLuint
+unsigned
 tgsi_compare_instruction_ext_label(
    struct tgsi_instruction_ext_label a,
    struct tgsi_instruction_ext_label b )
 {
    a.Padding = b.Padding = 0;
    a.Extended = b.Extended = 0;
-   return *(GLuint *) &a != *(GLuint *) &b;
+   return ((union token_u32 *) &a)->u32 != ((union token_u32 *) &b)->u32;
 }
 
 struct tgsi_instruction_ext_label
 tgsi_build_instruction_ext_label(
-   GLuint label,
+   unsigned label,
    struct tgsi_token  *prev_token,
    struct tgsi_instruction *instruction,
    struct tgsi_header *header )
@@ -938,19 +938,19 @@ tgsi_default_instruction_ext_texture( void )
    return instruction_ext_texture;
 }
 
-GLuint
+unsigned
 tgsi_compare_instruction_ext_texture(
    struct tgsi_instruction_ext_texture a,
    struct tgsi_instruction_ext_texture b )
 {
    a.Padding = b.Padding = 0;
    a.Extended = b.Extended = 0;
-   return *(GLuint *) &a != *(GLuint *) &b;
+   return ((union token_u32 *) &a)->u32 != ((union token_u32 *) &b)->u32;
 }
 
 struct tgsi_instruction_ext_texture
 tgsi_build_instruction_ext_texture(
-   GLuint texture,
+   unsigned texture,
    struct tgsi_token *prev_token,
    struct tgsi_instruction *instruction,
    struct tgsi_header *header )
@@ -987,15 +987,15 @@ tgsi_default_src_register( void )
 
 struct tgsi_src_register
 tgsi_build_src_register(
-   GLuint file,
-   GLuint swizzle_x,
-   GLuint swizzle_y,
-   GLuint swizzle_z,
-   GLuint swizzle_w,
-   GLuint negate,
-   GLuint indirect,
-   GLuint dimension,
-   GLint index,
+   unsigned file,
+   unsigned swizzle_x,
+   unsigned swizzle_y,
+   unsigned swizzle_z,
+   unsigned swizzle_w,
+   unsigned negate,
+   unsigned indirect,
+   unsigned dimension,
+   int index,
    struct tgsi_instruction *instruction,
    struct tgsi_header *header )
 {
@@ -1061,42 +1061,42 @@ tgsi_default_src_register_ext_swz( void )
    return src_register_ext_swz;
 }
 
-GLuint
+unsigned
 tgsi_compare_src_register_ext_swz(
    struct tgsi_src_register_ext_swz a,
    struct tgsi_src_register_ext_swz b )
 {
    a.Padding = b.Padding = 0;
    a.Extended = b.Extended = 0;
-   return *(GLuint *) &a != *(GLuint *) &b;
+   return ((union token_u32 *) &a)->u32 != ((union token_u32 *) &b)->u32;
 }
 
 struct tgsi_src_register_ext_swz
 tgsi_build_src_register_ext_swz(
-   GLuint ext_swizzle_x,
-   GLuint ext_swizzle_y,
-   GLuint ext_swizzle_z,
-   GLuint ext_swizzle_w,
-   GLuint negate_x,
-   GLuint negate_y,
-   GLuint negate_z,
-   GLuint negate_w,
-   GLuint ext_divide,
+   unsigned ext_swizzle_x,
+   unsigned ext_swizzle_y,
+   unsigned ext_swizzle_z,
+   unsigned ext_swizzle_w,
+   unsigned negate_x,
+   unsigned negate_y,
+   unsigned negate_z,
+   unsigned negate_w,
+   unsigned ext_divide,
    struct tgsi_token *prev_token,
    struct tgsi_instruction *instruction,
    struct tgsi_header *header )
 {
    struct tgsi_src_register_ext_swz src_register_ext_swz;
 
-   assert (ext_swizzle_x <= TGSI_EXTSWIZZLE_ONE);
-   assert (ext_swizzle_y <= TGSI_EXTSWIZZLE_ONE);
-   assert (ext_swizzle_z <= TGSI_EXTSWIZZLE_ONE);
-   assert (ext_swizzle_w <= TGSI_EXTSWIZZLE_ONE);
-   assert (negate_x <= 1);
-   assert (negate_y <= 1);
-   assert (negate_z <= 1);
-   assert (negate_w <= 1);
-   assert (ext_divide <= TGSI_EXTSWIZZLE_ONE);
+   assert( ext_swizzle_x <= TGSI_EXTSWIZZLE_ONE );
+   assert( ext_swizzle_y <= TGSI_EXTSWIZZLE_ONE );
+   assert( ext_swizzle_z <= TGSI_EXTSWIZZLE_ONE );
+   assert( ext_swizzle_w <= TGSI_EXTSWIZZLE_ONE );
+   assert( negate_x <= 1 );
+   assert( negate_y <= 1 );
+   assert( negate_z <= 1 );
+   assert( negate_w <= 1 );
+   assert( ext_divide <= TGSI_EXTSWIZZLE_ONE );
 
    src_register_ext_swz = tgsi_default_src_register_ext_swz();
    src_register_ext_swz.ExtSwizzleX = ext_swizzle_x;
@@ -1132,34 +1132,34 @@ tgsi_default_src_register_ext_mod( void )
    return src_register_ext_mod;
 }
 
-GLuint
+unsigned
 tgsi_compare_src_register_ext_mod(
    struct tgsi_src_register_ext_mod a,
    struct tgsi_src_register_ext_mod b )
 {
    a.Padding = b.Padding = 0;
    a.Extended = b.Extended = 0;
-   return *(GLuint *) &a != *(GLuint *) &b;
+   return ((union token_u32 *) &a)->u32 != ((union token_u32 *) &b)->u32;
 }
 
 struct tgsi_src_register_ext_mod
 tgsi_build_src_register_ext_mod(
-   GLuint  complement,
-   GLuint  bias,
-   GLuint  scale_2x,
-   GLuint  absolute,
-   GLuint  negate,
-   struct  tgsi_token *prev_token,
-   struct  tgsi_instruction *instruction,
-   struct  tgsi_header *header )
+   unsigned complement,
+   unsigned bias,
+   unsigned scale_2x,
+   unsigned absolute,
+   unsigned negate,
+   struct tgsi_token *prev_token,
+   struct tgsi_instruction *instruction,
+   struct tgsi_header *header )
 {
    struct tgsi_src_register_ext_mod src_register_ext_mod;
 
-   assert (complement <= 1);
-   assert (bias <= 1);
-   assert (scale_2x <= 1);
-   assert (absolute <= 1);
-   assert (negate <= 1);
+   assert( complement <= 1 );
+   assert( bias <= 1 );
+   assert( scale_2x <= 1 );
+   assert( absolute <= 1 );
+   assert( negate <= 1 );
 
    src_register_ext_mod = tgsi_default_src_register_ext_mod();
    src_register_ext_mod.Complement = complement;
@@ -1190,8 +1190,8 @@ tgsi_default_dimension( void )
 
 struct tgsi_dimension
 tgsi_build_dimension(
-   GLuint indirect,
-   GLuint index,
+   unsigned indirect,
+   unsigned index,
    struct tgsi_instruction *instruction,
    struct tgsi_header *header )
 {
@@ -1224,17 +1224,17 @@ tgsi_default_dst_register( void )
 
 struct tgsi_dst_register
 tgsi_build_dst_register(
-   GLuint file,
-   GLuint mask,
-   GLint index,
+   unsigned file,
+   unsigned mask,
+   int index,
    struct tgsi_instruction *instruction,
    struct tgsi_header *header )
 {
    struct tgsi_dst_register dst_register;
 
-   assert (file <= TGSI_FILE_IMMEDIATE);
-   assert (mask <= TGSI_WRITEMASK_XYZW);
-   assert (index >= -32768 && index <= 32767);
+   assert( file <= TGSI_FILE_IMMEDIATE );
+   assert( mask <= TGSI_WRITEMASK_XYZW );
+   assert( index >= -32768 && index <= 32767 );
 
    dst_register = tgsi_default_dst_register();
    dst_register.File = file;
@@ -1278,36 +1278,36 @@ tgsi_default_dst_register_ext_concode( void )
    return dst_register_ext_concode;
 }
 
-GLuint
+unsigned
 tgsi_compare_dst_register_ext_concode(
    struct tgsi_dst_register_ext_concode a,
    struct tgsi_dst_register_ext_concode b )
 {
    a.Padding = b.Padding = 0;
    a.Extended = b.Extended = 0;
-   return *(GLuint *) &a != *(GLuint *) &b;
+   return ((union token_u32 *) &a)->u32 != ((union token_u32 *) &b)->u32;
 }
 
 struct tgsi_dst_register_ext_concode
 tgsi_build_dst_register_ext_concode(
-   GLuint  cc,
-   GLuint  swizzle_x,
-   GLuint  swizzle_y,
-   GLuint  swizzle_z,
-   GLuint  swizzle_w,
-   GLint index,
-   struct  tgsi_token *prev_token,
-   struct  tgsi_instruction *instruction,
-   struct  tgsi_header *header )
+   unsigned cc,
+   unsigned swizzle_x,
+   unsigned swizzle_y,
+   unsigned swizzle_z,
+   unsigned swizzle_w,
+   int index,
+   struct tgsi_token *prev_token,
+   struct tgsi_instruction *instruction,
+   struct tgsi_header *header )
 {
    struct tgsi_dst_register_ext_concode dst_register_ext_concode;
 
-   assert (cc <= TGSI_CC_FL);
-   assert (swizzle_x <= TGSI_SWIZZLE_W);
-   assert (swizzle_y <= TGSI_SWIZZLE_W);
-   assert (swizzle_z <= TGSI_SWIZZLE_W);
-   assert (swizzle_w <= TGSI_SWIZZLE_W);
-   assert (index >= -32768 && index <= 32767);
+   assert( cc <= TGSI_CC_FL );
+   assert( swizzle_x <= TGSI_SWIZZLE_W );
+   assert( swizzle_y <= TGSI_SWIZZLE_W );
+   assert( swizzle_z <= TGSI_SWIZZLE_W );
+   assert( swizzle_w <= TGSI_SWIZZLE_W );
+   assert( index >= -32768 && index <= 32767 );
 
    dst_register_ext_concode = tgsi_default_dst_register_ext_concode();
    dst_register_ext_concode.CondMask = cc;
@@ -1336,26 +1336,26 @@ tgsi_default_dst_register_ext_modulate( void )
    return dst_register_ext_modulate;
 }
 
-GLuint
+unsigned
 tgsi_compare_dst_register_ext_modulate(
    struct tgsi_dst_register_ext_modulate a,
    struct tgsi_dst_register_ext_modulate b )
 {
    a.Padding = b.Padding = 0;
    a.Extended = b.Extended = 0;
-   return *(GLuint *) &a != *(GLuint *) &b;
+   return ((union token_u32 *) &a)->u32 != ((union token_u32 *) &b)->u32;
 }
 
 struct tgsi_dst_register_ext_modulate
 tgsi_build_dst_register_ext_modulate(
-   GLuint modulate,
-   struct tgsi_token  *prev_token,
+   unsigned modulate,
+   struct tgsi_token *prev_token,
    struct tgsi_instruction *instruction,
    struct tgsi_header *header )
 {
    struct tgsi_dst_register_ext_modulate dst_register_ext_modulate;
 
-   assert (modulate <=  TGSI_MODULATE_EIGHTH);
+   assert( modulate <= TGSI_MODULATE_EIGHTH );
 
    dst_register_ext_modulate = tgsi_default_dst_register_ext_modulate();
    dst_register_ext_modulate.Modulate = modulate;
