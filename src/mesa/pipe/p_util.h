@@ -39,10 +39,10 @@
 #define Elements(x) sizeof(x)/sizeof(*(x))
 
 /**
- * Return pointer aligned to next multiple of 16 bytes.
+ * Return a pointer aligned to next multiple of 16 bytes.
  */
 static INLINE void *
-align16(void *unaligned)
+align16( void *unaligned )
 {
    union {
       void *p;
@@ -59,7 +59,12 @@ static INLINE unsigned ffs( unsigned u )
 {
    unsigned i;
 
+   if( u == 0 ) {
+      return 0;
+   }
+
    __asm bsf eax, [u]
+   __asm inc eax
    __asm mov [i], eax
 
    return i;
