@@ -3,15 +3,15 @@
 
 struct text_dump
 {
-    FILE *file;
-    GLuint tabs;
+   FILE     *file;
+   unsigned tabs;
 };
 
 static void
 text_dump_write(
    struct text_dump *dump,
    const void *buffer,
-   GLuint size )
+   unsigned size )
 {
    fwrite( buffer, size, 1, dump->file );
 }
@@ -21,14 +21,14 @@ text_dump_str(
    struct text_dump *dump,
    const char *str )
 {
-   GLuint i;
-   GLuint len = strlen( str );
+   unsigned i;
+   size_t len = strlen( str );
 
    for( i = 0; i < len; i++ ) {
       text_dump_write( dump, &str[i], 1 );
 
       if( str[i] == '\n' ) {
-         GLuint i;
+         unsigned i;
 
          for( i = 0; i < dump->tabs; i++ ) {
             text_dump_write( dump, "    ", 4 );
@@ -52,7 +52,7 @@ text_dump_chr(
 static void
 text_dump_uix(
    struct text_dump *dump,
-   const GLuint ui)
+   const unsigned ui )
 {
    char str[36];
 
@@ -63,7 +63,7 @@ text_dump_uix(
 static void
 text_dump_uid(
    struct text_dump *dump,
-   const GLuint ui )
+   const unsigned ui )
 {
    char str[16];
 
@@ -74,7 +74,7 @@ text_dump_uid(
 static void
 text_dump_sid(
    struct text_dump *dump,
-   const GLint si )
+   const int si )
 {
    char str[16];
 
@@ -85,7 +85,7 @@ text_dump_sid(
 static void
 text_dump_flt(
    struct text_dump *dump,
-   const GLfloat f )
+   const float f )
 {
    char str[48];
 
@@ -96,9 +96,9 @@ text_dump_flt(
 static void
 text_dump_enum(
    struct text_dump *dump,
-   const GLuint e,
+   const unsigned e,
    const char **enums,
-   const GLuint enums_count )
+   const unsigned enums_count )
 {
    if( e >= enums_count ) {
       text_dump_uid( dump, e );
@@ -667,8 +667,8 @@ static void
 dump_declaration_verbose(
    struct text_dump *dump,
    struct tgsi_full_declaration *decl,
-   GLuint ignored,
-   GLuint deflt,
+   unsigned ignored,
+   unsigned deflt,
    struct tgsi_full_declaration *fd )
 {
    TXT( "\nFile       : " );
@@ -749,7 +749,7 @@ dump_immediate_short(
    struct text_dump *dump,
    struct tgsi_full_immediate *imm )
 {
-   GLuint i;
+   unsigned i;
 
    TXT( "\nIMM " );
    ENM( imm->Immediate.DataType, TGSI_IMMS_SHORT );
@@ -776,9 +776,9 @@ static void
 dump_immediate_verbose(
    struct text_dump *dump,
    struct tgsi_full_immediate *imm,
-   GLuint ignored )
+   unsigned ignored )
 {
-   GLuint i;
+   unsigned i;
 
    TXT( "\nDataType   : " );
    ENM( imm->Immediate.DataType, TGSI_IMMS );
@@ -805,10 +805,10 @@ static void
 dump_instruction_short(
    struct text_dump *dump,
    struct tgsi_full_instruction *inst,
-   GLuint instno )
+   unsigned instno )
 {
-   GLuint i;
-   GLboolean first_reg = GL_TRUE;
+   unsigned i;
+   boolean first_reg = TRUE;
 
    CHR( '\n' );
    UID( instno );
@@ -858,7 +858,7 @@ dump_instruction_short(
          }
       }
 
-      first_reg = GL_FALSE;
+      first_reg = FALSE;
    }
 
    for( i = 0; i < inst->Instruction.NumSrcRegs; i++ ) {
@@ -900,7 +900,7 @@ dump_instruction_short(
          CHR( '|' );
       }
 
-      first_reg = GL_FALSE;
+      first_reg = FALSE;
    }
 
    switch( inst->Instruction.Opcode ) {
@@ -916,11 +916,11 @@ static void
 dump_instruction_verbose(
    struct text_dump *dump,
    struct tgsi_full_instruction *inst,
-   GLuint ignored,
-   GLuint deflt,
+   unsigned ignored,
+   unsigned deflt,
    struct tgsi_full_instruction *fi )
 {
-   GLuint i;
+   unsigned i;
 
    TXT( "\nOpcode     : " );
    ENM( inst->Instruction.Opcode, TGSI_OPCODES );
@@ -1259,29 +1259,29 @@ dump_instruction_verbose(
 void
 tgsi_dump(
    const struct tgsi_token *tokens,
-   GLuint flags )
+   unsigned flags )
 {
    struct text_dump _dump;
    struct text_dump *dump = &_dump;
    struct tgsi_parse_context parse;
    struct tgsi_full_instruction fi;
    struct tgsi_full_declaration fd;
-   GLuint verbose = flags & TGSI_DUMP_VERBOSE;
-   GLuint ignored = !(flags & TGSI_DUMP_NO_IGNORED);
-   GLuint deflt = !(flags & TGSI_DUMP_NO_DEFAULT);
-   GLuint instno = 0;
+   unsigned verbose = flags & TGSI_DUMP_VERBOSE;
+   unsigned ignored = !(flags & TGSI_DUMP_NO_IGNORED);
+   unsigned deflt = !(flags & TGSI_DUMP_NO_DEFAULT);
+   unsigned instno = 0;
 
    {
 #if 0
-      static GLuint counter = 0;
+      static unsigned counter = 0;
       char buffer[64];
 
       sprintf( buffer, "tgsi-dump-%.4u.txt", counter++ );
       dump->file = fopen( buffer, "wt" );
 #else
       dump->file = stderr;
-      dump->tabs = 0;
 #endif
+      dump->tabs = 0;
    }
 
    /* sanity check */
