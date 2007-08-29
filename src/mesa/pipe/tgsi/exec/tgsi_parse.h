@@ -105,7 +105,7 @@ void
 tgsi_parse_free(
    struct tgsi_parse_context *ctx );
 
-unsigned
+boolean
 tgsi_parse_end_of_tokens(
    struct tgsi_parse_context *ctx );
 
