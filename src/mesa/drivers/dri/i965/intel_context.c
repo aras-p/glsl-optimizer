@@ -576,6 +576,10 @@ GLboolean intelMakeCurrent(__DRIcontextPrivate *driContextPriv,
    if (driContextPriv) {
       struct intel_context *intel = (struct intel_context *) driContextPriv->driverPrivate;
 
+      if (intel->driReadDrawable != driReadPriv) {
+          intel->driReadDrawable = driReadPriv;
+      }
+
       if ( intel->driDrawable != driDrawPriv ) {
 	 /* Shouldn't the readbuffer be stored also? */
 	 driDrawableInitVBlank( driDrawPriv, intel->vblank_flags,
