@@ -12,8 +12,9 @@ void
 tgsi_full_token_free(
    union tgsi_full_token *full_token )
 {
-   if( full_token->Token.Type == TGSI_TOKEN_TYPE_IMMEDIATE )
+   if( full_token->Token.Type == TGSI_TOKEN_TYPE_IMMEDIATE ) {
       free( full_token->FullImmediate.u.Pointer );
+   }
 }
 
 unsigned
@@ -49,7 +50,7 @@ tgsi_parse_free(
    tgsi_full_token_free( &ctx->FullToken );
 }
 
-GLuint
+boolean
 tgsi_parse_end_of_tokens(
    struct tgsi_parse_context *ctx )
 {
