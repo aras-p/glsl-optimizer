@@ -9,6 +9,7 @@ extern "C" {
 #include "mtypes.h"
 #include "prog_instruction.h"
 #include "program.h"
+#include "pipe/p_compiler.h"
 
 #if defined __cplusplus
 } // extern "C"
