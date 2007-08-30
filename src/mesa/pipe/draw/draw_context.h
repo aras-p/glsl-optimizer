@@ -89,7 +89,7 @@ void draw_set_setup_stage( struct draw_context *draw,
                            struct draw_stage *stage );
 
 void draw_set_vertex_attributes( struct draw_context *draw,
-				 const unsigned *attrs,
+				 const uint *attrs, const uint *interp_mode,
 				 unsigned nr_attrs );
 
 unsigned draw_prim_info( unsigned prim, unsigned *first, unsigned *incr );

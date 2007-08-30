@@ -32,20 +32,6 @@
 #include "draw_private.h"
 
 
-struct flatshade_stage {
-   struct draw_stage stage;
-
-   const unsigned *lookup;
-};
-
-
-
-static INLINE struct flatshade_stage *flatshade_stage( struct draw_stage *stage )
-{
-   return (struct flatshade_stage *)stage;
-}
-
-
 static void flatshade_begin( struct draw_stage *stage )
 {
    stage->next->begin( stage->next );
@@ -69,13 +55,16 @@ static INLINE void copy_colors( struct draw_stage *stage,
                                 struct vertex_header *dst, 
                                 const struct vertex_header *src )
 {
-   const struct flatshade_stage *flatshade = flatshade_stage(stage);
-   const unsigned *lookup = flatshade->lookup;
+   const uint num_attribs = stage->draw->vertex_info.num_attribs;
+   const uint *interp_mode = stage->draw->vertex_info.interp_mode;
+   uint i;
 
-   copy_attr( lookup[TGSI_ATTRIB_COLOR0], dst, src );
-   copy_attr( lookup[TGSI_ATTRIB_COLOR1], dst, src );
-   copy_attr( lookup[TGSI_ATTRIB_BFC0], dst, src );
-   copy_attr( lookup[TGSI_ATTRIB_BFC1], dst, src );
+   /* Look for constant/flat attribs and duplicate from src to dst vertex */
+   for (i = 1; i < num_attribs - 2; i++) {
+      if (interp_mode[i + 2] == INTERP_CONSTANT) {
+         copy_attr( i, dst, src );
+      }
+   }
 }
 
 
@@ -142,22 +131,20 @@ static void flatshade_reset_stipple_counter( struct draw_stage *stage )
  */
 struct draw_stage *draw_flatshade_stage( struct draw_context *draw )
 {
-   struct flatshade_stage *flatshade = CALLOC_STRUCT(flatshade_stage);
+   struct draw_stage *flatshade = CALLOC_STRUCT(draw_stage);
 
    draw_alloc_tmps( &flatshade->stage, 2 );
 
-   flatshade->stage.draw = draw;
-   flatshade->stage.next = NULL;
-   flatshade->stage.begin = flatshade_begin;
-   flatshade->stage.point = flatshade_point;
-   flatshade->stage.line = flatshade_line;
-   flatshade->stage.tri = flatshade_tri;
-   flatshade->stage.end = flatshade_end;
-   flatshade->stage.reset_stipple_counter = flatshade_reset_stipple_counter;
+   flatshade->draw = draw;
+   flatshade->next = NULL;
+   flatshade->begin = flatshade_begin;
+   flatshade->point = flatshade_point;
+   flatshade->line = flatshade_line;
+   flatshade->tri = flatshade_tri;
+   flatshade->end = flatshade_end;
+   flatshade->reset_stipple_counter = flatshade_reset_stipple_counter;
 
-   flatshade->lookup = draw->vertex_info.attrib_to_slot;
-
-   return &flatshade->stage;
+   return flatshade;
 }
 
 

@@ -487,6 +487,10 @@ static void setup_tri_coefficients( struct setup_stage *setup )
 	 for (j = 0; j < NUM_CHANNELS; j++)
 	    tri_persp_coeff(setup, slot, j);
 	 break;
+
+      default:
+         /* invalid interp mode */
+         assert(0);
       }
    }
 }

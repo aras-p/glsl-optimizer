@@ -135,11 +135,13 @@ static void calculate_vertex_layout( struct softpipe_context *softpipe )
    /* If the attributes have changed, tell the draw module about
     * the new vertex layout.
     */
-   if (vinfo->attr_mask != softpipe->attr_mask) {
+   /* XXX we also need to do this when the shading mode (interp modes) change: */
+   if (1/*vinfo->attr_mask != softpipe->attr_mask*/) {
       softpipe->attr_mask = vinfo->attr_mask;
 
       draw_set_vertex_attributes( softpipe->draw,
                                   vinfo->slot_to_attrib,
+                                  vinfo->interp_mode,
                                   vinfo->num_attribs);
    }
 }

@@ -47,6 +47,15 @@
 #define FORMAT_4UB  5
 
 
+enum interp_mode {
+   INTERP_NONE,      /**< never interpolate vertex header info */
+   INTERP_CONSTANT,
+   INTERP_LINEAR,
+   INTERP_PERSPECTIVE
+};
+
+
+
 struct vertex_info
 {
    uint num_attribs;

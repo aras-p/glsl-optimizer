@@ -46,13 +46,6 @@ struct draw_context;
 struct draw_stage;
 
 
-enum interp_mode {
-   INTERP_CONSTANT, 
-   INTERP_LINEAR, 
-   INTERP_PERSPECTIVE
-};
-
-
 #define SP_NEW_VIEWPORT      0x1
 #define SP_NEW_SETUP         0x2
 #define SP_NEW_FS            0x4

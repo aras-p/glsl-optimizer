@@ -75,7 +75,7 @@ draw_arrays(struct draw_context *draw, unsigned prim,
 
 
 static INLINE void
-emit_vertex_attr(struct vertex_info *vinfo, uint vfAttr, uint format)
+emit_vertex_attr(struct vertex_info *vinfo, uint vfAttr, uint format, uint interp)
 {
    const uint n = vinfo->num_attribs;
    vinfo->attr_mask |= (1 << vfAttr);
@@ -85,8 +85,7 @@ emit_vertex_attr(struct vertex_info *vinfo, uint vfAttr, uint format)
       assert(vfAttr < Elements(vinfo->attrib_to_slot));
       vinfo->attrib_to_slot[vfAttr] = n - 2;
    }
-   /*printf("Vertex slot %d = vfattrib %d\n", n, vfAttr);*/
-   /*vinfo->interp_mode[n] = interpMode;*/
+   vinfo->interp_mode[n] = interp;
    vinfo->format[n] = format;
    vinfo->num_attribs++;
 
@@ -127,7 +126,8 @@ compute_vertex_size(struct vertex_info *vinfo)
 
 void
 draw_set_vertex_attributes( struct draw_context *draw,
-                            const unsigned *slot_to_vf_attr,
+                            const uint *slot_to_vf_attr,
+                            const uint *interp_mode,
                             unsigned nr_attrs )
 {
    struct vertex_info *vinfo = &draw->vertex_info;
@@ -140,15 +140,15 @@ draw_set_vertex_attributes( struct draw_context *draw,
    /*
     * First three attribs are always the same: header, clip pos, winpos
     */
-   emit_vertex_attr(vinfo, TGSI_ATTRIB_VERTEX_HEADER, FORMAT_1F);
-   emit_vertex_attr(vinfo, TGSI_ATTRIB_CLIP_POS, FORMAT_4F);
-   emit_vertex_attr(vinfo, TGSI_ATTRIB_POS, FORMAT_4F_VIEWPORT);
+   emit_vertex_attr(vinfo, TGSI_ATTRIB_VERTEX_HEADER, FORMAT_1F, INTERP_NONE);
+   emit_vertex_attr(vinfo, TGSI_ATTRIB_CLIP_POS, FORMAT_4F, INTERP_LINEAR);
+   emit_vertex_attr(vinfo, TGSI_ATTRIB_POS, FORMAT_4F_VIEWPORT, INTERP_LINEAR);
 
    /*
     * Remaining attribs (color, texcoords, etc)
     */
    for (i = 1; i < nr_attrs; i++) {
-      emit_vertex_attr(vinfo, slot_to_vf_attr[i], FORMAT_4F);
+      emit_vertex_attr(vinfo, slot_to_vf_attr[i], FORMAT_4F, interp_mode[i]);
    }
 
    compute_vertex_size(vinfo);
