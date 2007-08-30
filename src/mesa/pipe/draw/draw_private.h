@@ -158,6 +158,9 @@ struct draw_context
 
    /** Describes the layout of post-transformation vertices */
    struct vertex_info vertex_info;
+   /** Two-sided attributes: */
+   uint attrib_front0, attrib_back0;
+   uint attrib_front1, attrib_back1;
 
    unsigned nr_vertices;
 

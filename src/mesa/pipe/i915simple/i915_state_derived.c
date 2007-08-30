@@ -35,8 +35,9 @@
 #include "i915_fpc.h"
 
 
-static INLINE void
-emit_vertex_attr(struct vertex_info *vinfo, uint vfAttr, uint format, uint interp)
+static INLINE uint
+emit_vertex_attr(struct vertex_info *vinfo, uint vfAttr, uint format,
+                 uint interp)
 {
    const uint n = vinfo->num_attribs;
    vinfo->attr_mask |= (1 << vfAttr);
@@ -44,6 +45,7 @@ emit_vertex_attr(struct vertex_info *vinfo, uint vfAttr, uint format, uint inter
    vinfo->format[n] = format;
    vinfo->interp_mode[n] = interp;
    vinfo->num_attribs++;
+   return n;
 }
 
 
@@ -93,6 +95,7 @@ static void calculate_vertex_layout( struct i915_context *i915 )
    const uint colorInterp
       = i915->setup.flatshade ? INTERP_CONSTANT : INTERP_LINEAR;
    struct vertex_info *vinfo = &i915->current.vertex_info;
+   uint front0 = 0, back0 = 0, front1 = 0, back1 = 0;
    boolean needW = 0;
 
    memset(vinfo, 0, sizeof(*vinfo));
@@ -103,14 +106,16 @@ static void calculate_vertex_layout( struct i915_context *i915 )
 
    /* color0 */
    if (inputsRead & (1 << TGSI_ATTRIB_COLOR0)) {
-      emit_vertex_attr(vinfo, TGSI_ATTRIB_COLOR0, FORMAT_4UB, colorInterp);
+      front0 = emit_vertex_attr(vinfo, TGSI_ATTRIB_COLOR0,
+                                FORMAT_4UB, colorInterp);
       vinfo->hwfmt[0] |= S4_VFMT_COLOR;
    }
 
    /* color 1 */
    if (inputsRead & (1 << TGSI_ATTRIB_COLOR1)) {
       assert(0); /* untested */
-      emit_vertex_attr(vinfo, TGSI_ATTRIB_COLOR1, FORMAT_4UB, colorInterp);
+      front1 = emit_vertex_attr(vinfo, TGSI_ATTRIB_COLOR1,
+                                FORMAT_4UB, colorInterp);
       vinfo->hwfmt[0] |= S4_VFMT_SPEC_FOG;
    }
 
@@ -149,10 +154,12 @@ static void calculate_vertex_layout( struct i915_context *i915 )
     */
    if (i915->setup.light_twoside) {
       if (inputsRead & (1 << TGSI_ATTRIB_COLOR0)) {
-         emit_vertex_attr(vinfo, TGSI_ATTRIB_BFC0, FORMAT_OMIT, colorInterp);
+         back0 = emit_vertex_attr(vinfo, TGSI_ATTRIB_BFC0,
+                                  FORMAT_OMIT, colorInterp);
       }	    
       if (inputsRead & (1 << TGSI_ATTRIB_COLOR1)) {
-         emit_vertex_attr(vinfo, TGSI_ATTRIB_BFC1, FORMAT_OMIT, colorInterp);
+         back1 = emit_vertex_attr(vinfo, TGSI_ATTRIB_BFC1,
+                                  FORMAT_OMIT, colorInterp);
       }
    }
 
@@ -165,6 +172,9 @@ static void calculate_vertex_layout( struct i915_context *i915 )
                                vinfo->slot_to_attrib,
                                vinfo->interp_mode,
 			       vinfo->num_attribs);
+
+   draw_set_twoside_attributes(i915->draw,
+                               front0, back0, front1, back1);
 
    /* Need to set this flag so that the LIS2/4 registers get set.
     * It also means the i915_update_immediate() function must be called

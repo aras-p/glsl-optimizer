@@ -37,16 +37,21 @@
 
 
 
-static void
+/**
+ * Add another attribute to the given vertex_info object.
+ * \return slot in which the attribute was added
+ */
+static uint
 emit_vertex_attr(struct vertex_info *vinfo, uint vfAttr, uint format,
                  uint interp)
 {
    const uint n = vinfo->num_attribs;
    vinfo->attr_mask |= (1 << vfAttr);
    vinfo->slot_to_attrib[n] = vfAttr;
-   vinfo->interp_mode[n] = interp;
    vinfo->format[n] = format;
+   vinfo->interp_mode[n] = interp;
    vinfo->num_attribs++;
+   return n;
 }
 
 
@@ -62,6 +67,7 @@ static void calculate_vertex_layout( struct softpipe_context *softpipe )
    const uint colorInterp
       = softpipe->setup.flatshade ? INTERP_CONSTANT : INTERP_LINEAR;
    struct vertex_info *vinfo = &softpipe->vertex_info;
+   uint front0 = 0, back0 = 0, front1 = 0, back1 = 0;
    uint i;
 
    memset(vinfo, 0, sizeof(*vinfo));
@@ -89,12 +95,14 @@ static void calculate_vertex_layout( struct softpipe_context *softpipe )
  
    /* color0 */
    if (inputsRead & (1 << TGSI_ATTRIB_COLOR0)) {
-      emit_vertex_attr(vinfo, TGSI_ATTRIB_COLOR0, FORMAT_4F, colorInterp);
+      front0 = emit_vertex_attr(vinfo, TGSI_ATTRIB_COLOR0,
+                                FORMAT_4F, colorInterp);
    }
 
    /* color1 */
    if (inputsRead & (1 << TGSI_ATTRIB_COLOR1)) {
-      emit_vertex_attr(vinfo, TGSI_ATTRIB_COLOR1, FORMAT_4F, colorInterp);
+      front1 = emit_vertex_attr(vinfo, TGSI_ATTRIB_COLOR1,
+                                FORMAT_4F, colorInterp);
    }
 
    /* fog */
@@ -124,11 +132,13 @@ static void calculate_vertex_layout( struct softpipe_context *softpipe )
     */
    if (softpipe->setup.light_twoside) {
       if (inputsRead & (1 << TGSI_ATTRIB_COLOR0)) {
-         emit_vertex_attr(vinfo, TGSI_ATTRIB_BFC0, FORMAT_OMIT, INTERP_LINEAR);
+         back0 = emit_vertex_attr(vinfo, TGSI_ATTRIB_BFC0,
+                                  FORMAT_OMIT, colorInterp);
       }
 	    
       if (inputsRead & (1 << TGSI_ATTRIB_COLOR1)) {
-         emit_vertex_attr(vinfo, TGSI_ATTRIB_BFC1, FORMAT_OMIT, INTERP_LINEAR);
+         back1 = emit_vertex_attr(vinfo, TGSI_ATTRIB_BFC1,
+                                  FORMAT_OMIT, colorInterp);
       }
    }
 
@@ -143,6 +153,9 @@ static void calculate_vertex_layout( struct softpipe_context *softpipe )
                                   vinfo->slot_to_attrib,
                                   vinfo->interp_mode,
                                   vinfo->num_attribs);
+
+      draw_set_twoside_attributes(softpipe->draw,
+                                  front0, back0, front1, back1);
    }
 }
 

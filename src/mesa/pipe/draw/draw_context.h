@@ -92,6 +92,10 @@ void draw_set_vertex_attributes( struct draw_context *draw,
 				 const uint *attrs, const uint *interp_mode,
 				 unsigned nr_attrs );
 
+void draw_set_twoside_attributes(struct draw_context *draw,
+                                 uint front0, uint back0,
+                                 uint front1, uint back1);
+
 unsigned draw_prim_info( unsigned prim, unsigned *first, unsigned *incr );
 
 unsigned draw_trim( unsigned count, unsigned first, unsigned incr );

@@ -61,15 +61,11 @@ static void twoside_begin( struct draw_stage *stage )
 }
 
 
-static INLINE void copy_color( unsigned attr_dst,
+static INLINE void copy_attrib( unsigned attr_dst,
 			       unsigned attr_src,
 			       struct vertex_header *v )
 {
-   if (attr_dst && attr_src) {
-      memcpy( v->data[attr_dst],
-	      v->data[attr_src],
-	      sizeof(v->data[0]) );
-   }
+   COPY_4FV(v->data[attr_dst], v->data[attr_src]);
 }
 
 
@@ -78,14 +74,16 @@ static struct vertex_header *copy_bfc( struct twoside_stage *twoside,
 				       unsigned idx )
 {   
    struct vertex_header *tmp = dup_vert( &twoside->stage, v, idx );
+   const struct draw_context *draw = twoside->stage.draw;
    
-   copy_color( twoside->lookup[TGSI_ATTRIB_COLOR0], 
-	       twoside->lookup[TGSI_ATTRIB_BFC0],
-	       tmp );
-
-   copy_color( twoside->lookup[TGSI_ATTRIB_COLOR1], 
-	       twoside->lookup[TGSI_ATTRIB_BFC1],
-	       tmp );
+   if (draw->attrib_front0) {
+      assert(draw->attrib_back0);
+      copy_attrib(draw->attrib_front0, draw->attrib_back0, tmp);
+   }
+   if (draw->attrib_front1) {
+      assert(draw->attrib_back1);
+      copy_attrib(draw->attrib_front1, draw->attrib_back1, tmp);
+   }
 
    return tmp;
 }
@@ -104,7 +102,7 @@ static void twoside_tri( struct draw_stage *stage,
 
       tmp.det = header->det;
       tmp.edgeflags = header->edgeflags;
-      /* copy back colors to front color slots */
+      /* copy back attribs to front attribs */
       tmp.v[0] = copy_bfc(twoside, header->v[0], 0);
       tmp.v[1] = copy_bfc(twoside, header->v[1], 1);
       tmp.v[2] = copy_bfc(twoside, header->v[2], 2);
