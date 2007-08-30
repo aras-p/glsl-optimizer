@@ -133,7 +133,7 @@ struct draw_stage *draw_flatshade_stage( struct draw_context *draw )
 {
    struct draw_stage *flatshade = CALLOC_STRUCT(draw_stage);
 
-   draw_alloc_tmps( &flatshade->stage, 2 );
+   draw_alloc_tmps( flatshade, 2 );
 
    flatshade->draw = draw;
    flatshade->next = NULL;
