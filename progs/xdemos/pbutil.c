@@ -393,6 +393,7 @@ CreatePbuffer(Display *dpy, int screen, FBCONFIG config,
       pBuffer = None;
    }
 
+   XSync(dpy, False);
    /* Restore original X error handler */
    (void) XSetErrorHandler(oldHandler);
 
