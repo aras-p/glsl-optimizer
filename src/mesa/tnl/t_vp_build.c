@@ -1364,6 +1364,16 @@ static void build_pointsize( struct tnl_program *p )
    release_temp(p, ut);
 }
 
+/**
+ * Emit constant point size.
+ */
+static void constant_pointsize( struct tnl_program *p )
+{
+   struct ureg state_size = register_param1(p, STATE_POINT_SIZE);
+   struct ureg out = register_output(p, VERT_RESULT_PSIZ);
+   emit_op1(p, OPCODE_MOV, out, WRITEMASK_X, state_size);
+}
+
 static void build_tnl_program( struct tnl_program *p )
 {   /* Emit the program, starting with modelviewproject:
     */
@@ -1392,6 +1402,10 @@ static void build_tnl_program( struct tnl_program *p )
 
    if (p->state->point_attenuated)
       build_pointsize(p);
+#if 0
+   else
+      constant_pointsize(p);
+#endif
 
    /* Finish up:
     */

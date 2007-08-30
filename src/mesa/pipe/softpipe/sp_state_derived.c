@@ -102,6 +102,12 @@ static void calculate_vertex_layout( struct softpipe_context *softpipe )
       emit_vertex_attr(vinfo, TGSI_ATTRIB_FOG, FORMAT_1F, INTERP_PERSPECTIVE);
    }
 
+   /* point size */
+#if 0
+   /* XXX only emit if drawing points or front/back polygon mode is point mode */
+   emit_vertex_attr(vinfo, TGSI_ATTRIB_POINTSIZE, FORMAT_4F, INTERP_CONSTANT);
+#endif
+
    /* texcoords and varying vars */
    for (i = TGSI_ATTRIB_TEX0; i < TGSI_ATTRIB_VAR7; i++) {
       if (inputsRead & (1 << i)) {

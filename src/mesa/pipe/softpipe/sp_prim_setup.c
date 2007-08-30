@@ -79,6 +79,8 @@ struct setup_stage {
 
    float oneoverarea;
 
+   const unsigned *lookup;  /**< vertex attribute positions */
+
    struct tgsi_interp_coef coef[TGSI_ATTRIB_MAX];
    struct quad_header quad; 
 
@@ -884,10 +886,13 @@ static void
 setup_point(struct draw_stage *stage, struct prim_header *prim)
 {
    struct setup_stage *setup = setup_stage( stage );
-   /*XXX this should be a vertex attrib! */
-   const float halfSize = 0.5f * setup->softpipe->setup.point_size;
-   const boolean round = setup->softpipe->setup.point_smooth;
    const struct vertex_header *v0 = prim->v[0];
+
+   const int sizeAttr = setup->lookup[TGSI_ATTRIB_POINTSIZE];
+   const float halfSize
+      = sizeAttr ? (0.5f * v0->data[sizeAttr][0])
+        : (0.5f * setup->softpipe->setup.point_size);
+   const boolean round = setup->softpipe->setup.point_smooth;
    const float x = v0->data[TGSI_ATTRIB_POS][0];
    const float y = v0->data[TGSI_ATTRIB_POS][1];
    unsigned slot, j;
@@ -1071,6 +1076,8 @@ struct draw_stage *sp_draw_render_stage( struct softpipe_context *softpipe )
    setup->stage.reset_stipple_counter = reset_stipple_counter;
 
    setup->quad.coef = setup->coef;
+
+   setup->lookup = softpipe->draw->vertex_info.attrib_to_slot;
 
    return &setup->stage;
 }

@@ -36,7 +36,7 @@
 struct twoside_stage {
    struct draw_stage stage;
    float sign;         /**< +1 or -1 */
-   const unsigned *lookup;
+   const unsigned *lookup;   /**< vertex attribute positions */
 };
 
 
