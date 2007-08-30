@@ -1678,8 +1678,10 @@ PUBLIC GLXFBConfig *glXGetFBConfigs(Display *dpy, int screen, int *nelements)
 	    for ( modes = priv->screenConfigs[screen].configs
 		  ; modes != NULL
 		  ; modes = modes->next ) {
-		config[i] = modes;
-		i++;
+		if ( modes->fbconfigID != GLX_DONT_CARE ) {
+		    config[i] = modes;
+		    i++;
+		}
 	    }
 	}
     }
