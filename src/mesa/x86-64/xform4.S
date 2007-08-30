@@ -147,7 +147,7 @@ _mesa_x86_64_transform_points4_3d:
 
 p4_3d_loop:
 
-	movaps (%rdx), %xmm8		/* ox | oy | oz | ow */
+	movups (%rdx), %xmm8		/* ox | oy | oz | ow */
 	prefetchw 16(%rdi)
 
 	pshufd $0x00, %xmm8, %xmm0	/* ox | ox | ox | ox */
