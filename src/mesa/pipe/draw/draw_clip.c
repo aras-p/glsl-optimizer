@@ -177,10 +177,14 @@ static INLINE void do_tri( struct draw_stage *next,
 
 static void emit_poly( struct draw_stage *stage,
 		       struct vertex_header **inlist,
-		       unsigned n )
+		       unsigned n,
+                       const struct prim_header *origPrim)
 {
    struct prim_header header;
    unsigned i;
+
+   /* later stages may need the determinant, but only the sign matters */
+   header.det = origPrim->det;
 
    for (i = 2; i < n; i++) {
       header.v[0] = inlist[0];
@@ -193,6 +197,10 @@ static void emit_poly( struct draw_stage *stage,
 
 	 if (i != 2)   header.v[0]->edgeflag = 0;
 	 if (i != n-1) header.v[2]->edgeflag = 0;
+
+         header.edgeflags = ((header.v[0]->edgeflag << 0) | 
+                             (header.v[1]->edgeflag << 1) | 
+                             (header.v[2]->edgeflag << 2));
 
 	 stage->next->tri( stage->next, &header );
 
@@ -302,7 +310,7 @@ do_clip_tri( struct draw_stage *stage,
    /* Emit the polygon as triangles to the setup stage:
     */
    if (n >= 3)
-      emit_poly( stage, inlist, n );
+      emit_poly( stage, inlist, n, header );
 }
 
 
