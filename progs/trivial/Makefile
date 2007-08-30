@@ -13,6 +13,7 @@ LIBS = $(APP_LIB_DEPS)
 SOURCES = \
 	clear.c \
 	clear-scissor.c \
+	flat-clip.c \
 	fs-tri.c \
 	line-clip.c \
 	line-cull.c \
