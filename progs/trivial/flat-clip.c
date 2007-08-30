@@ -129,6 +129,8 @@ Init(void)
    printf("  z/Z:  change triangle size\n");
    printf("  r/R:  rotate\n");
    printf("  p:    toggle line/fill mode\n");
+   printf("  s:    toggle smooth/flat shading\n");
+   printf("  f:    switch polygon fill mode\n");
 }
 
 
