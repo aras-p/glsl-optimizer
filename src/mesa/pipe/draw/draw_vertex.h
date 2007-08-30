@@ -70,6 +70,25 @@ struct vertex_info
 
 
 
+/**
+ * Add another attribute to the given vertex_info object.
+ * \return slot in which the attribute was added
+ */
+static INLINE uint
+draw_emit_vertex_attr(struct vertex_info *vinfo, uint vfAttr, uint format,
+                      uint interp)
+{
+   const uint n = vinfo->num_attribs;
+   vinfo->attr_mask |= (1 << vfAttr);
+   vinfo->slot_to_attrib[n] = vfAttr;
+   vinfo->format[n] = format;
+   vinfo->interp_mode[n] = interp;
+   vinfo->num_attribs++;
+   return n;
+}
+
+
+
 struct draw_context;
 
 extern int draw_vertex_cache_check_space( struct draw_context *draw, 

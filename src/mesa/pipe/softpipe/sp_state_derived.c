@@ -36,26 +36,6 @@
 #include "pipe/tgsi/exec/tgsi_attribs.h"
 
 
-
-/**
- * Add another attribute to the given vertex_info object.
- * \return slot in which the attribute was added
- */
-static uint
-emit_vertex_attr(struct vertex_info *vinfo, uint vfAttr, uint format,
-                 uint interp)
-{
-   const uint n = vinfo->num_attribs;
-   vinfo->attr_mask |= (1 << vfAttr);
-   vinfo->slot_to_attrib[n] = vfAttr;
-   vinfo->format[n] = format;
-   vinfo->interp_mode[n] = interp;
-   vinfo->num_attribs++;
-   return n;
-}
-
-
-
 /**
  * Determine which post-transform / pre-rasterization vertex attributes
  * we need.
@@ -91,35 +71,37 @@ static void calculate_vertex_layout( struct softpipe_context *softpipe )
 
    /* position */
    /* TODO - Figure out if we need to do perspective divide, etc. */
-   emit_vertex_attr(vinfo, TGSI_ATTRIB_POS, FORMAT_4F, INTERP_LINEAR);
+   draw_emit_vertex_attr(vinfo, TGSI_ATTRIB_POS, FORMAT_4F, INTERP_LINEAR);
  
    /* color0 */
    if (inputsRead & (1 << TGSI_ATTRIB_COLOR0)) {
-      front0 = emit_vertex_attr(vinfo, TGSI_ATTRIB_COLOR0,
-                                FORMAT_4F, colorInterp);
+      front0 = draw_emit_vertex_attr(vinfo, TGSI_ATTRIB_COLOR0,
+                                     FORMAT_4F, colorInterp);
    }
 
    /* color1 */
    if (inputsRead & (1 << TGSI_ATTRIB_COLOR1)) {
-      front1 = emit_vertex_attr(vinfo, TGSI_ATTRIB_COLOR1,
-                                FORMAT_4F, colorInterp);
+      front1 = draw_emit_vertex_attr(vinfo, TGSI_ATTRIB_COLOR1,
+                                     FORMAT_4F, colorInterp);
    }
 
    /* fog */
    if (inputsRead & (1 << TGSI_ATTRIB_FOG)) {
-      emit_vertex_attr(vinfo, TGSI_ATTRIB_FOG, FORMAT_1F, INTERP_PERSPECTIVE);
+      draw_emit_vertex_attr(vinfo, TGSI_ATTRIB_FOG,
+                            FORMAT_1F, INTERP_PERSPECTIVE);
    }
 
    /* point size */
 #if 0
    /* XXX only emit if drawing points or front/back polygon mode is point mode */
-   emit_vertex_attr(vinfo, TGSI_ATTRIB_POINTSIZE, FORMAT_4F, INTERP_CONSTANT);
+   draw_emit_vertex_attr(vinfo, TGSI_ATTRIB_POINTSIZE,
+                         FORMAT_4F, INTERP_CONSTANT);
 #endif
 
    /* texcoords and varying vars */
    for (i = TGSI_ATTRIB_TEX0; i < TGSI_ATTRIB_VAR7; i++) {
       if (inputsRead & (1 << i)) {
-         emit_vertex_attr(vinfo, i, FORMAT_4F, INTERP_PERSPECTIVE);
+         draw_emit_vertex_attr(vinfo, i, FORMAT_4F, INTERP_PERSPECTIVE);
          softpipe->need_w = TRUE;
       }
    }
@@ -132,13 +114,13 @@ static void calculate_vertex_layout( struct softpipe_context *softpipe )
     */
    if (softpipe->setup.light_twoside) {
       if (inputsRead & (1 << TGSI_ATTRIB_COLOR0)) {
-         back0 = emit_vertex_attr(vinfo, TGSI_ATTRIB_BFC0,
-                                  FORMAT_OMIT, colorInterp);
+         back0 = draw_emit_vertex_attr(vinfo, TGSI_ATTRIB_BFC0,
+                                       FORMAT_OMIT, colorInterp);
       }
 	    
       if (inputsRead & (1 << TGSI_ATTRIB_COLOR1)) {
-         back1 = emit_vertex_attr(vinfo, TGSI_ATTRIB_BFC1,
-                                  FORMAT_OMIT, colorInterp);
+         back1 = draw_emit_vertex_attr(vinfo, TGSI_ATTRIB_BFC1,
+                                       FORMAT_OMIT, colorInterp);
       }
    }
 

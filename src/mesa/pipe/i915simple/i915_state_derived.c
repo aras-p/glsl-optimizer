@@ -35,55 +35,6 @@
 #include "i915_fpc.h"
 
 
-static INLINE uint
-emit_vertex_attr(struct vertex_info *vinfo, uint vfAttr, uint format,
-                 uint interp)
-{
-   const uint n = vinfo->num_attribs;
-   vinfo->attr_mask |= (1 << vfAttr);
-   vinfo->slot_to_attrib[n] = vfAttr;
-   vinfo->format[n] = format;
-   vinfo->interp_mode[n] = interp;
-   vinfo->num_attribs++;
-   return n;
-}
-
-
-/**
- * Recompute the vinfo->size field.
- */
-static void
-compute_vertex_size(struct vertex_info *vinfo)
-{
-   uint i;
-
-   vinfo->size = 0;
-   for (i = 0; i < vinfo->num_attribs; i++) {
-      switch (vinfo->format[i]) {
-      case FORMAT_OMIT:
-         break;
-      case FORMAT_4UB:
-         /* fall-through */
-      case FORMAT_1F:
-         vinfo->size += 1;
-         break;
-      case FORMAT_2F:
-         vinfo->size += 2;
-         break;
-      case FORMAT_3F:
-         vinfo->size += 3;
-         break;
-      case FORMAT_4F:
-         vinfo->size += 4;
-         break;
-      default:
-         assert(0);
-      }
-   }
-}
-
-
-
 /**
  * Determine which post-transform / pre-rasterization vertex attributes
  * we need.
@@ -101,21 +52,21 @@ static void calculate_vertex_layout( struct i915_context *i915 )
    memset(vinfo, 0, sizeof(*vinfo));
 
    /* pos */
-   emit_vertex_attr(vinfo, TGSI_ATTRIB_POS, FORMAT_3F, INTERP_LINEAR);
+   draw_emit_vertex_attr(vinfo, TGSI_ATTRIB_POS, FORMAT_3F, INTERP_LINEAR);
    /* Note: we'll set the S4_VFMT_XYZ[W] bits below */
 
    /* color0 */
    if (inputsRead & (1 << TGSI_ATTRIB_COLOR0)) {
-      front0 = emit_vertex_attr(vinfo, TGSI_ATTRIB_COLOR0,
-                                FORMAT_4UB, colorInterp);
+      front0 = draw_emit_vertex_attr(vinfo, TGSI_ATTRIB_COLOR0,
+                                     FORMAT_4UB, colorInterp);
       vinfo->hwfmt[0] |= S4_VFMT_COLOR;
    }
 
    /* color 1 */
    if (inputsRead & (1 << TGSI_ATTRIB_COLOR1)) {
       assert(0); /* untested */
-      front1 = emit_vertex_attr(vinfo, TGSI_ATTRIB_COLOR1,
-                                FORMAT_4UB, colorInterp);
+      front1 = draw_emit_vertex_attr(vinfo, TGSI_ATTRIB_COLOR1,
+                                     FORMAT_4UB, colorInterp);
       vinfo->hwfmt[0] |= S4_VFMT_SPEC_FOG;
    }
 
@@ -127,7 +78,7 @@ static void calculate_vertex_layout( struct i915_context *i915 )
       for (i = TGSI_ATTRIB_TEX0; i <= TGSI_ATTRIB_TEX7; i++) {
          uint hwtc;
          if (inputsRead & (1 << i)) {
-            emit_vertex_attr(vinfo, i, FORMAT_4F, INTERP_PERSPECTIVE);
+            draw_emit_vertex_attr(vinfo, i, FORMAT_4F, INTERP_PERSPECTIVE);
             hwtc = TEXCOORDFMT_4D;
             needW = TRUE;
          }
@@ -154,16 +105,16 @@ static void calculate_vertex_layout( struct i915_context *i915 )
     */
    if (i915->setup.light_twoside) {
       if (inputsRead & (1 << TGSI_ATTRIB_COLOR0)) {
-         back0 = emit_vertex_attr(vinfo, TGSI_ATTRIB_BFC0,
-                                  FORMAT_OMIT, colorInterp);
+         back0 = draw_emit_vertex_attr(vinfo, TGSI_ATTRIB_BFC0,
+                                       FORMAT_OMIT, colorInterp);
       }	    
       if (inputsRead & (1 << TGSI_ATTRIB_COLOR1)) {
-         back1 = emit_vertex_attr(vinfo, TGSI_ATTRIB_BFC1,
-                                  FORMAT_OMIT, colorInterp);
+         back1 = draw_emit_vertex_attr(vinfo, TGSI_ATTRIB_BFC1,
+                                       FORMAT_OMIT, colorInterp);
       }
    }
 
-   compute_vertex_size(vinfo);
+   draw_compute_vertex_size(vinfo);
 
    /* If the attributes have changed, tell the draw module about the new
     * vertex layout.  We'll also update the hardware vertex format info.

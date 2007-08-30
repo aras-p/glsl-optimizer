@@ -42,6 +42,7 @@
 
 
 struct vertex_buffer;
+struct vertex_info;
 struct draw_context;
 struct draw_stage;
 
@@ -95,6 +96,8 @@ void draw_set_vertex_attributes( struct draw_context *draw,
 void draw_set_twoside_attributes(struct draw_context *draw,
                                  uint front0, uint back0,
                                  uint front1, uint back1);
+
+void draw_compute_vertex_size(struct vertex_info *vinfo);
 
 unsigned draw_prim_info( unsigned prim, unsigned *first, unsigned *incr );
 

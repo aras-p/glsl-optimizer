@@ -164,6 +164,7 @@ DRAW_SOURCES = \
 	pipe/draw/draw_offset.c \
 	pipe/draw/draw_prim.c \
 	pipe/draw/draw_twoside.c \
+	pipe/draw/draw_vertex.c \
 	pipe/draw/draw_vertex_cache.c \
 	pipe/draw/draw_vertex_fetch.c \
 	pipe/draw/draw_vertex_shader.c \

@@ -215,39 +215,3 @@ draw_set_vertex_shader(struct draw_context *draw,
 {
    draw->vertex_shader = *shader;
 }
-
-
-/**
- * This function is used to tell the draw module about attributes
- * (like colors) that need to be selected based on front/back face
- * orientation.
- *
- * The logic is:
- *    if (polygon is back-facing) {
- *       vertex->attrib[front0] = vertex->attrib[back0];
- *       vertex->attrib[front1] = vertex->attrib[back1];
- *    }
- *
- * \param front0  first attrib to replace if the polygon is back-facing
- * \param back0  first attrib to copy if the polygon is back-facing
- * \param front1  second attrib to replace if the polygon is back-facing
- * \param back1  second attrib to copy if the polygon is back-facing
- *
- * Pass -1 to disable two-sided attributes.
- */
-void
-draw_set_twoside_attributes(struct draw_context *draw,
-                            uint front0, uint back0,
-                            uint front1, uint back1)
-{
-   /* XXX we could alternately pass an array of front/back attribs if there's
-    * ever need for more than two.  One could imagine a shader extension
-    * that allows arbitrary attributes to be selected based on polygon
-    * orientation...
-    */
-   draw->attrib_front0 = front0;
-   draw->attrib_back0 = back0;
-   draw->attrib_front1 = front1;
-   draw->attrib_back1 = back1;
-}
-
