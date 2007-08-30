@@ -717,6 +717,10 @@ setup_line_coefficients(struct setup_stage *setup, struct prim_header *prim)
 	 for (j = 0; j < NUM_CHANNELS; j++)
 	    line_persp_coeff(setup, slot, j);
 	 break;
+
+      default:
+         /* invalid interp mode */
+         assert(0);
       }
    }
 }
