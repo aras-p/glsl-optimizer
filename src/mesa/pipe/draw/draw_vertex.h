@@ -114,21 +114,4 @@ extern void draw_set_twoside_attributes(struct draw_context *draw,
 extern void draw_compute_vertex_size(struct vertex_info *vinfo);
 
 
-extern int draw_vertex_cache_check_space( struct draw_context *draw, 
-					  unsigned nr_verts );
-
-extern void draw_vertex_cache_validate( struct draw_context *draw );
-extern void draw_vertex_cache_invalidate( struct draw_context *draw );
-extern void draw_vertex_cache_unreference( struct draw_context *draw );
-
-extern void draw_vertex_shader_queue_flush( struct draw_context *draw );
-
-struct tgsi_exec_machine;
-
-extern void draw_vertex_fetch( struct draw_context *draw,
-			       struct tgsi_exec_machine *machine,
-			       const unsigned *elts,
-			       unsigned count );
-
-
 #endif /* DRAW_VERTEX_H */
