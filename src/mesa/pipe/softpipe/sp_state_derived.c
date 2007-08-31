@@ -43,8 +43,8 @@
  */
 static void calculate_vertex_layout( struct softpipe_context *softpipe )
 {
-   const unsigned inputsRead = softpipe->fs.inputs_read;
-   const uint colorInterp
+   const uint inputsRead = softpipe->fs.inputs_read;
+   const interp_mode colorInterp
       = softpipe->setup.flatshade ? INTERP_CONSTANT : INTERP_LINEAR;
    struct vertex_info *vinfo = &softpipe->vertex_info;
    uint front0 = 0, back0 = 0, front1 = 0, back1 = 0;

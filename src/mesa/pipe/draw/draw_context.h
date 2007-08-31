@@ -89,16 +89,6 @@ void draw_set_setup_state( struct draw_context *draw,
 void draw_set_setup_stage( struct draw_context *draw,
                            struct draw_stage *stage );
 
-void draw_set_vertex_attributes( struct draw_context *draw,
-				 const uint *attrs, const uint *interp_mode,
-				 unsigned nr_attrs );
-
-void draw_set_twoside_attributes(struct draw_context *draw,
-                                 uint front0, uint back0,
-                                 uint front1, uint back1);
-
-void draw_compute_vertex_size(struct vertex_info *vinfo);
-
 unsigned draw_prim_info( unsigned prim, unsigned *first, unsigned *incr );
 
 unsigned draw_trim( unsigned count, unsigned first, unsigned incr );

@@ -38,9 +38,9 @@
 #include "sp_quad.h"
 #include "sp_prim_setup.h"
 #include "pipe/draw/draw_private.h"
+#include "pipe/draw/draw_vertex.h"
 #include "pipe/p_util.h"
 
-#include "pipe/draw/draw_vertex.h"
 
 
 /**
@@ -461,7 +461,7 @@ static void tri_persp_coeff( struct setup_stage *setup,
  */
 static void setup_tri_coefficients( struct setup_stage *setup )
 {
-   const enum interp_mode *interp = setup->softpipe->vertex_info.interp_mode;
+   const interp_mode *interp = setup->softpipe->vertex_info.interp_mode;
    unsigned slot, j;
 
    /* z and w are done by linear interpolation:
@@ -680,7 +680,7 @@ line_persp_coeff(struct setup_stage *setup, unsigned slot, unsigned i)
 static INLINE void
 setup_line_coefficients(struct setup_stage *setup, struct prim_header *prim)
 {
-   const enum interp_mode *interp = setup->softpipe->vertex_info.interp_mode;
+   const interp_mode *interp = setup->softpipe->vertex_info.interp_mode;
    unsigned slot, j;
 
    /* use setup->vmin, vmax to point to vertices */

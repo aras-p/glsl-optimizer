@@ -45,8 +45,8 @@
 
 
 static INLINE void
-emit_vertex_attr(struct vertex_info *vinfo, uint vfAttr, uint format,
-                 uint interp)
+emit_vertex_attr(struct vertex_info *vinfo, uint vfAttr,
+                 attrib_format format, interp_mode interp)
 {
    const uint n = vinfo->num_attribs;
    vinfo->attr_mask |= (1 << vfAttr);
@@ -59,7 +59,6 @@ emit_vertex_attr(struct vertex_info *vinfo, uint vfAttr, uint format,
    vinfo->interp_mode[n] = interp;
    vinfo->format[n] = format;
    vinfo->num_attribs++;
-
 }
 
 
@@ -89,6 +88,7 @@ draw_compute_vertex_size(struct vertex_info *vinfo)
          vinfo->size += 3;
          break;
       case FORMAT_4F:
+      case FORMAT_4F_VIEWPORT:
          vinfo->size += 4;
          break;
       default:
@@ -104,7 +104,7 @@ draw_compute_vertex_size(struct vertex_info *vinfo)
 void
 draw_set_vertex_attributes( struct draw_context *draw,
                             const uint *slot_to_vf_attr,
-                            const uint *interp_mode,
+                            const interp_mode *interps,
                             unsigned nr_attrs )
 {
    struct vertex_info *vinfo = &draw->vertex_info;
@@ -125,7 +125,7 @@ draw_set_vertex_attributes( struct draw_context *draw,
     * Remaining attribs (color, texcoords, etc)
     */
    for (i = 1; i < nr_attrs; i++) {
-      emit_vertex_attr(vinfo, slot_to_vf_attr[i], FORMAT_4F, interp_mode[i]);
+      emit_vertex_attr(vinfo, slot_to_vf_attr[i], FORMAT_4F, interps[i]);
    }
 
    draw_compute_vertex_size(vinfo);

@@ -42,8 +42,8 @@
  */
 static void calculate_vertex_layout( struct i915_context *i915 )
 {
-   const unsigned inputsRead = i915->fs.inputs_read;
-   const uint colorInterp
+   const uint inputsRead = i915->fs.inputs_read;
+   const interp_mode colorInterp
       = i915->setup.flatshade ? INTERP_CONSTANT : INTERP_LINEAR;
    struct vertex_info *vinfo = &i915->current.vertex_info;
    uint front0 = 0, back0 = 0, front1 = 0, back1 = 0;
