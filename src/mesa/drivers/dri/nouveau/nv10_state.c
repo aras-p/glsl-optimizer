@@ -43,20 +43,17 @@ static void nv10ViewportScale(nouveauContextPtr nmesa)
 	GLfloat projection[16];
 	int i;
 
-	if (!ctx->DrawBuffer) {
-		return;
-	}
-	if (!ctx->DrawBuffer->_DepthBuffer) {
-		return;
-	}
-
-	switch (ctx->DrawBuffer->_DepthBuffer->DepthBits) {
-		case 16:
-			max_depth *= 32767.0;
-			break;
-		case 24:
-			max_depth *= 16777215.0;
-			break;
+	if (ctx->DrawBuffer) {
+		if (ctx->DrawBuffer->_DepthBuffer) {
+			switch (ctx->DrawBuffer->_DepthBuffer->DepthBits) {
+				case 16:
+					max_depth *= 32767.0;
+					break;
+				case 24:
+					max_depth *= 16777215.0;
+					break;
+			}
+		}
 	}
 
 	BEGIN_RING_SIZE(NvSub3D, NV10_TCL_PRIMITIVE_3D_VIEWPORT_SCALE_X, 4);
@@ -64,17 +61,6 @@ static void nv10ViewportScale(nouveauContextPtr nmesa)
 	OUT_RINGf (h - 2048.0);
 	OUT_RINGf (max_depth);
 	OUT_RINGf (0.0);
-
-	/* FIXME: should multiply by gl projection and modelview ? */
-	memset(projection, 0, sizeof(projection));
-	projection[0*4+0] = w;
-	projection[1*4+1] = -h;
-	projection[2*4+2] = max_depth;
-	projection[3*4+3] = 1.0;
-	BEGIN_RING_SIZE(NvSub3D, NV10_TCL_PRIMITIVE_3D_PROJECTION_MATRIX(0), 16);
-	for (i=0; i<16; i++) {
-		OUT_RINGf (projection[i]);
-	}
 }
 
 static void nv10AlphaFunc(GLcontext *ctx, GLenum func, GLfloat ref)
@@ -784,11 +770,6 @@ static void nv10UpdateModelProjMatrix(nouveauContextPtr nmesa)
 	}
 	for (i=0; i<4; i++) {
 		projection[i+12] = nmesa->model_proj.m[i+12];
-	}
-
-	for (i=0; i<16; i++) {
-		printf("%d\t%.3f\t%.3f\n", i,
-			nmesa->model_proj.m[i], projection[i]);
 	}
 
 	BEGIN_RING_SIZE(NvSub3D, NV10_TCL_PRIMITIVE_3D_PROJECTION_MATRIX(0), 16);
