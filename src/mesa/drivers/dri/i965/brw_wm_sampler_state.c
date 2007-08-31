@@ -192,8 +192,8 @@ static void brw_update_sampler_state( struct gl_texture_unit *texUnit,
     */
    sampler->ss0.base_level = U_FIXED(0, 1);
 
-   sampler->ss1.max_lod = U_FIXED(MAX2(texObj->MaxLod, 0), 6);
-   sampler->ss1.min_lod = U_FIXED(MAX2(texObj->MinLod, 0), 6);
+   sampler->ss1.max_lod = U_FIXED(MIN2(MAX2(texObj->MaxLod, 0), 13), 6);
+   sampler->ss1.min_lod = U_FIXED(MIN2(MAX2(texObj->MinLod, 0), 13), 6);
    
    sampler->ss2.default_color_pointer = sdc_gs_offset >> 5;
 }
