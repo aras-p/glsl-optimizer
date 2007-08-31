@@ -520,6 +520,10 @@ static void nv50TextureMatrix(GLcontext *ctx, GLuint unit, const GLmatrix *mat)
 	/* Only with shaders */
 }
 
+static void nv50UpdateModelProjMatrix(nouveauContextPtr nmesa)
+{
+}
+
 static void nv50WindowMoved(nouveauContextPtr nmesa)
 {
 	GLcontext *ctx = nmesa->glCtx;
@@ -638,4 +642,5 @@ void nv50InitStateFuncs(GLcontext *ctx, struct dd_function_table *func)
 	nmesa->hw_func.InitCard		= nv50InitCard;
 	nmesa->hw_func.BindBuffers	= nv50BindBuffers;
 	nmesa->hw_func.WindowMoved	= nv50WindowMoved;
+	nmesa->hw_func.UpdateModelProjMatrix = nv50UpdateModelProjMatrix;
 }

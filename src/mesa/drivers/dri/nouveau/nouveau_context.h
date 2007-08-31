@@ -86,6 +86,9 @@ typedef struct nouveau_hw_func_t {
 				 nouveau_renderbuffer_t *depth);
 	/* Update anything that depends on the window position/size */
 	void      (*WindowMoved)(struct nouveau_context *);
+
+	/* Update projection matrix */
+	void	(*UpdateModelProjMatrix)(struct nouveau_context *);
 } nouveau_hw_func;
 
 typedef struct nouveau_context {
@@ -116,6 +119,9 @@ typedef struct nouveau_context {
 	/* State for tris */
 	GLuint color_offset;
 	GLuint specular_offset;
+
+	/* Projection*modelview matrix */
+	GLmatrix model_proj;
 
 	/* Vertex state */
 	GLuint vertex_size;

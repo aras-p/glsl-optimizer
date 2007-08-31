@@ -750,6 +750,51 @@ static void nv10TextureMatrix(GLcontext *ctx, GLuint unit, const GLmatrix *mat)
         OUT_RING_CACHEp(mat->m, 16);
 }
 
+static void nv10UpdateModelProjMatrix(nouveauContextPtr nmesa)
+{
+	GLcontext *ctx = nmesa->glCtx;
+	GLfloat w = ((GLfloat) ctx->Viewport.Width) * 0.5;
+	GLfloat h = ((GLfloat) ctx->Viewport.Height) * 0.5;
+	GLfloat max_depth = (ctx->Viewport.Near + ctx->Viewport.Far) * 0.5;
+	GLfloat projection[16];
+	int i;
+
+	if (ctx->DrawBuffer) {
+		if (ctx->DrawBuffer->_DepthBuffer) {
+			switch (ctx->DrawBuffer->_DepthBuffer->DepthBits) {
+				case 16:
+					max_depth *= 32767.0;
+					break;
+				case 24:
+					max_depth *= 16777215.0;
+					break;
+			}
+		}
+	}
+
+	/* Rescale for viewport */
+	for (i=0; i<4; i++) {
+		projection[i] = w * nmesa->model_proj.m[i];
+	}
+	for (i=0; i<4; i++) {
+		projection[i+4] = -h * nmesa->model_proj.m[i+4];
+	}
+	for (i=0; i<4; i++) {
+		projection[i+8] = max_depth * nmesa->model_proj.m[i+8];
+	}
+	for (i=0; i<4; i++) {
+		projection[i+12] = nmesa->model_proj.m[i+12];
+	}
+
+	for (i=0; i<16; i++) {
+		printf("%d\t%.3f\t%.3f\n", i,
+			nmesa->model_proj.m[i], projection[i]);
+	}
+
+	BEGIN_RING_SIZE(NvSub3D, NV10_TCL_PRIMITIVE_3D_PROJECTION_MATRIX(0), 16);
+	OUT_RINGp(projection, 16);
+}
+
 /* Update anything that depends on the window position/size */
 static void nv10WindowMoved(nouveauContextPtr nmesa)
 {
@@ -1011,4 +1056,5 @@ void nv10InitStateFuncs(GLcontext *ctx, struct dd_function_table *func)
 	nmesa->hw_func.InitCard		= nv10InitCard;
 	nmesa->hw_func.BindBuffers	= nv10BindBuffers;
 	nmesa->hw_func.WindowMoved	= nv10WindowMoved;
+	nmesa->hw_func.UpdateModelProjMatrix = nv10UpdateModelProjMatrix;
 }

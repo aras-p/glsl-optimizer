@@ -100,6 +100,16 @@ static void nouveauDepthRange(GLcontext *ctx, GLclampd near, GLclampd far)
     nouveauCalcViewport(ctx);
 }
 
+static void nouveauUpdateModelProjMatrix(GLcontext *ctx)
+{
+	nouveauContextPtr nmesa = NOUVEAU_CONTEXT(ctx);
+
+	_math_matrix_mul_matrix(&(nmesa->model_proj), &(ctx->_ModelProjectMatrix),
+		ctx->ModelviewMatrixStack.Top);
+
+	nmesa->hw_func.UpdateModelProjMatrix(nmesa);
+}
+
 static void nouveauDDUpdateHWState(GLcontext *ctx)
 {
     nouveauContextPtr nmesa = NOUVEAU_CONTEXT(ctx);
@@ -141,6 +151,13 @@ static void nouveauDDUpdateHWState(GLcontext *ctx)
 
 static void nouveauDDInvalidateState(GLcontext *ctx, GLuint new_state)
 {
+	if ( new_state & _NEW_PROJECTION ) {
+		nouveauUpdateModelProjMatrix(ctx);
+	}
+        if ( new_state & _NEW_MODELVIEW ) {
+		nouveauUpdateModelProjMatrix(ctx);
+	}
+
     _swrast_InvalidateState( ctx, new_state );
     _swsetup_InvalidateState( ctx, new_state );
     _vbo_InvalidateState( ctx, new_state );
