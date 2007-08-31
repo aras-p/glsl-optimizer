@@ -960,6 +960,11 @@ static void build_lighting( struct tnl_program *p )
 	    VPpli = get_temp(p); 
 	    half = get_temp(p);
  
+       /* In homogeneous object coordinates
+        */
+       emit_op1(p, OPCODE_RCP, dist, 0, swizzle1(Ppli, W));
+       emit_op2(p, OPCODE_MUL, Ppli, 0, Ppli, dist);
+
 	    /* Calulate VPpli vector
 	     */
 	    emit_op2(p, OPCODE_SUB, VPpli, 0, Ppli, V); 
