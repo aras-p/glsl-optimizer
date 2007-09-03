@@ -171,9 +171,9 @@ static void __gluMultMatrixVecd(const GLdouble matrix[16], const GLdouble in[4],
 ** Invert 4x4 matrix.
 ** Contributed by David Moore (See Mesa bug #6748)
 */
-static int __gluInvertMatrixd(const GLdouble m[16], GLdouble inv[16])
+static int __gluInvertMatrixd(const GLdouble m[16], GLdouble invOut[16])
 {
-    double det;
+    double inv[16], det;
     int i;
 
     inv[0] =   m[5]*m[10]*m[15] - m[5]*m[11]*m[14] - m[9]*m[6]*m[15]
@@ -216,7 +216,7 @@ static int __gluInvertMatrixd(const GLdouble m[16], GLdouble inv[16])
     det = 1.0 / det;
 
     for (i = 0; i < 16; i++)
-        inv[i] *= det;
+        invOut[i] = inv[i] * det;
 
     return GL_TRUE;
 }
