@@ -40,7 +40,6 @@ static void nv10ViewportScale(nouveauContextPtr nmesa)
 	GLfloat w = ((GLfloat) ctx->Viewport.Width) * 0.5;
 	GLfloat h = ((GLfloat) ctx->Viewport.Height) * 0.5;
 	GLfloat max_depth = (ctx->Viewport.Near + ctx->Viewport.Far) * 0.5;
-	GLfloat projection[16];
 	int i;
 
 	if (ctx->DrawBuffer) {
@@ -780,6 +779,16 @@ static void nv10UpdateProjectionMatrix(GLcontext *ctx)
 	OUT_RINGp(projection, 16);
 }
 
+static void nv10UpdateModelviewMatrix(GLcontext *ctx)
+{
+	/* TODO	update modelview if lighting or vertex weight enabled
+		update inverse modelview if lighting enabled
+		or update projection if lighting and vertex weight disabled
+	*/
+
+	nv10UpdateProjectionMatrix(ctx);
+}
+
 /* Update anything that depends on the window position/size */
 static void nv10WindowMoved(nouveauContextPtr nmesa)
 {
@@ -1042,4 +1051,5 @@ void nv10InitStateFuncs(GLcontext *ctx, struct dd_function_table *func)
 	nmesa->hw_func.BindBuffers	= nv10BindBuffers;
 	nmesa->hw_func.WindowMoved	= nv10WindowMoved;
 	nmesa->hw_func.UpdateProjectionMatrix = nv10UpdateProjectionMatrix;
+	nmesa->hw_func.UpdateModelviewMatrix = nv10UpdateModelviewMatrix;
 }
