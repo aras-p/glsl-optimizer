@@ -88,7 +88,10 @@ typedef struct nouveau_hw_func_t {
 	void      (*WindowMoved)(struct nouveau_context *);
 
 	/* Update projection matrix */
-	void	(*UpdateModelProjMatrix)(struct nouveau_context *);
+	void	(*UpdateProjectionMatrix)(GLcontext *);
+
+	/* Update modelview matrix (used for lighting and vertex weight) */
+	void	(*UpdateModelviewMatrix)(GLcontext *);
 } nouveau_hw_func;
 
 typedef struct nouveau_context {
@@ -120,8 +123,8 @@ typedef struct nouveau_context {
 	GLuint color_offset;
 	GLuint specular_offset;
 
-	/* Projection*modelview matrix */
-	GLmatrix model_proj;
+	/* Projection matrix */
+	GLmatrix projection;
 
 	/* Vertex state */
 	GLuint vertex_size;

@@ -100,14 +100,12 @@ static void nouveauDepthRange(GLcontext *ctx, GLclampd near, GLclampd far)
     nouveauCalcViewport(ctx);
 }
 
-static void nouveauUpdateModelProjMatrix(GLcontext *ctx)
+static void nouveauUpdateProjectionMatrix(GLcontext *ctx)
 {
-	nouveauContextPtr nmesa = NOUVEAU_CONTEXT(ctx);
+}
 
-	_math_matrix_mul_matrix(&(nmesa->model_proj), &(ctx->_ModelProjectMatrix),
-		ctx->ModelviewMatrixStack.Top);
-
-	nmesa->hw_func.UpdateModelProjMatrix(nmesa);
+static void nouveauUpdateModelviewMatrix(GLcontext *ctx)
+{
 }
 
 static void nouveauDDUpdateHWState(GLcontext *ctx)
@@ -151,11 +149,13 @@ static void nouveauDDUpdateHWState(GLcontext *ctx)
 
 static void nouveauDDInvalidateState(GLcontext *ctx, GLuint new_state)
 {
+	nouveauContextPtr nmesa = NOUVEAU_CONTEXT(ctx);
+
 	if ( new_state & _NEW_PROJECTION ) {
-		nouveauUpdateModelProjMatrix(ctx);
+		nmesa->hw_func.UpdateProjectionMatrix(ctx);
 	}
         if ( new_state & _NEW_MODELVIEW ) {
-		nouveauUpdateModelProjMatrix(ctx);
+		nmesa->hw_func.UpdateModelviewMatrix(ctx);
 	}
 
     _swrast_InvalidateState( ctx, new_state );
@@ -203,6 +203,8 @@ void nouveauDDInitState(nouveauContextPtr nmesa)
 /* Initialize the driver's state functions */
 void nouveauDDInitStateFuncs(GLcontext *ctx)
 {
+   nouveauContextPtr nmesa = NOUVEAU_CONTEXT(ctx);
+
    ctx->Driver.UpdateState		= nouveauDDInvalidateState;
 
    ctx->Driver.ClearIndex		= NULL;
@@ -253,6 +255,10 @@ void nouveauDDInitStateFuncs(GLcontext *ctx)
    ctx->Driver.CopyColorSubTable = _swrast_CopyColorSubTable;
    ctx->Driver.CopyConvolutionFilter1D = _swrast_CopyConvolutionFilter1D;
    ctx->Driver.CopyConvolutionFilter2D = _swrast_CopyConvolutionFilter2D;
+
+   /* Matrix updates */
+   nmesa->hw_func.UpdateProjectionMatrix = nouveauUpdateProjectionMatrix;
+   nmesa->hw_func.UpdateModelviewMatrix = nouveauUpdateModelviewMatrix;
 }
 
 #define STATE_INIT(a) if (ctx->Driver.a) ctx->Driver.a
