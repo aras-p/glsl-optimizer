@@ -171,9 +171,6 @@ void nouveauDDInitState(nouveauContextPtr nmesa)
     uint32_t type = nmesa->screen->card->type;
     switch(type)
     {
-        case NV_03:
-            /* Unimplemented */
-            break;
         case NV_04:
         case NV_05:
             nv04InitStateFuncs(nmesa->glCtx, &nmesa->glCtx->Driver);

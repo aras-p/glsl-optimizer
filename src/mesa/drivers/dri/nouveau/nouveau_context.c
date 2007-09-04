@@ -216,9 +216,6 @@ GLboolean nouveauCreateContext( const __GLcontextModes *glVisual,
 	nouveauDDInitState( nmesa );
 	switch(nmesa->screen->card->type)
 	{
-		case NV_03:
-			//nv03TriInitFunctions( ctx );
-			break;
 		case NV_04:
 		case NV_05:
 			nv04TriInitFunctions( ctx );
