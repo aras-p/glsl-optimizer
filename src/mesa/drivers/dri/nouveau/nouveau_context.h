@@ -123,9 +123,6 @@ typedef struct nouveau_context {
 	GLuint color_offset;
 	GLuint specular_offset;
 
-	/* Projection matrix */
-	GLmatrix projection;
-
 	/* Vertex state */
 	GLuint vertex_size;
 	GLubyte *verts;

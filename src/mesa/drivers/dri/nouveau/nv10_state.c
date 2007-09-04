@@ -40,7 +40,6 @@ static void nv10ViewportScale(nouveauContextPtr nmesa)
 	GLfloat w = ((GLfloat) ctx->Viewport.Width) * 0.5;
 	GLfloat h = ((GLfloat) ctx->Viewport.Height) * 0.5;
 	GLfloat max_depth = (ctx->Viewport.Near + ctx->Viewport.Far) * 0.5;
-	int i;
 
 	if (ctx->DrawBuffer) {
 		if (ctx->DrawBuffer->_DepthBuffer) {
@@ -757,22 +756,18 @@ static void nv10UpdateProjectionMatrix(GLcontext *ctx)
 		}
 	}
 
-	/* Calc projection * modelview */
-	_math_matrix_mul_matrix(&(nmesa->projection), &(ctx->_ModelProjectMatrix),
-		ctx->ModelviewMatrixStack.Top);
-
-	/* Rescale for viewport */
+	/* Transpose and rescale for viewport */
 	for (i=0; i<4; i++) {
-		projection[i] = w * nmesa->projection.m[i];
+		projection[i] = w * ctx->_ModelProjectMatrix.m[i*4];
 	}
 	for (i=0; i<4; i++) {
-		projection[i+4] = -h * nmesa->projection.m[i+4];
+		projection[i+4] = -h * ctx->_ModelProjectMatrix.m[i*4+1];
 	}
 	for (i=0; i<4; i++) {
-		projection[i+8] = max_depth * nmesa->projection.m[i+8];
+		projection[i+8] = max_depth * ctx->_ModelProjectMatrix.m[i*4+2];
 	}
 	for (i=0; i<4; i++) {
-		projection[i+12] = nmesa->projection.m[i+12];
+		projection[i+12] = ctx->_ModelProjectMatrix.m[i*4+3];
 	}
 
 	BEGIN_RING_SIZE(NvSub3D, NV10_TCL_PRIMITIVE_3D_PROJECTION_MATRIX(0), 16);

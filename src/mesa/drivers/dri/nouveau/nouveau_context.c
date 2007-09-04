@@ -210,7 +210,6 @@ GLboolean nouveauCreateContext( const __GLcontextModes *glVisual,
 	_swsetup_CreateContext( ctx );
 
 	_math_matrix_ctr(&nmesa->viewport);
-	_math_matrix_ctr(&nmesa->projection);
 
 	nouveauDDInitStateFuncs( ctx );
 	nouveauSpanInitFunctions( ctx );
