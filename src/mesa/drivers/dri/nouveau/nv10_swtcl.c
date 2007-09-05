@@ -417,31 +417,65 @@ static inline void nv10OutputVertexFormat(struct nouveau_context* nmesa)
 	/*
 	 * Tell t_vertex about the vertex format
 	 */
-	for(i=0;i<16;i++)
-	{
-		if (RENDERINPUTS_TEST(index, i))
+	if ((nmesa->screen->card->type>=NV_10) && (nmesa->screen->card->type<=NV_17)) {
+
+#define NV10_EMIT_VERTEX_ATTRIB(i) \
+	do {	\
+		if (RENDERINPUTS_TEST(index, i)) {	\
+			switch(attr_size[i])	\
+			{	\
+				case 1:	\
+					EMIT_ATTR(i,EMIT_1F);	\
+					break;	\
+				case 2:	\
+					EMIT_ATTR(i,EMIT_2F);	\
+					break;	\
+				case 3:	\
+					EMIT_ATTR(i,EMIT_3F);	\
+					break;	\
+				case 4:	\
+					EMIT_ATTR(i,EMIT_4F);	\
+					break;	\
+			}	\
+			total_size+=attr_size[i];	\
+		}	\
+	} while (0)
+
+		NV10_EMIT_VERTEX_ATTRIB(_TNL_ATTRIB_FOG);
+		NV10_EMIT_VERTEX_ATTRIB(_TNL_ATTRIB_WEIGHT);
+		NV10_EMIT_VERTEX_ATTRIB(_TNL_ATTRIB_NORMAL);
+		NV10_EMIT_VERTEX_ATTRIB(_TNL_ATTRIB_TEX1);
+		NV10_EMIT_VERTEX_ATTRIB(_TNL_ATTRIB_TEX0);
+		NV10_EMIT_VERTEX_ATTRIB(_TNL_ATTRIB_COLOR1);
+		NV10_EMIT_VERTEX_ATTRIB(_TNL_ATTRIB_COLOR0);
+		NV10_EMIT_VERTEX_ATTRIB(_TNL_ATTRIB_POS);
+	} else {
+		for(i=0;i<16;i++)
 		{
-			slots=i+1;
-			switch(attr_size[i])
+			if (RENDERINPUTS_TEST(index, i))
 			{
-				case 1:
-					EMIT_ATTR(i,EMIT_1F);
-					break;
-				case 2:
-					EMIT_ATTR(i,EMIT_2F);
-					break;
-				case 3:
-					EMIT_ATTR(i,EMIT_3F);
-					break;
-				case 4:
-					EMIT_ATTR(i,EMIT_4F);
-					break;
+				slots=i+1;
+				switch(attr_size[i])
+				{
+					case 1:
+						EMIT_ATTR(i,EMIT_1F);
+						break;
+					case 2:
+						EMIT_ATTR(i,EMIT_2F);
+						break;
+					case 3:
+						EMIT_ATTR(i,EMIT_3F);
+						break;
+					case 4:
+						EMIT_ATTR(i,EMIT_4F);
+						break;
+				}
+				if (i==_TNL_ATTRIB_COLOR0)
+					nmesa->color_offset=total_size;
+				if (i==_TNL_ATTRIB_COLOR1)
+					nmesa->specular_offset=total_size;
+				total_size+=attr_size[i];
 			}
-			if (i==_TNL_ATTRIB_COLOR0)
-				nmesa->color_offset=total_size;
-			if (i==_TNL_ATTRIB_COLOR1)
-				nmesa->specular_offset=total_size;
-			total_size+=attr_size[i];
 		}
 	}
 
