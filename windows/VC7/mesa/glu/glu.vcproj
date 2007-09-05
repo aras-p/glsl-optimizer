@@ -1,7 +1,7 @@
-<?xml version="1.0" encoding = "Windows-1252"?>
+<?xml version="1.0" encoding="Windows-1252"?>
 <VisualStudioProject
 	ProjectType="Visual C++"
-	Version="7.00"
+	Version="7.10"
 	Name="glu"
 	SccProjectName=""
 	SccLocalPath="">
@@ -71,7 +71,13 @@ if exist ..\..\..\..\progs\demos copy Release\GLU32.DLL ..\..\..\..\progs\demos
 			<Tool
 				Name="VCWebServiceProxyGeneratorTool"/>
 			<Tool
+				Name="VCXMLDataGeneratorTool"/>
+			<Tool
 				Name="VCWebDeploymentTool"/>
+			<Tool
+				Name="VCManagedWrapperGeneratorTool"/>
+			<Tool
+				Name="VCAuxiliaryManagedWrapperGeneratorTool"/>
 		</Configuration>
 		<Configuration
 			Name="Debug|Win32"
@@ -135,9 +141,17 @@ if exist ..\..\..\..\progs\demos copy Debug\GLU32.DLL ..\..\..\..\progs\demos
 			<Tool
 				Name="VCWebServiceProxyGeneratorTool"/>
 			<Tool
+				Name="VCXMLDataGeneratorTool"/>
+			<Tool
 				Name="VCWebDeploymentTool"/>
+			<Tool
+				Name="VCManagedWrapperGeneratorTool"/>
+			<Tool
+				Name="VCAuxiliaryManagedWrapperGeneratorTool"/>
 		</Configuration>
 	</Configurations>
+	<References>
+	</References>
 	<Files>
 		<Filter
 			Name="Source Files"
@@ -231,6 +245,9 @@ if exist ..\..\..\..\progs\demos copy Debug\GLU32.DLL ..\..\..\..\progs\demos
 				RelativePath="..\..\..\..\src\glu\sgi\libnurbs\internals\basicsurfeval.h">
 			</File>
 			<File
+				RelativePath="..\..\..\..\src\glu\sgi\libnurbs\internals\bezierarc.h">
+			</File>
+			<File
 				RelativePath="..\..\..\..\src\glu\sgi\libnurbs\interface\bezierEval.h">
 			</File>
 			<File
@@ -238,9 +255,6 @@ if exist ..\..\..\..\progs\demos copy Debug\GLU32.DLL ..\..\..\..\progs\demos
 			</File>
 			<File
 				RelativePath="..\..\..\..\src\glu\sgi\libnurbs\interface\bezierPatchMesh.h">
-			</File>
-			<File
-				RelativePath="..\..\..\..\src\glu\sgi\libnurbs\internals\bezierarc.h">
 			</File>
 			<File
 				RelativePath="..\..\..\..\src\glu\sgi\libnurbs\internals\bin.h">
@@ -297,10 +311,10 @@ if exist ..\..\..\..\progs\demos copy Debug\GLU32.DLL ..\..\..\..\progs\demos
 				RelativePath="..\..\..\..\src\glu\sgi\libnurbs\interface\glcurveval.h">
 			</File>
 			<File
-				RelativePath="..\..\..\..\src\glu\sgi\libnurbs\nurbtess\glimports.h">
+				RelativePath="..\..\..\..\src\glu\sgi\libnurbs\interface\glimports.h">
 			</File>
 			<File
-				RelativePath="..\..\..\..\src\glu\sgi\libnurbs\interface\glimports.h">
+				RelativePath="..\..\..\..\src\glu\sgi\libnurbs\nurbtess\glimports.h">
 			</File>
 			<File
 				RelativePath="..\..\..\..\src\glu\sgi\libnurbs\interface\glrenderer.h">
@@ -315,9 +329,6 @@ if exist ..\..\..\..\progs\demos copy Debug\GLU32.DLL ..\..\..\..\progs\demos
 				RelativePath="..\..\..\..\src\glu\sgi\include\gluos.h">
 			</File>
 			<File
-				RelativePath="..\..\..\..\src\glu\sgi\libnurbs\nurbtess\gridWrap.h">
-			</File>
-			<File
 				RelativePath="..\..\..\..\src\glu\sgi\libnurbs\internals\gridline.h">
 			</File>
 			<File
@@ -325,6 +336,9 @@ if exist ..\..\..\..\progs\demos copy Debug\GLU32.DLL ..\..\..\..\progs\demos
 			</File>
 			<File
 				RelativePath="..\..\..\..\src\glu\sgi\libnurbs\internals\gridvertex.h">
+			</File>
+			<File
+				RelativePath="..\..\..\..\src\glu\sgi\libnurbs\nurbtess\gridWrap.h">
 			</File>
 			<File
 				RelativePath="..\..\..\..\src\glu\sgi\libnurbs\internals\hull.h">
@@ -357,10 +371,10 @@ if exist ..\..\..\..\progs\demos copy Debug\GLU32.DLL ..\..\..\..\progs\demos
 				RelativePath="..\..\..\..\src\glu\sgi\libnurbs\nurbtess\monoPolyPart.h">
 			</File>
 			<File
-				RelativePath="..\..\..\..\src\glu\sgi\libnurbs\nurbtess\monoTriangulation.h">
+				RelativePath="..\..\..\..\src\glu\sgi\libnurbs\internals\monotonizer.h">
 			</File>
 			<File
-				RelativePath="..\..\..\..\src\glu\sgi\libnurbs\internals\monotonizer.h">
+				RelativePath="..\..\..\..\src\glu\sgi\libnurbs\nurbtess\monoTriangulation.h">
 			</File>
 			<File
 				RelativePath="..\..\..\..\src\glu\sgi\libnurbs\internals\myassert.h">
@@ -372,16 +386,16 @@ if exist ..\..\..\..\progs\demos copy Debug\GLU32.DLL ..\..\..\..\progs\demos
 				RelativePath="..\..\..\..\src\glu\sgi\libnurbs\internals\mysetjmp.h">
 			</File>
 			<File
-				RelativePath="..\..\..\..\src\glu\sgi\libnurbs\nurbtess\mystdio.h">
-			</File>
-			<File
 				RelativePath="..\..\..\..\src\glu\sgi\libnurbs\interface\mystdio.h">
 			</File>
 			<File
-				RelativePath="..\..\..\..\src\glu\sgi\libnurbs\nurbtess\mystdlib.h">
+				RelativePath="..\..\..\..\src\glu\sgi\libnurbs\nurbtess\mystdio.h">
 			</File>
 			<File
 				RelativePath="..\..\..\..\src\glu\sgi\libnurbs\interface\mystdlib.h">
+			</File>
+			<File
+				RelativePath="..\..\..\..\src\glu\sgi\libnurbs\nurbtess\mystdlib.h">
 			</File>
 			<File
 				RelativePath="..\..\..\..\src\glu\sgi\libnurbs\internals\mystring.h">
@@ -459,10 +473,10 @@ if exist ..\..\..\..\progs\demos copy Debug\GLU32.DLL ..\..\..\..\progs\demos
 				RelativePath="..\..\..\..\src\glu\sgi\libnurbs\nurbtess\sampleCompTop.h">
 			</File>
 			<File
-				RelativePath="..\..\..\..\src\glu\sgi\libnurbs\nurbtess\sampleMonoPoly.h">
+				RelativePath="..\..\..\..\src\glu\sgi\libnurbs\nurbtess\sampledLine.h">
 			</File>
 			<File
-				RelativePath="..\..\..\..\src\glu\sgi\libnurbs\nurbtess\sampledLine.h">
+				RelativePath="..\..\..\..\src\glu\sgi\libnurbs\nurbtess\sampleMonoPoly.h">
 			</File>
 			<File
 				RelativePath="..\..\..\..\src\glu\sgi\libnurbs\nurbtess\searchTree.h">
@@ -516,9 +530,6 @@ if exist ..\..\..\..\progs\demos copy Debug\GLU32.DLL ..\..\..\..\progs\demos
 		<Filter
 			Name="C++ files"
 			Filter=".cc">
-			<File
-				RelativePath="..\..\..\..\src\glu\sgi\libtess\README">
-			</File>
 			<File
 				RelativePath="..\..\..\..\src\glu\sgi\libnurbs\internals\arc.cc">
 			</File>
@@ -634,13 +645,13 @@ if exist ..\..\..\..\progs\demos copy Debug\GLU32.DLL ..\..\..\..\progs\demos
 				RelativePath="..\..\..\..\src\glu\sgi\libnurbs\nurbtess\monoPolyPart.cc">
 			</File>
 			<File
+				RelativePath="..\..\..\..\src\glu\sgi\libnurbs\internals\monotonizer.cc">
+			</File>
+			<File
 				RelativePath="..\..\..\..\src\glu\sgi\libnurbs\nurbtess\monoTriangulation.cc">
 			</File>
 			<File
 				RelativePath="..\..\..\..\src\glu\sgi\libnurbs\internals\monoTriangulationBackend.cc">
-			</File>
-			<File
-				RelativePath="..\..\..\..\src\glu\sgi\libnurbs\internals\monotonizer.cc">
 			</File>
 			<File
 				RelativePath="..\..\..\..\src\glu\sgi\libnurbs\internals\mycode.cc">
@@ -682,6 +693,9 @@ if exist ..\..\..\..\progs\demos copy Debug\GLU32.DLL ..\..\..\..\progs\demos
 				RelativePath="..\..\..\..\src\glu\sgi\libnurbs\internals\reader.cc">
 			</File>
 			<File
+				RelativePath="..\..\..\..\src\glu\sgi\libtess\README">
+			</File>
+			<File
 				RelativePath="..\..\..\..\src\glu\sgi\libnurbs\nurbtess\rectBlock.cc">
 			</File>
 			<File
@@ -700,10 +714,10 @@ if exist ..\..\..\..\progs\demos copy Debug\GLU32.DLL ..\..\..\..\progs\demos
 				RelativePath="..\..\..\..\src\glu\sgi\libnurbs\nurbtess\sampleCompTop.cc">
 			</File>
 			<File
-				RelativePath="..\..\..\..\src\glu\sgi\libnurbs\nurbtess\sampleMonoPoly.cc">
+				RelativePath="..\..\..\..\src\glu\sgi\libnurbs\nurbtess\sampledLine.cc">
 			</File>
 			<File
-				RelativePath="..\..\..\..\src\glu\sgi\libnurbs\nurbtess\sampledLine.cc">
+				RelativePath="..\..\..\..\src\glu\sgi\libnurbs\nurbtess\sampleMonoPoly.cc">
 			</File>
 			<File
 				RelativePath="..\..\..\..\src\glu\sgi\libnurbs\nurbtess\searchTree.cc">
