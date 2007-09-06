@@ -253,8 +253,12 @@ static void nv10DepthRange(GLcontext *ctx, GLclampd nearval, GLclampd farval)
 	nouveauContextPtr nmesa = NOUVEAU_CONTEXT(ctx);
 
 	GLfloat depth_scale = 16777216.0;
-	if (ctx->DrawBuffer->_DepthBuffer->DepthBits == 16) {
-		depth_scale = 32768.0;
+	if (ctx->DrawBuffer) {
+		if (ctx->DrawBuffer->_DepthBuffer) {
+			if (ctx->DrawBuffer->_DepthBuffer->DepthBits == 16) {
+				depth_scale = 32768.0;
+			}
+		}
 	}
 
 	BEGIN_RING_CACHE(NvSub3D, NV10_TCL_PRIMITIVE_3D_DEPTH_RANGE_NEAR, 2);
