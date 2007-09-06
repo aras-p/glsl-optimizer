@@ -111,6 +111,11 @@ struct dd_function_table {
 
 
    /**
+    * Execute glRasterPos, updating the ctx->Current.Raster fields
+    */
+   void (*RasterPos)( GLcontext *ctx, const GLfloat v[4] );
+
+   /**
     * \name Image-related functions
     */
    /*@{*/

@@ -79,6 +79,7 @@ _mesa_init_driver_functions(struct dd_function_table *driver)
    /* framebuffer/image functions */
    driver->Clear = _swrast_Clear;
    driver->Accum = _swrast_Accum;
+   driver->RasterPos = _tnl_RasterPos;
    driver->DrawPixels = _swrast_DrawPixels;
    driver->ReadPixels = _swrast_ReadPixels;
    driver->CopyPixels = _swrast_CopyPixels;
