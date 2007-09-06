@@ -296,6 +296,7 @@ void nouveauInitState(GLcontext *ctx)
     STATE_INIT(CullFace)( ctx, ctx->Polygon.CullFaceMode );
     STATE_INIT(DepthFunc)( ctx, ctx->Depth.Func );
     STATE_INIT(DepthMask)( ctx, ctx->Depth.Mask );
+    STATE_INIT(DepthRange)( ctx, ctx->Viewport.Near, ctx->Viewport.Far );
 
     STATE_INIT(Enable)( ctx, GL_ALPHA_TEST, ctx->Color.AlphaEnabled );
     STATE_INIT(Enable)( ctx, GL_BLEND, ctx->Color.BlendEnabled );
