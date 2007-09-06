@@ -49,6 +49,7 @@
 #define PIPE_ATTRIB_MAX      32
 #define PIPE_MAX_COLOR_BUFS   8
 #define PIPE_MAX_TEXTURE_LEVELS  16
+#define PIPE_MAX_FEEDBACK_ATTRIBS 16
 
 
 /* fwd decl */
@@ -91,6 +92,20 @@ struct pipe_setup_state
    float offset_units;
    float offset_scale;
 };
+
+
+/**
+ * Post-transform vertex feeback
+ */
+struct pipe_feedback_state {
+   uint enabled:1;        /**< enable feedback? */
+   uint discard:1;        /**< discard primitives? */
+   uint interleaved:1;    /**< interleaved output? */
+   uint num_attribs;
+   uint attrib[PIPE_MAX_FEEDBACK_ATTRIBS];
+   uint size[PIPE_MAX_FEEDBACK_ATTRIBS];
+};
+
 
 struct pipe_poly_stipple {
    unsigned stipple[32];

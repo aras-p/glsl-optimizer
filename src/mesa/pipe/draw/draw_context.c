@@ -137,7 +137,12 @@ static void validate_pipeline( struct draw_context *draw )
       draw->pipeline.flatshade->next = next;
       next = draw->pipeline.flatshade;
    }
-   
+
+   if (draw->feedback.enabled || draw->feedback.discard) {
+      draw->pipeline.feedback->next = next;
+      next = draw->pipeline.feedback;
+   }
+
    draw->pipeline.first = next;
 }
 
@@ -190,6 +195,14 @@ void draw_set_viewport_state( struct draw_context *draw,
 
 
 void
+draw_set_vertex_shader(struct draw_context *draw,
+                       const struct pipe_shader_state *shader)
+{
+   draw->vertex_shader = *shader;
+}
+
+
+void
 draw_set_vertex_buffer(struct draw_context *draw,
                        unsigned attr,
                        const struct pipe_vertex_buffer *buffer)
@@ -209,9 +222,30 @@ draw_set_vertex_element(struct draw_context *draw,
 }
 
 
+/**
+ * Tell drawing context where to find mapped vertex buffers.
+ */
 void
-draw_set_vertex_shader(struct draw_context *draw,
-                       const struct pipe_shader_state *shader)
+draw_set_mapped_vertex_buffer(struct draw_context *draw,
+                              unsigned attr, const void *buffer)
 {
-   draw->vertex_shader = *shader;
+   draw->mapped_vbuffer[attr] = buffer;
 }
+
+
+void
+draw_set_mapped_constant_buffer(struct draw_context *draw,
+                                const void *buffer)
+{
+   draw->mapped_constants = buffer;
+}
+
+
+void
+draw_set_mapped_feedback_buffer(struct draw_context *draw, uint index,
+                                void *buffer, uint size)
+{
+   draw->mapped_feedback_buffer[index] = buffer;
+   draw->mapped_feedback_buffer_size[index] = size; /* in bytes */
+}
+

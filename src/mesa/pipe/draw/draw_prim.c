@@ -353,23 +353,6 @@ draw_set_prim( struct draw_context *draw, unsigned prim )
 }
 
 
-/**
- * Tell drawing context where to find mapped vertex buffers.
- */
-void draw_set_mapped_vertex_buffer(struct draw_context *draw,
-                                   unsigned attr, const void *buffer)
-{
-   draw->mapped_vbuffer[attr] = buffer;
-}
-
-
-void draw_set_mapped_constant_buffer(struct draw_context *draw,
-                                     const void *buffer)
-{
-   draw->mapped_constants = buffer;
-}
-
-
 unsigned
 draw_prim_info(unsigned prim, unsigned *first, unsigned *incr)
 {

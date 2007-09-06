@@ -93,14 +93,11 @@ unsigned draw_prim_info( unsigned prim, unsigned *first, unsigned *incr );
 
 unsigned draw_trim( unsigned count, unsigned first, unsigned incr );
 
-void draw_set_mapped_element_buffer( struct draw_context *draw,
-                                     unsigned eltSize, void *elements );
 
-void draw_set_mapped_vertex_buffer(struct draw_context *draw,
-                                   unsigned attr, const void *buffer);
+void
+draw_set_vertex_shader(struct draw_context *draw,
+                       const struct pipe_shader_state *shader);
 
-void draw_set_mapped_constant_buffer(struct draw_context *draw,
-                                     const void *buffer);
 
 void
 draw_set_vertex_buffer(struct draw_context *draw,
@@ -112,10 +109,18 @@ draw_set_vertex_element(struct draw_context *draw,
                         unsigned attr,
                         const struct pipe_vertex_element *element);
 
-void
-draw_set_vertex_shader(struct draw_context *draw,
-                       const struct pipe_shader_state *shader);
+void draw_set_mapped_element_buffer( struct draw_context *draw,
+                                     unsigned eltSize, void *elements );
 
+void draw_set_mapped_vertex_buffer(struct draw_context *draw,
+                                   unsigned attr, const void *buffer);
+
+void draw_set_mapped_constant_buffer(struct draw_context *draw,
+                                     const void *buffer);
+
+void
+draw_set_mapped_feedback_buffer(struct draw_context *draw, uint index,
+                                void *buffer, uint size);
 
 void
 draw_arrays(struct draw_context *draw, unsigned prim,

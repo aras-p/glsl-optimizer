@@ -138,14 +138,28 @@ struct pipe_context {
    void (*set_viewport_state)( struct pipe_context *,
                                const struct pipe_viewport_state * );
 
+   /*
+    * Vertex arrays
+    */
    void (*set_vertex_buffer)( struct pipe_context *,
                               unsigned index,
                               const struct pipe_vertex_buffer * );
-   
+
    void (*set_vertex_element)( struct pipe_context *,
 			       unsigned index,
 			       const struct pipe_vertex_element * );
-			       
+
+   /*
+    * Vertex feedback
+    */
+   void (*set_feedback_buffer)(struct pipe_context *,
+                               unsigned index,
+                               struct pipe_vertex_buffer *);
+   
+   void (*set_feedback_element)(struct pipe_context *,
+                                unsigned index,
+                                const struct pipe_vertex_element *);
+
    
    /*
     * Surface functions
