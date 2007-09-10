@@ -48,6 +48,7 @@ struct draw_context *draw_create( void )
    draw->pipeline.clip      = draw_clip_stage( draw );
    draw->pipeline.flatshade = draw_flatshade_stage( draw );
    draw->pipeline.cull      = draw_cull_stage( draw );
+   draw->pipeline.feedback  = draw_feedback_stage( draw );
 
    ASSIGN_4V( draw->plane[0], -1,  0,  0, 1 );
    ASSIGN_4V( draw->plane[1],  1,  0,  0, 1 );
@@ -144,6 +145,14 @@ static void validate_pipeline( struct draw_context *draw )
    }
 
    draw->pipeline.first = next;
+}
+
+
+void draw_set_feedback_state( struct draw_context *draw,
+                              const struct pipe_feedback_state *feedback )
+{
+   draw->feedback = *feedback;
+   validate_pipeline( draw );
 }
 
 
@@ -245,6 +254,7 @@ void
 draw_set_mapped_feedback_buffer(struct draw_context *draw, uint index,
                                 void *buffer, uint size)
 {
+   assert(index < PIPE_MAX_FEEDBACK_ATTRIBS);
    draw->mapped_feedback_buffer[index] = buffer;
    draw->mapped_feedback_buffer_size[index] = size; /* in bytes */
 }

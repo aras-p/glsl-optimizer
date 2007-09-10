@@ -83,6 +83,9 @@ void draw_set_viewport_state( struct draw_context *draw,
 void draw_set_clip_state( struct draw_context *pipe,
                           const struct pipe_clip_state *clip );
 
+void draw_set_feedback_state( struct draw_context *draw,
+                              const struct pipe_feedback_state * );
+
 void draw_set_setup_state( struct draw_context *draw,
                            const struct pipe_setup_state *setup );
 

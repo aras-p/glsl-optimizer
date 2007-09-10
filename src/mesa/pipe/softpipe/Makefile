@@ -26,6 +26,7 @@ DRIVER_SOURCES = \
 	sp_state_blend.c \
 	sp_state_clip.c \
 	sp_state_derived.c \
+	sp_state_feedback.c \
 	sp_state_fs.c \
 	sp_state_sampler.c \
 	sp_state_setup.c \

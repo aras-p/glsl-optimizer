@@ -371,5 +371,14 @@ struct pipe_vertex_element
 };
 
 
+/**
+ * Vertex feedback buffer
+ */
+struct pipe_feedback_buffer {
+   struct pipe_buffer_handle *buffer;
+   unsigned size;
+   unsigned start_offset;
+};
+
 
 #endif

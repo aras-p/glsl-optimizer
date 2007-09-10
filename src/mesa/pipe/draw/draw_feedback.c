@@ -81,7 +81,8 @@ feedback_vertex(struct draw_stage *stage, const struct vertex_header *vertex)
 
    for (i = 0; i < feedback->num_attribs; i++) {
       const uint attr = feedback->attrib[i];
-      const float *src = attr ? vertex->data[attr] : vertex->clip;
+      const uint slot = stage->draw->vertex_info.attrib_to_slot[attr];
+      const float *src = attr ? vertex->data[slot] : vertex->clip;
       const uint size = feedback->size[i];
       float *dest = fs->dest[i * select];
 

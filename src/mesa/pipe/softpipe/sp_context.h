@@ -78,6 +78,7 @@ struct softpipe_context {
    struct pipe_clip_state clip;
    struct pipe_constant_buffer constants[2];
    struct pipe_depth_state depth_test;
+   struct pipe_feedback_state feedback;
    struct pipe_framebuffer_state framebuffer;
    struct pipe_shader_state fs;
    struct pipe_shader_state vs;
@@ -106,6 +107,9 @@ struct softpipe_context {
    unsigned nr_frag_attrs;  /**< number of active fragment attribs */
    boolean need_z;  /**< produce quad/fragment Z values? */
    boolean need_w;  /**< produce quad/fragment W values? */
+
+   /** Feedback buffers */
+   struct pipe_feedback_buffer feedback_buffer[PIPE_MAX_FEEDBACK_ATTRIBS];
 
 #if 0
    /* Stipple derived state:

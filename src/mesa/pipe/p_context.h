@@ -106,6 +106,9 @@ struct pipe_context {
    void (*set_depth_state)( struct pipe_context *,
                             const struct pipe_depth_state * );
 
+   void (*set_feedback_state)( struct pipe_context *,
+                               const struct pipe_feedback_state *);
+
    void (*set_framebuffer_state)( struct pipe_context *,
                                   const struct pipe_framebuffer_state * );
 
@@ -154,13 +157,8 @@ struct pipe_context {
     */
    void (*set_feedback_buffer)(struct pipe_context *,
                                unsigned index,
-                               struct pipe_vertex_buffer *);
-   
-   void (*set_feedback_element)(struct pipe_context *,
-                                unsigned index,
-                                const struct pipe_vertex_element *);
+                               const struct pipe_feedback_buffer *);
 
-   
    /*
     * Surface functions
     * This might go away...

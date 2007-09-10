@@ -239,6 +239,7 @@ struct pipe_context *softpipe_create( struct pipe_winsys *pipe_winsys,
    softpipe->pipe.set_clear_color_state = softpipe_set_clear_color_state;
    softpipe->pipe.set_constant_buffer = softpipe_set_constant_buffer;
    softpipe->pipe.set_depth_state = softpipe_set_depth_test_state;
+   softpipe->pipe.set_feedback_state = softpipe_set_feedback_state;
    softpipe->pipe.set_framebuffer_state = softpipe_set_framebuffer_state;
    softpipe->pipe.set_fs_state = softpipe_set_fs_state;
    softpipe->pipe.set_vs_state = softpipe_set_vs_state;
@@ -249,8 +250,10 @@ struct pipe_context *softpipe_create( struct pipe_winsys *pipe_winsys,
    softpipe->pipe.set_stencil_state = softpipe_set_stencil_state;
    softpipe->pipe.set_texture_state = softpipe_set_texture_state;
    softpipe->pipe.set_viewport_state = softpipe_set_viewport_state;
+
    softpipe->pipe.set_vertex_buffer = softpipe_set_vertex_buffer;
    softpipe->pipe.set_vertex_element = softpipe_set_vertex_element;
+   softpipe->pipe.set_feedback_buffer = softpipe_set_feedback_buffer;
 
    softpipe->pipe.draw_arrays = softpipe_draw_arrays;
    softpipe->pipe.draw_elements = softpipe_draw_elements;
