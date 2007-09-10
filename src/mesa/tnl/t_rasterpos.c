@@ -393,9 +393,6 @@ compute_texgen(GLcontext *ctx, const GLfloat vObj[4], const GLfloat vEye[4],
 void
 _tnl_RasterPos(GLcontext *ctx, const GLfloat vObj[4])
 {
-   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
-   FLUSH_CURRENT(ctx, 0);
-
    if (ctx->VertexProgram._Enabled) {
       /* XXX implement this */
       _mesa_problem(ctx, "Vertex programs not implemented for glRasterPos");

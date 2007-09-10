@@ -53,6 +53,9 @@ rasterpos(GLfloat x, GLfloat y, GLfloat z, GLfloat w)
    if (ctx->NewState)
       _mesa_update_state( ctx );
 
+   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
+   FLUSH_CURRENT(ctx, 0);
+
    ctx->Driver.RasterPos(ctx, p);
 }
 
