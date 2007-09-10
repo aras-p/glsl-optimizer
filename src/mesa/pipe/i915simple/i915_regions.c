@@ -123,8 +123,8 @@ i915_region_release(struct pipe_context *pipe, struct pipe_region **region)
    if ((*region)->refcount == 0) {
       assert((*region)->map_refcount == 0);
 
-      i915->pipe.winsys->buffer_unreference( i915->pipe.winsys,
-					     &((*region)->buffer) );
+      i915->pipe.winsys->buffer_reference( i915->pipe.winsys,
+                                           &((*region)->buffer), NULL );
       free(*region);
    }
    *region = NULL;

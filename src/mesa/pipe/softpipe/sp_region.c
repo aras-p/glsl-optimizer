@@ -121,8 +121,8 @@ sp_region_release(struct pipe_context *pipe, struct pipe_region **region)
    if ((*region)->refcount == 0) {
       assert((*region)->map_refcount == 0);
 
-      sp->pipe.winsys->buffer_unreference( sp->pipe.winsys,
-                                           &((*region)->buffer) );
+      sp->pipe.winsys->buffer_reference( sp->pipe.winsys,
+                                         &((*region)->buffer), NULL );
       free(*region);
    }
    *region = NULL;

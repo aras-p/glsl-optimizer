@@ -337,7 +337,7 @@ st_RasterPos(GLcontext *ctx, const GLfloat v[4])
 
    /* free vertex feedback buffer */
    pipe->winsys->buffer_unmap(pipe->winsys, fb_buf.buffer);
-   pipe->winsys->buffer_unreference(pipe->winsys, &fb_buf.buffer);
+   pipe->winsys->buffer_reference(pipe->winsys, &fb_buf.buffer, NULL);
 
    /* restore pipe state */
    pipe->set_feedback_state(pipe, &ctx->st->state.feedback);

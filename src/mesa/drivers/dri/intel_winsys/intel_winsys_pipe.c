@@ -84,21 +84,20 @@ static void intel_buffer_unmap(struct pipe_winsys *sws,
 }
 
 
-static struct pipe_buffer_handle *
+static void
 intel_buffer_reference(struct pipe_winsys *sws,
+		       struct pipe_buffer_handle **ptr,
 		       struct pipe_buffer_handle *buf)
 {
-   return pipe_bo( driBOReference( dri_bo(buf) ) );
-}
-
-static void intel_buffer_unreference(struct pipe_winsys *sws, 
-				     struct pipe_buffer_handle **buf)
-{
-   if (*buf) {
-      driBOUnReference( dri_bo(*buf) );
+   if (*ptr) {
+      driBOUnReference( dri_bo(*ptr) );
       *buf = NULL;
    }
+
+   driBOReference( dri_bo(buf) );
+   *ptr = buf;
 }
+
 
 /* Grabs the hardware lock!
  */
@@ -208,7 +207,6 @@ intel_create_pipe_winsys( struct intel_context *intel )
    iws->winsys.buffer_map = intel_buffer_map;
    iws->winsys.buffer_unmap = intel_buffer_unmap;
    iws->winsys.buffer_reference = intel_buffer_reference;
-   iws->winsys.buffer_unreference = intel_buffer_unreference;
    iws->winsys.buffer_data = intel_buffer_data;
    iws->winsys.buffer_subdata = intel_buffer_subdata;
    iws->winsys.buffer_get_subdata = intel_buffer_get_subdata;

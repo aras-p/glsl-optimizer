@@ -68,8 +68,9 @@ void softpipe_set_constant_buffer(struct pipe_context *pipe,
    assert(index == 0);
 
    /* note: reference counting */
-   ws->buffer_unreference(ws, &softpipe->constants[shader].buffer);
-   softpipe->constants[shader].buffer = ws->buffer_reference(ws, buf->buffer);
+   ws->buffer_reference(ws,
+                        &softpipe->constants[shader].buffer,
+                        buf->buffer);
    softpipe->constants[shader].size = buf->size;
 
    softpipe->dirty |= SP_NEW_CONSTANTS;

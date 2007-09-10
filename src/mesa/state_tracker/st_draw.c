@@ -152,7 +152,8 @@ static void
 destroy_default_attribs_buffer(struct st_context *st)
 {
    struct pipe_context *pipe = st->pipe;
-   pipe->winsys->buffer_unreference(pipe->winsys, &st->default_attrib_buffer);
+   pipe->winsys->buffer_reference(pipe->winsys,
+                                  &st->default_attrib_buffer, NULL);
 }
 
 
@@ -349,7 +350,7 @@ st_draw_vertices(GLcontext *ctx, unsigned prim,
    pipe->draw_arrays(pipe, prim, 0, numVertex);
 
    /* XXX: do one-time */
-   pipe->winsys->buffer_unreference(pipe->winsys, &vbuf);
+   pipe->winsys->buffer_reference(pipe->winsys, &vbuf, NULL);
 }
 
 

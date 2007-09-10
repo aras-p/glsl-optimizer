@@ -81,7 +81,7 @@ st_bufferobj_free(GLcontext *ctx, struct gl_buffer_object *obj)
    struct st_buffer_object *st_obj = st_buffer_object(obj);
 
    if (st_obj->buffer) 
-      pipe->winsys->buffer_unreference(pipe->winsys, &st_obj->buffer);
+      pipe->winsys->buffer_reference(pipe->winsys, &st_obj->buffer, NULL);
 
    free(st_obj);
 }

@@ -79,11 +79,10 @@ struct pipe_winsys {
    void (*buffer_unmap)( struct pipe_winsys *sws, 
 			 struct pipe_buffer_handle *buf );
 
-   struct pipe_buffer_handle *(*buffer_reference)( struct pipe_winsys *sws,
-						   struct pipe_buffer_handle *buf );
-
-   void (*buffer_unreference)( struct pipe_winsys *sws, 
-			       struct pipe_buffer_handle **buf );
+   /** Set ptr = buf, with reference counting */
+   void (*buffer_reference)( struct pipe_winsys *sws,
+                             struct pipe_buffer_handle **ptr,
+                             struct pipe_buffer_handle *buf );
 
    void (*buffer_data)(struct pipe_winsys *sws, 
 		       struct pipe_buffer_handle *buf,

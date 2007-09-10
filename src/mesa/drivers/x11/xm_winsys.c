@@ -108,30 +108,31 @@ xm_buffer_unmap(struct pipe_winsys *pws, struct pipe_buffer_handle *buf)
    xm_buf->mapped = NULL;
 }
 
-
-static struct pipe_buffer_handle *
-xm_buffer_reference(struct pipe_winsys *pws, struct pipe_buffer_handle *buf)
-{
-   struct xm_buffer *xm_buf = xm_bo(buf);
-   xm_buf->refcount++;
-   return buf;
-}
-
 static void
-xm_buffer_unreference(struct pipe_winsys *pws, struct pipe_buffer_handle **buf)
+xm_buffer_reference(struct pipe_winsys *pws,
+                    struct pipe_buffer_handle **ptr,
+                    struct pipe_buffer_handle *buf)
 {
-   if (*buf) {
-      struct xm_buffer *xm_buf = xm_bo(*buf);
-      xm_buf->refcount--;
-      assert(xm_buf->refcount >= 0);
-      if (xm_buf->refcount == 0) {
-         if (xm_buf->data) {
-            free(xm_buf->data);
-            xm_buf->data = NULL;
+   if (*ptr) {
+      struct xm_buffer *oldBuf = xm_bo(*ptr);
+      oldBuf->refcount--;
+      assert(oldBuf->refcount >= 0);
+      if (oldBuf->refcount == 0) {
+         if (oldBuf->data) {
+            free(oldBuf->data);
+            oldBuf->data = NULL;
          }
-         free(xm_buf);
+         free(oldBuf);
       }
-      *buf = NULL;
+      *ptr = NULL;
+   }
+
+   assert(!(*ptr));
+
+   if (buf) {
+      struct xm_buffer *newBuf = xm_bo(buf);
+      newBuf->refcount++;
+      *ptr = buf;
    }
 }
 
@@ -237,7 +238,6 @@ xmesa_create_pipe_winsys( XMesaContext xmesa )
    xws->winsys.buffer_map = xm_buffer_map;
    xws->winsys.buffer_unmap = xm_buffer_unmap;
    xws->winsys.buffer_reference = xm_buffer_reference;
-   xws->winsys.buffer_unreference = xm_buffer_unreference;
    xws->winsys.buffer_data = xm_buffer_data;
    xws->winsys.buffer_subdata = xm_buffer_subdata;
    xws->winsys.buffer_get_subdata = xm_buffer_get_subdata;
