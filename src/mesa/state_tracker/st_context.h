@@ -74,6 +74,7 @@ struct st_context
       struct pipe_clip_state clip;
       struct pipe_constant_buffer constants[2];
       struct pipe_depth_state depth;
+      struct pipe_feedback_state feedback;
       struct pipe_framebuffer_state framebuffer;
       struct pipe_mipmap_tree *texture[PIPE_MAX_SAMPLERS];
       struct pipe_poly_stipple poly_stipple;
