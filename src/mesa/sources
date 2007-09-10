@@ -320,7 +320,7 @@ X11_DRIVER_SOURCES =		\
 	drivers/x11/xm_dd.c	\
 	drivers/x11/xm_glide.c	\
 	drivers/x11/xm_line.c	\
-	drivers/x11/xm_softpipe.c	\
+	drivers/x11/xm_winsys.c	\
 	drivers/x11/xm_span.c	\
 	drivers/x11/xm_surface.c	\
 	drivers/x11/xm_tri.c
