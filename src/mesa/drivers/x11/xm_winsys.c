@@ -41,13 +41,21 @@
 #include "pipe/softpipe/sp_winsys.h"
 
 
-struct xm_softpipe_winsys
+/**
+ * XMesa winsys, derived from softpipe winsys.
+ * NOTE: there's nothing really X-specific in this winsys layer so
+ * we could probably lift it up somewhere.
+ */
+struct xm_winsys
 {
    struct softpipe_winsys sws;
-   XMesaContext xmctx; /* not really needed */
+   int foo; /* placeholder */
 };
 
 
+/**
+ * Low-level OS/window system memory buffer
+ */
 struct xm_buffer
 {
    int refcount;
@@ -75,10 +83,10 @@ pipe_bo( struct xm_buffer *bo )
 
 /* Turn a softpipe winsys into an xm/softpipe winsys:
  */
-static inline struct xm_softpipe_winsys *
-xm_softpipe_winsys(struct softpipe_winsys *sws)
+static inline struct xm_winsys *
+xm_winsys(struct softpipe_winsys *sws)
 {
-   return (struct xm_softpipe_winsys *) sws;
+   return (struct xm_winsys *) sws;
 }
 
 
@@ -246,7 +254,7 @@ xmesa_create_pipe_winsys( XMesaContext xmesa )
 struct pipe_context *
 xmesa_create_softpipe(XMesaContext xmesa)
 {
-   struct xm_softpipe_winsys *isws = CALLOC_STRUCT( xm_softpipe_winsys );
+   struct xm_winsys *isws = CALLOC_STRUCT( xm_winsys );
    
    /* Fill in this struct with callbacks that softpipe will need to
     * communicate with the window system, buffer manager, etc. 
