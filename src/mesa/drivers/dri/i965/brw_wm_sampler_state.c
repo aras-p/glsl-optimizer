@@ -178,7 +178,7 @@ static void brw_update_sampler_state( struct gl_texture_unit *texUnit,
 
    /* Set LOD bias: 
     */
-   sampler->ss0.lod_bias = S_FIXED(texUnit->LodBias + texObj->LodBias, 6);
+   sampler->ss0.lod_bias = S_FIXED(CLAMP(texUnit->LodBias + texObj->LodBias, -16, 15), 6);
 
    sampler->ss0.lod_preclamp = 1; /* OpenGL mode */
    sampler->ss0.default_color_mode = 0; /* OpenGL/DX10 mode */
