@@ -1499,8 +1499,6 @@ void
 _mesa_make_current( GLcontext *newCtx, GLframebuffer *drawBuffer,
                     GLframebuffer *readBuffer )
 {
-   GET_CURRENT_CONTEXT(oldCtx);
-
    if (MESA_VERBOSE & VERBOSE_API)
       _mesa_debug(newCtx, "_mesa_make_current()\n");
 
@@ -1525,13 +1523,6 @@ _mesa_make_current( GLcontext *newCtx, GLframebuffer *drawBuffer,
    _glapi_set_context((void *) newCtx);
    ASSERT(_mesa_get_current_context() == newCtx);
 
-   if (oldCtx) {
-      _mesa_unreference_framebuffer(&oldCtx->WinSysDrawBuffer);
-      _mesa_unreference_framebuffer(&oldCtx->WinSysReadBuffer);
-      _mesa_unreference_framebuffer(&oldCtx->DrawBuffer);
-      _mesa_unreference_framebuffer(&oldCtx->ReadBuffer);
-   }
-         
    if (!newCtx) {
       _glapi_set_dispatch(NULL);  /* none current */
    }
