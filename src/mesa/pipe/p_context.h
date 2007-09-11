@@ -75,11 +75,12 @@ struct pipe_context {
    void (*clear)(struct pipe_context *pipe, struct pipe_surface *ps,
                  unsigned clearValue);
 
-   /** occlusion counting (XXX this may be temporary - we should probably
-    * have generic query objects with begin/end methods)
+   /**
+    * Query objects
     */
-   void (*reset_occlusion_counter)(struct pipe_context *pipe);
-   unsigned (*get_occlusion_counter)(struct pipe_context *pipe);
+   void (*begin_query)(struct pipe_context *pipe, struct pipe_query_object *q);
+   void (*end_query)(struct pipe_context *pipe, struct pipe_query_object *q);
+   void (*wait_query)(struct pipe_context *pipe, struct pipe_query_object *q);
 
    /*
     * State functions

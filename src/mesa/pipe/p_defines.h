@@ -299,4 +299,12 @@
 #define PIPE_PRIM_POLYGON         9
 
 
+/**
+ * Query object types
+ */
+#define PIPE_QUERY_OCCLUSION_COUNTER     0
+#define PIPE_QUERY_PRIMITIVES_GENERATED  1
+#define PIPE_QUERY_PRIMITIVES_EMITTED    2
+#define PIPE_QUERY_TYPES                 3
+
 #endif

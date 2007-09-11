@@ -2085,10 +2085,11 @@ struct gl_ati_fragment_shader_state
  */
 struct gl_query_object
 {
-   GLuint Id;
-   GLuint64EXT Result; /* the counter */
-   GLboolean Active;   /* inside Begin/EndQuery */
-   GLboolean Ready;    /* result is ready */
+   GLenum Target;      /**< The query target, when active */
+   GLuint Id;          /**< hash table ID/name */
+   GLuint64EXT Result; /**< the counter */
+   GLboolean Active;   /**< inside Begin/EndQuery */
+   GLboolean Ready;    /**< result is ready? */
 };
 
 

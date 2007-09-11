@@ -94,6 +94,11 @@ struct softpipe_context {
    unsigned dirty;
 
    /*
+    * Active queries
+    */
+   struct pipe_query_object *queries[PIPE_QUERY_TYPES];
+
+   /*
     * Mapped vertex buffers
     */
    ubyte *mapped_vbuffer[PIPE_ATTRIB_MAX];
@@ -119,8 +124,6 @@ struct softpipe_context {
 
    /** Derived from scissor and surface bounds: */
    struct pipe_scissor_state cliprect;
-
-   unsigned occlusion_counter;
 
    unsigned line_stipple_counter;
 

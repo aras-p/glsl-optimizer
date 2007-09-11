@@ -381,4 +381,14 @@ struct pipe_feedback_buffer {
 };
 
 
+/**
+ * Hardware queries (occlusion, transform feedback, timing, etc)
+ */
+struct pipe_query_object {
+   uint type:3;   /**< PIPE_QUERY_x */
+   uint ready:1;  /**< is result ready? */
+   uint64 count;
+};
+
+
 #endif

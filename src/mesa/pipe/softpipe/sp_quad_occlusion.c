@@ -44,11 +44,13 @@ static void
 occlusion_count_quad(struct quad_stage *qs, struct quad_header *quad)
 {
    struct softpipe_context *softpipe = qs->softpipe;
+   struct pipe_query_object *occ
+      = softpipe->queries[PIPE_QUERY_OCCLUSION_COUNTER];
 
-   softpipe->occlusion_counter += (quad->mask     ) & 1;
-   softpipe->occlusion_counter += (quad->mask >> 1) & 1;
-   softpipe->occlusion_counter += (quad->mask >> 2) & 1;
-   softpipe->occlusion_counter += (quad->mask >> 3) & 1;
+   occ->count += (quad->mask     ) & 1;
+   occ->count += (quad->mask >> 1) & 1;
+   occ->count += (quad->mask >> 2) & 1;
+   occ->count += (quad->mask >> 3) & 1;
 
    if (quad->mask)
       qs->next->run(qs->next, quad);

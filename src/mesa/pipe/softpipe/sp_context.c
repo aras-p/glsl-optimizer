@@ -195,18 +195,36 @@ static void softpipe_destroy( struct pipe_context *pipe )
 }
 
 
-static void softpipe_reset_occlusion_counter(struct pipe_context *pipe)
+static void
+softpipe_begin_query(struct pipe_context *pipe, struct pipe_query_object *q)
 {
    struct softpipe_context *softpipe = softpipe_context( pipe );
-   softpipe->occlusion_counter = 0;
+   assert(q->type < PIPE_QUERY_TYPES);
+   assert(!softpipe->queries[q->type]);
+   softpipe->queries[q->type] = q;
 }
 
-/* XXX pipe param should be const */
-static unsigned softpipe_get_occlusion_counter(struct pipe_context *pipe)
+
+static void
+softpipe_end_query(struct pipe_context *pipe, struct pipe_query_object *q)
 {
    struct softpipe_context *softpipe = softpipe_context( pipe );
-   return softpipe->occlusion_counter;
+   assert(q->type < PIPE_QUERY_TYPES);
+   assert(softpipe->queries[q->type]);
+   q->ready = 1;  /* software rendering is synchronous */
+   softpipe->queries[q->type] = NULL;
 }
+
+
+static void
+softpipe_wait_query(struct pipe_context *pipe, struct pipe_query_object *q)
+{
+   /* Should never get here since we indicated that the result was
+    * ready in softpipe_end_query().
+    */
+   assert(0);
+}
+
 
 static const char *softpipe_get_name( struct pipe_context *pipe )
 {
@@ -260,8 +278,11 @@ struct pipe_context *softpipe_create( struct pipe_winsys *pipe_winsys,
 
    softpipe->pipe.clear = softpipe_clear;
    softpipe->pipe.flush = softpipe_flush;
-   softpipe->pipe.reset_occlusion_counter = softpipe_reset_occlusion_counter;
-   softpipe->pipe.get_occlusion_counter = softpipe_get_occlusion_counter;
+
+   softpipe->pipe.begin_query = softpipe_begin_query;
+   softpipe->pipe.end_query = softpipe_end_query;
+   softpipe->pipe.wait_query = softpipe_wait_query;
+
    softpipe->pipe.get_name = softpipe_get_name;
    softpipe->pipe.get_vendor = softpipe_get_vendor;
 

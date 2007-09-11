@@ -1,8 +1,8 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.5.1
+ * Version:  7.1
  *
- * Copyright (C) 1999-2006  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2007  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -54,6 +54,42 @@ _mesa_new_query_object(GLcontext *ctx, GLuint id)
 
 
 /**
+ * Begin a query.  Software driver fallback.
+ * Called via ctx->Driver.BeginQuery().
+ */
+void
+_mesa_begin_query(GLcontext *ctx, struct gl_query_object *q)
+{
+   /* no-op */
+}
+
+
+/**
+ * End a query.  Software driver fallback.
+ * Called via ctx->Driver.EndQuery().
+ */
+void
+_mesa_end_query(GLcontext *ctx, struct gl_query_object *q)
+{
+   q->Ready = GL_TRUE;
+}
+
+
+/**
+ * Wait for query to complete.  Software driver fallback.
+ * Called via ctx->Driver.WaitQuery().
+ */
+void
+_mesa_wait_query(GLcontext *ctx, struct gl_query_object *q)
+{
+   /* For software drivers, _mesa_end_query() should have completed the query.
+    * For real hardware, implement a proper WaitQuery() driver function.
+    */
+   assert(q->Ready);
+}
+
+
+/**
  * Delete an occlusion query object.
  * Not removed from hash table here.
  * XXX maybe add Delete() method to gl_query_object class and call that instead
@@ -61,7 +97,7 @@ _mesa_new_query_object(GLcontext *ctx, GLuint id)
 static void
 delete_query_object(struct gl_query_object *q)
 {
-   FREE(q);
+   _mesa_free(q);
 }
 
 
@@ -216,6 +252,7 @@ _mesa_BeginQueryARB(GLenum target, GLuint id)
       }
    }
 
+   q->Target = target;
    q->Active = GL_TRUE;
    q->Result = 0;
    q->Ready = GL_FALSE;
@@ -229,9 +266,7 @@ _mesa_BeginQueryARB(GLenum target, GLuint id)
    }
 #endif
 
-   if (ctx->Driver.BeginQuery) {
-      ctx->Driver.BeginQuery(ctx, target, q);
-   }
+   ctx->Driver.BeginQuery(ctx, q);
 }
 
 
@@ -275,13 +310,7 @@ _mesa_EndQueryARB(GLenum target)
    }
 
    q->Active = GL_FALSE;
-   if (ctx->Driver.EndQuery) {
-      ctx->Driver.EndQuery(ctx, target, q);
-   }
-   else {
-      /* if we're using software rendering/querying */
-      q->Ready = GL_TRUE;
-   }
+   ctx->Driver.EndQuery(ctx, q);
 }
 
 
@@ -346,13 +375,8 @@ _mesa_GetQueryObjectivARB(GLuint id, GLenum pname, GLint *params)
 
    switch (pname) {
       case GL_QUERY_RESULT_ARB:
-         while (!q->Ready) {
-            /* Wait for the query to finish! */
-            /* If using software rendering, the result will always be ready
-             * by time we get here.  Otherwise, we must be using hardware!
-             */
-            ASSERT(ctx->Driver.EndQuery);
-         }
+         if (!q->Ready)
+            ctx->Driver.WaitQuery(ctx, q);
          /* if result is too large for returned type, clamp to max value */
          if (q->Result > 0x7fffffff) {
             *params = 0x7fffffff;
@@ -362,7 +386,6 @@ _mesa_GetQueryObjectivARB(GLuint id, GLenum pname, GLint *params)
          }
          break;
       case GL_QUERY_RESULT_AVAILABLE_ARB:
-         /* XXX revisit when we have a hardware implementation! */
          *params = q->Ready;
          break;
       default:
@@ -390,13 +413,8 @@ _mesa_GetQueryObjectuivARB(GLuint id, GLenum pname, GLuint *params)
 
    switch (pname) {
       case GL_QUERY_RESULT_ARB:
-         while (!q->Ready) {
-            /* Wait for the query to finish! */
-            /* If using software rendering, the result will always be ready
-             * by time we get here.  Otherwise, we must be using hardware!
-             */
-            ASSERT(ctx->Driver.EndQuery);
-         }
+         if (!q->Ready)
+            ctx->Driver.WaitQuery(ctx, q);
          /* if result is too large for returned type, clamp to max value */
          if (q->Result > 0xffffffff) {
             *params = 0xffffffff;
@@ -406,7 +424,6 @@ _mesa_GetQueryObjectuivARB(GLuint id, GLenum pname, GLuint *params)
          }
          break;
       case GL_QUERY_RESULT_AVAILABLE_ARB:
-         /* XXX revisit when we have a hardware implementation! */
          *params = q->Ready;
          break;
       default:
@@ -439,17 +456,11 @@ _mesa_GetQueryObjecti64vEXT(GLuint id, GLenum pname, GLint64EXT *params)
 
    switch (pname) {
       case GL_QUERY_RESULT_ARB:
-         while (!q->Ready) {
-            /* Wait for the query to finish! */
-            /* If using software rendering, the result will always be ready
-             * by time we get here.  Otherwise, we must be using hardware!
-             */
-            ASSERT(ctx->Driver.EndQuery);
-         }
+         if (!q->Ready)
+            ctx->Driver.WaitQuery(ctx, q);
          *params = q->Result;
          break;
       case GL_QUERY_RESULT_AVAILABLE_ARB:
-         /* XXX revisit when we have a hardware implementation! */
          *params = q->Ready;
          break;
       default:
@@ -480,17 +491,11 @@ _mesa_GetQueryObjectui64vEXT(GLuint id, GLenum pname, GLuint64EXT *params)
 
    switch (pname) {
       case GL_QUERY_RESULT_ARB:
-         while (!q->Ready) {
-            /* Wait for the query to finish! */
-            /* If using software rendering, the result will always be ready
-             * by time we get here.  Otherwise, we must be using hardware!
-             */
-            ASSERT(ctx->Driver.EndQuery);
-         }
+         if (!q->Ready)
+            ctx->Driver.WaitQuery(ctx, q);
          *params = q->Result;
          break;
       case GL_QUERY_RESULT_AVAILABLE_ARB:
-         /* XXX revisit when we have a hardware implementation! */
          *params = q->Ready;
          break;
       default:

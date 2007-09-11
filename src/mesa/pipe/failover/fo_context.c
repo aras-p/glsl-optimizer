@@ -129,8 +129,8 @@ struct pipe_context *failover_create( struct pipe_context *hw,
     * at this point - if the hardware doesn't support it, don't
     * advertise it to the application.
     */
-   failover->pipe.reset_occlusion_counter = hw->reset_occlusion_counter;
-   failover->pipe.get_occlusion_counter = hw->get_occlusion_counter;
+   failover->pipe.begin_query = hw->begin_query;
+   failover->pipe.end_query = hw->end_query;
 
    failover_init_state_functions( failover );
 

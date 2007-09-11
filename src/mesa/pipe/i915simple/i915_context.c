@@ -149,6 +149,22 @@ static void i915_destroy( struct pipe_context *pipe )
 
 
 
+static void
+i915_begin_query(struct pipe_context *pipe, struct pipe_query_object *q)
+{
+   /* should never be called */
+   assert(0);
+}
+
+
+static void
+i915_end_query(struct pipe_context *pipe, struct pipe_query_object *q)
+{
+   /* should never be called */
+   assert(0);
+}
+
+
 static boolean i915_draw_elements( struct pipe_context *pipe,
                                 struct pipe_buffer_handle *indexBuffer,
                                 unsigned indexSize,
@@ -257,8 +273,9 @@ struct pipe_context *i915_create( struct pipe_winsys *pipe_winsys,
    i915->pipe.supported_formats = i915_supported_formats;
    i915->pipe.max_texture_size = i915_max_texture_size;
    i915->pipe.clear = i915_clear;
-   i915->pipe.reset_occlusion_counter = NULL; /* no support */
-   i915->pipe.get_occlusion_counter = NULL;
+
+   i915->pipe.begin_query = i915_begin_query;
+   i915->pipe.end_query = i915_end_query;
 
    i915->pipe.draw_arrays = i915_draw_arrays;
    i915->pipe.draw_elements = i915_draw_elements;
