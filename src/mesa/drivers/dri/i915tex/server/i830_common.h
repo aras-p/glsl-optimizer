@@ -121,14 +121,17 @@ typedef struct {
 	unsigned int rotated_tiled;
 	unsigned int rotated2_tiled;
 
-	int pipeA_x;
-	int pipeA_y;
-	int pipeA_w;
-	int pipeA_h;
-	int pipeB_x;
-	int pipeB_y;
-	int pipeB_w;
-	int pipeB_h;
+	int planeA_x;
+	int planeA_y;
+	int planeA_w;
+	int planeA_h;
+	int planeB_x;
+	int planeB_y;
+	int planeB_w;
+	int planeB_h;
+
+	int planeA_pipe;
+	int planeB_pipe;
 
 	/* Triple buffering */
 	drm_handle_t third_handle;

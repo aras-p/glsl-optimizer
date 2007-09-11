@@ -564,16 +564,16 @@ void intelWindowMoved( intelContextPtr intel )
 	 drmI830Sarea *sarea = intel->sarea;
 	 drm_clip_rect_t drw_rect = { .x1 = dPriv->x, .x2 = dPriv->x + dPriv->w,
 				      .y1 = dPriv->y, .y2 = dPriv->y + dPriv->h };
-	 drm_clip_rect_t pipeA_rect = { .x1 = sarea->pipeA_x,
-					.x2 = sarea->pipeA_x + sarea->pipeA_w,
-					.y1 = sarea->pipeA_y,
-					.y2 = sarea->pipeA_y + sarea->pipeA_h };
-	 drm_clip_rect_t pipeB_rect = { .x1 = sarea->pipeB_x,
-					.x2 = sarea->pipeB_x + sarea->pipeB_w,
-					.y1 = sarea->pipeB_y,
-					.y2 = sarea->pipeB_y + sarea->pipeB_h };
-	 GLint areaA = driIntersectArea( drw_rect, pipeA_rect );
-	 GLint areaB = driIntersectArea( drw_rect, pipeB_rect );
+	 drm_clip_rect_t planeA_rect = { .x1 = sarea->planeA_x,
+					.x2 = sarea->planeA_x + sarea->planeA_w,
+					.y1 = sarea->planeA_y,
+					.y2 = sarea->planeA_y + sarea->planeA_h };
+	 drm_clip_rect_t planeB_rect = { .x1 = sarea->planeB_x,
+					.x2 = sarea->planeB_x + sarea->planeB_w,
+					.y1 = sarea->planeB_y,
+					.y2 = sarea->planeB_y + sarea->planeB_h };
+	 GLint areaA = driIntersectArea( drw_rect, planeA_rect );
+	 GLint areaB = driIntersectArea( drw_rect, planeB_rect );
 	 GLuint flags = intel->vblank_flags;
 
 	 if (areaB > areaA || (areaA == areaB && areaB > 0)) {
