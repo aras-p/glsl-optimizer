@@ -30,8 +30,8 @@
   */
             
 
-#include "program.h"
-#include "macros.h"
+#include "main/macros.h"
+#include "shader/program.h"
 #include "shader/prog_parameter.h"
 #include "shader/prog_print.h"
 #include "brw_context.h"

@@ -34,9 +34,9 @@
 #define BRW_SF_H
 
 
+#include "shader/program.h"
 #include "brw_context.h"
 #include "brw_eu.h"
-#include "program.h"
 
 
 #define SF_POINTS    0

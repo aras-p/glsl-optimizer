@@ -35,10 +35,10 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
  * For a description of the vertex program instruction set see r300_reg.h.
  */
 
-#include "glheader.h"
-#include "macros.h"
-#include "enums.h"
-#include "program.h"
+#include "main/glheader.h"
+#include "main/macros.h"
+#include "main/enums.h"
+#include "shader/program.h"
 #include "shader/prog_instruction.h"
 #include "shader/prog_parameter.h"
 #include "shader/prog_statevars.h"
