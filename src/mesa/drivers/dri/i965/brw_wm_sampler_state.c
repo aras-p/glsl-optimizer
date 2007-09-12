@@ -173,7 +173,7 @@ static void brw_update_sampler_state( struct gl_texture_unit *texUnit,
        * message (sample_c).  So need to recompile WM program when
        * shadow comparison is enabled on each/any texture unit.
        */
-      sampler->ss0.shadow_function = intel_translate_compare_func(texObj->CompareFunc);
+      sampler->ss0.shadow_function = intel_translate_shadow_compare_func(texObj->CompareFunc);
    }
 
    /* Set LOD bias: 
