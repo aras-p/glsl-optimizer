@@ -1,0 +1,11 @@
+prefix=@INSTALL_DIR@
+exec_prefix=${prefix}
+libdir=${exec_prefix}/@LIB_DIR@
+includedir=${prefix}/include
+
+Name: glu
+Description: Mesa OpenGL Utility library
+Requires: gl
+Version: @VERSION@
+Libs: -L${libdir} -lGLU
+Cflags: -I${includedir}

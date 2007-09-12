@@ -25,11 +25,21 @@ OBJECTS = $(GLW_SOURCES:.c=.o)
 
 default: $(TOP)/$(LIB_DIR)/$(GLW_LIB_NAME)
 
-install:
+# GLU pkg-config file
+pcedit = sed \
+	-e 's,@INSTALL_DIR@,$(INSTALL_DIR),' \
+	-e 's,@LIB_DIR@,$(LIB_DIR),' \
+	-e 's,@VERSION@,$(MAJOR).$(MINOR).$(TINY),'
+glw.pc: glw.pc.in
+	$(pcedit) $< > $@
+
+install: glw.pc
 	$(INSTALL) -d $(DESTDIR)$(INSTALL_DIR)/include/GL
 	$(INSTALL) -d $(DESTDIR)$(INSTALL_DIR)/$(LIB_DIR)
+	$(INSTALL) -d $(DESTDIR)$(INSTALL_DIR)/$(LIB_DIR)/pkgconfig
 	$(INSTALL) -m 644 *.h $(DESTDIR)$(INSTALL_DIR)/include/GL
 	$(INSTALL) $(TOP)/$(LIB_DIR)/libGLw.* $(DESTDIR)$(INSTALL_DIR)/$(LIB_DIR)
+	$(INSTALL) -m 644 glw.pc $(DESTDIR)$(INSTALL_DIR)/$(LIB_DIR)/pkgconfig
 
 clean:
 	-rm depend depend.bak

@@ -1,0 +1,11 @@
+prefix=@INSTALL_DIR@
+exec_prefix=${prefix}
+libdir=${exec_prefix}/@LIB_DIR@
+includedir=${prefix}/include
+
+Name: glw
+Description: Mesa OpenGL widget library
+Requires: gl
+Version: @VERSION@
+Libs: -L${libdir} -lGLU
+Cflags: -I${includedir}
