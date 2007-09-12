@@ -97,10 +97,10 @@ $(TOP)/$(LIB_DIR)/$(GLUT_LIB_NAME): depend $(OBJECTS)
 
 
 install:
-	$(INSTALL) -d $(INSTALL_DIR)/include/GL
-	$(INSTALL) -d $(INSTALL_DIR)/$(LIB_DIR)
-	$(INSTALL) -m 644 $(TOP)/include/GL/glut.h $(INSTALL_DIR)/include/GL
-	$(INSTALL) $(TOP)/$(LIB_DIR)/libglut* $(INSTALL_DIR)/$(LIB_DIR)
+	$(INSTALL) -d $(DESTDIR)$(INSTALL_DIR)/include/GL
+	$(INSTALL) -d $(DESTDIR)$(INSTALL_DIR)/$(LIB_DIR)
+	$(INSTALL) -m 644 $(TOP)/include/GL/glut.h $(DESTDIR)$(INSTALL_DIR)/include/GL
+	$(INSTALL) $(TOP)/$(LIB_DIR)/libglut* $(DESTDIR)$(INSTALL_DIR)/$(LIB_DIR)
 
 
 clean:

@@ -149,22 +149,22 @@ subdirs:
 
 
 install: default
-	$(INSTALL) -d $(INSTALL_DIR)/include/GL
-	$(INSTALL) -d $(INSTALL_DIR)/$(LIB_DIR)
-	$(INSTALL) -m 644 $(TOP)/include/GL/*.h $(INSTALL_DIR)/include/GL
+	$(INSTALL) -d $(DESTDIR)$(INSTALL_DIR)/include/GL
+	$(INSTALL) -d $(DESTDIR)$(INSTALL_DIR)/$(LIB_DIR)
+	$(INSTALL) -m 644 $(TOP)/include/GL/*.h $(DESTDIR)$(INSTALL_DIR)/include/GL
 	@if [ -e $(TOP)/$(LIB_DIR)/$(GL_LIB_NAME) ]; then \
-		$(INSTALL) $(TOP)/$(LIB_DIR)/libGL* $(INSTALL_DIR)/$(LIB_DIR); \
+		$(INSTALL) $(TOP)/$(LIB_DIR)/libGL* $(DESTDIR)$(INSTALL_DIR)/$(LIB_DIR); \
 	fi
 	@if [ -e $(TOP)/$(LIB_DIR)/$(OSMESA_LIB_NAME) ]; then \
-		$(INSTALL) $(TOP)/$(LIB_DIR)/libOSMesa* $(INSTALL_DIR)/$(LIB_DIR); \
+		$(INSTALL) $(TOP)/$(LIB_DIR)/libOSMesa* $(DESTDIR)$(INSTALL_DIR)/$(LIB_DIR); \
 	fi
 	@if [ "${DRIVER_DIRS}" = "dri" ] ; then \
 		cd drivers/dri ; $(MAKE) install ; \
 	fi
 
 ## NOT INSTALLED YET:
-## $(INSTALL) -d $(INSTALL_DIR)/include/GLES
-## $(INSTALL) -m 644 include/GLES/*.h $(INSTALL_DIR)/include/GLES
+## $(INSTALL) -d $(DESTDIR)$(INSTALL_DIR)/include/GLES
+## $(INSTALL) -m 644 include/GLES/*.h $(DESTDIR)$(INSTALL_DIR)/include/GLES
 
 
 # Emacs tags

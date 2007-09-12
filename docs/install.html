@@ -287,7 +287,15 @@ already installed, you'll have to choose different directories, like
 To install Mesa's headers and libraries, run <code>make install</code>.
 But first, check the Mesa/configs/default file and examine the values
 of the <b>INSTALL_DIR</b> and <b>DRI_DRIVER_INSTALL_DIR</b> variables.
-Change them if needed, then run <code>make install</code>
+Change them if needed, then run <code>make install</code>.
+</p>
+
+<p>
+The variable
+<b>DESTDIR</b> may also be used to install the contents to a temporary
+staging directory.
+This can be useful for package management.
+For example: <code>make install DESTDIR=/somepath/</code>
 </p>
 
 <p>
