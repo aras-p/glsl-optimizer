@@ -23,7 +23,7 @@ C_SOURCES = \
 
 OBJECTS = $(C_SOURCES:.c=.o)
 
-INCLUDES = -I. -I- -I$(TOP)/include
+INCLUDES = -I. -I$(TOP)/include
 
 ##### RULES #####
 
