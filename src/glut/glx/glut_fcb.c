@@ -19,7 +19,7 @@
 /* Set a Fortran callback function. */
 
 void APIENTRY
-__glutSetFCB(int which, void *func)
+__glutSetFCB(int which, GLUTproc func)
 {
 #ifdef SUPPORT_FORTRAN
   switch (which) {
@@ -100,61 +100,61 @@ __glutSetFCB(int which, void *func)
 
 /* Get a Fortran callback function. */
 
-void* APIENTRY
+GLUTproc APIENTRY
 __glutGetFCB(int which)
 {
 #ifdef SUPPORT_FORTRAN
   switch (which) {
   case GLUT_FCB_DISPLAY:
-    return (void *) __glutCurrentWindow->fdisplay;
+    return __glutCurrentWindow->fdisplay;
   case GLUT_FCB_RESHAPE:
-    return (void *) __glutCurrentWindow->freshape;
+    return __glutCurrentWindow->freshape;
   case GLUT_FCB_MOUSE:
-    return (void *) __glutCurrentWindow->fmouse;
+    return __glutCurrentWindow->fmouse;
   case GLUT_FCB_MOTION:
-    return (void *) __glutCurrentWindow->fmotion;
+    return __glutCurrentWindow->fmotion;
   case GLUT_FCB_PASSIVE:
-    return (void *) __glutCurrentWindow->fpassive;
+    return __glutCurrentWindow->fpassive;
   case GLUT_FCB_ENTRY:
-    return (void *) __glutCurrentWindow->fentry;
+    return __glutCurrentWindow->fentry;
   case GLUT_FCB_KEYBOARD:
-    return (void *) __glutCurrentWindow->fkeyboard;
+    return __glutCurrentWindow->fkeyboard;
   case GLUT_FCB_KEYBOARD_UP:
-    return (void *) __glutCurrentWindow->fkeyboardUp;
+    return __glutCurrentWindow->fkeyboardUp;
   case GLUT_FCB_WINDOW_STATUS:
-    return (void *) __glutCurrentWindow->fwindowStatus;
+    return __glutCurrentWindow->fwindowStatus;
   case GLUT_FCB_VISIBILITY:
-    return (void *) __glutCurrentWindow->fvisibility;
+    return __glutCurrentWindow->fvisibility;
   case GLUT_FCB_SPECIAL:
-    return (void *) __glutCurrentWindow->fspecial;
+    return __glutCurrentWindow->fspecial;
   case GLUT_FCB_SPECIAL_UP:
-    return (void *) __glutCurrentWindow->fspecialUp;
+    return __glutCurrentWindow->fspecialUp;
   case GLUT_FCB_BUTTON_BOX:
-    return (void *) __glutCurrentWindow->fbuttonBox;
+    return __glutCurrentWindow->fbuttonBox;
   case GLUT_FCB_DIALS:
-    return (void *) __glutCurrentWindow->fdials;
+    return __glutCurrentWindow->fdials;
   case GLUT_FCB_SPACE_MOTION:
-    return (void *) __glutCurrentWindow->fspaceMotion;
+    return __glutCurrentWindow->fspaceMotion;
   case GLUT_FCB_SPACE_ROTATE:
-    return (void *) __glutCurrentWindow->fspaceRotate;
+    return __glutCurrentWindow->fspaceRotate;
   case GLUT_FCB_SPACE_BUTTON:
-    return (void *) __glutCurrentWindow->fspaceButton;
+    return __glutCurrentWindow->fspaceButton;
   case GLUT_FCB_TABLET_MOTION:
-    return (void *) __glutCurrentWindow->ftabletMotion;
+    return __glutCurrentWindow->ftabletMotion;
   case GLUT_FCB_TABLET_BUTTON:
-    return (void *) __glutCurrentWindow->ftabletButton;
+    return __glutCurrentWindow->ftabletButton;
   case GLUT_FCB_JOYSTICK:
 #ifdef _WIN32
-    return (void *) __glutCurrentWindow->fjoystick;
+    return __glutCurrentWindow->fjoystick;
 #else
     return NULL;
 #endif
   case GLUT_FCB_OVERLAY_DISPLAY:
-    return (void *) __glutCurrentWindow->overlay->fdisplay;
+    return __glutCurrentWindow->overlay->fdisplay;
   case GLUT_FCB_SELECT:
-    return (void *) __glutCurrentMenu->fselect;
+    return __glutCurrentMenu->fselect;
   case GLUT_FCB_TIMER:
-    return (void *) __glutTimerList->ffunc;
+    return __glutTimerList->ffunc;
   default:
     return NULL;
   }
