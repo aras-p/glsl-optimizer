@@ -306,6 +306,26 @@ This is a handy way to compare multiple OpenGL implementations.
 </p>
 
 
+<H3>1.5 pkg-config support</H3>
+
+<p>
+Running <code>make install</code> will install package configuration files
+for the pkg-config utility.
+</p>
+
+<p>
+When compiling your OpenGL application you can use pkg-config to determine
+the proper compiler and linker flags.
+</p>
+
+<p>
+For example, compiling and linking a GLUT application can be done with:
+</p>
+<pre>
+   gcc `pkg-config --cflags --libs glut` mydemo.c -o mydemo
+</pre>
+
+<br>
 
 <a name="windows">
 <H2>2. Windows Compilation and Installation</H1>
