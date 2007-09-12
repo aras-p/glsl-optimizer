@@ -663,7 +663,9 @@ void brw_emit_anyprim_setup( struct brw_sf_compile *c )
 					       (1<<_3DPRIM_TRIFAN_NOSTIPPLE)));
    jmp = brw_JMPI(p, ip, ip, brw_imm_w(0));
    {
+      brw_push_insn_state(p); 
       brw_emit_tri_setup( c );
+      brw_pop_insn_state(p);
       /* note - thread killed in subroutine */
    }
    brw_land_fwd_jump(p, jmp);
@@ -677,7 +679,9 @@ void brw_emit_anyprim_setup( struct brw_sf_compile *c )
 					       (1<<_3DPRIM_LINESTRIP_CONT_BF)));
    jmp = brw_JMPI(p, ip, ip, brw_imm_w(0));
    {
+      brw_push_insn_state(p); 
       brw_emit_line_setup( c );
+      brw_pop_insn_state(p);
       /* note - thread killed in subroutine */
    }
    brw_land_fwd_jump(p, jmp); 
@@ -686,7 +690,9 @@ void brw_emit_anyprim_setup( struct brw_sf_compile *c )
    brw_AND(p, v1_null_ud, payload_attr, brw_imm_ud(1<<BRW_SPRITE_POINT_ENABLE));
    jmp = brw_JMPI(p, ip, ip, brw_imm_w(0));
    {
+      brw_push_insn_state(p); 
       brw_emit_point_sprite_setup( c );
+      brw_pop_insn_state(p);
    }
    brw_land_fwd_jump(p, jmp); 
 
