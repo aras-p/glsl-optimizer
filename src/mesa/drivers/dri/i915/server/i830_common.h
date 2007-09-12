@@ -127,9 +127,6 @@ typedef struct {
 	int planeB_y;
 	int planeB_w;
 	int planeB_h;
-
-	int planeA_pipe;
-	int planeB_pipe;
 } drmI830Sarea;
 
 /* Flags for perf_boxes
