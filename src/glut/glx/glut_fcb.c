@@ -154,7 +154,7 @@ __glutGetFCB(int which)
   case GLUT_FCB_SELECT:
     return __glutCurrentMenu->fselect;
   case GLUT_FCB_TIMER:
-    return __glutTimerList->ffunc;
+     return __glutTimerList ? __glutTimerList->ffunc : NULL;
   default:
     return NULL;
   }
