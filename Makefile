@@ -211,6 +211,7 @@ MAIN_FILES = \
 	$(DIRECTORY)/src/mesa/Makefile*					\
 	$(DIRECTORY)/src/mesa/sources					\
 	$(DIRECTORY)/src/mesa/descrip.mms				\
+	$(DIRECTORY)/src/mesa/gl.pc.in					\
 	$(DIRECTORY)/src/mesa/depend					\
 	$(DIRECTORY)/src/mesa/main/*.[chS]				\
 	$(DIRECTORY)/src/mesa/main/descrip.mms				\
@@ -318,6 +319,7 @@ DRI_FILES = \
 SGI_GLU_FILES = \
 	$(DIRECTORY)/src/glu/Makefile					\
 	$(DIRECTORY)/src/glu/descrip.mms				\
+	$(DIRECTORY)/src/glu/glu.pc.in					\
 	$(DIRECTORY)/src/glu/sgi/Makefile				\
 	$(DIRECTORY)/src/glu/sgi/Makefile.mgw				\
 	$(DIRECTORY)/src/glu/sgi/Makefile.win				\
@@ -394,6 +396,7 @@ GLUT_FILES = \
 	$(DIRECTORY)/include/GL/glutf90.h		\
 	$(DIRECTORY)/src/glut/glx/Makefile*		\
 	$(DIRECTORY)/src/glut/glx/depend		\
+	$(DIRECTORY)/src/glut/glx/glut.pc.in		\
 	$(DIRECTORY)/src/glut/glx/*def			\
 	$(DIRECTORY)/src/glut/glx/descrip.mms		\
 	$(DIRECTORY)/src/glut/glx/mms_depend		\
@@ -416,6 +419,7 @@ DEPEND_FILES = \
 	$(TOP)/src/mesa/depend		\
 	$(TOP)/src/glx/x11/depend	\
 	$(TOP)/src/glw/depend		\
+	$(TOP)/src/glw/glw.pc.in	\
 	$(TOP)/src/glut/glx/depend	\
 	$(TOP)/src/glu/sgi/depend
 
