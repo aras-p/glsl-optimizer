@@ -323,6 +323,11 @@ static void nv10Enable(GLcontext *ctx, GLenum cap, GLboolean state)
 			break;
 //		case GL_HISTOGRAM:
 //		case GL_INDEX_LOGIC_OP:
+#if 0
+			/* light is broken, the hardware seem to only allow to use light 
+			 * in order : ie GL_LIGHT0 & GL_LIGHT2 is invalid
+			 * In this case the blob remap GL_LIGHT2 to hw light 1
+			 */
 		case GL_LIGHT0:
 		case GL_LIGHT1:
 		case GL_LIGHT2:
@@ -333,7 +338,11 @@ static void nv10Enable(GLcontext *ctx, GLenum cap, GLboolean state)
 		case GL_LIGHT7:
 			{
 			uint32_t mask=1<<(2*(cap-GL_LIGHT0));
-			nmesa->enabled_lights=((nmesa->enabled_lights&mask)|(mask*state));
+			if (state)
+				nmesa->enabled_lights |= mask;
+			else
+				nmesa->enabled_lights &= ~mask;
+
 			if (nmesa->lighting_enabled)
 			{
 				BEGIN_RING_CACHE(NvSub3D, NV10_TCL_PRIMITIVE_3D_ENABLED_LIGHTS, 1);
@@ -349,6 +358,7 @@ static void nv10Enable(GLcontext *ctx, GLenum cap, GLboolean state)
 			else
 				OUT_RING_CACHE(0x0);
 			break;
+#endif
 		case GL_LINE_SMOOTH:
 			BEGIN_RING_CACHE(NvSub3D, NV10_TCL_PRIMITIVE_3D_LINE_SMOOTH_ENABLE, 1);
 			OUT_RING_CACHE(state);
