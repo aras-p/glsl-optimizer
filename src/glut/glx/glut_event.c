@@ -172,10 +172,14 @@ handleTimeouts(void)
   GETTIMEOFDAY(&now);
   while (IS_AT_OR_AFTER(__glutTimerList->timeout, now)) {
     timer = __glutTimerList;
-    __glutTimerList = timer->next;
+    /* call the timer function */
     timer->func(timer->value);
+    /* remove from the linked list */
+    __glutTimerList = timer->next;
+    /* put this timer on the "free" list */
     timer->next = freeTimerList;
     freeTimerList = timer;
+
     if (!__glutTimerList)
       break;
   }
