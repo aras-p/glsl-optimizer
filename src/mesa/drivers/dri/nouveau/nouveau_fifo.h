@@ -149,6 +149,7 @@ extern void nouveau_state_cache_init(nouveauContextPtr nmesa);
 #define BEGIN_RING_CACHE(subchannel,tag,size) do {					\
 	nmesa->state_cache.dirty=1;	 						\
 	nmesa->state_cache.current_pos=((tag)/4);					\
+	assert(nmesa->state_cache.current_pos + size <= NOUVEAU_STATE_CACHE_ENTRIES); \
 }while(0)
 
 #define OUT_RING_CACHE(n) do {									\
