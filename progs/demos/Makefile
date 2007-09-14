@@ -19,6 +19,7 @@ PROGS = \
 	arbocclude \
 	bounce \
 	clearspd \
+	copypix \
 	cubemap \
 	drawpix \
 	engine \
@@ -151,6 +152,10 @@ fslight: fslight.o
 fslight.o: fslight.c extfuncs.h
 	$(CC) -c -I$(INCDIR) $(CFLAGS) fslight.c
 
+
+
+viewdds: viewdds.c
+	$(CC) -I$(INCDIR) $(CFLAGS) $< readtex.o $(APP_LIB_DEPS) -L. -lgltc -o $@
 
 
 clean:
