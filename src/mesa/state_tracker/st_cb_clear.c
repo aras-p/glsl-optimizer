@@ -49,6 +49,8 @@
 
 #include "pipe/tgsi/mesa/mesa_to_tgsi.h"
 
+#include "cso_cache/cso_cache.h"
+
 #include "vf/vf.h"
 
 
@@ -295,7 +297,8 @@ clear_with_quad(GLcontext *ctx,
          if (st->ctx->Color.DitherFlag)
             blend.dither = 1;
       }
-      pipe->set_blend_state(pipe, &blend);
+      const struct pipe_blend_state *state = cso_cached_blend_state(st, &blend);
+      pipe->bind_blend_state(pipe, state);
    }
 
    /* depth state: always pass */
@@ -390,7 +393,7 @@ clear_with_quad(GLcontext *ctx,
 
    /* Restore pipe state */
    pipe->set_alpha_test_state(pipe, &st->state.alpha_test);
-   pipe->set_blend_state(pipe, &st->state.blend);
+   pipe->bind_blend_state(pipe, st->state.blend);
    pipe->set_depth_state(pipe, &st->state.depth);
    pipe->set_fs_state(pipe, &st->state.fs);
    pipe->set_vs_state(pipe, &st->state.vs);

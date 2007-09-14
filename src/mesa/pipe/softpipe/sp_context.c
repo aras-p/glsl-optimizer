@@ -250,9 +250,12 @@ struct pipe_context *softpipe_create( struct pipe_winsys *pipe_winsys,
    softpipe->pipe.max_texture_size = softpipe_max_texture_size;
 
    /* state setters */
+   softpipe->pipe.create_blend_state = softpipe_create_blend_state;
+   softpipe->pipe.bind_blend_state = softpipe_bind_blend_state;
+   softpipe->pipe.delete_blend_state = softpipe_delete_blend_state;
+
    softpipe->pipe.set_alpha_test_state = softpipe_set_alpha_test_state;
    softpipe->pipe.set_blend_color = softpipe_set_blend_color;
-   softpipe->pipe.set_blend_state = softpipe_set_blend_state;
    softpipe->pipe.set_clip_state = softpipe_set_clip_state;
    softpipe->pipe.set_clear_color_state = softpipe_set_clear_color_state;
    softpipe->pipe.set_constant_buffer = softpipe_set_constant_buffer;

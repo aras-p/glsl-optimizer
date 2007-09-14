@@ -186,6 +186,9 @@ TGSIDECO_SOURCES = \
 TGSIMESA_SOURCES = \
 	pipe/tgsi/mesa/mesa_to_tgsi.c
 
+STATECACHE_SOURCES = \
+	cso_cache/cso_cache.c
+
 STATETRACKER_SOURCES = \
 	state_tracker/st_atom.c \
 	state_tracker/st_atom_alphatest.c \
@@ -373,6 +376,7 @@ SOLO_SOURCES = \
 	$(TGSIEXEC_SOURCES)	\
 	$(TGSIDECO_SOURCES)	\
 	$(TGSIMESA_SOURCES)	\
+	$(STATECACHE_SOURCES)   \
 	$(STATETRACKER_SOURCES)	\
 	$(TNL_SOURCES)		\
 	$(SHADER_SOURCES)	\

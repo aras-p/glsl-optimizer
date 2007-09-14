@@ -82,7 +82,7 @@ static void upload_MODES4( struct i915_context *i915 )
    {
       modes4 |= (_3DSTATE_MODES_4_CMD |
 		 ENABLE_LOGIC_OP_FUNC |
-		 LOGIC_OP_FUNC(i915_translate_logic_op(i915->blend.logicop_func)));
+		 LOGIC_OP_FUNC(i915_translate_logic_op(i915->blend->logicop_func)));
    }
    
    /* Always, so that we know when state is in-active: 
@@ -204,13 +204,13 @@ static void upload_IAB( struct i915_context *i915 )
    unsigned iab = 0;
 
    {
-      unsigned eqRGB  = i915->blend.rgb_func;
-      unsigned srcRGB = i915->blend.rgb_src_factor;
-      unsigned dstRGB = i915->blend.rgb_dst_factor;
+      unsigned eqRGB  = i915->blend->rgb_func;
+      unsigned srcRGB = i915->blend->rgb_src_factor;
+      unsigned dstRGB = i915->blend->rgb_dst_factor;
 
-      unsigned eqA    = i915->blend.alpha_func;
-      unsigned srcA   = i915->blend.alpha_src_factor;
-      unsigned dstA   = i915->blend.alpha_dst_factor;
+      unsigned eqA    = i915->blend->alpha_func;
+      unsigned srcA   = i915->blend->alpha_src_factor;
+      unsigned dstA   = i915->blend->alpha_dst_factor;
 
       /* Special handling for MIN/MAX filter modes handled at
        * state_tracker level.

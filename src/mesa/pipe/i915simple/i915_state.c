@@ -37,16 +37,36 @@
 
 /* None of this state is actually used for anything yet.
  */
-static void i915_set_blend_state( struct pipe_context *pipe,
+
+static const struct pipe_blend_state *
+i915_create_blend_state(struct pipe_context *pipe,
+                        const struct pipe_blend_state *blend)
+{
+   /*struct i915_context *i915 = i915_context(pipe);*/
+
+   struct pipe_blend_state *new_blend = malloc(sizeof(struct pipe_blend_state));
+   memcpy(new_blend, blend, sizeof(struct pipe_blend_state));
+
+   return new_blend;
+}
+
+static void i915_bind_blend_state( struct pipe_context *pipe,
 			     const struct pipe_blend_state *blend )
 {
    struct i915_context *i915 = i915_context(pipe);
 
-   i915->blend = *blend;
+   i915->blend = blend;
 
    i915->dirty |= I915_NEW_BLEND;
 }
 
+
+static void i915_delete_blend_state( struct pipe_context *pipe,
+			     const struct pipe_blend_state *blend )
+{
+   /*struct i915_context *i915 = i915_context(pipe);*/
+   free(blend);
+}
 
 static void i915_set_blend_color( struct pipe_context *pipe,
 			     const struct pipe_blend_color *blend_color )
@@ -289,9 +309,12 @@ static void i915_set_vertex_element( struct pipe_context *pipe,
 void
 i915_init_state_functions( struct i915_context *i915 )
 {
+   i915->pipe.create_blend_state = i915_create_blend_state;
+   i915->pipe.bind_blend_state = i915_bind_blend_state;
+   i915->pipe.delete_blend_state = i915_delete_blend_state;
+
    i915->pipe.set_alpha_test_state = i915_set_alpha_test_state;
    i915->pipe.set_blend_color = i915_set_blend_color;
-   i915->pipe.set_blend_state = i915_set_blend_state;
    i915->pipe.set_clip_state = i915_set_clip_state;
    i915->pipe.set_clear_color_state = i915_set_clear_color_state;
    i915->pipe.set_constant_buffer = i915_set_constant_buffer;

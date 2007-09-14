@@ -49,19 +49,19 @@ colormask_quad(struct quad_stage *qs, struct quad_header *quad)
    sps->read_quad_f_swz(sps, quad->x0, quad->y0, dest);
 
    /* R */
-   if (!(softpipe->blend.colormask & PIPE_MASK_R))
+   if (!(softpipe->blend->colormask & PIPE_MASK_R))
        COPY_4V(quad->outputs.color[0], dest[0]);
 
    /* G */
-   if (!(softpipe->blend.colormask & PIPE_MASK_G))
+   if (!(softpipe->blend->colormask & PIPE_MASK_G))
        COPY_4V(quad->outputs.color[1], dest[1]);
 
    /* B */
-   if (!(softpipe->blend.colormask & PIPE_MASK_B))
+   if (!(softpipe->blend->colormask & PIPE_MASK_B))
        COPY_4V(quad->outputs.color[2], dest[2]);
 
    /* A */
-   if (!(softpipe->blend.colormask & PIPE_MASK_A))
+   if (!(softpipe->blend->colormask & PIPE_MASK_A))
        COPY_4V(quad->outputs.color[3], dest[3]);
 
    /* pass quad to next stage */

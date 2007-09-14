@@ -67,8 +67,9 @@ struct failover_context {
 
    /* The most recent drawing state as set by the driver:
     */
+   const struct pipe_blend_state *blend;
+
    struct pipe_alpha_test_state alpha_test;
-   struct pipe_blend_state blend;
    struct pipe_blend_color blend_color;
    struct pipe_clear_color_state clear_color;
    struct pipe_clip_state clip;

@@ -45,6 +45,7 @@
 #include "st_program.h"
 #include "pipe/p_context.h"
 #include "pipe/draw/draw_context.h"
+#include "cso_cache/cso_cache.h"
 
 
 void st_invalidate_state(GLcontext * ctx, GLuint new_state)
@@ -70,6 +71,8 @@ struct st_context *st_create_context( GLcontext *ctx,
 
    st->dirty.mesa = ~0;
    st->dirty.st = ~0;
+
+   st->cache = cso_cache_create();
 
    st_init_atoms( st );
    st_init_draw( st );
@@ -112,6 +115,7 @@ void st_destroy_context( struct st_context *st )
    /*st_destroy_cb_teximage( st );*/
    st_destroy_cb_texture( st );
 #endif
+   cso_cache_destroy( st->cache );
 
    st->pipe->destroy( st->pipe );
    FREE( st );

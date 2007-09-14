@@ -111,7 +111,7 @@ blend_quad(struct quad_stage *qs, struct quad_header *quad)
    /*
     * Compute src/first term RGB
     */
-   switch (softpipe->blend.rgb_src_factor) {
+   switch (softpipe->blend->rgb_src_factor) {
    case PIPE_BLENDFACTOR_ONE:
       VEC4_COPY(source[0], quad->outputs.color[0]); /* R */
       VEC4_COPY(source[1], quad->outputs.color[1]); /* G */
@@ -253,7 +253,7 @@ blend_quad(struct quad_stage *qs, struct quad_header *quad)
    /*
     * Compute src/first term A
     */
-   switch (softpipe->blend.alpha_src_factor) {
+   switch (softpipe->blend->alpha_src_factor) {
    case PIPE_BLENDFACTOR_ONE:
       VEC4_COPY(source[3], quad->outputs.color[3]); /* A */
       break;
@@ -275,7 +275,7 @@ blend_quad(struct quad_stage *qs, struct quad_header *quad)
    /*
     * Compute dest/second term RGB
     */
-   switch (softpipe->blend.rgb_dst_factor) {
+   switch (softpipe->blend->rgb_dst_factor) {
    case PIPE_BLENDFACTOR_ONE:
       /* dest = dest * 1   NO-OP, leave dest as-is */
       break;
@@ -301,7 +301,7 @@ blend_quad(struct quad_stage *qs, struct quad_header *quad)
    /*
     * Compute dest/second term A
     */
-   switch (softpipe->blend.alpha_dst_factor) {
+   switch (softpipe->blend->alpha_dst_factor) {
    case PIPE_BLENDFACTOR_ONE:
       /* dest = dest * 1   NO-OP, leave dest as-is */
       break;
@@ -323,7 +323,7 @@ blend_quad(struct quad_stage *qs, struct quad_header *quad)
    /*
     * Combine RGB terms
     */
-   switch (softpipe->blend.rgb_func) {
+   switch (softpipe->blend->rgb_func) {
    case PIPE_BLEND_ADD:
       VEC4_ADD(quad->outputs.color[0], source[0], dest[0]); /* R */
       VEC4_ADD(quad->outputs.color[1], source[1], dest[1]); /* G */
@@ -356,7 +356,7 @@ blend_quad(struct quad_stage *qs, struct quad_header *quad)
    /*
     * Combine A terms
     */
-   switch (softpipe->blend.alpha_func) {
+   switch (softpipe->blend->alpha_func) {
    case PIPE_BLEND_ADD:
       VEC4_ADD(quad->outputs.color[3], source[3], dest[3]); /* A */
       break;

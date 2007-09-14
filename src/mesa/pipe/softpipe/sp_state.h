@@ -33,15 +33,19 @@
 
 #include "pipe/p_state.h"
 
+const struct pipe_blend_state *
+softpipe_create_blend_state(struct pipe_context *,
+                            const struct pipe_blend_state *);
+void softpipe_bind_blend_state(struct pipe_context *,
+                               const struct pipe_blend_state *);
+void softpipe_delete_blend_state(struct pipe_context *,
+                                 const struct pipe_blend_state *);
 
 void softpipe_set_framebuffer_state( struct pipe_context *,
 			     const struct pipe_framebuffer_state * );
 
 void softpipe_set_alpha_test_state( struct pipe_context *,
                                     const struct pipe_alpha_test_state * );
-
-void softpipe_set_blend_state( struct pipe_context *,
-                               const struct pipe_blend_state * );
 
 void softpipe_set_blend_color( struct pipe_context *pipe,
                                const struct pipe_blend_color *blend_color );

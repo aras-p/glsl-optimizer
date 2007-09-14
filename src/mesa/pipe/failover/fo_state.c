@@ -58,14 +58,14 @@ failover_set_alpha_test_state(struct pipe_context *pipe,
 
 
 static void 
-failover_set_blend_state( struct pipe_context *pipe,
+failover_bind_blend_state( struct pipe_context *pipe,
 			  const struct pipe_blend_state *blend )
 {
    struct failover_context *failover = failover_context(pipe);
 
-   failover->blend = *blend;
+   failover->blend = blend;
    failover->dirty |= FO_NEW_BLEND;
-   failover->hw->set_blend_state( failover->hw, blend );
+   failover->hw->bind_blend_state( failover->hw, blend );
 }
 
 
@@ -266,9 +266,10 @@ failover_set_vertex_element(struct pipe_context *pipe,
 void
 failover_init_state_functions( struct failover_context *failover )
 {
+   failover->pipe.bind_blend_state = failover_bind_blend_state;
+
    failover->pipe.set_alpha_test_state = failover_set_alpha_test_state;
    failover->pipe.set_blend_color = failover_set_blend_color;
-   failover->pipe.set_blend_state = failover_set_blend_state;
    failover->pipe.set_clip_state = failover_set_clip_state;
    failover->pipe.set_clear_color_state = failover_set_clear_color_state;
    failover->pipe.set_depth_state = failover_set_depth_test_state;

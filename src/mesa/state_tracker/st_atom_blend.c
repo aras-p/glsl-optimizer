@@ -36,6 +36,7 @@
 #include "st_atom.h"
 #include "pipe/p_context.h"
 #include "pipe/p_defines.h"
+#include "cso_cache/cso_cache.h"
 
 
 /**
@@ -209,10 +210,14 @@ update_blend( struct st_context *st )
    if (st->ctx->Color.DitherFlag)
       blend.dither = 1;
 
-   if (memcmp(&blend, &st->state.blend, sizeof(blend)) != 0) {
+   struct pipe_blend_state *real_blend =
+      cso_cached_blend_state(st, &blend);
+
+   if (st->state.blend != real_blend) {
       /* state has changed */
-      st->state.blend = blend;  /* struct copy */
-      st->pipe->set_blend_state(st->pipe, &blend); /* set new state */
+      st->state.blend = real_blend;
+      /* bind new state */
+      st->pipe->bind_blend_state(st->pipe, real_blend);
    }
 
    if (memcmp(st->ctx->Color.BlendColor, &st->state.blend_color, 4 * sizeof(GLfloat)) != 0) {

@@ -39,7 +39,7 @@ struct st_texture_image;
 struct st_fragment_program;
 struct draw_context;
 struct draw_stage;
-
+struct cso_cache;
 
 #define ST_NEW_MESA                    0x1 /* Mesa state has changed */
 #define ST_NEW_FRAGMENT_PROGRAM        0x2
@@ -74,8 +74,9 @@ struct st_context
     * though, we just shove random objects across the interface.  
     */
    struct {
+      const struct pipe_blend_state  *blend;
+
       struct pipe_alpha_test_state  alpha_test;
-      struct pipe_blend_state  blend;
       struct pipe_blend_color  blend_color;
       struct pipe_clear_color_state clear_color;
       struct pipe_clip_state clip;
@@ -122,6 +123,8 @@ struct st_context
    struct st_fragment_program *fp;
 
    struct pipe_buffer_handle *default_attrib_buffer;
+
+   struct cso_cache *cache;
 };
 
 

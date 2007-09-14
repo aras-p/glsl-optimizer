@@ -31,7 +31,7 @@
 #include "p_state.h"
 #include "p_compiler.h"
 
-
+struct pipe_state_cache;
 /**
  * Software pipeline rendering context.  Basically a collection of
  * state setting functions, plus VBO drawing entrypoint.
@@ -85,11 +85,15 @@ struct pipe_context {
    /*
     * State functions
     */
+   const struct pipe_blend_state * (*create_blend_state)(struct pipe_context *,
+                                                         const struct pipe_blend_state *);
+   void (*bind_blend_state)(struct pipe_context *,
+                            const struct pipe_blend_state *);
+   void (*delete_blend_state)(struct pipe_context *,
+                              const struct pipe_blend_state *);
+
    void (*set_alpha_test_state)( struct pipe_context *,
                                  const struct pipe_alpha_test_state * );
-
-   void (*set_blend_state)( struct pipe_context *,
-                            const struct pipe_blend_state * );
 
    void (*set_blend_color)( struct pipe_context *,
                             const struct pipe_blend_color * );
