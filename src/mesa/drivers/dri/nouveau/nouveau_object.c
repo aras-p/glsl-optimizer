@@ -39,7 +39,7 @@ void nouveauObjectInit(nouveauContextPtr nmesa)
 		nouveauCreateContextObject(nmesa, NvCtxSurf3D, NV04_CONTEXT_SURFACES_3D);
 	}
 	if (nmesa->screen->card->type>=NV_11) {
-		nouveauCreateContextObject(nmesa, NvImageBlit, NV10_IMAGE_BLIT);
+		nouveauCreateContextObject(nmesa, NvImageBlit, NV11_IMAGE_BLIT);
 	} else {
 		nouveauCreateContextObject(nmesa, NvImageBlit, NV_IMAGE_BLIT);
 	}
@@ -56,9 +56,9 @@ void nouveauObjectInit(nouveauContextPtr nmesa)
 	OUT_RING(NvDmaFB);
 
 	nouveauObjectOnSubchannel(nmesa, NvSubImageBlit, NvImageBlit);
-	BEGIN_RING_SIZE(NvSubImageBlit, NV10_IMAGE_BLIT_SET_CONTEXT_SURFACES_2D, 1);
+	BEGIN_RING_SIZE(NvSubImageBlit, NV_IMAGE_BLIT_SET_SURFACES_2D, 1);
 	OUT_RING(NvCtxSurf2D);
-	BEGIN_RING_SIZE(NvSubImageBlit, NV10_IMAGE_BLIT_SET_OPERATION, 1);
+	BEGIN_RING_SIZE(NvSubImageBlit, NV_IMAGE_BLIT_OPERATION, 1);
 	OUT_RING(3); /* SRCCOPY */
 
 	if ((nmesa->screen->card->type>=NV_10) && (nmesa->screen->card->type<NV_20)) {

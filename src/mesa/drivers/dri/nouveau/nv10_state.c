@@ -840,7 +840,7 @@ static GLboolean nv10InitCard(nouveauContextPtr nmesa)
         OUT_RING(0);
 
 	/* Clipping regions */
-	BEGIN_RING_SIZE(NvSub3D, 0x2b4, 1); /* clip_mode */
+	BEGIN_RING_SIZE(NvSub3D, NV10_TCL_PRIMITIVE_3D_VIEWPORT_CLIP_MODE, 1);
 	OUT_RING  (0);
 	BEGIN_RING_SIZE(NvSub3D,
 	      NV10_TCL_PRIMITIVE_3D_VIEWPORT_CLIP_HORIZ(0), 1);

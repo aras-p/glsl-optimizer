@@ -348,7 +348,7 @@ nouveauDoSwapBuffers(nouveauContextPtr nmesa, __DRIdrawablePrivate *dPriv)
 	}
 
 	for (i=0; i<nbox; i++, box++) {
-		BEGIN_RING_SIZE(NvSubImageBlit, NV10_IMAGE_BLIT_SET_POINT, 3);
+		BEGIN_RING_SIZE(NvSubImageBlit, NV_IMAGE_BLIT_POINT_IN, 3);
 		OUT_RING       (((box->y1 - dPriv->y) << 16) |
 				(box->x1 - dPriv->x));
 		OUT_RING       ((box->y1 << 16) | box->x1);

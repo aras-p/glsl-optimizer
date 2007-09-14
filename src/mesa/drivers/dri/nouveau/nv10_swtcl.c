@@ -74,7 +74,7 @@ static inline void nv10StartPrimitive(struct nouveau_context* nmesa,uint32_t pri
 		BEGIN_RING_SIZE(NvSub3D,NV30_TCL_PRIMITIVE_3D_VERTEX_DATA|NONINC_METHOD,size);
 }
 
-inline void nv10FinishPrimitive(struct nouveau_context *nmesa)
+void nv10FinishPrimitive(struct nouveau_context *nmesa)
 {
 	if ((nmesa->screen->card->type>=NV_10) && (nmesa->screen->card->type<=NV_17))
 		BEGIN_RING_SIZE(NvSub3D,NV10_TCL_PRIMITIVE_3D_BEGIN_END,1);
@@ -516,7 +516,7 @@ static inline void nv10OutputVertexFormat(struct nouveau_context* nmesa)
 	} else {
 		BEGIN_RING_SIZE(NvSub3D, NV30_TCL_PRIMITIVE_3D_DO_VERTICES, 1);
 		OUT_RING(0);
-		BEGIN_RING_CACHE(NvSub3D,NV30_TCL_PRIMITIVE_3D_VERTEX_ATTR0_POS,slots);
+		BEGIN_RING_CACHE(NvSub3D,NV20_TCL_PRIMITIVE_3D_VB_POINTER_ATTR8_TX0,slots);
 		for(i=0;i<slots;i++)
 		{
 			int size=attr_size[i];
