@@ -91,11 +91,13 @@ intel_buffer_reference(struct pipe_winsys *sws,
 {
    if (*ptr) {
       driBOUnReference( dri_bo(*ptr) );
-      *buf = NULL;
+      *ptr = NULL;
    }
 
-   driBOReference( dri_bo(buf) );
-   *ptr = buf;
+   if (buf) {
+      driBOReference( dri_bo(buf) );
+      *ptr = buf;
+   }
 }
 
 
