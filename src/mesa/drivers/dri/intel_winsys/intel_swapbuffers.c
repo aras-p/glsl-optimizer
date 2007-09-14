@@ -46,7 +46,7 @@
 #define DRM_VBLANK_FLIP 0x8000000
 
 typedef struct drm_i915_flip {
-   int pipes;
+   int planes;
 } drm_i915_flip_t;
 
 #undef DRM_IOCTL_I915_FLIP
@@ -273,32 +273,32 @@ intelWindowMoved(struct intel_context *intel)
       GLint areaB = driIntersectArea( drw_rect, pipeB_rect );
       GLuint flags = intel_fb->vblank_flags;
       GLboolean pf_active;
-      GLint pf_pipes;
+      GLint pf_planes;
 
       /* Update page flipping info
        */
-      pf_pipes = 0;
+      pf_planes = 0;
 
       if (areaA > 0)
-	 pf_pipes |= 1;
+	 pf_planes |= 1;
 
       if (areaB > 0)
-	 pf_pipes |= 2;
+	 pf_planes |= 2;
 
       intel_fb->pf_current_page = (intel->sarea->pf_current_page >>
-				   (intel_fb->pf_pipes & 0x2)) & 0x3;
+				   (intel_fb->pf_planes & 0x2)) & 0x3;
 
       intel_fb->pf_num_pages = 2 /*intel->intelScreen->third.handle ? 3 : 2*/;
 
-      pf_active = pf_pipes && (pf_pipes & intel->sarea->pf_active) == pf_pipes;
+      pf_active = pf_planes && (pf_planes & intel->sarea->pf_active) == pf_planes;
 
       if (pf_active != intel_fb->pf_active)
 	 DBG(LOCK, "%s - Page flipping %sactive\n",
 	     __progname, pf_active ? "" : "in");
 
       if (pf_active) {
-	 /* Sync pages between pipes if we're flipping on both at the same time */
-	 if (pf_pipes == 0x3 &&	pf_pipes != intel_fb->pf_pipes &&
+	 /* Sync pages between planes if we're flipping on both at the same time */
+	 if (pf_planes == 0x3 && pf_planes != intel_fb->pf_planes &&
 	     (intel->sarea->pf_current_page & 0x3) !=
 	     (((intel->sarea->pf_current_page) >> 2) & 0x3)) {
 	    drm_i915_flip_t flip;
@@ -314,7 +314,7 @@ intelWindowMoved(struct intel_context *intel)
 		  ((intel_fb->pf_current_page + intel_fb->pf_num_pages - 1) %
 		   intel_fb->pf_num_pages) << 2;
 
-	       flip.pipes = 0x2;
+	       flip.planes = 0x2;
 	    } else {
                intel->sarea->pf_current_page =
 		  intel->sarea->pf_current_page & (0x3 << 2);
@@ -322,13 +322,13 @@ intelWindowMoved(struct intel_context *intel)
 		  (intel_fb->pf_current_page + intel_fb->pf_num_pages - 1) %
 		  intel_fb->pf_num_pages;
 
-	       flip.pipes = 0x1;
+	       flip.planes = 0x1;
 	    }
 
 	    drmCommandWrite(intel->driFd, DRM_I915_FLIP, &flip, sizeof(flip));
 	 }
 
-	 intel_fb->pf_pipes = pf_pipes;
+	 intel_fb->pf_planes = pf_planes;
       }
 
       intel_fb->pf_active = pf_active;
@@ -403,14 +403,14 @@ intel_wait_flips(struct intel_context *intel, GLuint batch_flags)
 			     BUFFER_BACK_LEFT);
 
    if (intel_fb->Base.Name == 0 && intel_rb->pf_pending == intel_fb->pf_seq) {
-      GLint pf_pipes = intel_fb->pf_pipes;
+      GLint pf_planes = intel_fb->pf_planes;
       BATCH_LOCALS;
 
       /* Wait for pending flips to take effect */
       BEGIN_BATCH(2, batch_flags);
-      OUT_BATCH(pf_pipes & 0x1 ? (MI_WAIT_FOR_EVENT | MI_WAIT_FOR_PLANE_A_FLIP)
+      OUT_BATCH(pf_planes & 0x1 ? (MI_WAIT_FOR_EVENT | MI_WAIT_FOR_PLANE_A_FLIP)
 		: 0);
-      OUT_BATCH(pf_pipes & 0x2 ? (MI_WAIT_FOR_EVENT | MI_WAIT_FOR_PLANE_B_FLIP)
+      OUT_BATCH(pf_planes & 0x2 ? (MI_WAIT_FOR_EVENT | MI_WAIT_FOR_PLANE_B_FLIP)
 		: 0);
       ADVANCE_BATCH();
 
@@ -449,7 +449,7 @@ intelPageFlip(const __DRIdrawablePrivate * dPriv)
    if (dPriv->numClipRects && intel_fb->pf_active) {
       drm_i915_flip_t flip;
 
-      flip.pipes = intel_fb->pf_pipes;
+      flip.planes = intel_fb->pf_planes;
 
       ret = drmCommandWrite(intel->driFd, DRM_I915_FLIP, &flip, sizeof(flip));
    }
@@ -464,7 +464,7 @@ intelPageFlip(const __DRIdrawablePrivate * dPriv)
    }
 
    intel_fb->pf_current_page = (intel->sarea->pf_current_page >>
-				(intel_fb->pf_pipes & 0x2)) & 0x3;
+				(intel_fb->pf_planes & 0x2)) & 0x3;
 
    if (dPriv->numClipRects != 0) {
       intel_get_renderbuffer(&intel_fb->Base, BUFFER_FRONT_LEFT)->pf_pending =
@@ -524,7 +524,7 @@ intelScheduleSwap(const __DRIdrawablePrivate * dPriv, GLboolean *missed_target)
       swap.seqtype |= DRM_VBLANK_FLIP;
 
       intel_fb->pf_current_page = (((intel->sarea->pf_current_page >>
-				     (intel_fb->pf_pipes & 0x2)) & 0x3) + 1) %
+				     (intel_fb->pf_planes & 0x2)) & 0x3) + 1) %
 				  intel_fb->pf_num_pages;
    }
 
@@ -554,7 +554,7 @@ intelScheduleSwap(const __DRIdrawablePrivate * dPriv, GLboolean *missed_target)
    } else {
       if (swap.seqtype & DRM_VBLANK_FLIP) {
 	 intel_fb->pf_current_page = ((intel->sarea->pf_current_page >>
-					(intel_fb->pf_pipes & 0x2)) & 0x3) %
+					(intel_fb->pf_planes & 0x2)) & 0x3) %
 				     intel_fb->pf_num_pages;
       }
 

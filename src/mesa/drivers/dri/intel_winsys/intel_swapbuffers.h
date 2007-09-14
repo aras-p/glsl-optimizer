@@ -42,7 +42,7 @@ struct intel_framebuffer
    /* Drawable page flipping state */
    GLboolean pf_active;
    GLuint pf_seq;
-   GLint pf_pipes;
+   GLint pf_planes;
    GLint pf_current_page;
    GLint pf_num_pages;
 
