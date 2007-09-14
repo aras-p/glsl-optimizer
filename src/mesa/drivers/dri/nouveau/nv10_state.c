@@ -200,7 +200,7 @@ static void nv10ClearStencil(GLcontext *ctx, GLint s)
 static void nv10ClipPlane(GLcontext *ctx, GLenum plane, const GLfloat *equation)
 {
 	nouveauContextPtr nmesa = NOUVEAU_CONTEXT(ctx);
-	BEGIN_RING_CACHE(NvSub3D, NV10_TCL_PRIMITIVE_3D_CLIP_PLANE_A(plane), 4);
+	BEGIN_RING_CACHE(NvSub3D, NV10_TCL_PRIMITIVE_3D_CLIP_PLANE_A(plane - GL_CLIP_PLANE0), 4);
 	OUT_RING_CACHEf(equation[0]);
 	OUT_RING_CACHEf(equation[1]);
 	OUT_RING_CACHEf(equation[2]);
