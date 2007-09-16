@@ -233,16 +233,16 @@ static void (*nv10_render_tab_verts[GL_POLYGON+2])(GLcontext *,
 static inline void nv10_render_generic_primitive_elts(GLcontext *ctx,GLuint start,GLuint count,GLuint flags,GLuint prim)
 {
 	struct nouveau_context *nmesa = NOUVEAU_CONTEXT(ctx);
-	GLubyte *vertptr = (GLubyte *)nmesa->verts;
-	GLuint vertsize = nmesa->vertex_size;
-	GLuint size_dword = vertsize*(count-start)/4;
+	uint32_t *vertptr = (GLubyte *)nmesa->verts;
+	GLuint vertsize = nmesa->vertex_size / 4;
+	GLuint size_dword = vertsize*(count-start);
 	const GLuint * const elt = TNL_CONTEXT(ctx)->vb.Elts;
 	GLuint j;
 
 	nv10ExtendPrimitive(nmesa, size_dword);
 	nv10StartPrimitive(nmesa,prim+1,size_dword);
 	for (j=start; j<count; j++ ) {
-		OUT_RING_VERT(nmesa, (nouveauVertex*)(vertptr+(elt[j]*vertsize)),vertsize/4);
+		OUT_RING_VERT(nmesa, (nouveauVertex*)(vertptr+(elt[j]*vertsize)),vertsize);
 	}
 	nv10FinishPrimitive(nmesa);
 }
@@ -332,22 +332,6 @@ do {									\
    nmesa->vertex_attr_count++;						\
 } while (0)
 
-static void nv10_render_clipped_line(GLcontext *ctx,GLuint ii,GLuint jj)
-{
-	/* FIXME do something here */
-	WARN_ONCE("Unimplemented %s\n", __func__);
-}
-
-static void nv10_render_clipped_poly(GLcontext *ctx,const GLuint *elts,GLuint n)
-{
-	TNLcontext *tnl = TNL_CONTEXT(ctx);
-	struct vertex_buffer *VB = &tnl->vb;
-	GLuint *tmp = VB->Elts;
-	VB->Elts = (GLuint *)elts;
-	nv10_render_generic_primitive_elts( ctx, 0, n, PRIM_BEGIN|PRIM_END,GL_POLYGON );
-	VB->Elts = tmp;
-}
-
 static inline void nv10_render_points(GLcontext *ctx,GLuint first,GLuint last)
 {
 	WARN_ONCE("Unimplemented\n");
@@ -356,12 +340,10 @@ static inline void nv10_render_points(GLcontext *ctx,GLuint first,GLuint last)
 static inline void nv10_render_line(GLcontext *ctx,GLuint v1,GLuint v2)
 {
 	struct nouveau_context *nmesa = NOUVEAU_CONTEXT(ctx);
-	GLubyte *vertptr = (GLubyte *)nmesa->verts;
-	GLuint vertsize = nmesa->vertex_size;
-	GLuint size_dword = vertsize*(2)/4;
-
+	uint32_t *vertptr = (GLubyte *)nmesa->verts;
 	/* OUT_RINGp wants size in DWORDS */
-	vertsize >>= 2;
+	GLuint vertsize = nmesa->vertex_size / 4;
+	GLuint size_dword = vertsize*2;
 
 	nv10ExtendPrimitive(nmesa, size_dword);
 	nv10StartPrimitive(nmesa,GL_LINES+1,size_dword);
@@ -373,12 +355,10 @@ static inline void nv10_render_line(GLcontext *ctx,GLuint v1,GLuint v2)
 static inline void nv10_render_triangle(GLcontext *ctx,GLuint v1,GLuint v2,GLuint v3)
 {
 	struct nouveau_context *nmesa = NOUVEAU_CONTEXT(ctx);
-	GLubyte *vertptr = (GLubyte *)nmesa->verts;
-	GLuint vertsize = nmesa->vertex_size;
-	GLuint size_dword = vertsize*(3)/4;
-
+	uint32_t *vertptr = (GLubyte *)nmesa->verts;
 	/* OUT_RINGp wants size in DWORDS */
-	vertsize >>= 2;
+	GLuint vertsize = nmesa->vertex_size / 4;
+	GLuint size_dword = vertsize*3;
 
 	nv10ExtendPrimitive(nmesa, size_dword);
 	nv10StartPrimitive(nmesa,GL_TRIANGLES+1,size_dword);
@@ -391,12 +371,10 @@ static inline void nv10_render_triangle(GLcontext *ctx,GLuint v1,GLuint v2,GLuin
 static inline void nv10_render_quad(GLcontext *ctx,GLuint v1,GLuint v2,GLuint v3,GLuint v4)
 {
 	struct nouveau_context *nmesa = NOUVEAU_CONTEXT(ctx);
-	GLubyte *vertptr = (GLubyte *)nmesa->verts;
-	GLuint vertsize = nmesa->vertex_size;
-	GLuint size_dword = vertsize*(4)/4;
-
+	uint32_t *vertptr = (GLubyte *)nmesa->verts;
 	/* OUT_RINGp wants size in DWORDS */
-	vertsize >>= 2;
+	GLuint vertsize = nmesa->vertex_size / 4;
+	GLuint size_dword = vertsize*4;
 
 	nv10ExtendPrimitive(nmesa, size_dword);
 	nv10StartPrimitive(nmesa,GL_QUADS+1,size_dword);
@@ -416,8 +394,8 @@ static void nv10ChooseRenderState(GLcontext *ctx)
 
 	tnl->Driver.Render.PrimTabVerts = nv10_render_tab_verts;
 	tnl->Driver.Render.PrimTabElts = nv10_render_tab_elts;
-	tnl->Driver.Render.ClippedLine = nv10_render_clipped_line;
-	tnl->Driver.Render.ClippedPolygon = nv10_render_clipped_poly;
+	tnl->Driver.Render.ClippedLine = _tnl_RenderClippedLine;
+	tnl->Driver.Render.ClippedPolygon = _tnl_RenderClippedPolygon;
 	tnl->Driver.Render.Points = nv10_render_points;
 	tnl->Driver.Render.Line = nv10_render_line;
 	tnl->Driver.Render.Triangle = nv10_render_triangle;
