@@ -294,7 +294,7 @@ GLuint _tnl_install_attrs( GLcontext *ctx, const struct tnl_attr_map *map,
    GLuint i, j;
 
    assert(nr < _TNL_ATTRIB_MAX);
-/*   assert(nr == 0 || map[0].attrib == VERT_ATTRIB_POS);*/
+   assert(nr == 0 || map[0].attrib == VERT_ATTRIB_POS);
 
    vtx->new_inputs = ~0;
    vtx->need_viewport = GL_FALSE;
