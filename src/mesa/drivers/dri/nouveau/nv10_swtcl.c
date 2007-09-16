@@ -75,8 +75,8 @@ static const int default_attr_size[8]={3,3,3,4,3,1,4,4};
 
 #define OUT_RING_VERT_RAW(ptr,vertex_size) do{						\
 	/* if the vertex size is not null, we have at least pos attribute */ \
-	OUT_RINGp((ptr) + default_attr_size[_TNL_ATTRIB_POS], (vertex_size) - default_attr_size[_TNL_ATTRIB_POS]); \
-	OUT_RINGp((ptr), default_attr_size[_TNL_ATTRIB_POS]); \
+	OUT_RINGp((uint32_t *)(ptr) + default_attr_size[_TNL_ATTRIB_POS], (vertex_size) - default_attr_size[_TNL_ATTRIB_POS]); \
+	OUT_RINGp((uint32_t *)(ptr), default_attr_size[_TNL_ATTRIB_POS]); \
 }while(0)
 
 #define OUT_RING_VERT(nmesa,ptr,vertex_size) do{ \
