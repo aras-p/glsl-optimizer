@@ -147,13 +147,13 @@ static inline void nv10ExtendPrimitive(struct nouveau_context* nmesa, int size)
 static inline void nv10_render_generic_primitive_verts(GLcontext *ctx,GLuint start,GLuint count,GLuint flags,GLuint prim)
 {
 	struct nouveau_context *nmesa = NOUVEAU_CONTEXT(ctx);
-	GLubyte *vertptr = (GLubyte *)nmesa->verts;
+	GLfloat *vertptr = (GLfloat *)nmesa->verts;
 	GLuint vertsize = nmesa->vertex_size;
-	GLuint size_dword = vertsize*(count-start)/4;
+	GLuint size_dword = vertsize*(count-start);
 
 	nv10ExtendPrimitive(nmesa, size_dword);
 	nv10StartPrimitive(nmesa,prim+1,size_dword);
-	OUT_RING_VERTp(nmesa, (nouveauVertex*)(vertptr+(start*vertsize)),size_dword, (vertsize/4));
+	OUT_RING_VERTp(nmesa, (nouveauVertex*)(vertptr+(start*vertsize)),size_dword, vertsize);
 	nv10FinishPrimitive(nmesa);
 }
 
@@ -234,7 +234,7 @@ static inline void nv10_render_generic_primitive_elts(GLcontext *ctx,GLuint star
 {
 	struct nouveau_context *nmesa = NOUVEAU_CONTEXT(ctx);
 	GLfloat *vertptr = (GLfloat *)nmesa->verts;
-	GLuint vertsize = nmesa->vertex_size / 4;
+	GLuint vertsize = nmesa->vertex_size;
 	GLuint size_dword = vertsize*(count-start);
 	const GLuint * const elt = TNL_CONTEXT(ctx)->vb.Elts;
 	GLuint j;
@@ -335,7 +335,7 @@ do {									\
 static inline void nv10_render_point(GLcontext *ctx, GLfloat *vertptr)
 {
 	struct nouveau_context *nmesa = NOUVEAU_CONTEXT(ctx);
-	GLuint vertsize = nmesa->vertex_size / 4;
+	GLuint vertsize = nmesa->vertex_size;
 	GLuint size_dword = vertsize;
 
 	nv10ExtendPrimitive(nmesa, size_dword);
@@ -349,7 +349,7 @@ static inline void nv10_render_points(GLcontext *ctx,GLuint first,GLuint last)
 	struct vertex_buffer *VB = &TNL_CONTEXT(ctx)->vb;
 	struct nouveau_context *nmesa = NOUVEAU_CONTEXT(ctx);
 	GLfloat *vertptr = (GLfloat *)nmesa->verts;
-	GLuint vertsize = nmesa->vertex_size / 4;
+	GLuint vertsize = nmesa->vertex_size;
 	GLuint i;
 
 	if (VB->Elts) {
@@ -368,8 +368,7 @@ static inline void nv10_render_line(GLcontext *ctx,GLuint v1,GLuint v2)
 {
 	struct nouveau_context *nmesa = NOUVEAU_CONTEXT(ctx);
 	GLfloat *vertptr = (GLfloat *)nmesa->verts;
-	/* OUT_RINGp wants size in DWORDS */
-	GLuint vertsize = nmesa->vertex_size / 4;
+	GLuint vertsize = nmesa->vertex_size;
 	GLuint size_dword = vertsize*2;
 
 	nv10ExtendPrimitive(nmesa, size_dword);
@@ -383,8 +382,7 @@ static inline void nv10_render_triangle(GLcontext *ctx,GLuint v1,GLuint v2,GLuin
 {
 	struct nouveau_context *nmesa = NOUVEAU_CONTEXT(ctx);
 	GLfloat *vertptr = (GLfloat *)nmesa->verts;
-	/* OUT_RINGp wants size in DWORDS */
-	GLuint vertsize = nmesa->vertex_size / 4;
+	GLuint vertsize = nmesa->vertex_size;
 	GLuint size_dword = vertsize*3;
 
 	nv10ExtendPrimitive(nmesa, size_dword);
@@ -399,8 +397,7 @@ static inline void nv10_render_quad(GLcontext *ctx,GLuint v1,GLuint v2,GLuint v3
 {
 	struct nouveau_context *nmesa = NOUVEAU_CONTEXT(ctx);
 	GLfloat *vertptr = (GLfloat *)nmesa->verts;
-	/* OUT_RINGp wants size in DWORDS */
-	GLuint vertsize = nmesa->vertex_size / 4;
+	GLuint vertsize = nmesa->vertex_size;
 	GLuint size_dword = vertsize*4;
 
 	nv10ExtendPrimitive(nmesa, size_dword);
@@ -528,7 +525,9 @@ static inline void nv10OutputVertexFormat(struct nouveau_context* nmesa)
 			nmesa->vertex_attrs, 
 			nmesa->vertex_attr_count,
 			NULL, 0 );
-	assert(nmesa->vertex_size==total_size*4);
+	/* OUT_RINGp wants size in DWORDS */
+	nmesa->vertex_size = nmesa->vertex_size / 4;
+	assert(nmesa->vertex_size==total_size);
 
 	/* 
 	 * Tell the hardware about the vertex format
