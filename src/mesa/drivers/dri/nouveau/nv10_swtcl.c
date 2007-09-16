@@ -75,8 +75,8 @@ static const int default_attr_size[8]={3,3,3,4,3,1,4,4};
 
 #define OUT_RING_VERT_RAW(ptr,vertex_size) do{						\
 	/* if the vertex size is not null, we have at least pos attribute */ \
-	OUT_RINGp((uint32_t *)(ptr) + default_attr_size[_TNL_ATTRIB_POS], (vertex_size) - default_attr_size[_TNL_ATTRIB_POS]); \
-	OUT_RINGp((uint32_t *)(ptr), default_attr_size[_TNL_ATTRIB_POS]); \
+	OUT_RINGp((GLfloat *)(ptr) + default_attr_size[_TNL_ATTRIB_POS], (vertex_size) - default_attr_size[_TNL_ATTRIB_POS]); \
+	OUT_RINGp((GLfloat *)(ptr), default_attr_size[_TNL_ATTRIB_POS]); \
 }while(0)
 
 #define OUT_RING_VERT(nmesa,ptr,vertex_size) do{ \
@@ -93,14 +93,14 @@ static const int default_attr_size[8]={3,3,3,4,3,1,4,4};
 		OUT_RINGp(ptr, sz); \
 	else \
 		for (nb_vert = 0; nb_vert < (sz)/(vertex_size); nb_vert++) { \
-			OUT_RING_VERT_RAW((uint32_t*)(ptr)+nb_vert*(vertex_size), vertex_size); \
+			OUT_RING_VERT_RAW((GLfloat*)(ptr)+nb_vert*(vertex_size), vertex_size); \
 		} \
 }while(0)
 
 #endif
 
 
-static inline void nv10StartPrimitive(struct nouveau_context* nmesa,uint32_t primitive,uint32_t size)
+static inline void nv10StartPrimitive(struct nouveau_context* nmesa,GLuint primitive,GLuint size)
 {
 	if ((nmesa->screen->card->type>=NV_10) && (nmesa->screen->card->type<=NV_17))
 		BEGIN_RING_SIZE(NvSub3D,NV10_TCL_PRIMITIVE_3D_BEGIN_END,1);
@@ -233,7 +233,7 @@ static void (*nv10_render_tab_verts[GL_POLYGON+2])(GLcontext *,
 static inline void nv10_render_generic_primitive_elts(GLcontext *ctx,GLuint start,GLuint count,GLuint flags,GLuint prim)
 {
 	struct nouveau_context *nmesa = NOUVEAU_CONTEXT(ctx);
-	uint32_t *vertptr = (GLubyte *)nmesa->verts;
+	GLfloat *vertptr = (GLfloat *)nmesa->verts;
 	GLuint vertsize = nmesa->vertex_size / 4;
 	GLuint size_dword = vertsize*(count-start);
 	const GLuint * const elt = TNL_CONTEXT(ctx)->vb.Elts;
@@ -332,7 +332,7 @@ do {									\
    nmesa->vertex_attr_count++;						\
 } while (0)
 
-static inline void nv10_render_point(GLcontext *ctx, GLubyte *vertptr)
+static inline void nv10_render_point(GLcontext *ctx, GLfloat *vertptr)
 {
 	struct nouveau_context *nmesa = NOUVEAU_CONTEXT(ctx);
 	GLuint vertsize = nmesa->vertex_size / 4;
@@ -348,7 +348,7 @@ static inline void nv10_render_points(GLcontext *ctx,GLuint first,GLuint last)
 {
 	struct vertex_buffer *VB = &TNL_CONTEXT(ctx)->vb;
 	struct nouveau_context *nmesa = NOUVEAU_CONTEXT(ctx);
-	uint32_t *vertptr = (GLubyte *)nmesa->verts;
+	GLfloat *vertptr = (GLfloat *)nmesa->verts;
 	GLuint vertsize = nmesa->vertex_size / 4;
 	GLuint i;
 
@@ -367,7 +367,7 @@ static inline void nv10_render_points(GLcontext *ctx,GLuint first,GLuint last)
 static inline void nv10_render_line(GLcontext *ctx,GLuint v1,GLuint v2)
 {
 	struct nouveau_context *nmesa = NOUVEAU_CONTEXT(ctx);
-	uint32_t *vertptr = (GLubyte *)nmesa->verts;
+	GLfloat *vertptr = (GLfloat *)nmesa->verts;
 	/* OUT_RINGp wants size in DWORDS */
 	GLuint vertsize = nmesa->vertex_size / 4;
 	GLuint size_dword = vertsize*2;
@@ -382,7 +382,7 @@ static inline void nv10_render_line(GLcontext *ctx,GLuint v1,GLuint v2)
 static inline void nv10_render_triangle(GLcontext *ctx,GLuint v1,GLuint v2,GLuint v3)
 {
 	struct nouveau_context *nmesa = NOUVEAU_CONTEXT(ctx);
-	uint32_t *vertptr = (GLubyte *)nmesa->verts;
+	GLfloat *vertptr = (GLfloat *)nmesa->verts;
 	/* OUT_RINGp wants size in DWORDS */
 	GLuint vertsize = nmesa->vertex_size / 4;
 	GLuint size_dword = vertsize*3;
@@ -398,7 +398,7 @@ static inline void nv10_render_triangle(GLcontext *ctx,GLuint v1,GLuint v2,GLuin
 static inline void nv10_render_quad(GLcontext *ctx,GLuint v1,GLuint v2,GLuint v3,GLuint v4)
 {
 	struct nouveau_context *nmesa = NOUVEAU_CONTEXT(ctx);
-	uint32_t *vertptr = (GLubyte *)nmesa->verts;
+	GLfloat *vertptr = (GLfloat *)nmesa->verts;
 	/* OUT_RINGp wants size in DWORDS */
 	GLuint vertsize = nmesa->vertex_size / 4;
 	GLuint size_dword = vertsize*4;
