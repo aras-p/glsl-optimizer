@@ -332,9 +332,36 @@ do {									\
    nmesa->vertex_attr_count++;						\
 } while (0)
 
+static inline void nv10_render_point(GLcontext *ctx, GLubyte *vertptr)
+{
+	struct nouveau_context *nmesa = NOUVEAU_CONTEXT(ctx);
+	GLuint vertsize = nmesa->vertex_size / 4;
+	GLuint size_dword = vertsize;
+
+	nv10ExtendPrimitive(nmesa, size_dword);
+	nv10StartPrimitive(nmesa,GL_POINTS+1,size_dword);
+	OUT_RING_VERT(nmesa, (nouveauVertex*)(vertptr),vertsize);
+	nv10FinishPrimitive(nmesa);
+}
+
 static inline void nv10_render_points(GLcontext *ctx,GLuint first,GLuint last)
 {
-	WARN_ONCE("Unimplemented\n");
+	struct vertex_buffer *VB = &TNL_CONTEXT(ctx)->vb;
+	struct nouveau_context *nmesa = NOUVEAU_CONTEXT(ctx);
+	uint32_t *vertptr = (GLubyte *)nmesa->verts;
+	GLuint vertsize = nmesa->vertex_size / 4;
+	GLuint i;
+
+	if (VB->Elts) {
+		for (i = first; i < last; i++)
+			if (VB->ClipMask[VB->Elts[i]] == 0)
+				nv10_render_point(ctx, vertptr + (VB->Elts[i]*vertsize));
+	}
+	else {
+		for (i = first; i < last; i++)
+			if (VB->ClipMask[i] == 0)
+				nv10_render_point(ctx, vertptr + (i*vertsize));
+	}
 }
 
 static inline void nv10_render_line(GLcontext *ctx,GLuint v1,GLuint v2)
