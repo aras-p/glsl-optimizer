@@ -54,6 +54,50 @@ static void nv10RasterPrimitive( GLcontext *ctx, GLenum rprim, GLuint hwprim );
 static void nv10RenderPrimitive( GLcontext *ctx, GLenum prim );
 static void nv10ResetLineStipple( GLcontext *ctx );
 
+static const int default_attr_size[8]={3,3,3,4,3,1,4,4};
+
+/* Mesa requires us to put pos attribute as the first attribute of the
+ * vertex, but on NV10 it is the last attribute.
+ * To fix that we put the pos attribute first, and we swap the pos
+ * attribute before sending it to the card.
+ * Speed cost of the swap seems negligeable
+ */
+#if 0
+/* old stuff where pos attribute isn't put first for mesa.
+ * Usefull for speed comparaison
+ */
+#define INV_VERT(i) i
+#define OUT_RING_VERTp(nmesa, ptr,sz, vertex_size) OUT_RINGp(ptr,sz)
+#define OUT_RING_VERT(nmesa, ptr, vertex_size) OUT_RINGp(ptr,vertex_size)
+#else
+
+#define INV_VERT(i) (i==0?7:i-1)
+
+#define OUT_RING_VERT_RAW(ptr,vertex_size) do{						\
+	/* if the vertex size is not null, we have at least pos attribute */ \
+	OUT_RINGp((ptr) + default_attr_size[_TNL_ATTRIB_POS], (vertex_size) - default_attr_size[_TNL_ATTRIB_POS]); \
+	OUT_RINGp((ptr), default_attr_size[_TNL_ATTRIB_POS]); \
+}while(0)
+
+#define OUT_RING_VERT(nmesa,ptr,vertex_size) do{ \
+	if (nmesa->screen->card->type>=NV_20) \
+		OUT_RINGp(ptr, vertex_size); \
+	else \
+		OUT_RING_VERT_RAW(ptr, vertex_size); \
+}while(0)
+
+
+#define OUT_RING_VERTp(nmesa, ptr,sz, vertex_size) do{						\
+	int nb_vert; \
+	if (nmesa->screen->card->type>=NV_20) \
+		OUT_RINGp(ptr, sz); \
+	else \
+		for (nb_vert = 0; nb_vert < (sz)/(vertex_size); nb_vert++) { \
+			OUT_RING_VERT_RAW((uint32_t*)(ptr)+nb_vert*(vertex_size), vertex_size); \
+		} \
+}while(0)
+
+#endif
 
 
 static inline void nv10StartPrimitive(struct nouveau_context* nmesa,uint32_t primitive,uint32_t size)
@@ -109,7 +153,7 @@ static inline void nv10_render_generic_primitive_verts(GLcontext *ctx,GLuint sta
 
 	nv10ExtendPrimitive(nmesa, size_dword);
 	nv10StartPrimitive(nmesa,prim+1,size_dword);
-	OUT_RINGp((nouveauVertex*)(vertptr+(start*vertsize)),size_dword);
+	OUT_RING_VERTp(nmesa, (nouveauVertex*)(vertptr+(start*vertsize)),size_dword, (vertsize/4));
 	nv10FinishPrimitive(nmesa);
 }
 
@@ -198,7 +242,7 @@ static inline void nv10_render_generic_primitive_elts(GLcontext *ctx,GLuint star
 	nv10ExtendPrimitive(nmesa, size_dword);
 	nv10StartPrimitive(nmesa,prim+1,size_dword);
 	for (j=start; j<count; j++ ) {
-		OUT_RINGp((nouveauVertex*)(vertptr+(elt[j]*vertsize)),vertsize/4);
+		OUT_RING_VERT(nmesa, (nouveauVertex*)(vertptr+(elt[j]*vertsize)),vertsize/4);
 	}
 	nv10FinishPrimitive(nmesa);
 }
@@ -290,7 +334,8 @@ do {									\
 
 static void nv10_render_clipped_line(GLcontext *ctx,GLuint ii,GLuint jj)
 {
-
+	/* FIXME do something here */
+	WARN_ONCE("Unimplemented %s\n", __func__);
 }
 
 static void nv10_render_clipped_poly(GLcontext *ctx,const GLuint *elts,GLuint n)
@@ -320,8 +365,8 @@ static inline void nv10_render_line(GLcontext *ctx,GLuint v1,GLuint v2)
 
 	nv10ExtendPrimitive(nmesa, size_dword);
 	nv10StartPrimitive(nmesa,GL_LINES+1,size_dword);
-	OUT_RINGp((nouveauVertex*)(vertptr+(v1*vertsize)),vertsize);
-	OUT_RINGp((nouveauVertex*)(vertptr+(v2*vertsize)),vertsize);
+	OUT_RING_VERT(nmesa, (nouveauVertex*)(vertptr+(v1*vertsize)),vertsize);
+	OUT_RING_VERT(nmesa, (nouveauVertex*)(vertptr+(v2*vertsize)),vertsize);
 	nv10FinishPrimitive(nmesa);
 }
 
@@ -337,9 +382,9 @@ static inline void nv10_render_triangle(GLcontext *ctx,GLuint v1,GLuint v2,GLuin
 
 	nv10ExtendPrimitive(nmesa, size_dword);
 	nv10StartPrimitive(nmesa,GL_TRIANGLES+1,size_dword);
-	OUT_RINGp((nouveauVertex*)(vertptr+(v1*vertsize)),vertsize);
-	OUT_RINGp((nouveauVertex*)(vertptr+(v2*vertsize)),vertsize);
-	OUT_RINGp((nouveauVertex*)(vertptr+(v3*vertsize)),vertsize);
+	OUT_RING_VERT(nmesa, (nouveauVertex*)(vertptr+(v1*vertsize)),vertsize);
+	OUT_RING_VERT(nmesa, (nouveauVertex*)(vertptr+(v2*vertsize)),vertsize);
+	OUT_RING_VERT(nmesa, (nouveauVertex*)(vertptr+(v3*vertsize)),vertsize);
 	nv10FinishPrimitive(nmesa);
 }
 
@@ -355,10 +400,10 @@ static inline void nv10_render_quad(GLcontext *ctx,GLuint v1,GLuint v2,GLuint v3
 
 	nv10ExtendPrimitive(nmesa, size_dword);
 	nv10StartPrimitive(nmesa,GL_QUADS+1,size_dword);
-	OUT_RINGp((nouveauVertex*)(vertptr+(v1*vertsize)),vertsize);
-	OUT_RINGp((nouveauVertex*)(vertptr+(v2*vertsize)),vertsize);
-	OUT_RINGp((nouveauVertex*)(vertptr+(v3*vertsize)),vertsize);
-	OUT_RINGp((nouveauVertex*)(vertptr+(v4*vertsize)),vertsize);
+	OUT_RING_VERT(nmesa, (nouveauVertex*)(vertptr+(v1*vertsize)),vertsize);
+	OUT_RING_VERT(nmesa, (nouveauVertex*)(vertptr+(v2*vertsize)),vertsize);
+	OUT_RING_VERT(nmesa, (nouveauVertex*)(vertptr+(v3*vertsize)),vertsize);
+	OUT_RING_VERT(nmesa, (nouveauVertex*)(vertptr+(v4*vertsize)),vertsize);
 	nv10FinishPrimitive(nmesa);
 }
 
@@ -388,7 +433,6 @@ static inline void nv10OutputVertexFormat(struct nouveau_context* nmesa)
 	DECLARE_RENDERINPUTS(index);
 	struct vertex_buffer *VB = &tnl->vb;
 	int attr_size[16];
-	int default_attr_size[8]={3,3,3,4,3,1,4,4};
 	const int nv10_vtx_attribs[8]={
 		_TNL_ATTRIB_FOG, _TNL_ATTRIB_WEIGHT,
 		_TNL_ATTRIB_NORMAL, _TNL_ATTRIB_TEX1,
@@ -425,7 +469,7 @@ static inline void nv10OutputVertexFormat(struct nouveau_context* nmesa)
 	 */
 	if ((nmesa->screen->card->type>=NV_10) && (nmesa->screen->card->type<=NV_17)) {
 		for(i=0;i<8;i++) {
-			int j = nv10_vtx_attribs[i];
+			int j = nv10_vtx_attribs[INV_VERT(i)];
 			if (RENDERINPUTS_TEST(index, j)) {
 				switch(attr_size[j])
 				{
