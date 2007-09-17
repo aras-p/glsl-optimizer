@@ -37,11 +37,6 @@
 #include "i915_blit.h"
 
 
-static void
-i915_region_idle(struct pipe_context *pipe, struct pipe_region *region)
-{
-   
-}
 
 
 static ubyte *
@@ -302,7 +297,6 @@ i915_region_fill(struct pipe_context *pipe,
 void
 i915_init_region_functions(struct i915_context *i915)
 {
-   i915->pipe.region_idle = i915_region_idle;
    i915->pipe.region_map = i915_region_map;
    i915->pipe.region_unmap = i915_region_unmap;
    i915->pipe.region_alloc = i915_region_alloc;

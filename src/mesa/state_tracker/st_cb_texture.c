@@ -705,14 +705,6 @@ st_TexImage(GLcontext * ctx,
    if (!pixels)
       return;
 
-
-   if (stImage->mt)
-      pipe->region_idle(pipe, stImage->mt->region);
-
-#if 0
-   LOCK_HARDWARE(intel);
-#endif
-
    if (stImage->mt) {
       texImage->Data = st_miptree_image_map(pipe,
                                                stImage->mt,
@@ -765,10 +757,6 @@ st_TexImage(GLcontext * ctx,
       st_miptree_image_unmap(pipe, stImage->mt);
       texImage->Data = NULL;
    }
-
-#if 0
-   UNLOCK_HARDWARE(intel);
-#endif
 
 #if 0
    /* GL_SGIS_generate_mipmap -- this can be accelerated now.
@@ -958,13 +946,6 @@ st_TexSubimage(GLcontext * ctx,
    if (!pixels)
       return;
 
-   if (stImage->mt)
-      pipe->region_idle(pipe, stImage->mt->region);
-
-#if 0
-   LOCK_HARDWARE(intel);
-#endif
-
    /* Map buffer if necessary.  Need to lock to prevent other contexts
     * from uploading the buffer under us.
     */
@@ -1004,10 +985,6 @@ st_TexSubimage(GLcontext * ctx,
       st_miptree_image_unmap(pipe, stImage->mt);
       texImage->Data = NULL;
    }
-
-#if 0
-   UNLOCK_HARDWARE(intel);
-#endif
 }
 
 

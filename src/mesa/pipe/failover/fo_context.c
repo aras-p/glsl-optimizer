@@ -139,7 +139,6 @@ struct pipe_context *failover_create( struct pipe_context *hw,
 
    failover->pipe.region_alloc = hw->region_alloc;
    failover->pipe.region_release = hw->region_release;
-   failover->pipe.region_idle = hw->region_idle;
    failover->pipe.region_map = hw->region_map;
    failover->pipe.region_unmap = hw->region_unmap;
    failover->pipe.region_data = hw->region_data;

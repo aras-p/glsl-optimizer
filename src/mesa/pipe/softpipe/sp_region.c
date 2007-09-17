@@ -48,12 +48,6 @@ round_up(unsigned n, unsigned multiple)
 }
 
 
-static void
-sp_region_idle(struct pipe_context *pipe, struct pipe_region *region)
-{
-   
-}
-
 
 static ubyte *
 sp_region_map(struct pipe_context *pipe, struct pipe_region *region)
@@ -283,7 +277,6 @@ sp_region_fill(struct pipe_context *pipe,
 void
 sp_init_region_functions(struct softpipe_context *sp)
 {
-   sp->pipe.region_idle = sp_region_idle;
    sp->pipe.region_map = sp_region_map;
    sp->pipe.region_unmap = sp_region_unmap;
    sp->pipe.region_alloc = sp_region_alloc;

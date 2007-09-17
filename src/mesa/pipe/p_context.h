@@ -182,8 +182,6 @@ struct pipe_context {
 
    void (*region_release)(struct pipe_context *pipe, struct pipe_region **r);
 
-   void (*region_idle)(struct pipe_context *pipe, struct pipe_region *region);
-
    ubyte *(*region_map)(struct pipe_context *pipe, struct pipe_region *r);
 
    void (*region_unmap)(struct pipe_context *pipe, struct pipe_region *r);
