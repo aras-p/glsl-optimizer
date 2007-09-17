@@ -74,6 +74,8 @@ static struct cso_hash *_cso_hash_for_type(struct cso_cache *sc, enum cso_cache_
    switch(type) {
    case CSO_BLEND:
       hash = sc->blend_hash;
+   case CSO_SAMPLER:
+      hash = sc->sampler_hash;
    }
 
    return hash;
@@ -84,6 +86,8 @@ static int _cso_size_for_type(enum cso_cache_type type)
    switch(type) {
    case CSO_BLEND:
       return sizeof(struct pipe_blend_state);
+   case CSO_SAMPLER:
+      return sizeof(struct pipe_sampler_state);
    }
    return 0;
 }
@@ -133,6 +137,7 @@ struct cso_cache *cso_cache_create(void)
    struct cso_cache *sc = malloc(sizeof(struct cso_cache));
 
    sc->blend_hash = cso_hash_create();
+   sc->sampler_hash = cso_hash_create();
 
    return sc;
 }
@@ -140,8 +145,8 @@ struct cso_cache *cso_cache_create(void)
 void cso_cache_delete(struct cso_cache *sc)
 {
    assert(sc);
-   assert(sc->blend_hash);
    cso_hash_delete(sc->blend_hash);
+   cso_hash_delete(sc->sampler_hash);
    free(sc);
 }
 

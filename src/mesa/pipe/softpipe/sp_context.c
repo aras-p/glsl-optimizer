@@ -253,6 +253,9 @@ struct pipe_context *softpipe_create( struct pipe_winsys *pipe_winsys,
    softpipe->pipe.create_blend_state = softpipe_create_blend_state;
    softpipe->pipe.bind_blend_state = softpipe_bind_blend_state;
    softpipe->pipe.delete_blend_state = softpipe_delete_blend_state;
+   softpipe->pipe.create_sampler_state = softpipe_create_sampler_state;
+   softpipe->pipe.bind_sampler_state = softpipe_bind_sampler_state;
+   softpipe->pipe.delete_sampler_state = softpipe_delete_sampler_state;
 
    softpipe->pipe.set_alpha_test_state = softpipe_set_alpha_test_state;
    softpipe->pipe.set_blend_color = softpipe_set_blend_color;
@@ -265,7 +268,6 @@ struct pipe_context *softpipe_create( struct pipe_winsys *pipe_winsys,
    softpipe->pipe.set_fs_state = softpipe_set_fs_state;
    softpipe->pipe.set_vs_state = softpipe_set_vs_state;
    softpipe->pipe.set_polygon_stipple = softpipe_set_polygon_stipple;
-   softpipe->pipe.set_sampler_state = softpipe_set_sampler_state;
    softpipe->pipe.set_scissor_state = softpipe_set_scissor_state;
    softpipe->pipe.set_setup_state = softpipe_set_setup_state;
    softpipe->pipe.set_stencil_state = softpipe_set_stencil_state;

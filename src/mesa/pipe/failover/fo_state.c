@@ -196,16 +196,16 @@ failover_set_stencil_state(struct pipe_context *pipe,
 
 
 static void
-failover_set_sampler_state(struct pipe_context *pipe,
+failover_bind_sampler_state(struct pipe_context *pipe,
 			   unsigned unit,
                            const struct pipe_sampler_state *sampler)
 {
    struct failover_context *failover = failover_context(pipe);
 
-   failover->sampler[unit] = *sampler;
+   failover->sampler[unit] = sampler;
    failover->dirty |= FO_NEW_SAMPLER;
    failover->dirty_sampler |= (1<<unit);
-   failover->hw->set_sampler_state( failover->hw, unit, sampler );
+   failover->hw->bind_sampler_state( failover->hw, unit, sampler );
 }
 
 
@@ -267,6 +267,7 @@ void
 failover_init_state_functions( struct failover_context *failover )
 {
    failover->pipe.bind_blend_state = failover_bind_blend_state;
+   failover->pipe.bind_sampler_state = failover_bind_sampler_state;
 
    failover->pipe.set_alpha_test_state = failover_set_alpha_test_state;
    failover->pipe.set_blend_color = failover_set_blend_color;
@@ -277,7 +278,6 @@ failover_init_state_functions( struct failover_context *failover )
    failover->pipe.set_fs_state = failover_set_fs_state;
    failover->pipe.set_vs_state = failover_set_vs_state;
    failover->pipe.set_polygon_stipple = failover_set_polygon_stipple;
-   failover->pipe.set_sampler_state = failover_set_sampler_state;
    failover->pipe.set_scissor_state = failover_set_scissor_state;
    failover->pipe.set_setup_state = failover_set_setup_state;
    failover->pipe.set_stencil_state = failover_set_stencil_state;

@@ -269,7 +269,7 @@ void i915_update_samplers( struct i915_context *i915 )
       if (i915->texture[unit]) {
 	 update_sampler( i915,
                          unit,
-                         i915->sampler + unit,       /* sampler state */
+                         i915->sampler[unit],       /* sampler state */
                          i915->texture[unit],        /* mipmap tree */
 			 i915->current.sampler[unit] /* the result */
                          );

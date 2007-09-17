@@ -42,8 +42,6 @@ static const struct pipe_blend_state *
 i915_create_blend_state(struct pipe_context *pipe,
                         const struct pipe_blend_state *blend)
 {
-   /*struct i915_context *i915 = i915_context(pipe);*/
-
    struct pipe_blend_state *new_blend = malloc(sizeof(struct pipe_blend_state));
    memcpy(new_blend, blend, sizeof(struct pipe_blend_state));
 
@@ -62,10 +60,9 @@ static void i915_bind_blend_state( struct pipe_context *pipe,
 
 
 static void i915_delete_blend_state( struct pipe_context *pipe,
-			     const struct pipe_blend_state *blend )
+                                     const struct pipe_blend_state *blend )
 {
-   /*struct i915_context *i915 = i915_context(pipe);*/
-   free(blend);
+   free((void*)blend);
 }
 
 static void i915_set_blend_color( struct pipe_context *pipe,
@@ -76,6 +73,34 @@ static void i915_set_blend_color( struct pipe_context *pipe,
    i915->blend_color = *blend_color;
 
    i915->dirty |= I915_NEW_BLEND;
+}
+
+static const struct pipe_sampler_state *
+i915_create_sampler_state(struct pipe_context *pipe,
+                          const struct pipe_sampler_state *sampler)
+{
+   struct pipe_sampler_state *new_sampler = malloc(sizeof(struct pipe_sampler_state));
+   memcpy(new_sampler, sampler, sizeof(struct pipe_sampler_state));
+
+   return new_sampler;
+}
+
+static void i915_bind_sampler_state(struct pipe_context *pipe,
+                                    unsigned unit,
+                                    const struct pipe_sampler_state *sampler)
+{
+   struct i915_context *i915 = i915_context(pipe);
+
+   assert(unit < PIPE_MAX_SAMPLERS);
+   i915->sampler[unit] = sampler;
+
+   i915->dirty |= I915_NEW_SAMPLER;
+}
+
+static void i915_delete_sampler_state(struct pipe_context *pipe,
+                                      const struct pipe_sampler_state *sampler)
+{
+   free((struct pipe_sampler_state*)sampler);
 }
 
 
@@ -189,19 +214,6 @@ static void i915_set_constant_buffer(struct pipe_context *pipe,
 }
 
 
-static void i915_set_sampler_state(struct pipe_context *pipe,
-                           unsigned unit,
-                           const struct pipe_sampler_state *sampler)
-{
-   struct i915_context *i915 = i915_context(pipe);
-
-   assert(unit < PIPE_MAX_SAMPLERS);
-   i915->sampler[unit] = *sampler;
-
-   i915->dirty |= I915_NEW_SAMPLER;
-}
-
-
 static void i915_set_texture_state(struct pipe_context *pipe,
 				   unsigned unit,
 				   struct pipe_mipmap_tree *texture)
@@ -293,7 +305,6 @@ static void i915_set_vertex_buffer( struct pipe_context *pipe,
    /* pass-through to draw module */
    draw_set_vertex_buffer(i915->draw, index, buffer);
 }
-   
 
 static void i915_set_vertex_element( struct pipe_context *pipe,
                                      unsigned index,
@@ -313,6 +324,10 @@ i915_init_state_functions( struct i915_context *i915 )
    i915->pipe.bind_blend_state = i915_bind_blend_state;
    i915->pipe.delete_blend_state = i915_delete_blend_state;
 
+   i915->pipe.create_sampler_state = i915_create_sampler_state;
+   i915->pipe.bind_sampler_state = i915_bind_sampler_state;
+   i915->pipe.delete_sampler_state = i915_delete_sampler_state;
+
    i915->pipe.set_alpha_test_state = i915_set_alpha_test_state;
    i915->pipe.set_blend_color = i915_set_blend_color;
    i915->pipe.set_clip_state = i915_set_clip_state;
@@ -323,7 +338,6 @@ i915_init_state_functions( struct i915_context *i915 )
    i915->pipe.set_fs_state = i915_set_fs_state;
    i915->pipe.set_vs_state = i915_set_vs_state;
    i915->pipe.set_polygon_stipple = i915_set_polygon_stipple;
-   i915->pipe.set_sampler_state = i915_set_sampler_state;
    i915->pipe.set_scissor_state = i915_set_scissor_state;
    i915->pipe.set_setup_state = i915_set_setup_state;
    i915->pipe.set_stencil_state = i915_set_stencil_state;

@@ -34,10 +34,16 @@
 #define ST_CACHE_H
 
 struct pipe_blend_state;
+struct pipe_sampler_state;
 struct st_context;
 
 struct pipe_blend_state * st_cached_blend_state(
    struct st_context *st,
    const struct pipe_blend_state *blend);
+
+struct pipe_sampler_state * st_cached_sampler_state(
+   struct st_context *st,
+   const struct pipe_sampler_state *sampler);
+
 
 #endif

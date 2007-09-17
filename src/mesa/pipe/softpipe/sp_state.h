@@ -41,6 +41,15 @@ void softpipe_bind_blend_state(struct pipe_context *,
 void softpipe_delete_blend_state(struct pipe_context *,
                                  const struct pipe_blend_state *);
 
+const struct pipe_sampler_state *
+softpipe_create_sampler_state(struct pipe_context *,
+                              const struct pipe_sampler_state *);
+void softpipe_bind_sampler_state(struct pipe_context *,
+                                 unsigned,
+                                 const struct pipe_sampler_state *);
+void softpipe_delete_sampler_state(struct pipe_context *,
+                                   const struct pipe_sampler_state *);
+
 void softpipe_set_framebuffer_state( struct pipe_context *,
 			     const struct pipe_framebuffer_state * );
 
@@ -80,10 +89,6 @@ void softpipe_set_scissor_state( struct pipe_context *,
 
 void softpipe_set_setup_state( struct pipe_context *,
 			      const struct pipe_setup_state * );
-
-void softpipe_set_sampler_state( struct pipe_context *,
-                                 unsigned unit,
-                                 const struct pipe_sampler_state * );
 
 void softpipe_set_stencil_state( struct pipe_context *,
                                  const struct pipe_stencil_state * );

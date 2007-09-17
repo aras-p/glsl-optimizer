@@ -33,6 +33,7 @@
  
 
 #include "st_context.h"
+#include "st_cache.h"
 #include "st_atom.h"
 #include "pipe/p_context.h"
 #include "pipe/p_defines.h"
@@ -142,10 +143,13 @@ update_samplers(struct st_context *st)
          /* XXX more sampler state here */
       }
 
-      if (memcmp(&sampler, &st->state.sampler[u], sizeof(sampler)) != 0) {
+      const struct pipe_sampler_state *cached_sampler =
+         st_cached_sampler_state(st, &sampler);
+
+      if (cached_sampler == st->state.sampler[u]) {
          /* state has changed */
-         st->state.sampler[u] = sampler;
-         st->pipe->set_sampler_state(st->pipe, u, &sampler);
+         st->state.sampler[u] = cached_sampler;
+         st->pipe->bind_sampler_state(st->pipe, u, cached_sampler);
       }
    }
 }

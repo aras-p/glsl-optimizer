@@ -100,8 +100,8 @@ failover_state_emit( struct failover_context *failover )
    if (failover->dirty & FO_NEW_SAMPLER) {
       for (i = 0; i < PIPE_MAX_SAMPLERS; i++) {
 	 if (failover->dirty_sampler & (1<<i)) {
-	    failover->sw->set_sampler_state( failover->sw, i, 
-					     &failover->sampler[i] );
+	    failover->sw->bind_sampler_state( failover->sw, i,
+                                              failover->sampler[i] );
 	 }
       }
    }

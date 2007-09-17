@@ -92,6 +92,15 @@ struct pipe_context {
    void (*delete_blend_state)(struct pipe_context *,
                               const struct pipe_blend_state *);
 
+   const struct pipe_sampler_state * (*create_sampler_state)(
+      struct pipe_context *,
+      const struct pipe_sampler_state *);
+   void (*bind_sampler_state)(struct pipe_context *,
+                              unsigned unit,
+                              const struct pipe_sampler_state *);
+   void (*delete_sampler_state)(struct pipe_context *,
+                                const struct pipe_sampler_state *);
+
    void (*set_alpha_test_state)( struct pipe_context *,
                                  const struct pipe_alpha_test_state * );
 
@@ -134,10 +143,6 @@ struct pipe_context {
 
    void (*set_stencil_state)( struct pipe_context *,
                               const struct pipe_stencil_state * );
-
-   void (*set_sampler_state)( struct pipe_context *,
-                              unsigned unit,
-                              const struct pipe_sampler_state * );
 
    void (*set_texture_state)( struct pipe_context *,
                               unsigned unit,

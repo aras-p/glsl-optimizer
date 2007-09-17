@@ -34,6 +34,7 @@
 
 #include "st_context.h"
 #include "st_atom.h"
+#include "st_cache.h"
 #include "st_draw.h"
 #include "st_program.h"
 #include "st_cb_drawpixels.h"
@@ -359,7 +360,8 @@ draw_textured_quad(GLcontext *ctx, GLint x, GLint y, GLfloat z,
       sampler.min_img_filter = PIPE_TEX_FILTER_NEAREST;
       sampler.min_mip_filter = PIPE_TEX_MIPFILTER_NONE;
       sampler.mag_img_filter = PIPE_TEX_FILTER_NEAREST;
-      pipe->set_sampler_state(pipe, unit, &sampler);
+      const struct pipe_sampler_state *state = st_cached_sampler_state(ctx->st, &sampler);
+      pipe->bind_sampler_state(pipe, unit, state);
    }
 
    /* viewport state: viewport matching window dims */
@@ -402,7 +404,7 @@ draw_textured_quad(GLcontext *ctx, GLint x, GLint y, GLfloat z,
    pipe->set_fs_state(pipe, &ctx->st->state.fs);
    pipe->set_vs_state(pipe, &ctx->st->state.vs);
    pipe->set_texture_state(pipe, unit, ctx->st->state.texture[unit]);
-   pipe->set_sampler_state(pipe, unit, &ctx->st->state.sampler[unit]);
+   pipe->bind_sampler_state(pipe, unit, ctx->st->state.sampler[unit]);
    pipe->set_viewport_state(pipe, &ctx->st->state.viewport);
 
    free_mipmap_tree(pipe, mt);

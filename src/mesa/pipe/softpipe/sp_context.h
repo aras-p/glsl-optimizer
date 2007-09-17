@@ -71,7 +71,8 @@ struct softpipe_context {
 
    /* The most recent drawing state as set by the driver:
     */
-   const struct pipe_blend_state *blend;
+   const struct pipe_blend_state   *blend;
+   const struct pipe_sampler_state *sampler[PIPE_MAX_SAMPLERS];
 
    struct pipe_alpha_test_state alpha_test;
    struct pipe_blend_color blend_color;
@@ -85,7 +86,6 @@ struct softpipe_context {
    struct pipe_shader_state vs;
    struct pipe_poly_stipple poly_stipple;
    struct pipe_scissor_state scissor;
-   struct pipe_sampler_state sampler[PIPE_MAX_SAMPLERS];
    struct pipe_setup_state setup;
    struct pipe_stencil_state stencil;
    struct pipe_mipmap_tree *texture[PIPE_MAX_SAMPLERS];

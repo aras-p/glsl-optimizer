@@ -34,17 +34,35 @@
 
 
 
+const struct pipe_sampler_state *
+softpipe_create_sampler_state(struct pipe_context *pipe,
+                              const struct pipe_sampler_state *sampler)
+{
+   struct pipe_sampler_state *new_sampler = malloc(sizeof(struct pipe_sampler_state));
+   memcpy(new_sampler, sampler, sizeof(struct pipe_sampler_state));
+
+   return new_sampler;
+}
+
 void
-softpipe_set_sampler_state(struct pipe_context *pipe,
-                           unsigned unit,
-                           const struct pipe_sampler_state *sampler)
+softpipe_bind_sampler_state(struct pipe_context *pipe,
+                            unsigned unit,
+                            const struct pipe_sampler_state *sampler)
 {
    struct softpipe_context *softpipe = softpipe_context(pipe);
 
    assert(unit < PIPE_MAX_SAMPLERS);
-   softpipe->sampler[unit] = *sampler;
+   softpipe->sampler[unit] = sampler;
 
    softpipe->dirty |= SP_NEW_SAMPLER;
+}
+
+
+void
+softpipe_delete_sampler_state(struct pipe_context *pipe,
+                              const struct pipe_sampler_state *sampler)
+{
+   free((struct pipe_sampler_state*)sampler);
 }
 
 

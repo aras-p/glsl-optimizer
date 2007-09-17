@@ -59,3 +59,20 @@ struct pipe_blend_state * st_cached_blend_state(
    }
    return (struct pipe_blend_state*)(cso_hash_iter_data(iter));
 }
+
+struct pipe_sampler_state * st_cached_sampler_state(
+   struct st_context *st,
+   const struct pipe_sampler_state *sampler)
+{
+   unsigned hash_key = cso_construct_key((void*)sampler, sizeof(struct pipe_sampler_state));
+   struct cso_hash_iter iter = cso_find_state_template(st->cache,
+                                                       hash_key, CSO_SAMPLER,
+                                                       (void*)sampler);
+   if (cso_hash_iter_is_null(iter)) {
+      const struct pipe_sampler_state *created_state = st->pipe->create_sampler_state(
+         st->pipe, sampler);
+      iter = cso_insert_state(st->cache, hash_key, CSO_SAMPLER,
+                              (void*)created_state);
+   }
+   return (struct pipe_sampler_state*)(cso_hash_iter_data(iter));
+}
