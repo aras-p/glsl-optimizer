@@ -1015,9 +1015,9 @@ xmesa_new_query_object(GLcontext *ctx, GLuint id)
 
 
 static void
-xmesa_begin_query(GLcontext *ctx, GLenum target, struct gl_query_object *q)
+xmesa_begin_query(GLcontext *ctx, struct gl_query_object *q)
 {
-   if (target == GL_TIME_ELAPSED_EXT) {
+   if (q->Target == GL_TIME_ELAPSED_EXT) {
       struct xmesa_query_object *xq = (struct xmesa_query_object *) q;
       (void) gettimeofday(&xq->StartTime, NULL);
    }
@@ -1042,9 +1042,9 @@ time_diff(const struct timeval *t0, const struct timeval *t1)
 
 
 static void
-xmesa_end_query(GLcontext *ctx, GLenum target, struct gl_query_object *q)
+xmesa_end_query(GLcontext *ctx, struct gl_query_object *q)
 {
-   if (target == GL_TIME_ELAPSED_EXT) {
+   if (q->Target == GL_TIME_ELAPSED_EXT) {
       struct xmesa_query_object *xq = (struct xmesa_query_object *) q;
       struct timeval endTime;
       (void) gettimeofday(&endTime, NULL);
