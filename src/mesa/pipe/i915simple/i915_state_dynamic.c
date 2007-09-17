@@ -68,8 +68,8 @@ static void upload_MODES4( struct i915_context *i915 )
 
    /* I915_NEW_STENCIL */
    {
-      int testmask = i915->stencil.value_mask[0] & 0xff;
-      int writemask = i915->stencil.write_mask[0] & 0xff;
+      int testmask = i915->depth_stencil->stencil.value_mask[0] & 0xff;
+      int writemask = i915->depth_stencil->stencil.write_mask[0] & 0xff;
 
       modes4 |= (_3DSTATE_MODES_4_CMD |
 		 ENABLE_STENCIL_TEST_MASK |
@@ -94,7 +94,7 @@ static void upload_MODES4( struct i915_context *i915 )
 }
 
 const struct i915_tracked_state i915_upload_MODES4 = {
-   .dirty = I915_NEW_BLEND | I915_NEW_STENCIL,
+   .dirty = I915_NEW_BLEND | I915_NEW_DEPTH_STENCIL,
    .update = upload_MODES4
 };
 
@@ -112,14 +112,14 @@ static void upload_BFO( struct i915_context *i915 )
 
    /* _NEW_STENCIL 
     */
-   if (i915->stencil.back_enabled) {
-      int test  = i915_translate_compare_func(i915->stencil.back_func);
-      int fop   = i915_translate_stencil_op(i915->stencil.back_fail_op);
-      int dfop  = i915_translate_stencil_op(i915->stencil.back_zfail_op);
-      int dpop  = i915_translate_stencil_op(i915->stencil.back_zpass_op);
-      int ref   = i915->stencil.ref_value[1] & 0xff;
-      int tmask = i915->stencil.value_mask[1] & 0xff;
-      int wmask = i915->stencil.write_mask[1] & 0xff;
+   if (i915->depth_stencil->stencil.back_enabled) {
+      int test  = i915_translate_compare_func(i915->depth_stencil->stencil.back_func);
+      int fop   = i915_translate_stencil_op(i915->depth_stencil->stencil.back_fail_op);
+      int dfop  = i915_translate_stencil_op(i915->depth_stencil->stencil.back_zfail_op);
+      int dpop  = i915_translate_stencil_op(i915->depth_stencil->stencil.back_zpass_op);
+      int ref   = i915->depth_stencil->stencil.ref_value[1] & 0xff;
+      int tmask = i915->depth_stencil->stencil.value_mask[1] & 0xff;
+      int wmask = i915->depth_stencil->stencil.write_mask[1] & 0xff;
       
       bf[0] = (_3DSTATE_BACKFACE_STENCIL_OPS |
 	       BFO_ENABLE_STENCIL_FUNCS |
@@ -157,7 +157,7 @@ static void upload_BFO( struct i915_context *i915 )
 }
 
 const struct i915_tracked_state i915_upload_BFO = {
-   .dirty = I915_NEW_STENCIL,
+   .dirty = I915_NEW_DEPTH_STENCIL,
    .update = upload_BFO
 };
 

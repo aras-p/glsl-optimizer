@@ -29,14 +29,66 @@
   * Authors:
   *   Keith Whitwell <keith@tungstengraphics.com>
   *   Brian Paul
+  *   Zack  Rusin
   */
  
 
 #include "st_context.h"
+#include "st_cache.h"
 #include "st_atom.h"
 #include "pipe/p_context.h"
 #include "pipe/p_defines.h"
 
+
+/**
+ * Convert GLenum stencil func tokens to pipe tokens.
+ */
+static GLuint
+gl_stencil_func_to_sp(GLenum func)
+{
+   /* Same values, just biased */
+   assert(PIPE_FUNC_NEVER == GL_NEVER - GL_NEVER);
+   assert(PIPE_FUNC_LESS == GL_LESS - GL_NEVER);
+   assert(PIPE_FUNC_EQUAL == GL_EQUAL - GL_NEVER);
+   assert(PIPE_FUNC_LEQUAL == GL_LEQUAL - GL_NEVER);
+   assert(PIPE_FUNC_GREATER == GL_GREATER - GL_NEVER);
+   assert(PIPE_FUNC_NOTEQUAL == GL_NOTEQUAL - GL_NEVER);
+   assert(PIPE_FUNC_GEQUAL == GL_GEQUAL - GL_NEVER);
+   assert(PIPE_FUNC_ALWAYS == GL_ALWAYS - GL_NEVER);
+   assert(func >= GL_NEVER);
+   assert(func <= GL_ALWAYS);
+   return func - GL_NEVER;
+}
+
+
+/**
+ * Convert GLenum stencil op tokens to pipe tokens.
+ */
+static GLuint
+gl_stencil_op_to_sp(GLenum func)
+{
+   switch (func) {
+   case GL_KEEP:
+      return PIPE_STENCIL_OP_KEEP;
+   case GL_ZERO:
+      return PIPE_STENCIL_OP_ZERO;
+   case GL_REPLACE:
+      return PIPE_STENCIL_OP_REPLACE;
+   case GL_INCR:
+      return PIPE_STENCIL_OP_INCR;
+   case GL_DECR:
+      return PIPE_STENCIL_OP_DECR;
+   case GL_INCR_WRAP:
+      return PIPE_STENCIL_OP_INCR_WRAP;
+   case GL_DECR_WRAP:
+      return PIPE_STENCIL_OP_DECR_WRAP;
+   case GL_INVERT:
+      return PIPE_STENCIL_OP_INVERT;
+   default:
+      assert("invalid GL token in gl_stencil_op_to_sp()" == NULL);
+      return 0;
+   }
+}
 
 /**
  * Convert GLenum depth func tokens to pipe tokens.
@@ -59,35 +111,59 @@ gl_depth_func_to_sp(GLenum func)
 }
 
 
-static void 
-update_depth( struct st_context *st )
+static void
+update_depth_stencil(struct st_context *st)
 {
-   struct pipe_depth_state depth;
+   struct pipe_depth_stencil_state depth_stencil;
 
-   memset(&depth, 0, sizeof(depth));
+   memset(&depth_stencil, 0, sizeof(depth_stencil));
 
-   depth.enabled = st->ctx->Depth.Test;
-   depth.writemask = st->ctx->Depth.Mask;
-   depth.func = gl_depth_func_to_sp(st->ctx->Depth.Func);
-   depth.clear = st->ctx->Depth.Clear;
+   depth_stencil.depth.enabled = st->ctx->Depth.Test;
+   depth_stencil.depth.writemask = st->ctx->Depth.Mask;
+   depth_stencil.depth.func = gl_depth_func_to_sp(st->ctx->Depth.Func);
+   depth_stencil.depth.clear = st->ctx->Depth.Clear;
 
    if (st->ctx->Query.CurrentOcclusionObject &&
        st->ctx->Query.CurrentOcclusionObject->Active)
-      depth.occlusion_count = 1;
+      depth_stencil.depth.occlusion_count = 1;
 
-   if (memcmp(&depth, &st->state.depth, sizeof(depth)) != 0) {
+   if (st->ctx->Stencil.Enabled) {
+      depth_stencil.stencil.front_enabled = 1;
+      depth_stencil.stencil.front_func = gl_stencil_func_to_sp(st->ctx->Stencil.Function[0]);
+      depth_stencil.stencil.front_fail_op = gl_stencil_op_to_sp(st->ctx->Stencil.FailFunc[0]);
+      depth_stencil.stencil.front_zfail_op = gl_stencil_op_to_sp(st->ctx->Stencil.ZFailFunc[0]);
+      depth_stencil.stencil.front_zpass_op = gl_stencil_op_to_sp(st->ctx->Stencil.ZPassFunc[0]);
+      depth_stencil.stencil.ref_value[0] = st->ctx->Stencil.Ref[0] & 0xff;
+      depth_stencil.stencil.value_mask[0] = st->ctx->Stencil.ValueMask[0] & 0xff;
+      depth_stencil.stencil.write_mask[0] = st->ctx->Stencil.WriteMask[0] & 0xff;
+      if (st->ctx->Stencil.TestTwoSide) {
+         depth_stencil.stencil.back_enabled = 1;
+         depth_stencil.stencil.back_func = gl_stencil_func_to_sp(st->ctx->Stencil.Function[1]);
+         depth_stencil.stencil.back_fail_op = gl_stencil_op_to_sp(st->ctx->Stencil.FailFunc[1]);
+         depth_stencil.stencil.back_zfail_op = gl_stencil_op_to_sp(st->ctx->Stencil.ZFailFunc[1]);
+         depth_stencil.stencil.back_zpass_op = gl_stencil_op_to_sp(st->ctx->Stencil.ZPassFunc[1]);
+         depth_stencil.stencil.ref_value[1] = st->ctx->Stencil.Ref[1] & 0xff;
+         depth_stencil.stencil.value_mask[1] = st->ctx->Stencil.ValueMask[1] & 0xff;
+         depth_stencil.stencil.write_mask[1] = st->ctx->Stencil.WriteMask[1] & 0xff;
+      }
+      depth_stencil.stencil.clear_value = st->ctx->Stencil.Clear & 0xff;
+   }
+
+   struct pipe_depth_stencil_state *cached_state =
+      st_cached_depth_stencil_state(st, &depth_stencil);
+   if (st->state.depth_stencil != cached_state) {
       /* state has changed */
-      st->state.depth = depth;  /* struct copy */
-      st->pipe->set_depth_state(st->pipe, &depth); /* set new state */
+      st->state.depth_stencil = cached_state;
+      st->pipe->bind_depth_stencil_state(st->pipe, cached_state); /* set new state */
    }
 }
 
 
-const struct st_tracked_state st_update_depth = {
-   .name = "st_update_depth",
+const struct st_tracked_state st_update_depth_stencil = {
+   .name = "st_update_depth_stencil",
    .dirty = {
-      .mesa = (_NEW_DEPTH),
+      .mesa = (_NEW_DEPTH|_NEW_STENCIL),
       .st  = 0,
    },
-   .update = update_depth
+   .update = update_depth_stencil
 };

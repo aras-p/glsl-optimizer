@@ -71,16 +71,6 @@ void softpipe_set_blend_color( struct pipe_context *pipe,
 /** XXX move someday?  Or consolidate all these simple state setters
  * into one file.
  */
-void
-softpipe_set_depth_test_state(struct pipe_context *pipe,
-                              const struct pipe_depth_state *depth)
-{
-   struct softpipe_context *softpipe = softpipe_context(pipe);
-
-   softpipe->depth_test = *depth;
-
-   softpipe->dirty |= SP_NEW_DEPTH_TEST;
-}
 
 void
 softpipe_set_alpha_test_state(struct pipe_context *pipe,
@@ -93,14 +83,30 @@ softpipe_set_alpha_test_state(struct pipe_context *pipe,
    softpipe->dirty |= SP_NEW_ALPHA_TEST;
 }
 
+const struct pipe_depth_stencil_state *
+softpipe_create_depth_stencil_state(struct pipe_context *pipe,
+                              const struct pipe_depth_stencil_state *depth_stencil)
+{
+   struct pipe_depth_stencil_state *new_ds = malloc(sizeof(struct pipe_depth_stencil_state));
+   memcpy(new_ds, depth_stencil, sizeof(struct pipe_depth_stencil_state));
+
+   return new_ds;
+}
+
 void
-softpipe_set_stencil_state(struct pipe_context *pipe,
-                           const struct pipe_stencil_state *stencil)
+softpipe_bind_depth_stencil_state(struct pipe_context *pipe,
+                              const struct pipe_depth_stencil_state *depth_stencil)
 {
    struct softpipe_context *softpipe = softpipe_context(pipe);
 
-   softpipe->stencil = *stencil;
+   softpipe->depth_stencil = depth_stencil;
 
-   softpipe->dirty |= SP_NEW_STENCIL;
+   softpipe->dirty |= SP_NEW_DEPTH_STENCIL;
 }
 
+void
+softpipe_delete_depth_stencil_state(struct pipe_context *pipe,
+                                    const struct pipe_depth_stencil_state *depth)
+{
+   free((struct pipe_depth_stencil_state*)depth);
+}

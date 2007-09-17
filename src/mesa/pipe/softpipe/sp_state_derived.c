@@ -55,7 +55,7 @@ static void calculate_vertex_layout( struct softpipe_context *softpipe )
    /* Need Z if depth test is enabled or the fragment program uses the
     * fragment position (XYZW).
     */
-   if (softpipe->depth_test.enabled ||
+   if (softpipe->depth_stencil->depth.enabled ||
        (inputsRead & (1 << TGSI_ATTRIB_POS)))
       softpipe->need_z = TRUE;
    else
@@ -186,15 +186,14 @@ void softpipe_update_derived( struct softpipe_context *softpipe )
       calculate_vertex_layout( softpipe );
 
    if (softpipe->dirty & (SP_NEW_SCISSOR |
-                          SP_NEW_STENCIL |
+                          SP_NEW_DEPTH_STENCIL |
                           SP_NEW_FRAMEBUFFER))
       compute_cliprect(softpipe);
 
    if (softpipe->dirty & (SP_NEW_BLEND |
-                          SP_NEW_DEPTH_TEST |
+                          SP_NEW_DEPTH_STENCIL |
                           SP_NEW_ALPHA_TEST |
                           SP_NEW_FRAMEBUFFER |
-                          SP_NEW_STENCIL |
                           SP_NEW_SETUP |
                           SP_NEW_FS))
       sp_build_quad_pipeline(softpipe);

@@ -146,13 +146,31 @@ struct pipe_shader_state {
    void *executable;
 };
 
-struct pipe_depth_state
+struct pipe_depth_stencil_state
 {
-   unsigned enabled:1;   /**< depth test enabled? */
-   unsigned writemask:1; /**< allow depth buffer writes? */
-   unsigned func:3;      /**< depth test func (PIPE_FUNC_x) */
-   unsigned occlusion_count:1; /**< XXX move this elsewhere? */
-   float clear;      /**< Clear value in [0,1] (XXX correct place?) */
+   struct {
+      unsigned enabled:1;   /**< depth test enabled? */
+      unsigned writemask:1; /**< allow depth buffer writes? */
+      unsigned func:3;      /**< depth test func (PIPE_FUNC_x) */
+      unsigned occlusion_count:1; /**< XXX move this elsewhere? */
+      float clear;      /**< Clear value in [0,1] (XXX correct place?) */
+   } depth;
+   struct {
+      unsigned front_enabled:1;
+      unsigned front_func:3;     /**< PIPE_FUNC_x */
+      unsigned front_fail_op:3;  /**< PIPE_STENCIL_OP_x */
+      unsigned front_zpass_op:3; /**< PIPE_STENCIL_OP_x */
+      unsigned front_zfail_op:3; /**< PIPE_STENCIL_OP_x */
+      unsigned back_enabled:1;
+      unsigned back_func:3;      /**< PIPE_FUNC_x */
+      unsigned back_fail_op:3;   /**< PIPE_STENCIL_OP_x */
+      unsigned back_zpass_op:3;  /**< PIPE_STENCIL_OP_x */
+      unsigned back_zfail_op:3;  /**< PIPE_STENCIL_OP_x */
+      ubyte ref_value[2];    /**< [0] = front, [1] = back */
+      ubyte value_mask[2];
+      ubyte write_mask[2];
+      ubyte clear_value;
+   } stencil;
 };
 
 struct pipe_alpha_test_state {
@@ -187,24 +205,6 @@ struct pipe_clear_color_state
 {
    float color[4];
 };
-
-struct pipe_stencil_state {
-   unsigned front_enabled:1;
-   unsigned front_func:3;     /**< PIPE_FUNC_x */
-   unsigned front_fail_op:3;  /**< PIPE_STENCIL_OP_x */
-   unsigned front_zpass_op:3; /**< PIPE_STENCIL_OP_x */
-   unsigned front_zfail_op:3; /**< PIPE_STENCIL_OP_x */
-   unsigned back_enabled:1;
-   unsigned back_func:3;      /**< PIPE_FUNC_x */
-   unsigned back_fail_op:3;   /**< PIPE_STENCIL_OP_x */
-   unsigned back_zpass_op:3;  /**< PIPE_STENCIL_OP_x */
-   unsigned back_zfail_op:3;  /**< PIPE_STENCIL_OP_x */
-   ubyte ref_value[2];    /**< [0] = front, [1] = back */
-   ubyte value_mask[2];
-   ubyte write_mask[2];
-   ubyte clear_value;
-};
-
 
 struct pipe_framebuffer_state
 {

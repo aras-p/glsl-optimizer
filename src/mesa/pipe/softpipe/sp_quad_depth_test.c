@@ -77,7 +77,7 @@ sp_depth_test_quad(struct quad_stage *qs, struct quad_header *quad)
    /* get zquad from zbuffer */
    sps->read_quad_z(sps, quad->x0, quad->y0, bzzzz);
 
-   switch (softpipe->depth_test.func) {
+   switch (softpipe->depth_stencil->depth.func) {
    case PIPE_FUNC_NEVER:
       /* zmask = 0 */
       break;
@@ -129,7 +129,7 @@ sp_depth_test_quad(struct quad_stage *qs, struct quad_header *quad)
 
    quad->mask &= zmask;
 
-   if (softpipe->depth_test.writemask) {
+   if (softpipe->depth_stencil->depth.writemask) {
       
       /* This is also efficient with sse / spe instructions: 
        */

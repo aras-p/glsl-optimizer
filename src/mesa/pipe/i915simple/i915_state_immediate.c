@@ -128,12 +128,12 @@ static void upload_S5( struct i915_context *i915 )
    unsigned LIS5 = 0;
 
    /* I915_NEW_STENCIL */
-   if (i915->stencil.front_enabled) {
-      int test = i915_translate_compare_func(i915->stencil.front_func);
-      int fop = i915_translate_stencil_op(i915->stencil.front_fail_op);
-      int dfop = i915_translate_stencil_op(i915->stencil.front_zfail_op);
-      int dpop = i915_translate_stencil_op(i915->stencil.front_zpass_op);
-      int ref = i915->stencil.ref_value[0] & 0xff;
+   if (i915->depth_stencil->stencil.front_enabled) {
+      int test = i915_translate_compare_func(i915->depth_stencil->stencil.front_func);
+      int fop = i915_translate_stencil_op(i915->depth_stencil->stencil.front_fail_op);
+      int dfop = i915_translate_stencil_op(i915->depth_stencil->stencil.front_zfail_op);
+      int dpop = i915_translate_stencil_op(i915->depth_stencil->stencil.front_zpass_op);
+      int ref = i915->depth_stencil->stencil.ref_value[0] & 0xff;
       
       LIS5 |= (S5_STENCIL_TEST_ENABLE |
 	       S5_STENCIL_WRITE_ENABLE |
@@ -179,7 +179,7 @@ static void upload_S5( struct i915_context *i915 )
 }
 
 const struct i915_tracked_state i915_upload_S5 = {
-   .dirty = (I915_NEW_STENCIL | I915_NEW_BLEND | I915_NEW_SETUP),
+   .dirty = (I915_NEW_DEPTH_STENCIL | I915_NEW_BLEND | I915_NEW_SETUP),
    .update = upload_S5
 };
 
@@ -219,13 +219,13 @@ static void upload_S6( struct i915_context *i915 )
 
    /* I915_NEW_DEPTH 
     */
-   if (i915->depth_test.enabled) {
-      int func = i915_translate_compare_func(i915->depth_test.func);
+   if (i915->depth_stencil->depth.enabled) {
+      int func = i915_translate_compare_func(i915->depth_stencil->depth.func);
 
       LIS6 |= (S6_DEPTH_TEST_ENABLE |
 	       (func << S6_DEPTH_TEST_FUNC_SHIFT));
 
-      if (i915->depth_test.writemask)
+      if (i915->depth_stencil->depth.writemask)
 	 LIS6 |= S6_DEPTH_WRITE_ENABLE;
    }
 
@@ -236,7 +236,7 @@ static void upload_S6( struct i915_context *i915 )
 }
 
 const struct i915_tracked_state i915_upload_S6 = {
-   .dirty = I915_NEW_ALPHA_TEST | I915_NEW_BLEND | I915_NEW_DEPTH_TEST,
+   .dirty = I915_NEW_ALPHA_TEST | I915_NEW_BLEND | I915_NEW_DEPTH_STENCIL,
    .update = upload_S6
 };
 

@@ -103,14 +103,14 @@ failover_set_clear_color_state( struct pipe_context *pipe,
 }
 
 static void
-failover_set_depth_test_state(struct pipe_context *pipe,
-                              const struct pipe_depth_state *depth)
+failover_bind_depth_stencil_state(struct pipe_context *pipe,
+                          const struct pipe_depth_stencil_state *depth_stencil)
 {
    struct failover_context *failover = failover_context(pipe);
 
-   failover->depth_test = *depth;
-   failover->dirty |= FO_NEW_DEPTH_TEST;
-   failover->hw->set_depth_state( failover->hw, depth );
+   failover->depth_stencil = depth_stencil;
+   failover->dirty |= FO_NEW_DEPTH_STENCIL;
+   failover->hw->bind_depth_stencil_state( failover->hw, depth_stencil );
 }
 
 static void
@@ -182,18 +182,6 @@ failover_set_scissor_state( struct pipe_context *pipe,
    failover->dirty |= FO_NEW_SCISSOR;
    failover->hw->set_scissor_state( failover->hw, scissor );
 }
-
-static void
-failover_set_stencil_state(struct pipe_context *pipe,
-                           const struct pipe_stencil_state *stencil)
-{
-   struct failover_context *failover = failover_context(pipe);
-
-   failover->stencil = *stencil;
-   failover->dirty |= FO_NEW_STENCIL;
-   failover->hw->set_stencil_state( failover->hw, stencil );
-}
-
 
 static void
 failover_bind_sampler_state(struct pipe_context *pipe,
@@ -268,19 +256,18 @@ failover_init_state_functions( struct failover_context *failover )
 {
    failover->pipe.bind_blend_state = failover_bind_blend_state;
    failover->pipe.bind_sampler_state = failover_bind_sampler_state;
+   failover->pipe.bind_depth_stencil_state = failover_bind_depth_stencil_state;
 
    failover->pipe.set_alpha_test_state = failover_set_alpha_test_state;
    failover->pipe.set_blend_color = failover_set_blend_color;
    failover->pipe.set_clip_state = failover_set_clip_state;
    failover->pipe.set_clear_color_state = failover_set_clear_color_state;
-   failover->pipe.set_depth_state = failover_set_depth_test_state;
    failover->pipe.set_framebuffer_state = failover_set_framebuffer_state;
    failover->pipe.set_fs_state = failover_set_fs_state;
    failover->pipe.set_vs_state = failover_set_vs_state;
    failover->pipe.set_polygon_stipple = failover_set_polygon_stipple;
    failover->pipe.set_scissor_state = failover_set_scissor_state;
    failover->pipe.set_setup_state = failover_set_setup_state;
-   failover->pipe.set_stencil_state = failover_set_stencil_state;
    failover->pipe.set_texture_state = failover_set_texture_state;
    failover->pipe.set_viewport_state = failover_set_viewport_state;
    failover->pipe.set_vertex_buffer = failover_set_vertex_buffer;

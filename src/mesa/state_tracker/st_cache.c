@@ -76,3 +76,20 @@ struct pipe_sampler_state * st_cached_sampler_state(
    }
    return (struct pipe_sampler_state*)(cso_hash_iter_data(iter));
 }
+
+struct pipe_depth_stencil_state * st_cached_depth_stencil_state(
+   struct st_context *st,
+   const struct pipe_depth_stencil_state *depth_stencil)
+{
+   unsigned hash_key = cso_construct_key((void*)depth_stencil, sizeof(struct pipe_depth_stencil_state));
+   struct cso_hash_iter iter = cso_find_state_template(st->cache,
+                                                       hash_key, CSO_DEPTH_STENCIL,
+                                                       (void*)depth_stencil);
+   if (cso_hash_iter_is_null(iter)) {
+      const struct pipe_depth_stencil_state *created_state = st->pipe->create_depth_stencil_state(
+         st->pipe, depth_stencil);
+      iter = cso_insert_state(st->cache, hash_key, CSO_DEPTH_STENCIL,
+                              (void*)created_state);
+   }
+   return (struct pipe_depth_stencil_state*)(cso_hash_iter_data(iter));
+}

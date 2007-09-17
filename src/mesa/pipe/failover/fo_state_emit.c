@@ -70,8 +70,8 @@ failover_state_emit( struct failover_context *failover )
    if (failover->dirty & FO_NEW_CLEAR_COLOR)
       failover->sw->set_clear_color_state( failover->sw, &failover->clear_color );
 
-   if (failover->dirty & FO_NEW_DEPTH_TEST)
-      failover->sw->set_depth_state( failover->sw, &failover->depth_test );
+   if (failover->dirty & FO_NEW_DEPTH_STENCIL)
+      failover->sw->bind_depth_stencil_state( failover->sw, failover->depth_stencil );
 
    if (failover->dirty & FO_NEW_FRAMEBUFFER)
       failover->sw->set_framebuffer_state( failover->sw, &failover->framebuffer );
@@ -90,9 +90,6 @@ failover_state_emit( struct failover_context *failover )
 
    if (failover->dirty & FO_NEW_SCISSOR)
       failover->sw->set_scissor_state( failover->sw, &failover->scissor );
-
-   if (failover->dirty & FO_NEW_STENCIL)
-      failover->sw->set_stencil_state( failover->sw, &failover->stencil );
 
    if (failover->dirty & FO_NEW_VIEWPORT)
       failover->sw->set_viewport_state( failover->sw, &failover->viewport );

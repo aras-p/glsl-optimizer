@@ -207,23 +207,23 @@ stencil_test_quad(struct quad_stage *qs, struct quad_header *quad)
 
    /* choose front or back face function, operator, etc */
    /* XXX we could do these initializations once per primitive */
-   if (softpipe->stencil.back_enabled && quad->facing) {
-      func = softpipe->stencil.back_func;
-      failOp = softpipe->stencil.back_fail_op;
-      zFailOp = softpipe->stencil.back_zfail_op;
-      zPassOp = softpipe->stencil.back_zpass_op;
-      ref = softpipe->stencil.ref_value[1];
-      wrtMask = softpipe->stencil.write_mask[1];
-      valMask = softpipe->stencil.value_mask[1];
+   if (softpipe->depth_stencil->stencil.back_enabled && quad->facing) {
+      func = softpipe->depth_stencil->stencil.back_func;
+      failOp = softpipe->depth_stencil->stencil.back_fail_op;
+      zFailOp = softpipe->depth_stencil->stencil.back_zfail_op;
+      zPassOp = softpipe->depth_stencil->stencil.back_zpass_op;
+      ref = softpipe->depth_stencil->stencil.ref_value[1];
+      wrtMask = softpipe->depth_stencil->stencil.write_mask[1];
+      valMask = softpipe->depth_stencil->stencil.value_mask[1];
    }
    else {
-      func = softpipe->stencil.front_func;
-      failOp = softpipe->stencil.front_fail_op;
-      zFailOp = softpipe->stencil.front_zfail_op;
-      zPassOp = softpipe->stencil.front_zpass_op;
-      ref = softpipe->stencil.ref_value[0];
-      wrtMask = softpipe->stencil.write_mask[0];
-      valMask = softpipe->stencil.value_mask[0];
+      func = softpipe->depth_stencil->stencil.front_func;
+      failOp = softpipe->depth_stencil->stencil.front_fail_op;
+      zFailOp = softpipe->depth_stencil->stencil.front_zfail_op;
+      zPassOp = softpipe->depth_stencil->stencil.front_zpass_op;
+      ref = softpipe->depth_stencil->stencil.ref_value[0];
+      wrtMask = softpipe->depth_stencil->stencil.write_mask[0];
+      valMask = softpipe->depth_stencil->stencil.value_mask[0];
    }
 
    assert(s_surf); /* shouldn't get here if there's no stencil buffer */
@@ -244,7 +244,7 @@ stencil_test_quad(struct quad_stage *qs, struct quad_header *quad)
    if (quad->mask) {
 
       /* now the pixels that passed the stencil test are depth tested */
-      if (softpipe->depth_test.enabled) {
+      if (softpipe->depth_stencil->depth.enabled) {
          const unsigned origMask = quad->mask;
 
          sp_depth_test_quad(qs, quad);  /* quad->mask is updated */

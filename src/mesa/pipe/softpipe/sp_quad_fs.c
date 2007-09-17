@@ -179,7 +179,7 @@ static void shade_begin(struct quad_stage *qs)
    unsigned i, entry;
 
    for (i = 0; i < PIPE_MAX_SAMPLERS; i++) {
-      qss->samplers[i].state = &softpipe->sampler[i];
+      qss->samplers[i].state = softpipe->sampler[i];
       qss->samplers[i].texture = softpipe->texture[i];
       qss->samplers[i].get_samples = sp_get_samples;
       qss->samplers[i].pipe = &softpipe->pipe;

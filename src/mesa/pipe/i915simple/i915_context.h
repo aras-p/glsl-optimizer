@@ -125,19 +125,18 @@ struct i915_context
     */
    const struct pipe_blend_state   *blend;
    const struct pipe_sampler_state *sampler[PIPE_MAX_SAMPLERS];
+   const struct pipe_depth_stencil_state   *depth_stencil;
 
    struct pipe_alpha_test_state alpha_test;
    struct pipe_blend_color blend_color;
    struct pipe_clear_color_state clear_color;
    struct pipe_clip_state clip;
    struct pipe_constant_buffer constants[PIPE_SHADER_TYPES];
-   struct pipe_depth_state depth_test;
    struct pipe_framebuffer_state framebuffer;
    struct pipe_shader_state fs;
    struct pipe_poly_stipple poly_stipple;
    struct pipe_scissor_state scissor;
    struct pipe_setup_state setup;
-   struct pipe_stencil_state stencil;
    struct pipe_mipmap_tree *texture[PIPE_MAX_SAMPLERS];
    struct pipe_viewport_state viewport;
    struct pipe_vertex_buffer vertex_buffer[PIPE_ATTRIB_MAX];
@@ -163,16 +162,15 @@ struct i915_context
 #define I915_NEW_SETUP         0x2
 #define I915_NEW_FS            0x4
 #define I915_NEW_BLEND         0x8
-#define I915_NEW_CLIP         0x10
-#define I915_NEW_SCISSOR      0x20
-#define I915_NEW_STIPPLE      0x40
-#define I915_NEW_FRAMEBUFFER  0x80
-#define I915_NEW_ALPHA_TEST  0x100
-#define I915_NEW_DEPTH_TEST  0x200
-#define I915_NEW_SAMPLER     0x400
-#define I915_NEW_TEXTURE     0x800
-#define I915_NEW_STENCIL    0x1000
-#define I915_NEW_CONSTANTS  0x2000
+#define I915_NEW_CLIP          0x10
+#define I915_NEW_SCISSOR       0x20
+#define I915_NEW_STIPPLE       0x40
+#define I915_NEW_FRAMEBUFFER   0x80
+#define I915_NEW_ALPHA_TEST    0x100
+#define I915_NEW_DEPTH_STENCIL 0x200
+#define I915_NEW_SAMPLER       0x400
+#define I915_NEW_TEXTURE       0x800
+#define I915_NEW_CONSTANTS     0x1000
 
 
 /* Driver's internally generated state flags:

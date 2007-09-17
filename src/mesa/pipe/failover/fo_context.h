@@ -36,25 +36,24 @@
 
 
 
-#define FO_NEW_VIEWPORT      0x1
-#define FO_NEW_SETUP         0x2
-#define FO_NEW_FRAGMENT_SHADER            0x4
-#define FO_NEW_BLEND         0x8
-#define FO_NEW_CLIP         0x10
-#define FO_NEW_SCISSOR      0x20
-#define FO_NEW_STIPPLE      0x40
-#define FO_NEW_FRAMEBUFFER  0x80
-#define FO_NEW_ALPHA_TEST  0x100
-#define FO_NEW_DEPTH_TEST  0x200
-#define FO_NEW_SAMPLER     0x400
-#define FO_NEW_TEXTURE     0x800
-#define FO_NEW_STENCIL    0x1000
-#define FO_NEW_VERTEX     0x2000
-#define FO_NEW_VERTEX_SHADER        0x4000
-#define FO_NEW_BLEND_COLOR    0x8000
-#define FO_NEW_CLEAR_COLOR    0x10000
-#define FO_NEW_VERTEX_BUFFER  0x20000
-#define FO_NEW_VERTEX_ELEMENT 0x40000
+#define FO_NEW_VIEWPORT        0x1
+#define FO_NEW_SETUP           0x2
+#define FO_NEW_FRAGMENT_SHADER 0x4
+#define FO_NEW_BLEND           0x8
+#define FO_NEW_CLIP            0x10
+#define FO_NEW_SCISSOR         0x20
+#define FO_NEW_STIPPLE         0x40
+#define FO_NEW_FRAMEBUFFER     0x80
+#define FO_NEW_ALPHA_TEST      0x100
+#define FO_NEW_DEPTH_STENCIL   0x200
+#define FO_NEW_SAMPLER         0x400
+#define FO_NEW_TEXTURE         0x800
+#define FO_NEW_VERTEX          0x2000
+#define FO_NEW_VERTEX_SHADER   0x4000
+#define FO_NEW_BLEND_COLOR     0x8000
+#define FO_NEW_CLEAR_COLOR     0x10000
+#define FO_NEW_VERTEX_BUFFER   0x20000
+#define FO_NEW_VERTEX_ELEMENT  0x40000
 
 
 
@@ -69,19 +68,18 @@ struct failover_context {
     */
    const struct pipe_blend_state *blend;
    const struct pipe_sampler_state *sampler[PIPE_MAX_SAMPLERS];
+   const struct pipe_depth_stencil_state *depth_stencil;
 
    struct pipe_alpha_test_state alpha_test;
    struct pipe_blend_color blend_color;
    struct pipe_clear_color_state clear_color;
    struct pipe_clip_state clip;
-   struct pipe_depth_state depth_test;
    struct pipe_framebuffer_state framebuffer;
    struct pipe_shader_state fragment_shader;
    struct pipe_shader_state vertex_shader;
    struct pipe_poly_stipple poly_stipple;
    struct pipe_scissor_state scissor;
    struct pipe_setup_state setup;
-   struct pipe_stencil_state stencil;
    struct pipe_mipmap_tree *texture[PIPE_MAX_SAMPLERS];
    struct pipe_viewport_state viewport;
    struct pipe_vertex_buffer vertex_buffer[PIPE_ATTRIB_MAX];

@@ -283,6 +283,7 @@ clear_with_quad(GLcontext *ctx,
    /* blend state: RGBA masking */
    {
       struct pipe_blend_state blend;
+      const struct pipe_blend_state *state;
       memset(&blend, 0, sizeof(blend));
       if (color) {
          if (ctx->Color.ColorMask[0])
@@ -296,20 +297,34 @@ clear_with_quad(GLcontext *ctx,
          if (st->ctx->Color.DitherFlag)
             blend.dither = 1;
       }
-      const struct pipe_blend_state *state = st_cached_blend_state(st, &blend);
+      state = st_cached_blend_state(st, &blend);
       pipe->bind_blend_state(pipe, state);
    }
 
-   /* depth state: always pass */
+   /* depth_stencil state: always pass/set to ref value */
    {
-      struct pipe_depth_state depth_test;
-      memset(&depth_test, 0, sizeof(depth_test));
+      struct pipe_depth_stencil_state depth_stencil;
+      struct pipe_depth_stencil_state *cached;
+      memset(&depth_stencil, 0, sizeof(depth_stencil));
       if (depth) {
-         depth_test.enabled = 1;
-         depth_test.writemask = 1;
-         depth_test.func = PIPE_FUNC_ALWAYS;
+         depth_stencil.depth.enabled = 1;
+         depth_stencil.depth.writemask = 1;
+         depth_stencil.depth.func = PIPE_FUNC_ALWAYS;
       }
-      pipe->set_depth_state(pipe, &depth_test);
+
+      if (stencil) {
+         depth_stencil.stencil.front_enabled = 1;
+         depth_stencil.stencil.front_func = PIPE_FUNC_ALWAYS;
+         depth_stencil.stencil.front_fail_op = PIPE_STENCIL_OP_REPLACE;
+         depth_stencil.stencil.front_zpass_op = PIPE_STENCIL_OP_REPLACE;
+         depth_stencil.stencil.front_zfail_op = PIPE_STENCIL_OP_REPLACE;
+         depth_stencil.stencil.ref_value[0] = ctx->Stencil.Clear;
+         depth_stencil.stencil.value_mask[0] = 0xff;
+         depth_stencil.stencil.write_mask[0] = ctx->Stencil.WriteMask[0] & 0xff;
+      }
+      cached =
+         st_cached_depth_stencil_state(ctx->st, &depth_stencil);
+      pipe->bind_depth_stencil_state(pipe, cached);
    }
 
    /* setup state: nothing */
@@ -324,23 +339,6 @@ clear_with_quad(GLcontext *ctx,
          setup.scissor = 1;
 #endif
       pipe->set_setup_state(pipe, &setup);
-   }
-
-   /* stencil state: always set to ref value */
-   {
-      struct pipe_stencil_state stencil_test;
-      memset(&stencil_test, 0, sizeof(stencil_test));
-      if (stencil) {
-         stencil_test.front_enabled = 1;
-         stencil_test.front_func = PIPE_FUNC_ALWAYS;
-         stencil_test.front_fail_op = PIPE_STENCIL_OP_REPLACE;
-         stencil_test.front_zpass_op = PIPE_STENCIL_OP_REPLACE;
-         stencil_test.front_zfail_op = PIPE_STENCIL_OP_REPLACE;
-         stencil_test.ref_value[0] = ctx->Stencil.Clear;
-         stencil_test.value_mask[0] = 0xff;
-         stencil_test.write_mask[0] = ctx->Stencil.WriteMask[0] & 0xff;
-      }
-      pipe->set_stencil_state(pipe, &stencil_test);
    }
 
    /* fragment shader state: color pass-through program */
@@ -393,11 +391,10 @@ clear_with_quad(GLcontext *ctx,
    /* Restore pipe state */
    pipe->set_alpha_test_state(pipe, &st->state.alpha_test);
    pipe->bind_blend_state(pipe, st->state.blend);
-   pipe->set_depth_state(pipe, &st->state.depth);
+   pipe->bind_depth_stencil_state(pipe, st->state.depth_stencil);
    pipe->set_fs_state(pipe, &st->state.fs);
    pipe->set_vs_state(pipe, &st->state.vs);
    pipe->set_setup_state(pipe, &st->state.setup);
-   pipe->set_stencil_state(pipe, &st->state.stencil);
    pipe->set_viewport_state(pipe, &ctx->st->state.viewport);
    /* OR:
    st_invalidate_state(ctx, _NEW_COLOR | _NEW_DEPTH | _NEW_STENCIL);

@@ -31,7 +31,7 @@ sp_build_quad_pipeline(struct softpipe_context *sp)
       sp->quad.first = sp->quad.bufloop;
    }
 
-   if (sp->depth_test.occlusion_count) {
+   if (sp->depth_stencil->depth.occlusion_count) {
       sp->quad.occlusion->next = sp->quad.first;
       sp->quad.first = sp->quad.occlusion;
    }
@@ -43,12 +43,12 @@ sp_build_quad_pipeline(struct softpipe_context *sp)
       sp->quad.first = sp->quad.coverage;
    }
 
-   if (   sp->stencil.front_enabled
-       || sp->stencil.front_enabled) {
+   if (   sp->depth_stencil->stencil.front_enabled
+       || sp->depth_stencil->stencil.back_enabled) {
       sp->quad.stencil_test->next = sp->quad.first;
       sp->quad.first = sp->quad.stencil_test;
    }
-   else if (sp->depth_test.enabled &&
+   else if (sp->depth_stencil->depth.enabled &&
             sp->framebuffer.zbuf) {
       sp->quad.depth_test->next = sp->quad.first;
       sp->quad.first = sp->quad.depth_test;

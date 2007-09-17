@@ -101,6 +101,14 @@ struct pipe_context {
    void (*delete_sampler_state)(struct pipe_context *,
                                 const struct pipe_sampler_state *);
 
+   const struct pipe_depth_stencil_state * (*create_depth_stencil_state)(
+      struct pipe_context *,
+      const struct pipe_depth_stencil_state *);
+   void (*bind_depth_stencil_state)(struct pipe_context *,
+                                    const struct pipe_depth_stencil_state *);
+   void (*delete_depth_stencil_state)(struct pipe_context *,
+                                      const struct pipe_depth_stencil_state *);
+
    void (*set_alpha_test_state)( struct pipe_context *,
                                  const struct pipe_alpha_test_state * );
 
@@ -116,9 +124,6 @@ struct pipe_context {
    void (*set_constant_buffer)( struct pipe_context *,
                                 uint shader, uint index,
                                 const struct pipe_constant_buffer *buf );
-                              
-   void (*set_depth_state)( struct pipe_context *,
-                            const struct pipe_depth_state * );
 
    void (*set_feedback_state)( struct pipe_context *,
                                const struct pipe_feedback_state *);
@@ -140,9 +145,6 @@ struct pipe_context {
 
    void (*set_scissor_state)( struct pipe_context *,
                               const struct pipe_scissor_state * );
-
-   void (*set_stencil_state)( struct pipe_context *,
-                              const struct pipe_stencil_state * );
 
    void (*set_texture_state)( struct pipe_context *,
                               unsigned unit,
