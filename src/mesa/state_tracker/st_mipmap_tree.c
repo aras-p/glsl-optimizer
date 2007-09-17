@@ -180,18 +180,22 @@ st_miptree_depth_offsets(struct pipe_mipmap_tree *mt, GLuint level)
 {
    static const GLuint zero = 0;
 
-   if (mt->target != GL_TEXTURE_3D || mt->level[level].nr_images == 1)
+   if (mt->target != PIPE_TEXTURE_3D || mt->level[level].nr_images == 1)
       return &zero;
    else
       return mt->level[level].image_offset;
 }
 
 
+/**
+ * Return the offset to the given mipmap texture image within the
+ * texture memory buffer, in bytes.
+ */
 GLuint
 st_miptree_image_offset(const struct pipe_mipmap_tree * mt,
                         GLuint face, GLuint level)
 {
-   if (mt->target == GL_TEXTURE_CUBE_MAP_ARB)
+   if (mt->target == PIPE_TEXTURE_CUBE)
       return (mt->level[level].level_offset +
               mt->level[level].image_offset[face] * mt->cpp);
    else
