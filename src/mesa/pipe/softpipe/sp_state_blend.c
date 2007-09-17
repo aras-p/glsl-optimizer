@@ -53,7 +53,7 @@ void softpipe_bind_blend_state( struct pipe_context *pipe,
 void softpipe_delete_blend_state(struct pipe_context *pipe,
                                  const struct pipe_blend_state *blend )
 {
-   free(blend);
+   free((struct pipe_blend_state *)blend);
 }
 
 
