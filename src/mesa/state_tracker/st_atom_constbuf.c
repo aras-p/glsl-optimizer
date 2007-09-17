@@ -30,6 +30,7 @@
   *   Brian Paul
   */
 
+#include "main/imports.h"
 #include "shader/prog_parameter.h"
 
 #include "pipe/p_context.h"
