@@ -54,7 +54,7 @@ static void cull_begin( struct draw_stage *stage )
 {
    struct cull_stage *cull = cull_stage(stage);
 
-   cull->winding = stage->draw->setup.cull_mode;
+   cull->winding = stage->draw->rasterizer->cull_mode;
 
    stage->next->begin( stage->next );
 }

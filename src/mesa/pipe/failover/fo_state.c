@@ -160,15 +160,15 @@ failover_set_polygon_stipple( struct pipe_context *pipe,
 
 
 
-static void 
-failover_set_setup_state( struct pipe_context *pipe,
-			     const struct pipe_setup_state *setup )
+static void
+failover_bind_rasterizer_state( struct pipe_context *pipe,
+                                const struct pipe_rasterizer_state *setup )
 {
    struct failover_context *failover = failover_context(pipe);
 
-   failover->setup = *setup; 
-   failover->dirty |= FO_NEW_SETUP;
-   failover->hw->set_setup_state( failover->hw, setup );
+   failover->rasterizer = setup;
+   failover->dirty |= FO_NEW_RASTERIZER;
+   failover->hw->bind_rasterizer_state( failover->hw, setup );
 }
 
 
@@ -257,6 +257,7 @@ failover_init_state_functions( struct failover_context *failover )
    failover->pipe.bind_blend_state = failover_bind_blend_state;
    failover->pipe.bind_sampler_state = failover_bind_sampler_state;
    failover->pipe.bind_depth_stencil_state = failover_bind_depth_stencil_state;
+   failover->pipe.bind_rasterizer_state = failover_bind_rasterizer_state;
 
    failover->pipe.set_alpha_test_state = failover_set_alpha_test_state;
    failover->pipe.set_blend_color = failover_set_blend_color;
@@ -267,7 +268,6 @@ failover_init_state_functions( struct failover_context *failover )
    failover->pipe.set_vs_state = failover_set_vs_state;
    failover->pipe.set_polygon_stipple = failover_set_polygon_stipple;
    failover->pipe.set_scissor_state = failover_set_scissor_state;
-   failover->pipe.set_setup_state = failover_set_setup_state;
    failover->pipe.set_texture_state = failover_set_texture_state;
    failover->pipe.set_viewport_state = failover_set_viewport_state;
    failover->pipe.set_vertex_buffer = failover_set_vertex_buffer;

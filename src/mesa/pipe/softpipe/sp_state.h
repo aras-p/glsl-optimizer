@@ -50,7 +50,6 @@ void softpipe_bind_sampler_state(struct pipe_context *,
 void softpipe_delete_sampler_state(struct pipe_context *,
                                    const struct pipe_sampler_state *);
 
-
 const struct pipe_depth_stencil_state *
 softpipe_create_depth_stencil_state(struct pipe_context *,
                                     const struct pipe_depth_stencil_state *);
@@ -58,6 +57,14 @@ void softpipe_bind_depth_stencil_state(struct pipe_context *,
                                        const struct pipe_depth_stencil_state *);
 void softpipe_delete_depth_stencil_state(struct pipe_context *,
                                          const struct pipe_depth_stencil_state *);
+
+const struct pipe_rasterizer_state *
+softpipe_create_rasterizer_state(struct pipe_context *,
+                              const struct pipe_rasterizer_state *);
+void softpipe_bind_rasterizer_state(struct pipe_context *,
+                                 const struct pipe_rasterizer_state *);
+void softpipe_delete_rasterizer_state(struct pipe_context *,
+                                   const struct pipe_rasterizer_state *);
 
 void softpipe_set_framebuffer_state( struct pipe_context *,
 			     const struct pipe_framebuffer_state * );
@@ -92,9 +99,6 @@ void softpipe_set_polygon_stipple( struct pipe_context *,
 
 void softpipe_set_scissor_state( struct pipe_context *,
                                  const struct pipe_scissor_state * );
-
-void softpipe_set_setup_state( struct pipe_context *,
-			      const struct pipe_setup_state * );
 
 void softpipe_set_texture_state( struct pipe_context *,
                                  unsigned unit,

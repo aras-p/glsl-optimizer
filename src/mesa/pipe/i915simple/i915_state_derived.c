@@ -44,7 +44,7 @@ static void calculate_vertex_layout( struct i915_context *i915 )
 {
    const uint inputsRead = i915->fs.inputs_read;
    const interp_mode colorInterp
-      = i915->setup.flatshade ? INTERP_CONSTANT : INTERP_LINEAR;
+      = i915->rasterizer->flatshade ? INTERP_CONSTANT : INTERP_LINEAR;
    struct vertex_info *vinfo = &i915->current.vertex_info;
    uint front0 = 0, back0 = 0, front1 = 0, back1 = 0;
    boolean needW = 0;
@@ -103,7 +103,7 @@ static void calculate_vertex_layout( struct i915_context *i915 )
     * lighting.  Edgeflag is dealt with specially by setting bits in
     * the vertex header.
     */
-   if (i915->setup.light_twoside) {
+   if (i915->rasterizer->light_twoside) {
       if (inputsRead & (1 << TGSI_ATTRIB_COLOR0)) {
          back0 = draw_emit_vertex_attr(vinfo, TGSI_ATTRIB_BFC0,
                                        FORMAT_OMIT, colorInterp);
@@ -142,7 +142,7 @@ static void calculate_vertex_layout( struct i915_context *i915 )
  */
 void i915_update_derived( struct i915_context *i915 )
 {
-   if (i915->dirty & (I915_NEW_SETUP | I915_NEW_FS))
+   if (i915->dirty & (I915_NEW_RASTERIZER | I915_NEW_FS))
       calculate_vertex_layout( i915 );
 
    if (i915->dirty & (I915_NEW_SAMPLER | I915_NEW_TEXTURE))

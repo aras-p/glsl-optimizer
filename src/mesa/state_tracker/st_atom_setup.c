@@ -32,6 +32,7 @@
  
 
 #include "st_context.h"
+#include "st_cache.h"
 #include "pipe/p_context.h"
 #include "pipe/p_defines.h"
 #include "st_atom.h"
@@ -68,20 +69,21 @@ static GLboolean get_offset_flag( GLuint fill_mode,
 }
 
 
-static void update_setup_state( struct st_context *st )
+static void update_raster_state( struct st_context *st )
 {
    GLcontext *ctx = st->ctx;
-   struct pipe_setup_state setup;
+   struct pipe_rasterizer_state raster;
+   const struct pipe_rasterizer_state *cached;
 
-   memset(&setup, 0, sizeof(setup));
+   memset(&raster, 0, sizeof(raster));
    
    /* _NEW_POLYGON, _NEW_BUFFERS
     */
    {
       if (ctx->Polygon.FrontFace == GL_CCW)
-         setup.front_winding = PIPE_WINDING_CCW;
+         raster.front_winding = PIPE_WINDING_CCW;
       else
-         setup.front_winding = PIPE_WINDING_CW;
+         raster.front_winding = PIPE_WINDING_CW;
 
       /* XXX
        * I think the intention here is that user-created framebuffer objects
@@ -90,13 +92,13 @@ static void update_setup_state( struct st_context *st )
        * But this is an implementation/driver-specific artifact - remove...
        */
       if (ctx->DrawBuffer && ctx->DrawBuffer->Name != 0)
-         setup.front_winding ^= PIPE_WINDING_BOTH;
+         raster.front_winding ^= PIPE_WINDING_BOTH;
    }
 
    /* _NEW_LIGHT
     */
    if (ctx->Light.ShadeModel == GL_FLAT)
-      setup.flatshade = 1;
+      raster.flatshade = 1;
 
    /* _NEW_LIGHT | _NEW_PROGRAM
     *
@@ -105,23 +107,23 @@ static void update_setup_state( struct st_context *st )
     * GL_VERTEX_PROGRAM_TWO_SIDE is set).  Note the logic here.
     */
    if (ctx->VertexProgram._Enabled) {
-      setup.light_twoside = ctx->VertexProgram.TwoSideEnabled;
+      raster.light_twoside = ctx->VertexProgram.TwoSideEnabled;
    }
    else if (ctx->Light.Enabled && ctx->Light.Model.TwoSide) {
-      setup.light_twoside = 1;
+      raster.light_twoside = 1;
    }
 
    /* _NEW_POLYGON
     */
    if (ctx->Polygon.CullFlag) {
       if (ctx->Polygon.CullFaceMode == GL_FRONT_AND_BACK) {
-	 setup.cull_mode = PIPE_WINDING_BOTH;
+	 raster.cull_mode = PIPE_WINDING_BOTH;
       }
       else if (ctx->Polygon.CullFaceMode == GL_FRONT) {
-	 setup.cull_mode = setup.front_winding;
+	 raster.cull_mode = raster.front_winding;
       }
       else {
-	 setup.cull_mode = setup.front_winding ^ PIPE_WINDING_BOTH;
+	 raster.cull_mode = raster.front_winding ^ PIPE_WINDING_BOTH;
       }
    }
 
@@ -131,23 +133,23 @@ static void update_setup_state( struct st_context *st )
       GLuint fill_front = translate_fill( ctx->Polygon.FrontMode );
       GLuint fill_back = translate_fill( ctx->Polygon.BackMode );
       
-      if (setup.front_winding == PIPE_WINDING_CW) {
-	 setup.fill_cw = fill_front;
-	 setup.fill_ccw = fill_back;
+      if (raster.front_winding == PIPE_WINDING_CW) {
+	 raster.fill_cw = fill_front;
+	 raster.fill_ccw = fill_back;
       }
       else {
-	 setup.fill_cw = fill_back;
-	 setup.fill_ccw = fill_front;
+	 raster.fill_cw = fill_back;
+	 raster.fill_ccw = fill_front;
       }
 
       /* Simplify when culling is active:
        */
-      if (setup.cull_mode & PIPE_WINDING_CW) {
-	 setup.fill_cw = setup.fill_ccw;
+      if (raster.cull_mode & PIPE_WINDING_CW) {
+	 raster.fill_cw = raster.fill_ccw;
       }
       
-      if (setup.cull_mode & PIPE_WINDING_CCW) {
-	 setup.fill_ccw = setup.fill_cw;
+      if (raster.cull_mode & PIPE_WINDING_CCW) {
+	 raster.fill_ccw = raster.fill_cw;
       }
    }
 
@@ -155,67 +157,68 @@ static void update_setup_state( struct st_context *st )
     */
    if (ctx->Polygon.OffsetUnits != 0.0 ||
        ctx->Polygon.OffsetFactor != 0.0) {
-      setup.offset_cw = get_offset_flag( setup.fill_cw, &ctx->Polygon );
-      setup.offset_ccw = get_offset_flag( setup.fill_ccw, &ctx->Polygon );
-      setup.offset_units = ctx->Polygon.OffsetUnits;
-      setup.offset_scale = ctx->Polygon.OffsetFactor;
+      raster.offset_cw = get_offset_flag( raster.fill_cw, &ctx->Polygon );
+      raster.offset_ccw = get_offset_flag( raster.fill_ccw, &ctx->Polygon );
+      raster.offset_units = ctx->Polygon.OffsetUnits;
+      raster.offset_scale = ctx->Polygon.OffsetFactor;
    }
 
    if (ctx->Polygon.SmoothFlag)
-      setup.poly_smooth = 1;
+      raster.poly_smooth = 1;
 
    if (ctx->Polygon.StippleFlag)
-      setup.poly_stipple_enable = 1;
+      raster.poly_stipple_enable = 1;
 
 
    /* _NEW_BUFFERS, _NEW_POLYGON
     */
-   if (setup.fill_cw != PIPE_POLYGON_MODE_FILL ||
-       setup.fill_ccw != PIPE_POLYGON_MODE_FILL)
+   if (raster.fill_cw != PIPE_POLYGON_MODE_FILL ||
+       raster.fill_ccw != PIPE_POLYGON_MODE_FILL)
    {
       GLfloat mrd = (ctx->DrawBuffer ? 
 		     ctx->DrawBuffer->_MRD : 
 		     1.0);
 
-      setup.offset_units = ctx->Polygon.OffsetFactor * mrd;
-      setup.offset_scale = (ctx->Polygon.OffsetUnits * mrd *
+      raster.offset_units = ctx->Polygon.OffsetFactor * mrd;
+      raster.offset_scale = (ctx->Polygon.OffsetUnits * mrd *
 			    st->polygon_offset_scale);
    }
       
    /* _NEW_POINT
     */
-   setup.point_size = ctx->Point.Size;
-   setup.point_smooth = ctx->Point.SmoothFlag;
+   raster.point_size = ctx->Point.Size;
+   raster.point_smooth = ctx->Point.SmoothFlag;
 
    /* _NEW_LINE
     */
-   setup.line_width = ctx->Line.Width;
-   setup.line_smooth = ctx->Line.SmoothFlag;
-   setup.line_stipple_enable = ctx->Line.StippleFlag;
-   setup.line_stipple_pattern = ctx->Line.StipplePattern;
+   raster.line_width = ctx->Line.Width;
+   raster.line_smooth = ctx->Line.SmoothFlag;
+   raster.line_stipple_enable = ctx->Line.StippleFlag;
+   raster.line_stipple_pattern = ctx->Line.StipplePattern;
    /* GL stipple factor is in [1,256], remap to [0, 255] here */
-   setup.line_stipple_factor = ctx->Line.StippleFactor - 1;
+   raster.line_stipple_factor = ctx->Line.StippleFactor - 1;
 
    /* _NEW_MULTISAMPLE */
    if (ctx->Multisample.Enabled)
-      setup.multisample = 1;
+      raster.multisample = 1;
 
    /* _NEW_SCISSOR */
    if (ctx->Scissor.Enabled)
-      setup.scissor = 1;
+      raster.scissor = 1;
 
-   if (memcmp(&setup, &st->state.setup, sizeof(setup)) != 0) {
-      st->state.setup = setup;
-      st->pipe->set_setup_state( st->pipe, &setup );
+   cached = st_cached_rasterizer_state(st, &raster);
+   if (st->state.rasterizer != cached) {
+      st->state.rasterizer = cached;
+      st->pipe->bind_rasterizer_state( st->pipe, cached );
    }
 }
 
-const struct st_tracked_state st_update_setup = {
-   .name = "st_update_setup",
+const struct st_tracked_state st_update_rasterizer = {
+   .name = "st_update_rasterizer",
    .dirty = {
       .mesa = (_NEW_LIGHT | _NEW_POLYGON | _NEW_LINE | _NEW_SCISSOR |
                _NEW_POINT | _NEW_BUFFERS | _NEW_MULTISAMPLE),
       .st  = 0,
    },
-   .update = update_setup_state
+   .update = update_raster_state
 };

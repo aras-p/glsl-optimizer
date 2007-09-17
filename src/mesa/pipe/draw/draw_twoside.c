@@ -55,7 +55,7 @@ static void twoside_begin( struct draw_stage *stage )
     * if the triangle is back-facing (negative).
     * sign = -1 for CCW, +1 for CW
     */
-   twoside->sign = (stage->draw->setup.front_winding == PIPE_WINDING_CCW) ? -1.0f : 1.0f;
+   twoside->sign = (stage->draw->rasterizer->front_winding == PIPE_WINDING_CCW) ? -1.0f : 1.0f;
 
    stage->next->begin( stage->next );
 }

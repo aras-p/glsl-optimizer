@@ -59,8 +59,8 @@ static void unfilled_begin( struct draw_stage *stage )
 {
    struct unfilled_stage *unfilled = unfilled_stage(stage);
 
-   unfilled->mode[0] = stage->draw->setup.fill_ccw; /* front */
-   unfilled->mode[1] = stage->draw->setup.fill_cw;  /* back */
+   unfilled->mode[0] = stage->draw->rasterizer->fill_ccw; /* front */
+   unfilled->mode[1] = stage->draw->rasterizer->fill_cw;  /* back */
 
    stage->next->begin( stage->next );
 }

@@ -85,8 +85,8 @@ failover_state_emit( struct failover_context *failover )
    if (failover->dirty & FO_NEW_STIPPLE)
       failover->sw->set_polygon_stipple( failover->sw, &failover->poly_stipple );
 
-   if (failover->dirty & FO_NEW_SETUP)
-      failover->sw->set_setup_state( failover->sw, &failover->setup );
+   if (failover->dirty & FO_NEW_RASTERIZER)
+      failover->sw->bind_rasterizer_state( failover->sw, failover->rasterizer );
 
    if (failover->dirty & FO_NEW_SCISSOR)
       failover->sw->set_scissor_state( failover->sw, &failover->scissor );

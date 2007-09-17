@@ -77,6 +77,7 @@ struct st_context
       const struct pipe_blend_state   *blend;
       const struct pipe_sampler_state *sampler[PIPE_MAX_SAMPLERS];
       const struct pipe_depth_stencil_state *depth_stencil;
+      const struct pipe_rasterizer_state  *rasterizer;
 
       struct pipe_alpha_test_state  alpha_test;
       struct pipe_blend_color  blend_color;
@@ -88,7 +89,6 @@ struct st_context
       struct pipe_mipmap_tree *texture[PIPE_MAX_SAMPLERS];
       struct pipe_poly_stipple poly_stipple;
       struct pipe_scissor_state scissor;
-      struct pipe_setup_state  setup;
       struct pipe_shader_state fs;
       struct pipe_shader_state vs;
       struct pipe_viewport_state viewport;

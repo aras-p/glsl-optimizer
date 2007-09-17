@@ -351,7 +351,7 @@ static boolean setup_sort_vertices( struct setup_stage *setup,
     *  - the GLSL gl_FrontFacing fragment attribute (bool)
     *  - two-sided stencil test
     */
-   setup->quad.facing = (prim->det > 0.0) ^ (setup->softpipe->setup.front_winding == PIPE_WINDING_CW);
+   setup->quad.facing = (prim->det > 0.0) ^ (setup->softpipe->rasterizer->front_winding == PIPE_WINDING_CW);
 
    return TRUE;
 }
@@ -830,10 +830,10 @@ setup_line(struct draw_stage *stage, struct prim_header *prim)
       const int errorDec = error - dx;
 
       for (i = 0; i < dx; i++) {
-         if (!sp->setup.line_stipple_enable ||
+         if (!sp->rasterizer->line_stipple_enable ||
              stipple_test(sp->line_stipple_counter,
-                          sp->setup.line_stipple_pattern,
-                          sp->setup.line_stipple_factor + 1)) {
+                          sp->rasterizer->line_stipple_pattern,
+                          sp->rasterizer->line_stipple_factor + 1)) {
              plot(setup, x0, y0);
          }
 
@@ -857,10 +857,10 @@ setup_line(struct draw_stage *stage, struct prim_header *prim)
       const int errorDec = error - dy;
 
       for (i = 0; i < dy; i++) {
-         if (!sp->setup.line_stipple_enable ||
+         if (!sp->rasterizer->line_stipple_enable ||
              stipple_test(sp->line_stipple_counter,
-                          sp->setup.line_stipple_pattern,
-                          sp->setup.line_stipple_factor + 1)) {
+                          sp->rasterizer->line_stipple_pattern,
+                          sp->rasterizer->line_stipple_factor + 1)) {
             plot(setup, x0, y0);
          }
 
@@ -899,8 +899,8 @@ setup_point(struct draw_stage *stage, struct prim_header *prim)
    const int sizeAttr = setup->lookup[TGSI_ATTRIB_POINTSIZE];
    const float halfSize
       = sizeAttr ? (0.5f * v0->data[sizeAttr][0])
-        : (0.5f * setup->softpipe->setup.point_size);
-   const boolean round = setup->softpipe->setup.point_smooth;
+        : (0.5f * setup->softpipe->rasterizer->point_size);
+   const boolean round = setup->softpipe->rasterizer->point_smooth;
    const float x = v0->data[TGSI_ATTRIB_POS][0];
    const float y = v0->data[TGSI_ATTRIB_POS][1];
    unsigned slot, j;

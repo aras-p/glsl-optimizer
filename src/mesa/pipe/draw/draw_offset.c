@@ -57,8 +57,8 @@ static void offset_begin( struct draw_stage *stage )
    struct offset_stage *offset = offset_stage(stage);
    float mrd = 1.0f / 65535.0f; /* XXX this depends on depthbuffer bits! */
 
-   offset->units = stage->draw->setup.offset_units * mrd;
-   offset->scale = stage->draw->setup.offset_scale;
+   offset->units = stage->draw->rasterizer->offset_units * mrd;
+   offset->scale = stage->draw->rasterizer->offset_scale;
 
    stage->next->begin( stage->next );
 }

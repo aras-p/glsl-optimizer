@@ -316,11 +316,13 @@ draw_textured_quad(GLcontext *ctx, GLint x, GLint y, GLfloat z,
 
    /* setup state: just scissor */
    {
-      struct pipe_setup_state setup;
+      struct pipe_rasterizer_state  setup;
+      struct pipe_rasterizer_state *cached;
       memset(&setup, 0, sizeof(setup));
       if (ctx->Scissor.Enabled)
          setup.scissor = 1;
-      pipe->set_setup_state(pipe, &setup);
+      cached = st_cached_rasterizer_state(ctx->st, &setup);
+      pipe->bind_rasterizer_state(pipe, cached);
    }
 
    /* fragment shader state: TEX lookup program */
@@ -400,7 +402,7 @@ draw_textured_quad(GLcontext *ctx, GLint x, GLint y, GLfloat z,
    draw_quad(ctx, x0, y0, z, x1, y1);
 
    /* restore GL state */
-   pipe->set_setup_state(pipe, &ctx->st->state.setup);
+   pipe->bind_rasterizer_state(pipe, ctx->st->state.rasterizer);
    pipe->set_fs_state(pipe, &ctx->st->state.fs);
    pipe->set_vs_state(pipe, &ctx->st->state.vs);
    pipe->set_texture_state(pipe, unit, ctx->st->state.texture[unit]);

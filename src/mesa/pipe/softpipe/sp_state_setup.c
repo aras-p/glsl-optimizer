@@ -31,17 +31,35 @@
 #include "pipe/draw/draw_context.h"
 
 
-void softpipe_set_setup_state( struct pipe_context *pipe,
-			      const struct pipe_setup_state *setup )
+
+const struct pipe_rasterizer_state *
+softpipe_create_rasterizer_state(struct pipe_context *pipe,
+                              const struct pipe_rasterizer_state *setup)
+{
+   struct pipe_rasterizer_state *raster =
+      malloc(sizeof(struct pipe_rasterizer_state));
+   memcpy(raster, setup, sizeof(struct pipe_rasterizer_state));
+
+   return raster;
+}
+
+void softpipe_bind_rasterizer_state(struct pipe_context *pipe,
+                                 const struct pipe_rasterizer_state *setup)
 {
    struct softpipe_context *softpipe = softpipe_context(pipe);
 
    /* pass-through to draw module */
    draw_set_setup_state(softpipe->draw, setup);
 
-   memcpy( &softpipe->setup, setup, sizeof(*setup) );
+   softpipe->rasterizer = setup;
 
-   softpipe->dirty |= SP_NEW_SETUP;
+   softpipe->dirty |= SP_NEW_RASTERIZER;
+}
+
+void softpipe_delete_rasterizer_state(struct pipe_context *pipe,
+                                   const struct pipe_rasterizer_state *rasterizer)
+{
+   free((struct pipe_rasterizer_state*)rasterizer);
 }
 
 

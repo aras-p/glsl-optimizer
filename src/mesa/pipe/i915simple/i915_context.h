@@ -126,6 +126,7 @@ struct i915_context
    const struct pipe_blend_state   *blend;
    const struct pipe_sampler_state *sampler[PIPE_MAX_SAMPLERS];
    const struct pipe_depth_stencil_state   *depth_stencil;
+   const struct pipe_rasterizer_state *rasterizer;
 
    struct pipe_alpha_test_state alpha_test;
    struct pipe_blend_color blend_color;
@@ -136,7 +137,6 @@ struct i915_context
    struct pipe_shader_state fs;
    struct pipe_poly_stipple poly_stipple;
    struct pipe_scissor_state scissor;
-   struct pipe_setup_state setup;
    struct pipe_mipmap_tree *texture[PIPE_MAX_SAMPLERS];
    struct pipe_viewport_state viewport;
    struct pipe_vertex_buffer vertex_buffer[PIPE_ATTRIB_MAX];
@@ -159,7 +159,7 @@ struct i915_context
 /* A flag for each state_tracker state object:
  */
 #define I915_NEW_VIEWPORT      0x1
-#define I915_NEW_SETUP         0x2
+#define I915_NEW_RASTERIZER    0x2
 #define I915_NEW_FS            0x4
 #define I915_NEW_BLEND         0x8
 #define I915_NEW_CLIP          0x10

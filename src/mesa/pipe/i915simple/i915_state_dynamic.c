@@ -261,10 +261,10 @@ static void upload_DEPTHSCALE( struct i915_context *i915 )
 
    memset( ds, 0, sizeof(ds) );
    
-   /* I915_NEW_SETUP
+   /* I915_NEW_RASTERIZER
     */
    ds[0].u = _3DSTATE_DEPTH_OFFSET_SCALE;
-   ds[1].f = i915->setup.offset_scale;
+   ds[1].f = i915->rasterizer->offset_scale;
 
    set_dynamic_indirect( i915, 
 			 I915_DYNAMIC_DEPTHSCALE_0,
@@ -273,7 +273,7 @@ static void upload_DEPTHSCALE( struct i915_context *i915 )
 }
 
 const struct i915_tracked_state i915_upload_DEPTHSCALE = {
-   .dirty = I915_NEW_SETUP,
+   .dirty = I915_NEW_RASTERIZER,
    .update = upload_DEPTHSCALE
 };
 
@@ -298,9 +298,9 @@ static void upload_STIPPLE( struct i915_context *i915 )
    st[0] = _3DSTATE_STIPPLE;
    st[1] = 0;
    
-   /* I915_NEW_SETUP 
+   /* I915_NEW_RASTERIZER 
     */
-   if (i915->setup.poly_stipple_enable) {
+   if (i915->rasterizer->poly_stipple_enable) {
       st[1] |= ST1_ENABLE;
    }
 
@@ -333,7 +333,7 @@ static void upload_STIPPLE( struct i915_context *i915 )
 
 
 const struct i915_tracked_state i915_upload_STIPPLE = {
-   .dirty = I915_NEW_SETUP | I915_NEW_STIPPLE,
+   .dirty = I915_NEW_RASTERIZER | I915_NEW_STIPPLE,
    .update = upload_STIPPLE
 };
 
@@ -346,7 +346,7 @@ static void upload_SCISSOR_ENABLE( struct i915_context *i915 )
 {
    unsigned sc[1];
 
-   if (i915->setup.scissor) 
+   if (i915->rasterizer->scissor) 
       sc[0] = _3DSTATE_SCISSOR_ENABLE_CMD | ENABLE_SCISSOR_RECT;
    else
       sc[0] = _3DSTATE_SCISSOR_ENABLE_CMD | DISABLE_SCISSOR_RECT;
@@ -358,7 +358,7 @@ static void upload_SCISSOR_ENABLE( struct i915_context *i915 )
 }
 
 const struct i915_tracked_state i915_upload_SCISSOR_ENABLE = {
-   .dirty = I915_NEW_SETUP,
+   .dirty = I915_NEW_RASTERIZER,
    .update = upload_SCISSOR_ENABLE
 };
 

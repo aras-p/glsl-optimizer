@@ -47,6 +47,10 @@ struct pipe_sampler_state * st_cached_sampler_state(
 
 struct pipe_depth_stencil_state *st_cached_depth_stencil_state(
    struct st_context *st,
-   const struct pipe_depth_stencil_state *sampler);
+   const struct pipe_depth_stencil_state *depth_stencil);
+
+struct pipe_rasterizer_state *st_cached_rasterizer_state(
+   struct st_context *st,
+   const struct pipe_rasterizer_state *raster);
 
 #endif

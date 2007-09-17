@@ -329,16 +329,18 @@ clear_with_quad(GLcontext *ctx,
 
    /* setup state: nothing */
    {
-      struct pipe_setup_state setup;
-      memset(&setup, 0, sizeof(setup));
+      struct pipe_rasterizer_state raster;
+      const struct pipe_rasterizer_state *cached;
+      memset(&raster, 0, sizeof(raster));
 #if 0
       /* don't do per-pixel scissor; we'll just draw a PIPE_PRIM_QUAD
        * that matches the scissor bounds.
        */
       if (ctx->Scissor.Enabled)
-         setup.scissor = 1;
+         raster.scissor = 1;
 #endif
-      pipe->set_setup_state(pipe, &setup);
+      cached = st_cached_rasterizer_state(ctx->st, &raster);
+      pipe->bind_rasterizer_state(pipe, cached);
    }
 
    /* fragment shader state: color pass-through program */
@@ -394,7 +396,7 @@ clear_with_quad(GLcontext *ctx,
    pipe->bind_depth_stencil_state(pipe, st->state.depth_stencil);
    pipe->set_fs_state(pipe, &st->state.fs);
    pipe->set_vs_state(pipe, &st->state.vs);
-   pipe->set_setup_state(pipe, &st->state.setup);
+   pipe->bind_rasterizer_state(pipe, st->state.rasterizer);
    pipe->set_viewport_state(pipe, &ctx->st->state.viewport);
    /* OR:
    st_invalidate_state(ctx, _NEW_COLOR | _NEW_DEPTH | _NEW_STENCIL);

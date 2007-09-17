@@ -65,9 +65,9 @@ struct pipe_buffer_handle;
 
 
 /**
- * Primitive (point/line/tri) setup info
+ * Primitive (point/line/tri) rasterization info
  */
-struct pipe_setup_state
+struct pipe_rasterizer_state
 {
    unsigned flatshade:1;
    unsigned light_twoside:1;

@@ -259,6 +259,9 @@ struct pipe_context *softpipe_create( struct pipe_winsys *pipe_winsys,
    softpipe->pipe.create_depth_stencil_state = softpipe_create_depth_stencil_state;
    softpipe->pipe.bind_depth_stencil_state = softpipe_bind_depth_stencil_state;
    softpipe->pipe.delete_depth_stencil_state = softpipe_delete_depth_stencil_state;
+   softpipe->pipe.create_rasterizer_state = softpipe_create_rasterizer_state;
+   softpipe->pipe.bind_rasterizer_state = softpipe_bind_rasterizer_state;
+   softpipe->pipe.delete_rasterizer_state = softpipe_delete_rasterizer_state;
 
    softpipe->pipe.set_alpha_test_state = softpipe_set_alpha_test_state;
    softpipe->pipe.set_blend_color = softpipe_set_blend_color;
@@ -271,7 +274,6 @@ struct pipe_context *softpipe_create( struct pipe_winsys *pipe_winsys,
    softpipe->pipe.set_vs_state = softpipe_set_vs_state;
    softpipe->pipe.set_polygon_stipple = softpipe_set_polygon_stipple;
    softpipe->pipe.set_scissor_state = softpipe_set_scissor_state;
-   softpipe->pipe.set_setup_state = softpipe_set_setup_state;
    softpipe->pipe.set_texture_state = softpipe_set_texture_state;
    softpipe->pipe.set_viewport_state = softpipe_set_viewport_state;
 

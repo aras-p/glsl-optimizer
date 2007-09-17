@@ -51,7 +51,7 @@ const struct st_tracked_state st_update_depth_stencil;
 const struct st_tracked_state st_update_tnl;
 const struct st_tracked_state st_update_fs;
 const struct st_tracked_state st_update_vs;
-const struct st_tracked_state st_update_setup;
+const struct st_tracked_state st_update_rasterizer;
 const struct st_tracked_state st_update_polygon_stipple;
 const struct st_tracked_state st_update_viewport;
 const struct st_tracked_state st_update_scissor;

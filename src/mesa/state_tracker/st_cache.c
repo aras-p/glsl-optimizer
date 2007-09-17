@@ -93,3 +93,21 @@ struct pipe_depth_stencil_state * st_cached_depth_stencil_state(
    }
    return (struct pipe_depth_stencil_state*)(cso_hash_iter_data(iter));
 }
+
+struct pipe_rasterizer_state * st_cached_rasterizer_state(
+   struct st_context *st,
+   const struct pipe_rasterizer_state *raster)
+{
+   unsigned hash_key = cso_construct_key((void*)raster,
+                                         sizeof(struct pipe_rasterizer_state));
+   struct cso_hash_iter iter = cso_find_state_template(st->cache,
+                                                       hash_key, CSO_RASTERIZER,
+                                                       (void*)raster);
+   if (cso_hash_iter_is_null(iter)) {
+      const struct pipe_rasterizer_state *created_state =
+         st->pipe->create_rasterizer_state(st->pipe, raster);
+      iter = cso_insert_state(st->cache, hash_key, CSO_RASTERIZER,
+                              (void*)created_state);
+   }
+   return (struct pipe_rasterizer_state*)(cso_hash_iter_data(iter));
+}

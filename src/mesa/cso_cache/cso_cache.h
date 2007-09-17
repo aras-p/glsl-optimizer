@@ -43,12 +43,14 @@ struct cso_cache {
    struct cso_hash *blend_hash;
    struct cso_hash *sampler_hash;
    struct cso_hash *depth_stencil_hash;
+   struct cso_hash *rasterizer_hash;
 };
 
 enum cso_cache_type {
    CSO_BLEND,
    CSO_SAMPLER,
-   CSO_DEPTH_STENCIL
+   CSO_DEPTH_STENCIL,
+   CSO_RASTERIZER
 };
 
 unsigned cso_construct_key(void *item, int item_size);

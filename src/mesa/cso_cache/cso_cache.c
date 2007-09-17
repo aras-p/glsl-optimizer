@@ -78,6 +78,8 @@ static struct cso_hash *_cso_hash_for_type(struct cso_cache *sc, enum cso_cache_
       hash = sc->sampler_hash;
    case CSO_DEPTH_STENCIL:
       hash = sc->depth_stencil_hash;
+   case CSO_RASTERIZER:
+      hash = sc->rasterizer_hash;
    }
 
    return hash;
@@ -92,6 +94,8 @@ static int _cso_size_for_type(enum cso_cache_type type)
       return sizeof(struct pipe_sampler_state);
    case CSO_DEPTH_STENCIL:
       return sizeof(struct pipe_depth_stencil_state);
+   case CSO_RASTERIZER:
+      return sizeof(struct pipe_rasterizer_state);
    }
    return 0;
 }
@@ -143,6 +147,7 @@ struct cso_cache *cso_cache_create(void)
    sc->blend_hash = cso_hash_create();
    sc->sampler_hash = cso_hash_create();
    sc->depth_stencil_hash = cso_hash_create();
+   sc->rasterizer_hash = cso_hash_create();
 
    return sc;
 }
@@ -153,6 +158,7 @@ void cso_cache_delete(struct cso_cache *sc)
    cso_hash_delete(sc->blend_hash);
    cso_hash_delete(sc->sampler_hash);
    cso_hash_delete(sc->depth_stencil_hash);
+   cso_hash_delete(sc->rasterizer_hash);
    free(sc);
 }
 

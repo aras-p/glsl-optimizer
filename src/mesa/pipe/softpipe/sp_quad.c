@@ -36,9 +36,9 @@ sp_build_quad_pipeline(struct softpipe_context *sp)
       sp->quad.first = sp->quad.occlusion;
    }
 
-   if (sp->setup.poly_smooth ||
-       sp->setup.line_smooth ||
-       sp->setup.point_smooth) {
+   if (sp->rasterizer->poly_smooth ||
+       sp->rasterizer->line_smooth ||
+       sp->rasterizer->point_smooth) {
       sp->quad.coverage->next = sp->quad.first;
       sp->quad.first = sp->quad.coverage;
    }
@@ -65,7 +65,7 @@ sp_build_quad_pipeline(struct softpipe_context *sp)
       sp->quad.first = sp->quad.shade;
    }
 
-   if (sp->setup.poly_stipple_enable) {
+   if (sp->rasterizer->poly_stipple_enable) {
       sp->quad.polygon_stipple->next = sp->quad.first;
       sp->quad.first = sp->quad.polygon_stipple;
    }

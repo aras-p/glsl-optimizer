@@ -45,7 +45,7 @@ static void calculate_vertex_layout( struct softpipe_context *softpipe )
 {
    const uint inputsRead = softpipe->fs.inputs_read;
    const interp_mode colorInterp
-      = softpipe->setup.flatshade ? INTERP_CONSTANT : INTERP_LINEAR;
+      = softpipe->rasterizer->flatshade ? INTERP_CONSTANT : INTERP_LINEAR;
    struct vertex_info *vinfo = &softpipe->vertex_info;
    uint front0 = 0, back0 = 0, front1 = 0, back1 = 0;
    uint i;
@@ -112,7 +112,7 @@ static void calculate_vertex_layout( struct softpipe_context *softpipe )
     * lighting.  Edgeflag is dealt with specially by setting bits in
     * the vertex header.
     */
-   if (softpipe->setup.light_twoside) {
+   if (softpipe->rasterizer->light_twoside) {
       if (inputsRead & (1 << TGSI_ATTRIB_COLOR0)) {
          back0 = draw_emit_vertex_attr(vinfo, TGSI_ATTRIB_BFC0,
                                        FORMAT_OMIT, colorInterp);
@@ -160,7 +160,7 @@ compute_cliprect(struct softpipe_context *sp)
       surfHeight = sp->scissor.maxy;
    }
 
-   if (sp->setup.scissor) {
+   if (sp->rasterizer->scissor) {
       /* clip to scissor rect */
       sp->cliprect.minx = MAX2(sp->scissor.minx, 0);
       sp->cliprect.miny = MAX2(sp->scissor.miny, 0);
@@ -182,7 +182,7 @@ compute_cliprect(struct softpipe_context *sp)
  */
 void softpipe_update_derived( struct softpipe_context *softpipe )
 {
-   if (softpipe->dirty & (SP_NEW_SETUP | SP_NEW_FS))
+   if (softpipe->dirty & (SP_NEW_RASTERIZER | SP_NEW_FS))
       calculate_vertex_layout( softpipe );
 
    if (softpipe->dirty & (SP_NEW_SCISSOR |
@@ -194,7 +194,7 @@ void softpipe_update_derived( struct softpipe_context *softpipe )
                           SP_NEW_DEPTH_STENCIL |
                           SP_NEW_ALPHA_TEST |
                           SP_NEW_FRAMEBUFFER |
-                          SP_NEW_SETUP |
+                          SP_NEW_RASTERIZER |
                           SP_NEW_FS))
       sp_build_quad_pipeline(softpipe);
 

@@ -47,9 +47,9 @@ coverage_quad(struct quad_stage *qs, struct quad_header *quad)
 {
    struct softpipe_context *softpipe = qs->softpipe;
 
-   if ((softpipe->setup.poly_smooth && quad->prim == PRIM_TRI) ||
-       (softpipe->setup.line_smooth && quad->prim == PRIM_LINE) ||
-       (softpipe->setup.point_smooth && quad->prim == PRIM_POINT)) {
+   if ((softpipe->rasterizer->poly_smooth && quad->prim == PRIM_TRI) ||
+       (softpipe->rasterizer->line_smooth && quad->prim == PRIM_LINE) ||
+       (softpipe->rasterizer->point_smooth && quad->prim == PRIM_POINT)) {
       unsigned j;
       for (j = 0; j < QUAD_SIZE; j++) {
          assert(quad->coverage[j] >= 0.0);

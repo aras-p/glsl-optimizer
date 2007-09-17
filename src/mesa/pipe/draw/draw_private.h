@@ -137,7 +137,7 @@ struct draw_context
    } pipeline;
 
    /* pipe state that we need: */
-   struct pipe_setup_state setup;
+   const struct pipe_rasterizer_state *rasterizer;
    struct pipe_feedback_state feedback;
    struct pipe_viewport_state viewport;
    struct pipe_vertex_buffer vertex_buffer[PIPE_ATTRIB_MAX];

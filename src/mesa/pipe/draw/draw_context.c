@@ -98,19 +98,19 @@ static void validate_pipeline( struct draw_context *draw )
     * shorter pipelines for lines & points.
     */
 
-   if (draw->setup.fill_cw != PIPE_POLYGON_MODE_FILL ||
-       draw->setup.fill_ccw != PIPE_POLYGON_MODE_FILL) {
+   if (draw->rasterizer->fill_cw != PIPE_POLYGON_MODE_FILL ||
+       draw->rasterizer->fill_ccw != PIPE_POLYGON_MODE_FILL) {
       draw->pipeline.unfilled->next = next;
       next = draw->pipeline.unfilled;
    }
 	 
-   if (draw->setup.offset_cw ||
-       draw->setup.offset_ccw) {
+   if (draw->rasterizer->offset_cw ||
+       draw->rasterizer->offset_ccw) {
       draw->pipeline.offset->next = next;
       next = draw->pipeline.offset;
    }
 
-   if (draw->setup.light_twoside) {
+   if (draw->rasterizer->light_twoside) {
       draw->pipeline.twoside->next = next;
       next = draw->pipeline.twoside;
    }
@@ -134,7 +134,7 @@ static void validate_pipeline( struct draw_context *draw )
     * this for clipped primitives, ie it is a part of the clip
     * routine.
     */
-   if (draw->setup.flatshade) {
+   if (draw->rasterizer->flatshade) {
       draw->pipeline.flatshade->next = next;
       next = draw->pipeline.flatshade;
    }
@@ -161,9 +161,9 @@ void draw_set_feedback_state( struct draw_context *draw,
  * This causes the drawing pipeline to be rebuilt.
  */
 void draw_set_setup_state( struct draw_context *draw,
-                           const struct pipe_setup_state *setup )
+                           const struct pipe_rasterizer_state *raster )
 {
-   draw->setup = *setup;  /* struct copy */
+   draw->rasterizer = raster;
    validate_pipeline( draw );
 }
 

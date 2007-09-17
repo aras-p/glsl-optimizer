@@ -62,8 +62,8 @@ static void upload_S2S4(struct i915_context *i915)
       assert(LIS4); /* should never be zero? */
    }
 
-   /* I915_NEW_SETUP */
-   switch (i915->setup.cull_mode) {
+   /* I915_NEW_RASTERIZER */
+   switch (i915->rasterizer->cull_mode) {
    case PIPE_WINDING_NONE:
       LIS4 |= S4_CULLMODE_NONE;
       break;
@@ -78,25 +78,25 @@ static void upload_S2S4(struct i915_context *i915)
       break;
    }
 
-   /* I915_NEW_SETUP */
+   /* I915_NEW_RASTERIZER */
    {
-      int line_width = CLAMP((int)(i915->setup.line_width * 2), 1, 0xf);
+      int line_width = CLAMP((int)(i915->rasterizer->line_width * 2), 1, 0xf);
 
       LIS4 |= line_width << S4_LINE_WIDTH_SHIFT;
 
-      if (i915->setup.line_smooth)
+      if (i915->rasterizer->line_smooth)
 	 LIS4 |= S4_LINE_ANTIALIAS_ENABLE;
    }
 
-   /* I915_NEW_SETUP */
+   /* I915_NEW_RASTERIZER */
    {
-      int point_size = CLAMP((int) i915->setup.point_size, 1, 0xff);
+      int point_size = CLAMP((int) i915->rasterizer->point_size, 1, 0xff);
 
       LIS4 |= point_size << S4_POINT_WIDTH_SHIFT;
    }
 
-   /* I915_NEW_SETUP */
-   if (i915->setup.flatshade) {
+   /* I915_NEW_RASTERIZER */
+   if (i915->rasterizer->flatshade) {
       LIS4 |= (S4_FLATSHADE_ALPHA |
 	       S4_FLATSHADE_COLOR |
 	       S4_FLATSHADE_SPECULAR);
@@ -114,7 +114,7 @@ static void upload_S2S4(struct i915_context *i915)
 
 
 const struct i915_tracked_state i915_upload_S2S4 = {
-   .dirty = I915_NEW_SETUP | I915_NEW_VERTEX_FORMAT,
+   .dirty = I915_NEW_RASTERIZER | I915_NEW_VERTEX_FORMAT,
    .update = upload_S2S4
 };
 
@@ -165,7 +165,7 @@ static void upload_S5( struct i915_context *i915 )
 
 
 #if 0
-   /* I915_NEW_SETUP */
+   /* I915_NEW_RASTERIZER */
    if (i915->state.Polygon->OffsetFill) {
       LIS5 |= S5_GLOBAL_DEPTH_OFFSET_ENABLE;
    }
@@ -179,7 +179,7 @@ static void upload_S5( struct i915_context *i915 )
 }
 
 const struct i915_tracked_state i915_upload_S5 = {
-   .dirty = (I915_NEW_DEPTH_STENCIL | I915_NEW_BLEND | I915_NEW_SETUP),
+   .dirty = (I915_NEW_DEPTH_STENCIL | I915_NEW_BLEND | I915_NEW_RASTERIZER),
    .update = upload_S5
 };
 
@@ -247,9 +247,9 @@ static void upload_S7( struct i915_context *i915 )
 {
    float LIS7;
 
-   /* I915_NEW_SETUP
+   /* I915_NEW_RASTERIZER
     */
-   LIS7 = i915->setup.offset_units; /* probably incorrect */
+   LIS7 = i915->rasterizer->offset_units; /* probably incorrect */
 
    if (LIS7 != i915->current.immediate[I915_IMMEDIATE_S7]) {
       i915->current.immediate[I915_IMMEDIATE_S7] = LIS7;
@@ -258,7 +258,7 @@ static void upload_S7( struct i915_context *i915 )
 }
 
 const struct i915_tracked_state i915_upload_S7 = {
-   .dirty = I915_NEW_SETUP,
+   .dirty = I915_NEW_RASTERIZER,
    .update = upload_S7
 };
 
