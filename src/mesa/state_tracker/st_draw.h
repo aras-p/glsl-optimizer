@@ -34,10 +34,30 @@
 #ifndef ST_DRAW_H
 #define ST_DRAW_H
 
+struct _mesa_prim;
+struct _mesa_index_buffer;
 
 void st_init_draw( struct st_context *st );
 
 void st_destroy_draw( struct st_context *st );
+
+extern void
+st_draw_vbo(GLcontext *ctx,
+            const struct gl_client_array **arrays,
+            const struct _mesa_prim *prims,
+            GLuint nr_prims,
+            const struct _mesa_index_buffer *ib,
+            GLuint min_index,
+            GLuint max_index);
+
+extern void
+st_feedback_draw_vbo(GLcontext *ctx,
+                     const struct gl_client_array **arrays,
+                     const struct _mesa_prim *prims,
+                     GLuint nr_prims,
+                     const struct _mesa_index_buffer *ib,
+                     GLuint min_index,
+                     GLuint max_index);
 
 void 
 st_draw_vertices(GLcontext *ctx, unsigned prim,

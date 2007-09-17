@@ -33,6 +33,7 @@
 #include "st_cb_clear.h"
 #include "st_cb_drawpixels.h"
 #include "st_cb_fbo.h"
+#include "st_cb_feedback.h"
 #include "st_cb_queryobj.h"
 #include "st_cb_rasterpos.h"
 #include "st_cb_readpixels.h"
@@ -43,6 +44,7 @@
 #include "st_draw.h"
 #include "st_program.h"
 #include "pipe/p_context.h"
+#include "pipe/draw/draw_context.h"
 
 
 void st_invalidate_state(GLcontext * ctx, GLuint new_state)
@@ -63,6 +65,8 @@ struct st_context *st_create_context( GLcontext *ctx,
 
    st->ctx = ctx;
    st->pipe = pipe;
+
+   st->draw = draw_create(); /* for selection/feedback */
 
    st->dirty.mesa = ~0;
    st->dirty.st = ~0;
@@ -97,6 +101,7 @@ struct st_context *st_create_context( GLcontext *ctx,
 
 void st_destroy_context( struct st_context *st )
 {
+   draw_destroy(st->draw);
    st_destroy_atoms( st );
    st_destroy_draw( st );
 
@@ -120,6 +125,7 @@ void st_init_driver_functions(struct dd_function_table *functions)
    st_init_clear_functions(functions);
    st_init_drawpixels_functions(functions);
    st_init_fbo_functions(functions);
+   st_init_feedback_functions(functions);
    st_init_program_functions(functions);
    st_init_query_functions(functions);
    st_init_rasterpos_functions(functions);

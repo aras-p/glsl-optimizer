@@ -37,6 +37,9 @@ struct st_region;
 struct st_texture_object;
 struct st_texture_image;
 struct st_fragment_program;
+struct draw_context;
+struct draw_stage;
+
 
 #define ST_NEW_MESA                    0x1 /* Mesa state has changed */
 #define ST_NEW_FRAGMENT_PROGRAM        0x2
@@ -61,6 +64,10 @@ struct st_context
    GLcontext *ctx;
 
    struct pipe_context *pipe;
+
+   struct draw_context *draw;  /**< For selection/feedback */
+   struct draw_stage *feedback_stage;  /**< For FL_FEEDBACK rendermode */
+   struct draw_stage *selection_stage;  /**< For GL_SELECT rendermode */
 
    /* Eventually will use a cache to feed the pipe with
     * create/bind/delete calls to constant state objects.  Not yet

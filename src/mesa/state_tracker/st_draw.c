@@ -46,6 +46,8 @@
 #include "pipe/p_winsys.h"
 #include "pipe/tgsi/exec/tgsi_attribs.h"
 
+#include "pipe/draw/draw_private.h"
+#include "pipe/draw/draw_context.h"
 
 
 static GLuint
@@ -173,14 +175,14 @@ update_default_attribs_buffer(GLcontext *ctx)
  * we have something to render.
  * Basically, translate the information into the format expected by pipe.
  */
-static void
-draw_vbo(GLcontext *ctx,
-         const struct gl_client_array **arrays,
-         const struct _mesa_prim *prims,
-         GLuint nr_prims,
-         const struct _mesa_index_buffer *ib,
-         GLuint min_index,
-         GLuint max_index)
+void
+st_draw_vbo(GLcontext *ctx,
+            const struct gl_client_array **arrays,
+            const struct _mesa_prim *prims,
+            GLuint nr_prims,
+            const struct _mesa_index_buffer *ib,
+            GLuint min_index,
+            GLuint max_index)
 {
    struct pipe_context *pipe = ctx->st->pipe;
    GLuint attr, i;
@@ -356,6 +358,166 @@ st_draw_vertices(GLcontext *ctx, unsigned prim,
 
 
 
+/**
+ * Called by VBO to draw arrays when in selection or feedback mode.
+ * This is very much like the normal draw_vbo() function above.
+ * Look at code refactoring some day.
+ * Might move this into the failover module some day.
+ */
+void
+st_feedback_draw_vbo(GLcontext *ctx,
+                     const struct gl_client_array **arrays,
+                     const struct _mesa_prim *prims,
+                     GLuint nr_prims,
+                     const struct _mesa_index_buffer *ib,
+                     GLuint min_index,
+                     GLuint max_index)
+{
+   struct st_context *st = ctx->st;
+   struct pipe_context *pipe = st->pipe;
+   struct draw_context *draw = st->draw;
+   GLuint attr, i;
+   GLbitfield attrsNeeded;
+   const unsigned attr0_offset = (unsigned) arrays[0]->Ptr;
+   struct pipe_buffer_handle *index_buffer_handle = 0;
+
+   assert(ctx->RenderMode == GL_SELECT ||
+          ctx->RenderMode == GL_FEEDBACK);
+   assert(draw);
+
+   /*
+    * Set up the draw module's state.
+    *
+    * We'd like to do this less frequently, but the normal state-update
+    * code sends state updates to the pipe, not to our private draw module.
+    */
+   assert(draw);
+   draw_set_viewport_state(draw, &st->state.viewport);
+   draw_set_clip_state(draw, &st->state.clip);
+   draw_set_setup_state(draw, &st->state.setup);
+   draw_set_vertex_shader(draw, &st->state.vs);
+   /* XXX need to set vertex info too */
+
+
+   update_default_attribs_buffer(ctx);
+
+   /* this must be after state validation */
+   attrsNeeded = ctx->st->state.vs.inputs_read;
+
+   /* tell draw module about the vertex array element/attributes */
+   for (attr = 0; attr < 16; attr++) {
+      struct pipe_vertex_buffer vbuffer;
+      struct pipe_vertex_element velement;
+      void *map;
+
+      vbuffer.buffer = NULL;
+      vbuffer.pitch = 0;
+      velement.src_offset = 0;
+      velement.vertex_buffer_index = 0;
+      velement.src_format = 0;
+
+      if (attrsNeeded & (1 << attr)) {
+         const GLuint mesaAttr = tgsi_attrib_to_mesa_attrib(attr);
+         struct gl_buffer_object *bufobj = arrays[mesaAttr]->BufferObj;
+
+         if (bufobj && bufobj->Name) {
+            struct st_buffer_object *stobj = st_buffer_object(bufobj);
+            /* Recall that for VBOs, the gl_client_array->Ptr field is
+             * really an offset from the start of the VBO, not a pointer.
+             */
+            unsigned offset = (unsigned) arrays[mesaAttr]->Ptr;
+
+            assert(stobj->buffer);
+
+            vbuffer.buffer = stobj->buffer;
+            vbuffer.buffer_offset = attr0_offset;  /* in bytes */
+            vbuffer.pitch = arrays[mesaAttr]->StrideB; /* in bytes */
+            vbuffer.max_index = 0;  /* need this? */
+
+            velement.src_offset = offset - attr0_offset; /* bytes */
+            velement.vertex_buffer_index = attr;
+            velement.dst_offset = 0; /* need this? */
+            velement.src_format = pipe_vertex_format(arrays[mesaAttr]->Type,
+                                                     arrays[mesaAttr]->Size);
+            assert(velement.src_format);
+         }
+         else {
+            /* use the default attribute buffer */
+            vbuffer.buffer = ctx->st->default_attrib_buffer;
+            vbuffer.buffer_offset = 0;
+            vbuffer.pitch = 0; /* must be zero! */
+            vbuffer.max_index = 1;
+
+            velement.src_offset = attr * 4 * sizeof(GLfloat);
+            velement.vertex_buffer_index = attr;
+            velement.dst_offset = 0;
+            velement.src_format = PIPE_FORMAT_R32G32B32A32_FLOAT;
+         }
+      }
+
+      if (attr == 0)
+         assert(vbuffer.buffer);
+
+      draw_set_vertex_buffer(draw, attr, &vbuffer);
+      draw_set_vertex_element(draw, attr, &velement);
+
+      /* map the attrib buffer */
+      if (vbuffer.buffer) {
+         map = pipe->winsys->buffer_map(pipe->winsys,
+                                        vbuffer.buffer,
+                                        PIPE_BUFFER_FLAG_READ);
+         draw_set_mapped_vertex_buffer(draw, attr, map);
+      }
+   }
+
+
+   if (ib) {
+      unsigned indexSize;
+      struct gl_buffer_object *bufobj = ib->obj;
+      struct st_buffer_object *stobj = st_buffer_object(bufobj);
+      index_buffer_handle = stobj->buffer;
+      void *map;
+
+      switch (ib->type) {
+      case GL_UNSIGNED_INT:
+         indexSize = 4;
+         break;
+      case GL_UNSIGNED_SHORT:
+         indexSize = 2;
+         break;
+      default:
+         assert(0);
+      }
+
+      map = pipe->winsys->buffer_map(pipe->winsys,
+                                     index_buffer_handle,
+                                     PIPE_BUFFER_FLAG_READ);
+      draw_set_mapped_element_buffer(draw, indexSize, map);
+   }
+
+
+   /* draw here */
+   for (i = 0; i < nr_prims; i++) {
+      draw_arrays(draw, prims[i].mode, prims[i].start, prims[i].count);
+   }
+
+
+   /*
+    * unmap vertex/index buffers
+    */
+   for (i = 0; i < PIPE_ATTRIB_MAX; i++) {
+      if (draw->vertex_buffer[i].buffer) {
+         pipe->winsys->buffer_unmap(pipe->winsys,
+                                    draw->vertex_buffer[i].buffer);
+         draw_set_mapped_vertex_buffer(draw, i, NULL);
+      }
+   }
+   if (ib) {
+      pipe->winsys->buffer_unmap(pipe->winsys, index_buffer_handle);
+      draw_set_mapped_element_buffer(draw, 0, NULL);
+   }
+}
+
 
 
 /* This is all a hack to keep using tnl until we have vertex programs
@@ -370,7 +532,7 @@ void st_init_draw( struct st_context *st )
 
    assert(vbo);
    assert(vbo->draw_prims);
-   vbo->draw_prims = draw_vbo;
+   vbo->draw_prims = st_draw_vbo;
 
    _tnl_ProgramCacheInit( ctx );
 }
