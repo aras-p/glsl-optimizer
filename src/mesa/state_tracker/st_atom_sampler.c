@@ -146,7 +146,7 @@ update_samplers(struct st_context *st)
       const struct pipe_sampler_state *cached_sampler =
          st_cached_sampler_state(st, &sampler);
 
-      if (cached_sampler == st->state.sampler[u]) {
+      if (cached_sampler != st->state.sampler[u]) {
          /* state has changed */
          st->state.sampler[u] = cached_sampler;
          st->pipe->bind_sampler_state(st->pipe, u, cached_sampler);
