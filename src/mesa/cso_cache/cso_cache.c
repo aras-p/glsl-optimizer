@@ -29,9 +29,10 @@
  */
 
 #include "cso_cache.h"
+#include "cso_hash.h"
 
 #if 1
-static unsigned hash_key( const void *key, unsigned key_size )
+static unsigned hash_key(const void *key, unsigned key_size)
 {
    unsigned *ikey = (unsigned *)key;
    unsigned hash = 0, i;
@@ -63,114 +64,84 @@ static unsigned hash_key(const unsigned char *p, int n)
 
 unsigned cso_construct_key(void *item, int item_size)
 {
-   return hash_key((const unsigned char*)(item), item_size);
+   return hash_key((item), item_size);
 }
 
-struct cso_cache_item *
+static struct cso_hash *_cso_hash_for_type(struct cso_cache *sc, enum cso_cache_type type)
+{
+   struct cso_hash *hash = 0;
+
+   switch(type) {
+   case CSO_BLEND:
+      hash = sc->blend_hash;
+   }
+
+   return hash;
+}
+
+static int _cso_size_for_type(enum cso_cache_type type)
+{
+   switch(type) {
+   case CSO_BLEND:
+      return sizeof(struct pipe_blend_state);
+   }
+   return 0;
+}
+
+struct cso_hash_iter
 cso_insert_state(struct cso_cache *sc,
-                 unsigned hash_key,
-                 void *state, int state_size)
+                 unsigned hash_key, enum cso_cache_type type,
+                 void *state)
 {
-   struct cso_cache_item *found_state =
-      _mesa_HashLookup(sc->hash, hash_key);
-   struct cso_cache_item *item =
-      malloc(sizeof(struct cso_cache_item));
-   _mesa_printf("inserting state ========= key = %d\n", hash_key);
-   item->key        = hash_key;
-   item->state_size = state_size;
-   item->state      = state;
-   item->next       = 0;
-
-   if (found_state) {
-      while (found_state->next)
-         found_state = found_state->next;
-      found_state->next = item;
-   } else
-      _mesa_HashInsert(sc->hash, hash_key, item);
-   return item;
+   struct cso_hash *hash = _cso_hash_for_type(sc, type);
+   return cso_hash_insert(hash, hash_key, state);
 }
 
-struct cso_cache_item *
+struct cso_hash_iter
 cso_find_state(struct cso_cache *sc,
-               unsigned hash_key,
-               void *state, int state_size)
+               unsigned hash_key, enum cso_cache_type type)
 {
-   struct cso_cache_item *found_state =
-      _mesa_HashLookup(sc->hash, hash_key);
+   struct cso_hash *hash = _cso_hash_for_type(sc, type);
 
-   while (found_state &&
-          (found_state->state_size != state_size ||
-           memcmp(found_state->state, state, state_size))) {
-      found_state = found_state->next;
-   }
-
-   _mesa_printf("finding state  ========== %d (%p)\n", hash_key, found_state);
-   return found_state;
+   return cso_hash_find(hash, hash_key);
 }
 
-struct cso_cache_item *
-cso_remove_state(struct cso_cache *sc,
-                 unsigned hash_key,
-                 void *state, int state_size)
+struct cso_hash_iter cso_find_state_template(struct cso_cache *sc,
+                                             unsigned hash_key, enum cso_cache_type type,
+                                             void *templ)
 {
-   struct cso_cache_item *found_state =
-      _mesa_HashLookup(sc->hash, hash_key);
-   struct cso_cache_item *prev = 0;
+   struct cso_hash_iter iter = cso_find_state(sc, hash_key, type);
+   int size = _cso_size_for_type(type);
+   while (!cso_hash_iter_is_null(iter)) {
+      void *iter_data = cso_hash_iter_data(iter);
+      if (!memcmp(iter_data, templ, size))
+         return iter;
+      iter = cso_hash_iter_next(iter);
+   }
+   return iter;
+}
 
-   while (found_state &&
-          (found_state->state_size != state_size ||
-           memcmp(found_state->state, state, state_size))) {
-      prev = found_state;
-      found_state = found_state->next;
-   }
-   if (found_state) {
-      if (prev)
-         prev->next = found_state->next;
-      else {
-         if (found_state->next)
-            _mesa_HashInsert(sc->hash, hash_key, found_state->next);
-         else
-            _mesa_HashRemove(sc->hash, hash_key);
-      }
-   }
-   return found_state;
+void * cso_take_state(struct cso_cache *sc,
+                      unsigned hash_key, enum cso_cache_type type)
+{
+   struct cso_hash *hash = _cso_hash_for_type(sc, type);
+   return cso_hash_take(hash, hash_key);
 }
 
 struct cso_cache *cso_cache_create(void)
 {
    struct cso_cache *sc = malloc(sizeof(struct cso_cache));
 
-   sc->hash = _mesa_NewHashTable();
+   sc->blend_hash = cso_hash_create();
 
    return sc;
 }
 
-void cso_cache_destroy(struct cso_cache *sc)
+void cso_cache_delete(struct cso_cache *sc)
 {
    assert(sc);
-   assert(sc->hash);
-   _mesa_DeleteHashTable(sc->hash);
+   assert(sc->blend_hash);
+   cso_hash_delete(sc->blend_hash);
    free(sc);
 }
 
-/* This function will either find the state of the given template
- * in the cache or it will create a new state state from the given
- * template, will insert it in the cache and return it.
- */
-struct pipe_blend_state * cso_cached_blend_state(
-   struct st_context *st,
-   const struct pipe_blend_state *blend)
-{
-   unsigned hash_key = cso_construct_key((void*)blend, sizeof(struct pipe_blend_state));
-   struct cso_cache_item *cache_item = cso_find_state(st->cache,
-                                                      hash_key,
-                                                      (void*)blend,
-                                                      sizeof(struct pipe_blend_state));
-   if (!cache_item) {
-      const struct pipe_blend_state *created_state = st->pipe->create_blend_state(
-         st->pipe, blend);
-      cache_item = cso_insert_state(st->cache, hash_key,
-                                    (void*)created_state, sizeof(struct pipe_blend_state));
-   }
-   return (struct pipe_blend_state*)cache_item->state;
-}

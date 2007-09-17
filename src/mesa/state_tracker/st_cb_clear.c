@@ -35,6 +35,7 @@
 #include "main/macros.h"
 #include "shader/prog_instruction.h"
 #include "st_atom.h"
+#include "st_cache.h"
 #include "st_context.h"
 #include "st_cb_clear.h"
 #include "st_cb_fbo.h"
@@ -48,8 +49,6 @@
 #include "pipe/p_winsys.h"
 
 #include "pipe/tgsi/mesa/mesa_to_tgsi.h"
-
-#include "cso_cache/cso_cache.h"
 
 #include "vf/vf.h"
 
@@ -297,7 +296,7 @@ clear_with_quad(GLcontext *ctx,
          if (st->ctx->Color.DitherFlag)
             blend.dither = 1;
       }
-      const struct pipe_blend_state *state = cso_cached_blend_state(st, &blend);
+      const struct pipe_blend_state *state = st_cached_blend_state(st, &blend);
       pipe->bind_blend_state(pipe, state);
    }
 

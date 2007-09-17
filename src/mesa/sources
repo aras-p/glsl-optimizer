@@ -187,6 +187,7 @@ TGSIMESA_SOURCES = \
 	pipe/tgsi/mesa/mesa_to_tgsi.c
 
 STATECACHE_SOURCES = \
+	cso_cache/cso_hash.c \
 	cso_cache/cso_cache.c
 
 STATETRACKER_SOURCES = \
@@ -220,6 +221,7 @@ STATETRACKER_SOURCES = \
 	state_tracker/st_cb_readpixels.c \
 	state_tracker/st_cb_strings.c \
 	state_tracker/st_cb_texture.c \
+        state_tracker/st_cache.c \
 	state_tracker/st_context.c \
 	state_tracker/st_draw.c \
 	state_tracker/st_format.c \

@@ -33,10 +33,11 @@
  
 
 #include "st_context.h"
+#include "st_cache.h"
 #include "st_atom.h"
+
 #include "pipe/p_context.h"
 #include "pipe/p_defines.h"
-#include "cso_cache/cso_cache.h"
 
 
 /**
@@ -211,7 +212,7 @@ update_blend( struct st_context *st )
       blend.dither = 1;
 
    struct pipe_blend_state *real_blend =
-      cso_cached_blend_state(st, &blend);
+      st_cached_blend_state(st, &blend);
 
    if (st->state.blend != real_blend) {
       /* state has changed */

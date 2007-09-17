@@ -115,7 +115,7 @@ void st_destroy_context( struct st_context *st )
    /*st_destroy_cb_teximage( st );*/
    st_destroy_cb_texture( st );
 #endif
-   cso_cache_destroy( st->cache );
+   cso_cache_delete( st->cache );
 
    st->pipe->destroy( st->pipe );
    FREE( st );

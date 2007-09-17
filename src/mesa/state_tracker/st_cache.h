@@ -30,37 +30,14 @@
   *   Zack Rusin <zack@tungstengraphics.com>
   */
 
-#ifndef CSO_CACHE_H
-#define CSO_CACHE_H
+#ifndef ST_CACHE_H
+#define ST_CACHE_H
 
-#include "pipe/p_context.h"
-#include "pipe/p_state.h"
+struct pipe_blend_state;
+struct st_context;
 
-
-struct cso_hash;
-
-struct cso_cache {
-   struct cso_hash *blend_hash;
-};
-
-enum cso_cache_type {
-   CSO_BLEND,
-};
-
-unsigned cso_construct_key(void *item, int item_size);
-
-struct cso_cache *cso_cache_create(void);
-void cso_cache_delete(struct cso_cache *sc);
-
-struct cso_hash_iter cso_insert_state(struct cso_cache *sc,
-                                      unsigned hash_key, enum cso_cache_type type,
-                                      void *state);
-struct cso_hash_iter cso_find_state(struct cso_cache *sc,
-                                    unsigned hash_key, enum cso_cache_type type);
-struct cso_hash_iter cso_find_state_template(struct cso_cache *sc,
-                                             unsigned hash_key, enum cso_cache_type type,
-                                             void *templ);
-void * cso_take_state(struct cso_cache *sc, unsigned hash_key,
-                      enum cso_cache_type type);
+struct pipe_blend_state * st_cached_blend_state(
+   struct st_context *st,
+   const struct pipe_blend_state *blend);
 
 #endif

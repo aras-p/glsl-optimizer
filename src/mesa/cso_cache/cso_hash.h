@@ -30,37 +30,33 @@
   *   Zack Rusin <zack@tungstengraphics.com>
   */
 
-#ifndef CSO_CACHE_H
-#define CSO_CACHE_H
-
-#include "pipe/p_context.h"
-#include "pipe/p_state.h"
-
+#ifndef CSO_HASH_H
+#define CSO_HASH_H
 
 struct cso_hash;
+struct cso_node;
 
-struct cso_cache {
-   struct cso_hash *blend_hash;
+struct cso_hash_iter {
+   struct cso_hash *hash;
+   struct cso_node  *node;
 };
 
-enum cso_cache_type {
-   CSO_BLEND,
-};
+struct cso_hash *cso_hash_create(void);
+void              cso_hash_delete(struct cso_hash *hash);
 
-unsigned cso_construct_key(void *item, int item_size);
+struct cso_hash_iter cso_hash_insert(struct cso_hash *hash, unsigned key,
+                                     void *data);
+void  *cso_hash_take(struct cso_hash *hash, unsigned key);
 
-struct cso_cache *cso_cache_create(void);
-void cso_cache_delete(struct cso_cache *sc);
+struct cso_hash_iter cso_hash_first_node(struct cso_hash *hash);
+struct cso_hash_iter cso_hash_find(struct cso_hash *hash, unsigned key);
 
-struct cso_hash_iter cso_insert_state(struct cso_cache *sc,
-                                      unsigned hash_key, enum cso_cache_type type,
-                                      void *state);
-struct cso_hash_iter cso_find_state(struct cso_cache *sc,
-                                    unsigned hash_key, enum cso_cache_type type);
-struct cso_hash_iter cso_find_state_template(struct cso_cache *sc,
-                                             unsigned hash_key, enum cso_cache_type type,
-                                             void *templ);
-void * cso_take_state(struct cso_cache *sc, unsigned hash_key,
-                      enum cso_cache_type type);
+
+int       cso_hash_iter_is_null(struct cso_hash_iter iter);
+unsigned  cso_hash_iter_key(struct cso_hash_iter iter);
+void     *cso_hash_iter_data(struct cso_hash_iter iter);
+
+struct cso_hash_iter cso_hash_iter_next(struct cso_hash_iter iter);
+struct cso_hash_iter cso_hash_iter_prev(struct cso_hash_iter iter);
 
 #endif

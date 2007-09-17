@@ -30,37 +30,32 @@
   *   Zack Rusin <zack@tungstengraphics.com>
   */
 
-#ifndef CSO_CACHE_H
-#define CSO_CACHE_H
+#include "st_cache.h"
 
-#include "pipe/p_context.h"
+#include "st_context.h"
+
 #include "pipe/p_state.h"
 
+#include "cso_cache/cso_cache.h"
+#include "cso_cache/cso_hash.h"
 
-struct cso_hash;
-
-struct cso_cache {
-   struct cso_hash *blend_hash;
-};
-
-enum cso_cache_type {
-   CSO_BLEND,
-};
-
-unsigned cso_construct_key(void *item, int item_size);
-
-struct cso_cache *cso_cache_create(void);
-void cso_cache_delete(struct cso_cache *sc);
-
-struct cso_hash_iter cso_insert_state(struct cso_cache *sc,
-                                      unsigned hash_key, enum cso_cache_type type,
-                                      void *state);
-struct cso_hash_iter cso_find_state(struct cso_cache *sc,
-                                    unsigned hash_key, enum cso_cache_type type);
-struct cso_hash_iter cso_find_state_template(struct cso_cache *sc,
-                                             unsigned hash_key, enum cso_cache_type type,
-                                             void *templ);
-void * cso_take_state(struct cso_cache *sc, unsigned hash_key,
-                      enum cso_cache_type type);
-
-#endif
+/* This function will either find the state of the given template
+ * in the cache or it will create a new state state from the given
+ * template, will insert it in the cache and return it.
+ */
+struct pipe_blend_state * st_cached_blend_state(
+   struct st_context *st,
+   const struct pipe_blend_state *blend)
+{
+   unsigned hash_key = cso_construct_key((void*)blend, sizeof(struct pipe_blend_state));
+   struct cso_hash_iter iter = cso_find_state_template(st->cache,
+                                                       hash_key, CSO_BLEND,
+                                                       (void*)blend);
+   if (cso_hash_iter_is_null(iter)) {
+      const struct pipe_blend_state *created_state = st->pipe->create_blend_state(
+         st->pipe, blend);
+      iter = cso_insert_state(st->cache, hash_key, CSO_BLEND,
+                              (void*)created_state);
+   }
+   return (struct pipe_blend_state*)(cso_hash_iter_data(iter));
+}
