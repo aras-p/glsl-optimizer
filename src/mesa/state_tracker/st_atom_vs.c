@@ -72,7 +72,7 @@ static void compile_vs( struct st_context *st )
 #if defined(USE_X86_ASM) || defined(SLANG_X86)
    tgsi_emit_sse2(
       vp->vs.tokens,
-      &vp->vs.sse2_program );
+      &vp->sse2_program );
 #endif
 
    vp->dirty = 0;
@@ -106,7 +106,7 @@ static void update_vs( struct st_context *st )
 	 compile_vs( st );
 
 #if defined(USE_X86_ASM) || defined(SLANG_X86)
-      vs.executable = (void *) x86_get_func( &vp->sse2_program );
+      st->vp->vs.executable = (void *) x86_get_func( &vp->sse2_program );
 #endif
 
       st->state.vs = st->vp->vs;
