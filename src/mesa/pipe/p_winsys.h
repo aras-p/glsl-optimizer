@@ -60,7 +60,7 @@ struct pipe_winsys {
 		   const char *, ... );	
 
 
-   /* The buffer manager is modeled after the dri_bugmgr interface,
+   /* The buffer manager is modeled after the dri_bufmgr interface,
     * but this is the subset that softpipe cares about.  Remember that
     * softpipe gets to choose the interface it needs, and the window
     * systems must then implement that interface (rather than the
