@@ -74,6 +74,8 @@ struct softpipe_context {
    const struct pipe_sampler_state *sampler[PIPE_MAX_SAMPLERS];
    const struct pipe_depth_stencil_state   *depth_stencil;
    const struct pipe_rasterizer_state *rasterizer;
+   const struct pipe_shader_state *fs;
+   const struct pipe_shader_state *vs;
 
    struct pipe_alpha_test_state alpha_test;
    struct pipe_blend_color blend_color;
@@ -82,8 +84,6 @@ struct softpipe_context {
    struct pipe_constant_buffer constants[2];
    struct pipe_feedback_state feedback;
    struct pipe_framebuffer_state framebuffer;
-   struct pipe_shader_state fs;
-   struct pipe_shader_state vs;
    struct pipe_poly_stipple poly_stipple;
    struct pipe_scissor_state scissor;
    struct pipe_mipmap_tree *texture[PIPE_MAX_SAMPLERS];

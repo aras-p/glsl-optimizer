@@ -193,7 +193,7 @@ st_draw_vbo(GLcontext *ctx,
    update_default_attribs_buffer(ctx);
 
    /* this must be after state validation */
-   attrsNeeded = ctx->st->state.vs.inputs_read;
+   attrsNeeded = ctx->st->state.vs->inputs_read;
 
    /* tell pipe about the vertex array element/attributes */
    for (attr = 0; attr < 16; attr++) {
@@ -395,14 +395,14 @@ st_feedback_draw_vbo(GLcontext *ctx,
    draw_set_viewport_state(draw, &st->state.viewport);
    draw_set_clip_state(draw, &st->state.clip);
    draw_set_rasterizer_state(draw, st->state.rasterizer);
-   draw_set_vertex_shader(draw, &st->state.vs);
+   draw_set_vertex_shader(draw, st->state.vs);
    /* XXX need to set vertex info too */
 
 
    update_default_attribs_buffer(ctx);
 
    /* this must be after state validation */
-   attrsNeeded = ctx->st->state.vs.inputs_read;
+   attrsNeeded = ctx->st->state.vs->inputs_read;
 
    /* tell draw module about the vertex array element/attributes */
    for (attr = 0; attr < 16; attr++) {

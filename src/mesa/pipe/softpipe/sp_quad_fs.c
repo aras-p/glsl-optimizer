@@ -108,7 +108,7 @@ shade_quad(
    /* init machine state */
    tgsi_exec_machine_init(
       &machine,
-      softpipe->fs.tokens,
+      softpipe->fs->tokens,
       PIPE_MAX_SAMPLERS,
       qss->samplers );
 

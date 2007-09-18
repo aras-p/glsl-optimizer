@@ -251,17 +251,21 @@ struct pipe_context *softpipe_create( struct pipe_winsys *pipe_winsys,
 
    /* state setters */
    softpipe->pipe.create_blend_state = softpipe_create_blend_state;
-   softpipe->pipe.bind_blend_state = softpipe_bind_blend_state;
+   softpipe->pipe.bind_blend_state   = softpipe_bind_blend_state;
    softpipe->pipe.delete_blend_state = softpipe_delete_blend_state;
    softpipe->pipe.create_sampler_state = softpipe_create_sampler_state;
-   softpipe->pipe.bind_sampler_state = softpipe_bind_sampler_state;
+   softpipe->pipe.bind_sampler_state   = softpipe_bind_sampler_state;
    softpipe->pipe.delete_sampler_state = softpipe_delete_sampler_state;
    softpipe->pipe.create_depth_stencil_state = softpipe_create_depth_stencil_state;
-   softpipe->pipe.bind_depth_stencil_state = softpipe_bind_depth_stencil_state;
+   softpipe->pipe.bind_depth_stencil_state   = softpipe_bind_depth_stencil_state;
    softpipe->pipe.delete_depth_stencil_state = softpipe_delete_depth_stencil_state;
    softpipe->pipe.create_rasterizer_state = softpipe_create_rasterizer_state;
-   softpipe->pipe.bind_rasterizer_state = softpipe_bind_rasterizer_state;
+   softpipe->pipe.bind_rasterizer_state   = softpipe_bind_rasterizer_state;
    softpipe->pipe.delete_rasterizer_state = softpipe_delete_rasterizer_state;
+   softpipe->pipe.create_shader_state = softpipe_create_shader_state;
+   softpipe->pipe.bind_fs_state       = softpipe_bind_fs_state;
+   softpipe->pipe.bind_vs_state       = softpipe_bind_vs_state;
+   softpipe->pipe.delete_shader_state = softpipe_delete_shader_state;
 
    softpipe->pipe.set_alpha_test_state = softpipe_set_alpha_test_state;
    softpipe->pipe.set_blend_color = softpipe_set_blend_color;
@@ -270,8 +274,6 @@ struct pipe_context *softpipe_create( struct pipe_winsys *pipe_winsys,
    softpipe->pipe.set_constant_buffer = softpipe_set_constant_buffer;
    softpipe->pipe.set_feedback_state = softpipe_set_feedback_state;
    softpipe->pipe.set_framebuffer_state = softpipe_set_framebuffer_state;
-   softpipe->pipe.set_fs_state = softpipe_set_fs_state;
-   softpipe->pipe.set_vs_state = softpipe_set_vs_state;
    softpipe->pipe.set_polygon_stipple = softpipe_set_polygon_stipple;
    softpipe->pipe.set_scissor_state = softpipe_set_scissor_state;
    softpipe->pipe.set_texture_state = softpipe_set_texture_state;

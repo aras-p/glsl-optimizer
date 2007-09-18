@@ -161,19 +161,29 @@ static void i915_set_polygon_stipple( struct pipe_context *pipe,
 }
 
 
+static const struct pipe_shader_state *
+i915_create_shader_state( struct pipe_context *pipe,
+                          const struct pipe_shader_state *templ )
+{
 
-static void i915_set_fs_state( struct pipe_context *pipe,
+   struct pipe_shader_state *shader = malloc(sizeof(struct pipe_shader_state));
+   memcpy(shader, templ, sizeof(struct pipe_shader_state));
+
+   return shader;
+}
+
+static void i915_bind_fs_state( struct pipe_context *pipe,
                                const struct pipe_shader_state *fs )
 {
    struct i915_context *i915 = i915_context(pipe);
 
-   memcpy(&i915->fs, fs, sizeof(*fs));
+   i915->fs = fs;
 
    i915->dirty |= I915_NEW_FS;
 }
 
 
-static void i915_set_vs_state( struct pipe_context *pipe,
+static void i915_bind_vs_state( struct pipe_context *pipe,
                                const struct pipe_shader_state *vs )
 {
    struct i915_context *i915 = i915_context(pipe);
@@ -182,6 +192,11 @@ static void i915_set_vs_state( struct pipe_context *pipe,
    draw_set_vertex_shader(i915->draw, vs);
 }
 
+static void i915_delete_shader_state( struct pipe_context *pipe,
+                                      const struct pipe_shader_state *shader )
+{
+   free((struct pipe_shader_state*)shader);
+}
 
 static void i915_set_constant_buffer(struct pipe_context *pipe,
                                      uint shader, uint index,
@@ -358,6 +373,10 @@ i915_init_state_functions( struct i915_context *i915 )
    i915->pipe.create_rasterizer_state = i915_create_rasterizer_state;
    i915->pipe.bind_rasterizer_state = i915_bind_rasterizer_state;
    i915->pipe.delete_rasterizer_state = i915_delete_rasterizer_state;
+   i915->pipe.create_shader_state = i915_create_shader_state;
+   i915->pipe.bind_fs_state = i915_bind_fs_state;
+   i915->pipe.bind_vs_state = i915_bind_vs_state;
+   i915->pipe.delete_shader_state = i915_delete_shader_state;
 
    i915->pipe.set_alpha_test_state = i915_set_alpha_test_state;
    i915->pipe.set_blend_color = i915_set_blend_color;
@@ -365,8 +384,6 @@ i915_init_state_functions( struct i915_context *i915 )
    i915->pipe.set_clear_color_state = i915_set_clear_color_state;
    i915->pipe.set_constant_buffer = i915_set_constant_buffer;
    i915->pipe.set_framebuffer_state = i915_set_framebuffer_state;
-   i915->pipe.set_fs_state = i915_set_fs_state;
-   i915->pipe.set_vs_state = i915_set_vs_state;
    i915->pipe.set_polygon_stipple = i915_set_polygon_stipple;
    i915->pipe.set_scissor_state = i915_set_scissor_state;
    i915->pipe.set_texture_state = i915_set_texture_state;

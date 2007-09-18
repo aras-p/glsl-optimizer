@@ -33,29 +33,45 @@
 #include "pipe/draw/draw_context.h"
 
 
-void softpipe_set_fs_state( struct pipe_context *pipe,
+const struct pipe_shader_state *
+softpipe_create_shader_state( struct pipe_context *pipe,
+                              const struct pipe_shader_state *templ )
+{
+   struct pipe_shader_state *shader = malloc(sizeof(struct pipe_shader_state));
+   memcpy(shader, templ, sizeof(struct pipe_shader_state));
+
+   return shader;
+}
+
+void softpipe_bind_fs_state( struct pipe_context *pipe,
                             const struct pipe_shader_state *fs )
 {
    struct softpipe_context *softpipe = softpipe_context(pipe);
 
-   memcpy(&softpipe->fs, fs, sizeof(*fs));
+   softpipe->fs = fs;
 
    softpipe->dirty |= SP_NEW_FS;
 }
 
 
-void softpipe_set_vs_state( struct pipe_context *pipe,
+void softpipe_bind_vs_state( struct pipe_context *pipe,
                             const struct pipe_shader_state *vs )
 {
    struct softpipe_context *softpipe = softpipe_context(pipe);
 
-   memcpy(&softpipe->vs, vs, sizeof(*vs));
+   softpipe->vs = vs;
 
    softpipe->dirty |= SP_NEW_VS;
 
    draw_set_vertex_shader(softpipe->draw, vs);
 }
 
+
+void softpipe_delete_shader_state( struct pipe_context *pipe,
+                                   const struct pipe_shader_state *shader )
+{
+   free((struct pipe_shader_state*)shader);
+}
 
 void softpipe_set_constant_buffer(struct pipe_context *pipe,
                                   uint shader, uint index,

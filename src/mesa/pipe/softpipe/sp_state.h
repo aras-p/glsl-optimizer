@@ -88,11 +88,15 @@ void softpipe_set_constant_buffer(struct pipe_context *,
 void softpipe_set_feedback_state( struct pipe_context *,
                                   const struct pipe_feedback_state * );
 
-void softpipe_set_fs_state( struct pipe_context *,
-                            const struct pipe_shader_state * );
-
-void softpipe_set_vs_state( struct pipe_context *,
-                            const struct pipe_shader_state * );
+const struct pipe_shader_state *
+softpipe_create_shader_state( struct pipe_context *,
+                              const struct pipe_shader_state * );
+void softpipe_bind_fs_state( struct pipe_context *,
+                             const struct pipe_shader_state * );
+void softpipe_bind_vs_state( struct pipe_context *,
+                             const struct pipe_shader_state * );
+void softpipe_delete_shader_state( struct pipe_context *,
+                                   const struct pipe_shader_state * );
 
 void softpipe_set_polygon_stipple( struct pipe_context *,
 				  const struct pipe_poly_stipple * );

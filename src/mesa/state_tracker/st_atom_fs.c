@@ -38,6 +38,7 @@
 #include "pipe/tgsi/exec/tgsi_dump.h"
 
 #include "st_context.h"
+#include "st_cache.h"
 #include "st_atom.h"
 #include "st_program.h"
 
@@ -46,16 +47,21 @@
 static void compile_fs( struct st_context *st )
 {
    struct st_fragment_program *fp = st->fp;
+   struct pipe_shader_state fs;
+   struct pipe_shader_state *cached;
 
    /* XXX: fix static allocation of tokens:
     */
    tgsi_mesa_compile_fp_program( &fp->Base, fp->tokens, ST_FP_MAX_TOKENS );
 
-   fp->fs.inputs_read
+   memset(&fs, 0, sizeof(fs));
+   fs.inputs_read
       = tgsi_mesa_translate_fragment_input_mask(fp->Base.Base.InputsRead);
-   fp->fs.outputs_written
+   fs.outputs_written
       = tgsi_mesa_translate_fragment_output_mask(fp->Base.Base.OutputsWritten);
-   fp->fs.tokens = &fp->tokens[0];
+   fs.tokens = &fp->tokens[0];
+   cached = st_cached_shader_state(st, &fs);
+   fp->fsx = cached;
 
    if (TGSI_DEBUG)
       tgsi_dump( fp->tokens, TGSI_DUMP_VERBOSE );
@@ -92,8 +98,8 @@ static void update_fs( struct st_context *st )
       if (fp->dirty)
 	 compile_fs( st );
 
-      st->state.fs = fp->fs;
-      st->pipe->set_fs_state(st->pipe, &st->state.fs);
+      st->state.fs = fp->fsx;
+      st->pipe->bind_fs_state(st->pipe, st->state.fs);
    }
 }
 

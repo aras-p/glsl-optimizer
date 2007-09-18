@@ -872,11 +872,11 @@ i915_translate_instructions(struct i915_fp_compile *p,
 
 static struct i915_fp_compile *
 i915_init_compile(struct i915_context *i915,
-                  struct pipe_shader_state *fs)
+                  const struct pipe_shader_state *fs)
 {
    struct i915_fp_compile *p = CALLOC_STRUCT(i915_fp_compile);
 
-   p->shader = &i915->fs;
+   p->shader = i915->fs;
 
    p->vertex_info = &i915->current.vertex_info;
 
@@ -1032,8 +1032,8 @@ i915_fixup_depth_write(struct i915_fp_compile *p)
 void
 i915_translate_fragment_program( struct i915_context *i915 )
 {
-   struct i915_fp_compile *p = i915_init_compile(i915, &i915->fs);
-   const struct tgsi_token *tokens = i915->fs.tokens;
+   struct i915_fp_compile *p = i915_init_compile(i915, i915->fs);
+   const struct tgsi_token *tokens = i915->fs->tokens;
 
    i915_find_wpos_space(p);
 

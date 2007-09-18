@@ -111,3 +111,21 @@ struct pipe_rasterizer_state * st_cached_rasterizer_state(
    }
    return (struct pipe_rasterizer_state*)(cso_hash_iter_data(iter));
 }
+
+struct pipe_shader_state * st_cached_shader_state(
+   struct st_context *st,
+   const struct pipe_shader_state *templ)
+{
+   unsigned hash_key = cso_construct_key((void*)templ,
+                                         sizeof(struct pipe_shader_state));
+   struct cso_hash_iter iter = cso_find_state_template(st->cache,
+                                                       hash_key, CSO_SHADER,
+                                                       (void*)templ);
+   if (cso_hash_iter_is_null(iter)) {
+      const struct pipe_shader_state *created_state =
+         st->pipe->create_shader_state(st->pipe, templ);
+      iter = cso_insert_state(st->cache, hash_key, CSO_SHADER,
+                              (void*)created_state);
+   }
+   return (struct pipe_shader_state*)(cso_hash_iter_data(iter));
+}

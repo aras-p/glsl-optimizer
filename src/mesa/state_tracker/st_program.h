@@ -53,8 +53,8 @@ struct st_fragment_program
 
    struct tgsi_token tokens[ST_FP_MAX_TOKENS];
    GLboolean dirty;
-   
-   struct pipe_shader_state fs;
+
+   const struct pipe_shader_state *fsx;
    GLuint param_state;
 };
 
@@ -75,7 +75,7 @@ struct st_vertex_program
    struct x86_function  sse2_program;
 #endif
 
-   struct pipe_shader_state vs;
+   const struct pipe_shader_state *vs;
    GLuint param_state;
 };
 

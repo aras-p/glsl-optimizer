@@ -127,6 +127,7 @@ struct i915_context
    const struct pipe_sampler_state *sampler[PIPE_MAX_SAMPLERS];
    const struct pipe_depth_stencil_state   *depth_stencil;
    const struct pipe_rasterizer_state *rasterizer;
+   const struct pipe_shader_state *fs;
 
    struct pipe_alpha_test_state alpha_test;
    struct pipe_blend_color blend_color;
@@ -134,7 +135,6 @@ struct i915_context
    struct pipe_clip_state clip;
    struct pipe_constant_buffer constants[PIPE_SHADER_TYPES];
    struct pipe_framebuffer_state framebuffer;
-   struct pipe_shader_state fs;
    struct pipe_poly_stipple poly_stipple;
    struct pipe_scissor_state scissor;
    struct pipe_mipmap_tree *texture[PIPE_MAX_SAMPLERS];

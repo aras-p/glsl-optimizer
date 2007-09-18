@@ -44,7 +44,7 @@
  * Program translation state
  */
 struct i915_fp_compile {
-   struct pipe_shader_state *shader;
+   const struct pipe_shader_state *shader;
 
    struct vertex_info *vertex_info;
 

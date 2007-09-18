@@ -329,19 +329,22 @@ draw_textured_quad(GLcontext *ctx, GLint x, GLint y, GLfloat z,
    {
       static struct st_fragment_program *stfp = NULL;
       struct pipe_shader_state fs;
+      struct pipe_shader_state *cached;
       if (!stfp) {
          stfp = make_fragment_shader(ctx->st);
       }
       memset(&fs, 0, sizeof(fs));
       fs.inputs_read = stfp->Base.Base.InputsRead;
       fs.tokens = &stfp->tokens[0];
-      pipe->set_fs_state(pipe, &fs);
+      cached = st_cached_shader_state(ctx->st, &fs);
+      pipe->bind_fs_state(pipe, cached);
    }
 
    /* vertex shader state: position + texcoord pass-through */
    {
       static struct st_vertex_program *stvp = NULL;
       struct pipe_shader_state vs;
+      struct pipe_shader_state *cached;
       if (!stvp) {
          stvp = make_vertex_shader(ctx->st);
       }
@@ -349,7 +352,8 @@ draw_textured_quad(GLcontext *ctx, GLint x, GLint y, GLfloat z,
       vs.inputs_read = stvp->Base.Base.InputsRead;
       vs.outputs_written = stvp->Base.Base.OutputsWritten;
       vs.tokens = &stvp->tokens[0];
-      pipe->set_vs_state(pipe, &vs);
+      cached = st_cached_shader_state(ctx->st, &vs);
+      pipe->bind_vs_state(pipe, cached);
    }
 
    /* texture sampling state: */
@@ -403,8 +407,8 @@ draw_textured_quad(GLcontext *ctx, GLint x, GLint y, GLfloat z,
 
    /* restore GL state */
    pipe->bind_rasterizer_state(pipe, ctx->st->state.rasterizer);
-   pipe->set_fs_state(pipe, &ctx->st->state.fs);
-   pipe->set_vs_state(pipe, &ctx->st->state.vs);
+   pipe->bind_fs_state(pipe, ctx->st->state.fs);
+   pipe->bind_vs_state(pipe, ctx->st->state.vs);
    pipe->set_texture_state(pipe, unit, ctx->st->state.texture[unit]);
    pipe->bind_sampler_state(pipe, unit, ctx->st->state.sampler[unit]);
    pipe->set_viewport_state(pipe, &ctx->st->state.viewport);

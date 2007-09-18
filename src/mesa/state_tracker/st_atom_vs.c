@@ -41,6 +41,7 @@
 #include "pipe/tgsi/exec/tgsi_core.h"
 
 #include "st_context.h"
+#include "st_cache.h"
 #include "st_atom.h"
 #include "st_program.h"
 
@@ -55,16 +56,21 @@
 static void compile_vs( struct st_context *st )
 {
    struct st_vertex_program *vp = st->vp;
-
+   struct pipe_shader_state vs;
+   struct pipe_shader_state *cached;
    /* XXX: fix static allocation of tokens:
     */
    tgsi_mesa_compile_vp_program( &vp->Base, vp->tokens, ST_FP_MAX_TOKENS );
 
-   vp->vs.inputs_read
+   memset(&vs, 0, sizeof(vs));
+   vs.inputs_read
       = tgsi_mesa_translate_vertex_input_mask(vp->Base.Base.InputsRead);
-   vp->vs.outputs_written
+   vs.outputs_written
       = tgsi_mesa_translate_vertex_output_mask(vp->Base.Base.OutputsWritten);
-   vp->vs.tokens = &vp->tokens[0];
+   vs.tokens = &vp->tokens[0];
+
+   cached = st_cached_shader_state(st, &vs);
+   vp->vs = cached;
 
    if (TGSI_DEBUG)
       tgsi_dump( vp->tokens, 0 );
@@ -110,7 +116,7 @@ static void update_vs( struct st_context *st )
 #endif
 
       st->state.vs = st->vp->vs;
-      st->pipe->set_vs_state(st->pipe, &st->state.vs);
+      st->pipe->bind_vs_state(st->pipe, st->state.vs);
    }
 }
 

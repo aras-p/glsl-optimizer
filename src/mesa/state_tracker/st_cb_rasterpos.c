@@ -53,7 +53,7 @@ static void
 setup_vertex_attribs(GLcontext *ctx)
 {
    struct pipe_context *pipe = ctx->st->pipe;
-   const uint inputAttrs = ctx->st->state.vs.inputs_read;
+   const uint inputAttrs = ctx->st->state.vs->inputs_read;
    uint attr;
 
    /* all attributes come from the default attribute buffer */
@@ -84,7 +84,7 @@ static void
 setup_feedback(GLcontext *ctx)
 {
    struct pipe_context *pipe = ctx->st->pipe;
-   const uint outputAttrs = ctx->st->state.vs.outputs_written;
+   const uint outputAttrs = ctx->st->state.vs->outputs_written;
    struct pipe_feedback_state feedback;
    uint i;
 
@@ -307,7 +307,7 @@ st_RasterPos(GLcontext *ctx, const GLfloat v[4])
 
    /* extract values and update rasterpos state */
    {
-      const uint outputAttrs = ctx->st->state.vs.outputs_written;
+      const uint outputAttrs = ctx->st->state.vs->outputs_written;
       const float *pos, *color0, *color1, *tex0;
       float *buf = buf_map;
 

@@ -53,4 +53,8 @@ struct pipe_rasterizer_state *st_cached_rasterizer_state(
    struct st_context *st,
    const struct pipe_rasterizer_state *raster);
 
+struct pipe_shader_state *st_cached_shader_state(
+   struct st_context *st,
+   const struct pipe_shader_state *templ);
+
 #endif

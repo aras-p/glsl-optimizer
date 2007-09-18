@@ -347,6 +347,7 @@ clear_with_quad(GLcontext *ctx,
    {
       static struct st_fragment_program *stfp = NULL;
       struct pipe_shader_state fs;
+      const struct pipe_shader_state *cached;
       if (!stfp) {
          stfp = make_color_shader(st);
       }
@@ -354,13 +355,15 @@ clear_with_quad(GLcontext *ctx,
       fs.inputs_read = tgsi_mesa_translate_fragment_input_mask(stfp->Base.Base.InputsRead);
       fs.outputs_written = tgsi_mesa_translate_fragment_output_mask(stfp->Base.Base.OutputsWritten);
       fs.tokens = &stfp->tokens[0];
-      pipe->set_fs_state(pipe, &fs);
+      cached = st_cached_shader_state(st, &fs);
+      pipe->bind_fs_state(pipe, cached);
    }
 
    /* vertex shader state: color/position pass-through */
    {
       static struct st_vertex_program *stvp = NULL;
       struct pipe_shader_state vs;
+      const struct pipe_shader_state *cached;
       if (!stvp) {
          stvp = make_vertex_shader(st);
       }
@@ -368,7 +371,8 @@ clear_with_quad(GLcontext *ctx,
       vs.inputs_read = stvp->Base.Base.InputsRead;
       vs.outputs_written = stvp->Base.Base.OutputsWritten;
       vs.tokens = &stvp->tokens[0];
-      pipe->set_vs_state(pipe, &vs);
+      cached = st_cached_shader_state(st, &vs);
+      pipe->bind_vs_state(pipe, cached);
    }
 
    /* viewport state: viewport matching window dims */
@@ -394,8 +398,8 @@ clear_with_quad(GLcontext *ctx,
    pipe->set_alpha_test_state(pipe, &st->state.alpha_test);
    pipe->bind_blend_state(pipe, st->state.blend);
    pipe->bind_depth_stencil_state(pipe, st->state.depth_stencil);
-   pipe->set_fs_state(pipe, &st->state.fs);
-   pipe->set_vs_state(pipe, &st->state.vs);
+   pipe->bind_fs_state(pipe, st->state.fs);
+   pipe->bind_vs_state(pipe, st->state.vs);
    pipe->bind_rasterizer_state(pipe, st->state.rasterizer);
    pipe->set_viewport_state(pipe, &ctx->st->state.viewport);
    /* OR:
