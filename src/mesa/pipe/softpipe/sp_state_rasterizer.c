@@ -49,7 +49,7 @@ void softpipe_bind_rasterizer_state(struct pipe_context *pipe,
    struct softpipe_context *softpipe = softpipe_context(pipe);
 
    /* pass-through to draw module */
-   draw_set_setup_state(softpipe->draw, setup);
+   draw_set_rasterizer_state(softpipe->draw, setup);
 
    softpipe->rasterizer = setup;
 

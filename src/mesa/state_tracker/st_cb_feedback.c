@@ -285,14 +285,14 @@ st_RenderMode(GLcontext *ctx, GLenum newMode )
    else if (newMode == GL_SELECT) {
       if (!st->selection_stage)
          st->selection_stage = draw_glselect_stage(ctx, draw);
-      draw_set_setup_stage(draw, st->selection_stage);
+      draw_set_rasterize_stage(draw, st->selection_stage);
       /* Plug in new vbo draw function */
       vbo->draw_prims = st_feedback_draw_vbo;
    }
    else {
       if (!st->feedback_stage)
          st->feedback_stage = draw_glfeedback_stage(ctx, draw);
-      draw_set_setup_stage(draw, st->feedback_stage);
+      draw_set_rasterize_stage(draw, st->feedback_stage);
       /* Plug in new vbo draw function */
       vbo->draw_prims = st_feedback_draw_vbo;
    }

@@ -133,7 +133,7 @@ struct draw_context
       struct draw_stage *twoside;
       struct draw_stage *offset;
       struct draw_stage *unfilled;
-      struct draw_stage *setup;  /* aka render/rasterize */
+      struct draw_stage *rasterize;
    } pipeline;
 
    /* pipe state that we need: */

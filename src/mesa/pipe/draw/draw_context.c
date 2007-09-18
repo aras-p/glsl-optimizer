@@ -89,7 +89,7 @@ void draw_destroy( struct draw_context *draw )
  */
 static void validate_pipeline( struct draw_context *draw )
 {
-   struct draw_stage *next = draw->pipeline.setup;
+   struct draw_stage *next = draw->pipeline.rasterize;
 
    /*
     * NOTE: we build up the pipeline in end-to-start order.
@@ -157,11 +157,11 @@ void draw_set_feedback_state( struct draw_context *draw,
 
 
 /**
- * Register new primitive setup/rendering state.
+ * Register new primitive rasterization/rendering state.
  * This causes the drawing pipeline to be rebuilt.
  */
-void draw_set_setup_state( struct draw_context *draw,
-                           const struct pipe_rasterizer_state *raster )
+void draw_set_rasterizer_state( struct draw_context *draw,
+                                const struct pipe_rasterizer_state *raster )
 {
    draw->rasterizer = raster;
    validate_pipeline( draw );
@@ -172,10 +172,10 @@ void draw_set_setup_state( struct draw_context *draw,
  * Plug in the primitive rendering/rasterization stage.
  * This is provided by the device driver.
  */
-void draw_set_setup_stage( struct draw_context *draw,
-                           struct draw_stage *stage )
+void draw_set_rasterize_stage( struct draw_context *draw,
+                               struct draw_stage *stage )
 {
-   draw->pipeline.setup = stage;
+   draw->pipeline.rasterize = stage;
 }
 
 

@@ -318,7 +318,7 @@ struct pipe_context *softpipe_create( struct pipe_winsys *pipe_winsys,
     */
    softpipe->draw = draw_create();
    assert(softpipe->draw);
-   draw_set_setup_stage(softpipe->draw, sp_draw_render_stage(softpipe));
+   draw_set_rasterize_stage(softpipe->draw, sp_draw_render_stage(softpipe));
 
    sp_init_region_functions(softpipe);
    sp_init_surface_functions(softpipe);

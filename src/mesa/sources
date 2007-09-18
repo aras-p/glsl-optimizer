@@ -203,7 +203,7 @@ STATETRACKER_SOURCES = \
 	state_tracker/st_atom_fs.c \
 	state_tracker/st_atom_sampler.c \
 	state_tracker/st_atom_scissor.c \
-	state_tracker/st_atom_setup.c \
+	state_tracker/st_atom_rasterizer.c \
 	state_tracker/st_atom_stipple.c \
 	state_tracker/st_atom_texture.c \
 	state_tracker/st_atom_viewport.c \

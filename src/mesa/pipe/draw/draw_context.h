@@ -86,11 +86,11 @@ void draw_set_clip_state( struct draw_context *pipe,
 void draw_set_feedback_state( struct draw_context *draw,
                               const struct pipe_feedback_state * );
 
-void draw_set_setup_state( struct draw_context *draw,
-                           const struct pipe_rasterizer_state *raster );
+void draw_set_rasterizer_state( struct draw_context *draw,
+                                const struct pipe_rasterizer_state *raster );
 
-void draw_set_setup_stage( struct draw_context *draw,
-                           struct draw_stage *stage );
+void draw_set_rasterize_stage( struct draw_context *draw,
+                               struct draw_stage *stage );
 
 unsigned draw_prim_info( unsigned prim, unsigned *first, unsigned *incr );
 

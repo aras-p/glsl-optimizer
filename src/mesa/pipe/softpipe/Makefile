@@ -29,7 +29,7 @@ DRIVER_SOURCES = \
 	sp_state_feedback.c \
 	sp_state_fs.c \
 	sp_state_sampler.c \
-	sp_state_setup.c \
+	sp_state_rasterizer.c \
 	sp_state_surface.c \
 	sp_state_vertex.c \
 	sp_tex_layout.c \
