@@ -1173,4 +1173,6 @@ void brw_vs_emit(struct brw_vs_compile *c )
    end_inst = &p->store[p->nr_insn];
    emit_vertex_write(c);
    post_vs_emit(c, end_inst);
+   for (insn = 0; insn < nr_insns; insn++)
+       c->vp->program.Base.Instructions[insn].Data = NULL;
 }

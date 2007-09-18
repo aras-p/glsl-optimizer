@@ -555,6 +555,8 @@ void intelDestroyContext(__DRIcontextPrivate *driContextPriv)
 #endif
 
       /* free the Mesa context */
+      intel->ctx.VertexProgram.Current = NULL;
+      intel->ctx.FragmentProgram.Current = NULL;
       _mesa_destroy_context(&intel->ctx);
    }
 

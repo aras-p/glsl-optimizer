@@ -1246,6 +1246,8 @@ static void brw_wm_emit_glsl(struct brw_wm_compile *c)
 	}
     }
     post_wm_emit(c);
+    for (i = 0; i < c->fp->program.Base.NumInstructions; i++)
+	c->fp->program.Base.Instructions[i].Data = NULL;
 }
 
 void brw_wm_glsl_emit(struct brw_wm_compile *c)
