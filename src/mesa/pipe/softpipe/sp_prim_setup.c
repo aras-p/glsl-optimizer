@@ -428,6 +428,10 @@ static void tri_linear_coeff( struct setup_stage *setup,
 /**
  * Compute a0, dadx and dady for a perspective-corrected interpolant,
  * for a triangle.
+ * We basically multiply the vertex value by 1/w before computing
+ * the plane coefficients (a0, dadx, dady).
+ * Later, when we compute the value at a particular fragment position we'll
+ * divide the interpolated value by the interpolated W at that fragment.
  */
 static void tri_persp_coeff( struct setup_stage *setup,
                              unsigned slot,
