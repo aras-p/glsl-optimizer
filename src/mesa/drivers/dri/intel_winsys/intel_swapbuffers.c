@@ -496,7 +496,8 @@ intelScheduleSwap(const __DRIdrawablePrivate * dPriv, GLboolean *missed_target)
    drm_i915_vblank_swap_t swap;
    GLboolean ret;
 
-   if (!intel_fb->vblank_flags ||
+   /* XXX: Scheduled buffer swaps don't work with private back buffers yet */
+   if (1 || !intel_fb->vblank_flags ||
        (intel_fb->vblank_flags & VBLANK_FLAG_NO_IRQ) ||
        intelScreen->drmMinor < (intel_fb->pf_active ? 9 : 6))
       return GL_FALSE;
