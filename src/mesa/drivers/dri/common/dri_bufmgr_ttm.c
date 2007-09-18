@@ -220,6 +220,8 @@ dri_ttm_bo_map(dri_bo *buf, GLboolean write_enable)
    if (write_enable)
        flags |= DRM_BO_FLAG_WRITE;
 
+   assert(buf->virtual == NULL);
+
    return drmBOMap(bufmgr_ttm->fd, &ttm_buf->drm_bo, flags, 0, &buf->virtual);
 }
 
@@ -233,6 +235,8 @@ dri_ttm_bo_unmap(dri_bo *buf)
       return 0;
 
    bufmgr_ttm = (dri_bufmgr_ttm *)buf->bufmgr;
+
+   assert(buf->virtual != NULL);
 
    buf->virtual = NULL;
 
@@ -264,6 +268,9 @@ dri_ttm_validate(dri_bo *buf, unsigned int flags)
 
    if (err == 0) {
       /* XXX: add to fence list for sanity checking */
+   } else {
+      fprintf(stderr, "failed to validate buffer (%s): %s\n",
+	      ttm_buf->name, strerror(err));
    }
 
    buf->offset = ttm_buf->drm_bo.offset;
@@ -294,6 +301,7 @@ dri_ttm_fence_validated(dri_bufmgr *bufmgr, const char *name,
    fence_ttm->fence.bufmgr = bufmgr;
    ret = drmFenceBuffers(bufmgr_ttm->fd, type, &fence_ttm->drm_fence);
    if (ret) {
+      fprintf(stderr, "failed to fence (%s): %s\n", name, strerror(ret));
       free(fence_ttm);
       return NULL;
    }
