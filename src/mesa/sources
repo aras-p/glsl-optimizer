@@ -187,8 +187,8 @@ TGSIMESA_SOURCES = \
 	pipe/tgsi/mesa/mesa_to_tgsi.c
 
 STATECACHE_SOURCES = \
-	cso_cache/cso_hash.c \
-	cso_cache/cso_cache.c
+	pipe/cso_cache/cso_hash.c \
+	pipe/cso_cache/cso_cache.c
 
 STATETRACKER_SOURCES = \
 	state_tracker/st_atom.c \

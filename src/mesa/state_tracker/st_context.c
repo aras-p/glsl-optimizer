@@ -45,7 +45,7 @@
 #include "st_program.h"
 #include "pipe/p_context.h"
 #include "pipe/draw/draw_context.h"
-#include "cso_cache/cso_cache.h"
+#include "pipe/cso_cache/cso_cache.h"
 
 
 void st_invalidate_state(GLcontext * ctx, GLuint new_state)
