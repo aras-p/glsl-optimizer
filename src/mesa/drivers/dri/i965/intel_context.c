@@ -82,6 +82,9 @@ int INTEL_DEBUG = (0);
 #define need_GL_EXT_multi_draw_arrays
 #define need_GL_EXT_secondary_color
 #define need_GL_VERSION_2_0
+#define need_GL_ARB_shader_objects
+#define need_GL_ARB_vertex_shader
+
 #include "extension_helper.h"
 
 #ifndef VERBOSE
@@ -185,6 +188,9 @@ const struct dri_extension card_extensions[] =
     { "GL_NV_blend_square",                NULL },
     { "GL_SGIS_generate_mipmap",           NULL },
     { "GL_ARB_shading_language_100",       GL_VERSION_2_0_functions},
+    { "GL_ARB_shader_objects",             GL_ARB_shader_objects_functions},
+    { "GL_ARB_vertex_shader",              GL_ARB_vertex_shader_functions},
+    { "GL_ARB_fragment_shader",            NULL },
     /* XXX not implement yet, to compile builtin glsl lib */
     { "GL_ARB_draw_buffers",               NULL },
     { NULL,                                NULL }
