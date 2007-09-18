@@ -30,6 +30,7 @@
 static GLenum Target = GL_TEXTURE_2D;
 static GLenum Filter = GL_NEAREST;
 GLenum doubleBuffer;
+static float Rot = 0;
 
 static void Init(void)
 {
@@ -81,13 +82,24 @@ static void Reshape(int width, int height)
    glViewport(0, 0, (GLint)width, (GLint)height);
    glMatrixMode(GL_PROJECTION);
    glLoadIdentity();
+#if 0
    glOrtho(-1.0, 1.0, -1.0, 1.0, -0.5, 1000.0);
+#else
+   glFrustum(-1, 1, -1, 1, 10, 20);
+#endif
    glMatrixMode(GL_MODELVIEW);
+   glTranslatef(0, 0, -15);
 }
 
 static void Key(unsigned char key, int x, int y)
 {
    switch (key) {
+   case 'r':
+      Rot += 10.0;
+      break;
+   case 'R':
+      Rot -= 10.0;
+      break;
    case 27:
       exit(0);
    default:
@@ -100,16 +112,21 @@ static void Draw(void)
 {
    glClear(GL_COLOR_BUFFER_BIT); 
 
+   glPushMatrix();
+   glRotatef(Rot, 0, 1, 0);
+
    glBegin(GL_QUADS);
    glTexCoord2f(1,0); 
-   glVertex3f( 0.9, -0.9, -30.0);
+   glVertex3f( 0.9, -0.9, 0.0);
    glTexCoord2f(1,1); 
-   glVertex3f( 0.9,  0.9, -30.0);
+   glVertex3f( 0.9,  0.9, 0.0);
    glTexCoord2f(0,1); 
-   glVertex3f(-0.9,  0.9, -30.0);
+   glVertex3f(-0.9,  0.9, 0.0);
    glTexCoord2f(0,0); 
-   glVertex3f(-0.9,  -0.9, -30.0);
+   glVertex3f(-0.9,  -0.9, 0.0);
    glEnd();
+
+   glPopMatrix();
 
    glFlush();
 
