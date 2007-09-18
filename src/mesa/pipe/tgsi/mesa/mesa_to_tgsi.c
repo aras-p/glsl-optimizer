@@ -859,7 +859,7 @@ tgsi_mesa_compile_fp_program(
       fulldecl = make_frag_input_decl(
          1,
          1 + count - 1,
-         TGSI_INTERPOLATE_LINEAR,
+         TGSI_INTERPOLATE_PERSPECTIVE,
          TGSI_WRITEMASK_XYZW );
       ti += tgsi_build_full_declaration(
          &fulldecl,

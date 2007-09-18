@@ -68,10 +68,9 @@ quad_shade_stage(struct quad_stage *qs)
  *   INPUT[attr] = MAD INPUT[attr],   COEF_DADY[attr], INPUT_WPOS.yyyy
  */
 static INLINE void
-linterp_z(const struct tgsi_interp_coef *coef,
-          struct tgsi_exec_vector *pos)
+linterp(const struct tgsi_interp_coef *coef,
+          struct tgsi_exec_vector *pos, uint ch)
 {
-   uint ch = 2;
    uint j;
    for (j = 0; j < QUAD_SIZE; j++) {
       const float x = pos->xyzw[0].f[j];
@@ -81,7 +80,6 @@ linterp_z(const struct tgsi_interp_coef *coef,
                             coef->dady[ch] * y);
    }
 }
-
 
 
 /* This should be done by the fragment shader execution unit (code
@@ -131,7 +129,8 @@ shade_quad(
    machine.Inputs[0].xyzw[1].f[3] = fy + 1.0f;
 
    /* interp Z */
-   linterp_z(&quad->coef[0], &machine.Inputs[0]);
+   linterp(&quad->coef[0], &machine.Inputs[0], 2); /* Z */
+   linterp(&quad->coef[0], &machine.Inputs[0], 3); /* 1/W */
 
    /* run shader */
    tgsi_exec_machine_run( &machine );

@@ -1104,6 +1104,7 @@ perspective_interpolation(
       const float y = mach->Inputs[0].xyzw[1].f[i];
       // WPOS.w here is really 1/w
       const float w = 1.0f / mach->Inputs[0].xyzw[3].f[i];
+      assert(mach->Inputs[0].xyzw[3].f[i] != 0.0);
 
       mach->Inputs[attrib].xyzw[chan].f[i] =
          (mach->InterpCoefs[attrib].a0[chan] +
