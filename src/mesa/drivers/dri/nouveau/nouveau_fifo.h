@@ -145,6 +145,9 @@ extern void nouveau_state_cache_init(nouveauContextPtr nmesa);
 #define OUT_RING_CACHE(n) OUT_RING((n))
 #define OUT_RING_CACHEf(n) OUT_RINGf((n))
 #define OUT_RING_CACHEp(ptr, sz) OUT_RINGp((ptr), (sz))
+#define OUT_RING_CACHE_FORCE(n) OUT_RING((n))
+#define OUT_RING_CACHE_FORCEf(n) OUT_RINGf((n))
+#define OUT_RING_CACHE_FORCEp(ptr, sz) OUT_RINGp((ptr), (sz))
 #else
 #define BEGIN_RING_CACHE(subchannel,tag,size) do {					\
 	nmesa->state_cache.dirty=1;	 						\
@@ -162,17 +165,40 @@ extern void nouveau_state_cache_init(nouveauContextPtr nmesa);
 }while(0)
 
 #define OUT_RING_CACHEf(n) do {									\
-	if ((*(float*)(&nmesa->state_cache.atoms[nmesa->state_cache.current_pos].value))!=(n)){	\
+	if ((*(GLfloat*)(&nmesa->state_cache.atoms[nmesa->state_cache.current_pos].value))!=(n)){	\
 		nmesa->state_cache.atoms[nmesa->state_cache.current_pos].dirty=1;	 	\
 		nmesa->state_cache.hdirty[nmesa->state_cache.current_pos/NOUVEAU_STATE_CACHE_HIER_SIZE]=1; 		\
-		(*(float*)(&nmesa->state_cache.atoms[nmesa->state_cache.current_pos].value))=(n);\
+		(*(GLfloat*)(&nmesa->state_cache.atoms[nmesa->state_cache.current_pos].value))=(n);\
 	}											\
 	nmesa->state_cache.current_pos++;							\
 }while(0)
 
 #define OUT_RING_CACHEp(ptr,sz) do {							\
-uint32_t* p=(uint32_t*)(ptr);								\
-int i; for(i=0;i<sz;i++) OUT_RING_CACHE(*(p+i)); 					\
+	GLuint* p=(GLuint*)(ptr);									\
+	int i;														\
+	for(i=0;i<sz;i++)											\
+		OUT_RING_CACHE(*(p+i)); 								\
+}while(0)
+
+#define OUT_RING_CACHE_FORCE(n) do {									\
+	nmesa->state_cache.atoms[nmesa->state_cache.current_pos].dirty=1; 		\
+	nmesa->state_cache.hdirty[nmesa->state_cache.current_pos/NOUVEAU_STATE_CACHE_HIER_SIZE]=1; 		\
+	nmesa->state_cache.atoms[nmesa->state_cache.current_pos].value=(n);		\
+	nmesa->state_cache.current_pos++;							\
+}while(0)
+
+#define OUT_RING_CACHE_FORCEf(n) do {									\
+	nmesa->state_cache.atoms[nmesa->state_cache.current_pos].dirty=1;	 	\
+	nmesa->state_cache.hdirty[nmesa->state_cache.current_pos/NOUVEAU_STATE_CACHE_HIER_SIZE]=1; 		\
+	(*(GLfloat*)(&nmesa->state_cache.atoms[nmesa->state_cache.current_pos].value))=(n);\
+	nmesa->state_cache.current_pos++;							\
+}while(0)
+
+#define OUT_RING_CACHE_FORCEp(ptr,sz) do {						\
+	GLuint* p=(GLuint*)(ptr);									\
+	int i;														\
+	for(i=0;i<sz;i++)											\
+		OUT_RING_CACHE_FORCE(*(p+i)); 							\
 }while(0)
 #endif
 
