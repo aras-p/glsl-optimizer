@@ -34,9 +34,9 @@
 #define BRW_WM_H
 
 
+#include "shader/prog_instruction.h"
 #include "brw_context.h"
 #include "brw_eu.h"
-#include "prog_instruction.h"
 
 /* A big lookup table is used to figure out which and how many
  * additional regs will inserted before the main payload in the WM

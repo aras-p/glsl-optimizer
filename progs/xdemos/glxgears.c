@@ -433,7 +433,7 @@ make_window( Display *dpy, const char *name,
    attr.override_redirect = fullscreen;
    mask = CWBackPixel | CWBorderPixel | CWColormap | CWEventMask | CWOverrideRedirect;
 
-   win = XCreateWindow( dpy, root, 0, 0, width, height,
+   win = XCreateWindow( dpy, root, x, y, width, height,
 		        0, visinfo->depth, InputOutput,
 		        visinfo->visual, mask, &attr );
 
@@ -548,13 +548,16 @@ usage(void)
    printf("  -stereo                 run in stereo mode\n");
    printf("  -fullscreen             run in fullscreen mode\n");
    printf("  -info                   display OpenGL renderer info\n");
+   printf("  -winwidth <width>       window width (default: 300)\n");
+   printf("  -winheight <height>     window height (default: 300)\n");
 }
  
 
 int
 main(int argc, char *argv[])
 {
-   const int winWidth = 300, winHeight = 300;
+   unsigned int winWidth = 300, winHeight = 300;
+   int x = 0, y = 0;
    Display *dpy;
    Window win;
    GLXContext ctx;
@@ -576,6 +579,10 @@ main(int argc, char *argv[])
       else if (strcmp(argv[i], "-fullscreen") == 0) {
          fullscreen = GL_TRUE;
       }
+      else if (i < argc-1 && strcmp(argv[i], "-geometry") == 0) {
+         XParseGeometry(argv[i+1], &x, &y, &winWidth, &winHeight);
+         i++;
+      }
       else {
          usage();
          return -1;
@@ -589,7 +596,7 @@ main(int argc, char *argv[])
       return -1;
    }
 
-   make_window(dpy, "glxgears", 0, 0, winWidth, winHeight, &win, &ctx);
+   make_window(dpy, "glxgears", x, y, winWidth, winHeight, &win, &ctx);
    XMapWindow(dpy, win);
    glXMakeCurrent(dpy, win, ctx);
 

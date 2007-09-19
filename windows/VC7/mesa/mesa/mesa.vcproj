@@ -1,7 +1,7 @@
-<?xml version="1.0" encoding = "Windows-1252"?>
+<?xml version="1.0" encoding="Windows-1252"?>
 <VisualStudioProject
 	ProjectType="Visual C++"
-	Version="7.00"
+	Version="7.10"
 	Name="mesa"
 	SccProjectName=""
 	SccLocalPath="">
@@ -55,6 +55,12 @@
 				Culture="1033"/>
 			<Tool
 				Name="VCWebServiceProxyGeneratorTool"/>
+			<Tool
+				Name="VCXMLDataGeneratorTool"/>
+			<Tool
+				Name="VCManagedWrapperGeneratorTool"/>
+			<Tool
+				Name="VCAuxiliaryManagedWrapperGeneratorTool"/>
 		</Configuration>
 		<Configuration
 			Name="Debug|Win32"
@@ -101,18 +107,20 @@
 				Culture="1033"/>
 			<Tool
 				Name="VCWebServiceProxyGeneratorTool"/>
+			<Tool
+				Name="VCXMLDataGeneratorTool"/>
+			<Tool
+				Name="VCManagedWrapperGeneratorTool"/>
+			<Tool
+				Name="VCAuxiliaryManagedWrapperGeneratorTool"/>
 		</Configuration>
 	</Configurations>
+	<References>
+	</References>
 	<Files>
 		<Filter
 			Name="Source Files"
 			Filter="cpp;c;cxx;rc;def;r;odl;idl;hpj;bat">
-			<File
-				RelativePath="..\..\..\..\src\mesa\array_cache\ac_context.c">
-			</File>
-			<File
-				RelativePath="..\..\..\..\src\mesa\array_cache\ac_import.c">
-			</File>
 			<File
 				RelativePath="..\..\..\..\src\mesa\main\accum.c">
 			</File>
@@ -129,13 +137,13 @@
 				RelativePath="..\..\..\..\src\mesa\main\api_validate.c">
 			</File>
 			<File
-				RelativePath="..\..\..\..\src\mesa\main\arrayobj.c">
-			</File>
-			<File
 				RelativePath="..\..\..\..\src\mesa\shader\arbprogparse.c">
 			</File>
 			<File
 				RelativePath="..\..\..\..\src\mesa\shader\arbprogram.c">
+			</File>
+			<File
+				RelativePath="..\..\..\..\src\mesa\main\arrayobj.c">
 			</File>
 			<File
 				RelativePath="..\..\..\..\src\mesa\shader\atifragshader.c">
@@ -237,6 +245,15 @@
 				</FileConfiguration>
 			</File>
 			<File
+				RelativePath="..\..\..\..\src\mesa\shader\grammar\grammar_crt.c">
+				<FileConfiguration
+					Name="Debug|Win32"
+					ExcludedFromBuild="TRUE">
+					<Tool
+						Name="VCCLCompilerTool"/>
+				</FileConfiguration>
+			</File>
+			<File
 				RelativePath="..\..\..\..\src\mesa\shader\grammar\grammar_mesa.c">
 			</File>
 			<File
@@ -300,13 +317,7 @@
 				RelativePath="..\..\..\..\src\mesa\shader\nvprogram.c">
 			</File>
 			<File
-				RelativePath="..\..\..\..\src\mesa\shader\nvvertexec.c">
-			</File>
-			<File
 				RelativePath="..\..\..\..\src\mesa\shader\nvvertparse.c">
-			</File>
-			<File
-				RelativePath="..\..\..\..\src\mesa\main\occlude.c">
 			</File>
 			<File
 				RelativePath="..\..\..\..\src\mesa\main\pixel.c">
@@ -318,7 +329,31 @@
 				RelativePath="..\..\..\..\src\mesa\main\polygon.c">
 			</File>
 			<File
+				RelativePath="..\..\..\..\src\mesa\shader\prog_debug.c">
+			</File>
+			<File
+				RelativePath="..\..\..\..\src\mesa\shader\prog_execute.c">
+			</File>
+			<File
+				RelativePath="..\..\..\..\src\mesa\shader\prog_instruction.c">
+			</File>
+			<File
+				RelativePath="..\..\..\..\src\mesa\shader\prog_parameter.c">
+			</File>
+			<File
+				RelativePath="..\..\..\..\src\mesa\shader\prog_print.c">
+			</File>
+			<File
+				RelativePath="..\..\..\..\src\mesa\shader\prog_statevars.c">
+			</File>
+			<File
 				RelativePath="..\..\..\..\src\mesa\shader\program.c">
+			</File>
+			<File
+				RelativePath="..\..\..\..\src\mesa\shader\programopt.c">
+			</File>
+			<File
+				RelativePath="..\..\..\..\src\mesa\main\queryobj.c">
 			</File>
 			<File
 				RelativePath="..\..\..\..\src\mesa\main\rastpos.c">
@@ -340,9 +375,6 @@
 			</File>
 			<File
 				RelativePath="..\..\..\..\src\mesa\swrast\s_alpha.c">
-			</File>
-			<File
-				RelativePath="..\..\..\..\src\mesa\swrast\s_arbshader.c">
 			</File>
 			<File
 				RelativePath="..\..\..\..\src\mesa\swrast\s_atifragshader.c">
@@ -378,6 +410,9 @@
 				RelativePath="..\..\..\..\src\mesa\swrast\s_fog.c">
 			</File>
 			<File
+				RelativePath="..\..\..\..\src\mesa\swrast\s_fragprog.c">
+			</File>
+			<File
 				RelativePath="..\..\..\..\src\mesa\swrast\s_imaging.c">
 			</File>
 			<File
@@ -388,9 +423,6 @@
 			</File>
 			<File
 				RelativePath="..\..\..\..\src\mesa\swrast\s_masking.c">
-			</File>
-			<File
-				RelativePath="..\..\..\..\src\mesa\swrast\s_nvfragprog.c">
 			</File>
 			<File
 				RelativePath="..\..\..\..\src\mesa\swrast\s_points.c">
@@ -420,28 +452,16 @@
 				RelativePath="..\..\..\..\src\mesa\swrast\s_zoom.c">
 			</File>
 			<File
-				RelativePath="..\..\..\..\src\mesa\shader\shaderobjects.c">
+				RelativePath="..\..\..\..\src\mesa\shader\shader_api.c">
 			</File>
 			<File
-				RelativePath="..\..\..\..\src\mesa\shader\shaderobjects_3dlabs.c">
+				RelativePath="..\..\..\..\src\mesa\main\shaders.c">
 			</File>
 			<File
-				RelativePath="..\..\..\..\src\mesa\shader\slang\slang_analyse.c">
+				RelativePath="..\..\..\..\src\mesa\shader\slang\slang_builtin.c">
 			</File>
 			<File
-				RelativePath="..\..\..\..\src\mesa\shader\slang\slang_assemble.c">
-			</File>
-			<File
-				RelativePath="..\..\..\..\src\mesa\shader\slang\slang_assemble_assignment.c">
-			</File>
-			<File
-				RelativePath="..\..\..\..\src\mesa\shader\slang\slang_assemble_conditional.c">
-			</File>
-			<File
-				RelativePath="..\..\..\..\src\mesa\shader\slang\slang_assemble_constructor.c">
-			</File>
-			<File
-				RelativePath="..\..\..\..\src\mesa\shader\slang\slang_assemble_typeinfo.c">
+				RelativePath="..\..\..\..\src\mesa\shader\slang\slang_codegen.c">
 			</File>
 			<File
 				RelativePath="..\..\..\..\src\mesa\shader\slang\slang_compile.c">
@@ -459,31 +479,46 @@
 				RelativePath="..\..\..\..\src\mesa\shader\slang\slang_compile_variable.c">
 			</File>
 			<File
-				RelativePath="..\..\..\..\src\mesa\shader\slang\slang_execute.c">
+				RelativePath="..\..\..\..\src\mesa\shader\slang\slang_emit.c">
 			</File>
 			<File
-				RelativePath="..\..\..\..\src\mesa\shader\slang\slang_execute_x86.c">
+				RelativePath="..\..\..\..\src\mesa\shader\slang\slang_ir.c">
 			</File>
 			<File
-				RelativePath="..\..\..\..\src\mesa\shader\slang\slang_export.c">
+				RelativePath="..\..\..\..\src\mesa\shader\slang\slang_label.c">
 			</File>
 			<File
 				RelativePath="..\..\..\..\src\mesa\shader\slang\slang_library_noise.c">
 			</File>
 			<File
-				RelativePath="..\..\..\..\src\mesa\shader\slang\slang_library_texsample.c">
+				RelativePath="..\..\..\..\src\mesa\shader\slang\slang_link.c">
 			</File>
 			<File
-				RelativePath="..\..\..\..\src\mesa\shader\slang\slang_link.c">
+				RelativePath="..\..\..\..\src\mesa\shader\slang\slang_log.c">
+			</File>
+			<File
+				RelativePath="..\..\..\..\src\mesa\shader\slang\slang_mem.c">
 			</File>
 			<File
 				RelativePath="..\..\..\..\src\mesa\shader\slang\slang_preprocess.c">
 			</File>
 			<File
+				RelativePath="..\..\..\..\src\mesa\shader\slang\slang_print.c">
+			</File>
+			<File
+				RelativePath="..\..\..\..\src\mesa\shader\slang\slang_simplify.c">
+			</File>
+			<File
 				RelativePath="..\..\..\..\src\mesa\shader\slang\slang_storage.c">
 			</File>
 			<File
+				RelativePath="..\..\..\..\src\mesa\shader\slang\slang_typeinfo.c">
+			</File>
+			<File
 				RelativePath="..\..\..\..\src\mesa\shader\slang\slang_utility.c">
+			</File>
+			<File
+				RelativePath="..\..\..\..\src\mesa\shader\slang\slang_vartable.c">
 			</File>
 			<File
 				RelativePath="..\..\..\..\src\mesa\swrast_setup\ss_context.c">
@@ -498,31 +533,13 @@
 				RelativePath="..\..\..\..\src\mesa\main\stencil.c">
 			</File>
 			<File
-				RelativePath="..\..\..\..\src\mesa\tnl\t_array_api.c">
-			</File>
-			<File
-				RelativePath="..\..\..\..\src\mesa\tnl\t_array_import.c">
-			</File>
-			<File
 				RelativePath="..\..\..\..\src\mesa\tnl\t_context.c">
 			</File>
 			<File
+				RelativePath="..\..\..\..\src\mesa\tnl\t_draw.c">
+			</File>
+			<File
 				RelativePath="..\..\..\..\src\mesa\tnl\t_pipeline.c">
-			</File>
-			<File
-				RelativePath="..\..\..\..\src\mesa\tnl\t_save_api.c">
-			</File>
-			<File
-				RelativePath="..\..\..\..\src\mesa\tnl\t_save_loopback.c">
-			</File>
-			<File
-				RelativePath="..\..\..\..\src\mesa\tnl\t_save_playback.c">
-			</File>
-			<File
-				RelativePath="..\..\..\..\src\mesa\tnl\t_vb_arbprogram.c">
-			</File>
-			<File
-				RelativePath="..\..\..\..\src\mesa\tnl\t_vb_arbshader.c">
 			</File>
 			<File
 				RelativePath="..\..\..\..\src\mesa\tnl\t_vb_cull.c">
@@ -564,18 +581,6 @@
 				RelativePath="..\..\..\..\src\mesa\tnl\t_vp_build.c">
 			</File>
 			<File
-				RelativePath="..\..\..\..\src\mesa\tnl\t_vtx_api.c">
-			</File>
-			<File
-				RelativePath="..\..\..\..\src\mesa\tnl\t_vtx_eval.c">
-			</File>
-			<File
-				RelativePath="..\..\..\..\src\mesa\tnl\t_vtx_exec.c">
-			</File>
-			<File
-				RelativePath="..\..\..\..\src\mesa\tnl\t_vtx_generic.c">
-			</File>
-			<File
 				RelativePath="..\..\..\..\src\mesa\main\texcompress.c">
 			</File>
 			<File
@@ -607,6 +612,48 @@
 			</File>
 			<File
 				RelativePath="..\..\..\..\src\mesa\main\varray.c">
+			</File>
+			<File
+				RelativePath="..\..\..\..\src\mesa\vbo\vbo_context.c">
+			</File>
+			<File
+				RelativePath="..\..\..\..\src\mesa\vbo\vbo_exec.c">
+			</File>
+			<File
+				RelativePath="..\..\..\..\src\mesa\vbo\vbo_exec_api.c">
+			</File>
+			<File
+				RelativePath="..\..\..\..\src\mesa\vbo\vbo_exec_array.c">
+			</File>
+			<File
+				RelativePath="..\..\..\..\src\mesa\vbo\vbo_exec_draw.c">
+			</File>
+			<File
+				RelativePath="..\..\..\..\src\mesa\vbo\vbo_exec_eval.c">
+			</File>
+			<File
+				RelativePath="..\..\..\..\src\mesa\vbo\vbo_rebase.c">
+			</File>
+			<File
+				RelativePath="..\..\..\..\src\mesa\vbo\vbo_save.c">
+			</File>
+			<File
+				RelativePath="..\..\..\..\src\mesa\vbo\vbo_save_api.c">
+			</File>
+			<File
+				RelativePath="..\..\..\..\src\mesa\vbo\vbo_save_draw.c">
+			</File>
+			<File
+				RelativePath="..\..\..\..\src\mesa\vbo\vbo_save_loopback.c">
+			</File>
+			<File
+				RelativePath="..\..\..\..\src\mesa\vbo\vbo_split.c">
+			</File>
+			<File
+				RelativePath="..\..\..\..\src\mesa\vbo\vbo_split_copy.c">
+			</File>
+			<File
+				RelativePath="..\..\..\..\src\mesa\vbo\vbo_split_inplace.c">
 			</File>
 			<File
 				RelativePath="..\..\..\..\src\mesa\main\vsnprintf.c">
@@ -766,6 +813,9 @@
 				RelativePath="..\..\..\..\src\mesa\shader\grammar\grammar.h">
 			</File>
 			<File
+				RelativePath="..\..\..\..\src\mesa\shader\grammar\grammar_crt.h">
+			</File>
+			<File
 				RelativePath="..\..\..\..\src\mesa\shader\grammar\grammar_mesa.h">
 			</File>
 			<File
@@ -850,9 +900,6 @@
 				RelativePath="..\..\..\..\src\mesa\shader\nvfragparse.h">
 			</File>
 			<File
-				RelativePath="..\..\..\..\src\mesa\shader\nvfragprog.h">
-			</File>
-			<File
 				RelativePath="..\..\..\..\src\mesa\shader\nvprogram.h">
 			</File>
 			<File
@@ -860,12 +907,6 @@
 			</File>
 			<File
 				RelativePath="..\..\..\..\src\mesa\shader\nvvertparse.h">
-			</File>
-			<File
-				RelativePath="..\..\..\..\src\mesa\shader\nvvertprog.h">
-			</File>
-			<File
-				RelativePath="..\..\..\..\src\mesa\main\occlude.h">
 			</File>
 			<File
 				RelativePath="..\..\..\..\src\mesa\main\pixel.h">
@@ -877,13 +918,34 @@
 				RelativePath="..\..\..\..\src\mesa\main\polygon.h">
 			</File>
 			<File
+				RelativePath="..\..\..\..\src\mesa\shader\prog_debug.h">
+			</File>
+			<File
+				RelativePath="..\..\..\..\src\mesa\shader\prog_execute.h">
+			</File>
+			<File
+				RelativePath="..\..\..\..\src\mesa\shader\prog_instruction.h">
+			</File>
+			<File
+				RelativePath="..\..\..\..\src\mesa\shader\prog_parameter.h">
+			</File>
+			<File
+				RelativePath="..\..\..\..\src\mesa\shader\prog_print.h">
+			</File>
+			<File
+				RelativePath="..\..\..\..\src\mesa\shader\prog_statevars.h">
+			</File>
+			<File
 				RelativePath="..\..\..\..\src\mesa\shader\program.h">
 			</File>
 			<File
-				RelativePath="..\..\..\..\src\mesa\main\rastpos.h">
+				RelativePath="..\..\..\..\src\mesa\shader\programopt.h">
 			</File>
 			<File
-				RelativePath="..\..\..\..\src\mesa\main\rbadaptors.h">
+				RelativePath="..\..\..\..\src\mesa\main\queryobj.h">
+			</File>
+			<File
+				RelativePath="..\..\..\..\src\mesa\main\rastpos.h">
 			</File>
 			<File
 				RelativePath="..\..\..\..\src\mesa\main\renderbuffer.h">
@@ -926,6 +988,9 @@
 			</File>
 			<File
 				RelativePath="..\..\..\..\src\mesa\swrast\s_fog.h">
+			</File>
+			<File
+				RelativePath="..\..\..\..\src\mesa\swrast\s_fragprog.h">
 			</File>
 			<File
 				RelativePath="..\..\..\..\src\mesa\swrast\s_lines.h">
@@ -976,46 +1041,76 @@
 				RelativePath="..\..\..\..\src\mesa\swrast\s_zoom.h">
 			</File>
 			<File
-				RelativePath="..\..\..\..\src\mesa\shader\shaderobjects.h">
+				RelativePath="..\..\..\..\src\mesa\shader\shader_api.h">
 			</File>
 			<File
-				RelativePath="..\..\..\..\src\mesa\shader\shaderobjects_3dlabs.h">
+				RelativePath="..\..\..\..\src\mesa\main\shaders.h">
 			</File>
 			<File
 				RelativePath="..\..\..\..\src\mesa\main\simple_list.h">
 			</File>
 			<File
-				RelativePath="..\..\..\..\src\mesa\shader\slang\slang_assemble.h">
+				RelativePath="..\..\..\..\src\mesa\shader\slang\slang_builtin.h">
 			</File>
 			<File
-				RelativePath="..\..\..\..\src\mesa\shader\slang\slang_assemble_assignment.h">
-			</File>
-			<File
-				RelativePath="..\..\..\..\src\mesa\shader\slang\slang_assemble_conditional.h">
-			</File>
-			<File
-				RelativePath="..\..\..\..\src\mesa\shader\slang\slang_assemble_constructor.h">
-			</File>
-			<File
-				RelativePath="..\..\..\..\src\mesa\shader\slang\slang_assemble_typeinfo.h">
+				RelativePath="..\..\..\..\src\mesa\shader\slang\slang_codegen.h">
 			</File>
 			<File
 				RelativePath="..\..\..\..\src\mesa\shader\slang\slang_compile.h">
 			</File>
 			<File
-				RelativePath="..\..\..\..\src\mesa\shader\slang\slang_execute.h">
+				RelativePath="..\..\..\..\src\mesa\shader\slang\slang_compile_function.h">
 			</File>
 			<File
-				RelativePath="..\..\..\..\src\mesa\shader\slang\slang_mesa.h">
+				RelativePath="..\..\..\..\src\mesa\shader\slang\slang_compile_operation.h">
+			</File>
+			<File
+				RelativePath="..\..\..\..\src\mesa\shader\slang\slang_compile_struct.h">
+			</File>
+			<File
+				RelativePath="..\..\..\..\src\mesa\shader\slang\slang_compile_variable.h">
+			</File>
+			<File
+				RelativePath="..\..\..\..\src\mesa\shader\slang\slang_emit.h">
+			</File>
+			<File
+				RelativePath="..\..\..\..\src\mesa\shader\slang\slang_ir.h">
+			</File>
+			<File
+				RelativePath="..\..\..\..\src\mesa\shader\slang\slang_label.h">
+			</File>
+			<File
+				RelativePath="..\..\..\..\src\mesa\shader\slang\slang_library_noise.h">
+			</File>
+			<File
+				RelativePath="..\..\..\..\src\mesa\shader\slang\slang_link.h">
+			</File>
+			<File
+				RelativePath="..\..\..\..\src\mesa\shader\slang\slang_log.h">
+			</File>
+			<File
+				RelativePath="..\..\..\..\src\mesa\shader\slang\slang_mem.h">
 			</File>
 			<File
 				RelativePath="..\..\..\..\src\mesa\shader\slang\slang_preprocess.h">
 			</File>
 			<File
+				RelativePath="..\..\..\..\src\mesa\shader\slang\slang_print.h">
+			</File>
+			<File
+				RelativePath="..\..\..\..\src\mesa\shader\slang\slang_simplify.h">
+			</File>
+			<File
 				RelativePath="..\..\..\..\src\mesa\shader\slang\slang_storage.h">
 			</File>
 			<File
+				RelativePath="..\..\..\..\src\mesa\shader\slang\slang_typeinfo.h">
+			</File>
+			<File
 				RelativePath="..\..\..\..\src\mesa\shader\slang\slang_utility.h">
+			</File>
+			<File
+				RelativePath="..\..\..\..\src\mesa\shader\slang\slang_vartable.h">
 			</File>
 			<File
 				RelativePath="..\..\..\..\src\mesa\swrast_setup\ss_context.h">
@@ -1042,22 +1137,10 @@
 				RelativePath="..\..\..\..\src\mesa\swrast_setup\swrast_setup.h">
 			</File>
 			<File
-				RelativePath="..\..\..\..\src\mesa\tnl\t_array_api.h">
-			</File>
-			<File
-				RelativePath="..\..\..\..\src\mesa\tnl\t_array_import.h">
-			</File>
-			<File
 				RelativePath="..\..\..\..\src\mesa\tnl\t_context.h">
 			</File>
 			<File
 				RelativePath="..\..\..\..\src\mesa\tnl\t_pipeline.h">
-			</File>
-			<File
-				RelativePath="..\..\..\..\src\mesa\tnl\t_save_api.h">
-			</File>
-			<File
-				RelativePath="..\..\..\..\src\mesa\tnl\t_vb_arbprogram.h">
 			</File>
 			<File
 				RelativePath="..\..\..\..\src\mesa\tnl\t_vb_cliptmp.h">
@@ -1073,9 +1156,6 @@
 			</File>
 			<File
 				RelativePath="..\..\..\..\src\mesa\tnl\t_vp_build.h">
-			</File>
-			<File
-				RelativePath="..\..\..\..\src\mesa\tnl\t_vtx_api.h">
 			</File>
 			<File
 				RelativePath="..\..\..\..\src\mesa\main\texcompress.h">
@@ -1108,10 +1188,28 @@
 				RelativePath="..\..\..\..\src\mesa\tnl\tnl.h">
 			</File>
 			<File
-				RelativePath="..\..\..\..\src\mesa\shader\slang\traverse_wrap.h">
+				RelativePath="..\..\..\..\src\mesa\main\varray.h">
 			</File>
 			<File
-				RelativePath="..\..\..\..\src\mesa\main\varray.h">
+				RelativePath="..\..\..\..\src\mesa\vbo\vbo.h">
+			</File>
+			<File
+				RelativePath="..\..\..\..\src\mesa\vbo\vbo_attrib.h">
+			</File>
+			<File
+				RelativePath="..\..\..\..\src\mesa\vbo\vbo_attrib_tmp.h">
+			</File>
+			<File
+				RelativePath="..\..\..\..\src\mesa\vbo\vbo_context.h">
+			</File>
+			<File
+				RelativePath="..\..\..\..\src\mesa\vbo\vbo_exec.h">
+			</File>
+			<File
+				RelativePath="..\..\..\..\src\mesa\vbo\vbo_save.h">
+			</File>
+			<File
+				RelativePath="..\..\..\..\src\mesa\vbo\vbo_split.h">
 			</File>
 			<File
 				RelativePath="..\..\..\..\src\mesa\main\version.h">

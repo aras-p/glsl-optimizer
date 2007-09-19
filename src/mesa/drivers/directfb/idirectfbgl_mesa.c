@@ -134,7 +134,6 @@ static bool  directfbgl_init_visual    ( GLvisual              *visual,
 static bool  directfbgl_create_context ( GLcontext             *context,
                                          GLframebuffer         *framebuffer,
                                          GLvisual              *visual,
-                                         DFBSurfacePixelFormat  format,
                                          IDirectFBGL_data      *data );
 static void  directfbgl_destroy_context( GLcontext             *context,
                                          GLframebuffer         *framebuffer );
@@ -340,8 +339,9 @@ Construct( IDirectFBGL *thiz, IDirectFBSurface *surface )
      }
      
      /* Create context. */
-     if (!directfbgl_create_context( &data->context, &data->framebuffer,
-                                     &data->visual, data->format, data )) {
+     if (!directfbgl_create_context( &data->context,
+                                     &data->framebuffer,
+                                     &data->visual, data )) {
           D_ERROR( "DirectFBGL/Mesa: failed to create context.\n" );
           IDirectFBGL_Mesa_Destruct( thiz );
           return DFB_UNSUPPORTED;
@@ -762,11 +762,10 @@ directfbgl_init_visual( GLvisual              *visual,
 }
 
 static bool
-directfbgl_create_context( GLcontext             *context,
-                           GLframebuffer         *framebuffer,
-                           GLvisual              *visual,
-                           DFBSurfacePixelFormat  format,
-                           IDirectFBGL_data      *data )
+directfbgl_create_context( GLcontext        *context,
+                           GLframebuffer    *framebuffer,
+                           GLvisual         *visual,
+                           IDirectFBGL_data *data )
 {
      struct dd_function_table functions;
      
@@ -800,7 +799,7 @@ directfbgl_create_context( GLcontext             *context,
      data->render.Delete         = dfbDeleteRenderbuffer;
      data->render.AllocStorage   = dfbRenderbufferStorage;
      
-     switch (format) {
+     switch (data->format) {
           case DSPF_RGB332:
                data->render.GetRow        = get_row_RGB332;
                data->render.GetValues     = get_values_RGB332;
@@ -887,6 +886,9 @@ directfbgl_create_context( GLcontext             *context,
                return false;
      }
 
+     data->render.Width = data->width;
+     data->render.Height = data->height;
+
      _mesa_add_renderbuffer( framebuffer, BUFFER_FRONT_LEFT, &data->render );
      
      _mesa_add_soft_renderbuffers( framebuffer,
@@ -908,8 +910,11 @@ static void
 directfbgl_destroy_context( GLcontext     *context,
                             GLframebuffer *framebuffer )
 {
-     _mesa_free_framebuffer_data( framebuffer );
-     _mesa_notifyDestroy( context );
+     _swsetup_DestroyContext( context );
+     _swrast_DestroyContext( context );
+     _tnl_DestroyContext( context );
+     _vbo_DestroyContext( context );
+     //_mesa_free_framebuffer_data( framebuffer );
      _mesa_free_context_data( context );
 }    
  

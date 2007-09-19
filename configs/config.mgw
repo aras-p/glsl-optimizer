@@ -1,0 +1,42 @@
+# MinGW config include file updated for Mesa 7.0
+#
+#  Updated : by Heromyth, on 2007-7-21
+#  Email   : zxpmyth@yahoo.com.cn
+#  Bugs    : 1) All the default settings work fine. But the setting X86=1 can't work. 
+#            The others havn't been tested yet.
+#            2) The generated DLLs are *not* compatible with the ones built
+#            with the other compilers like VC8, especially for GLUT. 
+#            3) Although more tests are needed, it can be used individually!
+
+# The generated DLLs by MingW with STDCALL are not totally compatible 
+# with the ones linked by Microsoft's compilers.
+#
+# xxx_USING_STDCALL = 1          Compiling MESA with __stdcall. This is default!
+# 
+# xxx_USING_STDCALL = 0          Compiling MESA without __stdcall. I like this:)
+#  
+
+# In fact, GL_USING_STDCALL and GLUT_USING_STDCALL can be
+# different. For example:
+#
+#   GL_USING_STDCALL = 0
+#   GLUT_USING_STDCALL = 1
+# 
+# Suggested setting:
+#
+#     ALL_USING_STDCALL = 1
+#
+# That's default!
+#
+
+
+ALL_USING_STDCALL = 1
+
+
+ifeq ($(ALL_USING_STDCALL),1)
+  GL_USING_STDCALL = 1
+  GLUT_USING_STDCALL = 1
+else
+  GL_USING_STDCALL = 0
+  GLUT_USING_STDCALL = 0
+endif

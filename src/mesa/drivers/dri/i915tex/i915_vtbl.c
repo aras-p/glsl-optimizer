@@ -44,11 +44,16 @@
 #include "i915_context.h"
 
 static void
-i915_render_start(struct intel_context *intel)
+i915_render_prevalidate(struct intel_context *intel)
 {
    struct i915_context *i915 = i915_context(&intel->ctx);
 
    i915ValidateFragmentProgram(i915);
+}
+
+static void
+i915_render_start(struct intel_context *intel)
+{
 }
 
 
@@ -61,6 +66,7 @@ i915_reduced_primitive_state(struct intel_context *intel, GLenum rprim)
    st1 &= ~ST1_ENABLE;
 
    switch (rprim) {
+   case GL_QUADS: /* from RASTERIZE(GL_QUADS) in t_dd_tritemp.h */
    case GL_TRIANGLES:
       if (intel->ctx.Polygon.StippleFlag && intel->hw_stipple)
          st1 |= ST1_ENABLE;
@@ -197,7 +203,7 @@ i915_emit_invarient_state(struct intel_context *intel)
 
    /* Need to initialize this to zero.
     */
-   OUT_BATCH(_3DSTATE_LOAD_STATE_IMMEDIATE_1 | I1_LOAD_S(3) | 0);
+   OUT_BATCH(_3DSTATE_LOAD_STATE_IMMEDIATE_1 | I1_LOAD_S(3) | (0));
    OUT_BATCH(0);
 
    /* XXX: Use this */
@@ -215,6 +221,7 @@ i915_emit_invarient_state(struct intel_context *intel)
 
    /* Don't support twosided stencil yet */
    OUT_BATCH(_3DSTATE_BACKFACE_STENCIL_OPS | BFO_ENABLE_STENCIL_TWO_SIDE | 0);
+   OUT_BATCH(0);
 
    ADVANCE_BATCH();
 }
@@ -245,6 +252,9 @@ get_state_size(struct i915_hw_state *state)
    GLuint dirty = get_dirty(state);
    GLuint i;
    GLuint sz = 0;
+
+   if (dirty & I915_UPLOAD_INVARIENT)
+      sz += 30 * 4;
 
    if (dirty & I915_UPLOAD_CTX)
       sz += sizeof(state->Ctx);
@@ -301,6 +311,7 @@ i915_emit_state(struct intel_context *intel)
     * causing more state to be dirty!
     */
    dirty = get_dirty(state);
+   state->emitted |= dirty;
 
    if (INTEL_DEBUG & DEBUG_STATE)
       fprintf(stderr, "%s dirty: %x\n", __FUNCTION__, dirty);
@@ -420,12 +431,22 @@ i915_emit_state(struct intel_context *intel)
          i915_disassemble_program(state->Program, state->ProgramSize);
    }
 
-   state->emitted |= dirty;
+   assert(get_dirty(state) == 0);
 }
 
 static void
 i915_destroy_context(struct intel_context *intel)
 {
+   GLuint i;
+   struct i915_context *i915 = i915_context(&intel->ctx);
+
+   for (i = 0; i < I915_TEX_UNITS; i++) {
+      if (i915->state.tex_buffer[i] != NULL) {
+	 dri_bo_unreference(i915->state.tex_buffer[i]);
+	 i915->state.tex_buffer[i] = NULL;
+      }
+   }
+
    _tnl_free_vertices(&intel->ctx);
 }
 
@@ -542,6 +563,7 @@ i915InitVtbl(struct i915_context *i915)
    i915->intel.vtbl.lost_hardware = i915_lost_hardware;
    i915->intel.vtbl.reduced_primitive_state = i915_reduced_primitive_state;
    i915->intel.vtbl.render_start = i915_render_start;
+   i915->intel.vtbl.render_prevalidate = i915_render_prevalidate;
    i915->intel.vtbl.set_draw_region = i915_set_draw_region;
    i915->intel.vtbl.update_texture_state = i915UpdateTextureState;
    i915->intel.vtbl.flush_cmd = i915_flush_cmd;

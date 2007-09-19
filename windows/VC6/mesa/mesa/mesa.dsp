@@ -689,10 +689,6 @@ SOURCE=..\..\..\..\src\mesa\tnl\t_pipeline.c
 # End Source File
 # Begin Source File
 
-SOURCE=..\..\..\..\src\mesa\tnl\t_save_api.c
-# End Source File
-# Begin Source File
-
 SOURCE=..\..\..\..\src\mesa\tnl\t_save_loopback.c
 # End Source File
 # Begin Source File

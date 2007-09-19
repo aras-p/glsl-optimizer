@@ -124,6 +124,7 @@ extern void          __glutDestroyWindow( __GlutWindow *window );
 extern void          __glutDestroyWindows( void );
 /* callback.c */
 extern void          __glutHandleTimers( void );
+extern GLboolean     __glutGetTimeout( int *ret_msec );
 extern void          __glutFreeTimers( void );
 
 

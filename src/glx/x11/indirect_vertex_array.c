@@ -527,7 +527,7 @@ static GLubyte *
 emit_DrawArrays_header_old( __GLXcontext * gc,
 			    struct array_state_vector * arrays,
 			    size_t * elements_per_request,
-			    size_t * total_requests,
+			    unsigned int * total_requests,
 			    GLenum mode, GLsizei count )
 {
     size_t command_size;
@@ -640,7 +640,7 @@ emit_DrawArrays_old( GLenum mode, GLint first, GLsizei count )
 
     GLubyte * pc;
     size_t elements_per_request;
-    size_t total_requests = 0;
+    unsigned total_requests = 0;
     unsigned i;
     size_t total_sent = 0;
 
@@ -770,9 +770,10 @@ emit_DrawElements_old( GLenum mode, GLsizei count, GLenum type,
 
     GLubyte * pc;
     size_t elements_per_request;
-    size_t total_requests = 0;
+    unsigned total_requests = 0;
     unsigned i;
     unsigned req;
+    unsigned req_element=0;
 
 
     pc = emit_DrawArrays_header_old( gc, arrays, & elements_per_request,
@@ -790,7 +791,7 @@ emit_DrawElements_old( GLenum mode, GLsizei count, GLenum type,
 
 	switch( type ) {
 	case GL_UNSIGNED_INT: {
-	    const GLuint   * ui_ptr = (const GLuint   *) indices;
+	    const GLuint   * ui_ptr = (const GLuint   *) indices + req_element;
 
 	    for ( i = 0 ; i < elements_per_request ; i++ ) {
 		const GLint index = (GLint) *(ui_ptr++);
@@ -799,7 +800,7 @@ emit_DrawElements_old( GLenum mode, GLsizei count, GLenum type,
 	    break;
 	}
 	case GL_UNSIGNED_SHORT: {
-	    const GLushort * us_ptr = (const GLushort *) indices;
+	    const GLushort * us_ptr = (const GLushort *) indices + req_element;
 
 	    for ( i = 0 ; i < elements_per_request ; i++ ) {
 		const GLint index = (GLint) *(us_ptr++);
@@ -808,7 +809,7 @@ emit_DrawElements_old( GLenum mode, GLsizei count, GLenum type,
 	    break;
 	}
 	case GL_UNSIGNED_BYTE: {
-	    const GLubyte  * ub_ptr = (const GLubyte  *) indices;
+	    const GLubyte  * ub_ptr = (const GLubyte  *) indices + req_element;
 
 	    for ( i = 0 ; i < elements_per_request ; i++ ) {
 		const GLint index = (GLint) *(ub_ptr++);
@@ -826,6 +827,7 @@ emit_DrawElements_old( GLenum mode, GLsizei count, GLenum type,
 	}
 
 	count -= elements_per_request;
+	req_element += elements_per_request;
     }
 
 

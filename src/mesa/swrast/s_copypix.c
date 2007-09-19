@@ -1,6 +1,6 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.5.3
+ * Version:  7.1
  *
  * Copyright (C) 1999-2007  Brian Paul   All Rights Reserved.
  *
@@ -71,13 +71,20 @@ regions_overlap(GLint srcx, GLint srcy,
    }
    else {
       /* add one pixel of slop when zooming, just to be safe */
-      if ((srcx > dstx + (width * zoomX) + 1) || (srcx + width + 1 < dstx)) {
+      if (srcx > (dstx + ((zoomX > 0.0F) ? (width * zoomX + 1.0F) : 0.0F))) {
+         /* src is completely right of dest */
+         return GL_FALSE;
+      }
+      else if (srcx + width + 1.0F < dstx + ((zoomX > 0.0F) ? 0.0F : (width * zoomX))) {
+         /* src is completely left of dest */
          return GL_FALSE;
       }
       else if ((srcy < dsty) && (srcy + height < dsty + (height * zoomY))) {
+         /* src is completely below dest */
          return GL_FALSE;
       }
       else if ((srcy > dsty) && (srcy + height > dsty + (height * zoomY))) {
+         /* src is completely above dest */
          return GL_FALSE;
       }
       else {
@@ -102,8 +109,10 @@ copy_conv_rgba_pixels(GLcontext *ctx, GLint srcx, GLint srcy,
    GLfloat *dest, *tmpImage, *convImage;
    SWspan span;
 
-   INIT_SPAN(span, GL_BITMAP, 0, 0, SPAN_RGBA);
+   INIT_SPAN(span, GL_BITMAP);
    _swrast_span_default_attribs(ctx, &span);
+   span.arrayMask = SPAN_RGBA;
+   span.arrayAttribs = FRAG_BIT_COL0;
 
    /* allocate space for GLfloat image */
    tmpImage = (GLfloat *) _mesa_malloc(width * height * 4 * sizeof(GLfloat));
@@ -156,7 +165,7 @@ copy_conv_rgba_pixels(GLcontext *ctx, GLint srcx, GLint srcy,
       /* write the new image */
       for (row = 0; row < height; row++) {
          const GLfloat *src = convImage + row * width * 4;
-         GLvoid *rgba = (GLvoid *) span.array->attribs[FRAG_ATTRIB_COL0];
+         GLfloat *rgba = (GLfloat *) span.array->attribs[FRAG_ATTRIB_COL0];
 
          /* copy convolved colors into span array */
          _mesa_memcpy(rgba, src, width * 4 * sizeof(GLfloat));
@@ -188,8 +197,6 @@ static void
 copy_rgba_pixels(GLcontext *ctx, GLint srcx, GLint srcy,
                  GLint width, GLint height, GLint destx, GLint desty)
 {
-   SWcontext *swrast = SWRAST_CONTEXT(ctx);
-   const GLbitfield prevActiveAttribs = swrast->_ActiveAttribMask;
    GLfloat *tmpImage, *p;
    GLint sy, dy, stepy, row;
    const GLboolean zoom = ctx->Pixel.ZoomX != 1.0F || ctx->Pixel.ZoomY != 1.0F;
@@ -199,15 +206,12 @@ copy_rgba_pixels(GLcontext *ctx, GLint srcx, GLint srcy,
 
    if (!ctx->ReadBuffer->_ColorReadBuffer) {
       /* no readbuffer - OK */
-      goto end;
+      return;
    }
-
-   /* don't interpolate COL0 and overwrite the glDrawPixel colors! */
-   swrast->_ActiveAttribMask &= ~FRAG_BIT_COL0;
 
    if (ctx->Pixel.Convolution2DEnabled || ctx->Pixel.Separable2DEnabled) {
       copy_conv_rgba_pixels(ctx, srcx, srcy, width, height, destx, desty);
-      goto end;
+      return;
    }
    else if (ctx->Pixel.Convolution1DEnabled) {
       /* make sure we don't apply 1D convolution */
@@ -237,14 +241,16 @@ copy_rgba_pixels(GLcontext *ctx, GLint srcx, GLint srcy,
       stepy = 1;
    }
 
-   INIT_SPAN(span, GL_BITMAP, 0, 0, SPAN_RGBA);
+   INIT_SPAN(span, GL_BITMAP);
    _swrast_span_default_attribs(ctx, &span);
+   span.arrayMask = SPAN_RGBA;
+   span.arrayAttribs = FRAG_BIT_COL0; /* we'll fill in COL0 attrib values */
 
    if (overlapping) {
       tmpImage = (GLfloat *) _mesa_malloc(width * height * sizeof(GLfloat) * 4);
       if (!tmpImage) {
          _mesa_error( ctx, GL_OUT_OF_MEMORY, "glCopyPixels" );
-         goto end;
+         return;
       }
       /* read the source image as RGBA/float */
       p = tmpImage;
@@ -299,9 +305,6 @@ copy_rgba_pixels(GLcontext *ctx, GLint srcx, GLint srcy,
 
    if (overlapping)
       _mesa_free(tmpImage);
-
-end:
-   swrast->_ActiveAttribMask = prevActiveAttribs;
 }
 
 
@@ -322,8 +325,9 @@ copy_ci_pixels( GLcontext *ctx, GLint srcx, GLint srcy,
       return;
    }
 
-   INIT_SPAN(span, GL_BITMAP, 0, 0, SPAN_INDEX);
+   INIT_SPAN(span, GL_BITMAP);
    _swrast_span_default_attribs(ctx, &span);
+   span.arrayMask = SPAN_INDEX;
 
    if (ctx->DrawBuffer == ctx->ReadBuffer) {
       overlapping = regions_overlap(srcx, srcy, destx, desty, width, height,
@@ -456,8 +460,9 @@ copy_depth_pixels( GLcontext *ctx, GLint srcx, GLint srcy,
       return;
    }
 
-   INIT_SPAN(span, GL_BITMAP, 0, 0, SPAN_Z);
+   INIT_SPAN(span, GL_BITMAP);
    _swrast_span_default_attribs(ctx, &span);
+   span.arrayMask = SPAN_Z;
 
    if (ctx->DrawBuffer == ctx->ReadBuffer) {
       overlapping = regions_overlap(srcx, srcy, destx, desty, width, height,

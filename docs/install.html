@@ -287,7 +287,15 @@ already installed, you'll have to choose different directories, like
 To install Mesa's headers and libraries, run <code>make install</code>.
 But first, check the Mesa/configs/default file and examine the values
 of the <b>INSTALL_DIR</b> and <b>DRI_DRIVER_INSTALL_DIR</b> variables.
-Change them if needed, then run <code>make install</code>
+Change them if needed, then run <code>make install</code>.
+</p>
+
+<p>
+The variable
+<b>DESTDIR</b> may also be used to install the contents to a temporary
+staging directory.
+This can be useful for package management.
+For example: <code>make install DESTDIR=/somepath/</code>
 </p>
 
 <p>
@@ -298,6 +306,26 @@ This is a handy way to compare multiple OpenGL implementations.
 </p>
 
 
+<H3>1.5 pkg-config support</H3>
+
+<p>
+Running <code>make install</code> will install package configuration files
+for the pkg-config utility.
+</p>
+
+<p>
+When compiling your OpenGL application you can use pkg-config to determine
+the proper compiler and linker flags.
+</p>
+
+<p>
+For example, compiling and linking a GLUT application can be done with:
+</p>
+<pre>
+   gcc `pkg-config --cflags --libs glut` mydemo.c -o mydemo
+</pre>
+
+<br>
 
 <a name="windows">
 <H2>2. Windows Compilation and Installation</H1>

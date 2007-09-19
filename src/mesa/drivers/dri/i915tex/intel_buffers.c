@@ -50,7 +50,7 @@
 #define DRM_VBLANK_FLIP 0x8000000
 
 typedef struct drm_i915_flip {
-   int pipes;
+   int planes;
 } drm_i915_flip_t;
 
 #undef DRM_IOCTL_I915_FLIP
@@ -235,34 +235,34 @@ intelWindowMoved(struct intel_context *intel)
       drmI830Sarea *sarea = intel->sarea;
       drm_clip_rect_t drw_rect = { .x1 = dPriv->x, .x2 = dPriv->x + dPriv->w,
 				   .y1 = dPriv->y, .y2 = dPriv->y + dPriv->h };
-      drm_clip_rect_t pipeA_rect = { .x1 = sarea->pipeA_x, .y1 = sarea->pipeA_y,
-				     .x2 = sarea->pipeA_x + sarea->pipeA_w,
-				     .y2 = sarea->pipeA_y + sarea->pipeA_h };
-      drm_clip_rect_t pipeB_rect = { .x1 = sarea->pipeB_x, .y1 = sarea->pipeB_y,
-				     .x2 = sarea->pipeB_x + sarea->pipeB_w,
-				     .y2 = sarea->pipeB_y + sarea->pipeB_h };
-      GLint areaA = driIntersectArea( drw_rect, pipeA_rect );
-      GLint areaB = driIntersectArea( drw_rect, pipeB_rect );
+      drm_clip_rect_t planeA_rect = { .x1 = sarea->planeA_x, .y1 = sarea->planeA_y,
+				     .x2 = sarea->planeA_x + sarea->planeA_w,
+				     .y2 = sarea->planeA_y + sarea->planeA_h };
+      drm_clip_rect_t planeB_rect = { .x1 = sarea->planeB_x, .y1 = sarea->planeB_y,
+				     .x2 = sarea->planeB_x + sarea->planeB_w,
+				     .y2 = sarea->planeB_y + sarea->planeB_h };
+      GLint areaA = driIntersectArea( drw_rect, planeA_rect );
+      GLint areaB = driIntersectArea( drw_rect, planeB_rect );
       GLuint flags = intel_fb->vblank_flags;
       GLboolean pf_active;
-      GLint pf_pipes;
+      GLint pf_planes;
 
       /* Update page flipping info
        */
-      pf_pipes = 0;
+      pf_planes = 0;
 
       if (areaA > 0)
-	 pf_pipes |= 1;
+	 pf_planes |= 1;
 
       if (areaB > 0)
-	 pf_pipes |= 2;
+	 pf_planes |= 2;
 
       intel_fb->pf_current_page = (intel->sarea->pf_current_page >>
-				   (intel_fb->pf_pipes & 0x2)) & 0x3;
+				   (intel_fb->pf_planes & 0x2)) & 0x3;
 
       intel_fb->pf_num_pages = intel->intelScreen->third.handle ? 3 : 2;
 
-      pf_active = pf_pipes && (pf_pipes & intel->sarea->pf_active) == pf_pipes;
+      pf_active = pf_planes && (pf_planes & intel->sarea->pf_active) == pf_planes;
 
       if (INTEL_DEBUG & DEBUG_LOCK)
 	 if (pf_active != intel_fb->pf_active)
@@ -270,8 +270,8 @@ intelWindowMoved(struct intel_context *intel)
 			 pf_active ? "" : "in");
 
       if (pf_active) {
-	 /* Sync pages between pipes if we're flipping on both at the same time */
-	 if (pf_pipes == 0x3 &&	pf_pipes != intel_fb->pf_pipes &&
+	 /* Sync pages between planes if flipping on both at the same time */
+	 if (pf_planes == 0x3 && pf_planes != intel_fb->pf_planes &&
 	     (intel->sarea->pf_current_page & 0x3) !=
 	     (((intel->sarea->pf_current_page) >> 2) & 0x3)) {
 	    drm_i915_flip_t flip;
@@ -287,7 +287,7 @@ intelWindowMoved(struct intel_context *intel)
 		  ((intel_fb->pf_current_page + intel_fb->pf_num_pages - 1) %
 		   intel_fb->pf_num_pages) << 2;
 
-	       flip.pipes = 0x2;
+	       flip.planes = 0x2;
 	    } else {
                intel->sarea->pf_current_page =
 		  intel->sarea->pf_current_page & (0x3 << 2);
@@ -295,13 +295,13 @@ intelWindowMoved(struct intel_context *intel)
 		  (intel_fb->pf_current_page + intel_fb->pf_num_pages - 1) %
 		  intel_fb->pf_num_pages;
 
-	       flip.pipes = 0x1;
+	       flip.planes = 0x1;
 	    }
 
 	    drmCommandWrite(intel->driFd, DRM_I915_FLIP, &flip, sizeof(flip));
 	 }
 
-	 intel_fb->pf_pipes = pf_pipes;
+	 intel_fb->pf_planes = pf_planes;
       }
 
       intel_fb->pf_active = pf_active;
@@ -316,7 +316,8 @@ intelWindowMoved(struct intel_context *intel)
 	 flags = intel_fb->vblank_flags & ~VBLANK_FLAG_SECONDARY;
       }
 
-      if (flags != intel_fb->vblank_flags) {
+      if (flags != intel_fb->vblank_flags && intel_fb->vblank_flags &&
+	  !(intel_fb->vblank_flags & VBLANK_FLAG_NO_IRQ)) {
 	 drmVBlank vbl;
 	 int i;
 
@@ -327,7 +328,9 @@ intelWindowMoved(struct intel_context *intel)
 	 }
 
 	 for (i = 0; i < intel_fb->pf_num_pages; i++) {
-	    if (!intel_fb->color_rb[i])
+	    if (!intel_fb->color_rb[i] ||
+		(intel_fb->vbl_waited - intel_fb->color_rb[i]->vbl_pending) <=
+		(1<<23))
 	       continue;
 
 	    vbl.request.sequence = intel_fb->color_rb[i]->vbl_pending;
@@ -712,14 +715,14 @@ intel_wait_flips(struct intel_context *intel, GLuint batch_flags)
 			     BUFFER_BACK_LEFT);
 
    if (intel_fb->Base.Name == 0 && intel_rb->pf_pending == intel_fb->pf_seq) {
-      GLint pf_pipes = intel_fb->pf_pipes;
+      GLint pf_planes = intel_fb->pf_planes;
       BATCH_LOCALS;
 
       /* Wait for pending flips to take effect */
       BEGIN_BATCH(2, batch_flags);
-      OUT_BATCH(pf_pipes & 0x1 ? (MI_WAIT_FOR_EVENT | MI_WAIT_FOR_PLANE_A_FLIP)
+      OUT_BATCH(pf_planes & 0x1 ? (MI_WAIT_FOR_EVENT | MI_WAIT_FOR_PLANE_A_FLIP)
 		: 0);
-      OUT_BATCH(pf_pipes & 0x2 ? (MI_WAIT_FOR_EVENT | MI_WAIT_FOR_PLANE_B_FLIP)
+      OUT_BATCH(pf_planes & 0x2 ? (MI_WAIT_FOR_EVENT | MI_WAIT_FOR_PLANE_B_FLIP)
 		: 0);
       ADVANCE_BATCH();
 
@@ -758,7 +761,7 @@ intelPageFlip(const __DRIdrawablePrivate * dPriv)
    if (dPriv->numClipRects && intel_fb->pf_active) {
       drm_i915_flip_t flip;
 
-      flip.pipes = intel_fb->pf_pipes;
+      flip.planes = intel_fb->pf_planes;
 
       ret = drmCommandWrite(intel->driFd, DRM_I915_FLIP, &flip, sizeof(flip));
    }
@@ -773,7 +776,7 @@ intelPageFlip(const __DRIdrawablePrivate * dPriv)
    }
 
    intel_fb->pf_current_page = (intel->sarea->pf_current_page >>
-				(intel_fb->pf_pipes & 0x2)) & 0x3;
+				(intel_fb->pf_planes & 0x2)) & 0x3;
 
    if (dPriv->numClipRects != 0) {
       intel_get_renderbuffer(&intel_fb->Base, BUFFER_FRONT_LEFT)->pf_pending =
@@ -828,7 +831,8 @@ intelScheduleSwap(const __DRIdrawablePrivate * dPriv, GLboolean *missed_target)
    drm_i915_vblank_swap_t swap;
    GLboolean ret;
 
-   if ((intel_fb->vblank_flags & VBLANK_FLAG_NO_IRQ) ||
+   if (!intel_fb->vblank_flags ||
+       (intel_fb->vblank_flags & VBLANK_FLAG_NO_IRQ) ||
        intelScreen->current_rotation != 0 ||
        intelScreen->drmMinor < (intel_fb->pf_active ? 9 : 6))
       return GL_FALSE;
@@ -856,7 +860,7 @@ intelScheduleSwap(const __DRIdrawablePrivate * dPriv, GLboolean *missed_target)
       swap.seqtype |= DRM_VBLANK_FLIP;
 
       intel_fb->pf_current_page = (((intel->sarea->pf_current_page >>
-				     (intel_fb->pf_pipes & 0x2)) & 0x3) + 1) %
+				     (intel_fb->pf_planes & 0x2)) & 0x3) + 1) %
 				  intel_fb->pf_num_pages;
    }
 
@@ -880,7 +884,7 @@ intelScheduleSwap(const __DRIdrawablePrivate * dPriv, GLboolean *missed_target)
    } else {
       if (swap.seqtype & DRM_VBLANK_FLIP) {
 	 intel_fb->pf_current_page = ((intel->sarea->pf_current_page >>
-					(intel_fb->pf_pipes & 0x2)) & 0x3) %
+					(intel_fb->pf_planes & 0x2)) & 0x3) %
 				     intel_fb->pf_num_pages;
       }
 
@@ -1120,6 +1124,15 @@ intel_draw_buffer(GLcontext * ctx, struct gl_framebuffer *fb)
       ctx->Driver.Enable(ctx, GL_STENCIL_TEST, ctx->Stencil.Enabled);
    }
 
+   /*
+    * Update depth test state
+    */
+   if (ctx->Depth.Test && fb->Visual.depthBits > 0) {
+      ctx->Driver.Enable(ctx, GL_DEPTH_TEST, GL_TRUE);
+   }
+   else {
+      ctx->Driver.Enable(ctx, GL_DEPTH_TEST, GL_FALSE);
+   }
 
    /**
     ** Release old regions, reference new regions

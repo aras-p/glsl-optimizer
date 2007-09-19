@@ -43,10 +43,9 @@
 #include "prog_parameter.h"
 #include "prog_print.h"
 #include "prog_statevars.h"
-#include "shader_api.h"
-
-#include "slang_compile.h"
-#include "slang_link.h"
+#include "shader/shader_api.h"
+#include "shader/slang/slang_compile.h"
+#include "shader/slang/slang_link.h"
 
 
 
@@ -378,7 +377,7 @@ _mesa_attach_shader(GLcontext *ctx, GLuint program, GLuint shader)
    struct gl_shader_program *shProg
       = _mesa_lookup_shader_program(ctx, program);
    struct gl_shader *sh = _mesa_lookup_shader(ctx, shader);
-   const GLuint n = shProg->NumShaders;
+   GLuint n;
    GLuint i;
 
    if (!shProg || !sh) {
@@ -386,6 +385,8 @@ _mesa_attach_shader(GLcontext *ctx, GLuint program, GLuint shader)
                   "glAttachShader(bad program or shader name)");
       return;
    }
+
+   n = shProg->NumShaders;
 
    for (i = 0; i < n; i++) {
       if (shProg->Shaders[i] == sh) {
@@ -548,7 +549,7 @@ _mesa_detach_shader(GLcontext *ctx, GLuint program, GLuint shader)
 {
    struct gl_shader_program *shProg
       = _mesa_lookup_shader_program(ctx, program);
-   const GLuint n = shProg->NumShaders;
+   GLuint n;
    GLuint i, j;
 
    if (!shProg) {
@@ -556,6 +557,8 @@ _mesa_detach_shader(GLcontext *ctx, GLuint program, GLuint shader)
                   "glDetachShader(bad program or shader name)");
       return;
    }
+
+   n = shProg->NumShaders;
 
    for (i = 0; i < n; i++) {
       if (shProg->Shaders[i]->Name == shader) {
@@ -780,7 +783,7 @@ _mesa_get_programiv(GLcontext *ctx, GLuint program,
       *params = shProg->Validated;
       break;
    case GL_INFO_LOG_LENGTH:
-      *params = shProg->InfoLog ? strlen(shProg->InfoLog) : 0;
+      *params = shProg->InfoLog ? strlen(shProg->InfoLog) + 1 : 0;
       break;
    case GL_ATTACHED_SHADERS:
       *params = shProg->NumShaders;
@@ -832,10 +835,10 @@ _mesa_get_shaderiv(GLcontext *ctx, GLuint name, GLenum pname, GLint *params)
       *params = shader->CompileStatus;
       break;
    case GL_INFO_LOG_LENGTH:
-      *params = shader->InfoLog ? strlen(shader->InfoLog) : 0;
+      *params = shader->InfoLog ? strlen(shader->InfoLog) + 1 : 0;
       break;
    case GL_SHADER_SOURCE_LENGTH:
-      *params = shader->Source ? strlen((char *) shader->Source) : 0;
+      *params = shader->Source ? strlen((char *) shader->Source) + 1 : 0;
       break;
    default:
       _mesa_error(ctx, GL_INVALID_ENUM, "glGetShaderiv(pname)");

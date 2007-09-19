@@ -134,6 +134,15 @@ $(TOP)/$(LIB_DIR)/$(OSMESA_LIB_NAME): $(OSMESA_DRIVER_OBJECTS) $(OSMESA16_OBJECT
 
 
 ######################################################################
+# libGL pkg-config file
+pcedit = sed \
+	-e 's,@INSTALL_DIR@,$(INSTALL_DIR),' \
+	-e 's,@LIB_DIR@,$(LIB_DIR),' \
+	-e 's,@VERSION@,$(MESA_MAJOR).$(MESA_MINOR).$(MESA_TINY),'
+gl.pc: gl.pc.in
+	$(pcedit) $< > $@
+
+######################################################################
 # Generic stuff
 
 depend: $(ALL_SOURCES)
@@ -148,23 +157,25 @@ subdirs:
 	@ (cd x86-64 ; $(MAKE))
 
 
-install: default
-	$(INSTALL) -d $(INSTALL_DIR)/include/GL
-	$(INSTALL) -d $(INSTALL_DIR)/$(LIB_DIR)
-	$(INSTALL) -m 644 $(TOP)/include/GL/*.h $(INSTALL_DIR)/include/GL
+install: default gl.pc
+	$(INSTALL) -d $(DESTDIR)$(INSTALL_DIR)/include/GL
+	$(INSTALL) -d $(DESTDIR)$(INSTALL_DIR)/$(LIB_DIR)
+	$(INSTALL) -d $(DESTDIR)$(INSTALL_DIR)/$(LIB_DIR)/pkgconfig
+	$(INSTALL) -m 644 $(TOP)/include/GL/*.h $(DESTDIR)$(INSTALL_DIR)/include/GL
 	@if [ -e $(TOP)/$(LIB_DIR)/$(GL_LIB_NAME) ]; then \
-		$(INSTALL) $(TOP)/$(LIB_DIR)/libGL* $(INSTALL_DIR)/$(LIB_DIR); \
+		$(INSTALL) $(TOP)/$(LIB_DIR)/libGL* $(DESTDIR)$(INSTALL_DIR)/$(LIB_DIR); \
 	fi
+	$(INSTALL) -m 644 gl.pc $(DESTDIR)$(INSTALL_DIR)/$(LIB_DIR)/pkgconfig
 	@if [ -e $(TOP)/$(LIB_DIR)/$(OSMESA_LIB_NAME) ]; then \
-		$(INSTALL) $(TOP)/$(LIB_DIR)/libOSMesa* $(INSTALL_DIR)/$(LIB_DIR); \
+		$(INSTALL) $(TOP)/$(LIB_DIR)/libOSMesa* $(DESTDIR)$(INSTALL_DIR)/$(LIB_DIR); \
 	fi
 	@if [ "${DRIVER_DIRS}" = "dri" ] ; then \
 		cd drivers/dri ; $(MAKE) install ; \
 	fi
 
 ## NOT INSTALLED YET:
-## $(INSTALL) -d $(INSTALL_DIR)/include/GLES
-## $(INSTALL) -m 644 include/GLES/*.h $(INSTALL_DIR)/include/GLES
+## $(INSTALL) -d $(DESTDIR)$(INSTALL_DIR)/include/GLES
+## $(INSTALL) -m 644 include/GLES/*.h $(DESTDIR)$(INSTALL_DIR)/include/GLES
 
 
 # Emacs tags
@@ -176,9 +187,9 @@ clean:
 	-rm -f */*/*.o
 	-rm -f depend depend.bak libmesa.a
 	-rm -f drivers/*/*.o
-	(cd drivers/dri ; $(MAKE) clean)
-	(cd x86 ; $(MAKE) clean)
-	(cd x86-64 ; $(MAKE) clean)
+	(cd drivers/dri && $(MAKE) clean)
+	(cd x86 && $(MAKE) clean)
+	(cd x86-64 && $(MAKE) clean)
 
 
 include depend

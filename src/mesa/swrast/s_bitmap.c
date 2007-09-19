@@ -82,7 +82,9 @@ _swrast_Bitmap( GLcontext *ctx, GLint px, GLint py,
    if (SWRAST_CONTEXT(ctx)->NewState)
       _swrast_validate_derived( ctx );
 
-   INIT_SPAN(span, GL_BITMAP, width, 0, SPAN_XY);
+   INIT_SPAN(span, GL_BITMAP);
+   span.end = width;
+   span.arrayMask = SPAN_XY;
    _swrast_span_default_attribs(ctx, &span);
 
    for (row = 0; row < height; row++) {
@@ -180,7 +182,9 @@ _swrast_Bitmap( GLcontext *ctx, GLint px, GLint py,
    if (SWRAST_CONTEXT(ctx)->NewState)
       _swrast_validate_derived( ctx );
 
-   INIT_SPAN(span, GL_BITMAP, width, 0, SPAN_MASK);
+   INIT_SPAN(span, GL_BITMAP);
+   span.end = width;
+   span.arrayMask = SPAN_MASK;
    _swrast_span_default_attribs(ctx, &span);
 
    /*span.arrayMask |= SPAN_MASK;*/  /* we'll init span.mask[] */

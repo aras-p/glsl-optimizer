@@ -47,6 +47,8 @@ static GLfloat Xrot = 0, Yrot = 0;
 static GLfloat EyeDist = 10;
 static GLboolean use_vertex_arrays = GL_FALSE;
 static GLboolean anim = GL_TRUE;
+static GLboolean NoClear = GL_FALSE;
+static GLint FrameParity = 0;
 
 #define eps1 0.99
 #define br   20.0  /* box radius */
@@ -156,7 +158,30 @@ static void draw_skybox( void )
 
 static void draw( void )
 {
-   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+   if (NoClear) {
+      /* This demonstrates how we can avoid calling glClear.
+       * This method only works if every pixel in the window is painted for
+       * every frame.
+       * We can simply skip clearing of the color buffer in this case.
+       * For the depth buffer, we alternately use a different subrange of
+       * the depth buffer for each frame.  For the odd frame use the range
+       * [0, 0.5] with GL_LESS.  For the even frames, use the range [1, 0.5]
+       * with GL_GREATER.
+       */
+      FrameParity = 1 - FrameParity;
+      if (FrameParity) {
+         glDepthRange(0.0, 0.5);
+         glDepthFunc(GL_LESS);
+      }
+      else {
+         glDepthRange(1.0, 0.5);
+         glDepthFunc(GL_GREATER);
+      }      
+   }
+   else {
+      /* ordinary clearing */
+      glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+   }
 
    glPushMatrix(); /*MODELVIEW*/
       glTranslatef( 0.0, 0.0, -EyeDist );
@@ -452,6 +477,24 @@ static void usage(void)
 }
 
 
+static void parse_args(int argc, char *argv[])
+{
+   int initFlag = 0;
+   int i;
+
+   for (i = 1; i < argc; i++) {
+      if (strcmp(argv[i], "-i") == 0)
+         initFlag = 1;
+      else if (strcmp(argv[i], "--noclear") == 0)
+         NoClear = GL_TRUE;
+      else {
+         fprintf(stderr, "Bad option: %s\n", argv[i]);
+         exit(1);
+      }
+   }
+   init (initFlag);
+}
+
 int main( int argc, char *argv[] )
 {
    glutInit(&argc, argv);
@@ -459,17 +502,13 @@ int main( int argc, char *argv[] )
    glutInitWindowSize(600, 500);
    glutInitDisplayMode( GLUT_RGB | GLUT_DEPTH | GLUT_DOUBLE );
    glutCreateWindow("Texture Cube Mapping");
-
-   if (argc > 1 && strcmp(argv[1] , "-i") == 0)
-      init( 1 );
-   else
-      init( 0 );
    glutReshapeFunc( reshape );
    glutKeyboardFunc( key );
    glutSpecialFunc( specialkey );
    glutDisplayFunc( draw );
    if (anim)
       glutIdleFunc(idle);
+   parse_args(argc, argv);
    usage();
    glutMainLoop();
    return 0;

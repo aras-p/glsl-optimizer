@@ -67,18 +67,22 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
 
-#include "glheader.h"
-#include "context.h"
-#include "dlist.h"
-#include "enums.h"
-#include "macros.h"
-#include "api_validate.h"
-#include "api_arrayelt.h"
-#include "vtxfmt.h"
-#include "dispatch.h"
+#include "main/glheader.h"
+#include "main/context.h"
+#include "main/dlist.h"
+#include "main/enums.h"
+#include "main/macros.h"
+#include "main/api_validate.h"
+#include "main/api_arrayelt.h"
+#include "main/vtxfmt.h"
+#include "glapi/dispatch.h"
 
 #include "vbo_context.h"
 
+
+#ifdef ERROR
+#undef ERROR
+#endif
 
 
 /*
@@ -859,6 +863,9 @@ static void GLAPIENTRY _save_OBE_DrawElements(GLenum mode, GLsizei count, GLenum
       return;
 
    _ae_map_vbos( ctx );
+
+   if (ctx->Array.ElementArrayBufferObj->Name)
+      indices = ADD_POINTERS(ctx->Array.ElementArrayBufferObj->Pointer, indices);
 
    vbo_save_NotifyBegin( ctx, mode | VBO_SAVE_PRIM_WEAK );
 

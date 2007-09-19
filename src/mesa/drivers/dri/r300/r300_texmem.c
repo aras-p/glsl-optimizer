@@ -505,7 +505,7 @@ int r300UploadTexImages(r300ContextPtr rmesa, r300TexObjPtr t, GLuint face)
 			t->base.lastLevel);
 	}
 
-	if (!t || t->base.totalSize == 0)
+	if (t->base.totalSize == 0)
 		return 0;
 
 	if (RADEON_DEBUG & DEBUG_SYNC) {

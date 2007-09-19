@@ -29,18 +29,19 @@
 #include "macros.h"
 #include "enums.h"
 
+#include "shader/prog_instruction.h"
+#include "shader/prog_parameter.h"
+#include "shader/program.h"
+#include "shader/programopt.h"
+
 #include "tnl/tnl.h"
 #include "tnl/t_context.h"
+
 #include "intel_batchbuffer.h"
 
 #include "i915_reg.h"
 #include "i915_context.h"
 #include "i915_program.h"
-
-#include "prog_instruction.h"
-#include "prog_parameter.h"
-#include "program.h"
-#include "programopt.h"
 
 
 
@@ -304,7 +305,7 @@ static void upload_program( struct i915_fragment_program *p )
 			 A0_MUL,
 			 tmp, A0_DEST_CHANNEL_X, 0,
 			 src0, 
-			 i915_emit_const1f(p, 1.0/(M_PI * 2)),
+			 i915_emit_const1f(p, 1.0/(M_PI)),
 			 0);
 
 	 i915_emit_arith( p, 
@@ -319,7 +320,7 @@ static void upload_program( struct i915_fragment_program *p )
 			 A0_MUL,
 			 tmp, A0_DEST_CHANNEL_X, 0,
 			 tmp, 
-			 i915_emit_const1f(p, (M_PI * 2)),
+			 i915_emit_const1f(p, (M_PI)),
 			 0);
 
 	 /* 
@@ -645,7 +646,7 @@ static void upload_program( struct i915_fragment_program *p )
 			 A0_MUL,
 			 tmp, A0_DEST_CHANNEL_X, 0,
 			 src0, 
-			 i915_emit_const1f(p, 1.0/(M_PI * 2)),
+			 i915_emit_const1f(p, 1.0/(M_PI)),
 			 0);
 
 	 i915_emit_arith( p, 
@@ -660,7 +661,7 @@ static void upload_program( struct i915_fragment_program *p )
 			 A0_MUL,
 			 tmp, A0_DEST_CHANNEL_X, 0,
 			 tmp, 
-			 i915_emit_const1f(p, (M_PI * 2)),
+			 i915_emit_const1f(p, (M_PI)),
 			 0);
 
 	 /* 

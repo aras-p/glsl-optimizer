@@ -27,7 +27,8 @@
 
 #include "intel_batchbuffer.h"
 #include "intel_ioctl.h"
-#include "i915_disasm.h"
+#include "intel_decode.h"
+#include "i915_debug.h"
 
 /* Relocations in kernel space:
  *    - pass dma buffer seperately
@@ -67,9 +68,6 @@
  * modifying cliprects ???
  */
 
-/*======================================================================
- * Public functions
- */
 void
 intel_batchbuffer_reset(struct intel_batchbuffer *batch)
 {
@@ -197,7 +195,7 @@ do_flush_locked(struct intel_batchbuffer *batch,
 
    if (INTEL_DEBUG & DEBUG_BATCH) {
       dri_bo_map(batch->buf, GL_FALSE);
-      i915_disasm(ptr, used / 4, batch->buf->offset);
+      intel_decode(ptr, used / 4, batch->buf->offset);
       dri_bo_unmap(batch->buf);
    }
 }

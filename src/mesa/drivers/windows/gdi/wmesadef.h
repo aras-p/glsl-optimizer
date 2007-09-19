@@ -1,6 +1,8 @@
 #ifndef WMESADEF_H
 #define WMESADEF_H
-
+#ifdef __MINGW32__
+#include <windows.h>
+#endif
 #include "context.h"
 
 

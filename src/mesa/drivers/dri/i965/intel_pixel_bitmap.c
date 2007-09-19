@@ -168,12 +168,15 @@ do_blit_bitmap( GLcontext *ctx,
 {
    struct intel_context *intel = intel_context(ctx);
    struct intel_region *dst = intel_drawbuf_region(intel);
-   
+   GLfloat tmpColor[4];
+
    union {
       GLuint ui;
       GLubyte ub[4];
    } color;
 
+   if (!dst)
+       return GL_FALSE;
 
    if (unpack->BufferObj->Name) {
       bitmap = map_pbo(ctx, width, height, unpack, bitmap);
@@ -181,10 +184,16 @@ do_blit_bitmap( GLcontext *ctx,
 	 return GL_TRUE;	/* even though this is an error, we're done */
    }
 
-   UNCLAMPED_FLOAT_TO_CHAN(color.ub[0], ctx->Current.RasterColor[2]);
-   UNCLAMPED_FLOAT_TO_CHAN(color.ub[1], ctx->Current.RasterColor[1]);
-   UNCLAMPED_FLOAT_TO_CHAN(color.ub[2], ctx->Current.RasterColor[0]);
-   UNCLAMPED_FLOAT_TO_CHAN(color.ub[3], ctx->Current.RasterColor[3]);
+   COPY_4V(tmpColor, ctx->Current.RasterColor);
+
+   if (NEED_SECONDARY_COLOR(ctx)) {
+       ADD_3V(tmpColor, tmpColor, ctx->Current.RasterSecondaryColor);
+   }
+
+   UNCLAMPED_FLOAT_TO_CHAN(color.ub[0], tmpColor[2]);
+   UNCLAMPED_FLOAT_TO_CHAN(color.ub[1], tmpColor[1]);
+   UNCLAMPED_FLOAT_TO_CHAN(color.ub[2], tmpColor[0]);
+   UNCLAMPED_FLOAT_TO_CHAN(color.ub[3], tmpColor[3]);
 
    /* Does zoom apply to bitmaps?
     */
@@ -226,10 +235,10 @@ do_blit_bitmap( GLcontext *ctx,
       dsty = dPriv->y + (dPriv->h - dsty - height);  
       dstx = dPriv->x + dstx;
 
-      dest_rect.x1 = dstx;
-      dest_rect.y1 = dsty;
-      dest_rect.x2 = dstx + width;
-      dest_rect.y2 = dsty + height;
+      dest_rect.x1 = dstx < 0 ? 0 : dstx;
+      dest_rect.y1 = dsty < 0 ? 0 : dsty;
+      dest_rect.x2 = dstx + width < 0 ? 0 : dstx + width;
+      dest_rect.y2 = dsty + height < 0 ? 0 : dsty + height;
 
       for (i = 0; i < nbox; i++) {
          drm_clip_rect_t rect;
@@ -260,7 +269,9 @@ do_blit_bitmap( GLcontext *ctx,
 	       int h = MIN2(DY, box_h - py);
 	       int w = MIN2(DX, box_w - px); 
 	       GLuint sz = align(align(w,8) * h, 64)/8;
-	    
+	       GLenum logic_op = ctx->Color.ColorLogicOpEnabled ?
+		  ctx->Color.LogicOp : GL_COPY;
+
 	       assert(sz <= sizeof(stipple));
 	       memset(stipple, 0, sz);
 
@@ -288,7 +299,8 @@ do_blit_bitmap( GLcontext *ctx,
 						  dst->tiled,
 						  rect.x1 + px,
 						  rect.y2 - (py + h),
-						  w, h);
+						  w, h,
+						  logic_op);
 	    } 
 	 } 
       }

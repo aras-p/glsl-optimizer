@@ -26,11 +26,20 @@
  *
  */
 
+/** @file intel_decode.c
+ * This file contains code to print out batchbuffer contents in a
+ * human-readable format.
+ *
+ * The current version only supports i915 packets, and only pretty-prints a
+ * subset of them.  The intention is for it to make just a best attempt to
+ * decode, but never crash in the process.
+ */
+
 #include <stdio.h>
 #include <stdarg.h>
 #include <inttypes.h>
 
-#include "i915_disasm.h"
+#include "intel_decode.h"
 #include "i915_reg.h"
 
 #define BUFFER_FAIL(_count, _len, _name) do {			\
@@ -782,7 +791,7 @@ decode_3d(uint32_t *data, int count, uint32_t hw_offset, int *failures)
  * \param hw_offset hardware address for the buffer
  */
 int
-i915_disasm(uint32_t *data, int count, uint32_t hw_offset)
+intel_decode(uint32_t *data, int count, uint32_t hw_offset)
 {
     int index = 0;
     int failures = 0;
@@ -815,7 +824,7 @@ i915_disasm(uint32_t *data, int count, uint32_t hw_offset)
     return failures;
 }
 
-void i915_disasm_context_reset()
+void intel_decode_context_reset()
 {
     saved_s2_set = 0;
     saved_s4_set = 1;

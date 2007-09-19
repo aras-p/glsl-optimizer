@@ -497,6 +497,86 @@ void brw_emit_line_setup( struct brw_sf_compile *c )
    } 
 }
 
+void brw_emit_point_sprite_setup( struct brw_sf_compile *c )
+{
+   struct brw_compile *p = &c->func;
+   GLuint i;
+
+   c->nr_verts = 1;
+   alloc_regs(c);
+   copy_z_inv_w(c);
+   for (i = 0; i < c->nr_setup_regs; i++)
+   {
+      struct brw_sf_point_tex *tex = &c->point_attrs[c->idx_to_attr[2*i]];
+      struct brw_reg a0 = offset(c->vert[0], i);
+      GLushort pc, pc_persp, pc_linear;
+      GLboolean last = calculate_masks(c, i, &pc, &pc_persp, &pc_linear);
+            
+      if (pc_persp)
+      {				
+	  if (!tex->CoordReplace) {
+	      brw_set_predicate_control_flag_value(p, pc_persp);
+	      brw_MUL(p, a0, a0, c->inv_w[0]);
+	  }
+      }
+
+      if (tex->CoordReplace) {
+	  /* Caculate 1.0/PointWidth */
+	  brw_math(&c->func,
+		  c->tmp,
+		  BRW_MATH_FUNCTION_INV,
+		  BRW_MATH_SATURATE_NONE,
+		  0,
+		  c->dx0,
+		  BRW_MATH_DATA_SCALAR,
+		  BRW_MATH_PRECISION_FULL);
+
+	  if (c->key.SpriteOrigin == GL_UPPER_LEFT) {
+	   	brw_MUL(p, c->m1Cx, c->tmp, c->inv_w[0]);
+		brw_MOV(p, vec1(suboffset(c->m1Cx, 1)), brw_imm_f(0.0));
+	  	brw_MUL(p, c->m2Cy, c->tmp, negate(c->inv_w[0]));
+		brw_MOV(p, vec1(suboffset(c->m2Cy, 0)), brw_imm_f(0.0));
+	  } else {
+	   	brw_MUL(p, c->m1Cx, c->tmp, c->inv_w[0]);
+		brw_MOV(p, vec1(suboffset(c->m1Cx, 1)), brw_imm_f(0.0));
+	  	brw_MUL(p, c->m2Cy, c->tmp, c->inv_w[0]);
+		brw_MOV(p, vec1(suboffset(c->m2Cy, 0)), brw_imm_f(0.0));
+	  }
+      } else {
+	  brw_MOV(p, c->m1Cx, brw_imm_ud(0));
+	  brw_MOV(p, c->m2Cy, brw_imm_ud(0));
+      }
+
+      {
+	 brw_set_predicate_control_flag_value(p, pc); 
+	 if (tex->CoordReplace) {
+	     if (c->key.SpriteOrigin == GL_UPPER_LEFT) {
+		 brw_MUL(p, c->m3C0, c->inv_w[0], brw_imm_f(1.0));
+		 brw_MOV(p, vec1(suboffset(c->m3C0, 0)), brw_imm_f(0.0));
+	     }
+	     else
+		 brw_MOV(p, c->m3C0, brw_imm_f(0.0));
+	 } else {
+	 	brw_MOV(p, c->m3C0, a0); /* constant value */
+	 }
+
+	 /* Copy m0..m3 to URB. 
+	  */
+	 brw_urb_WRITE(p, 
+		       brw_null_reg(),
+		       0,
+		       brw_vec8_grf(0, 0),
+		       0, 	/* allocate */
+		       1,	/* used */
+		       4, 	/* msg len */
+		       0,	/* response len */
+		       last, 	/* eot */
+		       last, 	/* writes complete */
+		       i*4,	/* urb destination offset */
+		       BRW_URB_SWIZZLE_TRANSPOSE);
+      }
+   }
+}
 
 /* Points setup - several simplifications as all attributes are
  * constant across the face of the point (point sprites excluded!)
@@ -561,6 +641,7 @@ void brw_emit_anyprim_setup( struct brw_sf_compile *c )
    struct brw_compile *p = &c->func;
    struct brw_reg ip = brw_ip_reg();
    struct brw_reg payload_prim = brw_uw1_reg(BRW_GENERAL_REGISTER_FILE, 1, 0);
+   struct brw_reg payload_attr = get_element_ud(brw_vec1_reg(BRW_GENERAL_REGISTER_FILE, 1, 0), 0); 
    struct brw_reg primmask;
    struct brw_instruction *jmp;
    struct brw_reg v1_null_ud = vec1(retype(brw_null_reg(), BRW_REGISTER_TYPE_UD));
@@ -582,7 +663,9 @@ void brw_emit_anyprim_setup( struct brw_sf_compile *c )
 					       (1<<_3DPRIM_TRIFAN_NOSTIPPLE)));
    jmp = brw_JMPI(p, ip, ip, brw_imm_w(0));
    {
+      brw_push_insn_state(p); 
       brw_emit_tri_setup( c );
+      brw_pop_insn_state(p);
       /* note - thread killed in subroutine */
    }
    brw_land_fwd_jump(p, jmp);
@@ -596,8 +679,20 @@ void brw_emit_anyprim_setup( struct brw_sf_compile *c )
 					       (1<<_3DPRIM_LINESTRIP_CONT_BF)));
    jmp = brw_JMPI(p, ip, ip, brw_imm_w(0));
    {
+      brw_push_insn_state(p); 
       brw_emit_line_setup( c );
+      brw_pop_insn_state(p);
       /* note - thread killed in subroutine */
+   }
+   brw_land_fwd_jump(p, jmp); 
+
+   brw_set_conditionalmod(p, BRW_CONDITIONAL_Z);
+   brw_AND(p, v1_null_ud, payload_attr, brw_imm_ud(1<<BRW_SPRITE_POINT_ENABLE));
+   jmp = brw_JMPI(p, ip, ip, brw_imm_w(0));
+   {
+      brw_push_insn_state(p); 
+      brw_emit_point_sprite_setup( c );
+      brw_pop_insn_state(p);
    }
    brw_land_fwd_jump(p, jmp); 
 

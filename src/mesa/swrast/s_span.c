@@ -1,6 +1,6 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.5.3
+ * Version:  7.1
  *
  * Copyright (C) 1999-2007  Brian Paul   All Rights Reserved.
  *
@@ -171,10 +171,11 @@ interpolate_active_attribs(GLcontext *ctx, SWspan *span, GLbitfield attrMask)
 {
    const SWcontext *swrast = SWRAST_CONTEXT(ctx);
 
-   /* for glDraw/CopyPixels() we may have turned off some bits in
-    * the _ActiveAttribMask - be sure to obey that mask now.
+   /*
+    * Don't overwrite existing array values, such as colors that may have
+    * been produced by glDraw/CopyPixels.
     */
-   attrMask &= swrast->_ActiveAttribMask;
+   attrMask &= ~span->arrayAttribs;
 
    ATTRIB_LOOP_BEGIN
       if (attrMask & (1 << attr)) {
@@ -201,6 +202,7 @@ interpolate_active_attribs(GLcontext *ctx, SWspan *span, GLbitfield attrMask)
             v3 += dv3dx;
             w += dwdx;
          }
+         ASSERT((span->arrayAttribs & (1 << attr)) == 0);
          span->arrayAttribs |= (1 << attr);
       }
    ATTRIB_LOOP_END
@@ -871,7 +873,7 @@ _swrast_write_index_span( GLcontext *ctx, SWspan *span)
 #endif
 
    /* we have to wait until after occlusion to do this test */
-   if (ctx->Color.DrawBuffer == GL_NONE || ctx->Color.IndexMask == 0) {
+   if (ctx->Color.IndexMask == 0) {
       /* write no pixels */
       span->arrayMask = origArrayMask;
       return;
@@ -1150,6 +1152,7 @@ convert_color_type(SWspan *span, GLenum newType, GLuint output)
                         span->end, span->array->mask);
 
    span->array->ChanType = newType;
+   span->array->rgba = dst;
 }
 
 
@@ -1177,7 +1180,10 @@ shade_texture_span(GLcontext *ctx, SWspan *span)
       if (span->primitive == GL_BITMAP && span->array->ChanType != GL_FLOAT) {
          convert_color_type(span, GL_FLOAT, 0);
       }
-      interpolate_active_attribs(ctx, span, ~0);
+      if (span->primitive != GL_POINT) {
+         /* for points, we populated the arrays already */
+         interpolate_active_attribs(ctx, span, ~0);
+      }
       span->array->ChanType = GL_FLOAT;
 
       if (!(span->arrayMask & SPAN_Z))
@@ -1234,7 +1240,8 @@ _swrast_write_rgba_span( GLcontext *ctx, SWspan *span)
    const GLbitfield origInterpMask = span->interpMask;
    const GLbitfield origArrayMask = span->arrayMask;
    const GLbitfield origArrayAttribs = span->arrayAttribs;
-   const GLenum chanType = span->array->ChanType;
+   const GLenum origChanType = span->array->ChanType;
+   void * const origRgba = span->array->rgba;
    const GLboolean shader = (ctx->FragmentProgram._Current
                              || ctx->ATIFragmentShader._Enabled);
    const GLboolean shaderOrTexture = shader || ctx->Texture._EnabledUnits;
@@ -1351,7 +1358,7 @@ _swrast_write_rgba_span( GLcontext *ctx, SWspan *span)
 
 #if CHAN_BITS == 32
    if ((span->arrayAttribs & FRAG_BIT_COL0) == 0) {
-      interpolate_int_colors(ctx, span);
+      interpolate_active_attribs(ctx, span, FRAG_BIT_COL0);
    }
 #else
    if ((span->arrayMask & SPAN_RGBA) == 0) {
@@ -1456,7 +1463,8 @@ end:
    span->interpMask = origInterpMask;
    span->arrayMask = origArrayMask;
    span->arrayAttribs = origArrayAttribs;
-   span->array->ChanType = chanType;
+   span->array->ChanType = origChanType;
+   span->array->rgba = origRgba;
 }
 
 

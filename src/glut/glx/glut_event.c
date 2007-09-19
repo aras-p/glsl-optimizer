@@ -24,7 +24,7 @@
 # ifdef __sgi
 #  include <bstring.h>    /* prototype for bzero used by FD_ZERO */
 # endif
-# if (defined(SVR4) || defined(CRAY) || defined(AIXV3)) && !defined(FD_SETSIZE)
+# if (defined(__FreeBSD__) || defined(SVR4) || defined(CRAY) || defined(AIXV3)) && !defined(FD_SETSIZE)
 #  include <sys/select.h> /* select system call interface */
 #  ifdef luna
 #   include <sysent.h>
@@ -172,10 +172,14 @@ handleTimeouts(void)
   GETTIMEOFDAY(&now);
   while (IS_AT_OR_AFTER(__glutTimerList->timeout, now)) {
     timer = __glutTimerList;
-    __glutTimerList = timer->next;
+    /* call the timer function */
     timer->func(timer->value);
+    /* remove from the linked list */
+    __glutTimerList = timer->next;
+    /* put this timer on the "free" list */
     timer->next = freeTimerList;
     freeTimerList = timer;
+
     if (!__glutTimerList)
       break;
   }

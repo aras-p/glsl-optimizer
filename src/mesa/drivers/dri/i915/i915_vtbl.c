@@ -41,7 +41,8 @@
 #include "i915_reg.h"
 #include "i915_context.h"
 
-static void i915_render_start( intelContextPtr intel )
+static void
+i915_render_prevalidate(struct intel_context *intel)
 {
    GLcontext *ctx = &intel->ctx;
    i915ContextPtr i915 = I915_CONTEXT(intel);
@@ -54,6 +55,10 @@ static void i915_render_start( intelContextPtr intel )
    }
 }
 
+static void i915_render_start( intelContextPtr intel )
+{
+}
+
 
 static void i915_reduced_primitive_state( intelContextPtr intel,
 					  GLenum rprim )
@@ -64,6 +69,7 @@ static void i915_reduced_primitive_state( intelContextPtr intel,
     st1 &= ~ST1_ENABLE;
 
     switch (rprim) {
+    case GL_QUADS: /* from RASTERIZE(GL_QUADS) in t_dd_tritemp.h */
     case GL_TRIANGLES:
        if (intel->ctx.Polygon.StippleFlag &&
 	   intel->hw_stipple)
@@ -453,6 +459,7 @@ void i915InitVtbl( i915ContextPtr i915 )
    i915->intel.vtbl.lost_hardware = i915_lost_hardware;
    i915->intel.vtbl.reduced_primitive_state = i915_reduced_primitive_state;
    i915->intel.vtbl.render_start = i915_render_start;
+   i915->intel.vtbl.render_prevalidate = i915_render_prevalidate;
    i915->intel.vtbl.set_color_region = i915_set_color_region;
    i915->intel.vtbl.set_z_region = i915_set_z_region;
    i915->intel.vtbl.update_color_z_regions = i915_update_color_z_regions;

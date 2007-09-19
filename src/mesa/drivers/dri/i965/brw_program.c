@@ -29,15 +29,15 @@
   *   Keith Whitwell <keith@tungstengraphics.com>
   */
   
+#include "main/imports.h"
+#include "main/enums.h"
 #include "shader/prog_parameter.h"
+#include "shader/program.h"
+#include "tnl/tnl.h"
+
 #include "brw_context.h"
 #include "brw_aub.h"
 #include "brw_util.h"
-#include "program.h"
-#include "imports.h"
-#include "enums.h"
-#include "tnl/tnl.h"
-
 
 static void brwBindProgram( GLcontext *ctx,
 			    GLenum target, 

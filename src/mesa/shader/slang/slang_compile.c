@@ -28,11 +28,11 @@
  * \author Michal Krol
  */
 
-#include "imports.h"
-#include "context.h"
-#include "program.h"
-#include "prog_parameter.h"
-#include "grammar_mesa.h"
+#include "main/imports.h"
+#include "main/context.h"
+#include "shader/program.h"
+#include "shader/prog_parameter.h"
+#include "shader/grammar/grammar_mesa.h"
 #include "slang_codegen.h"
 #include "slang_compile.h"
 #include "slang_preprocess.h"
@@ -2135,7 +2135,7 @@ _slang_compile(GLcontext *ctx, struct gl_shader *shader)
          progTarget = GL_FRAGMENT_PROGRAM_ARB;
       shader->Programs
          = (struct gl_program **) malloc(sizeof(struct gl_program*));
-      shader->Programs[0] = _mesa_new_program(ctx, progTarget, 1);
+      shader->Programs[0] = ctx->Driver.NewProgram(ctx, progTarget, 1);
       shader->NumPrograms = 1;
 
       shader->Programs[0]->Parameters = _mesa_new_parameter_list();

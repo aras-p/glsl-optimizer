@@ -20,7 +20,7 @@
 
 /*
  * Mesa 3-D graphics library
- * Version:  7.0
+ * Version:  7.1
  *
  * Copyright (C) 1999-2007  Brian Paul   All Rights Reserved.
  *
@@ -254,7 +254,7 @@ _mesa_memset16( unsigned short *dst, unsigned short val, size_t n )
       *dst++ = val;
 }
 
-/** Wrapper around either memcpy() or bzero() */
+/** Wrapper around either memset() or bzero() */
 void
 _mesa_bzero( void *dst, size_t n )
 {
@@ -575,7 +575,11 @@ _mesa_ffs(int i)
  *          if no bits set.
  */
 int
+#ifdef __MINGW32__
+_mesa_ffsll(long val)
+#else
 _mesa_ffsll(long long val)
+#endif
 {
 #ifdef ffsll
    return ffsll(val);

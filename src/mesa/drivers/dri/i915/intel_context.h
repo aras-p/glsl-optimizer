@@ -112,6 +112,7 @@ struct intel_context
       void (*update_texture_state)( intelContextPtr intel );
 
       void (*render_start)( intelContextPtr intel );
+      void (*render_prevalidate) (struct intel_context * intel);
       void (*set_color_region)( intelContextPtr intel, const intelRegion *reg );
       void (*set_z_region)( intelContextPtr intel, const intelRegion *reg );
       void (*update_color_z_regions)(intelContextPtr intel,

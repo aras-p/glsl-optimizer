@@ -130,6 +130,7 @@ struct intel_context
       void (*update_texture_state) (struct intel_context * intel);
 
       void (*render_start) (struct intel_context * intel);
+      void (*render_prevalidate) (struct intel_context * intel);
       void (*set_draw_region) (struct intel_context * intel,
                                struct intel_region * draw_region,
                                struct intel_region * depth_region);

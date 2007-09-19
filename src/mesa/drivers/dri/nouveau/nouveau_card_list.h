@@ -1,7 +1,4 @@
 static nouveau_card nouveau_card_list[]={
-{0x0008,  "EDGE 3D",                               0,                             NV_03, 0},
-{0x0009,  "EDGE 3D",                               0,                             NV_03, 0},
-{0x0010,  "Mutara V08",                            0,                             NV_03, 0},
 {0x0020,  "RIVA TNT",                              NV04_DX5_TEXTURED_TRIANGLE,    NV_04, 0},
 {0x0028,  "RIVA TNT2/TNT2 Pro",                    NV04_DX5_TEXTURED_TRIANGLE,    NV_04, 0},
 {0x0029,  "RIVA TNT2 Ultra",                       NV04_DX5_TEXTURED_TRIANGLE,    NV_04, 0},
@@ -220,10 +217,6 @@ static nouveau_card nouveau_card_list[]={
 {0x03D1,  "GeForce 6100 nForce 405",               NV30_TCL_PRIMITIVE_3D|0x4400,  NV_44, 0},
 {0x03D2,  "GeForce 6100 nForce 400",               NV30_TCL_PRIMITIVE_3D|0x4400,  NV_44, 0},
 {0x03D5,  "GeForce 6100 nForce 420",               NV30_TCL_PRIMITIVE_3D|0x4400,  NV_44, 0},
-{0x0008,  "NV1",                                   0,                             NV_03, 0},
-{0x0009,  "DAC64",                                 0,                             NV_03, 0},
-{0x0018,  "Riva128",                               0,                             NV_03, 0},
-{0x0019,  "Riva128ZX",                             0,                             NV_03, 0},
 {0x0020,  "TNT",                                   NV04_DX5_TEXTURED_TRIANGLE,    NV_04, 0},
 {0x0028,  "TNT2",                                  NV04_DX5_TEXTURED_TRIANGLE,    NV_04, 0},
 {0x0029,  "UTNT2",                                 NV04_DX5_TEXTURED_TRIANGLE,    NV_04, 0},

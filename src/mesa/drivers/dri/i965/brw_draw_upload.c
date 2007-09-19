@@ -593,6 +593,28 @@ void brw_upload_indices( struct brw_context *brw,
 				 ib_size,
 				 index_buffer->ptr,
 				 bufferobj);
+   } else {
+       if (((1 << get_index_type(index_buffer->type)) - 1) & offset) {
+           struct gl_buffer_object *vbo;
+           GLuint voffset;
+           GLubyte *map = ctx->Driver.MapBuffer(ctx,
+                                                GL_ELEMENT_ARRAY_BUFFER_ARB,
+                                                GL_DYNAMIC_DRAW_ARB,
+                                                bufferobj);
+           map += offset;
+           get_space(brw, ib_size, &vbo, &voffset);
+           
+           ctx->Driver.BufferSubData(ctx,
+                                     GL_ELEMENT_ARRAY_BUFFER_ARB,
+                                     voffset,
+                                     ib_size,
+                                     map,
+                                     vbo);
+           ctx->Driver.UnmapBuffer(ctx, GL_ELEMENT_ARRAY_BUFFER_ARB, bufferobj);
+
+           bufferobj = vbo;
+           offset = voffset;
+       }
    }
 
    /* Emit the indexbuffer packet:

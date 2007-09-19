@@ -59,7 +59,7 @@
 #include "intel_regions.h"
 #include "intel_buffer_objects.h"
 #include "intel_fbo.h"
-#include "i915_disasm.h"
+#include "intel_decode.h"
 
 #include "drirenderbuffer.h"
 #include "vblank.h"
@@ -617,12 +617,23 @@ intelMakeCurrent(__DRIcontextPrivate * driContextPriv,
       if (intel->ctx.DrawBuffer == &intel_fb->Base) {
 
 	 if (intel->driDrawable != driDrawPriv) {
-	    intel_fb->vblank_flags = (intel->intelScreen->irq_active != 0)
-	       ? driGetDefaultVBlankFlags(&intel->optionCache)
-	       : VBLANK_FLAG_NO_IRQ;
-	    (*dri_interface->getUST) (&intel_fb->swap_ust);
-	    driDrawableInitVBlank(driDrawPriv, intel_fb->vblank_flags,
-				  &intel_fb->vbl_seq);
+	    if (driDrawPriv->pdraw->swap_interval == (unsigned)-1) {
+	       int i;
+
+	       intel_fb->vblank_flags = (intel->intelScreen->irq_active != 0)
+		  ? driGetDefaultVBlankFlags(&intel->optionCache)
+		 : VBLANK_FLAG_NO_IRQ;
+
+	       (*dri_interface->getUST) (&intel_fb->swap_ust);
+	       driDrawableInitVBlank(driDrawPriv, intel_fb->vblank_flags,
+				     &intel_fb->vbl_seq);
+	       intel_fb->vbl_waited = intel_fb->vbl_seq;
+
+	       for (i = 0; i < (intel->intelScreen->third.handle ? 3 : 2); i++) {
+		  if (intel_fb->color_rb[i])
+		     intel_fb->color_rb[i]->vbl_pending = intel_fb->vbl_seq;
+	       }
+	    }
 	    intel->driDrawable = driDrawPriv;
 	    intelWindowMoved(intel);
 	 }
@@ -667,7 +678,7 @@ intelContendedLock(struct intel_context *intel, GLuint flags)
       sarea->texAge = intel->hHWContext;
       dri_bufmgr_fake_contended_lock_take(intel->intelScreen->bufmgr);
       if (INTEL_DEBUG & DEBUG_BATCH)
-	 i915_disasm_context_reset();
+	 intel_decode_context_reset();
    }
 
    if (sarea->width != intelScreen->width ||
@@ -680,37 +691,27 @@ intelContendedLock(struct intel_context *intel, GLuint flags)
    if (sarea->width != intel->width ||
        sarea->height != intel->height ||
        sarea->rotation != intel->current_rotation) {
-      
-      void *batchMap = intel->batch->map;
-      
+      int numClipRects = intel->numClipRects;
+
       /*
        * FIXME: Really only need to do this when drawing to a
        * common back- or front buffer.
        */
 
       /*
-       * This will drop the outstanding batchbuffer on the floor
+       * This will essentially drop the outstanding batchbuffer on the floor.
        */
+      intel->numClipRects = 0;
 
-      if (batchMap != NULL) {
-	 dri_bo_unmap(intel->batch->buf);
-	 intel->batch->map = NULL;
-      }
+      if (intel->Fallback)
+	 _swrast_flush(&intel->ctx);
 
-      intel_batchbuffer_reset(intel->batch);
+      INTEL_FIREVERTICES(intel);
 
-      if (batchMap == NULL) {
-	 dri_bo_unmap(intel->batch->buf);
-	 intel->batch->map = NULL;
-      }
+      if (intel->batch->map != intel->batch->ptr)
+	 intel_batchbuffer_flush(intel->batch);
 
-      /* lose all primitives */
-      intel->prim.primitive = ~0;
-      intel->prim.start_ptr = 0;
-      intel->prim.flush = 0;
-
-      /* re-emit all state */
-      intel->vtbl.lost_hardware(intel);
+      intel->numClipRects = numClipRects;
 
       /* force window update */
       intel->lastStamp = 0;
@@ -751,7 +752,9 @@ void LOCK_HARDWARE( struct intel_context *intel )
 				    BUFFER_BACK_LEFT);
     }
 
-    if (intel_rb && (intel_fb->vbl_waited - intel_rb->vbl_pending) > (1<<23)) {
+    if (intel_rb && intel_fb->vblank_flags &&
+	!(intel_fb->vblank_flags & VBLANK_FLAG_NO_IRQ) &&
+	(intel_fb->vbl_waited - intel_rb->vbl_pending) > (1<<23)) {
 	drmVBlank vbl;
 
 	vbl.request.type = DRM_VBLANK_ABSOLUTE;

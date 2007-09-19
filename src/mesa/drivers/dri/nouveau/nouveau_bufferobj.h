@@ -2,10 +2,10 @@
 #define __NOUVEAU_BUFFEROBJ_H__
 
 #include "mtypes.h"
-#include "nouveau_buffers.h"
+#include "nouveau_mem.h"
 
 #define NOUVEAU_BO_VRAM_OK (NOUVEAU_MEM_FB | NOUVEAU_MEM_FB_ACCEPTABLE)
-#define NOUVEAU_BO_AGP_OK  (NOUVEAU_MEM_AGP | NOUVEAU_MEM_AGP_ACCEPTABLE)
+#define NOUVEAU_BO_GART_OK  (NOUVEAU_MEM_AGP | NOUVEAU_MEM_AGP_ACCEPTABLE)
 
 typedef struct nouveau_bufferobj_region_t {
 	uint32_t start;

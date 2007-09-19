@@ -130,6 +130,8 @@ sisAllocTexImage( sisContextPtr smesa, sisTexObjPtr t, int level,
 static void
 sisFreeTexImage( sisContextPtr smesa, sisTexObjPtr t, int level )
 {
+   assert(level >= 0);
+   assert(level < SIS_MAX_TEXTURE_LEVELS);
    if (t->image[level].Data == NULL)
       return;
 
@@ -213,7 +215,7 @@ sisDeleteTexture( GLcontext * ctx, struct gl_texture_object *texObj )
        */
       return;
    }
-   for (i = 0; i < MAX_TEXTURE_LEVELS; i++) {
+   for (i = 0; i < SIS_MAX_TEXTURE_LEVELS; i++) {
       sisFreeTexImage( smesa, t, i );
    }
 

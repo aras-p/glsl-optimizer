@@ -154,19 +154,44 @@ brwChooseTextureFormat( GLcontext *ctx, GLint internalFormat,
 
    case GL_RGB_S3TC:
    case GL_RGB4_S3TC:
+   case GL_COMPRESSED_RGB_S3TC_DXT1_EXT:
+       return &_mesa_texformat_rgb_dxt1;
+
+   case GL_COMPRESSED_RGBA_S3TC_DXT1_EXT:
+       return &_mesa_texformat_rgba_dxt1;
+
    case GL_RGBA_S3TC:
    case GL_RGBA4_S3TC:
    case GL_COMPRESSED_RGBA_S3TC_DXT3_EXT:
+       return &_mesa_texformat_rgba_dxt3;
+
    case GL_COMPRESSED_RGBA_S3TC_DXT5_EXT:
-   case GL_COMPRESSED_RGBA_S3TC_DXT1_EXT:
-   case GL_COMPRESSED_RGB_S3TC_DXT1_EXT:
-     return &_mesa_texformat_rgb_dxt1; /* there is no rgba support? */
+       return &_mesa_texformat_rgba_dxt5;
 
    case GL_DEPTH_COMPONENT:
    case GL_DEPTH_COMPONENT16:
    case GL_DEPTH_COMPONENT24:
    case GL_DEPTH_COMPONENT32:
       return &_mesa_texformat_z16;
+
+   case GL_SRGB_EXT:
+   case GL_SRGB8_EXT:
+   case GL_SRGB_ALPHA_EXT:
+   case GL_SRGB8_ALPHA8_EXT:
+   case GL_SLUMINANCE_EXT:
+   case GL_SLUMINANCE8_EXT:
+   case GL_SLUMINANCE_ALPHA_EXT:
+   case GL_SLUMINANCE8_ALPHA8_EXT:
+   case GL_COMPRESSED_SRGB_EXT:
+   case GL_COMPRESSED_SRGB_ALPHA_EXT:
+   case GL_COMPRESSED_SLUMINANCE_EXT:
+   case GL_COMPRESSED_SLUMINANCE_ALPHA_EXT:
+	return &_mesa_texformat_srgba8;
+   case GL_COMPRESSED_SRGB_S3TC_DXT1_EXT:
+   case GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT1_EXT:
+   case GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT3_EXT:
+   case GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT5_EXT:
+     return &_mesa_texformat_srgb_dxt1;
 
    default:
       fprintf(stderr, "unexpected texture format %s in %s\n", 

@@ -39,18 +39,13 @@ static void
 feedback_vertex(GLcontext * ctx, const SWvertex * v, const SWvertex * pv)
 {
    GLfloat win[4];
-   GLfloat color[4];
    const GLfloat *vtc = v->attrib[FRAG_ATTRIB_TEX0];
+   const GLfloat *color = v->attrib[FRAG_ATTRIB_COL0];
 
    win[0] = v->attrib[FRAG_ATTRIB_WPOS][0];
    win[1] = v->attrib[FRAG_ATTRIB_WPOS][1];
    win[2] = v->attrib[FRAG_ATTRIB_WPOS][2] / ctx->DrawBuffer->_DepthMaxF;
    win[3] = 1.0F / v->attrib[FRAG_ATTRIB_WPOS][3];
-
-   color[0] = CHAN_TO_FLOAT(pv->color[0]);
-   color[1] = CHAN_TO_FLOAT(pv->color[1]);
-   color[2] = CHAN_TO_FLOAT(pv->color[2]);
-   color[3] = CHAN_TO_FLOAT(pv->color[3]);
 
    _mesa_feedback_vertex(ctx, win, color, v->attrib[FRAG_ATTRIB_CI][0], vtc);
 }

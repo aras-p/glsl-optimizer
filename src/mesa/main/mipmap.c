@@ -1,8 +1,8 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.5.2
+ * Version:  7.1
  *
- * Copyright (C) 1999-2006  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2007  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -957,7 +957,8 @@ _mesa_generate_mipmap(GLcontext *ctx, GLenum target,
       GLint  components, size;
       GLchan *dst;
 
-      assert(texObj->Target == GL_TEXTURE_2D);
+      assert(texObj->Target == GL_TEXTURE_2D ||
+             texObj->Target == GL_TEXTURE_CUBE_MAP_ARB);
 
       if (srcImage->_BaseFormat == GL_RGB) {
          convertFormat = &_mesa_texformat_rgb;

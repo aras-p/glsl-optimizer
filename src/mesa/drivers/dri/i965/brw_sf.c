@@ -43,7 +43,7 @@
 #include "brw_sf.h"
 #include "brw_state.h"
 
-#define DO_SETUP_BITS ((1<<FRAG_ATTRIB_MAX)-1)
+#define DO_SETUP_BITS ((1<<(FRAG_ATTRIB_MAX)) - 1)
 
 static void compile_sf_prog( struct brw_context *brw,
 			     struct brw_sf_prog_key *key )
@@ -74,6 +74,11 @@ static void compile_sf_prog( struct brw_context *brw,
       if (c.key.attrs & (1<<i)) {
 	 c.attr_to_idx[i] = idx;
 	 c.idx_to_attr[idx] = i;
+	 if (i >= VERT_RESULT_TEX0 && i <= VERT_RESULT_TEX7) {
+		 c.point_attrs[i].CoordReplace = 
+			brw->attribs.Point->CoordReplace[i - VERT_RESULT_TEX0];
+	 } else
+		 c.point_attrs[i].CoordReplace = GL_FALSE;
 	 idx++;
       }
    
@@ -90,7 +95,10 @@ static void compile_sf_prog( struct brw_context *brw,
       break;
    case SF_POINTS:
       c.nr_verts = 1;
-      brw_emit_point_setup( &c );
+      if (key->do_point_sprite)
+	  brw_emit_point_sprite_setup( &c );
+      else
+	  brw_emit_point_setup( &c );
       break;
    case SF_UNFILLED_TRIS:
       c.nr_verts = 3;
@@ -162,7 +170,8 @@ static void upload_sf_prog( struct brw_context *brw )
       break;
    }
 
-
+   key.do_point_sprite = brw->attribs.Point->PointSprite;
+   key.SpriteOrigin = brw->attribs.Point->SpriteOrigin;
    /* _NEW_LIGHT */
    key.do_flat_shading = (brw->attribs.Light->ShadeModel == GL_FLAT);
    key.do_twoside_color = (brw->attribs.Light->Enabled && brw->attribs.Light->Model.TwoSide);
@@ -179,7 +188,7 @@ static void upload_sf_prog( struct brw_context *brw )
 
 const struct brw_tracked_state brw_sf_prog = {
    .dirty = {
-      .mesa  = (_NEW_LIGHT|_NEW_POLYGON),
+      .mesa  = (_NEW_LIGHT|_NEW_POLYGON|_NEW_POINT),
       .brw   = (BRW_NEW_REDUCED_PRIMITIVE),
       .cache = CACHE_NEW_VS_PROG
    },

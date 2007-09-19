@@ -38,8 +38,8 @@
 #include "glheader.h"
 #include <GL/internal/glcore.h>	/* __GLcontextModes (GLvisual) */
 #include "config.h"		/* Hardwired parameters */
-#include "glapitable.h"
-#include "glthread.h"
+#include "glapi/glapitable.h"
+#include "glapi/glthread.h"
 #include "math/m_matrix.h"	/* GLmatrix */
 #include "bitset.h"
 
@@ -917,7 +917,6 @@ struct gl_line_attrib
    GLushort StipplePattern;	/**< Stipple pattern */
    GLint StippleFactor;		/**< Stipple repeat factor */
    GLfloat Width;		/**< Line width */
-   GLfloat _Width;		/**< Clamped Line width */
 };
 
 
@@ -1063,7 +1062,6 @@ struct gl_point_attrib
 {
    GLboolean SmoothFlag;	/**< True if GL_POINT_SMOOTH is enabled */
    GLfloat Size;		/**< User-specified point size */
-   GLfloat _Size;		/**< Size clamped to Const.Min/MaxPointSize */
    GLfloat Params[3];		/**< GL_EXT_point_parameters */
    GLfloat MinSize, MaxSize;	/**< GL_EXT_point_parameters */
    GLfloat Threshold;		/**< GL_EXT_point_parameters */
@@ -1133,13 +1131,13 @@ struct gl_stencil_attrib
  * An index for each type of texture object
  */
 /*@{*/
-#define TEXTURE_1D_INDEX    0
-#define TEXTURE_2D_INDEX    1
-#define TEXTURE_3D_INDEX    2
-#define TEXTURE_CUBE_INDEX  3
-#define TEXTURE_RECT_INDEX  4
-#define TEXTURE_1D_ARRAY_INDEX    5
-#define TEXTURE_2D_ARRAY_INDEX    6
+#define TEXTURE_1D_INDEX       0
+#define TEXTURE_2D_INDEX       1
+#define TEXTURE_3D_INDEX       2
+#define TEXTURE_CUBE_INDEX     3
+#define TEXTURE_RECT_INDEX     4
+#define TEXTURE_1D_ARRAY_INDEX 5
+#define TEXTURE_2D_ARRAY_INDEX 6
 /*@}*/
 
 /**
@@ -1147,13 +1145,13 @@ struct gl_stencil_attrib
  * Used for Texture.Unit[]._ReallyEnabled flags.
  */
 /*@{*/
-#define TEXTURE_1D_BIT   (1 << TEXTURE_1D_INDEX)
-#define TEXTURE_2D_BIT   (1 << TEXTURE_2D_INDEX)
-#define TEXTURE_3D_BIT   (1 << TEXTURE_3D_INDEX)
-#define TEXTURE_CUBE_BIT (1 << TEXTURE_CUBE_INDEX)
-#define TEXTURE_RECT_BIT (1 << TEXTURE_RECT_INDEX)
-#define TEXTURE_1D_ARRAY_BIT   (1 << TEXTURE_1D_ARRAY_INDEX)
-#define TEXTURE_2D_ARRAY_BIT   (1 << TEXTURE_2D_ARRAY_INDEX)
+#define TEXTURE_1D_BIT       (1 << TEXTURE_1D_INDEX)
+#define TEXTURE_2D_BIT       (1 << TEXTURE_2D_INDEX)
+#define TEXTURE_3D_BIT       (1 << TEXTURE_3D_INDEX)
+#define TEXTURE_CUBE_BIT     (1 << TEXTURE_CUBE_INDEX)
+#define TEXTURE_RECT_BIT     (1 << TEXTURE_RECT_INDEX)
+#define TEXTURE_1D_ARRAY_BIT (1 << TEXTURE_1D_ARRAY_INDEX)
+#define TEXTURE_2D_ARRAY_BIT (1 << TEXTURE_2D_ARRAY_INDEX)
 /*@}*/
 
 
@@ -1327,8 +1325,6 @@ struct gl_texture_format
 };
 
 
-#define MAX_3D_TEXTURE_SIZE (1 << (MAX_3D_TEXTURE_LEVELS - 1))
-
 /**
  * Texture image state.  Describes the dimensions of a texture image,
  * the texel format and pointers to Texel Fetch functions.
@@ -1393,7 +1389,7 @@ struct gl_texture_image
 #define FACE_NEG_Y   3
 #define FACE_POS_Z   4
 #define FACE_NEG_Z   5
-#define MAX_FACES  6
+#define MAX_FACES    6
 /*@}*/
 
 
@@ -1404,6 +1400,7 @@ struct gl_texture_image
  */
 struct gl_texture_object
 {
+   _glthread_Mutex Mutex;	/**< for thread safety */
    GLint RefCount;		/**< reference count */
    GLuint Name;			/**< the user-visible texture object ID */
    GLenum Target;               /**< GL_TEXTURE_1D, GL_TEXTURE_2D, etc. */
@@ -1539,17 +1536,6 @@ struct gl_texture_unit
 
    struct gl_texture_object *_Current; /**< Points to really enabled tex obj */
 
-   /** These are used for glPush/PopAttrib */
-   /*@{*/
-   struct gl_texture_object Saved1D;
-   struct gl_texture_object Saved2D;
-   struct gl_texture_object Saved3D;
-   struct gl_texture_object SavedCubeMap;
-   struct gl_texture_object SavedRect;
-   struct gl_texture_object Saved1DArray;
-   struct gl_texture_object Saved2DArray;
-   /*@}*/
-
    /** GL_SGI_texture_color_table */
    /*@{*/
    struct gl_color_table ColorTable;
@@ -1590,13 +1576,8 @@ struct gl_texture_attrib
 
    struct gl_texture_unit Unit[MAX_TEXTURE_UNITS];
 
-   struct gl_texture_object *Proxy1D;
-   struct gl_texture_object *Proxy2D;
-   struct gl_texture_object *Proxy3D;
-   struct gl_texture_object *ProxyCubeMap;
-   struct gl_texture_object *ProxyRect;
-   struct gl_texture_object *Proxy1DArray;
-   struct gl_texture_object *Proxy2DArray;
+   /** Proxy texture objects */
+   struct gl_texture_object *ProxyTex[NUM_TEXTURE_TARGETS];
 
    /** GL_EXT_shared_texture_palette */
    GLboolean SharedPalette;
@@ -2193,10 +2174,9 @@ struct gl_shared_state
     * \todo Improve the granularity of locking.
     */
    /*@{*/
-   _glthread_Mutex TexMutex;		   /**< texobj thread safety */
-   GLuint TextureStateStamp;	           /**< state notification for shared tex  */
+   _glthread_Mutex TexMutex;		/**< texobj thread safety */
+   GLuint TextureStateStamp;	        /**< state notification for shared tex */
    /*@}*/
-
 
 
    /**
@@ -2886,7 +2866,6 @@ struct mesa_display_list
  */
 struct gl_dlist_state
 {
-   struct mesa_display_list *CallStack[MAX_LIST_NESTING];
    GLuint CallDepth;		/**< Current recursion calling depth */
 
    struct mesa_display_list *CurrentList;

@@ -409,6 +409,8 @@ test(GLenum type, GLint bits, const char *filename)
 
    printf("Rendering %d bit/channel image: %s\n", bits, filename);
 
+   OSMesaColorClamp(GL_TRUE);
+
    init_context();
    render_image();
    if (Gradient)
@@ -421,7 +423,7 @@ test(GLenum type, GLint bits, const char *filename)
    if (WriteFiles && filename != NULL) {
       if (type == GL_UNSIGNED_SHORT) {
          GLushort *buffer16 = (GLushort *) buffer;
-         GLubyte *buffer8 = malloc(WIDTH * HEIGHT * 4);
+         GLubyte *buffer8 = (GLubyte *) malloc(WIDTH * HEIGHT * 4);
          int i;
          for (i = 0; i < WIDTH * HEIGHT * 4; i++)
             buffer8[i] = buffer16[i] >> 8;
@@ -430,8 +432,9 @@ test(GLenum type, GLint bits, const char *filename)
       }
       else if (type == GL_FLOAT) {
          GLfloat *buffer32 = (GLfloat *) buffer;
-         GLubyte *buffer8 = malloc(WIDTH * HEIGHT * 4);
+         GLubyte *buffer8 = (GLubyte *) malloc(WIDTH * HEIGHT * 4);
          int i;
+         /* colors may be outside [0,1] so we need to clamp */
          for (i = 0; i < WIDTH * HEIGHT * 4; i++)
             buffer8[i] = (GLubyte) (buffer32[i] * 255.0);
          write_ppm(filename, buffer8, WIDTH, HEIGHT);

@@ -48,7 +48,7 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #define LOCAL_VARS							\
    nouveauContextPtr nmesa = NOUVEAU_CONTEXT(ctx);			\
-   nouveau_renderbuffer *nrb = (nouveau_renderbuffer *)rb;		\
+   nouveau_renderbuffer_t *nrb = (nouveau_renderbuffer_t *)rb;		\
    GLuint height = nrb->mesa.Height;					\
    GLubyte *map = (GLubyte *)(nrb->map ? nrb->map : nrb->mem->map) +    \
 	 (nmesa->drawY * nrb->pitch) + (nmesa->drawX * nrb->cpp);       \
@@ -67,7 +67,7 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
  * Color buffers
  */
 
-/* RGB565 */ 
+/* RGB565 */
 #define SPANTMP_PIXEL_FMT GL_RGB
 #define SPANTMP_PIXEL_TYPE GL_UNSIGNED_SHORT_5_6_5
 
@@ -86,40 +86,38 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #define GET_PTR(X,Y) (map + (Y)*nrb->pitch + (X)*nrb->cpp)
 #include "spantmp2.h"
 
-static void
-nouveauSpanRenderStart( GLcontext *ctx )
+static void nouveauSpanRenderStart(GLcontext * ctx)
 {
-   nouveauContextPtr nmesa = NOUVEAU_CONTEXT(ctx);
-   FIRE_RING();
-   LOCK_HARDWARE(nmesa);
-   nouveauWaitForIdleLocked( nmesa );
+	nouveauContextPtr nmesa = NOUVEAU_CONTEXT(ctx);
+	FIRE_RING();
+	LOCK_HARDWARE(nmesa);
+	nouveauWaitForIdleLocked(nmesa);
 }
 
-static void
-nouveauSpanRenderFinish( GLcontext *ctx )
+static void nouveauSpanRenderFinish(GLcontext * ctx)
 {
-   nouveauContextPtr nmesa = NOUVEAU_CONTEXT(ctx);
-   _swrast_flush( ctx );
-   nouveauWaitForIdleLocked( nmesa );
-   UNLOCK_HARDWARE( nmesa );
+	nouveauContextPtr nmesa = NOUVEAU_CONTEXT(ctx);
+	_swrast_flush(ctx);
+	nouveauWaitForIdleLocked(nmesa);
+	UNLOCK_HARDWARE(nmesa);
 }
 
-void nouveauSpanInitFunctions( GLcontext *ctx )
+void nouveauSpanInitFunctions(GLcontext * ctx)
 {
-   struct swrast_device_driver *swdd = _swrast_GetDeviceDriverReference(ctx);
-   swdd->SpanRenderStart	= nouveauSpanRenderStart;
-   swdd->SpanRenderFinish	= nouveauSpanRenderFinish;
+	struct swrast_device_driver *swdd =
+	    _swrast_GetDeviceDriverReference(ctx);
+	swdd->SpanRenderStart = nouveauSpanRenderStart;
+	swdd->SpanRenderFinish = nouveauSpanRenderFinish;
 }
 
 
 /**
  * Plug in the Get/Put routines for the given driRenderbuffer.
  */
-void
-nouveauSpanSetFunctions(nouveau_renderbuffer *nrb, const GLvisual *vis)
+void nouveauSpanSetFunctions(nouveau_renderbuffer_t * nrb)
 {
-   if (nrb->mesa._ActualFormat == GL_RGBA8)
-      nouveauInitPointers_ARGB8888(&nrb->mesa);
-   else if (nrb->mesa._ActualFormat == GL_RGB5)
-      nouveauInitPointers_RGB565(&nrb->mesa);
+	if (nrb->mesa._ActualFormat == GL_RGBA8)
+		nouveauInitPointers_ARGB8888(&nrb->mesa);
+	else			// if (nrb->mesa._ActualFormat == GL_RGB5)
+		nouveauInitPointers_RGB565(&nrb->mesa);
 }

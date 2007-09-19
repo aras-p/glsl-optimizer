@@ -28,16 +28,16 @@
  * \author Brian Paul
  */
 
-#include "imports.h"
-#include "context.h"
-#include "hash.h"
-#include "macros.h"
-#include "program.h"
-#include "prog_instruction.h"
-#include "prog_parameter.h"
-#include "prog_print.h"
-#include "prog_statevars.h"
-#include "shader_api.h"
+#include "main/imports.h"
+#include "main/context.h"
+#include "main/hash.h"
+#include "main/macros.h"
+#include "shader/program.h"
+#include "shader/prog_instruction.h"
+#include "shader/prog_parameter.h"
+#include "shader/prog_print.h"
+#include "shader/prog_statevars.h"
+#include "shader/shader_api.h"
 #include "slang_link.h"
 
 
@@ -329,8 +329,10 @@ _slang_resolve_attributes(struct gl_shader_program *shProg,
                 * glVertex/position.
                 */
                for (attr = 1; attr < MAX_VERTEX_ATTRIBS; attr++) {
-                  if (((1 << attr) & usedAttributes) == 0)
+                  if (((1 << attr) & usedAttributes) == 0) {
+                     usedAttributes |= (1 << attr);
                      break;
+                  }
                }
                if (attr == MAX_VERTEX_ATTRIBS) {
                   /* too many!  XXX record error log */

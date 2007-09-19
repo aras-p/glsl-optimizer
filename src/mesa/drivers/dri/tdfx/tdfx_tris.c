@@ -184,7 +184,7 @@ tdfx_translate_vertex( GLcontext *ctx, const tdfxVertex *src, SWvertex *dst)
       }
    }
 
-   dst->pointSize = ctx->Point._Size;
+   dst->pointSize = ctx->Point.Size;
 }
 
 

@@ -32,12 +32,14 @@
 
 #include "glheader.h"
 #include "imports.h"
+#include "buffers.h"
 #include "context.h"
 #include "depthstencil.h"
 #include "mtypes.h"
 #include "fbobject.h"
 #include "framebuffer.h"
 #include "renderbuffer.h"
+#include "texobj.h"
 
 
 
@@ -65,7 +67,9 @@ compute_depth_max(struct gl_framebuffer *fb)
       fb->_DepthMax = 0xffffffff;
    }
    fb->_DepthMaxF = (GLfloat) fb->_DepthMax;
-   fb->_MRD = 1.0;  /* Minimum resolvable depth value, for polygon offset */
+
+   /* Minimum resolvable depth value, for polygon offset */
+   fb->_MRD = 1.0 / fb->_DepthMaxF;
 }
 
 
@@ -135,7 +139,7 @@ _mesa_initialize_framebuffer(struct gl_framebuffer *fb, const GLvisual *visual)
    /* save the visual */
    fb->Visual = *visual;
 
-   /* Init glRead/DrawBuffer state */
+   /* Init read/draw renderbuffer state */
    if (visual->doubleBufferMode) {
       fb->ColorDrawBuffer[0] = GL_BACK;
       fb->_ColorDrawBufferMask[0] = BUFFER_BIT_BACK_LEFT;
@@ -190,17 +194,11 @@ _mesa_free_framebuffer_data(struct gl_framebuffer *fb)
          _mesa_reference_renderbuffer(&att->Renderbuffer, NULL);
       }
       if (att->Texture) {
-         /* render to texture */
-         att->Texture->RefCount--;
-         if (att->Texture->RefCount == 0) {
-            GET_CURRENT_CONTEXT(ctx);
-            if (ctx) {
-               ctx->Driver.DeleteTexture(ctx, att->Texture);
-            }
-         }
+         _mesa_reference_texobj(&att->Texture, NULL);
       }
+      ASSERT(!att->Renderbuffer);
+      ASSERT(!att->Texture);
       att->Type = GL_NONE;
-      att->Texture = NULL;
    }
 
    /* unbind _Depth/_StencilBuffer to decr ref counts */
@@ -586,7 +584,7 @@ _mesa_update_stencil_buffer(GLcontext *ctx,
 
 
 /**
- * Update the list of color drawing renderbuffer pointers.
+ * Update the (derived) list of color drawing renderbuffer pointers.
  * Later, when we're rendering we'll loop from 0 to _NumColorDrawBuffers
  * writing colors.
  */
@@ -630,7 +628,7 @@ update_color_draw_buffers(GLcontext *ctx, struct gl_framebuffer *fb)
 
 
 /**
- * Update the color read renderbuffer pointer.
+ * Update the (derived) color read renderbuffer pointer.
  * Unlike the DrawBuffer, we can only read from one (or zero) color buffers.
  */
 static void
@@ -653,35 +651,71 @@ update_color_read_buffer(GLcontext *ctx, struct gl_framebuffer *fb)
 
 
 /**
- * Update state related to the current draw/read framebuffers.
+ * Update a gl_framebuffer's derived state.
+ *
  * Specifically, update these framebuffer fields:
  *    _ColorDrawBuffers
  *    _NumColorDrawBuffers
  *    _ColorReadBuffer
  *    _DepthBuffer
  *    _StencilBuffer
- * If the current framebuffer is user-created, make sure it's complete.
- * The following functions can effect this state:  glReadBuffer,
- * glDrawBuffer, glDrawBuffersARB, glFramebufferRenderbufferEXT,
+ *
+ * If the framebuffer is user-created, make sure it's complete.
+ *
+ * The following functions (at least) can effect framebuffer state:
+ * glReadBuffer, glDrawBuffer, glDrawBuffersARB, glFramebufferRenderbufferEXT,
  * glRenderbufferStorageEXT.
  */
-void
-_mesa_update_framebuffer(GLcontext *ctx)
+static void
+update_framebuffer(GLcontext *ctx, struct gl_framebuffer *fb)
 {
-   struct gl_framebuffer *fb = ctx->DrawBuffer;
-
-   /* Completeness only matters for user-created framebuffers */
-   if (fb->Name != 0) {
+   if (fb->Name == 0) {
+      /* This is a window-system framebuffer */
+      /* Need to update the FB's GL_DRAW_BUFFER state to match the
+       * context state (GL_READ_BUFFER too).
+       */
+      if (fb->ColorDrawBuffer[0] != ctx->Color.DrawBuffer[0]) {
+         _mesa_drawbuffers(ctx, ctx->Const.MaxDrawBuffers,
+                           ctx->Color.DrawBuffer, NULL);
+      }
+      if (fb->ColorReadBuffer != ctx->Pixel.ReadBuffer) {
+         
+      }
+   }
+   else {
+      /* This is a user-created framebuffer.
+       * Completeness only matters for user-created framebuffers.
+       */
       _mesa_test_framebuffer_completeness(ctx, fb);
       _mesa_update_framebuffer_visual(fb);
    }
 
+   /* Strictly speaking, we don't need to update the draw-state
+    * if this FB is bound as ctx->ReadBuffer (and conversely, the
+    * read-state if this FB is bound as ctx->DrawBuffer), but no
+    * harm.
+    */
    update_color_draw_buffers(ctx, fb);
    update_color_read_buffer(ctx, fb);
    _mesa_update_depth_buffer(ctx, fb, BUFFER_DEPTH);
    _mesa_update_stencil_buffer(ctx, fb, BUFFER_STENCIL);
 
    compute_depth_max(fb);
+}
+
+
+/**
+ * Update state related to the current draw/read framebuffers.
+ */
+void
+_mesa_update_framebuffer(GLcontext *ctx)
+{
+   struct gl_framebuffer *drawFb = ctx->DrawBuffer;
+   struct gl_framebuffer *readFb = ctx->ReadBuffer;
+
+   update_framebuffer(ctx, drawFb);
+   if (readFb != drawFb)
+      update_framebuffer(ctx, readFb);
 }
 
 

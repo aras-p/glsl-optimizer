@@ -24,13 +24,13 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  *
  **************************************************************************/
-#include "glheader.h"
-#include "macros.h"
-#include "enums.h"
 
+#include "main/glheader.h"
+#include "main/macros.h"
+#include "main/enums.h"
 #include "tnl/t_context.h"
-#include "atifragshader.h"
-#include "program.h"
+#include "shader/atifragshader.h"
+#include "shader/program.h"
 #include "r200_context.h"
 #include "r200_ioctl.h"
 #include "r200_tex.h"

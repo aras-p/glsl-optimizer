@@ -26,13 +26,13 @@
  *    Keith Whitwell <keith@tungstengraphics.com>
  */
 
-#include "glheader.h"
-#include "context.h"
-#include "imports.h"
-#include "mtypes.h"
-#include "macros.h"
-#include "light.h"
-#include "state.h"
+#include "main/glheader.h"
+#include "main/context.h"
+#include "main/imports.h"
+#include "main/mtypes.h"
+#include "main/macros.h"
+#include "main/light.h"
+#include "main/state.h"
 
 #include "vbo_context.h"
 
@@ -132,9 +132,11 @@ static void vbo_bind_vertex_list( GLcontext *ctx,
    }
 
    for (attr = 0; attr < VBO_ATTRIB_MAX; attr++) {
-      if (node->attrsz[attr]) {
+      GLuint src = map[attr];
+
+      if (node->attrsz[src]) {
 	 arrays[attr].Ptr = (const GLubyte *)data;
-	 arrays[attr].Size = node->attrsz[attr];
+	 arrays[attr].Size = node->attrsz[src];
 	 arrays[attr].StrideB = node->vertex_size * sizeof(GLfloat);
 	 arrays[attr].Stride = node->vertex_size * sizeof(GLfloat);
 	 arrays[attr].Type = GL_FLOAT;

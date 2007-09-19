@@ -55,6 +55,7 @@ SOURCES = \
 	pbo.c \
 	prog_parameter.c \
 	projtex.c \
+	random.c \
 	readrate.c \
 	seccolor.c \
 	sharedtex.c \

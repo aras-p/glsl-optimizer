@@ -33,17 +33,18 @@ DRIVER_SOURCES = \
 	intel_pixel_draw.c \
 	intel_buffers.c \
 	intel_blit.c \
-	i915_disasm.c \
 	i915_tex.c \
 	i915_texstate.c \
 	i915_context.c \
 	i915_debug.c \
+	i915_debug_fp.c \
 	i915_fragprog.c \
 	i915_metaops.c \
 	i915_program.c \
 	i915_state.c \
 	i915_vtbl.c \
 	intel_context.c \
+	intel_decode.c \
 	intel_ioctl.c \
 	intel_rotate.c \
 	intel_screen.c \

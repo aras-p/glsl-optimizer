@@ -23,6 +23,9 @@
 #endif
 #include <X11/Xutil.h>
 #else
+#ifdef __MINGW32__
+#include <GL/gl.h>
+#endif
 #include <windows.h>
 #ifndef __CYGWIN32__
 #include <mmsystem.h>  /* Win32 Multimedia API header. */

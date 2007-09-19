@@ -9,6 +9,9 @@
 
 #include "glutint.h"
 #include <sys/timeb.h>
+#ifdef __MINGW32__
+#include <ctype.h>
+#endif
 
 #if defined(_WIN32) && !defined(__CYGWIN32__)
 #include <mmsystem.h>  /* Win32 Multimedia API header. */

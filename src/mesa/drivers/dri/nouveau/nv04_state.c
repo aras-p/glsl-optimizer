@@ -451,8 +451,8 @@ static GLboolean nv04InitCard(nouveauContextPtr nmesa)
 
 /* Update buffer offset/pitch/format */
 static GLboolean nv04BindBuffers(nouveauContextPtr nmesa, int num_color,
-		nouveau_renderbuffer **color,
-		nouveau_renderbuffer *depth)
+		nouveau_renderbuffer_t **color,
+		nouveau_renderbuffer_t *depth)
 {
 	GLuint x, y, w, h;
 	uint32_t depth_pitch=(depth?depth->pitch:0+15)&~15+16;

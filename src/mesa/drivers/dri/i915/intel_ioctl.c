@@ -53,6 +53,10 @@ u_int32_t intelGetLastFrame (intelContextPtr intel)
    return frame;
 }
 
+/**
+ * Emits a marker in the command stream, numbered from 0x00000001 to
+ * 0x7fffffff.
+ */
 int intelEmitIrqLocked( intelContextPtr intel )
 {
    drmI830IrqEmit ie;
@@ -61,6 +65,10 @@ int intelEmitIrqLocked( intelContextPtr intel )
    assert(((*(int *)intel->driHwLock) & ~DRM_LOCK_CONT) == 
 	  (DRM_LOCK_HELD|intel->hHWContext));
 
+   /* Valgrind can't tell that the kernel will have copyout()ed onto this
+    * value, so initialize it now to prevent false positives.
+    */
+   seq = 0;
    ie.irq_seq = &seq;
 	 
    ret = drmCommandWriteRead( intel->driFd, DRM_I830_IRQ_EMIT, 
@@ -76,6 +84,7 @@ int intelEmitIrqLocked( intelContextPtr intel )
    return seq;
 }
 
+/** Blocks on a marker returned by intelEitIrqLocked(). */
 void intelWaitIrq( intelContextPtr intel, int seq )
 {
    int ret;

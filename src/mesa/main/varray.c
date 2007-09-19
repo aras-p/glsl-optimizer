@@ -32,7 +32,7 @@
 #include "mtypes.h"
 #include "varray.h"
 #include "arrayobj.h"
-#include "dispatch.h"
+#include "glapi/dispatch.h"
 
 
 /**

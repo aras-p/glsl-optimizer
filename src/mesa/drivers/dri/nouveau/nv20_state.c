@@ -568,10 +568,10 @@ static void nv20Scissor(GLcontext *ctx, GLint x, GLint y, GLsizei w, GLsizei h)
 	   y += nmesa->drawY;
 	}
 
-        BEGIN_RING_CACHE(NvSub3D, NV20_TCL_PRIMITIVE_3D_SCISSOR_X2_X1, 1);
+        /*BEGIN_RING_CACHE(NvSub3D, NV20_TCL_PRIMITIVE_3D_SCISSOR_X2_X1, 1);
         OUT_RING_CACHE((w << 16) | x );
         BEGIN_RING_CACHE(NvSub3D, NV20_TCL_PRIMITIVE_3D_SCISSOR_Y2_Y1, 1);
-        OUT_RING_CACHE((h << 16) | y );
+        OUT_RING_CACHE((h << 16) | y );*/
 
 }
 
@@ -728,8 +728,8 @@ static GLboolean nv20InitCard(nouveauContextPtr nmesa)
 
 /* Update buffer offset/pitch/format */
 static GLboolean nv20BindBuffers(nouveauContextPtr nmesa, int num_color,
-				 nouveau_renderbuffer **color,
-				 nouveau_renderbuffer *depth)
+				 nouveau_renderbuffer_t **color,
+				 nouveau_renderbuffer_t *depth)
 {
 	GLuint x, y, w, h;
 	GLuint pitch, format, depth_pitch;
@@ -764,11 +764,11 @@ static GLboolean nv20BindBuffers(nouveauContextPtr nmesa, int num_color,
 	}
 
 	/* Always set to bottom left of buffer */
-	BEGIN_RING_CACHE(NvSub3D, NV20_TCL_PRIMITIVE_3D_VIEWPORT_ORIGIN_X, 4);
+	/*BEGIN_RING_CACHE(NvSub3D, NV20_TCL_PRIMITIVE_3D_VIEWPORT_ORIGIN_X, 4);
 	OUT_RING_CACHEf (0.0);
 	OUT_RING_CACHEf ((GLfloat) h);
 	OUT_RING_CACHEf (0.0);
-	OUT_RING_CACHEf (0.0);
+	OUT_RING_CACHEf (0.0);*/
 
 	return GL_TRUE;
 }
