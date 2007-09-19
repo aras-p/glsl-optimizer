@@ -117,15 +117,20 @@ struct pipe_context {
    void (*delete_depth_stencil_state)(struct pipe_context *,
                                       const struct pipe_depth_stencil_state *);
 
-   const struct pipe_shader_state * (*create_shader_state)(
+   const struct pipe_shader_state * (*create_fs_state)(
       struct pipe_context *,
       const struct pipe_shader_state *);
    void (*bind_fs_state)(struct pipe_context *,
                          const struct pipe_shader_state *);
+   void (*delete_fs_state)(struct pipe_context *,
+                           const struct pipe_shader_state *);
+   const struct pipe_shader_state * (*create_vs_state)(
+      struct pipe_context *,
+      const struct pipe_shader_state *);
    void (*bind_vs_state)(struct pipe_context *,
                          const struct pipe_shader_state *);
-   void (*delete_shader_state)(struct pipe_context *,
-                               const struct pipe_shader_state *);
+   void (*delete_vs_state)(struct pipe_context *,
+                           const struct pipe_shader_state *);
 
    void (*set_alpha_test_state)( struct pipe_context *,
                                  const struct pipe_alpha_test_state * );

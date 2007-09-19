@@ -373,10 +373,12 @@ i915_init_state_functions( struct i915_context *i915 )
    i915->pipe.create_rasterizer_state = i915_create_rasterizer_state;
    i915->pipe.bind_rasterizer_state = i915_bind_rasterizer_state;
    i915->pipe.delete_rasterizer_state = i915_delete_rasterizer_state;
-   i915->pipe.create_shader_state = i915_create_shader_state;
+   i915->pipe.create_fs_state = i915_create_shader_state;
    i915->pipe.bind_fs_state = i915_bind_fs_state;
+   i915->pipe.delete_fs_state = i915_delete_shader_state;
+   i915->pipe.create_vs_state = i915_create_shader_state;
    i915->pipe.bind_vs_state = i915_bind_vs_state;
-   i915->pipe.delete_shader_state = i915_delete_shader_state;
+   i915->pipe.delete_vs_state = i915_delete_shader_state;
 
    i915->pipe.set_alpha_test_state = i915_set_alpha_test_state;
    i915->pipe.set_blend_color = i915_set_blend_color;

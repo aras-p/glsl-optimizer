@@ -370,7 +370,7 @@ clear_with_quad(GLcontext *ctx,
       fs.inputs_read = tgsi_mesa_translate_fragment_input_mask(stfp->Base.Base.InputsRead);
       fs.outputs_written = tgsi_mesa_translate_fragment_output_mask(stfp->Base.Base.OutputsWritten);
       fs.tokens = &stfp->tokens[0];
-      cached = st_cached_shader_state(st, &fs);
+      cached = st_cached_fs_state(st, &fs);
       pipe->bind_fs_state(pipe, cached);
    }
 
@@ -386,7 +386,7 @@ clear_with_quad(GLcontext *ctx,
       vs.inputs_read = stvp->Base.Base.InputsRead;
       vs.outputs_written = stvp->Base.Base.OutputsWritten;
       vs.tokens = &stvp->tokens[0];
-      cached = st_cached_shader_state(st, &vs);
+      cached = st_cached_vs_state(st, &vs);
       pipe->bind_vs_state(pipe, cached);
    }
 

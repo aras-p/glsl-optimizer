@@ -347,7 +347,7 @@ draw_textured_quad(GLcontext *ctx, GLint x, GLint y, GLfloat z,
       memset(&fs, 0, sizeof(fs));
       fs.inputs_read = stfp->Base.Base.InputsRead;
       fs.tokens = &stfp->tokens[0];
-      cached = st_cached_shader_state(ctx->st, &fs);
+      cached = st_cached_fs_state(ctx->st, &fs);
       pipe->bind_fs_state(pipe, cached);
    }
 
@@ -363,7 +363,7 @@ draw_textured_quad(GLcontext *ctx, GLint x, GLint y, GLfloat z,
       vs.inputs_read = stvp->Base.Base.InputsRead;
       vs.outputs_written = stvp->Base.Base.OutputsWritten;
       vs.tokens = &stvp->tokens[0];
-      cached = st_cached_shader_state(ctx->st, &vs);
+      cached = st_cached_vs_state(ctx->st, &vs);
       pipe->bind_vs_state(pipe, cached);
    }
 

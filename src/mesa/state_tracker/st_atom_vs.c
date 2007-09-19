@@ -104,7 +104,7 @@ static void compile_vs( struct st_context *st )
 
    vs.tokens = &vp->tokens[0];
 
-   cached = st_cached_shader_state(st, &vs);
+   cached = st_cached_vs_state(st, &vs);
 
    vp->vs = cached;
 

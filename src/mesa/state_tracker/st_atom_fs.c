@@ -77,7 +77,7 @@ static void compile_fs( struct st_context *st )
    fs.outputs_written
       = tgsi_mesa_translate_fragment_output_mask(fp->Base.Base.OutputsWritten);
    fs.tokens = &fp->tokens[0];
-   cached = st_cached_shader_state(st, &fs);
+   cached = st_cached_fs_state(st, &fs);
    fp->fsx = cached;
 
    if (TGSI_DEBUG)

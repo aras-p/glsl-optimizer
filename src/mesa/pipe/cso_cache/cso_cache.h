@@ -44,7 +44,8 @@ struct cso_cache {
    struct cso_hash *sampler_hash;
    struct cso_hash *depth_stencil_hash;
    struct cso_hash *rasterizer_hash;
-   struct cso_hash *shader_hash;
+   struct cso_hash *fs_hash;
+   struct cso_hash *vs_hash;
 };
 
 enum cso_cache_type {
@@ -52,7 +53,8 @@ enum cso_cache_type {
    CSO_SAMPLER,
    CSO_DEPTH_STENCIL,
    CSO_RASTERIZER,
-   CSO_SHADER
+   CSO_FRAGMENT_SHADER,
+   CSO_VERTEX_SHADER
 };
 
 unsigned cso_construct_key(void *item, int item_size);
