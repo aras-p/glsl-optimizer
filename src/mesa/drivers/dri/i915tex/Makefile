@@ -44,6 +44,7 @@ DRIVER_SOURCES = \
 	i915_state.c \
 	i915_vtbl.c \
 	intel_context.c \
+	intel_decode.c \
 	intel_ioctl.c \
 	intel_rotate.c \
 	intel_screen.c \

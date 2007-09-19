@@ -27,6 +27,7 @@
 
 #include "intel_batchbuffer.h"
 #include "intel_ioctl.h"
+#include "intel_decode.h"
 #include "i915_debug.h"
 
 /* Relocations in kernel space:
@@ -66,16 +67,6 @@
  * server automatically waits on its own dma to complete before
  * modifying cliprects ???
  */
-
-static void
-intel_dump_batchbuffer(GLuint offset, GLuint * ptr, GLuint count)
-{
-   int i;
-   fprintf(stderr, "\n\n\nSTART BATCH (%d dwords):\n", count / 4);
-   for (i = 0; i < count / 4; i += 1)
-      fprintf(stderr, "\t0x%08x\n", ptr[i]);
-   fprintf(stderr, "END BATCH\n\n\n");
-}
 
 void
 intel_batchbuffer_reset(struct intel_batchbuffer *batch)
@@ -186,11 +177,8 @@ do_flush_locked(struct intel_batchbuffer *batch,
       ptr[r->offset / 4] = driBOOffset(r->buf) + r->delta;
    }
 
-   if (INTEL_DEBUG & DEBUG_BATCH) {
-      if (0) i915_dump_batchbuffer(ptr, ptr + used/4);
-      intel_dump_batchbuffer(0, ptr, used);
-   }
-
+   if (INTEL_DEBUG & DEBUG_BATCH)
+      intel_decode(ptr, used / 4, 0);
 
    driBOUnmap(batch->buffer);
    batch->map = NULL;
