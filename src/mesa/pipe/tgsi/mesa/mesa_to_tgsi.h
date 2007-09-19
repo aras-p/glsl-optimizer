@@ -10,12 +10,17 @@ struct tgsi_token;
 GLboolean
 tgsi_mesa_compile_fp_program(
    const struct gl_fragment_program *program,
+   const GLuint inputMapping[],
+   const GLuint interpMode[],
+   const GLuint outputMapping[],
    struct tgsi_token *tokens,
    GLuint maxTokens );
 
 GLboolean
 tgsi_mesa_compile_vp_program(
    const struct gl_vertex_program *program,
+   const GLuint inputMapping[],
+   const GLuint outputMapping[],
    struct tgsi_token *tokens,
    GLuint maxTokens );
 

@@ -51,25 +51,61 @@
 
 
 
-/* translate shader to TGSI format 
-*/
+/**
+ * Translate Mesa shader to TGSI format 
+ */
 static void compile_vs( struct st_context *st )
 {
    struct st_vertex_program *vp = st->vp;
    struct pipe_shader_state vs;
    struct pipe_shader_state *cached;
-   /* XXX: fix static allocation of tokens:
-    */
-   tgsi_mesa_compile_vp_program( &vp->Base, vp->tokens, ST_FP_MAX_TOKENS );
+   GLuint i;
 
    memset(&vs, 0, sizeof(vs));
+
+   /*
+    * Determine how many inputs there are.
+    * Also, compute two look-up tables that map between Mesa VERT_ATTRIB_x
+    * values and TGSI generic input indexes.
+    */
+   for (i = 0; i < MAX_VERTEX_PROGRAM_ATTRIBS; i++) {
+      if (vp->Base.Base.InputsRead & (1 << i)) {
+         vp->input_to_index[i] = vs.num_inputs;
+         vp->index_to_input[vs.num_inputs] = i;
+         vs.num_inputs++;
+      }
+   }
+
+   /*
+    * Determine output register mapping.
+    */
+   for (i = 0; i < VERT_RESULT_MAX; i++) {
+      if (vp->Base.Base.OutputsWritten & (1 << i)) {
+         vp->output_to_index[i] = vs.num_outputs;
+         vp->index_to_output[vs.num_outputs] = i;
+         vs.num_outputs++;
+      }
+   }
+
+
+   /* XXX: fix static allocation of tokens:
+    */
+   tgsi_mesa_compile_vp_program( &vp->Base,
+                                 vp->input_to_index,
+                                 vp->output_to_index,
+                                 vp->tokens, ST_FP_MAX_TOKENS );
+
+#if 01
    vs.inputs_read
       = tgsi_mesa_translate_vertex_input_mask(vp->Base.Base.InputsRead);
+#endif
    vs.outputs_written
       = tgsi_mesa_translate_vertex_output_mask(vp->Base.Base.OutputsWritten);
+
    vs.tokens = &vp->tokens[0];
 
    cached = st_cached_shader_state(st, &vs);
+
    vp->vs = cached;
 
    if (TGSI_DEBUG)
@@ -121,7 +157,7 @@ static void update_vs( struct st_context *st )
 const struct st_tracked_state st_update_vs = {
    .name = "st_update_vs",
    .dirty = {
-      .mesa  = 0, 
+      .mesa  = _NEW_PROGRAM, 
       .st   = ST_NEW_VERTEX_PROGRAM,
    },
    .update = update_vs

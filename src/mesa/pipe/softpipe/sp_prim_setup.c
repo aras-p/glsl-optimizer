@@ -448,6 +448,14 @@ static void tri_persp_coeff( struct setup_stage *setup,
    float a = setup->ebot.dy * majda - botda * setup->emaj.dy;
    float b = setup->emaj.dx * botda - majda * setup->ebot.dx;
       
+   /*
+   printf("tri persp %d,%d: %f %f %f\n", slot, i,
+          setup->vmin->data[slot][i],
+          setup->vmid->data[slot][i],
+          setup->vmax->data[slot][i]
+          );
+   */
+
    assert(slot < TGSI_ATTRIB_MAX);
    assert(i <= 3);
 

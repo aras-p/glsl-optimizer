@@ -56,10 +56,17 @@
 static struct st_fragment_program *
 make_fragment_shader(struct st_context *st)
 {
+   static const GLuint outputMapping[2] = { 1, 0 };
    GLcontext *ctx = st->ctx;
    struct st_fragment_program *stfp;
    struct gl_program *p;
    GLboolean b;
+   GLuint interpMode[16];
+   GLuint i;
+
+   /* XXX temporary */
+   for (i = 0; i < 16; i++)
+      interpMode[i] = TGSI_INTERPOLATE_LINEAR;
 
    p = ctx->Driver.NewProgram(ctx, GL_FRAGMENT_PROGRAM_ARB, 0);
    if (!p)
@@ -88,7 +95,8 @@ make_fragment_shader(struct st_context *st)
 
    stfp = (struct st_fragment_program *) p;
    /* compile into tgsi format */
-   b = tgsi_mesa_compile_fp_program(&stfp->Base,
+   b = tgsi_mesa_compile_fp_program(&stfp->Base, NULL, interpMode,
+                                    outputMapping,
                                     stfp->tokens, ST_FP_MAX_TOKENS);
    assert(b);
 
@@ -103,6 +111,8 @@ make_fragment_shader(struct st_context *st)
 static struct st_vertex_program *
 make_vertex_shader(struct st_context *st)
 {
+   /* Map VERT_RESULT_HPOS to 0, VERT_RESULT_TEX0 to 1 */
+   static const GLuint outputMapping[] = { 0, 0, 0, 0, 1 };
    GLcontext *ctx = st->ctx;
    struct st_vertex_program *stvp;
    struct gl_program *p;
@@ -140,7 +150,8 @@ make_vertex_shader(struct st_context *st)
 
    stvp = (struct st_vertex_program *) p;
    /* compile into tgsi format */
-   b = tgsi_mesa_compile_vp_program(&stvp->Base,
+   b = tgsi_mesa_compile_vp_program(&stvp->Base, NULL,
+                                    outputMapping,
                                     stvp->tokens, ST_FP_MAX_TOKENS);
    assert(b);
 

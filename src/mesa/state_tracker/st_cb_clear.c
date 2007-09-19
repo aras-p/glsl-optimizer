@@ -119,12 +119,19 @@ is_depth_stencil_format(GLuint pipeFormat)
  * Create a simple fragment shader that just passes through the fragment color.
  */
 static struct st_fragment_program *
-make_color_shader(struct st_context *st)
+make_frag_shader(struct st_context *st)
 {
+   static const GLuint outputMapping[] = { 1, 0 };
    GLcontext *ctx = st->ctx;
    struct st_fragment_program *stfp;
    struct gl_program *p;
    GLboolean b;
+   GLuint interpMode[16];
+   GLuint i;
+
+   /* XXX temporary */
+   for (i = 0; i < 16; i++)
+      interpMode[i] = TGSI_INTERPOLATE_LINEAR;
 
    p = ctx->Driver.NewProgram(ctx, GL_FRAGMENT_PROGRAM_ARB, 0);
    if (!p)
@@ -151,7 +158,8 @@ make_color_shader(struct st_context *st)
 
    stfp = (struct st_fragment_program *) p;
    /* compile into tgsi format */
-   b = tgsi_mesa_compile_fp_program(&stfp->Base,
+   b = tgsi_mesa_compile_fp_program(&stfp->Base, NULL, interpMode,
+                                    outputMapping,
                                     stfp->tokens, ST_FP_MAX_TOKENS);
    assert(b);
 
@@ -166,6 +174,11 @@ make_color_shader(struct st_context *st)
 static struct st_vertex_program *
 make_vertex_shader(struct st_context *st)
 {
+   /* Map VERT_ATTRIB_POS to 0, VERT_ATTRIB_COLOR0 to 1 */
+   static const GLuint inputMapping[4] = { 0, 0, 0, 1 };
+   /* Map VERT_RESULT_HPOS to 0, VERT_RESULT_COL0 to 1 */
+   static const GLuint outputMapping[2] = { 0, 1 };
+
    GLcontext *ctx = st->ctx;
    struct st_vertex_program *stvp;
    struct gl_program *p;
@@ -204,6 +217,8 @@ make_vertex_shader(struct st_context *st)
    stvp = (struct st_vertex_program *) p;
    /* compile into tgsi format */
    b = tgsi_mesa_compile_vp_program(&stvp->Base,
+                                    inputMapping,
+                                    outputMapping,
                                     stvp->tokens, ST_FP_MAX_TOKENS);
    assert(b);
 
@@ -349,7 +364,7 @@ clear_with_quad(GLcontext *ctx,
       struct pipe_shader_state fs;
       const struct pipe_shader_state *cached;
       if (!stfp) {
-         stfp = make_color_shader(st);
+         stfp = make_frag_shader(st);
       }
       memset(&fs, 0, sizeof(fs));
       fs.inputs_read = tgsi_mesa_translate_fragment_input_mask(stfp->Base.Base.InputsRead);

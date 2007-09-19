@@ -114,7 +114,6 @@ run_vertex_program(struct draw_context *draw,
 
    draw_vertex_fetch( draw, &machine, elts, count );
 
-
    /* run shader */
    if( draw->vertex_shader.executable != NULL ) {
 #if defined(USE_X86_ASM) || defined(SLANG_X86)
@@ -159,14 +158,23 @@ run_vertex_program(struct draw_context *draw,
       vOut[j]->data[0][2] = z * scale[2] + trans[2];
       vOut[j]->data[0][3] = w;
 
-      /* remaining attributes are packed into sequential post-transform
+      /* Remaining attributes are packed into sequential post-transform
        * vertex attrib slots.
+       * Skip 0 since we just did it above.
+       * Subtract two because of the VERTEX_HEADER, CLIP_POS attribs.
        */
-      for (slot = 1; slot < draw->vertex_info.num_attribs; slot++) {
+      for (slot = 1; slot < draw->vertex_info.num_attribs - 2; slot++) {
          vOut[j]->data[slot][0] = machine.Outputs[slot].xyzw[0].f[j];
          vOut[j]->data[slot][1] = machine.Outputs[slot].xyzw[1].f[j];
          vOut[j]->data[slot][2] = machine.Outputs[slot].xyzw[2].f[j];
          vOut[j]->data[slot][3] = machine.Outputs[slot].xyzw[3].f[j];
+         /*
+         printf("output %d: %f %f %f %f\n", slot,
+                vOut[j]->data[slot][0],
+                vOut[j]->data[slot][1],
+                vOut[j]->data[slot][2],
+                vOut[j]->data[slot][3]);
+         */
       }
    } /* loop over vertices */
 }

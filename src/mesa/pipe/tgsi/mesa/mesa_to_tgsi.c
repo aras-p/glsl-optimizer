@@ -211,6 +211,7 @@ tgsi_mesa_translate_fragment_output(GLuint attrib)
 }
 
 
+#if 01
 uint
 tgsi_mesa_translate_vertex_input_mask(GLbitfield mask)
 {
@@ -224,7 +225,7 @@ tgsi_mesa_translate_vertex_input_mask(GLbitfield mask)
    }
    return tgsiMask;
 }
-
+#endif
 
 uint
 tgsi_mesa_translate_vertex_output_mask(GLbitfield mask)
@@ -318,7 +319,9 @@ map_register_file_index(
    GLuint processor,
    GLuint file,
    GLuint index,
-   GLbitfield usage_bitmask )
+   GLbitfield usage_bitmask,
+   const GLuint inputMapping[],
+   const GLuint outputMapping[])
 {
    GLuint mapped_index;
    GLuint i;
@@ -337,6 +340,12 @@ map_register_file_index(
        * etc.
        */
       assert( index < 32 );
+      if (inputMapping) {
+         printf("New map %d input %d to %d\n", processor, index,
+                inputMapping[index]);
+         return inputMapping[index];
+      }
+
       assert( usage_bitmask & (1 << index) );
       mapped_index = 0;
       for( i = 0; i < index; i++ ) {
@@ -344,7 +353,7 @@ map_register_file_index(
             mapped_index++;
          }
       }
-      printf("Map input %d to %d\n", index, mapped_index);
+      printf("Map %d input %d to %d\n", processor, index, mapped_index);
       break;
 
    case TGSI_FILE_OUTPUT:
@@ -372,6 +381,8 @@ map_register_file_index(
                mapped_index++;
             }
          }
+         printf("Map VP output from %d to %d\n", index, mapped_index);
+         assert(outputMapping[index] == mapped_index);
       }
       break;
 
@@ -443,6 +454,8 @@ compile_instruction(
    struct tgsi_full_instruction *fullinst,
    GLuint inputs_read,
    GLuint outputs_written,
+   const GLuint inputMapping[],
+   const GLuint outputMapping[],
    GLuint preamble_size,
    GLuint processor )
 {
@@ -462,7 +475,9 @@ compile_instruction(
       processor,
       fulldst->DstRegister.File,
       inst->DstReg.Index,
-      outputs_written
+      outputs_written,
+      NULL,
+      outputMapping
       );
    fulldst->DstRegister.WriteMask = convert_writemask( inst->DstReg.WriteMask );
 
@@ -475,7 +490,9 @@ compile_instruction(
          processor,
          fullsrc->SrcRegister.File,
          inst->SrcReg[i].Index,
-         inputs_read );
+         inputs_read,
+         inputMapping,
+         outputMapping );
 
       for( j = 0; j < 4; j++ ) {
          GLuint swz;
@@ -789,9 +806,20 @@ make_frag_output_decl(
    return decl;
 }
 
+
+/**
+ * Convert Mesa fragment program to TGSI format.
+ * \param inputMapping  array to map original Mesa fragment program inputs
+ *                      registers to TGSI generic input indexes
+ * \param interpMode  array[FRAG_ATTRIB_x] of TGSI_INTERPOLATE_LINEAR/PERSP.
+ *
+ */
 GLboolean
 tgsi_mesa_compile_fp_program(
    const struct gl_fragment_program *program,
+   const GLuint inputMapping[],
+   const GLuint interpMode[],
+   const GLuint outputMapping[],
    struct tgsi_token *tokens,
    GLuint maxTokens )
 {
@@ -800,8 +828,10 @@ tgsi_mesa_compile_fp_program(
    struct tgsi_processor *processor;
    struct tgsi_full_declaration fulldecl;
    struct tgsi_full_instruction fullinst;
+   /*
    struct tgsi_full_dst_register *fulldst;
    struct tgsi_full_src_register *fullsrc;
+   */
    GLuint inputs_read;
    GLboolean reads_wpos;
    GLuint preamble_size = 0;
@@ -822,7 +852,7 @@ tgsi_mesa_compile_fp_program(
    /*
     * Declare input attributes. Note that we do not interpolate fragment position.
     */
-
+   reads_wpos = 1;
    /* Fragment position. */
    if( reads_wpos ) {
       fulldecl = make_frag_input_decl(
@@ -853,20 +883,16 @@ tgsi_mesa_compile_fp_program(
    for( i = 1; i < 32; i++ ) {
       if( inputs_read & (1 << i) ) {
          count++;
+         fulldecl = make_frag_input_decl(count,
+                                         count,
+                                         interpMode[i],
+                                         TGSI_WRITEMASK_XYZW );
+         ti += tgsi_build_full_declaration(&fulldecl,
+                                           &tokens[ti],
+                                           header,
+                                           maxTokens - ti );
       }
-   }
-   if( count > 0 ) {
-      fulldecl = make_frag_input_decl(
-         1,
-         1 + count - 1,
-         TGSI_INTERPOLATE_PERSPECTIVE,
-         TGSI_WRITEMASK_XYZW );
-      ti += tgsi_build_full_declaration(
-         &fulldecl,
-         &tokens[ti],
-         header,
-         maxTokens - ti );
-   }
+   }         
 
    /*
     * Declare output attributes.
@@ -932,6 +958,8 @@ tgsi_mesa_compile_fp_program(
             &fullinst,
             inputs_read,
             ~0, /*outputs_written*/
+            inputMapping,
+            outputMapping,
             preamble_size,
             TGSI_PROCESSOR_FRAGMENT ) ) {
          assert( i == program->Base.NumInstructions - 1 );
@@ -955,8 +983,10 @@ tgsi_mesa_compile_fp_program(
 GLboolean
 tgsi_mesa_compile_vp_program(
    const struct gl_vertex_program *program,
+   const GLuint inputMapping[],
+   const GLuint outputMapping[],
    struct tgsi_token *tokens,
-   GLuint maxTokens )
+   GLuint maxTokens)
 {
    GLuint i, ti;
    struct tgsi_header *header;
@@ -983,6 +1013,8 @@ tgsi_mesa_compile_vp_program(
             &fullinst,
             inputs_read,
             outputs_written,
+            inputMapping,
+            outputMapping,
             0,
             TGSI_PROCESSOR_VERTEX ) ) {
          assert( i == program->Base.NumInstructions - 1 );

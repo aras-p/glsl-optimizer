@@ -67,6 +67,10 @@ fetch_attrib4(const void *ptr, unsigned format, float attrib[4])
    }
 }
 
+
+/**
+ * Fetch vertex attributes for 'count' vertices.
+ */
 void draw_vertex_fetch( struct draw_context *draw,
 			struct tgsi_exec_machine *machine,
 			const unsigned *elts,
@@ -74,27 +78,26 @@ void draw_vertex_fetch( struct draw_context *draw,
 {
    unsigned j;
 
-
-   /* load machine inputs */
+   /* loop over vertices */
    for (j = 0; j < count; j++) {
-      unsigned attr;
-      for (attr = 0; attr < 16; attr++) {
-         if (draw->vertex_shader.inputs_read & (1 << attr)) {
-            unsigned buf = draw->vertex_element[attr].vertex_buffer_index;
-            const void *src
-               = (const void *) ((const ubyte *) draw->mapped_vbuffer[buf]
-                                 + draw->vertex_buffer[buf].buffer_offset
-                                 + draw->vertex_element[attr].src_offset
-                                 + elts[j] * draw->vertex_buffer[buf].pitch);
-            float p[4];
+      uint attr;
+      /* loop over vertex attributes (vertex shader inputs) */
+      for (attr = 0; attr < draw->vertex_shader.num_inputs; attr++) {
 
-            fetch_attrib4(src, draw->vertex_element[attr].src_format, p);
+         unsigned buf = draw->vertex_element[attr].vertex_buffer_index;
+         const void *src
+            = (const void *) ((const ubyte *) draw->mapped_vbuffer[buf]
+                              + draw->vertex_buffer[buf].buffer_offset
+                              + draw->vertex_element[attr].src_offset
+                              + elts[j] * draw->vertex_buffer[buf].pitch);
+         float p[4];
 
-            machine->Inputs[attr].xyzw[0].f[j] = p[0]; /*X*/
-            machine->Inputs[attr].xyzw[1].f[j] = p[1]; /*Y*/
-            machine->Inputs[attr].xyzw[2].f[j] = p[2]; /*Z*/
-            machine->Inputs[attr].xyzw[3].f[j] = p[3]; /*W*/
-         }
+         fetch_attrib4(src, draw->vertex_element[attr].src_format, p);
+
+         machine->Inputs[attr].xyzw[0].f[j] = p[0]; /*X*/
+         machine->Inputs[attr].xyzw[1].f[j] = p[1]; /*Y*/
+         machine->Inputs[attr].xyzw[2].f[j] = p[2]; /*Z*/
+         machine->Inputs[attr].xyzw[3].f[j] = p[3]; /*W*/
       }
    }
 }

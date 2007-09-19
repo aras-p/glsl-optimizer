@@ -61,13 +61,20 @@ struct st_fragment_program
 
 struct st_vertex_program
 {
-   struct gl_vertex_program Base;
-   GLboolean error;             /* If program is malformed for any reason. */
+   struct gl_vertex_program Base;  /**< The Mesa vertex program */
+   GLboolean error;        /**< Set if program is malformed for any reason. */
 
-   GLuint    id;		/* String id, for tracking
-				 * ProgramStringNotify changes.
-				 */
+   GLuint    id; /**< String id, for tracking ProgramStringNotify changes. */
 
+   /** maps a Mesa VERT_ATTRIB_x to a packed TGSI input index */
+   GLuint input_to_index[MAX_VERTEX_PROGRAM_ATTRIBS];
+   /** maps a TGSI input index back to a Mesa VERT_ATTRIB_x */
+   GLuint index_to_input[MAX_VERTEX_PROGRAM_ATTRIBS];
+
+   GLuint output_to_index[MAX_VERTEX_PROGRAM_ATTRIBS];
+   GLuint index_to_output[MAX_VERTEX_PROGRAM_ATTRIBS];
+
+   /** The program in TGSI format */
    struct tgsi_token tokens[ST_FP_MAX_TOKENS];
    GLboolean dirty;
 

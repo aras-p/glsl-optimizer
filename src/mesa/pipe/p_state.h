@@ -144,6 +144,9 @@ struct pipe_shader_state {
    unsigned outputs_written;               /**< TGSI_ATTRIB_ bits */
    const struct tgsi_token *tokens;
    void *executable;
+
+   uint num_inputs;
+   uint num_outputs;
 };
 
 struct pipe_depth_stencil_state

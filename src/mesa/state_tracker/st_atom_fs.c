@@ -42,17 +42,34 @@
 #include "st_atom.h"
 #include "st_program.h"
 
-#define TGSI_DEBUG 0
+#define TGSI_DEBUG 1
 
 static void compile_fs( struct st_context *st )
 {
+   /* Map FRAG_RESULT_COLR to output 1, map FRAG_RESULT_DEPR to output 0 */
+   static const GLuint outputMapping[2] = {1, 0};
    struct st_fragment_program *fp = st->fp;
    struct pipe_shader_state fs;
    struct pipe_shader_state *cached;
+   GLuint interpMode[16];  /* XXX size? */
+   GLuint i;
+
+   for (i = 0; i < 16; i++) {
+      if (fp->Base.Base.InputsRead & (1 << i)) {
+         if (i == FRAG_ATTRIB_COL0 || i == FRAG_ATTRIB_COL1) {
+            interpMode[i] = TGSI_INTERPOLATE_LINEAR;
+         }
+         else {
+            interpMode[i] = TGSI_INTERPOLATE_PERSPECTIVE;
+         }
+      }
+   }
 
    /* XXX: fix static allocation of tokens:
     */
-   tgsi_mesa_compile_fp_program( &fp->Base, fp->tokens, ST_FP_MAX_TOKENS );
+   tgsi_mesa_compile_fp_program( &fp->Base, NULL, interpMode,
+                                 outputMapping,
+                                 fp->tokens, ST_FP_MAX_TOKENS );
 
    memset(&fs, 0, sizeof(fs));
    fs.inputs_read
@@ -64,7 +81,7 @@ static void compile_fs( struct st_context *st )
    fp->fsx = cached;
 
    if (TGSI_DEBUG)
-      tgsi_dump( fp->tokens, TGSI_DUMP_VERBOSE );
+      tgsi_dump( fp->tokens, 0/*TGSI_DUMP_VERBOSE*/ );
 
    fp->dirty = 0;
 }
