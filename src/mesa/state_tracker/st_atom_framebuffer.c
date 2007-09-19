@@ -74,7 +74,10 @@ update_framebuffer_state( struct st_context *st )
       framebuffer.sbuf = strb->surface;
    }
 
-   if (memcmp(&framebuffer, &st->state.framebuffer, sizeof(framebuffer)) != 0) {
+   /* XXX: The memcmp is insufficient for eliminating redundant state changes,
+    * but we should probably do more work here to that end.
+    */
+   if (1 /*memcmp(&framebuffer, &st->state.framebuffer, sizeof(framebuffer)) != 0*/) {
       st->state.framebuffer = framebuffer;
       st->pipe->set_framebuffer_state( st->pipe, &framebuffer );
    }
