@@ -99,6 +99,10 @@ st_renderbuffer_alloc_storage(GLcontext * ctx, struct gl_renderbuffer *rb,
       pipe->region_release(pipe, &strb->surface->region);
    }
 
+   /* Softpipe operates on quads, so pad dimensions to multiples of 2 */
+   width += width & 1;
+   height += height & 1;
+
    strb->surface->region = pipe->region_alloc(pipe, cpp, width, height, flags);
    if (!strb->surface->region)
       return GL_FALSE; /* out of memory, try s/w buffer? */
