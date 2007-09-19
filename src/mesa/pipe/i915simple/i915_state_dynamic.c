@@ -79,12 +79,8 @@ static void upload_MODES4( struct i915_context *i915 )
    }
 
    /* I915_NEW_BLEND */
-   {
-      modes4 |= (_3DSTATE_MODES_4_CMD |
-		 ENABLE_LOGIC_OP_FUNC |
-		 LOGIC_OP_FUNC(i915_translate_logic_op(i915->blend->logicop_func)));
-   }
-   
+   modes4 |= i915->blend->modes4;
+
    /* Always, so that we know when state is in-active: 
     */
    set_dynamic_indirect( i915, 
@@ -201,44 +197,10 @@ const struct i915_tracked_state i915_upload_BLENDCOLOR = {
 
 static void upload_IAB( struct i915_context *i915 )
 {
-   unsigned iab = 0;
-
-   {
-      unsigned eqRGB  = i915->blend->rgb_func;
-      unsigned srcRGB = i915->blend->rgb_src_factor;
-      unsigned dstRGB = i915->blend->rgb_dst_factor;
-
-      unsigned eqA    = i915->blend->alpha_func;
-      unsigned srcA   = i915->blend->alpha_src_factor;
-      unsigned dstA   = i915->blend->alpha_dst_factor;
-
-      /* Special handling for MIN/MAX filter modes handled at
-       * state_tracker level.
-       */
-
-      if (srcA != srcRGB ||
-	  dstA != dstRGB ||
-	  eqA != eqRGB) {
-
-	 iab = (_3DSTATE_INDEPENDENT_ALPHA_BLEND_CMD |    
-		IAB_MODIFY_ENABLE |
-		IAB_ENABLE |
-		IAB_MODIFY_FUNC | 
-		IAB_MODIFY_SRC_FACTOR | 
-		IAB_MODIFY_DST_FACTOR |
-		SRC_ABLND_FACT(i915_translate_blend_factor(srcA)) |
-		DST_ABLND_FACT(i915_translate_blend_factor(dstA)) |
-		(i915_translate_blend_func(eqA) << IAB_FUNC_SHIFT));
-      }	 
-      else {
-	 iab = (_3DSTATE_INDEPENDENT_ALPHA_BLEND_CMD |    
-		IAB_MODIFY_ENABLE |
-		0);
-      }
-   }
+   unsigned iab = i915->blend->iab;
 
 
-   set_dynamic_indirect( i915, 
+   set_dynamic_indirect( i915,
 			 I915_DYNAMIC_IAB,
 			 &iab,
 			 1 );

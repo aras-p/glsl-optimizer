@@ -113,7 +113,12 @@ struct i915_state
    unsigned id;			/* track lost context events */
 };
 
-
+struct i915_blend_state {
+   unsigned iab;
+   unsigned modes4;
+   unsigned LIS5;
+   unsigned LIS6;
+};
 
 struct i915_context
 {
@@ -123,7 +128,7 @@ struct i915_context
 
    /* The most recent drawing state as set by the driver:
     */
-   const struct pipe_blend_state   *blend;
+   const struct i915_blend_state   *blend;
    const struct pipe_sampler_state *sampler[PIPE_MAX_SAMPLERS];
    const struct pipe_depth_stencil_state   *depth_stencil;
    const struct pipe_rasterizer_state *rasterizer;

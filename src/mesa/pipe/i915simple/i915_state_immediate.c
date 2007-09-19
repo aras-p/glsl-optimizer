@@ -144,25 +144,7 @@ static void upload_S5( struct i915_context *i915 )
 	       (dpop << S5_STENCIL_PASS_Z_PASS_SHIFT));
    }
 
-   /* I915_NEW_BLEND */
-   if (i915->blend->logicop_enable) 
-      LIS5 |= S5_LOGICOP_ENABLE;
-
-   if (i915->blend->dither) 
-      LIS5 |= S5_COLOR_DITHER_ENABLE;
-
-   if ((i915->blend->colormask & PIPE_MASK_R) == 0)
-      LIS5 |= S5_WRITEDISABLE_RED;
-
-   if ((i915->blend->colormask & PIPE_MASK_G) == 0)
-      LIS5 |= S5_WRITEDISABLE_GREEN;
-   
-   if ((i915->blend->colormask & PIPE_MASK_B) == 0)
-      LIS5 |= S5_WRITEDISABLE_BLUE;
-
-   if ((i915->blend->colormask & PIPE_MASK_A) == 0)
-      LIS5 |= S5_WRITEDISABLE_ALPHA;
-
+   LIS5 |= i915->blend->LIS5;
 
 #if 0
    /* I915_NEW_RASTERIZER */
@@ -205,17 +187,7 @@ static void upload_S6( struct i915_context *i915 )
 
    /* I915_NEW_BLEND
     */
-   if (i915->blend->blend_enable)
-   {
-      unsigned funcRGB = i915->blend->rgb_func;
-      unsigned srcRGB = i915->blend->rgb_src_factor;
-      unsigned dstRGB = i915->blend->rgb_dst_factor;
-      
-      LIS6 |= (S6_CBUF_BLEND_ENABLE |
-	       SRC_BLND_FACT(i915_translate_blend_factor(srcRGB)) |
-	       DST_BLND_FACT(i915_translate_blend_factor(dstRGB)) |
-	       (i915_translate_blend_func(funcRGB) << S6_CBUF_BLEND_FUNC_SHIFT));
-   }
+   LIS6 |= i915->blend->LIS6;
 
    /* I915_NEW_DEPTH 
     */

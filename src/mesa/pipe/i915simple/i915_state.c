@@ -33,7 +33,9 @@
 #include "pipe/p_winsys.h"
 
 #include "i915_context.h"
+#include "i915_reg.h"
 #include "i915_state.h"
+#include "i915_state_inlines.h"
 
 /* None of this state is actually used for anything yet.
  */
@@ -42,25 +44,90 @@ static void *
 i915_create_blend_state(struct pipe_context *pipe,
                         const struct pipe_blend_state *blend)
 {
-   struct pipe_blend_state *new_blend = malloc(sizeof(struct pipe_blend_state));
-   memcpy(new_blend, blend, sizeof(struct pipe_blend_state));
+   struct i915_blend_state *cso_data = calloc(1, sizeof(struct i915_blend_state));
 
-   return new_blend;
+   {
+      unsigned eqRGB  = blend->rgb_func;
+      unsigned srcRGB = blend->rgb_src_factor;
+      unsigned dstRGB = blend->rgb_dst_factor;
+
+      unsigned eqA    = blend->alpha_func;
+      unsigned srcA   = blend->alpha_src_factor;
+      unsigned dstA   = blend->alpha_dst_factor;
+
+      /* Special handling for MIN/MAX filter modes handled at
+       * state_tracker level.
+       */
+
+      if (srcA != srcRGB ||
+	  dstA != dstRGB ||
+	  eqA != eqRGB) {
+
+	 cso_data->iab = (_3DSTATE_INDEPENDENT_ALPHA_BLEND_CMD |
+                          IAB_MODIFY_ENABLE |
+                          IAB_ENABLE |
+                          IAB_MODIFY_FUNC |
+                          IAB_MODIFY_SRC_FACTOR |
+                          IAB_MODIFY_DST_FACTOR |
+                          SRC_ABLND_FACT(i915_translate_blend_factor(srcA)) |
+                          DST_ABLND_FACT(i915_translate_blend_factor(dstA)) |
+                          (i915_translate_blend_func(eqA) << IAB_FUNC_SHIFT));
+      }
+      else {
+	 cso_data->iab = (_3DSTATE_INDEPENDENT_ALPHA_BLEND_CMD |
+                          IAB_MODIFY_ENABLE |
+                          0);
+      }
+   }
+
+   cso_data->modes4 |= (_3DSTATE_MODES_4_CMD |
+                        ENABLE_LOGIC_OP_FUNC |
+                        LOGIC_OP_FUNC(i915_translate_logic_op(blend->logicop_func)));
+
+   if (blend->logicop_enable)
+      cso_data->LIS5 |= S5_LOGICOP_ENABLE;
+
+   if (blend->dither)
+      cso_data->LIS5 |= S5_COLOR_DITHER_ENABLE;
+
+   if ((blend->colormask & PIPE_MASK_R) == 0)
+      cso_data->LIS5 |= S5_WRITEDISABLE_RED;
+
+   if ((blend->colormask & PIPE_MASK_G) == 0)
+      cso_data->LIS5 |= S5_WRITEDISABLE_GREEN;
+
+   if ((blend->colormask & PIPE_MASK_B) == 0)
+      cso_data->LIS5 |= S5_WRITEDISABLE_BLUE;
+
+   if ((blend->colormask & PIPE_MASK_A) == 0)
+      cso_data->LIS5 |= S5_WRITEDISABLE_ALPHA;
+
+   if (blend->blend_enable) {
+      unsigned funcRGB = blend->rgb_func;
+      unsigned srcRGB  = blend->rgb_src_factor;
+      unsigned dstRGB  = blend->rgb_dst_factor;
+
+      cso_data->LIS6 |= (S6_CBUF_BLEND_ENABLE |
+                         SRC_BLND_FACT(i915_translate_blend_factor(srcRGB)) |
+                         DST_BLND_FACT(i915_translate_blend_factor(dstRGB)) |
+                         (i915_translate_blend_func(funcRGB) << S6_CBUF_BLEND_FUNC_SHIFT));
+   }
+
+   return cso_data;
 }
 
-static void i915_bind_blend_state( struct pipe_context *pipe,
-                                   void *blend )
+static void i915_bind_blend_state(struct pipe_context *pipe,
+                                  void *blend)
 {
    struct i915_context *i915 = i915_context(pipe);
 
-   i915->blend = (struct pipe_blend_state *)blend;
+   i915->blend = (struct i915_blend_state*)blend;
 
    i915->dirty |= I915_NEW_BLEND;
 }
 
 
-static void i915_delete_blend_state( struct pipe_context *pipe,
-                                     void *blend )
+static void i915_delete_blend_state(struct pipe_context *pipe, void *blend)
 {
    free(blend);
 }
