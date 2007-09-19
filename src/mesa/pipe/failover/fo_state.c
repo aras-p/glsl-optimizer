@@ -183,17 +183,42 @@ failover_set_polygon_stipple( struct pipe_context *pipe,
    failover->hw->set_polygon_stipple( failover->hw, stipple );
 }
 
+static void *
+failover_create_rasterizer_state(struct pipe_context *pipe,
+                                 const struct pipe_rasterizer_state *templ)
+{
+   struct fo_state *state = malloc(sizeof(struct fo_state));
+   struct failover_context *failover = failover_context(pipe);
 
+   state->sw_state = failover->sw->create_rasterizer_state(pipe, templ);
+   state->hw_state = failover->hw->create_rasterizer_state(pipe, templ);
+
+   return state;
+}
 
 static void
-failover_bind_rasterizer_state( struct pipe_context *pipe,
-                                const struct pipe_rasterizer_state *setup )
+failover_bind_rasterizer_state(struct pipe_context *pipe,
+                               void *raster)
 {
    struct failover_context *failover = failover_context(pipe);
 
-   failover->rasterizer = setup;
+   failover->rasterizer = (struct fo_state *)raster;
    failover->dirty |= FO_NEW_RASTERIZER;
-   failover->hw->bind_rasterizer_state( failover->hw, setup );
+   failover->hw->bind_rasterizer_state( failover->hw, raster );
+}
+
+static void
+failover_delete_rasterizer_state(struct pipe_context *pipe,
+                                 void *raster)
+{
+   struct fo_state *state = (struct fo_state*)raster;
+   struct failover_context *failover = failover_context(pipe);
+
+   failover->sw->delete_rasterizer_state(pipe, state->sw_state);
+   failover->hw->delete_rasterizer_state(pipe, state->hw_state);
+   state->sw_state = 0;
+   state->hw_state = 0;
+   free(state);
 }
 
 
@@ -284,7 +309,9 @@ failover_init_state_functions( struct failover_context *failover )
    failover->pipe.delete_blend_state = failover_delete_blend_state;
    failover->pipe.bind_sampler_state = failover_bind_sampler_state;
    failover->pipe.bind_depth_stencil_state = failover_bind_depth_stencil_state;
+   failover->pipe.create_rasterizer_state = failover_create_rasterizer_state;
    failover->pipe.bind_rasterizer_state = failover_bind_rasterizer_state;
+   failover->pipe.delete_rasterizer_state = failover_delete_rasterizer_state;
    failover->pipe.bind_fs_state = failover_bind_fs_state;
    failover->pipe.bind_vs_state = failover_bind_vs_state;
 

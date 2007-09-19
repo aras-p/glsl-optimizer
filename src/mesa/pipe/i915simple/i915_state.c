@@ -371,23 +371,19 @@ static void i915_set_viewport_state( struct pipe_context *pipe,
 }
 
 
-static const struct pipe_rasterizer_state *
+static void *
 i915_create_rasterizer_state(struct pipe_context *pipe,
                              const struct pipe_rasterizer_state *setup)
 {
-   struct pipe_rasterizer_state *raster =
-      malloc(sizeof(struct pipe_rasterizer_state));
-   memcpy(raster, setup, sizeof(struct pipe_rasterizer_state));
-
-   return raster;
+   return 0;
 }
 
 static void i915_bind_rasterizer_state( struct pipe_context *pipe,
-                                   const struct pipe_rasterizer_state *setup )
+                                        void *setup )
 {
    struct i915_context *i915 = i915_context(pipe);
 
-   i915->rasterizer = setup;
+   i915->rasterizer = (struct pipe_rasterizer_state *)setup;
 
    /* pass-through to draw module */
    draw_set_rasterizer_state(i915->draw, setup);
@@ -395,10 +391,10 @@ static void i915_bind_rasterizer_state( struct pipe_context *pipe,
    i915->dirty |= I915_NEW_RASTERIZER;
 }
 
-static void i915_delete_rasterizer_state( struct pipe_context *pipe,
-                                     const struct pipe_rasterizer_state *setup )
+static void i915_delete_rasterizer_state(struct pipe_context *pipe,
+                                         void *setup)
 {
-   free((struct pipe_rasterizer_state*)setup);
+   /* do nothing */
 }
 
 static void i915_set_vertex_buffer( struct pipe_context *pipe,

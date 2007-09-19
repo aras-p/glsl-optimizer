@@ -58,13 +58,13 @@ void softpipe_bind_depth_stencil_state(struct pipe_context *,
 void softpipe_delete_depth_stencil_state(struct pipe_context *,
                                          const struct pipe_depth_stencil_state *);
 
-const struct pipe_rasterizer_state *
+void *
 softpipe_create_rasterizer_state(struct pipe_context *,
-                              const struct pipe_rasterizer_state *);
-void softpipe_bind_rasterizer_state(struct pipe_context *,
                                  const struct pipe_rasterizer_state *);
+void softpipe_bind_rasterizer_state(struct pipe_context *,
+                                    void *);
 void softpipe_delete_rasterizer_state(struct pipe_context *,
-                                   const struct pipe_rasterizer_state *);
+                                      void *);
 
 void softpipe_set_framebuffer_state( struct pipe_context *,
 			     const struct pipe_framebuffer_state * );

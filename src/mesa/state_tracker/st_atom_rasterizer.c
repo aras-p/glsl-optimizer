@@ -73,7 +73,7 @@ static void update_raster_state( struct st_context *st )
 {
    GLcontext *ctx = st->ctx;
    struct pipe_rasterizer_state raster;
-   const struct pipe_rasterizer_state *cached;
+   const struct cso_rasterizer *cso;
 
    memset(&raster, 0, sizeof(raster));
    
@@ -206,10 +206,10 @@ static void update_raster_state( struct st_context *st )
    if (ctx->Scissor.Enabled)
       raster.scissor = 1;
 
-   cached = st_cached_rasterizer_state(st, &raster);
-   if (st->state.rasterizer != cached) {
-      st->state.rasterizer = cached;
-      st->pipe->bind_rasterizer_state( st->pipe, cached );
+   cso = st_cached_rasterizer_state(st, &raster);
+   if (st->state.rasterizer != cso) {
+      st->state.rasterizer = cso;
+      st->pipe->bind_rasterizer_state(st->pipe, cso->data);
    }
 }
 

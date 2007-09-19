@@ -53,6 +53,11 @@ struct cso_blend {
    void   *data;
 };
 
+struct cso_rasterizer {
+   struct pipe_rasterizer_state state;
+   void *data;
+};
+
 enum cso_cache_type {
    CSO_BLEND,
    CSO_SAMPLER,

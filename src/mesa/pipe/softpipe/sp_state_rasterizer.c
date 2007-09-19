@@ -32,34 +32,30 @@
 
 
 
-const struct pipe_rasterizer_state *
+void *
 softpipe_create_rasterizer_state(struct pipe_context *pipe,
-                              const struct pipe_rasterizer_state *setup)
+                                 const struct pipe_rasterizer_state *setup)
 {
-   struct pipe_rasterizer_state *raster =
-      malloc(sizeof(struct pipe_rasterizer_state));
-   memcpy(raster, setup, sizeof(struct pipe_rasterizer_state));
-
-   return raster;
+   return 0;
 }
 
 void softpipe_bind_rasterizer_state(struct pipe_context *pipe,
-                                 const struct pipe_rasterizer_state *setup)
+                                    void *setup)
 {
    struct softpipe_context *softpipe = softpipe_context(pipe);
 
    /* pass-through to draw module */
    draw_set_rasterizer_state(softpipe->draw, setup);
 
-   softpipe->rasterizer = setup;
+   softpipe->rasterizer = (struct pipe_rasterizer_state *)setup;
 
    softpipe->dirty |= SP_NEW_RASTERIZER;
 }
 
 void softpipe_delete_rasterizer_state(struct pipe_context *pipe,
-                                   const struct pipe_rasterizer_state *rasterizer)
+                                      void *rasterizer)
 {
-   free((struct pipe_rasterizer_state*)rasterizer);
+   /* do nothing */
 }
 
 

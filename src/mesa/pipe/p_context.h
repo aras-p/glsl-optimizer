@@ -99,13 +99,10 @@ struct pipe_context {
    void (*delete_sampler_state)(struct pipe_context *,
                                 const struct pipe_sampler_state *);
 
-   const struct pipe_rasterizer_state *(*create_rasterizer_state)(
-      struct pipe_context *,
-      const struct pipe_rasterizer_state *);
-   void (*bind_rasterizer_state)(struct pipe_context *,
-                                 const struct pipe_rasterizer_state *);
-   void (*delete_rasterizer_state)(struct pipe_context *,
-                                   const struct pipe_rasterizer_state *);
+   void *(*create_rasterizer_state)(struct pipe_context *,
+                                    const struct pipe_rasterizer_state *);
+   void (*bind_rasterizer_state)(struct pipe_context *, void *);
+   void (*delete_rasterizer_state)(struct pipe_context *, void *);
 
    const struct pipe_depth_stencil_state * (*create_depth_stencil_state)(
       struct pipe_context *,
