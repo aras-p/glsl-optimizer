@@ -187,7 +187,7 @@ st_draw_vbo(GLcontext *ctx,
             GLuint max_index)
 {
    struct pipe_context *pipe = ctx->st->pipe;
-   const struct st_vertex_program *vp = ctx->st->vp;
+   const struct st_vertex_program *vp;
    const struct pipe_shader_state *vs;
    const unsigned attr0_offset = (unsigned) arrays[0]->Ptr;
    GLboolean needDefaultAttribs = GL_FALSE;
@@ -195,7 +195,8 @@ st_draw_vbo(GLcontext *ctx,
 
    st_validate_state(ctx->st);
 
-   /* must do this after state validation! */
+   /* must get these after state validation! */
+   vp = ctx->st->vp;
    vs = ctx->st->state.vs;
 
    /* loop over TGSI shader inputs */
