@@ -112,10 +112,11 @@ static void compile_vs( struct st_context *st )
       tgsi_dump( vp->tokens, 0 );
 
 #if defined(USE_X86_ASM) || defined(SLANG_X86)
-   tgsi_emit_sse2(
-      vp->tokens,
-      &vp->sse2_program );
-   cached->executable = (void *) x86_get_func( &vp->sse2_program );
+   if (vp->sse2_program.csr == vp->sse2_program.store)
+      tgsi_emit_sse2( vp->tokens, &vp->sse2_program );
+
+   if (!cached->executable)
+      cached->executable = (void *) x86_get_func( &vp->sse2_program );
 #endif
 
    vp->dirty = 0;
