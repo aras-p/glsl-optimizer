@@ -430,11 +430,21 @@ static void nv10Enable(GLcontext *ctx, GLenum cap, GLboolean state)
 static void nv10Fogfv(GLcontext *ctx, GLenum pname, const GLfloat *params)
 {
     nouveauContextPtr nmesa = NOUVEAU_CONTEXT(ctx);
+    GLubyte cf[4];
     switch(pname)
     {
         case GL_FOG_MODE:
-            //BEGIN_RING_CACHE(NvSub3D, NV10_TCL_PRIMITIVE_3D_FOG_MODE, 1);
-            //OUT_RING_CACHE (params);
+            BEGIN_RING_CACHE(NvSub3D, NV10_TCL_PRIMITIVE_3D_FOG_MODE, 1);
+            OUT_RING_CACHE (ctx->Fog.Mode); /* can we extract it from params ??? */
+            break;
+        case GL_FOG_COLOR:
+            CLAMPED_FLOAT_TO_UBYTE(cf[0], params[0]);
+            CLAMPED_FLOAT_TO_UBYTE(cf[1], params[1]);
+            CLAMPED_FLOAT_TO_UBYTE(cf[2], params[2]);
+            CLAMPED_FLOAT_TO_UBYTE(cf[3], params[3]);
+
+            BEGIN_RING_CACHE(NvSub3D, NV10_TCL_PRIMITIVE_3D_FOG_COLOR, 1);
+            OUT_RING_CACHE(PACK_COLOR_8888(cf[3], cf[1], cf[2], cf[0]));
             break;
             /* TODO: unsure about the rest.*/
         default:
@@ -585,11 +595,12 @@ static void nv10LineWidth(GLcontext *ctx, GLfloat width)
 
 static void nv10LogicOpcode(GLcontext *ctx, GLenum opcode)
 {
+	nouveauContextPtr nmesa = NOUVEAU_CONTEXT(ctx);
+
 	if (nmesa->screen->card->type < NV_11) {
 		return;
 	}
 
-	nouveauContextPtr nmesa = NOUVEAU_CONTEXT(ctx);
 	BEGIN_RING_CACHE(NvSub3D, NV10_TCL_PRIMITIVE_3D_COLOR_LOGIC_OP_OP, 1);
 	OUT_RING_CACHE(opcode);
 }
