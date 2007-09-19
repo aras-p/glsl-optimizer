@@ -156,6 +156,7 @@ static void
 update_blend( struct st_context *st )
 {
    struct pipe_blend_state blend;
+   const struct cso_blend *cso;
 
    memset(&blend, 0, sizeof(blend));
 
@@ -211,8 +212,7 @@ update_blend( struct st_context *st )
    if (st->ctx->Color.DitherFlag)
       blend.dither = 1;
 
-   const struct cso_blend *cso =
-      st_cached_blend_state(st, &blend);
+   cso = st_cached_blend_state(st, &blend);
 
    if (st->state.blend != cso) {
       /* state has changed */

@@ -34,10 +34,9 @@ void *
 softpipe_create_blend_state(struct pipe_context *pipe,
                             const struct pipe_blend_state *blend)
 {
-   struct pipe_blend_state *new_blend = malloc(sizeof(struct pipe_blend_state));
-   memcpy(new_blend, blend, sizeof(struct pipe_blend_state));
-
-   return new_blend;
+   /* means that we just want pipe_blend_state and don't have
+    * anything specific */
+   return 0;
 }
 
 void softpipe_bind_blend_state( struct pipe_context *pipe,
@@ -53,7 +52,7 @@ void softpipe_bind_blend_state( struct pipe_context *pipe,
 void softpipe_delete_blend_state(struct pipe_context *pipe,
                                  void *blend )
 {
-   free(blend);
+   /* do nothing */
 }
 
 
