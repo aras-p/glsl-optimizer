@@ -801,8 +801,8 @@ static void nv10UpdateProjectionMatrix(GLcontext *ctx)
 		projection[i+12] = ctx->_ModelProjectMatrix.m[i*4+3];
 	}
 
-	BEGIN_RING_SIZE(NvSub3D, NV10_TCL_PRIMITIVE_3D_PROJECTION_MATRIX(0), 16);
-	OUT_RINGp(projection, 16);
+	BEGIN_RING_CACHE(NvSub3D, NV10_TCL_PRIMITIVE_3D_PROJECTION_MATRIX(0), 16);
+	OUT_RING_CACHE_FORCEp(projection, 16);
 }
 
 static void nv10UpdateModelviewMatrix(GLcontext *ctx)
