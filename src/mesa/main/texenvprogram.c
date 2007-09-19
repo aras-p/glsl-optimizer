@@ -1081,6 +1081,7 @@ create_new_program(GLcontext *ctx, struct state_key *key,
        * a reduced value and not what is expected in FogOption
        */
       p.program->FogOption = ctx->Fog.Mode;
+      p.program->Base.InputsRead |= FRAG_BIT_FOGC; /* XXX new */
    } else
       p.program->FogOption = GL_NONE;
 
