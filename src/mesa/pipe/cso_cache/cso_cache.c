@@ -74,16 +74,22 @@ static struct cso_hash *_cso_hash_for_type(struct cso_cache *sc, enum cso_cache_
    switch(type) {
    case CSO_BLEND:
       hash = sc->blend_hash;
+      break;
    case CSO_SAMPLER:
       hash = sc->sampler_hash;
+      break;
    case CSO_DEPTH_STENCIL:
       hash = sc->depth_stencil_hash;
+      break;
    case CSO_RASTERIZER:
       hash = sc->rasterizer_hash;
+      break;
    case CSO_FRAGMENT_SHADER:
       hash = sc->fs_hash;
+      break;
    case CSO_VERTEX_SHADER:
       hash = sc->vs_hash;
+      break;
    }
 
    return hash;
