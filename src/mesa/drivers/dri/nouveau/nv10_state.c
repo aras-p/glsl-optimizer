@@ -297,8 +297,10 @@ static void nv10Enable(GLcontext *ctx, GLenum cap, GLboolean state)
 			OUT_RING_CACHE(state);
 			break;
 		case GL_COLOR_LOGIC_OP:
-			BEGIN_RING_CACHE(NvSub3D, NV10_TCL_PRIMITIVE_3D_COLOR_LOGIC_OP_ENABLE, 1);
-			OUT_RING_CACHE(state);
+			if (nmesa->screen->card->type >= NV_11) {
+				BEGIN_RING_CACHE(NvSub3D, NV10_TCL_PRIMITIVE_3D_COLOR_LOGIC_OP_ENABLE, 1);
+				OUT_RING_CACHE(state);
+			}
 			break;
 //		case GL_COLOR_MATERIAL:
 //		case GL_COLOR_SUM_EXT:
@@ -583,6 +585,10 @@ static void nv10LineWidth(GLcontext *ctx, GLfloat width)
 
 static void nv10LogicOpcode(GLcontext *ctx, GLenum opcode)
 {
+	if (nmesa->screen->card->type < NV_11) {
+		return;
+	}
+
 	nouveauContextPtr nmesa = NOUVEAU_CONTEXT(ctx);
 	BEGIN_RING_CACHE(NvSub3D, NV10_TCL_PRIMITIVE_3D_COLOR_LOGIC_OP_OP, 1);
 	OUT_RING_CACHE(opcode);
