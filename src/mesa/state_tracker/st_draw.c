@@ -38,6 +38,7 @@
 #include "tnl/t_vp_build.h"
 
 #include "st_atom.h"
+#include "st_cache.h"
 #include "st_context.h"
 #include "st_cb_bufferobjects.h"
 #include "st_draw.h"
