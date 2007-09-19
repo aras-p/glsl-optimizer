@@ -30,7 +30,7 @@
 #include "sp_context.h"
 #include "sp_state.h"
 
-const struct pipe_blend_state *
+void *
 softpipe_create_blend_state(struct pipe_context *pipe,
                             const struct pipe_blend_state *blend)
 {
@@ -41,19 +41,19 @@ softpipe_create_blend_state(struct pipe_context *pipe,
 }
 
 void softpipe_bind_blend_state( struct pipe_context *pipe,
-			     const struct pipe_blend_state *blend )
+                                void *blend )
 {
    struct softpipe_context *softpipe = softpipe_context(pipe);
 
-   softpipe->blend = blend;
+   softpipe->blend = (const struct pipe_blend_state *)blend;
 
    softpipe->dirty |= SP_NEW_BLEND;
 }
 
 void softpipe_delete_blend_state(struct pipe_context *pipe,
-                                 const struct pipe_blend_state *blend )
+                                 void *blend )
 {
-   free((struct pipe_blend_state *)blend);
+   free(blend);
 }
 
 

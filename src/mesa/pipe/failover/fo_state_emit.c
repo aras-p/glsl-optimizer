@@ -59,7 +59,8 @@ failover_state_emit( struct failover_context *failover )
       failover->sw->set_alpha_test_state( failover->sw, &failover->alpha_test );
 
    if (failover->dirty & FO_NEW_BLEND)
-      failover->sw->bind_blend_state( failover->sw, failover->blend );
+      failover->sw->bind_blend_state( failover->sw,
+                                      failover->blend->sw_state );
 
    if (failover->dirty & FO_NEW_BLEND_COLOR)
       failover->sw->set_blend_color( failover->sw, &failover->blend_color );

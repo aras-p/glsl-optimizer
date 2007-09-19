@@ -38,7 +38,7 @@
 /* None of this state is actually used for anything yet.
  */
 
-static const struct pipe_blend_state *
+static void *
 i915_create_blend_state(struct pipe_context *pipe,
                         const struct pipe_blend_state *blend)
 {
@@ -49,20 +49,20 @@ i915_create_blend_state(struct pipe_context *pipe,
 }
 
 static void i915_bind_blend_state( struct pipe_context *pipe,
-			     const struct pipe_blend_state *blend )
+                                   void *blend )
 {
    struct i915_context *i915 = i915_context(pipe);
 
-   i915->blend = blend;
+   i915->blend = (struct pipe_blend_state *)blend;
 
    i915->dirty |= I915_NEW_BLEND;
 }
 
 
 static void i915_delete_blend_state( struct pipe_context *pipe,
-                                     const struct pipe_blend_state *blend )
+                                     void *blend )
 {
-   free((void*)blend);
+   free(blend);
 }
 
 static void i915_set_blend_color( struct pipe_context *pipe,

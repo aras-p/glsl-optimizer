@@ -43,21 +43,22 @@
  * in the cache or it will create a new state state from the given
  * template, will insert it in the cache and return it.
  */
-struct pipe_blend_state * st_cached_blend_state(
-   struct st_context *st,
-   const struct pipe_blend_state *blend)
+const struct cso_blend * st_cached_blend_state(struct st_context *st,
+                                               const struct pipe_blend_state *templ)
 {
-   unsigned hash_key = cso_construct_key((void*)blend, sizeof(struct pipe_blend_state));
+   unsigned hash_key = cso_construct_key((void*)templ, sizeof(struct pipe_blend_state));
    struct cso_hash_iter iter = cso_find_state_template(st->cache,
                                                        hash_key, CSO_BLEND,
-                                                       (void*)blend);
+                                                       (void*)templ);
    if (cso_hash_iter_is_null(iter)) {
-      const struct pipe_blend_state *created_state = st->pipe->create_blend_state(
-         st->pipe, blend);
-      iter = cso_insert_state(st->cache, hash_key, CSO_BLEND,
-                              (void*)created_state);
+      struct cso_blend *cso = malloc(sizeof(struct cso_blend));
+      memcpy(&cso->state, templ, sizeof(struct pipe_blend_state));
+      cso->data = st->pipe->create_blend_state(st->pipe, templ);
+      if (!cso->data)
+         cso->data = &cso->state;
+      iter = cso_insert_state(st->cache, hash_key, CSO_BLEND, cso);
    }
-   return (struct pipe_blend_state*)(cso_hash_iter_data(iter));
+   return ((struct cso_blend *)cso_hash_iter_data(iter));
 }
 
 struct pipe_sampler_state * st_cached_sampler_state(

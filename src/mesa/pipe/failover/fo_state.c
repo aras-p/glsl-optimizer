@@ -57,17 +57,43 @@ failover_set_alpha_test_state(struct pipe_context *pipe,
 }
 
 
-static void 
+static void *
+failover_create_blend_state( struct pipe_context *pipe,
+                             const struct pipe_blend_state *blend )
+{
+   struct fo_state *state = malloc(sizeof(struct fo_state));
+   struct failover_context *failover = failover_context(pipe);
+
+   state->sw_state = failover->sw->create_blend_state(pipe, blend);
+   state->hw_state = failover->hw->create_blend_state(pipe, blend);
+
+   return state;
+}
+
+static void
 failover_bind_blend_state( struct pipe_context *pipe,
-			  const struct pipe_blend_state *blend )
+                           void *blend )
 {
    struct failover_context *failover = failover_context(pipe);
 
-   failover->blend = blend;
+   failover->blend = (struct fo_state *)blend;
    failover->dirty |= FO_NEW_BLEND;
    failover->hw->bind_blend_state( failover->hw, blend );
 }
 
+static void
+failover_delete_blend_state( struct pipe_context *pipe,
+                             void *blend )
+{
+   struct fo_state *state = (struct fo_state*)blend;
+   struct failover_context *failover = failover_context(pipe);
+
+   failover->sw->delete_blend_state(pipe, state->sw_state);
+   failover->hw->delete_blend_state(pipe, state->hw_state);
+   state->sw_state = 0;
+   state->hw_state = 0;
+   free(state);
+}
 
 static void 
 failover_set_blend_color( struct pipe_context *pipe,
@@ -253,7 +279,9 @@ failover_set_vertex_element(struct pipe_context *pipe,
 void
 failover_init_state_functions( struct failover_context *failover )
 {
+   failover->pipe.create_blend_state = failover_create_blend_state;
    failover->pipe.bind_blend_state = failover_bind_blend_state;
+   failover->pipe.delete_blend_state = failover_delete_blend_state;
    failover->pipe.bind_sampler_state = failover_bind_sampler_state;
    failover->pipe.bind_depth_stencil_state = failover_bind_depth_stencil_state;
    failover->pipe.bind_rasterizer_state = failover_bind_rasterizer_state;

@@ -33,17 +33,19 @@
 #ifndef ST_CACHE_H
 #define ST_CACHE_H
 
+#include "pipe/cso_cache/cso_cache.h"
+
 struct pipe_blend_state;
 struct pipe_sampler_state;
 struct st_context;
 
-struct pipe_blend_state * st_cached_blend_state(
-   struct st_context *st,
-   const struct pipe_blend_state *blend);
+const struct cso_blend *
+st_cached_blend_state(struct st_context *st,
+                      const struct pipe_blend_state *blend);
 
-struct pipe_sampler_state * st_cached_sampler_state(
-   struct st_context *st,
-   const struct pipe_sampler_state *sampler);
+struct pipe_sampler_state *
+st_cached_sampler_state(struct st_context *st,
+                        const struct pipe_sampler_state *sampler);
 
 struct pipe_depth_stencil_state *st_cached_depth_stencil_state(
    struct st_context *st,

@@ -211,14 +211,14 @@ update_blend( struct st_context *st )
    if (st->ctx->Color.DitherFlag)
       blend.dither = 1;
 
-   struct pipe_blend_state *real_blend =
+   const struct cso_blend *cso =
       st_cached_blend_state(st, &blend);
 
-   if (st->state.blend != real_blend) {
+   if (st->state.blend != cso) {
       /* state has changed */
-      st->state.blend = real_blend;
+      st->state.blend = cso;
       /* bind new state */
-      st->pipe->bind_blend_state(st->pipe, real_blend);
+      st->pipe->bind_blend_state(st->pipe, cso->data);
    }
 
    if (memcmp(st->ctx->Color.BlendColor, &st->state.blend_color, 4 * sizeof(GLfloat)) != 0) {

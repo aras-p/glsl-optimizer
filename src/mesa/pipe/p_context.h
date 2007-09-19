@@ -85,12 +85,10 @@ struct pipe_context {
    /*
     * State functions
     */
-   const struct pipe_blend_state * (*create_blend_state)(struct pipe_context *,
-                                                         const struct pipe_blend_state *);
-   void (*bind_blend_state)(struct pipe_context *,
-                            const struct pipe_blend_state *);
-   void (*delete_blend_state)(struct pipe_context *,
-                              const struct pipe_blend_state *);
+   void * (*create_blend_state)(struct pipe_context *,
+                                const struct pipe_blend_state *);
+   void (*bind_blend_state)(struct pipe_context *, void *);
+   void (*delete_blend_state)(struct pipe_context *, void  *);
 
    const struct pipe_sampler_state * (*create_sampler_state)(
       struct pipe_context *,

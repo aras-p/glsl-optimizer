@@ -298,7 +298,7 @@ clear_with_quad(GLcontext *ctx,
    /* blend state: RGBA masking */
    {
       struct pipe_blend_state blend;
-      const struct pipe_blend_state *state;
+      const struct cso_blend *cso;
       memset(&blend, 0, sizeof(blend));
       if (color) {
          if (ctx->Color.ColorMask[0])
@@ -312,8 +312,8 @@ clear_with_quad(GLcontext *ctx,
          if (st->ctx->Color.DitherFlag)
             blend.dither = 1;
       }
-      state = st_cached_blend_state(st, &blend);
-      pipe->bind_blend_state(pipe, state);
+      cso = st_cached_blend_state(st, &blend);
+      pipe->bind_blend_state(pipe, cso->data);
    }
 
    /* depth_stencil state: always pass/set to ref value */
@@ -411,7 +411,7 @@ clear_with_quad(GLcontext *ctx,
 
    /* Restore pipe state */
    pipe->set_alpha_test_state(pipe, &st->state.alpha_test);
-   pipe->bind_blend_state(pipe, st->state.blend);
+   pipe->bind_blend_state(pipe, st->state.blend->data);
    pipe->bind_depth_stencil_state(pipe, st->state.depth_stencil);
    pipe->bind_fs_state(pipe, st->state.fs);
    pipe->bind_vs_state(pipe, st->state.vs);

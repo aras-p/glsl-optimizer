@@ -60,13 +60,17 @@
 #define FO_HW 0
 #define FO_SW 1
 
+struct fo_state {
+   void *sw_state;
+   void *hw_state;
+};
 struct failover_context {     
    struct pipe_context pipe;  /**< base class */
 
 
    /* The most recent drawing state as set by the driver:
     */
-   const struct pipe_blend_state         *blend;
+   const struct fo_state                 *blend;
    const struct pipe_sampler_state       *sampler[PIPE_MAX_SAMPLERS];
    const struct pipe_depth_stencil_state *depth_stencil;
    const struct pipe_rasterizer_state    *rasterizer;

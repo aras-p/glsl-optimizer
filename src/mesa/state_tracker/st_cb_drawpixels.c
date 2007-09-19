@@ -493,8 +493,8 @@ static GLboolean
 any_fragment_ops(const struct st_context *st)
 {
    if (st->state.alpha_test.enabled ||
-       st->state.blend->blend_enable ||
-       st->state.blend->logicop_enable ||
+       st->state.blend->state.blend_enable ||
+       st->state.blend->state.logicop_enable ||
        st->state.depth_stencil->depth.enabled)
       /* XXX more checks */
       return GL_TRUE;

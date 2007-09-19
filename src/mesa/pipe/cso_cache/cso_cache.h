@@ -48,6 +48,11 @@ struct cso_cache {
    struct cso_hash *vs_hash;
 };
 
+struct cso_blend {
+   struct pipe_blend_state state;
+   void   *data;
+};
+
 enum cso_cache_type {
    CSO_BLEND,
    CSO_SAMPLER,
