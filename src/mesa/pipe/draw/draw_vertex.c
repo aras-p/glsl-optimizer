@@ -45,7 +45,7 @@
 
 
 static INLINE void
-emit_vertex_attr(struct vertex_info *vinfo, /*uint vfAttr,*/
+emit_vertex_attr(struct vertex_info *vinfo,
                  attrib_format format, interp_mode interp)
 {
    const uint n = vinfo->num_attribs;
@@ -112,15 +112,15 @@ draw_set_vertex_attributes( struct draw_context *draw,
    /*
     * First three attribs are always the same: header, clip pos, winpos
     */
-   emit_vertex_attr(vinfo, /*TGSI_ATTRIB_VERTEX_HEADER,*/ FORMAT_1F, INTERP_NONE);
-   emit_vertex_attr(vinfo, /*TGSI_ATTRIB_CLIP_POS,*/ FORMAT_4F, INTERP_LINEAR);
-   emit_vertex_attr(vinfo, /*TGSI_ATTRIB_POS,*/ FORMAT_4F_VIEWPORT, INTERP_LINEAR);
+   emit_vertex_attr(vinfo, FORMAT_1F, INTERP_NONE);
+   emit_vertex_attr(vinfo, FORMAT_4F, INTERP_LINEAR);
+   emit_vertex_attr(vinfo, FORMAT_4F_VIEWPORT, INTERP_LINEAR);
 
    /*
     * Remaining attribs (color, texcoords, etc)
     */
    for (i = 1; i < nr_attrs; i++) {
-      emit_vertex_attr(vinfo, /*slot_to_vf_attr[i],*/ FORMAT_4F, interps[i]);
+      emit_vertex_attr(vinfo, FORMAT_4F, interps[i]);
    }
 
    draw_compute_vertex_size(vinfo);

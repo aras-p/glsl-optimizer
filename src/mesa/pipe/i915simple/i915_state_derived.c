@@ -103,40 +103,6 @@ static void calculate_vertex_layout( struct i915_context *i915 )
       }
    }
 
-#if 0
-   /* color0 */
-   if (inputsRead & (1 << TGSI_ATTRIB_COLOR0)) {
-      front0 = draw_emit_vertex_attr(vinfo, FORMAT_4UB, colorInterp);
-      vinfo->hwfmt[0] |= S4_VFMT_COLOR;
-   }
-
-   /* color 1 */
-   if (inputsRead & (1 << TGSI_ATTRIB_COLOR1)) {
-      assert(0); /* untested */
-      front1 = draw_emit_vertex_attr(vinfo, FORMAT_4UB, colorInterp);
-      vinfo->hwfmt[0] |= S4_VFMT_SPEC_FOG;
-   }
-
-   /* XXX fog? */
-
-   /* texcoords */
-   {
-      uint i;
-      for (i = TGSI_ATTRIB_TEX0; i <= TGSI_ATTRIB_TEX7; i++) {
-         uint hwtc;
-         if (inputsRead & (1 << i)) {
-            draw_emit_vertex_attr(vinfo, FORMAT_4F, INTERP_PERSPECTIVE);
-            hwtc = TEXCOORDFMT_4D;
-            needW = TRUE;
-         }
-         else {
-            hwtc = TEXCOORDFMT_NOT_PRESENT;
-         }
-         vinfo->hwfmt[1] |= hwtc << ((i - TGSI_ATTRIB_TEX0) * 4);
-      }
-   }
-#endif
-
    /* go back and fill in the vertex position info now that we have needW */
    if (needW) {
       vinfo->hwfmt[0] |= S4_VFMT_XYZW;

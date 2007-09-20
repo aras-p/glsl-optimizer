@@ -34,13 +34,7 @@
 #define DRAW_VERTEX_H
 
 
-
-#if 0
-#define MAX_VERT_ATTRIBS 12  /* OK? */
-#endif
-
 struct draw_context;
-
 
 
 /**
@@ -92,9 +86,6 @@ draw_emit_vertex_attr(struct vertex_info *vinfo,
 {
    const uint n = vinfo->num_attribs;
    assert(n < PIPE_MAX_SHADER_OUTPUTS);
-   /*
-   vinfo->attr_mask |= (1 << vfAttr);
-   */
    vinfo->format[n] = format;
    vinfo->interp_mode[n] = interp;
    vinfo->num_attribs++;
