@@ -71,11 +71,6 @@ struct st_vertex_program
    /** maps a TGSI input index back to a Mesa VERT_ATTRIB_x */
    GLuint index_to_input[MAX_VERTEX_PROGRAM_ATTRIBS];
 
-#if 0
-   GLuint output_to_index[MAX_VERTEX_PROGRAM_ATTRIBS];
-   GLuint index_to_output[MAX_VERTEX_PROGRAM_ATTRIBS];
-#endif
-
    /** The program in TGSI format */
    struct tgsi_token tokens[ST_FP_MAX_TOKENS];
    GLboolean dirty;

@@ -87,6 +87,7 @@ static void
 feedback_vertex(GLcontext *ctx, const struct draw_context *draw,
                 const struct vertex_header *v)
 {
+   const struct st_context *st = ctx->st;
    GLfloat win[4];
    const GLfloat *color, *texcoord;
    const GLfloat ci = 0;
@@ -97,13 +98,18 @@ feedback_vertex(GLcontext *ctx, const struct draw_context *draw,
    win[2] = v->data[0][2];
    win[3] = 1.0F / v->data[0][3];
 
-   slot = draw->vertex_info.attrib_to_slot[TGSI_ATTRIB_COLOR0];
+   /* XXX
+    * When we compute vertex layout, save info about position of the
+    * color and texcoord attribs to use here.
+    */
+
+   slot = st->vertex_attrib_to_slot[VERT_RESULT_COL0];
    if (slot)
       color = v->data[slot];
    else
       color = ctx->Current.Attrib[VERT_ATTRIB_COLOR0];
 
-   slot = draw->vertex_info.attrib_to_slot[TGSI_ATTRIB_TEX0];
+   slot = st->vertex_attrib_to_slot[VERT_RESULT_TEX0];
    if (slot)
       texcoord = v->data[slot];
    else

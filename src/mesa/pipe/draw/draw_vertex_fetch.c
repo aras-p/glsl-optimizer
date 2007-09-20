@@ -81,6 +81,9 @@ void draw_vertex_fetch( struct draw_context *draw,
    /* loop over vertices */
    for (j = 0; j < count; j++) {
       uint attr;
+
+      /*printf("fetch vertex %u: \n", j);*/
+
       /* loop over vertex attributes (vertex shader inputs) */
       for (attr = 0; attr < draw->vertex_shader.num_inputs; attr++) {
 
@@ -93,6 +96,8 @@ void draw_vertex_fetch( struct draw_context *draw,
          float p[4];
 
          fetch_attrib4(src, draw->vertex_element[attr].src_format, p);
+
+         /*printf("  %u: %f %f %f %f\n", attr, p[0], p[1], p[2], p[3]);*/
 
          machine->Inputs[attr].xyzw[0].f[j] = p[0]; /*X*/
          machine->Inputs[attr].xyzw[1].f[j] = p[1]; /*Y*/

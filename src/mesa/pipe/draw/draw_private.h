@@ -62,7 +62,7 @@ struct vertex_header {
 };
 
 /* XXX This is too large */
-#define MAX_VERTEX_SIZE ((2 + TGSI_ATTRIB_MAX) * 4 * sizeof(float))
+#define MAX_VERTEX_SIZE ((2 + PIPE_MAX_SHADER_OUTPUTS) * 4 * sizeof(float))
 
 
 

@@ -173,7 +173,7 @@ static void calculate_vertex_layout( struct i915_context *i915 )
     * vertex layout.  We'll also update the hardware vertex format info.
     */
    draw_set_vertex_attributes( i915->draw,
-                               vinfo->slot_to_attrib,
+                               NULL,/*vinfo->slot_to_attrib,*/
                                vinfo->interp_mode,
 			       vinfo->num_attribs);
 

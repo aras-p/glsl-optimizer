@@ -78,7 +78,7 @@ feedback_vertex(struct draw_stage *stage, const struct vertex_header *vertex)
     * we can either address output buffer 0 (for interleaving) or
     * output buffer i (for non-interleaved).
     */
-
+#if 0
    for (i = 0; i < feedback->num_attribs; i++) {
       const uint attr = feedback->attrib[i];
       const uint slot = stage->draw->vertex_info.attrib_to_slot[attr];
@@ -104,6 +104,7 @@ feedback_vertex(struct draw_stage *stage, const struct vertex_header *vertex)
       }
       fs->dest[i * select] += size;
    }
+#endif
 
    fs->num_vert_emitted++;
 }

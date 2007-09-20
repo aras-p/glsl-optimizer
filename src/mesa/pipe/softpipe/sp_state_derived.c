@@ -59,6 +59,8 @@ static void calculate_vertex_layout( struct softpipe_context *softpipe )
       softpipe->need_z = FALSE;
    softpipe->need_w = FALSE;
 
+   softpipe->psize_slot = -1;
+
    /* always emit vertex pos */
    /* TODO - Figure out if we need to do perspective divide, etc. */
    draw_emit_vertex_attr(vinfo, TGSI_ATTRIB_POS, FORMAT_4F, INTERP_LINEAR);
@@ -93,6 +95,7 @@ static void calculate_vertex_layout( struct softpipe_context *softpipe )
                                FORMAT_4F, INTERP_CONSTANT);
          break;
 #endif
+         softpipe->psize_slot = i;
          /*case TGSI_SEMANTIC_TEXCOORD:*/
       case TGSI_SEMANTIC_TEX0:
          draw_emit_vertex_attr(vinfo, TGSI_ATTRIB_TEX0,
@@ -131,10 +134,10 @@ static void calculate_vertex_layout( struct softpipe_context *softpipe )
     */
    /* XXX we also need to do this when the shading mode (interp modes) change: */
    if (1/*vinfo->attr_mask != softpipe->attr_mask*/) {
-      softpipe->attr_mask = vinfo->attr_mask;
+      /*softpipe->attr_mask = vinfo->attr_mask;*/
 
       draw_set_vertex_attributes( softpipe->draw,
-                                  vinfo->slot_to_attrib,
+                                  NULL,/*vinfo->slot_to_attrib,*/
                                   vinfo->interp_mode,
                                   vinfo->num_attribs);
 

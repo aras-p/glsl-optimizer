@@ -68,16 +68,15 @@ typedef enum {
 } interp_mode;
 
 
-
+/**
+ * Information about post-transformed vertex layout.
+ */
 struct vertex_info
 {
    uint num_attribs;
    uint hwfmt[4];      /**< hardware format info for this format */
-   uint attr_mask;     /**< mask of VF_ATTR_ bits */
-   uint slot_to_attrib[MAX_VERT_ATTRIBS];
-   uint attrib_to_slot[TGSI_ATTRIB_MAX];
-   interp_mode interp_mode[MAX_VERT_ATTRIBS];
-   attrib_format format[MAX_VERT_ATTRIBS];   /**< FORMAT_x */
+   interp_mode interp_mode[PIPE_MAX_SHADER_OUTPUTS];
+   attrib_format format[PIPE_MAX_SHADER_OUTPUTS];   /**< FORMAT_x */
    uint size;          /**< total vertex size in dwords */
 };
 
@@ -92,9 +91,10 @@ draw_emit_vertex_attr(struct vertex_info *vinfo, uint vfAttr,
                       attrib_format format, interp_mode interp)
 {
    const uint n = vinfo->num_attribs;
-   assert(n < MAX_VERT_ATTRIBS);
+   assert(n < PIPE_MAX_SHADER_OUTPUTS);
+   /*
    vinfo->attr_mask |= (1 << vfAttr);
-   vinfo->slot_to_attrib[n] = vfAttr;
+   */
    vinfo->format[n] = format;
    vinfo->interp_mode[n] = interp;
    vinfo->num_attribs++;

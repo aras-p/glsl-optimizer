@@ -57,7 +57,6 @@ const struct cso_vertex_shader *
 st_translate_vertex_shader(struct st_context *st,
                            struct st_vertex_program *stvp)
 {
-   GLuint outputMapping[PIPE_MAX_SHADER_INPUTS];
    struct pipe_shader_state vs;
    const struct cso_vertex_shader *cso;
    GLuint i;
@@ -83,6 +82,9 @@ st_translate_vertex_shader(struct st_context *st,
          case VERT_ATTRIB_COLOR1:
             vs.input_semantics[vs.num_inputs] = TGSI_SEMANTIC_COLOR1;
             break;
+         case VERT_ATTRIB_TEX0:
+            vs.input_semantics[vs.num_inputs] = TGSI_SEMANTIC_TEX0;
+            break;
          default:
             vs.input_semantics[vs.num_inputs] = TGSI_SEMANTIC_OTHER;
          }
@@ -95,11 +97,8 @@ st_translate_vertex_shader(struct st_context *st,
     */
    for (i = 0; i < VERT_RESULT_MAX; i++) {
       if (stvp->Base.Base.OutputsWritten & (1 << i)) {
-#if 0
-         stvp->output_to_index[i] = vs.num_outputs;
-         stvp->index_to_output[vs.num_outputs] = i;
-#endif
-         outputMapping[i] = vs.num_outputs;
+         /* put this attrib in the next available slot */
+         st->vertex_attrib_to_slot[i] = vs.num_outputs;
 
          switch (i) {
          case VERT_RESULT_HPOS:
@@ -129,11 +128,7 @@ st_translate_vertex_shader(struct st_context *st,
     */
    tgsi_mesa_compile_vp_program( &stvp->Base,
                                  stvp->input_to_index,
-#if 0
-                                 stvp->output_to_index,
-#else
-                                 outputMapping,
-#endif
+                                 st->vertex_attrib_to_slot,
                                  stvp->tokens, ST_FP_MAX_TOKENS );
 
 #if 0
@@ -195,6 +190,12 @@ static void update_vs( struct st_context *st )
       st->vp = stvp;
       st->state.vs = stvp->vs;
 
+#if 0
+      printf("###### bind vp tokens: %p %p  num_inp=%u\n",
+             stvp, stvp->tokens, stvp->vs->state.num_inputs);
+      if (TGSI_DEBUG)
+         tgsi_dump( stvp->tokens, 0 );
+#endif
       st->pipe->bind_vs_state(st->pipe, st->state.vs->data);
    }
 }

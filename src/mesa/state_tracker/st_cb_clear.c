@@ -491,7 +491,7 @@ clear_depth_buffer(GLcontext *ctx, struct gl_renderbuffer *rb)
 
    assert(strb->surface->format);
 
-#if 01
+#if 0
    if (ctx->Scissor.Enabled ||
        (isDS && ctx->DrawBuffer->Visual.stencilBits > 0)) {
       /* scissoring or we have a combined depth/stencil buffer */

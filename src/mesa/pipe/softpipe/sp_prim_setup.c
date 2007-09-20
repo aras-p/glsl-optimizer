@@ -79,8 +79,6 @@ struct setup_stage {
 
    float oneoverarea;
 
-   const unsigned *lookup;  /**< vertex attribute positions */
-
    struct tgsi_interp_coef coef[TGSI_ATTRIB_MAX];
    struct quad_header quad; 
 
@@ -249,7 +247,7 @@ static void print_vertex(const struct setup_stage *setup,
 {
    int i;
    printf("Vertex:\n");
-   for (i = 0; i < setup->softpipe->nr_attrs; i++) {
+   for (i = 0; i < setup->quad.nr_attrs; i++) {
       printf("  %d: %f %f %f\n",  i, 
           v->data[i][0], v->data[i][1], v->data[i][2]);
    }
@@ -907,8 +905,7 @@ setup_point(struct draw_stage *stage, struct prim_header *prim)
 {
    struct setup_stage *setup = setup_stage( stage );
    const struct vertex_header *v0 = prim->v[0];
-
-   const int sizeAttr = setup->lookup[TGSI_ATTRIB_POINTSIZE];
+   const int sizeAttr = setup->softpipe->psize_slot;
    const float halfSize
       = sizeAttr ? (0.5f * v0->data[sizeAttr][0])
         : (0.5f * setup->softpipe->rasterizer->point_size);
@@ -916,6 +913,8 @@ setup_point(struct draw_stage *stage, struct prim_header *prim)
    const float x = v0->data[TGSI_ATTRIB_POS][0];
    const float y = v0->data[TGSI_ATTRIB_POS][1];
    unsigned slot, j;
+
+   assert(sizeAttr >= 0);
 
    /* For points, all interpolants are constant-valued.
     * However, for point sprites, we'll need to setup texcoords appropriately.
@@ -1096,8 +1095,6 @@ struct draw_stage *sp_draw_render_stage( struct softpipe_context *softpipe )
    setup->stage.reset_stipple_counter = reset_stipple_counter;
 
    setup->quad.coef = setup->coef;
-
-   setup->lookup = softpipe->draw->vertex_info.attrib_to_slot;
 
    return &setup->stage;
 }

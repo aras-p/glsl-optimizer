@@ -119,9 +119,17 @@ struct st_context
 
    GLfloat polygon_offset_scale; /* ?? */
 
-   struct st_vertex_program *vp;
-   struct st_fragment_program *fp;
+   /** Mapping from VERT_ATTRIB_x to post-transformed vertex slot */
+   GLuint vertex_attrib_to_slot[VERT_RESULT_MAX];
 
+   struct st_vertex_program *vp;    /**< Currently bound vertex program */
+   struct st_fragment_program *fp;  /**< Currently bound fragment program */
+
+   /**
+    * Buffer object which stores the ctx->Current.Attrib[] values.
+    * Used for vertex array drawing when we we need an attribute for
+    * which there's no enabled array.
+    */
    struct pipe_buffer_handle *default_attrib_buffer;
 
    struct cso_cache *cache;
