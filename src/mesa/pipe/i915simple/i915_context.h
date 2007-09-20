@@ -141,6 +141,11 @@ struct i915_rasterizer_state {
    union { float f; unsigned u; } ds[2];
 };
 
+struct i915_sampler_state {
+   unsigned state[3];
+   const struct pipe_sampler_state *templ;
+};
+
 struct i915_context
 {
    struct pipe_context pipe; 
@@ -150,7 +155,7 @@ struct i915_context
    /* The most recent drawing state as set by the driver:
     */
    const struct i915_blend_state           *blend;
-   const struct pipe_sampler_state *sampler[PIPE_MAX_SAMPLERS];
+   const struct i915_sampler_state         *sampler[PIPE_MAX_SAMPLERS];
    const struct i915_depth_stencil_state   *depth_stencil;
    const struct i915_rasterizer_state      *rasterizer;
    const struct pipe_shader_state *fs;

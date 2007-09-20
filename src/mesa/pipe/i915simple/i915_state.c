@@ -38,9 +38,79 @@
 #include "i915_state.h"
 #include "i915_state_inlines.h"
 
+
+/* The i915 (and related graphics cores) do not support GL_CLAMP.  The
+ * Intel drivers for "other operating systems" implement GL_CLAMP as
+ * GL_CLAMP_TO_EDGE, so the same is done here.
+ */
+static unsigned
+translate_wrap_mode(unsigned wrap)
+{
+   switch (wrap) {
+   case PIPE_TEX_WRAP_REPEAT:
+      return TEXCOORDMODE_WRAP;
+   case PIPE_TEX_WRAP_CLAMP:
+      return TEXCOORDMODE_CLAMP_EDGE;   /* not quite correct */
+   case PIPE_TEX_WRAP_CLAMP_TO_EDGE:
+      return TEXCOORDMODE_CLAMP_EDGE;
+   case PIPE_TEX_WRAP_CLAMP_TO_BORDER:
+      return TEXCOORDMODE_CLAMP_BORDER;
+//   case PIPE_TEX_WRAP_MIRRORED_REPEAT:
+//      return TEXCOORDMODE_MIRROR;
+   default:
+      return TEXCOORDMODE_WRAP;
+   }
+}
+
+static unsigned translate_img_filter( unsigned filter )
+{
+   switch (filter) {
+   case PIPE_TEX_FILTER_NEAREST:
+      return FILTER_NEAREST;
+   case PIPE_TEX_FILTER_LINEAR:
+      return FILTER_LINEAR;
+   default:
+      assert(0);
+      return FILTER_NEAREST;
+   }
+}
+
+static unsigned translate_mip_filter( unsigned filter )
+{
+   switch (filter) {
+   case PIPE_TEX_MIPFILTER_NONE:
+      return MIPFILTER_NONE;
+   case PIPE_TEX_MIPFILTER_NEAREST:
+      return MIPFILTER_NEAREST;
+   case PIPE_TEX_FILTER_LINEAR:
+      return MIPFILTER_LINEAR;
+   default:
+      assert(0);
+      return MIPFILTER_NONE;
+   }
+}
+
+static unsigned translate_compare_func(unsigned func)
+{
+   switch (func) {
+   case PIPE_FUNC_NEVER:
+   case PIPE_FUNC_LESS:
+   case PIPE_FUNC_EQUAL:
+   case PIPE_FUNC_LEQUAL:
+   case PIPE_FUNC_GREATER:
+   case PIPE_FUNC_NOTEQUAL:
+   case PIPE_FUNC_GEQUAL:
+   case PIPE_FUNC_ALWAYS:
+      return 0;
+   default:
+      assert(0);
+      return 0;
+   }
+}
+
+
 /* None of this state is actually used for anything yet.
  */
-
 static void *
 i915_create_blend_state(struct pipe_context *pipe,
                         const struct pipe_blend_state *blend)
@@ -147,7 +217,59 @@ static void *
 i915_create_sampler_state(struct pipe_context *pipe,
                           const struct pipe_sampler_state *sampler)
 {
-   return 0;
+   struct i915_sampler_state *cso = calloc(1, sizeof(struct i915_sampler_state));
+   cso->templ = sampler;
+
+   const unsigned ws = sampler->wrap_s;
+   const unsigned wt = sampler->wrap_t;
+   const unsigned wr = sampler->wrap_r;
+   unsigned minFilt, magFilt;
+   unsigned mipFilt;
+
+   mipFilt = translate_mip_filter(sampler->min_mip_filter);
+   if (sampler->max_anisotropy > 1.0) {
+      minFilt = FILTER_ANISOTROPIC;
+      magFilt = FILTER_ANISOTROPIC;
+   }
+   else {
+      minFilt = translate_img_filter( sampler->min_img_filter );
+      magFilt = translate_img_filter( sampler->mag_img_filter );
+   }
+
+   {
+      int b = sampler->lod_bias * 16.0;
+      b = CLAMP(b, -256, 255);
+      cso->state[0] |= ((b << SS2_LOD_BIAS_SHIFT) & SS2_LOD_BIAS_MASK);
+   }
+
+   /* Shadow:
+    */
+   if (sampler->compare_mode == PIPE_TEX_COMPARE_R_TO_TEXTURE) 
+   {
+      cso->state[0] |= (SS2_SHADOW_ENABLE |
+                        translate_compare_func(sampler->compare_func));
+
+      minFilt = FILTER_4X4_FLAT;
+      magFilt = FILTER_4X4_FLAT;
+   }
+
+   cso->state[0] |= ((minFilt << SS2_MIN_FILTER_SHIFT) |
+                     (mipFilt << SS2_MIP_FILTER_SHIFT) |
+                     (magFilt << SS2_MAG_FILTER_SHIFT));
+
+   cso->state[1] |=
+      ((translate_wrap_mode(ws) << SS3_TCX_ADDR_MODE_SHIFT) |
+       (translate_wrap_mode(wt) << SS3_TCY_ADDR_MODE_SHIFT) |
+       (translate_wrap_mode(wr) << SS3_TCZ_ADDR_MODE_SHIFT));
+
+   {
+      ubyte r = float_to_ubyte(sampler->border_color[0]);
+      ubyte g = float_to_ubyte(sampler->border_color[1]);
+      ubyte b = float_to_ubyte(sampler->border_color[2]);
+      ubyte a = float_to_ubyte(sampler->border_color[3]);
+      cso->state[2] = I915PACKCOLOR8888(r, g, b, a);
+   }
+   return cso;
 }
 
 static void i915_bind_sampler_state(struct pipe_context *pipe,
@@ -156,7 +278,7 @@ static void i915_bind_sampler_state(struct pipe_context *pipe,
    struct i915_context *i915 = i915_context(pipe);
 
    assert(unit < PIPE_MAX_SAMPLERS);
-   i915->sampler[unit] = (const struct pipe_sampler_state *)sampler;
+   i915->sampler[unit] = (const struct i915_sampler_state*)sampler;
 
    i915->dirty |= I915_NEW_SAMPLER;
 }
@@ -164,6 +286,7 @@ static void i915_bind_sampler_state(struct pipe_context *pipe,
 static void i915_delete_sampler_state(struct pipe_context *pipe,
                                       void *sampler)
 {
+   free(sampler);
 }
 
 
