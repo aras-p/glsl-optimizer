@@ -42,6 +42,8 @@
 #include "string.h"
 #include "imports.h"
 
+#define BUFMGR_DEBUG 0
+
 typedef struct _dri_bufmgr_ttm {
    dri_bufmgr bufmgr;
 
@@ -128,6 +130,10 @@ dri_ttm_alloc(dri_bufmgr *bufmgr, const char *name,
    ttm_buf->name = name;
    ttm_buf->refcount = 1;
 
+#if BUFMGR_DEBUG
+   fprintf(stderr, "bo_create: %p (%s)\n", &ttm_buf->bo, ttm_buf->name);
+#endif
+
    return &ttm_buf->bo;
 }
 
@@ -173,6 +179,11 @@ dri_ttm_bo_create_from_handle(dri_bufmgr *bufmgr, const char *name,
    ttm_buf->bo.bufmgr = bufmgr;
    ttm_buf->name = name;
    ttm_buf->refcount = 1;
+
+#if BUFMGR_DEBUG
+   fprintf(stderr, "bo_create_from_handle: %p (%s)\n", &ttm_buf->bo,
+	   ttm_buf->name);
+#endif
 
    return &ttm_buf->bo;
 }
@@ -222,6 +233,10 @@ dri_ttm_bo_map(dri_bo *buf, GLboolean write_enable)
 
    assert(buf->virtual == NULL);
 
+#if BUFMGR_DEBUG
+   fprintf(stderr, "bo_map: %p (%s)\n", &ttm_buf->bo, ttm_buf->name);
+#endif
+
    return drmBOMap(bufmgr_ttm->fd, &ttm_buf->drm_bo, flags, 0, &buf->virtual);
 }
 
@@ -239,6 +254,10 @@ dri_ttm_bo_unmap(dri_bo *buf)
    assert(buf->virtual != NULL);
 
    buf->virtual = NULL;
+
+#if BUFMGR_DEBUG
+   fprintf(stderr, "bo_unmap: %p (%s)\n", &ttm_buf->bo, ttm_buf->name);
+#endif
 
    return drmBOUnmap(bufmgr_ttm->fd, &ttm_buf->drm_bo);
 }
@@ -275,6 +294,10 @@ dri_ttm_validate(dri_bo *buf, unsigned int flags)
 
    buf->offset = ttm_buf->drm_bo.offset;
 
+#if BUFMGR_DEBUG
+   fprintf(stderr, "bo_validate: %p (%s)\n", &ttm_buf->bo, ttm_buf->name);
+#endif
+
    return err;
 }
 
@@ -305,6 +328,12 @@ dri_ttm_fence_validated(dri_bufmgr *bufmgr, const char *name,
       free(fence_ttm);
       return NULL;
    }
+
+#if BUFMGR_DEBUG
+   fprintf(stderr, "fence_validated: %p (%s)\n", &fence_ttm->fence,
+	   fence_ttm->name);
+#endif
+
    return &fence_ttm->fence;
 }
 
@@ -354,6 +383,11 @@ dri_ttm_fence_wait(dri_fence *fence)
 		   __FILE__, __LINE__, ret, fence_ttm->name);
       abort();
    }
+
+#if BUFMGR_DEBUG
+   fprintf(stderr, "fence_wait: %p (%s)\n", &fence_ttm->fence,
+	   fence_ttm->name);
+#endif
 }
 
 static void
