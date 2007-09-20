@@ -116,6 +116,14 @@ intel_batchbuffer_free(struct intel_batchbuffer *batch)
    free(batch);
 }
 
+static int
+relocation_sort(const void *a_in, const void *b_in) {
+   const struct buffer_reloc *a = a_in, *b = b_in;
+
+   return (intptr_t)a->buf < (intptr_t)b->buf ? -1 : 1;
+}
+
+
 /* TODO: Push this whole function into bufmgr.
  */
 static void
@@ -132,13 +140,49 @@ do_flush_locked(struct intel_batchbuffer *batch,
    assert(batch->buf->virtual != NULL);
    ptr = batch->buf->virtual;
 
+   /* Sort our relocation list in terms of referenced buffer pointer.
+    * This lets us uniquely validate the buffers with the sum of all the flags,
+    * while avoiding O(n^2) on number of relocations.
+    */
+   qsort(batch->reloc, batch->nr_relocs, sizeof(batch->reloc[0]),
+	 relocation_sort);
+
+   /* Perform the necessary validations of buffers, and enter the relocations
+    * in the batchbuffer.
+    */
    for (i = 0; i < batch->nr_relocs; i++) {
       struct buffer_reloc *r = &batch->reloc[i];
 
       if (r->validate_flags & DRM_BO_FLAG_WRITE)
 	 performed_rendering = GL_TRUE;
 
-      dri_bo_validate(r->buf, r->validate_flags);
+      /* If this is the first time we've seen this buffer in the relocation
+       * list, figure out our flags and validate it.
+       */
+      if (i == 0 || batch->reloc[i - 1].buf != r->buf) {
+	 uint32_t validate_flags;
+	 int j, ret;
+
+	 /* Accumulate the flags we need for validating this buffer. */
+	 validate_flags = r->validate_flags;
+	 for (j = i + 1; j < batch->nr_relocs; j++) {
+	    if (batch->reloc[j].buf != r->buf)
+	       break;
+	    validate_flags |= batch->reloc[j].validate_flags;
+	 }
+
+	 /* Validate.  If we fail, fence to clear the unfenced list and bail
+	  * out.
+	  */
+	 ret = dri_bo_validate(r->buf, validate_flags);
+	 if (ret != 0) {
+	    dri_bo_unmap(batch->buf);
+	    fo = dri_fence_validated(intel->intelScreen->bufmgr,
+				     "batchbuffer failure fence", GL_TRUE);
+	    dri_fence_unreference(fo);
+	    goto done;
+	 }
+      }
       ptr[r->offset / 4] = r->buf->offset + r->delta;
       dri_bo_unreference(r->buf);
    }
@@ -193,6 +237,7 @@ do_flush_locked(struct intel_batchbuffer *batch,
       intel->vtbl.lost_hardware(intel);
    }
 
+done:
    if (INTEL_DEBUG & DEBUG_BATCH) {
       dri_bo_map(batch->buf, GL_FALSE);
       intel_decode(ptr, used / 4, batch->buf->offset);
