@@ -106,16 +106,16 @@ st_translate_vertex_shader(struct st_context *st,
             vs.output_semantics[vs.num_outputs] = TGSI_SEMANTIC_POSITION;
             break;
          case VERT_RESULT_COL0:
-            vs.input_semantics[vs.num_inputs] = TGSI_SEMANTIC_COLOR0;
+            vs.output_semantics[vs.num_inputs] = TGSI_SEMANTIC_COLOR0;
             break;
          case VERT_RESULT_COL1:
-            vs.input_semantics[vs.num_inputs] = TGSI_SEMANTIC_COLOR1;
+            vs.output_semantics[vs.num_inputs] = TGSI_SEMANTIC_COLOR1;
             break;
          case VERT_RESULT_BFC0:
-            vs.input_semantics[vs.num_inputs] = TGSI_SEMANTIC_COLOR0B;
+            vs.output_semantics[vs.num_inputs] = TGSI_SEMANTIC_COLOR0B;
             break;
          case VERT_RESULT_BFC1:
-            vs.input_semantics[vs.num_inputs] = TGSI_SEMANTIC_COLOR1B;
+            vs.output_semantics[vs.num_inputs] = TGSI_SEMANTIC_COLOR1B;
             break;
          default:
             vs.output_semantics[vs.num_outputs] = TGSI_SEMANTIC_OTHER;
