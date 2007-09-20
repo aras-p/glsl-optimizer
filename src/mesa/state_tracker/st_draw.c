@@ -47,7 +47,6 @@
 #include "pipe/p_context.h"
 #include "pipe/p_defines.h"
 #include "pipe/p_winsys.h"
-#include "pipe/tgsi/exec/tgsi_attribs.h"
 
 #include "pipe/draw/draw_private.h"
 #include "pipe/draw/draw_context.h"

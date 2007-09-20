@@ -34,7 +34,6 @@
 
 #include "pipe/p_util.h"
 #include "pipe/p_defines.h"
-#include "pipe/tgsi/exec/tgsi_attribs.h"
 
 #include "sp_context.h"
 #include "sp_headers.h"

@@ -33,7 +33,6 @@
 #include "sp_context.h"
 #include "sp_state.h"
 
-#include "pipe/tgsi/exec/tgsi_attribs.h"
 #include "pipe/tgsi/exec/tgsi_token.h"
 
 

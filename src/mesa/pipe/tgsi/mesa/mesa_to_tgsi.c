@@ -1,6 +1,5 @@
 #include "tgsi_platform.h"
 #include "tgsi_mesa.h"
-#include "pipe/tgsi/exec/tgsi_attribs.h"
 #include "pipe/tgsi/mesa/mesa_to_tgsi.h"
 
 #define TGSI_DEBUG 0

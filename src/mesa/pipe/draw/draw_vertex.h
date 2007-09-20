@@ -33,11 +33,11 @@
 #ifndef DRAW_VERTEX_H
 #define DRAW_VERTEX_H
 
-#include "pipe/tgsi/exec/tgsi_attribs.h"
 
 
+#if 0
 #define MAX_VERT_ATTRIBS 12  /* OK? */
-
+#endif
 
 struct draw_context;
 
