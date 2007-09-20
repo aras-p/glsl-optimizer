@@ -188,11 +188,12 @@ static void update_vs( struct st_context *st )
    }
 
    if (st->vp != stvp || stvp->dirty) {
-      /* Bind the vertex program */
-      st->vp = stvp;
-
       if (stvp->dirty)
-	 st->state.vs = st_translate_vertex_shader( st, st->vp );
+         (void) st_translate_vertex_shader( st, stvp );
+
+      /* Bind the vertex program and TGSI shader */
+      st->vp = stvp;
+      st->state.vs = stvp->vs;
 
       st->pipe->bind_vs_state(st->pipe, st->state.vs->data);
    }

@@ -177,11 +177,13 @@ static void update_fs( struct st_context *st )
 
    /* if new binding, or shader has changed */
    if (st->fp != stfp || stfp->dirty) {
-      /* Bind the program */
-      st->fp = stfp;
 
       if (stfp->dirty)
-	 st->state.fs = st_translate_fragment_shader( st, st->fp );
+         (void) st_translate_fragment_shader( st, stfp );
+
+      /* Bind the vertex program and TGSI shader */
+      st->fp = stfp;
+      st->state.fs = stfp->fs;
 
       st->pipe->bind_fs_state(st->pipe, st->state.fs->data);
    }
