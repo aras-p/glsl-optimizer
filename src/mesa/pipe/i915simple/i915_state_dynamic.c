@@ -165,18 +165,9 @@ const struct i915_tracked_state i915_upload_IAB = {
 
 static void upload_DEPTHSCALE( struct i915_context *i915 )
 {
-   union { float f; unsigned u; } ds[2];
-
-   memset( ds, 0, sizeof(ds) );
-   
-   /* I915_NEW_RASTERIZER
-    */
-   ds[0].u = _3DSTATE_DEPTH_OFFSET_SCALE;
-   ds[1].f = i915->rasterizer->offset_scale;
-
-   set_dynamic_indirect( i915, 
+   set_dynamic_indirect( i915,
 			 I915_DYNAMIC_DEPTHSCALE_0,
-			 &ds[0].u,
+			 &(i915->rasterizer->ds[0].u),
 			 2 );
 }
 
@@ -205,12 +196,10 @@ static void upload_STIPPLE( struct i915_context *i915 )
 
    st[0] = _3DSTATE_STIPPLE;
    st[1] = 0;
-   
-   /* I915_NEW_RASTERIZER 
+
+   /* I915_NEW_RASTERIZER
     */
-   if (i915->rasterizer->poly_stipple_enable) {
-      st[1] |= ST1_ENABLE;
-   }
+   st[1] |= i915->rasterizer->st;
 
 
    /* I915_NEW_STIPPLE
@@ -248,20 +237,13 @@ const struct i915_tracked_state i915_upload_STIPPLE = {
 
 
 /***********************************************************************
- * Scissor.  
+ * Scissor.
  */
 static void upload_SCISSOR_ENABLE( struct i915_context *i915 )
 {
-   unsigned sc[1];
-
-   if (i915->rasterizer->scissor) 
-      sc[0] = _3DSTATE_SCISSOR_ENABLE_CMD | ENABLE_SCISSOR_RECT;
-   else
-      sc[0] = _3DSTATE_SCISSOR_ENABLE_CMD | DISABLE_SCISSOR_RECT;
-
-   set_dynamic_indirect( i915, 
+   set_dynamic_indirect( i915,
 			 I915_DYNAMIC_SC_ENA_0,
-			 &sc[0],
+			 &(i915->rasterizer->sc[0]),
 			 1 );
 }
 

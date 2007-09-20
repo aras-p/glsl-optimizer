@@ -44,8 +44,7 @@
 static void calculate_vertex_layout( struct i915_context *i915 )
 {
    const struct pipe_shader_state *fs = i915->fs;
-   const interp_mode colorInterp
-      = i915->rasterizer->flatshade ? INTERP_CONSTANT : INTERP_LINEAR;
+   const interp_mode colorInterp = i915->rasterizer->color_interp;
    struct vertex_info *vinfo = &i915->current.vertex_info;
    uint front0 = 0, back0 = 0, front1 = 0, back1 = 0;
    boolean needW = 0;
@@ -161,7 +160,7 @@ static void calculate_vertex_layout( struct i915_context *i915 )
       if (front0) {
          back0 = draw_emit_vertex_attr(vinfo, TGSI_ATTRIB_BFC0,
                                        FORMAT_OMIT, colorInterp);
-      }	    
+      }
       if (back0) {
          back1 = draw_emit_vertex_attr(vinfo, TGSI_ATTRIB_BFC1,
                                        FORMAT_OMIT, colorInterp);

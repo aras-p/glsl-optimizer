@@ -62,46 +62,7 @@ static void upload_S2S4(struct i915_context *i915)
       assert(LIS4); /* should never be zero? */
    }
 
-   /* I915_NEW_RASTERIZER */
-   switch (i915->rasterizer->cull_mode) {
-   case PIPE_WINDING_NONE:
-      LIS4 |= S4_CULLMODE_NONE;
-      break;
-   case PIPE_WINDING_CW:
-      LIS4 |= S4_CULLMODE_CW;
-      break;
-   case PIPE_WINDING_CCW:
-      LIS4 |= S4_CULLMODE_CCW;
-      break;
-   case PIPE_WINDING_BOTH:
-      LIS4 |= S4_CULLMODE_BOTH;
-      break;
-   }
-
-   /* I915_NEW_RASTERIZER */
-   {
-      int line_width = CLAMP((int)(i915->rasterizer->line_width * 2), 1, 0xf);
-
-      LIS4 |= line_width << S4_LINE_WIDTH_SHIFT;
-
-      if (i915->rasterizer->line_smooth)
-	 LIS4 |= S4_LINE_ANTIALIAS_ENABLE;
-   }
-
-   /* I915_NEW_RASTERIZER */
-   {
-      int point_size = CLAMP((int) i915->rasterizer->point_size, 1, 0xff);
-
-      LIS4 |= point_size << S4_POINT_WIDTH_SHIFT;
-   }
-
-   /* I915_NEW_RASTERIZER */
-   if (i915->rasterizer->flatshade) {
-      LIS4 |= (S4_FLATSHADE_ALPHA |
-	       S4_FLATSHADE_COLOR |
-	       S4_FLATSHADE_SPECULAR);
-   }
-
+   LIS4 |= i915->rasterizer->LIS4;
 
    if (LIS2 != i915->current.immediate[I915_IMMEDIATE_S2] ||
        LIS4 != i915->current.immediate[I915_IMMEDIATE_S4]) {
@@ -198,7 +159,7 @@ static void upload_S7( struct i915_context *i915 )
 
    /* I915_NEW_RASTERIZER
     */
-   LIS7 = i915->rasterizer->offset_units; /* probably incorrect */
+   LIS7 = i915->rasterizer->LIS7; /* probably incorrect */
 
    if (LIS7 != i915->current.immediate[I915_IMMEDIATE_S7]) {
       i915->current.immediate[I915_IMMEDIATE_S7] = LIS7;

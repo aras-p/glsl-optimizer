@@ -127,6 +127,20 @@ struct i915_depth_stencil_state {
    unsigned depth_LIS6;
 };
 
+struct i915_rasterizer_state {
+   int light_twoside : 1;
+   unsigned st;
+   interp_mode color_interp;
+
+   unsigned LIS4;
+   unsigned LIS7;
+   unsigned sc[1];
+
+   const struct pipe_rasterizer_state *templ;
+
+   union { float f; unsigned u; } ds[2];
+};
+
 struct i915_context
 {
    struct pipe_context pipe; 
@@ -138,7 +152,7 @@ struct i915_context
    const struct i915_blend_state           *blend;
    const struct pipe_sampler_state *sampler[PIPE_MAX_SAMPLERS];
    const struct i915_depth_stencil_state   *depth_stencil;
-   const struct pipe_rasterizer_state *rasterizer;
+   const struct i915_rasterizer_state      *rasterizer;
    const struct pipe_shader_state *fs;
 
    struct pipe_alpha_test_state alpha_test;

@@ -31,6 +31,7 @@
 
 #include "pipe/draw/draw_context.h"
 #include "pipe/p_winsys.h"
+#include "pipe/p_util.h"
 
 #include "i915_context.h"
 #include "i915_reg.h"
@@ -437,9 +438,64 @@ static void i915_set_viewport_state( struct pipe_context *pipe,
 
 static void *
 i915_create_rasterizer_state(struct pipe_context *pipe,
-                             const struct pipe_rasterizer_state *setup)
+                             const struct pipe_rasterizer_state *rasterizer)
 {
-   return 0;
+   struct i915_rasterizer_state *cso = calloc(1, sizeof(struct i915_rasterizer_state));
+
+   cso->templ = rasterizer;
+   cso->color_interp = rasterizer->flatshade ? INTERP_CONSTANT : INTERP_LINEAR;
+   cso->light_twoside = rasterizer->light_twoside;
+   cso->ds[0].u = _3DSTATE_DEPTH_OFFSET_SCALE;
+   cso->ds[1].f = rasterizer->offset_scale;
+   if (rasterizer->poly_stipple_enable) {
+      cso->st |= ST1_ENABLE;
+   }
+
+   if (rasterizer->scissor)
+      cso->sc[0] = _3DSTATE_SCISSOR_ENABLE_CMD | ENABLE_SCISSOR_RECT;
+   else
+      cso->sc[0] = _3DSTATE_SCISSOR_ENABLE_CMD | DISABLE_SCISSOR_RECT;
+
+   switch (rasterizer->cull_mode) {
+   case PIPE_WINDING_NONE:
+      cso->LIS4 |= S4_CULLMODE_NONE;
+      break;
+   case PIPE_WINDING_CW:
+      cso->LIS4 |= S4_CULLMODE_CW;
+      break;
+   case PIPE_WINDING_CCW:
+      cso->LIS4 |= S4_CULLMODE_CCW;
+      break;
+   case PIPE_WINDING_BOTH:
+      cso->LIS4 |= S4_CULLMODE_BOTH;
+      break;
+   }
+
+   {
+      int line_width = CLAMP((int)(rasterizer->line_width * 2), 1, 0xf);
+
+      cso->LIS4 |= line_width << S4_LINE_WIDTH_SHIFT;
+
+      if (rasterizer->line_smooth)
+	 cso->LIS4 |= S4_LINE_ANTIALIAS_ENABLE;
+   }
+
+   {
+      int point_size = CLAMP((int) rasterizer->point_size, 1, 0xff);
+
+      cso->LIS4 |= point_size << S4_POINT_WIDTH_SHIFT;
+   }
+
+   if (rasterizer->flatshade) {
+      cso->LIS4 |= (S4_FLATSHADE_ALPHA |
+                    S4_FLATSHADE_COLOR |
+                    S4_FLATSHADE_SPECULAR);
+   }
+
+   cso->LIS7 = rasterizer->offset_units; /* probably incorrect */
+
+
+   return cso;
 }
 
 static void i915_bind_rasterizer_state( struct pipe_context *pipe,
@@ -447,10 +503,10 @@ static void i915_bind_rasterizer_state( struct pipe_context *pipe,
 {
    struct i915_context *i915 = i915_context(pipe);
 
-   i915->rasterizer = (struct pipe_rasterizer_state *)setup;
+   i915->rasterizer = (struct i915_rasterizer_state *)setup;
 
    /* pass-through to draw module */
-   draw_set_rasterizer_state(i915->draw, setup);
+   draw_set_rasterizer_state(i915->draw, i915->rasterizer->templ);
 
    i915->dirty |= I915_NEW_RASTERIZER;
 }
