@@ -58,6 +58,16 @@ struct cso_rasterizer {
    void *data;
 };
 
+struct cso_fragment_shader {
+   struct pipe_shader_state state;
+   void *data;
+};
+
+struct cso_vertex_shader {
+   struct pipe_shader_state state;
+   void *data;
+};
+
 enum cso_cache_type {
    CSO_BLEND,
    CSO_SAMPLER,

@@ -53,13 +53,13 @@
  * Translate a Mesa vertex shader into a TGSI shader.
  * \return  pointer to cached pipe_shader object.
  */
-struct pipe_shader_state *
+const struct cso_vertex_shader *
 st_translate_vertex_shader(struct st_context *st,
                            struct st_vertex_program *stvp)
 {
    GLuint outputMapping[PIPE_MAX_SHADER_INPUTS];
    struct pipe_shader_state vs;
-   struct pipe_shader_state *cached;
+   const struct cso_vertex_shader *cso;
    GLuint i;
 
    memset(&vs, 0, sizeof(vs));
@@ -147,8 +147,8 @@ st_translate_vertex_shader(struct st_context *st,
 
    vs.tokens = &stvp->tokens[0];
 
-   cached = st_cached_vs_state(st, &vs);
-   stvp->vs = cached;
+   cso = st_cached_vs_state(st, &vs);
+   stvp->vs = cso;
 
    if (TGSI_DEBUG)
       tgsi_dump( stvp->tokens, 0 );
@@ -157,13 +157,13 @@ st_translate_vertex_shader(struct st_context *st,
    if (stvp->sse2_program.csr == stvp->sse2_program.store)
       tgsi_emit_sse2( stvp->tokens, &stvp->sse2_program );
 
-   if (!cached->executable)
-      cached->executable = (void *) x86_get_func( &stvp->sse2_program );
+   if (!cso->state.executable)
+      cso->state.executable = (void *) x86_get_func( &stvp->sse2_program );
 #endif
 
    stvp->dirty = 0;
 
-   return cached;
+   return cso;
 }
 
 
@@ -191,10 +191,10 @@ static void update_vs( struct st_context *st )
       /* Bind the vertex program */
       st->vp = stvp;
 
-      if (stvp->dirty) 
+      if (stvp->dirty)
 	 st->state.vs = st_translate_vertex_shader( st, st->vp );
 
-      st->pipe->bind_vs_state(st->pipe, st->state.vs);
+      st->pipe->bind_vs_state(st->pipe, st->state.vs->data);
    }
 }
 

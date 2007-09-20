@@ -330,7 +330,7 @@ draw_textured_quad(GLcontext *ctx, GLint x, GLint y, GLfloat z,
       if (!stfp) {
          stfp = make_fragment_shader(ctx->st);
       }
-      pipe->bind_fs_state(pipe, stfp->fs);
+      pipe->bind_fs_state(pipe, stfp->fs->data);
    }
 
    /* vertex shader state: position + texcoord pass-through */
@@ -339,7 +339,7 @@ draw_textured_quad(GLcontext *ctx, GLint x, GLint y, GLfloat z,
       if (!stvp) {
          stvp = make_vertex_shader(ctx->st);
       }
-      pipe->bind_vs_state(pipe, stvp->vs);
+      pipe->bind_vs_state(pipe, stvp->vs->data);
    }
 
    /* texture sampling state: */
@@ -393,8 +393,8 @@ draw_textured_quad(GLcontext *ctx, GLint x, GLint y, GLfloat z,
 
    /* restore GL state */
    pipe->bind_rasterizer_state(pipe, ctx->st->state.rasterizer->data);
-   pipe->bind_fs_state(pipe, ctx->st->state.fs);
-   pipe->bind_vs_state(pipe, ctx->st->state.vs);
+   pipe->bind_fs_state(pipe, ctx->st->state.fs->data);
+   pipe->bind_vs_state(pipe, ctx->st->state.vs->data);
    pipe->set_texture_state(pipe, unit, ctx->st->state.texture[unit]);
    pipe->bind_sampler_state(pipe, unit, ctx->st->state.sampler[unit]);
    pipe->set_viewport_state(pipe, &ctx->st->state.viewport);

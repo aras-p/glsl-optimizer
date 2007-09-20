@@ -348,7 +348,7 @@ clear_with_quad(GLcontext *ctx,
       if (!stfp) {
          stfp = make_frag_shader(st);
       }
-      pipe->bind_fs_state(pipe, stfp->fs);
+      pipe->bind_fs_state(pipe, stfp->fs->data);
    }
 
    /* vertex shader state: color/position pass-through */
@@ -357,7 +357,7 @@ clear_with_quad(GLcontext *ctx,
       if (!stvp) {
          stvp = make_vertex_shader(st);
       }
-      pipe->bind_vs_state(pipe, stvp->vs);
+      pipe->bind_vs_state(pipe, stvp->vs->data);
    }
 
    /* viewport state: viewport matching window dims */
@@ -383,8 +383,8 @@ clear_with_quad(GLcontext *ctx,
    pipe->set_alpha_test_state(pipe, &st->state.alpha_test);
    pipe->bind_blend_state(pipe, st->state.blend->data);
    pipe->bind_depth_stencil_state(pipe, st->state.depth_stencil);
-   pipe->bind_fs_state(pipe, st->state.fs);
-   pipe->bind_vs_state(pipe, st->state.vs);
+   pipe->bind_fs_state(pipe, st->state.fs->data);
+   pipe->bind_vs_state(pipe, st->state.vs->data);
    pipe->bind_rasterizer_state(pipe, st->state.rasterizer->data);
    pipe->set_viewport_state(pipe, &ctx->st->state.viewport);
    /* OR:

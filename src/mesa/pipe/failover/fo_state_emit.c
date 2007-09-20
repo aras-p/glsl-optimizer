@@ -78,10 +78,12 @@ failover_state_emit( struct failover_context *failover )
       failover->sw->set_framebuffer_state( failover->sw, &failover->framebuffer );
 
    if (failover->dirty & FO_NEW_FRAGMENT_SHADER)
-      failover->sw->bind_fs_state( failover->sw, failover->fragment_shader );
+      failover->sw->bind_fs_state( failover->sw,
+                                   failover->fragment_shader->sw_state );
 
    if (failover->dirty & FO_NEW_VERTEX_SHADER)
-      failover->sw->bind_vs_state( failover->sw, failover->vertex_shader );
+      failover->sw->bind_vs_state( failover->sw,
+                                   failover->vertex_shader->sw_state );
 
    if (failover->dirty & FO_NEW_STIPPLE)
       failover->sw->set_polygon_stipple( failover->sw, &failover->poly_stipple );

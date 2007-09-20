@@ -74,8 +74,8 @@ struct failover_context {
    const struct pipe_sampler_state       *sampler[PIPE_MAX_SAMPLERS];
    const struct pipe_depth_stencil_state *depth_stencil;
    const struct fo_state                 *rasterizer;
-   const struct pipe_shader_state        *fragment_shader;
-   const struct pipe_shader_state        *vertex_shader;
+   const struct fo_state                 *fragment_shader;
+   const struct fo_state                 *vertex_shader;
 
    struct pipe_alpha_test_state alpha_test;
    struct pipe_blend_color blend_color;

@@ -150,26 +150,81 @@ failover_set_framebuffer_state(struct pipe_context *pipe,
    failover->hw->set_framebuffer_state( failover->hw, framebuffer );
 }
 
+
+static void *
+failover_create_fs_state(struct pipe_context *pipe,
+                         const struct pipe_shader_state *templ)
+{
+   struct fo_state *state = malloc(sizeof(struct fo_state));
+   struct failover_context *failover = failover_context(pipe);
+
+   state->sw_state = failover->sw->create_fs_state(pipe, templ);
+   state->hw_state = failover->hw->create_fs_state(pipe, templ);
+
+   return state;
+}
+
 static void
 failover_bind_fs_state(struct pipe_context *pipe,
-                       const struct pipe_shader_state *fs)
+                       void *fs)
 {
    struct failover_context *failover = failover_context(pipe);
 
-   failover->fragment_shader = fs;
+   failover->fragment_shader = (struct fo_state *)fs;
    failover->dirty |= FO_NEW_FRAGMENT_SHADER;
-   failover->hw->bind_fs_state( failover->hw, fs );
+   failover->hw->bind_fs_state(failover->hw, (struct pipe_shader_state *)fs);
+}
+
+static void
+failover_delete_fs_state(struct pipe_context *pipe,
+                         void *fs)
+{
+   struct fo_state *state = (struct fo_state*)fs;
+   struct failover_context *failover = failover_context(pipe);
+
+   failover->sw->delete_fs_state(pipe, state->sw_state);
+   failover->hw->delete_fs_state(pipe, state->hw_state);
+   state->sw_state = 0;
+   state->hw_state = 0;
+   free(state);
+}
+
+static void *
+failover_create_vs_state(struct pipe_context *pipe,
+                         const struct pipe_shader_state *templ)
+{
+   struct fo_state *state = malloc(sizeof(struct fo_state));
+   struct failover_context *failover = failover_context(pipe);
+
+   state->sw_state = failover->sw->create_vs_state(pipe, templ);
+   state->hw_state = failover->hw->create_vs_state(pipe, templ);
+
+   return state;
 }
 
 static void
 failover_bind_vs_state(struct pipe_context *pipe,
-		      const struct pipe_shader_state *vs)
+                       void *vs)
 {
    struct failover_context *failover = failover_context(pipe);
 
-   failover->vertex_shader = vs;
+   failover->vertex_shader = (struct fo_state*)vs;
    failover->dirty |= FO_NEW_VERTEX_SHADER;
-   failover->hw->bind_vs_state( failover->hw, vs );
+   failover->hw->bind_vs_state(failover->hw, vs);
+}
+
+static void
+failover_delete_vs_state(struct pipe_context *pipe,
+                         void *vs)
+{
+   struct fo_state *state = (struct fo_state*)vs;
+   struct failover_context *failover = failover_context(pipe);
+
+   failover->sw->delete_vs_state(pipe, state->sw_state);
+   failover->hw->delete_vs_state(pipe, state->hw_state);
+   state->sw_state = 0;
+   state->hw_state = 0;
+   free(state);
 }
 
 static void 
@@ -312,8 +367,12 @@ failover_init_state_functions( struct failover_context *failover )
    failover->pipe.create_rasterizer_state = failover_create_rasterizer_state;
    failover->pipe.bind_rasterizer_state = failover_bind_rasterizer_state;
    failover->pipe.delete_rasterizer_state = failover_delete_rasterizer_state;
-   failover->pipe.bind_fs_state = failover_bind_fs_state;
-   failover->pipe.bind_vs_state = failover_bind_vs_state;
+   failover->pipe.create_fs_state = failover_create_fs_state;
+   failover->pipe.bind_fs_state   = failover_bind_fs_state;
+   failover->pipe.delete_fs_state = failover_delete_fs_state;
+   failover->pipe.create_vs_state = failover_create_vs_state;
+   failover->pipe.bind_vs_state   = failover_bind_vs_state;
+   failover->pipe.delete_vs_state = failover_delete_vs_state;
 
    failover->pipe.set_alpha_test_state = failover_set_alpha_test_state;
    failover->pipe.set_blend_color = failover_set_blend_color;

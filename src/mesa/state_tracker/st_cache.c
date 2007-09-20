@@ -115,9 +115,9 @@ const struct cso_rasterizer* st_cached_rasterizer_state(
    return (struct cso_rasterizer*)(cso_hash_iter_data(iter));
 }
 
-struct pipe_shader_state * st_cached_fs_state(
-   struct st_context *st,
-   const struct pipe_shader_state *templ)
+const struct cso_fragment_shader *
+st_cached_fs_state(struct st_context *st,
+                   const struct pipe_shader_state *templ)
 {
    unsigned hash_key = cso_construct_key((void*)templ,
                                          sizeof(struct pipe_shader_state));
@@ -125,17 +125,19 @@ struct pipe_shader_state * st_cached_fs_state(
                                                        hash_key, CSO_FRAGMENT_SHADER,
                                                        (void*)templ);
    if (cso_hash_iter_is_null(iter)) {
-      const struct pipe_shader_state *created_state =
-         st->pipe->create_fs_state(st->pipe, templ);
-      iter = cso_insert_state(st->cache, hash_key, CSO_FRAGMENT_SHADER,
-                              (void*)created_state);
+      struct cso_fragment_shader *cso = malloc(sizeof(struct cso_fragment_shader));
+      memcpy(&cso->state, templ, sizeof(struct pipe_shader_state));
+      cso->data = st->pipe->create_fs_state(st->pipe, templ);
+      if (!cso->data)
+         cso->data = &cso->state;
+      iter = cso_insert_state(st->cache, hash_key, CSO_FRAGMENT_SHADER, cso);
    }
-   return (struct pipe_shader_state*)(cso_hash_iter_data(iter));
+   return (struct cso_fragment_shader*)(cso_hash_iter_data(iter));
 }
 
-struct pipe_shader_state * st_cached_vs_state(
-   struct st_context *st,
-   const struct pipe_shader_state *templ)
+const struct cso_vertex_shader *
+st_cached_vs_state(struct st_context *st,
+                   const struct pipe_shader_state *templ)
 {
    unsigned hash_key = cso_construct_key((void*)templ,
                                          sizeof(struct pipe_shader_state));
@@ -143,10 +145,12 @@ struct pipe_shader_state * st_cached_vs_state(
                                                        hash_key, CSO_VERTEX_SHADER,
                                                        (void*)templ);
    if (cso_hash_iter_is_null(iter)) {
-      const struct pipe_shader_state *created_state =
-         st->pipe->create_vs_state(st->pipe, templ);
-      iter = cso_insert_state(st->cache, hash_key, CSO_VERTEX_SHADER,
-                              (void*)created_state);
+      struct cso_vertex_shader *cso = malloc(sizeof(struct cso_vertex_shader));
+      memcpy(&cso->state, templ, sizeof(struct pipe_shader_state));
+      cso->data = st->pipe->create_vs_state(st->pipe, templ);
+      if (!cso->data)
+         cso->data = &cso->state;
+      iter = cso_insert_state(st->cache, hash_key, CSO_VERTEX_SHADER, cso);
    }
-   return (struct pipe_shader_state*)(cso_hash_iter_data(iter));
+   return (struct cso_vertex_shader*)(cso_hash_iter_data(iter));
 }

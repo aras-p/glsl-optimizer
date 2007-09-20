@@ -55,13 +55,13 @@ const struct cso_rasterizer *
 st_cached_rasterizer_state(struct st_context *st,
                            const struct pipe_rasterizer_state *raster);
 
-struct pipe_shader_state *st_cached_fs_state(
-   struct st_context *st,
-   const struct pipe_shader_state *templ);
+const struct cso_fragment_shader *
+st_cached_fs_state(struct st_context *st,
+                   const struct pipe_shader_state *templ);
 
 
-struct pipe_shader_state *st_cached_vs_state(
-   struct st_context *st,
-   const struct pipe_shader_state *templ);
+const struct cso_vertex_shader *
+st_cached_vs_state(struct st_context *st,
+                   const struct pipe_shader_state *templ);
 
 #endif

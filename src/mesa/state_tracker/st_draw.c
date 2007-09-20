@@ -198,7 +198,7 @@ st_draw_vbo(GLcontext *ctx,
 
    /* must get these after state validation! */
    vp = ctx->st->vp;
-   vs = ctx->st->state.vs;
+   vs = &ctx->st->state.vs->state;
 
    /* loop over TGSI shader inputs */
    for (attr = 0; attr < vs->num_inputs; attr++) {
@@ -405,8 +405,8 @@ st_feedback_draw_vbo(GLcontext *ctx,
    assert(draw);
    draw_set_viewport_state(draw, &st->state.viewport);
    draw_set_clip_state(draw, &st->state.clip);
-   draw_set_rasterizer_state(draw, st->state.rasterizer->data);
-   draw_set_vertex_shader(draw, st->state.vs);
+   draw_set_rasterizer_state(draw, &st->state.rasterizer->state);
+   draw_set_vertex_shader(draw, &st->state.vs->state);
    /* XXX need to set vertex info too */
 
 

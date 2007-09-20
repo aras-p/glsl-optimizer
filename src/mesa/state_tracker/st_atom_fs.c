@@ -51,14 +51,14 @@
  * Translate a Mesa fragment shader into a TGSI shader.
  * \return  pointer to cached pipe_shader object.
  */
-struct pipe_shader_state *
+const struct cso_fragment_shader *
 st_translate_fragment_shader(struct st_context *st,
                            struct st_fragment_program *stfp)
 {
    GLuint outputMapping[FRAG_RESULT_MAX];
    GLuint inputMapping[PIPE_MAX_SHADER_INPUTS];
    struct pipe_shader_state fs;
-   struct pipe_shader_state *cached;
+   const struct cso_fragment_shader *cso;
    GLuint interpMode[16];  /* XXX size? */
    GLuint i;
    GLbitfield inputsRead = stfp->Base.Base.InputsRead;
@@ -142,15 +142,15 @@ st_translate_fragment_shader(struct st_context *st,
 
    fs.tokens = &stfp->tokens[0];
 
-   cached = st_cached_fs_state(st, &fs);
-   stfp->fs = cached;
+   cso = st_cached_fs_state(st, &fs);
+   stfp->fs = cso;
 
    if (TGSI_DEBUG)
       tgsi_dump( stfp->tokens, 0/*TGSI_DUMP_VERBOSE*/ );
 
    stfp->dirty = 0;
 
-   return cached;
+   return cso;
 }
 
 
@@ -183,7 +183,7 @@ static void update_fs( struct st_context *st )
       if (stfp->dirty)
 	 st->state.fs = st_translate_fragment_shader( st, st->fp );
 
-      st->pipe->bind_fs_state(st->pipe, st->state.fs);
+      st->pipe->bind_fs_state(st->pipe, st->state.fs->data);
    }
 }
 

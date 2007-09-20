@@ -79,8 +79,8 @@ struct st_context
       const struct pipe_sampler_state *sampler[PIPE_MAX_SAMPLERS];
       const struct pipe_depth_stencil_state *depth_stencil;
       const struct cso_rasterizer  *rasterizer;
-      const struct pipe_shader_state *fs;
-      const struct pipe_shader_state *vs;
+      const struct cso_fragment_shader *fs;
+      const struct cso_vertex_shader   *vs;
 
       struct pipe_alpha_test_state  alpha_test;
       struct pipe_blend_color  blend_color;

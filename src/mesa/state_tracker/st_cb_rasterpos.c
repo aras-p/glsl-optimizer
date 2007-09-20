@@ -35,6 +35,7 @@
 
 #include "st_context.h"
 #include "st_atom.h"
+#include "st_cache.h"
 #include "st_draw.h"
 #include "st_program.h"
 #include "st_cb_rasterpos.h"
@@ -88,7 +89,7 @@ static void
 setup_feedback(GLcontext *ctx)
 {
    struct pipe_context *pipe = ctx->st->pipe;
-   const struct pipe_shader_state *vs = ctx->st->state.vs;
+   const struct pipe_shader_state *vs = &ctx->st->state.vs->state;
    struct pipe_feedback_state feedback;
    uint i;
 

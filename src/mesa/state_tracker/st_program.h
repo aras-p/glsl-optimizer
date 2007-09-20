@@ -40,6 +40,8 @@
 
 #define ST_FP_MAX_TOKENS 1024
 
+struct cso_fragment_shader;
+struct cso_vertex_shader;
 
 struct st_fragment_program
 {
@@ -52,7 +54,7 @@ struct st_fragment_program
    GLboolean dirty;
 
    /** Pointer to the corresponding cached shader */
-   const struct pipe_shader_state *fs;
+   const struct cso_fragment_shader *fs;
 
    GLuint param_state;
 };
@@ -83,7 +85,7 @@ struct st_vertex_program
 #endif
 
    /** Pointer to the corresponding cached shader */
-   const struct pipe_shader_state *vs;
+   const struct cso_vertex_shader *vs;
 
    GLuint param_state;
 };
@@ -105,12 +107,12 @@ st_vertex_program( struct gl_vertex_program *vp )
 }
 
 
-extern struct pipe_shader_state *
+extern const struct cso_fragment_shader *
 st_translate_fragment_shader(struct st_context *st,
                              struct st_fragment_program *fp);
 
 
-extern struct pipe_shader_state *
+extern const struct cso_vertex_shader *
 st_translate_vertex_shader(struct st_context *st,
                            struct st_vertex_program *vp);
 

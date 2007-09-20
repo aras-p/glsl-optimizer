@@ -228,41 +228,37 @@ static void i915_set_polygon_stipple( struct pipe_context *pipe,
 }
 
 
-static const struct pipe_shader_state *
-i915_create_shader_state( struct pipe_context *pipe,
-                          const struct pipe_shader_state *templ )
+static void *
+i915_create_shader_state(struct pipe_context *pipe,
+                         const struct pipe_shader_state *templ)
 {
-
-   struct pipe_shader_state *shader = malloc(sizeof(struct pipe_shader_state));
-   memcpy(shader, templ, sizeof(struct pipe_shader_state));
-
-   return shader;
+   return 0;
 }
 
 static void i915_bind_fs_state( struct pipe_context *pipe,
-                               const struct pipe_shader_state *fs )
+                               void *fs )
 {
    struct i915_context *i915 = i915_context(pipe);
 
-   i915->fs = fs;
+   i915->fs = (struct pipe_shader_state *)fs;
 
    i915->dirty |= I915_NEW_FS;
 }
 
 
-static void i915_bind_vs_state( struct pipe_context *pipe,
-                               const struct pipe_shader_state *vs )
+static void i915_bind_vs_state(struct pipe_context *pipe,
+                               void *vs)
 {
    struct i915_context *i915 = i915_context(pipe);
 
    /* just pass-through to draw module */
-   draw_set_vertex_shader(i915->draw, vs);
+   draw_set_vertex_shader(i915->draw, (const struct pipe_shader_state *)vs);
 }
 
-static void i915_delete_shader_state( struct pipe_context *pipe,
-                                      const struct pipe_shader_state *shader )
+static void i915_delete_shader_state(struct pipe_context *pipe,
+                                     void *shader)
 {
-   free((struct pipe_shader_state*)shader);
+   /*do nothing*/
 }
 
 static void i915_set_constant_buffer(struct pipe_context *pipe,

@@ -33,44 +33,39 @@
 #include "pipe/draw/draw_context.h"
 
 
-const struct pipe_shader_state *
-softpipe_create_shader_state( struct pipe_context *pipe,
-                              const struct pipe_shader_state *templ )
+void * softpipe_create_shader_state(struct pipe_context *pipe,
+                                    const struct pipe_shader_state *templ)
 {
-   struct pipe_shader_state *shader = malloc(sizeof(struct pipe_shader_state));
-   memcpy(shader, templ, sizeof(struct pipe_shader_state));
-
-   return shader;
+   /* we just want the pipe_shader_state template in the bind calls */
+   return 0;
 }
 
-void softpipe_bind_fs_state( struct pipe_context *pipe,
-                            const struct pipe_shader_state *fs )
+void softpipe_bind_fs_state(struct pipe_context *pipe, void *fs)
 {
    struct softpipe_context *softpipe = softpipe_context(pipe);
 
-   softpipe->fs = fs;
+   softpipe->fs = (struct pipe_shader_state *)fs;
 
    softpipe->dirty |= SP_NEW_FS;
 }
 
 
-void softpipe_bind_vs_state( struct pipe_context *pipe,
-                            const struct pipe_shader_state *vs )
+void softpipe_bind_vs_state(struct pipe_context *pipe, void *vs)
 {
    struct softpipe_context *softpipe = softpipe_context(pipe);
 
-   softpipe->vs = vs;
+   softpipe->vs = (struct pipe_shader_state *)vs;
 
    softpipe->dirty |= SP_NEW_VS;
 
-   draw_set_vertex_shader(softpipe->draw, vs);
+   draw_set_vertex_shader(softpipe->draw, (struct pipe_shader_state *)vs);
 }
 
 
 void softpipe_delete_shader_state( struct pipe_context *pipe,
-                                   const struct pipe_shader_state *shader )
+                                   void *shader )
 {
-   free((struct pipe_shader_state*)shader);
+   /* do nothing */
 }
 
 void softpipe_set_constant_buffer(struct pipe_context *pipe,
