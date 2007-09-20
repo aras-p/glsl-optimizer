@@ -115,6 +115,7 @@ static void
 update_depth_stencil(struct st_context *st)
 {
    struct pipe_depth_stencil_state depth_stencil;
+   const struct cso_depth_stencil *cso;
 
    memset(&depth_stencil, 0, sizeof(depth_stencil));
 
@@ -149,12 +150,11 @@ update_depth_stencil(struct st_context *st)
       depth_stencil.stencil.clear_value = st->ctx->Stencil.Clear & 0xff;
    }
 
-   struct pipe_depth_stencil_state *cached_state =
-      st_cached_depth_stencil_state(st, &depth_stencil);
-   if (st->state.depth_stencil != cached_state) {
+   cso = st_cached_depth_stencil_state(st, &depth_stencil);
+   if (st->state.depth_stencil != cso) {
       /* state has changed */
-      st->state.depth_stencil = cached_state;
-      st->pipe->bind_depth_stencil_state(st->pipe, cached_state); /* set new state */
+      st->state.depth_stencil = cso;
+      st->pipe->bind_depth_stencil_state(st->pipe, cso->data); /* bind new state */
    }
 }
 

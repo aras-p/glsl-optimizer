@@ -128,15 +128,42 @@ failover_set_clear_color_state( struct pipe_context *pipe,
    failover->hw->set_clear_color_state( failover->hw, clear_color );
 }
 
+static void *
+failover_create_depth_stencil_state(struct pipe_context *pipe,
+                              const struct pipe_depth_stencil_state *templ)
+{
+   struct fo_state *state = malloc(sizeof(struct fo_state));
+   struct failover_context *failover = failover_context(pipe);
+
+   state->sw_state = failover->sw->create_depth_stencil_state(pipe, templ);
+   state->hw_state = failover->hw->create_depth_stencil_state(pipe, templ);
+
+   return state;
+}
+
 static void
 failover_bind_depth_stencil_state(struct pipe_context *pipe,
-                          const struct pipe_depth_stencil_state *depth_stencil)
+                                  void *depth_stencil)
 {
    struct failover_context *failover = failover_context(pipe);
 
-   failover->depth_stencil = depth_stencil;
+   failover->depth_stencil = (struct fo_state *)depth_stencil;
    failover->dirty |= FO_NEW_DEPTH_STENCIL;
    failover->hw->bind_depth_stencil_state( failover->hw, depth_stencil );
+}
+
+static void
+failover_delete_depth_stencil_state(struct pipe_context *pipe,
+                                    void *ds)
+{
+   struct fo_state *state = (struct fo_state*)ds;
+   struct failover_context *failover = failover_context(pipe);
+
+   failover->sw->delete_depth_stencil_state(pipe, state->sw_state);
+   failover->hw->delete_depth_stencil_state(pipe, state->hw_state);
+   state->sw_state = 0;
+   state->hw_state = 0;
+   free(state);
 }
 
 static void
@@ -363,7 +390,9 @@ failover_init_state_functions( struct failover_context *failover )
    failover->pipe.bind_blend_state = failover_bind_blend_state;
    failover->pipe.delete_blend_state = failover_delete_blend_state;
    failover->pipe.bind_sampler_state = failover_bind_sampler_state;
-   failover->pipe.bind_depth_stencil_state = failover_bind_depth_stencil_state;
+   failover->pipe.create_depth_stencil_state = failover_create_depth_stencil_state;
+   failover->pipe.bind_depth_stencil_state   = failover_bind_depth_stencil_state;
+   failover->pipe.delete_depth_stencil_state = failover_delete_depth_stencil_state;
    failover->pipe.create_rasterizer_state = failover_create_rasterizer_state;
    failover->pipe.bind_rasterizer_state = failover_bind_rasterizer_state;
    failover->pipe.delete_rasterizer_state = failover_delete_rasterizer_state;

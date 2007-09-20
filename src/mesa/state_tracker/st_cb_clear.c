@@ -303,7 +303,7 @@ clear_with_quad(GLcontext *ctx,
    /* depth_stencil state: always pass/set to ref value */
    {
       struct pipe_depth_stencil_state depth_stencil;
-      struct pipe_depth_stencil_state *cached;
+      const struct cso_depth_stencil *cso;
       memset(&depth_stencil, 0, sizeof(depth_stencil));
       if (depth) {
          depth_stencil.depth.enabled = 1;
@@ -321,9 +321,8 @@ clear_with_quad(GLcontext *ctx,
          depth_stencil.stencil.value_mask[0] = 0xff;
          depth_stencil.stencil.write_mask[0] = ctx->Stencil.WriteMask[0] & 0xff;
       }
-      cached =
-         st_cached_depth_stencil_state(ctx->st, &depth_stencil);
-      pipe->bind_depth_stencil_state(pipe, cached);
+      cso = st_cached_depth_stencil_state(ctx->st, &depth_stencil);
+      pipe->bind_depth_stencil_state(pipe, cso->data);
    }
 
    /* setup state: nothing */
@@ -382,7 +381,7 @@ clear_with_quad(GLcontext *ctx,
    /* Restore pipe state */
    pipe->set_alpha_test_state(pipe, &st->state.alpha_test);
    pipe->bind_blend_state(pipe, st->state.blend->data);
-   pipe->bind_depth_stencil_state(pipe, st->state.depth_stencil);
+   pipe->bind_depth_stencil_state(pipe, st->state.depth_stencil->data);
    pipe->bind_fs_state(pipe, st->state.fs->data);
    pipe->bind_vs_state(pipe, st->state.vs->data);
    pipe->bind_rasterizer_state(pipe, st->state.rasterizer->data);

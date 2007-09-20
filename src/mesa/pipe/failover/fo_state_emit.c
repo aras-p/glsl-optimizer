@@ -72,7 +72,8 @@ failover_state_emit( struct failover_context *failover )
       failover->sw->set_clear_color_state( failover->sw, &failover->clear_color );
 
    if (failover->dirty & FO_NEW_DEPTH_STENCIL)
-      failover->sw->bind_depth_stencil_state( failover->sw, failover->depth_stencil );
+      failover->sw->bind_depth_stencil_state( failover->sw,
+                                              failover->depth_stencil->sw_state );
 
    if (failover->dirty & FO_NEW_FRAMEBUFFER)
       failover->sw->set_framebuffer_state( failover->sw, &failover->framebuffer );

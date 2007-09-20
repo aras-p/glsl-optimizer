@@ -105,13 +105,10 @@ struct pipe_context {
    void (*bind_rasterizer_state)(struct pipe_context *, void *);
    void (*delete_rasterizer_state)(struct pipe_context *, void *);
 
-   const struct pipe_depth_stencil_state * (*create_depth_stencil_state)(
-      struct pipe_context *,
-      const struct pipe_depth_stencil_state *);
-   void (*bind_depth_stencil_state)(struct pipe_context *,
-                                    const struct pipe_depth_stencil_state *);
-   void (*delete_depth_stencil_state)(struct pipe_context *,
-                                      const struct pipe_depth_stencil_state *);
+   void * (*create_depth_stencil_state)(struct pipe_context *,
+                                        const struct pipe_depth_stencil_state *);
+   void (*bind_depth_stencil_state)(struct pipe_context *, void *);
+   void (*delete_depth_stencil_state)(struct pipe_context *, void *);
 
    void * (*create_fs_state)(struct pipe_context *,
                              const struct pipe_shader_state *);

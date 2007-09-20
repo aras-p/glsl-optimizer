@@ -175,31 +175,27 @@ static void i915_delete_sampler_state(struct pipe_context *pipe,
  * into one file.
  */
 
-static const struct pipe_depth_stencil_state *
+static void *
 i915_create_depth_stencil_state(struct pipe_context *pipe,
                            const struct pipe_depth_stencil_state *depth_stencil)
 {
-   struct pipe_depth_stencil_state *new_ds =
-      malloc(sizeof(struct pipe_depth_stencil_state));
-   memcpy(new_ds, depth_stencil, sizeof(struct pipe_depth_stencil_state));
-
-   return new_ds;
+   return 0;
 }
 
 static void i915_bind_depth_stencil_state(struct pipe_context *pipe,
-                           const struct pipe_depth_stencil_state *depth_stencil)
+                                          void *depth_stencil)
 {
    struct i915_context *i915 = i915_context(pipe);
 
-   i915->depth_stencil = depth_stencil;
+   i915->depth_stencil = (const struct pipe_depth_stencil_state *)depth_stencil;
 
    i915->dirty |= I915_NEW_DEPTH_STENCIL;
 }
 
 static void i915_delete_depth_stencil_state(struct pipe_context *pipe,
-                           const struct pipe_depth_stencil_state *depth_stencil)
+                                            void *depth_stencil)
 {
-   free((struct pipe_depth_stencil_state *)depth_stencil);
+   /* do nothing */
 }
 
 static void i915_set_alpha_test_state(struct pipe_context *pipe,

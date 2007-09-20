@@ -53,6 +53,11 @@ struct cso_blend {
    void   *data;
 };
 
+struct cso_depth_stencil {
+   struct pipe_depth_stencil_state state;
+   void *data;
+};
+
 struct cso_rasterizer {
    struct pipe_rasterizer_state state;
    void *data;

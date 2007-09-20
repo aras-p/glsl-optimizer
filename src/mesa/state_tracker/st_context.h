@@ -77,7 +77,7 @@ struct st_context
    struct {
       const struct cso_blend *blend;
       const struct pipe_sampler_state *sampler[PIPE_MAX_SAMPLERS];
-      const struct pipe_depth_stencil_state *depth_stencil;
+      const struct cso_depth_stencil *depth_stencil;
       const struct cso_rasterizer  *rasterizer;
       const struct cso_fragment_shader *fs;
       const struct cso_vertex_shader   *vs;
