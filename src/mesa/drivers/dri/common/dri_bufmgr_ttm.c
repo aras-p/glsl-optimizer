@@ -270,7 +270,7 @@ dri_ttm_validate(dri_bo *buf, unsigned int flags)
       /* XXX: add to fence list for sanity checking */
    } else {
       fprintf(stderr, "failed to validate buffer (%s): %s\n",
-	      ttm_buf->name, strerror(err));
+	      ttm_buf->name, strerror(-err));
    }
 
    buf->offset = ttm_buf->drm_bo.offset;
@@ -301,7 +301,7 @@ dri_ttm_fence_validated(dri_bufmgr *bufmgr, const char *name,
    fence_ttm->fence.bufmgr = bufmgr;
    ret = drmFenceBuffers(bufmgr_ttm->fd, type, &fence_ttm->drm_fence);
    if (ret) {
-      fprintf(stderr, "failed to fence (%s): %s\n", name, strerror(ret));
+      fprintf(stderr, "failed to fence (%s): %s\n", name, strerror(-ret));
       free(fence_ttm);
       return NULL;
    }
