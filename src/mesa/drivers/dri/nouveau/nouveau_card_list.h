@@ -113,6 +113,7 @@ static nouveau_card nouveau_card_list[]={
 {0x0193,  "GeForce 8800 GTS",                      NV30_TCL_PRIMITIVE_3D|0x5000,  NV_50, 0},
 {0x01A0,  "GeForce2 MX Integrated Graphics",       NV11_TCL_PRIMITIVE_3D,         NV_11, 0},
 {0x01D1,  "GeForce 7300 LE",                       NV30_TCL_PRIMITIVE_3D|0x4400,  NV_44, 0},
+{0x01D3,  "GeForce 7300 SE",                       NV30_TCL_PRIMITIVE_3D|0x4400,  NV_44, 0},
 {0x01D6,  "GeForce Go 7200",                       NV30_TCL_PRIMITIVE_3D|0x4400,  NV_44, 0},
 {0x01D7,  "Quadro NVS 110M / GeForce Go 7300",     NV30_TCL_PRIMITIVE_3D|0x4400,  NV_44, 0},
 {0x01D8,  "GeForce Go 7400",                       NV30_TCL_PRIMITIVE_3D|0x4400,  NV_44, 0},
