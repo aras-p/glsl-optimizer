@@ -53,7 +53,7 @@ const struct cso_blend * st_cached_blend_state(struct st_context *st,
    if (cso_hash_iter_is_null(iter)) {
       struct cso_blend *cso = malloc(sizeof(struct cso_blend));
       memcpy(&cso->state, templ, sizeof(struct pipe_blend_state));
-      cso->data = st->pipe->create_blend_state(st->pipe, templ);
+      cso->data = st->pipe->create_blend_state(st->pipe, &cso->state);
       if (!cso->data)
          cso->data = &cso->state;
       iter = cso_insert_state(st->cache, hash_key, CSO_BLEND, cso);
@@ -72,7 +72,7 @@ st_cached_sampler_state(struct st_context *st,
    if (cso_hash_iter_is_null(iter)) {
       struct cso_sampler *cso = malloc(sizeof(struct cso_sampler));
       memcpy(&cso->state, templ, sizeof(struct pipe_sampler_state));
-      cso->data = st->pipe->create_sampler_state(st->pipe, templ);
+      cso->data = st->pipe->create_sampler_state(st->pipe, &cso->state);
       if (!cso->data)
          cso->data = &cso->state;
       iter = cso_insert_state(st->cache, hash_key, CSO_SAMPLER, cso);
@@ -92,7 +92,7 @@ st_cached_depth_stencil_state(struct st_context *st,
    if (cso_hash_iter_is_null(iter)) {
       struct cso_depth_stencil *cso = malloc(sizeof(struct cso_depth_stencil));
       memcpy(&cso->state, templ, sizeof(struct pipe_depth_stencil_state));
-      cso->data = st->pipe->create_depth_stencil_state(st->pipe, templ);
+      cso->data = st->pipe->create_depth_stencil_state(st->pipe, &cso->state);
       if (!cso->data)
          cso->data = &cso->state;
       iter = cso_insert_state(st->cache, hash_key, CSO_DEPTH_STENCIL, cso);
@@ -112,7 +112,7 @@ const struct cso_rasterizer* st_cached_rasterizer_state(
    if (cso_hash_iter_is_null(iter)) {
       struct cso_rasterizer *cso = malloc(sizeof(struct cso_rasterizer));
       memcpy(&cso->state, templ, sizeof(struct pipe_rasterizer_state));
-      cso->data = st->pipe->create_rasterizer_state(st->pipe, templ);
+      cso->data = st->pipe->create_rasterizer_state(st->pipe, &cso->state);
       if (!cso->data)
          cso->data = &cso->state;
       iter = cso_insert_state(st->cache, hash_key, CSO_RASTERIZER, cso);
@@ -132,7 +132,7 @@ st_cached_fs_state(struct st_context *st,
    if (cso_hash_iter_is_null(iter)) {
       struct cso_fragment_shader *cso = malloc(sizeof(struct cso_fragment_shader));
       memcpy(&cso->state, templ, sizeof(struct pipe_shader_state));
-      cso->data = st->pipe->create_fs_state(st->pipe, templ);
+      cso->data = st->pipe->create_fs_state(st->pipe, &cso->state);
       if (!cso->data)
          cso->data = &cso->state;
       iter = cso_insert_state(st->cache, hash_key, CSO_FRAGMENT_SHADER, cso);
@@ -152,7 +152,7 @@ st_cached_vs_state(struct st_context *st,
    if (cso_hash_iter_is_null(iter)) {
       struct cso_vertex_shader *cso = malloc(sizeof(struct cso_vertex_shader));
       memcpy(&cso->state, templ, sizeof(struct pipe_shader_state));
-      cso->data = st->pipe->create_vs_state(st->pipe, templ);
+      cso->data = st->pipe->create_vs_state(st->pipe, &cso->state);
       if (!cso->data)
          cso->data = &cso->state;
       iter = cso_insert_state(st->cache, hash_key, CSO_VERTEX_SHADER, cso);
