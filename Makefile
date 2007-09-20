@@ -67,6 +67,7 @@ aix-64-static \
 aix-gcc \
 aix-static \
 bluegene-osmesa \
+bluegene-xlc-osmesa \
 beos \
 darwin \
 darwin-static \
