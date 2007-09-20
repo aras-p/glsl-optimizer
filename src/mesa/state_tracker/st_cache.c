@@ -61,21 +61,23 @@ const struct cso_blend * st_cached_blend_state(struct st_context *st,
    return ((struct cso_blend *)cso_hash_iter_data(iter));
 }
 
-struct pipe_sampler_state * st_cached_sampler_state(
-   struct st_context *st,
-   const struct pipe_sampler_state *sampler)
+const struct cso_sampler *
+st_cached_sampler_state(struct st_context *st,
+                        const struct pipe_sampler_state *templ)
 {
-   unsigned hash_key = cso_construct_key((void*)sampler, sizeof(struct pipe_sampler_state));
+   unsigned hash_key = cso_construct_key((void*)templ, sizeof(struct pipe_sampler_state));
    struct cso_hash_iter iter = cso_find_state_template(st->cache,
                                                        hash_key, CSO_SAMPLER,
-                                                       (void*)sampler);
+                                                       (void*)templ);
    if (cso_hash_iter_is_null(iter)) {
-      const struct pipe_sampler_state *created_state = st->pipe->create_sampler_state(
-         st->pipe, sampler);
-      iter = cso_insert_state(st->cache, hash_key, CSO_SAMPLER,
-                              (void*)created_state);
+      struct cso_sampler *cso = malloc(sizeof(struct cso_sampler));
+      memcpy(&cso->state, templ, sizeof(struct pipe_sampler_state));
+      cso->data = st->pipe->create_sampler_state(st->pipe, templ);
+      if (!cso->data)
+         cso->data = &cso->state;
+      iter = cso_insert_state(st->cache, hash_key, CSO_SAMPLER, cso);
    }
-   return (struct pipe_sampler_state*)(cso_hash_iter_data(iter));
+   return (struct cso_sampler*)(cso_hash_iter_data(iter));
 }
 
 const struct cso_depth_stencil *

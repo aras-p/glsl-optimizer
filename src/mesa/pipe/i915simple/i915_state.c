@@ -142,32 +142,27 @@ static void i915_set_blend_color( struct pipe_context *pipe,
    i915->dirty |= I915_NEW_BLEND;
 }
 
-static const struct pipe_sampler_state *
+static void *
 i915_create_sampler_state(struct pipe_context *pipe,
                           const struct pipe_sampler_state *sampler)
 {
-   struct pipe_sampler_state *new_sampler = malloc(sizeof(struct pipe_sampler_state));
-   memcpy(new_sampler, sampler, sizeof(struct pipe_sampler_state));
-
-   return new_sampler;
+   return 0;
 }
 
 static void i915_bind_sampler_state(struct pipe_context *pipe,
-                                    unsigned unit,
-                                    const struct pipe_sampler_state *sampler)
+                                    unsigned unit, void *sampler)
 {
    struct i915_context *i915 = i915_context(pipe);
 
    assert(unit < PIPE_MAX_SAMPLERS);
-   i915->sampler[unit] = sampler;
+   i915->sampler[unit] = (const struct pipe_sampler_state *)sampler;
 
    i915->dirty |= I915_NEW_SAMPLER;
 }
 
 static void i915_delete_sampler_state(struct pipe_context *pipe,
-                                      const struct pipe_sampler_state *sampler)
+                                      void *sampler)
 {
-   free((struct pipe_sampler_state*)sampler);
 }
 
 

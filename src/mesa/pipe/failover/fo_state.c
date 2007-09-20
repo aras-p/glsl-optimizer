@@ -75,10 +75,10 @@ failover_bind_blend_state( struct pipe_context *pipe,
                            void *blend )
 {
    struct failover_context *failover = failover_context(pipe);
-
-   failover->blend = (struct fo_state *)blend;
+   struct fo_state *state = (struct fo_state *)blend;
+   failover->blend = state;
    failover->dirty |= FO_NEW_BLEND;
-   failover->hw->bind_blend_state( failover->hw, blend );
+   failover->hw->bind_blend_state( failover->hw, state->hw_state );
 }
 
 static void
@@ -146,10 +146,10 @@ failover_bind_depth_stencil_state(struct pipe_context *pipe,
                                   void *depth_stencil)
 {
    struct failover_context *failover = failover_context(pipe);
-
-   failover->depth_stencil = (struct fo_state *)depth_stencil;
+   struct fo_state *state = (struct fo_state *)depth_stencil;
+   failover->depth_stencil = state;
    failover->dirty |= FO_NEW_DEPTH_STENCIL;
-   failover->hw->bind_depth_stencil_state( failover->hw, depth_stencil );
+   failover->hw->bind_depth_stencil_state(failover->hw, state->hw_state);
 }
 
 static void
@@ -192,14 +192,13 @@ failover_create_fs_state(struct pipe_context *pipe,
 }
 
 static void
-failover_bind_fs_state(struct pipe_context *pipe,
-                       void *fs)
+failover_bind_fs_state(struct pipe_context *pipe, void *fs)
 {
    struct failover_context *failover = failover_context(pipe);
-
-   failover->fragment_shader = (struct fo_state *)fs;
+   struct fo_state *state = (struct fo_state*)fs;
+   failover->fragment_shader = state;
    failover->dirty |= FO_NEW_FRAGMENT_SHADER;
-   failover->hw->bind_fs_state(failover->hw, (struct pipe_shader_state *)fs);
+   failover->hw->bind_fs_state(failover->hw, state->hw_state);
 }
 
 static void
@@ -235,9 +234,10 @@ failover_bind_vs_state(struct pipe_context *pipe,
 {
    struct failover_context *failover = failover_context(pipe);
 
-   failover->vertex_shader = (struct fo_state*)vs;
+   struct fo_state *state = (struct fo_state*)vs;
+   failover->vertex_shader = state;
    failover->dirty |= FO_NEW_VERTEX_SHADER;
-   failover->hw->bind_vs_state(failover->hw, vs);
+   failover->hw->bind_vs_state(failover->hw, state->hw_state);
 }
 
 static void
@@ -284,9 +284,10 @@ failover_bind_rasterizer_state(struct pipe_context *pipe,
 {
    struct failover_context *failover = failover_context(pipe);
 
-   failover->rasterizer = (struct fo_state *)raster;
+   struct fo_state *state = (struct fo_state*)raster;
+   failover->rasterizer = state;
    failover->dirty |= FO_NEW_RASTERIZER;
-   failover->hw->bind_rasterizer_state( failover->hw, raster );
+   failover->hw->bind_rasterizer_state(failover->hw, state->hw_state);
 }
 
 static void
@@ -315,17 +316,44 @@ failover_set_scissor_state( struct pipe_context *pipe,
    failover->hw->set_scissor_state( failover->hw, scissor );
 }
 
-static void
-failover_bind_sampler_state(struct pipe_context *pipe,
-			   unsigned unit,
-                           const struct pipe_sampler_state *sampler)
+
+static void *
+failover_create_sampler_state(struct pipe_context *pipe,
+                              const struct pipe_sampler_state *templ)
 {
+   struct fo_state *state = malloc(sizeof(struct fo_state));
    struct failover_context *failover = failover_context(pipe);
 
-   failover->sampler[unit] = sampler;
+   state->sw_state = failover->sw->create_sampler_state(pipe, templ);
+   state->hw_state = failover->hw->create_sampler_state(pipe, templ);
+
+   return state;
+}
+
+static void
+failover_bind_sampler_state(struct pipe_context *pipe,
+			   unsigned unit, void *sampler)
+{
+   struct failover_context *failover = failover_context(pipe);
+   struct fo_state *state = (struct fo_state*)sampler;
+   failover->sampler[unit] = state;
    failover->dirty |= FO_NEW_SAMPLER;
    failover->dirty_sampler |= (1<<unit);
-   failover->hw->bind_sampler_state( failover->hw, unit, sampler );
+   failover->hw->bind_sampler_state(failover->hw, unit,
+                                    state->hw_state);
+}
+
+static void
+failover_delete_sampler_state(struct pipe_context *pipe, void *sampler)
+{
+   struct fo_state *state = (struct fo_state*)sampler;
+   struct failover_context *failover = failover_context(pipe);
+
+   failover->sw->delete_sampler_state(pipe, state->sw_state);
+   failover->hw->delete_sampler_state(pipe, state->hw_state);
+   state->sw_state = 0;
+   state->hw_state = 0;
+   free(state);
 }
 
 
@@ -389,7 +417,9 @@ failover_init_state_functions( struct failover_context *failover )
    failover->pipe.create_blend_state = failover_create_blend_state;
    failover->pipe.bind_blend_state = failover_bind_blend_state;
    failover->pipe.delete_blend_state = failover_delete_blend_state;
-   failover->pipe.bind_sampler_state = failover_bind_sampler_state;
+   failover->pipe.create_sampler_state = failover_create_sampler_state;
+   failover->pipe.bind_sampler_state   = failover_bind_sampler_state;
+   failover->pipe.delete_sampler_state = failover_delete_sampler_state;
    failover->pipe.create_depth_stencil_state = failover_create_depth_stencil_state;
    failover->pipe.bind_depth_stencil_state   = failover_bind_depth_stencil_state;
    failover->pipe.delete_depth_stencil_state = failover_delete_depth_stencil_state;

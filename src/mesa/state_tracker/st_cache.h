@@ -43,7 +43,7 @@ const struct cso_blend *
 st_cached_blend_state(struct st_context *st,
                       const struct pipe_blend_state *blend);
 
-struct pipe_sampler_state *
+const struct cso_sampler *
 st_cached_sampler_state(struct st_context *st,
                         const struct pipe_sampler_state *sampler);
 

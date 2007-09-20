@@ -123,6 +123,7 @@ update_samplers(struct st_context *st)
       const struct gl_texture_object *texobj
          = st->ctx->Texture.Unit[u]._Current;
       struct pipe_sampler_state sampler;
+      const struct cso_sampler *cso;
 
       memset(&sampler, 0, sizeof(sampler));
 
@@ -143,13 +144,12 @@ update_samplers(struct st_context *st)
          /* XXX more sampler state here */
       }
 
-      const struct pipe_sampler_state *cached_sampler =
-         st_cached_sampler_state(st, &sampler);
+      cso = st_cached_sampler_state(st, &sampler);
 
-      if (cached_sampler != st->state.sampler[u]) {
+      if (cso != st->state.sampler[u]) {
          /* state has changed */
-         st->state.sampler[u] = cached_sampler;
-         st->pipe->bind_sampler_state(st->pipe, u, cached_sampler);
+         st->state.sampler[u] = cso;
+         st->pipe->bind_sampler_state(st->pipe, u, cso->data);
       }
    }
 }

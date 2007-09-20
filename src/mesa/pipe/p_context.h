@@ -91,14 +91,11 @@ struct pipe_context {
    void (*bind_blend_state)(struct pipe_context *, void *);
    void (*delete_blend_state)(struct pipe_context *, void  *);
 
-   const struct pipe_sampler_state * (*create_sampler_state)(
-      struct pipe_context *,
-      const struct pipe_sampler_state *);
-   void (*bind_sampler_state)(struct pipe_context *,
-                              unsigned unit,
-                              const struct pipe_sampler_state *);
-   void (*delete_sampler_state)(struct pipe_context *,
-                                const struct pipe_sampler_state *);
+   void * (*create_sampler_state)(struct pipe_context *,
+                                  const struct pipe_sampler_state *);
+   void (*bind_sampler_state)(struct pipe_context *, unsigned unit,
+                              void *);
+   void (*delete_sampler_state)(struct pipe_context *, void *);
 
    void *(*create_rasterizer_state)(struct pipe_context *,
                                     const struct pipe_rasterizer_state *);

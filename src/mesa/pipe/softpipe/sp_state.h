@@ -41,14 +41,11 @@ void softpipe_bind_blend_state(struct pipe_context *,
 void softpipe_delete_blend_state(struct pipe_context *,
                                  void *);
 
-const struct pipe_sampler_state *
+void *
 softpipe_create_sampler_state(struct pipe_context *,
                               const struct pipe_sampler_state *);
-void softpipe_bind_sampler_state(struct pipe_context *,
-                                 unsigned,
-                                 const struct pipe_sampler_state *);
-void softpipe_delete_sampler_state(struct pipe_context *,
-                                   const struct pipe_sampler_state *);
+void softpipe_bind_sampler_state(struct pipe_context *, unsigned, void *);
+void softpipe_delete_sampler_state(struct pipe_context *, void *);
 
 void *
 softpipe_create_depth_stencil_state(struct pipe_context *,

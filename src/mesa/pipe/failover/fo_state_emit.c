@@ -103,7 +103,7 @@ failover_state_emit( struct failover_context *failover )
       for (i = 0; i < PIPE_MAX_SAMPLERS; i++) {
 	 if (failover->dirty_sampler & (1<<i)) {
 	    failover->sw->bind_sampler_state( failover->sw, i,
-                                              failover->sampler[i] );
+                                              failover->sampler[i]->sw_state );
 	 }
       }
    }

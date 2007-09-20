@@ -32,27 +32,21 @@
 #include "sp_context.h"
 #include "sp_state.h"
 
-
-
-const struct pipe_sampler_state *
+void *
 softpipe_create_sampler_state(struct pipe_context *pipe,
                               const struct pipe_sampler_state *sampler)
 {
-   struct pipe_sampler_state *new_sampler = malloc(sizeof(struct pipe_sampler_state));
-   memcpy(new_sampler, sampler, sizeof(struct pipe_sampler_state));
-
-   return new_sampler;
+   return 0;
 }
 
 void
 softpipe_bind_sampler_state(struct pipe_context *pipe,
-                            unsigned unit,
-                            const struct pipe_sampler_state *sampler)
+                            unsigned unit, void *sampler)
 {
    struct softpipe_context *softpipe = softpipe_context(pipe);
 
    assert(unit < PIPE_MAX_SAMPLERS);
-   softpipe->sampler[unit] = sampler;
+   softpipe->sampler[unit] = (struct pipe_sampler_state *)sampler;
 
    softpipe->dirty |= SP_NEW_SAMPLER;
 }
@@ -60,9 +54,9 @@ softpipe_bind_sampler_state(struct pipe_context *pipe,
 
 void
 softpipe_delete_sampler_state(struct pipe_context *pipe,
-                              const struct pipe_sampler_state *sampler)
+                              void *sampler)
 {
-   free((struct pipe_sampler_state*)sampler);
+   /* do nothing */
 }
 
 

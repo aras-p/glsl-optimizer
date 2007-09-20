@@ -73,6 +73,11 @@ struct cso_vertex_shader {
    void *data;
 };
 
+struct cso_sampler {
+   struct pipe_sampler_state state;
+   void *data;
+};
+
 enum cso_cache_type {
    CSO_BLEND,
    CSO_SAMPLER,

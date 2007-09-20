@@ -345,6 +345,7 @@ draw_textured_quad(GLcontext *ctx, GLint x, GLint y, GLfloat z,
    /* texture sampling state: */
    {
       struct pipe_sampler_state sampler;
+      const struct cso_sampler *cso;
       memset(&sampler, 0, sizeof(sampler));
       sampler.wrap_s = PIPE_TEX_WRAP_REPEAT;
       sampler.wrap_t = PIPE_TEX_WRAP_REPEAT;
@@ -352,8 +353,8 @@ draw_textured_quad(GLcontext *ctx, GLint x, GLint y, GLfloat z,
       sampler.min_img_filter = PIPE_TEX_FILTER_NEAREST;
       sampler.min_mip_filter = PIPE_TEX_MIPFILTER_NONE;
       sampler.mag_img_filter = PIPE_TEX_FILTER_NEAREST;
-      const struct pipe_sampler_state *state = st_cached_sampler_state(ctx->st, &sampler);
-      pipe->bind_sampler_state(pipe, unit, state);
+      cso = st_cached_sampler_state(ctx->st, &sampler);
+      pipe->bind_sampler_state(pipe, unit, cso->data);
    }
 
    /* viewport state: viewport matching window dims */
@@ -396,7 +397,7 @@ draw_textured_quad(GLcontext *ctx, GLint x, GLint y, GLfloat z,
    pipe->bind_fs_state(pipe, ctx->st->state.fs->data);
    pipe->bind_vs_state(pipe, ctx->st->state.vs->data);
    pipe->set_texture_state(pipe, unit, ctx->st->state.texture[unit]);
-   pipe->bind_sampler_state(pipe, unit, ctx->st->state.sampler[unit]);
+   pipe->bind_sampler_state(pipe, unit, ctx->st->state.sampler[unit]->data);
    pipe->set_viewport_state(pipe, &ctx->st->state.viewport);
 
    free_mipmap_tree(pipe, mt);
