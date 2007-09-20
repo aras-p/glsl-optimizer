@@ -356,7 +356,7 @@ st_draw_vertices(GLcontext *ctx, unsigned prim,
       velement.vertex_buffer_index = 0;
       velement.src_format = PIPE_FORMAT_R32G32B32A32_FLOAT;
       velement.dst_offset = 0;
-      pipe->set_vertex_element(pipe, attribs[i], &velement);
+      pipe->set_vertex_element(pipe, i/**attribs[i]**/, &velement);
    }
 
    /* draw */
@@ -411,7 +411,7 @@ st_feedback_draw_vbo(GLcontext *ctx,
 
 
    update_default_attribs_buffer(ctx);
-
+#if 0
    /* this must be after state validation */
    attrsNeeded = ctx->st->state.vs->inputs_read;
 
@@ -480,7 +480,9 @@ st_feedback_draw_vbo(GLcontext *ctx,
          draw_set_mapped_vertex_buffer(draw, attr, map);
       }
    }
-
+#else
+   assert(0);
+#endif
 
    if (ib) {
       unsigned indexSize;

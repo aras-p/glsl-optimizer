@@ -56,11 +56,9 @@
 static struct st_fragment_program *
 make_fragment_shader(struct st_context *st)
 {
-   static const GLuint outputMapping[2] = { 1, 0 };
    GLcontext *ctx = st->ctx;
    struct st_fragment_program *stfp;
    struct gl_program *p;
-   GLboolean b;
    GLuint interpMode[16];
    GLuint i;
 
@@ -94,11 +92,7 @@ make_fragment_shader(struct st_context *st)
    p->OutputsWritten = (1 << FRAG_RESULT_COLR);
 
    stfp = (struct st_fragment_program *) p;
-   /* compile into tgsi format */
-   b = tgsi_mesa_compile_fp_program(&stfp->Base, NULL, interpMode,
-                                    outputMapping,
-                                    stfp->tokens, ST_FP_MAX_TOKENS);
-   assert(b);
+   st_translate_fragment_shader(st, stfp);
 
    return stfp;
 }
@@ -112,11 +106,9 @@ static struct st_vertex_program *
 make_vertex_shader(struct st_context *st)
 {
    /* Map VERT_RESULT_HPOS to 0, VERT_RESULT_TEX0 to 1 */
-   static const GLuint outputMapping[] = { 0, 0, 0, 0, 1 };
    GLcontext *ctx = st->ctx;
    struct st_vertex_program *stvp;
    struct gl_program *p;
-   GLboolean b;
 
    p = ctx->Driver.NewProgram(ctx, GL_VERTEX_PROGRAM_ARB, 0);
    if (!p)
@@ -149,11 +141,7 @@ make_vertex_shader(struct st_context *st)
                         (1 << VERT_RESULT_HPOS));
 
    stvp = (struct st_vertex_program *) p;
-   /* compile into tgsi format */
-   b = tgsi_mesa_compile_vp_program(&stvp->Base, NULL,
-                                    outputMapping,
-                                    stvp->tokens, ST_FP_MAX_TOKENS);
-   assert(b);
+   st_translate_vertex_shader(st, stvp);
 
    return stvp;
 }
@@ -339,32 +327,19 @@ draw_textured_quad(GLcontext *ctx, GLint x, GLint y, GLfloat z,
    /* fragment shader state: TEX lookup program */
    {
       static struct st_fragment_program *stfp = NULL;
-      struct pipe_shader_state fs;
-      struct pipe_shader_state *cached;
       if (!stfp) {
          stfp = make_fragment_shader(ctx->st);
       }
-      memset(&fs, 0, sizeof(fs));
-      fs.inputs_read = stfp->Base.Base.InputsRead;
-      fs.tokens = &stfp->tokens[0];
-      cached = st_cached_fs_state(ctx->st, &fs);
-      pipe->bind_fs_state(pipe, cached);
+      pipe->bind_fs_state(pipe, stfp->fs);
    }
 
    /* vertex shader state: position + texcoord pass-through */
    {
       static struct st_vertex_program *stvp = NULL;
-      struct pipe_shader_state vs;
-      struct pipe_shader_state *cached;
       if (!stvp) {
          stvp = make_vertex_shader(ctx->st);
       }
-      memset(&vs, 0, sizeof(vs));
-      vs.inputs_read = stvp->Base.Base.InputsRead;
-      vs.outputs_written = stvp->Base.Base.OutputsWritten;
-      vs.tokens = &stvp->tokens[0];
-      cached = st_cached_vs_state(ctx->st, &vs);
-      pipe->bind_vs_state(pipe, cached);
+      pipe->bind_vs_state(pipe, stvp->vs);
    }
 
    /* texture sampling state: */

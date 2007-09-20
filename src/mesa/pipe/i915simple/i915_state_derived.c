@@ -33,6 +33,7 @@
 #include "i915_state.h"
 #include "i915_reg.h"
 #include "i915_fpc.h"
+#include "pipe/tgsi/exec/tgsi_token.h"
 
 
 /**
@@ -42,19 +43,71 @@
  */
 static void calculate_vertex_layout( struct i915_context *i915 )
 {
-   const uint inputsRead = i915->fs->inputs_read;
+   const struct pipe_shader_state *fs = i915->fs;
    const interp_mode colorInterp
       = i915->rasterizer->flatshade ? INTERP_CONSTANT : INTERP_LINEAR;
    struct vertex_info *vinfo = &i915->current.vertex_info;
    uint front0 = 0, back0 = 0, front1 = 0, back1 = 0;
    boolean needW = 0;
+   uint i;
+   boolean texCoords[8];
 
+   memset(texCoords, 0, sizeof(texCoords));
    memset(vinfo, 0, sizeof(*vinfo));
 
    /* pos */
    draw_emit_vertex_attr(vinfo, TGSI_ATTRIB_POS, FORMAT_3F, INTERP_LINEAR);
    /* Note: we'll set the S4_VFMT_XYZ[W] bits below */
 
+   for (i = 0; i < fs->num_inputs; i++) {
+      switch (fs->input_semantics[i]) {
+      case TGSI_SEMANTIC_POSITION:
+         break;
+      case TGSI_SEMANTIC_COLOR0:
+         front0 = draw_emit_vertex_attr(vinfo, TGSI_ATTRIB_COLOR0,
+                                        FORMAT_4UB, colorInterp);
+         vinfo->hwfmt[0] |= S4_VFMT_COLOR;
+         break;
+      case TGSI_SEMANTIC_COLOR1:
+         assert(0); /* untested */
+         front1 = draw_emit_vertex_attr(vinfo, TGSI_ATTRIB_COLOR1,
+                                        FORMAT_4UB, colorInterp);
+         vinfo->hwfmt[0] |= S4_VFMT_SPEC_FOG;
+         break;
+      case TGSI_SEMANTIC_TEX0:
+      case TGSI_SEMANTIC_TEX1:
+      case TGSI_SEMANTIC_TEX2:
+      case TGSI_SEMANTIC_TEX3:
+      case TGSI_SEMANTIC_TEX4:
+      case TGSI_SEMANTIC_TEX5:
+      case TGSI_SEMANTIC_TEX6:
+      case TGSI_SEMANTIC_TEX7:
+         {
+            const uint unit = fs->input_semantics[i] - TGSI_SEMANTIC_TEX0;
+            uint hwtc;
+            texCoords[unit] = TRUE;
+            draw_emit_vertex_attr(vinfo, TGSI_ATTRIB_TEX0 + i,
+                               FORMAT_4F, INTERP_PERSPECTIVE);
+            hwtc = TEXCOORDFMT_4D;
+            needW = TRUE;
+            vinfo->hwfmt[1] |= hwtc << (unit * 4);
+         }
+         break;
+      default:
+         assert(0);
+      }
+
+   }
+
+   /* finish up texcoord fields */
+   for (i = 0; i < 8; i++) {
+      if (!texCoords[i]) {
+         const uint hwtc = TEXCOORDFMT_NOT_PRESENT;
+         vinfo->hwfmt[1] |= hwtc << (i* 4);
+      }
+   }
+
+#if 0
    /* color0 */
    if (inputsRead & (1 << TGSI_ATTRIB_COLOR0)) {
       front0 = draw_emit_vertex_attr(vinfo, TGSI_ATTRIB_COLOR0,
@@ -88,6 +141,7 @@ static void calculate_vertex_layout( struct i915_context *i915 )
          vinfo->hwfmt[1] |= hwtc << ((i - TGSI_ATTRIB_TEX0) * 4);
       }
    }
+#endif
 
    /* go back and fill in the vertex position info now that we have needW */
    if (needW) {
@@ -104,11 +158,11 @@ static void calculate_vertex_layout( struct i915_context *i915 )
     * the vertex header.
     */
    if (i915->rasterizer->light_twoside) {
-      if (inputsRead & (1 << TGSI_ATTRIB_COLOR0)) {
+      if (front0) {
          back0 = draw_emit_vertex_attr(vinfo, TGSI_ATTRIB_BFC0,
                                        FORMAT_OMIT, colorInterp);
       }	    
-      if (inputsRead & (1 << TGSI_ATTRIB_COLOR1)) {
+      if (back0) {
          back1 = draw_emit_vertex_attr(vinfo, TGSI_ATTRIB_BFC1,
                                        FORMAT_OMIT, colorInterp);
       }

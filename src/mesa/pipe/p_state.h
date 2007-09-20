@@ -50,6 +50,8 @@
 #define PIPE_MAX_COLOR_BUFS   8
 #define PIPE_MAX_TEXTURE_LEVELS  16
 #define PIPE_MAX_FEEDBACK_ATTRIBS 16
+#define PIPE_MAX_SHADER_INPUTS 16
+#define PIPE_MAX_SHADER_OUTPUTS 16
 
 
 /* fwd decl */
@@ -140,13 +142,14 @@ struct pipe_constant_buffer {
 
 
 struct pipe_shader_state {
-   unsigned inputs_read;                   /**< TGSI_ATTRIB_ bits */
-   unsigned outputs_written;               /**< TGSI_ATTRIB_ bits */
    const struct tgsi_token *tokens;
    void *executable;
 
-   uint num_inputs;
-   uint num_outputs;
+   /** These fields somewhat constitute the shader "signature" */
+   ubyte num_inputs;
+   ubyte num_outputs;
+   ubyte input_semantics[PIPE_MAX_SHADER_INPUTS];
+   ubyte output_semantics[PIPE_MAX_SHADER_OUTPUTS];
 };
 
 struct pipe_depth_stencil_state

@@ -325,7 +325,7 @@ tgsi_build_declaration_semantic(
 {
    struct tgsi_declaration_semantic ds;
 
-   assert( semantic_name <= TGSI_SEMANTIC_COLOR );
+   assert( semantic_name <= TGSI_SEMANTIC_COUNT );
    assert( semantic_index <= 0xFFFF );
 
    ds = tgsi_default_declaration_semantic();

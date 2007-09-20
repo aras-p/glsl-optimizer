@@ -236,6 +236,15 @@ static const char *softpipe_get_vendor( struct pipe_context *pipe )
    return "Tungsten Graphics, Inc.";
 }
 
+static int softpipe_get_param(struct pipe_context *pipe, uint param)
+{
+   switch (param) {
+   case PIPE_PARAM_FS_NEEDS_POS:
+      return 1;
+   default:
+      return 0;
+   }
+}
 
 struct pipe_context *softpipe_create( struct pipe_winsys *pipe_winsys,
 				      struct softpipe_winsys *softpipe_winsys )
@@ -248,6 +257,7 @@ struct pipe_context *softpipe_create( struct pipe_winsys *pipe_winsys,
    /* queries */
    softpipe->pipe.supported_formats = softpipe_supported_formats;
    softpipe->pipe.max_texture_size = softpipe_max_texture_size;
+   softpipe->pipe.get_param = softpipe_get_param;
 
    /* state setters */
    softpipe->pipe.create_blend_state = softpipe_create_blend_state;

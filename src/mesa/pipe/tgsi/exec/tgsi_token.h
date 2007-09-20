@@ -73,11 +73,11 @@ struct tgsi_declaration
 {
    unsigned Type        : 4;  /* TGSI_TOKEN_TYPE_DECLARATION */
    unsigned Size        : 8;  /* UINT */
-   unsigned File        : 4;  /* TGSI_FILE_ */
-   unsigned Declare     : 4;  /* TGSI_DECLARE_ */
-   unsigned UsageMask   : 4;  /* TGSI_WRITEMASK_ */
-   unsigned Interpolate : 1;  /* BOOL */
-   unsigned Semantic    : 1;  /* BOOL */
+   unsigned File        : 4;  /* one of TGSI_FILE_x */
+   unsigned Declare     : 4;  /* one of TGSI_DECLARE_x */
+   unsigned UsageMask   : 4;  /* bitmask of TGSI_WRITEMASK_x flags */
+   unsigned Interpolate : 1;  /* BOOL, any interpolation info? */
+   unsigned Semantic    : 1;  /* BOOL, any semantic info? */
    unsigned Padding     : 5;
    unsigned Extended    : 1;  /* BOOL */
 };
@@ -103,12 +103,27 @@ struct tgsi_declaration_interpolation
    unsigned Padding       : 28;
 };
 
-#define TGSI_SEMANTIC_DEPTH   0
-#define TGSI_SEMANTIC_COLOR   1
+#define TGSI_SEMANTIC_DEPTH    0
+#define TGSI_SEMANTIC_COLOR0   1
+#define TGSI_SEMANTIC_COLOR1   2
+#define TGSI_SEMANTIC_COLOR0B  3 /**< back-face primary color */
+#define TGSI_SEMANTIC_COLOR1B  4 /**< back-face secondary color */
+#define TGSI_SEMANTIC_POSITION 5
+#define TGSI_SEMANTIC_FOG      6
+#define TGSI_SEMANTIC_OTHER    7 /* XXX temp */
+#define TGSI_SEMANTIC_TEX0     8
+#define TGSI_SEMANTIC_TEX1     9
+#define TGSI_SEMANTIC_TEX2    10
+#define TGSI_SEMANTIC_TEX3    11
+#define TGSI_SEMANTIC_TEX4    12
+#define TGSI_SEMANTIC_TEX5    13
+#define TGSI_SEMANTIC_TEX6    14
+#define TGSI_SEMANTIC_TEX7    15
+#define TGSI_SEMANTIC_COUNT   16 /**< number of semantic values */
 
 struct tgsi_declaration_semantic
 {
-   unsigned SemanticName   : 8;  /* TGSI_SEMANTIC_ */
+   unsigned SemanticName   : 8;  /* one of TGSI_SEMANTIC_ */
    unsigned SemanticIndex  : 16; /* UINT */
    unsigned Padding        : 8;
 };

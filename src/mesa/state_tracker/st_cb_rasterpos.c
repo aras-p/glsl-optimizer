@@ -53,6 +53,7 @@ static void
 setup_vertex_attribs(GLcontext *ctx)
 {
    struct pipe_context *pipe = ctx->st->pipe;
+#if 0
    const uint inputAttrs = ctx->st->state.vs->inputs_read;
    uint attr;
 
@@ -77,6 +78,9 @@ setup_vertex_attribs(GLcontext *ctx)
          pipe->set_vertex_element(pipe, attr, &velement);
       }
    }
+#else
+   assert(0);
+#endif
 }
 
 
@@ -84,7 +88,7 @@ static void
 setup_feedback(GLcontext *ctx)
 {
    struct pipe_context *pipe = ctx->st->pipe;
-   const uint outputAttrs = ctx->st->state.vs->outputs_written;
+   const struct pipe_shader_state *vs = ctx->st->state.vs;
    struct pipe_feedback_state feedback;
    uint i;
 
@@ -94,8 +98,8 @@ setup_feedback(GLcontext *ctx)
    feedback.discard = 1;
    feedback.num_attribs = 0;
 
-   for (i = 0; i < TGSI_ATTRIB_VAR0; i++) {
-      if ((1 << i) & outputAttrs) {
+   for (i = 0; i < vs->num_outputs; i++) {
+      if (1/***(1 << i) & outputAttrs***/) {
          feedback.attrib[feedback.num_attribs] = i;
          feedback.size[feedback.num_attribs] = 4;
          feedback.num_attribs++;
@@ -306,6 +310,7 @@ st_RasterPos(GLcontext *ctx, const GLfloat v[4])
                                                 PIPE_BUFFER_FLAG_READ);
 
    /* extract values and update rasterpos state */
+#if 0 /* XXX update */
    {
       const uint outputAttrs = ctx->st->state.vs->outputs_written;
       const float *pos, *color0, *color1, *tex0;
@@ -333,7 +338,7 @@ st_RasterPos(GLcontext *ctx, const GLfloat v[4])
 
       update_rasterpos(ctx, pos, color0, color1, tex0);
    }
-
+#endif
 
    /* free vertex feedback buffer */
    pipe->winsys->buffer_unmap(pipe->winsys, fb_buf.buffer);

@@ -45,16 +45,15 @@ struct st_fragment_program
 {
    struct gl_fragment_program Base;
    GLboolean error;             /* If program is malformed for any reason. */
-
-   GLuint    id;		/* String id, for tracking
-				 * ProgramStringNotify changes.
-				 */
+   GLuint id; /**< String id, for tracking ProgramStringNotify changes. */
 
 
    struct tgsi_token tokens[ST_FP_MAX_TOKENS];
    GLboolean dirty;
 
-   const struct pipe_shader_state *fsx;
+   /** Pointer to the corresponding cached shader */
+   const struct pipe_shader_state *fs;
+
    GLuint param_state;
 };
 
@@ -63,16 +62,17 @@ struct st_vertex_program
 {
    struct gl_vertex_program Base;  /**< The Mesa vertex program */
    GLboolean error;        /**< Set if program is malformed for any reason. */
-
-   GLuint    id; /**< String id, for tracking ProgramStringNotify changes. */
+   GLuint id; /**< String id, for tracking ProgramStringNotify changes. */
 
    /** maps a Mesa VERT_ATTRIB_x to a packed TGSI input index */
    GLuint input_to_index[MAX_VERTEX_PROGRAM_ATTRIBS];
    /** maps a TGSI input index back to a Mesa VERT_ATTRIB_x */
    GLuint index_to_input[MAX_VERTEX_PROGRAM_ATTRIBS];
 
+#if 0
    GLuint output_to_index[MAX_VERTEX_PROGRAM_ATTRIBS];
    GLuint index_to_output[MAX_VERTEX_PROGRAM_ATTRIBS];
+#endif
 
    /** The program in TGSI format */
    struct tgsi_token tokens[ST_FP_MAX_TOKENS];
@@ -82,7 +82,9 @@ struct st_vertex_program
    struct x86_function  sse2_program;
 #endif
 
+   /** Pointer to the corresponding cached shader */
    const struct pipe_shader_state *vs;
+
    GLuint param_state;
 };
 
@@ -101,5 +103,16 @@ st_vertex_program( struct gl_vertex_program *vp )
 {
    return (struct st_vertex_program *)vp;
 }
+
+
+extern struct pipe_shader_state *
+st_translate_fragment_shader(struct st_context *st,
+                             struct st_fragment_program *fp);
+
+
+extern struct pipe_shader_state *
+st_translate_vertex_shader(struct st_context *st,
+                           struct st_vertex_program *vp);
+
 
 #endif

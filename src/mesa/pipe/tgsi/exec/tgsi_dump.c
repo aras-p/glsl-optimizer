@@ -202,13 +202,27 @@ static const char *TGSI_INTERPOLATES_SHORT[] =
 static const char *TGSI_SEMANTICS[] =
 {
    "SEMANTIC_DEPTH",
-   "SEMANTIC_COLOR"
+   "SEMANTIC_COLOR0",
+   "SEMANTIC_COLOR1",
+   "SEMANTIC_COLOR0B",
+   "SEMANTIC_COLOR1B",
+   "SEMANTIC_POSITION",
+   "SEMANTIC_FOG",
+   "SEMANTIC_OTHER,"
+   "SEMANTIC_TEX0",
 };
 
 static const char *TGSI_SEMANTICS_SHORT[] =
 {
    "DEPTH",
-   "COLOR"
+   "COLOR0",
+   "COLOR1",
+   "COLOR0B",
+   "COLOR1B",
+   "POSITION",
+   "FOG",
+   "OTHER",
+   "TEX0"
 };
 
 static const char *TGSI_IMMS[] =

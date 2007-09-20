@@ -57,7 +57,8 @@ struct pipe_context {
 
    const char *(*get_vendor)( struct pipe_context *pipe );
 
-   
+   int (*get_param)( struct pipe_context *pipe, int param );
+
 
    /*
     * Drawing.  

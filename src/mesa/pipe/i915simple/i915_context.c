@@ -138,6 +138,18 @@ i915_max_texture_size(struct pipe_context *pipe, unsigned textureType,
 }
 
 
+static int
+i915_get_param(struct pipe_context *pipe, uint param)
+{
+   switch (param) {
+   case PIPE_PARAM_FS_NEEDS_POS:
+      return 0;
+   default:
+      return 0;
+   }
+}
+
+
 static void i915_destroy( struct pipe_context *pipe )
 {
    struct i915_context *i915 = i915_context( pipe );
@@ -272,6 +284,8 @@ struct pipe_context *i915_create( struct pipe_winsys *pipe_winsys,
    i915->pipe.destroy = i915_destroy;
    i915->pipe.supported_formats = i915_supported_formats;
    i915->pipe.max_texture_size = i915_max_texture_size;
+   i915->pipe.get_param = i915_get_param;
+
    i915->pipe.clear = i915_clear;
 
    i915->pipe.begin_query = i915_begin_query;

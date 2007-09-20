@@ -121,11 +121,9 @@ is_depth_stencil_format(GLuint pipeFormat)
 static struct st_fragment_program *
 make_frag_shader(struct st_context *st)
 {
-   static const GLuint outputMapping[] = { 1, 0 };
    GLcontext *ctx = st->ctx;
    struct st_fragment_program *stfp;
    struct gl_program *p;
-   GLboolean b;
    GLuint interpMode[16];
    GLuint i;
 
@@ -157,11 +155,7 @@ make_frag_shader(struct st_context *st)
    p->OutputsWritten = (1 << FRAG_RESULT_COLR);
 
    stfp = (struct st_fragment_program *) p;
-   /* compile into tgsi format */
-   b = tgsi_mesa_compile_fp_program(&stfp->Base, NULL, interpMode,
-                                    outputMapping,
-                                    stfp->tokens, ST_FP_MAX_TOKENS);
-   assert(b);
+   st_translate_fragment_shader(st, stfp);
 
    return stfp;
 }
@@ -174,15 +168,9 @@ make_frag_shader(struct st_context *st)
 static struct st_vertex_program *
 make_vertex_shader(struct st_context *st)
 {
-   /* Map VERT_ATTRIB_POS to 0, VERT_ATTRIB_COLOR0 to 1 */
-   static const GLuint inputMapping[4] = { 0, 0, 0, 1 };
-   /* Map VERT_RESULT_HPOS to 0, VERT_RESULT_COL0 to 1 */
-   static const GLuint outputMapping[2] = { 0, 1 };
-
    GLcontext *ctx = st->ctx;
    struct st_vertex_program *stvp;
    struct gl_program *p;
-   GLboolean b;
 
    p = ctx->Driver.NewProgram(ctx, GL_VERTEX_PROGRAM_ARB, 0);
    if (!p)
@@ -215,12 +203,8 @@ make_vertex_shader(struct st_context *st)
                         (1 << VERT_RESULT_HPOS));
 
    stvp = (struct st_vertex_program *) p;
-   /* compile into tgsi format */
-   b = tgsi_mesa_compile_vp_program(&stvp->Base,
-                                    inputMapping,
-                                    outputMapping,
-                                    stvp->tokens, ST_FP_MAX_TOKENS);
-   assert(b);
+   st_translate_vertex_shader(st, stvp);
+   assert(stvp->vs);
 
    return stvp;
 }
@@ -361,33 +345,19 @@ clear_with_quad(GLcontext *ctx,
    /* fragment shader state: color pass-through program */
    {
       static struct st_fragment_program *stfp = NULL;
-      struct pipe_shader_state fs;
-      const struct pipe_shader_state *cached;
       if (!stfp) {
          stfp = make_frag_shader(st);
       }
-      memset(&fs, 0, sizeof(fs));
-      fs.inputs_read = tgsi_mesa_translate_fragment_input_mask(stfp->Base.Base.InputsRead);
-      fs.outputs_written = tgsi_mesa_translate_fragment_output_mask(stfp->Base.Base.OutputsWritten);
-      fs.tokens = &stfp->tokens[0];
-      cached = st_cached_fs_state(st, &fs);
-      pipe->bind_fs_state(pipe, cached);
+      pipe->bind_fs_state(pipe, stfp->fs);
    }
 
    /* vertex shader state: color/position pass-through */
    {
       static struct st_vertex_program *stvp = NULL;
-      struct pipe_shader_state vs;
-      const struct pipe_shader_state *cached;
       if (!stvp) {
          stvp = make_vertex_shader(st);
       }
-      memset(&vs, 0, sizeof(vs));
-      vs.inputs_read = stvp->Base.Base.InputsRead;
-      vs.outputs_written = stvp->Base.Base.OutputsWritten;
-      vs.tokens = &stvp->tokens[0];
-      cached = st_cached_vs_state(st, &vs);
-      pipe->bind_vs_state(pipe, cached);
+      pipe->bind_vs_state(pipe, stvp->vs);
    }
 
    /* viewport state: viewport matching window dims */
@@ -522,12 +492,15 @@ clear_depth_buffer(GLcontext *ctx, struct gl_renderbuffer *rb)
 
    assert(strb->surface->format);
 
+#if 01
    if (ctx->Scissor.Enabled ||
        (isDS && ctx->DrawBuffer->Visual.stencilBits > 0)) {
       /* scissoring or we have a combined depth/stencil buffer */
       clear_with_quad(ctx, GL_FALSE, GL_TRUE, GL_FALSE);
    }
-   else {
+   else
+#endif
+ {
       /* simple clear of whole buffer */
       GLuint clearValue = depth_value(strb->surface->format, ctx->Depth.Clear);
       ctx->st->pipe->clear(ctx->st->pipe, strb->surface, clearValue);

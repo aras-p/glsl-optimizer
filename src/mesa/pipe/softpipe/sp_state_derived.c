@@ -34,6 +34,7 @@
 #include "sp_state.h"
 
 #include "pipe/tgsi/exec/tgsi_attribs.h"
+#include "pipe/tgsi/exec/tgsi_token.h"
 
 
 /**
@@ -43,7 +44,7 @@
  */
 static void calculate_vertex_layout( struct softpipe_context *softpipe )
 {
-   const uint inputsRead = softpipe->fs->inputs_read;
+   const struct pipe_shader_state *fs = softpipe->fs;
    const interp_mode colorInterp
       = softpipe->rasterizer->flatshade ? INTERP_CONSTANT : INTERP_LINEAR;
    struct vertex_info *vinfo = &softpipe->vertex_info;
@@ -52,57 +53,59 @@ static void calculate_vertex_layout( struct softpipe_context *softpipe )
 
    memset(vinfo, 0, sizeof(*vinfo));
 
-   /* Need Z if depth test is enabled or the fragment program uses the
-    * fragment position (XYZW).
-    */
-   if (softpipe->depth_stencil->depth.enabled ||
-       (inputsRead & (1 << TGSI_ATTRIB_POS)))
+   if (softpipe->depth_stencil->depth.enabled)
       softpipe->need_z = TRUE;
    else
       softpipe->need_z = FALSE;
+   softpipe->need_w = FALSE;
 
-   /* Need W if we do any perspective-corrected interpolation or the
-    * fragment program uses the fragment position.
-    */
-   if (inputsRead & (1 << TGSI_ATTRIB_POS))
-      softpipe->need_w = TRUE;
-   else
-      softpipe->need_w = FALSE;
-
-   /* position */
+   /* always emit vertex pos */
    /* TODO - Figure out if we need to do perspective divide, etc. */
    draw_emit_vertex_attr(vinfo, TGSI_ATTRIB_POS, FORMAT_4F, INTERP_LINEAR);
- 
-   /* color0 */
-   if (inputsRead & (1 << TGSI_ATTRIB_COLOR0)) {
-      front0 = draw_emit_vertex_attr(vinfo, TGSI_ATTRIB_COLOR0,
-                                     FORMAT_4F, colorInterp);
-   }
 
-   /* color1 */
-   if (inputsRead & (1 << TGSI_ATTRIB_COLOR1)) {
-      front1 = draw_emit_vertex_attr(vinfo, TGSI_ATTRIB_COLOR1,
-                                     FORMAT_4F, colorInterp);
-   }
-
-   /* fog */
-   if (inputsRead & (1 << TGSI_ATTRIB_FOG)) {
-      draw_emit_vertex_attr(vinfo, TGSI_ATTRIB_FOG,
-                            FORMAT_1F, INTERP_PERSPECTIVE);
-   }
-
-   /* point size */
+   for (i = 0; i < fs->num_inputs; i++) {
+      switch (fs->input_semantics[i]) {
+      case TGSI_SEMANTIC_POSITION:
+         /* Need Z if depth test is enabled or the fragment program uses the
+          * fragment position (XYZW).
+          */
+         softpipe->need_z = TRUE;
+         softpipe->need_w = TRUE;
+         break;
+      case TGSI_SEMANTIC_COLOR0:
+         front0 = draw_emit_vertex_attr(vinfo, TGSI_ATTRIB_COLOR0,
+                                        FORMAT_4F, colorInterp);
+         break;
+      case TGSI_SEMANTIC_COLOR1:
+         front1 = draw_emit_vertex_attr(vinfo, TGSI_ATTRIB_COLOR1,
+                                        FORMAT_4F, colorInterp);
+         break;
+      case TGSI_SEMANTIC_FOG:
+         draw_emit_vertex_attr(vinfo, TGSI_ATTRIB_FOG,
+                               FORMAT_1F, INTERP_PERSPECTIVE);
+         break;
 #if 0
-   /* XXX only emit if drawing points or front/back polygon mode is point mode */
-   draw_emit_vertex_attr(vinfo, TGSI_ATTRIB_POINTSIZE,
-                         FORMAT_4F, INTERP_CONSTANT);
+      case TGSI_SEMANTIC_PSIZE:
+         /* XXX only emit if drawing points or front/back polygon mode
+          * is point mode
+          */
+         draw_emit_vertex_attr(vinfo, TGSI_ATTRIB_POINTSIZE,
+                               FORMAT_4F, INTERP_CONSTANT);
+         break;
 #endif
-
-   /* texcoords and varying vars */
-   for (i = TGSI_ATTRIB_TEX0; i < TGSI_ATTRIB_VAR7; i++) {
-      if (inputsRead & (1 << i)) {
+         /*case TGSI_SEMANTIC_TEXCOORD:*/
+      case TGSI_SEMANTIC_TEX0:
+         draw_emit_vertex_attr(vinfo, TGSI_ATTRIB_TEX0,
+                               FORMAT_4F, INTERP_PERSPECTIVE);
+         softpipe->need_w = TRUE;
+         break;
+      case TGSI_SEMANTIC_OTHER:
          draw_emit_vertex_attr(vinfo, i, FORMAT_4F, INTERP_PERSPECTIVE);
          softpipe->need_w = TRUE;
+         break;
+
+      default:
+         assert(0);
       }
    }
 
@@ -113,12 +116,11 @@ static void calculate_vertex_layout( struct softpipe_context *softpipe )
     * the vertex header.
     */
    if (softpipe->rasterizer->light_twoside) {
-      if (inputsRead & (1 << TGSI_ATTRIB_COLOR0)) {
+      if (front0) {
          back0 = draw_emit_vertex_attr(vinfo, TGSI_ATTRIB_BFC0,
                                        FORMAT_OMIT, colorInterp);
       }
-	    
-      if (inputsRead & (1 << TGSI_ATTRIB_COLOR1)) {
+      if (back0) {
          back1 = draw_emit_vertex_attr(vinfo, TGSI_ATTRIB_BFC1,
                                        FORMAT_OMIT, colorInterp);
       }

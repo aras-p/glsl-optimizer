@@ -10,7 +10,9 @@ struct tgsi_token;
 GLboolean
 tgsi_mesa_compile_fp_program(
    const struct gl_fragment_program *program,
+   GLuint numInputs,
    const GLuint inputMapping[],
+   const ubyte inputSemantic[],
    const GLuint interpMode[],
    const GLuint outputMapping[],
    struct tgsi_token *tokens,

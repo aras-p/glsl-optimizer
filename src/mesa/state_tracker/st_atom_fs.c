@@ -27,6 +27,7 @@
  /*
   * Authors:
   *   Keith Whitwell <keith@tungstengraphics.com>
+  *   Brian Paul
   */
 
 #include "shader/prog_parameter.h"
@@ -42,55 +43,121 @@
 #include "st_atom.h"
 #include "st_program.h"
 
+
 #define TGSI_DEBUG 1
 
-static void compile_fs( struct st_context *st )
+
+/**
+ * Translate a Mesa fragment shader into a TGSI shader.
+ * \return  pointer to cached pipe_shader object.
+ */
+struct pipe_shader_state *
+st_translate_fragment_shader(struct st_context *st,
+                           struct st_fragment_program *stfp)
 {
-   /* Map FRAG_RESULT_COLR to output 1, map FRAG_RESULT_DEPR to output 0 */
-   static const GLuint outputMapping[2] = {1, 0};
-   struct st_fragment_program *fp = st->fp;
+   GLuint outputMapping[FRAG_RESULT_MAX];
+   GLuint inputMapping[PIPE_MAX_SHADER_INPUTS];
    struct pipe_shader_state fs;
    struct pipe_shader_state *cached;
    GLuint interpMode[16];  /* XXX size? */
    GLuint i;
+   GLbitfield inputsRead = stfp->Base.Base.InputsRead;
+
+   /* Check if all fragment programs need the fragment position (in order
+    * to do perspective-corrected interpolation).
+    */
+   if (st->pipe->get_param(st->pipe, PIPE_PARAM_FS_NEEDS_POS))
+      inputsRead |= FRAG_BIT_WPOS;
+
+   memset(&fs, 0, sizeof(fs));
 
    for (i = 0; i < 16; i++) {
-      if (fp->Base.Base.InputsRead & (1 << i)) {
-         if (i == FRAG_ATTRIB_COL0 || i == FRAG_ATTRIB_COL1) {
-            interpMode[i] = TGSI_INTERPOLATE_LINEAR;
+      if (inputsRead & (1 << i)) {
+         inputMapping[i] = fs.num_inputs;
+
+         switch (i) {
+         case FRAG_ATTRIB_WPOS:
+            fs.input_semantics[fs.num_inputs] = TGSI_SEMANTIC_POSITION;
+            interpMode[fs.num_inputs] = TGSI_INTERPOLATE_CONSTANT;
+            break;
+         case FRAG_ATTRIB_COL0:
+            fs.input_semantics[fs.num_inputs] = TGSI_SEMANTIC_COLOR0;
+            interpMode[fs.num_inputs] = TGSI_INTERPOLATE_LINEAR;
+            break;
+         case FRAG_ATTRIB_COL1:
+            fs.input_semantics[fs.num_inputs] = TGSI_SEMANTIC_COLOR1;
+            interpMode[fs.num_inputs] = TGSI_INTERPOLATE_LINEAR;
+            break;
+         case FRAG_ATTRIB_TEX0:
+            fs.input_semantics[fs.num_inputs] = TGSI_SEMANTIC_TEX0;
+            interpMode[fs.num_inputs] = TGSI_INTERPOLATE_PERSPECTIVE;
+            break;
+         default:
+            assert(0);
          }
-         else {
-            interpMode[i] = TGSI_INTERPOLATE_PERSPECTIVE;
+
+         fs.num_inputs++;
+      }
+   }
+
+   /*
+    * Outputs
+    */
+   for (i = 0; i < FRAG_RESULT_MAX; i++) {
+      if (stfp->Base.Base.OutputsWritten & (1 << i)) {
+         switch (i) {
+         case FRAG_RESULT_DEPR:
+            fs.output_semantics[fs.num_outputs] = TGSI_SEMANTIC_DEPTH;
+            outputMapping[i] = fs.num_outputs;
+            break;
+         case FRAG_RESULT_COLR:
+            fs.output_semantics[fs.num_outputs] = TGSI_SEMANTIC_COLOR0;
+            outputMapping[i] = fs.num_outputs;
+            break;
+         default:
+            assert(0);
          }
+         fs.num_outputs++;
       }
    }
 
    /* XXX: fix static allocation of tokens:
     */
-   tgsi_mesa_compile_fp_program( &fp->Base, NULL, interpMode,
+   tgsi_mesa_compile_fp_program( &stfp->Base,
+                                 fs.num_inputs,
+                                 inputMapping,
+                                 fs.input_semantics,
+                                 interpMode,
                                  outputMapping,
-                                 fp->tokens, ST_FP_MAX_TOKENS );
+                                 stfp->tokens, ST_FP_MAX_TOKENS );
 
-   memset(&fs, 0, sizeof(fs));
+#if 0
    fs.inputs_read
-      = tgsi_mesa_translate_fragment_input_mask(fp->Base.Base.InputsRead);
+      = tgsi_mesa_translate_fragment_input_mask(stfp->Base.Base.InputsRead);
+#endif
+#if 0
    fs.outputs_written
-      = tgsi_mesa_translate_fragment_output_mask(fp->Base.Base.OutputsWritten);
-   fs.tokens = &fp->tokens[0];
+      = tgsi_mesa_translate_fragment_output_mask(stfp->Base.Base.OutputsWritten);
+#endif
+
+   fs.tokens = &stfp->tokens[0];
+
    cached = st_cached_fs_state(st, &fs);
-   fp->fsx = cached;
+   stfp->fs = cached;
 
    if (TGSI_DEBUG)
-      tgsi_dump( fp->tokens, 0/*TGSI_DUMP_VERBOSE*/ );
+      tgsi_dump( stfp->tokens, 0/*TGSI_DUMP_VERBOSE*/ );
 
-   fp->dirty = 0;
+   stfp->dirty = 0;
+
+   return cached;
 }
 
 
 
 static void update_fs( struct st_context *st )
 {
-   struct st_fragment_program *fp = NULL;
+   struct st_fragment_program *stfp = NULL;
 
    /* find active shader and params.  Changes to this Mesa state
     * should be covered by ST_NEW_FRAGMENT_PROGRAM, thanks to the
@@ -101,21 +168,21 @@ static void update_fs( struct st_context *st )
        st->ctx->Shader.CurrentProgram->FragmentProgram) {
       struct gl_fragment_program *f
          = st->ctx->Shader.CurrentProgram->FragmentProgram;
-      fp = st_fragment_program(f);
+      stfp = st_fragment_program(f);
    }
    else {
       assert(st->ctx->FragmentProgram._Current);
-      fp = st_fragment_program(st->ctx->FragmentProgram._Current);
+      stfp = st_fragment_program(st->ctx->FragmentProgram._Current);
    }
 
-   /* translate shader to TGSI format */
-   if (st->fp != fp || fp->dirty) {
-      st->fp = fp;
+   /* if new binding, or shader has changed */
+   if (st->fp != stfp || stfp->dirty) {
+      /* Bind the program */
+      st->fp = stfp;
 
-      if (fp->dirty)
-	 compile_fs( st );
+      if (stfp->dirty)
+	 st->state.fs = st_translate_fragment_shader( st, st->fp );
 
-      st->state.fs = fp->fsx;
       st->pipe->bind_fs_state(st->pipe, st->state.fs);
    }
 }

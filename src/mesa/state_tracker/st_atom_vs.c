@@ -49,14 +49,15 @@
 #define TGSI_DEBUG 1
 
 
-
-
 /**
- * Translate Mesa shader to TGSI format 
+ * Translate a Mesa vertex shader into a TGSI shader.
+ * \return  pointer to cached pipe_shader object.
  */
-static void compile_vs( struct st_context *st )
+struct pipe_shader_state *
+st_translate_vertex_shader(struct st_context *st,
+                           struct st_vertex_program *stvp)
 {
-   struct st_vertex_program *vp = st->vp;
+   GLuint outputMapping[PIPE_MAX_SHADER_INPUTS];
    struct pipe_shader_state vs;
    struct pipe_shader_state *cached;
    GLuint i;
@@ -69,20 +70,56 @@ static void compile_vs( struct st_context *st )
     * values and TGSI generic input indexes.
     */
    for (i = 0; i < MAX_VERTEX_PROGRAM_ATTRIBS; i++) {
-      if (vp->Base.Base.InputsRead & (1 << i)) {
-         vp->input_to_index[i] = vs.num_inputs;
-         vp->index_to_input[vs.num_inputs] = i;
+      if (stvp->Base.Base.InputsRead & (1 << i)) {
+         stvp->input_to_index[i] = vs.num_inputs;
+         stvp->index_to_input[vs.num_inputs] = i;
+         switch (i) {
+         case VERT_ATTRIB_POS:
+            vs.input_semantics[vs.num_inputs] = TGSI_SEMANTIC_POSITION;
+            break;
+         case VERT_ATTRIB_COLOR0:
+            vs.input_semantics[vs.num_inputs] = TGSI_SEMANTIC_COLOR0;
+            break;
+         case VERT_ATTRIB_COLOR1:
+            vs.input_semantics[vs.num_inputs] = TGSI_SEMANTIC_COLOR1;
+            break;
+         default:
+            vs.input_semantics[vs.num_inputs] = TGSI_SEMANTIC_OTHER;
+         }
          vs.num_inputs++;
       }
    }
 
    /*
-    * Determine output register mapping.
+    * Determine number of outputs and the register mapping.
     */
    for (i = 0; i < VERT_RESULT_MAX; i++) {
-      if (vp->Base.Base.OutputsWritten & (1 << i)) {
-         vp->output_to_index[i] = vs.num_outputs;
-         vp->index_to_output[vs.num_outputs] = i;
+      if (stvp->Base.Base.OutputsWritten & (1 << i)) {
+#if 0
+         stvp->output_to_index[i] = vs.num_outputs;
+         stvp->index_to_output[vs.num_outputs] = i;
+#endif
+         outputMapping[i] = vs.num_outputs;
+
+         switch (i) {
+         case VERT_RESULT_HPOS:
+            vs.output_semantics[vs.num_outputs] = TGSI_SEMANTIC_POSITION;
+            break;
+         case VERT_RESULT_COL0:
+            vs.input_semantics[vs.num_inputs] = TGSI_SEMANTIC_COLOR0;
+            break;
+         case VERT_RESULT_COL1:
+            vs.input_semantics[vs.num_inputs] = TGSI_SEMANTIC_COLOR1;
+            break;
+         case VERT_RESULT_BFC0:
+            vs.input_semantics[vs.num_inputs] = TGSI_SEMANTIC_COLOR0B;
+            break;
+         case VERT_RESULT_BFC1:
+            vs.input_semantics[vs.num_inputs] = TGSI_SEMANTIC_COLOR1B;
+            break;
+         default:
+            vs.output_semantics[vs.num_outputs] = TGSI_SEMANTIC_OTHER;
+         }
          vs.num_outputs++;
       }
    }
@@ -90,43 +127,50 @@ static void compile_vs( struct st_context *st )
 
    /* XXX: fix static allocation of tokens:
     */
-   tgsi_mesa_compile_vp_program( &vp->Base,
-                                 vp->input_to_index,
-                                 vp->output_to_index,
-                                 vp->tokens, ST_FP_MAX_TOKENS );
-
-#if 01
-   vs.inputs_read
-      = tgsi_mesa_translate_vertex_input_mask(vp->Base.Base.InputsRead);
+   tgsi_mesa_compile_vp_program( &stvp->Base,
+                                 stvp->input_to_index,
+#if 0
+                                 stvp->output_to_index,
+#else
+                                 outputMapping,
 #endif
-   vs.outputs_written
-      = tgsi_mesa_translate_vertex_output_mask(vp->Base.Base.OutputsWritten);
+                                 stvp->tokens, ST_FP_MAX_TOKENS );
 
-   vs.tokens = &vp->tokens[0];
+#if 0
+   vs.inputs_read
+      = tgsi_mesa_translate_vertex_input_mask(stvp->Base.Base.InputsRead);
+#endif
+#if 0
+   vs.outputs_written
+      = tgsi_mesa_translate_vertex_output_mask(stvp->Base.Base.OutputsWritten);
+#endif
+
+   vs.tokens = &stvp->tokens[0];
 
    cached = st_cached_vs_state(st, &vs);
-
-   vp->vs = cached;
+   stvp->vs = cached;
 
    if (TGSI_DEBUG)
-      tgsi_dump( vp->tokens, 0 );
+      tgsi_dump( stvp->tokens, 0 );
 
 #if defined(USE_X86_ASM) || defined(SLANG_X86)
-   if (vp->sse2_program.csr == vp->sse2_program.store)
-      tgsi_emit_sse2( vp->tokens, &vp->sse2_program );
+   if (stvp->sse2_program.csr == stvp->sse2_program.store)
+      tgsi_emit_sse2( stvp->tokens, &stvp->sse2_program );
 
    if (!cached->executable)
-      cached->executable = (void *) x86_get_func( &vp->sse2_program );
+      cached->executable = (void *) x86_get_func( &stvp->sse2_program );
 #endif
 
-   vp->dirty = 0;
+   stvp->dirty = 0;
+
+   return cached;
 }
 
 
 
 static void update_vs( struct st_context *st )
 {
-   struct st_vertex_program *vp;
+   struct st_vertex_program *stvp;
 
    /* find active shader and params -- Should be covered by
     * ST_NEW_VERTEX_PROGRAM
@@ -136,20 +180,20 @@ static void update_vs( struct st_context *st )
        st->ctx->Shader.CurrentProgram->VertexProgram) {
       struct gl_vertex_program *f
          = st->ctx->Shader.CurrentProgram->VertexProgram;
-      vp = st_vertex_program(f);
+      stvp = st_vertex_program(f);
    }
    else {
       assert(st->ctx->VertexProgram._Current);
-      vp = st_vertex_program(st->ctx->VertexProgram._Current);
+      stvp = st_vertex_program(st->ctx->VertexProgram._Current);
    }
 
-   if (st->vp != vp || vp->dirty) {
-      st->vp = vp;
+   if (st->vp != stvp || stvp->dirty) {
+      /* Bind the vertex program */
+      st->vp = stvp;
 
-      if (vp->dirty) 
-	 compile_vs( st );
+      if (stvp->dirty) 
+	 st->state.vs = st_translate_vertex_shader( st, st->vp );
 
-      st->state.vs = st->vp->vs;
       st->pipe->bind_vs_state(st->pipe, st->state.vs);
    }
 }
