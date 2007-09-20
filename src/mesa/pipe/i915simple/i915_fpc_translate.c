@@ -155,7 +155,6 @@ src_vector(struct i915_fp_compile *p,
       sem_name = p->input_semantic_name[index];
       sem_ind = p->input_semantic_index[index];
 
-#if 1
       switch (sem_name) {
       case TGSI_SEMANTIC_POSITION:
          printf("SKIP SEM POS\n");
@@ -186,42 +185,6 @@ src_vector(struct i915_fp_compile *p,
          i915_program_error(p, "Bad source->Index");
          return 0;
       }
-#else
-      index = p->vertex_info->slot_to_attrib[index];
-
-      switch (index) {
-      case TGSI_ATTRIB_POS:
-         assert(p->wpos_tex != -1);
-         src = i915_emit_decl(p, REG_TYPE_T, p->wpos_tex, D0_CHANNEL_ALL);
-         break;
-      case TGSI_ATTRIB_COLOR0:
-         src = i915_emit_decl(p, REG_TYPE_T, T_DIFFUSE, D0_CHANNEL_ALL);
-         break;
-      case TGSI_ATTRIB_COLOR1:
-         src = i915_emit_decl(p, REG_TYPE_T, T_SPECULAR, D0_CHANNEL_XYZ);
-         src = swizzle(src, X, Y, Z, ONE);
-         break;
-      case TGSI_ATTRIB_FOG:
-         src = i915_emit_decl(p, REG_TYPE_T, T_FOG_W, D0_CHANNEL_W);
-         src = swizzle(src, W, W, W, W);
-         break;
-      case TGSI_ATTRIB_TEX0:
-      case TGSI_ATTRIB_TEX1:
-      case TGSI_ATTRIB_TEX2:
-      case TGSI_ATTRIB_TEX3:
-      case TGSI_ATTRIB_TEX4:
-      case TGSI_ATTRIB_TEX5:
-      case TGSI_ATTRIB_TEX6:
-      case TGSI_ATTRIB_TEX7:
-         src = i915_emit_decl(p, REG_TYPE_T,
-                              T_TEX0 + (index - TGSI_ATTRIB_TEX0),
-                              D0_CHANNEL_ALL);
-         break;
-      default:
-         i915_program_error(p, "Bad source->Index");
-         return 0;
-      }
-#endif
       break;
 
    case TGSI_FILE_CONSTANT:
