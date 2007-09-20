@@ -131,15 +131,6 @@ st_translate_fragment_shader(struct st_context *st,
                                  outputMapping,
                                  stfp->tokens, ST_FP_MAX_TOKENS );
 
-#if 0
-   fs.inputs_read
-      = tgsi_mesa_translate_fragment_input_mask(stfp->Base.Base.InputsRead);
-#endif
-#if 0
-   fs.outputs_written
-      = tgsi_mesa_translate_fragment_output_mask(stfp->Base.Base.OutputsWritten);
-#endif
-
    fs.tokens = &stfp->tokens[0];
 
    cso = st_cached_fs_state(st, &fs);

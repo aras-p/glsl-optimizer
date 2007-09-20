@@ -4,276 +4,6 @@
 
 #define TGSI_DEBUG 0
 
-#if 0
-/**
- * Convert a VERT_ATTRIB_x to a TGSI_ATTRIB_y
- */
-uint
-tgsi_mesa_translate_vertex_input(GLuint attrib)
-{
-   /* XXX these could be implemented with array lookups too.... */
-   switch (attrib) {
-   case VERT_ATTRIB_POS:
-      return TGSI_ATTRIB_POS;
-   case VERT_ATTRIB_WEIGHT:
-      return TGSI_ATTRIB_WEIGHT;
-   case VERT_ATTRIB_NORMAL:
-      return TGSI_ATTRIB_NORMAL;
-   case VERT_ATTRIB_COLOR0:
-      return TGSI_ATTRIB_COLOR0;
-   case VERT_ATTRIB_COLOR1:
-      return TGSI_ATTRIB_COLOR1;
-   case VERT_ATTRIB_FOG:
-      return TGSI_ATTRIB_FOG;
-   case VERT_ATTRIB_COLOR_INDEX:
-      return TGSI_ATTRIB_COLOR_INDEX;
-   case VERT_ATTRIB_EDGEFLAG:
-      return TGSI_ATTRIB_EDGEFLAG;
-   case VERT_ATTRIB_TEX0:
-      return TGSI_ATTRIB_TEX0;
-   case VERT_ATTRIB_TEX1:
-      return TGSI_ATTRIB_TEX1;
-   case VERT_ATTRIB_TEX2:
-      return TGSI_ATTRIB_TEX2;
-   case VERT_ATTRIB_TEX3:
-      return TGSI_ATTRIB_TEX3;
-   case VERT_ATTRIB_TEX4:
-      return TGSI_ATTRIB_TEX4;
-   case VERT_ATTRIB_TEX5:
-      return TGSI_ATTRIB_TEX5;
-   case VERT_ATTRIB_TEX6:
-      return TGSI_ATTRIB_TEX6;
-   case VERT_ATTRIB_TEX7:
-      return TGSI_ATTRIB_TEX7;
-   case VERT_ATTRIB_GENERIC0:
-      return TGSI_ATTRIB_VAR0;
-   case VERT_ATTRIB_GENERIC1:
-      return TGSI_ATTRIB_VAR1;
-   case VERT_ATTRIB_GENERIC2:
-      return TGSI_ATTRIB_VAR2;
-   case VERT_ATTRIB_GENERIC3:
-      return TGSI_ATTRIB_VAR3;
-   case VERT_ATTRIB_GENERIC4:
-      return TGSI_ATTRIB_VAR4;
-   case VERT_ATTRIB_GENERIC5:
-      return TGSI_ATTRIB_VAR5;
-   case VERT_ATTRIB_GENERIC6:
-      return TGSI_ATTRIB_VAR6;
-   case VERT_ATTRIB_GENERIC7:
-      return TGSI_ATTRIB_VAR7;
-   default:
-      assert(0);
-      return 0;
-   }
-}
-
-
-/**
- * Convert VERT_RESULT_x to TGSI_ATTRIB_y
- */
-uint
-tgsi_mesa_translate_vertex_output(GLuint attrib)
-{
-   switch (attrib) {
-   case VERT_RESULT_HPOS:
-      return TGSI_ATTRIB_POS;
-   case VERT_RESULT_COL0:
-      return TGSI_ATTRIB_COLOR0;
-   case VERT_RESULT_COL1:
-      return TGSI_ATTRIB_COLOR1;
-   case VERT_RESULT_FOGC:
-      return TGSI_ATTRIB_FOG;
-   case VERT_RESULT_TEX0:
-      return TGSI_ATTRIB_TEX0;
-   case VERT_RESULT_TEX1:
-      return TGSI_ATTRIB_TEX1;
-   case VERT_RESULT_TEX2:
-      return TGSI_ATTRIB_TEX2;
-   case VERT_RESULT_TEX3:
-      return TGSI_ATTRIB_TEX3;
-   case VERT_RESULT_TEX4:
-      return TGSI_ATTRIB_TEX4;
-   case VERT_RESULT_TEX5:
-      return TGSI_ATTRIB_TEX5;
-   case VERT_RESULT_TEX6:
-      return TGSI_ATTRIB_TEX6;
-   case VERT_RESULT_TEX7:
-      return TGSI_ATTRIB_TEX7;
-   case VERT_RESULT_PSIZ:
-      return TGSI_ATTRIB_POINTSIZE;
-   case VERT_RESULT_BFC0:
-      return TGSI_ATTRIB_BFC0;
-   case VERT_RESULT_BFC1:
-      return TGSI_ATTRIB_BFC1;
-   case VERT_RESULT_VAR0:
-      return TGSI_ATTRIB_VAR0;
-   case VERT_RESULT_VAR0 + 1:
-      return TGSI_ATTRIB_VAR1;
-   case VERT_RESULT_VAR0 + 2:
-      return TGSI_ATTRIB_VAR2;
-   case VERT_RESULT_VAR0 + 3:
-      return TGSI_ATTRIB_VAR3;
-   case VERT_RESULT_VAR0 + 4:
-      return TGSI_ATTRIB_VAR4;
-   case VERT_RESULT_VAR0 + 5:
-      return TGSI_ATTRIB_VAR5;
-   case VERT_RESULT_VAR0 + 6:
-      return TGSI_ATTRIB_VAR6;
-   case VERT_RESULT_VAR0 + 7:
-      return TGSI_ATTRIB_VAR7;
-   default:
-      assert(0);
-      return 0;
-   }
-}
-
-
-/**
- * Convert a FRAG_ATTRIB_x to a TGSI_ATTRIB_y
- */
-uint
-tgsi_mesa_translate_fragment_input(GLuint attrib)
-{
-   switch (attrib) {
-   case FRAG_ATTRIB_WPOS:
-      return TGSI_ATTRIB_POS;
-   case FRAG_ATTRIB_COL0:
-      return TGSI_ATTRIB_COLOR0;
-   case FRAG_ATTRIB_COL1:
-      return TGSI_ATTRIB_COLOR1;
-   case FRAG_ATTRIB_FOGC:
-      return TGSI_ATTRIB_FOG;
-   case FRAG_ATTRIB_TEX0:
-      return TGSI_ATTRIB_TEX0;
-   case FRAG_ATTRIB_TEX1:
-      return TGSI_ATTRIB_TEX1;
-   case FRAG_ATTRIB_TEX2:
-      return TGSI_ATTRIB_TEX2;
-   case FRAG_ATTRIB_TEX3:
-      return TGSI_ATTRIB_TEX3;
-   case FRAG_ATTRIB_TEX4:
-      return TGSI_ATTRIB_TEX4;
-   case FRAG_ATTRIB_TEX5:
-      return TGSI_ATTRIB_TEX5;
-   case FRAG_ATTRIB_TEX6:
-      return TGSI_ATTRIB_TEX6;
-   case FRAG_ATTRIB_TEX7:
-      return TGSI_ATTRIB_TEX7;
-   case FRAG_ATTRIB_VAR0:
-      return TGSI_ATTRIB_VAR0;
-   case FRAG_ATTRIB_VAR0 + 1:
-      return TGSI_ATTRIB_VAR1;
-   case FRAG_ATTRIB_VAR0 + 2:
-      return TGSI_ATTRIB_VAR2;
-   case FRAG_ATTRIB_VAR0 + 3:
-      return TGSI_ATTRIB_VAR3;
-   case FRAG_ATTRIB_VAR0 + 4:
-      return TGSI_ATTRIB_VAR4;
-   case FRAG_ATTRIB_VAR0 + 5:
-      return TGSI_ATTRIB_VAR5;
-   case FRAG_ATTRIB_VAR0 + 6:
-      return TGSI_ATTRIB_VAR6;
-   case FRAG_ATTRIB_VAR0 + 7:
-      return TGSI_ATTRIB_VAR7;
-   default:
-      assert(0);
-      return 0;
-   }
-}
-
-
-/**
- * Convert FRAG_RESULT_x to TGSI_ATTRIB_y
- */
-uint
-tgsi_mesa_translate_fragment_output(GLuint attrib)
-{
-   switch (attrib) {
-   case FRAG_RESULT_DEPR:
-      return TGSI_ATTRIB_POS;
-   case FRAG_RESULT_COLR:
-      /* fall-through */
-   case FRAG_RESULT_COLH:
-      /* fall-through */
-   case FRAG_RESULT_DATA0:
-      return TGSI_ATTRIB_COLOR0;
-   case FRAG_RESULT_DATA0 + 1:
-      return TGSI_ATTRIB_COLOR0 + 1;
-   case FRAG_RESULT_DATA0 + 2:
-      return TGSI_ATTRIB_COLOR0 + 2;
-   case FRAG_RESULT_DATA0 + 3:
-      return TGSI_ATTRIB_COLOR0 + 3;
-   default:
-      assert(0);
-      return 0;
-   }
-}
-#endif
-
-
-#if 0
-uint
-tgsi_mesa_translate_vertex_input_mask(GLbitfield mask)
-{
-   uint tgsiMask = 0x0;
-   uint i;
-   for (i = 0; i < VERT_ATTRIB_MAX && mask; i++) {
-      if (mask & (1 << i)) {
-         tgsiMask |= 1 << tgsi_mesa_translate_vertex_input(i);
-      }
-      mask &= ~(1 << i);
-   }
-   return tgsiMask;
-}
-
-uint
-tgsi_mesa_translate_vertex_output_mask(GLbitfield mask)
-{
-   uint tgsiMask = 0x0;
-   uint i;
-   for (i = 0; i < VERT_RESULT_MAX && mask; i++) {
-      if (mask & (1 << i)) {
-         tgsiMask |= 1 << tgsi_mesa_translate_vertex_output(i);
-      }
-      mask &= ~(1 << i);
-   }
-   return tgsiMask;
-}
-
-uint
-tgsi_mesa_translate_fragment_input_mask(GLbitfield mask)
-{
-   uint tgsiMask = 0x0;
-   uint i;
-   for (i = 0; i < FRAG_ATTRIB_MAX && mask; i++) {
-      if (mask & (1 << i)) {
-         tgsiMask |= 1 << tgsi_mesa_translate_fragment_input(i);
-      }
-      mask &= ~(1 << i);
-   }
-   return tgsiMask;
-}
-
-
-uint
-tgsi_mesa_translate_fragment_output_mask(GLbitfield mask)
-{
-   uint tgsiMask = 0x0;
-   uint i;
-   for (i = 0; i < FRAG_RESULT_MAX && mask; i++) {
-      if (mask & (1 << i)) {
-         tgsiMask |= 1 << tgsi_mesa_translate_fragment_output(i);
-      }
-      mask &= ~(1 << i);
-   }
-   return tgsiMask;
-}
-
-
-#endif
-
-
-
 
 /*
  * Map mesa register file to TGSI register file.
@@ -319,16 +49,10 @@ map_register_file_index(
    GLuint processor,
    GLuint file,
    GLuint index,
-#if 0
-   GLbitfield usage_bitmask,
-#endif
    const GLuint inputMapping[],
    const GLuint outputMapping[])
 {
    GLuint mapped_index;
-#if 0
-   GLuint i;
-#endif
 
    assert(processor == TGSI_PROCESSOR_FRAGMENT
           || processor == TGSI_PROCESSOR_VERTEX);
@@ -343,24 +67,8 @@ map_register_file_index(
        * If a program uses 3 input attribs, the mapped indexes will be 1,2,3.
        * etc.
        */
-      assert( index < 32 );
-      if (inputMapping) {
-         printf("New map %d input %d to %d\n", processor, index,
-                inputMapping[index]);
-         return inputMapping[index];
-      }
-      assert(0);
-#if 0
-      assert( usage_bitmask & (1 << index) );
-      mapped_index = 0;
-      for( i = 0; i < index; i++ ) {
-         if( usage_bitmask & (1 << i) ) {
-            mapped_index++;
-         }
-      }
       printf("Map %d input %d to %d\n", processor, index, mapped_index);
-#endif
-      break;
+      return inputMapping[index];
 
    case TGSI_FILE_OUTPUT:
       /*
@@ -381,15 +89,6 @@ map_register_file_index(
       else {
          /* vertex output slots are tightly packed, find mapped pos */
          /* mapped_index = VERT_RESULT_x */
-#if 0
-         mapped_index = 0;
-         for( i = 0; i < index; i++ ) {
-            if( usage_bitmask & (1 << i) ) {
-               mapped_index++;
-            }
-         }
-         assert(outputMapping[index] == mapped_index);
-#endif
          mapped_index = outputMapping[index];
          printf("Map VP output from %d to %d\n", index, mapped_index);
       }
@@ -461,10 +160,6 @@ static GLboolean
 compile_instruction(
    const struct prog_instruction *inst,
    struct tgsi_full_instruction *fullinst,
-#if 0
-   GLuint inputs_read,
-   GLuint outputs_written,
-#endif
    const GLuint inputMapping[],
    const GLuint outputMapping[],
    GLuint preamble_size,
@@ -486,14 +181,7 @@ compile_instruction(
       processor,
       fulldst->DstRegister.File,
       inst->DstReg.Index,
-#if 0
-      outputs_written,
-#endif
-#if 0
-      NULL,
-#else
       inputMapping,
-#endif
       outputMapping
       );
    fulldst->DstRegister.WriteMask = convert_writemask( inst->DstReg.WriteMask );
@@ -507,9 +195,6 @@ compile_instruction(
          processor,
          fullsrc->SrcRegister.File,
          inst->SrcReg[i].Index,
-#if 0
-         inputs_read,
-#endif
          inputMapping,
          outputMapping );
 
@@ -849,7 +534,8 @@ tgsi_mesa_compile_fp_program(
    struct tgsi_token *tokens,
    GLuint maxTokens )
 {
-   GLuint i, ti, count;
+   GLuint i;
+   GLuint ti;  /* token index */
    struct tgsi_header *header;
    struct tgsi_processor *processor;
    struct tgsi_full_declaration fulldecl;
@@ -871,56 +557,6 @@ tgsi_mesa_compile_fp_program(
    *processor = tgsi_build_processor( TGSI_PROCESSOR_FRAGMENT, header );
 
    ti = 3;
-
-#if 0
-   reads_wpos = program->Base.InputsRead & (1 << FRAG_ATTRIB_WPOS);
-   inputs_read = program->Base.InputsRead | (1 << FRAG_ATTRIB_WPOS);
-
-   /*
-    * Declare input attributes. Note that we do not interpolate fragment position.
-    */
-   reads_wpos = 1;
-   /* Fragment position. */
-   if( reads_wpos ) {
-      fulldecl = make_frag_input_decl(
-         0,
-         TGSI_INTERPOLATE_CONSTANT,
-         TGSI_WRITEMASK_XY,
-         TGSI_SEMANTIC_POSITION );
-      ti += tgsi_build_full_declaration(
-         &fulldecl,
-         &tokens[ti],
-         header,
-         maxTokens - ti );
-   }
-
-   /* Fragment zw. */
-   fulldecl = make_frag_input_decl(
-      0,
-      TGSI_INTERPOLATE_LINEAR,
-      reads_wpos ? TGSI_WRITEMASK_ZW : TGSI_WRITEMASK_Z,
-      TGSI_SEMANTIC_POSITION );
-   ti += tgsi_build_full_declaration(
-      &fulldecl,
-      &tokens[ti],
-      header,
-      maxTokens - ti );
-
-   count = 0;
-   for( i = 1; i < 32; i++ ) {
-      if( inputs_read & (1 << i) ) {
-         count++;
-         fulldecl = make_frag_input_decl(count,
-                                         interpMode[i],
-                                         TGSI_WRITEMASK_XYZW,
-                                         inputSemantic[count] );
-         ti += tgsi_build_full_declaration(&fulldecl,
-                                           &tokens[ti],
-                                           header,
-                                           maxTokens - ti );
-      }
-   }         
-#else
 
    for (i = 0; i < numInputs; i++) {
       switch (inputSemantic[i]) {
@@ -958,7 +594,6 @@ tgsi_mesa_compile_fp_program(
          break;
       }
    }
-#endif
 
 
    /*
@@ -1023,10 +658,6 @@ tgsi_mesa_compile_fp_program(
       if( compile_instruction(
             &program->Base.Instructions[i],
             &fullinst,
-#if 0
-            inputs_read,
-            ~0, /*outputs_written*/
-#endif
             inputMapping,
             outputMapping,
             preamble_size,
@@ -1061,12 +692,6 @@ tgsi_mesa_compile_vp_program(
    struct tgsi_header *header;
    struct tgsi_processor *processor;
    struct tgsi_full_instruction fullinst;
-#if 0
-   GLuint inputs_read = ~0;
-   GLuint outputs_written;
-
-   outputs_written = program->Base.OutputsWritten;
-#endif
 
    *(struct tgsi_version *) &tokens[0] = tgsi_build_version();
 
@@ -1082,10 +707,6 @@ tgsi_mesa_compile_vp_program(
       if( compile_instruction(
             &program->Base.Instructions[i],
             &fullinst,
-#if 0
-            inputs_read,
-            outputs_written,
-#endif
             inputMapping,
             outputMapping,
             0,

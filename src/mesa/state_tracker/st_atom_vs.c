@@ -131,15 +131,6 @@ st_translate_vertex_shader(struct st_context *st,
                                  st->vertex_attrib_to_slot,
                                  stvp->tokens, ST_FP_MAX_TOKENS );
 
-#if 0
-   vs.inputs_read
-      = tgsi_mesa_translate_vertex_input_mask(stvp->Base.Base.InputsRead);
-#endif
-#if 0
-   vs.outputs_written
-      = tgsi_mesa_translate_vertex_output_mask(stvp->Base.Base.OutputsWritten);
-#endif
-
    vs.tokens = &stvp->tokens[0];
 
    cso = st_cached_vs_state(st, &vs);
