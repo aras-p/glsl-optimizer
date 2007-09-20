@@ -103,23 +103,13 @@ struct tgsi_declaration_interpolation
    unsigned Padding       : 28;
 };
 
-#define TGSI_SEMANTIC_DEPTH    0
-#define TGSI_SEMANTIC_COLOR0   1
-#define TGSI_SEMANTIC_COLOR1   2
-#define TGSI_SEMANTIC_COLOR0B  3 /**< back-face primary color */
-#define TGSI_SEMANTIC_COLOR1B  4 /**< back-face secondary color */
-#define TGSI_SEMANTIC_POSITION 5
-#define TGSI_SEMANTIC_FOG      6
-#define TGSI_SEMANTIC_OTHER    7 /* XXX temp */
-#define TGSI_SEMANTIC_TEX0     8
-#define TGSI_SEMANTIC_TEX1     9
-#define TGSI_SEMANTIC_TEX2    10
-#define TGSI_SEMANTIC_TEX3    11
-#define TGSI_SEMANTIC_TEX4    12
-#define TGSI_SEMANTIC_TEX5    13
-#define TGSI_SEMANTIC_TEX6    14
-#define TGSI_SEMANTIC_TEX7    15
-#define TGSI_SEMANTIC_COUNT   16 /**< number of semantic values */
+#define TGSI_SEMANTIC_POSITION 0
+#define TGSI_SEMANTIC_COLOR    1
+#define TGSI_SEMANTIC_BCOLOR   2 /**< back-face color */
+#define TGSI_SEMANTIC_FOG      3
+#define TGSI_SEMANTIC_TEXCOORD 4
+#define TGSI_SEMANTIC_GENERIC  5
+#define TGSI_SEMANTIC_COUNT    6 /**< number of semantic values */
 
 struct tgsi_declaration_semantic
 {

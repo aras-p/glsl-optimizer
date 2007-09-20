@@ -77,23 +77,41 @@ st_translate_fragment_shader(struct st_context *st,
 
          switch (i) {
          case FRAG_ATTRIB_WPOS:
-            fs.input_semantics[fs.num_inputs] = TGSI_SEMANTIC_POSITION;
+            fs.input_semantic_name[fs.num_inputs] = TGSI_SEMANTIC_POSITION;
+            fs.input_semantic_index[fs.num_inputs] = 0;
             interpMode[fs.num_inputs] = TGSI_INTERPOLATE_CONSTANT;
             break;
          case FRAG_ATTRIB_COL0:
-            fs.input_semantics[fs.num_inputs] = TGSI_SEMANTIC_COLOR0;
+            fs.input_semantic_name[fs.num_inputs] = TGSI_SEMANTIC_COLOR;
+            fs.input_semantic_index[fs.num_inputs] = 0;
             interpMode[fs.num_inputs] = TGSI_INTERPOLATE_LINEAR;
             break;
          case FRAG_ATTRIB_COL1:
-            fs.input_semantics[fs.num_inputs] = TGSI_SEMANTIC_COLOR1;
+            fs.input_semantic_name[fs.num_inputs] = TGSI_SEMANTIC_COLOR;
+            fs.input_semantic_index[fs.num_inputs] = 1;
             interpMode[fs.num_inputs] = TGSI_INTERPOLATE_LINEAR;
             break;
+         case FRAG_ATTRIB_FOGC:
+            assert(0);
+            break;
          case FRAG_ATTRIB_TEX0:
-            fs.input_semantics[fs.num_inputs] = TGSI_SEMANTIC_TEX0;
+         case FRAG_ATTRIB_TEX1:
+         case FRAG_ATTRIB_TEX2:
+         case FRAG_ATTRIB_TEX3:
+         case FRAG_ATTRIB_TEX4:
+         case FRAG_ATTRIB_TEX5:
+         case FRAG_ATTRIB_TEX6:
+         case FRAG_ATTRIB_TEX7:
+            fs.input_semantic_name[fs.num_inputs] = TGSI_SEMANTIC_TEXCOORD;
+            fs.input_semantic_index[fs.num_inputs] = i - FRAG_ATTRIB_TEX0;
             interpMode[fs.num_inputs] = TGSI_INTERPOLATE_PERSPECTIVE;
             break;
+         case FRAG_ATTRIB_VAR0:
+            /* fall-through */
          default:
-            assert(0);
+            fs.input_semantic_name[fs.num_inputs] = TGSI_SEMANTIC_GENERIC;
+            fs.input_semantic_index[fs.num_inputs] = i - FRAG_ATTRIB_VAR0;
+            interpMode[fs.num_inputs] = TGSI_INTERPOLATE_PERSPECTIVE;
          }
 
          fs.num_inputs++;
@@ -107,11 +125,11 @@ st_translate_fragment_shader(struct st_context *st,
       if (stfp->Base.Base.OutputsWritten & (1 << i)) {
          switch (i) {
          case FRAG_RESULT_DEPR:
-            fs.output_semantics[fs.num_outputs] = TGSI_SEMANTIC_DEPTH;
+            fs.output_semantic_name[fs.num_outputs] = TGSI_SEMANTIC_POSITION;
             outputMapping[i] = fs.num_outputs;
             break;
          case FRAG_RESULT_COLR:
-            fs.output_semantics[fs.num_outputs] = TGSI_SEMANTIC_COLOR0;
+            fs.output_semantic_name[fs.num_outputs] = TGSI_SEMANTIC_COLOR;
             outputMapping[i] = fs.num_outputs;
             break;
          default:
@@ -126,7 +144,8 @@ st_translate_fragment_shader(struct st_context *st,
    tgsi_mesa_compile_fp_program( &stfp->Base,
                                  fs.num_inputs,
                                  inputMapping,
-                                 fs.input_semantics,
+                                 fs.input_semantic_name,
+                                 fs.input_semantic_index,
                                  interpMode,
                                  outputMapping,
                                  stfp->tokens, ST_FP_MAX_TOKENS );

@@ -148,8 +148,12 @@ struct pipe_shader_state {
    /** These fields somewhat constitute the shader "signature" */
    ubyte num_inputs;
    ubyte num_outputs;
-   ubyte input_semantics[PIPE_MAX_SHADER_INPUTS];
-   ubyte output_semantics[PIPE_MAX_SHADER_OUTPUTS];
+
+   ubyte input_semantic_name[PIPE_MAX_SHADER_INPUTS]; /**< TGSI_SEMANTIC_x */
+   ubyte input_semantic_index[PIPE_MAX_SHADER_INPUTS];
+
+   ubyte output_semantic_name[PIPE_MAX_SHADER_OUTPUTS]; /**< TGSI_SEMANTIC_x */
+   ubyte output_semantic_index[PIPE_MAX_SHADER_OUTPUTS];
 };
 
 struct pipe_depth_stencil_state

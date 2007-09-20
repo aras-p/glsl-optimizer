@@ -473,7 +473,8 @@ make_frag_input_decl(
    GLuint index,
    GLuint interpolate,
    GLuint usage_mask,
-   GLuint semantic_name )
+   GLuint semantic_name,
+   GLuint semantic_index )
 {
    struct tgsi_full_declaration decl;
 
@@ -486,6 +487,7 @@ make_frag_input_decl(
    decl.u.DeclarationRange.First = index;
    decl.u.DeclarationRange.Last = index;
    decl.Semantic.SemanticName = semantic_name;
+   decl.Semantic.SemanticIndex = semantic_index;
    decl.Interpolation.Interpolate = interpolate;
 
    return decl;
@@ -495,6 +497,7 @@ static struct tgsi_full_declaration
 make_frag_output_decl(
    GLuint index,
    GLuint semantic_name,
+   GLuint semantic_index,
    GLuint usage_mask )
 {
    struct tgsi_full_declaration decl;
@@ -507,7 +510,7 @@ make_frag_output_decl(
    decl.u.DeclarationRange.First = index;
    decl.u.DeclarationRange.Last = index;
    decl.Semantic.SemanticName = semantic_name;
-   decl.Semantic.SemanticIndex = 0;
+   decl.Semantic.SemanticIndex = semantic_index;
 
    return decl;
 }
@@ -528,7 +531,8 @@ tgsi_mesa_compile_fp_program(
    const struct gl_fragment_program *program,
    GLuint numInputs,
    const GLuint inputMapping[],
-   const ubyte inputSemantic[],
+   const ubyte inputSemanticName[],
+   const ubyte inputSemanticIndex[],
    const GLuint interpMode[],
    const GLuint outputMapping[],
    struct tgsi_token *tokens,
@@ -553,13 +557,13 @@ tgsi_mesa_compile_fp_program(
    ti = 3;
 
    for (i = 0; i < numInputs; i++) {
-      switch (inputSemantic[i]) {
+      switch (inputSemanticName[i]) {
       case TGSI_SEMANTIC_POSITION:
          /* Fragment XY pos */
          fulldecl = make_frag_input_decl(i,
                                          TGSI_INTERPOLATE_CONSTANT,
                                          TGSI_WRITEMASK_XY,
-                                         TGSI_SEMANTIC_POSITION );
+                                         TGSI_SEMANTIC_POSITION, 0 );
          ti += tgsi_build_full_declaration(
                                            &fulldecl,
                                            &tokens[ti],
@@ -569,7 +573,7 @@ tgsi_mesa_compile_fp_program(
          fulldecl = make_frag_input_decl(i,
                                          TGSI_INTERPOLATE_LINEAR,
                                          TGSI_WRITEMASK_ZW,
-                                         TGSI_SEMANTIC_POSITION );
+                                         TGSI_SEMANTIC_POSITION, 0 );
          ti += tgsi_build_full_declaration(
                                            &fulldecl,
                                            &tokens[ti],
@@ -580,7 +584,8 @@ tgsi_mesa_compile_fp_program(
          fulldecl = make_frag_input_decl(i,
                                          interpMode[i],
                                          TGSI_WRITEMASK_XYZW,
-                                         inputSemantic[i] );
+                                         inputSemanticName[i],
+                                         inputSemanticIndex[i]);
          ti += tgsi_build_full_declaration(&fulldecl,
                                            &tokens[ti],
                                            header,
@@ -599,7 +604,7 @@ tgsi_mesa_compile_fp_program(
 
    fulldecl = make_frag_output_decl(
       0,
-      TGSI_SEMANTIC_DEPTH,
+      TGSI_SEMANTIC_POSITION, 0,  /* Z / Depth */
       TGSI_WRITEMASK_Z );
    ti += tgsi_build_full_declaration(
       &fulldecl,
@@ -610,7 +615,7 @@ tgsi_mesa_compile_fp_program(
    if( program->Base.OutputsWritten & (1 << FRAG_RESULT_COLR) ) {
       fulldecl = make_frag_output_decl(
          1,
-         TGSI_SEMANTIC_COLOR0,
+         TGSI_SEMANTIC_COLOR, 0,
          TGSI_WRITEMASK_XYZW );
       ti += tgsi_build_full_declaration(
          &fulldecl,

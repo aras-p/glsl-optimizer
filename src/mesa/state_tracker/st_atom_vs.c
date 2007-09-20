@@ -64,9 +64,8 @@ st_translate_vertex_shader(struct st_context *st,
    memset(&vs, 0, sizeof(vs));
 
    /*
-    * Determine how many inputs there are.
-    * Also, compute two look-up tables that map between Mesa VERT_ATTRIB_x
-    * values and TGSI generic input indexes.
+    * Determine number of inputs, the mappings between VERT_ATTRIB_x
+    * and TGSI generic input indexes, plus input attrib semantic info.
     */
    for (i = 0; i < MAX_VERTEX_PROGRAM_ATTRIBS; i++) {
       if (stvp->Base.Base.InputsRead & (1 << i)) {
@@ -74,26 +73,57 @@ st_translate_vertex_shader(struct st_context *st,
          stvp->index_to_input[vs.num_inputs] = i;
          switch (i) {
          case VERT_ATTRIB_POS:
-            vs.input_semantics[vs.num_inputs] = TGSI_SEMANTIC_POSITION;
+            vs.input_semantic_name[vs.num_inputs] = TGSI_SEMANTIC_POSITION;
+            vs.input_semantic_index[vs.num_inputs] = 0;
+            break;
+         case VERT_ATTRIB_WEIGHT:
+            /* fall-through */
+         case VERT_ATTRIB_NORMAL:
+            /* just label as a generic */
+            vs.input_semantic_name[vs.num_inputs] = TGSI_SEMANTIC_GENERIC;
+            vs.input_semantic_index[vs.num_inputs] = 0;
             break;
          case VERT_ATTRIB_COLOR0:
-            vs.input_semantics[vs.num_inputs] = TGSI_SEMANTIC_COLOR0;
+            vs.input_semantic_name[vs.num_inputs] = TGSI_SEMANTIC_COLOR;
+            vs.input_semantic_index[vs.num_inputs] = 0;
             break;
          case VERT_ATTRIB_COLOR1:
-            vs.input_semantics[vs.num_inputs] = TGSI_SEMANTIC_COLOR1;
+            vs.input_semantic_name[vs.num_inputs] = TGSI_SEMANTIC_COLOR;
+            vs.input_semantic_index[vs.num_inputs] = 1;
             break;
          case VERT_ATTRIB_TEX0:
-            vs.input_semantics[vs.num_inputs] = TGSI_SEMANTIC_TEX0;
+         case VERT_ATTRIB_TEX1:
+         case VERT_ATTRIB_TEX2:
+         case VERT_ATTRIB_TEX3:
+         case VERT_ATTRIB_TEX4:
+         case VERT_ATTRIB_TEX5:
+         case VERT_ATTRIB_TEX6:
+         case VERT_ATTRIB_TEX7:
+            vs.input_semantic_name[vs.num_inputs] = TGSI_SEMANTIC_TEXCOORD;
+            vs.input_semantic_index[vs.num_inputs] = 1 - VERT_ATTRIB_TEX0;
+            break;
+         case VERT_ATTRIB_GENERIC0:
+         case VERT_ATTRIB_GENERIC1:
+         case VERT_ATTRIB_GENERIC2:
+         case VERT_ATTRIB_GENERIC3:
+         case VERT_ATTRIB_GENERIC4:
+         case VERT_ATTRIB_GENERIC5:
+         case VERT_ATTRIB_GENERIC6:
+         case VERT_ATTRIB_GENERIC7:
+            assert(i < VERT_ATTRIB_MAX);
+            vs.input_semantic_name[vs.num_inputs] = TGSI_SEMANTIC_GENERIC;
+            vs.input_semantic_index[vs.num_inputs] = 1 - VERT_ATTRIB_GENERIC0;
             break;
          default:
-            vs.input_semantics[vs.num_inputs] = TGSI_SEMANTIC_OTHER;
+            assert(0);
          }
          vs.num_inputs++;
       }
    }
 
    /*
-    * Determine number of outputs and the register mapping.
+    * Determine number of outputs, the register mapping and
+    * the semantic information for each vertex output/result.
     */
    for (i = 0; i < VERT_RESULT_MAX; i++) {
       if (stvp->Base.Base.OutputsWritten & (1 << i)) {
@@ -102,23 +132,49 @@ st_translate_vertex_shader(struct st_context *st,
 
          switch (i) {
          case VERT_RESULT_HPOS:
-            vs.output_semantics[vs.num_outputs] = TGSI_SEMANTIC_POSITION;
+            vs.output_semantic_name[vs.num_outputs] = TGSI_SEMANTIC_POSITION;
+            vs.output_semantic_index[vs.num_inputs] = 0;
             break;
          case VERT_RESULT_COL0:
-            vs.output_semantics[vs.num_inputs] = TGSI_SEMANTIC_COLOR0;
+            vs.output_semantic_name[vs.num_inputs] = TGSI_SEMANTIC_COLOR;
+            vs.output_semantic_index[vs.num_inputs] = 0;
             break;
          case VERT_RESULT_COL1:
-            vs.output_semantics[vs.num_inputs] = TGSI_SEMANTIC_COLOR1;
+            vs.output_semantic_name[vs.num_inputs] = TGSI_SEMANTIC_COLOR;
+            vs.output_semantic_index[vs.num_inputs] = 1;
             break;
          case VERT_RESULT_BFC0:
-            vs.output_semantics[vs.num_inputs] = TGSI_SEMANTIC_COLOR0B;
+            vs.output_semantic_name[vs.num_inputs] = TGSI_SEMANTIC_BCOLOR;
+            vs.output_semantic_index[vs.num_inputs] = 0;
             break;
          case VERT_RESULT_BFC1:
-            vs.output_semantics[vs.num_inputs] = TGSI_SEMANTIC_COLOR1B;
+            vs.output_semantic_name[vs.num_inputs] = TGSI_SEMANTIC_BCOLOR;
+            vs.output_semantic_index[vs.num_inputs] = 1;
             break;
+         case VERT_RESULT_FOGC:
+         case VERT_RESULT_PSIZ:
+         case VERT_RESULT_EDGE:
+            assert(0);
+            break;
+         case VERT_RESULT_TEX0:
+         case VERT_RESULT_TEX1:
+         case VERT_RESULT_TEX2:
+         case VERT_RESULT_TEX3:
+         case VERT_RESULT_TEX4:
+         case VERT_RESULT_TEX5:
+         case VERT_RESULT_TEX6:
+         case VERT_RESULT_TEX7:
+            vs.output_semantic_name[vs.num_inputs] = TGSI_SEMANTIC_TEXCOORD;
+            vs.output_semantic_index[vs.num_inputs] = i - VERT_RESULT_TEX0;
+            break;
+         case VERT_RESULT_VAR0:
+            /* fall-through */
          default:
-            vs.output_semantics[vs.num_outputs] = TGSI_SEMANTIC_OTHER;
+            assert(i - VERT_RESULT_VAR0 < MAX_VARYING);
+            vs.output_semantic_name[vs.num_inputs] = TGSI_SEMANTIC_GENERIC;
+            vs.output_semantic_index[vs.num_inputs] = i - VERT_RESULT_VAR0;
          }
+
          vs.num_outputs++;
       }
    }

@@ -309,7 +309,7 @@ tgsi_default_declaration_semantic( void )
 {
    struct tgsi_declaration_semantic ds;
 
-   ds.SemanticName = TGSI_SEMANTIC_DEPTH;
+   ds.SemanticName = TGSI_SEMANTIC_POSITION;
    ds.SemanticIndex = 0;
    ds.Padding = 0;
 

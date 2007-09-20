@@ -94,7 +94,8 @@ run_vertex_program(struct draw_context *draw,
    const float *trans = draw->viewport.translate;
 
    assert(count <= 4);
-   assert(draw->vertex_shader.output_semantics[0] == TGSI_SEMANTIC_POSITION);
+   assert(draw->vertex_shader.output_semantic_name[0]
+          == TGSI_SEMANTIC_POSITION);
 
 #ifdef DEBUG
    memset( &machine, 0, sizeof( machine ) );

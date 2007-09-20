@@ -65,7 +65,7 @@ static void calculate_vertex_layout( struct softpipe_context *softpipe )
    draw_emit_vertex_attr(vinfo, FORMAT_4F, INTERP_LINEAR);
 
    for (i = 0; i < fs->num_inputs; i++) {
-      switch (fs->input_semantics[i]) {
+      switch (fs->input_semantic_name[i]) {
       case TGSI_SEMANTIC_POSITION:
          /* Need Z if depth test is enabled or the fragment program uses the
           * fragment position (XYZW).
@@ -73,13 +73,16 @@ static void calculate_vertex_layout( struct softpipe_context *softpipe )
          softpipe->need_z = TRUE;
          softpipe->need_w = TRUE;
          break;
-      case TGSI_SEMANTIC_COLOR0:
-         front0 = draw_emit_vertex_attr(vinfo,
-                                        FORMAT_4F, colorInterp);
-         break;
-      case TGSI_SEMANTIC_COLOR1:
-         front1 = draw_emit_vertex_attr(vinfo,
-                                        FORMAT_4F, colorInterp);
+      case TGSI_SEMANTIC_COLOR:
+         if (fs->input_semantic_index[i] == 0) {
+            front0 = draw_emit_vertex_attr(vinfo,
+                                           FORMAT_4F, colorInterp);
+         }
+         else {
+            assert(fs->input_semantic_index[i] == 1);
+            front1 = draw_emit_vertex_attr(vinfo,
+                                           FORMAT_4F, colorInterp);
+         }
          break;
       case TGSI_SEMANTIC_FOG:
          draw_emit_vertex_attr(vinfo,
@@ -96,12 +99,13 @@ static void calculate_vertex_layout( struct softpipe_context *softpipe )
 #endif
          softpipe->psize_slot = i;
          /*case TGSI_SEMANTIC_TEXCOORD:*/
-      case TGSI_SEMANTIC_TEX0:
+      case TGSI_SEMANTIC_TEXCOORD:
+         /* unit = fs->input_semantic_index[i] */
          draw_emit_vertex_attr(vinfo,
                                FORMAT_4F, INTERP_PERSPECTIVE);
          softpipe->need_w = TRUE;
          break;
-      case TGSI_SEMANTIC_OTHER:
+      case TGSI_SEMANTIC_GENERIC:
          draw_emit_vertex_attr(vinfo, FORMAT_4F, INTERP_PERSPECTIVE);
          softpipe->need_w = TRUE;
          break;

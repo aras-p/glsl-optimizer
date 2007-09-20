@@ -59,28 +59,24 @@ static void calculate_vertex_layout( struct i915_context *i915 )
    /* Note: we'll set the S4_VFMT_XYZ[W] bits below */
 
    for (i = 0; i < fs->num_inputs; i++) {
-      switch (fs->input_semantics[i]) {
+      switch (fs->input_semantic_name[i]) {
       case TGSI_SEMANTIC_POSITION:
          break;
-      case TGSI_SEMANTIC_COLOR0:
-         front0 = draw_emit_vertex_attr(vinfo, FORMAT_4UB, colorInterp);
-         vinfo->hwfmt[0] |= S4_VFMT_COLOR;
+      case TGSI_SEMANTIC_COLOR:
+         if (fs->input_semantic_index[i] == 0) {
+            front0 = draw_emit_vertex_attr(vinfo, FORMAT_4UB, colorInterp);
+            vinfo->hwfmt[0] |= S4_VFMT_COLOR;
+         }
+         else {
+            assert(fs->input_semantic_index[i] == 1);
+            assert(0); /* untested */
+            front1 = draw_emit_vertex_attr(vinfo, FORMAT_4UB, colorInterp);
+            vinfo->hwfmt[0] |= S4_VFMT_SPEC_FOG;
+         }
          break;
-      case TGSI_SEMANTIC_COLOR1:
-         assert(0); /* untested */
-         front1 = draw_emit_vertex_attr(vinfo, FORMAT_4UB, colorInterp);
-         vinfo->hwfmt[0] |= S4_VFMT_SPEC_FOG;
-         break;
-      case TGSI_SEMANTIC_TEX0:
-      case TGSI_SEMANTIC_TEX1:
-      case TGSI_SEMANTIC_TEX2:
-      case TGSI_SEMANTIC_TEX3:
-      case TGSI_SEMANTIC_TEX4:
-      case TGSI_SEMANTIC_TEX5:
-      case TGSI_SEMANTIC_TEX6:
-      case TGSI_SEMANTIC_TEX7:
+      case TGSI_SEMANTIC_TEXCOORD:
          {
-            const uint unit = fs->input_semantics[i] - TGSI_SEMANTIC_TEX0;
+            const uint unit = fs->input_semantic_index[i];
             uint hwtc;
             texCoords[unit] = TRUE;
             draw_emit_vertex_attr(vinfo, FORMAT_4F, INTERP_PERSPECTIVE);
