@@ -36,7 +36,9 @@
 struct twoside_stage {
    struct draw_stage stage;
    float sign;         /**< +1 or -1 */
+#if 0
    const unsigned *lookup;   /**< vertex attribute positions */
+#endif
 };
 
 
@@ -162,7 +164,9 @@ struct draw_stage *draw_twoside_stage( struct draw_context *draw )
    twoside->stage.end = twoside_end;
    twoside->stage.reset_stipple_counter = twoside_reset_stipple_counter;
 
+#if 0
    twoside->lookup = draw->vertex_info.attrib_to_slot;
+#endif
 
    return &twoside->stage;
 }
