@@ -63,7 +63,7 @@ static void calculate_vertex_layout( struct softpipe_context *softpipe )
 
    /* always emit vertex pos */
    /* TODO - Figure out if we need to do perspective divide, etc. */
-   draw_emit_vertex_attr(vinfo, TGSI_ATTRIB_POS, FORMAT_4F, INTERP_LINEAR);
+   draw_emit_vertex_attr(vinfo, FORMAT_4F, INTERP_LINEAR);
 
    for (i = 0; i < fs->num_inputs; i++) {
       switch (fs->input_semantics[i]) {
@@ -75,15 +75,15 @@ static void calculate_vertex_layout( struct softpipe_context *softpipe )
          softpipe->need_w = TRUE;
          break;
       case TGSI_SEMANTIC_COLOR0:
-         front0 = draw_emit_vertex_attr(vinfo, TGSI_ATTRIB_COLOR0,
+         front0 = draw_emit_vertex_attr(vinfo,
                                         FORMAT_4F, colorInterp);
          break;
       case TGSI_SEMANTIC_COLOR1:
-         front1 = draw_emit_vertex_attr(vinfo, TGSI_ATTRIB_COLOR1,
+         front1 = draw_emit_vertex_attr(vinfo,
                                         FORMAT_4F, colorInterp);
          break;
       case TGSI_SEMANTIC_FOG:
-         draw_emit_vertex_attr(vinfo, TGSI_ATTRIB_FOG,
+         draw_emit_vertex_attr(vinfo,
                                FORMAT_1F, INTERP_PERSPECTIVE);
          break;
 #if 0
@@ -91,19 +91,19 @@ static void calculate_vertex_layout( struct softpipe_context *softpipe )
          /* XXX only emit if drawing points or front/back polygon mode
           * is point mode
           */
-         draw_emit_vertex_attr(vinfo, TGSI_ATTRIB_POINTSIZE,
+         draw_emit_vertex_attr(vinfo,
                                FORMAT_4F, INTERP_CONSTANT);
          break;
 #endif
          softpipe->psize_slot = i;
          /*case TGSI_SEMANTIC_TEXCOORD:*/
       case TGSI_SEMANTIC_TEX0:
-         draw_emit_vertex_attr(vinfo, TGSI_ATTRIB_TEX0,
+         draw_emit_vertex_attr(vinfo,
                                FORMAT_4F, INTERP_PERSPECTIVE);
          softpipe->need_w = TRUE;
          break;
       case TGSI_SEMANTIC_OTHER:
-         draw_emit_vertex_attr(vinfo, i, FORMAT_4F, INTERP_PERSPECTIVE);
+         draw_emit_vertex_attr(vinfo, FORMAT_4F, INTERP_PERSPECTIVE);
          softpipe->need_w = TRUE;
          break;
 
@@ -120,12 +120,10 @@ static void calculate_vertex_layout( struct softpipe_context *softpipe )
     */
    if (softpipe->rasterizer->light_twoside) {
       if (front0) {
-         back0 = draw_emit_vertex_attr(vinfo, TGSI_ATTRIB_BFC0,
-                                       FORMAT_OMIT, colorInterp);
+         back0 = draw_emit_vertex_attr(vinfo, FORMAT_OMIT, colorInterp);
       }
       if (back0) {
-         back1 = draw_emit_vertex_attr(vinfo, TGSI_ATTRIB_BFC1,
-                                       FORMAT_OMIT, colorInterp);
+         back1 = draw_emit_vertex_attr(vinfo, FORMAT_OMIT, colorInterp);
       }
    }
 

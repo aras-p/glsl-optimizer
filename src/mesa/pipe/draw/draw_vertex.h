@@ -87,7 +87,7 @@ struct vertex_info
  * \return slot in which the attribute was added
  */
 static INLINE uint
-draw_emit_vertex_attr(struct vertex_info *vinfo, uint vfAttr,
+draw_emit_vertex_attr(struct vertex_info *vinfo,
                       attrib_format format, interp_mode interp)
 {
    const uint n = vinfo->num_attribs;

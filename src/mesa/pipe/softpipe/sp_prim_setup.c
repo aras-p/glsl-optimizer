@@ -79,7 +79,7 @@ struct setup_stage {
 
    float oneoverarea;
 
-   struct tgsi_interp_coef coef[TGSI_ATTRIB_MAX];
+   struct tgsi_interp_coef coef[PIPE_MAX_SHADER_INPUTS];
    struct quad_header quad; 
 
    struct {
@@ -366,7 +366,7 @@ static void const_coeff( struct setup_stage *setup,
 			 unsigned slot,
 			 unsigned i )
 {
-   assert(slot < TGSI_ATTRIB_MAX);
+   assert(slot < PIPE_MAX_SHADER_INPUTS);
    assert(i <= 3);
 
    setup->coef[slot].dadx[i] = 0;
@@ -391,7 +391,7 @@ static void tri_linear_coeff( struct setup_stage *setup,
    float a = setup->ebot.dy * majda - botda * setup->emaj.dy;
    float b = setup->emaj.dx * botda - majda * setup->ebot.dx;
    
-   assert(slot < TGSI_ATTRIB_MAX);
+   assert(slot < PIPE_MAX_SHADER_INPUTS);
    assert(i <= 3);
 
    setup->coef[slot].dadx[i] = a * setup->oneoverarea;
@@ -454,7 +454,7 @@ static void tri_persp_coeff( struct setup_stage *setup,
           );
    */
 
-   assert(slot < TGSI_ATTRIB_MAX);
+   assert(slot < PIPE_MAX_SHADER_INPUTS);
    assert(i <= 3);
 
    setup->coef[slot].dadx[i] = a * setup->oneoverarea;
@@ -910,8 +910,8 @@ setup_point(struct draw_stage *stage, struct prim_header *prim)
       = sizeAttr ? (0.5f * v0->data[sizeAttr][0])
         : (0.5f * setup->softpipe->rasterizer->point_size);
    const boolean round = setup->softpipe->rasterizer->point_smooth;
-   const float x = v0->data[TGSI_ATTRIB_POS][0];
-   const float y = v0->data[TGSI_ATTRIB_POS][1];
+   const float x = v0->data[0][0];  /* Note: data[0] is always position */
+   const float y = v0->data[0][1];
    unsigned slot, j;
 
    assert(sizeAttr >= 0);

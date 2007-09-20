@@ -77,6 +77,7 @@ pipe_vertex_format(GLenum format, GLuint size)
 }
 
 
+#if 0
 /**
  * Convert a mesa vertex attribute to a TGSI attribute
  */
@@ -137,7 +138,7 @@ tgsi_attrib_to_mesa_attrib(GLuint attr)
       return 0;
    }
 }
-
+#endif
 
 
 /**

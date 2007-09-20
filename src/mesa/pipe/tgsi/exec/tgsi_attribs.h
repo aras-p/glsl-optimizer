@@ -5,6 +5,7 @@
 /**
  * The specific values here are not important (could remove them).
  */
+#if 0
 enum {
    TGSI_ATTRIB_POS = 0,
    TGSI_ATTRIB_WEIGHT = 1,
@@ -41,6 +42,7 @@ enum {
 
 #define TGSI_MAX_TEXTURE 8
 #define TGSI_MAX_VARYING 8
+#endif
 
 
 
