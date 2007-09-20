@@ -120,6 +120,13 @@ struct i915_blend_state {
    unsigned LIS6;
 };
 
+struct i915_depth_stencil_state {
+   unsigned stencil_modes4;
+   unsigned bfo[2];
+   unsigned stencil_LIS5;
+   unsigned depth_LIS6;
+};
+
 struct i915_context
 {
    struct pipe_context pipe; 
@@ -128,9 +135,9 @@ struct i915_context
 
    /* The most recent drawing state as set by the driver:
     */
-   const struct i915_blend_state   *blend;
+   const struct i915_blend_state           *blend;
    const struct pipe_sampler_state *sampler[PIPE_MAX_SAMPLERS];
-   const struct pipe_depth_stencil_state   *depth_stencil;
+   const struct i915_depth_stencil_state   *depth_stencil;
    const struct pipe_rasterizer_state *rasterizer;
    const struct pipe_shader_state *fs;
 

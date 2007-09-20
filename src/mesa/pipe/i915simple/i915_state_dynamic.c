@@ -67,17 +67,7 @@ static void upload_MODES4( struct i915_context *i915 )
    unsigned modes4 = 0;
 
    /* I915_NEW_STENCIL */
-   {
-      int testmask = i915->depth_stencil->stencil.value_mask[0] & 0xff;
-      int writemask = i915->depth_stencil->stencil.write_mask[0] & 0xff;
-
-      modes4 |= (_3DSTATE_MODES_4_CMD |
-		 ENABLE_STENCIL_TEST_MASK |
-		 STENCIL_TEST_MASK(testmask) |
-		 ENABLE_STENCIL_WRITE_MASK |
-		 STENCIL_WRITE_MASK(writemask));
-   }
-
+   modes4 |= i915->depth_stencil->stencil_modes4;
    /* I915_NEW_BLEND */
    modes4 |= i915->blend->modes4;
 
@@ -102,53 +92,9 @@ const struct i915_tracked_state i915_upload_MODES4 = {
 
 static void upload_BFO( struct i915_context *i915 )
 {
-   unsigned bf[2];
-
-   memset( bf, 0, sizeof(bf) );
-
-   /* _NEW_STENCIL 
-    */
-   if (i915->depth_stencil->stencil.back_enabled) {
-      int test  = i915_translate_compare_func(i915->depth_stencil->stencil.back_func);
-      int fop   = i915_translate_stencil_op(i915->depth_stencil->stencil.back_fail_op);
-      int dfop  = i915_translate_stencil_op(i915->depth_stencil->stencil.back_zfail_op);
-      int dpop  = i915_translate_stencil_op(i915->depth_stencil->stencil.back_zpass_op);
-      int ref   = i915->depth_stencil->stencil.ref_value[1] & 0xff;
-      int tmask = i915->depth_stencil->stencil.value_mask[1] & 0xff;
-      int wmask = i915->depth_stencil->stencil.write_mask[1] & 0xff;
-      
-      bf[0] = (_3DSTATE_BACKFACE_STENCIL_OPS |
-	       BFO_ENABLE_STENCIL_FUNCS |
-	       BFO_ENABLE_STENCIL_TWO_SIDE |
-	       BFO_ENABLE_STENCIL_REF |
-	       BFO_STENCIL_TWO_SIDE |
-	       (ref  << BFO_STENCIL_REF_SHIFT) |
-	       (test << BFO_STENCIL_TEST_SHIFT) |
-	       (fop  << BFO_STENCIL_FAIL_SHIFT) |
-	       (dfop << BFO_STENCIL_PASS_Z_FAIL_SHIFT) |
-	       (dpop << BFO_STENCIL_PASS_Z_PASS_SHIFT));
-
-      bf[1] = (_3DSTATE_BACKFACE_STENCIL_MASKS |
-	       BFM_ENABLE_STENCIL_TEST_MASK |
-	       BFM_ENABLE_STENCIL_WRITE_MASK |
-	       (tmask << BFM_STENCIL_TEST_MASK_SHIFT) |
-	       (wmask << BFM_STENCIL_WRITE_MASK_SHIFT));
-   }
-   else {
-      /* This actually disables two-side stencil: The bit set is a
-       * modify-enable bit to indicate we are changing the two-side
-       * setting.  Then there is a symbolic zero to show that we are
-       * setting the flag to zero/off.
-       */
-      bf[0] = (_3DSTATE_BACKFACE_STENCIL_OPS |
-	       BFO_ENABLE_STENCIL_TWO_SIDE |
-	       0);
-      bf[1] = 0;
-   }      
-
-   set_dynamic_indirect( i915, 
+   set_dynamic_indirect( i915,
 			 I915_DYNAMIC_BFO_0,
-			 &bf[0],
+			 &(i915->depth_stencil->bfo[0]),
 			 2 );
 }
 

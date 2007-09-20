@@ -174,7 +174,84 @@ static void *
 i915_create_depth_stencil_state(struct pipe_context *pipe,
                            const struct pipe_depth_stencil_state *depth_stencil)
 {
-   return 0;
+   struct i915_depth_stencil_state *cso = calloc(1, sizeof(struct i915_depth_stencil_state));
+
+   {
+      int testmask = depth_stencil->stencil.value_mask[0] & 0xff;
+      int writemask = depth_stencil->stencil.write_mask[0] & 0xff;
+
+      cso->stencil_modes4 |= (_3DSTATE_MODES_4_CMD |
+                              ENABLE_STENCIL_TEST_MASK |
+                              STENCIL_TEST_MASK(testmask) |
+                              ENABLE_STENCIL_WRITE_MASK |
+                              STENCIL_WRITE_MASK(writemask));
+   }
+
+   if (depth_stencil->stencil.front_enabled) {
+      int test = i915_translate_compare_func(depth_stencil->stencil.front_func);
+      int fop  = i915_translate_stencil_op(depth_stencil->stencil.front_fail_op);
+      int dfop = i915_translate_stencil_op(depth_stencil->stencil.front_zfail_op);
+      int dpop = i915_translate_stencil_op(depth_stencil->stencil.front_zpass_op);
+      int ref  = depth_stencil->stencil.ref_value[0] & 0xff;
+
+      cso->stencil_LIS5 |= (S5_STENCIL_TEST_ENABLE |
+                            S5_STENCIL_WRITE_ENABLE |
+                            (ref  << S5_STENCIL_REF_SHIFT) |
+                            (test << S5_STENCIL_TEST_FUNC_SHIFT) |
+                            (fop  << S5_STENCIL_FAIL_SHIFT) |
+                            (dfop << S5_STENCIL_PASS_Z_FAIL_SHIFT) |
+                            (dpop << S5_STENCIL_PASS_Z_PASS_SHIFT));
+   }
+
+   if (depth_stencil->stencil.back_enabled) {
+      int test  = i915_translate_compare_func(depth_stencil->stencil.back_func);
+      int fop   = i915_translate_stencil_op(depth_stencil->stencil.back_fail_op);
+      int dfop  = i915_translate_stencil_op(depth_stencil->stencil.back_zfail_op);
+      int dpop  = i915_translate_stencil_op(depth_stencil->stencil.back_zpass_op);
+      int ref   = depth_stencil->stencil.ref_value[1] & 0xff;
+      int tmask = depth_stencil->stencil.value_mask[1] & 0xff;
+      int wmask = depth_stencil->stencil.write_mask[1] & 0xff;
+
+      cso->bfo[0] = (_3DSTATE_BACKFACE_STENCIL_OPS |
+                     BFO_ENABLE_STENCIL_FUNCS |
+                     BFO_ENABLE_STENCIL_TWO_SIDE |
+                     BFO_ENABLE_STENCIL_REF |
+                     BFO_STENCIL_TWO_SIDE |
+                     (ref  << BFO_STENCIL_REF_SHIFT) |
+                     (test << BFO_STENCIL_TEST_SHIFT) |
+                     (fop  << BFO_STENCIL_FAIL_SHIFT) |
+                     (dfop << BFO_STENCIL_PASS_Z_FAIL_SHIFT) |
+                     (dpop << BFO_STENCIL_PASS_Z_PASS_SHIFT));
+
+      cso->bfo[1] = (_3DSTATE_BACKFACE_STENCIL_MASKS |
+                     BFM_ENABLE_STENCIL_TEST_MASK |
+                     BFM_ENABLE_STENCIL_WRITE_MASK |
+                     (tmask << BFM_STENCIL_TEST_MASK_SHIFT) |
+                     (wmask << BFM_STENCIL_WRITE_MASK_SHIFT));
+   }
+   else {
+      /* This actually disables two-side stencil: The bit set is a
+       * modify-enable bit to indicate we are changing the two-side
+       * setting.  Then there is a symbolic zero to show that we are
+       * setting the flag to zero/off.
+       */
+      cso->bfo[0] = (_3DSTATE_BACKFACE_STENCIL_OPS |
+                     BFO_ENABLE_STENCIL_TWO_SIDE |
+                     0);
+      cso->bfo[1] = 0;
+   }
+
+   if (depth_stencil->depth.enabled) {
+      int func = i915_translate_compare_func(depth_stencil->depth.func);
+
+      cso->depth_LIS6 |= (S6_DEPTH_TEST_ENABLE |
+                          (func << S6_DEPTH_TEST_FUNC_SHIFT));
+
+      if (depth_stencil->depth.writemask)
+	 cso->depth_LIS6 |= S6_DEPTH_WRITE_ENABLE;
+   }
+
+   return cso;
 }
 
 static void i915_bind_depth_stencil_state(struct pipe_context *pipe,
@@ -182,7 +259,7 @@ static void i915_bind_depth_stencil_state(struct pipe_context *pipe,
 {
    struct i915_context *i915 = i915_context(pipe);
 
-   i915->depth_stencil = (const struct pipe_depth_stencil_state *)depth_stencil;
+   i915->depth_stencil = (const struct i915_depth_stencil_state *)depth_stencil;
 
    i915->dirty |= I915_NEW_DEPTH_STENCIL;
 }
@@ -190,7 +267,7 @@ static void i915_bind_depth_stencil_state(struct pipe_context *pipe,
 static void i915_delete_depth_stencil_state(struct pipe_context *pipe,
                                             void *depth_stencil)
 {
-   /* do nothing */
+   free(depth_stencil);
 }
 
 static void i915_set_alpha_test_state(struct pipe_context *pipe,

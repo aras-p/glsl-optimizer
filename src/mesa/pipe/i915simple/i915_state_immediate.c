@@ -127,22 +127,7 @@ static void upload_S5( struct i915_context *i915 )
 {
    unsigned LIS5 = 0;
 
-   /* I915_NEW_STENCIL */
-   if (i915->depth_stencil->stencil.front_enabled) {
-      int test = i915_translate_compare_func(i915->depth_stencil->stencil.front_func);
-      int fop = i915_translate_stencil_op(i915->depth_stencil->stencil.front_fail_op);
-      int dfop = i915_translate_stencil_op(i915->depth_stencil->stencil.front_zfail_op);
-      int dpop = i915_translate_stencil_op(i915->depth_stencil->stencil.front_zpass_op);
-      int ref = i915->depth_stencil->stencil.ref_value[0] & 0xff;
-      
-      LIS5 |= (S5_STENCIL_TEST_ENABLE |
-	       S5_STENCIL_WRITE_ENABLE |
-	       (ref  << S5_STENCIL_REF_SHIFT) |
-	       (test << S5_STENCIL_TEST_FUNC_SHIFT) |
-	       (fop  << S5_STENCIL_FAIL_SHIFT) |
-	       (dfop << S5_STENCIL_PASS_Z_FAIL_SHIFT) |
-	       (dpop << S5_STENCIL_PASS_Z_PASS_SHIFT));
-   }
+   LIS5 |= i915->depth_stencil->stencil_LIS5;
 
    LIS5 |= i915->blend->LIS5;
 
@@ -189,17 +174,9 @@ static void upload_S6( struct i915_context *i915 )
     */
    LIS6 |= i915->blend->LIS6;
 
-   /* I915_NEW_DEPTH 
+   /* I915_NEW_DEPTH
     */
-   if (i915->depth_stencil->depth.enabled) {
-      int func = i915_translate_compare_func(i915->depth_stencil->depth.func);
-
-      LIS6 |= (S6_DEPTH_TEST_ENABLE |
-	       (func << S6_DEPTH_TEST_FUNC_SHIFT));
-
-      if (i915->depth_stencil->depth.writemask)
-	 LIS6 |= S6_DEPTH_WRITE_ENABLE;
-   }
+   LIS6 |= i915->depth_stencil->depth_LIS6;
 
    if (LIS6 != i915->current.immediate[I915_IMMEDIATE_S6]) {
       i915->current.immediate[I915_IMMEDIATE_S6] = LIS6;
