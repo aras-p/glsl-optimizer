@@ -139,7 +139,7 @@ i915_max_texture_size(struct pipe_context *pipe, unsigned textureType,
 
 
 static int
-i915_get_param(struct pipe_context *pipe, uint param)
+i915_get_param(struct pipe_context *pipe, int param)
 {
    switch (param) {
    case PIPE_PARAM_FS_NEEDS_POS:

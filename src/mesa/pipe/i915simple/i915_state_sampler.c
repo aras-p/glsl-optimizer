@@ -240,7 +240,7 @@ i915_update_texture(struct i915_context *i915, uint unit,
 
 
    {
-      struct pipe_buffer_handle *p = driBOReference(mt->region->buffer);
+      /*struct pipe_buffer_handle *p =*/ driBOReference(mt->region->buffer);
    }
 
 #if 0
