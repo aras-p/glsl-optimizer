@@ -48,6 +48,7 @@ static void calculate_vertex_layout( struct softpipe_context *softpipe )
    const interp_mode colorInterp
       = softpipe->rasterizer->flatshade ? INTERP_CONSTANT : INTERP_LINEAR;
    struct vertex_info *vinfo = &softpipe->vertex_info;
+   boolean emitBack0 = FALSE, emitBack1 = FALSE, emitPsize = FALSE;
    uint front0 = 0, back0 = 0, front1 = 0, back1 = 0;
    uint i;
 
@@ -101,11 +102,11 @@ static void calculate_vertex_layout( struct softpipe_context *softpipe )
 
       case TGSI_SEMANTIC_BCOLOR:
          if (fs->input_semantic_index[i] == 0) {
-            back0 = draw_emit_vertex_attr(vinfo, FORMAT_4F, colorInterp);
+            emitBack0 = TRUE;
          }
          else {
             assert(fs->input_semantic_index[i] == 1);
-            back1 = draw_emit_vertex_attr(vinfo, FORMAT_4F, colorInterp);
+            emitBack1 = TRUE;
          }
          break;
 
@@ -117,8 +118,7 @@ static void calculate_vertex_layout( struct softpipe_context *softpipe )
          /* XXX only emit if drawing points or front/back polygon mode
           * is point mode
           */
-         draw_emit_vertex_attr(vinfo, FORMAT_1F, INTERP_CONSTANT);
-         softpipe->psize_slot = i;
+         emitPsize = TRUE;
          break;
 
       case TGSI_SEMANTIC_GENERIC:
@@ -134,20 +134,20 @@ static void calculate_vertex_layout( struct softpipe_context *softpipe )
 
    softpipe->nr_frag_attrs = vinfo->num_attribs;
 
-#if 0
-   /* Additional attributes required for setup: Just twosided
-    * lighting.  Edgeflag is dealt with specially by setting bits in
-    * the vertex header.
+   /* We want these after all other attribs since they won't get passed
+    * to the fragment shader.  All prior vertex output attribs should match
+    * up 1:1 with the fragment shader inputs.
     */
-   if (softpipe->rasterizer->light_twoside) {
-      if (front0) {
-         back0 = draw_emit_vertex_attr(vinfo, FORMAT_OMIT, colorInterp);
-      }
-      if (back0) {
-         back1 = draw_emit_vertex_attr(vinfo, FORMAT_OMIT, colorInterp);
-      }
+   if (emitBack0) {
+      back0 = draw_emit_vertex_attr(vinfo, FORMAT_4F, colorInterp);
    }
-#endif
+   if (emitBack1) {
+      back1 = draw_emit_vertex_attr(vinfo, FORMAT_4F, colorInterp);
+   }
+   if (emitPsize) {
+      softpipe->psize_slot
+         = draw_emit_vertex_attr(vinfo, FORMAT_1F, INTERP_CONSTANT);
+   }
 
    /* If the attributes have changed, tell the draw module about
     * the new vertex layout.
