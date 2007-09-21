@@ -133,23 +133,23 @@ st_translate_vertex_shader(struct st_context *st,
          switch (i) {
          case VERT_RESULT_HPOS:
             vs.output_semantic_name[vs.num_outputs] = TGSI_SEMANTIC_POSITION;
-            vs.output_semantic_index[vs.num_inputs] = 0;
+            vs.output_semantic_index[vs.num_outputs] = 0;
             break;
          case VERT_RESULT_COL0:
             vs.output_semantic_name[vs.num_inputs] = TGSI_SEMANTIC_COLOR;
-            vs.output_semantic_index[vs.num_inputs] = 0;
+            vs.output_semantic_index[vs.num_outputs] = 0;
             break;
          case VERT_RESULT_COL1:
             vs.output_semantic_name[vs.num_inputs] = TGSI_SEMANTIC_COLOR;
-            vs.output_semantic_index[vs.num_inputs] = 1;
+            vs.output_semantic_index[vs.num_outputs] = 1;
             break;
          case VERT_RESULT_BFC0:
-            vs.output_semantic_name[vs.num_inputs] = TGSI_SEMANTIC_BCOLOR;
-            vs.output_semantic_index[vs.num_inputs] = 0;
+            vs.output_semantic_name[vs.num_outputs] = TGSI_SEMANTIC_BCOLOR;
+            vs.output_semantic_index[vs.num_outputs] = 0;
             break;
          case VERT_RESULT_BFC1:
-            vs.output_semantic_name[vs.num_inputs] = TGSI_SEMANTIC_BCOLOR;
-            vs.output_semantic_index[vs.num_inputs] = 1;
+            vs.output_semantic_name[vs.num_outputs] = TGSI_SEMANTIC_BCOLOR;
+            vs.output_semantic_index[vs.num_outputs] = 1;
             break;
          case VERT_RESULT_FOGC:
          case VERT_RESULT_PSIZ:
@@ -164,15 +164,15 @@ st_translate_vertex_shader(struct st_context *st,
          case VERT_RESULT_TEX5:
          case VERT_RESULT_TEX6:
          case VERT_RESULT_TEX7:
-            vs.output_semantic_name[vs.num_inputs] = TGSI_SEMANTIC_TEXCOORD;
-            vs.output_semantic_index[vs.num_inputs] = i - VERT_RESULT_TEX0;
+            vs.output_semantic_name[vs.num_outputs] = TGSI_SEMANTIC_TEXCOORD;
+            vs.output_semantic_index[vs.num_outputs] = i - VERT_RESULT_TEX0;
             break;
          case VERT_RESULT_VAR0:
             /* fall-through */
          default:
             assert(i - VERT_RESULT_VAR0 < MAX_VARYING);
-            vs.output_semantic_name[vs.num_inputs] = TGSI_SEMANTIC_GENERIC;
-            vs.output_semantic_index[vs.num_inputs] = i - VERT_RESULT_VAR0;
+            vs.output_semantic_name[vs.num_outputs] = TGSI_SEMANTIC_GENERIC;
+            vs.output_semantic_index[vs.num_outputs] = i - VERT_RESULT_VAR0;
          }
 
          vs.num_outputs++;
