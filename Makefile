@@ -14,7 +14,10 @@ default: $(TOP)/configs/current
 
 
 doxygen:
-	(cd doxygen ; make) ; \
+	cd doxygen && $(MAKE)
+
+.PHONY: doxygen
+
 
 clean:
 	@for dir in $(SUBDIRS) ; do \
