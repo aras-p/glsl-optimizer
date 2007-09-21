@@ -71,6 +71,9 @@ st_translate_fragment_shader(struct st_context *st,
 
    memset(&fs, 0, sizeof(fs));
 
+   /*
+    * Convert Mesa program inputs to TGSI input register semantics.
+    */
    for (attr = 0; attr < FRAG_ATTRIB_MAX; attr++) {
       if (inputsRead & (1 << attr)) {
          inputMapping[attr] = fs.num_inputs;
@@ -119,7 +122,7 @@ st_translate_fragment_shader(struct st_context *st,
    }
 
    /*
-    * Outputs
+    * Semantics for outputs
     */
    for (attr = 0; attr < FRAG_RESULT_MAX; attr++) {
       if (stfp->Base.Base.OutputsWritten & (1 << attr)) {
