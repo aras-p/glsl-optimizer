@@ -183,7 +183,10 @@ st_translate_vertex_shader(struct st_context *st,
    /* XXX: fix static allocation of tokens:
     */
    tgsi_mesa_compile_vp_program( &stvp->Base,
+                                 vs.num_inputs,
                                  stvp->input_to_index,
+                                 vs.input_semantic_name,
+                                 vs.input_semantic_index,
                                  st->vertex_attrib_to_slot,
                                  stvp->tokens, ST_FP_MAX_TOKENS );
 

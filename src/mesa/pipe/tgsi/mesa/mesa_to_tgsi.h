@@ -22,7 +22,10 @@ tgsi_mesa_compile_fp_program(
 GLboolean
 tgsi_mesa_compile_vp_program(
    const struct gl_vertex_program *program,
+   GLuint numInputs,
    const GLuint inputMapping[],
+   const ubyte inputSemanticName[],
+   const ubyte inputSemanticIndex[],
    const GLuint outputMapping[],
    struct tgsi_token *tokens,
    GLuint maxTokens );

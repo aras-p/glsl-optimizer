@@ -469,7 +469,7 @@ compile_instruction(
 }
 
 static struct tgsi_full_declaration
-make_frag_input_decl(
+make_input_decl(
    GLuint index,
    GLuint interpolate,
    GLuint usage_mask,
@@ -560,20 +560,20 @@ tgsi_mesa_compile_fp_program(
       switch (inputSemanticName[i]) {
       case TGSI_SEMANTIC_POSITION:
          /* Fragment XY pos */
-         fulldecl = make_frag_input_decl(i,
-                                         TGSI_INTERPOLATE_CONSTANT,
-                                         TGSI_WRITEMASK_XY,
-                                         TGSI_SEMANTIC_POSITION, 0 );
+         fulldecl = make_input_decl(i,
+                                    TGSI_INTERPOLATE_CONSTANT,
+                                    TGSI_WRITEMASK_XY,
+                                    TGSI_SEMANTIC_POSITION, 0 );
          ti += tgsi_build_full_declaration(
                                            &fulldecl,
                                            &tokens[ti],
                                            header,
                                            maxTokens - ti );
          /* Fragment ZW pos */
-         fulldecl = make_frag_input_decl(i,
-                                         TGSI_INTERPOLATE_LINEAR,
-                                         TGSI_WRITEMASK_ZW,
-                                         TGSI_SEMANTIC_POSITION, 0 );
+         fulldecl = make_input_decl(i,
+                                    TGSI_INTERPOLATE_LINEAR,
+                                    TGSI_WRITEMASK_ZW,
+                                    TGSI_SEMANTIC_POSITION, 0 );
          ti += tgsi_build_full_declaration(
                                            &fulldecl,
                                            &tokens[ti],
@@ -581,11 +581,11 @@ tgsi_mesa_compile_fp_program(
                                            maxTokens - ti );
          break;
       default:
-         fulldecl = make_frag_input_decl(i,
-                                         interpMode[i],
-                                         TGSI_WRITEMASK_XYZW,
-                                         inputSemanticName[i],
-                                         inputSemanticIndex[i]);
+         fulldecl = make_input_decl(i,
+                                    interpMode[i],
+                                    TGSI_WRITEMASK_XYZW,
+                                    inputSemanticName[i],
+                                    inputSemanticIndex[i]);
          ti += tgsi_build_full_declaration(&fulldecl,
                                            &tokens[ti],
                                            header,
@@ -682,7 +682,10 @@ tgsi_mesa_compile_fp_program(
 GLboolean
 tgsi_mesa_compile_vp_program(
    const struct gl_vertex_program *program,
+   GLuint numInputs,
    const GLuint inputMapping[],
+   const ubyte inputSemanticName[],
+   const ubyte inputSemanticIndex[],
    const GLuint outputMapping[],
    struct tgsi_token *tokens,
    GLuint maxTokens)
@@ -704,6 +707,19 @@ tgsi_mesa_compile_vp_program(
 
    /* XXX todo: input/output declarations
     */
+   for (i = 0; i < numInputs; i++) {
+      struct tgsi_full_declaration fulldecl;
+      fulldecl = make_input_decl(i,
+                                 TGSI_INTERPOLATE_CONSTANT, /* no interp */
+                                 TGSI_WRITEMASK_XYZW,
+                                 inputSemanticName[i],
+                                 inputSemanticIndex[i]);
+      ti += tgsi_build_full_declaration(&fulldecl,
+                                        &tokens[ti],
+                                        header,
+                                        maxTokens - ti );
+   }
+
 
    for( i = 0; i < program->Base.NumInstructions; i++ ) {
       if( compile_instruction(
