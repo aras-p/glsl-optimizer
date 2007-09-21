@@ -278,7 +278,7 @@ struct pipe_region
 struct pipe_surface
 {
    struct pipe_region *region;
-   unsigned format:5;            /**< PIPE_FORMAT_x */
+   unsigned format;              /**< PIPE_FORMAT_x */
    unsigned width, height;
    unsigned offset;              /**< offset from start of region, in bytes */
    unsigned refcount;
