@@ -494,7 +494,7 @@ make_input_decl(
 }
 
 static struct tgsi_full_declaration
-make_frag_output_decl(
+make_output_decl(
    GLuint index,
    GLuint semantic_name,
    GLuint semantic_index,
@@ -602,7 +602,7 @@ tgsi_mesa_compile_fp_program(
       program->Base.OutputsWritten ==
       (program->Base.OutputsWritten & ((1 << FRAG_RESULT_COLR) | (1 << FRAG_RESULT_DEPR))) );
 
-   fulldecl = make_frag_output_decl(
+   fulldecl = make_output_decl(
       0,
       TGSI_SEMANTIC_POSITION, 0,  /* Z / Depth */
       TGSI_WRITEMASK_Z );
@@ -613,7 +613,7 @@ tgsi_mesa_compile_fp_program(
       maxTokens - ti );
 
    if( program->Base.OutputsWritten & (1 << FRAG_RESULT_COLR) ) {
-      fulldecl = make_frag_output_decl(
+      fulldecl = make_output_decl(
          1,
          TGSI_SEMANTIC_COLOR, 0,
          TGSI_WRITEMASK_XYZW );
@@ -725,10 +725,10 @@ tgsi_mesa_compile_vp_program(
    /* output decls */
    for (i = 0; i < numOutputs; i++) {
       struct tgsi_full_declaration fulldecl;
-      fulldecl = make_frag_output_decl(i,
-                                       outputSemanticName[i],
-                                       outputSemanticIndex[i],
-                                       TGSI_WRITEMASK_XYZW );
+      fulldecl = make_output_decl(i,
+                                  outputSemanticName[i],
+                                  outputSemanticIndex[i],
+                                  TGSI_WRITEMASK_XYZW );
       ti += tgsi_build_full_declaration(&fulldecl,
                                         &tokens[ti],
                                         header,
