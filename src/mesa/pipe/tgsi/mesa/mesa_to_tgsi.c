@@ -67,7 +67,6 @@ map_register_file_index(
        * If a program uses 3 input attribs, the mapped indexes will be 1,2,3.
        * etc.
        */
-      printf("Map %d input %d to %d\n", processor, index, mapped_index);
       return inputMapping[index];
 
    case TGSI_FILE_OUTPUT:
@@ -90,7 +89,6 @@ map_register_file_index(
          /* vertex output slots are tightly packed, find mapped pos */
          /* mapped_index = VERT_RESULT_x */
          mapped_index = outputMapping[index];
-         printf("Map VP output from %d to %d\n", index, mapped_index);
       }
       break;
 
