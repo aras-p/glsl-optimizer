@@ -67,7 +67,7 @@ st_translate_vertex_shader(struct st_context *st,
     * Determine number of inputs, the mappings between VERT_ATTRIB_x
     * and TGSI generic input indexes, plus input attrib semantic info.
     */
-   for (attr = 0; attr < MAX_VERTEX_PROGRAM_ATTRIBS; attr++) {
+   for (attr = 0; attr < VERT_ATTRIB_MAX; attr++) {
       if (stvp->Base.Base.InputsRead & (1 << attr)) {
          stvp->input_to_index[attr] = vs.num_inputs;
          stvp->index_to_input[vs.num_inputs] = attr;
