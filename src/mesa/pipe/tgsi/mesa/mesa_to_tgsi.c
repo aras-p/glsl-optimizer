@@ -686,7 +686,10 @@ tgsi_mesa_compile_vp_program(
    const GLuint inputMapping[],
    const ubyte inputSemanticName[],
    const ubyte inputSemanticIndex[],
+   GLuint numOutputs,
    const GLuint outputMapping[],
+   const ubyte outputSemanticName[],
+   const ubyte outputSemanticIndex[],
    struct tgsi_token *tokens,
    GLuint maxTokens)
 {
@@ -705,8 +708,7 @@ tgsi_mesa_compile_vp_program(
 
    ti = 3;
 
-   /* XXX todo: input/output declarations
-    */
+   /* input decls */
    for (i = 0; i < numInputs; i++) {
       struct tgsi_full_declaration fulldecl;
       fulldecl = make_input_decl(i,
@@ -714,6 +716,19 @@ tgsi_mesa_compile_vp_program(
                                  TGSI_WRITEMASK_XYZW,
                                  inputSemanticName[i],
                                  inputSemanticIndex[i]);
+      ti += tgsi_build_full_declaration(&fulldecl,
+                                        &tokens[ti],
+                                        header,
+                                        maxTokens - ti );
+   }
+
+   /* output decls */
+   for (i = 0; i < numOutputs; i++) {
+      struct tgsi_full_declaration fulldecl;
+      fulldecl = make_frag_output_decl(i,
+                                       outputSemanticName[i],
+                                       outputSemanticIndex[i],
+                                       TGSI_WRITEMASK_XYZW );
       ti += tgsi_build_full_declaration(&fulldecl,
                                         &tokens[ti],
                                         header,

@@ -136,11 +136,11 @@ st_translate_vertex_shader(struct st_context *st,
             vs.output_semantic_index[vs.num_outputs] = 0;
             break;
          case VERT_RESULT_COL0:
-            vs.output_semantic_name[vs.num_inputs] = TGSI_SEMANTIC_COLOR;
+            vs.output_semantic_name[vs.num_outputs] = TGSI_SEMANTIC_COLOR;
             vs.output_semantic_index[vs.num_outputs] = 0;
             break;
          case VERT_RESULT_COL1:
-            vs.output_semantic_name[vs.num_inputs] = TGSI_SEMANTIC_COLOR;
+            vs.output_semantic_name[vs.num_outputs] = TGSI_SEMANTIC_COLOR;
             vs.output_semantic_index[vs.num_outputs] = 1;
             break;
          case VERT_RESULT_BFC0:
@@ -187,7 +187,10 @@ st_translate_vertex_shader(struct st_context *st,
                                  stvp->input_to_index,
                                  vs.input_semantic_name,
                                  vs.input_semantic_index,
+                                 vs.num_outputs,
                                  st->vertex_attrib_to_slot,
+                                 vs.output_semantic_name,
+                                 vs.output_semantic_index,
                                  stvp->tokens, ST_FP_MAX_TOKENS );
 
    vs.tokens = &stvp->tokens[0];
