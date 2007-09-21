@@ -99,13 +99,8 @@ static void calculate_vertex_layout( struct softpipe_context *softpipe )
 #endif
          softpipe->psize_slot = i;
          /*case TGSI_SEMANTIC_TEXCOORD:*/
-      case TGSI_SEMANTIC_TEXCOORD:
-         /* unit = fs->input_semantic_index[i] */
-         draw_emit_vertex_attr(vinfo,
-                               FORMAT_4F, INTERP_PERSPECTIVE);
-         softpipe->need_w = TRUE;
-         break;
       case TGSI_SEMANTIC_GENERIC:
+         /* this includes texcoords and varying vars */
          draw_emit_vertex_attr(vinfo, FORMAT_4F, INTERP_PERSPECTIVE);
          softpipe->need_w = TRUE;
          break;

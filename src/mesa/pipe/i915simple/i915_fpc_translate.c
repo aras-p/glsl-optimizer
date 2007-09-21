@@ -178,7 +178,8 @@ src_vector(struct i915_fp_compile *p,
          src = i915_emit_decl(p, REG_TYPE_T, T_FOG_W, D0_CHANNEL_W);
          src = swizzle(src, W, W, W, W);
          break;
-      case TGSI_SEMANTIC_TEXCOORD:
+      case TGSI_SEMANTIC_GENERIC:
+         /* usually a texcoord */
          src = i915_emit_decl(p, REG_TYPE_T, T_TEX0 + sem_ind, D0_CHANNEL_ALL);
          break;
       default:

@@ -99,7 +99,7 @@ st_translate_vertex_shader(struct st_context *st,
          case VERT_ATTRIB_TEX5:
          case VERT_ATTRIB_TEX6:
          case VERT_ATTRIB_TEX7:
-            vs.input_semantic_name[vs.num_inputs] = TGSI_SEMANTIC_TEXCOORD;
+            vs.input_semantic_name[vs.num_inputs] = TGSI_SEMANTIC_GENERIC;
             vs.input_semantic_index[vs.num_inputs] = attr - VERT_ATTRIB_TEX0;
             break;
          case VERT_ATTRIB_GENERIC0:
@@ -164,7 +164,7 @@ st_translate_vertex_shader(struct st_context *st,
          case VERT_RESULT_TEX5:
          case VERT_RESULT_TEX6:
          case VERT_RESULT_TEX7:
-            vs.output_semantic_name[vs.num_outputs] = TGSI_SEMANTIC_TEXCOORD;
+            vs.output_semantic_name[vs.num_outputs] = TGSI_SEMANTIC_GENERIC;
             vs.output_semantic_index[vs.num_outputs] = attr - VERT_RESULT_TEX0;
             break;
          case VERT_RESULT_VAR0:

@@ -74,7 +74,8 @@ static void calculate_vertex_layout( struct i915_context *i915 )
             vinfo->hwfmt[0] |= S4_VFMT_SPEC_FOG;
          }
          break;
-      case TGSI_SEMANTIC_TEXCOORD:
+      case TGSI_SEMANTIC_GENERIC:
+         /* usually a texcoord */
          {
             const uint unit = fs->input_semantic_index[i];
             uint hwtc;
