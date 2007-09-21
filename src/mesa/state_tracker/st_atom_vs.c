@@ -59,7 +59,7 @@ st_translate_vertex_shader(struct st_context *st,
 {
    struct pipe_shader_state vs;
    const struct cso_vertex_shader *cso;
-   GLuint i;
+   GLuint attr;
 
    memset(&vs, 0, sizeof(vs));
 
@@ -67,11 +67,11 @@ st_translate_vertex_shader(struct st_context *st,
     * Determine number of inputs, the mappings between VERT_ATTRIB_x
     * and TGSI generic input indexes, plus input attrib semantic info.
     */
-   for (i = 0; i < MAX_VERTEX_PROGRAM_ATTRIBS; i++) {
-      if (stvp->Base.Base.InputsRead & (1 << i)) {
-         stvp->input_to_index[i] = vs.num_inputs;
-         stvp->index_to_input[vs.num_inputs] = i;
-         switch (i) {
+   for (attr = 0; attr < MAX_VERTEX_PROGRAM_ATTRIBS; attr++) {
+      if (stvp->Base.Base.InputsRead & (1 << attr)) {
+         stvp->input_to_index[attr] = vs.num_inputs;
+         stvp->index_to_input[vs.num_inputs] = attr;
+         switch (attr) {
          case VERT_ATTRIB_POS:
             vs.input_semantic_name[vs.num_inputs] = TGSI_SEMANTIC_POSITION;
             vs.input_semantic_index[vs.num_inputs] = 0;
@@ -100,7 +100,7 @@ st_translate_vertex_shader(struct st_context *st,
          case VERT_ATTRIB_TEX6:
          case VERT_ATTRIB_TEX7:
             vs.input_semantic_name[vs.num_inputs] = TGSI_SEMANTIC_TEXCOORD;
-            vs.input_semantic_index[vs.num_inputs] = i - VERT_ATTRIB_TEX0;
+            vs.input_semantic_index[vs.num_inputs] = attr - VERT_ATTRIB_TEX0;
             break;
          case VERT_ATTRIB_GENERIC0:
          case VERT_ATTRIB_GENERIC1:
@@ -110,9 +110,9 @@ st_translate_vertex_shader(struct st_context *st,
          case VERT_ATTRIB_GENERIC5:
          case VERT_ATTRIB_GENERIC6:
          case VERT_ATTRIB_GENERIC7:
-            assert(i < VERT_ATTRIB_MAX);
+            assert(attr < VERT_ATTRIB_MAX);
             vs.input_semantic_name[vs.num_inputs] = TGSI_SEMANTIC_GENERIC;
-            vs.input_semantic_index[vs.num_inputs] = i - VERT_ATTRIB_GENERIC0;
+            vs.input_semantic_index[vs.num_inputs] = attr - VERT_ATTRIB_GENERIC0;
             break;
          default:
             assert(0);
@@ -125,12 +125,12 @@ st_translate_vertex_shader(struct st_context *st,
     * Determine number of outputs, the register mapping and
     * the semantic information for each vertex output/result.
     */
-   for (i = 0; i < VERT_RESULT_MAX; i++) {
-      if (stvp->Base.Base.OutputsWritten & (1 << i)) {
+   for (attr = 0; attr < VERT_RESULT_MAX; attr++) {
+      if (stvp->Base.Base.OutputsWritten & (1 << attr)) {
          /* put this attrib in the next available slot */
-         st->vertex_attrib_to_slot[i] = vs.num_outputs;
+         st->vertex_attrib_to_slot[attr] = vs.num_outputs;
 
-         switch (i) {
+         switch (attr) {
          case VERT_RESULT_HPOS:
             vs.output_semantic_name[vs.num_outputs] = TGSI_SEMANTIC_POSITION;
             vs.output_semantic_index[vs.num_outputs] = 0;
@@ -165,14 +165,14 @@ st_translate_vertex_shader(struct st_context *st,
          case VERT_RESULT_TEX6:
          case VERT_RESULT_TEX7:
             vs.output_semantic_name[vs.num_outputs] = TGSI_SEMANTIC_TEXCOORD;
-            vs.output_semantic_index[vs.num_outputs] = i - VERT_RESULT_TEX0;
+            vs.output_semantic_index[vs.num_outputs] = attr - VERT_RESULT_TEX0;
             break;
          case VERT_RESULT_VAR0:
             /* fall-through */
          default:
-            assert(i - VERT_RESULT_VAR0 < MAX_VARYING);
+            assert(attr - VERT_RESULT_VAR0 < MAX_VARYING);
             vs.output_semantic_name[vs.num_outputs] = TGSI_SEMANTIC_GENERIC;
-            vs.output_semantic_index[vs.num_outputs] = i - VERT_RESULT_VAR0;
+            vs.output_semantic_index[vs.num_outputs] = attr - VERT_RESULT_VAR0;
          }
 
          vs.num_outputs++;

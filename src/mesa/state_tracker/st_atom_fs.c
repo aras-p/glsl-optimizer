@@ -60,7 +60,7 @@ st_translate_fragment_shader(struct st_context *st,
    struct pipe_shader_state fs;
    const struct cso_fragment_shader *cso;
    GLuint interpMode[16];  /* XXX size? */
-   GLuint i;
+   GLuint attr;
    GLbitfield inputsRead = stfp->Base.Base.InputsRead;
 
    /* Check if all fragment programs need the fragment position (in order
@@ -71,11 +71,11 @@ st_translate_fragment_shader(struct st_context *st,
 
    memset(&fs, 0, sizeof(fs));
 
-   for (i = 0; i < 16; i++) {
-      if (inputsRead & (1 << i)) {
-         inputMapping[i] = fs.num_inputs;
+   for (attr = 0; attr < FRAG_ATTRIB_MAX; attr++) {
+      if (inputsRead & (1 << attr)) {
+         inputMapping[attr] = fs.num_inputs;
 
-         switch (i) {
+         switch (attr) {
          case FRAG_ATTRIB_WPOS:
             fs.input_semantic_name[fs.num_inputs] = TGSI_SEMANTIC_POSITION;
             fs.input_semantic_index[fs.num_inputs] = 0;
@@ -103,14 +103,14 @@ st_translate_fragment_shader(struct st_context *st,
          case FRAG_ATTRIB_TEX6:
          case FRAG_ATTRIB_TEX7:
             fs.input_semantic_name[fs.num_inputs] = TGSI_SEMANTIC_TEXCOORD;
-            fs.input_semantic_index[fs.num_inputs] = i - FRAG_ATTRIB_TEX0;
+            fs.input_semantic_index[fs.num_inputs] = attr - FRAG_ATTRIB_TEX0;
             interpMode[fs.num_inputs] = TGSI_INTERPOLATE_PERSPECTIVE;
             break;
          case FRAG_ATTRIB_VAR0:
             /* fall-through */
          default:
             fs.input_semantic_name[fs.num_inputs] = TGSI_SEMANTIC_GENERIC;
-            fs.input_semantic_index[fs.num_inputs] = i - FRAG_ATTRIB_VAR0;
+            fs.input_semantic_index[fs.num_inputs] = attr - FRAG_ATTRIB_VAR0;
             interpMode[fs.num_inputs] = TGSI_INTERPOLATE_PERSPECTIVE;
          }
 
@@ -121,16 +121,16 @@ st_translate_fragment_shader(struct st_context *st,
    /*
     * Outputs
     */
-   for (i = 0; i < FRAG_RESULT_MAX; i++) {
-      if (stfp->Base.Base.OutputsWritten & (1 << i)) {
-         switch (i) {
+   for (attr = 0; attr < FRAG_RESULT_MAX; attr++) {
+      if (stfp->Base.Base.OutputsWritten & (1 << attr)) {
+         switch (attr) {
          case FRAG_RESULT_DEPR:
             fs.output_semantic_name[fs.num_outputs] = TGSI_SEMANTIC_POSITION;
-            outputMapping[i] = fs.num_outputs;
+            outputMapping[attr] = fs.num_outputs;
             break;
          case FRAG_RESULT_COLR:
             fs.output_semantic_name[fs.num_outputs] = TGSI_SEMANTIC_COLOR;
-            outputMapping[i] = fs.num_outputs;
+            outputMapping[attr] = fs.num_outputs;
             break;
          default:
             assert(0);
