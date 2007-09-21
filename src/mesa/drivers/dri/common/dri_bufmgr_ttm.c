@@ -59,6 +59,11 @@ typedef struct _dri_bo_ttm {
    int refcount;		/* Protected by bufmgr->mutex */
    drmBO drm_bo;
    const char *name;
+   /**
+    * Note whether we are the owner of the buffer, to determine if we must
+    * drmBODestroy or drmBOUnreference to unreference the buffer.
+    */
+   GLboolean owner;
 } dri_bo_ttm;
 
 typedef struct _dri_fence_ttm
@@ -66,8 +71,6 @@ typedef struct _dri_fence_ttm
    dri_fence fence;
 
    int refcount;		/* Protected by bufmgr->mutex */
-   /** Fence type from when the fence was created, used for later waits */
-   unsigned int type;
    const char *name;
    drmFence drm_fence;
 } dri_fence_ttm;
@@ -129,6 +132,7 @@ dri_ttm_alloc(dri_bufmgr *bufmgr, const char *name,
    ttm_buf->bo.bufmgr = bufmgr;
    ttm_buf->name = name;
    ttm_buf->refcount = 1;
+   ttm_buf->owner = GL_TRUE;
 
 #if BUFMGR_DEBUG
    fprintf(stderr, "bo_create: %p (%s)\n", &ttm_buf->bo, ttm_buf->name);
@@ -179,6 +183,7 @@ dri_ttm_bo_create_from_handle(dri_bufmgr *bufmgr, const char *name,
    ttm_buf->bo.bufmgr = bufmgr;
    ttm_buf->name = name;
    ttm_buf->refcount = 1;
+   ttm_buf->owner = GL_FALSE;
 
 #if BUFMGR_DEBUG
    fprintf(stderr, "bo_create_from_handle: %p (%s)\n", &ttm_buf->bo,
@@ -210,7 +215,24 @@ dri_ttm_bo_unreference(dri_bo *buf)
 
    _glthread_LOCK_MUTEX(bufmgr_ttm->mutex);
    if (--ttm_buf->refcount == 0) {
-      drmBOUnReference(bufmgr_ttm->fd, &ttm_buf->drm_bo);
+      int ret;
+
+      /* XXX Having to use drmBODestroy as the opposite of drmBOCreate instead
+       * of simply unreferencing is madness, and leads to behaviors we may not
+       * want (making the buffer unsharable).
+       */
+      if (ttm_buf->owner)
+	 ret = drmBODestroy(bufmgr_ttm->fd, &ttm_buf->drm_bo);
+      else
+	 ret = drmBOUnReference(bufmgr_ttm->fd, &ttm_buf->drm_bo);
+      if (ret != 0) {
+	 fprintf(stderr, "drmBOUnReference failed (%s): %s\n", ttm_buf->name,
+		 strerror(-ret));
+      }
+#if BUFMGR_DEBUG
+      fprintf(stderr, "bo_unreference final: %p (%s)\n",
+	      &ttm_buf->bo, ttm_buf->name);
+#endif
       _glthread_UNLOCK_MUTEX(bufmgr_ttm->mutex);
       free(buf);
       return;
@@ -320,7 +342,6 @@ dri_ttm_fence_validated(dri_bufmgr *bufmgr, const char *name,
 
    fence_ttm->refcount = 1;
    fence_ttm->name = name;
-   fence_ttm->type = type;
    fence_ttm->fence.bufmgr = bufmgr;
    ret = drmFenceBuffers(bufmgr_ttm->fd, type, &fence_ttm->drm_fence);
    if (ret) {
@@ -359,7 +380,19 @@ dri_ttm_fence_unreference(dri_fence *fence)
 
    _glthread_LOCK_MUTEX(bufmgr_ttm->mutex);
    if (--fence_ttm->refcount == 0) {
-      drmFenceDestroy(bufmgr_ttm->fd, &fence_ttm->drm_fence);
+      int ret;
+
+      /* XXX Having to use drmFenceDestroy as the opposite of drmFenceBuffers
+       * instead of simply unreferencing is madness, and leads to behaviors we
+       * may not want (making the fence unsharable).  This behavior by the DRM
+       * ioctls should be fixed, and drmFenceDestroy eliminated.
+       */
+      ret = drmFenceDestroy(bufmgr_ttm->fd, &fence_ttm->drm_fence);
+      if (ret != 0) {
+	 fprintf(stderr, "drmFenceDestroy failed (%s): %s\n",
+		 fence_ttm->name, strerror(-ret));
+      }
+
       _glthread_UNLOCK_MUTEX(bufmgr_ttm->mutex);
       free(fence);
       return;
@@ -375,8 +408,7 @@ dri_ttm_fence_wait(dri_fence *fence)
    int ret;
 
    _glthread_LOCK_MUTEX(bufmgr_ttm->mutex);
-   ret = drmFenceWait(bufmgr_ttm->fd, 0, &fence_ttm->drm_fence,
-		      fence_ttm->type);
+   ret = drmFenceWait(bufmgr_ttm->fd, 0, &fence_ttm->drm_fence, 0);
    _glthread_UNLOCK_MUTEX(bufmgr_ttm->mutex);
    if (ret != 0) {
       _mesa_printf("%s:%d: Error %d waiting for fence %s.\n",
