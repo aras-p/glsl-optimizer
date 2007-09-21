@@ -95,7 +95,9 @@ st_translate_fragment_shader(struct st_context *st,
             interpMode[fs.num_inputs] = TGSI_INTERPOLATE_LINEAR;
             break;
          case FRAG_ATTRIB_FOGC:
-            assert(0);
+            fs.input_semantic_name[fs.num_inputs] = TGSI_SEMANTIC_FOG;
+            fs.input_semantic_index[fs.num_inputs] = 0;
+            interpMode[fs.num_inputs] = TGSI_INTERPOLATE_PERSPECTIVE;
             break;
          case FRAG_ATTRIB_TEX0:
          case FRAG_ATTRIB_TEX1:

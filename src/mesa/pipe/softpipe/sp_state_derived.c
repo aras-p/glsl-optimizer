@@ -43,6 +43,7 @@
  */
 static void calculate_vertex_layout( struct softpipe_context *softpipe )
 {
+   const struct pipe_shader_state *vs = softpipe->vs;
    const struct pipe_shader_state *fs = softpipe->fs;
    const interp_mode colorInterp
       = softpipe->rasterizer->flatshade ? INTERP_CONSTANT : INTERP_LINEAR;
@@ -58,47 +59,68 @@ static void calculate_vertex_layout( struct softpipe_context *softpipe )
       softpipe->need_z = FALSE;
    softpipe->need_w = FALSE;
 
+   if (fs->input_semantic_name[0] == TGSI_SEMANTIC_POSITION) {
+      /* Need Z if depth test is enabled or the fragment program uses the
+       * fragment position (XYZW).
+       */
+      softpipe->need_z = TRUE;
+      softpipe->need_w = TRUE;
+   }
+
    softpipe->psize_slot = -1;
 
    /* always emit vertex pos */
-   /* TODO - Figure out if we need to do perspective divide, etc. */
    draw_emit_vertex_attr(vinfo, FORMAT_4F, INTERP_LINEAR);
 
-   for (i = 0; i < fs->num_inputs; i++) {
-      switch (fs->input_semantic_name[i]) {
+   /*
+    * XXX I think we need to reconcile the vertex shader outputs with
+    * the fragment shader inputs here to make sure the slots line up.
+    * Might just be getting lucky so far.
+    * Or maybe do that in the state tracker?
+    */
+
+   for (i = 0; i < vs->num_outputs; i++) {
+      switch (vs->output_semantic_name[i]) {
+
       case TGSI_SEMANTIC_POSITION:
-         /* Need Z if depth test is enabled or the fragment program uses the
-          * fragment position (XYZW).
+         /* vertex programs always emit position, but might not be
+          * needed for fragment progs.
           */
-         softpipe->need_z = TRUE;
-         softpipe->need_w = TRUE;
+         /* no-op */
          break;
+
       case TGSI_SEMANTIC_COLOR:
          if (fs->input_semantic_index[i] == 0) {
-            front0 = draw_emit_vertex_attr(vinfo,
-                                           FORMAT_4F, colorInterp);
+            front0 = draw_emit_vertex_attr(vinfo, FORMAT_4F, colorInterp);
          }
          else {
             assert(fs->input_semantic_index[i] == 1);
-            front1 = draw_emit_vertex_attr(vinfo,
-                                           FORMAT_4F, colorInterp);
+            front1 = draw_emit_vertex_attr(vinfo, FORMAT_4F, colorInterp);
          }
          break;
-      case TGSI_SEMANTIC_FOG:
-         draw_emit_vertex_attr(vinfo,
-                               FORMAT_1F, INTERP_PERSPECTIVE);
+
+      case TGSI_SEMANTIC_BCOLOR:
+         if (fs->input_semantic_index[i] == 0) {
+            back0 = draw_emit_vertex_attr(vinfo, FORMAT_4F, colorInterp);
+         }
+         else {
+            assert(fs->input_semantic_index[i] == 1);
+            back1 = draw_emit_vertex_attr(vinfo, FORMAT_4F, colorInterp);
+         }
          break;
-#if 0
+
+      case TGSI_SEMANTIC_FOG:
+         draw_emit_vertex_attr(vinfo, FORMAT_1F, INTERP_PERSPECTIVE);
+         break;
+
       case TGSI_SEMANTIC_PSIZE:
          /* XXX only emit if drawing points or front/back polygon mode
           * is point mode
           */
-         draw_emit_vertex_attr(vinfo,
-                               FORMAT_4F, INTERP_CONSTANT);
-         break;
-#endif
+         draw_emit_vertex_attr(vinfo, FORMAT_1F, INTERP_CONSTANT);
          softpipe->psize_slot = i;
-         /*case TGSI_SEMANTIC_TEXCOORD:*/
+         break;
+
       case TGSI_SEMANTIC_GENERIC:
          /* this includes texcoords and varying vars */
          draw_emit_vertex_attr(vinfo, FORMAT_4F, INTERP_PERSPECTIVE);
@@ -112,6 +134,7 @@ static void calculate_vertex_layout( struct softpipe_context *softpipe )
 
    softpipe->nr_frag_attrs = vinfo->num_attribs;
 
+#if 0
    /* Additional attributes required for setup: Just twosided
     * lighting.  Edgeflag is dealt with specially by setting bits in
     * the vertex header.
@@ -124,6 +147,7 @@ static void calculate_vertex_layout( struct softpipe_context *softpipe )
          back1 = draw_emit_vertex_attr(vinfo, FORMAT_OMIT, colorInterp);
       }
    }
+#endif
 
    /* If the attributes have changed, tell the draw module about
     * the new vertex layout.

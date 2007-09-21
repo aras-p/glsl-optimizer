@@ -265,6 +265,9 @@ st_RasterPos(GLcontext *ctx, const GLfloat v[4])
    float *buf_map;
    struct pipe_feedback_buffer fb_buf;
 
+   /** XXX TEMPORARILY DISABLE */
+   return;
+
    st_validate_state(ctx->st);
 
    /* setup vertex buffers */

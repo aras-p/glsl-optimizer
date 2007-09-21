@@ -91,6 +91,10 @@ st_translate_vertex_shader(struct st_context *st,
             vs.input_semantic_name[vs.num_inputs] = TGSI_SEMANTIC_COLOR;
             vs.input_semantic_index[vs.num_inputs] = 1;
             break;
+         case VERT_ATTRIB_FOG:
+            vs.input_semantic_name[vs.num_inputs] = TGSI_SEMANTIC_FOG;
+            vs.input_semantic_index[vs.num_inputs] = 0;
+            break;
          case VERT_ATTRIB_TEX0:
          case VERT_ATTRIB_TEX1:
          case VERT_ATTRIB_TEX2:
@@ -152,7 +156,13 @@ st_translate_vertex_shader(struct st_context *st,
             vs.output_semantic_index[vs.num_outputs] = 1;
             break;
          case VERT_RESULT_FOGC:
+            vs.output_semantic_name[vs.num_outputs] = TGSI_SEMANTIC_FOG;
+            vs.output_semantic_index[vs.num_outputs] = 0;
+            break;
          case VERT_RESULT_PSIZ:
+            vs.output_semantic_name[vs.num_outputs] = TGSI_SEMANTIC_PSIZE;
+            vs.output_semantic_index[vs.num_outputs] = 0;
+            break;
          case VERT_RESULT_EDGE:
             assert(0);
             break;

@@ -107,8 +107,9 @@ struct tgsi_declaration_interpolation
 #define TGSI_SEMANTIC_COLOR    1
 #define TGSI_SEMANTIC_BCOLOR   2 /**< back-face color */
 #define TGSI_SEMANTIC_FOG      3
-#define TGSI_SEMANTIC_GENERIC  4
-#define TGSI_SEMANTIC_COUNT    5 /**< number of semantic values */
+#define TGSI_SEMANTIC_PSIZE    4
+#define TGSI_SEMANTIC_GENERIC  5
+#define TGSI_SEMANTIC_COUNT    6 /**< number of semantic values */
 
 struct tgsi_declaration_semantic
 {

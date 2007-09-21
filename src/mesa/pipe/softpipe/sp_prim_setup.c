@@ -907,14 +907,12 @@ setup_point(struct draw_stage *stage, struct prim_header *prim)
    const struct vertex_header *v0 = prim->v[0];
    const int sizeAttr = setup->softpipe->psize_slot;
    const float halfSize
-      = sizeAttr ? (0.5f * v0->data[sizeAttr][0])
+      = sizeAttr > 0 ? (0.5f * v0->data[sizeAttr][0])
         : (0.5f * setup->softpipe->rasterizer->point_size);
    const boolean round = setup->softpipe->rasterizer->point_smooth;
    const float x = v0->data[0][0];  /* Note: data[0] is always position */
    const float y = v0->data[0][1];
    unsigned slot, j;
-
-   assert(sizeAttr >= 0);
 
    /* For points, all interpolants are constant-valued.
     * However, for point sprites, we'll need to setup texcoords appropriately.
