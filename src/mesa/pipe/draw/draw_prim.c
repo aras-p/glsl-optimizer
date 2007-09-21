@@ -107,7 +107,7 @@ static struct prim_header *get_queued_prim( struct draw_context *draw,
 					    unsigned nr_verts )
 {
    if (draw->pq.queue_nr + 1 >= PRIM_QUEUE_LENGTH ||
-       draw_vertex_cache_check_space( draw, nr_verts )) 
+       !draw_vertex_cache_check_space( draw, nr_verts )) 
    {
       draw_flush( draw );
    }
