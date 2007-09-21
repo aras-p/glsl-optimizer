@@ -54,7 +54,7 @@ sp_build_quad_pipeline(struct softpipe_context *sp)
       sp->quad.first = sp->quad.depth_test;
    }
 
-   if (sp->alpha_test.enabled) {
+   if (sp->alpha_test->enabled) {
       sp->quad.alpha_test->next = sp->quad.first;
       sp->quad.first = sp->quad.alpha_test;
    }

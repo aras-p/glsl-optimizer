@@ -275,8 +275,10 @@ clear_with_quad(GLcontext *ctx,
    /* alpha state: disabled */
    {
       struct pipe_alpha_test_state alpha_test;
+      const struct cso_alpha_test *cso;
       memset(&alpha_test, 0, sizeof(alpha_test));
-      pipe->set_alpha_test_state(pipe, &alpha_test);
+      cso = st_cached_alpha_test_state(st, &alpha_test);
+      pipe->bind_alpha_test_state(pipe, cso->data);
    }
 
    /* blend state: RGBA masking */
@@ -379,7 +381,7 @@ clear_with_quad(GLcontext *ctx,
    draw_quad(ctx, x0, y0, x1, y1, ctx->Depth.Clear, ctx->Color.ClearColor);
 
    /* Restore pipe state */
-   pipe->set_alpha_test_state(pipe, &st->state.alpha_test);
+   pipe->bind_alpha_test_state(pipe, st->state.alpha_test->data);
    pipe->bind_blend_state(pipe, st->state.blend->data);
    pipe->bind_depth_stencil_state(pipe, st->state.depth_stencil->data);
    pipe->bind_fs_state(pipe, st->state.fs->data);

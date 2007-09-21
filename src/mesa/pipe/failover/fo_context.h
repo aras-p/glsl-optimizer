@@ -64,12 +64,13 @@ struct fo_state {
    void *sw_state;
    void *hw_state;
 };
-struct failover_context {     
+struct failover_context {
    struct pipe_context pipe;  /**< base class */
 
 
    /* The most recent drawing state as set by the driver:
     */
+   const struct fo_state     *alpha_test;
    const struct fo_state     *blend;
    const struct fo_state     *sampler[PIPE_MAX_SAMPLERS];
    const struct fo_state     *depth_stencil;
@@ -77,7 +78,6 @@ struct failover_context {
    const struct fo_state     *fragment_shader;
    const struct fo_state     *vertex_shader;
 
-   struct pipe_alpha_test_state alpha_test;
    struct pipe_blend_color blend_color;
    struct pipe_clear_color_state clear_color;
    struct pipe_clip_state clip;

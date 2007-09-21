@@ -90,6 +90,9 @@ static struct cso_hash *_cso_hash_for_type(struct cso_cache *sc, enum cso_cache_
    case CSO_VERTEX_SHADER:
       hash = sc->vs_hash;
       break;
+   case CSO_ALPHA_TEST:
+      hash = sc->alpha_hash;
+      break;
    }
 
    return hash;
@@ -110,6 +113,8 @@ static int _cso_size_for_type(enum cso_cache_type type)
       return sizeof(struct pipe_shader_state);
    case CSO_VERTEX_SHADER:
       return sizeof(struct pipe_shader_state);
+   case CSO_ALPHA_TEST:
+      return sizeof(struct pipe_alpha_test_state);
    }
    return 0;
 }
@@ -164,6 +169,7 @@ struct cso_cache *cso_cache_create(void)
    sc->rasterizer_hash    = cso_hash_create();
    sc->fs_hash            = cso_hash_create();
    sc->vs_hash            = cso_hash_create();
+   sc->alpha_hash         = cso_hash_create();
 
    return sc;
 }
@@ -177,5 +183,6 @@ void cso_cache_delete(struct cso_cache *sc)
    cso_hash_delete(sc->rasterizer_hash);
    cso_hash_delete(sc->fs_hash);
    cso_hash_delete(sc->vs_hash);
+   cso_hash_delete(sc->alpha_hash);
    free(sc);
 }

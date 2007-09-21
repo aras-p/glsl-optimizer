@@ -71,15 +71,29 @@ void softpipe_set_blend_color( struct pipe_context *pipe,
  * into one file.
  */
 
+void *
+softpipe_create_alpha_test_state(struct pipe_context *pipe,
+                                 const struct pipe_alpha_test_state *alpha)
+{
+   return 0;
+}
+
 void
-softpipe_set_alpha_test_state(struct pipe_context *pipe,
-                              const struct pipe_alpha_test_state *alpha)
+softpipe_bind_alpha_test_state(struct pipe_context *pipe,
+                               void *alpha)
 {
    struct softpipe_context *softpipe = softpipe_context(pipe);
 
-   softpipe->alpha_test = *alpha;
+   softpipe->alpha_test = (const struct pipe_alpha_test_state *)alpha;
 
    softpipe->dirty |= SP_NEW_ALPHA_TEST;
+}
+
+void
+softpipe_delete_alpha_test_state(struct pipe_context *pipe,
+                                 void *alpha)
+{
+   /* do nothing */
 }
 
 void *

@@ -39,6 +39,10 @@ struct pipe_blend_state;
 struct pipe_sampler_state;
 struct st_context;
 
+const struct cso_alpha_test *
+st_cached_alpha_test_state(struct st_context *st,
+                           const struct pipe_alpha_test_state *alpha);
+
 const struct cso_blend *
 st_cached_blend_state(struct st_context *st,
                       const struct pipe_blend_state *blend);

@@ -62,6 +62,7 @@ static const struct st_tracked_state *atoms[] =
    &st_update_texture,
    &st_update_vs_constants,
    &st_update_fs_constants,
+   &st_update_alpha_test
 };
 
 

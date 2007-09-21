@@ -60,6 +60,7 @@ const struct st_tracked_state st_update_sampler;
 const struct st_tracked_state st_update_texture;
 const struct st_tracked_state st_update_fs_constants;
 const struct st_tracked_state st_update_vs_constants;
+const struct st_tracked_state st_update_alpha_test;
 
 
 #endif

@@ -56,7 +56,8 @@ failover_state_emit( struct failover_context *failover )
    unsigned i;
 
    if (failover->dirty & FO_NEW_ALPHA_TEST)
-      failover->sw->set_alpha_test_state( failover->sw, &failover->alpha_test );
+      failover->sw->bind_alpha_test_state( failover->sw,
+                                           failover->alpha_test->sw_state );
 
    if (failover->dirty & FO_NEW_BLEND)
       failover->sw->bind_blend_state( failover->sw,

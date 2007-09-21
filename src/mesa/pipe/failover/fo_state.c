@@ -45,15 +45,44 @@
  * lower overheads.
  */
 
-static void
-failover_set_alpha_test_state(struct pipe_context *pipe,
-                              const struct pipe_alpha_test_state *alpha)
+static void *
+failover_create_alpha_test_state(struct pipe_context *pipe,
+                                 const struct pipe_alpha_test_state *templ)
 {
+   struct fo_state *state = malloc(sizeof(struct fo_state));
    struct failover_context *failover = failover_context(pipe);
 
-   failover->alpha_test = *alpha;
+   state->sw_state = failover->sw->create_alpha_test_state(pipe, templ);
+   state->hw_state = failover->hw->create_alpha_test_state(pipe, templ);
+
+   return state;
+}
+
+static void
+failover_bind_alpha_test_state(struct pipe_context *pipe,
+                               void *alpha)
+{
+   struct failover_context *failover = failover_context(pipe);
+   struct fo_state *state = (struct fo_state *)alpha;
+
+   failover->alpha_test = state;
    failover->dirty |= FO_NEW_ALPHA_TEST;
-   failover->hw->set_alpha_test_state( failover->hw, alpha );
+   failover->hw->bind_alpha_test_state(failover->hw,
+                                       state->hw_state);
+}
+
+static void
+failover_delete_alpha_test_state(struct pipe_context *pipe,
+                                 void *alpha)
+{
+   struct fo_state *state = (struct fo_state*)alpha;
+   struct failover_context *failover = failover_context(pipe);
+
+   failover->sw->delete_alpha_test_state(pipe, state->sw_state);
+   failover->hw->delete_alpha_test_state(pipe, state->hw_state);
+   state->sw_state = 0;
+   state->hw_state = 0;
+   free(state);
 }
 
 
@@ -95,7 +124,7 @@ failover_delete_blend_state( struct pipe_context *pipe,
    free(state);
 }
 
-static void 
+static void
 failover_set_blend_color( struct pipe_context *pipe,
 			  const struct pipe_blend_color *blend_color )
 {
@@ -414,8 +443,11 @@ failover_set_vertex_element(struct pipe_context *pipe,
 void
 failover_init_state_functions( struct failover_context *failover )
 {
+   failover->pipe.create_alpha_test_state = failover_create_alpha_test_state;
+   failover->pipe.bind_alpha_test_state   = failover_bind_alpha_test_state;
+   failover->pipe.delete_alpha_test_state = failover_delete_alpha_test_state;
    failover->pipe.create_blend_state = failover_create_blend_state;
-   failover->pipe.bind_blend_state = failover_bind_blend_state;
+   failover->pipe.bind_blend_state   = failover_bind_blend_state;
    failover->pipe.delete_blend_state = failover_delete_blend_state;
    failover->pipe.create_sampler_state = failover_create_sampler_state;
    failover->pipe.bind_sampler_state   = failover_bind_sampler_state;
@@ -433,7 +465,6 @@ failover_init_state_functions( struct failover_context *failover )
    failover->pipe.bind_vs_state   = failover_bind_vs_state;
    failover->pipe.delete_vs_state = failover_delete_vs_state;
 
-   failover->pipe.set_alpha_test_state = failover_set_alpha_test_state;
    failover->pipe.set_blend_color = failover_set_blend_color;
    failover->pipe.set_clip_state = failover_set_clip_state;
    failover->pipe.set_clear_color_state = failover_set_clear_color_state;

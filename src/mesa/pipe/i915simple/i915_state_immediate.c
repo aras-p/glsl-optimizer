@@ -121,9 +121,9 @@ static void upload_S6( struct i915_context *i915 )
 
    /* I915_NEW_ALPHA_TEST
     */
-   if (i915->alpha_test.enabled) {
-      int test = i915_translate_compare_func(i915->alpha_test.func);
-      ubyte refByte = float_to_ubyte(i915->alpha_test.ref);
+   if (i915->alpha_test->enabled) {
+      int test = i915_translate_compare_func(i915->alpha_test->func);
+      ubyte refByte = float_to_ubyte(i915->alpha_test->ref);
       
 
       LIS6 |= (S6_ALPHA_TEST_ENABLE |

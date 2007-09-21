@@ -86,26 +86,30 @@ struct pipe_context {
    /*
     * State functions
     */
+   void * (*create_alpha_test_state)(struct pipe_context *,
+                                     const struct pipe_alpha_test_state *);
+   void   (*bind_alpha_test_state)(struct pipe_context *, void *);
+   void   (*delete_alpha_test_state)(struct pipe_context *, void *);
+
    void * (*create_blend_state)(struct pipe_context *,
                                 const struct pipe_blend_state *);
-   void (*bind_blend_state)(struct pipe_context *, void *);
-   void (*delete_blend_state)(struct pipe_context *, void  *);
+   void   (*bind_blend_state)(struct pipe_context *, void *);
+   void   (*delete_blend_state)(struct pipe_context *, void  *);
 
    void * (*create_sampler_state)(struct pipe_context *,
                                   const struct pipe_sampler_state *);
-   void (*bind_sampler_state)(struct pipe_context *, unsigned unit,
-                              void *);
-   void (*delete_sampler_state)(struct pipe_context *, void *);
+   void   (*bind_sampler_state)(struct pipe_context *, unsigned unit, void *);
+   void   (*delete_sampler_state)(struct pipe_context *, void *);
 
-   void *(*create_rasterizer_state)(struct pipe_context *,
-                                    const struct pipe_rasterizer_state *);
-   void (*bind_rasterizer_state)(struct pipe_context *, void *);
-   void (*delete_rasterizer_state)(struct pipe_context *, void *);
+   void * (*create_rasterizer_state)(struct pipe_context *,
+                                     const struct pipe_rasterizer_state *);
+   void   (*bind_rasterizer_state)(struct pipe_context *, void *);
+   void   (*delete_rasterizer_state)(struct pipe_context *, void *);
 
    void * (*create_depth_stencil_state)(struct pipe_context *,
                                         const struct pipe_depth_stencil_state *);
-   void (*bind_depth_stencil_state)(struct pipe_context *, void *);
-   void (*delete_depth_stencil_state)(struct pipe_context *, void *);
+   void   (*bind_depth_stencil_state)(struct pipe_context *, void *);
+   void   (*delete_depth_stencil_state)(struct pipe_context *, void *);
 
    void * (*create_fs_state)(struct pipe_context *,
                              const struct pipe_shader_state *);
@@ -117,9 +121,9 @@ struct pipe_context {
    void   (*bind_vs_state)(struct pipe_context *, void *);
    void   (*delete_vs_state)(struct pipe_context *, void *);
 
-   void (*set_alpha_test_state)( struct pipe_context *,
-                                 const struct pipe_alpha_test_state * );
-
+   /* The following look more properties than states.
+    * maybe combine a few of them into states or pass them
+    * in the bind calls to the state */
    void (*set_blend_color)( struct pipe_context *,
                             const struct pipe_blend_color * );
 

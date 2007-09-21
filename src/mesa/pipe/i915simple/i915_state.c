@@ -394,14 +394,27 @@ static void i915_delete_depth_stencil_state(struct pipe_context *pipe,
    free(depth_stencil);
 }
 
-static void i915_set_alpha_test_state(struct pipe_context *pipe,
-                              const struct pipe_alpha_test_state *alpha)
+
+static void *
+i915_create_alpha_test_state(struct pipe_context *pipe,
+                             const struct pipe_alpha_test_state *alpha)
+{
+   return 0;
+}
+
+static void i915_bind_alpha_test_state(struct pipe_context *pipe,
+                                       void *alpha)
 {
    struct i915_context *i915 = i915_context(pipe);
 
-   i915->alpha_test = *alpha;
+   i915->alpha_test = (const struct pipe_alpha_test_state*)alpha;
 
    i915->dirty |= I915_NEW_ALPHA_TEST;
+}
+
+static void i915_delete_alpha_test_state(struct pipe_context *pipe,
+                                         void *alpha)
+{
 }
 
 static void i915_set_scissor_state( struct pipe_context *pipe,
@@ -664,6 +677,10 @@ static void i915_set_vertex_element( struct pipe_context *pipe,
 void
 i915_init_state_functions( struct i915_context *i915 )
 {
+   i915->pipe.create_alpha_test_state = i915_create_alpha_test_state;
+   i915->pipe.bind_alpha_test_state   = i915_bind_alpha_test_state;
+   i915->pipe.delete_alpha_test_state = i915_delete_alpha_test_state;
+
    i915->pipe.create_blend_state = i915_create_blend_state;
    i915->pipe.bind_blend_state = i915_bind_blend_state;
    i915->pipe.delete_blend_state = i915_delete_blend_state;
@@ -686,7 +703,6 @@ i915_init_state_functions( struct i915_context *i915 )
    i915->pipe.bind_vs_state = i915_bind_vs_state;
    i915->pipe.delete_vs_state = i915_delete_shader_state;
 
-   i915->pipe.set_alpha_test_state = i915_set_alpha_test_state;
    i915->pipe.set_blend_color = i915_set_blend_color;
    i915->pipe.set_clip_state = i915_set_clip_state;
    i915->pipe.set_clear_color_state = i915_set_clear_color_state;

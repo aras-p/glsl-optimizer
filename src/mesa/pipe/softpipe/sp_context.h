@@ -70,6 +70,7 @@ struct softpipe_context {
 
    /* The most recent drawing state as set by the driver:
     */
+   const struct pipe_alpha_test_state *alpha_test;
    const struct pipe_blend_state   *blend;
    const struct pipe_sampler_state *sampler[PIPE_MAX_SAMPLERS];
    const struct pipe_depth_stencil_state   *depth_stencil;
@@ -77,7 +78,6 @@ struct softpipe_context {
    const struct pipe_shader_state *fs;
    const struct pipe_shader_state *vs;
 
-   struct pipe_alpha_test_state alpha_test;
    struct pipe_blend_color blend_color;
    struct pipe_clear_color_state clear_color;
    struct pipe_clip_state clip;

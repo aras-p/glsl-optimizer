@@ -154,13 +154,13 @@ struct i915_context
 
    /* The most recent drawing state as set by the driver:
     */
+   const struct pipe_alpha_test_state      *alpha_test;
    const struct i915_blend_state           *blend;
    const struct i915_sampler_state         *sampler[PIPE_MAX_SAMPLERS];
    const struct i915_depth_stencil_state   *depth_stencil;
    const struct i915_rasterizer_state      *rasterizer;
    const struct pipe_shader_state *fs;
 
-   struct pipe_alpha_test_state alpha_test;
    struct pipe_blend_color blend_color;
    struct pipe_clear_color_state clear_color;
    struct pipe_clip_state clip;

@@ -159,3 +159,23 @@ st_cached_vs_state(struct st_context *st,
    }
    return (struct cso_vertex_shader*)(cso_hash_iter_data(iter));
 }
+
+const struct cso_alpha_test *
+st_cached_alpha_test_state(struct st_context *st,
+                           const struct pipe_alpha_test_state *templ)
+{
+   unsigned hash_key = cso_construct_key((void*)templ,
+                                         sizeof(struct pipe_alpha_test_state));
+   struct cso_hash_iter iter = cso_find_state_template(st->cache,
+                                                       hash_key, CSO_ALPHA_TEST,
+                                                       (void*)templ);
+   if (cso_hash_iter_is_null(iter)) {
+      struct cso_alpha_test *cso = malloc(sizeof(struct cso_alpha_test));
+      memcpy(&cso->state, templ, sizeof(struct pipe_alpha_test_state));
+      cso->data = st->pipe->create_alpha_test_state(st->pipe, &cso->state);
+      if (!cso->data)
+         cso->data = &cso->state;
+      iter = cso_insert_state(st->cache, hash_key, CSO_ALPHA_TEST, cso);
+   }
+   return ((struct cso_alpha_test *)cso_hash_iter_data(iter));
+}

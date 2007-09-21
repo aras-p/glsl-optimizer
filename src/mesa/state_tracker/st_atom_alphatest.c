@@ -33,6 +33,7 @@
  
 
 #include "st_context.h"
+#include "st_cache.h"
 #include "st_atom.h"
 #include "pipe/p_context.h"
 #include "pipe/p_defines.h"
@@ -63,6 +64,7 @@ static void
 update_alpha_test( struct st_context *st )
 {
    struct pipe_alpha_test_state alpha;
+   const struct cso_alpha_test *cso;
 
    memset(&alpha, 0, sizeof(alpha));
 
@@ -71,11 +73,11 @@ update_alpha_test( struct st_context *st )
       alpha.func = gl_alpha_func_to_sp(st->ctx->Color.AlphaFunc);
       alpha.ref = st->ctx->Color.AlphaRef;
    }
-
-   if (memcmp(&alpha, &st->state.alpha_test, sizeof(alpha)) != 0) {
+   cso = st_cached_alpha_test_state(st, &alpha);
+   if (st->state.alpha_test != cso) {
       /* state has changed */
-      st->state.alpha_test = alpha;  /* struct copy */
-      st->pipe->set_alpha_test_state(st->pipe, &alpha); /* set new state */
+      st->state.alpha_test = cso;
+      st->pipe->bind_alpha_test_state(st->pipe, cso->data); /* bind new state */
    }
 }
 
@@ -88,8 +90,3 @@ const struct st_tracked_state st_update_alpha_test = {
    },
    .update = update_alpha_test
 };
-
-
-
-
-
