@@ -493,15 +493,12 @@ clear_depth_buffer(GLcontext *ctx, struct gl_renderbuffer *rb)
 
    assert(strb->surface->format);
 
-#if 0
    if (ctx->Scissor.Enabled ||
        (isDS && ctx->DrawBuffer->Visual.stencilBits > 0)) {
       /* scissoring or we have a combined depth/stencil buffer */
       clear_with_quad(ctx, GL_FALSE, GL_TRUE, GL_FALSE);
    }
-   else
-#endif
- {
+   else {
       /* simple clear of whole buffer */
       GLuint clearValue = depth_value(strb->surface->format, ctx->Depth.Clear);
       ctx->st->pipe->clear(ctx->st->pipe, strb->surface, clearValue);
