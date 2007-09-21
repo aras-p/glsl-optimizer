@@ -68,6 +68,9 @@ static INLINE void copy_attrib( unsigned attr_dst,
 }
 
 
+/**
+ * Copy back color(s) to front color(s).
+ */
 static struct vertex_header *copy_bfc( struct twoside_stage *twoside, 
 				       const struct vertex_header *v,
 				       unsigned idx )
@@ -75,12 +78,12 @@ static struct vertex_header *copy_bfc( struct twoside_stage *twoside,
    struct vertex_header *tmp = dup_vert( &twoside->stage, v, idx );
    const struct draw_context *draw = twoside->stage.draw;
    
-   if (draw->attrib_front0 != -1) {
-      assert(draw->attrib_back0 != -1);
+   if (draw->attrib_front0 && draw->attrib_back0) {
+      assert(draw->attrib_back0);
       copy_attrib(draw->attrib_front0, draw->attrib_back0, tmp);
    }
-   if (draw->attrib_front1 != -1) {
-      assert(draw->attrib_back1 != -1);
+   if (draw->attrib_front1 && draw->attrib_back1) {
+      assert(draw->attrib_back1);
       copy_attrib(draw->attrib_front1, draw->attrib_back1, tmp);
    }
 
