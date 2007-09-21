@@ -397,9 +397,19 @@ static void i915_delete_depth_stencil_state(struct pipe_context *pipe,
 
 static void *
 i915_create_alpha_test_state(struct pipe_context *pipe,
-                             const struct pipe_alpha_test_state *alpha)
+                             const struct pipe_alpha_test_state *alpha_test)
 {
-   return 0;
+   struct i915_alpha_test_state *cso = calloc(1, sizeof(struct i915_alpha_test_state));
+
+   if (alpha_test->enabled) {
+      int test = i915_translate_compare_func(alpha_test->func);
+      ubyte refByte = float_to_ubyte(alpha_test->ref);
+
+      cso->LIS6 |= (S6_ALPHA_TEST_ENABLE |
+                    (test << S6_ALPHA_TEST_FUNC_SHIFT) |
+                    (((unsigned) refByte) << S6_ALPHA_REF_SHIFT));
+   }
+   return cso;
 }
 
 static void i915_bind_alpha_test_state(struct pipe_context *pipe,
@@ -407,7 +417,7 @@ static void i915_bind_alpha_test_state(struct pipe_context *pipe,
 {
    struct i915_context *i915 = i915_context(pipe);
 
-   i915->alpha_test = (const struct pipe_alpha_test_state*)alpha;
+   i915->alpha_test = (const struct i915_alpha_test_state*)alpha;
 
    i915->dirty |= I915_NEW_ALPHA_TEST;
 }
@@ -415,6 +425,7 @@ static void i915_bind_alpha_test_state(struct pipe_context *pipe,
 static void i915_delete_alpha_test_state(struct pipe_context *pipe,
                                          void *alpha)
 {
+   free(alpha);
 }
 
 static void i915_set_scissor_state( struct pipe_context *pipe,
@@ -650,7 +661,7 @@ static void i915_bind_rasterizer_state( struct pipe_context *pipe,
 static void i915_delete_rasterizer_state(struct pipe_context *pipe,
                                          void *setup)
 {
-   /* do nothing */
+   free(setup);
 }
 
 static void i915_set_vertex_buffer( struct pipe_context *pipe,

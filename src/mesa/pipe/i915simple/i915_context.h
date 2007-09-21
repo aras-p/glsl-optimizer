@@ -146,15 +146,19 @@ struct i915_sampler_state {
    const struct pipe_sampler_state *templ;
 };
 
+struct i915_alpha_test_state {
+   unsigned LIS6;
+};
+
 struct i915_context
 {
-   struct pipe_context pipe; 
+   struct pipe_context pipe;
    struct i915_winsys *winsys;
    struct draw_context *draw;
 
    /* The most recent drawing state as set by the driver:
     */
-   const struct pipe_alpha_test_state      *alpha_test;
+   const struct i915_alpha_test_state      *alpha_test;
    const struct i915_blend_state           *blend;
    const struct i915_sampler_state         *sampler[PIPE_MAX_SAMPLERS];
    const struct i915_depth_stencil_state   *depth_stencil;
