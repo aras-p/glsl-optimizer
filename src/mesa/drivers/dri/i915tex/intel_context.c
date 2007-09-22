@@ -59,6 +59,7 @@
 #include "intel_regions.h"
 #include "intel_buffer_objects.h"
 #include "intel_fbo.h"
+#include "intel_decode.h"
 
 #include "drirenderbuffer.h"
 #include "vblank.h"
@@ -176,7 +177,6 @@ const struct dri_extension card_extensions[] = {
    {"GL_ARB_texture_mirrored_repeat", NULL},
    {"GL_ARB_texture_rectangle", NULL},
    {"GL_ARB_vertex_buffer_object", GL_ARB_vertex_buffer_object_functions},
-   {"GL_ARB_pixel_buffer_object", NULL},
    {"GL_ARB_vertex_program", GL_ARB_vertex_program_functions},
    {"GL_ARB_window_pos", GL_ARB_window_pos_functions},
    {"GL_EXT_blend_color", GL_EXT_blend_color_functions},
@@ -187,7 +187,6 @@ const struct dri_extension card_extensions[] = {
    {"GL_EXT_blend_subtract", NULL},
    {"GL_EXT_cull_vertex", GL_EXT_cull_vertex_functions},
    {"GL_EXT_fog_coord", GL_EXT_fog_coord_functions},
-   {"GL_EXT_framebuffer_object", GL_EXT_framebuffer_object_functions},
    {"GL_EXT_multi_draw_arrays", GL_EXT_multi_draw_arrays_functions},
 #if 1                           /* XXX FBO temporary? */
    {"GL_EXT_packed_depth_stencil", NULL},
@@ -207,6 +206,12 @@ const struct dri_extension card_extensions[] = {
    {"GL_NV_vertex_program", GL_NV_vertex_program_functions},
    {"GL_NV_vertex_program1_1", NULL},
 /*     { "GL_SGIS_generate_mipmap",           NULL }, */
+   {NULL, NULL}
+};
+
+const struct dri_extension ttm_extensions[] = {
+   {"GL_EXT_framebuffer_object", GL_EXT_framebuffer_object_functions},
+   {"GL_ARB_pixel_buffer_object", NULL},
    {NULL, NULL}
 };
 
@@ -314,9 +319,8 @@ intelFinish(GLcontext * ctx)
    struct intel_context *intel = intel_context(ctx);
    intelFlush(ctx);
    if (intel->batch->last_fence) {
-      driFenceFinish(intel->batch->last_fence,
-                     0, GL_FALSE);
-      driFenceUnReference(intel->batch->last_fence);
+      dri_fence_wait(intel->batch->last_fence);
+      dri_fence_unreference(intel->batch->last_fence);
       intel->batch->last_fence = NULL;
    }
    intelCheckFrontRotate(ctx);
@@ -358,15 +362,7 @@ intelInitContext(struct intel_context *intel,
    drmI830Sarea *saPriv = (drmI830Sarea *)
       (((GLubyte *) sPriv->pSAREA) + intelScreen->sarea_priv_offset);
    int fthrottle_mode;
-   GLboolean havePools;
 
-   DRM_LIGHT_LOCK(sPriv->fd, &sPriv->pSAREA->lock, driContextPriv->hHWContext);
-   havePools = intelCreatePools(intelScreen);
-   DRM_UNLOCK(sPriv->fd, &sPriv->pSAREA->lock, driContextPriv->hHWContext);
-
-   if (!havePools)
-      return GL_FALSE;
-     
    if (!_mesa_initialize_context(&intel->ctx,
                                  mesaVis, shareCtx,
                                  functions, (void *) intel))
@@ -460,7 +456,6 @@ intelInitContext(struct intel_context *intel,
    intel->RenderIndex = ~0;
 
    fthrottle_mode = driQueryOptioni(&intel->optionCache, "fthrottle_mode");
-   intel->iw.irq_seq = -1;
    intel->irqsEmitted = 0;
 
    intel->do_irqs = (intel->intelScreen->irq_active &&
@@ -476,6 +471,9 @@ intelInitContext(struct intel_context *intel,
    driInitExtensions(ctx, card_extensions,
 /* 		      GL_TRUE, */
                      GL_FALSE);
+
+   if (intelScreen->ttm)
+      driInitExtensions(ctx, ttm_extensions, GL_FALSE);
 
 
    intel->batch = intel_batchbuffer_alloc(intel);
@@ -533,13 +531,13 @@ intelDestroyContext(__DRIcontextPrivate * driContextPriv)
       intel_batchbuffer_free(intel->batch);
 
       if (intel->last_swap_fence) {
-	 driFenceFinish(intel->last_swap_fence, DRM_FENCE_TYPE_EXE, GL_TRUE);
-	 driFenceUnReference(intel->last_swap_fence);
+	 dri_fence_wait(intel->last_swap_fence);
+	 dri_fence_unreference(intel->last_swap_fence);
 	 intel->last_swap_fence = NULL;
       }
       if (intel->first_swap_fence) {
-	 driFenceFinish(intel->first_swap_fence, DRM_FENCE_TYPE_EXE, GL_TRUE);
-	 driFenceUnReference(intel->first_swap_fence);
+	 dri_fence_wait(intel->first_swap_fence);
+	 dri_fence_unreference(intel->first_swap_fence);
 	 intel->first_swap_fence = NULL;
       }
 
@@ -670,6 +668,18 @@ intelContendedLock(struct intel_context *intel, GLuint flags)
     */
    if (dPriv)
       DRI_VALIDATE_DRAWABLE_INFO(sPriv, dPriv);
+
+   /* If the last consumer of the texture memory wasn't us, notify the fake
+    * bufmgr and record the new owner.  We should have the memory shared
+    * between contexts of a single fake bufmgr, but this will at least make
+    * things correct for now.
+    */
+   if (!intel->intelScreen->ttm && sarea->texAge != intel->hHWContext) {
+      sarea->texAge = intel->hHWContext;
+      dri_bufmgr_fake_contended_lock_take(intel->intelScreen->bufmgr);
+      if (INTEL_DEBUG & DEBUG_BATCH)
+	 intel_decode_context_reset();
+   }
 
    if (sarea->width != intelScreen->width ||
        sarea->height != intelScreen->height ||

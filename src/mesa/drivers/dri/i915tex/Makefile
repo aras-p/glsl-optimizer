@@ -2,7 +2,7 @@
 TOP = ../../../../..
 include $(TOP)/configs/current
 
-LIBNAME = i915tex_dri.so
+LIBNAME = i915_dri.so
 
 MINIGLX_SOURCES = server/intel_dri.c
 
@@ -52,8 +52,7 @@ DRIVER_SOURCES = \
 	intel_state.c \
 	intel_tris.c \
 	intel_fbo.c \
-	intel_depthstencil.c \
-	intel_batchpool.c
+	intel_depthstencil.c
 
 C_SOURCES = \
 	$(COMMON_SOURCES) \

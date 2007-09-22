@@ -41,7 +41,7 @@ struct gl_buffer_object;
 struct intel_buffer_object
 {
    struct gl_buffer_object Base;
-   struct _DriBufferObject *buffer;     /* the low-level buffer manager's buffer handle */
+   dri_bo *buffer;     /* the low-level buffer manager's buffer handle */
 
    struct intel_region *region; /* Is there a zero-copy texture
                                    associated with this (pixel)
@@ -51,9 +51,9 @@ struct intel_buffer_object
 
 /* Get the bm buffer associated with a GL bufferobject:
  */
-struct _DriBufferObject *intel_bufferobj_buffer(struct intel_context *intel,
-                                                struct intel_buffer_object
-                                                *obj, GLuint flag);
+dri_bo *intel_bufferobj_buffer(struct intel_context *intel,
+			       struct intel_buffer_object
+			       *obj, GLuint flag);
 
 /* Hook the bufferobject implementation into mesa: 
  */

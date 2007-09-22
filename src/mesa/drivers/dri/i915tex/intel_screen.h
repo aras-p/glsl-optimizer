@@ -33,7 +33,7 @@
 #include "intel_rotate.h"
 #include "i830_common.h"
 #include "xmlconfig.h"
-#include "dri_bufpool.h"
+#include "dri_bufmgr.h"
 
 /* XXX: change name or eliminate to avoid conflict with "struct
  * intel_region"!!!
@@ -45,6 +45,7 @@ typedef struct
    char *map;                   /* memory map */
    int offset;                  /* from start of video mem, in bytes */
    int pitch;                   /* row stride, in bytes */
+   unsigned int bo_handle;	/* buffer object id if available, or -1 */
 } intelRegion;
 
 typedef struct
@@ -90,12 +91,15 @@ typedef struct
    * Configuration cache with default values for all contexts
    */
    driOptionCache optionCache;
-   struct _DriBufferPool *batchPool;
-   struct _DriBufferPool *texPool;
-   struct _DriBufferPool *regionPool;
-   struct _DriBufferPool *staticPool;
+
+   dri_bufmgr *bufmgr;
    unsigned int maxBatchSize;
-   GLboolean havePools;
+
+   /**
+    * This value indicates that the kernel memory manager is being used
+    * instead of the fake client-side memory manager.
+    */
+   GLboolean ttm;
 } intelScreenPrivate;
 
 
@@ -122,16 +126,9 @@ extern void intelSwapBuffers(__DRIdrawablePrivate * dPriv);
 extern void
 intelCopySubBuffer(__DRIdrawablePrivate * dPriv, int x, int y, int w, int h);
 
-extern struct _DriBufferPool *driBatchPoolInit(int fd, unsigned flags,
-                                               unsigned long bufSize,
-                                               unsigned numBufs,
-                                               unsigned checkDelayed);
-
 extern struct intel_context *intelScreenContext(intelScreenPrivate *intelScreen);
 
 extern void
 intelUpdateScreenRotation(__DRIscreenPrivate * sPriv, drmI830Sarea * sarea);
-extern GLboolean
-intelCreatePools(intelScreenPrivate *intelScreen);
 
 #endif

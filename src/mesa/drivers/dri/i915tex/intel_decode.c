@@ -824,7 +824,7 @@ intel_decode(uint32_t *data, int count, uint32_t hw_offset)
     return failures;
 }
 
-void intel_disasm_context_reset()
+void intel_decode_context_reset()
 {
     saved_s2_set = 0;
     saved_s4_set = 1;

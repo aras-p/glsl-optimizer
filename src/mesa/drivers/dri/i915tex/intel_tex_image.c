@@ -221,11 +221,10 @@ try_pbo_upload(struct intel_context *intel,
    intelFlush(&intel->ctx);
    LOCK_HARDWARE(intel);
    {
-      struct _DriBufferObject *src_buffer =
-         intel_bufferobj_buffer(intel, pbo, INTEL_READ);
-      struct _DriBufferObject *dst_buffer =
-         intel_region_buffer(intel->intelScreen, intelImage->mt->region,
-                             INTEL_WRITE_FULL);
+      dri_bo *src_buffer = intel_bufferobj_buffer(intel, pbo, INTEL_READ);
+      dri_bo *dst_buffer = intel_region_buffer(intel->intelScreen,
+					       intelImage->mt->region,
+					       INTEL_WRITE_FULL);
 
 
       intelEmitCopyBlit(intel,
