@@ -214,7 +214,7 @@ _mesa_validate_DrawRangeElements(GLcontext *ctx, GLenum mode,
 
       /* make sure count doesn't go outside buffer bounds */
       if (indexBytes > ctx->Array.ElementArrayBufferObj->Size) {
-         _mesa_warning(ctx, "glDrawElements index out of buffer bounds");
+         _mesa_warning(ctx, "glDrawRangeElements index out of buffer bounds");
          return GL_FALSE;
       }
    }
