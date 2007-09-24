@@ -216,7 +216,7 @@ st_translate_vertex_shader(struct st_context *st,
       tgsi_emit_sse2( stvp->tokens, &stvp->sse2_program );
 
    if (!cso->state.executable)
-      cso->state.executable = (void *) x86_get_func( &stvp->sse2_program );
+      ((struct cso_vertex_shader*)cso)->state.executable = (void *) x86_get_func( &stvp->sse2_program );
 #endif
 
    stvp->dirty = 0;
