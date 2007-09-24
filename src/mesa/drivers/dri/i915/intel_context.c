@@ -159,10 +159,6 @@ intelGetString(GLcontext * ctx, GLenum name)
 
 /**
  * Extension strings exported by the intel driver.
- *
- * \note
- * It appears that ARB_texture_env_crossbar has "disappeared" compared to the
- * old i830-specific driver.
  */
 const struct dri_extension card_extensions[] = {
    {"GL_ARB_multisample", GL_ARB_multisample_functions},

@@ -173,21 +173,6 @@ struct i915_fragment_program
       const GLfloat *values;    /* Pointer to tracked values */
    } param[I915_MAX_CONSTANT];
    GLuint nr_params;
-
-
-   /* Helpers for i915_texprog.c:
-    */
-   GLuint src_texture;          /* Reg containing sampled texture color,
-                                 * else UREG_BAD.
-                                 */
-
-   GLuint src_previous;         /* Reg containing color from previous 
-                                 * stage.  May need to be decl'd.
-                                 */
-
-   GLuint last_tex_stage;       /* Number of last enabled texture unit */
-
-   struct vertex_buffer *VB;
 };
 
 

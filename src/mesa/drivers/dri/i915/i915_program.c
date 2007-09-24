@@ -391,7 +391,6 @@ void
 i915_init_program(struct i915_context *i915, struct i915_fragment_program *p)
 {
    GLcontext *ctx = &i915->intel.ctx;
-   TNLcontext *tnl = TNL_CONTEXT(ctx);
 
    p->translated = 0;
    p->params_uptodate = 0;
@@ -416,11 +415,6 @@ i915_init_program(struct i915_context *i915, struct i915_fragment_program *p)
    p->wpos_tex = -1;
    p->depth_written = 0;
    p->nr_params = 0;
-
-   p->src_texture = UREG_BAD;
-   p->src_previous = UREG(REG_TYPE_T, T_DIFFUSE);
-   p->last_tex_stage = 0;
-   p->VB = &tnl->vb;
 
    *(p->decl++) = _3DSTATE_PIXEL_SHADER_PROGRAM;
 }
