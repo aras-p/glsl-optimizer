@@ -1,6 +1,8 @@
 glthreads
+glxcontexts
 glxdemo
 glxgears
+glxgears_fbconfig
 glxheads
 glxinfo
 glxpixmap
@@ -8,9 +10,12 @@ glxpbdemo
 glxswapcontrol
 manywin
 offset
+overlay
 pbinfo
 pbdemo
+texture_from_pixmap
 wincopy
 xdemo
 xfont
 xrotfontdemo
+yuvrect_client
