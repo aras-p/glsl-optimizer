@@ -115,6 +115,23 @@ get_temp(
 }
 
 static struct x86_reg
+get_coef_base( void )
+{
+   return get_output_base();
+}
+
+static struct x86_reg
+get_coef(
+   unsigned vec,
+   unsigned chan,
+   unsigned member )
+{
+   return x86_make_disp(
+      get_coef_base(),
+      ((vec * 3 + member) * 4 + chan) * 4 );
+}
+
+static struct x86_reg
 get_addr(
    unsigned vec,
    unsigned chan )
@@ -143,7 +160,7 @@ emit_const(
 }
 
 static void
-emit_input(
+emit_inputf(
    struct x86_function *func,
    unsigned xmm,
    unsigned vec,
@@ -153,6 +170,19 @@ emit_input(
       func,
       make_xmm( xmm ),
       get_input( vec, chan ) );
+}
+
+static void
+emit_inputs(
+   struct x86_function *func,
+   unsigned xmm,
+   unsigned vec,
+   unsigned chan )
+{
+   sse_movups(
+      func,
+      get_input( vec, chan ),
+      make_xmm( xmm ) );
 }
 
 static void
@@ -182,7 +212,7 @@ emit_tempf(
 }
 
 static void
-emit_temps (
+emit_temps(
    struct x86_function *func,
    unsigned xmm,
    unsigned vec,
@@ -192,6 +222,70 @@ emit_temps (
       func,
       get_temp( vec, chan ),
       make_xmm( xmm ) );
+}
+
+static void
+emit_coef(
+   struct x86_function *func,
+   unsigned xmm,
+   unsigned vec,
+   unsigned chan,
+   unsigned member )
+{
+   sse_movss(
+      func,
+      make_xmm( xmm ),
+      get_coef( vec, chan, member ) );
+   sse_shufps(
+      func,
+      make_xmm( xmm ),
+      make_xmm( xmm ),
+      SHUF( 0, 0, 0, 0 ) );
+}
+
+static void
+emit_coef_a0(
+   struct x86_function *func,
+   unsigned xmm,
+   unsigned vec,
+   unsigned chan )
+{
+   emit_coef(
+      func,
+      xmm,
+      vec,
+      chan,
+      0 );
+}
+
+static void
+emit_coef_dadx(
+   struct x86_function *func,
+   unsigned xmm,
+   unsigned vec,
+   unsigned chan )
+{
+   emit_coef(
+      func,
+      xmm,
+      vec,
+      chan,
+      1 );
+}
+
+static void
+emit_coef_dady(
+   struct x86_function *func,
+   unsigned xmm,
+   unsigned vec,
+   unsigned chan )
+{
+   emit_coef(
+      func,
+      xmm,
+      vec,
+      chan,
+      2 );
 }
 
 static void
@@ -676,7 +770,7 @@ emit_fetch(
          break;
 
       case TGSI_FILE_INPUT:
-         emit_input(
+         emit_inputf(
             func,
             xmm,
             reg->SrcRegister.Index,
@@ -1658,6 +1752,76 @@ emit_instruction(
    }
 }
 
+static void
+emit_declaration(
+   struct x86_function *func,
+   struct tgsi_full_declaration *decl )
+{
+   if( decl->Declaration.File == TGSI_FILE_INPUT ) {
+      unsigned first, last, mask;
+      unsigned i, j;
+
+      assert( decl->Declaration.Declare == TGSI_DECLARE_RANGE );
+
+      first = decl->u.DeclarationRange.First;
+      last = decl->u.DeclarationRange.Last;
+      mask = decl->Declaration.UsageMask;
+
+      /* Do not touch WPOS.xy */
+      if( first == 0 ) {
+         mask &= ~TGSI_WRITEMASK_XY;
+         if( mask == TGSI_WRITEMASK_NONE ) {
+            first++;
+         }
+      }
+
+      for( i = first; i <= last; i++ ) {
+         for( j = 0; j < NUM_CHANNELS; j++ ) {
+            if( mask & (1 << j) ) {
+               switch( decl->Interpolation.Interpolate ) {
+               case TGSI_INTERPOLATE_CONSTANT:
+                  emit_coef_a0( func, 0, i, j );
+                  emit_inputs( func, 0, i, j );
+                  break;
+
+               case TGSI_INTERPOLATE_LINEAR:
+                  emit_inputf( func, 0, 0, TGSI_SWIZZLE_X );
+                  emit_coef_dadx( func, 1, i, j );
+                  emit_inputf( func, 2, 0, TGSI_SWIZZLE_Y );
+                  emit_coef_dady( func, 3, i, j );
+                  emit_mul( func, 0, 1 );    /* x * dadx */
+                  emit_coef_a0( func, 4, i, j );
+                  emit_mul( func, 2, 3 );    /* y * dady */
+                  emit_add( func, 0, 4 );    /* x * dadx + a0 */
+                  emit_add( func, 0, 2 );    /* x * dadx + y * dady + a0 */
+                  emit_inputs( func, 0, i, j );
+                  break;
+
+               case TGSI_INTERPOLATE_PERSPECTIVE:
+                  emit_inputf( func, 0, 0, TGSI_SWIZZLE_X );
+                  emit_coef_dadx( func, 1, i, j );
+                  emit_inputf( func, 2, 0, TGSI_SWIZZLE_Y );
+                  emit_coef_dady( func, 3, i, j );
+                  emit_mul( func, 0, 1 );    /* x * dadx */
+                  emit_inputf( func, 4, 0, TGSI_SWIZZLE_W );
+                  emit_coef_a0( func, 5, i, j );
+                  emit_rcp( func, 4, 4 );    /* 1.0 / w */
+                  emit_mul( func, 2, 3 );    /* y * dady */
+                  emit_add( func, 0, 5 );    /* x * dadx + a0 */
+                  emit_add( func, 0, 2 );    /* x * dadx + y * dady + a0 */
+                  emit_mul( func, 0, 4 );    /* (x * dadx + y * dady + a0) / w */
+                  emit_inputs( func, 0, i, j );
+                  break;
+
+               default:
+                  assert( 0 );
+               }
+            }
+         }
+      }
+   }
+}
+
 unsigned
 tgsi_emit_sse2(
    struct tgsi_token *tokens,
@@ -1694,6 +1858,84 @@ tgsi_emit_sse2(
          break;
 
       case TGSI_TOKEN_TYPE_INSTRUCTION:
+         emit_instruction(
+            func,
+            &parse.FullToken.FullInstruction );
+         break;
+
+      default:
+         assert( 0 );
+      }
+   }
+
+   tgsi_parse_free( &parse );
+
+#ifdef WIN32
+   x86_retw( func, 16 );
+#else
+   x86_ret( func );
+#endif
+
+   return 1;
+}
+
+/**
+ * Fragment shaders are responsible for interpolating shader inputs. Because on
+ * x86 we have only 4 GP registers, and here we have 5 shader arguments (input,
+ * output, const, temp and coef), the code is split into two phases --
+ * DECLARATION and INSTRUCTION phase.
+ * GP register holding the output argument is aliased with the coeff argument,
+ * as outputs are not needed in the DECLARATION phase.
+ */
+unsigned
+tgsi_emit_sse2_fs(
+   struct tgsi_token *tokens,
+   struct x86_function *func )
+{
+   struct tgsi_parse_context parse;
+   boolean instruction_phase = FALSE;
+
+   func->csr = func->store;
+
+   /* DECLARATION phase, do not load output argument. */
+   x86_mov(
+      func,
+      get_input_base(),
+      get_argument( 0 ) );
+   x86_mov(
+      func,
+      get_const_base(),
+      get_argument( 2 ) );
+   x86_mov(
+      func,
+      get_temp_base(),
+      get_argument( 3 ) );
+   x86_mov(
+      func,
+      get_coef_base(),
+      get_argument( 4 ) );
+
+   tgsi_parse_init( &parse, tokens );
+
+   while( !tgsi_parse_end_of_tokens( &parse ) ) {
+      tgsi_parse_token( &parse );
+
+      switch( parse.FullToken.Token.Type ) {
+      case TGSI_TOKEN_TYPE_DECLARATION:
+         emit_declaration(
+            func,
+            &parse.FullToken.FullDeclaration );
+         break;
+
+      case TGSI_TOKEN_TYPE_INSTRUCTION:
+         if( !instruction_phase ) {
+            /* INSTRUCTION phase, overwrite coeff with output. */
+            instruction_phase = TRUE;
+            x86_mov(
+               func,
+               get_output_base(),
+               get_argument( 1 ) );
+         }
          emit_instruction(
             func,
             &parse.FullToken.FullInstruction );

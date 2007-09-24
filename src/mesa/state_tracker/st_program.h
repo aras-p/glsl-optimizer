@@ -49,9 +49,13 @@ struct st_fragment_program
    GLboolean error;             /* If program is malformed for any reason. */
    GLuint id; /**< String id, for tracking ProgramStringNotify changes. */
 
-
+   /** The program in TGSI format */
    struct tgsi_token tokens[ST_FP_MAX_TOKENS];
    GLboolean dirty;
+
+#if defined(USE_X86_ASM) || defined(SLANG_X86)
+   struct x86_function  sse2_program;
+#endif
 
    /** Pointer to the corresponding cached shader */
    const struct cso_fragment_shader *fs;

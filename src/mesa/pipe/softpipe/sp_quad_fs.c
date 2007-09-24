@@ -56,30 +56,22 @@ quad_shade_stage(struct quad_stage *qs)
 }
 
 
+#if !defined(XSTDCALL) 
+#if defined(WIN32)
+#define XSTDCALL __stdcall
+#else
+#define XSTDCALL
+#endif
+#endif
 
-
-/**
- * Compute quad's attribute values by linear interpolation.
- *
- * Push into the fp:
- * 
- *   INPUT[attr] = MAD COEF_A0[attr], COEF_DADX[attr], INPUT_WPOS.xxxx
- *   INPUT[attr] = MAD INPUT[attr],   COEF_DADY[attr], INPUT_WPOS.yyyy
- */
-static INLINE void
-linterp(const struct tgsi_interp_coef *coef,
-          struct tgsi_exec_vector *pos, uint ch)
-{
-   uint j;
-   for (j = 0; j < QUAD_SIZE; j++) {
-      const float x = pos->xyzw[0].f[j];
-      const float y = pos->xyzw[1].f[j];
-      pos->xyzw[ch].f[j] = (coef->a0[ch] +
-                            coef->dadx[ch] * x + 
-                            coef->dady[ch] * y);
-   }
-}
-
+#if defined(USE_X86_ASM) || defined(SLANG_X86)
+typedef void (XSTDCALL *sse2_function)(
+   const struct tgsi_exec_vector *input,
+   struct tgsi_exec_vector *output,
+   float (*constant)[4],
+   struct tgsi_exec_vector *temporary,
+   const struct tgsi_interp_coef *coef );
+#endif
 
 /* This should be done by the fragment shader execution unit (code
  * generated from the decl instructions).  Do it here for now.
@@ -127,12 +119,23 @@ shade_quad(
    machine.Inputs[0].xyzw[1].f[2] = fy + 1.0f;
    machine.Inputs[0].xyzw[1].f[3] = fy + 1.0f;
 
-   /* interp Z */
-   linterp(&quad->coef[0], &machine.Inputs[0], 2); /* Z */
-   linterp(&quad->coef[0], &machine.Inputs[0], 3); /* 1/W */
-
    /* run shader */
-   tgsi_exec_machine_run( &machine );
+   if( softpipe->fs->executable != NULL ) {
+#if defined(USE_X86_ASM) || defined(SLANG_X86)
+      sse2_function func = (sse2_function) softpipe->fs->executable;
+      func(
+         machine.Inputs,
+         machine.Outputs,
+         machine.Consts,
+         machine.Temps,
+         machine.InterpCoefs );
+#else
+      assert( 0 );
+#endif
+   }
+   else {
+      tgsi_exec_machine_run( &machine );
+   }
 
    /* store result color (always in output[1]) */
    memcpy(

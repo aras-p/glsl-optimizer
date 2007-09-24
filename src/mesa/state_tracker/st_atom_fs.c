@@ -36,6 +36,7 @@
 #include "pipe/p_defines.h"
 #include "pipe/p_winsys.h"
 #include "pipe/tgsi/mesa/mesa_to_tgsi.h"
+#include "pipe/tgsi/exec/tgsi_core.h"
 #include "pipe/tgsi/exec/tgsi_dump.h"
 
 #include "st_context.h"
@@ -162,6 +163,14 @@ st_translate_fragment_shader(struct st_context *st,
 
    if (TGSI_DEBUG)
       tgsi_dump( stfp->tokens, 0/*TGSI_DUMP_VERBOSE*/ );
+
+#if defined(USE_X86_ASM) || defined(SLANG_X86)
+   if (stfp->sse2_program.csr == stfp->sse2_program.store)
+      tgsi_emit_sse2_fs( stfp->tokens, &stfp->sse2_program );
+
+   if (!cso->state.executable)
+      ((struct cso_fragment_shader*)cso)->state.executable = (void *) x86_get_func( &stfp->sse2_program );
+#endif
 
    stfp->dirty = 0;
 

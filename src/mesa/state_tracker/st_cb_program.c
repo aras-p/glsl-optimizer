@@ -99,12 +99,15 @@ static struct gl_program *st_new_program( GLcontext *ctx,
    }
 
    case GL_FRAGMENT_PROGRAM_ARB:
-   case GL_FRAGMENT_PROGRAM_NV:
-   {
+   case GL_FRAGMENT_PROGRAM_NV: {
       struct st_fragment_program *prog = CALLOC_STRUCT(st_fragment_program);
 
       prog->id = program_id++;
       prog->dirty = 1;
+
+#if defined(USE_X86_ASM) || defined(SLANG_X86)
+      x86_init_func( &prog->sse2_program );
+#endif
 
       return _mesa_init_fragment_program( ctx, 
 					  &prog->Base,
@@ -121,8 +124,7 @@ static void st_delete_program( GLcontext *ctx,
 			       struct gl_program *prog )
 {
    switch( prog->Target ) {
-   case GL_VERTEX_PROGRAM_ARB:
-   {
+   case GL_VERTEX_PROGRAM_ARB: {
 #if defined(USE_X86_ASM) || defined(SLANG_X86)
       struct st_vertex_program *p = (struct st_vertex_program *) prog;
 
@@ -130,7 +132,14 @@ static void st_delete_program( GLcontext *ctx,
 #endif
       break;
    }
+   case GL_FRAGMENT_PROGRAM_ARB: {
+#if defined(USE_X86_ASM) || defined(SLANG_X86)
+      struct st_fragment_program *p = (struct st_fragment_program *) prog;
 
+      x86_release_func( &p->sse2_program );
+#endif
+      break;
+   }
    }
    _mesa_delete_program( ctx, prog );
 }
@@ -156,7 +165,7 @@ static void st_program_string_notify( GLcontext *ctx,
       if (prog == &ctx->FragmentProgram._Current->Base)
 	 st->dirty.st |= ST_NEW_FRAGMENT_PROGRAM;
 
-      p->id = program_id++;      
+      p->id = program_id++;
       p->param_state = p->Base.Base.Parameters->StateFlags;
    }
    else if (target == GL_VERTEX_PROGRAM_ARB) {
@@ -165,7 +174,7 @@ static void st_program_string_notify( GLcontext *ctx,
       if (prog == &ctx->VertexProgram._Current->Base)
 	 st->dirty.st |= ST_NEW_VERTEX_PROGRAM;
 
-      p->id = program_id++;      
+      p->id = program_id++;
       p->param_state = p->Base.Base.Parameters->StateFlags;
 
       /* Also tell tnl about it:
