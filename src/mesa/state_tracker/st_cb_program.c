@@ -56,15 +56,7 @@ static void st_bind_program( GLcontext *ctx,
 {
    struct st_context *st = st_context(ctx);
 
-   switch (target) {
-   case GL_VERTEX_PROGRAM_ARB: 
-      st->dirty.st |= ST_NEW_VERTEX_PROGRAM;
-      break;
-   case GL_FRAGMENT_PROGRAM_ARB:
-      st->dirty.st |= ST_NEW_FRAGMENT_PROGRAM;
-      break;
-   }
-   st->dirty.st |= ST_NEW_LINKAGE;
+   st->dirty.st |= ST_NEW_SHADER;
 }
 
 
@@ -77,9 +69,7 @@ static void st_use_program( GLcontext *ctx,
 {
    struct st_context *st = st_context(ctx);
 
-   st->dirty.st |= ST_NEW_VERTEX_PROGRAM;
-   st->dirty.st |= ST_NEW_FRAGMENT_PROGRAM;
-   st->dirty.st |= ST_NEW_LINKAGE;
+   st->dirty.st |= ST_NEW_SHADER;
 }
 
 
@@ -126,7 +116,7 @@ static struct gl_program *st_new_program( GLcontext *ctx,
       return _mesa_new_program(ctx, target, id);
    }
 
-   st->dirty.st |= ST_NEW_LINKAGE;
+   st->dirty.st |= ST_NEW_SHADER;
 }
 
 
@@ -180,18 +170,12 @@ static void st_program_string_notify( GLcontext *ctx,
    if (target == GL_FRAGMENT_PROGRAM_ARB) {
       struct st_fragment_program *stfp = (struct st_fragment_program *) prog;
 
-      if (prog == &ctx->FragmentProgram._Current->Base)
-	 st->dirty.st |= ST_NEW_FRAGMENT_PROGRAM;
-
       stfp->serialNo++;
 
       stfp->param_state = stfp->Base.Base.Parameters->StateFlags;
    }
    else if (target == GL_VERTEX_PROGRAM_ARB) {
       struct st_vertex_program *stvp = (struct st_vertex_program *) prog;
-
-      if (prog == &ctx->VertexProgram._Current->Base)
-	 st->dirty.st |= ST_NEW_VERTEX_PROGRAM;
 
       stvp->serialNo++;
 
@@ -202,7 +186,7 @@ static void st_program_string_notify( GLcontext *ctx,
       _tnl_program_string(ctx, target, prog);
    }
 
-   st->dirty.st |= ST_NEW_LINKAGE;
+   st->dirty.st |= ST_NEW_SHADER;
 }
 
 

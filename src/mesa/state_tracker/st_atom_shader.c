@@ -416,7 +416,7 @@ const struct st_tracked_state st_update_shader = {
    .name = "st_update_shader",
    .dirty = {
       .mesa  = 0,
-      .st   = ST_NEW_LINKAGE
+      .st   = ST_NEW_SHADER
    },
    .update = update_linkage
 };

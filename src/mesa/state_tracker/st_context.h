@@ -45,7 +45,7 @@ struct cso_blend;
 #define ST_NEW_MESA                    0x1 /* Mesa state has changed */
 #define ST_NEW_FRAGMENT_PROGRAM        0x2
 #define ST_NEW_VERTEX_PROGRAM          0x4
-#define ST_NEW_LINKAGE                 0x8
+#define ST_NEW_SHADER                  0x8
 
 
 struct st_state_flags {
