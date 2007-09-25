@@ -402,6 +402,7 @@ draw_quad_colored(GLcontext *ctx, GLfloat x0, GLfloat y0, GLfloat z,
 static void
 draw_textured_quad(GLcontext *ctx, GLint x, GLint y, GLfloat z,
                    GLsizei width, GLsizei height,
+                   GLfloat zoomX, GLfloat zoomY,
                    struct pipe_mipmap_tree *mt,
                    struct st_vertex_program *stvp,
                    struct st_fragment_program *stfp,
@@ -654,7 +655,8 @@ st_DrawPixels(GLcontext *ctx, GLint x, GLint y, GLsizei width, GLsizei height,
          = make_mipmap_tree(ctx->st, width, height, format, type,
                             unpack, pixels);
       draw_textured_quad(ctx, x, y, ctx->Current.RasterPos[2],
-                         width, height, mt, stvp, stfp, NULL);
+                         width, height, ctx->Pixel.ZoomX, ctx->Pixel.ZoomY,
+                         mt, stvp, stfp, NULL);
       free_mipmap_tree(st->pipe, mt);
    }
    else {
@@ -823,7 +825,8 @@ st_Bitmap(GLcontext *ctx, GLint x, GLint y, GLsizei width, GLsizei height,
    mt = create_bitmap_texture(ctx, width, height, unpack, bitmap);
 
    draw_textured_quad(ctx, x, y, ctx->Current.RasterPos[2],
-                      width, height, mt, stvp, stfp,
+                      width, height, 1.0, 1.0,
+                      mt, stvp, stfp,
                       ctx->Current.RasterColor);
 
    free_mipmap_tree(st->pipe, mt);
