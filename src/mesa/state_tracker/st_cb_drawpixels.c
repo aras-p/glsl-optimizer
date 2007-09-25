@@ -209,7 +209,9 @@ make_vertex_shader(struct st_context *st, GLboolean passColor)
 }
 
 
-
+/**
+ * Make mipmap tree containing the glDrawPixels image.
+ */
 static struct pipe_mipmap_tree *
 make_mipmap_tree(struct st_context *st,
                  GLsizei width, GLsizei height, GLenum format, GLenum type,
@@ -230,11 +232,14 @@ make_mipmap_tree(struct st_context *st,
    cpp = st_sizeof_format(pipeFormat);
 
    mt = CALLOC_STRUCT(pipe_mipmap_tree);
+   if (!mt)
+      return NULL;
 
    if (unpack->BufferObj && unpack->BufferObj->Name) {
       /*
       mt->region = buffer_object_region(unpack->BufferObj);
       */
+      printf("st_DrawPixels (sourcing from PBO not implemented yet)\n");
    }
    else {
       static const GLuint dstImageOffsets = 0;
@@ -654,10 +659,12 @@ st_DrawPixels(GLcontext *ctx, GLint x, GLint y, GLsizei width, GLsizei height,
       struct pipe_mipmap_tree *mt
          = make_mipmap_tree(ctx->st, width, height, format, type,
                             unpack, pixels);
-      draw_textured_quad(ctx, x, y, ctx->Current.RasterPos[2],
-                         width, height, ctx->Pixel.ZoomX, ctx->Pixel.ZoomY,
-                         mt, stvp, stfp, NULL);
-      free_mipmap_tree(st->pipe, mt);
+      if (mt) {
+         draw_textured_quad(ctx, x, y, ctx->Current.RasterPos[2],
+                            width, height, ctx->Pixel.ZoomX, ctx->Pixel.ZoomY,
+                            mt, stvp, stfp, NULL);
+         free_mipmap_tree(st->pipe, mt);
+      }
    }
    else {
       /* blit */
@@ -671,9 +678,9 @@ st_DrawPixels(GLcontext *ctx, GLint x, GLint y, GLsizei width, GLsizei height,
  * Create a texture which represents a bitmap image.
  */
 static struct pipe_mipmap_tree *
-create_bitmap_texture(GLcontext *ctx, GLsizei width, GLsizei height,
-                      const struct gl_pixelstore_attrib *unpack,
-                      const GLubyte *bitmap)
+make_bitmap_texture(GLcontext *ctx, GLsizei width, GLsizei height,
+                    const struct gl_pixelstore_attrib *unpack,
+                    const GLubyte *bitmap)
 {
    struct pipe_context *pipe = ctx->st->pipe;
    const uint flags = PIPE_SURFACE_FLAG_TEXTURE;
@@ -707,6 +714,16 @@ create_bitmap_texture(GLcontext *ctx, GLsizei width, GLsizei height,
     * Create a mipmap tree.
     */
    mt = CALLOC_STRUCT(pipe_mipmap_tree);
+   if (!mt)
+      return NULL;
+
+   if (unpack->BufferObj && unpack->BufferObj->Name) {
+      /*
+      mt->region = buffer_object_region(unpack->BufferObj);
+      */
+      printf("st_Bitmap (sourcing from PBO not implemented yet)\n");
+   }
+
 
    /* allocate texture region/storage */
    mt->region = pipe->region_alloc(pipe, cpp, width, height, flags);
@@ -714,6 +731,10 @@ create_bitmap_texture(GLcontext *ctx, GLsizei width, GLsizei height,
 
    /* map texture region */
    dest = pipe->region_map(pipe, mt->region);
+   if (!dest) {
+      printf("st_Bitmap region_map() failed!?!");
+      return NULL;
+   }
 
    /* Put image into texture region.
     * Note that the image is actually going to be upside down in
@@ -732,7 +753,7 @@ create_bitmap_texture(GLcontext *ctx, GLsizei width, GLsizei height,
          for (col = 0; col < width; col++) {
 
             /* set texel to 255 if bit is set */
-            destRow[comp] = 255; //(*src & mask) ? 255 : 0;
+            destRow[comp] = (*src & mask) ? 255 : 0;
             destRow += cpp;
 
             if (mask == 128U) {
@@ -822,14 +843,15 @@ st_Bitmap(GLcontext *ctx, GLint x, GLint y, GLsizei width, GLsizei height,
 
    st_validate_state(st);
 
-   mt = create_bitmap_texture(ctx, width, height, unpack, bitmap);
+   mt = make_bitmap_texture(ctx, width, height, unpack, bitmap);
+   if (mt) {
+      draw_textured_quad(ctx, x, y, ctx->Current.RasterPos[2],
+                         width, height, 1.0, 1.0,
+                         mt, stvp, stfp,
+                         ctx->Current.RasterColor);
 
-   draw_textured_quad(ctx, x, y, ctx->Current.RasterPos[2],
-                      width, height, 1.0, 1.0,
-                      mt, stvp, stfp,
-                      ctx->Current.RasterColor);
-
-   free_mipmap_tree(st->pipe, mt);
+      free_mipmap_tree(st->pipe, mt);
+   }
 }
 
 
