@@ -30,7 +30,8 @@
   *   Brian Paul
   */
 
-#include "imports.h"
+#include "main/imports.h"
+#include "main/image.h"
 
 #include "st_context.h"
 #include "st_atom.h"
@@ -59,12 +60,6 @@ make_fragment_shader(struct st_context *st)
    GLcontext *ctx = st->ctx;
    struct st_fragment_program *stfp;
    struct gl_program *p;
-   GLuint interpMode[16];
-   GLuint i;
-
-   /* XXX temporary */
-   for (i = 0; i < 16; i++)
-      interpMode[i] = TGSI_INTERPOLATE_LINEAR;
 
    p = ctx->Driver.NewProgram(ctx, GL_FRAGMENT_PROGRAM_ARB, 0);
    if (!p)
@@ -297,13 +292,11 @@ draw_quad(GLcontext *ctx, GLfloat x0, GLfloat y0, GLfloat z,
 
 static void
 draw_textured_quad(GLcontext *ctx, GLint x, GLint y, GLfloat z,
-                   GLsizei width, GLsizei height, GLenum format, GLenum type,
-                   const struct gl_pixelstore_attrib *unpack,
-                   const GLvoid *pixels)
+                   GLsizei width, GLsizei height,
+                   struct pipe_mipmap_tree *mt)
 {
    const GLuint unit = 0;
    struct pipe_context *pipe = ctx->st->pipe;
-   struct pipe_mipmap_tree *mt;
    GLfloat x0, y0, x1, y1;
    GLuint maxWidth, maxHeight;
 
@@ -377,8 +370,6 @@ draw_textured_quad(GLcontext *ctx, GLint x, GLint y, GLfloat z,
 
    /* mipmap tree state: */
    {
-      mt = make_mipmap_tree(ctx->st, width, height, format, type,
-                            unpack, pixels);
       pipe->set_texture_state(pipe, unit, mt);
    }
 
@@ -401,8 +392,6 @@ draw_textured_quad(GLcontext *ctx, GLint x, GLint y, GLfloat z,
    pipe->set_texture_state(pipe, unit, ctx->st->state.texture[unit]);
    pipe->bind_sampler_state(pipe, unit, ctx->st->state.sampler[unit]->data);
    pipe->set_viewport_state(pipe, &ctx->st->state.viewport);
-
-   free_mipmap_tree(pipe, mt);
 }
 
 
@@ -547,8 +536,12 @@ st_DrawPixels(GLcontext *ctx, GLint x, GLint y, GLsizei width, GLsizei height,
        any_pixel_transfer_ops(st) ||
        !compatible_formats(format, type, ps->format)) {
       /* textured quad */
-      draw_textured_quad(ctx, x, y, ctx->Current.RasterPos[2], width, height,
-                         format, type, unpack, pixels);
+      struct pipe_mipmap_tree *mt
+         = make_mipmap_tree(ctx->st, width, height, format, type,
+                            unpack, pixels);
+      draw_textured_quad(ctx, x, y, ctx->Current.RasterPos[2],
+                         width, height, mt);
+      free_mipmap_tree(st->pipe, mt);
    }
    else {
       /* blit */
