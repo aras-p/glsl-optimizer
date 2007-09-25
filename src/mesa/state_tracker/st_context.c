@@ -26,6 +26,8 @@
  **************************************************************************/
 
 #include "main/imports.h"
+#include "main/extensions.h"
+#include "tnl/tnl.h"
 #include "vbo/vbo.h"
 #include "st_public.h"
 #include "st_context.h"
@@ -97,6 +99,9 @@ struct st_context *st_create_context( GLcontext *ctx,
 
    /* XXXX This is temporary! */
    _mesa_enable_sw_extensions(ctx);
+
+   /* we'll always do per-pixel fog in the fragment shader */
+   _tnl_allow_vertex_fog(ctx, GL_FALSE);
 
    return st;
 }

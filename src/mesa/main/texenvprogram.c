@@ -1097,15 +1097,21 @@ create_new_program(GLcontext *ctx, struct state_key *key,
    ASSERT(p.program->Base.NumInstructions <= MAX_INSTRUCTIONS);
 
    /* Allocate final instruction array */
-   program->Base.Instructions
-      = _mesa_alloc_instructions(program->Base.NumInstructions);
-   if (!program->Base.Instructions) {
+   p.program->Base.Instructions
+      = _mesa_alloc_instructions(p.program->Base.NumInstructions);
+   if (!p.program->Base.Instructions) {
       _mesa_error(ctx, GL_OUT_OF_MEMORY,
                   "generating tex env program");
       return;
    }
-   _mesa_copy_instructions(program->Base.Instructions, instBuffer,
-                           program->Base.NumInstructions);
+   _mesa_copy_instructions(p.program->Base.Instructions, instBuffer,
+                           p.program->Base.NumInstructions);
+
+   if (p.program->FogOption) {
+      _mesa_append_fog_code(ctx, p.program);
+      p.program->FogOption = GL_NONE;
+   }
+
 
    /* Notify driver the fragment program has (actually) changed.
     */
