@@ -66,15 +66,15 @@ static void upload_constants( struct st_context *st,
       {
 	 int i;
 
-	 _mesa_printf("%s(%d): %d / %x\n", 
-		      __FUNCTION__, id, params->NumParameters, params->StateFlags);
+	 printf("%s(shader=%d, numParams=%d, stateFlags=0x%x)\n", 
+                __FUNCTION__, id, params->NumParameters, params->StateFlags);
 
 	 for (i = 0; i < params->NumParameters; i++)
-	    fprintf(stderr, "%d: %f %f %f %f\n", i,
-		    params->ParameterValues[i][0],
-		    params->ParameterValues[i][1],
-		    params->ParameterValues[i][2],
-		    params->ParameterValues[i][3]);
+            printf("%d: %f %f %f %f\n", i,
+                   params->ParameterValues[i][0],
+                   params->ParameterValues[i][1],
+                   params->ParameterValues[i][2],
+                   params->ParameterValues[i][3]);
       }
 
       /* load Mesa constants into the constant buffer */
