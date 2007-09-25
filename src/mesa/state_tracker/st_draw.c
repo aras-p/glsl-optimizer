@@ -316,7 +316,7 @@ st_draw_vbo(GLcontext *ctx,
 void 
 st_draw_vertices(GLcontext *ctx, unsigned prim,
                  unsigned numVertex, float *verts,
-                 unsigned numAttribs, const unsigned attribs[])
+                 unsigned numAttribs)
 {
    const float width = ctx->DrawBuffer->Width;
    const float height = ctx->DrawBuffer->Height;
@@ -328,7 +328,6 @@ st_draw_vertices(GLcontext *ctx, unsigned prim,
    unsigned i;
 
    assert(numAttribs > 0);
-   assert(attribs[0] == 0); /* position */
 
    /* convert to clip coords */
    for (i = 0; i < numVertex; i++) {
@@ -356,7 +355,7 @@ st_draw_vertices(GLcontext *ctx, unsigned prim,
       velement.vertex_buffer_index = 0;
       velement.src_format = PIPE_FORMAT_R32G32B32A32_FLOAT;
       velement.dst_offset = 0;
-      pipe->set_vertex_element(pipe, i/**attribs[i]**/, &velement);
+      pipe->set_vertex_element(pipe, i, &velement);
    }
 
    /* draw */

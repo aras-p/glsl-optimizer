@@ -223,10 +223,6 @@ draw_quad(GLcontext *ctx,
           float x0, float y0, float x1, float y1, GLfloat z,
           const GLfloat color[4])
 {
-   static const GLuint attribs[2] = {
-      0, /* pos */
-      3  /* color */
-   };
    GLfloat verts[4][2][4]; /* four verts, two attribs, XYZW */
    GLuint i;
 
@@ -253,7 +249,7 @@ draw_quad(GLcontext *ctx,
       verts[i][1][3] = color[3];
    }
 
-   st_draw_vertices(ctx, PIPE_PRIM_QUADS, 4, (float *) verts, 2, attribs);
+   st_draw_vertices(ctx, PIPE_PRIM_QUADS, 4, (float *) verts, 2);
 }
 
 

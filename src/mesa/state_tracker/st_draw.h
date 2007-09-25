@@ -62,7 +62,7 @@ st_feedback_draw_vbo(GLcontext *ctx,
 void 
 st_draw_vertices(GLcontext *ctx, unsigned prim,
                  unsigned numVertex, float *verts,
-                 unsigned numAttribs, const unsigned attribs[]);
+                 unsigned numAttribs);
 
 
 #endif

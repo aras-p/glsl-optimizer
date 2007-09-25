@@ -312,10 +312,6 @@ static void
 draw_quad(GLcontext *ctx, GLfloat x0, GLfloat y0, GLfloat z,
           GLfloat x1, GLfloat y1)
 {
-   static const GLuint attribs[2] = {
-      0, /* pos */
-      8  /* tex0 */
-   };
    GLfloat verts[4][2][4]; /* four verts, two attribs, XYZW */
    GLuint i;
 
@@ -351,7 +347,7 @@ draw_quad(GLcontext *ctx, GLfloat x0, GLfloat y0, GLfloat z,
       verts[i][1][3] = 1.0; /*Q*/
    }
 
-   st_draw_vertices(ctx, PIPE_PRIM_QUADS, 4, (float *) verts, 2, attribs);
+   st_draw_vertices(ctx, PIPE_PRIM_QUADS, 4, (float *) verts, 2);
 }
 
 
@@ -359,11 +355,6 @@ static void
 draw_quad_colored(GLcontext *ctx, GLfloat x0, GLfloat y0, GLfloat z,
                   GLfloat x1, GLfloat y1, const GLfloat *color)
 {
-   static const GLuint attribs[3] = {
-      0, /* pos */
-      1, /* color */
-      8  /* tex0 */
-   };
    GLfloat verts[4][3][4]; /* four verts, three attribs, XYZW */
    GLuint i;
 
@@ -403,7 +394,7 @@ draw_quad_colored(GLcontext *ctx, GLfloat x0, GLfloat y0, GLfloat z,
       verts[i][2][3] = 1.0; /*Q*/
    }
 
-   st_draw_vertices(ctx, PIPE_PRIM_QUADS, 4, (float *) verts, 3, attribs);
+   st_draw_vertices(ctx, PIPE_PRIM_QUADS, 4, (float *) verts, 3);
 }
 
 
