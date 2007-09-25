@@ -305,7 +305,7 @@ dri_ttm_validate(dri_bo *buf, unsigned int flags)
    mask = DRM_BO_MASK_MEM;
    mask |= flags & (DRM_BO_FLAG_READ | DRM_BO_FLAG_WRITE | DRM_BO_FLAG_EXE);
 
-   err = drmBOValidate(bufmgr_ttm->fd, &ttm_buf->drm_bo, flags, mask, 0);
+   err = drmBOValidate(bufmgr_ttm->fd, &ttm_buf->drm_bo, 0, flags, mask, 0);
 
    if (err == 0) {
       /* XXX: add to fence list for sanity checking */
@@ -343,7 +343,7 @@ dri_ttm_fence_validated(dri_bufmgr *bufmgr, const char *name,
    fence_ttm->refcount = 1;
    fence_ttm->name = name;
    fence_ttm->fence.bufmgr = bufmgr;
-   ret = drmFenceBuffers(bufmgr_ttm->fd, type, &fence_ttm->drm_fence);
+   ret = drmFenceBuffers(bufmgr_ttm->fd, type, 0, &fence_ttm->drm_fence);
    if (ret) {
       fprintf(stderr, "failed to fence (%s): %s\n", name, strerror(-ret));
       free(fence_ttm);
