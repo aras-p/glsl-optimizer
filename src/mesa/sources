@@ -200,14 +200,13 @@ STATETRACKER_SOURCES = \
 	state_tracker/st_atom_depth.c \
 	state_tracker/st_atom_fixedfunction.c \
 	state_tracker/st_atom_framebuffer.c \
-	state_tracker/st_atom_fs.c \
 	state_tracker/st_atom_sampler.c \
 	state_tracker/st_atom_scissor.c \
+	state_tracker/st_atom_shader.c \
 	state_tracker/st_atom_rasterizer.c \
 	state_tracker/st_atom_stipple.c \
 	state_tracker/st_atom_texture.c \
 	state_tracker/st_atom_viewport.c \
-	state_tracker/st_atom_vs.c \
 	state_tracker/st_cb_bufferobjects.c \
 	state_tracker/st_cb_clear.c \
 	state_tracker/st_cb_flush.c \
@@ -224,6 +223,7 @@ STATETRACKER_SOURCES = \
 	state_tracker/st_context.c \
 	state_tracker/st_draw.c \
 	state_tracker/st_format.c \
+	state_tracker/st_program.c \
 	state_tracker/st_mipmap_tree.c
 
 SHADER_SOURCES = \

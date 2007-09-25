@@ -51,15 +51,22 @@
 
 /**
  * Translate a Mesa vertex shader into a TGSI shader.
+ * \param outputMapping  to map vertex program output registers to TGSI
+ *                       output slots
+ * \param tokensOut  destination for TGSI tokens
  * \return  pointer to cached pipe_shader object.
  */
 const struct cso_vertex_shader *
-st_translate_vertex_shader(struct st_context *st,
-                           struct st_vertex_program *stvp)
+st_translate_vertex_shader(const struct st_context *st,
+                           struct st_vertex_program *stvp,
+                           const GLuint outputMapping[],
+                           struct tgsi_token *tokensOut,
+                           GLuint maxTokens)
 {
+   GLuint defaultOutputMapping[VERT_RESULT_MAX];
    struct pipe_shader_state vs;
    const struct cso_vertex_shader *cso;
-   GLuint attr;
+   GLuint attr, i;
 
    memset(&vs, 0, sizeof(vs));
 
@@ -69,31 +76,36 @@ st_translate_vertex_shader(struct st_context *st,
     */
    for (attr = 0; attr < VERT_ATTRIB_MAX; attr++) {
       if (stvp->Base.Base.InputsRead & (1 << attr)) {
-         stvp->input_to_index[attr] = vs.num_inputs;
-         stvp->index_to_input[vs.num_inputs] = attr;
+         const GLuint slot = vs.num_inputs;
+
+         vs.num_inputs++;
+
+         stvp->input_to_index[attr] = slot;
+         stvp->index_to_input[slot] = attr;
+
          switch (attr) {
          case VERT_ATTRIB_POS:
-            vs.input_semantic_name[vs.num_inputs] = TGSI_SEMANTIC_POSITION;
-            vs.input_semantic_index[vs.num_inputs] = 0;
+            vs.input_semantic_name[slot] = TGSI_SEMANTIC_POSITION;
+            vs.input_semantic_index[slot] = 0;
             break;
          case VERT_ATTRIB_WEIGHT:
             /* fall-through */
          case VERT_ATTRIB_NORMAL:
             /* just label as a generic */
-            vs.input_semantic_name[vs.num_inputs] = TGSI_SEMANTIC_GENERIC;
-            vs.input_semantic_index[vs.num_inputs] = 0;
+            vs.input_semantic_name[slot] = TGSI_SEMANTIC_GENERIC;
+            vs.input_semantic_index[slot] = 0;
             break;
          case VERT_ATTRIB_COLOR0:
-            vs.input_semantic_name[vs.num_inputs] = TGSI_SEMANTIC_COLOR;
-            vs.input_semantic_index[vs.num_inputs] = 0;
+            vs.input_semantic_name[slot] = TGSI_SEMANTIC_COLOR;
+            vs.input_semantic_index[slot] = 0;
             break;
          case VERT_ATTRIB_COLOR1:
-            vs.input_semantic_name[vs.num_inputs] = TGSI_SEMANTIC_COLOR;
-            vs.input_semantic_index[vs.num_inputs] = 1;
+            vs.input_semantic_name[slot] = TGSI_SEMANTIC_COLOR;
+            vs.input_semantic_index[slot] = 1;
             break;
          case VERT_ATTRIB_FOG:
-            vs.input_semantic_name[vs.num_inputs] = TGSI_SEMANTIC_FOG;
-            vs.input_semantic_index[vs.num_inputs] = 0;
+            vs.input_semantic_name[slot] = TGSI_SEMANTIC_FOG;
+            vs.input_semantic_index[slot] = 0;
             break;
          case VERT_ATTRIB_TEX0:
          case VERT_ATTRIB_TEX1:
@@ -103,8 +115,8 @@ st_translate_vertex_shader(struct st_context *st,
          case VERT_ATTRIB_TEX5:
          case VERT_ATTRIB_TEX6:
          case VERT_ATTRIB_TEX7:
-            vs.input_semantic_name[vs.num_inputs] = TGSI_SEMANTIC_GENERIC;
-            vs.input_semantic_index[vs.num_inputs] = attr - VERT_ATTRIB_TEX0;
+            vs.input_semantic_name[slot] = TGSI_SEMANTIC_GENERIC;
+            vs.input_semantic_index[slot] = attr - VERT_ATTRIB_TEX0;
             break;
          case VERT_ATTRIB_GENERIC0:
          case VERT_ATTRIB_GENERIC1:
@@ -115,53 +127,71 @@ st_translate_vertex_shader(struct st_context *st,
          case VERT_ATTRIB_GENERIC6:
          case VERT_ATTRIB_GENERIC7:
             assert(attr < VERT_ATTRIB_MAX);
-            vs.input_semantic_name[vs.num_inputs] = TGSI_SEMANTIC_GENERIC;
-            vs.input_semantic_index[vs.num_inputs] = attr - VERT_ATTRIB_GENERIC0;
+            vs.input_semantic_name[slot] = TGSI_SEMANTIC_GENERIC;
+            vs.input_semantic_index[slot] = attr - VERT_ATTRIB_GENERIC0;
             break;
          default:
             assert(0);
          }
-         vs.num_inputs++;
       }
    }
 
+   /* initialize output semantics to defaults */
+   for (i = 0; i < PIPE_MAX_SHADER_OUTPUTS; i++) {
+      vs.output_semantic_name[i] = TGSI_SEMANTIC_GENERIC;
+      vs.output_semantic_index[i] = 0;
+   }
+
    /*
-    * Determine number of outputs, the register mapping and
-    * the semantic information for each vertex output/result.
+    * Determine number of outputs, the (default) output register
+    * mapping and the semantic information for each output.
     */
    for (attr = 0; attr < VERT_RESULT_MAX; attr++) {
       if (stvp->Base.Base.OutputsWritten & (1 << attr)) {
-         /* put this attrib in the next available slot */
-         st->vertex_attrib_to_slot[attr] = vs.num_outputs;
+         GLuint slot;
+
+         if (outputMapping) {
+            slot = outputMapping[attr];
+            assert(slot != ~0);
+         }
+         else {
+            slot = vs.num_outputs;
+            vs.num_outputs++;
+            defaultOutputMapping[attr] = slot;
+         }
+
+         /*
+         printf("Output %u -> slot %u\n", attr, slot);
+         */
 
          switch (attr) {
          case VERT_RESULT_HPOS:
-            vs.output_semantic_name[vs.num_outputs] = TGSI_SEMANTIC_POSITION;
-            vs.output_semantic_index[vs.num_outputs] = 0;
+            vs.output_semantic_name[slot] = TGSI_SEMANTIC_POSITION;
+            vs.output_semantic_index[slot] = 0;
             break;
          case VERT_RESULT_COL0:
-            vs.output_semantic_name[vs.num_outputs] = TGSI_SEMANTIC_COLOR;
-            vs.output_semantic_index[vs.num_outputs] = 0;
+            vs.output_semantic_name[slot] = TGSI_SEMANTIC_COLOR;
+            vs.output_semantic_index[slot] = 0;
             break;
          case VERT_RESULT_COL1:
-            vs.output_semantic_name[vs.num_outputs] = TGSI_SEMANTIC_COLOR;
-            vs.output_semantic_index[vs.num_outputs] = 1;
+            vs.output_semantic_name[slot] = TGSI_SEMANTIC_COLOR;
+            vs.output_semantic_index[slot] = 1;
             break;
          case VERT_RESULT_BFC0:
-            vs.output_semantic_name[vs.num_outputs] = TGSI_SEMANTIC_BCOLOR;
-            vs.output_semantic_index[vs.num_outputs] = 0;
+            vs.output_semantic_name[slot] = TGSI_SEMANTIC_BCOLOR;
+            vs.output_semantic_index[slot] = 0;
             break;
          case VERT_RESULT_BFC1:
-            vs.output_semantic_name[vs.num_outputs] = TGSI_SEMANTIC_BCOLOR;
-            vs.output_semantic_index[vs.num_outputs] = 1;
+            vs.output_semantic_name[slot] = TGSI_SEMANTIC_BCOLOR;
+            vs.output_semantic_index[slot] = 1;
             break;
          case VERT_RESULT_FOGC:
-            vs.output_semantic_name[vs.num_outputs] = TGSI_SEMANTIC_FOG;
-            vs.output_semantic_index[vs.num_outputs] = 0;
+            vs.output_semantic_name[slot] = TGSI_SEMANTIC_FOG;
+            vs.output_semantic_index[slot] = 0;
             break;
          case VERT_RESULT_PSIZ:
-            vs.output_semantic_name[vs.num_outputs] = TGSI_SEMANTIC_PSIZE;
-            vs.output_semantic_index[vs.num_outputs] = 0;
+            vs.output_semantic_name[slot] = TGSI_SEMANTIC_PSIZE;
+            vs.output_semantic_index[slot] = 0;
             break;
          case VERT_RESULT_EDGE:
             assert(0);
@@ -174,46 +204,59 @@ st_translate_vertex_shader(struct st_context *st,
          case VERT_RESULT_TEX5:
          case VERT_RESULT_TEX6:
          case VERT_RESULT_TEX7:
-            vs.output_semantic_name[vs.num_outputs] = TGSI_SEMANTIC_GENERIC;
-            vs.output_semantic_index[vs.num_outputs] = attr - VERT_RESULT_TEX0;
+            vs.output_semantic_name[slot] = TGSI_SEMANTIC_GENERIC;
+            vs.output_semantic_index[slot] = attr - VERT_RESULT_TEX0;
             break;
          case VERT_RESULT_VAR0:
             /* fall-through */
          default:
             assert(attr - VERT_RESULT_VAR0 < MAX_VARYING);
-            vs.output_semantic_name[vs.num_outputs] = TGSI_SEMANTIC_GENERIC;
-            vs.output_semantic_index[vs.num_outputs] = attr - VERT_RESULT_VAR0;
+            vs.output_semantic_name[slot] = TGSI_SEMANTIC_GENERIC;
+            vs.output_semantic_index[slot] = attr - VERT_RESULT_VAR0;
          }
-
-         vs.num_outputs++;
       }
    }
 
 
+   if (outputMapping) {
+      /* find max output slot referenced to compute vs.num_outputs */
+      GLuint maxSlot = 0;
+      for (attr = 0; attr < VERT_RESULT_MAX; attr++) {
+         if (outputMapping[attr] != ~0 && outputMapping[attr] > maxSlot)
+            maxSlot = outputMapping[attr];
+      }
+      vs.num_outputs = maxSlot + 1;
+   }
+   else {
+      outputMapping = defaultOutputMapping;
+   }
+
    /* XXX: fix static allocation of tokens:
     */
    tgsi_mesa_compile_vp_program( &stvp->Base,
+                                 /* inputs */
                                  vs.num_inputs,
                                  stvp->input_to_index,
                                  vs.input_semantic_name,
                                  vs.input_semantic_index,
+                                 /* outputs */
                                  vs.num_outputs,
-                                 st->vertex_attrib_to_slot,
+                                 outputMapping,
                                  vs.output_semantic_name,
                                  vs.output_semantic_index,
-                                 stvp->tokens, ST_FP_MAX_TOKENS );
+                                 /* tokenized result */
+                                 tokensOut, maxTokens);
 
-   vs.tokens = &stvp->tokens[0];
-
+   vs.tokens = tokensOut;
    cso = st_cached_vs_state(st, &vs);
    stvp->vs = cso;
 
    if (TGSI_DEBUG)
-      tgsi_dump( stvp->tokens, 0 );
+      tgsi_dump( tokensOut, 0 );
 
 #if defined(USE_X86_ASM) || defined(SLANG_X86)
    if (stvp->sse2_program.csr == stvp->sse2_program.store)
-      tgsi_emit_sse2( stvp->tokens, &stvp->sse2_program );
+      tgsi_emit_sse2( tokensOut, &stvp->sse2_program );
 
    if (!cso->state.executable)
       ((struct cso_vertex_shader*)cso)->state.executable = (void *) x86_get_func( &stvp->sse2_program );
@@ -246,6 +289,7 @@ static void update_vs( struct st_context *st )
    }
 
    if (st->vp != stvp || stvp->dirty) {
+#if 0
       if (stvp->dirty)
          (void) st_translate_vertex_shader( st, stvp );
 
@@ -260,10 +304,15 @@ static void update_vs( struct st_context *st )
          tgsi_dump( stvp->tokens, 0 );
 #endif
       st->pipe->bind_vs_state(st->pipe, st->state.vs->data);
+#else
+      /* NEW */
+      st->dirty.st |= ST_NEW_LINKAGE;
+
+#endif
    }
 }
 
-
+#if 0
 const struct st_tracked_state st_update_vs = {
    .name = "st_update_vs",
    .dirty = {
@@ -272,7 +321,4 @@ const struct st_tracked_state st_update_vs = {
    },
    .update = update_vs
 };
-
-
-
-
+#endif

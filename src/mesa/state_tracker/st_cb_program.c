@@ -30,24 +30,26 @@
   *   Keith Whitwell <keith@tungstengraphics.com>
   */
 
+#include "main/glheader.h"
+#include "main/macros.h"
+#include "main/enums.h"
+#include "shader/prog_instruction.h"
+#include "shader/prog_parameter.h"
+#include "shader/program.h"
+#include "shader/programopt.h"
+
 #include "st_context.h"
-#include "st_program.h"    
-#include "glheader.h"
-#include "macros.h"
-#include "enums.h"
-#include "prog_instruction.h"
-#include "prog_parameter.h"
-#include "program.h"
-#include "programopt.h"
+#include "st_program.h"
+#include "st_atom_shader.h"
+
 #include "tnl/tnl.h"
 #include "pipe/tgsi/mesa/tgsi_mesa.h"
 
 
-/* Counter to track program string changes:
+/**
+ * Called via ctx->Driver.BindProgram() to bind an ARB vertex or
+ * fragment program.
  */
-static GLuint program_id = 0;
-
-
 static void st_bind_program( GLcontext *ctx,
 			     GLenum target, 
 			     struct gl_program *prog )
@@ -62,8 +64,14 @@ static void st_bind_program( GLcontext *ctx,
       st->dirty.st |= ST_NEW_FRAGMENT_PROGRAM;
       break;
    }
+   st->dirty.st |= ST_NEW_LINKAGE;
 }
 
+
+/**
+ * Called via ctx->Driver.UseProgram() to bind a linked GLSL program
+ * (vertex shader + fragment shader).
+ */
 static void st_use_program( GLcontext *ctx,
 			    GLuint program )
 {
@@ -71,6 +79,7 @@ static void st_use_program( GLcontext *ctx,
 
    st->dirty.st |= ST_NEW_VERTEX_PROGRAM;
    st->dirty.st |= ST_NEW_FRAGMENT_PROGRAM;
+   st->dirty.st |= ST_NEW_LINKAGE;
 }
 
 
@@ -79,14 +88,13 @@ static struct gl_program *st_new_program( GLcontext *ctx,
 					  GLenum target, 
 					  GLuint id )
 {
-//   struct st_context *st = st_context(ctx);
+   struct st_context *st = st_context(ctx);
 
    switch (target) {
    case GL_VERTEX_PROGRAM_ARB: {
       struct st_vertex_program *prog = CALLOC_STRUCT(st_vertex_program);
 
-      prog->id = program_id++;
-      prog->dirty = 1;
+      prog->serialNo = 1;
 
 #if defined(USE_X86_ASM) || defined(SLANG_X86)
       x86_init_func( &prog->sse2_program );
@@ -102,8 +110,7 @@ static struct gl_program *st_new_program( GLcontext *ctx,
    case GL_FRAGMENT_PROGRAM_NV: {
       struct st_fragment_program *prog = CALLOC_STRUCT(st_fragment_program);
 
-      prog->id = program_id++;
-      prog->dirty = 1;
+      prog->serialNo = 1;
 
 #if defined(USE_X86_ASM) || defined(SLANG_X86)
       x86_init_func( &prog->sse2_program );
@@ -118,29 +125,40 @@ static struct gl_program *st_new_program( GLcontext *ctx,
    default:
       return _mesa_new_program(ctx, target, id);
    }
+
+   st->dirty.st |= ST_NEW_LINKAGE;
 }
+
 
 static void st_delete_program( GLcontext *ctx,
 			       struct gl_program *prog )
 {
+   struct st_context *st = st_context(ctx);
+
    switch( prog->Target ) {
-   case GL_VERTEX_PROGRAM_ARB: {
+   case GL_VERTEX_PROGRAM_ARB:
+      {
+         struct st_vertex_program *stvp = (struct st_vertex_program *) prog;
 #if defined(USE_X86_ASM) || defined(SLANG_X86)
-      struct st_vertex_program *p = (struct st_vertex_program *) prog;
-
-      x86_release_func( &p->sse2_program );
+         x86_release_func( &stvp->sse2_program );
 #endif
+         st_remove_vertex_program(st, stvp);
+      }
       break;
-   }
-   case GL_FRAGMENT_PROGRAM_ARB: {
+   case GL_FRAGMENT_PROGRAM_ARB:
+      {
+         struct st_fragment_program *stfp
+            = (struct st_fragment_program *) prog;
 #if defined(USE_X86_ASM) || defined(SLANG_X86)
-      struct st_fragment_program *p = (struct st_fragment_program *) prog;
-
-      x86_release_func( &p->sse2_program );
+         x86_release_func( &stfp->sse2_program );
 #endif
+         st_remove_fragment_program(st, stfp);
+      }
       break;
+   default:
+      assert(0); /* problem */
    }
-   }
+
    _mesa_delete_program( ctx, prog );
 }
 
@@ -160,27 +178,31 @@ static void st_program_string_notify( GLcontext *ctx,
    struct st_context *st = st_context(ctx);
 
    if (target == GL_FRAGMENT_PROGRAM_ARB) {
-      struct st_fragment_program *p = (struct st_fragment_program *)prog;
+      struct st_fragment_program *stfp = (struct st_fragment_program *) prog;
 
       if (prog == &ctx->FragmentProgram._Current->Base)
 	 st->dirty.st |= ST_NEW_FRAGMENT_PROGRAM;
 
-      p->id = program_id++;
-      p->param_state = p->Base.Base.Parameters->StateFlags;
+      stfp->serialNo++;
+
+      stfp->param_state = stfp->Base.Base.Parameters->StateFlags;
    }
    else if (target == GL_VERTEX_PROGRAM_ARB) {
-      struct st_vertex_program *p = (struct st_vertex_program *)prog;
+      struct st_vertex_program *stvp = (struct st_vertex_program *) prog;
 
       if (prog == &ctx->VertexProgram._Current->Base)
 	 st->dirty.st |= ST_NEW_VERTEX_PROGRAM;
 
-      p->id = program_id++;
-      p->param_state = p->Base.Base.Parameters->StateFlags;
+      stvp->serialNo++;
+
+      stvp->param_state = stvp->Base.Base.Parameters->StateFlags;
 
       /* Also tell tnl about it:
        */
       _tnl_program_string(ctx, target, prog);
    }
+
+   st->dirty.st |= ST_NEW_LINKAGE;
 }
 
 

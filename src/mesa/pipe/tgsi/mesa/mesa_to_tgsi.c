@@ -476,6 +476,8 @@ make_input_decl(
 {
    struct tgsi_full_declaration decl;
 
+   assert(semantic_name < TGSI_SEMANTIC_COUNT);
+
    decl = tgsi_default_full_declaration();
    decl.Declaration.File = TGSI_FILE_INPUT;
    decl.Declaration.Declare = TGSI_DECLARE_RANGE;
@@ -499,6 +501,8 @@ make_output_decl(
    GLuint usage_mask )
 {
    struct tgsi_full_declaration decl;
+
+   assert(semantic_name < TGSI_SEMANTIC_COUNT);
 
    decl = tgsi_default_full_declaration();
    decl.Declaration.File = TGSI_FILE_OUTPUT;

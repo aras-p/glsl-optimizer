@@ -102,13 +102,13 @@ feedback_vertex(GLcontext *ctx, const struct draw_context *draw,
     * color and texcoord attribs to use here.
     */
 
-   slot = st->vertex_attrib_to_slot[VERT_RESULT_COL0];
+   slot = st->vertex_result_to_slot[VERT_RESULT_COL0];
    if (slot)
       color = v->data[slot];
    else
       color = ctx->Current.Attrib[VERT_ATTRIB_COLOR0];
 
-   slot = st->vertex_attrib_to_slot[VERT_RESULT_TEX0];
+   slot = st->vertex_result_to_slot[VERT_RESULT_TEX0];
    if (slot)
       texcoord = v->data[slot];
    else

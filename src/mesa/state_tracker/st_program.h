@@ -47,11 +47,11 @@ struct st_fragment_program
 {
    struct gl_fragment_program Base;
    GLboolean error;             /* If program is malformed for any reason. */
-   GLuint id; /**< String id, for tracking ProgramStringNotify changes. */
+
+   GLuint serialNo;
 
    /** The program in TGSI format */
    struct tgsi_token tokens[ST_FP_MAX_TOKENS];
-   GLboolean dirty;
 
 #if defined(USE_X86_ASM) || defined(SLANG_X86)
    struct x86_function  sse2_program;
@@ -68,7 +68,8 @@ struct st_vertex_program
 {
    struct gl_vertex_program Base;  /**< The Mesa vertex program */
    GLboolean error;        /**< Set if program is malformed for any reason. */
-   GLuint id; /**< String id, for tracking ProgramStringNotify changes. */
+
+   GLuint serialNo;
 
    /** maps a Mesa VERT_ATTRIB_x to a packed TGSI input index */
    GLuint input_to_index[MAX_VERTEX_PROGRAM_ATTRIBS];
@@ -77,7 +78,6 @@ struct st_vertex_program
 
    /** The program in TGSI format */
    struct tgsi_token tokens[ST_FP_MAX_TOKENS];
-   GLboolean dirty;
 
 #if defined(USE_X86_ASM) || defined(SLANG_X86)
    struct x86_function  sse2_program;
@@ -90,7 +90,8 @@ struct st_vertex_program
 };
 
 
-extern void st_init_program_functions(struct dd_function_table *functions);
+extern void
+st_init_program_functions(struct dd_function_table *functions);
 
 
 static inline struct st_fragment_program *
@@ -98,6 +99,7 @@ st_fragment_program( struct gl_fragment_program *fp )
 {
    return (struct st_fragment_program *)fp;
 }
+
 
 static inline struct st_vertex_program *
 st_vertex_program( struct gl_vertex_program *vp )
@@ -107,13 +109,18 @@ st_vertex_program( struct gl_vertex_program *vp )
 
 
 extern const struct cso_fragment_shader *
-st_translate_fragment_shader(struct st_context *st,
-                             struct st_fragment_program *fp);
+st_translate_fragment_program(struct st_context *st,
+                              struct st_fragment_program *fp,
+                              const GLuint inputMapping[],
+                              struct tgsi_token *tokens,
+                              GLuint maxTokens);
 
 
 extern const struct cso_vertex_shader *
-st_translate_vertex_shader(struct st_context *st,
-                           struct st_vertex_program *vp);
-
+st_translate_vertex_program(struct st_context *st,
+                            struct st_vertex_program *vp,
+                            const GLuint vert_output_to_slot[],
+                            struct tgsi_token *tokens,
+                            GLuint maxTokens);
 
 #endif

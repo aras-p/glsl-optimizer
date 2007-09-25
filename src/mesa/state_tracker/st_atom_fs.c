@@ -24,11 +24,12 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  * 
  **************************************************************************/
- /*
-  * Authors:
-  *   Keith Whitwell <keith@tungstengraphics.com>
-  *   Brian Paul
-  */
+
+/*
+ * Authors:
+ *   Keith Whitwell <keith@tungstengraphics.com>
+ *   Brian Paul
+ */
 
 #include "shader/prog_parameter.h"
 
@@ -50,14 +51,20 @@
 
 /**
  * Translate a Mesa fragment shader into a TGSI shader.
+ * \param inputMapping  to map fragment program input registers to TGSI
+ *                      input slots
+ * \param tokensOut  destination for TGSI tokens
  * \return  pointer to cached pipe_shader object.
  */
 const struct cso_fragment_shader *
-st_translate_fragment_shader(struct st_context *st,
-                           struct st_fragment_program *stfp)
+st_translate_fragment_shader(const struct st_context *st,
+                             struct st_fragment_program *stfp,
+                             const GLuint inputMapping[],
+                             struct tgsi_token *tokensOut,
+                             GLuint maxTokens)
 {
    GLuint outputMapping[FRAG_RESULT_MAX];
-   GLuint inputMapping[PIPE_MAX_SHADER_INPUTS];
+   GLuint defaultInputMapping[FRAG_ATTRIB_MAX];
    struct pipe_shader_state fs;
    const struct cso_fragment_shader *cso;
    GLuint interpMode[16];  /* XXX size? */
@@ -67,6 +74,7 @@ st_translate_fragment_shader(struct st_context *st,
    /* Check if all fragment programs need the fragment position (in order
     * to do perspective-corrected interpolation).
     */
+   /* XXX temporary! */
    if (st->pipe->get_param(st->pipe, PIPE_PARAM_FS_NEEDS_POS))
       inputsRead |= FRAG_BIT_WPOS;
 
@@ -77,28 +85,32 @@ st_translate_fragment_shader(struct st_context *st,
     */
    for (attr = 0; attr < FRAG_ATTRIB_MAX; attr++) {
       if (inputsRead & (1 << attr)) {
-         inputMapping[attr] = fs.num_inputs;
+         const GLuint slot = fs.num_inputs;
+
+         fs.num_inputs++;
+
+         defaultInputMapping[attr] = slot;
 
          switch (attr) {
          case FRAG_ATTRIB_WPOS:
-            fs.input_semantic_name[fs.num_inputs] = TGSI_SEMANTIC_POSITION;
-            fs.input_semantic_index[fs.num_inputs] = 0;
-            interpMode[fs.num_inputs] = TGSI_INTERPOLATE_CONSTANT;
+            fs.input_semantic_name[slot] = TGSI_SEMANTIC_POSITION;
+            fs.input_semantic_index[slot] = 0;
+            interpMode[slot] = TGSI_INTERPOLATE_CONSTANT;
             break;
          case FRAG_ATTRIB_COL0:
-            fs.input_semantic_name[fs.num_inputs] = TGSI_SEMANTIC_COLOR;
-            fs.input_semantic_index[fs.num_inputs] = 0;
-            interpMode[fs.num_inputs] = TGSI_INTERPOLATE_LINEAR;
+            fs.input_semantic_name[slot] = TGSI_SEMANTIC_COLOR;
+            fs.input_semantic_index[slot] = 0;
+            interpMode[slot] = TGSI_INTERPOLATE_LINEAR;
             break;
          case FRAG_ATTRIB_COL1:
-            fs.input_semantic_name[fs.num_inputs] = TGSI_SEMANTIC_COLOR;
-            fs.input_semantic_index[fs.num_inputs] = 1;
-            interpMode[fs.num_inputs] = TGSI_INTERPOLATE_LINEAR;
+            fs.input_semantic_name[slot] = TGSI_SEMANTIC_COLOR;
+            fs.input_semantic_index[slot] = 1;
+            interpMode[slot] = TGSI_INTERPOLATE_LINEAR;
             break;
          case FRAG_ATTRIB_FOGC:
-            fs.input_semantic_name[fs.num_inputs] = TGSI_SEMANTIC_FOG;
-            fs.input_semantic_index[fs.num_inputs] = 0;
-            interpMode[fs.num_inputs] = TGSI_INTERPOLATE_PERSPECTIVE;
+            fs.input_semantic_name[slot] = TGSI_SEMANTIC_FOG;
+            fs.input_semantic_index[slot] = 0;
+            interpMode[slot] = TGSI_INTERPOLATE_PERSPECTIVE;
             break;
          case FRAG_ATTRIB_TEX0:
          case FRAG_ATTRIB_TEX1:
@@ -108,19 +120,17 @@ st_translate_fragment_shader(struct st_context *st,
          case FRAG_ATTRIB_TEX5:
          case FRAG_ATTRIB_TEX6:
          case FRAG_ATTRIB_TEX7:
-            fs.input_semantic_name[fs.num_inputs] = TGSI_SEMANTIC_GENERIC;
-            fs.input_semantic_index[fs.num_inputs] = attr - FRAG_ATTRIB_TEX0;
-            interpMode[fs.num_inputs] = TGSI_INTERPOLATE_PERSPECTIVE;
+            fs.input_semantic_name[slot] = TGSI_SEMANTIC_GENERIC;
+            fs.input_semantic_index[slot] = attr - FRAG_ATTRIB_TEX0;
+            interpMode[slot] = TGSI_INTERPOLATE_PERSPECTIVE;
             break;
          case FRAG_ATTRIB_VAR0:
             /* fall-through */
          default:
-            fs.input_semantic_name[fs.num_inputs] = TGSI_SEMANTIC_GENERIC;
-            fs.input_semantic_index[fs.num_inputs] = attr - FRAG_ATTRIB_VAR0;
-            interpMode[fs.num_inputs] = TGSI_INTERPOLATE_PERSPECTIVE;
+            fs.input_semantic_name[slot] = TGSI_SEMANTIC_GENERIC;
+            fs.input_semantic_index[slot] = attr - FRAG_ATTRIB_VAR0;
+            interpMode[slot] = TGSI_INTERPOLATE_PERSPECTIVE;
          }
-
-         fs.num_inputs++;
       }
    }
 
@@ -145,34 +155,39 @@ st_translate_fragment_shader(struct st_context *st,
       }
    }
 
+   if (!inputMapping)
+      inputMapping = defaultInputMapping;
+
    /* XXX: fix static allocation of tokens:
     */
    tgsi_mesa_compile_fp_program( &stfp->Base,
+                                 /* inputs */
                                  fs.num_inputs,
                                  inputMapping,
                                  fs.input_semantic_name,
                                  fs.input_semantic_index,
                                  interpMode,
+                                 /* outputs */
                                  outputMapping,
-                                 stfp->tokens, ST_FP_MAX_TOKENS );
+                                 /* tokenized result */
+                                 tokensOut, maxTokens);
 
-   fs.tokens = &stfp->tokens[0];
+
+   fs.tokens = tokensOut;
 
    cso = st_cached_fs_state(st, &fs);
    stfp->fs = cso;
 
    if (TGSI_DEBUG)
-      tgsi_dump( stfp->tokens, 0/*TGSI_DUMP_VERBOSE*/ );
+      tgsi_dump( tokensOut, 0/*TGSI_DUMP_VERBOSE*/ );
 
 #if defined(USE_X86_ASM) || defined(SLANG_X86)
    if (stfp->sse2_program.csr == stfp->sse2_program.store)
-      tgsi_emit_sse2_fs( stfp->tokens, &stfp->sse2_program );
+      tgsi_emit_sse2_fs( tokensOut, &stfp->sse2_program );
 
    if (!cso->state.executable)
       ((struct cso_fragment_shader*)cso)->state.executable = (void *) x86_get_func( &stfp->sse2_program );
 #endif
-
-   stfp->dirty = 0;
 
    return cso;
 }
@@ -200,8 +215,9 @@ static void update_fs( struct st_context *st )
    }
 
    /* if new binding, or shader has changed */
-   if (st->fp != stfp || stfp->dirty) {
+   if (st->fp != stfp /**|| stfp->dirty**/) {
 
+#if 0
       if (stfp->dirty)
          (void) st_translate_fragment_shader( st, stfp );
 
@@ -210,10 +226,17 @@ static void update_fs( struct st_context *st )
       st->state.fs = stfp->fs;
 
       st->pipe->bind_fs_state(st->pipe, st->state.fs->data);
+#else
+
+      /* NEW */
+      st->dirty.st |= ST_NEW_LINKAGE;
+
+#endif
    }
 }
 
 
+#if 0
 const struct st_tracked_state st_update_fs = {
    .name = "st_update_fs",
    .dirty = {
@@ -222,3 +245,4 @@ const struct st_tracked_state st_update_fs = {
    },
    .update = update_fs
 };
+#endif

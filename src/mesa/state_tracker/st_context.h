@@ -45,6 +45,8 @@ struct cso_blend;
 #define ST_NEW_MESA                    0x1 /* Mesa state has changed */
 #define ST_NEW_FRAGMENT_PROGRAM        0x2
 #define ST_NEW_VERTEX_PROGRAM          0x4
+#define ST_NEW_LINKAGE                 0x8
+
 
 struct st_state_flags {
    GLuint mesa;
@@ -119,8 +121,8 @@ struct st_context
 
    GLfloat polygon_offset_scale; /* ?? */
 
-   /** Mapping from VERT_ATTRIB_x to post-transformed vertex slot */
-   GLuint vertex_attrib_to_slot[VERT_RESULT_MAX];
+   /** Mapping from VERT_RESULT_x to post-transformed vertex slot */
+   const GLuint *vertex_result_to_slot;
 
    struct st_vertex_program *vp;    /**< Currently bound vertex program */
    struct st_fragment_program *fp;  /**< Currently bound fragment program */
