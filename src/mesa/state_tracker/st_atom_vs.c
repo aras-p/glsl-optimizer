@@ -46,7 +46,7 @@
 #include "st_program.h"
 
 
-#define TGSI_DEBUG 1
+#define TGSI_DEBUG 0
 
 
 /**
