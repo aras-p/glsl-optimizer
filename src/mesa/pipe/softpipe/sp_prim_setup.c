@@ -41,7 +41,7 @@
 #include "pipe/draw/draw_vertex.h"
 #include "pipe/p_util.h"
 
-
+#define DEBUG_VERTS 0
 
 /**
  * Triangle edge info
@@ -241,15 +241,15 @@ static void flush_spans( struct setup_stage *setup )
    setup->span.right[1] = 0;
 }
 
-#if 0
+#if DEBUG_VERTS
 static void print_vertex(const struct setup_stage *setup,
                          const struct vertex_header *v)
 {
    int i;
-   printf("Vertex:\n");
+   fprintf(stderr, "Vertex: (%p)\n", v);
    for (i = 0; i < setup->quad.nr_attrs; i++) {
-      printf("  %d: %f %f %f\n",  i, 
-          v->data[i][0], v->data[i][1], v->data[i][2]);
+      fprintf(stderr, "  %d: %f %f %f %f\n",  i, 
+              v->data[i][0], v->data[i][1], v->data[i][2], v->data[i][3]);
    }
 }
 #endif
@@ -261,8 +261,8 @@ static boolean setup_sort_vertices( struct setup_stage *setup,
    const struct vertex_header *v1 = prim->v[1];
    const struct vertex_header *v2 = prim->v[2];
 
-#if 0
-   printf("Triangle:\n");
+#if DEBUG_VERTS
+   fprintf(stderr, "Triangle:\n");
    print_vertex(setup, v0);
    print_vertex(setup, v1);
    print_vertex(setup, v2);
@@ -1095,4 +1095,86 @@ struct draw_stage *sp_draw_render_stage( struct softpipe_context *softpipe )
    setup->quad.coef = setup->coef;
 
    return &setup->stage;
+}
+
+
+/* Recalculate det.  This is only used in the test harness below:
+ */
+static void calc_det( struct prim_header *header )
+{
+   /* Window coords: */
+   const float *v0 = header->v[0]->data[0];
+   const float *v1 = header->v[1]->data[0];
+   const float *v2 = header->v[2]->data[0];
+
+   /* edge vectors e = v0 - v2, f = v1 - v2 */
+   const float ex = v0[0] - v2[0];
+   const float ey = v0[1] - v2[1];
+   const float fx = v1[0] - v2[0];
+   const float fy = v1[1] - v2[1];
+   
+   /* det = cross(e,f).z */
+   header->det = ex * fy - ey * fx;
+}
+
+
+
+/* Test harness - feed vertex buffer back into prim pipeline.
+ *
+ * The big issue at this point is that reset_stipple doesn't make it
+ * through the interface.  Probably need to split primitives at reset
+ * stipple, perhaps using the ~0 index marker.
+ */
+void sp_vbuf_setup_draw( struct pipe_context *pipe,
+                         unsigned primitive,
+                         const ushort *elements,
+                         unsigned nr_elements,
+                         const void *vertex_buffer,
+                         unsigned nr_vertices )
+{
+   struct softpipe_context *softpipe = softpipe_context( pipe );
+   struct setup_stage *setup = setup_stage( softpipe->setup );
+   struct prim_header prim;
+   unsigned vertex_size = setup->stage.draw->vertex_info.size * sizeof(float);
+   int i, j;
+
+   prim.det = 0;
+   prim.reset_line_stipple = 0;
+   prim.edgeflags = 0;
+   prim.pad = 0;
+
+   setup->stage.begin( &setup->stage );
+
+   switch (primitive) {
+   case PIPE_PRIM_TRIANGLES:
+      for (i = 0; i < nr_elements; i += 3) {
+         for (j = 0; j < 3; j++) 
+            prim.v[j] = (struct vertex_header *)((char *)vertex_buffer + 
+                                                 elements[i+j] * vertex_size);
+         
+         calc_det(&prim);
+         setup->stage.tri( &setup->stage, &prim );
+      }
+      break;
+
+   case PIPE_PRIM_LINES:
+      for (i = 0; i < nr_elements; i += 2) {
+         for (j = 0; j < 2; j++) 
+            prim.v[j] = (struct vertex_header *)((char *)vertex_buffer + 
+                                                 elements[i+j] * vertex_size);
+         
+         setup->stage.line( &setup->stage, &prim );
+      }
+      break;
+
+   case PIPE_PRIM_POINTS:
+      for (i = 0; i < nr_elements; i += 2) {
+         prim.v[i] = (struct vertex_header *)((char *)vertex_buffer + 
+                                              elements[i] * vertex_size);         
+         setup->stage.point( &setup->stage, &prim );
+      }
+      break;
+   }
+
+   setup->stage.end( &setup->stage );
 }

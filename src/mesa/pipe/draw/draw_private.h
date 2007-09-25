@@ -54,7 +54,8 @@
 struct vertex_header {
    unsigned clipmask:12;
    unsigned edgeflag:1;
-   unsigned pad:19;
+   unsigned pad:3;
+   unsigned vertex_id:16;
 
    float clip[4];
 
@@ -230,6 +231,8 @@ extern int draw_vertex_cache_check_space( struct draw_context *draw,
 extern void draw_vertex_cache_validate( struct draw_context *draw );
 extern void draw_vertex_cache_invalidate( struct draw_context *draw );
 extern void draw_vertex_cache_unreference( struct draw_context *draw );
+extern void draw_vertex_cache_reset_vertex_ids( struct draw_context *draw );
+
 
 extern void draw_vertex_shader_queue_flush( struct draw_context *draw );
 
@@ -255,6 +258,7 @@ dup_vert( struct draw_stage *stage,
 {   
    struct vertex_header *tmp = stage->tmp[idx];
    memcpy(tmp, vert, stage->draw->vertex_info.size * sizeof(float) );
+   tmp->vertex_id = ~0;
    return tmp;
 }
 

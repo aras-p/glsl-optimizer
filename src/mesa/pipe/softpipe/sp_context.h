@@ -146,6 +146,8 @@ struct softpipe_context {
 
    /** The primitive drawing context */
    struct draw_context *draw;
+   struct draw_stage *setup;
+   struct draw_stage *vbuf;
 
    struct pipe_surface *cbuf;      /**< current color buffer (one of cbufs) */
 };

@@ -106,9 +106,12 @@ void draw_flush( struct draw_context *draw )
 static struct prim_header *get_queued_prim( struct draw_context *draw,
 					    unsigned nr_verts )
 {
-   if (draw->pq.queue_nr + 1 >= PRIM_QUEUE_LENGTH ||
-       !draw_vertex_cache_check_space( draw, nr_verts )) 
-   {
+   if (draw->pq.queue_nr + 1 >= PRIM_QUEUE_LENGTH) {
+//      fprintf(stderr, "p");
+      draw_flush( draw );
+   }
+   else if (!draw_vertex_cache_check_space( draw, nr_verts )) {
+//      fprintf(stderr, "v");
       draw_flush( draw );
    }
 

@@ -46,6 +46,8 @@ void draw_vertex_cache_invalidate( struct draw_context *draw )
    
    for (i = 0; i < Elements( draw->vcache.idx ); i++)
       draw->vcache.idx[i] = ~0;
+
+//   fprintf(stderr, "x\n");
 }
 
 
@@ -63,10 +65,14 @@ static struct vertex_header *get_vertex( struct draw_context *draw,
 
       /* If slot is in use, use the overflow area:
        */
-      if (draw->vcache.referenced & (1 << slot))
+      if (draw->vcache.referenced & (1 << slot)) {
+//         fprintf(stderr, "o");
 	 slot = VCACHE_SIZE + draw->vcache.overflow++;
-      else
+      }
+      else {
+//         fprintf(stderr, ".");
          draw->vcache.referenced |= (1 << slot);  /* slot now in use */
+      }
 
       draw->vcache.idx[slot] = i;
 
@@ -79,7 +85,10 @@ static struct vertex_header *get_vertex( struct draw_context *draw,
       /* Need to set the vertex's edge flag here.  If we're being called
        * by do_ef_triangle(), that function needs edge flag info!
        */
+      draw->vcache.vertex[slot]->clipmask = 0;
       draw->vcache.vertex[slot]->edgeflag = 1; /*XXX use user's edge flag! */
+      draw->vcache.vertex[slot]->pad = 0;
+      draw->vcache.vertex[slot]->vertex_id = ~0;
    }
 
    return draw->vcache.vertex[slot];
@@ -110,6 +119,13 @@ static struct vertex_header *get_ubyte_elt_vertex( struct draw_context *draw,
 }
 
 
+void draw_vertex_cache_reset_vertex_ids( struct draw_context *draw )
+{
+   unsigned i;
+
+   for (i = 0; i < Elements(draw->vcache.vertex); i++)
+      draw->vcache.vertex[i]->vertex_id = ~0;
+}
 
 void draw_vertex_cache_validate( struct draw_context *draw )
 {

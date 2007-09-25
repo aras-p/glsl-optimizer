@@ -44,5 +44,39 @@ struct softpipe_context;
 extern struct draw_stage *sp_draw_render_stage( struct softpipe_context *softpipe );
 
 
+/* A special stage to gather the stream of triangles, lines, points
+ * together and reconstruct vertex buffers for hardware upload.
+ *
+ * First attempt, work in progress.
+ * 
+ * TODO:
+ *    - separate out vertex buffer building and primitive emit, ie >1 draw per vb.
+ *    - tell vbuf stage how to build hw vertices directly
+ *    - pass vbuf stage a buffer pointer for direct emit to agp/vram.
+ */
+typedef void (*vbuf_draw_func)( struct pipe_context *pipe,
+                                unsigned prim,
+                                const ushort *elements,
+                                unsigned nr_elements,
+                                const void *vertex_buffer,
+                                unsigned nr_vertices );
+
+
+extern struct draw_stage *sp_draw_vbuf_stage( struct draw_context *draw_context,
+                                              struct pipe_context *pipe,
+                                              vbuf_draw_func draw );
+
+
+
+/* Test harness
+ */
+void sp_vbuf_setup_draw( struct pipe_context *pipe,
+                         unsigned prim,
+                         const ushort *elements,
+                         unsigned nr_elements,
+                         const void *vertex_buffer,
+                         unsigned nr_vertices );
+
+
 
 #endif /* SP_PRIM_SETUP_H */

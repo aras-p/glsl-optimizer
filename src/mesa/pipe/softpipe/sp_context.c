@@ -334,7 +334,19 @@ struct pipe_context *softpipe_create( struct pipe_winsys *pipe_winsys,
     */
    softpipe->draw = draw_create();
    assert(softpipe->draw);
-   draw_set_rasterize_stage(softpipe->draw, sp_draw_render_stage(softpipe));
+   softpipe->setup = sp_draw_render_stage(softpipe);
+
+   if (getenv("SP_VBUF")) {
+      softpipe->vbuf = sp_draw_vbuf_stage(softpipe->draw, 
+                                          &softpipe->pipe, 
+                                          sp_vbuf_setup_draw);
+
+      draw_set_rasterize_stage(softpipe->draw, softpipe->vbuf);
+   }
+   else {
+      draw_set_rasterize_stage(softpipe->draw, softpipe->setup);
+   }
+
 
    sp_init_region_functions(softpipe);
    sp_init_surface_functions(softpipe);

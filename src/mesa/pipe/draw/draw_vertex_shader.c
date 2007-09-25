@@ -189,6 +189,8 @@ void draw_vertex_shader_queue_flush( struct draw_context *draw )
 {
    unsigned i, j;
 
+//   fprintf(stderr, " q(%d) ", draw->vs.queue_nr );
+
    /* run vertex shader on vertex cache entries, four per invokation */
    for (i = 0; i < draw->vs.queue_nr; i += 4) {
       struct vertex_header *dests[4];
