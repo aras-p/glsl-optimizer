@@ -55,36 +55,79 @@
  * the fragment color.
  */
 static struct st_fragment_program *
-make_fragment_shader(struct st_context *st)
+make_fragment_shader(struct st_context *st, GLboolean bitmapMode)
 {
    GLcontext *ctx = st->ctx;
    struct st_fragment_program *stfp;
    struct gl_program *p;
+   GLuint ic = 0;
 
    p = ctx->Driver.NewProgram(ctx, GL_FRAGMENT_PROGRAM_ARB, 0);
    if (!p)
       return NULL;
 
-   p->NumInstructions = 2;
-   p->Instructions = _mesa_alloc_instructions(2);
+   if (bitmapMode)
+      p->NumInstructions = 3;
+   else
+      p->NumInstructions = 2;
+
+   p->Instructions = _mesa_alloc_instructions(p->NumInstructions);
    if (!p->Instructions) {
       ctx->Driver.DeleteProgram(ctx, p);
       return NULL;
    }
-   _mesa_init_instructions(p->Instructions, 2);
-   /* TEX result.color, fragment.texcoord[0], texture[0], 2D; */
-   p->Instructions[0].Opcode = OPCODE_TEX;
-   p->Instructions[0].DstReg.File = PROGRAM_OUTPUT;
-   p->Instructions[0].DstReg.Index = FRAG_RESULT_COLR;
-   p->Instructions[0].SrcReg[0].File = PROGRAM_INPUT;
-   p->Instructions[0].SrcReg[0].Index = FRAG_ATTRIB_TEX0;
-   p->Instructions[0].TexSrcUnit = 0;
-   p->Instructions[0].TexSrcTarget = TEXTURE_2D_INDEX;
+   _mesa_init_instructions(p->Instructions, p->NumInstructions);
+   if (bitmapMode) {
+      /*
+       * XXX This is temporary
+       * We actually need to cull the fragment if the texture value is zero.
+       * But TGSI doesn't support conditionals yet.
+       * Also, we need to compose this fragment shader with the current
+       * user-provided fragment shader so the fragment program is applied
+       * to the fragments which aren't culled.
+       */
+      /* TEX temp0, fragment.texcoord[0], texture[0], 2D; */
+      p->Instructions[ic].Opcode = OPCODE_TEX;
+      p->Instructions[ic].DstReg.File = PROGRAM_TEMPORARY;
+      p->Instructions[ic].DstReg.Index = 0;
+      p->Instructions[ic].SrcReg[0].File = PROGRAM_INPUT;
+      p->Instructions[ic].SrcReg[0].Index = FRAG_ATTRIB_TEX0;
+      p->Instructions[ic].TexSrcUnit = 0;
+      p->Instructions[ic].TexSrcTarget = TEXTURE_2D_INDEX;
+      ic++;
+      /* MUL result.color, temp0.xxxx, fragment.color */
+      p->Instructions[ic].Opcode = OPCODE_MUL;
+      p->Instructions[ic].DstReg.File = PROGRAM_OUTPUT;
+      p->Instructions[ic].DstReg.Index = FRAG_RESULT_COLR;
+      p->Instructions[ic].SrcReg[0].File = PROGRAM_TEMPORARY;
+      p->Instructions[ic].SrcReg[0].Index = 0;
+      p->Instructions[ic].SrcReg[0].Swizzle = SWIZZLE_WWWW;
+      p->Instructions[ic].SrcReg[1].File = PROGRAM_INPUT;
+      p->Instructions[ic].SrcReg[1].Index = FRAG_ATTRIB_COL0;
+      ic++;
+   }
+   else {
+      /* DrawPixels mode */
+      /* TEX result.color, fragment.texcoord[0], texture[0], 2D; */
+      p->Instructions[0].Opcode = OPCODE_TEX;
+      p->Instructions[0].DstReg.File = PROGRAM_OUTPUT;
+      p->Instructions[0].DstReg.Index = FRAG_RESULT_COLR;
+      p->Instructions[0].SrcReg[0].File = PROGRAM_INPUT;
+      p->Instructions[0].SrcReg[0].Index = FRAG_ATTRIB_TEX0;
+      p->Instructions[0].TexSrcUnit = 0;
+      p->Instructions[0].TexSrcTarget = TEXTURE_2D_INDEX;
+      ic++;
+   }
    /* END; */
-   p->Instructions[1].Opcode = OPCODE_END;
+   p->Instructions[ic++].Opcode = OPCODE_END;
+
+   assert(ic == p->NumInstructions);
 
    p->InputsRead = FRAG_BIT_TEX0;
    p->OutputsWritten = (1 << FRAG_RESULT_COLR);
+   if (bitmapMode) {
+      p->InputsRead |= FRAG_BIT_COL0;
+   }
 
    stfp = (struct st_fragment_program *) p;
    st_translate_fragment_program(st, stfp, NULL,
@@ -96,45 +139,67 @@ make_fragment_shader(struct st_context *st)
 
 /**
  * Create a simple vertex shader that just passes through the
- * vertex position and color.
+ * vertex position and texcoord (and color).
  */
 static struct st_vertex_program *
-make_vertex_shader(struct st_context *st)
+make_vertex_shader(struct st_context *st, GLboolean passColor)
 {
-   /* Map VERT_RESULT_HPOS to 0, VERT_RESULT_TEX0 to 1 */
    GLcontext *ctx = st->ctx;
    struct st_vertex_program *stvp;
    struct gl_program *p;
+   GLuint ic = 0;
 
    p = ctx->Driver.NewProgram(ctx, GL_VERTEX_PROGRAM_ARB, 0);
    if (!p)
       return NULL;
 
-   p->NumInstructions = 3;
-   p->Instructions = _mesa_alloc_instructions(3);
+   if (passColor)
+      p->NumInstructions = 4;
+   else
+      p->NumInstructions = 3;
+
+   p->Instructions = _mesa_alloc_instructions(p->NumInstructions);
    if (!p->Instructions) {
       ctx->Driver.DeleteProgram(ctx, p);
       return NULL;
    }
-   _mesa_init_instructions(p->Instructions, 3);
+   _mesa_init_instructions(p->Instructions, p->NumInstructions);
    /* MOV result.pos, vertex.pos; */
    p->Instructions[0].Opcode = OPCODE_MOV;
    p->Instructions[0].DstReg.File = PROGRAM_OUTPUT;
    p->Instructions[0].DstReg.Index = VERT_RESULT_HPOS;
    p->Instructions[0].SrcReg[0].File = PROGRAM_INPUT;
    p->Instructions[0].SrcReg[0].Index = VERT_ATTRIB_POS;
-   /* MOV result.color, vertex.color; */
+   /* MOV result.texcoord0, vertex.texcoord0; */
    p->Instructions[1].Opcode = OPCODE_MOV;
    p->Instructions[1].DstReg.File = PROGRAM_OUTPUT;
    p->Instructions[1].DstReg.Index = VERT_RESULT_TEX0;
    p->Instructions[1].SrcReg[0].File = PROGRAM_INPUT;
    p->Instructions[1].SrcReg[0].Index = VERT_ATTRIB_TEX0;
+   ic = 2;
+   if (passColor) {
+      /* MOV result.color0, vertex.color0; */
+      p->Instructions[ic].Opcode = OPCODE_MOV;
+      p->Instructions[ic].DstReg.File = PROGRAM_OUTPUT;
+      p->Instructions[ic].DstReg.Index = VERT_RESULT_COL0;
+      p->Instructions[ic].SrcReg[0].File = PROGRAM_INPUT;
+      p->Instructions[ic].SrcReg[0].Index = VERT_ATTRIB_COLOR0;
+      ic++;
+   }
+
    /* END; */
-   p->Instructions[2].Opcode = OPCODE_END;
+   p->Instructions[ic].Opcode = OPCODE_END;
+   ic++;
+
+   assert(ic == p->NumInstructions);
 
    p->InputsRead = VERT_BIT_POS | VERT_BIT_TEX0;
    p->OutputsWritten = ((1 << VERT_RESULT_TEX0) |
                         (1 << VERT_RESULT_HPOS));
+   if (passColor) {
+      p->InputsRead |= VERT_BIT_COLOR0;
+      p->OutputsWritten |= (1 << VERT_RESULT_COL0);
+   }
 
    stvp = (struct st_vertex_program *) p;
    st_translate_vertex_program(st, stvp, NULL,
@@ -255,10 +320,10 @@ draw_quad(GLcontext *ctx, GLfloat x0, GLfloat y0, GLfloat z,
    GLuint i;
 
    /* upper-left */
-   verts[0][0][0] = x0;
-   verts[0][0][1] = y0;
-   verts[0][1][0] = 0.0;
-   verts[0][1][1] = 0.0;
+   verts[0][0][0] = x0;    /* attr[0].x */
+   verts[0][0][1] = y0;    /* attr[0].x */
+   verts[0][1][0] = 0.0;   /* attr[1].s */
+   verts[0][1][1] = 0.0;   /* attr[1].t */
 
    /* upper-right */
    verts[1][0][0] = x1;
@@ -291,9 +356,65 @@ draw_quad(GLcontext *ctx, GLfloat x0, GLfloat y0, GLfloat z,
 
 
 static void
+draw_quad_colored(GLcontext *ctx, GLfloat x0, GLfloat y0, GLfloat z,
+                  GLfloat x1, GLfloat y1, const GLfloat *color)
+{
+   static const GLuint attribs[3] = {
+      0, /* pos */
+      1, /* color */
+      8  /* tex0 */
+   };
+   GLfloat verts[4][3][4]; /* four verts, three attribs, XYZW */
+   GLuint i;
+
+   /* upper-left */
+   verts[0][0][0] = x0;    /* attr[0].x */
+   verts[0][0][1] = y0;    /* attr[0].x */
+   verts[0][2][0] = 0.0;   /* attr[2].s */
+   verts[0][2][1] = 0.0;   /* attr[2].t */
+
+   /* upper-right */
+   verts[1][0][0] = x1;
+   verts[1][0][1] = y0;
+   verts[1][2][0] = 1.0;
+   verts[1][2][1] = 0.0;
+
+   /* lower-right */
+   verts[2][0][0] = x1;
+   verts[2][0][1] = y1;
+   verts[2][2][0] = 1.0;
+   verts[2][2][1] = 1.0;
+
+   /* lower-left */
+   verts[3][0][0] = x0;
+   verts[3][0][1] = y1;
+   verts[3][2][0] = 0.0;
+   verts[3][2][1] = 1.0;
+
+   /* same for all verts: */
+   for (i = 0; i < 4; i++) {
+      verts[i][0][2] = z;   /*Z*/
+      verts[i][0][3] = 1.0; /*W*/
+      verts[i][1][0] = color[0];
+      verts[i][1][1] = color[1];
+      verts[i][1][2] = color[2];
+      verts[i][1][3] = color[3];
+      verts[i][2][2] = 0.0; /*R*/
+      verts[i][2][3] = 1.0; /*Q*/
+   }
+
+   st_draw_vertices(ctx, PIPE_PRIM_QUADS, 4, (float *) verts, 3, attribs);
+}
+
+
+
+static void
 draw_textured_quad(GLcontext *ctx, GLint x, GLint y, GLfloat z,
                    GLsizei width, GLsizei height,
-                   struct pipe_mipmap_tree *mt)
+                   struct pipe_mipmap_tree *mt,
+                   struct st_vertex_program *stvp,
+                   struct st_fragment_program *stfp,
+                   const GLfloat *color)
 {
    const GLuint unit = 0;
    struct pipe_context *pipe = ctx->st->pipe;
@@ -320,22 +441,10 @@ draw_textured_quad(GLcontext *ctx, GLint x, GLint y, GLfloat z,
    }
 
    /* fragment shader state: TEX lookup program */
-   {
-      static struct st_fragment_program *stfp = NULL;
-      if (!stfp) {
-         stfp = make_fragment_shader(ctx->st);
-      }
-      pipe->bind_fs_state(pipe, stfp->fs->data);
-   }
+   pipe->bind_fs_state(pipe, stfp->fs->data);
 
    /* vertex shader state: position + texcoord pass-through */
-   {
-      static struct st_vertex_program *stvp = NULL;
-      if (!stvp) {
-         stvp = make_vertex_shader(ctx->st);
-      }
-      pipe->bind_vs_state(pipe, stvp->vs->data);
-   }
+   pipe->bind_vs_state(pipe, stvp->vs->data);
 
    /* texture sampling state: */
    {
@@ -383,7 +492,10 @@ draw_textured_quad(GLcontext *ctx, GLint x, GLint y, GLfloat z,
    y1 = y + height * ctx->Pixel.ZoomY;
 
    /* draw textured quad */
-   draw_quad(ctx, x0, y0, z, x1, y1);
+   if (color)
+      draw_quad_colored(ctx, x0, y0, z, x1, y1, color);
+   else
+      draw_quad(ctx, x0, y0, z, x1, y1);
 
    /* restore GL state */
    pipe->bind_rasterizer_state(pipe, ctx->st->state.rasterizer->data);
@@ -514,9 +626,20 @@ st_DrawPixels(GLcontext *ctx, GLint x, GLint y, GLsizei width, GLsizei height,
               GLenum format, GLenum type,
               const struct gl_pixelstore_attrib *unpack, const GLvoid *pixels)
 {
+   static struct st_fragment_program *stfp = NULL;
+   static struct st_vertex_program *stvp = NULL;
    struct st_context *st = ctx->st;
    struct pipe_surface *ps;
    GLuint bufferFormat;
+
+   /* create the fragment program if needed */
+   if (!stfp) {
+      stfp = make_fragment_shader(ctx->st, GL_FALSE);
+   }
+   /* and vertex program */
+   if (!stvp) {
+      stvp = make_vertex_shader(ctx->st, GL_FALSE);
+   }
 
    st_validate_state(st);
 
@@ -540,7 +663,7 @@ st_DrawPixels(GLcontext *ctx, GLint x, GLint y, GLsizei width, GLsizei height,
          = make_mipmap_tree(ctx->st, width, height, format, type,
                             unpack, pixels);
       draw_textured_quad(ctx, x, y, ctx->Current.RasterPos[2],
-                         width, height, mt);
+                         width, height, mt, stvp, stfp, NULL);
       free_mipmap_tree(st->pipe, mt);
    }
    else {
@@ -550,16 +673,169 @@ st_DrawPixels(GLcontext *ctx, GLint x, GLint y, GLsizei width, GLsizei height,
 }
 
 
+
+/**
+ * Create a texture which represents a bitmap image.
+ */
+static struct pipe_mipmap_tree *
+create_bitmap_texture(GLcontext *ctx, GLsizei width, GLsizei height,
+                      const struct gl_pixelstore_attrib *unpack,
+                      const GLubyte *bitmap)
+{
+   struct pipe_context *pipe = ctx->st->pipe;
+   const uint flags = PIPE_SURFACE_FLAG_TEXTURE;
+   uint numFormats, i, format = 0, cpp, comp, pitch;
+   const uint *formats = ctx->st->pipe->supported_formats(pipe, &numFormats);
+   ubyte *dest;
+   struct pipe_mipmap_tree *mt;
+   int row, col;
+
+   /* find a texture format we know */
+   for (i = 0; i < numFormats; i++) {
+      switch (formats[i]) {
+      case PIPE_FORMAT_U_I8:
+         format = formats[i];
+         cpp = 1;
+         comp = 0;
+         break;
+      case PIPE_FORMAT_U_A8_R8_G8_B8:
+         format = formats[i];
+         cpp = 4;
+         comp = 3; /* alpha channel */ /*XXX little-endian dependency */
+         break;
+      default:
+         /* XXX support more formats */
+         ;
+      }
+   }
+   assert(format);
+
+   /**
+    * Create a mipmap tree.
+    */
+   mt = CALLOC_STRUCT(pipe_mipmap_tree);
+
+   /* allocate texture region/storage */
+   mt->region = pipe->region_alloc(pipe, cpp, width, height, flags);
+   pitch = mt->region->pitch;
+
+   /* map texture region */
+   dest = pipe->region_map(pipe, mt->region);
+
+   /* Put image into texture region.
+    * Note that the image is actually going to be upside down in
+    * the texture.  We deal with that with texcoords.
+    */
+
+   for (row = 0; row < height; row++) {
+      const GLubyte *src = (const GLubyte *) _mesa_image_address2d(unpack,
+                 bitmap, width, height, GL_COLOR_INDEX, GL_BITMAP, row, 0);
+      ubyte *destRow = dest + row * pitch * cpp;
+
+      if (unpack->LsbFirst) {
+         /* Lsb first */
+         GLubyte mask = 1U << (unpack->SkipPixels & 0x7);
+         assert(0);
+         for (col = 0; col < width; col++) {
+
+            /* set texel to 255 if bit is set */
+            destRow[comp] = 255; //(*src & mask) ? 255 : 0;
+            destRow += cpp;
+
+            if (mask == 128U) {
+               src++;
+               mask = 1U;
+            }
+            else {
+               mask = mask << 1;
+            }
+         }
+
+         /* get ready for next row */
+         if (mask != 1)
+            src++;
+      }
+      else {
+         /* Msb first */
+         GLubyte mask = 128U >> (unpack->SkipPixels & 0x7);
+         for (col = 0; col < width; col++) {
+
+            /* set texel to 255 if bit is set */
+            destRow[comp] =(*src & mask) ? 255 : 0;
+            destRow += cpp;
+
+            if (mask == 1U) {
+               src++;
+               mask = 128U;
+            }
+            else {
+               mask = mask >> 1;
+            }
+         }
+
+         /* get ready for next row */
+         if (mask != 128)
+            src++;
+      }
+
+   } /* row */
+
+   /* unmap */
+   pipe->region_unmap(pipe, mt->region);
+
+   mt->target = PIPE_TEXTURE_2D;
+   mt->internal_format = GL_RGBA;
+   mt->format = format;
+   mt->first_level = 0;
+   mt->last_level = 0;
+   mt->width0 = width;
+   mt->height0 = height;
+   mt->depth0 = 1;
+   mt->cpp = cpp;
+   mt->compressed = 0;
+   mt->pitch = mt->region->pitch;
+   mt->depth_pitch = 0;
+   mt->total_height = height;
+   mt->level[0].level_offset = 0;
+   mt->level[0].width = width;
+   mt->level[0].height = height;
+   mt->level[0].depth = 1;
+   mt->level[0].nr_images = 1;
+   mt->level[0].image_offset = NULL;
+   mt->refcount = 1;
+
+   return mt;
+}
+
+
+
 static void
 st_Bitmap(GLcontext *ctx, GLint x, GLint y, GLsizei width, GLsizei height,
           const struct gl_pixelstore_attrib *unpack, const GLubyte *bitmap )
 {
+   static struct st_vertex_program *stvp = NULL;
+   static struct st_fragment_program *stfp = NULL;
    struct st_context *st = ctx->st;
+   struct pipe_mipmap_tree *mt;
+
+   /* create the fragment program if needed */
+   if (!stfp) {
+      stfp = make_fragment_shader(ctx->st, GL_TRUE);
+   }
+   /* and vertex program */
+   if (!stvp) {
+      stvp = make_vertex_shader(ctx->st, GL_TRUE);
+   }
 
    st_validate_state(st);
 
-   fprintf(stderr, "st_Bitmap not implemented yet\n");
-   /* XXX to do */
+   mt = create_bitmap_texture(ctx, width, height, unpack, bitmap);
+
+   draw_textured_quad(ctx, x, y, ctx->Current.RasterPos[2],
+                      width, height, mt, stvp, stfp,
+                      ctx->Current.RasterColor);
+
+   free_mipmap_tree(st->pipe, mt);
 }
 
 
