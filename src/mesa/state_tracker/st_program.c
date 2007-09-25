@@ -31,13 +31,11 @@
   */
 
 
-#include "shader/prog_parameter.h"
-#include "shader/prog_print.h"
-#include "tnl/t_vp_build.h"
+#include "main/imports.h"
+#include "main/mtypes.h"
 
 #include "pipe/p_context.h"
 #include "pipe/p_defines.h"
-#include "pipe/p_winsys.h"
 #include "pipe/tgsi/mesa/mesa_to_tgsi.h"
 #include "pipe/tgsi/exec/tgsi_core.h"
 
