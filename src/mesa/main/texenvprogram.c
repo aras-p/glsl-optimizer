@@ -32,6 +32,7 @@
 #include "shader/prog_instruction.h"
 #include "shader/prog_print.h"
 #include "shader/prog_statevars.h"
+#include "shader/programopt.h"
 #include "texenvprogram.h"
 
 /**
