@@ -415,7 +415,7 @@ update_linkage( struct st_context *st )
 const struct st_tracked_state st_update_shader = {
    .name = "st_update_shader",
    .dirty = {
-      .mesa  = 0,
+      .mesa  = _NEW_PROGRAM,
       .st   = ST_NEW_SHADER
    },
    .update = update_linkage
