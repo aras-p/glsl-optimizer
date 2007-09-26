@@ -86,7 +86,7 @@ static struct gl_program *st_new_program( GLcontext *ctx,
 
       prog->serialNo = 1;
 
-#if defined(USE_X86_ASM) || defined(SLANG_X86)
+#if defined(__i386__) || defined(__386__)
       x86_init_func( &prog->sse2_program );
 #endif
 
@@ -102,7 +102,7 @@ static struct gl_program *st_new_program( GLcontext *ctx,
 
       prog->serialNo = 1;
 
-#if defined(USE_X86_ASM) || defined(SLANG_X86)
+#if defined(__i386__) || defined(__386__)
       x86_init_func( &prog->sse2_program );
 #endif
 
@@ -129,7 +129,7 @@ static void st_delete_program( GLcontext *ctx,
    case GL_VERTEX_PROGRAM_ARB:
       {
          struct st_vertex_program *stvp = (struct st_vertex_program *) prog;
-#if defined(USE_X86_ASM) || defined(SLANG_X86)
+#if defined(__i386__) || defined(__386__)
          x86_release_func( &stvp->sse2_program );
 #endif
          st_remove_vertex_program(st, stvp);
@@ -139,7 +139,7 @@ static void st_delete_program( GLcontext *ctx,
       {
          struct st_fragment_program *stfp
             = (struct st_fragment_program *) prog;
-#if defined(USE_X86_ASM) || defined(SLANG_X86)
+#if defined(__i386__) || defined(__386__)
          x86_release_func( &stfp->sse2_program );
 #endif
          st_remove_fragment_program(st, stfp);

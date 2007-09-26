@@ -2,7 +2,7 @@
 #include "tgsi_core.h"
 #include "x86/rtasm/x86sse.h"
 
-#if defined(USE_X86_ASM) || defined(SLANG_X86)
+#if defined(__i386__) || defined(__386__)
 
 #define FOR_EACH_CHANNEL( CHAN )\
    for( CHAN = 0; CHAN < 4; CHAN++ )

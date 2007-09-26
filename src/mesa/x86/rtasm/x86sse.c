@@ -1,4 +1,4 @@
-#if defined(USE_X86_ASM) || defined(SLANG_X86)
+#if defined(__i386__) || defined(__386__)
 
 #include "imports.h"
 #include "x86sse.h"

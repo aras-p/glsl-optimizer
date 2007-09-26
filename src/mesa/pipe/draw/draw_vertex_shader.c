@@ -64,13 +64,11 @@ compute_clipmask(float cx, float cy, float cz, float cw)
 #endif
 #endif
 
-#if defined(USE_X86_ASM) || defined(SLANG_X86)
-typedef void (XSTDCALL *sse2_function)(
+typedef void (XSTDCALL *codegen_function) (
    const struct tgsi_exec_vector *input,
    struct tgsi_exec_vector *output,
    float (*constant)[4],
    struct tgsi_exec_vector *temporary );
-#endif
 
 /**
  * Transform vertices with the current vertex program/shader
@@ -117,16 +115,12 @@ run_vertex_program(struct draw_context *draw,
 
    /* run shader */
    if( draw->vertex_shader.executable != NULL ) {
-#if defined(USE_X86_ASM) || defined(SLANG_X86)
-      sse2_function func = (sse2_function) draw->vertex_shader.executable;
+      codegen_function func = (codegen_function) draw->vertex_shader.executable;
       func(
          machine.Inputs,
          machine.Outputs,
          machine.Consts,
          machine.Temps );
-#else
-      assert( 0 );
-#endif
    }
    else {
       tgsi_exec_machine_run( &machine );

@@ -253,7 +253,7 @@ st_translate_vertex_program(struct st_context *st,
    if (TGSI_DEBUG)
       tgsi_dump( tokensOut, 0 );
 
-#if defined(USE_X86_ASM) || defined(SLANG_X86)
+#if defined(__i386__) || defined(__386__)
    if (stvp->sse2_program.csr == stvp->sse2_program.store)
       tgsi_emit_sse2( tokensOut, &stvp->sse2_program );
 
@@ -398,7 +398,7 @@ st_translate_fragment_program(struct st_context *st,
    if (TGSI_DEBUG)
       tgsi_dump( tokensOut, 0/*TGSI_DUMP_VERBOSE*/ );
 
-#if defined(USE_X86_ASM) || defined(SLANG_X86)
+#if defined(__i386__) || defined(__386__)
    if (stfp->sse2_program.csr == stfp->sse2_program.store)
       tgsi_emit_sse2_fs( tokensOut, &stfp->sse2_program );
 

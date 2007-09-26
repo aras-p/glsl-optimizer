@@ -53,7 +53,7 @@ struct st_fragment_program
    /** The program in TGSI format */
    struct tgsi_token tokens[ST_FP_MAX_TOKENS];
 
-#if defined(USE_X86_ASM) || defined(SLANG_X86)
+#if defined(__i386__) || defined(__386__)
    struct x86_function  sse2_program;
 #endif
 
@@ -79,7 +79,7 @@ struct st_vertex_program
    /** The program in TGSI format */
    struct tgsi_token tokens[ST_FP_MAX_TOKENS];
 
-#if defined(USE_X86_ASM) || defined(SLANG_X86)
+#if defined(__i386__) || defined(__386__)
    struct x86_function  sse2_program;
 #endif
 

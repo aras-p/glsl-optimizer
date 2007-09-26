@@ -64,14 +64,12 @@ quad_shade_stage(struct quad_stage *qs)
 #endif
 #endif
 
-#if defined(USE_X86_ASM) || defined(SLANG_X86)
-typedef void (XSTDCALL *sse2_function)(
+typedef void (XSTDCALL *codegen_function)(
    const struct tgsi_exec_vector *input,
    struct tgsi_exec_vector *output,
    float (*constant)[4],
    struct tgsi_exec_vector *temporary,
    const struct tgsi_interp_coef *coef );
-#endif
 
 /* This should be done by the fragment shader execution unit (code
  * generated from the decl instructions).  Do it here for now.
@@ -121,17 +119,13 @@ shade_quad(
 
    /* run shader */
    if( softpipe->fs->executable != NULL ) {
-#if defined(USE_X86_ASM) || defined(SLANG_X86)
-      sse2_function func = (sse2_function) softpipe->fs->executable;
+      codegen_function func = (codegen_function) softpipe->fs->executable;
       func(
          machine.Inputs,
          machine.Outputs,
          machine.Consts,
          machine.Temps,
          machine.InterpCoefs );
-#else
-      assert( 0 );
-#endif
    }
    else {
       tgsi_exec_machine_run( &machine );

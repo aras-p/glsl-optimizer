@@ -2,7 +2,7 @@
 #ifndef _X86SSE_H_
 #define _X86SSE_H_
 
-#if defined(USE_X86_ASM) || defined(SLANG_X86)
+#if defined(__i386__) || defined(__386__)
 
 #include "glheader.h"
 
