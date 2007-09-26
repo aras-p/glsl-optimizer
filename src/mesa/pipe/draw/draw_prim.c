@@ -374,7 +374,6 @@ draw_prim( struct draw_context *draw, unsigned start, unsigned count )
 static void
 draw_set_prim( struct draw_context *draw, unsigned prim )
 {
-   _mesa_printf("%s %d\n", __FUNCTION__, prim);
    assert(prim >= PIPE_PRIM_POINTS);
    assert(prim <= PIPE_PRIM_POLYGON);
 
