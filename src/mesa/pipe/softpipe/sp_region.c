@@ -123,21 +123,22 @@ sp_region_release(struct pipe_context *pipe, struct pipe_region **region)
 }
 
 
-/*
- * XXX Move this into core Mesa?
+/**
+ * Copy 2D rect from one place to another.
+ * Position and sizes are in pixels.
  */
 static void
-_mesa_copy_rect(ubyte * dst,
-                unsigned cpp,
-                unsigned dst_pitch,
-                unsigned dst_x,
-                unsigned dst_y,
-                unsigned width,
-                unsigned height,
-                const ubyte * src,
-                unsigned src_pitch,
-		unsigned src_x, 
-		unsigned src_y)
+copy_rect(ubyte * dst,
+          unsigned cpp,
+          unsigned dst_pitch,
+          unsigned dst_x,
+          unsigned dst_y,
+          unsigned width,
+          unsigned height,
+          const ubyte * src,
+          unsigned src_pitch,
+          unsigned src_x, 
+          unsigned src_y)
 {
    unsigned i;
 
@@ -176,10 +177,10 @@ sp_region_data(struct pipe_context *pipe,
 	       const void *src, unsigned src_pitch,
 	       unsigned srcx, unsigned srcy, unsigned width, unsigned height)
 {
-   _mesa_copy_rect(pipe->region_map(pipe, dst) + dst_offset,
-                   dst->cpp,
-                   dst->pitch,
-                   dstx, dsty, width, height, src, src_pitch, srcx, srcy);
+   copy_rect(pipe->region_map(pipe, dst) + dst_offset,
+             dst->cpp,
+             dst->pitch,
+             dstx, dsty, width, height, src, src_pitch, srcx, srcy);
 
    pipe->region_unmap(pipe, dst);
 }
@@ -198,14 +199,14 @@ sp_region_copy(struct pipe_context *pipe,
 {
    assert( dst->cpp == src->cpp );
 
-   _mesa_copy_rect(pipe->region_map(pipe, dst) + dst_offset,
-                   dst->cpp,
-                   dst->pitch,
-                   dstx, dsty, 
-		   width, height, 
-		   pipe->region_map(pipe, src) + src_offset, 
-		   src->pitch, 
-		   srcx, srcy);
+   copy_rect(pipe->region_map(pipe, dst) + dst_offset,
+             dst->cpp,
+             dst->pitch,
+             dstx, dsty, 
+             width, height, 
+             pipe->region_map(pipe, src) + src_offset, 
+             src->pitch, 
+             srcx, srcy);
 
    pipe->region_unmap(pipe, src);
    pipe->region_unmap(pipe, dst);
