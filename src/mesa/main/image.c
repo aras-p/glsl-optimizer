@@ -4625,6 +4625,37 @@ _mesa_clip_readpixels(const GLcontext *ctx,
 
 
 /**
+ * Do clipping for a glCopyTexSubImage call.
+ * The framebuffer source region might extend outside the framebuffer
+ * bounds.  Clip the source region against the framebuffer bounds and
+ * adjust the texture/dest position and size accordingly.
+ *
+ * \return GL_FALSE if region is totally clipped, GL_TRUE otherwise.
+ */
+GLboolean
+_mesa_clip_copytexsubimage(const GLcontext *ctx,
+                           GLint *destX, GLint *destY,
+                           GLint *srcX, GLint *srcY,
+                           GLsizei *width, GLsizei *height)
+{
+   const struct gl_framebuffer *fb = ctx->ReadBuffer;
+   const GLint srcX0 = *srcX, srcY0 = *srcY;
+
+   if (_mesa_clip_to_region(fb->_Xmin, fb->_Ymin, fb->_Xmax, fb->_Ymax,
+                            srcX, srcY, width, height)) {
+      *destX = *destX + *srcX - srcX0;
+      *destY = *destY + *srcY - srcY0;
+
+      return GL_TRUE;
+   }
+   else {
+      return GL_FALSE;
+   }
+}
+
+
+
+/**
  * Clip the rectangle defined by (x, y, width, height) against the bounds
  * specified by [xmin, xmax) and [ymin, ymax).
  * \return GL_FALSE if rect is totally clipped, GL_TRUE otherwise.

@@ -3024,6 +3024,9 @@ _mesa_CopyTexSubImage1D( GLenum target, GLint level,
    struct gl_texture_object *texObj;
    struct gl_texture_image *texImage;
    GLsizei postConvWidth = width;
+   GLint yoffset = 0;
+   GLsizei height = 1;
+
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
 
@@ -3053,8 +3056,13 @@ _mesa_CopyTexSubImage1D( GLenum target, GLint level,
       /* If we have a border, xoffset=-1 is legal.  Bias by border width */
       xoffset += texImage->Border;
 
-      ASSERT(ctx->Driver.CopyTexSubImage1D);
-      (*ctx->Driver.CopyTexSubImage1D)(ctx, target, level, xoffset, x, y, width);
+      if (_mesa_clip_copytexsubimage(ctx, &xoffset, &yoffset, &x, &y,
+                                     &width, &height)) {
+         ASSERT(ctx->Driver.CopyTexSubImage1D);
+         ctx->Driver.CopyTexSubImage1D(ctx, target, level,
+                                       xoffset, x, y, width);
+      }
+
       ctx->NewState |= _NEW_TEXTURE;
    }
  out:
@@ -3099,10 +3107,14 @@ _mesa_CopyTexSubImage2D( GLenum target, GLint level,
       /* If we have a border, xoffset=-1 is legal.  Bias by border width */
       xoffset += texImage->Border;
       yoffset += texImage->Border;
-      
-      ASSERT(ctx->Driver.CopyTexSubImage2D);
-      (*ctx->Driver.CopyTexSubImage2D)(ctx, target, level,
+
+      if (_mesa_clip_copytexsubimage(ctx, &xoffset, &yoffset, &x, &y,
+                                     &width, &height)) {
+         ASSERT(ctx->Driver.CopyTexSubImage2D);
+         ctx->Driver.CopyTexSubImage2D(ctx, target, level,
 				       xoffset, yoffset, x, y, width, height);
+      }
+
       ctx->NewState |= _NEW_TEXTURE;
    }
  out:
@@ -3150,10 +3162,14 @@ _mesa_CopyTexSubImage3D( GLenum target, GLint level,
       yoffset += texImage->Border;
       zoffset += texImage->Border;
       
-      ASSERT(ctx->Driver.CopyTexSubImage3D);
-      (*ctx->Driver.CopyTexSubImage3D)(ctx, target, level,
+      if (_mesa_clip_copytexsubimage(ctx, &xoffset, &yoffset, &x, &y,
+                                     &width, &height)) {
+         ASSERT(ctx->Driver.CopyTexSubImage3D);
+         ctx->Driver.CopyTexSubImage3D(ctx, target, level,
 				       xoffset, yoffset, zoffset,
 				       x, y, width, height);
+      }
+
       ctx->NewState |= _NEW_TEXTURE;
    }
  out:
