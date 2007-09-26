@@ -66,7 +66,8 @@ st_get_string(GLcontext * ctx, GLenum name)
    }
 
    case GL_RENDERER:
-      snprintf(st->renderer, sizeof(st->renderer), "TG3D, %s on %s", 
+      snprintf(st->renderer, sizeof(st->renderer), "Gallium %s, %s on %s", 
+               ST_VERSION_STRING,
 	       pipe->get_name( pipe ),
 	       pipe->winsys->get_name( pipe->winsys ));
 
