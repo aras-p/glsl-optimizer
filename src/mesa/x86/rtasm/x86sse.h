@@ -120,7 +120,7 @@ void x86_fixup_fwd_jump( struct x86_function *p,
 
 void x86_jmp( struct x86_function *p, GLubyte *label );
 
-void x86_call( struct x86_function *p, GLubyte *label );
+void x86_call( struct x86_function *p, void (*label)() );
 
 /* michal:
  * Temporary. As I need immediate operands, and dont want to mess with the codegen,

@@ -408,7 +408,7 @@ emit_func_call1(
    struct x86_function *func,
    unsigned xmm_dst,
    unsigned storage,
-   unsigned char *code )
+   void (*code)() )
 {
    x86_push(
       func,
@@ -443,7 +443,7 @@ emit_func_call2(
    unsigned xmm_dst,
    unsigned xmm_src,
    unsigned storage,
-   unsigned char *code )
+   void (*code)() )
 {
    x86_push(
       func,
@@ -506,7 +506,7 @@ emit_cos(
       func,
       xmm_dst,
       ALIGN16( (unsigned) g_cos_storage ),
-      (unsigned char *) cos4f );
+      cos4f );
 }
 
 /* XXX: move into machine context */
@@ -538,7 +538,7 @@ emit_sin (struct x86_function *func,
       func,
       xmm_dst,
       ALIGN16( (unsigned) g_sin_storage ),
-      (unsigned char *) sin4f );
+      sin4f );
 }
 
 static void
@@ -596,7 +596,7 @@ emit_pow(
       xmm_dst,
       xmm_src,
       ALIGN16( (unsigned) g_pow_storage ),
-      (unsigned char *) pow4f );
+      pow4f );
 }
 
 /* XXX: move into machine context */
@@ -629,7 +629,7 @@ emit_ex2(
       func,
       xmm_dst,
       ALIGN16( (unsigned) g_ex2_storage ),
-      (unsigned char *) ex24f );
+      ex24f );
 }
 
 /* XXX: move into machine context */
@@ -655,7 +655,7 @@ emit_lg2(
       func,
       xmm_dst,
       ALIGN16( (unsigned) g_lg2_storage ),
-      (unsigned char *) lg24f );
+      lg24f );
 }
 
 /* XXX: move into machine context */
@@ -681,7 +681,7 @@ emit_flr(
       func,
       xmm_dst,
       ALIGN16( (unsigned) g_flr_storage ),
-      (unsigned char *) flr4f );
+      flr4f );
 }
 
 /* XXX: move into machine context */
@@ -707,7 +707,7 @@ emit_frc(
       func,
       xmm_dst,
       ALIGN16( (unsigned) g_frc_storage ),
-      (unsigned char *) frc4f );
+      frc4f );
 }
 
 static void

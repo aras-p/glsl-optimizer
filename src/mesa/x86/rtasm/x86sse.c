@@ -6,6 +6,12 @@
 #define DISASSEM 0
 #define X86_TWOB 0x0f
 
+static GLubyte *cptr( void (*label)() )
+{
+   return (char *)(unsigned long)label;
+}
+
+
 /* Emit bytes to the instruction stream:
  */
 static void emit_1b( struct x86_function *p, GLbyte b0 )
@@ -252,10 +258,10 @@ void x86_jmp( struct x86_function *p, GLubyte *label)
    emit_1i(p, label - x86_get_label(p) - 4);
 }
 
-void x86_call( struct x86_function *p, GLubyte *label)
+void x86_call( struct x86_function *p, void (*label)())
 {
    emit_1ub(p, 0xe8);
-   emit_1i(p, label - x86_get_label(p) - 4);
+   emit_1i(p, cptr(label) - x86_get_label(p) - 4);
 }
 
 /* michal:
@@ -1138,7 +1144,7 @@ void (*x86_get_func( struct x86_function *p ))(void)
 {
    if (DISASSEM)
       _mesa_printf("disassemble %p %p\n", p->store, p->csr);
-   return (void (*)(void))p->store;
+   return (void (*)(void)) (unsigned long) p->store;
 }
 
 #else
