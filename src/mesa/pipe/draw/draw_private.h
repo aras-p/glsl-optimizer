@@ -126,6 +126,8 @@ struct draw_context
    struct {
       struct draw_stage *first;  /**< one of the following */
 
+      struct draw_stage *validate; 
+
       /* stages (in logical order) */
       struct draw_stage *feedback;
       struct draw_stage *flatshade;
@@ -171,13 +173,10 @@ struct draw_context
    uint attrib_front0, attrib_back0;
    uint attrib_front1, attrib_back1;
 
-   unsigned nr_vertices;
-
+   unsigned drawing;
    unsigned prim;   /**< current prim type: PIPE_PRIM_x */
    unsigned reduced_prim;
 
-   struct vertex_header *(*get_vertex)( struct draw_context *draw,
-					unsigned i );
 
    /* Post-tnl vertex cache:
     */
@@ -186,6 +185,9 @@ struct draw_context
       unsigned idx[VCACHE_SIZE + VCACHE_OVERFLOW];
       struct vertex_header *vertex[VCACHE_SIZE + VCACHE_OVERFLOW];
       unsigned overflow;
+
+      struct vertex_header *(*get_vertex)( struct draw_context *draw,
+                                           unsigned i );
    } vcache;
 
    /* Vertex shader queue:
@@ -219,6 +221,7 @@ extern struct draw_stage *draw_offset_stage( struct draw_context *context );
 extern struct draw_stage *draw_clip_stage( struct draw_context *context );
 extern struct draw_stage *draw_flatshade_stage( struct draw_context *context );
 extern struct draw_stage *draw_cull_stage( struct draw_context *context );
+extern struct draw_stage *draw_validate_stage( struct draw_context *context );
 
 
 extern void draw_free_tmps( struct draw_stage *stage );
@@ -228,7 +231,6 @@ extern void draw_alloc_tmps( struct draw_stage *stage, unsigned nr );
 extern int draw_vertex_cache_check_space( struct draw_context *draw, 
 					  unsigned nr_verts );
 
-extern void draw_vertex_cache_validate( struct draw_context *draw );
 extern void draw_vertex_cache_invalidate( struct draw_context *draw );
 extern void draw_vertex_cache_unreference( struct draw_context *draw );
 extern void draw_vertex_cache_reset_vertex_ids( struct draw_context *draw );
@@ -242,6 +244,17 @@ extern void draw_vertex_fetch( struct draw_context *draw,
 			       struct tgsi_exec_machine *machine,
 			       const unsigned *elts,
 			       unsigned count );
+
+
+#define DRAW_FLUSH_PRIM_QUEUE                0x1
+#define DRAW_FLUSH_VERTEX_CACHE_INVALIDATE   0x2
+#define DRAW_FLUSH_DRAW                      0x4
+
+
+void draw_do_flush( struct draw_context *draw,
+                    unsigned flags );
+
+
 
 
 /**

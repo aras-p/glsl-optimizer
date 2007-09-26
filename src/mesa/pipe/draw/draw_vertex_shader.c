@@ -169,13 +169,12 @@ run_vertex_program(struct draw_context *draw,
          vOut[j]->data[slot][1] = machine.Outputs[slot].xyzw[1].f[j];
          vOut[j]->data[slot][2] = machine.Outputs[slot].xyzw[2].f[j];
          vOut[j]->data[slot][3] = machine.Outputs[slot].xyzw[3].f[j];
-         /*
+         
          printf("output %d: %f %f %f %f\n", slot,
                 vOut[j]->data[slot][0],
                 vOut[j]->data[slot][1],
                 vOut[j]->data[slot][2],
                 vOut[j]->data[slot][3]);
-         */
       }
    } /* loop over vertices */
 }
@@ -189,7 +188,7 @@ void draw_vertex_shader_queue_flush( struct draw_context *draw )
 {
    unsigned i, j;
 
-//   fprintf(stderr, " q(%d) ", draw->vs.queue_nr );
+   fprintf(stderr, " q(%d) ", draw->vs.queue_nr );
 
    /* run vertex shader on vertex cache entries, four per invokation */
    for (i = 0; i < draw->vs.queue_nr; i += 4) {

@@ -41,7 +41,7 @@
 #include "pipe/draw/draw_vertex.h"
 #include "pipe/p_util.h"
 
-#define DEBUG_VERTS 0
+#define DEBUG_VERTS 1
 
 /**
  * Triangle edge info

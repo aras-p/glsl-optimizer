@@ -58,14 +58,15 @@ static unsigned reduced_prim[PIPE_PRIM_POLYGON + 1] = {
 };
 
 
-void draw_flush( struct draw_context *draw )
+static void draw_prim_queue_flush( struct draw_context *draw )
 {
    struct draw_stage *first = draw->pipeline.first;
    unsigned i;
 
    /* Make sure all vertices are available:
     */
-   draw_vertex_cache_validate(draw);
+   if (draw->vs.queue_nr)
+      draw_vertex_shader_queue_flush(draw);
 
    switch (draw->reduced_prim) {
    case RP_TRI:
@@ -91,9 +92,38 @@ void draw_flush( struct draw_context *draw )
       break;
    }
 
-   draw->pq.queue_nr = 0;
-
+   draw->pq.queue_nr = 0;   
    draw_vertex_cache_unreference( draw );
+}
+
+
+void draw_do_flush( struct draw_context *draw, 
+                    unsigned flush )
+{
+   if ((flush & (DRAW_FLUSH_PRIM_QUEUE |
+                 DRAW_FLUSH_VERTEX_CACHE_INVALIDATE |
+                 DRAW_FLUSH_DRAW)) && 
+        draw->pq.queue_nr)
+   {
+      draw_prim_queue_flush(draw);
+   }
+
+   if ((flush & (DRAW_FLUSH_VERTEX_CACHE_INVALIDATE |
+                 DRAW_FLUSH_DRAW)) && 
+       draw->drawing)
+   {
+      draw_vertex_cache_invalidate(draw);
+   }
+
+   if ((flush & DRAW_FLUSH_DRAW) && 
+       draw->drawing)
+   {
+      draw->pipeline.first->end( draw->pipeline.first );
+      draw->drawing = 0;
+      draw->prim = ~0;
+      draw->pipeline.first = draw->pipeline.validate;
+   }
+
 }
 
 
@@ -106,13 +136,13 @@ void draw_flush( struct draw_context *draw )
 static struct prim_header *get_queued_prim( struct draw_context *draw,
 					    unsigned nr_verts )
 {
-   if (draw->pq.queue_nr + 1 >= PRIM_QUEUE_LENGTH) {
-//      fprintf(stderr, "p");
-      draw_flush( draw );
-   }
-   else if (!draw_vertex_cache_check_space( draw, nr_verts )) {
+   if (!draw_vertex_cache_check_space( draw, nr_verts )) {
 //      fprintf(stderr, "v");
-      draw_flush( draw );
+      draw_do_flush( draw, DRAW_FLUSH_VERTEX_CACHE_INVALIDATE );
+   }
+   else if (draw->pq.queue_nr + 1 >= PRIM_QUEUE_LENGTH) {
+//      fprintf(stderr, "p");
+      draw_do_flush( draw, DRAW_FLUSH_PRIM_QUEUE );
    }
 
    return &draw->pq.queue[draw->pq.queue_nr++];
@@ -129,7 +159,7 @@ static void do_point( struct draw_context *draw,
    prim->reset_line_stipple = 0;
    prim->edgeflags = 1;
    prim->pad = 0;
-   prim->v[0] = draw->get_vertex( draw, i0 );
+   prim->v[0] = draw->vcache.get_vertex( draw, i0 );
 }
 
 
@@ -143,8 +173,8 @@ static void do_line( struct draw_context *draw,
    prim->reset_line_stipple = reset_stipple;
    prim->edgeflags = 1;
    prim->pad = 0;
-   prim->v[0] = draw->get_vertex( draw, i0 );
-   prim->v[1] = draw->get_vertex( draw, i1 );
+   prim->v[0] = draw->vcache.get_vertex( draw, i0 );
+   prim->v[1] = draw->vcache.get_vertex( draw, i1 );
 }
 
 static void do_triangle( struct draw_context *draw,
@@ -157,9 +187,9 @@ static void do_triangle( struct draw_context *draw,
    prim->reset_line_stipple = 1;
    prim->edgeflags = ~0;
    prim->pad = 0;
-   prim->v[0] = draw->get_vertex( draw, i0 );
-   prim->v[1] = draw->get_vertex( draw, i1 );
-   prim->v[2] = draw->get_vertex( draw, i2 );
+   prim->v[0] = draw->vcache.get_vertex( draw, i0 );
+   prim->v[1] = draw->vcache.get_vertex( draw, i1 );
+   prim->v[2] = draw->vcache.get_vertex( draw, i2 );
 }
 			  
 static void do_ef_triangle( struct draw_context *draw,
@@ -170,9 +200,9 @@ static void do_ef_triangle( struct draw_context *draw,
 			    unsigned i2 )
 {
    struct prim_header *prim = get_queued_prim( draw, 3 );
-   struct vertex_header *v0 = draw->get_vertex( draw, i0 );
-   struct vertex_header *v1 = draw->get_vertex( draw, i1 );
-   struct vertex_header *v2 = draw->get_vertex( draw, i2 );
+   struct vertex_header *v0 = draw->vcache.get_vertex( draw, i0 );
+   struct vertex_header *v1 = draw->vcache.get_vertex( draw, i1 );
+   struct vertex_header *v2 = draw->vcache.get_vertex( draw, i2 );
 
    prim->reset_line_stipple = reset_stipple;
 
@@ -202,7 +232,7 @@ static void do_quad( struct draw_context *draw,
 /**
  * Main entrypoint to draw some number of points/lines/triangles
  */
-void
+static void
 draw_prim( struct draw_context *draw, unsigned start, unsigned count )
 {
    unsigned i;
@@ -341,14 +371,15 @@ draw_prim( struct draw_context *draw, unsigned start, unsigned count )
 }
 
 
-void
+static void
 draw_set_prim( struct draw_context *draw, unsigned prim )
 {
+   _mesa_printf("%s %d\n", __FUNCTION__, prim);
    assert(prim >= PIPE_PRIM_POINTS);
    assert(prim <= PIPE_PRIM_POLYGON);
 
    if (reduced_prim[prim] != draw->reduced_prim) {
-      draw_flush( draw );
+      draw_do_flush( draw, DRAW_FLUSH_PRIM_QUEUE );
       draw->reduced_prim = reduced_prim[prim];
    }
 
@@ -356,91 +387,32 @@ draw_set_prim( struct draw_context *draw, unsigned prim )
 }
 
 
-unsigned
-draw_prim_info(unsigned prim, unsigned *first, unsigned *incr)
-{
-   assert(prim >= PIPE_PRIM_POINTS);
-   assert(prim <= PIPE_PRIM_POLYGON);
-
-   switch (prim) {
-   case PIPE_PRIM_POINTS:
-      *first = 1;
-      *incr = 1;
-      return 0;
-   case PIPE_PRIM_LINES:
-      *first = 2;
-      *incr = 2;
-      return 0;
-   case PIPE_PRIM_LINE_STRIP:
-      *first = 2;
-      *incr = 1;
-      return 0;
-   case PIPE_PRIM_LINE_LOOP:
-      *first = 2;
-      *incr = 1;
-      return 1;
-   case PIPE_PRIM_TRIANGLES:
-      *first = 3;
-      *incr = 3;
-      return 0;
-   case PIPE_PRIM_TRIANGLE_STRIP:
-      *first = 3;
-      *incr = 1;
-      return 0;
-   case PIPE_PRIM_TRIANGLE_FAN:
-   case PIPE_PRIM_POLYGON:
-      *first = 3;
-      *incr = 1;
-      return 1;
-   case PIPE_PRIM_QUADS:
-      *first = 4;
-      *incr = 4;
-      return 0;
-   case PIPE_PRIM_QUAD_STRIP:
-      *first = 4;
-      *incr = 2;
-      return 0;
-   default:
-      assert(0);
-      *first = 1;
-      *incr = 1;
-      return 0;
-   }
-}
-
-
-unsigned
-draw_trim( unsigned count, unsigned first, unsigned incr )
-{
-   if (count < first)
-      return 0;
-   else
-      return count - (count - first) % incr; 
-}
 
 
 /**
- * Allocate space for temporary post-transform vertices, such as for clipping.
+ * Draw vertex arrays
+ * This is the main entrypoint into the drawing module.
+ * \param prim  one of PIPE_PRIM_x
+ * \param start  index of first vertex to draw
+ * \param count  number of vertices to draw
  */
-void draw_alloc_tmps( struct draw_stage *stage, unsigned nr )
+void
+draw_arrays(struct draw_context *draw, unsigned prim,
+            unsigned start, unsigned count)
 {
-   stage->nr_tmps = nr;
+   if (!draw->drawing) {
+      draw->drawing = 1;
 
-   if (nr) {
-      ubyte *store = (ubyte *) malloc(MAX_VERTEX_SIZE * nr);
-      unsigned i;
-
-      stage->tmp = (struct vertex_header **) malloc(sizeof(struct vertex_header *) * nr);
-      
-      for (i = 0; i < nr; i++)
-	 stage->tmp[i] = (struct vertex_header *)(store + i * MAX_VERTEX_SIZE);
+      /* tell drawing pipeline we're beginning drawing */
+      draw->pipeline.first->begin( draw->pipeline.first );
    }
+
+   if (draw->prim != prim) {
+      draw_set_prim( draw, prim );
+   }
+
+   /* drawing done here: */
+   draw_prim(draw, start, count);
 }
 
-void draw_free_tmps( struct draw_stage *stage )
-{
-   if (stage->tmp) {
-      free(stage->tmp[0]);
-      free(stage->tmp);
-   }
-}
+

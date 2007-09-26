@@ -57,7 +57,6 @@ struct draw_stage;
 #define CLIP_BOTTOM_BIT  0x08
 #define CLIP_NEAR_BIT    0x10
 #define CLIP_FAR_BIT     0x20
-#define CLIP_CULL_BIT    (1 << (6 + PIPE_MAX_CLIP_PLANES)) /*unused? */
 /*@}*/
 
 /**
@@ -92,10 +91,6 @@ void draw_set_rasterizer_state( struct draw_context *draw,
 void draw_set_rasterize_stage( struct draw_context *draw,
                                struct draw_stage *stage );
 
-unsigned draw_prim_info( unsigned prim, unsigned *first, unsigned *incr );
-
-unsigned draw_trim( unsigned count, unsigned first, unsigned incr );
-
 
 void
 draw_set_vertex_shader(struct draw_context *draw,
@@ -125,9 +120,22 @@ void
 draw_set_mapped_feedback_buffer(struct draw_context *draw, uint index,
                                 void *buffer, uint size);
 
-void
-draw_arrays(struct draw_context *draw, unsigned prim,
-            unsigned start, unsigned count);
+
+/***********************************************************************
+ * draw_prim.c 
+ */
+
+void draw_arrays(struct draw_context *draw, unsigned prim,
+		 unsigned start, unsigned count);
+
+void draw_flush(struct draw_context *draw);
+
+/***********************************************************************
+ * draw_debug.c 
+ */
+boolean draw_validate_prim( unsigned prim, unsigned length );
+unsigned draw_trim_prim( unsigned mode, unsigned count );
+
 
 
 #endif /* DRAW_CONTEXT_H */

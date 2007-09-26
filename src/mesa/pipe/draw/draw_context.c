@@ -49,6 +49,8 @@ struct draw_context *draw_create( void )
    draw->pipeline.flatshade = draw_flatshade_stage( draw );
    draw->pipeline.cull      = draw_cull_stage( draw );
    draw->pipeline.feedback  = draw_feedback_stage( draw );
+   draw->pipeline.validate  = draw_validate_stage( draw );
+   draw->pipeline.first     = draw->pipeline.validate;
 
    ASSIGN_4V( draw->plane[0], -1,  0,  0, 1 );
    ASSIGN_4V( draw->plane[1],  1,  0,  0, 1 );
@@ -73,6 +75,8 @@ struct draw_context *draw_create( void )
    draw->attrib_front1 = -1;
    draw->attrib_back1 = -1;
 
+   draw_vertex_cache_invalidate( draw );
+
    return draw;
 }
 
@@ -84,75 +88,19 @@ void draw_destroy( struct draw_context *draw )
 }
 
 
-/**
- * Rebuild the rendering pipeline.
- */
-static void validate_pipeline( struct draw_context *draw )
+
+void draw_flush( struct draw_context *draw )
 {
-   struct draw_stage *next = draw->pipeline.rasterize;
-
-   /*
-    * NOTE: we build up the pipeline in end-to-start order.
-    *
-    * TODO: make the current primitive part of the state and build
-    * shorter pipelines for lines & points.
-    */
-
-   if (draw->rasterizer->fill_cw != PIPE_POLYGON_MODE_FILL ||
-       draw->rasterizer->fill_ccw != PIPE_POLYGON_MODE_FILL) {
-      draw->pipeline.unfilled->next = next;
-      next = draw->pipeline.unfilled;
-   }
-	 
-   if (draw->rasterizer->offset_cw ||
-       draw->rasterizer->offset_ccw) {
-      draw->pipeline.offset->next = next;
-      next = draw->pipeline.offset;
-   }
-
-   if (draw->rasterizer->light_twoside) {
-      draw->pipeline.twoside->next = next;
-      next = draw->pipeline.twoside;
-   }
-
-   /* Always run the cull stage as we calculate determinant there
-    * also.  Fix this..
-    */
-   {
-      draw->pipeline.cull->next = next;
-      next = draw->pipeline.cull;
-   }
-
-   /* Clip stage
-    */
-   {
-      draw->pipeline.clip->next = next;
-      next = draw->pipeline.clip;
-   }
-
-   /* Do software flatshading prior to clipping.  XXX: should only do
-    * this for clipped primitives, ie it is a part of the clip
-    * routine.
-    */
-   if (draw->rasterizer->flatshade) {
-      draw->pipeline.flatshade->next = next;
-      next = draw->pipeline.flatshade;
-   }
-
-   if (draw->feedback.enabled || draw->feedback.discard) {
-      draw->pipeline.feedback->next = next;
-      next = draw->pipeline.feedback;
-   }
-
-   draw->pipeline.first = next;
+   if (draw->drawing)
+      draw_do_flush( draw, DRAW_FLUSH_DRAW );
 }
 
 
 void draw_set_feedback_state( struct draw_context *draw,
                               const struct pipe_feedback_state *feedback )
 {
+   draw_flush( draw );
    draw->feedback = *feedback;
-   validate_pipeline( draw );
 }
 
 
@@ -163,8 +111,8 @@ void draw_set_feedback_state( struct draw_context *draw,
 void draw_set_rasterizer_state( struct draw_context *draw,
                                 const struct pipe_rasterizer_state *raster )
 {
+   draw_flush( draw );
    draw->rasterizer = raster;
-   validate_pipeline( draw );
 }
 
 
@@ -175,6 +123,7 @@ void draw_set_rasterizer_state( struct draw_context *draw,
 void draw_set_rasterize_stage( struct draw_context *draw,
                                struct draw_stage *stage )
 {
+   draw_flush( draw );
    draw->pipeline.rasterize = stage;
 }
 
@@ -185,6 +134,8 @@ void draw_set_rasterize_stage( struct draw_context *draw,
 void draw_set_clip_state( struct draw_context *draw,
                           const struct pipe_clip_state *clip )
 {
+   draw_flush( draw );
+
    assert(clip->nr <= PIPE_MAX_CLIP_PLANES);
    memcpy(&draw->plane[6], clip->ucp, clip->nr * sizeof(clip->ucp[0]));
    draw->nr_planes = 6 + clip->nr;
@@ -199,6 +150,7 @@ void draw_set_clip_state( struct draw_context *draw,
 void draw_set_viewport_state( struct draw_context *draw,
                               const struct pipe_viewport_state *viewport )
 {
+   draw_flush( draw );
    draw->viewport = *viewport; /* struct copy */
 }
 
@@ -207,6 +159,7 @@ void
 draw_set_vertex_shader(struct draw_context *draw,
                        const struct pipe_shader_state *shader)
 {
+   draw_flush( draw );
    draw->vertex_shader = *shader;
 }
 
@@ -216,6 +169,8 @@ draw_set_vertex_buffer(struct draw_context *draw,
                        unsigned attr,
                        const struct pipe_vertex_buffer *buffer)
 {
+   draw_flush( draw );
+
    assert(attr < PIPE_ATTRIB_MAX);
    draw->vertex_buffer[attr] = *buffer;
 }
@@ -226,6 +181,8 @@ draw_set_vertex_element(struct draw_context *draw,
                         unsigned attr,
                         const struct pipe_vertex_element *element)
 {
+   draw_flush( draw );
+
    assert(attr < PIPE_ATTRIB_MAX);
    draw->vertex_element[attr] = *element;
 }
@@ -238,6 +195,8 @@ void
 draw_set_mapped_vertex_buffer(struct draw_context *draw,
                               unsigned attr, const void *buffer)
 {
+   draw_flush( draw );
+
    draw->mapped_vbuffer[attr] = buffer;
 }
 
@@ -246,6 +205,8 @@ void
 draw_set_mapped_constant_buffer(struct draw_context *draw,
                                 const void *buffer)
 {
+   draw_flush( draw );
+
    draw->mapped_constants = buffer;
 }
 
@@ -254,8 +215,41 @@ void
 draw_set_mapped_feedback_buffer(struct draw_context *draw, uint index,
                                 void *buffer, uint size)
 {
+   draw_flush( draw );
+
    assert(index < PIPE_MAX_FEEDBACK_ATTRIBS);
    draw->mapped_feedback_buffer[index] = buffer;
    draw->mapped_feedback_buffer_size[index] = size; /* in bytes */
 }
+
+
+
+
+
+/**
+ * Allocate space for temporary post-transform vertices, such as for clipping.
+ */
+void draw_alloc_tmps( struct draw_stage *stage, unsigned nr )
+{
+   stage->nr_tmps = nr;
+
+   if (nr) {
+      ubyte *store = (ubyte *) malloc(MAX_VERTEX_SIZE * nr);
+      unsigned i;
+
+      stage->tmp = (struct vertex_header **) malloc(sizeof(struct vertex_header *) * nr);
+      
+      for (i = 0; i < nr; i++)
+	 stage->tmp[i] = (struct vertex_header *)(store + i * MAX_VERTEX_SIZE);
+   }
+}
+
+void draw_free_tmps( struct draw_stage *stage )
+{
+   if (stage->tmp) {
+      free(stage->tmp[0]);
+      free(stage->tmp);
+   }
+}
+
 

@@ -99,6 +99,8 @@ void draw_vertex_fetch( struct draw_context *draw,
 
          /*printf("  %u: %f %f %f %f\n", attr, p[0], p[1], p[2], p[3]);*/
 
+         /* Transform to AoS xxxx/yyyy/zzzz/wwww representation:
+          */
          machine->Inputs[attr].xyzw[0].f[j] = p[0]; /*X*/
          machine->Inputs[attr].xyzw[1].f[j] = p[1]; /*Y*/
          machine->Inputs[attr].xyzw[2].f[j] = p[2]; /*Z*/

@@ -95,14 +95,16 @@ softpipe_draw_elements(struct pipe_context *pipe,
 {
    struct softpipe_context *sp = softpipe_context(pipe);
    struct draw_context *draw = sp->draw;
-   unsigned length, first, incr, i;
+   unsigned i;
 
-   /* first, check that the primitive is not malformed */
-   draw_prim_info( mode, &first, &incr );
-   length = draw_trim( count, first, incr );
-   if (!length)
-      return TRUE;
+   /* first, check that the primitive is not malformed.  It is the
+    * state tracker's responsibility to do send only correctly formed
+    * primitives down.
+    */
+//   count = draw_trim_prim( mode, count );
 
+   if (!draw_validate_prim( mode, count ))
+      assert(0);
 
    if (sp->dirty)
       softpipe_update_derived( sp );
@@ -150,6 +152,9 @@ softpipe_draw_elements(struct pipe_context *pipe,
 
    /* draw! */
    draw_arrays(draw, mode, start, count);
+
+   /* always flush for now */
+   draw_flush(draw);
 
    /*
     * unmap vertex/index buffers

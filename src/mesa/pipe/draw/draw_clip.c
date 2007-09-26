@@ -248,8 +248,6 @@ do_clip_tri( struct draw_stage *stage,
    inlist[1] = header->v[1];
    inlist[2] = header->v[2];
 
-   clipmask &= ~CLIP_CULL_BIT;
-
    while (clipmask && n >= 3) {
       const unsigned plane_idx = ffs(clipmask)-1;
       const float *plane = clipper->plane[plane_idx];
@@ -330,8 +328,6 @@ do_clip_line( struct draw_stage *stage,
    float t0 = 0.0F;
    float t1 = 0.0F;
    struct prim_header newprim;
-
-   clipmask &= ~CLIP_CULL_BIT;
 
    while (clipmask) {
       const unsigned plane_idx = ffs(clipmask)-1;

@@ -157,15 +157,16 @@ VF_SOURCES = \
 
 
 DRAW_SOURCES = \
-	pipe/draw/draw_arrays.c \
 	pipe/draw/draw_clip.c \
 	pipe/draw/draw_context.c\
 	pipe/draw/draw_cull.c \
+	pipe/draw/draw_debug.c \
 	pipe/draw/draw_feedback.c \
 	pipe/draw/draw_flatshade.c \
 	pipe/draw/draw_offset.c \
 	pipe/draw/draw_prim.c \
 	pipe/draw/draw_twoside.c \
+	pipe/draw/draw_validate.c \
 	pipe/draw/draw_vertex.c \
 	pipe/draw/draw_vertex_cache.c \
 	pipe/draw/draw_vertex_fetch.c \

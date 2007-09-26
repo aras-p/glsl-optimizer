@@ -69,6 +69,8 @@ static void
 feedback_vertex(struct draw_stage *stage, const struct vertex_header *vertex)
 {
    struct feedback_stage *fs = (struct feedback_stage *) stage;
+
+#if 0
    const struct pipe_feedback_state *feedback = &stage->draw->feedback;
    const uint select = feedback->interleaved ? 0 : 1;
    uint i;

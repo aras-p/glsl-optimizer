@@ -90,6 +90,9 @@ static struct vertex_header *get_vertex( struct draw_context *draw,
       draw->vcache.vertex[slot]->pad = 0;
       draw->vcache.vertex[slot]->vertex_id = ~0;
    }
+   else {
+//      fprintf(stderr, "*");
+   }
 
    return draw->vcache.vertex[slot];
 }
@@ -127,10 +130,6 @@ void draw_vertex_cache_reset_vertex_ids( struct draw_context *draw )
       draw->vcache.vertex[i]->vertex_id = ~0;
 }
 
-void draw_vertex_cache_validate( struct draw_context *draw )
-{
-   draw_vertex_shader_queue_flush( draw );
-}
 
 void draw_vertex_cache_unreference( struct draw_context *draw )
 {
@@ -168,19 +167,21 @@ void
 draw_set_mapped_element_buffer( struct draw_context *draw,
                                 unsigned eltSize, void *elements )
 {
+//   draw_statechange( draw );
+
    /* choose the get_vertex() function to use */
    switch (eltSize) {
    case 0:
-      draw->get_vertex = get_vertex;
+      draw->vcache.get_vertex = get_vertex;
       break;
    case 1:
-      draw->get_vertex = get_ubyte_elt_vertex;
+      draw->vcache.get_vertex = get_ubyte_elt_vertex;
       break;
    case 2:
-      draw->get_vertex = get_ushort_elt_vertex;
+      draw->vcache.get_vertex = get_ushort_elt_vertex;
       break;
    case 4:
-      draw->get_vertex = get_uint_elt_vertex;
+      draw->vcache.get_vertex = get_uint_elt_vertex;
       break;
    default:
       assert(0);
