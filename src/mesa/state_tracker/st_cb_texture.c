@@ -37,6 +37,7 @@
 #include "main/texstore.h"
 
 #include "state_tracker/st_context.h"
+#include "state_tracker/st_cb_fbo.h"
 #include "state_tracker/st_cb_texture.h"
 #include "state_tracker/st_format.h"
 #include "state_tracker/st_mipmap_tree.h"
@@ -1049,63 +1050,39 @@ st_TexSubImage1D(GLcontext * ctx,
 
 
 /**
- * Get the pipe_region which is the source for any glCopyTex[Sub]Image call.
- *
- * Do the best we can using the blitter.  A future project is to use
- * the texture engine and fragment programs for these copies.
+ * Do a CopyTex[Sub]Image using an optimized hardware (blit) path.
+ * Note that the region to copy has already been clip tested.
+ * \return GL_TRUE if success, GL_FALSE if failure (use a fallback)
  */
-static const struct pipe_region *
-get_teximage_source(GLcontext *ctx, GLenum internalFormat)
-{
-#if 00
-   struct intel_renderbuffer *irb;
-
-   DBG("%s %s\n", __FUNCTION__,
-       _mesa_lookup_enum_by_nr(internalFormat));
-
-   switch (internalFormat) {
-   case GL_DEPTH_COMPONENT:
-   case GL_DEPTH_COMPONENT16_ARB:
-      irb = intel_get_renderbuffer(intel->ctx.ReadBuffer, BUFFER_DEPTH);
-      if (irb && irb->region && irb->region->cpp == 2)
-         return irb->region;
-      return NULL;
-   case GL_DEPTH24_STENCIL8_EXT:
-   case GL_DEPTH_STENCIL_EXT:
-      irb = intel_get_renderbuffer(intel->ctx.ReadBuffer, BUFFER_DEPTH);
-      if (irb && irb->region && irb->region->cpp == 4)
-         return irb->region;
-      return NULL;
-   case GL_RGBA:
-   case GL_RGBA8:
-      return intel_readbuf_region(intel);
-   case GL_RGB:
-      if (intel->intelScreen->front.cpp == 2)
-         return intel_readbuf_region(intel);
-      return NULL;
-   default:
-      return NULL;
-   }
-#else
-   return NULL;
-#endif
-}
-
-
 static GLboolean
 do_copy_texsubimage(GLcontext *ctx,
                     struct st_texture_image *stImage,
-                    GLenum internalFormat,
-                    GLint dstx, GLint dsty,
-                    GLint x, GLint y, GLsizei width, GLsizei height)
+                    GLenum baseFormat,
+                    GLint destX, GLint destY,
+                    GLint srcX, GLint srcY, GLsizei width, GLsizei height)
 {
-   const struct pipe_region *src =
-      get_teximage_source(ctx, internalFormat);
+   struct gl_framebuffer *fb = ctx->ReadBuffer;
+   struct st_renderbuffer *strb;
+   struct pipe_context *pipe = ctx->st->pipe;
+   struct pipe_region *src_region, *dest_region;
+   uint dest_offset, src_offset;
+   uint dest_format, src_format;
 
-   if (!stImage->mt || !src) {
-      DBG("%s fail %p %p\n", __FUNCTION__, (void *) stImage->mt, (void *) src);
-      return GL_FALSE;
+   /* determine if copying depth or color data */
+   if (baseFormat == GL_DEPTH_COMPONENT) {
+      strb = st_renderbuffer(fb->_DepthBuffer);
    }
+   else if (baseFormat == GL_DEPTH_STENCIL_EXT) {
+      strb = st_renderbuffer(fb->_StencilBuffer);
+   }
+   else {
+      /* baseFormat == GL_RGB, GL_RGBA, GL_ALPHA, etc */
+      strb = st_renderbuffer(fb->_ColorReadBuffer);
+   }
+
+   assert(strb);
+   assert(strb->surface);
+   assert(stImage->mt);
 
 #if 00 /* XXX FIX flush/locking */
    intelFlush(ctx);
@@ -1113,49 +1090,55 @@ do_copy_texsubimage(GLcontext *ctx,
    LOCK_HARDWARE(intel);
 #endif
 
-   {
-      GLuint image_offset = st_miptree_image_offset(stImage->mt,
-                                                       stImage->face,
-                                                       stImage->level);
-      const GLint orig_x = x;
-      const GLint orig_y = y;
-      const struct gl_framebuffer *fb = ctx->DrawBuffer;
+   src_format = strb->surface->format;
+   dest_format = stImage->mt->format;
+   if (src_format != dest_format)
+      return GL_FALSE;
 
-      if (_mesa_clip_to_region(fb->_Xmin, fb->_Ymin, fb->_Xmax, fb->_Ymax,
-                               &x, &y, &width, &height)) {
-         /* Update dst for clipped src.  Need to also clip the source rect.
-          */
-         dstx += x - orig_x;
-         dsty += y - orig_y;
+   src_region = strb->surface->region;
+   dest_region = stImage->mt->region;
+   if (!src_region || !dest_region)
+      return GL_FALSE;
+   if (src_region->cpp != dest_region->cpp)
+      return GL_FALSE;
 
-         if (!(ctx->ReadBuffer->Name == 0)) {
-	    /* XXX this looks bogus ? */
-	    /* FBO: invert Y */
-	    y = ctx->ReadBuffer->Height - y - 1;
-         }
+   src_offset = 0;
+   dest_offset = st_miptree_image_offset(stImage->mt,
+                                         stImage->face,
+                                         stImage->level);
 
-         /* A bit of fiddling to get the blitter to work with -ve
-          * pitches.  But we get a nice inverted blit this way, so it's
-          * worth it:
-          */
+   /* XXX may need to invert image depending on window vs. user-created FBO */
+
 #if 0
-         intelEmitCopyBlit(intel,
-                           stImage->mt->cpp,
-                           -src->pitch,
-                           src->buffer,
-                           src->height * src->pitch * src->cpp,
-                           stImage->mt->pitch,
-                           stImage->mt->region->buffer,
-                           image_offset,
-                           x, y + height, dstx, dsty, width, height,
-			   GL_COPY); /* ? */
-         intel_batchbuffer_flush(intel->batch);
+   /* A bit of fiddling to get the blitter to work with -ve
+    * pitches.  But we get a nice inverted blit this way, so it's
+    * worth it:
+    */
+   intelEmitCopyBlit(intel,
+                     stImage->mt->cpp,
+                     -src->pitch,
+                     src->buffer,
+                     src->height * src->pitch * src->cpp,
+                     stImage->mt->pitch,
+                     stImage->mt->region->buffer,
+                     dest_offset,
+                     x, y + height, dstx, dsty, width, height,
+                     GL_COPY); /* ? */
+   intel_batchbuffer_flush(intel->batch);
 #else
-         /* XXX use pipe->region_copy() ??? */
-         (void) image_offset;
+
+   pipe->region_copy(pipe,
+                     /* dest */
+                     dest_region,
+                     dest_offset,
+                     destX, destY,
+                     /* src */
+                     src_region,
+                     src_offset,
+                     srcX, srcY,
+                     /* size */
+                     width, height);
 #endif
-      }
-   }
 
 #if 0
    UNLOCK_HARDWARE(intel);
@@ -1266,7 +1249,7 @@ st_CopyTexSubImage1D(GLcontext * ctx, GLenum target, GLint level,
       _mesa_select_tex_object(ctx, texUnit, target);
    struct gl_texture_image *texImage =
       _mesa_select_tex_image(ctx, texObj, target, level);
-   GLenum internalFormat = texImage->InternalFormat;
+   const GLenum baseFormat = texImage->TexFormat->BaseFormat;
 
    /* XXX need to check <border> as in above function? */
 
@@ -1275,7 +1258,7 @@ st_CopyTexSubImage1D(GLcontext * ctx, GLenum target, GLint level,
 
    if (!do_copy_texsubimage(ctx,
                             st_texture_image(texImage),
-                            internalFormat, xoffset, 0, x, y, width, 1)) {
+                            baseFormat, xoffset, 0, x, y, width, 1)) {
 #if 0
       _swrast_copy_texsubimage1d(ctx, target, level, xoffset, x, y, width);
 #endif
