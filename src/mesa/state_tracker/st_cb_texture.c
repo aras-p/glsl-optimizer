@@ -1050,23 +1050,90 @@ st_TexSubImage1D(GLcontext * ctx,
 
 
 /**
+ * Return 0 for GL_TEXTURE_CUBE_MAP_POSITIVE_X,
+ *        1 for GL_TEXTURE_CUBE_MAP_NEGATIVE_X,
+ *        etc.
+ * XXX duplicated from main/teximage.c
+ */
+static uint
+texture_face(GLenum target)
+{
+   if (target >= GL_TEXTURE_CUBE_MAP_POSITIVE_X_ARB &&
+       target <= GL_TEXTURE_CUBE_MAP_NEGATIVE_Z_ARB)
+      return (GLuint) target - (GLuint) GL_TEXTURE_CUBE_MAP_POSITIVE_X;
+   else
+      return 0;
+}
+
+
+
+/**
+ * Do a CopyTexSubImage operation by mapping the source region and
+ * dest region and copying/converting pixels.
+ */
+static void
+fallback_copy_texsubimage(GLcontext *ctx,
+                          GLenum target,
+                          GLint level,
+                          struct st_renderbuffer *strb,
+                          struct st_texture_image *stImage,
+                          GLenum baseFormat,
+                          GLint destX, GLint destY, GLint destZ,
+                          GLint srcX, GLint srcY,
+                          GLsizei width, GLsizei height)
+{
+   struct pipe_context *pipe = ctx->st->pipe;
+   const uint face = texture_face(target);
+   struct pipe_mipmap_tree *mt = stImage->mt;
+   struct pipe_surface *src_surf, *dest_surf;
+   GLfloat *data;
+
+   src_surf = strb->surface;
+
+   dest_surf = pipe->get_tex_surface(pipe, mt,
+                                    face, level, destZ);
+
+   data = (GLfloat *) malloc(width * height * 4 * sizeof(GLfloat));
+   src_surf->get_tile(src_surf, srcX, srcY, width, height, data);
+
+   /* process pixels */
+
+   dest_surf->put_tile(dest_surf, destX, destY, width, height, data);
+
+   free(data);
+}
+
+
+
+
+/**
  * Do a CopyTex[Sub]Image using an optimized hardware (blit) path.
  * Note that the region to copy has already been clip tested.
  * \return GL_TRUE if success, GL_FALSE if failure (use a fallback)
  */
-static GLboolean
+static void
 do_copy_texsubimage(GLcontext *ctx,
-                    struct st_texture_image *stImage,
-                    GLenum baseFormat,
-                    GLint destX, GLint destY,
-                    GLint srcX, GLint srcY, GLsizei width, GLsizei height)
+                    GLenum target, GLint level,
+                    GLint destX, GLint destY, GLint destZ,
+                    GLint srcX, GLint srcY,
+                    GLsizei width, GLsizei height)
 {
+   struct gl_texture_unit *texUnit =
+      &ctx->Texture.Unit[ctx->Texture.CurrentUnit];
+   struct gl_texture_object *texObj =
+      _mesa_select_tex_object(ctx, texUnit, target);
+   struct gl_texture_image *texImage =
+      _mesa_select_tex_image(ctx, texObj, target, level);
+   struct st_texture_image *stImage = st_texture_image(texImage);
+   GLenum baseFormat = texImage->InternalFormat;
    struct gl_framebuffer *fb = ctx->ReadBuffer;
    struct st_renderbuffer *strb;
    struct pipe_context *pipe = ctx->st->pipe;
    struct pipe_region *src_region, *dest_region;
    uint dest_offset, src_offset;
    uint dest_format, src_format;
+
+   (void) texImage;
 
    /* determine if copying depth or color data */
    if (baseFormat == GL_DEPTH_COMPONENT) {
@@ -1084,65 +1151,75 @@ do_copy_texsubimage(GLcontext *ctx,
    assert(strb->surface);
    assert(stImage->mt);
 
-#if 00 /* XXX FIX flush/locking */
-   intelFlush(ctx);
-   /* XXX still need the lock ? */
-   LOCK_HARDWARE(intel);
-#endif
-
    src_format = strb->surface->format;
    dest_format = stImage->mt->format;
-   if (src_format != dest_format)
-      return GL_FALSE;
 
    src_region = strb->surface->region;
    dest_region = stImage->mt->region;
-   if (!src_region || !dest_region)
-      return GL_FALSE;
-   if (src_region->cpp != dest_region->cpp)
-      return GL_FALSE;
 
-   src_offset = 0;
-   dest_offset = st_miptree_image_offset(stImage->mt,
-                                         stImage->face,
-                                         stImage->level);
+   if (src_format == dest_format &&
+       /* XXX also check GL pixel transfer ops here */
+       src_region &&
+       dest_region &&
+       src_region->cpp == dest_region->cpp) {
+      /* do blit-style copy */
+      src_offset = 0;
+      dest_offset = st_miptree_image_offset(stImage->mt,
+                                            stImage->face,
+                                            stImage->level);
 
-   /* XXX may need to invert image depending on window vs. user-created FBO */
+      /* XXX may need to invert image depending on window
+       * vs. user-created FBO
+       */
+
+#if 00 /* XXX FIX flush/locking */
+      intelFlush(ctx);
+      /* XXX still need the lock ? */
+      LOCK_HARDWARE(intel);
+#endif
 
 #if 0
-   /* A bit of fiddling to get the blitter to work with -ve
-    * pitches.  But we get a nice inverted blit this way, so it's
-    * worth it:
-    */
-   intelEmitCopyBlit(intel,
-                     stImage->mt->cpp,
-                     -src->pitch,
-                     src->buffer,
-                     src->height * src->pitch * src->cpp,
-                     stImage->mt->pitch,
-                     stImage->mt->region->buffer,
-                     dest_offset,
-                     x, y + height, dstx, dsty, width, height,
-                     GL_COPY); /* ? */
-   intel_batchbuffer_flush(intel->batch);
+      /* A bit of fiddling to get the blitter to work with -ve
+       * pitches.  But we get a nice inverted blit this way, so it's
+       * worth it:
+       */
+      intelEmitCopyBlit(intel,
+                        stImage->mt->cpp,
+                        -src->pitch,
+                        src->buffer,
+                        src->height * src->pitch * src->cpp,
+                        stImage->mt->pitch,
+                        stImage->mt->region->buffer,
+                        dest_offset,
+                        x, y + height, dstx, dsty, width, height,
+                        GL_COPY); /* ? */
+      intel_batchbuffer_flush(intel->batch);
 #else
 
-   pipe->region_copy(pipe,
-                     /* dest */
-                     dest_region,
-                     dest_offset,
-                     destX, destY,
-                     /* src */
-                     src_region,
-                     src_offset,
-                     srcX, srcY,
-                     /* size */
-                     width, height);
+      pipe->region_copy(pipe,
+                        /* dest */
+                        dest_region,
+                        dest_offset,
+                        destX, destY,
+                        /* src */
+                        src_region,
+                        src_offset,
+                        srcX, srcY,
+                        /* size */
+                        width, height);
 #endif
 
 #if 0
-   UNLOCK_HARDWARE(intel);
+      UNLOCK_HARDWARE(intel);
 #endif
+   }
+   else {
+      fallback_copy_texsubimage(ctx, target, level,
+                                strb, stImage, baseFormat,
+                                destX, destY, destZ,
+                                srcX, srcY, width, height);
+   }
+
 
 #if 0
    /* GL_SGIS_generate_mipmap -- this can be accelerated now.
@@ -1155,8 +1232,8 @@ do_copy_texsubimage(GLcontext *ctx,
    }
 #endif
 
-   return GL_TRUE;
 }
+
 
 
 static void
@@ -1171,8 +1248,10 @@ st_CopyTexImage1D(GLcontext * ctx, GLenum target, GLint level,
    struct gl_texture_image *texImage =
       _mesa_select_tex_image(ctx, texObj, target, level);
 
+#if 0
    if (border)
       goto fail;
+#endif
 
    /* Setup or redefine the texture object, mipmap tree and texture
     * image.  Don't populate yet.  
@@ -1182,19 +1261,9 @@ st_CopyTexImage1D(GLcontext * ctx, GLenum target, GLint level,
                           GL_RGBA, CHAN_TYPE, NULL,
                           &ctx->DefaultPacking, texObj, texImage);
 
-   if (!do_copy_texsubimage(ctx,
-                            st_texture_image(texImage),
-                            internalFormat, 0, 0, x, y, width, 1))
-      goto fail;
-
-   return;
-
- fail:
-#if 0
-   _swrast_copy_teximage1d(ctx, target, level, internalFormat, x, y,
-                           width, border);
-#endif
-   ;
+   do_copy_texsubimage(ctx, target, level,
+                       0, 0, 0,
+                       x, y, width, 1);
 }
 
 
@@ -1211,8 +1280,10 @@ st_CopyTexImage2D(GLcontext * ctx, GLenum target, GLint level,
    struct gl_texture_image *texImage =
       _mesa_select_tex_image(ctx, texObj, target, level);
 
+#if 0
    if (border)
       goto fail;
+#endif
 
    /* Setup or redefine the texture object, mipmap tree and texture
     * image.  Don't populate yet.  
@@ -1223,19 +1294,9 @@ st_CopyTexImage2D(GLcontext * ctx, GLenum target, GLint level,
                           &ctx->DefaultPacking, texObj, texImage);
 
 
-   if (!do_copy_texsubimage(ctx,
-                            st_texture_image(texImage),
-                            internalFormat, 0, 0, x, y, width, height))
-      goto fail;
-
-   return;
-
- fail:
-#if 0
-   _swrast_copy_teximage2d(ctx, target, level, internalFormat, x, y,
-                           width, height, border);
-#endif
-   assert(0);
+   do_copy_texsubimage(ctx, target, level,
+                       0, 0, 0,
+                       x, y, width, height);
 }
 
 
@@ -1243,27 +1304,11 @@ static void
 st_CopyTexSubImage1D(GLcontext * ctx, GLenum target, GLint level,
                      GLint xoffset, GLint x, GLint y, GLsizei width)
 {
-   struct gl_texture_unit *texUnit =
-      &ctx->Texture.Unit[ctx->Texture.CurrentUnit];
-   struct gl_texture_object *texObj =
-      _mesa_select_tex_object(ctx, texUnit, target);
-   struct gl_texture_image *texImage =
-      _mesa_select_tex_image(ctx, texObj, target, level);
-   const GLenum baseFormat = texImage->TexFormat->BaseFormat;
-
-   /* XXX need to check <border> as in above function? */
-
-   /* Need to check texture is compatible with source format. 
-    */
-
-   if (!do_copy_texsubimage(ctx,
-                            st_texture_image(texImage),
-                            baseFormat, xoffset, 0, x, y, width, 1)) {
-#if 0
-      _swrast_copy_texsubimage1d(ctx, target, level, xoffset, x, y, width);
-#endif
-      assert(0);
-   }
+   const GLint yoffset = 0, zoffset = 0;
+   const GLsizei height = 1;
+   do_copy_texsubimage(ctx, target, level,
+                       xoffset, yoffset, zoffset,
+                       x, y, width, height);
 }
 
 
@@ -1272,28 +1317,21 @@ st_CopyTexSubImage2D(GLcontext * ctx, GLenum target, GLint level,
                      GLint xoffset, GLint yoffset,
                      GLint x, GLint y, GLsizei width, GLsizei height)
 {
-   struct gl_texture_unit *texUnit =
-      &ctx->Texture.Unit[ctx->Texture.CurrentUnit];
-   struct gl_texture_object *texObj =
-      _mesa_select_tex_object(ctx, texUnit, target);
-   struct gl_texture_image *texImage =
-      _mesa_select_tex_image(ctx, texObj, target, level);
-   GLenum internalFormat = texImage->InternalFormat;
+   const GLint zoffset = 0;
+   do_copy_texsubimage(ctx, target, level,
+                       xoffset, yoffset, zoffset,
+                       x, y, width, height);
+}
 
 
-   /* Need to check texture is compatible with source format. 
-    */
-
-   if (!do_copy_texsubimage(ctx,
-                            st_texture_image(texImage),
-                            internalFormat,
-                            xoffset, yoffset, x, y, width, height)) {
-#if 0
-      _swrast_copy_texsubimage2d(ctx, target, level,
-                                 xoffset, yoffset, x, y, width, height);
-#endif
-      assert(0);
-   }
+static void
+st_CopyTexSubImage3D(GLcontext * ctx, GLenum target, GLint level,
+                     GLint xoffset, GLint yoffset, GLint zoffset,
+                     GLint x, GLint y, GLsizei width, GLsizei height)
+{
+   do_copy_texsubimage(ctx, target, level,
+                       xoffset, yoffset, zoffset,
+                       x, y, width, height);
 }
 
 
@@ -1588,6 +1626,8 @@ st_init_texture_functions(struct dd_function_table *functions)
    functions->CopyTexImage2D = st_CopyTexImage2D;
    functions->CopyTexSubImage1D = st_CopyTexSubImage1D;
    functions->CopyTexSubImage2D = st_CopyTexSubImage2D;
+   functions->CopyTexSubImage3D = st_CopyTexSubImage3D;
+
    functions->GetTexImage = st_GetTexImage;
 
    /* compressed texture functions */
