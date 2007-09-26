@@ -126,10 +126,7 @@ void brw_pool_check_wrap( struct brw_context *brw,
 			  struct brw_mem_pool *pool )
 {
    if (pool->offset > (pool->size * 3) / 4) {
-      if (brw->intel.aub_file)
-	 brw->intel.aub_wrap = 1;
-      else
-	 brw->state.dirty.brw |= BRW_NEW_CONTEXT;
+      brw->state.dirty.brw |= BRW_NEW_CONTEXT;
    }
 
 }

@@ -31,7 +31,6 @@
       
 
 #include "brw_state.h"
-#include "brw_aub.h"
 #include "intel_batchbuffer.h"
 #include "imports.h"
 
@@ -188,13 +187,11 @@ GLuint brw_upload_cache( struct brw_cache *cache,
 
    /* Copy data to the buffer:
     */
-   bmBufferSubDataAUB(&cache->brw->intel,
-		      cache->pool->buffer,
-		      offset, 
-		      data_size, 
-		      data,
-		      cache->aub_type,
-		      cache->aub_sub_type);
+   bmBufferSubData(&cache->brw->intel,
+		   cache->pool->buffer,
+		   offset,
+		   data_size,
+		   data);
    
 
    cache->brw->state.dirty.cache |= 1<<cache->id;
@@ -227,17 +224,17 @@ GLuint brw_cache_data(struct brw_cache *cache,
    return brw_cache_data_sz(cache, data, cache->key_size);
 }
 
-
-
-
+enum pool_type {
+   DW_SURFACE_STATE,
+   DW_GENERAL_STATE
+};
 
 static void brw_init_cache( struct brw_context *brw, 
 			    const char *name,
 			    GLuint id,
 			    GLuint key_size,
 			    GLuint aux_size,
-			    GLuint aub_type,
-			    GLuint aub_sub_type )
+			    enum pool_type pool_type)
 {
    struct brw_cache *cache = &brw->cache[id];
    cache->brw = brw;
@@ -254,9 +251,7 @@ static void brw_init_cache( struct brw_context *brw,
 
    cache->key_size = key_size;
    cache->aux_size = aux_size;
-   cache->aub_type = aub_type;
-   cache->aub_sub_type = aub_sub_type;
-   switch (aub_type) {
+   switch (pool_type) {
    case DW_GENERAL_STATE: cache->pool = &brw->pool[BRW_GS_POOL]; break;
    case DW_SURFACE_STATE: cache->pool = &brw->pool[BRW_SS_POOL]; break;
    default: assert(0); break;
@@ -271,136 +266,119 @@ void brw_init_caches( struct brw_context *brw )
 		  BRW_CC_VP,
 		  sizeof(struct brw_cc_viewport),
 		  0,
-		  DW_GENERAL_STATE,
-		  DWGS_COLOR_CALC_VIEWPORT_STATE);
+		  DW_GENERAL_STATE);
 
    brw_init_cache(brw,
 		  "CC_UNIT",
 		  BRW_CC_UNIT,
 		  sizeof(struct brw_cc_unit_state),
 		  0,
-		  DW_GENERAL_STATE,
-		  DWGS_COLOR_CALC_STATE);
+		  DW_GENERAL_STATE);
 
    brw_init_cache(brw,
 		  "WM_PROG",
 		  BRW_WM_PROG,
 		  sizeof(struct brw_wm_prog_key),
 		  sizeof(struct brw_wm_prog_data),
-		  DW_GENERAL_STATE,
-		  DWGS_KERNEL_INSTRUCTIONS);
+		  DW_GENERAL_STATE);
 
    brw_init_cache(brw,
 		  "SAMPLER_DEFAULT_COLOR",
 		  BRW_SAMPLER_DEFAULT_COLOR,
 		  sizeof(struct brw_sampler_default_color),
 		  0,
-		  DW_GENERAL_STATE,
-		  DWGS_SAMPLER_DEFAULT_COLOR);
+		  DW_GENERAL_STATE);
 
    brw_init_cache(brw,
 		  "SAMPLER",
 		  BRW_SAMPLER,
 		  0,		/* variable key/data size */
 		  0,
-		  DW_GENERAL_STATE,
-		  DWGS_SAMPLER_STATE);
+		  DW_GENERAL_STATE);
 
    brw_init_cache(brw,
 		  "WM_UNIT",
 		  BRW_WM_UNIT,
 		  sizeof(struct brw_wm_unit_state),
 		  0,
-		  DW_GENERAL_STATE,
-		  DWGS_WINDOWER_IZ_STATE);
+		  DW_GENERAL_STATE);
 
    brw_init_cache(brw,
 		  "SF_PROG",
 		  BRW_SF_PROG,
 		  sizeof(struct brw_sf_prog_key),
 		  sizeof(struct brw_sf_prog_data),
-		  DW_GENERAL_STATE,
-		  DWGS_KERNEL_INSTRUCTIONS);
+		  DW_GENERAL_STATE);
 
    brw_init_cache(brw,
 		  "SF_VP",
 		  BRW_SF_VP,
 		  sizeof(struct brw_sf_viewport),
 		  0,
-		  DW_GENERAL_STATE,
-		  DWGS_STRIPS_FANS_VIEWPORT_STATE);
+		  DW_GENERAL_STATE);
 
    brw_init_cache(brw,
 		  "SF_UNIT",
 		  BRW_SF_UNIT,
 		  sizeof(struct brw_sf_unit_state),
 		  0,
-		  DW_GENERAL_STATE,
-		  DWGS_STRIPS_FANS_STATE);
+		  DW_GENERAL_STATE);
 
    brw_init_cache(brw,
 		  "VS_UNIT",
 		  BRW_VS_UNIT,
 		  sizeof(struct brw_vs_unit_state),
 		  0,
-		  DW_GENERAL_STATE,
-		  DWGS_VERTEX_SHADER_STATE);
+		  DW_GENERAL_STATE);
 
    brw_init_cache(brw,
 		  "VS_PROG",
 		  BRW_VS_PROG,
 		  sizeof(struct brw_vs_prog_key),
 		  sizeof(struct brw_vs_prog_data),
-		  DW_GENERAL_STATE,
-		  DWGS_KERNEL_INSTRUCTIONS);
+		  DW_GENERAL_STATE);
 
    brw_init_cache(brw,
 		  "CLIP_UNIT",
 		  BRW_CLIP_UNIT,
 		  sizeof(struct brw_clip_unit_state),
 		  0,
-		  DW_GENERAL_STATE,
-		  DWGS_CLIPPER_STATE);
+		  DW_GENERAL_STATE);
 
    brw_init_cache(brw,
 		  "CLIP_PROG",
 		  BRW_CLIP_PROG,
 		  sizeof(struct brw_clip_prog_key),
 		  sizeof(struct brw_clip_prog_data),
-		  DW_GENERAL_STATE,
-		  DWGS_KERNEL_INSTRUCTIONS);
+		  DW_GENERAL_STATE);
 
    brw_init_cache(brw,
 		  "GS_UNIT",
 		  BRW_GS_UNIT,
 		  sizeof(struct brw_gs_unit_state),
 		  0,
-		  DW_GENERAL_STATE,
-		  DWGS_GEOMETRY_SHADER_STATE);
+		  DW_GENERAL_STATE);
 
    brw_init_cache(brw,
 		  "GS_PROG",
 		  BRW_GS_PROG,
 		  sizeof(struct brw_gs_prog_key),
 		  sizeof(struct brw_gs_prog_data),
-		  DW_GENERAL_STATE,
-		  DWGS_KERNEL_INSTRUCTIONS);
+		  DW_GENERAL_STATE);
 
    brw_init_cache(brw,
 		  "SS_SURFACE",
 		  BRW_SS_SURFACE,
 		  sizeof(struct brw_surface_state),
 		  0,
-		  DW_SURFACE_STATE,
-		  DWSS_SURFACE_STATE);
+		  DW_SURFACE_STATE);
 
    brw_init_cache(brw,
 		  "SS_SURF_BIND",
 		  BRW_SS_SURF_BIND,
 		  sizeof(struct brw_surface_binding_table),
 		  0,
-		  DW_SURFACE_STATE,
-		  DWSS_BINDING_TABLE_STATE);
+		  DW_SURFACE_STATE);
 }
 
 

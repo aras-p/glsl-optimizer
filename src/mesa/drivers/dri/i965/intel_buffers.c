@@ -450,12 +450,6 @@ void intelSwapBuffers( __DRIdrawablePrivate *dPriv )
 	 } else {
 	    intelCopyBuffer( dPriv, NULL );
 	 }
-	 if (intel->aub_file) {
-	    intelFlush(ctx);
-	    intel->vtbl.aub_dump_bmp( intel, 1 );
-
-	    intel->aub_wrap = 1;
-	 }
       }
    } else {
       /* XXX this shouldn't be an error but we can't handle it for now */

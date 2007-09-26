@@ -36,7 +36,6 @@
 #include "brw_draw.h"
 #include "brw_defines.h"
 #include "brw_context.h"
-#include "brw_aub.h"
 #include "brw_state.h"
 #include "brw_fallback.h"
 
@@ -467,11 +466,6 @@ void brw_draw_prims( GLcontext *ctx,
    if (!retval) {
        _swsetup_Wakeup(ctx);
       _tnl_draw_prims(ctx, arrays, prim, nr_prims, ib, min_index, max_index);
-   }
-
-   if (intel->aub_file && (INTEL_DEBUG & DEBUG_SYNC)) {
-      intelFinish( &intel->ctx );
-      intel->aub_wrap = 1;
    }
 }
 

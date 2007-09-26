@@ -42,7 +42,6 @@
 #include "brw_defines.h"
 #include "brw_state.h"
 #include "brw_util.h"
-#include "brw_aub.h"
 
 
 /* Partition the CURBE between the various users of constant values:
@@ -315,13 +314,11 @@ static void upload_constant_buffer(struct brw_context *brw)
 
       /* Copy data to the buffer:
        */
-      bmBufferSubDataAUB(&brw->intel,
-			 pool->buffer,
-			 brw->curbe.gs_offset, 
-			 bufsz, 
-			 buf,
-			 DW_CONSTANT_BUFFER,
-			 0);
+      bmBufferSubData(&brw->intel,
+		      pool->buffer,
+		      brw->curbe.gs_offset,
+		      bufsz,
+		      buf);
    }
 
    /* TODO: only emit the constant_buffer packet when necessary, ie:

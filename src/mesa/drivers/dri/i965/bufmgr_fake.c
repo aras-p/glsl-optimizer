@@ -85,7 +85,6 @@ struct buffer {
 
    unsigned mapped:1;		
    unsigned dirty:1;		
-   unsigned aub_dirty:1;	
    unsigned alignment:13;
    unsigned flags:16;
 
@@ -906,86 +905,6 @@ int bmBufferSubData(struct intel_context *intel,
    return retval;
 }
 
-
-
-int bmBufferDataAUB(struct intel_context *intel, 
-		     struct buffer *buf, 
-		     unsigned size, 
-		     const void *data, 
-		     unsigned flags,
-		     unsigned aubtype,
-		     unsigned aubsubtype )
-{
-   int retval = bmBufferData(intel, buf, size, data, flags);
-   
-
-   /* This only works because in this version of the buffer manager we
-    * allocate all buffers statically in agp space and so can emit the
-    * uploads to the aub file with the correct offsets as they happen.
-    */
-   if (retval == 0 && data && intel->aub_file) {
-
-      if (buf->block && !buf->dirty) {
-	 intel->vtbl.aub_gtt_data(intel,
-				      buf->block->mem->ofs,
-				      buf->block->virtual,
-				      size,
-				      aubtype,
-				      aubsubtype);
-	 buf->aub_dirty = 0;
-      }
-   }
-   
-   return retval;
-}
-		       
-
-int bmBufferSubDataAUB(struct intel_context *intel, 
-			struct buffer *buf, 
-			unsigned offset, 
-			unsigned size, 
-			const void *data,
-			unsigned aubtype,
-			unsigned aubsubtype )
-{
-   int retval = bmBufferSubData(intel, buf, offset, size, data);
-   
-
-   /* This only works because in this version of the buffer manager we
-    * allocate all buffers statically in agp space and so can emit the
-    * uploads to the aub file with the correct offsets as they happen.
-    */
-   if (intel->aub_file) {
-      if (retval == 0 && buf->block && !buf->dirty)
-	 intel->vtbl.aub_gtt_data(intel,
-				      buf->block->mem->ofs + offset,
-				      ((const char *)buf->block->virtual) + offset,
-				      size,
-				      aubtype,
-				      aubsubtype);
-   }
-
-   return retval;
-}
-
-void bmUnmapBufferAUB( struct intel_context *intel, 
-		       struct buffer *buf,
-		       unsigned aubtype,
-		       unsigned aubsubtype )
-{
-   bmUnmapBuffer(intel, buf);
-
-   if (intel->aub_file) {
-      /* Hack - exclude the framebuffer mappings.  If you removed
-       * this, you'd get very big aubfiles, but you *would* be able to
-       * see fallback rendering.
-       */
-      if (buf->block  && !buf->dirty && buf->block->pool == &intel->bm->pool[0]) {
-	 buf->aub_dirty = 1;
-      }
-   }
-}
-
 unsigned bmBufferOffset(struct intel_context *intel, 
 			struct buffer *buf)
 {
@@ -1197,26 +1116,7 @@ int bmValidateBuffers( struct intel_context *intel )
 			 buf->backing_store, 
 			 buf->size);
 
-	       if (intel->aub_file) {
-		  intel->vtbl.aub_gtt_data(intel,
-					       buf->block->mem->ofs,
-					       buf->backing_store,
-					       buf->size,
-					       0,
-					       0);
-	       }
-
 	       buf->dirty = 0;
-	       buf->aub_dirty = 0;
-	    }
-	    else if (buf->aub_dirty) {
-	       intel->vtbl.aub_gtt_data(intel,
-					    buf->block->mem->ofs,
-					    buf->block->virtual,
-					    buf->size,
-					    0,
-					    0);
-	       buf->aub_dirty = 0;
 	    }
 
 	    block->referenced = 0;

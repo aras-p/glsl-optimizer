@@ -668,13 +668,6 @@ void LOCK_HARDWARE( struct intel_context *intel )
 
    intel->locked = 1;
 
-   if (intel->aub_wrap) {
-      bm_fake_NotifyContendedLockTake( intel );
-      intel->vtbl.lost_hardware( intel );
-      intel->vtbl.aub_wrap(intel);
-      intel->aub_wrap = 0;
-   }
-
    if (bmError(intel)) {
       bmEvictAll(intel);
       intel->vtbl.lost_hardware( intel );

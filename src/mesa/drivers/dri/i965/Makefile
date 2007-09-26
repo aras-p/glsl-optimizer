@@ -22,8 +22,6 @@ DRIVER_SOURCES = \
 	intel_tex.c \
 	intel_tex_layout.c \
 	intel_tex_validate.c \
-	brw_aub.c \
-	brw_aub_playback.c \
 	brw_cc.c \
 	brw_clip.c \
 	brw_clip_line.c \

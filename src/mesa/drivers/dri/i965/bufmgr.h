@@ -130,24 +130,6 @@ int bmBufferSubData(struct intel_context *,
 		     unsigned size, 
 		     const void *data );
 
-
-int bmBufferDataAUB(struct intel_context *, 
-		     struct buffer *buf, 
-		     unsigned size, 
-		     const void *data, 
-		     unsigned flags,
-		     unsigned aubtype,
-		     unsigned aubsubtype );
-
-int bmBufferSubDataAUB(struct intel_context *, 
-			struct buffer *buf, 
-			unsigned offset, 
-			unsigned size, 
-			const void *data,
-			unsigned aubtype,
-			unsigned aubsubtype );
-
-
 /* In this version, taking the offset will provoke an upload on
  * buffers not already resident in AGP:
  */
@@ -169,12 +151,6 @@ void *bmMapBuffer( struct intel_context *,
 
 void bmUnmapBuffer( struct intel_context *,
 		    struct buffer *buf );
-
-void bmUnmapBufferAUB( struct intel_context *,
-		       struct buffer *buf,
-		       unsigned aubtype,
-		       unsigned aubsubtype );
-
 
 /* Pertains to all buffers who's offset has been taken since the last
  * fence or release.

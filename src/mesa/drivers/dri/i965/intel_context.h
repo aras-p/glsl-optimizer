@@ -109,20 +109,6 @@ struct intel_context
       void (*emit_flush)( struct intel_context *intel,
 			  GLuint unused );
 
-      void (*aub_commands)( struct intel_context *intel, 
-			    GLuint offset,
-			    const void *buf,
-			    GLuint sz );
-      void (*aub_dump_bmp)( struct intel_context *intel, GLuint buffer );
-      void (*aub_wrap)( struct intel_context *intel );
-      void (*aub_gtt_data)( struct intel_context *intel, 
-			    GLuint offset,
-			    const void *src,
-			    GLuint size,
-			    GLuint aubtype, 
-			    GLuint aubsubtype);
-
-
       void (*reduced_primitive_state)( struct intel_context *intel, GLenum rprim );
 
       GLboolean (*check_vertex_size)( struct intel_context *intel, GLuint expected );
@@ -176,7 +162,6 @@ struct intel_context
    GLuint last_swap_fence;
    GLuint second_last_swap_fence;
    
-   GLboolean aub_wrap;
    GLuint stats_wm;
 
    struct intel_batchbuffer *batch;
@@ -238,8 +223,6 @@ struct intel_context
    __DRIscreenPrivate *driScreen;
    intelScreenPrivate *intelScreen; 
    volatile drmI830Sarea *sarea; 
-   
-   FILE *aub_file;
 
    GLuint lastStamp;
 

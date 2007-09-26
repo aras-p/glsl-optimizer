@@ -115,10 +115,6 @@ void intelWaitIrq( struct intel_context *intel, int seq )
       if ( ret ) {
 	 fprintf( stderr, "%s: drmI830IrqWait: %d\n", __FUNCTION__, ret );
 
-	 if (intel->aub_file) {
-	    intel->vtbl.aub_dump_bmp( intel, intel->ctx.Visual.doubleBufferMode ? 1 : 0 );
-	 }
-
 	 exit(1);
       }
    }
