@@ -32,6 +32,7 @@
 
 #include "main/imports.h"
 #include "shader/prog_parameter.h"
+#include "shader/prog_print.h"
 
 #include "pipe/p_context.h"
 #include "pipe/p_defines.h"
@@ -69,12 +70,15 @@ static void upload_constants( struct st_context *st,
 	 printf("%s(shader=%d, numParams=%d, stateFlags=0x%x)\n", 
                 __FUNCTION__, id, params->NumParameters, params->StateFlags);
 
+         _mesa_print_parameter_list(params);
+         /*
 	 for (i = 0; i < params->NumParameters; i++)
             printf("%d: %f %f %f %f\n", i,
                    params->ParameterValues[i][0],
                    params->ParameterValues[i][1],
                    params->ParameterValues[i][2],
                    params->ParameterValues[i][3]);
+         */
       }
 
       /* load Mesa constants into the constant buffer */
