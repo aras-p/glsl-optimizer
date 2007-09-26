@@ -99,12 +99,15 @@ softpipe_draw_elements(struct pipe_context *pipe,
 
    /* first, check that the primitive is not malformed.  It is the
     * state tracker's responsibility to do send only correctly formed
-    * primitives down.
+    * primitives down.  It currently isn't doing that though...
     */
-//   count = draw_trim_prim( mode, count );
-
+#if 1
+   count = draw_trim_prim( mode, count );
+#else
    if (!draw_validate_prim( mode, count ))
       assert(0);
+#endif
+
 
    if (sp->dirty)
       softpipe_update_derived( sp );
