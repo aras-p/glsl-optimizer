@@ -1070,6 +1070,8 @@ texture_face(GLenum target)
 /**
  * Do a CopyTexSubImage operation by mapping the source region and
  * dest region and copying/converting pixels.
+ *
+ * Note: srcY=0=TOP of renderbuffer
  */
 static void
 fallback_copy_texsubimage(GLcontext *ctx,
@@ -1093,12 +1095,19 @@ fallback_copy_texsubimage(GLcontext *ctx,
    dest_surf = pipe->get_tex_surface(pipe, mt,
                                     face, level, destZ);
 
+   (void) pipe->region_map(pipe, dest_surf->region);
+   (void) pipe->region_map(pipe, src_surf->region);
+
    data = (GLfloat *) malloc(width * height * 4 * sizeof(GLfloat));
    src_surf->get_tile(src_surf, srcX, srcY, width, height, data);
 
-   /* process pixels */
+   /* Do GL pixel transfer ops here */
+   /* Also, invert image if strb orientation is Y_0_TOP */
 
    dest_surf->put_tile(dest_surf, destX, destY, width, height, data);
+
+   (void) pipe->region_unmap(pipe, dest_surf->region);
+   (void) pipe->region_unmap(pipe, src_surf->region);
 
    free(data);
 }
@@ -1109,6 +1118,9 @@ fallback_copy_texsubimage(GLcontext *ctx,
 /**
  * Do a CopyTex[Sub]Image using an optimized hardware (blit) path.
  * Note that the region to copy has already been clip tested.
+ *
+ * Note: srcY=0=Bottom of renderbuffer
+ *
  * \return GL_TRUE if success, GL_FALSE if failure (use a fallback)
  */
 static void
@@ -1150,6 +1162,10 @@ do_copy_texsubimage(GLcontext *ctx,
    assert(strb);
    assert(strb->surface);
    assert(stImage->mt);
+
+   if (st_fb_orientation(ctx->ReadBuffer) == Y_0_TOP) {
+      srcY = strb->Base.Height - srcY - height;
+   }
 
    src_format = strb->surface->format;
    dest_format = stImage->mt->format;
