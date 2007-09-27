@@ -4641,7 +4641,7 @@ _mesa_clip_copytexsubimage(const GLcontext *ctx,
    const struct gl_framebuffer *fb = ctx->ReadBuffer;
    const GLint srcX0 = *srcX, srcY0 = *srcY;
 
-   if (_mesa_clip_to_region(fb->_Xmin, fb->_Ymin, fb->_Xmax, fb->_Ymax,
+   if (_mesa_clip_to_region(0, 0, fb->Width, fb->Height,
                             srcX, srcY, width, height)) {
       *destX = *destX + *srcX - srcX0;
       *destY = *destY + *srcY - srcY0;
