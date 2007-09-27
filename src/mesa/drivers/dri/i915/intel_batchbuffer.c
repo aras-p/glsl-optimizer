@@ -240,7 +240,8 @@ do_flush_locked(struct intel_batchbuffer *batch,
 done:
    if (INTEL_DEBUG & DEBUG_BATCH) {
       dri_bo_map(batch->buf, GL_FALSE);
-      intel_decode(ptr, used / 4, batch->buf->offset);
+      intel_decode(ptr, used / 4, batch->buf->offset,
+		   intel->intelScreen->deviceID);
       dri_bo_unmap(batch->buf);
    }
 }

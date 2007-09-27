@@ -28,6 +28,7 @@
 #include "imports.h"
 #include "intel_batchbuffer.h"
 #include "intel_ioctl.h"
+#include "intel_decode.h"
 #include "bufmgr.h"
 
 
@@ -166,6 +167,16 @@ GLboolean intel_batchbuffer_flush( struct intel_batchbuffer *batch )
       bmReleaseBuffers( batch->intel );
       retval = GL_FALSE;
       goto out;
+   }
+
+   if (INTEL_DEBUG & DEBUG_BATCH) {
+      char *map;
+
+      map = bmMapBuffer(batch->intel, batch->buffer,
+			BM_MEM_AGP|BM_MEM_LOCAL|BM_CLIENT);
+      intel_decode((uint32_t *)(map + batch->offset), used / 4,
+		   offset + batch->offset, intel->intelScreen->deviceID);
+      bmUnmapBuffer(batch->intel, batch->buffer);
    }
 
    /* Fire the batch buffer, which was uploaded above:

@@ -25,5 +25,5 @@
  *
  */
 
-int intel_decode(uint32_t *data, int count, uint32_t hw_offset);
-void intel_decode_context_reset();
+int intel_decode(uint32_t *data, int count, uint32_t hw_offset, uint32_t devid);
+void intel_decode_context_reset(void);

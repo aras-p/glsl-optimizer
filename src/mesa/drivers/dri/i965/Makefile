@@ -11,6 +11,7 @@ DRIVER_SOURCES = \
 	intel_buffer_objects.c \
 	intel_buffers.c \
 	intel_context.c \
+	intel_decode.c \
 	intel_ioctl.c \
 	intel_mipmap_tree.c \
 	intel_regions.c \
@@ -92,6 +93,7 @@ DRIVER_DEFINES = -I../intel
 
 include ../Makefile.template
 
+intel_decode.o: ../intel/intel_decode.c
 intel_tex_layout.o: ../intel/intel_tex_layout.c
 
 server:

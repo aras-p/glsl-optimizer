@@ -46,6 +46,7 @@
 #include "drivers/common/driverfuncs.h"
 
 #include "intel_screen.h"
+#include "intel_chipset.h"
 
 #include "i830_dri.h"
 #include "i830_common.h"
@@ -225,6 +226,7 @@ static const struct dri_debug_control debug_control[] =
     { "thre",  DEBUG_SINGLE_THREAD },
     { "wm",    DEBUG_WM },
     { "vs",    DEBUG_VS },
+    { "bat",   DEBUG_BATCH },
     { NULL,    0 }
 };
 

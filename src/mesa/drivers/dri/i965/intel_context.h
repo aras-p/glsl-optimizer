@@ -355,22 +355,7 @@ extern int INTEL_DEBUG;
 #define DEBUG_WM        0x10000
 #define DEBUG_URB       0x20000
 #define DEBUG_VS        0x40000
-
-
-#define PCI_CHIP_845_G			0x2562
-#define PCI_CHIP_I830_M			0x3577
-#define PCI_CHIP_I855_GM		0x3582
-#define PCI_CHIP_I865_G			0x2572
-#define PCI_CHIP_I915_G			0x2582
-#define PCI_CHIP_I915_GM		0x2592
-#define PCI_CHIP_I945_G			0x2772
-#define PCI_CHIP_I965_G			0x29A2
-#define PCI_CHIP_I965_Q			0x2992
-#define PCI_CHIP_I965_G_1		0x2982
-#define PCI_CHIP_I946_GZ		0x2972
-#define PCI_CHIP_I965_GM                0x2A02
-#define PCI_CHIP_I965_GME               0x2A12
-
+#define DEBUG_BATCH	0x80000
 
 /* ================================================================
  * intel_context.c:
