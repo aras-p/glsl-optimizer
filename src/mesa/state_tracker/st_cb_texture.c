@@ -1069,7 +1069,7 @@ texture_face(GLenum target)
 
 /**
  * Do a CopyTexSubImage operation by mapping the source region and
- * dest region and copying/converting pixels.
+ * dest region and using get_tile()/put_tile() to access the pixels/texels.
  *
  * Note: srcY=0=TOP of renderbuffer
  */
@@ -1089,6 +1089,16 @@ fallback_copy_texsubimage(GLcontext *ctx,
    struct pipe_mipmap_tree *mt = stImage->mt;
    struct pipe_surface *src_surf, *dest_surf;
    GLfloat *data;
+   GLint row, yStep;
+
+   /* determine bottom-to-top vs. top-to-bottom order */
+   if (st_fb_orientation(ctx->ReadBuffer) == Y_0_TOP) {
+      destY = height - 1 - destY;
+      yStep = -1;
+   }
+   else {
+      yStep = 1;
+   }
 
    src_surf = strb->surface;
 
@@ -1098,13 +1108,24 @@ fallback_copy_texsubimage(GLcontext *ctx,
    (void) pipe->region_map(pipe, dest_surf->region);
    (void) pipe->region_map(pipe, src_surf->region);
 
-   data = (GLfloat *) malloc(width * height * 4 * sizeof(GLfloat));
-   src_surf->get_tile(src_surf, srcX, srcY, width, height, data);
+   /* buffer for one row */
+   data = (GLfloat *) malloc(width * 4 * sizeof(GLfloat));
 
-   /* Do GL pixel transfer ops here */
-   /* Also, invert image if strb orientation is Y_0_TOP */
+   /* do copy row by row */
+   for (row = 0; row < height; row++) {
+      src_surf->get_tile(src_surf, srcX, srcY + row, width, 1, data);
 
-   dest_surf->put_tile(dest_surf, destX, destY, width, height, data);
+      /* XXX we're ignoring convolution for now */
+      if (ctx->_ImageTransferState) {
+         _mesa_apply_rgba_transfer_ops(ctx,
+                            ctx->_ImageTransferState & ~IMAGE_CONVOLUTION_BIT,
+                            width, (GLfloat (*)[4])data);
+      }
+
+      dest_surf->put_tile(dest_surf, destX, destY, width, 1, data);
+      destY += yStep;
+   }
+
 
    (void) pipe->region_unmap(pipe, dest_surf->region);
    (void) pipe->region_unmap(pipe, src_surf->region);
@@ -1174,7 +1195,7 @@ do_copy_texsubimage(GLcontext *ctx,
    dest_region = stImage->mt->region;
 
    if (src_format == dest_format &&
-       /* XXX also check GL pixel transfer ops here */
+       ctx->_ImageTransferState == 0x0 &&
        src_region &&
        dest_region &&
        src_region->cpp == dest_region->cpp) {
