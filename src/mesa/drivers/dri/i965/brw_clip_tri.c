@@ -472,7 +472,6 @@ static void brw_clip_test( struct brw_clip_compile *c )
     brw_MOV(p, v0, deref_4f(vt0, c->offset[VERT_RESULT_HPOS]));
     brw_MOV(p, v1, deref_4f(vt1, c->offset[VERT_RESULT_HPOS]));
     brw_MOV(p, v2, deref_4f(vt2, c->offset[VERT_RESULT_HPOS]));
-    brw_AND(p, c->reg.planemask, c->reg.planemask, brw_imm_ud(~0x3f));
 
     /* test nearz, xmin, ymin plane */
     brw_CMP(p, t1, BRW_CONDITIONAL_LE, negate(v0), get_element(v0, 3)); 
