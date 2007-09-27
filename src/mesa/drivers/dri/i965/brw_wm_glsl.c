@@ -12,6 +12,7 @@ GLboolean brw_wm_is_glsl(struct gl_fragment_program *fp)
 	struct prog_instruction *inst = &fp->Base.Instructions[i];
 	switch (inst->Opcode) {
 	    case OPCODE_IF:
+	    case OPCODE_INT:
 	    case OPCODE_ENDIF:
 	    case OPCODE_CAL:
 	    case OPCODE_BRK:
@@ -165,6 +166,24 @@ static void emit_abs( struct brw_wm_compile *c,
 	    dst = get_dst_reg(c, inst, i, 1);
 	    src = get_src_reg(c, &inst->SrcReg[0], i, 1);
 	    brw_MOV(p, dst, brw_abs(src));
+	}
+    }
+    brw_set_saturate(p, 0);
+}
+
+static void emit_mov_int( struct brw_wm_compile *c,
+		struct prog_instruction *inst)
+{
+    int i;
+    struct brw_compile *p = &c->func;
+    GLuint mask = inst->DstReg.WriteMask;
+    brw_set_saturate(p, inst->SaturateMode != SATURATE_OFF);
+    for (i = 0; i < 4; i++) {
+	if (mask & (1<<i)) {
+	    struct brw_reg src, dst;
+	    dst = retype(get_dst_reg(c, inst, i, 1), BRW_REGISTER_TYPE_D);
+	    src = retype(get_src_reg(c, &inst->SrcReg[0], i, 1), BRW_REGISTER_TYPE_D);
+	    brw_MOV(p, dst, src);
 	}
     }
     brw_set_saturate(p, 0);
@@ -1106,6 +1125,9 @@ static void brw_wm_emit_glsl(struct brw_wm_compile *c)
 		break;
 	    case OPCODE_LRP:
 		emit_lrp(c, inst);
+		break;
+	    case OPCODE_INT:
+		emit_mov_int(c, inst);
 		break;
 	    case OPCODE_MOV:
 		emit_mov(c, inst);
