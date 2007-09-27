@@ -133,6 +133,46 @@ a8r8g8b8_get_tile(struct pipe_surface *ps,
 }
 
 
+static void
+a8r8g8b8_put_tile(struct pipe_surface *ps,
+                  unsigned x, unsigned y, unsigned w, unsigned h,
+                  const float *p)
+{
+   unsigned *dst
+      = ((unsigned *) (ps->region->map + ps->offset))
+      + y * ps->region->pitch + x;
+   unsigned i, j;
+   unsigned w0 = w;
+
+   assert(ps->format == PIPE_FORMAT_U_A8_R8_G8_B8);
+
+#if 0
+   assert(x + w <= ps->width);
+   assert(y + h <= ps->height);
+#else
+   /* temp clipping hack */
+   if (x + w > ps->width)
+      w = ps->width - x;
+   if (y + h > ps->height)
+      h = ps->height -y;
+#endif
+   for (i = 0; i < h; i++) {
+      const float *pRow = p;
+      for (j = 0; j < w; j++) {
+         unsigned r, g, b, a;
+         UNCLAMPED_FLOAT_TO_UBYTE(r, pRow[0]);
+         UNCLAMPED_FLOAT_TO_UBYTE(g, pRow[1]);
+         UNCLAMPED_FLOAT_TO_UBYTE(b, pRow[2]);
+         UNCLAMPED_FLOAT_TO_UBYTE(a, pRow[3]);
+         dst[j] = (a << 24) | (r << 16) | (g << 8) | b;
+         pRow += 4;
+      }
+      dst += ps->region->pitch;
+      p += w0 * 4;
+   }
+}
+
+
 /*** PIPE_FORMAT_U_A1_R5_G5_B5 ***/
 
 static void
@@ -705,6 +745,7 @@ softpipe_init_surface_funcs(struct softpipe_surface *sps)
       sps->read_quad_f_swz = a8r8g8b8_read_quad_f_swz;
       sps->write_quad_f_swz = a8r8g8b8_write_quad_f_swz;
       sps->surface.get_tile = a8r8g8b8_get_tile;
+      sps->surface.put_tile = a8r8g8b8_put_tile;
       break;
    case PIPE_FORMAT_U_A1_R5_G5_B5:
       sps->surface.get_tile = a1r5g5b5_get_tile;
