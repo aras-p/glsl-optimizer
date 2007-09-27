@@ -69,11 +69,18 @@ static void brwUseProgram(GLcontext *ctx, GLuint program)
         _mesa_use_program(ctx, program);
         sh_prog = ctx->Shader.CurrentProgram;
         if (sh_prog) {
-            ctx->VertexProgram.Enabled = GL_TRUE;
-            ctx->FragmentProgram.Enabled = GL_TRUE;
-            brw->attribs.VertexProgram->Current = sh_prog->VertexProgram;
-            brw->attribs.FragmentProgram->Current = sh_prog->FragmentProgram;
-        }
+	    if (sh_prog->VertexProgram) {
+		brw->attribs.VertexProgram->Current = sh_prog->VertexProgram;
+		ctx->VertexProgram.Enabled = GL_TRUE;
+	    }else
+		ctx->VertexProgram.Enabled = GL_FALSE;
+		
+	    if (sh_prog->FragmentProgram) {
+		brw->attribs.FragmentProgram->Current = sh_prog->FragmentProgram;
+		ctx->FragmentProgram.Enabled = GL_TRUE;
+	    } else
+		ctx->VertexProgram.Enabled = GL_FALSE;
+	}
 }
 
 static void brwInitProgFuncs( struct dd_function_table *functions )
