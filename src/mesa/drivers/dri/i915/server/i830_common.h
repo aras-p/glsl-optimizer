@@ -54,6 +54,7 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #define DRM_I830_DESTROY_HEAP             0x0c
 #define DRM_I830_SET_VBLANK_PIPE          0x0d
 #define DRM_I830_GET_VBLANK_PIPE          0x0e
+#define DRM_I830_MMIO		       	  0x10
 
 typedef struct {
    enum {
@@ -232,5 +233,24 @@ typedef struct {
 typedef struct {
         int pipe;
 } drmI830VBlankPipe;
+
+#define MMIO_READ  0
+#define MMIO_WRITE 1
+
+#define MMIO_REGS_IA_PRIMATIVES_COUNT           0
+#define MMIO_REGS_IA_VERTICES_COUNT             1
+#define MMIO_REGS_VS_INVOCATION_COUNT           2
+#define MMIO_REGS_GS_PRIMITIVES_COUNT           3
+#define MMIO_REGS_GS_INVOCATION_COUNT           4
+#define MMIO_REGS_CL_PRIMITIVES_COUNT           5
+#define MMIO_REGS_CL_INVOCATION_COUNT           6
+#define MMIO_REGS_PS_INVOCATION_COUNT           7
+#define MMIO_REGS_PS_DEPTH_COUNT                8
+
+typedef struct {
+        unsigned int read_write:1;
+        unsigned int reg:31;
+        void __user *data;
+} drmI830MMIO;
 
 #endif /* _I830_DRM_H_ */

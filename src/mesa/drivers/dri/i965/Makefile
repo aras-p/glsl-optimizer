@@ -77,6 +77,12 @@ DRIVER_SOURCES = \
 	brw_wm_state.c \
 	brw_wm_surface_state.c 
 
+SYMLINKS = \
+	server/i830_dri.h \
+	server/i830_common.h \
+	server/intel_dri.c \
+	server/intel.h
+
 C_SOURCES = \
 	$(COMMON_SOURCES) \
 	$(MINIGLX_SOURCES) \
@@ -90,4 +96,10 @@ include ../Makefile.template
 
 intel_tex_layout.o: ../intel/intel_tex_layout.c
 
-symlinks:
+server:
+	mkdir -p server
+
+$(SYMLINKS): server
+	@[ -e $@ ] || ln -sf ../../i915/$@ server/
+
+symlinks: $(SYMLINKS)
