@@ -89,6 +89,7 @@ st_miptree_create(struct pipe_context *pipe,
       /* note: it's OK to pass 'pitch' as 'width' here: */
       mt->region = pipe->region_alloc(pipe, mt->cpp, mt->pitch,
                                       mt->total_height, flags);
+      mt->pitch = mt->region->pitch; /*XXX NEW */
    }
 
    if (!mt->region) {
