@@ -487,8 +487,6 @@ try_pbo_upload(GLcontext *ctx,
 
    dst_stride = stImage->mt->pitch;
 
-   intelFlush(&intel->ctx);
-   LOCK_HARDWARE(intel);
    {
       struct _DriBufferObject *src_buffer =
          intel_bufferobj_buffer(intel, pbo, INTEL_READ);
@@ -505,10 +503,7 @@ try_pbo_upload(GLcontext *ctx,
                         dst_stride, dst_buffer, dst_offset,
                         0, 0, 0, 0, width, height,
 			GL_COPY);
-
-      intel_batchbuffer_flush(intel->batch);
    }
-   UNLOCK_HARDWARE(intel);
 
    return GL_TRUE;
 #endif
@@ -555,10 +550,6 @@ st_TexImage(GLcontext * ctx,
 
    DBG("%s target %s level %d %dx%dx%d border %d\n", __FUNCTION__,
        _mesa_lookup_enum_by_nr(target), level, width, height, depth, border);
-
-#if 0
-   intelFlush(ctx);
-#endif
 
    stImage->face = target_to_face(target);
    stImage->level = level;
@@ -937,10 +928,6 @@ st_TexSubimage(GLcontext * ctx,
        _mesa_lookup_enum_by_nr(target),
        level, xoffset, yoffset, width, height);
 
-#if 0
-   intelFlush(ctx);
-#endif
-
    pixels =
       _mesa_validate_pbo_teximage(ctx, dims, width, height, depth, format,
                                   type, pixels, packing, "glTexSubImage2D");
@@ -1209,12 +1196,6 @@ do_copy_texsubimage(GLcontext *ctx,
        * vs. user-created FBO
        */
 
-#if 00 /* XXX FIX flush/locking */
-      intelFlush(ctx);
-      /* XXX still need the lock ? */
-      LOCK_HARDWARE(intel);
-#endif
-
 #if 0
       /* A bit of fiddling to get the blitter to work with -ve
        * pitches.  But we get a nice inverted blit this way, so it's
@@ -1230,7 +1211,6 @@ do_copy_texsubimage(GLcontext *ctx,
                         dest_offset,
                         x, y + height, dstx, dsty, width, height,
                         GL_COPY); /* ? */
-      intel_batchbuffer_flush(intel->batch);
 #else
 
       pipe->region_copy(pipe,
@@ -1244,10 +1224,6 @@ do_copy_texsubimage(GLcontext *ctx,
                         srcX, srcY,
                         /* size */
                         width, height);
-#endif
-
-#if 0
-      UNLOCK_HARDWARE(intel);
 #endif
    }
    else {
@@ -1583,68 +1559,9 @@ st_finalize_mipmap_tree(GLcontext *ctx,
       }
    }
 
-   /**
-   if (need_flush)
-      intel_batchbuffer_flush(intel->batch);
-   **/
 
    return GL_TRUE;
 }
-
-
-#if 0 /* unused? */
-void
-st_tex_map_images(struct pipe_context *pipe,
-                  struct st_texture_object *stObj)
-{
-   GLuint nr_faces = (stObj->base.Target == GL_TEXTURE_CUBE_MAP) ? 6 : 1;
-   GLuint face, i;
-
-   DBG("%s\n", __FUNCTION__);
-
-   for (face = 0; face < nr_faces; face++) {
-      for (i = stObj->firstLevel; i <= stObj->lastLevel; i++) {
-         struct st_texture_image *stImage =
-            st_texture_image(stObj->base.Image[face][i]);
-
-         if (stImage->mt) {
-            stImage->base.Data
-               = st_miptree_image_map(pipe,
-                                      stImage->mt,
-                                      stImage->face,
-                                      stImage->level,
-                                      &stImage->base.RowStride,
-                                      stImage->base.ImageOffsets);
-            /* convert stride to texels, not bytes */
-            stImage->base.RowStride /= stImage->mt->cpp;
-/*             stImage->base.ImageStride /= stImage->mt->cpp; */
-         }
-      }
-   }
-}
-
-
-
-void
-st_tex_unmap_images(struct pipe_context *pipe,
-                    struct st_texture_object *stObj)
-{
-   GLuint nr_faces = (stObj->base.Target == GL_TEXTURE_CUBE_MAP) ? 6 : 1;
-   GLuint face, i;
-
-   for (face = 0; face < nr_faces; face++) {
-      for (i = stObj->firstLevel; i <= stObj->lastLevel; i++) {
-         struct st_texture_image *stImage =
-            st_texture_image(stObj->base.Image[face][i]);
-
-         if (stImage->mt) {
-            st_miptree_image_unmap(pipe, stImage->mt);
-            stImage->base.Data = NULL;
-         }
-      }
-   }
-}
-#endif
 
 
 
