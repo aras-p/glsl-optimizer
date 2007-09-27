@@ -80,13 +80,6 @@ typedef struct
     * Configuration cache with default values for all contexts 
     */
    driOptionCache optionCache;
-
-   /**
-    * This value indicates that the kernel memory manager is being used
-    * instead of the fake client-side memory manager.
-    */
-   GLboolean ttm;
-   dri_bufmgr *bufmgr;
 } intelScreenPrivate;
 
 

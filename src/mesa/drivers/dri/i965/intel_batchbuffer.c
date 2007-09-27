@@ -28,23 +28,12 @@
 #include "imports.h"
 #include "intel_batchbuffer.h"
 #include "intel_ioctl.h"
-#include "dri_bufmgr.h"
+#include "bufmgr.h"
 
 
 static void intel_batchbuffer_reset( struct intel_batchbuffer *batch )
 {
    assert(batch->map == NULL);
-
-   if (batch->buf != NULL) {
-      dri_bo_unreference(batch->buf);
-      batch->buf = NULL;
-   }
-
-   batch->buf = dri_bo_alloc(intel->intelScreen->bufmgr, "batchbuffer",
-			     intel->intelScreen->maxBatchSize, 4096,
-			     DRM_BO_FLAG_MEM_TT);
-   dri_bo_map(batch->buf, GL_TRUE);
-   batch->map = batch->buf->virtual;
 
    batch->offset = (unsigned long)batch->ptr;
    batch->offset = (batch->offset + 63) & ~63;

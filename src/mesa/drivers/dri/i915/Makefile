@@ -66,7 +66,6 @@ DRIVER_DEFINES = -I../intel $(shell pkg-config libdrm --atleast-version=2.3.1 \
 
 include ../Makefile.template
 
-intel_batchbuffer.o: ../intel/intel_batchbuffer.o
 intel_tex_layout.o: ../intel/intel_tex_layout.c
 
 symlinks:

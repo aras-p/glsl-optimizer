@@ -29,7 +29,7 @@
 #define INTEL_BATCHBUFFER_H
 
 #include "mtypes.h"
-#include "dri_bufmgr.h"
+#include "bufmgr.h"
 
 struct intel_context;
 
@@ -43,7 +43,7 @@ struct intel_context;
 struct intel_batchbuffer {
    struct intel_context *intel;
 
-   dri_bo *buffer;
+   struct buffer *buffer;
 
    GLuint flags;
    unsigned long offset;

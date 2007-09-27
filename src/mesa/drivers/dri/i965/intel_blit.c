@@ -41,7 +41,7 @@
 #include "intel_regions.h"
 #include "intel_structs.h"
 
-#include "dri_bufmgr.h"
+#include "bufmgr.h"
 
 
 
@@ -66,7 +66,7 @@ void intelCopyBuffer( const __DRIdrawablePrivate *dPriv,
    intelFlush( &intel->ctx );
 
 
-   dri_fence_wait(intel, intel->last_swap_fence);
+   bmFinishFenceLock(intel, intel->last_swap_fence);
 
    /* The LOCK_HARDWARE is required for the cliprects.  Buffer offsets
     * should work regardless.
@@ -154,10 +154,8 @@ void intelCopyBuffer( const __DRIdrawablePrivate *dPriv,
    }
 
    intel_batchbuffer_flush( intel->batch );
-
-   dri_fence_unreference(intel->second_last_swap_fence);
    intel->second_last_swap_fence = intel->last_swap_fence;
-   intel->last_swap_fence = dri_fence_reference(intel->bmbmSetFenceLock( intel );
+   intel->last_swap_fence = bmSetFenceLock( intel );
    UNLOCK_HARDWARE( intel );
 
    if (!rect)
@@ -180,7 +178,7 @@ void intelCopyBuffer( const __DRIdrawablePrivate *dPriv,
 void intelEmitFillBlit( struct intel_context *intel,
 			GLuint cpp,
 			GLshort dst_pitch,
-			dri_bo *dst_buffer,
+			struct buffer *dst_buffer,
 			GLuint dst_offset,
 			GLboolean dst_tiled,
 			GLshort x, GLshort y, 
@@ -252,11 +250,11 @@ static GLuint translate_raster_op(GLenum logicop)
 void intelEmitCopyBlit( struct intel_context *intel,
 			GLuint cpp,
 			GLshort src_pitch,
-			dri_bo *src_buffer,
+			struct buffer *src_buffer,
 			GLuint  src_offset,
 			GLboolean src_tiled,
 			GLshort dst_pitch,
-			dri_bo *dst_buffer,
+			struct buffer *dst_buffer,
 			GLuint  dst_offset,
 			GLboolean dst_tiled,
 			GLshort src_x, GLshort src_y,
@@ -530,7 +528,7 @@ intelEmitImmediateColorExpandBlit(struct intel_context *intel,
 				  GLubyte *src_bits, GLuint src_size,
 				  GLuint fg_color,
 				  GLshort dst_pitch,
-				  dri_bo *dst_buffer,
+				  struct buffer *dst_buffer,
 				  GLuint dst_offset,
 				  GLboolean dst_tiled,
 				  GLshort x, GLshort y, 

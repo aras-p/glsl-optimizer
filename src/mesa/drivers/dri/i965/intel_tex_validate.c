@@ -31,7 +31,7 @@
 #include "intel_context.h"
 #include "intel_mipmap_tree.h"
 #include "intel_tex.h"
-#include "dri_bufmgr.h"
+#include "bufmgr.h"
 
 /**
  * Compute which mipmap levels that really need to be sent to the hardware.

@@ -34,7 +34,7 @@
 #include "brw_context.h"
 #include "brw_state.h"
 #include "brw_defines.h"
-#include "dri_bufmgr.h"
+#include "bufmgr.h"
 
 /***********************************************************************
  * WM unit - fragment programs and rasterization

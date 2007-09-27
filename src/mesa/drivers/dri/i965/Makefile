@@ -5,6 +5,7 @@ include $(TOP)/configs/current
 LIBNAME = i965_dri.so
 
 DRIVER_SOURCES = \
+	bufmgr_fake.c \
 	intel_batchbuffer.c \
 	intel_blit.c \
 	intel_buffer_objects.c \
@@ -91,7 +92,6 @@ DRIVER_DEFINES = -I../intel
 
 include ../Makefile.template
 
-intel_batchbuffer.o: ../intel/intel_batchbuffer.o
 intel_tex_layout.o: ../intel/intel_tex_layout.c
 
 server:
