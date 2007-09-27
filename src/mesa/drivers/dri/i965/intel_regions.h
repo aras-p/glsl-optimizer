@@ -29,7 +29,7 @@
 #define INTEL_REGIONS_H
 
 #include "mtypes.h"
-#include "bufmgr.h"		/* for DBG! */
+#include "dri_bufmgr.h"		/* for DBG! */
 struct intel_context;
 
 /* A layer on top of the bufmgr buffers that adds a few useful things:
@@ -40,7 +40,7 @@ struct intel_context;
  * - Blitter commands for copying 2D regions between buffers.
  */
 struct intel_region {
-   struct buffer *buffer;
+   dri_bo *buffer;
    GLuint refcount;
    GLuint cpp;
    GLuint pitch;

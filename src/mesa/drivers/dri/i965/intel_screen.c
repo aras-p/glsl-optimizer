@@ -109,12 +109,18 @@ intelMapScreenRegions(__DRIscreenPrivate *sPriv)
       return GL_FALSE;
    }
 
-   if (drmMap(sPriv->fd,
-              intelScreen->tex.handle,
-              intelScreen->tex.size,
-              (drmAddress *)&intelScreen->tex.map) != 0) {
-      intelUnmapScreenRegions(intelScreen);
-      return GL_FALSE;
+   if (intelScreen->tex.size != 0) {
+      intelScreen->ttm = GL_FALSE;
+
+      if (drmMap(sPriv->fd,
+		 intelScreen->tex.handle,
+		 intelScreen->tex.size,
+		 (drmAddress *)&intelScreen->tex.map) != 0) {
+	 intelUnmapScreenRegions(intelScreen);
+	 return GL_FALSE;
+      }
+   } else {
+      intelScreen->ttm = GL_TRUE;
    }
 
    if (0)
@@ -163,6 +169,32 @@ intelUnmapScreenRegions(intelScreenPrivate *intelScreen)
    }
 }
 
+/** Driver-specific fence emit implementation for the fake memory manager. */
+static unsigned int
+intel_fence_emit(void *private)
+{
+   intelScreenPrivate *intelScreen = (intelScreenPrivate *)private;
+   unsigned int fence;
+
+   /* XXX: Need to emit a flush, if we haven't already (at least with the
+    * current batchbuffer implementation, we have).
+    */
+
+   fence = intelEmitIrqLocked(intelScreen);
+
+   return fence;
+}
+
+/** Driver-specific fence wait implementation for the fake memory manager. */
+static int
+intel_fence_wait(void *private, unsigned int cookie)
+{
+   intelScreenPrivate *intelScreen = (intelScreenPrivate *)private;
+
+   intelWaitIrq(intelScreen, cookie);
+
+   return 0;
+}
 
 static void
 intelPrintDRIInfo(intelScreenPrivate *intelScreen,
@@ -359,7 +391,19 @@ static GLboolean intelInitDriver(__DRIscreenPrivate *sPriv)
       (*glx_enable_extension)( psc, "GLX_SGI_make_current_read" );
       (*glx_enable_extension)( psc, "GLX_MESA_copy_sub_buffer" );
    }
-   
+
+   assert(!intelScreen->ttm);
+   intelScreen->bufmgr = dri_bufmgr_fake_init(intelScreen->tex.offset,
+					      intelScreen->tex.map,
+					      intelScreen->tex.size,
+					      intel_fence_emit,
+					      intel_fence_wait,
+					      intelScreen);
+   if (intelScreen->bufmgr == FALSE) {
+      fprintf(stderr, "Couldn't initialize buffer manager\n");
+      return GL_FALSE;
+   }
+
    return GL_TRUE;
 }
 
@@ -369,6 +413,7 @@ static void intelDestroyScreen(__DRIscreenPrivate *sPriv)
    intelScreenPrivate *intelScreen = (intelScreenPrivate *)sPriv->private;
 
    intelUnmapScreenRegions(intelScreen);
+   dri_bufmgr_destroy(intelScreen->bufmgr);
    FREE(intelScreen);
    sPriv->private = NULL;
 }

@@ -31,7 +31,7 @@
 #include "intel_context.h"
 #include "intel_ioctl.h"
 
-struct buffer;
+dri_bo;
 
 extern void intelCopyBuffer( const __DRIdrawablePrivate *dpriv,
 			     const drm_clip_rect_t *rect );
@@ -40,11 +40,11 @@ extern void intelClearWithBlit(GLcontext *ctx, GLbitfield mask);
 extern void intelEmitCopyBlit( struct intel_context *intel,
 			       GLuint cpp,
 			       GLshort src_pitch,
-			       struct buffer *src_buffer,
+			       dri_bo *src_buffer,
 			       GLuint  src_offset,
 			       GLboolean src_tiled,
 			       GLshort dst_pitch,
-			       struct buffer *dst_buffer,
+			       dri_bo *dst_buffer,
 			       GLuint  dst_offset,
 			       GLboolean dst_tiled,
 			       GLshort srcx, GLshort srcy,
@@ -55,7 +55,7 @@ extern void intelEmitCopyBlit( struct intel_context *intel,
 extern void intelEmitFillBlit( struct intel_context *intel,
 			       GLuint cpp,
 			       GLshort dst_pitch,
-			       struct buffer *dst_buffer,
+			       dri_bo *dst_buffer,
 			       GLuint dst_offset,
 			       GLboolean dst_tiled,
 			       GLshort x, GLshort y, 
@@ -68,7 +68,7 @@ intelEmitImmediateColorExpandBlit(struct intel_context *intel,
 				  GLubyte *src_bits, GLuint src_size,
 				  GLuint fg_color,
 				  GLshort dst_pitch,
-				  struct buffer *dst_buffer,
+				  dri_bo *dst_buffer,
 				  GLuint dst_offset,
 				  GLboolean dst_tiled,
 				  GLshort dst_x, GLshort dst_y, 

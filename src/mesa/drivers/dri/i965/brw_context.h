@@ -242,7 +242,7 @@ struct brw_surface_binding_table {
 struct brw_cache;
 
 struct brw_mem_pool {
-   struct buffer *buffer;
+   dri_bo *buffer;
 
    GLuint size;
    GLuint offset;		/* offset of first free byte */
@@ -605,7 +605,7 @@ struct brw_context
       GLuint nr_surfaces;      
 
       GLuint max_threads;
-      struct buffer *scratch_buffer;
+      dri_bo *scratch_buffer;
       GLuint scratch_buffer_size;
 
       GLuint sampler_count;

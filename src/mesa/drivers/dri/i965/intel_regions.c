@@ -42,7 +42,7 @@
 #include "intel_context.h"
 #include "intel_regions.h"
 #include "intel_blit.h"
-#include "bufmgr.h"
+#include "dri_bufmgr.h"
 #include "imports.h"
 
 /* XXX: Thread safety?
@@ -51,7 +51,7 @@ GLubyte *intel_region_map(struct intel_context *intel, struct intel_region *regi
 {
    DBG("%s\n", __FUNCTION__);
    if (!region->map_refcount++) {
-      region->map = bmMapBuffer(intel, region->buffer, 0);
+      region->map = dri_bo_map(region->buffer, GL_TRUE);
       if (!region->map)
 	 region->map_refcount--;
    }
@@ -64,7 +64,7 @@ void intel_region_unmap(struct intel_context *intel,
 {
    DBG("%s\n", __FUNCTION__);
    if (!--region->map_refcount) {
-      bmUnmapBuffer(intel, region->buffer);
+      dri_bo_unmap(region->buffer);
       region->map = NULL;
    }
 }
@@ -84,8 +84,8 @@ struct intel_region *intel_region_alloc( struct intel_context *intel,
    region->height = height; 	/* needed? */
    region->refcount = 1;
 
-   bmGenBuffers(intel, "tex", 1, &region->buffer, 6);
-   bmBufferData(intel, region->buffer, pitch * cpp * height, NULL, 0);
+   region->buffer = dri_bo_alloc(intelScreen->bufmgr, "region",
+				 pitch * cpp * height, 64, DRM_BO_FLAG_MEM_TT);
 
    return region;
 }
@@ -108,7 +108,7 @@ void intel_region_release( struct intel_context *intel,
    
    if (--(*region)->refcount == 0) {
       assert((*region)->map_refcount == 0);
-      bmDeleteBuffers(intel, 1, &(*region)->buffer);
+      dri_bo_unreference((*region)->buffer);
       free(*region);
    }
    *region = NULL;

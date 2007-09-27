@@ -58,7 +58,7 @@
 #include "intel_regions.h"
 #include "intel_buffer_objects.h"
 
-#include "bufmgr.h"
+#include "dri_bufmgr.h"
 
 #include "utils.h"
 #include "vblank.h"
@@ -635,10 +635,10 @@ static void intelContendedLock( struct intel_context *intel, GLuint flags )
    /* As above, but don't evict the texture data on transitions
     * between contexts which all share a local buffer manager.
     */
-   if (sarea->texAge != my_bufmgr) {
+   if (sarea->texAge != intel->hHWContext) {
       DBG("Lost Textures: sarea->texAge %x my_bufmgr %x\n", sarea->ctxOwner, my_bufmgr);
-      sarea->texAge = my_bufmgr;
-      bm_fake_NotifyContendedLockTake( intel ); 
+      sarea->texAge = intel->hHWContext;
+      dri_bufmgr_fake_contended_lock_take(intel->intelScreen->bufmgr);
    }
 
    /* Drawable changed?
@@ -668,11 +668,6 @@ void LOCK_HARDWARE( struct intel_context *intel )
 
    intel->locked = 1;
 
-   if (bmError(intel)) {
-      bmEvictAll(intel);
-      intel->vtbl.lost_hardware( intel );
-   }
-
    /* Make sure nothing has been emitted prior to getting the lock:
     */
    assert(intel->batch->map == 0);
@@ -680,16 +675,8 @@ void LOCK_HARDWARE( struct intel_context *intel )
    /* XXX: postpone, may not be needed:
     */
    if (!intel_batchbuffer_map(intel->batch)) {
-      bmEvictAll(intel);
-      intel->vtbl.lost_hardware( intel );
-
-      /* This could only fail if the batchbuffer was greater in size
-       * than the available texture memory:
-       */
-      if (!intel_batchbuffer_map(intel->batch)) {
-	 _mesa_printf("double failure to map batchbuffer\n");
-	 assert(0);
-      }
+      _mesa_printf("failure to map batchbuffer\n");
+      assert(0);
    }
 }
  

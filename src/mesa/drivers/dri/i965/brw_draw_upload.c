@@ -58,7 +58,7 @@ struct brw_array_state {
 	 GLuint dword;
       } vb0;
    
-      struct buffer *buffer;
+      dri_bo *buffer;
       GLuint offset;
 
       GLuint max_index;   
@@ -68,7 +68,7 @@ struct brw_array_state {
 };
 
 
-static struct buffer *array_buffer( const struct gl_client_array *array )
+static dri_bo *array_buffer( const struct gl_client_array *array )
 {
    return intel_bufferobj_buffer(intel_buffer_object(array->BufferObj));
 }
@@ -620,7 +620,7 @@ void brw_upload_indices( struct brw_context *brw,
     */
    {
       struct brw_indexbuffer ib;
-      struct buffer *buffer = intel_bufferobj_buffer(intel_buffer_object(bufferobj));
+      dri_bo *buffer = intel_bufferobj_buffer(intel_buffer_object(bufferobj));
 
       memset(&ib, 0, sizeof(ib));
    

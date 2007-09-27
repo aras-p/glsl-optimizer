@@ -41,7 +41,7 @@
 #include "intel_blit.h"
 #include "intel_regions.h"
 #include "drm.h"
-#include "bufmgr.h"
+#include "dri_bufmgr.h"
 
 static int intelWaitIdleLocked( struct intel_context *intel )
 {

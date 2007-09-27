@@ -32,7 +32,7 @@
 
 #include "intel_context.h"
 #include "intel_buffer_objects.h"
-#include "bufmgr.h"
+#include "dri_bufmgr.h"
 
 
 /**
@@ -185,7 +185,7 @@ static GLboolean intel_bufferobj_unmap( GLcontext *ctx,
    return GL_TRUE;
 }
 
-struct buffer *intel_bufferobj_buffer( const struct intel_buffer_object *intel_obj )
+dri_bo *intel_bufferobj_buffer( const struct intel_buffer_object *intel_obj )
 {
    assert(intel_obj->Base.Name);
    assert(intel_obj->buffer);

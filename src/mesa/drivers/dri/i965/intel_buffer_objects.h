@@ -39,13 +39,13 @@ struct gl_buffer_object;
  */
 struct intel_buffer_object {
    struct gl_buffer_object Base;
-   struct buffer *buffer;   /* the low-level buffer manager's buffer handle */
+   dri_bo *buffer;   /* the low-level buffer manager's buffer handle */
 };
 
 
 /* Get the bm buffer associated with a GL bufferobject:
  */
-struct buffer *intel_bufferobj_buffer( const struct intel_buffer_object *obj );
+dri_bo *intel_bufferobj_buffer( const struct intel_buffer_object *obj );
 
 /* Hook the bufferobject implementation into mesa: 
  */

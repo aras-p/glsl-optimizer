@@ -34,7 +34,7 @@
 #include "imports.h"
 
 #include "intel_ioctl.h"
-#include "bufmgr.h"
+#include "dri_bufmgr.h"
 
 GLboolean brw_pool_alloc( struct brw_mem_pool *pool,
 			  GLuint size,
