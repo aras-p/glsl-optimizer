@@ -1414,9 +1414,10 @@ copy_image_data_to_tree(struct pipe_context *pipe,
       /* Copy potentially with the blitter:
        */
       st_miptree_image_copy(pipe,
-                               stObj->mt,
-                               stImage->face,
-                               stImage->level, stImage->mt);
+                            stObj->mt,  /* dest miptree */
+                            stImage->face, stImage->level,
+                            stImage->mt /* src miptree */
+                            );
 
       st_miptree_release(pipe, &stImage->mt);
    }

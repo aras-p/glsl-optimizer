@@ -309,10 +309,10 @@ st_miptree_image_copy(struct pipe_context *pipe,
    for (i = 0; i < depth; i++) {
       pipe->region_copy(pipe,
                         dst->region, dst_offset + dst_depth_offset[i],
-                        0,
-                        0,
+                        0, 0, /* destX, Y */
                         src->region, src_offset + src_depth_offset[i],
-                        0, 0, width, height);
+                        0, 0, /* srcX, Y */
+                        width, height);
    }
 
 }
