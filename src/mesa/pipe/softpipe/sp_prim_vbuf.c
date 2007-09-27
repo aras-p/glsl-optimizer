@@ -114,8 +114,8 @@ static boolean check_space( struct vbuf_stage *vbuf )
 static void emit_vertex( struct vbuf_stage *vbuf,
                          struct vertex_header *vertex )
 {
-   fprintf(stderr, "emit vertex %d to %p\n", 
-           vbuf->nr_vertices, vbuf->vertex_ptr);
+//   fprintf(stderr, "emit vertex %d to %p\n", 
+//           vbuf->nr_vertices, vbuf->vertex_ptr);
 
    vertex->vertex_id = vbuf->nr_vertices++;
 
