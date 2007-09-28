@@ -253,6 +253,14 @@ st_translate_vertex_program(struct st_context *st,
    if (TGSI_DEBUG)
       tgsi_dump( tokensOut, 0 );
 
+#if defined(__i386__) || defined(__386__)
+   if (stvp->sse2_program.csr == stvp->sse2_program.store)
+      tgsi_emit_sse2( tokensOut, &stvp->sse2_program );
+
+   if (!cso->state.executable)
+      ((struct cso_vertex_shader*)cso)->state.executable = (void *) x86_get_func( &stvp->sse2_program );
+#endif
+
    return cso;
 }
 

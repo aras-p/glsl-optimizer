@@ -443,13 +443,16 @@ static void i915_set_polygon_stipple( struct pipe_context *pipe,
 {
 }
 
-static void * i915_create_fs_state(struct pipe_context *pipe,
-                                   const struct pipe_shader_state *templ)
+
+static void *
+i915_create_shader_state(struct pipe_context *pipe,
+                         const struct pipe_shader_state *templ)
 {
    return 0;
 }
 
-static void i915_bind_fs_state(struct pipe_context *pipe, void *fs)
+static void i915_bind_fs_state( struct pipe_context *pipe,
+                               void *fs )
 {
    struct i915_context *i915 = i915_context(pipe);
 
@@ -458,35 +461,20 @@ static void i915_bind_fs_state(struct pipe_context *pipe, void *fs)
    i915->dirty |= I915_NEW_FS;
 }
 
-static void i915_delete_fs_state(struct pipe_context *pipe, void *shader)
+
+static void i915_bind_vs_state(struct pipe_context *pipe,
+                               void *vs)
+{
+   struct i915_context *i915 = i915_context(pipe);
+
+   /* just pass-through to draw module */
+   draw_set_vertex_shader(i915->draw, (const struct pipe_shader_state *)vs);
+}
+
+static void i915_delete_shader_state(struct pipe_context *pipe,
+                                     void *shader)
 {
    /*do nothing*/
-}
-
-static void *
-i915_create_vs_state(struct pipe_context *pipe,
-                     const struct pipe_shader_state *templ)
-{
-   struct i915_context *i915 = i915_context(pipe);
-
-   /* just pass-through to draw module */
-   return draw_create_vertex_shader(i915->draw, templ);
-}
-
-static void i915_bind_vs_state(struct pipe_context *pipe, void *vs)
-{
-   struct i915_context *i915 = i915_context(pipe);
-
-   /* just pass-through to draw module */
-   draw_bind_vertex_shader(i915->draw, vs);
-}
-
-static void i915_delete_vs_state(struct pipe_context *pipe, void *shader)
-{
-   struct i915_context *i915 = i915_context(pipe);
-
-   /* just pass-through to draw module */
-   draw_delete_vertex_shader(i915->draw, shader);
 }
 
 static void i915_set_constant_buffer(struct pipe_context *pipe,
@@ -719,12 +707,12 @@ i915_init_state_functions( struct i915_context *i915 )
    i915->pipe.create_rasterizer_state = i915_create_rasterizer_state;
    i915->pipe.bind_rasterizer_state = i915_bind_rasterizer_state;
    i915->pipe.delete_rasterizer_state = i915_delete_rasterizer_state;
-   i915->pipe.create_fs_state = i915_create_fs_state;
+   i915->pipe.create_fs_state = i915_create_shader_state;
    i915->pipe.bind_fs_state = i915_bind_fs_state;
-   i915->pipe.delete_fs_state = i915_delete_fs_state;
-   i915->pipe.create_vs_state = i915_create_vs_state;
+   i915->pipe.delete_fs_state = i915_delete_shader_state;
+   i915->pipe.create_vs_state = i915_create_shader_state;
    i915->pipe.bind_vs_state = i915_bind_vs_state;
-   i915->pipe.delete_vs_state = i915_delete_vs_state;
+   i915->pipe.delete_vs_state = i915_delete_shader_state;
 
    i915->pipe.set_blend_color = i915_set_blend_color;
    i915->pipe.set_clip_state = i915_set_clip_state;

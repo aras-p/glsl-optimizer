@@ -46,7 +46,6 @@
 
 #include "draw_vertex.h"
 
-#include "x86/rtasm/x86sse.h"
 
 /**
  * Basic vertex info.
@@ -105,7 +104,7 @@ struct draw_stage
 
    void (*tri)( struct draw_stage *,
 		struct prim_header * );
-
+   
    void (*end)( struct draw_stage * );
 
    void (*reset_stipple_counter)( struct draw_stage * );
@@ -117,15 +116,6 @@ struct draw_stage
 #define VCACHE_OVERFLOW        4
 #define VS_QUEUE_LENGTH        (VCACHE_SIZE + VCACHE_OVERFLOW + 1)	/* can never fill up */
 
-/**
- * Private version of the compiled vertex_shader
- */
-struct draw_vertex_shader {
-   const struct pipe_shader_state *state;
-#if defined(__i386__) || defined(__386__)
-   struct x86_function  sse2_program;
-#endif
-};
 
 /**
  * Private context for the drawing module.
@@ -155,7 +145,7 @@ struct draw_context
    struct pipe_viewport_state viewport;
    struct pipe_vertex_buffer vertex_buffer[PIPE_ATTRIB_MAX];
    struct pipe_vertex_element vertex_element[PIPE_ATTRIB_MAX];
-   const struct draw_vertex_shader *vertex_shader;
+   struct pipe_shader_state vertex_shader;
    struct pipe_vertex_buffer feedback_buffer[PIPE_ATTRIB_MAX];
    struct pipe_vertex_element feedback_element[PIPE_ATTRIB_MAX];
 

@@ -62,12 +62,8 @@ struct draw_stage;
 #define SP_NEW_VS            0x2000
 #define SP_NEW_CONSTANTS     0x4000
 
-struct sp_vertex_shader_state {
-   const struct pipe_shader_state *state;
-   void  *draw_data;
-};
 
-struct softpipe_context {
+struct softpipe_context {     
    struct pipe_context pipe;  /**< base class */
    struct softpipe_winsys *winsys;	/**< window system interface */
 
@@ -80,7 +76,7 @@ struct softpipe_context {
    const struct pipe_depth_stencil_state   *depth_stencil;
    const struct pipe_rasterizer_state *rasterizer;
    const struct pipe_shader_state *fs;
-   const struct sp_vertex_shader_state *vs;
+   const struct pipe_shader_state *vs;
 
    struct pipe_blend_color blend_color;
    struct pipe_clear_color_state clear_color;

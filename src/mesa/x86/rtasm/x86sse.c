@@ -6,22 +6,22 @@
 #define DISASSEM 0
 #define X86_TWOB 0x0f
 
-static unsigned char *cptr( void (*label)() )
+static GLubyte *cptr( void (*label)() )
 {
-   return (unsigned char *)(unsigned long)label;
+   return (char *)(unsigned long)label;
 }
 
 
 /* Emit bytes to the instruction stream:
  */
-static void emit_1b( struct x86_function *p, char b0 )
+static void emit_1b( struct x86_function *p, GLbyte b0 )
 {
-   *(char *)(p->csr++) = b0;
+   *(GLbyte *)(p->csr++) = b0;
 }
 
-static void emit_1i( struct x86_function *p, int i0 )
+static void emit_1i( struct x86_function *p, GLint i0 )
 {
-   *(int *)(p->csr) = i0;
+   *(GLint *)(p->csr) = i0;
    p->csr += 4;
 }
 
@@ -35,20 +35,20 @@ static void disassem( struct x86_function *p, const char *fn )
 #endif
 }
 
-static void emit_1ub_fn( struct x86_function *p, unsigned char b0, const char *fn )
+static void emit_1ub_fn( struct x86_function *p, GLubyte b0, const char *fn )
 {
    disassem(p, fn);
    *(p->csr++) = b0;
 }
 
-static void emit_2ub_fn( struct x86_function *p, unsigned char b0, unsigned char b1, const char *fn )
+static void emit_2ub_fn( struct x86_function *p, GLubyte b0, GLubyte b1, const char *fn )
 {
    disassem(p, fn);
    *(p->csr++) = b0;
    *(p->csr++) = b1;
 }
 
-static void emit_3ub_fn( struct x86_function *p, unsigned char b0, unsigned char b1, unsigned char b2, const char *fn )
+static void emit_3ub_fn( struct x86_function *p, GLubyte b0, GLubyte b1, GLubyte b2, const char *fn )
 {
    disassem(p, fn);
    *(p->csr++) = b0;
@@ -69,7 +69,7 @@ static void emit_modrm( struct x86_function *p,
 			struct x86_reg reg, 
 			struct x86_reg regmem )
 {
-   unsigned char val = 0;
+   GLubyte val = 0;
    
    assert(reg.mod == mod_REG);
    
@@ -104,7 +104,7 @@ static void emit_modrm( struct x86_function *p,
 
 
 static void emit_modrm_noreg( struct x86_function *p,
-			      unsigned op,
+			      GLuint op,
 			      struct x86_reg regmem )
 {
    struct x86_reg dummy = x86_make_reg(file_REG32, op);
@@ -117,8 +117,8 @@ static void emit_modrm_noreg( struct x86_function *p,
  * the arguments presented.
  */
 static void emit_op_modrm( struct x86_function *p,
-			   unsigned char op_dst_is_reg, 
-			   unsigned char op_dst_is_mem,
+			   GLubyte op_dst_is_reg, 
+			   GLubyte op_dst_is_mem,
 			   struct x86_reg dst,
 			   struct x86_reg src )
 {  
@@ -162,7 +162,7 @@ struct x86_reg x86_make_reg( enum x86_reg_file file,
 }
 
 struct x86_reg x86_make_disp( struct x86_reg reg,
-			      int disp )
+			      GLint disp )
 {
    assert(reg.file == file_REG32);
 
@@ -191,7 +191,7 @@ struct x86_reg x86_get_base_reg( struct x86_reg reg )
    return x86_make_reg( reg.file, reg.idx );
 }
 
-unsigned char *x86_get_label( struct x86_function *p )
+GLubyte *x86_get_label( struct x86_function *p )
 {
    return p->csr;
 }
@@ -205,13 +205,13 @@ unsigned char *x86_get_label( struct x86_function *p )
 
 void x86_jcc( struct x86_function *p,
 	      enum x86_cc cc,
-	      unsigned char *label )
+	      GLubyte *label )
 {
-   int offset = label - (x86_get_label(p) + 2);
+   GLint offset = label - (x86_get_label(p) + 2);
    
    if (offset <= 127 && offset >= -128) {
       emit_1ub(p, 0x70 + cc);
-      emit_1b(p, (char) offset);
+      emit_1b(p, (GLbyte) offset);
    }
    else {
       offset = label - (x86_get_label(p) + 6);
@@ -222,7 +222,7 @@ void x86_jcc( struct x86_function *p,
 
 /* Always use a 32bit offset for forward jumps:
  */
-unsigned char *x86_jcc_forward( struct x86_function *p,
+GLubyte *x86_jcc_forward( struct x86_function *p,
 			  enum x86_cc cc )
 {
    emit_2ub(p, 0x0f, 0x80 + cc);
@@ -230,14 +230,14 @@ unsigned char *x86_jcc_forward( struct x86_function *p,
    return x86_get_label(p);
 }
 
-unsigned char *x86_jmp_forward( struct x86_function *p)
+GLubyte *x86_jmp_forward( struct x86_function *p)
 {
    emit_1ub(p, 0xe9);
    emit_1i(p, 0);
    return x86_get_label(p);
 }
 
-unsigned char *x86_call_forward( struct x86_function *p)
+GLubyte *x86_call_forward( struct x86_function *p)
 {
    emit_1ub(p, 0xe8);
    emit_1i(p, 0);
@@ -247,12 +247,12 @@ unsigned char *x86_call_forward( struct x86_function *p)
 /* Fixup offset from forward jump:
  */
 void x86_fixup_fwd_jump( struct x86_function *p,
-			 unsigned char *fixup )
+			 GLubyte *fixup )
 {
    *(int *)(fixup - 4) = x86_get_label(p) - fixup;
 }
 
-void x86_jmp( struct x86_function *p, unsigned char *label)
+void x86_jmp( struct x86_function *p, GLubyte *label)
 {
    emit_1ub(p, 0xe9);
    emit_1i(p, label - x86_get_label(p) - 4);
@@ -268,7 +268,7 @@ void x86_call( struct x86_function *p, void (*label)())
  * Temporary. As I need immediate operands, and dont want to mess with the codegen,
  * I load the immediate into general purpose register and use it.
  */
-void x86_mov_reg_imm( struct x86_function *p, struct x86_reg dst, int imm )
+void x86_mov_reg_imm( struct x86_function *p, struct x86_reg dst, GLint imm )
 {
    assert(dst.mod == mod_REG);
    emit_1ub(p, 0xb8 + dst.idx);
@@ -595,7 +595,7 @@ void sse_cvtps2pi( struct x86_function *p,
 void sse_shufps( struct x86_function *p,
 		 struct x86_reg dest,
 		 struct x86_reg arg0,
-		 unsigned char shuf) 
+		 GLubyte shuf) 
 {
    emit_2ub(p, X86_TWOB, 0xC6);
    emit_modrm(p, dest, arg0);
@@ -605,7 +605,7 @@ void sse_shufps( struct x86_function *p,
 void sse_cmpps( struct x86_function *p,
 		struct x86_reg dest,
 		struct x86_reg arg0,
-		unsigned char cc) 
+		GLubyte cc) 
 {
    emit_2ub(p, X86_TWOB, 0xC2);
    emit_modrm(p, dest, arg0);
@@ -630,7 +630,7 @@ void sse_pmovmskb( struct x86_function *p,
 void sse2_pshufd( struct x86_function *p,
 		  struct x86_reg dest,
 		  struct x86_reg arg0,
-		  unsigned char shuf) 
+		  GLubyte shuf) 
 {
    emit_3ub(p, 0x66, X86_TWOB, 0x70);
    emit_modrm(p, dest, arg0);
@@ -772,11 +772,11 @@ void x87_fclex( struct x86_function *p )
 
 
 static void x87_arith_op( struct x86_function *p, struct x86_reg dst, struct x86_reg arg,
-			  unsigned char dst0ub0,
-			  unsigned char dst0ub1,
-			  unsigned char arg0ub0,
-			  unsigned char arg0ub1,
-			  unsigned char argmem_noreg)
+			  GLubyte dst0ub0,
+			  GLubyte dst0ub1,
+			  GLubyte arg0ub0,
+			  GLubyte arg0ub1,
+			  GLubyte argmem_noreg)
 {
    assert(dst.file == file_x87);
 
@@ -1116,7 +1116,7 @@ void mmx_movq( struct x86_function *p,
  * account any push/pop activity:
  */
 struct x86_reg x86_fn_arg( struct x86_function *p,
-			   unsigned arg )
+			   GLuint arg )
 {
    return x86_make_disp(x86_make_reg(file_REG32, reg_SP), 
 			p->stack_offset + arg * 4);	/* ??? */
@@ -1128,7 +1128,7 @@ void x86_init_func( struct x86_function *p )
    x86_init_func_size(p, 1024);
 }
 
-void x86_init_func_size( struct x86_function *p, unsigned code_size )
+void x86_init_func_size( struct x86_function *p, GLuint code_size )
 {
    p->store = _mesa_exec_malloc(code_size);
    p->csr = p->store;

@@ -33,13 +33,10 @@
 #include "pipe/draw/draw_context.h"
 
 
-void * softpipe_create_fs_state(struct pipe_context *pipe,
-                                const struct pipe_shader_state *templ)
+void * softpipe_create_shader_state(struct pipe_context *pipe,
+                                    const struct pipe_shader_state *templ)
 {
-   /* Decide whether we'll be codegenerating this shader and if so do
-    * that now.
-    */
-
+   /* we just want the pipe_shader_state template in the bind calls */
    return 0;
 }
 
@@ -52,50 +49,24 @@ void softpipe_bind_fs_state(struct pipe_context *pipe, void *fs)
    softpipe->dirty |= SP_NEW_FS;
 }
 
-void softpipe_delete_fs_state(struct pipe_context *pipe,
-                              void *shader)
-{
-}
-
-
-void * softpipe_create_vs_state(struct pipe_context *pipe,
-                                const struct pipe_shader_state *templ)
-{
-   struct softpipe_context *softpipe = softpipe_context(pipe);
-   struct sp_vertex_shader_state *state =
-      malloc(sizeof(struct sp_vertex_shader_state));
-
-   state->state = templ;
-   state->draw_data = draw_create_vertex_shader(softpipe->draw,
-                                                state->state);
-
-   return state;
-}
 
 void softpipe_bind_vs_state(struct pipe_context *pipe, void *vs)
 {
    struct softpipe_context *softpipe = softpipe_context(pipe);
 
-   softpipe->vs = (const struct sp_vertex_shader_state *)vs;
-
-   draw_bind_vertex_shader(softpipe->draw, softpipe->vs->draw_data);
+   softpipe->vs = (struct pipe_shader_state *)vs;
 
    softpipe->dirty |= SP_NEW_VS;
+
+   draw_set_vertex_shader(softpipe->draw, (struct pipe_shader_state *)vs);
 }
 
-void softpipe_delete_vs_state(struct pipe_context *pipe,
-                              void *vs)
+
+void softpipe_delete_shader_state( struct pipe_context *pipe,
+                                   void *shader )
 {
-   struct softpipe_context *softpipe = softpipe_context(pipe);
-
-   struct sp_vertex_shader_state *state =
-      (struct sp_vertex_shader_state *)vs;
-
-   draw_delete_vertex_shader(softpipe->draw, state->draw_data);
-   free(state);
+   /* do nothing */
 }
-
-
 
 void softpipe_set_constant_buffer(struct pipe_context *pipe,
                                   uint shader, uint index,

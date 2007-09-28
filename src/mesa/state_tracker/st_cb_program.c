@@ -86,6 +86,10 @@ static struct gl_program *st_new_program( GLcontext *ctx,
 
       prog->serialNo = 1;
 
+#if defined(__i386__) || defined(__386__)
+      x86_init_func( &prog->sse2_program );
+#endif
+
       return _mesa_init_vertex_program( ctx, 
 					&prog->Base,
 					target, 
@@ -125,6 +129,9 @@ static void st_delete_program( GLcontext *ctx,
    case GL_VERTEX_PROGRAM_ARB:
       {
          struct st_vertex_program *stvp = (struct st_vertex_program *) prog;
+#if defined(__i386__) || defined(__386__)
+         x86_release_func( &stvp->sse2_program );
+#endif
          st_remove_vertex_program(st, stvp);
       }
       break;
