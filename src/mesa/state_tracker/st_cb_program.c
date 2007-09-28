@@ -37,6 +37,7 @@
 #include "shader/prog_parameter.h"
 #include "shader/program.h"
 #include "shader/programopt.h"
+#include "shader/shader_api.h"
 
 #include "st_context.h"
 #include "st_program.h"
@@ -70,6 +71,8 @@ static void st_use_program( GLcontext *ctx,
    struct st_context *st = st_context(ctx);
 
    st->dirty.st |= ST_NEW_SHADER;
+
+   _mesa_use_program(ctx, program);
 }
 
 
