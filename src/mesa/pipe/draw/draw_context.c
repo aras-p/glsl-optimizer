@@ -41,12 +41,6 @@ struct draw_context *draw_create( void )
 {
    struct draw_context *draw = CALLOC_STRUCT( draw_context );
 
-#if defined(__i386__) || defined(__386__)
-   draw->use_sse = getenv("GALLIUM_SSE") != NULL;
-#else
-   draw->use_sse = false;
-#endif
-
    /* create pipeline stages */
    draw->pipeline.unfilled  = draw_unfilled_stage( draw );
    draw->pipeline.twoside   = draw_twoside_stage( draw );
@@ -248,11 +242,6 @@ void draw_free_tmps( struct draw_stage *stage )
       free(stage->tmp[0]);
       free(stage->tmp);
    }
-}
-
-boolean draw_use_sse(struct draw_context *draw)
-{
-   return draw->use_sse;
 }
 
 

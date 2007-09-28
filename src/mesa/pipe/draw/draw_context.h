@@ -99,7 +99,6 @@ void draw_bind_vertex_shader(struct draw_context *draw,
 void draw_delete_vertex_shader(struct draw_context *draw,
                                void *vcso);
 
-boolean draw_use_sse(struct draw_context *draw);
 
 void
 draw_set_vertex_buffer(struct draw_context *draw,

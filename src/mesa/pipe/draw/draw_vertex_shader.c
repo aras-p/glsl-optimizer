@@ -220,11 +220,10 @@ draw_create_vertex_shader(struct draw_context *draw,
 #if defined(__i386__) || defined(__386__)
    x86_init_func(&vs->sse2_program);
 
-   if (draw->use_sse) {
-      tgsi_emit_sse2(shader->tokens, &vs->sse2_program);
-      ((struct pipe_shader_state*)(vs->state))->executable =
-         x86_get_func(&vs->sse2_program);
-   }
+   tgsi_emit_sse2(shader->tokens, &vs->sse2_program);
+
+   ((struct pipe_shader_state*)(vs->state))->executable =
+      x86_get_func(&vs->sse2_program);
 #endif
 
    return vs;
