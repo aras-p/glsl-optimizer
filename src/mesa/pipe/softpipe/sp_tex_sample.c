@@ -479,10 +479,8 @@ choose_mipmap_levels(struct tgsi_sampler *sampler,
 {
    if (sampler->state->min_mip_filter == PIPE_TEX_MIPFILTER_NONE) {
       /* no mipmap selection needed */
-      assert(sampler->state->min_img_filter ==
-             sampler->state->mag_img_filter);
       *imgFilter = sampler->state->mag_img_filter;
-      *level0 = *level1 = 0;
+      *level0 = *level1 = sampler->texture->first_level;
    }
    else {
       float lambda;
@@ -497,7 +495,7 @@ choose_mipmap_levels(struct tgsi_sampler *sampler,
       if (lambda < 0.0) { /* XXX threshold depends on the filter */
          /* magnifying */
          *imgFilter = sampler->state->mag_img_filter;
-         *level0 = *level1 = 0;
+         *level0 = *level1 = sampler->texture->first_level;
       }
       else {
          /* minifying */
