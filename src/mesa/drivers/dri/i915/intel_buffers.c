@@ -50,7 +50,7 @@
 #define DRM_VBLANK_FLIP 0x8000000
 
 typedef struct drm_i915_flip {
-   int planes;
+   int pipes;
 } drm_i915_flip_t;
 
 #undef DRM_IOCTL_I915_FLIP
@@ -287,7 +287,7 @@ intelWindowMoved(struct intel_context *intel)
 		  ((intel_fb->pf_current_page + intel_fb->pf_num_pages - 1) %
 		   intel_fb->pf_num_pages) << 2;
 
-	       flip.planes = 0x2;
+	       flip.pipes = 0x2;
 	    } else {
                intel->sarea->pf_current_page =
 		  intel->sarea->pf_current_page & (0x3 << 2);
@@ -295,7 +295,7 @@ intelWindowMoved(struct intel_context *intel)
 		  (intel_fb->pf_current_page + intel_fb->pf_num_pages - 1) %
 		  intel_fb->pf_num_pages;
 
-	       flip.planes = 0x1;
+	       flip.pipes = 0x1;
 	    }
 
 	    drmCommandWrite(intel->driFd, DRM_I915_FLIP, &flip, sizeof(flip));
@@ -761,7 +761,7 @@ intelPageFlip(const __DRIdrawablePrivate * dPriv)
    if (dPriv->numClipRects && intel_fb->pf_active) {
       drm_i915_flip_t flip;
 
-      flip.planes = intel_fb->pf_planes;
+      flip.pipes = intel_fb->pf_planes;
 
       ret = drmCommandWrite(intel->driFd, DRM_I915_FLIP, &flip, sizeof(flip));
    }
