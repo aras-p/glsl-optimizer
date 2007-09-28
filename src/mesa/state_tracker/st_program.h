@@ -79,10 +79,6 @@ struct st_vertex_program
    /** The program in TGSI format */
    struct tgsi_token tokens[ST_FP_MAX_TOKENS];
 
-#if defined(__i386__) || defined(__386__)
-   struct x86_function  sse2_program;
-#endif
-
    /** Pointer to the corresponding cached shader */
    const struct cso_vertex_shader *vs;
 

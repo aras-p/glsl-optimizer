@@ -275,12 +275,12 @@ struct pipe_context *softpipe_create( struct pipe_winsys *pipe_winsys,
    softpipe->pipe.create_rasterizer_state = softpipe_create_rasterizer_state;
    softpipe->pipe.bind_rasterizer_state   = softpipe_bind_rasterizer_state;
    softpipe->pipe.delete_rasterizer_state = softpipe_delete_rasterizer_state;
-   softpipe->pipe.create_fs_state = softpipe_create_shader_state;
+   softpipe->pipe.create_fs_state = softpipe_create_fs_state;
    softpipe->pipe.bind_fs_state   = softpipe_bind_fs_state;
-   softpipe->pipe.delete_fs_state = softpipe_delete_shader_state;
-   softpipe->pipe.create_vs_state = softpipe_create_shader_state;
+   softpipe->pipe.delete_fs_state = softpipe_delete_fs_state;
+   softpipe->pipe.create_vs_state = softpipe_create_vs_state;
    softpipe->pipe.bind_vs_state   = softpipe_bind_vs_state;
-   softpipe->pipe.delete_vs_state = softpipe_delete_shader_state;
+   softpipe->pipe.delete_vs_state = softpipe_delete_vs_state;
 
    softpipe->pipe.set_blend_color = softpipe_set_blend_color;
    softpipe->pipe.set_clip_state = softpipe_set_clip_state;

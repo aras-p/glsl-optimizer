@@ -36,6 +36,8 @@
 #include "draw_context.h"
 #include "draw_vertex.h"
 
+#include "x86/rtasm/x86sse.h"
+
 #include "pipe/tgsi/exec/tgsi_core.h"
 
 static INLINE unsigned
@@ -70,6 +72,7 @@ typedef void (XSTDCALL *codegen_function) (
    float (*constant)[4],
    struct tgsi_exec_vector *temporary );
 
+
 /**
  * Transform vertices with the current vertex program/shader
  * Up to four vertices can be shaded at a time.
@@ -92,7 +95,7 @@ run_vertex_program(struct draw_context *draw,
    const float *trans = draw->viewport.translate;
 
    assert(count <= 4);
-   assert(draw->vertex_shader.output_semantic_name[0]
+   assert(draw->vertex_shader->state->output_semantic_name[0]
           == TGSI_SEMANTIC_POSITION);
 
 #ifdef DEBUG
@@ -101,7 +104,7 @@ run_vertex_program(struct draw_context *draw,
 
    /* init machine state */
    tgsi_exec_machine_init(&machine,
-                          draw->vertex_shader.tokens,
+                          draw->vertex_shader->state->tokens,
                           PIPE_MAX_SAMPLERS,
                           NULL /*samplers*/ );
 
@@ -114,8 +117,8 @@ run_vertex_program(struct draw_context *draw,
    draw_vertex_fetch( draw, &machine, elts, count );
 
    /* run shader */
-   if( draw->vertex_shader.executable != NULL ) {
-      codegen_function func = (codegen_function) draw->vertex_shader.executable;
+   if( draw->vertex_shader->state->executable != NULL ) {
+      codegen_function func = (codegen_function) draw->vertex_shader->state->executable;
       func(
          machine.Inputs,
          machine.Outputs,
@@ -205,4 +208,43 @@ void draw_vertex_shader_queue_flush( struct draw_context *draw )
 
    draw->vs.queue_nr = 0;
 }
+
+
+void *
+draw_create_vertex_shader(struct draw_context *draw,
+                          const struct pipe_shader_state *shader)
+{
+   struct draw_vertex_shader *vs = calloc(1, sizeof(struct draw_vertex_shader));
+
+   vs->state = shader;
+#if defined(__i386__) || defined(__386__)
+   x86_init_func(&vs->sse2_program);
+
+   tgsi_emit_sse2(shader->tokens, &vs->sse2_program);
+
+   ((struct pipe_shader_state*)(vs->state))->executable =
+      x86_get_func(&vs->sse2_program);
+#endif
+
+   return vs;
+}
+
+void draw_bind_vertex_shader(struct draw_context *draw,
+                             void *vcso)
+{
+   draw_flush(draw);
+   draw->vertex_shader = (struct draw_vertex_shader*)(vcso);
+}
+
+void draw_delete_vertex_shader(struct draw_context *draw,
+                               void *vcso)
+{
+   struct draw_vertex_shader *vs = (struct draw_vertex_shader*)(vcso);
+#if defined(__i386__) || defined(__386__)
+   x86_release_func(&vs->sse2_program);
+#endif
+   free(vcso);
+}
+
+
 
