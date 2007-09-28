@@ -134,9 +134,10 @@ static void prealloc_reg(struct brw_wm_compile *c)
     c->prog_data.first_curbe_grf = c->key.nr_depth_regs * 2;
     c->prog_data.urb_read_length = nr_interp_regs * 2;
     c->prog_data.curb_read_length = c->nr_creg;
-    c->ret_reg = brw_uw1_reg(BRW_GENERAL_REGISTER_FILE, c->reg_index, 0);
-    c->emit_mask_reg = brw_uw1_reg(BRW_GENERAL_REGISTER_FILE, c->reg_index, 1);
+    c->emit_mask_reg = brw_uw1_reg(BRW_GENERAL_REGISTER_FILE, c->reg_index, 0);
     c->reg_index++;
+    c->stack =  brw_uw16_reg(BRW_GENERAL_REGISTER_FILE, c->reg_index, 0);
+    c->reg_index += 2;
 }
 
 static struct brw_reg get_dst_reg(struct brw_wm_compile *c, 
@@ -1075,10 +1076,14 @@ static void brw_wm_emit_glsl(struct brw_wm_compile *c)
     struct brw_instruction *inst0, *inst1;
     int i, if_insn = 0, loop_insn = 0;
     struct brw_compile *p = &c->func;
+    struct brw_indirect stack_index = brw_indirect(0, 0);
+
     brw_init_compile(&c->func);
     c->reg_index = 0;
     prealloc_reg(c);
     brw_set_compression_control(p, BRW_COMPRESSION_NONE);
+    brw_MOV(p, get_addr_reg(stack_index), brw_address(c->stack));
+
     for (i = 0; i < c->nr_fp_insns; i++) {
 	struct prog_instruction *inst = &c->prog_instructions[i];
 	struct prog_instruction *orig_inst;
@@ -1227,19 +1232,29 @@ static void brw_wm_emit_glsl(struct brw_wm_compile *c)
 	    case OPCODE_CAL: 
 		brw_push_insn_state(p);
 		brw_set_mask_control(p, BRW_MASK_DISABLE);
-		brw_set_predicate_control(p, BRW_PREDICATE_NONE);
-		brw_ADD(p, c->ret_reg, brw_ip_reg(), brw_imm_d(2*16));
-		orig_inst = inst->Data;
-		orig_inst->Data = current_insn(p);
-		brw_ADD(p, brw_ip_reg(), brw_ip_reg(), brw_imm_d(1*16));
-		brw_pop_insn_state(p);
+                brw_set_predicate_control(p, BRW_PREDICATE_NONE);
+                brw_set_access_mode(p, BRW_ALIGN_1);
+                brw_ADD(p, deref_1uw(stack_index, 0), brw_ip_reg(), brw_imm_d(3*16));
+                brw_set_access_mode(p, BRW_ALIGN_16);
+                brw_ADD(p, get_addr_reg(stack_index),
+                         get_addr_reg(stack_index), brw_imm_d(4));
+                orig_inst = inst->Data;
+                orig_inst->Data = &p->store[p->nr_insn];
+                brw_ADD(p, brw_ip_reg(), brw_ip_reg(), brw_imm_d(1*16));
+                brw_pop_insn_state(p);
 		break;
+
 	    case OPCODE_RET:
 		brw_push_insn_state(p);
 		brw_set_mask_control(p, BRW_MASK_DISABLE);
-		brw_set_predicate_control(p, BRW_PREDICATE_NONE);
-		brw_MOV(p, brw_ip_reg(), c->ret_reg);
+                brw_set_predicate_control(p, BRW_PREDICATE_NONE);
+                brw_ADD(p, get_addr_reg(stack_index),
+                        get_addr_reg(stack_index), brw_imm_d(-4));
+                brw_set_access_mode(p, BRW_ALIGN_1);
+                brw_MOV(p, brw_ip_reg(), deref_1uw(stack_index, 0));
+                brw_set_access_mode(p, BRW_ALIGN_16);
 		brw_pop_insn_state(p);
+
 		break;
 	    case OPCODE_BGNLOOP:
 		loop_inst[loop_insn++] = brw_DO(p, BRW_EXECUTE_8);
