@@ -309,6 +309,7 @@ _mesa_enable_imaging_extensions(GLcontext *ctx)
 {
    ctx->Extensions.ARB_imaging = GL_TRUE;
    ctx->Extensions.EXT_blend_color = GL_TRUE;
+   ctx->Extensions.EXT_blend_logic_op = GL_TRUE;
    ctx->Extensions.EXT_blend_minmax = GL_TRUE;
    ctx->Extensions.EXT_blend_subtract = GL_TRUE;
    ctx->Extensions.EXT_convolution = GL_TRUE;
@@ -353,7 +354,6 @@ _mesa_enable_1_4_extensions(GLcontext *ctx)
    ctx->Extensions.ARB_window_pos = GL_TRUE;
    ctx->Extensions.EXT_blend_color = GL_TRUE;
    ctx->Extensions.EXT_blend_func_separate = GL_TRUE;
-   ctx->Extensions.EXT_blend_logic_op = GL_TRUE;
    ctx->Extensions.EXT_blend_minmax = GL_TRUE;
    ctx->Extensions.EXT_blend_subtract = GL_TRUE;
    ctx->Extensions.EXT_fog_coord = GL_TRUE;

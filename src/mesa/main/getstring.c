@@ -96,7 +96,6 @@ _mesa_GetString( GLenum name )
                 ctx->Extensions.ARB_window_pos &&
                 ctx->Extensions.EXT_blend_color &&
                 ctx->Extensions.EXT_blend_func_separate &&
-                ctx->Extensions.EXT_blend_logic_op &&
                 ctx->Extensions.EXT_blend_minmax &&
                 ctx->Extensions.EXT_blend_subtract &&
                 ctx->Extensions.EXT_fog_coord &&
