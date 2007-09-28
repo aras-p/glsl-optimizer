@@ -1,0 +1,8 @@
+# Configuration for profiling on Linux for 64-bit X86 (Opteron) with gprof
+
+include $(TOP)/configs/linux-x86-64-static
+
+CONFIG_NAME = linux-x86-64-profile
+
+OPT_FLAGS = -pg -g -O2
+DEFINES += -DNDEBUG

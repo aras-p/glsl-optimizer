@@ -1,0 +1,8 @@
+# Configuration for profiling on Linux with x86 optimizations with gprof
+
+include $(TOP)/configs/linux-x86-static
+
+CONFIG_NAME = linux-x86-profile
+
+OPT_FLAGS = -pg -g -O2
+DEFINES += -DNDEBUG
