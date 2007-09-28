@@ -92,9 +92,12 @@ void draw_set_rasterize_stage( struct draw_context *draw,
                                struct draw_stage *stage );
 
 
-void
-draw_set_vertex_shader(struct draw_context *draw,
-                       const struct pipe_shader_state *shader);
+void * draw_create_vertex_shader(struct draw_context *draw,
+                                 const struct pipe_shader_state *shader);
+void draw_bind_vertex_shader(struct draw_context *draw,
+                             void *vcso);
+void draw_delete_vertex_shader(struct draw_context *draw,
+                               void *vcso);
 
 
 void

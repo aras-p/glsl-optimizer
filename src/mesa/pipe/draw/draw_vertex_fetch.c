@@ -85,7 +85,7 @@ void draw_vertex_fetch( struct draw_context *draw,
       /*printf("fetch vertex %u: \n", j);*/
 
       /* loop over vertex attributes (vertex shader inputs) */
-      for (attr = 0; attr < draw->vertex_shader.num_inputs; attr++) {
+      for (attr = 0; attr < draw->vertex_shader->state->num_inputs; attr++) {
 
          unsigned buf = draw->vertex_element[attr].vertex_buffer_index;
          const void *src

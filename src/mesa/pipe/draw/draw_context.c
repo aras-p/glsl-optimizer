@@ -155,14 +155,6 @@ void draw_set_viewport_state( struct draw_context *draw,
 }
 
 
-void
-draw_set_vertex_shader(struct draw_context *draw,
-                       const struct pipe_shader_state *shader)
-{
-   draw_flush( draw );
-   draw->vertex_shader = *shader;
-}
-
 
 void
 draw_set_vertex_buffer(struct draw_context *draw,
