@@ -220,6 +220,8 @@ struct draw_context
       struct prim_header queue[PRIM_QUEUE_LENGTH];
       unsigned queue_nr;
    } pq;
+
+   int use_sse : 1;
 };
 
 
