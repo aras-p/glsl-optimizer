@@ -38,20 +38,28 @@
 #include "pipe/tgsi/exec/tgsi_token.h"
 #include "x86/rtasm/x86sse.h"
 
-#define ST_FP_MAX_TOKENS 1024
+
+#define ST_MAX_SHADER_TOKENS 1024
+
 
 struct cso_fragment_shader;
 struct cso_vertex_shader;
+struct translated_vertex_program;
 
+
+/**
+ * Derived from Mesa gl_fragment_program:
+ */
 struct st_fragment_program
 {
    struct gl_fragment_program Base;
-   GLboolean error;             /* If program is malformed for any reason. */
-
    GLuint serialNo;
 
+   GLuint input_to_slot[FRAG_ATTRIB_MAX];  /**< Maps FRAG_ATTRIB_x to slot */
+   GLuint num_input_slots;
+
    /** The program in TGSI format */
-   struct tgsi_token tokens[ST_FP_MAX_TOKENS];
+   struct tgsi_token tokens[ST_MAX_SHADER_TOKENS];
 
 #if defined(__i386__) || defined(__386__)
    struct x86_function  sse2_program;
@@ -61,23 +69,29 @@ struct st_fragment_program
    const struct cso_fragment_shader *fs;
 
    GLuint param_state;
+
+   /** List of vertex programs which have been translated such that their
+    * outputs match this fragment program's inputs.
+    */
+   struct translated_vertex_program *vertex_programs;
 };
 
 
+/**
+ * Derived from Mesa gl_fragment_program:
+ */
 struct st_vertex_program
 {
    struct gl_vertex_program Base;  /**< The Mesa vertex program */
-   GLboolean error;        /**< Set if program is malformed for any reason. */
-
    GLuint serialNo;
 
    /** maps a Mesa VERT_ATTRIB_x to a packed TGSI input index */
    GLuint input_to_index[MAX_VERTEX_PROGRAM_ATTRIBS];
    /** maps a TGSI input index back to a Mesa VERT_ATTRIB_x */
-   GLuint index_to_input[MAX_VERTEX_PROGRAM_ATTRIBS];
+   GLuint index_to_input[PIPE_MAX_SHADER_INPUTS];
 
    /** The program in TGSI format */
-   struct tgsi_token tokens[ST_FP_MAX_TOKENS];
+   struct tgsi_token tokens[ST_MAX_SHADER_TOKENS];
 
    /** Pointer to the corresponding cached shader */
    const struct cso_vertex_shader *vs;

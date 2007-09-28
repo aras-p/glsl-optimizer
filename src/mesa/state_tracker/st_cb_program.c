@@ -165,12 +165,24 @@ static void st_program_string_notify( GLcontext *ctx,
 
       stfp->serialNo++;
 
+      if (stfp->fs) {
+         /* free the TGSI code */
+         // cso_delete(stfp->vs);
+         stfp->fs = NULL;
+      }
+
       stfp->param_state = stfp->Base.Base.Parameters->StateFlags;
    }
    else if (target == GL_VERTEX_PROGRAM_ARB) {
       struct st_vertex_program *stvp = (struct st_vertex_program *) prog;
 
       stvp->serialNo++;
+
+      if (stvp->vs) {
+         /* free the TGSI code */
+         // cso_delete(stfp->vs);
+         stvp->vs = NULL;
+      }
 
       stvp->param_state = stvp->Base.Base.Parameters->StateFlags;
 

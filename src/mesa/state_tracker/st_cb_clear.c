@@ -156,7 +156,7 @@ make_frag_shader(struct st_context *st)
 
    stfp = (struct st_fragment_program *) p;
    st_translate_fragment_program(st, stfp, NULL,
-                                 stfp->tokens, ST_FP_MAX_TOKENS);
+                                 stfp->tokens, ST_MAX_SHADER_TOKENS);
 
    return stfp;
 }
@@ -205,7 +205,7 @@ make_vertex_shader(struct st_context *st)
 
    stvp = (struct st_vertex_program *) p;
    st_translate_vertex_program(st, stvp, NULL,
-                               stvp->tokens, ST_FP_MAX_TOKENS);
+                               stvp->tokens, ST_MAX_SHADER_TOKENS);
    assert(stvp->vs);
 
    return stvp;

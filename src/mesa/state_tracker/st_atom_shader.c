@@ -51,105 +51,56 @@
 #include "st_atom_shader.h"
 
 
-
 /**
- * Structure to describe a (vertex program, fragment program) pair
- * which is linked together (used together to render something).  This
- * linkage basically servers the same purpose as the OpenGL Shading
- * Language linker, but also applies to ARB programs and Mesa's
- * fixed-function-generated programs.
- *
- * More background:
- *
- * The translation from Mesa programs to TGSI programs depends on the
- * linkage between the vertex program and the fragment program.  This is
- * because we tightly pack the inputs and outputs of shaders into
- * consecutive "slots".
- *
- * Suppose an app uses one vertex program "VP" (outputting pos, color and tex0)
- * and two fragment programs:
- *    FP1: uses tex0 input only (input slot 0)
- *    FP2: uses color input only (input slot 0)
- *
- * When VP is used with FP1 we want VP.output[2] to match FP1.input[0], but
- * when VP is used with FP2 we want VP.output[1] to match FP1.input[0].
- *
- * We don't want to re-translate the vertex and/or fragment programs
- * each time the VP/FP bindings/linkings change.  The solution is this
- * structure which stores the translated TGSI shaders on a per-linkage
- * basis.
- * 
+ * This represents a vertex program, especially translated to match
+ * the inputs of a particular fragment shader.
  */
-struct linked_program_pair
+struct translated_vertex_program
 {
-   struct st_vertex_program *vprog;  /**< never changes */
-   struct st_fragment_program *fprog;  /**< never changes */
+   /** The fragment shader "signature" this vertex shader is meant for: */
+   GLbitfield frag_inputs;
 
-   struct tgsi_token vs_tokens[ST_FP_MAX_TOKENS];
-   struct tgsi_token fs_tokens[ST_FP_MAX_TOKENS];
+   /** Compared against master vertex program's serialNo: */
+   GLuint serialNo;
 
+   /** Maps VERT_RESULT_x to slot */
+   GLuint output_to_slot[VERT_RESULT_MAX];
+
+   /** The program in TGSI format */
+   struct tgsi_token tokens[ST_MAX_SHADER_TOKENS];
+
+   /** Pointer to the translated, cached vertex shader */
    const struct cso_vertex_shader *vs;
-   const struct cso_fragment_shader *fs;
 
-   GLuint vertSerialNo, fragSerialNo;
-
-   /** maps a Mesa VERT_ATTRIB_x to a packed TGSI input index */
-   GLuint vp_input_to_index[MAX_VERTEX_PROGRAM_ATTRIBS];
-   /** maps a TGSI input index back to a Mesa VERT_ATTRIB_x */
-   GLuint vp_index_to_input[MAX_VERTEX_PROGRAM_ATTRIBS];
-
-   GLuint vp_result_to_slot[VERT_RESULT_MAX];
-
-   struct linked_program_pair *next;
+   struct translated_vertex_program *next;  /**< next in linked list */
 };
 
 
-/** XXX temporary - use some kind of hash table instead */
-static struct linked_program_pair *Pairs = NULL;
-
-
-static void
-find_and_remove(struct gl_program *prog)
-{
-   struct linked_program_pair *pair, *prev = NULL, *next;
-   for (pair = Pairs; pair; pair = next) {
-      next = pair->next;
-      if (pair->vprog == (struct st_vertex_program *) prog ||
-          pair->fprog == (struct st_fragment_program *) prog) {
-         /* unlink */
-         if (prev)
-            prev->next = next;
-         else
-            Pairs = next;
-         /* delete pair->vs */
-         /* delete pair->fs */
-         free(pair);
-      }
-      else {
-         prev = pair;
-      }
-   }
-}
-
 
 /**
- * Delete any known program pairs that use the given vertex program.
+ * Free data hanging off the st vert prog.
  */
 void
 st_remove_vertex_program(struct st_context *st, struct st_vertex_program *stvp)
 {
-   find_and_remove(&stvp->Base.Base);
+   /* no-op, for now? */
 }
 
 
 /**
- * Delete any known program pairs that use the given fragment program.
+ * Free data hanging off the st frag prog.
  */
 void
 st_remove_fragment_program(struct st_context *st,
                           struct st_fragment_program *stfp)
 {
-   find_and_remove(&stfp->Base.Base);
+   struct translated_vertex_program *xvp, *next;
+
+   for (xvp = stfp->vertex_programs; xvp; xvp = next) {
+      next = xvp->next;
+      /* XXX free xvp->vs */
+      free(xvp);
+   }
 }
 
 
@@ -187,182 +138,122 @@ vp_out_to_fp_in(GLuint vertResult)
 
 
 /**
- * Examine the outputs written by a vertex program and the inputs read
- * by a fragment program to determine which match up and where they
- * should be mapped into the generic shader output/input slots.
- * \param vert_output_map  returns the vertex output register mapping
- * \param frag_input_map  returns the fragment input register mapping
+ * Find a translated vertex program that corresponds to stvp and
+ * has outputs matched to stfp's inputs.
+ * This performs vertex and fragment translation (to TGSI) when needed.
  */
-static GLuint
-link_outputs_to_inputs(GLbitfield outputsWritten,
-                       GLbitfield inputsRead,
-                       GLuint vert_output_map[],
-                       GLuint frag_input_map[])
+static struct translated_vertex_program *
+find_translated_vp(struct st_context *st,
+                   struct st_vertex_program *stvp,
+                   struct st_fragment_program *stfp)
 {
    static const GLuint UNUSED = ~0;
-   GLint vert_slot_to_attr[50], frag_slot_to_attr[50];
-   GLuint outAttr, inAttr;
-   GLuint numIn = 0, dummySlot;
-
-   for (inAttr = 0; inAttr < FRAG_ATTRIB_MAX; inAttr++) {
-      if (inputsRead & (1 << inAttr)) {
-         frag_input_map[inAttr] = numIn;
-         frag_slot_to_attr[numIn] = inAttr;
-         numIn++;
-      }
-      else {
-         frag_input_map[inAttr] = UNUSED;
-      }
-   }
-
-   for (outAttr = 0; outAttr < VERT_RESULT_MAX; outAttr++) {
-      if (outputsWritten & (1 << outAttr)) {
-         /* see if the frag prog wants this vert output */
-         GLint fpIn = vp_out_to_fp_in(outAttr);
-
-         if (fpIn >= 0) {
-            GLuint frag_slot = frag_input_map[fpIn];
-            vert_output_map[outAttr] = frag_slot;
-            vert_slot_to_attr[frag_slot] = outAttr;
-         }
-         else {
-            vert_output_map[outAttr] = UNUSED;
-         }
-      }
-      else { 
-         vert_output_map[outAttr] = UNUSED;
-      }
-   }
+   struct translated_vertex_program *xvp;
+   const GLbitfield fragInputsRead
+      = stfp->Base.Base.InputsRead | FRAG_BIT_WPOS;
 
    /*
-    * We'll map all unused vertex program outputs to this slot.
-    * We'll also map all undefined fragment program inputs to this slot.
+    * Translate fragment program if needed.
     */
-   dummySlot = numIn;
+   if (!stfp->fs) {
+      GLuint inAttr, numIn = 0;
 
-   /* Map vert program outputs that aren't used to the dummy slot */
-   for (outAttr = 0; outAttr < VERT_RESULT_MAX; outAttr++) {
-      if (outputsWritten & (1 << outAttr)) {
-         if (vert_output_map[outAttr] == UNUSED)
-            vert_output_map[outAttr] = dummySlot;
+      for (inAttr = 0; inAttr < FRAG_ATTRIB_MAX; inAttr++) {
+         if (fragInputsRead & (1 << inAttr)) {
+            stfp->input_to_slot[inAttr] = numIn;
+            numIn++;
+         }
+         else {
+            stfp->input_to_slot[inAttr] = UNUSED;
+         }
       }
+
+      stfp->num_input_slots = numIn;
+
+      (void) st_translate_fragment_program(st, stfp,
+                                           stfp->input_to_slot,
+                                           stfp->tokens,
+                                           ST_MAX_SHADER_TOKENS);
+      assert(stfp->fs);
    }
 
-   /* Map frag program inputs that aren't defined to the dummy slot */
-   for (inAttr = 0; inAttr < FRAG_ATTRIB_MAX; inAttr++) {
-      if (inputsRead & (1 << inAttr)) {
-         if (frag_input_map[inAttr] == UNUSED)
-            frag_input_map[inAttr] = dummySlot;
-      }
-   }
 
-#if 0
-   printf("vOut  W  slot\n");
-   for (outAttr = 0; outAttr < VERT_RESULT_MAX; outAttr++) {
-      printf("%4d  %c %4d\n", outAttr,
-             " *"[(outputsWritten >> outAttr) & 1],
-             vert_output_map[outAttr]);
-   }
-   printf("vIn  R  slot\n");
-   for (inAttr = 0; inAttr < FRAG_ATTRIB_MAX; inAttr++) {
-      printf("%3d  %c %4d\n", inAttr,
-             " *"[(inputsRead >> inAttr) & 1],
-             frag_input_map[inAttr]);
-   }
-#endif
-
-   return numIn;
-}
-
-
-static struct linked_program_pair *
-lookup_program_pair(struct st_context *st,
-                    struct st_vertex_program *vprog,
-                    struct st_fragment_program *fprog)
-{
-   struct linked_program_pair *pair;
-
-   /* search */
-   for (pair = Pairs; pair; pair = pair->next) {
-      if (pair->vprog == vprog && pair->fprog == fprog) {
-         /* found it */
+   /* See if we've got a translated vertex program whose outputs match
+    * the fragment program's inputs.
+    * XXX This could be a hash lookup, using InputsRead as the key.
+    */
+   for (xvp = stfp->vertex_programs; xvp; xvp = xvp->next) {
+      if (xvp->frag_inputs == stfp->Base.Base.InputsRead) {
          break;
       }
    }
 
-   /*
-    * Examine the outputs of the vertex shader and the inputs of the
-    * fragment shader to determine how to match both to a common set
-    * of slots.
-    */
-   if (!pair) {
-      pair = CALLOC_STRUCT(linked_program_pair);
-      if (pair) {
-         pair->vprog = vprog;
-         pair->fprog = fprog;
+   /* No?  Allocate translated vp object now */
+   if (!xvp) {
+      xvp = CALLOC_STRUCT(translated_vertex_program);
+      xvp->frag_inputs = fragInputsRead;
+
+      xvp->next = stfp->vertex_programs;
+      stfp->vertex_programs = xvp;
+   }
+
+   /* See if we need to translate vertex program to TGSI form */
+   if (xvp->serialNo != stvp->serialNo) {
+      GLuint outAttr, dummySlot;
+      const GLbitfield outputsWritten = stvp->Base.Base.OutputsWritten;
+
+      /* Compute mapping of vertex program outputs to slots, which depends
+       * on the fragment program's input->slot mapping.
+       */
+      for (outAttr = 0; outAttr < VERT_RESULT_MAX; outAttr++) {
+         /* set default: */
+         xvp->output_to_slot[outAttr] = UNUSED;
+
+         if (outputsWritten & (1 << outAttr)) {
+            /* see if the frag prog wants this vert output */
+            GLint fpIn = vp_out_to_fp_in(outAttr);
+            if (fpIn >= 0) {
+               xvp->output_to_slot[outAttr] = stfp->input_to_slot[fpIn];
+            }
+         }
       }
+
+      /* Unneeded vertex program outputs will go to this slot.
+       * We could use this info to do dead code elimination in the
+       * vertex program.
+       */
+      dummySlot = stfp->num_input_slots;
+
+      /* Map vert program outputs that aren't used to the dummy slot */
+      for (outAttr = 0; outAttr < VERT_RESULT_MAX; outAttr++) {
+         if (outputsWritten & (1 << outAttr)) {
+            if (xvp->output_to_slot[outAttr] == UNUSED)
+               xvp->output_to_slot[outAttr] = dummySlot;
+         }
+      }
+
+
+      xvp->vs = st_translate_vertex_program(st, stvp,
+                                            xvp->output_to_slot,
+                                            xvp->tokens,
+                                            ST_MAX_SHADER_TOKENS);
+      assert(xvp->vs);
+      stvp->vs = NULL; /* don't want to use this */
+
+      /* translated VP is up to date now */
+      xvp->serialNo = stvp->serialNo;
    }
 
-   return pair;
-}
-
-
-static void
-link_shaders(struct st_context *st, struct linked_program_pair *pair)
-{
-   struct st_vertex_program *vprog = pair->vprog;
-   struct st_fragment_program *fprog = pair->fprog;
-
-   assert(vprog);
-   assert(fprog);
-
-   if (pair->vertSerialNo != vprog->serialNo ||
-       pair->fragSerialNo != fprog->serialNo) {
-      /* re-link and re-translate */
-      GLuint vert_output_mapping[VERT_RESULT_MAX];
-      GLuint frag_input_mapping[FRAG_ATTRIB_MAX];
-
-      link_outputs_to_inputs(vprog->Base.Base.OutputsWritten,
-                             fprog->Base.Base.InputsRead | FRAG_BIT_WPOS,
-                             vert_output_mapping,
-                             frag_input_mapping);
-
-      /* xlate vp to vs + vs tokens */
-      st_translate_vertex_program(st, vprog,
-                                  vert_output_mapping,
-                                  pair->vs_tokens, ST_FP_MAX_TOKENS);
-
-      pair->vprog = vprog;
-      /* temp hacks */
-      pair->vs = vprog->vs;
-      vprog->vs = NULL;
-
-
-      /* xlate fp to fs + fs tokens */
-      st_translate_fragment_program(st, fprog,
-                                    frag_input_mapping,
-                                    pair->fs_tokens, ST_FP_MAX_TOKENS);
-      pair->fprog = fprog;
-      /* temp hacks */
-      pair->fs = fprog->fs;
-      fprog->fs = NULL;
-
-      /* save pair */
-      pair->next = Pairs;
-      Pairs = pair;
-
-      pair->vertSerialNo = vprog->serialNo;
-      pair->fragSerialNo = fprog->serialNo;
-   }
+   return xvp;
 }
 
 
 static void
 update_linkage( struct st_context *st )
 {
-   struct linked_program_pair *pair;
    struct st_vertex_program *stvp;
    struct st_fragment_program *stfp;
+   struct translated_vertex_program *xvp;
 
    /* find active shader and params -- Should be covered by
     * ST_NEW_VERTEX_PROGRAM
@@ -392,23 +283,17 @@ update_linkage( struct st_context *st )
       stfp = st_fragment_program(st->ctx->FragmentProgram._Current);
    }
 
+   xvp = find_translated_vp(st, stvp, stfp);
 
-   pair = lookup_program_pair(st, stvp, stfp);
-   assert(pair);
-   link_shaders(st, pair);
-
-
-   /* Bind the vertex program and TGSI shader */
    st->vp = stvp;
-   st->state.vs = pair->vs;
+   st->state.vs = xvp->vs;
    st->pipe->bind_vs_state(st->pipe, st->state.vs->data);
 
-   /* Bind the fragment program and TGSI shader */
    st->fp = stfp;
-   st->state.fs = pair->fs;
+   st->state.fs = stfp->fs;
    st->pipe->bind_fs_state(st->pipe, st->state.fs->data);
 
-   st->vertex_result_to_slot = pair->vp_result_to_slot;
+   st->vertex_result_to_slot = xvp->output_to_slot;
 }
 
 
