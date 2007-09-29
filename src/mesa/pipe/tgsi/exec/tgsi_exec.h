@@ -98,8 +98,12 @@ struct tgsi_exec_labels
 #define TGSI_EXEC_NUM_ADDRS   1
 
 #define TGSI_EXEC_MAX_COND_NESTING  10
+#define TGSI_EXEC_MAX_LOOP_NESTING  10
 
 
+/**
+ * Run-time virtual machine state for executing TGSI shader.
+ */
 struct tgsi_exec_machine
 {
    /*
@@ -132,12 +136,18 @@ struct tgsi_exec_machine
    /* FRAGMENT processor only. */
    const struct tgsi_interp_coef *InterpCoefs;
 
-   /* Conditional execution mask */
+   /* Conditional execution masks */
    uint CondMask;
+   uint LoopMask;
+   uint ExecMask;  /**< = CondMask & LoopMask */
 
-   /* Condition mask stack (for nested conditionals) */
-   uint condStack[TGSI_EXEC_MAX_COND_NESTING];
+   /** Condition mask stack (for nested conditionals) */
+   uint CondStack[TGSI_EXEC_MAX_COND_NESTING];
    int CondStackTop;
+
+   /** Loop mask stack (for nested loops) */
+   uint LoopStack[TGSI_EXEC_MAX_LOOP_NESTING];
+   int LoopStackTop;
 };
 
 
