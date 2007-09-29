@@ -96,6 +96,8 @@ tgsi_exec_machine_init(
       mach->Temps[TEMP_128_I].xyzw[TEMP_128_C].f[i] = 128.0f;
       mach->Temps[TEMP_M128_I].xyzw[TEMP_M128_C].f[i] = -128.0f;
    }
+
+   mach->CondMask = 0xf;
 }
 
 void
@@ -175,12 +177,17 @@ static void
 micro_add(
    union tgsi_exec_channel *dst,
    const union tgsi_exec_channel *src0,
-   const union tgsi_exec_channel *src1 )
+   const union tgsi_exec_channel *src1,
+   uint mask)
 {
-   dst->f[0] = src0->f[0] + src1->f[0];
-   dst->f[1] = src0->f[1] + src1->f[1];
-   dst->f[2] = src0->f[2] + src1->f[2];
-   dst->f[3] = src0->f[3] + src1->f[3];
+   if (mask & 0x1)
+      dst->f[0] = src0->f[0] + src1->f[0];
+   if (mask & 0x2)
+      dst->f[1] = src0->f[1] + src1->f[1];
+   if (mask & 0x4)
+      dst->f[2] = src0->f[2] + src1->f[2];
+   if (mask & 0x8)
+      dst->f[3] = src0->f[3] + src1->f[3];
 }
 
 static void
@@ -524,12 +531,17 @@ static void
 micro_mul(
    union tgsi_exec_channel *dst,
    const union tgsi_exec_channel *src0,
-   const union tgsi_exec_channel *src1 )
+   const union tgsi_exec_channel *src1,
+   uint condMask)
 {
-   dst->f[0] = src0->f[0] * src1->f[0];
-   dst->f[1] = src0->f[1] * src1->f[1];
-   dst->f[2] = src0->f[2] * src1->f[2];
-   dst->f[3] = src0->f[3] * src1->f[3];
+   if (condMask & 0x1)
+      dst->f[0] = src0->f[0] * src1->f[0];
+   if (condMask & 0x2)
+      dst->f[1] = src0->f[1] * src1->f[1];
+   if (condMask & 0x4)
+      dst->f[2] = src0->f[2] * src1->f[2];
+   if (condMask & 0x8)
+      dst->f[3] = src0->f[3] * src1->f[3];
 }
 
 static void
@@ -720,12 +732,17 @@ static void
 micro_sub(
    union tgsi_exec_channel *dst,
    const union tgsi_exec_channel *src0,
-   const union tgsi_exec_channel *src1 )
+   const union tgsi_exec_channel *src1,
+   uint mask)
 {
-   dst->f[0] = src0->f[0] - src1->f[0];
-   dst->f[1] = src0->f[1] - src1->f[1];
-   dst->f[2] = src0->f[2] - src1->f[2];
-   dst->f[3] = src0->f[3] - src1->f[3];
+   if (mask & 0x1)
+      dst->f[0] = src0->f[0] - src1->f[0];
+   if (mask & 0x2)
+      dst->f[1] = src0->f[1] - src1->f[1];
+   if (mask & 0x4)
+      dst->f[2] = src0->f[2] - src1->f[2];
+   if (mask & 0x8)
+      dst->f[3] = src0->f[3] - src1->f[3];
 }
 
 static void
@@ -940,7 +957,8 @@ store_dest(
    const union tgsi_exec_channel *chan,
    const struct tgsi_full_dst_register *reg,
    const struct tgsi_full_instruction *inst,
-   GLuint chan_index )
+   GLuint chan_index,
+   uint mask)
 {
    union tgsi_exec_channel *dst;
 
@@ -968,7 +986,18 @@ store_dest(
    switch (inst->Instruction.Saturate)
    {
    case TGSI_SAT_NONE:
+#if 0
       *dst = *chan;
+#else
+      if (mask & 0x1)
+         dst->i[0] = chan->i[0];
+      if (mask & 0x2)
+         dst->i[1] = chan->i[1];
+      if (mask & 0x4)
+         dst->i[2] = chan->i[2];
+      if (mask & 0x8)
+         dst->i[3] = chan->i[3];
+#endif
       break;
 
    case TGSI_SAT_ZERO_ONE:
@@ -989,7 +1018,10 @@ store_dest(
     fetch_source (mach, VAL, &inst->FullSrcRegisters[INDEX], CHAN)
 
 #define STORE(VAL,INDEX,CHAN)\
-    store_dest (mach, VAL, &inst->FullDstRegisters[INDEX], inst, CHAN)
+    store_dest (mach, VAL, &inst->FullDstRegisters[INDEX], inst, CHAN, ~0)
+
+#define STORE_MASKED(VAL,INDEX,CHAN,MASK) \
+    store_dest (mach, VAL, &inst->FullDstRegisters[INDEX], inst, CHAN, MASK)
 
 static void
 exec_kil (struct tgsi_exec_machine *mach,
@@ -1113,6 +1145,7 @@ perspective_interpolation(
    }
 }
 
+
 typedef void (* interpolation_func)(
    struct tgsi_exec_machine *mach,
    unsigned attrib,
@@ -1209,7 +1242,7 @@ exec_instruction(
    /* TGSI_OPCODE_SWZ */
       FOR_EACH_ENABLED_CHANNEL( *inst, chan_index ) {
          FETCH( &r[0], 0, chan_index );
-         STORE( &r[0], 0, chan_index );
+         STORE_MASKED( &r[0], 0, chan_index, mach->CondMask );
       }
       break;
 
@@ -1276,7 +1309,7 @@ exec_instruction(
             FETCH(&r[0], 0, chan_index);
             FETCH(&r[1], 1, chan_index);
 
-            micro_mul( &r[0], &r[0], &r[1] );
+            micro_mul( &r[0], &r[0], &r[1], mach->CondMask );
 
             STORE(&r[0], 0, chan_index);
         }
@@ -1286,7 +1319,7 @@ exec_instruction(
       FOR_EACH_ENABLED_CHANNEL( *inst, chan_index ) {
          FETCH( &r[0], 0, chan_index );
          FETCH( &r[1], 1, chan_index );
-         micro_add( &r[0], &r[0], &r[1] );
+         micro_add( &r[0], &r[0], &r[1], mach->CondMask );
          STORE( &r[0], 0, chan_index );
       }
       break;
@@ -1295,17 +1328,17 @@ exec_instruction(
    /* TGSI_OPCODE_DOT3 */
       FETCH( &r[0], 0, CHAN_X );
       FETCH( &r[1], 1, CHAN_X );
-      micro_mul( &r[0], &r[0], &r[1] );
+      micro_mul( &r[0], &r[0], &r[1], mach->CondMask );
 
       FETCH( &r[1], 0, CHAN_Y );
       FETCH( &r[2], 1, CHAN_Y );
-      micro_mul( &r[1], &r[1], &r[2] );
-      micro_add( &r[0], &r[0], &r[1] );
+      micro_mul( &r[1], &r[1], &r[2], mach->CondMask );
+      micro_add( &r[0], &r[0], &r[1], mach->CondMask );
 
       FETCH( &r[1], 0, CHAN_Z );
       FETCH( &r[2], 1, CHAN_Z );
-      micro_mul( &r[1], &r[1], &r[2] );
-      micro_add( &r[0], &r[0], &r[1] );
+      micro_mul( &r[1], &r[1], &r[2], mach->CondMask );
+      micro_add( &r[0], &r[0], &r[1], mach->CondMask );
 
       FOR_EACH_ENABLED_CHANNEL( *inst, chan_index ) {
          STORE( &r[0], 0, chan_index );
@@ -1317,25 +1350,25 @@ exec_instruction(
        FETCH(&r[0], 0, CHAN_X);
        FETCH(&r[1], 1, CHAN_X);
 
-       micro_mul( &r[0], &r[0], &r[1] );
+       micro_mul( &r[0], &r[0], &r[1], mach->CondMask );
 
        FETCH(&r[1], 0, CHAN_Y);
        FETCH(&r[2], 1, CHAN_Y);
 
-       micro_mul( &r[1], &r[1], &r[2] );
-       micro_add( &r[0], &r[0], &r[1] );
+       micro_mul( &r[1], &r[1], &r[2], mach->CondMask );
+       micro_add( &r[0], &r[0], &r[1], mach->CondMask );
 
        FETCH(&r[1], 0, CHAN_Z);
        FETCH(&r[2], 1, CHAN_Z);
 
-       micro_mul( &r[1], &r[1], &r[2] );
-       micro_add( &r[0], &r[0], &r[1] );
+       micro_mul( &r[1], &r[1], &r[2], mach->CondMask );
+       micro_add( &r[0], &r[0], &r[1], mach->CondMask );
 
        FETCH(&r[1], 0, CHAN_W);
        FETCH(&r[2], 1, CHAN_W);
 
-       micro_mul( &r[1], &r[1], &r[2] );
-       micro_add( &r[0], &r[0], &r[1] );
+       micro_mul( &r[1], &r[1], &r[2], mach->CondMask );
+       micro_add( &r[0], &r[0], &r[1], mach->CondMask );
 
       FOR_EACH_ENABLED_CHANNEL( *inst, chan_index ) {
 	 STORE( &r[0], 0, chan_index );
@@ -1350,7 +1383,7 @@ exec_instruction(
       if (IS_CHANNEL_ENABLED( *inst, CHAN_Y )) {
 	 FETCH( &r[0], 0, CHAN_Y );
 	 FETCH( &r[1], 1, CHAN_Y);
-	 micro_mul( &r[0], &r[0], &r[1] );
+	 micro_mul( &r[0], &r[0], &r[1], mach->CondMask );
 	 STORE( &r[0], 0, CHAN_Y );
       }
 
@@ -1412,9 +1445,9 @@ exec_instruction(
       FOR_EACH_ENABLED_CHANNEL( *inst, chan_index ) {
          FETCH( &r[0], 0, chan_index );
          FETCH( &r[1], 1, chan_index );
-         micro_mul( &r[0], &r[0], &r[1] );
+         micro_mul( &r[0], &r[0], &r[1], mach->CondMask );
          FETCH( &r[1], 2, chan_index );
-         micro_add( &r[0], &r[0], &r[1] );
+         micro_add( &r[0], &r[0], &r[1], mach->CondMask );
          STORE( &r[0], 0, chan_index );
       }
       break;
@@ -1424,7 +1457,7 @@ exec_instruction(
           FETCH(&r[0], 0, chan_index);
           FETCH(&r[1], 1, chan_index);
 
-          micro_sub( &r[0], &r[0], &r[1] );
+          micro_sub( &r[0], &r[0], &r[1], mach->CondMask );
 
           STORE(&r[0], 0, chan_index);
        }
@@ -1437,9 +1470,9 @@ exec_instruction(
          FETCH(&r[1], 1, chan_index);
          FETCH(&r[2], 2, chan_index);
 
-         micro_sub( &r[1], &r[1], &r[2] );
-         micro_mul( &r[0], &r[0], &r[1] );
-         micro_add( &r[0], &r[0], &r[2] );
+         micro_sub( &r[1], &r[1], &r[2], mach->CondMask );
+         micro_mul( &r[0], &r[0], &r[1], mach->CondMask );
+         micro_add( &r[0], &r[0], &r[2], mach->CondMask );
 
          STORE(&r[0], 0, chan_index);
       }
@@ -1533,13 +1566,13 @@ exec_instruction(
       FETCH(&r[0], 0, CHAN_Y);
       FETCH(&r[1], 1, CHAN_Z);
 
-      micro_mul( &r[2], &r[0], &r[1] );
+      micro_mul( &r[2], &r[0], &r[1], mach->CondMask );
 
       FETCH(&r[3], 0, CHAN_Z);
       FETCH(&r[4], 1, CHAN_Y);
 
-      micro_mul( &r[5], &r[3], &r[4] );
-      micro_sub( &r[2], &r[2], &r[5] );
+      micro_mul( &r[5], &r[3], &r[4], mach->CondMask );
+      micro_sub( &r[2], &r[2], &r[5], mach->CondMask );
 
       if (IS_CHANNEL_ENABLED( *inst, CHAN_X )) {
 	 STORE( &r[2], 0, CHAN_X );
@@ -1547,20 +1580,20 @@ exec_instruction(
 
       FETCH(&r[2], 1, CHAN_X);
 
-      micro_mul( &r[3], &r[3], &r[2] );
+      micro_mul( &r[3], &r[3], &r[2], mach->CondMask );
 
       FETCH(&r[5], 0, CHAN_X);
 
-      micro_mul( &r[1], &r[1], &r[5] );
-      micro_sub( &r[3], &r[3], &r[1] );
+      micro_mul( &r[1], &r[1], &r[5], mach->CondMask );
+      micro_sub( &r[3], &r[3], &r[1], mach->CondMask );
 
       if (IS_CHANNEL_ENABLED( *inst, CHAN_Y )) {
 	 STORE( &r[3], 0, CHAN_Y );
       }
 
-      micro_mul( &r[5], &r[5], &r[4] );
-      micro_mul( &r[0], &r[0], &r[2] );
-      micro_sub( &r[5], &r[5], &r[0] );
+      micro_mul( &r[5], &r[5], &r[4], mach->CondMask );
+      micro_mul( &r[0], &r[0], &r[2], mach->CondMask );
+      micro_sub( &r[5], &r[5], &r[0], mach->CondMask );
 
       if (IS_CHANNEL_ENABLED( *inst, CHAN_Z )) {
 	 STORE( &r[5], 0, CHAN_Z );
@@ -1593,23 +1626,23 @@ exec_instruction(
       FETCH(&r[0], 0, CHAN_X);
       FETCH(&r[1], 1, CHAN_X);
 
-      micro_mul( &r[0], &r[0], &r[1] );
+      micro_mul( &r[0], &r[0], &r[1], mach->CondMask );
 
       FETCH(&r[1], 0, CHAN_Y);
       FETCH(&r[2], 1, CHAN_Y);
 
-      micro_mul( &r[1], &r[1], &r[2] );
-      micro_add( &r[0], &r[0], &r[1] );
+      micro_mul( &r[1], &r[1], &r[2], mach->CondMask );
+      micro_add( &r[0], &r[0], &r[1], mach->CondMask );
 
       FETCH(&r[1], 0, CHAN_Z);
       FETCH(&r[2], 1, CHAN_Z);
 
-      micro_mul( &r[1], &r[1], &r[2] );
-      micro_add( &r[0], &r[0], &r[1] );
+      micro_mul( &r[1], &r[1], &r[2], mach->CondMask );
+      micro_add( &r[0], &r[0], &r[1], mach->CondMask );
 
       FETCH(&r[1], 1, CHAN_W);
 
-      micro_add( &r[0], &r[0], &r[1] );
+      micro_add( &r[0], &r[0], &r[1], mach->CondMask );
 
       FOR_EACH_ENABLED_CHANNEL( *inst, chan_index ) {
 	 STORE( &r[0], 0, chan_index );
@@ -1892,12 +1925,12 @@ exec_instruction(
    case TGSI_OPCODE_DP2:
       FETCH( &r[0], 0, CHAN_X );
       FETCH( &r[1], 1, CHAN_X );
-      micro_mul( &r[0], &r[0], &r[1] );
+      micro_mul( &r[0], &r[0], &r[1], mach->CondMask );
 
       FETCH( &r[1], 0, CHAN_Y );
       FETCH( &r[2], 1, CHAN_Y );
-      micro_mul( &r[1], &r[1], &r[2] );
-      micro_add( &r[0], &r[0], &r[1] );
+      micro_mul( &r[1], &r[1], &r[2], mach->CondMask );
+      micro_add( &r[0], &r[0], &r[1], mach->CondMask );
 
       FOR_EACH_ENABLED_CHANNEL( *inst, chan_index ) {
          STORE( &r[0], 0, chan_index );
@@ -1913,42 +1946,21 @@ exec_instruction(
       break;
 
    case TGSI_OPCODE_IF:
-      {
-         GLuint cond = 0;
-         struct tgsi_exec_cond_state *state;
-
-         /* Allocate condition state. */
-         assert( mach->CondStack.Index > 0 );
-         mach->CondStack.Index--;
-
-         /* Evaluate the condition mask. */
-         FETCH( &r[0], 0, CHAN_X );
-         if( r[0].u[0] ) {
-            cond |= 1;
-         }
-         if( r[0].u[1] ) {
-            cond |= 2;
-         }
-         if( r[0].u[2] ) {
-            cond |= 4;
-         }
-         if( r[0].u[3] ) {
-            cond |= 8;
-         }
-
-         state = &mach->CondStack.States[mach->CondStack.Index];
-
-         /* Initialize the If portion of condition state. */
-         memcpy(
-            state->IfPortion.TempsAddrs,
-            mach->Temps,
-            sizeof( state->IfPortion.TempsAddrs ) );
-         memcpy(
-            state->IfPortion.Outputs,
-            mach->Outputs,
-            sizeof( state->IfPortion.Outputs ) );
-         state->Condition = cond;
-         state->WasElse = GL_FALSE;
+      /* push CondMask */
+      mach->condStack[mach->CondStackTop++] = mach->CondMask;
+      FETCH( &r[0], 0, CHAN_X );
+      /* update CondMask */
+      if( ! r[0].u[0] ) {
+         mach->CondMask &= ~0x1;
+      }
+      if( ! r[0].u[1] ) {
+         mach->CondMask &= ~0x2;
+      }
+      if( ! r[0].u[2] ) {
+         mach->CondMask &= ~0x4;
+      }
+      if( ! r[0].u[3] ) {
+         mach->CondMask &= ~0x8;
       }
       break;
 
@@ -1961,106 +1973,19 @@ exec_instruction(
       break;
 
    case TGSI_OPCODE_ELSE:
+      /* invert CondMask wrt previous mask */
       {
-         struct tgsi_exec_cond_state *state;
-         struct tgsi_exec_cond_regs temp;
-
-         state = &mach->CondStack.States[mach->CondStack.Index];
-
-         /* Copy the results of the If portion to temporary storage. */
-         memcpy(
-            temp.TempsAddrs,
-            mach->Temps,
-            sizeof( temp.TempsAddrs ) );
-         memcpy(
-            temp.Outputs,
-            mach->Outputs,
-            sizeof( temp.Outputs ) );
-
-         /* Restore the state of registers from before the If statement. */
-         memcpy(
-            mach->Temps,
-            state->IfPortion.TempsAddrs,
-            sizeof( state->IfPortion.TempsAddrs ) );
-         memcpy(
-            mach->Outputs,
-            state->IfPortion.Outputs,
-            sizeof( state->IfPortion.Outputs ) );
-
-         /* Save the results of If portion. */
-         memcpy(
-            &state->IfPortion,
-            &temp,
-            sizeof( state->IfPortion ) );
-         state->WasElse = GL_TRUE;
+         uint prevMask;
+         assert(mach->CondStackTop > 0);
+         prevMask = mach->condStack[mach->CondStackTop - 1];
+         mach->CondMask = ~mach->CondMask & prevMask;
       }
       break;
 
    case TGSI_OPCODE_ENDIF:
-      {
-         struct tgsi_exec_cond_state *state;
-         GLuint i;
-
-         state = &mach->CondStack.States[mach->CondStack.Index];
-
-         if( state->WasElse ) {
-            /* Save the results of Else portion. */
-            memcpy(
-               state->ElsePortion.TempsAddrs,
-               mach->Temps,
-               sizeof( state->ElsePortion.TempsAddrs ) );
-            memcpy(
-               state->ElsePortion.Outputs,
-               mach->Outputs,
-               sizeof( state->ElsePortion.Outputs ) );
-         }
-         else {
-            /* Copy the state of registers from before the If statement to Else portion. */
-            memcpy(
-               &state->ElsePortion,
-               &state->IfPortion,
-               sizeof( state->ElsePortion ) );
-
-            /* Save the results of the If portion. */
-            memcpy(
-               state->IfPortion.TempsAddrs,
-               mach->Temps,
-               sizeof( state->IfPortion.TempsAddrs ) );
-            memcpy(
-               state->IfPortion.Outputs,
-               mach->Outputs,
-               sizeof( state->IfPortion.Outputs ) );
-         }
-
-         /* Mix the If and Else portions based on condition mask. */
-         for( i = 0; i < 4; i++ ) {
-            struct tgsi_exec_cond_regs *regs;
-            GLuint j;
-
-            if( state->Condition & (1 << i) ) {
-               regs = &state->IfPortion;
-            }
-            else {
-               regs = &state->ElsePortion;
-            }
-
-            for( j = 0; j < TGSI_EXEC_NUM_TEMPS + TGSI_EXEC_NUM_ADDRS; j++ ) {
-               mach->Temps[j].xyzw[0].u[i] = regs->TempsAddrs[j].xyzw[0].u[i];
-               mach->Temps[j].xyzw[1].u[i] = regs->TempsAddrs[j].xyzw[1].u[i];
-               mach->Temps[j].xyzw[2].u[i] = regs->TempsAddrs[j].xyzw[2].u[i];
-               mach->Temps[j].xyzw[3].u[i] = regs->TempsAddrs[j].xyzw[3].u[i];
-            }
-            for( j = 0; j < 2; j++ ) {
-               mach->Outputs[j].xyzw[0].u[i] = regs->Outputs[j].xyzw[0].u[i];
-               mach->Outputs[j].xyzw[1].u[i] = regs->Outputs[j].xyzw[1].u[i];
-               mach->Outputs[j].xyzw[2].u[i] = regs->Outputs[j].xyzw[2].u[i];
-               mach->Outputs[j].xyzw[3].u[i] = regs->Outputs[j].xyzw[3].u[i];
-            }
-         }
-
-         /* Release condition state. */
-         mach->CondStack.Index++;
-      }
+      assert(mach->CondStackTop > 0);
+      /* pop CondMask */
+      mach->CondMask = mach->condStack[--mach->CondStackTop];
       break;
 
    case TGSI_OPCODE_ENDLOOP:
@@ -2246,8 +2171,6 @@ tgsi_exec_machine_run2(
       mach->Temps[TEMP_PRIMITIVE_I].xyzw[TEMP_PRIMITIVE_C].u[0] = 0;
       mach->Primitives[0] = 0;
    }
-
-   mach->CondStack.Index = 8;
 
    k = tgsi_parse_init( &parse, mach->Tokens );
    if (k != TGSI_PARSE_OK) {

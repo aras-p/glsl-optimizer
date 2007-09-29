@@ -120,6 +120,10 @@ struct tgsi_exec_cond_stack
    unsigned                      Index;      /* into States[] */
 };
 
+
+#define TGSI_EXEC_MAX_COND_NESTING  10
+
+
 struct tgsi_exec_machine
 {
    /*
@@ -152,8 +156,14 @@ struct tgsi_exec_machine
    /* FRAGMENT processor only. */
    const struct tgsi_interp_coef *InterpCoefs;
 
-   struct tgsi_exec_cond_stack   CondStack;
+   /* Conditional execution mask */
+   uint CondMask;
+
+   /* Condition mask stack (for nested conditionals) */
+   uint condStack[TGSI_EXEC_MAX_COND_NESTING];
+   int CondStackTop;
 };
+
 
 void
 tgsi_exec_machine_init(
