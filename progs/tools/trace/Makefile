@@ -17,7 +17,7 @@ default: $(TRACER)
 
 $(TRACER): $(OBJECTS)
 	$(TOP)/bin/mklib -o $(TRACER) -noprefix -cplusplus \
-		$(MKLIB_OPTIONS) $(OBJECTS)
+		-ldflags '$(LDFLAGS)' $(MKLIB_OPTIONS) $(OBJECTS)
 
 gltrace.cc: gltrace.py
 	PYTHONPATH=$(TOP)/src/mesa/glapi python gltrace.py -f $(TOP)/src/mesa/glapi/gl_API.xml  > gltrace.cc

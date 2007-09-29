@@ -64,7 +64,7 @@ default: depend $(TOP)/$(LIB_DIR)/$(GL_LIB_NAME)
 
 # Make libGL
 $(TOP)/$(LIB_DIR)/$(GL_LIB_NAME):  $(OBJECTS) Makefile
-	$(TOP)/bin/mklib -o $(GL_LIB) -linker '$(CC)' \
+	$(TOP)/bin/mklib -o $(GL_LIB) -linker '$(CC)' -ldflags '$(LDFLAGS)' \
 		-major 1 -minor 2 $(MKLIB_OPTIONS) \
 		-install $(TOP)/$(LIB_DIR) $(GL_LIB_DEPS) $(OBJECTS)
 

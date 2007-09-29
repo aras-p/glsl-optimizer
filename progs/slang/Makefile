@@ -29,13 +29,13 @@ clean:
 #
 
 cltest: cltest.o framework.o $(LIB_DEP)
-	$(CC) cltest.o framework.o $(APP_LIB_DEPS) -o cltest
+	$(CC) $(LDFLAGS) cltest.o framework.o $(APP_LIB_DEPS) -o cltest
 
 sotest: sotest.o framework.o $(LIB_DEP)
-	$(CC) sotest.o framework.o $(APP_LIB_DEPS) -o sotest
+	$(CC) $(LDFLAGS) sotest.o framework.o $(APP_LIB_DEPS) -o sotest
 
 vstest: vstest.o framework.o $(LIB_DEP)
-	$(CC) vstest.o framework.o $(APP_LIB_DEPS) -o vstest
+	$(CC) $(LDFLAGS) vstest.o framework.o $(APP_LIB_DEPS) -o vstest
 
 #
 # objects

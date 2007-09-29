@@ -45,7 +45,7 @@ $(TOP)/$(LIB_DIR):
 
 # Make the library:
 $(TOP)/$(LIB_DIR)/$(GLU_LIB_NAME): $(OBJECTS)
-	@ $(TOP)/bin/mklib -o $(GLU_LIB) -linker '$(CC)' \
+	@ $(TOP)/bin/mklib -o $(GLU_LIB) -linker '$(CC)' -ldflags '$(LDFLAGS)' \
 		-major $(GLU_MAJOR) -minor $(GLU_MINOR) -patch $(GLU_TINY) \
 		$(MKLIB_OPTIONS) -install $(TOP)/$(LIB_DIR) \
 		$(GLU_LIB_DEPS) $(OBJECTS)

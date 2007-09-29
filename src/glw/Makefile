@@ -48,7 +48,7 @@ clean:
 
 # Make the library
 $(TOP)/$(LIB_DIR)/$(GLW_LIB_NAME): $(OBJECTS)
-	$(TOP)/bin/mklib -o $(GLW_LIB) -linker '$(CC)' \
+	$(TOP)/bin/mklib -o $(GLW_LIB) -linker '$(CC)' -ldflags '$(LDFLAGS)' \
 		-major $(MAJOR) -minor $(MINOR) -patch $(TINY) \
 		$(MKLIB_OPTIONS) -install $(TOP)/$(LIB_DIR) \
 		$(GLW_LIB_DEPS) $(OBJECTS)

@@ -103,7 +103,7 @@ clean:
 .SUFFIXES: .c
 
 .c:
-	$(CC) $(INCLUDES) $(CFLAGS) $< $(LIBS) -o $@
+	$(CC) $(INCLUDES) $(CFLAGS) $(LDFLAGS) $< $(LIBS) -o $@
 
 .c.o:
 	$(CC) -c $(INCLUDES) $(CFLAGS) $(DEFINES) $< -o $@
@@ -124,31 +124,31 @@ arraytexture.o: arraytexture.c readtex.h
 	$(CC) -c $(INCLUDES) $(CFLAGS) $(DEFINES) arraytexture.c -o $@
 
 afsmultiarb: afsmultiarb.o readtex.o
-	$(CC) $(CFLAGS) afsmultiarb.o readtex.o $(LIBS) -o $@
+	$(CC) $(CFLAGS) $(LDFLAGS) afsmultiarb.o readtex.o $(LIBS) -o $@
 
 afsmultiarb.o: afsmultiarb.c readtex.h
 	$(CC) -c $(INCLUDES) $(CFLAGS) $(DEFINES) afsmultiarb.c -o $@
 
 drawbuffers: drawbuffers.o
-	$(CC) $(CFLAGS) drawbuffers.o $(LIBS) -o $@
+	$(CC) $(CFLAGS) $(LDFLAGS) drawbuffers.o $(LIBS) -o $@
 
 drawbuffers.o: drawbuffers.c extfuncs.h
 	$(CC) -c $(INCLUDES) $(CFLAGS) $(DEFINES) drawbuffers.c -o $@
 
 texrect: texrect.o readtex.o
-	$(CC) $(CFLAGS) texrect.o readtex.o $(LIBS) -o $@
+	$(CC) $(CFLAGS) $(LDFLAGS) texrect.o readtex.o $(LIBS) -o $@
 
 texrect.o: texrect.c readtex.h
 	$(CC) -c $(INCLUDES) $(CFLAGS) $(DEFINES) texrect.c -o $@
 
 bug_3195: bug_3195.o readtex.o
-	$(CC) $(CFLAGS) bug_3195.o readtex.o $(LIBS) -o $@
+	$(CC) $(CFLAGS) $(LDFLAGS) bug_3195.o readtex.o $(LIBS) -o $@
 
 bug_3195.o: bug_3195.c readtex.h
 	$(CC) -c $(INCLUDES) $(CFLAGS) $(DEFINES) bug_3195.c -o $@
 
 invert: invert.o readtex.o
-	$(CC) $(CFLAGS) invert.o readtex.o $(LIBS) -o $@
+	$(CC) $(CFLAGS) $(LDFLAGS) invert.o readtex.o $(LIBS) -o $@
 
 invert.o: invert.c readtex.h
 	$(CC) -c $(INCLUDES) $(CFLAGS) $(DEFINES) invert.c -o $@

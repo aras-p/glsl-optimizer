@@ -70,7 +70,7 @@ default: depend symlinks $(LIBNAME) $(TOP)/$(LIB_DIR)/$(LIBNAME)
 
 
 $(LIBNAME): $(OBJECTS) $(MESA_MODULES) $(WINOBJ) Makefile $(TOP)/src/mesa/drivers/dri/Makefile.template
-	$(TOP)/bin/mklib -noprefix -o $@ \
+	$(TOP)/bin/mklib -ldflags '$(LDFLAGS)' -noprefix -o $@ \
 		$(OBJECTS) $(MESA_MODULES) $(WINOBJ) $(DRI_LIB_DEPS)
 
 
