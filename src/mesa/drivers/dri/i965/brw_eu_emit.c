@@ -611,6 +611,20 @@ struct brw_instruction *brw_BREAK(struct brw_compile *p)
    return insn;
 }
 
+struct brw_instruction *brw_CONT(struct brw_compile *p)
+{
+   struct brw_instruction *insn;
+   insn = next_insn(p, BRW_OPCODE_CONTINUE);
+   brw_set_dest(insn, brw_ip_reg());
+   brw_set_src0(insn, brw_ip_reg());
+   brw_set_src1(insn, brw_imm_d(0x0));
+   insn->header.compression_control = BRW_COMPRESSION_NONE;
+   insn->header.execution_size = BRW_EXECUTE_8;
+   insn->header.mask_control = BRW_MASK_DISABLE;
+   insn->bits3.if_else.pad0 = 0;
+   return insn;
+}
+
 /* DO/WHILE loop:
  */
 struct brw_instruction *brw_DO(struct brw_compile *p, GLuint execute_size)

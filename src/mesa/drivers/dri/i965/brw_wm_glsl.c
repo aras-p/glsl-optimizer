@@ -940,6 +940,37 @@ static void emit_ddy(struct brw_wm_compile *c,
     brw_set_saturate(p, 0);
 }
 
+static void emit_wpos_xy(struct brw_wm_compile *c,
+                struct prog_instruction *inst)
+{
+    struct brw_compile *p = &c->func;
+    GLuint mask = inst->DstReg.WriteMask;
+    struct brw_reg src0[2], dst[2];
+
+    dst[0] = get_dst_reg(c, inst, 0, 1);
+    dst[1] = get_dst_reg(c, inst, 1, 1);
+
+    src0[0] = get_src_reg(c, &inst->SrcReg[0], 0, 1);
+    src0[1] = get_src_reg(c, &inst->SrcReg[0], 1, 1);
+
+    /* Calc delta X,Y by subtracting origin in r1 from the pixel
+     * centers.
+     */
+    if (mask & WRITEMASK_X) {
+	brw_MOV(p,
+		dst[0],
+		retype(src0[0], BRW_REGISTER_TYPE_UW));
+    }
+
+    if (mask & WRITEMASK_Y) {
+	/* TODO -- window_height - Y */
+	brw_MOV(p,
+		dst[1],
+		negate(retype(src0[1], BRW_REGISTER_TYPE_UW)));
+
+    }
+}
+
 /* TODO
    BIAS on SIMD8 not workind yet...
  */	
@@ -1091,6 +1122,11 @@ static void brw_wm_emit_glsl(struct brw_wm_compile *c)
 	if ((orig_inst = inst->Data) != 0)
 	    orig_inst->Data = current_insn(p);
 
+	if (inst->CondUpdate)
+	    brw_set_conditionalmod(p, BRW_CONDITIONAL_NZ);
+	else
+	    brw_set_conditionalmod(p, BRW_CONDITIONAL_NONE);
+
 	switch (inst->Opcode) {
 	    case WM_PIXELXY:
 		emit_pixel_xy(c, inst);
@@ -1109,6 +1145,9 @@ static void brw_wm_emit_glsl(struct brw_wm_compile *c)
 		break;
 	    case WM_CINTERP:
 		emit_cinterp(c, inst);
+		break;
+	    case WM_WPOSXY:
+		emit_wpos_xy(c, inst);
 		break;
 	    case WM_FB_WRITE:
 		emit_fb_write(c, inst);
@@ -1258,8 +1297,11 @@ static void brw_wm_emit_glsl(struct brw_wm_compile *c)
 		loop_inst[loop_insn++] = brw_DO(p, BRW_EXECUTE_8);
 		break;
 	    case OPCODE_BRK:
-		brw_set_predicate_control(p, BRW_PREDICATE_NORMAL);
 		brw_BREAK(p);
+		brw_set_predicate_control(p, BRW_PREDICATE_NONE);
+		break;
+	    case OPCODE_CONT:
+		brw_CONT(p);
 		brw_set_predicate_control(p, BRW_PREDICATE_NONE);
 		break;
 	    case OPCODE_ENDLOOP: 
@@ -1272,13 +1314,20 @@ static void brw_wm_emit_glsl(struct brw_wm_compile *c)
 		    if (inst0->header.opcode == BRW_OPCODE_BREAK) {
 			inst0->bits3.if_else.jump_count = inst1 - inst0 + 1;
 			inst0->bits3.if_else.pop_count = 0;
-		    }
+		    } else if (inst0->header.opcode == BRW_OPCODE_CONTINUE) {
+                        inst0->bits3.if_else.jump_count = inst1 - inst0;
+                        inst0->bits3.if_else.pop_count = 0;
+                    }
 		}
 		break;
 	    default:
 		_mesa_printf("unsupported IR in fragment shader %d\n",
 			inst->Opcode);
 	}
+	if (inst->CondUpdate)
+	    brw_set_predicate_control(p, BRW_PREDICATE_NORMAL);
+	else
+	    brw_set_predicate_control(p, BRW_PREDICATE_NONE);
     }
     post_wm_emit(c);
     for (i = 0; i < c->fp->program.Base.NumInstructions; i++)

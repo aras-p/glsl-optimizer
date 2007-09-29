@@ -815,6 +815,7 @@ struct brw_instruction *brw_WHILE(struct brw_compile *p,
 	       struct brw_instruction *patch_insn);
 
 struct brw_instruction *brw_BREAK(struct brw_compile *p);
+struct brw_instruction *brw_CONT(struct brw_compile *p);
 /* Forward jumps:
  */
 void brw_land_fwd_jump(struct brw_compile *p, 
