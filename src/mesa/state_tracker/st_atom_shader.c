@@ -183,7 +183,7 @@ find_translated_vp(struct st_context *st,
     * XXX This could be a hash lookup, using InputsRead as the key.
     */
    for (xvp = stfp->vertex_programs; xvp; xvp = xvp->next) {
-      if (xvp->frag_inputs == stfp->Base.Base.InputsRead) {
+      if (xvp->frag_inputs == fragInputsRead) {
          break;
       }
    }
