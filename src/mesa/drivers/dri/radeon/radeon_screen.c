@@ -53,6 +53,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "r200_context.h"
 #include "r200_ioctl.h"
 #include "r200_span.h"
+#include "r200_tex.h"
 #elif RADEON_COMMON && defined(RADEON_COMMON_FOR_R300)
 #include "r300_context.h"
 #include "r300_fragprog.h"
@@ -973,7 +974,8 @@ static const struct __DriverAPIRec r200API = {
    .WaitForMSC      = driWaitForMSC32,
    .WaitForSBC      = NULL,
    .SwapBuffersMSC  = NULL,
-   .CopySubBuffer   = r200CopySubBuffer
+   .CopySubBuffer   = r200CopySubBuffer,
+   .setTexOffset    = r200SetTexOffset
 };
 #endif
 
