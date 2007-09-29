@@ -210,7 +210,7 @@ static void Init (void)
       "   // Compute diffuse and specular contributions\n"
 #if 0
       "   gl_FragColor = diffuse * dotProd + specular * pow (dotProd, 20.0);\n"
-#else
+#elif 1 /* test IF/ELSE/ENDIF */
       "   if (normal.y > 0.0) { \n"
       "      gl_FragColor = diffuse * dotProd + specular * pow (dotProd, 20.0);\n"
       "   } \n"
@@ -220,6 +220,16 @@ static void Init (void)
       "      } \n"
       "      else { \n"
       "         gl_FragColor = vec4(1, 1, 0, 0); \n"
+      "      } \n"
+      "   } \n"
+#elif 1 /* test LOOP */
+      "   while (1) { \n"
+      "      if (normal.y >= 0.0) { \n"
+      "         gl_FragColor = vec4(1, 0, 0, 0); \n"
+      "         break; \n"
+      "      } else { \n"
+      "         gl_FragColor = diffuse * dotProd + specular * pow (dotProd, 20.0);\n"
+      "         break; \n"
       "      } \n"
       "   } \n"
 #endif
