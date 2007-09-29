@@ -208,7 +208,21 @@ static void Init (void)
       "   // Compute dot product of light direction and normal vector\n"
       "   float dotProd = max (dot (lightPos, normalize (normal)), 0.0);\n"
       "   // Compute diffuse and specular contributions\n"
+#if 0
       "   gl_FragColor = diffuse * dotProd + specular * pow (dotProd, 20.0);\n"
+#else
+      "   if (normal.y > 0.0) { \n"
+      "      gl_FragColor = diffuse * dotProd + specular * pow (dotProd, 20.0);\n"
+      "   } \n"
+      "   else { \n"
+      "      if (normal.x < 0.0) { \n"
+      "         gl_FragColor = vec4(1, 0, 0, 0); \n"
+      "      } \n"
+      "      else { \n"
+      "         gl_FragColor = vec4(1, 1, 0, 0); \n"
+      "      } \n"
+      "   } \n"
+#endif
       "}\n"
    ;
    static const char *vertShaderText =
