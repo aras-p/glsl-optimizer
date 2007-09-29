@@ -97,30 +97,6 @@ struct tgsi_exec_labels
 #define TGSI_EXEC_NUM_TEMPS   (32 + 4)
 #define TGSI_EXEC_NUM_ADDRS   1
 
-/* XXX: This is temporary */
-struct tgsi_exec_cond_regs
-{
-   struct tgsi_exec_vector    TempsAddrs[TGSI_EXEC_NUM_TEMPS + TGSI_EXEC_NUM_ADDRS];
-   struct tgsi_exec_vector    Outputs[2];    /* XXX: That's just enough for fragment shader only! */
-};
-
-/* XXX: This is temporary */
-struct tgsi_exec_cond_state
-{
-   struct tgsi_exec_cond_regs IfPortion;
-   struct tgsi_exec_cond_regs ElsePortion;
-   unsigned                   Condition;
-   boolean                    WasElse;
-};
-
-/* XXX: This is temporary */
-struct tgsi_exec_cond_stack
-{
-   struct tgsi_exec_cond_state   States[8];
-   unsigned                      Index;      /* into States[] */
-};
-
-
 #define TGSI_EXEC_MAX_COND_NESTING  10
 
 
