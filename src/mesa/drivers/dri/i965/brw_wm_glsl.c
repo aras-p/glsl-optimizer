@@ -966,7 +966,7 @@ static void emit_wpos_xy(struct brw_wm_compile *c,
 	/* TODO -- window_height - Y */
 	brw_MOV(p,
 		dst[1],
-		negate(retype(src0[1], BRW_REGISTER_TYPE_UW)));
+		retype(src0[1], BRW_REGISTER_TYPE_UW));
 
     }
 }
@@ -1272,7 +1272,7 @@ static void brw_wm_emit_glsl(struct brw_wm_compile *c)
 		brw_push_insn_state(p);
 		brw_set_mask_control(p, BRW_MASK_DISABLE);
                 brw_set_access_mode(p, BRW_ALIGN_1);
-                brw_ADD(p, deref_1uw(stack_index, 0), brw_ip_reg(), brw_imm_d(3*16));
+                brw_ADD(p, deref_1ud(stack_index, 0), brw_ip_reg(), brw_imm_d(3*16));
                 brw_set_access_mode(p, BRW_ALIGN_16);
                 brw_ADD(p, get_addr_reg(stack_index),
                          get_addr_reg(stack_index), brw_imm_d(4));
@@ -1288,7 +1288,7 @@ static void brw_wm_emit_glsl(struct brw_wm_compile *c)
                 brw_ADD(p, get_addr_reg(stack_index),
                         get_addr_reg(stack_index), brw_imm_d(-4));
                 brw_set_access_mode(p, BRW_ALIGN_1);
-                brw_MOV(p, brw_ip_reg(), deref_1uw(stack_index, 0));
+                brw_MOV(p, brw_ip_reg(), deref_1ud(stack_index, 0));
                 brw_set_access_mode(p, BRW_ALIGN_16);
 		brw_pop_insn_state(p);
 

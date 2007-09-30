@@ -648,6 +648,11 @@ static __inline struct brw_reg deref_1uw(struct brw_indirect ptr, GLint offset)
    return retype(deref_1f(ptr, offset), BRW_REGISTER_TYPE_UW);
 }
 
+static __inline struct brw_reg deref_1ud(struct brw_indirect ptr, GLint offset)
+{
+   return retype(deref_1f(ptr, offset), BRW_REGISTER_TYPE_UD);
+}
+
 static __inline struct brw_reg get_addr_reg(struct brw_indirect ptr)
 {
    return brw_address_reg(ptr.addr_subnr);
