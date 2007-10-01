@@ -57,6 +57,8 @@
  */
 struct translated_vertex_program
 {
+   struct st_vertex_program *master;
+
    /** The fragment shader "signature" this vertex shader is meant for: */
    GLbitfield frag_inputs;
 
@@ -183,7 +185,7 @@ find_translated_vp(struct st_context *st,
     * XXX This could be a hash lookup, using InputsRead as the key.
     */
    for (xvp = stfp->vertex_programs; xvp; xvp = xvp->next) {
-      if (xvp->frag_inputs == fragInputsRead) {
+      if (xvp->master == stvp && xvp->frag_inputs == fragInputsRead) {
          break;
       }
    }
@@ -192,6 +194,7 @@ find_translated_vp(struct st_context *st,
    if (!xvp) {
       xvp = CALLOC_STRUCT(translated_vertex_program);
       xvp->frag_inputs = fragInputsRead;
+      xvp->master = stvp;
 
       xvp->next = stfp->vertex_programs;
       stfp->vertex_programs = xvp;

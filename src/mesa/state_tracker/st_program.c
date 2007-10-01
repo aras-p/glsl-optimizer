@@ -281,12 +281,11 @@ st_translate_fragment_program(struct st_context *st,
    GLuint attr;
    GLbitfield inputsRead = stfp->Base.Base.InputsRead;
 
-   /* Check if all fragment programs need the fragment position (in order
-    * to do perspective-corrected interpolation).
+   /* For software rendering, we always need the fragment input position
+    * in order to calculate interpolated values.
+    * For i915, we always want to emit the semantic info for position.
     */
-   /* XXX temporary! */
-   if (st->pipe->get_param(st->pipe, PIPE_PARAM_FS_NEEDS_POS))
-      inputsRead |= FRAG_BIT_WPOS;
+   inputsRead |= FRAG_BIT_WPOS;
 
    memset(&fs, 0, sizeof(fs));
 

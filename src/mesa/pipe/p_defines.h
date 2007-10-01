@@ -308,10 +308,4 @@
 #define PIPE_QUERY_TYPES                 3
 
 
-/**
- * Pipe capabilities/queries
- */
-#define PIPE_PARAM_FS_NEEDS_POS  1
-
-
 #endif

@@ -142,8 +142,6 @@ static int
 i915_get_param(struct pipe_context *pipe, int param)
 {
    switch (param) {
-   case PIPE_PARAM_FS_NEEDS_POS:
-      return 0;
    default:
       return 0;
    }
