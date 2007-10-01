@@ -257,7 +257,9 @@ i915_update_texture(struct i915_context *i915, uint unit,
    assert(format);
    assert(pitch);
 
+   /*
    printf("texture format = 0x%x\n", format);
+   */
 
    /* MS3 state */
    state[0] =
