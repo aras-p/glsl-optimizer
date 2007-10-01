@@ -101,7 +101,8 @@ setup_feedback(GLcontext *ctx)
       feedback.num_attribs++;
    }
 
-   pipe->set_feedback_state(pipe, &feedback);
+   if (pipe->set_feedback_state)
+      pipe->set_feedback_state(pipe, &feedback);
 }
 
 
@@ -294,7 +295,8 @@ st_RasterPos(GLcontext *ctx, const GLfloat v[4])
       pipe->winsys->buffer_data(pipe->winsys, fb_buf.buffer,
                                 fb_buf.size,
                                 NULL); /* data */
-      pipe->set_feedback_buffer(pipe, 0, &fb_buf);
+      if (pipe->set_feedback_buffer)
+         pipe->set_feedback_buffer(pipe, 0, &fb_buf);
    }
 
 
@@ -347,7 +349,8 @@ st_RasterPos(GLcontext *ctx, const GLfloat v[4])
    pipe->winsys->buffer_reference(pipe->winsys, &fb_buf.buffer, NULL);
 
    /* restore pipe state */
-   pipe->set_feedback_state(pipe, &st->state.feedback);
+   if (pipe->set_feedback_state)
+      pipe->set_feedback_state(pipe, &st->state.feedback);
 }
 
 
