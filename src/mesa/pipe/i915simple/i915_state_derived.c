@@ -45,17 +45,17 @@ static void calculate_vertex_layout( struct i915_context *i915 )
 {
    const struct pipe_shader_state *fs = i915->fs;
    const interp_mode colorInterp = i915->rasterizer->color_interp;
-   struct vertex_info *vinfo = &i915->current.vertex_info;
+   struct vertex_info vinfo;
    uint front0 = 0, back0 = 0, front1 = 0, back1 = 0;
    boolean needW = 0;
    uint i;
    boolean texCoords[8];
 
    memset(texCoords, 0, sizeof(texCoords));
-   memset(vinfo, 0, sizeof(*vinfo));
+   memset(&vinfo, 0, sizeof(vinfo));
 
    /* pos */
-   draw_emit_vertex_attr(vinfo, FORMAT_3F, INTERP_LINEAR);
+   draw_emit_vertex_attr(&vinfo, FORMAT_3F, INTERP_LINEAR);
    /* Note: we'll set the S4_VFMT_XYZ[W] bits below */
 
    for (i = 0; i < fs->num_inputs; i++) {
@@ -64,13 +64,13 @@ static void calculate_vertex_layout( struct i915_context *i915 )
          break;
       case TGSI_SEMANTIC_COLOR:
          if (fs->input_semantic_index[i] == 0) {
-            front0 = draw_emit_vertex_attr(vinfo, FORMAT_4UB, colorInterp);
-            vinfo->hwfmt[0] |= S4_VFMT_COLOR;
+            front0 = draw_emit_vertex_attr(&vinfo, FORMAT_4UB, colorInterp);
+            vinfo.hwfmt[0] |= S4_VFMT_COLOR;
          }
          else {
             assert(fs->input_semantic_index[i] == 1);
-            front1 = draw_emit_vertex_attr(vinfo, FORMAT_4UB, colorInterp);
-            vinfo->hwfmt[0] |= S4_VFMT_SPEC_FOG;
+            front1 = draw_emit_vertex_attr(&vinfo, FORMAT_4UB, colorInterp);
+            vinfo.hwfmt[0] |= S4_VFMT_SPEC_FOG;
          }
          break;
       case TGSI_SEMANTIC_GENERIC:
@@ -79,15 +79,15 @@ static void calculate_vertex_layout( struct i915_context *i915 )
             const uint unit = fs->input_semantic_index[i];
             uint hwtc;
             texCoords[unit] = TRUE;
-            draw_emit_vertex_attr(vinfo, FORMAT_4F, INTERP_PERSPECTIVE);
+            draw_emit_vertex_attr(&vinfo, FORMAT_4F, INTERP_PERSPECTIVE);
             hwtc = TEXCOORDFMT_4D;
             needW = TRUE;
-            vinfo->hwfmt[1] |= hwtc << (unit * 4);
+            vinfo.hwfmt[1] |= hwtc << (unit * 4);
          }
          break;
       case TGSI_SEMANTIC_FOG:
          fprintf(stderr, "i915 fogcoord not implemented yet\n");
-         draw_emit_vertex_attr(vinfo, FORMAT_1F, INTERP_PERSPECTIVE);
+         draw_emit_vertex_attr(&vinfo, FORMAT_1F, INTERP_PERSPECTIVE);
          break;
       default:
          assert(0);
@@ -99,18 +99,18 @@ static void calculate_vertex_layout( struct i915_context *i915 )
    for (i = 0; i < 8; i++) {
       if (!texCoords[i]) {
          const uint hwtc = TEXCOORDFMT_NOT_PRESENT;
-         vinfo->hwfmt[1] |= hwtc << (i* 4);
+         vinfo.hwfmt[1] |= hwtc << (i* 4);
       }
    }
 
    /* go back and fill in the vertex position info now that we have needW */
    if (needW) {
-      vinfo->hwfmt[0] |= S4_VFMT_XYZW;
-      vinfo->format[0] = FORMAT_4F;
+      vinfo.hwfmt[0] |= S4_VFMT_XYZW;
+      vinfo.format[0] = FORMAT_4F;
    }
    else {
-      vinfo->hwfmt[0] |= S4_VFMT_XYZ;
-      vinfo->format[0] = FORMAT_3F;
+      vinfo.hwfmt[0] |= S4_VFMT_XYZ;
+      vinfo.format[0] = FORMAT_3F;
    }
 
    /* Additional attributes required for setup: Just twosided
@@ -119,31 +119,35 @@ static void calculate_vertex_layout( struct i915_context *i915 )
     */
    if (i915->rasterizer->light_twoside) {
       if (front0) {
-         back0 = draw_emit_vertex_attr(vinfo, FORMAT_OMIT, colorInterp);
+         back0 = draw_emit_vertex_attr(&vinfo, FORMAT_OMIT, colorInterp);
       }
       if (back0) {
-         back1 = draw_emit_vertex_attr(vinfo, FORMAT_OMIT, colorInterp);
+         back1 = draw_emit_vertex_attr(&vinfo, FORMAT_OMIT, colorInterp);
       }
    }
 
-   draw_compute_vertex_size(vinfo);
+   draw_compute_vertex_size(&vinfo);
 
-   /* If the attributes have changed, tell the draw module about the new
-    * vertex layout.  We'll also update the hardware vertex format info.
-    */
-   draw_set_vertex_attributes( i915->draw,
-                               NULL,/*vinfo->slot_to_attrib,*/
-                               vinfo->interp_mode,
-			       vinfo->num_attribs);
+   if (memcmp(&i915->current.vertex_info, &vinfo, sizeof(vinfo))) {
+      /* If the attributes have changed, tell the draw module about the new
+       * vertex layout.  We'll also update the hardware vertex format info.
+       */
+      draw_set_vertex_attributes( i915->draw,
+                                  NULL,/*vinfo.slot_to_attrib,*/
+                                  vinfo.interp_mode,
+                                  vinfo.num_attribs);
+      
+      draw_set_twoside_attributes(i915->draw,
+                                  front0, back0, front1, back1);
 
-   draw_set_twoside_attributes(i915->draw,
-                               front0, back0, front1, back1);
+      /* Need to set this flag so that the LIS2/4 registers get set.
+       * It also means the i915_update_immediate() function must be called
+       * after this one, in i915_update_derived().
+       */
+      i915->dirty |= I915_NEW_VERTEX_FORMAT;
 
-   /* Need to set this flag so that the LIS2/4 registers get set.
-    * It also means the i915_update_immediate() function must be called
-    * after this one, in i915_update_derived().
-    */
-   i915->dirty |= I915_NEW_VERTEX_FORMAT;
+      memcpy(&i915->current.vertex_info, &vinfo, sizeof(vinfo));
+   }
 }
 
 
