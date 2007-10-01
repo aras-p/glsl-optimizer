@@ -69,7 +69,6 @@ static void calculate_vertex_layout( struct i915_context *i915 )
          }
          else {
             assert(fs->input_semantic_index[i] == 1);
-            assert(0); /* untested */
             front1 = draw_emit_vertex_attr(vinfo, FORMAT_4UB, colorInterp);
             vinfo->hwfmt[0] |= S4_VFMT_SPEC_FOG;
          }
