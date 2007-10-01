@@ -311,7 +311,7 @@ struct pipe_context *i915_create( struct pipe_winsys *pipe_winsys,
    if (i915->flags.is_i945)
       i915->pipe.mipmap_tree_layout = i945_miptree_layout;
    else
-      i915->pipe.mipmap_tree_layout = i945_miptree_layout;
+      i915->pipe.mipmap_tree_layout = i915_miptree_layout;
 
 
    i915->dirty = ~0;
