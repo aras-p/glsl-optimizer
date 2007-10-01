@@ -43,7 +43,6 @@
 #include "st_program.h"
 #include "st_atom_shader.h"
 
-#include "tnl/tnl.h"
 #include "pipe/tgsi/mesa/tgsi_mesa.h"
 
 
@@ -57,7 +56,14 @@ static void st_bind_program( GLcontext *ctx,
 {
    struct st_context *st = st_context(ctx);
 
-   st->dirty.st |= ST_NEW_SHADER;
+   switch (target) {
+   case GL_VERTEX_PROGRAM_ARB: 
+      st->dirty.st |= ST_NEW_VERTEX_PROGRAM;
+      break;
+   case GL_FRAGMENT_PROGRAM_ARB:
+      st->dirty.st |= ST_NEW_FRAGMENT_PROGRAM;
+      break;
+   }
 }
 
 
@@ -70,7 +76,8 @@ static void st_use_program( GLcontext *ctx,
 {
    struct st_context *st = st_context(ctx);
 
-   st->dirty.st |= ST_NEW_SHADER;
+   st->dirty.st |= ST_NEW_FRAGMENT_PROGRAM;
+   st->dirty.st |= ST_NEW_VERTEX_PROGRAM;
 
    _mesa_use_program(ctx, program);
 }
@@ -114,8 +121,6 @@ static struct gl_program *st_new_program( GLcontext *ctx,
    default:
       return _mesa_new_program(ctx, target, id);
    }
-
-   st->dirty.st |= ST_NEW_SHADER;
 }
 
 
@@ -175,6 +180,9 @@ static void st_program_string_notify( GLcontext *ctx,
       }
 
       stfp->param_state = stfp->Base.Base.Parameters->StateFlags;
+
+      if (st->fp == stfp)
+	 st->dirty.st |= ST_NEW_FRAGMENT_PROGRAM;
    }
    else if (target == GL_VERTEX_PROGRAM_ARB) {
       struct st_vertex_program *stvp = (struct st_vertex_program *) prog;
@@ -189,12 +197,10 @@ static void st_program_string_notify( GLcontext *ctx,
 
       stvp->param_state = stvp->Base.Base.Parameters->StateFlags;
 
-      /* Also tell tnl about it:
-       */
-      _tnl_program_string(ctx, target, prog);
-   }
+      if (st->vp == stvp)
+	 st->dirty.st |= ST_NEW_VERTEX_PROGRAM;
 
-   st->dirty.st |= ST_NEW_SHADER;
+   }
 }
 
 
