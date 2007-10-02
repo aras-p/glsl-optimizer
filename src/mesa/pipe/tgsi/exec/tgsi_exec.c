@@ -179,6 +179,10 @@ tgsi_exec_machine_init(
    GLuint i, k;
    struct tgsi_parse_context parse;
 
+#if 0
+   tgsi_dump(tokens, 0);
+#endif
+
    mach->Tokens = tokens;
 
    mach->Samplers = samplers;
@@ -732,6 +736,17 @@ micro_ishr(
    dst->i[1] = src0->i[1] >> src1->i[1];
    dst->i[2] = src0->i[2] >> src1->i[2];
    dst->i[3] = src0->i[3] >> src1->i[3];
+}
+
+static void
+micro_trunc(
+   union tgsi_exec_channel *dst,
+   const union tgsi_exec_channel *src0 )
+{
+   dst->f[0] = (float) (int) src0->u[0];
+   dst->f[1] = (float) (int) src0->u[1];
+   dst->f[2] = (float) (int) src0->u[2];
+   dst->f[3] = (float) (int) src0->u[3];
 }
 
 static void
@@ -1995,13 +2010,6 @@ exec_instruction(
       assert (0);
       break;
 
-   case TGSI_OPCODE_BRK:
-      /* turn off loop channels for each enabled exec channel */
-      mach->LoopMask &= ~mach->ExecMask;
-      /* Todo: if mach->LoopMask == 0, jump to end of loop */
-      UPDATE_EXEC_MASK(mach);
-      break;
-
    case TGSI_OPCODE_IF:
       /* push CondMask */
       assert(mach->CondStackTop < TGSI_EXEC_MAX_COND_NESTING);
@@ -2024,16 +2032,6 @@ exec_instruction(
       /* Todo: If CondMask==0, jump to ELSE */
       break;
 
-   case TGSI_OPCODE_LOOP:
-      /* push LoopMask */
-      assert(mach->LoopStackTop < TGSI_EXEC_MAX_LOOP_NESTING);
-      mach->LoopStack[mach->LoopStackTop++] = mach->LoopMask;
-      break;
-
-   case TGSI_OPCODE_REP:
-      assert (0);
-      break;
-
    case TGSI_OPCODE_ELSE:
       /* invert CondMask wrt previous mask */
       {
@@ -2046,16 +2044,20 @@ exec_instruction(
       }
       break;
 
-   case TGSI_OPCODE_END:
-      /* halt execution */
-      *pc = -1;
-      break;
-
    case TGSI_OPCODE_ENDIF:
       /* pop CondMask */
       assert(mach->CondStackTop > 0);
       mach->CondMask = mach->CondStack[--mach->CondStackTop];
       UPDATE_EXEC_MASK(mach);
+      break;
+
+   case TGSI_OPCODE_END:
+      /* halt execution */
+      *pc = -1;
+      break;
+
+   case TGSI_OPCODE_REP:
+      assert (0);
       break;
 
    case TGSI_OPCODE_ENDREP:
@@ -2095,8 +2097,11 @@ exec_instruction(
       break;
 
    case TGSI_OPCODE_TRUNC:
-      /* TGSI_OPCODE_INT */
-      assert (0);
+      FOR_EACH_ENABLED_CHANNEL( *inst, chan_index ) {
+         FETCH( &r[0], 0, chan_index );
+         micro_trunc( &r[0], &r[0] );
+         STORE( &r[0], 0, chan_index );
+      }
       break;
 
    case TGSI_OPCODE_SHL:
@@ -2160,10 +2165,6 @@ exec_instruction(
       assert (0);
       break;
 
-   case TGSI_OPCODE_CONT:
-      assert (0);
-      break;
-
    case TGSI_OPCODE_EMIT:
       mach->Temps[TEMP_OUTPUT_I].xyzw[TEMP_OUTPUT_C].u[0] += 16;
       mach->Primitives[mach->Temps[TEMP_PRIMITIVE_I].xyzw[TEMP_PRIMITIVE_C].u[0]]++;
@@ -2174,14 +2175,12 @@ exec_instruction(
       mach->Primitives[mach->Temps[TEMP_PRIMITIVE_I].xyzw[TEMP_PRIMITIVE_C].u[0]] = 0;
       break;
 
+   case TGSI_OPCODE_LOOP:
+      /* fall-through (for now) */
    case TGSI_OPCODE_BGNLOOP2:
       /* push LoopMask */
       assert(mach->LoopStackTop < TGSI_EXEC_MAX_LOOP_NESTING);
       mach->LoopStack[mach->LoopStackTop++] = mach->LoopMask;
-      break;
-
-   case TGSI_OPCODE_BGNSUB:
-      /* no-op */
       break;
 
    case TGSI_OPCODE_ENDLOOP:
@@ -2197,6 +2196,22 @@ exec_instruction(
          mach->LoopMask = mach->LoopStack[--mach->LoopStackTop];
          UPDATE_EXEC_MASK(mach);
       }
+      break;
+
+   case TGSI_OPCODE_BRK:
+      /* turn off loop channels for each enabled exec channel */
+      mach->LoopMask &= ~mach->ExecMask;
+      /* Todo: if mach->LoopMask == 0, jump to end of loop */
+      UPDATE_EXEC_MASK(mach);
+      break;
+
+   case TGSI_OPCODE_CONT:
+      assert (0);
+      break;
+
+
+   case TGSI_OPCODE_BGNSUB:
+      /* no-op */
       break;
 
    case TGSI_OPCODE_ENDSUB:
