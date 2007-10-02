@@ -1247,7 +1247,8 @@ _mesa_UpdateTexEnvProgram( GLcontext *ctx )
 
    /* If a conventional fragment program/shader isn't in effect... */
    if (!ctx->FragmentProgram._Enabled &&
-       !ctx->Shader.CurrentProgram) {
+       (!ctx->Shader.CurrentProgram ||
+        !ctx->Shader.CurrentProgram->FragmentProgram) ) {
       make_state_key(ctx, &key);
       hash = hash_key(&key);
       
