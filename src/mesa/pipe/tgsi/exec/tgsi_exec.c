@@ -1980,6 +1980,16 @@ exec_instruction(
    case TGSI_OPCODE_CAL:
       /* skip the call if no execution channels are enabled */
       if (mach->ExecMask) {
+         /* do the call */
+
+         /* push Cond, Loop, Cont stacks */
+         assert(mach->CondStackTop < TGSI_EXEC_MAX_COND_NESTING);
+         mach->CondStack[mach->CondStackTop++] = mach->CondMask;
+         assert(mach->LoopStackTop < TGSI_EXEC_MAX_LOOP_NESTING);
+         mach->LoopStack[mach->LoopStackTop++] = mach->LoopMask;
+         assert(mach->ContStackTop < TGSI_EXEC_MAX_LOOP_NESTING);
+         mach->ContStack[mach->ContStackTop++] = mach->ContMask;
+
          /* note that PC was already incremented above */
          mach->CallStack[mach->CallStackTop++] = *pc;
          *pc = inst->InstructionExtLabel.Label;
@@ -1987,6 +1997,15 @@ exec_instruction(
       break;
 
    case TGSI_OPCODE_RET:
+      /* XXX examine ExecMask to determine if we should _really_ return */
+      /* pop Cond, Loop, Cont stacks */
+      assert(mach->CondStackTop > 0);
+      mach->CondMask = mach->CondStack[--mach->CondStackTop];
+      assert(mach->LoopStackTop > 0);
+      mach->LoopMask = mach->LoopStack[--mach->LoopStackTop];
+      assert(mach->ContStackTop > 0);
+      mach->ContMask = mach->ContStack[--mach->ContStackTop];
+
       assert(mach->CallStackTop >= 0);
       if (mach->CallStackTop == 0) {
          /* XXX error? */
