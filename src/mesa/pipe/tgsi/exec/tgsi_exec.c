@@ -66,21 +66,21 @@
 #define CHAN_W  3
 
 
+
 static void
-expand_program(struct tgsi_exec_machine *mach )
+tgsi_exec_prepare( struct tgsi_exec_machine *mach )
 {
+   struct tgsi_exec_labels *labels = &mach->Labels;
+   struct tgsi_parse_context parse;
    struct tgsi_full_instruction *instructions;
    struct tgsi_full_declaration *declarations;
-   struct tgsi_parse_context parse;
-   uint k;
    uint maxInstructions = 10, numInstructions = 0;
    uint maxDeclarations = 10, numDeclarations = 0;
+   GLuint k;
+   GLuint instno = 0;
 
-   k = tgsi_parse_init( &parse, mach->Tokens );
-   if (k != TGSI_PARSE_OK) {
-      printf("Problem parsing!\n");
-      return;
-   }
+   mach->ImmLimit = 0;
+   labels->count = 0;
 
    declarations = (struct tgsi_full_declaration *)
       malloc(maxDeclarations * sizeof(struct tgsi_full_declaration));
@@ -88,13 +88,20 @@ expand_program(struct tgsi_exec_machine *mach )
    instructions = (struct tgsi_full_instruction *)
       malloc(maxInstructions * sizeof(struct tgsi_full_instruction));
 
+   k = tgsi_parse_init( &parse, mach->Tokens );
+   if (k != TGSI_PARSE_OK) {
+      fprintf(stderr, "Problem parsing!\n");
+      return;
+   }
+
    while( !tgsi_parse_end_of_tokens( &parse ) ) {
+      GLuint pointer = parse.Position;
+      GLuint i;
+
       tgsi_parse_token( &parse );
       switch( parse.FullToken.Token.Type ) {
       case TGSI_TOKEN_TYPE_DECLARATION:
-         /*
-         exec_declaration( mach, &parse.FullToken.FullDeclaration );
-         */
+         /* save expanded declaration */
          if (numDeclarations == maxDeclarations) {
             maxDeclarations += 10;
             declarations = realloc(declarations,
@@ -106,9 +113,25 @@ expand_program(struct tgsi_exec_machine *mach )
                 sizeof(declarations[0]));
          numDeclarations++;
          break;
+
       case TGSI_TOKEN_TYPE_IMMEDIATE:
+         assert( (parse.FullToken.FullImmediate.Immediate.Size - 1) % 4 == 0 );
+         assert( mach->ImmLimit + (parse.FullToken.FullImmediate.Immediate.Size - 1) / 4 <= 256 );
+
+         for( i = 0; i < parse.FullToken.FullImmediate.Immediate.Size - 1; i++ ) {
+            mach->Imms[mach->ImmLimit + i / 4][i % 4] = parse.FullToken.FullImmediate.u.ImmediateFloat32[i].Float;
+         }
+         mach->ImmLimit += (parse.FullToken.FullImmediate.Immediate.Size - 1) / 4;
          break;
+
       case TGSI_TOKEN_TYPE_INSTRUCTION:
+         assert( labels->count < 128 );
+
+         labels->labels[labels->count][0] = instno;
+         labels->labels[labels->count][1] = pointer;
+         labels->count++;
+
+         /* save expanded instruction */
          if (numInstructions == maxInstructions) {
             maxInstructions += 10;
             instructions = realloc(instructions,
@@ -120,17 +143,24 @@ expand_program(struct tgsi_exec_machine *mach )
                 sizeof(instructions[0]));
          numInstructions++;
          break;
+
       default:
          assert( 0 );
       }
    }
    tgsi_parse_free (&parse);
 
-   assert(!mach->Instructions);
-   mach->Instructions = instructions;
-   mach->NumInstructions = numInstructions;
+   if (mach->Declarations) {
+      free(mach->Declarations);
+   }
    mach->Declarations = declarations;
    mach->NumDeclarations = numDeclarations;
+
+   if (mach->Instructions) {
+      free(mach->Instructions);
+   }
+   mach->Instructions = instructions;
+   mach->NumInstructions = numInstructions;
 }
 
 
@@ -177,77 +207,7 @@ tgsi_exec_machine_init(
       mach->Temps[TEMP_M128_I].xyzw[TEMP_M128_C].f[i] = -128.0f;
    }
 
-   if (mach->Declarations) {
-      free(mach->Declarations);
-      mach->Declarations = NULL;
-      mach->NumDeclarations = 0;
-   }
-   if (mach->Instructions) {
-      free(mach->Instructions);
-      mach->Instructions = NULL;
-      mach->NumInstructions = 0;
-   }
-
-   mach->CondMask = 0xf;
-   mach->LoopMask = 0xf;
-   mach->ExecMask = 0xf;
-
-#if 01
    tgsi_exec_prepare( mach );
-   expand_program(mach);
-#endif
-}
-
-void
-tgsi_exec_prepare(
-                  struct tgsi_exec_machine *mach )
-{
-   struct tgsi_exec_labels *labels = &mach->Labels;
-   struct tgsi_parse_context parse;
-   GLuint k;
-   GLuint instno = 0;
-
-   mach->ImmLimit = 0;
-   labels->count = 0;
-
-   k = tgsi_parse_init( &parse, mach->Tokens );
-   if (k != TGSI_PARSE_OK) {
-      printf("Problem parsing!\n");
-      return;
-   }
-
-   while( !tgsi_parse_end_of_tokens( &parse ) ) {
-      GLuint pointer = parse.Position;
-      GLuint i;
-
-      tgsi_parse_token( &parse );
-      switch( parse.FullToken.Token.Type ) {
-      case TGSI_TOKEN_TYPE_DECLARATION:
-         break;
-
-      case TGSI_TOKEN_TYPE_IMMEDIATE:
-         assert( (parse.FullToken.FullImmediate.Immediate.Size - 1) % 4 == 0 );
-         assert( mach->ImmLimit + (parse.FullToken.FullImmediate.Immediate.Size - 1) / 4 <= 256 );
-
-         for( i = 0; i < parse.FullToken.FullImmediate.Immediate.Size - 1; i++ ) {
-            mach->Imms[mach->ImmLimit + i / 4][i % 4] = parse.FullToken.FullImmediate.u.ImmediateFloat32[i].Float;
-         }
-         mach->ImmLimit += (parse.FullToken.FullImmediate.Immediate.Size - 1) / 4;
-         break;
-
-      case TGSI_TOKEN_TYPE_INSTRUCTION:
-         assert( labels->count < 128 );
-
-         labels->labels[labels->count][0] = instno;
-         labels->labels[labels->count][1] = pointer;
-         labels->count++;
-         break;
-
-      default:
-         assert( 0 );
-      }
-   }
-   tgsi_parse_free (&parse);
 }
 
 
@@ -2257,6 +2217,10 @@ tgsi_exec_machine_run( struct tgsi_exec_machine *mach )
 #if XXX_SSE
    mach->Temps[TEMP_KILMASK_I].xyzw[TEMP_KILMASK_C].u[0] = 0;
 #else
+
+   mach->CondMask = 0xf;
+   mach->LoopMask = 0xf;
+   mach->ExecMask = 0xf;
 
    mach->Temps[TEMP_KILMASK_I].xyzw[TEMP_KILMASK_C].u[0] = 0;
    mach->Temps[TEMP_OUTPUT_I].xyzw[TEMP_OUTPUT_C].u[0] = 0;

@@ -167,10 +167,6 @@ tgsi_exec_machine_init(
    struct tgsi_sampler *samplers);
 
 void
-tgsi_exec_prepare(
-   struct tgsi_exec_machine *mach );
-
-void
 tgsi_exec_machine_run(
    struct tgsi_exec_machine *mach );
 
