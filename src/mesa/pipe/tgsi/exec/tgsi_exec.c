@@ -855,6 +855,14 @@ fetch_src_file_channel(
          chan->u[3] = mach->Addrs[index->i[3]].xyzw[swizzle].u[3];
          break;
 
+      case TGSI_FILE_OUTPUT:
+         /* vertex varying/output vars can be read too */
+         chan->u[0] = mach->Outputs[index->i[0]].xyzw[swizzle].u[0];
+         chan->u[1] = mach->Outputs[index->i[1]].xyzw[swizzle].u[1];
+         chan->u[2] = mach->Outputs[index->i[2]].xyzw[swizzle].u[2];
+         chan->u[3] = mach->Outputs[index->i[3]].xyzw[swizzle].u[3];
+         break;
+
       default:
          assert( 0 );
       }
