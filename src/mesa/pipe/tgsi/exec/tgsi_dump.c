@@ -270,7 +270,7 @@ static const char *TGSI_OPCODES[] =
    "OPCODE_COS",
    "OPCODE_DDX",
    "OPCODE_DDY",
-   "OPCODE_KIL",
+   "OPCODE_KILP",
    "OPCODE_PK2H",
    "OPCODE_PK2US",
    "OPCODE_PK4B",
@@ -364,6 +364,7 @@ static const char *TGSI_OPCODES[] =
    "OPCODE_IFC",
    "OPCODE_BREAKC",
    "OPCODE_TXP",
+   "OPCODE_KIL",
    "OPCODE_END"
 };
 
@@ -408,7 +409,7 @@ static const char *TGSI_OPCODES_SHORT[] =
    "COS",
    "DDX",
    "DDY",
-   "KIL",
+   "KILP",
    "PK2H",
    "PK2US",
    "PK4B",
@@ -502,6 +503,7 @@ static const char *TGSI_OPCODES_SHORT[] =
    "IFC",
    "BREAKC",
    "TXP",
+   "KIL",
    "END"
 };
 

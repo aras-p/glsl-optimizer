@@ -236,7 +236,7 @@ struct tgsi_immediate_float32
 #define TGSI_OPCODE_EX2                 TGSI_OPCODE_EXPBASE2
 #define TGSI_OPCODE_FLR                 TGSI_OPCODE_FLOOR
 #define TGSI_OPCODE_FRC                 TGSI_OPCODE_FRAC
-#define TGSI_OPCODE_KIL                 39
+#define TGSI_OPCODE_KILP                39  /* predicated kill */
 #define TGSI_OPCODE_LG2                 TGSI_OPCODE_LOGBASE2
 /* TGSI_OPCODE_LIT */
 #define TGSI_OPCODE_LRP                 TGSI_OPCODE_LERP
@@ -1100,9 +1100,10 @@ struct tgsi_immediate_float32
 /* TGSI_OPCODE_MOVA */
 /* TGSI_OPCODE_LOGP */
 
-#define TGSI_OPCODE_END                 133   /* aka HALT */
+#define TGSI_OPCODE_KIL                 133  /* unpredicated kill */
+#define TGSI_OPCODE_END                 134  /* aka HALT */
 
-#define TGSI_OPCODE_LAST                134
+#define TGSI_OPCODE_LAST                135
 
 #define TGSI_SAT_NONE            0  /* do not saturate */
 #define TGSI_SAT_ZERO_ONE        1  /* clamp to [0,1] */

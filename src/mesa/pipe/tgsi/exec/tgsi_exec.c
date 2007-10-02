@@ -1129,8 +1129,12 @@ store_dest(
     store_dest (mach, VAL, &inst->FullDstRegisters[INDEX], inst, CHAN )
 
 
+/**
+ * Execute ARB-style KIL which is predicated by a src register.
+ * Kill fragment if any of the four values is less than zero.
+ */
 static void
-exec_kil (struct tgsi_exec_machine *mach,
+exec_kilp(struct tgsi_exec_machine *mach,
           const struct tgsi_full_instruction *inst)
 {
     GLuint uniquemask;
@@ -1167,6 +1171,14 @@ exec_kil (struct tgsi_exec_machine *mach,
     mach->Temps[TEMP_KILMASK_I].xyzw[TEMP_KILMASK_C].u[0] |= kilmask;
 }
 
+
+static void
+exec_kil(struct tgsi_exec_machine *mach,
+         const struct tgsi_full_instruction *inst)
+{
+   /* for enabled ExecMask bits, set the killed bit */
+   mach->Temps[TEMP_KILMASK_I].xyzw[TEMP_KILMASK_C].u[0] |= mach->ExecMask;
+}
 
 
 
@@ -1781,6 +1793,10 @@ exec_instruction(
          STORE( &r[0], 0, chan_index );
       }
       break;
+
+   case TGSI_OPCODE_KILP:
+       exec_kilp (mach, inst);
+       break;
 
    case TGSI_OPCODE_KIL:
        exec_kil (mach, inst);

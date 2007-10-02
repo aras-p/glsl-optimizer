@@ -336,6 +336,12 @@ compile_instruction(
       fullinst->Instruction.Opcode = TGSI_OPCODE_INT;
       break;
    case OPCODE_KIL:
+      /* predicated w/ a register */
+      fullinst->Instruction.Opcode = TGSI_OPCODE_KILP;
+      break;
+   case OPCODE_KIL_NV:
+      /* unpredicated */
+      assert(inst->DstReg.CondMask == COND_TR);
       fullinst->Instruction.Opcode = TGSI_OPCODE_KIL;
       break;
    case OPCODE_LG2:
