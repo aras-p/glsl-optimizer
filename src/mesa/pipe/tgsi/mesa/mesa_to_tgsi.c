@@ -154,7 +154,7 @@ convert_writemask(
    return writemask;
 }
 
-static GLboolean
+static void
 compile_instruction(
    const struct prog_instruction *inst,
    struct tgsi_full_instruction *fullinst,
@@ -460,12 +460,11 @@ compile_instruction(
       fulldst->DstRegister.WriteMask &= TGSI_WRITEMASK_XYZ;
       break;
    case OPCODE_END:
-      return GL_TRUE;
+      fullinst->Instruction.Opcode = TGSI_OPCODE_END;
+      break;
    default:
       assert( 0 );
    }
-
-   return GL_FALSE;
 }
 
 static struct tgsi_full_declaration
@@ -658,20 +657,13 @@ tgsi_mesa_compile_fp_program(
 #endif
 
    for( i = 0; i < program->Base.NumInstructions; i++ ) {
-      if( compile_instruction(
+      compile_instruction(
             &program->Base.Instructions[i],
             &fullinst,
             inputMapping,
             outputMapping,
             preamble_size,
-            TGSI_PROCESSOR_FRAGMENT ) ) {
-         assert( i == program->Base.NumInstructions - 1 );
-
-         if( TGSI_DEBUG ) {
-            tgsi_dump( tokens, 0 );
-         }
-         break;
-      }
+            TGSI_PROCESSOR_FRAGMENT );
 
       ti += tgsi_build_full_instruction(
          &fullinst,
@@ -741,20 +733,13 @@ tgsi_mesa_compile_vp_program(
 
 
    for( i = 0; i < program->Base.NumInstructions; i++ ) {
-      if( compile_instruction(
+      compile_instruction(
             &program->Base.Instructions[i],
             &fullinst,
             inputMapping,
             outputMapping,
             0,
-            TGSI_PROCESSOR_VERTEX ) ) {
-         assert( i == program->Base.NumInstructions - 1 );
-
-	 if( TGSI_DEBUG ) {
-            tgsi_dump( tokens, 0 );
-         }
-         break;
-      }
+            TGSI_PROCESSOR_VERTEX );
 
       ti += tgsi_build_full_instruction(
          &fullinst,

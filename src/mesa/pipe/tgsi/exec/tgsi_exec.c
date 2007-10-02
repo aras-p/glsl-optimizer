@@ -2029,6 +2029,11 @@ exec_instruction(
       }
       break;
 
+   case TGSI_OPCODE_END:
+      /* halt execution */
+      *pc = -1;
+      break;
+
    case TGSI_OPCODE_ENDIF:
       /* pop CondMask */
       assert(mach->CondStackTop > 0);
@@ -2233,15 +2238,14 @@ tgsi_exec_machine_run( struct tgsi_exec_machine *mach )
 
    {
       uint i;
-      int pc;
+      int pc = 0;
 
       for (i = 0; i < mach->NumDeclarations; i++) {
          exec_declaration( mach, mach->Declarations+i );
       }
 
-      pc = 0;
-
-      while (pc != 99 && pc < mach->NumInstructions) {
+      while (pc != -1) {
+         assert(pc < mach->NumInstructions);
          exec_instruction( mach, mach->Instructions + pc, &pc );
       }
    }

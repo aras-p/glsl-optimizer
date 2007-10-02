@@ -363,7 +363,8 @@ static const char *TGSI_OPCODES[] =
    "OPCODE_CALLNZ",
    "OPCODE_IFC",
    "OPCODE_BREAKC",
-   "OPCODE_TXP"
+   "OPCODE_TXP",
+   "OPCODE_END"
 };
 
 static const char *TGSI_OPCODES_SHORT[] =
@@ -500,6 +501,8 @@ static const char *TGSI_OPCODES_SHORT[] =
    "CALLNZ",
    "IFC",
    "BREAKC",
+   "TXP",
+   "END"
 };
 
 static const char *TGSI_SATS[] =

@@ -486,6 +486,10 @@ i915_translate_instruction(struct i915_fp_compile *p,
                       swizzle(src1, ONE, Y, ONE, W), 0);
       break;
 
+   case TGSI_OPCODE_END:
+      /* no-op */
+      break;
+
    case TGSI_OPCODE_EX2:
       src0 = src_vector(p, &inst->FullSrcRegisters[0]);
 

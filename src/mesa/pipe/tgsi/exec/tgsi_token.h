@@ -1100,7 +1100,9 @@ struct tgsi_immediate_float32
 /* TGSI_OPCODE_MOVA */
 /* TGSI_OPCODE_LOGP */
 
-#define TGSI_OPCODE_LAST                133
+#define TGSI_OPCODE_END                 133   /* aka HALT */
+
+#define TGSI_OPCODE_LAST                134
 
 #define TGSI_SAT_NONE            0  /* do not saturate */
 #define TGSI_SAT_ZERO_ONE        1  /* clamp to [0,1] */
