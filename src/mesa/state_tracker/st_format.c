@@ -123,6 +123,8 @@ st_mesa_format_to_pipe_format(GLuint mesaFormat)
       return PIPE_FORMAT_U_L8;
    case MESA_FORMAT_I8:
       return PIPE_FORMAT_U_I8;
+   case MESA_FORMAT_Z16:
+      return PIPE_FORMAT_U_Z16;
    default:
       assert(0);
       return 0;
