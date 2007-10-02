@@ -172,6 +172,8 @@ find_translated_vp(struct st_context *st,
 
       stfp->num_input_slots = numIn;
 
+      assert(stfp->Base.Base.NumInstructions > 1);
+
       (void) st_translate_fragment_program(st, stfp,
                                            stfp->input_to_slot,
                                            stfp->tokens,
@@ -235,6 +237,7 @@ find_translated_vp(struct st_context *st,
          }
       }
 
+      assert(stvp->Base.Base.NumInstructions > 1);
 
       xvp->vs = st_translate_vertex_program(st, stvp,
                                             xvp->output_to_slot,
