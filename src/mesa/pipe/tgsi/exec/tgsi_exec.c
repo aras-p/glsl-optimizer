@@ -57,7 +57,7 @@
 
 /** The execution mask depends on the conditional mask and the loop mask */
 #define UPDATE_EXEC_MASK(MACH) \
-      MACH->ExecMask = MACH->CondMask & MACH->LoopMask
+      MACH->ExecMask = MACH->CondMask & MACH->LoopMask & MACH->ContMask
 
 
 #define CHAN_X  0
@@ -2178,14 +2178,19 @@ exec_instruction(
    case TGSI_OPCODE_LOOP:
       /* fall-through (for now) */
    case TGSI_OPCODE_BGNLOOP2:
-      /* push LoopMask */
+      /* push LoopMask and ContMasks */
       assert(mach->LoopStackTop < TGSI_EXEC_MAX_LOOP_NESTING);
       mach->LoopStack[mach->LoopStackTop++] = mach->LoopMask;
+      assert(mach->ContStackTop < TGSI_EXEC_MAX_LOOP_NESTING);
+      mach->ContStack[mach->ContStackTop++] = mach->ContMask;
       break;
 
    case TGSI_OPCODE_ENDLOOP:
       /* fall-through (for now at least) */
    case TGSI_OPCODE_ENDLOOP2:
+      /* Restore ContMask, but don't pop */
+      assert(mach->ContStackTop > 0);
+      mach->ContMask = mach->ContStack[mach->ContStackTop - 1];
       if (mach->LoopMask) {
          /* repeat loop: jump to instruction just past BGNLOOP */
          *pc = inst->InstructionExtLabel.Label + 1;
@@ -2194,8 +2199,11 @@ exec_instruction(
          /* exit loop: pop LoopMask */
          assert(mach->LoopStackTop > 0);
          mach->LoopMask = mach->LoopStack[--mach->LoopStackTop];
-         UPDATE_EXEC_MASK(mach);
+         /* pop ContMask */
+         assert(mach->ContStackTop > 0);
+         mach->ContMask = mach->ContStack[--mach->ContStackTop];
       }
+      UPDATE_EXEC_MASK(mach);
       break;
 
    case TGSI_OPCODE_BRK:
@@ -2206,16 +2214,18 @@ exec_instruction(
       break;
 
    case TGSI_OPCODE_CONT:
-      assert (0);
+      /* turn off cont channels for each enabled exec channel */
+      mach->ContMask &= ~mach->ExecMask;
+      /* Todo: if mach->LoopMask == 0, jump to end of loop */
+      UPDATE_EXEC_MASK(mach);
       break;
-
 
    case TGSI_OPCODE_BGNSUB:
       /* no-op */
       break;
 
    case TGSI_OPCODE_ENDSUB:
-      assert( 0 );
+      /* no-op */
       break;
 
    case TGSI_OPCODE_NOISE1:
@@ -2255,9 +2265,12 @@ tgsi_exec_machine_run( struct tgsi_exec_machine *mach )
 
    mach->CondMask = 0xf;
    mach->LoopMask = 0xf;
+   mach->ContMask = 0xf;
    mach->ExecMask = 0xf;
+
    assert(mach->CondStackTop == 0);
    assert(mach->LoopStackTop == 0);
+   assert(mach->ContStackTop == 0);
    assert(mach->CallStackTop == 0);
 
    mach->Temps[TEMP_KILMASK_I].xyzw[TEMP_KILMASK_C].u[0] = 0;

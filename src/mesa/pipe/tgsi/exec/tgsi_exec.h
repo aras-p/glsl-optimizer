@@ -138,8 +138,9 @@ struct tgsi_exec_machine
    const struct tgsi_interp_coef *InterpCoefs;
 
    /* Conditional execution masks */
-   uint CondMask;
-   uint LoopMask;
+   uint CondMask;  /**< For IF/ELSE/ENDIF */
+   uint LoopMask;  /**< For BGNLOOP/ENDLOOP */
+   uint ContMask;  /**< For loop CONT statements */
    uint ExecMask;  /**< = CondMask & LoopMask */
 
    /** Condition mask stack (for nested conditionals) */
@@ -149,6 +150,10 @@ struct tgsi_exec_machine
    /** Loop mask stack (for nested loops) */
    uint LoopStack[TGSI_EXEC_MAX_LOOP_NESTING];
    int LoopStackTop;
+
+   /** Loop continue mask stack (see comments in tgsi_exec.c) */
+   uint ContStack[TGSI_EXEC_MAX_LOOP_NESTING];
+   int ContStackTop;
 
    uint CallStack[TGSI_EXEC_MAX_CALL_NESTING];
    int CallStackTop;
