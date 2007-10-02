@@ -98,18 +98,6 @@ run_vertex_program(struct draw_context *draw,
    assert(draw->vertex_shader->state->output_semantic_name[0]
           == TGSI_SEMANTIC_POSITION);
 
-#ifdef DEBUG_foo
-   memset( machine, 0, sizeof( *machine ) );
-#endif
-
-#if 0
-   /* init machine state */
-   tgsi_exec_machine_init(machine,
-                          draw->vertex_shader->state->tokens,
-                          PIPE_MAX_SAMPLERS,
-                          NULL /*samplers*/ );
-#endif
-
    /* Consts does not require 16 byte alignment. */
    machine->Consts = (float (*)[4]) draw->mapped_constants;
 
@@ -240,7 +228,7 @@ void draw_bind_vertex_shader(struct draw_context *draw,
    draw_flush(draw);
    draw->vertex_shader = (struct draw_vertex_shader*)(vcso);
 
-   /* init machine state */
+   /* specify the fragment program to interpret/execute */
    tgsi_exec_machine_init(&draw->machine,
                           draw->vertex_shader->state->tokens,
                           PIPE_MAX_SAMPLERS,
