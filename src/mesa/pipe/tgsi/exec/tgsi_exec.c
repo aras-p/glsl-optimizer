@@ -1911,9 +1911,12 @@ exec_instruction(
       break;
 
    case TGSI_OPCODE_CAL:
-      /* note that PC was already incremented above */
-      mach->CallStack[mach->CallStackTop++] = *pc;
-      *pc = inst->InstructionExtLabel.Label;
+      /* skip the call if no execution channels are enabled */
+      if (mach->ExecMask) {
+         /* note that PC was already incremented above */
+         mach->CallStack[mach->CallStackTop++] = *pc;
+         *pc = inst->InstructionExtLabel.Label;
+      }
       break;
 
    case TGSI_OPCODE_RET:
