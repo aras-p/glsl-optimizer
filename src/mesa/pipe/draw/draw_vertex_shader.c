@@ -86,7 +86,7 @@ run_vertex_program(struct draw_context *draw,
                    unsigned elts[4], unsigned count,
                    struct vertex_header *vOut[])
 {
-   struct tgsi_exec_machine machine;
+   struct tgsi_exec_machine *machine = &draw->machine;
    unsigned int j;
 
    ALIGN16_DECL(struct tgsi_exec_vector, inputs, PIPE_ATTRIB_MAX);
@@ -98,35 +98,39 @@ run_vertex_program(struct draw_context *draw,
    assert(draw->vertex_shader->state->output_semantic_name[0]
           == TGSI_SEMANTIC_POSITION);
 
-#ifdef DEBUG
-   memset( &machine, 0, sizeof( machine ) );
+#ifdef DEBUG_foo
+   memset( machine, 0, sizeof( *machine ) );
 #endif
 
+#if 0
    /* init machine state */
-   tgsi_exec_machine_init(&machine,
+   tgsi_exec_machine_init(machine,
                           draw->vertex_shader->state->tokens,
                           PIPE_MAX_SAMPLERS,
                           NULL /*samplers*/ );
+#endif
 
    /* Consts does not require 16 byte alignment. */
-   machine.Consts = (float (*)[4]) draw->mapped_constants;
+   machine->Consts = (float (*)[4]) draw->mapped_constants;
 
-   machine.Inputs = ALIGN16_ASSIGN(inputs);
-   machine.Outputs = ALIGN16_ASSIGN(outputs);
+   machine->Inputs = ALIGN16_ASSIGN(inputs);
+   machine->Outputs = ALIGN16_ASSIGN(outputs);
 
-   draw_vertex_fetch( draw, &machine, elts, count );
+   draw_vertex_fetch( draw, machine, elts, count );
 
    /* run shader */
    if( draw->vertex_shader->state->executable != NULL ) {
+      /* SSE */
       codegen_function func = (codegen_function) draw->vertex_shader->state->executable;
       func(
-         machine.Inputs,
-         machine.Outputs,
-         machine.Consts,
-         machine.Temps );
+         machine->Inputs,
+         machine->Outputs,
+         machine->Consts,
+         machine->Temps );
    }
    else {
-      tgsi_exec_machine_run( &machine );
+      /* interpreter */
+      tgsi_exec_machine_run( machine );
    }
 
 
@@ -136,10 +140,10 @@ run_vertex_program(struct draw_context *draw,
       float x, y, z, w;
 
       /* Handle attr[0] (position) specially: */
-      x = vOut[j]->clip[0] = machine.Outputs[0].xyzw[0].f[j];
-      y = vOut[j]->clip[1] = machine.Outputs[0].xyzw[1].f[j];
-      z = vOut[j]->clip[2] = machine.Outputs[0].xyzw[2].f[j];
-      w = vOut[j]->clip[3] = machine.Outputs[0].xyzw[3].f[j];
+      x = vOut[j]->clip[0] = machine->Outputs[0].xyzw[0].f[j];
+      y = vOut[j]->clip[1] = machine->Outputs[0].xyzw[1].f[j];
+      z = vOut[j]->clip[2] = machine->Outputs[0].xyzw[2].f[j];
+      w = vOut[j]->clip[3] = machine->Outputs[0].xyzw[3].f[j];
 
       vOut[j]->clipmask = compute_clipmask(x, y, z, w) | draw->user_clipmask;
       vOut[j]->edgeflag = 1;
@@ -162,10 +166,10 @@ run_vertex_program(struct draw_context *draw,
        * Subtract two because of the VERTEX_HEADER, CLIP_POS attribs.
        */
       for (slot = 1; slot < draw->vertex_info.num_attribs - 2; slot++) {
-         vOut[j]->data[slot][0] = machine.Outputs[slot].xyzw[0].f[j];
-         vOut[j]->data[slot][1] = machine.Outputs[slot].xyzw[1].f[j];
-         vOut[j]->data[slot][2] = machine.Outputs[slot].xyzw[2].f[j];
-         vOut[j]->data[slot][3] = machine.Outputs[slot].xyzw[3].f[j];
+         vOut[j]->data[slot][0] = machine->Outputs[slot].xyzw[0].f[j];
+         vOut[j]->data[slot][1] = machine->Outputs[slot].xyzw[1].f[j];
+         vOut[j]->data[slot][2] = machine->Outputs[slot].xyzw[2].f[j];
+         vOut[j]->data[slot][3] = machine->Outputs[slot].xyzw[3].f[j];
          /*
          printf("output %d: %f %f %f %f\n", slot,
                 vOut[j]->data[slot][0],
@@ -235,6 +239,12 @@ void draw_bind_vertex_shader(struct draw_context *draw,
 {
    draw_flush(draw);
    draw->vertex_shader = (struct draw_vertex_shader*)(vcso);
+
+   /* init machine state */
+   tgsi_exec_machine_init(&draw->machine,
+                          draw->vertex_shader->state->tokens,
+                          PIPE_MAX_SAMPLERS,
+                          NULL /*samplers*/ );
 }
 
 void draw_delete_vertex_shader(struct draw_context *draw,

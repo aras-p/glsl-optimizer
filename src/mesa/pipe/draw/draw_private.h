@@ -47,6 +47,8 @@
 #include "draw_vertex.h"
 
 #include "x86/rtasm/x86sse.h"
+#include "pipe/tgsi/exec/tgsi_core.h"
+
 
 /**
  * Basic vertex info.
@@ -187,6 +189,8 @@ struct draw_context
    unsigned prim;   /**< current prim type: PIPE_PRIM_x */
    unsigned reduced_prim;
 
+   /** TGSI program interpreter runtime state */
+   struct tgsi_exec_machine machine;
 
    /* Post-tnl vertex cache:
     */

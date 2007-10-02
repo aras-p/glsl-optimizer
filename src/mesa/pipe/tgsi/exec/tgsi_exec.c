@@ -65,6 +65,80 @@
 #define CHAN_Z  2
 #define CHAN_W  3
 
+
+static void
+expand_program(struct tgsi_exec_machine *mach )
+{
+   struct tgsi_full_instruction *instructions;
+   struct tgsi_full_declaration *declarations;
+   struct tgsi_parse_context parse;
+   uint k;
+   uint maxInstructions = 10, numInstructions = 0;
+   uint maxDeclarations = 10, numDeclarations = 0;
+
+   k = tgsi_parse_init( &parse, mach->Tokens );
+   if (k != TGSI_PARSE_OK) {
+      printf("Problem parsing!\n");
+      return;
+   }
+
+   declarations = (struct tgsi_full_declaration *)
+      malloc(maxDeclarations * sizeof(struct tgsi_full_declaration));
+
+   instructions = (struct tgsi_full_instruction *)
+      malloc(maxInstructions * sizeof(struct tgsi_full_instruction));
+
+   while( !tgsi_parse_end_of_tokens( &parse ) ) {
+      tgsi_parse_token( &parse );
+      switch( parse.FullToken.Token.Type ) {
+      case TGSI_TOKEN_TYPE_DECLARATION:
+         /*
+         exec_declaration( mach, &parse.FullToken.FullDeclaration );
+         */
+         if (numDeclarations == maxDeclarations) {
+            maxDeclarations += 10;
+            declarations = realloc(declarations,
+                                   maxDeclarations
+                                   * sizeof(struct tgsi_full_instruction));
+         }
+         memcpy(declarations + numDeclarations,
+                &parse.FullToken.FullInstruction,
+                sizeof(declarations[0]));
+         numDeclarations++;
+         break;
+      case TGSI_TOKEN_TYPE_IMMEDIATE:
+         break;
+      case TGSI_TOKEN_TYPE_INSTRUCTION:
+         if (numInstructions == maxInstructions) {
+            maxInstructions += 10;
+            instructions = realloc(instructions,
+                                   maxInstructions
+                                   * sizeof(struct tgsi_full_instruction));
+         }
+         memcpy(instructions + numInstructions,
+                &parse.FullToken.FullInstruction,
+                sizeof(instructions[0]));
+         numInstructions++;
+         break;
+      default:
+         assert( 0 );
+      }
+   }
+   tgsi_parse_free (&parse);
+
+   assert(!mach->Instructions);
+   mach->Instructions = instructions;
+   mach->NumInstructions = numInstructions;
+   mach->Declarations = declarations;
+   mach->NumDeclarations = numDeclarations;
+}
+
+
+/**
+ * Initialize machine state by expanding tokens to full instructions,
+ * allocating temporary storage, setting up constants, etc.
+ * After this, we can call tgsi_exec_machine_run() many times.
+ */
 void
 tgsi_exec_machine_init(
    struct tgsi_exec_machine *mach,
@@ -103,16 +177,32 @@ tgsi_exec_machine_init(
       mach->Temps[TEMP_M128_I].xyzw[TEMP_M128_C].f[i] = -128.0f;
    }
 
+   if (mach->Declarations) {
+      free(mach->Declarations);
+      mach->Declarations = NULL;
+      mach->NumDeclarations = 0;
+   }
+   if (mach->Instructions) {
+      free(mach->Instructions);
+      mach->Instructions = NULL;
+      mach->NumInstructions = 0;
+   }
+
    mach->CondMask = 0xf;
    mach->LoopMask = 0xf;
    mach->ExecMask = 0xf;
+
+#if 01
+   tgsi_exec_prepare( mach );
+   expand_program(mach);
+#endif
 }
 
 void
 tgsi_exec_prepare(
-   struct tgsi_exec_machine *mach,
-   struct tgsi_exec_labels *labels )
+                  struct tgsi_exec_machine *mach )
 {
+   struct tgsi_exec_labels *labels = &mach->Labels;
    struct tgsi_parse_context parse;
    GLuint k;
    GLuint instno = 0;
@@ -164,10 +254,10 @@ void
 tgsi_exec_machine_run(
    struct tgsi_exec_machine *mach )
 {
-   struct tgsi_exec_labels labels;
-
-   tgsi_exec_prepare( mach, &labels );
-   tgsi_exec_machine_run2( mach, &labels );
+#if 0
+   tgsi_exec_prepare( mach );
+#endif
+   tgsi_exec_machine_run2( mach );
 }
 
 static void
@@ -2170,77 +2260,9 @@ exec_instruction(
 }
 
 
-static void
-expand_program(struct tgsi_exec_machine *mach )
-{
-   struct tgsi_full_instruction *instructions;
-   struct tgsi_full_declaration *declarations;
-   struct tgsi_parse_context parse;
-   uint k;
-   uint maxInstructions = 10, numInstructions = 0;
-   uint maxDeclarations = 10, numDeclarations = 0;
-
-   k = tgsi_parse_init( &parse, mach->Tokens );
-   if (k != TGSI_PARSE_OK) {
-      printf("Problem parsing!\n");
-      return;
-   }
-
-   declarations = (struct tgsi_full_declaration *)
-      malloc(maxDeclarations * sizeof(struct tgsi_full_declaration));
-
-   instructions = (struct tgsi_full_instruction *)
-      malloc(maxInstructions * sizeof(struct tgsi_full_instruction));
-
-   while( !tgsi_parse_end_of_tokens( &parse ) ) {
-      tgsi_parse_token( &parse );
-      switch( parse.FullToken.Token.Type ) {
-      case TGSI_TOKEN_TYPE_DECLARATION:
-         /*
-         exec_declaration( mach, &parse.FullToken.FullDeclaration );
-         */
-         if (numDeclarations == maxDeclarations) {
-            maxDeclarations += 10;
-            declarations = realloc(declarations,
-                                   maxDeclarations
-                                   * sizeof(struct tgsi_full_instruction));
-         }
-         memcpy(declarations + numDeclarations,
-                &parse.FullToken.FullInstruction,
-                sizeof(declarations[0]));
-         numDeclarations++;
-         break;
-      case TGSI_TOKEN_TYPE_IMMEDIATE:
-         break;
-      case TGSI_TOKEN_TYPE_INSTRUCTION:
-         if (numInstructions == maxInstructions) {
-            maxInstructions += 10;
-            instructions = realloc(instructions,
-                                   maxInstructions
-                                   * sizeof(struct tgsi_full_instruction));
-         }
-         memcpy(instructions + numInstructions,
-                &parse.FullToken.FullInstruction,
-                sizeof(instructions[0]));
-         numInstructions++;
-         break;
-      default:
-         assert( 0 );
-      }
-   }
-   tgsi_parse_free (&parse);
-
-   mach->Instructions = instructions;
-   mach->NumInstructions = numInstructions;
-   mach->Declarations = declarations;
-   mach->NumDeclarations = numDeclarations;
-}
-
-
 void
 tgsi_exec_machine_run2(
-   struct tgsi_exec_machine *mach,
-   struct tgsi_exec_labels *labels )
+                       struct tgsi_exec_machine *mach )
 {
 #if 0 && MESA
    GET_CURRENT_CONTEXT(ctx);
@@ -2255,9 +2277,11 @@ tgsi_exec_machine_run2(
    GLuint k;
 #endif
 
+#if 0
    if (!mach->Instructions) {
       expand_program(mach);
    }
+#endif
 
    mach->Temps[TEMP_KILMASK_I].xyzw[TEMP_KILMASK_C].u[0] = 0;
    mach->Temps[TEMP_OUTPUT_I].xyzw[TEMP_OUTPUT_C].u[0] = 0;
@@ -2305,8 +2329,10 @@ tgsi_exec_machine_run2(
          exec_instruction( mach, mach->Instructions + pc, &pc );
       }
 
+#if 0
       free(mach->Declarations);
       free(mach->Instructions);
+#endif
    }
 #endif
 

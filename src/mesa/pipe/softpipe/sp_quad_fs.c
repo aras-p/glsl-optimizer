@@ -45,6 +45,8 @@ struct quad_shade_stage
 {
    struct quad_stage stage;
    struct tgsi_sampler samplers[PIPE_MAX_SAMPLERS];
+   struct tgsi_exec_machine machine;
+   struct tgsi_exec_vector *inputs, *outputs;
 };
 
 
@@ -83,58 +85,41 @@ shade_quad(
    struct softpipe_context *softpipe = qs->softpipe;
    const float fx = (float) quad->x0;
    const float fy = (float) quad->y0;
-   struct tgsi_exec_machine machine;
-
-   ALIGN16_DECL(struct tgsi_exec_vector, inputs, PIPE_ATTRIB_MAX);
-   ALIGN16_DECL(struct tgsi_exec_vector, outputs, PIPE_ATTRIB_MAX);
-
-#ifdef DEBUG
-   memset( &machine, 0, sizeof( machine ) );
-#endif
-
-   /* init machine state */
-   tgsi_exec_machine_init(
-      &machine,
-      softpipe->fs->tokens,
-      PIPE_MAX_SAMPLERS,
-      qss->samplers );
+   struct tgsi_exec_machine *machine = &qss->machine;
 
    /* Consts does not require 16 byte alignment. */
-   machine.Consts = softpipe->mapped_constants[PIPE_SHADER_FRAGMENT];
+   machine->Consts = softpipe->mapped_constants[PIPE_SHADER_FRAGMENT];
 
-   machine.Inputs = ALIGN16_ASSIGN(inputs);
-   machine.Outputs = ALIGN16_ASSIGN(outputs);
+   machine->InterpCoefs = quad->coef;
 
-   machine.InterpCoefs = quad->coef;
+   machine->Inputs[0].xyzw[0].f[0] = fx;
+   machine->Inputs[0].xyzw[0].f[1] = fx + 1.0f;
+   machine->Inputs[0].xyzw[0].f[2] = fx;
+   machine->Inputs[0].xyzw[0].f[3] = fx + 1.0f;
 
-   machine.Inputs[0].xyzw[0].f[0] = fx;
-   machine.Inputs[0].xyzw[0].f[1] = fx + 1.0f;
-   machine.Inputs[0].xyzw[0].f[2] = fx;
-   machine.Inputs[0].xyzw[0].f[3] = fx + 1.0f;
-
-   machine.Inputs[0].xyzw[1].f[0] = fy;
-   machine.Inputs[0].xyzw[1].f[1] = fy;
-   machine.Inputs[0].xyzw[1].f[2] = fy + 1.0f;
-   machine.Inputs[0].xyzw[1].f[3] = fy + 1.0f;
+   machine->Inputs[0].xyzw[1].f[0] = fy;
+   machine->Inputs[0].xyzw[1].f[1] = fy;
+   machine->Inputs[0].xyzw[1].f[2] = fy + 1.0f;
+   machine->Inputs[0].xyzw[1].f[3] = fy + 1.0f;
 
    /* run shader */
    if( softpipe->fs->executable != NULL ) {
       codegen_function func = (codegen_function) softpipe->fs->executable;
       func(
-         machine.Inputs,
-         machine.Outputs,
-         machine.Consts,
-         machine.Temps,
-         machine.InterpCoefs );
+         machine->Inputs,
+         machine->Outputs,
+         machine->Consts,
+         machine->Temps,
+         machine->InterpCoefs );
    }
    else {
-      tgsi_exec_machine_run( &machine );
+      tgsi_exec_machine_run( machine );
    }
 
    /* store result color (always in output[1]) */
    memcpy(
       quad->outputs.color,
-      &machine.Outputs[1].xyzw[0].f[0],
+      &machine->Outputs[1].xyzw[0].f[0],
       sizeof( quad->outputs.color ) );
 
 #if 0
@@ -142,14 +127,14 @@ shade_quad(
       /* XXX temporary */
       memcpy(
          quad->outputs.depth,
-         &machine.Outputs[0].xyzw[2],
+         machine->Outputs[0].xyzw[2],
          sizeof( quad->outputs.depth ) );
    }
 #else
    {
       uint i;
       for (i = 0; i < 4; i++) {
-         quad->outputs.depth[i] = machine.Inputs[0].xyzw[2].f[i];
+         quad->outputs.depth[i] = machine->Inputs[0].xyzw[2].f[i];
 #if 0
          printf("output z %f\n",  quad->outputs.depth[i]);
 #endif
@@ -188,6 +173,12 @@ static void shade_begin(struct quad_stage *qs)
       }
    }
 
+   /* XXX only do this if the fragment shader changes... */
+   tgsi_exec_machine_init(&qss->machine,
+                          softpipe->fs->tokens,
+                          PIPE_MAX_SAMPLERS,
+                          qss->samplers );
+
    if (qs->next)
       qs->next->begin(qs->next);
 }
@@ -195,11 +186,17 @@ static void shade_begin(struct quad_stage *qs)
 
 struct quad_stage *sp_quad_shade_stage( struct softpipe_context *softpipe )
 {
-   struct quad_shade_stage *stage = CALLOC_STRUCT(quad_shade_stage);
+   struct quad_shade_stage *qss = CALLOC_STRUCT(quad_shade_stage);
 
-   stage->stage.softpipe = softpipe;
-   stage->stage.begin = shade_begin;
-   stage->stage.run = shade_quad;
+   /* allocate storage for program inputs/outputs, aligned to 16 bytes */
+   qss->inputs = malloc(PIPE_ATTRIB_MAX * sizeof(*qss->inputs) + 16);
+   qss->outputs = malloc(PIPE_ATTRIB_MAX * sizeof(*qss->outputs) + 16);
+   qss->machine.Inputs = align16(qss->inputs);
+   qss->machine.Outputs = align16(qss->outputs);
 
-   return &stage->stage;
+   qss->stage.softpipe = softpipe;
+   qss->stage.begin = shade_begin;
+   qss->stage.run = shade_quad;
+
+   return &qss->stage;
 }

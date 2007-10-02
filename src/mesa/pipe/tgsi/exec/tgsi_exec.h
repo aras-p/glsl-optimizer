@@ -154,6 +154,8 @@ struct tgsi_exec_machine
 
    struct tgsi_full_declaration *Declarations;
    uint NumDeclarations;
+
+   struct tgsi_exec_labels Labels;
 };
 
 
@@ -166,8 +168,7 @@ tgsi_exec_machine_init(
 
 void
 tgsi_exec_prepare(
-   struct tgsi_exec_machine *mach,
-   struct tgsi_exec_labels *labels );
+   struct tgsi_exec_machine *mach );
 
 void
 tgsi_exec_machine_run(
@@ -175,8 +176,7 @@ tgsi_exec_machine_run(
 
 void
 tgsi_exec_machine_run2(
-   struct tgsi_exec_machine *mach,
-   struct tgsi_exec_labels *labels );
+   struct tgsi_exec_machine *mach );
 
 #if defined __cplusplus
 } // extern "C"
