@@ -148,6 +148,12 @@ struct tgsi_exec_machine
    /** Loop mask stack (for nested loops) */
    uint LoopStack[TGSI_EXEC_MAX_LOOP_NESTING];
    int LoopStackTop;
+
+   struct tgsi_full_instruction *Instructions;
+   uint NumInstructions;
+
+   struct tgsi_full_declaration *Declarations;
+   uint NumDeclarations;
 };
 
 

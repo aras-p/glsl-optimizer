@@ -260,6 +260,7 @@ compile_instruction(
       break;
    case OPCODE_BGNLOOP:
       fullinst->Instruction.Opcode = TGSI_OPCODE_BGNLOOP2;
+      fullinst->InstructionExtLabel.Label = inst->BranchTarget + preamble_size;
       break;
    case OPCODE_BGNSUB:
       fullinst->Instruction.Opcode = TGSI_OPCODE_BGNSUB;
@@ -306,6 +307,7 @@ compile_instruction(
       break;
    case OPCODE_ENDLOOP:
       fullinst->Instruction.Opcode = TGSI_OPCODE_ENDLOOP2;
+      fullinst->InstructionExtLabel.Label = inst->BranchTarget + preamble_size;
       break;
    case OPCODE_ENDSUB:
       fullinst->Instruction.Opcode = TGSI_OPCODE_ENDSUB;

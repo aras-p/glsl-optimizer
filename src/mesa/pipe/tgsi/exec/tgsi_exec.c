@@ -1213,11 +1213,12 @@ static void
 exec_instruction(
    struct tgsi_exec_machine *mach,
    const struct tgsi_full_instruction *inst,
-   struct tgsi_exec_labels *labels,
-   GLuint *programCounter )
+   int *pc )
 {
    GLuint chan_index;
    union tgsi_exec_channel r[8];
+
+   (*pc)++;
 
    switch (inst->Instruction.Opcode) {
    case TGSI_OPCODE_ARL:
@@ -1690,7 +1691,12 @@ exec_instruction(
       break;
 
    case TGSI_OPCODE_SEQ:
-      assert (0);
+      FOR_EACH_ENABLED_CHANNEL( *inst, chan_index ) {
+         FETCH( &r[0], 0, chan_index );
+         FETCH( &r[1], 1, chan_index );
+         micro_eq( &r[0], &r[0], &r[1], &mach->Temps[TEMP_0_I].xyzw[TEMP_0_C], &mach->Temps[TEMP_1_I].xyzw[TEMP_1_C] );
+         STORE( &r[0], 0, chan_index );
+      }
       break;
 
    case TGSI_OPCODE_SFL:
@@ -1934,6 +1940,7 @@ exec_instruction(
    case TGSI_OPCODE_BRK:
       /* turn off loop channels for each enabled exec channel */
       mach->LoopMask &= ~mach->ExecMask;
+      /* Todo: if mach->LoopMask == 0, jump to end of loop */
       UPDATE_EXEC_MASK(mach);
       break;
 
@@ -1956,6 +1963,7 @@ exec_instruction(
          mach->CondMask &= ~0x8;
       }
       UPDATE_EXEC_MASK(mach);
+      /* Todo: If CondMask==0, jump to ELSE */
       break;
 
    case TGSI_OPCODE_LOOP:
@@ -1976,6 +1984,7 @@ exec_instruction(
          prevMask = mach->CondStack[mach->CondStackTop - 1];
          mach->CondMask = ~mach->CondMask & prevMask;
          UPDATE_EXEC_MASK(mach);
+         /* Todo: If CondMask==0, jump to ENDIF */
       }
       break;
 
@@ -2120,10 +2129,16 @@ exec_instruction(
       break;
 
    case TGSI_OPCODE_ENDLOOP2:
-      /* pop LoopMask */
-      assert(mach->LoopStackTop > 0);
-      mach->LoopMask = mach->LoopStack[--mach->LoopStackTop];
-      UPDATE_EXEC_MASK(mach);
+      if (mach->LoopMask) {
+         /* repeat loop: jump to instruction just past BGNLOOP */
+         *pc = inst->InstructionExtLabel.Label + 1;
+      }
+      else {
+         /* exit loop: pop LoopMask */
+         assert(mach->LoopStackTop > 0);
+         mach->LoopMask = mach->LoopStack[--mach->LoopStackTop];
+         UPDATE_EXEC_MASK(mach);
+      }
       break;
 
    case TGSI_OPCODE_ENDSUB:
@@ -2154,12 +2169,80 @@ exec_instruction(
    }
 }
 
+
+static void
+expand_program(struct tgsi_exec_machine *mach )
+{
+   struct tgsi_full_instruction *instructions;
+   struct tgsi_full_declaration *declarations;
+   struct tgsi_parse_context parse;
+   uint k;
+   uint maxInstructions = 10, numInstructions = 0;
+   uint maxDeclarations = 10, numDeclarations = 0;
+
+   k = tgsi_parse_init( &parse, mach->Tokens );
+   if (k != TGSI_PARSE_OK) {
+      printf("Problem parsing!\n");
+      return;
+   }
+
+   declarations = (struct tgsi_full_declaration *)
+      malloc(maxDeclarations * sizeof(struct tgsi_full_declaration));
+
+   instructions = (struct tgsi_full_instruction *)
+      malloc(maxInstructions * sizeof(struct tgsi_full_instruction));
+
+   while( !tgsi_parse_end_of_tokens( &parse ) ) {
+      tgsi_parse_token( &parse );
+      switch( parse.FullToken.Token.Type ) {
+      case TGSI_TOKEN_TYPE_DECLARATION:
+         /*
+         exec_declaration( mach, &parse.FullToken.FullDeclaration );
+         */
+         if (numDeclarations == maxDeclarations) {
+            maxDeclarations += 10;
+            declarations = realloc(declarations,
+                                   maxDeclarations
+                                   * sizeof(struct tgsi_full_instruction));
+         }
+         memcpy(declarations + numDeclarations,
+                &parse.FullToken.FullInstruction,
+                sizeof(declarations[0]));
+         numDeclarations++;
+         break;
+      case TGSI_TOKEN_TYPE_IMMEDIATE:
+         break;
+      case TGSI_TOKEN_TYPE_INSTRUCTION:
+         if (numInstructions == maxInstructions) {
+            maxInstructions += 10;
+            instructions = realloc(instructions,
+                                   maxInstructions
+                                   * sizeof(struct tgsi_full_instruction));
+         }
+         memcpy(instructions + numInstructions,
+                &parse.FullToken.FullInstruction,
+                sizeof(instructions[0]));
+         numInstructions++;
+         break;
+      default:
+         assert( 0 );
+      }
+   }
+   tgsi_parse_free (&parse);
+
+   mach->Instructions = instructions;
+   mach->NumInstructions = numInstructions;
+   mach->Declarations = declarations;
+   mach->NumDeclarations = numDeclarations;
+}
+
+
 void
 tgsi_exec_machine_run2(
    struct tgsi_exec_machine *mach,
    struct tgsi_exec_labels *labels )
 {
-#if MESA
+#if 0 && MESA
    GET_CURRENT_CONTEXT(ctx);
    GLuint i;
 #endif
@@ -2167,8 +2250,14 @@ tgsi_exec_machine_run2(
 #if XXX_SSE
    mach->Temps[TEMP_KILMASK_I].xyzw[TEMP_KILMASK_C].u[0] = 0;
 #else
+#if 0
    struct tgsi_parse_context parse;
    GLuint k;
+#endif
+
+   if (!mach->Instructions) {
+      expand_program(mach);
+   }
 
    mach->Temps[TEMP_KILMASK_I].xyzw[TEMP_KILMASK_C].u[0] = 0;
    mach->Temps[TEMP_OUTPUT_I].xyzw[TEMP_OUTPUT_C].u[0] = 0;
@@ -2178,12 +2267,13 @@ tgsi_exec_machine_run2(
       mach->Primitives[0] = 0;
    }
 
+
+#if 0
    k = tgsi_parse_init( &parse, mach->Tokens );
    if (k != TGSI_PARSE_OK) {
       printf("Problem parsing!\n");
       return;
    }
-
    while( !tgsi_parse_end_of_tokens( &parse ) ) {
       tgsi_parse_token( &parse );
       switch( parse.FullToken.Token.Type ) {
@@ -2200,6 +2290,26 @@ tgsi_exec_machine_run2(
       }
    }
    tgsi_parse_free (&parse);
+#else
+   {
+      uint i;
+      int pc;
+
+      for (i = 0; i < mach->NumDeclarations; i++) {
+         exec_declaration( mach, mach->Declarations+i );
+      }
+
+      pc = 0;
+
+      while (pc != 99 && pc < mach->NumInstructions) {
+         exec_instruction( mach, mach->Instructions + pc, &pc );
+      }
+
+      free(mach->Declarations);
+      free(mach->Instructions);
+   }
+#endif
+
 #endif
 
 #if 0
@@ -2213,4 +2323,5 @@ tgsi_exec_machine_run2(
    }
 #endif
 }
+
 
