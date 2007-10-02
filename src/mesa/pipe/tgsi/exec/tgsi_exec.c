@@ -250,15 +250,6 @@ tgsi_exec_prepare(
    tgsi_parse_free (&parse);
 }
 
-void
-tgsi_exec_machine_run(
-   struct tgsi_exec_machine *mach )
-{
-#if 0
-   tgsi_exec_prepare( mach );
-#endif
-   tgsi_exec_machine_run2( mach );
-}
 
 static void
 micro_abs(
@@ -2261,27 +2252,11 @@ exec_instruction(
 
 
 void
-tgsi_exec_machine_run2(
-                       struct tgsi_exec_machine *mach )
+tgsi_exec_machine_run( struct tgsi_exec_machine *mach )
 {
-#if 0 && MESA
-   GET_CURRENT_CONTEXT(ctx);
-   GLuint i;
-#endif
-
 #if XXX_SSE
    mach->Temps[TEMP_KILMASK_I].xyzw[TEMP_KILMASK_C].u[0] = 0;
 #else
-#if 0
-   struct tgsi_parse_context parse;
-   GLuint k;
-#endif
-
-#if 0
-   if (!mach->Instructions) {
-      expand_program(mach);
-   }
-#endif
 
    mach->Temps[TEMP_KILMASK_I].xyzw[TEMP_KILMASK_C].u[0] = 0;
    mach->Temps[TEMP_OUTPUT_I].xyzw[TEMP_OUTPUT_C].u[0] = 0;
@@ -2292,29 +2267,6 @@ tgsi_exec_machine_run2(
    }
 
 
-#if 0
-   k = tgsi_parse_init( &parse, mach->Tokens );
-   if (k != TGSI_PARSE_OK) {
-      printf("Problem parsing!\n");
-      return;
-   }
-   while( !tgsi_parse_end_of_tokens( &parse ) ) {
-      tgsi_parse_token( &parse );
-      switch( parse.FullToken.Token.Type ) {
-      case TGSI_TOKEN_TYPE_DECLARATION:
-         exec_declaration( mach, &parse.FullToken.FullDeclaration );
-         break;
-      case TGSI_TOKEN_TYPE_IMMEDIATE:
-         break;
-      case TGSI_TOKEN_TYPE_INSTRUCTION:
-         exec_instruction( mach, &parse.FullToken.FullInstruction, labels, &parse.Position );
-         break;
-      default:
-         assert( 0 );
-      }
-   }
-   tgsi_parse_free (&parse);
-#else
    {
       uint i;
       int pc;
@@ -2328,13 +2280,7 @@ tgsi_exec_machine_run2(
       while (pc != 99 && pc < mach->NumInstructions) {
          exec_instruction( mach, mach->Instructions + pc, &pc );
       }
-
-#if 0
-      free(mach->Declarations);
-      free(mach->Instructions);
-#endif
    }
-#endif
 
 #endif
 

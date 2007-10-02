@@ -174,10 +174,6 @@ void
 tgsi_exec_machine_run(
    struct tgsi_exec_machine *mach );
 
-void
-tgsi_exec_machine_run2(
-   struct tgsi_exec_machine *mach );
-
 #if defined __cplusplus
 } // extern "C"
 #endif // defined __cplusplus
