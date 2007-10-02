@@ -1,0 +1,29 @@
+# Configuration for building only libOSMesa on BlueGene using the IBM xlc compiler
+# This doesn't really have a lot of dependencies, so it should be usable
+# on similar systems too.
+# It uses static linking and disables multithreading.
+
+include $(TOP)/configs/default
+
+CONFIG_NAME = bluegene-osmesa
+
+# Compiler and flags
+CC = /opt/ibmcmp/vacpp/bg/8.0/bin/blrts_xlc
+CXX = /opt/ibmcmp/vacpp/bg/8.0/bin/blrts_xlC
+CFLAGS = -O3 -pedantic -D_POSIX_SOURCE -D_POSIX_C_SOURCE=199309L -D_SVID_SOURCE -D_BSD_SOURCE
+CXXFLAGS = -O3 -pedantic -D_POSIX_SOURCE -D_POSIX_C_SOURCE=199309L -D_SVID_SOURCE -D_BSD_SOURCE
+
+MKLIB_OPTIONS = -static
+
+OSMESA_LIB_NAME = libOSMesa.a
+
+# Directories
+SRC_DIRS = mesa glu
+DRIVER_DIRS = osmesa
+PROGRAM_DIRS = osdemos
+
+
+# Dependencies
+OSMESA_LIB_DEPS = -lm
+GLU_LIB_DEPS = -L$(TOP)/$(LIB_DIR) -l$(OSMESA_LIB)
+APP_LIB_DEPS = -lOSMesa -lGLU -lm

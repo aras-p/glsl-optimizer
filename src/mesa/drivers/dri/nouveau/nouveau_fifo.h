@@ -48,14 +48,14 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #define NV_FIFO_READ(reg) *(volatile u_int32_t *)(nmesa->fifo.mmio + (reg/4))
 #define NV_FIFO_WRITE(reg,value) *(volatile u_int32_t *)(nmesa->fifo.mmio + (reg/4)) = value;
-#define NV_FIFO_READ_GET() ((NV_FIFO_READ(NV03_FIFO_REGS_DMAGET) - nmesa->fifo.put_base) >> 2)
+#define NV_FIFO_READ_GET() ((NV_FIFO_READ(NV03_FIFO_REGS_DMAGET) - nmesa->fifo.drm.put_base) >> 2)
 #define NV_FIFO_WRITE_PUT(val) do { \
 	if (NOUVEAU_RING_TRACE) {\
 		printf("FIRE_RING : 0x%08x\n", nmesa->fifo.current << 2); \
 		fflush(stdout); \
 		sleep(1); \
 	} \
-	NV_FIFO_WRITE(NV03_FIFO_REGS_DMAPUT, ((val)<<2) + nmesa->fifo.put_base); \
+	NV_FIFO_WRITE(NV03_FIFO_REGS_DMAPUT, ((val)<<2) + nmesa->fifo.drm.put_base); \
 } while(0)
 
 /* 
@@ -110,20 +110,20 @@ nouveau_fifo_remaining-=sz;							\
 		uint32_t* p=(uint32_t*)(ptr);							\
 		int i; printf("OUT_RINGp: (size 0x%x dwords) (%s)\n",sz, __func__); for(i=0;i<sz;i++) printf(" [0x%08x] 0x%08x   %f\n", (nmesa->fifo.current+i) << 2, *(p+i), *((float*)(p+i))); 	\
 	} \
-	memcpy(nmesa->fifo.buffer+nmesa->fifo.current,ptr,(sz)*4);		\
+	memcpy(nmesa->fifo.pushbuf+nmesa->fifo.current,ptr,(sz)*4);		\
 	nmesa->fifo.current+=(sz);						\
 }while(0)
 
 #define OUT_RING(n) do {							\
 if (NOUVEAU_RING_TRACE) \
     printf("OUT_RINGn: [0x%08x] 0x%08x (%s)\n", nmesa->fifo.current << 2, n, __func__);        \
-nmesa->fifo.buffer[nmesa->fifo.current++]=(n);					\
+nmesa->fifo.pushbuf[nmesa->fifo.current++]=(n);					\
 }while(0)
 
 #define OUT_RINGf(n) do {							\
 if (NOUVEAU_RING_TRACE) \
     printf("OUT_RINGf: [0x%08x] %.04f (%s)\n", nmesa->fifo.current << 2, n, __func__);        \
-*((float*)(nmesa->fifo.buffer+nmesa->fifo.current++))=(n);			\
+*((float*)(nmesa->fifo.pushbuf+nmesa->fifo.current++))=(n);			\
 }while(0)
 
 #define BEGIN_RING_SIZE(subchannel,tag,size) do {					\
@@ -145,10 +145,14 @@ extern void nouveau_state_cache_init(nouveauContextPtr nmesa);
 #define OUT_RING_CACHE(n) OUT_RING((n))
 #define OUT_RING_CACHEf(n) OUT_RINGf((n))
 #define OUT_RING_CACHEp(ptr, sz) OUT_RINGp((ptr), (sz))
+#define OUT_RING_CACHE_FORCE(n) OUT_RING((n))
+#define OUT_RING_CACHE_FORCEf(n) OUT_RINGf((n))
+#define OUT_RING_CACHE_FORCEp(ptr, sz) OUT_RINGp((ptr), (sz))
 #else
 #define BEGIN_RING_CACHE(subchannel,tag,size) do {					\
 	nmesa->state_cache.dirty=1;	 						\
 	nmesa->state_cache.current_pos=((tag)/4);					\
+	assert(nmesa->state_cache.current_pos + size <= NOUVEAU_STATE_CACHE_ENTRIES); \
 }while(0)
 
 #define OUT_RING_CACHE(n) do {									\
@@ -161,17 +165,40 @@ extern void nouveau_state_cache_init(nouveauContextPtr nmesa);
 }while(0)
 
 #define OUT_RING_CACHEf(n) do {									\
-	if ((*(float*)(&nmesa->state_cache.atoms[nmesa->state_cache.current_pos].value))!=(n)){	\
+	if ((*(GLfloat*)(&nmesa->state_cache.atoms[nmesa->state_cache.current_pos].value))!=(n)){	\
 		nmesa->state_cache.atoms[nmesa->state_cache.current_pos].dirty=1;	 	\
 		nmesa->state_cache.hdirty[nmesa->state_cache.current_pos/NOUVEAU_STATE_CACHE_HIER_SIZE]=1; 		\
-		(*(float*)(&nmesa->state_cache.atoms[nmesa->state_cache.current_pos].value))=(n);\
+		(*(GLfloat*)(&nmesa->state_cache.atoms[nmesa->state_cache.current_pos].value))=(n);\
 	}											\
 	nmesa->state_cache.current_pos++;							\
 }while(0)
 
 #define OUT_RING_CACHEp(ptr,sz) do {							\
-uint32_t* p=(uint32_t*)(ptr);								\
-int i; for(i=0;i<sz;i++) OUT_RING_CACHE(*(p+i)); 					\
+	GLuint* p=(GLuint*)(ptr);									\
+	int i;														\
+	for(i=0;i<sz;i++)											\
+		OUT_RING_CACHE(*(p+i)); 								\
+}while(0)
+
+#define OUT_RING_CACHE_FORCE(n) do {									\
+	nmesa->state_cache.atoms[nmesa->state_cache.current_pos].dirty=1; 		\
+	nmesa->state_cache.hdirty[nmesa->state_cache.current_pos/NOUVEAU_STATE_CACHE_HIER_SIZE]=1; 		\
+	nmesa->state_cache.atoms[nmesa->state_cache.current_pos].value=(n);		\
+	nmesa->state_cache.current_pos++;							\
+}while(0)
+
+#define OUT_RING_CACHE_FORCEf(n) do {									\
+	nmesa->state_cache.atoms[nmesa->state_cache.current_pos].dirty=1;	 	\
+	nmesa->state_cache.hdirty[nmesa->state_cache.current_pos/NOUVEAU_STATE_CACHE_HIER_SIZE]=1; 		\
+	(*(GLfloat*)(&nmesa->state_cache.atoms[nmesa->state_cache.current_pos].value))=(n);\
+	nmesa->state_cache.current_pos++;							\
+}while(0)
+
+#define OUT_RING_CACHE_FORCEp(ptr,sz) do {						\
+	GLuint* p=(GLuint*)(ptr);									\
+	int i;														\
+	for(i=0;i<sz;i++)											\
+		OUT_RING_CACHE_FORCE(*(p+i)); 							\
 }while(0)
 #endif
 

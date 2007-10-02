@@ -277,9 +277,6 @@ struct brw_cache {
    GLuint key_size;		/* for fixed-size keys */
    GLuint aux_size;
 
-   GLuint aub_type;
-   GLuint aub_sub_type;
-   
    GLuint last_addr;			/* offset of active item */
 };
 

@@ -64,7 +64,7 @@ void intel_region_unmap(struct intel_context *intel,
 {
    DBG("%s\n", __FUNCTION__);
    if (!--region->map_refcount) {
-      bmUnmapBufferAUB(intel, region->buffer, 0, 0);
+      bmUnmapBuffer(intel, region->buffer);
       region->map = NULL;
    }
 }
@@ -217,10 +217,10 @@ GLboolean intel_region_data(struct intel_context *intel,
        srcx == 0 &&
        srcy == 0) 
    {
-      return (bmBufferDataAUB(intel,
-			      dst->buffer,
-			      dst->cpp * width * dst->height,
-			      src, 0, 0, 0) == 0);
+      return (bmBufferData(intel,
+			   dst->buffer,
+			   dst->cpp * width * dst->height,
+			   src, 0) == 0);
    }
    else {
       GLubyte *map = intel_region_map(intel, dst);

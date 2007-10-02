@@ -36,6 +36,7 @@ SOURCES = \
 	glut_dstr.c \
 	glut_event.c \
 	glut_ext.c \
+	glut_fcb.c \
 	glut_fullscrn.c \
 	glut_gamemode.c \
 	glut_get.c \
@@ -90,17 +91,27 @@ default: $(TOP)/$(LIB_DIR)/$(GLUT_LIB_NAME)
 
 # Make the library
 $(TOP)/$(LIB_DIR)/$(GLUT_LIB_NAME): depend $(OBJECTS)
-	$(TOP)/bin/mklib -o $(GLUT_LIB) -linker '$(CC)' \
+	$(TOP)/bin/mklib -o $(GLUT_LIB) -linker '$(CC)' -ldflags '$(LDFLAGS)' \
 		-major $(GLUT_MAJOR) -minor $(GLUT_MINOR) -patch $(GLUT_TINY) \
 		$(MKLIB_OPTIONS) -install $(TOP)/$(LIB_DIR) \
 		$(GLUT_LIB_DEPS) $(OBJECTS)
 
 
-install:
-	$(INSTALL) -d $(INSTALL_DIR)/include/GL
-	$(INSTALL) -d $(INSTALL_DIR)/$(LIB_DIR)
-	$(INSTALL) -m 644 $(TOP)/include/GL/glut.h $(INSTALL_DIR)/include/GL
-	$(INSTALL) $(TOP)/$(LIB_DIR)/libglut* $(INSTALL_DIR)/$(LIB_DIR)
+# glut pkgconfig file
+pcedit = sed \
+	-e 's,@INSTALL_DIR@,$(INSTALL_DIR),' \
+	-e 's,@LIB_DIR@,$(LIB_DIR),' \
+	-e 's,@VERSION@,$(GLUT_MAJOR).$(GLUT_MINOR).$(GLUT_TINY),'
+glut.pc: glut.pc.in
+	$(pcedit) $< > $@
+
+install: glut.pc
+	$(INSTALL) -d $(DESTDIR)$(INSTALL_DIR)/include/GL
+	$(INSTALL) -d $(DESTDIR)$(INSTALL_DIR)/$(LIB_DIR)
+	$(INSTALL) -d $(DESTDIR)$(INSTALL_DIR)/$(LIB_DIR)/pkgconfig
+	$(INSTALL) -m 644 $(TOP)/include/GL/glut.h $(DESTDIR)$(INSTALL_DIR)/include/GL
+	$(INSTALL) $(TOP)/$(LIB_DIR)/libglut* $(DESTDIR)$(INSTALL_DIR)/$(LIB_DIR)
+	$(INSTALL) -m 644 glut.pc $(DESTDIR)$(INSTALL_DIR)/$(LIB_DIR)/pkgconfig
 
 
 clean:

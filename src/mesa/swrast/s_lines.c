@@ -1,6 +1,6 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.5.3
+ * Version:  7.1
  *
  * Copyright (C) 1999-2007  Brian Paul   All Rights Reserved.
  *
@@ -279,7 +279,11 @@ _swrast_choose_line( GLcontext *ctx )
                || ctx->Line.StippleFlag) {
          /* no texture, but Z, fog, width>1, stipple, etc. */
          if (rgbmode)
+#if CHAN_BITS == 32
+            USE(general_line);
+#else
             USE(rgba_line);
+#endif
          else
             USE(ci_line);
       }

@@ -63,16 +63,16 @@ default: depend $(TOP)/$(LIB_DIR)/$(GLUT_LIB_NAME)
 
 # Make the library
 $(TOP)/$(LIB_DIR)/$(GLUT_LIB_NAME): depend $(OBJECTS)
-	$(TOP)/bin/mklib -o $(GLUT_LIB) -linker '$(CC)' \
+	$(TOP)/bin/mklib -o $(GLUT_LIB) -linker '$(CC)' -ldflags '$(LDFLAGS)' \
 		-major $(GLUT_MAJOR) -minor $(GLUT_MINOR) -patch $(GLUT_TINY) \
 		$(GLUT_LIB_DEPS) -install $(TOP)/$(LIB_DIR) \
 		$(MKLIB_OPTIONS) $(OBJECTS)
 
 install:
-	$(INSTALL) -d $(INSTALL_DIR)/include/GL
-	$(INSTALL) -d $(INSTALL_DIR)/$(LIB_DIR)
-	$(INSTALL) -m 644 $(TOP)/include/GL/glut.h $(INSTALL_DIR)/include/GL
-	$(INSTALL) $(TOP)/$(LIB_DIR)/libglut* $(INSTALL_DIR)/$(LIB_DIR)
+	$(INSTALL) -d $(DESTDIR)$(INSTALL_DIR)/include/GL
+	$(INSTALL) -d $(DESTDIR)$(INSTALL_DIR)/$(LIB_DIR)
+	$(INSTALL) -m 644 $(TOP)/include/GL/glut.h $(DESTDIR)$(INSTALL_DIR)/include/GL
+	$(INSTALL) $(TOP)/$(LIB_DIR)/libglut* $(DESTDIR)$(INSTALL_DIR)/$(LIB_DIR)
 
 # Run 'make -f Makefile.solo dep' to update the dependencies if you change
 # what's included by any source file.

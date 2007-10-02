@@ -112,7 +112,7 @@ extern _CRTIMP void __cdecl exit(int);
    and redifinition of Windows system defs, also removes requirement of
    pretty much any standard windows header from this file */
 
-#if (_MSC_VER >= 800) || defined(_STDCALL_SUPPORTED) || defined(__CYGWIN32__)
+#if (_MSC_VER >= 800) || defined(__MINGW32__) || defined(_STDCALL_SUPPORTED) || defined(__CYGWIN32__)
 #	define GLUTAPIENTRY __stdcall
 #else
 #	define GLUTAPIENTRY

@@ -37,6 +37,7 @@
 #include "intel_tex_layout.h"
 #include "macros.h"
 
+#define ALIGN(value, alignment)  ((value + alignment - 1) & ~(alignment - 1))
 
 GLboolean brw_miptree_layout( struct intel_mipmap_tree *mt )
 {
@@ -53,11 +54,20 @@ GLboolean brw_miptree_layout( struct intel_mipmap_tree *mt )
       GLuint pack_x_pitch, pack_x_nr;
       GLuint pack_y_pitch;
       GLuint level;
+      GLuint align_h = 2;
+      GLuint align_w = 4;
 
-      mt->pitch = ((mt->width0 * mt->cpp + 3) & ~3) / mt->cpp;
       mt->total_height = 0;
+      
+      if (mt->compressed) {
+          align_w = intel_compressed_alignment(mt->internal_format);
+          mt->pitch = ALIGN(width, align_w);
+          pack_y_pitch = (height + 3) / 4;
+      } else {
+          mt->pitch = ((mt->width0 * mt->cpp + 3) & ~3) / mt->cpp;
+          pack_y_pitch = ALIGN(mt->height0, align_h);
+      }
 
-      pack_y_pitch = MAX2(mt->height0, 2);
       pack_x_pitch = mt->pitch;
       pack_x_nr = 1;
 
@@ -83,20 +93,30 @@ GLboolean brw_miptree_layout( struct intel_mipmap_tree *mt )
 
 
 	 mt->total_height += y;
-
-	 if (pack_x_pitch > 4) {
-	    pack_x_pitch >>= 1;
-	    pack_x_nr <<= 1;
-	    assert(pack_x_pitch * pack_x_nr <= mt->pitch);
-	 }
-
-	 if (pack_y_pitch > 2) {
-	    pack_y_pitch >>= 1;
-	 }
-
 	 width  = minify(width);
 	 height = minify(height);
 	 depth  = minify(depth);
+
+    if (mt->compressed) {
+        pack_y_pitch = (height + 3) / 4;
+        
+        if (pack_x_pitch > ALIGN(width, align_w)) {
+            pack_x_pitch = ALIGN(width, align_w);
+            pack_x_nr <<= 1;
+        }
+    } else {
+        if (pack_x_pitch > 4) {
+            pack_x_pitch >>= 1;
+            pack_x_nr <<= 1;
+            assert(pack_x_pitch * pack_x_nr <= mt->pitch);
+        }
+
+        if (pack_y_pitch > 2) {
+            pack_y_pitch >>= 1;
+            pack_y_pitch = ALIGN(pack_y_pitch, align_h);
+        }
+    }
+
       }
       break;
    }

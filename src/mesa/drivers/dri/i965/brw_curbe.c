@@ -42,7 +42,6 @@
 #include "brw_defines.h"
 #include "brw_state.h"
 #include "brw_util.h"
-#include "brw_aub.h"
 
 
 /* Partition the CURBE between the various users of constant values:
@@ -90,7 +89,7 @@ static void calculate_curbe_offsets( struct brw_context *brw )
     */
    if (nr_fp_regs > brw->curbe.wm_size ||
        nr_vp_regs > brw->curbe.vs_size ||
-       nr_clip_regs > brw->curbe.clip_size ||
+       nr_clip_regs != brw->curbe.clip_size ||
        (total_regs < brw->curbe.total_size / 4 &&
 	brw->curbe.total_size > 16)) {
 
@@ -315,13 +314,11 @@ static void upload_constant_buffer(struct brw_context *brw)
 
       /* Copy data to the buffer:
        */
-      bmBufferSubDataAUB(&brw->intel,
-			 pool->buffer,
-			 brw->curbe.gs_offset, 
-			 bufsz, 
-			 buf,
-			 DW_CONSTANT_BUFFER,
-			 0);
+      bmBufferSubData(&brw->intel,
+		      pool->buffer,
+		      brw->curbe.gs_offset,
+		      bufsz,
+		      buf);
    }
 
    /* TODO: only emit the constant_buffer packet when necessary, ie:

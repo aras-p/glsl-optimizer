@@ -13,7 +13,8 @@ COMMON_SOURCES = \
 
 COMMON_BM_SOURCES = \
 	../common/dri_bufmgr.c \
-	../common/dri_drmpool.c
+	../common/dri_bufmgr_ttm.c \
+	../common/dri_bufmgr_fake.c
 
 
 ifeq ($(WINDOW_SYSTEM),dri)
@@ -49,11 +50,6 @@ SHARED_INCLUDES = \
 	-I$(TOP)/src/mesa \
 	-I$(TOP)/src/mesa/main \
 	-I$(TOP)/src/mesa/glapi \
-	-I$(TOP)/src/mesa/math \
-	-I$(TOP)/src/mesa/transform \
-	-I$(TOP)/src/mesa/shader \
-	-I$(TOP)/src/mesa/swrast \
-	-I$(TOP)/src/mesa/swrast_setup \
 	-I$(TOP)/src/egl/main \
 	-I$(TOP)/src/egl/drivers/dri \
 	$(LIBDRM_CFLAGS)
@@ -74,7 +70,7 @@ default: depend symlinks $(LIBNAME) $(TOP)/$(LIB_DIR)/$(LIBNAME)
 
 
 $(LIBNAME): $(OBJECTS) $(MESA_MODULES) $(WINOBJ) Makefile $(TOP)/src/mesa/drivers/dri/Makefile.template
-	$(TOP)/bin/mklib -noprefix -o $@ \
+	$(TOP)/bin/mklib -ldflags '$(LDFLAGS)' -noprefix -o $@ \
 		$(OBJECTS) $(MESA_MODULES) $(WINOBJ) $(DRI_LIB_DEPS)
 
 
@@ -100,8 +96,8 @@ clean:
 
 
 install: $(LIBNAME)
-	$(INSTALL) -d $(DRI_DRIVER_INSTALL_DIR)
-	$(INSTALL) -m 755 $(LIBNAME) $(DRI_DRIVER_INSTALL_DIR)
+	$(INSTALL) -d $(DESTDIR)$(DRI_DRIVER_INSTALL_DIR)
+	$(INSTALL) -m 755 $(LIBNAME) $(DESTDIR)$(DRI_DRIVER_INSTALL_DIR)
 
 
 include depend

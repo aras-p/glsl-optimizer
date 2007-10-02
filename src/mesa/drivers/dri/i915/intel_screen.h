@@ -29,39 +29,51 @@
 #define _INTEL_INIT_H_
 
 #include <sys/time.h>
-#include "xmlconfig.h"
 #include "dri_util.h"
 #include "intel_rotate.h"
 #include "i830_common.h"
+#include "xmlconfig.h"
+#include "dri_bufmgr.h"
 
-
-/* This roughly corresponds to a gl_renderbuffer (Mesa 6.4) */
-typedef struct {
+/* XXX: change name or eliminate to avoid conflict with "struct
+ * intel_region"!!!
+ */
+typedef struct
+{
    drm_handle_t handle;
-   drmSize size;        /* region size in bytes */
-   char *map;           /* memory map */
-   int offset;          /* from start of video mem, in bytes */
-   int pitch;           /* row stride, in bytes */
+   drmSize size;                /* region size in bytes */
+   char *map;                   /* memory map */
+   int offset;                  /* from start of video mem, in bytes */
+   int pitch;                   /* row stride, in bytes */
+   unsigned int bo_handle;	/* buffer object id if available, or -1 */
 } intelRegion;
 
-typedef struct 
+typedef struct
 {
    intelRegion front;
    intelRegion back;
+   intelRegion third;
    intelRegion rotated;
    intelRegion depth;
    intelRegion tex;
-   
+
+   struct intel_region *front_region;
+   struct intel_region *back_region;
+   struct intel_region *third_region;
+   struct intel_region *depth_region;
+   struct intel_region *rotated_region;
+
    int deviceID;
    int width;
    int height;
-   int mem;         /* unused */
-   
-   int cpp;         /* for front and back buffers */
-   int fbFormat;
+   int mem;                     /* unused */
+
+   int cpp;                     /* for front and back buffers */
+/*    int bitsPerPixel;   */
+   int fbFormat;                /* XXX FBO: this is obsolete - remove after i830 updates */
 
    int logTextureGranularity;
-   
+
    __DRIscreenPrivate *driScrnPriv;
    unsigned int sarea_priv_offset;
 
@@ -72,41 +84,51 @@ typedef struct
 
    struct matrix23 rotMatrix;
 
-   int current_rotation;  /* 0, 90, 180 or 270 */
+   int current_rotation;        /* 0, 90, 180 or 270 */
    int rotatedWidth, rotatedHeight;
 
    /**
    * Configuration cache with default values for all contexts
    */
    driOptionCache optionCache;
+
+   dri_bufmgr *bufmgr;
+   unsigned int maxBatchSize;
+
+   /**
+    * This value indicates that the kernel memory manager is being used
+    * instead of the fake client-side memory manager.
+    */
+   GLboolean ttm;
 } intelScreenPrivate;
 
 
-extern GLboolean
-intelMapScreenRegions(__DRIscreenPrivate *sPriv);
+
+extern GLboolean intelMapScreenRegions(__DRIscreenPrivate * sPriv);
+
+extern void intelUnmapScreenRegions(intelScreenPrivate * intelScreen);
 
 extern void
-intelUnmapScreenRegions(intelScreenPrivate *intelScreen);
+intelUpdateScreenFromSAREA(intelScreenPrivate * intelScreen,
+                           drmI830Sarea * sarea);
 
-extern void
-intelUpdateScreenFromSAREA(intelScreenPrivate *intelScreen,
-                           drmI830Sarea *sarea);
+extern void intelDestroyContext(__DRIcontextPrivate * driContextPriv);
 
-extern void
-intelDestroyContext(__DRIcontextPrivate *driContextPriv);
-
-extern GLboolean
-intelUnbindContext(__DRIcontextPrivate *driContextPriv);
+extern GLboolean intelUnbindContext(__DRIcontextPrivate * driContextPriv);
 
 extern GLboolean
-intelMakeCurrent(__DRIcontextPrivate *driContextPriv,
-                 __DRIdrawablePrivate *driDrawPriv,
-                 __DRIdrawablePrivate *driReadPriv);
+intelMakeCurrent(__DRIcontextPrivate * driContextPriv,
+                 __DRIdrawablePrivate * driDrawPriv,
+                 __DRIdrawablePrivate * driReadPriv);
+
+extern void intelSwapBuffers(__DRIdrawablePrivate * dPriv);
 
 extern void
-intelSwapBuffers(__DRIdrawablePrivate *dPriv);
+intelCopySubBuffer(__DRIdrawablePrivate * dPriv, int x, int y, int w, int h);
+
+extern struct intel_context *intelScreenContext(intelScreenPrivate *intelScreen);
 
 extern void
-intelCopySubBuffer( __DRIdrawablePrivate *dPriv, int x, int y, int w, int h );
+intelUpdateScreenRotation(__DRIscreenPrivate * sPriv, drmI830Sarea * sarea);
 
 #endif

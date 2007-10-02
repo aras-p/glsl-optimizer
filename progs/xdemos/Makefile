@@ -38,7 +38,7 @@ PROGS = glthreads \
 .SUFFIXES: .c
 
 .c: $(LIB_DEP)
-	$(CC) -I$(INCDIR) $(CFLAGS) $< $(APP_LIB_DEPS) -o $@
+	$(CC) -I$(INCDIR) $(X11_INCLUDES) $(CFLAGS) $(LDFLAGS) $< $(APP_LIB_DEPS) -o $@
 
 
 ##### TARGETS #####
@@ -53,32 +53,32 @@ clean:
 
 # special cases
 pbinfo: pbinfo.o pbutil.o
-	$(CC) -I$(INCDIR) $(CFLAGS) pbinfo.o pbutil.o $(APP_LIB_DEPS) -o $@
+	$(CC) $(LDFLAGS) pbinfo.o pbutil.o $(APP_LIB_DEPS) -o $@
 
 pbdemo: pbdemo.o pbutil.o
-	$(CC) -I$(INCDIR) $(CFLAGS) pbdemo.o pbutil.o $(APP_LIB_DEPS) -o $@
+	$(CC) $(LDFLAGS) pbdemo.o pbutil.o $(APP_LIB_DEPS) -o $@
 
 pbinfo.o: pbinfo.c pbutil.h
-	$(CC) -c -I. -I$(INCDIR) $(CFLAGS) pbinfo.c
+	$(CC) -c -I. -I$(INCDIR) $(X11_INCLUDES) $(CFLAGS) pbinfo.c
 
 pbdemo.o: pbdemo.c pbutil.h
-	$(CC) -c -I. -I$(INCDIR) $(CFLAGS) pbdemo.c
+	$(CC) -c -I. -I$(INCDIR) $(X11_INCLUDES) $(CFLAGS) pbdemo.c
 
 pbutil.o: pbutil.c pbutil.h
-	$(CC) -c -I. -I$(INCDIR) $(CFLAGS) pbutil.c
+	$(CC) -c -I. -I$(INCDIR) $(X11_INCLUDES) $(CFLAGS) pbutil.c
 
 glxgears_fbconfig: glxgears_fbconfig.o pbutil.o
-	$(CC) -I$(INCDIR) $(CFLAGS) glxgears_fbconfig.o pbutil.o $(APP_LIB_DEPS) -o $@
+	$(CC) $(LDFLAGS) glxgears_fbconfig.o pbutil.o $(APP_LIB_DEPS) -o $@
 
 glxgears_fbconfig.o: glxgears_fbconfig.c pbutil.h
-	$(CC) -I$(INCDIR) $(CFLAGS) -c -I. $(CFLAGS) glxgears_fbconfig.c
+	$(CC) -I$(INCDIR) $(X11_INCLUDES) $(CFLAGS) -c -I. $(CFLAGS) glxgears_fbconfig.c
 
 xrotfontdemo: xrotfontdemo.o xuserotfont.o
-	$(CC) -I$(INCDIR) $(CFLAGS) xrotfontdemo.o xuserotfont.o $(APP_LIB_DEPS) -o $@
+	$(CC) $(LDFLAGS) xrotfontdemo.o xuserotfont.o $(APP_LIB_DEPS) -o $@
 
 xuserotfont.o: xuserotfont.c xuserotfont.h
-	$(CC) -c -I. -I$(INCDIR) $(CFLAGS) xuserotfont.c
+	$(CC) -c -I. -I$(INCDIR) $(X11_INCLUDES) $(CFLAGS) xuserotfont.c
 
 xrotfontdemo.o: xrotfontdemo.c xuserotfont.h
-	$(CC) -c -I. -I$(INCDIR) $(CFLAGS) xrotfontdemo.c
+	$(CC) -c -I. -I$(INCDIR) $(X11_INCLUDES) $(CFLAGS) xrotfontdemo.c
 

@@ -15,11 +15,14 @@
 
 void
 matrix23Set(struct matrix23 *m,
-            int m00, int m01, int m02,
-            int m10, int m11, int m12)
+            int m00, int m01, int m02, int m10, int m11, int m12)
 {
-   m->m00 = m00;   m->m01 = m01;   m->m02 = m02;
-   m->m10 = m10;   m->m11 = m11;   m->m12 = m12;
+   m->m00 = m00;
+   m->m01 = m01;
+   m->m02 = m02;
+   m->m10 = m10;
+   m->m11 = m11;
+   m->m12 = m12;
 }
 
 
@@ -66,9 +69,9 @@ matrix23TransformDistance(const struct matrix23 *m, int *xDist, int *yDist)
    *yDist = (y1 - y0) + (y2 - y0);
 
    if (*xDist < 0)
-       *xDist = -*xDist;
+      *xDist = -*xDist;
    if (*yDist < 0)
-       *yDist = -*yDist;
+      *yDist = -*yDist;
 }
 
 
@@ -76,7 +79,8 @@ matrix23TransformDistance(const struct matrix23 *m, int *xDist, int *yDist)
  * Transform the rect defined by (x, y, w, h) by m.
  */
 void
-matrix23TransformRect(const struct matrix23 *m, int *x, int *y, int *w, int *h)
+matrix23TransformRect(const struct matrix23 *m, int *x, int *y, int *w,
+                      int *h)
 {
    int x0 = *x, y0 = *y;
    int x1 = *x + *w, y1 = *y;
@@ -108,16 +112,16 @@ matrix23Rotate(struct matrix23 *m, int width, int height, int angle)
       matrix23Set(m, 1, 0, 0, 0, 1, 0);
       break;
    case 90:
-      matrix23Set(m, 0, 1, 0,  -1, 0, width);
+      matrix23Set(m, 0, 1, 0, -1, 0, width);
       break;
    case 180:
-      matrix23Set(m, -1, 0, width,  0, -1, height);
+      matrix23Set(m, -1, 0, width, 0, -1, height);
       break;
    case 270:
-      matrix23Set(m, 0, -1, height,  1, 0, 0);
+      matrix23Set(m, 0, -1, height, 1, 0, 0);
       break;
    default:
-      /*abort()*/;
+      /*abort() */ ;
    }
 }
 
@@ -129,16 +133,24 @@ void
 matrix23Flip(struct matrix23 *m, int width, int height, int xflip, int yflip)
 {
    if (xflip) {
-      m->m00 = -1;  m->m01 = 0;   m->m02 = width - 1;
+      m->m00 = -1;
+      m->m01 = 0;
+      m->m02 = width - 1;
    }
    else {
-      m->m00 = 1;   m->m01 = 0;   m->m02 = 0;
+      m->m00 = 1;
+      m->m01 = 0;
+      m->m02 = 0;
    }
    if (yflip) {
-      m->m10 = 0;   m->m11 = -1;  m->m12 = height - 1;
+      m->m10 = 0;
+      m->m11 = -1;
+      m->m12 = height - 1;
    }
    else {
-      m->m10 = 0;   m->m11 = 1;   m->m12 = 0;
+      m->m10 = 0;
+      m->m11 = 1;
+      m->m12 = 0;
    }
 }
 
@@ -169,14 +181,18 @@ main(int argc, char *argv[])
 {
    int width = 500, height = 400;
    int rot;
-   int fx = 0, fy = 0;  /* flip x and/or y ? */
+   int fx = 0, fy = 0;          /* flip x and/or y ? */
    int coords[4][2];
 
    /* four corner coords to test with */
-   coords[0][0] = 0;  coords[0][1] = 0;
-   coords[1][0] = width-1;  coords[1][1] = 0;
-   coords[2][0] = width-1;  coords[2][1] = height-1;
-   coords[3][0] = 0;  coords[3][1] = height-1;
+   coords[0][0] = 0;
+   coords[0][1] = 0;
+   coords[1][0] = width - 1;
+   coords[1][1] = 0;
+   coords[2][0] = width - 1;
+   coords[2][1] = height - 1;
+   coords[3][0] = 0;
+   coords[3][1] = height - 1;
 
 
    for (rot = 0; rot < 360; rot += 90) {

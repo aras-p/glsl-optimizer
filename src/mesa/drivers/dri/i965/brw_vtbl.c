@@ -47,7 +47,6 @@
 
 #include "brw_draw.h"
 #include "brw_state.h"
-#include "brw_aub.h"
 #include "brw_fallback.h"
 #include "brw_vs.h"
 
@@ -59,8 +58,6 @@ static void brw_destroy_context( struct intel_context *intel )
 {
    GLcontext *ctx = &intel->ctx;
    struct brw_context *brw = brw_context(&intel->ctx);
-
-   brw_aub_destroy(brw);
 
    brw_destroy_metaops(brw);
    brw_destroy_state(brw);

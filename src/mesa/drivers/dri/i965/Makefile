@@ -11,6 +11,7 @@ DRIVER_SOURCES = \
 	intel_buffer_objects.c \
 	intel_buffers.c \
 	intel_context.c \
+	intel_decode.c \
 	intel_ioctl.c \
 	intel_mipmap_tree.c \
 	intel_regions.c \
@@ -22,8 +23,6 @@ DRIVER_SOURCES = \
 	intel_tex.c \
 	intel_tex_layout.c \
 	intel_tex_validate.c \
-	brw_aub.c \
-	brw_aub_playback.c \
 	brw_cc.c \
 	brw_clip.c \
 	brw_clip_line.c \
@@ -77,6 +76,12 @@ DRIVER_SOURCES = \
 	brw_wm_state.c \
 	brw_wm_surface_state.c 
 
+SYMLINKS = \
+	server/i830_dri.h \
+	server/i830_common.h \
+	server/intel_dri.c \
+	server/intel.h
+
 C_SOURCES = \
 	$(COMMON_SOURCES) \
 	$(MINIGLX_SOURCES) \
@@ -88,6 +93,13 @@ DRIVER_DEFINES = -I../intel
 
 include ../Makefile.template
 
+intel_decode.o: ../intel/intel_decode.c
 intel_tex_layout.o: ../intel/intel_tex_layout.c
 
-symlinks:
+server:
+	mkdir -p server
+
+$(SYMLINKS): server
+	@[ -e $@ ] || ln -sf ../../i915/$@ server/
+
+symlinks: $(SYMLINKS)

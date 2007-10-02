@@ -1,126 +1,122 @@
-/**************************************************************************
- * 
- * Copyright 2003 Tungsten Graphics, Inc., Cedar Park, Texas.
- * All Rights Reserved.
- * 
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the
- * "Software"), to deal in the Software without restriction, including
- * without limitation the rights to use, copy, modify, merge, publish,
- * distribute, sub license, and/or sell copies of the Software, and to
- * permit persons to whom the Software is furnished to do so, subject to
- * the following conditions:
- * 
- * The above copyright notice and this permission notice (including the
- * next paragraph) shall be included in all copies or substantial portions
- * of the Software.
- * 
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
- * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT.
- * IN NO EVENT SHALL TUNGSTEN GRAPHICS AND/OR ITS SUPPLIERS BE LIABLE FOR
- * ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
- * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
- * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
- * 
- **************************************************************************/
-
 #ifndef INTEL_BATCHBUFFER_H
 #define INTEL_BATCHBUFFER_H
 
-#include "intel_context.h"
-#include "intel_ioctl.h"
+#include "mtypes.h"
+#include "dri_bufmgr.h"
 
+struct intel_context;
 
-#define BATCH_LOCALS	GLubyte *batch_ptr;
+#define BATCH_SZ 16384
+#define BATCH_RESERVED 16
 
-/* #define VERBOSE 0 */
-#ifndef VERBOSE
-extern int VERBOSE;
-#endif
+#define MAX_RELOCS 4096
 
+#define INTEL_BATCH_NO_CLIPRECTS 0x1
+#define INTEL_BATCH_CLIPRECTS    0x2
 
-#define BEGIN_BATCH(n)							\
-do {									\
-   if (VERBOSE) fprintf(stderr, 					\
-			"BEGIN_BATCH(%ld) in %s, %d dwords free\n",	\
-			((unsigned long)n), __FUNCTION__,		\
-			intel->batch.space/4);				\
-   if (intel->batch.space < (n)*4)					\
-      intelFlushBatch(intel, GL_TRUE);					\
-   if (intel->batch.space == intel->batch.size)	intel->batch.func = __FUNCTION__;			\
-   batch_ptr = intel->batch.ptr;					\
-} while (0)
-
-#define OUT_BATCH(n)					\
-do {							\
-   *(GLuint *)batch_ptr = (n);				\
-   if (VERBOSE) fprintf(stderr, " -- %08x at %s/%d\n", (n), __FILE__, __LINE__);	\
-   batch_ptr += 4;					\
-} while (0)
-
-#define ADVANCE_BATCH()						\
-do {								\
-   if (VERBOSE) fprintf(stderr, "ADVANCE_BATCH()\n");		\
-   intel->batch.space -= (batch_ptr - intel->batch.ptr);	\
-   intel->batch.ptr = batch_ptr;				\
-   assert(intel->batch.space >= 0);				\
-} while(0)
-
-extern void intelInitBatchBuffer( GLcontext *ctx );
-extern void intelDestroyBatchBuffer( GLcontext *ctx );
-
-extern void intelStartInlinePrimitive( intelContextPtr intel, GLuint prim );
-extern void intelWrapInlinePrimitive( intelContextPtr intel );
-extern void intelRestartInlinePrimitive( intelContextPtr intel );
-extern GLuint *intelEmitInlinePrimitiveLocked(intelContextPtr intel, 
-					      int primitive, int dwords,
-					      int vertex_size);
-extern void intelCopyBuffer( const __DRIdrawablePrivate *dpriv,
-			     const drm_clip_rect_t	*rect);
-extern void intelClearWithBlit(GLcontext *ctx, GLbitfield mask, GLboolean all,
-			     GLint cx1, GLint cy1, GLint cw, GLint ch);
-
-extern void intelEmitCopyBlitLocked( intelContextPtr intel,
-				     GLuint cpp,
-				     GLshort src_pitch,
-				     GLuint  src_offset,
-				     GLshort dst_pitch,
-				     GLuint  dst_offset,
-				     GLshort srcx, GLshort srcy,
-				     GLshort dstx, GLshort dsty,
-				     GLshort w, GLshort h );
-
-extern void intelEmitFillBlitLocked( intelContextPtr intel,
-				     GLuint cpp,
-				     GLshort dst_pitch,
-				     GLuint dst_offset,
-				     GLshort x, GLshort y, 
-				     GLshort w, GLshort h,
-				     GLuint color );
-
-
-
-
-static __inline GLuint *intelExtendInlinePrimitive( intelContextPtr intel, 
-						GLuint dwords )
+struct buffer_reloc
 {
-   GLuint sz = dwords * sizeof(GLuint);
-   GLuint *ptr;
+   dri_bo *buf;
+   GLuint offset;
+   GLuint delta;                /* not needed? */
+   GLuint validate_flags;
+};
 
-   if (intel->batch.space < sz) {
-      intelWrapInlinePrimitive( intel );
-/*       assert(intel->batch.space >= sz); */
-   }
+struct intel_batchbuffer
+{
+   struct intel_context *intel;
 
-/*    assert(intel->prim.primitive != ~0); */
-   ptr = (GLuint *)intel->batch.ptr;
-   intel->batch.ptr += sz;
-   intel->batch.space -= sz;
+   dri_bo *buf;
+   dri_fence *last_fence;
+   GLuint flags;
 
-   return ptr;
+   drmBOList list;
+   GLuint list_count;
+   GLubyte *map;
+   GLubyte *ptr;
+
+   struct buffer_reloc reloc[MAX_RELOCS];
+   GLuint nr_relocs;
+   GLuint size;
+};
+
+struct intel_batchbuffer *intel_batchbuffer_alloc(struct intel_context
+                                                  *intel);
+
+void intel_batchbuffer_free(struct intel_batchbuffer *batch);
+
+
+void intel_batchbuffer_finish(struct intel_batchbuffer *batch);
+
+void intel_batchbuffer_flush(struct intel_batchbuffer *batch);
+
+void intel_batchbuffer_reset(struct intel_batchbuffer *batch);
+
+
+/* Unlike bmBufferData, this currently requires the buffer be mapped.
+ * Consider it a convenience function wrapping multple
+ * intel_buffer_dword() calls.
+ */
+void intel_batchbuffer_data(struct intel_batchbuffer *batch,
+                            const void *data, GLuint bytes, GLuint flags);
+
+void intel_batchbuffer_release_space(struct intel_batchbuffer *batch,
+                                     GLuint bytes);
+
+GLboolean intel_batchbuffer_emit_reloc(struct intel_batchbuffer *batch,
+                                       dri_bo *buffer,
+                                       GLuint flags, GLuint offset);
+
+/* Inline functions - might actually be better off with these
+ * non-inlined.  Certainly better off switching all command packets to
+ * be passed as structs rather than dwords, but that's a little bit of
+ * work...
+ */
+static INLINE GLuint
+intel_batchbuffer_space(struct intel_batchbuffer *batch)
+{
+   return (batch->size - BATCH_RESERVED) - (batch->ptr - batch->map);
 }
 
+
+static INLINE void
+intel_batchbuffer_emit_dword(struct intel_batchbuffer *batch, GLuint dword)
+{
+   assert(batch->map);
+   assert(intel_batchbuffer_space(batch) >= 4);
+   *(GLuint *) (batch->ptr) = dword;
+   batch->ptr += 4;
+}
+
+static INLINE void
+intel_batchbuffer_require_space(struct intel_batchbuffer *batch,
+                                GLuint sz, GLuint flags)
+{
+   assert(sz < batch->size - 8);
+   if (intel_batchbuffer_space(batch) < sz ||
+       (batch->flags != 0 && flags != 0 && batch->flags != flags))
+      intel_batchbuffer_flush(batch);
+
+   batch->flags |= flags;
+}
+
+/* Here are the crusty old macros, to be removed:
+ */
+#define BATCH_LOCALS
+
+#define BEGIN_BATCH(n, flags) do {				\
+   assert(!intel->prim.flush);					\
+   intel_batchbuffer_require_space(intel->batch, (n)*4, flags);	\
+} while (0)
+
+#define OUT_BATCH(d)  intel_batchbuffer_emit_dword(intel->batch, d)
+
+#define OUT_RELOC(buf, flags, delta) do { 				\
+   assert((delta) >= 0);						\
+   intel_batchbuffer_emit_reloc(intel->batch, buf, flags, delta);	\
+} while (0)
+
+#define ADVANCE_BATCH() do { } while(0)
 
 
 #endif

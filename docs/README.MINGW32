@@ -91,9 +91,11 @@ Running the Build:
 
 
 
-*******************This section is added by Heromyth*****************************
-Updated on 2007-7-21, by Heromyth <zxpmyth@yahoo.com.cn>
+******This section is added by Heromyth <zxpmyth@yahoo.com.cn>*************
 
+====================
+Updated on 2007-7-21
+====================
 
 Notice:
 	1) The generated DLLs are *not* compatible with the ones built
@@ -115,7 +117,7 @@ For example, run:
 , and delete all the lines where all the wgl*() functions are. Because they would 
 be conflicted with the ones in <Mesa3D-root>\include\GL\mesa_wgl.h.
 
-======= Conflicted Functions List ======
+>>>>>>>>>> Conflicted Functions List >>>>>>>>>>
 WINGDIAPI BOOL WINAPI wglCopyContext(HGLRC,HGLRC,UINT);
 WINGDIAPI HGLRC WINAPI wglCreateContext(HDC);
 WINGDIAPI HGLRC WINAPI wglCreateLayerContext(HDC,int);
@@ -134,6 +136,18 @@ WINGDIAPI BOOL WINAPI wglUseFontBitmapsA(HDC,DWORD,DWORD,DWORD);
 WINGDIAPI BOOL WINAPI wglUseFontBitmapsW(HDC,DWORD,DWORD,DWORD);
 WINGDIAPI BOOL WINAPI wglUseFontOutlinesA(HDC,DWORD,DWORD,DWORD,FLOAT,FLOAT,int,LPGLYPHMETRICSFLOAT);
 WINGDIAPI BOOL WINAPI wglUseFontOutlinesW(HDC,DWORD,DWORD,DWORD,FLOAT,FLOAT,int,LPGLYPHMETRICSFLOAT);
-===================
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+
+====================
+Updated on 2007-7-22
+====================
+	I havn't thought that I would find a better way to solve my problems so soon. 
+I changed the method in which the import-libs and DLLs are made. After this update,
+the DLLs of MESA are more optimized and more compatible. 
+	It seems that there is no need to keep the building way of 'NO-STDCALL'.The 
+way of USING_STDCALL is so nice! The file <Mesa3D-root>\configs\config.mgw is 
+also not needed, and can be deleted safely!
+	
+
 
 *********************************************************************************

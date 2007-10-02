@@ -1,18 +1,8 @@
-/**
- * \file attrib.h
- * Attribute stacks.
- * 
- * \if subset
- * (No-op)
- *
- * \endif
- */
-
 /*
  * Mesa 3-D graphics library
- * Version:  5.1
+ * Version:  7.1
  *
- * Copyright (C) 1999-2003  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2007  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -31,8 +21,6 @@
  * AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
-
-
 
 #ifndef ATTRIB_H
 #define ATTRIB_H
@@ -58,10 +46,14 @@ _mesa_PopClientAttrib( void );
 extern void 
 _mesa_init_attrib( GLcontext *ctx );
 
+extern void 
+_mesa_free_attrib_data( GLcontext *ctx );
+
 #else
 
 /** No-op */
 #define _mesa_init_attrib( c ) ((void)0)
+#define _mesa_free_attrib_data( c ) ((void)0)
 
 #endif
 

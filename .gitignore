@@ -2,6 +2,7 @@
 *.o
 *.so
 *.sw[a-z]
+*.pc
 *~
 depend
 depend.bak

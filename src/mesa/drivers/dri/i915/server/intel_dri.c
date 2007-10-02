@@ -292,15 +292,43 @@ static void I830SetupMemoryTiling(const DRIDriverContext *ctx, I830Rec *pI830)
 
 static int I830DetectMemory(const DRIDriverContext *ctx, I830Rec *pI830)
 {
-  struct pci_device host_bridge;
+  struct pci_device host_bridge, ig_dev;
   uint32_t gmch_ctrl;
   int memsize = 0;
   int range;
-
+  uint32_t aper_size;
+  uint32_t membase2 = 0;
+      
   memset(&host_bridge, 0, sizeof(host_bridge));
+  memset(&ig_dev, 0, sizeof(ig_dev));
+
+  ig_dev.dev = 2;
 
   pci_device_cfg_read_u32(&host_bridge, &gmch_ctrl, I830_GMCH_CTRL);
-  
+
+  if (IS_I830(pI830) || IS_845G(pI830)) {
+    if ((gmch_ctrl & I830_GMCH_MEM_MASK) == I830_GMCH_MEM_128M) {
+      aper_size = 0x80000000;
+    } else {
+      aper_size = 0x40000000;
+    }
+  } else {
+    if (IS_I9XX(pI830)) {
+      int ret;
+      ret = pci_device_cfg_read_u32(&ig_dev, &membase2, 0x18);
+      if (membase2 & 0x08000000)
+	aper_size = 0x8000000;
+      else
+	aper_size = 0x10000000;
+
+      fprintf(stderr,"aper size is %08X %08x %d\n", aper_size, membase2, ret);
+    } else
+      aper_size = 0x8000000;
+  }
+
+  pI830->aper_size = aper_size;
+
+
   /* We need to reduce the stolen size, by the GTT and the popup.
    * The GTT varying according the the FbMapSize and the popup is 4KB */
   range = (ctx->shared.fbSize / (1024*1024)) + 4;
@@ -577,7 +605,8 @@ I830AllocateMemory(const DRIDriverContext *ctx, I830Rec *pI830)
     fprintf(stderr,"unable to allocate context buffer %ld\n", ret);
     return FALSE;
   }
-  
+
+#if 0  
   memset(&(pI830->TexMem), 0, sizeof(pI830->TexMem));
   pI830->TexMem.Key = -1;
 
@@ -588,6 +617,7 @@ I830AllocateMemory(const DRIDriverContext *ctx, I830Rec *pI830)
     fprintf(stderr,"unable to allocate texture memory %ld\n", ret);
     return FALSE;
   }
+#endif
 
   return TRUE;
 }
@@ -605,10 +635,27 @@ I830BindMemory(const DRIDriverContext *ctx, I830Rec *pI830)
     return FALSE;
   if (!BindAgpRange(ctx, &pI830->ContextMem))
     return FALSE;
+#if 0
   if (!BindAgpRange(ctx, &pI830->TexMem))
     return FALSE;
-
+#endif
   return TRUE;
+}
+
+static void SetupDRIMM(const DRIDriverContext *ctx, I830Rec *pI830)
+{
+  unsigned long aperEnd = ROUND_DOWN_TO(pI830->aper_size, GTT_PAGE_SIZE) / GTT_PAGE_SIZE;
+  unsigned long aperStart = ROUND_TO(pI830->aper_size - KB(32768), GTT_PAGE_SIZE) / GTT_PAGE_SIZE;
+
+  fprintf(stderr, "aper size is %08X\n", ctx->shared.fbSize);
+  if (drmMMInit(ctx->drmFD, aperStart, aperEnd - aperStart, DRM_BO_MEM_TT)) {
+      fprintf(stderr,
+	      "DRM MM Initialization Failed\n");
+  } else {
+    fprintf(stderr,
+	    "DRM MM Initialized at offset 0x%lx length %d page\n", aperStart, aperEnd-aperStart);
+  }
+
 }
 
 static Bool
@@ -810,6 +857,7 @@ I830DRIMapScreenRegions(DRIDriverContext *ctx, I830Rec *pI830, drmI830Sarea *sar
    fprintf(stderr, "[drm] Depth Buffer = 0x%08x\n",
               sarea->depth_handle);
 
+#if 0
    if (drmAddMap(ctx->drmFD,
 		 (drm_handle_t)sarea->tex_offset,
 		 sarea->tex_size, DRM_AGP, 0,
@@ -820,7 +868,7 @@ I830DRIMapScreenRegions(DRIDriverContext *ctx, I830Rec *pI830, drmI830Sarea *sar
    }
    fprintf(stderr, "[drm] textures = 0x%08x\n",
 	      sarea->tex_handle);
-
+#endif
    return TRUE;
 }
 
@@ -848,29 +896,6 @@ I830DRIUnmapScreenRegions(const DRIDriverContext *ctx, I830Rec *pI830, drmI830Sa
    }
 }
 
-static void
-I830InitTextureHeap(const DRIDriverContext *ctx, I830Rec *pI830, drmI830Sarea *sarea)
-{
-   /* Start up the simple memory manager for agp space */
-   drmI830MemInitHeap drmHeap;
-   drmHeap.region = I830_MEM_REGION_AGP;
-   drmHeap.start  = 0;
-   drmHeap.size   = sarea->tex_size;
-      
-   if (drmCommandWrite(ctx->drmFD, DRM_I830_INIT_HEAP,
-			  &drmHeap, sizeof(drmHeap))) {
-      fprintf(stderr,
-		    "[drm] Failed to initialized agp heap manager\n");
-   } else {
-      fprintf(stderr,
-		    "[drm] Initialized kernel agp heap manager, %d\n",
-		    sarea->tex_size);
-
-      I830SetParam(ctx, I830_SETPARAM_TEX_LRU_LOG_GRANULARITY, 
-		      sarea->log_tex_granularity);
-   }
-}
-
 static Bool
 I830DRIDoMappings(DRIDriverContext *ctx, I830Rec *pI830, drmI830Sarea *sarea)
 {
@@ -892,7 +917,7 @@ I830DRIDoMappings(DRIDriverContext *ctx, I830Rec *pI830, drmI830Sarea *sarea)
    /* init to zero to be safe */
 
   I830DRIMapScreenRegions(ctx, pI830, sarea);
-  I830InitTextureHeap(ctx, pI830, sarea);
+  SetupDRIMM(ctx, pI830);
 
    if (ctx->pciDevice != PCI_CHIP_845_G &&
        ctx->pciDevice != PCI_CHIP_I830_M) {
@@ -1084,6 +1109,10 @@ I830ScreenInit(DRIDriverContext *ctx, I830Rec *pI830)
      return FALSE;
    }
 
+   pSAREAPriv->rotated_offset = -1;
+   pSAREAPriv->rotated_size = 0;
+   pSAREAPriv->rotated_pitch = ctx->shared.virtualWidth;
+
    pSAREAPriv->front_offset = pI830->FrontBuffer.Start;
    pSAREAPriv->front_size = pI830->FrontBuffer.Size;
    pSAREAPriv->width = ctx->shared.virtualWidth;
@@ -1095,8 +1124,10 @@ I830ScreenInit(DRIDriverContext *ctx, I830Rec *pI830)
    pSAREAPriv->back_size = pI830->BackBuffer.Size;
    pSAREAPriv->depth_offset = pI830->DepthBuffer.Start;
    pSAREAPriv->depth_size = pI830->DepthBuffer.Size;
+#if 0
    pSAREAPriv->tex_offset = pI830->TexMem.Start;
    pSAREAPriv->tex_size = pI830->TexMem.Size;
+#endif
    pSAREAPriv->log_tex_granularity = pI830->TexGranularity;
 
    ctx->driverClientMsg = malloc(sizeof(I830DRIRec));
@@ -1108,14 +1139,6 @@ I830ScreenInit(DRIDriverContext *ctx, I830Rec *pI830)
    pI830DRI->height = ctx->shared.virtualHeight;
    pI830DRI->mem = ctx->shared.fbSize;
    pI830DRI->cpp = ctx->cpp;
-   pI830DRI->backOffset = pI830->BackBuffer.Start;
-   pI830DRI->backPitch = pI830->BackBuffer.Pitch; 
-
-   pI830DRI->depthOffset = pI830->DepthBuffer.Start;
-   pI830DRI->depthPitch = pI830->DepthBuffer.Pitch; 
-
-   pI830DRI->fbOffset = pI830->FrontBuffer.Start;
-   pI830DRI->fbStride = pI830->FrontBuffer.Pitch;
 
    pI830DRI->bitsPerPixel = ctx->bpp;
    pI830DRI->sarea_priv_offset = sizeof(drm_sarea_t);

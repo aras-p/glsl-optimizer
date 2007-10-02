@@ -285,7 +285,7 @@ static void brw_wm_populate_key( struct brw_context *brw,
 
 
    /* BRW_NEW_WM_INPUT_DIMENSIONS */
-   key->projtex_mask = brw->wm.input_size_masks[4-1]; 
+   key->projtex_mask = brw->wm.input_size_masks[4-1] >> (FRAG_ATTRIB_TEX0 - FRAG_ATTRIB_WPOS); 
 
    /* _NEW_LIGHT */
    key->flat_shade = (brw->attribs.Light->ShadeModel == GL_FLAT);

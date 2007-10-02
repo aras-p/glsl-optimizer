@@ -1401,6 +1401,11 @@ void WMesaSwapBuffers( HDC hdc )
     }
 }
 
+void WMesaShareLists(WMesaContext ctx_to_share, WMesaContext ctx)
+{
+	_mesa_share_state(&ctx->gl_ctx, &ctx_to_share->gl_ctx);	
+}
+
 /* This is hopefully a temporary hack to define some needed dispatch
  * table entries.  Hopefully, I'll find a better solution.  The
  * dispatch table generation scripts ought to be making these dummy

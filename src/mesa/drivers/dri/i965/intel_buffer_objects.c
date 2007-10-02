@@ -103,8 +103,7 @@ static void intel_bufferobj_data( GLcontext *ctx,
    obj->Size = size;
    obj->Usage = usage;
 
-   bmBufferDataAUB(intel, intel_obj->buffer, size, data, 0,
-		   0, 0);
+   bmBufferData(intel, intel_obj->buffer, size, data, 0);
 }
 
 
@@ -125,7 +124,7 @@ static void intel_bufferobj_subdata( GLcontext *ctx,
    struct intel_buffer_object *intel_obj = intel_buffer_object(obj);
 
    assert(intel_obj);
-   bmBufferSubDataAUB(intel, intel_obj->buffer, offset, size, data, 0, 0);
+   bmBufferSubData(intel, intel_obj->buffer, offset, size, data);
 }
 
 
@@ -181,7 +180,7 @@ static GLboolean intel_bufferobj_unmap( GLcontext *ctx,
    assert(intel_obj);
    assert(intel_obj->buffer);
    assert(obj->Pointer);
-   bmUnmapBufferAUB(intel, intel_obj->buffer, 0, 0);
+   bmUnmapBuffer(intel, intel_obj->buffer);
    obj->Pointer = NULL;
    return GL_TRUE;
 }

@@ -30,43 +30,11 @@
 
 #include "intel_context.h"
 
-extern void intelWaitAgeLocked( intelContextPtr intel, int age, GLboolean unlock );
+void intelWaitIrq(intelScreenPrivate *intelScreen, int seq);
+int intelEmitIrqLocked(intelScreenPrivate *intelScreen);
 
-extern void intelClear(GLcontext *ctx, GLbitfield mask);
-
-extern void intelPageFlip( const __DRIdrawablePrivate *dpriv );
-
-extern void intelRotateWindow(intelContextPtr intel,
-                              __DRIdrawablePrivate *dPriv, GLuint srcBuffer);
-
-extern void intelWaitForIdle( intelContextPtr intel );
-extern void intelFlushBatch( intelContextPtr intel, GLboolean refill );
-extern void intelFlushBatchLocked( intelContextPtr intel,
-				   GLboolean ignore_cliprects,
-				   GLboolean refill,
-				   GLboolean allow_unlock);
-extern void intelRefillBatchLocked( intelContextPtr intel, GLboolean allow_unlock );
-extern void intelFinish( GLcontext *ctx );
-extern void intelFlush( GLcontext *ctx );
-extern void intelglFlush( GLcontext *ctx );
-
-extern void *intelAllocateAGP( intelContextPtr intel, GLsizei size );
-extern void intelFreeAGP( intelContextPtr intel, void *pointer );
-
-extern void *intelAllocateMemoryMESA( __DRInativeDisplay *dpy, int scrn, 
-				      GLsizei size, GLfloat readfreq,
-				      GLfloat writefreq, GLfloat priority );
-
-extern void intelFreeMemoryMESA( __DRInativeDisplay *dpy, int scrn, 
-				 GLvoid *pointer );
-
-extern GLuint intelGetMemoryOffsetMESA( __DRInativeDisplay *dpy, int scrn, const GLvoid *pointer );
-extern GLboolean intelIsAgpMemory( intelContextPtr intel, const GLvoid *pointer,
-				  GLint size );
-
-extern GLuint intelAgpOffsetFromVirtual( intelContextPtr intel, const GLvoid *p );
-
-extern void intelWaitIrq( intelContextPtr intel, int seq );
-extern u_int32_t intelGetLastFrame (intelContextPtr intel);
-extern int intelEmitIrqLocked( intelContextPtr intel );
+void intel_batch_ioctl(struct intel_context *intel,
+                       GLuint start_offset,
+                       GLuint used,
+                       GLboolean ignore_cliprects, GLboolean allow_unlock);
 #endif

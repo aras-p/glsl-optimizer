@@ -46,6 +46,7 @@
 #include "drivers/common/driverfuncs.h"
 
 #include "intel_screen.h"
+#include "intel_chipset.h"
 
 #include "i830_dri.h"
 #include "i830_common.h"
@@ -66,6 +67,7 @@
 int INTEL_DEBUG = (0);
 #endif
 
+#define need_GL_NV_point_sprite
 #define need_GL_ARB_multisample
 #define need_GL_ARB_point_parameters
 #define need_GL_ARB_texture_compression
@@ -81,6 +83,7 @@ int INTEL_DEBUG = (0);
 #define need_GL_EXT_fog_coord
 #define need_GL_EXT_multi_draw_arrays
 #define need_GL_EXT_secondary_color
+#define need_GL_EXT_point_parameters
 #include "extension_helper.h"
 
 #ifndef VERBOSE
@@ -146,6 +149,7 @@ const struct dri_extension card_extensions[] =
     { "GL_ARB_multisample",                GL_ARB_multisample_functions },
     { "GL_ARB_multitexture",               NULL },
     { "GL_ARB_point_parameters",           GL_ARB_point_parameters_functions },
+    { "GL_NV_point_sprite",                GL_NV_point_sprite_functions },
     { "GL_ARB_texture_border_clamp",       NULL },
     { "GL_ARB_texture_compression",        GL_ARB_texture_compression_functions },
     { "GL_ARB_texture_cube_map",           NULL },
@@ -158,6 +162,8 @@ const struct dri_extension card_extensions[] =
     { "GL_NV_texture_rectangle",           NULL },
     { "GL_EXT_texture_rectangle",          NULL },
     { "GL_ARB_texture_rectangle",          NULL },
+    { "GL_ARB_point_sprite",               NULL},
+    { "GL_ARB_point_parameters",	   NULL }, 
     { "GL_ARB_vertex_buffer_object",       GL_ARB_vertex_buffer_object_functions },
     { "GL_ARB_vertex_program",             GL_ARB_vertex_program_functions },
     { "GL_ARB_window_pos",                 GL_ARB_window_pos_functions },
@@ -177,6 +183,7 @@ const struct dri_extension card_extensions[] =
     { "GL_EXT_texture_env_dot3",           NULL },
     { "GL_EXT_texture_filter_anisotropic", NULL },
     { "GL_EXT_texture_lod_bias",           NULL },
+    { "GL_EXT_texture_sRGB",               NULL },
     { "GL_3DFX_texture_compression_FXT1",  NULL },
     { "GL_APPLE_client_storage",           NULL },
     { "GL_MESA_pack_invert",               NULL },
@@ -219,6 +226,7 @@ static const struct dri_debug_control debug_control[] =
     { "thre",  DEBUG_SINGLE_THREAD },
     { "wm",    DEBUG_WM },
     { "vs",    DEBUG_VS },
+    { "bat",   DEBUG_BATCH },
     { NULL,    0 }
 };
 
@@ -265,7 +273,7 @@ intelBeginQuery(GLcontext *ctx, GLenum target, struct gl_query_object *q)
 	};
 	intel->stats_wm++;
 	intelFinish(&intel->ctx);
-	drmCommandRead(intel->driFd, DRM_I830_MMIO, &io, sizeof(io));
+	drmCommandWrite(intel->driFd, DRM_I830_MMIO, &io, sizeof(io));
 }
 
 static void
@@ -279,7 +287,7 @@ intelEndQuery(GLcontext *ctx, GLenum target, struct gl_query_object *q)
 		.data = &tmp
 	};
 	intelFinish(&intel->ctx);
-	drmCommandRead(intel->driFd, DRM_I830_MMIO, &io, sizeof(io));
+	drmCommandWrite(intel->driFd, DRM_I830_MMIO, &io, sizeof(io));
 	q->Result = tmp - q->Result;
 	q->Ready = GL_TRUE;
 	intel->stats_wm--;
@@ -570,6 +578,10 @@ GLboolean intelMakeCurrent(__DRIcontextPrivate *driContextPriv,
    if (driContextPriv) {
       struct intel_context *intel = (struct intel_context *) driContextPriv->driverPrivate;
 
+      if (intel->driReadDrawable != driReadPriv) {
+          intel->driReadDrawable = driReadPriv;
+      }
+
       if ( intel->driDrawable != driDrawPriv ) {
 	 /* Shouldn't the readbuffer be stored also? */
 	 driDrawableInitVBlank( driDrawPriv, intel->vblank_flags,
@@ -658,19 +670,12 @@ void LOCK_HARDWARE( struct intel_context *intel )
 
    intel->locked = 1;
 
-   if (intel->aub_wrap) {
-      bm_fake_NotifyContendedLockTake( intel ); 
-      intel->vtbl.lost_hardware( intel );
-      intel->vtbl.aub_wrap(intel);
-      intel->aub_wrap = 0;
-   }
-
    if (bmError(intel)) {
       bmEvictAll(intel);
       intel->vtbl.lost_hardware( intel );
    }
 
-   /* Make sure nothing has been emitted prior to getting the lock: 
+   /* Make sure nothing has been emitted prior to getting the lock:
     */
    assert(intel->batch->map == 0);
 
@@ -702,8 +707,6 @@ void UNLOCK_HARDWARE( struct intel_context *intel )
    intel_batchbuffer_unmap(intel->batch);
    intel->vtbl.note_unlock( intel );
    intel->locked = 0;
-
-
 
    DRM_UNLOCK(intel->driFd, intel->driHwLock, intel->hHWContext);
    _glthread_UNLOCK_MUTEX(lockMutex); 

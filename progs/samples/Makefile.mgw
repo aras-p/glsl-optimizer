@@ -53,31 +53,15 @@
 
 TOP = ../..
 
-include $(TOP)/configs/config.mgw
-ALL_USING_STDCALL ?= 1
-GL_USING_STDCALL ?= 1
-GLUT_USING_STDCALL ?= 1
-
 CC = mingw32-gcc
 CFLAGS = -Wall -pedantic
-CFLAGS += -O2 -ffast-math
+CFLAGS += -O2 -ffast-math -D_DLL
 CFLAGS += -I$(TOP)/include -I../util
 ifeq ($(FX),1)
   CFLAGS += -DFX
 endif
 
 CFLAGS += -DGLUT_DISABLE_ATEXIT_HACK
-
-ifeq ($(GL_USING_STDCALL),0)
-  CFLAGS += -DGL_NO_STDCALL
-endif
-
-ifeq ($(GLUT_USING_STDCALL),1)
-  CFLAGS += -D_STDCALL_SUPPORTED
-else
-  CFLAGS += -DGLUT_NO_STDCALL
-endif
-
 
 LD = mingw32-g++
 LDFLAGS = -s -L$(TOP)/lib
@@ -87,7 +71,8 @@ LDLIBS = -lglut32 -lglu32 -lopengl32
 .c.o:
 	$(CC) -o $@ $(CFLAGS) -c $<
 %.exe: ../util/readtex.o ../util/showbuffer.o %.o
-	$(LD) -o $@ $(LDFLAGS) $^ $(LDLIBS)
+	$(LD) -o $@ $(LDFLAGS) $(LDLIBS) $^
+
 
 all:
 	$(error Must specify <filename.exe> to build)

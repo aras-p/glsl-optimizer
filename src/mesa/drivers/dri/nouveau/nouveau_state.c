@@ -100,6 +100,14 @@ static void nouveauDepthRange(GLcontext *ctx, GLclampd near, GLclampd far)
     nouveauCalcViewport(ctx);
 }
 
+static void nouveauUpdateProjectionMatrix(GLcontext *ctx)
+{
+}
+
+static void nouveauUpdateModelviewMatrix(GLcontext *ctx)
+{
+}
+
 static void nouveauDDUpdateHWState(GLcontext *ctx)
 {
     nouveauContextPtr nmesa = NOUVEAU_CONTEXT(ctx);
@@ -141,6 +149,15 @@ static void nouveauDDUpdateHWState(GLcontext *ctx)
 
 static void nouveauDDInvalidateState(GLcontext *ctx, GLuint new_state)
 {
+	nouveauContextPtr nmesa = NOUVEAU_CONTEXT(ctx);
+
+	if ( new_state & _NEW_PROJECTION ) {
+		nmesa->hw_func.UpdateProjectionMatrix(ctx);
+	}
+        if ( new_state & _NEW_MODELVIEW ) {
+		nmesa->hw_func.UpdateModelviewMatrix(ctx);
+	}
+
     _swrast_InvalidateState( ctx, new_state );
     _swsetup_InvalidateState( ctx, new_state );
     _vbo_InvalidateState( ctx, new_state );
@@ -154,9 +171,6 @@ void nouveauDDInitState(nouveauContextPtr nmesa)
     uint32_t type = nmesa->screen->card->type;
     switch(type)
     {
-        case NV_03:
-            /* Unimplemented */
-            break;
         case NV_04:
         case NV_05:
             nv04InitStateFuncs(nmesa->glCtx, &nmesa->glCtx->Driver);
@@ -186,6 +200,8 @@ void nouveauDDInitState(nouveauContextPtr nmesa)
 /* Initialize the driver's state functions */
 void nouveauDDInitStateFuncs(GLcontext *ctx)
 {
+   nouveauContextPtr nmesa = NOUVEAU_CONTEXT(ctx);
+
    ctx->Driver.UpdateState		= nouveauDDInvalidateState;
 
    ctx->Driver.ClearIndex		= NULL;
@@ -236,6 +252,10 @@ void nouveauDDInitStateFuncs(GLcontext *ctx)
    ctx->Driver.CopyColorSubTable = _swrast_CopyColorSubTable;
    ctx->Driver.CopyConvolutionFilter1D = _swrast_CopyConvolutionFilter1D;
    ctx->Driver.CopyConvolutionFilter2D = _swrast_CopyConvolutionFilter2D;
+
+   /* Matrix updates */
+   nmesa->hw_func.UpdateProjectionMatrix = nouveauUpdateProjectionMatrix;
+   nmesa->hw_func.UpdateModelviewMatrix = nouveauUpdateModelviewMatrix;
 }
 
 #define STATE_INIT(a) if (ctx->Driver.a) ctx->Driver.a
@@ -276,6 +296,7 @@ void nouveauInitState(GLcontext *ctx)
     STATE_INIT(CullFace)( ctx, ctx->Polygon.CullFaceMode );
     STATE_INIT(DepthFunc)( ctx, ctx->Depth.Func );
     STATE_INIT(DepthMask)( ctx, ctx->Depth.Mask );
+    STATE_INIT(DepthRange)( ctx, ctx->Viewport.Near, ctx->Viewport.Far );
 
     STATE_INIT(Enable)( ctx, GL_ALPHA_TEST, ctx->Color.AlphaEnabled );
     STATE_INIT(Enable)( ctx, GL_BLEND, ctx->Color.BlendEnabled );

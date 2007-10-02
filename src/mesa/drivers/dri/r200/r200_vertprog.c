@@ -30,10 +30,10 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
  *   Aapo Tahkola <aet@rasterburn.org>
  *   Roland Scheidegger <rscheidegger_lists@hispeed.ch>
  */
-#include "glheader.h"
-#include "macros.h"
-#include "enums.h"
-#include "program.h"
+#include "main/glheader.h"
+#include "main/macros.h"
+#include "main/enums.h"
+#include "shader/program.h"
 #include "shader/prog_instruction.h"
 #include "shader/prog_parameter.h"
 #include "shader/prog_statevars.h"

@@ -18,7 +18,7 @@ PROGS = accum bitmap1 bitmap2 blendeq blendxor copy cursor depth eval fog \
 .SUFFIXES: .c
 
 .c: $(LIB_DEP)
-	$(CC) -I$(INCDIR) $(CFLAGS) $< $(APP_LIB_DEPS) -o $@
+	$(CC) -I$(INCDIR) $(CFLAGS) $(LDFLAGS) $< $(APP_LIB_DEPS) -o $@
 
 
 ##### TARGETS #####
@@ -27,7 +27,7 @@ default: $(PROGS)
 
 
 sphere: sphere.o readtex.o
-	$(CC) -I$(INCDIR) $(CFLAGS) sphere.o readtex.o $(APP_LIB_DEPS) -o $@
+	$(CC) -I$(INCDIR) $(CFLAGS) $(LDFLAGS) sphere.o readtex.o $(APP_LIB_DEPS) -o $@
 
 sphere.o: sphere.c readtex.h
 	$(CC) -c -I$(INCDIR) $(CFLAGS) sphere.c

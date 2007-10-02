@@ -46,46 +46,42 @@
 /* ================================================================
  * Texture combine functions
  */
-static GLuint pass_through( GLuint *state, GLuint blendUnit )
+static GLuint
+pass_through(GLuint * state, GLuint blendUnit)
 {
    state[0] = (_3DSTATE_MAP_BLEND_OP_CMD(blendUnit) |
-	       TEXPIPE_COLOR |
-	       ENABLE_TEXOUTPUT_WRT_SEL |
-	       TEXOP_OUTPUT_CURRENT |
-	       DISABLE_TEX_CNTRL_STAGE |
-	       TEXOP_SCALE_1X |
-	       TEXOP_MODIFY_PARMS |
-	       TEXBLENDOP_ARG1);
+               TEXPIPE_COLOR |
+               ENABLE_TEXOUTPUT_WRT_SEL |
+               TEXOP_OUTPUT_CURRENT |
+               DISABLE_TEX_CNTRL_STAGE |
+               TEXOP_SCALE_1X | TEXOP_MODIFY_PARMS | TEXBLENDOP_ARG1);
    state[1] = (_3DSTATE_MAP_BLEND_OP_CMD(blendUnit) |
-	       TEXPIPE_ALPHA |
-	       ENABLE_TEXOUTPUT_WRT_SEL |
-	       TEXOP_OUTPUT_CURRENT |
-	       TEXOP_SCALE_1X |
-	       TEXOP_MODIFY_PARMS |
-	       TEXBLENDOP_ARG1);
+               TEXPIPE_ALPHA |
+               ENABLE_TEXOUTPUT_WRT_SEL |
+               TEXOP_OUTPUT_CURRENT |
+               TEXOP_SCALE_1X | TEXOP_MODIFY_PARMS | TEXBLENDOP_ARG1);
    state[2] = (_3DSTATE_MAP_BLEND_ARG_CMD(blendUnit) |
-	       TEXPIPE_COLOR |
-	       TEXBLEND_ARG1 |
-	       TEXBLENDARG_MODIFY_PARMS |
-	       TEXBLENDARG_CURRENT);
+               TEXPIPE_COLOR |
+               TEXBLEND_ARG1 |
+               TEXBLENDARG_MODIFY_PARMS | TEXBLENDARG_CURRENT);
    state[3] = (_3DSTATE_MAP_BLEND_ARG_CMD(blendUnit) |
-	       TEXPIPE_ALPHA |
-	       TEXBLEND_ARG1 |
-	       TEXBLENDARG_MODIFY_PARMS |
-	       TEXBLENDARG_CURRENT);
+               TEXPIPE_ALPHA |
+               TEXBLEND_ARG1 |
+               TEXBLENDARG_MODIFY_PARMS | TEXBLENDARG_CURRENT);
 
    return 4;
 }
 
-static GLuint emit_factor( GLuint blendUnit, GLuint *state, GLuint count, 
-			   const GLfloat *factor )
+static GLuint
+emit_factor(GLuint blendUnit, GLuint * state, GLuint count,
+            const GLfloat * factor)
 {
    GLubyte r, g, b, a;
    GLuint col;
-      
+
    if (0)
       fprintf(stderr, "emit constant %d: %.2f %.2f %.2f %.2f\n",
-	  blendUnit, factor[0], factor[1], factor[2], factor[3]);
+              blendUnit, factor[0], factor[1], factor[2], factor[3]);
 
    UNCLAMPED_FLOAT_TO_UBYTE(r, factor[0]);
    UNCLAMPED_FLOAT_TO_UBYTE(g, factor[1]);
@@ -94,21 +90,27 @@ static GLuint emit_factor( GLuint blendUnit, GLuint *state, GLuint count,
 
    col = ((a << 24) | (r << 16) | (g << 8) | b);
 
-   state[count++] = _3DSTATE_COLOR_FACTOR_N_CMD(blendUnit); 
+   state[count++] = _3DSTATE_COLOR_FACTOR_N_CMD(blendUnit);
    state[count++] = col;
 
    return count;
 }
 
 
-static __inline__ GLuint GetTexelOp(GLint unit)
+static INLINE GLuint
+GetTexelOp(GLint unit)
 {
-   switch(unit) {
-   case 0: return TEXBLENDARG_TEXEL0;
-   case 1: return TEXBLENDARG_TEXEL1;
-   case 2: return TEXBLENDARG_TEXEL2;
-   case 3: return TEXBLENDARG_TEXEL3;
-   default: return TEXBLENDARG_TEXEL0;
+   switch (unit) {
+   case 0:
+      return TEXBLENDARG_TEXEL0;
+   case 1:
+      return TEXBLENDARG_TEXEL1;
+   case 2:
+      return TEXBLENDARG_TEXEL2;
+   case 3:
+      return TEXBLENDARG_TEXEL3;
+   default:
+      return TEXBLENDARG_TEXEL0;
    }
 }
 
@@ -132,12 +134,10 @@ static __inline__ GLuint GetTexelOp(GLint unit)
  * partial support for the extension?
  */
 GLuint
-i830SetTexEnvCombine(i830ContextPtr i830,
-		     const struct gl_tex_env_combine_state * combine,
-		     GLint blendUnit,
-		     GLuint texel_op,
-		     GLuint *state,
-		     const GLfloat *factor )
+i830SetTexEnvCombine(struct i830_context * i830,
+                     const struct gl_tex_env_combine_state * combine,
+                     GLint blendUnit,
+                     GLuint texel_op, GLuint * state, const GLfloat * factor)
 {
    const GLuint numColorArgs = combine->_NumArgsRGB;
    const GLuint numAlphaArgs = combine->_NumArgsA;
@@ -162,7 +162,7 @@ i830SetTexEnvCombine(i830ContextPtr i830,
       TEXPIPE_ALPHA | TEXBLEND_ARG0 | TEXBLENDARG_MODIFY_PARMS,
    };
 
-   if(INTEL_DEBUG&DEBUG_TEXTURE)
+   if (INTEL_DEBUG & DEBUG_TEXTURE)
       fprintf(stderr, "%s\n", __FUNCTION__);
 
 
@@ -188,23 +188,23 @@ i830SetTexEnvCombine(i830ContextPtr i830,
    }
 
 
-   switch(combine->ModeRGB) {
-   case GL_REPLACE: 
+   switch (combine->ModeRGB) {
+   case GL_REPLACE:
       blendop = TEXBLENDOP_ARG1;
       break;
-   case GL_MODULATE: 
+   case GL_MODULATE:
       blendop = TEXBLENDOP_MODULATE;
       break;
-   case GL_ADD: 
+   case GL_ADD:
       blendop = TEXBLENDOP_ADD;
       break;
    case GL_ADD_SIGNED:
-      blendop = TEXBLENDOP_ADDSIGNED; 
+      blendop = TEXBLENDOP_ADDSIGNED;
       break;
    case GL_INTERPOLATE:
-      blendop = TEXBLENDOP_BLEND; 
+      blendop = TEXBLENDOP_BLEND;
       break;
-   case GL_SUBTRACT: 
+   case GL_SUBTRACT:
       blendop = TEXBLENDOP_SUBTRACT;
       break;
    case GL_DOT3_RGB_EXT:
@@ -215,55 +215,54 @@ i830SetTexEnvCombine(i830ContextPtr i830,
    case GL_DOT3_RGBA:
       blendop = TEXBLENDOP_DOT3;
       break;
-   default: 
-      return pass_through( state, blendUnit );
+   default:
+      return pass_through(state, blendUnit);
    }
 
    blendop |= (rgb_shift << TEXOP_SCALE_SHIFT);
 
 
    /* Handle RGB args */
-   for(i = 0; i < 3; i++) {
-      switch(combine->SourceRGB[i]) {
-      case GL_TEXTURE: 
-	 args_RGB[i] = texel_op;
-	 break;
+   for (i = 0; i < 3; i++) {
+      switch (combine->SourceRGB[i]) {
+      case GL_TEXTURE:
+         args_RGB[i] = texel_op;
+         break;
       case GL_TEXTURE0:
       case GL_TEXTURE1:
       case GL_TEXTURE2:
       case GL_TEXTURE3:
-	 args_RGB[i] = GetTexelOp( combine->SourceRGB[i] - GL_TEXTURE0 );
-	 break;
+         args_RGB[i] = GetTexelOp(combine->SourceRGB[i] - GL_TEXTURE0);
+         break;
       case GL_CONSTANT:
-	 args_RGB[i] = TEXBLENDARG_FACTOR_N; 
-	 need_factor = 1;
-	 break;
+         args_RGB[i] = TEXBLENDARG_FACTOR_N;
+         need_factor = 1;
+         break;
       case GL_PRIMARY_COLOR:
-	 args_RGB[i] = TEXBLENDARG_DIFFUSE;
-	 break;
+         args_RGB[i] = TEXBLENDARG_DIFFUSE;
+         break;
       case GL_PREVIOUS:
-	 args_RGB[i] = TEXBLENDARG_CURRENT; 
-	 break;
-      default: 
-	 return pass_through( state, blendUnit );
+         args_RGB[i] = TEXBLENDARG_CURRENT;
+         break;
+      default:
+         return pass_through(state, blendUnit);
       }
 
-      switch(combine->OperandRGB[i]) {
-      case GL_SRC_COLOR: 
-	 args_RGB[i] |= 0;
-	 break;
-      case GL_ONE_MINUS_SRC_COLOR: 
-	 args_RGB[i] |= TEXBLENDARG_INV_ARG;
-	 break;
-      case GL_SRC_ALPHA: 
-	 args_RGB[i] |= TEXBLENDARG_REPLICATE_ALPHA;
-	 break;
-      case GL_ONE_MINUS_SRC_ALPHA: 
-	 args_RGB[i] |= (TEXBLENDARG_REPLICATE_ALPHA | 
-			 TEXBLENDARG_INV_ARG);
-	 break;
-      default: 
-	 return pass_through( state, blendUnit );
+      switch (combine->OperandRGB[i]) {
+      case GL_SRC_COLOR:
+         args_RGB[i] |= 0;
+         break;
+      case GL_ONE_MINUS_SRC_COLOR:
+         args_RGB[i] |= TEXBLENDARG_INV_ARG;
+         break;
+      case GL_SRC_ALPHA:
+         args_RGB[i] |= TEXBLENDARG_REPLICATE_ALPHA;
+         break;
+      case GL_ONE_MINUS_SRC_ALPHA:
+         args_RGB[i] |= (TEXBLENDARG_REPLICATE_ALPHA | TEXBLENDARG_INV_ARG);
+         break;
+      default:
+         return pass_through(state, blendUnit);
       }
    }
 
@@ -275,76 +274,76 @@ i830SetTexEnvCombine(i830ContextPtr i830,
     * Note - the global factor is set up with alpha == .5, so 
     * the alpha part of the DOT4 calculation should be zero.
     */
-   if ( combine->ModeRGB == GL_DOT3_RGBA_EXT || 
-	combine->ModeRGB == GL_DOT3_RGBA ) {
+   if (combine->ModeRGB == GL_DOT3_RGBA_EXT ||
+       combine->ModeRGB == GL_DOT3_RGBA) {
       ablendop = TEXBLENDOP_DOT4;
-      args_A[0] = TEXBLENDARG_FACTOR; /* the global factor */
+      args_A[0] = TEXBLENDARG_FACTOR;   /* the global factor */
       args_A[1] = TEXBLENDARG_FACTOR;
       args_A[2] = TEXBLENDARG_FACTOR;
    }
    else {
-      switch(combine->ModeA) {
-      case GL_REPLACE: 
-	 ablendop = TEXBLENDOP_ARG1;
-	 break;
-      case GL_MODULATE: 
-	 ablendop = TEXBLENDOP_MODULATE;
-	 break;
-      case GL_ADD: 
-	 ablendop = TEXBLENDOP_ADD;
-	 break;
+      switch (combine->ModeA) {
+      case GL_REPLACE:
+         ablendop = TEXBLENDOP_ARG1;
+         break;
+      case GL_MODULATE:
+         ablendop = TEXBLENDOP_MODULATE;
+         break;
+      case GL_ADD:
+         ablendop = TEXBLENDOP_ADD;
+         break;
       case GL_ADD_SIGNED:
-	 ablendop = TEXBLENDOP_ADDSIGNED; 
-	 break;
+         ablendop = TEXBLENDOP_ADDSIGNED;
+         break;
       case GL_INTERPOLATE:
-	 ablendop = TEXBLENDOP_BLEND; 
-	 break;
-      case GL_SUBTRACT: 
-	 ablendop = TEXBLENDOP_SUBTRACT;
-	 break;
+         ablendop = TEXBLENDOP_BLEND;
+         break;
+      case GL_SUBTRACT:
+         ablendop = TEXBLENDOP_SUBTRACT;
+         break;
       default:
-	 return pass_through( state, blendUnit );
+         return pass_through(state, blendUnit);
       }
 
 
       ablendop |= (alpha_shift << TEXOP_SCALE_SHIFT);
 
       /* Handle A args */
-      for(i = 0; i < 3; i++) {
-	 switch(combine->SourceA[i]) {
-	 case GL_TEXTURE: 
-	    args_A[i] = texel_op;
-	    break;
-	 case GL_TEXTURE0:
-	 case GL_TEXTURE1:
-	 case GL_TEXTURE2:
-	 case GL_TEXTURE3:
-	    args_A[i] = GetTexelOp( combine->SourceA[i] - GL_TEXTURE0 );
-	    break;
-	 case GL_CONSTANT:
-	    args_A[i] = TEXBLENDARG_FACTOR_N; 
-	    need_factor = 1;
-	    break;
-	 case GL_PRIMARY_COLOR:
-	    args_A[i] = TEXBLENDARG_DIFFUSE; 
-	    break;
-	 case GL_PREVIOUS:
-	    args_A[i] = TEXBLENDARG_CURRENT; 
-	    break;
-	 default: 
-	    return pass_through( state, blendUnit );
-	 }
+      for (i = 0; i < 3; i++) {
+         switch (combine->SourceA[i]) {
+         case GL_TEXTURE:
+            args_A[i] = texel_op;
+            break;
+         case GL_TEXTURE0:
+         case GL_TEXTURE1:
+         case GL_TEXTURE2:
+         case GL_TEXTURE3:
+            args_A[i] = GetTexelOp(combine->SourceA[i] - GL_TEXTURE0);
+            break;
+         case GL_CONSTANT:
+            args_A[i] = TEXBLENDARG_FACTOR_N;
+            need_factor = 1;
+            break;
+         case GL_PRIMARY_COLOR:
+            args_A[i] = TEXBLENDARG_DIFFUSE;
+            break;
+         case GL_PREVIOUS:
+            args_A[i] = TEXBLENDARG_CURRENT;
+            break;
+         default:
+            return pass_through(state, blendUnit);
+         }
 
-	 switch(combine->OperandA[i]) {
-	 case GL_SRC_ALPHA: 
-	    args_A[i] |= 0;
-	    break;
-	 case GL_ONE_MINUS_SRC_ALPHA: 
-	    args_A[i] |= TEXBLENDARG_INV_ARG;
-	    break;
-	 default: 
-	    return pass_through( state, blendUnit );
-	 }
+         switch (combine->OperandA[i]) {
+         case GL_SRC_ALPHA:
+            args_A[i] |= 0;
+            break;
+         case GL_ONE_MINUS_SRC_ALPHA:
+            args_A[i] |= TEXBLENDARG_INV_ARG;
+            break;
+         default:
+            return pass_through(state, blendUnit);
+         }
       }
    }
 
@@ -363,86 +362,86 @@ i830SetTexEnvCombine(i830ContextPtr i830,
 
    used = 0;
    state[used++] = (_3DSTATE_MAP_BLEND_OP_CMD(blendUnit) |
-		    TEXPIPE_COLOR |
-		    ENABLE_TEXOUTPUT_WRT_SEL |
-		    TEXOP_OUTPUT_CURRENT |
-		    DISABLE_TEX_CNTRL_STAGE |
-		    TEXOP_MODIFY_PARMS |
-		    blendop);
+                    TEXPIPE_COLOR |
+                    ENABLE_TEXOUTPUT_WRT_SEL |
+                    TEXOP_OUTPUT_CURRENT |
+                    DISABLE_TEX_CNTRL_STAGE | TEXOP_MODIFY_PARMS | blendop);
    state[used++] = (_3DSTATE_MAP_BLEND_OP_CMD(blendUnit) |
-		    TEXPIPE_ALPHA |
-		    ENABLE_TEXOUTPUT_WRT_SEL |
-		    TEXOP_OUTPUT_CURRENT |
-		    TEXOP_MODIFY_PARMS |
-		    ablendop);
+                    TEXPIPE_ALPHA |
+                    ENABLE_TEXOUTPUT_WRT_SEL |
+                    TEXOP_OUTPUT_CURRENT | TEXOP_MODIFY_PARMS | ablendop);
 
-   for ( i = 0 ; i < numColorArgs ; i++ ) {
+   for (i = 0; i < numColorArgs; i++) {
       state[used++] = (_3DSTATE_MAP_BLEND_ARG_CMD(blendUnit) |
-		       tex_blend_rgb[i] | args_RGB[i]);
+                       tex_blend_rgb[i] | args_RGB[i]);
    }
 
-   for ( i = 0 ; i < numAlphaArgs ; i++ ) {
+   for (i = 0; i < numAlphaArgs; i++) {
       state[used++] = (_3DSTATE_MAP_BLEND_ARG_CMD(blendUnit) |
-		       tex_blend_a[i] | args_A[i]);
+                       tex_blend_a[i] | args_A[i]);
    }
 
 
-   if (need_factor) 
-      return emit_factor( blendUnit, state, used, factor );
-   else 
+   if (need_factor)
+      return emit_factor(blendUnit, state, used, factor);
+   else
       return used;
 }
 
 
-static void emit_texblend( i830ContextPtr i830, GLuint unit, GLuint blendUnit,
-			   GLboolean last_stage )
+static void
+emit_texblend(struct i830_context *i830, GLuint unit, GLuint blendUnit,
+              GLboolean last_stage)
 {
    struct gl_texture_unit *texUnit = &i830->intel.ctx.Texture.Unit[unit];
    GLuint tmp[I830_TEXBLEND_SIZE], tmp_sz;
 
 
-   if (0) fprintf(stderr, "%s unit %d\n", __FUNCTION__, unit);
+   if (0)
+      fprintf(stderr, "%s unit %d\n", __FUNCTION__, unit);
 
    /* Update i830->state.TexBlend
-    */ 
-   tmp_sz = i830SetTexEnvCombine(i830, texUnit->_CurrentCombine, blendUnit, 
-				 GetTexelOp(unit), tmp,
-				 texUnit->EnvColor );
+    */
+   tmp_sz = i830SetTexEnvCombine(i830, texUnit->_CurrentCombine, blendUnit,
+                                 GetTexelOp(unit), tmp, texUnit->EnvColor);
 
-   if (last_stage) 
+   if (last_stage)
       tmp[0] |= TEXOP_LAST_STAGE;
 
    if (tmp_sz != i830->state.TexBlendWordsUsed[blendUnit] ||
-       memcmp( tmp, i830->state.TexBlend[blendUnit], tmp_sz * sizeof(GLuint))) {
-      
-      I830_STATECHANGE( i830, I830_UPLOAD_TEXBLEND(blendUnit) );
-      memcpy( i830->state.TexBlend[blendUnit], tmp, tmp_sz * sizeof(GLuint));
+       memcmp(tmp, i830->state.TexBlend[blendUnit],
+              tmp_sz * sizeof(GLuint))) {
+
+      I830_STATECHANGE(i830, I830_UPLOAD_TEXBLEND(blendUnit));
+      memcpy(i830->state.TexBlend[blendUnit], tmp, tmp_sz * sizeof(GLuint));
       i830->state.TexBlendWordsUsed[blendUnit] = tmp_sz;
    }
 
    I830_ACTIVESTATE(i830, I830_UPLOAD_TEXBLEND(blendUnit), GL_TRUE);
 }
 
-static void emit_passthrough( i830ContextPtr i830 )
+static void
+emit_passthrough(struct i830_context *i830)
 {
    GLuint tmp[I830_TEXBLEND_SIZE], tmp_sz;
    GLuint unit = 0;
 
-   tmp_sz = pass_through( tmp, unit );
+   tmp_sz = pass_through(tmp, unit);
    tmp[0] |= TEXOP_LAST_STAGE;
 
    if (tmp_sz != i830->state.TexBlendWordsUsed[unit] ||
-       memcmp( tmp, i830->state.TexBlend[unit], tmp_sz * sizeof(GLuint))) {
-      
-      I830_STATECHANGE( i830, I830_UPLOAD_TEXBLEND(unit) );
-      memcpy( i830->state.TexBlend[unit], tmp, tmp_sz * sizeof(GLuint));
+       memcmp(tmp, i830->state.TexBlend[unit], tmp_sz * sizeof(GLuint))) {
+
+      I830_STATECHANGE(i830, I830_UPLOAD_TEXBLEND(unit));
+      memcpy(i830->state.TexBlend[unit], tmp, tmp_sz * sizeof(GLuint));
       i830->state.TexBlendWordsUsed[unit] = tmp_sz;
    }
 
    I830_ACTIVESTATE(i830, I830_UPLOAD_TEXBLEND(unit), GL_TRUE);
 }
 
-void i830EmitTextureBlend( i830ContextPtr i830 )
+void
+i830EmitTextureBlend(struct i830_context *i830)
 {
    GLcontext *ctx = &i830->intel.ctx;
    GLuint unit, last_stage = 0, blendunit = 0;
@@ -450,16 +449,15 @@ void i830EmitTextureBlend( i830ContextPtr i830 )
    I830_ACTIVESTATE(i830, I830_UPLOAD_TEXBLEND_ALL, GL_FALSE);
 
    if (ctx->Texture._EnabledUnits) {
-      for (unit = 0 ; unit < ctx->Const.MaxTextureUnits ; unit++)
-	 if (ctx->Texture.Unit[unit]._ReallyEnabled) 
-	    last_stage = unit;
+      for (unit = 0; unit < ctx->Const.MaxTextureUnits; unit++)
+         if (ctx->Texture.Unit[unit]._ReallyEnabled)
+            last_stage = unit;
 
-      for (unit = 0 ; unit < ctx->Const.MaxTextureUnits ; unit++)
-	 if (ctx->Texture.Unit[unit]._ReallyEnabled) 
-	    emit_texblend( i830, unit, blendunit++, last_stage == unit );
+      for (unit = 0; unit < ctx->Const.MaxTextureUnits; unit++)
+         if (ctx->Texture.Unit[unit]._ReallyEnabled)
+            emit_texblend(i830, unit, blendunit++, last_stage == unit);
    }
    else {
-      emit_passthrough( i830 );
+      emit_passthrough(i830);
    }
 }
-

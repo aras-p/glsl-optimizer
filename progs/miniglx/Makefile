@@ -27,7 +27,7 @@ INCLUDES = \
 .SUFFIXES: .c
 
 .c:
-	$(CC) $(INCLUDES) $(CFLAGS) $< $(APP_LIB_DEPS) -o $@
+	$(CC) $(INCLUDES) $(CFLAGS) $(LDFLAGS) $< $(APP_LIB_DEPS) -o $@
 
 .c.o:
 	$(CC) -c $(INCLUDES) $(CFLAGS) $< -o $@

@@ -38,37 +38,38 @@
  * Mesa's Driver Functions
  ***************************************/
 
-static const struct dri_extension i830_extensions[] =
-{
-    { "GL_ARB_texture_env_crossbar",       NULL },
-    { NULL,                                NULL }
+static const struct dri_extension i830_extensions[] = {
+   {"GL_ARB_texture_env_crossbar", NULL},
+   {NULL, NULL}
 };
 
 
-static void i830InitDriverFunctions( struct dd_function_table *functions )
+static void
+i830InitDriverFunctions(struct dd_function_table *functions)
 {
-   intelInitDriverFunctions( functions );
-   i830InitStateFuncs( functions );
-   i830InitTextureFuncs( functions );
+   intelInitDriverFunctions(functions);
+   i830InitStateFuncs(functions);
+   i830InitTextureFuncs(functions);
 }
 
 
-GLboolean i830CreateContext( const __GLcontextModes *mesaVis,
-			    __DRIcontextPrivate *driContextPriv,
-			    void *sharedContextPrivate)
+GLboolean
+i830CreateContext(const __GLcontextModes * mesaVis,
+                  __DRIcontextPrivate * driContextPriv,
+                  void *sharedContextPrivate)
 {
    struct dd_function_table functions;
-   i830ContextPtr i830 = (i830ContextPtr) CALLOC_STRUCT(i830_context);
-   intelContextPtr intel = &i830->intel;
+   struct i830_context *i830 = CALLOC_STRUCT(i830_context);
+   struct intel_context *intel = &i830->intel;
    GLcontext *ctx = &intel->ctx;
-   GLuint i;
-   if (!i830) return GL_FALSE;
+   if (!i830)
+      return GL_FALSE;
 
-   i830InitVtbl( i830 );
-   i830InitDriverFunctions( &functions );
+   i830InitVtbl(i830);
+   i830InitDriverFunctions(&functions);
 
-   if (!intelInitContext( intel, mesaVis, driContextPriv,
-			  sharedContextPrivate, &functions )) {
+   if (!intelInitContext(intel, mesaVis, driContextPriv,
+                         sharedContextPrivate, &functions)) {
       FREE(i830);
       return GL_FALSE;
    }
@@ -77,48 +78,27 @@ GLboolean i830CreateContext( const __GLcontextModes *mesaVis,
    intel->ctx.Const.MaxTextureImageUnits = I830_TEX_UNITS;
    intel->ctx.Const.MaxTextureCoordUnits = I830_TEX_UNITS;
 
-   intel->nr_heaps = 1;
-   intel->texture_heaps[0] = 
-      driCreateTextureHeap( 0, intel,
-			    intel->intelScreen->tex.size,
-			    12,
-			    I830_NR_TEX_REGIONS,
-			    intel->sarea->texList,
-			    (unsigned *) & intel->sarea->texAge,
-			    & intel->swapped,
-			    sizeof( struct i830_texture_object ),
-			    (destroy_texture_object_t *)intelDestroyTexObj );
-
-   /* FIXME: driCalculateMaxTextureLevels assumes that mipmaps are tightly
-    * FIXME: packed, but they're not in Intel graphics hardware.
+   /* Advertise the full hardware capabilities.  The new memory
+    * manager should cope much better with overload situations:
     */
-   intel->ctx.Const.MaxTextureUnits = I830_TEX_UNITS;
-   i = driQueryOptioni( &intel->optionCache, "allow_large_textures");
-   driCalculateMaxTextureLevels( intel->texture_heaps,
-				 intel->nr_heaps,
-				 &intel->ctx.Const,
-				 4,
-				 11, /* max 2D texture size is 2048x2048 */
-				 8,  /* max 3D texture size is 256^3 */
-				 10, /* max CUBE texture size is 1024x1024 */
-				 11, /* max RECT. supported */
-				 12,
-				 GL_FALSE,
-				 i );
+   ctx->Const.MaxTextureLevels = 12;
+   ctx->Const.Max3DTextureLevels = 9;
+   ctx->Const.MaxCubeTextureLevels = 11;
+   ctx->Const.MaxTextureRectSize = (1 << 11);
+   ctx->Const.MaxTextureUnits = I830_TEX_UNITS;
 
-   _tnl_init_vertices( ctx, ctx->Const.MaxArrayLockSize + 12, 
-		       18 * sizeof(GLfloat) );
+   _tnl_init_vertices(ctx, ctx->Const.MaxArrayLockSize + 12,
+                      18 * sizeof(GLfloat));
 
    intel->verts = TNL_CONTEXT(ctx)->clipspace.vertex_buf;
 
-   driInitExtensions( ctx, i830_extensions, GL_FALSE );
+   driInitExtensions(ctx, i830_extensions, GL_FALSE);
 
-   i830InitState( i830 );
+   i830InitState(i830);
+   i830InitMetaFuncs(i830);
 
-
-   _tnl_allow_vertex_fog( ctx, 1 ); 
-   _tnl_allow_pixel_fog( ctx, 0 ); 
+   _tnl_allow_vertex_fog(ctx, 1);
+   _tnl_allow_pixel_fog(ctx, 0);
 
    return GL_TRUE;
 }
-

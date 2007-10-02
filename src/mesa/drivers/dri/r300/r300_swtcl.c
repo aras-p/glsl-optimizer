@@ -40,6 +40,7 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "enums.h"
 #include "image.h"
 #include "imports.h"
+#include "light.h"
 #include "macros.h"
 
 #include "swrast/s_context.h"

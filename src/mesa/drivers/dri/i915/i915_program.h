@@ -48,11 +48,11 @@
 #define UREG_CHANNEL_W_NEGATE_SHIFT   11
 #define UREG_CHANNEL_W_SHIFT          8
 #define UREG_CHANNEL_ZERO_NEGATE_MBZ  5
-#define UREG_CHANNEL_ZERO_SHIFT       4      
+#define UREG_CHANNEL_ZERO_SHIFT       4
 #define UREG_CHANNEL_ONE_NEGATE_MBZ   1
-#define UREG_CHANNEL_ONE_SHIFT        0      
+#define UREG_CHANNEL_ONE_SHIFT        0
 
-#define UREG_BAD          0xffffffff /* not a valid ureg */
+#define UREG_BAD          0xffffffff    /* not a valid ureg */
 
 #define X    SRC_X
 #define Y    SRC_Y
@@ -84,78 +84,75 @@
 
 /* One neat thing about the UREG representation:  
  */
-static __inline int swizzle( int reg, int x, int y, int z, int w )
+static INLINE int
+swizzle(int reg, int x, int y, int z, int w)
 {
    return ((reg & ~UREG_XYZW_CHANNEL_MASK) |
-	   CHANNEL_SRC( GET_CHANNEL_SRC( reg, x ), 0 ) |
-	   CHANNEL_SRC( GET_CHANNEL_SRC( reg, y ), 1 ) |
-	   CHANNEL_SRC( GET_CHANNEL_SRC( reg, z ), 2 ) |
-	   CHANNEL_SRC( GET_CHANNEL_SRC( reg, w ), 3 ));
+           CHANNEL_SRC(GET_CHANNEL_SRC(reg, x), 0) |
+           CHANNEL_SRC(GET_CHANNEL_SRC(reg, y), 1) |
+           CHANNEL_SRC(GET_CHANNEL_SRC(reg, z), 2) |
+           CHANNEL_SRC(GET_CHANNEL_SRC(reg, w), 3));
 }
 
 /* Another neat thing about the UREG representation:  
  */
-static __inline int negate( int reg, int x, int y, int z, int w )
+static INLINE int
+negate(int reg, int x, int y, int z, int w)
 {
-   return reg ^ (((x&1)<<UREG_CHANNEL_X_NEGATE_SHIFT)|
-		 ((y&1)<<UREG_CHANNEL_Y_NEGATE_SHIFT)|
-		 ((z&1)<<UREG_CHANNEL_Z_NEGATE_SHIFT)|
-		 ((w&1)<<UREG_CHANNEL_W_NEGATE_SHIFT));
+   return reg ^ (((x & 1) << UREG_CHANNEL_X_NEGATE_SHIFT) |
+                 ((y & 1) << UREG_CHANNEL_Y_NEGATE_SHIFT) |
+                 ((z & 1) << UREG_CHANNEL_Z_NEGATE_SHIFT) |
+                 ((w & 1) << UREG_CHANNEL_W_NEGATE_SHIFT));
 }
 
 
-extern GLuint i915_get_temp( struct i915_fragment_program *p );
-extern GLuint i915_get_utemp( struct i915_fragment_program *p );
-extern void i915_release_utemps( struct i915_fragment_program *p );
+extern GLuint i915_get_temp(struct i915_fragment_program *p);
+extern GLuint i915_get_utemp(struct i915_fragment_program *p);
+extern void i915_release_utemps(struct i915_fragment_program *p);
 
 
-extern GLuint i915_emit_texld( struct i915_fragment_program *p,
-			      GLuint dest,
-			      GLuint destmask,
-			      GLuint sampler,
-			      GLuint coord,
-			      GLuint op );
+extern GLuint i915_emit_texld(struct i915_fragment_program *p,
+                              GLuint dest,
+                              GLuint destmask,
+                              GLuint sampler, GLuint coord, GLuint op);
 
-extern GLuint i915_emit_arith( struct i915_fragment_program *p,
-			      GLuint op,
-			      GLuint dest,
-			      GLuint mask,
-			      GLuint saturate,
-			      GLuint src0,
-			      GLuint src1,
-			      GLuint src2 );
+extern GLuint i915_emit_arith(struct i915_fragment_program *p,
+                              GLuint op,
+                              GLuint dest,
+                              GLuint mask,
+                              GLuint saturate,
+                              GLuint src0, GLuint src1, GLuint src2);
 
-extern GLuint i915_emit_decl( struct i915_fragment_program *p,
-			     GLuint type, GLuint nr, GLuint d0_flags );
+extern GLuint i915_emit_decl(struct i915_fragment_program *p,
+                             GLuint type, GLuint nr, GLuint d0_flags);
 
 
-extern GLuint i915_emit_const1f( struct i915_fragment_program *p, 
-				GLfloat c0 );
+extern GLuint i915_emit_const1f(struct i915_fragment_program *p, GLfloat c0);
 
-extern GLuint i915_emit_const2f( struct i915_fragment_program *p, 
-				GLfloat c0, GLfloat c1 );
+extern GLuint i915_emit_const2f(struct i915_fragment_program *p,
+                                GLfloat c0, GLfloat c1);
 
-extern GLuint i915_emit_const4fv( struct i915_fragment_program *p,
-				 const GLfloat *c );
+extern GLuint i915_emit_const4fv(struct i915_fragment_program *p,
+                                 const GLfloat * c);
 
-extern GLuint i915_emit_const4f( struct i915_fragment_program *p, 
-				GLfloat c0, GLfloat c1, 
-				GLfloat c2, GLfloat c3 );
+extern GLuint i915_emit_const4f(struct i915_fragment_program *p,
+                                GLfloat c0, GLfloat c1,
+                                GLfloat c2, GLfloat c3);
 
 
-extern GLuint i915_emit_param4fv( struct i915_fragment_program *p, 
-				 const GLfloat *values );
+extern GLuint i915_emit_param4fv(struct i915_fragment_program *p,
+                                 const GLfloat * values);
 
-extern void i915_program_error( struct i915_fragment_program *p,
-                                const char *msg );
+extern void i915_program_error(struct i915_fragment_program *p,
+                               const char *msg);
 
-extern void i915_init_program( i915ContextPtr i915,
-			      struct i915_fragment_program *p );
+extern void i915_init_program(struct i915_context *i915,
+                              struct i915_fragment_program *p);
 
-extern void i915_upload_program( i915ContextPtr i915, 
-				struct i915_fragment_program *p );
+extern void i915_upload_program(struct i915_context *i915,
+                                struct i915_fragment_program *p);
 
-extern void i915_fini_program( struct i915_fragment_program *p );
+extern void i915_fini_program(struct i915_fragment_program *p);
 
 
 

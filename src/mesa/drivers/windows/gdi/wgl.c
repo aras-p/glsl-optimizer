@@ -601,8 +601,8 @@ WINGDIAPI HGLRC GLAPIENTRY wglCreateLayerContext(HDC hdc,
 WINGDIAPI BOOL GLAPIENTRY wglShareLists(HGLRC hglrc1,
 					HGLRC hglrc2)
 {
-    (void) hglrc1; (void) hglrc2;
-    return(TRUE);
+	WMesaShareLists(hglrc1, hglrc2);
+	return(TRUE);
 }
 
 

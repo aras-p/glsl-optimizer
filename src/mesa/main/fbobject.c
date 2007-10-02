@@ -151,22 +151,18 @@ _mesa_remove_attachment(GLcontext *ctx, struct gl_renderbuffer_attachment *att)
 {
    if (att->Type == GL_TEXTURE) {
       ASSERT(att->Texture);
-      att->Texture->RefCount--;
-      if (att->Texture->RefCount == 0) {
-	 ctx->Driver.DeleteTexture(ctx, att->Texture);
+      if (ctx->Driver.FinishRenderTexture) {
+         /* tell driver we're done rendering to this texobj */
+         ctx->Driver.FinishRenderTexture(ctx, att);
       }
-      else {
-         /* tell driver that we're done rendering to this texture. */
-         if (ctx->Driver.FinishRenderTexture) {
-            ctx->Driver.FinishRenderTexture(ctx, att);
-         }
-      }
-      att->Texture = NULL;
+      _mesa_reference_texobj(&att->Texture, NULL); /* unbind */
+      ASSERT(!att->Texture);
    }
    if (att->Type == GL_TEXTURE || att->Type == GL_RENDERBUFFER_EXT) {
       ASSERT(att->Renderbuffer);
       ASSERT(!att->Texture);
-      _mesa_reference_renderbuffer(&att->Renderbuffer, NULL);
+      _mesa_reference_renderbuffer(&att->Renderbuffer, NULL); /* unbind */
+      ASSERT(!att->Renderbuffer);
    }
    att->Type = GL_NONE;
    att->Complete = GL_TRUE;
@@ -192,8 +188,8 @@ _mesa_set_texture_attachment(GLcontext *ctx,
       /* new attachment */
       _mesa_remove_attachment(ctx, att);
       att->Type = GL_TEXTURE;
-      att->Texture = texObj;
-      texObj->RefCount++;
+      assert(!att->Texture);
+      _mesa_reference_texobj(&att->Texture, texObj);
    }
 
    /* always update these fields */
@@ -966,9 +962,11 @@ _mesa_BindFramebufferEXT(GLenum target, GLuint framebuffer)
    }
 
    FLUSH_VERTICES(ctx, _NEW_BUFFERS);
+
    if (ctx->Driver.Flush) {  
       ctx->Driver.Flush(ctx);
    }
+
    if (framebuffer) {
       /* Binding a user-created framebuffer object */
       newFb = _mesa_lookup_framebuffer(ctx, framebuffer);
@@ -1002,32 +1000,18 @@ _mesa_BindFramebufferEXT(GLenum target, GLuint framebuffer)
     * XXX check if re-binding same buffer and skip some of this code.
     */
 
-   /* for window-framebuffers, re-initialize the fbo values, as they
-      could be wrong (makecurrent with a new drawable while still a fbo
-      was bound will lead to default init fbo values).
-      note that therefore the context ReadBuffer/DrawBuffer values are not
-      valid while fbo's are bound!!! */
    if (bindReadBuf) {
       _mesa_reference_framebuffer(&ctx->ReadBuffer, newFbread);
-      if (!newFbread->Name) {
-         _mesa_readbuffer_update_fields(ctx, ctx->Pixel.ReadBuffer);
-      }
    }
 
    if (bindDrawBuf) {
       /* check if old FB had any texture attachments */
       check_end_texture_render(ctx, ctx->DrawBuffer);
+
       /* check if time to delete this framebuffer */
       _mesa_reference_framebuffer(&ctx->DrawBuffer, newFb);
-      if (!newFb->Name) {
-         GLuint i;
-         GLenum buffers[MAX_DRAW_BUFFERS];
-         for(i = 0; i < ctx->Const.MaxDrawBuffers; i++) {
-            buffers[i] = ctx->Color.DrawBuffer[i];
-         }
-         _mesa_drawbuffers(ctx, ctx->Const.MaxDrawBuffers, buffers, NULL);
-      }
-      else {
+
+      if (newFb->Name != 0) {
          /* check if newly bound framebuffer has any texture attachments */
          check_begin_texture_render(ctx, newFb);
       }

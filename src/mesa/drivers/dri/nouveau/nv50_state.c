@@ -584,9 +584,9 @@ static GLboolean nv50InitCard(nouveauContextPtr nmesa)
 	return GL_FALSE;
 }
 
-static GLboolean nv50BindBuffers(nouveauContextPtr nmesa, int num_color,
-      				 nouveau_renderbuffer **color,
-				 nouveau_renderbuffer *depth)
+static GLboolean
+nv50BindBuffers(nouveauContextPtr nmesa, int num_color,
+		nouveau_renderbuffer_t **color, nouveau_renderbuffer_t *depth)
 {
 	return GL_FALSE;
 }

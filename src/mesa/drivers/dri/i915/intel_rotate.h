@@ -11,11 +11,9 @@ struct matrix23
 
 extern void
 matrix23Set(struct matrix23 *m,
-            int m00, int m01, int m02,
-            int m10, int m11, int m12);
+            int m00, int m01, int m02, int m10, int m11, int m12);
 
-extern void
-matrix23TransformCoordi(const struct matrix23 *m, int *x, int *y);
+extern void matrix23TransformCoordi(const struct matrix23 *m, int *x, int *y);
 
 extern void
 matrix23TransformCoordf(const struct matrix23 *m, float *x, float *y);

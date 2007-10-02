@@ -55,7 +55,7 @@ static void upload_clip_unit( struct brw_context *brw )
    /* BRW_NEW_URB_FENCE */
    clip.thread4.nr_urb_entries = brw->urb.nr_clip_entries; 
    clip.thread4.urb_entry_allocation_size = brw->urb.vsize - 1;
-   clip.thread4.max_threads = 0; /* Hmm, maybe the max is 1 or 2 threads */
+   clip.thread4.max_threads = 1; /* 2 threads */
 
    if (INTEL_DEBUG & DEBUG_STATS)
       clip.thread4.stats_enable = 1; 

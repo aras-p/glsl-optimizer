@@ -5,7 +5,7 @@
 
 /*
  * Mesa 3-D graphics library
- * Version:  7.0
+ * Version:  7.1
  *
  * Copyright (C) 1999-2007  Brian Paul   All Rights Reserved.
  *
@@ -82,8 +82,13 @@ _mesa_PointParameteriNV( GLenum pname, GLint param )
 void GLAPIENTRY
 _mesa_PointParameterivNV( GLenum pname, const GLint *params )
 {
-   const GLfloat value = (GLfloat) params[0];
-   _mesa_PointParameterfvEXT(pname, &value);
+   GLfloat p[3];
+   p[0] = (GLfloat) params[0];
+   if (pname == GL_DISTANCE_ATTENUATION_EXT) {
+      p[1] = (GLfloat) params[1];
+      p[2] = (GLfloat) params[2];
+   }
+   _mesa_PointParameterfvEXT(pname, p);
 }
 
 
@@ -118,6 +123,11 @@ _mesa_PointParameterfvEXT( GLenum pname, const GLfloat *params)
             ctx->Point._Attenuated = (ctx->Point.Params[0] != 1.0 ||
                                       ctx->Point.Params[1] != 0.0 ||
                                       ctx->Point.Params[2] != 0.0);
+
+            if (ctx->Point._Attenuated)
+               ctx->_TriangleCaps |= DD_POINT_ATTEN;
+            else
+               ctx->_TriangleCaps &= ~DD_POINT_ATTEN;
          }
          else {
             _mesa_error(ctx, GL_INVALID_ENUM,

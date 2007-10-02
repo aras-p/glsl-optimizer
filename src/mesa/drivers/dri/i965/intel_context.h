@@ -109,20 +109,6 @@ struct intel_context
       void (*emit_flush)( struct intel_context *intel,
 			  GLuint unused );
 
-      void (*aub_commands)( struct intel_context *intel, 
-			    GLuint offset,
-			    const void *buf,
-			    GLuint sz );
-      void (*aub_dump_bmp)( struct intel_context *intel, GLuint buffer );
-      void (*aub_wrap)( struct intel_context *intel );
-      void (*aub_gtt_data)( struct intel_context *intel, 
-			    GLuint offset,
-			    const void *src,
-			    GLuint size,
-			    GLuint aubtype, 
-			    GLuint aubsubtype);
-
-
       void (*reduced_primitive_state)( struct intel_context *intel, GLenum rprim );
 
       GLboolean (*check_vertex_size)( struct intel_context *intel, GLuint expected );
@@ -176,7 +162,6 @@ struct intel_context
    GLuint last_swap_fence;
    GLuint second_last_swap_fence;
    
-   GLboolean aub_wrap;
    GLuint stats_wm;
 
    struct intel_batchbuffer *batch;
@@ -234,11 +219,10 @@ struct intel_context
    int driFd;
 
    __DRIdrawablePrivate *driDrawable;
+   __DRIdrawablePrivate *driReadDrawable;
    __DRIscreenPrivate *driScreen;
    intelScreenPrivate *intelScreen; 
    volatile drmI830Sarea *sarea; 
-   
-   FILE *aub_file;
 
    GLuint lastStamp;
 
@@ -371,22 +355,7 @@ extern int INTEL_DEBUG;
 #define DEBUG_WM        0x10000
 #define DEBUG_URB       0x20000
 #define DEBUG_VS        0x40000
-
-
-#define PCI_CHIP_845_G			0x2562
-#define PCI_CHIP_I830_M			0x3577
-#define PCI_CHIP_I855_GM		0x3582
-#define PCI_CHIP_I865_G			0x2572
-#define PCI_CHIP_I915_G			0x2582
-#define PCI_CHIP_I915_GM		0x2592
-#define PCI_CHIP_I945_G			0x2772
-#define PCI_CHIP_I965_G			0x29A2
-#define PCI_CHIP_I965_Q			0x2992
-#define PCI_CHIP_I965_G_1		0x2982
-#define PCI_CHIP_I946_GZ		0x2972
-#define PCI_CHIP_I965_GM                0x2A02
-#define PCI_CHIP_I965_GME               0x2A12
-
+#define DEBUG_BATCH	0x80000
 
 /* ================================================================
  * intel_context.c:
@@ -463,7 +432,7 @@ extern void intelInitStateFuncs( struct dd_function_table *functions );
 #define BLENDFACT_INV_CONST_ALPHA	0x0f
 #define BLENDFACT_MASK          	0x0f
 
-
+extern int intel_translate_shadow_compare_func( GLenum func );
 extern int intel_translate_compare_func( GLenum func );
 extern int intel_translate_stencil_op( GLenum op );
 extern int intel_translate_blend_factor( GLenum factor );

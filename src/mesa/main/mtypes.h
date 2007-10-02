@@ -1400,6 +1400,7 @@ struct gl_texture_image
  */
 struct gl_texture_object
 {
+   _glthread_Mutex Mutex;	/**< for thread safety */
    GLint RefCount;		/**< reference count */
    GLuint Name;			/**< the user-visible texture object ID */
    GLenum Target;               /**< GL_TEXTURE_1D, GL_TEXTURE_2D, etc. */
@@ -1535,17 +1536,6 @@ struct gl_texture_unit
 
    struct gl_texture_object *_Current; /**< Points to really enabled tex obj */
 
-   /** These are used for glPush/PopAttrib */
-   /*@{*/
-   struct gl_texture_object Saved1D;
-   struct gl_texture_object Saved2D;
-   struct gl_texture_object Saved3D;
-   struct gl_texture_object SavedCubeMap;
-   struct gl_texture_object SavedRect;
-   struct gl_texture_object Saved1DArray;
-   struct gl_texture_object Saved2DArray;
-   /*@}*/
-
    /** GL_SGI_texture_color_table */
    /*@{*/
    struct gl_color_table ColorTable;
@@ -1586,13 +1576,8 @@ struct gl_texture_attrib
 
    struct gl_texture_unit Unit[MAX_TEXTURE_UNITS];
 
-   struct gl_texture_object *Proxy1D;
-   struct gl_texture_object *Proxy2D;
-   struct gl_texture_object *Proxy3D;
-   struct gl_texture_object *ProxyCubeMap;
-   struct gl_texture_object *ProxyRect;
-   struct gl_texture_object *Proxy1DArray;
-   struct gl_texture_object *Proxy2DArray;
+   /** Proxy texture objects */
+   struct gl_texture_object *ProxyTex[NUM_TEXTURE_TARGETS];
 
    /** GL_EXT_shared_texture_palette */
    GLboolean SharedPalette;
@@ -2881,7 +2866,6 @@ struct mesa_display_list
  */
 struct gl_dlist_state
 {
-   struct mesa_display_list *CallStack[MAX_LIST_NESTING];
    GLuint CallDepth;		/**< Current recursion calling depth */
 
    struct mesa_display_list *CurrentList;
@@ -3056,7 +3040,10 @@ struct __GLcontextRec
 
    /** \name Derived state */
    /*@{*/
-   GLbitfield _TriangleCaps;      /**< bitwise-or of DD_* flags */
+   /** Bitwise-or of DD_* flags.  Note that this bitfield may be used before
+    * state validation so they need to always be current.
+    */
+   GLbitfield _TriangleCaps;
    GLbitfield _ImageTransferState;/**< bitwise-or of IMAGE_*_BIT flags */
    GLfloat _EyeZDir[3];
    GLfloat _ModelViewInvScale;

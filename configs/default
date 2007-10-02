@@ -20,6 +20,7 @@ CC = cc
 CXX = CC
 CFLAGS = -O
 CXXFLAGS = -O
+LDFLAGS =
 GLU_CFLAGS = 
 
 # Misc tools and flags

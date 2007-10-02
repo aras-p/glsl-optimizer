@@ -1,8 +1,7 @@
-#include "glheader.h"
-#include "macros.h"
-#include "enums.h"
 
-#include "program.h"
+#include "main/glheader.h"
+
+#include "shader/program.h"
 #include "tnl/tnl.h"
 #include "r300_context.h"
 #include "r300_fragprog.h"

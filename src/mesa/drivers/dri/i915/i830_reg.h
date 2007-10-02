@@ -407,7 +407,7 @@
 #define LOGICOP_SET			0xf
 #define MODE4_ENABLE_STENCIL_TEST_MASK	((1<<17)|(0xff00))
 #define ENABLE_STENCIL_TEST_MASK	(1<<17)
-#define STENCIL_TEST_MASK(x)		((x)<<8)
+#define STENCIL_TEST_MASK(x)		(((x)&0xff)<<8)
 #define MODE4_ENABLE_STENCIL_WRITE_MASK	((1<<16)|(0x00ff))
 #define ENABLE_STENCIL_WRITE_MASK	(1<<16)
 #define STENCIL_WRITE_MASK(x)		((x)&0xff)
@@ -554,8 +554,8 @@
 #define    MAPSURF_4BIT_INDEXED		   (7<<6)
 #define TM0S1_MT_FORMAT_MASK         (0x7 << 3)
 #define TM0S1_MT_FORMAT_SHIFT        3
-#define    MT_4BIT_IDX_ARGB8888	           (7<<3) /* SURFACE_4BIT_INDEXED */
-#define    MT_8BIT_IDX_RGB565	           (0<<3) /* SURFACE_8BIT_INDEXED */
+#define    MT_4BIT_IDX_ARGB8888	           (7<<3)       /* SURFACE_4BIT_INDEXED */
+#define    MT_8BIT_IDX_RGB565	           (0<<3)       /* SURFACE_8BIT_INDEXED */
 #define    MT_8BIT_IDX_ARGB1555	           (1<<3)
 #define    MT_8BIT_IDX_ARGB4444	           (2<<3)
 #define    MT_8BIT_IDX_AY88		   (3<<3)
@@ -563,9 +563,9 @@
 #define    MT_8BIT_IDX_BUMP_88DVDU 	   (5<<3)
 #define    MT_8BIT_IDX_BUMP_655LDVDU	   (6<<3)
 #define    MT_8BIT_IDX_ARGB8888	           (7<<3)
-#define    MT_8BIT_I8		           (0<<3) /* SURFACE_8BIT */
+#define    MT_8BIT_I8		           (0<<3)       /* SURFACE_8BIT */
 #define    MT_8BIT_L8		           (1<<3)
-#define    MT_16BIT_RGB565 		   (0<<3) /* SURFACE_16BIT */
+#define    MT_16BIT_RGB565 		   (0<<3)       /* SURFACE_16BIT */
 #define    MT_16BIT_ARGB1555		   (1<<3)
 #define    MT_16BIT_ARGB4444		   (2<<3)
 #define    MT_16BIT_AY88		   (3<<3)
@@ -573,16 +573,17 @@
 #define    MT_16BIT_BUMP_88DVDU	           (5<<3)
 #define    MT_16BIT_BUMP_655LDVDU	   (6<<3)
 #define    MT_16BIT_DIB_RGB565_8888	   (7<<3)
-#define    MT_32BIT_ARGB8888		   (0<<3) /* SURFACE_32BIT */
+#define    MT_32BIT_ARGB8888		   (0<<3)       /* SURFACE_32BIT */
 #define    MT_32BIT_ABGR8888		   (1<<3)
+#define    MT_32BIT_XRGB8888		   (2<<3)       /* XXX: Guess from i915_reg.h */
 #define    MT_32BIT_BUMP_XLDVDU_8888	   (6<<3)
 #define    MT_32BIT_DIB_8888		   (7<<3)
-#define    MT_411_YUV411		   (0<<3) /* SURFACE_411 */
-#define    MT_422_YCRCB_SWAPY	           (0<<3) /* SURFACE_422 */
+#define    MT_411_YUV411		   (0<<3)       /* SURFACE_411 */
+#define    MT_422_YCRCB_SWAPY	           (0<<3)       /* SURFACE_422 */
 #define    MT_422_YCRCB_NORMAL	           (1<<3)
 #define    MT_422_YCRCB_SWAPUV	           (2<<3)
 #define    MT_422_YCRCB_SWAPUVY	           (3<<3)
-#define    MT_COMPRESS_DXT1		   (0<<3) /* SURFACE_COMPRESSED */
+#define    MT_COMPRESS_DXT1		   (0<<3)       /* SURFACE_COMPRESSED */
 #define    MT_COMPRESS_DXT2_3	           (1<<3)
 #define    MT_COMPRESS_DXT4_5	           (2<<3)
 #define    MT_COMPRESS_FXT1		   (3<<3)

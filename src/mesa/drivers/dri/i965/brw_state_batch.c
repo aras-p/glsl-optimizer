@@ -32,7 +32,6 @@
 
 
 #include "brw_state.h"
-#include "brw_aub.h"
 #include "intel_batchbuffer.h"
 #include "imports.h"
 

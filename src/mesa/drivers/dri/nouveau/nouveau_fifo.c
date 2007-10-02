@@ -57,7 +57,8 @@ void WAIT_RING(nouveauContextPtr nmesa,u_int32_t size)
 		if(nmesa->fifo.put >= fifo_get) {
 			nmesa->fifo.free = nmesa->fifo.max - nmesa->fifo.current;
 			if(nmesa->fifo.free < size+1) {
-				OUT_RING(NV03_FIFO_CMD_JUMP | nmesa->fifo.put_base);
+				OUT_RING(NV03_FIFO_CMD_JUMP |
+					 nmesa->fifo.drm.put_base);
 				if(fifo_get <= RING_SKIPS) {
 					if(nmesa->fifo.put <= RING_SKIPS) /* corner case - will be idle */
 						NV_FIFO_WRITE_PUT(RING_SKIPS + 1);
@@ -98,54 +99,54 @@ void nouveauWaitForIdle(nouveauContextPtr nmesa)
 // here we call the fifo initialization ioctl and fill in stuff accordingly
 GLboolean nouveauFifoInit(nouveauContextPtr nmesa)
 {
-	struct drm_nouveau_fifo_alloc fifo_init;
 	int i, ret;
 
 #ifdef NOUVEAU_RING_DEBUG
 	return GL_TRUE;
 #endif
 
-	fifo_init.fb_ctxdma_handle = NvDmaFB;
-	fifo_init.tt_ctxdma_handle = NvDmaTT;
-	ret=drmCommandWriteRead(nmesa->driFd, DRM_NOUVEAU_FIFO_ALLOC, &fifo_init, sizeof(fifo_init));
+	nmesa->fifo.drm.fb_ctxdma_handle = NvDmaFB;
+	nmesa->fifo.drm.tt_ctxdma_handle = NvDmaTT;
+	ret = drmCommandWriteRead(nmesa->driFd, DRM_NOUVEAU_CHANNEL_ALLOC,
+				  &nmesa->fifo.drm, sizeof(nmesa->fifo.drm));
 	if (ret) {
-		FATAL("Fifo initialization ioctl failed (returned %d)\n",ret);
+		FATAL("Fifo initialization ioctl failed (returned %d)\n", ret);
 		return GL_FALSE;
 	}
 
-	ret = drmMap(nmesa->driFd, fifo_init.cmdbuf, fifo_init.cmdbuf_size, &nmesa->fifo.buffer);
+	ret = drmMap(nmesa->driFd, nmesa->fifo.drm.cmdbuf,
+		     nmesa->fifo.drm.cmdbuf_size, &nmesa->fifo.pushbuf);
 	if (ret) {
-		FATAL("Unable to map the fifo (returned %d)\n",ret);
+		FATAL("Unable to map the fifo (returned %d)\n", ret);
 		return GL_FALSE;
 	}
 
-	ret = drmMap(nmesa->driFd, fifo_init.ctrl, fifo_init.ctrl_size, &nmesa->fifo.mmio);
+	ret = drmMap(nmesa->driFd, nmesa->fifo.drm.ctrl,
+		     nmesa->fifo.drm.ctrl_size, &nmesa->fifo.mmio);
 	if (ret) {
-		FATAL("Unable to map the control regs (returned %d)\n",ret);
+		FATAL("Unable to map the control regs (returned %d)\n", ret);
 		return GL_FALSE;
 	}
 
-	ret = drmMap(nmesa->driFd, fifo_init.notifier,
-				   fifo_init.notifier_size,
-				   &nmesa->notifier_block);
+	ret = drmMap(nmesa->driFd, nmesa->fifo.drm.notifier,
+				   nmesa->fifo.drm.notifier_size,
+				   &nmesa->fifo.notifier_block);
 	if (ret) {
-		FATAL("Unable to map the notifier block (returned %d)\n",ret);
+		FATAL("Unable to map the notifier block (returned %d)\n", ret);
 		return GL_FALSE;
 	}
 
 	/* Setup our initial FIFO tracking params */
-	nmesa->fifo.channel  = fifo_init.channel;
-	nmesa->fifo.put_base = fifo_init.put_base;
 	nmesa->fifo.current  = 0;
 	nmesa->fifo.put      = 0;
-	nmesa->fifo.max      = (fifo_init.cmdbuf_size >> 2) - 1;
+	nmesa->fifo.max      = (nmesa->fifo.drm.cmdbuf_size >> 2) - 1;
 	nmesa->fifo.free     = nmesa->fifo.max - nmesa->fifo.current;
 
 	for (i=0; i<RING_SKIPS; i++)
 	   OUT_RING(0);
 	nmesa->fifo.free -= RING_SKIPS;
 
-	MESSAGE("Fifo init ok. Using context %d\n", fifo_init.channel);
+	MESSAGE("Fifo init ok. Using context %d\n", nmesa->fifo.drm.channel);
 	return GL_TRUE;
 }
 

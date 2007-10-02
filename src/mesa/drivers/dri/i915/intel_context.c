@@ -38,7 +38,6 @@
 #include "swrast/swrast.h"
 #include "swrast_setup/swrast_setup.h"
 #include "tnl/tnl.h"
-#include "vbo/vbo.h"
 
 #include "tnl/t_pipeline.h"
 #include "tnl/t_vertex.h"
@@ -48,17 +47,24 @@
 #include "intel_screen.h"
 
 #include "i830_dri.h"
-#include "i830_common.h"
 
+#include "intel_buffers.h"
 #include "intel_tex.h"
 #include "intel_span.h"
 #include "intel_tris.h"
 #include "intel_ioctl.h"
 #include "intel_batchbuffer.h"
+#include "intel_blit.h"
+#include "intel_pixel.h"
+#include "intel_regions.h"
+#include "intel_buffer_objects.h"
+#include "intel_fbo.h"
+#include "intel_decode.h"
 
+#include "drirenderbuffer.h"
 #include "vblank.h"
 #include "utils.h"
-#include "xmlpool.h" /* for symbolic values of enum-type options */
+#include "xmlpool.h"            /* for symbolic values of enum-type options */
 #ifndef INTEL_DEBUG
 int INTEL_DEBUG = (0);
 #endif
@@ -75,67 +81,74 @@ int INTEL_DEBUG = (0);
 #define need_GL_EXT_blend_minmax
 #define need_GL_EXT_cull_vertex
 #define need_GL_EXT_fog_coord
+#define need_GL_EXT_framebuffer_object
 #define need_GL_EXT_multi_draw_arrays
 #define need_GL_EXT_secondary_color
 #define need_GL_NV_vertex_program
 #include "extension_helper.h"
 
-#ifndef VERBOSE
-int VERBOSE = 0;
-#endif
 
-#if DEBUG_LOCKING
-char *prevLockFile;
-int prevLockLine;
-#endif
+#define DRIVER_DATE                     "20061102"
 
-/***************************************
- * Mesa's Driver Functions
- ***************************************/
+_glthread_Mutex lockMutex;
+static GLboolean lockMutexInit = GL_FALSE;
 
-#define DRIVER_DATE "20061017"
 
-const GLubyte *intelGetString( GLcontext *ctx, GLenum name )
+static const GLubyte *
+intelGetString(GLcontext * ctx, GLenum name)
 {
-   const char * chipset;
+   const char *chipset;
    static char buffer[128];
 
    switch (name) {
    case GL_VENDOR:
-      return (GLubyte *)"Tungsten Graphics, Inc";
+      return (GLubyte *) "Tungsten Graphics, Inc";
       break;
-      
+
    case GL_RENDERER:
-      switch (INTEL_CONTEXT(ctx)->intelScreen->deviceID) {
+      switch (intel_context(ctx)->intelScreen->deviceID) {
       case PCI_CHIP_845_G:
-	 chipset = "Intel(R) 845G"; break;
+         chipset = "Intel(R) 845G";
+         break;
       case PCI_CHIP_I830_M:
-	 chipset = "Intel(R) 830M"; break;
+         chipset = "Intel(R) 830M";
+         break;
       case PCI_CHIP_I855_GM:
-	 chipset = "Intel(R) 852GM/855GM"; break;
+         chipset = "Intel(R) 852GM/855GM";
+         break;
       case PCI_CHIP_I865_G:
-	 chipset = "Intel(R) 865G"; break;
+         chipset = "Intel(R) 865G";
+         break;
       case PCI_CHIP_I915_G:
-	 chipset = "Intel(R) 915G"; break;
+         chipset = "Intel(R) 915G";
+         break;
       case PCI_CHIP_I915_GM:
-	 chipset = "Intel(R) 915GM"; break;
+         chipset = "Intel(R) 915GM";
+         break;
       case PCI_CHIP_I945_G:
-	 chipset = "Intel(R) 945G"; break;
+         chipset = "Intel(R) 945G";
+         break;
       case PCI_CHIP_I945_GM:
-	 chipset = "Intel(R) 945GM"; break;
+         chipset = "Intel(R) 945GM";
+         break;
       case PCI_CHIP_I945_GME:
-	 chipset = "Intel(R) 945GME"; break;
+         chipset = "Intel(R) 945GME";
+         break;
       case PCI_CHIP_G33_G:
-	 chipset = "Intel(R) G33"; break;
+	 chipset = "Intel(R) G33";
+	 break;
       case PCI_CHIP_Q35_G:
-	 chipset = "Intel(R) Q35"; break;
+	 chipset = "Intel(R) Q35";
+	 break;
       case PCI_CHIP_Q33_G:
-	 chipset = "Intel(R) Q33"; break;
+	 chipset = "Intel(R) Q33";
+	 break;
       default:
-	 chipset = "Unknown Intel Chipset"; break;
+         chipset = "Unknown Intel Chipset";
+         break;
       }
 
-      (void) driGetRendererString( buffer, chipset, DRIVER_DATE, 0 );
+      (void) driGetRendererString(buffer, chipset, DRIVER_DATE, 0);
       return (GLubyte *) buffer;
 
    default:
@@ -146,51 +159,56 @@ const GLubyte *intelGetString( GLcontext *ctx, GLenum name )
 
 /**
  * Extension strings exported by the intel driver.
- *
- * \note
- * It appears that ARB_texture_env_crossbar has "disappeared" compared to the
- * old i830-specific driver.
  */
-const struct dri_extension card_extensions[] =
-{
-    { "GL_ARB_multisample",                GL_ARB_multisample_functions },
-    { "GL_ARB_multitexture",               NULL },
-    { "GL_ARB_point_parameters",           GL_ARB_point_parameters_functions },
-    { "GL_ARB_texture_border_clamp",       NULL },
-    { "GL_ARB_texture_compression",        GL_ARB_texture_compression_functions },
-    { "GL_ARB_texture_cube_map",           NULL },
-    { "GL_ARB_texture_env_add",            NULL },
-    { "GL_ARB_texture_env_combine",        NULL },
-    { "GL_ARB_texture_env_dot3",           NULL },
-    { "GL_ARB_texture_mirrored_repeat",    NULL },
-    { "GL_ARB_texture_rectangle",          NULL },
-    { "GL_ARB_vertex_buffer_object",       GL_ARB_vertex_buffer_object_functions },
-    { "GL_ARB_vertex_program",             GL_ARB_vertex_program_functions },
-    { "GL_ARB_window_pos",                 GL_ARB_window_pos_functions },
-    { "GL_EXT_blend_color",                GL_EXT_blend_color_functions },
-    { "GL_EXT_blend_equation_separate",    GL_EXT_blend_equation_separate_functions },
-    { "GL_EXT_blend_func_separate",        GL_EXT_blend_func_separate_functions },
-    { "GL_EXT_blend_minmax",               GL_EXT_blend_minmax_functions },
-    { "GL_EXT_blend_subtract",             NULL },
-    { "GL_EXT_cull_vertex",                GL_EXT_cull_vertex_functions },
-    { "GL_EXT_fog_coord",                  GL_EXT_fog_coord_functions },
-    { "GL_EXT_multi_draw_arrays",          GL_EXT_multi_draw_arrays_functions },
-    { "GL_EXT_secondary_color",            GL_EXT_secondary_color_functions },
-    { "GL_EXT_stencil_wrap",               NULL },
-    { "GL_EXT_texture_edge_clamp",         NULL },
-    { "GL_EXT_texture_env_combine",        NULL },
-    { "GL_EXT_texture_env_dot3",           NULL },
-    { "GL_EXT_texture_filter_anisotropic", NULL },
-    { "GL_EXT_texture_lod_bias",           NULL },
-    { "GL_3DFX_texture_compression_FXT1",  NULL },
-    { "GL_APPLE_client_storage",           NULL },
-    { "GL_MESA_pack_invert",               NULL },
-    { "GL_MESA_ycbcr_texture",             NULL },
-    { "GL_NV_blend_square",                NULL },
-    { "GL_NV_vertex_program",              GL_NV_vertex_program_functions },
-    { "GL_NV_vertex_program1_1",           NULL },
-    { "GL_SGIS_generate_mipmap",           NULL },
-    { NULL,                                NULL }
+const struct dri_extension card_extensions[] = {
+   {"GL_ARB_multisample", GL_ARB_multisample_functions},
+   {"GL_ARB_multitexture", NULL},
+   {"GL_ARB_point_parameters", GL_ARB_point_parameters_functions},
+   {"GL_ARB_texture_border_clamp", NULL},
+   {"GL_ARB_texture_compression", GL_ARB_texture_compression_functions},
+   {"GL_ARB_texture_cube_map", NULL},
+   {"GL_ARB_texture_env_add", NULL},
+   {"GL_ARB_texture_env_combine", NULL},
+   {"GL_ARB_texture_env_dot3", NULL},
+   {"GL_ARB_texture_mirrored_repeat", NULL},
+   {"GL_ARB_texture_rectangle", NULL},
+   {"GL_ARB_vertex_buffer_object", GL_ARB_vertex_buffer_object_functions},
+   {"GL_ARB_vertex_program", GL_ARB_vertex_program_functions},
+   {"GL_ARB_window_pos", GL_ARB_window_pos_functions},
+   {"GL_EXT_blend_color", GL_EXT_blend_color_functions},
+   {"GL_EXT_blend_equation_separate",
+    GL_EXT_blend_equation_separate_functions},
+   {"GL_EXT_blend_func_separate", GL_EXT_blend_func_separate_functions},
+   {"GL_EXT_blend_minmax", GL_EXT_blend_minmax_functions},
+   {"GL_EXT_blend_subtract", NULL},
+   {"GL_EXT_cull_vertex", GL_EXT_cull_vertex_functions},
+   {"GL_EXT_fog_coord", GL_EXT_fog_coord_functions},
+   {"GL_EXT_multi_draw_arrays", GL_EXT_multi_draw_arrays_functions},
+#if 1                           /* XXX FBO temporary? */
+   {"GL_EXT_packed_depth_stencil", NULL},
+#endif
+   {"GL_EXT_secondary_color", GL_EXT_secondary_color_functions},
+   {"GL_EXT_stencil_wrap", NULL},
+   {"GL_EXT_texture_edge_clamp", NULL},
+   {"GL_EXT_texture_env_combine", NULL},
+   {"GL_EXT_texture_env_dot3", NULL},
+   {"GL_EXT_texture_filter_anisotropic", NULL},
+   {"GL_EXT_texture_lod_bias", NULL},
+   {"GL_3DFX_texture_compression_FXT1", NULL},
+   {"GL_APPLE_client_storage", NULL},
+   {"GL_MESA_pack_invert", NULL},
+   {"GL_MESA_ycbcr_texture", NULL},
+   {"GL_NV_blend_square", NULL},
+   {"GL_NV_vertex_program", GL_NV_vertex_program_functions},
+   {"GL_NV_vertex_program1_1", NULL},
+/*     { "GL_SGIS_generate_mipmap",           NULL }, */
+   {NULL, NULL}
+};
+
+const struct dri_extension ttm_extensions[] = {
+   {"GL_EXT_framebuffer_object", GL_EXT_framebuffer_object_functions},
+   {"GL_ARB_pixel_buffer_object", NULL},
+   {NULL, NULL}
 };
 
 extern const struct tnl_pipeline_stage _intel_render_stage;
@@ -206,82 +224,144 @@ static const struct tnl_pipeline_stage *intel_pipeline[] = {
    &_tnl_point_attenuation_stage,
    &_tnl_vertex_program_stage,
 #if 1
-   &_intel_render_stage,     /* ADD: unclipped rastersetup-to-dma */
+   &_intel_render_stage,        /* ADD: unclipped rastersetup-to-dma */
 #endif
    &_tnl_render_stage,
    0,
 };
 
 
-static const struct dri_debug_control debug_control[] =
-{
-    { "fall",  DEBUG_FALLBACKS },
-    { "tex",   DEBUG_TEXTURE },
-    { "ioctl", DEBUG_IOCTL },
-    { "prim",  DEBUG_PRIMS },
-    { "vert",  DEBUG_VERTS },
-    { "state", DEBUG_STATE },
-    { "verb",  DEBUG_VERBOSE },
-    { "dri",   DEBUG_DRI },
-    { "dma",   DEBUG_DMA },
-    { "san",   DEBUG_SANITY },
-    { "sync",  DEBUG_SYNC },
-    { "sleep", DEBUG_SLEEP },
-    { "pix",   DEBUG_PIXEL },
-    { NULL,    0 }
+static const struct dri_debug_control debug_control[] = {
+   {"tex", DEBUG_TEXTURE},
+   {"state", DEBUG_STATE},
+   {"ioctl", DEBUG_IOCTL},
+   {"blit", DEBUG_BLIT},
+   {"mip", DEBUG_MIPTREE},
+   {"fall", DEBUG_FALLBACKS},
+   {"verb", DEBUG_VERBOSE},
+   {"bat", DEBUG_BATCH},
+   {"pix", DEBUG_PIXEL},
+   {"buf", DEBUG_BUFMGR},
+   {"reg", DEBUG_REGION},
+   {"fbo", DEBUG_FBO},
+   {"lock", DEBUG_LOCK},
+   {NULL, 0}
 };
 
 
-static void intelInvalidateState( GLcontext *ctx, GLuint new_state )
+static void
+intelInvalidateState(GLcontext * ctx, GLuint new_state)
 {
-   _swrast_InvalidateState( ctx, new_state );
-   _swsetup_InvalidateState( ctx, new_state );
-   _vbo_InvalidateState( ctx, new_state );
-   _tnl_InvalidateState( ctx, new_state );
-   _tnl_invalidate_vertex_state( ctx, new_state );
-   INTEL_CONTEXT(ctx)->NewGLState |= new_state;
+   _swrast_InvalidateState(ctx, new_state);
+   _swsetup_InvalidateState(ctx, new_state);
+   _vbo_InvalidateState(ctx, new_state);
+   _tnl_InvalidateState(ctx, new_state);
+   _tnl_invalidate_vertex_state(ctx, new_state);
+   intel_context(ctx)->NewGLState |= new_state;
 }
 
 
-void intelInitDriverFunctions( struct dd_function_table *functions )
+void
+intelFlush(GLcontext * ctx)
 {
-   _mesa_init_driver_functions( functions );
+   struct intel_context *intel = intel_context(ctx);
 
-   functions->Clear = intelClear;
+   if (intel->Fallback)
+      _swrast_flush(ctx);
+
+   INTEL_FIREVERTICES(intel);
+
+   if (intel->batch->map != intel->batch->ptr)
+      intel_batchbuffer_flush(intel->batch);
+
+   /* XXX: Need to do an MI_FLUSH here.
+    */
+}
+
+
+/**
+ * Check if we need to rotate/warp the front color buffer to the
+ * rotated screen.  We generally need to do this when we get a glFlush
+ * or glFinish after drawing to the front color buffer.
+ */
+static void
+intelCheckFrontRotate(GLcontext * ctx)
+{
+   struct intel_context *intel = intel_context(ctx);
+   if (intel->ctx.DrawBuffer->_ColorDrawBufferMask[0] ==
+       BUFFER_BIT_FRONT_LEFT) {
+      intelScreenPrivate *screen = intel->intelScreen;
+      if (screen->current_rotation != 0) {
+         __DRIdrawablePrivate *dPriv = intel->driDrawable;
+         intelRotateWindow(intel, dPriv, BUFFER_BIT_FRONT_LEFT);
+      }
+   }
+}
+
+
+/**
+ * Called via glFlush.
+ */
+static void
+intelglFlush(GLcontext * ctx)
+{
+   intelFlush(ctx);
+   intelCheckFrontRotate(ctx);
+}
+
+void
+intelFinish(GLcontext * ctx)
+{
+   struct intel_context *intel = intel_context(ctx);
+   intelFlush(ctx);
+   if (intel->batch->last_fence) {
+      dri_fence_wait(intel->batch->last_fence);
+      dri_fence_unreference(intel->batch->last_fence);
+      intel->batch->last_fence = NULL;
+   }
+   intelCheckFrontRotate(ctx);
+}
+
+
+void
+intelInitDriverFunctions(struct dd_function_table *functions)
+{
+   _mesa_init_driver_functions(functions);
+
    functions->Flush = intelglFlush;
    functions->Finish = intelFinish;
    functions->GetString = intelGetString;
    functions->UpdateState = intelInvalidateState;
+   functions->CopyColorTable = _swrast_CopyColorTable;
+   functions->CopyColorSubTable = _swrast_CopyColorSubTable;
+   functions->CopyConvolutionFilter1D = _swrast_CopyConvolutionFilter1D;
+   functions->CopyConvolutionFilter2D = _swrast_CopyConvolutionFilter2D;
 
-   intelInitTextureFuncs( functions );
-   intelInitPixelFuncs( functions );
-   intelInitStateFuncs( functions );
+   intelInitTextureFuncs(functions);
+   intelInitPixelFuncs(functions);
+   intelInitStateFuncs(functions);
+   intelInitBufferFuncs(functions);
 }
 
-static void intel_emit_invarient_state( GLcontext *ctx )
-{
-}
 
-
-
-GLboolean intelInitContext( intelContextPtr intel,
-			    const __GLcontextModes *mesaVis,
-			    __DRIcontextPrivate *driContextPriv,
-			    void *sharedContextPrivate,
-			    struct dd_function_table *functions )
+GLboolean
+intelInitContext(struct intel_context *intel,
+                 const __GLcontextModes * mesaVis,
+                 __DRIcontextPrivate * driContextPriv,
+                 void *sharedContextPrivate,
+                 struct dd_function_table *functions)
 {
    GLcontext *ctx = &intel->ctx;
    GLcontext *shareCtx = (GLcontext *) sharedContextPrivate;
    __DRIscreenPrivate *sPriv = driContextPriv->driScreenPriv;
-   intelScreenPrivate *intelScreen = (intelScreenPrivate *)sPriv->private;
+   intelScreenPrivate *intelScreen = (intelScreenPrivate *) sPriv->private;
    drmI830Sarea *saPriv = (drmI830Sarea *)
-      (((GLubyte *)sPriv->pSAREA)+intelScreen->sarea_priv_offset);
+      (((GLubyte *) sPriv->pSAREA) + intelScreen->sarea_priv_offset);
    int fthrottle_mode;
 
    if (!_mesa_initialize_context(&intel->ctx,
-				 mesaVis, shareCtx, 
-				 functions,
-				 (void*) intel))
+                                 mesaVis, shareCtx,
+                                 functions, (void *) intel))
       return GL_FALSE;
 
    driContextPriv->driverPrivate = intel;
@@ -289,14 +369,26 @@ GLboolean intelInitContext( intelContextPtr intel,
    intel->driScreen = sPriv;
    intel->sarea = saPriv;
 
+   intel->width = intelScreen->width;
+   intel->height = intelScreen->height;
+   intel->current_rotation = intelScreen->current_rotation;
 
-   (void) memset( intel->texture_heaps, 0, sizeof( intel->texture_heaps ) );
-   make_empty_list( & intel->swapped );
+   if (!lockMutexInit) {
+      lockMutexInit = GL_TRUE;
+      _glthread_INIT_MUTEX(lockMutex);
+   }
 
-   driParseConfigFiles (&intel->optionCache, &intelScreen->optionCache,
-			intel->driScreen->myNum, "i915");
+   driParseConfigFiles(&intel->optionCache, &intelScreen->optionCache,
+                       intel->driScreen->myNum, "i915");
 
    ctx->Const.MaxTextureMaxAnisotropy = 2.0;
+
+   /* This doesn't yet catch all non-conformant rendering, but it's a
+    * start.
+    */
+   if (getenv("INTEL_STRICT_CONFORMANCE")) {
+      intel->strict_conformance = 1;
+   }
 
    ctx->Const.MinLineWidth = 1.0;
    ctx->Const.MinLineWidthAA = 1.0;
@@ -315,361 +407,255 @@ GLboolean intelInitContext( intelContextPtr intel,
     */
    _mesa_init_point(ctx);
 
+   ctx->Const.MaxColorAttachments = 4;  /* XXX FBO: review this */
+
    /* Initialize the software rasterizer and helper modules. */
-   _swrast_CreateContext( ctx );
-   _vbo_CreateContext( ctx );
-   _tnl_CreateContext( ctx );
-   _swsetup_CreateContext( ctx );
+   _swrast_CreateContext(ctx);
+   _vbo_CreateContext(ctx);
+   _tnl_CreateContext(ctx);
+   _swsetup_CreateContext(ctx);
 
    /* Install the customized pipeline: */
-   _tnl_destroy_pipeline( ctx );
-   _tnl_install_pipeline( ctx, intel_pipeline );
+   _tnl_destroy_pipeline(ctx);
+   _tnl_install_pipeline(ctx, intel_pipeline);
 
    /* Configure swrast to match hardware characteristics: */
-   _swrast_allow_pixel_fog( ctx, GL_FALSE );
-   _swrast_allow_vertex_fog( ctx, GL_TRUE );
+   _swrast_allow_pixel_fog(ctx, GL_FALSE);
+   _swrast_allow_vertex_fog(ctx, GL_TRUE);
 
    /* Dri stuff */
    intel->hHWContext = driContextPriv->hHWContext;
    intel->driFd = sPriv->fd;
-   intel->driHwLock = (drmLock *) &sPriv->pSAREA->lock;
+   intel->driHwLock = (drmLock *) & sPriv->pSAREA->lock;
 
-   intel->hw_stencil = mesaVis->stencilBits && mesaVis->depthBits == 24;
    intel->hw_stipple = 1;
 
-   switch(mesaVis->depthBits) {
-   case 0:			/* what to do in this case? */
+   /* XXX FBO: this doesn't seem to be used anywhere */
+   switch (mesaVis->depthBits) {
+   case 0:                     /* what to do in this case? */
    case 16:
-      intel->depth_scale = 1.0/0xffff;
-      intel->polygon_offset_scale = 1.0/0xffff;
-      intel->depth_clear_mask = ~0;
-      intel->ClearDepth = 0xffff;
+      intel->polygon_offset_scale = 1.0 / 0xffff;
       break;
    case 24:
-      intel->depth_scale = 1.0/0xffffff;
-      intel->polygon_offset_scale = 2.0/0xffffff; /* req'd to pass glean */
-      intel->depth_clear_mask = 0x00ffffff;
-      intel->stencil_clear_mask = 0xff000000;
-      intel->ClearDepth = 0x00ffffff;
+      intel->polygon_offset_scale = 2.0 / 0xffffff;     /* req'd to pass glean */
       break;
    default:
-      assert(0); 
+      assert(0);
       break;
    }
 
    /* Initialize swrast, tnl driver tables: */
-   intelInitSpanFuncs( ctx );
-   intelInitTriFuncs( ctx );
+   intelInitSpanFuncs(ctx);
+   intelInitTriFuncs(ctx);
 
 
    intel->RenderIndex = ~0;
 
    fthrottle_mode = driQueryOptioni(&intel->optionCache, "fthrottle_mode");
-   intel->iw.irq_seq = -1;
    intel->irqsEmitted = 0;
 
    intel->do_irqs = (intel->intelScreen->irq_active &&
-		     fthrottle_mode == DRI_CONF_FTHROTTLE_IRQS);
+                     fthrottle_mode == DRI_CONF_FTHROTTLE_IRQS);
 
    intel->do_usleeps = (fthrottle_mode == DRI_CONF_FTHROTTLE_USLEEPS);
 
-   intel->vblank_flags = (intel->intelScreen->irq_active != 0)
-       ? driGetDefaultVBlankFlags(&intel->optionCache) : VBLANK_FLAG_NO_IRQ;
+   _math_matrix_ctr(&intel->ViewportMatrix);
 
-   (*dri_interface->getUST)(&intel->swap_ust);
-   _math_matrix_ctr (&intel->ViewportMatrix);
+   /* Disable imaging extension until convolution is working in
+    * teximage paths:
+    */
+   driInitExtensions(ctx, card_extensions,
+/* 		      GL_TRUE, */
+                     GL_FALSE);
 
-   driInitExtensions( ctx, card_extensions, GL_TRUE );
+   if (intelScreen->ttm)
+      driInitExtensions(ctx, ttm_extensions, GL_FALSE);
+
+
+   intel->batch = intel_batchbuffer_alloc(intel);
+   intel->last_swap_fence = NULL;
+   intel->first_swap_fence = NULL;
+
+   intel_bufferobj_init(intel);
+   intel_fbo_init(intel);
 
    if (intel->ctx.Mesa_DXTn) {
-     _mesa_enable_extension( ctx, "GL_EXT_texture_compression_s3tc" );
-     _mesa_enable_extension( ctx, "GL_S3_s3tc" );
+      _mesa_enable_extension(ctx, "GL_EXT_texture_compression_s3tc");
+      _mesa_enable_extension(ctx, "GL_S3_s3tc");
    }
-   else if (driQueryOptionb (&intel->optionCache, "force_s3tc_enable")) {
-     _mesa_enable_extension( ctx, "GL_EXT_texture_compression_s3tc" );
+   else if (driQueryOptionb(&intel->optionCache, "force_s3tc_enable")) {
+      _mesa_enable_extension(ctx, "GL_EXT_texture_compression_s3tc");
    }
 
-/*    driInitTextureObjects( ctx, & intel->swapped, */
-/* 			  DRI_TEXMGR_DO_TEXTURE_1D | */
-/* 			  DRI_TEXMGR_DO_TEXTURE_2D |  */
-/* 			  DRI_TEXMGR_DO_TEXTURE_RECT ); */
-
-
-   intelInitBatchBuffer(&intel->ctx);
-   intel->prim.flush = intel_emit_invarient_state;
    intel->prim.primitive = ~0;
 
 
 #if DO_DEBUG
-   INTEL_DEBUG  = driParseDebugString( getenv( "INTEL_DEBUG" ),
-				       debug_control );
-   INTEL_DEBUG |= driParseDebugString( getenv( "INTEL_DEBUG" ),
-				       debug_control );
+   INTEL_DEBUG = driParseDebugString(getenv("INTEL_DEBUG"), debug_control);
 #endif
 
-#ifndef VERBOSE
-   if (getenv("INTEL_VERBOSE"))
-      VERBOSE=1;
-#endif
-
-   if (getenv("INTEL_NO_RAST") || 
-       getenv("INTEL_NO_RAST")) {
+   if (getenv("INTEL_NO_RAST")) {
       fprintf(stderr, "disabling 3D rasterization\n");
-      FALLBACK(intel, INTEL_FALLBACK_USER, 1); 
+      FALLBACK(intel, INTEL_FALLBACK_USER, 1);
    }
 
    return GL_TRUE;
 }
 
-void intelDestroyContext(__DRIcontextPrivate *driContextPriv)
+void
+intelDestroyContext(__DRIcontextPrivate * driContextPriv)
 {
-   intelContextPtr intel = (intelContextPtr) driContextPriv->driverPrivate;
+   struct intel_context *intel =
+      (struct intel_context *) driContextPriv->driverPrivate;
 
-   assert(intel); /* should never be null */
+   assert(intel);               /* should never be null */
    if (intel) {
-      GLboolean   release_texture_heaps;
+      GLboolean release_texture_heaps;
 
-      INTEL_FIREVERTICES( intel );
+      INTEL_FIREVERTICES(intel);
 
-      intel->vtbl.destroy( intel );
+      intel->vtbl.destroy(intel);
 
       release_texture_heaps = (intel->ctx.Shared->RefCount == 1);
-      _swsetup_DestroyContext (&intel->ctx);
-      _tnl_DestroyContext (&intel->ctx);
-      _vbo_DestroyContext (&intel->ctx);
+      _swsetup_DestroyContext(&intel->ctx);
+      _tnl_DestroyContext(&intel->ctx);
+      _vbo_DestroyContext(&intel->ctx);
 
-      _swrast_DestroyContext (&intel->ctx);
-      intel->Fallback = 0;	/* don't call _swrast_Flush later */
+      _swrast_DestroyContext(&intel->ctx);
+      intel->Fallback = 0;      /* don't call _swrast_Flush later */
 
-      intelDestroyBatchBuffer(&intel->ctx);
-      
+      intel_batchbuffer_free(intel->batch);
 
-      if ( release_texture_heaps ) {
+      if (intel->last_swap_fence) {
+	 dri_fence_wait(intel->last_swap_fence);
+	 dri_fence_unreference(intel->last_swap_fence);
+	 intel->last_swap_fence = NULL;
+      }
+      if (intel->first_swap_fence) {
+	 dri_fence_wait(intel->first_swap_fence);
+	 dri_fence_unreference(intel->first_swap_fence);
+	 intel->first_swap_fence = NULL;
+      }
+
+
+      if (release_texture_heaps) {
          /* This share group is about to go away, free our private
           * texture object data.
           */
-         int i;
-
-         for ( i = 0 ; i < intel->nr_heaps ; i++ ) {
-	    driDestroyTextureHeap( intel->texture_heaps[ i ] );
-	    intel->texture_heaps[ i ] = NULL;
-         }
-
-	 assert( is_empty_list( & intel->swapped ) );
+         if (INTEL_DEBUG & DEBUG_TEXTURE)
+            fprintf(stderr, "do something to free texture heaps\n");
       }
 
       /* free the Mesa context */
-      _mesa_destroy_context(&intel->ctx);
+      _mesa_free_context_data(&intel->ctx);
    }
 }
 
-void intelSetFrontClipRects( intelContextPtr intel )
-{
-   __DRIdrawablePrivate *dPriv = intel->driDrawable;
-
-   if (!dPriv) return;
-
-   intel->numClipRects = dPriv->numClipRects;
-   intel->pClipRects = dPriv->pClipRects;
-   intel->drawX = dPriv->x;
-   intel->drawY = dPriv->y;
-}
-
-
-void intelSetBackClipRects( intelContextPtr intel )
-{
-   __DRIdrawablePrivate *dPriv = intel->driDrawable;
-
-   if (!dPriv) return;
-
-   if (intel->sarea->pf_enabled == 0 && dPriv->numBackClipRects == 0) {
-      intel->numClipRects = dPriv->numClipRects;
-      intel->pClipRects = dPriv->pClipRects;
-      intel->drawX = dPriv->x;
-      intel->drawY = dPriv->y;
-   } else {
-      intel->numClipRects = dPriv->numBackClipRects;
-      intel->pClipRects = dPriv->pBackClipRects;
-      intel->drawX = dPriv->backX;
-      intel->drawY = dPriv->backY;
-      
-      if (dPriv->numBackClipRects == 1 &&
-	  dPriv->x == dPriv->backX &&
-	  dPriv->y == dPriv->backY) {
-      
-	 /* Repeat the calculation of the back cliprect dimensions here
-	  * as early versions of dri.a in the Xserver are incorrect.  Try
-	  * very hard not to restrict future versions of dri.a which
-	  * might eg. allocate truly private back buffers.
-	  */
-	 int x1, y1;
-	 int x2, y2;
-	 
-	 x1 = dPriv->x;
-	 y1 = dPriv->y;      
-	 x2 = dPriv->x + dPriv->w;
-	 y2 = dPriv->y + dPriv->h;
-	 
-	 if (x1 < 0) x1 = 0;
-	 if (y1 < 0) y1 = 0;
-	 if (x2 > intel->intelScreen->width) x2 = intel->intelScreen->width;
-	 if (y2 > intel->intelScreen->height) y2 = intel->intelScreen->height;
-
-	 if (x1 == dPriv->pBackClipRects[0].x1 &&
-	     y1 == dPriv->pBackClipRects[0].y1) {
-
-	    dPriv->pBackClipRects[0].x2 = x2;
-	    dPriv->pBackClipRects[0].y2 = y2;
-	 }
-      }
-   }
-}
-
-
-void intelWindowMoved( intelContextPtr intel )
-{
-   __DRIdrawablePrivate *dPriv = intel->driDrawable;
-   GLframebuffer *drawFb = (GLframebuffer *) dPriv->driverPrivate;
-
-   if (!intel->ctx.DrawBuffer) {
-      intelSetFrontClipRects( intel );
-   }
-   else {
-      driUpdateFramebufferSize(&intel->ctx, dPriv);
-      switch (drawFb->_ColorDrawBufferMask[0]) {
-      case BUFFER_BIT_FRONT_LEFT:
-	 intelSetFrontClipRects( intel );
-	 break;
-      case BUFFER_BIT_BACK_LEFT:
-	 intelSetBackClipRects( intel );
-	 break;
-      default:
-	 /* glDrawBuffer(GL_NONE or GL_FRONT_AND_BACK): software fallback */
-	 intelSetFrontClipRects( intel );
-      }
-   }
-
-   if (drawFb->Width != dPriv->w || drawFb->Height != dPriv->h) {
-      /* update Mesa's notion of framebuffer/window size */
-      _mesa_resize_framebuffer(&intel->ctx, drawFb, dPriv->w, dPriv->h);
-      drawFb->Initialized = GL_TRUE; /* XXX remove someday */
-   }
-
-   /* Set state we know depends on drawable parameters:
-    */
-   {
-      GLcontext *ctx = &intel->ctx;
-
-      if (intel->intelScreen->driScrnPriv->ddxMinor >= 7) {
-	 drmI830Sarea *sarea = intel->sarea;
-	 drm_clip_rect_t drw_rect = { .x1 = dPriv->x, .x2 = dPriv->x + dPriv->w,
-				      .y1 = dPriv->y, .y2 = dPriv->y + dPriv->h };
-	 drm_clip_rect_t pipeA_rect = { .x1 = sarea->pipeA_x,
-					.x2 = sarea->pipeA_x + sarea->pipeA_w,
-					.y1 = sarea->pipeA_y,
-					.y2 = sarea->pipeA_y + sarea->pipeA_h };
-	 drm_clip_rect_t pipeB_rect = { .x1 = sarea->pipeB_x,
-					.x2 = sarea->pipeB_x + sarea->pipeB_w,
-					.y1 = sarea->pipeB_y,
-					.y2 = sarea->pipeB_y + sarea->pipeB_h };
-	 GLint areaA = driIntersectArea( drw_rect, pipeA_rect );
-	 GLint areaB = driIntersectArea( drw_rect, pipeB_rect );
-	 GLuint flags = intel->vblank_flags;
-
-	 if (areaB > areaA || (areaA == areaB && areaB > 0)) {
-	    flags = intel->vblank_flags | VBLANK_FLAG_SECONDARY;
-	 } else {
-	    flags = intel->vblank_flags & ~VBLANK_FLAG_SECONDARY;
-	 }
-
-	 if (flags != intel->vblank_flags) {
-	    intel->vblank_flags = flags;
-	    driGetCurrentVBlank(dPriv, intel->vblank_flags, &intel->vbl_seq);
-	 }
-      } else {
-	 intel->vblank_flags &= ~VBLANK_FLAG_SECONDARY;
-      }
-
-      ctx->Driver.Scissor( ctx, ctx->Scissor.X, ctx->Scissor.Y,
-			   ctx->Scissor.Width, ctx->Scissor.Height );
-      
-      ctx->Driver.DepthRange( ctx, 
-			      ctx->Viewport.Near,
-			      ctx->Viewport.Far );
-   }
-}
-
-GLboolean intelUnbindContext(__DRIcontextPrivate *driContextPriv)
+GLboolean
+intelUnbindContext(__DRIcontextPrivate * driContextPriv)
 {
    return GL_TRUE;
 }
 
-GLboolean intelMakeCurrent(__DRIcontextPrivate *driContextPriv,
-			  __DRIdrawablePrivate *driDrawPriv,
-			  __DRIdrawablePrivate *driReadPriv)
+GLboolean
+intelMakeCurrent(__DRIcontextPrivate * driContextPriv,
+                 __DRIdrawablePrivate * driDrawPriv,
+                 __DRIdrawablePrivate * driReadPriv)
 {
 
    if (driContextPriv) {
-      intelContextPtr intel = (intelContextPtr) driContextPriv->driverPrivate;
+      struct intel_context *intel =
+         (struct intel_context *) driContextPriv->driverPrivate;
+      struct intel_framebuffer *intel_fb =
+	 (struct intel_framebuffer *) driDrawPriv->driverPrivate;
+      GLframebuffer *readFb = (GLframebuffer *) driReadPriv->driverPrivate;
 
-      if ( intel->driDrawable != driDrawPriv ) {
-	 /* Shouldn't the readbuffer be stored also? */
-	 driDrawableInitVBlank( driDrawPriv, intel->vblank_flags,
-				&intel->vbl_seq );
 
-	 intel->driDrawable = driDrawPriv;
-	 intelWindowMoved( intel );
+      /* XXX FBO temporary fix-ups! */
+      /* if the renderbuffers don't have regions, init them from the context */
+      {
+         struct intel_renderbuffer *irbDepth
+            = intel_get_renderbuffer(&intel_fb->Base, BUFFER_DEPTH);
+         struct intel_renderbuffer *irbStencil
+            = intel_get_renderbuffer(&intel_fb->Base, BUFFER_STENCIL);
+
+         if (intel_fb->color_rb[0] && !intel_fb->color_rb[0]->region) {
+            intel_region_reference(&intel_fb->color_rb[0]->region,
+				   intel->intelScreen->front_region);
+         }
+         if (intel_fb->color_rb[1] && !intel_fb->color_rb[1]->region) {
+            intel_region_reference(&intel_fb->color_rb[1]->region,
+				   intel->intelScreen->back_region);
+         }
+         if (intel_fb->color_rb[2] && !intel_fb->color_rb[2]->region) {
+            intel_region_reference(&intel_fb->color_rb[2]->region,
+				   intel->intelScreen->third_region);
+         }
+         if (irbDepth && !irbDepth->region) {
+            intel_region_reference(&irbDepth->region, intel->intelScreen->depth_region);
+         }
+         if (irbStencil && !irbStencil->region) {
+            intel_region_reference(&irbStencil->region, intel->intelScreen->depth_region);
+         }
       }
 
-      _mesa_make_current(&intel->ctx,
-			 (GLframebuffer *) driDrawPriv->driverPrivate,
-			 (GLframebuffer *) driReadPriv->driverPrivate);
+      /* set GLframebuffer size to match window, if needed */
+      driUpdateFramebufferSize(&intel->ctx, driDrawPriv);
 
-      intel->ctx.Driver.DrawBuffer( &intel->ctx, intel->ctx.Color.DrawBuffer[0] );
-   } else {
+      if (driReadPriv != driDrawPriv) {
+	 driUpdateFramebufferSize(&intel->ctx, driReadPriv);
+      }
+
+      _mesa_make_current(&intel->ctx, &intel_fb->Base, readFb);
+
+      /* The drawbuffer won't always be updated by _mesa_make_current: 
+       */
+      if (intel->ctx.DrawBuffer == &intel_fb->Base) {
+
+	 if (intel->driDrawable != driDrawPriv) {
+	    if (driDrawPriv->pdraw->swap_interval == (unsigned)-1) {
+	       int i;
+
+	       intel_fb->vblank_flags = (intel->intelScreen->irq_active != 0)
+		  ? driGetDefaultVBlankFlags(&intel->optionCache)
+		 : VBLANK_FLAG_NO_IRQ;
+
+	       (*dri_interface->getUST) (&intel_fb->swap_ust);
+	       driDrawableInitVBlank(driDrawPriv, intel_fb->vblank_flags,
+				     &intel_fb->vbl_seq);
+	       intel_fb->vbl_waited = intel_fb->vbl_seq;
+
+	       for (i = 0; i < (intel->intelScreen->third.handle ? 3 : 2); i++) {
+		  if (intel_fb->color_rb[i])
+		     intel_fb->color_rb[i]->vbl_pending = intel_fb->vbl_seq;
+	       }
+	    }
+	    intel->driDrawable = driDrawPriv;
+	    intelWindowMoved(intel);
+	 }
+
+	 intel_draw_buffer(&intel->ctx, &intel_fb->Base);
+      }
+   }
+   else {
       _mesa_make_current(NULL, NULL, NULL);
    }
 
    return GL_TRUE;
 }
 
-/**
- * Use the information in the sarea to update the screen parameters
- * related to screen rotation.
- */
 static void
-intelUpdateScreenRotation(intelContextPtr intel,
-                          __DRIscreenPrivate *sPriv,
-                          drmI830Sarea *sarea)
-{
-   intelScreenPrivate *intelScreen = (intelScreenPrivate *)sPriv->private;
-   intelRegion *colorBuf;
-
-   intelUnmapScreenRegions(intelScreen);
-
-   intelUpdateScreenFromSAREA(intelScreen, sarea);
-
-   /* update the current hw offsets for the color and depth buffers */
-   if (intel->ctx.DrawBuffer->_ColorDrawBufferMask[0] == BUFFER_BIT_BACK_LEFT)
-      colorBuf = &intelScreen->back;
-   else
-      colorBuf = &intelScreen->front;
-   intel->vtbl.update_color_z_regions(intel, colorBuf, &intelScreen->depth);
-
-   if (!intelMapScreenRegions(sPriv)) {
-      fprintf(stderr, "ERROR Remapping screen regions!!!\n");
-   }
-}
-
-void intelGetLock( intelContextPtr intel, GLuint flags )
+intelContendedLock(struct intel_context *intel, GLuint flags)
 {
    __DRIdrawablePrivate *dPriv = intel->driDrawable;
    __DRIscreenPrivate *sPriv = intel->driScreen;
-   intelScreenPrivate *intelScreen = (intelScreenPrivate *)sPriv->private;
-   drmI830Sarea * sarea = intel->sarea;
-   unsigned   i;
+   intelScreenPrivate *intelScreen = (intelScreenPrivate *) sPriv->private;
+   drmI830Sarea *sarea = intel->sarea;
 
    drmGetLock(intel->driFd, intel->hHWContext, flags);
+
+   if (INTEL_DEBUG & DEBUG_LOCK)
+      _mesa_printf("%s - got contended lock\n", __progname);
 
    /* If the window moved, may need to set a new cliprect now.
     *
@@ -679,98 +665,129 @@ void intelGetLock( intelContextPtr intel, GLuint flags )
    if (dPriv)
       DRI_VALIDATE_DRAWABLE_INFO(sPriv, dPriv);
 
-   if (dPriv && intel->lastStamp != dPriv->lastStamp) {
-      intelWindowMoved( intel );
-      intel->lastStamp = dPriv->lastStamp;
-   }
-
-   /* If we lost context, need to dump all registers to hardware.
-    * Note that we don't care about 2d contexts, even if they perform
-    * accelerated commands, so the DRI locking in the X server is even
-    * more broken than usual.
+   /* If the last consumer of the texture memory wasn't us, notify the fake
+    * bufmgr and record the new owner.  We should have the memory shared
+    * between contexts of a single fake bufmgr, but this will at least make
+    * things correct for now.
     */
+   if (!intel->intelScreen->ttm && sarea->texAge != intel->hHWContext) {
+      sarea->texAge = intel->hHWContext;
+      dri_bufmgr_fake_contended_lock_take(intel->intelScreen->bufmgr);
+      if (INTEL_DEBUG & DEBUG_BATCH)
+	 intel_decode_context_reset();
+   }
 
    if (sarea->width != intelScreen->width ||
        sarea->height != intelScreen->height ||
        sarea->rotation != intelScreen->current_rotation) {
-      intelUpdateScreenRotation(intel, sPriv, sarea);
 
-      /* This will drop the outstanding batchbuffer on the floor */
-      intel->batch.ptr -= (intel->batch.size - intel->batch.space);
-      intel->batch.space = intel->batch.size;
-      /* lose all primitives */
-      intel->prim.primitive = ~0;
-      intel->prim.start_ptr = 0;
-      intel->prim.flush = 0;
-      intel->vtbl.lost_hardware( intel ); 
-
-      intel->lastStamp = 0; /* force window update */
-
-      /* Release batch buffer
-       */
-      intelDestroyBatchBuffer(&intel->ctx);
-      intelInitBatchBuffer(&intel->ctx);
-      intel->prim.flush = intel_emit_invarient_state;
-
-      /* Still need to reset the global LRU?
-       */
-      intel_driReinitTextureHeap( intel->texture_heaps[0], intel->intelScreen->tex.size );
+      intelUpdateScreenRotation(sPriv, sarea);
    }
 
-   /* Shared texture managment - if another client has played with
-    * texture space, figure out which if any of our textures have been
-    * ejected, and update our global LRU.
+   if (sarea->width != intel->width ||
+       sarea->height != intel->height ||
+       sarea->rotation != intel->current_rotation) {
+      int numClipRects = intel->numClipRects;
+
+      /*
+       * FIXME: Really only need to do this when drawing to a
+       * common back- or front buffer.
+       */
+
+      /*
+       * This will essentially drop the outstanding batchbuffer on the floor.
+       */
+      intel->numClipRects = 0;
+
+      if (intel->Fallback)
+	 _swrast_flush(&intel->ctx);
+
+      INTEL_FIREVERTICES(intel);
+
+      if (intel->batch->map != intel->batch->ptr)
+	 intel_batchbuffer_flush(intel->batch);
+
+      intel->numClipRects = numClipRects;
+
+      /* force window update */
+      intel->lastStamp = 0;
+
+      intel->width = sarea->width;
+      intel->height = sarea->height;
+      intel->current_rotation = sarea->rotation;
+   }
+
+   /* Drawable changed?
     */
-   for ( i = 0 ; i < intel->nr_heaps ; i++ ) {
-      DRI_AGE_TEXTURES( intel->texture_heaps[ i ] );
+   if (dPriv && intel->lastStamp != dPriv->lastStamp) {
+      intelWindowMoved(intel);
+      intel->lastStamp = dPriv->lastStamp;
    }
 }
 
 
-void intelSwapBuffers( __DRIdrawablePrivate *dPriv )
+
+/* Lock the hardware and validate our state.  
+ */
+void LOCK_HARDWARE( struct intel_context *intel )
 {
-   if (dPriv->driContextPriv && dPriv->driContextPriv->driverPrivate) {
-      intelContextPtr intel;
-      GLcontext *ctx;
-      intel = (intelContextPtr) dPriv->driContextPriv->driverPrivate;
-      ctx = &intel->ctx;
-      if (ctx->Visual.doubleBufferMode) {
-         intelScreenPrivate *screen = intel->intelScreen;
-	 _mesa_notifySwapBuffers( ctx );  /* flush pending rendering comands */
-	 if ( 0 /*intel->doPageFlip*/ ) { /* doPageFlip is never set !!! */
-	    intelPageFlip( dPriv );
-	 } else {
-	     intelCopyBuffer( dPriv, NULL );
-	 }
-         if (screen->current_rotation != 0) {
-            intelRotateWindow(intel, dPriv, BUFFER_BIT_FRONT_LEFT);
-         }
-      }
-   } else {
-      /* XXX this shouldn't be an error but we can't handle it for now */
-      fprintf(stderr, "%s: drawable has no context!\n", __FUNCTION__);
-   }
+    char __ret=0;
+    struct intel_framebuffer *intel_fb = NULL;
+    struct intel_renderbuffer *intel_rb = NULL;
+    _glthread_LOCK_MUTEX(lockMutex);
+    assert(!intel->locked);
+
+    if (intel->driDrawable) {
+       intel_fb = intel->driDrawable->driverPrivate;
+
+       if (intel_fb)
+	  intel_rb =
+	     intel_get_renderbuffer(&intel_fb->Base,
+				    intel_fb->Base._ColorDrawBufferMask[0] ==
+				    BUFFER_BIT_FRONT_LEFT ? BUFFER_FRONT_LEFT :
+				    BUFFER_BACK_LEFT);
+    }
+
+    if (intel_rb && intel_fb->vblank_flags &&
+	!(intel_fb->vblank_flags & VBLANK_FLAG_NO_IRQ) &&
+	(intel_fb->vbl_waited - intel_rb->vbl_pending) > (1<<23)) {
+	drmVBlank vbl;
+
+	vbl.request.type = DRM_VBLANK_ABSOLUTE;
+
+	if ( intel_fb->vblank_flags & VBLANK_FLAG_SECONDARY ) {
+	    vbl.request.type |= DRM_VBLANK_SECONDARY;
+	}
+
+	vbl.request.sequence = intel_rb->vbl_pending;
+	drmWaitVBlank(intel->driFd, &vbl);
+	intel_fb->vbl_waited = vbl.reply.sequence;
+    }
+
+    DRM_CAS(intel->driHwLock, intel->hHWContext,
+        (DRM_LOCK_HELD|intel->hHWContext), __ret);
+
+    if (__ret)
+        intelContendedLock( intel, 0 );
+
+    if (INTEL_DEBUG & DEBUG_LOCK)
+      _mesa_printf("%s - locked\n", __progname);
+
+    intel->locked = 1;
 }
 
-void intelCopySubBuffer( __DRIdrawablePrivate *dPriv,
-			 int x, int y, int w, int h )
+
+  /* Unlock the hardware using the global current context 
+   */
+void UNLOCK_HARDWARE( struct intel_context *intel )
 {
-   if (dPriv->driContextPriv && dPriv->driContextPriv->driverPrivate) {
-      intelContextPtr intel;
-      GLcontext *ctx;
-      intel = (intelContextPtr) dPriv->driContextPriv->driverPrivate;
-      ctx = &intel->ctx;
-      if (ctx->Visual.doubleBufferMode) {
-	 drm_clip_rect_t rect;
-	 rect.x1 = x + dPriv->x;
-	 rect.y1 = (dPriv->h - y - h) + dPriv->y;
-	 rect.x2 = rect.x1 + w;
-	 rect.y2 = rect.y1 + h;
-	 _mesa_notifySwapBuffers( ctx );  /* flush pending rendering comands */
-	 intelCopyBuffer( dPriv, &rect );
-      }
-   } else {
-      /* XXX this shouldn't be an error but we can't handle it for now */
-      fprintf(stderr, "%s: drawable has no context!\n", __FUNCTION__);
-   }
-}
+   intel->locked = 0;
+
+   DRM_UNLOCK(intel->driFd, intel->driHwLock, intel->hHWContext);
+
+   _glthread_UNLOCK_MUTEX(lockMutex);
+
+   if (INTEL_DEBUG & DEBUG_LOCK)
+      _mesa_printf("%s - unlocked\n", __progname);
+} 
+

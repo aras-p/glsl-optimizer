@@ -814,6 +814,11 @@ main(int argc, char *argv[])
 
    init();
 
+   /* Set initial projection/viewing transformation.
+    * same as glxgears.c
+    */
+   reshape(300, 300);
+
    event_loop(dpy, win);
 
    glXDestroyContext(dpy, ctx);

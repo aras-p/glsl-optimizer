@@ -40,6 +40,23 @@ static int align(int value, int alignment)
    return (value + alignment - 1) & ~(alignment - 1);
 }
 
+GLuint intel_compressed_alignment(GLenum internalFormat)
+{
+    GLuint alignment = 4;
+
+    switch (internalFormat) {
+    case GL_COMPRESSED_RGB_FXT1_3DFX:
+    case GL_COMPRESSED_RGBA_FXT1_3DFX:
+        alignment = 8;
+        break;
+
+    default:
+        break;
+    }
+
+    return alignment;
+}
+
 void i945_miptree_layout_2d( struct intel_mipmap_tree *mt )
 {
    GLint align_h = 2, align_w = 4;
@@ -51,17 +68,30 @@ void i945_miptree_layout_2d( struct intel_mipmap_tree *mt )
 
    mt->pitch = mt->width0;
 
+   if (mt->compressed) {
+       align_w = intel_compressed_alignment(mt->internal_format);
+       mt->pitch = align(mt->width0, align_w);
+   }
+
    /* May need to adjust pitch to accomodate the placement of
     * the 2nd mipmap.  This occurs when the alignment
     * constraints of mipmap placement push the right edge of the
     * 2nd mipmap out past the width of its parent.
     */
    if (mt->first_level != mt->last_level) {
-      GLuint mip1_width = align(minify(mt->width0), align_w)
-			+ minify(minify(mt->width0));
+       GLuint mip1_width;
 
-      if (mip1_width > mt->width0)
-	 mt->pitch = mip1_width;
+       if (mt->compressed) {
+           mip1_width = align(minify(mt->width0), align_w)
+               + align(minify(minify(mt->width0)), align_w);
+       } else {
+           mip1_width = align(minify(mt->width0), align_w)
+               + minify(minify(mt->width0));
+       }
+
+       if (mip1_width > mt->pitch) {
+           mt->pitch = mip1_width;
+       }
    }
 
    /* Pitch must be a whole number of dwords, even though we

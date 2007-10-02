@@ -72,58 +72,62 @@
 
 #define I915_CONSTFLAG_PARAM 0x1f
 
-GLuint i915_get_temp( struct i915_fragment_program *p )
+GLuint
+i915_get_temp(struct i915_fragment_program *p)
 {
-   int bit = ffs( ~p->temp_flag );
+   int bit = ffs(~p->temp_flag);
    if (!bit) {
       fprintf(stderr, "%s: out of temporaries\n", __FILE__);
       exit(1);
    }
 
-   p->temp_flag |= 1<<(bit-1);
-   return UREG(REG_TYPE_R, (bit-1));
+   p->temp_flag |= 1 << (bit - 1);
+   return UREG(REG_TYPE_R, (bit - 1));
 }
 
 
-GLuint i915_get_utemp( struct i915_fragment_program *p )
+GLuint
+i915_get_utemp(struct i915_fragment_program * p)
 {
-   int bit = ffs( ~p->utemp_flag );
+   int bit = ffs(~p->utemp_flag);
    if (!bit) {
       fprintf(stderr, "%s: out of temporaries\n", __FILE__);
       exit(1);
    }
 
-   p->utemp_flag |= 1<<(bit-1);
-   return UREG(REG_TYPE_U, (bit-1));
+   p->utemp_flag |= 1 << (bit - 1);
+   return UREG(REG_TYPE_U, (bit - 1));
 }
 
-void i915_release_utemps( struct i915_fragment_program *p )
+void
+i915_release_utemps(struct i915_fragment_program *p)
 {
    p->utemp_flag = ~0x7;
 }
 
 
-GLuint i915_emit_decl( struct i915_fragment_program *p,
-		      GLuint type, GLuint nr, GLuint d0_flags )
+GLuint
+i915_emit_decl(struct i915_fragment_program *p,
+               GLuint type, GLuint nr, GLuint d0_flags)
 {
    GLuint reg = UREG(type, nr);
 
    if (type == REG_TYPE_T) {
-      if (p->decl_t & (1<<nr))
-	 return reg;
+      if (p->decl_t & (1 << nr))
+         return reg;
 
-      p->decl_t |= (1<<nr);
+      p->decl_t |= (1 << nr);
    }
    else if (type == REG_TYPE_S) {
-      if (p->decl_s & (1<<nr))
-	 return reg;
+      if (p->decl_s & (1 << nr))
+         return reg;
 
-      p->decl_s |= (1<<nr);
+      p->decl_s |= (1 << nr);
    }
-   else 
+   else
       return reg;
 
-   *(p->decl++) = (D0_DCL | D0_DEST( reg ) | d0_flags);
+   *(p->decl++) = (D0_DCL | D0_DEST(reg) | d0_flags);
    *(p->decl++) = D1_MBZ;
    *(p->decl++) = D2_MBZ;
 
@@ -131,24 +135,26 @@ GLuint i915_emit_decl( struct i915_fragment_program *p,
    return reg;
 }
 
-GLuint i915_emit_arith( struct i915_fragment_program *p,
-		       GLuint op,
-		       GLuint dest,
-		       GLuint mask,
-		       GLuint saturate,
-		       GLuint src0,
-		       GLuint src1,
-		       GLuint src2 )
+GLuint
+i915_emit_arith(struct i915_fragment_program * p,
+                GLuint op,
+                GLuint dest,
+                GLuint mask,
+                GLuint saturate, GLuint src0, GLuint src1, GLuint src2)
 {
    GLuint c[3];
    GLuint nr_const = 0;
 
    assert(GET_UREG_TYPE(dest) != REG_TYPE_CONST);
-   assert(dest = UREG(GET_UREG_TYPE(dest), GET_UREG_NR(dest)));
+   dest = UREG(GET_UREG_TYPE(dest), GET_UREG_NR(dest));
+   assert(dest);
 
-   if (GET_UREG_TYPE(src0) == REG_TYPE_CONST) c[nr_const++] = 0;
-   if (GET_UREG_TYPE(src1) == REG_TYPE_CONST) c[nr_const++] = 1;
-   if (GET_UREG_TYPE(src2) == REG_TYPE_CONST) c[nr_const++] = 2;
+   if (GET_UREG_TYPE(src0) == REG_TYPE_CONST)
+      c[nr_const++] = 0;
+   if (GET_UREG_TYPE(src1) == REG_TYPE_CONST)
+      c[nr_const++] = 1;
+   if (GET_UREG_TYPE(src2) == REG_TYPE_CONST)
+      c[nr_const++] = 2;
 
    /* Recursively call this function to MOV additional const values
     * into temporary registers.  Use utemp registers for this -
@@ -164,31 +170,25 @@ GLuint i915_emit_arith( struct i915_fragment_program *p,
       old_utemp_flag = p->utemp_flag;
 
       first = GET_UREG_NR(s[c[0]]);
-      for (i = 1 ; i < nr_const ; i++) {
-	 if (GET_UREG_NR(s[c[i]]) != first) {
-	    GLuint tmp = i915_get_utemp(p);
+      for (i = 1; i < nr_const; i++) {
+         if (GET_UREG_NR(s[c[i]]) != first) {
+            GLuint tmp = i915_get_utemp(p);
 
-	    i915_emit_arith( p, A0_MOV, tmp, A0_DEST_CHANNEL_ALL, 0,
-			    s[c[i]], 0, 0 );
-	    s[c[i]] = tmp;
-	 }
+            i915_emit_arith(p, A0_MOV, tmp, A0_DEST_CHANNEL_ALL, 0,
+                            s[c[i]], 0, 0);
+            s[c[i]] = tmp;
+         }
       }
 
       src0 = s[0];
       src1 = s[1];
       src2 = s[2];
-      p->utemp_flag = old_utemp_flag; /* restore */
+      p->utemp_flag = old_utemp_flag;   /* restore */
    }
 
-   *(p->csr++) = (op | 
-		  A0_DEST( dest ) |
-		  mask | 
-		  saturate |
-		  A0_SRC0( src0 ));
-   *(p->csr++) = (A1_SRC0( src0 ) |
-		  A1_SRC1( src1 ));
-   *(p->csr++) = (A2_SRC1( src1 ) |
-		  A2_SRC2( src2 ));
+   *(p->csr++) = (op | A0_DEST(dest) | mask | saturate | A0_SRC0(src0));
+   *(p->csr++) = (A1_SRC0(src0) | A1_SRC1(src1));
+   *(p->csr++) = (A2_SRC1(src1) | A2_SRC2(src2));
 
    p->nr_alu_insn++;
    return dest;
@@ -239,24 +239,28 @@ GLuint i915_emit_texld( struct i915_fragment_program *p,
 }
 
 
-GLuint i915_emit_const1f( struct i915_fragment_program *p, GLfloat c0 )
+GLuint
+i915_emit_const1f(struct i915_fragment_program * p, GLfloat c0)
 {
    GLint reg, idx;
 
-   if (c0 == 0.0) return swizzle(UREG(REG_TYPE_R, 0), ZERO, ZERO, ZERO, ZERO);
-   if (c0 == 1.0) return swizzle(UREG(REG_TYPE_R, 0), ONE,  ONE,  ONE,  ONE );
+   if (c0 == 0.0)
+      return swizzle(UREG(REG_TYPE_R, 0), ZERO, ZERO, ZERO, ZERO);
+   if (c0 == 1.0)
+      return swizzle(UREG(REG_TYPE_R, 0), ONE, ONE, ONE, ONE);
 
    for (reg = 0; reg < I915_MAX_CONSTANT; reg++) {
       if (p->constant_flags[reg] == I915_CONSTFLAG_PARAM)
-	 continue;
+         continue;
       for (idx = 0; idx < 4; idx++) {
-	 if (!(p->constant_flags[reg] & (1<<idx)) ||
-	     p->constant[reg][idx] == c0) {
-	    p->constant[reg][idx] = c0;
-	    p->constant_flags[reg] |= 1<<idx;
-	    if (reg+1 > p->nr_constants) p->nr_constants = reg+1;
-	    return swizzle(UREG(REG_TYPE_CONST, reg),idx,ZERO,ZERO,ONE);
-	 }
+         if (!(p->constant_flags[reg] & (1 << idx)) ||
+             p->constant[reg][idx] == c0) {
+            p->constant[reg][idx] = c0;
+            p->constant_flags[reg] |= 1 << idx;
+            if (reg + 1 > p->nr_constants)
+               p->nr_constants = reg + 1;
+            return swizzle(UREG(REG_TYPE_CONST, reg), idx, ZERO, ZERO, ONE);
+         }
       }
    }
 
@@ -265,29 +269,35 @@ GLuint i915_emit_const1f( struct i915_fragment_program *p, GLfloat c0 )
    return 0;
 }
 
-GLuint i915_emit_const2f( struct i915_fragment_program *p, 
-			 GLfloat c0, GLfloat c1 )
+GLuint
+i915_emit_const2f(struct i915_fragment_program * p, GLfloat c0, GLfloat c1)
 {
    GLint reg, idx;
 
-   if (c0 == 0.0) return swizzle(i915_emit_const1f(p, c1), ZERO, X, Z, W);
-   if (c0 == 1.0) return swizzle(i915_emit_const1f(p, c1), ONE,  X, Z, W); 
+   if (c0 == 0.0)
+      return swizzle(i915_emit_const1f(p, c1), ZERO, X, Z, W);
+   if (c0 == 1.0)
+      return swizzle(i915_emit_const1f(p, c1), ONE, X, Z, W);
 
-   if (c1 == 0.0) return swizzle(i915_emit_const1f(p, c0), X, ZERO, Z, W);
-   if (c1 == 1.0) return swizzle(i915_emit_const1f(p, c0), X, ONE,  Z, W);
+   if (c1 == 0.0)
+      return swizzle(i915_emit_const1f(p, c0), X, ZERO, Z, W);
+   if (c1 == 1.0)
+      return swizzle(i915_emit_const1f(p, c0), X, ONE, Z, W);
 
    for (reg = 0; reg < I915_MAX_CONSTANT; reg++) {
       if (p->constant_flags[reg] == 0xf ||
-	  p->constant_flags[reg] == I915_CONSTFLAG_PARAM)
-	 continue;
+          p->constant_flags[reg] == I915_CONSTFLAG_PARAM)
+         continue;
       for (idx = 0; idx < 3; idx++) {
-	 if (!(p->constant_flags[reg] & (3<<idx))) {
-	    p->constant[reg][idx] = c0;
-	    p->constant[reg][idx+1] = c1;
-	    p->constant_flags[reg] |= 3<<idx;
-	    if (reg+1 > p->nr_constants) p->nr_constants = reg+1;
-	    return swizzle(UREG(REG_TYPE_CONST, reg),idx,idx+1,ZERO,ONE);
-	 }
+         if (!(p->constant_flags[reg] & (3 << idx))) {
+            p->constant[reg][idx] = c0;
+            p->constant[reg][idx + 1] = c1;
+            p->constant_flags[reg] |= 3 << idx;
+            if (reg + 1 > p->nr_constants)
+               p->nr_constants = reg + 1;
+            return swizzle(UREG(REG_TYPE_CONST, reg), idx, idx + 1, ZERO,
+                           ONE);
+         }
       }
    }
 
@@ -298,27 +308,28 @@ GLuint i915_emit_const2f( struct i915_fragment_program *p,
 
 
 
-GLuint i915_emit_const4f( struct i915_fragment_program *p, 
-			 GLfloat c0, GLfloat c1, GLfloat c2, GLfloat c3 )
+GLuint
+i915_emit_const4f(struct i915_fragment_program * p,
+                  GLfloat c0, GLfloat c1, GLfloat c2, GLfloat c3)
 {
    GLint reg;
 
    for (reg = 0; reg < I915_MAX_CONSTANT; reg++) {
       if (p->constant_flags[reg] == 0xf &&
-	  p->constant[reg][0] == c0 &&
-	  p->constant[reg][1] == c1 &&
-	  p->constant[reg][2] == c2 &&
-	  p->constant[reg][3] == c3) {
-	 return UREG(REG_TYPE_CONST, reg);
+          p->constant[reg][0] == c0 &&
+          p->constant[reg][1] == c1 &&
+          p->constant[reg][2] == c2 && p->constant[reg][3] == c3) {
+         return UREG(REG_TYPE_CONST, reg);
       }
       else if (p->constant_flags[reg] == 0) {
-	 p->constant[reg][0] = c0;
-	 p->constant[reg][1] = c1;
-	 p->constant[reg][2] = c2;
-	 p->constant[reg][3] = c3;
-	 p->constant_flags[reg] = 0xf;
-	 if (reg+1 > p->nr_constants) p->nr_constants = reg+1;
-	 return UREG(REG_TYPE_CONST, reg);
+         p->constant[reg][0] = c0;
+         p->constant[reg][1] = c1;
+         p->constant[reg][2] = c2;
+         p->constant[reg][3] = c3;
+         p->constant_flags[reg] = 0xf;
+         if (reg + 1 > p->nr_constants)
+            p->nr_constants = reg + 1;
+         return UREG(REG_TYPE_CONST, reg);
       }
    }
 
@@ -328,34 +339,36 @@ GLuint i915_emit_const4f( struct i915_fragment_program *p,
 }
 
 
-GLuint i915_emit_const4fv( struct i915_fragment_program *p, const GLfloat *c )
+GLuint
+i915_emit_const4fv(struct i915_fragment_program * p, const GLfloat * c)
 {
-   return i915_emit_const4f( p, c[0], c[1], c[2], c[3] );
+   return i915_emit_const4f(p, c[0], c[1], c[2], c[3]);
 }
 
 
-GLuint i915_emit_param4fv( struct i915_fragment_program *p, 
-			  const GLfloat *values )
+GLuint
+i915_emit_param4fv(struct i915_fragment_program * p, const GLfloat * values)
 {
    GLint reg, i;
 
    for (i = 0; i < p->nr_params; i++) {
       if (p->param[i].values == values)
-	 return UREG(REG_TYPE_CONST, p->param[i].reg);
+         return UREG(REG_TYPE_CONST, p->param[i].reg);
    }
 
 
    for (reg = 0; reg < I915_MAX_CONSTANT; reg++) {
       if (p->constant_flags[reg] == 0) {
-	 p->constant_flags[reg] = I915_CONSTFLAG_PARAM;
-	 i = p->nr_params++;
+         p->constant_flags[reg] = I915_CONSTFLAG_PARAM;
+         i = p->nr_params++;
 
-	 p->param[i].values = values;
-	 p->param[i].reg = reg;
-	 p->params_uptodate = 0;
+         p->param[i].values = values;
+         p->param[i].reg = reg;
+         p->params_uptodate = 0;
 
-	 if (reg+1 > p->nr_constants) p->nr_constants = reg+1;
-	 return UREG(REG_TYPE_CONST, reg);
+         if (reg + 1 > p->nr_constants)
+            p->nr_constants = reg + 1;
+         return UREG(REG_TYPE_CONST, reg);
       }
    }
 
@@ -366,30 +379,31 @@ GLuint i915_emit_param4fv( struct i915_fragment_program *p,
 
 
 
-
-void i915_program_error( struct i915_fragment_program *p, const char *msg )
+void
+i915_program_error(struct i915_fragment_program *p, const char *msg)
 {
    _mesa_problem(NULL, "i915_program_error: %s", msg);
    p->error = 1;
 }
 
-void i915_init_program( i915ContextPtr i915, struct i915_fragment_program *p )
+
+void
+i915_init_program(struct i915_context *i915, struct i915_fragment_program *p)
 {
    GLcontext *ctx = &i915->intel.ctx;
-   TNLcontext *tnl = TNL_CONTEXT( ctx );
-   
+
    p->translated = 0;
    p->params_uptodate = 0;
    p->on_hardware = 0;
    p->error = 0;
 
-   p->nr_tex_indirect = 1;	/* correct? */
+   p->nr_tex_indirect = 1;      /* correct? */
    p->nr_tex_insn = 0;
    p->nr_alu_insn = 0;
    p->nr_decl_insn = 0;
 
-   p->ctx = ctx;  
-   memset( p->constant_flags, 0, sizeof(p->constant_flags) );
+   p->ctx = ctx;
+   memset(p->constant_flags, 0, sizeof(p->constant_flags));
 
    p->nr_constants = 0;
    p->csr = p->program;
@@ -402,21 +416,17 @@ void i915_init_program( i915ContextPtr i915, struct i915_fragment_program *p )
    p->depth_written = 0;
    p->nr_params = 0;
 
-   p->src_texture = UREG_BAD;
-   p->src_previous = UREG(REG_TYPE_T, T_DIFFUSE);
-   p->last_tex_stage = 0;
-   p->VB = &tnl->vb;
-
    *(p->decl++) = _3DSTATE_PIXEL_SHADER_PROGRAM;
 }
 
 
-void i915_fini_program( struct i915_fragment_program *p )
+void
+i915_fini_program(struct i915_fragment_program *p)
 {
    GLuint program_size = p->csr - p->program;
    GLuint decl_size = p->decl - p->declarations;
-   
-   if (p->nr_tex_indirect > I915_MAX_TEX_INDIRECT) 
+
+   if (p->nr_tex_indirect > I915_MAX_TEX_INDIRECT)
       i915_program_error(p, "Exceeded max nr indirect texture lookups");
 
    if (p->nr_tex_insn > I915_MAX_TEX_INSN)
@@ -446,22 +456,24 @@ void i915_fini_program( struct i915_fragment_program *p )
    p->declarations[0] |= program_size + decl_size - 2;
 }
 
-void i915_upload_program( i915ContextPtr i915, struct i915_fragment_program *p )
+void
+i915_upload_program(struct i915_context *i915,
+                    struct i915_fragment_program *p)
 {
    GLuint program_size = p->csr - p->program;
    GLuint decl_size = p->decl - p->declarations;
 
-   FALLBACK( &i915->intel, I915_FALLBACK_PROGRAM, p->error );
+   FALLBACK(&i915->intel, I915_FALLBACK_PROGRAM, p->error);
 
    /* Could just go straight to the batchbuffer from here:
     */
    if (i915->state.ProgramSize != (program_size + decl_size) ||
-       memcmp(i915->state.Program + decl_size, p->program, 
-	      program_size*sizeof(int)) != 0) {
-      I915_STATECHANGE( i915, I915_UPLOAD_PROGRAM );
-      memcpy(i915->state.Program, p->declarations, decl_size*sizeof(int));
+       memcmp(i915->state.Program + decl_size, p->program,
+              program_size * sizeof(int)) != 0) {
+      I915_STATECHANGE(i915, I915_UPLOAD_PROGRAM);
+      memcpy(i915->state.Program, p->declarations, decl_size * sizeof(int));
       memcpy(i915->state.Program + decl_size, p->program,
-	     program_size*sizeof(int));
+             program_size * sizeof(int));
       i915->state.ProgramSize = decl_size + program_size;
    }
 
@@ -470,30 +482,28 @@ void i915_upload_program( i915ContextPtr i915, struct i915_fragment_program *p )
     */
    if (p->nr_constants) {
       GLuint nr = p->nr_constants;
-      
-      I915_ACTIVESTATE( i915, I915_UPLOAD_CONSTANTS, 1 );
-      I915_STATECHANGE( i915, I915_UPLOAD_CONSTANTS );
+
+      I915_ACTIVESTATE(i915, I915_UPLOAD_CONSTANTS, 1);
+      I915_STATECHANGE(i915, I915_UPLOAD_CONSTANTS);
 
       i915->state.Constant[0] = _3DSTATE_PIXEL_SHADER_CONSTANTS | ((nr) * 4);
-      i915->state.Constant[1] = (1<<(nr-1)) | ((1<<(nr-1))-1);
-      
-      memcpy(&i915->state.Constant[2], p->constant, 4*sizeof(int)*(nr));
+      i915->state.Constant[1] = (1 << (nr - 1)) | ((1 << (nr - 1)) - 1);
+
+      memcpy(&i915->state.Constant[2], p->constant, 4 * sizeof(int) * (nr));
       i915->state.ConstantSize = 2 + (nr) * 4;
 
       if (0) {
-	 GLuint i;
-	 for (i = 0; i < nr; i++) {
-	    fprintf(stderr, "const[%d]: %f %f %f %f\n", i, 
-		    p->constant[i][0],
-		    p->constant[i][1],
-		    p->constant[i][2],
-		    p->constant[i][3]);
-	 }
+         GLuint i;
+         for (i = 0; i < nr; i++) {
+            fprintf(stderr, "const[%d]: %f %f %f %f\n", i,
+                    p->constant[i][0],
+                    p->constant[i][1], p->constant[i][2], p->constant[i][3]);
+         }
       }
    }
    else {
-      I915_ACTIVESTATE( i915, I915_UPLOAD_CONSTANTS, 0 );
-   }  
+      I915_ACTIVESTATE(i915, I915_UPLOAD_CONSTANTS, 0);
+   }
 
    p->on_hardware = 1;
 }

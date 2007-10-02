@@ -30,6 +30,8 @@
 
 #include "mtypes.h"
 
+
+
 #define _INTEL_NEW_RENDERSTATE (_DD_NEW_LINE_STIPPLE |		\
 			       _DD_NEW_TRI_UNFILLED |		\
 			       _DD_NEW_TRI_LIGHT_TWOSIDE |	\
@@ -38,9 +40,30 @@
 			       _NEW_PROGRAM |		\
 			       _NEW_POLYGONSTIPPLE)
 
-extern void intelInitTriFuncs( GLcontext *ctx );
+extern void intelInitTriFuncs(GLcontext * ctx);
 
-extern void intelPrintRenderState( const char *msg, GLuint state );
-extern void intelChooseRenderState( GLcontext *ctx );
+extern void intelChooseRenderState(GLcontext * ctx);
+
+extern void intelStartInlinePrimitive(struct intel_context *intel,
+                                      GLuint prim, GLuint flags);
+extern void intelWrapInlinePrimitive(struct intel_context *intel);
+
+GLuint *intelExtendInlinePrimitive(struct intel_context *intel,
+                                   GLuint dwords);
+
+
+void intel_meta_draw_quad(struct intel_context *intel,
+                          GLfloat x0, GLfloat x1,
+                          GLfloat y0, GLfloat y1,
+                          GLfloat z,
+                          GLuint color,
+                          GLfloat s0, GLfloat s1, GLfloat t0, GLfloat t1);
+
+void intel_meta_draw_poly(struct intel_context *intel,
+                          GLuint n,
+                          GLfloat xy[][2],
+                          GLfloat z, GLuint color, GLfloat tex[][2]);
+
+
 
 #endif

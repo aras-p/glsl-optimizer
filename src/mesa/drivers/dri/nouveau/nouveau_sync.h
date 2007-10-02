@@ -28,8 +28,6 @@
 #ifndef __NOUVEAU_SYNC_H__
 #define __NOUVEAU_SYNC_H__
 
-#include "nouveau_buffers.h"
-
 #define NV_NOTIFIER_SIZE                                                      32
 #define NV_NOTIFY_TIME_0                                              0x00000000
 #define NV_NOTIFY_TIME_1                                              0x00000004
@@ -47,24 +45,24 @@
 #define NV_NOTIFY                                                     0x00000104
 #define NV_NOTIFY_STYLE_WRITE_ONLY                                             0
 
-extern struct drm_nouveau_notifier_alloc *
+extern struct drm_nouveau_notifierobj_alloc *
 nouveau_notifier_new(GLcontext *, GLuint handle, GLuint count);
 extern void 
-nouveau_notifier_destroy(GLcontext *, struct drm_nouveau_notifier_alloc *);
+nouveau_notifier_destroy(GLcontext *, struct drm_nouveau_notifierobj_alloc *);
 extern void
-nouveau_notifier_reset(GLcontext *, struct drm_nouveau_notifier_alloc *,
+nouveau_notifier_reset(GLcontext *, struct drm_nouveau_notifierobj_alloc *,
 		       GLuint id);
 extern GLuint
-nouveau_notifier_status(GLcontext *, struct drm_nouveau_notifier_alloc *,
+nouveau_notifier_status(GLcontext *, struct drm_nouveau_notifierobj_alloc *,
 			GLuint id);
 extern GLuint
-nouveau_notifier_return_val(GLcontext *, struct drm_nouveau_notifier_alloc *,
+nouveau_notifier_return_val(GLcontext *, struct drm_nouveau_notifierobj_alloc *,
 			    GLuint id);
 extern GLboolean
-nouveau_notifier_wait_status(GLcontext *, struct drm_nouveau_notifier_alloc *,
+nouveau_notifier_wait_status(GLcontext *, struct drm_nouveau_notifierobj_alloc *,
 			     GLuint id, GLuint status, GLuint timeout);
 extern void
-nouveau_notifier_wait_nop(GLcontext *ctx, struct drm_nouveau_notifier_alloc *,
+nouveau_notifier_wait_nop(GLcontext *ctx, struct drm_nouveau_notifierobj_alloc *,
 			  GLuint subc);
 
 extern GLboolean nouveauSyncInitFuncs(GLcontext *ctx);

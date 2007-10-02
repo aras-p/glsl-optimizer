@@ -112,6 +112,20 @@
 /* 3DSTATE_CHROMA_KEY */
 
 /* 3DSTATE_CLEAR_PARAMETERS, p150 */
+/* 
+ * Sets the color, depth and stencil clear values used by the
+ * CLEAR_RECT and ZONE_INIT primitive types, respectively.  These
+ * primitives set override most 3d state and only take a minimal x/y
+ * vertex.  The color/z/stencil information is supplied here and
+ * therefore cannot vary per vertex.
+ */
+#define _3DSTATE_CLEAR_PARAMETERS	(CMD_3D | (0x1d<<24) | (0x9c<<16) | 5)
+/* Dword 1 */
+#define CLEARPARAM_CLEAR_RECT		(1 << 16)
+#define CLEARPARAM_ZONE_INIT		(0 << 16)
+#define CLEARPARAM_WRITE_COLOR		(1 << 2)
+#define CLEARPARAM_WRITE_DEPTH		(1 << 1)
+#define CLEARPARAM_WRITE_STENCIL	(1 << 0)
 
 /* 3DSTATE_CONSTANT_BLEND_COLOR, p153 */
 #define _3DSTATE_CONST_BLEND_COLOR_CMD	(CMD_3D | (0x1d<<24) | (0x88<<16))
@@ -424,9 +438,22 @@
 
 #define S7_DEPTH_OFFSET_CONST_MASK     ~0
 
-/* 3DSTATE_MAP_DEINTERLACER_PARAMETERS */
-/* 3DSTATE_MAP_PALETTE_LOAD_32, p206 */
 
+/* Helper macros for blend factors
+ */
+#define DST_BLND_FACT(f) ((f)<<S6_CBUF_DST_BLEND_FACT_SHIFT)
+#define SRC_BLND_FACT(f) ((f)<<S6_CBUF_SRC_BLEND_FACT_SHIFT)
+#define DST_ABLND_FACT(f) ((f)<<IAB_DST_FACTOR_SHIFT)
+#define SRC_ABLND_FACT(f) ((f)<<IAB_SRC_FACTOR_SHIFT)
+
+
+
+
+/* 3DSTATE_MAP_DEINTERLACER_PARAMETERS */
+
+/* 3DSTATE_MAP_PALETTE_LOAD_32, p206 */
+#define _3DSTATE_MAP_PALETTE_LOAD_32    (CMD_3D|(0x1d<<24)|(0x8f<<16))
+/* subsequent dwords up to length (max 16) are ARGB8888 color values */
 
 /* _3DSTATE_MODES_4, p218 */
 #define _3DSTATE_MODES_4_CMD		(CMD_3D|(0x0d<<24))
@@ -435,7 +462,7 @@
 #define LOGICOP_MASK			(0xf<<18)
 #define MODE4_ENABLE_STENCIL_TEST_MASK	((1<<17)|(0xff00))
 #define ENABLE_STENCIL_TEST_MASK	(1<<17)
-#define STENCIL_TEST_MASK(x)		((x)<<8)
+#define STENCIL_TEST_MASK(x)		(((x)&0xff)<<8)
 #define MODE4_ENABLE_STENCIL_WRITE_MASK	((1<<16)|(0x00ff))
 #define ENABLE_STENCIL_WRITE_MASK	(1<<16)
 #define STENCIL_WRITE_MASK(x)		((x)&0xff)
@@ -458,7 +485,7 @@
 
 
 #define I915_MAX_TEX_INDIRECT 4
-#define I915_MAX_TEX_INSN     32     
+#define I915_MAX_TEX_INSN     32
 #define I915_MAX_ALU_INSN     64
 #define I915_MAX_DECL_INSN    27
 #define I915_MAX_TEMPORARY    16
@@ -470,33 +497,33 @@
  */
 #define _3DSTATE_PIXEL_SHADER_PROGRAM    (CMD_3D|(0x1d<<24)|(0x5<<16))
 
-#define REG_TYPE_R                 0 /* temporary regs, no need to
-				      * dcl, must be written before
-				      * read -- Preserved between
-				      * phases. 
-				      */
-#define REG_TYPE_T                 1 /* Interpolated values, must be
-				      * dcl'ed before use.
-				      *
-				      * 0..7: texture coord,
-				      * 8: diffuse spec,
-				      * 9: specular color,
-				      * 10: fog parameter in w.
-				      */
-#define REG_TYPE_CONST             2 /* Restriction: only one const
-				      * can be referenced per
-				      * instruction, though it may be
-				      * selected for multiple inputs.
-				      * Constants not initialized
-				      * default to zero.
-				      */
-#define REG_TYPE_S                 3 /* sampler */
-#define REG_TYPE_OC                4 /* output color (rgba) */
-#define REG_TYPE_OD                5 /* output depth (w), xyz are
-				      * temporaries.  If not written,
-				      * interpolated depth is used?
-				      */
-#define REG_TYPE_U                 6 /* unpreserved temporaries */
+#define REG_TYPE_R                 0    /* temporary regs, no need to
+                                         * dcl, must be written before
+                                         * read -- Preserved between
+                                         * phases. 
+                                         */
+#define REG_TYPE_T                 1    /* Interpolated values, must be
+                                         * dcl'ed before use.
+                                         *
+                                         * 0..7: texture coord,
+                                         * 8: diffuse spec,
+                                         * 9: specular color,
+                                         * 10: fog parameter in w.
+                                         */
+#define REG_TYPE_CONST             2    /* Restriction: only one const
+                                         * can be referenced per
+                                         * instruction, though it may be
+                                         * selected for multiple inputs.
+                                         * Constants not initialized
+                                         * default to zero.
+                                         */
+#define REG_TYPE_S                 3    /* sampler */
+#define REG_TYPE_OC                4    /* output color (rgba) */
+#define REG_TYPE_OD                5    /* output depth (w), xyz are
+                                         * temporaries.  If not written,
+                                         * interpolated depth is used?
+                                         */
+#define REG_TYPE_U                 6    /* unpreserved temporaries */
 #define REG_TYPE_MASK              0x7
 #define REG_NR_MASK                0xf
 
@@ -513,34 +540,34 @@
 #define T_TEX7     7
 #define T_DIFFUSE  8
 #define T_SPECULAR 9
-#define T_FOG_W    10		/* interpolated fog is in W coord */
+#define T_FOG_W    10           /* interpolated fog is in W coord */
 
 /* Arithmetic instructions */
 
 /* .replicate_swizzle == selection and replication of a particular
  * scalar channel, ie., .xxxx, .yyyy, .zzzz or .wwww 
  */
-#define A0_NOP    (0x0<<24)		/* no operation */
-#define A0_ADD    (0x1<<24)		/* dst = src0 + src1 */
-#define A0_MOV    (0x2<<24)		/* dst = src0 */
-#define A0_MUL    (0x3<<24)		/* dst = src0 * src1 */
-#define A0_MAD    (0x4<<24)		/* dst = src0 * src1 + src2 */
-#define A0_DP2ADD (0x5<<24)		/* dst.xyzw = src0.xy dot src1.xy + src2.replicate_swizzle */
-#define A0_DP3    (0x6<<24)		/* dst.xyzw = src0.xyz dot src1.xyz */
-#define A0_DP4    (0x7<<24)		/* dst.xyzw = src0.xyzw dot src1.xyzw */
-#define A0_FRC    (0x8<<24)		/* dst = src0 - floor(src0) */
-#define A0_RCP    (0x9<<24)		/* dst.xyzw = 1/(src0.replicate_swizzle) */
-#define A0_RSQ    (0xa<<24)		/* dst.xyzw = 1/(sqrt(abs(src0.replicate_swizzle))) */
-#define A0_EXP    (0xb<<24)		/* dst.xyzw = exp2(src0.replicate_swizzle) */
-#define A0_LOG    (0xc<<24)		/* dst.xyzw = log2(abs(src0.replicate_swizzle)) */
-#define A0_CMP    (0xd<<24)		/* dst = (src0 >= 0.0) ? src1 : src2 */
-#define A0_MIN    (0xe<<24)		/* dst = (src0 < src1) ? src0 : src1 */
-#define A0_MAX    (0xf<<24)		/* dst = (src0 >= src1) ? src0 : src1 */
-#define A0_FLR    (0x10<<24)		/* dst = floor(src0) */
-#define A0_MOD    (0x11<<24)		/* dst = src0 fmod 1.0 */
-#define A0_TRC    (0x12<<24)		/* dst = int(src0) */
-#define A0_SGE    (0x13<<24)		/* dst = src0 >= src1 ? 1.0 : 0.0 */
-#define A0_SLT    (0x14<<24)		/* dst = src0 < src1 ? 1.0 : 0.0 */
+#define A0_NOP    (0x0<<24)     /* no operation */
+#define A0_ADD    (0x1<<24)     /* dst = src0 + src1 */
+#define A0_MOV    (0x2<<24)     /* dst = src0 */
+#define A0_MUL    (0x3<<24)     /* dst = src0 * src1 */
+#define A0_MAD    (0x4<<24)     /* dst = src0 * src1 + src2 */
+#define A0_DP2ADD (0x5<<24)     /* dst.xyzw = src0.xy dot src1.xy + src2.replicate_swizzle */
+#define A0_DP3    (0x6<<24)     /* dst.xyzw = src0.xyz dot src1.xyz */
+#define A0_DP4    (0x7<<24)     /* dst.xyzw = src0.xyzw dot src1.xyzw */
+#define A0_FRC    (0x8<<24)     /* dst = src0 - floor(src0) */
+#define A0_RCP    (0x9<<24)     /* dst.xyzw = 1/(src0.replicate_swizzle) */
+#define A0_RSQ    (0xa<<24)     /* dst.xyzw = 1/(sqrt(abs(src0.replicate_swizzle))) */
+#define A0_EXP    (0xb<<24)     /* dst.xyzw = exp2(src0.replicate_swizzle) */
+#define A0_LOG    (0xc<<24)     /* dst.xyzw = log2(abs(src0.replicate_swizzle)) */
+#define A0_CMP    (0xd<<24)     /* dst = (src0 >= 0.0) ? src1 : src2 */
+#define A0_MIN    (0xe<<24)     /* dst = (src0 < src1) ? src0 : src1 */
+#define A0_MAX    (0xf<<24)     /* dst = (src0 >= src1) ? src0 : src1 */
+#define A0_FLR    (0x10<<24)    /* dst = floor(src0) */
+#define A0_MOD    (0x11<<24)    /* dst = src0 fmod 1.0 */
+#define A0_TRC    (0x12<<24)    /* dst = int(src0) */
+#define A0_SGE    (0x13<<24)    /* dst = src0 >= src1 ? 1.0 : 0.0 */
+#define A0_SLT    (0x14<<24)    /* dst = src0 < src1 ? 1.0 : 0.0 */
 #define A0_DEST_SATURATE                 (1<<22)
 #define A0_DEST_TYPE_SHIFT                19
 /* Allow: R, OC, OD, U */
@@ -599,23 +626,23 @@
 
 
 /* Texture instructions */
-#define T0_TEXLD     (0x15<<24)	/* Sample texture using predeclared
-				 * sampler and address, and output
-				 * filtered texel data to destination
-				 * register */
-#define T0_TEXLDP    (0x16<<24)	/* Same as texld but performs a
-				 * perspective divide of the texture
-				 * coordinate .xyz values by .w before
-				 * sampling. */
-#define T0_TEXLDB    (0x17<<24)	/* Same as texld but biases the
-				 * computed LOD by w.  Only S4.6 two's
-				 * comp is used.  This implies that a
-				 * float to fixed conversion is
-				 * done. */
-#define T0_TEXKILL   (0x18<<24)	/* Does not perform a sampling
-				 * operation.  Simply kills the pixel
-				 * if any channel of the address
-				 * register is < 0.0. */
+#define T0_TEXLD     (0x15<<24) /* Sample texture using predeclared
+                                 * sampler and address, and output
+                                 * filtered texel data to destination
+                                 * register */
+#define T0_TEXLDP    (0x16<<24) /* Same as texld but performs a
+                                 * perspective divide of the texture
+                                 * coordinate .xyz values by .w before
+                                 * sampling. */
+#define T0_TEXLDB    (0x17<<24) /* Same as texld but biases the
+                                 * computed LOD by w.  Only S4.6 two's
+                                 * comp is used.  This implies that a
+                                 * float to fixed conversion is
+                                 * done. */
+#define T0_TEXKILL   (0x18<<24) /* Does not perform a sampling
+                                 * operation.  Simply kills the pixel
+                                 * if any channel of the address
+                                 * register is < 0.0. */
 #define T0_DEST_TYPE_SHIFT                19
 /* Allow: R, OC, OD, U */
 /* Note: U (unpreserved) regs do not retain their values between
@@ -627,18 +654,18 @@
  */
 #define T0_DEST_NR_SHIFT                 14
 /* Allow R: 0..15, OC,OD: 0..0, U: 0..2 */
-#define T0_SAMPLER_NR_SHIFT              0 /* This field ignored for TEXKILL */
+#define T0_SAMPLER_NR_SHIFT              0      /* This field ignored for TEXKILL */
 #define T0_SAMPLER_NR_MASK               (0xf<<0)
 
-#define T1_ADDRESS_REG_TYPE_SHIFT        24 /* Reg to use as texture coord */
+#define T1_ADDRESS_REG_TYPE_SHIFT        24     /* Reg to use as texture coord */
 /* Allow R, T, OC, OD -- R, OC, OD are 'dependent' reads, new program phase */
 #define T1_ADDRESS_REG_NR_SHIFT          17
 #define T2_MBZ                           0
 
 /* Declaration instructions */
-#define D0_DCL       (0x19<<24)	/* Declare a t (interpolated attrib)
-				 * register or an s (sampler)
-				 * register. */
+#define D0_DCL       (0x19<<24) /* Declare a t (interpolated attrib)
+                                 * register or an s (sampler)
+                                 * register. */
 #define D0_SAMPLE_TYPE_SHIFT              22
 #define D0_SAMPLE_TYPE_2D                 (0x0<<22)
 #define D0_SAMPLE_TYPE_CUBE               (0x1<<22)
@@ -695,12 +722,12 @@
 #define    MAPSURF_4BIT_INDEXED		   (7<<7)
 #define MS3_MT_FORMAT_MASK         (0x7 << 3)
 #define MS3_MT_FORMAT_SHIFT        3
-#define    MT_4BIT_IDX_ARGB8888	           (7<<3) /* SURFACE_4BIT_INDEXED */
-#define    MT_8BIT_I8		           (0<<3) /* SURFACE_8BIT */
+#define    MT_4BIT_IDX_ARGB8888	           (7<<3)       /* SURFACE_4BIT_INDEXED */
+#define    MT_8BIT_I8		           (0<<3)       /* SURFACE_8BIT */
 #define    MT_8BIT_L8		           (1<<3)
 #define    MT_8BIT_A8		           (4<<3)
 #define    MT_8BIT_MONO8	           (5<<3)
-#define    MT_16BIT_RGB565 		   (0<<3) /* SURFACE_16BIT */
+#define    MT_16BIT_RGB565 		   (0<<3)       /* SURFACE_16BIT */
 #define    MT_16BIT_ARGB1555		   (1<<3)
 #define    MT_16BIT_ARGB4444		   (2<<3)
 #define    MT_16BIT_AY88		   (3<<3)
@@ -709,7 +736,7 @@
 #define    MT_16BIT_I16	                   (7<<3)
 #define    MT_16BIT_L16	                   (8<<3)
 #define    MT_16BIT_A16	                   (9<<3)
-#define    MT_32BIT_ARGB8888		   (0<<3) /* SURFACE_32BIT */
+#define    MT_32BIT_ARGB8888		   (0<<3)       /* SURFACE_32BIT */
 #define    MT_32BIT_ABGR8888		   (1<<3)
 #define    MT_32BIT_XRGB8888		   (2<<3)
 #define    MT_32BIT_XBGR8888		   (3<<3)
@@ -725,11 +752,11 @@
 #define    MT_32BIT_xI824	           (0xD<<3)
 #define    MT_32BIT_xA824	           (0xE<<3)
 #define    MT_32BIT_xL824	           (0xF<<3)
-#define    MT_422_YCRCB_SWAPY	           (0<<3) /* SURFACE_422 */
+#define    MT_422_YCRCB_SWAPY	           (0<<3)       /* SURFACE_422 */
 #define    MT_422_YCRCB_NORMAL	           (1<<3)
 #define    MT_422_YCRCB_SWAPUV	           (2<<3)
 #define    MT_422_YCRCB_SWAPUVY	           (3<<3)
-#define    MT_COMPRESS_DXT1		   (0<<3) /* SURFACE_COMPRESSED */
+#define    MT_COMPRESS_DXT1		   (0<<3)       /* SURFACE_COMPRESSED */
 #define    MT_COMPRESS_DXT2_3	           (1<<3)
 #define    MT_COMPRESS_DXT4_5	           (2<<3)
 #define    MT_COMPRESS_FXT1		   (3<<3)
@@ -751,7 +778,7 @@
 #define MS4_MIP_LAYOUT_LEGACY           (0<<8)
 #define MS4_MIP_LAYOUT_BELOW_LPT        (0<<8)
 #define MS4_MIP_LAYOUT_RIGHT_LPT        (1<<8)
-#define MS4_VOLUME_DEPTH_SHIFT          0    
+#define MS4_VOLUME_DEPTH_SHIFT          0
 #define MS4_VOLUME_DEPTH_MASK           (0xff<<0)
 
 /* p244 */
@@ -779,7 +806,7 @@
 #define   FILTER_4X4_1    	3
 #define   FILTER_4X4_2    	4
 #define   FILTER_4X4_FLAT 	5
-#define   FILTER_6X5_MONO   	6 /* XXX - check */
+#define   FILTER_6X5_MONO   	6       /* XXX - check */
 #define SS2_MIN_FILTER_SHIFT          14
 #define SS2_MIN_FILTER_MASK           (0x7<<14)
 #define SS2_LOD_BIAS_SHIFT            5
@@ -826,10 +853,14 @@
 #define ST1_ENABLE               (1<<16)
 #define ST1_MASK                 (0xffff)
 
+#define _3DSTATE_DEFAULT_Z          ((0x3<<29)|(0x1d<<24)|(0x98<<16))
+#define _3DSTATE_DEFAULT_DIFFUSE    ((0x3<<29)|(0x1d<<24)|(0x99<<16))
+#define _3DSTATE_DEFAULT_SPECULAR   ((0x3<<29)|(0x1d<<24)|(0x9a<<16))
 
-#define MI_FLUSH           ((0<<29)|(4<<23))
-#define FLUSH_MAP_CACHE    (1<<0)
-#define FLUSH_RENDER_CACHE (1<<1)
+
+#define MI_FLUSH                   ((0<<29)|(4<<23))
+#define FLUSH_MAP_CACHE            (1<<0)
+#define INHIBIT_FLUSH_RENDER_CACHE (1<<2)
 
 
 #endif

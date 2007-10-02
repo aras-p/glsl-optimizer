@@ -9,12 +9,13 @@ MINIGLX_SOURCES =
 
 DRIVER_SOURCES = \
 	nouveau_bufferobj.c      \
-	nouveau_buffers.c        \
 	nouveau_card.c           \
 	nouveau_context.c        \
 	nouveau_driver.c         \
+	nouveau_fbo.c            \
 	nouveau_fifo.c           \
 	nouveau_lock.c           \
+	nouveau_mem.c            \
 	nouveau_object.c         \
 	nouveau_screen.c         \
 	nouveau_span.c           \

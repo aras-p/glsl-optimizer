@@ -1,8 +1,8 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.5
+ * Version:  7.1
  *
- * Copyright (C) 2006  Tungsten Graphics   All Rights Reserved.
+ * Copyright (C) 2007  Tungsten Graphics   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -457,9 +457,13 @@ static void register_matrix_param5( struct tnl_program *p,
 }
 
 
+/**
+ * Convert a ureg source register to a prog_src_register.
+ */
 static void emit_arg( struct prog_src_register *src,
 		      struct ureg reg )
 {
+   assert(reg.file != PROGRAM_OUTPUT);
    src->File = reg.file;
    src->Index = reg.idx;
    src->Swizzle = reg.swz;
@@ -469,9 +473,18 @@ static void emit_arg( struct prog_src_register *src,
    src->RelAddr = 0;
 }
 
+/**
+ * Convert a ureg dest register to a prog_dst_register.
+ */
 static void emit_dst( struct prog_dst_register *dst,
 		      struct ureg reg, GLuint mask )
 {
+   /* Check for legal output register type.  UNDEFINED will occur in
+    * instruction that don't produce a result (like END).
+    */
+   assert(reg.file == PROGRAM_TEMPORARY ||
+          reg.file == PROGRAM_OUTPUT ||
+          reg.file == PROGRAM_UNDEFINED);
    dst->File = reg.file;
    dst->Index = reg.idx;
    /* allow zero as a shorthand for xyzw */
@@ -956,13 +969,19 @@ static void build_lighting( struct tnl_program *p )
 					       STATE_POSITION); 
 	    struct ureg V = get_eye_position(p);
 	    struct ureg dist = get_temp(p);
+	    struct ureg tmpPpli = get_temp(p);
 
 	    VPpli = get_temp(p); 
 	    half = get_temp(p);
  
-	    /* Calulate VPpli vector
+            /* In homogeneous object coordinates
+             */
+            emit_op1(p, OPCODE_RCP, dist, 0, swizzle1(Ppli, W));
+            emit_op2(p, OPCODE_MUL, tmpPpli, 0, Ppli, dist);
+
+	    /* Calculate VPpli vector
 	     */
-	    emit_op2(p, OPCODE_SUB, VPpli, 0, Ppli, V); 
+	    emit_op2(p, OPCODE_SUB, VPpli, 0, tmpPpli, V); 
 
 	    /* Normalize VPpli.  The dist value also used in
 	     * attenuation below.
@@ -994,6 +1013,7 @@ static void build_lighting( struct tnl_program *p )
 	    emit_normalize_vec3(p, half, half);
 
 	    release_temp(p, dist);
+	    release_temp(p, tmpPpli);
 	 }
 
 	 /* Calculate dot products:

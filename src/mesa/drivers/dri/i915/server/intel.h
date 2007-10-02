@@ -75,6 +75,9 @@
 
 #define I830_GMCH_CTRL		0x52
 
+#define I830_GMCH_MEM_MASK      0x1
+#define I830_GMCH_MEM_64M       0x1
+#define I830_GMCH_MEM_128M      0
 
 #define I830_GMCH_GMS_MASK			0x70
 #define I830_GMCH_GMS_DISABLED		0x00
@@ -141,7 +144,7 @@ typedef struct _I830Rec {
    unsigned char *MMIOBase;
    unsigned char *FbBase;
    int cpp;
-
+   uint32_t aper_size;
    unsigned int bios_version;
 
    /* These are set in PreInit and never changed. */

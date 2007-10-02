@@ -33,13 +33,119 @@
 #include "texmem.h"
 
 
-void intelInitTextureFuncs( struct dd_function_table *functions );
+void intelInitTextureFuncs(struct dd_function_table *functions);
 
-void intelDestroyTexObj( intelContextPtr intel, intelTextureObjectPtr t );
-int intelUploadTexImages( intelContextPtr intel, intelTextureObjectPtr t,
-			  GLuint face );
+const struct gl_texture_format *intelChooseTextureFormat(GLcontext * ctx,
+                                                         GLint internalFormat,
+                                                         GLenum format,
+                                                         GLenum type);
 
-GLboolean 
-intel_driReinitTextureHeap( driTexHeap *heap,
-			    unsigned size );
+
+void intelTexImage3D(GLcontext * ctx,
+                     GLenum target, GLint level,
+                     GLint internalFormat,
+                     GLint width, GLint height, GLint depth,
+                     GLint border,
+                     GLenum format, GLenum type, const void *pixels,
+                     const struct gl_pixelstore_attrib *packing,
+                     struct gl_texture_object *texObj,
+                     struct gl_texture_image *texImage);
+
+void intelTexSubImage3D(GLcontext * ctx,
+                        GLenum target,
+                        GLint level,
+                        GLint xoffset, GLint yoffset, GLint zoffset,
+                        GLsizei width, GLsizei height, GLsizei depth,
+                        GLenum format, GLenum type,
+                        const GLvoid * pixels,
+                        const struct gl_pixelstore_attrib *packing,
+                        struct gl_texture_object *texObj,
+                        struct gl_texture_image *texImage);
+
+void intelTexImage2D(GLcontext * ctx,
+                     GLenum target, GLint level,
+                     GLint internalFormat,
+                     GLint width, GLint height, GLint border,
+                     GLenum format, GLenum type, const void *pixels,
+                     const struct gl_pixelstore_attrib *packing,
+                     struct gl_texture_object *texObj,
+                     struct gl_texture_image *texImage);
+
+void intelTexSubImage2D(GLcontext * ctx,
+                        GLenum target,
+                        GLint level,
+                        GLint xoffset, GLint yoffset,
+                        GLsizei width, GLsizei height,
+                        GLenum format, GLenum type,
+                        const GLvoid * pixels,
+                        const struct gl_pixelstore_attrib *packing,
+                        struct gl_texture_object *texObj,
+                        struct gl_texture_image *texImage);
+
+void intelTexImage1D(GLcontext * ctx,
+                     GLenum target, GLint level,
+                     GLint internalFormat,
+                     GLint width, GLint border,
+                     GLenum format, GLenum type, const void *pixels,
+                     const struct gl_pixelstore_attrib *packing,
+                     struct gl_texture_object *texObj,
+                     struct gl_texture_image *texImage);
+
+void intelTexSubImage1D(GLcontext * ctx,
+                        GLenum target,
+                        GLint level,
+                        GLint xoffset,
+                        GLsizei width,
+                        GLenum format, GLenum type,
+                        const GLvoid * pixels,
+                        const struct gl_pixelstore_attrib *packing,
+                        struct gl_texture_object *texObj,
+                        struct gl_texture_image *texImage);
+
+void intelCopyTexImage1D(GLcontext * ctx, GLenum target, GLint level,
+                         GLenum internalFormat,
+                         GLint x, GLint y, GLsizei width, GLint border);
+
+void intelCopyTexImage2D(GLcontext * ctx, GLenum target, GLint level,
+                         GLenum internalFormat,
+                         GLint x, GLint y, GLsizei width, GLsizei height,
+                         GLint border);
+
+void intelCopyTexSubImage1D(GLcontext * ctx, GLenum target, GLint level,
+                            GLint xoffset, GLint x, GLint y, GLsizei width);
+
+void intelCopyTexSubImage2D(GLcontext * ctx, GLenum target, GLint level,
+                            GLint xoffset, GLint yoffset,
+                            GLint x, GLint y, GLsizei width, GLsizei height);
+
+void intelGetTexImage(GLcontext * ctx, GLenum target, GLint level,
+                      GLenum format, GLenum type, GLvoid * pixels,
+                      struct gl_texture_object *texObj,
+                      struct gl_texture_image *texImage);
+
+void intelCompressedTexImage2D( GLcontext *ctx, GLenum target, GLint level,
+				GLint internalFormat,
+				GLint width, GLint height, GLint border,
+				GLsizei imageSize, const GLvoid *data,
+				struct gl_texture_object *texObj,
+				struct gl_texture_image *texImage );
+
+void intelGetCompressedTexImage(GLcontext *ctx, GLenum target, GLint level,
+				GLvoid *pixels,
+				const struct gl_texture_object *texObj,
+				const struct gl_texture_image *texImage);
+
+void intelSetTexOffset(__DRIcontext *pDRICtx, GLint texname,
+		       unsigned long long offset, GLint depth, GLuint pitch);
+
+GLuint intel_finalize_mipmap_tree(struct intel_context *intel, GLuint unit);
+
+void intel_tex_map_images(struct intel_context *intel,
+                          struct intel_texture_object *intelObj);
+
+void intel_tex_unmap_images(struct intel_context *intel,
+                            struct intel_texture_object *intelObj);
+
+int intel_compressed_num_bytes(GLuint mesaFormat);
+
 #endif

@@ -57,50 +57,31 @@ the DRI hardware drivers.
 
 <li>
 <p>
-DRM kernel modules and header files from the
-<a href="http://dri.sf.net/" target="_parent">DRI</a> project.
-</p>
-
-<p>
-If you don't already have the DRM file, you can get the sources from
-CVS by doing:
-<pre>
-cvs -z3 -d:pserver:anonymous@anoncvs.freedesktop.org:/cvs/dri co drm
-</pre>
-<p>
-See the <a href="http://dri.freedesktop.org/wiki/Building" target="_parent">
-DRI Building Instructions</a> for the steps to build the DRM modules.  Mesa
-6.5 requires at least libdrm 2.0.1 or greater.
+For Mesa 7.0.2 <a href="http://dri.freedesktop.org/libdrm/">
+DRM version 2.3</a> is required.
 </p>
 <p>
-You can verify that the DRM files have been properly installed by
-running <code>pkg-config --modversion libdrm</code>
-
+To check if you already have it, run:
+<br>
+<code>pkg-config --modversion libdrm</code>
+</p>
+<p>
+You can download and install a <a href="http://dri.freedesktop.org/libdrm/">
+tarball release</a> or get the code from git with:
+<br>
+<code>git clone git://anongit.freedesktop.org/git/mesa/drm</code>
+<br>
+Then revert to the drm-2.3.0 tag with:
+<br>
+<code>git-reset --hard drm-2.3.0</code>
+</p>
 </li>
 
 <li>
-Recent /usr/include/GL/glxproto.h file.
-<p>You'll need this if you get any errors about _GLXvop_BindTexImageEXT
-being undefined.
-</p>
-<p>
-Download/install the
-<a href="http://gitweb.freedesktop.org/?p=xorg/proto/glproto.git">glproto</a>
-module from X.org git, or grab the
-<A href="http://webcvs.freedesktop.org/*checkout*/xorg/proto/GL/glxproto.h?rev=1.9&content-type=text%2Fplain">glxproto.h file</a> and put it in the
-Mesa/include/GL/ directory.
-</p>
-
-</li>
-
-<li>DRI-enabled X server.
-<p>Visit
-<a href="http://www.xfree86.org" target="_parent">XFree86</a>
-or
+Relatively recent
 <a href="http://freedesktop.org/wiki/Software_2fXserver" target="_parent">
-X.org</a>
-for more information.
-</p>
+X.org</a> release.
+Mesa depends on a number of X header and library files.
 </li>
 
 </ol>
@@ -287,7 +268,15 @@ already installed, you'll have to choose different directories, like
 To install Mesa's headers and libraries, run <code>make install</code>.
 But first, check the Mesa/configs/default file and examine the values
 of the <b>INSTALL_DIR</b> and <b>DRI_DRIVER_INSTALL_DIR</b> variables.
-Change them if needed, then run <code>make install</code>
+Change them if needed, then run <code>make install</code>.
+</p>
+
+<p>
+The variable
+<b>DESTDIR</b> may also be used to install the contents to a temporary
+staging directory.
+This can be useful for package management.
+For example: <code>make install DESTDIR=/somepath/</code>
 </p>
 
 <p>
@@ -298,6 +287,26 @@ This is a handy way to compare multiple OpenGL implementations.
 </p>
 
 
+<H3>1.5 pkg-config support</H3>
+
+<p>
+Running <code>make install</code> will install package configuration files
+for the pkg-config utility.
+</p>
+
+<p>
+When compiling your OpenGL application you can use pkg-config to determine
+the proper compiler and linker flags.
+</p>
+
+<p>
+For example, compiling and linking a GLUT application can be done with:
+</p>
+<pre>
+   gcc `pkg-config --cflags --libs glut` mydemo.c -o mydemo
+</pre>
+
+<br>
 
 <a name="windows">
 <H2>2. Windows Compilation and Installation</H1>

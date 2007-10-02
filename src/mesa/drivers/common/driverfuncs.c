@@ -25,11 +25,10 @@
 
 #include "glheader.h"
 #include "imports.h"
+#include "arrayobj.h"
 #include "buffers.h"
 #include "context.h"
 #include "framebuffer.h"
-#include "program.h"
-#include "prog_execute.h"
 #include "queryobj.h"
 #include "renderbuffer.h"
 #include "texcompress.h"
@@ -44,9 +43,10 @@
 #include "fbobject.h"
 #include "texrender.h"
 #endif
-#include "shader_api.h"
-#include "arrayobj.h"
 
+#include "shader/program.h"
+#include "shader/prog_execute.h"
+#include "shader/shader_api.h"
 #include "driverfuncs.h"
 #include "tnl/tnl.h"
 #include "swrast/swrast.h"
