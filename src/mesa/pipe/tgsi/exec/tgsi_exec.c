@@ -1903,12 +1903,18 @@ exec_instruction(
       break;
 
    case TGSI_OPCODE_CAL:
-      assert (0);
+      /* note that PC was already incremented above */
+      mach->CallStack[mach->CallStackTop++] = *pc;
+      *pc = inst->InstructionExtLabel.Label;
       break;
 
    case TGSI_OPCODE_RET:
-      /* XXX: end of shader! */
-      /*assert (0);*/
+      assert(mach->CallStackTop >= 0);
+      if (mach->CallStackTop == 0) {
+         /* XXX error? */
+         return;
+      }
+      *pc = mach->CallStack[--mach->CallStackTop];
       break;
 
    case TGSI_OPCODE_SSG:
@@ -2041,13 +2047,6 @@ exec_instruction(
       UPDATE_EXEC_MASK(mach);
       break;
 
-   case TGSI_OPCODE_ENDLOOP:
-      /* pop LoopMask */
-      assert(mach->LoopStackTop > 0);
-      mach->LoopMask = mach->LoopStack[--mach->LoopStackTop];
-      UPDATE_EXEC_MASK(mach);
-      break;
-
    case TGSI_OPCODE_ENDREP:
        assert (0);
        break;
@@ -2171,9 +2170,11 @@ exec_instruction(
       break;
 
    case TGSI_OPCODE_BGNSUB:
-      assert( 0 );
+      /* no-op */
       break;
 
+   case TGSI_OPCODE_ENDLOOP:
+      /* fall-through (for now at least) */
    case TGSI_OPCODE_ENDLOOP2:
       if (mach->LoopMask) {
          /* repeat loop: jump to instruction just past BGNLOOP */
@@ -2219,6 +2220,9 @@ exec_instruction(
 void
 tgsi_exec_machine_run( struct tgsi_exec_machine *mach )
 {
+   uint i;
+   int pc = 0;
+
 #if XXX_SSE
    mach->Temps[TEMP_KILMASK_I].xyzw[TEMP_KILMASK_C].u[0] = 0;
 #else
@@ -2226,6 +2230,9 @@ tgsi_exec_machine_run( struct tgsi_exec_machine *mach )
    mach->CondMask = 0xf;
    mach->LoopMask = 0xf;
    mach->ExecMask = 0xf;
+   assert(mach->CondStackTop == 0);
+   assert(mach->LoopStackTop == 0);
+   assert(mach->CallStackTop == 0);
 
    mach->Temps[TEMP_KILMASK_I].xyzw[TEMP_KILMASK_C].u[0] = 0;
    mach->Temps[TEMP_OUTPUT_I].xyzw[TEMP_OUTPUT_C].u[0] = 0;
@@ -2236,18 +2243,15 @@ tgsi_exec_machine_run( struct tgsi_exec_machine *mach )
    }
 
 
-   {
-      uint i;
-      int pc = 0;
+   /* execute declarations (interpolants) */
+   for (i = 0; i < mach->NumDeclarations; i++) {
+      exec_declaration( mach, mach->Declarations+i );
+   }
 
-      for (i = 0; i < mach->NumDeclarations; i++) {
-         exec_declaration( mach, mach->Declarations+i );
-      }
-
-      while (pc != -1) {
-         assert(pc < mach->NumInstructions);
-         exec_instruction( mach, mach->Instructions + pc, &pc );
-      }
+   /* execute instructions, until pc is set to -1 */
+   while (pc != -1) {
+      assert(pc < mach->NumInstructions);
+      exec_instruction( mach, mach->Instructions + pc, &pc );
    }
 
 #endif

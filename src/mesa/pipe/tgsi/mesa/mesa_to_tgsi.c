@@ -271,6 +271,10 @@ compile_instruction(
    case OPCODE_BRK:
       fullinst->Instruction.Opcode = TGSI_OPCODE_BRK;
       break;
+   case OPCODE_CAL:
+      fullinst->Instruction.Opcode = TGSI_OPCODE_CAL;
+      fullinst->InstructionExtLabel.Label = inst->BranchTarget + preamble_size;
+      break;
    case OPCODE_CMP:
       fullinst->Instruction.Opcode = TGSI_OPCODE_CMP;
       break;
@@ -381,6 +385,9 @@ compile_instruction(
       break;
    case OPCODE_RCP:
       fullinst->Instruction.Opcode = TGSI_OPCODE_RCP;
+      break;
+   case OPCODE_RET:
+      fullinst->Instruction.Opcode = TGSI_OPCODE_RET;
       break;
    case OPCODE_RSQ:
       fullinst->Instruction.Opcode = TGSI_OPCODE_RSQ;

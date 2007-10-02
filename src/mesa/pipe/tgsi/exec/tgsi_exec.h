@@ -99,6 +99,7 @@ struct tgsi_exec_labels
 
 #define TGSI_EXEC_MAX_COND_NESTING  10
 #define TGSI_EXEC_MAX_LOOP_NESTING  10
+#define TGSI_EXEC_MAX_CALL_NESTING  10
 
 
 /**
@@ -148,6 +149,9 @@ struct tgsi_exec_machine
    /** Loop mask stack (for nested loops) */
    uint LoopStack[TGSI_EXEC_MAX_LOOP_NESTING];
    int LoopStackTop;
+
+   uint CallStack[TGSI_EXEC_MAX_CALL_NESTING];
+   int CallStackTop;
 
    struct tgsi_full_instruction *Instructions;
    uint NumInstructions;
