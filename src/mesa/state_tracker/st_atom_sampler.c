@@ -137,8 +137,18 @@ update_samplers(struct st_context *st)
          sampler.mag_img_filter = gl_filter_to_img_filter(texobj->MagFilter);
 
          sampler.lod_bias = st->ctx->Texture.Unit[u].LodBias;
+#if 1
          sampler.min_lod = texobj->MinLod;
          sampler.max_lod = texobj->MaxLod;
+#else
+         /* min/max lod should really be as follows (untested).
+          * Also, calculate_first_last_level() needs to be overhauled
+          * since today's hardware had real support for LOD clamping.
+          */
+         sampler.min_lod = MAX2(texobj->BaseLevel, texobj->MinLod);
+         sampler.max_lod = MIN2(texobj->MaxLevel, texobj->MaxLod);
+#endif
+
 	 sampler.max_anisotropy = texobj->MaxAnisotropy;
 
          /* XXX more sampler state here */
