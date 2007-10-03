@@ -40,17 +40,6 @@
 
 #include "pipe/tgsi/exec/tgsi_core.h"
 
-
-static INLINE float dot4(const float *a, const float *b)
-{
-   float result = (a[0]*b[0] +
-                   a[1]*b[1] +
-                   a[2]*b[2] +
-                   a[3]*b[3]);
-
-   return result;
-}
-
 static INLINE unsigned
 compute_clipmask(const float *clip, const float (*plane)[4], unsigned nr)
 {

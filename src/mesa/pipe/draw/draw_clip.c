@@ -138,20 +138,6 @@ static void interp( const struct clipper *clip,
    }
 }
 
-
-
-static INLINE float dot4( const float *a,
-			    const float *b )
-{
-   float result = (a[0]*b[0] +
-		     a[1]*b[1] +
-		     a[2]*b[2] +
-		     a[3]*b[3]);
-
-   return result;
-}
-
-
 #if 0   
 static INLINE void do_tri( struct draw_stage *next,
 			   struct prim_header *header )
