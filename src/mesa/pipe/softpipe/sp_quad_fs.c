@@ -113,7 +113,7 @@ shade_quad(
          machine->InterpCoefs );
    }
    else {
-      tgsi_exec_machine_run( machine );
+      quad->mask &= tgsi_exec_machine_run( machine );
    }
 
    /* store result color (always in output[1]) */

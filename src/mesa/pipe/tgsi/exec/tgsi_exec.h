@@ -175,7 +175,7 @@ tgsi_exec_machine_init(
    unsigned numSamplers,
    struct tgsi_sampler *samplers);
 
-void
+uint
 tgsi_exec_machine_run(
    struct tgsi_exec_machine *mach );
 

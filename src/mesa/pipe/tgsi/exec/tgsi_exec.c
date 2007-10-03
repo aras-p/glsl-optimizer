@@ -2359,15 +2359,15 @@ exec_instruction(
 }
 
 
-void
+/**
+ * Run TGSI interpreter.
+ * \return bitmask of "alive" quad components
+ */
+uint
 tgsi_exec_machine_run( struct tgsi_exec_machine *mach )
 {
    uint i;
    int pc = 0;
-
-#if XXX_SSE
-   mach->Temps[TEMP_KILMASK_I].xyzw[TEMP_KILMASK_C].u[0] = 0;
-#else
 
    mach->CondMask = 0xf;
    mach->LoopMask = 0xf;
@@ -2399,8 +2399,6 @@ tgsi_exec_machine_run( struct tgsi_exec_machine *mach )
       exec_instruction( mach, mach->Instructions + pc, &pc );
    }
 
-#endif
-
 #if 0
    /* we scale from floats in [0,1] to Zbuffer ints in sp_quad_depth_test.c */
    if (mach->Processor == TGSI_PROCESSOR_FRAGMENT) {
@@ -2411,6 +2409,8 @@ tgsi_exec_machine_run( struct tgsi_exec_machine *mach )
          mach->Outputs[0].xyzw[2].f[i] *= ctx->DrawBuffer->_DepthMaxF;
    }
 #endif
+
+   return ~mach->Temps[TEMP_KILMASK_I].xyzw[TEMP_KILMASK_C].u[0];
 }
 
 
