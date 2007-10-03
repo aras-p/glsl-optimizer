@@ -1230,7 +1230,7 @@ exec_tex(struct tgsi_exec_machine *mach,
 
       if (biasLod) {
          FETCH(&r[1], 0, CHAN_W);
-         lodBias = r[1].f[0];
+         lodBias = r[2].f[0];
       }
       else
          lodBias = 0.0;
@@ -1261,8 +1261,8 @@ exec_tex(struct tgsi_exec_machine *mach,
       }
 
       if (biasLod) {
-         FETCH(&r[1], 0, CHAN_W);
-         lodBias = r[1].f[0];
+         FETCH(&r[2], 0, CHAN_W);
+         lodBias = r[2].f[0];
       }
       else
          lodBias = 0.0;
@@ -1295,8 +1295,8 @@ exec_tex(struct tgsi_exec_machine *mach,
       }
 
       if (biasLod) {
-         FETCH(&r[1], 0, CHAN_W);
-         lodBias = r[1].f[0];
+         FETCH(&r[3], 0, CHAN_W);
+         lodBias = r[3].f[0];
       }
       else
          lodBias = 0.0;
