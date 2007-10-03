@@ -249,6 +249,12 @@ struct pipe_context *softpipe_create( struct pipe_winsys *pipe_winsys,
 {
    struct softpipe_context *softpipe = CALLOC_STRUCT(softpipe_context);
 
+#if defined(__i386__) || defined(__386__)
+   softpipe->use_sse = getenv("GALLIUM_SSE") != NULL;
+#else
+   softpipe->use_sse = false;
+#endif
+
    softpipe->pipe.winsys = pipe_winsys;
    softpipe->pipe.destroy = softpipe_destroy;
 

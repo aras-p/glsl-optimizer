@@ -61,10 +61,6 @@ struct st_fragment_program
    /** The program in TGSI format */
    struct tgsi_token tokens[ST_MAX_SHADER_TOKENS];
 
-#if defined(__i386__) || defined(__386__)
-   struct x86_function  sse2_program;
-#endif
-
    /** Pointer to the corresponding cached shader */
    const struct cso_fragment_shader *fs;
 

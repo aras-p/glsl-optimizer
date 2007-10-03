@@ -103,7 +103,8 @@ shade_quad(
    machine->Inputs[0].xyzw[1].f[3] = fy + 1.0f;
 
    /* run shader */
-   if( softpipe->fs->executable != NULL ) {
+   /* XXX: Generated code effectively unusable until it handles quad->mask */
+   if( !quad->mask && softpipe->fs->executable != NULL ) {
       codegen_function func = (codegen_function) softpipe->fs->executable;
       func(
          machine->Inputs,

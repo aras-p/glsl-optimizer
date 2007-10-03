@@ -31,17 +31,31 @@
 #include "pipe/p_defines.h"
 #include "pipe/p_winsys.h"
 #include "pipe/draw/draw_context.h"
+#include "pipe/tgsi/exec/tgsi_core.h"
 
 
 void * softpipe_create_fs_state(struct pipe_context *pipe,
                                 const struct pipe_shader_state *templ)
 {
+   struct softpipe_context *softpipe = softpipe_context(pipe);
+
    /* Decide whether we'll be codegenerating this shader and if so do
     * that now.
     */
 
    struct pipe_shader_state *state = malloc(sizeof(struct pipe_shader_state));
    memcpy(state, templ, sizeof(struct pipe_shader_state));
+
+#if defined(__i386__) || defined(__386__)
+   if (softpipe->use_sse) {
+      x86_init_func( &state->sse2_program );
+
+      tgsi_emit_sse2_fs( state->tokens, &state->sse2_program );
+
+      state->executable = (void *)x86_get_func( &state->sse2_program );
+   }
+#endif
+
    return state;
 }
 
@@ -57,6 +71,12 @@ void softpipe_bind_fs_state(struct pipe_context *pipe, void *fs)
 void softpipe_delete_fs_state(struct pipe_context *pipe,
                               void *shader)
 {
+#if defined(__i386__) || defined(__386__)
+   struct pipe_shader_state *state = shader;
+
+   x86_release_func( &state->sse2_program );
+#endif
+
    free(shader);
 }
 

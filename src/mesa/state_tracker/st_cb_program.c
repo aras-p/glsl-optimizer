@@ -108,10 +108,6 @@ static struct gl_program *st_new_program( GLcontext *ctx,
 
       prog->serialNo = 1;
 
-#if defined(__i386__) || defined(__386__)
-      x86_init_func( &prog->sse2_program );
-#endif
-
       return _mesa_init_fragment_program( ctx, 
 					  &prog->Base,
 					  target, 
@@ -140,9 +136,6 @@ static void st_delete_program( GLcontext *ctx,
       {
          struct st_fragment_program *stfp
             = (struct st_fragment_program *) prog;
-#if defined(__i386__) || defined(__386__)
-         x86_release_func( &stfp->sse2_program );
-#endif
          st_remove_fragment_program(st, stfp);
       }
       break;

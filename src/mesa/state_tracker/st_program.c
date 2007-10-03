@@ -390,16 +390,6 @@ st_translate_fragment_program(struct st_context *st,
    if (TGSI_DEBUG)
       tgsi_dump( tokensOut, 0/*TGSI_DUMP_VERBOSE*/ );
 
-#if defined(__i386__) || defined(__386__)
-   if (draw_use_sse(st->draw)) {
-      if (stfp->sse2_program.csr == stfp->sse2_program.store)
-         tgsi_emit_sse2_fs( tokensOut, &stfp->sse2_program );
-
-      if (!cso->state.executable)
-         ((struct cso_fragment_shader*)cso)->state.executable = (void *) x86_get_func( &stfp->sse2_program );
-   }
-#endif
-
    return cso;
 }
 

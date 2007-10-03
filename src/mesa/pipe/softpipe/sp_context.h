@@ -154,6 +154,8 @@ struct softpipe_context {
    struct draw_stage *vbuf;
 
    struct pipe_surface *cbuf;      /**< current color buffer (one of cbufs) */
+
+   int use_sse : 1;
 };
 
 

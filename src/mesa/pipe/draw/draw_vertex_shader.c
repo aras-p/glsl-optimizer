@@ -214,12 +214,13 @@ draw_create_vertex_shader(struct draw_context *draw,
 
    vs->state = shader;
 #if defined(__i386__) || defined(__386__)
-   x86_init_func(&vs->sse2_program);
-
    if (draw->use_sse) {
-      tgsi_emit_sse2(shader->tokens, &vs->sse2_program);
-      ((struct pipe_shader_state*)(vs->state))->executable =
-         x86_get_func(&vs->sse2_program);
+      x86_init_func( &shader->sse2_program );
+
+      tgsi_emit_sse2( shader->tokens, &shader->sse2_program );
+
+      ((struct pipe_shader_state *)shader)->executable = (void *)
+	 x86_get_func( &shader->sse2_program );
    }
 #endif
 
@@ -243,9 +244,12 @@ void draw_delete_vertex_shader(struct draw_context *draw,
                                void *vcso)
 {
    struct draw_vertex_shader *vs = (struct draw_vertex_shader*)(vcso);
+
 #if defined(__i386__) || defined(__386__)
-   x86_release_func(&vs->sse2_program);
+   x86_release_func(&vs->state->sse2_program);
 #endif
+
+   free(vs->state);
    free(vcso);
 }
 
