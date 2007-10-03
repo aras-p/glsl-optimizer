@@ -1089,7 +1089,8 @@ store_dest(
       return;
 
    case TGSI_FILE_OUTPUT:
-      dst = &mach->Outputs[mach->Temps[TEMP_OUTPUT_I].xyzw[TEMP_OUTPUT_C].u[0] + reg->DstRegister.Index].xyzw[chan_index];
+      dst = &mach->Outputs[mach->Temps[TEMP_OUTPUT_I].xyzw[TEMP_OUTPUT_C].u[0]
+                           + reg->DstRegister.Index].xyzw[chan_index];
       break;
 
    case TGSI_FILE_TEMPORARY:
@@ -1108,9 +1109,6 @@ store_dest(
    switch (inst->Instruction.Saturate)
    {
    case TGSI_SAT_NONE:
-#if 0
-      *dst = *chan;
-#else
       if (mach->ExecMask & 0x1)
          dst->i[0] = chan->i[0];
       if (mach->ExecMask & 0x2)
@@ -1119,12 +1117,14 @@ store_dest(
          dst->i[2] = chan->i[2];
       if (mach->ExecMask & 0x8)
          dst->i[3] = chan->i[3];
-#endif
       break;
 
    case TGSI_SAT_ZERO_ONE:
-      micro_lt( dst, chan, &mach->Temps[TEMP_0_I].xyzw[TEMP_0_C], &mach->Temps[TEMP_0_I].xyzw[TEMP_0_C], chan );
-      micro_lt( dst, chan, &mach->Temps[TEMP_1_I].xyzw[TEMP_1_C], chan, &mach->Temps[TEMP_1_I].xyzw[TEMP_1_C] );
+      /* XXX need to obey ExecMask here */
+      micro_lt( dst, chan, &mach->Temps[TEMP_0_I].xyzw[TEMP_0_C],
+                &mach->Temps[TEMP_0_I].xyzw[TEMP_0_C], chan );
+      micro_lt( dst, chan, &mach->Temps[TEMP_1_I].xyzw[TEMP_1_C],
+                chan, &mach->Temps[TEMP_1_I].xyzw[TEMP_1_C] );
       break;
 
    case TGSI_SAT_MINUS_PLUS_ONE:
@@ -1184,16 +1184,6 @@ exec_kilp(struct tgsi_exec_machine *mach,
 
     mach->Temps[TEMP_KILMASK_I].xyzw[TEMP_KILMASK_C].u[0] |= kilmask;
 }
-
-
-static void
-exec_kil(struct tgsi_exec_machine *mach,
-         const struct tgsi_full_instruction *inst)
-{
-   /* for enabled ExecMask bits, set the killed bit */
-   mach->Temps[TEMP_KILMASK_I].xyzw[TEMP_KILMASK_C].u[0] |= mach->ExecMask;
-}
-
 
 
 /*
@@ -1809,12 +1799,13 @@ exec_instruction(
       break;
 
    case TGSI_OPCODE_KILP:
-       exec_kilp (mach, inst);
-       break;
+      exec_kilp (mach, inst);
+      break;
 
    case TGSI_OPCODE_KIL:
-       exec_kil (mach, inst);
-       break;
+      /* for enabled ExecMask bits, set the killed bit */
+      mach->Temps[TEMP_KILMASK_I].xyzw[TEMP_KILMASK_C].u[0] |= mach->ExecMask;
+      break;
 
    case TGSI_OPCODE_PK2H:
       assert (0);
