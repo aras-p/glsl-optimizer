@@ -86,7 +86,12 @@ st_readpixels(GLcontext *ctx, GLint x, GLint y, GLsizei width, GLsizei height,
 
    }
 
-   strb = st_renderbuffer(ctx->ReadBuffer->_ColorReadBuffer);
+   if (format == GL_DEPTH_COMPONENT) {
+      strb = st_renderbuffer(ctx->ReadBuffer->_DepthBuffer);
+   }
+   else {
+      strb = st_renderbuffer(ctx->ReadBuffer->_ColorReadBuffer);
+   }
    if (!strb)
       return;
 
@@ -98,6 +103,14 @@ st_readpixels(GLcontext *ctx, GLint x, GLint y, GLsizei width, GLsizei height,
                                              height, format, type, 0, 0);
       dfStride = width * 4;
    }
+#if 0
+   else if (format == GL_DEPTH_COMPONENT && type == GL_FLOAT) {
+      /* write tile(row) directly into user's buffer */
+      df = (GLfloat *) _mesa_image_address2d(&clippedPacking, dest, width,
+                                             height, format, type, 0, 0);
+      dfStride = width;
+   }
+#endif
    else {
       /* write tile(row) into temp row buffer */
       df = (GLfloat *) temp;
@@ -122,8 +135,26 @@ st_readpixels(GLcontext *ctx, GLint x, GLint y, GLsizei width, GLsizei height,
          /* convert GLfloat to user's format/type */
          GLvoid *dst = _mesa_image_address2d(&clippedPacking, dest, width,
                                              height, format, type, i, 0);
-         _mesa_pack_rgba_span_float(ctx, width, temp, format, type, dst,
-                                    &clippedPacking, transferOps);
+         if (format == GL_DEPTH_COMPONENT) {
+            float z[MAX_WIDTH];
+            if (strb->surface->format == PIPE_FORMAT_S8_Z24) {
+               const double scale = 1.0 / ((1 << 24) - 1);
+               const uint *zs = (const uint *) temp;
+               uint k;
+               for (k = 0; k < width; k++) {
+                  z[k] = (zs[k] & 0xffffff) * scale;
+               }
+            }
+            else {
+               assert(0);
+            }
+            _mesa_pack_depth_span(ctx, width, dst, type,
+                                  z, &clippedPacking);
+         }
+         else {
+            _mesa_pack_rgba_span_float(ctx, width, temp, format, type, dst,
+                                       &clippedPacking, transferOps);
+         }
       }
    }
 
