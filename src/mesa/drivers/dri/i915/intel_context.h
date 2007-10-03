@@ -460,9 +460,6 @@ extern void intelInitStateFuncs(struct dd_function_table *functions);
 #define BLENDFACT_INV_CONST_ALPHA	0x0f
 #define BLENDFACT_MASK          	0x0f
 
-#define MI_BATCH_BUFFER_END 	(0xA<<23)
-
-
 extern int intel_translate_compare_func(GLenum func);
 extern int intel_translate_stencil_op(GLenum op);
 extern int intel_translate_blend_factor(GLenum factor);

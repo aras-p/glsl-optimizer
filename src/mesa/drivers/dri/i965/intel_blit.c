@@ -110,8 +110,7 @@ void intelCopyBuffer( const __DRIdrawablePrivate *dPriv,
       } 
       else {
 	 BR13 = (0xCC << 16) | (1<<24) | (1<<25);
-	 CMD = (XY_SRC_COPY_BLT_CMD | XY_SRC_COPY_BLT_WRITE_ALPHA |
-		XY_SRC_COPY_BLT_WRITE_RGB);
+	 CMD = XY_SRC_COPY_BLT_CMD | XY_BLT_WRITE_ALPHA | XY_BLT_WRITE_RGB;
       }
 
       if (src->tiled) {
@@ -199,8 +198,7 @@ void intelEmitFillBlit( struct intel_context *intel,
       break;
    case 4:
       BR13 = (0xF0 << 16) | (1<<24) | (1<<25);
-      CMD = (XY_COLOR_BLT_CMD | XY_COLOR_BLT_WRITE_ALPHA |
-	     XY_COLOR_BLT_WRITE_RGB);
+      CMD = XY_COLOR_BLT_CMD | XY_BLT_WRITE_ALPHA | XY_BLT_WRITE_RGB;
       break;
    default:
       return;
@@ -290,8 +288,7 @@ void intelEmitCopyBlit( struct intel_context *intel,
    case 4:
       BR13 = (translate_raster_op(logic_op) << 16) | (1<<24) |
 	  (1<<25);
-      CMD = (XY_SRC_COPY_BLT_CMD | XY_SRC_COPY_BLT_WRITE_ALPHA |
-	     XY_SRC_COPY_BLT_WRITE_RGB);
+      CMD = XY_SRC_COPY_BLT_CMD | XY_BLT_WRITE_ALPHA | XY_BLT_WRITE_RGB;
       break;
    default:
       return;
@@ -388,12 +385,11 @@ void intelClearWithBlit(GLcontext *ctx, GLbitfield flags)
       break;
    case 4:
       BR13 = (0xF0 << 16) | (1<<24) | (1<<25);
-      BACK_CMD = FRONT_CMD = (XY_COLOR_BLT_CMD |
-			      XY_COLOR_BLT_WRITE_ALPHA | 
-			      XY_COLOR_BLT_WRITE_RGB);
+      BACK_CMD = FRONT_CMD = XY_COLOR_BLT_CMD |
+	 XY_BLT_WRITE_ALPHA | XY_BLT_WRITE_RGB;
       DEPTH_CMD = XY_COLOR_BLT_CMD;
-      if (flags & BUFFER_BIT_DEPTH) DEPTH_CMD |= XY_COLOR_BLT_WRITE_RGB;
-      if (flags & BUFFER_BIT_STENCIL) DEPTH_CMD |= XY_COLOR_BLT_WRITE_ALPHA;
+      if (flags & BUFFER_BIT_DEPTH) DEPTH_CMD |= XY_BLT_WRITE_RGB;
+      if (flags & BUFFER_BIT_STENCIL) DEPTH_CMD |= XY_BLT_WRITE_ALPHA;
       break;
    default:
       return;
@@ -517,11 +513,6 @@ void intelClearWithBlit(GLcontext *ctx, GLbitfield flags)
 }
 
 
-
-#define BR13_565  0x1
-#define BR13_8888 0x3
-
-
 void
 intelEmitImmediateColorExpandBlit(struct intel_context *intel,
 				  GLuint cpp,
@@ -576,15 +567,15 @@ intelEmitImmediateColorExpandBlit(struct intel_context *intel,
 
    opcode = XY_SETUP_BLT_CMD;
    if (cpp == 4)
-      opcode |= XY_COLOR_BLT_WRITE_ALPHA | XY_COLOR_BLT_WRITE_RGB;
+      opcode |= XY_BLT_WRITE_ALPHA | XY_BLT_WRITE_RGB;
    if (dst_tiled)
       opcode |= XY_DST_TILED;
 
    br13 = dst_pitch | (translate_raster_op(logic_op) << 16) | (1 << 29);
    if (cpp == 2)
-      br13 |= BR13_565 << 24;
+      br13 |= BR13_565;
    else
-      br13 |= BR13_8888 << 24;
+      br13 |= BR13_8888;
 
    BEGIN_BATCH(8, INTEL_BATCH_NO_CLIPRECTS);
    OUT_BATCH(opcode);
