@@ -67,8 +67,11 @@ void * softpipe_create_vs_state(struct pipe_context *pipe,
    struct softpipe_context *softpipe = softpipe_context(pipe);
    struct sp_vertex_shader_state *state =
       malloc(sizeof(struct sp_vertex_shader_state));
+   struct pipe_shader_state *templ_copy =
+      malloc(sizeof(struct pipe_shader_state));
+   memcpy(templ_copy, templ, sizeof(struct pipe_shader_state));
 
-   state->state = templ;
+   state->state = templ_copy;
    state->draw_data = draw_create_vertex_shader(softpipe->draw,
                                                 state->state);
 
@@ -95,6 +98,7 @@ void softpipe_delete_vs_state(struct pipe_context *pipe,
       (struct sp_vertex_shader_state *)vs;
 
    draw_delete_vertex_shader(softpipe->draw, state->draw_data);
+   free(state->state);
    free(state);
 }
 
