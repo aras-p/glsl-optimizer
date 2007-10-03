@@ -40,17 +40,27 @@
 
 #include "pipe/tgsi/exec/tgsi_core.h"
 
+
+static INLINE float dot4(const float *a, const float *b)
+{
+   float result = (a[0]*b[0] +
+                   a[1]*b[1] +
+                   a[2]*b[2] +
+                   a[3]*b[3]);
+
+   return result;
+}
+
 static INLINE unsigned
-compute_clipmask(float cx, float cy, float cz, float cw)
+compute_clipmask(const float *clip, const float (*plane)[4], unsigned nr)
 {
    unsigned mask = 0;
+   unsigned i;
 
-   if (-cx + cw < 0) mask |= CLIP_RIGHT_BIT;
-   if ( cx + cw < 0) mask |= CLIP_LEFT_BIT;
-   if (-cy + cw < 0) mask |= CLIP_TOP_BIT;
-   if ( cy + cw < 0) mask |= CLIP_BOTTOM_BIT;
-   if (-cz + cw < 0) mask |= CLIP_FAR_BIT;
-   if ( cz + cw < 0) mask |= CLIP_NEAR_BIT;
+   for (i = 0; i < nr; i++) {
+      if (dot4(clip, plane[i]) < 0) 
+         mask |= (1<<i);
+   }
 
    return mask;
 }
@@ -127,13 +137,18 @@ run_vertex_program(struct draw_context *draw,
       unsigned slot;
       float x, y, z, w;
 
-      /* Handle attr[0] (position) specially: */
+      /* Handle attr[0] (position) specially:
+       *
+       * XXX: Computing the clipmask should be done in the vertex
+       * program as a set of DP4 instructions appended to the
+       * user-provided code.
+       */
       x = vOut[j]->clip[0] = machine->Outputs[0].xyzw[0].f[j];
       y = vOut[j]->clip[1] = machine->Outputs[0].xyzw[1].f[j];
       z = vOut[j]->clip[2] = machine->Outputs[0].xyzw[2].f[j];
       w = vOut[j]->clip[3] = machine->Outputs[0].xyzw[3].f[j];
 
-      vOut[j]->clipmask = compute_clipmask(x, y, z, w) | draw->user_clipmask;
+      vOut[j]->clipmask = compute_clipmask(vOut[j]->clip, draw->plane, draw->nr_planes);
       vOut[j]->edgeflag = 1;
 
       /* divide by w */

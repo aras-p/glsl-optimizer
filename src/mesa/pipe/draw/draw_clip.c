@@ -50,13 +50,6 @@
 #endif
 
 
-/** bitmask for the first view-frustum clip planes */
-#define VIEWPLANE_MASK ((1 << 6) - 1)
-
-/** bitmask for the user-defined clip planes */
-#define USERPLANE_MASK (((1 << PIPE_MAX_CLIP_PLANES) - 1) << 6)
-
-
 
 struct clipper {
    struct draw_stage stage;      /**< base class */
@@ -335,10 +328,6 @@ do_clip_line( struct draw_stage *stage,
       const float dp0 = dot4( pos0, plane );
       const float dp1 = dot4( pos1, plane );
 
-      /* need this to handle user-clip planes properly */
-      if (dp0 < 0.0F && dp1 < 0.0F)
-         return;
-
       if (dp1 < 0.0F) {
 	 float t = dp1 / (dp1 - dp0);
          t1 = MAX2(t1, t);
@@ -392,21 +381,8 @@ static void
 clip_point( struct draw_stage *stage, 
 	    struct prim_header *header )
 {
-   if (header->v[0]->clipmask == 0) {
+   if (header->v[0]->clipmask == 0) 
       stage->next->point( stage->next, header );
-   }
-   else if (header->v[0]->clipmask & USERPLANE_MASK) {
-      /* test against user clip planes now */
-      const struct clipper *clipper = clipper_stage( stage );
-      uint i;
-      for (i = 6; i < stage->draw->nr_planes; i++) {
-         float dot = dot4(clipper->plane[i], header->v[0]->clip);
-         if (dot < 0.0F)
-            return; /* clipped! */
-      }
-      /* not clipped */
-      stage->next->point( stage->next, header );
-   }
 }
 
 
@@ -421,22 +397,8 @@ clip_line( struct draw_stage *stage,
       /* no clipping needed */
       stage->next->line( stage->next, header );
    }
-   else if (((header->v[0]->clipmask &
-              header->v[1]->clipmask &
-              VIEWPLANE_MASK) == 0) ||
-            (clipmask & USERPLANE_MASK)) {
-      /* About the above predicate: the clipmask bits for the view volume
-       * exactly indicate whether the coordinate is inside or outside each
-       * frustum plane.  However, the bits for user-defined planes are set
-       * if the plane is enabled, and does not really indicate if the
-       * coordinate is inside or outside the user-defined plane.
-       *
-       * To change this (so that the user-plane bits really indicate
-       * inside/outside) we'd have to compute the dot products earlier
-       * in the draw_prim.c code (see compute_clipmask()).
-       * We will probably do that when we have support for user clip coord
-       * in vertex shaders...
-       */
+   else if ((header->v[0]->clipmask &
+             header->v[1]->clipmask) == 0) {
       do_clip_line(stage, header, clipmask);
    }
    /* else, totally clipped */
@@ -455,11 +417,9 @@ clip_tri( struct draw_stage *stage,
       /* no clipping needed */
       stage->next->tri( stage->next, header );
    }
-   else if (((header->v[0]->clipmask & 
-              header->v[1]->clipmask & 
-              header->v[2]->clipmask &
-              VIEWPLANE_MASK) == 0) ||
-            (clipmask & USERPLANE_MASK)) {
+   else if ((header->v[0]->clipmask & 
+             header->v[1]->clipmask & 
+             header->v[2]->clipmask) == 0) {
       do_clip_tri(stage, header, clipmask);
    }
 }
