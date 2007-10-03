@@ -32,7 +32,7 @@
 
 
 #define CMD_3D (0x3<<29)
-
+#define CMD_2D (0x2<<29)
 
 #define _3DPRIMITIVE         ((0x3<<29)|(0x1f<<24))
 #define PRIM_INDIRECT            (1<<23)
@@ -73,6 +73,8 @@
 #define BR00_OP_SRC_COPY_BLT 0x10C00000
 #define BR13_SOLID_PATTERN   0x80000000
 
+#define XY_SETUP_BLT_CMD		(CMD_2D | (1 << 22) | 6)
+
 #define XY_COLOR_BLT_CMD		((2<<29)|(0x50<<22)|0x4)
 #define XY_COLOR_BLT_WRITE_ALPHA	(1<<21)
 #define XY_COLOR_BLT_WRITE_RGB		(1<<20)
@@ -81,6 +83,8 @@
 #define XY_SRC_COPY_BLT_WRITE_ALPHA     (1<<21)
 #define XY_SRC_COPY_BLT_WRITE_RGB       (1<<20)
 
+#define XY_BLT_WRITE_ALPHA	(1<<21)
+#define XY_BLT_WRITE_RGB	(1<<20)
 #define XY_SRC_TILED  (1<<15)
 #define XY_DST_TILED  (1<<11)
 
