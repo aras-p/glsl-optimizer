@@ -1194,7 +1194,7 @@ fetch_texel( struct tgsi_sampler *sampler,
              const union tgsi_exec_channel *s,
              const union tgsi_exec_channel *t,
              const union tgsi_exec_channel *p,
-             float lodbias,
+             float lodbias,  /* XXX should be float[4] */
              union tgsi_exec_channel *r,
              union tgsi_exec_channel *g,
              union tgsi_exec_channel *b,
@@ -1212,6 +1212,124 @@ fetch_texel( struct tgsi_sampler *sampler,
       a->f[j] = rgba[3][j];
    }
 }
+
+
+static void
+exec_tex(struct tgsi_exec_machine *mach,
+         const struct tgsi_full_instruction *inst,
+         boolean biasLod)
+{
+   const uint unit = inst->FullSrcRegisters[1].SrcRegister.Index;
+   union tgsi_exec_channel r[8];
+   uint chan_index;
+   float lodBias;
+
+   switch (inst->InstructionExtTexture.Texture) {
+   case TGSI_TEXTURE_1D:
+
+      FETCH(&r[0], 0, CHAN_X);
+
+      switch (inst->FullSrcRegisters[0].SrcRegisterExtSwz.ExtDivide) {
+      case TGSI_EXTSWIZZLE_W:
+         FETCH(&r[1], 0, CHAN_W);
+         micro_div( &r[0], &r[0], &r[1] );
+         break;
+
+      case TGSI_EXTSWIZZLE_ONE:
+         break;
+
+      default:
+         assert (0);
+      }
+
+      if (biasLod) {
+         FETCH(&r[1], 0, CHAN_W);
+         lodBias = r[1].f[0];
+      }
+      else
+         lodBias = 0.0;
+
+      fetch_texel(&mach->Samplers[unit],
+                  &r[0], NULL, NULL, lodBias,  /* S, T, P, BIAS */
+                  &r[0], &r[1], &r[2], &r[3]); /* R, G, B, A */
+      break;
+
+   case TGSI_TEXTURE_2D:
+   case TGSI_TEXTURE_RECT:
+
+      FETCH(&r[0], 0, CHAN_X);
+      FETCH(&r[1], 0, CHAN_Y);
+
+      switch (inst->FullSrcRegisters[0].SrcRegisterExtSwz.ExtDivide) {
+      case TGSI_EXTSWIZZLE_W:
+         FETCH(&r[2], 0, CHAN_W);
+         micro_div( &r[0], &r[0], &r[2] );
+         micro_div( &r[1], &r[1], &r[2] );
+         break;
+
+      case TGSI_EXTSWIZZLE_ONE:
+         break;
+
+      default:
+         assert (0);
+      }
+
+      if (biasLod) {
+         FETCH(&r[1], 0, CHAN_W);
+         lodBias = r[1].f[0];
+      }
+      else
+         lodBias = 0.0;
+
+      fetch_texel(&mach->Samplers[unit],
+                  &r[0], &r[1], NULL, lodBias,
+                  &r[0], &r[1], &r[2], &r[3]);
+      break;
+
+   case TGSI_TEXTURE_3D:
+   case TGSI_TEXTURE_CUBE:
+
+      FETCH(&r[0], 0, CHAN_X);
+      FETCH(&r[1], 0, CHAN_Y);
+      FETCH(&r[2], 0, CHAN_Z);
+
+      switch (inst->FullSrcRegisters[0].SrcRegisterExtSwz.ExtDivide) {
+      case TGSI_EXTSWIZZLE_W:
+         FETCH(&r[3], 0, CHAN_W);
+         micro_div( &r[0], &r[0], &r[3] );
+         micro_div( &r[1], &r[1], &r[3] );
+         micro_div( &r[2], &r[2], &r[3] );
+         break;
+
+      case TGSI_EXTSWIZZLE_ONE:
+         break;
+
+      default:
+         assert (0);
+      }
+
+      if (biasLod) {
+         FETCH(&r[1], 0, CHAN_W);
+         lodBias = r[1].f[0];
+      }
+      else
+         lodBias = 0.0;
+
+      fetch_texel(&mach->Samplers[unit],
+                  &r[0], &r[1], &r[2], lodBias,
+                  &r[0], &r[1], &r[2], &r[3]);
+      break;
+
+   default:
+      assert (0);
+   }
+
+   FOR_EACH_ENABLED_CHANNEL( *inst, chan_index ) {
+      STORE( &r[chan_index], 0, chan_index );
+   }
+}
+
+
 
 static void
 constant_interpolation(
@@ -1880,91 +1998,13 @@ exec_instruction(
       break;
 
    case TGSI_OPCODE_TEX:
-      {
-         const GLuint unit = inst->FullSrcRegisters[1].SrcRegister.Index;
-         switch (inst->InstructionExtTexture.Texture) {
-         case TGSI_TEXTURE_1D:
+      /* src arg0 is the texcoord */
+      exec_tex(mach, inst, FALSE);
+      break;
 
-            FETCH(&r[0], 0, CHAN_X);
-
-            switch (inst->FullSrcRegisters[0].SrcRegisterExtSwz.ExtDivide) {
-            case TGSI_EXTSWIZZLE_W:
-               FETCH(&r[1], 0, CHAN_W);
-               micro_div( &r[0], &r[0], &r[1] );
-               break;
-
-            case TGSI_EXTSWIZZLE_ONE:
-               break;
-
-            default:
-               assert (0);
-            }
-
-            fetch_texel(&mach->Samplers[unit],
-                        &r[0], NULL, NULL, 0.0,
-                        &r[0], &r[1], &r[2], &r[3]);
-            break;
-
-         case TGSI_TEXTURE_2D:
-         case TGSI_TEXTURE_RECT:
-
-            FETCH(&r[0], 0, CHAN_X);
-            FETCH(&r[1], 0, CHAN_Y);
-
-            switch (inst->FullSrcRegisters[0].SrcRegisterExtSwz.ExtDivide) {
-            case TGSI_EXTSWIZZLE_W:
-               FETCH(&r[2], 0, CHAN_W);
-               micro_div( &r[0], &r[0], &r[2] );
-               micro_div( &r[1], &r[1], &r[2] );
-               break;
-
-            case TGSI_EXTSWIZZLE_ONE:
-               break;
-
-            default:
-               assert (0);
-            }
-
-            fetch_texel(&mach->Samplers[unit],
-                        &r[0], &r[1], NULL, 0.0,
-                        &r[0], &r[1], &r[2], &r[3]);
-            break;
-
-         case TGSI_TEXTURE_3D:
-         case TGSI_TEXTURE_CUBE:
-
-            FETCH(&r[0], 0, CHAN_X);
-            FETCH(&r[1], 0, CHAN_Y);
-            FETCH(&r[2], 0, CHAN_Z);
-
-            switch (inst->FullSrcRegisters[0].SrcRegisterExtSwz.ExtDivide) {
-            case TGSI_EXTSWIZZLE_W:
-               FETCH(&r[3], 0, CHAN_W);
-               micro_div( &r[0], &r[0], &r[3] );
-               micro_div( &r[1], &r[1], &r[3] );
-               micro_div( &r[2], &r[2], &r[3] );
-               break;
-
-            case TGSI_EXTSWIZZLE_ONE:
-               break;
-
-            default:
-               assert (0);
-            }
-
-            fetch_texel(&mach->Samplers[unit],
-                        &r[0], &r[1], &r[2], 0.0,
-                        &r[0], &r[1], &r[2], &r[3]);
-            break;
-
-         default:
-            assert (0);
-         }
-
-         FOR_EACH_ENABLED_CHANNEL( *inst, chan_index ) {
-            STORE( &r[chan_index], 0, chan_index );
-         }
-      }
+   case TGSI_OPCODE_TXB:
+      /* Texture lookup with lod bias (src0.w) */
+      exec_tex(mach, inst, TRUE);
       break;
 
    case TGSI_OPCODE_TXD:
@@ -2074,10 +2114,6 @@ exec_instruction(
       if( IS_CHANNEL_ENABLED( *inst, CHAN_W ) ) {
          STORE( &mach->Temps[TEMP_1_I].xyzw[TEMP_1_C], 0, CHAN_W );
       }
-      break;
-
-   case TGSI_OPCODE_TXB:
-      assert (0);
       break;
 
    case TGSI_OPCODE_NRM:
