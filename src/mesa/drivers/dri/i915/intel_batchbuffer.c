@@ -116,85 +116,21 @@ intel_batchbuffer_free(struct intel_batchbuffer *batch)
    free(batch);
 }
 
-static int
-relocation_sort(const void *a_in, const void *b_in) {
-   const struct buffer_reloc *a = a_in, *b = b_in;
-
-   return (intptr_t)a->buf < (intptr_t)b->buf ? -1 : 1;
-}
 
 
 /* TODO: Push this whole function into bufmgr.
  */
 static void
 do_flush_locked(struct intel_batchbuffer *batch,
-                GLuint used,
-                GLboolean ignore_cliprects, GLboolean allow_unlock)
+		GLuint used,
+		GLboolean ignore_cliprects, GLboolean allow_unlock)
 {
-   GLuint *ptr;
-   GLuint i;
    struct intel_context *intel = batch->intel;
-   dri_fence *fo;
-   GLboolean performed_rendering = GL_FALSE;
 
-   assert(batch->buf->virtual != NULL);
-   ptr = batch->buf->virtual;
+   dri_process_relocs(batch->buf);
 
-   /* Sort our relocation list in terms of referenced buffer pointer.
-    * This lets us uniquely validate the buffers with the sum of all the flags,
-    * while avoiding O(n^2) on number of relocations.
-    */
-   qsort(batch->reloc, batch->nr_relocs, sizeof(batch->reloc[0]),
-	 relocation_sort);
-
-   /* Perform the necessary validations of buffers, and enter the relocations
-    * in the batchbuffer.
-    */
-   for (i = 0; i < batch->nr_relocs; i++) {
-      struct buffer_reloc *r = &batch->reloc[i];
-
-      if (r->validate_flags & DRM_BO_FLAG_WRITE)
-	 performed_rendering = GL_TRUE;
-
-      /* If this is the first time we've seen this buffer in the relocation
-       * list, figure out our flags and validate it.
-       */
-      if (i == 0 || batch->reloc[i - 1].buf != r->buf) {
-	 uint32_t validate_flags;
-	 int j, ret;
-
-	 /* Accumulate the flags we need for validating this buffer. */
-	 validate_flags = r->validate_flags;
-	 for (j = i + 1; j < batch->nr_relocs; j++) {
-	    if (batch->reloc[j].buf != r->buf)
-	       break;
-	    validate_flags |= batch->reloc[j].validate_flags;
-	 }
-
-	 /* Validate.  If we fail, fence to clear the unfenced list and bail
-	  * out.
-	  */
-	 ret = dri_bo_validate(r->buf, validate_flags);
-	 if (ret != 0) {
-	    dri_bo_unmap(batch->buf);
-	    fo = dri_fence_validated(intel->intelScreen->bufmgr,
-				     "batchbuffer failure fence", GL_TRUE);
-	    dri_fence_unreference(fo);
-	    goto done;
-	 }
-      }
-      ptr[r->offset / 4] = r->buf->offset + r->delta;
-      dri_bo_unreference(r->buf);
-   }
-
-   dri_bo_unmap(batch->buf);
    batch->map = NULL;
    batch->ptr = NULL;
-
-   dri_bo_validate(batch->buf, DRM_BO_FLAG_MEM_TT | DRM_BO_FLAG_EXE);
-
-   batch->list_count = 0;
-   batch->nr_relocs = 0;
    batch->flags = 0;
 
    /* Throw away non-effective packets.  Won't work once we have
@@ -208,21 +144,7 @@ do_flush_locked(struct intel_batchbuffer *batch,
                         used, ignore_cliprects, allow_unlock);
    }
 
-   /* Associate a fence with the validated buffers, and note that we included
-    * a flush at the end.
-    */
-   fo = dri_fence_validated(intel->intelScreen->bufmgr,
-			    "Batch fence", GL_TRUE);
-
-   if (performed_rendering) {
-      dri_fence_unreference(batch->last_fence);
-      batch->last_fence = fo;
-   } else {
-     /* If we didn't validate any buffers for writing by the card, we don't
-      * need to track the fence for glFinish().
-      */
-      dri_fence_unreference(fo);
-   }
+   dri_post_submit(batch->buf, &batch->last_fence);
 
    if (intel->numClipRects == 0 && !ignore_cliprects) {
       if (allow_unlock) {
@@ -237,15 +159,13 @@ do_flush_locked(struct intel_batchbuffer *batch,
       intel->vtbl.lost_hardware(intel);
    }
 
-done:
    if (INTEL_DEBUG & DEBUG_BATCH) {
-      dri_bo_map(batch->buf, GL_FALSE);
-      intel_decode(ptr, used / 4, batch->buf->offset,
-		   intel->intelScreen->deviceID);
-      dri_bo_unmap(batch->buf);
+      //      dri_bo_map(batch->buf, GL_FALSE);
+      //      intel_decode(ptr, used / 4, batch->buf->offset,
+      //		   intel->intelScreen->deviceID);
+      //      dri_bo_unmap(batch->buf);
    }
 }
-
 
 void
 intel_batchbuffer_flush(struct intel_batchbuffer *batch)
@@ -280,7 +200,7 @@ intel_batchbuffer_flush(struct intel_batchbuffer *batch)
 
    do_flush_locked(batch, used, !(batch->flags & INTEL_BATCH_CLIPRECTS),
 		   GL_FALSE);
-
+     
    if (!was_locked)
       UNLOCK_HARDWARE(intel);
 
@@ -305,21 +225,11 @@ intel_batchbuffer_emit_reloc(struct intel_batchbuffer *batch,
                              dri_bo *buffer,
                              GLuint flags, GLuint delta)
 {
-   struct buffer_reloc *r = &batch->reloc[batch->nr_relocs++];
-
-   assert(batch->nr_relocs <= MAX_RELOCS);
-
-   dri_bo_reference(buffer);
-   r->buf = buffer;
-   r->offset = batch->ptr - batch->map;
-   r->delta = delta;
-   r->validate_flags = flags;
-
+   dri_emit_reloc(batch->buf, flags, delta, batch->ptr - batch->map, buffer);
    batch->ptr += 4;
+
    return GL_TRUE;
 }
-
-
 
 void
 intel_batchbuffer_data(struct intel_batchbuffer *batch,

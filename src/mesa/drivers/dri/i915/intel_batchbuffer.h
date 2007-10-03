@@ -2,6 +2,9 @@
 #define INTEL_BATCHBUFFER_H
 
 #include "mtypes.h"
+
+#include "intel_drmbuf.h"
+
 #include "dri_bufmgr.h"
 
 struct intel_context;
@@ -9,18 +12,8 @@ struct intel_context;
 #define BATCH_SZ 16384
 #define BATCH_RESERVED 16
 
-#define MAX_RELOCS 4096
-
 #define INTEL_BATCH_NO_CLIPRECTS 0x1
 #define INTEL_BATCH_CLIPRECTS    0x2
-
-struct buffer_reloc
-{
-   dri_bo *buf;
-   GLuint offset;
-   GLuint delta;                /* not needed? */
-   GLuint validate_flags;
-};
 
 struct intel_batchbuffer
 {
@@ -30,13 +23,9 @@ struct intel_batchbuffer
    dri_fence *last_fence;
    GLuint flags;
 
-   drmBOList list;
-   GLuint list_count;
    GLubyte *map;
    GLubyte *ptr;
 
-   struct buffer_reloc reloc[MAX_RELOCS];
-   GLuint nr_relocs;
    GLuint size;
 };
 

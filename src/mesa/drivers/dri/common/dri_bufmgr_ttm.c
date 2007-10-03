@@ -43,6 +43,15 @@
 #include "imports.h"
 
 #define BUFMGR_DEBUG 0
+#define MAX_RELOCS 4096
+
+struct ttm_buffer_reloc
+{
+   dri_bo *buf;
+   GLuint offset;
+   GLuint delta;                /* not needed? */
+   GLuint validate_flags;
+};
 
 typedef struct _dri_bufmgr_ttm {
    dri_bufmgr bufmgr;
@@ -51,6 +60,12 @@ typedef struct _dri_bufmgr_ttm {
    _glthread_Mutex mutex;
    unsigned int fence_type;
    unsigned int fence_type_flush;
+
+   /** ttm relocation list */
+   struct ttm_buffer_reloc reloc[MAX_RELOCS];
+   GLuint nr_relocs;
+   GLboolean performed_rendering;
+
 } dri_bufmgr_ttm;
 
 typedef struct _dri_bo_ttm {
@@ -431,6 +446,118 @@ dri_bufmgr_ttm_destroy(dri_bufmgr *bufmgr)
    free(bufmgr);
 }
 
+
+static void
+dri_ttm_emit_reloc(dri_bo *batch_buf, GLuint flags, GLuint delta, GLuint offset,
+		    dri_bo *relocatee)
+{
+   dri_bufmgr_ttm *bufmgr_ttm = (dri_bufmgr_ttm *)batch_buf->bufmgr;
+   struct ttm_buffer_reloc *r = &bufmgr_ttm->reloc[bufmgr_ttm->nr_relocs++];
+   
+   assert(bufmgr_ttm->nr_relocs <= MAX_RELOCS);
+
+   dri_bo_reference(relocatee);
+
+   r->buf = relocatee;
+   r->offset = offset;
+   r->delta = delta;
+   r->validate_flags = flags;
+
+   return;
+}
+
+
+static int
+relocation_sort(const void *a_in, const void *b_in) {
+   const struct ttm_buffer_reloc *a = a_in, *b = b_in;
+
+   return (intptr_t)a->buf < (intptr_t)b->buf ? -1 : 1;
+}
+
+static void *
+dri_ttm_process_reloc(dri_bo *batch_buf)
+{
+   dri_bufmgr_ttm *bufmgr_ttm = (dri_bufmgr_ttm *)batch_buf->bufmgr;
+   GLuint i;
+   GLuint *ptr;
+
+   assert(batch_buf->virtual != NULL);
+   ptr = batch_buf->virtual;
+
+   bufmgr_ttm->performed_rendering = GL_FALSE;
+
+   /* Sort our relocation list in terms of referenced buffer pointer.
+    * This lets us uniquely validate the buffers with the sum of all the flags,
+    * while avoiding O(n^2) on number of relocations.
+    */
+   qsort(bufmgr_ttm->reloc, bufmgr_ttm->nr_relocs, sizeof(bufmgr_ttm->reloc[0]),
+	 relocation_sort);
+
+   /* Perform the necessary validations of buffers, and enter the relocations
+    * in the batchbuffer.
+    */
+   for (i = 0; i < bufmgr_ttm->nr_relocs; i++) {
+      struct ttm_buffer_reloc *r = &bufmgr_ttm->reloc[i];
+
+      if (r->validate_flags & DRM_BO_FLAG_WRITE)
+	 bufmgr_ttm->performed_rendering = GL_TRUE;
+
+      /* If this is the first time we've seen this buffer in the relocation
+       * list, figure out our flags and validate it.
+       */
+      if (i == 0 || bufmgr_ttm->reloc[i - 1].buf != r->buf) {
+	 uint32_t validate_flags;
+	 int j, ret;
+
+	 /* Accumulate the flags we need for validating this buffer. */
+	 validate_flags = r->validate_flags;
+	 for (j = i + 1; j < bufmgr_ttm->nr_relocs; j++) {
+	    if (bufmgr_ttm->reloc[j].buf != r->buf)
+	       break;
+	    validate_flags |= bufmgr_ttm->reloc[j].validate_flags;
+	 }
+
+	 /* Validate.  If we fail, fence to clear the unfenced list and bail
+	  * out.
+	  */
+	 ret = dri_bo_validate(r->buf, validate_flags);
+	 if (ret != 0) {
+	    dri_fence *fo;
+	    dri_bo_unmap(batch_buf);
+	    fo = dri_fence_validated(batch_buf->bufmgr,
+				     "batchbuffer failure fence", GL_TRUE);
+	    dri_fence_unreference(fo);
+	    goto done;
+	 }
+      }
+      ptr[r->offset / 4] = r->buf->offset + r->delta;
+      dri_bo_unreference(r->buf);
+   }
+   dri_bo_unmap(batch_buf);
+
+   dri_bo_validate(batch_buf, DRM_BO_FLAG_MEM_TT | DRM_BO_FLAG_EXE);
+
+   bufmgr_ttm->nr_relocs = 0;
+ done:
+   return NULL;
+}
+
+static void
+dri_ttm_post_submit(dri_bo *batch_buf, dri_fence **last_fence)
+{
+   dri_bufmgr_ttm *bufmgr_ttm = (dri_bufmgr_ttm *)batch_buf->bufmgr;
+   dri_fence *fo;
+
+   fo = dri_fence_validated(batch_buf->bufmgr, "Batch fence", GL_TRUE);
+
+   if (bufmgr_ttm->performed_rendering) {
+      dri_fence_unreference(*last_fence);
+      *last_fence = fo;
+   } else {
+      dri_fence_unreference(fo);
+   }
+}
+
 /**
  * Initializes the TTM buffer manager, which uses the kernel to allocate, map,
  * and manage map buffer objections.
@@ -464,6 +591,8 @@ dri_bufmgr_ttm_init(int fd, unsigned int fence_type,
    bufmgr_ttm->bufmgr.fence_unreference = dri_ttm_fence_unreference;
    bufmgr_ttm->bufmgr.fence_wait = dri_ttm_fence_wait;
    bufmgr_ttm->bufmgr.destroy = dri_bufmgr_ttm_destroy;
-
+   bufmgr_ttm->bufmgr.emit_reloc = dri_ttm_emit_reloc;
+   bufmgr_ttm->bufmgr.process_relocs = dri_ttm_process_reloc;
+   bufmgr_ttm->bufmgr.post_submit = dri_ttm_post_submit;   
    return &bufmgr_ttm->bufmgr;
 }

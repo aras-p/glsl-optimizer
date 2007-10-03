@@ -59,6 +59,16 @@
  * processed through the command queue wouldn't need to care about
  * fences.
  */
+#define MAX_RELOCS 4096
+
+struct fake_buffer_reloc
+{
+   dri_bo *buf;
+   GLuint offset;
+   GLuint delta;                /* not needed? */
+   GLuint validate_flags;
+};
+
 struct block {
    struct block *next, *prev;
    struct mem_block *mem;	/* BM_MEM_AGP */
@@ -107,6 +117,12 @@ typedef struct _bufmgr_fake {
    int (*fence_wait)(void *private, unsigned int fence_cookie);
    /** Driver-supplied argument to driver callbacks */
    void *driver_priv;
+
+
+   /** fake relocation list */
+   struct fake_buffer_reloc reloc[MAX_RELOCS];
+   GLuint nr_relocs;
+   GLboolean performed_rendering;
 } dri_bufmgr_fake;
 
 typedef struct _dri_bo_fake {
@@ -837,6 +853,117 @@ dri_fake_destroy(dri_bufmgr *bufmgr)
    free(bufmgr);
 }
 
+static void
+dri_fake_emit_reloc(dri_bo *batch_buf, GLuint flags, GLuint delta, GLuint offset,
+		    dri_bo *relocatee)
+{
+   dri_bufmgr_fake *bufmgr_fake = (dri_bufmgr_fake *)batch_buf->bufmgr;
+   struct fake_buffer_reloc *r = &bufmgr_fake->reloc[bufmgr_fake->nr_relocs++];
+   
+   assert(bufmgr_fake->nr_relocs <= MAX_RELOCS);
+
+   dri_bo_reference(relocatee);
+
+   r->buf = relocatee;
+   r->offset = offset;
+   r->delta = delta;
+   r->validate_flags = flags;
+
+   return;
+}
+
+
+static int
+relocation_sort(const void *a_in, const void *b_in) {
+   const struct fake_buffer_reloc *a = a_in, *b = b_in;
+
+   return (intptr_t)a->buf < (intptr_t)b->buf ? -1 : 1;
+}
+
+static void *
+dri_fake_process_reloc(dri_bo *batch_buf)
+{
+   dri_bufmgr_fake *bufmgr_fake = (dri_bufmgr_fake *)batch_buf->bufmgr;
+   GLuint i;
+   GLuint *ptr;
+
+   assert(batch_buf->virtual != NULL);
+   ptr = batch_buf->virtual;
+
+   bufmgr_fake->performed_rendering = GL_FALSE;
+
+   /* Sort our relocation list in terms of referenced buffer pointer.
+    * This lets us uniquely validate the buffers with the sum of all the flags,
+    * while avoiding O(n^2) on number of relocations.
+    */
+   qsort(bufmgr_fake->reloc, bufmgr_fake->nr_relocs, sizeof(bufmgr_fake->reloc[0]),
+	 relocation_sort);
+
+   /* Perform the necessary validations of buffers, and enter the relocations
+    * in the batchbuffer.
+    */
+   for (i = 0; i < bufmgr_fake->nr_relocs; i++) {
+      struct fake_buffer_reloc *r = &bufmgr_fake->reloc[i];
+
+      if (r->validate_flags & DRM_BO_FLAG_WRITE)
+	 bufmgr_fake->performed_rendering = GL_TRUE;
+
+      /* If this is the first time we've seen this buffer in the relocation
+       * list, figure out our flags and validate it.
+       */
+      if (i == 0 || bufmgr_fake->reloc[i - 1].buf != r->buf) {
+	 uint32_t validate_flags;
+	 int j, ret;
+
+	 /* Accumulate the flags we need for validating this buffer. */
+	 validate_flags = r->validate_flags;
+	 for (j = i + 1; j < bufmgr_fake->nr_relocs; j++) {
+	    if (bufmgr_fake->reloc[j].buf != r->buf)
+	       break;
+	    validate_flags |= bufmgr_fake->reloc[j].validate_flags;
+	 }
+
+	 /* Validate.  If we fail, fence to clear the unfenced list and bail
+	  * out.
+	  */
+	 ret = dri_bo_validate(r->buf, validate_flags);
+	 if (ret != 0) {
+	    dri_fence *fo;
+	    dri_bo_unmap(batch_buf);
+	    fo = dri_fence_validated(batch_buf->bufmgr,
+				     "batchbuffer failure fence", GL_TRUE);
+	    dri_fence_unreference(fo);
+	    goto done;
+	 }
+      }
+      ptr[r->offset / 4] = r->buf->offset + r->delta;
+      dri_bo_unreference(r->buf);
+   }
+   dri_bo_unmap(batch_buf);
+
+   dri_bo_validate(batch_buf, DRM_BO_FLAG_MEM_TT | DRM_BO_FLAG_EXE);
+
+   bufmgr_fake->nr_relocs = 0;
+ done:
+   return NULL;
+}
+
+static void
+dri_fake_post_submit(dri_bo *batch_buf, dri_fence **last_fence)
+{
+   dri_bufmgr_fake *bufmgr_fake = (dri_bufmgr_fake *)batch_buf->bufmgr;
+   dri_fence *fo;
+
+   fo = dri_fence_validated(batch_buf->bufmgr, "Batch fence", GL_TRUE);
+
+   if (bufmgr_fake->performed_rendering) {
+      dri_fence_unreference(*last_fence);
+      *last_fence = fo;
+   } else {
+      dri_fence_unreference(fo);
+   }
+}
+
 dri_bufmgr *
 dri_bufmgr_fake_init(unsigned long low_offset, void *low_virtual,
 		     unsigned long size,
@@ -873,7 +1000,9 @@ dri_bufmgr_fake_init(unsigned long low_offset, void *low_virtual,
    bufmgr_fake->bufmgr.fence_reference = dri_fake_fence_reference;
    bufmgr_fake->bufmgr.fence_unreference = dri_fake_fence_unreference;
    bufmgr_fake->bufmgr.destroy = dri_fake_destroy;
-
+   bufmgr_fake->bufmgr.emit_reloc = dri_fake_emit_reloc;
+   bufmgr_fake->bufmgr.process_relocs = dri_fake_process_reloc;
+   bufmgr_fake->bufmgr.post_submit = dri_fake_post_submit;
    bufmgr_fake->fence_emit = fence_emit;
    bufmgr_fake->fence_wait = fence_wait;
    bufmgr_fake->driver_priv = driver_priv;

@@ -158,6 +158,15 @@ struct _dri_bufmgr {
     * Tears down the buffer manager instance.
     */
    void (*destroy)(dri_bufmgr *bufmgr);
+   
+   /**
+    * Add relocation
+    */
+   void (*emit_reloc)(dri_bo *batch_buf, GLuint flags, GLuint delta, GLuint offset, dri_bo *relocatee);
+
+   void *(*process_relocs)(dri_bo *batch_buf);
+
+   void (*post_submit)(dri_bo *batch_buf, dri_fence **fence);
 };
 
 dri_bo *dri_bo_alloc(dri_bufmgr *bufmgr, const char *name, unsigned long size,
@@ -195,4 +204,8 @@ void dri_bufmgr_destroy(dri_bufmgr *bufmgr);
 dri_bo *dri_ttm_bo_create_from_handle(dri_bufmgr *bufmgr, const char *name,
 				      unsigned int handle);
 
+void dri_emit_reloc(dri_bo *batch_buf, GLuint flags, GLuint delta, GLuint offset, dri_bo *relocatee);
+void dri_process_relocs(dri_bo *batch_buf);
+void dri_post_process_relocs(dri_bo *batch_buf);
+void dri_post_submit(dri_bo *batch_buf, dri_fence **last_fence);
 #endif
