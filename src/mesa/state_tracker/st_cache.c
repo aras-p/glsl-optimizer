@@ -39,10 +39,17 @@
 #include "pipe/cso_cache/cso_cache.h"
 #include "pipe/cso_cache/cso_hash.h"
 
-/* This function will either find the state of the given template
- * in the cache or it will create a new state state from the given
- * template, will insert it in the cache and return it.
+
+/* Those function will either find the state of the given template
+ * in the cache or they will create a new state from the given
+ * template, insert it in the cache and return it.
  */
+
+/*
+ * If the driver returns 0 from the create method then they will assign
+ * the data member of the cso to be the template itself.
+ */
+
 const struct cso_blend * st_cached_blend_state(struct st_context *st,
                                                const struct pipe_blend_state *templ)
 {
