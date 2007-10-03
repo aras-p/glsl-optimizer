@@ -99,19 +99,27 @@ intel_miptree_create(struct intel_context *intel,
 
    if (ok) {
       if (!mt->compressed) {
-	 /* XXX: Align pitch to multiple of 64 bytes for now to allow
-	  * render-to-texture to work in all cases. This should probably be
-	  * replaced at some point by some scheme to only do this when really
-	  * necessary.
-	  */
-	 mt->pitch = (mt->pitch * cpp + 63) & ~63;
+	 int align;
+
+	 if (intel->intelScreen->ttm) {
+	    /* XXX: Align pitch to multiple of 64 bytes for now to allow
+	     * render-to-texture to work in all cases. This should probably be
+	     * replaced at some point by some scheme to only do this when really
+	     * necessary.
+	     */
+	    align = 63;
+	 } else {
+	    align = 3;
+	 }
+
+	 mt->pitch = (mt->pitch * cpp + align) & ~align;
 
 	 /* XXX: At least the i915 seems very upset when the pitch is a multiple
 	  * of 1024 and sometimes 512 bytes - performance can drop by several
-	  * times. Go to the next multiple of 64 for now.
+	  * times. Go to the next multiple of the required alignment for now.
 	  */
 	 if (!(mt->pitch & 511))
-	    mt->pitch += 64;
+	    mt->pitch += align + 1;
 
 	 mt->pitch /= cpp;
       }
