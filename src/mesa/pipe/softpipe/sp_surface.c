@@ -695,6 +695,42 @@ s8z24_write_quad_stencil(struct softpipe_surface *sps,
 }
 
 
+/**
+ * Note, the actual returned pixels are uint, not float
+ */
+static void
+s8z24_get_tile(struct pipe_surface *ps,
+               unsigned x, unsigned y, unsigned w, unsigned h, float *p)
+{
+   const uint *src
+      = ((const uint *) (ps->region->map + ps->offset))
+      + y * ps->region->pitch + x;
+   unsigned i, j;
+   unsigned w0 = w;
+
+   assert(ps->format == PIPE_FORMAT_S8_Z24);
+
+#if 0
+   assert(x + w <= ps->width);
+   assert(y + h <= ps->height);
+#else
+   /* temp clipping hack */
+   if (x + w > ps->width)
+      w = ps->width - x;
+   if (y + h > ps->height)
+      h = ps->height -y;
+#endif
+   for (i = 0; i < h; i++) {
+      uint *pRow = (uint *) p;
+      for (j = 0; j < w; j++) {
+         pRow[j] = src[j];
+      }
+      src += ps->region->pitch;
+      p += w0;
+   }
+}
+
+
 /*** PIPE_FORMAT_U_S8 ***/
 
 static void
@@ -784,6 +820,7 @@ softpipe_init_surface_funcs(struct softpipe_surface *sps)
       sps->write_quad_z = s8z24_write_quad_z;
       sps->read_quad_stencil = s8z24_read_quad_stencil;
       sps->write_quad_stencil = s8z24_write_quad_stencil;
+      sps->surface.get_tile = s8z24_get_tile;
       break;
 
    case PIPE_FORMAT_U_S8:
