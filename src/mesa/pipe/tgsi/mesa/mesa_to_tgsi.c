@@ -59,22 +59,13 @@ map_register_file_index(
 
    switch( file ) {
    case TGSI_FILE_INPUT:
-      /*
-       * The fragment/vertex program input indexes (FRAG/VERT_ATTRIB_x) get
-       * mapped to a packed sequence of integers.
-       * If a program uses one input attribute, the mapped index will be 1.
-       * If a program uses two input attribs, the mapped indexes will be 1,2.
-       * If a program uses 3 input attribs, the mapped indexes will be 1,2,3.
-       * etc.
-       */
+      /* inputs are mapped according to the user-defined map */
       return inputMapping[index];
 
    case TGSI_FILE_OUTPUT:
-      /*
-      assert( usage_bitmask == 0x0 );
-      */
       if( processor == TGSI_PROCESSOR_FRAGMENT ) {
-         /* depth result  -> index 0
+         /* fragment program outputs are hard-coded:
+          * depth result  -> index 0
           * color results -> index 1, 2, ...
           */
 	 if( index == FRAG_RESULT_DEPR ) {
@@ -86,8 +77,7 @@ map_register_file_index(
          }
       }
       else {
-         /* vertex output slots are tightly packed, find mapped pos */
-         /* mapped_index = VERT_RESULT_x */
+         /* vertex outputs are mapped according to the user-defined map */
          mapped_index = outputMapping[index];
       }
       break;
