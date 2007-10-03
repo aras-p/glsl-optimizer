@@ -1125,7 +1125,7 @@ struct x86_reg x86_fn_arg( struct x86_function *p,
 
 void x86_init_func( struct x86_function *p )
 {
-   x86_init_func_size(p, 1024);
+   x86_init_func_size(p, 2048);
 }
 
 void x86_init_func_size( struct x86_function *p, unsigned code_size )
