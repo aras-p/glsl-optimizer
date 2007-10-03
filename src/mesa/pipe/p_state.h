@@ -150,13 +150,11 @@ struct pipe_shader_state {
 #endif
    void *executable;
 
-   /** These fields somewhat constitute the shader "signature" */
    ubyte num_inputs;
    ubyte num_outputs;
-
+   uint outputs_written;  /**< bitmask */
    ubyte input_semantic_name[PIPE_MAX_SHADER_INPUTS]; /**< TGSI_SEMANTIC_x */
    ubyte input_semantic_index[PIPE_MAX_SHADER_INPUTS];
-
    ubyte output_semantic_name[PIPE_MAX_SHADER_OUTPUTS]; /**< TGSI_SEMANTIC_x */
    ubyte output_semantic_index[PIPE_MAX_SHADER_OUTPUTS];
 };

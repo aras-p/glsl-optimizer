@@ -116,8 +116,7 @@ shade_quad(
       sizeof( quad->outputs.color ) );
 
    /* Z */
-   if (qss->stage.softpipe->fs->output_semantic_name[0]
-       == TGSI_SEMANTIC_POSITION) {
+   if (qss->stage.softpipe->fs->outputs_written & 0x1) {
       /* output[0] is new Z */
       uint i;
       for (i = 0; i < 4; i++) {
