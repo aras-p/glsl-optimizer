@@ -55,16 +55,6 @@ compute_clipmask(const float *clip, const float (*plane)[4], unsigned nr)
 }
 
 
-
-
-#if !defined(XSTDCALL) 
-#if defined(WIN32)
-#define XSTDCALL __stdcall
-#else
-#define XSTDCALL
-#endif
-#endif
-
 typedef void (XSTDCALL *codegen_function) (
    const struct tgsi_exec_vector *input,
    struct tgsi_exec_vector *output,

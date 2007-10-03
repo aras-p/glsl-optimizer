@@ -80,4 +80,14 @@ typedef unsigned long long uint64;
 
 
 
+/** For calling code-gen'd functions */
+#if !defined(XSTDCALL) 
+#if defined(WIN32)
+#define XSTDCALL __stdcall
+#else
+#define XSTDCALL
+#endif
+#endif
+
+
 #endif /* P_COMPILER_H */
