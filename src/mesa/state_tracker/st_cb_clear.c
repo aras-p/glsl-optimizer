@@ -264,7 +264,7 @@ clear_with_quad(GLcontext *ctx,
                 GLboolean color, GLboolean depth, GLboolean stencil)
 {
    struct st_context *st = ctx->st;
-   struct pipe_context *pipe = ctx->st->pipe;
+   struct pipe_context *pipe = st->pipe;
    const GLfloat x0 = ctx->DrawBuffer->_Xmin;
    const GLfloat y0 = ctx->DrawBuffer->_Ymin;
    const GLfloat x1 = ctx->DrawBuffer->_Xmax;
@@ -321,7 +321,7 @@ clear_with_quad(GLcontext *ctx,
          depth_stencil.stencil.value_mask[0] = 0xff;
          depth_stencil.stencil.write_mask[0] = ctx->Stencil.WriteMask[0] & 0xff;
       }
-      cso = st_cached_depth_stencil_state(ctx->st, &depth_stencil);
+      cso = st_cached_depth_stencil_state(st, &depth_stencil);
       pipe->bind_depth_stencil_state(pipe, cso->data);
    }
 
@@ -337,7 +337,7 @@ clear_with_quad(GLcontext *ctx,
       if (ctx->Scissor.Enabled)
          raster.scissor = 1;
 #endif
-      cso = st_cached_rasterizer_state(ctx->st, &raster);
+      cso = st_cached_rasterizer_state(st, &raster);
       pipe->bind_rasterizer_state(pipe, cso->data);
    }
 
@@ -385,7 +385,7 @@ clear_with_quad(GLcontext *ctx,
    pipe->bind_fs_state(pipe, st->state.fs->data);
    pipe->bind_vs_state(pipe, st->state.vs->data);
    pipe->bind_rasterizer_state(pipe, st->state.rasterizer->data);
-   pipe->set_viewport_state(pipe, &ctx->st->state.viewport);
+   pipe->set_viewport_state(pipe, &st->state.viewport);
    /* OR:
    st_invalidate_state(ctx, _NEW_COLOR | _NEW_DEPTH | _NEW_STENCIL);
    */
@@ -491,8 +491,7 @@ clear_depth_buffer(GLcontext *ctx, struct gl_renderbuffer *rb)
 
    assert(strb->surface->format);
 
-   if (ctx->Scissor.Enabled ||
-       (isDS && ctx->DrawBuffer->Visual.stencilBits > 0)) {
+   if (check_clear_depth_with_quad(ctx, rb)) {
       /* scissoring or we have a combined depth/stencil buffer */
       clear_with_quad(ctx, GL_FALSE, GL_TRUE, GL_FALSE);
    }
