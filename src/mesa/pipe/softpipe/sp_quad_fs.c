@@ -123,25 +123,22 @@ shade_quad(
       &machine->Outputs[1].xyzw[0].f[0],
       sizeof( quad->outputs.color ) );
 
-#if 0
-   if( softpipe->need_z ) {
-      /* XXX temporary */
-      memcpy(
-         quad->outputs.depth,
-         machine->Outputs[0].xyzw[2],
-         sizeof( quad->outputs.depth ) );
+   /* Z */
+   if (qss->stage.softpipe->fs->output_semantic_name[0]
+       == TGSI_SEMANTIC_POSITION) {
+      /* output[0] is new Z */
+      uint i;
+      for (i = 0; i < 4; i++) {
+         quad->outputs.depth[i] = machine->Outputs[0].xyzw[2].f[i];
+      }
    }
-#else
-   {
+   else {
+      /* pass input Z to output Z */
       uint i;
       for (i = 0; i < 4; i++) {
          quad->outputs.depth[i] = machine->Inputs[0].xyzw[2].f[i];
-#if 0
-         printf("output z %f\n",  quad->outputs.depth[i]);
-#endif
       }
    }
-#endif
 
    /* shader may cull fragments */
    if( quad->mask ) {
