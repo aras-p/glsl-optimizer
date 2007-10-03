@@ -1,6 +1,6 @@
 # Makefile for core library for VMS
 # contributed by Jouk Jansen  joukj@hrem.nano.tudelft.nl
-# Last revision : 8 May 2007
+# Last revision : 3 October 2007
 
 .first
 	define gl [----.include.gl]
@@ -11,6 +11,9 @@
 	define swrast_setup [--.swrast_setup]
 	define array_cache [--.array_cache]
 	define drivers [-]
+	define glapi [--.glapi]
+	define main [--.main]
+	define shader [--.shader]
 
 .include [----]mms-config.
 
