@@ -157,9 +157,9 @@ void dri_emit_reloc(dri_bo *batch_buf, GLuint flags, GLuint delta, GLuint offset
    batch_buf->bufmgr->emit_reloc(batch_buf, flags, delta, offset, relocatee);
 }
 
-void dri_process_relocs(dri_bo *batch_buf)
+void *dri_process_relocs(dri_bo *batch_buf, GLuint *hack)
 {
-   batch_buf->bufmgr->process_relocs(batch_buf);
+   return batch_buf->bufmgr->process_relocs(batch_buf, hack);
 }
 
 void dri_post_submit(dri_bo *batch_buf, dri_fence **last_fence)

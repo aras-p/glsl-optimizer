@@ -3,8 +3,6 @@
 
 #include "mtypes.h"
 
-#include "intel_drmbuf.h"
-
 #include "dri_bufmgr.h"
 
 struct intel_context;

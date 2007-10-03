@@ -126,8 +126,10 @@ do_flush_locked(struct intel_batchbuffer *batch,
 		GLboolean ignore_cliprects, GLboolean allow_unlock)
 {
    struct intel_context *intel = batch->intel;
+   void *start;
+   uint32_t hack;
 
-   dri_process_relocs(batch->buf);
+   start = dri_process_relocs(batch->buf, &hack);
 
    batch->map = NULL;
    batch->ptr = NULL;
@@ -139,11 +141,17 @@ do_flush_locked(struct intel_batchbuffer *batch,
     */
 
    if (!(intel->numClipRects == 0 && !ignore_cliprects)) {
-      intel_batch_ioctl(batch->intel,
-                        batch->buf->offset,
-                        used, ignore_cliprects, allow_unlock);
+      if (intel->intelScreen->ttm == GL_TRUE) {
+	 intel_exec_ioctl(batch->intel,
+			  used, ignore_cliprects, allow_unlock,
+			  start, &hack);
+      } else {
+	 intel_batch_ioctl(batch->intel,
+			   batch->buf->offset,
+			   used, ignore_cliprects, allow_unlock);
+      }
    }
-
+      
    dri_post_submit(batch->buf, &batch->last_fence);
 
    if (intel->numClipRects == 0 && !ignore_cliprects) {

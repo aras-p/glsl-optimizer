@@ -538,7 +538,7 @@ intelInitDriver(__DRIscreenPrivate * sPriv)
    if (getenv("INTEL_NO_TTM") == NULL &&
        intelScreen->driScrnPriv->ddxMinor >= 9 &&
        intelScreen->front.bo_handle != -1) {
-      intelScreen->bufmgr = dri_bufmgr_ttm_init(sPriv->fd,
+      intelScreen->bufmgr = intel_bufmgr_ttm_init(sPriv->fd,
 						DRM_FENCE_TYPE_EXE,
 						DRM_FENCE_TYPE_EXE |
 						DRM_I915_FENCE_TYPE_RW);

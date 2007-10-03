@@ -105,9 +105,6 @@ intel_batch_ioctl(struct intel_context *intel,
     * hardware contexts which would preserve statechanges beyond a
     * single buffer.
     */
-
-
-
    batch.start = start_offset;
    batch.used = used;
    batch.cliprects = intel->pClipRects;
@@ -132,4 +129,49 @@ intel_batch_ioctl(struct intel_context *intel,
     * each buffer flush.
     */
    intel->vtbl.lost_hardware(intel);
+}
+
+void
+intel_exec_ioctl(struct intel_context *intel,
+		 GLuint used,
+		 GLboolean ignore_cliprects, GLboolean allow_unlock,
+		 void *start, uint32_t *hack)
+{
+   struct drm_i915_execbuffer execbuf;
+   
+   assert(intel->locked);
+   assert(used);
+
+   memset(&execbuf, 0, sizeof(execbuf));
+
+   execbuf.cmdbuf_handle = *hack; // TODO
+   execbuf.batch.used = used;
+   execbuf.batch.cliprects = intel->pClipRects;
+   execbuf.batch.num_cliprects = ignore_cliprects ? 0 : intel->numClipRects;
+   execbuf.batch.DR1 = 0;
+   execbuf.batch.DR4 = ((((GLuint) intel->drawX) & 0xffff) |
+			(((GLuint) intel->drawY) << 16));
+
+   execbuf.ops_list = (unsigned)start; // TODO
+   execbuf.fence_arg.flags = DRM_I915_FENCE_FLAG_FLUSHED;
+
+   if (drmCommandWrite(intel->driFd, DRM_I915_EXECBUFFER, &execbuf,
+                       sizeof(execbuf))) {
+      fprintf(stderr, "DRM_I830_EXECBUFFER: %d\n", -errno);
+      UNLOCK_HARDWARE(intel);
+      exit(1);
+   }
+
+   /* FIXME: use hardware contexts to avoid 'losing' hardware after
+    * each buffer flush.
+    */
+   intel->vtbl.lost_hardware(intel);
+
+#if 0
+   fence->handle = execbuf.fence_arg.handle;
+   fence->fence_class = execbuf.fence_arg.fence_class;
+   fence->type = execbuf.fence_arg.type;
+   fence->flags = execbuf.fence_arg.flags;
+   fence->fence.signaled = 0;
+#endif
 }
