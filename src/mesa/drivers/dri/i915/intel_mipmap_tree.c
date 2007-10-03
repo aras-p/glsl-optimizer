@@ -104,7 +104,16 @@ intel_miptree_create(struct intel_context *intel,
 	  * replaced at some point by some scheme to only do this when really
 	  * necessary.
 	  */
-	 mt->pitch = ((mt->pitch * cpp + 63) & ~63) / cpp;
+	 mt->pitch = (mt->pitch * cpp + 63) & ~63;
+
+	 /* XXX: At least the i915 seems very upset when the pitch is a multiple
+	  * of 1024 and sometimes 512 bytes - performance can drop by several
+	  * times. Go to the next multiple of 64 for now.
+	  */
+	 if (!(mt->pitch & 511))
+	    mt->pitch += 64;
+
+	 mt->pitch /= cpp;
       }
 
       mt->region = intel_region_alloc(intel->intelScreen,
