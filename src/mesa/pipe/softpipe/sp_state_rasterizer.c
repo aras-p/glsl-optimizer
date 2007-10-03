@@ -36,7 +36,10 @@ void *
 softpipe_create_rasterizer_state(struct pipe_context *pipe,
                                  const struct pipe_rasterizer_state *setup)
 {
-   return 0;
+   struct pipe_rasterizer_state *state =
+      malloc(sizeof(struct pipe_rasterizer_state));
+   memcpy(state, setup, sizeof(struct pipe_rasterizer_state));
+   return state;
 }
 
 void softpipe_bind_rasterizer_state(struct pipe_context *pipe,
@@ -55,7 +58,7 @@ void softpipe_bind_rasterizer_state(struct pipe_context *pipe,
 void softpipe_delete_rasterizer_state(struct pipe_context *pipe,
                                       void *rasterizer)
 {
-   /* do nothing */
+   free(rasterizer);
 }
 
 

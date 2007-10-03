@@ -34,9 +34,9 @@ void *
 softpipe_create_blend_state(struct pipe_context *pipe,
                             const struct pipe_blend_state *blend)
 {
-   /* means that we just want pipe_blend_state and don't have
-    * anything specific */
-   return 0;
+   struct pipe_blend_state *state = malloc(sizeof(struct pipe_blend_state));
+   memcpy(state, blend, sizeof(struct pipe_blend_state));
+   return state;
 }
 
 void softpipe_bind_blend_state( struct pipe_context *pipe,
@@ -50,9 +50,9 @@ void softpipe_bind_blend_state( struct pipe_context *pipe,
 }
 
 void softpipe_delete_blend_state(struct pipe_context *pipe,
-                                 void *blend )
+                                 void *blend)
 {
-   /* do nothing */
+   free(blend);
 }
 
 
@@ -75,7 +75,9 @@ void *
 softpipe_create_alpha_test_state(struct pipe_context *pipe,
                                  const struct pipe_alpha_test_state *alpha)
 {
-   return 0;
+   struct pipe_alpha_test_state *state = malloc(sizeof(struct pipe_alpha_test_state));
+   memcpy(state, alpha, sizeof(struct pipe_alpha_test_state));
+   return state;
 }
 
 void
@@ -93,14 +95,17 @@ void
 softpipe_delete_alpha_test_state(struct pipe_context *pipe,
                                  void *alpha)
 {
-   /* do nothing */
+   free(alpha);
 }
 
 void *
 softpipe_create_depth_stencil_state(struct pipe_context *pipe,
                               const struct pipe_depth_stencil_state *depth_stencil)
 {
-   return 0;
+   struct pipe_depth_stencil_state *state =
+      malloc(sizeof(struct pipe_depth_stencil_state));
+   memcpy(state, depth_stencil, sizeof(struct pipe_depth_stencil_state));
+   return state;
 }
 
 void
@@ -117,5 +122,5 @@ softpipe_bind_depth_stencil_state(struct pipe_context *pipe,
 void
 softpipe_delete_depth_stencil_state(struct pipe_context *pipe, void *depth)
 {
-   /* do nothing */
+   free(depth);
 }

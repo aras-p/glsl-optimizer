@@ -40,7 +40,9 @@ void * softpipe_create_fs_state(struct pipe_context *pipe,
     * that now.
     */
 
-   return 0;
+   struct pipe_shader_state *state = malloc(sizeof(struct pipe_shader_state));
+   memcpy(state, templ, sizeof(struct pipe_shader_state));
+   return state;
 }
 
 void softpipe_bind_fs_state(struct pipe_context *pipe, void *fs)
@@ -55,6 +57,7 @@ void softpipe_bind_fs_state(struct pipe_context *pipe, void *fs)
 void softpipe_delete_fs_state(struct pipe_context *pipe,
                               void *shader)
 {
+   free(shader);
 }
 
 

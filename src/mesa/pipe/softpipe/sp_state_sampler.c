@@ -36,7 +36,9 @@ void *
 softpipe_create_sampler_state(struct pipe_context *pipe,
                               const struct pipe_sampler_state *sampler)
 {
-   return 0;
+   struct pipe_sampler_state *state = malloc(sizeof(struct pipe_sampler_state));
+   memcpy(state, sampler, sizeof(struct pipe_sampler_state));
+   return state;
 }
 
 void
@@ -56,7 +58,7 @@ void
 softpipe_delete_sampler_state(struct pipe_context *pipe,
                               void *sampler)
 {
-   /* do nothing */
+   free(sampler);
 }
 
 
