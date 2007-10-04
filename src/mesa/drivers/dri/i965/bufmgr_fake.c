@@ -168,7 +168,7 @@ static GLboolean alloc_from_pool( struct intel_context *intel,
    if (!block)
       return GL_FALSE;
 
-   sz = (buf->size + align-1) & ~(align-1);
+   sz = ALIGN(buf->size, align);
 
    block->mem = mmAllocMem(pool->heap, 
 			   sz, 

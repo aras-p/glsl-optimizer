@@ -292,6 +292,8 @@ extern char *__progname;
 #define SUBPIXEL_X 0.125
 #define SUBPIXEL_Y 0.125
 
+#define ALIGN(value, alignment)  ((value + alignment - 1) & ~(alignment - 1))
+
 #define INTEL_FIREVERTICES(intel)		\
 do {						\
    if ((intel)->prim.flush)			\

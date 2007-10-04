@@ -533,7 +533,7 @@ intelEmitImmediateColorExpandBlit(struct intel_context *intel,
 				  GLenum logic_op)
 {
    struct xy_text_immediate_blit text;
-   int dwords = ((src_size + 7) & ~7) / 4;
+   int dwords = ALIGN(src_size, 8) / 4;
    uint32_t opcode, br13;
 
    assert( logic_op - GL_CLEAR >= 0 );

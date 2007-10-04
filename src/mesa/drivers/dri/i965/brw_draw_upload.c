@@ -290,7 +290,7 @@ static void get_space( struct brw_context *brw,
 		       struct gl_buffer_object **vbo_return,
 		       GLuint *offset_return )
 {
-   size = (size + 63) & ~63;
+   size = ALIGN(size, 64);
    
    if (brw->vb.upload.offset + size > BRW_UPLOAD_INIT_SIZE)
       wrap_buffers(brw, size);

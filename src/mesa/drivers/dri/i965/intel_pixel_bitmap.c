@@ -91,11 +91,6 @@ static void set_bit( GLubyte *dest,
    dest[bit/8] |= 1 << (bit % 8);
 }
 
-static int align(int x, int align)
-{
-   return (x + align - 1) & ~(align - 1);
-}
-
 /* Extract a rectangle's worth of data from the bitmap.  Called
  * per-cliprect.
  */
@@ -147,7 +142,7 @@ static GLuint get_bitmap_rect(GLsizei width, GLsizei height,
       }
 
       if (row_align)
-	 bit = (bit + row_align - 1) & ~(row_align - 1);
+	 bit = ALIGN(bit, row_align);
    }
 
    return count;
@@ -268,7 +263,7 @@ do_blit_bitmap( GLcontext *ctx,
 	    for (px = 0; px < box_w; px += DX) { 
 	       int h = MIN2(DY, box_h - py);
 	       int w = MIN2(DX, box_w - px); 
-	       GLuint sz = align(align(w,8) * h, 64)/8;
+	       GLuint sz = ALIGN(ALIGN(w,8) * h, 64)/8;
 	       GLenum logic_op = ctx->Color.ColorLogicOpEnabled ?
 		  ctx->Color.LogicOp : GL_COPY;
 

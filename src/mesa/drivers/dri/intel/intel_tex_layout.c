@@ -34,12 +34,6 @@
 #include "intel_tex_layout.h"
 #include "macros.h"
 
-
-static int align(int value, int alignment)
-{
-   return (value + alignment - 1) & ~(alignment - 1);
-}
-
 GLuint intel_compressed_alignment(GLenum internalFormat)
 {
     GLuint alignment = 4;
@@ -70,7 +64,7 @@ void i945_miptree_layout_2d( struct intel_mipmap_tree *mt )
 
    if (mt->compressed) {
        align_w = intel_compressed_alignment(mt->internal_format);
-       mt->pitch = align(mt->width0, align_w);
+       mt->pitch = ALIGN(mt->width0, align_w);
    }
 
    /* May need to adjust pitch to accomodate the placement of
@@ -82,10 +76,10 @@ void i945_miptree_layout_2d( struct intel_mipmap_tree *mt )
        GLuint mip1_width;
 
        if (mt->compressed) {
-           mip1_width = align(minify(mt->width0), align_w)
-               + align(minify(minify(mt->width0)), align_w);
+           mip1_width = ALIGN(minify(mt->width0), align_w)
+               + ALIGN(minify(minify(mt->width0)), align_w);
        } else {
-           mip1_width = align(minify(mt->width0), align_w)
+           mip1_width = ALIGN(minify(mt->width0), align_w)
                + minify(minify(mt->width0));
        }
 
@@ -97,7 +91,7 @@ void i945_miptree_layout_2d( struct intel_mipmap_tree *mt )
    /* Pitch must be a whole number of dwords, even though we
     * express it in texels.
     */
-   mt->pitch = align(mt->pitch * mt->cpp, 4) / mt->cpp;
+   mt->pitch = ALIGN(mt->pitch * mt->cpp, 4) / mt->cpp;
    mt->total_height = 0;
 
    for ( level = mt->first_level ; level <= mt->last_level ; level++ ) {
@@ -109,7 +103,7 @@ void i945_miptree_layout_2d( struct intel_mipmap_tree *mt )
       if (mt->compressed)
 	 img_height = MAX2(1, height/4);
       else
-	 img_height = align(height, align_h);
+	 img_height = ALIGN(height, align_h);
 
 
       /* Because the images are packed better, the final offset
@@ -120,7 +114,7 @@ void i945_miptree_layout_2d( struct intel_mipmap_tree *mt )
       /* Layout_below: step right after second mipmap.
        */
       if (level == mt->first_level + 1) {
-	 x += align(width, align_w);
+	 x += ALIGN(width, align_w);
       }
       else {
 	 y += img_height;
