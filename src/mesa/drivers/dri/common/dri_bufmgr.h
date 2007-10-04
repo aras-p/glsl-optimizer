@@ -164,7 +164,7 @@ struct _dri_bufmgr {
     */
    void (*emit_reloc)(dri_bo *batch_buf, GLuint flags, GLuint delta, GLuint offset, dri_bo *relocatee);
 
-   void *(*process_relocs)(dri_bo *batch_buf, void *hack);
+   void *(*process_relocs)(dri_bo *batch_buf);
 
    void (*post_submit)(dri_bo *batch_buf, dri_fence **fence);
 };
@@ -205,7 +205,7 @@ dri_bo *dri_ttm_bo_create_from_handle(dri_bufmgr *bufmgr, const char *name,
 				      unsigned int handle);
 
 void dri_emit_reloc(dri_bo *batch_buf, GLuint flags, GLuint delta, GLuint offset, dri_bo *relocatee);
-void *dri_process_relocs(dri_bo *batch_buf, GLuint *hack);
+void *dri_process_relocs(dri_bo *batch_buf);
 void dri_post_process_relocs(dri_bo *batch_buf);
 void dri_post_submit(dri_bo *batch_buf, dri_fence **last_fence);
 #endif

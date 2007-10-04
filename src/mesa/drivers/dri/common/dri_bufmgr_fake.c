@@ -881,7 +881,7 @@ relocation_sort(const void *a_in, const void *b_in) {
 }
 
 static void *
-dri_fake_process_reloc(dri_bo *batch_buf, GLuint *hack)
+dri_fake_process_reloc(dri_bo *batch_buf)
 {
    dri_bufmgr_fake *bufmgr_fake = (dri_bufmgr_fake *)batch_buf->bufmgr;
    GLuint i;

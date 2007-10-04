@@ -42,6 +42,8 @@
 #include "intel_regions.h"
 #include "drm.h"
 
+#include "intel_bufmgr_ttm.h"
+
 #define FILE_DEBUG_FLAG DEBUG_IOCTL
 
 int
@@ -135,16 +137,20 @@ void
 intel_exec_ioctl(struct intel_context *intel,
 		 GLuint used,
 		 GLboolean ignore_cliprects, GLboolean allow_unlock,
-		 void *start, uint32_t *hack)
+		 void *start, dri_fence **fence)
 {
    struct drm_i915_execbuffer execbuf;
-   
+   dri_fence *fo;
+
    assert(intel->locked);
    assert(used);
 
+   if (*fence) {
+     dri_fence_unreference(*fence);
+   }
+
    memset(&execbuf, 0, sizeof(execbuf));
 
-   execbuf.cmdbuf_handle = *hack; // TODO
    execbuf.batch.used = used;
    execbuf.batch.cliprects = intel->pClipRects;
    execbuf.batch.num_cliprects = ignore_cliprects ? 0 : intel->numClipRects;
@@ -153,25 +159,28 @@ intel_exec_ioctl(struct intel_context *intel,
 			(((GLuint) intel->drawY) << 16));
 
    execbuf.ops_list = (unsigned)start; // TODO
-   execbuf.fence_arg.flags = DRM_I915_FENCE_FLAG_FLUSHED;
+   execbuf.fence_arg.flags = DRM_FENCE_FLAG_SHAREABLE | DRM_I915_FENCE_FLAG_FLUSHED;
 
-   if (drmCommandWrite(intel->driFd, DRM_I915_EXECBUFFER, &execbuf,
+   if (drmCommandWriteRead(intel->driFd, DRM_I915_EXECBUFFER, &execbuf,
                        sizeof(execbuf))) {
       fprintf(stderr, "DRM_I830_EXECBUFFER: %d\n", -errno);
       UNLOCK_HARDWARE(intel);
       exit(1);
    }
 
+
+   fo = intel_ttm_fence_create_from_arg(intel->intelScreen->bufmgr, "fence buffers",
+					&execbuf.fence_arg);
+   if (!fo) {
+      fprintf(stderr, "failed to fence handle: %08x\n", execbuf.fence_arg.handle);
+      UNLOCK_HARDWARE(intel);
+      exit(1);
+   }
+   *fence = fo;
+
    /* FIXME: use hardware contexts to avoid 'losing' hardware after
     * each buffer flush.
     */
    intel->vtbl.lost_hardware(intel);
 
-#if 0
-   fence->handle = execbuf.fence_arg.handle;
-   fence->fence_class = execbuf.fence_arg.fence_class;
-   fence->type = execbuf.fence_arg.type;
-   fence->flags = execbuf.fence_arg.flags;
-   fence->fence.signaled = 0;
-#endif
 }

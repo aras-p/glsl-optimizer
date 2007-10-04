@@ -44,6 +44,8 @@
 
 #include "i915_drm.h"
 
+#include "intel_bufmgr_ttm.h"
+
 #define BUFMGR_DEBUG 0
 
 #define MAX_RELOCS_PER_LIST 511
@@ -128,7 +130,7 @@ typedef struct _dri_fence_ttm
 } dri_fence_ttm;
 
 
-static int i830AdjustListNodes(struct intel_bo_list *list)
+static int intel_adjust_list_nodes(struct intel_bo_list *list)
 {
     struct intel_bo_node *node;
     drmMMListHead *l;
@@ -156,6 +158,7 @@ static int i830AdjustListNodes(struct intel_bo_list *list)
     return ret;
 }
 
+#if 0
 void intel_bo_free_list(struct intel_bo_list *list)
 {
     struct intel_bo_node *node;
@@ -180,13 +183,14 @@ void intel_bo_free_list(struct intel_bo_list *list)
 	list->numCurrent--;
     }
 }
-	
-int intel_bo_reset_list(struct intel_bo_list *list)
+#endif
+
+static int intel_bo_reset_list(struct intel_bo_list *list)
 {
     drmMMListHead *l;
     int ret;
 
-    ret = i830AdjustListNodes(list);
+    ret = intel_adjust_list_nodes(list);
     if (ret)
 	return ret;
 
@@ -197,7 +201,7 @@ int intel_bo_reset_list(struct intel_bo_list *list)
 	list->numOnList--;
 	l = list->list.next;
     }
-    return i830AdjustListNodes(list);
+    return intel_adjust_list_nodes(list);
 }
 
 static void generic_destroy(void *nodep)
@@ -205,7 +209,7 @@ static void generic_destroy(void *nodep)
     free(nodep);
 }
 
-int intel_create_bo_list(int numTarget, struct intel_bo_list *list, void (*destroy)(void *))
+static int intel_create_bo_list(int numTarget, struct intel_bo_list *list, void (*destroy)(void *))
 {
     DRMINITLISTHEAD(&list->list);
     DRMINITLISTHEAD(&list->free);
@@ -216,11 +220,11 @@ int intel_create_bo_list(int numTarget, struct intel_bo_list *list, void (*destr
         list->destroy = destroy;
     else
         list->destroy = generic_destroy;
-    return i830AdjustListNodes(list);
+    return intel_adjust_list_nodes(list);
 }
 
 
-struct drm_i915_op_arg *
+static struct drm_i915_op_arg *
 intel_setup_validate_list(int fd, struct intel_bo_list *list, struct intel_bo_list *reloc_list)
 {
     struct intel_bo_node *node;
@@ -259,7 +263,6 @@ intel_setup_validate_list(int fd, struct intel_bo_list *list, struct intel_bo_li
 
 	    if (rl_node->handle == node->buf->handle) {
 		arg->reloc_handle = rl_node->type_list.buf.handle;
-		//		drmBOUnmap(fd, &rl_node->type_list.buf);
 	    }
 	}
     }
@@ -270,7 +273,7 @@ intel_setup_validate_list(int fd, struct intel_bo_list *list, struct intel_bo_li
     return first;
 }
 
-void intel_free_validate_list(int fd, struct intel_bo_list *list)
+static void intel_free_validate_list(int fd, struct intel_bo_list *list)
 {
     struct intel_bo_node *node;
     drmMMListHead *l;
@@ -284,29 +287,29 @@ void intel_free_validate_list(int fd, struct intel_bo_list *list)
     }
 }
 
-void intel_free_reloc_list(int fd, struct intel_bo_list *reloc_list)
+static void intel_free_reloc_list(int fd, struct intel_bo_list *reloc_list)
 {
     struct intel_bo_reloc_node *reloc_node;
     drmMMListHead *rl, *tmp;
 
     for (rl = reloc_list->list.next, tmp = rl->next; rl != &reloc_list->list; rl = tmp, tmp = rl->next) {
 	reloc_node = DRMLISTENTRY(struct intel_bo_reloc_node, rl, head);
-	
+
 	DRMLISTDEL(rl);
 
 	if (reloc_node->nr_reloc_types > 1) {
 	    
 	    /* TODO */
 	}
-	
+
 	drmBOUnmap(fd, &reloc_node->type_list.buf);
 	drmBODestroy(fd, &reloc_node->type_list.buf);
 	free(reloc_node);
     }
 }
 
-int intel_add_validate_buffer(struct intel_bo_list *list, dri_bo *buf, unsigned flags,
-			  unsigned mask, int *itemLoc, void (*destroy_cb)(void *))
+static int intel_add_validate_buffer(struct intel_bo_list *list, dri_bo *buf, unsigned flags,
+				     unsigned mask, int *itemLoc, void (*destroy_cb)(void *))
 {
     struct intel_bo_node *node, *cur;
     drmMMListHead *l;
@@ -317,7 +320,7 @@ int intel_add_validate_buffer(struct intel_bo_list *list, dri_bo *buf, unsigned 
 
     for (l = list->list.next; l != &list->list; l = l->next) {
 	node = DRMLISTENTRY(struct intel_bo_node, l, head);
-	if (node->buf == buf_bo) {
+	if (node->buf->handle == buf_bo->handle) {
 	    cur = node;
 	    break;
 	}
@@ -343,25 +346,9 @@ int intel_add_validate_buffer(struct intel_bo_list *list, dri_bo *buf, unsigned 
 	unsigned memFlags = cur->arg0 & flags & memMask;
 	
 	if (!memFlags) {
-#if 0
-	    ErrorF("Incompatible memory location requests "
-		   "on validate list.\n");
-	    ErrorF("Previous flag: 0x%08lx, mask: 0x%08lx\n",
-		   cur->arg0, cur->arg1);
-	    ErrorF("Current flag: 0x%08lx, mask: 0x%08lx\n",
-		   flags, mask);
-#endif
 	    return -EINVAL;
 	}
 	if (mask & cur->arg1 & ~DRM_BO_MASK_MEM  & (cur->arg0 ^ flags)) {
-#if 0
-	    ErrorF("Incompatible buffer flag requests "
-		   "on validate list.\n");
-	    ErrorF("Previous flag: 0x%08lx, mask: 0x%08lx\n",
-		   cur->arg0, cur->arg1);
-	    ErrorF("Current flag: 0x%08lx, mask: 0x%08lx\n",
-		   flags, mask);
-#endif
 	    return -EINVAL;
 	}
 	cur->arg1 |= mask;
@@ -395,7 +382,7 @@ static int intel_create_new_reloc_type_list(int fd, struct intel_bo_reloc_list *
 }
 
 
-int intel_add_validate_reloc(int fd, struct intel_bo_list *reloc_list, struct intel_reloc_info *reloc_info)
+static int intel_add_validate_reloc(int fd, struct intel_bo_list *reloc_list, struct intel_reloc_info *reloc_info)
 {
     struct intel_bo_reloc_node *rl_node, *cur;
     drmMMListHead *rl, *l;
@@ -411,7 +398,6 @@ int intel_add_validate_reloc(int fd, struct intel_bo_list *reloc_list, struct in
 	if (rl_node->handle == reloc_info->handle) {
 	    cur = rl_node;
 	    break;
-
 	}
     }
 
@@ -594,7 +580,7 @@ intel_ttm_bo_create_from_handle(dri_bufmgr *bufmgr, const char *name,
    ttm_buf->owner = GL_FALSE;
 
 #if BUFMGR_DEBUG
-   fprintf(stderr, "bo_create_from_handle: %p (%s)\n", &ttm_buf->bo,
+   fprintf(stderr, "bo_create_from_handle: %p %08x (%s)\n", &ttm_buf->bo, handle,
 	   ttm_buf->name);
 #endif
 
@@ -731,39 +717,48 @@ dri_ttm_validate(dri_bo *buf, unsigned int flags)
    return err;
 }
 
+/* Returns a dri_bo wrapping the given buffer object handle.
+ *
+ * This can be used when one application needs to pass a buffer object
+ * to another.
+ */
+dri_fence *
+intel_ttm_fence_create_from_arg(dri_bufmgr *bufmgr, const char *name,
+				drm_fence_arg_t *arg)
+{
+   dri_bufmgr_ttm *ttm_bufmgr;
+   dri_fence_ttm *ttm_fence;
+
+   ttm_bufmgr = (dri_bufmgr_ttm *)bufmgr;
+
+   ttm_fence = malloc(sizeof(*ttm_fence));
+   if (!ttm_fence)
+      return NULL;
+
+   ttm_fence->drm_fence.handle = arg->handle;
+   ttm_fence->drm_fence.fence_class = arg->fence_class;
+   ttm_fence->drm_fence.type = arg->type;
+   ttm_fence->drm_fence.flags = arg->flags;
+   ttm_fence->drm_fence.signaled = 0;
+   ttm_fence->drm_fence.sequence = arg->sequence;
+
+   ttm_fence->fence.bufmgr = bufmgr;
+   ttm_fence->name = name;
+   ttm_fence->refcount = 1;
+
+#if BUFMGR_DEBUG
+   fprintf(stderr, "fence_create_from_handle: %p (%s)\n", &ttm_fence->fence,
+	   ttm_fence->name);
+#endif
+
+   return &ttm_fence->fence;
+}
+
 static dri_fence *
 dri_ttm_fence_validated(dri_bufmgr *bufmgr, const char *name,
 			GLboolean flushed)
 {
-   dri_fence_ttm *fence_ttm = malloc(sizeof(*fence_ttm));
-   dri_bufmgr_ttm *bufmgr_ttm = (dri_bufmgr_ttm *)bufmgr;
-   int ret;
-   unsigned int type;
-
-   if (!fence_ttm)
-      return NULL;
-
-   if (flushed)
-      type = bufmgr_ttm->fence_type_flush;
-   else
-      type = bufmgr_ttm->fence_type;
-
-   fence_ttm->refcount = 1;
-   fence_ttm->name = name;
-   fence_ttm->fence.bufmgr = bufmgr;
-   ret = drmFenceBuffers(bufmgr_ttm->fd, type, 0, &fence_ttm->drm_fence);
-   if (ret) {
-      fprintf(stderr, "failed to fence (%s): %s\n", name, strerror(-ret));
-      free(fence_ttm);
-      return NULL;
-   }
-
-#if BUFMGR_DEBUG
-   fprintf(stderr, "fence_validated: %p (%s)\n", &fence_ttm->fence,
-	   fence_ttm->name);
-#endif
-
-   return &fence_ttm->fence;
+   return NULL;
 }
 
 static void
@@ -775,6 +770,10 @@ dri_ttm_fence_reference(dri_fence *fence)
    _glthread_LOCK_MUTEX(bufmgr_ttm->mutex);
    ++fence_ttm->refcount;
    _glthread_UNLOCK_MUTEX(bufmgr_ttm->mutex);
+#if BUFMGR_DEBUG
+   fprintf(stderr, "fence_reference: %p (%s)\n", &fence_ttm->fence,
+	   fence_ttm->name);
+#endif
 }
 
 static void
@@ -786,6 +785,10 @@ dri_ttm_fence_unreference(dri_fence *fence)
    if (!fence)
       return;
 
+#if BUFMGR_DEBUG
+   fprintf(stderr, "fence_unreference: %p (%s)\n", &fence_ttm->fence,
+	   fence_ttm->name);
+#endif
    _glthread_LOCK_MUTEX(bufmgr_ttm->mutex);
    if (--fence_ttm->refcount == 0) {
       int ret;
@@ -845,7 +848,7 @@ static void intel_dribo_destroy_callback(void *priv)
    dri_bo *dribo = priv;
    
    if (dribo) {
-      dri_bo_unreference(dribo);
+     dri_bo_unreference(dribo);
    }
 }
 
@@ -854,12 +857,22 @@ dri_ttm_emit_reloc(dri_bo *batch_buf, GLuint flags, GLuint delta, GLuint offset,
 		    dri_bo *relocatee)
 {
    dri_bo_ttm *ttm_buf = (dri_bo_ttm *)batch_buf;
-   dri_bo_ttm *relocatee_buf = (dri_bo_ttm *)relocatee;
    dri_bufmgr_ttm *bufmgr_ttm = (dri_bufmgr_ttm *)batch_buf->bufmgr;
    int newItem;
    struct intel_reloc_info reloc;
+   int mask;
+   int ret;
 
-   intel_add_validate_buffer(&bufmgr_ttm->list, relocatee, flags, flags, &newItem, intel_dribo_destroy_callback);
+   mask = DRM_BO_MASK_MEM;
+   mask |= flags & (DRM_BO_FLAG_READ | DRM_BO_FLAG_WRITE | DRM_BO_FLAG_EXE);
+
+   ret = intel_add_validate_buffer(&bufmgr_ttm->list, relocatee, flags, mask, &newItem, intel_dribo_destroy_callback);
+   if (ret < 0)
+     return;
+
+   if (ret == 1) {
+      dri_bo_reference(relocatee);
+   }
 
    reloc.type = I915_RELOC_TYPE_0;
    reloc.reloc = offset;
@@ -873,18 +886,19 @@ dri_ttm_emit_reloc(dri_bo *batch_buf, GLuint flags, GLuint delta, GLuint offset,
 
 
 static void *
-dri_ttm_process_reloc(dri_bo *batch_buf, GLuint *hack)
+dri_ttm_process_reloc(dri_bo *batch_buf)
 {
    dri_bufmgr_ttm *bufmgr_ttm = (dri_bufmgr_ttm *)batch_buf->bufmgr;
    void *ptr;
    int itemLoc;
+
+   dri_bo_unmap(batch_buf);
 
    intel_add_validate_buffer(&bufmgr_ttm->list, batch_buf, DRM_BO_FLAG_MEM_TT | DRM_BO_FLAG_EXE,
 			     DRM_BO_MASK_MEM | DRM_BO_FLAG_EXE, &itemLoc, NULL);
 
    ptr = intel_setup_validate_list(bufmgr_ttm->fd, &bufmgr_ttm->list, &bufmgr_ttm->reloc_list);
 
-   *hack = ((dri_bo_ttm *)batch_buf)->drm_bo.handle;
    return ptr;
 }
 
@@ -896,14 +910,7 @@ dri_ttm_post_submit(dri_bo *batch_buf, dri_fence **last_fence)
    intel_free_validate_list(bufmgr_ttm->fd, &bufmgr_ttm->list);
    intel_free_reloc_list(bufmgr_ttm->fd, &bufmgr_ttm->reloc_list);
 
-   /*
-    
-   bb->fence.handle = execbuf.fence_arg.handle;
-   bb->fence.fence_class = execbuf.fence_arg.fence_class;
-   bb->fence.type = execbuf.fence_arg.type;
-   bb->fence.flags = execbuf.fence_arg.flags;
-   bb->fence.signaled = 0;
-   */
+   intel_bo_reset_list(&bufmgr_ttm->list);
 }
 
 /**
@@ -927,7 +934,7 @@ intel_bufmgr_ttm_init(int fd, unsigned int fence_type,
    bufmgr_ttm->fence_type_flush = fence_type_flush;
    _glthread_INIT_MUTEX(bufmgr_ttm->mutex);
 
-   intel_create_bo_list(40, &bufmgr_ttm->list, NULL);
+   intel_create_bo_list(10, &bufmgr_ttm->list, NULL);
    intel_create_bo_list(1, &bufmgr_ttm->reloc_list, NULL);
 
    bufmgr_ttm->bufmgr.bo_alloc = dri_ttm_alloc;

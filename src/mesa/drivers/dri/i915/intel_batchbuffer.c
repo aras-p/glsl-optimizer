@@ -127,9 +127,8 @@ do_flush_locked(struct intel_batchbuffer *batch,
 {
    struct intel_context *intel = batch->intel;
    void *start;
-   uint32_t hack;
 
-   start = dri_process_relocs(batch->buf, &hack);
+   start = dri_process_relocs(batch->buf);
 
    batch->map = NULL;
    batch->ptr = NULL;
@@ -144,7 +143,7 @@ do_flush_locked(struct intel_batchbuffer *batch,
       if (intel->intelScreen->ttm == GL_TRUE) {
 	 intel_exec_ioctl(batch->intel,
 			  used, ignore_cliprects, allow_unlock,
-			  start, &hack);
+			  start, &batch->last_fence);
       } else {
 	 intel_batch_ioctl(batch->intel,
 			   batch->buf->offset,

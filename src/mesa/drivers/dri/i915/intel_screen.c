@@ -50,6 +50,8 @@
 #include "intel_regions.h"
 #include "intel_batchbuffer.h"
 
+#include "intel_bufmgr_ttm.h"
+
 PUBLIC const char __driConfigOptions[] =
    DRI_CONF_BEGIN DRI_CONF_SECTION_PERFORMANCE
    DRI_CONF_FTHROTTLE_MODE(DRI_CONF_FTHROTTLE_IRQS)
