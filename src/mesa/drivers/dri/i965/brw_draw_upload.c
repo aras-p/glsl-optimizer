@@ -541,7 +541,8 @@ GLboolean brw_upload_vertices( struct brw_context *brw,
    
    for (i = 0; i < nr_enabled; i++) {
       OUT_BATCH( vbp.vb[i].vb0.dword );
-      OUT_BATCH( bmBufferOffset(&brw->intel, vbp.vb[i].buffer) + vbp.vb[i].offset);
+      OUT_RELOC( vbp.vb[i].buffer, DRM_BO_FLAG_MEM_TT | DRM_BO_FLAG_READ,
+		 vbp.vb[i].offset);
       OUT_BATCH( vbp.vb[i].max_index );
       OUT_BATCH( vbp.vb[i].instance_data_step_rate );
    }
@@ -632,8 +633,9 @@ void brw_upload_indices( struct brw_context *brw,
 
       BEGIN_BATCH(4, 0);
       OUT_BATCH( ib.header.dword );
-      OUT_BATCH( bmBufferOffset(intel, buffer) + offset );
-      OUT_BATCH( bmBufferOffset(intel, buffer) + offset + ib_size );
+      OUT_RELOC( buffer, DRM_BO_FLAG_MEM_TT | DRM_BO_FLAG_READ, offset);
+      OUT_RELOC( buffer, DRM_BO_FLAG_MEM_TT | DRM_BO_FLAG_READ,
+		 offset + ib_size);
       OUT_BATCH( 0 );
       ADVANCE_BATCH();
    }
