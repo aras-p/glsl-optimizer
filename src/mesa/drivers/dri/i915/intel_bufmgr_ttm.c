@@ -87,11 +87,8 @@ struct intel_bo_reloc_node
 };
 
 struct intel_bo_list {
-    unsigned numTarget;
     unsigned numCurrent;
-    unsigned numOnList;
     drmMMListHead list;
-    drmMMListHead free;
     void (*destroy)(void *node);
 };
 
@@ -132,35 +129,7 @@ typedef struct _dri_fence_ttm
 } dri_fence_ttm;
 
 
-static int intel_adjust_list_nodes(struct intel_bo_list *list)
-{
-    struct intel_bo_node *node;
-    drmMMListHead *l;
-    int ret = 0;
-
-    while(list->numCurrent < list->numTarget) {
-	node = (struct intel_bo_node *) drmMalloc(sizeof(*node));
-	if (!node) {
-	    ret = -ENOMEM;
-	    break;
-	}
-	list->numCurrent++;
-	DRMLISTADD(&node->head, &list->free);
-    }
-
-    while(list->numCurrent > list->numTarget) {
-	l = list->free.next;
-	if (l == &list->free)
-	    break;
-	DRMLISTDEL(l);
-	node = DRMLISTENTRY(struct intel_bo_node, l, head);
-	list->destroy(node);
-	list->numCurrent--;
-    }
-    return ret;
-}
-
-void intel_bo_free_list(struct intel_bo_list *list)
+static void intel_bo_free_list(struct intel_bo_list *list)
 {
     struct intel_bo_node *node;
     drmMMListHead *l;
@@ -172,36 +141,7 @@ void intel_bo_free_list(struct intel_bo_list *list)
 	list->destroy(node);
 	l = list->list.next;
 	list->numCurrent--;
-	list->numOnList--;
     }
-
-    l = list->free.next;
-    while(l != &list->free) {
-	DRMLISTDEL(l);
-	node = DRMLISTENTRY(struct intel_bo_node, l, head);
-	list->destroy(node);
-	l = list->free.next;
-	list->numCurrent--;
-    }
-}
-
-static int intel_bo_reset_list(struct intel_bo_list *list)
-{
-    drmMMListHead *l;
-    int ret;
-
-    ret = intel_adjust_list_nodes(list);
-    if (ret)
-	return ret;
-
-    l = list->list.next;
-    while (l != &list->list) {
-	DRMLISTDEL(l);
-	DRMLISTADD(l, &list->free);
-	list->numOnList--;
-	l = list->list.next;
-    }
-    return intel_adjust_list_nodes(list);
 }
 
 static void generic_destroy(void *nodep)
@@ -212,15 +152,12 @@ static void generic_destroy(void *nodep)
 static int intel_create_bo_list(int numTarget, struct intel_bo_list *list, void (*destroy)(void *))
 {
     DRMINITLISTHEAD(&list->list);
-    DRMINITLISTHEAD(&list->free);
-    list->numTarget = numTarget;
     list->numCurrent = 0;
-    list->numOnList = 0;
     if (destroy)
         list->destroy = destroy;
     else
         list->destroy = generic_destroy;
-    return intel_adjust_list_nodes(list);
+    return 0;
 }
 
 
@@ -913,7 +850,7 @@ dri_ttm_post_submit(dri_bo *batch_buf, dri_fence **last_fence)
    intel_free_validate_list(bufmgr_ttm->fd, &bufmgr_ttm->list);
    intel_free_reloc_list(bufmgr_ttm->fd, &bufmgr_ttm->reloc_list);
 
-   intel_bo_reset_list(&bufmgr_ttm->list);
+   intel_bo_free_list(&bufmgr_ttm->list);
 }
 
 /**
