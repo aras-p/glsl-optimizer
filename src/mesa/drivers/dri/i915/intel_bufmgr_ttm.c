@@ -1,5 +1,6 @@
 /**************************************************************************
  * 
+ * Copyright © 2007 Red Hat Inc.
  * Copyright © 2007 Intel Corporation
  * Copyright 2006 Tungsten Graphics, Inc., Bismarck, ND., USA
  * All Rights Reserved.
@@ -30,6 +31,7 @@
  * Authors: Thomas Hellström <thomas-at-tungstengraphics-dot-com>
  *          Keith Whitwell <keithw-at-tungstengraphics-dot-com>
  *	    Eric Anholt <eric@anholt.net>
+ *	    Dave Airlie <airlied@linux.ie>
  */
 
 #include <xf86drm.h>
