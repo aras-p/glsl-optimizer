@@ -160,7 +160,6 @@ static int intel_adjust_list_nodes(struct intel_bo_list *list)
     return ret;
 }
 
-#if 0
 void intel_bo_free_list(struct intel_bo_list *list)
 {
     struct intel_bo_node *node;
@@ -185,7 +184,6 @@ void intel_bo_free_list(struct intel_bo_list *list)
 	list->numCurrent--;
     }
 }
-#endif
 
 static int intel_bo_reset_list(struct intel_bo_list *list)
 {
@@ -218,7 +216,7 @@ static int intel_create_bo_list(int numTarget, struct intel_bo_list *list, void 
     list->numTarget = numTarget;
     list->numCurrent = 0;
     list->numOnList = 0;
-    if (list->destroy)
+    if (destroy)
         list->destroy = destroy;
     else
         list->destroy = generic_destroy;
@@ -839,6 +837,9 @@ static void
 dri_bufmgr_ttm_destroy(dri_bufmgr *bufmgr)
 {
    dri_bufmgr_ttm *bufmgr_ttm = (dri_bufmgr_ttm *)bufmgr;
+
+   intel_bo_free_list(&bufmgr_ttm->list);
+   intel_bo_free_list(&bufmgr_ttm->reloc_list);
 
    _glthread_DESTROY_MUTEX(bufmgr_ttm->mutex);
    free(bufmgr);
