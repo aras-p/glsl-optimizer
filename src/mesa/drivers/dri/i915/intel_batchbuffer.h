@@ -7,8 +7,7 @@
 
 struct intel_context;
 
-//#define BATCH_SZ 16384
-#define BATCH_SZ 4096
+#define BATCH_SZ 16384
 #define BATCH_RESERVED 16
 
 #define INTEL_BATCH_NO_CLIPRECTS 0x1
