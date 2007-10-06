@@ -378,3 +378,39 @@ void nouveauCopySubBuffer(__DRIdrawablePrivate *dPriv,
 {
 }
 
+void nouveauClearBuffer(GLcontext *ctx, nouveau_renderbuffer_t *buffer,
+	int fill, int mask)
+{
+	nouveauContextPtr nmesa = NOUVEAU_CONTEXT(ctx);
+	int dimensions;
+
+	if (!buffer) {
+		return;
+	}
+
+	/* FIXME: only support 32 bits atm */
+
+	/* Surface that we will work on */
+	nouveauObjectOnSubchannel(nmesa, NvSubCtxSurf2D, NvCtxSurf2D);
+
+	BEGIN_RING_SIZE(NvSubCtxSurf2D, NV10_CONTEXT_SURFACES_2D_FORMAT, 4);
+	OUT_RING(0x0b); /* Y32 color format */
+	OUT_RING((buffer->pitch<<16)|buffer->pitch);
+	OUT_RING(buffer->offset);
+	OUT_RING(buffer->offset);
+
+	/* Now clear a rectangle */
+	dimensions = ((buffer->mesa.Height)<<16) | (buffer->mesa.Width);
+
+	nouveauObjectOnSubchannel(nmesa, NvSubGdiRectText, NvGdiRectText);
+
+	BEGIN_RING_SIZE(NvSubGdiRectText, NV04_GDI_RECTANGLE_TEXT_OPERATION, 1);
+	OUT_RING(3);	/* SRCCOPY */
+
+	BEGIN_RING_SIZE(NvSubGdiRectText, NV04_GDI_RECTANGLE_TEXT_BLOCK_LEVEL1_TL, 5);
+	OUT_RING(0);	/* top left */
+	OUT_RING(dimensions);	/* bottom right */
+	OUT_RING(fill);
+	OUT_RING(0);	/* top left */
+	OUT_RING(dimensions);	/* bottom right */
+}
