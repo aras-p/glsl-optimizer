@@ -951,6 +951,10 @@ static void emit_tex(struct r300_fragment_program *fp,
 		if (REG_GET_TYPE(dest) == REG_TYPE_OUTPUT) {
 			rdest = dest;
 			dest = get_temp_reg_tex(fp);
+		} else if (fpi->DstReg.WriteMask != WRITEMASK_XYZW) {
+			/* in case write mask isn't XYZW */
+			rdest = dest;
+			dest = get_temp_reg_tex(fp);
 		}
 		hwdest =
 		    t_hw_dst(fp, dest, GL_TRUE,
@@ -1016,7 +1020,7 @@ static void emit_tex(struct r300_fragment_program *fp,
 
 	/* Copy from temp to output if needed */
 	if (REG_GET_VALID(rdest)) {
-		emit_arith(fp, PFS_OP_MAD, rdest, WRITEMASK_XYZW, dest,
+		emit_arith(fp, PFS_OP_MAD, rdest, fpi->DstReg.WriteMask, dest,
 			   pfs_one, pfs_zero, 0);
 		free_temp(fp, dest);
 	}
