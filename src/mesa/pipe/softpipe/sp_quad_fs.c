@@ -35,6 +35,8 @@
 #include "pipe/p_util.h"
 #include "pipe/p_defines.h"
 
+#include "pipe/llvm/llvmtgsi.h"
+
 #include "sp_context.h"
 #include "sp_headers.h"
 #include "sp_quad.h"
@@ -107,6 +109,7 @@ shade_quad(
          machine->InterpCoefs );
    }
    else {
+      ga_llvm_prog_exec(softpipe->fs->llvm_prog);
       quad->mask &= tgsi_exec_machine_run( machine );
    }
 

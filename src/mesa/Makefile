@@ -16,10 +16,10 @@ SOFTPIPE_LIB = $(TOP)/src/mesa/pipe/softpipe/libsoftpipe.a
 .SUFFIXES : .cpp
 
 .c.o:
-	$(CC) -c $(INCLUDE_DIRS) $(CFLAGS) $< -o $@
+	$(CC) -c $(LLVM_CFLAGS) $(INCLUDE_DIRS) $(CFLAGS) $< -o $@
 
 .cpp.o:
-	$(CXX) -c $(INCLUDE_DIRS) $(CXXFLAGS) $< -o $@
+	$(CXX) -c $(LLVM_CXXFLAGS) $(INCLUDE_DIRS) $(CXXFLAGS) $< -o $@
 
 .S.o:
 	$(CC) -c $(INCLUDE_DIRS) $(CFLAGS) $< -o $@

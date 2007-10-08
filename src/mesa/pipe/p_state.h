@@ -58,6 +58,7 @@
 
 /* fwd decl */
 struct pipe_surface;
+struct ga_llvm_prog;
 
 /* opaque type */
 struct pipe_buffer_handle;
@@ -152,6 +153,8 @@ struct pipe_shader_state {
    struct x86_function sse2_program;
 #endif
    void (*executable)();
+
+   const struct ga_llvm_prog *llvm_prog;
 
    ubyte num_inputs;
    ubyte num_outputs;

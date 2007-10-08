@@ -188,6 +188,11 @@ TGSIDECO_SOURCES = \
 TGSIMESA_SOURCES = \
 	pipe/tgsi/mesa/mesa_to_tgsi.c
 
+ifeq ($(MESA_NO_LLVM),0)
+  LLVMTGSI_SOURCES = \
+	pipe/llvm/llvmtgsi.cpp
+endif
+
 STATECACHE_SOURCES = \
 	pipe/cso_cache/cso_hash.c \
 	pipe/cso_cache/cso_cache.c
@@ -366,6 +371,7 @@ FBDEV_DRIVER_SOURCES =			\
 ALL_SOURCES = \
 	$(GLAPI_SOURCES)	\
 	$(SOLO_SOURCES)		\
+        $(LLVMTGSI_SOURCES)     \
 	$(ASM_SOURCES)		\
 	$(COMMON_DRIVER_SOURCES)\
 	$(X11_DRIVER_SOURCES)	\
@@ -392,13 +398,15 @@ SOLO_SOURCES = \
 
 CORE_SOURCES = \
 	$(GLAPI_SOURCES)	\
-	$(SOLO_SOURCES)
+	$(SOLO_SOURCES)         \
+	$(LLVMTGSI_SOURCES)
 
 
 ### Object files
 
 SOLO_OBJECTS = \
 	$(SOLO_SOURCES:.c=.o) \
+	$(LLVMTGSI_SOURCES:.cpp=.o) \
 	$(ASM_SOURCES:.S=.o)
 
 GLAPI_OBJECTS = \

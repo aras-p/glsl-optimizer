@@ -39,6 +39,7 @@
 #include "pipe/draw/draw_context.h"
 #include "pipe/tgsi/mesa/mesa_to_tgsi.h"
 #include "pipe/tgsi/exec/tgsi_core.h"
+#include "pipe/llvm/llvmtgsi.h"
 
 #include "st_context.h"
 #include "st_cache.h"
@@ -250,6 +251,7 @@ st_translate_vertex_program(struct st_context *st,
                                 tokensOut, maxTokens);
 
    vs.tokens = tokensOut;
+   vs.llvm_prog = ga_llvm_from_tgsi(vs.tokens);
    cso = st_cached_vs_state(st, &vs);
    stvp->vs = cso;
 
@@ -405,7 +407,7 @@ st_translate_fragment_program(struct st_context *st,
                                 tokensOut, maxTokens);
 
    fs.tokens = tokensOut;
-
+   fs.llvm_prog = ga_llvm_from_tgsi(fs.tokens);
    cso = st_cached_fs_state(st, &fs);
    stfp->fs = cso;
 
