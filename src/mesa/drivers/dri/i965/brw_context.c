@@ -79,7 +79,7 @@ static void brwUseProgram(GLcontext *ctx, GLuint program)
 		brw->attribs.FragmentProgram->Current = sh_prog->FragmentProgram;
 		ctx->FragmentProgram.Enabled = GL_TRUE;
 	    } else
-		ctx->VertexProgram.Enabled = GL_FALSE;
+		ctx->FragmentProgram.Enabled = GL_FALSE;
 	}
 }
 
