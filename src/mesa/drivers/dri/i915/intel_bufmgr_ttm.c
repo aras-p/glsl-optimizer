@@ -162,7 +162,7 @@ static int intel_create_bo_list(int numTarget, struct intel_bo_list *list, void 
 
 
 static struct drm_i915_op_arg *
-intel_setup_validate_list(int fd, struct intel_bo_list *list, struct intel_bo_list *reloc_list)
+intel_setup_validate_list(int fd, struct intel_bo_list *list, struct intel_bo_list *reloc_list, GLuint *count_p)
 {
     struct intel_bo_node *node;
     struct intel_bo_reloc_node *rl_node;
@@ -170,6 +170,7 @@ intel_setup_validate_list(int fd, struct intel_bo_list *list, struct intel_bo_li
     struct drm_i915_op_arg *arg, *first;
     struct drm_bo_op_req *req;
     uint64_t *prevNext = NULL;
+    GLuint count = 0;
 
     first = NULL;
 
@@ -202,11 +203,13 @@ intel_setup_validate_list(int fd, struct intel_bo_list *list, struct intel_bo_li
 		arg->reloc_handle = rl_node->type_list.buf.handle;
 	    }
 	}
+	count++;
     }
 
     if (!first)
 	return 0;
 
+    *count_p = count;
     return first;
 }
 
@@ -385,8 +388,6 @@ static int intel_add_validate_reloc(int fd, struct intel_bo_list *reloc_list, st
 	    cur_type->relocs[0] = (reloc_info->type << 16);
 	    cur_type->relocs[1] = 0;
 
-	    //	    cur->relocs[cur->nr_reloc_lists-1][1] = 0;// TODO ADD HANDLE HERE
-	    
 	    cur->nr_reloc_types++;
 	}
     }
@@ -615,45 +616,6 @@ dri_ttm_bo_unmap(dri_bo *buf)
    return drmBOUnmap(bufmgr_ttm->fd, &ttm_buf->drm_bo);
 }
 
-static int
-dri_ttm_validate(dri_bo *buf, unsigned int flags)
-{
-   dri_bufmgr_ttm *bufmgr_ttm;
-   dri_bo_ttm *ttm_buf = (dri_bo_ttm *)buf;
-   unsigned int mask;
-   int err;
-
-   /* XXX: Sanity-check whether we've already validated this one under
-    * different flags.  See drmAddValidateItem().
-    */
-
-   bufmgr_ttm = (dri_bufmgr_ttm *)buf->bufmgr;
-
-   /* Calculate the appropriate mask to pass to the DRM. There appears to be
-    * be a direct relationship to flags, so it's unnecessary to have it passed
-    * in as an argument.
-    */
-   mask = DRM_BO_MASK_MEM;
-   mask |= flags & (DRM_BO_FLAG_READ | DRM_BO_FLAG_WRITE | DRM_BO_FLAG_EXE);
-
-   err = drmBOValidate(bufmgr_ttm->fd, &ttm_buf->drm_bo, 0, flags, mask, 0);
-
-   if (err == 0) {
-      /* XXX: add to fence list for sanity checking */
-   } else {
-      fprintf(stderr, "failed to validate buffer (%s): %s\n",
-	      ttm_buf->name, strerror(-err));
-   }
-
-   buf->offset = ttm_buf->drm_bo.offset;
-
-#if BUFMGR_DEBUG
-   fprintf(stderr, "bo_validate: %p (%s)\n", &ttm_buf->bo, ttm_buf->name);
-#endif
-
-   return err;
-}
-
 /* Returns a dri_bo wrapping the given buffer object handle.
  *
  * This can be used when one application needs to pass a buffer object
@@ -691,12 +653,6 @@ intel_ttm_fence_create_from_arg(dri_bufmgr *bufmgr, const char *name,
    return &ttm_fence->fence;
 }
 
-static dri_fence *
-dri_ttm_fence_validated(dri_bufmgr *bufmgr, const char *name,
-			GLboolean flushed)
-{
-   return NULL;
-}
 
 static void
 dri_ttm_fence_reference(dri_fence *fence)
@@ -826,7 +782,7 @@ dri_ttm_emit_reloc(dri_bo *batch_buf, GLuint flags, GLuint delta, GLuint offset,
 
 
 static void *
-dri_ttm_process_reloc(dri_bo *batch_buf)
+dri_ttm_process_reloc(dri_bo *batch_buf, GLuint *count)
 {
    dri_bufmgr_ttm *bufmgr_ttm = (dri_bufmgr_ttm *)batch_buf->bufmgr;
    void *ptr;
@@ -837,7 +793,7 @@ dri_ttm_process_reloc(dri_bo *batch_buf)
    intel_add_validate_buffer(&bufmgr_ttm->list, batch_buf, DRM_BO_FLAG_MEM_TT | DRM_BO_FLAG_EXE,
 			     DRM_BO_MASK_MEM | DRM_BO_FLAG_EXE, &itemLoc, NULL);
 
-   ptr = intel_setup_validate_list(bufmgr_ttm->fd, &bufmgr_ttm->list, &bufmgr_ttm->reloc_list);
+   ptr = intel_setup_validate_list(bufmgr_ttm->fd, &bufmgr_ttm->list, &bufmgr_ttm->reloc_list, count);
 
    return ptr;
 }
@@ -883,8 +839,6 @@ intel_bufmgr_ttm_init(int fd, unsigned int fence_type,
    bufmgr_ttm->bufmgr.bo_unreference = dri_ttm_bo_unreference;
    bufmgr_ttm->bufmgr.bo_map = dri_ttm_bo_map;
    bufmgr_ttm->bufmgr.bo_unmap = dri_ttm_bo_unmap;
-   bufmgr_ttm->bufmgr.bo_validate = dri_ttm_validate;
-   bufmgr_ttm->bufmgr.fence_validated = dri_ttm_fence_validated;
    bufmgr_ttm->bufmgr.fence_reference = dri_ttm_fence_reference;
    bufmgr_ttm->bufmgr.fence_unreference = dri_ttm_fence_unreference;
    bufmgr_ttm->bufmgr.fence_wait = dri_ttm_fence_wait;

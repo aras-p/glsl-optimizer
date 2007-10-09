@@ -40,5 +40,5 @@ void intel_batch_ioctl(struct intel_context *intel,
 void intel_exec_ioctl(struct intel_context *intel,
 		      GLuint used,
 		      GLboolean ignore_cliprects, GLboolean allow_unlock,
-		      void *start, dri_fence **fence);
+		      void *start, GLuint count, dri_fence **fence);
 #endif

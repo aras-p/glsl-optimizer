@@ -13,7 +13,6 @@ COMMON_SOURCES = \
 
 COMMON_BM_SOURCES = \
 	../common/dri_bufmgr.c \
-	../common/dri_bufmgr_ttm.c \
 	../common/dri_bufmgr_fake.c
 
 

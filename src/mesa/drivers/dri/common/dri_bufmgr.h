@@ -116,30 +116,6 @@ struct _dri_bufmgr {
    /** Reduces the refcount on the userspace mapping of the buffer object. */
    int (*bo_unmap)(dri_bo *buf);
 
-   /**
-    * Makes the buffer accessible to the graphics chip.
-    *
-    * The resulting offset of the buffer within the graphics aperture is then
-    * available at buf->offset until the buffer is fenced.
-    *
-    * Flags should consist of the memory types that the buffer may be validated
-    * into and the read/write/exe flags appropriate to the use of the buffer.
-    */
-   int (*bo_validate)(dri_bo *buf, unsigned int flags);
-
-   /**
-    * Associates the current set of validated buffers with a fence.
-    *
-    * Once fenced, the buffer manager will allow the validated buffers to be
-    * evicted when the graphics device's execution has passed the fence
-    * command.
-    *
-    * The fence object will have flags for the sum of the read/write/exe flags
-    * of the validated buffers associated with it.
-    */
-   dri_fence * (*fence_validated)(dri_bufmgr *bufmgr, const char *name,
-				  GLboolean flushed);
-
    /** Takes a reference on a fence object */
    void (*fence_reference)(dri_fence *fence);
 
@@ -164,7 +140,7 @@ struct _dri_bufmgr {
     */
    void (*emit_reloc)(dri_bo *batch_buf, GLuint flags, GLuint delta, GLuint offset, dri_bo *relocatee);
 
-   void *(*process_relocs)(dri_bo *batch_buf);
+  void *(*process_relocs)(dri_bo *batch_buf, GLuint *count);
 
    void (*post_submit)(dri_bo *batch_buf, dri_fence **fence);
 };
@@ -178,9 +154,6 @@ void dri_bo_reference(dri_bo *bo);
 void dri_bo_unreference(dri_bo *bo);
 int dri_bo_map(dri_bo *buf, GLboolean write_enable);
 int dri_bo_unmap(dri_bo *buf);
-int dri_bo_validate(dri_bo *buf, unsigned int flags);
-dri_fence *dri_fence_validated(dri_bufmgr *bufmgr, const char *name,
-			       GLboolean flushed);
 void dri_fence_wait(dri_fence *fence);
 void dri_fence_reference(dri_fence *fence);
 void dri_fence_unreference(dri_fence *fence);
@@ -205,7 +178,7 @@ dri_bo *dri_ttm_bo_create_from_handle(dri_bufmgr *bufmgr, const char *name,
 				      unsigned int handle);
 
 void dri_emit_reloc(dri_bo *batch_buf, GLuint flags, GLuint delta, GLuint offset, dri_bo *relocatee);
-void *dri_process_relocs(dri_bo *batch_buf);
+void *dri_process_relocs(dri_bo *batch_buf, uint32_t *count);
 void dri_post_process_relocs(dri_bo *batch_buf);
 void dri_post_submit(dri_bo *batch_buf, dri_fence **last_fence);
 #endif

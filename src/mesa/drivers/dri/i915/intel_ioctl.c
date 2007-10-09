@@ -137,7 +137,7 @@ void
 intel_exec_ioctl(struct intel_context *intel,
 		 GLuint used,
 		 GLboolean ignore_cliprects, GLboolean allow_unlock,
-		 void *start, dri_fence **fence)
+		 void *start, GLuint count, dri_fence **fence)
 {
    struct drm_i915_execbuffer execbuf;
    dri_fence *fo;
@@ -151,6 +151,7 @@ intel_exec_ioctl(struct intel_context *intel,
 
    memset(&execbuf, 0, sizeof(execbuf));
 
+   execbuf.num_buffers = count;
    execbuf.batch.used = used;
    execbuf.batch.cliprects = intel->pClipRects;
    execbuf.batch.num_cliprects = ignore_cliprects ? 0 : intel->numClipRects;
