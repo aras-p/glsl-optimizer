@@ -78,6 +78,7 @@ shade_quad(
    const float fx = (float) quad->x0;
    const float fy = (float) quad->y0;
    struct tgsi_exec_machine *machine = &qss->machine;
+   uint colorOut;
 
    /* Consts does not require 16 byte alignment. */
    machine->Consts = softpipe->mapped_constants[PIPE_SHADER_FRAGMENT];
@@ -109,27 +110,31 @@ shade_quad(
       quad->mask &= tgsi_exec_machine_run( machine );
    }
 
-   /* store result color (always in output[1]) */
-   memcpy(
-      quad->outputs.color,
-      &machine->Outputs[1].xyzw[0].f[0],
-      sizeof( quad->outputs.color ) );
-
-   /* Z */
-   if (qss->stage.softpipe->fs->outputs_written & 0x1) {
+   if (qss->stage.softpipe->fs->output_semantic_name[0] == TGSI_SEMANTIC_POSITION) {
       /* output[0] is new Z */
       uint i;
       for (i = 0; i < 4; i++) {
          quad->outputs.depth[i] = machine->Outputs[0].xyzw[2].f[i];
       }
+      colorOut = 1;
    }
    else {
-      /* pass input Z to output Z */
+      /* pass input Z (which was interpolated by the executor) to output Z */
       uint i;
       for (i = 0; i < 4; i++) {
          quad->outputs.depth[i] = machine->Inputs[0].xyzw[2].f[i];
       }
+      colorOut = 0;
    }
+
+   /* store result color */
+   /* XXX need to handle multiple color outputs someday */
+   assert(qss->stage.softpipe->fs->output_semantic_name[colorOut]
+          == TGSI_SEMANTIC_COLOR);
+   memcpy(
+      quad->outputs.color,
+      &machine->Outputs[colorOut].xyzw[0].f[0],
+      sizeof( quad->outputs.color ) );
 
    /* shader may cull fragments */
    if( quad->mask ) {

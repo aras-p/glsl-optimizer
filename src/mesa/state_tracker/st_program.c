@@ -160,8 +160,6 @@ st_translate_vertex_program(struct st_context *st,
             defaultOutputMapping[attr] = slot;
          }
 
-         vs.outputs_written |= (1 << slot);
-
          /*
          printf("Output %u -> slot %u\n", attr, slot);
          */
@@ -346,35 +344,33 @@ st_translate_fragment_program(struct st_context *st,
    }
 
    /*
-    * Semantics for outputs
+    * Semantics and mapping for outputs
     */
    {
       uint numColors = 0;
       GLbitfield outputsWritten = stfp->Base.Base.OutputsWritten;
 
-      /* output[0] is always Z, but may not really be written */
-      fs.output_semantic_name[fs.num_outputs] = TGSI_SEMANTIC_POSITION;
-      fs.output_semantic_index[fs.num_outputs] = 0;
-      outputMapping[FRAG_RESULT_DEPR] = fs.num_outputs;
-      fs.num_outputs++;
-
+      /* if z is written, emit that first */
       if (outputsWritten & (1 << FRAG_RESULT_DEPR)) {
-         fs.outputs_written |= 0x1;
+         fs.output_semantic_name[fs.num_outputs] = TGSI_SEMANTIC_POSITION;
+         fs.output_semantic_index[fs.num_outputs] = 0;
+         outputMapping[FRAG_RESULT_DEPR] = fs.num_outputs;
+         fs.num_outputs++;
          outputsWritten &= ~(1 << FRAG_RESULT_DEPR);
       }
 
-      /* color outputs begin at output [1] */
+      /* handle remaning outputs (color) */
       for (attr = 0; attr < FRAG_RESULT_MAX; attr++) {
          if (outputsWritten & (1 << attr)) {
             switch (attr) {
             case FRAG_RESULT_DEPR:
+               /* handled above */
                assert(0);
                break;
             case FRAG_RESULT_COLR:
                fs.output_semantic_name[fs.num_outputs] = TGSI_SEMANTIC_COLOR;
                fs.output_semantic_index[fs.num_outputs] = numColors;
                outputMapping[attr] = fs.num_outputs;
-               fs.outputs_written |= (0x2 << numColors);
                numColors++;
                break;
             default:

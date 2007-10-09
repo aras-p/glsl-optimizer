@@ -46,47 +46,22 @@ map_register_file(
  */
 static GLuint
 map_register_file_index(
-   GLuint processor,
    GLuint file,
    GLuint index,
    const GLuint inputMapping[],
    const GLuint outputMapping[])
 {
-   GLuint mapped_index;
-
-   assert(processor == TGSI_PROCESSOR_FRAGMENT
-          || processor == TGSI_PROCESSOR_VERTEX);
-
    switch( file ) {
    case TGSI_FILE_INPUT:
       /* inputs are mapped according to the user-defined map */
       return inputMapping[index];
 
    case TGSI_FILE_OUTPUT:
-      if( processor == TGSI_PROCESSOR_FRAGMENT ) {
-         /* fragment program outputs are hard-coded:
-          * depth result  -> index 0
-          * color results -> index 1, 2, ...
-          */
-	 if( index == FRAG_RESULT_DEPR ) {
-            mapped_index = 0; /**TGSI_ATTRIB_POS;**/
-         }
-         else {
-            assert( index == FRAG_RESULT_COLR );
-            mapped_index = 1; /**TGSI_ATTRIB_COLOR0;**/
-         }
-      }
-      else {
-         /* vertex outputs are mapped according to the user-defined map */
-         mapped_index = outputMapping[index];
-      }
-      break;
+      return outputMapping[index];
 
    default:
-      mapped_index = index;
+      return index;
    }
-
-   return mapped_index;
 }
 
 /*
@@ -166,7 +141,6 @@ compile_instruction(
    fulldst = &fullinst->FullDstRegisters[0];
    fulldst->DstRegister.File = map_register_file( inst->DstReg.File );
    fulldst->DstRegister.Index = map_register_file_index(
-      processor,
       fulldst->DstRegister.File,
       inst->DstReg.Index,
       inputMapping,
@@ -180,7 +154,6 @@ compile_instruction(
       fullsrc = &fullinst->FullSrcRegisters[i];
       fullsrc->SrcRegister.File = map_register_file( inst->SrcReg[i].File );
       fullsrc->SrcRegister.Index = map_register_file_index(
-         processor,
          fullsrc->SrcRegister.File,
          inst->SrcReg[i].Index,
          inputMapping,

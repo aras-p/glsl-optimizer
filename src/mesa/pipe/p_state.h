@@ -152,7 +152,6 @@ struct pipe_shader_state {
 
    ubyte num_inputs;
    ubyte num_outputs;
-   uint outputs_written;  /**< bitmask */
    ubyte input_semantic_name[PIPE_MAX_SHADER_INPUTS]; /**< TGSI_SEMANTIC_x */
    ubyte input_semantic_index[PIPE_MAX_SHADER_INPUTS];
    ubyte output_semantic_name[PIPE_MAX_SHADER_OUTPUTS]; /**< TGSI_SEMANTIC_x */
