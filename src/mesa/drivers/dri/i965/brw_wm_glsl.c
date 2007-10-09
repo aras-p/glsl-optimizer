@@ -172,7 +172,7 @@ static void emit_abs( struct brw_wm_compile *c,
     brw_set_saturate(p, 0);
 }
 
-static void emit_mov_int( struct brw_wm_compile *c,
+static void emit_int( struct brw_wm_compile *c,
 		struct prog_instruction *inst)
 {
     int i;
@@ -184,7 +184,7 @@ static void emit_mov_int( struct brw_wm_compile *c,
 	    struct brw_reg src, dst;
 	    dst = retype(get_dst_reg(c, inst, i, 1), BRW_REGISTER_TYPE_D);
 	    src = retype(get_src_reg(c, &inst->SrcReg[0], i, 1), BRW_REGISTER_TYPE_D);
-	    brw_MOV(p, dst, src);
+	    brw_RNDD(p, dst, src);
 	}
     }
     brw_set_saturate(p, 0);
@@ -1181,7 +1181,7 @@ static void brw_wm_emit_glsl(struct brw_wm_compile *c)
 		emit_lrp(c, inst);
 		break;
 	    case OPCODE_INT:
-		emit_mov_int(c, inst);
+		emit_int(c, inst);
 		break;
 	    case OPCODE_MOV:
 		emit_mov(c, inst);
