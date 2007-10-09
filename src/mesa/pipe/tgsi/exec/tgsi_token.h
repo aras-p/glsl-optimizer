@@ -96,6 +96,7 @@ struct tgsi_declaration_mask
 #define TGSI_INTERPOLATE_CONSTANT      0
 #define TGSI_INTERPOLATE_LINEAR        1
 #define TGSI_INTERPOLATE_PERSPECTIVE   2
+#define TGSI_INTERPOLATE_ATTRIB        3  /**< Vertex shader input attrib */
 
 struct tgsi_declaration_interpolation
 {

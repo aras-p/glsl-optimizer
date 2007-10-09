@@ -714,7 +714,7 @@ tgsi_mesa_compile_vp_program(
    for (i = 0; i < numInputs; i++) {
       struct tgsi_full_declaration fulldecl;
       fulldecl = make_input_decl(i,
-                                 TGSI_INTERPOLATE_CONSTANT, /* no interp */
+                                 TGSI_INTERPOLATE_ATTRIB,
                                  TGSI_WRITEMASK_XYZW,
                                  GL_FALSE, inputSemanticName[i],
                                  inputSemanticIndex[i]);

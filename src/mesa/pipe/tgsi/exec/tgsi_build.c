@@ -294,7 +294,7 @@ tgsi_build_declaration_interpolation(
 {
    struct tgsi_declaration_interpolation di;
 
-   assert( interpolate <= TGSI_INTERPOLATE_PERSPECTIVE );
+   assert( interpolate <= TGSI_INTERPOLATE_ATTRIB );
 
    di = tgsi_default_declaration_interpolation();
    di.Interpolate = interpolate;
