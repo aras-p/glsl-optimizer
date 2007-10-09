@@ -118,9 +118,16 @@ static struct state_key *make_state_key( GLcontext *ctx )
 {
    TNLcontext *tnl = TNL_CONTEXT(ctx);
    struct vertex_buffer *VB = &tnl->vb;
-   const struct gl_fragment_program *fp = ctx->FragmentProgram._Current;
+   const struct gl_fragment_program *fp;
    struct state_key *key = CALLOC_STRUCT(state_key);
    GLuint i;
+
+   if (ctx->Shader.CurrentProgram &&
+       ctx->Shader.CurrentProgram->LinkStatus &&
+       ctx->Shader.CurrentProgram->FragmentProgram)
+      fp = ctx->Shader.CurrentProgram->FragmentProgram;
+   else
+      fp = ctx->FragmentProgram._Current;
 
    /* This now relies on texenvprogram.c being active:
     */
