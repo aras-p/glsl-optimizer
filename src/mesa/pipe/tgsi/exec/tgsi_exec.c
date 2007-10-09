@@ -2036,7 +2036,7 @@ exec_instruction(
       if (mach->ExecMask) {
          /* do the call */
 
-         /* push Cond, Loop, Cont stacks */
+         /* push the Cond, Loop, Cont stacks */
          assert(mach->CondStackTop < TGSI_EXEC_MAX_COND_NESTING);
          mach->CondStack[mach->CondStackTop++] = mach->CondMask;
          assert(mach->LoopStackTop < TGSI_EXEC_MAX_LOOP_NESTING);
@@ -2054,13 +2054,13 @@ exec_instruction(
       break;
 
    case TGSI_OPCODE_RET:
-      /* XXX examine ExecMask to determine if we should _really_ return */
-      /* pop Cond, Loop, Cont stacks */
       mach->FuncMask &= ~mach->ExecMask;
       UPDATE_EXEC_MASK(mach);
 
       if (mach->ExecMask == 0x0) {
          /* really return now (otherwise, keep executing */
+
+         /* pop the Cond, Loop, Cont stacks */
          assert(mach->CondStackTop > 0);
          mach->CondMask = mach->CondStack[--mach->CondStackTop];
          assert(mach->LoopStackTop > 0);
