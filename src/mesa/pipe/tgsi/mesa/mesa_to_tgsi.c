@@ -498,6 +498,54 @@ make_output_decl(
 }
 
 
+static struct tgsi_full_declaration
+make_temp_decl(GLuint index)
+{
+   struct tgsi_full_declaration decl;
+   decl = tgsi_default_full_declaration();
+   decl.Declaration.File = TGSI_FILE_TEMPORARY;
+   decl.Declaration.Declare = TGSI_DECLARE_RANGE;
+   decl.u.DeclarationRange.First = index;
+   decl.u.DeclarationRange.Last = index;
+   return decl;
+}
+
+
+/**
+ * Find the temporaries which are used in the given program.
+ * Put the indices of the temporaries in 'tempsUsed'.
+ * \return number of temporaries used
+ */
+static GLuint
+find_temporaries(const struct gl_program *program,
+                 GLuint tempsUsed[MAX_PROGRAM_TEMPS])
+{
+   GLuint i, j, count;
+
+   for (i = 0; i < MAX_PROGRAM_TEMPS; i++)
+      tempsUsed[i] = GL_FALSE;
+
+   for (i = 0; i < program->NumInstructions; i++) {
+      const struct prog_instruction *inst = program->Instructions + i;
+      const GLuint n = _mesa_num_inst_src_regs( inst->Opcode );
+      for (j = 0; j < n; j++) {
+         if (inst->SrcReg[j].File == PROGRAM_TEMPORARY)
+            tempsUsed[inst->SrcReg[j].Index] = GL_TRUE;
+         if (inst->DstReg.File == PROGRAM_TEMPORARY)
+            tempsUsed[inst->DstReg.Index] = GL_TRUE;
+      }
+   }
+
+   /* convert flags to list of indices */
+   count = 0;
+   for (i = 0; i < MAX_PROGRAM_TEMPS; i++) {
+      if (tempsUsed[i])
+         tempsUsed[count++] = i;
+   }
+   return count;
+}
+
+
 /**
  * Convert Mesa fragment program to TGSI format.
  * \param inputMapping  maps Mesa fragment program inputs to TGSI generic
@@ -527,7 +575,6 @@ tgsi_mesa_compile_fp_program(
    GLuint ti;  /* token index */
    struct tgsi_header *header;
    struct tgsi_processor *processor;
-   struct tgsi_full_declaration fulldecl;
    struct tgsi_full_instruction fullinst;
    GLuint preamble_size = 0;
 
@@ -542,6 +589,7 @@ tgsi_mesa_compile_fp_program(
    ti = 3;
 
    for (i = 0; i < numInputs; i++) {
+      struct tgsi_full_declaration fulldecl;
       switch (inputSemanticName[i]) {
       case TGSI_SEMANTIC_POSITION:
          /* Fragment XY pos */
@@ -584,6 +632,7 @@ tgsi_mesa_compile_fp_program(
     * Declare output attributes.
     */
    for (i = 0; i < numOutputs; i++) {
+      struct tgsi_full_declaration fulldecl;
       switch (outputSemanticName[i]) {
       case TGSI_SEMANTIC_POSITION:
          fulldecl = make_output_decl(i,
@@ -607,6 +656,20 @@ tgsi_mesa_compile_fp_program(
          break;
       default:
          abort();
+      }
+   }
+
+   {
+      GLuint tempsUsed[MAX_PROGRAM_TEMPS];
+      uint numTemps = find_temporaries(&program->Base, tempsUsed);
+      for (i = 0; i < numTemps; i++) {
+         struct tgsi_full_declaration fulldecl;
+         fulldecl = make_temp_decl(tempsUsed[i]);
+         ti += tgsi_build_full_declaration(
+                                           &fulldecl,
+                                           &tokens[ti],
+                                           header,
+                                           maxTokens - ti );
       }
    }
 
@@ -714,6 +777,19 @@ tgsi_mesa_compile_vp_program(
                                         maxTokens - ti );
    }
 
+   {
+      GLuint tempsUsed[MAX_PROGRAM_TEMPS];
+      uint numTemps = find_temporaries(&program->Base, tempsUsed);
+      for (i = 0; i < numTemps; i++) {
+         struct tgsi_full_declaration fulldecl;
+         fulldecl = make_temp_decl(tempsUsed[i]);
+         ti += tgsi_build_full_declaration(
+                                           &fulldecl,
+                                           &tokens[ti],
+                                           header,
+                                           maxTokens - ti );
+      }
+   }
 
    for( i = 0; i < program->Base.NumInstructions; i++ ) {
       compile_instruction(
