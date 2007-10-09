@@ -50,7 +50,6 @@
 
 #define BUFMGR_DEBUG 0
 
-#define MAX_RELOCS_PER_LIST 511
 struct intel_reloc_info
 {
    GLuint type;
@@ -100,6 +99,7 @@ typedef struct _dri_bufmgr_ttm {
    unsigned int fence_type;
    unsigned int fence_type_flush;
 
+   uint32_t max_relocs;
    /** ttm relocation list */
    struct intel_bo_list list;
    struct intel_bo_list reloc_list;
@@ -299,16 +299,15 @@ static int intel_add_validate_buffer(struct intel_bo_list *list, dri_bo *buf, un
     return ret;
 }
 
-#define RELOC0_STRIDE 4
-#define RELOC0_HEADER 4
-#define RELOC_BUF_SIZE ((RELOC0_HEADER + MAX_RELOCS_PER_LIST * RELOC0_STRIDE) * sizeof(uint32_t))
 
-static int intel_create_new_reloc_type_list(int fd, struct intel_bo_reloc_list *cur_type)
+#define RELOC_BUF_SIZE(x) ((I915_RELOC0_HEADER + x * I915_RELOC0_STRIDE) * sizeof(uint32_t))
+
+static int intel_create_new_reloc_type_list(int fd, struct intel_bo_reloc_list *cur_type, int max_relocs)
 {
     int ret;
     
     /* should allocate a drmBO here */
-    ret = drmBOCreate(fd, 0, RELOC_BUF_SIZE, 0,
+    ret = drmBOCreate(fd, 0, RELOC_BUF_SIZE(max_relocs), 0,
 		      NULL, drm_bo_type_dc,
 		      DRM_BO_FLAG_MEM_LOCAL | DRM_BO_FLAG_READ | DRM_BO_FLAG_WRITE | DRM_BO_FLAG_MAPPABLE | DRM_BO_FLAG_CACHED,
 		      0, &cur_type->buf);
@@ -322,7 +321,7 @@ static int intel_create_new_reloc_type_list(int fd, struct intel_bo_reloc_list *
 }
 
 
-static int intel_add_validate_reloc(int fd, struct intel_bo_list *reloc_list, struct intel_reloc_info *reloc_info)
+static int intel_add_validate_reloc(int fd, struct intel_bo_list *reloc_list, struct intel_reloc_info *reloc_info, uint32_t max_relocs)
 {
     struct intel_bo_reloc_node *rl_node, *cur;
     drmMMListHead *rl, *l;
@@ -352,7 +351,7 @@ static int intel_add_validate_reloc(int fd, struct intel_bo_list *reloc_list, st
 	cur_type = &cur->type_list;
 
 	DRMINITLISTHEAD(&cur->type_list.head);
-	ret = intel_create_new_reloc_type_list(fd, cur_type);
+	ret = intel_create_new_reloc_type_list(fd, cur_type, max_relocs);
 	if (ret) {
 	    return -1;
 	}
@@ -382,7 +381,7 @@ static int intel_add_validate_reloc(int fd, struct intel_bo_list *reloc_list, st
 		return -ENOMEM;
 	    }
 	    
-	    ret = intel_create_new_reloc_type_list(fd, cur_type);
+	    ret = intel_create_new_reloc_type_list(fd, cur_type, max_relocs);
 	    DRMLISTADDTAIL(&cur_type->head, &cur->type_list.head);
 
 	    cur_type->relocs[0] = (reloc_info->type << 16);
@@ -396,11 +395,11 @@ static int intel_add_validate_reloc(int fd, struct intel_bo_list *reloc_list, st
 
     num_relocs = (reloc_start[0] & 0xffff);
 
-    reloc_start[num_relocs*RELOC0_STRIDE + RELOC0_HEADER] = reloc_info->reloc;
-    reloc_start[num_relocs*RELOC0_STRIDE + RELOC0_HEADER+1] = reloc_info->delta;
-    reloc_start[num_relocs*RELOC0_STRIDE + RELOC0_HEADER+2] = reloc_info->index;
+    reloc_start[num_relocs*I915_RELOC0_STRIDE + I915_RELOC0_HEADER] = reloc_info->reloc;
+    reloc_start[num_relocs*I915_RELOC0_STRIDE + I915_RELOC0_HEADER+1] = reloc_info->delta;
+    reloc_start[num_relocs*I915_RELOC0_STRIDE + I915_RELOC0_HEADER+2] = reloc_info->index;
     reloc_start[0]++;
-    if (((reloc_start[0] & 0xffff)) > (MAX_RELOCS_PER_LIST)) {
+    if (((reloc_start[0] & 0xffff)) > (max_relocs)) {
 	return -ENOMEM;
     }
     return 0;
@@ -776,7 +775,7 @@ dri_ttm_emit_reloc(dri_bo *batch_buf, GLuint flags, GLuint delta, GLuint offset,
    reloc.index = newItem;
    reloc.handle = ttm_buf->drm_bo.handle;
 
-   intel_add_validate_reloc(bufmgr_ttm->fd, &bufmgr_ttm->reloc_list, &reloc);
+   intel_add_validate_reloc(bufmgr_ttm->fd, &bufmgr_ttm->reloc_list, &reloc, bufmgr_ttm->max_relocs);
    return;
 }
 
@@ -820,7 +819,7 @@ dri_ttm_post_submit(dri_bo *batch_buf, dri_fence **last_fence)
  */
 dri_bufmgr *
 intel_bufmgr_ttm_init(int fd, unsigned int fence_type,
-		    unsigned int fence_type_flush)
+		      unsigned int fence_type_flush, int batch_size)
 {
    dri_bufmgr_ttm *bufmgr_ttm;
 
@@ -829,6 +828,9 @@ intel_bufmgr_ttm_init(int fd, unsigned int fence_type,
    bufmgr_ttm->fence_type = fence_type;
    bufmgr_ttm->fence_type_flush = fence_type_flush;
    _glthread_INIT_MUTEX(bufmgr_ttm->mutex);
+
+   /* lets go with one relocation per every four dwords - purely heuristic */
+   bufmgr_ttm->max_relocs = batch_size / sizeof(uint32_t) / 4;
 
    intel_create_bo_list(10, &bufmgr_ttm->list, NULL);
    intel_create_bo_list(1, &bufmgr_ttm->reloc_list, NULL);
