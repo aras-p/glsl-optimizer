@@ -292,6 +292,8 @@ extern char *__progname;
 #define SUBPIXEL_X 0.125
 #define SUBPIXEL_Y 0.125
 
+#define ALIGN(value, alignment)  ((value + alignment - 1) & ~(alignment - 1))
+
 #define INTEL_FIREVERTICES(intel)		\
 do {						\
    if ((intel)->prim.flush)			\
@@ -459,9 +461,6 @@ extern void intelInitStateFuncs(struct dd_function_table *functions);
 #define BLENDFACT_CONST_ALPHA		0x0e
 #define BLENDFACT_INV_CONST_ALPHA	0x0f
 #define BLENDFACT_MASK          	0x0f
-
-#define MI_BATCH_BUFFER_END 	(0xA<<23)
-
 
 extern int intel_translate_compare_func(GLenum func);
 extern int intel_translate_stencil_op(GLenum op);

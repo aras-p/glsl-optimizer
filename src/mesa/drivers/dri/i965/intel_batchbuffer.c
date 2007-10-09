@@ -37,7 +37,7 @@ static void intel_batchbuffer_reset( struct intel_batchbuffer *batch )
    assert(batch->map == NULL);
 
    batch->offset = (unsigned long)batch->ptr;
-   batch->offset = (batch->offset + 63) & ~63;
+   batch->offset = ALIGN(batch->offset, 64);
    batch->ptr = (unsigned char *) batch->offset;
 
    if (BATCH_SZ - batch->offset < BATCH_REFILL) {
@@ -208,7 +208,7 @@ void intel_batchbuffer_align( struct intel_batchbuffer *batch,
 			      GLuint sz )
 {
    unsigned long ptr = (unsigned long) batch->ptr;
-   unsigned long aptr = (ptr + align) & ~((unsigned long)align-1);
+   unsigned long aptr = ALIGN(ptr, align);
    GLuint fixup = aptr - ptr;
 
    if (intel_batchbuffer_space(batch) < fixup + sz)

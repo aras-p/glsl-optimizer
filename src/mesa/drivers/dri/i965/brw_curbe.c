@@ -304,7 +304,7 @@ static void upload_constant_buffer(struct brw_context *brw)
       
       if (!brw_pool_alloc(pool, 
 			  bufsz,
-			  6,
+			  1 << 6,
 			  &brw->curbe.gs_offset)) {
 	 _mesa_printf("out of GS memory for curbe\n");
 	 assert(0);

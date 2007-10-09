@@ -46,7 +46,8 @@ static void upload_gs_unit( struct brw_context *brw )
 
    /* CACHE_NEW_GS_PROG */
    if (brw->gs.prog_active) {
-      gs.thread0.grf_reg_count = ((brw->gs.prog_data->total_grf-1) & ~15) / 16;
+      gs.thread0.grf_reg_count =
+	 ALIGN(brw->gs.prog_data->total_grf, 16) / 16 - 1;
       gs.thread0.kernel_start_pointer = brw->gs.prog_gs_offset >> 6;
       gs.thread3.urb_entry_read_length = brw->gs.prog_data->urb_read_length;
    }

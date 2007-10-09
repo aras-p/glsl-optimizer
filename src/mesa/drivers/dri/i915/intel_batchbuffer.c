@@ -28,7 +28,7 @@
 #include "intel_batchbuffer.h"
 #include "intel_ioctl.h"
 #include "intel_decode.h"
-#include "i915_debug.h"
+#include "intel_reg.h"
 
 /* Relocations in kernel space:
  *    - pass dma buffer seperately

@@ -110,91 +110,19 @@ static void nv10BlendFuncSeparate(GLcontext *ctx, GLenum sfactorRGB, GLenum dfac
 	OUT_RING_CACHE(dfactorRGB);
 }
 
-static void nv10ClearBuffer(GLcontext *ctx, nouveau_renderbuffer_t *buffer, int fill, int mask)
-{
-	nouveauContextPtr nmesa = NOUVEAU_CONTEXT(ctx);
-	int dimensions;
-
-	if (!buffer) {
-		return;
-	}
-
-	/* Surface that we will work on */
-	nouveauObjectOnSubchannel(nmesa, NvSubCtxSurf2D, NvCtxSurf2D);
-
-	BEGIN_RING_SIZE(NvSubCtxSurf2D, NV10_CONTEXT_SURFACES_2D_FORMAT, 4);
-	OUT_RING(0x0b); /* Y32 color format */
-	OUT_RING((buffer->pitch<<16)|buffer->pitch);
-	OUT_RING(buffer->offset);
-	OUT_RING(buffer->offset);
-
-	/* Now clear a rectangle */
-	dimensions = ((buffer->mesa.Height)<<16) | (buffer->mesa.Width);
-
-	nouveauObjectOnSubchannel(nmesa, NvSubGdiRectText, NvGdiRectText);
-
-	BEGIN_RING_SIZE(NvSubGdiRectText, NV04_GDI_RECTANGLE_TEXT_OPERATION, 1);
-	OUT_RING(3);	/* SRCCOPY */
-
-	BEGIN_RING_SIZE(NvSubGdiRectText, NV04_GDI_RECTANGLE_TEXT_BLOCK_LEVEL1_TL, 5);
-	OUT_RING(0);	/* top left */
-	OUT_RING(dimensions);	/* bottom right */
-	OUT_RING(fill);
-	OUT_RING(0);	/* top left */
-	OUT_RING(dimensions);	/* bottom right */
-}
-
-static void nv10Clear(GLcontext *ctx, GLbitfield mask)
-{
-	nouveauContextPtr nmesa = NOUVEAU_CONTEXT(ctx);
-
-	if (mask & (BUFFER_BIT_FRONT_LEFT|BUFFER_BIT_BACK_LEFT)) {
-		nv10ClearBuffer(ctx, nmesa->color_buffer,
-			nmesa->clear_color_value, 0xffffffff);
-	}
-	/* FIXME: check depth bits */
-	if (mask & (BUFFER_BIT_DEPTH)) {
-		nv10ClearBuffer(ctx, nmesa->depth_buffer,
-			nmesa->clear_value, 0xffffff00);
-	}
-	/* FIXME: check about stencil? */
-	if (mask & (BUFFER_BIT_STENCIL)) {
-		nv10ClearBuffer(ctx, nmesa->depth_buffer,
-			nmesa->clear_value, 0x000000ff);
-	}
-}
-
 static void nv10ClearColor(GLcontext *ctx, const GLfloat color[4])
 {
-	nouveauContextPtr nmesa = NOUVEAU_CONTEXT(ctx);
-	GLubyte c[4];
-	UNCLAMPED_FLOAT_TO_RGBA_CHAN(c,color);
-	nmesa->clear_color_value = PACK_COLOR_8888(c[3],c[0],c[1],c[2]);
+	/* Not for NV10 */
 }
 
 static void nv10ClearDepth(GLcontext *ctx, GLclampd d)
 {
-	nouveauContextPtr nmesa = NOUVEAU_CONTEXT(ctx);
-
-/*	switch (ctx->DrawBuffer->_DepthBuffer->DepthBits) {
-		case 16:
-			nmesa->clear_value = (uint32_t)(d*0x7FFF);
-			break;
-		case 24:*/
-			nmesa->clear_value = ((nmesa->clear_value&0x000000FF) |
-				(((uint32_t)(d*0xFFFFFF))<<8));
-/*			break;
-	}*/
+	/* Not for NV10 */
 }
 
 static void nv10ClearStencil(GLcontext *ctx, GLint s)
 {
-	nouveauContextPtr nmesa = NOUVEAU_CONTEXT(ctx);
-
-/*	if (ctx->DrawBuffer->_DepthBuffer->DepthBits == 24) {*/
-		nmesa->clear_value = ((nmesa->clear_value&0xFFFFFF00)|
-			(s&0x000000FF));
-/*	}*/
+	/* Not for NV10 */
 }
 
 static void nv10ClipPlane(GLcontext *ctx, GLenum plane, const GLfloat *equation)
@@ -1037,10 +965,10 @@ void nv10InitStateFuncs(GLcontext *ctx, struct dd_function_table *func)
 	func->BlendColor		= nv10BlendColor;
 	func->BlendEquationSeparate	= nv10BlendEquationSeparate;
 	func->BlendFuncSeparate		= nv10BlendFuncSeparate;
-	func->Clear			= nv10Clear;
-	func->ClearColor		= nv10ClearColor;
-	func->ClearDepth		= nv10ClearDepth;
-	func->ClearStencil		= nv10ClearStencil;
+/*	func->Clear			= nv10Clear;*/		/* Not for NV10 */
+	func->ClearColor		= nv10ClearColor;	/* Not for NV10 */
+	func->ClearDepth		= nv10ClearDepth;	/* Not for NV10 */
+	func->ClearStencil		= nv10ClearStencil;	/* Not for NV10 */
 	func->ClipPlane			= nv10ClipPlane;
 	func->ColorMask			= nv10ColorMask;
 	func->ColorMaterial		= nv10ColorMaterial;

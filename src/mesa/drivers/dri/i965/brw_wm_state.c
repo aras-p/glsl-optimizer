@@ -62,7 +62,7 @@ static void upload_wm_unit(struct brw_context *brw )
    memset(&wm, 0, sizeof(wm));
 
    /* CACHE_NEW_WM_PROG */
-   wm.thread0.grf_reg_count = ((brw->wm.prog_data->total_grf-1) & ~15) / 16;
+   wm.thread0.grf_reg_count = ALIGN(brw->wm.prog_data->total_grf, 16) / 16 - 1;
    wm.thread0.kernel_start_pointer = brw->wm.prog_gs_offset >> 6;
    wm.thread3.dispatch_grf_start_reg = brw->wm.prog_data->first_curbe_grf;
    wm.thread3.urb_entry_read_length = brw->wm.prog_data->urb_read_length;
@@ -71,7 +71,7 @@ static void upload_wm_unit(struct brw_context *brw )
    wm.wm5.max_threads = max_threads;      
 
    if (brw->wm.prog_data->total_scratch) {
-      GLuint per_thread = (brw->wm.prog_data->total_scratch + 1023) / 1024;
+      GLuint per_thread = ALIGN(brw->wm.prog_data->total_scratch, 1024);
       GLuint total = per_thread * (max_threads + 1);
 
       /* Scratch space -- just have to make sure there is sufficient

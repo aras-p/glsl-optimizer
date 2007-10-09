@@ -252,6 +252,8 @@ void UNLOCK_HARDWARE( struct intel_context *intel );
 #define SUBPIXEL_X 0.125
 #define SUBPIXEL_Y 0.125
 
+#define ALIGN(value, alignment)  ((value + alignment - 1) & ~(alignment - 1))
+
 /* ================================================================
  * Color packing:
  */

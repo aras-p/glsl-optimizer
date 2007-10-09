@@ -110,8 +110,7 @@ void intelCopyBuffer( const __DRIdrawablePrivate *dPriv,
       } 
       else {
 	 BR13 = (0xCC << 16) | (1<<24) | (1<<25);
-	 CMD = (XY_SRC_COPY_BLT_CMD | XY_SRC_COPY_BLT_WRITE_ALPHA |
-		XY_SRC_COPY_BLT_WRITE_RGB);
+	 CMD = XY_SRC_COPY_BLT_CMD | XY_BLT_WRITE_ALPHA | XY_BLT_WRITE_RGB;
       }
 
       if (src->tiled) {
@@ -145,10 +144,10 @@ void intelCopyBuffer( const __DRIdrawablePrivate *dPriv,
 	 OUT_BATCH( dst_pitch | BR13 );
 	 OUT_BATCH( (tmp.y1 << 16) | tmp.x1 );
 	 OUT_BATCH( (tmp.y2 << 16) | tmp.x2 );
-	 OUT_BATCH( bmBufferOffset(intel, dst->buffer) );
+	 OUT_RELOC( dst->buffer, DRM_BO_FLAG_MEM_TT | DRM_BO_FLAG_WRITE, 0 );
 	 OUT_BATCH( (tmp.y1 << 16) | tmp.x1 );
 	 OUT_BATCH( src_pitch );
-	 OUT_BATCH( bmBufferOffset(intel, src->buffer) ); 
+	 OUT_RELOC( src->buffer, DRM_BO_FLAG_MEM_TT | DRM_BO_FLAG_READ, 0 );
 	 ADVANCE_BATCH();
       }
    }
@@ -199,8 +198,7 @@ void intelEmitFillBlit( struct intel_context *intel,
       break;
    case 4:
       BR13 = (0xF0 << 16) | (1<<24) | (1<<25);
-      CMD = (XY_COLOR_BLT_CMD | XY_COLOR_BLT_WRITE_ALPHA |
-	     XY_COLOR_BLT_WRITE_RGB);
+      CMD = XY_COLOR_BLT_CMD | XY_BLT_WRITE_ALPHA | XY_BLT_WRITE_RGB;
       break;
    default:
       return;
@@ -216,7 +214,7 @@ void intelEmitFillBlit( struct intel_context *intel,
    OUT_BATCH( dst_pitch | BR13 );
    OUT_BATCH( (y << 16) | x );
    OUT_BATCH( ((y+h) << 16) | (x+w) );
-   OUT_BATCH( bmBufferOffset(intel, dst_buffer) + dst_offset );
+   OUT_RELOC( dst_buffer, DRM_BO_FLAG_MEM_TT | DRM_BO_FLAG_WRITE, dst_offset );
    OUT_BATCH( color );
    ADVANCE_BATCH();
 }
@@ -290,8 +288,7 @@ void intelEmitCopyBlit( struct intel_context *intel,
    case 4:
       BR13 = (translate_raster_op(logic_op) << 16) | (1<<24) |
 	  (1<<25);
-      CMD = (XY_SRC_COPY_BLT_CMD | XY_SRC_COPY_BLT_WRITE_ALPHA |
-	     XY_SRC_COPY_BLT_WRITE_RGB);
+      CMD = XY_SRC_COPY_BLT_CMD | XY_BLT_WRITE_ALPHA | XY_BLT_WRITE_RGB;
       break;
    default:
       return;
@@ -328,10 +325,12 @@ void intelEmitCopyBlit( struct intel_context *intel,
       OUT_BATCH( dst_pitch | BR13 );
       OUT_BATCH( (dst_y << 16) | dst_x );
       OUT_BATCH( (dst_y2 << 16) | dst_x2 );
-      OUT_BATCH( bmBufferOffset(intel, dst_buffer) + dst_offset );	
+      OUT_RELOC( dst_buffer, DRM_BO_FLAG_MEM_TT | DRM_BO_FLAG_WRITE,
+		 dst_offset );
       OUT_BATCH( (src_y << 16) | src_x );
       OUT_BATCH( src_pitch );
-      OUT_BATCH( bmBufferOffset(intel, src_buffer) + src_offset ); 
+      OUT_RELOC( src_buffer, DRM_BO_FLAG_MEM_TT | DRM_BO_FLAG_READ,
+		 src_offset );
       ADVANCE_BATCH();
    }
    else {
@@ -340,10 +339,11 @@ void intelEmitCopyBlit( struct intel_context *intel,
       OUT_BATCH( (dst_pitch & 0xffff) | BR13 );
       OUT_BATCH( (0 << 16) | dst_x );
       OUT_BATCH( (h << 16) | dst_x2 );
-      OUT_BATCH( bmBufferOffset(intel, dst_buffer) + dst_offset + dst_y * dst_pitch );	
-      OUT_BATCH( (0 << 16) | src_x );
+      OUT_RELOC( dst_buffer, DRM_BO_FLAG_MEM_TT | DRM_BO_FLAG_WRITE,
+		 dst_offset + dst_y * dst_pitch );
       OUT_BATCH( (src_pitch & 0xffff) );
-      OUT_BATCH( bmBufferOffset(intel, src_buffer) + src_offset + src_y * src_pitch ); 
+      OUT_RELOC( src_buffer, DRM_BO_FLAG_MEM_TT | DRM_BO_FLAG_READ,
+		 src_offset + src_y * src_pitch );
       ADVANCE_BATCH();
    }
 }
@@ -388,12 +388,11 @@ void intelClearWithBlit(GLcontext *ctx, GLbitfield flags)
       break;
    case 4:
       BR13 = (0xF0 << 16) | (1<<24) | (1<<25);
-      BACK_CMD = FRONT_CMD = (XY_COLOR_BLT_CMD |
-			      XY_COLOR_BLT_WRITE_ALPHA | 
-			      XY_COLOR_BLT_WRITE_RGB);
+      BACK_CMD = FRONT_CMD = XY_COLOR_BLT_CMD |
+	 XY_BLT_WRITE_ALPHA | XY_BLT_WRITE_RGB;
       DEPTH_CMD = XY_COLOR_BLT_CMD;
-      if (flags & BUFFER_BIT_DEPTH) DEPTH_CMD |= XY_COLOR_BLT_WRITE_RGB;
-      if (flags & BUFFER_BIT_STENCIL) DEPTH_CMD |= XY_COLOR_BLT_WRITE_ALPHA;
+      if (flags & BUFFER_BIT_DEPTH) DEPTH_CMD |= XY_BLT_WRITE_RGB;
+      if (flags & BUFFER_BIT_STENCIL) DEPTH_CMD |= XY_BLT_WRITE_ALPHA;
       break;
    default:
       return;
@@ -484,7 +483,8 @@ void intelClearWithBlit(GLcontext *ctx, GLbitfield flags)
 	    OUT_BATCH( front_pitch | BR13 );
 	    OUT_BATCH( (b.y1 << 16) | b.x1 );
 	    OUT_BATCH( (b.y2 << 16) | b.x2 );
-	    OUT_BATCH( bmBufferOffset(intel, front->buffer) );
+	    OUT_RELOC( front->buffer, DRM_BO_FLAG_MEM_TT | DRM_BO_FLAG_WRITE,
+		       0 );
 	    OUT_BATCH( clear_color );
 	    ADVANCE_BATCH();
 	 }
@@ -495,7 +495,8 @@ void intelClearWithBlit(GLcontext *ctx, GLbitfield flags)
 	    OUT_BATCH( back_pitch | BR13 );
 	    OUT_BATCH( (b.y1 << 16) | b.x1 );
 	    OUT_BATCH( (b.y2 << 16) | b.x2 );
-	    OUT_BATCH( bmBufferOffset(intel, back->buffer) );
+	    OUT_RELOC( back->buffer, DRM_BO_FLAG_MEM_TT | DRM_BO_FLAG_WRITE,
+		       0 );
 	    OUT_BATCH( clear_color );
 	    ADVANCE_BATCH();
 	 }
@@ -506,7 +507,8 @@ void intelClearWithBlit(GLcontext *ctx, GLbitfield flags)
 	    OUT_BATCH( depth_pitch | BR13 );
 	    OUT_BATCH( (b.y1 << 16) | b.x1 );
 	    OUT_BATCH( (b.y2 << 16) | b.x2 );
-	    OUT_BATCH( bmBufferOffset(intel, depth->buffer) );
+	    OUT_RELOC( depth->buffer, DRM_BO_FLAG_MEM_TT | DRM_BO_FLAG_WRITE,
+		       0 );
 	    OUT_BATCH( clear_depth );
 	    ADVANCE_BATCH();
 	 }      
@@ -515,11 +517,6 @@ void intelClearWithBlit(GLcontext *ctx, GLbitfield flags)
    intel_batchbuffer_flush( intel->batch );
    UNLOCK_HARDWARE( intel );
 }
-
-
-
-#define BR13_565  0x1
-#define BR13_8888 0x3
 
 
 void
@@ -535,9 +532,9 @@ intelEmitImmediateColorExpandBlit(struct intel_context *intel,
 				  GLshort w, GLshort h,
 				  GLenum logic_op)
 {
-   struct xy_setup_blit setup;
    struct xy_text_immediate_blit text;
-   int dwords = ((src_size + 7) & ~7) / 4;
+   int dwords = ALIGN(src_size, 8) / 4;
+   uint32_t opcode, br13;
 
    assert( logic_op - GL_CLEAR >= 0 );
    assert( logic_op - GL_CLEAR < 0x10 );
@@ -554,31 +551,6 @@ intelEmitImmediateColorExpandBlit(struct intel_context *intel,
        __FUNCTION__,
        dst_buffer, dst_pitch, dst_offset, x, y, w, h, src_size, dwords);
 
-   memset(&setup, 0, sizeof(setup));
-   
-   setup.br0.client = CLIENT_2D;
-   setup.br0.opcode = OPCODE_XY_SETUP_BLT;
-   setup.br0.write_alpha = (cpp == 4);
-   setup.br0.write_rgb = (cpp == 4);
-   setup.br0.dst_tiled = dst_tiled;
-   setup.br0.length = (sizeof(setup) / sizeof(int)) - 2;
-      
-   setup.br13.dest_pitch = dst_pitch;
-   setup.br13.rop = translate_raster_op(logic_op);
-   setup.br13.color_depth = (cpp == 4) ? BR13_8888 : BR13_565;
-   setup.br13.clipping_enable = 0;
-   setup.br13.mono_source_transparency = 1;
-
-   setup.dw2.clip_y1 = 0;
-   setup.dw2.clip_x1 = 0;
-   setup.dw3.clip_y2 = 100;
-   setup.dw3.clip_x2 = 100;
-
-   setup.dest_base_addr = bmBufferOffset(intel, dst_buffer) + dst_offset;
-   setup.background_color = 0;
-   setup.foreground_color = fg_color;
-   setup.pattern_base_addr = 0;
-
    memset(&text, 0, sizeof(text));
    text.dw0.client = CLIENT_2D;
    text.dw0.opcode = OPCODE_XY_TEXT_IMMEDIATE_BLT;
@@ -594,15 +566,33 @@ intelEmitImmediateColorExpandBlit(struct intel_context *intel,
    text.dw2.dest_x2 = x + w;
 
    intel_batchbuffer_require_space( intel->batch,
-				    sizeof(setup) + 
+				    (8 * 4) +
 				    sizeof(text) + 
 				    dwords,
 				    INTEL_BATCH_NO_CLIPRECTS );
 
-   intel_batchbuffer_data( intel->batch,
-			   &setup,
-			   sizeof(setup),
-			   INTEL_BATCH_NO_CLIPRECTS );
+   opcode = XY_SETUP_BLT_CMD;
+   if (cpp == 4)
+      opcode |= XY_BLT_WRITE_ALPHA | XY_BLT_WRITE_RGB;
+   if (dst_tiled)
+      opcode |= XY_DST_TILED;
+
+   br13 = dst_pitch | (translate_raster_op(logic_op) << 16) | (1 << 29);
+   if (cpp == 2)
+      br13 |= BR13_565;
+   else
+      br13 |= BR13_8888;
+
+   BEGIN_BATCH(8, INTEL_BATCH_NO_CLIPRECTS);
+   OUT_BATCH(opcode);
+   OUT_BATCH(br13);
+   OUT_BATCH((0 << 16) | 0); /* clip x1, y1 */
+   OUT_BATCH((100 << 16) | 100); /* clip x2, y2 */
+   OUT_RELOC(dst_buffer, DRM_BO_FLAG_MEM_TT | DRM_BO_FLAG_WRITE, dst_offset);
+   OUT_BATCH(0); /* bg */
+   OUT_BATCH(fg_color); /* fg */
+   OUT_BATCH(0); /* pattern base addr */
+   ADVANCE_BATCH();
 
    intel_batchbuffer_data( intel->batch,
 			   &text,
