@@ -702,6 +702,8 @@ static void emit_tex( struct brw_wm_compile *c,
 	      msgLength,
 	      0);	
 
+   if (shadow)
+       brw_MOV(p, dst[3], brw_imm_f(1.0));
 }
 
 

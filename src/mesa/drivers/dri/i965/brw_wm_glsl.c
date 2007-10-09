@@ -1027,8 +1027,10 @@ static void emit_tex(struct brw_wm_compile *c,
     GLuint msg_len;
     GLuint i, nr;
     GLuint emit;
+    GLboolean shadow = (c->key.shadowtex_mask & (1<<inst->TexSrcUnit)) ? 1 : 0;
 
     payload_reg = get_reg(c, PROGRAM_PAYLOAD, PAYLOAD_DEPTH, 0, 1, 0, 0);
+
     for (i = 0; i < 4; i++) 
 	dst[i] = get_dst_reg(c, inst, i, 1);
     for (i = 0; i < 4; i++)
@@ -1061,6 +1063,11 @@ static void emit_tex(struct brw_wm_compile *c,
 	msg_len += 1;
     }
 
+    if (shadow) {
+	brw_MOV(p, brw_message_reg(5), brw_imm_f(0));
+	brw_MOV(p, brw_message_reg(6), src[2]);
+    }
+
     brw_SAMPLE(p,
 	    retype(vec8(dst[0]), BRW_REGISTER_TYPE_UW),
 	    1,
@@ -1070,8 +1077,11 @@ static void emit_tex(struct brw_wm_compile *c,
 	    inst->DstReg.WriteMask,
 	    BRW_SAMPLER_MESSAGE_SIMD8_SAMPLE,
 	    4,
-	    4,
+	    shadow ? 6 : 4,
 	    0);
+
+    if (shadow)
+	brw_MOV(p, dst[3], brw_imm_f(1.0));
 }
 
 static void post_wm_emit( struct brw_wm_compile *c )
