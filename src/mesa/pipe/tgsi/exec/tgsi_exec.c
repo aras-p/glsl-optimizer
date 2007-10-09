@@ -109,7 +109,7 @@
 
 /** The execution mask depends on the conditional mask and the loop mask */
 #define UPDATE_EXEC_MASK(MACH) \
-      MACH->ExecMask = MACH->CondMask & MACH->LoopMask & MACH->ContMask
+      MACH->ExecMask = MACH->CondMask & MACH->LoopMask & MACH->ContMask & MACH->FuncMask
 
 
 #define CHAN_X  0
@@ -2044,6 +2044,9 @@ exec_instruction(
          assert(mach->ContStackTop < TGSI_EXEC_MAX_LOOP_NESTING);
          mach->ContStack[mach->ContStackTop++] = mach->ContMask;
 
+         assert(mach->FuncStackTop < TGSI_EXEC_MAX_CALL_NESTING);
+         mach->FuncStack[mach->FuncStackTop++] = mach->FuncMask;
+
          /* note that PC was already incremented above */
          mach->CallStack[mach->CallStackTop++] = *pc;
          *pc = inst->InstructionExtLabel.Label;
@@ -2053,19 +2056,28 @@ exec_instruction(
    case TGSI_OPCODE_RET:
       /* XXX examine ExecMask to determine if we should _really_ return */
       /* pop Cond, Loop, Cont stacks */
-      assert(mach->CondStackTop > 0);
-      mach->CondMask = mach->CondStack[--mach->CondStackTop];
-      assert(mach->LoopStackTop > 0);
-      mach->LoopMask = mach->LoopStack[--mach->LoopStackTop];
-      assert(mach->ContStackTop > 0);
-      mach->ContMask = mach->ContStack[--mach->ContStackTop];
+      mach->FuncMask &= ~mach->ExecMask;
+      UPDATE_EXEC_MASK(mach);
 
-      assert(mach->CallStackTop >= 0);
-      if (mach->CallStackTop == 0) {
-         /* XXX error? */
-         return;
+      if (mach->ExecMask == 0x0) {
+         /* really return now (otherwise, keep executing */
+         assert(mach->CondStackTop > 0);
+         mach->CondMask = mach->CondStack[--mach->CondStackTop];
+         assert(mach->LoopStackTop > 0);
+         mach->LoopMask = mach->LoopStack[--mach->LoopStackTop];
+         assert(mach->ContStackTop > 0);
+         mach->ContMask = mach->ContStack[--mach->ContStackTop];
+
+         assert(mach->FuncStackTop > 0);
+         mach->FuncMask = mach->FuncStack[--mach->FuncStackTop];
+
+         assert(mach->CallStackTop >= 0);
+         if (mach->CallStackTop == 0) {
+            /* XXX error? */
+            return;
+         }
+         *pc = mach->CallStack[--mach->CallStackTop];
       }
-      *pc = mach->CallStack[--mach->CallStackTop];
       break;
 
    case TGSI_OPCODE_SSG:
@@ -2387,6 +2399,7 @@ tgsi_exec_machine_run( struct tgsi_exec_machine *mach )
    mach->CondMask = 0xf;
    mach->LoopMask = 0xf;
    mach->ContMask = 0xf;
+   mach->FuncMask = 0xf;
    mach->ExecMask = 0xf;
 
    assert(mach->CondStackTop == 0);

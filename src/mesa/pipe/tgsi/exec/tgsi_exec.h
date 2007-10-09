@@ -141,6 +141,7 @@ struct tgsi_exec_machine
    uint CondMask;  /**< For IF/ELSE/ENDIF */
    uint LoopMask;  /**< For BGNLOOP/ENDLOOP */
    uint ContMask;  /**< For loop CONT statements */
+   uint FuncMask;  /**< For function calls */
    uint ExecMask;  /**< = CondMask & LoopMask */
 
    /** Condition mask stack (for nested conditionals) */
@@ -155,6 +156,11 @@ struct tgsi_exec_machine
    uint ContStack[TGSI_EXEC_MAX_LOOP_NESTING];
    int ContStackTop;
 
+   /** Function execution mask stack (for executing subroutine code) */
+   uint FuncStack[TGSI_EXEC_MAX_CALL_NESTING];
+   int FuncStackTop;
+
+   /** Function call stack for saving/restoring the program counter */
    uint CallStack[TGSI_EXEC_MAX_CALL_NESTING];
    int CallStackTop;
 
