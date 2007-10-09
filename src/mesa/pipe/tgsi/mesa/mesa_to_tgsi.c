@@ -546,6 +546,200 @@ find_temporaries(const struct gl_program *program,
 }
 
 
+
+
+/**
+ * Translate Mesa program to TGSI format.
+ * \param program  the program to translate
+ * \param numInputs  number of input registers used
+ * \param inputMapping  maps Mesa fragment program inputs to TGSI generic
+ *                      input indexes
+ * \param inputSemanticName  the TGSI_SEMANTIC flag for each input
+ * \param inputSemanticIndex  the semantic index (ex: which texcoord) for each input
+ * \param interpMode  the TGSI_INTERPOLATE_LINEAR/PERSP mode for each input
+
+ * \param numOutputs  number of output registers used
+ * \param outputMapping  maps Mesa fragment program outputs to TGSI
+ *                       generic outputs
+ * \param outputSemanticName  the TGSI_SEMANTIC flag for each output
+ * \param outputSemanticIndex  the semantic index (ex: which texcoord) for each output
+ * \param tokens  array to store translated tokens in
+ * \param maxTokens  size of the tokens array
+ *
+ */
+#if 0
+static GLboolean
+tgsi_translate_program(
+                       uint procType,
+   const struct gl_program *program,
+   GLuint numInputs,
+   const GLuint inputMapping[],
+   const ubyte inputSemanticName[],
+   const ubyte inputSemanticIndex[],
+   const GLuint interpMode[],
+   GLuint numOutputs,
+   const GLuint outputMapping[],
+   const ubyte outputSemanticName[],
+   const ubyte outputSemanticIndex[],
+   struct tgsi_token *tokens,
+   GLuint maxTokens )
+{
+   GLuint i;
+   GLuint ti;  /* token index */
+   struct tgsi_header *header;
+   struct tgsi_processor *processor;
+   struct tgsi_full_instruction fullinst;
+   GLuint preamble_size = 0;
+
+   assert(procType == TGSI_PROCESSOR_FRAGMENT ||
+          procType == TGSI_PROCESSOR_VERTEX);
+
+   *(struct tgsi_version *) &tokens[0] = tgsi_build_version();
+
+   header = (struct tgsi_header *) &tokens[1];
+   *header = tgsi_build_header();
+
+   processor = (struct tgsi_processor *) &tokens[2];
+   *processor = tgsi_build_processor( procType, header );
+
+   ti = 3;
+
+   /*
+    * Declare input attributes.
+    */
+   if (procType == TGSI_PROCESSOR_FRAGMENT) {
+      for (i = 0; i < numInputs; i++) {
+         struct tgsi_full_declaration fulldecl;
+         switch (inputSemanticName[i]) {
+         case TGSI_SEMANTIC_POSITION:
+            /* Fragment XY pos */
+            fulldecl = make_input_decl(i,
+                                       TGSI_INTERPOLATE_CONSTANT,
+                                       TGSI_WRITEMASK_XY,
+                                       GL_TRUE, TGSI_SEMANTIC_POSITION, 0 );
+            ti += tgsi_build_full_declaration(
+                                              &fulldecl,
+                                              &tokens[ti],
+                                              header,
+                                              maxTokens - ti );
+            /* Fragment ZW pos */
+            fulldecl = make_input_decl(i,
+                                       TGSI_INTERPOLATE_LINEAR,
+                                       TGSI_WRITEMASK_ZW,
+                                       GL_TRUE, TGSI_SEMANTIC_POSITION, 0 );
+            ti += tgsi_build_full_declaration(&fulldecl,
+                                              &tokens[ti],
+                                              header,
+                                              maxTokens - ti );
+            break;
+         default:
+            fulldecl = make_input_decl(i,
+                                       interpMode[i],
+                                       TGSI_WRITEMASK_XYZW,
+                                       GL_TRUE, inputSemanticName[i],
+                                       inputSemanticIndex[i]);
+            ti += tgsi_build_full_declaration(&fulldecl,
+                                              &tokens[ti],
+                                              header,
+                                              maxTokens - ti );
+            break;
+         }
+      }
+   }
+   else {
+      /* vertex prog */
+      for (i = 0; i < numInputs; i++) {
+         struct tgsi_full_declaration fulldecl;
+         fulldecl = make_input_decl(i,
+                                    TGSI_INTERPOLATE_ATTRIB,
+                                    TGSI_WRITEMASK_XYZW,
+                                    GL_FALSE, inputSemanticName[i],
+                                    inputSemanticIndex[i]);
+         ti += tgsi_build_full_declaration(&fulldecl,
+                                           &tokens[ti],
+                                           header,
+                                           maxTokens - ti );
+      }
+   }
+
+   /*
+    * Declare output attributes.
+    */
+   if (procType == TGSI_PROCESSOR_FRAGMENT) {
+      for (i = 0; i < numOutputs; i++) {
+         struct tgsi_full_declaration fulldecl;
+         switch (outputSemanticName[i]) {
+         case TGSI_SEMANTIC_POSITION:
+            fulldecl = make_output_decl(i,
+                                        TGSI_SEMANTIC_POSITION, 0, /* Z / Depth */
+                                        TGSI_WRITEMASK_Z );
+            break;
+         case TGSI_SEMANTIC_COLOR:
+            fulldecl = make_output_decl(i,
+                                        TGSI_SEMANTIC_COLOR, 0,
+                                        TGSI_WRITEMASK_XYZW );
+            break;
+         default:
+            abort();
+         }
+         ti += tgsi_build_full_declaration(&fulldecl,
+                                           &tokens[ti],
+                                           header,
+                                           maxTokens - ti );
+      }
+   }
+   else {
+      /* vertex prog */
+      for (i = 0; i < numOutputs; i++) {
+         struct tgsi_full_declaration fulldecl;
+         fulldecl = make_output_decl(i,
+                                     outputSemanticName[i],
+                                     outputSemanticIndex[i],
+                                     TGSI_WRITEMASK_XYZW );
+         ti += tgsi_build_full_declaration(&fulldecl,
+                                           &tokens[ti],
+                                           header,
+                                           maxTokens - ti );
+      }
+   }
+
+   /* temporary decls */
+   {
+      GLuint tempsUsed[MAX_PROGRAM_TEMPS];
+      uint numTemps = find_temporaries(program, tempsUsed);
+      for (i = 0; i < numTemps; i++) {
+         struct tgsi_full_declaration fulldecl;
+         fulldecl = make_temp_decl(tempsUsed[i]);
+         ti += tgsi_build_full_declaration(
+                                           &fulldecl,
+                                           &tokens[ti],
+                                           header,
+                                           maxTokens - ti );
+      }
+   }
+
+   for( i = 0; i < program->NumInstructions; i++ ) {
+      compile_instruction(
+            &program->Instructions[i],
+            &fullinst,
+            inputMapping,
+            outputMapping,
+            preamble_size,
+            procType );
+
+      ti += tgsi_build_full_instruction(
+         &fullinst,
+         &tokens[ti],
+         header,
+         maxTokens - ti );
+   }
+
+   return GL_TRUE;
+}
+#endif
+
+
+
 /**
  * Convert Mesa fragment program to TGSI format.
  * \param inputMapping  maps Mesa fragment program inputs to TGSI generic
