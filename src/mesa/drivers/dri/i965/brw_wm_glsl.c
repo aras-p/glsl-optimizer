@@ -182,8 +182,8 @@ static void emit_int( struct brw_wm_compile *c,
     for (i = 0; i < 4; i++) {
 	if (mask & (1<<i)) {
 	    struct brw_reg src, dst;
-	    dst = retype(get_dst_reg(c, inst, i, 1), BRW_REGISTER_TYPE_D);
-	    src = retype(get_src_reg(c, &inst->SrcReg[0], i, 1), BRW_REGISTER_TYPE_D);
+	    dst = get_dst_reg(c, inst, i, 1) ;
+	    src = get_src_reg(c, &inst->SrcReg[0], i, 1);
 	    brw_RNDD(p, dst, src);
 	}
     }
