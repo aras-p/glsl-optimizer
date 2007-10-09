@@ -15,7 +15,10 @@ tgsi_mesa_compile_fp_program(
    const ubyte inputSemanticName[],
    const ubyte inputSemanticIndex[],
    const GLuint interpMode[],
+   GLuint numOutputs,
    const GLuint outputMapping[],
+   const ubyte outputSemanticName[],
+   const ubyte outputSemanticIndex[],
    struct tgsi_token *tokens,
    GLuint maxTokens );
 

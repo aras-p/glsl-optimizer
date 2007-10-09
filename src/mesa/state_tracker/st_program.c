@@ -394,7 +394,10 @@ st_translate_fragment_program(struct st_context *st,
                                  fs.input_semantic_index,
                                  interpMode,
                                  /* outputs */
+                                 fs.num_outputs,
                                  outputMapping,
+                                 fs.output_semantic_name,
+                                 fs.output_semantic_index,
                                  /* tokenized result */
                                  tokensOut, maxTokens);
 

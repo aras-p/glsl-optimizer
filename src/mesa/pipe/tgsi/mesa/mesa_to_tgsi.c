@@ -516,7 +516,10 @@ tgsi_mesa_compile_fp_program(
    const ubyte inputSemanticName[],
    const ubyte inputSemanticIndex[],
    const GLuint interpMode[],
+   GLuint numOutputs,
    const GLuint outputMapping[],
+   const ubyte outputSemanticName[],
+   const ubyte outputSemanticIndex[],
    struct tgsi_token *tokens,
    GLuint maxTokens )
 {
@@ -580,30 +583,31 @@ tgsi_mesa_compile_fp_program(
    /*
     * Declare output attributes.
     */
-   assert(
-      program->Base.OutputsWritten ==
-      (program->Base.OutputsWritten & ((1 << FRAG_RESULT_COLR) | (1 << FRAG_RESULT_DEPR))) );
-
-   fulldecl = make_output_decl(
-      0,
-      TGSI_SEMANTIC_POSITION, 0,  /* Z / Depth */
-      TGSI_WRITEMASK_Z );
-   ti += tgsi_build_full_declaration(
-      &fulldecl,
-      &tokens[ti],
-      header,
-      maxTokens - ti );
-
-   if( program->Base.OutputsWritten & (1 << FRAG_RESULT_COLR) ) {
-      fulldecl = make_output_decl(
-         1,
-         TGSI_SEMANTIC_COLOR, 0,
-         TGSI_WRITEMASK_XYZW );
-      ti += tgsi_build_full_declaration(
-         &fulldecl,
-         &tokens[ti],
-         header,
-         maxTokens - ti );
+   for (i = 0; i < numOutputs; i++) {
+      switch (outputSemanticName[i]) {
+      case TGSI_SEMANTIC_POSITION:
+         fulldecl = make_output_decl(i,
+                                     TGSI_SEMANTIC_POSITION, 0, /* Z / Depth */
+                                     TGSI_WRITEMASK_Z );
+         ti += tgsi_build_full_declaration(
+                                           &fulldecl,
+                                           &tokens[ti],
+                                           header,
+                                           maxTokens - ti );
+         break;
+      case TGSI_SEMANTIC_COLOR:
+         fulldecl = make_output_decl(i,
+                                     TGSI_SEMANTIC_COLOR, 0,
+                                     TGSI_WRITEMASK_XYZW );
+         ti += tgsi_build_full_declaration(
+                                           &fulldecl,
+                                           &tokens[ti],
+                                           header,
+                                           maxTokens - ti );
+         break;
+      default:
+         abort();
+      }
    }
 
    /*
