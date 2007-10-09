@@ -475,6 +475,7 @@ make_input_decl(
    GLuint index,
    GLuint interpolate,
    GLuint usage_mask,
+   GLboolean semantic_info,
    GLuint semantic_name,
    GLuint semantic_index )
 {
@@ -486,12 +487,14 @@ make_input_decl(
    decl.Declaration.File = TGSI_FILE_INPUT;
    decl.Declaration.Declare = TGSI_DECLARE_RANGE;
    decl.Declaration.UsageMask = usage_mask;
-   decl.Declaration.Semantic = 1;
+   decl.Declaration.Semantic = semantic_info;
    decl.Declaration.Interpolate = 1;
    decl.u.DeclarationRange.First = index;
    decl.u.DeclarationRange.Last = index;
-   decl.Semantic.SemanticName = semantic_name;
-   decl.Semantic.SemanticIndex = semantic_index;
+   if (semantic_info) {
+      decl.Semantic.SemanticName = semantic_name;
+      decl.Semantic.SemanticIndex = semantic_index;
+   }
    decl.Interpolation.Interpolate = interpolate;
 
    return decl;
@@ -569,7 +572,7 @@ tgsi_mesa_compile_fp_program(
          fulldecl = make_input_decl(i,
                                     TGSI_INTERPOLATE_CONSTANT,
                                     TGSI_WRITEMASK_XY,
-                                    TGSI_SEMANTIC_POSITION, 0 );
+                                    GL_TRUE, TGSI_SEMANTIC_POSITION, 0 );
          ti += tgsi_build_full_declaration(
                                            &fulldecl,
                                            &tokens[ti],
@@ -579,7 +582,7 @@ tgsi_mesa_compile_fp_program(
          fulldecl = make_input_decl(i,
                                     TGSI_INTERPOLATE_LINEAR,
                                     TGSI_WRITEMASK_ZW,
-                                    TGSI_SEMANTIC_POSITION, 0 );
+                                    GL_TRUE, TGSI_SEMANTIC_POSITION, 0 );
          ti += tgsi_build_full_declaration(
                                            &fulldecl,
                                            &tokens[ti],
@@ -590,7 +593,7 @@ tgsi_mesa_compile_fp_program(
          fulldecl = make_input_decl(i,
                                     interpMode[i],
                                     TGSI_WRITEMASK_XYZW,
-                                    inputSemanticName[i],
+                                    GL_TRUE, inputSemanticName[i],
                                     inputSemanticIndex[i]);
          ti += tgsi_build_full_declaration(&fulldecl,
                                            &tokens[ti],
@@ -713,7 +716,7 @@ tgsi_mesa_compile_vp_program(
       fulldecl = make_input_decl(i,
                                  TGSI_INTERPOLATE_CONSTANT, /* no interp */
                                  TGSI_WRITEMASK_XYZW,
-                                 inputSemanticName[i],
+                                 GL_FALSE, inputSemanticName[i],
                                  inputSemanticIndex[i]);
       ti += tgsi_build_full_declaration(&fulldecl,
                                         &tokens[ti],
