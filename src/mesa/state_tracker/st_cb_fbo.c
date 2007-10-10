@@ -64,6 +64,7 @@ st_renderbuffer_alloc_storage(GLcontext * ctx, struct gl_renderbuffer *rb,
    const struct pipe_format_info *info = st_get_format_info(pipeFormat);
    GLuint cpp;
    GLbitfield flags = PIPE_SURFACE_FLAG_RENDER; /* want to render to surface */
+   GLuint width2, height2;
 
    assert(info);
    if (!info)
@@ -100,10 +101,10 @@ st_renderbuffer_alloc_storage(GLcontext * ctx, struct gl_renderbuffer *rb,
    }
 
    /* Softpipe operates on quads, so pad dimensions to multiples of 2 */
-   width += width & 1;
-   height += height & 1;
+   width2 = (width + 1) & ~1;
+   height2 = (height + 1) & ~1;
 
-   strb->surface->region = pipe->region_alloc(pipe, cpp, width, height, flags);
+   strb->surface->region = pipe->region_alloc(pipe, cpp, width2, height2, flags);
    if (!strb->surface->region)
       return GL_FALSE; /* out of memory, try s/w buffer? */
 
