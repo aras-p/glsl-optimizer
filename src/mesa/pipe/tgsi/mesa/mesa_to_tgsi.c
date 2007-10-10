@@ -39,10 +39,10 @@ map_register_file(
 /**
  * Map mesa register file index to TGSI index.
  * Take special care when processing input and output indices.
- * \param processor  either TGSI_PROCESSOR_FRAGMENT or  TGSI_PROCESSOR_VERTEX
  * \param file  one of TGSI_FILE_x
  * \param index  the mesa register file index
- * \param usage_bitmask  ???
+ * \param inputMapping  maps Mesa input indexes to TGSI input indexes
+ * \param outputMapping  maps Mesa output indexes to TGSI output indexes
  */
 static GLuint
 map_register_file_index(
@@ -443,6 +443,9 @@ compile_instruction(
    }
 }
 
+/**
+ * \param usage_mask  bitfield of TGSI_WRITEMASK_{XYZW} tokens
+ */
 static struct tgsi_full_declaration
 make_input_decl(
    GLuint index,
@@ -450,7 +453,7 @@ make_input_decl(
    GLuint usage_mask,
    GLboolean semantic_info,
    GLuint semantic_name,
-   GLuint semantic_index )
+   GLbitfield semantic_index )
 {
    struct tgsi_full_declaration decl;
 
@@ -473,12 +476,15 @@ make_input_decl(
    return decl;
 }
 
+/**
+ * \param usage_mask  bitfield of TGSI_WRITEMASK_{XYZW} tokens
+ */
 static struct tgsi_full_declaration
 make_output_decl(
    GLuint index,
    GLuint semantic_name,
    GLuint semantic_index,
-   GLuint usage_mask )
+   GLbitfield usage_mask )
 {
    struct tgsi_full_declaration decl;
 
@@ -567,10 +573,9 @@ find_temporaries(const struct gl_program *program,
  * \param maxTokens  size of the tokens array
  *
  */
-#if 0
-static GLboolean
-tgsi_translate_program(
-                       uint procType,
+GLboolean
+tgsi_translate_mesa_program(
+   uint procType,
    const struct gl_program *program,
    GLuint numInputs,
    const GLuint inputMapping[],
@@ -726,273 +731,6 @@ tgsi_translate_program(
             outputMapping,
             preamble_size,
             procType );
-
-      ti += tgsi_build_full_instruction(
-         &fullinst,
-         &tokens[ti],
-         header,
-         maxTokens - ti );
-   }
-
-   return GL_TRUE;
-}
-#endif
-
-
-
-/**
- * Convert Mesa fragment program to TGSI format.
- * \param inputMapping  maps Mesa fragment program inputs to TGSI generic
- *                      input indexes
- * \param inputSemantic  the TGSI_SEMANTIC flag for each input
- * \param interpMode  the TGSI_INTERPOLATE_LINEAR/PERSP mode for each input
- * \param outputMapping  maps Mesa fragment program outputs to TGSI
- *                       generic outputs
- *
- */
-GLboolean
-tgsi_mesa_compile_fp_program(
-   const struct gl_fragment_program *program,
-   GLuint numInputs,
-   const GLuint inputMapping[],
-   const ubyte inputSemanticName[],
-   const ubyte inputSemanticIndex[],
-   const GLuint interpMode[],
-   GLuint numOutputs,
-   const GLuint outputMapping[],
-   const ubyte outputSemanticName[],
-   const ubyte outputSemanticIndex[],
-   struct tgsi_token *tokens,
-   GLuint maxTokens )
-{
-   GLuint i;
-   GLuint ti;  /* token index */
-   struct tgsi_header *header;
-   struct tgsi_processor *processor;
-   struct tgsi_full_instruction fullinst;
-   GLuint preamble_size = 0;
-
-   *(struct tgsi_version *) &tokens[0] = tgsi_build_version();
-
-   header = (struct tgsi_header *) &tokens[1];
-   *header = tgsi_build_header();
-
-   processor = (struct tgsi_processor *) &tokens[2];
-   *processor = tgsi_build_processor( TGSI_PROCESSOR_FRAGMENT, header );
-
-   ti = 3;
-
-   for (i = 0; i < numInputs; i++) {
-      struct tgsi_full_declaration fulldecl;
-      switch (inputSemanticName[i]) {
-      case TGSI_SEMANTIC_POSITION:
-         /* Fragment XY pos */
-         fulldecl = make_input_decl(i,
-                                    TGSI_INTERPOLATE_CONSTANT,
-                                    TGSI_WRITEMASK_XY,
-                                    GL_TRUE, TGSI_SEMANTIC_POSITION, 0 );
-         ti += tgsi_build_full_declaration(
-                                           &fulldecl,
-                                           &tokens[ti],
-                                           header,
-                                           maxTokens - ti );
-         /* Fragment ZW pos */
-         fulldecl = make_input_decl(i,
-                                    TGSI_INTERPOLATE_LINEAR,
-                                    TGSI_WRITEMASK_ZW,
-                                    GL_TRUE, TGSI_SEMANTIC_POSITION, 0 );
-         ti += tgsi_build_full_declaration(
-                                           &fulldecl,
-                                           &tokens[ti],
-                                           header,
-                                           maxTokens - ti );
-         break;
-      default:
-         fulldecl = make_input_decl(i,
-                                    interpMode[i],
-                                    TGSI_WRITEMASK_XYZW,
-                                    GL_TRUE, inputSemanticName[i],
-                                    inputSemanticIndex[i]);
-         ti += tgsi_build_full_declaration(&fulldecl,
-                                           &tokens[ti],
-                                           header,
-                                           maxTokens - ti );
-         break;
-      }
-   }
-
-
-   /*
-    * Declare output attributes.
-    */
-   for (i = 0; i < numOutputs; i++) {
-      struct tgsi_full_declaration fulldecl;
-      switch (outputSemanticName[i]) {
-      case TGSI_SEMANTIC_POSITION:
-         fulldecl = make_output_decl(i,
-                                     TGSI_SEMANTIC_POSITION, 0, /* Z / Depth */
-                                     TGSI_WRITEMASK_Z );
-         ti += tgsi_build_full_declaration(
-                                           &fulldecl,
-                                           &tokens[ti],
-                                           header,
-                                           maxTokens - ti );
-         break;
-      case TGSI_SEMANTIC_COLOR:
-         fulldecl = make_output_decl(i,
-                                     TGSI_SEMANTIC_COLOR, 0,
-                                     TGSI_WRITEMASK_XYZW );
-         ti += tgsi_build_full_declaration(
-                                           &fulldecl,
-                                           &tokens[ti],
-                                           header,
-                                           maxTokens - ti );
-         break;
-      default:
-         abort();
-      }
-   }
-
-   {
-      GLuint tempsUsed[MAX_PROGRAM_TEMPS];
-      uint numTemps = find_temporaries(&program->Base, tempsUsed);
-      for (i = 0; i < numTemps; i++) {
-         struct tgsi_full_declaration fulldecl;
-         fulldecl = make_temp_decl(tempsUsed[i]);
-         ti += tgsi_build_full_declaration(
-                                           &fulldecl,
-                                           &tokens[ti],
-                                           header,
-                                           maxTokens - ti );
-      }
-   }
-
-   /*
-    * Copy fragment z if the shader does not write it.
-    */
-#if 0
-   if( !(program->Base.OutputsWritten & (1 << FRAG_RESULT_DEPR)) ) {
-      fullinst = tgsi_default_full_instruction();
-
-      fullinst.Instruction.Opcode = TGSI_OPCODE_MOV;
-      fullinst.Instruction.NumDstRegs = 1;
-      fullinst.Instruction.NumSrcRegs = 1;
-
-      fulldst = &fullinst.FullDstRegisters[0];
-      fulldst->DstRegister.File = TGSI_FILE_OUTPUT;
-      fulldst->DstRegister.Index = 0;
-      fulldst->DstRegister.WriteMask = TGSI_WRITEMASK_Z;
-
-      fullsrc = &fullinst.FullSrcRegisters[0];
-      fullsrc->SrcRegister.File = TGSI_FILE_INPUT;
-      fullsrc->SrcRegister.Index = 0;
-
-      ti += tgsi_build_full_instruction(
-         &fullinst,
-         &tokens[ti],
-         header,
-         maxTokens - ti );
-      preamble_size++;
-   }
-#endif
-
-   for( i = 0; i < program->Base.NumInstructions; i++ ) {
-      compile_instruction(
-            &program->Base.Instructions[i],
-            &fullinst,
-            inputMapping,
-            outputMapping,
-            preamble_size,
-            TGSI_PROCESSOR_FRAGMENT );
-
-      ti += tgsi_build_full_instruction(
-         &fullinst,
-         &tokens[ti],
-         header,
-         maxTokens - ti );
-   }
-
-   return GL_TRUE;
-}
-
-GLboolean
-tgsi_mesa_compile_vp_program(
-   const struct gl_vertex_program *program,
-   GLuint numInputs,
-   const GLuint inputMapping[],
-   const ubyte inputSemanticName[],
-   const ubyte inputSemanticIndex[],
-   GLuint numOutputs,
-   const GLuint outputMapping[],
-   const ubyte outputSemanticName[],
-   const ubyte outputSemanticIndex[],
-   struct tgsi_token *tokens,
-   GLuint maxTokens)
-{
-   GLuint i, ti;
-   struct tgsi_header *header;
-   struct tgsi_processor *processor;
-   struct tgsi_full_instruction fullinst;
-
-   *(struct tgsi_version *) &tokens[0] = tgsi_build_version();
-
-   header = (struct tgsi_header *) &tokens[1];
-   *header = tgsi_build_header();
-
-   processor = (struct tgsi_processor *) &tokens[2];
-   *processor = tgsi_build_processor( TGSI_PROCESSOR_VERTEX, header );
-
-   ti = 3;
-
-   /* input decls */
-   for (i = 0; i < numInputs; i++) {
-      struct tgsi_full_declaration fulldecl;
-      fulldecl = make_input_decl(i,
-                                 TGSI_INTERPOLATE_ATTRIB,
-                                 TGSI_WRITEMASK_XYZW,
-                                 GL_FALSE, inputSemanticName[i],
-                                 inputSemanticIndex[i]);
-      ti += tgsi_build_full_declaration(&fulldecl,
-                                        &tokens[ti],
-                                        header,
-                                        maxTokens - ti );
-   }
-
-   /* output decls */
-   for (i = 0; i < numOutputs; i++) {
-      struct tgsi_full_declaration fulldecl;
-      fulldecl = make_output_decl(i,
-                                  outputSemanticName[i],
-                                  outputSemanticIndex[i],
-                                  TGSI_WRITEMASK_XYZW );
-      ti += tgsi_build_full_declaration(&fulldecl,
-                                        &tokens[ti],
-                                        header,
-                                        maxTokens - ti );
-   }
-
-   {
-      GLuint tempsUsed[MAX_PROGRAM_TEMPS];
-      uint numTemps = find_temporaries(&program->Base, tempsUsed);
-      for (i = 0; i < numTemps; i++) {
-         struct tgsi_full_declaration fulldecl;
-         fulldecl = make_temp_decl(tempsUsed[i]);
-         ti += tgsi_build_full_declaration(
-                                           &fulldecl,
-                                           &tokens[ti],
-                                           header,
-                                           maxTokens - ti );
-      }
-   }
-
-   for( i = 0; i < program->Base.NumInstructions; i++ ) {
-      compile_instruction(
-            &program->Base.Instructions[i],
-            &fullinst,
-            inputMapping,
-            outputMapping,
-            0,
-            TGSI_PROCESSOR_VERTEX );
 
       ti += tgsi_build_full_instruction(
          &fullinst,

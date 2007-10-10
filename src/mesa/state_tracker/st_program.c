@@ -233,19 +233,21 @@ st_translate_vertex_program(struct st_context *st,
 
    /* XXX: fix static allocation of tokens:
     */
-   tgsi_mesa_compile_vp_program( &stvp->Base,
-                                 /* inputs */
-                                 vs.num_inputs,
-                                 stvp->input_to_index,
-                                 vs.input_semantic_name,
-                                 vs.input_semantic_index,
-                                 /* outputs */
-                                 vs.num_outputs,
-                                 outputMapping,
-                                 vs.output_semantic_name,
+   tgsi_translate_mesa_program( TGSI_PROCESSOR_VERTEX,
+                                &stvp->Base.Base,
+                                /* inputs */
+                                vs.num_inputs,
+                                stvp->input_to_index,
+                                vs.input_semantic_name,
+                                vs.input_semantic_index,
+                                NULL,
+                                /* outputs */
+                                vs.num_outputs,
+                                outputMapping,
+                                vs.output_semantic_name,
                                  vs.output_semantic_index,
-                                 /* tokenized result */
-                                 tokensOut, maxTokens);
+                                /* tokenized result */
+                                tokensOut, maxTokens);
 
    vs.tokens = tokensOut;
    cso = st_cached_vs_state(st, &vs);
@@ -386,21 +388,21 @@ st_translate_fragment_program(struct st_context *st,
 
    /* XXX: fix static allocation of tokens:
     */
-   tgsi_mesa_compile_fp_program( &stfp->Base,
-                                 /* inputs */
-                                 fs.num_inputs,
-                                 inputMapping,
-                                 fs.input_semantic_name,
-                                 fs.input_semantic_index,
-                                 interpMode,
-                                 /* outputs */
-                                 fs.num_outputs,
-                                 outputMapping,
-                                 fs.output_semantic_name,
-                                 fs.output_semantic_index,
-                                 /* tokenized result */
-                                 tokensOut, maxTokens);
-
+   tgsi_translate_mesa_program( TGSI_PROCESSOR_FRAGMENT,
+                                &stfp->Base.Base,
+                                /* inputs */
+                                fs.num_inputs,
+                                inputMapping,
+                                fs.input_semantic_name,
+                                fs.input_semantic_index,
+                                interpMode,
+                                /* outputs */
+                                fs.num_outputs,
+                                outputMapping,
+                                fs.output_semantic_name,
+                                fs.output_semantic_index,
+                                /* tokenized result */
+                                tokensOut, maxTokens);
 
    fs.tokens = tokensOut;
 

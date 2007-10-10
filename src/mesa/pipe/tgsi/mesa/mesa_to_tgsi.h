@@ -8,27 +8,14 @@ extern "C" {
 struct tgsi_token;
 
 GLboolean
-tgsi_mesa_compile_fp_program(
-   const struct gl_fragment_program *program,
+tgsi_translate_mesa_program(
+   uint procType,
+   const struct gl_program *program,
    GLuint numInputs,
    const GLuint inputMapping[],
    const ubyte inputSemanticName[],
    const ubyte inputSemanticIndex[],
    const GLuint interpMode[],
-   GLuint numOutputs,
-   const GLuint outputMapping[],
-   const ubyte outputSemanticName[],
-   const ubyte outputSemanticIndex[],
-   struct tgsi_token *tokens,
-   GLuint maxTokens );
-
-GLboolean
-tgsi_mesa_compile_vp_program(
-   const struct gl_vertex_program *program,
-   GLuint numInputs,
-   const GLuint inputMapping[],
-   const ubyte inputSemanticName[],
-   const ubyte inputSemanticIndex[],
    GLuint numOutputs,
    const GLuint outputMapping[],
    const ubyte outputSemanticName[],
