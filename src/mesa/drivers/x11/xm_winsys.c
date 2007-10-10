@@ -58,8 +58,9 @@ struct xm_winsys
  */
 struct xm_buffer
 {
+   boolean userBuffer;  /** Is this a user-space buffer? */
    int refcount;
-   int size;
+   unsigned size;
    void *data;
    void *mapped;
 };
@@ -119,7 +120,8 @@ xm_buffer_reference(struct pipe_winsys *pws,
       assert(oldBuf->refcount >= 0);
       if (oldBuf->refcount == 0) {
          if (oldBuf->data) {
-            free(oldBuf->data);
+            if (!oldBuf->userBuffer)
+               free(oldBuf->data);
             oldBuf->data = NULL;
          }
          free(oldBuf);
@@ -141,6 +143,7 @@ xm_buffer_data(struct pipe_winsys *pws, struct pipe_buffer_handle *buf,
                unsigned size, const void *data )
 {
    struct xm_buffer *xm_buf = xm_bo(buf);
+   assert(!xm_buf->userBuffer);
    if (xm_buf->size != size) {
       if (xm_buf->data)
          free(xm_buf->data);
@@ -157,6 +160,7 @@ xm_buffer_subdata(struct pipe_winsys *pws, struct pipe_buffer_handle *buf,
 {
    struct xm_buffer *xm_buf = xm_bo(buf);
    GLubyte *b = (GLubyte *) xm_buf->data;
+   assert(!xm_buf->userBuffer);
    assert(b);
    memcpy(b + offset, data, size);
 }
@@ -167,6 +171,7 @@ xm_buffer_get_subdata(struct pipe_winsys *pws, struct pipe_buffer_handle *buf,
 {
    const struct xm_buffer *xm_buf = xm_bo(buf);
    const GLubyte *b = (GLubyte *) xm_buf->data;
+   assert(!xm_buf->userBuffer);
    assert(b);
    memcpy(data, b + offset, size);
 }
@@ -204,14 +209,26 @@ xm_get_name(struct pipe_winsys *pws)
 }
 
 
-/* Softpipe has no concept of pools.  We choose the tex/region pool
- * for all buffers.
- */
 static struct pipe_buffer_handle *
 xm_buffer_create(struct pipe_winsys *pws, unsigned alignment)
 {
    struct xm_buffer *buffer = CALLOC_STRUCT(xm_buffer);
    buffer->refcount = 1;
+   return pipe_bo(buffer);
+}
+
+
+/**
+ * Create buffer which wraps user-space data.
+ */
+static struct pipe_buffer_handle *
+xm_user_buffer_create(struct pipe_winsys *pws, void *ptr, unsigned bytes)
+{
+   struct xm_buffer *buffer = CALLOC_STRUCT(xm_buffer);
+   buffer->userBuffer = TRUE;
+   buffer->refcount = 1;
+   buffer->data = ptr;
+   buffer->size = bytes;
    return pipe_bo(buffer);
 }
 
@@ -235,6 +252,7 @@ xmesa_create_pipe_winsys( XMesaContext xmesa )
     * that rendering be done to an appropriate _DriBufferObject.  
     */
    xws->winsys.buffer_create = xm_buffer_create;
+   xws->winsys.user_buffer_create = xm_user_buffer_create;
    xws->winsys.buffer_map = xm_buffer_map;
    xws->winsys.buffer_unmap = xm_buffer_unmap;
    xws->winsys.buffer_reference = xm_buffer_reference;
