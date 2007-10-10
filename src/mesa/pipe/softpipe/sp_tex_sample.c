@@ -594,6 +594,8 @@ get_texel(struct tgsi_sampler *sampler,
                    ty * TEX_CACHE_TILE_SIZE,
                    TEX_CACHE_TILE_SIZE, TEX_CACHE_TILE_SIZE,
                    (float *) sampler->cache[entry].data);
+
+      pipe_surface_reference(&ps, NULL);
    }
    else {
       /*
