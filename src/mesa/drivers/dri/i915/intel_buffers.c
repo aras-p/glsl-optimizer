@@ -45,7 +45,7 @@
 
 /* This block can be removed when libdrm >= 2.3.1 is required */
 
-#ifndef DRM_VBLANK_FLIP
+#ifndef DRM_IOCTL_I915_FLIP
 
 #define DRM_VBLANK_FLIP 0x8000000
 
