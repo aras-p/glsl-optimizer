@@ -62,6 +62,20 @@ fetch_attrib4(const void *ptr, unsigned format, float attrib[4])
    case PIPE_FORMAT_R32_FLOAT:
       attrib[0] = ((float *) ptr)[0];
       break;
+
+   case PIPE_FORMAT_R32G32B32A32_SSCALED:
+      attrib[3] = ((int *) ptr)[3];
+      /* fall-through */
+   case PIPE_FORMAT_R32G32B32_SSCALED:
+      attrib[2] = ((int *) ptr)[2];
+      /* fall-through */
+   case PIPE_FORMAT_R32G32_SSCALED:
+      attrib[1] = ((int *) ptr)[1];
+      /* fall-through */
+   case PIPE_FORMAT_R32_SSCALED:
+      attrib[0] = ((int *) ptr)[0];
+      break;
+
    default:
       assert(0);
    }
