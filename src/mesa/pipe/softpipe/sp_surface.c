@@ -56,9 +56,10 @@ a8r8g8b8_read_quad_f_swz(struct softpipe_surface *sps, int x, int y,
    unsigned i, j;
 
    assert(sps->surface.format == PIPE_FORMAT_U_A8_R8_G8_B8);
+#if 0
    assert(x < (int) sps->surface.width - 1);
    assert(y < (int) sps->surface.height - 1);
-
+#endif
    for (i = 0; i < 2; i++) { /* loop over pixel row */
       for (j = 0; j < 2; j++) {  /* loop over pixel column */
          const unsigned p = src[j];
