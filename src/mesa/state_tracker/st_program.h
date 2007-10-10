@@ -82,7 +82,7 @@ struct st_vertex_program
    GLuint serialNo;
 
    /** maps a Mesa VERT_ATTRIB_x to a packed TGSI input index */
-   GLuint input_to_index[MAX_VERTEX_PROGRAM_ATTRIBS];
+   GLuint input_to_index[VERT_ATTRIB_MAX];
    /** maps a TGSI input index back to a Mesa VERT_ATTRIB_x */
    GLuint index_to_input[PIPE_MAX_SHADER_INPUTS];
 
