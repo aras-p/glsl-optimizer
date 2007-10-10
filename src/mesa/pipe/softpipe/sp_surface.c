@@ -882,7 +882,7 @@ softpipe_get_tex_surface(struct pipe_context *pipe,
    if (ps) {
       assert(ps->format);
       assert(ps->refcount);
-      ps->region = mt->region;
+      pipe_region_reference(&ps->region, mt->region);
       ps->width = mt->level[level].width;
       ps->height = mt->level[level].height;
       ps->offset = offset;
