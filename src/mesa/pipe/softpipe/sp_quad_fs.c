@@ -47,6 +47,7 @@ struct quad_shade_stage
    struct tgsi_sampler samplers[PIPE_MAX_SAMPLERS];
    struct tgsi_exec_machine machine;
    struct tgsi_exec_vector *inputs, *outputs;
+   int colorOutSlot, depthOutSlot;
 };
 
 
@@ -78,7 +79,6 @@ shade_quad(
    const float fx = (float) quad->x0;
    const float fy = (float) quad->y0;
    struct tgsi_exec_machine *machine = &qss->machine;
-   uint colorOut;
 
    /* Consts does not require 16 byte alignment. */
    machine->Consts = softpipe->mapped_constants[PIPE_SHADER_FRAGMENT];
@@ -110,31 +110,32 @@ shade_quad(
       quad->mask &= tgsi_exec_machine_run( machine );
    }
 
-   if (qss->stage.softpipe->fs->output_semantic_name[0] == TGSI_SEMANTIC_POSITION) {
-      /* output[0] is new Z */
+   /* store result color */
+   if (qss->colorOutSlot >= 0) {
+      /* XXX need to handle multiple color outputs someday */
+      assert(qss->stage.softpipe->fs->output_semantic_name[qss->colorOutSlot]
+             == TGSI_SEMANTIC_COLOR);
+      memcpy(
+             quad->outputs.color,
+             &machine->Outputs[qss->colorOutSlot].xyzw[0].f[0],
+             sizeof( quad->outputs.color ) );
+   }
+
+   /* store result Z */
+   if (qss->depthOutSlot >= 0) {
+      /* output[slot] is new Z */
       uint i;
       for (i = 0; i < 4; i++) {
          quad->outputs.depth[i] = machine->Outputs[0].xyzw[2].f[i];
       }
-      colorOut = 1;
    }
    else {
-      /* pass input Z (which was interpolated by the executor) to output Z */
+      /* copy input Z (which was interpolated by the executor) to output Z */
       uint i;
       for (i = 0; i < 4; i++) {
          quad->outputs.depth[i] = machine->Inputs[0].xyzw[2].f[i];
       }
-      colorOut = 0;
    }
-
-   /* store result color */
-   /* XXX need to handle multiple color outputs someday */
-   assert(qss->stage.softpipe->fs->output_semantic_name[colorOut]
-          == TGSI_SEMANTIC_COLOR);
-   memcpy(
-      quad->outputs.color,
-      &machine->Outputs[colorOut].xyzw[0].f[0],
-      sizeof( quad->outputs.color ) );
 
    /* shader may cull fragments */
    if( quad->mask ) {
@@ -172,6 +173,20 @@ static void shade_begin(struct quad_stage *qs)
                           softpipe->fs->tokens,
                           PIPE_MAX_SAMPLERS,
                           qss->samplers );
+
+   /* find output slots for depth, color */
+   qss->colorOutSlot = -1;
+   qss->depthOutSlot = -1;
+   for (i = 0; i < qss->stage.softpipe->fs->num_outputs; i++) {
+      switch (qss->stage.softpipe->fs->output_semantic_name[i]) {
+      case TGSI_SEMANTIC_POSITION:
+         qss->depthOutSlot = i;
+         break;
+      case TGSI_SEMANTIC_COLOR:
+         qss->colorOutSlot = i;
+         break;
+      }
+   }
 
    if (qs->next)
       qs->next->begin(qs->next);
