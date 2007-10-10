@@ -498,7 +498,7 @@ GLboolean intelInitContext( struct intel_context *intel,
       _mesa_enable_extension( ctx, "GL_EXT_texture_compression_s3tc" );
       _mesa_enable_extension( ctx, "GL_S3_s3tc" );
    }
-   else if (driQueryOptionb (&intelScreen->optionCache, "force_s3tc_enable")) {
+   else if (driQueryOptionb (&intel->optionCache, "force_s3tc_enable")) {
       _mesa_enable_extension( ctx, "GL_EXT_texture_compression_s3tc" );
    }
 
