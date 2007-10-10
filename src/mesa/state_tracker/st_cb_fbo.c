@@ -316,10 +316,10 @@ st_render_texture(GLcontext *ctx,
    /* get the mipmap tree for the texture */
    mt = st_get_texobj_mipmap_tree(att->Texture);
    assert(mt);
-   assert(mt->level[0].width);
+   assert(mt->level[att->TextureLevel].width);
 
-   rb->Width = mt->level[0].width;
-   rb->Height = mt->level[0].height;
+   rb->Width = mt->level[att->TextureLevel].width;
+   rb->Height = mt->level[att->TextureLevel].height;
 
    /* the renderbuffer's surface is inside the mipmap_tree: */
    strb->surface = pipe->get_tex_surface(pipe, mt,
