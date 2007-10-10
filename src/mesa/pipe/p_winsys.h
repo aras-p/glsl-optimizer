@@ -29,13 +29,13 @@
 #define P_WINSYS_H
 
 
-/* This is the interface that softpipe requires any window system
- * hosting it to implement.  This is the only include file in softpipe
+/**
+ * This is the interface that Gallium3D requires any window system
+ * hosting it to implement.  This is the only include file in Gallium3D
  * which is public.
- */
-
-
-/* Pipe drivers are (meant to be!) independent of both GL and the
+ *
+ *
+ * Gallium3D drivers are (meant to be!) independent of both GL and the
  * window system.  The window system provides a buffer manager and a
  * set of additional hooks for things like command buffer submission,
  * etc.
@@ -45,33 +45,33 @@
  * etc.
  */
 
+
+/** Opaque type */
 struct pipe_buffer_handle;
 
-struct pipe_winsys {
-
-   /* Do any special operations to ensure frontbuffer contents are
+struct pipe_winsys
+{
+   /**
+    * Do any special operations to ensure frontbuffer contents are
     * displayed, eg copy fake frontbuffer.
     */
    void (*flush_frontbuffer)( struct pipe_winsys *sws );
 
-   /* debug output 
-    */
+   /** for debug output */
    void (*printf)( struct pipe_winsys *sws,
 		   const char *, ... );	
 
 
    /* The buffer manager is modeled after the dri_bufmgr interface,
-    * but this is the subset that softpipe cares about.  Remember that
-    * softpipe gets to choose the interface it needs, and the window
+    * but this is the subset that gallium cares about.  Remember that
+    * gallium gets to choose the interface it needs, and the window
     * systems must then implement that interface (rather than the
     * other way around...).
-    *
-    * Softpipe only really wants to make system memory allocations,
-    * right?? 
     */
    struct pipe_buffer_handle *(*buffer_create)(struct pipe_winsys *sws, 
 					       unsigned alignment );
 
+   /** flags is bitmask of PIPE_BUFFER_FLAG_READ/WRITE */
    void *(*buffer_map)( struct pipe_winsys *sws, 
 			struct pipe_buffer_handle *buf,
 			unsigned flags );
@@ -101,12 +101,10 @@ struct pipe_winsys {
 			      void *data);
 
 
-   /* Wait for any hw swapbuffers, etc. to finish: 
-    */
+   /** Wait for any hw swapbuffers, etc. to finish */
    void (*wait_idle)( struct pipe_winsys *sws );
 
-   /* Queries:
-    */
+   /** Queries */
    const char *(*get_name)( struct pipe_winsys *sws );
 
 };
