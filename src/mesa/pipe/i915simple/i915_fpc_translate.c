@@ -240,14 +240,17 @@ get_result_vector(struct i915_fp_compile *p,
 {
    switch (dest->DstRegister.File) {
    case TGSI_FILE_OUTPUT:
-      switch (dest->DstRegister.Index) {
-      case 0:  /**TGSI_ATTRIB_POS:**/
-         return UREG(REG_TYPE_OD, 0);
-      case 1:  /**TGSI_ATTRIB_COLOR0:**/
-         return UREG(REG_TYPE_OC, 0);
-      default:
-         i915_program_error(p, "Bad inst->DstReg.Index");
-         return 0;
+      {
+         uint sem_name = p->output_semantic_name[dest->DstRegister.Index];
+         switch (sem_name) {
+         case TGSI_SEMANTIC_POSITION:
+            return UREG(REG_TYPE_OD, 0);
+         case TGSI_SEMANTIC_COLOR:
+            return UREG(REG_TYPE_OC, 0);
+         default:
+            i915_program_error(p, "Bad inst->DstReg.Index/semantics");
+            return 0;
+         }
       }
    case TGSI_FILE_TEMPORARY:
       return UREG(REG_TYPE_R, dest->DstRegister.Index);
@@ -866,6 +869,17 @@ i915_translate_instructions(struct i915_fp_compile *p,
             /*printf("FS Input DECL [%u] sem %u\n", ind, sem);*/
             p->input_semantic_name[ind] = sem;
             p->input_semantic_index[ind] = semi;
+         }
+         else if (parse.FullToken.FullDeclaration.Declaration.File
+             == TGSI_FILE_OUTPUT) {
+            /* save output register info for use in get_result_vector() */
+            uint ind, sem, semi;
+            ind = parse.FullToken.FullDeclaration.u.DeclarationRange.First;
+            sem = parse.FullToken.FullDeclaration.Semantic.SemanticName;
+            semi = parse.FullToken.FullDeclaration.Semantic.SemanticIndex;
+            /*printf("FS Output DECL [%u] sem %u\n", ind, sem);*/
+            p->output_semantic_name[ind] = sem;
+            p->output_semantic_index[ind] = semi;
          }
          break;
 

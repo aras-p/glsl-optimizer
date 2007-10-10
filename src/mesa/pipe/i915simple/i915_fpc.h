@@ -54,6 +54,9 @@ struct i915_fp_compile {
    uint input_semantic_name[PIPE_MAX_SHADER_INPUTS];
    uint input_semantic_index[PIPE_MAX_SHADER_INPUTS];
 
+   uint output_semantic_name[PIPE_MAX_SHADER_OUTPUTS];
+   uint output_semantic_index[PIPE_MAX_SHADER_OUTPUTS];
+
    /** points into the i915->current.constants array: */
    float (*constants)[4];
    uint num_constants;
