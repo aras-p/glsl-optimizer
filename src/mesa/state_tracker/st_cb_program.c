@@ -88,8 +88,6 @@ static struct gl_program *st_new_program( GLcontext *ctx,
 					  GLenum target, 
 					  GLuint id )
 {
-   struct st_context *st = st_context(ctx);
-
    switch (target) {
    case GL_VERTEX_PROGRAM_ARB: {
       struct st_vertex_program *prog = CALLOC_STRUCT(st_vertex_program);
