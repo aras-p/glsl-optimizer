@@ -247,7 +247,7 @@ LoadAndCompileShader(GLuint shader, const char *text)
       GLchar log[1000];
       GLsizei len;
       glGetShaderInfoLog_func(shader, 1000, &len, log);
-      fprintf(stderr, "brick: problem compiling shader: %s\n", log);
+      fprintf(stderr, "bump: problem compiling shader: %s\n", log);
       exit(1);
    }
    else {
@@ -267,12 +267,12 @@ ReadShader(GLuint shader, const char *filename)
    char *buffer = (char*) malloc(max);
    FILE *f = fopen(filename, "r");
    if (!f) {
-      fprintf(stderr, "brick: Unable to open shader file %s\n", filename);
+      fprintf(stderr, "bump: Unable to open shader file %s\n", filename);
       exit(1);
    }
 
    n = fread(buffer, 1, max, f);
-   printf("brick: read %d bytes from shader file %s\n", n, filename);
+   printf("bump: read %d bytes from shader file %s\n", n, filename);
    if (n > 0) {
       buffer[n] = 0;
       LoadAndCompileShader(shader, buffer);
