@@ -71,6 +71,12 @@ struct pipe_winsys
    struct pipe_buffer_handle *(*buffer_create)(struct pipe_winsys *sws, 
 					       unsigned alignment );
 
+   /** Create a buffer that wraps user-space data */
+   struct pipe_buffer_handle *(*user_buffer_create)(struct pipe_winsys *sws, 
+                                                    void *ptr,
+                                                    unsigned bytes);
+
+
    /** flags is bitmask of PIPE_BUFFER_FLAG_READ/WRITE */
    void *(*buffer_map)( struct pipe_winsys *sws, 
 			struct pipe_buffer_handle *buf,
