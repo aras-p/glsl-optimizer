@@ -197,6 +197,7 @@ st_draw_vbo(GLcontext *ctx,
             GLuint max_index)
 {
    struct pipe_context *pipe = ctx->st->pipe;
+   struct pipe_winsys *winsys = pipe->winsys;
    const struct st_vertex_program *vp;
    const struct pipe_shader_state *vs;
    const unsigned attr0_offset = (unsigned) arrays[0]->Ptr;
@@ -253,9 +254,9 @@ st_draw_vbo(GLcontext *ctx,
 
          /* wrap user data */
          vbuffer.buffer
-            = pipe->winsys->user_buffer_create(pipe->winsys,
-                                               (void *) arrays[mesaAttr]->Ptr,
-                                               bytes);
+            = winsys->user_buffer_create(winsys,
+                                         (void *) arrays[mesaAttr]->Ptr,
+                                         bytes);
 
          /* XXX need to deref/free this buffer.vbuffer after drawing! */
 
@@ -283,9 +284,8 @@ st_draw_vbo(GLcontext *ctx,
    if (ib) {
       /* indexed primitive */
       struct gl_buffer_object *bufobj = ib->obj;
-      struct pipe_buffer_handle *bh = NULL;
+      struct pipe_buffer_handle *indexBuf = NULL;
       unsigned indexSize, i;
-      GLboolean userBuffer = GL_FALSE;
 
       switch (ib->type) {
       case GL_UNSIGNED_INT:
@@ -298,28 +298,26 @@ st_draw_vbo(GLcontext *ctx,
          assert(0);
       }
 
+      /* get/create the index buffer object */
       if (bufobj && bufobj->Name) {
          /* elements/indexes are in a real VBO */
          struct st_buffer_object *stobj = st_buffer_object(bufobj);
-         bh = stobj->buffer;
-         /* XXX reference buffer here, don't special case userBuffer below */
+         winsys->buffer_reference(winsys, &indexBuf, stobj->buffer);
       }
       else {
          /* element/indicies are in user space memory */
-         bh = pipe->winsys->user_buffer_create(pipe->winsys,
+         indexBuf = winsys->user_buffer_create(winsys,
                                                (void *) ib->ptr,
                                                ib->count * indexSize);
-         userBuffer = GL_TRUE;
       }
 
+      /* draw */
       for (i = 0; i < nr_prims; i++) {
-         pipe->draw_elements(pipe, bh, indexSize,
-                              prims[i].mode, prims[i].start, prims[i].count);
+         pipe->draw_elements(pipe, indexBuf, indexSize,
+                             prims[i].mode, prims[i].start, prims[i].count);
       }
 
-      if (userBuffer) {
-         pipe->winsys->buffer_reference(pipe->winsys, &bh, NULL);
-      }
+      winsys->buffer_reference(winsys, &indexBuf, NULL);
    }
    else {
       /* non-indexed */
