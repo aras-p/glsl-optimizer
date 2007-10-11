@@ -200,9 +200,11 @@ st_draw_vbo(GLcontext *ctx,
    struct pipe_winsys *winsys = pipe->winsys;
    const struct st_vertex_program *vp;
    const struct pipe_shader_state *vs;
-   const unsigned attr0_offset = (unsigned) arrays[0]->Ptr;
-   GLboolean needDefaultAttribs = GL_FALSE;
    GLuint attr;
+   struct pipe_vertex_buffer vbuffer[PIPE_MAX_SHADER_INPUTS];
+
+   /* sanity check for pointer arithmetic below */
+   assert(sizeof(arrays[0]->Ptr[0]) == 1);
 
    st_validate_state(ctx->st);
 
@@ -210,41 +212,26 @@ st_draw_vbo(GLcontext *ctx,
    vp = ctx->st->vp;
    vs = &ctx->st->state.vs->state;
 
-   /* loop over TGSI shader inputs */
+   /* loop over TGSI shader inputs to determine vertex buffer
+    * and attribute info
+    */
    for (attr = 0; attr < vs->num_inputs; attr++) {
       const GLuint mesaAttr = vp->index_to_input[attr];
       struct gl_buffer_object *bufobj = arrays[mesaAttr]->BufferObj;
-
-      struct pipe_vertex_buffer vbuffer;
       struct pipe_vertex_element velement;
 
-      vbuffer.buffer = NULL;
-      vbuffer.pitch = 0;
-      velement.src_offset = 0;
-      velement.vertex_buffer_index = 0;
-      velement.src_format = 0;
-
       if (bufobj && bufobj->Name) {
-         /* attribute data is in a VBO */
-         struct st_buffer_object *stobj = st_buffer_object(bufobj);
-         /* Recall that for VBOs, the gl_client_array->Ptr field is
+         /* Attribute data is in a VBO.
+          * Recall that for VBOs, the gl_client_array->Ptr field is
           * really an offset from the start of the VBO, not a pointer.
           */
-         unsigned offset = (unsigned) arrays[mesaAttr]->Ptr;
-
+         struct st_buffer_object *stobj = st_buffer_object(bufobj);
          assert(stobj->buffer);
 
-         vbuffer.buffer = stobj->buffer;
-         vbuffer.buffer_offset = attr0_offset;  /* in bytes */
-         vbuffer.pitch = arrays[mesaAttr]->StrideB; /* in bytes */
-         vbuffer.max_index = 0;  /* need this? */
-
-         velement.src_offset = offset - attr0_offset; /* bytes */
-         velement.vertex_buffer_index = attr;
-         velement.dst_offset = 0; /* need this? */
-         velement.src_format = pipe_vertex_format(arrays[mesaAttr]->Type,
-                                                  arrays[mesaAttr]->Size);
-         assert(velement.src_format);
+         vbuffer[attr].buffer = NULL;
+         winsys->buffer_reference(winsys, &vbuffer[attr].buffer, stobj->buffer);
+         vbuffer[attr].buffer_offset = (unsigned) arrays[0]->Ptr;/* in bytes */
+         velement.src_offset = arrays[mesaAttr]->Ptr - arrays[0]->Ptr;
       }
       else {
          /* attribute data is in user-space memory, not a VBO */
@@ -253,30 +240,26 @@ st_draw_vbo(GLcontext *ctx,
                        * (max_index + 1));
 
          /* wrap user data */
-         vbuffer.buffer
+         vbuffer[attr].buffer
             = winsys->user_buffer_create(winsys,
                                          (void *) arrays[mesaAttr]->Ptr,
                                          bytes);
-
-         /* XXX need to deref/free this buffer.vbuffer after drawing! */
-
-         vbuffer.buffer_offset = 0;
-         vbuffer.pitch = arrays[mesaAttr]->StrideB; /* in bytes */
-         vbuffer.max_index = 0;  /* need this? */
-
+         vbuffer[attr].buffer_offset = 0;
          velement.src_offset = 0;
-         velement.vertex_buffer_index = attr;
-         velement.dst_offset = 0; /* need this? */
-         velement.src_format = pipe_vertex_format(arrays[mesaAttr]->Type,
-                                                  arrays[mesaAttr]->Size);
       }
 
-      pipe->set_vertex_buffer(pipe, attr, &vbuffer);
-      pipe->set_vertex_element(pipe, attr, &velement);
-   }
+      /* common-case setup */
+      vbuffer[attr].pitch = arrays[mesaAttr]->StrideB; /* in bytes */
+      vbuffer[attr].max_index = 0;  /* need this? */
+      velement.vertex_buffer_index = attr;
+      velement.dst_offset = 0; /* need this? */
+      velement.src_format = pipe_vertex_format(arrays[mesaAttr]->Type,
+                                               arrays[mesaAttr]->Size);
+      assert(velement.src_format);
 
-   if (needDefaultAttribs) {
-      update_default_attribs_buffer(ctx);
+      /* tell pipe about this attribute */
+      pipe->set_vertex_buffer(pipe, attr, &vbuffer[attr]);
+      pipe->set_vertex_element(pipe, attr, &velement);
    }
 
 
@@ -325,6 +308,11 @@ st_draw_vbo(GLcontext *ctx,
       for (i = 0; i < nr_prims; i++) {
          pipe->draw_arrays(pipe, prims[i].mode, prims[i].start, prims[i].count);
       }
+   }
+
+   /* unreference buffers (frees wrapped user-space buffer objects) */
+   for (attr = 0; attr < vs->num_inputs; attr++) {
+      winsys->buffer_reference(winsys, &vbuffer[attr].buffer, NULL);
    }
 }
 
