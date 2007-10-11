@@ -53,8 +53,11 @@
 #include "pipe/draw/draw_context.h"
 
 
+/**
+ * Return a PIPE_FORMAT_x for the given GL datatype and size.
+ */
 static GLuint
-pipe_vertex_format(GLenum format, GLuint size)
+pipe_vertex_format(GLenum type, GLuint size)
 {
    static const GLuint float_fmts[4] = {
       PIPE_FORMAT_R32_FLOAT,
@@ -69,12 +72,12 @@ pipe_vertex_format(GLenum format, GLuint size)
       PIPE_FORMAT_R32G32B32A32_SSCALED,
    };
 
-   assert(format >= GL_BYTE);
-   assert(format <= GL_DOUBLE);
+   assert(type >= GL_BYTE);
+   assert(type <= GL_DOUBLE);
    assert(size >= 1);
    assert(size <= 4);
 
-   switch (format) {
+   switch (type) {
    case GL_FLOAT:
       return float_fmts[size - 1];
    case GL_INT:
@@ -250,7 +253,6 @@ st_draw_vbo(GLcontext *ctx,
  * \param numVertex  number of vertices
  * \param verts  vertex data (all attributes are float[4])
  * \param numAttribs  number of attributes per vertex
- * \param attribs  index of each attribute (0=pos, 3=color, etc)
  */
 void 
 st_draw_vertices(GLcontext *ctx, unsigned prim,
@@ -460,14 +462,12 @@ st_feedback_draw_vbo(GLcontext *ctx,
 
 
 
-/* This is all a hack to keep using tnl until we have vertex programs
- * up and running.
- */
 void st_init_draw( struct st_context *st )
 {
    GLcontext *ctx = st->ctx;
    struct vbo_context *vbo = (struct vbo_context *) ctx->swtnl_im;
 
+   /* actually, not used here, but elsewhere */
    create_default_attribs_buffer(st);
 
    assert(vbo);
