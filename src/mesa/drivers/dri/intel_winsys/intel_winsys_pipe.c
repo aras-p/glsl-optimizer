@@ -151,6 +151,21 @@ intel_buffer_create(struct pipe_winsys *sws,
 }
 
 
+static struct pipe_buffer_handle *
+intel_user_buffer_create(struct pipe_winsys *sws, void *ptr, unsigned bytes)
+{
+   struct intel_context *intel = intel_pipe_winsys(sws)->intel;
+   struct _DriBufferObject *buffer;
+
+   LOCK_HARDWARE( intel );
+   driGenUserBuffer( intel->intelScreen->regionPool, 
+                     "pipe user buffer", &buffer, ptr, bytes);
+   UNLOCK_HARDWARE( intel );
+
+   return pipe_bo(buffer);
+}
+
+
 static void intel_wait_idle( struct pipe_winsys *sws )
 {
    struct intel_context *intel = intel_pipe_winsys(sws)->intel;
@@ -206,6 +221,7 @@ intel_create_pipe_winsys( struct intel_context *intel )
     * that rendering be done to an appropriate _DriBufferObject.  
     */
    iws->winsys.buffer_create = intel_buffer_create;
+   iws->winsys.user_buffer_create = intel_user_buffer_create;
    iws->winsys.buffer_map = intel_buffer_map;
    iws->winsys.buffer_unmap = intel_buffer_unmap;
    iws->winsys.buffer_reference = intel_buffer_reference;
