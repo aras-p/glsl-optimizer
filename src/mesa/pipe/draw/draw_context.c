@@ -81,6 +81,8 @@ struct draw_context *draw_create( void )
    draw->attrib_front1 = -1;
    draw->attrib_back1 = -1;
 
+   draw->prim = ~0; /* != any of PIPE_PRIM_x */
+
    draw_vertex_cache_invalidate( draw );
 
    return draw;
