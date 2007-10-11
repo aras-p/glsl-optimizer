@@ -17,6 +17,7 @@ PROGS = glthreads \
 	glxinfo \
 	glxpixmap \
 	glxpbdemo \
+	glxsnoop \
 	glxswapcontrol \
 	manywin \
 	offset \
