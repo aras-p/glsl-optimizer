@@ -171,17 +171,6 @@ destroy_default_attribs_buffer(struct st_context *st)
 }
 
 
-static void
-update_default_attribs_buffer(GLcontext *ctx)
-{
-   struct pipe_context *pipe = ctx->st->pipe;
-   struct pipe_buffer_handle *buf = ctx->st->default_attrib_buffer;
-   const unsigned size = sizeof(ctx->Current.Attrib);
-   const void *data = ctx->Current.Attrib;
-   pipe->winsys->buffer_data(pipe->winsys, buf, size, data);
-}
-
-
 /**
  * This function gets plugged into the VBO module and is called when
  * we have something to render.
@@ -200,8 +189,8 @@ st_draw_vbo(GLcontext *ctx,
    struct pipe_winsys *winsys = pipe->winsys;
    const struct st_vertex_program *vp;
    const struct pipe_shader_state *vs;
-   GLuint attr;
    struct pipe_vertex_buffer vbuffer[PIPE_MAX_SHADER_INPUTS];
+   GLuint attr;
 
    /* sanity check for pointer arithmetic below */
    assert(sizeof(arrays[0]->Ptr[0]) == 1);
@@ -400,14 +389,22 @@ st_feedback_draw_vbo(GLcontext *ctx,
    struct st_context *st = ctx->st;
    struct pipe_context *pipe = st->pipe;
    struct draw_context *draw = st->draw;
-   GLuint attr, i;
-   GLbitfield attrsNeeded;
-   const unsigned attr0_offset = (unsigned) arrays[0]->Ptr;
+   struct pipe_winsys *winsys = pipe->winsys;
+   const struct st_vertex_program *vp;
+   const struct pipe_shader_state *vs;
    struct pipe_buffer_handle *index_buffer_handle = 0;
+   struct pipe_vertex_buffer vbuffer[PIPE_MAX_SHADER_INPUTS];
+   GLuint attr, i;
 
    assert(ctx->RenderMode == GL_SELECT ||
           ctx->RenderMode == GL_FEEDBACK);
    assert(draw);
+
+   st_validate_state(ctx->st);
+
+   /* must get these after state validation! */
+   vp = ctx->st->vp;
+   vs = &ctx->st->state.vs->state;
 
    /*
     * Set up the draw module's state.
@@ -420,82 +417,63 @@ st_feedback_draw_vbo(GLcontext *ctx,
    draw_set_clip_state(draw, &st->state.clip);
    draw_set_rasterizer_state(draw, &st->state.rasterizer->state);
    draw_bind_vertex_shader(draw, st->state.vs->data);
-   /* XXX need to set vertex info too */
 
-
-   update_default_attribs_buffer(ctx);
-#if 0
-   /* this must be after state validation */
-   attrsNeeded = ctx->st->state.vs->inputs_read;
-
-   /* tell draw module about the vertex array element/attributes */
-   for (attr = 0; attr < 16; attr++) {
-      struct pipe_vertex_buffer vbuffer;
+   /* loop over TGSI shader inputs to determine vertex buffer
+    * and attribute info
+    */
+   for (attr = 0; attr < vs->num_inputs; attr++) {
+      const GLuint mesaAttr = vp->index_to_input[attr];
+      struct gl_buffer_object *bufobj = arrays[mesaAttr]->BufferObj;
       struct pipe_vertex_element velement;
       void *map;
 
-      vbuffer.buffer = NULL;
-      vbuffer.pitch = 0;
-      velement.src_offset = 0;
-      velement.vertex_buffer_index = 0;
-      velement.src_format = 0;
+      if (bufobj && bufobj->Name) {
+         /* Attribute data is in a VBO.
+          * Recall that for VBOs, the gl_client_array->Ptr field is
+          * really an offset from the start of the VBO, not a pointer.
+          */
+         struct st_buffer_object *stobj = st_buffer_object(bufobj);
+         assert(stobj->buffer);
 
-      if (attrsNeeded & (1 << attr)) {
-         const GLuint mesaAttr = tgsi_attrib_to_mesa_attrib(attr);
-         struct gl_buffer_object *bufobj = arrays[mesaAttr]->BufferObj;
+         vbuffer[attr].buffer = NULL;
+         winsys->buffer_reference(winsys, &vbuffer[attr].buffer, stobj->buffer);
+         vbuffer[attr].buffer_offset = (unsigned) arrays[0]->Ptr;/* in bytes */
+         velement.src_offset = arrays[mesaAttr]->Ptr - arrays[0]->Ptr;
+      }
+      else {
+         /* attribute data is in user-space memory, not a VBO */
+         uint bytes = (arrays[mesaAttr]->Size
+                       * _mesa_sizeof_type(arrays[mesaAttr]->Type)
+                       * (max_index + 1));
 
-         if (bufobj && bufobj->Name) {
-            struct st_buffer_object *stobj = st_buffer_object(bufobj);
-            /* Recall that for VBOs, the gl_client_array->Ptr field is
-             * really an offset from the start of the VBO, not a pointer.
-             */
-            unsigned offset = (unsigned) arrays[mesaAttr]->Ptr;
-
-            assert(stobj->buffer);
-
-            vbuffer.buffer = stobj->buffer;
-            vbuffer.buffer_offset = attr0_offset;  /* in bytes */
-            vbuffer.pitch = arrays[mesaAttr]->StrideB; /* in bytes */
-            vbuffer.max_index = 0;  /* need this? */
-
-            velement.src_offset = offset - attr0_offset; /* bytes */
-            velement.vertex_buffer_index = attr;
-            velement.dst_offset = 0; /* need this? */
-            velement.src_format = pipe_vertex_format(arrays[mesaAttr]->Type,
-                                                     arrays[mesaAttr]->Size);
-            assert(velement.src_format);
-         }
-         else {
-            /* use the default attribute buffer */
-            vbuffer.buffer = ctx->st->default_attrib_buffer;
-            vbuffer.buffer_offset = 0;
-            vbuffer.pitch = 0; /* must be zero! */
-            vbuffer.max_index = 1;
-
-            velement.src_offset = attr * 4 * sizeof(GLfloat);
-            velement.vertex_buffer_index = attr;
-            velement.dst_offset = 0;
-            velement.src_format = PIPE_FORMAT_R32G32B32A32_FLOAT;
-         }
+         /* wrap user data */
+         vbuffer[attr].buffer
+            = winsys->user_buffer_create(winsys,
+                                         (void *) arrays[mesaAttr]->Ptr,
+                                         bytes);
+         vbuffer[attr].buffer_offset = 0;
+         velement.src_offset = 0;
       }
 
-      if (attr == 0)
-         assert(vbuffer.buffer);
+      /* common-case setup */
+      vbuffer[attr].pitch = arrays[mesaAttr]->StrideB; /* in bytes */
+      vbuffer[attr].max_index = 0;  /* need this? */
+      velement.vertex_buffer_index = attr;
+      velement.dst_offset = 0; /* need this? */
+      velement.src_format = pipe_vertex_format(arrays[mesaAttr]->Type,
+                                               arrays[mesaAttr]->Size);
+      assert(velement.src_format);
 
-      draw_set_vertex_buffer(draw, attr, &vbuffer);
+      /* tell draw about this attribute */
+      draw_set_vertex_buffer(draw, attr, &vbuffer[attr]);
       draw_set_vertex_element(draw, attr, &velement);
 
       /* map the attrib buffer */
-      if (vbuffer.buffer) {
-         map = pipe->winsys->buffer_map(pipe->winsys,
-                                        vbuffer.buffer,
-                                        PIPE_BUFFER_FLAG_READ);
-         draw_set_mapped_vertex_buffer(draw, attr, map);
-      }
+      map = pipe->winsys->buffer_map(pipe->winsys,
+                                     vbuffer[attr].buffer,
+                                     PIPE_BUFFER_FLAG_READ);
+      draw_set_mapped_vertex_buffer(draw, attr, map);
    }
-#else
-   assert(0);
-#endif
 
    if (ib) {
       unsigned indexSize;
