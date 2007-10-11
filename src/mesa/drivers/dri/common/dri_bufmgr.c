@@ -67,6 +67,10 @@ typedef struct _DriBufferObject
    unsigned hint;
    unsigned alignment;
    void *private;
+   /* user-space buffer: */
+   unsigned userBuffer;
+   void *userData;
+   unsigned userSize;
 } DriBufferObject;
 
 
@@ -205,22 +209,29 @@ driBOWaitIdle(struct _DriBufferObject *buf, int lazy)
 void *
 driBOMap(struct _DriBufferObject *buf, unsigned flags, unsigned hint)
 {
-   void *virtual;
+   if (buf->userBuffer) {
+      return buf->userData;
+   }
+   else {
+      void *virtual;
 
-   assert(buf->private != NULL);
+      assert(buf->private != NULL);
 
-   _glthread_LOCK_MUTEX(buf->mutex);
-   BM_CKFATAL(buf->pool->map(buf->pool, buf->private, flags, hint, &virtual));
-   _glthread_UNLOCK_MUTEX(buf->mutex);
-   return virtual;
+      _glthread_LOCK_MUTEX(buf->mutex);
+      BM_CKFATAL(buf->pool->map(buf->pool, buf->private, flags, hint, &virtual));
+      _glthread_UNLOCK_MUTEX(buf->mutex);
+      return virtual;
+   }
 }
 
 void
 driBOUnmap(struct _DriBufferObject *buf)
 {
-   assert(buf->private != NULL);
+   if (!buf->userBuffer) {
+      assert(buf->private != NULL);
 
-   buf->pool->unmap(buf->pool, buf->private);
+      buf->pool->unmap(buf->pool, buf->private);
+   }
 }
 
 unsigned long
@@ -272,7 +283,8 @@ driBOUnReference(struct _DriBufferObject *buf)
    tmp = --buf->refCount;
    _glthread_UNLOCK_MUTEX(bmMutex);
    if (!tmp) {
-      buf->pool->destroy(buf->pool, buf->private);
+      if (buf->private)
+         buf->pool->destroy(buf->pool, buf->private);
       free(buf);
    }
 }
@@ -284,6 +296,8 @@ driBOData(struct _DriBufferObject *buf,
    void *virtual;
    int newBuffer;
    struct _DriBufferPool *pool;
+
+   assert(!buf->userBuffer); /* XXX just do a memcpy? */
 
    _glthread_LOCK_MUTEX(buf->mutex);
    pool = buf->pool;
@@ -323,6 +337,8 @@ driBOSubData(struct _DriBufferObject *buf,
 {
    void *virtual;
 
+   assert(!buf->userBuffer); /* XXX just do a memcpy? */
+
    _glthread_LOCK_MUTEX(buf->mutex);
    if (size && data) {
       BM_CKFATAL(buf->pool->map(buf->pool, buf->private,
@@ -339,6 +355,8 @@ driBOGetSubData(struct _DriBufferObject *buf,
 {
    void *virtual;
 
+   assert(!buf->userBuffer); /* XXX just do a memcpy? */
+
    _glthread_LOCK_MUTEX(buf->mutex);
    if (size && data) {
       BM_CKFATAL(buf->pool->map(buf->pool, buf->private,
@@ -354,6 +372,8 @@ driBOSetStatic(struct _DriBufferObject *buf,
                unsigned long offset,
                unsigned long size, void *virtual, unsigned flags)
 {
+   assert(!buf->userBuffer); /* XXX what to do? */
+
    _glthread_LOCK_MUTEX(buf->mutex);
    if (buf->private != NULL) {
       _mesa_error(NULL, GL_INVALID_OPERATION,
@@ -414,6 +434,22 @@ driGenBuffers(struct _DriBufferPool *pool,
       buffers[i] = buf;
    }
 }
+
+void
+driGenUserBuffer(struct _DriBufferPool *pool,
+                 const char *name,
+                 struct _DriBufferObject **buffers,
+                 void *ptr, unsigned bytes)
+{
+   const unsigned alignment = 1, flags = 0, hint = 0;
+
+   driGenBuffers(pool, name, 1, buffers, alignment, flags, hint);
+
+   (*buffers)->userBuffer = 1;
+   (*buffers)->userData = ptr;
+   (*buffers)->userSize = bytes;
+}
+
 
 void
 driDeleteBuffers(unsigned n, struct _DriBufferObject *buffers[])

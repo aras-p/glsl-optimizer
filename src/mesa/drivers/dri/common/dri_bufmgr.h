@@ -78,6 +78,10 @@ extern void driGenBuffers(struct _DriBufferPool *pool,
                           unsigned n,
                           struct _DriBufferObject *buffers[],
                           unsigned alignment, unsigned flags, unsigned hint);
+extern void driGenUserBuffer(struct _DriBufferPool *pool,
+                             const char *name,
+                             struct _DriBufferObject *buffers[],
+                             void *ptr, unsigned bytes);
 extern void driDeleteBuffers(unsigned n, struct _DriBufferObject *buffers[]);
 extern void driInitBufMgr(int fd);
 extern void driBOCreateList(int target, drmBOList * list);
