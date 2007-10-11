@@ -30,11 +30,17 @@
 
 
 /**
+ * \file
  * This is the interface that Gallium3D requires any window system
  * hosting it to implement.  This is the only include file in Gallium3D
  * which is public.
- *
- *
+ */
+
+
+/** Opaque type for a buffer */
+struct pipe_buffer_handle;
+
+/**
  * Gallium3D drivers are (meant to be!) independent of both GL and the
  * window system.  The window system provides a buffer manager and a
  * set of additional hooks for things like command buffer submission,
@@ -44,11 +50,6 @@
  * driver and the hardware driver about the format of command buffers,
  * etc.
  */
-
-
-/** Opaque type */
-struct pipe_buffer_handle;
-
 struct pipe_winsys
 {
    /**
@@ -57,12 +58,14 @@ struct pipe_winsys
     */
    void (*flush_frontbuffer)( struct pipe_winsys *sws );
 
-   /** for debug output */
+   /** Debug output */
    void (*printf)( struct pipe_winsys *sws,
 		   const char *, ... );	
 
 
-   /* The buffer manager is modeled after the dri_bufmgr interface,
+   /**
+    * The buffer manager is modeled after the dri_bufmgr interface, which 
+    * in turn is modeled after the ARB_vertex_buffer_object extension,  
     * but this is the subset that gallium cares about.  Remember that
     * gallium gets to choose the interface it needs, and the window
     * systems must then implement that interface (rather than the
@@ -77,7 +80,10 @@ struct pipe_winsys
                                                     unsigned bytes);
 
 
-   /** flags is bitmask of PIPE_BUFFER_FLAG_READ/WRITE */
+   /** 
+    * Map the entire data store of a buffer object into the client's address.
+    * flags is bitmask of PIPE_BUFFER_FLAG_READ/WRITE. 
+    */
    void *(*buffer_map)( struct pipe_winsys *sws, 
 			struct pipe_buffer_handle *buf,
 			unsigned flags );
@@ -90,16 +96,19 @@ struct pipe_winsys
                              struct pipe_buffer_handle **ptr,
                              struct pipe_buffer_handle *buf );
 
+   /** Create the data store of a buffer and optionally initialize it */
    void (*buffer_data)(struct pipe_winsys *sws, 
 		       struct pipe_buffer_handle *buf,
 		       unsigned size, const void *data );
 
+   /** Modify some or all of the data contained in a buffer's data store */
    void (*buffer_subdata)(struct pipe_winsys *sws, 
 			  struct pipe_buffer_handle *buf,
 			  unsigned long offset, 
 			  unsigned long size, 
 			  const void *data);
 
+   /** Query some or all of the data contained in a buffer's data store */
    void (*buffer_get_subdata)(struct pipe_winsys *sws, 
 			      struct pipe_buffer_handle *buf,
 			      unsigned long offset, 
@@ -117,4 +126,4 @@ struct pipe_winsys
 
 
 
-#endif /* SP_WINSYS_H */
+#endif /* P_WINSYS_H */
