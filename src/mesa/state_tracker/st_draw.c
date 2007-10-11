@@ -31,6 +31,7 @@
   */
 
 #include "main/imports.h"
+#include "main/image.h"
 
 #include "vbo/vbo.h"
 #include "vbo/vbo_context.h"
@@ -61,6 +62,12 @@ pipe_vertex_format(GLenum format, GLuint size)
       PIPE_FORMAT_R32G32B32_FLOAT,
       PIPE_FORMAT_R32G32B32A32_FLOAT,
    };
+   static const GLuint int_fmts[4] = {
+      PIPE_FORMAT_R32_SSCALED,
+      PIPE_FORMAT_R32G32_SSCALED,
+      PIPE_FORMAT_R32G32B32_SSCALED,
+      PIPE_FORMAT_R32G32B32A32_SSCALED,
+   };
 
    assert(format >= GL_BYTE);
    assert(format <= GL_DOUBLE);
@@ -70,6 +77,8 @@ pipe_vertex_format(GLenum format, GLuint size)
    switch (format) {
    case GL_FLOAT:
       return float_fmts[size - 1];
+   case GL_INT:
+      return int_fmts[size - 1];
    default:
       assert(0);
    }
@@ -215,6 +224,7 @@ st_draw_vbo(GLcontext *ctx,
       velement.src_format = 0;
 
       if (bufobj && bufobj->Name) {
+         /* attribute data is in a VBO */
          struct st_buffer_object *stobj = st_buffer_object(bufobj);
          /* Recall that for VBOs, the gl_client_array->Ptr field is
           * really an offset from the start of the VBO, not a pointer.
@@ -236,22 +246,29 @@ st_draw_vbo(GLcontext *ctx,
          assert(velement.src_format);
       }
       else {
-         /* use the default attribute buffer */
-         needDefaultAttribs = GL_TRUE;
+         /* attribute data is in user-space memory, not a VBO */
+         uint bytes = (arrays[mesaAttr]->Size
+                       * _mesa_sizeof_type(arrays[mesaAttr]->Type)
+                       * (max_index + 1));
 
-         vbuffer.buffer = ctx->st->default_attrib_buffer;
+         /* wrap user data */
+         vbuffer.buffer
+            = pipe->winsys->user_buffer_create(pipe->winsys,
+                                               (void *) arrays[mesaAttr]->Ptr,
+                                               bytes);
+
+         /* XXX need to deref/free this buffer.vbuffer after drawing! */
+
          vbuffer.buffer_offset = 0;
-         vbuffer.pitch = 0; /* must be zero! */
-         vbuffer.max_index = 1;
+         vbuffer.pitch = arrays[mesaAttr]->StrideB; /* in bytes */
+         vbuffer.max_index = 0;  /* need this? */
 
-         velement.src_offset = mesaAttr * 4 * sizeof(GLfloat);
+         velement.src_offset = 0;
          velement.vertex_buffer_index = attr;
-         velement.dst_offset = 0;
-         velement.src_format = PIPE_FORMAT_R32G32B32A32_FLOAT;
+         velement.dst_offset = 0; /* need this? */
+         velement.src_format = pipe_vertex_format(arrays[mesaAttr]->Type,
+                                                  arrays[mesaAttr]->Size);
       }
-
-      if (attr == 0)
-         assert(vbuffer.buffer);
 
       pipe->set_vertex_buffer(pipe, attr, &vbuffer);
       pipe->set_vertex_element(pipe, attr, &velement);
@@ -268,29 +285,40 @@ st_draw_vbo(GLcontext *ctx,
       struct gl_buffer_object *bufobj = ib->obj;
       struct pipe_buffer_handle *bh = NULL;
       unsigned indexSize, i;
+      GLboolean userBuffer = GL_FALSE;
+
+      switch (ib->type) {
+      case GL_UNSIGNED_INT:
+         indexSize = 4;
+         break;
+      case GL_UNSIGNED_SHORT:
+         indexSize = 2;
+         break;
+      default:
+         assert(0);
+      }
 
       if (bufobj && bufobj->Name) {
          /* elements/indexes are in a real VBO */
          struct st_buffer_object *stobj = st_buffer_object(bufobj);
          bh = stobj->buffer;
-         switch (ib->type) {
-         case GL_UNSIGNED_INT:
-            indexSize = 4;
-            break;
-         case GL_UNSIGNED_SHORT:
-            indexSize = 2;
-            break;
-         default:
-            assert(0);
-         }
+         /* XXX reference buffer here, don't special case userBuffer below */
       }
       else {
-         assert(0);
+         /* element/indicies are in user space memory */
+         bh = pipe->winsys->user_buffer_create(pipe->winsys,
+                                               (void *) ib->ptr,
+                                               ib->count * indexSize);
+         userBuffer = GL_TRUE;
       }
 
       for (i = 0; i < nr_prims; i++) {
          pipe->draw_elements(pipe, bh, indexSize,
                               prims[i].mode, prims[i].start, prims[i].count);
+      }
+
+      if (userBuffer) {
+         pipe->winsys->buffer_reference(pipe->winsys, &bh, NULL);
       }
    }
    else {
