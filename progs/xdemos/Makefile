@@ -8,7 +8,9 @@ INCDIR = $(TOP)/include
 
 LIB_DEP = $(TOP)/$(LIB_DIR)/$(GL_LIB_NAME) $(TOP)/$(LIB_DIR)/$(GLU_LIB_NAME)
 
-PROGS = glthreads \
+PROGS = \
+	corender \
+	glthreads \
 	glxdemo \
 	glxgears \
 	glxgears_fbconfig \
@@ -83,3 +85,11 @@ xuserotfont.o: xuserotfont.c xuserotfont.h
 xrotfontdemo.o: xrotfontdemo.c xuserotfont.h
 	$(CC) -c -I. -I$(INCDIR) $(X11_INCLUDES) $(CFLAGS) xrotfontdemo.c
 
+corender: corender.o ipc.o
+	$(CC) $(CFLAGS) corender.o ipc.o $(APP_LIB_DEPS) -o $@
+
+corender.o: corender.c ipc.h
+	$(CC) -c -I. -I$(INCDIR) $(X11_INCLUDES) $(CFLAGS) corender.c
+
+ipc.o: ipc.c ipc.h
+	$(CC) -c -I. -I$(INCDIR) $(X11_INCLUDES) $(CFLAGS) ipc.c
