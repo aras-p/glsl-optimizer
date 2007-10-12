@@ -539,6 +539,7 @@ intelInitDriver(__DRIscreenPrivate * sPriv)
    intelScreen->ttm = GL_FALSE;
    if (getenv("INTEL_NO_TTM") == NULL &&
        intelScreen->driScrnPriv->ddxMinor >= 9 &&
+       intelScreen->drmMinor >= 11 &&
        intelScreen->front.bo_handle != -1) {
       intelScreen->bufmgr = intel_bufmgr_ttm_init(sPriv->fd,
 						  DRM_FENCE_TYPE_EXE,
