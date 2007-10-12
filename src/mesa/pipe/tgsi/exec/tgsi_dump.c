@@ -589,6 +589,16 @@ static const char *TGSI_EXTSWIZZLES[] =
    "EXTSWIZZLE_ONE"
 };
 
+static const char *TGSI_EXTSWIZZLES_SHORT[] =
+{
+   "x",
+   "y",
+   "z",
+   "w",
+   "0",
+   "1"
+};
+
 static const char *TGSI_WRITEMASKS[] =
 {
    "0",
@@ -900,6 +910,16 @@ dump_instruction_short(
       SID( src->SrcRegister.Index );
       CHR( ']' );
 
+      if (src->SrcRegisterExtSwz.ExtSwizzleX != TGSI_EXTSWIZZLE_X ||
+          src->SrcRegisterExtSwz.ExtSwizzleY != TGSI_EXTSWIZZLE_Y ||
+          src->SrcRegisterExtSwz.ExtSwizzleZ != TGSI_EXTSWIZZLE_Z ||
+          src->SrcRegisterExtSwz.ExtSwizzleW != TGSI_EXTSWIZZLE_W) {
+         CHR( '.' );
+         ENM( src->SrcRegisterExtSwz.ExtSwizzleX, TGSI_EXTSWIZZLES_SHORT );
+         ENM( src->SrcRegisterExtSwz.ExtSwizzleY, TGSI_EXTSWIZZLES_SHORT );
+         ENM( src->SrcRegisterExtSwz.ExtSwizzleZ, TGSI_EXTSWIZZLES_SHORT );
+         ENM( src->SrcRegisterExtSwz.ExtSwizzleW, TGSI_EXTSWIZZLES_SHORT );
+      }
       if( src->SrcRegister.SwizzleX != TGSI_SWIZZLE_X ||
             src->SrcRegister.SwizzleY != TGSI_SWIZZLE_Y ||
             src->SrcRegister.SwizzleZ != TGSI_SWIZZLE_Z ||
