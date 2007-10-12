@@ -66,14 +66,8 @@ make_fragment_shader(struct st_context *st, GLboolean bitmapMode)
    if (!p)
       return NULL;
 
-#define CULL 1  /* Use KIL to cull 0 bits/pixels in bitmap? */
-
    if (bitmapMode)
-#if CULL
-      p->NumInstructions = 7;
-#else
-      p->NumInstructions = 3;
-#endif
+      p->NumInstructions = 6;
    else
       p->NumInstructions = 2;
 
@@ -85,14 +79,11 @@ make_fragment_shader(struct st_context *st, GLboolean bitmapMode)
    _mesa_init_instructions(p->Instructions, p->NumInstructions);
    if (bitmapMode) {
       /*
-       * XXX This is temporary
-       * We actually need to cull the fragment if the texture value is zero.
-       * But TGSI doesn't support conditionals yet.
-       * Also, we need to compose this fragment shader with the current
+       * XXX, we need to compose this fragment shader with the current
        * user-provided fragment shader so the fragment program is applied
        * to the fragments which aren't culled.
        */
-      /* TEX temp0, fragment.texcoord[0], texture[0], 2D; */
+      /* TEX tmp0, fragment.texcoord[0], texture[0], 2D; */
       p->Instructions[ic].Opcode = OPCODE_TEX;
       p->Instructions[ic].DstReg.File = PROGRAM_TEMPORARY;
       p->Instructions[ic].DstReg.Index = 0;
@@ -101,13 +92,36 @@ make_fragment_shader(struct st_context *st, GLboolean bitmapMode)
       p->Instructions[ic].TexSrcUnit = 0;
       p->Instructions[ic].TexSrcTarget = TEXTURE_2D_INDEX;
       ic++;
-#if CULL
-      /* IF temp0 */
-      p->Instructions[ic].Opcode = OPCODE_IF;
+
+      /* SWZ tmp0.x, tmp0.x, 1111; # tmp0.x = 1.0 */
+      p->Instructions[ic].Opcode = OPCODE_SWZ;
+      p->Instructions[ic].DstReg.File = PROGRAM_TEMPORARY;
+      p->Instructions[ic].DstReg.Index = 0;
+      p->Instructions[ic].DstReg.WriteMask = WRITEMASK_X;
+      p->Instructions[ic].SrcReg[0].File = PROGRAM_TEMPORARY;
+      p->Instructions[ic].SrcReg[0].Index = 0;
+      p->Instructions[ic].SrcReg[0].Swizzle
+         = MAKE_SWIZZLE4(SWIZZLE_ONE, SWIZZLE_ONE, SWIZZLE_ONE, SWIZZLE_ONE );
+      ic++;
+
+      /* SUB tmp0.w, tmp0.w, tmp0.x;  #  tmp0.w -= 1 */
+      p->Instructions[ic].Opcode = OPCODE_SUB;
+      p->Instructions[ic].DstReg.File = PROGRAM_TEMPORARY;
+      p->Instructions[ic].DstReg.Index = 0;
+      p->Instructions[ic].DstReg.WriteMask = WRITEMASK_W;
       p->Instructions[ic].SrcReg[0].File = PROGRAM_TEMPORARY;
       p->Instructions[ic].SrcReg[0].Index = 0;
       p->Instructions[ic].SrcReg[0].Swizzle = SWIZZLE_WWWW;
-      p->Instructions[ic].BranchTarget = ic + 2;
+      p->Instructions[ic].SrcReg[1].File = PROGRAM_TEMPORARY;
+      p->Instructions[ic].SrcReg[1].Index = 0;
+      p->Instructions[ic].SrcReg[1].Swizzle = SWIZZLE_XXXX; /* 1.0 */
+      ic++;
+
+      /* KIL if tmp0.w < 0 */
+      p->Instructions[ic].Opcode = OPCODE_KIL;
+      p->Instructions[ic].SrcReg[0].File = PROGRAM_TEMPORARY;
+      p->Instructions[ic].SrcReg[0].Index = 0;
+      p->Instructions[ic].SrcReg[0].Swizzle = SWIZZLE_WWWW;
       ic++;
 
       /* MOV result.color, fragment.color */
@@ -117,31 +131,6 @@ make_fragment_shader(struct st_context *st, GLboolean bitmapMode)
       p->Instructions[ic].SrcReg[0].File = PROGRAM_INPUT;
       p->Instructions[ic].SrcReg[0].Index = FRAG_ATTRIB_COL0;
       ic++;
-
-      /* ELSE */
-      p->Instructions[ic].Opcode = OPCODE_ELSE;
-      p->Instructions[ic].BranchTarget = ic + 2;
-      ic++;
-
-      /* KILL */
-      p->Instructions[ic].Opcode = OPCODE_KIL_NV;
-      ic++;
-
-      /* ENDIF */
-      p->Instructions[ic].Opcode = OPCODE_ENDIF;
-      ic++;
-#else
-      /* MUL result.color, temp0.xxxx, fragment.color */
-      p->Instructions[ic].Opcode = OPCODE_MUL;
-      p->Instructions[ic].DstReg.File = PROGRAM_OUTPUT;
-      p->Instructions[ic].DstReg.Index = FRAG_RESULT_COLR;
-      p->Instructions[ic].SrcReg[0].File = PROGRAM_TEMPORARY;
-      p->Instructions[ic].SrcReg[0].Index = 0;
-      p->Instructions[ic].SrcReg[0].Swizzle = SWIZZLE_WWWW;
-      p->Instructions[ic].SrcReg[1].File = PROGRAM_INPUT;
-      p->Instructions[ic].SrcReg[1].Index = FRAG_ATTRIB_COL0;
-      ic++;
-#endif
    }
    else {
       /* DrawPixels mode */
