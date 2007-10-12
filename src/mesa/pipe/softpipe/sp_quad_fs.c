@@ -109,7 +109,7 @@ shade_quad(
          machine->InterpCoefs );
    }
    else {
-      ga_llvm_prog_exec(softpipe->fs->llvm_prog);
+      //ga_llvm_prog_exec(softpipe->fs->llvm_prog);
       quad->mask &= tgsi_exec_machine_run( machine );
    }
 

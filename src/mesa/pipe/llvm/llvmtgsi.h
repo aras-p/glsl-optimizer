@@ -18,7 +18,11 @@ ga_llvm_from_tgsi(const struct tgsi_token *tokens);
 
 void ga_llvm_prog_delete(struct ga_llvm_prog *prog);
 
-int ga_llvm_prog_exec(struct ga_llvm_prog *prog);
+int ga_llvm_prog_exec(struct ga_llvm_prog *prog,
+                      float (*inputs)[32][4],
+                      void *dests[16*32*4],
+                      float (*consts)[4],
+                      int count);
 
 #if defined __cplusplus
 } // extern "C"

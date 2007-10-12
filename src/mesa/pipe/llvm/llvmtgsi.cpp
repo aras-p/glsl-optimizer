@@ -426,7 +426,11 @@ void ga_llvm_prog_delete(struct ga_llvm_prog *prog)
    free(prog);
 }
 
-int ga_llvm_prog_exec(struct ga_llvm_prog *prog)
+int ga_llvm_prog_exec(struct ga_llvm_prog *prog,
+                      float (*inputs)[32][4],
+                      void *dests[16*32*4],
+                      float (*consts)[4],
+                      int count)
 {
    //std::cout << "START "<<std::endl;
    llvm::Module *mod = static_cast<llvm::Module*>(prog->module);

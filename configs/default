@@ -76,7 +76,8 @@ else
 endif
 
 ifeq ($(MESA_NO_LLVM),0)
-  LLVM_CFLAGS=`llvm-config --cflags` -DMESA_NO_LLVM=0
+#  LLVM_CFLAGS=`llvm-config --cflags` -DMESA_NO_LLVM=0
+  LLVM_CFLAGS=-DMESA_NO_LLVM=0
   LLVM_CXXFLAGS=`llvm-config --cxxflags` -DMESA_NO_LLVM=0 -Wno-long-long
   LLVM_LDFLAGS=`llvm-config --ldflags`
   LLVM_LIBS=`llvm-config --libs`

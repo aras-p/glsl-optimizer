@@ -91,6 +91,8 @@ run_vertex_program(struct draw_context *draw,
    assert(draw->vertex_shader->state->output_semantic_name[0]
           == TGSI_SEMANTIC_POSITION);
 
+   fprintf(stderr, "------ run_vertex\n");
+
    /* Consts does not require 16 byte alignment. */
    machine->Consts = (float (*)[4]) draw->mapped_constants;
 
@@ -161,10 +163,6 @@ run_vertex_program(struct draw_context *draw,
          vOut[j]->data[slot][3] = machine->Outputs[slot].xyzw[3].f[j];
 #if DBG
          printf("output[%d][%d]: %f %f %f %f\n", j, slot,
-                vOut[j]->data[slot][0],
-                vOut[j]->data[slot][1],
-                vOut[j]->data[slot][2],
-                vOut[j]->data[slot][3]);
 #endif
       }
    } /* loop over vertices */
@@ -179,7 +177,12 @@ void draw_vertex_shader_queue_flush( struct draw_context *draw )
 {
    unsigned i, j;
 
-//   fprintf(stderr, " q(%d) ", draw->vs.queue_nr );
+   fprintf(stderr, "XX q(%d) ", draw->vs.queue_nr );
+
+   if (draw->vertex_shader->state->llvm_prog) {
+      draw_vertex_shader_queue_flush_llvm(draw);
+      return;
+   }
 
    /* run vertex shader on vertex cache entries, four per invokation */
    for (i = 0; i < draw->vs.queue_nr; i += 4) {
