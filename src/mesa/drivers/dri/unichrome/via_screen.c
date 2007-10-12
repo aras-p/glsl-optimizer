@@ -98,9 +98,7 @@ viaInitDriver(__DRIscreenPrivate *sPriv)
 {
     viaScreenPrivate *viaScreen;
     VIADRIPtr gDRIPriv = (VIADRIPtr)sPriv->pDevPriv;
-    PFNGLXSCRENABLEEXTENSIONPROC glx_enable_extension =
-      (PFNGLXSCRENABLEEXTENSIONPROC) (*dri_interface->getProcAddress("glxEnableExtension"));
-    void * const psc = sPriv->psc->screenConfigs;
+    int i;
 
     if (sPriv->devPrivSize != sizeof(VIADRIRec)) {
       fprintf(stderr,"\nERROR!  sizeof(VIADRIRec) does not match passed size from device driver\n");
@@ -175,16 +173,16 @@ viaInitDriver(__DRIscreenPrivate *sPriv)
 
     viaScreen->sareaPrivOffset = gDRIPriv->sarea_priv_offset;
 
-    if ( glx_enable_extension != NULL ) {
-       if ( viaScreen->irqEnabled ) {
-	  (*glx_enable_extension)( psc, "GLX_SGI_swap_control" );
-	  (*glx_enable_extension)( psc, "GLX_SGI_video_sync" );
-	  (*glx_enable_extension)( psc, "GLX_MESA_swap_control" );
-       }
-
-       (*glx_enable_extension)( psc, "GLX_SGI_make_current_read" );
-       (*glx_enable_extension)( psc, "GLX_MESA_swap_frame_usage" );
+    i = 0;
+    viaScreen->extensions[i++] = &driFrameTrackingExtension.base;
+    viaScreen->extensions[i++] = &driReadDrawableExtension;
+    if ( viaScreen->irqEnabled ) {
+	viaScreen->extensions[i++] = &driSwapControlExtension.base;
+	viaScreen->extensions[i++] = &driMediaStreamCounterExtension.base;
     }
+
+    viaScreen->extensions[i++] = NULL;
+    sPriv->extensions = viaScreen->extensions;
 
     return GL_TRUE;
 }
@@ -326,7 +324,6 @@ viaDestroyBuffer(__DRIdrawablePrivate *driDrawPriv)
 
 
 static struct __DriverAPIRec viaAPI = {
-   .InitDriver      = viaInitDriver,
    .DestroyScreen   = viaDestroyScreen,
    .CreateContext   = viaCreateContext,
    .DestroyContext  = viaDestroyContext,
@@ -408,67 +405,47 @@ viaFillInModes( unsigned pixel_bits, GLboolean have_back_buffer )
 
 
 /**
- * This is the bootstrap function for the driver.  libGL supplies all of the
- * requisite information about the system, and the driver initializes itself.
- * This routine also fills in the linked list pointed to by \c driver_modes
- * with the \c __GLcontextModes that the driver can support for windows or
- * pbuffers.
+ * This is the driver specific part of the createNewScreen entry point.
  * 
- * \return A pointer to a \c __DRIscreenPrivate on success, or \c NULL on 
- *         failure.
+ * \todo maybe fold this into intelInitDriver
+ *
+ * \return the __GLcontextModes supported by this driver
  */
-PUBLIC
-void * __driCreateNewScreen_20050727( __DRInativeDisplay *dpy, int scrn,
-			     __DRIscreen *psc,
-			     const __GLcontextModes * modes,
-			     const __DRIversion * ddx_version,
-			     const __DRIversion * dri_version,
-			     const __DRIversion * drm_version,
-			     const __DRIframebuffer * frame_buffer,
-			     drmAddress pSAREA, int fd, 
-			     int internal_api_version,
-			     const __DRIinterfaceMethods * interface,
-			     __GLcontextModes ** driver_modes )
-			     
+__GLcontextModes *__driDriverInitScreen(__DRIscreenPrivate *psp)
 {
-   __DRIscreenPrivate *psp;
    static const __DRIversion ddx_expected = { VIA_DRIDDX_VERSION_MAJOR,
                                               VIA_DRIDDX_VERSION_MINOR,
                                               VIA_DRIDDX_VERSION_PATCH };
    static const __DRIversion dri_expected = { 4, 0, 0 };
    static const __DRIversion drm_expected = { 2, 3, 0 };
    static const char *driver_name = "Unichrome";
-
-   dri_interface = interface;
+   VIADRIPtr dri_priv = (VIADRIPtr) psp->pDevPriv;
 
    if ( ! driCheckDriDdxDrmVersions2( driver_name,
-				      dri_version, & dri_expected,
-				      ddx_version, & ddx_expected,
-				      drm_version, & drm_expected) ) {
+				      &psp->dri_version, & dri_expected,
+				      &psp->ddx_version, & ddx_expected,
+				      &psp->drm_version, & drm_expected) )
       return NULL;
-   }
-      
-   psp = __driUtilCreateNewScreen(dpy, scrn, psc, NULL,
-				  ddx_version, dri_version, drm_version,
-				  frame_buffer, pSAREA, fd,
-				  internal_api_version, &viaAPI);
-   if ( psp != NULL ) {
-      VIADRIPtr dri_priv = (VIADRIPtr) psp->pDevPriv;
-      *driver_modes = viaFillInModes( dri_priv->bytesPerPixel * 8,
-				      GL_TRUE );
 
-      /* Calling driInitExtensions here, with a NULL context pointer, does not actually
-       * enable the extensions.  It just makes sure that all the dispatch offsets for all
-       * the extensions that *might* be enables are known.  This is needed because the
-       * dispatch offsets need to be known when _mesa_context_create is called, but we can't
-       * enable the extensions until we have a context pointer.
-       *
-       * Hello chicken.  Hello egg.  How are you two today?
-       */
-      driInitExtensions( NULL, card_extensions, GL_FALSE );
-   }
+   psp->DriverAPI = viaAPI;
 
-   return (void *) psp;
+   /* Calling driInitExtensions here, with a NULL context pointer,
+    * does not actually enable the extensions.  It just makes sure
+    * that all the dispatch offsets for all the extensions that
+    * *might* be enables are known.  This is needed because the
+    * dispatch offsets need to be known when _mesa_context_create is
+    * called, but we can't enable the extensions until we have a
+    * context pointer.
+    *
+    * Hello chicken.  Hello egg.  How are you two today?
+    */
+   driInitExtensions( NULL, card_extensions, GL_FALSE );
+
+   if (!viaInitDriver(psp))
+       return NULL;
+
+   return viaFillInModes( dri_priv->bytesPerPixel * 8, GL_TRUE );
+
 }
 
 

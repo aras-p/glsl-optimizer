@@ -168,6 +168,10 @@ static const struct tnl_pipeline_stage *savage_pipeline[] = {
 };
 
 
+static const __DRIextension *savageExtensions[] = {
+    &driReadDrawableExtension,
+};
+
 /* this is first function called in dirver*/
 
 static GLboolean
@@ -175,9 +179,6 @@ savageInitDriver(__DRIscreenPrivate *sPriv)
 {
   savageScreenPrivate *savageScreen;
   SAVAGEDRIPtr         gDRIPriv = (SAVAGEDRIPtr)sPriv->pDevPriv;
-   PFNGLXSCRENABLEEXTENSIONPROC glx_enable_extension =
-     (PFNGLXSCRENABLEEXTENSIONPROC) (*dri_interface->getProcAddress("glxEnableExtension"));
-
 
    if (sPriv->devPrivSize != sizeof(SAVAGEDRIRec)) {
       fprintf(stderr,"\nERROR!  sizeof(SAVAGEDRIRec) does not match passed size from device driver\n");
@@ -265,10 +266,7 @@ savageInitDriver(__DRIscreenPrivate *sPriv)
    driParseOptionInfo (&savageScreen->optionCache,
 		       __driConfigOptions, __driNConfigOptions);
 
-   if (glx_enable_extension != NULL) {
-      (*glx_enable_extension)(sPriv->psc->screenConfigs,
-			      "GLX_SGI_make_current_read");
-   }
+   sPriv->extensions = savageExtensions;
 
 #if 0
    savageDDFastPathInit();
@@ -525,7 +523,7 @@ savageCreateContext( const __GLcontextModes *mesaVis,
 					    "enable_fastpath");
    /* DRM versions before 2.1.3 would only render triangle lists. ELTS
     * support was added in 2.2.0. */
-   if (imesa->enable_fastpath && sPriv->drmMinor < 2) {
+   if (imesa->enable_fastpath && sPriv->drm_version.minor < 2) {
       fprintf (stderr,
 	       "*** Disabling fast path because your DRM version is buggy "
 	       "or doesn't\n*** support ELTS. You need at least Savage DRM "
@@ -920,7 +918,6 @@ void savageGetLock( savageContextPtr imesa, GLuint flags )
 
 
 static const struct __DriverAPIRec savageAPI = {
-   savageInitDriver,
    savageDestroyScreen,
    savageCreateContext,
    savageDestroyContext,
@@ -1017,63 +1014,44 @@ savageFillInModes( unsigned pixel_bits, unsigned depth_bits,
 
 
 /**
- * This is the bootstrap function for the driver.  libGL supplies all of the
- * requisite information about the system, and the driver initializes itself.
- * This routine also fills in the linked list pointed to by \c driver_modes
- * with the \c __GLcontextModes that the driver can support for windows or
- * pbuffers.
+ * This is the driver specific part of the createNewScreen entry point.
  * 
- * \return A pointer to a \c __DRIscreenPrivate on success, or \c NULL on 
- *         failure.
+ * \todo maybe fold this into intelInitDriver
+ *
+ * \return the __GLcontextModes supported by this driver
  */
-PUBLIC
-void * __driCreateNewScreen_20050727( __DRInativeDisplay *dpy, int scrn, __DRIscreen *psc,
-			     const __GLcontextModes * modes,
-			     const __DRIversion * ddx_version,
-			     const __DRIversion * dri_version,
-			     const __DRIversion * drm_version,
-			     const __DRIframebuffer * frame_buffer,
-			     drmAddress pSAREA, int fd, 
-			     int internal_api_version,
-			     const __DRIinterfaceMethods * interface,
-			     __GLcontextModes ** driver_modes )
-			     
+__GLcontextModes *__driDriverInitScreen(__DRIscreenPrivate *psp)
 {
-   __DRIscreenPrivate *psp;
    static const __DRIversion ddx_expected = { 2, 0, 0 };
    static const __DRIversion dri_expected = { 4, 0, 0 };
    static const __DRIversion drm_expected = { 2, 1, 0 };
-
-   dri_interface = interface;
+   SAVAGEDRIPtr dri_priv = (SAVAGEDRIPtr)psp->pDevPriv;
 
    if ( ! driCheckDriDdxDrmVersions2( "Savage",
-				      dri_version, & dri_expected,
-				      ddx_version, & ddx_expected,
-				      drm_version, & drm_expected ) ) {
+				      &psp->dri_version, & dri_expected,
+				      &psp->ddx_version, & ddx_expected,
+				      &psp->drm_version, & drm_expected ) )
       return NULL;
-   }
-      
-   psp = __driUtilCreateNewScreen(dpy, scrn, psc, NULL,
-				  ddx_version, dri_version, drm_version,
-				  frame_buffer, pSAREA, fd,
-				  internal_api_version, &savageAPI);
-   if ( psp != NULL ) {
-      SAVAGEDRIPtr dri_priv = (SAVAGEDRIPtr)psp->pDevPriv;
-      *driver_modes = savageFillInModes( dri_priv->cpp*8,
-					 (dri_priv->cpp == 2) ? 16 : 24,
-					 (dri_priv->cpp == 2) ? 0  : 8,
-					 (dri_priv->backOffset != dri_priv->depthOffset) );
 
-      /* Calling driInitExtensions here, with a NULL context pointer, does not actually
-       * enable the extensions.  It just makes sure that all the dispatch offsets for all
-       * the extensions that *might* be enables are known.  This is needed because the
-       * dispatch offsets need to be known when _mesa_context_create is called, but we can't
-       * enable the extensions until we have a context pointer.
-       *
-       * Hello chicken.  Hello egg.  How are you two today?
-       */
-      driInitExtensions( NULL, card_extensions, GL_FALSE );
-   }
+   psp->DriverAPI = savageAPI;
 
-   return (void *) psp;
+   /* Calling driInitExtensions here, with a NULL context pointer,
+    * does not actually enable the extensions.  It just makes sure
+    * that all the dispatch offsets for all the extensions that
+    * *might* be enables are known.  This is needed because the
+    * dispatch offsets need to be known when _mesa_context_create is
+    * called, but we can't enable the extensions until we have a
+    * context pointer.
+    *
+    * Hello chicken.  Hello egg.  How are you two today?
+    */
+   driInitExtensions( NULL, card_extensions, GL_FALSE );
+
+   if (!savageInitDriver(psp))
+       return NULL;
+
+   return savageFillInModes( dri_priv->cpp*8,
+			     (dri_priv->cpp == 2) ? 16 : 24,
+			     (dri_priv->cpp == 2) ? 0  : 8,
+			     (dri_priv->backOffset != dri_priv->depthOffset) );
 }

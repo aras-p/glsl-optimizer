@@ -55,7 +55,7 @@ mgaSetFence( mgaContextPtr mmesa, uint32_t * fence )
 {
     int ret = ENOSYS;
 
-    if ( mmesa->driScreen->drmMinor >= 2 ) {
+    if ( mmesa->driScreen->drm_version.minor >= 2 ) {
 	ret = drmCommandWriteRead( mmesa->driScreen->fd, DRM_MGA_SET_FENCE,
 				   fence, sizeof( uint32_t ));
 	if (ret) {
@@ -73,7 +73,7 @@ mgaWaitFence( mgaContextPtr mmesa, uint32_t fence, uint32_t * curr_fence )
 {
     int ret = ENOSYS;
 
-    if ( mmesa->driScreen->drmMinor >= 2 ) {
+    if ( mmesa->driScreen->drm_version.minor >= 2 ) {
 	uint32_t temp = fence;
 	
 	ret = drmCommandWriteRead( mmesa->driScreen->fd,

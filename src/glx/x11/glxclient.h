@@ -60,6 +60,7 @@
 #include "GL/internal/glcore.h"
 #include "glapitable.h"
 #include "glxextensions.h"
+#include "glxhash.h"
 #if defined( USE_XTHREADS )
 # include <X11/Xthreads.h>
 #elif defined( PTHREADS )
@@ -71,13 +72,18 @@
 
 #define __GLX_MAX_TEXTURE_UNITS 32
 
+typedef struct __GLXscreenConfigsRec __GLXscreenConfigs;
 typedef struct __GLXcontextRec __GLXcontext;
+typedef struct __GLXdrawableRec __GLXdrawable;
 typedef struct __GLXdisplayPrivateRec __GLXdisplayPrivate;
 typedef struct _glapi_table __GLapi;
 
 /************************************************************************/
 
 #ifdef GLX_DIRECT_RENDERING
+
+#define containerOf(ptr, type, member)			\
+    (type *)( (char *)ptr - offsetof(type,member) )
 
 #include <GL/internal/dri_interface.h>
 
@@ -239,6 +245,7 @@ struct __GLXcontextRec {
      * Screen number.
      */
     GLint screen;
+    __GLXscreenConfigs *psc;
 
     /**
      * \c GL_TRUE if the context was created with ImportContext, which
@@ -349,6 +356,16 @@ struct __GLXcontextRec {
      * Per context direct rendering interface functions and data.
      */
     __DRIcontext driContext;
+
+    /**
+     * Pointer to the mode used to create this context.
+     */
+    const __GLcontextModes * mode;
+
+    /**
+     * XID for the server side drm_context_t
+     */
+    XID hwContextID;
 #endif
     
     /**
@@ -439,7 +456,7 @@ extern void __glFreeAttributeState(__GLXcontext *);
  * One of these records exists per screen of the display.  It contains
  * a pointer to the config data for that screen (if the screen supports GL).
  */
-typedef struct __GLXscreenConfigsRec {
+struct __GLXscreenConfigsRec {
     /**
      * GLX extension string reported by the X-server.
      */
@@ -456,6 +473,30 @@ typedef struct __GLXscreenConfigsRec {
      * Per screen direct rendering interface functions and data.
      */
     __DRIscreen driScreen;
+    __glxHashTable *drawHash;
+    Display *dpy;
+    int scr;
+
+#ifdef __DRI_COPY_SUB_BUFFER
+    __DRIcopySubBufferExtension *copySubBuffer;
+#endif
+
+#ifdef __DRI_SWAP_CONTROL
+    __DRIswapControlExtension *swapControl;
+#endif
+
+#ifdef __DRI_ALLOCATE
+    __DRIallocateExtension *allocate;
+#endif
+
+#ifdef __DRI_FRAME_TRACKING
+    __DRIframeTrackingExtension *frameTracking;
+#endif
+
+#ifdef __DRI_MEDIA_STREAM_COUNTER
+    __DRImediaStreamCounterExtension *msc;
+#endif
+
 #endif
 
     /**
@@ -475,7 +516,7 @@ typedef struct __GLXscreenConfigsRec {
     GLboolean ext_list_first_time;
     /*@}*/
 
-} __GLXscreenConfigs;
+};
 
 /**
  * Per display private data.  One of these records exists for each display
@@ -527,6 +568,18 @@ struct __GLXdisplayPrivateRec {
     __DRIdisplay driDisplay;
 #endif
 };
+
+#ifdef GLX_DIRECT_RENDERING
+
+struct __GLXdrawableRec {
+    XID drawable;
+    __GLXscreenConfigs *psc;
+    __DRIdrawable driDrawable;
+};
+
+#endif
+
+
 
 void __glXFreeContext(__GLXcontext*);
 
@@ -687,7 +740,7 @@ extern int __glXGetInternalVersion(void);
 /* Get the unadjusted system time */
 extern int __glXGetUST( int64_t * ust );
 
-extern Bool __glXGetMscRateOML(Display * dpy, GLXDrawable drawable,
-    int32_t * numerator, int32_t * denominator);
+extern GLboolean __glXGetMscRateOML(__DRIdrawable *draw,
+				    int32_t * numerator, int32_t * denominator);
 
 #endif /* !__GLX_client_h__ */

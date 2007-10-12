@@ -156,7 +156,7 @@ GLboolean radeonInitContext(radeonContextPtr radeon,
 	radeon->dri.hwContext = driContextPriv->hHWContext;
 	radeon->dri.hwLock = &sPriv->pSAREA->lock;
 	radeon->dri.fd = sPriv->fd;
-	radeon->dri.drmMinor = sPriv->drmMinor;
+	radeon->dri.drmMinor = sPriv->drm_version.minor;
 
 	radeon->radeonScreen = screen;
 	radeon->sarea = (drm_radeon_sarea_t *) ((GLubyte *) sPriv->pSAREA +

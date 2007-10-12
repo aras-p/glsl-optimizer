@@ -277,14 +277,14 @@ GLboolean r200CreateContext( const __GLcontextModes *glVisual,
                                                  "def_max_anisotropy");
 
    if ( driQueryOptionb( &rmesa->optionCache, "hyperz" ) ) {
-      if ( sPriv->drmMinor < 13 )
+      if ( sPriv->drm_version.minor < 13 )
 	 fprintf( stderr, "DRM version 1.%d too old to support HyperZ, "
-			  "disabling.\n",sPriv->drmMinor );
+			  "disabling.\n", sPriv->drm_version.minor );
       else
 	 rmesa->using_hyperz = GL_TRUE;
    }
  
-   if ( sPriv->drmMinor >= 15 )
+   if ( sPriv->drm_version.minor >= 15 )
       rmesa->texmicrotile = GL_TRUE;
 
    /* Init default driver functions then plug in our R200-specific functions
@@ -317,7 +317,7 @@ GLboolean r200CreateContext( const __GLcontextModes *glVisual,
    rmesa->dri.hwContext = driContextPriv->hHWContext;
    rmesa->dri.hwLock = &sPriv->pSAREA->lock;
    rmesa->dri.fd = sPriv->fd;
-   rmesa->dri.drmMinor = sPriv->drmMinor;
+   rmesa->dri.drmMinor = sPriv->drm_version.minor;
 
    rmesa->r200Screen = screen;
    rmesa->sarea = (drm_radeon_sarea_t *)((GLubyte *)sPriv->pSAREA +

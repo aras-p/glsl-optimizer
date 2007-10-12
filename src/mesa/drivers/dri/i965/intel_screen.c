@@ -264,14 +264,19 @@ intelUpdateScreenFromSAREA(intelScreenPrivate *intelScreen,
       intelPrintSAREA(sarea);
 }
 
+static const __DRIextension *intelExtensions[] = {
+    &driReadDrawableExtension,
+    &driCopySubBufferExtension.base,
+    &driSwapControlExtension.base,
+    &driFrameTrackingExtension.base,
+    &driMediaStreamCounterExtension.base,
+    NULL
+};
 
 static GLboolean intelInitDriver(__DRIscreenPrivate *sPriv)
 {
    intelScreenPrivate *intelScreen;
    I830DRIPtr         gDRIPriv = (I830DRIPtr)sPriv->pDevPriv;
-   PFNGLXSCRENABLEEXTENSIONPROC glx_enable_extension =
-     (PFNGLXSCRENABLEEXTENSIONPROC) (*dri_interface->getProcAddress("glxEnableExtension"));
-   void * const psc = sPriv->psc->screenConfigs;
    volatile drmI830Sarea *sarea;
 
    if (sPriv->devPrivSize != sizeof(I830DRIRec)) {
@@ -317,7 +322,7 @@ static GLboolean intelInitDriver(__DRIscreenPrivate *sPriv)
       return GL_FALSE;
    }
 
-   intelScreen->drmMinor = sPriv->drmMinor;
+   intelScreen->drmMinor = sPriv->drm_version.minor;
 
    /* Determine if IRQs are active? */
    {
@@ -351,14 +356,7 @@ static GLboolean intelInitDriver(__DRIscreenPrivate *sPriv)
       }
    }
 
-   if (glx_enable_extension != NULL) {
-      (*glx_enable_extension)( psc, "GLX_SGI_swap_control" );
-      (*glx_enable_extension)( psc, "GLX_SGI_video_sync" );
-      (*glx_enable_extension)( psc, "GLX_MESA_swap_control" );
-      (*glx_enable_extension)( psc, "GLX_MESA_swap_frame_usage" );
-      (*glx_enable_extension)( psc, "GLX_SGI_make_current_read" );
-      (*glx_enable_extension)( psc, "GLX_MESA_copy_sub_buffer" );
-   }
+   sPriv->extensions = intelExtensions;
    
    return GL_TRUE;
 }
@@ -541,7 +539,6 @@ static GLboolean intelCreateContext( const __GLcontextModes *mesaVis,
 
 
 static const struct __DriverAPIRec intelAPI = {
-   .InitDriver      = intelInitDriver,
    .DestroyScreen   = intelDestroyScreen,
    .CreateContext   = intelCreateContext,
    .DestroyContext  = intelDestroyContext,
@@ -640,62 +637,44 @@ intelFillInModes( unsigned pixel_bits, unsigned depth_bits,
 
 
 /**
- * This is the bootstrap function for the driver.  libGL supplies all of the
- * requisite information about the system, and the driver initializes itself.
- * This routine also fills in the linked list pointed to by \c driver_modes
- * with the \c __GLcontextModes that the driver can support for windows or
- * pbuffers.
+ * This is the driver specific part of the createNewScreen entry point.
  * 
- * \return A pointer to a \c __DRIscreenPrivate on success, or \c NULL on 
- *         failure.
+ * \todo maybe fold this into intelInitDriver
+ *
+ * \return the __GLcontextModes supported by this driver
  */
-PUBLIC
-void * __driCreateNewScreen_20050727( __DRInativeDisplay *dpy, int scrn, __DRIscreen *psc,
-			     const __GLcontextModes * modes,
-			     const __DRIversion * ddx_version,
-			     const __DRIversion * dri_version,
-			     const __DRIversion * drm_version,
-			     const __DRIframebuffer * frame_buffer,
-			     drmAddress pSAREA, int fd, 
-			     int internal_api_version,
-			     const __DRIinterfaceMethods * interface,
-			     __GLcontextModes ** driver_modes )
-			     
+__GLcontextModes *__driDriverInitScreen(__DRIscreenPrivate *psp)
 {
-   __DRIscreenPrivate *psp;
    static const __DRIversion ddx_expected = { 1, 6, 0 };
    static const __DRIversion dri_expected = { 4, 0, 0 };
    static const __DRIversion drm_expected = { 1, 3, 0 };
+   I830DRIPtr dri_priv = (I830DRIPtr) psp->pDevPriv;
 
-   dri_interface = interface;
-
+   psp->DriverAPI = intelAPI;
    if ( ! driCheckDriDdxDrmVersions2( "i915",
-				      dri_version, & dri_expected,
-				      ddx_version, & ddx_expected,
-				      drm_version, & drm_expected ) ) {
-      return NULL;
+				      &psp->dri_version, &dri_expected,
+				      &psp->ddx_version, &ddx_expected,
+				      &psp->drm_version, &drm_expected ) ) {
+       return NULL;
    }
 
-   psp = __driUtilCreateNewScreen(dpy, scrn, psc, NULL,
-				  ddx_version, dri_version, drm_version,
-				  frame_buffer, pSAREA, fd,
-				  internal_api_version, &intelAPI);
-   if ( psp != NULL ) {
-      I830DRIPtr dri_priv = (I830DRIPtr) psp->pDevPriv;
-      *driver_modes = intelFillInModes( dri_priv->cpp * 8,
-					(dri_priv->cpp == 2) ? 16 : 24,
-					(dri_priv->cpp == 2) ? 0  : 8,
-					GL_TRUE );
-      /* Calling driInitExtensions here, with a NULL context pointer, does not actually
-       * enable the extensions.  It just makes sure that all the dispatch offsets for all
-       * the extensions that *might* be enables are known.  This is needed because the
-       * dispatch offsets need to be known when _mesa_context_create is called, but we can't
-       * enable the extensions until we have a context pointer.
-       *
-       * Hello chicken.  Hello egg.  How are you two today?
-       */
-      intelInitExtensions(NULL, GL_FALSE);
-   }
+   /* Calling driInitExtensions here, with a NULL context pointer,
+    * does not actually enable the extensions.  It just makes sure
+    * that all the dispatch offsets for all the extensions that
+    * *might* be enables are known.  This is needed because the
+    * dispatch offsets need to be known when _mesa_context_create is
+    * called, but we can't enable the extensions until we have a
+    * context pointer.
+    *
+    * Hello chicken.  Hello egg.  How are you two today?
+    */
+   intelInitExtensions(NULL, GL_FALSE);
 
-   return (void *) psp;
+   if (!intelInitDriver(psp))
+       return NULL;
+
+   return intelFillInModes( dri_priv->cpp * 8,
+			    (dri_priv->cpp == 2) ? 16 : 24,
+			    (dri_priv->cpp == 2) ? 0  : 8,
+			    GL_TRUE );
 }

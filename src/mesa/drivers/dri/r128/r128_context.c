@@ -254,7 +254,7 @@ GLboolean r128CreateContext( const __GLcontextModes *glVisual,
    _tnl_allow_vertex_fog( ctx, GL_TRUE );
 
    driInitExtensions( ctx, card_extensions, GL_TRUE );
-   if (sPriv->drmMinor >= 4)
+   if (sPriv->drm_version.minor >= 4)
       _mesa_enable_extension( ctx, "GL_MESA_ycbcr_texture" );
 
    r128InitTriFuncs( ctx );

@@ -601,9 +601,6 @@ viaCreateContext(const __GLcontextModes *visual,
     _tnl_allow_pixel_fog(ctx, GL_FALSE);
     _tnl_allow_vertex_fog(ctx, GL_TRUE);
 
-/*     vmesa->display = dpy; */
-    vmesa->display = sPriv->display;
-    
     vmesa->hHWContext = driContextPriv->hHWContext;
     vmesa->driFd = sPriv->fd;
     vmesa->driHwLock = &sPriv->pSAREA->lock;

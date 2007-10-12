@@ -61,6 +61,7 @@
 #include <inttypes.h>
 #include <sys/mman.h>
 #include "xf86dri.h"
+#include "xf86drm.h"
 #include "sarea.h"
 #include "dri_glx.h"
 #endif
@@ -107,10 +108,6 @@ static int _mesa_sparc_needs_init = 1;
 #else
 #define INIT_MESA_SPARC
 #endif
-
-#ifdef GLX_DIRECT_RENDERING
-static __DRIscreen *__glXFindDRIScreen(__DRInativeDisplay *dpy, int scrn);
-#endif /* GLX_DIRECT_RENDERING */
 
 static Bool MakeContextCurrent(Display *dpy, GLXDrawable draw,
     GLXDrawable read, GLXContext gc);
@@ -363,9 +360,9 @@ static void FreeScreenConfigs(__GLXdisplayPrivate *priv)
 #ifdef GLX_DIRECT_RENDERING
 	/* Free the direct rendering per screen data */
 	if (psc->driScreen.private)
-	    (*psc->driScreen.destroyScreen)(priv->dpy, i,
-					    psc->driScreen.private);
+	    (*psc->driScreen.destroyScreen)(&psc->driScreen);
 	psc->driScreen.private = NULL;
+	__glxHashDestroy(psc->drawHash);
 #endif
     }
     XFree((char*) priv->screenConfigs);
@@ -694,21 +691,8 @@ filter_modes( __GLcontextModes ** server_modes,
     return modes_count;
 }
 
-
-/**
- * Implement \c __DRIinterfaceMethods::getProcAddress.
- */
-static __DRIfuncPtr get_proc_address( const char * proc_name )
-{
-    if (strcmp( proc_name, "glxEnableExtension" ) == 0) {
-	return (__DRIfuncPtr) __glXScrEnableExtension;
-    }
-    
-    return NULL;
-}
-
 #ifdef XDAMAGE_1_1_INTERFACE
-static GLboolean has_damage_post(__DRInativeDisplay *dpy)
+static GLboolean has_damage_post(Display *dpy)
 {
     static GLboolean inited = GL_FALSE;
     static GLboolean has_damage;
@@ -730,8 +714,7 @@ static GLboolean has_damage_post(__DRInativeDisplay *dpy)
 }
 #endif /* XDAMAGE_1_1_INTERFACE */
 
-static void __glXReportDamage(__DRInativeDisplay *dpy, int screen,
-			      __DRIid drawable,
+static void __glXReportDamage(__DRIdrawable *driDraw,
 			      int x, int y,
 			      drm_clip_rect_t *rects, int num_rects,
 			      GLboolean front_buffer)
@@ -741,6 +724,11 @@ static void __glXReportDamage(__DRInativeDisplay *dpy, int screen,
     XserverRegion region;
     int i;
     int x_off, y_off;
+    __GLXdrawable *glxDraw =
+	containerOf(driDraw, __GLXdrawable, driDrawable);
+    __GLXscreenConfigs *psc = glxDraw->psc;
+    Display *dpy = psc->dpy;
+    Drawable drawable;
 
     if (!has_damage_post(dpy))
 	return;
@@ -748,10 +736,11 @@ static void __glXReportDamage(__DRInativeDisplay *dpy, int screen,
     if (front_buffer) {
 	x_off = x;
 	y_off = y;
-	drawable = RootWindow(dpy, screen);
+	drawable = RootWindow(dpy, psc->scr);
     } else{
 	x_off = 0;
 	y_off = 0;
+	drawable = glxDraw->drawable;
     }
 
     xrects = malloc(sizeof(XRectangle) * num_rects);
@@ -771,24 +760,35 @@ static void __glXReportDamage(__DRInativeDisplay *dpy, int screen,
 #endif
 }
 
+static GLboolean
+__glXDRIGetDrawableInfo(__DRIdrawable *drawable,
+			unsigned int *index, unsigned int *stamp, 
+			int *X, int *Y, int *W, int *H,
+			int *numClipRects, drm_clip_rect_t ** pClipRects,
+			int *backX, int *backY,
+			int *numBackClipRects, drm_clip_rect_t **pBackClipRects)
+{
+    __GLXdrawable *glxDraw =
+	containerOf(drawable, __GLXdrawable, driDrawable);
+    __GLXscreenConfigs *psc = glxDraw->psc;
+    Display *dpy = psc->dpy;
+
+    return XF86DRIGetDrawableInfo(dpy, psc->scr, glxDraw->drawable,
+				  index, stamp, X, Y, W, H,
+				  numClipRects, pClipRects,
+				  backX, backY,
+				  numBackClipRects, pBackClipRects);
+}
+
+
 /**
  * Table of functions exported by the loader to the driver.
  */
 static const __DRIinterfaceMethods interface_methods = {
-    get_proc_address,
-
     _gl_context_modes_create,
     _gl_context_modes_destroy,
-      
-    __glXFindDRIScreen,
-    __glXWindowExists,
-      
-    XF86DRICreateContextWithConfig,
-    XF86DRIDestroyContext,
 
-    XF86DRICreateDrawable,
-    XF86DRIDestroyDrawable,
-    XF86DRIGetDrawableInfo,
+    __glXDRIGetDrawableInfo,
 
     __glXGetUST,
     __glXGetMscRateOML,
@@ -816,7 +816,7 @@ static const __DRIinterfaceMethods interface_methods = {
  *       returned by the client-side driver.
  */
 static void *
-CallCreateNewScreen(Display *dpy, int scrn, __DRIscreen *psc,
+CallCreateNewScreen(Display *dpy, int scrn, __GLXscreenConfigs *psc,
 		    __DRIdisplay * driDpy,
 		    PFNCREATENEWSCREENFUNC createNewScreen)
 {
@@ -937,13 +937,11 @@ CallCreateNewScreen(Display *dpy, int scrn, __DRIscreen *psc,
 
 				if ( status == 0 ) {
 				    __GLcontextModes * driver_modes = NULL;
-				    __GLXscreenConfigs *configs = psc->screenConfigs;
 
 				    err_msg = "InitDriver";
 				    err_extra = NULL;
-				    psp = (*createNewScreen)(dpy, scrn,
-							     psc,
-							     configs->configs,
+				    psp = (*createNewScreen)(scrn,
+							     &psc->driScreen,
 							     & ddx_version,
 							     & dri_version,
 							     & drm_version,
@@ -954,8 +952,7 @@ CallCreateNewScreen(Display *dpy, int scrn, __DRIscreen *psc,
 							     & interface_methods,
 							     & driver_modes );
 
-				    filter_modes( & configs->configs,
-						  driver_modes );
+				    filter_modes(&psc->configs, driver_modes);
 				    _gl_context_modes_destroy( driver_modes );
 				}
 			    }
@@ -999,6 +996,7 @@ CallCreateNewScreen(Display *dpy, int scrn, __DRIscreen *psc,
 
     return psp;
 }
+
 #endif /* GLX_DIRECT_RENDERING */
 
 
@@ -1169,6 +1167,16 @@ static Bool AllocAndFetchScreenConfigs(Display *dpy, __GLXdisplayPrivate *priv)
 	UnlockDisplay(dpy);
 
 #ifdef GLX_DIRECT_RENDERING
+	psc->scr = i;
+	psc->dpy = dpy;
+	/* Create drawable hash */
+	psc->drawHash = __glxHashCreate();
+	if ( psc->drawHash == NULL ) {
+	    SyncHandle();
+	    FreeScreenConfigs(priv);
+	    return GL_FALSE;
+	}
+
         /* Initialize per screen dynamic client GLX extensions */
 	psc->ext_list_first_time = GL_TRUE;
 	/* Initialize the direct rendering per screen data and functions */
@@ -1179,11 +1187,12 @@ static Bool AllocAndFetchScreenConfigs(Display *dpy, __GLXdisplayPrivate *priv)
 	    if (priv->driDisplay.createNewScreen &&
 		priv->driDisplay.createNewScreen[i]) {
 
-		psc->driScreen.screenConfigs = (void *)psc;
 		psc->driScreen.private =
-		    CallCreateNewScreen(dpy, i, & psc->driScreen,
+		    CallCreateNewScreen(dpy, i, psc,
 					& priv->driDisplay,
 					priv->driDisplay.createNewScreen[i] );
+		if (psc->driScreen.private != NULL)
+		    __glXScrEnableDRIExtension(psc);
 	    }
 	}
 #endif
@@ -1506,33 +1515,6 @@ PUBLIC GLXDrawable glXGetCurrentDrawable(void)
 
 /************************************************************************/
 
-#ifdef GLX_DIRECT_RENDERING
-/* Return the DRI per screen structure */
-__DRIscreen *__glXFindDRIScreen(__DRInativeDisplay *dpy, int scrn)
-{
-    __DRIscreen *pDRIScreen = NULL;
-    XExtDisplayInfo *info = __glXFindDisplay(dpy);
-    XExtData **privList, *found;
-    __GLXdisplayPrivate *dpyPriv;
-    XEDataObject dataObj;
-
-    __glXLock();
-    dataObj.display = dpy;
-    privList = XEHeadOfExtensionList(dataObj);
-    found = XFindOnExtensionList(privList, info->codes->extension);
-    __glXUnlock();
-
-    if (found) {
-	dpyPriv = (__GLXdisplayPrivate *)found->private_data;
-	pDRIScreen = &dpyPriv->screenConfigs[scrn].driScreen;
-    }
-
-    return pDRIScreen;
-}
-#endif
-
-/************************************************************************/
-
 static Bool SendMakeCurrentRequest( Display *dpy, CARD8 opcode,
     GLXContextID gc, GLXContextTag old_gc, GLXDrawable draw, GLXDrawable read,
     xGLXMakeCurrentReply * reply );
@@ -1617,20 +1599,71 @@ static Bool SendMakeCurrentRequest(Display *dpy, CARD8 opcode,
 
 
 #ifdef GLX_DIRECT_RENDERING
+static __DRIdrawable *
+FetchDRIDrawable( Display *dpy, GLXDrawable drawable, GLXContext gc)
+{
+    __GLXdisplayPrivate * const priv = __glXInitialize(dpy);
+    __GLXdrawable *pdraw;
+    __GLXscreenConfigs *sc;
+    drm_drawable_t hwDrawable;
+    void *empty_attribute_list = NULL;
+
+    if (priv == NULL || priv->driDisplay.private == NULL)
+	return NULL;
+    
+    sc = &priv->screenConfigs[gc->screen];
+    if (__glxHashLookup(sc->drawHash, drawable, (void *) &pdraw) == 0)
+	return &pdraw->driDrawable;
+
+    /* Allocate a new drawable */
+    pdraw = Xmalloc(sizeof(*pdraw));
+    if (!pdraw)
+	return NULL;
+
+    pdraw->drawable = drawable;
+    pdraw->psc = sc;
+
+    if (!XF86DRICreateDrawable(dpy, sc->scr, drawable, &hwDrawable))
+	return NULL;
+
+    /* Create a new drawable */
+    pdraw->driDrawable.private =
+	(*sc->driScreen.createNewDrawable)(&sc->driScreen,
+					   gc->mode,
+					   &pdraw->driDrawable,
+					   hwDrawable,
+					   GLX_WINDOW_BIT,
+					   empty_attribute_list);
+
+    if (!pdraw->driDrawable.private) {
+	XF86DRIDestroyDrawable(dpy, sc->scr, drawable);
+	Xfree(pdraw);
+	return NULL;
+    }
+
+    if (__glxHashInsert(sc->drawHash, drawable, pdraw)) {
+	(*pdraw->driDrawable.destroyDrawable)(&pdraw->driDrawable);
+	XF86DRIDestroyDrawable(dpy, sc->scr, drawable);
+	Xfree(pdraw);
+	return NULL;
+    }
+
+    return &pdraw->driDrawable;
+}
+
 static Bool BindContextWrapper( Display *dpy, GLXContext gc,
 				GLXDrawable draw, GLXDrawable read )
 {
-    return (*gc->driContext.bindContext)(dpy, gc->screen, draw, read,
-					 & gc->driContext);
+    __DRIdrawable *pdraw = FetchDRIDrawable(dpy, draw, gc);
+    __DRIdrawable *pread = FetchDRIDrawable(dpy, read, gc);
+
+    return (*gc->driContext.bindContext)(&gc->driContext, pdraw, pread);
 }
 
 
 static Bool UnbindContextWrapper( GLXContext gc )
 {
-    return (*gc->driContext.unbindContext)(gc->currentDpy, gc->screen, 
-					   gc->currentDrawable,
-					   gc->currentReadable,
-					   & gc->driContext );
+    return (*gc->driContext.unbindContext)(&gc->driContext);
 }
 #endif /* GLX_DIRECT_RENDERING */
 
@@ -1742,7 +1775,10 @@ USED static Bool MakeContextCurrent(Display *dpy, GLXDrawable draw,
 		if (oldGC->isDirect) {
 		    if (oldGC->driContext.private) {
 			(*oldGC->driContext.destroyContext)
-			    (dpy, oldGC->screen, oldGC->driContext.private);
+			    (&oldGC->driContext);
+			XF86DRIDestroyContext(oldGC->createDpy,
+					      oldGC->psc->scr,
+					      gc->hwContextID);
 			oldGC->driContext.private = NULL;
 		    }
 		}

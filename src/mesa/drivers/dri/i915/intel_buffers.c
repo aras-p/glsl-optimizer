@@ -45,7 +45,7 @@
 
 /* This block can be removed when libdrm >= 2.3.1 is required */
 
-#ifndef DRM_VBLANK_FLIP
+#ifndef DRM_IOCTL_I915_FLIP
 
 #define DRM_VBLANK_FLIP 0x8000000
 
@@ -231,7 +231,7 @@ intelWindowMoved(struct intel_context *intel)
       }
    }
 
-   if (intel->intelScreen->driScrnPriv->ddxMinor >= 7) {
+   if (intel->intelScreen->driScrnPriv->ddx_version.minor >= 7) {
       drmI830Sarea *sarea = intel->sarea;
       drm_clip_rect_t drw_rect = { .x1 = dPriv->x, .x2 = dPriv->x + dPriv->w,
 				   .y1 = dPriv->y, .y2 = dPriv->y + dPriv->h };
