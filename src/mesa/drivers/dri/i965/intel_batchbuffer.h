@@ -121,6 +121,12 @@ void intel_batchbuffer_align( struct intel_batchbuffer *batch,
 #define BATCH_LOCALS 
 #define BEGIN_BATCH(n, flags) intel_batchbuffer_require_space(intel->batch, n*4, flags)
 #define OUT_BATCH(d)  intel_batchbuffer_emit_dword(intel->batch, d)
+
+#define OUT_RELOC(buf, flags, delta) do { 				\
+   assert((delta) >= 0);						\
+   OUT_BATCH(bmBufferOffset(intel, buf) + delta);				\
+} while (0)
+
 #define ADVANCE_BATCH() do { } while(0)
 
 

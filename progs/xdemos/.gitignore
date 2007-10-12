@@ -5,14 +5,14 @@ glxgears
 glxgears_fbconfig
 glxheads
 glxinfo
-glxpixmap
 glxpbdemo
+glxpixmap
 glxswapcontrol
 manywin
 offset
 overlay
-pbinfo
 pbdemo
+pbinfo
 texture_from_pixmap
 wincopy
 xdemo

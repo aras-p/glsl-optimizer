@@ -37,8 +37,6 @@
 #include "intel_tex_layout.h"
 #include "macros.h"
 
-#define ALIGN(value, alignment)  ((value + alignment - 1) & ~(alignment - 1))
-
 GLboolean brw_miptree_layout( struct intel_mipmap_tree *mt )
 {
    /* XXX: these vary depending on image format: 
@@ -64,7 +62,7 @@ GLboolean brw_miptree_layout( struct intel_mipmap_tree *mt )
           mt->pitch = ALIGN(width, align_w);
           pack_y_pitch = (height + 3) / 4;
       } else {
-          mt->pitch = ((mt->width0 * mt->cpp + 3) & ~3) / mt->cpp;
+          mt->pitch = ALIGN(mt->width0 * mt->cpp, 4) / mt->cpp;
           pack_y_pitch = ALIGN(mt->height0, align_h);
       }
 

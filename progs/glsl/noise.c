@@ -188,7 +188,7 @@ LoadAndCompileShader(GLuint shader, const char *text)
       GLchar log[1000];
       GLsizei len;
       glGetShaderInfoLog_func(shader, 1000, &len, log);
-      fprintf(stderr, "brick: problem compiling shader: %s\n", log);
+      fprintf(stderr, "noise: problem compiling shader: %s\n", log);
       exit(1);
    }
    else {

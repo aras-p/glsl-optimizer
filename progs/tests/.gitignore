@@ -1,5 +1,4 @@
 .cvsignore
-getproclist.h
 afsmultiarb
 antialias
 arbfpspec
@@ -34,17 +33,18 @@ fogcoord
 fptest1
 fptexture
 getprocaddress
-jkrahntest
+getproclist.h
 interleave
 invert
+jkrahntest
 manytex
 mipmap_limits
 multipal
 no_s3tc
 packedpixels
 pbo
-projtex
 prog_parameter
+projtex
 random
 readrate
 readtex.c

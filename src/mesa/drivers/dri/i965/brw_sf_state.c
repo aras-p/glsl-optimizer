@@ -118,7 +118,7 @@ static void upload_sf_unit( struct brw_context *brw )
    memset(&sf, 0, sizeof(sf));
 
    /* CACHE_NEW_SF_PROG */
-   sf.thread0.grf_reg_count = ((brw->sf.prog_data->total_grf-1) & ~15) / 16;
+   sf.thread0.grf_reg_count = ALIGN(brw->sf.prog_data->total_grf, 16) / 16 - 1;
    sf.thread0.kernel_start_pointer = brw->sf.prog_gs_offset >> 6;
    sf.thread3.urb_entry_read_length = brw->sf.prog_data->urb_read_length;
 

@@ -105,8 +105,7 @@ intelCopyBuffer(const __DRIdrawablePrivate * dPriv,
       }
       else {
 	 BR13 = (pitch * cpp) | (0xCC << 16) | (1 << 24) | (1 << 25);
-	 CMD = (XY_SRC_COPY_BLT_CMD | XY_SRC_COPY_BLT_WRITE_ALPHA |
-		XY_SRC_COPY_BLT_WRITE_RGB);
+	 CMD = (XY_SRC_COPY_BLT_CMD | XY_BLT_WRITE_ALPHA | XY_BLT_WRITE_RGB);
       }
 
       for (i = 0; i < nbox; i++, pbox++) {
@@ -184,8 +183,7 @@ intelEmitFillBlit(struct intel_context *intel,
       break;
    case 4:
       BR13 = dst_pitch | (0xF0 << 16) | (1 << 24) | (1 << 25);
-      CMD = (XY_COLOR_BLT_CMD | XY_COLOR_BLT_WRITE_ALPHA |
-             XY_COLOR_BLT_WRITE_RGB);
+      CMD = (XY_COLOR_BLT_CMD | XY_BLT_WRITE_ALPHA | XY_BLT_WRITE_RGB);
       break;
    default:
       return;
@@ -273,8 +271,7 @@ intelEmitCopyBlit(struct intel_context *intel,
          (((GLint) dst_pitch) & 0xffff) | 
 	 (translate_raster_op(logic_op) << 16) | (1 << 24) | (1 << 25);
       CMD =
-         (XY_SRC_COPY_BLT_CMD | XY_SRC_COPY_BLT_WRITE_ALPHA |
-          XY_SRC_COPY_BLT_WRITE_RGB);
+         (XY_SRC_COPY_BLT_CMD | XY_BLT_WRITE_ALPHA | XY_BLT_WRITE_RGB);
       break;
    default:
       return;
@@ -443,15 +440,14 @@ intelClearWithBlit(GLcontext * ctx, GLbitfield mask)
                   if (buf == BUFFER_DEPTH || buf == BUFFER_STENCIL) {
                      CMD = XY_COLOR_BLT_CMD;
                      if (clearMask & BUFFER_BIT_DEPTH)
-                        CMD |= XY_COLOR_BLT_WRITE_RGB;
+                        CMD |= XY_BLT_WRITE_RGB;
                      if (clearMask & BUFFER_BIT_STENCIL)
-                        CMD |= XY_COLOR_BLT_WRITE_ALPHA;
+                        CMD |= XY_BLT_WRITE_ALPHA;
                   }
                   else {
                      /* clearing RGBA */
-                     CMD = (XY_COLOR_BLT_CMD |
-                            XY_COLOR_BLT_WRITE_ALPHA |
-                            XY_COLOR_BLT_WRITE_RGB);
+                     CMD = XY_COLOR_BLT_CMD |
+			XY_BLT_WRITE_ALPHA | XY_BLT_WRITE_RGB;
                   }
                }
                else {
