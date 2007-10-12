@@ -1137,9 +1137,9 @@ static void
 exec_kilp(struct tgsi_exec_machine *mach,
           const struct tgsi_full_instruction *inst)
 {
-    GLuint uniquemask;
+    GLbitfield uniquemask;
     GLuint chan_index;
-    GLuint kilmask = 0;
+    GLbitfield kilmask = 0; /* bit 0 = pixel 0, bit 1 = pixel 1, etc */
     union tgsi_exec_channel r[1];
 
     /* This mask stores component bits that were already tested. Note that
@@ -1165,7 +1165,7 @@ exec_kilp(struct tgsi_exec_machine *mach,
         FETCH(&r[0], 0, chan_index);
         for (i = 0; i < 4; i++)
             if (r[0].f[i] < 0.0f)
-                kilmask |= 1 << (i * 4);
+                kilmask |= 1 << i;
     }
 
     mach->Temps[TEMP_KILMASK_I].xyzw[TEMP_KILMASK_C].u[0] |= kilmask;
