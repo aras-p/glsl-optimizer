@@ -160,6 +160,7 @@ st_draw_vbo(GLcontext *ctx,
          winsys->buffer_reference(winsys, &vbuffer[attr].buffer, stobj->buffer);
          vbuffer[attr].buffer_offset = (unsigned) arrays[0]->Ptr;/* in bytes */
          velement.src_offset = arrays[mesaAttr]->Ptr - arrays[0]->Ptr;
+         assert(velement.src_offset <= 2048); /* 11-bit field */
       }
       else {
          /* attribute data is in user-space memory, not a VBO */
