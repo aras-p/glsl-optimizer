@@ -300,7 +300,7 @@ static int intel_add_validate_buffer(struct intel_bo_list *list, dri_bo *buf, un
 }
 
 
-#define RELOC_BUF_SIZE(x) ((I915_RELOC0_HEADER + x * I915_RELOC0_STRIDE) * sizeof(uint32_t))
+#define RELOC_BUF_SIZE(x) ((I915_RELOC_HEADER + x * I915_RELOC0_STRIDE) * sizeof(uint32_t))
 
 static int intel_create_new_reloc_type_list(int fd, struct intel_bo_reloc_list *cur_type, int max_relocs)
 {
@@ -395,9 +395,9 @@ static int intel_add_validate_reloc(int fd, struct intel_bo_list *reloc_list, st
 
     num_relocs = (reloc_start[0] & 0xffff);
 
-    reloc_start[num_relocs*I915_RELOC0_STRIDE + I915_RELOC0_HEADER] = reloc_info->reloc;
-    reloc_start[num_relocs*I915_RELOC0_STRIDE + I915_RELOC0_HEADER+1] = reloc_info->delta;
-    reloc_start[num_relocs*I915_RELOC0_STRIDE + I915_RELOC0_HEADER+2] = reloc_info->index;
+    reloc_start[num_relocs*I915_RELOC0_STRIDE + I915_RELOC_HEADER] = reloc_info->reloc;
+    reloc_start[num_relocs*I915_RELOC0_STRIDE + I915_RELOC_HEADER+1] = reloc_info->delta;
+    reloc_start[num_relocs*I915_RELOC0_STRIDE + I915_RELOC_HEADER+2] = reloc_info->index;
     reloc_start[0]++;
     if (((reloc_start[0] & 0xffff)) > (max_relocs)) {
 	return -ENOMEM;
