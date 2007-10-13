@@ -164,6 +164,67 @@ make_fragment_shader(struct st_context *st, GLboolean bitmapMode)
 
 
 /**
+ * Create fragment shader that does a TEX() instruction to get a Z
+ * value, then writes to FRAG_RESULT_DEPR.
+ */
+static struct st_fragment_program *
+make_fragment_shader_z(struct st_context *st)
+{
+   GLcontext *ctx = st->ctx;
+   struct st_fragment_program *stfp;
+   struct gl_program *p;
+   GLuint ic = 0;
+
+   p = ctx->Driver.NewProgram(ctx, GL_FRAGMENT_PROGRAM_ARB, 0);
+   if (!p)
+      return NULL;
+
+   p->NumInstructions = 3;
+
+   p->Instructions = _mesa_alloc_instructions(p->NumInstructions);
+   if (!p->Instructions) {
+      ctx->Driver.DeleteProgram(ctx, p);
+      return NULL;
+   }
+   _mesa_init_instructions(p->Instructions, p->NumInstructions);
+
+   /* TEX result.color, fragment.texcoord[0], texture[0], 2D; */
+   p->Instructions[ic].Opcode = OPCODE_TEX;
+   p->Instructions[ic].DstReg.File = PROGRAM_OUTPUT;
+   p->Instructions[ic].DstReg.Index = FRAG_RESULT_DEPR;
+   p->Instructions[ic].DstReg.WriteMask = WRITEMASK_Z;
+   p->Instructions[ic].SrcReg[0].File = PROGRAM_INPUT;
+   p->Instructions[ic].SrcReg[0].Index = FRAG_ATTRIB_TEX0;
+   p->Instructions[ic].TexSrcUnit = 0;
+   p->Instructions[ic].TexSrcTarget = TEXTURE_2D_INDEX;
+   ic++;
+
+   /* MOV result.color, fragment.color */
+   p->Instructions[ic].Opcode = OPCODE_MOV;
+   p->Instructions[ic].DstReg.File = PROGRAM_OUTPUT;
+   p->Instructions[ic].DstReg.Index = FRAG_RESULT_COLR;
+   p->Instructions[ic].SrcReg[0].File = PROGRAM_INPUT;
+   p->Instructions[ic].SrcReg[0].Index = FRAG_ATTRIB_COL0;
+   ic++;
+
+   /* END; */
+   p->Instructions[ic++].Opcode = OPCODE_END;
+
+   assert(ic == p->NumInstructions);
+
+   p->InputsRead = FRAG_BIT_TEX0 | FRAG_BIT_COL0;
+   p->OutputsWritten = (1 << FRAG_RESULT_COLR) | (1 << FRAG_RESULT_DEPR);
+
+   stfp = (struct st_fragment_program *) p;
+   st_translate_fragment_program(st, stfp, NULL,
+                                 stfp->tokens, ST_MAX_SHADER_TOKENS);
+
+   return stfp;
+}
+
+
+
+/**
  * Create a simple vertex shader that just passes through the
  * vertex position and texcoord (and color).
  */
@@ -235,6 +296,21 @@ make_vertex_shader(struct st_context *st, GLboolean passColor)
 }
 
 
+static GLenum
+_mesa_base_format(GLenum format)
+{
+   switch (format) {
+   case GL_DEPTH_COMPONENT:
+      return GL_DEPTH_COMPONENT;
+   case GL_STENCIL_INDEX:
+      return GL_STENCIL_INDEX;
+   default:
+      return GL_RGBA;
+   }
+}
+
+
+
 /**
  * Make mipmap tree containing the glDrawPixels image.
  */
@@ -249,8 +325,11 @@ make_mipmap_tree(struct st_context *st,
    const GLbitfield flags = PIPE_SURFACE_FLAG_TEXTURE;
    struct pipe_mipmap_tree *mt;
    GLuint pipeFormat, cpp;
+   GLenum baseFormat;
 
-   mformat = st_ChooseTextureFormat(st->ctx, GL_RGBA, format, type);
+   baseFormat = _mesa_base_format(format);
+
+   mformat = st_ChooseTextureFormat(st->ctx, baseFormat, format, type);
    assert(mformat);
 
    pipeFormat = st_mesa_format_to_pipe_format(mformat->MesaFormat);
@@ -285,7 +364,7 @@ make_mipmap_tree(struct st_context *st,
        * the texture.  We deal with that with texcoords.
        */
       success = mformat->StoreImage(st->ctx, 2,       /* dims */
-                                    GL_RGBA,          /* baseInternalFormat */
+                                    baseFormat,       /* baseInternalFormat */
                                     mformat,          /* gl_texture_format */
                                     dest,             /* dest */
                                     0, 0, 0,          /* dstX/Y/Zoffset */
@@ -649,31 +728,51 @@ st_DrawPixels(GLcontext *ctx, GLint x, GLint y, GLsizei width, GLsizei height,
               GLenum format, GLenum type,
               const struct gl_pixelstore_attrib *unpack, const GLvoid *pixels)
 {
-   static struct st_fragment_program *stfp = NULL;
-   static struct st_vertex_program *stvp = NULL;
+   static struct st_fragment_program *stfp_c = NULL; /* color */
+   static struct st_fragment_program *stfp_z = NULL; /* z */
+   static struct st_vertex_program *stvp_t = NULL;  /* just emit texcoord */
+   static struct st_vertex_program *stvp_c = NULL;  /* emit color too */
+   struct st_fragment_program *stfp;
+   struct st_vertex_program *stvp;
    struct st_context *st = ctx->st;
    struct pipe_surface *ps;
    GLuint bufferFormat;
+   const GLfloat *color;
 
    /* create the fragment program if needed */
-   if (!stfp) {
-      stfp = make_fragment_shader(ctx->st, GL_FALSE);
+   if (!stfp_c) {
+      stfp_c = make_fragment_shader(ctx->st, GL_FALSE);
    }
+   if (!stfp_z) {
+      stfp_z = make_fragment_shader_z(ctx->st);
+   }
+
    /* and vertex program */
-   if (!stvp) {
-      stvp = make_vertex_shader(ctx->st, GL_FALSE);
+   if (!stvp_t) {
+      stvp_t = make_vertex_shader(ctx->st, GL_FALSE);
+   }
+   if (!stvp_c) {
+      stvp_c = make_vertex_shader(ctx->st, GL_TRUE);
    }
 
    st_validate_state(st);
 
    if (format == GL_DEPTH_COMPONENT) {
       ps = st->state.framebuffer.zbuf;
+      stfp = stfp_z;
+      stvp = stvp_c;
+      color = ctx->Current.RasterColor;
    }
    else if (format == GL_STENCIL_INDEX) {
       ps = st->state.framebuffer.sbuf;
+      /* XXX special case - can't use texture map */
+      color = NULL;
    }
    else {
       ps = st->state.framebuffer.cbufs[0];
+      stfp = stfp_c;
+      stvp = stvp_t;
+      color = NULL;
    }
 
    bufferFormat = ps->format;
@@ -688,7 +787,7 @@ st_DrawPixels(GLcontext *ctx, GLint x, GLint y, GLsizei width, GLsizei height,
       if (mt) {
          draw_textured_quad(ctx, x, y, ctx->Current.RasterPos[2],
                             width, height, ctx->Pixel.ZoomX, ctx->Pixel.ZoomY,
-                            mt, stvp, stfp, NULL);
+                            mt, stvp, stfp, color);
          free_mipmap_tree(st->pipe, mt);
       }
    }
@@ -890,8 +989,14 @@ st_CopyPixels(GLcontext *ctx, GLint srcx, GLint srcy,
 
    st_validate_state(st);
 
+   /* allocate a texture of size width x height */
+
+   /* blit/copy framebuffer region into texture */
+
+   /* draw textured quad */
+
+
    fprintf(stderr, "st_CopyPixels not implemented yet\n");
-   /* XXX to do */
 }
 
 
