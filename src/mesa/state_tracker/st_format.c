@@ -79,7 +79,20 @@ st_get_format_info(GLuint format)
          0, 0,                       /* depth, stencil */
          2                           /* size in bytes */
       },
-      /* XXX lots more */
+      {
+         PIPE_FORMAT_U_Z16,
+         GL_DEPTH_COMPONENT,         /* base_format */
+         0, 0, 0, 0, 0, 0,           /* color bits */
+         16, 0,                      /* depth, stencil */
+         2                           /* size in bytes */
+      },
+      {
+         PIPE_FORMAT_U_Z32,
+         GL_DEPTH_COMPONENT,         /* base_format */
+         0, 0, 0, 0, 0, 0,           /* color bits */
+         32, 0,                      /* depth, stencil */
+         4                           /* size in bytes */
+      },
       {
          PIPE_FORMAT_S8_Z24,
          GL_DEPTH_STENCIL_EXT,       /* base_format */
@@ -87,6 +100,7 @@ st_get_format_info(GLuint format)
          24, 8,                      /* depth, stencil */
          4                           /* size in bytes */
       }
+      /* XXX lots more cases to add */
    };         
    GLuint i;
 
