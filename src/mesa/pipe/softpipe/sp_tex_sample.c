@@ -606,10 +606,23 @@ get_texel(struct tgsi_sampler *sampler,
    /* get the texel from cache entry */
    tx = x % TEX_CACHE_TILE_SIZE;
    ty = y % TEX_CACHE_TILE_SIZE;
-   rgba[0][j] = sampler->cache[entry].data[ty][tx][0];
-   rgba[1][j] = sampler->cache[entry].data[ty][tx][1];
-   rgba[2][j] = sampler->cache[entry].data[ty][tx][2];
-   rgba[3][j] = sampler->cache[entry].data[ty][tx][3];
+   if (sampler->texture->format == PIPE_FORMAT_U_Z16 ||
+       sampler->texture->format == PIPE_FORMAT_U_Z32 ||
+       sampler->texture->format == PIPE_FORMAT_S8_Z24) {
+      /* get_tile() returned one float per texel */
+      float *src = (float *) sampler->cache[entry].data;
+      rgba[0][j] =
+      rgba[1][j] =
+      rgba[2][j] =
+      rgba[3][j] = src[ty * TEX_CACHE_TILE_SIZE + tx];
+   }
+   else {
+      /* get_tile() returned four floats per texel */
+      rgba[0][j] = sampler->cache[entry].data[ty][tx][0];
+      rgba[1][j] = sampler->cache[entry].data[ty][tx][1];
+      rgba[2][j] = sampler->cache[entry].data[ty][tx][2];
+      rgba[3][j] = sampler->cache[entry].data[ty][tx][3];
+   }
 }
 
 
