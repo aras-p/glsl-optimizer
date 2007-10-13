@@ -47,6 +47,78 @@
 
 
 /**
+ * Special case for reading stencil buffer.
+ * For color/depth we use get_tile().  For stencil, map the stencil buffer.
+ */
+static void
+read_stencil_pixels(GLcontext *ctx, GLint x, GLint y,
+                    GLsizei width, GLsizei height, GLenum type,
+                    const struct gl_pixelstore_attrib *packing,
+                    GLvoid *pixels)
+{
+   struct st_context *st = ctx->st;
+   struct pipe_context *pipe = st->pipe;
+   struct gl_framebuffer *fb = ctx->ReadBuffer;
+   struct st_renderbuffer *strb = st_renderbuffer(fb->_StencilBuffer);
+   struct pipe_surface *ps = strb->surface;
+   ubyte *stmap;
+   GLint j;
+
+   /* map the stencil buffer */
+   stmap = pipe->region_map(pipe, ps->region);
+
+   /* width should never be > MAX_WIDTH since we did clipping earlier */
+   ASSERT(width <= MAX_WIDTH);
+
+   /* process image row by row */
+   for (j = 0; j < height; j++, y++) {
+      GLvoid *dest;
+      GLstencil values[MAX_WIDTH];
+      GLint srcY;
+
+      if (st_fb_orientation(ctx->DrawBuffer) == Y_0_TOP) {
+         srcY = ctx->DrawBuffer->Height - y - 1;
+      }
+      else {
+         srcY = y;
+      }
+
+      /* get stencil values */
+      switch (ps->format) {
+      case PIPE_FORMAT_U_S8:
+         {
+            const ubyte *src = stmap + y * ps->region->pitch + x;
+            memcpy(values, src, width);
+         }
+         break;
+      case PIPE_FORMAT_S8_Z24:
+         {
+            const uint *src = (const uint *) stmap + y * ps->region->pitch + x;
+            GLint k;
+            for (k = 0; k < width; k++) {
+               values[k] = src[k] >> 24;
+            }
+         }
+         break;
+      default:
+         assert(0);
+      }
+
+      /* store */
+      dest = _mesa_image_address2d(packing, pixels, width, height,
+                                   GL_STENCIL_INDEX, type, j, 0);
+
+      _mesa_pack_stencil_span(ctx, width, type, dest, values, packing);
+   }
+
+
+   /* unmap the stencil buffer */
+   pipe->region_unmap(pipe, ps->region);
+}
+
+
+
+/**
  * Do glReadPixels by getting rows from the framebuffer surface with
  * get_tile().  Convert to requested format/type with Mesa image routines.
  * Image transfer ops are done in software too.
@@ -86,7 +158,11 @@ st_readpixels(GLcontext *ctx, GLint x, GLint y, GLsizei width, GLsizei height,
 
    }
 
-   if (format == GL_DEPTH_COMPONENT) {
+   if (format == GL_STENCIL_INDEX) {
+      read_stencil_pixels(ctx, x, y, width, height, type, pack, dest);
+      return;
+   }
+   else if (format == GL_DEPTH_COMPONENT) {
       strb = st_renderbuffer(ctx->ReadBuffer->_DepthBuffer);
    }
    else {
