@@ -240,6 +240,44 @@ z16_write_quad_z(struct softpipe_surface *sps,
    dst[1] = zzzz[3];
 }
 
+/**
+ * Return as floats in [0,1].
+ */
+static void
+z16_get_tile(struct pipe_surface *ps,
+             unsigned x, unsigned y, unsigned w, unsigned h, float *p)
+{
+   const ushort *src
+      = ((const ushort *) (ps->region->map + ps->offset))
+      + y * ps->region->pitch + x;
+   const float scale = 1.0 / 65535.0;
+   unsigned i, j;
+   unsigned w0 = w;
+
+   assert(ps->format == PIPE_FORMAT_U_Z16);
+
+#if 0
+   assert(x + w <= ps->width);
+   assert(y + h <= ps->height);
+#else
+   /* temp clipping hack */
+   if (x + w > ps->width)
+      w = ps->width - x;
+   if (y + h > ps->height)
+      h = ps->height -y;
+#endif
+   for (i = 0; i < h; i++) {
+      float *pRow = p;
+      for (j = 0; j < w; j++) {
+         pRow[j] = src[j] * scale;
+      }
+      src += ps->region->pitch;
+      p += w0;
+   }
+}
+
+
+
 
 /*** PIPE_FORMAT_U_L8 ***/
 
@@ -619,6 +657,42 @@ z32_write_quad_z(struct softpipe_surface *sps,
    dst[1] = zzzz[3];
 }
 
+/**
+ * Return as floats in [0,1].
+ */
+static void
+z32_get_tile(struct pipe_surface *ps,
+             unsigned x, unsigned y, unsigned w, unsigned h, float *p)
+{
+   const uint *src
+      = ((const uint *) (ps->region->map + ps->offset))
+      + y * ps->region->pitch + x;
+   const double scale = 1.0 / (double) 0xffffffff;
+   unsigned i, j;
+   unsigned w0 = w;
+
+   assert(ps->format == PIPE_FORMAT_U_Z16);
+
+#if 0
+   assert(x + w <= ps->width);
+   assert(y + h <= ps->height);
+#else
+   /* temp clipping hack */
+   if (x + w > ps->width)
+      w = ps->width - x;
+   if (y + h > ps->height)
+      h = ps->height -y;
+#endif
+   for (i = 0; i < h; i++) {
+      float *pRow = p;
+      for (j = 0; j < w; j++) {
+         pRow[j] = src[j] * scale;
+      }
+      src += ps->region->pitch;
+      p += w0;
+   }
+}
+
 
 /*** PIPE_FORMAT_S8_Z24 ***/
 
@@ -697,7 +771,7 @@ s8z24_write_quad_stencil(struct softpipe_surface *sps,
 
 
 /**
- * Note, the actual returned pixels are uint, not float
+ * Return Z component as float in [0,1].  Stencil part ignored.
  */
 static void
 s8z24_get_tile(struct pipe_surface *ps,
@@ -706,6 +780,7 @@ s8z24_get_tile(struct pipe_surface *ps,
    const uint *src
       = ((const uint *) (ps->region->map + ps->offset))
       + y * ps->region->pitch + x;
+   const double scale = 1.0 / ((1 << 24) - 1);
    unsigned i, j;
    unsigned w0 = w;
 
@@ -722,9 +797,9 @@ s8z24_get_tile(struct pipe_surface *ps,
       h = ps->height -y;
 #endif
    for (i = 0; i < h; i++) {
-      uint *pRow = (uint *) p;
+      float *pRow = p;
       for (j = 0; j < w; j++) {
-         pRow[j] = src[j];
+         pRow[j] = (src[j] & 0xffffff) * scale;
       }
       src += ps->region->pitch;
       p += w0;
@@ -811,10 +886,12 @@ softpipe_init_surface_funcs(struct softpipe_surface *sps)
    case PIPE_FORMAT_U_Z16:
       sps->read_quad_z = z16_read_quad_z;
       sps->write_quad_z = z16_write_quad_z;
+      sps->surface.get_tile = z16_get_tile;
       break;
    case PIPE_FORMAT_U_Z32:
       sps->read_quad_z = z32_read_quad_z;
       sps->write_quad_z = z32_write_quad_z;
+      sps->surface.get_tile = z32_get_tile;
       break;
    case PIPE_FORMAT_S8_Z24:
       sps->read_quad_z = s8z24_read_quad_z;
