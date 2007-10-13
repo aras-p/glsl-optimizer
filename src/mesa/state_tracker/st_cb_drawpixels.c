@@ -32,6 +32,7 @@
 
 #include "main/imports.h"
 #include "main/image.h"
+#include "main/macros.h"
 
 #include "st_context.h"
 #include "st_atom.h"
@@ -720,6 +721,81 @@ draw_blit(struct st_context *st,
 }
 
 
+static void
+draw_stencil_pixels(GLcontext *ctx, GLint x, GLint y,
+                    GLsizei width, GLsizei height, GLenum type,
+                    const struct gl_pixelstore_attrib *unpack,
+                    const GLvoid *pixels)
+{
+   struct st_context *st = ctx->st;
+   struct pipe_context *pipe = st->pipe;
+   struct pipe_surface *ps = st->state.framebuffer.sbuf;
+   const GLboolean zoom = ctx->Pixel.ZoomX != 1.0 || ctx->Pixel.ZoomY != 1.0;
+   GLint skipPixels;
+   ubyte *stmap;
+
+   /* map the stencil buffer */
+   stmap = pipe->region_map(pipe, ps->region);
+
+   /* if width > MAX_WIDTH, have to process image in chunks */
+   skipPixels = 0;
+   while (skipPixels < width) {
+      const GLint spanX = x + skipPixels;
+      const GLint spanWidth = MIN2(width - skipPixels, MAX_WIDTH);
+      GLint row;
+      for (row = 0; row < height; row++) {
+         GLint spanY = y + row;
+         GLubyte values[MAX_WIDTH];
+         GLenum destType = GL_UNSIGNED_BYTE;
+         const GLvoid *source = _mesa_image_address2d(unpack, pixels,
+                                                      width, height,
+                                                      GL_COLOR_INDEX, type,
+                                                      row, skipPixels);
+         _mesa_unpack_stencil_span(ctx, spanWidth, destType, values,
+                                   type, source, unpack,
+                                   ctx->_ImageTransferState);
+         if (zoom) {
+            /*
+            _swrast_write_zoomed_stencil_span(ctx, x, y, spanWidth,
+                                              spanX, spanY, values);
+            */
+         }
+         else {
+            if (st_fb_orientation(ctx->DrawBuffer) == Y_0_TOP) {
+               spanY = ctx->DrawBuffer->Height - spanY - 1;
+            }
+
+            switch (ps->format) {
+            case PIPE_FORMAT_U_S8:
+               {
+                  ubyte *dest = stmap + spanY * ps->region->pitch + spanX;
+                  memcpy(dest, values, spanWidth);
+               }
+               break;
+            case PIPE_FORMAT_S8_Z24:
+               {
+                  uint *dest = (uint *) stmap + spanY * ps->region->pitch + spanX;
+                  GLint k;
+                  for (k = 0; k < spanWidth; k++) {
+                     uint p = dest[k];
+                     p = (p & 0xffffff) | (values[k] << 24);
+                     dest[k] = p;
+                  }
+               }
+               break;
+            default:
+               assert(0);
+            }
+         }
+      }
+      skipPixels += spanWidth;
+   }
+
+   /* unmap the stencil buffer */
+   pipe->region_unmap(pipe, ps->region);
+}
+
+
 /**
  * Called via ctx->Driver.DrawPixels()
  */
@@ -739,7 +815,12 @@ st_DrawPixels(GLcontext *ctx, GLint x, GLint y, GLsizei width, GLsizei height,
    GLuint bufferFormat;
    const GLfloat *color;
 
-   /* create the fragment program if needed */
+   if (format == GL_STENCIL_INDEX) {
+      draw_stencil_pixels(ctx, x, y, width, height, type, unpack, pixels);
+      return;
+   }
+
+   /* create the fragment programs if needed */
    if (!stfp_c) {
       stfp_c = make_fragment_shader(ctx->st, GL_FALSE);
    }
@@ -747,7 +828,7 @@ st_DrawPixels(GLcontext *ctx, GLint x, GLint y, GLsizei width, GLsizei height,
       stfp_z = make_fragment_shader_z(ctx->st);
    }
 
-   /* and vertex program */
+   /* and vertex programs */
    if (!stvp_t) {
       stvp_t = make_vertex_shader(ctx->st, GL_FALSE);
    }
