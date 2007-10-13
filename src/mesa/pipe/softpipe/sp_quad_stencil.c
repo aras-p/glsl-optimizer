@@ -42,42 +42,42 @@ do_stencil_test(const ubyte stencilVals[QUAD_SIZE], unsigned func,
       break;
    case PIPE_FUNC_LESS:
       for (j = 0; j < QUAD_SIZE; j++) {
-         if ((stencilVals[j] & valMask) < ref) {
+         if (ref < (stencilVals[j] & valMask)) {
             passMask |= (1 << j);
          }
       }
       break;
    case PIPE_FUNC_EQUAL:
       for (j = 0; j < QUAD_SIZE; j++) {
-         if ((stencilVals[j] & valMask) == ref) {
+         if (ref == (stencilVals[j] & valMask)) {
             passMask |= (1 << j);
          }
       }
       break;
    case PIPE_FUNC_LEQUAL:
       for (j = 0; j < QUAD_SIZE; j++) {
-         if ((stencilVals[j] & valMask) <= ref) {
+         if (ref <= (stencilVals[j] & valMask)) {
             passMask |= (1 << j);
          }
       }
       break;
    case PIPE_FUNC_GREATER:
       for (j = 0; j < QUAD_SIZE; j++) {
-         if ((stencilVals[j] & valMask) > ref) {
+         if (ref > (stencilVals[j] & valMask)) {
             passMask |= (1 << j);
          }
       }
       break;
    case PIPE_FUNC_NOTEQUAL:
       for (j = 0; j < QUAD_SIZE; j++) {
-         if ((stencilVals[j] & valMask) != ref) {
+         if (ref != (stencilVals[j] & valMask)) {
             passMask |= (1 << j);
          }
       }
       break;
    case PIPE_FUNC_GEQUAL:
       for (j = 0; j < QUAD_SIZE; j++) {
-         if ((stencilVals[j] & valMask) >= ref) {
+         if (ref >= (stencilVals[j] & valMask)) {
             passMask |= (1 << j);
          }
       }
