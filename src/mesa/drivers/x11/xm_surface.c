@@ -192,7 +192,18 @@ static void
 put_tile(struct pipe_surface *ps,
          GLuint x, GLuint y, GLuint w, GLuint h, const GLfloat *p)
 {
-   assert(0);
+   struct xmesa_renderbuffer *xrb = xmesa_rb((struct softpipe_surface *) ps);
+   GLubyte tmp[MAX_WIDTH * 4];
+   GLuint i, j;
+   GET_CURRENT_CONTEXT(ctx);
+   FLIP(y);
+   for (i = 0; i < h; i++) {
+      for (j = 0; j < w * 4; j++) {
+         CLAMPED_FLOAT_TO_UBYTE(tmp[j], p[j]);
+      }
+      xrb->St.Base.PutRow(ctx, &xrb->St.Base, w, x, y - i, tmp, NULL);
+      p += w * 4;
+   }
 }
 
 
