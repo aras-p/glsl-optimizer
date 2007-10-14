@@ -212,9 +212,7 @@ sp_region_copy(struct pipe_context *pipe,
    pipe->region_unmap(pipe, dst);
 }
 
-/* Fill a rectangular sub-region.  Need better logic about when to
- * push buffers into AGP - will currently do so whenever possible.
- */
+
 static ubyte *
 get_pointer(struct pipe_region *dst, unsigned x, unsigned y)
 {
@@ -222,6 +220,13 @@ get_pointer(struct pipe_region *dst, unsigned x, unsigned y)
 }
 
 
+#define UBYTE_TO_USHORT(B) ((B) | ((B) << 8))
+
+
+/**
+ * Fill a rectangular sub-region.  Need better logic about when to
+ * push buffers into AGP - will currently do so whenever possible.
+ */
 static void
 sp_region_fill(struct pipe_context *pipe,
                struct pipe_region *dst,
@@ -237,32 +242,54 @@ sp_region_fill(struct pipe_context *pipe,
    (void)pipe->region_map(pipe, dst);
 
    switch (dst->cpp) {
-   case 1: {
-      ubyte *row = get_pointer(dst, dstx, dsty);
-      for (i = 0; i < height; i++) {
-	 memset(row, value, width);
+   case 1:
+      {
+         ubyte *row = get_pointer(dst, dstx, dsty);
+         for (i = 0; i < height; i++) {
+            memset(row, value, width);
 	 row += dst->pitch;
+         }
       }
-   }
-   break;
-   case 2: {
-      ushort *row = (ushort *) get_pointer(dst, dstx, dsty);
-      for (i = 0; i < height; i++) {
-	 for (j = 0; j < width; j++)
-	    row[j] = value;
-	 row += dst->pitch;
+      break;
+   case 2:
+      {
+         ushort *row = (ushort *) get_pointer(dst, dstx, dsty);
+         for (i = 0; i < height; i++) {
+            for (j = 0; j < width; j++)
+               row[j] = value;
+            row += dst->pitch;
+         }
       }
-   }
-   break;
-   case 4: {
-      unsigned *row = (unsigned *) get_pointer(dst, dstx, dsty);
-      for (i = 0; i < height; i++) {
-	 for (j = 0; j < width; j++)
-	    row[j] = value;
-	 row += dst->pitch;
+      break;
+   case 4:
+      {
+         unsigned *row = (unsigned *) get_pointer(dst, dstx, dsty);
+         for (i = 0; i < height; i++) {
+            for (j = 0; j < width; j++)
+               row[j] = value;
+            row += dst->pitch;
+         }
       }
-   }
-   break;
+      break;
+   case 8:
+      {
+         /* expand the 4-byte clear value to an 8-byte value */
+         ushort *row = (ushort *) get_pointer(dst, dstx, dsty);
+         ushort val0 = UBYTE_TO_USHORT((value >>  0) & 0xff);
+         ushort val1 = UBYTE_TO_USHORT((value >>  8) & 0xff);
+         ushort val2 = UBYTE_TO_USHORT((value >> 16) & 0xff);
+         ushort val3 = UBYTE_TO_USHORT((value >> 24) & 0xff);
+         for (i = 0; i < height; i++) {
+            for (j = 0; j < width; j++) {
+               row[j*4+0] = val0;
+               row[j*4+1] = val1;
+               row[j*4+2] = val2;
+               row[j*4+3] = val3;
+            }
+            row += dst->pitch * 4;
+         }
+      }
+      break;
    default:
       assert(0);
       break;

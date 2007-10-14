@@ -43,6 +43,31 @@
  */
 
 
+/** Convert GLshort in [-32768,32767] to GLfloat in [-1.0,1.0] */
+#define SHORT_TO_FLOAT(S)   ((2.0F * (S) + 1.0F) * (1.0F/65535.0F))
+
+#define UNCLAMPED_FLOAT_TO_SHORT(us, f)  \
+   us = ( (short) ( CLAMP((f), 0.0, 1.0) * 32767.0F) )
+
+
+
+#if 0
+#define CLIP_TILE \
+   do { \
+      assert(x + w <= ps->width);               \
+      assert(y + h <= ps->height);              \
+   } while(0)
+
+#else
+#define CLIP_TILE \
+   do { \
+      if (x + w > ps->width) \
+         w = ps->width - x; \
+      if (y + h > ps->height) \
+         h = ps->height -y; \
+   } while(0)
+#endif
+
 
 /*** PIPE_FORMAT_U_A8_R8_G8_B8 ***/
 
@@ -108,16 +133,8 @@ a8r8g8b8_get_tile(struct pipe_surface *ps,
 
    assert(ps->format == PIPE_FORMAT_U_A8_R8_G8_B8);
 
-#if 0
-   assert(x + w <= ps->width);
-   assert(y + h <= ps->height);
-#else
-   /* temp clipping hack */
-   if (x + w > ps->width)
-      w = ps->width - x;
-   if (y + h > ps->height)
-      h = ps->height -y;
-#endif
+   CLIP_TILE;
+
    for (i = 0; i < h; i++) {
       float *pRow = p;
       for (j = 0; j < w; j++) {
@@ -147,16 +164,8 @@ a8r8g8b8_put_tile(struct pipe_surface *ps,
 
    assert(ps->format == PIPE_FORMAT_U_A8_R8_G8_B8);
 
-#if 0
-   assert(x + w <= ps->width);
-   assert(y + h <= ps->height);
-#else
-   /* temp clipping hack */
-   if (x + w > ps->width)
-      w = ps->width - x;
-   if (y + h > ps->height)
-      h = ps->height -y;
-#endif
+   CLIP_TILE;
+
    for (i = 0; i < h; i++) {
       const float *pRow = p;
       for (j = 0; j < w; j++) {
@@ -256,16 +265,8 @@ z16_get_tile(struct pipe_surface *ps,
 
    assert(ps->format == PIPE_FORMAT_U_Z16);
 
-#if 0
-   assert(x + w <= ps->width);
-   assert(y + h <= ps->height);
-#else
-   /* temp clipping hack */
-   if (x + w > ps->width)
-      w = ps->width - x;
-   if (y + h > ps->height)
-      h = ps->height -y;
-#endif
+   CLIP_TILE;
+
    for (i = 0; i < h; i++) {
       float *pRow = p;
       for (j = 0; j < w; j++) {
@@ -338,16 +339,8 @@ l8_get_tile(struct pipe_surface *ps,
 
    assert(ps->format == PIPE_FORMAT_U_L8);
 
-#if 0
-   assert(x + w <= ps->width);
-   assert(y + h <= ps->height);
-#else
-   /* temp clipping hack */
-   if (x + w > ps->width)
-      w = ps->width - x;
-   if (y + h > ps->height)
-      h = ps->height -y;
-#endif
+   CLIP_TILE;
+
    for (i = 0; i < h; i++) {
       float *pRow = p;
       for (j = 0; j < w; j++) {
@@ -422,16 +415,8 @@ a8_get_tile(struct pipe_surface *ps,
 
    assert(ps->format == PIPE_FORMAT_U_A8);
 
-#if 0
-   assert(x + w <= ps->width);
-   assert(y + h <= ps->height);
-#else
-   /* temp clipping hack */
-   if (x + w > ps->width)
-      w = ps->width - x;
-   if (y + h > ps->height)
-      h = ps->height -y;
-#endif
+   CLIP_TILE;
+
    for (i = 0; i < h; i++) {
       float *pRow = p;
       for (j = 0; j < w; j++) {
@@ -442,6 +427,74 @@ a8_get_tile(struct pipe_surface *ps,
          pRow += 4;
       }
       src += ps->region->pitch;
+      p += w0 * 4;
+   }
+}
+
+
+/*** PIPE_FORMAT_S_R16_G16_B16_A16 ***/
+
+static void
+r16g16b16a16_get_tile(struct pipe_surface *ps,
+                      unsigned x, unsigned y, unsigned w, unsigned h, float *p)
+{
+   const short *src
+      = ((const short *) (ps->region->map + ps->offset))
+      + (y * ps->region->pitch + x) * 4;
+   unsigned i, j;
+   unsigned w0 = w;
+
+   assert(ps->format == PIPE_FORMAT_S_R16_G16_B16_A16);
+
+   CLIP_TILE;
+
+   for (i = 0; i < h; i++) {
+      float *pRow = p;
+      const short *pixel = src;
+      for (j = 0; j < w; j++) {
+         pRow[0] = SHORT_TO_FLOAT(pixel[0]);
+         pRow[1] = SHORT_TO_FLOAT(pixel[1]);
+         pRow[2] = SHORT_TO_FLOAT(pixel[2]);
+         pRow[3] = SHORT_TO_FLOAT(pixel[3]);
+         pRow += 4;
+         pixel += 4;
+      }
+      src += ps->region->pitch * 4;
+      p += w0 * 4;
+   }
+}
+
+
+static void
+r16g16b16a16_put_tile(struct pipe_surface *ps,
+                      unsigned x, unsigned y, unsigned w, unsigned h,
+                      const float *p)
+{
+   short *dst
+      = ((short *) (ps->region->map + ps->offset))
+      + (y * ps->region->pitch + x) * 4;
+   unsigned i, j;
+   unsigned w0 = w;
+
+   assert(ps->format == PIPE_FORMAT_S_R16_G16_B16_A16);
+
+   CLIP_TILE;
+
+   for (i = 0; i < h; i++) {
+      const float *pRow = p;
+      for (j = 0; j < w; j++) {
+         short r, g, b, a;
+         UNCLAMPED_FLOAT_TO_SHORT(r, pRow[0]);
+         UNCLAMPED_FLOAT_TO_SHORT(g, pRow[1]);
+         UNCLAMPED_FLOAT_TO_SHORT(b, pRow[2]);
+         UNCLAMPED_FLOAT_TO_SHORT(a, pRow[3]);
+         dst[j*4+0] = r;
+         dst[j*4+1] = g;
+         dst[j*4+2] = b;
+         dst[j*4+3] = a;
+         pRow += 4;
+      }
+      dst += ps->region->pitch * 4;
       p += w0 * 4;
    }
 }
@@ -507,16 +560,8 @@ i8_get_tile(struct pipe_surface *ps,
 
    assert(ps->format == PIPE_FORMAT_U_I8);
 
-#if 0
-   assert(x + w <= ps->width);
-   assert(y + h <= ps->height);
-#else
-   /* temp clipping hack */
-   if (x + w > ps->width)
-      w = ps->width - x;
-   if (y + h > ps->height)
-      h = ps->height -y;
-#endif
+   CLIP_TILE;
+
    for (i = 0; i < h; i++) {
       float *pRow = p;
       for (j = 0; j < w; j++) {
@@ -593,16 +638,8 @@ a8_l8_get_tile(struct pipe_surface *ps,
 
    assert(ps->format == PIPE_FORMAT_U_A8_L8);
 
-#if 0
-   assert(x + w <= ps->width);
-   assert(y + h <= ps->height);
-#else
-   /* temp clipping hack */
-   if (x + w > ps->width)
-      w = ps->width - x;
-   if (y + h > ps->height)
-      h = ps->height -y;
-#endif
+   CLIP_TILE;
+
    for (i = 0; i < h; i++) {
       float *pRow = p;
       for (j = 0; j < w; j++) {
@@ -673,16 +710,8 @@ z32_get_tile(struct pipe_surface *ps,
 
    assert(ps->format == PIPE_FORMAT_U_Z16);
 
-#if 0
-   assert(x + w <= ps->width);
-   assert(y + h <= ps->height);
-#else
-   /* temp clipping hack */
-   if (x + w > ps->width)
-      w = ps->width - x;
-   if (y + h > ps->height)
-      h = ps->height -y;
-#endif
+   CLIP_TILE;
+
    for (i = 0; i < h; i++) {
       float *pRow = p;
       for (j = 0; j < w; j++) {
@@ -786,16 +815,8 @@ s8z24_get_tile(struct pipe_surface *ps,
 
    assert(ps->format == PIPE_FORMAT_S8_Z24);
 
-#if 0
-   assert(x + w <= ps->width);
-   assert(y + h <= ps->height);
-#else
-   /* temp clipping hack */
-   if (x + w > ps->width)
-      w = ps->width - x;
-   if (y + h > ps->height)
-      h = ps->height -y;
-#endif
+   CLIP_TILE;
+
    for (i = 0; i < h; i++) {
       float *pRow = p;
       for (j = 0; j < w; j++) {
@@ -881,6 +902,11 @@ softpipe_init_surface_funcs(struct softpipe_surface *sps)
       sps->read_quad_f_swz = a8_l8_read_quad_f_swz;
       sps->write_quad_f_swz = a8_l8_write_quad_f_swz;
       sps->surface.get_tile = a8_l8_get_tile;
+      break;
+
+   case PIPE_FORMAT_S_R16_G16_B16_A16:
+      sps->surface.get_tile = r16g16b16a16_get_tile;
+      sps->surface.put_tile = r16g16b16a16_put_tile;
       break;
 
    case PIPE_FORMAT_U_Z16:
