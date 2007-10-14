@@ -65,8 +65,6 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #ifndef _XF86DRI_SERVER_
 
-#include <GL/internal/dri_interface.h>
-
 _XFUNCPROTOBEGIN
 
 Bool XF86DRIQueryExtension( Display *dpy, int *event_base, int *error_base );
