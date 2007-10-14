@@ -200,7 +200,7 @@
         <glx vendorpriv="65546"/>
     </function>
 </category>
-a
+
 <category name="GLX_MESA_copy_sub_buffer" number="215">
     <function name="CopySubBufferMESA">
         <glx vendorpriv="5154"/>
