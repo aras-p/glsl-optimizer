@@ -70,14 +70,6 @@ st_renderbuffer_alloc_storage(GLcontext * ctx, struct gl_renderbuffer *rb,
    if (!info)
       return GL_FALSE;
 
-   switch (pipeFormat) {
-   case PIPE_FORMAT_S8_Z24:
-      strb->Base.DataType = GL_UNSIGNED_INT;
-      break;
-   default:
-      strb->Base.DataType = GL_UNSIGNED_BYTE; /* XXX fix */
-   }
-
    strb->Base._ActualFormat = info->base_format;
    strb->Base.RedBits = info->red_bits;
    strb->Base.GreenBits = info->green_bits;
@@ -85,6 +77,9 @@ st_renderbuffer_alloc_storage(GLcontext * ctx, struct gl_renderbuffer *rb,
    strb->Base.AlphaBits = info->alpha_bits;
    strb->Base.DepthBits = info->depth_bits;
    strb->Base.StencilBits = info->stencil_bits;
+   strb->Base.DataType = st_format_datatype(pipeFormat);
+
+   assert(strb->Base.DataType);
 
    cpp = info->size;
 
@@ -229,6 +224,7 @@ st_new_renderbuffer_fb(GLenum intFormat)
    switch (intFormat) {
    case GL_RGB5:
    case GL_RGBA8:
+   case GL_RGBA16:
       strb->Base._BaseFormat = GL_RGBA;
       break;
    case GL_DEPTH_COMPONENT16:

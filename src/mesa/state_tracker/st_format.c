@@ -54,6 +54,7 @@ st_get_format_info(GLuint format)
       {
          PIPE_FORMAT_U_R8_G8_B8_A8,  /* format */
          GL_RGBA,                    /* base_format */
+         GL_UNSIGNED_BYTE,           /* datatype for renderbuffers */
          8, 8, 8, 8, 0, 0,           /* color bits */
          0, 0,                       /* depth, stencil */
          4                           /* size in bytes */
@@ -61,6 +62,7 @@ st_get_format_info(GLuint format)
       {
          PIPE_FORMAT_U_A8_R8_G8_B8,
          GL_RGBA,                    /* base_format */
+         GL_UNSIGNED_BYTE,           /* datatype for renderbuffers */
          8, 8, 8, 8, 0, 0,           /* color bits */
          0, 0,                       /* depth, stencil */
          4                           /* size in bytes */
@@ -68,6 +70,7 @@ st_get_format_info(GLuint format)
       {
          PIPE_FORMAT_U_A1_R5_G5_B5,
          GL_RGBA,                    /* base_format */
+         GL_UNSIGNED_SHORT,          /* datatype for renderbuffers */
          5, 5, 5, 1, 0, 0,           /* color bits */
          0, 0,                       /* depth, stencil */
          2                           /* size in bytes */
@@ -75,13 +78,23 @@ st_get_format_info(GLuint format)
       {
          PIPE_FORMAT_U_R5_G6_B5,
          GL_RGBA,                    /* base_format */
+         GL_UNSIGNED_SHORT,          /* datatype for renderbuffers */
          5, 6, 5, 0, 0, 0,           /* color bits */
          0, 0,                       /* depth, stencil */
          2                           /* size in bytes */
       },
       {
+         PIPE_FORMAT_S_R16_G16_B16_A16,
+         GL_RGBA,                    /* base_format */
+         GL_UNSIGNED_SHORT,          /* datatype for renderbuffers */
+         16, 16, 16, 16, 0, 0,       /* color bits */
+         0, 0,                       /* depth, stencil */
+         8                           /* size in bytes */
+      },
+      {
          PIPE_FORMAT_U_Z16,
          GL_DEPTH_COMPONENT,         /* base_format */
+         GL_UNSIGNED_SHORT,          /* datatype for renderbuffers */
          0, 0, 0, 0, 0, 0,           /* color bits */
          16, 0,                      /* depth, stencil */
          2                           /* size in bytes */
@@ -89,6 +102,7 @@ st_get_format_info(GLuint format)
       {
          PIPE_FORMAT_U_Z32,
          GL_DEPTH_COMPONENT,         /* base_format */
+         GL_UNSIGNED_INT,            /* datatype for renderbuffers */
          0, 0, 0, 0, 0, 0,           /* color bits */
          32, 0,                      /* depth, stencil */
          4                           /* size in bytes */
@@ -96,6 +110,7 @@ st_get_format_info(GLuint format)
       {
          PIPE_FORMAT_S8_Z24,
          GL_DEPTH_STENCIL_EXT,       /* base_format */
+         GL_UNSIGNED_INT,            /* datatype for renderbuffers */
          0, 0, 0, 0, 0, 0,           /* color bits */
          24, 8,                      /* depth, stencil */
          4                           /* size in bytes */
@@ -112,12 +127,27 @@ st_get_format_info(GLuint format)
 }
 
 
+/**
+ * Return bytes per pixel for the given format.
+ */
 GLuint
 st_sizeof_format(GLuint pipeFormat)
 {
    const struct pipe_format_info *info = st_get_format_info(pipeFormat);
    assert(info);
    return info->size;
+}
+
+
+/**
+ * Return bytes per pixel for the given format.
+ */
+GLenum
+st_format_datatype(GLuint pipeFormat)
+{
+   const struct pipe_format_info *info = st_get_format_info(pipeFormat);
+   assert(info);
+   return info->datatype;
 }
 
 
@@ -157,6 +187,22 @@ default_rgba_format(const GLuint formats[], GLuint num)
       if (formats[i] == PIPE_FORMAT_U_R8_G8_B8_A8 ||
           formats[i] == PIPE_FORMAT_U_A8_R8_G8_B8 ||
           formats[i] == PIPE_FORMAT_U_R5_G6_B5) {
+         return formats[i];
+      }
+   }
+   return PIPE_FORMAT_NONE;
+}
+
+
+/**
+ * Search list of formats for first RGBA format with >8 bits/channel.
+ */
+static GLuint
+default_deep_rgba_format(const GLuint formats[], GLuint num)
+{
+   GLuint i;
+   for (i = 0; i < num; i++) {
+      if (formats[i] == PIPE_FORMAT_S_R16_G16_B16_A16) {
          return formats[i];
       }
    }
@@ -244,8 +290,9 @@ st_choose_pipe_format(struct pipe_context *pipe, GLint internalFormat,
    case GL_RGBA8:
    case GL_RGB10_A2:
    case GL_RGBA12:
-   case GL_RGBA16:
       return default_rgba_format(supported, n);
+   case GL_RGBA16:
+      return default_deep_rgba_format(supported, n);
 
    case GL_RGBA4:
    case GL_RGBA2:

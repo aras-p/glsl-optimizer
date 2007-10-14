@@ -34,6 +34,7 @@ struct pipe_format_info
 {
    GLuint format;
    GLenum base_format;
+   GLenum datatype;
    GLubyte red_bits;
    GLubyte green_bits;
    GLubyte blue_bits;
@@ -52,6 +53,10 @@ st_get_format_info(GLuint format);
 
 extern GLuint
 st_sizeof_format(GLuint pipeFormat);
+
+
+extern GLenum
+st_format_datatype(GLuint pipeFormat);
 
 
 extern GLuint
