@@ -442,15 +442,21 @@ create_xmesa_buffer(XMesaDrawable d, BufferType type,
       _mesa_add_renderbuffer(&b->mesa_buffer, BUFFER_STENCIL, rb);
    }
 
+   if (vis->mesa_visual.accumRedBits > 0) {
+      struct gl_renderbuffer *rb
+         = st_new_renderbuffer_fb(GL_RGBA16);
+      _mesa_add_renderbuffer(&b->mesa_buffer, BUFFER_ACCUM, rb);
+   }
+
 
    /*
     * Other renderbuffer (depth, stencil, etc)
     */
    _mesa_add_soft_renderbuffers(&b->mesa_buffer,
-                                GL_FALSE,  /* color */
-                                GL_FALSE,/*vis->mesa_visual.haveDepthBuffer,*/
-                                GL_FALSE,
-                                vis->mesa_visual.haveAccumBuffer,
+                                GL_FALSE, /* color */
+                                GL_FALSE, /*vis->mesa_visual.haveDepthBuffer,*/
+                                GL_FALSE, /* stencil */
+                                GL_FALSE, /* accum */
                                 b->swAlpha,
                                 vis->mesa_visual.numAuxBuffers > 0 );
 

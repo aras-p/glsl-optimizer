@@ -277,10 +277,11 @@ xmesa_supported_formats(struct pipe_context *pipe, GLuint *numFormats)
 {
    static const GLuint formats[] = {
       PIPE_FORMAT_U_A8_R8_G8_B8,
+      PIPE_FORMAT_S_R16_G16_B16_A16,
       PIPE_FORMAT_S8_Z24
    };
 
-   *numFormats = 2;
+   *numFormats = sizeof(formats) / sizeof(formats[0]);
 
    return formats;
 }
