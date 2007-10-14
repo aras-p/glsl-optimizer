@@ -31,6 +31,7 @@
 #include "vbo/vbo.h"
 #include "st_public.h"
 #include "st_context.h"
+#include "st_cb_accum.h"
 #include "st_cb_bufferobjects.h"
 #include "st_cb_clear.h"
 #include "st_cb_drawpixels.h"
@@ -130,6 +131,7 @@ void st_destroy_context( struct st_context *st )
 
 void st_init_driver_functions(struct dd_function_table *functions)
 {
+   st_init_accum_functions(functions);
    st_init_bufferobject_functions(functions);
    st_init_clear_functions(functions);
    st_init_drawpixels_functions(functions);
