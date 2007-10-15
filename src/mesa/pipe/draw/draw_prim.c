@@ -119,7 +119,7 @@ void draw_do_flush( struct draw_context *draw,
        draw->drawing)
    {
       draw->pipeline.first->end( draw->pipeline.first );
-      draw->drawing = 0;
+      draw->drawing = FALSE;
       draw->prim = ~0;
       draw->pipeline.first = draw->pipeline.validate;
    }
@@ -400,7 +400,7 @@ draw_arrays(struct draw_context *draw, unsigned prim,
             unsigned start, unsigned count)
 {
    if (!draw->drawing) {
-      draw->drawing = 1;
+      draw->drawing = TRUE;
 
       /* tell drawing pipeline we're beginning drawing */
       draw->pipeline.first->begin( draw->pipeline.first );
