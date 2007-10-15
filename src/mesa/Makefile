@@ -113,11 +113,11 @@ osmesa-only: depend subdirs $(TOP)/$(LIB_DIR)/$(OSMESA_LIB_NAME)
 
 # Make the GL library
 $(TOP)/$(LIB_DIR)/$(GL_LIB_NAME): $(STAND_ALONE_OBJECTS) $(SOFTPIPE_LIB)
-	@ $(TOP)/bin/mklib -o $(GL_LIB) -linker '$(CC)' \
+	$(TOP)/bin/mklib -o $(GL_LIB) -linker '$(CC)' \
 		-major $(GL_MAJOR) -minor $(GL_MINOR) -patch $(GL_TINY) \
 		-install $(TOP)/$(LIB_DIR) \
-		$(MKLIB_OPTIONS) $(GL_LIB_DEPS) $(STAND_ALONE_OBJECTS) \
-		$(SOFTPIPE_LIB)
+		$(MKLIB_OPTIONS) $(STAND_ALONE_OBJECTS) \
+		$(SOFTPIPE_LIB) $(GL_LIB_DEPS)
 
 # Make the OSMesa library
 $(TOP)/$(LIB_DIR)/$(OSMESA_LIB_NAME): $(OSMESA_DRIVER_OBJECTS) $(OSMESA16_OBJECTS)

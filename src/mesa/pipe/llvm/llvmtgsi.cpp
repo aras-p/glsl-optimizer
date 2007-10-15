@@ -1,5 +1,6 @@
 #include "llvmtgsi.h"
 
+#include "pipe/p_context.h"
 #include "pipe/tgsi/exec/tgsi_exec.h"
 #include "pipe/tgsi/exec/tgsi_token.h"
 #include "pipe/tgsi/exec/tgsi_build.h"
@@ -469,7 +470,7 @@ tgsi_to_llvm(const struct tgsi_token *tokens)
 }
 
 struct ga_llvm_prog *
-ga_llvm_from_tgsi(const struct tgsi_token *tokens)
+ga_llvm_from_tgsi(struct pipe_context *pipe, const struct tgsi_token *tokens)
 {
    std::cout << "Creating llvm " <<std::endl;
    struct ga_llvm_prog *ga_llvm =
@@ -487,20 +488,24 @@ ga_llvm_from_tgsi(const struct tgsi_token *tokens)
 
    llvm::ExistingModuleProvider *mp =
       new llvm::ExistingModuleProvider(mod);
-   llvm::ExecutionEngine *ee =
-      llvm::ExecutionEngine::create(mp, false);
-
+   llvm::ExecutionEngine *ee = 0;
+   if (!pipe->llvm_execution_engine) {
+      ee = llvm::ExecutionEngine::create(mp, false);
+      pipe->llvm_execution_engine = ee;
+   } else {
+      ee = (llvm::ExecutionEngine*)pipe->llvm_execution_engine;
+      ee->addModuleProvider(mp);
+   }
    ga_llvm->module = mod;
-   ga_llvm->engine = ee;
    fprintf(stderr, "DUMPX \n");
    //tgsi_dump(tokens, TGSI_DUMP_VERBOSE);
    tgsi_dump(tokens, 0);
    fprintf(stderr, "DUMPEND \n");
 
    Function *func = mod->getFunction("run_vertex_shader");
-   std::cout << "run_vertex_shader  = "<<func;
+   std::cout << "run_vertex_shader  = "<<func<<std::endl;
    ga_llvm->function = ee->getPointerToFunctionOrStub(func);
-   std::cout << " -- FUNC is " <<ga_llvm->function;
+   std::cout << " -- FUNC is " <<ga_llvm->function<<std::endl;
 
    return ga_llvm;
 }
@@ -515,15 +520,22 @@ void ga_llvm_prog_delete(struct ga_llvm_prog *prog)
    free(prog);
 }
 
+typedef void (*vertex_shader_runner)(float (*ainputs)[32][4],
+                                  float (*dests)[32][4],
+                                  float (*aconsts)[4],
+                                  int count,
+                                  int num_attribs);
+
 int ga_llvm_prog_exec(struct ga_llvm_prog *prog,
                       float (*inputs)[32][4],
-                      void *dests[16*32*4],
+                      float (*dests)[32][4],
                       float (*consts)[4],
                       int count,
                       int num_attribs)
 {
    std::cout << "---- START LLVM Execution "<<std::endl;
-
+   vertex_shader_runner runner = reinterpret_cast<vertex_shader_runner>(prog->function);
+   runner(inputs, dests, consts, count, num_attribs);
 
    std::cout << "---- END LLVM Execution "<<std::endl;
    return 0;

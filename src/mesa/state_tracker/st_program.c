@@ -251,7 +251,7 @@ st_translate_vertex_program(struct st_context *st,
                                 tokensOut, maxTokens);
 
    vs.tokens = tokensOut;
-   vs.llvm_prog = ga_llvm_from_tgsi(vs.tokens);
+   vs.llvm_prog = ga_llvm_from_tgsi(st->pipe, vs.tokens);
    cso = st_cached_vs_state(st, &vs);
    stvp->vs = cso;
 
@@ -407,7 +407,7 @@ st_translate_fragment_program(struct st_context *st,
                                 tokensOut, maxTokens);
 
    fs.tokens = tokensOut;
-   fs.llvm_prog = ga_llvm_from_tgsi(fs.tokens);
+   fs.llvm_prog = ga_llvm_from_tgsi(st->pipe, fs.tokens);
    cso = st_cached_fs_state(st, &fs);
    stfp->fs = cso;
 

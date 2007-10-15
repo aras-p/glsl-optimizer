@@ -38,7 +38,9 @@ struct pipe_state_cache;
  */
 struct pipe_context {
    struct pipe_winsys *winsys;
-   
+
+   void *llvm_execution_engine;
+
    void (*destroy)( struct pipe_context * );
 
    /*
