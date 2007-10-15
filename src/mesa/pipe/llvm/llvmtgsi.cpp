@@ -14,15 +14,88 @@
 #include <llvm/DerivedTypes.h>
 #include <llvm/Instructions.h>
 #include <llvm/ModuleProvider.h>
+#include <llvm/Pass.h>
+#include <llvm/PassManager.h>
 #include <llvm/ParameterAttributes.h>
 #include <llvm/Support/PatternMatch.h>
 #include <llvm/ExecutionEngine/JIT.h>
 #include <llvm/ExecutionEngine/Interpreter.h>
 #include <llvm/ExecutionEngine/GenericValue.h>
 #include <llvm/Support/MemoryBuffer.h>
+#include <llvm/LinkAllPasses.h>
+#include <llvm/Analysis/Verifier.h>
+#include <llvm/Analysis/LoopPass.h>
+#include <llvm/Target/TargetData.h>
 #include <llvm/Bitcode/ReaderWriter.h>
 #include <iostream>
 
+using namespace llvm;
+#include "llvm_base_shader.cpp"
+
+
+static inline void addPass(PassManager &PM, Pass *P) {
+  // Add the pass to the pass manager...
+  PM.add(P);
+}
+
+static inline void AddStandardCompilePasses(PassManager &PM) {
+   PM.add(createVerifierPass());                  // Verify that input is correct
+
+   addPass(PM, createLowerSetJmpPass());          // Lower llvm.setjmp/.longjmp
+
+   // If the -strip-debug command line option was specified, do it.
+   //if (StripDebug)
+   //  addPass(PM, createStripSymbolsPass(true));
+
+   addPass(PM, createRaiseAllocationsPass());     // call %malloc -> malloc inst
+   addPass(PM, createCFGSimplificationPass());    // Clean up disgusting code
+   addPass(PM, createPromoteMemoryToRegisterPass());// Kill useless allocas
+   addPass(PM, createGlobalOptimizerPass());      // Optimize out global vars
+   addPass(PM, createGlobalDCEPass());            // Remove unused fns and globs
+   addPass(PM, createIPConstantPropagationPass());// IP Constant Propagation
+   addPass(PM, createDeadArgEliminationPass());   // Dead argument elimination
+   addPass(PM, createInstructionCombiningPass()); // Clean up after IPCP & DAE
+   addPass(PM, createCFGSimplificationPass());    // Clean up after IPCP & DAE
+
+   addPass(PM, createPruneEHPass());              // Remove dead EH info
+
+   //if (!DisableInline)
+   addPass(PM, createFunctionInliningPass());   // Inline small functions
+   addPass(PM, createArgumentPromotionPass());    // Scalarize uninlined fn args
+
+   addPass(PM, createTailDuplicationPass());      // Simplify cfg by copying code
+   addPass(PM, createInstructionCombiningPass()); // Cleanup for scalarrepl.
+   addPass(PM, createCFGSimplificationPass());    // Merge & remove BBs
+   addPass(PM, createScalarReplAggregatesPass()); // Break up aggregate allocas
+   addPass(PM, createInstructionCombiningPass()); // Combine silly seq's
+   addPass(PM, createCondPropagationPass());      // Propagate conditionals
+
+   addPass(PM, createTailCallEliminationPass());  // Eliminate tail calls
+   addPass(PM, createCFGSimplificationPass());    // Merge & remove BBs
+   addPass(PM, createReassociatePass());          // Reassociate expressions
+   addPass(PM, createLoopRotatePass());
+   addPass(PM, createLICMPass());                 // Hoist loop invariants
+   addPass(PM, createLoopUnswitchPass());         // Unswitch loops.
+   addPass(PM, createLoopIndexSplitPass());       // Index split loops.
+   addPass(PM, createInstructionCombiningPass()); // Clean up after LICM/reassoc
+   addPass(PM, createIndVarSimplifyPass());       // Canonicalize indvars
+   addPass(PM, createLoopUnrollPass());           // Unroll small loops
+   addPass(PM, createInstructionCombiningPass()); // Clean up after the unroller
+   addPass(PM, createGVNPass());                  // Remove redundancies
+   addPass(PM, createSCCPPass());                 // Constant prop with SCCP
+
+   // Run instcombine after redundancy elimination to exploit opportunities
+   // opened up by them.
+   addPass(PM, createInstructionCombiningPass());
+   addPass(PM, createCondPropagationPass());      // Propagate conditionals
+
+   addPass(PM, createDeadStoreEliminationPass()); // Delete dead stores
+   addPass(PM, createAggressiveDCEPass());        // SSA based 'Aggressive DCE'
+   addPass(PM, createCFGSimplificationPass());    // Merge & remove BBs
+   addPass(PM, createSimplifyLibCallsPass());     // Library Call Optimizations
+   addPass(PM, createDeadTypeEliminationPass());  // Eliminate dead types
+   addPass(PM, createConstantMergePass());        // Merge dup global constants
+}
 
 static void
 translate_declaration(llvm::Module *module,
@@ -341,7 +414,7 @@ translate_instruction(llvm::Module *module,
 static llvm::Module *
 tgsi_to_llvm(const struct tgsi_token *tokens)
 {
-   llvm::Module *mod = new llvm::Module("tgsi");
+   llvm::Module *mod = createBaseShader();
    struct tgsi_parse_context parse;
    struct tgsi_full_instruction fi;
    struct tgsi_full_declaration fd;
@@ -402,17 +475,32 @@ ga_llvm_from_tgsi(const struct tgsi_token *tokens)
    struct ga_llvm_prog *ga_llvm =
       (struct ga_llvm_prog *)malloc(sizeof(struct ga_llvm_prog));
    llvm::Module *mod = tgsi_to_llvm(tokens);
+
+   /* Run optimization passes over it */
+   PassManager passes;
+   // Add an appropriate TargetData instance for this module...
+   passes.add(new TargetData(mod));
+   AddStandardCompilePasses(passes);
+   std::cout<<"Running optimization passes..."<<std::endl;
+   bool b = passes.run(*mod);
+   std::cout<<"\tModified mod = "<<b<<std::endl;
+
    llvm::ExistingModuleProvider *mp =
       new llvm::ExistingModuleProvider(mod);
-   //llvm::ExecutionEngine *ee =
-   //   llvm::ExecutionEngine::create(mp, false);
+   llvm::ExecutionEngine *ee =
+      llvm::ExecutionEngine::create(mp, false);
 
    ga_llvm->module = mod;
-   ga_llvm->engine = 0;//ee;
+   ga_llvm->engine = ee;
    fprintf(stderr, "DUMPX \n");
    //tgsi_dump(tokens, TGSI_DUMP_VERBOSE);
    tgsi_dump(tokens, 0);
    fprintf(stderr, "DUMPEND \n");
+
+   Function *func = mod->getFunction("run_vertex_shader");
+   std::cout << "run_vertex_shader  = "<<func;
+   ga_llvm->function = ee->getPointerToFunctionOrStub(func);
+   std::cout << " -- FUNC is " <<ga_llvm->function;
 
    return ga_llvm;
 }
@@ -423,6 +511,7 @@ void ga_llvm_prog_delete(struct ga_llvm_prog *prog)
    delete mod;
    prog->module = 0;
    prog->engine = 0;
+   prog->function = 0;
    free(prog);
 }
 
@@ -430,24 +519,12 @@ int ga_llvm_prog_exec(struct ga_llvm_prog *prog,
                       float (*inputs)[32][4],
                       void *dests[16*32*4],
                       float (*consts)[4],
-                      int count)
+                      int count,
+                      int num_attribs)
 {
-   //std::cout << "START "<<std::endl;
-   llvm::Module *mod = static_cast<llvm::Module*>(prog->module);
-   llvm::Function *func = mod->getFunction("main");
-   llvm::ExecutionEngine *ee = static_cast<llvm::ExecutionEngine*>(prog->engine);
+   std::cout << "---- START LLVM Execution "<<std::endl;
 
-   std::vector<llvm::GenericValue> args(0);
-   //args[0] = GenericValue(&st);
-   //std::cout << "Mod is "<<*mod;
-   //std::cout << "\n\nRunning llvm: " << std::endl;
-   if (func) {
-      std::cout << "Func is "<<func;
-      llvm::GenericValue gv = ee->runFunction(func, args);
-   }
 
-//delete ee;
-//delete mp;
-
+   std::cout << "---- END LLVM Execution "<<std::endl;
    return 0;
 }

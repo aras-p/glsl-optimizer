@@ -112,7 +112,7 @@ void draw_vertex_shader_queue_flush_llvm(struct draw_context *draw)
    float (*consts)[4] = (float (*)[4]) draw->mapped_constants;
    struct ga_llvm_prog *prog = draw->vertex_shader->state->llvm_prog;
 
-   fprintf(stderr, "XX q(%d) ", draw->vs.queue_nr);
+   fprintf(stderr, "--- XX q(%d) ", draw->vs.queue_nr);
 
    /* fetch the inputs */
    for (i = 0; i < draw->vs.queue_nr; ++i) {
@@ -123,7 +123,8 @@ void draw_vertex_shader_queue_flush_llvm(struct draw_context *draw)
 
    /* batch execute the shaders on all the vertices */
    ga_llvm_prog_exec(prog, inputs, dests, consts,
-                     draw->vs.queue_nr);
+                     draw->vs.queue_nr,
+                     draw->vertex_info.num_attribs);
 
    draw->vs.queue_nr = 0;
 }
