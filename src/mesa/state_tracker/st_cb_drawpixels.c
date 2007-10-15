@@ -105,11 +105,10 @@ make_fragment_shader(struct st_context *st, GLboolean bitmapMode)
          = MAKE_SWIZZLE4(SWIZZLE_ONE, SWIZZLE_ONE, SWIZZLE_ONE, SWIZZLE_ONE );
       ic++;
 
-      /* SUB tmp0.w, tmp0.w, tmp0.x;  #  tmp0.w -= 1 */
+      /* SUB tmp0, tmp0.wwww, tmp0.xxxx;  #  tmp0.w -= 1 */
       p->Instructions[ic].Opcode = OPCODE_SUB;
       p->Instructions[ic].DstReg.File = PROGRAM_TEMPORARY;
       p->Instructions[ic].DstReg.Index = 0;
-      p->Instructions[ic].DstReg.WriteMask = WRITEMASK_W;
       p->Instructions[ic].SrcReg[0].File = PROGRAM_TEMPORARY;
       p->Instructions[ic].SrcReg[0].Index = 0;
       p->Instructions[ic].SrcReg[0].Swizzle = SWIZZLE_WWWW;
@@ -118,11 +117,10 @@ make_fragment_shader(struct st_context *st, GLboolean bitmapMode)
       p->Instructions[ic].SrcReg[1].Swizzle = SWIZZLE_XXXX; /* 1.0 */
       ic++;
 
-      /* KIL if tmp0.w < 0 */
+      /* KIL if tmp0 < 0 */
       p->Instructions[ic].Opcode = OPCODE_KIL;
       p->Instructions[ic].SrcReg[0].File = PROGRAM_TEMPORARY;
       p->Instructions[ic].SrcReg[0].Index = 0;
-      p->Instructions[ic].SrcReg[0].Swizzle = SWIZZLE_WWWW;
       ic++;
 
       /* MOV result.color, fragment.color */
