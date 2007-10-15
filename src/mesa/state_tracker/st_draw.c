@@ -310,6 +310,35 @@ st_draw_vertices(GLcontext *ctx, unsigned prim,
 }
 
 
+/**
+ * Set the (private) draw module's post-transformed vertex format when in
+ * GL_SELECT or GL_FEEDBACK mode.
+ */
+static void
+set_feedback_vertex_format(GLcontext *ctx)
+{
+   struct st_context *st = ctx->st;
+   uint attrs[PIPE_MAX_SHADER_OUTPUTS];
+   interp_mode interp[PIPE_MAX_SHADER_OUTPUTS];
+   GLuint n, i;
+
+   if (ctx->RenderMode == GL_FEEDBACK) {
+      /* emit all attribs (pos, color, texcoord) as GLfloat[4] */
+      n = st->state.vs->state.num_outputs;
+      for (i = 0; i < n; i++) {
+         attrs[i] = FORMAT_4F;
+         interp[i] = INTERP_NONE;
+      }
+   }
+   else {
+      assert(ctx->RenderMode == GL_SELECT);
+      n = 1;
+      attrs[0] = FORMAT_4F;
+      interp[0] = INTERP_NONE;
+   }
+
+   draw_set_vertex_attributes(st->draw, attrs, interp, n);
+}
 
 
 /**
@@ -359,6 +388,7 @@ st_feedback_draw_vbo(GLcontext *ctx,
    draw_set_clip_state(draw, &st->state.clip);
    draw_set_rasterizer_state(draw, &st->state.rasterizer->state);
    draw_bind_vertex_shader(draw, st->state.vs->data);
+   set_feedback_vertex_format(ctx);
 
    /* loop over TGSI shader inputs to determine vertex buffer
     * and attribute info

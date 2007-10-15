@@ -93,8 +93,9 @@ feedback_vertex(GLcontext *ctx, const struct draw_context *draw,
    const GLfloat ci = 0;
    GLuint slot;
 
+   /* Recall that Y=0=Top of window for Gallium wincoords */
    win[0] = v->data[0][0];
-   win[1] = v->data[0][1];
+   win[1] = ctx->DrawBuffer->Height - v->data[0][1];
    win[2] = v->data[0][2];
    win[3] = 1.0F / v->data[0][3];
 
@@ -104,13 +105,13 @@ feedback_vertex(GLcontext *ctx, const struct draw_context *draw,
     */
 
    slot = st->vertex_result_to_slot[VERT_RESULT_COL0];
-   if (slot)
+   if (slot != ~0)
       color = v->data[slot];
    else
       color = ctx->Current.Attrib[VERT_ATTRIB_COLOR0];
 
    slot = st->vertex_result_to_slot[VERT_RESULT_TEX0];
-   if (slot)
+   if (slot != ~0)
       texcoord = v->data[slot];
    else
       texcoord = ctx->Current.Attrib[VERT_ATTRIB_TEX0];
@@ -294,13 +295,6 @@ st_RenderMode(GLcontext *ctx, GLenum newMode )
       draw_set_rasterize_stage(draw, st->selection_stage);
       /* Plug in new vbo draw function */
       vbo->draw_prims = st_feedback_draw_vbo;
-      /* setup post-transform vertex attribs */
-      {
-         /* just emit pos as GLfloat[4] */
-         static const uint attrs[1] = { FORMAT_4F };
-         const interp_mode *interp = NULL;
-         draw_set_vertex_attributes(draw, attrs, interp, 1);
-      }
    }
    else {
       if (!st->feedback_stage)
@@ -308,19 +302,8 @@ st_RenderMode(GLcontext *ctx, GLenum newMode )
       draw_set_rasterize_stage(draw, st->feedback_stage);
       /* Plug in new vbo draw function */
       vbo->draw_prims = st_feedback_draw_vbo;
-      /* setup post-transform vertex attribs */
-      {
-         /* emit all attribs as GLfloat[4] */
-         uint attrs[PIPE_MAX_SHADER_OUTPUTS];
-         interp_mode interp[PIPE_MAX_SHADER_OUTPUTS];
-         GLuint n = st->state.vs->state.num_outputs;
-         GLuint i;
-         for (i = 0; i < n; i++) {
-            attrs[i] = FORMAT_4F;
-            interp[i] = INTERP_NONE;
-         }
-         draw_set_vertex_attributes(draw, attrs, interp, n);
-      }
+      /* need to generate/use a vertex program that emits pos/color/tex */
+      st->dirty.st |= ST_NEW_VERTEX_PROGRAM;
    }
 }
 
