@@ -175,10 +175,11 @@ i915_end_query(struct pipe_context *pipe, struct pipe_query_object *q)
 }
 
 
-static boolean i915_draw_elements( struct pipe_context *pipe,
-                                struct pipe_buffer_handle *indexBuffer,
-                                unsigned indexSize,
-                                unsigned prim, unsigned start, unsigned count)
+static boolean
+i915_draw_elements( struct pipe_context *pipe,
+                    struct pipe_buffer_handle *indexBuffer,
+                    unsigned indexSize,
+                    unsigned prim, unsigned start, unsigned count)
 {
    struct i915_context *i915 = i915_context( pipe );
    struct draw_context *draw = i915->draw;
@@ -187,8 +188,7 @@ static boolean i915_draw_elements( struct pipe_context *pipe,
    if (i915->dirty)
       i915_update_derived( i915 );
 
-
-  /*
+   /*
     * Map vertex buffers
     */
    for (i = 0; i < PIPE_ATTRIB_MAX; i++) {
