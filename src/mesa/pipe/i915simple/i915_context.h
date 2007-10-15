@@ -169,12 +169,16 @@ struct i915_context
    struct pipe_clear_color_state clear_color;
    struct pipe_clip_state clip;
    struct pipe_constant_buffer constants[PIPE_SHADER_TYPES];
+   struct pipe_feedback_state feedback;
    struct pipe_framebuffer_state framebuffer;
    struct pipe_poly_stipple poly_stipple;
    struct pipe_scissor_state scissor;
    struct pipe_mipmap_tree *texture[PIPE_MAX_SAMPLERS];
    struct pipe_viewport_state viewport;
    struct pipe_vertex_buffer vertex_buffer[PIPE_ATTRIB_MAX];
+
+   /** Feedback buffers */
+   struct pipe_feedback_buffer feedback_buffer[PIPE_MAX_FEEDBACK_ATTRIBS];
 
    unsigned dirty;
 

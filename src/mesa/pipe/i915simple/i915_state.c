@@ -550,6 +550,33 @@ static void i915_set_framebuffer_state(struct pipe_context *pipe,
 }
 
 
+static void
+i915_set_feedback_state(struct pipe_context *pipe,
+                        const struct pipe_feedback_state *feedback)
+{
+   struct i915_context *i915 = i915_context(pipe);
+   i915->feedback = *feedback;
+   draw_set_feedback_state(i915->draw, feedback);
+}
+
+
+static void
+i915_set_feedback_buffer(struct pipe_context *pipe,
+                             unsigned index,
+                             const struct pipe_feedback_buffer *feedback)
+{
+   struct i915_context *i915 = i915_context(pipe);
+
+   assert(index < PIPE_MAX_FEEDBACK_ATTRIBS);
+
+   /* Need to be careful with referencing */
+   pipe->winsys->buffer_reference(pipe->winsys,
+                                  &i915->feedback_buffer[index].buffer,
+                                  feedback->buffer);
+   i915->feedback_buffer[index].size = feedback->size;
+   i915->feedback_buffer[index].start_offset = feedback->start_offset;
+}
+
 
 
 static void i915_set_clear_color_state(struct pipe_context *pipe,
@@ -731,6 +758,9 @@ i915_init_state_functions( struct i915_context *i915 )
    i915->pipe.set_clear_color_state = i915_set_clear_color_state;
    i915->pipe.set_constant_buffer = i915_set_constant_buffer;
    i915->pipe.set_framebuffer_state = i915_set_framebuffer_state;
+   i915->pipe.set_feedback_state = i915_set_feedback_state;
+   i915->pipe.set_feedback_buffer = i915_set_feedback_buffer;
+
    i915->pipe.set_polygon_stipple = i915_set_polygon_stipple;
    i915->pipe.set_scissor_state = i915_set_scissor_state;
    i915->pipe.set_texture_state = i915_set_texture_state;

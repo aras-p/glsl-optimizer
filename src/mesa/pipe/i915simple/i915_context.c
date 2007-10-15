@@ -212,6 +212,19 @@ static boolean i915_draw_elements( struct pipe_context *pipe,
       draw_set_mapped_element_buffer(draw, 0, NULL);
    }
 
+   /* Map feedback buffers if enabled */
+   if (i915->feedback.enabled) {
+      const uint n = i915->feedback.interleaved ? 1 : i915->feedback.num_attribs;
+      for (i = 0; i < n; i++) {
+         void *ptr = pipe->winsys->buffer_map(pipe->winsys,
+                                              i915->feedback_buffer[i].buffer,
+                                              PIPE_BUFFER_FLAG_WRITE);
+         draw_set_mapped_feedback_buffer(draw, i, ptr,
+                                         i915->feedback_buffer[i].size);
+      }
+   }
+
+
    draw_set_mapped_constant_buffer(draw,
                                 i915->current.constants[PIPE_SHADER_VERTEX]);
 
@@ -230,6 +243,16 @@ static boolean i915_draw_elements( struct pipe_context *pipe,
    if (indexBuffer) {
       pipe->winsys->buffer_unmap(pipe->winsys, indexBuffer);
       draw_set_mapped_element_buffer(draw, 0, NULL);
+   }
+
+   /* Unmap feedback buffers if enabled */
+   if (i915->feedback.enabled) {
+      const uint n = i915->feedback.interleaved ? 1 : i915->feedback.num_attribs;
+      for (i = 0; i < n; i++) {
+         pipe->winsys->buffer_unmap(pipe->winsys,
+                                    i915->feedback_buffer[i].buffer);
+         draw_set_mapped_feedback_buffer(draw, i, NULL, 0);
+      }
    }
 
    return TRUE;
