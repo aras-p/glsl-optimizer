@@ -97,6 +97,116 @@ do { \
 
 
 static void
+logicop_quad(struct quad_stage *qs, struct quad_header *quad)
+{
+   struct softpipe_context *softpipe = qs->softpipe;
+   struct softpipe_surface *sps = softpipe_surface(softpipe->cbuf);
+   float dest[4][QUAD_SIZE];
+   ubyte src[4][4], dst[4][4], res[4][4];
+   uint *src4 = (uint *) src;
+   uint *dst4 = (uint *) dst;
+   uint *res4 = (uint *) res;
+   uint j;
+
+   /* get colors from framebuffer */
+   sps->read_quad_f_swz(sps, quad->x0, quad->y0, dest);
+   /* convert to ubyte */
+   for (j = 0; j < 4; j++) { /* loop over R,G,B,A channels */
+      UNCLAMPED_FLOAT_TO_UBYTE(dst[j][0], dest[j][0]); /* P0 */
+      UNCLAMPED_FLOAT_TO_UBYTE(dst[j][1], dest[j][1]); /* P1 */
+      UNCLAMPED_FLOAT_TO_UBYTE(dst[j][2], dest[j][2]); /* P2 */
+      UNCLAMPED_FLOAT_TO_UBYTE(dst[j][3], dest[j][3]); /* P3 */
+
+      UNCLAMPED_FLOAT_TO_UBYTE(src[j][0], quad->outputs.color[j][0]); /* P0 */
+      UNCLAMPED_FLOAT_TO_UBYTE(src[j][1], quad->outputs.color[j][1]); /* P1 */
+      UNCLAMPED_FLOAT_TO_UBYTE(src[j][2], quad->outputs.color[j][2]); /* P2 */
+      UNCLAMPED_FLOAT_TO_UBYTE(src[j][3], quad->outputs.color[j][3]); /* P3 */
+   }
+
+   switch (softpipe->blend->logicop_func) {
+   case PIPE_LOGICOP_CLEAR:
+      for (j = 0; j < 4; j++)
+         res4[j] = 0;
+      break;
+   case PIPE_LOGICOP_NOR:
+      for (j = 0; j < 4; j++)
+         res4[j] = ~(src4[j] | dst4[j]);
+      break;
+   case PIPE_LOGICOP_AND_INVERTED:
+      for (j = 0; j < 4; j++)
+         res4[j] = ~src4[j] & dst4[j];
+      break;
+   case PIPE_LOGICOP_COPY_INVERTED:
+      for (j = 0; j < 4; j++)
+         res4[j] = ~src4[j];
+      break;
+   case PIPE_LOGICOP_AND_REVERSE:
+      for (j = 0; j < 4; j++)
+         res4[j] = src4[j] & ~dst4[j];
+      break;
+   case PIPE_LOGICOP_INVERT:
+      for (j = 0; j < 4; j++)
+         res4[j] = ~dst4[j];
+      break;
+   case PIPE_LOGICOP_XOR:
+      for (j = 0; j < 4; j++)
+         res4[j] = dst4[j] ^ src4[j];
+      break;
+   case PIPE_LOGICOP_NAND:
+      for (j = 0; j < 4; j++)
+         res4[j] = ~(src4[j] & dst4[j]);
+      break;
+   case PIPE_LOGICOP_AND:
+      for (j = 0; j < 4; j++)
+         res4[j] = src4[j] & dst4[j];
+      break;
+   case PIPE_LOGICOP_EQUIV:
+      for (j = 0; j < 4; j++)
+         res4[j] = ~(src4[j] ^ dst4[j]);
+      break;
+   case PIPE_LOGICOP_NOOP:
+      for (j = 0; j < 4; j++)
+         res4[j] = dst4[j];
+      break;
+   case PIPE_LOGICOP_OR_INVERTED:
+      for (j = 0; j < 4; j++)
+         res4[j] = ~src4[j] | dst4[j];
+      break;
+   case PIPE_LOGICOP_COPY:
+      for (j = 0; j < 4; j++)
+         res4[j] = src4[j];
+      break;
+   case PIPE_LOGICOP_OR_REVERSE:
+      for (j = 0; j < 4; j++)
+         res4[j] = src4[j] | ~dst4[j];
+      break;
+   case PIPE_LOGICOP_OR:
+      for (j = 0; j < 4; j++)
+         res4[j] = src4[j] | dst4[j];
+      break;
+   case PIPE_LOGICOP_SET:
+      for (j = 0; j < 4; j++)
+         res4[j] = ~0;
+      break;
+   default:
+      assert(0);
+   }
+
+   for (j = 0; j < 4; j++) {
+      quad->outputs.color[j][0] = UBYTE_TO_FLOAT(res[j][0]);
+      quad->outputs.color[j][1] = UBYTE_TO_FLOAT(res[j][1]);
+      quad->outputs.color[j][2] = UBYTE_TO_FLOAT(res[j][2]);
+      quad->outputs.color[j][3] = UBYTE_TO_FLOAT(res[j][3]);
+   }
+
+   /* pass quad to next stage */
+   qs->next->run(qs->next, quad);
+}
+
+
+
+
+static void
 blend_quad(struct quad_stage *qs, struct quad_header *quad)
 {
    static const float zero[4] = { 0, 0, 0, 0 };
@@ -104,7 +214,12 @@ blend_quad(struct quad_stage *qs, struct quad_header *quad)
    struct softpipe_context *softpipe = qs->softpipe;
    struct softpipe_surface *sps = softpipe_surface(softpipe->cbuf);
    float source[4][QUAD_SIZE], dest[4][QUAD_SIZE];
-   
+
+   if (softpipe->blend->logicop_enable) {
+      logicop_quad(qs, quad);
+      return;
+   }
+
    /* get colors from framebuffer */
    sps->read_quad_f_swz(sps, quad->x0, quad->y0, dest);
 
@@ -371,6 +486,7 @@ blend_quad(struct quad_stage *qs, struct quad_header *quad)
       break;
    case PIPE_BLEND_MAX:
       VEC4_MAX(quad->outputs.color[3], source[3], dest[3]); /* A */
+      break;
    default:
       abort();
    }
