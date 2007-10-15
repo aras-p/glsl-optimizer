@@ -293,6 +293,13 @@ st_RenderMode(GLcontext *ctx, GLenum newMode )
       draw_set_rasterize_stage(draw, st->selection_stage);
       /* Plug in new vbo draw function */
       vbo->draw_prims = st_feedback_draw_vbo;
+      /* setup post-transform vertex attribs */
+      {
+         /* just emit pos as GLfloat[4] */
+         static const uint attrs[1] = { FORMAT_4F };
+         const interp_mode *interp = NULL;
+         draw_set_vertex_attributes(draw, attrs, interp, 1);
+      }
    }
    else {
       if (!st->feedback_stage)

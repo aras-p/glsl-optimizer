@@ -336,6 +336,7 @@ st_feedback_draw_vbo(GLcontext *ctx,
    struct pipe_buffer_handle *index_buffer_handle = 0;
    struct pipe_vertex_buffer vbuffer[PIPE_MAX_SHADER_INPUTS];
    GLuint attr, i;
+   ubyte *mapped_constants;
 
    assert(ctx->RenderMode == GL_SELECT ||
           ctx->RenderMode == GL_FEEDBACK);
@@ -439,6 +440,17 @@ st_feedback_draw_vbo(GLcontext *ctx,
                                      PIPE_BUFFER_FLAG_READ);
       draw_set_mapped_element_buffer(draw, indexSize, map);
    }
+   else {
+      /* no index/element buffer */
+      draw_set_mapped_element_buffer(draw, 0, NULL);
+   }
+
+
+   /* map constant buffers */
+   mapped_constants = winsys->buffer_map(winsys,
+                               st->state.constants[PIPE_SHADER_VERTEX].buffer,
+                               PIPE_BUFFER_FLAG_READ);
+   draw_set_mapped_constant_buffer(st->draw, mapped_constants);
 
 
    /* draw here */
@@ -446,6 +458,9 @@ st_feedback_draw_vbo(GLcontext *ctx,
       draw_arrays(draw, prims[i].mode, prims[i].start, prims[i].count);
    }
 
+
+   /* unmap constant buffers */
+   winsys->buffer_unmap(winsys, st->state.constants[PIPE_SHADER_VERTEX].buffer);
 
    /*
     * unmap vertex/index buffers
