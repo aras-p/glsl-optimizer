@@ -54,6 +54,7 @@
 #include "pipe/p_context.h"
 #include "pipe/p_defines.h"
 #include "pipe/p_winsys.h"
+#include "pipe/cso_cache/cso_cache.h"
 #include "vf/vf.h"
 
 #include "pipe/draw/draw_context.h"
@@ -307,6 +308,19 @@ st_RenderMode(GLcontext *ctx, GLenum newMode )
       draw_set_rasterize_stage(draw, st->feedback_stage);
       /* Plug in new vbo draw function */
       vbo->draw_prims = st_feedback_draw_vbo;
+      /* setup post-transform vertex attribs */
+      {
+         /* emit all attribs as GLfloat[4] */
+         uint attrs[PIPE_MAX_SHADER_OUTPUTS];
+         interp_mode interp[PIPE_MAX_SHADER_OUTPUTS];
+         GLuint n = st->state.vs->state.num_outputs;
+         GLuint i;
+         for (i = 0; i < n; i++) {
+            attrs[i] = FORMAT_4F;
+            interp[i] = INTERP_NONE;
+         }
+         draw_set_vertex_attributes(draw, attrs, interp, n);
+      }
    }
 }
 
