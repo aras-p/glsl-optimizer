@@ -242,6 +242,8 @@ st_draw_vbo(GLcontext *ctx,
    /* unreference buffers (frees wrapped user-space buffer objects) */
    for (attr = 0; attr < vs->num_inputs; attr++) {
       winsys->buffer_reference(winsys, &vbuffer[attr].buffer, NULL);
+      assert(!vbuffer[attr].buffer);
+      pipe->set_vertex_buffer(pipe, attr, &vbuffer[attr]);
    }
 }
 
