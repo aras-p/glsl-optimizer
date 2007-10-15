@@ -299,6 +299,19 @@ print_tex_op(struct debug_stream *stream,
 }
 
 static void
+print_texkil_op(struct debug_stream *stream, 
+                unsigned opcode, const unsigned * program)
+{
+   PRINTF("TEXKIL ");
+
+   print_reg_type_nr(stream, 
+		     (program[1] >> T1_ADDRESS_REG_TYPE_SHIFT) &
+                     REG_TYPE_MASK,
+                     (program[1] >> T1_ADDRESS_REG_NR_SHIFT) & REG_NR_MASK);
+   PRINTF("\n");
+}
+
+static void
 print_dcl_op(struct debug_stream *stream, 
 	     unsigned opcode, const unsigned * program)
 {
@@ -328,8 +341,10 @@ i915_disassemble_program(struct debug_stream *stream,
 
       if ((int) opcode >= A0_NOP && opcode <= A0_SLT)
          print_arith_op(stream, opcode >> 24, program);
-      else if (opcode >= T0_TEXLD && opcode <= T0_TEXKILL)
+      else if (opcode >= T0_TEXLD && opcode < T0_TEXKILL)
          print_tex_op(stream, opcode >> 24, program);
+      else if (opcode == T0_TEXKILL)
+         print_texkil_op(stream, opcode >> 24, program);
       else if (opcode == D0_DCL)
          print_dcl_op(stream, opcode >> 24, program);
       else
