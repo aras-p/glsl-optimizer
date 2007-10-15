@@ -206,6 +206,9 @@ st_draw_vbo(GLcontext *ctx,
       case GL_UNSIGNED_SHORT:
          indexSize = 2;
          break;
+      case GL_UNSIGNED_BYTE:
+         indexSize = 1;
+         break;
       default:
          assert(0);
       }
