@@ -33,7 +33,6 @@
 #include "pipe/p_defines.h"
 #include "i915_context.h"
 #include "i915_state.h"
-//#include "colormac.h"
 
 
 /**
