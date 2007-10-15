@@ -910,20 +910,22 @@ dump_instruction_short(
       SID( src->SrcRegister.Index );
       CHR( ']' );
 
-      if (src->SrcRegisterExtSwz.ExtSwizzleX != TGSI_EXTSWIZZLE_X ||
-          src->SrcRegisterExtSwz.ExtSwizzleY != TGSI_EXTSWIZZLE_Y ||
-          src->SrcRegisterExtSwz.ExtSwizzleZ != TGSI_EXTSWIZZLE_Z ||
-          src->SrcRegisterExtSwz.ExtSwizzleW != TGSI_EXTSWIZZLE_W) {
-         CHR( '.' );
-         ENM( src->SrcRegisterExtSwz.ExtSwizzleX, TGSI_EXTSWIZZLES_SHORT );
-         ENM( src->SrcRegisterExtSwz.ExtSwizzleY, TGSI_EXTSWIZZLES_SHORT );
-         ENM( src->SrcRegisterExtSwz.ExtSwizzleZ, TGSI_EXTSWIZZLES_SHORT );
-         ENM( src->SrcRegisterExtSwz.ExtSwizzleW, TGSI_EXTSWIZZLES_SHORT );
+      if (src->SrcRegister.Extended) {
+         if (src->SrcRegisterExtSwz.ExtSwizzleX != TGSI_EXTSWIZZLE_X ||
+             src->SrcRegisterExtSwz.ExtSwizzleY != TGSI_EXTSWIZZLE_Y ||
+             src->SrcRegisterExtSwz.ExtSwizzleZ != TGSI_EXTSWIZZLE_Z ||
+             src->SrcRegisterExtSwz.ExtSwizzleW != TGSI_EXTSWIZZLE_W) {
+            CHR( '.' );
+            ENM( src->SrcRegisterExtSwz.ExtSwizzleX, TGSI_EXTSWIZZLES_SHORT );
+            ENM( src->SrcRegisterExtSwz.ExtSwizzleY, TGSI_EXTSWIZZLES_SHORT );
+            ENM( src->SrcRegisterExtSwz.ExtSwizzleZ, TGSI_EXTSWIZZLES_SHORT );
+            ENM( src->SrcRegisterExtSwz.ExtSwizzleW, TGSI_EXTSWIZZLES_SHORT );
+         }
       }
-      if( src->SrcRegister.SwizzleX != TGSI_SWIZZLE_X ||
-            src->SrcRegister.SwizzleY != TGSI_SWIZZLE_Y ||
-            src->SrcRegister.SwizzleZ != TGSI_SWIZZLE_Z ||
-            src->SrcRegister.SwizzleW != TGSI_SWIZZLE_W ) {
+      else if( src->SrcRegister.SwizzleX != TGSI_SWIZZLE_X ||
+               src->SrcRegister.SwizzleY != TGSI_SWIZZLE_Y ||
+               src->SrcRegister.SwizzleZ != TGSI_SWIZZLE_Z ||
+               src->SrcRegister.SwizzleW != TGSI_SWIZZLE_W ) {
          CHR( '.' );
          ENM( src->SrcRegister.SwizzleX, TGSI_SWIZZLES_SHORT );
          ENM( src->SrcRegister.SwizzleY, TGSI_SWIZZLES_SHORT );
