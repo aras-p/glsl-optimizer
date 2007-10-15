@@ -693,7 +693,7 @@ static struct ureg get_eye_normal( struct tnl_program *p )
 	 struct ureg rescale = register_param2(p, STATE_INTERNAL,
 					       STATE_NORMAL_SCALE);
 
-	 emit_op2( p, OPCODE_MUL, p->eye_normal, 0, normal, 
+	 emit_op2( p, OPCODE_MUL, p->eye_normal, 0, p->eye_normal,
 		   swizzle1(rescale, X));
       }
    }
@@ -1122,7 +1122,6 @@ static void build_fog( struct tnl_program *p )
       struct ureg params = register_param2(p, STATE_INTERNAL,
 					   STATE_FOG_PARAMS_OPTIMIZED);
       struct ureg tmp = get_temp(p);
-
       GLboolean useabs = (p->state->fog_mode != FOG_EXP2);
 
       if (useabs) {
