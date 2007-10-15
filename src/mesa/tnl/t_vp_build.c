@@ -134,13 +134,6 @@ static struct state_key *make_state_key( GLcontext *ctx )
    assert(fp);
 
    key->fragprog_inputs_read = fp->Base.InputsRead;
-   if (ctx->RenderMode == GL_FEEDBACK) {
-      /* This is a bit of a hack, but you can imagine feedback mode as using
-       * a special no-op fragment shader that just requires particular
-       * inputs (inputs which satisfy feedback mode).
-       */
-      key->fragprog_inputs_read |= FRAG_BIT_COL0 | FRAG_BIT_TEX0;
-   }
 
    key->separate_specular = (ctx->Light.Model.ColorControl ==
 			     GL_SEPARATE_SPECULAR_COLOR);
