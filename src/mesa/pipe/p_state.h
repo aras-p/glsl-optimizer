@@ -243,6 +243,7 @@ struct pipe_sampler_state
    unsigned compare:1;       /**< shadow/depth compare enabled? */
    unsigned compare_mode:1;  /**< PIPE_TEX_COMPARE_x */
    unsigned compare_func:3;  /**< PIPE_FUNC_x */
+   unsigned normalized_coords:1;  /**< Are coords normalized to [0,1]? */
    float shadow_ambient; /**< shadow test fail color/intensity */
    float min_lod;
    float max_lod;

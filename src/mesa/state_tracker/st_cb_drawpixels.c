@@ -558,6 +558,7 @@ draw_textured_quad(GLcontext *ctx, GLint x, GLint y, GLfloat z,
       sampler.min_img_filter = PIPE_TEX_FILTER_NEAREST;
       sampler.min_mip_filter = PIPE_TEX_MIPFILTER_NONE;
       sampler.mag_img_filter = PIPE_TEX_FILTER_NEAREST;
+      sampler.normalized_coords = 1;
       cso = st_cached_sampler_state(ctx->st, &sampler);
       pipe->bind_sampler_state(pipe, unit, cso->data);
    }

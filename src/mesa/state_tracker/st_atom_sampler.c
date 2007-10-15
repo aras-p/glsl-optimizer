@@ -136,6 +136,9 @@ update_samplers(struct st_context *st)
          sampler.min_mip_filter = gl_filter_to_mip_filter(texobj->MinFilter);
          sampler.mag_img_filter = gl_filter_to_img_filter(texobj->MagFilter);
 
+         if (texobj->Target != GL_TEXTURE_RECTANGLE_ARB)
+            sampler.normalized_coords = 1;
+
          sampler.lod_bias = st->ctx->Texture.Unit[u].LodBias;
 #if 1
          sampler.min_lod = texobj->MinLod;

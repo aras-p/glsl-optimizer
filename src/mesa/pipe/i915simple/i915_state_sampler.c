@@ -127,10 +127,6 @@ static void update_sampler(struct i915_context *i915,
 #endif
 
    state[1] |= (unit << SS3_TEXTUREMAP_INDEX_SHIFT);
-
-   if (is_power_of_two_texture(mt)) {
-      state[1] |= SS3_NORMALIZED_COORDS;
-   }
 }
 
 void i915_update_samplers( struct i915_context *i915 )

@@ -427,8 +427,9 @@ compute_lambda(struct tgsi_sampler *sampler,
       float dsdy = s[QUAD_TOP_LEFT]     - s[QUAD_BOTTOM_LEFT];
       dsdx = FABSF(dsdx);
       dsdy = FABSF(dsdy);
-      /* XXX only multiply by width for NORMALIZEd texcoords */
-      rho = MAX2(dsdx, dsdy) * sampler->texture->width0;
+      rho = MAX2(dsdx, dsdy);
+      if (sampler->state->normalized_coords)
+         rho *= sampler->texture->width0;
    }
    if (t) {
       float dtdx = t[QUAD_BOTTOM_RIGHT] - t[QUAD_BOTTOM_LEFT];
@@ -436,8 +437,9 @@ compute_lambda(struct tgsi_sampler *sampler,
       float max;
       dtdx = FABSF(dtdx);
       dtdy = FABSF(dtdy);
-      /* XXX only multiply by height for NORMALIZEd texcoords */
-      max = MAX2(dtdx, dtdy) * sampler->texture->height0;
+      max = MAX2(dtdx, dtdy);
+      if (sampler->state->normalized_coords)
+         max *= sampler->texture->height0;
       rho = MAX2(rho, max);
    }
    if (p) {
@@ -446,8 +448,9 @@ compute_lambda(struct tgsi_sampler *sampler,
       float max;
       dpdx = FABSF(dpdx);
       dpdy = FABSF(dpdy);
-      /* XXX only multiply by depth for NORMALIZEd texcoords */
-      max = MAX2(dpdx, dpdy) * sampler->texture->depth0;
+      max = MAX2(dpdx, dpdy);
+      if (sampler->state->normalized_coords)
+         max *= sampler->texture->depth0;
       rho = MAX2(rho, max);
    }
 
@@ -647,8 +650,13 @@ sp_get_samples_2d_common(struct tgsi_sampler *sampler,
    choose_mipmap_levels(sampler, s, t, p, lodbias,
                         &level0, &level1, &levelBlend, &imgFilter);
 
-   width = sampler->texture->level[level0].width;
-   height = sampler->texture->level[level0].height;
+   if (sampler->state->normalized_coords) {
+      width = sampler->texture->level[level0].width;
+      height = sampler->texture->level[level0].height;
+   }
+   else {
+      width = height = 1.0;
+   }
 
    assert(width > 0);
 
