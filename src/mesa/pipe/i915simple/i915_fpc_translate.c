@@ -197,11 +197,21 @@ src_vector(struct i915_fp_compile *p,
       return 0;
    }
 
-   src = swizzle(src,
-                 source->SrcRegister.SwizzleX,
-                 source->SrcRegister.SwizzleY,
-                 source->SrcRegister.SwizzleZ,
-                 source->SrcRegister.SwizzleW);
+   if (source->SrcRegister.Extended) {
+      src = swizzle(src,
+                    source->SrcRegisterExtSwz.ExtSwizzleX,
+                    source->SrcRegisterExtSwz.ExtSwizzleY,
+                    source->SrcRegisterExtSwz.ExtSwizzleZ,
+                    source->SrcRegisterExtSwz.ExtSwizzleW);
+   }
+   else {
+      src = swizzle(src,
+                    source->SrcRegister.SwizzleX,
+                    source->SrcRegister.SwizzleY,
+                    source->SrcRegister.SwizzleZ,
+                    source->SrcRegister.SwizzleW);
+   }
+
 
    /* There's both negate-all-components and per-component negation.
     * Try to handle both here.
@@ -512,6 +522,19 @@ i915_translate_instruction(struct i915_fp_compile *p,
       break;
 
    case TGSI_OPCODE_KIL:
+      /* unconditional kill */
+      assert(0); /* not tested yet */
+#if 0
+      src0 = src_vector(p, &inst->FullSrcRegisters[0]);
+      tmp = i915_get_utemp(p);
+
+      i915_emit_texld(p, tmp, A0_DEST_CHANNEL_ALL,   /* use a dummy dest reg */
+                      0, src0, T0_TEXKILL);
+#endif
+      break;
+
+   case TGSI_OPCODE_KILP:
+      /* kill if src[0].x < 0 || src[0].y < 0 ... */
       src0 = src_vector(p, &inst->FullSrcRegisters[0]);
       tmp = i915_get_utemp(p);
 
