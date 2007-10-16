@@ -112,11 +112,6 @@ typedef struct _dri_bo_ttm {
    int refcount;		/* Protected by bufmgr->mutex */
    drmBO drm_bo;
    const char *name;
-   /**
-    * Note whether we are the owner of the buffer, to determine if we must
-    * drmBODestroy or drmBOUnreference to unreference the buffer.
-    */
-   GLboolean owner;
 } dri_bo_ttm;
 
 typedef struct _dri_fence_ttm
@@ -243,7 +238,7 @@ static void intel_free_reloc_list(int fd, struct intel_bo_list *reloc_list)
 	}
 
 	drmBOUnmap(fd, &reloc_node->type_list.buf);
-	drmBODestroy(fd, &reloc_node->type_list.buf);
+	drmBOUnreference(fd, &reloc_node->type_list.buf);
 	free(reloc_node);
     }
 }
@@ -307,8 +302,8 @@ static int intel_create_new_reloc_type_list(int fd, struct intel_bo_reloc_list *
     int ret;
     
     /* should allocate a drmBO here */
-    ret = drmBOCreate(fd, 0, RELOC_BUF_SIZE(max_relocs), 0,
-		      NULL, drm_bo_type_dc,
+    ret = drmBOCreate(fd, RELOC_BUF_SIZE(max_relocs), 0,
+		      NULL,
 		      DRM_BO_FLAG_MEM_LOCAL | DRM_BO_FLAG_READ | DRM_BO_FLAG_WRITE | DRM_BO_FLAG_MAPPABLE | DRM_BO_FLAG_CACHED,
 		      0, &cur_type->buf);
     if (ret)
@@ -450,9 +445,8 @@ dri_ttm_alloc(dri_bufmgr *bufmgr, const char *name,
    /* No hints we want to use. */
    hint = 0;
 
-   ret = drmBOCreate(ttm_bufmgr->fd, 0, size, alignment / pageSize,
-		     NULL, drm_bo_type_dc,
-                     flags, hint, &ttm_buf->drm_bo);
+   ret = drmBOCreate(ttm_bufmgr->fd, size, alignment / pageSize,
+		     NULL, flags, hint, &ttm_buf->drm_bo);
    if (ret != 0) {
       free(ttm_buf);
       return NULL;
@@ -463,7 +457,6 @@ dri_ttm_alloc(dri_bufmgr *bufmgr, const char *name,
    ttm_buf->bo.bufmgr = bufmgr;
    ttm_buf->name = name;
    ttm_buf->refcount = 1;
-   ttm_buf->owner = GL_TRUE;
 
 #if BUFMGR_DEBUG
    fprintf(stderr, "bo_create: %p (%s)\n", &ttm_buf->bo, ttm_buf->name);
@@ -514,7 +507,6 @@ intel_ttm_bo_create_from_handle(dri_bufmgr *bufmgr, const char *name,
    ttm_buf->bo.bufmgr = bufmgr;
    ttm_buf->name = name;
    ttm_buf->refcount = 1;
-   ttm_buf->owner = GL_FALSE;
 
 #if BUFMGR_DEBUG
    fprintf(stderr, "bo_create_from_handle: %p %08x (%s)\n", &ttm_buf->bo, handle,
@@ -548,16 +540,9 @@ dri_ttm_bo_unreference(dri_bo *buf)
    if (--ttm_buf->refcount == 0) {
       int ret;
 
-      /* XXX Having to use drmBODestroy as the opposite of drmBOCreate instead
-       * of simply unreferencing is madness, and leads to behaviors we may not
-       * want (making the buffer unsharable).
-       */
-      if (ttm_buf->owner)
-	 ret = drmBODestroy(bufmgr_ttm->fd, &ttm_buf->drm_bo);
-      else
-	 ret = drmBOUnReference(bufmgr_ttm->fd, &ttm_buf->drm_bo);
+      ret = drmBOUnreference(bufmgr_ttm->fd, &ttm_buf->drm_bo);
       if (ret != 0) {
-	 fprintf(stderr, "drmBOUnReference failed (%s): %s\n", ttm_buf->name,
+	 fprintf(stderr, "drmBOUnreference failed (%s): %s\n", ttm_buf->name,
 		 strerror(-ret));
       }
 #if BUFMGR_DEBUG
@@ -685,14 +670,9 @@ dri_ttm_fence_unreference(dri_fence *fence)
    if (--fence_ttm->refcount == 0) {
       int ret;
 
-      /* XXX Having to use drmFenceDestroy as the opposite of drmFenceBuffers
-       * instead of simply unreferencing is madness, and leads to behaviors we
-       * may not want (making the fence unsharable).  This behavior by the DRM
-       * ioctls should be fixed, and drmFenceDestroy eliminated.
-       */
-      ret = drmFenceDestroy(bufmgr_ttm->fd, &fence_ttm->drm_fence);
+      ret = drmFenceUnreference(bufmgr_ttm->fd, &fence_ttm->drm_fence);
       if (ret != 0) {
-	 fprintf(stderr, "drmFenceDestroy failed (%s): %s\n",
+	 fprintf(stderr, "drmFenceUnreference failed (%s): %s\n",
 		 fence_ttm->name, strerror(-ret));
       }
 
