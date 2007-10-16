@@ -125,11 +125,11 @@ quad_clip(struct setup_stage *setup)
    if (setup->quad.x0 < minx)
       setup->quad.mask &= (MASK_BOTTOM_RIGHT | MASK_TOP_RIGHT);
    if (setup->quad.y0 < miny)
-      setup->quad.mask &= (MASK_TOP_LEFT | MASK_TOP_RIGHT);
+      setup->quad.mask &= (MASK_BOTTOM_LEFT | MASK_BOTTOM_RIGHT);
    if (setup->quad.x0 == maxx - 1)
       setup->quad.mask &= (MASK_BOTTOM_LEFT | MASK_TOP_LEFT);
    if (setup->quad.y0 == maxy - 1)
-      setup->quad.mask &= (MASK_BOTTOM_LEFT | MASK_BOTTOM_RIGHT);
+      setup->quad.mask &= (MASK_TOP_LEFT | MASK_TOP_RIGHT);
 }
 
 
@@ -184,16 +184,16 @@ static unsigned calculate_mask( struct setup_stage *setup,
    unsigned mask = 0;
 
    if (x >= setup->span.left[0] && x < setup->span.right[0]) 
-      mask |= MASK_BOTTOM_LEFT;
+      mask |= MASK_TOP_LEFT;
 
    if (x >= setup->span.left[1] && x < setup->span.right[1]) 
-      mask |= MASK_TOP_LEFT;
+      mask |= MASK_BOTTOM_LEFT;
       
    if (x+1 >= setup->span.left[0] && x+1 < setup->span.right[0]) 
-      mask |= MASK_BOTTOM_RIGHT;
+      mask |= MASK_TOP_RIGHT;
 
    if (x+1 >= setup->span.left[1] && x+1 < setup->span.right[1]) 
-      mask |= MASK_TOP_RIGHT;
+      mask |= MASK_BOTTOM_RIGHT;
 
    return mask;
 }

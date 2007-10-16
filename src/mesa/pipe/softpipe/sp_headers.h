@@ -39,17 +39,18 @@
 
 
 /* The rasterizer generates 2x2 quads of fragment and feeds them to
- * the current fp_machine (see below).  
+ * the current fp_machine (see below).
+ * Remember that Y=0=top with Y increasing down the window.
  */
-#define QUAD_BOTTOM_LEFT  0
-#define QUAD_BOTTOM_RIGHT 1
-#define QUAD_TOP_LEFT     2
-#define QUAD_TOP_RIGHT    3
+#define QUAD_TOP_LEFT     0
+#define QUAD_TOP_RIGHT    1
+#define QUAD_BOTTOM_LEFT  2
+#define QUAD_BOTTOM_RIGHT 3
 
-#define MASK_BOTTOM_LEFT  0x1
-#define MASK_BOTTOM_RIGHT 0x2
-#define MASK_TOP_LEFT     0x4
-#define MASK_TOP_RIGHT    0x8
+#define MASK_TOP_LEFT     (1 << QUAD_TOP_LEFT)
+#define MASK_TOP_RIGHT    (1 << QUAD_TOP_RIGHT)
+#define MASK_BOTTOM_LEFT  (1 << QUAD_BOTTOM_LEFT)
+#define MASK_BOTTOM_RIGHT (1 << QUAD_BOTTOM_RIGHT)
 #define MASK_ALL          0xf
 
 
