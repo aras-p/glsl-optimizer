@@ -659,9 +659,9 @@ static void setup_tri( struct draw_stage *stage,
 static void
 line_linear_coeff(struct setup_stage *setup, unsigned slot, unsigned i)
 {
-   const float dz = setup->vmax->data[slot][i] - setup->vmin->data[slot][i];
-   const float dadx = dz * setup->emaj.dx * setup->oneoverarea;
-   const float dady = dz * setup->emaj.dy * setup->oneoverarea;
+   const float da = setup->vmax->data[slot][i] - setup->vmin->data[slot][i];
+   const float dadx = da * setup->emaj.dx * setup->oneoverarea;
+   const float dady = da * setup->emaj.dy * setup->oneoverarea;
    setup->coef[slot].dadx[i] = dadx;
    setup->coef[slot].dady[i] = dady;
    setup->coef[slot].a0[i]
@@ -678,8 +678,19 @@ line_linear_coeff(struct setup_stage *setup, unsigned slot, unsigned i)
 static void
 line_persp_coeff(struct setup_stage *setup, unsigned slot, unsigned i)
 {
-   /* XXX to do */
-   line_linear_coeff(setup, slot, i); /* XXX temporary */
+   /* XXX double-check/verify this arithmetic */
+   const float a0 = setup->vmin->data[slot][i] * setup->vmin->data[0][3];
+   const float a1 = setup->vmax->data[slot][i] * setup->vmin->data[0][3];
+   const float da = a1 - a0;
+   const float dadx = da * setup->emaj.dx * setup->oneoverarea;
+   const float dady = da * setup->emaj.dy * setup->oneoverarea;
+   setup->coef[slot].dadx[i] = dadx;
+   setup->coef[slot].dady[i] = dady;
+   setup->coef[slot].a0[i]
+      = (setup->vmin->data[slot][i] - 
+         (dadx * (setup->vmin->data[0][0] - 0.5f) + 
+          dady * (setup->vmin->data[0][1] - 0.5f)));
+
 }
 
 
@@ -895,6 +906,18 @@ setup_line(struct draw_stage *stage, struct prim_header *prim)
 }
 
 
+static void
+point_persp_coeff(struct setup_stage *setup, const struct vertex_header *vert,
+                  uint slot, uint i)
+{
+   assert(slot < PIPE_MAX_SHADER_INPUTS);
+   assert(i <= 3);
+   setup->coef[slot].dadx[i] = 0.0F;
+   setup->coef[slot].dady[i] = 0.0F;
+   setup->coef[slot].a0[i] = vert->data[slot][i] * vert->data[0][3];
+}
+
+
 /**
  * Do setup for point rasterization, then render the point.
  * Round or square points...
@@ -904,6 +927,7 @@ static void
 setup_point(struct draw_stage *stage, struct prim_header *prim)
 {
    struct setup_stage *setup = setup_stage( stage );
+   const interp_mode *interp = setup->softpipe->vertex_info.interp_mode;
    const struct vertex_header *v0 = prim->v[0];
    const int sizeAttr = setup->softpipe->psize_slot;
    const float halfSize
@@ -934,8 +958,20 @@ setup_point(struct draw_stage *stage, struct prim_header *prim)
    const_coeff(setup, 0, 2);
    const_coeff(setup, 0, 3);
    for (slot = 1; slot < setup->quad.nr_attrs; slot++) {
-      for (j = 0; j < NUM_CHANNELS; j++)
-         const_coeff(setup, slot, j);
+      switch (interp[slot]) {
+      case INTERP_CONSTANT:
+         /* fall-through */
+      case INTERP_LINEAR:
+         for (j = 0; j < NUM_CHANNELS; j++)
+            const_coeff(setup, slot, j);
+         break;
+      case INTERP_PERSPECTIVE:
+         for (j = 0; j < NUM_CHANNELS; j++)
+            point_persp_coeff(setup, v0, slot, j);
+         break;
+      default:
+         assert(0);
+      }
    }
 
    setup->quad.prim = PRIM_POINT;
