@@ -542,7 +542,7 @@ visual_class_abbrev(int cls)
 }
 
 
-static void
+static GLboolean
 get_visual_attribs(Display *dpy, XVisualInfo *vInfo,
                    struct visual_attribs *attribs)
 {
@@ -564,7 +564,7 @@ get_visual_attribs(Display *dpy, XVisualInfo *vInfo,
    attribs->bitsPerRGB = vInfo->bits_per_rgb;
 
    if (glXGetConfig(dpy, vInfo, GLX_USE_GL, &attribs->supportsGL) != 0)
-      return;
+      return GL_FALSE;
    glXGetConfig(dpy, vInfo, GLX_BUFFER_SIZE, &attribs->bufferSize);
    glXGetConfig(dpy, vInfo, GLX_LEVEL, &attribs->level);
    glXGetConfig(dpy, vInfo, GLX_RGBA, &attribs->rgba);
@@ -616,6 +616,8 @@ get_visual_attribs(Display *dpy, XVisualInfo *vInfo,
 #else
    attribs->visualCaveat = 0;
 #endif
+
+   return GL_TRUE;
 }
 
 
@@ -763,7 +765,8 @@ print_visual_info(Display *dpy, int scrnum, InfoMode mode)
    if (mode == Verbose) {
       for (i = 0; i < numVisuals; i++) {
          struct visual_attribs attribs;
-         get_visual_attribs(dpy, &visuals[i], &attribs);
+         if (!get_visual_attribs(dpy, &visuals[i], &attribs))
+	    continue;
          print_visual_attribs_verbose(&attribs);
       }
    }
@@ -771,7 +774,8 @@ print_visual_info(Display *dpy, int scrnum, InfoMode mode)
       print_visual_attribs_short_header();
       for (i = 0; i < numVisuals; i++) {
          struct visual_attribs attribs;
-         get_visual_attribs(dpy, &visuals[i], &attribs);
+         if (!get_visual_attribs(dpy, &visuals[i], &attribs))
+	    continue;
          print_visual_attribs_short(&attribs);
       }
    }
@@ -779,7 +783,8 @@ print_visual_info(Display *dpy, int scrnum, InfoMode mode)
       print_visual_attribs_long_header();
       for (i = 0; i < numVisuals; i++) {
          struct visual_attribs attribs;
-         get_visual_attribs(dpy, &visuals[i], &attribs);
+         if (!get_visual_attribs(dpy, &visuals[i], &attribs))
+	    continue;
          print_visual_attribs_long(&attribs);
       }
    }
