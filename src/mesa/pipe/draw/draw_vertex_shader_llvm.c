@@ -98,6 +98,21 @@ void vertex_fetch(struct draw_context *draw,
    }
 }
 
+static INLINE unsigned
+compute_clipmask(const float *clip, const float (*plane)[4], unsigned nr)
+{
+   unsigned mask = 0;
+   unsigned i;
+
+   for (i = 0; i < nr; i++) {
+      if (dot4(clip, plane[i]) < 0) 
+         mask |= (1<<i);
+   }
+
+   return mask;
+}
+
+
 /**
  * Called by the draw module when the vertx cache needs to be flushed.
  * This involves running the vertex shader.
@@ -109,8 +124,10 @@ void draw_vertex_shader_queue_flush_llvm(struct draw_context *draw)
    struct vertex_header *dests[VS_QUEUE_LENGTH];
    float                 inputs[VS_QUEUE_LENGTH][PIPE_MAX_SHADER_INPUTS][4];
    float                 outputs[VS_QUEUE_LENGTH][PIPE_MAX_SHADER_INPUTS][4];
-   float (*consts)[4] = (float (*)[4]) draw->mapped_constants;
-   struct ga_llvm_prog *prog = draw->vertex_shader->state->llvm_prog;
+   float (*consts)[4]          = (float (*)[4]) draw->mapped_constants;
+   struct ga_llvm_prog  *prog  = (struct ga_llvm_prog *)draw->vertex_shader->state->llvm_prog;
+   const float          *scale = draw->viewport.scale;
+   const float          *trans = draw->viewport.translate;
 
    fprintf(stderr, "--- XX q(%d) \n", draw->vs.queue_nr);
 
@@ -128,6 +145,59 @@ void draw_vertex_shader_queue_flush_llvm(struct draw_context *draw)
 
    /* FIXME: finish conversion */
    /* dests = outputs */
+
+   /* store machine results */
+   for (int i = 0; i < draw->vs.queue_nr; ++i) {
+      unsigned slot;
+      float x, y, z, w;
+      struct vertex_header *vOut = draw->vs.queue[i].dest;
+      float (*dests)[4] = outputs[i];
+
+      /* Handle attr[0] (position) specially:
+       *
+       * XXX: Computing the clipmask should be done in the vertex
+       * program as a set of DP4 instructions appended to the
+       * user-provided code.
+       */
+      x = vOut->clip[0] = dests[0][0];
+      y = vOut->clip[1] = dests[0][1];
+      z = vOut->clip[2] = dests[0][2];
+      w = vOut->clip[3] = dests[0][3];
+      printf("output %d: %f %f %f %f\n", 0, x, y, z, w);
+
+      vOut->clipmask = compute_clipmask(vOut->clip, draw->plane, draw->nr_planes);
+      vOut->edgeflag = 1;
+
+      /* divide by w */
+      w = 1.0f / w;
+      x *= w;
+      y *= w;
+      z *= w;
+
+      /* Viewport mapping */
+      vOut->data[0][0] = x * scale[0] + trans[0];
+      vOut->data[0][1] = y * scale[1] + trans[1];
+      vOut->data[0][2] = z * scale[2] + trans[2];
+      vOut->data[0][3] = w;
+
+      /* Remaining attributes are packed into sequential post-transform
+       * vertex attrib slots.
+       * Skip 0 since we just did it above.
+       * Subtract two because of the VERTEX_HEADER, CLIP_POS attribs.
+       */
+      for (slot = 1; slot < draw->vertex_info.num_attribs - 2; slot++) {
+         vOut->data[slot][0] = dests[slot][0];
+         vOut->data[slot][1] = dests[slot][1];
+         vOut->data[slot][2] = dests[slot][2];
+         vOut->data[slot][3] = dests[slot][3];
+
+         printf("output %d: %f %f %f %f\n", slot,
+                vOut->data[slot][0],
+                vOut->data[slot][1],
+                vOut->data[slot][2],
+                vOut->data[slot][3]);
+      }
+   } /* loop over vertices */
 
    draw->vs.queue_nr = 0;
 }

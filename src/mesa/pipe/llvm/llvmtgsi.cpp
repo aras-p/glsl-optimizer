@@ -32,6 +32,7 @@
 
 using namespace llvm;
 #include "llvm_base_shader.cpp"
+#include "tgsillvmbuilder.cpp"
 
 
 static inline void addPass(PassManager &PM, Pass *P) {
@@ -116,6 +117,7 @@ translate_immediate(llvm::Module *module,
 
 static void
 translate_instruction(llvm::Module *module,
+                      VertexShaderBuilder *builder,
                       struct tgsi_full_instruction *inst,
                       struct tgsi_full_instruction *fi)
 {
@@ -135,6 +137,7 @@ translate_instruction(llvm::Module *module,
    case TGSI_OPCODE_LOG:
       break;
    case TGSI_OPCODE_MUL:
+      
       break;
    case TGSI_OPCODE_ADD:
       break;
@@ -435,6 +438,7 @@ tgsi_to_llvm(const struct tgsi_token *tokens)
 
    tgsi_parse_init(&parse, tokens);
 
+   Function* func_printf = mod->getFunction("printf");
    //parse.FullHeader.Processor.Processor
 
    //parse.FullVersion.Version.MajorVersion
@@ -446,7 +450,7 @@ tgsi_to_llvm(const struct tgsi_token *tokens)
 
    fi = tgsi_default_full_instruction();
    fd = tgsi_default_full_declaration();
-
+   VertexShaderBuilder builder(label_entry, ptr_IN, ptr_CONST);
    while(!tgsi_parse_end_of_tokens(&parse)) {
       tgsi_parse_token(&parse);
 
@@ -465,7 +469,7 @@ tgsi_to_llvm(const struct tgsi_token *tokens)
          break;
 
       case TGSI_TOKEN_TYPE_INSTRUCTION:
-         translate_instruction(mod,
+         translate_instruction(mod, &builder,
                                &parse.FullToken.FullInstruction,
                                &fi);
          break;
@@ -475,29 +479,26 @@ tgsi_to_llvm(const struct tgsi_token *tokens)
       }
    }
 
-
-   Function* func_printf = mod->getFunction("printf");
-#if 1
-     
+#if 0
    // Type Definitions
    ArrayType* ArrayTy_0 = ArrayType::get(IntegerType::get(8), 19);
-  
+
    PointerType* PointerTy_1 = PointerType::get(ArrayTy_0);
-  
+
    VectorType* VectorTy_4 = VectorType::get(Type::FloatTy, 4);
-  
+
    PointerType* PointerTy_3 = PointerType::get(VectorTy_4);
-  
-  
+
+
    VectorType* VectorTy_5 = VectorType::get(IntegerType::get(32), 4);
-  
-  
+
+
    PointerType* PointerTy_8 = PointerType::get(IntegerType::get(8));
-  
-  
+
+
    // Global Variable Declarations
 
-  
+
    GlobalVariable* gvar_array__str = new GlobalVariable(
       /*Type=*/ArrayTy_0,
       /*isConstant=*/true,
@@ -505,7 +506,7 @@ tgsi_to_llvm(const struct tgsi_token *tokens)
       /*Initializer=*/0, // has initializer, specified below
       /*Name=*/".str",
       mod);
-  
+
    GlobalVariable* gvar_array__str1 = new GlobalVariable(
       /*Type=*/ArrayTy_0,
       /*isConstant=*/true,
@@ -513,7 +514,7 @@ tgsi_to_llvm(const struct tgsi_token *tokens)
       /*Initializer=*/0, // has initializer, specified below
       /*Name=*/".str1",
       mod);
-  
+
    GlobalVariable* gvar_array__str2 = new GlobalVariable(
       /*Type=*/ArrayTy_0,
       /*isConstant=*/true,
@@ -521,7 +522,7 @@ tgsi_to_llvm(const struct tgsi_token *tokens)
       /*Initializer=*/0, // has initializer, specified below
       /*Name=*/".str2",
       mod);
-  
+
    // Constant Definitions
    Constant* const_array_9 = ConstantArray::get("const %f %f %f %f\x0A", true);
    Constant* const_array_10 = ConstantArray::get("resul %f %f %f %f\x0A", true);
@@ -563,14 +564,14 @@ tgsi_to_llvm(const struct tgsi_token *tokens)
    const_ptr_24_indices.push_back(const_int32_21);
    const_ptr_24_indices.push_back(const_int32_21);
    Constant* const_ptr_24 = ConstantExpr::getGetElementPtr(gvar_array__str2, &const_ptr_24_indices[0], const_ptr_24_indices.size() );
-  
+
    // Global Variable Definitions
    gvar_array__str->setInitializer(const_array_9);
    gvar_array__str1->setInitializer(const_array_10);
    gvar_array__str2->setInitializer(const_array_11);
-  
+
    // Function Definitions
-  
+
    // Function: execute_shader (func_execute_shader)
    {
       // Block entry (label_entry)
@@ -725,5 +726,13 @@ int ga_llvm_prog_exec(struct ga_llvm_prog *prog,
    runner(inputs, dests, consts, count, num_attribs);
 
    std::cout << "---- END LLVM Execution "<<std::endl;
+
+   for (int i = 0; i < count; ++i) {
+      for (int j = 0; j < num_attribs; ++j) {
+         printf("OUT(%d, %d) [%f, %f, %f, %f]\n", i, j,
+                dests[i][j][0], dests[i][j][1],
+                dests[i][j][2], dests[i][j][3]);
+      }
+   }
    return 0;
 }
