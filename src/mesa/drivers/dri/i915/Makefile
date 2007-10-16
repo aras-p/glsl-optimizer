@@ -62,7 +62,8 @@ C_SOURCES = \
 
 ASM_SOURCES = 
 
-DRIVER_DEFINES = -I../intel $(shell pkg-config libdrm --atleast-version=2.3.1 \
+DRIVER_DEFINES = -I../intel -I../intel/server \
+	$(shell pkg-config libdrm --atleast-version=2.3.1 \
 				&& echo "-DDRM_VBLANK_FLIP=DRM_VBLANK_FLIP")
 
 include ../Makefile.template
