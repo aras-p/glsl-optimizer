@@ -421,12 +421,18 @@ intelUpdateScreenFromSAREA(intelScreenPrivate * intelScreen,
       intelPrintSAREA(sarea);
 }
 
+static const __DRItexOffsetExtension intelTexOffsetExtension = {
+   { __DRI_TEX_OFFSET },
+   intelSetTexOffset,
+};
+
 static const __DRIextension *intelExtensions[] = {
     &driReadDrawableExtension,
     &driCopySubBufferExtension.base,
     &driSwapControlExtension.base,
     &driFrameTrackingExtension.base,
     &driMediaStreamCounterExtension.base,
+    &intelTexOffsetExtension.base,
     NULL
 };
 
