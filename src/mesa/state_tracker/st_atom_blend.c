@@ -45,7 +45,7 @@
  * Both blend factors and blend funcs are accepted.
  */
 static GLuint
-gl_blend_to_sp(GLenum blend)
+translate_blend(GLenum blend)
 {
    switch (blend) {
    /* blend functions */
@@ -88,9 +88,9 @@ gl_blend_to_sp(GLenum blend)
    case GL_ONE_MINUS_SRC_ALPHA:
       return PIPE_BLENDFACTOR_INV_SRC_ALPHA;
    case GL_ONE_MINUS_DST_COLOR:
-      return PIPE_BLENDFACTOR_INV_DST_ALPHA;
-   case GL_ONE_MINUS_DST_ALPHA:
       return PIPE_BLENDFACTOR_INV_DST_COLOR;
+   case GL_ONE_MINUS_DST_ALPHA:
+      return PIPE_BLENDFACTOR_INV_DST_ALPHA;
    case GL_ONE_MINUS_CONSTANT_COLOR:
       return PIPE_BLENDFACTOR_INV_CONST_COLOR;
    case GL_ONE_MINUS_CONSTANT_ALPHA:
@@ -100,7 +100,7 @@ gl_blend_to_sp(GLenum blend)
       return PIPE_BLENDFACTOR_INV_SRC1_ALPHA;
       */
    default:
-      assert("invalid GL token in gl_blend_to_sp()" == NULL);
+      assert("invalid GL token in translate_blend()" == NULL);
       return 0;
    }
 }
@@ -110,7 +110,7 @@ gl_blend_to_sp(GLenum blend)
  * Convert GLenum logicop tokens to pipe tokens.
  */
 static GLuint
-gl_logicop_to_sp(GLenum logicop)
+translate_logicop(GLenum logicop)
 {
    switch (logicop) {
    case GL_CLEAR:
@@ -146,7 +146,7 @@ gl_logicop_to_sp(GLenum logicop)
    case GL_SET:
       return PIPE_LOGICOP_SET;
    default:
-      assert("invalid GL token in gl_logicop_to_sp()" == NULL);
+      assert("invalid GL token in translate_logicop()" == NULL);
       return 0;
    }
 }
@@ -165,13 +165,13 @@ update_blend( struct st_context *st )
         st->ctx->Color.BlendEquationRGB == GL_LOGIC_OP)) {
       /* logicop enabled */
       blend.logicop_enable = 1;
-      blend.logicop_func = gl_logicop_to_sp(st->ctx->Color.LogicOp);
+      blend.logicop_func = translate_logicop(st->ctx->Color.LogicOp);
    }
    else if (st->ctx->Color.BlendEnabled) {
       /* blending enabled */
       blend.blend_enable = 1;
 
-      blend.rgb_func = gl_blend_to_sp(st->ctx->Color.BlendEquationRGB);
+      blend.rgb_func = translate_blend(st->ctx->Color.BlendEquationRGB);
       if (st->ctx->Color.BlendEquationRGB == GL_MIN ||
           st->ctx->Color.BlendEquationRGB == GL_MAX) {
          /* Min/max are special */
@@ -179,11 +179,11 @@ update_blend( struct st_context *st )
          blend.rgb_dst_factor = PIPE_BLENDFACTOR_ONE;
       }
       else {
-         blend.rgb_src_factor = gl_blend_to_sp(st->ctx->Color.BlendSrcRGB);
-         blend.rgb_dst_factor = gl_blend_to_sp(st->ctx->Color.BlendDstRGB);
+         blend.rgb_src_factor = translate_blend(st->ctx->Color.BlendSrcRGB);
+         blend.rgb_dst_factor = translate_blend(st->ctx->Color.BlendDstRGB);
       }
 
-      blend.alpha_func = gl_blend_to_sp(st->ctx->Color.BlendEquationA);
+      blend.alpha_func = translate_blend(st->ctx->Color.BlendEquationA);
       if (st->ctx->Color.BlendEquationA == GL_MIN ||
           st->ctx->Color.BlendEquationA == GL_MAX) {
          /* Min/max are special */
@@ -191,8 +191,8 @@ update_blend( struct st_context *st )
          blend.alpha_dst_factor = PIPE_BLENDFACTOR_ONE;
       }
       else {
-         blend.alpha_src_factor = gl_blend_to_sp(st->ctx->Color.BlendSrcA);
-         blend.alpha_dst_factor = gl_blend_to_sp(st->ctx->Color.BlendDstA);
+         blend.alpha_src_factor = translate_blend(st->ctx->Color.BlendSrcA);
+         blend.alpha_dst_factor = translate_blend(st->ctx->Color.BlendDstA);
       }
    }
    else {
