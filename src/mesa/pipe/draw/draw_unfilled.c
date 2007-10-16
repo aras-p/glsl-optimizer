@@ -125,7 +125,7 @@ static void unfilled_tri( struct draw_stage *stage,
 			  struct prim_header *header )
 {
    struct unfilled_stage *unfilled = unfilled_stage(stage);
-   unsigned mode = unfilled->mode[header->det < 0.0];
+   unsigned mode = unfilled->mode[header->det >= 0.0];
   
    switch (mode) {
    case PIPE_POLYGON_MODE_FILL:
