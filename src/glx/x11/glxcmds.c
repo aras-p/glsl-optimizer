@@ -903,12 +903,12 @@ PUBLIC int glXGetConfig(Display *dpy, XVisualInfo *vis, int attribute,
 {
     __GLXdisplayPrivate *priv;
     __GLXscreenConfigs *psc;
+    __GLcontextModes *modes;
     int   status;
 
     status = GetGLXPrivScreenConfig( dpy, vis->screen, & priv, & psc );
     if ( status == Success ) {
-	const __GLcontextModes * const modes = _gl_context_modes_find_visual(
-					     psc->configs, vis->visualid );
+	modes = _gl_context_modes_find_visual(psc->visuals, vis->visualid);
 
 	/* Lookup attribute after first finding a match on the visual */
 	if ( modes != NULL ) {
@@ -1286,7 +1286,7 @@ PUBLIC XVisualInfo *glXChooseVisual(Display *dpy, int screen, int *attribList)
     ** Compute a score for those that do
     ** Remember which visual, if any, got the highest score
     */
-    for ( modes = psc->configs ; modes != NULL ; modes = modes->next ) {
+    for ( modes = psc->visuals ; modes != NULL ; modes = modes->next ) {
 	if ( fbconfigs_compatible( & test_config, modes )
 	     && ((best_config == NULL)
 		 || (fbconfig_compare( (const __GLcontextModes * const * const)&modes, &best_config ) < 0)) ) {
@@ -1654,6 +1654,7 @@ PUBLIC GLXFBConfig *glXGetFBConfigs(Display *dpy, int screen, int *nelements)
     __GLcontextModes ** config = NULL;
     int   i;
 
+    *nelements = 0;
     if ( (priv->screenConfigs != NULL)
 	 && (screen >= 0) && (screen <= ScreenCount(dpy))
 	 && (priv->screenConfigs[screen].configs != NULL)
