@@ -67,6 +67,7 @@ PUBLIC const char __driConfigOptions[] =
 #endif /*USE_NEW_INTERFACE */
 
      extern const struct dri_extension card_extensions[];
+     extern const struct dri_extension ttm_extensions[];
 
 /**
  * Map all the memory regions described by the screen.
@@ -916,6 +917,7 @@ PUBLIC __GLcontextModes *__driDriverInitScreen(__DRIscreenPrivate *psp)
     * Hello chicken.  Hello egg.  How are you two today?
     */
    driInitExtensions(NULL, card_extensions, GL_FALSE);
+   driInitExtensions(NULL, ttm_extensions, GL_FALSE);
 
    if (!intelInitDriver(psp))
        return NULL;
