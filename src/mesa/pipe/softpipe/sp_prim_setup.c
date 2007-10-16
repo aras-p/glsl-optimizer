@@ -1011,8 +1011,8 @@ setup_point(struct draw_stage *stage, struct prim_header *prim)
                dist2 = dx * dx + dy * dy;
                if (dist2 <= rmax2) {
                   cover = 1.0F - (dist2 - rmin2) * cscale;
-                  setup->quad.coverage[QUAD_BOTTOM_LEFT] = MIN2(cover, 1.0f);
-                  setup->quad.mask |= MASK_BOTTOM_LEFT;
+                  setup->quad.coverage[QUAD_TOP_LEFT] = MIN2(cover, 1.0f);
+                  setup->quad.mask |= MASK_TOP_LEFT;
                }
 
                dx = (ix + 1.5f) - x;
@@ -1020,8 +1020,8 @@ setup_point(struct draw_stage *stage, struct prim_header *prim)
                dist2 = dx * dx + dy * dy;
                if (dist2 <= rmax2) {
                   cover = 1.0F - (dist2 - rmin2) * cscale;
-                  setup->quad.coverage[QUAD_BOTTOM_RIGHT] = MIN2(cover, 1.0f);
-                  setup->quad.mask |= MASK_BOTTOM_RIGHT;
+                  setup->quad.coverage[QUAD_TOP_RIGHT] = MIN2(cover, 1.0f);
+                  setup->quad.mask |= MASK_TOP_RIGHT;
                }
 
                dx = (ix + 0.5f) - x;
@@ -1029,8 +1029,8 @@ setup_point(struct draw_stage *stage, struct prim_header *prim)
                dist2 = dx * dx + dy * dy;
                if (dist2 <= rmax2) {
                   cover = 1.0F - (dist2 - rmin2) * cscale;
-                  setup->quad.coverage[QUAD_TOP_LEFT] = MIN2(cover, 1.0f);
-                  setup->quad.mask |= MASK_TOP_LEFT;
+                  setup->quad.coverage[QUAD_BOTTOM_LEFT] = MIN2(cover, 1.0f);
+                  setup->quad.mask |= MASK_BOTTOM_LEFT;
                }
 
                dx = (ix + 1.5f) - x;
@@ -1038,8 +1038,8 @@ setup_point(struct draw_stage *stage, struct prim_header *prim)
                dist2 = dx * dx + dy * dy;
                if (dist2 <= rmax2) {
                   cover = 1.0F - (dist2 - rmin2) * cscale;
-                  setup->quad.coverage[QUAD_TOP_RIGHT] = MIN2(cover, 1.0f);
-                  setup->quad.mask |= MASK_TOP_RIGHT;
+                  setup->quad.coverage[QUAD_BOTTOM_RIGHT] = MIN2(cover, 1.0f);
+                  setup->quad.mask |= MASK_BOTTOM_RIGHT;
                }
 
                if (setup->quad.mask) {
@@ -1068,12 +1068,12 @@ setup_point(struct draw_stage *stage, struct prim_header *prim)
 
                if (iy + 0.5 < y - halfSize) {
                   /* below the bottom edge */
-                  setup->quad.mask &= ~(MASK_BOTTOM_LEFT | MASK_BOTTOM_RIGHT);
+                  setup->quad.mask &= ~(MASK_TOP_LEFT | MASK_TOP_RIGHT);
                }
 
                if (iy + 1.5 > y + halfSize) {
                   /* above the top edge */
-                  setup->quad.mask &= ~(MASK_TOP_LEFT | MASK_TOP_RIGHT);
+                  setup->quad.mask &= ~(MASK_BOTTOM_LEFT | MASK_BOTTOM_RIGHT);
                }
 
                if (setup->quad.mask) {
