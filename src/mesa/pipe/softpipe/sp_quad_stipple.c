@@ -16,18 +16,40 @@
 static void
 stipple_quad(struct quad_stage *qs, struct quad_header *quad)
 {
+   static const uint bit31 = 1 << 31;
+   static const uint bit30 = 1 << 30;
+
    if (quad->prim == PRIM_TRI) {
       struct softpipe_context *softpipe = qs->softpipe;
-      const int col0 = quad->x0 % 32;
-      const int row0 = quad->y0 % 32;
-      const unsigned stipple0 = softpipe->poly_stipple.stipple[row0];
-      const unsigned stipple1 = softpipe->poly_stipple.stipple[row0 + 1];
+      /* need to invert Y to index into OpenGL's stipple pattern */
+      const int y0 = softpipe->framebuffer.cbufs[0]->height - 1 - quad->y0;
+      const int y1 = y0 - 1;
+      const unsigned stipple0 = softpipe->poly_stipple.stipple[y0 % 32];
+      const unsigned stipple1 = softpipe->poly_stipple.stipple[y1 % 32];
 
-      /* XXX there may be a better way to lay out the stored stipple
-       * values to further simplify this computation.
+#if 1
+      const int col0 = quad->x0 % 32;
+      if ((stipple0 & (bit31 >> col0)) == 0)
+         quad->mask &= ~MASK_TOP_LEFT;
+
+      if ((stipple0 & (bit30 >> col0)) == 0)
+         quad->mask &= ~MASK_TOP_RIGHT;
+
+      if ((stipple1 & (bit31 >> col0)) == 0)
+         quad->mask &= ~MASK_BOTTOM_LEFT;
+
+      if ((stipple1 & (bit30 >> col0)) == 0)
+         quad->mask &= ~MASK_BOTTOM_RIGHT;
+#else
+      /* We'd like to use this code, but we'd need to redefine
+       * MASK_TOP_LEFT to be (1 << 1) and MASK_TOP_RIGHT to be (1 << 0),
+       * and similarly for the BOTTOM bits.  But that may have undesirable
+       * side effects elsewhere.
        */
+      const int col0 = 30 - (quad->x0 % 32);
       quad->mask &= (((stipple0 >> col0) & 0x3) | 
                      (((stipple1 >> col0) & 0x3) << 2));
+#endif
 
       if (quad->mask)
          qs->next->run(qs->next, quad);
