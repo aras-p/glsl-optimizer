@@ -5,6 +5,8 @@
 extern "C" {
 #endif
 
+#include "pipe/p_state.h"
+
 struct tgsi_exec_machine;
 struct tgsi_token;
 struct tgsi_sampler;
@@ -21,8 +23,8 @@ ga_llvm_from_tgsi(struct pipe_context *pipe, const struct tgsi_token *tokens);
 void ga_llvm_prog_delete(struct ga_llvm_prog *prog);
 
 int ga_llvm_prog_exec(struct ga_llvm_prog *prog,
-                      float (*inputs)[32][4],
-                      float (*dests)[32][4],
+                      float (*inputs)[PIPE_MAX_SHADER_INPUTS][4],
+                      float (*dests)[PIPE_MAX_SHADER_INPUTS][4],
                       float (*consts)[4],
                       int count,
                       int num_attribs);

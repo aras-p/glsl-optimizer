@@ -420,6 +420,19 @@ tgsi_to_llvm(const struct tgsi_token *tokens)
    struct tgsi_full_instruction fi;
    struct tgsi_full_declaration fd;
 
+   Function* shader = mod->getFunction("execute_shader");
+   shader->setName("execute_shader_2");
+
+   Function::arg_iterator args = shader->arg_begin();
+   Value *ptr_OUT = args++;
+   ptr_OUT->setName("OUT");
+   Value *ptr_IN = args++;
+   ptr_IN->setName("IN");
+   Value *ptr_CONST = args++;
+   ptr_CONST->setName("CONST");
+
+   BasicBlock *label_entry = new BasicBlock("entry", shader, 0);
+
    tgsi_parse_init(&parse, tokens);
 
    //parse.FullHeader.Processor.Processor
@@ -462,10 +475,184 @@ tgsi_to_llvm(const struct tgsi_token *tokens)
       }
    }
 
+
+   Function* func_printf = mod->getFunction("printf");
+#if 1
+     
+   // Type Definitions
+   ArrayType* ArrayTy_0 = ArrayType::get(IntegerType::get(8), 19);
+  
+   PointerType* PointerTy_1 = PointerType::get(ArrayTy_0);
+  
+   VectorType* VectorTy_4 = VectorType::get(Type::FloatTy, 4);
+  
+   PointerType* PointerTy_3 = PointerType::get(VectorTy_4);
+  
+  
+   VectorType* VectorTy_5 = VectorType::get(IntegerType::get(32), 4);
+  
+  
+   PointerType* PointerTy_8 = PointerType::get(IntegerType::get(8));
+  
+  
+   // Global Variable Declarations
+
+  
+   GlobalVariable* gvar_array__str = new GlobalVariable(
+      /*Type=*/ArrayTy_0,
+      /*isConstant=*/true,
+      /*Linkage=*/GlobalValue::InternalLinkage,
+      /*Initializer=*/0, // has initializer, specified below
+      /*Name=*/".str",
+      mod);
+  
+   GlobalVariable* gvar_array__str1 = new GlobalVariable(
+      /*Type=*/ArrayTy_0,
+      /*isConstant=*/true,
+      /*Linkage=*/GlobalValue::InternalLinkage,
+      /*Initializer=*/0, // has initializer, specified below
+      /*Name=*/".str1",
+      mod);
+  
+   GlobalVariable* gvar_array__str2 = new GlobalVariable(
+      /*Type=*/ArrayTy_0,
+      /*isConstant=*/true,
+      /*Linkage=*/GlobalValue::InternalLinkage,
+      /*Initializer=*/0, // has initializer, specified below
+      /*Name=*/".str2",
+      mod);
+  
+   // Constant Definitions
+   Constant* const_array_9 = ConstantArray::get("const %f %f %f %f\x0A", true);
+   Constant* const_array_10 = ConstantArray::get("resul %f %f %f %f\x0A", true);
+   Constant* const_array_11 = ConstantArray::get("outpu %f %f %f %f\x0A", true);
+   UndefValue* const_packed_12 = UndefValue::get(VectorTy_4);
+   Constant* const_packed_13 = Constant::getNullValue(VectorTy_5);
+   std::vector<Constant*> const_packed_14_elems;
+   ConstantInt* const_int32_15 = ConstantInt::get(APInt(32,  "1", 10));
+   const_packed_14_elems.push_back(const_int32_15);
+   const_packed_14_elems.push_back(const_int32_15);
+   const_packed_14_elems.push_back(const_int32_15);
+   const_packed_14_elems.push_back(const_int32_15);
+   Constant* const_packed_14 = ConstantVector::get(VectorTy_5, const_packed_14_elems);
+   std::vector<Constant*> const_packed_16_elems;
+   ConstantInt* const_int32_17 = ConstantInt::get(APInt(32,  "2", 10));
+   const_packed_16_elems.push_back(const_int32_17);
+   const_packed_16_elems.push_back(const_int32_17);
+   const_packed_16_elems.push_back(const_int32_17);
+   const_packed_16_elems.push_back(const_int32_17);
+   Constant* const_packed_16 = ConstantVector::get(VectorTy_5, const_packed_16_elems);
+   std::vector<Constant*> const_packed_18_elems;
+   ConstantInt* const_int32_19 = ConstantInt::get(APInt(32,  "3", 10));
+   const_packed_18_elems.push_back(const_int32_19);
+   const_packed_18_elems.push_back(const_int32_19);
+   const_packed_18_elems.push_back(const_int32_19);
+   const_packed_18_elems.push_back(const_int32_19);
+   Constant* const_packed_18 = ConstantVector::get(VectorTy_5, const_packed_18_elems);
+   std::vector<Constant*> const_ptr_20_indices;
+   Constant* const_int32_21 = Constant::getNullValue(IntegerType::get(32));
+   const_ptr_20_indices.push_back(const_int32_21);
+   const_ptr_20_indices.push_back(const_int32_21);
+   Constant* const_ptr_20 = ConstantExpr::getGetElementPtr(gvar_array__str, &const_ptr_20_indices[0], const_ptr_20_indices.size() );
+   UndefValue* const_double_22 = UndefValue::get(Type::DoubleTy);
+   std::vector<Constant*> const_ptr_23_indices;
+   const_ptr_23_indices.push_back(const_int32_21);
+   const_ptr_23_indices.push_back(const_int32_21);
+   Constant* const_ptr_23 = ConstantExpr::getGetElementPtr(gvar_array__str1, &const_ptr_23_indices[0], const_ptr_23_indices.size() );
+   std::vector<Constant*> const_ptr_24_indices;
+   const_ptr_24_indices.push_back(const_int32_21);
+   const_ptr_24_indices.push_back(const_int32_21);
+   Constant* const_ptr_24 = ConstantExpr::getGetElementPtr(gvar_array__str2, &const_ptr_24_indices[0], const_ptr_24_indices.size() );
+  
+   // Global Variable Definitions
+   gvar_array__str->setInitializer(const_array_9);
+   gvar_array__str1->setInitializer(const_array_10);
+   gvar_array__str2->setInitializer(const_array_11);
+  
+   // Function Definitions
+  
+   // Function: execute_shader (func_execute_shader)
+   {
+      // Block entry (label_entry)
+      LoadInst* packed_tmp1 = new LoadInst(ptr_IN, "tmp1", false, label_entry);
+      ShuffleVectorInst* packed_tmp3 = new ShuffleVectorInst(packed_tmp1, const_packed_12, const_packed_13, "tmp3", label_entry);
+      LoadInst* packed_tmp6 = new LoadInst(ptr_CONST, "tmp6", false, label_entry);
+      BinaryOperator* packed_mul = BinaryOperator::create(Instruction::Mul, packed_tmp3, packed_tmp6, "mul", label_entry);
+      ShuffleVectorInst* packed_tmp8 = new ShuffleVectorInst(packed_tmp1, const_packed_12, const_packed_14, "tmp8", label_entry);
+      GetElementPtrInst* ptr_arrayidx10 = new GetElementPtrInst(ptr_CONST, const_int32_15, "arrayidx10", label_entry);
+      LoadInst* packed_tmp11 = new LoadInst(ptr_arrayidx10, "tmp11", false, label_entry);
+      BinaryOperator* packed_mul12 = BinaryOperator::create(Instruction::Mul, packed_tmp8, packed_tmp11, "mul12", label_entry);
+      BinaryOperator* packed_add = BinaryOperator::create(Instruction::Add, packed_mul12, packed_mul, "add", label_entry);
+      ShuffleVectorInst* packed_tmp15 = new ShuffleVectorInst(packed_tmp1, const_packed_12, const_packed_16, "tmp15", label_entry);
+      GetElementPtrInst* ptr_arrayidx17 = new GetElementPtrInst(ptr_CONST, const_int32_17, "arrayidx17", label_entry);
+      LoadInst* packed_tmp18 = new LoadInst(ptr_arrayidx17, "tmp18", false, label_entry);
+      BinaryOperator* packed_mul19 = BinaryOperator::create(Instruction::Mul, packed_tmp15, packed_tmp18, "mul19", label_entry);
+      BinaryOperator* packed_add21 = BinaryOperator::create(Instruction::Add, packed_mul19, packed_add, "add21", label_entry);
+      ShuffleVectorInst* packed_tmp25 = new ShuffleVectorInst(packed_tmp1, const_packed_12, const_packed_18, "tmp25", label_entry);
+      GetElementPtrInst* ptr_arrayidx27 = new GetElementPtrInst(ptr_CONST, const_int32_19, "arrayidx27", label_entry);
+      LoadInst* packed_tmp28 = new LoadInst(ptr_arrayidx27, "tmp28", false, label_entry);
+      BinaryOperator* packed_mul29 = BinaryOperator::create(Instruction::Mul, packed_tmp25, packed_tmp28, "mul29", label_entry);
+      BinaryOperator* packed_add31 = BinaryOperator::create(Instruction::Add, packed_mul29, packed_add21, "add31", label_entry);
+      StoreInst* void_25 = new StoreInst(packed_add31, ptr_OUT, false, label_entry);
+      GetElementPtrInst* ptr_arrayidx33 = new GetElementPtrInst(ptr_OUT, const_int32_15, "arrayidx33", label_entry);
+      GetElementPtrInst* ptr_arrayidx35 = new GetElementPtrInst(ptr_IN, const_int32_15, "arrayidx35", label_entry);
+      LoadInst* packed_tmp36 = new LoadInst(ptr_arrayidx35, "tmp36", false, label_entry);
+      StoreInst* void_26 = new StoreInst(packed_tmp36, ptr_arrayidx33, false, label_entry);
+      std::vector<Value*> int32_call_params;
+      int32_call_params.push_back(const_ptr_20);
+      int32_call_params.push_back(const_double_22);
+      int32_call_params.push_back(const_double_22);
+      int32_call_params.push_back(const_double_22);
+      int32_call_params.push_back(const_double_22);
+      //CallInst* int32_call = new CallInst(func_printf, int32_call_params.begin(), int32_call_params.end(), "call", label_entry);
+      //int32_call->setCallingConv(CallingConv::C);
+      //int32_call->setTailCall(true);
+      ExtractElementInst* float_tmp52 = new ExtractElementInst(packed_tmp1, const_int32_21, "tmp52", label_entry);
+      CastInst* double_conv53 = new FPExtInst(float_tmp52, Type::DoubleTy, "conv53", label_entry);
+      ExtractElementInst* float_tmp55 = new ExtractElementInst(packed_tmp1, const_int32_15, "tmp55", label_entry);
+      CastInst* double_conv56 = new FPExtInst(float_tmp55, Type::DoubleTy, "conv56", label_entry);
+      ExtractElementInst* float_tmp58 = new ExtractElementInst(packed_tmp1, const_int32_17, "tmp58", label_entry);
+      CastInst* double_conv59 = new FPExtInst(float_tmp58, Type::DoubleTy, "conv59", label_entry);
+      ExtractElementInst* float_tmp61 = new ExtractElementInst(packed_tmp1, const_int32_19, "tmp61", label_entry);
+      CastInst* double_conv62 = new FPExtInst(float_tmp61, Type::DoubleTy, "conv62", label_entry);
+      std::vector<Value*> int32_call63_params;
+      int32_call63_params.push_back(const_ptr_23);
+      int32_call63_params.push_back(double_conv53);
+      int32_call63_params.push_back(double_conv56);
+      int32_call63_params.push_back(double_conv59);
+      int32_call63_params.push_back(double_conv62);
+      //CallInst* int32_call63 = new CallInst(func_printf, int32_call63_params.begin(), int32_call63_params.end(), "call63", label_entry);
+      //int32_call63->setCallingConv(CallingConv::C);
+      //int32_call63->setTailCall(true);
+      ExtractElementInst* float_tmp65 = new ExtractElementInst(packed_add31, const_int32_21, "tmp65", label_entry);
+      CastInst* double_conv66 = new FPExtInst(float_tmp65, Type::DoubleTy, "conv66", label_entry);
+      ExtractElementInst* float_tmp68 = new ExtractElementInst(packed_add31, const_int32_15, "tmp68", label_entry);
+      CastInst* double_conv69 = new FPExtInst(float_tmp68, Type::DoubleTy, "conv69", label_entry);
+      ExtractElementInst* float_tmp71 = new ExtractElementInst(packed_add31, const_int32_17, "tmp71", label_entry);
+      CastInst* double_conv72 = new FPExtInst(float_tmp71, Type::DoubleTy, "conv72", label_entry);
+      ExtractElementInst* float_tmp74 = new ExtractElementInst(packed_add31, const_int32_19, "tmp74", label_entry);
+      CastInst* double_conv75 = new FPExtInst(float_tmp74, Type::DoubleTy, "conv75", label_entry);
+      std::vector<Value*> int32_call76_params;
+      int32_call76_params.push_back(const_ptr_24);
+      int32_call76_params.push_back(double_conv66);
+      int32_call76_params.push_back(double_conv69);
+      int32_call76_params.push_back(double_conv72);
+      int32_call76_params.push_back(double_conv75);
+      //CallInst* int32_call76 = new CallInst(func_printf, int32_call76_params.begin(), int32_call76_params.end(), "call76", label_entry);
+      //int32_call76->setCallingConv(CallingConv::C);
+      //int32_call76->setTailCall(true);
+   }
+#endif
+
+   new ReturnInst(label_entry);
+
    //TXT("\ntgsi-dump end -------------------\n");
 
    tgsi_parse_free(&parse);
 
+   std::cout<<"XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"<<std::endl;
+   std::cout<<*mod<<std::endl;
+   std::cout<<"YYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYY"<<std::endl;
    return mod;
 }
 
@@ -520,15 +707,15 @@ void ga_llvm_prog_delete(struct ga_llvm_prog *prog)
    free(prog);
 }
 
-typedef void (*vertex_shader_runner)(float (*ainputs)[32][4],
-                                  float (*dests)[32][4],
+typedef void (*vertex_shader_runner)(float (*ainputs)[PIPE_MAX_SHADER_INPUTS][4],
+                                  float (*dests)[PIPE_MAX_SHADER_INPUTS][4],
                                   float (*aconsts)[4],
                                   int count,
                                   int num_attribs);
 
 int ga_llvm_prog_exec(struct ga_llvm_prog *prog,
-                      float (*inputs)[32][4],
-                      float (*dests)[32][4],
+                      float (*inputs)[PIPE_MAX_SHADER_INPUTS][4],
+                      float (*dests)[PIPE_MAX_SHADER_INPUTS][4],
                       float (*consts)[4],
                       int count,
                       int num_attribs)

@@ -132,6 +132,7 @@ run_vertex_program(struct draw_context *draw,
       y = vOut[j]->clip[1] = machine->Outputs[0].xyzw[1].f[j];
       z = vOut[j]->clip[2] = machine->Outputs[0].xyzw[2].f[j];
       w = vOut[j]->clip[3] = machine->Outputs[0].xyzw[3].f[j];
+      printf("output %d: %f %f %f %f\n", 0, x, y, z, w);
 
       vOut[j]->clipmask = compute_clipmask(vOut[j]->clip, draw->plane, draw->nr_planes);
       vOut[j]->edgeflag = 1;

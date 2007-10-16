@@ -92,7 +92,7 @@ inline void collect_results(float4 *results, struct vertex_header *vOut,
 }
 #endif
 
-void from_array(float4 (*res)[32], float (*ainputs)[32][4],
+void from_array(float4 (*res)[16], float (*ainputs)[16][4],
                 int count, int num_attribs)
 {
    for (int i = 0; i < count; ++i) {
@@ -102,6 +102,7 @@ void from_array(float4 (*res)[32], float (*ainputs)[32][4],
          vec.y = ainputs[i][j][1];
          vec.z = ainputs[i][j][2];
          vec.w = ainputs[i][j][3];
+         //printf("FAR(%d %d) %f %f %f %f\n", i, j, vec.x, vec.y, vec.z, vec.w);
          res[i][j] = vec;
       }
    }
@@ -116,6 +117,7 @@ void from_consts(float4 *res, float (*ainputs)[4],
       vec.y = ainputs[i][1];
       vec.z = ainputs[i][2];
       vec.w = ainputs[i][3];
+      //printf("VCONST %f %f %f %f\n", vec.x, vec.y, vec.z, vec.w);
       res[i] = vec;
    }
 }
@@ -125,6 +127,7 @@ void to_array(float (*dests)[4], float4 *in, int num_attribs)
    for (int i = 0; i < num_attribs; ++i) {
       float  *rd = dests[i];
       float4  ri = in[i];
+      printf("DEST = %f %f %f %f\n", ri.x, ri.y, ri.z, ri.w);
       rd[0] = ri.x;
       rd[1] = ri.y;
       rd[2] = ri.z;
@@ -135,23 +138,23 @@ void to_array(float (*dests)[4], float4 *in, int num_attribs)
 extern void execute_shader(float4 *dests, float4 *inputs,
                            float4 *consts);
 
-void run_vertex_shader(float (*ainputs)[32][4],
-                       float (*dests)[32][4],
+void run_vertex_shader(float (*ainputs)[16][4],
+                       float (*dests)[16][4],
                        float (*aconsts)[4],
                        int count,
                        int num_attribs)
 {
-   float4  inputs[16*32*4][32];
-   float4  consts[32];
-   float4  results[16*32*4][32];
+   float4  inputs[16*32*4][16];
+   float4  consts[16];
+   float4  results[16*32*4][16];
 
    printf("XXXXXXXXXXX run_vertex_shader\n");
    from_array(inputs, ainputs, count, num_attribs);
-   from_consts(consts, aconsts, 32);
+   from_consts(consts, aconsts, 5);
    for (int i = 0; i < count; ++i) {
       float4 *in  = inputs[i];
       float4 *res = results[i];
-      to_array(dests[i], results[i], num_attribs);
       execute_shader(res, in, consts);
+      to_array(dests[i], res, num_attribs);
    }
 }

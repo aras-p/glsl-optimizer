@@ -98,11 +98,6 @@ void vertex_fetch(struct draw_context *draw,
    }
 }
 
-void execute_shader(void *dests, void *inputs, void *consts)
-{
-   fprintf(stderr, "EXECUTING--\n");
-}
-
 /**
  * Called by the draw module when the vertx cache needs to be flushed.
  * This involves running the vertex shader.
@@ -118,28 +113,6 @@ void draw_vertex_shader_queue_flush_llvm(struct draw_context *draw)
    struct ga_llvm_prog *prog = draw->vertex_shader->state->llvm_prog;
 
    fprintf(stderr, "--- XX q(%d) \n", draw->vs.queue_nr);
-   /* Consts does not require 16 byte alignment. */
-   fprintf(stderr, "0AAAAA = %f %f %f %f\n",
-           consts[0][0],
-           consts[0][1],
-           consts[0][2],
-           consts[0][3]);
-
-      fprintf(stderr, "1AAAAA = %f %f %f %f\n",
-           consts[1][0],
-           consts[1][1],
-           consts[1][2],
-           consts[1][3]);
-         fprintf(stderr, "2AAAAA = %f %f %f %f\n",
-           consts[2][0],
-           consts[2][1],
-           consts[2][2],
-                 consts[2][3]);
-         fprintf(stderr, "3AAAAA = %f %f %f %f\n",
-           consts[3][0],
-           consts[3][1],
-           consts[3][2],
-           consts[3][3]);
 
    /* fetch the inputs */
    for (i = 0; i < draw->vs.queue_nr; ++i) {
@@ -151,7 +124,7 @@ void draw_vertex_shader_queue_flush_llvm(struct draw_context *draw)
    /* batch execute the shaders on all the vertices */
    ga_llvm_prog_exec(prog, inputs, outputs, consts,
                      draw->vs.queue_nr,
-                     draw->vertex_info.num_attribs);
+                     draw->vertex_shader->state->num_inputs);
 
    /* FIXME: finish conversion */
    /* dests = outputs */
