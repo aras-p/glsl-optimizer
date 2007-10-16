@@ -954,7 +954,6 @@ make_bitmap_texture(GLcontext *ctx, GLsizei width, GLsizei height,
       if (unpack->LsbFirst) {
          /* Lsb first */
          GLubyte mask = 1U << (unpack->SkipPixels & 0x7);
-         assert(0);
          for (col = 0; col < width; col++) {
 
             /* set texel to 255 if bit is set */
