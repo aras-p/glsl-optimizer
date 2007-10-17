@@ -84,10 +84,14 @@ update_framebuffer_state( struct st_context *st )
 }
 
 
+/**
+ * Note that glDrawBuffer() sets _NEW_COLOR, not _NEW_BUFFER.
+ */
+
 const struct st_tracked_state st_update_framebuffer = {
    .name = "st_update_framebuffer",
    .dirty = {
-      .mesa = _NEW_BUFFERS,
+      .mesa = (_NEW_BUFFERS | _NEW_COLOR),
       .st  = 0,
    },
    .update = update_framebuffer_state
