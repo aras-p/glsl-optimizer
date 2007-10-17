@@ -47,7 +47,7 @@
 #define SHORT_TO_FLOAT(S)   ((2.0F * (S) + 1.0F) * (1.0F/65535.0F))
 
 #define UNCLAMPED_FLOAT_TO_SHORT(us, f)  \
-   us = ( (short) ( CLAMP((f), 0.0, 1.0) * 32767.0F) )
+   us = ( (short) ( CLAMP((f), -1.0, 1.0) * 32767.0F) )
 
 
 
