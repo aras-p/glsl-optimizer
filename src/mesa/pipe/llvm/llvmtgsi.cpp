@@ -205,7 +205,9 @@ translate_instruction(llvm::Module *module,
       out = instr->dp3(inputs[0], inputs[1]);
    }
       break;
-   case TGSI_OPCODE_DP4:
+   case TGSI_OPCODE_DP4: {
+      out = instr->dp4(inputs[0], inputs[1]);
+   }
       break;
    case TGSI_OPCODE_DST:
       break;
@@ -767,6 +769,10 @@ ga_llvm_from_tgsi(struct pipe_context *pipe, const struct tgsi_token *tokens)
    std::cout << "Creating llvm " <<std::endl;
    struct ga_llvm_prog *ga_llvm =
       (struct ga_llvm_prog *)malloc(sizeof(struct ga_llvm_prog));
+   fprintf(stderr, "DUMPX \n");
+   //tgsi_dump(tokens, TGSI_DUMP_VERBOSE);
+   tgsi_dump(tokens, 0);
+   fprintf(stderr, "DUMPEND \n");
    llvm::Module *mod = tgsi_to_llvm(tokens);
 
    /* Run optimization passes over it */
@@ -789,10 +795,6 @@ ga_llvm_from_tgsi(struct pipe_context *pipe, const struct tgsi_token *tokens)
       ee->addModuleProvider(mp);
    }
    ga_llvm->module = mod;
-   fprintf(stderr, "DUMPX \n");
-   //tgsi_dump(tokens, TGSI_DUMP_VERBOSE);
-   tgsi_dump(tokens, 0);
-   fprintf(stderr, "DUMPEND \n");
 
    Function *func = mod->getFunction("run_vertex_shader");
    std::cout << "run_vertex_shader  = "<<func<<std::endl;

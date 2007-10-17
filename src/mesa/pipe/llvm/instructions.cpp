@@ -226,3 +226,30 @@ llvm::Value * Instructions::rcp(llvm::Value *in1)
    return vectorFromVals(res, res, res, res);
 }
 
+llvm::Value * Instructions::dp4(llvm::Value *in1, llvm::Value *in2)
+{
+   Value *mulRes = mul(in1, in2);
+   ExtractElementInst *x = new ExtractElementInst(mulRes, unsigned(0),
+                                                  name("extractx"),
+                                                  m_block);
+   ExtractElementInst *y = new ExtractElementInst(mulRes, unsigned(1),
+                                                  name("extracty"),
+                                                  m_block);
+   ExtractElementInst *z = new ExtractElementInst(mulRes, unsigned(2),
+                                                  name("extractz"),
+                                                  m_block);
+   ExtractElementInst *w = new ExtractElementInst(mulRes, unsigned(3),
+                                                  name("extractw"),
+                                                  m_block);
+   BinaryOperator *xy = BinaryOperator::create(Instruction::Add, x, y,
+                                                name("xy"),
+                                                m_block);
+   BinaryOperator *xyz = BinaryOperator::create(Instruction::Add, xy, z,
+                                                name("xyz"),
+                                                m_block);
+   BinaryOperator *dot4 = BinaryOperator::create(Instruction::Add, xyz, w,
+                                                 name("dot4"),
+                                                 m_block);
+   return vectorFromVals(dot4, dot4, dot4, dot4);
+}
+
