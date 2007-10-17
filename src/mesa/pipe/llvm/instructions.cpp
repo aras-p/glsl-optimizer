@@ -280,3 +280,25 @@ llvm::Value * Instructions::dph(llvm::Value *in1, llvm::Value *in2)
    return vectorFromVals(dph, dph, dph, dph);
 }
 
+llvm::Value * Instructions::dst(llvm::Value *in1, llvm::Value *in2)
+{
+   ExtractElementInst *y1 = new ExtractElementInst(in1, unsigned(1),
+                                                   name("y1"),
+                                                   m_block);
+   ExtractElementInst *z = new ExtractElementInst(in1, unsigned(2),
+                                                  name("z"),
+                                                  m_block);
+   ExtractElementInst *y2 = new ExtractElementInst(in2, unsigned(1),
+                                                   name("y2"),
+                                                   m_block);
+   ExtractElementInst *w = new ExtractElementInst(in2, unsigned(3),
+                                                  name("w"),
+                                                  m_block);
+   BinaryOperator *ry = BinaryOperator::create(Instruction::Mul,
+                                               y1, y2,
+                                               name("tyuy"),
+                                               m_block);
+   return vectorFromVals(ConstantFP::get(Type::FloatTy, APFloat(1.f)),
+                         ry, z, w);
+}
+
