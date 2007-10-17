@@ -253,3 +253,30 @@ llvm::Value * Instructions::dp4(llvm::Value *in1, llvm::Value *in2)
    return vectorFromVals(dot4, dot4, dot4, dot4);
 }
 
+llvm::Value * Instructions::dph(llvm::Value *in1, llvm::Value *in2)
+{
+   Value *mulRes = mul(in1, in2);
+   ExtractElementInst *x = new ExtractElementInst(mulRes, unsigned(0),
+                                                  name("extractx"),
+                                                  m_block);
+   ExtractElementInst *y = new ExtractElementInst(mulRes, unsigned(1),
+                                                  name("extracty"),
+                                                  m_block);
+   ExtractElementInst *z = new ExtractElementInst(mulRes, unsigned(2),
+                                                  name("extractz"),
+                                                  m_block);
+   ExtractElementInst *w = new ExtractElementInst(in2, unsigned(3),
+                                                  name("val2w"),
+                                                  m_block);
+   BinaryOperator *xy = BinaryOperator::create(Instruction::Add, x, y,
+                                                name("xy"),
+                                                m_block);
+   BinaryOperator *xyz = BinaryOperator::create(Instruction::Add, xy, z,
+                                                name("xyz"),
+                                                m_block);
+   BinaryOperator *dph = BinaryOperator::create(Instruction::Add, xyz, w,
+                                                name("dph"),
+                                                m_block);
+   return vectorFromVals(dph, dph, dph, dph);
+}
+
