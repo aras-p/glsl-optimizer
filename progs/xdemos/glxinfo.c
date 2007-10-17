@@ -682,9 +682,6 @@ get_fbconfig_attribs(Display *dpy, GLXFBConfig fbconfig,
 
    glXGetFBConfigAttrib(dpy, fbconfig, GLX_FBCONFIG_ID, &attribs->id);
 
-   /* FIXME: convert from GL enum to visual class. */
-   glXGetFBConfigAttrib(dpy, fbconfig, GLX_X_VISUAL_TYPE, &attribs->klass);
-
 #if 0
    attribs->depth = vInfo->depth;
    attribs->redMask = vInfo->red_mask;
@@ -1122,10 +1119,10 @@ main(int argc, char *argv[])
          mesa_hack(dpy, scrnum);
          print_screen_info(dpy, scrnum, allowDirect, limits);
          printf("\n");
-#ifdef GLX_VERSION_1_3
          print_visual_info(dpy, scrnum, mode);
-#endif
+#ifdef GLX_VERSION_1_3
          print_fbconfig_info(dpy, scrnum, mode);
+#endif
          if (scrnum + 1 < numScreens)
             printf("\n\n");
       }
