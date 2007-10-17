@@ -799,6 +799,9 @@ sp_get_samples(struct tgsi_sampler *sampler,
                float lodbias,
                float rgba[NUM_CHANNELS][QUAD_SIZE])
 {
+   if (!sampler->texture)
+      return;
+
    switch (sampler->texture->target) {
    case PIPE_TEXTURE_1D:
       sp_get_samples_1d(sampler, s, t, p, lodbias, rgba);
