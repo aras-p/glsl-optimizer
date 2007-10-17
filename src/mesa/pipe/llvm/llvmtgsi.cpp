@@ -1,5 +1,8 @@
 #include "llvmtgsi.h"
 
+#include "instructions.h"
+#include "storage.h"
+
 #include "pipe/p_context.h"
 #include "pipe/tgsi/exec/tgsi_exec.h"
 #include "pipe/tgsi/exec/tgsi_token.h"
@@ -30,10 +33,8 @@
 #include <llvm/Bitcode/ReaderWriter.h>
 #include <iostream>
 
-#include "instructions.h"
 using namespace llvm;
 #include "llvm_base_shader.cpp"
-#include "tgsillvmbuilder.cpp"
 
 
 static inline void addPass(PassManager &PM, Pass *P) {
