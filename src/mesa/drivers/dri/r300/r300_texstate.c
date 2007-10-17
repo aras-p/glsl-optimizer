@@ -116,10 +116,8 @@ static const struct tx_table {
 	_ASSIGN(INTENSITY_FLOAT32, R300_EASY_TX_FORMAT(X, X, X, X, FL_I32)),
 	_ASSIGN(INTENSITY_FLOAT16, R300_EASY_TX_FORMAT(X, X, X, X, FL_I16)),
 	_ASSIGN(Z16, R300_EASY_TX_FORMAT(X, X, X, X, X16)),
-#if 0
 	_ASSIGN(Z24_S8, R300_EASY_TX_FORMAT(X, X, X, X, X24_Y8)),
 	_ASSIGN(Z32, R300_EASY_TX_FORMAT(X, X, X, X, X32)),
-#endif
 	/* *INDENT-ON* */
 };
 
@@ -127,6 +125,24 @@ static const struct tx_table {
 
 void r300SetDepthTexMode(struct gl_texture_object *tObj)
 {
+	static const GLuint formats[3][3] = {
+		{
+			R300_EASY_TX_FORMAT(X, X, X, X, X16),
+			R300_EASY_TX_FORMAT(X, X, X, ONE, X16),
+			R300_EASY_TX_FORMAT(ZERO, ZERO, ZERO, X, X16),
+		},
+		{
+			R300_EASY_TX_FORMAT(X, X, X, X, X24_Y8),
+			R300_EASY_TX_FORMAT(X, X, X, ONE, X24_Y8),
+			R300_EASY_TX_FORMAT(ZERO, ZERO, ZERO, X, X24_Y8),
+		},
+		{
+			R300_EASY_TX_FORMAT(X, X, X, X, X32),
+			R300_EASY_TX_FORMAT(X, X, X, ONE, X32),
+			R300_EASY_TX_FORMAT(ZERO, ZERO, ZERO, X, X32),
+		},
+	};
+	const GLuint *format;
 	r300TexObjPtr t;
 
 	if (!tObj)
@@ -134,22 +150,41 @@ void r300SetDepthTexMode(struct gl_texture_object *tObj)
 
 	t = (r300TexObjPtr) tObj->DriverData;
 
-	switch (tObj->DepthMode) {
-	case GL_LUMINANCE:
-		t->format = R300_EASY_TX_FORMAT(X, X, X, X, X16);
+
+	switch (tObj->Image[0][tObj->BaseLevel]->TexFormat->MesaFormat) {
+	case MESA_FORMAT_Z16:
+		format = formats[0];
 		break;
-	case GL_INTENSITY:
-		t->format = R300_EASY_TX_FORMAT(X, X, X, ONE, X16);
+	case MESA_FORMAT_Z24_S8:
+		format = formats[1];
 		break;
-	case GL_ALPHA:
-		t->format = R300_EASY_TX_FORMAT(ZERO, ZERO, ZERO, X, X16);
+	case MESA_FORMAT_Z32:
+		format = formats[2];
 		break;
 	default:
 		/* Error...which should have already been caught by higher
 		 * levels of Mesa.
 		 */
 		ASSERT(0);
+		return;
+	}
+
+	switch (tObj->DepthMode) {
+	case GL_LUMINANCE:
+		t->format = format[0];
 		break;
+	case GL_INTENSITY:
+		t->format = format[1];
+		break;
+	case GL_ALPHA:
+		t->format = format[2];
+		break;
+	default:
+		/* Error...which should have already been caught by higher
+		 * levels of Mesa.
+		 */
+		ASSERT(0);
+		return;
 	}
 }
 
