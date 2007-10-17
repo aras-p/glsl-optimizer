@@ -1033,6 +1033,8 @@ createConfigsFromProperties(Display *dpy, int nvisuals, int nprops,
     m = modes;
     for (i = 0; i < nvisuals; i++) {
 	_XRead(dpy, (char *)props, prop_size);
+	/* Older X servers don't send this so we default it here. */
+	m->drawableType = GLX_WINDOW_BIT;
 	__glXInitializeVisualConfigFromTags(m, nprops, props,
 					    tagged_only, GL_TRUE);
 	m->screen = screen;
