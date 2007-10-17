@@ -115,10 +115,44 @@ static const struct tx_table {
 	_ASSIGN(LUMINANCE_ALPHA_FLOAT16, R300_EASY_TX_FORMAT(X, X, X, Y, FL_I16A16)),
 	_ASSIGN(INTENSITY_FLOAT32, R300_EASY_TX_FORMAT(X, X, X, X, FL_I32)),
 	_ASSIGN(INTENSITY_FLOAT16, R300_EASY_TX_FORMAT(X, X, X, X, FL_I16)),
+	_ASSIGN(Z16, R300_EASY_TX_FORMAT(X, X, X, X, X16)),
+#if 0
+	_ASSIGN(Z24_S8, R300_EASY_TX_FORMAT(X, X, X, X, X24_Y8)),
+	_ASSIGN(Z32, R300_EASY_TX_FORMAT(X, X, X, X, X32)),
+#endif
 	/* *INDENT-ON* */
 };
 
 #undef _ASSIGN
+
+void r300SetDepthTexMode(struct gl_texture_object *tObj)
+{
+	r300TexObjPtr t;
+
+	if (!tObj)
+		return;
+
+	t = (r300TexObjPtr) tObj->DriverData;
+
+	switch (tObj->DepthMode) {
+	case GL_LUMINANCE:
+		t->format = R300_EASY_TX_FORMAT(X, X, X, X, X16);
+		break;
+	case GL_INTENSITY:
+		t->format = R300_EASY_TX_FORMAT(X, X, X, ONE, X16);
+		break;
+	case GL_ALPHA:
+		t->format = R300_EASY_TX_FORMAT(ZERO, ZERO, ZERO, X, X16);
+		break;
+	default:
+		/* Error...which should have already been caught by higher
+		 * levels of Mesa.
+		 */
+		ASSERT(0);
+		break;
+	}
+}
+
 
 /**
  * This function computes the number of bytes of storage needed for
@@ -146,7 +180,12 @@ static void r300SetTexImages(r300ContextPtr rmesa,
 	 */
 	if (!t->image_override
 	    && VALID_FORMAT(baseImage->TexFormat->MesaFormat)) {
-		t->format = tx_table[baseImage->TexFormat->MesaFormat].format;
+		if (baseImage->TexFormat->BaseFormat == GL_DEPTH_COMPONENT) {
+			r300SetDepthTexMode(tObj);
+		} else {
+			t->format = tx_table[baseImage->TexFormat->MesaFormat].format;
+		}
+
 		t->filter |= tx_table[baseImage->TexFormat->MesaFormat].filter;
 	} else if (!t->image_override) {
 		_mesa_problem(NULL, "unexpected texture format in %s",

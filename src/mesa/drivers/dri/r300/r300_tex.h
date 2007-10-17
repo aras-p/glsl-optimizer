@@ -35,6 +35,8 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #ifndef __r300_TEX_H__
 #define __r300_TEX_H__
 
+extern void r300SetDepthTexMode(struct gl_texture_object *tObj);
+
 extern void r300SetTexOffset(__DRIcontext *pDRICtx, GLint texname,
 			     unsigned long long offset, GLint depth,
 			     GLuint pitch);
