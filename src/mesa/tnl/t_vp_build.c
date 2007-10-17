@@ -135,6 +135,11 @@ static struct state_key *make_state_key( GLcontext *ctx )
 
    key->fragprog_inputs_read = fp->Base.InputsRead;
 
+   if (ctx->RenderMode == GL_FEEDBACK) {
+      /* make sure the vertprog emits color and tex0 */
+      key->fragprog_inputs_read |= (FRAG_BIT_COL0 | FRAG_BIT_TEX0);
+   }
+
    key->separate_specular = (ctx->Light.Model.ColorControl ==
 			     GL_SEPARATE_SPECULAR_COLOR);
 
