@@ -276,6 +276,8 @@ _mesa_ReadPixels( GLint x, GLint y, GLsizei width, GLsizei height,
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
 
+   FLUSH_CURRENT(ctx, 0);
+
    if (width < 0 || height < 0) {
       _mesa_error( ctx, GL_INVALID_VALUE,
                    "glReadPixels(width=%d height=%d)", width, height );
