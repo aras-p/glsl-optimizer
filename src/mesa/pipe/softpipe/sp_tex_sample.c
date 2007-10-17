@@ -697,7 +697,6 @@ sp_get_samples_2d_common(struct tgsi_sampler *sampler,
          if (level0 != level1) {
             /* get texels from second mipmap level and blend */
             float rgba2[4][4];
-            unsigned c;
             x0 = x0 / 2;
             y0 = y0 / 2;
             x1 = x1 / 2;
@@ -759,6 +758,117 @@ sp_get_samples_3d(struct tgsi_sampler *sampler,
                   float rgba[NUM_CHANNELS][QUAD_SIZE])
 {
    /* get/map pipe_surfaces corresponding to 3D tex slices */
+   unsigned level0, level1, j, imgFilter;
+   int width, height, depth;
+   float levelBlend;
+   const uint face = 0;
+
+   choose_mipmap_levels(sampler, s, t, p, lodbias,
+                        &level0, &level1, &levelBlend, &imgFilter);
+
+   if (sampler->state->normalized_coords) {
+      width = sampler->texture->level[level0].width;
+      height = sampler->texture->level[level0].height;
+      depth = sampler->texture->level[level0].depth;
+   }
+   else {
+      width = height = depth = 1.0;
+   }
+
+   assert(width > 0);
+   assert(height > 0);
+   assert(depth > 0);
+
+   switch (imgFilter) {
+   case PIPE_TEX_FILTER_NEAREST:
+      for (j = 0; j < QUAD_SIZE; j++) {
+         int x = nearest_texcoord(sampler->state->wrap_s, s[j], width);
+         int y = nearest_texcoord(sampler->state->wrap_t, t[j], height);
+         int z = nearest_texcoord(sampler->state->wrap_r, p[j], depth);
+         get_texel(sampler, face, level0, z, x, y, rgba, j);
+
+         if (level0 != level1) {
+            /* get texels from second mipmap level and blend */
+            float rgba2[4][4];
+            unsigned c;
+            x /= 2;
+            y /= 2;
+            z /= 2;
+            get_texel(sampler, face, level1, z, x, y, rgba2, j);
+            for (c = 0; c < NUM_CHANNELS; c++) {
+               rgba[c][j] = LERP(levelBlend, rgba2[c][j], rgba[c][j]);
+            }
+         }
+      }
+      break;
+   case PIPE_TEX_FILTER_LINEAR:
+      for (j = 0; j < QUAD_SIZE; j++) {
+         float texel0[4][4], texel1[4][4], xw, yw, zw;
+         int x0, x1, y0, y1, z0, z1, c;
+         linear_texcoord(sampler->state->wrap_s, s[j], width,  &x0, &x1, &xw);
+         linear_texcoord(sampler->state->wrap_t, t[j], height, &y0, &y1, &yw);
+         linear_texcoord(sampler->state->wrap_r, p[j], depth,  &z0, &z1, &zw);
+         get_texel(sampler, face, level0, z0, x0, y0, texel0, 0);
+         get_texel(sampler, face, level0, z0, x1, y0, texel0, 1);
+         get_texel(sampler, face, level0, z0, x0, y1, texel0, 2);
+         get_texel(sampler, face, level0, z0, x1, y1, texel0, 3);
+         get_texel(sampler, face, level0, z1, x0, y0, texel1, 0);
+         get_texel(sampler, face, level0, z1, x1, y0, texel1, 1);
+         get_texel(sampler, face, level0, z1, x0, y1, texel1, 2);
+         get_texel(sampler, face, level0, z1, x1, y1, texel1, 3);
+
+         /* 3D lerp */
+         for (c = 0; c < 4; c++) {
+            float ctemp0[4][4], ctemp1[4][4];
+            ctemp0[c][j] = lerp_2d(xw, yw,
+                                   texel0[c][0], texel0[c][1],
+                                   texel0[c][2], texel0[c][3]);
+            ctemp1[c][j] = lerp_2d(xw, yw,
+                                   texel1[c][0], texel1[c][1],
+                                   texel1[c][2], texel1[c][3]);
+            rgba[c][j] = LERP(zw, ctemp0[c][j], ctemp1[c][j]);
+         }
+
+         if (level0 != level1) {
+            /* get texels from second mipmap level and blend */
+            float rgba2[4][4];
+            x0 /= 2;
+            y0 /= 2;
+            z0 /= 2;
+            x1 /= 2;
+            y1 /= 2;
+            z1 /= 2;
+            get_texel(sampler, face, level1, z0, x0, y0, texel0, 0);
+            get_texel(sampler, face, level1, z0, x1, y0, texel0, 1);
+            get_texel(sampler, face, level1, z0, x0, y1, texel0, 2);
+            get_texel(sampler, face, level1, z0, x1, y1, texel0, 3);
+            get_texel(sampler, face, level1, z1, x0, y0, texel1, 0);
+            get_texel(sampler, face, level1, z1, x1, y0, texel1, 1);
+            get_texel(sampler, face, level1, z1, x0, y1, texel1, 2);
+            get_texel(sampler, face, level1, z1, x1, y1, texel1, 3);
+
+            /* 3D lerp */
+            for (c = 0; c < 4; c++) {
+               float ctemp0[4][4], ctemp1[4][4];
+               ctemp0[c][j] = lerp_2d(xw, yw,
+                                      texel0[c][0], texel0[c][1],
+                                      texel0[c][2], texel0[c][3]);
+               ctemp1[c][j] = lerp_2d(xw, yw,
+                                      texel1[c][0], texel1[c][1],
+                                      texel1[c][2], texel1[c][3]);
+               rgba2[c][j] = LERP(zw, ctemp0[c][j], ctemp1[c][j]);
+            }
+
+            /* blend mipmap levels */
+            for (c = 0; c < NUM_CHANNELS; c++) {
+               rgba[c][j] = LERP(levelBlend, rgba[c][j], rgba2[c][j]);
+            }
+         }
+      }
+      break;
+   default:
+      assert(0);
+   }
 }
 
 
