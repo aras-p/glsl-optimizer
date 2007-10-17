@@ -930,9 +930,10 @@ setup_point(struct draw_stage *stage, struct prim_header *prim)
    const interp_mode *interp = setup->softpipe->vertex_info.interp_mode;
    const struct vertex_header *v0 = prim->v[0];
    const int sizeAttr = setup->softpipe->psize_slot;
-   const float halfSize
-      = sizeAttr > 0 ? (0.5f * v0->data[sizeAttr][0])
-        : (0.5f * setup->softpipe->rasterizer->point_size);
+   const float size
+      = sizeAttr > 0 ? v0->data[sizeAttr][0]
+      : setup->softpipe->rasterizer->point_size;
+   const float halfSize = 0.5F * size;
    const boolean round = setup->softpipe->rasterizer->point_smooth;
    const float x = v0->data[0][0];  /* Note: data[0] is always position */
    const float y = v0->data[0][1];
@@ -986,19 +987,18 @@ setup_point(struct draw_stage *stage, struct prim_header *prim)
       clip_emit_quad(setup);
    }
    else {
-      const int ixmin = block((int) (x - halfSize));
-      const int ixmax = block((int) (x + halfSize));
-      const int iymin = block((int) (y - halfSize));
-      const int iymax = block((int) (y + halfSize));
-      int ix, iy;
-
       if (round) {
          /* rounded points */
+         const int ixmin = block((int) (x - halfSize));
+         const int ixmax = block((int) (x + halfSize));
+         const int iymin = block((int) (y - halfSize));
+         const int iymax = block((int) (y + halfSize));
          const float rmin = halfSize - 0.7071F;  /* 0.7071 = sqrt(2)/2 */
          const float rmax = halfSize + 0.7071F;
          const float rmin2 = MAX2(0.0F, rmin * rmin);
          const float rmax2 = rmax * rmax;
          const float cscale = 1.0F / (rmax2 - rmin2);
+         int ix, iy;
 
          for (iy = iymin; iy <= iymax; iy += 2) {
             for (ix = ixmin; ix <= ixmax; ix += 2) {
@@ -1052,35 +1052,47 @@ setup_point(struct draw_stage *stage, struct prim_header *prim)
       }
       else {
          /* square points */
+         const int xmin = (int) (x + 0.75 - halfSize);
+         const int ymin = (int) (y + 0.25 - halfSize);
+         const int xmax = xmin + (int) size;
+         const int ymax = ymin + (int) size;
+         /* XXX could apply scissor to xmin,ymin,xmax,ymax now */
+         const int ixmin = block(xmin);
+         const int ixmax = block(xmax - 1);
+         const int iymin = block(ymin);
+         const int iymax = block(ymax - 1);
+         int ix, iy;
+
+         /*
+         printf("(%f, %f) -> X:%d..%d Y:%d..%d\n", x, y, xmin, xmax,ymin,ymax);
+         */
          for (iy = iymin; iy <= iymax; iy += 2) {
+            uint rowMask = 0xf;
+            if (iy < ymin) {
+               /* above the top edge */
+               rowMask &= (MASK_BOTTOM_LEFT | MASK_BOTTOM_RIGHT);
+            }
+            if (iy + 1 >= ymax) {
+               /* below the bottom edge */
+               rowMask &= (MASK_TOP_LEFT | MASK_TOP_RIGHT);
+            }
+
             for (ix = ixmin; ix <= ixmax; ix += 2) {
-               setup->quad.mask = 0xf;
+               uint mask = rowMask;
 
-               if (ix + 0.5 < x - halfSize) {
+               if (ix < xmin) {
                   /* fragment is past left edge of point, turn off left bits */
-                  setup->quad.mask &= ~(MASK_BOTTOM_LEFT | MASK_TOP_LEFT);
+                  mask &= (MASK_BOTTOM_RIGHT | MASK_TOP_RIGHT);
                }
-
-               if (ix + 1.5 > x + halfSize) {
+               if (ix + 1 >= xmax) {
                   /* past the right edge */
-                  setup->quad.mask &= ~(MASK_BOTTOM_RIGHT | MASK_TOP_RIGHT);
+                  mask &= (MASK_BOTTOM_LEFT | MASK_TOP_LEFT);
                }
-
-               if (iy + 0.5 < y - halfSize) {
-                  /* below the bottom edge */
-                  setup->quad.mask &= ~(MASK_TOP_LEFT | MASK_TOP_RIGHT);
-               }
-
-               if (iy + 1.5 > y + halfSize) {
-                  /* above the top edge */
-                  setup->quad.mask &= ~(MASK_BOTTOM_LEFT | MASK_BOTTOM_RIGHT);
-               }
-
-               if (setup->quad.mask) {
-                  setup->quad.x0 = ix;
-                  setup->quad.y0 = iy;
-                  clip_emit_quad(setup);
-               }
+                  
+               setup->quad.mask = mask;
+               setup->quad.x0 = ix;
+               setup->quad.y0 = iy;
+               clip_emit_quad(setup);
             }
          }
       }
