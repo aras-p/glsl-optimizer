@@ -81,6 +81,7 @@
 #if 0
 #define need_GL_EXT_paletted_texture
 #endif
+#define need_GL_APPLE_vertex_array_object
 #define need_GL_NV_vertex_program
 #include "extension_helper.h"
 
@@ -412,6 +413,7 @@ static const struct dri_extension card_extensions[] =
 #endif
    { "GL_EXT_secondary_color",        GL_EXT_secondary_color_functions },
    { "GL_EXT_stencil_wrap",           NULL },
+   { "GL_APPLE_vertex_array_object",  GL_APPLE_vertex_array_object_functions },
    { "GL_MESA_ycbcr_texture",         NULL },
    { "GL_SGIS_generate_mipmap",       NULL },
    { NULL,                            NULL }
