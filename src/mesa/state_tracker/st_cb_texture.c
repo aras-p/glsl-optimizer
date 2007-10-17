@@ -1500,7 +1500,9 @@ st_finalize_mipmap_tree(GLcontext *ctx,
       comp_byte = compressed_num_bytes(firstImage->base.TexFormat->MesaFormat);
       cpp = comp_byte;
    }
-   else cpp = firstImage->base.TexFormat->TexelBytes;
+   else {
+      cpp = firstImage->base.TexFormat->TexelBytes;
+   }
 
    /* Check tree can hold all active levels.  Check tree matches
     * target, imageFormat, etc.
