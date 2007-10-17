@@ -668,7 +668,7 @@ sp_get_samples_2d_common(struct tgsi_sampler *sampler,
             y = y / 2;
             get_texel(sampler, faces[j], level1, x, y, 0, rgba2, j);
             for (c = 0; c < NUM_CHANNELS; c++) {
-               rgba[c][j] = LERP(levelBlend, rgba2[c][j], rgba[c][j]);
+               rgba[c][j] = LERP(levelBlend, rgba[c][j], rgba2[c][j]);
             }
          }
       }
