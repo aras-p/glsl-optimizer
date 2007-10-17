@@ -570,11 +570,11 @@ draw_textured_quad(GLcontext *ctx, GLint x, GLint y, GLfloat z,
       struct pipe_viewport_state vp;
       vp.scale[0] =  0.5 * width;
       vp.scale[1] = -0.5 * height;
-      vp.scale[2] = 0.5;
+      vp.scale[2] = 1.0;
       vp.scale[3] = 1.0;
       vp.translate[0] = 0.5 * width;
       vp.translate[1] = 0.5 * height;
-      vp.translate[2] = 0.5;
+      vp.translate[2] = 0.0;
       vp.translate[3] = 0.0;
       pipe->set_viewport_state(pipe, &vp);
    }

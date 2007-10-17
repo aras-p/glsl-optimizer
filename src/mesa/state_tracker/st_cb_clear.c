@@ -326,7 +326,7 @@ clear_with_quad(GLcontext *ctx,
       pipe->bind_depth_stencil_state(pipe, cso->data);
    }
 
-   /* setup state: nothing */
+   /* rasterizer state: nothing */
    {
       struct pipe_rasterizer_state raster;
       const struct cso_rasterizer *cso;
@@ -367,11 +367,11 @@ clear_with_quad(GLcontext *ctx,
       struct pipe_viewport_state vp;
       vp.scale[0] =  0.5 * width;
       vp.scale[1] = -0.5 * height;
-      vp.scale[2] = 0.5;
+      vp.scale[2] = 1.0;
       vp.scale[3] = 1.0;
       vp.translate[0] = 0.5 * width;
       vp.translate[1] = 0.5 * height;
-      vp.translate[2] = 0.5;
+      vp.translate[2] = 0.0;
       vp.translate[3] = 0.0;
       pipe->set_viewport_state(pipe, &vp);
    }
