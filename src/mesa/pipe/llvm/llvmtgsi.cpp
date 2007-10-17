@@ -30,6 +30,7 @@
 #include <llvm/Bitcode/ReaderWriter.h>
 #include <iostream>
 
+#include "instructions.h"
 using namespace llvm;
 #include "llvm_base_shader.cpp"
 #include "tgsillvmbuilder.cpp"
@@ -117,31 +118,82 @@ translate_immediate(llvm::Module *module,
 
 static void
 translate_instruction(llvm::Module *module,
-                      VertexShaderBuilder *builder,
+                      Storage *storage,
+                      Instructions *instr,
                       struct tgsi_full_instruction *inst,
                       struct tgsi_full_instruction *fi)
 {
+   llvm::Value *inputs[4];
+   for (int i = 0; i < inst->Instruction.NumSrcRegs; ++i) {
+      struct tgsi_full_src_register *src = &inst->FullSrcRegisters[i];
+      llvm::Value *val = 0;
+      if (src->SrcRegister.File == TGSI_FILE_CONSTANT) {
+         val = storage->constElement(src->SrcRegister.Index);
+      } else if (src->SrcRegister.File == TGSI_FILE_INPUT) {
+         val = storage->inputElement(src->SrcRegister.Index);
+      } else if (src->SrcRegister.File == TGSI_FILE_TEMPORARY) {
+         val = storage->tempElement(src->SrcRegister.Index);
+      } else {
+         fprintf(stderr, "ERROR: not support llvm source\n");
+         return;
+      }
+
+      if (src->SrcRegister.Extended) {
+         if (src->SrcRegisterExtSwz.ExtSwizzleX != TGSI_EXTSWIZZLE_X ||
+             src->SrcRegisterExtSwz.ExtSwizzleY != TGSI_EXTSWIZZLE_Y ||
+             src->SrcRegisterExtSwz.ExtSwizzleZ != TGSI_EXTSWIZZLE_Z ||
+             src->SrcRegisterExtSwz.ExtSwizzleW != TGSI_EXTSWIZZLE_W) {
+            int swizzle = src->SrcRegisterExtSwz.ExtSwizzleX * 1000;
+            swizzle += src->SrcRegisterExtSwz.ExtSwizzleY * 100;
+            swizzle += src->SrcRegisterExtSwz.ExtSwizzleZ * 10;
+            swizzle += src->SrcRegisterExtSwz.ExtSwizzleW * 1;
+            val = storage->shuffleVector(val, swizzle);
+         }
+      } else if (src->SrcRegister.SwizzleX != TGSI_SWIZZLE_X ||
+                 src->SrcRegister.SwizzleY != TGSI_SWIZZLE_Y ||
+                 src->SrcRegister.SwizzleZ != TGSI_SWIZZLE_Z ||
+                 src->SrcRegister.SwizzleW != TGSI_SWIZZLE_W) {
+         int swizzle = src->SrcRegister.SwizzleX * 1000;
+         swizzle += src->SrcRegister.SwizzleY  * 100;
+         swizzle += src->SrcRegister.SwizzleZ  * 10;
+         swizzle += src->SrcRegister.SwizzleW  * 1;
+         val = storage->shuffleVector(val, swizzle);
+      }
+      inputs[i] = val;
+   }
+
+   llvm::Value *out = 0;
    switch (inst->Instruction.Opcode) {
    case TGSI_OPCODE_ARL:
       break;
-   case TGSI_OPCODE_MOV:
+   case TGSI_OPCODE_MOV: {
+      out = inputs[0];
+   }
       break;
-   case TGSI_OPCODE_LIT:
+   case TGSI_OPCODE_LIT: {
+      //out = instr->lit(inputs[0]);
+      return;
+   }
       break;
    case TGSI_OPCODE_RCP:
       break;
-   case TGSI_OPCODE_RSQ:
+   case TGSI_OPCODE_RSQ: {
+      out = instr->rsq(inputs[0]);
+   }
       break;
    case TGSI_OPCODE_EXP:
       break;
    case TGSI_OPCODE_LOG:
       break;
-   case TGSI_OPCODE_MUL:
-      
+   case TGSI_OPCODE_MUL: {
+      out = instr->mul(inputs[0], inputs[1]);
+   }
       break;
    case TGSI_OPCODE_ADD:
       break;
-   case TGSI_OPCODE_DP3:
+   case TGSI_OPCODE_DP3: {
+      out = instr->dp3(inputs[0], inputs[1]);
+   }
       break;
    case TGSI_OPCODE_DP4:
       break;
@@ -155,7 +207,9 @@ translate_instruction(llvm::Module *module,
       break;
    case TGSI_OPCODE_SGE:
       break;
-   case TGSI_OPCODE_MAD:
+   case TGSI_OPCODE_MAD: {
+      out = instr->madd(inputs[0], inputs[1], inputs[2]);
+   }
       break;
    case TGSI_OPCODE_SUB:
       break;
@@ -400,6 +454,7 @@ translate_instruction(llvm::Module *module,
       break;
    }
 
+
    switch( inst->Instruction.Saturate ) {
    case TGSI_SAT_NONE:
       break;
@@ -411,6 +466,31 @@ translate_instruction(llvm::Module *module,
       break;
    default:
       assert( 0 );
+   }
+
+   for (int i = 0; i < inst->Instruction.NumDstRegs; ++i) {
+      struct tgsi_full_dst_register *dst = &inst->FullDstRegisters[i];
+
+      if (dst->DstRegister.File == TGSI_FILE_OUTPUT) {
+         storage->store(dst->DstRegister.Index, out);
+      } else if (dst->DstRegister.File == TGSI_FILE_TEMPORARY) {
+         storage->setTempElement(dst->DstRegister.Index, out);
+      } else {
+         fprintf(stderr, "ERROR: unsupported LLVM destination!");
+      }
+
+#if 0
+      if (dst->DstRegister.WriteMask != TGSI_WRITEMASK_XYZW) {
+         if (dst->DstRegister.WriteMask & TGSI_WRITEMASK_X) {
+         }
+         if (dst->DstRegister.WriteMask & TGSI_WRITEMASK_Y) {
+         }
+         if (dst->DstRegister.WriteMask & TGSI_WRITEMASK_Z) {
+         }
+         if (dst->DstRegister.WriteMask & TGSI_WRITEMASK_W) {
+         }
+      }
+#endif
    }
 }
 
@@ -450,7 +530,8 @@ tgsi_to_llvm(const struct tgsi_token *tokens)
 
    fi = tgsi_default_full_instruction();
    fd = tgsi_default_full_declaration();
-   VertexShaderBuilder builder(label_entry, ptr_IN, ptr_CONST);
+   Storage storage(label_entry, ptr_OUT, ptr_IN, ptr_CONST);
+   Instructions instr(mod, label_entry);
    while(!tgsi_parse_end_of_tokens(&parse)) {
       tgsi_parse_token(&parse);
 
@@ -469,7 +550,7 @@ tgsi_to_llvm(const struct tgsi_token *tokens)
          break;
 
       case TGSI_TOKEN_TYPE_INSTRUCTION:
-         translate_instruction(mod, &builder,
+         translate_instruction(mod, &storage, &instr,
                                &parse.FullToken.FullInstruction,
                                &fi);
          break;

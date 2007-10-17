@@ -191,7 +191,8 @@ TGSIMESA_SOURCES = \
 
 ifeq ($(MESA_NO_LLVM),0)
   LLVMTGSI_SOURCES = \
-	pipe/llvm/llvmtgsi.cpp
+	pipe/llvm/llvmtgsi.cpp \
+	pipe/llvm/instructions.cpp
 endif
 
 STATECACHE_SOURCES = \

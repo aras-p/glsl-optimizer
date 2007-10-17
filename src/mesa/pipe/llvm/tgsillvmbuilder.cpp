@@ -1,41 +1,52 @@
 
 #include <map>
 
-class VertexShaderBuilder
+class Storage
 {
    typedef std::map<int, llvm::LoadInst*> LoadMap;
 public:
-   VertexShaderBuilder(llvm::BasicBlock *block, llvm::Value *in, llvm::Value *consts);
+   Storage(llvm::BasicBlock *block,
+                       llvm::Value *out,
+                       llvm::Value *in, llvm::Value *consts);
 
    llvm::ConstantInt *constantInt(int);
    llvm::Constant *shuffleMask(int vec);
    llvm::Value *inputElement(int idx);
    llvm::Value *constElement(int idx);
 
+   llvm::Value *tempElement(int idx) const;
+   void setTempElement(int idx, llvm::Value *val);
+
    llvm::Value *shuffleVector(llvm::Value *vec, int shuffle);
 
 
+   void store(int dstIdx, llvm::Value *val);
 private:
    llvm::BasicBlock *m_block;
+   llvm::Value *m_OUT;
    llvm::Value *m_IN;
    llvm::Value *m_CONST;
 
    std::map<int, llvm::ConstantInt*> m_constInts;
-   std::map<int, llvm::Constant*> m_intVecs;
-   LoadMap    m_inputs;
-   LoadMap    m_consts;
+   std::map<int, llvm::Constant*>    m_intVecs;
+   std::vector<llvm::Value*>         m_temps;
+   LoadMap                           m_inputs;
+   LoadMap                           m_consts;
 
-   VectorType *m_floatVecType;
-   VectorType *m_intVecType;
+   llvm::VectorType *m_floatVecType;
+   llvm::VectorType *m_intVecType;
 
-   Value      *m_undefFloatVec;
-   Value      *m_undefIntVec;
+   llvm::Value      *m_undefFloatVec;
+   llvm::Value      *m_undefIntVec;
 
    int         m_shuffleId;
 };
 
-VertexShaderBuilder::VertexShaderBuilder(llvm::BasicBlock *block, llvm::Value *in, llvm::Value *consts)
-   : m_block(block), m_IN(in), m_CONST(consts)
+Storage::Storage(llvm::BasicBlock *block, llvm::Value *out,
+                                         llvm::Value *in, llvm::Value *consts)
+   : m_block(block), m_OUT(out),
+     m_IN(in), m_CONST(consts),
+     m_temps(32)
 {
    m_floatVecType = VectorType::get(Type::FloatTy, 4);
    m_intVecType   = VectorType::get(IntegerType::get(32), 4);
@@ -47,7 +58,7 @@ VertexShaderBuilder::VertexShaderBuilder(llvm::BasicBlock *block, llvm::Value *i
 }
 
 //can only build vectors with all members in the [0, 9] range
-llvm::Constant *VertexShaderBuilder::shuffleMask(int vec)
+llvm::Constant *Storage::shuffleMask(int vec)
 {
    if (m_intVecs.find(vec) != m_intVecs.end()) {
       return m_intVecs[vec];
@@ -73,7 +84,7 @@ llvm::Constant *VertexShaderBuilder::shuffleMask(int vec)
    return const_vec;
 }
 
-llvm::ConstantInt *VertexShaderBuilder::constantInt(int idx)
+llvm::ConstantInt *Storage::constantInt(int idx)
 {
    if (m_constInts.find(idx) != m_constInts.end()) {
       return m_constInts[idx];
@@ -83,7 +94,7 @@ llvm::ConstantInt *VertexShaderBuilder::constantInt(int idx)
    return const_int;
 }
 
-llvm::Value *VertexShaderBuilder::inputElement(int idx)
+llvm::Value *Storage::inputElement(int idx)
 {
    if (m_inputs.find(idx) != m_inputs.end()) {
       return m_inputs[idx];
@@ -102,7 +113,7 @@ llvm::Value *VertexShaderBuilder::inputElement(int idx)
    return load;
 }
 
-llvm::Value *VertexShaderBuilder::constElement(int idx)
+llvm::Value *Storage::constElement(int idx)
 {
    if (m_consts.find(idx) != m_consts.end()) {
       return m_consts[idx];
@@ -121,7 +132,7 @@ llvm::Value *VertexShaderBuilder::constElement(int idx)
    return load;
 }
 
-llvm::Value *VertexShaderBuilder::shuffleVector(llvm::Value *vec, int shuffle)
+llvm::Value *Storage::shuffleVector(llvm::Value *vec, int shuffle)
 {
    Constant *mask = shuffleMask(shuffle);
    ++m_shuffleId;
@@ -131,4 +142,29 @@ llvm::Value *VertexShaderBuilder::shuffleVector(llvm::Value *vec, int shuffle)
       new ShuffleVectorInst(vec, m_undefFloatVec, mask,
                             name, m_block);
    return res;
+}
+
+
+llvm::Value *Storage::tempElement(int idx) const
+{
+   Value *ret = m_temps[idx];
+   if (!ret)
+      return m_undefFloatVec;
+   return ret;
+}
+
+void Storage::setTempElement(int idx, llvm::Value *val)
+{
+   m_temps[idx] = val;
+}
+
+void Storage::store(int dstIdx, llvm::Value *val)
+{
+   char ptrName[13];
+   snprintf(ptrName, 13, "out_ptr%d", dstIdx);
+   GetElementPtrInst *getElem = new GetElementPtrInst(m_OUT,
+                                                      constantInt(dstIdx),
+                                                      ptrName,
+                                                      m_block);
+   new StoreInst(val, getElem, false, m_block);
 }
