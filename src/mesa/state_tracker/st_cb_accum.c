@@ -51,6 +51,41 @@
  */
 
 
+void
+st_clear_accum_buffer(GLcontext *ctx, struct gl_renderbuffer *rb)
+{
+   struct pipe_context *pipe = ctx->st->pipe;
+   struct st_renderbuffer *acc_strb = st_renderbuffer(rb);
+   struct pipe_surface *acc_ps = acc_strb->surface;
+   const GLint xpos = ctx->DrawBuffer->_Xmin;
+   const GLint ypos = ctx->DrawBuffer->_Ymin;
+   const GLint width = ctx->DrawBuffer->_Xmax - xpos;
+   const GLint height = ctx->DrawBuffer->_Ymax - ypos;
+   const GLfloat r = ctx->Accum.ClearColor[0];
+   const GLfloat g = ctx->Accum.ClearColor[1];
+   const GLfloat b = ctx->Accum.ClearColor[2];
+   const GLfloat a = ctx->Accum.ClearColor[3];
+   GLfloat *accBuf;
+   GLint i;
+
+   (void) pipe->region_map(pipe, acc_ps->region);
+
+   accBuf = (GLfloat *) malloc(width * height * 4 * sizeof(GLfloat));
+
+   for (i = 0; i < width * height; i++) {
+      accBuf[i * 4 + 0] = r;
+      accBuf[i * 4 + 1] = g;
+      accBuf[i * 4 + 2] = b;
+      accBuf[i * 4 + 3] = a;
+   }
+
+   acc_ps->put_tile(acc_ps, xpos, ypos, width, height, accBuf);
+
+   pipe->region_unmap(pipe, acc_ps->region);
+}
+
+
+
 /** For ADD/MULT */
 static void
 accum_mad(struct pipe_context *pipe, GLfloat scale, GLfloat bias,
@@ -67,8 +102,7 @@ accum_mad(struct pipe_context *pipe, GLfloat scale, GLfloat bias,
    acc_ps->get_tile(acc_ps, xpos, ypos, width, height, accBuf);
 
    for (i = 0; i < 4 * width * height; i++) {
-      GLfloat val = accBuf[i] * scale + bias;
-      accBuf[i] = CLAMP(val, 0.0, 1.0);
+      accBuf[i] = accBuf[i] * scale + bias;
    }
 
    acc_ps->put_tile(acc_ps, xpos, ypos, width, height, accBuf);
@@ -99,8 +133,7 @@ accum_accum(struct pipe_context *pipe, GLfloat value,
    acc_ps->get_tile(acc_ps, xpos, ypos, width, height, accBuf);
 
    for (i = 0; i < 4 * width * height; i++) {
-      GLfloat val = accBuf[i] + colorBuf[i] * value;
-      accBuf[i] = CLAMP(val, 0.0, 1.0);
+      accBuf[i] = accBuf[i] + colorBuf[i] * value;
    }
 
    acc_ps->put_tile(acc_ps, xpos, ypos, width, height, accBuf);
@@ -130,8 +163,7 @@ accum_load(struct pipe_context *pipe, GLfloat value,
    color_ps->get_tile(color_ps, xpos, ypos, width, height, buf);
 
    for (i = 0; i < 4 * width * height; i++) {
-      GLfloat val = buf[i] * value;
-      buf[i] = CLAMP(val, 0.0, 1.0);
+      buf[i] = buf[i] * value;
    }
 
    acc_ps->put_tile(acc_ps, xpos, ypos, width, height, buf);

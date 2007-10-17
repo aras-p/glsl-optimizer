@@ -30,6 +30,9 @@
 #define ST_CB_ACCUM_H
 
 
+extern void
+st_clear_accum_buffer(GLcontext *ctx, struct gl_renderbuffer *rb);
+
 extern void st_init_accum_functions(struct dd_function_table *functions);
 
 
