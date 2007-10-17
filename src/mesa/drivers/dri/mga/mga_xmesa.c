@@ -75,6 +75,7 @@
 #define need_GL_ARB_vertex_buffer_object
 #define need_GL_ARB_vertex_program
 #define need_GL_EXT_fog_coord
+#define need_GL_EXT_gpu_program_parameters
 #define need_GL_EXT_multi_draw_arrays
 #define need_GL_EXT_secondary_color
 #if 0
@@ -416,8 +417,9 @@ static const struct dri_extension card_extensions[] =
    { NULL,                            NULL }
 };
 
-static const struct dri_extension ARB_vp_extension[] = {
+static const struct dri_extension ARB_vp_extensions[] = {
    { "GL_ARB_vertex_program",         GL_ARB_vertex_program_functions },
+   { "GL_EXT_gpu_program_parameters", GL_EXT_gpu_program_parameters_functions },
    { NULL,                            NULL }
 };
 
@@ -622,7 +624,7 @@ mgaCreateContext( const __GLcontextModes *mesaVis,
    }
 
    if ( driQueryOptionb( &mmesa->optionCache, "arb_vertex_program" ) ) {
-      driInitSingleExtension( ctx, ARB_vp_extension );
+      driInitExtensions(ctx, ARB_vp_extensions, GL_FALSE);
    }
    
    if ( driQueryOptionb( &mmesa->optionCache, "nv_vertex_program" ) ) {
@@ -985,7 +987,7 @@ __GLcontextModes *__driDriverInitScreen(__DRIscreenPrivate *psp)
 
    driInitExtensions( NULL, card_extensions, GL_FALSE );
    driInitExtensions( NULL, g400_extensions, GL_FALSE );
-   driInitSingleExtension( NULL, ARB_vp_extension );
+   driInitExtensions(NULL, ARB_vp_extensions, GL_FALSE);
    driInitExtensions( NULL, NV_vp_extensions, GL_FALSE );
 
    if (!mgaInitDriver(psp))
