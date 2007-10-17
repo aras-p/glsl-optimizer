@@ -31,6 +31,7 @@
   */
 
 #include "main/imports.h"
+#include "main/feedback.h"
 #include "main/macros.h"
 
 #include "st_context.h"
@@ -250,6 +251,10 @@ update_rasterpos(GLcontext *ctx,
    }
 
    ctx->Current.RasterPosValid = GL_TRUE;
+
+   if (ctx->RenderMode == GL_SELECT) {
+      _mesa_update_hitflag( ctx, ctx->Current.RasterPos[2] );
+   }
 }
 
 
