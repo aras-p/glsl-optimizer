@@ -20,12 +20,16 @@ public:
    llvm::Value *madd(llvm::Value *in1, llvm::Value *in2,
                      llvm::Value *in2);
    llvm::Value *mul(llvm::Value *in1, llvm::Value *in2);
+   llvm::Value *pow(llvm::Value *in1, llvm::Value *in2);
+   llvm::Value *rcp(llvm::Value *in1);
    llvm::Value *rsq(llvm::Value *in1);
+   llvm::Value *sub(llvm::Value *in1, llvm::Value *in2);
 private:
    const char *name(const char *prefix);
 
    llvm::Value *callFSqrt(llvm::Value *val);
    llvm::Value *callFAbs(llvm::Value *val);
+   llvm::Value *callPow(llvm::Value *val1, llvm::Value *val2);
 
    llvm::Value *vectorFromVals(llvm::Value *x, llvm::Value *y,
                                llvm::Value *z, llvm::Value *w=0);
@@ -34,10 +38,12 @@ private:
    char        m_name[32];
    llvm::BasicBlock *m_block;
    int               m_idx;
-   llvm::Function   *m_llvmFSqrt;
-   llvm::Function   *m_llvmFAbs;
 
    llvm::VectorType *m_floatVecType;
+
+   llvm::Function   *m_llvmFSqrt;
+   llvm::Function   *m_llvmFAbs;
+   llvm::Function   *m_llvmPow;
 };
 
 #endif

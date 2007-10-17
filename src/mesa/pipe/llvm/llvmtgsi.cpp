@@ -125,6 +125,7 @@ translate_instruction(llvm::Module *module,
                       struct tgsi_full_instruction *fi)
 {
    llvm::Value *inputs[4];
+   printf("translate instr START\n");
    for (int i = 0; i < inst->Instruction.NumSrcRegs; ++i) {
       struct tgsi_full_src_register *src = &inst->FullSrcRegisters[i];
       llvm::Value *val = 0;
@@ -136,6 +137,7 @@ translate_instruction(llvm::Module *module,
          val = storage->tempElement(src->SrcRegister.Index);
       } else {
          fprintf(stderr, "ERROR: not support llvm source\n");
+         printf("translate instr END\n");
          return;
       }
 
@@ -154,6 +156,9 @@ translate_instruction(llvm::Module *module,
                  src->SrcRegister.SwizzleY != TGSI_SWIZZLE_Y ||
                  src->SrcRegister.SwizzleZ != TGSI_SWIZZLE_Z ||
                  src->SrcRegister.SwizzleW != TGSI_SWIZZLE_W) {
+         fprintf(stderr, "SWIZZLE is %d %d %d %d\n",
+                 src->SrcRegister.SwizzleX, src->SrcRegister.SwizzleY,
+                 src->SrcRegister.SwizzleZ, src->SrcRegister.SwizzleW);
          int swizzle = src->SrcRegister.SwizzleX * 1000;
          swizzle += src->SrcRegister.SwizzleY  * 100;
          swizzle += src->SrcRegister.SwizzleZ  * 10;
@@ -176,7 +181,9 @@ translate_instruction(llvm::Module *module,
       return;
    }
       break;
-   case TGSI_OPCODE_RCP:
+   case TGSI_OPCODE_RCP: {
+      out = instr->rcp(inputs[0]);
+   }
       break;
    case TGSI_OPCODE_RSQ: {
       out = instr->rsq(inputs[0]);
@@ -214,7 +221,9 @@ translate_instruction(llvm::Module *module,
       out = instr->madd(inputs[0], inputs[1], inputs[2]);
    }
       break;
-   case TGSI_OPCODE_SUB:
+   case TGSI_OPCODE_SUB: {
+      out = instr->sub(inputs[0], inputs[1]);
+   }
       break;
    case TGSI_OPCODE_LERP:
       break;
@@ -240,7 +249,9 @@ translate_instruction(llvm::Module *module,
       break;
    case TGSI_OPCODE_LOGBASE2:
       break;
-   case TGSI_OPCODE_POWER:
+   case TGSI_OPCODE_POWER: {
+      out = instr->pow(inputs[0], inputs[1]);
+   }
       break;
    case TGSI_OPCODE_CROSSPRODUCT:
       break;
@@ -449,6 +460,7 @@ translate_instruction(llvm::Module *module,
    case TGSI_OPCODE_KIL:
       break;
    case TGSI_OPCODE_END:
+      printf("translate instr END\n");
       return;
       break;
    default:
@@ -481,6 +493,7 @@ translate_instruction(llvm::Module *module,
       struct tgsi_full_dst_register *dst = &inst->FullDstRegisters[i];
 
       if (dst->DstRegister.File == TGSI_FILE_OUTPUT) {
+         printf("--- storing to %d %p\n", dst->DstRegister.Index, out);
          storage->store(dst->DstRegister.Index, out);
       } else if (dst->DstRegister.File == TGSI_FILE_TEMPORARY) {
          storage->setTempElement(dst->DstRegister.Index, out);
@@ -501,6 +514,7 @@ translate_instruction(llvm::Module *module,
       }
 #endif
    }
+   printf("translate instr END\n");
 }
 
 

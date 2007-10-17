@@ -12,8 +12,10 @@ Instructions::Instructions(llvm::Module *mod, llvm::BasicBlock *block)
    :  m_mod(mod), m_block(block), m_idx(0)
 {
    m_floatVecType = VectorType::get(Type::FloatTy, 4);
+
    m_llvmFSqrt = 0;
    m_llvmFAbs = 0;
+   m_llvmPow = 0;
 }
 
 llvm::Value * Instructions::add(llvm::Value *in1, llvm::Value *in2)
@@ -158,5 +160,69 @@ llvm::Value *Instructions::callFAbs(llvm::Value *val)
 llvm::Value * Instructions::lit(llvm::Value *in1)
 {
    return in1;
+}
+
+llvm::Value * Instructions::sub(llvm::Value *in1, llvm::Value *in2)
+{
+   BinaryOperator *res = BinaryOperator::create(Instruction::Sub, in1, in2,
+                                                name("sub"),
+                                                m_block);
+   return res;
+}
+
+llvm::Value * Instructions::callPow(llvm::Value *val1, llvm::Value *val2)
+{
+   if (!m_llvmPow) {
+      // predeclare the intrinsic
+      std::vector<const Type*> powArgs;
+      powArgs.push_back(Type::FloatTy);
+      powArgs.push_back(Type::FloatTy);
+      ParamAttrsList *powPal = 0;
+      FunctionType* powType = FunctionType::get(
+         /*Result=*/Type::FloatTy,
+         /*Params=*/powArgs,
+         /*isVarArg=*/false,
+         /*ParamAttrs=*/powPal);
+      m_llvmPow = new Function(
+         /*Type=*/powType,
+         /*Linkage=*/GlobalValue::ExternalLinkage,
+         /*Name=*/"llvm.pow.f32", m_mod);
+      m_llvmPow->setCallingConv(CallingConv::C);
+   }
+   std::vector<Value*> params;
+   params.push_back(val1);
+   params.push_back(val2);
+   CallInst *call = new CallInst(m_llvmPow, params.begin(), params.end(),
+                                 name("pow"),
+                                 m_block);
+   call->setCallingConv(CallingConv::C);
+   call->setTailCall(false);
+   return call;
+}
+
+llvm::Value * Instructions::pow(llvm::Value *in1, llvm::Value *in2)
+{
+   ExtractElementInst *x1 = new ExtractElementInst(in1, unsigned(0),
+                                                   name("x1"),
+                                                   m_block);
+   ExtractElementInst *x2 = new ExtractElementInst(in2, unsigned(0),
+                                                   name("x2"),
+                                                   m_block);
+   llvm::Value *val = callPow(x1, x2);
+   return vectorFromVals(val, val, val, val);
+}
+
+llvm::Value * Instructions::rcp(llvm::Value *in1)
+{
+   ExtractElementInst *x1 = new ExtractElementInst(in1, unsigned(0),
+                                                   name("x1"),
+                                                   m_block);
+   BinaryOperator *res = BinaryOperator::create(Instruction::FDiv,
+                                                ConstantFP::get(Type::FloatTy,
+                                                                APFloat(1.f)),
+                                                x1,
+                                                name("rcp"),
+                                                m_block);
+   return vectorFromVals(res, res, res, res);
 }
 
