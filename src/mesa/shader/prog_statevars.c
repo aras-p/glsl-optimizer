@@ -815,7 +815,7 @@ _mesa_load_state_parameters(GLcontext *ctx,
    if (!paramList)
       return;
 
-   assert(ctx->Driver.NeedFlush == 0);
+   /*assert(ctx->Driver.NeedFlush == 0);*/
 
    for (i = 0; i < paramList->NumParameters; i++) {
       if (paramList->Parameters[i].Type == PROGRAM_STATE_VAR) {
