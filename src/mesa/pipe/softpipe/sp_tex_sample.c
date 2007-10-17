@@ -77,17 +77,10 @@ lerp_2d(float a, float b,
 
 
 /**
- * Compute the remainder of a divided by b, but be careful with
- * negative values so that REPEAT mode works right.
+ * If A is a signed integer, A % B doesn't give the right value for A < 0
+ * (in terms of texture repeat).  Just casting to unsigned fixes that.
  */
-static INLINE int
-repeat_remainder(int a, int b)
-{
-   if (a >= 0)
-      return a % b;
-   else
-      return (a + 1) % b + b - 1;
-}
+#define REMAINDER(A, B) ((unsigned) (A) % (unsigned) (B))
 
 
 /**
@@ -106,7 +99,7 @@ nearest_texcoord(unsigned wrapMode, float s, unsigned size)
       /* s limited to [0,1) */
       /* i limited to [0,size-1] */
       i = ifloor(s * size);
-      i = repeat_remainder(i, size);
+      i = REMAINDER(i, size);
       return i;
    case PIPE_TEX_WRAP_CLAMP:
       /* s limited to [0,1] */
@@ -231,8 +224,8 @@ linear_texcoord(unsigned wrapMode, float s, unsigned size,
    switch (wrapMode) {
    case PIPE_TEX_WRAP_REPEAT:
       u = s * size - 0.5F;
-      *i0 = repeat_remainder(ifloor(u), size);
-      *i1 = repeat_remainder(*i0 + 1, size);
+      *i0 = REMAINDER(ifloor(u), size);
+      *i1 = REMAINDER(*i0 + 1, size);
       break;
    case PIPE_TEX_WRAP_CLAMP:
       if (s <= 0.0F)
