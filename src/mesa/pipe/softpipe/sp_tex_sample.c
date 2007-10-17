@@ -556,15 +556,15 @@ compute_cache_pos(unsigned face, unsigned level, unsigned zslice,
  *
  * \param face  the cube face in 0..5
  * \param level  the mipmap level
- * \param zslice  which slice of a 3D texture
  * \param x  the x coord of texel within 2D image
  * \param y  the y coord of texel within 2D image
+ * \param zslice  which slice of a 3D texture
  * \param rgba  the quad to put the texel/color into
  * \param j  which element of the rgba quad to write to
  */
 static void
 get_texel(struct tgsi_sampler *sampler,
-          unsigned face, unsigned level, unsigned zslice, int x, int y,
+          unsigned face, unsigned level, int x, int y, unsigned zslice,
           float rgba[NUM_CHANNELS][QUAD_SIZE], unsigned j)
 {
    int tx = x / TEX_CACHE_TILE_SIZE;
@@ -665,7 +665,7 @@ sp_get_samples_2d_common(struct tgsi_sampler *sampler,
       for (j = 0; j < QUAD_SIZE; j++) {
          int x = nearest_texcoord(sampler->state->wrap_s, s[j], width);
          int y = nearest_texcoord(sampler->state->wrap_t, t[j], height);
-         get_texel(sampler, faces[j], level0, 0, x, y, rgba, j);
+         get_texel(sampler, faces[j], level0, x, y, 0, rgba, j);
 
          if (level0 != level1) {
             /* get texels from second mipmap level and blend */
@@ -673,7 +673,7 @@ sp_get_samples_2d_common(struct tgsi_sampler *sampler,
             unsigned c;
             x = x / 2;
             y = y / 2;
-            get_texel(sampler, faces[j], level1, 0, x, y, rgba2, j);
+            get_texel(sampler, faces[j], level1, x, y, 0, rgba2, j);
             for (c = 0; c < NUM_CHANNELS; c++) {
                rgba[c][j] = LERP(levelBlend, rgba2[c][j], rgba[c][j]);
             }
@@ -686,10 +686,10 @@ sp_get_samples_2d_common(struct tgsi_sampler *sampler,
          int x0, y0, x1, y1, c;
          linear_texcoord(sampler->state->wrap_s, s[j], width,  &x0, &x1, &a);
          linear_texcoord(sampler->state->wrap_t, t[j], height, &y0, &y1, &b);
-         get_texel(sampler, faces[j], level0, 0, x0, y0, tx, 0);
-         get_texel(sampler, faces[j], level0, 0, x1, y0, tx, 1);
-         get_texel(sampler, faces[j], level0, 0, x0, y1, tx, 2);
-         get_texel(sampler, faces[j], level0, 0, x1, y1, tx, 3);
+         get_texel(sampler, faces[j], level0, x0, y0, 0, tx, 0);
+         get_texel(sampler, faces[j], level0, x1, y0, 0, tx, 1);
+         get_texel(sampler, faces[j], level0, x0, y1, 0, tx, 2);
+         get_texel(sampler, faces[j], level0, x1, y1, 0, tx, 3);
          for (c = 0; c < 4; c++) {
             rgba[c][j] = lerp_2d(a, b, tx[c][0], tx[c][1], tx[c][2], tx[c][3]);
          }
@@ -701,10 +701,10 @@ sp_get_samples_2d_common(struct tgsi_sampler *sampler,
             y0 = y0 / 2;
             x1 = x1 / 2;
             y1 = y1 / 2;
-            get_texel(sampler, faces[j], level1, 0, x0, y0, tx, 0);
-            get_texel(sampler, faces[j], level1, 0, x1, y0, tx, 1);
-            get_texel(sampler, faces[j], level1, 0, x0, y1, tx, 2);
-            get_texel(sampler, faces[j], level1, 0, x1, y1, tx, 3);
+            get_texel(sampler, faces[j], level1, x0, y0, 0, tx, 0);
+            get_texel(sampler, faces[j], level1, x1, y0, 0, tx, 1);
+            get_texel(sampler, faces[j], level1, x0, y1, 0, tx, 2);
+            get_texel(sampler, faces[j], level1, x1, y1, 0, tx, 3);
             for (c = 0; c < 4; c++) {
                rgba2[c][j] = lerp_2d(a, b,
                                      tx[c][0], tx[c][1], tx[c][2], tx[c][3]);
@@ -785,7 +785,7 @@ sp_get_samples_3d(struct tgsi_sampler *sampler,
          int x = nearest_texcoord(sampler->state->wrap_s, s[j], width);
          int y = nearest_texcoord(sampler->state->wrap_t, t[j], height);
          int z = nearest_texcoord(sampler->state->wrap_r, p[j], depth);
-         get_texel(sampler, face, level0, z, x, y, rgba, j);
+         get_texel(sampler, face, level0, x, y, z, rgba, j);
 
          if (level0 != level1) {
             /* get texels from second mipmap level and blend */
@@ -794,7 +794,7 @@ sp_get_samples_3d(struct tgsi_sampler *sampler,
             x /= 2;
             y /= 2;
             z /= 2;
-            get_texel(sampler, face, level1, z, x, y, rgba2, j);
+            get_texel(sampler, face, level1, x, y, z, rgba2, j);
             for (c = 0; c < NUM_CHANNELS; c++) {
                rgba[c][j] = LERP(levelBlend, rgba2[c][j], rgba[c][j]);
             }
@@ -803,19 +803,20 @@ sp_get_samples_3d(struct tgsi_sampler *sampler,
       break;
    case PIPE_TEX_FILTER_LINEAR:
       for (j = 0; j < QUAD_SIZE; j++) {
-         float texel0[4][4], texel1[4][4], xw, yw, zw;
+         float texel0[4][4], texel1[4][4];
+         float xw, yw, zw; /* interpolation weights */
          int x0, x1, y0, y1, z0, z1, c;
          linear_texcoord(sampler->state->wrap_s, s[j], width,  &x0, &x1, &xw);
          linear_texcoord(sampler->state->wrap_t, t[j], height, &y0, &y1, &yw);
          linear_texcoord(sampler->state->wrap_r, p[j], depth,  &z0, &z1, &zw);
-         get_texel(sampler, face, level0, z0, x0, y0, texel0, 0);
-         get_texel(sampler, face, level0, z0, x1, y0, texel0, 1);
-         get_texel(sampler, face, level0, z0, x0, y1, texel0, 2);
-         get_texel(sampler, face, level0, z0, x1, y1, texel0, 3);
-         get_texel(sampler, face, level0, z1, x0, y0, texel1, 0);
-         get_texel(sampler, face, level0, z1, x1, y0, texel1, 1);
-         get_texel(sampler, face, level0, z1, x0, y1, texel1, 2);
-         get_texel(sampler, face, level0, z1, x1, y1, texel1, 3);
+         get_texel(sampler, face, level0, x0, y0, z0, texel0, 0);
+         get_texel(sampler, face, level0, x1, y0, z0, texel0, 1);
+         get_texel(sampler, face, level0, x0, y1, z0, texel0, 2);
+         get_texel(sampler, face, level0, x1, y1, z0, texel0, 3);
+         get_texel(sampler, face, level0, x0, y0, z1, texel1, 0);
+         get_texel(sampler, face, level0, x1, y0, z1, texel1, 1);
+         get_texel(sampler, face, level0, x0, y1, z1, texel1, 2);
+         get_texel(sampler, face, level0, x1, y1, z1, texel1, 3);
 
          /* 3D lerp */
          for (c = 0; c < 4; c++) {
@@ -838,14 +839,14 @@ sp_get_samples_3d(struct tgsi_sampler *sampler,
             x1 /= 2;
             y1 /= 2;
             z1 /= 2;
-            get_texel(sampler, face, level1, z0, x0, y0, texel0, 0);
-            get_texel(sampler, face, level1, z0, x1, y0, texel0, 1);
-            get_texel(sampler, face, level1, z0, x0, y1, texel0, 2);
-            get_texel(sampler, face, level1, z0, x1, y1, texel0, 3);
-            get_texel(sampler, face, level1, z1, x0, y0, texel1, 0);
-            get_texel(sampler, face, level1, z1, x1, y0, texel1, 1);
-            get_texel(sampler, face, level1, z1, x0, y1, texel1, 2);
-            get_texel(sampler, face, level1, z1, x1, y1, texel1, 3);
+            get_texel(sampler, face, level1, x0, y0, z0, texel0, 0);
+            get_texel(sampler, face, level1, x1, y0, z0, texel0, 1);
+            get_texel(sampler, face, level1, x0, y1, z0, texel0, 2);
+            get_texel(sampler, face, level1, x1, y1, z0, texel0, 3);
+            get_texel(sampler, face, level1, x0, y0, z1, texel1, 0);
+            get_texel(sampler, face, level1, x1, y0, z1, texel1, 1);
+            get_texel(sampler, face, level1, x0, y1, z1, texel1, 2);
+            get_texel(sampler, face, level1, x1, y1, z1, texel1, 3);
 
             /* 3D lerp */
             for (c = 0; c < 4; c++) {
