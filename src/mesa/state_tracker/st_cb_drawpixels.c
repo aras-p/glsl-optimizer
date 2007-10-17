@@ -47,7 +47,6 @@
 #include "pipe/p_defines.h"
 #include "pipe/tgsi/mesa/mesa_to_tgsi.h"
 #include "shader/prog_instruction.h"
-#include "vf/vf.h"
 
 
 

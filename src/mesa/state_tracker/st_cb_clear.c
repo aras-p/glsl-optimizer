@@ -51,8 +51,6 @@
 
 #include "pipe/tgsi/mesa/mesa_to_tgsi.h"
 
-#include "vf/vf.h"
-
 
 
 

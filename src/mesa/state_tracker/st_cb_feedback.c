@@ -55,7 +55,6 @@
 #include "pipe/p_defines.h"
 #include "pipe/p_winsys.h"
 #include "pipe/cso_cache/cso_cache.h"
-#include "vf/vf.h"
 
 #include "pipe/draw/draw_context.h"
 #include "pipe/draw/draw_private.h"
