@@ -190,7 +190,9 @@ translate_instruction(llvm::Module *module,
       out = instr->mul(inputs[0], inputs[1]);
    }
       break;
-   case TGSI_OPCODE_ADD:
+   case TGSI_OPCODE_ADD: {
+      out = instr->add(inputs[0], inputs[1]);
+   }
       break;
    case TGSI_OPCODE_DP3: {
       out = instr->dp3(inputs[0], inputs[1]);
@@ -447,6 +449,7 @@ translate_instruction(llvm::Module *module,
    case TGSI_OPCODE_KIL:
       break;
    case TGSI_OPCODE_END:
+      return;
       break;
    default:
       fprintf(stderr, "ERROR: Unknown opcode %d\n",
@@ -455,6 +458,11 @@ translate_instruction(llvm::Module *module,
       break;
    }
 
+   if (!out) {
+      fprintf(stderr, "ERROR: unsupported opcode %d\n",
+              inst->Instruction.Opcode);
+      assert(!"Unsupported opcode");
+   }
 
    switch( inst->Instruction.Saturate ) {
    case TGSI_SAT_NONE:
