@@ -37,6 +37,7 @@
 #include "st_atom.h"
 #include "st_cache.h"
 #include "st_context.h"
+#include "st_cb_accum.h"
 #include "st_cb_clear.h"
 #include "st_cb_fbo.h"
 #include "st_draw.h"
@@ -462,28 +463,6 @@ clear_color_buffer(GLcontext *ctx, struct gl_renderbuffer *rb)
 
 
 static void
-clear_accum_buffer(GLcontext *ctx, struct gl_renderbuffer *rb)
-{
-   struct st_renderbuffer *strb = st_renderbuffer(rb);
-
-   if (!ctx->Scissor.Enabled) {
-      /* clear whole buffer w/out masking */
-      GLuint clearValue
-         = color_value(strb->surface->format, ctx->Accum.ClearColor);
-      /* Note that clearValue is 32 bits but the accum buffer will
-       * typically be 64bpp...
-       */
-      ctx->st->pipe->clear(ctx->st->pipe, strb->surface, clearValue);
-   }
-   else {
-      /* scissoring */
-      /* XXX point framebuffer.cbufs[0] at the accum buffer */
-      clear_with_quad(ctx, GL_TRUE, GL_FALSE, GL_FALSE);
-   }
-}
-
-
-static void
 clear_depth_buffer(GLcontext *ctx, struct gl_renderbuffer *rb)
 {
    struct st_renderbuffer *strb = st_renderbuffer(rb);
@@ -605,8 +584,8 @@ static void st_clear(GLcontext *ctx, GLbitfield mask)
    }
 
    if (mask & BUFFER_BIT_ACCUM) {
-      clear_accum_buffer(ctx,
-                     ctx->DrawBuffer->Attachment[BUFFER_ACCUM].Renderbuffer);
+      st_clear_accum_buffer(ctx,
+                       ctx->DrawBuffer->Attachment[BUFFER_ACCUM].Renderbuffer);
    }
 
    if ((mask & BUFFER_BITS_DS) == BUFFER_BITS_DS && depthRb == stencilRb) {
