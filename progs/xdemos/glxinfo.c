@@ -928,7 +928,7 @@ print_fbconfig_info(Display *dpy, int scrnum, InfoMode mode)
    if (numFBConfigs == 0)
       return;
 
-   printf("GLXFBConfigs:\n");
+   printf("%d GLXFBConfigs:\n", numFBConfigs);
    if (mode == Normal)
       print_visual_attribs_short_header();
    else if (mode == Wide)
