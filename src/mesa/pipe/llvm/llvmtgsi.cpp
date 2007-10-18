@@ -249,7 +249,9 @@ translate_instruction(llvm::Module *module,
       break;
    case TGSI_OPCODE_ROUND:
       break;
-   case TGSI_OPCODE_EXPBASE2:
+   case TGSI_OPCODE_EXPBASE2: {
+      out = instr->ex2(inputs[0]);
+   }
       break;
    case TGSI_OPCODE_LOGBASE2:
       break;

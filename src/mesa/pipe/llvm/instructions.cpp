@@ -302,3 +302,12 @@ llvm::Value * Instructions::dst(llvm::Value *in1, llvm::Value *in2)
                          ry, z, w);
 }
 
+llvm::Value * Instructions::ex2(llvm::Value *in)
+{
+   llvm::Value *val = callPow(ConstantFP::get(Type::FloatTy, APFloat(2.f)),
+                              new ExtractElementInst(in, unsigned(0),
+                                                     name("x1"),
+                                                     m_block));
+   return vectorFromVals(val, val, val, val);
+}
+
