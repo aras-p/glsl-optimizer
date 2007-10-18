@@ -1603,6 +1603,8 @@ XMesaContext XMesaCreateContext( XMesaVisual v, XMesaContext share_list )
    mesaCtx->st->pipe->surface_alloc = xmesa_surface_alloc;
    mesaCtx->st->pipe->supported_formats = xmesa_supported_formats;
 
+   mesaCtx->st->haveFramebufferRegions = GL_FALSE;
+
    /* special pipe->clear function */
    mesaCtx->st->pipe->clear = xmesa_clear;
 

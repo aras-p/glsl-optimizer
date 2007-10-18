@@ -1219,14 +1219,40 @@ st_CopyPixels(GLcontext *ctx, GLint srcx, GLint srcy,
       srcy = ctx->DrawBuffer->Height - srcy - height;
    }
 
-   /* copy source framebuffer region into mipmap/texture */
-   pipe->region_copy(pipe,
-                     mt->region, /* dest */
-                     0, /* dest_offset */
-                     0, 0, /* destx/y */
-                     psRead->region,
-                     0, /* src_offset */
-                     srcx, srcy, width, height);
+   /* For some drivers (like Xlib) it's not possible to treat the
+    * front/back color buffers as regions (they're XImages and Pixmaps).
+    * So, this var tells us if we can use region_copy here...
+    */
+   if (st->haveFramebufferRegions) {
+      /* copy source framebuffer region into mipmap/texture */
+      pipe->region_copy(pipe,
+                        mt->region, /* dest */
+                        0, /* dest_offset */
+                        0, 0, /* destx/y */
+                        psRead->region,
+                        0, /* src_offset */
+                        srcx, srcy, width, height);
+   }
+   else {
+      /* alternate path using get/put_tile() */
+      struct pipe_surface *psTex;
+      GLfloat *buf = (GLfloat *) malloc(width * height * 4 * sizeof(GLfloat));
+
+      psTex = pipe->get_tex_surface(pipe, mt, 0, 0, 0);
+
+      (void) pipe->region_map(pipe, psRead->region);
+      (void) pipe->region_map(pipe, psTex->region);
+
+      psRead->get_tile(psRead, srcx, srcy, width, height, buf);
+      psTex->put_tile(psTex, 0, 0, width, height, buf);
+
+      pipe->region_unmap(pipe, psRead->region);
+      pipe->region_unmap(pipe, psTex->region);
+
+      pipe_surface_reference(&psTex, NULL);
+
+      free(buf);
+   }
 
 
    /* draw textured quad */

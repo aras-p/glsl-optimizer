@@ -90,6 +90,7 @@ struct st_context *st_create_context( GLcontext *ctx,
 
    st->ctx->VertexProgram._MaintainTnlProgram = GL_TRUE;
 
+   st->haveFramebufferRegions = GL_TRUE;
 
 #if 0
    st_init_cb_clear( st );
