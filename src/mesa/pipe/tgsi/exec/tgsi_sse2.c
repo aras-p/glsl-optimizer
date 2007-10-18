@@ -1824,7 +1824,7 @@ emit_declaration(
 
 unsigned
 tgsi_emit_sse2(
-   struct tgsi_token *tokens,
+   const struct tgsi_token *tokens,
    struct x86_function *func )
 {
    struct tgsi_parse_context parse;
@@ -1889,7 +1889,7 @@ tgsi_emit_sse2(
  */
 unsigned
 tgsi_emit_sse2_fs(
-   struct tgsi_token *tokens,
+   const struct tgsi_token *tokens,
    struct x86_function *func )
 {
    struct tgsi_parse_context parse;
