@@ -44,7 +44,7 @@ struct draw_context *draw_create( void )
 #if defined(__i386__) || defined(__386__)
    draw->use_sse = getenv("GALLIUM_SSE") != NULL;
 #else
-   draw->use_sse = false;
+   draw->use_sse = FALSE;
 #endif
 
    /* create pipeline stages */
