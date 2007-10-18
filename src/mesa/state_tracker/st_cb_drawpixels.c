@@ -55,14 +55,20 @@
 /**
  * Create a simple fragment shader that does a TEX() instruction to get
  * the fragment color.
+ * If bitmapMode, use KIL instruction to kill the "0-pixels".
  */
 static struct st_fragment_program *
 make_fragment_shader(struct st_context *st, GLboolean bitmapMode)
 {
+   /* only make programs once and re-use */
+   static struct st_fragment_program *progs[2] = { NULL, NULL };
    GLcontext *ctx = st->ctx;
    struct st_fragment_program *stfp;
    struct gl_program *p;
    GLuint ic = 0;
+
+   if (progs[bitmapMode])
+      return progs[bitmapMode];
 
    p = ctx->Driver.NewProgram(ctx, GL_FRAGMENT_PROGRAM_ARB, 0);
    if (!p)
@@ -159,6 +165,8 @@ make_fragment_shader(struct st_context *st, GLboolean bitmapMode)
    st_translate_fragment_program(st, stfp, NULL,
                                  stfp->tokens, ST_MAX_SHADER_TOKENS);
 
+   progs[bitmapMode] = stfp;
+
    return stfp;
 }
 
@@ -166,14 +174,19 @@ make_fragment_shader(struct st_context *st, GLboolean bitmapMode)
 /**
  * Create fragment shader that does a TEX() instruction to get a Z
  * value, then writes to FRAG_RESULT_DEPR.
+ * Pass fragment color through as-is.
  */
 static struct st_fragment_program *
 make_fragment_shader_z(struct st_context *st)
 {
    GLcontext *ctx = st->ctx;
-   struct st_fragment_program *stfp;
+   /* only make programs once and re-use */
+   static struct st_fragment_program *stfp = NULL;
    struct gl_program *p;
    GLuint ic = 0;
+
+   if (stfp)
+      return stfp;
 
    p = ctx->Driver.NewProgram(ctx, GL_FRAGMENT_PROGRAM_ARB, 0);
    if (!p)
@@ -226,15 +239,20 @@ make_fragment_shader_z(struct st_context *st)
 
 /**
  * Create a simple vertex shader that just passes through the
- * vertex position and texcoord (and color).
+ * vertex position and texcoord (and optionally, color).
  */
 static struct st_vertex_program *
 make_vertex_shader(struct st_context *st, GLboolean passColor)
 {
+   /* only make programs once and re-use */
+   static struct st_vertex_program *progs[2] = { NULL, NULL };
    GLcontext *ctx = st->ctx;
    struct st_vertex_program *stvp;
    struct gl_program *p;
    GLuint ic = 0;
+
+   if (progs[passColor])
+      return progs[passColor];
 
    p = ctx->Driver.NewProgram(ctx, GL_VERTEX_PROGRAM_ARB, 0);
    if (!p)
@@ -292,6 +310,8 @@ make_vertex_shader(struct st_context *st, GLboolean passColor)
    st_translate_vertex_program(st, stvp, NULL,
                                stvp->tokens, ST_MAX_SHADER_TOKENS);
 
+   progs[passColor] = stvp;
+
    return stvp;
 }
 
@@ -311,75 +331,22 @@ _mesa_base_format(GLenum format)
 
 
 
-/**
- * Make mipmap tree containing the glDrawPixels image.
- */
 static struct pipe_mipmap_tree *
-make_mipmap_tree(struct st_context *st,
-                 GLsizei width, GLsizei height, GLenum format, GLenum type,
-                 const struct gl_pixelstore_attrib *unpack,
-                 const GLvoid *pixels)
+alloc_mipmap_tree(struct st_context *st,
+                  GLsizei width, GLsizei height, uint pipeFormat)
 {
-   struct pipe_context *pipe = st->pipe;
-   const struct gl_texture_format *mformat;
    const GLbitfield flags = PIPE_SURFACE_FLAG_TEXTURE;
    struct pipe_mipmap_tree *mt;
-   GLuint pipeFormat, cpp;
-   GLenum baseFormat;
-
-   baseFormat = _mesa_base_format(format);
-
-   mformat = st_ChooseTextureFormat(st->ctx, baseFormat, format, type);
-   assert(mformat);
-
-   pipeFormat = st_mesa_format_to_pipe_format(mformat->MesaFormat);
-   assert(pipeFormat);
-   cpp = st_sizeof_format(pipeFormat);
+   GLuint cpp;
 
    mt = CALLOC_STRUCT(pipe_mipmap_tree);
    if (!mt)
       return NULL;
 
-   if (unpack->BufferObj && unpack->BufferObj->Name) {
-      /*
-      mt->region = buffer_object_region(unpack->BufferObj);
-      */
-      printf("st_DrawPixels (sourcing from PBO not implemented yet)\n");
-   }
-   else {
-      static const GLuint dstImageOffsets = 0;
-      GLboolean success;
-      GLubyte *dest;
-      GLuint pitch;
+   cpp = st_sizeof_format(pipeFormat);
 
-      /* allocate texture region/storage */
-      mt->region = st->pipe->region_alloc(st->pipe, cpp, width, height, flags);
-      pitch = mt->region->pitch;
-
-      /* map texture region */
-      dest = pipe->region_map(pipe, mt->region);
-
-      /* Put image into texture region.
-       * Note that the image is actually going to be upside down in
-       * the texture.  We deal with that with texcoords.
-       */
-      success = mformat->StoreImage(st->ctx, 2,       /* dims */
-                                    baseFormat,       /* baseInternalFormat */
-                                    mformat,          /* gl_texture_format */
-                                    dest,             /* dest */
-                                    0, 0, 0,          /* dstX/Y/Zoffset */
-                                    pitch * cpp,      /* dstRowStride, bytes */
-                                    &dstImageOffsets, /* dstImageOffsets */
-                                    width, height, 1, /* size */
-                                    format, type,     /* src format/type */
-                                    pixels,           /* data source */
-                                    unpack);
-
-      /* unmap */
-      pipe->region_unmap(pipe, mt->region);
-
-      assert(success);
-   }
+   /* allocate texture region/storage */
+   mt->region = st->pipe->region_alloc(st->pipe, cpp, width, height, flags);
 
    mt->target = PIPE_TEXTURE_2D;
    mt->internal_format = GL_RGBA;
@@ -402,6 +369,98 @@ make_mipmap_tree(struct st_context *st,
    mt->level[0].image_offset = NULL;
    mt->refcount = 1;
 
+   return mt;
+}
+
+
+/**
+ * Make mipmap tree containing an image for glDrawPixels image.
+ * If 'pixels' is NULL, leave the texture image data undefined.
+ */
+static struct pipe_mipmap_tree *
+make_mipmap_tree(struct st_context *st,
+                 GLsizei width, GLsizei height, GLenum format, GLenum type,
+                 const struct gl_pixelstore_attrib *unpack,
+                 const GLvoid *pixels)
+{
+   struct pipe_context *pipe = st->pipe;
+   const struct gl_texture_format *mformat;
+   struct pipe_mipmap_tree *mt;
+   GLuint pipeFormat, cpp;
+   GLenum baseFormat;
+
+   baseFormat = _mesa_base_format(format);
+
+   mformat = st_ChooseTextureFormat(st->ctx, baseFormat, format, type);
+   assert(mformat);
+
+   pipeFormat = st_mesa_format_to_pipe_format(mformat->MesaFormat);
+   assert(pipeFormat);
+   cpp = st_sizeof_format(pipeFormat);
+
+   mt = alloc_mipmap_tree(st, width, height, pipeFormat);
+   if (!mt)
+      return NULL;
+
+   if (unpack->BufferObj && unpack->BufferObj->Name) {
+      /*
+      mt->region = buffer_object_region(unpack->BufferObj);
+      */
+      printf("st_DrawPixels (sourcing from PBO not implemented yet)\n");
+   }
+
+   {
+      static const GLuint dstImageOffsets = 0;
+      GLboolean success;
+      GLuint pitch = mt->region->pitch;
+      GLubyte *dest;
+
+      /* map texture region */
+      dest = pipe->region_map(pipe, mt->region);
+
+      /* Put image into texture region.
+       * Note that the image is actually going to be upside down in
+       * the texture.  We deal with that with texcoords.
+       */
+      success = mformat->StoreImage(st->ctx, 2,       /* dims */
+                                    baseFormat,       /* baseInternalFormat */
+                                    mformat,          /* gl_texture_format */
+                                    dest,             /* dest */
+                                    0, 0, 0,          /* dstX/Y/Zoffset */
+                                    pitch * cpp,      /* dstRowStride, bytes */
+                                    &dstImageOffsets, /* dstImageOffsets */
+                                    width, height, 1, /* size */
+                                    format, type,     /* src format/type */
+                                    pixels,           /* data source */
+                                    unpack);
+
+      /* unmap */
+      pipe->region_unmap(pipe, mt->region);
+      assert(success);
+   }
+
+#if 0
+   mt->target = PIPE_TEXTURE_2D;
+   mt->internal_format = GL_RGBA;
+   mt->format = pipeFormat;
+   mt->first_level = 0;
+   mt->last_level = 0;
+   mt->width0 = width;
+   mt->height0 = height;
+   mt->depth0 = 1;
+   mt->cpp = cpp;
+   mt->compressed = 0;
+   mt->pitch = mt->region->pitch;
+   mt->depth_pitch = 0;
+   mt->total_height = height;
+   mt->level[0].level_offset = 0;
+   mt->level[0].width = width;
+   mt->level[0].height = height;
+   mt->level[0].depth = 1;
+   mt->level[0].nr_images = 1;
+   mt->level[0].image_offset = NULL;
+   mt->refcount = 1;
+#endif
    return mt;
 }
 
@@ -804,10 +863,6 @@ st_DrawPixels(GLcontext *ctx, GLint x, GLint y, GLsizei width, GLsizei height,
               GLenum format, GLenum type,
               const struct gl_pixelstore_attrib *unpack, const GLvoid *pixels)
 {
-   static struct st_fragment_program *stfp_c = NULL; /* color */
-   static struct st_fragment_program *stfp_z = NULL; /* z */
-   static struct st_vertex_program *stvp_t = NULL;  /* just emit texcoord */
-   static struct st_vertex_program *stvp_c = NULL;  /* emit color too */
    struct st_fragment_program *stfp;
    struct st_vertex_program *stvp;
    struct st_context *st = ctx->st;
@@ -820,28 +875,12 @@ st_DrawPixels(GLcontext *ctx, GLint x, GLint y, GLsizei width, GLsizei height,
       return;
    }
 
-   /* create the fragment programs if needed */
-   if (!stfp_c) {
-      stfp_c = make_fragment_shader(ctx->st, GL_FALSE);
-   }
-   if (!stfp_z) {
-      stfp_z = make_fragment_shader_z(ctx->st);
-   }
-
-   /* and vertex programs */
-   if (!stvp_t) {
-      stvp_t = make_vertex_shader(ctx->st, GL_FALSE);
-   }
-   if (!stvp_c) {
-      stvp_c = make_vertex_shader(ctx->st, GL_TRUE);
-   }
-
    st_validate_state(st);
 
    if (format == GL_DEPTH_COMPONENT) {
       ps = st->state.framebuffer.zbuf;
-      stfp = stfp_z;
-      stvp = stvp_c;
+      stfp = make_fragment_shader_z(ctx->st);
+      stvp = make_vertex_shader(ctx->st, GL_TRUE);
       color = ctx->Current.RasterColor;
    }
    else if (format == GL_STENCIL_INDEX) {
@@ -851,8 +890,8 @@ st_DrawPixels(GLcontext *ctx, GLint x, GLint y, GLsizei width, GLsizei height,
    }
    else {
       ps = st->state.framebuffer.cbufs[0];
-      stfp = stfp_c;
-      stvp = stvp_t;
+      stfp = make_fragment_shader(ctx->st, GL_FALSE);
+      stvp = make_vertex_shader(ctx->st, GL_FALSE);
       color = NULL;
    }
 
@@ -1032,19 +1071,16 @@ static void
 st_Bitmap(GLcontext *ctx, GLint x, GLint y, GLsizei width, GLsizei height,
           const struct gl_pixelstore_attrib *unpack, const GLubyte *bitmap )
 {
-   static struct st_vertex_program *stvp = NULL;
-   static struct st_fragment_program *stfp = NULL;
+   struct st_vertex_program *stvp;
+   struct st_fragment_program *stfp;
    struct st_context *st = ctx->st;
    struct pipe_mipmap_tree *mt;
 
-   /* create the fragment program if needed */
-   if (!stfp) {
-      stfp = make_fragment_shader(ctx->st, GL_TRUE);
-   }
+   /* create the fragment program */
+   stfp = make_fragment_shader(ctx->st, GL_TRUE);
+
    /* and vertex program */
-   if (!stvp) {
-      stvp = make_vertex_shader(ctx->st, GL_TRUE);
-   }
+   stvp = make_vertex_shader(ctx->st, GL_TRUE);
 
    st_validate_state(st);
 
@@ -1138,22 +1174,59 @@ st_CopyPixels(GLcontext *ctx, GLint srcx, GLint srcy,
               GLint dstx, GLint dsty, GLenum type)
 {
    struct st_context *st = ctx->st;
+   struct pipe_context *pipe = st->pipe;
+   struct st_renderbuffer *rbRead;
+   struct st_vertex_program *stvp;
+   struct st_fragment_program *stfp;
+   struct pipe_surface *psRead;
+   struct pipe_mipmap_tree *mt;
+   GLfloat *color;
+   uint format;
 
    st_validate_state(st);
 
    if (type == GL_STENCIL) {
+      /* can't use texturing to do stencil */
       copy_stencil_pixels(ctx, srcx, srcy, width, height, dstx, dsty);
       return;
    }
 
-   /* allocate a texture of size width x height */
+   if (type == GL_COLOR) {
+      rbRead = st_renderbuffer(ctx->ReadBuffer->_ColorReadBuffer);
+      color = NULL;
+      stfp = make_fragment_shader(ctx->st, GL_FALSE);
+      stvp = make_vertex_shader(ctx->st, GL_FALSE);
+   }
+   else {
+      rbRead = st_renderbuffer(ctx->ReadBuffer->_DepthBuffer);
+      color = ctx->Current.Attrib[VERT_ATTRIB_COLOR0];
+      stfp = make_fragment_shader_z(ctx->st);
+      stvp = make_vertex_shader(ctx->st, GL_TRUE);
+   }
 
-   /* blit/copy framebuffer region into texture */
+   psRead = rbRead->surface;
+   format = psRead->format;
+
+   mt = alloc_mipmap_tree(ctx->st, width, height, format);
+   if (!mt)
+      return;
+
+   /* copy source framebuffer region into mipmap/texture */
+   pipe->region_copy(pipe,
+                     mt->region, /* dest */
+                     0, /* dest_offset */
+                     0, 0, /* destx/y */
+                     psRead->region,
+                     0, /* src_offset */
+                     srcx, srcy, width, height);
+
 
    /* draw textured quad */
+   draw_textured_quad(ctx, dstx, dsty, ctx->Current.RasterPos[2],
+                      width, height, ctx->Pixel.ZoomX, ctx->Pixel.ZoomY,
+                      mt, stvp, stfp, color);
 
-
-   fprintf(stderr, "st_CopyPixels not implemented yet\n");
+   free_mipmap_tree(st->pipe, mt);
 }
 
 
