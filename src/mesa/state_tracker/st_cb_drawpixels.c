@@ -40,6 +40,8 @@
 #include "st_draw.h"
 #include "st_program.h"
 #include "st_cb_drawpixels.h"
+#include "st_cb_readpixels.h"
+#include "st_cb_fbo.h"
 #include "st_cb_texture.h"
 #include "st_draw.h"
 #include "st_format.h"
@@ -1059,6 +1061,78 @@ st_Bitmap(GLcontext *ctx, GLint x, GLint y, GLsizei width, GLsizei height,
 
 
 static void
+copy_stencil_pixels(GLcontext *ctx, GLint srcx, GLint srcy,
+                    GLsizei width, GLsizei height,
+                    GLint dstx, GLint dsty)
+{
+   struct st_context *st = ctx->st;
+   struct pipe_context *pipe = st->pipe;
+   struct st_renderbuffer *rbRead = st_renderbuffer(ctx->ReadBuffer->_StencilBuffer);
+   struct st_renderbuffer *rbDraw = st_renderbuffer(ctx->DrawBuffer->_StencilBuffer);
+   struct pipe_surface *psRead = rbRead->surface;
+   struct pipe_surface *psDraw = rbDraw->surface;
+   ubyte *readMap, *drawMap;
+   ubyte *buffer;
+   int i;
+
+   buffer = malloc(width * height * sizeof(ubyte));
+   if (!buffer) {
+      _mesa_error(ctx, GL_OUT_OF_MEMORY, "glCopyPixels(stencil)");
+      return;
+   }
+
+   /* map the stencil buffers */
+   readMap = pipe->region_map(pipe, psRead->region);
+   drawMap = pipe->region_map(pipe, psDraw->region);
+
+   /* this will do stencil pixel transfer ops */
+   st_read_stencil_pixels(ctx, srcx, srcy, width, height, GL_UNSIGNED_BYTE,
+                          &ctx->DefaultPacking, buffer);
+
+   /* draw */
+   /* XXX PixelZoom not handled yet */
+   for (i = 0; i < height; i++) {
+      ubyte *dst;
+      const ubyte *src;
+      int y;
+
+      y = dsty + i;
+
+      if (st_fb_orientation(ctx->DrawBuffer) == Y_0_TOP) {
+         y = ctx->DrawBuffer->Height - y - 1;
+      }
+
+      dst = drawMap + (y * psDraw->region->pitch + dstx) * psDraw->region->cpp;
+      src = buffer + i * width;
+
+      switch (psDraw->format) {
+      case PIPE_FORMAT_S8_Z24:
+         {
+            uint *dst4 = (uint *) dst;
+            int j;
+            for (j = 0; j < width; j++) {
+               *dst4 = (*dst4 & 0xffffff) | (src[j] << 24);
+               dst4++;
+            }
+         }
+         break;
+      case PIPE_FORMAT_U_S8:
+         memcpy(dst, src, width);
+         break;
+      default:
+         assert(0);
+      }
+   }
+
+   free(buffer);
+
+   /* unmap the stencil buffers */
+   pipe->region_unmap(pipe, psRead->region);
+   pipe->region_unmap(pipe, psDraw->region);
+}
+
+
+static void
 st_CopyPixels(GLcontext *ctx, GLint srcx, GLint srcy,
               GLsizei width, GLsizei height,
               GLint dstx, GLint dsty, GLenum type)
@@ -1066,6 +1140,11 @@ st_CopyPixels(GLcontext *ctx, GLint srcx, GLint srcy,
    struct st_context *st = ctx->st;
 
    st_validate_state(st);
+
+   if (type == GL_STENCIL) {
+      copy_stencil_pixels(ctx, srcx, srcy, width, height, dstx, dsty);
+      return;
+   }
 
    /* allocate a texture of size width x height */
 
