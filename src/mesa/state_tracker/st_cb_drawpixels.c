@@ -1216,7 +1216,7 @@ st_CopyPixels(GLcontext *ctx, GLint srcx, GLint srcy,
       return;
 
    if (st_fb_orientation(ctx->DrawBuffer) == Y_0_TOP) {
-      srcy = ctx->DrawBuffer->Height - srcy - height - 1;
+      srcy = ctx->DrawBuffer->Height - srcy - height;
    }
 
    /* copy source framebuffer region into mipmap/texture */
