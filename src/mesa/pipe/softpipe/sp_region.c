@@ -147,7 +147,7 @@ copy_rect(ubyte * dst,
    dst += dst_x * cpp;
    src += src_x * cpp;
    dst += dst_y * dst_pitch;
-   src += src_y * dst_pitch;
+   src += src_y * src_pitch;
    width *= cpp;
 
    if (width == dst_pitch && width == src_pitch)
@@ -197,15 +197,18 @@ sp_region_copy(struct pipe_context *pipe,
 	       unsigned src_offset,
 	       unsigned srcx, unsigned srcy, unsigned width, unsigned height)
 {
+   ubyte *src_map, *dst_map;
    assert( dst->cpp == src->cpp );
 
-   copy_rect(pipe->region_map(pipe, dst) + dst_offset,
+   dst_map = pipe->region_map(pipe, dst);
+   src_map = pipe->region_map(pipe, src);
+   copy_rect(dst_map + dst_offset,
              dst->cpp,
              dst->pitch,
-             dstx, dsty, 
-             width, height, 
-             pipe->region_map(pipe, src) + src_offset, 
-             src->pitch, 
+             dstx, dsty,
+             width, height,
+             src_map + src_offset,
+             src->pitch,
              srcx, srcy);
 
    pipe->region_unmap(pipe, src);
