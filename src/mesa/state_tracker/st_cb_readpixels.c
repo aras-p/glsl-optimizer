@@ -50,11 +50,11 @@
  * Special case for reading stencil buffer.
  * For color/depth we use get_tile().  For stencil, map the stencil buffer.
  */
-static void
-read_stencil_pixels(GLcontext *ctx, GLint x, GLint y,
-                    GLsizei width, GLsizei height, GLenum type,
-                    const struct gl_pixelstore_attrib *packing,
-                    GLvoid *pixels)
+void
+st_read_stencil_pixels(GLcontext *ctx, GLint x, GLint y,
+                       GLsizei width, GLsizei height, GLenum type,
+                       const struct gl_pixelstore_attrib *packing,
+                       GLvoid *pixels)
 {
    struct st_context *st = ctx->st;
    struct pipe_context *pipe = st->pipe;

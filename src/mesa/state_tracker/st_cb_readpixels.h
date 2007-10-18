@@ -30,6 +30,12 @@
 #define ST_CB_READPIXELS_H
 
 extern void
+st_read_stencil_pixels(GLcontext *ctx, GLint x, GLint y,
+                       GLsizei width, GLsizei height, GLenum type,
+                       const struct gl_pixelstore_attrib *packing,
+                       GLvoid *pixels);
+
+extern void
 st_init_readpixels_functions(struct dd_function_table *functions);
 
 
