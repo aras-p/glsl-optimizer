@@ -187,6 +187,7 @@ update_rasterpos(GLcontext *ctx,
                  const float clipPos[4],
                  const float color0[4],
                  const float color1[4],
+                 const float *fog,
                  const float *tex)
 {
    uint i;
@@ -232,15 +233,17 @@ update_rasterpos(GLcontext *ctx,
    ctx->Current.RasterPos[3] = clipPos[3];
 
    /* compute raster distance */
+#if 0
    if (ctx->Fog.FogCoordinateSource == GL_FOG_COORDINATE_EXT)
       ctx->Current.RasterDistance = ctx->Current.Attrib[VERT_ATTRIB_FOG][0];
    else {
-#if 0
       /* XXX we don't have an eye coord! */
       ctx->Current.RasterDistance =
          SQRTF( eye[0]*eye[0] + eye[1]*eye[1] + eye[2]*eye[2] );
-#endif
    }
+#else
+   ctx->Current.RasterDistance = fog[0];
+#endif
 
    /* colors and texcoords */
    COPY_4FV(ctx->Current.RasterColor, color0);
@@ -314,7 +317,7 @@ st_RasterPos(GLcontext *ctx, const GLfloat v[4])
    /* extract values and update rasterpos state */
    {
       const GLuint *outputMapping = st->vertex_result_to_slot;
-      const float *pos, *color0, *color1, *tex0;
+      const float *pos, *color0, *color1, *fog, *tex0;
       float *buf = buf_map;
 
       assert(outputMapping[VERT_RESULT_HPOS] != ~0);
@@ -337,6 +340,14 @@ st_RasterPos(GLcontext *ctx, const GLfloat v[4])
          color1 = ctx->Current.Attrib[VERT_ATTRIB_COLOR1];
       }
 
+      if (outputMapping[VERT_RESULT_FOGC] != ~0) {
+         fog = buf;
+         buf += 4;
+      }
+      else {
+         fog = ctx->Current.Attrib[VERT_ATTRIB_FOG];
+      }
+
       if (outputMapping[VERT_RESULT_TEX0] != ~0) {
          tex0 = buf;
          buf += 4;
@@ -345,7 +356,7 @@ st_RasterPos(GLcontext *ctx, const GLfloat v[4])
          tex0 = ctx->Current.Attrib[VERT_ATTRIB_TEX0];
       }
 
-      update_rasterpos(ctx, pos, color0, color1, tex0);
+      update_rasterpos(ctx, pos, color0, color1, fog, tex0);
    }
 
    /* free vertex feedback buffer */
