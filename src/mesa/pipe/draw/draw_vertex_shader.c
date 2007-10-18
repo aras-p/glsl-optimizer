@@ -212,12 +212,14 @@ draw_create_vertex_shader(struct draw_context *draw,
    vs->state = shader;
 #if defined(__i386__) || defined(__386__)
    if (draw->use_sse) {
-      x86_init_func( &shader->sse2_program );
+      /* cast-away const */
+      struct pipe_shader_state *sh = (struct pipe_shader_state *) shader;
 
-      tgsi_emit_sse2( shader->tokens, &shader->sse2_program );
+      x86_init_func( &sh->sse2_program );
 
-      ((struct pipe_shader_state *)shader)->executable = (void *)
-	 x86_get_func( &shader->sse2_program );
+      tgsi_emit_sse2( sh->tokens, &sh->sse2_program );
+
+      sh->executable = x86_get_func( &sh->sse2_program );
    }
 #endif
 

@@ -148,7 +148,7 @@ struct pipe_shader_state {
 #if defined(__i386__) || defined(__386__)
    struct x86_function sse2_program;
 #endif
-   void *executable;
+   void (*executable)();
 
    ubyte num_inputs;
    ubyte num_outputs;
