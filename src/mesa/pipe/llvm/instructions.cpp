@@ -16,6 +16,7 @@ Instructions::Instructions(llvm::Module *mod, llvm::BasicBlock *block)
    m_llvmFSqrt = 0;
    m_llvmFAbs = 0;
    m_llvmPow = 0;
+   m_llvmFloor = 0;
 }
 
 llvm::Value * Instructions::add(llvm::Value *in1, llvm::Value *in2)
@@ -309,5 +310,55 @@ llvm::Value * Instructions::ex2(llvm::Value *in)
                                                      name("x1"),
                                                      m_block));
    return vectorFromVals(val, val, val, val);
+}
+
+llvm::Value * Instructions::callFloor(llvm::Value *val)
+{
+   if (!m_llvmFloor) {
+      // predeclare the intrinsic
+      std::vector<const Type*> floorArgs;
+      floorArgs.push_back(Type::FloatTy);
+      ParamAttrsList *floorPal = 0;
+      FunctionType* floorType = FunctionType::get(
+         /*Result=*/Type::FloatTy,
+         /*Params=*/floorArgs,
+         /*isVarArg=*/false,
+         /*ParamAttrs=*/floorPal);
+      m_llvmFloor = new Function(
+         /*Type=*/floorType,
+         /*Linkage=*/GlobalValue::ExternalLinkage,
+         /*Name=*/"floorf", m_mod);
+      m_llvmFloor->setCallingConv(CallingConv::C);
+   }
+   CallInst *call = new CallInst(m_llvmFloor, val,
+                                 name("floorf"),
+                                 m_block);
+   call->setCallingConv(CallingConv::C);
+   call->setTailCall(false);
+   return call;
+}
+
+llvm::Value * Instructions::floor(llvm::Value *in)
+{
+   ExtractElementInst *x = new ExtractElementInst(in, unsigned(0),
+                                                  name("extractx"),
+                                                  m_block);
+   ExtractElementInst *y = new ExtractElementInst(in, unsigned(1),
+                                                  name("extracty"),
+                                                  m_block);
+   ExtractElementInst *z = new ExtractElementInst(in, unsigned(2),
+                                                  name("extractz"),
+                                                  m_block);
+   ExtractElementInst *w = new ExtractElementInst(in, unsigned(3),
+                                                  name("extractw"),
+                                                  m_block);
+   return vectorFromVals(callFloor(x), callFloor(y),
+                         callFloor(z), callFloor(w));
+}
+
+llvm::Value * Instructions::frc(llvm::Value *in)
+{
+   llvm::Value *flr = floor(in);
+   return sub(in, flr);
 }
 

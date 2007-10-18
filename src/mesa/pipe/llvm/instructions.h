@@ -20,6 +20,8 @@ public:
    llvm::Value *dph(llvm::Value *in1, llvm::Value *in2);
    llvm::Value *dst(llvm::Value *in1, llvm::Value *in2);
    llvm::Value *ex2(llvm::Value *in1);
+   llvm::Value *floor(llvm::Value *in1);
+   llvm::Value *frc(llvm::Value *in1);
    llvm::Value *lit(llvm::Value *in1);
    llvm::Value *madd(llvm::Value *in1, llvm::Value *in2,
                      llvm::Value *in2);
@@ -31,8 +33,9 @@ public:
 private:
    const char *name(const char *prefix);
 
-   llvm::Value *callFSqrt(llvm::Value *val);
    llvm::Value *callFAbs(llvm::Value *val);
+   llvm::Value *callFloor(llvm::Value *val);
+   llvm::Value *callFSqrt(llvm::Value *val);
    llvm::Value *callPow(llvm::Value *val1, llvm::Value *val2);
 
    llvm::Value *vectorFromVals(llvm::Value *x, llvm::Value *y,
@@ -48,6 +51,7 @@ private:
    llvm::Function   *m_llvmFSqrt;
    llvm::Function   *m_llvmFAbs;
    llvm::Function   *m_llvmPow;
+   llvm::Function   *m_llvmFloor;
 };
 
 #endif

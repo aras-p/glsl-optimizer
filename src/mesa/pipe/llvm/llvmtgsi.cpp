@@ -241,11 +241,15 @@ translate_instruction(llvm::Module *module,
       break;
    case TGSI_OPCODE_NEGATE:
       break;
-   case TGSI_OPCODE_FRAC:
+   case TGSI_OPCODE_FRAC: {
+      out = instr->frc(inputs[0]);
+   }
       break;
    case TGSI_OPCODE_CLAMP:
       break;
-   case TGSI_OPCODE_FLOOR:
+   case TGSI_OPCODE_FLOOR: {
+      out = instr->floor(inputs[0]);
+   }
       break;
    case TGSI_OPCODE_ROUND:
       break;
