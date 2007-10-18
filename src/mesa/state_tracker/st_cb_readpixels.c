@@ -159,7 +159,7 @@ st_readpixels(GLcontext *ctx, GLint x, GLint y, GLsizei width, GLsizei height,
    }
 
    if (format == GL_STENCIL_INDEX) {
-      read_stencil_pixels(ctx, x, y, width, height, type, pack, dest);
+      st_read_stencil_pixels(ctx, x, y, width, height, type, pack, dest);
       return;
    }
    else if (format == GL_DEPTH_COMPONENT) {
