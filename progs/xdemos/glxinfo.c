@@ -395,19 +395,60 @@ print_screen_info(Display *dpy, int scrnum, Bool allowDirect, GLboolean limits)
    XSetWindowAttributes attr;
    unsigned long mask;
    Window root;
-   GLXContext ctx;
+   GLXContext ctx = NULL;
    XVisualInfo *visinfo;
    int width = 100, height = 100;
 
    root = RootWindow(dpy, scrnum);
 
    visinfo = glXChooseVisual(dpy, scrnum, attribSingle);
-   if (!visinfo) {
+   if (!visinfo)
       visinfo = glXChooseVisual(dpy, scrnum, attribDouble);
-      if (!visinfo) {
-         fprintf(stderr, "Error: couldn't find RGB GLX visual\n");
-         return;
+
+   if (visinfo)
+      ctx = glXCreateContext( dpy, visinfo, NULL, allowDirect );
+
+#ifdef GLX_VERSION_1_3
+   {
+      int fbAttribSingle[] = {
+	 GLX_RENDER_TYPE,   GLX_RGBA_BIT,
+	 GLX_RED_SIZE,      1,
+	 GLX_GREEN_SIZE,    1,
+	 GLX_BLUE_SIZE,     1,
+	 GLX_DOUBLEBUFFER,  GL_TRUE,
+	 None };
+      int fbAttribDouble[] = {
+	 GLX_RENDER_TYPE,   GLX_RGBA_BIT,
+	 GLX_RED_SIZE,      1,
+	 GLX_GREEN_SIZE,    1,
+	 GLX_BLUE_SIZE,     1,
+	 None };
+      GLXFBConfig *configs = NULL;
+      int nConfigs;
+
+      if (!visinfo)
+	 configs = glXChooseFBConfig(dpy, scrnum, fbAttribSingle, &nConfigs);
+      if (!visinfo)
+	 configs = glXChooseFBConfig(dpy, scrnum, fbAttribDouble, &nConfigs);
+
+      if (configs) {
+	 visinfo = glXGetVisualFromFBConfig(dpy, configs[0]);
+	 ctx = glXCreateNewContext(dpy, configs[0], GLX_RGBA_TYPE, NULL, allowDirect);
+	 XFree(configs);
       }
+   }
+#endif
+
+   if (!visinfo) {
+      fprintf(stderr, "Error: couldn't find RGB GLX visual or fbconfig\n");
+      return;
+   }
+
+   if (!ctx) {
+      fprintf(stderr, "Error: glXCreateContext failed\n");
+      XFree(visinfo);
+      XDestroyWindow(dpy, win);
+      return;
    }
 
    attr.background_pixel = 0;
@@ -418,14 +459,6 @@ print_screen_info(Display *dpy, int scrnum, Bool allowDirect, GLboolean limits)
    win = XCreateWindow(dpy, root, 0, 0, width, height,
 		       0, visinfo->depth, InputOutput,
 		       visinfo->visual, mask, &attr);
-
-   ctx = glXCreateContext( dpy, visinfo, NULL, allowDirect );
-   if (!ctx) {
-      fprintf(stderr, "Error: glXCreateContext failed\n");
-      XFree(visinfo);
-      XDestroyWindow(dpy, win);
-      return;
-   }
 
    if (glXMakeCurrent(dpy, win, ctx)) {
       const char *serverVendor = glXQueryServerString(dpy, scrnum, GLX_VENDOR);
