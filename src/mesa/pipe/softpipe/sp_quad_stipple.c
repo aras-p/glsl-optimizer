@@ -50,10 +50,11 @@ stipple_quad(struct quad_stage *qs, struct quad_header *quad)
       quad->mask &= (((stipple0 >> col0) & 0x3) | 
                      (((stipple1 >> col0) & 0x3) << 2));
 #endif
-
-      if (quad->mask)
-         qs->next->run(qs->next, quad);
+      if (!quad->mask)
+         return;
    }
+
+   qs->next->run(qs->next, quad);
 }
 
 
