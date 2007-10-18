@@ -26,6 +26,8 @@ public:
    llvm::Value *lg2(llvm::Value *in);
    llvm::Value *madd(llvm::Value *in1, llvm::Value *in2,
                      llvm::Value *in2);
+   llvm::Value *min(llvm::Value *in1, llvm::Value *in2);
+   llvm::Value *max(llvm::Value *in1, llvm::Value *in2);
    llvm::Value *mul(llvm::Value *in1, llvm::Value *in2);
    llvm::Value *pow(llvm::Value *in1, llvm::Value *in2);
    llvm::Value *rcp(llvm::Value *in);

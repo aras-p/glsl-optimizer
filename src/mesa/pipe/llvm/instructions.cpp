@@ -413,3 +413,105 @@ llvm::Value * Instructions::lg2(llvm::Value *in)
                              callFLog(z), callFLog(w)), const_vec);
 }
 
+llvm::Value * Instructions::min(llvm::Value *in1, llvm::Value *in2)
+{
+   ExtractElementInst *x1 = new ExtractElementInst(in1, unsigned(0),
+                                                  name("x1"),
+                                                  m_block);
+   ExtractElementInst *y1 = new ExtractElementInst(in1, unsigned(1),
+                                                  name("y1"),
+                                                  m_block);
+   ExtractElementInst *z1 = new ExtractElementInst(in1, unsigned(2),
+                                                  name("z1"),
+                                                  m_block);
+   ExtractElementInst *w1 = new ExtractElementInst(in1, unsigned(3),
+                                                  name("w1"),
+                                                  m_block);
+
+   ExtractElementInst *x2 = new ExtractElementInst(in2, unsigned(0),
+                                                   name("x2"),
+                                                   m_block);
+   ExtractElementInst *y2 = new ExtractElementInst(in2, unsigned(1),
+                                                   name("y2"),
+                                                   m_block);
+   ExtractElementInst *z2 = new ExtractElementInst(in2, unsigned(2),
+                                                   name("z2"),
+                                                   m_block);
+   ExtractElementInst *w2 = new ExtractElementInst(in2, unsigned(3),
+                                                   name("w2"),
+                                                   m_block);
+
+   FCmpInst *xcmp  = new FCmpInst(FCmpInst::FCMP_OLT, x1, x2,
+                                  name("xcmp"), m_block);
+   SelectInst *selx = new SelectInst(xcmp, x1, x2,
+                                     name("selx"), m_block);
+
+   FCmpInst *ycmp  = new FCmpInst(FCmpInst::FCMP_OLT, y1, y2,
+                                  name("ycmp"), m_block);
+   SelectInst *sely = new SelectInst(ycmp, y1, y2,
+                                     name("sely"), m_block);
+
+   FCmpInst *zcmp  = new FCmpInst(FCmpInst::FCMP_OLT, z1, z2,
+                                  name("zcmp"), m_block);
+   SelectInst *selz = new SelectInst(zcmp, z1, z2,
+                                     name("selz"), m_block);
+
+   FCmpInst *wcmp  = new FCmpInst(FCmpInst::FCMP_OLT, w1, w2,
+                                  name("wcmp"), m_block);
+   SelectInst *selw = new SelectInst(wcmp, w1, w2,
+                                     name("selw"), m_block);
+
+   return vectorFromVals(selx, sely, selz, selw);
+}
+
+llvm::Value * Instructions::max(llvm::Value *in1, llvm::Value *in2)
+{
+   ExtractElementInst *x1 = new ExtractElementInst(in1, unsigned(0),
+                                                  name("x1"),
+                                                  m_block);
+   ExtractElementInst *y1 = new ExtractElementInst(in1, unsigned(1),
+                                                  name("y1"),
+                                                  m_block);
+   ExtractElementInst *z1 = new ExtractElementInst(in1, unsigned(2),
+                                                  name("z1"),
+                                                  m_block);
+   ExtractElementInst *w1 = new ExtractElementInst(in1, unsigned(3),
+                                                  name("w1"),
+                                                  m_block);
+
+   ExtractElementInst *x2 = new ExtractElementInst(in2, unsigned(0),
+                                                   name("x2"),
+                                                   m_block);
+   ExtractElementInst *y2 = new ExtractElementInst(in2, unsigned(1),
+                                                   name("y2"),
+                                                   m_block);
+   ExtractElementInst *z2 = new ExtractElementInst(in2, unsigned(2),
+                                                   name("z2"),
+                                                   m_block);
+   ExtractElementInst *w2 = new ExtractElementInst(in2, unsigned(3),
+                                                   name("w2"),
+                                                   m_block);
+
+   FCmpInst *xcmp  = new FCmpInst(FCmpInst::FCMP_OGT, x1, x2,
+                                  name("xcmp"), m_block);
+   SelectInst *selx = new SelectInst(xcmp, x1, x2,
+                                     name("selx"), m_block);
+
+   FCmpInst *ycmp  = new FCmpInst(FCmpInst::FCMP_OGT, y1, y2,
+                                  name("ycmp"), m_block);
+   SelectInst *sely = new SelectInst(ycmp, y1, y2,
+                                     name("sely"), m_block);
+
+   FCmpInst *zcmp  = new FCmpInst(FCmpInst::FCMP_OGT, z1, z2,
+                                  name("zcmp"), m_block);
+   SelectInst *selz = new SelectInst(zcmp, z1, z2,
+                                     name("selz"), m_block);
+
+   FCmpInst *wcmp  = new FCmpInst(FCmpInst::FCMP_OGT, w1, w2,
+                                  name("wcmp"), m_block);
+   SelectInst *selw = new SelectInst(wcmp, w1, w2,
+                                     name("selw"), m_block);
+
+   return vectorFromVals(selx, sely, selz, selw);
+}
+

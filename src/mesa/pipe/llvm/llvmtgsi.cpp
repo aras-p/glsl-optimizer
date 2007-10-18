@@ -213,9 +213,13 @@ translate_instruction(llvm::Module *module,
       out = instr->dst(inputs[0], inputs[1]);
    }
       break;
-   case TGSI_OPCODE_MIN:
+   case TGSI_OPCODE_MIN: {
+      out = instr->min(inputs[0], inputs[1]);
+   }
       break;
-   case TGSI_OPCODE_MAX:
+   case TGSI_OPCODE_MAX: {
+      out = instr->max(inputs[0], inputs[1]);
+   }
       break;
    case TGSI_OPCODE_SLT:
       break;
