@@ -14,9 +14,10 @@ Instructions::Instructions(llvm::Module *mod, llvm::BasicBlock *block)
    m_floatVecType = VectorType::get(Type::FloatTy, 4);
 
    m_llvmFSqrt = 0;
-   m_llvmFAbs = 0;
-   m_llvmPow = 0;
+   m_llvmFAbs  = 0;
+   m_llvmPow   = 0;
    m_llvmFloor = 0;
+   m_llvmFlog  = 0;
 }
 
 llvm::Value * Instructions::add(llvm::Value *in1, llvm::Value *in2)
@@ -360,5 +361,55 @@ llvm::Value * Instructions::frc(llvm::Value *in)
 {
    llvm::Value *flr = floor(in);
    return sub(in, flr);
+}
+
+llvm::Value * Instructions::callFLog(llvm::Value *val)
+{
+   if (!m_llvmFlog) {
+      // predeclare the intrinsic
+      std::vector<const Type*> flogArgs;
+      flogArgs.push_back(Type::FloatTy);
+      ParamAttrsList *flogPal = 0;
+      FunctionType* flogType = FunctionType::get(
+         /*Result=*/Type::FloatTy,
+         /*Params=*/flogArgs,
+         /*isVarArg=*/false,
+         /*ParamAttrs=*/flogPal);
+      m_llvmFlog = new Function(
+         /*Type=*/flogType,
+         /*Linkage=*/GlobalValue::ExternalLinkage,
+         /*Name=*/"logf", m_mod);
+      m_llvmFlog->setCallingConv(CallingConv::C);
+   }
+   CallInst *call = new CallInst(m_llvmFlog, val,
+                                 name("logf"),
+                                 m_block);
+   call->setCallingConv(CallingConv::C);
+   call->setTailCall(false);
+   return call;
+}
+
+llvm::Value * Instructions::lg2(llvm::Value *in)
+{
+   ExtractElementInst *x = new ExtractElementInst(in, unsigned(0),
+                                                  name("extractx"),
+                                                  m_block);
+   ExtractElementInst *y = new ExtractElementInst(in, unsigned(1),
+                                                  name("extracty"),
+                                                  m_block);
+   ExtractElementInst *z = new ExtractElementInst(in, unsigned(2),
+                                                  name("extractz"),
+                                                  m_block);
+   ExtractElementInst *w = new ExtractElementInst(in, unsigned(3),
+                                                  name("extractw"),
+                                                  m_block);
+   llvm::Value *const_vec = vectorFromVals(
+      ConstantFP::get(Type::FloatTy, APFloat(1.442695f)),
+      ConstantFP::get(Type::FloatTy, APFloat(1.442695f)),
+      ConstantFP::get(Type::FloatTy, APFloat(1.442695f)),
+      ConstantFP::get(Type::FloatTy, APFloat(1.442695f))
+      );
+   return mul(vectorFromVals(callFLog(x), callFLog(y),
+                             callFLog(z), callFLog(w)), const_vec);
 }
 
