@@ -479,34 +479,35 @@ free_mipmap_tree(struct pipe_context *pipe, struct pipe_mipmap_tree *mt)
  */
 static void
 draw_quad(GLcontext *ctx, GLfloat x0, GLfloat y0, GLfloat z,
-          GLfloat x1, GLfloat y1)
+          GLfloat x1, GLfloat y1, GLboolean invertTex)
 {
    GLfloat verts[4][2][4]; /* four verts, two attribs, XYZW */
    GLuint i;
+   GLfloat tTop = invertTex, tBot = 1.0 - tTop;
 
    /* upper-left */
    verts[0][0][0] = x0;    /* attr[0].x */
    verts[0][0][1] = y0;    /* attr[0].x */
    verts[0][1][0] = 0.0;   /* attr[1].s */
-   verts[0][1][1] = 0.0;   /* attr[1].t */
+   verts[0][1][1] = tTop;  /* attr[1].t */
 
    /* upper-right */
    verts[1][0][0] = x1;
    verts[1][0][1] = y0;
    verts[1][1][0] = 1.0;
-   verts[1][1][1] = 0.0;
+   verts[1][1][1] = tTop;
 
    /* lower-right */
    verts[2][0][0] = x1;
    verts[2][0][1] = y1;
    verts[2][1][0] = 1.0;
-   verts[2][1][1] = 1.0;
+   verts[2][1][1] = tBot;
 
    /* lower-left */
    verts[3][0][0] = x0;
    verts[3][0][1] = y1;
    verts[3][1][0] = 0.0;
-   verts[3][1][1] = 1.0;
+   verts[3][1][1] = tBot;
 
    /* same for all verts: */
    for (i = 0; i < 4; i++) {
@@ -522,34 +523,36 @@ draw_quad(GLcontext *ctx, GLfloat x0, GLfloat y0, GLfloat z,
 
 static void
 draw_quad_colored(GLcontext *ctx, GLfloat x0, GLfloat y0, GLfloat z,
-                  GLfloat x1, GLfloat y1, const GLfloat *color)
+                  GLfloat x1, GLfloat y1, const GLfloat *color,
+                  GLboolean invertTex)
 {
    GLfloat verts[4][3][4]; /* four verts, three attribs, XYZW */
    GLuint i;
+   GLfloat tTop = invertTex, tBot = 1.0 - tTop;
 
    /* upper-left */
    verts[0][0][0] = x0;    /* attr[0].x */
-   verts[0][0][1] = y0;    /* attr[0].x */
+   verts[0][0][1] = y0;    /* attr[0].y */
    verts[0][2][0] = 0.0;   /* attr[2].s */
-   verts[0][2][1] = 0.0;   /* attr[2].t */
+   verts[0][2][1] = tTop;  /* attr[2].t */
 
    /* upper-right */
    verts[1][0][0] = x1;
    verts[1][0][1] = y0;
    verts[1][2][0] = 1.0;
-   verts[1][2][1] = 0.0;
+   verts[1][2][1] = tTop;
 
    /* lower-right */
    verts[2][0][0] = x1;
    verts[2][0][1] = y1;
    verts[2][2][0] = 1.0;
-   verts[2][2][1] = 1.0;
+   verts[2][2][1] = tBot;
 
    /* lower-left */
    verts[3][0][0] = x0;
    verts[3][0][1] = y1;
    verts[3][2][0] = 0.0;
-   verts[3][2][1] = 1.0;
+   verts[3][2][1] = tBot;
 
    /* same for all verts: */
    for (i = 0; i < 4; i++) {
@@ -575,7 +578,8 @@ draw_textured_quad(GLcontext *ctx, GLint x, GLint y, GLfloat z,
                    struct pipe_mipmap_tree *mt,
                    struct st_vertex_program *stvp,
                    struct st_fragment_program *stfp,
-                   const GLfloat *color)
+                   const GLfloat *color,
+                   GLboolean invertTex)
 {
    const GLuint unit = 0;
    struct pipe_context *pipe = ctx->st->pipe;
@@ -655,9 +659,9 @@ draw_textured_quad(GLcontext *ctx, GLint x, GLint y, GLfloat z,
 
    /* draw textured quad */
    if (color)
-      draw_quad_colored(ctx, x0, y0, z, x1, y1, color);
+      draw_quad_colored(ctx, x0, y0, z, x1, y1, color, invertTex);
    else
-      draw_quad(ctx, x0, y0, z, x1, y1);
+      draw_quad(ctx, x0, y0, z, x1, y1, invertTex);
 
    /* restore GL state */
    pipe->bind_rasterizer_state(pipe, ctx->st->state.rasterizer->data);
@@ -907,7 +911,7 @@ st_DrawPixels(GLcontext *ctx, GLint x, GLint y, GLsizei width, GLsizei height,
       if (mt) {
          draw_textured_quad(ctx, x, y, ctx->Current.RasterPos[2],
                             width, height, ctx->Pixel.ZoomX, ctx->Pixel.ZoomY,
-                            mt, stvp, stfp, color);
+                            mt, stvp, stfp, color, GL_FALSE);
          free_mipmap_tree(st->pipe, mt);
       }
    }
@@ -1089,7 +1093,7 @@ st_Bitmap(GLcontext *ctx, GLint x, GLint y, GLsizei width, GLsizei height,
       draw_textured_quad(ctx, x, y, ctx->Current.RasterPos[2],
                          width, height, 1.0, 1.0,
                          mt, stvp, stfp,
-                         ctx->Current.RasterColor);
+                         ctx->Current.RasterColor, GL_FALSE);
 
       free_mipmap_tree(st->pipe, mt);
    }
@@ -1211,6 +1215,10 @@ st_CopyPixels(GLcontext *ctx, GLint srcx, GLint srcy,
    if (!mt)
       return;
 
+   if (st_fb_orientation(ctx->DrawBuffer) == Y_0_TOP) {
+      srcy = ctx->DrawBuffer->Height - srcy - height - 1;
+   }
+
    /* copy source framebuffer region into mipmap/texture */
    pipe->region_copy(pipe,
                      mt->region, /* dest */
@@ -1224,7 +1232,7 @@ st_CopyPixels(GLcontext *ctx, GLint srcx, GLint srcy,
    /* draw textured quad */
    draw_textured_quad(ctx, dstx, dsty, ctx->Current.RasterPos[2],
                       width, height, ctx->Pixel.ZoomX, ctx->Pixel.ZoomY,
-                      mt, stvp, stfp, color);
+                      mt, stvp, stfp, color, GL_TRUE);
 
    free_mipmap_tree(st->pipe, mt);
 }
