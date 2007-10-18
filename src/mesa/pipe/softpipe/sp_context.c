@@ -355,10 +355,5 @@ struct pipe_context *softpipe_create( struct pipe_winsys *pipe_winsys,
    sp_init_region_functions(softpipe);
    sp_init_surface_functions(softpipe);
 
-   /*
-    * XXX we could plug GL selection/feedback into the drawing pipeline
-    * by specifying a different setup/render stage.
-    */
-
    return &softpipe->pipe;
 }
