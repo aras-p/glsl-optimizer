@@ -252,7 +252,7 @@ struct pipe_context *softpipe_create( struct pipe_winsys *pipe_winsys,
 #if defined(__i386__) || defined(__386__)
    softpipe->use_sse = getenv("GALLIUM_SSE") != NULL;
 #else
-   softpipe->use_sse = false;
+   softpipe->use_sse = FALSE;
 #endif
 
    softpipe->pipe.winsys = pipe_winsys;
