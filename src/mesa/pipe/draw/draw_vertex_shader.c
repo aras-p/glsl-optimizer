@@ -40,8 +40,12 @@
 
 #include "pipe/tgsi/exec/tgsi_core.h"
 
+
+#define DBG 0
+
+
 static INLINE unsigned
-compute_clipmask(const float *clip, const float (*plane)[4], unsigned nr)
+compute_clipmask(const float *clip, /*const*/ float plane[][4], unsigned nr)
 {
    unsigned mask = 0;
    unsigned i;
@@ -142,6 +146,9 @@ run_vertex_program(struct draw_context *draw,
       vOut[j]->data[0][2] = z * scale[2] + trans[2];
       vOut[j]->data[0][3] = w;
 
+#if DBG
+      printf("output[%d]win: %f %f %f %f\n", x, y, z, w);
+#endif
       /* Remaining attributes are packed into sequential post-transform
        * vertex attrib slots.
        * Skip 0 since we just did it above.
@@ -152,13 +159,13 @@ run_vertex_program(struct draw_context *draw,
          vOut[j]->data[slot][1] = machine->Outputs[slot].xyzw[1].f[j];
          vOut[j]->data[slot][2] = machine->Outputs[slot].xyzw[2].f[j];
          vOut[j]->data[slot][3] = machine->Outputs[slot].xyzw[3].f[j];
-         /*
-         printf("output %d: %f %f %f %f\n", slot,
+#if DBG
+         printf("output[%d][%d]: %f %f %f %f\n", j, slot,
                 vOut[j]->data[slot][0],
                 vOut[j]->data[slot][1],
                 vOut[j]->data[slot][2],
                 vOut[j]->data[slot][3]);
-         */
+#endif
       }
    } /* loop over vertices */
 }
@@ -236,10 +243,10 @@ void draw_delete_vertex_shader(struct draw_context *draw,
    struct draw_vertex_shader *vs = (struct draw_vertex_shader*)(vcso);
 
 #if defined(__i386__) || defined(__386__)
-   x86_release_func(&vs->state->sse2_program);
+   x86_release_func((struct x86_function *) &vs->state->sse2_program);
 #endif
 
-   free(vs->state);
+   free((void *) vs->state);
    free(vcso);
 }
 
