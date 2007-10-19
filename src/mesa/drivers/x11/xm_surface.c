@@ -284,6 +284,7 @@ xmesa_surface_alloc(struct pipe_context *pipe, GLuint pipeFormat)
 {
    struct xmesa_surface *xms = CALLOC_STRUCT(xmesa_surface);
 
+   assert(pipe);
    assert(pipeFormat);
 
    xms->surface.surface.format = pipeFormat;
@@ -292,9 +293,6 @@ xmesa_surface_alloc(struct pipe_context *pipe, GLuint pipeFormat)
     * This is really just a softpipe surface, not an XImage/Pixmap surface.
     */
    softpipe_init_surface_funcs(&xms->surface);
-
-   assert(pipe);
-   xms->surface.surface.region = pipe->region_alloc(pipe, 1, 1, 1, 0x0);
 
    return &xms->surface.surface;
 }
