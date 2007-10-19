@@ -146,8 +146,7 @@ sp_flush_tile_cache(struct softpipe_surface *sps)
       }
    }
 
-   printf("flushed tiles in use: %d\n", inuse);
-
+   /*printf("flushed tiles in use: %d\n", inuse);*/
 }
 
 
