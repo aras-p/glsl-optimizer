@@ -163,9 +163,11 @@ free_shared_state( GLcontext *ctx, struct gl_shared_state *ss );
  * We have to finish any pending rendering.
  */
 void
-_mesa_notifySwapBuffers(__GLcontext *gc)
+_mesa_notifySwapBuffers(__GLcontext *ctx)
 {
-   FLUSH_VERTICES( gc, 0 );
+   if (ctx->Driver.Flush) {
+      ctx->Driver.Flush(ctx);
+   }
 }
 
 
