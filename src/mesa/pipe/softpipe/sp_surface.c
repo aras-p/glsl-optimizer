@@ -866,6 +866,115 @@ s8_write_quad_stencil(struct softpipe_surface *sps,
 
 
 /**
+ * Get raw tile, any 32-bit pixel format.
+ */
+static void
+get_tile_raw32(struct pipe_surface *ps,
+               uint x, uint y, uint w, uint h, void *p)
+{
+   const uint *src
+      = ((const uint *) (ps->region->map + ps->offset))
+      + y * ps->region->pitch + x;
+   uint *pDest = (uint *) p;
+   unsigned i;
+   unsigned w0 = w;
+
+   assert(ps->region->map);
+   assert(ps->format == PIPE_FORMAT_S8_Z24 ||
+          ps->format == PIPE_FORMAT_U_Z32);
+
+   CLIP_TILE;
+
+   for (i = 0; i < h; i++) {
+      memcpy(pDest, src, w * sizeof(uint));
+      src += ps->region->pitch;
+      pDest += w0;
+   }
+}
+
+
+/**
+ * put raw tile, any 32-bit pixel format.
+ */
+static void
+put_tile_raw32(struct pipe_surface *ps,
+               uint x, uint y, uint w, uint h, const void *p)
+{
+   uint *dst
+      = ((uint *) (ps->region->map + ps->offset))
+      + y * ps->region->pitch + x;
+   const uint *pSrc = (const uint *) p;
+   unsigned i;
+   unsigned w0 = w;
+
+   assert(ps->region->map);
+   assert(ps->format == PIPE_FORMAT_S8_Z24 ||
+          ps->format == PIPE_FORMAT_U_Z32);
+
+   CLIP_TILE;
+
+   for (i = 0; i < h; i++) {
+      memcpy(dst, pSrc, w * sizeof(uint));
+      dst += ps->region->pitch;
+      pSrc += w0;
+   }
+}
+
+
+/**
+ * Get raw tile, any 16-bit pixel format.
+ */
+static void
+get_tile_raw16(struct pipe_surface *ps,
+               uint x, uint y, uint w, uint h, void *p)
+{
+   const ushort *src
+      = ((const ushort *) (ps->region->map + ps->offset))
+      + y * ps->region->pitch + x;
+   ushort *pDest = (ushort *) p;
+   uint i;
+   uint w0 = w;
+
+   assert(ps->format == PIPE_FORMAT_U_Z16);
+
+   CLIP_TILE;
+
+   for (i = 0; i < h; i++) {
+      memcpy(pDest, src, w * sizeof(ushort));
+      src += ps->region->pitch;
+      pDest += w0;
+   }
+}
+
+/**
+ * Put raw tile, any 16-bit pixel format.
+ */
+static void
+put_tile_raw16(struct pipe_surface *ps,
+               uint x, uint y, uint w, uint h, const void *p)
+{
+   ushort *dst
+      = ((ushort *) (ps->region->map + ps->offset))
+      + y * ps->region->pitch + x;
+   const ushort *pSrc = (const ushort *) p;
+   unsigned i;
+   unsigned w0 = w;
+
+   assert(ps->format == PIPE_FORMAT_U_Z16);
+
+   CLIP_TILE;
+
+   for (i = 0; i < h; i++) {
+      memcpy(dst, pSrc, w * sizeof(ushort));
+      dst += ps->region->pitch;
+      pSrc += w0;
+   }
+}
+
+
+
+
+/**
  * Initialize the quad_read/write and get/put_tile() methods.
  */
 void
@@ -915,11 +1024,15 @@ softpipe_init_surface_funcs(struct softpipe_surface *sps)
       sps->read_quad_z = z16_read_quad_z;
       sps->write_quad_z = z16_write_quad_z;
       sps->surface.get_tile = z16_get_tile;
+      sps->surface.get_tile_raw = get_tile_raw16;
+      sps->surface.put_tile_raw = put_tile_raw16;
       break;
    case PIPE_FORMAT_U_Z32:
       sps->read_quad_z = z32_read_quad_z;
       sps->write_quad_z = z32_write_quad_z;
       sps->surface.get_tile = z32_get_tile;
+      sps->surface.get_tile_raw = get_tile_raw32;
+      sps->surface.put_tile_raw = put_tile_raw32;
       break;
    case PIPE_FORMAT_S8_Z24:
       sps->read_quad_z = s8z24_read_quad_z;
@@ -927,6 +1040,8 @@ softpipe_init_surface_funcs(struct softpipe_surface *sps)
       sps->read_quad_stencil = s8z24_read_quad_stencil;
       sps->write_quad_stencil = s8z24_write_quad_stencil;
       sps->surface.get_tile = s8z24_get_tile;
+      sps->surface.get_tile_raw = get_tile_raw32;
+      sps->surface.put_tile_raw = put_tile_raw32;
       break;
 
    case PIPE_FORMAT_U_S8:
