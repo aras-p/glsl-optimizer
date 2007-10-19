@@ -43,3 +43,5 @@ binfo
 incopy
 demo
 font
+readtex.c
+readtex.h
