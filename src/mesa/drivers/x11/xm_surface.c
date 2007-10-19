@@ -49,6 +49,15 @@
 #include "state_tracker/st_context.h"
 
 
+#define CLIP_TILE \
+   do { \
+      if (x + w > ps->width) \
+         w = ps->width - x; \
+      if (y + h > ps->height) \
+         h = ps->height -y; \
+   } while(0)
+
+
 static INLINE struct xmesa_surface *
 xmesa_surf(struct softpipe_surface *sps)
 {
@@ -176,14 +185,18 @@ get_tile(struct pipe_surface *ps,
    struct xmesa_renderbuffer *xrb = xmesa_rb((struct softpipe_surface *) ps);
    GLubyte tmp[MAX_WIDTH * 4];
    GLuint i, j;
+   unsigned w0 = w;
    GET_CURRENT_CONTEXT(ctx);
+
+   CLIP_TILE;
+
    FLIP(y);
    for (i = 0; i < h; i++) {
       xrb->St.Base.GetRow(ctx, &xrb->St.Base, w, x, y - i, tmp);
       for (j = 0; j < w * 4; j++) {
          p[j] = UBYTE_TO_FLOAT(tmp[j]);
       }
-      p += w * 4;
+      p += w0 * 4;
    }
 }
 
@@ -195,14 +208,16 @@ put_tile(struct pipe_surface *ps,
    struct xmesa_renderbuffer *xrb = xmesa_rb((struct softpipe_surface *) ps);
    GLubyte tmp[MAX_WIDTH * 4];
    GLuint i, j;
+   unsigned w0 = w;
    GET_CURRENT_CONTEXT(ctx);
+   CLIP_TILE;
    FLIP(y);
    for (i = 0; i < h; i++) {
       for (j = 0; j < w * 4; j++) {
-         CLAMPED_FLOAT_TO_UBYTE(tmp[j], p[j]);
+         UNCLAMPED_FLOAT_TO_UBYTE(tmp[j], p[j]);
       }
       xrb->St.Base.PutRow(ctx, &xrb->St.Base, w, x, y - i, tmp, NULL);
-      p += w * 4;
+      p += w0 * 4;
    }
 }
 
@@ -223,6 +238,9 @@ xmesa_new_color_surface(struct pipe_context *pipe, GLuint pipeFormat)
    xms->surface.surface.format = pipeFormat;
    xms->surface.surface.refcount = 1;
 
+   /* some of the functions plugged in by this call will get overridden */
+   softpipe_init_surface_funcs(&xms->surface);
+
    switch (pipeFormat) {
    case PIPE_FORMAT_U_A8_R8_G8_B8:
       xms->surface.read_quad_f_swz = read_quad_f;
@@ -236,7 +254,6 @@ xmesa_new_color_surface(struct pipe_context *pipe, GLuint pipeFormat)
       xms->surface.surface.put_tile = put_tile;
       break;
    case PIPE_FORMAT_S8_Z24:
-      softpipe_init_surface_funcs(&xms->surface);
       /*
       xms->surface.read_quad_z = 1;
       xms->surface.write_quad_z = 1;
