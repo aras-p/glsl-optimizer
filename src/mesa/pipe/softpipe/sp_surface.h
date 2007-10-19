@@ -37,6 +37,7 @@
 struct pipe_context;
 struct softpipe_surface;
 struct softpipe_context;
+struct softpipe_tile_cache;
 
 
 /**
@@ -44,6 +45,8 @@ struct softpipe_context;
  */
 struct softpipe_surface {
    struct pipe_surface surface;
+
+   struct softpipe_tile_cache *tc;
 
    /**
     * Functions for read/writing surface data

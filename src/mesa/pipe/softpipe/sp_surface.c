@@ -25,12 +25,12 @@
  * 
  **************************************************************************/
 
+#include "pipe/p_defines.h"
+#include "pipe/p_util.h"
 #include "sp_context.h"
 #include "sp_state.h"
 #include "sp_surface.h"
-#include "pipe/p_defines.h"
-#include "pipe/p_util.h"
-
+#include "sp_tile_cache.h"
 
 /**
  * Softpipe surface functions.
@@ -871,6 +871,8 @@ s8_write_quad_stencil(struct softpipe_surface *sps,
 void
 softpipe_init_surface_funcs(struct softpipe_surface *sps)
 {
+   sps->tc = sp_create_tile_cache();
+
    assert(sps->surface.format);
 
    switch (sps->surface.format) {

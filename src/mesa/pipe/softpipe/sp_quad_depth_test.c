@@ -32,6 +32,7 @@
 #include "sp_headers.h"
 #include "sp_surface.h"
 #include "sp_quad.h"
+#include "sp_tile_cache.h"
 
 
 /**
@@ -48,6 +49,9 @@ sp_depth_test_quad(struct quad_stage *qs, struct quad_header *quad)
    unsigned zmask = 0;
    unsigned j;
    float scale;
+#if 0
+   struct cached_tile *tile = sp_get_cached_tile(softpipe, quad->x0, quad->y0);
+#endif
 
    assert(sps); /* shouldn't get here if there's no zbuffer */
 
@@ -74,8 +78,16 @@ sp_depth_test_quad(struct quad_stage *qs, struct quad_header *quad)
       qzzzz[j] = (unsigned) (quad->outputs.depth[j] * scale);
    }
 
+#if 0
+   for (j = 0; j < 4; j++) {
+      int x = quad->x0 % TILE_SIZE + (j & 1);
+      int y = quad->y0 % TILE_SIZE + (j >> 1);
+      bzzzz[j] = tile->depth[y][x];
+   }
+#else
    /* get zquad from zbuffer */
    sps->read_quad_z(sps, quad->x0, quad->y0, bzzzz);
+#endif
 
    switch (softpipe->depth_stencil->depth.func) {
    case PIPE_FUNC_NEVER:
@@ -139,8 +151,16 @@ sp_depth_test_quad(struct quad_stage *qs, struct quad_header *quad)
 	 }
       }
 
+#if 1
       /* write updated zquad to zbuffer */
       sps->write_quad_z(sps, quad->x0, quad->y0, bzzzz);
+#else
+      for (j = 0; j < 4; j++) {
+         int x = quad->x0 % TILE_SIZE + (j & 1);
+         int y = quad->y0 % TILE_SIZE + (j >> 1);
+         tile->depth[y][x] = bzzzz[j];
+      }
+#endif
    }
 }
 

@@ -35,6 +35,7 @@
 #include "sp_context.h"
 #include "sp_headers.h"
 #include "sp_surface.h"
+#include "sp_tile_cache.h"
 #include "sp_quad.h"
 
 
@@ -106,10 +107,19 @@ logicop_quad(struct quad_stage *qs, struct quad_header *quad)
    uint *src4 = (uint *) src;
    uint *dst4 = (uint *) dst;
    uint *res4 = (uint *) res;
-   uint j;
+   struct softpipe_cached_tile *
+      tile = sp_get_cached_tile(sps, quad->x0, quad->y0);
+   uint i, j;
 
-   /* get colors from framebuffer */
-   sps->read_quad_f_swz(sps, quad->x0, quad->y0, dest);
+   /* get/swizzle dest colors */
+   for (j = 0; j < QUAD_SIZE; j++) {
+      int x = (quad->x0 & (TILE_SIZE-1)) + (j & 1);
+      int y = (quad->y0 & (TILE_SIZE-1)) + (j >> 1);
+      for (i = 0; i < 4; i++) {
+         dest[i][j] = tile->data.color[y][x][i];
+      }
+   }
+
    /* convert to ubyte */
    for (j = 0; j < 4; j++) { /* loop over R,G,B,A channels */
       UNCLAMPED_FLOAT_TO_UBYTE(dst[j][0], dest[j][0]); /* P0 */
@@ -209,19 +219,28 @@ logicop_quad(struct quad_stage *qs, struct quad_header *quad)
 static void
 blend_quad(struct quad_stage *qs, struct quad_header *quad)
 {
-   static const float zero[4] = { 0, 0, 0, 0 };
-   static const float one[4] = { 1, 1, 1, 1 };
    struct softpipe_context *softpipe = qs->softpipe;
    struct softpipe_surface *sps = softpipe_surface(softpipe->cbuf);
+   static const float zero[4] = { 0, 0, 0, 0 };
+   static const float one[4] = { 1, 1, 1, 1 };
    float source[4][QUAD_SIZE], dest[4][QUAD_SIZE];
+   struct softpipe_cached_tile *
+      tile = sp_get_cached_tile(sps, quad->x0, quad->y0);
+   uint i, j;
 
    if (softpipe->blend->logicop_enable) {
       logicop_quad(qs, quad);
       return;
    }
 
-   /* get colors from framebuffer */
-   sps->read_quad_f_swz(sps, quad->x0, quad->y0, dest);
+   /* get/swizzle dest colors */
+   for (j = 0; j < QUAD_SIZE; j++) {
+      int x = (quad->x0 & (TILE_SIZE-1)) + (j & 1);
+      int y = (quad->y0 & (TILE_SIZE-1)) + (j >> 1);
+      for (i = 0; i < 4; i++) {
+         dest[i][j] = tile->data.color[y][x][i];
+      }
+   }
 
    /*
     * Compute src/first term RGB

@@ -33,7 +33,10 @@
 #include "pipe/p_defines.h"
 #include "sp_flush.h"
 #include "sp_context.h"
+#include "sp_surface.h"
+#include "sp_tile_cache.h"
 #include "sp_winsys.h"
+
 
 /* There will be actual work to do here.  In future we may want a
  * fence-like interface instead of finish, and perhaps flush will take
@@ -43,9 +46,18 @@ void
 softpipe_flush( struct pipe_context *pipe,
 		unsigned flags )
 {
+   struct softpipe_context *softpipe = softpipe_context(pipe);
+   uint i;
+
    /* - flush the quad pipeline
     * - flush the texture cache
     * - flush the render cache
     */
+
+   for (i = 0; i < softpipe->framebuffer.num_cbufs; i++) {
+      struct softpipe_surface *sps = softpipe_surface(softpipe->framebuffer.cbufs[i]);
+      if (sps)
+         sp_flush_tile_cache(sps);
+   }
 }
 

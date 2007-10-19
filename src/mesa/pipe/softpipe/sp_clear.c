@@ -35,6 +35,7 @@
 #include "sp_context.h"
 #include "sp_surface.h"
 #include "sp_state.h"
+#include "sp_tile_cache.h"
 
 
 /**
@@ -46,6 +47,7 @@ softpipe_clear(struct pipe_context *pipe, struct pipe_surface *ps,
                unsigned clearValue)
 {
    struct softpipe_context *softpipe = softpipe_context(pipe);
+   struct softpipe_surface *sps = softpipe_surface(ps);
    unsigned x, y, w, h;
 
    softpipe_update_derived(softpipe); /* not needed?? */
@@ -64,5 +66,8 @@ softpipe_clear(struct pipe_context *pipe, struct pipe_surface *ps,
    assert(w <= ps->region->pitch);
    assert(h <= ps->region->height);
 
+   /* XXX skip this fill if we're using tile cache */
    pipe->region_fill(pipe, ps->region, 0, x, y, w, h, clearValue);
+
+   sp_clear_tile_cache(sps, clearValue);
 }

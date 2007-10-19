@@ -36,17 +36,31 @@
 #include "sp_headers.h"
 #include "sp_surface.h"
 #include "sp_quad.h"
+#include "sp_tile_cache.h"
 
 
 
+/**
+ * XXX colormask could be rolled into blending...
+ */
 static void
 colormask_quad(struct quad_stage *qs, struct quad_header *quad)
 {
    struct softpipe_context *softpipe = qs->softpipe;
    struct softpipe_surface *sps = softpipe_surface(softpipe->cbuf);
    float dest[4][QUAD_SIZE];
-   
-   sps->read_quad_f_swz(sps, quad->x0, quad->y0, dest);
+   struct softpipe_cached_tile *
+      tile = sp_get_cached_tile(sps, quad->x0, quad->y0);
+   uint i, j;
+
+   /* get/swizzle dest colors */
+   for (j = 0; j < QUAD_SIZE; j++) {
+      int x = (quad->x0 & (TILE_SIZE-1)) + (j & 1);
+      int y = (quad->y0 & (TILE_SIZE-1)) + (j >> 1);
+      for (i = 0; i < 4; i++) {
+         dest[i][j] = tile->data.color[y][x][i];
+      }
+   }
 
    /* R */
    if (!(softpipe->blend->colormask & PIPE_MASK_R))

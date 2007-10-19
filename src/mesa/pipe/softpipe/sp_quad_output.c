@@ -1,57 +1,36 @@
-/*
- * Mesa 3-D graphics library
- * Version:  6.5
- *
- * Copyright (C) 1999-2005  Brian Paul   All Rights Reserved.
- *
+/**************************************************************************
+ * 
+ * Copyright 2007 Tungsten Graphics, Inc., Cedar Park, Texas.
+ * All Rights Reserved.
+ * 
  * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
+ * copy of this software and associated documentation files (the
+ * "Software"), to deal in the Software without restriction, including
+ * without limitation the rights to use, copy, modify, merge, publish,
+ * distribute, sub license, and/or sell copies of the Software, and to
+ * permit persons to whom the Software is furnished to do so, subject to
+ * the following conditions:
+ * 
+ * The above copyright notice and this permission notice (including the
+ * next paragraph) shall be included in all copies or substantial portions
+ * of the Software.
+ * 
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
- * BRIAN PAUL BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN
- * AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
- * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
- */
+ * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+ * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT.
+ * IN NO EVENT SHALL TUNGSTEN GRAPHICS AND/OR ITS SUPPLIERS BE LIABLE FOR
+ * ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
+ * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
+ * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ * 
+ **************************************************************************/
 
-/* Vertices are just an array of floats, with all the attributes
- * packed.  We currently assume a layout like:
- *
- * attr[0][0..3] - window position
- * attr[1..n][0..3] - remaining attributes.
- *
- * Attributes are assumed to be 4 floats wide but are packed so that
- * all the enabled attributes run contiguously.
- */
 #include "pipe/p_util.h"
 #include "sp_context.h"
 #include "sp_headers.h"
 #include "sp_surface.h"
 #include "sp_quad.h"
-
-
-static void mask_copy( float (*dest)[4],
-		       float (*src)[4],
-		       unsigned mask )
-{
-   unsigned i, j;
-
-   for (i = 0; i < 4; i++) {
-      if (mask & (1<<i)) {
-	 for (j = 0; j < 4; j++) {
-	    dest[j][i] = src[j][i];
-	 }
-      }
-   }
-}
+#include "sp_tile_cache.h"
 
 
 /**
@@ -64,20 +43,22 @@ output_quad(struct quad_stage *qs, struct quad_header *quad)
 {
    struct softpipe_context *softpipe = qs->softpipe;
    struct softpipe_surface *sps = softpipe_surface(softpipe->cbuf);
+   struct softpipe_cached_tile *tile
+      = sp_get_cached_tile(sps, quad->x0, quad->y0);
+   /* in-tile pos: */
+   const int itx = quad->x0 % TILE_SIZE;
+   const int ity = quad->y0 % TILE_SIZE;
+   int i, j;
 
-   if (quad->mask != MASK_ALL) {
-      float tmp[4][QUAD_SIZE];
-
-      /* XXX probably add a masked-write function someday */
-
-      sps->read_quad_f_swz(sps, quad->x0, quad->y0, tmp);
-
-      mask_copy( tmp, quad->outputs.color, quad->mask );
-
-      sps->write_quad_f_swz(sps, quad->x0, quad->y0, tmp);
-   }
-   else if (quad->mask) {
-      sps->write_quad_f_swz(sps, quad->x0, quad->y0, quad->outputs.color);
+   /* get/swizzle dest colors */
+   for (j = 0; j < QUAD_SIZE; j++) {
+      if (quad->mask & (1 << j)) {
+         int x = itx + (j & 1);
+         int y = ity + (j >> 1);
+         for (i = 0; i < 4; i++) { /* loop over color chans */
+            tile->data.color[y][x][i] = quad->outputs.color[i][j];
+         }
+      }
    }
 }
 

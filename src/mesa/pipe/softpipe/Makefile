@@ -35,6 +35,7 @@ DRIVER_SOURCES = \
 	sp_state_vertex.c \
 	sp_tex_layout.c \
 	sp_tex_sample.c \
+	sp_tile_cache.c \
 	sp_surface.c 
 
 C_SOURCES = \
