@@ -63,5 +63,13 @@ softpipe_flush( struct pipe_context *pipe,
 
    if (softpipe->sbuf_cache)
       sp_flush_tile_cache(softpipe->sbuf_cache);
+
+   /* Need this call for hardware buffers before swapbuffers.
+    *
+    * there should probably be another/different flush-type function
+    * that's called before swapbuffers because we don't always want
+    * to unmap surfaces when flushing.
+    */
+   softpipe_unmap_surfaces(softpipe);
 }
 
