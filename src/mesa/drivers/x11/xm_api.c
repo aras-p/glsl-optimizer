@@ -430,16 +430,26 @@ create_xmesa_buffer(XMesaDrawable d, BufferType type,
       b->swAlpha = GL_FALSE;
    }
 
-   if (vis->mesa_visual.depthBits > 0) {
+   if (vis->mesa_visual.depthBits > 0 &&
+       vis->mesa_visual.stencilBits > 0) {
+      /* combined depth/stencil */
       struct gl_renderbuffer *rb
-         = st_new_renderbuffer_fb(GL_DEPTH_COMPONENT32);
+         = st_new_renderbuffer_fb(GL_DEPTH24_STENCIL8_EXT);
       _mesa_add_renderbuffer(&b->mesa_buffer, BUFFER_DEPTH, rb);
-   }
-
-   if (vis->mesa_visual.stencilBits > 0) {
-      struct gl_renderbuffer *rb
-         = st_new_renderbuffer_fb(GL_STENCIL_INDEX8_EXT);
       _mesa_add_renderbuffer(&b->mesa_buffer, BUFFER_STENCIL, rb);
+   }
+   else {
+      if (vis->mesa_visual.depthBits > 0) {
+         struct gl_renderbuffer *rb
+         = st_new_renderbuffer_fb(GL_DEPTH_COMPONENT32);
+         _mesa_add_renderbuffer(&b->mesa_buffer, BUFFER_DEPTH, rb);
+      }
+
+      if (vis->mesa_visual.stencilBits > 0) {
+         struct gl_renderbuffer *rb
+            = st_new_renderbuffer_fb(GL_STENCIL_INDEX8_EXT);
+         _mesa_add_renderbuffer(&b->mesa_buffer, BUFFER_STENCIL, rb);
+      }
    }
 
    if (vis->mesa_visual.accumRedBits > 0) {
