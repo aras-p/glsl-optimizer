@@ -34,7 +34,6 @@ public:
    llvm::Value *rcp(llvm::Value *in);
    llvm::Value *rsq(llvm::Value *in);
    llvm::Value *sub(llvm::Value *in1, llvm::Value *in2);
-   llvm::Value *swizzleWrite(llvm::Value *in, int mask);
 
    void printVector(llvm::Value *val);
 private:

@@ -167,7 +167,7 @@ llvm::Value *Instructions::callFAbs(llvm::Value *val)
 
 llvm::Value * Instructions::lit(llvm::Value *in)
 {
-#if 1
+#if 0
    printVector(in);
    return in;
 
@@ -191,7 +191,7 @@ llvm::Value * Instructions::lit(llvm::Value *in)
       m_llvmLit = makeLitFunction(m_mod);
    }
    CallInst *call = new CallInst(m_llvmLit, in, name("litres"), m_block);
-   //call->setCallingConv(CallingConv::C);
+   call->setCallingConv(CallingConv::C);
    call->setTailCall(false);
    return call;
 #endif
@@ -896,9 +896,4 @@ void Instructions::printVector(llvm::Value *val)
    CallInst* call = new CallInst(func_printf, params.begin(), params.end(), "printf", m_block);
    call->setCallingConv(CallingConv::C);
    call->setTailCall(true);
-}
-
-llvm::Value * Instructions::swizzleWrite(llvm::Value *in, int mask)
-{
-    
 }

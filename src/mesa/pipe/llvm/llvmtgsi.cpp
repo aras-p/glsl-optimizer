@@ -184,8 +184,7 @@ translate_instruction(llvm::Module *module,
    }
       break;
    case TGSI_OPCODE_LIT: {
-      //out = instr->lit(inputs[0]);
-      return;
+      out = instr->lit(inputs[0]);
    }
       break;
    case TGSI_OPCODE_RCP: {
