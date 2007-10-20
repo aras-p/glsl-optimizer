@@ -59,10 +59,13 @@ i915_region_unmap(struct pipe_context *pipe, struct pipe_region *region)
 {
    struct i915_context *i915 = i915_context( pipe );
 
-   if (!--region->map_refcount) {
-      i915->pipe.winsys->buffer_unmap( i915->pipe.winsys,
-				       region->buffer );
-      region->map = NULL;
+   if (region->map_refcount > 0) {
+      assert(region->map);
+      if (!--region->map_refcount) {
+         i915->pipe.winsys->buffer_unmap( i915->pipe.winsys,
+                                          region->buffer );
+         region->map = NULL;
+      }
    }
 }
 

@@ -69,10 +69,13 @@ sp_region_unmap(struct pipe_context *pipe, struct pipe_region *region)
 {
    struct softpipe_context *sp = softpipe_context( pipe );
 
-   if (!--region->map_refcount) {
-      sp->pipe.winsys->buffer_unmap( sp->pipe.winsys,
-				region->buffer );
-      region->map = NULL;
+   if (region->map_refcount > 0) {
+      assert(region->map);
+      if (!--region->map_refcount) {
+         sp->pipe.winsys->buffer_unmap( sp->pipe.winsys,
+                                        region->buffer );
+         region->map = NULL;
+      }
    }
 }
 
