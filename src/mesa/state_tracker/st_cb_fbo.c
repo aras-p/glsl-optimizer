@@ -92,6 +92,10 @@ st_renderbuffer_alloc_storage(GLcontext * ctx, struct gl_renderbuffer *rb,
 
    /* free old region */
    if (strb->surface->region) {
+      /* loop here since mapping is refcounted */
+      struct pipe_region *r = strb->surface->region;
+      while (r->map)
+         pipe->region_unmap(pipe, r);
       pipe->region_release(pipe, &strb->surface->region);
    }
 
