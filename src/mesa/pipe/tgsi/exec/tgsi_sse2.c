@@ -1747,6 +1747,10 @@ emit_instruction(
       assert( 0 );
       break;
 
+   case TGSI_OPCODE_END:
+      /* nothing */
+      break;
+
    default:
       assert( 0 );
    }
