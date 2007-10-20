@@ -45,6 +45,7 @@ static void
 update_framebuffer_state( struct st_context *st )
 {
    struct pipe_framebuffer_state framebuffer;
+   struct gl_framebuffer *fb = st->ctx->DrawBuffer;
    struct st_renderbuffer *strb;
    GLuint i;
 
@@ -53,21 +54,21 @@ update_framebuffer_state( struct st_context *st )
    /* Examine Mesa's ctx->DrawBuffer->_ColorDrawBuffers state
     * to determine which surfaces to draw to
     */
-   framebuffer.num_cbufs = st->ctx->DrawBuffer->_NumColorDrawBuffers[0];
+   framebuffer.num_cbufs = fb->_NumColorDrawBuffers[0];
    for (i = 0; i < framebuffer.num_cbufs; i++) {
-      strb = st_renderbuffer(st->ctx->DrawBuffer->_ColorDrawBuffers[0][i]);
+      strb = st_renderbuffer(fb->_ColorDrawBuffers[0][i]);
       assert(strb->surface);
       framebuffer.cbufs[i] = strb->surface;
    }
 
-   strb = st_renderbuffer(st->ctx->DrawBuffer->_DepthBuffer);
+   strb = st_renderbuffer(fb->Attachment[BUFFER_DEPTH].Renderbuffer);
    if (strb) {
       strb = st_renderbuffer(strb->Base.Wrapped);
       assert(strb->surface);
       framebuffer.zbuf = strb->surface;
    }
 
-   strb = st_renderbuffer(st->ctx->DrawBuffer->_StencilBuffer);
+   strb = st_renderbuffer(fb->Attachment[BUFFER_STENCIL].Renderbuffer);
    if (strb) {
       strb = st_renderbuffer(strb->Base.Wrapped);
       assert(strb->surface);
