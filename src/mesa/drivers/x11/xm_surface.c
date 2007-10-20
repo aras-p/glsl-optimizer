@@ -76,108 +76,6 @@ xmesa_rb(struct softpipe_surface *sps)
 #define FLIP(Y) Y = xrb->St.Base.Height - (Y) - 1;
 
 
-/**
- * quad reading/writing
- * These functions are just wrappers around the existing renderbuffer
- * functions.
- * Note that Y=0 is the top of the surface.
- */
-
-static void
-read_quad_f(struct softpipe_surface *sps, GLint x, GLint y,
-            GLfloat (*rgba)[NUM_CHANNELS])
-{
-   struct xmesa_renderbuffer *xrb = xmesa_rb(sps);
-   GLubyte temp[16];
-   GLfloat *dst = (GLfloat *) rgba;
-   GLuint i;
-   GET_CURRENT_CONTEXT(ctx);
-   FLIP(y);
-   xrb->St.Base.GetRow(ctx, &xrb->St.Base, 2, x, y,     temp);
-   xrb->St.Base.GetRow(ctx, &xrb->St.Base, 2, x, y - 1, temp + 8);
-   for (i = 0; i < 16; i++) {
-      dst[i] = UBYTE_TO_FLOAT(temp[i]);
-   }
-}
-
-static void
-read_quad_f_swz(struct softpipe_surface *sps, GLint x, GLint y,
-                GLfloat (*rrrr)[QUAD_SIZE])
-{
-   struct xmesa_renderbuffer *xrb = xmesa_rb(sps);
-   GLubyte temp[16];
-   GLfloat *dst = (GLfloat *) rrrr;
-   GLuint i, j;
-   GET_CURRENT_CONTEXT(ctx);
-   FLIP(y);
-   xrb->St.Base.GetRow(ctx, &xrb->St.Base, 2, x, y,     temp);
-   xrb->St.Base.GetRow(ctx, &xrb->St.Base, 2, x, y - 1, temp + 8);
-   for (i = 0; i < 4; i++) {
-      for (j = 0; j < 4; j++) {
-         dst[j * 4 + i] = UBYTE_TO_FLOAT(temp[i * 4 + j]);
-      }
-   }
-}
-
-static void
-write_quad_f(struct softpipe_surface *sps, GLint x, GLint y,
-             GLfloat (*rgba)[NUM_CHANNELS])
-{
-   struct xmesa_renderbuffer *xrb = xmesa_rb(sps);
-   GLubyte temp[16];
-   const GLfloat *src = (const GLfloat *) rgba;
-   GLuint i;
-   GET_CURRENT_CONTEXT(ctx);
-   FLIP(y);
-   for (i = 0; i < 16; i++) {
-      UNCLAMPED_FLOAT_TO_UBYTE(temp[i], src[i]);
-   }
-   xrb->St.Base.PutRow(ctx, &xrb->St.Base, 2, x, y,     temp,     NULL);
-   xrb->St.Base.PutRow(ctx, &xrb->St.Base, 2, x, y - 1, temp + 8, NULL);
-}
-
-static void
-write_quad_f_swz(struct softpipe_surface *sps, GLint x, GLint y,
-                 GLfloat (*rrrr)[QUAD_SIZE])
-{
-   struct xmesa_renderbuffer *xrb = xmesa_rb(sps);
-   GLubyte temp[16];
-   const GLfloat *src = (const GLfloat *) rrrr;
-   GLuint i, j;
-   GET_CURRENT_CONTEXT(ctx);
-   FLIP(y);
-   for (i = 0; i < 4; i++) {
-      for (j = 0; j < 4; j++) {
-         UNCLAMPED_FLOAT_TO_UBYTE(temp[j * 4 + i], src[i * 4 + j]);
-      }
-   }
-   xrb->St.Base.PutRow(ctx, &xrb->St.Base, 2, x, y,     temp,     NULL);
-   xrb->St.Base.PutRow(ctx, &xrb->St.Base, 2, x, y - 1, temp + 8, NULL);
-}
-
-static void
-read_quad_ub(struct softpipe_surface *sps, GLint x, GLint y,
-             GLubyte (*rgba)[NUM_CHANNELS])
-{
-   struct xmesa_renderbuffer *xrb = xmesa_rb(sps);
-   GET_CURRENT_CONTEXT(ctx);
-   FLIP(y);
-   xrb->St.Base.GetRow(ctx, &xrb->St.Base, 2, x, y,     rgba);
-   xrb->St.Base.GetRow(ctx, &xrb->St.Base, 2, x, y - 1, rgba + 2);
-}
-
-static void
-write_quad_ub(struct softpipe_surface *sps, GLint x, GLint y,
-              GLubyte (*rgba)[NUM_CHANNELS])
-{
-   struct xmesa_renderbuffer *xrb = xmesa_rb(sps);
-   GET_CURRENT_CONTEXT(ctx);
-   FLIP(y);
-   xrb->St.Base.GetRow(ctx, &xrb->St.Base, 2, x, y,     rgba);
-   xrb->St.Base.GetRow(ctx, &xrb->St.Base, 2, x, y - 1, rgba + 2);
-}
-
-
 static void
 get_tile(struct pipe_surface *ps,
          GLuint x, GLuint y, GLuint w, GLuint h, GLfloat *p)
@@ -243,21 +141,10 @@ xmesa_new_color_surface(struct pipe_context *pipe, GLuint pipeFormat)
 
    switch (pipeFormat) {
    case PIPE_FORMAT_U_A8_R8_G8_B8:
-      xms->surface.read_quad_f_swz = read_quad_f;
-      xms->surface.read_quad_f = read_quad_f;
-      xms->surface.read_quad_f_swz = read_quad_f_swz;
-      xms->surface.read_quad_ub = read_quad_ub;
-      xms->surface.write_quad_f = write_quad_f;
-      xms->surface.write_quad_f_swz = write_quad_f_swz;
-      xms->surface.write_quad_ub = write_quad_ub;
       xms->surface.surface.get_tile = get_tile;
       xms->surface.surface.put_tile = put_tile;
       break;
    case PIPE_FORMAT_S8_Z24:
-      /*
-      xms->surface.read_quad_z = 1;
-      xms->surface.write_quad_z = 1;
-      */
       break;
    default:
       abort();

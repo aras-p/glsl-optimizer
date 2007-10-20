@@ -46,44 +46,7 @@ struct softpipe_tile_cache;
 struct softpipe_surface {
    struct pipe_surface surface;
 
-   /**
-    * Functions for read/writing surface data
-    */
-   void (*read_quad_f)( struct softpipe_surface *,
-			int x, int y,
-			float (*rgba)[NUM_CHANNELS] );
-
-   void (*read_quad_f_swz)( struct softpipe_surface *,
-			    int x, int y,
-			    float (*rrrr)[QUAD_SIZE] );
-
-   void (*read_quad_ub)( struct softpipe_surface *,
-			 int x, int y,
-			 ubyte (*rgba)[NUM_CHANNELS] );
-
-
-   void (*write_quad_f)( struct softpipe_surface *,
-			 int x, int y,
-			 float (*rgba)[NUM_CHANNELS] );
-
-   void (*write_quad_f_swz)( struct softpipe_surface *,
-			     int x, int y,
-			     float (*rrrr)[QUAD_SIZE] );
-
-
-   void (*write_quad_ub)( struct softpipe_surface *,
-			  int x, int y,
-			  ubyte (*rgba)[NUM_CHANNELS] );
-
-   void (*read_quad_z)(struct softpipe_surface *,
-                       int x, int y, unsigned zzzz[QUAD_SIZE]);
-   void (*write_quad_z)(struct softpipe_surface *,
-                        int x, int y, const unsigned zzzz[QUAD_SIZE]);
-
-   void (*read_quad_stencil)(struct softpipe_surface *,
-                             int x, int y, ubyte ssss[QUAD_SIZE]);
-   void (*write_quad_stencil)(struct softpipe_surface *,
-                              int x, int y, const ubyte ssss[QUAD_SIZE]);
+   /* no softpipe-specific extras now */
 };
 
 
