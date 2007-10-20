@@ -1,5 +1,6 @@
 #include "storage.h"
 
+#include "pipe/tgsi/exec/tgsi_token.h"
 #include <llvm/BasicBlock.h>
 #include <llvm/Module.h>
 #include <llvm/Value.h>
@@ -16,7 +17,8 @@ Storage::Storage(llvm::BasicBlock *block, llvm::Value *out,
                                          llvm::Value *in, llvm::Value *consts)
    : m_block(block), m_OUT(out),
      m_IN(in), m_CONST(consts),
-     m_temps(32)
+     m_temps(32), m_dstCache(32),
+     m_idx(0)
 {
    m_floatVecType = VectorType::get(Type::FloatTy, 4);
    m_intVecType   = VectorType::get(IntegerType::get(32), 4);
@@ -25,6 +27,7 @@ Storage::Storage(llvm::BasicBlock *block, llvm::Value *out,
    m_undefIntVec   = UndefValue::get(m_intVecType);
 
    m_shuffleId = 0;
+   m_numConsts = 0;
 }
 
 //can only build vectors with all members in the [0, 9] range
@@ -69,15 +72,11 @@ llvm::Value *Storage::inputElement(int idx)
    if (m_inputs.find(idx) != m_inputs.end()) {
       return m_inputs[idx];
    }
-   char ptrName[13];
-   char name[9];
-   snprintf(ptrName, 13, "input_ptr%d", idx);
-   snprintf(name, 9, "input%d", idx);
    GetElementPtrInst *getElem = new GetElementPtrInst(m_IN,
                                                       constantInt(idx),
-                                                      ptrName,
+                                                      name("input_ptr"),
                                                       m_block);
-   LoadInst *load = new LoadInst(getElem, name,
+   LoadInst *load = new LoadInst(getElem, name("input"),
                                  false, m_block);
    m_inputs[idx] = load;
    return load;
@@ -85,6 +84,7 @@ llvm::Value *Storage::inputElement(int idx)
 
 llvm::Value *Storage::constElement(int idx)
 {
+   m_numConsts = ((idx + 1) > m_numConsts) ? (idx + 1) : m_numConsts;
    if (m_consts.find(idx) != m_consts.end()) {
       return m_consts[idx];
    }
@@ -123,18 +123,70 @@ llvm::Value *Storage::tempElement(int idx) const
    return ret;
 }
 
-void Storage::setTempElement(int idx, llvm::Value *val)
+void Storage::setTempElement(int idx, llvm::Value *val, int mask)
 {
+   if (mask != TGSI_WRITEMASK_XYZW) {
+      llvm::Value *templ = m_temps[idx];
+      val = maskWrite(val, mask, templ);
+   }
    m_temps[idx] = val;
 }
 
-void Storage::store(int dstIdx, llvm::Value *val)
+void Storage::store(int dstIdx, llvm::Value *val, int mask)
 {
-   char ptrName[13];
-   snprintf(ptrName, 13, "out_ptr%d", dstIdx);
+   if (mask != TGSI_WRITEMASK_XYZW) {
+      llvm::Value *templ = m_dstCache[dstIdx];
+      val = maskWrite(val, mask, templ);
+   }
+
    GetElementPtrInst *getElem = new GetElementPtrInst(m_OUT,
                                                       constantInt(dstIdx),
-                                                      ptrName,
+                                                      name("out_ptr"),
                                                       m_block);
-   new StoreInst(val, getElem, false, m_block);
+   StoreInst *st = new StoreInst(val, getElem, false, m_block);
+   //m_dstCache[dstIdx] = st;
+}
+
+llvm::Value *Storage::maskWrite(llvm::Value *src, int mask, llvm::Value *templ)
+{
+   llvm::Value *dst = templ;
+   if (!dst)
+      dst = Constant::getNullValue(m_floatVecType);
+   if ((mask & TGSI_WRITEMASK_X)) {
+      llvm::Value *x = new ExtractElementInst(src, unsigned(0),
+                                              name("x"), m_block);
+      dst = new InsertElementInst(dst, x, unsigned(0),
+                                  name("dstx"), m_block);
+   }
+   if ((mask & TGSI_WRITEMASK_Y)) {
+      llvm::Value *y = new ExtractElementInst(src, unsigned(1),
+                                              name("y"), m_block);
+      dst = new InsertElementInst(dst, y, unsigned(1),
+                                  name("dsty"), m_block);
+   }
+   if ((mask & TGSI_WRITEMASK_Z)) {
+      llvm::Value *z = new ExtractElementInst(src, unsigned(2),
+                                              name("z"), m_block);
+      dst = new InsertElementInst(dst, z, unsigned(2),
+                                  name("dstz"), m_block);
+   }
+   if ((mask & TGSI_WRITEMASK_W)) {
+      llvm::Value *w = new ExtractElementInst(src, unsigned(3),
+                                              name("w"), m_block);
+      dst = new InsertElementInst(dst, w, unsigned(3),
+                                  name("dstw"), m_block);
+   }
+   return dst;
+}
+
+const char * Storage::name(const char *prefix)
+{
+   ++m_idx;
+   snprintf(m_name, 32, "%s%d", prefix, m_idx);
+   return m_name;
+}
+
+int Storage::numConsts() const
+{
+   return m_numConsts;
 }

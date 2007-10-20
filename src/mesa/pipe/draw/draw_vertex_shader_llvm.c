@@ -141,7 +141,8 @@ void draw_vertex_shader_queue_flush_llvm(struct draw_context *draw)
    /* batch execute the shaders on all the vertices */
    ga_llvm_prog_exec(prog, inputs, outputs, consts,
                      draw->vs.queue_nr,
-                     draw->vertex_shader->state->num_inputs);
+                     draw->vertex_shader->state->num_inputs,
+                     draw->vertex_info.num_attribs);
 
    /* FIXME: finish conversion */
    /* dests = outputs */

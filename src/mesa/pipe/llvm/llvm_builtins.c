@@ -102,14 +102,14 @@ void from_array(float4 (*res)[16], float (*ainputs)[16][4],
          vec.y = ainputs[i][j][1];
          vec.z = ainputs[i][j][2];
          vec.w = ainputs[i][j][3];
-         //printf("FAR(%d %d) %f %f %f %f\n", i, j, vec.x, vec.y, vec.z, vec.w);
+         printf("FRA(%d %d) %f %f %f %f\n", i, j, vec.x, vec.y, vec.z, vec.w);
          res[i][j] = vec;
       }
    }
 }
 
 void from_consts(float4 *res, float (*ainputs)[4],
-                int count)
+                 int count)
 {
    for (int i = 0; i < count; ++i) {
       float4 vec;
@@ -117,7 +117,7 @@ void from_consts(float4 *res, float (*ainputs)[4],
       vec.y = ainputs[i][1];
       vec.z = ainputs[i][2];
       vec.w = ainputs[i][3];
-      //printf("VCONST %f %f %f %f\n", vec.x, vec.y, vec.z, vec.w);
+      printf("VCONST(%d) %f %f %f %f\n", i, vec.x, vec.y, vec.z, vec.w);
       res[i] = vec;
    }
 }
@@ -141,20 +141,25 @@ extern void execute_shader(float4 *dests, float4 *inputs,
 void run_vertex_shader(float (*ainputs)[16][4],
                        float (*dests)[16][4],
                        float (*aconsts)[4],
-                       int count,
-                       int num_attribs)
+                       int num_vertices,
+                       int num_inputs,
+                       int num_attribs,
+                       int num_consts)
 {
    float4  inputs[16*32*4][16];
-   float4  consts[16];
+   float4  consts[32];
    float4  results[16*32*4][16];
 
-   printf("XXXXXXXXXXX run_vertex_shader\n");
-   from_array(inputs, ainputs, count, num_attribs);
-   from_consts(consts, aconsts, 5);
-   for (int i = 0; i < count; ++i) {
+   printf("XXX LLVM run_vertex_shader vertices = %d, inputs = %d, consts = %d\n",
+          num_vertices, num_inputs, num_consts);
+   from_array(inputs, ainputs, num_vertices, num_inputs);
+   from_consts(consts, aconsts, num_consts);
+   printf("               after conversion\n");
+   for (int i = 0; i < num_vertices; ++i) {
       float4 *in  = inputs[i];
       float4 *res = results[i];
       execute_shader(res, in, consts);
+      printf("after executing shader\n");
       to_array(dests[i], res, num_attribs);
    }
 }

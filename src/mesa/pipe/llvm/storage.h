@@ -27,12 +27,17 @@ public:
    llvm::Value *constElement(int idx);
 
    llvm::Value *tempElement(int idx) const;
-   void setTempElement(int idx, llvm::Value *val);
+   void setTempElement(int idx, llvm::Value *val, int mask);
 
    llvm::Value *shuffleVector(llvm::Value *vec, int shuffle);
 
 
-   void store(int dstIdx, llvm::Value *val);
+   void store(int dstIdx, llvm::Value *val, int mask);
+
+   int numConsts() const;
+private:
+   llvm::Value *maskWrite(llvm::Value *src, int mask, llvm::Value *templ);
+   const char *name(const char *prefix);
 private:
    llvm::BasicBlock *m_block;
    llvm::Value *m_OUT;
@@ -42,6 +47,7 @@ private:
    std::map<int, llvm::ConstantInt*> m_constInts;
    std::map<int, llvm::Constant*>    m_intVecs;
    std::vector<llvm::Value*>         m_temps;
+   std::vector<llvm::Value*>         m_dstCache;
    LoadMap                           m_inputs;
    LoadMap                           m_consts;
 
@@ -52,6 +58,10 @@ private:
    llvm::Value      *m_undefIntVec;
 
    int         m_shuffleId;
+   char        m_name[32];
+   int         m_idx;
+
+   int         m_numConsts;
 };
 
 #endif

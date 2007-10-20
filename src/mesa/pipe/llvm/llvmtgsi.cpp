@@ -125,6 +125,10 @@ translate_instruction(llvm::Module *module,
                       struct tgsi_full_instruction *fi)
 {
    llvm::Value *inputs[4];
+   inputs[0] = 0;
+   inputs[1] = 0;
+   inputs[2] = 0;
+   inputs[3] = 0;
    printf("translate instr START\n");
    for (int i = 0; i < inst->Instruction.NumSrcRegs; ++i) {
       struct tgsi_full_src_register *src = &inst->FullSrcRegisters[i];
@@ -168,7 +172,10 @@ translate_instruction(llvm::Module *module,
       inputs[i] = val;
    }
 
+   if (inputs[0])
+      instr->printVector(inputs[0]);
    llvm::Value *out = 0;
+   printf("Opcode is %d\n", inst->Instruction.Opcode);
    switch (inst->Instruction.Opcode) {
    case TGSI_OPCODE_ARL:
       break;
@@ -512,32 +519,19 @@ translate_instruction(llvm::Module *module,
 
       if (dst->DstRegister.File == TGSI_FILE_OUTPUT) {
          printf("--- storing to %d %p\n", dst->DstRegister.Index, out);
-         storage->store(dst->DstRegister.Index, out);
+         storage->store(dst->DstRegister.Index, out, dst->DstRegister.WriteMask);
       } else if (dst->DstRegister.File == TGSI_FILE_TEMPORARY) {
-         storage->setTempElement(dst->DstRegister.Index, out);
+         storage->setTempElement(dst->DstRegister.Index, out, dst->DstRegister.WriteMask);
       } else {
          fprintf(stderr, "ERROR: unsupported LLVM destination!");
       }
-
-#if 0
-      if (dst->DstRegister.WriteMask != TGSI_WRITEMASK_XYZW) {
-         if (dst->DstRegister.WriteMask & TGSI_WRITEMASK_X) {
-         }
-         if (dst->DstRegister.WriteMask & TGSI_WRITEMASK_Y) {
-         }
-         if (dst->DstRegister.WriteMask & TGSI_WRITEMASK_Z) {
-         }
-         if (dst->DstRegister.WriteMask & TGSI_WRITEMASK_W) {
-         }
-      }
-#endif
    }
    printf("translate instr END\n");
 }
 
 
 static llvm::Module *
-tgsi_to_llvm(const struct tgsi_token *tokens)
+tgsi_to_llvm(struct ga_llvm_prog *prog, const struct tgsi_token *tokens)
 {
    llvm::Module *mod = createBaseShader();
    struct tgsi_parse_context parse;
@@ -572,7 +566,7 @@ tgsi_to_llvm(const struct tgsi_token *tokens)
    fi = tgsi_default_full_instruction();
    fd = tgsi_default_full_declaration();
    Storage storage(label_entry, ptr_OUT, ptr_IN, ptr_CONST);
-   Instructions instr(mod, label_entry);
+   Instructions instr(mod, shader, label_entry);
    while(!tgsi_parse_end_of_tokens(&parse)) {
       tgsi_parse_token(&parse);
 
@@ -601,177 +595,13 @@ tgsi_to_llvm(const struct tgsi_token *tokens)
       }
    }
 
-#if 0
-   // Type Definitions
-   ArrayType* ArrayTy_0 = ArrayType::get(IntegerType::get(8), 19);
-
-   PointerType* PointerTy_1 = PointerType::get(ArrayTy_0);
-
-   VectorType* VectorTy_4 = VectorType::get(Type::FloatTy, 4);
-
-   PointerType* PointerTy_3 = PointerType::get(VectorTy_4);
-
-
-   VectorType* VectorTy_5 = VectorType::get(IntegerType::get(32), 4);
-
-
-   PointerType* PointerTy_8 = PointerType::get(IntegerType::get(8));
-
-
-   // Global Variable Declarations
-
-
-   GlobalVariable* gvar_array__str = new GlobalVariable(
-      /*Type=*/ArrayTy_0,
-      /*isConstant=*/true,
-      /*Linkage=*/GlobalValue::InternalLinkage,
-      /*Initializer=*/0, // has initializer, specified below
-      /*Name=*/".str",
-      mod);
-
-   GlobalVariable* gvar_array__str1 = new GlobalVariable(
-      /*Type=*/ArrayTy_0,
-      /*isConstant=*/true,
-      /*Linkage=*/GlobalValue::InternalLinkage,
-      /*Initializer=*/0, // has initializer, specified below
-      /*Name=*/".str1",
-      mod);
-
-   GlobalVariable* gvar_array__str2 = new GlobalVariable(
-      /*Type=*/ArrayTy_0,
-      /*isConstant=*/true,
-      /*Linkage=*/GlobalValue::InternalLinkage,
-      /*Initializer=*/0, // has initializer, specified below
-      /*Name=*/".str2",
-      mod);
-
-   // Constant Definitions
-   Constant* const_array_9 = ConstantArray::get("const %f %f %f %f\x0A", true);
-   Constant* const_array_10 = ConstantArray::get("resul %f %f %f %f\x0A", true);
-   Constant* const_array_11 = ConstantArray::get("outpu %f %f %f %f\x0A", true);
-   UndefValue* const_packed_12 = UndefValue::get(VectorTy_4);
-   Constant* const_packed_13 = Constant::getNullValue(VectorTy_5);
-   std::vector<Constant*> const_packed_14_elems;
-   ConstantInt* const_int32_15 = ConstantInt::get(APInt(32,  "1", 10));
-   const_packed_14_elems.push_back(const_int32_15);
-   const_packed_14_elems.push_back(const_int32_15);
-   const_packed_14_elems.push_back(const_int32_15);
-   const_packed_14_elems.push_back(const_int32_15);
-   Constant* const_packed_14 = ConstantVector::get(VectorTy_5, const_packed_14_elems);
-   std::vector<Constant*> const_packed_16_elems;
-   ConstantInt* const_int32_17 = ConstantInt::get(APInt(32,  "2", 10));
-   const_packed_16_elems.push_back(const_int32_17);
-   const_packed_16_elems.push_back(const_int32_17);
-   const_packed_16_elems.push_back(const_int32_17);
-   const_packed_16_elems.push_back(const_int32_17);
-   Constant* const_packed_16 = ConstantVector::get(VectorTy_5, const_packed_16_elems);
-   std::vector<Constant*> const_packed_18_elems;
-   ConstantInt* const_int32_19 = ConstantInt::get(APInt(32,  "3", 10));
-   const_packed_18_elems.push_back(const_int32_19);
-   const_packed_18_elems.push_back(const_int32_19);
-   const_packed_18_elems.push_back(const_int32_19);
-   const_packed_18_elems.push_back(const_int32_19);
-   Constant* const_packed_18 = ConstantVector::get(VectorTy_5, const_packed_18_elems);
-   std::vector<Constant*> const_ptr_20_indices;
-   Constant* const_int32_21 = Constant::getNullValue(IntegerType::get(32));
-   const_ptr_20_indices.push_back(const_int32_21);
-   const_ptr_20_indices.push_back(const_int32_21);
-   Constant* const_ptr_20 = ConstantExpr::getGetElementPtr(gvar_array__str, &const_ptr_20_indices[0], const_ptr_20_indices.size() );
-   UndefValue* const_double_22 = UndefValue::get(Type::DoubleTy);
-   std::vector<Constant*> const_ptr_23_indices;
-   const_ptr_23_indices.push_back(const_int32_21);
-   const_ptr_23_indices.push_back(const_int32_21);
-   Constant* const_ptr_23 = ConstantExpr::getGetElementPtr(gvar_array__str1, &const_ptr_23_indices[0], const_ptr_23_indices.size() );
-   std::vector<Constant*> const_ptr_24_indices;
-   const_ptr_24_indices.push_back(const_int32_21);
-   const_ptr_24_indices.push_back(const_int32_21);
-   Constant* const_ptr_24 = ConstantExpr::getGetElementPtr(gvar_array__str2, &const_ptr_24_indices[0], const_ptr_24_indices.size() );
-
-   // Global Variable Definitions
-   gvar_array__str->setInitializer(const_array_9);
-   gvar_array__str1->setInitializer(const_array_10);
-   gvar_array__str2->setInitializer(const_array_11);
-
-   // Function Definitions
-
-   // Function: execute_shader (func_execute_shader)
-   {
-      // Block entry (label_entry)
-      LoadInst* packed_tmp1 = new LoadInst(ptr_IN, "tmp1", false, label_entry);
-      ShuffleVectorInst* packed_tmp3 = new ShuffleVectorInst(packed_tmp1, const_packed_12, const_packed_13, "tmp3", label_entry);
-      LoadInst* packed_tmp6 = new LoadInst(ptr_CONST, "tmp6", false, label_entry);
-      BinaryOperator* packed_mul = BinaryOperator::create(Instruction::Mul, packed_tmp3, packed_tmp6, "mul", label_entry);
-      ShuffleVectorInst* packed_tmp8 = new ShuffleVectorInst(packed_tmp1, const_packed_12, const_packed_14, "tmp8", label_entry);
-      GetElementPtrInst* ptr_arrayidx10 = new GetElementPtrInst(ptr_CONST, const_int32_15, "arrayidx10", label_entry);
-      LoadInst* packed_tmp11 = new LoadInst(ptr_arrayidx10, "tmp11", false, label_entry);
-      BinaryOperator* packed_mul12 = BinaryOperator::create(Instruction::Mul, packed_tmp8, packed_tmp11, "mul12", label_entry);
-      BinaryOperator* packed_add = BinaryOperator::create(Instruction::Add, packed_mul12, packed_mul, "add", label_entry);
-      ShuffleVectorInst* packed_tmp15 = new ShuffleVectorInst(packed_tmp1, const_packed_12, const_packed_16, "tmp15", label_entry);
-      GetElementPtrInst* ptr_arrayidx17 = new GetElementPtrInst(ptr_CONST, const_int32_17, "arrayidx17", label_entry);
-      LoadInst* packed_tmp18 = new LoadInst(ptr_arrayidx17, "tmp18", false, label_entry);
-      BinaryOperator* packed_mul19 = BinaryOperator::create(Instruction::Mul, packed_tmp15, packed_tmp18, "mul19", label_entry);
-      BinaryOperator* packed_add21 = BinaryOperator::create(Instruction::Add, packed_mul19, packed_add, "add21", label_entry);
-      ShuffleVectorInst* packed_tmp25 = new ShuffleVectorInst(packed_tmp1, const_packed_12, const_packed_18, "tmp25", label_entry);
-      GetElementPtrInst* ptr_arrayidx27 = new GetElementPtrInst(ptr_CONST, const_int32_19, "arrayidx27", label_entry);
-      LoadInst* packed_tmp28 = new LoadInst(ptr_arrayidx27, "tmp28", false, label_entry);
-      BinaryOperator* packed_mul29 = BinaryOperator::create(Instruction::Mul, packed_tmp25, packed_tmp28, "mul29", label_entry);
-      BinaryOperator* packed_add31 = BinaryOperator::create(Instruction::Add, packed_mul29, packed_add21, "add31", label_entry);
-      StoreInst* void_25 = new StoreInst(packed_add31, ptr_OUT, false, label_entry);
-      GetElementPtrInst* ptr_arrayidx33 = new GetElementPtrInst(ptr_OUT, const_int32_15, "arrayidx33", label_entry);
-      GetElementPtrInst* ptr_arrayidx35 = new GetElementPtrInst(ptr_IN, const_int32_15, "arrayidx35", label_entry);
-      LoadInst* packed_tmp36 = new LoadInst(ptr_arrayidx35, "tmp36", false, label_entry);
-      StoreInst* void_26 = new StoreInst(packed_tmp36, ptr_arrayidx33, false, label_entry);
-      std::vector<Value*> int32_call_params;
-      int32_call_params.push_back(const_ptr_20);
-      int32_call_params.push_back(const_double_22);
-      int32_call_params.push_back(const_double_22);
-      int32_call_params.push_back(const_double_22);
-      int32_call_params.push_back(const_double_22);
-      //CallInst* int32_call = new CallInst(func_printf, int32_call_params.begin(), int32_call_params.end(), "call", label_entry);
-      //int32_call->setCallingConv(CallingConv::C);
-      //int32_call->setTailCall(true);
-      ExtractElementInst* float_tmp52 = new ExtractElementInst(packed_tmp1, const_int32_21, "tmp52", label_entry);
-      CastInst* double_conv53 = new FPExtInst(float_tmp52, Type::DoubleTy, "conv53", label_entry);
-      ExtractElementInst* float_tmp55 = new ExtractElementInst(packed_tmp1, const_int32_15, "tmp55", label_entry);
-      CastInst* double_conv56 = new FPExtInst(float_tmp55, Type::DoubleTy, "conv56", label_entry);
-      ExtractElementInst* float_tmp58 = new ExtractElementInst(packed_tmp1, const_int32_17, "tmp58", label_entry);
-      CastInst* double_conv59 = new FPExtInst(float_tmp58, Type::DoubleTy, "conv59", label_entry);
-      ExtractElementInst* float_tmp61 = new ExtractElementInst(packed_tmp1, const_int32_19, "tmp61", label_entry);
-      CastInst* double_conv62 = new FPExtInst(float_tmp61, Type::DoubleTy, "conv62", label_entry);
-      std::vector<Value*> int32_call63_params;
-      int32_call63_params.push_back(const_ptr_23);
-      int32_call63_params.push_back(double_conv53);
-      int32_call63_params.push_back(double_conv56);
-      int32_call63_params.push_back(double_conv59);
-      int32_call63_params.push_back(double_conv62);
-      //CallInst* int32_call63 = new CallInst(func_printf, int32_call63_params.begin(), int32_call63_params.end(), "call63", label_entry);
-      //int32_call63->setCallingConv(CallingConv::C);
-      //int32_call63->setTailCall(true);
-      ExtractElementInst* float_tmp65 = new ExtractElementInst(packed_add31, const_int32_21, "tmp65", label_entry);
-      CastInst* double_conv66 = new FPExtInst(float_tmp65, Type::DoubleTy, "conv66", label_entry);
-      ExtractElementInst* float_tmp68 = new ExtractElementInst(packed_add31, const_int32_15, "tmp68", label_entry);
-      CastInst* double_conv69 = new FPExtInst(float_tmp68, Type::DoubleTy, "conv69", label_entry);
-      ExtractElementInst* float_tmp71 = new ExtractElementInst(packed_add31, const_int32_17, "tmp71", label_entry);
-      CastInst* double_conv72 = new FPExtInst(float_tmp71, Type::DoubleTy, "conv72", label_entry);
-      ExtractElementInst* float_tmp74 = new ExtractElementInst(packed_add31, const_int32_19, "tmp74", label_entry);
-      CastInst* double_conv75 = new FPExtInst(float_tmp74, Type::DoubleTy, "conv75", label_entry);
-      std::vector<Value*> int32_call76_params;
-      int32_call76_params.push_back(const_ptr_24);
-      int32_call76_params.push_back(double_conv66);
-      int32_call76_params.push_back(double_conv69);
-      int32_call76_params.push_back(double_conv72);
-      int32_call76_params.push_back(double_conv75);
-      //CallInst* int32_call76 = new CallInst(func_printf, int32_call76_params.begin(), int32_call76_params.end(), "call76", label_entry);
-      //int32_call76->setCallingConv(CallingConv::C);
-      //int32_call76->setTailCall(true);
-   }
-#endif
-
    new ReturnInst(label_entry);
 
    //TXT("\ntgsi-dump end -------------------\n");
 
    tgsi_parse_free(&parse);
+
+   prog->num_consts = storage.numConsts();
 
    std::cout<<"XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"<<std::endl;
    std::cout<<*mod<<std::endl;
@@ -786,10 +616,9 @@ ga_llvm_from_tgsi(struct pipe_context *pipe, const struct tgsi_token *tokens)
    struct ga_llvm_prog *ga_llvm =
       (struct ga_llvm_prog *)malloc(sizeof(struct ga_llvm_prog));
    fprintf(stderr, "DUMPX \n");
-   //tgsi_dump(tokens, TGSI_DUMP_VERBOSE);
    tgsi_dump(tokens, 0);
    fprintf(stderr, "DUMPEND \n");
-   llvm::Module *mod = tgsi_to_llvm(tokens);
+   llvm::Module *mod = tgsi_to_llvm(ga_llvm, tokens);
 
    /* Run optimization passes over it */
    PassManager passes;
@@ -831,25 +660,29 @@ void ga_llvm_prog_delete(struct ga_llvm_prog *prog)
 }
 
 typedef void (*vertex_shader_runner)(float (*ainputs)[PIPE_MAX_SHADER_INPUTS][4],
-                                  float (*dests)[PIPE_MAX_SHADER_INPUTS][4],
-                                  float (*aconsts)[4],
-                                  int count,
-                                  int num_attribs);
+                                     float (*dests)[PIPE_MAX_SHADER_INPUTS][4],
+                                     float (*aconsts)[4],
+                                     int num_vertices,
+                                     int num_inputs,
+                                     int num_attribs,
+                                     int num_consts);
 
 int ga_llvm_prog_exec(struct ga_llvm_prog *prog,
                       float (*inputs)[PIPE_MAX_SHADER_INPUTS][4],
                       float (*dests)[PIPE_MAX_SHADER_INPUTS][4],
                       float (*consts)[4],
-                      int count,
+                      int num_vertices,
+                      int num_inputs,
                       int num_attribs)
 {
    std::cout << "---- START LLVM Execution "<<std::endl;
    vertex_shader_runner runner = reinterpret_cast<vertex_shader_runner>(prog->function);
-   runner(inputs, dests, consts, count, num_attribs);
+   runner(inputs, dests, consts, num_vertices, num_inputs,
+          num_attribs, prog->num_consts);
 
    std::cout << "---- END LLVM Execution "<<std::endl;
 
-   for (int i = 0; i < count; ++i) {
+   for (int i = 0; i < num_vertices; ++i) {
       for (int j = 0; j < num_attribs; ++j) {
          printf("OUT(%d, %d) [%f, %f, %f, %f]\n", i, j,
                 dests[i][j][0], dests[i][j][1],
