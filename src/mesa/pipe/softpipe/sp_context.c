@@ -384,6 +384,7 @@ struct pipe_context *softpipe_create( struct pipe_winsys *pipe_winsys,
       softpipe->cbuf_cache[i] = sp_create_tile_cache();
    softpipe->zbuf_cache = sp_create_tile_cache();
    softpipe->sbuf_cache_sep = sp_create_tile_cache();
+   softpipe->sbuf_cache = softpipe->sbuf_cache_sep; /* initial value */
 
    return &softpipe->pipe;
 }
