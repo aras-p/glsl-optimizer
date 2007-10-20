@@ -113,7 +113,7 @@ softpipe_draw_elements(struct pipe_context *pipe,
       softpipe_update_derived( sp );
 
    softpipe_map_surfaces(sp);
-
+   softpipe_map_texture_surfaces(sp);
    softpipe_map_constant_buffers(sp);
 
    /*
@@ -184,7 +184,8 @@ softpipe_draw_elements(struct pipe_context *pipe,
    }
 
 
-   softpipe_unmap_surfaces(sp);
+   /* Note: leave drawing surfaces mapped */
+   softpipe_unmap_texture_surfaces(sp);
    softpipe_unmap_constant_buffers(sp);
 
    return TRUE;

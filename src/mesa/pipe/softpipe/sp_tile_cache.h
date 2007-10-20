@@ -36,6 +36,9 @@ struct softpipe_context;
 struct softpipe_tile_cache;
 
 
+/**
+ * Cache tile size (width and height). This needs to be a power of two.
+ */
 #define TILE_SIZE 64
 
 
@@ -45,7 +48,9 @@ struct softpipe_cached_tile
    int x, y;         /** pos of tile in window coords */
    union {
       float color[TILE_SIZE][TILE_SIZE][4];
-      uint depth[TILE_SIZE][TILE_SIZE];
+      uint depth32[TILE_SIZE][TILE_SIZE];
+      ushort depth16[TILE_SIZE][TILE_SIZE];
+      ubyte stencil8[TILE_SIZE][TILE_SIZE];
    } data;
 };
 
@@ -57,13 +62,17 @@ extern void
 sp_destroy_tile_cache(struct softpipe_tile_cache *tc);
 
 extern void
-sp_flush_tile_cache(struct softpipe_surface *sps);
+sp_tile_cache_set_surface(struct softpipe_tile_cache *tc,
+                          struct softpipe_surface *sps);
 
 extern void
-sp_clear_tile_cache(struct softpipe_surface *sps, unsigned clearval);
+sp_flush_tile_cache(struct softpipe_tile_cache *tc);
+
+extern void
+sp_clear_tile_cache(struct softpipe_tile_cache *tc, unsigned clearval);
 
 extern struct softpipe_cached_tile *
-sp_get_cached_tile(struct softpipe_surface *sps, int x, int y);
+sp_get_cached_tile(struct softpipe_tile_cache *tc, int x, int y);
 
 
 #endif /* SP_TILE_CACHE_H */

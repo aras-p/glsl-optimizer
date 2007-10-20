@@ -44,6 +44,7 @@ struct softpipe_surface;
 struct softpipe_winsys;
 struct draw_context;
 struct draw_stage;
+struct softpipe_tile_cache;
 
 
 #define SP_NEW_VIEWPORT      0x1
@@ -154,6 +155,13 @@ struct softpipe_context {
    struct draw_stage *vbuf;
 
    struct pipe_surface *cbuf;      /**< current color buffer (one of cbufs) */
+
+   struct softpipe_tile_cache *cbuf_cache[PIPE_MAX_COLOR_BUFS];
+   struct softpipe_tile_cache *zbuf_cache;
+   /** Stencil buffer cache, for stencil separate from Z */
+   struct softpipe_tile_cache *sbuf_cache_sep;
+   /** This either points to zbuf_cache or sbuf_cache_sep */
+   struct softpipe_tile_cache *sbuf_cache;
 
    int use_sse : 1;
 };

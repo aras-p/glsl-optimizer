@@ -141,4 +141,10 @@ softpipe_map_surfaces(struct softpipe_context *sp);
 void
 softpipe_unmap_surfaces(struct softpipe_context *sp);
 
+void
+softpipe_map_texture_surfaces(struct softpipe_context *sp);
+
+void
+softpipe_unmap_texture_surfaces(struct softpipe_context *sp);
+
 #endif

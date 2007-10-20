@@ -7,6 +7,7 @@
 #include "sp_context.h"
 #include "sp_headers.h"
 #include "sp_surface.h"
+#include "sp_tile_cache.h"
 #include "sp_quad.h"
 #include "pipe/p_defines.h"
 #include "pipe/p_util.h"
@@ -200,10 +201,13 @@ static void
 stencil_test_quad(struct quad_stage *qs, struct quad_header *quad)
 {
    struct softpipe_context *softpipe = qs->softpipe;
-   struct softpipe_surface *s_surf = softpipe_surface(softpipe->framebuffer.sbuf);
+   struct softpipe_surface *sps = softpipe_surface(softpipe->framebuffer.sbuf);
    unsigned func, zFailOp, zPassOp, failOp;
    ubyte ref, wrtMask, valMask;
    ubyte stencilVals[QUAD_SIZE];
+   struct softpipe_cached_tile *tile
+      = sp_get_cached_tile(softpipe->sbuf_cache, quad->x0, quad->y0);
+   uint j;
 
    /* choose front or back face function, operator, etc */
    /* XXX we could do these initializations once per primitive */
@@ -226,8 +230,27 @@ stencil_test_quad(struct quad_stage *qs, struct quad_header *quad)
       valMask = softpipe->depth_stencil->stencil.value_mask[0];
    }
 
-   assert(s_surf); /* shouldn't get here if there's no stencil buffer */
-   s_surf->read_quad_stencil(s_surf, quad->x0, quad->y0, stencilVals);
+   assert(sps); /* shouldn't get here if there's no stencil buffer */
+
+   /* get stencil values from cached tile */
+   switch (sps->surface.format) {
+   case PIPE_FORMAT_S8_Z24:
+      for (j = 0; j < QUAD_SIZE; j++) {
+         int x = quad->x0 % TILE_SIZE + (j & 1);
+         int y = quad->y0 % TILE_SIZE + (j >> 1);
+         stencilVals[j] = tile->data.depth32[y][x] >> 24;
+      }
+      break;
+   case PIPE_FORMAT_U_S8:
+      for (j = 0; j < QUAD_SIZE; j++) {
+         int x = quad->x0 % TILE_SIZE + (j & 1);
+         int y = quad->y0 % TILE_SIZE + (j >> 1);
+         stencilVals[j] = tile->data.stencil8[y][x];
+      }
+      break;
+   default:
+      assert(0);
+   }
 
    /* do the stencil test first */
    {
@@ -242,7 +265,6 @@ stencil_test_quad(struct quad_stage *qs, struct quad_header *quad)
    }
 
    if (quad->mask) {
-
       /* now the pixels that passed the stencil test are depth tested */
       if (softpipe->depth_stencil->depth.enabled) {
          const unsigned origMask = quad->mask;
@@ -267,7 +289,27 @@ stencil_test_quad(struct quad_stage *qs, struct quad_header *quad)
 
    }
 
-   s_surf->write_quad_stencil(s_surf, quad->x0, quad->y0, stencilVals);
+   /* put new stencil values into cached tile */
+   switch (sps->surface.format) {
+   case PIPE_FORMAT_S8_Z24:
+      for (j = 0; j < QUAD_SIZE; j++) {
+         int x = quad->x0 % TILE_SIZE + (j & 1);
+         int y = quad->y0 % TILE_SIZE + (j >> 1);
+         uint s8z24 = tile->data.depth32[y][x];
+         s8z24 = (stencilVals[j] << 24) | (s8z24 & 0xffffff);
+         tile->data.depth32[y][x] = s8z24;
+      }
+      break;
+   case PIPE_FORMAT_U_S8:
+      for (j = 0; j < QUAD_SIZE; j++) {
+         int x = quad->x0 % TILE_SIZE + (j & 1);
+         int y = quad->y0 % TILE_SIZE + (j >> 1);
+         tile->data.stencil8[y][x] = stencilVals[j];
+      }
+      break;
+   default:
+      assert(0);
+   }
 
    if (quad->mask)
       qs->next->run(qs->next, quad);

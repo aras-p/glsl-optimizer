@@ -101,14 +101,13 @@ static void
 logicop_quad(struct quad_stage *qs, struct quad_header *quad)
 {
    struct softpipe_context *softpipe = qs->softpipe;
-   struct softpipe_surface *sps = softpipe_surface(softpipe->cbuf);
    float dest[4][QUAD_SIZE];
    ubyte src[4][4], dst[4][4], res[4][4];
    uint *src4 = (uint *) src;
    uint *dst4 = (uint *) dst;
    uint *res4 = (uint *) res;
    struct softpipe_cached_tile *
-      tile = sp_get_cached_tile(sps, quad->x0, quad->y0);
+      tile = sp_get_cached_tile(softpipe->cbuf_cache[0], quad->x0, quad->y0);
    uint i, j;
 
    /* get/swizzle dest colors */
@@ -220,12 +219,11 @@ static void
 blend_quad(struct quad_stage *qs, struct quad_header *quad)
 {
    struct softpipe_context *softpipe = qs->softpipe;
-   struct softpipe_surface *sps = softpipe_surface(softpipe->cbuf);
    static const float zero[4] = { 0, 0, 0, 0 };
    static const float one[4] = { 1, 1, 1, 1 };
    float source[4][QUAD_SIZE], dest[4][QUAD_SIZE];
    struct softpipe_cached_tile *
-      tile = sp_get_cached_tile(sps, quad->x0, quad->y0);
+      tile = sp_get_cached_tile(softpipe->cbuf_cache[0], quad->x0, quad->y0);
    uint i, j;
 
    if (softpipe->blend->logicop_enable) {

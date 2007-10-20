@@ -42,9 +42,8 @@ static void
 output_quad(struct quad_stage *qs, struct quad_header *quad)
 {
    struct softpipe_context *softpipe = qs->softpipe;
-   struct softpipe_surface *sps = softpipe_surface(softpipe->cbuf);
    struct softpipe_cached_tile *tile
-      = sp_get_cached_tile(sps, quad->x0, quad->y0);
+      = sp_get_cached_tile(softpipe->cbuf_cache[0], quad->x0, quad->y0);
    /* in-tile pos: */
    const int itx = quad->x0 % TILE_SIZE;
    const int ity = quad->y0 % TILE_SIZE;

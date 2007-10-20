@@ -39,55 +39,86 @@
  * Do depth testing for a quad.
  * Not static since it's used by the stencil code.
  */
+
+/*
+ * To increase efficiency, we should probably have multiple versions
+ * of this function that are specifically for Z16, Z32 and FP Z buffers.
+ * Try to effectively do that with codegen...
+ */
+
 void
 sp_depth_test_quad(struct quad_stage *qs, struct quad_header *quad)
 {
    struct softpipe_context *softpipe = qs->softpipe;
    struct softpipe_surface *sps = softpipe_surface(softpipe->framebuffer.zbuf);
+   const uint format = sps->surface.format;
    unsigned bzzzz[QUAD_SIZE];  /**< Z values fetched from depth buffer */
    unsigned qzzzz[QUAD_SIZE];  /**< Z values from the quad */
    unsigned zmask = 0;
    unsigned j;
-   float scale;
-#if 0
-   struct cached_tile *tile = sp_get_cached_tile(softpipe, quad->x0, quad->y0);
-#endif
+   struct softpipe_cached_tile *tile
+      = sp_get_cached_tile(softpipe->zbuf_cache, quad->x0, quad->y0);
 
    assert(sps); /* shouldn't get here if there's no zbuffer */
 
    /*
-    * To increase efficiency, we should probably have multiple versions
-    * of this function that are specifically for Z16, Z32 and FP Z buffers.
-    * Try to effectively do that with codegen...
-    */
-   if (sps->surface.format == PIPE_FORMAT_U_Z16)
-      scale = 65535.0;
-   else if (sps->surface.format == PIPE_FORMAT_S8_Z24)
-      scale = (float) ((1 << 24) - 1);
-   else
-      assert(0);  /* XXX fix this someday */
-
-   /*
-    * Convert quad's float depth values to int depth values.
+    * Convert quad's float depth values to int depth values (qzzzz).
     * If the Z buffer stores integer values, we _have_ to do the depth
     * compares with integers (not floats).  Otherwise, the float->int->float
     * conversion of Z values (which isn't an identity function) will cause
     * Z-fighting errors.
+    *
+    * Also, get the zbuffer values (bzzzz) from the cached tile.
     */
-   for (j = 0; j < QUAD_SIZE; j++) {
-      qzzzz[j] = (unsigned) (quad->outputs.depth[j] * scale);
-   }
+   switch (format) {
+   case PIPE_FORMAT_U_Z16:
+      {
+         float scale = 65535.0;
 
-#if 0
-   for (j = 0; j < 4; j++) {
-      int x = quad->x0 % TILE_SIZE + (j & 1);
-      int y = quad->y0 % TILE_SIZE + (j >> 1);
-      bzzzz[j] = tile->depth[y][x];
+         for (j = 0; j < QUAD_SIZE; j++) {
+            qzzzz[j] = (unsigned) (quad->outputs.depth[j] * scale);
+         }
+
+         for (j = 0; j < QUAD_SIZE; j++) {
+            int x = quad->x0 % TILE_SIZE + (j & 1);
+            int y = quad->y0 % TILE_SIZE + (j >> 1);
+            bzzzz[j] = tile->data.depth16[y][x];
+         }
+      }
+      break;
+   case PIPE_FORMAT_U_Z32:
+      {
+         double scale = (double) (uint) ~0UL;
+
+         for (j = 0; j < QUAD_SIZE; j++) {
+            qzzzz[j] = (unsigned) (quad->outputs.depth[j] * scale);
+         }
+
+         for (j = 0; j < QUAD_SIZE; j++) {
+            int x = quad->x0 % TILE_SIZE + (j & 1);
+            int y = quad->y0 % TILE_SIZE + (j >> 1);
+            bzzzz[j] = tile->data.depth32[y][x];
+         }
+      }
+      break;
+   case PIPE_FORMAT_S8_Z24:
+      {
+         float scale = (float) ((1 << 24) - 1);
+
+         for (j = 0; j < QUAD_SIZE; j++) {
+            qzzzz[j] = (unsigned) (quad->outputs.depth[j] * scale);
+         }
+
+         for (j = 0; j < QUAD_SIZE; j++) {
+            int x = quad->x0 % TILE_SIZE + (j & 1);
+            int y = quad->y0 % TILE_SIZE + (j >> 1);
+            bzzzz[j] = tile->data.depth32[y][x] & 0xffffff;
+         }
+      }
+      break;
+   default:
+      assert(0);
    }
-#else
-   /* get zquad from zbuffer */
-   sps->read_quad_z(sps, quad->x0, quad->y0, bzzzz);
-#endif
 
    switch (softpipe->depth_stencil->depth.func) {
    case PIPE_FUNC_NEVER:
@@ -151,16 +182,34 @@ sp_depth_test_quad(struct quad_stage *qs, struct quad_header *quad)
 	 }
       }
 
-#if 1
-      /* write updated zquad to zbuffer */
-      sps->write_quad_z(sps, quad->x0, quad->y0, bzzzz);
-#else
-      for (j = 0; j < 4; j++) {
-         int x = quad->x0 % TILE_SIZE + (j & 1);
-         int y = quad->y0 % TILE_SIZE + (j >> 1);
-         tile->depth[y][x] = bzzzz[j];
+      /* put updated Z values back into cached tile */
+      switch (format) {
+      case PIPE_FORMAT_U_Z16:
+         for (j = 0; j < QUAD_SIZE; j++) {
+            int x = quad->x0 % TILE_SIZE + (j & 1);
+            int y = quad->y0 % TILE_SIZE + (j >> 1);
+            tile->data.depth16[y][x] = bzzzz[j];
+         }
+         break;
+      case PIPE_FORMAT_U_Z32:
+         for (j = 0; j < QUAD_SIZE; j++) {
+            int x = quad->x0 % TILE_SIZE + (j & 1);
+            int y = quad->y0 % TILE_SIZE + (j >> 1);
+            tile->data.depth32[y][x] = bzzzz[j];
+         }
+         break;
+      case PIPE_FORMAT_S8_Z24:
+         for (j = 0; j < QUAD_SIZE; j++) {
+            int x = quad->x0 % TILE_SIZE + (j & 1);
+            int y = quad->y0 % TILE_SIZE + (j >> 1);
+            uint s8z24 = tile->data.depth32[y][x];
+            s8z24 = (s8z24 & 0xff000000) | bzzzz[j];
+            tile->data.depth32[y][x] = s8z24;
+         }
+         break;
+      default:
+         assert(0);
       }
-#endif
    }
 }
 

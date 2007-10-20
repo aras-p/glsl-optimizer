@@ -61,6 +61,10 @@
 #else
 #define CLIP_TILE \
    do { \
+      if (x >= ps->width) \
+         return; \
+      if (y >= ps->height) \
+         return; \
       if (x + w > ps->width) \
          w = ps->width - x; \
       if (y + h > ps->height) \
@@ -907,13 +911,16 @@ put_tile_raw32(struct pipe_surface *ps,
    unsigned i;
    unsigned w0 = w;
 
+   assert(w < 1000);
    assert(ps->region->map);
    assert(ps->format == PIPE_FORMAT_S8_Z24 ||
           ps->format == PIPE_FORMAT_U_Z32);
 
+   assert(w < 1000);
    CLIP_TILE;
 
    for (i = 0; i < h; i++) {
+   assert(w < 1000);
       memcpy(dst, pSrc, w * sizeof(uint));
       dst += ps->region->pitch;
       pSrc += w0;
@@ -980,8 +987,6 @@ put_tile_raw16(struct pipe_surface *ps,
 void
 softpipe_init_surface_funcs(struct softpipe_surface *sps)
 {
-   sps->tc = sp_create_tile_cache();
-
    assert(sps->surface.format);
 
    switch (sps->surface.format) {

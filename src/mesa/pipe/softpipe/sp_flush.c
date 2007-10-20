@@ -54,10 +54,14 @@ softpipe_flush( struct pipe_context *pipe,
     * - flush the render cache
     */
 
-   for (i = 0; i < softpipe->framebuffer.num_cbufs; i++) {
-      struct softpipe_surface *sps = softpipe_surface(softpipe->framebuffer.cbufs[i]);
-      if (sps)
-         sp_flush_tile_cache(sps);
-   }
+   for (i = 0; i < PIPE_MAX_COLOR_BUFS; i++)
+      if (softpipe->cbuf_cache[i])
+         sp_flush_tile_cache(softpipe->cbuf_cache[i]);
+
+   if (softpipe->zbuf_cache)
+      sp_flush_tile_cache(softpipe->zbuf_cache);
+
+   if (softpipe->sbuf_cache)
+      sp_flush_tile_cache(softpipe->sbuf_cache);
 }
 

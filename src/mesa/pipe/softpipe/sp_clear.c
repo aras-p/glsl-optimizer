@@ -69,5 +69,7 @@ softpipe_clear(struct pipe_context *pipe, struct pipe_surface *ps,
    /* XXX skip this fill if we're using tile cache */
    pipe->region_fill(pipe, ps->region, 0, x, y, w, h, clearValue);
 
+#if 0
    sp_clear_tile_cache(sps, clearValue);
+#endif
 }
