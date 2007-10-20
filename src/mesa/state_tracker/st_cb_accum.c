@@ -241,6 +241,9 @@ st_Accum(GLcontext *ctx, GLenum op, GLfloat value)
    const GLint width = ctx->DrawBuffer->_Xmax - xpos;
    const GLint height = ctx->DrawBuffer->_Ymax - ypos;
 
+   /* make sure color bufs aren't cached */
+   pipe->flush(pipe, 0);
+
    switch (op) {
    case GL_ADD:
       if (value != 0.0F) {
