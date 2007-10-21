@@ -55,44 +55,44 @@ do { \
     DST[3] = SRC; \
 } while(0)
 
-#define VEC4_ADD(SUM, A, B) \
+#define VEC4_ADD(R, A, B) \
 do { \
-   SUM[0] = A[0] + B[0]; \
-   SUM[1] = A[1] + B[1]; \
-   SUM[2] = A[2] + B[2]; \
-   SUM[3] = A[3] + B[3]; \
+   R[0] = A[0] + B[0]; \
+   R[1] = A[1] + B[1]; \
+   R[2] = A[2] + B[2]; \
+   R[3] = A[3] + B[3]; \
 } while (0)
 
-#define VEC4_SUB(SUM, A, B) \
+#define VEC4_SUB(R, A, B) \
 do { \
-   SUM[0] = A[0] - B[0]; \
-   SUM[1] = A[1] - B[1]; \
-   SUM[2] = A[2] - B[2]; \
-   SUM[3] = A[3] - B[3]; \
+   R[0] = A[0] - B[0]; \
+   R[1] = A[1] - B[1]; \
+   R[2] = A[2] - B[2]; \
+   R[3] = A[3] - B[3]; \
 } while (0)
 
-#define VEC4_MUL(SUM, A, B) \
+#define VEC4_MUL(R, A, B) \
 do { \
-   SUM[0] = A[0] * B[0]; \
-   SUM[1] = A[1] * B[1]; \
-   SUM[2] = A[2] * B[2]; \
-   SUM[3] = A[3] * B[3]; \
+   R[0] = A[0] * B[0]; \
+   R[1] = A[1] * B[1]; \
+   R[2] = A[2] * B[2]; \
+   R[3] = A[3] * B[3]; \
 } while (0)
 
-#define VEC4_MIN(SUM, A, B) \
+#define VEC4_MIN(R, A, B) \
 do { \
-   SUM[0] = (A[0] < B[0]) ? A[0] : B[0]; \
-   SUM[1] = (A[1] < B[1]) ? A[1] : B[1]; \
-   SUM[2] = (A[2] < B[2]) ? A[2] : B[2]; \
-   SUM[3] = (A[3] < B[3]) ? A[3] : B[3]; \
+   R[0] = (A[0] < B[0]) ? A[0] : B[0]; \
+   R[1] = (A[1] < B[1]) ? A[1] : B[1]; \
+   R[2] = (A[2] < B[2]) ? A[2] : B[2]; \
+   R[3] = (A[3] < B[3]) ? A[3] : B[3]; \
 } while (0)
 
-#define VEC4_MAX(SUM, A, B) \
+#define VEC4_MAX(R, A, B) \
 do { \
-   SUM[0] = (A[0] > B[0]) ? A[0] : B[0]; \
-   SUM[1] = (A[1] > B[1]) ? A[1] : B[1]; \
-   SUM[2] = (A[2] > B[2]) ? A[2] : B[2]; \
-   SUM[3] = (A[3] > B[3]) ? A[3] : B[3]; \
+   R[0] = (A[0] > B[0]) ? A[0] : B[0]; \
+   R[1] = (A[1] > B[1]) ? A[1] : B[1]; \
+   R[2] = (A[2] > B[2]) ? A[2] : B[2]; \
+   R[3] = (A[3] > B[3]) ? A[3] : B[3]; \
 } while (0)
 
 
