@@ -167,26 +167,6 @@ llvm::Value *Instructions::callFAbs(llvm::Value *val)
 
 llvm::Value * Instructions::lit(llvm::Value *in)
 {
-#if 0
-   printVector(in);
-   return in;
-
-   ExtractElementInst *x = new ExtractElementInst(in, unsigned(0),
-                                                  name("x"),
-                                                  m_block);
-   
-   ExtractElementInst *y = new ExtractElementInst(in, unsigned(1),
-                                                  name("y"),
-                                                  m_block);
-   
-   ExtractElementInst *w = new ExtractElementInst(in, unsigned(3),
-                                                  name("w"),
-                                                  m_block);
-   return vectorFromVals(ConstantFP::get(Type::FloatTy, APFloat(1.f)),
-                         ConstantFP::get(Type::FloatTy, APFloat(0.f)),
-                         ConstantFP::get(Type::FloatTy, APFloat(0.f)),
-                         ConstantFP::get(Type::FloatTy, APFloat(1.f)));
-#else
    if (!m_llvmLit) {
       m_llvmLit = makeLitFunction(m_mod);
    }
@@ -194,7 +174,6 @@ llvm::Value * Instructions::lit(llvm::Value *in)
    call->setCallingConv(CallingConv::C);
    call->setTailCall(false);
    return call;
-#endif
 }
 
 llvm::Value * Instructions::sub(llvm::Value *in1, llvm::Value *in2)

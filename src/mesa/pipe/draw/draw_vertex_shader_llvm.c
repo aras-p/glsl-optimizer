@@ -74,8 +74,6 @@ void vertex_fetch(struct draw_context *draw,
 {
    uint attr;
 
-   printf("fetch vertex %u: \n", elt);
-
    /* loop over vertex attributes (vertex shader inputs) */
    for (attr = 0; attr < draw->vertex_shader->state->num_inputs; attr++) {
 
@@ -88,8 +86,6 @@ void vertex_fetch(struct draw_context *draw,
       float p[4];
 
       fetch_attrib4(src, draw->vertex_element[attr].src_format, p);
-
-      printf(">  %u: %f %f %f %f\n", attr, p[0], p[1], p[2], p[3]);
 
       inputs[attr][0] = p[0]; /*X*/
       inputs[attr][1] = p[1]; /*Y*/
@@ -105,7 +101,7 @@ compute_clipmask(const float *clip, const float (*plane)[4], unsigned nr)
    unsigned i;
 
    for (i = 0; i < nr; i++) {
-      if (dot4(clip, plane[i]) < 0) 
+      if (dot4(clip, plane[i]) < 0)
          mask |= (1<<i);
    }
 
@@ -129,8 +125,6 @@ void draw_vertex_shader_queue_flush_llvm(struct draw_context *draw)
    const float          *scale = draw->viewport.scale;
    const float          *trans = draw->viewport.translate;
 
-   fprintf(stderr, "--- XX q(%d) \n", draw->vs.queue_nr);
-
    /* fetch the inputs */
    for (i = 0; i < draw->vs.queue_nr; ++i) {
       unsigned elt = draw->vs.queue[i].elt;
@@ -143,9 +137,6 @@ void draw_vertex_shader_queue_flush_llvm(struct draw_context *draw)
                      draw->vs.queue_nr,
                      draw->vertex_shader->state->num_inputs,
                      draw->vertex_info.num_attribs);
-
-   /* FIXME: finish conversion */
-   /* dests = outputs */
 
    /* store machine results */
    for (int i = 0; i < draw->vs.queue_nr; ++i) {

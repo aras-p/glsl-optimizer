@@ -26,7 +26,6 @@ Storage::Storage(llvm::BasicBlock *block, llvm::Value *out,
    m_undefFloatVec = UndefValue::get(m_floatVecType);
    m_undefIntVec   = UndefValue::get(m_intVecType);
 
-   m_shuffleId = 0;
    m_numConsts = 0;
 }
 
@@ -88,15 +87,11 @@ llvm::Value *Storage::constElement(int idx)
    if (m_consts.find(idx) != m_consts.end()) {
       return m_consts[idx];
    }
-   char ptrName[13];
-   char name[9];
-   snprintf(ptrName, 13, "const_ptr%d", idx);
-   snprintf(name, 9, "const%d", idx);
    GetElementPtrInst *getElem = new GetElementPtrInst(m_CONST,
                                                       constantInt(idx),
-                                                      ptrName,
+                                                      name("const_ptr"),
                                                       m_block);
-   LoadInst *load = new LoadInst(getElem, name,
+   LoadInst *load = new LoadInst(getElem, name("const"),
                                  false, m_block);
    m_consts[idx] = load;
    return load;
@@ -105,12 +100,9 @@ llvm::Value *Storage::constElement(int idx)
 llvm::Value *Storage::shuffleVector(llvm::Value *vec, int shuffle)
 {
    Constant *mask = shuffleMask(shuffle);
-   ++m_shuffleId;
-   char name[11];
-   snprintf(name, 11, "shuffle%d", m_shuffleId);
    ShuffleVectorInst *res =
       new ShuffleVectorInst(vec, m_undefFloatVec, mask,
-                            name, m_block);
+                            name("shuffle"), m_block);
    return res;
 }
 

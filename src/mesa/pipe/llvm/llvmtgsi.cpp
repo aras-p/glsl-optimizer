@@ -141,7 +141,6 @@ translate_instruction(llvm::Module *module,
          val = storage->tempElement(src->SrcRegister.Index);
       } else {
          fprintf(stderr, "ERROR: not support llvm source\n");
-         printf("translate instr END\n");
          return;
       }
 
@@ -160,9 +159,6 @@ translate_instruction(llvm::Module *module,
                  src->SrcRegister.SwizzleY != TGSI_SWIZZLE_Y ||
                  src->SrcRegister.SwizzleZ != TGSI_SWIZZLE_Z ||
                  src->SrcRegister.SwizzleW != TGSI_SWIZZLE_W) {
-         fprintf(stderr, "SWIZZLE is %d %d %d %d\n",
-                 src->SrcRegister.SwizzleX, src->SrcRegister.SwizzleY,
-                 src->SrcRegister.SwizzleZ, src->SrcRegister.SwizzleW);
          int swizzle = src->SrcRegister.SwizzleX * 1000;
          swizzle += src->SrcRegister.SwizzleY  * 100;
          swizzle += src->SrcRegister.SwizzleZ  * 10;
@@ -517,7 +513,6 @@ translate_instruction(llvm::Module *module,
       struct tgsi_full_dst_register *dst = &inst->FullDstRegisters[i];
 
       if (dst->DstRegister.File == TGSI_FILE_OUTPUT) {
-         printf("--- storing to %d %p\n", dst->DstRegister.Index, out);
          storage->store(dst->DstRegister.Index, out, dst->DstRegister.WriteMask);
       } else if (dst->DstRegister.File == TGSI_FILE_TEMPORARY) {
          storage->setTempElement(dst->DstRegister.Index, out, dst->DstRegister.WriteMask);
@@ -552,24 +547,12 @@ tgsi_to_llvm(struct ga_llvm_prog *prog, const struct tgsi_token *tokens)
 
    tgsi_parse_init(&parse, tokens);
 
-   Function* func_printf = mod->getFunction("printf");
-   //parse.FullHeader.Processor.Processor
-
-   //parse.FullVersion.Version.MajorVersion
-   //parse.FullVersion.Version.MinorVersion
-
-   //parse.FullHeader.Header.HeaderSize
-   //parse.FullHeader.Header.BodySize
-   //parse.FullHeader.Processor.Processor
-
    fi = tgsi_default_full_instruction();
    fd = tgsi_default_full_declaration();
    Storage storage(label_entry, ptr_OUT, ptr_IN, ptr_CONST);
    Instructions instr(mod, shader, label_entry);
    while(!tgsi_parse_end_of_tokens(&parse)) {
       tgsi_parse_token(&parse);
-
-      fprintf(stderr, "Translating %d\n", parse.FullToken.Token.Type);
 
       switch (parse.FullToken.Token.Type) {
       case TGSI_TOKEN_TYPE_DECLARATION:
@@ -596,8 +579,6 @@ tgsi_to_llvm(struct ga_llvm_prog *prog, const struct tgsi_token *tokens)
 
    new ReturnInst(label_entry);
 
-   //TXT("\ntgsi-dump end -------------------\n");
-
    tgsi_parse_free(&parse);
 
    prog->num_consts = storage.numConsts();
@@ -611,25 +592,21 @@ tgsi_to_llvm(struct ga_llvm_prog *prog, const struct tgsi_token *tokens)
 struct ga_llvm_prog *
 ga_llvm_from_tgsi(struct pipe_context *pipe, const struct tgsi_token *tokens)
 {
-   std::cout << "Creating llvm " <<std::endl;
+   std::cout << "Creating llvm from: " <<std::endl;
    struct ga_llvm_prog *ga_llvm =
       (struct ga_llvm_prog *)malloc(sizeof(struct ga_llvm_prog));
-   fprintf(stderr, "DUMPX \n");
+   fprintf(stderr, "----- TGSI Start ---- \n");
    tgsi_dump(tokens, 0);
-   fprintf(stderr, "DUMPEND \n");
+   fprintf(stderr, "----- TGSI End ---- \n");
    llvm::Module *mod = tgsi_to_llvm(ga_llvm, tokens);
 
    /* Run optimization passes over it */
    PassManager passes;
-   // Add an appropriate TargetData instance for this module...
    passes.add(new TargetData(mod));
    AddStandardCompilePasses(passes);
-   std::cout<<"Running optimization passes..."<<std::endl;
-   bool b = passes.run(*mod);
-   std::cout<<"\tModified mod = "<<b<<std::endl;
+   passes.run(*mod);
 
-   llvm::ExistingModuleProvider *mp =
-      new llvm::ExistingModuleProvider(mod);
+   llvm::ExistingModuleProvider *mp = new llvm::ExistingModuleProvider(mod);
    llvm::ExecutionEngine *ee = 0;
    if (!pipe->llvm_execution_engine) {
       ee = llvm::ExecutionEngine::create(mp, false);
@@ -681,12 +658,5 @@ int ga_llvm_prog_exec(struct ga_llvm_prog *prog,
 
    std::cout << "---- END LLVM Execution "<<std::endl;
 
-   for (int i = 0; i < num_vertices; ++i) {
-      for (int j = 0; j < num_attribs; ++j) {
-         printf("OUT(%d, %d) [%f, %f, %f, %f]\n", i, j,
-                dests[i][j][0], dests[i][j][1],
-                dests[i][j][2], dests[i][j][3]);
-      }
-   }
    return 0;
 }

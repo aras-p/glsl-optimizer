@@ -57,7 +57,6 @@ private:
    llvm::Value      *m_undefFloatVec;
    llvm::Value      *m_undefIntVec;
 
-   int         m_shuffleId;
    char        m_name[32];
    int         m_idx;
 

@@ -91,8 +91,6 @@ run_vertex_program(struct draw_context *draw,
    assert(draw->vertex_shader->state->output_semantic_name[0]
           == TGSI_SEMANTIC_POSITION);
 
-   fprintf(stderr, "------ run_vertex\n");
-
    /* Consts does not require 16 byte alignment. */
    machine->Consts = (float (*)[4]) draw->mapped_constants;
 
@@ -132,7 +130,6 @@ run_vertex_program(struct draw_context *draw,
       y = vOut[j]->clip[1] = machine->Outputs[0].xyzw[1].f[j];
       z = vOut[j]->clip[2] = machine->Outputs[0].xyzw[2].f[j];
       w = vOut[j]->clip[3] = machine->Outputs[0].xyzw[3].f[j];
-      printf("output %d: %f %f %f %f\n", 0, x, y, z, w);
 
       vOut[j]->clipmask = compute_clipmask(vOut[j]->clip, draw->plane, draw->nr_planes);
       vOut[j]->edgeflag = 1;
@@ -177,8 +174,6 @@ run_vertex_program(struct draw_context *draw,
 void draw_vertex_shader_queue_flush( struct draw_context *draw )
 {
    unsigned i, j;
-
-   fprintf(stderr, "XX q(%d) ", draw->vs.queue_nr );
 
    if (draw->vertex_shader->state->llvm_prog) {
       draw_vertex_shader_queue_flush_llvm(draw);
