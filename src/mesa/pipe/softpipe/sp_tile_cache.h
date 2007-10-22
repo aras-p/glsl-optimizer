@@ -45,7 +45,8 @@ struct softpipe_tile_cache;
 
 struct softpipe_cached_tile
 {
-   int x, y;         /** pos of tile in window coords */
+   int x, y;           /**< pos of tile in window coords */
+   int z, face, level; /**< Extra texture indexes */
    union {
       float color[TILE_SIZE][TILE_SIZE][4];
       uint depth32[TILE_SIZE][TILE_SIZE];
@@ -66,6 +67,10 @@ sp_tile_cache_set_surface(struct softpipe_tile_cache *tc,
                           struct softpipe_surface *sps);
 
 extern void
+sp_tile_cache_set_texture(struct softpipe_tile_cache *tc,
+                          struct pipe_mipmap_tree *texture);
+
+extern void
 sp_flush_tile_cache(struct softpipe_tile_cache *tc);
 
 extern void
@@ -73,6 +78,10 @@ sp_clear_tile_cache(struct softpipe_tile_cache *tc, unsigned clearval);
 
 extern struct softpipe_cached_tile *
 sp_get_cached_tile(struct softpipe_tile_cache *tc, int x, int y);
+
+extern struct softpipe_cached_tile *
+sp_get_cached_tile_tex(struct softpipe_tile_cache *tc, int x, int y, int z,
+                       int face, int level);
 
 
 #endif /* SP_TILE_CACHE_H */

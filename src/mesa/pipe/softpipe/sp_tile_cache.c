@@ -49,6 +49,7 @@
 struct softpipe_tile_cache
 {
    struct softpipe_surface *surface;  /**< the surface we're caching */
+   struct pipe_mipmap_tree *texture;  /**< if caching a texture */
    struct softpipe_cached_tile entries[NUM_ENTRIES];
    uint clear_flags[(MAX_WIDTH / TILE_SIZE) * (MAX_HEIGHT / TILE_SIZE) / 32];
 };
@@ -124,6 +125,12 @@ sp_tile_cache_set_surface(struct softpipe_tile_cache *tc,
 }
 
 
+void
+sp_tile_cache_set_texture(struct softpipe_tile_cache *tc,
+                          struct pipe_mipmap_tree *texture)
+{
+   tc->texture = texture;
+}
 
 
 void
@@ -247,6 +254,60 @@ sp_get_cached_tile(struct softpipe_tile_cache *tc, int x, int y)
 
    return tile;
 }
+
+
+/**
+ * Given the texture face, level, zslice, x and y values, compute
+ * the cache entry position/index where we'd hope to find the
+ * cached texture tile.
+ * This is basically a direct-map cache.
+ * XXX There's probably lots of ways in which we can improve this.
+ */
+static uint
+tex_cache_pos(int x, int y, int z, int face, int level)
+{
+   uint entry = x + y * 2 + z * 4 + face + level;
+   return entry % NUM_ENTRIES;
+}
+
+
+/**
+ * Similar to sp_get_cached_tile() but for textures.
+ * Tiles are read-only and indexed with more params.
+ */
+struct softpipe_cached_tile *
+sp_get_cached_tile_tex(struct softpipe_tile_cache *tc, int x, int y, int z,
+                       int face, int level)
+{
+   struct pipe_context *pipe; /* XXX need this */
+
+   /* tile pos in framebuffer: */
+   const int tile_x = x & ~(TILE_SIZE - 1);
+   const int tile_y = y & ~(TILE_SIZE - 1);
+
+   /* cache pos/entry: */
+   const int pos = tex_cache_pos(x / TILE_SIZE, y / TILE_SIZE,
+                                 z, face, level);
+   struct softpipe_cached_tile *tile = tc->entries + pos;
+
+   if (tile_x != tile->x ||
+       tile_y != tile->y ||
+       z != tile->z ||
+       face != tile->face ||
+       level != tile->level) {
+      struct pipe_surface *ps
+         = pipe->get_tex_surface(pipe, tc->texture, face, level, z);
+
+      ps->get_tile(ps,
+                   tile_x, tile_y, TILE_SIZE, TILE_SIZE,
+                   (float *) tile->data.color);
+
+      pipe_surface_reference(&ps, NULL);
+   }
+
+   return tile;
+}
+
 
 
 void
