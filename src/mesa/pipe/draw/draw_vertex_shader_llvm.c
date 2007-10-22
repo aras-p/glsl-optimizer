@@ -38,6 +38,8 @@
 #include "pipe/llvm/llvmtgsi.h"
 #include "pipe/tgsi/exec/tgsi_core.h"
 
+#define DBG 0
+
 static INLINE void
 fetch_attrib4(const void *ptr, unsigned format, float attrib[4])
 {
@@ -155,7 +157,9 @@ void draw_vertex_shader_queue_flush_llvm(struct draw_context *draw)
       y = vOut->clip[1] = dests[0][1];
       z = vOut->clip[2] = dests[0][2];
       w = vOut->clip[3] = dests[0][3];
+#if DBG
       printf("output %d: %f %f %f %f\n", 0, x, y, z, w);
+#endif
 
       vOut->clipmask = compute_clipmask(vOut->clip, draw->plane, draw->nr_planes);
       vOut->edgeflag = 1;
@@ -183,11 +187,13 @@ void draw_vertex_shader_queue_flush_llvm(struct draw_context *draw)
          vOut->data[slot][2] = dests[slot][2];
          vOut->data[slot][3] = dests[slot][3];
 
+#if DBG
          printf("output %d: %f %f %f %f\n", slot,
                 vOut->data[slot][0],
                 vOut->data[slot][1],
                 vOut->data[slot][2],
                 vOut->data[slot][3]);
+#endif
       }
    } /* loop over vertices */
 

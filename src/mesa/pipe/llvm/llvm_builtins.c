@@ -102,7 +102,6 @@ void from_array(float4 (*res)[16], float (*ainputs)[16][4],
          vec.y = ainputs[i][j][1];
          vec.z = ainputs[i][j][2];
          vec.w = ainputs[i][j][3];
-         printf("FRA(%d %d) %f %f %f %f\n", i, j, vec.x, vec.y, vec.z, vec.w);
          res[i][j] = vec;
       }
    }
@@ -117,7 +116,6 @@ void from_consts(float4 *res, float (*ainputs)[4],
       vec.y = ainputs[i][1];
       vec.z = ainputs[i][2];
       vec.w = ainputs[i][3];
-      printf("VCONST(%d) %f %f %f %f\n", i, vec.x, vec.y, vec.z, vec.w);
       res[i] = vec;
    }
 }
@@ -127,7 +125,6 @@ void to_array(float (*dests)[4], float4 *in, int num_attribs)
    for (int i = 0; i < num_attribs; ++i) {
       float  *rd = dests[i];
       float4  ri = in[i];
-      printf("DEST = %f %f %f %f\n", ri.x, ri.y, ri.z, ri.w);
       rd[0] = ri.x;
       rd[1] = ri.y;
       rd[2] = ri.z;
@@ -135,8 +132,8 @@ void to_array(float (*dests)[4], float4 *in, int num_attribs)
    }
 }
 
-extern void execute_shader(float4 *dests, float4 *inputs,
-                           float4 *consts);
+extern void execute_shader(float4 dests[16], float4 inputs[16],
+                           float4 consts[32]);
 
 void run_vertex_shader(float (*ainputs)[16][4],
                        float (*dests)[16][4],
@@ -150,16 +147,14 @@ void run_vertex_shader(float (*ainputs)[16][4],
    float4  consts[32];
    float4  results[16*32*4][16];
 
-   printf("XXX LLVM run_vertex_shader vertices = %d, inputs = %d, consts = %d\n",
-          num_vertices, num_inputs, num_consts);
+   /*printf("XXX LLVM run_vertex_shader vertices = %d, inputs = %d, attribs = %d, consts = %d\n",
+     num_vertices, num_inputs, num_attribs, num_consts);*/
    from_array(inputs, ainputs, num_vertices, num_inputs);
    from_consts(consts, aconsts, num_consts);
-   printf("               after conversion\n");
    for (int i = 0; i < num_vertices; ++i) {
       float4 *in  = inputs[i];
       float4 *res = results[i];
       execute_shader(res, in, consts);
-      printf("after executing shader\n");
       to_array(dests[i], res, num_attribs);
    }
 }

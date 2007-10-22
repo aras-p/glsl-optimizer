@@ -17,6 +17,7 @@ struct ga_llvm_prog {
    void *engine;
    void *function;
    int   num_consts;
+   int   id;
 };
 struct ga_llvm_prog *
 ga_llvm_from_tgsi(struct pipe_context *pipe, const struct tgsi_token *tokens);

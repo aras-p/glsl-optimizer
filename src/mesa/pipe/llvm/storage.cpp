@@ -77,6 +77,7 @@ llvm::Value *Storage::inputElement(int idx)
                                                       m_block);
    LoadInst *load = new LoadInst(getElem, name("input"),
                                  false, m_block);
+   load->setAlignment(8);
    m_inputs[idx] = load;
    return load;
 }
@@ -93,6 +94,7 @@ llvm::Value *Storage::constElement(int idx)
                                                       m_block);
    LoadInst *load = new LoadInst(getElem, name("const"),
                                  false, m_block);
+   load->setAlignment(8);
    m_consts[idx] = load;
    return load;
 }
@@ -136,6 +138,7 @@ void Storage::store(int dstIdx, llvm::Value *val, int mask)
                                                       name("out_ptr"),
                                                       m_block);
    StoreInst *st = new StoreInst(val, getElem, false, m_block);
+   st->setAlignment(8);
    //m_dstCache[dstIdx] = st;
 }
 

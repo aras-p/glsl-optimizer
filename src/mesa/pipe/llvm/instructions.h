@@ -47,6 +47,8 @@ private:
 
    llvm::Value *vectorFromVals(llvm::Value *x, llvm::Value *y,
                                llvm::Value *z, llvm::Value *w=0);
+
+   llvm::Function *declarePrintf();
 private:
    llvm::Module *m_mod;
    llvm::Function *m_func;

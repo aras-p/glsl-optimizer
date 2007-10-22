@@ -31,11 +31,16 @@
 #include <llvm/Analysis/LoopPass.h>
 #include <llvm/Target/TargetData.h>
 #include <llvm/Bitcode/ReaderWriter.h>
+
+#include <sstream>
 #include <iostream>
+
 
 using namespace llvm;
 #include "llvm_base_shader.cpp"
 
+
+static int GLOBAL_ID = 0;
 
 static inline void addPass(PassManager &PM, Pass *P) {
   // Add the pass to the pass manager...
@@ -168,8 +173,8 @@ translate_instruction(llvm::Module *module,
       inputs[i] = val;
    }
 
-   if (inputs[0])
-      instr->printVector(inputs[0]);
+   /*if (inputs[0])
+     instr->printVector(inputs[0]);*/
    llvm::Value *out = 0;
    printf("Opcode is %d\n", inst->Instruction.Opcode);
    switch (inst->Instruction.Opcode) {
@@ -523,7 +528,6 @@ translate_instruction(llvm::Module *module,
    printf("translate instr END\n");
 }
 
-
 static llvm::Module *
 tgsi_to_llvm(struct ga_llvm_prog *prog, const struct tgsi_token *tokens)
 {
@@ -533,7 +537,11 @@ tgsi_to_llvm(struct ga_llvm_prog *prog, const struct tgsi_token *tokens)
    struct tgsi_full_declaration fd;
 
    Function* shader = mod->getFunction("execute_shader");
-   shader->setName("execute_shader_2");
+   std::ostringstream stream;
+   stream << "execute_shader";
+   stream << prog->id;
+   std::string func_name = stream.str();
+   shader->setName(func_name.c_str());
 
    Function::arg_iterator args = shader->arg_begin();
    Value *ptr_OUT = args++;
@@ -593,8 +601,10 @@ struct ga_llvm_prog *
 ga_llvm_from_tgsi(struct pipe_context *pipe, const struct tgsi_token *tokens)
 {
    std::cout << "Creating llvm from: " <<std::endl;
+   ++GLOBAL_ID;
    struct ga_llvm_prog *ga_llvm =
       (struct ga_llvm_prog *)malloc(sizeof(struct ga_llvm_prog));
+   ga_llvm->id = GLOBAL_ID;
    fprintf(stderr, "----- TGSI Start ---- \n");
    tgsi_dump(tokens, 0);
    fprintf(stderr, "----- TGSI End ---- \n");
@@ -618,9 +628,7 @@ ga_llvm_from_tgsi(struct pipe_context *pipe, const struct tgsi_token *tokens)
    ga_llvm->module = mod;
 
    Function *func = mod->getFunction("run_vertex_shader");
-   std::cout << "run_vertex_shader  = "<<func<<std::endl;
    ga_llvm->function = ee->getPointerToFunctionOrStub(func);
-   std::cout << " -- FUNC is " <<ga_llvm->function<<std::endl;
 
    return ga_llvm;
 }
@@ -651,12 +659,9 @@ int ga_llvm_prog_exec(struct ga_llvm_prog *prog,
                       int num_inputs,
                       int num_attribs)
 {
-   std::cout << "---- START LLVM Execution "<<std::endl;
    vertex_shader_runner runner = reinterpret_cast<vertex_shader_runner>(prog->function);
    runner(inputs, dests, consts, num_vertices, num_inputs,
           num_attribs, prog->num_consts);
-
-   std::cout << "---- END LLVM Execution "<<std::endl;
 
    return 0;
 }
