@@ -39,6 +39,9 @@ struct wide_stage {
 
    float half_line_width;
    float half_point_size;
+
+   uint texcoord[PIPE_MAX_SHADER_OUTPUTS];
+   uint num_texcoords;
 };
 
 
@@ -120,10 +123,30 @@ static void wide_line( struct draw_stage *stage,
 }
 
 
+static void set_texcoords(const struct wide_stage *wide,
+                          struct vertex_header *v, const float tc[4])
+{
+   uint i;
+   for (i = 0; i < wide->num_texcoords; i++) {
+      uint j = wide->texcoord[i];
+      v->data[j][0] = tc[0];
+      v->data[j][1] = tc[1];
+      v->data[j][2] = tc[2];
+      v->data[j][3] = tc[3];
+   }
+}
+
+
+/* If there are lots of sprite points (and why wouldn't there be?) it
+ * would probably be more sensible to change hardware setup to
+ * optimize this rather than doing the whole thing in software like
+ * this.
+ */
 static void wide_point( struct draw_stage *stage,
 			struct prim_header *header )
 {
    const struct wide_stage *wide = wide_stage(stage);
+   const boolean sprite = stage->draw->rasterizer->point_sprite;
    float half_size = wide->half_point_size;
    float left_adj, right_adj;
 
@@ -155,6 +178,17 @@ static void wide_point( struct draw_stage *stage,
    pos3[0] += right_adj;
    pos3[1] += half_size;
 
+   if (sprite) {
+      static const float tex00[4] = { 0, 0, 0, 1 };
+      static const float tex01[4] = { 0, 1, 0, 1 };
+      static const float tex11[4] = { 1, 1, 0, 1 };
+      static const float tex10[4] = { 1, 0, 0, 1 };
+      set_texcoords( wide, v0, tex00 );
+      set_texcoords( wide, v1, tex01 );
+      set_texcoords( wide, v2, tex10 );
+      set_texcoords( wide, v3, tex11 );
+   }
+
    tri.det = header->det;  /* only the sign matters */
    tri.v[0] = v0;
    tri.v[1] = v2;
@@ -166,36 +200,6 @@ static void wide_point( struct draw_stage *stage,
    tri.v[2] = v1;
    stage->next->tri( stage->next, &tri );
 }
-
-
-/* If there are lots of sprite points (and why wouldn't there be?) it
- * would probably be more sensible to change hardware setup to
- * optimize this rather than doing the whole thing in software like
- * this.
- */
-static void sprite_point( struct draw_stage *stage,
-		       struct prim_header *header )
-{
-#if 0
-   struct vertex_header *v[4];
-   struct vertex_fetch *vf = stage->pipe->draw->vb.vf;
-
-   static const float tex00[4] = { 0, 0, 0, 1 };
-   static const float tex01[4] = { 0, 1, 0, 1 };
-   static const float tex11[4] = { 1, 1, 0, 1 };
-   static const float tex10[4] = { 1, 0, 0, 1 };
-
-   make_wide_point(stage, header->v[0], &v[0] );
-
-   set_texcoord( vf, v[0], tex00 );
-   set_texcoord( vf, v[1], tex01 );
-   set_texcoord( vf, v[2], tex10 );
-   set_texcoord( vf, v[3], tex11 );
-
-   quad( stage->next, v[0], v[1], v[2], v[3] );
-#endif
-}
-
 
 
 static void wide_begin( struct draw_stage *stage )
@@ -213,16 +217,24 @@ static void wide_begin( struct draw_stage *stage )
       wide->stage.line = passthrough_line;
    }
 
-   if (0/*draw->state.point_sprite*/) {
-      wide->stage.point = sprite_point;
-   }
-   else if (draw->rasterizer->point_size != 1.0) {
+   if (draw->rasterizer->point_size != 1.0) {
       wide->stage.point = wide_point;
    }
    else {
       wide->stage.point = passthrough_point;
    }
 
+   if (draw->rasterizer->point_sprite) {
+      /* find vertex shader texcoord outputs */
+      const struct draw_vertex_shader *vs = draw->vertex_shader;
+      uint i, j = 0;
+      for (i = 0; i < vs->state->num_outputs; i++) {
+         if (vs->state->output_semantic_name[i] == TGSI_SEMANTIC_GENERIC) {
+            wide->texcoord[j++] = i;
+         }
+      }
+      wide->num_texcoords = j;
+   }
    
    stage->next->begin( stage->next );
 }

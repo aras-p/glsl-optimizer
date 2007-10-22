@@ -52,7 +52,8 @@ static void validate_begin( struct draw_stage *stage )
     */
 
    if (draw->rasterizer->line_width != 1.0 ||
-       draw->rasterizer->point_size != 1.0) {
+       draw->rasterizer->point_size != 1.0 ||
+       draw->rasterizer->point_sprite) {
       draw->pipeline.wide->next = next;
       next = draw->pipeline.wide;
    }
