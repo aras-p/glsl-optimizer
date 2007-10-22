@@ -81,6 +81,8 @@ st_clear_accum_buffer(GLcontext *ctx, struct gl_renderbuffer *rb)
 
    acc_ps->put_tile(acc_ps, xpos, ypos, width, height, accBuf);
 
+   free(accBuf);
+
    pipe->region_unmap(pipe, acc_ps->region);
 }
 
@@ -107,7 +109,7 @@ accum_mad(struct pipe_context *pipe, GLfloat scale, GLfloat bias,
 
    acc_ps->put_tile(acc_ps, xpos, ypos, width, height, accBuf);
 
-   _mesa_free(accBuf);
+   free(accBuf);
 
    pipe->region_unmap(pipe, acc_ps->region);
 }
@@ -138,8 +140,8 @@ accum_accum(struct pipe_context *pipe, GLfloat value,
 
    acc_ps->put_tile(acc_ps, xpos, ypos, width, height, accBuf);
 
-   _mesa_free(colorBuf);
-   _mesa_free(accBuf);
+   free(colorBuf);
+   free(accBuf);
 
    pipe->region_unmap(pipe, color_ps->region);
    pipe->region_unmap(pipe, acc_ps->region);
@@ -168,7 +170,7 @@ accum_load(struct pipe_context *pipe, GLfloat value,
 
    acc_ps->put_tile(acc_ps, xpos, ypos, width, height, buf);
 
-   _mesa_free(buf);
+   free(buf);
 
    pipe->region_unmap(pipe, color_ps->region);
    pipe->region_unmap(pipe, acc_ps->region);
@@ -182,42 +184,39 @@ accum_return(GLcontext *ctx, GLfloat value,
              struct pipe_surface *color_ps)
 {
    struct pipe_context *pipe = ctx->st->pipe;
-   const GLboolean writeR = ctx->Color.ColorMask[0];
-   const GLboolean writeG = ctx->Color.ColorMask[1];
-   const GLboolean writeB = ctx->Color.ColorMask[2];
-   const GLboolean writeA = ctx->Color.ColorMask[3];
-   GLfloat *buf;
-   GLint i;
+   const GLubyte *colormask = ctx->Color.ColorMask;
+   GLfloat *abuf, *cbuf = NULL;
+   GLint i, ch;
 
-   buf = (GLfloat *) malloc(width * height * 4 * sizeof(GLfloat));
+   abuf = (GLfloat *) malloc(width * height * 4 * sizeof(GLfloat));
 
    (void) pipe->region_map(pipe, color_ps->region);
    (void) pipe->region_map(pipe, acc_ps->region);
 
-   acc_ps->get_tile(acc_ps, xpos, ypos, width, height, buf);
+   acc_ps->get_tile(acc_ps, xpos, ypos, width, height, abuf);
+
+   if (!colormask[0] || !colormask[1] || !colormask[2] || !colormask[3]) {
+      cbuf = (GLfloat *) malloc(width * height * 4 * sizeof(GLfloat));
+      color_ps->get_tile(color_ps, xpos, ypos, width, height, cbuf);
+   }
 
    for (i = 0; i < width * height; i++) {
-      if (writeR) {
-         GLfloat r = buf[i * 4 + 0] * value;
-         buf[i * 4 + 0] = CLAMP(r, 0.0, 1.0);
-      }
-      if (writeG) {
-         GLfloat g = buf[i * 4 + 1] * value;
-         buf[i * 4 + 1] = CLAMP(g, 0.0, 1.0);
-      }
-      if (writeB) {
-         GLfloat b = buf[i * 4 + 2] * value;
-         buf[i * 4 + 2] = CLAMP(b, 0.0, 1.0);
-      }
-      if (writeA) {
-         GLfloat a = buf[i * 4 + 3] * value;
-         buf[i * 4 + 3] = CLAMP(a, 0.0, 1.0);
+      for (ch = 0; ch < 4; ch++) {
+         if (colormask[ch]) {
+            GLfloat val = abuf[i * 4 + ch] * value;
+            abuf[i * 4 + ch] = CLAMP(val, 0.0, 1.0);
+         }
+         else {
+            abuf[i * 4 + ch] = cbuf[i * 4 + ch];
+         }
       }
    }
 
-   color_ps->put_tile(color_ps, xpos, ypos, width, height, buf);
+   color_ps->put_tile(color_ps, xpos, ypos, width, height, abuf);
 
-   _mesa_free(buf);
+   free(abuf);
+   if (cbuf)
+      free(cbuf);
 
    pipe->region_unmap(pipe, color_ps->region);
    pipe->region_unmap(pipe, acc_ps->region);
