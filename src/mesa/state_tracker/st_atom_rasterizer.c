@@ -74,6 +74,7 @@ static void update_raster_state( struct st_context *st )
    GLcontext *ctx = st->ctx;
    struct pipe_rasterizer_state raster;
    const struct cso_rasterizer *cso;
+   uint i;
 
    memset(&raster, 0, sizeof(raster));
    
@@ -189,6 +190,17 @@ static void update_raster_state( struct st_context *st )
    raster.point_size = ctx->Point.Size;
    raster.point_smooth = ctx->Point.SmoothFlag;
    raster.point_sprite = ctx->Point.PointSprite;
+   for (i = 0; i < MAX_TEXTURE_COORD_UNITS; i++) {
+      if (ctx->Point.CoordReplace[i]) {
+         if (ctx->Point.SpriteOrigin == GL_UPPER_LEFT)
+            raster.sprite_coord_mode[i] = PIPE_SPRITE_COORD_UPPER_LEFT;
+         else 
+            raster.sprite_coord_mode[i] = PIPE_SPRITE_COORD_LOWER_LEFT;
+      }
+      else {
+         raster.sprite_coord_mode[i] = PIPE_SPRITE_COORD_NONE;
+      }
+   }
 
    /* _NEW_LINE
     */

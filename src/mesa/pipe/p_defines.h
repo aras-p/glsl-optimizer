@@ -308,4 +308,11 @@
 #define PIPE_QUERY_TYPES                 3
 
 
+/**
+ * Point sprite coord modes
+ */
+#define PIPE_SPRITE_COORD_NONE       0
+#define PIPE_SPRITE_COORD_UPPER_LEFT 1
+#define PIPE_SPRITE_COORD_LOWER_LEFT 2
+
 #endif

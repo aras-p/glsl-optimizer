@@ -40,7 +40,8 @@ struct wide_stage {
    float half_line_width;
    float half_point_size;
 
-   uint texcoord[PIPE_MAX_SHADER_OUTPUTS];
+   uint texcoord_slot[PIPE_MAX_SHADER_OUTPUTS];
+   uint texcoord_mode[PIPE_MAX_SHADER_OUTPUTS];
    uint num_texcoords;
 };
 
@@ -123,16 +124,26 @@ static void wide_line( struct draw_stage *stage,
 }
 
 
+/**
+ * Set the vertex texcoords for sprite mode.
+ * Coords may be left untouched or set to a right-side-up or upside-down
+ * orientation.
+ */
 static void set_texcoords(const struct wide_stage *wide,
                           struct vertex_header *v, const float tc[4])
 {
    uint i;
    for (i = 0; i < wide->num_texcoords; i++) {
-      uint j = wide->texcoord[i];
-      v->data[j][0] = tc[0];
-      v->data[j][1] = tc[1];
-      v->data[j][2] = tc[2];
-      v->data[j][3] = tc[3];
+      if (wide->texcoord_mode[i] != PIPE_SPRITE_COORD_NONE) {
+         uint j = wide->texcoord_slot[i];
+         v->data[j][0] = tc[0];
+         if (wide->texcoord_mode[i] == PIPE_SPRITE_COORD_LOWER_LEFT)
+            v->data[j][1] = 1.0 - tc[1];
+         else
+            v->data[j][1] = tc[1];
+         v->data[j][2] = tc[2];
+         v->data[j][3] = tc[3];
+      }
    }
 }
 
@@ -230,7 +241,9 @@ static void wide_begin( struct draw_stage *stage )
       uint i, j = 0;
       for (i = 0; i < vs->state->num_outputs; i++) {
          if (vs->state->output_semantic_name[i] == TGSI_SEMANTIC_GENERIC) {
-            wide->texcoord[j++] = i;
+            wide->texcoord_slot[j] = i;
+            wide->texcoord_mode[j] = draw->rasterizer->sprite_coord_mode[j];
+            j++;
          }
       }
       wide->num_texcoords = j;
