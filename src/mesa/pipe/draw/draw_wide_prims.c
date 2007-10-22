@@ -125,6 +125,7 @@ static void wide_point( struct draw_stage *stage,
 {
    const struct wide_stage *wide = wide_stage(stage);
    float half_size = wide->half_point_size;
+   float left_adj, right_adj;
 
    struct prim_header tri;
 
@@ -139,16 +140,19 @@ static void wide_point( struct draw_stage *stage,
    float *pos2 = v2->data[0];
    float *pos3 = v3->data[0];
 
-   pos0[0] -= half_size;
+   left_adj = -half_size + 0.25;
+   right_adj = half_size + 0.25;
+
+   pos0[0] += left_adj;
    pos0[1] -= half_size;
 
-   pos1[0] -= half_size;
+   pos1[0] += left_adj;
    pos1[1] += half_size;
 
-   pos2[0] += half_size;
+   pos2[0] += right_adj;
    pos2[1] -= half_size;
 
-   pos3[0] += half_size;
+   pos3[0] += right_adj;
    pos3[1] += half_size;
 
    tri.det = header->det;  /* only the sign matters */
