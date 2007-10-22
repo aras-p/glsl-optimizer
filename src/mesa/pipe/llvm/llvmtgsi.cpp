@@ -162,10 +162,26 @@ translate_instruction(llvm::Module *module,
              src->SrcRegisterExtSwz.ExtSwizzleY != TGSI_EXTSWIZZLE_Y ||
              src->SrcRegisterExtSwz.ExtSwizzleZ != TGSI_EXTSWIZZLE_Z ||
              src->SrcRegisterExtSwz.ExtSwizzleW != TGSI_EXTSWIZZLE_W) {
-            int swizzle = src->SrcRegisterExtSwz.ExtSwizzleX * 1000;
-            swizzle += src->SrcRegisterExtSwz.ExtSwizzleY * 100;
-            swizzle += src->SrcRegisterExtSwz.ExtSwizzleZ * 10;
-            swizzle += src->SrcRegisterExtSwz.ExtSwizzleW * 1;
+            int swizzle = 0;
+
+            if (src->SrcRegisterExtSwz.ExtSwizzleX != TGSI_EXTSWIZZLE_X)
+               swizzle = src->SrcRegisterExtSwz.ExtSwizzleX * 1000;
+            else
+               swizzle = src->SrcRegister.SwizzleX * 1000;
+            if (src->SrcRegisterExtSwz.ExtSwizzleY != TGSI_EXTSWIZZLE_Y)
+               swizzle += src->SrcRegisterExtSwz.ExtSwizzleY * 100;
+            else
+               swizzle += src->SrcRegister.SwizzleY  * 100;
+            if (src->SrcRegisterExtSwz.ExtSwizzleZ != TGSI_EXTSWIZZLE_Z)
+               swizzle += src->SrcRegisterExtSwz.ExtSwizzleZ * 10;
+            else
+               swizzle += src->SrcRegister.SwizzleZ  * 10;
+            if (src->SrcRegisterExtSwz.ExtSwizzleW != TGSI_EXTSWIZZLE_W)
+               swizzle += src->SrcRegisterExtSwz.ExtSwizzleW * 1;
+            else
+               swizzle += src->SrcRegister.SwizzleW  * 1;
+            /*fprintf(stderr, "EXT XXXXXXXX swizzle x = %d\n", swizzle);*/
+
             val = storage->shuffleVector(val, swizzle);
          }
       } else if (src->SrcRegister.SwizzleX != TGSI_SWIZZLE_X ||
@@ -176,13 +192,16 @@ translate_instruction(llvm::Module *module,
          swizzle += src->SrcRegister.SwizzleY  * 100;
          swizzle += src->SrcRegister.SwizzleZ  * 10;
          swizzle += src->SrcRegister.SwizzleW  * 1;
+         /*fprintf(stderr, "XXXXXXXX swizzle = %d\n", swizzle);*/
          val = storage->shuffleVector(val, swizzle);
       }
       inputs[i] = val;
    }
 
    /*if (inputs[0])
-     instr->printVector(inputs[0]);*/
+     instr->printVector(inputs[0]);
+   if (inputs[1])
+   instr->printVector(inputs[1]);*/
    llvm::Value *out = 0;
    switch (inst->Instruction.Opcode) {
    case TGSI_OPCODE_ARL:

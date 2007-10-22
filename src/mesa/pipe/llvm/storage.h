@@ -57,6 +57,8 @@ private:
    llvm::Value      *m_undefFloatVec;
    llvm::Value      *m_undefIntVec;
 
+   llvm::Value      *m_extSwizzleVec;
+
    char        m_name[32];
    int         m_idx;
 

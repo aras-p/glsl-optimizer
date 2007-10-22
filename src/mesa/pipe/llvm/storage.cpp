@@ -25,6 +25,7 @@ Storage::Storage(llvm::BasicBlock *block, llvm::Value *out,
 
    m_undefFloatVec = UndefValue::get(m_floatVecType);
    m_undefIntVec   = UndefValue::get(m_intVecType);
+   m_extSwizzleVec = 0;
 
    m_numConsts = 0;
 }
@@ -32,6 +33,27 @@ Storage::Storage(llvm::BasicBlock *block, llvm::Value *out,
 //can only build vectors with all members in the [0, 9] range
 llvm::Constant *Storage::shuffleMask(int vec)
 {
+   if (!m_extSwizzleVec) {
+      Constant *const_vec = Constant::getNullValue(m_floatVecType);
+      InsertElementInst *res = new InsertElementInst(const_vec,
+                                                     ConstantFP::get(Type::FloatTy, APFloat(0.f)),
+                                                     unsigned(0),
+                                                     name("extswx"), m_block);
+      res = new InsertElementInst(res, ConstantFP::get(Type::FloatTy, APFloat(1.f)),
+                                  unsigned(1),
+                                  name("extswy"),
+                                  m_block);
+      res = new InsertElementInst(res, ConstantFP::get(Type::FloatTy, APFloat(0.f)),
+                                  unsigned(2),
+                                  name("extswz"),
+                                  m_block);
+      res = new InsertElementInst(res, ConstantFP::get(Type::FloatTy, APFloat(1.f)),
+                                  unsigned(3),
+                                  name("extsww"),
+                                  m_block);
+      m_extSwizzleVec = res;
+   }
+
    if (m_intVecs.find(vec) != m_intVecs.end()) {
       return m_intVecs[vec];
    }
@@ -79,6 +101,7 @@ llvm::Value *Storage::inputElement(int idx)
                                  false, m_block);
    load->setAlignment(8);
    m_inputs[idx] = load;
+
    return load;
 }
 
@@ -103,7 +126,7 @@ llvm::Value *Storage::shuffleVector(llvm::Value *vec, int shuffle)
 {
    Constant *mask = shuffleMask(shuffle);
    ShuffleVectorInst *res =
-      new ShuffleVectorInst(vec, m_undefFloatVec, mask,
+      new ShuffleVectorInst(vec, m_extSwizzleVec, mask,
                             name("shuffle"), m_block);
    return res;
 }
