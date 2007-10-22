@@ -48,6 +48,7 @@ struct draw_context *draw_create( void )
 #endif
 
    /* create pipeline stages */
+   draw->pipeline.wide      = draw_wide_stage( draw );
    draw->pipeline.unfilled  = draw_unfilled_stage( draw );
    draw->pipeline.twoside   = draw_twoside_stage( draw );
    draw->pipeline.offset    = draw_offset_stage( draw );

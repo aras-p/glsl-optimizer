@@ -51,6 +51,12 @@ static void validate_begin( struct draw_stage *stage )
     * shorter pipelines for lines & points.
     */
 
+   if (draw->rasterizer->line_width != 1.0 ||
+       draw->rasterizer->point_size != 1.0) {
+      draw->pipeline.wide->next = next;
+      next = draw->pipeline.wide;
+   }
+
    if (draw->rasterizer->fill_cw != PIPE_POLYGON_MODE_FILL ||
        draw->rasterizer->fill_ccw != PIPE_POLYGON_MODE_FILL) {
       draw->pipeline.unfilled->next = next;

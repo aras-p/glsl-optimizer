@@ -166,12 +166,13 @@ DRAW_SOURCES = \
 	pipe/draw/draw_offset.c \
 	pipe/draw/draw_prim.c \
 	pipe/draw/draw_twoside.c \
+	pipe/draw/draw_unfilled.c \
 	pipe/draw/draw_validate.c \
 	pipe/draw/draw_vertex.c \
 	pipe/draw/draw_vertex_cache.c \
 	pipe/draw/draw_vertex_fetch.c \
 	pipe/draw/draw_vertex_shader.c \
-	pipe/draw/draw_unfilled.c
+	pipe/draw/draw_wide_prims.c
 
 TGSIEXEC_SOURCES = \
 	pipe/tgsi/exec/tgsi_build.c \
