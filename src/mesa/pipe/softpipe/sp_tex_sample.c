@@ -36,6 +36,7 @@
 #include "sp_context.h"
 #include "sp_surface.h"
 #include "sp_tex_sample.h"
+#include "sp_tile_cache.h"
 #include "pipe/p_context.h"
 #include "pipe/p_defines.h"
 #include "pipe/p_util.h"
@@ -522,28 +523,6 @@ choose_mipmap_levels(struct tgsi_sampler *sampler,
 }
 
 
-
-/**
- * Given the texture face, level, zslice, x and y values, compute
- * the cache entry position/index where we'd hope to find the
- * cached texture tile.
- * This is basically a direct-map cache.
- * XXX There's probably lots of ways in which we can improve
- * texture caching....
- */
-static unsigned
-compute_cache_pos(unsigned face, unsigned level, unsigned zslice,
-                  int tx, int ty)
-{
-#if 01
-   unsigned entry = tx + ty * 2 + zslice * 4 + face + level;
-   return entry % TEX_CACHE_NUM_ENTRIES;
-#else
-   return 0;
-#endif
-}
-
-
 /**
  * Get a texel from a texture, using the texture tile cache.
  *
@@ -551,74 +530,27 @@ compute_cache_pos(unsigned face, unsigned level, unsigned zslice,
  * \param level  the mipmap level
  * \param x  the x coord of texel within 2D image
  * \param y  the y coord of texel within 2D image
- * \param zslice  which slice of a 3D texture
+ * \param z  which slice of a 3D texture
  * \param rgba  the quad to put the texel/color into
  * \param j  which element of the rgba quad to write to
+ *
+ * XXX maybe move this into sp_tile_cache.c and merge with the
+ * sp_get_cached_tile_tex() function.  Also, get 4 texels instead of 1...
  */
 static void
 get_texel(struct tgsi_sampler *sampler,
-          unsigned face, unsigned level, int x, int y, unsigned zslice,
+          unsigned face, unsigned level, int x, int y, int z,
           float rgba[NUM_CHANNELS][QUAD_SIZE], unsigned j)
 {
-   int tx = x / TEX_CACHE_TILE_SIZE;
-   int ty = y / TEX_CACHE_TILE_SIZE;
-   unsigned entry = compute_cache_pos(face, level, zslice, tx, ty);
-
-   if (tx != sampler->cache[entry].x ||
-       ty != sampler->cache[entry].y ||
-       face != sampler->cache[entry].face ||
-       level != sampler->cache[entry].level ||
-       zslice != sampler->cache[entry].zslice) {
-      /* entry is not what's expected */
-      struct pipe_context *pipe = (struct pipe_context *) sampler->pipe;
-      struct pipe_surface *ps
-         = pipe->get_tex_surface(pipe, sampler->texture, face, level, zslice);
-
-      /*
-      printf("cache miss (%d, %d) face %u\n", tx, ty, face);
-      */
-
-      assert(ps->width == sampler->texture->level[level].width);
-      assert(ps->height == sampler->texture->level[level].height);
-      sampler->cache[entry].x = tx;
-      sampler->cache[entry].y = ty;
-      sampler->cache[entry].level = level;
-      sampler->cache[entry].face = face;
-      sampler->cache[entry].zslice = zslice;
-      ps->get_tile(ps,
-                   tx * TEX_CACHE_TILE_SIZE,
-                   ty * TEX_CACHE_TILE_SIZE,
-                   TEX_CACHE_TILE_SIZE, TEX_CACHE_TILE_SIZE,
-                   (float *) sampler->cache[entry].data);
-
-      pipe_surface_reference(&ps, NULL);
-   }
-   else {
-      /*
-      printf("cache hit (%d, %d)\n", x, y);
-      */
-   }
-
-   /* get the texel from cache entry */
-   tx = x % TEX_CACHE_TILE_SIZE;
-   ty = y % TEX_CACHE_TILE_SIZE;
-   if (sampler->texture->format == PIPE_FORMAT_U_Z16 ||
-       sampler->texture->format == PIPE_FORMAT_U_Z32 ||
-       sampler->texture->format == PIPE_FORMAT_S8_Z24) {
-      /* get_tile() returned one float per texel */
-      float *src = (float *) sampler->cache[entry].data;
-      rgba[0][j] =
-      rgba[1][j] =
-      rgba[2][j] =
-      rgba[3][j] = src[ty * TEX_CACHE_TILE_SIZE + tx];
-   }
-   else {
-      /* get_tile() returned four floats per texel */
-      rgba[0][j] = sampler->cache[entry].data[ty][tx][0];
-      rgba[1][j] = sampler->cache[entry].data[ty][tx][1];
-      rgba[2][j] = sampler->cache[entry].data[ty][tx][2];
-      rgba[3][j] = sampler->cache[entry].data[ty][tx][3];
-   }
+   const int tx = x % TILE_SIZE;
+   const int ty = y % TILE_SIZE;
+   const struct softpipe_cached_tile *tile
+      = sp_get_cached_tile_tex(sampler->pipe, sampler->cache,
+                               x, y, z, face, level);
+   rgba[0][j] = tile->data.color[ty][tx][0];
+   rgba[1][j] = tile->data.color[ty][tx][1];
+   rgba[2][j] = tile->data.color[ty][tx][2];
+   rgba[3][j] = tile->data.color[ty][tx][3];
 }
 
 

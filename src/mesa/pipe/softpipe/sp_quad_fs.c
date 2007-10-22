@@ -153,19 +153,10 @@ static void shade_begin(struct quad_stage *qs)
    struct softpipe_context *softpipe = qs->softpipe;
    unsigned i, entry;
 
+   /* set TGSI sampler state that varies */
    for (i = 0; i < PIPE_MAX_SAMPLERS; i++) {
       qss->samplers[i].state = softpipe->sampler[i];
       qss->samplers[i].texture = softpipe->texture[i];
-      qss->samplers[i].get_samples = sp_get_samples;
-      qss->samplers[i].pipe = &softpipe->pipe;
-      /* init cache info here */
-      for (entry = 0; entry < TEX_CACHE_NUM_ENTRIES; entry++) {
-         qss->samplers[i].cache[entry].x = -1;
-         qss->samplers[i].cache[entry].y = -1;
-         qss->samplers[i].cache[entry].level = -1;
-         qss->samplers[i].cache[entry].face = -1;
-         qss->samplers[i].cache[entry].zslice = -1;
-      }
    }
 
    /* XXX only do this if the fragment shader changes... */
@@ -196,6 +187,7 @@ static void shade_begin(struct quad_stage *qs)
 struct quad_stage *sp_quad_shade_stage( struct softpipe_context *softpipe )
 {
    struct quad_shade_stage *qss = CALLOC_STRUCT(quad_shade_stage);
+   uint i;
 
    /* allocate storage for program inputs/outputs, aligned to 16 bytes */
    qss->inputs = malloc(PIPE_ATTRIB_MAX * sizeof(*qss->inputs) + 16);
@@ -206,6 +198,14 @@ struct quad_stage *sp_quad_shade_stage( struct softpipe_context *softpipe )
    qss->stage.softpipe = softpipe;
    qss->stage.begin = shade_begin;
    qss->stage.run = shade_quad;
+
+   /* set TGSI sampler state that's constant */
+   for (i = 0; i < PIPE_MAX_SAMPLERS; i++) {
+      assert(softpipe->tex_cache[i]);
+      qss->samplers[i].get_samples = sp_get_samples;
+      qss->samplers[i].pipe = &softpipe->pipe;
+      qss->samplers[i].cache = softpipe->tex_cache[i];
+   }
 
    return &qss->stage;
 }

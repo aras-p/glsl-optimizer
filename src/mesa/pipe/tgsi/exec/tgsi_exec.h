@@ -29,14 +29,8 @@ struct tgsi_interp_coef
    float dady[NUM_CHANNELS];
 };
 
-#define TEX_CACHE_TILE_SIZE 8
-#define TEX_CACHE_NUM_ENTRIES 8
 
-struct tgsi_texture_cache_entry
-{
-   int x, y, face, level, zslice;
-   float data[TEX_CACHE_TILE_SIZE][TEX_CACHE_TILE_SIZE][4];
-};
+struct softpipe_tile_cache;  /**< Opaque to TGSI */
 
 struct tgsi_sampler
 {
@@ -50,7 +44,7 @@ struct tgsi_sampler
                        float lodbias,
                        float rgba[NUM_CHANNELS][QUAD_SIZE]);
    void *pipe; /*XXX temporary*/
-   struct tgsi_texture_cache_entry cache[TEX_CACHE_NUM_ENTRIES];
+   struct softpipe_tile_cache *cache;
 };
 
 struct tgsi_exec_labels

@@ -163,6 +163,8 @@ struct softpipe_context {
    /** This either points to zbuf_cache or sbuf_cache_sep */
    struct softpipe_tile_cache *sbuf_cache;
 
+   struct softpipe_tile_cache *tex_cache[PIPE_MAX_SAMPLERS];
+
    int use_sse : 1;
 };
 

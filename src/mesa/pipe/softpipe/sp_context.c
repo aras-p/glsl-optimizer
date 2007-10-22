@@ -343,6 +343,20 @@ struct pipe_context *softpipe_create( struct pipe_winsys *pipe_winsys,
    softpipe->pipe.mipmap_tree_layout = softpipe_mipmap_tree_layout;
    softpipe->pipe.get_tex_surface = softpipe_get_tex_surface;
 
+   /*
+    * Alloc caches for accessing drawing surfaces and textures.
+    * Must be before quad stage setup!
+    */
+   for (i = 0; i < PIPE_MAX_COLOR_BUFS; i++)
+      softpipe->cbuf_cache[i] = sp_create_tile_cache();
+   softpipe->zbuf_cache = sp_create_tile_cache();
+   softpipe->sbuf_cache_sep = sp_create_tile_cache();
+   softpipe->sbuf_cache = softpipe->sbuf_cache_sep; /* initial value */
+
+   for (i = 0; i < PIPE_MAX_SAMPLERS; i++)
+      softpipe->tex_cache[i] = sp_create_tile_cache();
+
+
    /* setup quad rendering stages */
    softpipe->quad.polygon_stipple = sp_quad_polygon_stipple_stage(softpipe);
    softpipe->quad.shade = sp_quad_shade_stage(softpipe);
@@ -379,12 +393,6 @@ struct pipe_context *softpipe_create( struct pipe_winsys *pipe_winsys,
 
    sp_init_region_functions(softpipe);
    sp_init_surface_functions(softpipe);
-
-   for (i = 0; i < PIPE_MAX_COLOR_BUFS; i++)
-      softpipe->cbuf_cache[i] = sp_create_tile_cache();
-   softpipe->zbuf_cache = sp_create_tile_cache();
-   softpipe->sbuf_cache_sep = sp_create_tile_cache();
-   softpipe->sbuf_cache = softpipe->sbuf_cache_sep; /* initial value */
 
    return &softpipe->pipe;
 }

@@ -31,6 +31,8 @@
 
 #include "sp_context.h"
 #include "sp_state.h"
+#include "sp_tile_cache.h"
+
 
 void *
 softpipe_create_sampler_state(struct pipe_context *pipe,
@@ -71,6 +73,8 @@ softpipe_set_texture_state(struct pipe_context *pipe,
 
    assert(unit < PIPE_MAX_SAMPLERS);
    softpipe->texture[unit] = texture;  /* ptr, not struct */
+
+   sp_tile_cache_set_texture(softpipe->tex_cache[unit], texture);
 
    softpipe->dirty |= SP_NEW_TEXTURE;
 }
