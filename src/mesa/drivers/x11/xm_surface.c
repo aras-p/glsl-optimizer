@@ -78,12 +78,12 @@ xmesa_rb(struct softpipe_surface *sps)
 
 static void
 get_tile(struct pipe_surface *ps,
-         GLuint x, GLuint y, GLuint w, GLuint h, GLfloat *p)
+         uint x, uint y, uint w, uint h, float *p)
 {
    struct xmesa_renderbuffer *xrb = xmesa_rb((struct softpipe_surface *) ps);
    GLubyte tmp[MAX_WIDTH * 4];
    GLuint i, j;
-   unsigned w0 = w;
+   uint w0 = w;
    GET_CURRENT_CONTEXT(ctx);
 
    CLIP_TILE;
@@ -101,12 +101,12 @@ get_tile(struct pipe_surface *ps,
 
 static void
 put_tile(struct pipe_surface *ps,
-         GLuint x, GLuint y, GLuint w, GLuint h, const GLfloat *p)
+         uint x, uint y, uint w, uint h, const float *p)
 {
    struct xmesa_renderbuffer *xrb = xmesa_rb((struct softpipe_surface *) ps);
    GLubyte tmp[MAX_WIDTH * 4];
    GLuint i, j;
-   unsigned w0 = w;
+   uint w0 = w;
    GET_CURRENT_CONTEXT(ctx);
    CLIP_TILE;
    FLIP(y);
