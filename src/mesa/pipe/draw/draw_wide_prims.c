@@ -27,6 +27,7 @@
 
 /* Authors:  Keith Whitwell <keith@tungstengraphics.com>
  */
+
 #include "pipe/p_util.h"
 #include "pipe/p_defines.h"
 #include "draw_private.h"
@@ -35,8 +36,6 @@
 
 struct wide_stage {
    struct draw_stage stage;
-
-   unsigned hw_data_offset;
 
    float half_line_width;
    float half_point_size;
@@ -50,54 +49,50 @@ static INLINE struct wide_stage *wide_stage( struct draw_stage *stage )
 }
 
 
-
-
-
-static void tri( struct draw_stage *next,
-		 struct vertex_header *v0,
-		 struct vertex_header *v1,
-		 struct vertex_header *v2 )
+static void passthrough_point( struct draw_stage *stage,
+                               struct prim_header *header )
 {
-   struct prim_header tmp;
-
-   tmp.det = 1.0;
-   tmp.v[0] = v0;
-   tmp.v[1] = v1;
-   tmp.v[2] = v2;
-   next->tri( next, &tmp );
+   stage->next->point( stage->next, header );
 }
 
-static void quad( struct draw_stage *next,
-		  struct vertex_header *v0,
-		  struct vertex_header *v1,
-		  struct vertex_header *v2,
-		  struct vertex_header *v3 )
+static void passthrough_line( struct draw_stage *stage,
+                              struct prim_header *header )
 {
-   /* XXX: Need to disable tri-stipple
-    */
-   tri( next, v0, v1, v3 );
-   tri( next, v2, v0, v3 );
+   stage->next->line(stage->next, header);
 }
 
+static void passthrough_tri( struct draw_stage *stage,
+                             struct prim_header *header )
+{
+   stage->next->tri(stage->next, header);
+}
+
+
+/**
+ * Draw a wide line by drawing a quad (two triangles).
+ * XXX still need line stipple.
+ * XXX need to disable polygon stipple.
+ */
 static void wide_line( struct draw_stage *stage,
 		       struct prim_header *header )
 {
-   struct wide_stage *wide = wide_stage(stage);
-   unsigned hw_data_offset = wide->hw_data_offset;
-   float half_width = wide->half_line_width;
+   const struct wide_stage *wide = wide_stage(stage);
+   const float half_width = wide->half_line_width;
+
+   struct prim_header tri;
 
    struct vertex_header *v0 = dup_vert(stage, header->v[0], 0);
    struct vertex_header *v1 = dup_vert(stage, header->v[0], 1);
    struct vertex_header *v2 = dup_vert(stage, header->v[1], 2);
    struct vertex_header *v3 = dup_vert(stage, header->v[1], 3);
 
-   float *pos0 = (float *)&(v0->data[hw_data_offset]);
-   float *pos1 = (float *)&(v1->data[hw_data_offset]);
-   float *pos2 = (float *)&(v2->data[hw_data_offset]);
-   float *pos3 = (float *)&(v3->data[hw_data_offset]);
-   
-   float dx = FABSF(pos0[0] - pos2[0]);
-   float dy = FABSF(pos0[1] - pos2[1]);
+   float *pos0 = v0->data[0];
+   float *pos1 = v1->data[0];
+   float *pos2 = v2->data[0];
+   float *pos3 = v3->data[0];
+
+   const float dx = FABSF(pos0[0] - pos2[0]);
+   const float dy = FABSF(pos0[1] - pos2[1]);
    
    if (dx > dy) {
       pos0[1] -= half_width;
@@ -112,79 +107,61 @@ static void wide_line( struct draw_stage *stage,
       pos3[0] += half_width;
    }
 
-   quad( stage->next, v0, v1, v2, v3 );
+   tri.det = header->det;  /* only the sign matters */
+   tri.v[0] = v0;
+   tri.v[1] = v2;
+   tri.v[2] = v3;
+   stage->next->tri( stage->next, &tri );
+
+   tri.v[0] = v0;
+   tri.v[1] = v3;
+   tri.v[2] = v1;
+   stage->next->tri( stage->next, &tri );
 }
 
-
-static void make_wide_point( struct draw_stage *stage,
-			     const struct vertex_header *vin,
-			     struct vertex_header *v[] )
-{
-   struct wide_stage *wide = wide_stage(stage);
-   unsigned hw_data_offset = wide->hw_data_offset;
-   float half_size = wide->half_point_size;
-   float *pos[4];
-
-   v[0] = dup_vert(stage, vin, 0);
-   pos[0] = (float *)&(v[0]->data[hw_data_offset]);
-
-   /* Probably not correct:
-    */
-   pos[0][0] = pos[0][0];
-   pos[0][1] = pos[0][1] - .5;
-
-   v[1] = dup_vert(stage, v[0], 1);
-   v[2] = dup_vert(stage, v[0], 2);
-   v[3] = dup_vert(stage, v[0], 3);
-
-   pos[1] = (float *)&(v[1]->data[hw_data_offset]);
-   pos[2] = (float *)&(v[2]->data[hw_data_offset]);
-   pos[3] = (float *)&(v[3]->data[hw_data_offset]);
-   
-   _mesa_printf("point %f %f, %f\n", pos[0][0], pos[0][1], half_size);
-
-   pos[0][0] -= half_size;
-   pos[0][1] -= half_size;
-
-   pos[1][0] -= half_size;
-   pos[1][1] += half_size;
-
-   pos[2][0] += half_size;
-   pos[2][1] -= half_size;
-
-   pos[3][0] += half_size;
-   pos[3][1] += half_size;
-   
-//   quad( stage->next, v[0], v[1], v[2], v[3] );
-}
 
 static void wide_point( struct draw_stage *stage,
 			struct prim_header *header )
 {
-   struct vertex_header *v[4];
-   make_wide_point(stage, header->v[0], v );
-   quad( stage->next, v[0], v[1], v[2], v[3] );
+   const struct wide_stage *wide = wide_stage(stage);
+   float half_size = wide->half_point_size;
+
+   struct prim_header tri;
+
+   /* four dups of original vertex */
+   struct vertex_header *v0 = dup_vert(stage, header->v[0], 0);
+   struct vertex_header *v1 = dup_vert(stage, header->v[0], 1);
+   struct vertex_header *v2 = dup_vert(stage, header->v[0], 2);
+   struct vertex_header *v3 = dup_vert(stage, header->v[0], 3);
+
+   float *pos0 = v0->data[0];
+   float *pos1 = v1->data[0];
+   float *pos2 = v2->data[0];
+   float *pos3 = v3->data[0];
+
+   pos0[0] -= half_size;
+   pos0[1] -= half_size;
+
+   pos1[0] -= half_size;
+   pos1[1] += half_size;
+
+   pos2[0] += half_size;
+   pos2[1] -= half_size;
+
+   pos3[0] += half_size;
+   pos3[1] += half_size;
+
+   tri.det = header->det;  /* only the sign matters */
+   tri.v[0] = v0;
+   tri.v[1] = v2;
+   tri.v[2] = v3;
+   stage->next->tri( stage->next, &tri );
+
+   tri.v[0] = v0;
+   tri.v[1] = v3;
+   tri.v[2] = v1;
+   stage->next->tri( stage->next, &tri );
 }
-
-
-static void set_texcoord( struct vertex_fetch *vf,			   
-			  struct vertex_header *v,
-			  const float *val )
-{ 
-   GLubyte *dst = (GLubyte *)v;
-   const struct vf_attr *a = vf->attr;
-   const unsigned attr_count = vf->attr_count;
-   unsigned j;
-
-   /* XXX: precompute which attributes need to be set.
-    */
-   for (j = 1; j < attr_count; j++) {
-      if (a[j].attrib >= VF_ATTRIB_TEX0 &&
-	  a[j].attrib <= VF_ATTRIB_TEX7)
-	 a[j].insert[4-1]( &a[j], dst + a[j].vertoffset, val );
-   }
-}
-
 
 
 /* If there are lots of sprite points (and why wouldn't there be?) it
@@ -195,6 +172,7 @@ static void set_texcoord( struct vertex_fetch *vf,
 static void sprite_point( struct draw_stage *stage,
 		       struct prim_header *header )
 {
+#if 0
    struct vertex_header *v[4];
    struct vertex_fetch *vf = stage->pipe->draw->vb.vf;
 
@@ -204,13 +182,14 @@ static void sprite_point( struct draw_stage *stage,
    static const float tex10[4] = { 1, 0, 0, 1 };
 
    make_wide_point(stage, header->v[0], &v[0] );
-   
+
    set_texcoord( vf, v[0], tex00 );
    set_texcoord( vf, v[1], tex01 );
    set_texcoord( vf, v[2], tex10 );
    set_texcoord( vf, v[3], tex11 );
 
    quad( stage->next, v[0], v[1], v[2], v[3] );
+#endif
 }
 
 
@@ -218,31 +197,26 @@ static void sprite_point( struct draw_stage *stage,
 static void wide_begin( struct draw_stage *stage )
 {
    struct wide_stage *wide = wide_stage(stage);
-   struct clip_context *draw = stage->pipe->draw;
+   struct draw_context *draw = stage->draw;
 
-   if (draw->vb_state.clipped_prims)
-      wide->hw_data_offset = 16;
-   else
-      wide->hw_data_offset = 0;	
+   wide->half_point_size = 0.5 * draw->rasterizer->point_size;
+   wide->half_line_width = 0.5 * draw->rasterizer->line_width;
 
-   wide->half_point_size = draw->state.point_size / 2;
-   wide->half_line_width = draw->state.line_width / 2;
-
-   if (draw->state.line_width != 1.0) {
+   if (draw->rasterizer->line_width != 1.0) {
       wide->stage.line = wide_line;
    }
    else {
-      wide->stage.line = clip_passthrough_line;
+      wide->stage.line = passthrough_line;
    }
 
-   if (draw->state.point_sprite) {
+   if (0/*draw->state.point_sprite*/) {
       wide->stage.point = sprite_point;
    }
-   else if (draw->state.point_size != 1.0) {
+   else if (draw->rasterizer->point_size != 1.0) {
       wide->stage.point = wide_point;
    }
    else {
-      wide->stage.point = clip_passthrough_point;
+      wide->stage.point = passthrough_point;
    }
 
    
@@ -256,20 +230,26 @@ static void wide_end( struct draw_stage *stage )
    stage->next->end( stage->next );
 }
 
-struct draw_stage *clip_pipe_wide( struct clip_pipeline *pipe )
+
+static void draw_reset_stipple_counter( struct draw_stage *stage )
+{
+   stage->next->reset_stipple_counter( stage->next );
+}
+
+struct draw_stage *draw_wide_stage( struct draw_context *draw )
 {
    struct wide_stage *wide = CALLOC_STRUCT(wide_stage);
 
-   clip_pipe_alloc_tmps( &wide->stage, 4 );
+   draw_alloc_tmps( &wide->stage, 4 );
 
-   wide->stage.pipe = pipe;
+   wide->stage.draw = draw;
    wide->stage.next = NULL;
    wide->stage.begin = wide_begin;
    wide->stage.point = wide_point;
    wide->stage.line = wide_line;
-   wide->stage.tri = clip_passthrough_tri;
-   wide->stage.reset_tmps = clip_pipe_reset_tmps;
+   wide->stage.tri = passthrough_tri;
    wide->stage.end = wide_end;
+   wide->stage.reset_stipple_counter = draw_reset_stipple_counter;
 
    return &wide->stage;
 }
