@@ -188,6 +188,7 @@ static void update_raster_state( struct st_context *st )
     */
    raster.point_size = ctx->Point.Size;
    raster.point_smooth = ctx->Point.SmoothFlag;
+   raster.point_sprite = ctx->Point.PointSprite;
 
    /* _NEW_LINE
     */
