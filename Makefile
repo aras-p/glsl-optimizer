@@ -112,6 +112,7 @@ linux-ia64-icc \
 linux-ia64-icc-static \
 linux-icc \
 linux-icc-static \
+linux-llvm \
 linux-osmesa \
 linux-osmesa16 \
 linux-osmesa16-static \

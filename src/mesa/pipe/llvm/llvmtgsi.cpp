@@ -33,8 +33,16 @@
 #include <llvm/Bitcode/ReaderWriter.h>
 
 #include <sstream>
+#include <fstream>
 #include <iostream>
 
+
+struct ga_llvm_prog {
+   void *module;
+   void *function;
+   int   num_consts;
+   int   id;
+};
 
 using namespace llvm;
 #include "llvm_base_shader.cpp"
@@ -134,7 +142,7 @@ translate_instruction(llvm::Module *module,
    inputs[1] = 0;
    inputs[2] = 0;
    inputs[3] = 0;
-   printf("translate instr START\n");
+
    for (int i = 0; i < inst->Instruction.NumSrcRegs; ++i) {
       struct tgsi_full_src_register *src = &inst->FullSrcRegisters[i];
       llvm::Value *val = 0;
@@ -176,7 +184,6 @@ translate_instruction(llvm::Module *module,
    /*if (inputs[0])
      instr->printVector(inputs[0]);*/
    llvm::Value *out = 0;
-   printf("Opcode is %d\n", inst->Instruction.Opcode);
    switch (inst->Instruction.Opcode) {
    case TGSI_OPCODE_ARL:
       break;
@@ -485,7 +492,6 @@ translate_instruction(llvm::Module *module,
    case TGSI_OPCODE_KIL:
       break;
    case TGSI_OPCODE_END:
-      printf("translate instr END\n");
       return;
       break;
    default:
@@ -525,7 +531,6 @@ translate_instruction(llvm::Module *module,
          fprintf(stderr, "ERROR: unsupported LLVM destination!");
       }
    }
-   printf("translate instr END\n");
 }
 
 static llvm::Module *
@@ -590,10 +595,6 @@ tgsi_to_llvm(struct ga_llvm_prog *prog, const struct tgsi_token *tokens)
    tgsi_parse_free(&parse);
 
    prog->num_consts = storage.numConsts();
-
-   std::cout<<"XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"<<std::endl;
-   std::cout<<*mod<<std::endl;
-   std::cout<<"YYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYY"<<std::endl;
    return mod;
 }
 
@@ -605,9 +606,7 @@ ga_llvm_from_tgsi(struct pipe_context *pipe, const struct tgsi_token *tokens)
    struct ga_llvm_prog *ga_llvm =
       (struct ga_llvm_prog *)malloc(sizeof(struct ga_llvm_prog));
    ga_llvm->id = GLOBAL_ID;
-   fprintf(stderr, "----- TGSI Start ---- \n");
    tgsi_dump(tokens, 0);
-   fprintf(stderr, "----- TGSI End ---- \n");
    llvm::Module *mod = tgsi_to_llvm(ga_llvm, tokens);
 
    /* Run optimization passes over it */
@@ -630,6 +629,8 @@ ga_llvm_from_tgsi(struct pipe_context *pipe, const struct tgsi_token *tokens)
    Function *func = mod->getFunction("run_vertex_shader");
    ga_llvm->function = ee->getPointerToFunctionOrStub(func);
 
+   ga_llvm_prog_dump(ga_llvm, 0);
+
    return ga_llvm;
 }
 
@@ -638,7 +639,6 @@ void ga_llvm_prog_delete(struct ga_llvm_prog *prog)
    llvm::Module *mod = static_cast<llvm::Module*>(prog->module);
    delete mod;
    prog->module = 0;
-   prog->engine = 0;
    prog->function = 0;
    free(prog);
 }
@@ -664,4 +664,32 @@ int ga_llvm_prog_exec(struct ga_llvm_prog *prog,
           num_attribs, prog->num_consts);
 
    return 0;
+}
+
+void ga_llvm_prog_dump(struct ga_llvm_prog *prog, const char *file_prefix)
+{
+   llvm::Module *mod;
+   if (!prog || !prog->module)
+      return;
+
+   mod = static_cast<llvm::Module*>(prog->module);
+
+   if (file_prefix) {
+      std::ostringstream stream;
+      stream << file_prefix;
+      stream << prog->id;
+      stream << ".ll";
+      std::string name = stream.str();
+      std::ofstream out(name.c_str());
+      if (!out) {
+         std::cerr<<"Can't open file : "<<stream.str()<<std::endl;;
+         return;
+      }
+      out << (*mod);
+      out.close();
+   } else {
+      std::cout<<"; ---------- Start shader "<<prog->id<<std::endl;
+      std::cout<<*mod<<std::endl;
+      std::cout<<"; ---------- End shader "<<prog->id<<std::endl;
+   }
 }

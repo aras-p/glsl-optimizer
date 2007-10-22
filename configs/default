@@ -40,6 +40,8 @@ GLUT_LIB = glut
 GLW_LIB = GLw
 OSMESA_LIB = OSMesa
 
+LLVM_CFLAGS=-DMESA_NO_LLVM=1
+LLVM_CXXFLAGS=-DMESA_NO_LLVM=1
 
 # Library names (actual file names)
 GL_LIB_NAME = lib$(GL_LIB).so
@@ -65,30 +67,9 @@ DRIVER_DIRS = x11 osmesa
 # Which subdirs under $(TOP)/progs/ to enter:
 PROGRAM_DIRS = demos redbook samples glsl xdemos
 
-LLVM_VERSION := $(shell llvm-config --version)
-
-ifeq ($(LLVM_VERSION),)
-  $(warning Could not find LLVM! Make Sure 'llvm-config' is in the path)
-  MESA_NO_LLVM=1
-else
-  MESA_NO_LLVM=0
-  $(info Using LLVM version: $(LLVM_VERSION))
-endif
-
-ifeq ($(MESA_NO_LLVM),0)
-#  LLVM_CFLAGS=`llvm-config --cflags` -DMESA_NO_LLVM=0
-  LLVM_CFLAGS=-DMESA_NO_LLVM=0
-  LLVM_CXXFLAGS=`llvm-config --cxxflags` -DMESA_NO_LLVM=0 -Wno-long-long
-  LLVM_LDFLAGS=`llvm-config --ldflags`
-  LLVM_LIBS=`llvm-config --libs`
-else
-  LLVM_CFLAGS=-DMESA_NO_LLVM=1
-  LLVM_CXXFLAGS=-DMESA_NO_LLVM=1
-endif
-
 # Library/program dependencies
 #EXTRA_LIB_PATH ?=
-GL_LIB_DEPS = $(LLVM_LDFLAGS) $(LLVM_LIBS) $(EXTRA_LIB_PATH) -lX11 -lXext -lm -lpthread
+GL_LIB_DEPS = $(EXTRA_LIB_PATH) -lX11 -lXext -lm -lpthread
 OSMESA_LIB_DEPS = -L$(TOP)/$(LIB_DIR) -l$(GL_LIB)
 GLU_LIB_DEPS = -L$(TOP)/$(LIB_DIR) -l$(GL_LIB) -lm
 GLUT_LIB_DEPS = -L$(TOP)/$(LIB_DIR) -l$(GLU_LIB) -l$(GL_LIB) $(EXTRA_LIB_PATH) -lX11 -lXmu -lXt -lXi -lm
