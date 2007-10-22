@@ -600,6 +600,62 @@ llvm::Function * Instructions::declarePrintf()
   return func_printf;
 }
 
+llvm::Value * Instructions::sge(llvm::Value *in1, llvm::Value *in2)
+{
+   Constant *const1f = ConstantFP::get(Type::FloatTy, APFloat(1.000000e+00f));
+   Constant *const0f = Constant::getNullValue(Type::FloatTy);
+
+   ExtractElementInst *x1 = new ExtractElementInst(in1, unsigned(0), name("x1"), m_block);
+   ExtractElementInst *x2 = new ExtractElementInst(in2, unsigned(0), name("x2"), m_block);
+   FCmpInst *xcmp = new FCmpInst(FCmpInst::FCMP_OGE, x1, x2, name("xcmp"), m_block);
+   SelectInst *x = new SelectInst(xcmp, const1f, const0f, name("xsel"), m_block);
+
+   ExtractElementInst *y1 = new ExtractElementInst(in1, unsigned(1), name("y1"), m_block);
+   ExtractElementInst *y2 = new ExtractElementInst(in2, unsigned(1), name("y2"), m_block);
+   FCmpInst *ycmp = new FCmpInst(FCmpInst::FCMP_OGE, y1, y2, name("ycmp"), m_block);
+   SelectInst *y = new SelectInst(ycmp, const1f, const0f, name("ysel"), m_block);
+
+   ExtractElementInst *z1 = new ExtractElementInst(in1, unsigned(2), name("z1"), m_block);
+   ExtractElementInst *z2 = new ExtractElementInst(in2, unsigned(2), name("z2"), m_block);
+   FCmpInst *zcmp = new FCmpInst(FCmpInst::FCMP_OGE, z1, z2, name("zcmp"), m_block);
+   SelectInst *z = new SelectInst(zcmp, const1f, const0f, name("zsel"), m_block);
+
+   ExtractElementInst *w1 = new ExtractElementInst(in1, unsigned(3), name("w1"), m_block);
+   ExtractElementInst *w2 = new ExtractElementInst(in2, unsigned(3), name("w2"), m_block);
+   FCmpInst *wcmp = new FCmpInst(FCmpInst::FCMP_OGE, w1, w2, name("wcmp"), m_block);
+   SelectInst *w = new SelectInst(wcmp, const1f, const0f, name("wsel"), m_block);
+
+   return vectorFromVals(x, y, z, w);
+}
+
+
+llvm::Value * Instructions::slt(llvm::Value *in1, llvm::Value *in2)
+{
+   Constant *const1f = ConstantFP::get(Type::FloatTy, APFloat(1.000000e+00f));
+   Constant *const0f = Constant::getNullValue(Type::FloatTy);
+
+   ExtractElementInst *x1 = new ExtractElementInst(in1, unsigned(0), name("x1"), m_block);
+   ExtractElementInst *x2 = new ExtractElementInst(in2, unsigned(0), name("x2"), m_block);
+   FCmpInst *xcmp = new FCmpInst(FCmpInst::FCMP_OLT, x1, x2, name("xcmp"), m_block);
+   SelectInst *x = new SelectInst(xcmp, const1f, const0f, name("xsel"), m_block);
+
+   ExtractElementInst *y1 = new ExtractElementInst(in1, unsigned(1), name("y1"), m_block);
+   ExtractElementInst *y2 = new ExtractElementInst(in2, unsigned(1), name("y2"), m_block);
+   FCmpInst *ycmp = new FCmpInst(FCmpInst::FCMP_OLT, y1, y2, name("ycmp"), m_block);
+   SelectInst *y = new SelectInst(ycmp, const1f, const0f, name("ysel"), m_block);
+
+   ExtractElementInst *z1 = new ExtractElementInst(in1, unsigned(2), name("z1"), m_block);
+   ExtractElementInst *z2 = new ExtractElementInst(in2, unsigned(2), name("z2"), m_block);
+   FCmpInst *zcmp = new FCmpInst(FCmpInst::FCMP_OLT, z1, z2, name("zcmp"), m_block);
+   SelectInst *z = new SelectInst(zcmp, const1f, const0f, name("zsel"), m_block);
+
+   ExtractElementInst *w1 = new ExtractElementInst(in1, unsigned(3), name("w1"), m_block);
+   ExtractElementInst *w2 = new ExtractElementInst(in2, unsigned(3), name("w2"), m_block);
+   FCmpInst *wcmp = new FCmpInst(FCmpInst::FCMP_OLT, w1, w2, name("wcmp"), m_block);
+   SelectInst *w = new SelectInst(wcmp, const1f, const0f, name("wsel"), m_block);
+
+   return vectorFromVals(x, y, z, w);
+}
 
 /*
 typedef __attribute__(( ocu_vector_type(4) )) float float4;
@@ -775,3 +831,4 @@ Constant* const_packed_14 = ConstantVector::get(VectorTy_2, const_packed_14_elem
 }
    return func_lit;
 }
+

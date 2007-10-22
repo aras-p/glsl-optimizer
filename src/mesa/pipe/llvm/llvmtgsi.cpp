@@ -235,9 +235,13 @@ translate_instruction(llvm::Module *module,
       out = instr->max(inputs[0], inputs[1]);
    }
       break;
-   case TGSI_OPCODE_SLT:
+   case TGSI_OPCODE_SLT: {
+      out = instr->slt(inputs[0], inputs[1]);
+   }
       break;
-   case TGSI_OPCODE_SGE:
+   case TGSI_OPCODE_SGE: {
+      out = instr->sge(inputs[0], inputs[1]);
+   }
       break;
    case TGSI_OPCODE_MAD: {
       out = instr->madd(inputs[0], inputs[1], inputs[2]);
