@@ -43,6 +43,8 @@ struct wide_stage {
    uint texcoord_slot[PIPE_MAX_SHADER_OUTPUTS];
    uint texcoord_mode[PIPE_MAX_SHADER_OUTPUTS];
    uint num_texcoords;
+
+   int psize_slot;
 };
 
 
@@ -158,7 +160,7 @@ static void wide_point( struct draw_stage *stage,
 {
    const struct wide_stage *wide = wide_stage(stage);
    const boolean sprite = stage->draw->rasterizer->point_sprite;
-   float half_size = wide->half_point_size;
+   float half_size;
    float left_adj, right_adj;
 
    struct prim_header tri;
@@ -173,6 +175,14 @@ static void wide_point( struct draw_stage *stage,
    float *pos1 = v1->data[0];
    float *pos2 = v2->data[0];
    float *pos3 = v3->data[0];
+
+   /* point size is either per-vertex or fixed size */
+   if (wide->psize_slot >= 0) {
+      half_size = header->v[0]->data[wide->psize_slot][0];
+   }
+   else {
+      half_size = wide->half_point_size;
+   }
 
    left_adj = -half_size + 0.25;
    right_adj = half_size + 0.25;
@@ -247,6 +257,19 @@ static void wide_begin( struct draw_stage *stage )
          }
       }
       wide->num_texcoords = j;
+   }
+
+   wide->psize_slot = -1;
+   if (draw->rasterizer->point_size_per_vertex) {
+      /* find PSIZ vertex output */
+      const struct draw_vertex_shader *vs = draw->vertex_shader;
+      uint i;
+      for (i = 0; i < vs->state->num_outputs; i++) {
+         if (vs->state->output_semantic_name[i] == TGSI_SEMANTIC_PSIZE) {
+            wide->psize_slot = i;
+            break;
+         }
+      }
    }
    
    stage->next->begin( stage->next );

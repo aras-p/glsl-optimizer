@@ -86,6 +86,7 @@ struct pipe_rasterizer_state
    unsigned poly_stipple_enable:1;
    unsigned point_smooth:1;
    unsigned point_sprite:1;
+   unsigned point_size_per_vertex:1; /**< size computed in vertex shader */
    unsigned multisample:1;         /* XXX maybe more ms state in future */
    unsigned line_smooth:1;
    unsigned line_stipple_enable:1;

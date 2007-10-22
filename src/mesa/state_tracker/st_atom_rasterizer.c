@@ -201,6 +201,7 @@ static void update_raster_state( struct st_context *st )
          raster.sprite_coord_mode[i] = PIPE_SPRITE_COORD_NONE;
       }
    }
+   raster.point_size_per_vertex = ctx->VertexProgram.PointSizeEnabled;
 
    /* _NEW_LINE
     */
