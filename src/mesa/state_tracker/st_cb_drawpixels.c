@@ -797,6 +797,8 @@ draw_stencil_pixels(GLcontext *ctx, GLint x, GLint y,
    GLint skipPixels;
    ubyte *stmap;
 
+   pipe->flush(pipe, 0);
+
    /* map the stencil buffer */
    stmap = pipe->region_map(pipe, ps->region);
 
