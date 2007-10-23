@@ -162,7 +162,7 @@ a1r5g5b5_get_tile(struct pipe_surface *ps,
 /*** PIPE_FORMAT_U_Z16 ***/
 
 /**
- * Return as floats in [0,1].
+ * Return each Z value as four floats in [0,1].
  */
 static void
 z16_get_tile(struct pipe_surface *ps,
@@ -182,10 +182,13 @@ z16_get_tile(struct pipe_surface *ps,
    for (i = 0; i < h; i++) {
       float *pRow = p;
       for (j = 0; j < w; j++) {
-         pRow[j] = src[j] * scale;
+         pRow[j * 4 + 0] =
+         pRow[j * 4 + 1] =
+         pRow[j * 4 + 2] =
+         pRow[j * 4 + 3] = src[j] * scale;
       }
       src += ps->region->pitch;
-      p += w0;
+      p += 4 * w0;
    }
 }
 
@@ -391,7 +394,7 @@ a8_l8_get_tile(struct pipe_surface *ps,
 /*** PIPE_FORMAT_U_Z32 ***/
 
 /**
- * Return as floats in [0,1].
+ * Return each Z value as four floats in [0,1].
  */
 static void
 z32_get_tile(struct pipe_surface *ps,
@@ -411,10 +414,13 @@ z32_get_tile(struct pipe_surface *ps,
    for (i = 0; i < h; i++) {
       float *pRow = p;
       for (j = 0; j < w; j++) {
-         pRow[j] = src[j] * scale;
+         pRow[j * 4 + 0] =
+         pRow[j * 4 + 1] =
+         pRow[j * 4 + 2] =
+         pRow[j * 4 + 3] = src[j] * scale;
       }
       src += ps->region->pitch;
-      p += w0;
+      p += 4 * w0;
    }
 }
 
@@ -422,7 +428,7 @@ z32_get_tile(struct pipe_surface *ps,
 /*** PIPE_FORMAT_S8_Z24 ***/
 
 /**
- * Return Z component as float in [0,1].  Stencil part ignored.
+ * Return Z component as four float in [0,1].  Stencil part ignored.
  */
 static void
 s8z24_get_tile(struct pipe_surface *ps,
@@ -442,10 +448,13 @@ s8z24_get_tile(struct pipe_surface *ps,
    for (i = 0; i < h; i++) {
       float *pRow = p;
       for (j = 0; j < w; j++) {
-         pRow[j] = (src[j] & 0xffffff) * scale;
+         pRow[j * 4 + 0] =
+         pRow[j * 4 + 1] =
+         pRow[j * 4 + 2] =
+         pRow[j * 4 + 3] = (src[j] & 0xffffff) * scale;
       }
       src += ps->region->pitch;
-      p += w0;
+      p += 4 * w0;
    }
 }
 
