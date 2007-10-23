@@ -57,7 +57,7 @@ void draw_vertex_cache_invalidate( struct draw_context *draw )
 static struct vertex_header *get_vertex( struct draw_context *draw,
 					 unsigned i )
 {
-   unsigned slot = (i + (i>>5)) & 31;
+   unsigned slot = (i + (i>>5)) % VCACHE_SIZE;
    
    /* Cache miss?
     */
@@ -73,6 +73,8 @@ static struct vertex_header *get_vertex( struct draw_context *draw,
 //         fprintf(stderr, ".");
          draw->vcache.referenced |= (1 << slot);  /* slot now in use */
       }
+
+      assert(slot < Elements(draw->vcache.idx));
 
       draw->vcache.idx[slot] = i;
 
