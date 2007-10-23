@@ -488,8 +488,8 @@ static void emit_dst( struct prog_dst_register *dst,
    dst->Index = reg.idx;
    /* allow zero as a shorthand for xyzw */
    dst->WriteMask = mask ? mask : WRITEMASK_XYZW; 
-   dst->CondMask = COND_TR;
-   dst->CondSwizzle = 0;
+   dst->CondMask = COND_TR;  /* always pass cond test */
+   dst->CondSwizzle = SWIZZLE_NOOP;
    dst->CondSrc = 0;
    dst->pad = 0;
 }
@@ -512,7 +512,7 @@ static void debug_insn( struct prog_instruction *inst, const char *fn,
 
 
 static void emit_op3fn(struct tnl_program *p,
-		       GLuint op,
+                       enum prog_opcode op,
 		       struct ureg dest,
 		       GLuint mask,
 		       struct ureg src0,
