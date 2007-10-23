@@ -117,6 +117,12 @@ put_tile(struct pipe_surface *ps,
       xrb->St.Base.PutRow(ctx, &xrb->St.Base, w, x, y - i, tmp, NULL);
       p += w0 * 4;
    }
+#if 0 /* debug: flush */
+   {
+      XMesaContext xm = XMESA_CONTEXT(ctx);
+      XSync(xm->display, 0);
+   }
+#endif
 }
 
 
@@ -207,6 +213,11 @@ void
 xmesa_clear(struct pipe_context *pipe, struct pipe_surface *ps, GLuint value)
 {
    struct xmesa_renderbuffer *xrb = xmesa_rb((struct softpipe_surface *) ps);
+
+   /* XXX actually, we should just discard any cached tiles from this
+    * surface since we don't want to accidentally re-use them after clearing.
+    */
+   pipe->flush(pipe, 0);
 
    if (xrb && xrb->ximage) {
       /* clearing back color buffer */
