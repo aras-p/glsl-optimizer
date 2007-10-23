@@ -192,7 +192,7 @@ struct draw_context
    /* Post-tnl vertex cache:
     */
    struct {
-      unsigned referenced;
+      unsigned referenced;  /**< bitfield */
       unsigned idx[VCACHE_SIZE + VCACHE_OVERFLOW];
       struct vertex_header *vertex[VCACHE_SIZE + VCACHE_OVERFLOW];
       unsigned overflow;
