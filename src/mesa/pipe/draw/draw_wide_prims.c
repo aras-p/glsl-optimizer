@@ -100,17 +100,56 @@ static void wide_line( struct draw_stage *stage,
    const float dx = FABSF(pos0[0] - pos2[0]);
    const float dy = FABSF(pos0[1] - pos2[1]);
    
+   /*
+    * Draw wide line as a quad (two tris) by "stretching" the line along
+    * X or Y.
+    * XXX For AA lines, the quad corners have to be computed in a
+    * more sophisticated way.
+    */
+
+   /* need to tweak coords in several ways to be conformant here */
+
    if (dx > dy) {
-      pos0[1] -= half_width;
-      pos1[1] += half_width;
-      pos2[1] -= half_width;
-      pos3[1] += half_width;
+      /* x-major line */
+      pos0[1] = pos0[1] - half_width - 0.25;
+      pos1[1] = pos1[1] + half_width - 0.25;
+      pos2[1] = pos2[1] - half_width - 0.25;
+      pos3[1] = pos3[1] + half_width - 0.25;
+      if (pos0[0] < pos2[0]) {
+         /* left to right line */
+         pos0[0] -= 0.5;
+         pos1[0] -= 0.5;
+         pos2[0] -= 0.5;
+         pos3[0] -= 0.5;
+      }
+      else {
+         /* right to left line */
+         pos0[0] += 0.5;
+         pos1[0] += 0.5;
+         pos2[0] += 0.5;
+         pos3[0] += 0.5;
+      }
    }
    else {
-      pos0[0] -= half_width;
-      pos1[0] += half_width;
-      pos2[0] -= half_width;
-      pos3[0] += half_width;
+      /* y-major line */
+      pos0[0] = pos0[0] - half_width + 0.25;
+      pos1[0] = pos1[0] + half_width + 0.25;
+      pos2[0] = pos2[0] - half_width + 0.25;
+      pos3[0] = pos3[0] + half_width + 0.25;
+      if (pos0[1] < pos2[1]) {
+         /* top to bottom line */
+         pos0[1] -= 0.5;
+         pos1[1] -= 0.5;
+         pos2[1] -= 0.5;
+         pos3[1] -= 0.5;
+      }
+      else {
+         /* bottom to top line */
+         pos0[1] += 0.5;
+         pos1[1] += 0.5;
+         pos2[1] += 0.5;
+         pos3[1] += 0.5;
+      }
    }
 
    tri.det = header->det;  /* only the sign matters */
