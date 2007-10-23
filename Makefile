@@ -29,6 +29,8 @@ realclean:
 	$(MAKE) clean
 	-rm -rf lib*
 	-rm -f $(TOP)/configs/current
+	-rm -f $(TOP)/configs/autoconf
+	-rm -rf autom4te.cache
 	-rm -f `find . -name \*.o`
 	-rm -f `find . -name \*.a`
 	-rm -f `find . -name \*.so`
@@ -66,6 +68,7 @@ aix-64 \
 aix-64-static \
 aix-gcc \
 aix-static \
+autoconf \
 bluegene-osmesa \
 bluegene-xlc-osmesa \
 beos \
