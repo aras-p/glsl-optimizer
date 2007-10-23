@@ -461,8 +461,8 @@ static void emit_dst( struct prog_dst_register *dst,
    dst->File = ureg.file;
    dst->Index = ureg.idx;
    dst->WriteMask = mask;
-   dst->CondMask = 0;
-   dst->CondSwizzle = 0;
+   dst->CondMask = COND_TR;  /* always pass cond test */
+   dst->CondSwizzle = SWIZZLE_NOOP;
 }
 
 static struct prog_instruction *
