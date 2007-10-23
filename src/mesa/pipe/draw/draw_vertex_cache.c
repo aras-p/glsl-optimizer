@@ -59,6 +59,8 @@ static struct vertex_header *get_vertex( struct draw_context *draw,
 {
    unsigned slot = (i + (i>>5)) % VCACHE_SIZE;
    
+   assert(slot < 32); /* so we don't exceed the bitfield size below */
+
    /* Cache miss?
     */
    if (draw->vcache.idx[slot] != i) {
@@ -80,6 +82,7 @@ static struct vertex_header *get_vertex( struct draw_context *draw,
 
       /* Add to vertex shader queue:
        */
+      assert(draw->vs.queue_nr < VS_QUEUE_LENGTH);
       draw->vs.queue[draw->vs.queue_nr].dest = draw->vcache.vertex[slot];
       draw->vs.queue[draw->vs.queue_nr].elt = i;
       draw->vs.queue_nr++;
@@ -94,7 +97,13 @@ static struct vertex_header *get_vertex( struct draw_context *draw,
    }
    else {
 //      fprintf(stderr, "*");
+      /* primitive flushing may have cleared the bitfield but did not
+       * clear the idx[] array values.  Set the bit now.  This fixes a
+       * bug found when drawing long triangle fans.
+       */
+      draw->vcache.referenced |= (1 << slot);
    }
+
 
    return draw->vcache.vertex[slot];
 }
