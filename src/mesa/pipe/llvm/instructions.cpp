@@ -657,6 +657,61 @@ llvm::Value * Instructions::slt(llvm::Value *in1, llvm::Value *in2)
    return vectorFromVals(x, y, z, w);
 }
 
+llvm::Value * Instructions::cross(llvm::Value *in1, llvm::Value *in2)
+{
+   ExtractElementInst *x1 = new ExtractElementInst(in1, unsigned(0),
+                                                   name("x1"),
+                                                   m_block);
+   ExtractElementInst *y1 = new ExtractElementInst(in1, unsigned(1),
+                                                   name("y1"),
+                                                   m_block);
+   ExtractElementInst *z1 = new ExtractElementInst(in1, unsigned(2),
+                                                   name("z1"),
+                                                   m_block);
+
+   ExtractElementInst *x2 = new ExtractElementInst(in2, unsigned(0),
+                                                   name("x2"),
+                                                   m_block);
+   ExtractElementInst *y2 = new ExtractElementInst(in2, unsigned(1),
+                                                   name("y2"),
+                                                   m_block);
+   ExtractElementInst *z2 = new ExtractElementInst(in2, unsigned(2),
+                                                   name("z2"),
+                                                   m_block);
+   Value *y1z2 = mul(y1, z2);
+   Value *z1y2 = mul(z1, y2);
+
+   Value *z1x2 = mul(z1, x2);
+   Value *x1z2 = mul(x1, z2);
+
+   Value *x1y2 = mul(x1, y2);
+   Value *y1x2 = mul(y1, x2);
+
+   return vectorFromVals(sub(y1z2, z1y2), sub(z1x2, x1z2), sub(x1y2, y1x2));
+}
+
+
+llvm::Value * Instructions::abs(llvm::Value *in)
+{
+   ExtractElementInst *x = new ExtractElementInst(in, unsigned(0),
+                                                  name("extractx"),
+                                                  m_block);
+   ExtractElementInst *y = new ExtractElementInst(in, unsigned(1),
+                                                  name("extracty"),
+                                                  m_block);
+   ExtractElementInst *z = new ExtractElementInst(in, unsigned(2),
+                                                  name("extractz"),
+                                                  m_block);
+   ExtractElementInst *w = new ExtractElementInst(in, unsigned(3),
+                                                  name("extractw"),
+                                                  m_block);
+   Value *xabs  = callFAbs(x);
+   Value *yabs  = callFAbs(y);
+   Value *zabs  = callFAbs(z);
+   Value *wabs  = callFAbs(w);
+   return vectorFromVals(xabs, yabs, zabs, wabs);
+}
+
 /*
 typedef __attribute__(( ocu_vector_type(4) )) float float4;
 
@@ -831,4 +886,6 @@ Constant* const_packed_14 = ConstantVector::get(VectorTy_2, const_packed_14_elem
 }
    return func_lit;
 }
+
+
 

@@ -306,11 +306,15 @@ translate_instruction(llvm::Module *module,
       out = instr->pow(inputs[0], inputs[1]);
    }
       break;
-   case TGSI_OPCODE_CROSSPRODUCT:
+   case TGSI_OPCODE_CROSSPRODUCT: {
+      out = instr->cross(inputs[0], inputs[1]);
+   }
       break;
    case TGSI_OPCODE_MULTIPLYMATRIX:
       break;
-   case TGSI_OPCODE_ABS:
+   case TGSI_OPCODE_ABS: {
+      out = instr->abs(inputs[0]);
+   }
       break;
    case TGSI_OPCODE_RCC:
       break;

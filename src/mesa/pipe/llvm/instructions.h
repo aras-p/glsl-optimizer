@@ -15,7 +15,9 @@ class Instructions
 public:
    Instructions(llvm::Module *mod, llvm::Function *func, llvm::BasicBlock *block);
 
+   llvm::Value *abs(llvm::Value *in1);
    llvm::Value *add(llvm::Value *in1, llvm::Value *in2);
+   llvm::Value *cross(llvm::Value *in1, llvm::Value *in2);
    llvm::Value *dp3(llvm::Value *in1, llvm::Value *in2);
    llvm::Value *dp4(llvm::Value *in1, llvm::Value *in2);
    llvm::Value *dph(llvm::Value *in1, llvm::Value *in2);
