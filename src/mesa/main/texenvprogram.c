@@ -35,10 +35,11 @@
 #include "texenvprogram.h"
 
 /**
- * According to Glean's texCombine test, no more than 21 instructions
- * are needed.  Allow a few extra just in case.
+ * This MAX is probably a bit generous, but that's OK.  There can be
+ * up to four instructions per texture unit (TEX + 3 for combine),
+ * then there's fog and specular add.
  */
-#define MAX_INSTRUCTIONS ((MAX_TEXTURE_UNITS * 6) + 10) /* see bug 9829 */
+#define MAX_INSTRUCTIONS ((MAX_TEXTURE_UNITS * 4) + 12)
 
 #define DISASSEM (MESA_VERBOSE & VERBOSE_DISASSEM)
 
@@ -476,7 +477,9 @@ emit_op(struct texenv_fragment_program *p,
 {
    GLuint nr = p->program->Base.NumInstructions++;
    struct prog_instruction *inst = &p->program->Base.Instructions[nr];
-      
+
+   assert(nr < MAX_INSTRUCTIONS);
+
    _mesa_init_instructions(inst, 1);
    inst->Opcode = op;
    
