@@ -75,7 +75,7 @@ boolean
 softpipe_draw_arrays(struct pipe_context *pipe, unsigned mode,
                      unsigned start, unsigned count)
 {
-   return softpipe_draw_elements(pipe, NULL, 0, 0, mode, start, count);
+   return softpipe_draw_elements(pipe, NULL, 0, mode, start, count);
 }
 
 
@@ -90,7 +90,7 @@ softpipe_draw_arrays(struct pipe_context *pipe, unsigned mode,
 boolean
 softpipe_draw_elements(struct pipe_context *pipe,
                        struct pipe_buffer_handle *indexBuffer,
-                       unsigned indexSize, unsigned indexOffset,
+                       unsigned indexSize,
                        unsigned mode, unsigned start, unsigned count)
 {
    struct softpipe_context *sp = softpipe_context(pipe);
@@ -130,10 +130,9 @@ softpipe_draw_elements(struct pipe_context *pipe,
    }
    /* Map index buffer, if present */
    if (indexBuffer) {
-      ubyte *mapped_indexes
+      void *mapped_indexes
          = pipe->winsys->buffer_map(pipe->winsys, indexBuffer,
                                     PIPE_BUFFER_FLAG_READ);
-      mapped_indexes += indexOffset;
       draw_set_mapped_element_buffer(draw, indexSize, mapped_indexes);
    }
    else {

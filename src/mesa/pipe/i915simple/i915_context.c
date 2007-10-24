@@ -178,7 +178,7 @@ i915_end_query(struct pipe_context *pipe, struct pipe_query_object *q)
 static boolean
 i915_draw_elements( struct pipe_context *pipe,
                     struct pipe_buffer_handle *indexBuffer,
-                    unsigned indexSize, unsigned indexOffset,
+                    unsigned indexSize,
                     unsigned prim, unsigned start, unsigned count)
 {
    struct i915_context *i915 = i915_context( pipe );
@@ -202,10 +202,9 @@ i915_draw_elements( struct pipe_context *pipe,
    }
    /* Map index buffer, if present */
    if (indexBuffer) {
-      ubyte *mapped_indexes
+      void *mapped_indexes
          = pipe->winsys->buffer_map(pipe->winsys, indexBuffer,
                                     PIPE_BUFFER_FLAG_READ);
-      mapped_indexes += indexOffset;
       draw_set_mapped_element_buffer(draw, indexSize, mapped_indexes);
    }
    else {
@@ -263,7 +262,7 @@ i915_draw_elements( struct pipe_context *pipe,
 static boolean i915_draw_arrays( struct pipe_context *pipe,
 				 unsigned prim, unsigned start, unsigned count)
 {
-   return i915_draw_elements(pipe, NULL, 0, 0, prim, start, count);
+   return i915_draw_elements(pipe, NULL, 0, prim, start, count);
 }
 
 
