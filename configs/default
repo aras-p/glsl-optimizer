@@ -40,8 +40,6 @@ GLUT_LIB = glut
 GLW_LIB = GLw
 OSMESA_LIB = OSMesa
 
-LLVM_CFLAGS=-DMESA_NO_LLVM=1
-LLVM_CXXFLAGS=-DMESA_NO_LLVM=1
 
 # Library names (actual file names)
 GL_LIB_NAME = lib$(GL_LIB).so
@@ -66,6 +64,7 @@ GLU_DIRS = sgi
 DRIVER_DIRS = x11 osmesa
 # Which subdirs under $(TOP)/progs/ to enter:
 PROGRAM_DIRS = demos redbook samples glsl xdemos
+
 
 # Library/program dependencies
 #EXTRA_LIB_PATH ?=

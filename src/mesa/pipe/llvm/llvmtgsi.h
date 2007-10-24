@@ -7,6 +7,8 @@ extern "C" {
 
 #include "pipe/p_state.h"
 
+#ifdef MESA_LLVM
+
 struct tgsi_exec_machine;
 struct tgsi_token;
 struct tgsi_sampler;
@@ -28,6 +30,8 @@ int ga_llvm_prog_exec(struct ga_llvm_prog *prog,
                       int num_attribs);
 
 void ga_llvm_prog_dump(struct ga_llvm_prog *prog, const char *file_prefix);
+
+#endif /* MESA_LLVM */
 
 #if defined __cplusplus
 } // extern "C"

@@ -109,7 +109,9 @@ shade_quad(
          machine->InterpCoefs );
    }
    else {
-      //ga_llvm_prog_exec(softpipe->fs->llvm_prog);
+#ifdef MESA_LLVM
+      /*ga_llvm_prog_exec(softpipe->fs->llvm_prog);*/
+#endif
       quad->mask &= tgsi_exec_machine_run( machine );
    }
 

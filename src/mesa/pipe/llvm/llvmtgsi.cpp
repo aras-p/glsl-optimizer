@@ -10,7 +10,6 @@
 #include "pipe/tgsi/exec/tgsi_util.h"
 #include "pipe/tgsi/exec/tgsi_parse.h"
 #include "pipe/tgsi/exec/tgsi_dump.h"
-//#include "pipe/tgsi/tgsi_platform.h"
 
 #include <llvm/Module.h>
 #include <llvm/CallingConv.h>
@@ -36,6 +35,7 @@
 #include <fstream>
 #include <iostream>
 
+#ifdef MESA_LLVM
 
 struct ga_llvm_prog {
    void *module;
@@ -159,7 +159,7 @@ translate_instruction(llvm::Module *module,
       } else if (src->SrcRegister.File == TGSI_FILE_TEMPORARY) {
          val = storage->tempElement(src->SrcRegister.Index);
       } else {
-         fprintf(stderr, "ERROR: not support llvm source\n");
+         fprintf(stderr, "ERROR: not supported llvm source\n");
          return;
       }
 
@@ -751,3 +751,5 @@ void ga_llvm_prog_dump(struct ga_llvm_prog *prog, const char *file_prefix)
       std::cout<<"; ---------- End shader "<<prog->id<<std::endl;
    }
 }
+
+#endif /* MESA_LLVM */

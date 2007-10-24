@@ -11,21 +11,21 @@ LLVM_VERSION := $(shell llvm-config --version)
 
 ifeq ($(LLVM_VERSION),)
   $(warning Could not find LLVM! Make Sure 'llvm-config' is in the path)
-  MESA_NO_LLVM=1
+  MESA_LLVM=0
 else
-  MESA_NO_LLVM=0
+  MESA_LLVM=1
   $(info Using LLVM version: $(LLVM_VERSION))
 endif
 
-ifeq ($(MESA_NO_LLVM),0)
-#  LLVM_CFLAGS=`llvm-config --cflags` -DMESA_NO_LLVM=0
-  LLVM_CFLAGS=-DMESA_NO_LLVM=0
-  LLVM_CXXFLAGS=`llvm-config --cxxflags` -DMESA_NO_LLVM=0 -Wno-long-long
+ifeq ($(MESA_LLVM),1)
+#  LLVM_CFLAGS=`llvm-config --cflags` -DMESA_LLVM=1
+  LLVM_CFLAGS=-DMESA_LLVM=1
+  LLVM_CXXFLAGS=`llvm-config --cxxflags` -DMESA_LLVM=1 -Wno-long-long
   LLVM_LDFLAGS=`llvm-config --ldflags`
   LLVM_LIBS=`llvm-config --libs`
 else
-  LLVM_CFLAGS=-DMESA_NO_LLVM=1
-  LLVM_CXXFLAGS=-DMESA_NO_LLVM=1
+  LLVM_CFLAGS=
+  LLVM_CXXFLAGS=
 endif
 
 GL_LIB_DEPS = $(LLVM_LDFLAGS) $(LLVM_LIBS) $(EXTRA_LIB_PATH) -lX11 -lXext -lm -lpthread

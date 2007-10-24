@@ -251,7 +251,9 @@ extern void draw_vertex_cache_reset_vertex_ids( struct draw_context *draw );
 
 
 extern void draw_vertex_shader_queue_flush( struct draw_context *draw );
+#ifdef MESA_LLVM
 extern void draw_vertex_shader_queue_flush_llvm( struct draw_context *draw );
+#endif
 
 struct tgsi_exec_machine;
 

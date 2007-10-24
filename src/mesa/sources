@@ -189,7 +189,7 @@ TGSIDECO_SOURCES = \
 TGSIMESA_SOURCES = \
 	pipe/tgsi/mesa/mesa_to_tgsi.c
 
-ifeq ($(MESA_NO_LLVM),0)
+ifeq ($(MESA_LLVM),1)
   LLVMTGSI_SOURCES = \
 	pipe/llvm/llvmtgsi.cpp \
 	pipe/llvm/storage.cpp \

@@ -35,6 +35,8 @@
 #include "draw_context.h"
 #include "draw_vertex.h"
 
+#ifdef MESA_LLVM
+
 #include "pipe/llvm/llvmtgsi.h"
 #include "pipe/tgsi/exec/tgsi_core.h"
 
@@ -199,3 +201,5 @@ void draw_vertex_shader_queue_flush_llvm(struct draw_context *draw)
 
    draw->vs.queue_nr = 0;
 }
+
+#endif /* MESA_LLVM */

@@ -161,6 +161,10 @@ run_vertex_program(struct draw_context *draw,
          vOut[j]->data[slot][3] = machine->Outputs[slot].xyzw[3].f[j];
 #if DBG
          printf("output[%d][%d]: %f %f %f %f\n", j, slot,
+                vOut[j]->data[slot][0],
+                vOut[j]->data[slot][1],
+                vOut[j]->data[slot][2],
+                vOut[j]->data[slot][3]);
 #endif
       }
    } /* loop over vertices */
@@ -175,10 +179,13 @@ void draw_vertex_shader_queue_flush( struct draw_context *draw )
 {
    unsigned i, j;
 
+//   fprintf(stderr, " q(%d) ", draw->vs.queue_nr );
+#ifdef MESA_LLVM
    if (draw->vertex_shader->state->llvm_prog) {
       draw_vertex_shader_queue_flush_llvm(draw);
       return;
    }
+#endif
 
    /* run vertex shader on vertex cache entries, four per invokation */
    for (i = 0; i < draw->vs.queue_nr; i += 4) {
