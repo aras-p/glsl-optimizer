@@ -21,18 +21,26 @@ public:
            llvm::Value *out,
            llvm::Value *in, llvm::Value *consts);
 
+   void setCurrentBlock(llvm::BasicBlock *block);
+
    llvm::ConstantInt *constantInt(int);
    llvm::Constant *shuffleMask(int vec);
-   llvm::Value *inputElement(int idx);
-   llvm::Value *constElement(int idx);
+   llvm::Value *inputElement(int idx, llvm::Value *indIdx =0);
+   llvm::Value *constElement(int idx, llvm::Value *indIdx =0);
 
    llvm::Value *tempElement(int idx) const;
    void setTempElement(int idx, llvm::Value *val, int mask);
 
+   llvm::Value *addrElement(int idx) const;
+   void setAddrElement(int idx, llvm::Value *val, int mask);
+
    llvm::Value *shuffleVector(llvm::Value *vec, int shuffle);
 
+   llvm::Value *extractIndex(llvm::Value *vec);
 
    void store(int dstIdx, llvm::Value *val, int mask);
+
+   void popPhiNode();
 
    int numConsts() const;
 private:
@@ -47,6 +55,7 @@ private:
    std::map<int, llvm::ConstantInt*> m_constInts;
    std::map<int, llvm::Constant*>    m_intVecs;
    std::vector<llvm::Value*>         m_temps;
+   std::vector<llvm::Value*>         m_addrs;
    std::vector<llvm::Value*>         m_dstCache;
    LoadMap                           m_inputs;
    LoadMap                           m_consts;
@@ -63,6 +72,19 @@ private:
    int         m_idx;
 
    int         m_numConsts;
+
+   void addPhiNode(int, llvm::Value*, llvm::BasicBlock*,
+                   llvm::Value*, llvm::BasicBlock*);
+   void updatePhiNode(int, llvm::Value*);
+   struct PhiNode {
+      llvm::Value      *val1;
+      llvm::BasicBlock *block1;
+      llvm::Value      *val2;
+      llvm::BasicBlock *block2;
+   };
+
+   std::map<llvm::Value*, llvm::BasicBlock*> m_varBlocks;
+   std::map<int, PhiNode> m_phiNodes;
 };
 
 #endif

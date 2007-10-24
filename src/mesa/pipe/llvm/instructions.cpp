@@ -369,6 +369,11 @@ llvm::Value * Instructions::floor(llvm::Value *in)
                          callFloor(z), callFloor(w));
 }
 
+llvm::Value * Instructions::arl(llvm::Value *in)
+{
+   return floor(in);
+}
+
 llvm::Value * Instructions::frc(llvm::Value *in)
 {
    llvm::Value *flr = floor(in);
@@ -600,6 +605,34 @@ llvm::Function * Instructions::declarePrintf()
   return func_printf;
 }
 
+
+llvm::Value * Instructions::sgt(llvm::Value *in1, llvm::Value *in2)
+{
+   Constant *const1f = ConstantFP::get(Type::FloatTy, APFloat(1.000000e+00f));
+   Constant *const0f = Constant::getNullValue(Type::FloatTy);
+
+   ExtractElementInst *x1 = new ExtractElementInst(in1, unsigned(0), name("x1"), m_block);
+   ExtractElementInst *x2 = new ExtractElementInst(in2, unsigned(0), name("x2"), m_block);
+   FCmpInst *xcmp = new FCmpInst(FCmpInst::FCMP_OGT, x1, x2, name("xcmp"), m_block);
+   SelectInst *x = new SelectInst(xcmp, const1f, const0f, name("xsel"), m_block);
+
+   ExtractElementInst *y1 = new ExtractElementInst(in1, unsigned(1), name("y1"), m_block);
+   ExtractElementInst *y2 = new ExtractElementInst(in2, unsigned(1), name("y2"), m_block);
+   FCmpInst *ycmp = new FCmpInst(FCmpInst::FCMP_OGT, y1, y2, name("ycmp"), m_block);
+   SelectInst *y = new SelectInst(ycmp, const1f, const0f, name("ysel"), m_block);
+
+   ExtractElementInst *z1 = new ExtractElementInst(in1, unsigned(2), name("z1"), m_block);
+   ExtractElementInst *z2 = new ExtractElementInst(in2, unsigned(2), name("z2"), m_block);
+   FCmpInst *zcmp = new FCmpInst(FCmpInst::FCMP_OGT, z1, z2, name("zcmp"), m_block);
+   SelectInst *z = new SelectInst(zcmp, const1f, const0f, name("zsel"), m_block);
+
+   ExtractElementInst *w1 = new ExtractElementInst(in1, unsigned(3), name("w1"), m_block);
+   ExtractElementInst *w2 = new ExtractElementInst(in2, unsigned(3), name("w2"), m_block);
+   FCmpInst *wcmp = new FCmpInst(FCmpInst::FCMP_OGT, w1, w2, name("wcmp"), m_block);
+   SelectInst *w = new SelectInst(wcmp, const1f, const0f, name("wsel"), m_block);
+
+   return vectorFromVals(x, y, z, w);
+}
 llvm::Value * Instructions::sge(llvm::Value *in1, llvm::Value *in2)
 {
    Constant *const1f = ConstantFP::get(Type::FloatTy, APFloat(1.000000e+00f));
@@ -713,6 +746,8 @@ llvm::Value * Instructions::abs(llvm::Value *in)
 }
 
 /*
+FIXME: hand write the lit function. Currently it's
+generated from:
 typedef __attribute__(( ocu_vector_type(4) )) float float4;
 
 extern float powf(float a, float b);
@@ -744,7 +779,7 @@ clang --emit-llvm lit.c |llvm-as|opt -std-compile-opts|llvm2cpp -gen-contents -f
 */
 Function* makeLitFunction(Module *mod) {
 
-// Type Definitions
+   // Type Definitions
    std::vector<const Type*>FuncTy_0_args;
    FuncTy_0_args.push_back(Type::FloatTy);
    FuncTy_0_args.push_back(Type::FloatTy);
@@ -769,123 +804,172 @@ Function* makeLitFunction(Module *mod) {
       /*ParamAttrs=*/FuncTy_3_PAL);
 
 
-// Function Declarations
+   // Function Declarations
 
    Function* func_approx = new Function(
       /*Type=*/FuncTy_0,
       /*Linkage=*/GlobalValue::ExternalLinkage,
-      /*Name=*/"approx", mod); 
+      /*Name=*/"approx", mod);
    func_approx->setCallingConv(CallingConv::C);
 
-Function* func_powf = new Function(
-  /*Type=*/FuncTy_0,
-  /*Linkage=*/GlobalValue::ExternalLinkage,
-  /*Name=*/"powf", mod); // (external, no body)
-func_powf->setCallingConv(CallingConv::C);
+   Function* func_powf = new Function(
+      /*Type=*/FuncTy_0,
+      /*Linkage=*/GlobalValue::ExternalLinkage,
+      /*Name=*/"powf", mod); // (external, no body)
+   func_powf->setCallingConv(CallingConv::C);
 
-Function* func_lit = new Function(
-  /*Type=*/FuncTy_3,
-  /*Linkage=*/GlobalValue::ExternalLinkage,
-  /*Name=*/"lit", mod); 
-func_lit->setCallingConv(CallingConv::C);
+   Function* func_lit = new Function(
+      /*Type=*/FuncTy_3,
+      /*Linkage=*/GlobalValue::ExternalLinkage,
+      /*Name=*/"lit", mod);
+   func_lit->setCallingConv(CallingConv::C);
 
-// Global Variable Declarations
+   // Global Variable Declarations
 
 
-// Constant Definitions
-ConstantFP* const_float_4 = ConstantFP::get(Type::FloatTy, APFloat(-1.280000e+02f));
-ConstantFP* const_float_5 = ConstantFP::get(Type::FloatTy, APFloat(1.280000e+02f));
-Constant* const_float_6 = Constant::getNullValue(Type::FloatTy);
-Constant* const_int32_7 = Constant::getNullValue(IntegerType::get(32));
-std::vector<Constant*> const_packed_8_elems;
-ConstantFP* const_float_9 = ConstantFP::get(Type::FloatTy, APFloat(1.000000e+00f));
-const_packed_8_elems.push_back(const_float_9);
-UndefValue* const_float_10 = UndefValue::get(Type::FloatTy);
-const_packed_8_elems.push_back(const_float_10);
-const_packed_8_elems.push_back(const_float_10);
-const_packed_8_elems.push_back(const_float_9);
-Constant* const_packed_8 = ConstantVector::get(VectorTy_2, const_packed_8_elems);
-ConstantInt* const_int32_11 = ConstantInt::get(APInt(32,  "1", 10));
-ConstantInt* const_int32_12 = ConstantInt::get(APInt(32,  "3", 10));
-ConstantInt* const_int32_13 = ConstantInt::get(APInt(32,  "2", 10));
-std::vector<Constant*> const_packed_14_elems;
-const_packed_14_elems.push_back(const_float_9);
-const_packed_14_elems.push_back(const_float_6);
-const_packed_14_elems.push_back(const_float_6);
-const_packed_14_elems.push_back(const_float_9);
-Constant* const_packed_14 = ConstantVector::get(VectorTy_2, const_packed_14_elems);
+   // Constant Definitions
+   ConstantFP* const_float_4 = ConstantFP::get(Type::FloatTy, APFloat(-1.280000e+02f));
+   ConstantFP* const_float_5 = ConstantFP::get(Type::FloatTy, APFloat(1.280000e+02f));
+   Constant* const_float_6 = Constant::getNullValue(Type::FloatTy);
+   Constant* const_int32_7 = Constant::getNullValue(IntegerType::get(32));
+   std::vector<Constant*> const_packed_8_elems;
+   ConstantFP* const_float_9 = ConstantFP::get(Type::FloatTy, APFloat(1.000000e+00f));
+   const_packed_8_elems.push_back(const_float_9);
+   UndefValue* const_float_10 = UndefValue::get(Type::FloatTy);
+   const_packed_8_elems.push_back(const_float_10);
+   const_packed_8_elems.push_back(const_float_10);
+   const_packed_8_elems.push_back(const_float_9);
+   Constant* const_packed_8 = ConstantVector::get(VectorTy_2, const_packed_8_elems);
+   ConstantInt* const_int32_11 = ConstantInt::get(APInt(32,  "1", 10));
+   ConstantInt* const_int32_12 = ConstantInt::get(APInt(32,  "3", 10));
+   ConstantInt* const_int32_13 = ConstantInt::get(APInt(32,  "2", 10));
+   std::vector<Constant*> const_packed_14_elems;
+   const_packed_14_elems.push_back(const_float_9);
+   const_packed_14_elems.push_back(const_float_6);
+   const_packed_14_elems.push_back(const_float_6);
+   const_packed_14_elems.push_back(const_float_9);
+   Constant* const_packed_14 = ConstantVector::get(VectorTy_2, const_packed_14_elems);
 
-// Global Variable Definitions
+   // Global Variable Definitions
 
-// Function Definitions
+   // Function Definitions
 
-// Function: approx (func_approx)
-{
-  Function::arg_iterator args = func_approx->arg_begin();
-  Value* float_a = args++;
-  float_a->setName("a");
-  Value* float_b = args++;
-  float_b->setName("b");
-  
-  BasicBlock* label_entry = new BasicBlock("entry",func_approx,0);
-  
-  // Block entry (label_entry)
-  FCmpInst* int1_cmp = new FCmpInst(FCmpInst::FCMP_OLT, float_b, const_float_4, "cmp", label_entry);
-  SelectInst* float_b_addr_0 = new SelectInst(int1_cmp, const_float_4, float_b, "b.addr.0", label_entry);
-  FCmpInst* int1_cmp3 = new FCmpInst(FCmpInst::FCMP_OGT, float_b_addr_0, const_float_5, "cmp3", label_entry);
-  SelectInst* float_b_addr_1 = new SelectInst(int1_cmp3, const_float_5, float_b_addr_0, "b.addr.1", label_entry);
-  FCmpInst* int1_cmp7 = new FCmpInst(FCmpInst::FCMP_OLT, float_a, const_float_6, "cmp7", label_entry);
-  SelectInst* float_a_addr_0 = new SelectInst(int1_cmp7, const_float_6, float_a, "a.addr.0", label_entry);
-  std::vector<Value*> float_call_params;
-  float_call_params.push_back(float_a_addr_0);
-  float_call_params.push_back(float_b_addr_1);
-  CallInst* float_call = new CallInst(func_powf, float_call_params.begin(), float_call_params.end(), "call", label_entry);
-  float_call->setCallingConv(CallingConv::C);
-  float_call->setTailCall(true);
-  new ReturnInst(float_call, label_entry);
-  
-}
+   // Function: approx (func_approx)
+   {
+      Function::arg_iterator args = func_approx->arg_begin();
+      Value* float_a = args++;
+      float_a->setName("a");
+      Value* float_b = args++;
+      float_b->setName("b");
 
-// Function: lit (func_lit)
-{
-  Function::arg_iterator args = func_lit->arg_begin();
-  Value* packed_tmp = args++;
-  packed_tmp->setName("tmp");
-  
-  BasicBlock* label_entry_16 = new BasicBlock("entry",func_lit,0);
-  BasicBlock* label_ifthen = new BasicBlock("ifthen",func_lit,0);
-  BasicBlock* label_UnifiedReturnBlock = new BasicBlock("UnifiedReturnBlock",func_lit,0);
-  
-  // Block entry (label_entry_16)
-  ExtractElementInst* float_tmp7 = new ExtractElementInst(packed_tmp, const_int32_7, "tmp7", label_entry_16);
-  FCmpInst* int1_cmp_17 = new FCmpInst(FCmpInst::FCMP_OGT, float_tmp7, const_float_6, "cmp", label_entry_16);
-  new BranchInst(label_ifthen, label_UnifiedReturnBlock, int1_cmp_17, label_entry_16);
-  
-  // Block ifthen (label_ifthen)
-  InsertElementInst* packed_tmp12 = new InsertElementInst(const_packed_8, float_tmp7, const_int32_11, "tmp12", label_ifthen);
-  ExtractElementInst* float_tmp14 = new ExtractElementInst(packed_tmp, const_int32_11, "tmp14", label_ifthen);
-  ExtractElementInst* float_tmp16 = new ExtractElementInst(packed_tmp, const_int32_12, "tmp16", label_ifthen);
-  FCmpInst* int1_cmp_i = new FCmpInst(FCmpInst::FCMP_OLT, float_tmp16, const_float_4, "cmp.i", label_ifthen);
-  SelectInst* float_b_addr_0_i = new SelectInst(int1_cmp_i, const_float_4, float_tmp16, "b.addr.0.i", label_ifthen);
-  FCmpInst* int1_cmp3_i = new FCmpInst(FCmpInst::FCMP_OGT, float_b_addr_0_i, const_float_5, "cmp3.i", label_ifthen);
-  SelectInst* float_b_addr_1_i = new SelectInst(int1_cmp3_i, const_float_5, float_b_addr_0_i, "b.addr.1.i", label_ifthen);
-  FCmpInst* int1_cmp7_i = new FCmpInst(FCmpInst::FCMP_OLT, float_tmp14, const_float_6, "cmp7.i", label_ifthen);
-  SelectInst* float_a_addr_0_i = new SelectInst(int1_cmp7_i, const_float_6, float_tmp14, "a.addr.0.i", label_ifthen);
-  std::vector<Value*> float_call_i_params;
-  float_call_i_params.push_back(float_a_addr_0_i);
-  float_call_i_params.push_back(float_b_addr_1_i);
-  CallInst* float_call_i = new CallInst(func_powf, float_call_i_params.begin(), float_call_i_params.end(), "call.i", label_ifthen);
-  float_call_i->setCallingConv(CallingConv::C);
-  float_call_i->setTailCall(true);
-  InsertElementInst* packed_tmp18 = new InsertElementInst(packed_tmp12, float_call_i, const_int32_13, "tmp18", label_ifthen);
-  new ReturnInst(packed_tmp18, label_ifthen);
-  
-  // Block UnifiedReturnBlock (label_UnifiedReturnBlock)
-  new ReturnInst(const_packed_14, label_UnifiedReturnBlock);
-  
-}
+      BasicBlock* label_entry = new BasicBlock("entry",func_approx,0);
+
+      // Block entry (label_entry)
+      FCmpInst* int1_cmp = new FCmpInst(FCmpInst::FCMP_OLT, float_b, const_float_4, "cmp", label_entry);
+      SelectInst* float_b_addr_0 = new SelectInst(int1_cmp, const_float_4, float_b, "b.addr.0", label_entry);
+      FCmpInst* int1_cmp3 = new FCmpInst(FCmpInst::FCMP_OGT, float_b_addr_0, const_float_5, "cmp3", label_entry);
+      SelectInst* float_b_addr_1 = new SelectInst(int1_cmp3, const_float_5, float_b_addr_0, "b.addr.1", label_entry);
+      FCmpInst* int1_cmp7 = new FCmpInst(FCmpInst::FCMP_OLT, float_a, const_float_6, "cmp7", label_entry);
+      SelectInst* float_a_addr_0 = new SelectInst(int1_cmp7, const_float_6, float_a, "a.addr.0", label_entry);
+      std::vector<Value*> float_call_params;
+      float_call_params.push_back(float_a_addr_0);
+      float_call_params.push_back(float_b_addr_1);
+      CallInst* float_call = new CallInst(func_powf, float_call_params.begin(), float_call_params.end(), "call", label_entry);
+      float_call->setCallingConv(CallingConv::C);
+      float_call->setTailCall(true);
+      new ReturnInst(float_call, label_entry);
+   }
+
+   // Function: lit (func_lit)
+   {
+      Function::arg_iterator args = func_lit->arg_begin();
+      Value* packed_tmp = args++;
+      packed_tmp->setName("tmp");
+
+      BasicBlock* label_entry_16 = new BasicBlock("entry",func_lit,0);
+      BasicBlock* label_ifthen = new BasicBlock("ifthen",func_lit,0);
+      BasicBlock* label_UnifiedReturnBlock = new BasicBlock("UnifiedReturnBlock",func_lit,0);
+
+      // Block entry (label_entry_16)
+      ExtractElementInst* float_tmp7 = new ExtractElementInst(packed_tmp, const_int32_7, "tmp7", label_entry_16);
+      FCmpInst* int1_cmp_17 = new FCmpInst(FCmpInst::FCMP_OGT, float_tmp7, const_float_6, "cmp", label_entry_16);
+      new BranchInst(label_ifthen, label_UnifiedReturnBlock, int1_cmp_17, label_entry_16);
+
+      // Block ifthen (label_ifthen)
+      InsertElementInst* packed_tmp12 = new InsertElementInst(const_packed_8, float_tmp7, const_int32_11, "tmp12", label_ifthen);
+      ExtractElementInst* float_tmp14 = new ExtractElementInst(packed_tmp, const_int32_11, "tmp14", label_ifthen);
+      ExtractElementInst* float_tmp16 = new ExtractElementInst(packed_tmp, const_int32_12, "tmp16", label_ifthen);
+      FCmpInst* int1_cmp_i = new FCmpInst(FCmpInst::FCMP_OLT, float_tmp16, const_float_4, "cmp.i", label_ifthen);
+      SelectInst* float_b_addr_0_i = new SelectInst(int1_cmp_i, const_float_4, float_tmp16, "b.addr.0.i", label_ifthen);
+      FCmpInst* int1_cmp3_i = new FCmpInst(FCmpInst::FCMP_OGT, float_b_addr_0_i, const_float_5, "cmp3.i", label_ifthen);
+      SelectInst* float_b_addr_1_i = new SelectInst(int1_cmp3_i, const_float_5, float_b_addr_0_i, "b.addr.1.i", label_ifthen);
+      FCmpInst* int1_cmp7_i = new FCmpInst(FCmpInst::FCMP_OLT, float_tmp14, const_float_6, "cmp7.i", label_ifthen);
+      SelectInst* float_a_addr_0_i = new SelectInst(int1_cmp7_i, const_float_6, float_tmp14, "a.addr.0.i", label_ifthen);
+      std::vector<Value*> float_call_i_params;
+      float_call_i_params.push_back(float_a_addr_0_i);
+      float_call_i_params.push_back(float_b_addr_1_i);
+      CallInst* float_call_i = new CallInst(func_powf, float_call_i_params.begin(), float_call_i_params.end(), "call.i", label_ifthen);
+      float_call_i->setCallingConv(CallingConv::C);
+      float_call_i->setTailCall(true);
+      InsertElementInst* packed_tmp18 = new InsertElementInst(packed_tmp12, float_call_i, const_int32_13, "tmp18", label_ifthen);
+      new ReturnInst(packed_tmp18, label_ifthen);
+
+      // Block UnifiedReturnBlock (label_UnifiedReturnBlock)
+      new ReturnInst(const_packed_14, label_UnifiedReturnBlock);
+
+   }
    return func_lit;
 }
 
+void Instructions::ifop(llvm::Value *in)
+{
+   BasicBlock *ifthen = new BasicBlock(name("ifthen"), m_func,0);
+   BasicBlock *ifend = new BasicBlock(name("ifend"), m_func,0);
 
+   //BasicBlock *yblock = new BasicBlock(name("yblock"), m_func,0);
+   //BasicBlock *zblock = new BasicBlock(name("zblock"), m_func,0);
+   //BasicBlock *wblock = new BasicBlock(name("wblock"), m_func,0);
+
+   Constant *float0 = Constant::getNullValue(Type::FloatTy);
+
+   ExtractElementInst *x = new ExtractElementInst(in, unsigned(0), name("extractx"),
+                                                  m_block);
+   FCmpInst *xcmp = new FCmpInst(FCmpInst::FCMP_UNE, x, float0,
+                                 name("xcmp"), m_block);
+   new BranchInst(ifend, ifthen, xcmp, m_block);
+   //m_block = yblock;
+
+
+   m_block = ifthen;
+   m_ifStack.push(ifend);
+}
+
+llvm::BasicBlock * Instructions::currentBlock() const
+{
+   return m_block;
+}
+
+void Instructions::endif()
+{
+   assert(!m_ifStack.empty());
+   new BranchInst(m_ifStack.top(), m_block);
+   m_block = m_ifStack.top();
+   m_ifStack.pop();
+}
+
+llvm::Value * Instructions::lerp(llvm::Value *in1, llvm::Value *in2,
+                                 llvm::Value *in3)
+{
+   llvm::Value *m = mul(in1, in2);
+   llvm::Value *vec1 = vectorFromVals(ConstantFP::get(Type::FloatTy,
+                                                      APFloat(1.f)),
+                                      ConstantFP::get(Type::FloatTy,
+                                                      APFloat(1.f)),
+                                      ConstantFP::get(Type::FloatTy,
+                                                      APFloat(1.f)),
+                                      ConstantFP::get(Type::FloatTy,
+                                                      APFloat(1.f)));
+   llvm::Value *s = sub(vec1, in1);
+   return add(m, mul(s, in3));
+}
 

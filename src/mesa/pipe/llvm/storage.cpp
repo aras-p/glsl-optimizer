@@ -17,7 +17,8 @@ Storage::Storage(llvm::BasicBlock *block, llvm::Value *out,
                                          llvm::Value *in, llvm::Value *consts)
    : m_block(block), m_OUT(out),
      m_IN(in), m_CONST(consts),
-     m_temps(32), m_dstCache(32),
+     m_temps(32), m_addrs(32),
+     m_dstCache(32),
      m_idx(0)
 {
    m_floatVecType = VectorType::get(Type::FloatTy, 4);
@@ -88,15 +89,29 @@ llvm::ConstantInt *Storage::constantInt(int idx)
    return const_int;
 }
 
-llvm::Value *Storage::inputElement(int idx)
+llvm::Value *Storage::inputElement(int idx, llvm::Value *indIdx)
 {
-   if (m_inputs.find(idx) != m_inputs.end()) {
+   if (!indIdx && m_inputs.find(idx) != m_inputs.end()) {
       return m_inputs[idx];
    }
-   GetElementPtrInst *getElem = new GetElementPtrInst(m_IN,
-                                                      constantInt(idx),
-                                                      name("input_ptr"),
-                                                      m_block);
+   GetElementPtrInst *getElem = 0;
+
+   if (indIdx) {
+      getElem = new GetElementPtrInst(m_IN,
+                                      BinaryOperator::create(Instruction::Add,
+                                                             indIdx,
+                                                             constantInt(idx),
+                                                             name("add"),
+                                                             m_block),
+                                      name("input_ptr"),
+                                      m_block);
+   } else {
+      getElem = new GetElementPtrInst(m_IN,
+                                      constantInt(idx),
+                                      name("input_ptr"),
+                                      m_block);
+   }
+
    LoadInst *load = new LoadInst(getElem, name("input"),
                                  false, m_block);
    load->setAlignment(8);
@@ -105,16 +120,29 @@ llvm::Value *Storage::inputElement(int idx)
    return load;
 }
 
-llvm::Value *Storage::constElement(int idx)
+llvm::Value *Storage::constElement(int idx, llvm::Value *indIdx)
 {
    m_numConsts = ((idx + 1) > m_numConsts) ? (idx + 1) : m_numConsts;
-   if (m_consts.find(idx) != m_consts.end()) {
+   if (!indIdx && m_consts.find(idx) != m_consts.end()) {
       return m_consts[idx];
    }
-   GetElementPtrInst *getElem = new GetElementPtrInst(m_CONST,
-                                                      constantInt(idx),
-                                                      name("const_ptr"),
-                                                      m_block);
+
+   GetElementPtrInst *getElem = 0;
+
+   if (indIdx)
+      getElem = new GetElementPtrInst(m_CONST,
+                                      BinaryOperator::create(Instruction::Add,
+                                                             indIdx,
+                                                             constantInt(idx),
+                                                             name("add"),
+                                                             m_block),
+                                      name("const_ptr"),
+                                      m_block);
+   else
+      getElem = new GetElementPtrInst(m_CONST,
+                                      constantInt(idx),
+                                      name("const_ptr"),
+                                      m_block);
    LoadInst *load = new LoadInst(getElem, name("const"),
                                  false, m_block);
    load->setAlignment(8);
@@ -146,7 +174,17 @@ void Storage::setTempElement(int idx, llvm::Value *val, int mask)
       llvm::Value *templ = m_temps[idx];
       val = maskWrite(val, mask, templ);
    }
+   llvm::Value *templ = m_temps[idx];
+   if (templ) {
+      BasicBlock *block = m_varBlocks[templ];
+      if (block != m_block) {
+         addPhiNode(idx, val, m_block, templ, block);
+      } else
+         updatePhiNode(idx, val);
+   }
+
    m_temps[idx] = val;
+   m_varBlocks[val] = m_block;
 }
 
 void Storage::store(int dstIdx, llvm::Value *val, int mask)
@@ -207,4 +245,70 @@ const char * Storage::name(const char *prefix)
 int Storage::numConsts() const
 {
    return m_numConsts;
+}
+
+llvm::Value * Storage::addrElement(int idx) const
+{
+   Value *ret = m_addrs[idx];
+   if (!ret)
+      return m_undefFloatVec;
+   return ret;
+}
+
+void Storage::setAddrElement(int idx, llvm::Value *val, int mask)
+{
+   if (mask != TGSI_WRITEMASK_XYZW) {
+      llvm::Value *templ = m_addrs[idx];
+      val = maskWrite(val, mask, templ);
+   }
+   m_addrs[idx] = val;
+}
+
+llvm::Value * Storage::extractIndex(llvm::Value *vec)
+{
+   llvm::Value *x = new ExtractElementInst(vec, unsigned(0),
+                                           name("x"), m_block);
+   return new FPToSIInst(x, IntegerType::get(32), name("intidx"), m_block);
+}
+
+void Storage::setCurrentBlock(llvm::BasicBlock *block)
+{
+   m_block = block;
+}
+
+void Storage::addPhiNode(int idx, llvm::Value *val1, llvm::BasicBlock *blk1,
+                         llvm::Value *val2, llvm::BasicBlock *blk2)
+{
+   PhiNode node;
+   node.val1 = val1;
+   node.block1 = blk1;
+   node.val2 = val2;
+   node.block2 = blk2;
+   m_phiNodes[idx] = node;
+}
+
+void Storage::updatePhiNode(int idx, llvm::Value *val1)
+{
+   if (m_phiNodes.find(idx) == m_phiNodes.end())
+      return;
+   PhiNode node = m_phiNodes[idx];
+   node.val1 = val1;
+   m_phiNodes[idx] = node;
+}
+
+void Storage::popPhiNode()
+{
+   if (!m_phiNodes.empty()) {
+      std::map<int, PhiNode>::const_iterator itr;
+      for (itr = m_phiNodes.begin(); itr != m_phiNodes.end(); ++itr) {
+         PhiNode node = (*itr).second;
+         PHINode *dest = new PHINode(m_floatVecType,
+                                     name("phiDest"), m_block);
+         dest->reserveOperandSpace(2);
+         dest->addIncoming(node.val1, node.block1);
+         dest->addIncoming(node.val2, node.block2);
+         m_temps[(*itr).first] = dest;
+      }
+   }
+   m_phiNodes.clear();
 }

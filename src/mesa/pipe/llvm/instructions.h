@@ -5,6 +5,8 @@
 #include <llvm/Module.h>
 #include <llvm/Value.h>
 
+#include <stack>
+
 namespace llvm {
    class VectorType;
    class Function;
@@ -15,16 +17,23 @@ class Instructions
 public:
    Instructions(llvm::Module *mod, llvm::Function *func, llvm::BasicBlock *block);
 
+   llvm::BasicBlock *currentBlock() const;
+
    llvm::Value *abs(llvm::Value *in1);
+   llvm::Value *arl(llvm::Value *in1);
    llvm::Value *add(llvm::Value *in1, llvm::Value *in2);
    llvm::Value *cross(llvm::Value *in1, llvm::Value *in2);
    llvm::Value *dp3(llvm::Value *in1, llvm::Value *in2);
    llvm::Value *dp4(llvm::Value *in1, llvm::Value *in2);
    llvm::Value *dph(llvm::Value *in1, llvm::Value *in2);
    llvm::Value *dst(llvm::Value *in1, llvm::Value *in2);
+   void         endif();
    llvm::Value *ex2(llvm::Value *in);
    llvm::Value *floor(llvm::Value *in);
    llvm::Value *frc(llvm::Value *in);
+   void         ifop(llvm::Value *in);
+   llvm::Value *lerp(llvm::Value *in1, llvm::Value *in2,
+                     llvm::Value *in3);
    llvm::Value *lit(llvm::Value *in);
    llvm::Value *lg2(llvm::Value *in);
    llvm::Value *madd(llvm::Value *in1, llvm::Value *in2,
@@ -36,6 +45,7 @@ public:
    llvm::Value *rcp(llvm::Value *in);
    llvm::Value *rsq(llvm::Value *in);
    llvm::Value *sge(llvm::Value *in1, llvm::Value *in2);
+   llvm::Value *sgt(llvm::Value *in1, llvm::Value *in2);
    llvm::Value *slt(llvm::Value *in1, llvm::Value *in2);
    llvm::Value *sub(llvm::Value *in1, llvm::Value *in2);
 
@@ -70,6 +80,8 @@ private:
    llvm::Function   *m_llvmLit;
 
    llvm::Constant   *m_fmtPtr;
+
+   std::stack<llvm::BasicBlock*> m_ifStack;
 };
 
 #endif

@@ -146,10 +146,16 @@ translate_instruction(llvm::Module *module,
    for (int i = 0; i < inst->Instruction.NumSrcRegs; ++i) {
       struct tgsi_full_src_register *src = &inst->FullSrcRegisters[i];
       llvm::Value *val = 0;
+      llvm::Value *indIdx = 0;
+
+      if (src->SrcRegister.Indirect) {
+         indIdx = storage->addrElement(src->SrcRegisterInd.Index);
+         indIdx = storage->extractIndex(indIdx);
+      }
       if (src->SrcRegister.File == TGSI_FILE_CONSTANT) {
-         val = storage->constElement(src->SrcRegister.Index);
+         val = storage->constElement(src->SrcRegister.Index, indIdx);
       } else if (src->SrcRegister.File == TGSI_FILE_INPUT) {
-         val = storage->inputElement(src->SrcRegister.Index);
+         val = storage->inputElement(src->SrcRegister.Index, indIdx);
       } else if (src->SrcRegister.File == TGSI_FILE_TEMPORARY) {
          val = storage->tempElement(src->SrcRegister.Index);
       } else {
@@ -204,7 +210,9 @@ translate_instruction(llvm::Module *module,
    instr->printVector(inputs[1]);*/
    llvm::Value *out = 0;
    switch (inst->Instruction.Opcode) {
-   case TGSI_OPCODE_ARL:
+   case TGSI_OPCODE_ARL: {
+      out = instr->arl(inputs[0]);
+   }
       break;
    case TGSI_OPCODE_MOV: {
       out = inputs[0];
@@ -270,7 +278,9 @@ translate_instruction(llvm::Module *module,
       out = instr->sub(inputs[0], inputs[1]);
    }
       break;
-   case TGSI_OPCODE_LERP:
+   case TGSI_OPCODE_LERP: {
+      out = instr->lerp(inputs[0], inputs[1], inputs[2]);
+   }
       break;
    case TGSI_OPCODE_CND:
       break;
@@ -344,7 +354,9 @@ translate_instruction(llvm::Module *module,
       break;
    case TGSI_OPCODE_SFL:
       break;
-   case TGSI_OPCODE_SGT:
+   case TGSI_OPCODE_SGT: {
+      out = instr->sgt(inputs[0], inputs[1]);
+   }
       break;
    case TGSI_OPCODE_SIN:
       break;
@@ -398,7 +410,11 @@ translate_instruction(llvm::Module *module,
       break;
    case TGSI_OPCODE_BRK:
       break;
-   case TGSI_OPCODE_IF:
+   case TGSI_OPCODE_IF: {
+      instr->ifop(inputs[0]);
+      storage->setCurrentBlock(instr->currentBlock());
+      return;  //just update the state
+   }
       break;
    case TGSI_OPCODE_LOOP:
       break;
@@ -406,7 +422,12 @@ translate_instruction(llvm::Module *module,
       break;
    case TGSI_OPCODE_ELSE:
       break;
-   case TGSI_OPCODE_ENDIF:
+   case TGSI_OPCODE_ENDIF: {
+      instr->endif();
+      storage->setCurrentBlock(instr->currentBlock());
+      storage->popPhiNode();
+      return; //just update the state
+   }
       break;
    case TGSI_OPCODE_ENDLOOP:
       break;
@@ -554,8 +575,11 @@ translate_instruction(llvm::Module *module,
          storage->store(dst->DstRegister.Index, out, dst->DstRegister.WriteMask);
       } else if (dst->DstRegister.File == TGSI_FILE_TEMPORARY) {
          storage->setTempElement(dst->DstRegister.Index, out, dst->DstRegister.WriteMask);
+      } else if (dst->DstRegister.File == TGSI_FILE_ADDRESS) {
+         storage->setAddrElement(dst->DstRegister.Index, out, dst->DstRegister.WriteMask);
       } else {
          fprintf(stderr, "ERROR: unsupported LLVM destination!");
+         assert(!"wrong destination");
       }
    }
 }
@@ -617,7 +641,7 @@ tgsi_to_llvm(struct ga_llvm_prog *prog, const struct tgsi_token *tokens)
       }
    }
 
-   new ReturnInst(label_entry);
+   new ReturnInst(instr.currentBlock());
 
    tgsi_parse_free(&parse);
 
@@ -635,7 +659,8 @@ ga_llvm_from_tgsi(struct pipe_context *pipe, const struct tgsi_token *tokens)
    ga_llvm->id = GLOBAL_ID;
    tgsi_dump(tokens, 0);
    llvm::Module *mod = tgsi_to_llvm(ga_llvm, tokens);
-
+   ga_llvm->module = mod;
+   ga_llvm_prog_dump(ga_llvm, 0);
    /* Run optimization passes over it */
    PassManager passes;
    passes.add(new TargetData(mod));
@@ -715,8 +740,14 @@ void ga_llvm_prog_dump(struct ga_llvm_prog *prog, const char *file_prefix)
       out << (*mod);
       out.close();
    } else {
+      std::ostringstream stream;
+      stream << "execute_shader";
+      stream << prog->id;
+      std::string func_name = stream.str();
+      llvm::Function *func = mod->getFunction(func_name.c_str());
+      assert(func);
       std::cout<<"; ---------- Start shader "<<prog->id<<std::endl;
-      std::cout<<*mod<<std::endl;
+      std::cout<<*func<<std::endl;
       std::cout<<"; ---------- End shader "<<prog->id<<std::endl;
    }
 }
