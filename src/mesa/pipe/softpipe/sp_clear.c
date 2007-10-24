@@ -47,7 +47,7 @@ softpipe_clear(struct pipe_context *pipe, struct pipe_surface *ps,
                unsigned clearValue)
 {
    struct softpipe_context *softpipe = softpipe_context(pipe);
-   /*struct softpipe_surface *sps = softpipe_surface(ps);*/
+   struct softpipe_surface *sps = softpipe_surface(ps);
    unsigned x, y, w, h;
 
    softpipe_update_derived(softpipe); /* not needed?? */
@@ -66,8 +66,22 @@ softpipe_clear(struct pipe_context *pipe, struct pipe_surface *ps,
    assert(w <= ps->region->pitch);
    assert(h <= ps->region->height);
 
-   /* XXX skip this fill if we're using tile cache */
+   if (sps == sp_tile_cache_get_surface(softpipe->zbuf_cache)) {
+      float clear[4];
+      clear[0] = 1.0; /* XXX hack */
+      sp_tile_cache_clear(softpipe->zbuf_cache, clear);
+   }
+   else if (sps == sp_tile_cache_get_surface(softpipe->cbuf_cache[0])) {
+      float clear[4];
+      clear[0] = 0.2; /* XXX hack */
+      clear[1] = 0.2; /* XXX hack */
+      clear[2] = 0.2; /* XXX hack */
+      clear[3] = 0.2; /* XXX hack */
+      sp_tile_cache_clear(softpipe->cbuf_cache[0], clear);
+   }
+
    pipe->region_fill(pipe, ps->region, 0, x, y, w, h, clearValue);
+
 
 #if 0
    sp_clear_tile_cache(sps, clearValue);

@@ -37,6 +37,7 @@
 #include "sp_surface.h"
 #include "sp_tile_cache.h"
 
+#define CLEAR_OPTIMIZATION 0
 
 #define NUM_ENTRIES 20
 
@@ -52,6 +53,7 @@ struct softpipe_tile_cache
    struct pipe_mipmap_tree *texture;  /**< if caching a texture */
    struct softpipe_cached_tile entries[NUM_ENTRIES];
    uint clear_flags[(MAX_WIDTH / TILE_SIZE) * (MAX_HEIGHT / TILE_SIZE) / 32];
+   float clear_value[4];
 };
 
 
@@ -73,6 +75,7 @@ is_clear_flag_set(const uint *bitvec, int x, int y)
    x /= TILE_SIZE;
    y /= TILE_SIZE;
    pos = y * (MAX_WIDTH / TILE_SIZE) + x;
+   assert(pos / 32 < (MAX_WIDTH / TILE_SIZE) * (MAX_HEIGHT / TILE_SIZE) / 32);
    bit = bitvec[pos / 32] & (1 << (pos & 31));
    return bit;
 }
@@ -85,6 +88,7 @@ clear_clear_flag(uint *bitvec, int x, int y)
    x /= TILE_SIZE;
    y /= TILE_SIZE;
    pos = y * (MAX_WIDTH / TILE_SIZE) + x;
+   assert(pos / 32 < (MAX_WIDTH / TILE_SIZE) * (MAX_HEIGHT / TILE_SIZE) / 32);
    bitvec[pos / 32] &= ~(1 << (pos & 31));
 }
    
@@ -122,6 +126,13 @@ sp_tile_cache_set_surface(struct softpipe_tile_cache *tc,
                           struct softpipe_surface *sps)
 {
    tc->surface = sps;
+}
+
+
+struct softpipe_surface *
+sp_tile_cache_get_surface(struct softpipe_tile_cache *tc)
+{
+   return tc->surface;
 }
 
 
@@ -174,6 +185,7 @@ sp_flush_tile_cache(struct softpipe_tile_cache *tc)
          inuse++;
       }
    }
+
    /*
    printf("flushed tiles in use: %d\n", inuse);
    */
@@ -198,16 +210,8 @@ sp_get_cached_tile(struct softpipe_tile_cache *tc, int x, int y)
    const int pos = CACHE_POS(x, y);
    struct softpipe_cached_tile *tile = tc->entries + pos;
 
-   /*
-   printf("output %d, %d at pos %d\n", x, y, pos);
-   */
-
    if (tile_x != tile->x ||
        tile_y != tile->y) {
-
-      /*
-      printf("new tile at %d, %d, pos %d\n", tile_x, tile_y, pos);
-      */
 
       if (tile->x != -1) {
          /* put dirty tile back in framebuffer */
@@ -223,23 +227,63 @@ sp_get_cached_tile(struct softpipe_tile_cache *tc, int x, int y)
          }
       }
 
-      if (0/*is_clear_flag_set(tc->clear_flags, x, y)*/) {
+      if (is_clear_flag_set(tc->clear_flags, x, y)) {
          /* don't get tile from framebuffer, just clear it */
-#if 0
-         printf("clear tile\n");
          uint i, j;
-         for (i = 0; i < TILE_SIZE; i++) {
-            for (j = 0; j < TILE_SIZE; j++) {
-               tile->data.color[i][j][0] = 0.5;
-               tile->data.color[i][j][1] = 0.5;
-               tile->data.color[i][j][2] = 0.5;
-               tile->data.color[i][j][3] = 0.5;
+         /* XXX these loops could be optimized */
+         switch (ps->format) {
+         case PIPE_FORMAT_U_Z16:
+            {
+               ushort clear_val = (ushort) (tc->clear_value[0] * 0xffff);
+               for (i = 0; i < TILE_SIZE; i++) {
+                  for (j = 0; j < TILE_SIZE; j++) {
+                     tile->data.depth16[i][j] = clear_val;
+                  }
+               }
+            }
+            break;
+         case PIPE_FORMAT_U_Z32:
+            {
+               uint clear_val = (uint) (tc->clear_value[0] * 0xffffffff);
+               for (i = 0; i < TILE_SIZE; i++) {
+                  for (j = 0; j < TILE_SIZE; j++) {
+                     tile->data.depth32[i][j] = clear_val;
+                  }
+               }
+            }
+            break;
+         case PIPE_FORMAT_S8_Z24:
+            {
+               uint clear_val = (uint) (tc->clear_value[0] * 0xffffff);
+               clear_val |= ((uint) tc->clear_value[1]) << 24;
+               for (i = 0; i < TILE_SIZE; i++) {
+                  for (j = 0; j < TILE_SIZE; j++) {
+                     tile->data.depth32[i][j] = clear_val;
+                  }
+               }
+            }
+            break;
+         case PIPE_FORMAT_U_S8:
+            {
+               ubyte clear_val = (uint) tc->clear_value[0];
+               for (i = 0; i < TILE_SIZE; i++) {
+                  for (j = 0; j < TILE_SIZE; j++) {
+                     tile->data.stencil8[i][j] = clear_val;
+                  }
+               }
+            }
+            break;
+         default:
+            /* color */
+            for (i = 0; i < TILE_SIZE; i++) {
+               for (j = 0; j < TILE_SIZE; j++) {
+                  tile->data.color[i][j][0] = tc->clear_value[0];
+                  tile->data.color[i][j][1] = tc->clear_value[1];
+                  tile->data.color[i][j][2] = tc->clear_value[2];
+                  tile->data.color[i][j][3] = tc->clear_value[3];
+               }
             }
          }
-#else
-         (void) is_clear_flag_set;
-#endif
-         memset(tile->data.color, 0, sizeof(tile->data.color));
          clear_clear_flag(tc->clear_flags, x, y);
       }
       else {
@@ -322,10 +366,22 @@ sp_get_cached_tile_tex(struct pipe_context *pipe,
 }
 
 
-
+/**
+ * When a whole surface is being cleared to a value we can avoid
+ * fetching tiles above.
+ * Save the color and set a 'clearflag' for each tile of the screen.
+ */
 void
-sp_clear_tile_cache(struct softpipe_tile_cache *tc, unsigned clearval)
+sp_tile_cache_clear(struct softpipe_tile_cache *tc, const float value[4])
 {
-   (void) clearval; /* XXX use this */
+   tc->clear_value[0] = value[0];
+   tc->clear_value[1] = value[1];
+   tc->clear_value[2] = value[2];
+   tc->clear_value[3] = value[3];
+
+#if CLEAR_OPTIMIZATION
    memset(tc->clear_flags, 255, sizeof(tc->clear_flags));
+#else
+   memset(tc->clear_flags, 0, sizeof(tc->clear_flags));
+#endif
 }

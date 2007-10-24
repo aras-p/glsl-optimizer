@@ -29,7 +29,7 @@
 #define SP_TILE_CACHE_H
 
 
-#include "p_compiler.h"
+#include "pipe/p_compiler.h"
 
 
 struct softpipe_context;
@@ -66,6 +66,9 @@ extern void
 sp_tile_cache_set_surface(struct softpipe_tile_cache *tc,
                           struct softpipe_surface *sps);
 
+extern struct softpipe_surface *
+sp_tile_cache_get_surface(struct softpipe_tile_cache *tc);
+
 extern void
 sp_tile_cache_set_texture(struct softpipe_tile_cache *tc,
                           struct pipe_mipmap_tree *texture);
@@ -74,7 +77,7 @@ extern void
 sp_flush_tile_cache(struct softpipe_tile_cache *tc);
 
 extern void
-sp_clear_tile_cache(struct softpipe_tile_cache *tc, unsigned clearval);
+sp_tile_cache_clear(struct softpipe_tile_cache *tc, const float value[4]);
 
 extern struct softpipe_cached_tile *
 sp_get_cached_tile(struct softpipe_tile_cache *tc, int x, int y);

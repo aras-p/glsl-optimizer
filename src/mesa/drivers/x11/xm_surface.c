@@ -46,6 +46,7 @@
 #include "pipe/p_defines.h"
 #include "pipe/softpipe/sp_context.h"
 #include "pipe/softpipe/sp_clear.h"
+#include "pipe/softpipe/sp_tile_cache.h"
 #include "state_tracker/st_context.h"
 
 
@@ -218,6 +219,19 @@ xmesa_clear(struct pipe_context *pipe, struct pipe_surface *ps, GLuint value)
     * surface since we don't want to accidentally re-use them after clearing.
     */
    pipe->flush(pipe, 0);
+
+   {
+      struct softpipe_context *sp = softpipe_context(pipe);
+      struct softpipe_surface *sps = softpipe_surface(ps);
+      if (sps == sp_tile_cache_get_surface(sp->cbuf_cache[0])) {
+         float clear[4];
+         clear[0] = 0.2; /* XXX hack */
+         clear[1] = 0.2;
+         clear[2] = 0.2;
+         clear[3] = 0.2;
+         sp_tile_cache_clear(sp->cbuf_cache[0], clear);
+      }
+   }
 
    if (xrb && xrb->ximage) {
       /* clearing back color buffer */
