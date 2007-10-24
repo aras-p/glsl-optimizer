@@ -113,6 +113,7 @@ init_machine(GLcontext *ctx, struct gl_program_machine *machine,
    machine->DerivY = (GLfloat (*)[4]) span->attrStepY;
    machine->NumDeriv = FRAG_ATTRIB_MAX;
 
+   /* if running a GLSL program (not ARB_fragment_program) */
    if (ctx->Shader.CurrentProgram) {
       /* Store front/back facing value in register FOGC.Y */
       machine->Attribs[FRAG_ATTRIB_FOGC][col][1] = (GLfloat) ctx->_Facing;

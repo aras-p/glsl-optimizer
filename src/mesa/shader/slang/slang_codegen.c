@@ -282,6 +282,8 @@ sampler_to_texture_index(const slang_type_specifier_type type)
 }
 
 
+#define SWIZZLE_ZWWW MAKE_SWIZZLE4(SWIZZLE_Z, SWIZZLE_W, SWIZZLE_W, SWIZZLE_W)
+
 /**
  * Return the VERT_ATTRIB_* or FRAG_ATTRIB_* value that corresponds to
  * a vertex or fragment program input variable.  Return -1 if the input
@@ -316,9 +318,11 @@ _slang_input_index(const char *name, GLenum target, GLuint *swizzleOut)
       { "gl_FragCoord", FRAG_ATTRIB_WPOS, SWIZZLE_NOOP },
       { "gl_Color", FRAG_ATTRIB_COL0, SWIZZLE_NOOP },
       { "gl_SecondaryColor", FRAG_ATTRIB_COL1, SWIZZLE_NOOP },
-      { "gl_FogFragCoord", FRAG_ATTRIB_FOGC, SWIZZLE_XXXX },
       { "gl_TexCoord", FRAG_ATTRIB_TEX0, SWIZZLE_NOOP },
+      /* note: we're packing several quantities into the fogcoord vector */
+      { "gl_FogFragCoord", FRAG_ATTRIB_FOGC, SWIZZLE_XXXX },
       { "gl_FrontFacing", FRAG_ATTRIB_FOGC, SWIZZLE_YYYY }, /*XXX*/
+      { "gl_PointCoord", FRAG_ATTRIB_FOGC, SWIZZLE_ZWWW },
       { NULL, 0, SWIZZLE_NOOP }
    };
    GLuint i;
