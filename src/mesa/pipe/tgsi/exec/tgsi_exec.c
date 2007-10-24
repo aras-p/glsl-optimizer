@@ -60,10 +60,10 @@
 #include "main/macros.h"
 #endif
 
-#define TILE_BOTTOM_LEFT  0
-#define TILE_BOTTOM_RIGHT 1
-#define TILE_TOP_LEFT     2
-#define TILE_TOP_RIGHT    3
+#define TILE_TOP_LEFT     0
+#define TILE_TOP_RIGHT    1
+#define TILE_BOTTOM_LEFT  2
+#define TILE_BOTTOM_RIGHT 3
 
 #define TEMP_0_I           TGSI_EXEC_TEMP_00000000_I
 #define TEMP_0_C           TGSI_EXEC_TEMP_00000000_C
