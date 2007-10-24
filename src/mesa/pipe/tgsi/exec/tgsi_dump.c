@@ -945,6 +945,7 @@ dump_instruction_short(
    case TGSI_OPCODE_ELSE:
    case TGSI_OPCODE_BGNLOOP2:
    case TGSI_OPCODE_ENDLOOP2:
+   case TGSI_OPCODE_CAL:
       TXT( " :" );
       UID( inst->InstructionExtLabel.Label );
       break;
