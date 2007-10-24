@@ -71,7 +71,7 @@ struct pipe_context {
 
    boolean (*draw_elements)( struct pipe_context *pipe,
 			     struct pipe_buffer_handle *indexBuffer,
-			     unsigned indexSize,
+			     unsigned indexSize, unsigned indexOffset,
 			     unsigned mode, unsigned start, unsigned count);
 
    /** Clear a surface to given value (no scissor; clear whole surface) */

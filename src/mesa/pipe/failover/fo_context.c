@@ -47,7 +47,7 @@ static void failover_destroy( struct pipe_context *pipe )
 
 static boolean failover_draw_elements( struct pipe_context *pipe,
 				       struct pipe_buffer_handle *indexBuffer,
-				       unsigned indexSize,
+				       unsigned indexSize, unsigned indexOffset,
 				       unsigned prim, unsigned start, unsigned count)
 {
    struct failover_context *failover = failover_context( pipe );
@@ -65,6 +65,7 @@ static boolean failover_draw_elements( struct pipe_context *pipe,
       if (!failover->hw->draw_elements( failover->hw, 
 					indexBuffer, 
 					indexSize, 
+                                        indexOffset,
 					prim, 
 					start, 
 					count )) {
@@ -84,6 +85,7 @@ static boolean failover_draw_elements( struct pipe_context *pipe,
       failover->sw->draw_elements( failover->sw, 
 				   indexBuffer, 
 				   indexSize, 
+                                   indexOffset,
 				   prim, 
 				   start, 
 				   count );
@@ -102,7 +104,7 @@ static boolean failover_draw_elements( struct pipe_context *pipe,
 static boolean failover_draw_arrays( struct pipe_context *pipe,
 				     unsigned prim, unsigned start, unsigned count)
 {
-   return failover_draw_elements(pipe, NULL, 0, prim, start, count);
+   return failover_draw_elements(pipe, NULL, 0, 0, prim, start, count);
 }
 
 
