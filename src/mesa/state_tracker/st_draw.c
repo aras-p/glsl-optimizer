@@ -197,7 +197,7 @@ st_draw_vbo(GLcontext *ctx,
       /* indexed primitive */
       struct gl_buffer_object *bufobj = ib->obj;
       struct pipe_buffer_handle *indexBuf = NULL;
-      unsigned indexSize, i;
+      unsigned indexSize, indexOffset, i;
 
       switch (ib->type) {
       case GL_UNSIGNED_INT:
@@ -218,18 +218,21 @@ st_draw_vbo(GLcontext *ctx,
          /* elements/indexes are in a real VBO */
          struct st_buffer_object *stobj = st_buffer_object(bufobj);
          winsys->buffer_reference(winsys, &indexBuf, stobj->buffer);
+         indexOffset = (unsigned) ib->ptr / indexSize;
       }
       else {
          /* element/indicies are in user space memory */
          indexBuf = winsys->user_buffer_create(winsys,
                                                (void *) ib->ptr,
                                                ib->count * indexSize);
+         indexOffset = 0;
       }
 
       /* draw */
       for (i = 0; i < nr_prims; i++) {
          pipe->draw_elements(pipe, indexBuf, indexSize,
-                             prims[i].mode, prims[i].start, prims[i].count);
+                             prims[i].mode,
+                             prims[i].start + indexOffset, prims[i].count);
       }
 
       winsys->buffer_reference(winsys, &indexBuf, NULL);
