@@ -252,7 +252,7 @@ st_translate_vertex_program(struct st_context *st,
 
    vs.tokens = tokensOut;
 #ifdef MESA_LLVM
-   vs.llvm_prog = ga_llvm_from_tgsi(st->pipe, vs.tokens);
+   vs.llvm_prog = (void*)gallivm_from_tgsi(st->pipe, vs.tokens);
 #endif
    cso = st_cached_vs_state(st, &vs);
    stvp->vs = cso;
@@ -410,7 +410,7 @@ st_translate_fragment_program(struct st_context *st,
 
    fs.tokens = tokensOut;
 #ifdef MESA_LLVM
-   /*fs.llvm_prog = ga_llvm_from_tgsi(st->pipe, fs.tokens);*/
+   /*fs.llvm_prog = gallivm_from_tgsi(st->pipe, fs.tokens);*/
 #endif
    cso = st_cached_fs_state(st, &fs);
    stfp->fs = cso;

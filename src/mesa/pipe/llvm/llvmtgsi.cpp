@@ -1,3 +1,35 @@
+/**************************************************************************
+ *
+ * Copyright 2007 Tungsten Graphics, Inc., Cedar Park, Texas.
+ * All Rights Reserved.
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the
+ * "Software"), to deal in the Software without restriction, including
+ * without limitation the rights to use, copy, modify, merge, publish,
+ * distribute, sub license, and/or sell copies of the Software, and to
+ * permit persons to whom the Software is furnished to do so, subject to
+ * the following conditions:
+ *
+ * The above copyright notice and this permission notice (including the
+ * next paragraph) shall be included in all copies or substantial portions
+ * of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+ * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+ * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT.
+ * IN NO EVENT SHALL TUNGSTEN GRAPHICS AND/OR ITS SUPPLIERS BE LIABLE FOR
+ * ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
+ * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
+ * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ *
+ **************************************************************************/
+
+ /*
+  * Authors:
+  *   Zack Rusin zack@tungstengraphics.com
+  */
+
 #include "llvmtgsi.h"
 
 #include "instructions.h"
@@ -37,7 +69,7 @@
 
 #ifdef MESA_LLVM
 
-struct ga_llvm_prog {
+struct gallivm_prog {
    void *module;
    void *function;
    int   num_consts;
@@ -575,7 +607,7 @@ translate_instruction(llvm::Module *module,
 }
 
 static llvm::Module *
-tgsi_to_llvm(struct ga_llvm_prog *prog, const struct tgsi_token *tokens)
+tgsi_to_llvm(struct gallivm_prog *prog, const struct tgsi_token *tokens)
 {
    llvm::Module *mod = createBaseShader();
    struct tgsi_parse_context parse;
@@ -639,19 +671,19 @@ tgsi_to_llvm(struct ga_llvm_prog *prog, const struct tgsi_token *tokens)
    return mod;
 }
 
-struct ga_llvm_prog *
-ga_llvm_from_tgsi(struct pipe_context *pipe, const struct tgsi_token *tokens)
+struct gallivm_prog *
+gallivm_from_tgsi(struct pipe_context *pipe, const struct tgsi_token *tokens)
 {
    std::cout << "Creating llvm from: " <<std::endl;
    ++GLOBAL_ID;
-   struct ga_llvm_prog *ga_llvm =
-      (struct ga_llvm_prog *)malloc(sizeof(struct ga_llvm_prog));
-   ga_llvm->id = GLOBAL_ID;
+   struct gallivm_prog *gallivm =
+      (struct gallivm_prog *)malloc(sizeof(struct gallivm_prog));
+   gallivm->id = GLOBAL_ID;
    tgsi_dump(tokens, 0);
 
-   llvm::Module *mod = tgsi_to_llvm(ga_llvm, tokens);
-   ga_llvm->module = mod;
-   ga_llvm_prog_dump(ga_llvm, 0);
+   llvm::Module *mod = tgsi_to_llvm(gallivm, tokens);
+   gallivm->module = mod;
+   gallivm_prog_dump(gallivm, 0);
 
    /* Run optimization passes over it */
    PassManager passes;
@@ -668,17 +700,17 @@ ga_llvm_from_tgsi(struct pipe_context *pipe, const struct tgsi_token *tokens)
       ee = (llvm::ExecutionEngine*)pipe->llvm_execution_engine;
       ee->addModuleProvider(mp);
    }
-   ga_llvm->module = mod;
+   gallivm->module = mod;
 
    Function *func = mod->getFunction("run_vertex_shader");
-   ga_llvm->function = ee->getPointerToFunctionOrStub(func);
+   gallivm->function = ee->getPointerToFunctionOrStub(func);
 
-   ga_llvm_prog_dump(ga_llvm, 0);
+   gallivm_prog_dump(gallivm, 0);
 
-   return ga_llvm;
+   return gallivm;
 }
 
-void ga_llvm_prog_delete(struct ga_llvm_prog *prog)
+void gallivm_prog_delete(struct gallivm_prog *prog)
 {
    llvm::Module *mod = static_cast<llvm::Module*>(prog->module);
    delete mod;
@@ -695,7 +727,7 @@ typedef void (*vertex_shader_runner)(float (*ainputs)[PIPE_MAX_SHADER_INPUTS][4]
                                      int num_attribs,
                                      int num_consts);
 
-int ga_llvm_prog_exec(struct ga_llvm_prog *prog,
+int gallivm_prog_exec(struct gallivm_prog *prog,
                       float (*inputs)[PIPE_MAX_SHADER_INPUTS][4],
                       float (*dests)[PIPE_MAX_SHADER_INPUTS][4],
                       float (*consts)[4],
@@ -710,7 +742,7 @@ int ga_llvm_prog_exec(struct ga_llvm_prog *prog,
    return 0;
 }
 
-void ga_llvm_prog_dump(struct ga_llvm_prog *prog, const char *file_prefix)
+void gallivm_prog_dump(struct gallivm_prog *prog, const char *file_prefix)
 {
    llvm::Module *mod;
    if (!prog || !prog->module)
