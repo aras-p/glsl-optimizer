@@ -65,6 +65,9 @@
 #define TILE_BOTTOM_LEFT  2
 #define TILE_BOTTOM_RIGHT 3
 
+/*
+ * Shorthand locations of various utility registers (_I = Index, _C = Channel)
+ */
 #define TEMP_0_I           TGSI_EXEC_TEMP_00000000_I
 #define TEMP_0_C           TGSI_EXEC_TEMP_00000000_C
 #define TEMP_7F_I          TGSI_EXEC_TEMP_7FFFFFFF_I

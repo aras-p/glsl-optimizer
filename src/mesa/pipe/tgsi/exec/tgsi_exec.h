@@ -53,6 +53,9 @@ struct tgsi_exec_labels
    unsigned count;
 };
 
+/*
+ * Locations of various utility registers (_I = Index, _C = Channel)
+ */
 #define TGSI_EXEC_TEMP_00000000_I   32
 #define TGSI_EXEC_TEMP_00000000_C   0
 
