@@ -310,3 +310,31 @@ void Storage::declareTemp(int idx)
 {
     m_temps[idx] = new AllocaInst(m_floatVecType, name("temp"), m_block);
 }
+
+llvm::Value * Storage::outputElement(int idx, llvm::Value *indIdx )
+{
+    GetElementPtrInst *getElem = 0;
+
+   if (indIdx) {
+      getElem = new GetElementPtrInst(m_IN,
+                                      BinaryOperator::create(Instruction::Add,
+                                                             indIdx,
+                                                             constantInt(idx),
+                                                             name("add"),
+                                                             m_block),
+                                      name("output_ptr"),
+                                      m_block);
+   } else {
+      getElem = new GetElementPtrInst(m_IN,
+                                      constantInt(idx),
+                                      name("output_ptr"),
+                                      m_block);
+   }
+
+   LoadInst *load = new LoadInst(getElem, name("output"),
+                                 false, m_block);
+   load->setAlignment(8);
+   m_inputs[idx] = load;
+
+   return load;
+}

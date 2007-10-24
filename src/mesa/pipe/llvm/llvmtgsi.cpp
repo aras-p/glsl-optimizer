@@ -195,8 +195,8 @@ translate_instruction(llvm::Module *module,
          val = storage->inputElement(src->SrcRegister.Index, indIdx);
       } else if (src->SrcRegister.File == TGSI_FILE_TEMPORARY) {
          val = storage->tempElement(src->SrcRegister.Index);
-      } else if (src->SrcRegister.File == TGSI_FILE_TEMPORARY) {
-         fprintf(stderr, "FIXME: do somethign with immediates?\n");
+      } else if (src->SrcRegister.File == TGSI_FILE_OUTPUT) {
+         val = storage->outputElement(src->SrcRegister.Index, indIdx);
       } else {
          fprintf(stderr, "ERROR: not supported llvm source %d\n", src->SrcRegister.File);
          return;

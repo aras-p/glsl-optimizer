@@ -59,6 +59,7 @@ public:
    llvm::Constant *shuffleMask(int vec);
    llvm::Value *inputElement(int idx, llvm::Value *indIdx =0);
    llvm::Value *constElement(int idx, llvm::Value *indIdx =0);
+   llvm::Value *outputElement(int idx, llvm::Value *indIdx =0);
 
    llvm::Value *tempElement(int idx);
    void setTempElement(int idx, llvm::Value *val, int mask);
