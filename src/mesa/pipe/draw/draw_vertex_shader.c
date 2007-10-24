@@ -147,7 +147,11 @@ run_vertex_program(struct draw_context *draw,
       vOut[j]->data[0][3] = w;
 
 #if DBG
-      printf("output[%d]win: %f %f %f %f\n", x, y, z, w);
+      printf("output[%d]win: %f %f %f %f\n", j,
+             vOut[j]->data[0][0],
+             vOut[j]->data[0][1],
+             vOut[j]->data[0][2],
+             vOut[j]->data[0][3]);
 #endif
       /* Remaining attributes are packed into sequential post-transform
        * vertex attrib slots.
