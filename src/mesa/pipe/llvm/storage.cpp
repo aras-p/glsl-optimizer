@@ -192,31 +192,29 @@ llvm::Value *Storage::shuffleVector(llvm::Value *vec, int shuffle)
 }
 
 
-llvm::Value *Storage::tempElement(int idx) const
+llvm::Value *Storage::tempElement(int idx)
 {
-   Value *ret = m_temps[idx];
-   if (!ret)
+   Value *ptr = m_temps[idx];
+   if (!ptr)
       return m_undefFloatVec;
-   return ret;
+   llvm::LoadInst *li = new LoadInst(ptr, name("temp"),
+                                     false, m_block);
+   li->setAlignment(8);
+   return li;
 }
 
 void Storage::setTempElement(int idx, llvm::Value *val, int mask)
 {
    if (mask != TGSI_WRITEMASK_XYZW) {
-      llvm::Value *templ = m_temps[idx];
+      llvm::Value *templ = 0;
+      if (m_temps[idx])
+         templ = tempElement(idx);
       val = maskWrite(val, mask, templ);
    }
-   llvm::Value *templ = m_temps[idx];
-   if (templ) {
-      BasicBlock *block = m_varBlocks[templ];
-      if (block != m_block) {
-         addPhiNode(idx, val, m_block, templ, block);
-      } else
-         updatePhiNode(idx, val);
-   }
-
-   m_temps[idx] = val;
-   m_varBlocks[val] = m_block;
+   llvm::Value *ptr = m_temps[idx];
+   assert(ptr);
+   StoreInst *st = new StoreInst(val, ptr, false, m_block);
+   st->setAlignment(8);
 }
 
 void Storage::store(int dstIdx, llvm::Value *val, int mask)
@@ -308,39 +306,7 @@ void Storage::setCurrentBlock(llvm::BasicBlock *block)
    m_block = block;
 }
 
-void Storage::addPhiNode(int idx, llvm::Value *val1, llvm::BasicBlock *blk1,
-                         llvm::Value *val2, llvm::BasicBlock *blk2)
+void Storage::declareTemp(int idx)
 {
-   PhiNode node;
-   node.val1 = val1;
-   node.block1 = blk1;
-   node.val2 = val2;
-   node.block2 = blk2;
-   m_phiNodes[idx] = node;
-}
-
-void Storage::updatePhiNode(int idx, llvm::Value *val1)
-{
-   if (m_phiNodes.find(idx) == m_phiNodes.end())
-      return;
-   PhiNode node = m_phiNodes[idx];
-   node.val1 = val1;
-   m_phiNodes[idx] = node;
-}
-
-void Storage::popPhiNode()
-{
-   if (!m_phiNodes.empty()) {
-      std::map<int, PhiNode>::const_iterator itr;
-      for (itr = m_phiNodes.begin(); itr != m_phiNodes.end(); ++itr) {
-         PhiNode node = (*itr).second;
-         PHINode *dest = new PHINode(m_floatVecType,
-                                     name("phiDest"), m_block);
-         dest->reserveOperandSpace(2);
-         dest->addIncoming(node.val1, node.block1);
-         dest->addIncoming(node.val2, node.block2);
-         m_temps[(*itr).first] = dest;
-      }
-   }
-   m_phiNodes.clear();
+    m_temps[idx] = new AllocaInst(m_floatVecType, name("temp"), m_block);
 }

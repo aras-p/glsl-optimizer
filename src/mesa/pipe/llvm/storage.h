@@ -60,8 +60,9 @@ public:
    llvm::Value *inputElement(int idx, llvm::Value *indIdx =0);
    llvm::Value *constElement(int idx, llvm::Value *indIdx =0);
 
-   llvm::Value *tempElement(int idx) const;
+   llvm::Value *tempElement(int idx);
    void setTempElement(int idx, llvm::Value *val, int mask);
+   void declareTemp(int idx);
 
    llvm::Value *addrElement(int idx) const;
    void setAddrElement(int idx, llvm::Value *val, int mask);
@@ -71,8 +72,6 @@ public:
    llvm::Value *extractIndex(llvm::Value *vec);
 
    void store(int dstIdx, llvm::Value *val, int mask);
-
-   void popPhiNode();
 
    int numConsts() const;
 private:
@@ -104,19 +103,6 @@ private:
    int         m_idx;
 
    int         m_numConsts;
-
-   void addPhiNode(int, llvm::Value*, llvm::BasicBlock*,
-                   llvm::Value*, llvm::BasicBlock*);
-   void updatePhiNode(int, llvm::Value*);
-   struct PhiNode {
-      llvm::Value      *val1;
-      llvm::BasicBlock *block1;
-      llvm::Value      *val2;
-      llvm::BasicBlock *block2;
-   };
-
-   std::map<llvm::Value*, llvm::BasicBlock*> m_varBlocks;
-   std::map<int, PhiNode> m_phiNodes;
 };
 
 #endif

@@ -968,7 +968,7 @@ void Instructions::ifop(llvm::Value *in)
                                                   m_block);
    FCmpInst *xcmp = new FCmpInst(FCmpInst::FCMP_UNE, x, float0,
                                  name("xcmp"), m_block);
-   new BranchInst(ifend, ifthen, xcmp, m_block);
+   new BranchInst(ifthen, ifend, xcmp, m_block);
    //m_block = yblock;
 
 

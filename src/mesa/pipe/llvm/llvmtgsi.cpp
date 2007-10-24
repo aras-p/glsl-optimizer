@@ -139,9 +139,24 @@ static inline void AddStandardCompilePasses(PassManager &PM) {
 
 static void
 translate_declaration(llvm::Module *module,
+                      Storage *storage,
                       struct tgsi_full_declaration *decl,
                       struct tgsi_full_declaration *fd)
 {
+   if (decl->Declaration.File == TGSI_FILE_TEMPORARY) {
+      switch( decl->Declaration.Declare ) {
+      case TGSI_DECLARE_RANGE: {
+         int start = decl->u.DeclarationRange.First;
+         int end   = decl->u.DeclarationRange.Last;
+         for (int i = start; i <= end; ++i) {
+            storage->declareTemp(i);
+         }
+      }
+         break;
+      default:
+         assert( 0 );
+      }
+   }
 }
 
 
@@ -180,8 +195,10 @@ translate_instruction(llvm::Module *module,
          val = storage->inputElement(src->SrcRegister.Index, indIdx);
       } else if (src->SrcRegister.File == TGSI_FILE_TEMPORARY) {
          val = storage->tempElement(src->SrcRegister.Index);
+      } else if (src->SrcRegister.File == TGSI_FILE_TEMPORARY) {
+         fprintf(stderr, "FIXME: do somethign with immediates?\n");
       } else {
-         fprintf(stderr, "ERROR: not supported llvm source\n");
+         fprintf(stderr, "ERROR: not supported llvm source %d\n", src->SrcRegister.File);
          return;
       }
 
@@ -447,7 +464,6 @@ translate_instruction(llvm::Module *module,
    case TGSI_OPCODE_ENDIF: {
       instr->endif();
       storage->setCurrentBlock(instr->currentBlock());
-      storage->popPhiNode();
       return; //just update the state
    }
       break;
@@ -642,7 +658,7 @@ tgsi_to_llvm(struct gallivm_prog *prog, const struct tgsi_token *tokens)
 
       switch (parse.FullToken.Token.Type) {
       case TGSI_TOKEN_TYPE_DECLARATION:
-         translate_declaration(mod,
+         translate_declaration(mod, &storage,
                                &parse.FullToken.FullDeclaration,
                                &fd);
          break;
