@@ -128,8 +128,8 @@ tgsi_exec_prepare( struct tgsi_exec_machine *mach )
    struct tgsi_full_declaration *declarations;
    uint maxInstructions = 10, numInstructions = 0;
    uint maxDeclarations = 10, numDeclarations = 0;
-   GLuint k;
-   GLuint instno = 0;
+   uint k;
+   uint instno = 0;
 
    mach->ImmLimit = 0;
    labels->count = 0;
@@ -147,8 +147,8 @@ tgsi_exec_prepare( struct tgsi_exec_machine *mach )
    }
 
    while( !tgsi_parse_end_of_tokens( &parse ) ) {
-      GLuint pointer = parse.Position;
-      GLuint i;
+      uint pointer = parse.Position;
+      uint i;
 
       tgsi_parse_token( &parse );
       switch( parse.FullToken.Token.Type ) {
@@ -225,10 +225,10 @@ void
 tgsi_exec_machine_init(
    struct tgsi_exec_machine *mach,
    const struct tgsi_token *tokens,
-   GLuint numSamplers,
+   uint numSamplers,
    struct tgsi_sampler *samplers)
 {
-   GLuint i, k;
+   uint i, k;
    struct tgsi_parse_context parse;
 
 #if 0
@@ -272,10 +272,10 @@ micro_abs(
    union tgsi_exec_channel *dst,
    const union tgsi_exec_channel *src )
 {
-   dst->f[0] = (GLfloat) fabs( (GLdouble) src->f[0] );
-   dst->f[1] = (GLfloat) fabs( (GLdouble) src->f[1] );
-   dst->f[2] = (GLfloat) fabs( (GLdouble) src->f[2] );
-   dst->f[3] = (GLfloat) fabs( (GLdouble) src->f[3] );
+   dst->f[0] = (float) fabs( (double) src->f[0] );
+   dst->f[1] = (float) fabs( (double) src->f[1] );
+   dst->f[2] = (float) fabs( (double) src->f[2] );
+   dst->f[3] = (float) fabs( (double) src->f[3] );
 }
 
 static void
@@ -319,10 +319,10 @@ micro_ceil(
    union tgsi_exec_channel *dst,
    const union tgsi_exec_channel *src )
 {
-   dst->f[0] = (GLfloat) ceil( (GLdouble) src->f[0] );
-   dst->f[1] = (GLfloat) ceil( (GLdouble) src->f[1] );
-   dst->f[2] = (GLfloat) ceil( (GLdouble) src->f[2] );
-   dst->f[3] = (GLfloat) ceil( (GLdouble) src->f[3] );
+   dst->f[0] = (float) ceil( (double) src->f[0] );
+   dst->f[1] = (float) ceil( (double) src->f[1] );
+   dst->f[2] = (float) ceil( (double) src->f[2] );
+   dst->f[3] = (float) ceil( (double) src->f[3] );
 }
 
 static void
@@ -330,10 +330,10 @@ micro_cos(
    union tgsi_exec_channel *dst,
    const union tgsi_exec_channel *src )
 {
-   dst->f[0] = (GLfloat) cos( (GLdouble) src->f[0] );
-   dst->f[1] = (GLfloat) cos( (GLdouble) src->f[1] );
-   dst->f[2] = (GLfloat) cos( (GLdouble) src->f[2] );
-   dst->f[3] = (GLfloat) cos( (GLdouble) src->f[3] );
+   dst->f[0] = (float) cos( (double) src->f[0] );
+   dst->f[1] = (float) cos( (double) src->f[1] );
+   dst->f[2] = (float) cos( (double) src->f[2] );
+   dst->f[3] = (float) cos( (double) src->f[3] );
 }
 
 static void
@@ -415,10 +415,10 @@ micro_exp2(
    union tgsi_exec_channel *dst,
    const union tgsi_exec_channel *src)
 {
-   dst->f[0] = (GLfloat) pow( 2.0, (GLdouble) src->f[0] );
-   dst->f[1] = (GLfloat) pow( 2.0, (GLdouble) src->f[1] );
-   dst->f[2] = (GLfloat) pow( 2.0, (GLdouble) src->f[2] );
-   dst->f[3] = (GLfloat) pow( 2.0, (GLdouble) src->f[3] );
+   dst->f[0] = (float) pow( 2.0, (double) src->f[0] );
+   dst->f[1] = (float) pow( 2.0, (double) src->f[1] );
+   dst->f[2] = (float) pow( 2.0, (double) src->f[2] );
+   dst->f[3] = (float) pow( 2.0, (double) src->f[3] );
 }
 
 static void
@@ -426,10 +426,10 @@ micro_f2it(
    union tgsi_exec_channel *dst,
    const union tgsi_exec_channel *src )
 {
-   dst->i[0] = (GLint) src->f[0];
-   dst->i[1] = (GLint) src->f[1];
-   dst->i[2] = (GLint) src->f[2];
-   dst->i[3] = (GLint) src->f[3];
+   dst->i[0] = (int) src->f[0];
+   dst->i[1] = (int) src->f[1];
+   dst->i[2] = (int) src->f[2];
+   dst->i[3] = (int) src->f[3];
 }
 
 static void
@@ -437,10 +437,10 @@ micro_f2ut(
    union tgsi_exec_channel *dst,
    const union tgsi_exec_channel *src )
 {
-   dst->u[0] = (GLuint) src->f[0];
-   dst->u[1] = (GLuint) src->f[1];
-   dst->u[2] = (GLuint) src->f[2];
-   dst->u[3] = (GLuint) src->f[3];
+   dst->u[0] = (uint) src->f[0];
+   dst->u[1] = (uint) src->f[1];
+   dst->u[2] = (uint) src->f[2];
+   dst->u[3] = (uint) src->f[3];
 }
 
 static void
@@ -448,10 +448,10 @@ micro_flr(
    union tgsi_exec_channel *dst,
    const union tgsi_exec_channel *src )
 {
-   dst->f[0] = (GLfloat) floor( (GLdouble) src->f[0] );
-   dst->f[1] = (GLfloat) floor( (GLdouble) src->f[1] );
-   dst->f[2] = (GLfloat) floor( (GLdouble) src->f[2] );
-   dst->f[3] = (GLfloat) floor( (GLdouble) src->f[3] );
+   dst->f[0] = (float) floor( (double) src->f[0] );
+   dst->f[1] = (float) floor( (double) src->f[1] );
+   dst->f[2] = (float) floor( (double) src->f[2] );
+   dst->f[3] = (float) floor( (double) src->f[3] );
 }
 
 static void
@@ -459,10 +459,10 @@ micro_frc(
    union tgsi_exec_channel *dst,
    const union tgsi_exec_channel *src )
 {
-   dst->f[0] = src->f[0] - (GLfloat) floor( (GLdouble) src->f[0] );
-   dst->f[1] = src->f[1] - (GLfloat) floor( (GLdouble) src->f[1] );
-   dst->f[2] = src->f[2] - (GLfloat) floor( (GLdouble) src->f[2] );
-   dst->f[3] = src->f[3] - (GLfloat) floor( (GLdouble) src->f[3] );
+   dst->f[0] = src->f[0] - (float) floor( (double) src->f[0] );
+   dst->f[1] = src->f[1] - (float) floor( (double) src->f[1] );
+   dst->f[2] = src->f[2] - (float) floor( (double) src->f[2] );
+   dst->f[3] = src->f[3] - (float) floor( (double) src->f[3] );
 }
 
 static void
@@ -484,10 +484,10 @@ micro_i2f(
    union tgsi_exec_channel *dst,
    const union tgsi_exec_channel *src )
 {
-   dst->f[0] = (GLfloat) src->i[0];
-   dst->f[1] = (GLfloat) src->i[1];
-   dst->f[2] = (GLfloat) src->i[2];
-   dst->f[3] = (GLfloat) src->i[3];
+   dst->f[0] = (float) src->i[0];
+   dst->f[1] = (float) src->i[1];
+   dst->f[2] = (float) src->i[2];
+   dst->f[3] = (float) src->i[3];
 }
 
 static void
@@ -495,10 +495,10 @@ micro_lg2(
    union tgsi_exec_channel *dst,
    const union tgsi_exec_channel *src )
 {
-   dst->f[0] = (GLfloat) log( (GLdouble) src->f[0] ) * 1.442695f;
-   dst->f[1] = (GLfloat) log( (GLdouble) src->f[1] ) * 1.442695f;
-   dst->f[2] = (GLfloat) log( (GLdouble) src->f[2] ) * 1.442695f;
-   dst->f[3] = (GLfloat) log( (GLdouble) src->f[3] ) * 1.442695f;
+   dst->f[0] = (float) log( (double) src->f[0] ) * 1.442695f;
+   dst->f[1] = (float) log( (double) src->f[1] ) * 1.442695f;
+   dst->f[2] = (float) log( (double) src->f[2] ) * 1.442695f;
+   dst->f[3] = (float) log( (double) src->f[3] ) * 1.442695f;
 }
 
 static void
@@ -749,10 +749,10 @@ micro_pow(
    const union tgsi_exec_channel *src0,
    const union tgsi_exec_channel *src1 )
 {
-   dst->f[0] = (GLfloat) pow( (GLdouble) src0->f[0], (GLdouble) src1->f[0] );
-   dst->f[1] = (GLfloat) pow( (GLdouble) src0->f[1], (GLdouble) src1->f[1] );
-   dst->f[2] = (GLfloat) pow( (GLdouble) src0->f[2], (GLdouble) src1->f[2] );
-   dst->f[3] = (GLfloat) pow( (GLdouble) src0->f[3], (GLdouble) src1->f[3] );
+   dst->f[0] = (float) pow( (double) src0->f[0], (double) src1->f[0] );
+   dst->f[1] = (float) pow( (double) src0->f[1], (double) src1->f[1] );
+   dst->f[2] = (float) pow( (double) src0->f[2], (double) src1->f[2] );
+   dst->f[3] = (float) pow( (double) src0->f[3], (double) src1->f[3] );
 }
 
 static void
@@ -760,10 +760,10 @@ micro_rnd(
    union tgsi_exec_channel *dst,
    const union tgsi_exec_channel *src )
 {
-   dst->f[0] = (GLfloat) floor( (GLdouble) (src->f[0] + 0.5f) );
-   dst->f[1] = (GLfloat) floor( (GLdouble) (src->f[1] + 0.5f) );
-   dst->f[2] = (GLfloat) floor( (GLdouble) (src->f[2] + 0.5f) );
-   dst->f[3] = (GLfloat) floor( (GLdouble) (src->f[3] + 0.5f) );
+   dst->f[0] = (float) floor( (double) (src->f[0] + 0.5f) );
+   dst->f[1] = (float) floor( (double) (src->f[1] + 0.5f) );
+   dst->f[2] = (float) floor( (double) (src->f[2] + 0.5f) );
+   dst->f[3] = (float) floor( (double) (src->f[3] + 0.5f) );
 }
 
 static void
@@ -818,20 +818,20 @@ micro_sin(
    union tgsi_exec_channel *dst,
    const union tgsi_exec_channel *src )
 {
-   dst->f[0] = (GLfloat) sin( (GLdouble) src->f[0] );
-   dst->f[1] = (GLfloat) sin( (GLdouble) src->f[1] );
-   dst->f[2] = (GLfloat) sin( (GLdouble) src->f[2] );
-   dst->f[3] = (GLfloat) sin( (GLdouble) src->f[3] );
+   dst->f[0] = (float) sin( (double) src->f[0] );
+   dst->f[1] = (float) sin( (double) src->f[1] );
+   dst->f[2] = (float) sin( (double) src->f[2] );
+   dst->f[3] = (float) sin( (double) src->f[3] );
 }
 
 static void
 micro_sqrt( union tgsi_exec_channel *dst,
             const union tgsi_exec_channel *src )
 {
-   dst->f[0] = (GLfloat) sqrt( (GLdouble) src->f[0] );
-   dst->f[1] = (GLfloat) sqrt( (GLdouble) src->f[1] );
-   dst->f[2] = (GLfloat) sqrt( (GLdouble) src->f[2] );
-   dst->f[3] = (GLfloat) sqrt( (GLdouble) src->f[3] );
+   dst->f[0] = (float) sqrt( (double) src->f[0] );
+   dst->f[1] = (float) sqrt( (double) src->f[1] );
+   dst->f[2] = (float) sqrt( (double) src->f[2] );
+   dst->f[3] = (float) sqrt( (double) src->f[3] );
 }
 
 static void
@@ -851,10 +851,10 @@ micro_u2f(
    union tgsi_exec_channel *dst,
    const union tgsi_exec_channel *src )
 {
-   dst->f[0] = (GLfloat) src->u[0];
-   dst->f[1] = (GLfloat) src->u[1];
-   dst->f[2] = (GLfloat) src->u[2];
-   dst->f[3] = (GLfloat) src->u[3];
+   dst->f[0] = (float) src->u[0];
+   dst->f[1] = (float) src->u[1];
+   dst->f[2] = (float) src->u[2];
+   dst->f[3] = (float) src->u[3];
 }
 
 static void
@@ -872,8 +872,8 @@ micro_xor(
 static void
 fetch_src_file_channel(
    const struct tgsi_exec_machine *mach,
-   const GLuint file,
-   const GLuint swizzle,
+   const uint file,
+   const uint swizzle,
    const union tgsi_exec_channel *index,
    union tgsi_exec_channel *chan )
 {
@@ -905,13 +905,13 @@ fetch_src_file_channel(
          break;
 
       case TGSI_FILE_IMMEDIATE:
-         assert( index->i[0] < (GLint) mach->ImmLimit );
+         assert( index->i[0] < (int) mach->ImmLimit );
          chan->f[0] = mach->Imms[index->i[0]][swizzle];
-         assert( index->i[1] < (GLint) mach->ImmLimit );
+         assert( index->i[1] < (int) mach->ImmLimit );
          chan->f[1] = mach->Imms[index->i[1]][swizzle];
-         assert( index->i[2] < (GLint) mach->ImmLimit );
+         assert( index->i[2] < (int) mach->ImmLimit );
          chan->f[2] = mach->Imms[index->i[2]][swizzle];
-         assert( index->i[3] < (GLint) mach->ImmLimit );
+         assert( index->i[3] < (int) mach->ImmLimit );
          chan->f[3] = mach->Imms[index->i[3]][swizzle];
          break;
 
@@ -953,10 +953,10 @@ fetch_source(
    const struct tgsi_exec_machine *mach,
    union tgsi_exec_channel *chan,
    const struct tgsi_full_src_register *reg,
-   const GLuint chan_index )
+   const uint chan_index )
 {
    union tgsi_exec_channel index;
-   GLuint swizzle;
+   uint swizzle;
 
    index.i[0] =
    index.i[1] =
@@ -1066,7 +1066,7 @@ store_dest(
    const union tgsi_exec_channel *chan,
    const struct tgsi_full_dst_register *reg,
    const struct tgsi_full_instruction *inst,
-   GLuint chan_index )
+   uint chan_index )
 {
    union tgsi_exec_channel *dst;
 
@@ -1138,7 +1138,7 @@ exec_kilp(struct tgsi_exec_machine *mach,
           const struct tgsi_full_instruction *inst)
 {
     GLbitfield uniquemask;
-    GLuint chan_index;
+    uint chan_index;
     GLbitfield kilmask = 0; /* bit 0 = pixel 0, bit 1 = pixel 1, etc */
     union tgsi_exec_channel r[1];
 
@@ -1149,8 +1149,8 @@ exec_kilp(struct tgsi_exec_machine *mach,
 
     for (chan_index = 0; chan_index < 4; chan_index++)
     {
-        GLuint swizzle;
-        GLuint i;
+        uint swizzle;
+        uint i;
 
         /* unswizzle channel */
         swizzle = tgsi_util_get_full_src_register_extswizzle (
@@ -1186,8 +1186,8 @@ fetch_texel( struct tgsi_sampler *sampler,
              union tgsi_exec_channel *b,
              union tgsi_exec_channel *a )
 {
-   GLuint j;
-   GLfloat rgba[NUM_CHANNELS][QUAD_SIZE];
+   uint j;
+   float rgba[NUM_CHANNELS][QUAD_SIZE];
 
    sampler->get_samples(sampler, s->f, t->f, p->f, lodbias, rgba);
 
@@ -1451,7 +1451,7 @@ exec_instruction(
    const struct tgsi_full_instruction *inst,
    int *pc )
 {
-   GLuint chan_index;
+   uint chan_index;
    union tgsi_exec_channel r[8];
 
    (*pc)++;
