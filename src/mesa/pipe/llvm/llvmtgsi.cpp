@@ -47,71 +47,62 @@ struct ga_llvm_prog {
 using namespace llvm;
 #include "llvm_base_shader.cpp"
 
-
 static int GLOBAL_ID = 0;
-
-static inline void addPass(PassManager &PM, Pass *P) {
-  // Add the pass to the pass manager...
-  PM.add(P);
-}
 
 static inline void AddStandardCompilePasses(PassManager &PM) {
    PM.add(createVerifierPass());                  // Verify that input is correct
 
-   addPass(PM, createLowerSetJmpPass());          // Lower llvm.setjmp/.longjmp
+   PM.add(createLowerSetJmpPass());          // Lower llvm.setjmp/.longjmp
 
-   // If the -strip-debug command line option was specified, do it.
-   //if (StripDebug)
-   //  addPass(PM, createStripSymbolsPass(true));
+   //PM.add(createStripSymbolsPass(true));
 
-   addPass(PM, createRaiseAllocationsPass());     // call %malloc -> malloc inst
-   addPass(PM, createCFGSimplificationPass());    // Clean up disgusting code
-   addPass(PM, createPromoteMemoryToRegisterPass());// Kill useless allocas
-   addPass(PM, createGlobalOptimizerPass());      // Optimize out global vars
-   addPass(PM, createGlobalDCEPass());            // Remove unused fns and globs
-   addPass(PM, createIPConstantPropagationPass());// IP Constant Propagation
-   addPass(PM, createDeadArgEliminationPass());   // Dead argument elimination
-   addPass(PM, createInstructionCombiningPass()); // Clean up after IPCP & DAE
-   addPass(PM, createCFGSimplificationPass());    // Clean up after IPCP & DAE
+   PM.add(createRaiseAllocationsPass());     // call %malloc -> malloc inst
+   PM.add(createCFGSimplificationPass());    // Clean up disgusting code
+   PM.add(createPromoteMemoryToRegisterPass());// Kill useless allocas
+   PM.add(createGlobalOptimizerPass());      // Optimize out global vars
+   PM.add(createGlobalDCEPass());            // Remove unused fns and globs
+   PM.add(createIPConstantPropagationPass());// IP Constant Propagation
+   PM.add(createDeadArgEliminationPass());   // Dead argument elimination
+   PM.add(createInstructionCombiningPass()); // Clean up after IPCP & DAE
+   PM.add(createCFGSimplificationPass());    // Clean up after IPCP & DAE
 
-   addPass(PM, createPruneEHPass());              // Remove dead EH info
+   PM.add(createPruneEHPass());              // Remove dead EH info
 
-   //if (!DisableInline)
-   addPass(PM, createFunctionInliningPass());   // Inline small functions
-   addPass(PM, createArgumentPromotionPass());    // Scalarize uninlined fn args
+   PM.add(createFunctionInliningPass());   // Inline small functions
+   PM.add(createArgumentPromotionPass());    // Scalarize uninlined fn args
 
-   addPass(PM, createTailDuplicationPass());      // Simplify cfg by copying code
-   addPass(PM, createInstructionCombiningPass()); // Cleanup for scalarrepl.
-   addPass(PM, createCFGSimplificationPass());    // Merge & remove BBs
-   addPass(PM, createScalarReplAggregatesPass()); // Break up aggregate allocas
-   addPass(PM, createInstructionCombiningPass()); // Combine silly seq's
-   addPass(PM, createCondPropagationPass());      // Propagate conditionals
+   PM.add(createTailDuplicationPass());      // Simplify cfg by copying code
+   PM.add(createInstructionCombiningPass()); // Cleanup for scalarrepl.
+   PM.add(createCFGSimplificationPass());    // Merge & remove BBs
+   PM.add(createScalarReplAggregatesPass()); // Break up aggregate allocas
+   PM.add(createInstructionCombiningPass()); // Combine silly seq's
+   PM.add(createCondPropagationPass());      // Propagate conditionals
 
-   addPass(PM, createTailCallEliminationPass());  // Eliminate tail calls
-   addPass(PM, createCFGSimplificationPass());    // Merge & remove BBs
-   addPass(PM, createReassociatePass());          // Reassociate expressions
-   addPass(PM, createLoopRotatePass());
-   addPass(PM, createLICMPass());                 // Hoist loop invariants
-   addPass(PM, createLoopUnswitchPass());         // Unswitch loops.
-   addPass(PM, createLoopIndexSplitPass());       // Index split loops.
-   addPass(PM, createInstructionCombiningPass()); // Clean up after LICM/reassoc
-   addPass(PM, createIndVarSimplifyPass());       // Canonicalize indvars
-   addPass(PM, createLoopUnrollPass());           // Unroll small loops
-   addPass(PM, createInstructionCombiningPass()); // Clean up after the unroller
-   addPass(PM, createGVNPass());                  // Remove redundancies
-   addPass(PM, createSCCPPass());                 // Constant prop with SCCP
+   PM.add(createTailCallEliminationPass());  // Eliminate tail calls
+   PM.add(createCFGSimplificationPass());    // Merge & remove BBs
+   PM.add(createReassociatePass());          // Reassociate expressions
+   PM.add(createLoopRotatePass());
+   PM.add(createLICMPass());                 // Hoist loop invariants
+   PM.add(createLoopUnswitchPass());         // Unswitch loops.
+   PM.add(createLoopIndexSplitPass());       // Index split loops.
+   PM.add(createInstructionCombiningPass()); // Clean up after LICM/reassoc
+   PM.add(createIndVarSimplifyPass());       // Canonicalize indvars
+   PM.add(createLoopUnrollPass());           // Unroll small loops
+   PM.add(createInstructionCombiningPass()); // Clean up after the unroller
+   PM.add(createGVNPass());                  // Remove redundancies
+   PM.add(createSCCPPass());                 // Constant prop with SCCP
 
    // Run instcombine after redundancy elimination to exploit opportunities
    // opened up by them.
-   addPass(PM, createInstructionCombiningPass());
-   addPass(PM, createCondPropagationPass());      // Propagate conditionals
+   PM.add(createInstructionCombiningPass());
+   PM.add(createCondPropagationPass());      // Propagate conditionals
 
-   addPass(PM, createDeadStoreEliminationPass()); // Delete dead stores
-   addPass(PM, createAggressiveDCEPass());        // SSA based 'Aggressive DCE'
-   addPass(PM, createCFGSimplificationPass());    // Merge & remove BBs
-   addPass(PM, createSimplifyLibCallsPass());     // Library Call Optimizations
-   addPass(PM, createDeadTypeEliminationPass());  // Eliminate dead types
-   addPass(PM, createConstantMergePass());        // Merge dup global constants
+   PM.add(createDeadStoreEliminationPass()); // Delete dead stores
+   PM.add(createAggressiveDCEPass());        // SSA based 'Aggressive DCE'
+   PM.add(createCFGSimplificationPass());    // Merge & remove BBs
+   PM.add(createSimplifyLibCallsPass());     // Library Call Optimizations
+   PM.add(createDeadTypeEliminationPass());  // Eliminate dead types
+   PM.add(createConstantMergePass());        // Merge dup global constants
 }
 
 static void
@@ -119,7 +110,6 @@ translate_declaration(llvm::Module *module,
                       struct tgsi_full_declaration *decl,
                       struct tgsi_full_declaration *fd)
 {
-   /* i think this is going to be a noop */
 }
 
 
@@ -658,9 +648,11 @@ ga_llvm_from_tgsi(struct pipe_context *pipe, const struct tgsi_token *tokens)
       (struct ga_llvm_prog *)malloc(sizeof(struct ga_llvm_prog));
    ga_llvm->id = GLOBAL_ID;
    tgsi_dump(tokens, 0);
+
    llvm::Module *mod = tgsi_to_llvm(ga_llvm, tokens);
    ga_llvm->module = mod;
    ga_llvm_prog_dump(ga_llvm, 0);
+
    /* Run optimization passes over it */
    PassManager passes;
    passes.add(new TargetData(mod));
