@@ -2077,6 +2077,7 @@ exec_instruction(
             return;
          }
          *pc = mach->CallStack[--mach->CallStackTop];
+         UPDATE_EXEC_MASK(mach);
       }
       break;
 
