@@ -67,7 +67,7 @@ linux-solo: depend subdirs libmesa.a
 # Stand-alone Mesa libGL, no built-in drivers (DirectFB)
 
 libgl-core: $(CORE_OBJECTS)
-	@ $(TOP)/bin/mklib -o $(GL_LIB) -linker '$(CC)' \
+	@ $(TOP)/bin/mklib -o $(GL_LIB) \
 		-major $(MESA_MAJOR) -minor $(MESA_MINOR) -patch $(MESA_TINY) \
 		-install $(TOP)/$(LIB_DIR) $(MKLIB_OPTIONS) $(CORE_OBJECTS) \
 		$(GL_LIB_DEPS)
@@ -80,7 +80,7 @@ directfb: depend subdirs libgl-core
 # fbdev Mesa driver (libGL.so)
 
 fbdev: $(CORE_OBJECTS) $(FBDEV_DRIVER_OBJECTS) $(COMMON_DRIVER_OBJECTS)
-	@ $(TOP)/bin/mklib -o $(GL_LIB) -linker '$(CC)' \
+	@ $(TOP)/bin/mklib -o $(GL_LIB) \
 		-major $(MESA_MAJOR) -minor $(MESA_MINOR) -patch $(MESA_TINY) \
 		-install $(TOP)/$(LIB_DIR) $(MKLIB_OPTIONS) \
 		$(CORE_OBJECTS) $(FBDEV_DRIVER_OBJECTS) \
@@ -113,7 +113,7 @@ osmesa-only: depend subdirs $(TOP)/$(LIB_DIR)/$(OSMESA_LIB_NAME)
 
 # Make the GL library
 $(TOP)/$(LIB_DIR)/$(GL_LIB_NAME): $(STAND_ALONE_OBJECTS) $(SOFTPIPE_LIB)
-	@ $(TOP)/bin/mklib -o $(GL_LIB) -linker '$(CC)' \
+	@ $(TOP)/bin/mklib -o $(GL_LIB) \
 		-major $(GL_MAJOR) -minor $(GL_MINOR) -patch $(GL_TINY) \
 		-install $(TOP)/$(LIB_DIR) \
 		$(MKLIB_OPTIONS) $(STAND_ALONE_OBJECTS) \
@@ -122,13 +122,13 @@ $(TOP)/$(LIB_DIR)/$(GL_LIB_NAME): $(STAND_ALONE_OBJECTS) $(SOFTPIPE_LIB)
 # Make the OSMesa library
 $(TOP)/$(LIB_DIR)/$(OSMESA_LIB_NAME): $(OSMESA_DRIVER_OBJECTS) $(OSMESA16_OBJECTS)
 	@ if [ "${DRIVER_DIRS}" = "osmesa" ] ; then \
-		$(TOP)/bin/mklib -o $(OSMESA_LIB) -linker '$(CC)' \
+		$(TOP)/bin/mklib -o $(OSMESA_LIB) \
 			-major $(MESA_MAJOR) \
 			-minor $(MESA_MINOR) -patch $(MESA_TINY) \
 			-install $(TOP)/$(LIB_DIR) $(MKLIB_OPTIONS) \
 			$(OSMESA_LIB_DEPS) $(OSMESA16_OBJECTS) ; \
 	else \
-		$(TOP)/bin/mklib -o $(OSMESA_LIB) -linker '$(CC)' \
+		$(TOP)/bin/mklib -o $(OSMESA_LIB) \
 			-major $(MESA_MAJOR) \
 			-minor $(MESA_MINOR) -patch $(GL_TINY) \
 			-install $(TOP)/$(LIB_DIR) $(MKLIB_OPTIONS) \

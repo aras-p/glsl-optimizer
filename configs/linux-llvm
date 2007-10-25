@@ -23,6 +23,7 @@ ifeq ($(MESA_LLVM),1)
   LLVM_CXXFLAGS=`llvm-config --cxxflags` -DMESA_LLVM=1 -Wno-long-long
   LLVM_LDFLAGS=`llvm-config --ldflags`
   LLVM_LIBS=`llvm-config --libs`
+  MKLIB_OPTIONS=-cplusplus
 else
   LLVM_CFLAGS=
   LLVM_CXXFLAGS=
