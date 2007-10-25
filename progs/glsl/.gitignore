@@ -1,10 +1,13 @@
+bitmap
 brick
 bump
 deriv
 extfuncs.h
 mandelbrot
 noise
+points
 readtex.c
 readtex.h
 texdemo1
+trirast
 toyball
