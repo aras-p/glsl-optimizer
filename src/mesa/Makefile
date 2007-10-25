@@ -153,10 +153,10 @@ depend: $(ALL_SOURCES)
 
 
 subdirs:
-	@ if echo $(ASM_FLAGS) | grep USE_X86_ASM ; then \
+	@ if echo "$(ASM_FLAGS)" | grep -q USE_X86_ASM ; then \
 		(cd x86 ; $(MAKE)) ; \
 	fi
-	@ if echo $(ASM_FLAGS) | grep USE_X86_64_ASM ; then \
+	@ if echo "$(ASM_FLAGS)" | grep -q USE_X86_64_ASM ; then \
 		(cd x86 ; $(MAKE)) ; \
 		(cd x86-64 ; $(MAKE)) ; \
 	fi
