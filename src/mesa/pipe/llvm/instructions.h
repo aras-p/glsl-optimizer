@@ -54,13 +54,16 @@ public:
    llvm::Value *abs(llvm::Value *in1);
    llvm::Value *arl(llvm::Value *in1);
    llvm::Value *add(llvm::Value *in1, llvm::Value *in2);
+   void         beginLoop();
+   void         brk();
    llvm::Value *cross(llvm::Value *in1, llvm::Value *in2);
    llvm::Value *dp3(llvm::Value *in1, llvm::Value *in2);
    llvm::Value *dp4(llvm::Value *in1, llvm::Value *in2);
    llvm::Value *dph(llvm::Value *in1, llvm::Value *in2);
    llvm::Value *dst(llvm::Value *in1, llvm::Value *in2);
-   void         endif();
    void         elseop();
+   void         endif();
+   void         endLoop();
    llvm::Value *ex2(llvm::Value *in);
    llvm::Value *floor(llvm::Value *in);
    llvm::Value *frc(llvm::Value *in);
@@ -81,6 +84,7 @@ public:
    llvm::Value *sgt(llvm::Value *in1, llvm::Value *in2);
    llvm::Value *slt(llvm::Value *in1, llvm::Value *in2);
    llvm::Value *sub(llvm::Value *in1, llvm::Value *in2);
+   llvm::Value *trunc(llvm::Value *in);
 
    void printVector(llvm::Value *val);
 private:
@@ -115,6 +119,11 @@ private:
    llvm::Constant   *m_fmtPtr;
 
    std::stack<llvm::BasicBlock*> m_ifStack;
+   struct Loop {
+      llvm::BasicBlock *begin;
+      llvm::BasicBlock *end;
+   };
+   std::stack<Loop> m_loopStack;
 };
 
 #endif

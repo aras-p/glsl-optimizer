@@ -1016,3 +1016,67 @@ llvm::Value * Instructions::lerp(llvm::Value *in1, llvm::Value *in2,
    return add(m, mul(s, in3));
 }
 
+void Instructions::beginLoop()
+{
+   BasicBlock *begin = new BasicBlock(name("loop"), m_func,0);
+   BasicBlock *end = new BasicBlock(name("endloop"), m_func,0);
+
+   new BranchInst(begin, m_block);
+   Loop loop;
+   loop.begin = begin;
+   loop.end   = end;
+   m_block = begin;
+   m_loopStack.push(loop);
+}
+
+void Instructions::endLoop()
+{
+   assert(!m_loopStack.empty());
+   Loop loop = m_loopStack.top();
+   new BranchInst(loop.begin, m_block);
+   loop.end->moveAfter(m_block);
+   m_block = loop.end;
+   m_loopStack.pop();
+}
+
+void Instructions::brk()
+{
+   assert(!m_loopStack.empty());
+   BasicBlock *unr = new BasicBlock(name("unreachable"), m_func,0);
+   new BranchInst(m_loopStack.top().end, m_block);
+   m_block = unr;
+}
+
+llvm::Value * Instructions::trunc(llvm::Value *in)
+{
+   ExtractElementInst *x = new ExtractElementInst(in, unsigned(0),
+                                                  name("extractx"),
+                                                  m_block);
+   ExtractElementInst *y = new ExtractElementInst(in, unsigned(1),
+                                                  name("extracty"),
+                                                  m_block);
+   ExtractElementInst *z = new ExtractElementInst(in, unsigned(2),
+                                                  name("extractz"),
+                                                  m_block);
+   ExtractElementInst *w = new ExtractElementInst(in, unsigned(3),
+                                                  name("extractw"),
+                                                  m_block);
+   CastInst *icastx = new FPToSIInst(x, IntegerType::get(32),
+                                    name("ftoix"), m_block);
+   CastInst *icasty = new FPToSIInst(y, IntegerType::get(32),
+                                    name("ftoiy"), m_block);
+   CastInst *icastz = new FPToSIInst(z, IntegerType::get(32),
+                                    name("ftoiz"), m_block);
+   CastInst *icastw = new FPToSIInst(w, IntegerType::get(32),
+                                    name("ftoiw"), m_block);
+   CastInst *fx = new SIToFPInst(icastx, Type::FloatTy,
+                                 name("fx"), m_block);
+   CastInst *fy = new SIToFPInst(icasty, Type::FloatTy,
+                                 name("fy"), m_block);
+   CastInst *fz = new SIToFPInst(icastz, Type::FloatTy,
+                                 name("fz"), m_block);
+   CastInst *fw = new SIToFPInst(icastw, Type::FloatTy,
+                                 name("fw"), m_block);
+   return vectorFromVals(fx, fy, fz, fw);
+}
+
