@@ -25,7 +25,7 @@ DEFINES = -D_POSIX_SOURCE -D_POSIX_C_SOURCE=199309L -D_SVID_SOURCE \
 	-DGLX_DIRECT_RENDERING -DGLX_INDIRECT_RENDERING \
         -DHAVE_ALIAS -DUSE_XCB -DHAVE_POSIX_MEMALIGN
 
-X11_INCLUDES = `pkg-config --cflags-only-I x11` `pkg-config --cflags-only-I xcb` `pkg-config --cflags-only-I x11-xcb` `pkg-config --cflags-only-I xcb-glx`
+X11_INCLUDES = $(shell pkg-config --cflags-only-I x11) $(shell pkg-config --cflags-only-I xcb) $(shell pkg-config --cflags-only-I x11-xcb) $(shell pkg-config --cflags-only-I xcb-glx)
 
 CFLAGS = -Wall -Wmissing-prototypes $(OPT_FLAGS) $(PIC_FLAGS) $(ARCH_FLAGS) \
 	$(DEFINES) $(ASM_FLAGS) -std=c99 -ffast-math 
@@ -36,13 +36,13 @@ CXXFLAGS = -Wall $(OPT_FLAGS) $(PIC_FLAGS) $(ARCH_FLAGS) $(DEFINES)
 ASM_SOURCES = 
 
 # Library/program dependencies
-EXTRA_LIB_PATH=`pkg-config --libs-only-L x11`
+EXTRA_LIB_PATH=$(shell pkg-config --libs-only-L x11)
 
-LIBDRM_CFLAGS = `pkg-config --cflags libdrm`
-LIBDRM_LIB = `pkg-config --libs libdrm`
+LIBDRM_CFLAGS = $(shell pkg-config --cflags libdrm)
+LIBDRM_LIB = $(shell pkg-config --libs libdrm)
 DRI_LIB_DEPS  = $(EXTRA_LIB_PATH) -lm -lpthread -lexpat -ldl $(LIBDRM_LIB)
 GL_LIB_DEPS   = $(EXTRA_LIB_PATH) -lX11 -lXext -lXxf86vm -lm -lpthread -ldl \
-                $(LIBDRM_LIB) `pkg-config --libs xcb` `pkg-config --libs x11-xcb` `pkg-config --libs xcb-glx`
+                $(LIBDRM_LIB) $(shell pkg-config --libs xcb) $(shell pkg-config --libs x11-xcb) $(shell pkg-config --libs xcb-glx)
 
 
 # This is now 0 by default since it seems to confuse the hell out of people

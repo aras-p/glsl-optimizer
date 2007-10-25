@@ -16,10 +16,10 @@ PIC_FLAGS  = -fPIC
 ARCH_FLAGS ?=
 
 # DRM and pciaccess
-LIBDRM_CFLAGS = `pkg-config --cflags libdrm`
-LIBDRM_LIB = `pkg-config --libs libdrm`
-PCIACCESS_CFLAGS = `pkg-config --cflags pciaccess`
-PCIACCESS_LIB = `pkg-config --libs pciaccess`
+LIBDRM_CFLAGS = $(shell pkg-config --cflags libdrm)
+LIBDRM_LIB = $(shell pkg-config --libs libdrm)
+PCIACCESS_CFLAGS = $(shell pkg-config --cflags pciaccess)
+PCIACCESS_LIB = $(shell pkg-config --libs pciaccess)
 
 
 DEFINES = -D_POSIX_SOURCE -D_POSIX_C_SOURCE=199309L -D_SVID_SOURCE \
