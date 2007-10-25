@@ -71,7 +71,8 @@ instr_out(uint32_t *data, uint32_t hw_offset, unsigned int index,
 {
     va_list va;
 
-    fprintf(out, "0x%08x: 0x%08x: ", hw_offset + index * 4, data[index]);
+    fprintf(out, "0x%08x: 0x%08x:%s ", hw_offset + index * 4, data[index],
+	    index == 0 ? "" : "  ");
     va_start(va, fmt);
     vfprintf(out, fmt, va);
     va_end(va);
@@ -783,10 +784,36 @@ decode_3d(uint32_t *data, int count, uint32_t hw_offset, int *failures)
     return 1;
 }
 
+static const char *
+get_965_surfacetype(unsigned int surfacetype)
+{
+    switch (surfacetype) {
+    case 0: return "1D";
+    case 1: return "2D";
+    case 2: return "3D";
+    case 3: return "CUBE";
+    case 4: return "BUFFER";
+    case 7: return "NULL";
+    default: return "unknown";
+    }
+}
+
+static const char *
+get_965_depthformat(unsigned int depthformat)
+{
+    switch (depthformat) {
+    case 0: return "s8_z24float";
+    case 1: return "z32float";
+    case 2: return "z24s8";
+    case 5: return "z16";
+    default: return "unknown";
+    }
+}
+
 static int
 decode_3d_965(uint32_t *data, int count, uint32_t hw_offset, int *failures)
 {
-    unsigned int opcode;
+    unsigned int opcode, len;
 
     struct {
 	uint32_t opcode;
@@ -817,10 +844,107 @@ decode_3d_965(uint32_t *data, int count, uint32_t hw_offset, int *failures)
 	{ 0x7b00, 6, 6, "3DPRIMITIVE" },
     };
 
+    len = (data[0] & 0x0000ffff) + 2;
+
+    switch ((data[0] & 0xffff0000) >> 16) {
+    case 0x6101:
+	if (len != 6)
+	    fprintf(out, "Bad count in STATE_BASE_ADDRESS\n");
+	if (count < 6)
+	    BUFFER_FAIL(count, len, "STATE_BASE_ADDRESS");
+
+	instr_out(data, hw_offset, 0,
+		  "STATE_BASE_ADDRESS\n");
+
+	if (data[1] & 1) {
+	    instr_out(data, hw_offset, 1, "General state at 0x%08x\n",
+		      data[1] & ~1);
+	} else
+	    instr_out(data, hw_offset, 1, "General state not updated\n");
+
+	if (data[2] & 1) {
+	    instr_out(data, hw_offset, 2, "Surface state at 0x%08x\n",
+		      data[2] & ~1);
+	} else
+	    instr_out(data, hw_offset, 2, "Surface state not updated\n");
+
+	if (data[3] & 1) {
+	    instr_out(data, hw_offset, 3, "Indirect state at 0x%08x\n",
+		      data[3] & ~1);
+	} else
+	    instr_out(data, hw_offset, 3, "Indirect state not updated\n");
+
+	if (data[4] & 1) {
+	    instr_out(data, hw_offset, 4, "General state upper bound 0x%08x\n",
+		      data[4] & ~1);
+	} else
+	    instr_out(data, hw_offset, 4, "General state not updated\n");
+
+	if (data[5] & 1) {
+	    instr_out(data, hw_offset, 5, "Indirect state upper bound 0x%08x\n",
+		      data[5] & ~1);
+	} else
+	    instr_out(data, hw_offset, 5, "Indirect state not updated\n");
+
+	return len;
+    case 0x7800:
+	if (len != 7)
+	    fprintf(out, "Bad count in 3DSTATE_PIPELINED_POINTERS\n");
+	if (count < 7)
+	    BUFFER_FAIL(count, len, "3DSTATE_PIPELINED_POINTERS");
+
+	instr_out(data, hw_offset, 0,
+		  "3DSTATE_PIPELINED_POINTERS\n");
+	instr_out(data, hw_offset, 1, "VS state\n");
+	instr_out(data, hw_offset, 2, "GS state\n");
+	instr_out(data, hw_offset, 3, "Clip state\n");
+	instr_out(data, hw_offset, 4, "SF state\n");
+	instr_out(data, hw_offset, 5, "WM state\n");
+	instr_out(data, hw_offset, 6, "CC state\n");
+	return len;
+    case 0x7801:
+	if (len != 6)
+	    fprintf(out, "Bad count in 3DSTATE_BINDING_TABLE_POINTERS\n");
+	if (count < 6)
+	    BUFFER_FAIL(count, len, "3DSTATE_BINDING_TABLE_POINTERS");
+
+	instr_out(data, hw_offset, 0,
+		  "3DSTATE_BINDING_TABLE_POINTERS\n");
+	instr_out(data, hw_offset, 1, "VS binding table\n");
+	instr_out(data, hw_offset, 2, "GS binding table\n");
+	instr_out(data, hw_offset, 3, "Clip binding table\n");
+	instr_out(data, hw_offset, 4, "SF binding table\n");
+	instr_out(data, hw_offset, 5, "WM binding table\n");
+
+	return len;
+
+    case 0x7905:
+	if (len != 5)
+	    fprintf(out, "Bad count in 3DSTATE_DEPTH_BUFFER\n");
+	if (count < 5)
+	    BUFFER_FAIL(count, len, "3DSTATE_DEPTH_BUFFER");
+
+	instr_out(data, hw_offset, 0,
+		  "3DSTATE_DEPTH_BUFFER\n");
+	instr_out(data, hw_offset, 1, "%s, %s, pitch = %d bytes, %stiled\n",
+		  get_965_surfacetype(data[1] >> 29),
+		  get_965_depthformat((data[1] >> 18) & 0x7),
+		  (data[1] & 0x0001ffff) + 1,
+		  data[1] & (1 << 27) ? "" : "not ");
+	instr_out(data, hw_offset, 2, "depth offset\n");
+	instr_out(data, hw_offset, 3, "%dx%d\n",
+		  ((data[3] & 0x0007ffc0) >> 6) + 1,
+		  ((data[3] & 0xfff80000) >> 19) + 1);
+	instr_out(data, hw_offset, 4, "volume depth\n");
+
+	return len;
+    }
+
     for (opcode = 0; opcode < sizeof(opcodes_3d) / sizeof(opcodes_3d[0]);
 	 opcode++) {
 	if ((data[0] & 0xffff0000) >> 16 == opcodes_3d[opcode].opcode) {
-	    unsigned int len = 1, i;
+	    unsigned int i;
+	    len = 1;
 
 	    instr_out(data, hw_offset, 0, "%s\n", opcodes_3d[opcode].name);
 	    if (opcodes_3d[opcode].max_len > 1) {
