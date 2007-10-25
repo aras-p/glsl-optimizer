@@ -956,7 +956,7 @@ Function* makeLitFunction(Module *mod) {
 void Instructions::ifop(llvm::Value *in)
 {
    BasicBlock *ifthen = new BasicBlock(name("ifthen"), m_func,0);
-   BasicBlock *ifend = new BasicBlock(name("ifend"), m_func,0);
+   BasicBlock *ifend = new BasicBlock(name("ifthenend"), m_func,0);
 
    //BasicBlock *yblock = new BasicBlock(name("yblock"), m_func,0);
    //BasicBlock *zblock = new BasicBlock(name("zblock"), m_func,0);
@@ -979,6 +979,17 @@ void Instructions::ifop(llvm::Value *in)
 llvm::BasicBlock * Instructions::currentBlock() const
 {
    return m_block;
+}
+
+void Instructions::elseop()
+{
+   assert(!m_ifStack.empty());
+   BasicBlock *ifend = new BasicBlock(name("ifend"), m_func,0);
+   new BranchInst(ifend, m_block);
+   m_block = m_ifStack.top();
+   m_block->setName(name("ifelse"));
+   m_ifStack.pop();
+   m_ifStack.push(ifend);
 }
 
 void Instructions::endif()

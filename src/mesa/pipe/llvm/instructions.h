@@ -60,6 +60,7 @@ public:
    llvm::Value *dph(llvm::Value *in1, llvm::Value *in2);
    llvm::Value *dst(llvm::Value *in1, llvm::Value *in2);
    void         endif();
+   void         elseop();
    llvm::Value *ex2(llvm::Value *in);
    llvm::Value *floor(llvm::Value *in);
    llvm::Value *frc(llvm::Value *in);

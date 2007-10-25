@@ -459,7 +459,11 @@ translate_instruction(llvm::Module *module,
       break;
    case TGSI_OPCODE_REP:
       break;
-   case TGSI_OPCODE_ELSE:
+   case TGSI_OPCODE_ELSE: {
+      instr->elseop();
+      storage->setCurrentBlock(instr->currentBlock());
+      return; //only state update
+   }
       break;
    case TGSI_OPCODE_ENDIF: {
       instr->endif();
