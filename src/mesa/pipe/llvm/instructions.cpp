@@ -1080,3 +1080,8 @@ llvm::Value * Instructions::trunc(llvm::Value *in)
    return vectorFromVals(fx, fy, fz, fw);
 }
 
+void Instructions::end()
+{
+   new ReturnInst(m_block);
+}
+

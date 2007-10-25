@@ -64,6 +64,7 @@ public:
    void         elseop();
    void         endif();
    void         endLoop();
+   void         end();
    llvm::Value *ex2(llvm::Value *in);
    llvm::Value *floor(llvm::Value *in);
    llvm::Value *frc(llvm::Value *in);

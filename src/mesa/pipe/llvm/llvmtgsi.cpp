@@ -595,6 +595,7 @@ translate_instruction(llvm::Module *module,
    case TGSI_OPCODE_KIL:
       break;
    case TGSI_OPCODE_END:
+      instr->end();
       return;
       break;
    default:
@@ -695,8 +696,6 @@ tgsi_to_llvm(struct gallivm_prog *prog, const struct tgsi_token *tokens)
          assert(0);
       }
    }
-
-   new ReturnInst(instr.currentBlock());
 
    tgsi_parse_free(&parse);
 
