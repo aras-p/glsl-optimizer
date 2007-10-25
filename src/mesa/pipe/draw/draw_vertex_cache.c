@@ -68,12 +68,7 @@ static struct vertex_header *get_vertex( struct draw_context *draw,
       /* If slot is in use, use the overflow area:
        */
       if (draw->vcache.referenced & (1 << slot)) {
-//         fprintf(stderr, "o");
 	 slot = VCACHE_SIZE + draw->vcache.overflow++;
-      }
-      else {
-//         fprintf(stderr, ".");
-         draw->vcache.referenced |= (1 << slot);  /* slot now in use */
       }
 
       assert(slot < Elements(draw->vcache.idx));
@@ -95,16 +90,13 @@ static struct vertex_header *get_vertex( struct draw_context *draw,
       draw->vcache.vertex[slot]->pad = 0;
       draw->vcache.vertex[slot]->vertex_id = ~0;
    }
-   else {
-//      fprintf(stderr, "*");
-      /* primitive flushing may have cleared the bitfield but did not
-       * clear the idx[] array values.  Set the bit now.  This fixes a
-       * bug found when drawing long triangle fans.
-       */
-      draw->vcache.referenced |= (1 << slot);
-   }
 
 
+   /* primitive flushing may have cleared the bitfield but did not
+    * clear the idx[] array values.  Set the bit now.  This fixes a
+    * bug found when drawing long triangle fans.
+    */
+   draw->vcache.referenced |= (1 << slot);
    return draw->vcache.vertex[slot];
 }
 
