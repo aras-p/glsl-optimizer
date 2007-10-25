@@ -34,6 +34,7 @@
 #define STORAGE_H
 
 #include <map>
+#include <set>
 #include <vector>
 
 namespace llvm {
@@ -103,6 +104,8 @@ private:
    int         m_idx;
 
    int         m_numConsts;
+
+   std::map<int, bool > m_destWriteMap;
 };
 
 #endif

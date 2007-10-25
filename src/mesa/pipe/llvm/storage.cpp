@@ -212,7 +212,9 @@ void Storage::setTempElement(int idx, llvm::Value *val, int mask)
 void Storage::store(int dstIdx, llvm::Value *val, int mask)
 {
    if (mask != TGSI_WRITEMASK_XYZW) {
-      llvm::Value *templ = m_dstCache[dstIdx];
+      llvm::Value *templ = 0;
+      if (m_destWriteMap[dstIdx])
+         templ = outputElement(dstIdx);
       val = maskWrite(val, mask, templ);
    }
 
@@ -222,7 +224,7 @@ void Storage::store(int dstIdx, llvm::Value *val, int mask)
                                                       m_block);
    StoreInst *st = new StoreInst(val, getElem, false, m_block);
    st->setAlignment(8);
-   //m_dstCache[dstIdx] = st;
+   m_destWriteMap[dstIdx] = true;
 }
 
 llvm::Value *Storage::maskWrite(llvm::Value *src, int mask, llvm::Value *templ)
@@ -308,7 +310,7 @@ llvm::Value * Storage::outputElement(int idx, llvm::Value *indIdx )
     GetElementPtrInst *getElem = 0;
 
    if (indIdx) {
-      getElem = new GetElementPtrInst(m_IN,
+      getElem = new GetElementPtrInst(m_OUT,
                                       BinaryOperator::create(Instruction::Add,
                                                              indIdx,
                                                              constantInt(idx),
@@ -317,7 +319,7 @@ llvm::Value * Storage::outputElement(int idx, llvm::Value *indIdx )
                                       name("output_ptr"),
                                       m_block);
    } else {
-      getElem = new GetElementPtrInst(m_IN,
+      getElem = new GetElementPtrInst(m_OUT,
                                       constantInt(idx),
                                       name("output_ptr"),
                                       m_block);
