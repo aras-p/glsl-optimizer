@@ -54,7 +54,7 @@ static void read_shader(GLuint shader, const char *filename)
    }
 
    n = fread(buffer, 1, max, f);
-   printf("fslight: read %d bytes from shader file %s\n", n, filename);
+   printf("vp-tris: read %d bytes from shader file %s\n", n, filename);
    if (n > 0) {
       buffer[n] = 0;
       load_and_compile_shader(shader, buffer);

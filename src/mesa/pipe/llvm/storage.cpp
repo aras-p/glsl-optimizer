@@ -123,9 +123,6 @@ llvm::ConstantInt *Storage::constantInt(int idx)
 
 llvm::Value *Storage::inputElement(int idx, llvm::Value *indIdx)
 {
-   if (!indIdx && m_inputs.find(idx) != m_inputs.end()) {
-      return m_inputs[idx];
-   }
    GetElementPtrInst *getElem = 0;
 
    if (indIdx) {
@@ -147,7 +144,6 @@ llvm::Value *Storage::inputElement(int idx, llvm::Value *indIdx)
    LoadInst *load = new LoadInst(getElem, name("input"),
                                  false, m_block);
    load->setAlignment(8);
-   m_inputs[idx] = load;
 
    return load;
 }
@@ -155,9 +151,6 @@ llvm::Value *Storage::inputElement(int idx, llvm::Value *indIdx)
 llvm::Value *Storage::constElement(int idx, llvm::Value *indIdx)
 {
    m_numConsts = ((idx + 1) > m_numConsts) ? (idx + 1) : m_numConsts;
-   if (!indIdx && m_consts.find(idx) != m_consts.end()) {
-      return m_consts[idx];
-   }
 
    GetElementPtrInst *getElem = 0;
 
@@ -178,7 +171,6 @@ llvm::Value *Storage::constElement(int idx, llvm::Value *indIdx)
    LoadInst *load = new LoadInst(getElem, name("const"),
                                  false, m_block);
    load->setAlignment(8);
-   m_consts[idx] = load;
    return load;
 }
 
@@ -334,7 +326,6 @@ llvm::Value * Storage::outputElement(int idx, llvm::Value *indIdx )
    LoadInst *load = new LoadInst(getElem, name("output"),
                                  false, m_block);
    load->setAlignment(8);
-   m_inputs[idx] = load;
 
    return load;
 }

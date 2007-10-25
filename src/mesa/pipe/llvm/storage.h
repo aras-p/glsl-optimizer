@@ -47,7 +47,6 @@ namespace llvm {
 
 class Storage
 {
-   typedef std::map<int, llvm::LoadInst*> LoadMap;
 public:
    Storage(llvm::BasicBlock *block,
            llvm::Value *out,
@@ -75,9 +74,11 @@ public:
    void store(int dstIdx, llvm::Value *val, int mask);
 
    int numConsts() const;
+
 private:
    llvm::Value *maskWrite(llvm::Value *src, int mask, llvm::Value *templ);
    const char *name(const char *prefix);
+
 private:
    llvm::BasicBlock *m_block;
    llvm::Value *m_OUT;
@@ -89,8 +90,6 @@ private:
    std::vector<llvm::Value*>         m_temps;
    std::vector<llvm::Value*>         m_addrs;
    std::vector<llvm::Value*>         m_dstCache;
-   LoadMap                           m_inputs;
-   LoadMap                           m_consts;
 
    llvm::VectorType *m_floatVecType;
    llvm::VectorType *m_intVecType;
