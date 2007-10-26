@@ -166,7 +166,6 @@ translate_immediate(llvm::Module *module,
 {
 }
 
-
 static void
 translate_instruction(llvm::Module *module,
                       Storage *storage,
@@ -202,41 +201,15 @@ translate_instruction(llvm::Module *module,
          return;
       }
 
-      if (src->SrcRegister.Extended) {
-         if (src->SrcRegisterExtSwz.ExtSwizzleX != TGSI_EXTSWIZZLE_X ||
-             src->SrcRegisterExtSwz.ExtSwizzleY != TGSI_EXTSWIZZLE_Y ||
-             src->SrcRegisterExtSwz.ExtSwizzleZ != TGSI_EXTSWIZZLE_Z ||
-             src->SrcRegisterExtSwz.ExtSwizzleW != TGSI_EXTSWIZZLE_W) {
-            int swizzle = 0;
-
-            if (src->SrcRegisterExtSwz.ExtSwizzleX != TGSI_EXTSWIZZLE_X)
-               swizzle = src->SrcRegisterExtSwz.ExtSwizzleX * 1000;
-            else
-               swizzle = src->SrcRegister.SwizzleX * 1000;
-            if (src->SrcRegisterExtSwz.ExtSwizzleY != TGSI_EXTSWIZZLE_Y)
-               swizzle += src->SrcRegisterExtSwz.ExtSwizzleY * 100;
-            else
-               swizzle += src->SrcRegister.SwizzleY  * 100;
-            if (src->SrcRegisterExtSwz.ExtSwizzleZ != TGSI_EXTSWIZZLE_Z)
-               swizzle += src->SrcRegisterExtSwz.ExtSwizzleZ * 10;
-            else
-               swizzle += src->SrcRegister.SwizzleZ  * 10;
-            if (src->SrcRegisterExtSwz.ExtSwizzleW != TGSI_EXTSWIZZLE_W)
-               swizzle += src->SrcRegisterExtSwz.ExtSwizzleW * 1;
-            else
-               swizzle += src->SrcRegister.SwizzleW  * 1;
-            /*fprintf(stderr, "EXT XXXXXXXX swizzle x = %d\n", swizzle);*/
-
-            val = storage->shuffleVector(val, swizzle);
-         }
-      } else if (src->SrcRegister.SwizzleX != TGSI_SWIZZLE_X ||
-                 src->SrcRegister.SwizzleY != TGSI_SWIZZLE_Y ||
-                 src->SrcRegister.SwizzleZ != TGSI_SWIZZLE_Z ||
-                 src->SrcRegister.SwizzleW != TGSI_SWIZZLE_W) {
-         int swizzle = src->SrcRegister.SwizzleX * 1000;
-         swizzle += src->SrcRegister.SwizzleY  * 100;
-         swizzle += src->SrcRegister.SwizzleZ  * 10;
-         swizzle += src->SrcRegister.SwizzleW  * 1;
+      int swizzle = 0;
+      int xstart = 1000;
+      const int NO_SWIZZLE = TGSI_SWIZZLE_X * 1000 + TGSI_SWIZZLE_Y * 100 +
+                             TGSI_SWIZZLE_Z * 10 + TGSI_SWIZZLE_W;
+      for (int k = 0; k < 4; ++k) {
+         swizzle += tgsi_util_get_full_src_register_extswizzle(src, k) * xstart;
+         xstart /= 10;
+      }
+      if (swizzle != NO_SWIZZLE) {
          /*fprintf(stderr, "XXXXXXXX swizzle = %d\n", swizzle);*/
          val = storage->shuffleVector(val, swizzle);
       }
@@ -245,8 +218,8 @@ translate_instruction(llvm::Module *module,
 
    /*if (inputs[0])
      instr->printVector(inputs[0]);
-   if (inputs[1])
-   instr->printVector(inputs[1]);*/
+     if (inputs[1])
+     instr->printVector(inputs[1]);*/
    llvm::Value *out = 0;
    switch (inst->Instruction.Opcode) {
    case TGSI_OPCODE_ARL: {

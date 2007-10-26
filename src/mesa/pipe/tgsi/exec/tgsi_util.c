@@ -88,7 +88,7 @@ tgsi_util_get_full_src_register_extswizzle(
    if( swizzle <= TGSI_SWIZZLE_W ) {
       swizzle = tgsi_util_get_src_register_swizzle(
          &reg->SrcRegister,
-         swizzle );
+         component );
    }
 
    return swizzle;
