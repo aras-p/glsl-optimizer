@@ -926,7 +926,7 @@ fetch_src_file_channel(
          break;
 
       case TGSI_FILE_OUTPUT:
-         /* vertex varying/output vars can be read too */
+         /* vertex/fragment output vars can be read too */
          chan->u[0] = mach->Outputs[index->i[0]].xyzw[swizzle].u[0];
          chan->u[1] = mach->Outputs[index->i[1]].xyzw[swizzle].u[1];
          chan->u[2] = mach->Outputs[index->i[2]].xyzw[swizzle].u[2];
@@ -1989,16 +1989,24 @@ exec_instruction(
       break;
 
    case TGSI_OPCODE_TEX:
-      /* src arg0 is the texcoord */
+      /* simple texture lookup */
+      /* src[0] is the texcoord */
+      /* src[1] is the sampler unit */
       exec_tex(mach, inst, FALSE);
       break;
 
    case TGSI_OPCODE_TXB:
-      /* Texture lookup with lod bias (src0.w) */
+      /* Texture lookup with lod bias */
+      /* src[0] is the texcoord (src[0].w = load bias) */
+      /* src[1] is the sampler unit */
       exec_tex(mach, inst, TRUE);
       break;
 
    case TGSI_OPCODE_TXD:
+      /* Texture lookup with explict partial derivatives */
+      /* src[0] = texcoord */
+      /* src[1] = d[strq]/dx */
+      /* src[2] = d[strq]/dy */
       assert (0);
       break;
 
