@@ -2,8 +2,6 @@
 #include "tgsi_core.h"
 #include "x86/rtasm/x86sse.h"
 
-#if defined(__i386__) || defined(__386__)
-
 #define FOR_EACH_CHANNEL( CHAN )\
    for( CHAN = 0; CHAN < 4; CHAN++ )
 
@@ -22,7 +20,17 @@
 #define CHAN_Z 2
 #define CHAN_W 3
 
-#define ALIGN16( ADDR ) (((ADDR) + 15) & ~15)
+static unsigned
+p2u( void *p )
+{
+   union {
+      void     *p;
+      unsigned u;
+   } pu;
+
+   pu.p = p;
+   return pu.u;
+}
 
 static struct x86_reg
 get_argument(
@@ -482,7 +490,7 @@ static float g_cos_storage[4 + 3];
 static void
 cos4f( void )
 {
-   float *store = (float *) ALIGN16( (unsigned) g_cos_storage );
+   float *store = (float *) tgsi_align_128bit( g_cos_storage );
 
 #ifdef WIN32
    store[0] = (float) cos( (double) store[0] );
@@ -505,7 +513,7 @@ emit_cos(
    emit_func_call1(
       func,
       xmm_dst,
-      ALIGN16( (unsigned) g_cos_storage ),
+      p2u( tgsi_align_128bit( g_cos_storage ) ),
       cos4f );
 }
 
@@ -515,7 +523,7 @@ static float g_sin_storage[4 + 3];
 static void
 sin4f( void )
 {
-   float *store = (float *) ALIGN16( (unsigned) g_sin_storage );
+   float *store = (float *) tgsi_align_128bit( g_sin_storage );
 
 #ifdef WIN32
    store[0] = (float) sin( (double) store[0] );
@@ -537,7 +545,7 @@ emit_sin (struct x86_function *func,
    emit_func_call1(
       func,
       xmm_dst,
-      ALIGN16( (unsigned) g_sin_storage ),
+      p2u( tgsi_align_128bit( g_sin_storage ) ),
       sin4f );
 }
 
@@ -570,7 +578,7 @@ static float g_pow_storage[4 + 4 + 3];
 static void
 pow4f( void )
 {
-   float *store = (float *) ALIGN16( (unsigned) g_pow_storage );
+   float *store = (float *) tgsi_align_128bit( g_pow_storage );
 
 #ifdef WIN32
    store[0] = (float) pow( (double) store[0], (double) store[4] );
@@ -595,7 +603,7 @@ emit_pow(
       func,
       xmm_dst,
       xmm_src,
-      ALIGN16( (unsigned) g_pow_storage ),
+      p2u( tgsi_align_128bit( g_pow_storage ) ),
       pow4f );
 }
 
@@ -605,7 +613,7 @@ static float g_ex2_storage[4 + 3];
 static void
 ex24f( void )
 {
-   float *store = (float *) ALIGN16( (unsigned) g_ex2_storage );
+   float *store = (float *) tgsi_align_128bit( g_ex2_storage );
 
 #ifdef WIN32
    store[0] = (float) pow( 2.0, (double) store[0] );
@@ -628,7 +636,7 @@ emit_ex2(
    emit_func_call1(
       func,
       xmm_dst,
-      ALIGN16( (unsigned) g_ex2_storage ),
+      p2u( tgsi_align_128bit( g_ex2_storage ) ),
       ex24f );
 }
 
@@ -638,7 +646,7 @@ static float g_lg2_storage[4 + 3];
 static void
 lg24f( void )
 {
-   float *store = (float *) ALIGN16( (unsigned) g_lg2_storage );
+   float *store = (float *) tgsi_align_128bit( g_lg2_storage );
 
    store[0] = LOG2( store[0] );
    store[1] = LOG2( store[1] );
@@ -654,7 +662,7 @@ emit_lg2(
    emit_func_call1(
       func,
       xmm_dst,
-      ALIGN16( (unsigned) g_lg2_storage ),
+      p2u( tgsi_align_128bit( g_lg2_storage ) ),
       lg24f );
 }
 
@@ -664,7 +672,7 @@ static float g_flr_storage[4 + 3];
 static void
 flr4f( void )
 {
-   float *store = (float *) ALIGN16( (unsigned) g_flr_storage );
+   float *store = (float *) tgsi_align_128bit( g_flr_storage );
 
    store[0] = (float) floor( (double) store[0] );
    store[1] = (float) floor( (double) store[1] );
@@ -680,7 +688,7 @@ emit_flr(
    emit_func_call1(
       func,
       xmm_dst,
-      ALIGN16( (unsigned) g_flr_storage ),
+      p2u( tgsi_align_128bit( g_flr_storage ) ),
       flr4f );
 }
 
@@ -690,7 +698,7 @@ static float g_frc_storage[4 + 3];
 static void
 frc4f( void )
 {
-   float *store = (float *) ALIGN16( (unsigned) g_frc_storage );
+   float *store = (float *) tgsi_align_128bit( g_frc_storage );
 
    store[0] -= (float) floor( (double) store[0] );
    store[1] -= (float) floor( (double) store[1] );
@@ -706,7 +714,7 @@ emit_frc(
    emit_func_call1(
       func,
       xmm_dst,
-      ALIGN16( (unsigned) g_frc_storage ),
+      p2u( tgsi_align_128bit( g_frc_storage ) ),
       frc4f );
 }
 
@@ -1547,7 +1555,14 @@ emit_instruction(
       break;
 
    case TGSI_OPCODE_TEX:
-      assert( 0 );
+      emit_tempf(
+         func,
+         0,
+         TGSI_EXEC_TEMP_ONE_I,
+         TGSI_EXEC_TEMP_ONE_C );
+      FOR_EACH_DST0_ENABLED_CHANNEL( *inst, chan_index ) {
+         STORE( func, *inst, 0, 0, chan_index );
+      }
       break;
 
    case TGSI_OPCODE_TXD:
@@ -1747,10 +1762,6 @@ emit_instruction(
       assert( 0 );
       break;
 
-   case TGSI_OPCODE_END:
-      /* nothing */
-      break;
-
    default:
       assert( 0 );
    }
@@ -1828,7 +1839,7 @@ emit_declaration(
 
 unsigned
 tgsi_emit_sse2(
-   const struct tgsi_token *tokens,
+   struct tgsi_token *tokens,
    struct x86_function *func )
 {
    struct tgsi_parse_context parse;
@@ -1893,7 +1904,7 @@ tgsi_emit_sse2(
  */
 unsigned
 tgsi_emit_sse2_fs(
-   const struct tgsi_token *tokens,
+   struct tgsi_token *tokens,
    struct x86_function *func )
 {
    struct tgsi_parse_context parse;
@@ -1960,5 +1971,3 @@ tgsi_emit_sse2_fs(
 
    return 1;
 }
-
-#endif
