@@ -40,8 +40,6 @@
 
 #include "p_compiler.h"
 
-#include "x86/rtasm/x86sse.h"
-
 /**
  * Implementation limits
  */
@@ -58,7 +56,6 @@
 
 /* fwd decl */
 struct pipe_surface;
-struct ga_llvm_prog;
 
 /* opaque type */
 struct pipe_buffer_handle;
@@ -149,13 +146,6 @@ struct pipe_constant_buffer {
 
 struct pipe_shader_state {
    const struct tgsi_token *tokens;
-#if defined(__i386__) || defined(__386__)
-   struct x86_function sse2_program;
-#endif
-   void (*executable)();
-
-   const struct ga_llvm_prog *llvm_prog;
-
    ubyte num_inputs;
    ubyte num_outputs;
    ubyte input_semantic_name[PIPE_MAX_SHADER_INPUTS]; /**< TGSI_SEMANTIC_x */
