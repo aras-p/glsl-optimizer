@@ -19,10 +19,10 @@ tgsi_align_128bit(
    return ph.pointer;
 }
 
-GLuint
+unsigned
 tgsi_util_get_src_register_swizzle(
    const struct tgsi_src_register *reg,
-   GLuint component )
+   unsigned component )
 {
    switch( component ) {
    case 0:
@@ -39,10 +39,10 @@ tgsi_util_get_src_register_swizzle(
    return 0;
 }
 
-GLuint
+unsigned
 tgsi_util_get_src_register_extswizzle(
-   const struct   tgsi_src_register_ext_swz *reg,
-   GLuint component )
+   const struct tgsi_src_register_ext_swz *reg,
+   unsigned component )
 {
    switch( component ) {
    case 0:
@@ -59,12 +59,12 @@ tgsi_util_get_src_register_extswizzle(
    return 0;
 }
 
-GLuint
+unsigned
 tgsi_util_get_full_src_register_extswizzle(
    const struct tgsi_full_src_register  *reg,
-   GLuint component )
+   unsigned component )
 {
-   GLuint swizzle;
+   unsigned swizzle;
 
    /*
     * First, calculate  the   extended swizzle for a given channel. This will give
@@ -97,8 +97,8 @@ tgsi_util_get_full_src_register_extswizzle(
 void
 tgsi_util_set_src_register_swizzle(
    struct tgsi_src_register *reg,
-   GLuint swizzle,
-   GLuint component )
+   unsigned swizzle,
+   unsigned component )
 {
    switch( component ) {
    case 0:
@@ -121,8 +121,8 @@ tgsi_util_set_src_register_swizzle(
 void
 tgsi_util_set_src_register_extswizzle(
    struct tgsi_src_register_ext_swz *reg,
-   GLuint swizzle,
-   GLuint component )
+   unsigned swizzle,
+   unsigned component )
 {
    switch( component ) {
    case 0:
@@ -142,10 +142,10 @@ tgsi_util_set_src_register_extswizzle(
    }
 }
 
-GLuint
+unsigned
 tgsi_util_get_src_register_extnegate(
    const  struct tgsi_src_register_ext_swz *reg,
-   GLuint component )
+   unsigned component )
 {
    switch( component ) {
    case 0:
@@ -165,8 +165,8 @@ tgsi_util_get_src_register_extnegate(
 void
 tgsi_util_set_src_register_extnegate(
    struct tgsi_src_register_ext_swz *reg,
-   GLuint negate,
-   GLuint component )
+   unsigned negate,
+   unsigned component )
 {
    switch( component ) {
    case 0:
@@ -186,12 +186,12 @@ tgsi_util_set_src_register_extnegate(
    }
 }
 
-GLuint
+unsigned
 tgsi_util_get_full_src_register_sign_mode(
    const struct  tgsi_full_src_register *reg,
-   GLuint component )
+   unsigned component )
 {
-   GLuint sign_mode;
+   unsigned sign_mode;
 
    if( reg->SrcRegisterExtMod.Absolute ) {
       /* Consider only the post-abs negation. */
@@ -206,7 +206,7 @@ tgsi_util_get_full_src_register_sign_mode(
    else {
       /* Accumulate the three negations. */
 
-      GLuint negate;
+      unsigned negate;
 
       negate = reg->SrcRegister.Negate;
       if( tgsi_util_get_src_register_extnegate( &reg->SrcRegisterExtSwz, component ) ) {
@@ -230,7 +230,7 @@ tgsi_util_get_full_src_register_sign_mode(
 void
 tgsi_util_set_full_src_register_sign_mode(
    struct tgsi_full_src_register *reg,
-   GLuint sign_mode )
+   unsigned sign_mode )
 {
    reg->SrcRegisterExtSwz.NegateX = 0;
    reg->SrcRegisterExtSwz.NegateY = 0;
