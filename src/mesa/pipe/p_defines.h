@@ -28,6 +28,8 @@
 #ifndef PIPE_DEFINES_H
 #define PIPE_DEFINES_H
 
+#include "p_format.h"
+
 #define PIPE_BLENDFACTOR_ONE                 0x1
 #define PIPE_BLENDFACTOR_SRC_COLOR           0x2
 #define PIPE_BLENDFACTOR_SRC_ALPHA           0x3
@@ -157,98 +159,6 @@
 #define PIPE_TEX_FACE_POS_Z   4
 #define PIPE_TEX_FACE_NEG_Z   5
 #define PIPE_TEX_FACE_MAX     6
-
-
-/**
- * Texture/surface image formats (preliminary)
- */
-
-/* KW: Added lots of surface formats to support vertex element layout
- * definitions, and eventually render-to-vertex-buffer.  Could
- * consider making float/int/uint/scaled/normalized a separate
- * parameter, but on the other hand there are special cases like
- * z24s8, compressed textures, ycbcr, etc that won't fit that model.
- */
-
-#define PIPE_FORMAT_NONE               0  /**< unstructured */
-#define PIPE_FORMAT_U_A8_R8_G8_B8      2  /**< ubyte[4] ARGB */
-#define PIPE_FORMAT_U_A1_R5_G5_B5      3  /**< 16-bit packed RGBA */
-#define PIPE_FORMAT_U_A4_R4_G4_B4      4  /**< 16-bit packed RGBA */
-#define PIPE_FORMAT_U_R5_G6_B5         5  /**< 16-bit packed RGB */
-#define PIPE_FORMAT_U_L8               6  /**< ubyte luminance */
-#define PIPE_FORMAT_U_A8               7  /**< ubyte alpha */
-#define PIPE_FORMAT_U_I8               8  /**< ubyte intensity */
-#define PIPE_FORMAT_U_A8_L8            9  /**< ubyte alpha, luminance */
-#define PIPE_FORMAT_S_R16_G16_B16_A16 10  /**< signed 16-bit RGBA (accum) */
-#define PIPE_FORMAT_YCBCR             11
-#define PIPE_FORMAT_YCBCR_REV         12
-#define PIPE_FORMAT_U_Z16             13  /**< ushort Z/depth */
-#define PIPE_FORMAT_U_Z32             14  /**< uint Z/depth */
-#define PIPE_FORMAT_F_Z32             15  /**< float Z/depth */
-#define PIPE_FORMAT_S8_Z24            16  /**< 8-bit stencil + 24-bit Z */
-#define PIPE_FORMAT_U_S8              17  /**< 8-bit stencil */
-#define PIPE_FORMAT_R64_FLOAT             0x20
-#define PIPE_FORMAT_R64G64_FLOAT          0x21
-#define PIPE_FORMAT_R64G64B64_FLOAT       0x22
-#define PIPE_FORMAT_R64G64B64A64_FLOAT    0x23
-#define PIPE_FORMAT_R32_FLOAT             0x24
-#define PIPE_FORMAT_R32G32_FLOAT          0x25
-#define PIPE_FORMAT_R32G32B32_FLOAT       0x26
-#define PIPE_FORMAT_R32G32B32A32_FLOAT    0x27
-#define PIPE_FORMAT_R32_UNORM             0x28
-#define PIPE_FORMAT_R32G32_UNORM          0x29
-#define PIPE_FORMAT_R32G32B32_UNORM       0x2a
-#define PIPE_FORMAT_R32G32B32A32_UNORM    0x2b
-#define PIPE_FORMAT_R32_USCALED           0x2c
-#define PIPE_FORMAT_R32G32_USCALED        0x2d
-#define PIPE_FORMAT_R32G32B32_USCALED     0x2e
-#define PIPE_FORMAT_R32G32B32A32_USCALED  0x2f
-#define PIPE_FORMAT_R32_SNORM             0x30
-#define PIPE_FORMAT_R32G32_SNORM          0x31
-#define PIPE_FORMAT_R32G32B32_SNORM       0x32
-#define PIPE_FORMAT_R32G32B32A32_SNORM    0x33
-#define PIPE_FORMAT_R32_SSCALED           0x34
-#define PIPE_FORMAT_R32G32_SSCALED        0x35
-#define PIPE_FORMAT_R32G32B32_SSCALED     0x36
-#define PIPE_FORMAT_R32G32B32A32_SSCALED  0x37
-#define PIPE_FORMAT_R16_UNORM             0x38
-#define PIPE_FORMAT_R16G16_UNORM          0x39
-#define PIPE_FORMAT_R16G16B16_UNORM       0x3a
-#define PIPE_FORMAT_R16G16B16A16_UNORM    0x3b
-#define PIPE_FORMAT_R16_USCALED           0x3c
-#define PIPE_FORMAT_R16G16_USCALED        0x3d
-#define PIPE_FORMAT_R16G16B16_USCALED     0x3e
-#define PIPE_FORMAT_R16G16B16A16_USCALED  0x3f
-#define PIPE_FORMAT_R16_SNORM             0x40
-#define PIPE_FORMAT_R16G16_SNORM          0x41
-#define PIPE_FORMAT_R16G16B16_SNORM       0x42
-#define PIPE_FORMAT_R16G16B16A16_SNORM    0x43
-#define PIPE_FORMAT_R16_SSCALED           0x44
-#define PIPE_FORMAT_R16G16_SSCALED        0x45
-#define PIPE_FORMAT_R16G16B16_SSCALED     0x46
-#define PIPE_FORMAT_R16G16B16A16_SSCALED  0x47
-#define PIPE_FORMAT_R8_UNORM              0x48
-#define PIPE_FORMAT_R8G8_UNORM            0x49
-#define PIPE_FORMAT_R8G8B8_UNORM          0x4a
-#define PIPE_FORMAT_R8G8B8A8_UNORM        0x4b
-#define PIPE_FORMAT_R8_USCALED            0x4c
-#define PIPE_FORMAT_R8G8_USCALED          0x4d
-#define PIPE_FORMAT_R8G8B8_USCALED        0x4e
-#define PIPE_FORMAT_R8G8B8A8_USCALED      0x4f
-#define PIPE_FORMAT_R8_SNORM              0x50
-#define PIPE_FORMAT_R8G8_SNORM            0x51
-#define PIPE_FORMAT_R8G8B8_SNORM          0x52
-#define PIPE_FORMAT_R8G8B8A8_SNORM        0x53
-#define PIPE_FORMAT_R8_SSCALED            0x54
-#define PIPE_FORMAT_R8G8_SSCALED          0x55
-#define PIPE_FORMAT_R8G8B8_SSCALED        0x56
-#define PIPE_FORMAT_R8G8B8A8_SSCALED      0x57
-
-#define PIPE_FORMAT_COUNT                 0x58  /**< number of formats */
-
-/* Duplicated formats:
- */
-#define PIPE_FORMAT_U_R8_G8_B8_A8      PIPE_FORMAT_R8G8B8A8_UNORM
 
 /**
  * Surface flags
