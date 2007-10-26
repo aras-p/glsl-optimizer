@@ -291,27 +291,6 @@ struct pipe_surface
    unsigned width, height;
    unsigned offset;              /**< offset from start of region, in bytes */
    unsigned refcount;
-
-   /**
-    * Get block/tile of pixels from surface as floats
-    * If color surface, return float[4].  If depth surface, return float[1].
-    */
-   void (*get_tile)(struct pipe_surface *ps,
-                    uint x, uint y, uint w, uint h, float *p);
-
-   /**
-    * Put block/tile of pixels into surface as floats
-    * If color surface, data is float[4].  If depth surface, data is float[1].
-    */
-   void (*put_tile)(struct pipe_surface *ps,
-                    uint x, uint y, uint w, uint h, const float *p);
-
-   /** As above, but data is raw pixel data */
-   void (*get_tile_raw)(struct pipe_surface *ps,
-                        uint x, uint y, uint w, uint h, void *p);
-   /** As above, but data is raw pixel data */
-   void (*put_tile_raw)(struct pipe_surface *ps,
-                        uint x, uint y, uint w, uint h, const void *p);
 };
 
 

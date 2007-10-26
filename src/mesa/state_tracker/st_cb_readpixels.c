@@ -204,7 +204,7 @@ st_readpixels(GLcontext *ctx, GLint x, GLint y, GLsizei width, GLsizei height,
 
    /* Do a row at a time to flip image data vertically */
    for (i = 0; i < height; i++) {
-      strb->surface->get_tile(strb->surface, x, y, width, 1, df);
+      pipe->get_tile_rgba(pipe, strb->surface, x, y, width, 1, df);
       y += yStep;
       df += dfStride;
       if (!dfStride) {

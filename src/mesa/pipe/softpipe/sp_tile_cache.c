@@ -153,8 +153,10 @@ sp_tile_cache_set_texture(struct softpipe_tile_cache *tc,
 
 
 void
-sp_flush_tile_cache(struct softpipe_tile_cache *tc)
+sp_flush_tile_cache(struct softpipe_context *softpipe,
+                    struct softpipe_tile_cache *tc)
 {
+   struct pipe_context *pipe = &softpipe->pipe;
    struct pipe_surface *ps = &tc->surface->surface;
    boolean is_depth_stencil;
    int inuse = 0, pos;
@@ -171,14 +173,14 @@ sp_flush_tile_cache(struct softpipe_tile_cache *tc)
       struct softpipe_cached_tile *tile = tc->entries + pos;
       if (tile->x >= 0) {
          if (is_depth_stencil) {
-            ps->put_tile_raw(ps,
-                             tile->x, tile->y, TILE_SIZE, TILE_SIZE,
-                             tile->data.depth32);
+            pipe->put_tile(pipe, ps,
+                           tile->x, tile->y, TILE_SIZE, TILE_SIZE,
+                           tile->data.depth32, 0/*STRIDE*/);
          }
          else {
-            ps->put_tile(ps,
-                         tile->x, tile->y, TILE_SIZE, TILE_SIZE,
-                         (float *) tile->data.color);
+            pipe->put_tile_rgba(pipe, ps,
+                                tile->x, tile->y, TILE_SIZE, TILE_SIZE,
+                                (float *) tile->data.color);
          }
 
          tile->x = tile->y = -1;  /* mark as empty */
@@ -193,8 +195,10 @@ sp_flush_tile_cache(struct softpipe_tile_cache *tc)
 
 
 struct softpipe_cached_tile *
-sp_get_cached_tile(struct softpipe_tile_cache *tc, int x, int y)
+sp_get_cached_tile(struct softpipe_context *softpipe,
+                   struct softpipe_tile_cache *tc, int x, int y)
 {
+   struct pipe_context *pipe = &softpipe->pipe;
    struct pipe_surface *ps = &tc->surface->surface;
    boolean is_depth_stencil
       = (ps->format == PIPE_FORMAT_S8_Z24 ||
@@ -216,14 +220,14 @@ sp_get_cached_tile(struct softpipe_tile_cache *tc, int x, int y)
       if (tile->x != -1) {
          /* put dirty tile back in framebuffer */
          if (is_depth_stencil) {
-            ps->put_tile_raw(ps,
-                             tile->x, tile->y, TILE_SIZE, TILE_SIZE,
-                             tile->data.depth32);
+            pipe->put_tile(pipe, ps,
+                           tile->x, tile->y, TILE_SIZE, TILE_SIZE,
+                           tile->data.depth32, 0 /*STRIDE*/);
          }
          else {
-            ps->put_tile(ps,
-                         tile->x, tile->y, TILE_SIZE, TILE_SIZE,
-                         (float *) tile->data.color);
+            pipe->put_tile_rgba(pipe, ps,
+                                tile->x, tile->y, TILE_SIZE, TILE_SIZE,
+                                (float *) tile->data.color);
          }
       }
 
@@ -289,14 +293,14 @@ sp_get_cached_tile(struct softpipe_tile_cache *tc, int x, int y)
       else {
          /* get new tile from framebuffer */
          if (is_depth_stencil) {
-            ps->get_tile_raw(ps,
-                             tile_x, tile_y, TILE_SIZE, TILE_SIZE,
-                             tile->data.depth32);
+            pipe->get_tile(pipe, ps,
+                           tile_x, tile_y, TILE_SIZE, TILE_SIZE,
+                           tile->data.depth32, 0/*STRIDE*/);
          }
          else {
-            ps->get_tile(ps,
-                         tile_x, tile_y, TILE_SIZE, TILE_SIZE,
-                         (float *) tile->data.color);
+            pipe->get_tile_rgba(pipe, ps,
+                                tile_x, tile_y, TILE_SIZE, TILE_SIZE,
+                                (float *) tile->data.color);
          }
       }
 
@@ -349,9 +353,9 @@ sp_get_cached_tile_tex(struct pipe_context *pipe,
       struct pipe_surface *ps
          = pipe->get_tex_surface(pipe, tc->texture, face, level, z);
 
-      ps->get_tile(ps,
-                   tile_x, tile_y, TILE_SIZE, TILE_SIZE,
-                   (float *) tile->data.color);
+      pipe->get_tile_rgba(pipe, ps,
+                          tile_x, tile_y, TILE_SIZE, TILE_SIZE,
+                          (float *) tile->data.color);
 
       pipe_surface_reference(&ps, NULL);
 

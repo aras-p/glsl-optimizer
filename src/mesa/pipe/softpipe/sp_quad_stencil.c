@@ -206,7 +206,7 @@ stencil_test_quad(struct quad_stage *qs, struct quad_header *quad)
    ubyte ref, wrtMask, valMask;
    ubyte stencilVals[QUAD_SIZE];
    struct softpipe_cached_tile *tile
-      = sp_get_cached_tile(softpipe->sbuf_cache, quad->x0, quad->y0);
+      = sp_get_cached_tile(softpipe, softpipe->sbuf_cache, quad->x0, quad->y0);
    uint j;
 
    /* choose front or back face function, operator, etc */

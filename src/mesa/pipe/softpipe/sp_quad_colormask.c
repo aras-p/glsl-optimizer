@@ -48,8 +48,9 @@ colormask_quad(struct quad_stage *qs, struct quad_header *quad)
 {
    struct softpipe_context *softpipe = qs->softpipe;
    float dest[4][QUAD_SIZE];
-   struct softpipe_cached_tile *
-      tile = sp_get_cached_tile(softpipe->cbuf_cache[0], quad->x0, quad->y0);
+   struct softpipe_cached_tile *tile
+      = sp_get_cached_tile(softpipe,
+                           softpipe->cbuf_cache[0], quad->x0, quad->y0);
    uint i, j;
 
    /* get/swizzle dest colors */

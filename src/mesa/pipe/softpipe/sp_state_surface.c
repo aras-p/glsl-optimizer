@@ -51,7 +51,7 @@ softpipe_set_framebuffer_state(struct pipe_context *pipe,
       /* check if changing cbuf */
       if (sp->framebuffer.cbufs[i] != fb->cbufs[i]) {
          /* flush old */
-         sp_flush_tile_cache(sp->cbuf_cache[i]);
+         sp_flush_tile_cache(sp, sp->cbuf_cache[i]);
          /* unmap old */
          sps = softpipe_surface(sp->framebuffer.cbufs[i]);
          if (sps && sps->surface.region)
@@ -73,7 +73,7 @@ softpipe_set_framebuffer_state(struct pipe_context *pipe,
    /* zbuf changing? */
    if (sp->framebuffer.zbuf != fb->zbuf) {
       /* flush old */
-      sp_flush_tile_cache(sp->zbuf_cache);
+      sp_flush_tile_cache(sp, sp->zbuf_cache);
       /* unmap old */
       sps = softpipe_surface(sp->framebuffer.zbuf);
       if (sps && sps->surface.region)
@@ -98,7 +98,7 @@ softpipe_set_framebuffer_state(struct pipe_context *pipe,
    /* sbuf changing? */
    if (sp->framebuffer.sbuf != fb->sbuf) {
       /* flush old */
-      sp_flush_tile_cache(sp->sbuf_cache_sep);
+      sp_flush_tile_cache(sp, sp->sbuf_cache_sep);
       /* unmap old */
       sps = softpipe_surface(sp->framebuffer.sbuf);
       if (sps && sps->surface.region)

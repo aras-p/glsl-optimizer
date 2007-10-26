@@ -46,7 +46,14 @@ struct softpipe_tile_cache;
 struct softpipe_surface {
    struct pipe_surface surface;
 
-   /* no softpipe-specific extras now */
+   void (*get_tile)(struct pipe_surface *ps,
+                    uint x, uint y, uint w, uint h, float *p);
+   void (*put_tile)(struct pipe_surface *ps,
+                    uint x, uint y, uint w, uint h, const float *p);
+   void (*get_tile_raw)(struct pipe_surface *ps,
+                        uint x, uint y, uint w, uint h, void *p);
+   void (*put_tile_raw)(struct pipe_surface *ps,
+                        uint x, uint y, uint w, uint h, const void *p);
 };
 
 

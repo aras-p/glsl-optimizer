@@ -1100,7 +1100,7 @@ fallback_copy_texsubimage(GLcontext *ctx,
 
    /* do copy row by row */
    for (row = 0; row < height; row++) {
-      src_surf->get_tile(src_surf, srcX, srcY + row, width, 1, data);
+      pipe->get_tile_rgba(pipe, src_surf, srcX, srcY + row, width, 1, data);
 
       /* XXX we're ignoring convolution for now */
       if (ctx->_ImageTransferState) {
@@ -1109,7 +1109,7 @@ fallback_copy_texsubimage(GLcontext *ctx,
                             width, (GLfloat (*)[4])data);
       }
 
-      dest_surf->put_tile(dest_surf, destX, destY, width, 1, data);
+      pipe->put_tile_rgba(pipe, dest_surf, destX, destY, width, 1, data);
       destY += yStep;
    }
 

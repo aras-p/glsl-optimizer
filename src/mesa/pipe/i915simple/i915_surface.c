@@ -29,7 +29,6 @@
 #include "i915_state.h"
 #include "pipe/p_defines.h"
 #include "pipe/p_util.h"
-//#include "main/imports.h"
 
 
 struct i915_surface
@@ -44,8 +43,9 @@ struct i915_surface
  * Share it someday.
  */
 static void
-i915_get_tile(struct pipe_surface *ps,
-              unsigned x, unsigned y, unsigned w, unsigned h, float *p)
+i915_get_tile_rgba(struct pipe_context *pipe,
+                   struct pipe_surface *ps,
+                   uint x, uint y, uint w, uint h, float *p)
 {
    const unsigned *src
       = ((const unsigned *) (ps->region->map + ps->offset))
@@ -82,8 +82,9 @@ i915_get_tile(struct pipe_surface *ps,
 
 
 static void
-i915_put_tile(struct pipe_surface *ps,
-              unsigned x, unsigned y, unsigned w, unsigned h, const float *p)
+i915_put_tile_rgba(struct pipe_context *pipe,
+                   struct pipe_surface *ps,
+                   uint x, uint y, uint w, uint h, const float *p)
 {
    /* any need to put tiles into i915 surfaces? */
    assert(0);
@@ -102,8 +103,8 @@ i915_surface_alloc(struct pipe_context *pipe, unsigned format)
    surf->surface.format = format;
    surf->surface.refcount = 1;
 
-   surf->surface.get_tile = i915_get_tile;
-   surf->surface.put_tile = i915_put_tile;
+   //   surf->surface.get_tile = i915_get_tile;
+   //   surf->surface.put_tile = i915_put_tile;
 
    return &surf->surface;
 }
@@ -113,4 +114,6 @@ void
 i915_init_surface_functions(struct i915_context *i915)
 {
    i915->pipe.surface_alloc = i915_surface_alloc;
+   i915->pipe.get_tile_rgba = i915_get_tile_rgba;
+   i915->pipe.put_tile_rgba = i915_put_tile_rgba;
 }

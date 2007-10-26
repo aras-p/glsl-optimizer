@@ -1245,8 +1245,8 @@ st_CopyPixels(GLcontext *ctx, GLint srcx, GLint srcy,
       (void) pipe->region_map(pipe, psRead->region);
       (void) pipe->region_map(pipe, psTex->region);
 
-      psRead->get_tile(psRead, srcx, srcy, width, height, buf);
-      psTex->put_tile(psTex, 0, 0, width, height, buf);
+      pipe->get_tile_rgba(pipe, psRead, srcx, srcy, width, height, buf);
+      pipe->put_tile_rgba(pipe, psTex, 0, 0, width, height, buf);
 
       pipe->region_unmap(pipe, psRead->region);
       pipe->region_unmap(pipe, psTex->region);

@@ -148,8 +148,8 @@ xmesa_new_color_surface(struct pipe_context *pipe, GLuint pipeFormat)
 
    switch (pipeFormat) {
    case PIPE_FORMAT_U_A8_R8_G8_B8:
-      xms->surface.surface.get_tile = get_tile;
-      xms->surface.surface.put_tile = put_tile;
+      xms->surface.get_tile = get_tile;
+      xms->surface.put_tile = put_tile;
       break;
    case PIPE_FORMAT_S8_Z24:
       break;

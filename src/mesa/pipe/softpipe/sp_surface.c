@@ -632,48 +632,48 @@ softpipe_init_surface_funcs(struct softpipe_surface *sps)
 
    switch (sps->surface.format) {
    case PIPE_FORMAT_U_A8_R8_G8_B8:
-      sps->surface.get_tile = a8r8g8b8_get_tile;
-      sps->surface.put_tile = a8r8g8b8_put_tile;
+      sps->get_tile = a8r8g8b8_get_tile;
+      sps->put_tile = a8r8g8b8_put_tile;
       break;
    case PIPE_FORMAT_U_A1_R5_G5_B5:
-      sps->surface.get_tile = a1r5g5b5_get_tile;
+      sps->get_tile = a1r5g5b5_get_tile;
       break;
    case PIPE_FORMAT_U_L8:
-      sps->surface.get_tile = l8_get_tile;
+      sps->get_tile = l8_get_tile;
       break;
    case PIPE_FORMAT_U_A8:
-      sps->surface.get_tile = a8_get_tile;
+      sps->get_tile = a8_get_tile;
       break;
    case PIPE_FORMAT_U_I8:
-      sps->surface.get_tile = i8_get_tile;
+      sps->get_tile = i8_get_tile;
       break;
    case PIPE_FORMAT_U_A8_L8:
-      sps->surface.get_tile = a8_l8_get_tile;
+      sps->get_tile = a8_l8_get_tile;
       break;
 
    case PIPE_FORMAT_S_R16_G16_B16_A16:
-      sps->surface.get_tile = r16g16b16a16_get_tile;
-      sps->surface.put_tile = r16g16b16a16_put_tile;
+      sps->get_tile = r16g16b16a16_get_tile;
+      sps->put_tile = r16g16b16a16_put_tile;
       break;
 
    case PIPE_FORMAT_U_Z16:
-      sps->surface.get_tile = z16_get_tile;
-      sps->surface.get_tile_raw = get_tile_raw16;
-      sps->surface.put_tile_raw = put_tile_raw16;
+      sps->get_tile = z16_get_tile;
+      sps->get_tile_raw = get_tile_raw16;
+      sps->put_tile_raw = put_tile_raw16;
       break;
    case PIPE_FORMAT_U_Z32:
-      sps->surface.get_tile = z32_get_tile;
-      sps->surface.get_tile_raw = get_tile_raw32;
-      sps->surface.put_tile_raw = put_tile_raw32;
+      sps->get_tile = z32_get_tile;
+      sps->get_tile_raw = get_tile_raw32;
+      sps->put_tile_raw = put_tile_raw32;
       break;
    case PIPE_FORMAT_S8_Z24:
-      sps->surface.get_tile = s8z24_get_tile;
-      sps->surface.get_tile_raw = get_tile_raw32;
-      sps->surface.put_tile_raw = put_tile_raw32;
+      sps->get_tile = s8z24_get_tile;
+      sps->get_tile_raw = get_tile_raw32;
+      sps->put_tile_raw = put_tile_raw32;
       break;
    case PIPE_FORMAT_U_S8:
-      sps->surface.get_tile_raw = get_tile_raw8;
-      sps->surface.put_tile_raw = put_tile_raw8;
+      sps->get_tile_raw = get_tile_raw8;
+      sps->put_tile_raw = put_tile_raw8;
       break;
    default:
       assert(0);
@@ -739,8 +739,59 @@ softpipe_get_tex_surface(struct pipe_context *pipe,
 }
 
 
+static void
+get_tile_generic(struct pipe_context *pipe,
+                 struct pipe_surface *ps,
+                 uint x, uint y, uint w, uint h,
+                 void *p, int dst_stride)
+{
+   struct softpipe_surface *sps = softpipe_surface(ps);
+   sps->get_tile_raw(ps, x, y, w, h, p);
+}
+
+
+static void
+put_tile_generic(struct pipe_context *pipe,
+                 struct pipe_surface *ps,
+                 uint x, uint y, uint w, uint h,
+                 const void *p, int src_stride)
+{
+   struct softpipe_surface *sps = softpipe_surface(ps);
+   sps->put_tile_raw(ps, x, y, w, h, p);
+}
+
+
+static void
+get_tile_rgba_generic(struct pipe_context *pipe,
+                      struct pipe_surface *ps,
+                      uint x, uint y, uint w, uint h,
+                      float *p)
+{
+   struct softpipe_surface *sps = softpipe_surface(ps);
+   sps->get_tile(ps, x, y, w, h, p);
+}
+
+
+static void
+put_tile_rgba_generic(struct pipe_context *pipe,
+                      struct pipe_surface *ps,
+                      uint x, uint y, uint w, uint h,
+                      const float *p)
+{
+   struct softpipe_surface *sps = softpipe_surface(ps);
+   sps->put_tile(ps, x, y, w, h, p);
+}
+
+
+
 void
 sp_init_surface_functions(struct softpipe_context *sp)
 {
    sp->pipe.surface_alloc = softpipe_surface_alloc;
+
+   sp->pipe.get_tile = get_tile_generic;
+   sp->pipe.put_tile = put_tile_generic;
+
+   sp->pipe.get_tile_rgba = get_tile_rgba_generic;
+   sp->pipe.put_tile_rgba = put_tile_rgba_generic;
 }

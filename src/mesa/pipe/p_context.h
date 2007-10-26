@@ -188,6 +188,24 @@ struct pipe_context {
                                            unsigned face, unsigned level,
                                            unsigned zslice);
 
+   /** Get a block of raw pixel data from a surface */
+   void (*get_tile)(struct pipe_context *pipe,
+                    struct pipe_surface *ps,
+                    uint x, uint y, uint w, uint h,
+                    void *p, int dst_stride);
+   /** Put a block of raw pixel data into a surface */
+   void (*put_tile)(struct pipe_context *pipe,
+                    struct pipe_surface *ps,
+                    uint x, uint y, uint w, uint h,
+                    const void *p, int src_stride);
+
+   /* XXX temporary here, move these to softpipe */
+   void (*get_tile_rgba)(struct pipe_context *pipe, struct pipe_surface *ps,
+                         uint x, uint y, uint w, uint h, float *p);
+   void (*put_tile_rgba)(struct pipe_context *pipe, struct pipe_surface *ps,
+                         uint x, uint y, uint w, uint h, const float *p);
+
+
    /*
     * Memory region functions
     * Some of these may go away...
