@@ -253,7 +253,7 @@ void draw_free_tmps( struct draw_stage *stage )
 
 boolean draw_use_sse(struct draw_context *draw)
 {
-   return draw->use_sse;
+   return (boolean) draw->use_sse;
 }
 
 
