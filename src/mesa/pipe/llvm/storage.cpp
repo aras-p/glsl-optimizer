@@ -383,6 +383,7 @@ void Storage::pushTemps()
       }
       ++i;
    }
+   m_extSwizzleVec = 0;
 }
 
 void Storage::popTemps()

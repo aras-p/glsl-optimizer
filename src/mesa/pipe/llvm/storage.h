@@ -106,17 +106,16 @@ private:
    llvm::VectorType *m_floatVecType;
    llvm::VectorType *m_intVecType;
 
-   llvm::Value      *m_undefFloatVec;
-   llvm::Value      *m_undefIntVec;
-
-   llvm::Value      *m_extSwizzleVec;
-
    char        m_name[32];
    int         m_idx;
 
    int         m_numConsts;
 
    std::map<int, bool > m_destWriteMap;
+
+   llvm::Value      *m_undefFloatVec;
+   llvm::Value      *m_undefIntVec;
+   llvm::Value      *m_extSwizzleVec;
 
    struct Args {
       llvm::Value *out;
