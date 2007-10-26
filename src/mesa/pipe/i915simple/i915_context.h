@@ -237,6 +237,12 @@ struct draw_stage *i915_draw_render_stage( struct i915_context *i915 );
 
 
 /***********************************************************************
+ * i915_prim_vbuf.c: 
+ */
+struct draw_stage *i915_draw_vbuf_stage( struct i915_context *i915 );
+
+
+/***********************************************************************
  * i915_state_emit.c: 
  */
 void i915_emit_hardware_state(struct i915_context *i915 );
