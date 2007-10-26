@@ -215,6 +215,18 @@ static void softpipe_destroy( struct pipe_context *pipe )
 
    draw_destroy( softpipe->draw );
 
+   softpipe->quad.polygon_stipple->destroy( softpipe->quad.polygon_stipple );
+   softpipe->quad.shade->destroy( softpipe->quad.shade );
+   softpipe->quad.alpha_test->destroy( softpipe->quad.alpha_test );
+   softpipe->quad.depth_test->destroy( softpipe->quad.depth_test );
+   softpipe->quad.stencil_test->destroy( softpipe->quad.stencil_test );
+   softpipe->quad.occlusion->destroy( softpipe->quad.occlusion );
+   softpipe->quad.coverage->destroy( softpipe->quad.coverage );
+   softpipe->quad.bufloop->destroy( softpipe->quad.bufloop );
+   softpipe->quad.blend->destroy( softpipe->quad.blend );
+   softpipe->quad.colormask->destroy( softpipe->quad.colormask );
+   softpipe->quad.output->destroy( softpipe->quad.output );
+
    free( softpipe );
 }
 
