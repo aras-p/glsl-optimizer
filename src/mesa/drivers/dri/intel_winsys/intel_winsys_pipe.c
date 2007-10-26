@@ -41,6 +41,7 @@
 
 #include "pipe/p_winsys.h"
 #include "pipe/p_defines.h"
+#include "pipe/p_state.h"
 
 
 
@@ -192,6 +193,66 @@ intel_flush_frontbuffer( struct pipe_winsys *sws )
    intelCopyBuffer(dPriv, NULL);
 }
 
+
+static struct pipe_region *
+intel_i915_region_alloc(struct pipe_winsys *winsys,
+                        unsigned cpp, unsigned width,
+                        unsigned height, unsigned flags)
+{
+   struct pipe_region *region = calloc(sizeof(*region), 1);
+   const unsigned alignment = 64;
+
+   /* Choose a pitch to match hardware requirements - requires 64 byte
+    * alignment of render targets.  
+    *
+    * XXX: is this ok for textures??
+    * clearly want to be able to render to textures under some
+    * circumstances, but maybe not always a requirement.
+    */
+   unsigned pitch;
+
+   /* XXX is the pitch different for textures vs. drawables? */
+   if (flags & PIPE_SURFACE_FLAG_TEXTURE)  /* or PIPE_SURFACE_FLAG_RENDER? */
+      pitch = ((cpp * width + 63) & ~63) / cpp;
+   else
+      pitch = ((cpp * width + 63) & ~63) / cpp;
+
+   region->cpp = cpp;
+   region->pitch = pitch;
+   region->height = height;     /* needed? */
+   region->refcount = 1;
+
+   region->buffer = winsys->buffer_create( winsys, alignment );
+
+   winsys->buffer_data( winsys,
+                        region->buffer, 
+                        pitch * cpp * height, 
+                        NULL );
+
+   return region;
+}
+
+static void
+intel_i915_region_release(struct pipe_winsys *winsys,
+                          struct pipe_region **region)
+{
+   if (!*region)
+      return;
+
+   assert((*region)->refcount > 0);
+   (*region)->refcount--;
+
+   if ((*region)->refcount == 0) {
+      assert((*region)->map_refcount == 0);
+
+      winsys->buffer_reference( winsys,
+                                &((*region)->buffer), NULL );
+      free(*region);
+   }
+   *region = NULL;
+}
+
+
 static void
 intel_printf( struct pipe_winsys *sws, const char *fmtString, ... )
 {
@@ -233,6 +294,9 @@ intel_create_pipe_winsys( struct intel_context *intel )
    iws->winsys.printf = intel_printf;
    iws->winsys.get_name = intel_get_name;
    iws->intel = intel;
+
+   iws->winsys.region_alloc = intel_i915_region_alloc;
+   iws->winsys.region_release = intel_i915_region_release;
 
    return &iws->winsys;
 }
