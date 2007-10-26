@@ -328,7 +328,7 @@ void brw_wm_pass2( struct brw_wm_compile *c )
    c->state = PASS2_DONE;
 
    if (INTEL_DEBUG & DEBUG_WM) {
-      brw_wm_print_program(c, "pass2/done");
+       brw_wm_print_program(c, "pass2/done");
    }
 }
 

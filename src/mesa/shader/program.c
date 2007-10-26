@@ -285,6 +285,8 @@ _mesa_init_vertex_program( GLcontext *ctx, struct gl_vertex_program *prog,
 struct gl_program *
 _mesa_new_program(GLcontext *ctx, GLenum target, GLuint id)
 {
+   if (ctx->Driver.NewProgram)
+        return ctx->Driver.NewProgram(ctx, target, id);
    switch (target) {
    case GL_VERTEX_PROGRAM_ARB: /* == GL_VERTEX_PROGRAM_NV */
       return _mesa_init_vertex_program(ctx, CALLOC_STRUCT(gl_vertex_program),

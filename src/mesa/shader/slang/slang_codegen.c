@@ -1847,6 +1847,7 @@ _slang_gen_var_decl(slang_assemble_ctx *A, slang_variable *var)
 
       n->Store->File = PROGRAM_TEMPORARY;
       n->Store->Size = _slang_sizeof_type_specifier(&n->Var->type.specifier);
+      A->program->NumTemporaries++;
       assert(n->Store->Size > 0);
    }
    return n;
