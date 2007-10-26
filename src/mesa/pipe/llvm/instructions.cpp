@@ -32,6 +32,8 @@
 
 #include "instructions.h"
 
+#include "storage.h"
+
 #include <llvm/CallingConv.h>
 #include <llvm/Constants.h>
 #include <llvm/DerivedTypes.h>
@@ -39,10 +41,21 @@
 #include <llvm/InstrTypes.h>
 #include <llvm/Instructions.h>
 
+#include <sstream>
+#include <fstream>
+#include <iostream>
+
 using namespace llvm;
 
-
 Function* makeLitFunction(Module *mod);
+
+static inline std::string createFuncName(int label)
+{
+   std::ostringstream stream;
+   stream << "function";
+   stream << label;
+   return stream.str();
+}
 
 Instructions::Instructions(llvm::Module *mod, llvm::Function *func, llvm::BasicBlock *block)
    :  m_mod(mod), m_func(func), m_block(block), m_idx(0)
@@ -623,18 +636,18 @@ void Instructions::printVector(llvm::Value *val)
 llvm::Function * Instructions::declarePrintf()
 {
    std::vector<const Type*> args;
-  ParamAttrsList *params = 0;
-  FunctionType* funcTy = FunctionType::get(
-     /*Result=*/IntegerType::get(32),
-     /*Params=*/args,
-     /*isVarArg=*/true,
-     /*ParamAttrs=*/params);
-  Function* func_printf = new Function(
-     /*Type=*/funcTy,
-     /*Linkage=*/GlobalValue::ExternalLinkage,
-     /*Name=*/"printf", m_mod);
-  func_printf->setCallingConv(CallingConv::C);
-  return func_printf;
+   ParamAttrsList *params = 0;
+   FunctionType* funcTy = FunctionType::get(
+      /*Result=*/IntegerType::get(32),
+      /*Params=*/args,
+      /*isVarArg=*/true,
+      /*ParamAttrs=*/params);
+   Function* func_printf = new Function(
+      /*Type=*/funcTy,
+      /*Linkage=*/GlobalValue::ExternalLinkage,
+      /*Name=*/"printf", m_mod);
+   func_printf->setCallingConv(CallingConv::C);
+   return func_printf;
 }
 
 
@@ -821,8 +834,6 @@ Function* makeLitFunction(Module *mod) {
       /*Params=*/FuncTy_0_args,
       /*isVarArg=*/false,
       /*ParamAttrs=*/FuncTy_0_PAL);
-
-   PointerType* PointerTy_1 = PointerType::get(FuncTy_0);
 
    VectorType* VectorTy_2 = VectorType::get(Type::FloatTy, 4);
 
@@ -1083,5 +1094,74 @@ llvm::Value * Instructions::trunc(llvm::Value *in)
 void Instructions::end()
 {
    new ReturnInst(m_block);
+}
+
+void Instructions::cal(int label, llvm::Value *out, llvm::Value *in,
+                    llvm::Value *cst)
+{
+   std::vector<Value*> params;
+   params.push_back(out);
+   params.push_back(in);
+   params.push_back(cst);
+   llvm::Function *func = findFunction(label);
+
+   new CallInst(func, params.begin(), params.end(), std::string(), m_block);
+}
+
+llvm::Function * Instructions::declareFunc(int label)
+{
+   PointerType *vecPtr = PointerType::get(m_floatVecType);
+   std::vector<const Type*> args;
+   args.push_back(vecPtr);
+   args.push_back(vecPtr);
+   args.push_back(vecPtr);
+   ParamAttrsList *params = 0;
+   FunctionType *funcType = FunctionType::get(
+      /*Result=*/Type::VoidTy,
+      /*Params=*/args,
+      /*isVarArg=*/false,
+      /*ParamAttrs=*/params);
+   std::string name = createFuncName(label);
+   Function *func = new Function(
+      /*Type=*/funcType,
+      /*Linkage=*/GlobalValue::ExternalLinkage,
+      /*Name=*/name.c_str(), m_mod);
+   func->setCallingConv(CallingConv::C);
+   return func;
+}
+
+void Instructions::bgnSub(unsigned label, Storage *storage)
+{
+   llvm::Function *func = findFunction(label);
+
+   Function::arg_iterator args = func->arg_begin();
+   Value *ptr_OUT = args++;
+   ptr_OUT->setName("OUT");
+   Value *ptr_IN = args++;
+   ptr_IN->setName("IN");
+   Value *ptr_CONST = args++;
+   ptr_CONST->setName("CONST");
+   storage->pushArguments(ptr_OUT, ptr_IN, ptr_CONST);
+
+   llvm::BasicBlock *entry = new BasicBlock("entry", func, 0);
+
+   m_func = func;
+   m_block = entry;
+}
+
+void Instructions::endSub()
+{
+   m_func = 0;
+   m_block = 0;
+}
+
+llvm::Function * Instructions::findFunction(int label)
+{
+   llvm::Function *func = m_functions[label];
+   if (!func) {
+      func = declareFunc(label);
+      m_functions[label] = func;
+   }
+   return func;
 }
 

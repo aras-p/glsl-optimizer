@@ -171,7 +171,8 @@ translate_instruction(llvm::Module *module,
                       Storage *storage,
                       Instructions *instr,
                       struct tgsi_full_instruction *inst,
-                      struct tgsi_full_instruction *fi)
+                      struct tgsi_full_instruction *fi,
+                      unsigned instno)
 {
    llvm::Value *inputs[4];
    inputs[0] = 0;
@@ -400,9 +401,18 @@ translate_instruction(llvm::Module *module,
       break;
    case TGSI_OPCODE_BRA:
       break;
-   case TGSI_OPCODE_CAL:
+   case TGSI_OPCODE_CAL: {
+      instr->cal(inst->InstructionExtLabel.Label,
+                 storage->outputPtr(),
+                 storage->inputPtr(),
+                 storage->constPtr());
+      return;
+   }
       break;
-   case TGSI_OPCODE_RET:
+   case TGSI_OPCODE_RET: {
+      instr->end();
+      return;
+   }
       break;
    case TGSI_OPCODE_SSG:
       break;
@@ -495,15 +505,24 @@ translate_instruction(llvm::Module *module,
       return;
    }
       break;
-   case TGSI_OPCODE_BGNSUB:
-      break;
-   case TGSI_OPCODE_ENDLOOP2: {
-      instr->endLoop();
+   case TGSI_OPCODE_BGNSUB: {
+      instr->bgnSub(instno, storage);
       storage->setCurrentBlock(instr->currentBlock());
       return;
    }
       break;
-   case TGSI_OPCODE_ENDSUB:
+   case TGSI_OPCODE_ENDLOOP2: {
+      instr->endLoop();
+      storage->setCurrentBlock(instr->currentBlock());
+      storage->popArguments();
+      return;
+   }
+      break;
+   case TGSI_OPCODE_ENDSUB: {
+      instr->endSub();
+      storage->setCurrentBlock(instr->currentBlock());
+      return;
+   }
       break;
    case TGSI_OPCODE_NOISE1:
       break;
@@ -620,7 +639,7 @@ tgsi_to_llvm(struct gallivm_prog *prog, const struct tgsi_token *tokens)
    struct tgsi_parse_context parse;
    struct tgsi_full_instruction fi;
    struct tgsi_full_declaration fd;
-
+   unsigned instno = 0;
    Function* shader = mod->getFunction("execute_shader");
    std::ostringstream stream;
    stream << "execute_shader";
@@ -662,7 +681,8 @@ tgsi_to_llvm(struct gallivm_prog *prog, const struct tgsi_token *tokens)
       case TGSI_TOKEN_TYPE_INSTRUCTION:
          translate_instruction(mod, &storage, &instr,
                                &parse.FullToken.FullInstruction,
-                               &fi);
+                               &fi, instno);
+         ++instno;
          break;
 
       default:
@@ -776,7 +796,7 @@ void gallivm_prog_dump(struct gallivm_prog *prog, const char *file_prefix)
       llvm::Function *func = mod->getFunction(func_name.c_str());
       assert(func);
       std::cout<<"; ---------- Start shader "<<prog->id<<std::endl;
-      std::cout<<*func<<std::endl;
+      std::cout<<*mod<<std::endl;
       std::cout<<"; ---------- End shader "<<prog->id<<std::endl;
    }
 }

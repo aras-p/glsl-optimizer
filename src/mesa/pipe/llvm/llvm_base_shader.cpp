@@ -634,7 +634,7 @@ Module* createBaseShader() {
     BinaryOperator* int32_inc_103 = BinaryOperator::create(Instruction::Add, int32_i_0_reg2mem_0_100, const_int32_21, "inc", label_forbody_71);
     ICmpInst* int1_cmp21 = new ICmpInst(ICmpInst::ICMP_SLT, int32_inc_103, int32_num_vertices, "cmp21", label_forbody_71);
     new BranchInst(label_forbody_71, label_afterfor_72, int1_cmp21, label_forbody_71);
-    
+
     // Block afterfor (label_afterfor_72)
     new ReturnInst(label_afterfor_72);
     

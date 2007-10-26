@@ -35,6 +35,7 @@
 
 #include <map>
 #include <set>
+#include <stack>
 #include <vector>
 
 namespace llvm {
@@ -52,6 +53,10 @@ public:
    Storage(llvm::BasicBlock *block,
            llvm::Value *out,
            llvm::Value *in, llvm::Value *consts);
+
+   llvm::Value *inputPtr() const;
+   llvm::Value *outputPtr() const;
+   llvm::Value *constPtr() const;
 
    void setCurrentBlock(llvm::BasicBlock *block);
 
@@ -75,6 +80,10 @@ public:
    void store(int dstIdx, llvm::Value *val, int mask);
 
    int numConsts() const;
+
+   void pushArguments(llvm::Value *out, llvm::Value *in,
+                      llvm::Value *constPtr);
+   void popArguments();
 
 private:
    llvm::Value *maskWrite(llvm::Value *src, int mask, llvm::Value *templ);
@@ -106,6 +115,13 @@ private:
    int         m_numConsts;
 
    std::map<int, bool > m_destWriteMap;
+
+   struct Args {
+      llvm::Value *out;
+      llvm::Value *in;
+      llvm::Value *cst;
+   };
+   std::stack<Args> m_argStack;
 };
 
 #endif

@@ -46,7 +46,7 @@
 using namespace llvm;
 
 Storage::Storage(llvm::BasicBlock *block, llvm::Value *out,
-                                         llvm::Value *in, llvm::Value *consts)
+                 llvm::Value *in, llvm::Value *consts)
    : m_block(block), m_OUT(out),
      m_IN(in), m_CONST(consts),
      m_temps(32), m_addrs(32),
@@ -330,4 +330,42 @@ llvm::Value * Storage::outputElement(int idx, llvm::Value *indIdx )
    load->setAlignment(8);
 
    return load;
+}
+
+llvm::Value * Storage::inputPtr() const
+{
+   return m_IN;
+}
+
+llvm::Value * Storage::outputPtr() const
+{
+   return m_OUT;
+}
+
+llvm::Value * Storage::constPtr() const
+{
+   return m_CONST;
+}
+
+void Storage::pushArguments(llvm::Value *out, llvm::Value *in,
+                            llvm::Value *constPtr)
+{
+   Args arg;
+   arg.out = m_OUT;
+   arg.in  = m_IN;
+   arg.cst = m_CONST;
+   m_argStack.push(arg);
+
+   m_OUT = out;
+   m_IN = in;
+   m_CONST = constPtr;
+}
+
+void Storage::popArguments()
+{
+   Args arg = m_argStack.top();
+   m_OUT = arg.out;
+   m_IN = arg.in;
+   m_CONST = arg.cst;
+   m_argStack.pop();
 }

@@ -37,12 +37,15 @@
 #include <llvm/Module.h>
 #include <llvm/Value.h>
 
+#include <map>
 #include <stack>
 
 namespace llvm {
    class VectorType;
    class Function;
 }
+
+class Storage;
 
 class Instructions
 {
@@ -55,7 +58,10 @@ public:
    llvm::Value *arl(llvm::Value *in1);
    llvm::Value *add(llvm::Value *in1, llvm::Value *in2);
    void         beginLoop();
+   void         bgnSub(unsigned, Storage *);
    void         brk();
+   void         cal(int label, llvm::Value *out, llvm::Value *in,
+                    llvm::Value *cst);
    llvm::Value *cross(llvm::Value *in1, llvm::Value *in2);
    llvm::Value *dp3(llvm::Value *in1, llvm::Value *in2);
    llvm::Value *dp4(llvm::Value *in1, llvm::Value *in2);
@@ -65,6 +71,7 @@ public:
    void         endif();
    void         endLoop();
    void         end();
+   void         endSub();
    llvm::Value *ex2(llvm::Value *in);
    llvm::Value *floor(llvm::Value *in);
    llvm::Value *frc(llvm::Value *in);
@@ -101,6 +108,9 @@ private:
                                llvm::Value *z, llvm::Value *w=0);
 
    llvm::Function *declarePrintf();
+   llvm::Function *declareFunc(int label);
+
+   llvm::Function *findFunction(int label);
 private:
    llvm::Module *m_mod;
    llvm::Function *m_func;
@@ -125,6 +135,7 @@ private:
       llvm::BasicBlock *end;
    };
    std::stack<Loop> m_loopStack;
+   std::map<int, llvm::Function*> m_functions;
 };
 
 #endif
