@@ -466,7 +466,7 @@ compile_instruction(
       fulldst->DstRegister.WriteMask &= TGSI_WRITEMASK_XYZ;
       break;
    case OPCODE_END:
-      fullinst->Instruction.Opcode = TGSI_OPCODE_END;
+      fullinst->Instruction.Opcode = TGSI_OPCODE_RET;
       break;
    default:
       assert( 0 );
