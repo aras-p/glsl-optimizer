@@ -460,169 +460,6 @@ s8z24_get_tile(struct pipe_surface *ps,
 
 
 /**
- * Get raw tile, any 32-bit pixel format.
- */
-static void
-get_tile_raw32(struct pipe_surface *ps,
-               uint x, uint y, uint w, uint h, void *p)
-{
-   const uint *src
-      = ((const uint *) (ps->region->map + ps->offset))
-      + y * ps->region->pitch + x;
-   uint *pDest = (uint *) p;
-   unsigned i;
-   unsigned w0 = w;
-
-   assert(ps->region->map);
-   assert(ps->format == PIPE_FORMAT_S8_Z24 ||
-          ps->format == PIPE_FORMAT_U_Z32);
-
-   CLIP_TILE;
-
-   for (i = 0; i < h; i++) {
-      memcpy(pDest, src, w * sizeof(uint));
-      src += ps->region->pitch;
-      pDest += w0;
-   }
-}
-
-
-/**
- * put raw tile, any 32-bit pixel format.
- */
-static void
-put_tile_raw32(struct pipe_surface *ps,
-               uint x, uint y, uint w, uint h, const void *p)
-{
-   uint *dst
-      = ((uint *) (ps->region->map + ps->offset))
-      + y * ps->region->pitch + x;
-   const uint *pSrc = (const uint *) p;
-   unsigned i;
-   unsigned w0 = w;
-
-   assert(w < 1000);
-   assert(ps->region->map);
-   assert(ps->format == PIPE_FORMAT_S8_Z24 ||
-          ps->format == PIPE_FORMAT_U_Z32);
-
-   assert(w < 1000);
-   CLIP_TILE;
-
-   for (i = 0; i < h; i++) {
-   assert(w < 1000);
-      memcpy(dst, pSrc, w * sizeof(uint));
-      dst += ps->region->pitch;
-      pSrc += w0;
-   }
-}
-
-
-/**
- * Get raw tile, any 16-bit pixel format.
- */
-static void
-get_tile_raw16(struct pipe_surface *ps,
-               uint x, uint y, uint w, uint h, void *p)
-{
-   const ushort *src
-      = ((const ushort *) (ps->region->map + ps->offset))
-      + y * ps->region->pitch + x;
-   ushort *pDest = (ushort *) p;
-   uint i;
-   uint w0 = w;
-
-   assert(ps->format == PIPE_FORMAT_U_Z16);
-
-   CLIP_TILE;
-
-   for (i = 0; i < h; i++) {
-      memcpy(pDest, src, w * sizeof(ushort));
-      src += ps->region->pitch;
-      pDest += w0;
-   }
-}
-
-/**
- * Put raw tile, any 16-bit pixel format.
- */
-static void
-put_tile_raw16(struct pipe_surface *ps,
-               uint x, uint y, uint w, uint h, const void *p)
-{
-   ushort *dst
-      = ((ushort *) (ps->region->map + ps->offset))
-      + y * ps->region->pitch + x;
-   const ushort *pSrc = (const ushort *) p;
-   unsigned i;
-   unsigned w0 = w;
-
-   assert(ps->format == PIPE_FORMAT_U_Z16);
-
-   CLIP_TILE;
-
-   for (i = 0; i < h; i++) {
-      memcpy(dst, pSrc, w * sizeof(ushort));
-      dst += ps->region->pitch;
-      pSrc += w0;
-   }
-}
-
-
-/**
- * Get raw tile, any 16-bit pixel format.
- */
-static void
-get_tile_raw8(struct pipe_surface *ps,
-              uint x, uint y, uint w, uint h, void *p)
-{
-   const ubyte *src
-      = ((const ubyte *) (ps->region->map + ps->offset))
-      + y * ps->region->pitch + x;
-   ubyte *pDest = (ubyte *) p;
-   uint i;
-   uint w0 = w;
-
-   assert(ps->format == PIPE_FORMAT_U_Z16);
-
-   CLIP_TILE;
-
-   for (i = 0; i < h; i++) {
-      memcpy(pDest, src, w * sizeof(ubyte));
-      src += ps->region->pitch;
-      pDest += w0;
-   }
-}
-
-/**
- * Put raw tile, any 16-bit pixel format.
- */
-static void
-put_tile_raw8(struct pipe_surface *ps,
-              uint x, uint y, uint w, uint h, const void *p)
-{
-   ubyte *dst
-      = ((ubyte *) (ps->region->map + ps->offset))
-      + y * ps->region->pitch + x;
-   const ubyte *pSrc = (const ubyte *) p;
-   unsigned i;
-   unsigned w0 = w;
-
-   assert(ps->format == PIPE_FORMAT_U_Z16);
-
-   CLIP_TILE;
-
-   for (i = 0; i < h; i++) {
-      memcpy(dst, pSrc, w * sizeof(ubyte));
-      dst += ps->region->pitch;
-      pSrc += w0;
-   }
-}
-
-
-
-
-/**
  * Initialize the quad_read/write and get/put_tile() methods.
  */
 void
@@ -658,22 +495,14 @@ softpipe_init_surface_funcs(struct softpipe_surface *sps)
 
    case PIPE_FORMAT_U_Z16:
       sps->get_tile = z16_get_tile;
-      sps->get_tile_raw = get_tile_raw16;
-      sps->put_tile_raw = put_tile_raw16;
       break;
    case PIPE_FORMAT_U_Z32:
       sps->get_tile = z32_get_tile;
-      sps->get_tile_raw = get_tile_raw32;
-      sps->put_tile_raw = put_tile_raw32;
       break;
    case PIPE_FORMAT_S8_Z24:
       sps->get_tile = s8z24_get_tile;
-      sps->get_tile_raw = get_tile_raw32;
-      sps->put_tile_raw = put_tile_raw32;
       break;
    case PIPE_FORMAT_U_S8:
-      sps->get_tile_raw = get_tile_raw8;
-      sps->put_tile_raw = put_tile_raw8;
       break;
    default:
       assert(0);
@@ -739,28 +568,75 @@ softpipe_get_tex_surface(struct pipe_context *pipe,
 }
 
 
+/**
+ * Move raw block of pixels from surface to user memory.
+ */
 static void
-get_tile_generic(struct pipe_context *pipe,
-                 struct pipe_surface *ps,
-                 uint x, uint y, uint w, uint h,
-                 void *p, int dst_stride)
+softpipe_get_tile(struct pipe_context *pipe,
+                  struct pipe_surface *ps,
+                  uint x, uint y, uint w, uint h,
+                  void *p, int dst_stride)
 {
-   struct softpipe_surface *sps = softpipe_surface(ps);
-   sps->get_tile_raw(ps, x, y, w, h, p);
+   const uint cpp = ps->region->cpp;
+   const uint w0 = w;
+   const ubyte *pSrc;
+   ubyte *pDest;
+   uint i;
+
+   assert(ps->region->map);
+
+   CLIP_TILE;
+
+   if (dst_stride == 0) {
+      dst_stride = w0 * cpp;
+   }
+
+   pSrc = ps->region->map + ps->offset + (y * ps->region->pitch + x) * cpp;
+   pDest = (ubyte *) p;
+
+   for (i = 0; i < h; i++) {
+      memcpy(pDest, pSrc, w0 * cpp);
+      pDest += dst_stride;
+      pSrc += ps->region->pitch * cpp;
+   }
 }
 
 
+/**
+ * Move raw block of pixels from user memory to surface.
+ */
 static void
-put_tile_generic(struct pipe_context *pipe,
-                 struct pipe_surface *ps,
-                 uint x, uint y, uint w, uint h,
-                 const void *p, int src_stride)
+softpipe_put_tile(struct pipe_context *pipe,
+                  struct pipe_surface *ps,
+                  uint x, uint y, uint w, uint h,
+                  const void *p, int src_stride)
 {
-   struct softpipe_surface *sps = softpipe_surface(ps);
-   sps->put_tile_raw(ps, x, y, w, h, p);
+   const uint cpp = ps->region->cpp;
+   const uint w0 = w;
+   const ubyte *pSrc;
+   ubyte *pDest;
+   uint i;
+
+   assert(ps->region->map);
+
+   CLIP_TILE;
+
+   if (src_stride == 0) {
+      src_stride = w0 * cpp;
+   }
+
+   pSrc = (const ubyte *) p;
+   pDest = ps->region->map + ps->offset + (y * ps->region->pitch + x) * cpp;
+
+   for (i = 0; i < h; i++) {
+      memcpy(pDest, pSrc, w0 * cpp);
+      pDest += ps->region->pitch * cpp;
+      pSrc += src_stride;
+   }
 }
 
 
+/* XXX TEMPORARY */
 static void
 get_tile_rgba_generic(struct pipe_context *pipe,
                       struct pipe_surface *ps,
@@ -772,6 +648,7 @@ get_tile_rgba_generic(struct pipe_context *pipe,
 }
 
 
+/* XXX TEMPORARY */
 static void
 put_tile_rgba_generic(struct pipe_context *pipe,
                       struct pipe_surface *ps,
@@ -789,8 +666,8 @@ sp_init_surface_functions(struct softpipe_context *sp)
 {
    sp->pipe.surface_alloc = softpipe_surface_alloc;
 
-   sp->pipe.get_tile = get_tile_generic;
-   sp->pipe.put_tile = put_tile_generic;
+   sp->pipe.get_tile = softpipe_get_tile;
+   sp->pipe.put_tile = softpipe_put_tile;
 
    sp->pipe.get_tile_rgba = get_tile_rgba_generic;
    sp->pipe.put_tile_rgba = put_tile_rgba_generic;
