@@ -37,6 +37,7 @@
 #include "renderbuffer.h"
 #include "pipe/p_state.h"
 #include "pipe/p_defines.h"
+#include "pipe/p_winsys.h"
 #include "state_tracker/st_context.h"
 
 
@@ -254,7 +255,8 @@ finish_surface_init(GLcontext *ctx, struct xmesa_renderbuffer *xrb)
    struct pipe_context *pipe = ctx->st->pipe;
    if (!xrb->St.surface->region) {
       int w = 1, h = 1;
-      xrb->St.surface->region = pipe->region_alloc(pipe, 1, w, h, 0x0);
+      xrb->St.surface->region = pipe->winsys->region_alloc(pipe->winsys,
+                                                           1, w, h, 0x0);
    }
 }
 

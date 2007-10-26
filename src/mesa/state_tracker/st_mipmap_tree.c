@@ -31,6 +31,7 @@
 #include "pipe/p_state.h"
 #include "pipe/p_context.h"
 #include "pipe/p_defines.h"
+#include "pipe/p_winsys.h"
 
 
 #define DBG if(0) printf
@@ -87,8 +88,8 @@ st_miptree_create(struct pipe_context *pipe,
    ok = pipe->mipmap_tree_layout(pipe, mt);
    if (ok) {
       /* note: it's OK to pass 'pitch' as 'width' here: */
-      mt->region = pipe->region_alloc(pipe, mt->cpp, mt->pitch,
-                                      mt->total_height, flags);
+      mt->region = pipe->winsys->region_alloc(pipe->winsys, mt->cpp, mt->pitch,
+                                              mt->total_height, flags);
       mt->pitch = mt->region->pitch; /*XXX NEW */
    }
 
@@ -124,7 +125,7 @@ st_miptree_release(struct pipe_context *pipe,
 
       DBG("%s deleting %p\n", __FUNCTION__, (void *) *mt);
 
-      pipe->region_release(pipe, &((*mt)->region));
+      pipe->winsys->region_release(pipe->winsys, &((*mt)->region));
 
       for (i = 0; i < MAX_TEXTURE_LEVELS; i++)
          if ((*mt)->level[i].image_offset)

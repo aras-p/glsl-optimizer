@@ -44,6 +44,7 @@
 
 #include "pipe/p_context.h"
 #include "pipe/p_defines.h"
+#include "pipe/p_winsys.h"
 #include "pipe/softpipe/sp_context.h"
 #include "pipe/softpipe/sp_clear.h"
 #include "pipe/softpipe/sp_tile_cache.h"
@@ -163,7 +164,8 @@ xmesa_new_color_surface(struct pipe_context *pipe, GLuint pipeFormat)
     * functions.
     */
    if (pipe)
-      xms->surface.surface.region = pipe->region_alloc(pipe, 1, 0, 0, 0x0);
+      xms->surface.surface.region = pipe->winsys->region_alloc(pipe->winsys,
+                                                               1, 0, 0, 0x0);
 
    return &xms->surface.surface;
 }

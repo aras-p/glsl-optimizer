@@ -41,6 +41,7 @@
 
 #include "pipe/p_context.h"
 #include "pipe/p_defines.h"
+#include "pipe/p_winsys.h"
 #include "st_context.h"
 #include "st_cb_fbo.h"
 #include "st_cb_texture.h"
@@ -95,10 +96,11 @@ st_renderbuffer_alloc_storage(GLcontext * ctx, struct gl_renderbuffer *rb,
       struct pipe_region *r = strb->surface->region;
       while (r->map)
          pipe->region_unmap(pipe, r);
-      pipe->region_release(pipe, &strb->surface->region);
+      pipe->winsys->region_release(pipe->winsys, &strb->surface->region);
    }
 
-   strb->surface->region = pipe->region_alloc(pipe, cpp, width, height, flags);
+   strb->surface->region = pipe->winsys->region_alloc(pipe->winsys, cpp,
+                                                      width, height, flags);
    if (!strb->surface->region)
       return GL_FALSE; /* out of memory, try s/w buffer? */
 
@@ -125,7 +127,7 @@ st_renderbuffer_delete(struct gl_renderbuffer *rb)
       ASSERT(strb);
       if (strb && strb->surface) {
          if (strb->surface->region) {
-            pipe->region_release(pipe, &strb->surface->region);
+            pipe->winsys->region_release(pipe->winsys, &strb->surface->region);
          }
          free(strb->surface);
       }

@@ -233,6 +233,63 @@ xm_user_buffer_create(struct pipe_winsys *pws, void *ptr, unsigned bytes)
 }
 
 
+
+/**
+ * Round n up to next multiple.
+ */
+static INLINE unsigned
+round_up(unsigned n, unsigned multiple)
+{
+   return (n + multiple - 1) & ~(multiple - 1);
+}
+
+
+static struct pipe_region *
+xm_region_alloc(struct pipe_winsys *winsys,
+                unsigned cpp, unsigned width, unsigned height, unsigned flags)
+{
+   struct pipe_region *region = CALLOC_STRUCT(pipe_region);
+   const unsigned alignment = 64;
+
+   region->cpp = cpp;
+   region->pitch = round_up(width, alignment / cpp);
+   region->height = height;
+   region->refcount = 1;
+
+   assert(region->pitch > 0);
+
+   region->buffer = winsys->buffer_create( winsys, alignment )
+;
+
+   /* NULL data --> just allocate the space */
+   winsys->buffer_data( winsys,
+                        region->buffer, 
+                        region->pitch * cpp * height, 
+                        NULL );
+   return region;
+}
+
+
+static void
+xm_region_release(struct pipe_winsys *winsys, struct pipe_region **region)
+{
+   if (!*region)
+      return;
+
+   assert((*region)->refcount > 0);
+   (*region)->refcount--;
+
+   if ((*region)->refcount == 0) {
+      assert((*region)->map_refcount == 0);
+
+      winsys->buffer_reference( winsys, &((*region)->buffer), NULL );
+      free(*region);
+   }
+   *region = NULL;
+}
+
+
+
 struct xmesa_pipe_winsys
 {
    struct pipe_winsys winsys;
@@ -259,6 +316,10 @@ xmesa_create_pipe_winsys( XMesaContext xmesa )
    xws->winsys.buffer_data = xm_buffer_data;
    xws->winsys.buffer_subdata = xm_buffer_subdata;
    xws->winsys.buffer_get_subdata = xm_buffer_get_subdata;
+
+   xws->winsys.region_alloc = xm_region_alloc;
+   xws->winsys.region_release = xm_region_release;
+
    xws->winsys.flush_frontbuffer = xm_flush_frontbuffer;
    xws->winsys.wait_idle = xm_wait_idle;
    xws->winsys.printf = xm_printf;
@@ -272,27 +333,9 @@ xmesa_create_pipe_winsys( XMesaContext xmesa )
 struct pipe_context *
 xmesa_create_softpipe(XMesaContext xmesa)
 {
-   struct xm_winsys *isws = CALLOC_STRUCT( xm_winsys );
+   struct xm_winsys *xm_ws = CALLOC_STRUCT( xm_winsys );
    
-   /* Fill in this struct with callbacks that softpipe will need to
-    * communicate with the window system, buffer manager, etc. 
-    *
-    * Softpipe would be happy with a malloc based memory manager, but
-    * the SwapBuffers implementation in this winsys driver requires
-    * that rendering be done to an appropriate xm_buffer.  
-    */
-#if 0
-   isws->sws.create_buffer = xm_create_buffer;
-   isws->sws.buffer_map = xm_buffer_map;
-   isws->sws.buffer_unmap = xm_buffer_unmap;
-   isws->sws.buffer_reference = xm_buffer_reference;
-   isws->sws.buffer_unreference = xm_buffer_unreference;
-   isws->sws.buffer_data = xm_buffer_data;
-   isws->sws.buffer_subdata = xm_buffer_subdata;
-   isws->sws.buffer_get_subdata = xm_buffer_get_subdata;
-#endif
-
    /* Create the softpipe context:
     */
-   return softpipe_create( xmesa_create_pipe_winsys(xmesa), &isws->sws );
+   return softpipe_create( xmesa_create_pipe_winsys(xmesa), &xm_ws->sws );
 }

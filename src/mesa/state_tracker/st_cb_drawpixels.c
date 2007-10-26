@@ -47,6 +47,7 @@
 #include "st_format.h"
 #include "pipe/p_context.h"
 #include "pipe/p_defines.h"
+#include "pipe/p_winsys.h"
 #include "pipe/tgsi/mesa/mesa_to_tgsi.h"
 #include "shader/prog_instruction.h"
 
@@ -346,7 +347,8 @@ alloc_mipmap_tree(struct st_context *st,
    cpp = st_sizeof_format(pipeFormat);
 
    /* allocate texture region/storage */
-   mt->region = st->pipe->region_alloc(st->pipe, cpp, width, height, flags);
+   mt->region = st->pipe->winsys->region_alloc(st->pipe->winsys,
+                                               cpp, width, height, flags);
 
    mt->target = PIPE_TEXTURE_2D;
    mt->internal_format = GL_RGBA;
@@ -468,7 +470,7 @@ make_mipmap_tree(struct st_context *st,
 static void
 free_mipmap_tree(struct pipe_context *pipe, struct pipe_mipmap_tree *mt)
 {
-   pipe->region_release(pipe, &mt->region);
+   pipe->winsys->region_release(pipe->winsys, &mt->region);
    free(mt);
 }
 
@@ -977,7 +979,8 @@ make_bitmap_texture(GLcontext *ctx, GLsizei width, GLsizei height,
 
 
    /* allocate texture region/storage */
-   mt->region = pipe->region_alloc(pipe, cpp, width, height, flags);
+   mt->region = pipe->winsys->region_alloc(pipe->winsys,
+                                           cpp, width, height, flags);
    pitch = mt->region->pitch;
 
    /* map texture region */

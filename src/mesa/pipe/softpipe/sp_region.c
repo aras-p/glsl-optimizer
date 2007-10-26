@@ -38,16 +38,6 @@
 #include "pipe/p_defines.h"
 
 
-/**
- * Round n up to next multiple.
- */
-static INLINE unsigned
-round_up(unsigned n, unsigned multiple)
-{
-   return (n + multiple - 1) & ~(multiple - 1);
-}
-
-
 
 static ubyte *
 sp_region_map(struct pipe_context *pipe, struct pipe_region *region)
@@ -79,51 +69,6 @@ sp_region_unmap(struct pipe_context *pipe, struct pipe_region *region)
    }
 }
 
-static struct pipe_region *
-sp_region_alloc(struct pipe_context *pipe,
-		unsigned cpp, unsigned width, unsigned height, unsigned flags)
-{
-   struct softpipe_context *sp = softpipe_context( pipe );
-   struct pipe_region *region = CALLOC_STRUCT(pipe_region);
-   const unsigned alignment = 64;
-
-   region->cpp = cpp;
-   region->pitch = round_up(width, alignment / cpp);
-   region->height = height;
-   region->refcount = 1;
-
-   assert(region->pitch > 0);
-
-   region->buffer = sp->pipe.winsys->buffer_create( sp->pipe.winsys, alignment );
-
-   /* NULL data --> just allocate the space */
-   sp->pipe.winsys->buffer_data( sp->pipe.winsys,
-				 region->buffer, 
-				 region->pitch * cpp * height, 
-				 NULL );
-   return region;
-}
-
-static void
-sp_region_release(struct pipe_context *pipe, struct pipe_region **region)
-{
-   struct softpipe_context *sp = softpipe_context( pipe );
-
-   if (!*region)
-      return;
-
-   assert((*region)->refcount > 0);
-   (*region)->refcount--;
-
-   if ((*region)->refcount == 0) {
-      assert((*region)->map_refcount == 0);
-
-      sp->pipe.winsys->buffer_reference( sp->pipe.winsys,
-                                         &((*region)->buffer), NULL );
-      free(*region);
-   }
-   *region = NULL;
-}
 
 
 /**
@@ -313,8 +258,6 @@ sp_init_region_functions(struct softpipe_context *sp)
 {
    sp->pipe.region_map = sp_region_map;
    sp->pipe.region_unmap = sp_region_unmap;
-   sp->pipe.region_alloc = sp_region_alloc;
-   sp->pipe.region_release = sp_region_release;
    sp->pipe.region_data = sp_region_data;
    sp->pipe.region_copy = sp_region_copy;
    sp->pipe.region_fill = sp_region_fill;

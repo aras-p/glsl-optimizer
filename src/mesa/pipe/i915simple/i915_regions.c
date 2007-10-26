@@ -69,65 +69,6 @@ i915_region_unmap(struct pipe_context *pipe, struct pipe_region *region)
    }
 }
 
-static struct pipe_region *
-i915_region_alloc(struct pipe_context *pipe,
-		  unsigned cpp, unsigned width, unsigned height, unsigned flags)
-{
-   struct i915_context *i915 = i915_context( pipe );
-   struct pipe_region *region = calloc(sizeof(*region), 1);
-   const unsigned alignment = 64;
-
-   /* Choose a pitch to match hardware requirements - requires 64 byte
-    * alignment of render targets.  
-    *
-    * XXX: is this ok for textures??
-    * clearly want to be able to render to textures under some
-    * circumstances, but maybe not always a requirement.
-    */
-   unsigned pitch;
-
-   /* XXX is the pitch different for textures vs. drawables? */
-   if (flags & PIPE_SURFACE_FLAG_TEXTURE)  /* or PIPE_SURFACE_FLAG_RENDER? */
-      pitch = ((cpp * width + 63) & ~63) / cpp;
-   else
-      pitch = ((cpp * width + 63) & ~63) / cpp;
-
-   region->cpp = cpp;
-   region->pitch = pitch;
-   region->height = height;     /* needed? */
-   region->refcount = 1;
-
-   region->buffer = i915->pipe.winsys->buffer_create( i915->pipe.winsys, alignment );
-
-   i915->pipe.winsys->buffer_data( i915->pipe.winsys,
-				   region->buffer, 
-				   pitch * cpp * height, 
-				   NULL );
-
-   return region;
-}
-
-static void
-i915_region_release(struct pipe_context *pipe, struct pipe_region **region)
-{
-   struct i915_context *i915 = i915_context( pipe );
-
-   if (!*region)
-      return;
-
-   assert((*region)->refcount > 0);
-   (*region)->refcount--;
-
-   if ((*region)->refcount == 0) {
-      assert((*region)->map_refcount == 0);
-
-      i915->pipe.winsys->buffer_reference( i915->pipe.winsys,
-                                           &((*region)->buffer), NULL );
-      free(*region);
-   }
-   *region = NULL;
-}
-
 
 /*
  * XXX Move this into core Mesa?
@@ -302,8 +243,6 @@ i915_init_region_functions(struct i915_context *i915)
 {
    i915->pipe.region_map = i915_region_map;
    i915->pipe.region_unmap = i915_region_unmap;
-   i915->pipe.region_alloc = i915_region_alloc;
-   i915->pipe.region_release = i915_region_release;
    i915->pipe.region_data = i915_region_data;
    i915->pipe.region_copy = i915_region_copy;
    i915->pipe.region_fill = i915_region_fill;

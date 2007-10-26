@@ -208,14 +208,7 @@ struct pipe_context {
 
    /*
     * Memory region functions
-    * Some of these may go away...
     */
-   struct pipe_region *(*region_alloc)(struct pipe_context *pipe,
-                                       unsigned cpp, unsigned width, unsigned height,
-                                       unsigned flags);
-
-   void (*region_release)(struct pipe_context *pipe, struct pipe_region **r);
-
    ubyte *(*region_map)(struct pipe_context *pipe, struct pipe_region *r);
 
    void (*region_unmap)(struct pipe_context *pipe, struct pipe_region *r);
@@ -225,7 +218,8 @@ struct pipe_context {
                        unsigned dest_offset,
                        unsigned destx, unsigned desty,
                        const void *src, unsigned src_stride,
-                       unsigned srcx, unsigned srcy, unsigned width, unsigned height);
+                       unsigned srcx, unsigned srcy,
+                       unsigned width, unsigned height);
 
    void (*region_copy)(struct pipe_context *pipe,
                        struct pipe_region *dest,
@@ -234,7 +228,8 @@ struct pipe_context {
                        struct pipe_region *src,	/* don't make this const - 
 						   need to map/unmap */
                        unsigned src_offset,
-                       unsigned srcx, unsigned srcy, unsigned width, unsigned height);
+                       unsigned srcx, unsigned srcy,
+                       unsigned width, unsigned height);
 
    void (*region_fill)(struct pipe_context *pipe,
                        struct pipe_region *dst,

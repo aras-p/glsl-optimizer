@@ -50,6 +50,13 @@ struct pipe_buffer_handle;
  * driver and the hardware driver about the format of command buffers,
  * etc.
  */
+
+
+struct pipe_region;
+
+/** Opaque type */
+struct pipe_buffer_handle;
+
 struct pipe_winsys
 {
    /**
@@ -61,6 +68,13 @@ struct pipe_winsys
    /** Debug output */
    void (*printf)( struct pipe_winsys *sws,
 		   const char *, ... );	
+
+
+   struct pipe_region *(*region_alloc)(struct pipe_winsys *ws,
+                                       unsigned cpp, unsigned width,
+                                       unsigned height, unsigned flags);
+
+   void (*region_release)(struct pipe_winsys *ws, struct pipe_region **r);
 
 
    /**
