@@ -90,7 +90,7 @@ static INLINE struct vbuf_stage *vbuf_stage( struct draw_stage *stage )
 
 static boolean overflow( void *map, void *ptr, unsigned bytes, unsigned bufsz )
 {
-   unsigned long used = (char *)ptr - (char *)map;
+   unsigned long used = (unsigned long) ((char *) ptr - (char *) map);
    return (used + bytes) > bufsz;
 }
 
@@ -143,7 +143,7 @@ static void vbuf_tri( struct draw_stage *stage,
       if (prim->v[i]->vertex_id == 0xffff) 
          emit_vertex( vbuf, prim->v[i] );
       
-      vbuf->element_map[vbuf->nr_elements++] = prim->v[i]->vertex_id;
+      vbuf->element_map[vbuf->nr_elements++] = (ushort) prim->v[i]->vertex_id;
    }
 }
 
@@ -161,7 +161,7 @@ static void vbuf_line(struct draw_stage *stage,
       if (prim->v[i]->vertex_id == 0xffff) 
          emit_vertex( vbuf, prim->v[i] );
 
-      vbuf->element_map[vbuf->nr_elements++] = prim->v[i]->vertex_id;
+      vbuf->element_map[vbuf->nr_elements++] = (ushort) prim->v[i]->vertex_id;
    }   
 }
 
@@ -177,7 +177,7 @@ static void vbuf_point(struct draw_stage *stage,
    if (prim->v[0]->vertex_id == 0xffff) 
       emit_vertex( vbuf, prim->v[0] );
    
-   vbuf->element_map[vbuf->nr_elements++] = prim->v[0]->vertex_id;
+   vbuf->element_map[vbuf->nr_elements++] = (ushort) prim->v[0]->vertex_id;
 }
 
 
@@ -230,7 +230,7 @@ static void vbuf_flush_elements( struct draw_stage *stage )
                   vbuf->element_map,
                   vbuf->nr_elements,
                   vbuf->vertex_map,
-                  (vbuf->vertex_ptr - vbuf->vertex_map) / vbuf->vertex_size );
+                  (unsigned) (vbuf->vertex_ptr - vbuf->vertex_map) / vbuf->vertex_size );
       
       vbuf->nr_elements = 0;
 
