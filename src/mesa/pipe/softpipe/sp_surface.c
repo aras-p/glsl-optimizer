@@ -27,6 +27,7 @@
 
 #include "pipe/p_defines.h"
 #include "pipe/p_util.h"
+#include "pipe/p_winsys.h"
 #include "sp_context.h"
 #include "sp_state.h"
 #include "sp_surface.h"
@@ -361,7 +362,7 @@ i8_get_tile(struct pipe_surface *ps,
 
 static void
 a8_l8_get_tile(struct pipe_surface *ps,
-            unsigned x, unsigned y, unsigned w, unsigned h, float *p)
+               unsigned x, unsigned y, unsigned w, unsigned h, float *p)
 {
    const ushort *src
       = ((const ushort *) (ps->region->map + ps->offset))
@@ -466,7 +467,7 @@ void
 softpipe_init_surface_funcs(struct softpipe_surface *sps)
 {
    assert(sps->surface.format);
-
+#if 0
    switch (sps->surface.format) {
    case PIPE_FORMAT_U_A8_R8_G8_B8:
       sps->get_tile = a8r8g8b8_get_tile;
@@ -507,6 +508,7 @@ softpipe_init_surface_funcs(struct softpipe_surface *sps)
    default:
       assert(0);
    }
+#endif
 }
 
 
@@ -555,7 +557,7 @@ softpipe_get_tex_surface(struct pipe_context *pipe,
       assert(zslice == 0);
    }
 
-   ps = pipe->surface_alloc(pipe, mt->format);
+   ps = pipe->winsys->surface_alloc(pipe->winsys, mt->format);
    if (ps) {
       assert(ps->format);
       assert(ps->refcount);
@@ -637,26 +639,90 @@ softpipe_put_tile(struct pipe_context *pipe,
 
 
 /* XXX TEMPORARY */
-static void
-get_tile_rgba_generic(struct pipe_context *pipe,
-                      struct pipe_surface *ps,
-                      uint x, uint y, uint w, uint h,
-                      float *p)
+void
+softpipe_get_tile_rgba(struct pipe_context *pipe,
+                       struct pipe_surface *ps,
+                       uint x, uint y, uint w, uint h,
+                       float *p)
 {
-   struct softpipe_surface *sps = softpipe_surface(ps);
-   sps->get_tile(ps, x, y, w, h, p);
+   switch (ps->format) {
+   case PIPE_FORMAT_U_A8_R8_G8_B8:
+      a8r8g8b8_get_tile(ps, x, y, w, h, p);
+      break;
+   case PIPE_FORMAT_U_A1_R5_G5_B5:
+      a1r5g5b5_get_tile(ps, x, y, w, h, p);
+      break;
+   case PIPE_FORMAT_U_L8:
+      l8_get_tile(ps, x, y, w, h, p);
+      break;
+   case PIPE_FORMAT_U_A8:
+      a8_get_tile(ps, x, y, w, h, p);
+      break;
+   case PIPE_FORMAT_U_I8:
+      i8_get_tile(ps, x, y, w, h, p);
+      break;
+   case PIPE_FORMAT_U_A8_L8:
+      a8_l8_get_tile(ps, x, y, w, h, p);
+      break;
+   case PIPE_FORMAT_S_R16_G16_B16_A16:
+      r16g16b16a16_get_tile(ps, x, y, w, h, p);
+      break;
+   case PIPE_FORMAT_U_Z16:
+      z16_get_tile(ps, x, y, w, h, p);
+      break;
+   case PIPE_FORMAT_U_Z32:
+      z32_get_tile(ps, x, y, w, h, p);
+      break;
+   case PIPE_FORMAT_S8_Z24:
+      s8z24_get_tile(ps, x, y, w, h, p);
+      break;
+   default:
+      assert(0);
+   }
 }
 
 
 /* XXX TEMPORARY */
-static void
-put_tile_rgba_generic(struct pipe_context *pipe,
-                      struct pipe_surface *ps,
-                      uint x, uint y, uint w, uint h,
-                      const float *p)
+void
+softpipe_put_tile_rgba(struct pipe_context *pipe,
+                       struct pipe_surface *ps,
+                       uint x, uint y, uint w, uint h,
+                       const float *p)
 {
-   struct softpipe_surface *sps = softpipe_surface(ps);
-   sps->put_tile(ps, x, y, w, h, p);
+   switch (ps->format) {
+   case PIPE_FORMAT_U_A8_R8_G8_B8:
+      a8r8g8b8_put_tile(ps, x, y, w, h, p);
+      break;
+   case PIPE_FORMAT_U_A1_R5_G5_B5:
+      /*a1r5g5b5_put_tile(ps, x, y, w, h, p);*/
+      break;
+   case PIPE_FORMAT_U_L8:
+      /*l8_put_tile(ps, x, y, w, h, p);*/
+      break;
+   case PIPE_FORMAT_U_A8:
+      /*a8_put_tile(ps, x, y, w, h, p);*/
+      break;
+   case PIPE_FORMAT_U_I8:
+      /*i8_put_tile(ps, x, y, w, h, p);*/
+      break;
+   case PIPE_FORMAT_U_A8_L8:
+      /*a8_l8_put_tile(ps, x, y, w, h, p);*/
+      break;
+   case PIPE_FORMAT_S_R16_G16_B16_A16:
+      r16g16b16a16_put_tile(ps, x, y, w, h, p);
+      break;
+   case PIPE_FORMAT_U_Z16:
+      /*z16_put_tile(ps, x, y, w, h, p);*/
+      break;
+   case PIPE_FORMAT_U_Z32:
+      /*z32_put_tile(ps, x, y, w, h, p);*/
+      break;
+   case PIPE_FORMAT_S8_Z24:
+      /*s8z24_put_tile(ps, x, y, w, h, p);*/
+      break;
+   default:
+      assert(0);
+   }
 }
 
 
@@ -664,11 +730,12 @@ put_tile_rgba_generic(struct pipe_context *pipe,
 void
 sp_init_surface_functions(struct softpipe_context *sp)
 {
+#if 0
    sp->pipe.surface_alloc = softpipe_surface_alloc;
-
+#endif
    sp->pipe.get_tile = softpipe_get_tile;
    sp->pipe.put_tile = softpipe_put_tile;
 
-   sp->pipe.get_tile_rgba = get_tile_rgba_generic;
-   sp->pipe.put_tile_rgba = put_tile_rgba_generic;
+   sp->pipe.get_tile_rgba = softpipe_get_tile_rgba;
+   sp->pipe.put_tile_rgba = softpipe_put_tile_rgba;
 }

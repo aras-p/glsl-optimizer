@@ -598,7 +598,7 @@ struct pipe_context;
 
 struct xmesa_surface
 {
-   struct softpipe_surface surface;
+   struct pipe_surface surface;
    struct xmesa_renderbuffer *xrb;
 };
 
@@ -618,8 +618,15 @@ xmesa_surface_alloc(struct pipe_context *pipe, GLuint format);
 extern struct pipe_surface *
 xmesa_new_color_surface(struct pipe_context *pipe, GLuint format);
 
-extern const GLuint *
-xmesa_supported_formats(struct pipe_context *pipe, GLuint *numFormats);
+extern const uint *
+xmesa_supported_formats(struct pipe_context *pipe, uint *numFormats);
 
+extern void
+xmesa_get_tile_rgba(struct pipe_context *pipe, struct pipe_surface *ps,
+                    uint x, uint y, uint w, uint h, float *p);
+
+extern void
+xmesa_put_tile_rgba(struct pipe_context *pipe, struct pipe_surface *ps,
+                    uint x, uint y, uint w, uint h, const float *p);
 
 #endif

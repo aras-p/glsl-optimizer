@@ -176,13 +176,7 @@ struct pipe_context {
                                unsigned index,
                                const struct pipe_feedback_buffer *);
 
-   /*
-    * Surface functions
-    * This might go away...
-    */
-   struct pipe_surface *(*surface_alloc)(struct pipe_context *pipe,
-                                         unsigned format);
-
+   /** Get a surface which is a "view" into a texture */
    struct pipe_surface *(*get_tex_surface)(struct pipe_context *pipe,
                                            struct pipe_mipmap_tree *texture,
                                            unsigned face, unsigned level,
@@ -198,7 +192,6 @@ struct pipe_context {
                     struct pipe_surface *ps,
                     uint x, uint y, uint w, uint h,
                     const void *p, int src_stride);
-
    /* XXX temporary here, move these to softpipe */
    void (*get_tile_rgba)(struct pipe_context *pipe, struct pipe_surface *ps,
                          uint x, uint y, uint w, uint h, float *p);

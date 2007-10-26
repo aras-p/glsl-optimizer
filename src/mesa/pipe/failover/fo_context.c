@@ -134,7 +134,9 @@ struct pipe_context *failover_create( struct pipe_context *hw,
 
    failover_init_state_functions( failover );
 
+#if 0
    failover->pipe.surface_alloc = hw->surface_alloc;
+#endif
    failover->pipe.get_tex_surface = hw->get_tex_surface;
 
    failover->pipe.region_map = hw->region_map;

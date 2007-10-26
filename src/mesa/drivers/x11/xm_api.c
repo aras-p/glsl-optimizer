@@ -1610,8 +1610,15 @@ XMesaContext XMesaCreateContext( XMesaVisual v, XMesaContext share_list )
    st_create_context( mesaCtx,
                       xmesa_create_softpipe( c ) );
 
+   /* override these functions, as if the xlib driver were derived from
+    * the softpipe driver.
+    */
+#if 0
    mesaCtx->st->pipe->surface_alloc = xmesa_surface_alloc;
+#endif
    mesaCtx->st->pipe->supported_formats = xmesa_supported_formats;
+   mesaCtx->st->pipe->get_tile_rgba = xmesa_get_tile_rgba;
+   mesaCtx->st->pipe->put_tile_rgba = xmesa_put_tile_rgba;
 
    mesaCtx->st->haveFramebufferRegions = GL_FALSE;
 

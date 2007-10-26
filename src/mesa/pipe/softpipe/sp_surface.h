@@ -46,19 +46,32 @@ struct softpipe_tile_cache;
 struct softpipe_surface {
    struct pipe_surface surface;
 
+#if 0
    /* XXX these are temporary here */
    void (*get_tile)(struct pipe_surface *ps,
                     uint x, uint y, uint w, uint h, float *p);
    void (*put_tile)(struct pipe_surface *ps,
                     uint x, uint y, uint w, uint h, const float *p);
+#endif
 };
-
 
 extern struct pipe_surface *
 softpipe_get_tex_surface(struct pipe_context *pipe,
                          struct pipe_mipmap_tree *mt,
                          unsigned face, unsigned level, unsigned zslice);
 
+
+extern void
+softpipe_get_tile_rgba(struct pipe_context *pipe,
+                       struct pipe_surface *ps,
+                       uint x, uint y, uint w, uint h,
+                       float *p);
+
+extern void
+softpipe_put_tile_rgba(struct pipe_context *pipe,
+                       struct pipe_surface *ps,
+                       uint x, uint y, uint w, uint h,
+                       const float *p);
 
 extern void
 softpipe_init_surface_funcs(struct softpipe_surface *sps);

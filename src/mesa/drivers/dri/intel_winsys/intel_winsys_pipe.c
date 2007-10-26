@@ -253,6 +253,18 @@ intel_i915_region_release(struct pipe_winsys *winsys,
 }
 
 
+static struct pipe_surface *
+intel_i915_surface_alloc(struct pipe_winsys *winsys, unsigned format)
+{
+   struct pipe_surface *surf = CALLOC_STRUCT(pipe_surface);
+   if (surf) {
+      surf->format = format;
+      surf->refcount = 1;
+   }
+   return surf;
+}
+
+
 static void
 intel_printf( struct pipe_winsys *sws, const char *fmtString, ... )
 {
@@ -297,6 +309,8 @@ intel_create_pipe_winsys( struct intel_context *intel )
 
    iws->winsys.region_alloc = intel_i915_region_alloc;
    iws->winsys.region_release = intel_i915_region_release;
+
+   iws->winsys.surface_alloc = intel_i915_surface_alloc;
 
    return &iws->winsys;
 }

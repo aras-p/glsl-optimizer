@@ -289,6 +289,31 @@ xm_region_release(struct pipe_winsys *winsys, struct pipe_region **region)
 }
 
 
+/**
+ * Called via pipe->surface_alloc() to create new surfaces (textures,
+ * renderbuffers, etc.
+ */
+static struct pipe_surface *
+xm_surface_alloc(struct pipe_winsys *ws, GLuint pipeFormat)
+{
+   struct xmesa_surface *xms = CALLOC_STRUCT(xmesa_surface);
+
+   assert(ws);
+   assert(pipeFormat);
+
+   xms->surface.format = pipeFormat;
+   xms->surface.refcount = 1;
+#if 0
+   /*
+    * This is really just a softpipe surface, not an XImage/Pixmap surface.
+    */
+   softpipe_init_surface_funcs(&xms->surface);
+#endif
+   return &xms->surface;
+}
+
+
+
 
 struct xmesa_pipe_winsys
 {
@@ -319,6 +344,8 @@ xmesa_create_pipe_winsys( XMesaContext xmesa )
 
    xws->winsys.region_alloc = xm_region_alloc;
    xws->winsys.region_release = xm_region_release;
+
+   xws->winsys.surface_alloc = xm_surface_alloc;
 
    xws->winsys.flush_frontbuffer = xm_flush_frontbuffer;
    xws->winsys.wait_idle = xm_wait_idle;

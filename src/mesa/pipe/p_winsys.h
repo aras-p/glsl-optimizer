@@ -77,6 +77,10 @@ struct pipe_winsys
    void (*region_release)(struct pipe_winsys *ws, struct pipe_region **r);
 
 
+   /** allocate a new surface (no context dependency) */
+   struct pipe_surface *(*surface_alloc)(struct pipe_winsys *ws,
+                                         unsigned format);
+
    /**
     * The buffer manager is modeled after the dri_bufmgr interface, which 
     * in turn is modeled after the ARB_vertex_buffer_object extension,  

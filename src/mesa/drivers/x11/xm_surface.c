@@ -48,6 +48,7 @@
 #include "pipe/softpipe/sp_context.h"
 #include "pipe/softpipe/sp_clear.h"
 #include "pipe/softpipe/sp_tile_cache.h"
+#include "pipe/softpipe/sp_surface.h"
 #include "state_tracker/st_context.h"
 
 
@@ -67,6 +68,13 @@ xmesa_surf(struct softpipe_surface *sps)
 }
 
 
+static INLINE struct xmesa_surface *
+xmesa_surface(struct pipe_surface *ps)
+{
+   return (struct xmesa_surface *) ps;
+}
+
+
 static INLINE struct xmesa_renderbuffer *
 xmesa_rb(struct softpipe_surface *sps)
 {
@@ -78,53 +86,71 @@ xmesa_rb(struct softpipe_surface *sps)
 #define FLIP(Y) Y = xrb->St.Base.Height - (Y) - 1;
 
 
-static void
-get_tile(struct pipe_surface *ps,
-         uint x, uint y, uint w, uint h, float *p)
+void
+xmesa_get_tile_rgba(struct pipe_context *pipe, struct pipe_surface *ps,
+                    uint x, uint y, uint w, uint h, float *p)
 {
-   struct xmesa_renderbuffer *xrb = xmesa_rb((struct softpipe_surface *) ps);
-   GLubyte tmp[MAX_WIDTH * 4];
-   GLuint i, j;
-   uint w0 = w;
-   GET_CURRENT_CONTEXT(ctx);
+   struct xmesa_surface *xms = xmesa_surface(ps);
+   struct xmesa_renderbuffer *xrb = xms->xrb;
 
-   CLIP_TILE;
+   if (xrb) {
+      /* this is a front/back color buffer */
+      GLubyte tmp[MAX_WIDTH * 4];
+      GLuint i, j;
+      uint w0 = w;
+      GET_CURRENT_CONTEXT(ctx);
 
-   FLIP(y);
-   for (i = 0; i < h; i++) {
-      xrb->St.Base.GetRow(ctx, &xrb->St.Base, w, x, y - i, tmp);
-      for (j = 0; j < w * 4; j++) {
-         p[j] = UBYTE_TO_FLOAT(tmp[j]);
+      CLIP_TILE;
+
+      FLIP(y);
+      for (i = 0; i < h; i++) {
+         xrb->St.Base.GetRow(ctx, &xrb->St.Base, w, x, y - i, tmp);
+         for (j = 0; j < w * 4; j++) {
+            p[j] = UBYTE_TO_FLOAT(tmp[j]);
+         }
+         p += w0 * 4;
       }
-      p += w0 * 4;
+   }
+   else {
+      /* other softpipe surface */
+      softpipe_get_tile_rgba(pipe, ps, x, y, w, h, p);
    }
 }
 
 
-static void
-put_tile(struct pipe_surface *ps,
-         uint x, uint y, uint w, uint h, const float *p)
+void
+xmesa_put_tile_rgba(struct pipe_context *pipe, struct pipe_surface *ps,
+                    uint x, uint y, uint w, uint h, const float *p)
 {
-   struct xmesa_renderbuffer *xrb = xmesa_rb((struct softpipe_surface *) ps);
-   GLubyte tmp[MAX_WIDTH * 4];
-   GLuint i, j;
-   uint w0 = w;
-   GET_CURRENT_CONTEXT(ctx);
-   CLIP_TILE;
-   FLIP(y);
-   for (i = 0; i < h; i++) {
-      for (j = 0; j < w * 4; j++) {
-         UNCLAMPED_FLOAT_TO_UBYTE(tmp[j], p[j]);
+   struct xmesa_surface *xms = xmesa_surface(ps);
+   struct xmesa_renderbuffer *xrb = xms->xrb;
+
+   if (xrb) {
+      /* this is a front/back color buffer */
+      GLubyte tmp[MAX_WIDTH * 4];
+      GLuint i, j;
+      uint w0 = w;
+      GET_CURRENT_CONTEXT(ctx);
+      CLIP_TILE;
+      FLIP(y);
+      for (i = 0; i < h; i++) {
+         for (j = 0; j < w * 4; j++) {
+            UNCLAMPED_FLOAT_TO_UBYTE(tmp[j], p[j]);
+         }
+         xrb->St.Base.PutRow(ctx, &xrb->St.Base, w, x, y - i, tmp, NULL);
+         p += w0 * 4;
       }
-      xrb->St.Base.PutRow(ctx, &xrb->St.Base, w, x, y - i, tmp, NULL);
-      p += w0 * 4;
-   }
 #if 0 /* debug: flush */
-   {
-      XMesaContext xm = XMESA_CONTEXT(ctx);
-      XSync(xm->display, 0);
-   }
+      {
+         XMesaContext xm = XMESA_CONTEXT(ctx);
+         XSync(xm->display, 0);
+      }
 #endif
+   }
+   else {
+      /* other softpipe surface */
+      softpipe_put_tile_rgba(pipe, ps, x, y, w, h, p);
+   }
 }
 
 
@@ -141,12 +167,15 @@ xmesa_new_color_surface(struct pipe_context *pipe, GLuint pipeFormat)
 
    assert(pipeFormat);
 
-   xms->surface.surface.format = pipeFormat;
-   xms->surface.surface.refcount = 1;
+   xms->surface.format = pipeFormat;
+   xms->surface.refcount = 1;
 
+#if 0
    /* some of the functions plugged in by this call will get overridden */
    softpipe_init_surface_funcs(&xms->surface);
+#endif
 
+#if 0
    switch (pipeFormat) {
    case PIPE_FORMAT_U_A8_R8_G8_B8:
       xms->surface.get_tile = get_tile;
@@ -157,6 +186,7 @@ xmesa_new_color_surface(struct pipe_context *pipe, GLuint pipeFormat)
    default:
       abort();
    }
+#endif
 
    /* Note, the region we allocate doesn't actually have any storage
     * since we're drawing into an XImage or Pixmap.
@@ -164,10 +194,10 @@ xmesa_new_color_surface(struct pipe_context *pipe, GLuint pipeFormat)
     * functions.
     */
    if (pipe)
-      xms->surface.surface.region = pipe->winsys->region_alloc(pipe->winsys,
-                                                               1, 0, 0, 0x0);
+      xms->surface.region = pipe->winsys->region_alloc(pipe->winsys,
+                                                       1, 0, 0, 0x0);
 
-   return &xms->surface.surface;
+   return &xms->surface;
 }
 
 
@@ -183,14 +213,15 @@ xmesa_surface_alloc(struct pipe_context *pipe, GLuint pipeFormat)
    assert(pipe);
    assert(pipeFormat);
 
-   xms->surface.surface.format = pipeFormat;
-   xms->surface.surface.refcount = 1;
+   xms->surface.format = pipeFormat;
+   xms->surface.refcount = 1;
+#if 0
    /*
     * This is really just a softpipe surface, not an XImage/Pixmap surface.
     */
    softpipe_init_surface_funcs(&xms->surface);
-
-   return &xms->surface.surface;
+#endif
+   return &xms->surface;
 }
 
 
