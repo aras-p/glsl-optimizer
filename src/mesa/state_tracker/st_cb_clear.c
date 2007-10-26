@@ -464,7 +464,9 @@ static void
 clear_depth_buffer(GLcontext *ctx, struct gl_renderbuffer *rb)
 {
    struct st_renderbuffer *strb = st_renderbuffer(rb);
+   /*
    const GLboolean isDS = is_depth_stencil_format(strb->surface->format);
+   */
 
    assert(strb->surface->format);
 
