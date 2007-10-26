@@ -90,6 +90,12 @@ static void colormask_begin(struct quad_stage *qs)
 }
 
 
+static void colormask_destroy(struct quad_stage *qs)
+{
+   free( qs );
+}
+
+
 struct quad_stage *sp_quad_colormask_stage( struct softpipe_context *softpipe )
 {
    struct quad_stage *stage = CALLOC_STRUCT(quad_stage);
@@ -97,6 +103,7 @@ struct quad_stage *sp_quad_colormask_stage( struct softpipe_context *softpipe )
    stage->softpipe = softpipe;
    stage->begin = colormask_begin;
    stage->run = colormask_quad;
+   stage->destroy = colormask_destroy;
 
    return stage;
 }

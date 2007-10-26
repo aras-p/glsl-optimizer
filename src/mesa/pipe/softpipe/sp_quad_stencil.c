@@ -323,6 +323,12 @@ static void stencil_begin(struct quad_stage *qs)
 }
 
 
+static void stencil_destroy(struct quad_stage *qs)
+{
+   free( qs );
+}
+
+
 struct quad_stage *sp_quad_stencil_test_stage( struct softpipe_context *softpipe )
 {
    struct quad_stage *stage = CALLOC_STRUCT(quad_stage);
@@ -330,6 +336,7 @@ struct quad_stage *sp_quad_stencil_test_stage( struct softpipe_context *softpipe
    stage->softpipe = softpipe;
    stage->begin = stencil_begin;
    stage->run = stencil_test_quad;
+   stage->destroy = stencil_destroy;
 
    return stage;
 }

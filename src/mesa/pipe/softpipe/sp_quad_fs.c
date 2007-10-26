@@ -190,6 +190,12 @@ static void shade_begin(struct quad_stage *qs)
 }
 
 
+static void shade_destroy(struct quad_stage *qs)
+{
+   free( qs );
+}
+
+
 struct quad_stage *sp_quad_shade_stage( struct softpipe_context *softpipe )
 {
    struct quad_shade_stage *qss = CALLOC_STRUCT(quad_shade_stage);
@@ -204,6 +210,7 @@ struct quad_stage *sp_quad_shade_stage( struct softpipe_context *softpipe )
    qss->stage.softpipe = softpipe;
    qss->stage.begin = shade_begin;
    qss->stage.run = shade_quad;
+   qss->stage.destroy = shade_destroy;
 
    /* set TGSI sampler state that's constant */
    for (i = 0; i < PIPE_MAX_SAMPLERS; i++) {

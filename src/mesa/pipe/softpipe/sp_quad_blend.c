@@ -727,6 +727,12 @@ static void blend_begin(struct quad_stage *qs)
 }
 
 
+static void blend_destroy(struct quad_stage *qs)
+{
+   free( qs );
+}
+
+
 struct quad_stage *sp_quad_blend_stage( struct softpipe_context *softpipe )
 {
    struct quad_stage *stage = CALLOC_STRUCT(quad_stage);
@@ -734,6 +740,7 @@ struct quad_stage *sp_quad_blend_stage( struct softpipe_context *softpipe )
    stage->softpipe = softpipe;
    stage->begin = blend_begin;
    stage->run = blend_quad;
+   stage->destroy = blend_destroy;
 
    return stage;
 }

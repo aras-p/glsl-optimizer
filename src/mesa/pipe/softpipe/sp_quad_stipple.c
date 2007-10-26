@@ -65,6 +65,12 @@ static void stipple_begin(struct quad_stage *qs)
 }
 
 
+static void stipple_destroy(struct quad_stage *qs)
+{
+   free( qs );
+}
+
+
 struct quad_stage *
 sp_quad_polygon_stipple_stage( struct softpipe_context *softpipe )
 {
@@ -73,6 +79,7 @@ sp_quad_polygon_stipple_stage( struct softpipe_context *softpipe )
    stage->softpipe = softpipe;
    stage->begin = stipple_begin;
    stage->run = stipple_quad;
+   stage->destroy = stipple_destroy;
 
    return stage;
 }

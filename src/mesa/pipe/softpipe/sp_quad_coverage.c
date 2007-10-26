@@ -69,6 +69,12 @@ static void coverage_begin(struct quad_stage *qs)
 }
 
 
+static void coverage_destroy(struct quad_stage *qs)
+{
+   free( qs );
+}
+
+
 struct quad_stage *sp_quad_coverage_stage( struct softpipe_context *softpipe )
 {
    struct quad_stage *stage = CALLOC_STRUCT(quad_stage);
@@ -76,6 +82,7 @@ struct quad_stage *sp_quad_coverage_stage( struct softpipe_context *softpipe )
    stage->softpipe = softpipe;
    stage->begin = coverage_begin;
    stage->run = coverage_quad;
+   stage->destroy = coverage_destroy;
 
    return stage;
 }

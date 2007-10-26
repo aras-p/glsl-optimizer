@@ -88,6 +88,12 @@ static void alpha_test_begin(struct quad_stage *qs)
 }
 
 
+static void alpha_test_destroy(struct quad_stage *qs)
+{
+   free( qs );
+}
+
+
 struct quad_stage *
 sp_quad_alpha_test_stage( struct softpipe_context *softpipe )
 {
@@ -96,6 +102,7 @@ sp_quad_alpha_test_stage( struct softpipe_context *softpipe )
    stage->softpipe = softpipe;
    stage->begin = alpha_test_begin;
    stage->run = alpha_test_quad;
+   stage->destroy = alpha_test_destroy;
 
    return stage;
 }

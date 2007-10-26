@@ -231,6 +231,12 @@ static void depth_test_begin(struct quad_stage *qs)
 }
 
 
+static void depth_test_destroy(struct quad_stage *qs)
+{
+   free( qs );
+}
+
+
 struct quad_stage *sp_quad_depth_test_stage( struct softpipe_context *softpipe )
 {
    struct quad_stage *stage = CALLOC_STRUCT(quad_stage);
@@ -238,6 +244,7 @@ struct quad_stage *sp_quad_depth_test_stage( struct softpipe_context *softpipe )
    stage->softpipe = softpipe;
    stage->begin = depth_test_begin;
    stage->run = depth_test_quad;
+   stage->destroy = depth_test_destroy;
 
    return stage;
 }

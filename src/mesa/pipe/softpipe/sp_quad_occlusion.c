@@ -64,6 +64,11 @@ static void occlusion_begin(struct quad_stage *qs)
 }
 
 
+static void occlusion_destroy(struct quad_stage *qs)
+{
+   free( qs );
+}
+
 
 struct quad_stage *sp_quad_occlusion_stage( struct softpipe_context *softpipe )
 {
@@ -72,6 +77,7 @@ struct quad_stage *sp_quad_occlusion_stage( struct softpipe_context *softpipe )
    stage->softpipe = softpipe;
    stage->begin = occlusion_begin;
    stage->run = occlusion_count_quad;
+   stage->destroy = occlusion_destroy;
 
    return stage;
 }

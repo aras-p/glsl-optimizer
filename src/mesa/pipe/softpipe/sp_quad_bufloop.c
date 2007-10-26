@@ -50,6 +50,12 @@ static void cbuf_loop_begin(struct quad_stage *qs)
 }
 
 
+static void cbuf_loop_destroy(struct quad_stage *qs)
+{
+   free( qs );
+}
+
+
 /**
  * Create the colorbuffer loop stage.
  * This is used to implement multiple render targets and GL_FRONT_AND_BACK
@@ -62,6 +68,7 @@ struct quad_stage *sp_quad_bufloop_stage( struct softpipe_context *softpipe )
    stage->softpipe = softpipe;
    stage->begin = cbuf_loop_begin;
    stage->run = cbuf_loop_quad;
+   stage->destroy = cbuf_loop_destroy;
 
    return stage;
 }
