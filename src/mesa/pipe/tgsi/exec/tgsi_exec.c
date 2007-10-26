@@ -170,6 +170,7 @@ tgsi_exec_prepare( struct tgsi_exec_machine *mach )
          break;
 
       case TGSI_TOKEN_TYPE_IMMEDIATE:
+#if 0
          assert( (parse.FullToken.FullImmediate.Immediate.Size - 1) % 4 == 0 );
          assert( mach->ImmLimit + (parse.FullToken.FullImmediate.Immediate.Size - 1) / 4 <= 256 );
 
@@ -177,6 +178,16 @@ tgsi_exec_prepare( struct tgsi_exec_machine *mach )
             mach->Imms[mach->ImmLimit + i / 4][i % 4] = parse.FullToken.FullImmediate.u.ImmediateFloat32[i].Float;
          }
          mach->ImmLimit += (parse.FullToken.FullImmediate.Immediate.Size - 1) / 4;
+#else
+         /* Add this immediate value (vector of 1,2,3,4 floats) to immediates array */
+         assert( parse.FullToken.FullImmediate.Immediate.Size <= 4 );
+         assert( mach->ImmLimit < TGSI_EXEC_NUM_IMMEDIATES );
+
+         for( i = 0; i < parse.FullToken.FullImmediate.Immediate.Size; i++ ) {
+            mach->Imms[mach->ImmLimit][i] = parse.FullToken.FullImmediate.u.ImmediateFloat32[i].Float;
+         }
+         mach->ImmLimit++;
+#endif
          break;
 
       case TGSI_TOKEN_TYPE_INSTRUCTION:

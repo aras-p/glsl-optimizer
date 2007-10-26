@@ -93,11 +93,11 @@ struct tgsi_exec_labels
 
 #define TGSI_EXEC_NUM_TEMPS   (32 + 4)
 #define TGSI_EXEC_NUM_ADDRS   1
+#define TGSI_EXEC_NUM_IMMEDIATES  256
 
 #define TGSI_EXEC_MAX_COND_NESTING  10
 #define TGSI_EXEC_MAX_LOOP_NESTING  10
 #define TGSI_EXEC_MAX_CALL_NESTING  10
-
 
 /**
  * Run-time virtual machine state for executing TGSI shader.
@@ -120,7 +120,7 @@ struct tgsi_exec_machine
 
    struct tgsi_sampler           *Samplers;
 
-   float                         Imms[256][4];
+   float                         Imms[TGSI_EXEC_NUM_IMMEDIATES][4];
    unsigned                      ImmLimit;
    float                         (*Consts)[4];
    struct tgsi_exec_vector       *Inputs;

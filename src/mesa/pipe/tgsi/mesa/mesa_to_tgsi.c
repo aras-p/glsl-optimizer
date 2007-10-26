@@ -1,8 +1,11 @@
 #include "tgsi_platform.h"
 #include "tgsi_mesa.h"
 #include "pipe/tgsi/mesa/mesa_to_tgsi.h"
+#include "shader/prog_parameter.h"
 
 #define TGSI_DEBUG 0
+
+#define EMIT_IMMEDIATES 0
 
 
 /*
@@ -21,9 +24,14 @@ map_register_file(
    //case PROGRAM_ENV_PARAM:
    case PROGRAM_STATE_VAR:
    case PROGRAM_NAMED_PARAM:
-   case PROGRAM_CONSTANT:
    case PROGRAM_UNIFORM:
       return TGSI_FILE_CONSTANT;
+   case PROGRAM_CONSTANT:
+#if EMIT_IMMEDIATES
+      return TGSI_FILE_IMMEDIATE;
+#else
+      return TGSI_FILE_CONSTANT;
+#endif
    case PROGRAM_INPUT:
       return TGSI_FILE_INPUT;
    case PROGRAM_OUTPUT:
@@ -49,7 +57,8 @@ map_register_file_index(
    GLuint file,
    GLuint index,
    const GLuint inputMapping[],
-   const GLuint outputMapping[])
+   const GLuint outputMapping[],
+   const GLuint immediateMapping[])
 {
    switch( file ) {
    case TGSI_FILE_INPUT:
@@ -58,6 +67,11 @@ map_register_file_index(
 
    case TGSI_FILE_OUTPUT:
       return outputMapping[index];
+
+#if EMIT_IMMEDIATES
+   case TGSI_FILE_IMMEDIATE:
+      return immediateMapping[index];
+#endif
 
    default:
       return index;
@@ -119,12 +133,26 @@ convert_writemask(
    return writemask;
 }
 
+#if EMIT_IMMEDIATES
+static struct tgsi_full_immediate
+make_immediate(const float *value, uint size)
+{
+   struct tgsi_full_immediate imm;
+   imm.Immediate.Type = TGSI_TOKEN_TYPE_IMMEDIATE;
+   imm.Immediate.Size = size;
+   imm.Immediate.DataType = TGSI_IMM_FLOAT32;
+   imm.u.ImmediateFloat32 = (struct tgsi_immediate_float32 *) value;
+   return imm;
+}
+#endif
+
 static void
 compile_instruction(
    const struct prog_instruction *inst,
    struct tgsi_full_instruction *fullinst,
    const GLuint inputMapping[],
    const GLuint outputMapping[],
+   const GLuint immediateMapping[],
    GLuint preamble_size,
    GLuint processor )
 {
@@ -144,7 +172,8 @@ compile_instruction(
       fulldst->DstRegister.File,
       inst->DstReg.Index,
       inputMapping,
-      outputMapping
+      outputMapping,
+      NULL
       );
    fulldst->DstRegister.WriteMask = convert_writemask( inst->DstReg.WriteMask );
 
@@ -157,7 +186,8 @@ compile_instruction(
          fullsrc->SrcRegister.File,
          inst->SrcReg[i].Index,
          inputMapping,
-         outputMapping );
+         outputMapping,
+         immediateMapping);
 
       for( j = 0; j < 4; j++ ) {
          GLuint swz;
@@ -595,6 +625,10 @@ tgsi_translate_mesa_program(
    struct tgsi_processor *processor;
    struct tgsi_full_instruction fullinst;
    GLuint preamble_size = 0;
+   GLuint immediates[1000];
+#if EMIT_IMMEDIATES
+   GLuint numImmediates = 0;
+#endif
 
    assert(procType == TGSI_PROCESSOR_FRAGMENT ||
           procType == TGSI_PROCESSOR_VERTEX);
@@ -723,12 +757,30 @@ tgsi_translate_mesa_program(
       }
    }
 
+   /* immediates/literals */
+#if EMIT_IMMEDIATES
+   for (i = 0; i < program->Parameters->NumParameters; i++) {
+      if (program->Parameters->Parameters[i].Type == PROGRAM_CONSTANT) {
+         struct tgsi_full_immediate fullimm
+            = make_immediate(program->Parameters->ParameterValues[i],
+                             program->Parameters->Parameters[i].Size);
+         ti += tgsi_build_full_immediate(&fullimm,
+                                         &tokens[ti],
+                                         header,
+                                         maxTokens - ti);
+         immediates[i] = numImmediates;
+         numImmediates++;
+      }
+   }
+#endif
+
    for( i = 0; i < program->NumInstructions; i++ ) {
       compile_instruction(
             &program->Instructions[i],
             &fullinst,
             inputMapping,
             outputMapping,
+            immediates,
             preamble_size,
             procType );
 

@@ -89,7 +89,7 @@ text_dump_flt(
 {
    char str[48];
 
-   sprintf( str, "%40.6f", f );
+   sprintf( str, "%10.4f", f );
    text_dump_str( dump, str );
 }
 
@@ -780,7 +780,11 @@ dump_immediate_short(
    ENM( imm->Immediate.DataType, TGSI_IMMS_SHORT );
 
    TXT( " { " );
+#if 0
    for( i = 0; i < imm->Immediate.Size - 1; i++ ) {
+#else
+   for( i = 0; i < imm->Immediate.Size; i++ ) {
+#endif
       switch( imm->Immediate.DataType ) {
       case TGSI_IMM_FLOAT32:
          FLT( imm->u.ImmediateFloat32[i].Float );
