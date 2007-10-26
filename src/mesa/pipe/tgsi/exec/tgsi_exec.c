@@ -2082,6 +2082,13 @@ exec_instruction(
       if (mach->ExecMask == 0x0) {
          /* really return now (otherwise, keep executing */
 
+         if (mach->CallStackTop == 0) {
+            /* returning from main() */
+            *pc = -1;
+            return;
+         }
+         *pc = mach->CallStack[--mach->CallStackTop];
+
          /* pop the Cond, Loop, Cont stacks */
          assert(mach->CondStackTop > 0);
          mach->CondMask = mach->CondStack[--mach->CondStackTop];
@@ -2089,16 +2096,9 @@ exec_instruction(
          mach->LoopMask = mach->LoopStack[--mach->LoopStackTop];
          assert(mach->ContStackTop > 0);
          mach->ContMask = mach->ContStack[--mach->ContStackTop];
-
          assert(mach->FuncStackTop > 0);
          mach->FuncMask = mach->FuncStack[--mach->FuncStackTop];
 
-         assert(mach->CallStackTop >= 0);
-         if (mach->CallStackTop == 0) {
-            /* XXX error? */
-            return;
-         }
-         *pc = mach->CallStack[--mach->CallStackTop];
          UPDATE_EXEC_MASK(mach);
       }
       break;
