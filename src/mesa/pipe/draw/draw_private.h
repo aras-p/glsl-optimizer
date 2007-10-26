@@ -123,7 +123,8 @@ struct draw_stage
  * Private version of the compiled vertex_shader
  */
 struct draw_vertex_shader {
-   const struct pipe_shader_state *state;
+   const struct pipe_shader_state   *state;
+   struct x86_function              sse2_program;
 };
 
 /**
