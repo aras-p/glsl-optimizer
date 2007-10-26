@@ -853,7 +853,7 @@ setup_line(struct draw_stage *stage, struct prim_header *prim)
       for (i = 0; i < dx; i++) {
          if (!sp->rasterizer->line_stipple_enable ||
              stipple_test(sp->line_stipple_counter,
-                          sp->rasterizer->line_stipple_pattern,
+                          (ushort) sp->rasterizer->line_stipple_pattern,
                           sp->rasterizer->line_stipple_factor + 1)) {
              plot(setup, x0, y0);
          }
@@ -880,7 +880,7 @@ setup_line(struct draw_stage *stage, struct prim_header *prim)
       for (i = 0; i < dy; i++) {
          if (!sp->rasterizer->line_stipple_enable ||
              stipple_test(sp->line_stipple_counter,
-                          sp->rasterizer->line_stipple_pattern,
+                          (ushort) sp->rasterizer->line_stipple_pattern,
                           sp->rasterizer->line_stipple_factor + 1)) {
             plot(setup, x0, y0);
          }
@@ -1184,7 +1184,7 @@ void sp_vbuf_setup_draw( struct pipe_context *pipe,
    struct setup_stage *setup = setup_stage( softpipe->setup );
    struct prim_header prim;
    unsigned vertex_size = setup->stage.draw->vertex_info.size * sizeof(float);
-   int i, j;
+   unsigned i, j;
 
    prim.det = 0;
    prim.reset_line_stipple = 0;
