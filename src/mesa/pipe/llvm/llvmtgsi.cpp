@@ -508,19 +508,21 @@ translate_instruction(llvm::Module *module,
    case TGSI_OPCODE_BGNSUB: {
       instr->bgnSub(instno, storage);
       storage->setCurrentBlock(instr->currentBlock());
+      storage->pushTemps();
       return;
    }
       break;
    case TGSI_OPCODE_ENDLOOP2: {
       instr->endLoop();
       storage->setCurrentBlock(instr->currentBlock());
-      storage->popArguments();
       return;
    }
       break;
    case TGSI_OPCODE_ENDSUB: {
       instr->endSub();
       storage->setCurrentBlock(instr->currentBlock());
+      storage->popArguments();
+      storage->popTemps();
       return;
    }
       break;

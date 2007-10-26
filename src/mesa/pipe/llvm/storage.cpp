@@ -369,3 +369,24 @@ void Storage::popArguments()
    m_CONST = arg.cst;
    m_argStack.pop();
 }
+
+void Storage::pushTemps()
+{
+   m_tempStack.push(m_temps);
+   std::vector<llvm::Value*> oldTemps = m_temps;
+   m_temps = std::vector<llvm::Value*>(32);
+   int i = 0;
+   for (std::vector<llvm::Value*>::iterator itr = oldTemps.begin();
+        itr != oldTemps.end(); ++itr) {
+      if (*itr) {
+         declareTemp(i);
+      }
+      ++i;
+   }
+}
+
+void Storage::popTemps()
+{
+   m_temps = m_tempStack.top();
+   m_tempStack.pop();
+}

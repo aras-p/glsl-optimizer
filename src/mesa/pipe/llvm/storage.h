@@ -84,6 +84,8 @@ public:
    void pushArguments(llvm::Value *out, llvm::Value *in,
                       llvm::Value *constPtr);
    void popArguments();
+   void pushTemps();
+   void popTemps();
 
 private:
    llvm::Value *maskWrite(llvm::Value *src, int mask, llvm::Value *templ);
@@ -122,6 +124,7 @@ private:
       llvm::Value *cst;
    };
    std::stack<Args> m_argStack;
+   std::stack<std::vector<llvm::Value*> > m_tempStack;
 };
 
 #endif
