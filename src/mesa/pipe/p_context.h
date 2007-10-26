@@ -39,8 +39,6 @@ struct pipe_state_cache;
 struct pipe_context {
    struct pipe_winsys *winsys;
 
-   void *llvm_execution_engine;
-
    void (*destroy)( struct pipe_context * );
 
    /*
@@ -261,8 +259,8 @@ pipe_region_reference(struct pipe_region **ptr, struct pipe_region *region)
    if (*ptr) {
       /* unreference the old thing */
       struct pipe_region *oldReg = *ptr;
+      assert(oldReg->refcount > 0);
       oldReg->refcount--;
-      assert(oldReg->refcount >= 0);
       if (oldReg->refcount == 0) {
          /* free the old region */
          assert(oldReg->map_refcount == 0);
@@ -289,8 +287,8 @@ pipe_surface_reference(struct pipe_surface **ptr, struct pipe_surface *surf)
    if (*ptr) {
       /* unreference the old thing */
       struct pipe_surface *oldSurf = *ptr;
+      assert(oldSurf->refcount > 0);
       oldSurf->refcount--;
-      assert(oldSurf->refcount >= 0);
       if (oldSurf->refcount == 0) {
          /* free the old region */
          pipe_region_reference(&oldSurf->region, NULL);
@@ -307,3 +305,4 @@ pipe_surface_reference(struct pipe_surface **ptr, struct pipe_surface *surf)
 
 
 #endif /* PIPE_CONTEXT_H */
+
