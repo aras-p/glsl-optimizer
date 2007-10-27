@@ -247,12 +247,12 @@ st_choose_pipe_format(struct pipe_context *pipe, GLint internalFormat,
                       GLenum format, GLenum type)
 {
    const GLuint *supported;
-   GLboolean allow[PIPE_FORMAT_COUNT];
+   GLboolean allow[256];   /* XXX: this will go away */
    GLuint i, n;
 
    /* query supported formats and fill in bool allow[] table */
    supported = pipe->supported_formats(pipe, &n);
-   assert(n < PIPE_FORMAT_COUNT); /* sanity check */
+   assert(n < 256); /* sanity check */ /* XXX: this will go away */
    memset(allow, 0, sizeof(allow));
    for (i = 0; i < n; i++) {
       allow[supported[i]] = 1;
