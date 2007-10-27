@@ -47,7 +47,6 @@ softpipe_clear(struct pipe_context *pipe, struct pipe_surface *ps,
                unsigned clearValue)
 {
    struct softpipe_context *softpipe = softpipe_context(pipe);
-   struct softpipe_surface *sps = softpipe_surface(ps);
    unsigned x, y, w, h;
 
    softpipe_update_derived(softpipe); /* not needed?? */
@@ -66,12 +65,12 @@ softpipe_clear(struct pipe_context *pipe, struct pipe_surface *ps,
    assert(w <= ps->region->pitch);
    assert(h <= ps->region->height);
 
-   if (sps == sp_tile_cache_get_surface(softpipe->zbuf_cache)) {
+   if (ps == sp_tile_cache_get_surface(softpipe->zbuf_cache)) {
       float clear[4];
       clear[0] = 1.0; /* XXX hack */
       sp_tile_cache_clear(softpipe->zbuf_cache, clear);
    }
-   else if (sps == sp_tile_cache_get_surface(softpipe->cbuf_cache[0])) {
+   else if (ps == sp_tile_cache_get_surface(softpipe->cbuf_cache[0])) {
       float clear[4];
       clear[0] = 0.2; /* XXX hack */
       clear[1] = 0.2; /* XXX hack */
@@ -84,6 +83,6 @@ softpipe_clear(struct pipe_context *pipe, struct pipe_surface *ps,
 
 
 #if 0
-   sp_clear_tile_cache(sps, clearValue);
+   sp_clear_tile_cache(ps, clearValue);
 #endif
 }

@@ -44,7 +44,7 @@ softpipe_set_framebuffer_state(struct pipe_context *pipe,
                                const struct pipe_framebuffer_state *fb)
 {
    struct softpipe_context *sp = softpipe_context(pipe);
-   struct softpipe_surface *sps;
+   struct pipe_surface *ps;
    uint i;
 
    for (i = 0; i < PIPE_MAX_COLOR_BUFS; i++) {
@@ -53,18 +53,18 @@ softpipe_set_framebuffer_state(struct pipe_context *pipe,
          /* flush old */
          sp_flush_tile_cache(sp, sp->cbuf_cache[i]);
          /* unmap old */
-         sps = softpipe_surface(sp->framebuffer.cbufs[i]);
-         if (sps && sps->surface.region)
-            pipe->region_unmap(pipe, sps->surface.region);
+         ps = sp->framebuffer.cbufs[i];
+         if (ps && ps->region)
+            pipe->region_unmap(pipe, ps->region);
          /* map new */
-         sps = softpipe_surface(fb->cbufs[i]);
-         if (sps)
-            pipe->region_map(pipe, sps->surface.region);
+         ps = fb->cbufs[i];
+         if (ps)
+            pipe->region_map(pipe, ps->region);
          /* assign new */
          sp->framebuffer.cbufs[i] = fb->cbufs[i];
 
          /* update cache */
-         sp_tile_cache_set_surface(sp->cbuf_cache[i], sps);
+         sp_tile_cache_set_surface(sp->cbuf_cache[i], ps);
       }
    }
 
@@ -75,22 +75,22 @@ softpipe_set_framebuffer_state(struct pipe_context *pipe,
       /* flush old */
       sp_flush_tile_cache(sp, sp->zbuf_cache);
       /* unmap old */
-      sps = softpipe_surface(sp->framebuffer.zbuf);
-      if (sps && sps->surface.region)
-         pipe->region_unmap(pipe, sps->surface.region);
+      ps = sp->framebuffer.zbuf;
+      if (ps && ps->region)
+         pipe->region_unmap(pipe, ps->region);
       if (sp->framebuffer.sbuf == sp->framebuffer.zbuf) {
          /* combined z/stencil */
          sp->framebuffer.sbuf = NULL;
       }
       /* map new */
-      sps = softpipe_surface(fb->zbuf);
-      if (sps)
-         pipe->region_map(pipe, sps->surface.region);
+      ps = fb->zbuf;
+      if (ps)
+         pipe->region_map(pipe, ps->region);
       /* assign new */
       sp->framebuffer.zbuf = fb->zbuf;
 
       /* update cache */
-      sp_tile_cache_set_surface(sp->zbuf_cache, sps);
+      sp_tile_cache_set_surface(sp->zbuf_cache, ps);
    }
 
    /* XXX combined depth/stencil here */
@@ -100,13 +100,13 @@ softpipe_set_framebuffer_state(struct pipe_context *pipe,
       /* flush old */
       sp_flush_tile_cache(sp, sp->sbuf_cache_sep);
       /* unmap old */
-      sps = softpipe_surface(sp->framebuffer.sbuf);
-      if (sps && sps->surface.region)
-         pipe->region_unmap(pipe, sps->surface.region);
+      ps = sp->framebuffer.sbuf;
+      if (ps && ps->region)
+         pipe->region_unmap(pipe, ps->region);
       /* map new */
-      sps = softpipe_surface(fb->sbuf);
-      if (sps && fb->sbuf != fb->zbuf)
-         pipe->region_map(pipe, sps->surface.region);
+      ps = fb->sbuf;
+      if (ps && fb->sbuf != fb->zbuf)
+         pipe->region_map(pipe, ps->region);
       /* assign new */
       sp->framebuffer.sbuf = fb->sbuf;
 
@@ -114,12 +114,12 @@ softpipe_set_framebuffer_state(struct pipe_context *pipe,
       if (fb->sbuf != fb->zbuf) {
          /* separate stencil buf */
          sp->sbuf_cache = sp->sbuf_cache_sep;
-         sp_tile_cache_set_surface(sp->sbuf_cache, sps);
+         sp_tile_cache_set_surface(sp->sbuf_cache, ps);
       }
       else {
          /* combined depth/stencil */
          sp->sbuf_cache = sp->zbuf_cache;
-         sp_tile_cache_set_surface(sp->sbuf_cache, sps);
+         sp_tile_cache_set_surface(sp->sbuf_cache, ps);
       }
    }
 

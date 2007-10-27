@@ -40,7 +40,6 @@
 #include "sp_quad.h"
 
 
-struct softpipe_surface;
 struct softpipe_winsys;
 struct draw_context;
 struct draw_stage;

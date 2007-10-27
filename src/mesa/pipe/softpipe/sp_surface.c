@@ -461,78 +461,6 @@ s8z24_get_tile(struct pipe_surface *ps,
 
 
 /**
- * Initialize the quad_read/write and get/put_tile() methods.
- */
-void
-softpipe_init_surface_funcs(struct softpipe_surface *sps)
-{
-   assert(sps->surface.format);
-#if 0
-   switch (sps->surface.format) {
-   case PIPE_FORMAT_U_A8_R8_G8_B8:
-      sps->get_tile = a8r8g8b8_get_tile;
-      sps->put_tile = a8r8g8b8_put_tile;
-      break;
-   case PIPE_FORMAT_U_A1_R5_G5_B5:
-      sps->get_tile = a1r5g5b5_get_tile;
-      break;
-   case PIPE_FORMAT_U_L8:
-      sps->get_tile = l8_get_tile;
-      break;
-   case PIPE_FORMAT_U_A8:
-      sps->get_tile = a8_get_tile;
-      break;
-   case PIPE_FORMAT_U_I8:
-      sps->get_tile = i8_get_tile;
-      break;
-   case PIPE_FORMAT_U_A8_L8:
-      sps->get_tile = a8_l8_get_tile;
-      break;
-
-   case PIPE_FORMAT_S_R16_G16_B16_A16:
-      sps->get_tile = r16g16b16a16_get_tile;
-      sps->put_tile = r16g16b16a16_put_tile;
-      break;
-
-   case PIPE_FORMAT_U_Z16:
-      sps->get_tile = z16_get_tile;
-      break;
-   case PIPE_FORMAT_U_Z32:
-      sps->get_tile = z32_get_tile;
-      break;
-   case PIPE_FORMAT_S8_Z24:
-      sps->get_tile = s8z24_get_tile;
-      break;
-   case PIPE_FORMAT_U_S8:
-      break;
-   default:
-      assert(0);
-   }
-#endif
-}
-
-
-static struct pipe_surface *
-softpipe_surface_alloc(struct pipe_context *pipe, unsigned pipeFormat)
-{
-   struct softpipe_surface *sps = CALLOC_STRUCT(softpipe_surface);
-   if (!sps)
-      return NULL;
-
-   assert(pipeFormat < PIPE_FORMAT_COUNT);
-
-   sps->surface.format = pipeFormat;
-   sps->surface.refcount = 1;
-   softpipe_init_surface_funcs(sps);
-
-   return &sps->surface;
-}
-
-
-
-
-
-/**
  * Called via pipe->get_tex_surface()
  * XXX is this in the right place?
  */
@@ -730,9 +658,6 @@ softpipe_put_tile_rgba(struct pipe_context *pipe,
 void
 sp_init_surface_functions(struct softpipe_context *sp)
 {
-#if 0
-   sp->pipe.surface_alloc = softpipe_surface_alloc;
-#endif
    sp->pipe.get_tile = softpipe_get_tile;
    sp->pipe.put_tile = softpipe_put_tile;
 

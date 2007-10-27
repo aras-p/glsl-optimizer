@@ -201,7 +201,7 @@ static void
 stencil_test_quad(struct quad_stage *qs, struct quad_header *quad)
 {
    struct softpipe_context *softpipe = qs->softpipe;
-   struct softpipe_surface *sps = softpipe_surface(softpipe->framebuffer.sbuf);
+   struct pipe_surface *ps = softpipe->framebuffer.sbuf;
    unsigned func, zFailOp, zPassOp, failOp;
    ubyte ref, wrtMask, valMask;
    ubyte stencilVals[QUAD_SIZE];
@@ -230,10 +230,10 @@ stencil_test_quad(struct quad_stage *qs, struct quad_header *quad)
       valMask = softpipe->depth_stencil->stencil.value_mask[0];
    }
 
-   assert(sps); /* shouldn't get here if there's no stencil buffer */
+   assert(ps); /* shouldn't get here if there's no stencil buffer */
 
    /* get stencil values from cached tile */
-   switch (sps->surface.format) {
+   switch (ps->format) {
    case PIPE_FORMAT_S8_Z24:
       for (j = 0; j < QUAD_SIZE; j++) {
          int x = quad->x0 % TILE_SIZE + (j & 1);
@@ -290,7 +290,7 @@ stencil_test_quad(struct quad_stage *qs, struct quad_header *quad)
    }
 
    /* put new stencil values into cached tile */
-   switch (sps->surface.format) {
+   switch (ps->format) {
    case PIPE_FORMAT_S8_Z24:
       for (j = 0; j < QUAD_SIZE; j++) {
          int x = quad->x0 % TILE_SIZE + (j & 1);

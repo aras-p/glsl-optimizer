@@ -50,8 +50,8 @@ void
 sp_depth_test_quad(struct quad_stage *qs, struct quad_header *quad)
 {
    struct softpipe_context *softpipe = qs->softpipe;
-   struct softpipe_surface *sps = softpipe_surface(softpipe->framebuffer.zbuf);
-   const uint format = sps->surface.format;
+   struct pipe_surface *ps = softpipe->framebuffer.zbuf;
+   const uint format = ps->format;
    unsigned bzzzz[QUAD_SIZE];  /**< Z values fetched from depth buffer */
    unsigned qzzzz[QUAD_SIZE];  /**< Z values from the quad */
    unsigned zmask = 0;
@@ -59,7 +59,7 @@ sp_depth_test_quad(struct quad_stage *qs, struct quad_header *quad)
    struct softpipe_cached_tile *tile
       = sp_get_cached_tile(softpipe, softpipe->zbuf_cache, quad->x0, quad->y0);
 
-   assert(sps); /* shouldn't get here if there's no zbuffer */
+   assert(ps); /* shouldn't get here if there's no zbuffer */
 
    /*
     * Convert quad's float depth values to int depth values (qzzzz).

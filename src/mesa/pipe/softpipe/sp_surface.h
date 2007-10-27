@@ -35,25 +35,9 @@
 #include "pipe/p_state.h"
 
 struct pipe_context;
-struct softpipe_surface;
 struct softpipe_context;
 struct softpipe_tile_cache;
 
-
-/**
- * Softpipe surface is derived from pipe_surface.
- */
-struct softpipe_surface {
-   struct pipe_surface surface;
-
-#if 0
-   /* XXX these are temporary here */
-   void (*get_tile)(struct pipe_surface *ps,
-                    uint x, uint y, uint w, uint h, float *p);
-   void (*put_tile)(struct pipe_surface *ps,
-                    uint x, uint y, uint w, uint h, const float *p);
-#endif
-};
 
 extern struct pipe_surface *
 softpipe_get_tex_surface(struct pipe_context *pipe,
@@ -72,17 +56,6 @@ softpipe_put_tile_rgba(struct pipe_context *pipe,
                        struct pipe_surface *ps,
                        uint x, uint y, uint w, uint h,
                        const float *p);
-
-extern void
-softpipe_init_surface_funcs(struct softpipe_surface *sps);
-
-
-/** Cast wrapper */
-static INLINE struct softpipe_surface *
-softpipe_surface(struct pipe_surface *ps)
-{
-   return (struct softpipe_surface *) ps;
-}
 
 
 extern void

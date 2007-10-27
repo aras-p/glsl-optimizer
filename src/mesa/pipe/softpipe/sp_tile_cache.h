@@ -64,9 +64,9 @@ sp_destroy_tile_cache(struct softpipe_tile_cache *tc);
 
 extern void
 sp_tile_cache_set_surface(struct softpipe_tile_cache *tc,
-                          struct softpipe_surface *sps);
+                          struct pipe_surface *sps);
 
-extern struct softpipe_surface *
+extern struct pipe_surface *
 sp_tile_cache_get_surface(struct softpipe_tile_cache *tc);
 
 extern void

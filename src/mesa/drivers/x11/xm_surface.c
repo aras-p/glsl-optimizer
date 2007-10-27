@@ -27,7 +27,7 @@
  * \file xm_surface.c
  * Code to allow the softpipe code to write to X windows/buffers.
  * This is a bit of a hack for now.  We've basically got two different
- * abstractions for color buffers: gl_renderbuffer and softpipe_surface.
+ * abstractions for color buffers: gl_renderbuffer and pipe_surface.
  * They'll need to get merged someday...
  * For now, they're separate things that point to each other.
  */
@@ -62,13 +62,6 @@
 
 
 static INLINE struct xmesa_surface *
-xmesa_surf(struct softpipe_surface *sps)
-{
-   return (struct xmesa_surface *) sps;
-}
-
-
-static INLINE struct xmesa_surface *
 xmesa_surface(struct pipe_surface *ps)
 {
    return (struct xmesa_surface *) ps;
@@ -76,9 +69,9 @@ xmesa_surface(struct pipe_surface *ps)
 
 
 static INLINE struct xmesa_renderbuffer *
-xmesa_rb(struct softpipe_surface *sps)
+xmesa_rb(struct pipe_surface *ps)
 {
-   struct xmesa_surface *xms = xmesa_surf(sps);
+   struct xmesa_surface *xms = xmesa_surface(ps);
    return xms->xrb;
 }
 
@@ -170,24 +163,6 @@ xmesa_new_color_surface(struct pipe_context *pipe, GLuint pipeFormat)
    xms->surface.format = pipeFormat;
    xms->surface.refcount = 1;
 
-#if 0
-   /* some of the functions plugged in by this call will get overridden */
-   softpipe_init_surface_funcs(&xms->surface);
-#endif
-
-#if 0
-   switch (pipeFormat) {
-   case PIPE_FORMAT_U_A8_R8_G8_B8:
-      xms->surface.get_tile = get_tile;
-      xms->surface.put_tile = put_tile;
-      break;
-   case PIPE_FORMAT_S8_Z24:
-      break;
-   default:
-      abort();
-   }
-#endif
-
    /* Note, the region we allocate doesn't actually have any storage
     * since we're drawing into an XImage or Pixmap.
     * The region's size will get set in the xmesa_alloc_front/back_storage()
@@ -215,12 +190,7 @@ xmesa_surface_alloc(struct pipe_context *pipe, GLuint pipeFormat)
 
    xms->surface.format = pipeFormat;
    xms->surface.refcount = 1;
-#if 0
-   /*
-    * This is really just a softpipe surface, not an XImage/Pixmap surface.
-    */
-   softpipe_init_surface_funcs(&xms->surface);
-#endif
+
    return &xms->surface;
 }
 
@@ -246,7 +216,7 @@ xmesa_supported_formats(struct pipe_context *pipe, GLuint *numFormats)
 void
 xmesa_clear(struct pipe_context *pipe, struct pipe_surface *ps, GLuint value)
 {
-   struct xmesa_renderbuffer *xrb = xmesa_rb((struct softpipe_surface *) ps);
+   struct xmesa_renderbuffer *xrb = xmesa_rb(ps);
 
    /* XXX actually, we should just discard any cached tiles from this
     * surface since we don't want to accidentally re-use them after clearing.
@@ -255,8 +225,7 @@ xmesa_clear(struct pipe_context *pipe, struct pipe_surface *ps, GLuint value)
 
    {
       struct softpipe_context *sp = softpipe_context(pipe);
-      struct softpipe_surface *sps = softpipe_surface(ps);
-      if (sps == sp_tile_cache_get_surface(sp->cbuf_cache[0])) {
+      if (ps == sp_tile_cache_get_surface(sp->cbuf_cache[0])) {
          float clear[4];
          clear[0] = 0.2; /* XXX hack */
          clear[1] = 0.2;

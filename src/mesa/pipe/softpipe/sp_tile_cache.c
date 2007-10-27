@@ -49,7 +49,7 @@
 
 struct softpipe_tile_cache
 {
-   struct softpipe_surface *surface;  /**< the surface we're caching */
+   struct pipe_surface *surface;  /**< the surface we're caching */
    struct pipe_mipmap_tree *texture;  /**< if caching a texture */
    struct softpipe_cached_tile entries[NUM_ENTRIES];
    uint clear_flags[(MAX_WIDTH / TILE_SIZE) * (MAX_HEIGHT / TILE_SIZE) / 32];
@@ -123,13 +123,13 @@ sp_destroy_tile_cache(struct softpipe_tile_cache *tc)
 
 void
 sp_tile_cache_set_surface(struct softpipe_tile_cache *tc,
-                          struct softpipe_surface *sps)
+                          struct pipe_surface *ps)
 {
-   tc->surface = sps;
+   tc->surface = ps;
 }
 
 
-struct softpipe_surface *
+struct pipe_surface *
 sp_tile_cache_get_surface(struct softpipe_tile_cache *tc)
 {
    return tc->surface;
@@ -157,7 +157,7 @@ sp_flush_tile_cache(struct softpipe_context *softpipe,
                     struct softpipe_tile_cache *tc)
 {
    struct pipe_context *pipe = &softpipe->pipe;
-   struct pipe_surface *ps = &tc->surface->surface;
+   struct pipe_surface *ps = tc->surface;
    boolean is_depth_stencil;
    int inuse = 0, pos;
 
@@ -199,7 +199,7 @@ sp_get_cached_tile(struct softpipe_context *softpipe,
                    struct softpipe_tile_cache *tc, int x, int y)
 {
    struct pipe_context *pipe = &softpipe->pipe;
-   struct pipe_surface *ps = &tc->surface->surface;
+   struct pipe_surface *ps = tc->surface;
    boolean is_depth_stencil
       = (ps->format == PIPE_FORMAT_S8_Z24 ||
          ps->format == PIPE_FORMAT_U_Z16 ||
