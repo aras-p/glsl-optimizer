@@ -85,6 +85,7 @@ shade_quad(
    /* Consts does not require 16 byte alignment. */
    machine->Consts = softpipe->mapped_constants[PIPE_SHADER_FRAGMENT];
 
+   machine->SamplerUnits = softpipe->sampler_units;
    machine->InterpCoefs = quad->coef;
 
    machine->Inputs[0].xyzw[0].f[0] = fx;

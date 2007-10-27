@@ -1045,6 +1045,28 @@ _mesa_use_program(GLcontext *ctx, GLuint program)
 }
 
 
+
+/**
+ * Update the vertex and fragment program's TexturesUsed arrays.
+ */
+static void
+update_textures_used(struct gl_program *prog)
+{
+   GLuint s;
+
+   memset(prog->TexturesUsed, 0, sizeof(prog->TexturesUsed));
+
+   for (s = 0; s < MAX_SAMPLERS; s++) {
+      if (prog->SamplersUsed & (1 << s)) {
+         GLuint u = prog->SamplerUnits[s];
+         GLuint t = prog->SamplerTargets[s];
+         assert(u < MAX_TEXTURE_IMAGE_UNITS);
+         prog->TexturesUsed[u] |= (1 << t);
+      }
+   }
+}
+
+
 /**
  * Called via ctx->Driver.Uniform().
  */
@@ -1066,26 +1088,6 @@ _mesa_uniform(GLcontext *ctx, GLint location, GLsizei count,
    }
 
    FLUSH_VERTICES(ctx, _NEW_PROGRAM);
-
-   /*
-    * If we're setting a sampler, we must use glUniformi1()!
-    */
-   if (shProg->Uniforms->Parameters[location].Type == PROGRAM_SAMPLER) {
-      GLint unit;
-      if (type != GL_INT || count != 1) {
-         _mesa_error(ctx, GL_INVALID_OPERATION,
-                     "glUniform(only glUniform1i can be used "
-                     "to set sampler uniforms)");
-         return;
-      }
-      /* check that the sampler (tex unit index) is legal */
-      unit = ((GLint *) values)[0];
-      if (unit >= ctx->Const.MaxTextureImageUnits) {
-         _mesa_error(ctx, GL_INVALID_VALUE,
-                     "glUniform1(invalid sampler/tex unit index)");
-         return;
-      }
-   }
 
    if (count < 0) {
       _mesa_error(ctx, GL_INVALID_VALUE, "glUniform(count < 0)");
@@ -1119,31 +1121,60 @@ _mesa_uniform(GLcontext *ctx, GLint location, GLsizei count,
       return;
    }
 
-   for (k = 0; k < count; k++) {
-      GLfloat *uniformVal = shProg->Uniforms->ParameterValues[location + k];
-      if (type == GL_INT ||
-          type == GL_INT_VEC2 ||
-          type == GL_INT_VEC3 ||
-          type == GL_INT_VEC4) {
-         const GLint *iValues = ((const GLint *) values) + k * elems;
-         for (i = 0; i < elems; i++) {
-            uniformVal[i] = (GLfloat) iValues[i];
-         }
-      }
-      else {
-         const GLfloat *fValues = ((const GLfloat *) values) + k * elems;
-         for (i = 0; i < elems; i++) {
-            uniformVal[i] = fValues[i];
-         }
-      }
-   }
-
    if (shProg->Uniforms->Parameters[location].Type == PROGRAM_SAMPLER) {
-      if (shProg->VertexProgram)
-         _slang_resolve_samplers(shProg, &shProg->VertexProgram->Base);
-      if (shProg->FragmentProgram)
-         _slang_resolve_samplers(shProg, &shProg->FragmentProgram->Base);
+      /* This controls which texture unit which is used by a sampler */
+      GLuint texUnit, sampler;
+
+      /* data type for setting samplers must be int */
+      if (type != GL_INT || count != 1) {
+         _mesa_error(ctx, GL_INVALID_OPERATION,
+                     "glUniform(only glUniform1i can be used "
+                     "to set sampler uniforms)");
+         return;
+      }
+
+      sampler = (GLuint) shProg->Uniforms->ParameterValues[location][0];
+      texUnit = ((GLuint *) values)[0];
+
+      /* check that the sampler (tex unit index) is legal */
+      if (texUnit >= ctx->Const.MaxTextureImageUnits) {
+         _mesa_error(ctx, GL_INVALID_VALUE,
+                     "glUniform1(invalid sampler/tex unit index)");
+         return;
+      }
+
+      if (shProg->VertexProgram) {
+         shProg->VertexProgram->Base.SamplerUnits[sampler] = texUnit;
+         update_textures_used(&shProg->VertexProgram->Base);
+      }
+      if (shProg->FragmentProgram) {
+         shProg->FragmentProgram->Base.SamplerUnits[sampler] = texUnit;
+         update_textures_used(&shProg->FragmentProgram->Base);
+      }
+
+
       FLUSH_VERTICES(ctx, _NEW_TEXTURE);
+   }
+   else {
+      /* ordinary uniform variable */
+      for (k = 0; k < count; k++) {
+         GLfloat *uniformVal = shProg->Uniforms->ParameterValues[location + k];
+         if (type == GL_INT ||
+             type == GL_INT_VEC2 ||
+             type == GL_INT_VEC3 ||
+             type == GL_INT_VEC4) {
+            const GLint *iValues = ((const GLint *) values) + k * elems;
+            for (i = 0; i < elems; i++) {
+               uniformVal[i] = (GLfloat) iValues[i];
+            }
+         }
+         else {
+            const GLfloat *fValues = ((const GLfloat *) values) + k * elems;
+            for (i = 0; i < elems; i++) {
+               uniformVal[i] = fValues[i];
+            }
+         }
+      }
    }
 }
 

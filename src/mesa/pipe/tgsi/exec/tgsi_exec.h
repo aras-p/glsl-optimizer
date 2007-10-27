@@ -118,6 +118,7 @@ struct tgsi_exec_machine
    struct tgsi_exec_vector       *Temps;
    struct tgsi_exec_vector       *Addrs;
 
+   uint                          *SamplerUnits;
    struct tgsi_sampler           *Samplers;
 
    float                         Imms[TGSI_EXEC_NUM_IMMEDIATES][4];

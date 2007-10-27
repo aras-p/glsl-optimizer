@@ -446,6 +446,15 @@ static void i915_set_polygon_stipple( struct pipe_context *pipe,
 {
 }
 
+static void i915_set_sampler_units(struct pipe_context *pipe,
+                                   uint numSamplers, const uint *units)
+{
+   struct i915_context *i915 = i915_context(pipe);
+   uint i;
+   for (i = 0; i < numSamplers; i++)
+      i915->sampler_units[i] = units[i];
+}
+
 static void * i915_create_fs_state(struct pipe_context *pipe,
                                    const struct pipe_shader_state *templ)
 {
@@ -765,6 +774,7 @@ i915_init_state_functions( struct i915_context *i915 )
    i915->pipe.set_feedback_buffer = i915_set_feedback_buffer;
 
    i915->pipe.set_polygon_stipple = i915_set_polygon_stipple;
+   i915->pipe.set_sampler_units = i915_set_sampler_units;
    i915->pipe.set_scissor_state = i915_set_scissor_state;
    i915->pipe.set_texture_state = i915_set_texture_state;
    i915->pipe.set_viewport_state = i915_set_viewport_state;

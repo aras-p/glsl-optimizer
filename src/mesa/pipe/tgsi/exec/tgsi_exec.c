@@ -1219,10 +1219,13 @@ exec_tex(struct tgsi_exec_machine *mach,
          const struct tgsi_full_instruction *inst,
          boolean biasLod)
 {
-   const uint unit = inst->FullSrcRegisters[1].SrcRegister.Index;
+   const uint sampler = inst->FullSrcRegisters[1].SrcRegister.Index;
+   const uint unit = mach->SamplerUnits[sampler];
    union tgsi_exec_channel r[8];
    uint chan_index;
    float lodBias;
+
+   //   printf("Sampler %u unit %u\n", sampler, unit);
 
    switch (inst->InstructionExtTexture.Texture) {
    case TGSI_TEXTURE_1D:

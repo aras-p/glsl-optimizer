@@ -719,6 +719,8 @@ _mesa_print_program_opt(const struct gl_program *prog,
 void
 _mesa_print_program_parameters(GLcontext *ctx, const struct gl_program *prog)
 {
+   GLuint i;
+
    _mesa_printf("InputsRead: 0x%x\n", prog->InputsRead);
    _mesa_printf("OutputsWritten: 0x%x\n", prog->OutputsWritten);
    _mesa_printf("NumInstructions=%d\n", prog->NumInstructions);
@@ -726,6 +728,11 @@ _mesa_print_program_parameters(GLcontext *ctx, const struct gl_program *prog)
    _mesa_printf("NumParameters=%d\n", prog->NumParameters);
    _mesa_printf("NumAttributes=%d\n", prog->NumAttributes);
    _mesa_printf("NumAddressRegs=%d\n", prog->NumAddressRegs);
+   _mesa_printf("Samplers=[ ");
+   for (i = 0; i < MAX_SAMPLERS; i++) {
+      _mesa_printf("%d ", prog->SamplerUnits[i]);
+   }
+   _mesa_printf("]\n");
 	
    _mesa_load_state_parameters(ctx, prog->Parameters);
 			

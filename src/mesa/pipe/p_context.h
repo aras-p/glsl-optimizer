@@ -148,6 +148,9 @@ struct pipe_context {
    void (*set_polygon_stipple)( struct pipe_context *,
 				const struct pipe_poly_stipple * );
 
+   void (*set_sampler_units)( struct pipe_context *,
+                              uint num_samplers, const uint *units );
+
    void (*set_scissor_state)( struct pipe_context *,
                               const struct pipe_scissor_state * );
 

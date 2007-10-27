@@ -187,12 +187,17 @@ _mesa_init_program_struct( GLcontext *ctx, struct gl_program *prog,
 {
    (void) ctx;
    if (prog) {
+      GLuint i;
       _mesa_bzero(prog, sizeof(*prog));
       prog->Id = id;
       prog->Target = target;
       prog->Resident = GL_TRUE;
       prog->RefCount = 1;
       prog->Format = GL_PROGRAM_FORMAT_ASCII_ARB;
+
+      /* default mapping from samplers to texture units */
+      for (i = 0; i < MAX_SAMPLERS; i++)
+         prog->SamplerUnits[i] = i;
    }
 
    return prog;

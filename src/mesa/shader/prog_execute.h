@@ -62,6 +62,8 @@ struct gl_program_machine
    GLuint CondCodes[4];  /**< COND_* value for x/y/z/w */
    GLint AddressReg[MAX_PROGRAM_ADDRESS_REGS][4];
 
+   GLuint *Samplers;  /** Array mapping sampler var to tex unit */
+
    GLuint CallStack[MAX_PROGRAM_CALL_DEPTH]; /**< For CAL/RET instructions */
    GLuint StackDepth; /**< Index/ptr to top of CallStack[] */
 

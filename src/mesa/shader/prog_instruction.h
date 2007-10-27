@@ -413,11 +413,13 @@ struct prog_instruction
     */
    GLint BranchTarget;
 
+#if 0
    /**
     * For TEX instructions in shaders, the sampler to use for the
     * texture lookup.
     */
    GLint Sampler;
+#endif
 
    const char *Comment;
 };
@@ -442,6 +444,9 @@ _mesa_num_inst_src_regs(gl_inst_opcode opcode);
 
 extern GLuint
 _mesa_num_inst_dst_regs(gl_inst_opcode opcode);
+
+extern GLboolean
+_mesa_is_tex_instruction(gl_inst_opcode opcode);
 
 extern const char *
 _mesa_opcode_string(gl_inst_opcode opcode);

@@ -246,6 +246,17 @@ _mesa_num_inst_dst_regs(gl_inst_opcode opcode)
 }
 
 
+GLboolean
+_mesa_is_tex_instruction(gl_inst_opcode opcode)
+{
+   return (opcode == OPCODE_TEX ||
+           opcode == OPCODE_TXB ||
+           opcode == OPCODE_TXD ||
+           opcode == OPCODE_TXL ||
+           opcode == OPCODE_TXP);
+}
+
+
 /**
  * Return string name for given program opcode.
  */

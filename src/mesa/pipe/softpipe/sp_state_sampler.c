@@ -78,3 +78,17 @@ softpipe_set_texture_state(struct pipe_context *pipe,
 
    softpipe->dirty |= SP_NEW_TEXTURE;
 }
+
+
+void
+softpipe_set_sampler_units(struct pipe_context *pipe,
+                           uint num_samplers, const uint *units )
+{
+   struct softpipe_context *softpipe = softpipe_context(pipe);
+   uint i;
+   for (i = 0; i < num_samplers; i++)
+      softpipe->sampler_units[i] = units[i];
+   softpipe->dirty |= SP_NEW_SAMPLER;
+}
+
+

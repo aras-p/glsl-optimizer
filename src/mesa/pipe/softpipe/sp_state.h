@@ -99,6 +99,9 @@ void softpipe_delete_vs_state(struct pipe_context *, void *);
 void softpipe_set_polygon_stipple( struct pipe_context *,
 				  const struct pipe_poly_stipple * );
 
+void softpipe_set_sampler_units( struct pipe_context *,
+                                 uint numSamplers, const uint *units );
+
 void softpipe_set_scissor_state( struct pipe_context *,
                                  const struct pipe_scissor_state * );
 

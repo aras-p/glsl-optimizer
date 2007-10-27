@@ -1316,22 +1316,22 @@ _mesa_execute_program(GLcontext * ctx,
              * The rest of the time, just use zero (until we get a more
              * sophisticated way of computing lambda).
              */
+            const GLuint unit = machine->Samplers[inst->TexSrcUnit];
             GLfloat coord[4], color[4], lambda;
 #if 0
             if (inst->SrcReg[0].File == PROGRAM_INPUT &&
-                inst->SrcReg[0].Index == FRAG_ATTRIB_TEX0 + inst->TexSrcUnit)
-               lambda = span->array->lambda[inst->TexSrcUnit][column];
+                inst->SrcReg[0].Index == FRAG_ATTRIB_TEX0 + unit)
+               lambda = span->array->lambda[unit][column];
             else
 #endif
                lambda = 0.0;
             fetch_vector4(&inst->SrcReg[0], machine, coord);
-            machine->FetchTexelLod(ctx, coord, lambda, inst->TexSrcUnit,
-                                   color);
+            machine->FetchTexelLod(ctx, coord, lambda, unit, color);
             if (DEBUG_PROG) {
                printf("TEX (%g, %g, %g, %g) = texture[%d][%g, %g, %g, %g], "
                       "lod %f\n",
                       color[0], color[1], color[2], color[3],
-                      inst->TexSrcUnit,
+                      unit,
                       coord[0], coord[1], coord[2], coord[3], lambda);
             }
             store_vector4(inst, machine, color);
@@ -1375,11 +1375,12 @@ _mesa_execute_program(GLcontext * ctx,
       case OPCODE_TXP:         /* GL_ARB_fragment_program only */
          /* Texture lookup w/ projective divide */
          {
+            const GLuint unit = machine->Samplers[inst->TexSrcUnit];
             GLfloat texcoord[4], color[4], lambda;
 #if 0
             if (inst->SrcReg[0].File == PROGRAM_INPUT &&
                 inst->SrcReg[0].Index == FRAG_ATTRIB_TEX0 + inst->TexSrcUnit)
-               lambda = span->array->lambda[inst->TexSrcUnit][column];
+               lambda = span->array->lambda[unit][column];
             else
 #endif
                lambda = 0.0;
@@ -1393,8 +1394,7 @@ _mesa_execute_program(GLcontext * ctx,
                texcoord[1] /= texcoord[3];
                texcoord[2] /= texcoord[3];
             }
-            machine->FetchTexelLod(ctx, texcoord, lambda,
-                                   inst->TexSrcUnit, color);
+            machine->FetchTexelLod(ctx, texcoord, lambda, unit, color);
             store_vector4(inst, machine, color);
          }
          break;

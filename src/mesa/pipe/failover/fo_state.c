@@ -294,6 +294,19 @@ failover_set_polygon_stipple( struct pipe_context *pipe,
    failover->hw->set_polygon_stipple( failover->hw, stipple );
 }
 
+static void
+failover_set_sampler_units( struct pipe_context *pipe,
+                            uint num_samplers, const uint *units )
+{
+   struct failover_context *failover = failover_context(pipe);
+   uint i;
+
+   for (i = 0; i < num_samplers; i++)
+      failover->sampler_units[i] = units[i];
+   failover->dirty |= FO_NEW_SAMPLER;
+   failover->hw->set_sampler_units(failover->hw, num_samplers, units);
+}
+
 static void *
 failover_create_rasterizer_state(struct pipe_context *pipe,
                                  const struct pipe_rasterizer_state *templ)
@@ -470,6 +483,7 @@ failover_init_state_functions( struct failover_context *failover )
    failover->pipe.set_clear_color_state = failover_set_clear_color_state;
    failover->pipe.set_framebuffer_state = failover_set_framebuffer_state;
    failover->pipe.set_polygon_stipple = failover_set_polygon_stipple;
+   failover->pipe.set_sampler_units = failover_set_sampler_units;
    failover->pipe.set_scissor_state = failover_set_scissor_state;
    failover->pipe.set_texture_state = failover_set_texture_state;
    failover->pipe.set_viewport_state = failover_set_viewport_state;

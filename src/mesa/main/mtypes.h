@@ -1901,6 +1901,7 @@ struct gl_program
    GLbitfield InputsRead;     /**< Bitmask of which input regs are read */
    GLbitfield OutputsWritten; /**< Bitmask of which output regs are written to */
    GLbitfield TexturesUsed[MAX_TEXTURE_IMAGE_UNITS];  /**< TEXTURE_x_BIT bitmask */
+   GLbitfield SamplersUsed;   /**< Bitfield of which samplers are used */
    GLbitfield ShadowSamplers; /**< Texture units used for shadow sampling. */
 
    /** Named parameters, constants, etc. from program text */
@@ -1912,6 +1913,11 @@ struct gl_program
    struct gl_program_parameter_list *Varying;
    /** Vertex program user-defined attributes */
    struct gl_program_parameter_list *Attributes;
+
+   /** Map from sampler unit to texture unit (set by glUniform1i()) */
+   GLubyte SamplerUnits[MAX_SAMPLERS];
+   /** Which texture target is being sampled (TEXTURE_1D/2D/3D/etc_INDEX) */
+   GLubyte SamplerTargets[MAX_SAMPLERS];
 
    /** Logical counts */
    /*@{*/

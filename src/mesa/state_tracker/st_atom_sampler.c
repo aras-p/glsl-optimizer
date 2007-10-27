@@ -113,6 +113,23 @@ gl_filter_to_img_filter(GLenum filter)
 }
 
 
+static struct gl_fragment_program *
+current_fragment_program(GLcontext *ctx)
+{
+   struct gl_fragment_program *f;
+
+   if (ctx->Shader.CurrentProgram &&
+       ctx->Shader.CurrentProgram->LinkStatus &&
+       ctx->Shader.CurrentProgram->FragmentProgram) {
+      f = ctx->Shader.CurrentProgram->FragmentProgram;
+   }
+   else {
+      f = ctx->FragmentProgram._Current;
+      assert(f);
+   }
+   return f;
+}
+
 
 static void 
 update_samplers(struct st_context *st)
@@ -165,13 +182,27 @@ update_samplers(struct st_context *st)
          st->pipe->bind_sampler_state(st->pipe, u, cso->data);
       }
    }
+
+
+   /* mapping from sampler vars to texture units */
+   {
+      struct gl_fragment_program *fprog = current_fragment_program(st->ctx);
+      const GLubyte *samplerUnits = fprog->Base.SamplerUnits;
+      uint sample_units[PIPE_MAX_SAMPLERS];
+      uint s;
+      for (s = 0; s < PIPE_MAX_SAMPLERS; s++) {
+         sample_units[s] = fprog->Base.SamplerUnits[s];
+      }
+
+      st->pipe->set_sampler_units(st->pipe, PIPE_MAX_SAMPLERS, sample_units);
+   }
 }
 
 
 const struct st_tracked_state st_update_sampler = {
    .name = "st_update_sampler",
    .dirty = {
-      .mesa = _NEW_TEXTURE,
+      .mesa = _NEW_TEXTURE | _NEW_PROGRAM,
       .st  = 0,
    },
    .update = update_samplers
