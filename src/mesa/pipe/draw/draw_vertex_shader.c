@@ -101,7 +101,7 @@ run_vertex_program(struct draw_context *draw,
 
    /* run shader */
 #if defined(__i386__) || defined(__386__)
-   {
+   if (draw->use_sse) {
       /* SSE */
       codegen_function func = (codegen_function) x86_get_func( &draw->vertex_shader->sse2_program );
       func(
@@ -110,9 +110,12 @@ run_vertex_program(struct draw_context *draw,
          machine->Consts,
          machine->Temps );
    }
+   else
 #else
-   /* interpreter */
-   tgsi_exec_machine_run( machine );
+   {
+      /* interpreter */
+      tgsi_exec_machine_run( machine );
+   }
 #endif
 
    /* store machine results */
@@ -217,16 +220,17 @@ void *
 draw_create_vertex_shader(struct draw_context *draw,
                           const struct pipe_shader_state *shader)
 {
-   struct draw_vertex_shader *vs = calloc(1, sizeof(struct draw_vertex_shader));
+   struct draw_vertex_shader *vs;
 
+   vs = calloc( 1, sizeof( struct draw_vertex_shader ) );
    vs->state = shader;
+
 #if defined(__i386__) || defined(__386__)
    if (draw->use_sse) {
       /* cast-away const */
       struct pipe_shader_state *sh = (struct pipe_shader_state *) shader;
 
       x86_init_func( &vs->sse2_program );
-
       tgsi_emit_sse2( sh->tokens, &vs->sse2_program );
    }
 #endif
@@ -250,15 +254,14 @@ void draw_bind_vertex_shader(struct draw_context *draw,
 void draw_delete_vertex_shader(struct draw_context *draw,
                                void *vcso)
 {
-   struct draw_vertex_shader *vs = (struct draw_vertex_shader*)(vcso);
+   struct draw_vertex_shader *vs;
+
+   vs = (struct draw_vertex_shader *) vcso;
 
 #if defined(__i386__) || defined(__386__)
-   x86_release_func((struct x86_function *) &vs->sse2_program);
+   x86_release_func( (struct x86_function *) &vs->sse2_program );
 #endif
 
-   free((void *) vs->state);
-   free(vcso);
+   free( vs->state );
+   free( vs );
 }
-
-
-
