@@ -1139,37 +1139,37 @@ exec_kilp(struct tgsi_exec_machine *mach,
           const struct tgsi_full_instruction *inst)
 {
    uint uniquemask;
-    uint chan_index;
-    uint kilmask = 0; /* bit 0 = pixel 0, bit 1 = pixel 1, etc */
-    union tgsi_exec_channel r[1];
+   uint chan_index;
+   uint kilmask = 0; /* bit 0 = pixel 0, bit 1 = pixel 1, etc */
+   union tgsi_exec_channel r[1];
 
-    /* This mask stores component bits that were already tested. Note that
-     * we test if the value is less than zero, so 1.0 and 0.0 need not to be
-     * tested. */
-    uniquemask = (1 << TGSI_EXTSWIZZLE_ZERO) | (1 << TGSI_EXTSWIZZLE_ONE);
+   /* This mask stores component bits that were already tested. Note that
+    * we test if the value is less than zero, so 1.0 and 0.0 need not to be
+    * tested. */
+   uniquemask = (1 << TGSI_EXTSWIZZLE_ZERO) | (1 << TGSI_EXTSWIZZLE_ONE);
 
-    for (chan_index = 0; chan_index < 4; chan_index++)
-    {
-        uint swizzle;
-        uint i;
+   for (chan_index = 0; chan_index < 4; chan_index++)
+   {
+      uint swizzle;
+      uint i;
 
-        /* unswizzle channel */
-        swizzle = tgsi_util_get_full_src_register_extswizzle (
+      /* unswizzle channel */
+      swizzle = tgsi_util_get_full_src_register_extswizzle (
                         &inst->FullSrcRegisters[0],
                         chan_index);
 
-        /* check if the component has not been already tested */
-        if (uniquemask & (1 << swizzle))
-            continue;
-        uniquemask |= 1 << swizzle;
+      /* check if the component has not been already tested */
+      if (uniquemask & (1 << swizzle))
+         continue;
+      uniquemask |= 1 << swizzle;
 
-        FETCH(&r[0], 0, chan_index);
-        for (i = 0; i < 4; i++)
-            if (r[0].f[i] < 0.0f)
-                kilmask |= 1 << i;
-    }
+      FETCH(&r[0], 0, chan_index);
+      for (i = 0; i < 4; i++)
+         if (r[0].f[i] < 0.0f)
+            kilmask |= 1 << i;
+   }
 
-    mach->Temps[TEMP_KILMASK_I].xyzw[TEMP_KILMASK_C].u[0] |= kilmask;
+   mach->Temps[TEMP_KILMASK_I].xyzw[TEMP_KILMASK_C].u[0] |= kilmask;
 }
 
 
