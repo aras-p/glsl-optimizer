@@ -198,7 +198,11 @@ static void shade_begin(struct quad_stage *qs)
 
 static void shade_destroy(struct quad_stage *qs)
 {
-   free( qs );
+   struct quad_shade_stage *qss = (struct quad_shade_stage *) qs;
+
+   FREE( qss->inputs );
+   FREE( qss->outputs );
+   FREE( qs );
 }
 
 

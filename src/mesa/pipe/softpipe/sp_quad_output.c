@@ -72,7 +72,7 @@ static void output_begin(struct quad_stage *qs)
 
 static void output_destroy(struct quad_stage *qs)
 {
-   free( qs );
+   FREE( qs );
 }
 
 

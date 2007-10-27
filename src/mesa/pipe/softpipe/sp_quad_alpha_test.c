@@ -90,7 +90,7 @@ static void alpha_test_begin(struct quad_stage *qs)
 
 static void alpha_test_destroy(struct quad_stage *qs)
 {
-   free( qs );
+   FREE( qs );
 }
 
 

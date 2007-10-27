@@ -325,7 +325,7 @@ static void stencil_begin(struct quad_stage *qs)
 
 static void stencil_destroy(struct quad_stage *qs)
 {
-   free( qs );
+   FREE( qs );
 }
 
 

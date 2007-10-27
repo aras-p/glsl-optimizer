@@ -92,7 +92,7 @@ static void colormask_begin(struct quad_stage *qs)
 
 static void colormask_destroy(struct quad_stage *qs)
 {
-   free( qs );
+   FREE( qs );
 }
 
 

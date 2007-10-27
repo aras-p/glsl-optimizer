@@ -71,7 +71,7 @@ static void coverage_begin(struct quad_stage *qs)
 
 static void coverage_destroy(struct quad_stage *qs)
 {
-   free( qs );
+   FREE( qs );
 }
 
 
