@@ -139,7 +139,7 @@ make_immediate(const float *value, uint size)
 {
    struct tgsi_full_immediate imm;
    imm.Immediate.Type = TGSI_TOKEN_TYPE_IMMEDIATE;
-   imm.Immediate.Size = size;
+   imm.Immediate.Size = 1 + size; /* one for the token itself */
    imm.Immediate.DataType = TGSI_IMM_FLOAT32;
    imm.u.ImmediateFloat32 = (struct tgsi_immediate_float32 *) value;
    return imm;
