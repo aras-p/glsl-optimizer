@@ -102,6 +102,7 @@ shade_quad(
    machine->Inputs[0].xyzw[1].f[3] = fy + 1.0f;
 
    /* run shader */
+#if defined(__i386__) || defined(__386__)
    /* XXX: Generated code effectively unusable until it handles quad->mask */
    if( !quad->mask ) {
       codegen_function func = (codegen_function) x86_get_func( &softpipe->fs->sse2_program );
@@ -112,7 +113,9 @@ shade_quad(
          machine->Temps,
          machine->InterpCoefs );
    }
-   else {
+   else
+#endif
+   {
 #ifdef MESA_LLVM
       /*ga_llvm_prog_exec(softpipe->fs->llvm_prog);*/
 #endif
