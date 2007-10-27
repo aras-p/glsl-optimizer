@@ -111,12 +111,11 @@ run_vertex_program(struct draw_context *draw,
          machine->Temps );
    }
    else
-#else
+#endif
    {
       /* interpreter */
       tgsi_exec_machine_run( machine );
    }
-#endif
 
    /* store machine results */
    for (j = 0; j < count; j++) {
