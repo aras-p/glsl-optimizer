@@ -54,11 +54,6 @@
 #include "tgsi_core.h"
 #include "pipe/p_state.h"
 
-#define MESA 1
-#if MESA
-#include "main/context.h"
-#include "main/macros.h"
-#endif
 
 #define TILE_TOP_LEFT     0
 #define TILE_TOP_RIGHT    1
