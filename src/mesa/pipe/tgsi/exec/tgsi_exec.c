@@ -1535,21 +1535,21 @@ exec_instruction(
       assert (0);
       break;
 
-    case TGSI_OPCODE_LOG:
-        assert (0);
-        break;
+   case TGSI_OPCODE_LOG:
+      assert (0);
+      break;
 
-    case TGSI_OPCODE_MUL:
-        FOR_EACH_ENABLED_CHANNEL( *inst, chan_index )
-        {
-            FETCH(&r[0], 0, chan_index);
-            FETCH(&r[1], 1, chan_index);
+   case TGSI_OPCODE_MUL:
+      FOR_EACH_ENABLED_CHANNEL( *inst, chan_index )
+      {
+         FETCH(&r[0], 0, chan_index);
+         FETCH(&r[1], 1, chan_index);
 
-            micro_mul( &r[0], &r[0], &r[1] );
+         micro_mul( &r[0], &r[0], &r[1] );
 
-            STORE(&r[0], 0, chan_index);
-        }
-        break;
+         STORE(&r[0], 0, chan_index);
+      }
+      break;
 
    case TGSI_OPCODE_ADD:
       FOR_EACH_ENABLED_CHANNEL( *inst, chan_index ) {
@@ -1688,16 +1688,16 @@ exec_instruction(
       }
       break;
 
-    case TGSI_OPCODE_SUB:
-       FOR_EACH_ENABLED_CHANNEL( *inst, chan_index ) {
-          FETCH(&r[0], 0, chan_index);
-          FETCH(&r[1], 1, chan_index);
+   case TGSI_OPCODE_SUB:
+      FOR_EACH_ENABLED_CHANNEL( *inst, chan_index ) {
+         FETCH(&r[0], 0, chan_index);
+         FETCH(&r[1], 1, chan_index);
 
-          micro_sub( &r[0], &r[0], &r[1] );
+         micro_sub( &r[0], &r[0], &r[1] );
 
-          STORE(&r[0], 0, chan_index);
-       }
-       break;
+         STORE(&r[0], 0, chan_index);
+      }
+      break;
 
    case TGSI_OPCODE_LERP:
    /* TGSI_OPCODE_LRP */
