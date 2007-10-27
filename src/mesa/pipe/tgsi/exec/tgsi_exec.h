@@ -1,3 +1,30 @@
+/**************************************************************************
+ * 
+ * Copyright 2007 Tungsten Graphics, Inc., Cedar Park, Texas.
+ * All Rights Reserved.
+ * 
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the
+ * "Software"), to deal in the Software without restriction, including
+ * without limitation the rights to use, copy, modify, merge, publish,
+ * distribute, sub license, and/or sell copies of the Software, and to
+ * permit persons to whom the Software is furnished to do so, subject to
+ * the following conditions:
+ * 
+ * The above copyright notice and this permission notice (including the
+ * next paragraph) shall be included in all copies or substantial portions
+ * of the Software.
+ * 
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+ * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+ * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT.
+ * IN NO EVENT SHALL TUNGSTEN GRAPHICS AND/OR ITS SUPPLIERS BE LIABLE FOR
+ * ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
+ * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
+ * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ * 
+ **************************************************************************/
+
 #if !defined TGSI_EXEC_H
 #define TGSI_EXEC_H
 
@@ -5,11 +32,14 @@
 
 #if defined __cplusplus
 extern "C" {
-#endif // defined __cplusplus
+#endif
 
 #define NUM_CHANNELS 4  /* R,G,B,A */
 #define QUAD_SIZE    4  /* 4 pixel/quad */
 
+/**
+  * Registers may be treated as float, signed int or unsigned int.
+  */
 union tgsi_exec_channel
 {
    float    f[QUAD_SIZE];
@@ -17,11 +47,18 @@ union tgsi_exec_channel
    unsigned u[QUAD_SIZE];
 };
 
+/**
+  * A vector[RGBA] of channels[4 pixels]
+  */
 struct tgsi_exec_vector
 {
    union tgsi_exec_channel xyzw[NUM_CHANNELS];
 };
 
+/**
+ * For fragment programs, information for computing fragment input
+ * values from plane equation of the triangle/line.
+ */
 struct tgsi_interp_coef
 {
    float a0[NUM_CHANNELS];	/* in an xyzw layout */
@@ -32,6 +69,10 @@ struct tgsi_interp_coef
 
 struct softpipe_tile_cache;  /**< Opaque to TGSI */
 
+/**
+ * Information for sampling textures, which must be implemented
+ * by code outside the TGSI executor.
+ */
 struct tgsi_sampler
 {
    const struct pipe_sampler_state *state;
@@ -47,6 +88,9 @@ struct tgsi_sampler
    struct softpipe_tile_cache *cache;
 };
 
+/**
+ * For branching/calling subroutines.
+ */
 struct tgsi_exec_labels
 {
    unsigned labels[128][2];
@@ -184,8 +228,7 @@ tgsi_exec_machine_run(
    struct tgsi_exec_machine *mach );
 
 #if defined __cplusplus
-} // extern "C"
-#endif // defined __cplusplus
+} /* extern "C" */
+#endif
 
-#endif // !defined TGSI_EXEC_H
-
+#endif /* TGSI_EXEC_H */

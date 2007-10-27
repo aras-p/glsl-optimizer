@@ -1,6 +1,6 @@
 /**************************************************************************
  * 
- * Copyright 2003 Tungsten Graphics, Inc., Cedar Park, Texas.
+ * Copyright 2007 Tungsten Graphics, Inc., Cedar Park, Texas.
  * All Rights Reserved.
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a
@@ -1212,7 +1212,7 @@ exec_tex(struct tgsi_exec_machine *mach,
    uint chan_index;
    float lodBias;
 
-   //   printf("Sampler %u unit %u\n", sampler, unit);
+   /*   printf("Sampler %u unit %u\n", sampler, unit); */
 
    switch (inst->InstructionExtTexture.Texture) {
    case TGSI_TEXTURE_1D:
@@ -1364,7 +1364,7 @@ perspective_interpolation(
    for( i = 0; i < QUAD_SIZE; i++ ) {
       const float x = mach->Inputs[0].xyzw[0].f[i];
       const float y = mach->Inputs[0].xyzw[1].f[i];
-      // WPOS.w here is really 1/w
+      /* WPOS.w here is really 1/w */
       const float w = 1.0f / mach->Inputs[0].xyzw[3].f[i];
       assert(mach->Inputs[0].xyzw[3].f[i] != 0.0);
 
