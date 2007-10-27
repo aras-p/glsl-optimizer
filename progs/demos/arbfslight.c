@@ -208,7 +208,7 @@ static void Init (void)
       "   // Compute dot product of light direction and normal vector\n"
       "   float dotProd = max (dot (lightPos, normalize (normal)), 0.0);\n"
       "   // Compute diffuse and specular contributions\n"
-#if 0
+#if 1
       "   gl_FragColor = diffuse * dotProd + specular * pow (dotProd, 20.0);\n"
 #elif 1 /* test IF/ELSE/ENDIF */
       "   if (normal.y > 0.0) { \n"
