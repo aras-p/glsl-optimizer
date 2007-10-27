@@ -103,8 +103,7 @@ shade_quad(
 
    /* run shader */
 #if defined(__i386__) || defined(__386__)
-   /* XXX: Generated code effectively unusable until it handles quad->mask */
-   if( !quad->mask && softpipe->use_sse ) {
+   if( softpipe->use_sse ) {
       codegen_function func = (codegen_function) x86_get_func( &softpipe->fs->sse2_program );
       func(
          machine->Inputs,
@@ -112,6 +111,7 @@ shade_quad(
          machine->Consts,
          machine->Temps,
          machine->InterpCoefs );
+      quad->mask &= ~(machine->Temps[TGSI_EXEC_TEMP_KILMASK_I].xyzw[TGSI_EXEC_TEMP_KILMASK_C].u[0]);
    }
    else
 #endif
