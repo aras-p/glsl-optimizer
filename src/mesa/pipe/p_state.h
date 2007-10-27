@@ -368,7 +368,7 @@ struct pipe_vertex_element
    unsigned vertex_buffer_index:5;
 
    unsigned dst_offset:8; 
-   unsigned src_format:8; 	   /**< PIPE_FORMAT_* */
+   unsigned src_format; 	   /**< PIPE_FORMAT_* */
 };
 
 
