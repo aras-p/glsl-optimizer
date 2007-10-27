@@ -173,7 +173,7 @@ tgsi_exec_prepare( struct tgsi_exec_machine *mach )
          {
             uint size = parse.FullToken.FullImmediate.Immediate.Size - 1;
             assert( size % 4 == 0 );
-            assert( mach->ImmLimit + size / 4 <= 256 );
+            assert( mach->ImmLimit + size / 4 <= TGSI_EXEC_NUM_IMMEDIATES );
 
             for( i = 0; i < size; i++ ) {
                mach->Imms[mach->ImmLimit + i / 4][i % 4] = parse.FullToken.FullImmediate.u.ImmediateFloat32[i].Float;
