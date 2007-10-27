@@ -459,6 +459,7 @@ compile_instruction(
       fullinst->Instruction.Opcode = TGSI_OPCODE_SWZ;
       break;
    case OPCODE_TEX:
+      /* ordinary texture lookup */
       fullinst->Instruction.Opcode = TGSI_OPCODE_TEX;
       fullinst->Instruction.NumSrcRegs = 2;
       fullinst->InstructionExtTexture.Texture = map_texture_target( inst->TexSrcTarget );
@@ -466,6 +467,7 @@ compile_instruction(
       fullinst->FullSrcRegisters[1].SrcRegister.Index = inst->TexSrcUnit;
       break;
    case OPCODE_TXB:
+      /* texture lookup with LOD bias */
       fullinst->Instruction.Opcode = TGSI_OPCODE_TXB;
       fullinst->Instruction.NumSrcRegs = 2;
       fullinst->InstructionExtTexture.Texture = map_texture_target( inst->TexSrcTarget );
@@ -473,13 +475,16 @@ compile_instruction(
       fullinst->FullSrcRegisters[1].SrcRegister.Index = inst->TexSrcUnit;
       break;
    case OPCODE_TXD:
+      /* texture lookup with explicit partial derivatives */
       fullinst->Instruction.Opcode = TGSI_OPCODE_TXD;
-      fullinst->Instruction.NumSrcRegs = 2;
+      fullinst->Instruction.NumSrcRegs = 4;
       fullinst->InstructionExtTexture.Texture = map_texture_target( inst->TexSrcTarget );
-      fullinst->FullSrcRegisters[1].SrcRegister.File = TGSI_FILE_SAMPLER;
-      fullinst->FullSrcRegisters[1].SrcRegister.Index = inst->TexSrcUnit;
+      /* src[0] = coord, src[1] = d[strq]/dx, src[2] = d[strq]/dy */
+      fullinst->FullSrcRegisters[3].SrcRegister.File = TGSI_FILE_SAMPLER;
+      fullinst->FullSrcRegisters[3].SrcRegister.Index = inst->TexSrcUnit;
       break;
    case OPCODE_TXL:
+      /* texture lookup with explicit LOD */
       fullinst->Instruction.Opcode = TGSI_OPCODE_TXL;
       fullinst->Instruction.NumSrcRegs = 2;
       fullinst->InstructionExtTexture.Texture = map_texture_target( inst->TexSrcTarget );
@@ -487,6 +492,8 @@ compile_instruction(
       fullinst->FullSrcRegisters[1].SrcRegister.Index = inst->TexSrcUnit;
       break;
    case OPCODE_TXP:
+      /* texture lookup with divide by Q component */
+      /* convert to TEX w/ special flag for division */
       fullinst->Instruction.Opcode = TGSI_OPCODE_TEX;
       fullinst->Instruction.NumSrcRegs = 2;
       fullinst->InstructionExtTexture.Texture = map_texture_target( inst->TexSrcTarget );

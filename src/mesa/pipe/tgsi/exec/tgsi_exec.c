@@ -1996,15 +1996,15 @@ exec_instruction(
 
    case TGSI_OPCODE_TEX:
       /* simple texture lookup */
-      /* src[0] is the texcoord */
-      /* src[1] is the sampler unit */
+      /* src[0] = texcoord */
+      /* src[1] = sampler unit */
       exec_tex(mach, inst, FALSE);
       break;
 
    case TGSI_OPCODE_TXB:
       /* Texture lookup with lod bias */
-      /* src[0] is the texcoord (src[0].w = load bias) */
-      /* src[1] is the sampler unit */
+      /* src[0] = texcoord (src[0].w = load bias) */
+      /* src[1] = sampler unit */
       exec_tex(mach, inst, TRUE);
       break;
 
@@ -2013,7 +2013,15 @@ exec_instruction(
       /* src[0] = texcoord */
       /* src[1] = d[strq]/dx */
       /* src[2] = d[strq]/dy */
+      /* src[3] = sampler unit */
       assert (0);
+      break;
+
+   case TGSI_OPCODE_TXL:
+      /* Texture lookup with explit LOD */
+      /* src[0] = texcoord (src[0].w = load bias) */
+      /* src[1] = sampler unit */
+      exec_tex(mach, inst, TRUE);
       break;
 
    case TGSI_OPCODE_UP2H:
@@ -2155,10 +2163,6 @@ exec_instruction(
       FOR_EACH_ENABLED_CHANNEL( *inst, chan_index ) {
          STORE( &r[0], 0, chan_index );
       }
-      break;
-
-   case TGSI_OPCODE_TXL:
-      assert (0);
       break;
 
    case TGSI_OPCODE_IF:
