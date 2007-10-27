@@ -47,8 +47,10 @@ struct pipe_format_info
 };
 
 
-extern const struct pipe_format_info *
-st_get_format_info(GLuint format);
+extern GLboolean
+st_get_format_info(
+   GLuint format,
+   struct pipe_format_info *pinfo );
 
 
 extern GLuint

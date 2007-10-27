@@ -62,26 +62,27 @@ st_renderbuffer_alloc_storage(GLcontext * ctx, struct gl_renderbuffer *rb,
    struct st_renderbuffer *strb = st_renderbuffer(rb);
    const GLuint pipeFormat
       = st_choose_pipe_format(pipe, internalFormat, GL_NONE, GL_NONE);
-   const struct pipe_format_info *info = st_get_format_info(pipeFormat);
+   struct pipe_format_info info;
    GLuint cpp;
    GLbitfield flags = PIPE_SURFACE_FLAG_RENDER; /* want to render to surface */
 
-   assert(info);
-   if (!info)
+   if (!st_get_format_info( pipeFormat, &info )) {
+      assert( 0 );
       return GL_FALSE;
+   }
 
-   strb->Base._ActualFormat = info->base_format;
-   strb->Base.RedBits = info->red_bits;
-   strb->Base.GreenBits = info->green_bits;
-   strb->Base.BlueBits = info->blue_bits;
-   strb->Base.AlphaBits = info->alpha_bits;
-   strb->Base.DepthBits = info->depth_bits;
-   strb->Base.StencilBits = info->stencil_bits;
+   strb->Base._ActualFormat = info.base_format;
+   strb->Base.RedBits = info.red_bits;
+   strb->Base.GreenBits = info.green_bits;
+   strb->Base.BlueBits = info.blue_bits;
+   strb->Base.AlphaBits = info.alpha_bits;
+   strb->Base.DepthBits = info.depth_bits;
+   strb->Base.StencilBits = info.stencil_bits;
    strb->Base.DataType = st_format_datatype(pipeFormat);
 
    assert(strb->Base.DataType);
 
-   cpp = info->size;
+   cpp = info.size;
 
    if (!strb->surface) {
       strb->surface = pipe->winsys->surface_alloc(pipe->winsys, pipeFormat);

@@ -36,20 +36,74 @@
 #include "main/texstore.h"
 #include "main/texformat.h"
 #include "main/enums.h"
+#include "main/macros.h"
 
 #include "pipe/p_context.h"
 #include "pipe/p_defines.h"
 #include "st_context.h"
 #include "st_format.h"
 
+static GLuint
+format_bits(
+   struct pipe_format_rgbazs  info,
+   GLuint comp )
+{
+   GLuint   size;
 
+   if (info.swizzleX == comp) {
+      size = info.sizeX;
+   }
+   else if (info.swizzleY == comp) {
+      size = info.sizeY;
+   }
+   else if (info.swizzleZ == comp) {
+      size = info.sizeZ;
+   }
+   else if (info.swizzleW == comp) {
+      size = info.sizeW;
+   }
+   else {
+      size = 0;
+   }
+   return size << (info.exp8 * 3);
+}
+
+static GLuint
+format_max_bits(
+   struct pipe_format_rgbazs  info )
+{
+   GLuint   size = format_bits( info, PIPE_FORMAT_COMP_R );
+
+   size = MAX2( size, format_bits( info, PIPE_FORMAT_COMP_G ) );
+   size = MAX2( size, format_bits( info, PIPE_FORMAT_COMP_B ) );
+   size = MAX2( size, format_bits( info, PIPE_FORMAT_COMP_A ) );
+   size = MAX2( size, format_bits( info, PIPE_FORMAT_COMP_Z ) );
+   size = MAX2( size, format_bits( info, PIPE_FORMAT_COMP_S ) );
+   return size;
+}
+
+static GLuint
+format_size(
+   struct pipe_format_rgbazs  info )
+{
+   return
+      format_bits( info, PIPE_FORMAT_COMP_R ) +
+      format_bits( info, PIPE_FORMAT_COMP_G ) +
+      format_bits( info, PIPE_FORMAT_COMP_B ) +
+      format_bits( info, PIPE_FORMAT_COMP_A ) +
+      format_bits( info, PIPE_FORMAT_COMP_Z ) +
+      format_bits( info, PIPE_FORMAT_COMP_S );
+}
 
 /*
  * XXX temporary here
  */
-const struct pipe_format_info *
-st_get_format_info(GLuint format)
+GLboolean
+st_get_format_info(
+   GLuint format,
+   struct pipe_format_info *pinfo )
 {
+#if 0
    static const struct pipe_format_info info[] = {
       {
          PIPE_FORMAT_U_R8_G8_B8_A8,  /* format */
@@ -124,6 +178,113 @@ st_get_format_info(GLuint format)
          return info + i;
    }
    return NULL;
+#endif
+
+   union pipe_format fmt;
+
+   fmt.value32 = format;
+   if (fmt.header.layout == PIPE_FORMAT_LAYOUT_RGBAZS) {
+      struct pipe_format_rgbazs  info;
+
+      info = fmt.rgbazs;
+
+#if 0
+      printf(
+         "PIPE_FORMAT: X(%u), Y(%u), Z(%u), W(%u)\n",
+         info.sizeX,
+         info.sizeY,
+         info.sizeZ,
+         info.sizeW );
+#endif
+
+      /* Data type */
+      if (format == PIPE_FORMAT_U_A1_R5_G5_B5 || format == PIPE_FORMAT_U_R5_G6_B5) {
+         pinfo->datatype = GL_UNSIGNED_SHORT;
+      }
+      else {
+         GLuint size;
+
+         assert( info.type == PIPE_FORMAT_TYPE_UNORM );
+
+         size = format_max_bits( info );
+         if (size == 8) {
+            pinfo->datatype = GL_UNSIGNED_BYTE;
+         }
+         else if (size == 16) {
+            pinfo->datatype = GL_UNSIGNED_SHORT;
+         }
+         else {
+            assert( size <= 32 );
+
+            pinfo->datatype = GL_UNSIGNED_INT;
+         }
+      }
+
+      /* Component bits */
+      pinfo->red_bits = format_bits( info, PIPE_FORMAT_COMP_R );
+      pinfo->green_bits = format_bits( info, PIPE_FORMAT_COMP_G );
+      pinfo->blue_bits = format_bits( info, PIPE_FORMAT_COMP_B );
+      pinfo->alpha_bits = format_bits( info, PIPE_FORMAT_COMP_A );
+      pinfo->depth_bits = format_bits( info, PIPE_FORMAT_COMP_Z );
+      pinfo->stencil_bits = format_bits( info, PIPE_FORMAT_COMP_S );
+
+      /* Format size */
+      pinfo->size = format_size( info ) / 8;
+
+      /* Luminance & Intensity bits */
+      if( info.swizzleX == PIPE_FORMAT_COMP_R && info.swizzleY == PIPE_FORMAT_COMP_R && info.swizzleZ == PIPE_FORMAT_COMP_R ) {
+         if( info.swizzleW == PIPE_FORMAT_COMP_R ) {
+            pinfo->luminance_bits = 0;
+            pinfo->intensity_bits = pinfo->red_bits;
+         }
+         else {
+            pinfo->luminance_bits = pinfo->red_bits;
+            pinfo->intensity_bits = 0;
+         }
+         pinfo->red_bits = 0;
+      }
+
+      /* Base format */
+      if (pinfo->depth_bits) {
+         if (pinfo->stencil_bits) {
+            pinfo->base_format = GL_DEPTH_STENCIL_EXT;
+         }
+         else {
+            pinfo->base_format = GL_DEPTH_COMPONENT;
+         }
+      }
+      else if (pinfo->stencil_bits) {
+         pinfo->base_format = GL_STENCIL_INDEX;
+      }
+      else {
+         pinfo->base_format = GL_RGBA;
+      }
+   }
+   else {
+      struct pipe_format_ycbcr   info;
+
+      assert( fmt.header.layout == PIPE_FORMAT_LAYOUT_YCBCR );
+
+      info = fmt.ycbcr;
+
+      /* TODO */
+      assert( 0 );
+   }
+
+#if 0
+   printf(
+      "ST_FORMAT: R(%u), G(%u), B(%u), A(%u), Z(%u), S(%u)\n",
+      pinfo->red_bits,
+      pinfo->green_bits,
+      pinfo->blue_bits,
+      pinfo->alpha_bits,
+      pinfo->depth_bits,
+      pinfo->stencil_bits );
+#endif
+
+   pinfo->format = format;
+
+   return GL_TRUE;
 }
 
 
@@ -133,9 +294,12 @@ st_get_format_info(GLuint format)
 GLuint
 st_sizeof_format(GLuint pipeFormat)
 {
-   const struct pipe_format_info *info = st_get_format_info(pipeFormat);
-   assert(info);
-   return info->size;
+   struct pipe_format_info info;
+   if (!st_get_format_info( pipeFormat, &info )) {
+      assert( 0 );
+      return 0;
+   }
+   return info.size;
 }
 
 
@@ -145,9 +309,12 @@ st_sizeof_format(GLuint pipeFormat)
 GLenum
 st_format_datatype(GLuint pipeFormat)
 {
-   const struct pipe_format_info *info = st_get_format_info(pipeFormat);
-   assert(info);
-   return info->datatype;
+   struct pipe_format_info info;
+   if (!st_get_format_info( pipeFormat, &info )) {
+      assert( 0 );
+      return 0;
+   }
+   return info.datatype;
 }
 
 

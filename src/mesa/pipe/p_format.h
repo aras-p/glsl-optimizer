@@ -84,7 +84,7 @@ struct pipe_format_rgbazs
    ((EXP8) << 26) |\
    ((TYPE) << 28) )
 
-#define _PIPE_FORMAT_SWZ( SWZX, SWZY, SWZZ, SWZW ) (((SWZX) << 2) | ((SWZY) << 5) | ((SWZZ) << 8) | ((SWZW) << 11))
+#define _PIPE_FORMAT_SWZ( SWZX, SWZY, SWZZ, SWZW ) (((SWZX) << 0) | ((SWZY) << 3) | ((SWZZ) << 6) | ((SWZW) << 9))
 
 #define _PIPE_FORMAT_RGBAZS_1U( SWZ, SIZE, TYPE )\
    _PIPE_FORMAT_RGBAZS( SWZ, SIZE, SIZE, SIZE, SIZE, 0, TYPE )
