@@ -186,8 +186,6 @@ TGSIEXEC_SOURCES = \
 TGSIDECO_SOURCES = \
 	pipe/tgsi/deco/deco_caps.c
 
-TGSIMESA_SOURCES = \
-	pipe/tgsi/mesa/mesa_to_tgsi.c
 
 ifeq ($(MESA_LLVM),1)
   LLVMTGSI_SOURCES = \
@@ -235,6 +233,7 @@ STATETRACKER_SOURCES = \
 	state_tracker/st_debug.c \
 	state_tracker/st_draw.c \
 	state_tracker/st_format.c \
+	state_tracker/st_mesa_to_tgsi.c \
 	state_tracker/st_program.c \
 	state_tracker/st_mipmap_tree.c
 
@@ -389,7 +388,6 @@ SOLO_SOURCES = \
 	$(DRAW_SOURCES)		\
 	$(TGSIEXEC_SOURCES)	\
 	$(TGSIDECO_SOURCES)	\
-	$(TGSIMESA_SOURCES)	\
 	$(STATECACHE_SOURCES)   \
 	$(STATETRACKER_SOURCES)	\
 	$(TNL_SOURCES)		\

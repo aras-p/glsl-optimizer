@@ -41,7 +41,6 @@
 #include "main/mtypes.h"
 
 #include "pipe/p_context.h"
-#include "pipe/tgsi/mesa/mesa_to_tgsi.h"
 #include "pipe/tgsi/exec/tgsi_core.h"
 
 #include "st_context.h"
@@ -49,6 +48,7 @@
 #include "st_atom.h"
 #include "st_program.h"
 #include "st_atom_shader.h"
+#include "st_mesa_to_tgsi.h"
 
 
 /**

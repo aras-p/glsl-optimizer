@@ -37,7 +37,6 @@
 #include "pipe/p_context.h"
 #include "pipe/p_defines.h"
 #include "pipe/draw/draw_context.h"
-#include "pipe/tgsi/mesa/mesa_to_tgsi.h"
 #include "pipe/tgsi/exec/tgsi_core.h"
 #include "pipe/llvm/llvmtgsi.h"
 
@@ -45,6 +44,7 @@
 #include "st_cache.h"
 #include "st_atom.h"
 #include "st_program.h"
+#include "st_mesa_to_tgsi.h"
 
 
 #define TGSI_DEBUG 0

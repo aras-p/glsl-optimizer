@@ -45,10 +45,10 @@
 #include "st_cb_texture.h"
 #include "st_draw.h"
 #include "st_format.h"
+#include "st_mesa_to_tgsi.h"
 #include "pipe/p_context.h"
 #include "pipe/p_defines.h"
 #include "pipe/p_winsys.h"
-#include "pipe/tgsi/mesa/mesa_to_tgsi.h"
 #include "shader/prog_instruction.h"
 
 

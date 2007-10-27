@@ -43,13 +43,13 @@
 #include "st_draw.h"
 #include "st_program.h"
 #include "st_public.h"
+#include "st_mesa_to_tgsi.h"
 
 #include "pipe/p_context.h"
 #include "pipe/p_state.h"
 #include "pipe/p_defines.h"
 #include "pipe/p_winsys.h"
 
-#include "pipe/tgsi/mesa/mesa_to_tgsi.h"
 
 
 

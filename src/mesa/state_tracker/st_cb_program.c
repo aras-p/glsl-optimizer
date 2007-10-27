@@ -43,7 +43,6 @@
 #include "st_program.h"
 #include "st_atom_shader.h"
 
-#include "pipe/tgsi/mesa/tgsi_mesa.h"
 
 
 /**
