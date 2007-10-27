@@ -37,7 +37,10 @@
 
 #include "pipe/llvm/llvmtgsi.h"
 
+#include "x86/rtasm/x86sse.h"
+
 #include "sp_context.h"
+#include "sp_state.h"
 #include "sp_headers.h"
 #include "sp_quad.h"
 #include "sp_tex_sample.h"
@@ -100,8 +103,8 @@ shade_quad(
 
    /* run shader */
    /* XXX: Generated code effectively unusable until it handles quad->mask */
-   if( !quad->mask && softpipe->fs->executable != NULL ) {
-      codegen_function func = (codegen_function) softpipe->fs->executable;
+   if( !quad->mask ) {
+      codegen_function func = (codegen_function) x86_get_func( &softpipe->fs->sse2_program );
       func(
          machine->Inputs,
          machine->Outputs,
@@ -119,7 +122,7 @@ shade_quad(
    /* store result color */
    if (qss->colorOutSlot >= 0) {
       /* XXX need to handle multiple color outputs someday */
-      assert(qss->stage.softpipe->fs->output_semantic_name[qss->colorOutSlot]
+      assert(qss->stage.softpipe->fs->shader.output_semantic_name[qss->colorOutSlot]
              == TGSI_SEMANTIC_COLOR);
       memcpy(
              quad->outputs.color,
@@ -167,15 +170,15 @@ static void shade_begin(struct quad_stage *qs)
 
    /* XXX only do this if the fragment shader changes... */
    tgsi_exec_machine_init(&qss->machine,
-                          softpipe->fs->tokens,
+                          softpipe->fs->shader.tokens,
                           PIPE_MAX_SAMPLERS,
                           qss->samplers );
 
    /* find output slots for depth, color */
    qss->colorOutSlot = -1;
    qss->depthOutSlot = -1;
-   for (i = 0; i < qss->stage.softpipe->fs->num_outputs; i++) {
-      switch (qss->stage.softpipe->fs->output_semantic_name[i]) {
+   for (i = 0; i < qss->stage.softpipe->fs->shader.num_outputs; i++) {
+      switch (qss->stage.softpipe->fs->shader.output_semantic_name[i]) {
       case TGSI_SEMANTIC_POSITION:
          qss->depthOutSlot = i;
          break;

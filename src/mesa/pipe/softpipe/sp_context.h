@@ -79,7 +79,7 @@ struct softpipe_context {
    const struct pipe_sampler_state *sampler[PIPE_MAX_SAMPLERS];
    const struct pipe_depth_stencil_state   *depth_stencil;
    const struct pipe_rasterizer_state *rasterizer;
-   const struct pipe_shader_state *fs;
+   const struct sp_fragment_shader_state *fs;
    const struct sp_vertex_shader_state *vs;
 
    struct pipe_blend_color blend_color;

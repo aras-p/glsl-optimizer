@@ -33,6 +33,17 @@
 
 #include "pipe/p_state.h"
 
+#include "x86/rtasm/x86sse.h"
+
+/**
+ * Softpipe fs state is derived from pipe_shader_state.
+ */
+struct sp_fragment_shader_state {
+   struct pipe_shader_state   shader;
+#if defined(__i386__) || defined(__386__)
+   struct x86_function        sse2_program;
+#endif
+};
 
 void *
 softpipe_create_alpha_test_state(struct pipe_context *,

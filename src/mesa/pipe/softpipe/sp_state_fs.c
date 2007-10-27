@@ -43,16 +43,14 @@ void * softpipe_create_fs_state(struct pipe_context *pipe,
     * that now.
     */
 
-   struct pipe_shader_state *state = malloc(sizeof(struct pipe_shader_state));
-   memcpy(state, templ, sizeof(struct pipe_shader_state));
+   struct sp_fragment_shader_state *state = malloc(sizeof(struct sp_fragment_shader_state));
+   state->shader = *templ;
 
 #if defined(__i386__) || defined(__386__)
    if (softpipe->use_sse) {
       x86_init_func( &state->sse2_program );
 
-      tgsi_emit_sse2_fs( state->tokens, &state->sse2_program );
-
-      state->executable = (void *)x86_get_func( &state->sse2_program );
+      tgsi_emit_sse2_fs( state->shader.tokens, &state->sse2_program );
    }
 #endif
 
@@ -63,7 +61,7 @@ void softpipe_bind_fs_state(struct pipe_context *pipe, void *fs)
 {
    struct softpipe_context *softpipe = softpipe_context(pipe);
 
-   softpipe->fs = (struct pipe_shader_state *)fs;
+   softpipe->fs = (struct sp_fragment_shader_state *) fs;
 
    softpipe->dirty |= SP_NEW_FS;
 }
@@ -72,7 +70,7 @@ void softpipe_delete_fs_state(struct pipe_context *pipe,
                               void *shader)
 {
 #if defined(__i386__) || defined(__386__)
-   struct pipe_shader_state *state = shader;
+   struct sp_fragment_shader_state *state = shader;
 
    x86_release_func( &state->sse2_program );
 #endif
