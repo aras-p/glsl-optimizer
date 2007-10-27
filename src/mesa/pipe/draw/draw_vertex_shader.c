@@ -100,20 +100,20 @@ run_vertex_program(struct draw_context *draw,
    draw_vertex_fetch( draw, machine, elts, count );
 
    /* run shader */
-   if( draw->vertex_shader->state->executable != NULL ) {
+#if defined(__i386__) || defined(__386__)
+   {
       /* SSE */
-      codegen_function func = (codegen_function) draw->vertex_shader->state->executable;
+      codegen_function func = (codegen_function) x86_get_func( &draw->vertex_shader->sse2_program );
       func(
          machine->Inputs,
          machine->Outputs,
          machine->Consts,
          machine->Temps );
    }
-   else {
-      /* interpreter */
-      tgsi_exec_machine_run( machine );
-   }
-
+#else
+   /* interpreter */
+   tgsi_exec_machine_run( machine );
+#endif
 
    /* store machine results */
    for (j = 0; j < count; j++) {
@@ -225,11 +225,9 @@ draw_create_vertex_shader(struct draw_context *draw,
       /* cast-away const */
       struct pipe_shader_state *sh = (struct pipe_shader_state *) shader;
 
-      x86_init_func( &sh->sse2_program );
+      x86_init_func( &vs->sse2_program );
 
-      tgsi_emit_sse2( sh->tokens, &sh->sse2_program );
-
-      sh->executable = x86_get_func( &sh->sse2_program );
+      tgsi_emit_sse2( sh->tokens, &vs->sse2_program );
    }
 #endif
 
@@ -255,7 +253,7 @@ void draw_delete_vertex_shader(struct draw_context *draw,
    struct draw_vertex_shader *vs = (struct draw_vertex_shader*)(vcso);
 
 #if defined(__i386__) || defined(__386__)
-   x86_release_func((struct x86_function *) &vs->state->sse2_program);
+   x86_release_func((struct x86_function *) &vs->sse2_program);
 #endif
 
    free((void *) vs->state);

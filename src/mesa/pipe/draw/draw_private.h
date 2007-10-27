@@ -124,7 +124,9 @@ struct draw_stage
  */
 struct draw_vertex_shader {
    const struct pipe_shader_state   *state;
+#if defined(__i386__) || defined(__386__)
    struct x86_function              sse2_program;
+#endif
 };
 
 /**
