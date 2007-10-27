@@ -104,7 +104,7 @@ shade_quad(
    /* run shader */
 #if defined(__i386__) || defined(__386__)
    /* XXX: Generated code effectively unusable until it handles quad->mask */
-   if( !quad->mask ) {
+   if( !quad->mask && softpipe->use_sse ) {
       codegen_function func = (codegen_function) x86_get_func( &softpipe->fs->sse2_program );
       func(
          machine->Inputs,

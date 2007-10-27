@@ -49,7 +49,6 @@ void * softpipe_create_fs_state(struct pipe_context *pipe,
 #if defined(__i386__) || defined(__386__)
    if (softpipe->use_sse) {
       x86_init_func( &state->sse2_program );
-
       tgsi_emit_sse2_fs( state->shader.tokens, &state->sse2_program );
    }
 #endif
@@ -69,13 +68,13 @@ void softpipe_bind_fs_state(struct pipe_context *pipe, void *fs)
 void softpipe_delete_fs_state(struct pipe_context *pipe,
                               void *shader)
 {
-#if defined(__i386__) || defined(__386__)
    struct sp_fragment_shader_state *state = shader;
 
+#if defined(__i386__) || defined(__386__)
    x86_release_func( &state->sse2_program );
 #endif
 
-   free(shader);
+   free( state );
 }
 
 
