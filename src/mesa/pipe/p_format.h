@@ -124,7 +124,7 @@ struct pipe_format_ycbcr
 
 #define _PIPE_FORMAT_YCBCR( REV ) (\
    (PIPE_FORMAT_LAYOUT_YCBCR << 0) |\
-   ((REVERSED) << 2) )
+   ((REV) << 2) )
 
 union pipe_format
 {
