@@ -1138,9 +1138,9 @@ static void
 exec_kilp(struct tgsi_exec_machine *mach,
           const struct tgsi_full_instruction *inst)
 {
-    GLbitfield uniquemask;
+   uint uniquemask;
     uint chan_index;
-    GLbitfield kilmask = 0; /* bit 0 = pixel 0, bit 1 = pixel 1, etc */
+    uint kilmask = 0; /* bit 0 = pixel 0, bit 1 = pixel 1, etc */
     union tgsi_exec_channel r[1];
 
     /* This mask stores component bits that were already tested. Note that
