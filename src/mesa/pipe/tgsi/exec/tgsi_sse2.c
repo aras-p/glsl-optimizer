@@ -129,16 +129,6 @@ get_coef(
       ((vec * 3 + member) * 4 + chan) * 4 );
 }
 
-static struct x86_reg
-get_addr(
-   unsigned vec,
-   unsigned chan )
-{
-   return get_temp(
-      vec + TGSI_EXEC_NUM_TEMPS,
-      chan );
-}
-
 static void
 emit_const(
    struct x86_function *func,
@@ -284,20 +274,6 @@ emit_coef_dady(
       vec,
       chan,
       2 );
-}
-
-static void
-emit_addrf(
-   struct x86_function *func,
-   unsigned xmm,
-   unsigned vec,
-   unsigned chan )
-{
-   emit_tempf(
-      func,
-      xmm,
-      vec + TGSI_EXEC_NUM_TEMPS,
-      chan );
 }
 
 static void
