@@ -575,14 +575,16 @@ make_output_decl(
 
 
 static struct tgsi_full_declaration
-make_temp_decl(GLuint index)
+make_temp_decl(
+   GLuint start_index,
+   GLuint end_index )
 {
    struct tgsi_full_declaration decl;
    decl = tgsi_default_full_declaration();
    decl.Declaration.File = TGSI_FILE_TEMPORARY;
    decl.Declaration.Declare = TGSI_DECLARE_RANGE;
-   decl.u.DeclarationRange.First = index;
-   decl.u.DeclarationRange.Last = index;
+   decl.u.DeclarationRange.First = start_index;
+   decl.u.DeclarationRange.Last = end_index;
    return decl;
 }
 
@@ -592,11 +594,11 @@ make_temp_decl(GLuint index)
  * Put the indices of the temporaries in 'tempsUsed'.
  * \return number of temporaries used
  */
-static GLuint
+static void
 find_temporaries(const struct gl_program *program,
-                 GLuint tempsUsed[MAX_PROGRAM_TEMPS])
+                 GLboolean tempsUsed[MAX_PROGRAM_TEMPS])
 {
-   GLuint i, j, count;
+   GLuint i, j;
 
    for (i = 0; i < MAX_PROGRAM_TEMPS; i++)
       tempsUsed[i] = GL_FALSE;
@@ -611,14 +613,6 @@ find_temporaries(const struct gl_program *program,
             tempsUsed[inst->DstReg.Index] = GL_TRUE;
       }
    }
-
-   /* convert flags to list of indices */
-   count = 0;
-   for (i = 0; i < MAX_PROGRAM_TEMPS; i++) {
-      if (tempsUsed[i])
-         tempsUsed[count++] = i;
-   }
-   return count;
 }
 
 
@@ -784,16 +778,28 @@ tgsi_translate_mesa_program(
 
    /* temporary decls */
    {
-      GLuint tempsUsed[MAX_PROGRAM_TEMPS];
-      uint numTemps = find_temporaries(program, tempsUsed);
-      for (i = 0; i < numTemps; i++) {
-         struct tgsi_full_declaration fulldecl;
-         fulldecl = make_temp_decl(tempsUsed[i]);
-         ti += tgsi_build_full_declaration(
-                                           &fulldecl,
-                                           &tokens[ti],
-                                           header,
-                                           maxTokens - ti );
+      GLboolean tempsUsed[MAX_PROGRAM_TEMPS + 1];
+      GLboolean inside_range = GL_FALSE;
+      GLuint start_range;
+
+      find_temporaries(program, tempsUsed);
+      tempsUsed[MAX_PROGRAM_TEMPS] = GL_FALSE;
+      for (i = 0; i < MAX_PROGRAM_TEMPS + 1; i++) {
+         if (tempsUsed[i] && !inside_range) {
+            inside_range = GL_TRUE;
+            start_range = i;
+         }
+         else if (!tempsUsed[i] && inside_range) {
+            struct tgsi_full_declaration fulldecl;
+
+            inside_range = GL_FALSE;
+            fulldecl = make_temp_decl( start_range, i - 1 );
+            ti += tgsi_build_full_declaration(
+                                              &fulldecl,
+                                              &tokens[ti],
+                                              header,
+                                              maxTokens - ti );
+         }
       }
    }
 
