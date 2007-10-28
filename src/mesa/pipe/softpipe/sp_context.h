@@ -166,6 +166,7 @@ struct softpipe_context {
    struct softpipe_tile_cache *tex_cache[PIPE_MAX_SAMPLERS];
 
    int use_sse : 1;
+   int dump_fs : 1;
 };
 
 

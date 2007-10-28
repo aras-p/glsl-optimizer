@@ -292,6 +292,8 @@ struct pipe_context *softpipe_create( struct pipe_winsys *pipe_winsys,
    softpipe->use_sse = FALSE;
 #endif
 
+   softpipe->dump_fs = getenv( "GALLIUM_DUMP_FS" ) != NULL;
+
    softpipe->pipe.winsys = pipe_winsys;
    softpipe->pipe.destroy = softpipe_destroy;
 

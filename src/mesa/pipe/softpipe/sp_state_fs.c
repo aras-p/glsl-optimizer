@@ -46,6 +46,12 @@ void * softpipe_create_fs_state(struct pipe_context *pipe,
    struct sp_fragment_shader_state *state = malloc(sizeof(struct sp_fragment_shader_state));
    state->shader = *templ;
 
+   if( softpipe->dump_fs ) {
+      tgsi_dump(
+         state->shader.tokens,
+         0 );
+   }
+
 #if defined(__i386__) || defined(__386__)
    if (softpipe->use_sse) {
       x86_init_func( &state->sse2_program );
