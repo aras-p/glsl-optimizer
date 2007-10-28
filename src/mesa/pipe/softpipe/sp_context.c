@@ -46,14 +46,16 @@
 
 
 /**
- * Return list of supported surface/texture formats.
+ * Query format support.
  * If we find texture and drawable support differs, add a selector
  * parameter or another function.
  */
-static const unsigned *
-softpipe_supported_formats(struct pipe_context *pipe, unsigned *numFormats)
+static boolean
+softpipe_is_format_supported( struct pipe_context *pipe,
+                              uint format )
 {
 #if 0
+   /* XXX: This is broken -- rewrite if still needed. */
    static const unsigned supported[] = {
       PIPE_FORMAT_U_R8_G8_B8_A8,
       PIPE_FORMAT_U_A8_R8_G8_B8,
@@ -76,7 +78,7 @@ softpipe_supported_formats(struct pipe_context *pipe, unsigned *numFormats)
    return supported;
 #else
    struct softpipe_context *softpipe = softpipe_context( pipe );
-   return softpipe->winsys->supported_formats( softpipe->winsys, numFormats );
+   return softpipe->winsys->is_format_supported( softpipe->winsys, format );
 #endif
 }
 
@@ -298,7 +300,7 @@ struct pipe_context *softpipe_create( struct pipe_winsys *pipe_winsys,
    softpipe->pipe.destroy = softpipe_destroy;
 
    /* queries */
-   softpipe->pipe.supported_formats = softpipe_supported_formats;
+   softpipe->pipe.is_format_supported = softpipe_is_format_supported;
    softpipe->pipe.max_texture_size = softpipe_max_texture_size;
    softpipe->pipe.get_param = softpipe_get_param;
 

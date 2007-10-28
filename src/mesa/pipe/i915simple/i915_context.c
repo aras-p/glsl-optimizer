@@ -40,16 +40,16 @@
 
 
 /**
- * Return list of supported surface/texture formats.
+ * Query format support.
  * If we find texture and drawable support differs, add a selector
  * parameter or another function.
  */
-static const unsigned *
-i915_supported_formats(struct pipe_context *pipe, 
-//			   unsigned type,
-			   unsigned *numFormats)
+static boolean
+i915_is_format_supported( struct pipe_context *pipe,
+                          uint format )
 {
 #if 0
+   /* XXX: This is broken -- rewrite if still needed. */
    static const unsigned tex_supported[] = {
       PIPE_FORMAT_U_R8_G8_B8_A8,
       PIPE_FORMAT_U_A8_R8_G8_B8,
@@ -97,13 +97,13 @@ i915_supported_formats(struct pipe_context *pipe,
       return NULL;
    }
 #else
-   static const unsigned render_supported[] = {
-      PIPE_FORMAT_U_A8_R8_G8_B8,
-      PIPE_FORMAT_U_R5_G6_B5,
-      PIPE_FORMAT_S8_Z24,
+   switch( format ) {
+   case PIPE_FORMAT_U_A8_R8_G8_B8:
+   case PIPE_FORMAT_U_R5_G6_B5:
+   case PIPE_FORMAT_S8_Z24:
+      return TRUE;
    };
-   *numFormats = 3;
-   return render_supported;
+   return FALSE;
 #endif
 }
 
@@ -303,7 +303,7 @@ struct pipe_context *i915_create( struct pipe_winsys *pipe_winsys,
    i915->pipe.winsys = pipe_winsys;
 
    i915->pipe.destroy = i915_destroy;
-   i915->pipe.supported_formats = i915_supported_formats;
+   i915->pipe.is_format_supported = i915_is_format_supported;
    i915->pipe.max_texture_size = i915_max_texture_size;
    i915->pipe.get_param = i915_get_param;
 

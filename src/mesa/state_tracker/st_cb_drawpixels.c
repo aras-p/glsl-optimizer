@@ -937,31 +937,26 @@ make_bitmap_texture(GLcontext *ctx, GLsizei width, GLsizei height,
 {
    struct pipe_context *pipe = ctx->st->pipe;
    const uint flags = PIPE_SURFACE_FLAG_TEXTURE;
-   uint numFormats, i, format = 0, cpp, comp, pitch;
-   const uint *formats = ctx->st->pipe->supported_formats(pipe, &numFormats);
+   uint format = 0, cpp, comp, pitch;
    ubyte *dest;
    struct pipe_mipmap_tree *mt;
    int row, col;
 
    /* find a texture format we know */
-   for (i = 0; i < numFormats; i++) {
-      switch (formats[i]) {
-      case PIPE_FORMAT_U_I8:
-         format = formats[i];
-         cpp = 1;
-         comp = 0;
-         break;
-      case PIPE_FORMAT_U_A8_R8_G8_B8:
-         format = formats[i];
-         cpp = 4;
-         comp = 3; /* alpha channel */ /*XXX little-endian dependency */
-         break;
-      default:
-         /* XXX support more formats */
-         ;
-      }
+   if (pipe->is_format_supported( pipe, PIPE_FORMAT_U_I8 )) {
+      format = PIPE_FORMAT_U_I8;
+      cpp = 1;
+      comp = 0;
    }
-   assert(format);
+   else if (pipe->is_format_supported( pipe, PIPE_FORMAT_U_A8_R8_G8_B8 )) {
+      format = PIPE_FORMAT_U_A8_R8_G8_B8;
+      cpp = 4;
+      comp = 3; /* alpha channel */ /*XXX little-endian dependency */
+   }
+   else {
+      /* XXX support more formats */
+      assert( 0 );
+   }
 
    /**
     * Create a mipmap tree.

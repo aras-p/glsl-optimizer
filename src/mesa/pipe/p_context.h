@@ -44,8 +44,8 @@ struct pipe_context {
    /*
     * Queries
     */
-   const unsigned *(*supported_formats)(struct pipe_context *pipe,
-                                      unsigned *numFormats);
+   boolean (*is_format_supported)( struct pipe_context *pipe,
+                                   uint format );
 
    void (*max_texture_size)(struct pipe_context *pipe,
                             unsigned textureType, /* PIPE_TEXTURE_x */

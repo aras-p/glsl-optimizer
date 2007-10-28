@@ -35,8 +35,8 @@
  */
 
 struct softpipe_winsys {
-   const unsigned *(*supported_formats)(struct softpipe_winsys *sws, 
-					unsigned *numFormats);
+   boolean (*is_format_supported)( struct softpipe_winsys *sws,
+                                   uint format );
 
 };
 

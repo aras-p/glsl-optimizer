@@ -1616,7 +1616,7 @@ XMesaContext XMesaCreateContext( XMesaVisual v, XMesaContext share_list )
 #if 0
    mesaCtx->st->pipe->surface_alloc = xmesa_surface_alloc;
 #endif
-   mesaCtx->st->pipe->supported_formats = xmesa_supported_formats;
+   mesaCtx->st->pipe->is_format_supported = xmesa_is_format_supported;
    mesaCtx->st->pipe->get_tile_rgba = xmesa_get_tile_rgba;
    mesaCtx->st->pipe->put_tile_rgba = xmesa_put_tile_rgba;
 

@@ -116,7 +116,7 @@ struct pipe_context *failover_create( struct pipe_context *hw,
 
    failover->pipe.winsys = hw->winsys;
    failover->pipe.destroy = failover_destroy;
-   failover->pipe.supported_formats = hw->supported_formats;
+   failover->pipe.is_format_supported = hw->is_format_supported;
    failover->pipe.max_texture_size = hw->max_texture_size;
    failover->pipe.get_name = hw->get_name;
    failover->pipe.get_vendor = hw->get_vendor;
