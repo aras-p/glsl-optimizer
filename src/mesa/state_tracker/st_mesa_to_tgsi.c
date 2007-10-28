@@ -591,8 +591,6 @@ make_temp_decl(
 
 /**
  * Find the temporaries which are used in the given program.
- * Put the indices of the temporaries in 'tempsUsed'.
- * \return number of temporaries used
  */
 static void
 find_temporaries(const struct gl_program *program,
