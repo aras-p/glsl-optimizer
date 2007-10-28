@@ -20,17 +20,7 @@
 #define CHAN_Z 2
 #define CHAN_W 3
 
-static unsigned
-p2u( void *p )
-{
-   union {
-      void     *p;
-      unsigned u;
-   } pu;
-
-   pu.p = p;
-   return pu.u;
-}
+#define TEMP_R0   TGSI_EXEC_TEMP_R0
 
 static struct x86_reg
 get_argument(
@@ -376,132 +366,112 @@ emit_add(
 }
 
 static void
-emit_push_abcd(
+emit_push_gp(
    struct x86_function *func )
 {
    x86_push(
       func,
-      x86_make_reg( file_REG32, reg_AX ) );
+      get_const_base() );
    x86_push(
       func,
-      x86_make_reg( file_REG32, reg_BX ) );
+      get_input_base() );
    x86_push(
       func,
-      x86_make_reg( file_REG32, reg_CX ) );
+      get_output_base() );
+
+   /* It is important on non-win32 platforms that temp base is pushed last.
+    */
    x86_push(
       func,
-      x86_make_reg( file_REG32, reg_DX ) );
+      get_temp_base() );
 }
 
 static void
-emit_pop_dcba(
+emit_pop_gp(
    struct x86_function *func )
 {
+   /* Restore GP registers in a reverse order.
+    */
    x86_pop(
       func,
-      x86_make_reg( file_REG32, reg_DX ) );
+      get_temp_base() );
    x86_pop(
       func,
-      x86_make_reg( file_REG32, reg_CX ) );
+      get_output_base() );
    x86_pop(
       func,
-      x86_make_reg( file_REG32, reg_BX ) );
+      get_input_base() );
    x86_pop(
       func,
-      x86_make_reg( file_REG32, reg_AX ) );
+      get_const_base() );
 }
 
 static void
-emit_func_call1(
+emit_func_call_dst(
    struct x86_function *func,
    unsigned xmm_dst,
-   unsigned storage,
    void (*code)() )
 {
-   x86_push(
-      func,
-      x86_make_reg( file_REG32, reg_AX ) );
-   x86_mov_reg_imm(
-      func,
-      x86_make_reg( file_REG32, reg_AX ),
-      storage );
    sse_movaps(
       func,
-      x86_deref( x86_make_reg( file_REG32, reg_AX ) ),
+      get_temp( TEMP_R0, 0 ),
       make_xmm( xmm_dst ) );
-   emit_push_abcd(
+
+   emit_push_gp(
       func );
+
+#ifdef WIN32
+   x86_push(
+      func,
+      get_temp( TEMP_R0, 0 ) );
+#endif
+
    x86_call(
       func,
       code );
-   emit_pop_dcba(
+
+   emit_pop_gp(
       func );
+
    sse_movaps(
       func,
       make_xmm( xmm_dst ),
-      x86_deref( x86_make_reg( file_REG32, reg_AX ) ) );
-   x86_pop(
-      func,
-      x86_make_reg( file_REG32, reg_AX ) );
+      get_temp( TEMP_R0, 0 ) );
 }
 
 static void
-emit_func_call2(
+emit_func_call_dst_src(
    struct x86_function *func,
    unsigned xmm_dst,
    unsigned xmm_src,
-   unsigned storage,
    void (*code)() )
 {
-   x86_push(
-      func,
-      x86_make_reg( file_REG32, reg_AX ) );
-   x86_mov_reg_imm(
-      func,
-      x86_make_reg( file_REG32, reg_AX ),
-      storage );
    sse_movaps(
       func,
-      x86_deref( x86_make_reg( file_REG32, reg_AX ) ),
-      make_xmm( xmm_dst ) );
-   sse_movaps(
-      func,
-      x86_make_disp( x86_make_reg( file_REG32, reg_AX ), 16 ),
+      get_temp( TEMP_R0, 1 ),
       make_xmm( xmm_src ) );
-   emit_push_abcd(
-      func );
-   x86_call(
+
+   emit_func_call_dst(
       func,
+      xmm_dst,
       code );
-   emit_pop_dcba(
-      func );
-   sse_movaps(
-      func,
-      make_xmm( xmm_dst ),
-      x86_deref( x86_make_reg( file_REG32, reg_AX ) ) );
-   x86_pop(
-      func,
-      x86_make_reg( file_REG32, reg_AX ) );
 }
 
-/* XXX: move into machine context */
-static float g_cos_storage[4 + 3];
-
-static void
-cos4f( void )
+static void XSTDCALL
+cos4f(
+   float *store )
 {
-   float *store = (float *) tgsi_align_128bit( g_cos_storage );
-
 #ifdef WIN32
    store[0] = (float) cos( (double) store[0] );
    store[1] = (float) cos( (double) store[1] );
    store[2] = (float) cos( (double) store[2] );
    store[3] = (float) cos( (double) store[3] );
 #else
-   store[0] = cosf( store[0] );
-   store[1] = cosf( store[1] );
-   store[2] = cosf( store[2] );
-   store[3] = cosf( store[3] );
+   const unsigned X = TEMP_R0 * 16;
+   store[X + 0] = cosf( store[X + 0] );
+   store[X + 1] = cosf( store[X + 1] );
+   store[X + 2] = cosf( store[X + 2] );
+   store[X + 3] = cosf( store[X + 3] );
 #endif
 }
 
@@ -510,31 +480,27 @@ emit_cos(
    struct x86_function *func,
    unsigned xmm_dst )
 {
-   emit_func_call1(
+   emit_func_call_dst(
       func,
       xmm_dst,
-      p2u( tgsi_align_128bit( g_cos_storage ) ),
       cos4f );
 }
 
-/* XXX: move into machine context */
-static float g_sin_storage[4 + 3];
-
-static void
-sin4f( void )
+static void XSTDCALL
+sin4f(
+   float *store )
 {
-   float *store = (float *) tgsi_align_128bit( g_sin_storage );
-
 #ifdef WIN32
    store[0] = (float) sin( (double) store[0] );
    store[1] = (float) sin( (double) store[1] );
    store[2] = (float) sin( (double) store[2] );
    store[3] = (float) sin( (double) store[3] );
 #else
-   store[0] = sinf( store[0] );
-   store[1] = sinf( store[1] );
-   store[2] = sinf( store[2] );
-   store[3] = sinf( store[3] );
+   const unsigned X = TEMP_R0 * 16;
+   store[X + 0] = sinf( store[X + 0] );
+   store[X + 1] = sinf( store[X + 1] );
+   store[X + 2] = sinf( store[X + 2] );
+   store[X + 3] = sinf( store[X + 3] );
 #endif
 }
 
@@ -542,10 +508,9 @@ static void
 emit_sin (struct x86_function *func,
           unsigned xmm_dst)
 {
-   emit_func_call1(
+   emit_func_call_dst(
       func,
       xmm_dst,
-      p2u( tgsi_align_128bit( g_sin_storage ) ),
       sin4f );
 }
 
@@ -572,24 +537,21 @@ emit_mul (struct x86_function *func,
       make_xmm( xmm_src ) );
 }
 
-/* XXX: move into machine context */
-static float g_pow_storage[4 + 4 + 3];
-
-static void
-pow4f( void )
+static void XSTDCALL
+pow4f(
+   float *store )
 {
-   float *store = (float *) tgsi_align_128bit( g_pow_storage );
-
 #ifdef WIN32
    store[0] = (float) pow( (double) store[0], (double) store[4] );
    store[1] = (float) pow( (double) store[1], (double) store[5] );
    store[2] = (float) pow( (double) store[2], (double) store[6] );
    store[3] = (float) pow( (double) store[3], (double) store[7] );
 #else
-   store[0] = powf( store[0], store[4] );
-   store[1] = powf( store[1], store[5] );
-   store[2] = powf( store[2], store[6] );
-   store[3] = powf( store[3], store[7] );
+   const unsigned X = TEMP_R0 * 16;
+   store[X + 0] = powf( store[X + 0], store[X + 4] );
+   store[X + 1] = powf( store[X + 1], store[X + 5] );
+   store[X + 2] = powf( store[X + 2], store[X + 6] );
+   store[X + 3] = powf( store[X + 3], store[X + 7] );
 #endif
 }
 
@@ -599,32 +561,28 @@ emit_pow(
    unsigned xmm_dst,
    unsigned xmm_src )
 {
-   emit_func_call2(
+   emit_func_call_dst_src(
       func,
       xmm_dst,
       xmm_src,
-      p2u( tgsi_align_128bit( g_pow_storage ) ),
       pow4f );
 }
 
-/* XXX: move into machine context */
-static float g_ex2_storage[4 + 3];
-
-static void
-ex24f( void )
+static void XSTDCALL
+ex24f(
+   float *store )
 {
-   float *store = (float *) tgsi_align_128bit( g_ex2_storage );
-
 #ifdef WIN32
    store[0] = (float) pow( 2.0, (double) store[0] );
    store[1] = (float) pow( 2.0, (double) store[1] );
    store[2] = (float) pow( 2.0, (double) store[2] );
    store[3] = (float) pow( 2.0, (double) store[3] );
 #else
-   store[0] = powf( 2.0f, store[0] );
-   store[1] = powf( 2.0f, store[1] );
-   store[2] = powf( 2.0f, store[2] );
-   store[3] = powf( 2.0f, store[3] );
+   const unsigned X = TEMP_R0 * 16;
+   store[X + 0] = powf( 2.0f, store[X + 0] );
+   store[X + 1] = powf( 2.0f, store[X + 1] );
+   store[X + 2] = powf( 2.0f, store[X + 2] );
+   store[X + 3] = powf( 2.0f, store[X + 3] );
 #endif
 }
 
@@ -633,25 +591,25 @@ emit_ex2(
    struct x86_function *func,
    unsigned xmm_dst )
 {
-   emit_func_call1(
+   emit_func_call_dst(
       func,
       xmm_dst,
-      p2u( tgsi_align_128bit( g_ex2_storage ) ),
       ex24f );
 }
 
-/* XXX: move into machine context */
-static float g_lg2_storage[4 + 3];
-
-static void
-lg24f( void )
+static void XSTDCALL
+lg24f(
+   float *store )
 {
-   float *store = (float *) tgsi_align_128bit( g_lg2_storage );
-
-   store[0] = LOG2( store[0] );
-   store[1] = LOG2( store[1] );
-   store[2] = LOG2( store[2] );
-   store[3] = LOG2( store[3] );
+#ifdef WIN32
+   const unsigned X = 0;
+#else
+   const unsigned X = TEMP_R0 * 16;
+#endif
+   store[X + 0] = LOG2( store[X + 0] );
+   store[X + 1] = LOG2( store[X + 1] );
+   store[X + 2] = LOG2( store[X + 2] );
+   store[X + 3] = LOG2( store[X + 3] );
 }
 
 static void
@@ -659,25 +617,25 @@ emit_lg2(
    struct x86_function *func,
    unsigned xmm_dst )
 {
-   emit_func_call1(
+   emit_func_call_dst(
       func,
       xmm_dst,
-      p2u( tgsi_align_128bit( g_lg2_storage ) ),
       lg24f );
 }
 
-/* XXX: move into machine context */
-static float g_flr_storage[4 + 3];
-
-static void
-flr4f( void )
+static void XSTDCALL
+flr4f(
+   float *store )
 {
-   float *store = (float *) tgsi_align_128bit( g_flr_storage );
-
-   store[0] = (float) floor( (double) store[0] );
-   store[1] = (float) floor( (double) store[1] );
-   store[2] = (float) floor( (double) store[2] );
-   store[3] = (float) floor( (double) store[3] );
+#ifdef WIN32
+   const unsigned X = 0;
+#else
+   const unsigned X = TEMP_R0 * 16;
+#endif
+   store[X + 0] = (float) floor( (double) store[X + 0] );
+   store[X + 1] = (float) floor( (double) store[X + 1] );
+   store[X + 2] = (float) floor( (double) store[X + 2] );
+   store[X + 3] = (float) floor( (double) store[X + 3] );
 }
 
 static void
@@ -685,25 +643,25 @@ emit_flr(
    struct x86_function *func,
    unsigned xmm_dst )
 {
-   emit_func_call1(
+   emit_func_call_dst(
       func,
       xmm_dst,
-      p2u( tgsi_align_128bit( g_flr_storage ) ),
       flr4f );
 }
 
-/* XXX: move into machine context */
-static float g_frc_storage[4 + 3];
-
-static void
-frc4f( void )
+static void XSTDCALL
+frc4f(
+   float *store )
 {
-   float *store = (float *) tgsi_align_128bit( g_frc_storage );
-
-   store[0] -= (float) floor( (double) store[0] );
-   store[1] -= (float) floor( (double) store[1] );
-   store[2] -= (float) floor( (double) store[2] );
-   store[3] -= (float) floor( (double) store[3] );
+#ifdef WIN32
+   const unsigned X = 0;
+#else
+   const unsigned X = TEMP_R0 * 16;
+#endif
+   store[X + 0] -= (float) floor( (double) store[X + 0] );
+   store[X + 1] -= (float) floor( (double) store[X + 1] );
+   store[X + 2] -= (float) floor( (double) store[X + 2] );
+   store[X + 3] -= (float) floor( (double) store[X + 3] );
 }
 
 static void
@@ -711,10 +669,9 @@ emit_frc(
    struct x86_function *func,
    unsigned xmm_dst )
 {
-   emit_func_call1(
+   emit_func_call_dst(
       func,
       xmm_dst,
-      p2u( tgsi_align_128bit( g_frc_storage ) ),
       frc4f );
 }
 
