@@ -32,6 +32,8 @@
 
 #define CALLOC_STRUCT(T)   (struct T *) calloc(1, sizeof(struct T))
 
+#define MALLOC( SIZE )  malloc( SIZE )
+
 #define FREE( PTR )  free( PTR )
 
 #define CLAMP( X, MIN, MAX )  ( (X)<(MIN) ? (MIN) : ((X)>(MAX) ? (MAX) : (X)) )

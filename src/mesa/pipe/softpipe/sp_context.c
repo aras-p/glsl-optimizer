@@ -227,7 +227,7 @@ static void softpipe_destroy( struct pipe_context *pipe )
    softpipe->quad.colormask->destroy( softpipe->quad.colormask );
    softpipe->quad.output->destroy( softpipe->quad.output );
 
-   free( softpipe );
+   FREE( softpipe );
 }
 
 
