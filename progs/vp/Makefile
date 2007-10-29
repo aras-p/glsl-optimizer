@@ -8,7 +8,7 @@ TOP = ../..
 include $(TOP)/configs/current
 
 
-LIBS = $(APP_LIB_DEPS)
+LIBS = -L$(TOP)/$(LIB_DIR) -l$(GLUT_LIB) -l$(GLU_LIB) -l$(GL_LIB) $(APP_LIB_DEPS)
 
 SOURCES = \
 	vp-tris.c
