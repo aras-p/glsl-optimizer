@@ -452,6 +452,7 @@ mgaCreateContext( const __GLcontextModes *mesaVis,
    GLcontext *ctx, *shareCtx;
    mgaContextPtr mmesa;
    __DRIscreenPrivate *sPriv = driContextPriv->driScreenPriv;
+   __DRIdrawablePrivate *dPriv = driContextPriv->driDrawablePriv;
    mgaScreenPrivate *mgaScreen = (mgaScreenPrivate *)sPriv->private;
    drm_mga_sarea_t *saPriv = (drm_mga_sarea_t *)(((char*)sPriv->pSAREA)+
 					      mgaScreen->sarea_priv_offset);
@@ -650,7 +651,7 @@ mgaCreateContext( const __GLcontextModes *mesaVis,
 				    debug_control );
 #endif
 
-   mmesa->vblank_flags = (mmesa->mgaScreen->irq == 0)
+   dPriv->vblFlags = (mmesa->mgaScreen->irq == 0)
        ? VBLANK_FLAG_NO_IRQ : driGetDefaultVBlankFlags(&mmesa->optionCache);
 
    (*dri_interface->getUST)( & mmesa->swap_ust );
@@ -882,8 +883,8 @@ mgaMakeCurrent(__DRIcontextPrivate *driContextPriv,
       mgaContextPtr mmesa = (mgaContextPtr) driContextPriv->driverPrivate;
 
       if (mmesa->driDrawable != driDrawPriv) {
-	 driDrawableInitVBlank( driDrawPriv, mmesa->vblank_flags,
-				&mmesa->vbl_seq );
+	 driDrawableInitVBlank( driDrawPriv );
+
 	 mmesa->driDrawable = driDrawPriv;
 	 mmesa->dirty = ~0; 
 	 mmesa->dirty_cliprects = (MGA_FRONT|MGA_BACK); 
@@ -948,6 +949,7 @@ static const struct __DriverAPIRec mgaAPI = {
    .UnbindContext   = mgaUnbindContext,
    .GetSwapInfo     = getSwapInfo,
    .GetMSC          = driGetMSC32,
+   .GetDrawableMSC  = driDrawableGetMSC32,
    .WaitForMSC      = driWaitForMSC32,
    .WaitForSBC      = NULL,
    .SwapBuffersMSC  = NULL

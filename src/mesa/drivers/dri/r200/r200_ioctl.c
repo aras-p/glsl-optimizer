@@ -419,7 +419,7 @@ static void r200WaitForFrameCompletion( r200ContextPtr rmesa )
 
 /* Copy the back color buffer to the front color buffer.
  */
-void r200CopyBuffer( const __DRIdrawablePrivate *dPriv,
+void r200CopyBuffer( __DRIdrawablePrivate *dPriv,
 		      const drm_clip_rect_t	 *rect)
 {
    r200ContextPtr rmesa;
@@ -449,7 +449,7 @@ void r200CopyBuffer( const __DRIdrawablePrivate *dPriv,
    if (!rect)
    {
        UNLOCK_HARDWARE( rmesa );
-       driWaitForVBlank( dPriv, & rmesa->vbl_seq, rmesa->vblank_flags, & missed_target );
+       driWaitForVBlank( dPriv, & dPriv->vblSeq, dPriv->vblFlags, & missed_target );
        LOCK_HARDWARE( rmesa );
    }
 
@@ -513,7 +513,7 @@ void r200CopyBuffer( const __DRIdrawablePrivate *dPriv,
    }
 }
 
-void r200PageFlip( const __DRIdrawablePrivate *dPriv )
+void r200PageFlip( __DRIdrawablePrivate *dPriv )
 {
    r200ContextPtr rmesa;
    GLint ret;
@@ -553,7 +553,7 @@ void r200PageFlip( const __DRIdrawablePrivate *dPriv )
     */
    r200WaitForFrameCompletion( rmesa );
    UNLOCK_HARDWARE( rmesa );
-   driWaitForVBlank( dPriv, & rmesa->vbl_seq, rmesa->vblank_flags, & missed_target );
+   driWaitForVBlank( dPriv, & dPriv->vblSeq, dPriv->vblFlags, & missed_target );
    if ( missed_target ) {
       rmesa->swap_missed_count++;
       (void) (*dri_interface->getUST)( & rmesa->swap_missed_ust );

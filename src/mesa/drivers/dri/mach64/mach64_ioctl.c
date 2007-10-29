@@ -279,7 +279,7 @@ static int mach64WaitForFrameCompletion( mach64ContextPtr mmesa )
 
 /* Copy the back color buffer to the front color buffer.
  */
-void mach64CopyBuffer( const __DRIdrawablePrivate *dPriv )
+void mach64CopyBuffer( __DRIdrawablePrivate *dPriv )
 {
    mach64ContextPtr mmesa;
    GLint nbox, i, ret;
@@ -320,7 +320,7 @@ void mach64CopyBuffer( const __DRIdrawablePrivate *dPriv )
 #endif
 
    UNLOCK_HARDWARE( mmesa );
-   driWaitForVBlank( dPriv, &mmesa->vbl_seq, mmesa->vblank_flags, &missed_target );
+   driWaitForVBlank( dPriv, &dPriv->vblSeq, dPriv->vblFlags, &missed_target );
    LOCK_HARDWARE( mmesa );
 
    /* use front buffer cliprects */

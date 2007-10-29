@@ -205,6 +205,7 @@ static const struct __DriverAPIRec nouveauAPI = {
 	.UnbindContext   = nouveauUnbindContext,
 	.GetSwapInfo     = nouveauGetSwapInfo,
 	.GetMSC          = driGetMSC32,
+	.GetDrawableMSC  = driDrawableGetMSC32,
 	.WaitForMSC      = driWaitForMSC32,
 	.WaitForSBC      = NULL,
 	.SwapBuffersMSC  = NULL,

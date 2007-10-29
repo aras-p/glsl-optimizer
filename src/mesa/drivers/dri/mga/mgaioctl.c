@@ -428,8 +428,7 @@ void mgaCopyBuffer( const __DRIdrawablePrivate *dPriv )
    FLUSH_BATCH( mmesa );
 
    mgaWaitForFrameCompletion( mmesa );
-   driWaitForVBlank( dPriv, & mmesa->vbl_seq, mmesa->vblank_flags,
-		     & missed_target );
+   driWaitForVBlank( dPriv, & dPriv->vblSeq, dPriv->vblFlags, & missed_target );
    if ( missed_target ) {
       mmesa->swap_missed_count++;
       (void) (*dri_interface->getUST)( & mmesa->swap_missed_ust );

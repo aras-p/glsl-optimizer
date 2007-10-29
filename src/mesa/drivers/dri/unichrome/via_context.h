@@ -321,9 +321,6 @@ struct via_context {
     */
    driOptionCache optionCache;
 
-   GLuint vblank_flags;
-   GLuint vbl_seq;
-
    int64_t swap_ust;
    int64_t swap_missed_ust;
 

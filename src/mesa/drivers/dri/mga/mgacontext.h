@@ -258,11 +258,6 @@ struct mga_context_t {
    drmBufPtr  vertex_dma_buffer;
    drmBufPtr  iload_buffer;
 
-   /* VBI
-    */
-   GLuint vbl_seq;
-   GLuint vblank_flags;
-
    int64_t swap_ust;
    int64_t swap_missed_ust;
 

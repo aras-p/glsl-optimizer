@@ -263,8 +263,6 @@ struct mach64_context {
 
    /* VBI
     */
-   GLuint vbl_seq;
-   GLuint vblank_flags;
    GLuint do_irqs;
 
    /* Configuration cache

@@ -33,6 +33,8 @@
 #include "context.h"
 #include "framebuffer.h"
 #include "macros.h"
+#include "utils.h"
+#include "vblank.h"
 #include "swrast/swrast.h"
 
 GLboolean intel_intersect_cliprects( drm_clip_rect_t *dst,
@@ -188,6 +190,50 @@ void intelWindowMoved( struct intel_context *intel )
 	 /* glDrawBuffer(GL_NONE or GL_FRONT_AND_BACK): software fallback */
 	 intelSetFrontClipRects( intel );
       }
+   }
+
+   /* Get updated plane info so we sync against the right vblank counter */
+   if (intel->intelScreen->driScrnPriv->ddx_version.minor >= 7) {
+      drmI830Sarea *sarea = intel->sarea;
+      drm_clip_rect_t drw_rect = { .x1 = dPriv->x, .x2 = dPriv->x + dPriv->w,
+				   .y1 = dPriv->y, .y2 = dPriv->y + dPriv->h };
+      drm_clip_rect_t planeA_rect = { .x1 = sarea->planeA_x, .y1 = sarea->planeA_y,
+				     .x2 = sarea->planeA_x + sarea->planeA_w,
+				     .y2 = sarea->planeA_y + sarea->planeA_h };
+      drm_clip_rect_t planeB_rect = { .x1 = sarea->planeB_x, .y1 = sarea->planeB_y,
+				     .x2 = sarea->planeB_x + sarea->planeB_w,
+				     .y2 = sarea->planeB_y + sarea->planeB_h };
+      GLint areaA = driIntersectArea( drw_rect, planeA_rect );
+      GLint areaB = driIntersectArea( drw_rect, planeB_rect );
+      GLuint flags = dPriv->vblFlags;
+
+      /* Update vblank info
+       */
+      if (areaB > areaA || (areaA == areaB && areaB > 0)) {
+	 flags = dPriv->vblFlags | VBLANK_FLAG_SECONDARY;
+      } else {
+	 flags = dPriv->vblFlags & ~VBLANK_FLAG_SECONDARY;
+      }
+
+      /* Check to see if we changed pipes */
+      if (flags != dPriv->vblFlags && dPriv->vblFlags &&
+	  !(dPriv->vblFlags & VBLANK_FLAG_NO_IRQ)) {
+	 int64_t count;
+
+	 /*
+	  * Update msc_base from old pipe
+	  */
+	 driDrawableGetMSC32(dPriv->driScreenPriv, dPriv, &count);
+	 dPriv->msc_base = count;
+	 /*
+	  * Then get new vblank_base and vblSeq values
+	  */
+	 dPriv->vblFlags = flags;
+	 driGetCurrentVBlank(dPriv, dPriv->vblFlags, &dPriv->vblSeq);
+	 dPriv->vblank_base = dPriv->vblSeq;
+      }
+   } else {
+      dPriv->vblFlags &= ~VBLANK_FLAG_SECONDARY;
    }
 
    _mesa_resize_framebuffer(&intel->ctx,

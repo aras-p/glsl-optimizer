@@ -46,11 +46,13 @@
 					  */
 
 extern int driGetMSC32( __DRIscreenPrivate * priv, int64_t * count );
+extern int driDrawableGetMSC32( __DRIscreenPrivate * priv,
+				__DRIdrawablePrivate * drawablePrivate,
+				int64_t * count);
 extern int driWaitForMSC32( __DRIdrawablePrivate *priv,
     int64_t target_msc, int64_t divisor, int64_t remainder, int64_t * msc );
 extern GLuint driGetDefaultVBlankFlags( const driOptionCache *optionCache );
-extern void driDrawableInitVBlank ( __DRIdrawablePrivate *priv, GLuint flags,
-				    GLuint *vbl_seq );
+extern void driDrawableInitVBlank ( __DRIdrawablePrivate *priv );
 extern unsigned driGetVBlankInterval( const  __DRIdrawablePrivate *priv,
 				      GLuint flags );
 extern void driGetCurrentVBlank( const  __DRIdrawablePrivate *priv,

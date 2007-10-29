@@ -893,11 +893,8 @@ struct r200_context {
    GLuint TexGenCompSel;
    GLmatrix tmpmat;
 
-   /* VBI / buffer swap
+   /* buffer swap
     */
-   GLuint vbl_seq;
-   GLuint vblank_flags;
-
    int64_t swap_ust;
    int64_t swap_missed_ust;
 

@@ -157,7 +157,7 @@ static void radeonWaitForFrameCompletion(radeonContextPtr radeon)
 
 /* Copy the back color buffer to the front color buffer.
  */
-void radeonCopyBuffer(const __DRIdrawablePrivate * dPriv,
+void radeonCopyBuffer(__DRIdrawablePrivate * dPriv,
 		      const drm_clip_rect_t	 * rect)
 {
 	radeonContextPtr radeon;
@@ -187,7 +187,7 @@ void radeonCopyBuffer(const __DRIdrawablePrivate * dPriv,
 	if (!rect)
 	{
 	    UNLOCK_HARDWARE(radeon);
-	    driWaitForVBlank(dPriv, &radeon->vbl_seq, radeon->vblank_flags,
+	    driWaitForVBlank(dPriv, &dPriv->vblSeq, dPriv->vblFlags,
 			     &missed_target);
 	    LOCK_HARDWARE(radeon);
 	}
@@ -253,7 +253,7 @@ void radeonCopyBuffer(const __DRIdrawablePrivate * dPriv,
 	}
 }
 
-void radeonPageFlip(const __DRIdrawablePrivate * dPriv)
+void radeonPageFlip(__DRIdrawablePrivate * dPriv)
 {
 	radeonContextPtr radeon;
 	GLint ret;
@@ -293,7 +293,7 @@ void radeonPageFlip(const __DRIdrawablePrivate * dPriv)
 	 */
 	radeonWaitForFrameCompletion(radeon);
 	UNLOCK_HARDWARE(radeon);
-	driWaitForVBlank(dPriv, &radeon->vbl_seq, radeon->vblank_flags,
+	driWaitForVBlank(dPriv, &dPriv->vblSeq, dPriv->vblFlags,
 			 &missed_target);
 	if (missed_target) {
 		radeon->swap_missed_count++;

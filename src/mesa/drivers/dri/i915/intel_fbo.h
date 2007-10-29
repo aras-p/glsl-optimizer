@@ -50,8 +50,6 @@ struct intel_framebuffer
 
    /* VBI
     */
-   GLuint vbl_seq;
-   GLuint vblank_flags;
    GLuint vbl_waited;
 
    int64_t swap_ust;

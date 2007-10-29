@@ -46,9 +46,9 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #endif
 #include "radeon_drm.h"
 
-extern void radeonCopyBuffer(const __DRIdrawablePrivate * drawable,
+extern void radeonCopyBuffer(__DRIdrawablePrivate * drawable,
 			     const drm_clip_rect_t	* rect);
-extern void radeonPageFlip(const __DRIdrawablePrivate * drawable);
+extern void radeonPageFlip(__DRIdrawablePrivate * drawable);
 extern void radeonFlush(GLcontext * ctx);
 extern void radeonFinish(GLcontext * ctx);
 extern void radeonWaitForIdleLocked(radeonContextPtr radeon);

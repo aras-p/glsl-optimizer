@@ -790,6 +790,7 @@ static const struct __DriverAPIRec intelAPI = {
    .UnbindContext = intelUnbindContext,
    .GetSwapInfo = intelGetSwapInfo,
    .GetMSC = driGetMSC32,
+   .GetDrawableMSC = driDrawableGetMSC32,
    .WaitForMSC = driWaitForMSC32,
    .WaitForSBC = NULL,
    .SwapBuffersMSC = NULL,

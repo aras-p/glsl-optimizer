@@ -86,8 +86,8 @@ extern void r128ReadDepthSpanLocked( r128ContextPtr rmesa,
 extern void r128ReadDepthPixelsLocked( r128ContextPtr rmesa, GLuint n,
 				       const GLint x[], const GLint y[] );
 
-extern void r128CopyBuffer( const __DRIdrawablePrivate *dPriv );
-extern void r128PageFlip( const __DRIdrawablePrivate *dPriv );
+extern void r128CopyBuffer( __DRIdrawablePrivate *dPriv );
+extern void r128PageFlip( __DRIdrawablePrivate *dPriv );
 void r128WaitForVBlank( r128ContextPtr rmesa );
 
 extern void r128WaitForIdleLocked( r128ContextPtr rmesa );
