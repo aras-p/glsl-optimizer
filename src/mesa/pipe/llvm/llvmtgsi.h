@@ -44,15 +44,12 @@ extern "C" {
 struct tgsi_exec_machine;
 struct tgsi_token;
 struct tgsi_sampler;
-struct pipe_context;
 
 struct gallivm_prog;
+struct gallivm_cpu_engine;
 
-struct gallivm_prog *
-gallivm_from_tgsi(struct pipe_context *pipe, const struct tgsi_token *tokens);
-
+struct gallivm_prog *gallivm_from_tgsi(const struct tgsi_token *tokens);
 void gallivm_prog_delete(struct gallivm_prog *prog);
-
 int gallivm_prog_exec(struct gallivm_prog *prog,
                       float (*inputs)[PIPE_MAX_SHADER_INPUTS][4],
                       float (*dests)[PIPE_MAX_SHADER_INPUTS][4],
@@ -60,8 +57,12 @@ int gallivm_prog_exec(struct gallivm_prog *prog,
                       int num_vertices,
                       int num_inputs,
                       int num_attribs);
-
 void gallivm_prog_dump(struct gallivm_prog *prog, const char *file_prefix);
+
+
+struct gallivm_cpu_engine *gallivm_cpu_engine_create(struct gallivm_prog *prog);
+void gallivm_cpu_jit_compile(struct gallivm_cpu_engine *ee, struct gallivm_prog *prog);
+void gallivm_cpu_engine_delete(struct gallivm_cpu_engine *ee);
 
 #endif /* MESA_LLVM */
 

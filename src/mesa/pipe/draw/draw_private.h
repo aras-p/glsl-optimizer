@@ -50,6 +50,8 @@
 #include "pipe/tgsi/exec/tgsi_core.h"
 
 
+struct gallivm_prog;
+struct gallivm_cpu_engine;
 /**
  * Basic vertex info.
  * Carry some useful information around with the vertices in the prim pipe.  
@@ -126,6 +128,9 @@ struct draw_vertex_shader {
    const struct pipe_shader_state   *state;
 #if defined(__i386__) || defined(__386__)
    struct x86_function              sse2_program;
+#endif
+#ifdef MESA_LLVM
+   struct gallivm_prog *llvm_prog;
 #endif
 };
 
@@ -226,6 +231,9 @@ struct draw_context
    } pq;
 
    int use_sse : 1;
+#ifdef MESA_LLVM
+   struct gallivm_cpu_engine *engine;
+#endif
 };
 
 

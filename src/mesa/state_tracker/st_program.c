@@ -251,9 +251,7 @@ st_translate_vertex_program(struct st_context *st,
                                 tokensOut, maxTokens);
 
    vs.tokens = tokensOut;
-#ifdef MESA_LLVM
-   vs.llvm_prog = (void*)gallivm_from_tgsi(st->pipe, vs.tokens);
-#endif
+
    cso = st_cached_vs_state(st, &vs);
    stvp->vs = cso;
 

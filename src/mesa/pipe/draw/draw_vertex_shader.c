@@ -39,6 +39,7 @@
 #include "x86/rtasm/x86sse.h"
 
 #include "pipe/tgsi/exec/tgsi_core.h"
+#include "pipe/llvm/llvmtgsi.h"
 
 
 #define DBG 0
@@ -187,7 +188,7 @@ void draw_vertex_shader_queue_flush( struct draw_context *draw )
 
 //   fprintf(stderr, " q(%d) ", draw->vs.queue_nr );
 #ifdef MESA_LLVM
-   if (draw->vertex_shader->state->llvm_prog) {
+   if (draw->vertex_shader->llvm_prog) {
       draw_vertex_shader_queue_flush_llvm(draw);
       return;
    }
@@ -232,6 +233,13 @@ draw_create_vertex_shader(struct draw_context *draw,
       x86_init_func( &vs->sse2_program );
       tgsi_emit_sse2( sh->tokens, &vs->sse2_program );
    }
+#endif
+#ifdef MESA_LLVM
+   vs->llvm_prog = gallivm_from_tgsi(shader->tokens);
+   if (!draw->engine)
+      draw->engine = gallivm_cpu_engine_create(vs->llvm_prog);
+   else
+      gallivm_cpu_jit_compile(draw->engine, vs->llvm_prog);
 #endif
 
    return vs;

@@ -70,10 +70,14 @@
 #ifdef MESA_LLVM
 
 struct gallivm_prog {
-   void *module;
+   llvm::Module *module;
    void *function;
    int   num_consts;
    int   id;
+};
+
+struct gallivm_cpu_engine {
+   llvm::ExecutionEngine *engine;
 };
 
 using namespace llvm;
@@ -698,13 +702,21 @@ tgsi_to_llvm(struct gallivm_prog *prog, const struct tgsi_token *tokens)
    return mod;
 }
 
+/*!
+  Translates the TGSI tokens into LLVM format. Translated representation
+  is stored in the gallivm_prog and returned.
+  After calling this function the gallivm_prog can either be used with a custom
+  code generator to generate machine code for the GPU which the code generator
+  addresses or it can be jit compiled with gallivm_cpu_jit_compile and executed
+  with gallivm_prog_exec to run the module on the CPU.
+ */
 struct gallivm_prog *
-gallivm_from_tgsi(struct pipe_context *pipe, const struct tgsi_token *tokens)
+gallivm_from_tgsi(const struct tgsi_token *tokens)
 {
    std::cout << "Creating llvm from: " <<std::endl;
    ++GLOBAL_ID;
    struct gallivm_prog *gallivm =
-      (struct gallivm_prog *)malloc(sizeof(struct gallivm_prog));
+      (struct gallivm_prog *)calloc(1, sizeof(struct gallivm_prog));
    gallivm->id = GLOBAL_ID;
    tgsi_dump(tokens, 0);
 
@@ -718,19 +730,7 @@ gallivm_from_tgsi(struct pipe_context *pipe, const struct tgsi_token *tokens)
    AddStandardCompilePasses(passes);
    passes.run(*mod);
 
-   llvm::ExistingModuleProvider *mp = new llvm::ExistingModuleProvider(mod);
-   llvm::ExecutionEngine *ee = 0;
-   if (!pipe->llvm_execution_engine) {
-      ee = llvm::ExecutionEngine::create(mp, false);
-      pipe->llvm_execution_engine = ee;
-   } else {
-      ee = (llvm::ExecutionEngine*)pipe->llvm_execution_engine;
-      ee->addModuleProvider(mp);
-   }
    gallivm->module = mod;
-
-   Function *func = mod->getFunction("run_vertex_shader");
-   gallivm->function = ee->getPointerToFunctionOrStub(func);
 
    gallivm_prog_dump(gallivm, 0);
 
@@ -754,6 +754,12 @@ typedef void (*vertex_shader_runner)(float (*ainputs)[PIPE_MAX_SHADER_INPUTS][4]
                                      int num_attribs,
                                      int num_consts);
 
+
+/*!
+  This function is used to execute the gallivm_prog in software. Before calling
+  this function the gallivm_prog has to be JIT compiled with the gallivm_cpu_jit_compile
+  function.
+ */
 int gallivm_prog_exec(struct gallivm_prog *prog,
                       float (*inputs)[PIPE_MAX_SHADER_INPUTS][4],
                       float (*dests)[PIPE_MAX_SHADER_INPUTS][4],
@@ -763,6 +769,7 @@ int gallivm_prog_exec(struct gallivm_prog *prog,
                       int num_attribs)
 {
    vertex_shader_runner runner = reinterpret_cast<vertex_shader_runner>(prog->function);
+   assert(runner);
    runner(inputs, dests, consts, num_vertices, num_inputs,
           num_attribs, prog->num_consts);
 
@@ -803,4 +810,53 @@ void gallivm_prog_dump(struct gallivm_prog *prog, const char *file_prefix)
    }
 }
 
+
+/*!
+  This function creates a CPU based execution engine for the given gallivm_prog.
+  gallivm_cpu_engine should be used as a singleton throughout the library. Before
+  executing gallivm_prog_exec one needs to call gallivm_cpu_jit_compile.
+  The gallivm_prog instance which is being passed to the constructor is being
+  automatically JIT compiled so one shouldn't call gallivm_cpu_jit_compile
+  with it again.
+ */
+struct gallivm_cpu_engine * gallivm_cpu_engine_create(struct gallivm_prog *prog)
+{
+   struct gallivm_cpu_engine *cpu = (struct gallivm_cpu_engine *)
+                                    calloc(1, sizeof(struct gallivm_cpu_engine));
+   llvm::Module *mod = static_cast<llvm::Module*>(prog->module);
+   llvm::ExistingModuleProvider *mp = new llvm::ExistingModuleProvider(mod);
+   llvm::ExecutionEngine *ee = llvm::ExecutionEngine::create(mp, false);
+   cpu->engine = ee;
+
+   llvm::Function *func = mod->getFunction("run_vertex_shader");
+   prog->function = ee->getPointerToFunctionOrStub(func);
+   return cpu;
+}
+
+
+/*!
+  This function JIT compiles the given gallivm_prog with the given cpu based execution engine.
+  The reference to the generated machine code entry point will be stored
+  in the gallivm_prog program. After executing this function one can call gallivm_prog_exec
+  in order to execute the gallivm_prog on the CPU.
+ */
+void gallivm_cpu_jit_compile(struct gallivm_cpu_engine *cpu, struct gallivm_prog *prog)
+{
+   llvm::Module *mod = static_cast<llvm::Module*>(prog->module);
+   llvm::ExistingModuleProvider *mp = new llvm::ExistingModuleProvider(mod);
+   llvm::ExecutionEngine *ee = cpu->engine;
+   assert(ee);
+   ee->addModuleProvider(mp);
+
+   llvm::Function *func = mod->getFunction("run_vertex_shader");
+   prog->function = ee->getPointerToFunctionOrStub(func);
+}
+
+void gallivm_cpu_engine_delete(struct gallivm_cpu_engine *cpu)
+{
+   free(cpu);
+}
+
 #endif /* MESA_LLVM */
+
+

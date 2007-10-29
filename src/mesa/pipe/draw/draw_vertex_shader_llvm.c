@@ -125,7 +125,7 @@ void draw_vertex_shader_queue_flush_llvm(struct draw_context *draw)
    float                 inputs[VS_QUEUE_LENGTH][PIPE_MAX_SHADER_INPUTS][4];
    float                 outputs[VS_QUEUE_LENGTH][PIPE_MAX_SHADER_INPUTS][4];
    float (*consts)[4]          = (float (*)[4]) draw->mapped_constants;
-   struct gallivm_prog  *prog  = (struct gallivm_prog *)draw->vertex_shader->state->llvm_prog;
+   struct gallivm_prog  *prog  = draw->vertex_shader->llvm_prog;
    const float          *scale = draw->viewport.scale;
    const float          *trans = draw->viewport.translate;
 
