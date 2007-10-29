@@ -527,7 +527,7 @@ _mesa_drawbuffers(GLcontext *ctx, GLuint n, const GLenum *buffers,
       set_color_output(ctx, output, GL_NONE, 0x0);
    }
 
-   ctx->NewState |= _NEW_COLOR;
+   ctx->NewState |= _NEW_BUFFERS;
 }
 
 
@@ -588,7 +588,7 @@ _mesa_ReadBuffer(GLenum buffer)
    if (!_mesa_readbuffer_update_fields(ctx, buffer))
       return;
 
-   ctx->NewState |= _NEW_PIXEL;
+   ctx->NewState |= _NEW_BUFFERS;
 
    /*
     * Call device driver function.
