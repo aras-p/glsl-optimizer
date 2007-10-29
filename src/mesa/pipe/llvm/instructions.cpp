@@ -29,6 +29,7 @@
   * Authors:
   *   Zack Rusin zack@tungstengraphics.com
   */
+#ifdef MESA_LLVM
 
 #include "instructions.h"
 
@@ -1165,3 +1166,4 @@ llvm::Function * Instructions::findFunction(int label)
    return func;
 }
 
+#endif //MESA_LLVM

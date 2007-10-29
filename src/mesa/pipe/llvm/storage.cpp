@@ -29,6 +29,7 @@
   * Authors:
   *   Zack Rusin zack@tungstengraphics.com
   */
+#ifdef MESA_LLVM
 
 #include "storage.h"
 
@@ -391,3 +392,4 @@ void Storage::popTemps()
    m_temps = m_tempStack.top();
    m_tempStack.pop();
 }
+#endif //MESA_LLVM

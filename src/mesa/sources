@@ -187,12 +187,10 @@ TGSIDECO_SOURCES = \
 	pipe/tgsi/deco/deco_caps.c
 
 
-ifeq ($(MESA_LLVM),1)
-  LLVMTGSI_SOURCES = \
+LLVMTGSI_SOURCES = \
 	pipe/llvm/llvmtgsi.cpp \
 	pipe/llvm/storage.cpp \
 	pipe/llvm/instructions.cpp
-endif
 
 STATECACHE_SOURCES = \
 	pipe/cso_cache/cso_hash.c \

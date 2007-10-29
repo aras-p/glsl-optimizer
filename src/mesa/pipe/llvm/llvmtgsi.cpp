@@ -29,6 +29,7 @@
   * Authors:
   *   Zack Rusin zack@tungstengraphics.com
   */
+#ifdef MESA_LLVM
 
 #include "llvmtgsi.h"
 
@@ -66,8 +67,6 @@
 #include <sstream>
 #include <fstream>
 #include <iostream>
-
-#ifdef MESA_LLVM
 
 struct gallivm_prog {
    llvm::Module *module;
