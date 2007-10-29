@@ -68,12 +68,11 @@ struct st_context
    struct pipe_context *pipe;
 
    struct draw_context *draw;  /**< For selection/feedback */
-   struct draw_stage *feedback_stage;  /**< For FL_FEEDBACK rendermode */
+   struct draw_stage *feedback_stage;  /**< For GL_FEEDBACK rendermode */
    struct draw_stage *selection_stage;  /**< For GL_SELECT rendermode */
 
-   /* Eventually will use a cache to feed the pipe with
-    * create/bind/delete calls to constant state objects.  Not yet
-    * though, we just shove random objects across the interface.  
+   /* Some state is contained in constant objects.
+    * Other state is just parameter values.
     */
    struct {
       const struct cso_alpha_test      *alpha_test;
