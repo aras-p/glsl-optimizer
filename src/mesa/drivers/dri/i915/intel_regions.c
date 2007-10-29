@@ -44,6 +44,7 @@
 #include "intel_blit.h"
 #include "intel_buffer_objects.h"
 #include "dri_bufmgr.h"
+#include "intel_bufmgr_ttm.h"
 #include "intel_batchbuffer.h"
 
 #define FILE_DEBUG_FLAG DEBUG_REGION
