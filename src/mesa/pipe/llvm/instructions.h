@@ -107,6 +107,8 @@ private:
    llvm::Value *vectorFromVals(llvm::Value *x, llvm::Value *y,
                                llvm::Value *z, llvm::Value *w=0);
 
+   llvm::Value *constVector(float x, float y, float z, float w);
+
    llvm::Function *declarePrintf();
    llvm::Function *declareFunc(int label);
 

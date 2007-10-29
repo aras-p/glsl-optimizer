@@ -466,12 +466,8 @@ llvm::Value * Instructions::lg2(llvm::Value *in)
    ExtractElementInst *w = new ExtractElementInst(in, unsigned(3),
                                                   name("extractw"),
                                                   m_block);
-   llvm::Value *const_vec = vectorFromVals(
-      ConstantFP::get(Type::FloatTy, APFloat(1.442695f)),
-      ConstantFP::get(Type::FloatTy, APFloat(1.442695f)),
-      ConstantFP::get(Type::FloatTy, APFloat(1.442695f)),
-      ConstantFP::get(Type::FloatTy, APFloat(1.442695f))
-      );
+   llvm::Value *const_vec = constVector(1.442695f, 1.442695f,
+                                        1.442695f, 1.442695f);
    return mul(vectorFromVals(callFLog(x), callFLog(y),
                              callFLog(z), callFLog(w)), const_vec);
 }
@@ -1016,14 +1012,7 @@ llvm::Value * Instructions::lerp(llvm::Value *in1, llvm::Value *in2,
                                  llvm::Value *in3)
 {
    llvm::Value *m = mul(in1, in2);
-   llvm::Value *vec1 = vectorFromVals(ConstantFP::get(Type::FloatTy,
-                                                      APFloat(1.f)),
-                                      ConstantFP::get(Type::FloatTy,
-                                                      APFloat(1.f)),
-                                      ConstantFP::get(Type::FloatTy,
-                                                      APFloat(1.f)),
-                                      ConstantFP::get(Type::FloatTy,
-                                                      APFloat(1.f)));
+   llvm::Value *vec1 = constVector(1.f, 1.f, 1.f, 1.f);
    llvm::Value *s = sub(vec1, in1);
    return add(m, mul(s, in3));
 }
@@ -1170,4 +1159,15 @@ llvm::Function * Instructions::findFunction(int label)
    return func;
 }
 
+llvm::Value * Instructions::constVector(float x, float y, float z, float w)
+{
+   std::vector<Constant*> vec(4);
+   vec[0] = ConstantFP::get(Type::FloatTy, APFloat(x));
+   vec[1] = ConstantFP::get(Type::FloatTy, APFloat(y));
+   vec[2] = ConstantFP::get(Type::FloatTy, APFloat(z));
+   vec[3] = ConstantFP::get(Type::FloatTy, APFloat(w));
+   return ConstantVector::get(m_floatVecType, vec);
+}
+
 #endif //MESA_LLVM
+

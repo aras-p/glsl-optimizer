@@ -68,24 +68,12 @@ Storage::Storage(llvm::BasicBlock *block, llvm::Value *out,
 llvm::Constant *Storage::shuffleMask(int vec)
 {
    if (!m_extSwizzleVec) {
-      Constant *const_vec = Constant::getNullValue(m_floatVecType);
-      InsertElementInst *res = new InsertElementInst(const_vec,
-                                                     ConstantFP::get(Type::FloatTy, APFloat(0.f)),
-                                                     unsigned(0),
-                                                     name("extswx"), m_block);
-      res = new InsertElementInst(res, ConstantFP::get(Type::FloatTy, APFloat(1.f)),
-                                  unsigned(1),
-                                  name("extswy"),
-                                  m_block);
-      res = new InsertElementInst(res, ConstantFP::get(Type::FloatTy, APFloat(0.f)),
-                                  unsigned(2),
-                                  name("extswz"),
-                                  m_block);
-      res = new InsertElementInst(res, ConstantFP::get(Type::FloatTy, APFloat(1.f)),
-                                  unsigned(3),
-                                  name("extsww"),
-                                  m_block);
-      m_extSwizzleVec = res;
+      std::vector<Constant*> elems;
+      elems.push_back(ConstantFP::get(Type::FloatTy, APFloat(0.f)));
+      elems.push_back(ConstantFP::get(Type::FloatTy, APFloat(1.f)));
+      elems.push_back(ConstantFP::get(Type::FloatTy, APFloat(0.f)));
+      elems.push_back(ConstantFP::get(Type::FloatTy, APFloat(1.f)));
+      m_extSwizzleVec = ConstantVector::get(m_floatVecType, elems);
    }
 
    if (m_intVecs.find(vec) != m_intVecs.end()) {
