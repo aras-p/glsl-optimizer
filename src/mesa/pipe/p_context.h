@@ -29,7 +29,6 @@
 #define PIPE_CONTEXT_H
 
 #include "p_state.h"
-#include "p_util.h"
 
 struct pipe_state_cache;
 /**
@@ -246,63 +245,4 @@ struct pipe_context {
 		  unsigned flags );
 };
 
-
-/**
- * Set 'ptr' to point to 'region' and update reference counting.
- * The old thing pointed to, if any, will be unreferenced first.
- * 'region' may be NULL.
- */
-static INLINE void
-pipe_region_reference(struct pipe_region **ptr, struct pipe_region *region)
-{
-   assert(ptr);
-   if (*ptr) {
-      /* unreference the old thing */
-      struct pipe_region *oldReg = *ptr;
-      assert(oldReg->refcount > 0);
-      oldReg->refcount--;
-      if (oldReg->refcount == 0) {
-         /* free the old region */
-         assert(oldReg->map_refcount == 0);
-         /* XXX dereference the region->buffer */
-         FREE( oldReg );
-      }
-      *ptr = NULL;
-   }
-   if (region) {
-      /* reference the new thing */
-      region->refcount++;
-      *ptr = region;
-   }
-}
-
-
-/**
- * \sa pipe_region_reference
- */
-static INLINE void
-pipe_surface_reference(struct pipe_surface **ptr, struct pipe_surface *surf)
-{
-   assert(ptr);
-   if (*ptr) {
-      /* unreference the old thing */
-      struct pipe_surface *oldSurf = *ptr;
-      assert(oldSurf->refcount > 0);
-      oldSurf->refcount--;
-      if (oldSurf->refcount == 0) {
-         /* free the old region */
-         pipe_region_reference(&oldSurf->region, NULL);
-         FREE( oldSurf );
-      }
-      *ptr = NULL;
-   }
-   if (surf) {
-      /* reference the new thing */
-      surf->refcount++;
-      *ptr = surf;
-   }
-}
-
-
 #endif /* PIPE_CONTEXT_H */
-

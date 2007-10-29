@@ -41,6 +41,7 @@
 
 #include "pipe/p_context.h"
 #include "pipe/p_defines.h"
+#include "pipe/p_inlines.h"
 #include "pipe/p_winsys.h"
 #include "st_context.h"
 #include "st_cb_fbo.h"

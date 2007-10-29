@@ -26,6 +26,7 @@
  **************************************************************************/
 
 #include "pipe/p_defines.h"
+#include "pipe/p_util.h"
 #include "sp_context.h"
 #include "sp_state.h"
 #include "pipe/draw/draw_context.h"

@@ -29,6 +29,7 @@
  *  Brian Paul
  */
 
+#include "pipe/p_util.h"
 #include "sp_context.h"
 #include "sp_state.h"
 #include "sp_tile_cache.h"

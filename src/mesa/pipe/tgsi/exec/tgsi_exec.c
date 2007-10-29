@@ -50,10 +50,10 @@
  *   Brian Paul
  */
 
-#include "tgsi_platform.h"
-#include "tgsi_core.h"
+#include "pipe/p_compiler.h"
 #include "pipe/p_state.h"
-
+#include "pipe/p_util.h"
+#include "tgsi_core.h"
 
 #define TILE_TOP_LEFT     0
 #define TILE_TOP_RIGHT    1

@@ -27,6 +27,7 @@
 
 #include "pipe/p_defines.h"
 #include "pipe/p_util.h"
+#include "pipe/p_inlines.h"
 #include "pipe/p_winsys.h"
 #include "sp_context.h"
 #include "sp_state.h"
