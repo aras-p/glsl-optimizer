@@ -320,7 +320,12 @@ struct pipe_context *i915_create( struct pipe_winsys *pipe_winsys,
     */
    i915->draw = draw_create();
    assert(i915->draw);
-   draw_set_rasterize_stage(i915->draw, i915_draw_render_stage(i915));
+   if (getenv("I915_VBUF")) {
+      draw_set_rasterize_stage(i915->draw, i915_draw_vbuf_stage(i915));
+   }
+   else {
+      draw_set_rasterize_stage(i915->draw, i915_draw_render_stage(i915));
+   }
 
    i915_init_region_functions(i915);
    i915_init_surface_functions(i915);
