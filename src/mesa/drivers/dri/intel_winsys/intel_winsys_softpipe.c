@@ -45,20 +45,18 @@ struct intel_softpipe_winsys {
 /**
  * Return list of surface formats supported by this driver.
  */
-static const unsigned *
-intel_is_format_supported(struct softpipe_winsys *sws, 
-			  unsigned *numFormats)
+static boolean
+intel_is_format_supported(struct softpipe_winsys *sws, uint format)
 {
-   static const GLuint formats[] = {
-      PIPE_FORMAT_U_A8_R8_G8_B8,
-      PIPE_FORMAT_U_R5_G6_B5,
-      PIPE_FORMAT_S8_Z24,
-   };
-
-   *numFormats = sizeof(formats) / sizeof(formats[0]);
-   return formats;
+   switch(format) {
+   case PIPE_FORMAT_U_A8_R8_G8_B8:
+   case PIPE_FORMAT_U_R5_G6_B5:
+   case PIPE_FORMAT_S8_Z24:
+      return TRUE;
+   default:
+      return FALSE;
+   }
 }
-
 
 
 struct pipe_context *
