@@ -106,6 +106,7 @@ static void GarbageCollectDRIDrawables(Display *dpy, __GLXscreenConfigs *sc)
 	} while (__glxHashNext(sc->drawHash, &draw, (void *)&pdraw) == 1);
     }
 
+    XSync(dpy, GL_FALSE);
     XSetErrorHandler(oldXErrorHandler);
 }
 
