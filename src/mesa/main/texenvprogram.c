@@ -1279,9 +1279,11 @@ _mesa_UpdateTexEnvProgram( GLcontext *ctx )
             _mesa_printf("Found existing texenv program for key %x\n", hash);
       }
    } 
+#if 0
    else {
       ctx->FragmentProgram._Current = ctx->FragmentProgram.Current;
    }
+#endif
 
    /* Tell the driver about the change.  Could define a new target for
     * this?
