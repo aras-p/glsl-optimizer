@@ -88,6 +88,14 @@ extern struct gl_program *
 _mesa_clone_program(GLcontext *ctx, const struct gl_program *prog);
 
 
+extern struct gl_program *
+_mesa_combine_programs(GLcontext *ctx,
+                       struct gl_program *progA, struct gl_program *progB);
+
+extern GLint
+_mesa_find_free_register(const struct gl_program *prog, GLuint regFile);
+
+
 /*
  * API functions common to ARB/NV_vertex/fragment_program
  */
