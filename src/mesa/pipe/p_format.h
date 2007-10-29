@@ -30,24 +30,17 @@
 
 #include "p_compiler.h"
 
+/**
+ * The PIPE_FORMAT is a 32-bit wide bitfield that encodes all the information
+ * needed to uniquely describe a pixel format.
+ */
+
+/**
+ * Possible format layouts -- occupy first 2 bits. The interpretation of
+ * the remaining 30 bits depends on a particual format layout.
+ */
 #define PIPE_FORMAT_LAYOUT_RGBAZS   0
 #define PIPE_FORMAT_LAYOUT_YCBCR    1
-
-#define PIPE_FORMAT_COMP_R    0
-#define PIPE_FORMAT_COMP_G    1
-#define PIPE_FORMAT_COMP_B    2
-#define PIPE_FORMAT_COMP_A    3
-#define PIPE_FORMAT_COMP_0    4
-#define PIPE_FORMAT_COMP_1    5
-#define PIPE_FORMAT_COMP_Z    6
-#define PIPE_FORMAT_COMP_S    7
-
-#define PIPE_FORMAT_TYPE_UNKNOWN 0
-#define PIPE_FORMAT_TYPE_FLOAT   1
-#define PIPE_FORMAT_TYPE_UNORM   2
-#define PIPE_FORMAT_TYPE_SNORM   3
-#define PIPE_FORMAT_TYPE_USCALED 4
-#define PIPE_FORMAT_TYPE_SSCALED 5
 
 struct pipe_format_header
 {
@@ -57,6 +50,48 @@ struct pipe_format_header
 
 /**
  * RGBAZS Format Layout.
+ */
+
+/**
+ * Format component selectors for RGBAZS layout.
+ */
+#define PIPE_FORMAT_COMP_R    0
+#define PIPE_FORMAT_COMP_G    1
+#define PIPE_FORMAT_COMP_B    2
+#define PIPE_FORMAT_COMP_A    3
+#define PIPE_FORMAT_COMP_0    4
+#define PIPE_FORMAT_COMP_1    5
+#define PIPE_FORMAT_COMP_Z    6
+#define PIPE_FORMAT_COMP_S    7
+
+/**
+ * Format types for RGBAZS layout.
+ */
+#define PIPE_FORMAT_TYPE_UNKNOWN 0
+#define PIPE_FORMAT_TYPE_FLOAT   1
+#define PIPE_FORMAT_TYPE_UNORM   2
+#define PIPE_FORMAT_TYPE_SNORM   3
+#define PIPE_FORMAT_TYPE_USCALED 4
+#define PIPE_FORMAT_TYPE_SSCALED 5
+
+/**
+ * In a nutshell, this bitfield contains instructions how to unpack
+ * a given format to a full-blown 4-component vector suitable for FS.
+ * Because the destination vector is assumed to be RGBA FLOAT, we
+ * need to know how to swizzle and expand components from the source
+ * vector.
+ * Let's take U_A1_R5_G5_B5 as an example. SwizzleX is A, sizeX
+ * is 1 bit and type is UNORM. So we take the most significant bit
+ * from source vector, convert 0 to 0.0 and 1 to 1.0 and save it
+ * in the last component of the destination RGBA component.
+ * Next, swizzleY is R, sizeY is 5 and type is UNORM. We normalize
+ * those 5 bits into [0.0; 1.0] range and put it into second
+ * component of the destination vector. Rinse and repeat for
+ * components Z and W.
+ * If any of size fields is zero, it means the source format contains
+ * less than four components.
+ * If any swizzle is 0 or 1, the corresponding destination component
+ * should be filled with 0.0 and 1.0, respectively.
  */
 struct pipe_format_rgbazs
 {
@@ -74,6 +109,9 @@ struct pipe_format_rgbazs
    uint  padding  : 1;
 };
 
+/**
+ * Helper macro to encode the above structure into a 32-bit value.
+ */
 #define _PIPE_FORMAT_RGBAZS( SWZ, SIZEX, SIZEY, SIZEZ, SIZEW, EXP8, TYPE ) (\
    (PIPE_FORMAT_LAYOUT_RGBAZS << 0) |\
    ((SWZ) << 2) |\
@@ -84,23 +122,44 @@ struct pipe_format_rgbazs
    ((EXP8) << 26) |\
    ((TYPE) << 28) )
 
+/**
+ * Helper macro to encode the swizzle part of the structure above.
+ */
 #define _PIPE_FORMAT_SWZ( SWZX, SWZY, SWZZ, SWZW ) (((SWZX) << 0) | ((SWZY) << 3) | ((SWZZ) << 6) | ((SWZW) << 9))
 
+/**
+ * Shorthand macro for RGBAZS layout with uniform component sizes in 1-bit units.
+ */
 #define _PIPE_FORMAT_RGBAZS_1U( SWZ, SIZE, TYPE )\
    _PIPE_FORMAT_RGBAZS( SWZ, SIZE, SIZE, SIZE, SIZE, 0, TYPE )
 
+/**
+ * Shorthand macro for RGBAZS layout with non-uniform component sizes in 1-bit units.
+ */
 #define _PIPE_FORMAT_RGBAZS_1N( SWZ, SIZEX, SIZEY, SIZEZ, SIZEW, TYPE )\
    _PIPE_FORMAT_RGBAZS( SWZ, SIZEX, SIZEY, SIZEZ, SIZEW, 0, TYPE )
 
+/**
+ * Shorthand macro for RGBAZS layout with uniform component sizes in 8-bit units.
+ */
 #define _PIPE_FORMAT_RGBAZS_8U( SWZ, SIZE, TYPE )\
    _PIPE_FORMAT_RGBAZS( SWZ, SIZE, SIZE, SIZE, SIZE, 1, TYPE )
 
+/**
+ * Shorthand macro for RGBAZS layout with non-uniform component sizes in 8-bit units.
+ */
 #define _PIPE_FORMAT_RGBAZS_8N( SWZ, SIZEX, SIZEY, SIZEZ, SIZEW, TYPE )\
    _PIPE_FORMAT_RGBAZS( SWZ, SIZEX, SIZEY, SIZEZ, SIZEW, 1, TYPE )
 
+/**
+ * Shorthand macro for RGBAZS layout with non-uniform component sizes in 64-bit units.
+ */
 #define _PIPE_FORMAT_RGBAZS_64( SWZ, SIZEX, SIZEY, SIZEZ, SIZEW, TYPE )\
    _PIPE_FORMAT_RGBAZS( SWZ, SIZEX, SIZEY, SIZEZ, SIZEW, 2, TYPE )
 
+/**
+ * Shorthand macro for common format swizzles.
+ */
 #define _PIPE_FORMAT_R000 _PIPE_FORMAT_SWZ( PIPE_FORMAT_COMP_R, PIPE_FORMAT_COMP_0, PIPE_FORMAT_COMP_0, PIPE_FORMAT_COMP_0 )
 #define _PIPE_FORMAT_RG00 _PIPE_FORMAT_SWZ( PIPE_FORMAT_COMP_R, PIPE_FORMAT_COMP_0, PIPE_FORMAT_COMP_0, PIPE_FORMAT_COMP_A )
 #define _PIPE_FORMAT_RGB0 _PIPE_FORMAT_SWZ( PIPE_FORMAT_COMP_R, PIPE_FORMAT_COMP_0, PIPE_FORMAT_COMP_B, PIPE_FORMAT_COMP_A )
@@ -115,6 +174,14 @@ struct pipe_format_rgbazs
 #define _PIPE_FORMAT_SZ00 _PIPE_FORMAT_SWZ( PIPE_FORMAT_COMP_S, PIPE_FORMAT_COMP_Z, PIPE_FORMAT_COMP_0, PIPE_FORMAT_COMP_0 )
 #define _PIPE_FORMAT_S000 _PIPE_FORMAT_SWZ( PIPE_FORMAT_COMP_S, PIPE_FORMAT_COMP_0, PIPE_FORMAT_COMP_0, PIPE_FORMAT_COMP_0 )
 
+/**
+ * YCBCR Format Layout.
+ */
+
+/**
+ * This bitfields is simple. It only contains a flag that indicates whether the
+ * format is reversed or not.
+ */
 struct pipe_format_ycbcr
 {
    uint  layout   : 2;  /**< PIPE_FORMAT_LAYOUT_YCBCR */
@@ -122,6 +189,9 @@ struct pipe_format_ycbcr
    uint  padding  : 29;
 };
 
+/**
+ * Helper macro to encode the above structure into a 32-bit value.
+ */
 #define _PIPE_FORMAT_YCBCR( REV ) (\
    (PIPE_FORMAT_LAYOUT_YCBCR << 0) |\
    ((REV) << 2) )
