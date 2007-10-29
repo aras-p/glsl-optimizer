@@ -509,18 +509,17 @@ softpipe_get_tile(struct pipe_context *pipe,
                   void *p, int dst_stride)
 {
    const uint cpp = ps->region->cpp;
-   const uint w0 = w;
    const ubyte *pSrc;
    ubyte *pDest;
    uint i;
 
    assert(ps->region->map);
 
-   CLIP_TILE;
-
    if (dst_stride == 0) {
-      dst_stride = w0 * cpp;
+      dst_stride = w * cpp;
    }
+
+   CLIP_TILE;
 
    pSrc = ps->region->map + ps->offset + (y * ps->region->pitch + x) * cpp;
    pDest = (ubyte *) p;
@@ -543,18 +542,17 @@ softpipe_put_tile(struct pipe_context *pipe,
                   const void *p, int src_stride)
 {
    const uint cpp = ps->region->cpp;
-   const uint w0 = w;
    const ubyte *pSrc;
    ubyte *pDest;
    uint i;
 
    assert(ps->region->map);
 
-   CLIP_TILE;
-
    if (src_stride == 0) {
-      src_stride = w0 * cpp;
+      src_stride = w * cpp;
    }
+
+   CLIP_TILE;
 
    pSrc = (const ubyte *) p;
    pDest = ps->region->map + ps->offset + (y * ps->region->pitch + x) * cpp;
