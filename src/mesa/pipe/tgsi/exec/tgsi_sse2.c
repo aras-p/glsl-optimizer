@@ -22,14 +22,9 @@
 
 #define TEMP_R0   TGSI_EXEC_TEMP_R0
 
-static struct x86_reg
-get_argument(
-   unsigned index )
-{
-   return x86_make_disp(
-      x86_make_reg( file_REG32, reg_SP ),
-      (index + 1) * 4 );
-}
+/**
+ * X86 utility functions.
+ */
 
 static struct x86_reg
 make_xmm(
@@ -40,12 +35,59 @@ make_xmm(
       (enum x86_reg_name) xmm );
 }
 
+/**
+ * X86 register mapping helpers.
+ */
+
 static struct x86_reg
 get_const_base( void )
 {
    return x86_make_reg(
       file_REG32,
       reg_CX );
+}
+
+static struct x86_reg
+get_input_base( void )
+{
+   return x86_make_reg(
+      file_REG32,
+      reg_AX );
+}
+
+static struct x86_reg
+get_output_base( void )
+{
+   return x86_make_reg(
+      file_REG32,
+      reg_DX );
+}
+
+static struct x86_reg
+get_temp_base( void )
+{
+   return x86_make_reg(
+      file_REG32,
+      reg_BX );
+}
+
+static struct x86_reg
+get_coef_base( void )
+{
+   return get_output_base();
+}
+
+/**
+ * Data access helpers.
+ */
+
+static struct x86_reg
+get_argument(
+   unsigned index )
+{
+   return x86_make_disp(
+      x86_make_reg( file_REG32, reg_SP ),
+      (index + 1) * 4 );
 }
 
 static struct x86_reg
@@ -59,14 +101,6 @@ get_const(
 }
 
 static struct x86_reg
-get_input_base( void )
-{
-   return x86_make_reg(
-      file_REG32,
-      reg_AX );
-}
-
-static struct x86_reg
 get_input(
    unsigned vec,
    unsigned chan )
@@ -74,14 +108,6 @@ get_input(
    return x86_make_disp(
       get_input_base(),
       (vec * 4 + chan) * 16 );
-}
-
-static struct x86_reg
-get_output_base( void )
-{
-   return x86_make_reg(
-      file_REG32,
-      reg_DX );
 }
 
 static struct x86_reg
@@ -95,14 +121,6 @@ get_output(
 }
 
 static struct x86_reg
-get_temp_base( void )
-{
-   return x86_make_reg(
-      file_REG32,
-      reg_BX );
-}
-
-static struct x86_reg
 get_temp(
    unsigned vec,
    unsigned chan )
@@ -110,12 +128,6 @@ get_temp(
    return x86_make_disp(
       get_temp_base(),
       (vec * 4 + chan) * 16 );
-}
-
-static struct x86_reg
-get_coef_base( void )
-{
-   return get_output_base();
 }
 
 static struct x86_reg
@@ -128,6 +140,10 @@ get_coef(
       get_coef_base(),
       ((vec * 3 + member) * 4 + chan) * 4 );
 }
+
+/**
+ * Data fetch helpers.
+ */
 
 static void
 emit_const(
@@ -161,19 +177,6 @@ emit_inputf(
 }
 
 static void
-emit_inputs(
-   struct x86_function *func,
-   unsigned xmm,
-   unsigned vec,
-   unsigned chan )
-{
-   sse_movups(
-      func,
-      get_input( vec, chan ),
-      make_xmm( xmm ) );
-}
-
-static void
 emit_output(
    struct x86_function *func,
    unsigned xmm,
@@ -200,19 +203,6 @@ emit_tempf(
 }
 
 static void
-emit_temps(
-   struct x86_function *func,
-   unsigned xmm,
-   unsigned vec,
-   unsigned chan )
-{
-   sse_movaps(
-      func,
-      get_temp( vec, chan ),
-      make_xmm( xmm ) );
-}
-
-static void
 emit_coef(
    struct x86_function *func,
    unsigned xmm,
@@ -230,6 +220,54 @@ emit_coef(
       make_xmm( xmm ),
       SHUF( 0, 0, 0, 0 ) );
 }
+
+/**
+ * Data store helpers.
+ */
+
+static void
+emit_inputs(
+   struct x86_function *func,
+   unsigned xmm,
+   unsigned vec,
+   unsigned chan )
+{
+   sse_movups(
+      func,
+      get_input( vec, chan ),
+      make_xmm( xmm ) );
+}
+
+static void
+emit_temps(
+   struct x86_function *func,
+   unsigned xmm,
+   unsigned vec,
+   unsigned chan )
+{
+   sse_movaps(
+      func,
+      get_temp( vec, chan ),
+      make_xmm( xmm ) );
+}
+
+static void
+emit_addrs(
+   struct x86_function *func,
+   unsigned xmm,
+   unsigned vec,
+   unsigned chan )
+{
+   emit_temps(
+      func,
+      xmm,
+      vec + TGSI_EXEC_NUM_TEMPS,
+      chan );
+}
+
+/**
+ * Coefficent fetch helpers.
+ */
 
 static void
 emit_coef_a0(
@@ -276,70 +314,9 @@ emit_coef_dady(
       2 );
 }
 
-static void
-emit_addrs(
-   struct x86_function *func,
-   unsigned xmm,
-   unsigned vec,
-   unsigned chan )
-{
-   emit_temps(
-      func,
-      xmm,
-      vec + TGSI_EXEC_NUM_TEMPS,
-      chan );
-}
-
-static void
-emit_abs(
-   struct x86_function *func,
-   unsigned xmm )
-{
-   sse_andps(
-      func,
-      make_xmm( xmm ),
-      get_temp(
-         TGSI_EXEC_TEMP_7FFFFFFF_I,
-         TGSI_EXEC_TEMP_7FFFFFFF_C ) );
-}
-
-static void
-emit_neg(
-   struct x86_function *func,
-   unsigned xmm )
-{
-   sse_xorps(
-      func,
-      make_xmm( xmm ),
-      get_temp(
-         TGSI_EXEC_TEMP_80000000_I,
-         TGSI_EXEC_TEMP_80000000_C ) );
-}
-
-static void
-emit_setsign(
-   struct x86_function *func,
-   unsigned xmm )
-{
-   sse_orps(
-      func,
-      make_xmm( xmm ),
-      get_temp(
-         TGSI_EXEC_TEMP_80000000_I,
-         TGSI_EXEC_TEMP_80000000_C ) );
-}
-
-static void
-emit_add(
-   struct x86_function *func,
-   unsigned xmm_dst,
-   unsigned xmm_src )
-{
-   sse_addps(
-      func,
-      make_xmm( xmm_dst ),
-      make_xmm( xmm_src ) );
-}
+/**
+ * Function call helpers.
+ */
 
 static void
 emit_push_gp(
@@ -433,6 +410,35 @@ emit_func_call_dst_src(
       code );
 }
 
+/**
+ * Low-level instruction translators.
+ */
+
+static void
+emit_abs(
+   struct x86_function *func,
+   unsigned xmm )
+{
+   sse_andps(
+      func,
+      make_xmm( xmm ),
+      get_temp(
+         TGSI_EXEC_TEMP_7FFFFFFF_I,
+         TGSI_EXEC_TEMP_7FFFFFFF_C ) );
+}
+
+static void
+emit_add(
+   struct x86_function *func,
+   unsigned xmm_dst,
+   unsigned xmm_src )
+{
+   sse_addps(
+      func,
+      make_xmm( xmm_dst ),
+      make_xmm( xmm_src ) );
+}
+
 static void XSTDCALL
 cos4f(
    float *store )
@@ -460,88 +466,6 @@ emit_cos(
       func,
       xmm_dst,
       cos4f );
-}
-
-static void XSTDCALL
-sin4f(
-   float *store )
-{
-#ifdef WIN32
-   store[0] = (float) sin( (double) store[0] );
-   store[1] = (float) sin( (double) store[1] );
-   store[2] = (float) sin( (double) store[2] );
-   store[3] = (float) sin( (double) store[3] );
-#else
-   const unsigned X = TEMP_R0 * 16;
-   store[X + 0] = sinf( store[X + 0] );
-   store[X + 1] = sinf( store[X + 1] );
-   store[X + 2] = sinf( store[X + 2] );
-   store[X + 3] = sinf( store[X + 3] );
-#endif
-}
-
-static void
-emit_sin (struct x86_function *func,
-          unsigned xmm_dst)
-{
-   emit_func_call_dst(
-      func,
-      xmm_dst,
-      sin4f );
-}
-
-static void
-emit_mov(
-   struct x86_function *func,
-   unsigned xmm_dst,
-   unsigned xmm_src )
-{
-   sse_movups(
-      func,
-      make_xmm( xmm_dst ),
-      make_xmm( xmm_src ) );
-}
-
-static void
-emit_mul (struct x86_function *func,
-          unsigned xmm_dst,
-          unsigned xmm_src)
-{
-   sse_mulps(
-      func,
-      make_xmm( xmm_dst ),
-      make_xmm( xmm_src ) );
-}
-
-static void XSTDCALL
-pow4f(
-   float *store )
-{
-#ifdef WIN32
-   store[0] = (float) pow( (double) store[0], (double) store[4] );
-   store[1] = (float) pow( (double) store[1], (double) store[5] );
-   store[2] = (float) pow( (double) store[2], (double) store[6] );
-   store[3] = (float) pow( (double) store[3], (double) store[7] );
-#else
-   const unsigned X = TEMP_R0 * 16;
-   store[X + 0] = powf( store[X + 0], store[X + 4] );
-   store[X + 1] = powf( store[X + 1], store[X + 5] );
-   store[X + 2] = powf( store[X + 2], store[X + 6] );
-   store[X + 3] = powf( store[X + 3], store[X + 7] );
-#endif
-}
-
-static void
-emit_pow(
-   struct x86_function *func,
-   unsigned xmm_dst,
-   unsigned xmm_src )
-{
-   emit_func_call_dst_src(
-      func,
-      xmm_dst,
-      xmm_src,
-      pow4f );
 }
 
 static void XSTDCALL
@@ -573,30 +497,15 @@ emit_ex2(
       ex24f );
 }
 
-static void XSTDCALL
-lg24f(
-   float *store )
-{
-#ifdef WIN32
-   const unsigned X = 0;
-#else
-   const unsigned X = TEMP_R0 * 16;
-#endif
-   store[X + 0] = LOG2( store[X + 0] );
-   store[X + 1] = LOG2( store[X + 1] );
-   store[X + 2] = LOG2( store[X + 2] );
-   store[X + 3] = LOG2( store[X + 3] );
-}
-
 static void
-emit_lg2(
+emit_f2it(
    struct x86_function *func,
-   unsigned xmm_dst )
+   unsigned xmm )
 {
-   emit_func_call_dst(
+   sse2_cvttps2dq(
       func,
-      xmm_dst,
-      lg24f );
+      make_xmm( xmm ),
+      make_xmm( xmm ) );
 }
 
 static void XSTDCALL
@@ -651,6 +560,99 @@ emit_frc(
       frc4f );
 }
 
+static void XSTDCALL
+lg24f(
+   float *store )
+{
+#ifdef WIN32
+   const unsigned X = 0;
+#else
+   const unsigned X = TEMP_R0 * 16;
+#endif
+   store[X + 0] = LOG2( store[X + 0] );
+   store[X + 1] = LOG2( store[X + 1] );
+   store[X + 2] = LOG2( store[X + 2] );
+   store[X + 3] = LOG2( store[X + 3] );
+}
+
+static void
+emit_lg2(
+   struct x86_function *func,
+   unsigned xmm_dst )
+{
+   emit_func_call_dst(
+      func,
+      xmm_dst,
+      lg24f );
+}
+
+static void
+emit_mov(
+   struct x86_function *func,
+   unsigned xmm_dst,
+   unsigned xmm_src )
+{
+   sse_movups(
+      func,
+      make_xmm( xmm_dst ),
+      make_xmm( xmm_src ) );
+}
+
+static void
+emit_mul (struct x86_function *func,
+          unsigned xmm_dst,
+          unsigned xmm_src)
+{
+   sse_mulps(
+      func,
+      make_xmm( xmm_dst ),
+      make_xmm( xmm_src ) );
+}
+
+static void
+emit_neg(
+   struct x86_function *func,
+   unsigned xmm )
+{
+   sse_xorps(
+      func,
+      make_xmm( xmm ),
+      get_temp(
+         TGSI_EXEC_TEMP_80000000_I,
+         TGSI_EXEC_TEMP_80000000_C ) );
+}
+
+static void XSTDCALL
+pow4f(
+   float *store )
+{
+#ifdef WIN32
+   store[0] = (float) pow( (double) store[0], (double) store[4] );
+   store[1] = (float) pow( (double) store[1], (double) store[5] );
+   store[2] = (float) pow( (double) store[2], (double) store[6] );
+   store[3] = (float) pow( (double) store[3], (double) store[7] );
+#else
+   const unsigned X = TEMP_R0 * 16;
+   store[X + 0] = powf( store[X + 0], store[X + 4] );
+   store[X + 1] = powf( store[X + 1], store[X + 5] );
+   store[X + 2] = powf( store[X + 2], store[X + 6] );
+   store[X + 3] = powf( store[X + 3], store[X + 7] );
+#endif
+}
+
+static void
+emit_pow(
+   struct x86_function *func,
+   unsigned xmm_dst,
+   unsigned xmm_src )
+{
+   emit_func_call_dst_src(
+      func,
+      xmm_dst,
+      xmm_src,
+      pow4f );
+}
+
 static void
 emit_rcp (
    struct x86_function *func,
@@ -676,6 +678,47 @@ emit_rsqrt(
 }
 
 static void
+emit_setsign(
+   struct x86_function *func,
+   unsigned xmm )
+{
+   sse_orps(
+      func,
+      make_xmm( xmm ),
+      get_temp(
+         TGSI_EXEC_TEMP_80000000_I,
+         TGSI_EXEC_TEMP_80000000_C ) );
+}
+
+static void XSTDCALL
+sin4f(
+   float *store )
+{
+#ifdef WIN32
+   store[0] = (float) sin( (double) store[0] );
+   store[1] = (float) sin( (double) store[1] );
+   store[2] = (float) sin( (double) store[2] );
+   store[3] = (float) sin( (double) store[3] );
+#else
+   const unsigned X = TEMP_R0 * 16;
+   store[X + 0] = sinf( store[X + 0] );
+   store[X + 1] = sinf( store[X + 1] );
+   store[X + 2] = sinf( store[X + 2] );
+   store[X + 3] = sinf( store[X + 3] );
+#endif
+}
+
+static void
+emit_sin (struct x86_function *func,
+          unsigned xmm_dst)
+{
+   emit_func_call_dst(
+      func,
+      xmm_dst,
+      sin4f );
+}
+
+static void
 emit_sub(
    struct x86_function *func,
    unsigned xmm_dst,
@@ -686,6 +729,10 @@ emit_sub(
       make_xmm( xmm_dst ),
       make_xmm( xmm_src ) );
 }
+
+/**
+ * Register fetch.
+ */
 
 static void
 emit_fetch(
@@ -769,6 +816,13 @@ emit_fetch(
    }
 }
 
+#define FETCH( FUNC, INST, XMM, INDEX, CHAN )\
+   emit_fetch( FUNC, XMM, &(INST).FullSrcRegisters[INDEX], CHAN )
+
+/**
+ * Register store.
+ */
+
 static void
 emit_store(
    struct x86_function *func,
@@ -819,6 +873,13 @@ emit_store(
       break;
    }
 }
+
+#define STORE( FUNC, INST, XMM, INDEX, CHAN )\
+   emit_store( FUNC, XMM, &(INST).FullDstRegisters[INDEX], &(INST), CHAN )
+
+/**
+ * High-level instruction translators.
+ */
 
 static void
 emit_kil(
@@ -915,12 +976,6 @@ emit_kil(
       x86_make_reg( file_REG32, reg_AX ) );
 }
 
-#define FETCH( FUNC, INST, XMM, INDEX, CHAN )\
-   emit_fetch( FUNC, XMM, &(INST).FullSrcRegisters[INDEX], CHAN )
-
-#define STORE( FUNC, INST, XMM, INDEX, CHAN )\
-   emit_store( FUNC, XMM, &(INST).FullDstRegisters[INDEX], &(INST), CHAN )
-
 static void
 emit_setcc(
    struct x86_function *func,
@@ -979,17 +1034,6 @@ emit_cmp(
          make_xmm( 1 ) );
       STORE( func, *inst, 0, 0, chan_index );
    }
-}
-
-static void
-emit_f2it(
-   struct x86_function *func,
-   unsigned xmm )
-{
-   sse2_cvttps2dq(
-      func,
-      make_xmm( xmm ),
-      make_xmm( xmm ) );
 }
 
 static void
