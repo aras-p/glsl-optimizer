@@ -2,6 +2,104 @@
 #include "tgsi_core.h"
 #include "x86/rtasm/x86sse.h"
 
+#define DUMP_SSE  0
+
+#if DUMP_SSE
+
+static void
+_print_reg(
+   struct x86_reg reg )
+{
+   switch( reg.file ) {
+   case file_REG32:
+      switch( reg.idx ) {
+      case reg_AX:
+         printf( "EAX" );
+         break;
+      case reg_CX:
+         printf( "ECX" );
+         break;
+      case reg_DX:
+         printf( "EDX" );
+         break;
+      case reg_BX:
+         printf( "EBX" );
+         break;
+      case reg_SP:
+         printf( "ESP" );
+         break;
+      case reg_BP:
+         printf( "EBP" );
+         break;
+      case reg_SI:
+         printf( "ESI" );
+         break;
+      case reg_DI:
+         printf( "EDI" );
+         break;
+      }
+      break;
+   case file_MMX:
+      assert( 0 );
+      break;
+   case file_XMM:
+      printf( "XMM%u", reg.idx );
+      break;
+   case file_x87:
+      assert( 0 );
+      break;
+   }
+}
+
+static void
+_fill(
+   const char  *op )
+{
+   unsigned count = 10 - strlen( op );
+
+   while( count-- ) {
+      printf( " " );
+   }
+}
+
+#define DUMP_START() printf( "\nsse-dump start ----------------" )
+#define DUMP_END() printf( "\nsse-dump end ----------------\n" )
+#define DUMP( OP ) printf( "\n%s", OP )
+#define DUMP_I( OP, I ) do {\
+   printf( "\n%s", OP );\
+   _fill( OP );\
+   printf( "%u", I ); } while( 0 )
+#define DUMP_R( OP, R0 ) do {\
+   printf( "\n%s", OP );\
+   _fill( OP );\
+   _print_reg( R0 ); } while( 0 )
+#define DUMP_RR( OP, R0, R1 ) do {\
+   printf( "\n%s", OP );\
+   _fill( OP );\
+   _print_reg( R0 );\
+   printf( ", " );\
+   _print_reg( R1 ); } while( 0 )
+#define DUMP_RRI( OP, R0, R1, I ) do {\
+   printf( "\n%s", OP );\
+   _fill( OP );\
+   _print_reg( R0 );\
+   printf( ", " );\
+   _print_reg( R1 );\
+   printf( ", " );\
+   printf( "%u", I ); } while( 0 )
+
+#else
+
+#define DUMP_START()
+#define DUMP_END()
+#define DUMP( OP )
+#define DUMP_I( OP, I )
+#define DUMP_R( OP, R0 )
+#define DUMP_RR( OP, R0, R1 )
+#define DUMP_RRI( OP, R0, R1, I )
+
+#endif
+
 #define FOR_EACH_CHANNEL( CHAN )\
    for( CHAN = 0; CHAN < 4; CHAN++ )
 
@@ -142,6 +240,258 @@ get_coef(
 }
 
 /**
+ * X86 rtasm wrappers.
+ */
+
+static void
+emit_addps(
+   struct x86_function  *func,
+   struct x86_reg       dst,
+   struct x86_reg       src )
+{
+   DUMP_RR( "ADDPS", dst, src );
+   sse_addps( func, dst, src );
+}
+
+static void
+emit_andnps(
+   struct x86_function  *func,
+   struct x86_reg       dst,
+   struct x86_reg       src )
+{
+   DUMP_RR( "ANDNPS", dst, src );
+   sse_andnps( func, dst, src );
+}
+
+static void
+emit_andps(
+   struct x86_function  *func,
+   struct x86_reg       dst,
+   struct x86_reg       src )
+{
+   DUMP_RR( "ANDPS", dst, src );
+   sse_andps( func, dst, src );
+}
+
+static void
+emit_call(
+   struct x86_function  *func,
+   void                 (* addr)() )
+{
+   DUMP_I( "CALL", addr );
+   x86_call( func, addr );
+}
+
+static void
+emit_cmpps(
+   struct x86_function  *func,
+   struct x86_reg       dst,
+   struct x86_reg       src,
+   enum sse_cc          cc )
+{
+   DUMP_RRI( "CMPPS", dst, src, cc );
+   sse_cmpps( func, dst, src, cc );
+}
+
+static void
+emit_cvttps2dq(
+   struct x86_function  *func,
+   struct x86_reg       dst,
+   struct x86_reg       src )
+{
+   DUMP_RR( "CVTTPS2DQ", dst, src );
+   sse2_cvttps2dq( func, dst, src );
+}
+
+static void
+emit_maxps(
+   struct x86_function  *func,
+   struct x86_reg       dst,
+   struct x86_reg       src )
+{
+   DUMP_RR( "MAXPS", dst, src );
+   sse_maxps( func, dst, src );
+}
+
+static void
+emit_minps(
+   struct x86_function  *func,
+   struct x86_reg       dst,
+   struct x86_reg       src )
+{
+   DUMP_RR( "MINPS", dst, src );
+   sse_minps( func, dst, src );
+}
+
+static void
+emit_mov(
+   struct x86_function  *func,
+   struct x86_reg       dst,
+   struct x86_reg       src )
+{
+   DUMP_RR( "MOV", dst, src );
+   x86_mov( func, dst, src );
+}
+
+static void
+emit_movaps(
+   struct x86_function  *func,
+   struct x86_reg       dst,
+   struct x86_reg       src )
+{
+   DUMP_RR( "MOVAPS", dst, src );
+   sse_movaps( func, dst, src );
+}
+
+static void
+emit_movss(
+   struct x86_function  *func,
+   struct x86_reg       dst,
+   struct x86_reg       src )
+{
+   DUMP_RR( "MOVSS", dst, src );
+   sse_movss( func, dst, src );
+}
+
+static void
+emit_movups(
+   struct x86_function  *func,
+   struct x86_reg       dst,
+   struct x86_reg       src )
+{
+   DUMP_RR( "MOVUPS", dst, src );
+   sse_movups( func, dst, src );
+}
+
+static void
+emit_mulps(
+   struct x86_function  *func,
+   struct x86_reg       dst,
+   struct x86_reg       src )
+{
+   DUMP_RR( "MULPS", dst, src );
+   sse_mulps( func, dst, src );
+}
+
+static void
+emit_or(
+   struct x86_function  *func,
+   struct x86_reg       dst,
+   struct x86_reg       src )
+{
+   DUMP_RR( "OR", dst, src );
+   x86_or( func, dst, src );
+}
+
+static void
+emit_orps(
+   struct x86_function  *func,
+   struct x86_reg       dst,
+   struct x86_reg       src )
+{
+   DUMP_RR( "ORPS", dst, src );
+   sse_orps( func, dst, src );
+}
+
+static void
+emit_pmovmskb(
+   struct x86_function  *func,
+   struct x86_reg       dst,
+   struct x86_reg       src )
+{
+   DUMP_RR( "PMOVMSKB", dst, src );
+   sse_pmovmskb( func, dst, src );
+}
+
+static void
+emit_pop(
+   struct x86_function  *func,
+   struct x86_reg       dst )
+{
+   DUMP_R( "POP", dst );
+   x86_pop( func, dst );
+}
+
+static void
+emit_push(
+   struct x86_function  *func,
+   struct x86_reg       dst )
+{
+   DUMP_R( "PUSH", dst );
+   x86_push( func, dst );
+}
+
+static void
+emit_rcpps(
+   struct x86_function  *func,
+   struct x86_reg       dst,
+   struct x86_reg       src )
+{
+   DUMP_RR( "RCPPS", dst, src );
+   sse2_rcpps( func, dst, src );
+}
+
+#ifdef WIN32
+static void
+emit_retw(
+   struct x86_function  *func,
+   unsigned             size )
+{
+   DUMP_I( "RET", size );
+   x86_retw( func, size );
+}
+#else
+static void
+emit_ret(
+   struct x86_function  *func )
+{
+   DUMP( "RET" );
+   x86_ret( func );
+}
+#endif
+
+static void
+emit_rsqrtps(
+   struct x86_function  *func,
+   struct x86_reg       dst,
+   struct x86_reg       src )
+{
+   DUMP_RR( "RSQRTPS", dst, src );
+   sse_rsqrtps( func, dst, src );
+}
+
+static void
+emit_shufps(
+   struct x86_function  *func,
+   struct x86_reg       dst,
+   struct x86_reg       src,
+   unsigned             shuf )
+{
+   DUMP_RRI( "SHUFPS", dst, src, shuf );
+   sse_shufps( func, dst, src, shuf );
+}
+
+static void
+emit_subps(
+   struct x86_function  *func,
+   struct x86_reg       dst,
+   struct x86_reg       src )
+{
+   DUMP_RR( "SUBPS", dst, src );
+   sse_subps( func, dst, src );
+}
+
+static void
+emit_xorps(
+   struct x86_function  *func,
+   struct x86_reg       dst,
+   struct x86_reg       src )
+{
+   DUMP_RR( "XORPS", dst, src );
+   sse_xorps( func, dst, src );
+}
+
+/**
  * Data fetch helpers.
  */
 
@@ -152,11 +502,11 @@ emit_const(
    unsigned vec,
    unsigned chan )
 {
-   sse_movss(
+   emit_movss(
       func,
       make_xmm( xmm ),
       get_const( vec, chan ) );
-   sse_shufps(
+   emit_shufps(
       func,
       make_xmm( xmm ),
       make_xmm( xmm ),
@@ -170,7 +520,7 @@ emit_inputf(
    unsigned vec,
    unsigned chan )
 {
-   sse_movups(
+   emit_movups(
       func,
       make_xmm( xmm ),
       get_input( vec, chan ) );
@@ -183,7 +533,7 @@ emit_output(
    unsigned vec,
    unsigned chan )
 {
-   sse_movups(
+   emit_movups(
       func,
       get_output( vec, chan ),
       make_xmm( xmm ) );
@@ -196,7 +546,7 @@ emit_tempf(
    unsigned vec,
    unsigned chan )
 {
-   sse_movaps(
+   emit_movaps(
       func,
       make_xmm( xmm ),
       get_temp( vec, chan ) );
@@ -210,11 +560,11 @@ emit_coef(
    unsigned chan,
    unsigned member )
 {
-   sse_movss(
+   emit_movss(
       func,
       make_xmm( xmm ),
       get_coef( vec, chan, member ) );
-   sse_shufps(
+   emit_shufps(
       func,
       make_xmm( xmm ),
       make_xmm( xmm ),
@@ -232,7 +582,7 @@ emit_inputs(
    unsigned vec,
    unsigned chan )
 {
-   sse_movups(
+   emit_movups(
       func,
       get_input( vec, chan ),
       make_xmm( xmm ) );
@@ -245,7 +595,7 @@ emit_temps(
    unsigned vec,
    unsigned chan )
 {
-   sse_movaps(
+   emit_movaps(
       func,
       get_temp( vec, chan ),
       make_xmm( xmm ) );
@@ -322,19 +672,19 @@ static void
 emit_push_gp(
    struct x86_function *func )
 {
-   x86_push(
+   emit_push(
       func,
       get_const_base() );
-   x86_push(
+   emit_push(
       func,
       get_input_base() );
-   x86_push(
+   emit_push(
       func,
       get_output_base() );
 
    /* It is important on non-win32 platforms that temp base is pushed last.
     */
-   x86_push(
+   emit_push(
       func,
       get_temp_base() );
 }
@@ -345,16 +695,16 @@ emit_pop_gp(
 {
    /* Restore GP registers in a reverse order.
     */
-   x86_pop(
+   emit_pop(
       func,
       get_temp_base() );
-   x86_pop(
+   emit_pop(
       func,
       get_output_base() );
-   x86_pop(
+   emit_pop(
       func,
       get_input_base() );
-   x86_pop(
+   emit_pop(
       func,
       get_const_base() );
 }
@@ -365,7 +715,7 @@ emit_func_call_dst(
    unsigned xmm_dst,
    void (*code)() )
 {
-   sse_movaps(
+   emit_movaps(
       func,
       get_temp( TEMP_R0, 0 ),
       make_xmm( xmm_dst ) );
@@ -374,19 +724,19 @@ emit_func_call_dst(
       func );
 
 #ifdef WIN32
-   x86_push(
+   emit_push(
       func,
       get_temp( TEMP_R0, 0 ) );
 #endif
 
-   x86_call(
+   emit_call(
       func,
       code );
 
    emit_pop_gp(
       func );
 
-   sse_movaps(
+   emit_movaps(
       func,
       make_xmm( xmm_dst ),
       get_temp( TEMP_R0, 0 ) );
@@ -399,7 +749,7 @@ emit_func_call_dst_src(
    unsigned xmm_src,
    void (*code)() )
 {
-   sse_movaps(
+   emit_movaps(
       func,
       get_temp( TEMP_R0, 1 ),
       make_xmm( xmm_src ) );
@@ -419,7 +769,7 @@ emit_abs(
    struct x86_function *func,
    unsigned xmm )
 {
-   sse_andps(
+   emit_andps(
       func,
       make_xmm( xmm ),
       get_temp(
@@ -433,7 +783,7 @@ emit_add(
    unsigned xmm_dst,
    unsigned xmm_src )
 {
-   sse_addps(
+   emit_addps(
       func,
       make_xmm( xmm_dst ),
       make_xmm( xmm_src ) );
@@ -502,7 +852,7 @@ emit_f2it(
    struct x86_function *func,
    unsigned xmm )
 {
-   sse2_cvttps2dq(
+   emit_cvttps2dq(
       func,
       make_xmm( xmm ),
       make_xmm( xmm ) );
@@ -587,12 +937,12 @@ emit_lg2(
 }
 
 static void
-emit_mov(
+emit_MOV(
    struct x86_function *func,
    unsigned xmm_dst,
    unsigned xmm_src )
 {
-   sse_movups(
+   emit_movups(
       func,
       make_xmm( xmm_dst ),
       make_xmm( xmm_src ) );
@@ -603,7 +953,7 @@ emit_mul (struct x86_function *func,
           unsigned xmm_dst,
           unsigned xmm_src)
 {
-   sse_mulps(
+   emit_mulps(
       func,
       make_xmm( xmm_dst ),
       make_xmm( xmm_src ) );
@@ -614,7 +964,7 @@ emit_neg(
    struct x86_function *func,
    unsigned xmm )
 {
-   sse_xorps(
+   emit_xorps(
       func,
       make_xmm( xmm ),
       get_temp(
@@ -659,7 +1009,7 @@ emit_rcp (
    unsigned xmm_dst,
    unsigned xmm_src )
 {
-   sse2_rcpps(
+   emit_rcpps(
       func,
       make_xmm( xmm_dst ),
       make_xmm( xmm_src ) );
@@ -671,7 +1021,7 @@ emit_rsqrt(
    unsigned xmm_dst,
    unsigned xmm_src )
 {
-   sse_rsqrtps(
+   emit_rsqrtps(
       func,
       make_xmm( xmm_dst ),
       make_xmm( xmm_src ) );
@@ -682,7 +1032,7 @@ emit_setsign(
    struct x86_function *func,
    unsigned xmm )
 {
-   sse_orps(
+   emit_orps(
       func,
       make_xmm( xmm ),
       get_temp(
@@ -724,7 +1074,7 @@ emit_sub(
    unsigned xmm_dst,
    unsigned xmm_src )
 {
-   sse_subps(
+   emit_subps(
       func,
       make_xmm( xmm_dst ),
       make_xmm( xmm_src ) );
@@ -925,16 +1275,16 @@ emit_kil(
       }
    }
 
-   x86_push(
+   emit_push(
       func,
       x86_make_reg( file_REG32, reg_AX ) );
-   x86_push(
+   emit_push(
       func,
       x86_make_reg( file_REG32, reg_DX ) );
 
    FOR_EACH_CHANNEL( chan_index ) {
       if( uniquemask & (1 << chan_index) ) {
-         sse_cmpps(
+         emit_cmpps(
             func,
             make_xmm( registers[chan_index] ),
             get_temp(
@@ -943,17 +1293,17 @@ emit_kil(
             cc_LessThan );
 
          if( chan_index == firstchan ) {
-            sse_pmovmskb(
+            emit_pmovmskb(
                func,
                x86_make_reg( file_REG32, reg_AX ),
                make_xmm( registers[chan_index] ) );
          }
          else {
-            sse_pmovmskb(
+            emit_pmovmskb(
                func,
                x86_make_reg( file_REG32, reg_DX ),
                make_xmm( registers[chan_index] ) );
-            x86_or(
+            emit_or(
                func,
                x86_make_reg( file_REG32, reg_AX ),
                x86_make_reg( file_REG32, reg_DX ) );
@@ -961,17 +1311,17 @@ emit_kil(
       }
    }
 
-   x86_or(
+   emit_or(
       func,
       get_temp(
          TGSI_EXEC_TEMP_KILMASK_I,
          TGSI_EXEC_TEMP_KILMASK_C ),
       x86_make_reg( file_REG32, reg_AX ) );
 
-   x86_pop(
+   emit_pop(
       func,
       x86_make_reg( file_REG32, reg_DX ) );
-   x86_pop(
+   emit_pop(
       func,
       x86_make_reg( file_REG32, reg_AX ) );
 }
@@ -987,12 +1337,12 @@ emit_setcc(
    FOR_EACH_DST0_ENABLED_CHANNEL( *inst, chan_index ) {
       FETCH( func, *inst, 0, 0, chan_index );
       FETCH( func, *inst, 1, 1, chan_index );
-      sse_cmpps(
+      emit_cmpps(
          func,
          make_xmm( 0 ),
          make_xmm( 1 ),
          cc );
-      sse_andps(
+      emit_andps(
          func,
          make_xmm( 0 ),
          get_temp(
@@ -1013,22 +1363,22 @@ emit_cmp(
       FETCH( func, *inst, 0, 0, chan_index );
       FETCH( func, *inst, 1, 1, chan_index );
       FETCH( func, *inst, 2, 2, chan_index );
-      sse_cmpps(
+      emit_cmpps(
          func,
          make_xmm( 0 ),
          get_temp(
             TGSI_EXEC_TEMP_00000000_I,
             TGSI_EXEC_TEMP_00000000_C ),
          cc_LessThan );
-      sse_andps(
+      emit_andps(
          func,
          make_xmm( 1 ),
          make_xmm( 0 ) );
-      sse_andnps(
+      emit_andnps(
          func,
          make_xmm( 0 ),
          make_xmm( 2 ) );
-      sse_orps(
+      emit_orps(
          func,
          make_xmm( 0 ),
          make_xmm( 1 ) );
@@ -1079,7 +1429,7 @@ emit_instruction(
           IS_DST0_CHANNEL_ENABLED( *inst, CHAN_Z ) ) {
          if( IS_DST0_CHANNEL_ENABLED( *inst, CHAN_Y ) ) {
             FETCH( func, *inst, 0, 0, CHAN_X );
-            sse_maxps(
+            emit_maxps(
                func,
                make_xmm( 0 ),
                get_temp(
@@ -1089,20 +1439,20 @@ emit_instruction(
          }
          if( IS_DST0_CHANNEL_ENABLED( *inst, CHAN_Z ) ) {
             FETCH( func, *inst, 1, 0, CHAN_Y );
-            sse_maxps(
+            emit_maxps(
                func,
                make_xmm( 1 ),
                get_temp(
                   TGSI_EXEC_TEMP_00000000_I,
                   TGSI_EXEC_TEMP_00000000_C ) );
             FETCH( func, *inst, 2, 0, CHAN_W );
-            sse_minps(
+            emit_minps(
                func,
                make_xmm( 2 ),
                get_temp(
                   TGSI_EXEC_TEMP_128_I,
                   TGSI_EXEC_TEMP_128_C ) );
-            sse_maxps(
+            emit_maxps(
                func,
                make_xmm( 2 ),
                get_temp(
@@ -1110,16 +1460,16 @@ emit_instruction(
                   TGSI_EXEC_TEMP_MINUS_128_C ) );
             emit_pow( func, 1, 2 );
             FETCH( func, *inst, 0, 0, CHAN_X );
-            sse_xorps(
+            emit_xorps(
                func,
                make_xmm( 2 ),
                make_xmm( 2 ) );
-            sse_cmpps(
+            emit_cmpps(
                func,
                make_xmm( 2 ),
                make_xmm( 0 ),
                cc_LessThanEqual );
-            sse_andps(
+            emit_andps(
                func,
                make_xmm( 2 ),
                make_xmm( 1 ) );
@@ -1241,7 +1591,7 @@ emit_instruction(
       FOR_EACH_DST0_ENABLED_CHANNEL( *inst, chan_index ) {
          FETCH( func, *inst, 0, 0, chan_index );
          FETCH( func, *inst, 1, 1, chan_index );
-         sse_minps(
+         emit_minps(
             func,
             make_xmm( 0 ),
             make_xmm( 1 ) );
@@ -1253,7 +1603,7 @@ emit_instruction(
       FOR_EACH_DST0_ENABLED_CHANNEL( *inst, chan_index ) {
          FETCH( func, *inst, 0, 0, chan_index );
          FETCH( func, *inst, 1, 1, chan_index );
-         sse_maxps(
+         emit_maxps(
             func,
             make_xmm( 0 ),
             make_xmm( 1 ) );
@@ -1393,9 +1743,9 @@ emit_instruction(
          FETCH( func, *inst, 4, 1, CHAN_Y );
       }
       IF_IS_DST0_CHANNEL_ENABLED( *inst, CHAN_X ) {
-         emit_mov( func, 2, 0 );
+         emit_MOV( func, 2, 0 );
          emit_mul( func, 2, 1 );
-         emit_mov( func, 5, 3 );
+         emit_MOV( func, 5, 3 );
          emit_mul( func, 5, 4 );
          emit_sub( func, 2, 5 );
          STORE( func, *inst, 2, 0, CHAN_X );
@@ -1584,9 +1934,9 @@ emit_instruction(
 
    case TGSI_OPCODE_RET:
 #ifdef WIN32
-      x86_retw( func, 16 );
+      emit_retw( func, 16 );
 #else
-      x86_ret( func );
+      emit_ret( func );
 #endif
       break;
 
@@ -1825,21 +2175,23 @@ tgsi_emit_sse2(
 {
    struct tgsi_parse_context parse;
 
+   DUMP_START();
+
    func->csr = func->store;
 
-   x86_mov(
+   emit_mov(
       func,
       get_input_base(),
       get_argument( 0 ) );
-   x86_mov(
+   emit_mov(
       func,
       get_output_base(),
       get_argument( 1 ) );
-   x86_mov(
+   emit_mov(
       func,
       get_const_base(),
       get_argument( 2 ) );
-   x86_mov(
+   emit_mov(
       func,
       get_temp_base(),
       get_argument( 3 ) );
@@ -1865,6 +2217,8 @@ tgsi_emit_sse2(
    }
 
    tgsi_parse_free( &parse );
+
+   DUMP_END();
 
    return 1;
 }
@@ -1885,22 +2239,24 @@ tgsi_emit_sse2_fs(
    struct tgsi_parse_context parse;
    boolean instruction_phase = FALSE;
 
+   DUMP_START();
+
    func->csr = func->store;
 
    /* DECLARATION phase, do not load output argument. */
-   x86_mov(
+   emit_mov(
       func,
       get_input_base(),
       get_argument( 0 ) );
-   x86_mov(
+   emit_mov(
       func,
       get_const_base(),
       get_argument( 2 ) );
-   x86_mov(
+   emit_mov(
       func,
       get_temp_base(),
       get_argument( 3 ) );
-   x86_mov(
+   emit_mov(
       func,
       get_coef_base(),
       get_argument( 4 ) );
@@ -1921,7 +2277,7 @@ tgsi_emit_sse2_fs(
          if( !instruction_phase ) {
             /* INSTRUCTION phase, overwrite coeff with output. */
             instruction_phase = TRUE;
-            x86_mov(
+            emit_mov(
                func,
                get_output_base(),
                get_argument( 1 ) );
@@ -1937,6 +2293,8 @@ tgsi_emit_sse2_fs(
    }
 
    tgsi_parse_free( &parse );
+
+   DUMP_END();
 
    return 1;
 }
