@@ -1539,7 +1539,11 @@ emit_instruction(
       break;
 
    case TGSI_OPCODE_RET:
-      assert( 0 );
+#ifdef WIN32
+      x86_retw( func, 16 );
+#else
+      x86_ret( func );
+#endif
       break;
 
    case TGSI_OPCODE_SSG:
@@ -1818,12 +1822,6 @@ tgsi_emit_sse2(
 
    tgsi_parse_free( &parse );
 
-#ifdef WIN32
-   x86_retw( func, 16 );
-#else
-   x86_ret( func );
-#endif
-
    return 1;
 }
 
@@ -1895,12 +1893,6 @@ tgsi_emit_sse2_fs(
    }
 
    tgsi_parse_free( &parse );
-
-#ifdef WIN32
-   x86_retw( func, 16 );
-#else
-   x86_ret( func );
-#endif
 
    return 1;
 }
