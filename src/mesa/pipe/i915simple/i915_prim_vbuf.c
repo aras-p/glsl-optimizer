@@ -139,8 +139,7 @@ emit_vertex( struct vbuf_stage *vbuf,
 //   fprintf(stderr, "emit vertex %d to %p\n", 
 //           vbuf->nr_vertices, vbuf->vertex_ptr);
 
-   /* TODO: reuse vertices */
-   /* vertex->vertex_id = */ vbuf->nr_vertices++;
+   vertex->vertex_id = vbuf->nr_vertices++;
 
    for (i = 0; i < vinfo->num_attribs; i++) {
       switch (vinfo->format[i]) {
@@ -271,21 +270,17 @@ static void vbuf_first_point( struct draw_stage *stage,
 }
 
 
-static void vbuf_draw( struct draw_stage *stage,
-                       unsigned prim,
-                       const ushort *elements,
-                       unsigned nr_elements,
-                       const void *vertex_buffer,
-                       unsigned nr ) 
+static void vbuf_draw( struct draw_stage *stage ) 
 {
    struct vbuf_stage *vbuf = vbuf_stage( stage );
    struct i915_context *i915 = vbuf->i915;
+   unsigned nr = vbuf->nr_elements;
    unsigned vertex_size = i915->current.vertex_info.size * 4; /* in bytes */
    unsigned hwprim;
    unsigned *ptr;
-   unsigned i;
+   unsigned i, j;
    
-   switch(prim) {
+   switch(vbuf->prim) {
    case PIPE_PRIM_POINTS:
       hwprim = PRIM3D_POINTLIST;
       break;
@@ -306,7 +301,7 @@ static void vbuf_draw( struct draw_stage *stage,
    if (i915->hardware_dirty)
       i915_emit_hardware_state( i915 );
 
-   assert(vbuf->vertex_ptr - vbuf->vertex_map == nr * vertex_size / 4);
+   assert(vbuf->vertex_ptr - vbuf->vertex_map == vbuf->nr_vertices * vertex_size / 4);
    
    ptr = BEGIN_BATCH( 1 + nr * vertex_size / 4, 0 );
    if (ptr == 0) {
@@ -329,8 +324,9 @@ static void vbuf_draw( struct draw_stage *stage,
 	     hwprim |
 	     ((4 + vertex_size * nr)/4 - 2));
 
-   for (i = 0; i < nr * vertex_size / 4; i++)
-      OUT_BATCH(vbuf->vertex_map[i]);
+   for (i = 0; i < nr; i++)
+      for (j = 0; j < vertex_size / 4; j++)
+        OUT_BATCH(vbuf->vertex_map[vbuf->element_map[i]*vertex_size/4 + j]);
 }
 
 
@@ -339,19 +335,16 @@ static void vbuf_flush_elements( struct draw_stage *stage )
    struct vbuf_stage *vbuf = vbuf_stage( stage );
 
    if (vbuf->nr_elements) {
+#if 0
       fprintf(stderr, "%s (%d elts, %d verts)\n", 
                       __FUNCTION__, 
                       vbuf->nr_elements,
                       vbuf->nr_vertices);
+#endif
 
       /* Draw now or add to list of primitives???
        */
-      vbuf_draw( stage,
-                 vbuf->prim,
-                 vbuf->element_map,
-                 vbuf->nr_elements,
-                 vbuf->vertex_map,
-                 vbuf->nr_vertices );
+      vbuf_draw( stage );
       
       vbuf->nr_elements = 0;
 
