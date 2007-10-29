@@ -1098,12 +1098,13 @@ void Instructions::end()
 }
 
 void Instructions::cal(int label, llvm::Value *out, llvm::Value *in,
-                    llvm::Value *cst)
+                    llvm::Value *cst, llvm::Value *temp)
 {
    std::vector<Value*> params;
    params.push_back(out);
    params.push_back(in);
    params.push_back(cst);
+   params.push_back(temp);
    llvm::Function *func = findFunction(label);
 
    new CallInst(func, params.begin(), params.end(), std::string(), m_block);
@@ -1113,6 +1114,7 @@ llvm::Function * Instructions::declareFunc(int label)
 {
    PointerType *vecPtr = PointerType::get(m_floatVecType);
    std::vector<const Type*> args;
+   args.push_back(vecPtr);
    args.push_back(vecPtr);
    args.push_back(vecPtr);
    args.push_back(vecPtr);
@@ -1142,7 +1144,9 @@ void Instructions::bgnSub(unsigned label, Storage *storage)
    ptr_IN->setName("IN");
    Value *ptr_CONST = args++;
    ptr_CONST->setName("CONST");
-   storage->pushArguments(ptr_OUT, ptr_IN, ptr_CONST);
+   Value *ptr_TEMP = args++;
+   ptr_TEMP->setName("TEMP");
+   storage->pushArguments(ptr_OUT, ptr_IN, ptr_CONST, ptr_TEMP);
 
    llvm::BasicBlock *entry = new BasicBlock("entry", func, 0);
 

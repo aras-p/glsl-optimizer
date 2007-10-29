@@ -165,7 +165,7 @@ void to_array(float (*dests)[4], float4 *in, int num_attribs)
 }
 
 extern void execute_shader(float4 dests[16], float4 inputs[16],
-                           float4 consts[32]);
+                           float4 consts[32], float4 temps[128]);
 
 void run_vertex_shader(float (*ainputs)[16][4],
                        float (*dests)[16][4],
@@ -178,6 +178,7 @@ void run_vertex_shader(float (*ainputs)[16][4],
    float4  inputs[16*32*4][16];
    float4  consts[32];
    float4  results[16*32*4][16];
+   float4  temps[128];//MAX_PROGRAM_TEMPS
 
    /*printf("XXX LLVM run_vertex_shader vertices = %d, inputs = %d, attribs = %d, consts = %d\n",
      num_vertices, num_inputs, num_attribs, num_consts);*/
@@ -186,7 +187,7 @@ void run_vertex_shader(float (*ainputs)[16][4],
    for (int i = 0; i < num_vertices; ++i) {
       float4 *in  = inputs[i];
       float4 *res = results[i];
-      execute_shader(res, in, consts);
+      execute_shader(res, in, consts, temps);
       to_array(dests[i], res, num_attribs);
    }
 }

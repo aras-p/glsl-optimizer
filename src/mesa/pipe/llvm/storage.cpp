@@ -47,10 +47,10 @@
 using namespace llvm;
 
 Storage::Storage(llvm::BasicBlock *block, llvm::Value *out,
-                 llvm::Value *in, llvm::Value *consts)
+                 llvm::Value *in, llvm::Value *consts, llvm::Value *temps)
    : m_block(block), m_OUT(out),
-     m_IN(in), m_CONST(consts),
-     m_temps(32), m_addrs(32),
+     m_IN(in), m_CONST(consts), m_TEMPS(temps),
+     m_addrs(32),
      m_dstCache(32),
      m_idx(0)
 {
@@ -185,32 +185,51 @@ llvm::Value *Storage::shuffleVector(llvm::Value *vec, int shuffle)
 }
 
 
-llvm::Value *Storage::tempElement(int idx)
+llvm::Value *Storage::tempElement(int idx, llvm::Value *indIdx)
 {
-   Value *ptr = m_temps[idx];
-   if (!ptr)
-      return m_undefFloatVec;
-   llvm::LoadInst *li = new LoadInst(ptr, name("temp"),
-                                     false, m_block);
-   li->setAlignment(8);
-   return li;
+   GetElementPtrInst *getElem = 0;
+
+   if (indIdx) {
+      getElem = new GetElementPtrInst(m_TEMPS,
+                                      BinaryOperator::create(Instruction::Add,
+                                                             indIdx,
+                                                             constantInt(idx),
+                                                             name("add"),
+                                                             m_block),
+                                      name("temp_ptr"),
+                                      m_block);
+   } else {
+      getElem = new GetElementPtrInst(m_TEMPS,
+                                      constantInt(idx),
+                                      name("temp_ptr"),
+                                      m_block);
+   }
+
+   LoadInst *load = new LoadInst(getElem, name("temp"),
+                                 false, m_block);
+   load->setAlignment(8);
+
+   return load;
 }
 
 void Storage::setTempElement(int idx, llvm::Value *val, int mask)
 {
    if (mask != TGSI_WRITEMASK_XYZW) {
       llvm::Value *templ = 0;
-      if (m_temps[idx])
+      if (m_tempWriteMap[idx])
          templ = tempElement(idx);
       val = maskWrite(val, mask, templ);
    }
-   llvm::Value *ptr = m_temps[idx];
-   assert(ptr);
-   StoreInst *st = new StoreInst(val, ptr, false, m_block);
+   GetElementPtrInst *getElem = new GetElementPtrInst(m_TEMPS,
+                                                      constantInt(idx),
+                                                      name("temp_ptr"),
+                                                      m_block);
+   StoreInst *st = new StoreInst(val, getElem, false, m_block);
    st->setAlignment(8);
+   m_tempWriteMap[idx] = true;
 }
 
-void Storage::store(int dstIdx, llvm::Value *val, int mask)
+void Storage::setOutputElement(int dstIdx, llvm::Value *val, int mask)
 {
    if (mask != TGSI_WRITEMASK_XYZW) {
       llvm::Value *templ = 0;
@@ -301,12 +320,7 @@ void Storage::setCurrentBlock(llvm::BasicBlock *block)
    m_block = block;
 }
 
-void Storage::declareTemp(int idx)
-{
-    m_temps[idx] = new AllocaInst(m_floatVecType, name("temp"), m_block);
-}
-
-llvm::Value * Storage::outputElement(int idx, llvm::Value *indIdx )
+llvm::Value * Storage::outputElement(int idx, llvm::Value *indIdx)
 {
     GetElementPtrInst *getElem = 0;
 
@@ -348,18 +362,25 @@ llvm::Value * Storage::constPtr() const
    return m_CONST;
 }
 
+llvm::Value * Storage::tempPtr() const
+{
+   return m_TEMPS;
+}
+
 void Storage::pushArguments(llvm::Value *out, llvm::Value *in,
-                            llvm::Value *constPtr)
+                            llvm::Value *constPtr, llvm::Value *temp)
 {
    Args arg;
    arg.out = m_OUT;
    arg.in  = m_IN;
    arg.cst = m_CONST;
+   arg.temp = m_TEMPS;
    m_argStack.push(arg);
 
    m_OUT = out;
    m_IN = in;
    m_CONST = constPtr;
+   m_TEMPS = temp;
 }
 
 void Storage::popArguments()
@@ -368,31 +389,18 @@ void Storage::popArguments()
    m_OUT = arg.out;
    m_IN = arg.in;
    m_CONST = arg.cst;
+   m_TEMPS = arg.temp;
    m_argStack.pop();
 }
 
 void Storage::pushTemps()
 {
-   m_tempStack.push(m_temps);
-   std::vector<llvm::Value*> oldTemps = m_temps;
-   m_temps = std::vector<llvm::Value*>(32);
-   int i = 0;
-   for (std::vector<llvm::Value*>::iterator itr = oldTemps.begin();
-        itr != oldTemps.end(); ++itr) {
-      if (*itr) {
-         declareTemp(i);
-      }
-      ++i;
-   }
    m_extSwizzleVec = 0;
 }
 
 void Storage::popTemps()
 {
-   m_temps = m_tempStack.top();
-   m_tempStack.pop();
 }
-#endif //MESA_LLVM
 
 llvm::Value * Storage::immediateElement(int idx)
 {
@@ -408,3 +416,5 @@ void Storage::addImmediate(float *val)
    vec[3] = ConstantFP::get(Type::FloatTy, APFloat(val[3]));
    m_immediates.push_back(ConstantVector::get(m_floatVecType, vec));
 }
+
+#endif //MESA_LLVM

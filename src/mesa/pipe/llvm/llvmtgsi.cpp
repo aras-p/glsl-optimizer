@@ -146,20 +146,6 @@ translate_declaration(llvm::Module *module,
                       struct tgsi_full_declaration *decl,
                       struct tgsi_full_declaration *fd)
 {
-   if (decl->Declaration.File == TGSI_FILE_TEMPORARY) {
-      switch( decl->Declaration.Declare ) {
-      case TGSI_DECLARE_RANGE: {
-         int start = decl->u.DeclarationRange.First;
-         int end   = decl->u.DeclarationRange.Last;
-         for (int i = start; i <= end; ++i) {
-            storage->declareTemp(i);
-         }
-      }
-         break;
-      default:
-         assert( 0 );
-      }
-   }
 }
 
 
@@ -424,7 +410,8 @@ translate_instruction(llvm::Module *module,
       instr->cal(inst->InstructionExtLabel.Label,
                  storage->outputPtr(),
                  storage->inputPtr(),
-                 storage->constPtr());
+                 storage->constPtr(),
+                 storage->tempPtr());
       return;
    }
       break;
@@ -641,7 +628,7 @@ translate_instruction(llvm::Module *module,
       struct tgsi_full_dst_register *dst = &inst->FullDstRegisters[i];
 
       if (dst->DstRegister.File == TGSI_FILE_OUTPUT) {
-         storage->store(dst->DstRegister.Index, out, dst->DstRegister.WriteMask);
+         storage->setOutputElement(dst->DstRegister.Index, out, dst->DstRegister.WriteMask);
       } else if (dst->DstRegister.File == TGSI_FILE_TEMPORARY) {
          storage->setTempElement(dst->DstRegister.Index, out, dst->DstRegister.WriteMask);
       } else if (dst->DstRegister.File == TGSI_FILE_ADDRESS) {
@@ -675,6 +662,8 @@ tgsi_to_llvm(struct gallivm_prog *prog, const struct tgsi_token *tokens)
    ptr_IN->setName("IN");
    Value *ptr_CONST = args++;
    ptr_CONST->setName("CONST");
+   Value *ptr_TEMPS = args++;
+   ptr_TEMPS->setName("TEMPS");
 
    BasicBlock *label_entry = new BasicBlock("entry", shader, 0);
 
@@ -682,7 +671,7 @@ tgsi_to_llvm(struct gallivm_prog *prog, const struct tgsi_token *tokens)
 
    fi = tgsi_default_full_instruction();
    fd = tgsi_default_full_declaration();
-   Storage storage(label_entry, ptr_OUT, ptr_IN, ptr_CONST);
+   Storage storage(label_entry, ptr_OUT, ptr_IN, ptr_CONST, ptr_TEMPS);
    Instructions instr(mod, shader, label_entry);
    while(!tgsi_parse_end_of_tokens(&parse)) {
       tgsi_parse_token(&parse);

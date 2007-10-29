@@ -52,11 +52,12 @@ class Storage
 public:
    Storage(llvm::BasicBlock *block,
            llvm::Value *out,
-           llvm::Value *in, llvm::Value *consts);
+           llvm::Value *in, llvm::Value *consts, llvm::Value *temps);
 
    llvm::Value *inputPtr() const;
    llvm::Value *outputPtr() const;
    llvm::Value *constPtr() const;
+   llvm::Value *tempPtr() const;
 
    void setCurrentBlock(llvm::BasicBlock *block);
 
@@ -65,11 +66,11 @@ public:
    llvm::Value *inputElement(int idx, llvm::Value *indIdx =0);
    llvm::Value *constElement(int idx, llvm::Value *indIdx =0);
    llvm::Value *outputElement(int idx, llvm::Value *indIdx =0);
+   llvm::Value *tempElement(int idx, llvm::Value *indIdx =0);
    llvm::Value *immediateElement(int idx);
 
-   llvm::Value *tempElement(int idx);
+   void setOutputElement(int dstIdx, llvm::Value *val, int mask);
    void setTempElement(int idx, llvm::Value *val, int mask);
-   void declareTemp(int idx);
 
    llvm::Value *addrElement(int idx) const;
    void setAddrElement(int idx, llvm::Value *val, int mask);
@@ -78,12 +79,10 @@ public:
 
    llvm::Value *extractIndex(llvm::Value *vec);
 
-   void store(int dstIdx, llvm::Value *val, int mask);
-
    int numConsts() const;
 
    void pushArguments(llvm::Value *out, llvm::Value *in,
-                      llvm::Value *constPtr);
+                      llvm::Value *constPtr, llvm::Value *temp);
    void popArguments();
    void pushTemps();
    void popTemps();
@@ -99,10 +98,10 @@ private:
    llvm::Value *m_OUT;
    llvm::Value *m_IN;
    llvm::Value *m_CONST;
+   llvm::Value *m_TEMPS;
 
    std::map<int, llvm::ConstantInt*> m_constInts;
    std::map<int, llvm::Constant*>    m_intVecs;
-   std::vector<llvm::Value*>         m_temps;
    std::vector<llvm::Value*>         m_addrs;
    std::vector<llvm::Value*>         m_dstCache;
    std::vector<llvm::Constant*>      m_immediates;
@@ -116,6 +115,7 @@ private:
    int         m_numConsts;
 
    std::map<int, bool > m_destWriteMap;
+   std::map<int, bool > m_tempWriteMap;
 
    llvm::Value      *m_undefFloatVec;
    llvm::Value      *m_undefIntVec;
@@ -125,6 +125,7 @@ private:
       llvm::Value *out;
       llvm::Value *in;
       llvm::Value *cst;
+      llvm::Value *temp;
    };
    std::stack<Args> m_argStack;
    std::stack<std::vector<llvm::Value*> > m_tempStack;

@@ -61,7 +61,7 @@ public:
    void         bgnSub(unsigned, Storage *);
    void         brk();
    void         cal(int label, llvm::Value *out, llvm::Value *in,
-                    llvm::Value *cst);
+                    llvm::Value *cst, llvm::Value *tmp);
    llvm::Value *cross(llvm::Value *in1, llvm::Value *in2);
    llvm::Value *dp3(llvm::Value *in1, llvm::Value *in2);
    llvm::Value *dp4(llvm::Value *in1, llvm::Value *in2);
