@@ -399,9 +399,9 @@ static struct ureg get_tex_temp( struct texenv_fragment_program *p )
 }
 
 
-static void release_temps( struct texenv_fragment_program *p )
+static void release_temps(GLcontext *ctx, struct texenv_fragment_program *p )
 {
-   GLuint max_temp = p->ctx->Const.FragmentProgram.MaxTemps;
+   GLuint max_temp = ctx->Const.FragmentProgram.MaxTemps;
 
    /* KW: To support tex_env_crossbar, don't release the registers in
     * temps_output.
@@ -1037,7 +1037,7 @@ create_new_program(GLcontext *ctx, struct state_key *key,
    p.one = undef;
 
    p.last_tex_stage = 0;
-   release_temps(&p);
+   release_temps(ctx, &p);
 
    if (key->enabled_units) {
       /* First pass - to support texture_env_crossbar, first identify
@@ -1055,7 +1055,7 @@ create_new_program(GLcontext *ctx, struct state_key *key,
       for (unit = 0 ; unit < ctx->Const.MaxTextureUnits; unit++)
 	 if (key->enabled_units & (1<<unit)) {
 	    p.src_previous = emit_texenv( &p, unit );
-	    release_temps(&p);	/* release all temps */
+	    release_temps(ctx, &p);	/* release all temps */
 	 }
    }
 
@@ -1169,7 +1169,7 @@ static void rehash( struct texenvprog_cache *cache )
    cache->size = size;
 }
 
-static void clear_cache( struct texenvprog_cache *cache )
+static void clear_cache( GLcontext *ctx, struct texenvprog_cache *cache )
 {
    struct texenvprog_cache_item *c, *next;
    GLuint i;
@@ -1178,8 +1178,7 @@ static void clear_cache( struct texenvprog_cache *cache )
       for (c = cache->items[i]; c; c = next) {
 	 next = c->next;
 	 _mesa_free(c->key);
-	 cache->ctx->Driver.DeleteProgram(cache->ctx,
-                                          (struct gl_program *) c->data);
+	 ctx->Driver.DeleteProgram(ctx, (struct gl_program *) c->data);
 	 _mesa_free(c);
       }
       cache->items[i] = NULL;
@@ -1190,7 +1189,8 @@ static void clear_cache( struct texenvprog_cache *cache )
 }
 
 
-static void cache_item( struct texenvprog_cache *cache,
+static void cache_item( GLcontext *ctx,
+                        struct texenvprog_cache *cache,
 			GLuint hash,
 			const struct state_key *key,
 			void *data )
@@ -1208,7 +1208,7 @@ static void cache_item( struct texenvprog_cache *cache,
       if (cache->size < 1000)
 	 rehash(cache);
       else 
-	 clear_cache(cache);
+	 clear_cache(ctx, cache);
    }
 
    cache->n_items++;
@@ -1259,7 +1259,7 @@ _mesa_get_fixed_func_fragment_program(GLcontext *ctx)
 
       create_new_program(ctx, &key, prog);
 
-      cache_item(&ctx->Texture.env_fp_cache, hash, &key, prog);
+      cache_item(ctx, &ctx->Texture.env_fp_cache, hash, &key, prog);
    }
 
    return prog;
@@ -1301,7 +1301,6 @@ _mesa_UpdateTexEnvProgram( GLcontext *ctx )
 
 void _mesa_TexEnvProgramCacheInit( GLcontext *ctx )
 {
-   ctx->Texture.env_fp_cache.ctx = ctx;
    ctx->Texture.env_fp_cache.size = 17;
    ctx->Texture.env_fp_cache.n_items = 0;
    ctx->Texture.env_fp_cache.items = (struct texenvprog_cache_item **)
@@ -1312,6 +1311,6 @@ void _mesa_TexEnvProgramCacheInit( GLcontext *ctx )
 
 void _mesa_TexEnvProgramCacheDestroy( GLcontext *ctx )
 {
-   clear_cache(&ctx->Texture.env_fp_cache);
+   clear_cache(ctx, &ctx->Texture.env_fp_cache);
    _mesa_free(ctx->Texture.env_fp_cache.items);
 }

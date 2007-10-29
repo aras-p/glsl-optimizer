@@ -1566,7 +1566,6 @@ struct texenvprog_cache_item {
 struct texenvprog_cache {
    struct texenvprog_cache_item **items;
    GLuint size, n_items;
-   GLcontext *ctx;
 };
 
 /**
