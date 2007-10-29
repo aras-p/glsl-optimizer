@@ -11,7 +11,7 @@
 	define swrast [-.swrast]
 	define swrast_setup [-.swrast_setup]
 
-.include [---]mms-config.
+.include [---]mms.config
 
 ##### MACROS #####
 

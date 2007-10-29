@@ -4,7 +4,7 @@
 .first
 	define gl [---.include.gl]
 
-.include [---]mms-config.
+.include [---]mms.config
 
 ##### MACROS #####
 

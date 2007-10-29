@@ -1,7 +1,7 @@
 # Makefile for Mesa for VMS
 # contributed by Jouk Jansen  joukj@hrem.stm.tudelft.nl
 
-.include [-]mms-config.
+.include [-]mms.config
 
 all :
 	set default [.mesa]

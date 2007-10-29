@@ -8,7 +8,7 @@
 	define shader [-.shader]
 	define array_cache [-.array_cache]
 
-.include [---]mms-config.
+.include [---]mms.config
 
 ##### MACROS #####
 

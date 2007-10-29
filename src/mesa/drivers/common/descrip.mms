@@ -8,7 +8,7 @@
 	define tnl [--.tnl]
 	define swrast [--.swrast]
 
-.include [----]mms-config.
+.include [----]mms.config
 
 ##### MACROS #####
 

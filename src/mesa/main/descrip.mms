@@ -7,7 +7,7 @@
 	define math [-.math]
 	define shader [-.shader]
 
-.include [---]mms-config.
+.include [---]mms.config
 
 ##### MACROS #####
 

@@ -11,7 +11,7 @@
 	define array_cache [--.array_cache]
 	define drivers [-]
 
-.include [----]mms-config.
+.include [----]mms.config
 
 ##### MACROS #####
 

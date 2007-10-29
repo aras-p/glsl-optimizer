@@ -6,7 +6,7 @@
 	define gl [---.include.gl]
 	define math [-.math]
 
-.include [---]mms-config.
+.include [---]mms.config
 
 ##### MACROS #####
 
