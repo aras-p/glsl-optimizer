@@ -526,7 +526,7 @@ softpipe_get_tile(struct pipe_context *pipe,
    pDest = (ubyte *) p;
 
    for (i = 0; i < h; i++) {
-      memcpy(pDest, pSrc, w0 * cpp);
+      memcpy(pDest, pSrc, w * cpp);
       pDest += dst_stride;
       pSrc += ps->region->pitch * cpp;
    }
@@ -560,7 +560,7 @@ softpipe_put_tile(struct pipe_context *pipe,
    pDest = ps->region->map + ps->offset + (y * ps->region->pitch + x) * cpp;
 
    for (i = 0; i < h; i++) {
-      memcpy(pDest, pSrc, w0 * cpp);
+      memcpy(pDest, pSrc, w * cpp);
       pDest += ps->region->pitch * cpp;
       pSrc += src_stride;
    }
