@@ -802,14 +802,20 @@ void gallivm_prog_dump(struct gallivm_prog *prog, const char *file_prefix)
       out << (*mod);
       out.close();
    } else {
-      std::ostringstream stream;
-      stream << "execute_shader";
-      stream << prog->id;
-      std::string func_name = stream.str();
-      llvm::Function *func = mod->getFunction(func_name.c_str());
-      assert(func);
+      const llvm::Module::FunctionListType &funcs = mod->getFunctionList();
+      llvm::Module::FunctionListType::const_iterator itr;
       std::cout<<"; ---------- Start shader "<<prog->id<<std::endl;
-      std::cout<<*mod<<std::endl;
+      for (itr = funcs.begin(); itr != funcs.end(); ++itr) {
+         const llvm::Function &func = (*itr);
+         std::string name = func.getName();
+         const llvm::Function *found = 0;
+         if (name.find("execute_shader") != std::string::npos ||
+             name.find("function") != std::string::npos)
+            found = &func;
+         if (found) {
+            std::cout<<*found<<std::endl;
+         }
+      }
       std::cout<<"; ---------- End shader "<<prog->id<<std::endl;
    }
 }
