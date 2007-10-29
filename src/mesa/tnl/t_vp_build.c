@@ -122,12 +122,7 @@ static struct state_key *make_state_key( GLcontext *ctx )
    struct state_key *key = CALLOC_STRUCT(state_key);
    GLuint i;
 
-   if (ctx->Shader.CurrentProgram &&
-       ctx->Shader.CurrentProgram->LinkStatus &&
-       ctx->Shader.CurrentProgram->FragmentProgram)
-      fp = ctx->Shader.CurrentProgram->FragmentProgram;
-   else
-      fp = ctx->FragmentProgram._Current;
+   fp = ctx->FragmentProgram._Current;
 
    /* This now relies on texenvprogram.c being active:
     */
