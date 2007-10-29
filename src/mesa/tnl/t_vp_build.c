@@ -114,10 +114,40 @@ static GLuint translate_texgen( GLboolean enabled, GLenum mode )
    }
 }
 
-static struct state_key *make_state_key( GLcontext *ctx )
+
+/**
+ * Returns bitmask of flags indicating which materials are set per-vertex
+ * in the current VB.
+ * XXX get these from the VBO...
+ */
+static GLbitfield
+tnl_get_per_vertex_materials(GLcontext *ctx)
 {
    TNLcontext *tnl = TNL_CONTEXT(ctx);
    struct vertex_buffer *VB = &tnl->vb;
+   GLuint i;
+   GLbitfield mask = 0x0;
+
+   for (i = _TNL_FIRST_MAT; i <= _TNL_LAST_MAT; i++) 
+      if (VB->AttribPtr[i] && VB->AttribPtr[i]->stride) 
+         mask |= 1 << (i - _TNL_FIRST_MAT);
+
+   return mask;
+}
+
+/**
+ * Should fog be computed per-vertex?
+ */
+static GLbitfield
+tnl_get_per_vertex_fog(GLcontext *ctx)
+{
+   TNLcontext *tnl = TNL_CONTEXT(ctx);
+   return tnl->_DoVertexFog;
+}
+
+
+static struct state_key *make_state_key( GLcontext *ctx )
+{
    const struct gl_fragment_program *fp;
    struct state_key *key = CALLOC_STRUCT(state_key);
    GLuint i;
@@ -152,9 +182,7 @@ static struct state_key *make_state_key( GLcontext *ctx )
 	 key->light_color_material_mask = ctx->Light.ColorMaterialBitmask;
       }
 
-      for (i = _TNL_FIRST_MAT; i <= _TNL_LAST_MAT; i++) 
-	 if (VB->AttribPtr[i] && VB->AttribPtr[i]->stride) 
-	    key->light_material_mask |= 1<<(i-_TNL_ATTRIB_MAT_FRONT_AMBIENT);
+      key->light_material_mask = tnl_get_per_vertex_materials(ctx);
 
       for (i = 0; i < MAX_LIGHTS; i++) {
 	 struct gl_light *light = &ctx->Light.Light[i];
@@ -187,8 +215,7 @@ static struct state_key *make_state_key( GLcontext *ctx )
    if (ctx->Fog.FogCoordinateSource == GL_FRAGMENT_DEPTH_EXT)
       key->fog_source_is_depth = 1;
    
-   if (tnl->_DoVertexFog)
-      key->tnl_do_vertex_fog = 1;
+   key->tnl_do_vertex_fog = tnl_get_per_vertex_fog(ctx);
 
    if (ctx->Point._Attenuated)
       key->point_attenuated = 1;
