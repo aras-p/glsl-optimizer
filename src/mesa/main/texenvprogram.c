@@ -413,9 +413,9 @@ static struct ureg get_tex_temp( struct texenv_fragment_program *p )
 }
 
 
-static void release_temps( struct texenv_fragment_program *p )
+static void release_temps(GLcontext *ctx, struct texenv_fragment_program *p )
 {
-   GLuint max_temp = p->ctx->Const.FragmentProgram.MaxTemps;
+   GLuint max_temp = ctx->Const.FragmentProgram.MaxTemps;
 
    /* KW: To support tex_env_crossbar, don't release the registers in
     * temps_output.
@@ -1053,7 +1053,7 @@ create_new_program(GLcontext *ctx, struct state_key *key,
    p.one = undef;
 
    p.last_tex_stage = 0;
-   release_temps(&p);
+   release_temps(ctx, &p);
 
    if (key->enabled_units) {
       /* First pass - to support texture_env_crossbar, first identify
@@ -1071,7 +1071,7 @@ create_new_program(GLcontext *ctx, struct state_key *key,
       for (unit = 0 ; unit < ctx->Const.MaxTextureUnits; unit++)
 	 if (key->enabled_units & (1<<unit)) {
 	    p.src_previous = emit_texenv( &p, unit );
-	    release_temps(&p);	/* release all temps */
+	    release_temps(ctx, &p);	/* release all temps */
 	 }
    }
 
