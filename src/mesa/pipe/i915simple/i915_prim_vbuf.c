@@ -48,6 +48,10 @@
 #include "softpipe/sp_prim_setup.h"
 
 #include "i915_context.h"
+#include "i915_reg.h"
+#include "i915_winsys.h"
+#include "i915_batch.h"
+#include "i915_state.h"
 
 
 static void vbuf_flush_elements( struct draw_stage *stage );
@@ -63,14 +67,14 @@ static void vbuf_flush_elements( struct draw_stage *stage );
 struct vbuf_stage {
    struct draw_stage stage; /**< This must be first (base class) */
 
-   vbuf_draw_func draw;
-
+   /* FIXME: we have no guarantee that 'unsigned' is 32bit */
+   
    /* Vertices are passed in as an array of floats making up each
     * attribute in turn.  Will eventually convert to hardware format
     * in this stage.
     */
-   char *vertex_map;
-   char *vertex_ptr;
+   unsigned *vertex_map;
+   unsigned *vertex_ptr;
    unsigned vertex_size;
    unsigned nr_vertices;
 
@@ -94,7 +98,8 @@ static INLINE struct vbuf_stage *vbuf_stage( struct draw_stage *stage )
 }
 
 
-static boolean overflow( void *map, void *ptr, unsigned bytes, unsigned bufsz )
+static inline 
+boolean overflow( void *map, void *ptr, unsigned bytes, unsigned bufsz )
 {
    unsigned long used = (char *)ptr - (char *)map;
    return (used + bytes) > bufsz;
@@ -109,7 +114,6 @@ static boolean check_space( struct vbuf_stage *vbuf )
                  VBUF_SIZE ))
       return FALSE;
 
-   
    if (vbuf->nr_elements + 4 > IBUF_SIZE / sizeof(ushort) )
       return FALSE;
    
@@ -117,18 +121,66 @@ static boolean check_space( struct vbuf_stage *vbuf )
 }
 
 
-static void emit_vertex( struct vbuf_stage *vbuf,
-                         struct vertex_header *vertex )
+/**
+ * Extract the needed fields from vertex_header and emit i915 dwords.
+ * Recall that the vertices are constructed by the 'draw' module and
+ * have a couple of slots at the beginning (1-dword header, 4-dword
+ * clip pos) that we ignore here.
+ */
+static inline void 
+emit_vertex( struct vbuf_stage *vbuf,
+             struct vertex_header *vertex )
 {
+   struct i915_context *i915 = vbuf->i915;
+   const struct vertex_info *vinfo = &i915->current.vertex_info;
+   uint i;
+   uint count = 0;  /* for debug/sanity */
+
 //   fprintf(stderr, "emit vertex %d to %p\n", 
 //           vbuf->nr_vertices, vbuf->vertex_ptr);
 
-   vertex->vertex_id = vbuf->nr_vertices++;
+   /* TODO: reuse vertices */
+   /* vertex->vertex_id = */ vbuf->nr_vertices++;
 
-   //vbuf->emit_vertex( vbuf->vertex_ptr, vertex );
-   memcpy(vbuf->vertex_ptr, vertex, vbuf->vertex_size);
-
-   vbuf->vertex_ptr += vbuf->vertex_size;
+   for (i = 0; i < vinfo->num_attribs; i++) {
+      switch (vinfo->format[i]) {
+      case FORMAT_OMIT:
+         /* no-op */
+         break;
+      case FORMAT_1F:
+         *vbuf->vertex_ptr++ = fui(vertex->data[i][0]);
+         count++;
+         break;
+      case FORMAT_2F:
+         *vbuf->vertex_ptr++ = fui(vertex->data[i][0]);
+         *vbuf->vertex_ptr++ = fui(vertex->data[i][1]);
+         count += 2;
+         break;
+      case FORMAT_3F:
+         *vbuf->vertex_ptr++ = fui(vertex->data[i][0]);
+         *vbuf->vertex_ptr++ = fui(vertex->data[i][1]);
+         *vbuf->vertex_ptr++ = fui(vertex->data[i][2]);
+         count += 3;
+         break;
+      case FORMAT_4F:
+         *vbuf->vertex_ptr++ = fui(vertex->data[i][0]);
+         *vbuf->vertex_ptr++ = fui(vertex->data[i][1]);
+         *vbuf->vertex_ptr++ = fui(vertex->data[i][2]);
+         *vbuf->vertex_ptr++ = fui(vertex->data[i][3]);
+         count += 4;
+         break;
+      case FORMAT_4UB:
+	 *vbuf->vertex_ptr++ = pack_ub4(float_to_ubyte( vertex->data[i][2] ),
+                                        float_to_ubyte( vertex->data[i][1] ),
+                                        float_to_ubyte( vertex->data[i][0] ),
+                                        float_to_ubyte( vertex->data[i][3] ));
+         count += 1;
+         break;
+      default:
+         assert(0);
+      }
+   }
+   assert(count == vinfo->size);
 }
 
 
@@ -219,14 +271,66 @@ static void vbuf_first_point( struct draw_stage *stage,
 }
 
 
-static void vbuf_draw( struct pipe_context *pipe,
+static void vbuf_draw( struct draw_stage *stage,
                        unsigned prim,
                        const ushort *elements,
                        unsigned nr_elements,
                        const void *vertex_buffer,
-                       unsigned nr_vertices ) 
+                       unsigned nr ) 
 {
-   /* FIXME: */
+   struct vbuf_stage *vbuf = vbuf_stage( stage );
+   struct i915_context *i915 = vbuf->i915;
+   unsigned vertex_size = i915->current.vertex_info.size * 4; /* in bytes */
+   unsigned hwprim;
+   unsigned *ptr;
+   unsigned i;
+   
+   switch(prim) {
+   case PIPE_PRIM_POINTS:
+      hwprim = PRIM3D_POINTLIST;
+      break;
+   case PIPE_PRIM_LINES:
+      hwprim = PRIM3D_LINELIST;
+      break;
+   case PIPE_PRIM_TRIANGLES:
+      hwprim = PRIM3D_TRILIST;
+      break;
+   default:
+      assert(0);
+      return;
+   }
+
+   if (i915->dirty)
+      i915_update_derived( i915 );
+
+   if (i915->hardware_dirty)
+      i915_emit_hardware_state( i915 );
+
+   assert(vbuf->vertex_ptr - vbuf->vertex_map == nr * vertex_size / 4);
+   
+   ptr = BEGIN_BATCH( 1 + nr * vertex_size / 4, 0 );
+   if (ptr == 0) {
+      FLUSH_BATCH();
+
+      /* Make sure state is re-emitted after a flush: 
+       */
+      i915_update_derived( i915 );
+      i915_emit_hardware_state( i915 );
+
+      ptr = BEGIN_BATCH( 1 + nr * vertex_size / 4, 0 );
+      if (ptr == 0) {
+	 assert(0);
+	 return;
+      }
+   }
+
+   /* TODO: Fire a DMA buffer */
+   OUT_BATCH(_3DPRIMITIVE | 
+	     hwprim |
+	     ((4 + vertex_size * nr)/4 - 2));
+
+   for (i = 0; i < nr * vertex_size / 4; i++)
+      OUT_BATCH(vbuf->vertex_map[i]);
 }
 
 
@@ -235,16 +339,19 @@ static void vbuf_flush_elements( struct draw_stage *stage )
    struct vbuf_stage *vbuf = vbuf_stage( stage );
 
    if (vbuf->nr_elements) {
-      fprintf(stderr, "%s (%d elts)\n", __FUNCTION__, vbuf->nr_elements);
+      fprintf(stderr, "%s (%d elts, %d verts)\n", 
+                      __FUNCTION__, 
+                      vbuf->nr_elements,
+                      vbuf->nr_vertices);
 
       /* Draw now or add to list of primitives???
        */
-      vbuf_draw( &vbuf->i915->pipe,
-                  vbuf->prim,
-                  vbuf->element_map,
-                  vbuf->nr_elements,
-                  vbuf->vertex_map,
-                  (vbuf->vertex_ptr - vbuf->vertex_map) / vbuf->vertex_size );
+      vbuf_draw( stage,
+                 vbuf->prim,
+                 vbuf->element_map,
+                 vbuf->nr_elements,
+                 vbuf->vertex_map,
+                 vbuf->nr_vertices );
       
       vbuf->nr_elements = 0;
 
@@ -270,7 +377,7 @@ static void vbuf_begin( struct draw_stage *stage )
 {
    struct vbuf_stage *vbuf = vbuf_stage(stage);
 
-   vbuf->vertex_size = vbuf->i915->draw->vertex_info.size * sizeof(float);
+   vbuf->vertex_size = vbuf->i915->current.vertex_info.size * 4;
 }
 
 
@@ -284,8 +391,6 @@ static void vbuf_end( struct draw_stage *stage )
 
 static void reset_stipple_counter( struct draw_stage *stage )
 {
-   /* XXX:  This doesn't work.
-    */
 }
 
 
@@ -305,6 +410,7 @@ struct draw_stage *i915_draw_vbuf_stage( struct i915_context *i915 )
    vbuf->stage.end = vbuf_end;
    vbuf->stage.reset_stipple_counter = reset_stipple_counter;
 
+   /* FIXME: free this memory on takedown */
    vbuf->element_map = malloc( IBUF_SIZE );
    vbuf->vertex_map = malloc( VBUF_SIZE );
    
