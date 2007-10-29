@@ -1534,49 +1534,66 @@ static GLuint hash_key( struct state_key *key )
    return hash;
 }
 
-void _tnl_UpdateFixedFunctionProgram( GLcontext *ctx )
+
+/**
+ * Return a vertex program which implements the current fixed-function
+ * transform/lighting/texgen operations.
+ * XXX move this into core mesa (main/)
+ */
+struct gl_vertex_program *
+_mesa_get_fixed_func_vertex_program(GLcontext *ctx)
 {
    TNLcontext *tnl = TNL_CONTEXT(ctx);
+   struct gl_vertex_program *prog;
    struct state_key *key;
    GLuint hash;
+
+   /* Grab all the relevent state and put it in a single structure:
+    */
+   key = make_state_key(ctx);
+   hash = hash_key(key);
+
+   /* Look for an already-prepared program for this state:
+    */
+   prog = (struct gl_vertex_program *)
+      search_cache( tnl->vp_cache, hash, key, sizeof(*key) );
+   
+   if (!prog) {
+      /* OK, we'll have to build a new one */
+      if (0)
+         _mesa_printf("Build new TNL program\n");
+	 
+      prog = (struct gl_vertex_program *)
+         ctx->Driver.NewProgram(ctx, GL_VERTEX_PROGRAM_ARB, 0); 
+
+      create_new_program( key, prog,
+                          ctx->Const.VertexProgram.MaxTemps );
+
+#if 0
+      if (ctx->Driver.ProgramStringNotify)
+         ctx->Driver.ProgramStringNotify( ctx, GL_VERTEX_PROGRAM_ARB, 
+                                          &prog->Base );
+#endif
+      cache_item(tnl->vp_cache, hash, key, prog);
+   }
+   else {
+      /* use cached program */
+      _mesa_free(key);
+   }
+
+   return prog;
+}
+
+
+void _tnl_UpdateFixedFunctionProgram( GLcontext *ctx )
+{
    const struct gl_vertex_program *prev = ctx->VertexProgram._Current;
 
    if (!ctx->VertexProgram._Current ||
        ctx->VertexProgram._Current == ctx->VertexProgram._TnlProgram) {
-      /* Grab all the relevent state and put it in a single structure:
-       */
-      key = make_state_key(ctx);
-      hash = hash_key(key);
-
-      /* Look for an already-prepared program for this state:
-       */
-      ctx->VertexProgram._TnlProgram = (struct gl_vertex_program *)
-	 search_cache( tnl->vp_cache, hash, key, sizeof(*key) );
-   
-      /* OK, we'll have to build a new one:
-       */
-      if (!ctx->VertexProgram._TnlProgram) {
-	 if (0)
-	    _mesa_printf("Build new TNL program\n");
-	 
-	 ctx->VertexProgram._TnlProgram = (struct gl_vertex_program *)
-	    ctx->Driver.NewProgram(ctx, GL_VERTEX_PROGRAM_ARB, 0); 
-
-	 create_new_program( key, ctx->VertexProgram._TnlProgram, 
-			     ctx->Const.VertexProgram.MaxTemps );
-
-	 if (ctx->Driver.ProgramStringNotify)
-	    ctx->Driver.ProgramStringNotify( ctx, GL_VERTEX_PROGRAM_ARB, 
-                                       &ctx->VertexProgram._TnlProgram->Base );
-
-	 cache_item(tnl->vp_cache, hash, key, ctx->VertexProgram._TnlProgram );
-      }
-      else {
-	 FREE(key);
-	 if (0) 
-	    _mesa_printf("Found existing TNL program for key %x\n", hash);
-      }
-      ctx->VertexProgram._Current = ctx->VertexProgram._TnlProgram;
+      ctx->VertexProgram._Current
+         = ctx->VertexProgram._TnlProgram
+         = _mesa_get_fixed_func_vertex_program(ctx);
    }
 
    /* Tell the driver about the change.  Could define a new target for
