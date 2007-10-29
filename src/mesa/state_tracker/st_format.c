@@ -204,19 +204,25 @@ st_get_format_info(
       else {
          GLuint size;
 
-         assert( info.type == PIPE_FORMAT_TYPE_UNORM );
-
          size = format_max_bits( info );
          if (size == 8) {
-            pinfo->datatype = GL_UNSIGNED_BYTE;
+            if (info.type == PIPE_FORMAT_TYPE_UNORM)
+               pinfo->datatype = GL_UNSIGNED_BYTE;
+            else
+               pinfo->datatype = GL_BYTE;
          }
          else if (size == 16) {
-            pinfo->datatype = GL_UNSIGNED_SHORT;
+            if (info.type == PIPE_FORMAT_TYPE_UNORM)
+               pinfo->datatype = GL_UNSIGNED_SHORT;
+            else
+               pinfo->datatype = GL_SHORT;
          }
          else {
             assert( size <= 32 );
-
-            pinfo->datatype = GL_UNSIGNED_INT;
+            if (info.type == PIPE_FORMAT_TYPE_UNORM)
+               pinfo->datatype = GL_UNSIGNED_INT;
+            else
+               pinfo->datatype = GL_INT;
          }
       }
 
