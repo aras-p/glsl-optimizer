@@ -44,7 +44,7 @@
 
 static INLINE void
 emit_vertex_attr(struct vertex_info *vinfo,
-                 attrib_format format, interp_mode interp)
+                 enum attrib_format format, enum interp_mode interp)
 {
    const uint n = vinfo->num_attribs;
    vinfo->interp_mode[n] = interp;
@@ -95,7 +95,7 @@ draw_compute_vertex_size(struct vertex_info *vinfo)
 void
 draw_set_vertex_attributes( struct draw_context *draw,
                             const uint *slot_to_vf_attr,
-                            const interp_mode *interps,
+                            const enum interp_mode *interps,
                             unsigned nr_attrs )
 {
    struct vertex_info *vinfo = &draw->vertex_info;

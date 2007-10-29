@@ -40,7 +40,7 @@ struct draw_context;
 /**
  * Vertex attribute format
  */
-typedef enum {
+enum attrib_format {
    FORMAT_OMIT,
    FORMAT_1F,
    FORMAT_2F,
@@ -48,18 +48,18 @@ typedef enum {
    FORMAT_4F,
    FORMAT_4F_VIEWPORT,
    FORMAT_4UB
-} attrib_format;
+};
 
 
 /**
  * Attribute interpolation mode
  */
-typedef enum {
+enum interp_mode {
    INTERP_NONE,      /**< never interpolate vertex header info */
    INTERP_CONSTANT,
    INTERP_LINEAR,
    INTERP_PERSPECTIVE
-} interp_mode;
+};
 
 
 /**
@@ -69,8 +69,8 @@ struct vertex_info
 {
    uint num_attribs;
    uint hwfmt[4];      /**< hardware format info for this format */
-   interp_mode interp_mode[PIPE_MAX_SHADER_OUTPUTS];
-   attrib_format format[PIPE_MAX_SHADER_OUTPUTS];   /**< FORMAT_x */
+   enum interp_mode interp_mode[PIPE_MAX_SHADER_OUTPUTS];
+   enum attrib_format format[PIPE_MAX_SHADER_OUTPUTS];   /**< FORMAT_x */
    uint size;          /**< total vertex size in dwords */
 };
 
@@ -82,7 +82,7 @@ struct vertex_info
  */
 static INLINE uint
 draw_emit_vertex_attr(struct vertex_info *vinfo,
-                      attrib_format format, interp_mode interp)
+                      enum attrib_format format, enum interp_mode interp)
 {
    const uint n = vinfo->num_attribs;
    assert(n < PIPE_MAX_SHADER_OUTPUTS);
@@ -95,7 +95,7 @@ draw_emit_vertex_attr(struct vertex_info *vinfo,
 
 extern void draw_set_vertex_attributes( struct draw_context *draw,
                                         const uint *attrs,
-                                        const interp_mode *interps,
+                                        const enum interp_mode *interps,
                                         unsigned nr_attrs );
 
 extern void draw_set_twoside_attributes(struct draw_context *draw,

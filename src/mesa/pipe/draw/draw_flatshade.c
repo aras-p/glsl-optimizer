@@ -56,7 +56,7 @@ static INLINE void copy_colors( struct draw_stage *stage,
                                 const struct vertex_header *src )
 {
    const uint num_attribs = stage->draw->vertex_info.num_attribs;
-   const interp_mode *interp = stage->draw->vertex_info.interp_mode;
+   const enum interp_mode *interp = stage->draw->vertex_info.interp_mode;
    uint i;
 
    /* Look for constant/flat attribs and duplicate from src to dst vertex */

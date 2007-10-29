@@ -325,7 +325,7 @@ set_feedback_vertex_format(GLcontext *ctx)
 {
    struct st_context *st = ctx->st;
    uint attrs[PIPE_MAX_SHADER_OUTPUTS];
-   interp_mode interp[PIPE_MAX_SHADER_OUTPUTS];
+   enum interp_mode interp[PIPE_MAX_SHADER_OUTPUTS];
    GLuint n, i;
 
    if (ctx->RenderMode == GL_FEEDBACK) {

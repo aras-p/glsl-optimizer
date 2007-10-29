@@ -44,7 +44,7 @@
 static void calculate_vertex_layout( struct i915_context *i915 )
 {
    const struct pipe_shader_state *fs = i915->fs;
-   const interp_mode colorInterp = i915->rasterizer->color_interp;
+   const enum interp_mode colorInterp = i915->rasterizer->color_interp;
    struct vertex_info vinfo;
    uint front0 = 0, back0 = 0, front1 = 0, back1 = 0;
    boolean needW = 0;

@@ -471,7 +471,7 @@ static void tri_persp_coeff( struct setup_stage *setup,
  */
 static void setup_tri_coefficients( struct setup_stage *setup )
 {
-   const interp_mode *interp = setup->softpipe->vertex_info.interp_mode;
+   const enum interp_mode *interp = setup->softpipe->vertex_info.interp_mode;
    unsigned slot, j;
 
    /* z and w are done by linear interpolation:
@@ -701,7 +701,7 @@ line_persp_coeff(struct setup_stage *setup, unsigned slot, unsigned i)
 static INLINE void
 setup_line_coefficients(struct setup_stage *setup, struct prim_header *prim)
 {
-   const interp_mode *interp = setup->softpipe->vertex_info.interp_mode;
+   const enum interp_mode *interp = setup->softpipe->vertex_info.interp_mode;
    unsigned slot, j;
 
    /* use setup->vmin, vmax to point to vertices */
@@ -927,7 +927,7 @@ static void
 setup_point(struct draw_stage *stage, struct prim_header *prim)
 {
    struct setup_stage *setup = setup_stage( stage );
-   const interp_mode *interp = setup->softpipe->vertex_info.interp_mode;
+   const enum interp_mode *interp = setup->softpipe->vertex_info.interp_mode;
    const struct vertex_header *v0 = prim->v[0];
    const int sizeAttr = setup->softpipe->psize_slot;
    const float size
