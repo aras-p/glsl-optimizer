@@ -460,7 +460,8 @@ adjust_param_indexes(struct prog_instruction *inst, GLuint numInst,
  */
 struct gl_program *
 _mesa_combine_programs(GLcontext *ctx,
-                       struct gl_program *progA, struct gl_program *progB)
+                       const struct gl_program *progA,
+                       const struct gl_program *progB)
 {
    struct prog_instruction *newInst;
    struct gl_program *newProg;
