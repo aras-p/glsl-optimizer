@@ -168,7 +168,6 @@ _swrast_fog_rgba_span( const GLcontext *ctx, SWspan *span )
    GLfloat rFog, gFog, bFog;
 
    ASSERT(swrast->_FogEnabled);
-   ASSERT(swrast->_ActiveAttribMask & FRAG_BIT_FOGC);
    ASSERT(span->arrayMask & SPAN_RGBA);
 
    /* compute (scaled) fog color */

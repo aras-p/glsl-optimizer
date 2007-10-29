@@ -69,6 +69,7 @@ aix-static \
 bluegene-osmesa \
 bluegene-xlc-osmesa \
 beos \
+catamount-osmesa-pgi \
 darwin \
 darwin-static \
 darwin-static-x86ppc \
@@ -413,6 +414,9 @@ GLUT_FILES = \
 	$(DIRECTORY)/src/glut/fbdev/Makefile		\
 	$(DIRECTORY)/src/glut/fbdev/*[ch]		\
 	$(DIRECTORY)/src/glut/mini/*[ch]		\
+	$(DIRECTORY)/src/glut/directfb/Makefile		\
+	$(DIRECTORY)/src/glut/directfb/NOTES		\
+	$(DIRECTORY)/src/glut/directfb/*[ch]		\
 	$(DIRECTORY)/windows/VC6/progs/glut/glut.dsp	\
 	$(DIRECTORY)/windows/VC7/progs/glut/glut.vcproj
 

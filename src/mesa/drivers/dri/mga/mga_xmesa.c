@@ -75,11 +75,13 @@
 #define need_GL_ARB_vertex_buffer_object
 #define need_GL_ARB_vertex_program
 #define need_GL_EXT_fog_coord
+#define need_GL_EXT_gpu_program_parameters
 #define need_GL_EXT_multi_draw_arrays
 #define need_GL_EXT_secondary_color
 #if 0
 #define need_GL_EXT_paletted_texture
 #endif
+#define need_GL_APPLE_vertex_array_object
 #define need_GL_NV_vertex_program
 #include "extension_helper.h"
 
@@ -411,13 +413,15 @@ static const struct dri_extension card_extensions[] =
 #endif
    { "GL_EXT_secondary_color",        GL_EXT_secondary_color_functions },
    { "GL_EXT_stencil_wrap",           NULL },
+   { "GL_APPLE_vertex_array_object",  GL_APPLE_vertex_array_object_functions },
    { "GL_MESA_ycbcr_texture",         NULL },
    { "GL_SGIS_generate_mipmap",       NULL },
    { NULL,                            NULL }
 };
 
-static const struct dri_extension ARB_vp_extension[] = {
+static const struct dri_extension ARB_vp_extensions[] = {
    { "GL_ARB_vertex_program",         GL_ARB_vertex_program_functions },
+   { "GL_EXT_gpu_program_parameters", GL_EXT_gpu_program_parameters_functions },
    { NULL,                            NULL }
 };
 
@@ -448,6 +452,7 @@ mgaCreateContext( const __GLcontextModes *mesaVis,
    GLcontext *ctx, *shareCtx;
    mgaContextPtr mmesa;
    __DRIscreenPrivate *sPriv = driContextPriv->driScreenPriv;
+   __DRIdrawablePrivate *dPriv = driContextPriv->driDrawablePriv;
    mgaScreenPrivate *mgaScreen = (mgaScreenPrivate *)sPriv->private;
    drm_mga_sarea_t *saPriv = (drm_mga_sarea_t *)(((char*)sPriv->pSAREA)+
 					      mgaScreen->sarea_priv_offset);
@@ -622,7 +627,7 @@ mgaCreateContext( const __GLcontextModes *mesaVis,
    }
 
    if ( driQueryOptionb( &mmesa->optionCache, "arb_vertex_program" ) ) {
-      driInitSingleExtension( ctx, ARB_vp_extension );
+      driInitExtensions(ctx, ARB_vp_extensions, GL_FALSE);
    }
    
    if ( driQueryOptionb( &mmesa->optionCache, "nv_vertex_program" ) ) {
@@ -646,7 +651,7 @@ mgaCreateContext( const __GLcontextModes *mesaVis,
 				    debug_control );
 #endif
 
-   mmesa->vblank_flags = (mmesa->mgaScreen->irq == 0)
+   dPriv->vblFlags = (mmesa->mgaScreen->irq == 0)
        ? VBLANK_FLAG_NO_IRQ : driGetDefaultVBlankFlags(&mmesa->optionCache);
 
    (*dri_interface->getUST)( & mmesa->swap_ust );
@@ -878,8 +883,8 @@ mgaMakeCurrent(__DRIcontextPrivate *driContextPriv,
       mgaContextPtr mmesa = (mgaContextPtr) driContextPriv->driverPrivate;
 
       if (mmesa->driDrawable != driDrawPriv) {
-	 driDrawableInitVBlank( driDrawPriv, mmesa->vblank_flags,
-				&mmesa->vbl_seq );
+	 driDrawableInitVBlank( driDrawPriv );
+
 	 mmesa->driDrawable = driDrawPriv;
 	 mmesa->dirty = ~0; 
 	 mmesa->dirty_cliprects = (MGA_FRONT|MGA_BACK); 
@@ -944,6 +949,7 @@ static const struct __DriverAPIRec mgaAPI = {
    .UnbindContext   = mgaUnbindContext,
    .GetSwapInfo     = getSwapInfo,
    .GetMSC          = driGetMSC32,
+   .GetDrawableMSC  = driDrawableGetMSC32,
    .WaitForMSC      = driWaitForMSC32,
    .WaitForSBC      = NULL,
    .SwapBuffersMSC  = NULL
@@ -985,7 +991,7 @@ __GLcontextModes *__driDriverInitScreen(__DRIscreenPrivate *psp)
 
    driInitExtensions( NULL, card_extensions, GL_FALSE );
    driInitExtensions( NULL, g400_extensions, GL_FALSE );
-   driInitSingleExtension( NULL, ARB_vp_extension );
+   driInitExtensions(NULL, ARB_vp_extensions, GL_FALSE);
    driInitExtensions( NULL, NV_vp_extensions, GL_FALSE );
 
    if (!mgaInitDriver(psp))

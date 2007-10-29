@@ -7,6 +7,8 @@ INCDIR = $(TOP)/include
 
 LIB_DEP = $(TOP)/$(LIB_DIR)/$(GL_LIB_NAME) $(TOP)/$(LIB_DIR)/$(GLU_LIB_NAME) $(TOP)/$(LIB_DIR)/$(GLUT_LIB_NAME)
 
+LIBS = -L$(TOP)/$(LIB_DIR) -l$(GLUT_LIB) -l$(GLU_LIB) -l$(GL_LIB) $(APP_LIB_DEPS)
+
 PROGS = \
 	bitmap \
 	brick \
@@ -28,7 +30,7 @@ PROGS = \
 
 # make executable from .c file:
 .c: $(LIB_DEP)
-	$(CC) -I$(INCDIR) $(CFLAGS) $(LDFLAGS) $< $(APP_LIB_DEPS) -o $@
+	$(CC) -I$(INCDIR) $(CFLAGS) $(LDFLAGS) $< $(LIBS) -o $@
 
 
 ##### TARGETS #####
@@ -64,7 +66,7 @@ points.c: extfuncs.h
 toyball.c: extfuncs.h
 
 texdemo1: texdemo1.o readtex.o
-	$(CC) -I$(INCDIR) $(CFLAGS) $(LDFLAGS) texdemo1.o readtex.o $(APP_LIB_DEPS) -o $@
+	$(CC) -I$(INCDIR) $(CFLAGS) $(LDFLAGS) texdemo1.o readtex.o $(LIBS) -o $@
 
 texdemo1.o: texdemo1.c readtex.h extfuncs.h
 	$(CC) -c -I$(INCDIR) $(CFLAGS) texdemo1.c

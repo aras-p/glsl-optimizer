@@ -283,7 +283,7 @@ GLboolean nouveauMakeCurrent( __DRIcontextPrivate *driContextPriv,
 		struct gl_framebuffer *read_fb =
 			(struct gl_framebuffer*)driReadPriv->driverPrivate;
 
-		driDrawableInitVBlank(driDrawPriv, nmesa->vblank_flags, &nmesa->vblank_seq );
+		driDrawableInitVBlank(driDrawPriv);
 		nmesa->driDrawable = driDrawPriv;
 
 		_mesa_resize_framebuffer(nmesa->glCtx, draw_fb,

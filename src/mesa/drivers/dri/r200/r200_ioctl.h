@@ -89,9 +89,9 @@ extern void r200ReleaseDmaRegion( r200ContextPtr rmesa,
 				    struct r200_dma_region *region,
 				    const char *caller );
 
-extern void r200CopyBuffer( const __DRIdrawablePrivate *drawable,
+extern void r200CopyBuffer( __DRIdrawablePrivate *drawable,
 			    const drm_clip_rect_t      *rect);
-extern void r200PageFlip( const __DRIdrawablePrivate *drawable );
+extern void r200PageFlip( __DRIdrawablePrivate *drawable );
 extern void r200Flush( GLcontext *ctx );
 extern void r200Finish( GLcontext *ctx );
 extern void r200WaitForIdleLocked( r200ContextPtr rmesa );

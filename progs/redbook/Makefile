@@ -7,6 +7,8 @@ INCDIR = $(TOP)/include
 
 LIB_DEP = $(TOP)/$(LIB_DIR)/$(GL_LIB_NAME) $(TOP)/$(LIB_DIR)/$(GLU_LIB_NAME) $(TOP)/$(LIB_DIR)/$(GLUT_LIB_NAME)
 
+LIBS = -L$(TOP)/$(LIB_DIR) -l$(GLUT_LIB) -l$(GLU_LIB) -l$(GL_LIB) $(APP_LIB_DEPS)
+
 PROGS = aaindex aapoly aargb accanti accpersp alpha alpha3D anti \
 	bezcurve bezmesh checker clip colormat cube depthcue dof \
 	double drawf feedback fog fogindex font hello image light \
@@ -24,7 +26,7 @@ PROGS = aaindex aapoly aargb accanti accpersp alpha alpha3D anti \
 .SUFFIXES: .c
 
 .c: $(LIB_DEP)
-	$(CC) -I$(INCDIR) $(CFLAGS) $(LDFLAGS) $< $(APP_LIB_DEPS) -o $@
+	$(CC) -I$(INCDIR) $(CFLAGS) $(LDFLAGS) $< $(LIBS) -o $@
 
 
 

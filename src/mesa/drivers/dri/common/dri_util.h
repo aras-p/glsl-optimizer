@@ -206,6 +206,14 @@ struct __DriverAPIRec {
      */
     void (*setTexOffset)(__DRIcontext *pDRICtx, GLint texname,
 			 unsigned long long offset, GLint depth, GLuint pitch);
+
+    /**
+     * New version of GetMSC so we can pass drawable data to the low level
+     * DRM driver (e.g. pipe info).
+     */
+    int (*GetDrawableMSC) ( __DRIscreenPrivate * priv,
+			    __DRIdrawablePrivate *drawablePrivate,
+			    int64_t *count);
 };
 
 
@@ -315,6 +323,32 @@ struct __DRIdrawablePrivateRec {
     int backClipRectType;
     int numBackClipRects;
     drm_clip_rect_t *pBackClipRects;
+    /*@}*/
+
+    /**
+     * \name Vertical blank tracking information
+     * Used for waiting on vertical blank events.
+     */
+    /*@{*/
+    unsigned int vblSeq;
+    unsigned int vblFlags;
+    /*@}*/
+
+    /**
+     * \name Monotonic MSC tracking
+     *
+     * Low level driver is responsible for updating msc_base and
+     * vblSeq values so that higher level code can calculate
+     * a new msc value or msc target for a WaitMSC call.  The new value
+     * will be:
+     *   msc = msc_base + get_vblank_count() - vblank_base;
+     *
+     * And for waiting on a value, core code will use:
+     *   actual_target = target_msc - msc_base + vblank_base;
+     */
+    /*@{*/
+    int64_t vblank_base;
+    int64_t msc_base;
     /*@}*/
 
     /**

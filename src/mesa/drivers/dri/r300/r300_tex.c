@@ -482,6 +482,25 @@ static const struct gl_texture_format *r300ChooseTextureFormat(GLcontext * ctx,
 	case GL_RGBA32F_ARB:
 		return &_mesa_texformat_rgba_float32;
 
+	case GL_DEPTH_COMPONENT:
+	case GL_DEPTH_COMPONENT16:
+	case GL_DEPTH_COMPONENT24:
+	case GL_DEPTH_COMPONENT32:
+#if 0
+		switch (type) {
+		case GL_UNSIGNED_BYTE:
+		case GL_UNSIGNED_SHORT:
+			return &_mesa_texformat_z16;
+		case GL_UNSIGNED_INT:
+			return &_mesa_texformat_z32;
+		case GL_UNSIGNED_INT_24_8_EXT:
+		default:
+			return &_mesa_texformat_z24_s8;
+		}
+#else
+		return &_mesa_texformat_z16;
+#endif
+
 	default:
 		_mesa_problem(ctx,
 			      "unexpected internalFormat 0x%x in r300ChooseTextureFormat",
@@ -1056,6 +1075,19 @@ static void r300TexParameter(GLcontext * ctx, GLenum target,
 		 */
 		driSwapOutTextureObject((driTextureObject *) t);
 		break;
+
+	case GL_DEPTH_TEXTURE_MODE:
+		if (texObj->Image[0][texObj->BaseLevel]->TexFormat->BaseFormat 
+		    == GL_DEPTH_COMPONENT) {
+			r300SetDepthTexMode(texObj);
+			break;
+		} else {
+			/* If the texture isn't a depth texture, changing this
+			 * state won't cause any changes to the hardware.
+			 * Don't force a flush of texture state.
+			 */
+			return;
+		}
 
 	default:
 		return;

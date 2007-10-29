@@ -886,6 +886,14 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #	define R300_TX_FORMAT_A8R8G8B8	    	    0x13     /* no swizzle */
 #	define R300_TX_FORMAT_B8G8_B8G8	    	    0x14     /* no swizzle */
 #	define R300_TX_FORMAT_G8R8_G8B8	    	    0x15     /* no swizzle */
+
+	/* These two values are wrong, but they're the only values that
+	 * produce any even vaguely correct results.  Can r300 only do 16-bit
+	 * depth textures?
+	 */
+#	define R300_TX_FORMAT_X24_Y8	    	    0x1e
+#	define R300_TX_FORMAT_X32	    	    0x1e
+
 	/* 0x16 - some 16 bit green format.. ?? */
 #	define R300_TX_FORMAT_UNK25		   (1 << 25) /* no swizzle */
 #	define R300_TX_FORMAT_CUBIC_MAP		   (1 << 26)

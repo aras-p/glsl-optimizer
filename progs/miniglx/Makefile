@@ -20,6 +20,8 @@ INCLUDES = \
 	-I. \
 	-I$(TOP)/include
 
+LIBS = -L$(TOP)/$(LIB_DIR) -l$(GLUT_LIB) -l$(GLU_LIB) -l$(GL_LIB) $(APP_LIB_DEPS)
+
 
 ##### RULES #####
 
@@ -27,7 +29,7 @@ INCLUDES = \
 .SUFFIXES: .c
 
 .c:
-	$(CC) $(INCLUDES) $(CFLAGS) $(LDFLAGS) $< $(APP_LIB_DEPS) -o $@
+	$(CC) $(INCLUDES) $(CFLAGS) $(LDFLAGS) $< $(LIBS) -o $@
 
 .c.o:
 	$(CC) -c $(INCLUDES) $(CFLAGS) $< -o $@

@@ -616,18 +616,17 @@ intelMakeCurrent(__DRIcontextPrivate * driContextPriv,
 	    if (driDrawPriv->swap_interval == (unsigned)-1) {
 	       int i;
 
-	       intel_fb->vblank_flags = (intel->intelScreen->irq_active != 0)
+	       driDrawPriv->vblFlags = (intel->intelScreen->irq_active != 0)
 		  ? driGetDefaultVBlankFlags(&intel->optionCache)
 		 : VBLANK_FLAG_NO_IRQ;
 
 	       (*dri_interface->getUST) (&intel_fb->swap_ust);
-	       driDrawableInitVBlank(driDrawPriv, intel_fb->vblank_flags,
-				     &intel_fb->vbl_seq);
-	       intel_fb->vbl_waited = intel_fb->vbl_seq;
+	       driDrawableInitVBlank(driDrawPriv);
+	       intel_fb->vbl_waited = driDrawPriv->vblSeq;
 
 	       for (i = 0; i < (intel->intelScreen->third.handle ? 3 : 2); i++) {
 		  if (intel_fb->color_rb[i])
-		     intel_fb->color_rb[i]->vbl_pending = intel_fb->vbl_seq;
+		     intel_fb->color_rb[i]->vbl_pending = driDrawPriv->vblSeq;
 	       }
 	    }
 	    intel->driDrawable = driDrawPriv;
@@ -731,6 +730,7 @@ intelContendedLock(struct intel_context *intel, GLuint flags)
  */
 void LOCK_HARDWARE( struct intel_context *intel )
 {
+    __DRIdrawablePrivate *dPriv = intel->driDrawable;
     char __ret=0;
     struct intel_framebuffer *intel_fb = NULL;
     struct intel_renderbuffer *intel_rb = NULL;
@@ -748,14 +748,14 @@ void LOCK_HARDWARE( struct intel_context *intel )
 				    BUFFER_BACK_LEFT);
     }
 
-    if (intel_rb && intel_fb->vblank_flags &&
-	!(intel_fb->vblank_flags & VBLANK_FLAG_NO_IRQ) &&
+    if (intel_rb && dPriv->vblFlags &&
+	!(dPriv->vblFlags & VBLANK_FLAG_NO_IRQ) &&
 	(intel_fb->vbl_waited - intel_rb->vbl_pending) > (1<<23)) {
 	drmVBlank vbl;
 
 	vbl.request.type = DRM_VBLANK_ABSOLUTE;
 
-	if ( intel_fb->vblank_flags & VBLANK_FLAG_SECONDARY ) {
+	if ( dPriv->vblFlags & VBLANK_FLAG_SECONDARY ) {
 	    vbl.request.type |= DRM_VBLANK_SECONDARY;
 	}
 

@@ -484,6 +484,7 @@ static struct __DriverAPIRec mach64API = {
    .UnbindContext   = mach64UnbindContext,
    .GetSwapInfo     = NULL,
    .GetMSC          = driGetMSC32,
+   .GetDrawableMSC  = driDrawableGetMSC32,
    .WaitForMSC      = driWaitForMSC32,
    .WaitForSBC      = NULL,
    .SwapBuffersMSC  = NULL

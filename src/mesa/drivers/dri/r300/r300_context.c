@@ -93,6 +93,8 @@ int hw_tcl_on = 1;
 
 const struct dri_extension card_extensions[] = {
   /* *INDENT-OFF* */
+  {"GL_ARB_depth_texture",		NULL},
+  {"GL_ARB_fragment_program",		NULL},
   {"GL_ARB_multisample",		GL_ARB_multisample_functions},
   {"GL_ARB_multitexture",		NULL},
   {"GL_ARB_texture_border_clamp",	NULL},
@@ -105,7 +107,6 @@ const struct dri_extension card_extensions[] = {
   {"GL_ARB_texture_mirrored_repeat",	NULL},
   {"GL_ARB_vertex_buffer_object",	GL_ARB_vertex_buffer_object_functions},
   {"GL_ARB_vertex_program",		GL_ARB_vertex_program_functions},
-  {"GL_ARB_fragment_program",		NULL},
   {"GL_EXT_blend_equation_separate",	GL_EXT_blend_equation_separate_functions},
   {"GL_EXT_blend_func_separate",	GL_EXT_blend_func_separate_functions},
   {"GL_EXT_blend_minmax",		GL_EXT_blend_minmax_functions},
@@ -130,6 +131,7 @@ const struct dri_extension card_extensions[] = {
   {"GL_NV_blend_square",		NULL},
   {"GL_NV_vertex_program",		GL_NV_vertex_program_functions},
   {"GL_SGIS_generate_mipmap",		NULL},
+  {"GL_SGIX_depth_texture",		NULL},
   {NULL,				NULL}
   /* *INDENT-ON* */
 };

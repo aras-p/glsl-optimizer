@@ -362,7 +362,8 @@ static void FreeScreenConfigs(__GLXdisplayPrivate *priv)
 	if (psc->driScreen.private)
 	    (*psc->driScreen.destroyScreen)(&psc->driScreen);
 	psc->driScreen.private = NULL;
-	__glxHashDestroy(psc->drawHash);
+	if (psc->drawHash)
+	    __glxHashDestroy(psc->drawHash);
 #endif
     }
     XFree((char*) priv->screenConfigs);
@@ -999,6 +1000,128 @@ CallCreateNewScreen(Display *dpy, int scrn, __GLXscreenConfigs *psc,
 
 #endif /* GLX_DIRECT_RENDERING */
 
+static __GLcontextModes *
+createConfigsFromProperties(Display *dpy, int nvisuals, int nprops,
+			    int screen, GLboolean tagged_only)
+{
+    INT32 buf[__GLX_TOTAL_CONFIG], *props;
+    unsigned prop_size;
+    __GLcontextModes *modes, *m;
+    int i;
+
+    if (nprops == 0)
+	return NULL;
+
+    /* FIXME: Is the __GLX_MIN_CONFIG_PROPS test correct for FBconfigs? */
+
+    /* Check number of properties */
+    if (nprops < __GLX_MIN_CONFIG_PROPS || nprops > __GLX_MAX_CONFIG_PROPS)
+	return NULL;
+
+    /* Allocate memory for our config structure */
+    modes = _gl_context_modes_create(nvisuals, sizeof(__GLcontextModes));
+    if (!modes)
+	return NULL;
+
+    prop_size = nprops * __GLX_SIZE_INT32;
+    if (prop_size <= sizeof(buf))
+	props = buf;
+    else
+	props = Xmalloc(prop_size);
+
+    /* Read each config structure and convert it into our format */
+    m = modes;
+    for (i = 0; i < nvisuals; i++) {
+	_XRead(dpy, (char *)props, prop_size);
+	/* Older X servers don't send this so we default it here. */
+	m->drawableType = GLX_WINDOW_BIT;
+	__glXInitializeVisualConfigFromTags(m, nprops, props,
+					    tagged_only, GL_TRUE);
+	m->screen = screen;
+	m = m->next;
+    }
+
+    if (props != buf)
+	Xfree(props);
+
+    return modes;
+}
+
+static GLboolean
+getVisualConfigs(Display *dpy, __GLXdisplayPrivate *priv, int screen)
+{
+    xGLXGetVisualConfigsReq *req;
+    __GLXscreenConfigs *psc;
+    xGLXGetVisualConfigsReply reply;
+    
+    LockDisplay(dpy);
+
+    psc = priv->screenConfigs + screen;
+    psc->visuals = NULL;
+    GetReq(GLXGetVisualConfigs, req);
+    req->reqType = priv->majorOpcode;
+    req->glxCode = X_GLXGetVisualConfigs;
+    req->screen = screen;
+
+    if (!_XReply(dpy, (xReply*) &reply, 0, False))
+	goto out;
+
+    psc->visuals = createConfigsFromProperties(dpy,
+					       reply.numVisuals,
+					       reply.numProps,
+					       screen, GL_FALSE);
+
+ out:
+    UnlockDisplay(dpy);
+    return psc->visuals != NULL;
+}
+
+static GLboolean
+getFBConfigs(Display *dpy, __GLXdisplayPrivate *priv, int screen)
+{
+    xGLXGetFBConfigsReq *fb_req;
+    xGLXGetFBConfigsSGIXReq *sgi_req;
+    xGLXVendorPrivateWithReplyReq *vpreq;
+    xGLXGetFBConfigsReply reply;
+    __GLXscreenConfigs *psc;
+
+    psc = priv->screenConfigs + screen;
+    psc->serverGLXexts = __glXGetStringFromServer(dpy, priv->majorOpcode,
+						  X_GLXQueryServerString,
+						  screen, GLX_EXTENSIONS);
+
+    LockDisplay(dpy);
+
+    psc->configs = NULL;
+    if (atof(priv->serverGLXversion) >= 1.3) {
+	GetReq(GLXGetFBConfigs, fb_req);
+	fb_req->reqType = priv->majorOpcode;
+	fb_req->glxCode = X_GLXGetFBConfigs;
+	fb_req->screen = screen;
+    } else if (strstr(psc->serverGLXexts, "GLX_SGIX_fbconfig") != NULL) {
+	GetReqExtra(GLXVendorPrivateWithReply,
+		    sz_xGLXGetFBConfigsSGIXReq +
+		    sz_xGLXVendorPrivateWithReplyReq, vpreq);
+	sgi_req = (xGLXGetFBConfigsSGIXReq *) vpreq;
+	sgi_req->reqType = priv->majorOpcode;
+	sgi_req->glxCode = X_GLXVendorPrivateWithReply;
+	sgi_req->vendorCode = X_GLXvop_GetFBConfigsSGIX;
+	sgi_req->screen = screen;
+    } else
+	goto out;
+
+    if (!_XReply(dpy, (xReply*) &reply, 0, False))
+	goto out;
+
+    psc->configs = createConfigsFromProperties(dpy,
+					       reply.numFBConfigs,
+					       reply.numAttribs * 2,
+					       screen, GL_TRUE);
+
+ out:
+    UnlockDisplay(dpy);
+    return psc->configs != NULL;
+}
 
 /*
 ** Allocate the memory for the per screen configs for each screen.
@@ -1006,17 +1129,8 @@ CallCreateNewScreen(Display *dpy, int scrn, __GLXscreenConfigs *psc,
 */
 static Bool AllocAndFetchScreenConfigs(Display *dpy, __GLXdisplayPrivate *priv)
 {
-    xGLXGetVisualConfigsReq *req;
-    xGLXGetFBConfigsReq *fb_req;
-    xGLXVendorPrivateWithReplyReq *vpreq;
-    xGLXGetFBConfigsSGIXReq *sgi_req;
-    xGLXGetVisualConfigsReply reply;
     __GLXscreenConfigs *psc;
-    __GLcontextModes *config;
-    GLint i, j, nprops, screens;
-    INT32 buf[__GLX_TOTAL_CONFIG], *props;
-    unsigned supported_request = 0;
-    unsigned prop_size;
+    GLint i, screens;
 
     /*
     ** First allocate memory for the array of per screen configs.
@@ -1030,141 +1144,16 @@ static Bool AllocAndFetchScreenConfigs(Display *dpy, __GLXdisplayPrivate *priv)
     priv->screenConfigs = psc;
     
     priv->serverGLXversion = __glXGetStringFromServer(dpy, priv->majorOpcode,
-					 X_GLXQueryServerString,
-					 0, GLX_VERSION);
+						      X_GLXQueryServerString,
+						      0, GLX_VERSION);
     if ( priv->serverGLXversion == NULL ) {
 	FreeScreenConfigs(priv);
 	return GL_FALSE;
     }
 
-    if ( atof( priv->serverGLXversion ) >= 1.3 ) {
-	supported_request = 1;
-    }
-
-    /*
-    ** Now fetch each screens configs structures.  If a screen supports
-    ** GL (by returning a numVisuals > 0) then allocate memory for our
-    ** config structure and then fill it in.
-    */
     for (i = 0; i < screens; i++, psc++) {
-	if ( supported_request != 1 ) {
-	    psc->serverGLXexts = __glXGetStringFromServer(dpy, priv->majorOpcode,
-							  X_GLXQueryServerString,
-							  i, GLX_EXTENSIONS);
-	    if ( strstr( psc->serverGLXexts, "GLX_SGIX_fbconfig" ) != NULL ) {
-		supported_request = 2;
-	    }
-	    else {
-		supported_request = 3;
-	    }
-	}
-
-
-	LockDisplay(dpy);
-	switch( supported_request ) {
-	    case 1:
-	    GetReq(GLXGetFBConfigs,fb_req);
-	    fb_req->reqType = priv->majorOpcode;
-	    fb_req->glxCode = X_GLXGetFBConfigs;
-	    fb_req->screen = i;
-	    break;
-	   
-	    case 2:
-	    GetReqExtra(GLXVendorPrivateWithReply,
-			sz_xGLXGetFBConfigsSGIXReq-sz_xGLXVendorPrivateWithReplyReq,vpreq);
-	    sgi_req = (xGLXGetFBConfigsSGIXReq *) vpreq;
-	    sgi_req->reqType = priv->majorOpcode;
-	    sgi_req->glxCode = X_GLXVendorPrivateWithReply;
-	    sgi_req->vendorCode = X_GLXvop_GetFBConfigsSGIX;
-	    sgi_req->screen = i;
-	    break;
-
-	    case 3:
-	    GetReq(GLXGetVisualConfigs,req);
-	    req->reqType = priv->majorOpcode;
-	    req->glxCode = X_GLXGetVisualConfigs;
-	    req->screen = i;
-	    break;
- 	}
-
-	if (!_XReply(dpy, (xReply*) &reply, 0, False)) {
-	    /* Something is busted. Punt. */
-	    UnlockDisplay(dpy);
-	    SyncHandle();
-	    FreeScreenConfigs(priv);
-	    return GL_FALSE;
-	}
-
-	if (!reply.numVisuals) {
-	    /* This screen does not support GL rendering */
-	    UnlockDisplay(dpy);
-	    continue;
-	}
-
-	/* FIXME: Is the __GLX_MIN_CONFIG_PROPS test correct for
-	 * FIXME: FBconfigs? 
-	 */
-	/* Check number of properties */
-	nprops = reply.numProps;
-	if ((nprops < __GLX_MIN_CONFIG_PROPS) ||
-	    (nprops > __GLX_MAX_CONFIG_PROPS)) {
-	    /* Huh?  Not in protocol defined limits.  Punt */
-	    UnlockDisplay(dpy);
-	    SyncHandle();
-	    FreeScreenConfigs(priv);
-	    return GL_FALSE;
-	}
-
-	/* Allocate memory for our config structure */
-	psc->configs = _gl_context_modes_create(reply.numVisuals,
-						sizeof(__GLcontextModes));
-	if (!psc->configs) {
-	    UnlockDisplay(dpy);
-	    SyncHandle();
-	    FreeScreenConfigs(priv);
-	    return GL_FALSE;
-	}
-
-	/* Allocate memory for the properties, if needed */
-	if ( supported_request != 3 ) {
-	    nprops *= 2;
-	}
-
-	prop_size = nprops * __GLX_SIZE_INT32;
-
-	if (prop_size <= sizeof(buf)) {
- 	    props = buf;
- 	} else {
-	    props = (INT32 *) Xmalloc(prop_size);
- 	} 
-
-	/* Read each config structure and convert it into our format */
-        config = psc->configs;
-	for (j = 0; j < reply.numVisuals; j++) {
-	    assert( config != NULL );
-	    _XRead(dpy, (char *)props, prop_size);
-
-	    if ( supported_request != 3 ) {
-		config->rgbMode = GL_TRUE;
-		config->drawableType = GLX_WINDOW_BIT;
-	    }
-	    else {
-		config->drawableType = GLX_WINDOW_BIT | GLX_PIXMAP_BIT;
-	    }
-
-	    __glXInitializeVisualConfigFromTags( config, nprops, props,
-						 (supported_request != 3),
-						 GL_TRUE );
-	    if ( config->fbconfigID == GLX_DONT_CARE ) {
-		config->fbconfigID = config->visualID;
-	    }
-	    config->screen = i;
-	    config = config->next;
-	}
-	if (props != buf) {
-	    Xfree((char *)props);
-	}
-	UnlockDisplay(dpy);
+	getVisualConfigs(dpy, priv, i);
+	getFBConfigs(dpy, priv, i);
 
 #ifdef GLX_DIRECT_RENDERING
 	psc->scr = i;

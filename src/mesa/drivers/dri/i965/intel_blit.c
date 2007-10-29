@@ -76,7 +76,8 @@ void intelCopyBuffer( const __DRIdrawablePrivate *dPriv,
    if (!rect)
    {
        UNLOCK_HARDWARE( intel );
-       driWaitForVBlank( dPriv, &intel->vbl_seq, intel->vblank_flags, & missed_target );
+       driWaitForVBlank( dPriv, &dPriv->vblSeq, dPriv->vblFlags,
+			 &missed_target );
        LOCK_HARDWARE( intel );
    }
 

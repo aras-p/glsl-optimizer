@@ -106,6 +106,7 @@ static void GarbageCollectDRIDrawables(Display *dpy, __GLXscreenConfigs *sc)
 	} while (__glxHashNext(sc->drawHash, &draw, (void *)&pdraw) == 1);
     }
 
+    XSync(dpy, GL_FALSE);
     XSetErrorHandler(oldXErrorHandler);
 }
 
@@ -903,12 +904,12 @@ PUBLIC int glXGetConfig(Display *dpy, XVisualInfo *vis, int attribute,
 {
     __GLXdisplayPrivate *priv;
     __GLXscreenConfigs *psc;
+    __GLcontextModes *modes;
     int   status;
 
     status = GetGLXPrivScreenConfig( dpy, vis->screen, & priv, & psc );
     if ( status == Success ) {
-	const __GLcontextModes * const modes = _gl_context_modes_find_visual(
-					     psc->configs, vis->visualid );
+	modes = _gl_context_modes_find_visual(psc->visuals, vis->visualid);
 
 	/* Lookup attribute after first finding a match on the visual */
 	if ( modes != NULL ) {
@@ -1286,7 +1287,7 @@ PUBLIC XVisualInfo *glXChooseVisual(Display *dpy, int screen, int *attribList)
     ** Compute a score for those that do
     ** Remember which visual, if any, got the highest score
     */
-    for ( modes = psc->configs ; modes != NULL ; modes = modes->next ) {
+    for ( modes = psc->visuals ; modes != NULL ; modes = modes->next ) {
 	if ( fbconfigs_compatible( & test_config, modes )
 	     && ((best_config == NULL)
 		 || (fbconfig_compare( (const __GLcontextModes * const * const)&modes, &best_config ) < 0)) ) {
@@ -1654,6 +1655,7 @@ PUBLIC GLXFBConfig *glXGetFBConfigs(Display *dpy, int screen, int *nelements)
     __GLcontextModes ** config = NULL;
     int   i;
 
+    *nelements = 0;
     if ( (priv->screenConfigs != NULL)
 	 && (screen >= 0) && (screen <= ScreenCount(dpy))
 	 && (priv->screenConfigs[screen].configs != NULL)
@@ -1940,13 +1942,24 @@ static int __glXGetVideoSyncSGI(unsigned int *count)
    if ( (gc != NULL) && gc->isDirect ) {
       __GLXscreenConfigs * const psc = GetGLXScreenConfigs( gc->currentDpy,
 							    gc->screen );
-      if (psc->msc != NULL && psc->driScreen.private != NULL) {
-	 int       ret;
-	 int64_t   temp;
-
-	 ret = psc->msc->getMSC(&psc->driScreen, &temp);
-	 *count = (unsigned) temp;
-	 return (ret == 0) ? 0 : GLX_BAD_CONTEXT;
+      if ( psc->msc && psc->driScreen.private ) {
+          __DRIdrawable * const pdraw = 
+              GetDRIDrawable(gc->currentDpy, gc->currentDrawable, NULL);
+	  int64_t temp; 
+	  int ret;
+ 
+ 	  /*
+ 	   * Try to use getDrawableMSC first so we get the right
+ 	   * counter...
+ 	   */
+	  if (psc->msc->base.version >= 2 && psc->msc->getDrawableMSC)
+	      ret = (*psc->msc->getDrawableMSC)( &psc->driScreen,
+						 pdraw->private,
+						 & temp);
+	  else
+	      ret = (*psc->msc->getMSC)( &psc->driScreen, & temp);
+	  *count = (unsigned) temp;
+	  return (ret == 0) ? 0 : GLX_BAD_CONTEXT;
       }
    }
 #else
@@ -1969,16 +1982,14 @@ static int __glXWaitVideoSyncSGI(int divisor, int remainder, unsigned int *count
       if (psc->msc != NULL && psc->driScreen.private ) {
 	 __DRIdrawable * const pdraw = 
 	     GetDRIDrawable(gc->currentDpy, gc->currentDrawable, NULL);
-	 if (pdraw != NULL) {
-	    int       ret;
-	    int64_t   msc;
-	    int64_t   sbc;
+	 int       ret;
+	 int64_t   msc;
+	 int64_t   sbc;
 
-	    ret = (*psc->msc->waitForMSC)(pdraw, 0,
-					  divisor, remainder, &msc, &sbc);
-	    *count = (unsigned) msc;
-	    return (ret == 0) ? 0 : GLX_BAD_CONTEXT;
-	 }
+	 ret = (*psc->msc->waitForMSC)(pdraw, 0, divisor, remainder, &msc,
+				       &sbc);
+	 *count = (unsigned) msc;
+	 return (ret == 0) ? 0 : GLX_BAD_CONTEXT;
       }
    }
 #else

@@ -115,10 +115,79 @@ static const struct tx_table {
 	_ASSIGN(LUMINANCE_ALPHA_FLOAT16, R300_EASY_TX_FORMAT(X, X, X, Y, FL_I16A16)),
 	_ASSIGN(INTENSITY_FLOAT32, R300_EASY_TX_FORMAT(X, X, X, X, FL_I32)),
 	_ASSIGN(INTENSITY_FLOAT16, R300_EASY_TX_FORMAT(X, X, X, X, FL_I16)),
+	_ASSIGN(Z16, R300_EASY_TX_FORMAT(X, X, X, X, X16)),
+	_ASSIGN(Z24_S8, R300_EASY_TX_FORMAT(X, X, X, X, X24_Y8)),
+	_ASSIGN(Z32, R300_EASY_TX_FORMAT(X, X, X, X, X32)),
 	/* *INDENT-ON* */
 };
 
 #undef _ASSIGN
+
+void r300SetDepthTexMode(struct gl_texture_object *tObj)
+{
+	static const GLuint formats[3][3] = {
+		{
+			R300_EASY_TX_FORMAT(X, X, X, X, X16),
+			R300_EASY_TX_FORMAT(X, X, X, ONE, X16),
+			R300_EASY_TX_FORMAT(ZERO, ZERO, ZERO, X, X16),
+		},
+		{
+			R300_EASY_TX_FORMAT(X, X, X, X, X24_Y8),
+			R300_EASY_TX_FORMAT(X, X, X, ONE, X24_Y8),
+			R300_EASY_TX_FORMAT(ZERO, ZERO, ZERO, X, X24_Y8),
+		},
+		{
+			R300_EASY_TX_FORMAT(X, X, X, X, X32),
+			R300_EASY_TX_FORMAT(X, X, X, ONE, X32),
+			R300_EASY_TX_FORMAT(ZERO, ZERO, ZERO, X, X32),
+		},
+	};
+	const GLuint *format;
+	r300TexObjPtr t;
+
+	if (!tObj)
+		return;
+
+	t = (r300TexObjPtr) tObj->DriverData;
+
+
+	switch (tObj->Image[0][tObj->BaseLevel]->TexFormat->MesaFormat) {
+	case MESA_FORMAT_Z16:
+		format = formats[0];
+		break;
+	case MESA_FORMAT_Z24_S8:
+		format = formats[1];
+		break;
+	case MESA_FORMAT_Z32:
+		format = formats[2];
+		break;
+	default:
+		/* Error...which should have already been caught by higher
+		 * levels of Mesa.
+		 */
+		ASSERT(0);
+		return;
+	}
+
+	switch (tObj->DepthMode) {
+	case GL_LUMINANCE:
+		t->format = format[0];
+		break;
+	case GL_INTENSITY:
+		t->format = format[1];
+		break;
+	case GL_ALPHA:
+		t->format = format[2];
+		break;
+	default:
+		/* Error...which should have already been caught by higher
+		 * levels of Mesa.
+		 */
+		ASSERT(0);
+		return;
+	}
+}
+
 
 /**
  * This function computes the number of bytes of storage needed for
@@ -146,7 +215,12 @@ static void r300SetTexImages(r300ContextPtr rmesa,
 	 */
 	if (!t->image_override
 	    && VALID_FORMAT(baseImage->TexFormat->MesaFormat)) {
-		t->format = tx_table[baseImage->TexFormat->MesaFormat].format;
+		if (baseImage->TexFormat->BaseFormat == GL_DEPTH_COMPONENT) {
+			r300SetDepthTexMode(tObj);
+		} else {
+			t->format = tx_table[baseImage->TexFormat->MesaFormat].format;
+		}
+
 		t->filter |= tx_table[baseImage->TexFormat->MesaFormat].filter;
 	} else if (!t->image_override) {
 		_mesa_problem(NULL, "unexpected texture format in %s",

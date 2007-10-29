@@ -356,10 +356,18 @@ static void driSwapBuffers(__DRIdrawable *drawable)
 				   &rect, 1, GL_TRUE);
 }
 
+static int driDrawableGetMSC( __DRIscreen *screen, void *drawablePrivate,
+			      int64_t *msc )
+{
+    __DRIscreenPrivate *sPriv = screen->private;
+
+    return sPriv->DriverAPI.GetDrawableMSC( sPriv, drawablePrivate, msc );
+}
+
 /**
  * Called directly from a number of higher-level GLX functions.
  */
-static int driGetMSC( __DRIscreen *screen, int64_t *msc )
+static int driGetMSC( __DRIscreen *screen, void *drawablePrivate, int64_t *msc )
 {
     __DRIscreenPrivate *sPriv = screen->private;
 
@@ -396,6 +404,7 @@ const __DRImediaStreamCounterExtension driMediaStreamCounterExtension = {
     { __DRI_MEDIA_STREAM_COUNTER, __DRI_MEDIA_STREAM_COUNTER_VERSION },
     driGetMSC,
     driWaitForMSC,
+    driDrawableGetMSC,
 };
 
 static void driCopySubBuffer(__DRIdrawable *drawable,
@@ -471,6 +480,8 @@ static void *driCreateNewDrawable(__DRIscreen *screen,
     pdp->numBackClipRects = 0;
     pdp->pClipRects = NULL;
     pdp->pBackClipRects = NULL;
+    pdp->vblSeq = 0;
+    pdp->vblFlags = 0;
 
     psp = (__DRIscreenPrivate *)screen->private;
     pdp->driScreenPriv = psp;
@@ -485,6 +496,7 @@ static void *driCreateNewDrawable(__DRIscreen *screen,
     pdraw->private = pdp;
     pdraw->destroyDrawable = driDestroyDrawable;
     pdraw->swapBuffers = driSwapBuffers;  /* called by glXSwapBuffers() */
+    pdp->msc_base = 0;
 
     /* This special default value is replaced with the configured
      * default value when the drawable is first bound to a direct

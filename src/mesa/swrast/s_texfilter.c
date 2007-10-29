@@ -213,17 +213,10 @@ lerp_rgba_3d(GLchan result[4], GLfloat a, GLfloat b, GLfloat c,
 
 
 /**
- * Compute the remainder of a divided by b, but be careful with
- * negative values so that GL_REPEAT mode works right.
+ * If A is a signed integer, A % B doesn't give the right value for A < 0
+ * (in terms of texture repeat).  Just casting to unsigned fixes that.
  */
-static INLINE GLint
-repeat_remainder(GLint a, GLint b)
-{
-   if (a >= 0)
-      return a % b;
-   else
-      return (a + 1) % b + b - 1;
-}
+#define REMAINDER(A, B) ((unsigned) (A) % (unsigned) (B))
 
 
 /**
@@ -246,8 +239,8 @@ repeat_remainder(GLint a, GLint b)
          I1 = (I0 + 1) & (SIZE - 1);					\
       }									\
       else {								\
-         I0 = repeat_remainder(IFLOOR(U), SIZE);			\
-         I1 = repeat_remainder(I0 + 1, SIZE);				\
+         I0 = REMAINDER(IFLOOR(U), SIZE);				\
+         I1 = REMAINDER(I0 + 1, SIZE);					\
       }									\
       break;								\
    case GL_CLAMP_TO_EDGE:						\
@@ -366,7 +359,7 @@ repeat_remainder(GLint a, GLint b)
       if (img->_IsPowerOfTwo)						\
          I &= (SIZE - 1);						\
       else								\
-         I = repeat_remainder(I, SIZE);					\
+         I = REMAINDER(I, SIZE);					\
       break;								\
    case GL_CLAMP_TO_EDGE:						\
       {									\

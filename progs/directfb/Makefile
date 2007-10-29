@@ -11,6 +11,8 @@ LIB_DEP = $(TOP)/$(LIB_DIR)/$(GL_LIB_NAME) $(TOP)/$(LIB_DIR)/$(GLU_LIB_NAME)
 CFLAGS += $(shell pkg-config --cflags directfb)
 APP_LIB_DEPS += $(shell pkg-config --libs directfb)
 
+LIBS = -L$(TOP)/$(LIB_DIR) -l$(GLU_LIB) -l$(GL_LIB) $(APP_LIB_DEPS)
+
 PROGS = df_gears \
 	   df_reflect \
 	   df_morph3d \
@@ -22,7 +24,7 @@ PROGS = df_gears \
 .SUFFIXES: .c
 
 .c: $(LIB_DEP)
-	$(CC) -I$(INCDIR) $(CFLAGS) $(LDFLAGS) $< $(APP_LIB_DEPS) -o $@
+	$(CC) -I$(INCDIR) $(CFLAGS) $(LDFLAGS) $< $(LIBS) -o $@
 
 
 ##### TARGETS #####

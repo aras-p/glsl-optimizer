@@ -1183,7 +1183,7 @@ shade_texture_span(GLcontext *ctx, SWspan *span)
       if (span->primitive == GL_BITMAP && span->array->ChanType != GL_FLOAT) {
          convert_color_type(span, GL_FLOAT, 0);
       }
-      if (span->primitive != GL_POINT) {
+      if (span->primitive != GL_POINT || ctx->Point.PointSprite) {
          /* for points, we populated the arrays already */
          interpolate_active_attribs(ctx, span, ~0);
       }

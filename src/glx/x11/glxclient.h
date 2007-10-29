@@ -500,9 +500,9 @@ struct __GLXscreenConfigsRec {
 #endif
 
     /**
-     * Linked list of configurations for this screen.
+     * Linked list of glx visuals and  fbconfigs for this screen.
      */
-    __GLcontextModes *configs;
+    __GLcontextModes *visuals, *configs;
 
     /**
      * Per-screen dynamic GLX extension tracking.  The \c direct_support
