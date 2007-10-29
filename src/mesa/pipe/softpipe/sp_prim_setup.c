@@ -516,18 +516,18 @@ static void setup_tri_edges( struct setup_stage *setup )
    float vmid_y = setup->vmid->data[0][1] - 0.5f;
    float vmax_y = setup->vmax->data[0][1] - 0.5f;
 
-   setup->emaj.sy = ceilf(vmin_y);
-   setup->emaj.lines = (int) ceilf(vmax_y - setup->emaj.sy);
+   setup->emaj.sy = CEILF(vmin_y);
+   setup->emaj.lines = (int) CEILF(vmax_y - setup->emaj.sy);
    setup->emaj.dxdy = setup->emaj.dx / setup->emaj.dy;
    setup->emaj.sx = vmin_x + (setup->emaj.sy - vmin_y) * setup->emaj.dxdy;
 
-   setup->etop.sy = ceilf(vmid_y);
-   setup->etop.lines = (int) ceilf(vmax_y - setup->etop.sy);
+   setup->etop.sy = CEILF(vmid_y);
+   setup->etop.lines = (int) CEILF(vmax_y - setup->etop.sy);
    setup->etop.dxdy = setup->etop.dx / setup->etop.dy;
    setup->etop.sx = vmid_x + (setup->etop.sy - vmid_y) * setup->etop.dxdy;
 
-   setup->ebot.sy = ceilf(vmin_y);
-   setup->ebot.lines = (int) ceilf(vmid_y - setup->ebot.sy);
+   setup->ebot.sy = CEILF(vmin_y);
+   setup->ebot.lines = (int) CEILF(vmid_y - setup->ebot.sy);
    setup->ebot.dxdy = setup->ebot.dx / setup->ebot.dy;
    setup->ebot.sx = vmin_x + (setup->ebot.sy - vmin_y) * setup->ebot.dxdy;
 }
@@ -934,7 +934,7 @@ setup_point(struct draw_stage *stage, struct prim_header *prim)
       = sizeAttr > 0 ? v0->data[sizeAttr][0]
       : setup->softpipe->rasterizer->point_size;
    const float halfSize = 0.5F * size;
-   const boolean round = setup->softpipe->rasterizer->point_smooth;
+   const boolean round = (boolean) setup->softpipe->rasterizer->point_smooth;
    const float x = v0->data[0][0];  /* Note: data[0] is always position */
    const float y = v0->data[0][1];
    unsigned slot, j;

@@ -42,7 +42,7 @@ struct draw_context *draw_create( void )
    struct draw_context *draw = CALLOC_STRUCT( draw_context );
 
 #if defined(__i386__) || defined(__386__)
-   draw->use_sse = getenv("GALLIUM_SSE") != NULL;
+   draw->use_sse = GETENV( "GALLIUM_SSE" ) != NULL;
 #else
    draw->use_sse = FALSE;
 #endif
@@ -71,7 +71,7 @@ struct draw_context *draw_create( void )
     */
    {
       int i;
-      char *tmp = malloc(Elements(draw->vcache.vertex) * MAX_VERTEX_SIZE);
+      char *tmp = MALLOC( Elements(draw->vcache.vertex) * MAX_VERTEX_SIZE );
 
       for (i = 0; i < Elements(draw->vcache.vertex); i++)
 	 draw->vcache.vertex[i] = (struct vertex_header *)(tmp + i * MAX_VERTEX_SIZE);
@@ -92,8 +92,8 @@ struct draw_context *draw_create( void )
 
 void draw_destroy( struct draw_context *draw )
 {
-   free( draw->vcache.vertex[0] ); /* Frees all the vertices. */
-   free( draw );
+   FREE( draw->vcache.vertex[0] ); /* Frees all the vertices. */
+   FREE( draw );
 }
 
 
@@ -233,10 +233,10 @@ void draw_alloc_tmps( struct draw_stage *stage, unsigned nr )
    stage->nr_tmps = nr;
 
    if (nr) {
-      ubyte *store = (ubyte *) malloc(MAX_VERTEX_SIZE * nr);
+      ubyte *store = (ubyte *) MALLOC( MAX_VERTEX_SIZE * nr );
       unsigned i;
 
-      stage->tmp = (struct vertex_header **) malloc(sizeof(struct vertex_header *) * nr);
+      stage->tmp = (struct vertex_header **) MALLOC( sizeof(struct vertex_header *) * nr );
       
       for (i = 0; i < nr; i++)
 	 stage->tmp[i] = (struct vertex_header *)(store + i * MAX_VERTEX_SIZE);
@@ -246,8 +246,8 @@ void draw_alloc_tmps( struct draw_stage *stage, unsigned nr )
 void draw_free_tmps( struct draw_stage *stage )
 {
    if (stage->tmp) {
-      free(stage->tmp[0]);
-      free(stage->tmp);
+      FREE( stage->tmp[0] );
+      FREE( stage->tmp );
    }
 }
 

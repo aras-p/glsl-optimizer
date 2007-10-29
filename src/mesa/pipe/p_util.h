@@ -1,28 +1,29 @@
-
-/*
- * Mesa 3-D graphics library
- * Version:  6.5.2
- *
- * Copyright (C) 1999-2006  Brian Paul   All Rights Reserved.
- *
+/**************************************************************************
+ * 
+ * Copyright 2007 Tungsten Graphics, Inc., Cedar Park, Texas.
+ * All Rights Reserved.
+ * 
  * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
+ * copy of this software and associated documentation files (the
+ * "Software"), to deal in the Software without restriction, including
+ * without limitation the rights to use, copy, modify, merge, publish,
+ * distribute, sub license, and/or sell copies of the Software, and to
+ * permit persons to whom the Software is furnished to do so, subject to
+ * the following conditions:
+ * 
+ * The above copyright notice and this permission notice (including the
+ * next paragraph) shall be included in all copies or substantial portions
+ * of the Software.
+ * 
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
- * BRIAN PAUL BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN
- * AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
- * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
- */
-
+ * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+ * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT.
+ * IN NO EVENT SHALL TUNGSTEN GRAPHICS AND/OR ITS SUPPLIERS BE LIABLE FOR
+ * ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
+ * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
+ * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ * 
+ **************************************************************************/
 
 #ifndef P_UTIL_H
 #define P_UTIL_H
@@ -30,11 +31,83 @@
 #include "p_compiler.h"
 #include <math.h>
 
-#define CALLOC_STRUCT(T)   (struct T *) calloc(1, sizeof(struct T))
+#ifdef WIN32
+
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
+void * __stdcall
+EngAllocMem(
+    unsigned long Flags,
+    unsigned long MemSize,
+    unsigned long Tag );
+
+void __stdcall
+EngFreeMem(
+    void *Mem );
+
+#ifdef __cplusplus
+}
+#endif
+
+static INLINE void *
+MALLOC( unsigned size )
+{
+   return EngAllocMem( 0, size, 'D3AG' );
+}
+
+static INLINE void *
+CALLOC( unsigned count, unsigned size )
+{
+   void *ptr = MALLOC( count * size );
+   if( ptr ) {
+      memset( ptr, 0, count * size );
+   }
+   return ptr;
+}
+
+static INLINE void
+FREE( void *ptr )
+{
+   if( ptr ) {
+      EngFreeMem( ptr );
+   }
+}
+
+static INLINE void *
+REALLOC( void *old_ptr, unsigned old_size, unsigned new_size )
+{
+   void *new_ptr;
+   if( new_size <= old_size ) {
+      return old_ptr;
+   }
+   new_ptr = MALLOC( new_size );
+   if( new_ptr ) {
+      memcpy( new_ptr, old_ptr, old_size );
+   }
+   FREE( old_ptr );
+   return new_ptr;
+}
+
+#define GETENV( X )  NULL
+
+#else // WIN32
 
 #define MALLOC( SIZE )  malloc( SIZE )
 
+#define CALLOC( COUNT, SIZE )   calloc( COUNT, SIZE )
+
 #define FREE( PTR )  free( PTR )
+
+#define REALLOC( OLDPTR, OLDSIZE, NEWSIZE )  realloc( OLDPTR, NEWSIZE )
+
+#define GETENV( X )  getenv( X )
+
+#endif // WIN32
+
+#define CALLOC_STRUCT(T)   (struct T *) CALLOC(1, sizeof(struct T))
 
 #define CLAMP( X, MIN, MAX )  ( (X)<(MIN) ? (MIN) : ((X)>(MAX) ? (MAX) : (X)) )
 #define MIN2( A, B )   ( (A)<(B) ? (A) : (B) )
@@ -221,5 +294,10 @@ static INLINE float LOG2(float val)
    return num.f + log_2;
 }
 
+#if defined(__GNUC__)
+#define CEILF(x)   ceilf(x)
+#else
+#define CEILF(x)   ((float) ceil(x))
+#endif
 
 #endif

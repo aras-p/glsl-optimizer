@@ -133,10 +133,10 @@ tgsi_exec_prepare( struct tgsi_exec_machine *mach )
    labels->count = 0;
 
    declarations = (struct tgsi_full_declaration *)
-      malloc(maxDeclarations * sizeof(struct tgsi_full_declaration));
+      MALLOC( maxDeclarations * sizeof(struct tgsi_full_declaration) );
 
    instructions = (struct tgsi_full_instruction *)
-      malloc(maxInstructions * sizeof(struct tgsi_full_instruction));
+      MALLOC( maxInstructions * sizeof(struct tgsi_full_instruction) );
 
    k = tgsi_parse_init( &parse, mach->Tokens );
    if (k != TGSI_PARSE_OK) {
@@ -153,10 +153,12 @@ tgsi_exec_prepare( struct tgsi_exec_machine *mach )
       case TGSI_TOKEN_TYPE_DECLARATION:
          /* save expanded declaration */
          if (numDeclarations == maxDeclarations) {
-            maxDeclarations += 10;
-            declarations = realloc(declarations,
+            declarations = REALLOC(declarations,
                                    maxDeclarations
+                                   * sizeof(struct tgsi_full_instruction),
+                                   (maxDeclarations + 10)
                                    * sizeof(struct tgsi_full_instruction));
+            maxDeclarations += 10;
          }
          memcpy(declarations + numDeclarations,
                 &parse.FullToken.FullInstruction,
@@ -186,10 +188,12 @@ tgsi_exec_prepare( struct tgsi_exec_machine *mach )
 
          /* save expanded instruction */
          if (numInstructions == maxInstructions) {
-            maxInstructions += 10;
-            instructions = realloc(instructions,
+            instructions = REALLOC(instructions,
                                    maxInstructions
+                                   * sizeof(struct tgsi_full_instruction),
+                                   (maxInstructions + 10)
                                    * sizeof(struct tgsi_full_instruction));
+            maxInstructions += 10;
          }
          memcpy(instructions + numInstructions,
                 &parse.FullToken.FullInstruction,
@@ -204,13 +208,13 @@ tgsi_exec_prepare( struct tgsi_exec_machine *mach )
    tgsi_parse_free (&parse);
 
    if (mach->Declarations) {
-      free(mach->Declarations);
+      FREE( mach->Declarations );
    }
    mach->Declarations = declarations;
    mach->NumDeclarations = numDeclarations;
 
    if (mach->Instructions) {
-      free(mach->Instructions);
+      FREE( mach->Instructions );
    }
    mach->Instructions = instructions;
    mach->NumInstructions = numInstructions;
@@ -242,7 +246,7 @@ tgsi_exec_machine_init(
 
    k = tgsi_parse_init (&parse, mach->Tokens);
    if (k != TGSI_PARSE_OK) {
-      printf("Problem parsing!\n");
+      fprintf( stderr, "Problem parsing!\n" );
       return;
    }
 

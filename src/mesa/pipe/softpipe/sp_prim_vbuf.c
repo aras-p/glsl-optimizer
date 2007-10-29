@@ -295,8 +295,8 @@ struct draw_stage *sp_draw_vbuf_stage( struct draw_context *draw_context,
    vbuf->draw = draw;
    vbuf->draw_context = draw_context;
 
-   vbuf->element_map = malloc( IBUF_SIZE );
-   vbuf->vertex_map = malloc( VBUF_SIZE );
+   vbuf->element_map = MALLOC( IBUF_SIZE );
+   vbuf->vertex_map = MALLOC( VBUF_SIZE );
    
    vbuf->vertex_ptr = vbuf->vertex_map;
    

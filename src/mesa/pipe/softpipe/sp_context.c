@@ -289,12 +289,12 @@ struct pipe_context *softpipe_create( struct pipe_winsys *pipe_winsys,
    uint i;
 
 #if defined(__i386__) || defined(__386__)
-   softpipe->use_sse = getenv("GALLIUM_SSE") != NULL;
+   softpipe->use_sse = GETENV( "GALLIUM_SSE" ) != NULL;
 #else
    softpipe->use_sse = FALSE;
 #endif
 
-   softpipe->dump_fs = getenv( "GALLIUM_DUMP_FS" ) != NULL;
+   softpipe->dump_fs = GETENV( "GALLIUM_DUMP_FS" ) != NULL;
 
    softpipe->pipe.winsys = pipe_winsys;
    softpipe->pipe.destroy = softpipe_destroy;
@@ -396,7 +396,7 @@ struct pipe_context *softpipe_create( struct pipe_winsys *pipe_winsys,
    assert(softpipe->draw);
    softpipe->setup = sp_draw_render_stage(softpipe);
 
-   if (getenv("SP_VBUF")) {
+   if (GETENV( "SP_VBUF" ) != NULL) {
       softpipe->vbuf = sp_draw_vbuf_stage(softpipe->draw, 
                                           &softpipe->pipe, 
                                           sp_vbuf_setup_draw);

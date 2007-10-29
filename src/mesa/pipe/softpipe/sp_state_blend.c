@@ -34,7 +34,7 @@ void *
 softpipe_create_blend_state(struct pipe_context *pipe,
                             const struct pipe_blend_state *blend)
 {
-   struct pipe_blend_state *state = malloc(sizeof(struct pipe_blend_state));
+   struct pipe_blend_state *state = MALLOC( sizeof(struct pipe_blend_state) );
    memcpy(state, blend, sizeof(struct pipe_blend_state));
    return state;
 }
@@ -52,7 +52,7 @@ void softpipe_bind_blend_state( struct pipe_context *pipe,
 void softpipe_delete_blend_state(struct pipe_context *pipe,
                                  void *blend)
 {
-   free(blend);
+   FREE( blend );
 }
 
 
@@ -75,7 +75,7 @@ void *
 softpipe_create_alpha_test_state(struct pipe_context *pipe,
                                  const struct pipe_alpha_test_state *alpha)
 {
-   struct pipe_alpha_test_state *state = malloc(sizeof(struct pipe_alpha_test_state));
+   struct pipe_alpha_test_state *state = MALLOC( sizeof(struct pipe_alpha_test_state) );
    memcpy(state, alpha, sizeof(struct pipe_alpha_test_state));
    return state;
 }
@@ -95,7 +95,7 @@ void
 softpipe_delete_alpha_test_state(struct pipe_context *pipe,
                                  void *alpha)
 {
-   free(alpha);
+   FREE( alpha );
 }
 
 void *
@@ -103,7 +103,7 @@ softpipe_create_depth_stencil_state(struct pipe_context *pipe,
                               const struct pipe_depth_stencil_state *depth_stencil)
 {
    struct pipe_depth_stencil_state *state =
-      malloc(sizeof(struct pipe_depth_stencil_state));
+      MALLOC( sizeof(struct pipe_depth_stencil_state) );
    memcpy(state, depth_stencil, sizeof(struct pipe_depth_stencil_state));
    return state;
 }
@@ -122,5 +122,5 @@ softpipe_bind_depth_stencil_state(struct pipe_context *pipe,
 void
 softpipe_delete_depth_stencil_state(struct pipe_context *pipe, void *depth)
 {
-   free(depth);
+   FREE( depth );
 }

@@ -72,10 +72,10 @@ softpipe_clear(struct pipe_context *pipe, struct pipe_surface *ps,
    }
    else if (ps == sp_tile_cache_get_surface(softpipe->cbuf_cache[0])) {
       float clear[4];
-      clear[0] = 0.2; /* XXX hack */
-      clear[1] = 0.2; /* XXX hack */
-      clear[2] = 0.2; /* XXX hack */
-      clear[3] = 0.2; /* XXX hack */
+      clear[0] = 0.2f; /* XXX hack */
+      clear[1] = 0.2f; /* XXX hack */
+      clear[2] = 0.2f; /* XXX hack */
+      clear[3] = 0.2f; /* XXX hack */
       sp_tile_cache_clear(softpipe->cbuf_cache[0], clear);
    }
 

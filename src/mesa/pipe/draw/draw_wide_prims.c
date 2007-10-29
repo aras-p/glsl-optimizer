@@ -111,44 +111,44 @@ static void wide_line( struct draw_stage *stage,
 
    if (dx > dy) {
       /* x-major line */
-      pos0[1] = pos0[1] - half_width - 0.25;
-      pos1[1] = pos1[1] + half_width - 0.25;
-      pos2[1] = pos2[1] - half_width - 0.25;
-      pos3[1] = pos3[1] + half_width - 0.25;
+      pos0[1] = pos0[1] - half_width - 0.25f;
+      pos1[1] = pos1[1] + half_width - 0.25f;
+      pos2[1] = pos2[1] - half_width - 0.25f;
+      pos3[1] = pos3[1] + half_width - 0.25f;
       if (pos0[0] < pos2[0]) {
          /* left to right line */
-         pos0[0] -= 0.5;
-         pos1[0] -= 0.5;
-         pos2[0] -= 0.5;
-         pos3[0] -= 0.5;
+         pos0[0] -= 0.5f;
+         pos1[0] -= 0.5f;
+         pos2[0] -= 0.5f;
+         pos3[0] -= 0.5f;
       }
       else {
          /* right to left line */
-         pos0[0] += 0.5;
-         pos1[0] += 0.5;
-         pos2[0] += 0.5;
-         pos3[0] += 0.5;
+         pos0[0] += 0.5f;
+         pos1[0] += 0.5f;
+         pos2[0] += 0.5f;
+         pos3[0] += 0.5f;
       }
    }
    else {
       /* y-major line */
-      pos0[0] = pos0[0] - half_width + 0.25;
-      pos1[0] = pos1[0] + half_width + 0.25;
-      pos2[0] = pos2[0] - half_width + 0.25;
-      pos3[0] = pos3[0] + half_width + 0.25;
+      pos0[0] = pos0[0] - half_width + 0.25f;
+      pos1[0] = pos1[0] + half_width + 0.25f;
+      pos2[0] = pos2[0] - half_width + 0.25f;
+      pos3[0] = pos3[0] + half_width + 0.25f;
       if (pos0[1] < pos2[1]) {
          /* top to bottom line */
-         pos0[1] -= 0.5;
-         pos1[1] -= 0.5;
-         pos2[1] -= 0.5;
-         pos3[1] -= 0.5;
+         pos0[1] -= 0.5f;
+         pos1[1] -= 0.5f;
+         pos2[1] -= 0.5f;
+         pos3[1] -= 0.5f;
       }
       else {
          /* bottom to top line */
-         pos0[1] += 0.5;
-         pos1[1] += 0.5;
-         pos2[1] += 0.5;
-         pos3[1] += 0.5;
+         pos0[1] += 0.5f;
+         pos1[1] += 0.5f;
+         pos2[1] += 0.5f;
+         pos3[1] += 0.5f;
       }
    }
 
@@ -179,7 +179,7 @@ static void set_texcoords(const struct wide_stage *wide,
          uint j = wide->texcoord_slot[i];
          v->data[j][0] = tc[0];
          if (wide->texcoord_mode[i] == PIPE_SPRITE_COORD_LOWER_LEFT)
-            v->data[j][1] = 1.0 - tc[1];
+            v->data[j][1] = 1.0f - tc[1];
          else
             v->data[j][1] = tc[1];
          v->data[j][2] = tc[2];
@@ -198,7 +198,7 @@ static void wide_point( struct draw_stage *stage,
 			struct prim_header *header )
 {
    const struct wide_stage *wide = wide_stage(stage);
-   const boolean sprite = stage->draw->rasterizer->point_sprite;
+   const boolean sprite = (boolean) stage->draw->rasterizer->point_sprite;
    float half_size;
    float left_adj, right_adj;
 
@@ -223,8 +223,8 @@ static void wide_point( struct draw_stage *stage,
       half_size = wide->half_point_size;
    }
 
-   left_adj = -half_size + 0.25;
-   right_adj = half_size + 0.25;
+   left_adj = -half_size + 0.25f;
+   right_adj = half_size + 0.25f;
 
    pos0[0] += left_adj;
    pos0[1] -= half_size;
@@ -267,8 +267,8 @@ static void wide_begin( struct draw_stage *stage )
    struct wide_stage *wide = wide_stage(stage);
    struct draw_context *draw = stage->draw;
 
-   wide->half_point_size = 0.5 * draw->rasterizer->point_size;
-   wide->half_line_width = 0.5 * draw->rasterizer->line_width;
+   wide->half_point_size = 0.5f * draw->rasterizer->point_size;
+   wide->half_line_width = 0.5f * draw->rasterizer->line_width;
 
    if (draw->rasterizer->line_width != 1.0) {
       wide->stage.line = wide_line;

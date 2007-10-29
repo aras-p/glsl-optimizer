@@ -207,7 +207,7 @@ sp_region_fill(struct pipe_context *pipe,
          ushort *row = (ushort *) get_pointer(dst, dstx, dsty);
          for (i = 0; i < height; i++) {
             for (j = 0; j < width; j++)
-               row[j] = value;
+               row[j] = (ushort) value;
             row += dst->pitch;
          }
       }

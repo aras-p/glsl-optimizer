@@ -30,10 +30,8 @@
   *   Michel Dänzer <michel@tungstengraphics.com>
   */
 
-#include "pipe/p_state.h"
 #include "pipe/p_context.h"
 #include "pipe/p_defines.h"
-#include "pipe/p_util.h"
 #include "sp_tex_layout.h"
 
 
@@ -76,14 +74,14 @@ sp_miptree_set_level_info(struct pipe_mipmap_tree *mt,
    /* Not sure when this would happen, but anyway: 
     */
    if (mt->level[level].image_offset) {
-      free(mt->level[level].image_offset);
+      FREE( mt->level[level].image_offset );
       mt->level[level].image_offset = NULL;
    }
 
    assert(nr_images);
    assert(!mt->level[level].image_offset);
 
-   mt->level[level].image_offset = (unsigned *) malloc(nr_images * sizeof(unsigned));
+   mt->level[level].image_offset = (unsigned *) MALLOC( nr_images * sizeof(unsigned) );
    mt->level[level].image_offset[0] = 0;
 }
 

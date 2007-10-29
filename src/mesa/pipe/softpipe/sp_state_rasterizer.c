@@ -1,6 +1,6 @@
 /**************************************************************************
  * 
- * Copyright 2003 Tungsten Graphics, Inc., Cedar Park, Texas.
+ * Copyright 2007 Tungsten Graphics, Inc., Cedar Park, Texas.
  * All Rights Reserved.
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a
@@ -37,7 +37,7 @@ softpipe_create_rasterizer_state(struct pipe_context *pipe,
                                  const struct pipe_rasterizer_state *setup)
 {
    struct pipe_rasterizer_state *state =
-      malloc(sizeof(struct pipe_rasterizer_state));
+      MALLOC( sizeof(struct pipe_rasterizer_state) );
    memcpy(state, setup, sizeof(struct pipe_rasterizer_state));
    return state;
 }
@@ -58,7 +58,7 @@ void softpipe_bind_rasterizer_state(struct pipe_context *pipe,
 void softpipe_delete_rasterizer_state(struct pipe_context *pipe,
                                       void *rasterizer)
 {
-   free(rasterizer);
+   FREE( rasterizer );
 }
 
 

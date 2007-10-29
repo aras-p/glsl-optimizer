@@ -31,7 +31,6 @@
 #ifndef SP_CONTEXT_H
 #define SP_CONTEXT_H
 
-#include "pipe/p_state.h"
 #include "pipe/p_context.h"
 #include "pipe/p_defines.h"
 
@@ -63,7 +62,7 @@ struct softpipe_tile_cache;
 #define SP_NEW_CONSTANTS     0x4000
 
 struct sp_vertex_shader_state {
-   const struct pipe_shader_state *state;
+   struct pipe_shader_state *state;
    void  *draw_data;
 };
 

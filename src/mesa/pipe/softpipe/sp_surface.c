@@ -1,6 +1,6 @@
 /**************************************************************************
  * 
- * Copyright 2003 Tungsten Graphics, Inc., Cedar Park, Texas.
+ * Copyright 2007 Tungsten Graphics, Inc., Cedar Park, Texas.
  * All Rights Reserved.
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a
@@ -172,7 +172,7 @@ z16_get_tile(struct pipe_surface *ps,
    const ushort *src
       = ((const ushort *) (ps->region->map + ps->offset))
       + y * ps->region->pitch + x;
-   const float scale = 1.0 / 65535.0;
+   const float scale = 1.0f / 65535.0f;
    unsigned i, j;
    unsigned w0 = w;
 
@@ -418,7 +418,7 @@ z32_get_tile(struct pipe_surface *ps,
          pRow[j * 4 + 0] =
          pRow[j * 4 + 1] =
          pRow[j * 4 + 2] =
-         pRow[j * 4 + 3] = src[j] * scale;
+         pRow[j * 4 + 3] = (float) (scale * src[j]);
       }
       src += ps->region->pitch;
       p += 4 * w0;
@@ -452,7 +452,7 @@ s8z24_get_tile(struct pipe_surface *ps,
          pRow[j * 4 + 0] =
          pRow[j * 4 + 1] =
          pRow[j * 4 + 2] =
-         pRow[j * 4 + 3] = (src[j] & 0xffffff) * scale;
+         pRow[j * 4 + 3] = (float) (scale * (src[j] & 0xffffff));
       }
       src += ps->region->pitch;
       p += 4 * w0;

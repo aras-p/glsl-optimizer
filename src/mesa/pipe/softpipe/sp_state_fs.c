@@ -29,6 +29,7 @@
 #include "sp_state.h"
 
 #include "pipe/p_defines.h"
+#include "pipe/p_util.h"
 #include "pipe/p_winsys.h"
 #include "pipe/draw/draw_context.h"
 #include "pipe/tgsi/exec/tgsi_core.h"
@@ -43,7 +44,7 @@ void * softpipe_create_fs_state(struct pipe_context *pipe,
     * that now.
     */
 
-   struct sp_fragment_shader_state *state = malloc(sizeof(struct sp_fragment_shader_state));
+   struct sp_fragment_shader_state *state = MALLOC( sizeof(struct sp_fragment_shader_state) );
    state->shader = *templ;
 
    if( softpipe->dump_fs ) {
@@ -80,7 +81,7 @@ void softpipe_delete_fs_state(struct pipe_context *pipe,
    x86_release_func( &state->sse2_program );
 #endif
 
-   free( state );
+   FREE( state );
 }
 
 
@@ -88,15 +89,27 @@ void * softpipe_create_vs_state(struct pipe_context *pipe,
                                 const struct pipe_shader_state *templ)
 {
    struct softpipe_context *softpipe = softpipe_context(pipe);
-   struct sp_vertex_shader_state *state =
-      malloc(sizeof(struct sp_vertex_shader_state));
-   struct pipe_shader_state *templ_copy =
-      malloc(sizeof(struct pipe_shader_state));
-   memcpy(templ_copy, templ, sizeof(struct pipe_shader_state));
+   struct sp_vertex_shader_state *state;
 
-   state->state = templ_copy;
+   state = MALLOC( sizeof(struct sp_vertex_shader_state) );
+   if (state == NULL ) {
+      return NULL;
+   }
+
+   state->state = MALLOC( sizeof(struct pipe_shader_state) );
+   if (state->state == NULL) {
+      FREE( state );
+      return NULL;
+   }
+   memcpy( state->state, templ, sizeof(struct pipe_shader_state) );
+
    state->draw_data = draw_create_vertex_shader(softpipe->draw,
                                                 state->state);
+   if (state->draw_data == NULL) {
+      FREE( state->state );
+      FREE( state );
+      return NULL;
+   }
 
    return state;
 }
@@ -121,8 +134,8 @@ void softpipe_delete_vs_state(struct pipe_context *pipe,
       (struct sp_vertex_shader_state *)vs;
 
    draw_delete_vertex_shader(softpipe->draw, state->draw_data);
-   free(state->state);
-   free(state);
+   FREE( state->state );
+   FREE( state );
 }
 
 

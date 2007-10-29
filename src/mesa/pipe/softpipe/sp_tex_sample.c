@@ -39,7 +39,6 @@
 #include "sp_tile_cache.h"
 #include "pipe/p_context.h"
 #include "pipe/p_defines.h"
-#include "pipe/p_util.h"
 #include "pipe/tgsi/exec/tgsi_exec.h"
 
 
@@ -580,7 +579,7 @@ sp_get_samples_2d_common(struct tgsi_sampler *sampler,
       height = sampler->texture->level[level0].height;
    }
    else {
-      width = height = 1.0;
+      width = height = 1;
    }
 
    assert(width > 0);
@@ -697,7 +696,7 @@ sp_get_samples_3d(struct tgsi_sampler *sampler,
       depth = sampler->texture->level[level0].depth;
    }
    else {
-      width = height = depth = 1.0;
+      width = height = depth = 1;
    }
 
    assert(width > 0);

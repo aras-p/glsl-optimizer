@@ -99,7 +99,7 @@ sp_create_tile_cache(void)
    struct softpipe_tile_cache *tc;
    uint pos;
 
-   tc = calloc(1, sizeof(*tc));
+   tc = CALLOC_STRUCT( softpipe_tile_cache );
    if (tc) {
       for (pos = 0; pos < NUM_ENTRIES; pos++) {
          tc->entries[pos].x =
@@ -117,7 +117,7 @@ sp_destroy_tile_cache(struct softpipe_tile_cache *tc)
    for (pos = 0; pos < NUM_ENTRIES; pos++) {
       assert(tc->entries[pos].x < 0);
    }
-   free(tc);
+   FREE( tc );
 }
 
 

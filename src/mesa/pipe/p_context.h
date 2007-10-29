@@ -29,7 +29,7 @@
 #define PIPE_CONTEXT_H
 
 #include "p_state.h"
-#include "p_compiler.h"
+#include "p_util.h"
 
 struct pipe_state_cache;
 /**
@@ -265,7 +265,7 @@ pipe_region_reference(struct pipe_region **ptr, struct pipe_region *region)
          /* free the old region */
          assert(oldReg->map_refcount == 0);
          /* XXX dereference the region->buffer */
-         free(oldReg);
+         FREE( oldReg );
       }
       *ptr = NULL;
    }
@@ -292,7 +292,7 @@ pipe_surface_reference(struct pipe_surface **ptr, struct pipe_surface *surf)
       if (oldSurf->refcount == 0) {
          /* free the old region */
          pipe_region_reference(&oldSurf->region, NULL);
-         free(oldSurf);
+         FREE( oldSurf );
       }
       *ptr = NULL;
    }
