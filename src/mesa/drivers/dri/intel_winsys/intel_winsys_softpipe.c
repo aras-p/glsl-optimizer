@@ -46,8 +46,8 @@ struct intel_softpipe_winsys {
  * Return list of surface formats supported by this driver.
  */
 static const unsigned *
-intel_supported_formats(struct softpipe_winsys *sws, 
-			unsigned *numFormats)
+intel_is_format_supported(struct softpipe_winsys *sws, 
+			  unsigned *numFormats)
 {
    static const GLuint formats[] = {
       PIPE_FORMAT_U_A8_R8_G8_B8,
@@ -69,7 +69,7 @@ intel_create_softpipe( struct intel_context *intel )
    /* Fill in this struct with callbacks that softpipe will need to
     * communicate with the window system, buffer manager, etc. 
     */
-   isws->sws.supported_formats = intel_supported_formats;
+   isws->sws.is_format_supported = intel_is_format_supported;
    isws->intel = intel;
 
    /* Create the softpipe context:
