@@ -99,6 +99,7 @@ struct st_context
       struct st_tracked_state tracked_state[2];
    } constants;
 
+   /* XXX unused: */
    struct {
       struct gl_fragment_program *fragment_program;
    } cb;
