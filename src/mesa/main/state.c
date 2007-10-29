@@ -92,6 +92,7 @@
 #include "shader/program.h"
 #include "texenvprogram.h"
 #endif
+#include "tnl/t_vp_build.h"
 #if FEATURE_ARB_shader_objects
 #include "shaders.h"
 #endif
@@ -938,13 +939,12 @@ update_arrays( GLcontext *ctx )
 }
 
 
-/**
- * Update derived vertex/fragment program state.
- */
 static void
 update_program(GLcontext *ctx)
 {
    const struct gl_shader_program *shProg = ctx->Shader.CurrentProgram;
+   const struct gl_vertex_program *prevVP = ctx->VertexProgram._Current;
+   const struct gl_fragment_program *prevFP = ctx->FragmentProgram._Current;
 
    /* These _Enabled flags indicate if the program is enabled AND valid. */
    ctx->VertexProgram._Enabled = ctx->VertexProgram.Enabled
@@ -956,64 +956,83 @@ update_program(GLcontext *ctx)
 
    /*
     * Set the ctx->VertexProgram._Current and ctx->FragmentProgram._Current
-    * pointers to the programs that should be enabled/used.
+    * pointers to the programs that should be enabled/used.  These will only
+    * be NULL if we need to use the fixed-function code.
     *
     * These programs may come from several sources.  The priority is as
     * follows:
     *   1. OpenGL 2.0/ARB vertex/fragment shaders
     *   2. ARB/NV vertex/fragment programs
     *   3. Programs derived from fixed-function state.
+    *
+    * Note: it's possible for a vertex shader to get used with a fragment
+    * program (and vice versa) here, but in practice that shouldn't ever
+    * come up, or matter.
     */
 
-   ctx->FragmentProgram._Current = NULL;
-
-   if (shProg && shProg->LinkStatus) {
-      /* Use shader programs */
-      /* XXX this isn't quite right, since we may have either a vertex
-       * _or_ fragment shader (not always both).
-       */
-      ctx->VertexProgram._Current = shProg->VertexProgram;
+   /**
+    ** Fragment program
+    **/
+#if 1
+   /* XXX get rid of this someday? */
+   ctx->FragmentProgram._Active = GL_FALSE;
+#endif
+   if (shProg && shProg->LinkStatus && shProg->FragmentProgram) {
+      /* user-defined fragment shader */
       ctx->FragmentProgram._Current = shProg->FragmentProgram;
    }
-   else {
-      if (ctx->VertexProgram._Enabled) {
-         /* use user-defined vertex program */
-         ctx->VertexProgram._Current = ctx->VertexProgram.Current;
-      }
-      else if (ctx->VertexProgram._MaintainTnlProgram) {
-         /* Use vertex program generated from fixed-function state.
-          * The _Current pointer will get set in
-          * _tnl_UpdateFixedFunctionProgram() later if appropriate.
-          */
-         ctx->VertexProgram._Current = NULL;
-      }
-      else {
-         /* no vertex program */
-         ctx->VertexProgram._Current = NULL;
-      }
+   else if (ctx->FragmentProgram._Enabled) {
+      /* use user-defined fragment program */
+      ctx->FragmentProgram._Current = ctx->FragmentProgram.Current;
+   }
+   else if (ctx->FragmentProgram._MaintainTexEnvProgram) {
+      /* fragment program generated from fixed-function state */
+      ctx->FragmentProgram._Current = _mesa_get_fixed_func_fragment_program(ctx);
+      ctx->FragmentProgram._TexEnvProgram = ctx->FragmentProgram._Current;
 
-      if (ctx->FragmentProgram._Enabled) {
-         /* use user-defined vertex program */
-         ctx->FragmentProgram._Current = ctx->FragmentProgram.Current;
-      }
-      else if (ctx->FragmentProgram._MaintainTexEnvProgram) {
-         /* Use fragment program generated from fixed-function state.
-          * The _Current pointer will get set in _mesa_UpdateTexEnvProgram()
-          * later if appropriate.
-          */
-         ctx->FragmentProgram._Current = NULL;
-      }
-      else {
-         /* no fragment program */
-         ctx->FragmentProgram._Current = NULL;
-      }
+      /* XXX get rid of this confusing stuff someday? */
+      ctx->FragmentProgram._Active = ctx->FragmentProgram._Enabled;
+      if (ctx->FragmentProgram._UseTexEnvProgram)
+         ctx->FragmentProgram._Active = GL_TRUE;
+   }
+   else {
+      /* no fragment program */
+      ctx->FragmentProgram._Current = NULL;
    }
 
-   ctx->FragmentProgram._Active = ctx->FragmentProgram._Enabled;
-   if (ctx->FragmentProgram._MaintainTexEnvProgram &&
-       !ctx->FragmentProgram._Enabled) {
-      if (ctx->FragmentProgram._UseTexEnvProgram)
-	 ctx->FragmentProgram._Active = GL_TRUE;
+   if (ctx->FragmentProgram._Current != prevFP && ctx->Driver.BindProgram) {
+      ctx->Driver.BindProgram(ctx, GL_FRAGMENT_PROGRAM_ARB,
+                         (struct gl_program *) ctx->FragmentProgram._Current);
+   }
+
+   /**
+    ** Vertex program
+    **/
+#if 1
+   /* XXX get rid of this someday? */
+   ctx->VertexProgram._TnlProgram = NULL;
+#endif
+   if (shProg && shProg->LinkStatus && shProg->VertexProgram) {
+      /* user-defined vertex shader */
+      ctx->VertexProgram._Current = shProg->VertexProgram;
+   }
+   else if (ctx->VertexProgram._Enabled) {
+      /* use user-defined vertex program */
+      ctx->VertexProgram._Current = ctx->VertexProgram.Current;
+   }
+   else if (ctx->VertexProgram._MaintainTnlProgram) {
+      /* vertex program generated from fixed-function state */
+      ctx->VertexProgram._Current = _mesa_get_fixed_func_vertex_program(ctx);
+      ctx->VertexProgram._TnlProgram = ctx->VertexProgram._Current;
+   }
+   else {
+      /* no vertex program / used fixed-function code */
+      ctx->VertexProgram._Current = NULL;
+   }
+
+   if (ctx->VertexProgram._Current != prevVP && ctx->Driver.BindProgram) {
+      ctx->Driver.BindProgram(ctx, GL_VERTEX_PROGRAM_ARB,
+                              (struct gl_program *) ctx->VertexProgram._Current);
    }
 }
 
@@ -1140,12 +1159,10 @@ void
 _mesa_update_state_locked( GLcontext *ctx )
 {
    GLbitfield new_state = ctx->NewState;
+   GLbitfield prog_flags = _NEW_PROGRAM;
 
    if (MESA_VERBOSE & VERBOSE_STATE)
       _mesa_print_state("_mesa_update_state", new_state);
-
-   if (new_state & _NEW_PROGRAM)
-      update_program( ctx );
 
    if (new_state & (_NEW_MODELVIEW|_NEW_PROJECTION))
       _mesa_update_modelview_project( ctx, new_state );
@@ -1182,9 +1199,14 @@ _mesa_update_state_locked( GLcontext *ctx )
       update_tricaps( ctx, new_state );
 
    if (ctx->FragmentProgram._MaintainTexEnvProgram) {
-      if (new_state & (_NEW_TEXTURE | _DD_NEW_SEPARATE_SPECULAR | _NEW_FOG))
-	 _mesa_UpdateTexEnvProgram(ctx);
+      prog_flags |= (_NEW_TEXTURE | _NEW_FOG | _DD_NEW_SEPARATE_SPECULAR);
    }
+   if (ctx->VertexProgram._MaintainTnlProgram) {
+      prog_flags |= (_NEW_TEXTURE | _NEW_FOG | _NEW_LIGHT);
+   }
+   if (new_state & prog_flags)
+      update_program( ctx );
+
 
    /* ctx->_NeedEyeCoords is now up to date.
     *
