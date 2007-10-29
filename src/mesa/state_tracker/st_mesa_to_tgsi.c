@@ -38,8 +38,6 @@
 
 #define TGSI_DEBUG 0
 
-#define EMIT_IMMEDIATES 0
-
 
 /*
  * Map mesa register file to TGSI register file.
@@ -60,11 +58,7 @@ map_register_file(
    case PROGRAM_UNIFORM:
       return TGSI_FILE_CONSTANT;
    case PROGRAM_CONSTANT:
-#if EMIT_IMMEDIATES
       return TGSI_FILE_IMMEDIATE;
-#else
-      return TGSI_FILE_CONSTANT;
-#endif
    case PROGRAM_INPUT:
       return TGSI_FILE_INPUT;
    case PROGRAM_OUTPUT:
@@ -101,10 +95,8 @@ map_register_file_index(
    case TGSI_FILE_OUTPUT:
       return outputMapping[index];
 
-#if EMIT_IMMEDIATES
    case TGSI_FILE_IMMEDIATE:
       return immediateMapping[index];
-#endif
 
    default:
       return index;
@@ -166,7 +158,6 @@ convert_writemask(
    return writemask;
 }
 
-#if EMIT_IMMEDIATES
 static struct tgsi_full_immediate
 make_immediate(const float *value, uint size)
 {
@@ -177,7 +168,6 @@ make_immediate(const float *value, uint size)
    imm.u.ImmediateFloat32 = (struct tgsi_immediate_float32 *) value;
    return imm;
 }
-#endif
 
 static void
 compile_instruction(
@@ -661,9 +651,7 @@ tgsi_translate_mesa_program(
    struct tgsi_full_instruction fullinst;
    GLuint preamble_size = 0;
    GLuint immediates[1000];
-#if EMIT_IMMEDIATES
    GLuint numImmediates = 0;
-#endif
 
    assert(procType == TGSI_PROCESSOR_FRAGMENT ||
           procType == TGSI_PROCESSOR_VERTEX);
@@ -804,7 +792,6 @@ tgsi_translate_mesa_program(
    }
 
    /* immediates/literals */
-#if EMIT_IMMEDIATES
    for (i = 0; i < program->Parameters->NumParameters; i++) {
       if (program->Parameters->Parameters[i].Type == PROGRAM_CONSTANT) {
          struct tgsi_full_immediate fullimm
@@ -818,7 +805,6 @@ tgsi_translate_mesa_program(
          numImmediates++;
       }
    }
-#endif
 
    for( i = 0; i < program->NumInstructions; i++ ) {
       compile_instruction(

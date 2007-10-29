@@ -393,3 +393,18 @@ void Storage::popTemps()
    m_tempStack.pop();
 }
 #endif //MESA_LLVM
+
+llvm::Value * Storage::immediateElement(int idx)
+{
+   return m_immediates[idx];
+}
+
+void Storage::addImmediate(float *val)
+{
+   std::vector<Constant*> vec(4);
+   vec[0] = ConstantFP::get(Type::FloatTy, APFloat(val[0]));
+   vec[1] = ConstantFP::get(Type::FloatTy, APFloat(val[1]));
+   vec[2] = ConstantFP::get(Type::FloatTy, APFloat(val[2]));
+   vec[3] = ConstantFP::get(Type::FloatTy, APFloat(val[3]));
+   m_immediates.push_back(ConstantVector::get(m_floatVecType, vec));
+}

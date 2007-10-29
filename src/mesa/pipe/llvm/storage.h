@@ -65,6 +65,7 @@ public:
    llvm::Value *inputElement(int idx, llvm::Value *indIdx =0);
    llvm::Value *constElement(int idx, llvm::Value *indIdx =0);
    llvm::Value *outputElement(int idx, llvm::Value *indIdx =0);
+   llvm::Value *immediateElement(int idx);
 
    llvm::Value *tempElement(int idx);
    void setTempElement(int idx, llvm::Value *val, int mask);
@@ -87,6 +88,8 @@ public:
    void pushTemps();
    void popTemps();
 
+   void addImmediate(float *val);
+
 private:
    llvm::Value *maskWrite(llvm::Value *src, int mask, llvm::Value *templ);
    const char *name(const char *prefix);
@@ -102,6 +105,7 @@ private:
    std::vector<llvm::Value*>         m_temps;
    std::vector<llvm::Value*>         m_addrs;
    std::vector<llvm::Value*>         m_dstCache;
+   std::vector<llvm::Constant*>      m_immediates;
 
    llvm::VectorType *m_floatVecType;
    llvm::VectorType *m_intVecType;

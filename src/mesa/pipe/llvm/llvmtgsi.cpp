@@ -164,9 +164,23 @@ translate_declaration(llvm::Module *module,
 
 
 static void
-translate_immediate(llvm::Module *module,
+translate_immediate(Storage *storage,
                     struct tgsi_full_immediate *imm)
 {
+   float vec[4];
+   int i;
+   for (i = 0; i < imm->Immediate.Size - 1; ++i) {
+      switch( imm->Immediate.DataType ) {
+      case TGSI_IMM_FLOAT32:
+         vec[i] = imm->u.ImmediateFloat32[i].Float;
+         break;
+      default:
+         assert( 0 );
+      }
+   }
+   printf("-------------- VEC = %f %f %f %f\n",
+          vec[0], vec[1], vec[2], vec[3]);
+   storage->addImmediate(vec);
 }
 
 static void
@@ -200,6 +214,8 @@ translate_instruction(llvm::Module *module,
          val = storage->tempElement(src->SrcRegister.Index);
       } else if (src->SrcRegister.File == TGSI_FILE_OUTPUT) {
          val = storage->outputElement(src->SrcRegister.Index, indIdx);
+      } else if (src->SrcRegister.File == TGSI_FILE_IMMEDIATE) {
+         val = storage->immediateElement(src->SrcRegister.Index);
       } else {
          fprintf(stderr, "ERROR: not supported llvm source %d\n", src->SrcRegister.File);
          return;
@@ -679,7 +695,7 @@ tgsi_to_llvm(struct gallivm_prog *prog, const struct tgsi_token *tokens)
          break;
 
       case TGSI_TOKEN_TYPE_IMMEDIATE:
-         translate_immediate(mod,
+         translate_immediate(&storage,
                              &parse.FullToken.FullImmediate);
          break;
 
