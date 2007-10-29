@@ -113,24 +113,6 @@ gl_filter_to_img_filter(GLenum filter)
 }
 
 
-static struct gl_fragment_program *
-current_fragment_program(GLcontext *ctx)
-{
-   struct gl_fragment_program *f;
-
-   if (ctx->Shader.CurrentProgram &&
-       ctx->Shader.CurrentProgram->LinkStatus &&
-       ctx->Shader.CurrentProgram->FragmentProgram) {
-      f = ctx->Shader.CurrentProgram->FragmentProgram;
-   }
-   else {
-      f = ctx->FragmentProgram._Current;
-      assert(f);
-   }
-   return f;
-}
-
-
 static void 
 update_samplers(struct st_context *st)
 {
@@ -186,8 +168,7 @@ update_samplers(struct st_context *st)
 
    /* mapping from sampler vars to texture units */
    {
-      struct gl_fragment_program *fprog = current_fragment_program(st->ctx);
-      const GLubyte *samplerUnits = fprog->Base.SamplerUnits;
+      struct gl_fragment_program *fprog = st->ctx->FragmentProgram._Current;
       uint sample_units[PIPE_MAX_SAMPLERS];
       uint s;
       for (s = 0; s < PIPE_MAX_SAMPLERS; s++) {

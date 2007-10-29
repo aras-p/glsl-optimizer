@@ -264,30 +264,11 @@ update_linkage( struct st_context *st )
    /* find active shader and params -- Should be covered by
     * ST_NEW_VERTEX_PROGRAM
     */
-   if (st->ctx->Shader.CurrentProgram &&
-       st->ctx->Shader.CurrentProgram->LinkStatus &&
-       st->ctx->Shader.CurrentProgram->VertexProgram) {
-      struct gl_vertex_program *f
-         = st->ctx->Shader.CurrentProgram->VertexProgram;
-      stvp = st_vertex_program(f);
-   }
-   else {
-      assert(st->ctx->VertexProgram._Current);
-      stvp = st_vertex_program(st->ctx->VertexProgram._Current);
-   }
+   assert(st->ctx->VertexProgram._Current);
+   stvp = st_vertex_program(st->ctx->VertexProgram._Current);
 
-
-   if (st->ctx->Shader.CurrentProgram &&
-       st->ctx->Shader.CurrentProgram->LinkStatus &&
-       st->ctx->Shader.CurrentProgram->FragmentProgram) {
-      struct gl_fragment_program *f
-         = st->ctx->Shader.CurrentProgram->FragmentProgram;
-      stfp = st_fragment_program(f);
-   }
-   else {
-      assert(st->ctx->FragmentProgram._Current);
-      stfp = st_fragment_program(st->ctx->FragmentProgram._Current);
-   }
+   assert(st->ctx->FragmentProgram._Current);
+   stfp = st_fragment_program(st->ctx->FragmentProgram._Current);
 
    xvp = find_translated_vp(st, stvp, stfp);
 
