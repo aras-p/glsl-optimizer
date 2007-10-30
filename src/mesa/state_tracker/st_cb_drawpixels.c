@@ -184,15 +184,21 @@ make_drawpix_fragment_shader(struct st_context *st)
    struct st_fragment_program *stfp;
    struct gl_program *p;
 
-   printf("====== drawpix combine progs\n");
+   /*
+    * XXX Use st_program's serial numbers to determine when the
+    * user-provided program and pixel-transfer program to avoid
+    * needless combining/translation here.
+    */
+
    p = _mesa_combine_programs(ctx,
                               &st->pixel_transfer_program->Base,
                               &ctx->FragmentProgram._Current->Base);
-
+#if 0
    _mesa_print_program(p);
    printf("InputsRead: 0x%x\n", p->InputsRead);
    printf("OutputsWritten: 0x%x\n", p->OutputsWritten);
    _mesa_print_parameter_list(p->Parameters);
+#endif
 
    stfp = (struct st_fragment_program *) p;
    st_translate_fragment_program(st, stfp, NULL,

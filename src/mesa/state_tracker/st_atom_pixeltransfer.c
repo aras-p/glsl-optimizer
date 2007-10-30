@@ -128,9 +128,11 @@ get_pixel_transfer_program(GLcontext *ctx)
    fp->Base.NumInstructions = ic;
    fp->Base.Parameters = params;
 
+#if 0
    printf("========= pixel transfer prog\n");
    _mesa_print_program(&fp->Base);
    _mesa_print_parameter_list(fp->Base.Parameters);
+#endif
 
    return fp;
 }
