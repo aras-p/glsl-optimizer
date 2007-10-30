@@ -104,7 +104,7 @@ make_state_key(GLcontext *ctx,  struct state_key *key)
  * Returns a fragment program which implements the current pixel transfer ops.
  */
 static struct gl_fragment_program *
-get_pixel_transfer_program(GLcontext *ctx)
+get_pixel_transfer_program(GLcontext *ctx, const struct state_key *key)
 {
    struct prog_instruction inst[MAX_INST];
    struct gl_program_parameter_list *params;
@@ -132,12 +132,14 @@ get_pixel_transfer_program(GLcontext *ctx)
    fp->Base.OutputsWritten = (1 << FRAG_RESULT_COLR);
 
    /* MAD result.color, result.color, scale, bias; */
-   if (ctx->Pixel.RedBias != 0.0 || ctx->Pixel.RedScale != 1.0 ||
-       ctx->Pixel.GreenBias != 0.0 || ctx->Pixel.GreenScale != 1.0 ||
-       ctx->Pixel.BlueBias != 0.0 || ctx->Pixel.BlueScale != 1.0 ||
-       ctx->Pixel.AlphaBias != 0.0 || ctx->Pixel.AlphaScale != 1.0) {
+   if (key->scaleAndBias) {
+      static const gl_state_index scale_state[STATE_LENGTH] =
+         { STATE_INTERNAL, STATE_PT_SCALE, 0, 0, 0 };
+      static const gl_state_index bias_state[STATE_LENGTH] =
+         { STATE_INTERNAL, STATE_PT_BIAS, 0, 0, 0 };
       GLfloat scale[4], bias[4];
       GLint scale_p, bias_p;
+
       scale[0] = ctx->Pixel.RedScale;
       scale[1] = ctx->Pixel.GreenScale;
       scale[2] = ctx->Pixel.BlueScale;
@@ -147,8 +149,8 @@ get_pixel_transfer_program(GLcontext *ctx)
       bias[2] = ctx->Pixel.BlueBias;
       bias[3] = ctx->Pixel.AlphaBias;
 
-      scale_p = _mesa_add_named_constant(params, "RGBA_scale", scale, 4);
-      bias_p = _mesa_add_named_constant(params, "RGBA_bias", bias, 4);
+      scale_p = _mesa_add_state_reference(params, scale_state);
+      bias_p = _mesa_add_state_reference(params, bias_state);
 
       _mesa_init_instructions(inst + ic, 1);
       inst[ic].Opcode = OPCODE_MAD;
@@ -156,10 +158,83 @@ get_pixel_transfer_program(GLcontext *ctx)
       inst[ic].DstReg.Index = FRAG_RESULT_COLR;
       inst[ic].SrcReg[0].File = PROGRAM_OUTPUT;
       inst[ic].SrcReg[0].Index = FRAG_RESULT_COLR;
-      inst[ic].SrcReg[1].File = PROGRAM_CONSTANT;
+      inst[ic].SrcReg[1].File = PROGRAM_STATE_VAR;
       inst[ic].SrcReg[1].Index = scale_p;
-      inst[ic].SrcReg[2].File = PROGRAM_CONSTANT;
+      inst[ic].SrcReg[2].File = PROGRAM_STATE_VAR;
       inst[ic].SrcReg[2].Index = bias_p;
+      ic++;
+   }
+
+   if (key->colorMatrix) {
+      static const gl_state_index row0_state[STATE_LENGTH] =
+         { STATE_COLOR_MATRIX, 0, 0, 0, 0 };
+      static const gl_state_index row1_state[STATE_LENGTH] =
+         { STATE_COLOR_MATRIX, 0, 1, 1, 0 };
+      static const gl_state_index row2_state[STATE_LENGTH] =
+         { STATE_COLOR_MATRIX, 0, 2, 2, 0 };
+      static const gl_state_index row3_state[STATE_LENGTH] =
+         { STATE_COLOR_MATRIX, 0, 3, 3, 0 };
+
+      GLint row0_p = _mesa_add_state_reference(params, row0_state);
+      GLint row1_p = _mesa_add_state_reference(params, row1_state);
+      GLint row2_p = _mesa_add_state_reference(params, row2_state);
+      GLint row3_p = _mesa_add_state_reference(params, row3_state);
+
+      /* MOV temp0, result.color; */
+      _mesa_init_instructions(inst + ic, 1);
+      inst[ic].Opcode = OPCODE_MOV;
+      inst[ic].DstReg.File = PROGRAM_TEMPORARY;
+      inst[ic].DstReg.Index = 0;
+      inst[ic].SrcReg[0].File = PROGRAM_OUTPUT;
+      inst[ic].SrcReg[0].Index = FRAG_RESULT_COLR;
+      ic++;
+
+      /* DP4 result.color.x, tmp0, matrow0; */
+      _mesa_init_instructions(inst + ic, 1);
+      inst[ic].Opcode = OPCODE_DP4;
+      inst[ic].DstReg.File = PROGRAM_OUTPUT;
+      inst[ic].DstReg.Index = FRAG_RESULT_COLR;
+      inst[ic].DstReg.WriteMask = WRITEMASK_X;
+      inst[ic].SrcReg[0].File = PROGRAM_TEMPORARY;
+      inst[ic].SrcReg[0].Index = 0;
+      inst[ic].SrcReg[1].File = PROGRAM_STATE_VAR;
+      inst[ic].SrcReg[1].Index = row0_p;
+      ic++;
+
+      /* DP4 result.color.y, tmp0, matrow1; */
+      _mesa_init_instructions(inst + ic, 1);
+      inst[ic].Opcode = OPCODE_DP4;
+      inst[ic].DstReg.File = PROGRAM_OUTPUT;
+      inst[ic].DstReg.Index = FRAG_RESULT_COLR;
+      inst[ic].DstReg.WriteMask = WRITEMASK_Y;
+      inst[ic].SrcReg[0].File = PROGRAM_TEMPORARY;
+      inst[ic].SrcReg[0].Index = 0;
+      inst[ic].SrcReg[1].File = PROGRAM_STATE_VAR;
+      inst[ic].SrcReg[1].Index = row1_p;
+      ic++;
+
+      /* DP4 result.color.z, tmp0, matrow2; */
+      _mesa_init_instructions(inst + ic, 1);
+      inst[ic].Opcode = OPCODE_DP4;
+      inst[ic].DstReg.File = PROGRAM_OUTPUT;
+      inst[ic].DstReg.Index = FRAG_RESULT_COLR;
+      inst[ic].DstReg.WriteMask = WRITEMASK_Z;
+      inst[ic].SrcReg[0].File = PROGRAM_TEMPORARY;
+      inst[ic].SrcReg[0].Index = 0;
+      inst[ic].SrcReg[1].File = PROGRAM_STATE_VAR;
+      inst[ic].SrcReg[1].Index = row2_p;
+      ic++;
+
+      /* DP4 result.color.w, tmp0, matrow3; */
+      _mesa_init_instructions(inst + ic, 1);
+      inst[ic].Opcode = OPCODE_DP4;
+      inst[ic].DstReg.File = PROGRAM_OUTPUT;
+      inst[ic].DstReg.Index = FRAG_RESULT_COLR;
+      inst[ic].DstReg.WriteMask = WRITEMASK_W;
+      inst[ic].SrcReg[0].File = PROGRAM_TEMPORARY;
+      inst[ic].SrcReg[0].Index = 0;
+      inst[ic].SrcReg[1].File = PROGRAM_STATE_VAR;
+      inst[ic].SrcReg[1].Index = row3_p;
       ic++;
    }
 
@@ -204,13 +279,9 @@ update_pixel_transfer(struct st_context *st)
    fp = (struct gl_fragment_program *)
       _mesa_search_program_cache(st->pixel_transfer_cache, &key, sizeof(key));
    if (!fp) {
-      printf("Cached program not found\n");
-      fp = get_pixel_transfer_program(st->ctx);
+      fp = get_pixel_transfer_program(st->ctx, &key);
       _mesa_program_cache_insert(st->ctx, st->pixel_transfer_cache,
                                  &key, sizeof(key), &fp->Base);
-   }
-   else {
-      printf("Use cached program\n");
    }
 
    st->pixel_transfer_program = fp;
@@ -221,7 +292,7 @@ update_pixel_transfer(struct st_context *st)
 const struct st_tracked_state st_update_pixel_transfer = {
    .name = "st_update_pixel_transfer",
    .dirty = {
-      .mesa = _NEW_PIXEL,
+      .mesa = _NEW_PIXEL | _NEW_COLOR_MATRIX,
       .st  = 0,
    },
    .update = update_pixel_transfer
