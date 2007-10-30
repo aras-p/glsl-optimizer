@@ -1361,7 +1361,8 @@ GLubyte *__glXFlushRenderBuffer(__GLXcontext *ctx, GLubyte *pc)
 
     if ( (dpy != NULL) && (size > 0) ) {
 #ifdef USE_XCB
-	xcb_glx_render(c, ctx->currentContextTag, size, (char *)ctx->buf);
+	xcb_glx_render(c, ctx->currentContextTag, size,
+		       (const uint8_t *)ctx->buf);
 #else
 	/* Send the entire buffer as an X request */
 	LockDisplay(dpy);
