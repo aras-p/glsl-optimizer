@@ -278,6 +278,7 @@ _mesa_fetch_state(GLcontext *ctx, const gl_state_index state[],
    case STATE_MVP_MATRIX:
    case STATE_TEXTURE_MATRIX:
    case STATE_PROGRAM_MATRIX:
+   case STATE_COLOR_MATRIX:
       {
          /* state[0] = modelview, projection, texture, etc. */
          /* state[1] = which texture matrix or program matrix */
@@ -310,6 +311,9 @@ _mesa_fetch_state(GLcontext *ctx, const gl_state_index state[],
          }
          else if (mat == STATE_PROGRAM_MATRIX) {
             matrix = ctx->ProgramMatrixStack[index].Top;
+         }
+         else if (mat == STATE_COLOR_MATRIX) {
+            matrix = ctx->ColorMatrixStack.Top;
          }
          else {
             _mesa_problem(ctx, "Bad matrix name in _mesa_fetch_state()");
@@ -434,6 +438,18 @@ _mesa_fetch_state(GLcontext *ctx, const gl_state_index state[],
          value[3] = ctx->Light.Light[ln]._CosCutoff;
          return;
       }
+      case STATE_PT_SCALE:
+         value[0] = ctx->Pixel.RedScale;
+         value[1] = ctx->Pixel.GreenScale;
+         value[2] = ctx->Pixel.BlueScale;
+         value[3] = ctx->Pixel.AlphaScale;
+         break;
+      case STATE_PT_BIAS:
+         value[0] = ctx->Pixel.RedBias;
+         value[1] = ctx->Pixel.GreenBias;
+         value[2] = ctx->Pixel.BlueBias;
+         value[3] = ctx->Pixel.AlphaBias;
+         break;
       default:
          /* unknown state indexes are silently ignored
           *  should be handled by the driver.
