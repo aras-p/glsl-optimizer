@@ -41,9 +41,7 @@ extern "C" {
 
 #ifdef MESA_LLVM
 
-struct tgsi_exec_machine;
 struct tgsi_token;
-struct tgsi_sampler;
 
 struct gallivm_prog;
 struct gallivm_cpu_engine;

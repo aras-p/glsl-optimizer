@@ -164,9 +164,26 @@ translate_immediate(Storage *storage,
          assert( 0 );
       }
    }
-   printf("-------------- VEC = %f %f %f %f\n",
-          vec[0], vec[1], vec[2], vec[3]);
    storage->addImmediate(vec);
+}
+
+static inline llvm::Value *
+swizzleVector(llvm::Value *val, struct tgsi_full_src_register *src,
+              Storage *storage)
+{
+   int swizzle = 0;
+   int start = 1000;
+   const int NO_SWIZZLE = TGSI_SWIZZLE_X * 1000 + TGSI_SWIZZLE_Y * 100 +
+                          TGSI_SWIZZLE_Z * 10 + TGSI_SWIZZLE_W;
+   for (int k = 0; k < 4; ++k) {
+      swizzle += tgsi_util_get_full_src_register_extswizzle(src, k) * start;
+      start /= 10;
+   }
+   if (swizzle != NO_SWIZZLE) {
+      /*fprintf(stderr, "XXXXXXXX swizzle = %d\n", swizzle);*/
+      val = storage->shuffleVector(val, swizzle);
+   }
+   return val;
 }
 
 static void
@@ -207,19 +224,7 @@ translate_instruction(llvm::Module *module,
          return;
       }
 
-      int swizzle = 0;
-      int xstart = 1000;
-      const int NO_SWIZZLE = TGSI_SWIZZLE_X * 1000 + TGSI_SWIZZLE_Y * 100 +
-                             TGSI_SWIZZLE_Z * 10 + TGSI_SWIZZLE_W;
-      for (int k = 0; k < 4; ++k) {
-         swizzle += tgsi_util_get_full_src_register_extswizzle(src, k) * xstart;
-         xstart /= 10;
-      }
-      if (swizzle != NO_SWIZZLE) {
-         /*fprintf(stderr, "XXXXXXXX swizzle = %d\n", swizzle);*/
-         val = storage->shuffleVector(val, swizzle);
-      }
-      inputs[i] = val;
+      inputs[i] = swizzleVector(val, src, storage);
    }
 
    /*if (inputs[0])
@@ -611,6 +616,7 @@ translate_instruction(llvm::Module *module,
       assert(!"Unsupported opcode");
    }
 
+   /* # not sure if we need this */
    switch( inst->Instruction.Saturate ) {
    case TGSI_SAT_NONE:
       break;
@@ -624,6 +630,7 @@ translate_instruction(llvm::Module *module,
       assert( 0 );
    }
 
+   /* store results  */
    for (int i = 0; i < inst->Instruction.NumDstRegs; ++i) {
       struct tgsi_full_dst_register *dst = &inst->FullDstRegisters[i];
 
