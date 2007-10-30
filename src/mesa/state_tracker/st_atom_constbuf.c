@@ -40,14 +40,23 @@
 
 #include "st_context.h"
 #include "st_atom.h"
+#include "st_atom_constbuf.h"
 #include "st_program.h"
 
-static void upload_constants( struct st_context *st,
-			      struct gl_program_parameter_list *params,
-			      unsigned id)
+
+/**
+ * Pass the given program parameters to the graphics pipe as a
+ * constant buffer.
+ * \param id  either PIPE_SHADER_VERTEX or PIPE_SHADER_FRAGMENT
+ */
+void st_upload_constants( struct st_context *st,
+                          struct gl_program_parameter_list *params,
+                          unsigned id)
 {
    struct pipe_winsys *ws = st->pipe->winsys;
    struct pipe_constant_buffer *cbuf = &st->state.constants[id];
+
+   assert(id == PIPE_SHADER_VERTEX || id == PIPE_SHADER_FRAGMENT);
 
    /* update constants */
    if (params && params->NumParameters) {
@@ -90,7 +99,7 @@ static void update_vs_constants(struct st_context *st )
    struct st_vertex_program *vp = st->vp;
    struct gl_program_parameter_list *params = vp->Base.Base.Parameters;
 
-   upload_constants( st, params, PIPE_SHADER_VERTEX );
+   st_upload_constants( st, params, PIPE_SHADER_VERTEX );
 }
 
 const struct st_tracked_state st_update_vs_constants = {
@@ -109,7 +118,7 @@ static void update_fs_constants(struct st_context *st )
    struct st_fragment_program *fp = st->fp;
    struct gl_program_parameter_list *params = fp->Base.Base.Parameters;
 
-   upload_constants( st, params, PIPE_SHADER_FRAGMENT );
+   st_upload_constants( st, params, PIPE_SHADER_FRAGMENT );
 }
 
 const struct st_tracked_state st_update_fs_constants = {
