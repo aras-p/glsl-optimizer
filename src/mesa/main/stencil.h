@@ -63,9 +63,6 @@ extern void GLAPIENTRY
 _mesa_StencilFuncSeparate(GLenum face, GLenum func, GLint ref, GLuint mask);
 
 
-extern void APIENTRY
-_mesa_StencilOpSeparateATI(GLenum face, GLenum sfail, GLenum zfail, GLenum zpass);
-
 extern void GLAPIENTRY
 _mesa_StencilFuncSeparateATI(GLenum frontfunc, GLenum backfunc, GLint ref, GLuint mask);
 

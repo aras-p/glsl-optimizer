@@ -821,7 +821,6 @@ _mesa_init_exec_table(struct _glapi_table *exec)
 
    /* GL_ATI_separate_stencil */
    SET_StencilFuncSeparateATI(exec, _mesa_StencilFuncSeparateATI);
-   SET_StencilOpSeparateATI(exec, _mesa_StencilOpSeparateATI);
 }
 
 
