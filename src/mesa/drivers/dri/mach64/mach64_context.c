@@ -100,7 +100,6 @@ GLboolean mach64CreateContext( const __GLcontextModes *glVisual,
 {
    GLcontext *ctx, *shareCtx;
    __DRIscreenPrivate *driScreen = driContextPriv->driScreenPriv;
-   __DRIdrawablePrivate *dPriv = driContextPriv->driDrawablePriv;
    struct dd_function_table functions;
    mach64ContextPtr mmesa;
    mach64ScreenPtr mach64Screen;
@@ -254,9 +253,6 @@ GLboolean mach64CreateContext( const __GLcontextModes *glVisual,
 
    mmesa->do_irqs = (mmesa->mach64Screen->irq && !getenv("MACH64_NO_IRQS"));
 
-   dPriv->vblFlags = (mmesa->do_irqs)
-      ? driGetDefaultVBlankFlags(&mmesa->optionCache) : VBLANK_FLAG_NO_IRQ;
-
    driContextPriv->driverPrivate = (void *)mmesa;
 
    if (driQueryOptionb(&mmesa->optionCache, "no_rast")) {
@@ -331,9 +327,15 @@ mach64MakeCurrent( __DRIcontextPrivate *driContextPriv,
       }
 
       
-      driDrawableInitVBlank( driDrawPriv );
-
       if ( newMach64Ctx->driDrawable != driDrawPriv ) {
+	 if (driDrawPriv->swap_interval == (unsigned)-1) {
+	    driDrawPriv->vblFlags = (newMach64Ctx->do_irqs)
+	       ? driGetDefaultVBlankFlags(&newMach64Ctx->optionCache)
+	       : VBLANK_FLAG_NO_IRQ;
+
+	    driDrawableInitVBlank( driDrawPriv );
+	 }
+
 	 newMach64Ctx->driDrawable = driDrawPriv;
 	 mach64CalcViewport( newMach64Ctx->glCtx );
       }

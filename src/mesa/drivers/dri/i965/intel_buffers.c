@@ -229,7 +229,7 @@ void intelWindowMoved( struct intel_context *intel )
 	  * Then get new vblank_base and vblSeq values
 	  */
 	 dPriv->vblFlags = flags;
-	 driGetCurrentVBlank(dPriv, dPriv->vblFlags, &dPriv->vblSeq);
+	 driGetCurrentVBlank(dPriv);
 	 dPriv->vblank_base = dPriv->vblSeq;
       }
    } else {

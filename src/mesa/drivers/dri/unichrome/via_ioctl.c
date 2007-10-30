@@ -523,8 +523,7 @@ static void viaWaitIdleVBlank(  __DRIdrawablePrivate *dPriv,
 	  vmesa->thrashing)
 	 viaSwapOutWork(vmesa);
 
-      driWaitForVBlank( dPriv, & dPriv->vblSeq, dPriv->vblFlags,
-			& missed_target );
+      driWaitForVBlank( dPriv, & missed_target );
       if ( missed_target ) {
 	 vmesa->swap_missed_count++;
 	 (*dri_interface->getUST)( &vmesa->swap_missed_ust );

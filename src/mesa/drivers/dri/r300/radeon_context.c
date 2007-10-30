@@ -127,7 +127,6 @@ GLboolean radeonInitContext(radeonContextPtr radeon,
 			    void *sharedContextPrivate)
 {
 	__DRIscreenPrivate *sPriv = driContextPriv->driScreenPriv;
-	__DRIdrawablePrivate *dPriv = driContextPriv->driDrawablePriv;
 	radeonScreenPtr screen = (radeonScreenPtr) (sPriv->private);
 	GLcontext* ctx;
 	GLcontext* shareCtx;
@@ -177,9 +176,6 @@ GLboolean radeonInitContext(radeonContextPtr radeon,
 			"IRQ's not enabled, falling back to %s: %d %d\n",
 			radeon->do_usleeps ? "usleeps" : "busy waits",
 			fthrottle_mode, radeon->radeonScreen->irq);
-
-	dPriv->vblFlags = (radeon->radeonScreen->irq != 0)
-	    ? driGetDefaultVBlankFlags(&radeon->optionCache) : VBLANK_FLAG_NO_IRQ;
 
 	(*dri_interface->getUST) (&radeon->swap_ust);
 
@@ -278,7 +274,15 @@ GLboolean radeonMakeCurrent(__DRIcontextPrivate * driContextPriv,
 				radeon->glCtx);
 
 		if (radeon->dri.drawable != driDrawPriv) {
-		    driDrawableInitVBlank(driDrawPriv);
+			if (driDrawPriv->swap_interval == (unsigned)-1) {
+				driDrawPriv->vblFlags =
+					(radeon->radeonScreen->irq != 0)
+					? driGetDefaultVBlankFlags(&radeon->
+								   optionCache)
+					: VBLANK_FLAG_NO_IRQ;
+
+				driDrawableInitVBlank(driDrawPriv);
+			}
 		}
 
 		radeon->dri.readable = driReadPriv;

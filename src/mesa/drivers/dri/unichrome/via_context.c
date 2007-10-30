@@ -465,7 +465,6 @@ viaCreateContext(const __GLcontextModes *visual,
     GLcontext *ctx, *shareCtx;
     struct via_context *vmesa;
     __DRIscreenPrivate *sPriv = driContextPriv->driScreenPriv;
-    __DRIdrawablePrivate *dPriv = driContextPriv->driDrawablePriv;
     viaScreenPrivate *viaScreen = (viaScreenPrivate *)sPriv->private;
     drm_via_sarea_t *saPriv = (drm_via_sarea_t *)
         (((GLubyte *)sPriv->pSAREA) + viaScreen->sareaPrivOffset);
@@ -659,10 +658,6 @@ viaCreateContext(const __GLcontextModes *visual,
         driQueryOptionb(&vmesa->optionCache, "no_rast"))
        FALLBACK(vmesa, VIA_FALLBACK_USER_DISABLE, 1);
 
-    dPriv->vblFlags =
-       vmesa->viaScreen->irqEnabled ?
-        driGetDefaultVBlankFlags(&vmesa->optionCache) : VBLANK_FLAG_NO_IRQ;
-
     if (getenv("VIA_PAGEFLIP"))
        vmesa->allowPageFlip = 1;
 
@@ -838,12 +833,17 @@ viaMakeCurrent(__DRIcontextPrivate *driContextPriv,
         drawBuffer = (GLframebuffer *)driDrawPriv->driverPrivate;
         readBuffer = (GLframebuffer *)driReadPriv->driverPrivate;
 
-	if (vmesa->driDrawable != driDrawPriv) {
-	    driDrawableInitVBlank(driDrawPriv);
-	}
-
        if ((vmesa->driDrawable != driDrawPriv)
 	   || (vmesa->driReadable != driReadPriv)) {
+	  if (driDrawPriv->swap_interval == (unsigned)-1) {
+	     driDrawPriv->vblFlags =
+		vmesa->viaScreen->irqEnabled ?
+		driGetDefaultVBlankFlags(&vmesa->optionCache) :
+		VBLANK_FLAG_NO_IRQ;
+
+	     driDrawableInitVBlank(driDrawPriv);
+	  }
+
 	  vmesa->driDrawable = driDrawPriv;
 	  vmesa->driReadable = driReadPriv;
 

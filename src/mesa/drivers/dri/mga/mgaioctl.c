@@ -409,7 +409,7 @@ static void mgaWaitForFrameCompletion( mgaContextPtr mmesa )
 /*
  * Copy the back buffer to the front buffer.
  */
-void mgaCopyBuffer( const __DRIdrawablePrivate *dPriv )
+void mgaCopyBuffer( __DRIdrawablePrivate *dPriv )
 {
    mgaContextPtr mmesa;
    drm_clip_rect_t *pbox;
@@ -428,7 +428,7 @@ void mgaCopyBuffer( const __DRIdrawablePrivate *dPriv )
    FLUSH_BATCH( mmesa );
 
    mgaWaitForFrameCompletion( mmesa );
-   driWaitForVBlank( dPriv, & dPriv->vblSeq, dPriv->vblFlags, & missed_target );
+   driWaitForVBlank( dPriv, & missed_target );
    if ( missed_target ) {
       mmesa->swap_missed_count++;
       (void) (*dri_interface->getUST)( & mmesa->swap_missed_ust );

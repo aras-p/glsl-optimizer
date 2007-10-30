@@ -40,7 +40,6 @@
 #include "intel_fbo.h"
 #include "intel_reg.h"
 #include "intel_regions.h"
-#include "vblank.h"
 
 #define FILE_DEBUG_FLAG DEBUG_BLIT
 

@@ -452,7 +452,6 @@ mgaCreateContext( const __GLcontextModes *mesaVis,
    GLcontext *ctx, *shareCtx;
    mgaContextPtr mmesa;
    __DRIscreenPrivate *sPriv = driContextPriv->driScreenPriv;
-   __DRIdrawablePrivate *dPriv = driContextPriv->driDrawablePriv;
    mgaScreenPrivate *mgaScreen = (mgaScreenPrivate *)sPriv->private;
    drm_mga_sarea_t *saPriv = (drm_mga_sarea_t *)(((char*)sPriv->pSAREA)+
 					      mgaScreen->sarea_priv_offset);
@@ -650,9 +649,6 @@ mgaCreateContext( const __GLcontextModes *mesaVis,
    MGA_DEBUG = driParseDebugString( getenv( "MGA_DEBUG" ),
 				    debug_control );
 #endif
-
-   dPriv->vblFlags = (mmesa->mgaScreen->irq == 0)
-       ? VBLANK_FLAG_NO_IRQ : driGetDefaultVBlankFlags(&mmesa->optionCache);
 
    (*dri_interface->getUST)( & mmesa->swap_ust );
 
@@ -883,7 +879,13 @@ mgaMakeCurrent(__DRIcontextPrivate *driContextPriv,
       mgaContextPtr mmesa = (mgaContextPtr) driContextPriv->driverPrivate;
 
       if (mmesa->driDrawable != driDrawPriv) {
-	 driDrawableInitVBlank( driDrawPriv );
+	 if (driDrawPriv->swap_interval == (unsigned)-1) {
+	    driDrawPriv->vblFlags = (mmesa->mgaScreen->irq == 0)
+	       ? VBLANK_FLAG_NO_IRQ
+	       : driGetDefaultVBlankFlags(&mmesa->optionCache);
+
+	    driDrawableInitVBlank( driDrawPriv );
+	 }
 
 	 mmesa->driDrawable = driDrawPriv;
 	 mmesa->dirty = ~0; 

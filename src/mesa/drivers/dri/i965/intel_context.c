@@ -589,19 +589,21 @@ GLboolean intelMakeCurrent(__DRIcontextPrivate *driContextPriv,
    if (driContextPriv) {
       struct intel_context *intel = (struct intel_context *) driContextPriv->driverPrivate;
 
-      driDrawPriv->vblFlags = (intel->intelScreen->irq_active != 0)
-	  ? driGetDefaultVBlankFlags(&intel->optionCache) : VBLANK_FLAG_NO_IRQ;
-
-
       if (intel->driReadDrawable != driReadPriv) {
           intel->driReadDrawable = driReadPriv;
       }
 
       if ( intel->driDrawable != driDrawPriv ) {
+	 if (driDrawPriv->swap_interval == (unsigned)-1) {
+	    driDrawPriv->vblFlags = (intel->intelScreen->irq_active != 0)
+	       ? driGetDefaultVBlankFlags(&intel->optionCache)
+	       : VBLANK_FLAG_NO_IRQ;
+	    driDrawableInitVBlank( driDrawPriv );
+	 }
+
 	 intel->driDrawable = driDrawPriv;
 	 intelWindowMoved( intel );
 	 /* Shouldn't the readbuffer be stored also? */
-	 driDrawableInitVBlank( driDrawPriv );
       }
 
       _mesa_make_current(&intel->ctx,

@@ -449,7 +449,7 @@ void r200CopyBuffer( __DRIdrawablePrivate *dPriv,
    if (!rect)
    {
        UNLOCK_HARDWARE( rmesa );
-       driWaitForVBlank( dPriv, & dPriv->vblSeq, dPriv->vblFlags, & missed_target );
+       driWaitForVBlank( dPriv, & missed_target );
        LOCK_HARDWARE( rmesa );
    }
 
@@ -553,7 +553,7 @@ void r200PageFlip( __DRIdrawablePrivate *dPriv )
     */
    r200WaitForFrameCompletion( rmesa );
    UNLOCK_HARDWARE( rmesa );
-   driWaitForVBlank( dPriv, & dPriv->vblSeq, dPriv->vblFlags, & missed_target );
+   driWaitForVBlank( dPriv, & missed_target );
    if ( missed_target ) {
       rmesa->swap_missed_count++;
       (void) (*dri_interface->getUST)( & rmesa->swap_missed_ust );

@@ -667,9 +667,6 @@ struct radeon_context {
 
 	/* VBI
 	 */
-	GLuint vbl_seq;
-	GLuint vblank_flags;
-
 	int64_t swap_ust;
 	int64_t swap_missed_ust;
 

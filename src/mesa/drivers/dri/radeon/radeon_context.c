@@ -424,9 +424,6 @@ radeonCreateContext( const __GLcontextModes *glVisual,
 
    rmesa->do_usleeps = (fthrottle_mode == DRI_CONF_FTHROTTLE_USLEEPS);
 
-   rmesa->vblank_flags = (rmesa->radeonScreen->irq != 0)
-       ? driGetDefaultVBlankFlags(&rmesa->optionCache) : VBLANK_FLAG_NO_IRQ;
-
    (*dri_interface->getUST)( & rmesa->swap_ust );
 
 
@@ -592,15 +589,18 @@ radeonMakeCurrent( __DRIcontextPrivate *driContextPriv,
       if (RADEON_DEBUG & DEBUG_DRI)
 	 fprintf(stderr, "%s ctx %p\n", __FUNCTION__, (void *) newCtx->glCtx);
 
-      if ( newCtx->dri.drawable != driDrawPriv ) {
-         /* XXX we may need to validate the drawable here!!! */
-	  driDrawableInitVBlank( driDrawPriv );
-      }
-
       newCtx->dri.readable = driReadPriv;
 
       if ( (newCtx->dri.drawable != driDrawPriv) ||
            newCtx->lastStamp != driDrawPriv->lastStamp ) {
+	 if (driDrawPriv->swap_interval == (unsigned)-1) {
+	    driDrawPriv->vblFlags = (newCtx->radeonScreen->irq != 0)
+	       ? driGetDefaultVBlankFlags(&newCtx->optionCache)
+	       : VBLANK_FLAG_NO_IRQ;
+
+	    driDrawableInitVBlank( driDrawPriv );
+	 }
+
 	 newCtx->dri.drawable = driDrawPriv;
 
 	 radeonSetCliprects(newCtx);

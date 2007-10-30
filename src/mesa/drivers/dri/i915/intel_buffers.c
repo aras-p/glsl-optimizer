@@ -351,7 +351,7 @@ intelWindowMoved(struct intel_context *intel)
 	  * Then get new vblank_base and vblSeq values
 	  */
 	 dPriv->vblFlags = flags;
-	 driGetCurrentVBlank(dPriv, dPriv->vblFlags, &dPriv->vblSeq);
+	 driGetCurrentVBlank(dPriv);
 	 dPriv->vblank_base = dPriv->vblSeq;
 
 	 intel_fb->vbl_waited = dPriv->vblSeq;
@@ -838,7 +838,7 @@ static GLboolean
 intelScheduleSwap(__DRIdrawablePrivate * dPriv, GLboolean *missed_target)
 {
    struct intel_framebuffer *intel_fb = dPriv->driverPrivate;
-   unsigned int interval = driGetVBlankInterval(dPriv, dPriv->vblFlags);
+   unsigned int interval;
    struct intel_context *intel =
       intelScreenContext(dPriv->driScreenPriv->private);
    const intelScreenPrivate *intelScreen = intel->intelScreen;
@@ -851,6 +851,8 @@ intelScheduleSwap(__DRIdrawablePrivate * dPriv, GLboolean *missed_target)
        intelScreen->current_rotation != 0 ||
        intelScreen->drmMinor < (intel_fb->pf_active ? 9 : 6))
       return GL_FALSE;
+
+   interval = driGetVBlankInterval(dPriv);
 
    swap.seqtype = DRM_VBLANK_ABSOLUTE;
 
@@ -933,8 +935,7 @@ intelSwapBuffers(__DRIdrawablePrivate * dPriv)
 
          if (screen->current_rotation != 0 ||
 	     !intelScheduleSwap(dPriv, &missed_target)) {
-	    driWaitForVBlank(dPriv, &dPriv->vblSeq, dPriv->vblFlags,
-			     &missed_target);
+	    driWaitForVBlank(dPriv, &missed_target);
 
 	    if (screen->current_rotation != 0 || !intelPageFlip(dPriv)) {
 	       intelCopyBuffer(dPriv, NULL);

@@ -187,8 +187,7 @@ void radeonCopyBuffer(__DRIdrawablePrivate * dPriv,
 	if (!rect)
 	{
 	    UNLOCK_HARDWARE(radeon);
-	    driWaitForVBlank(dPriv, &dPriv->vblSeq, dPriv->vblFlags,
-			     &missed_target);
+	    driWaitForVBlank(dPriv, &missed_target);
 	    LOCK_HARDWARE(radeon);
 	}
 
@@ -293,8 +292,7 @@ void radeonPageFlip(__DRIdrawablePrivate * dPriv)
 	 */
 	radeonWaitForFrameCompletion(radeon);
 	UNLOCK_HARDWARE(radeon);
-	driWaitForVBlank(dPriv, &dPriv->vblSeq, dPriv->vblFlags,
-			 &missed_target);
+	driWaitForVBlank(dPriv, &missed_target);
 	if (missed_target) {
 		radeon->swap_missed_count++;
 		(void)(*dri_interface->getUST) (&radeon->swap_missed_ust);

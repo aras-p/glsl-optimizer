@@ -282,7 +282,7 @@ void r128CopyBuffer( __DRIdrawablePrivate *dPriv )
    }
 
    UNLOCK_HARDWARE( rmesa );
-   driWaitForVBlank( dPriv, &dPriv->vblSeq, dPriv->vblFlags, &missed_target );
+   driWaitForVBlank( dPriv, &missed_target );
    LOCK_HARDWARE( rmesa );
 
    nbox = dPriv->numClipRects;	/* must be in locked region */
@@ -359,7 +359,7 @@ void r128PageFlip( __DRIdrawablePrivate *dPriv )
    }
 
    UNLOCK_HARDWARE( rmesa );
-   driWaitForVBlank( dPriv, &dPriv->vblSeq, dPriv->vblFlags, &missed_target );
+   driWaitForVBlank( dPriv, &missed_target );
    LOCK_HARDWARE( rmesa );
 
    /* The kernel will have been initialized to perform page flipping

@@ -113,7 +113,6 @@ GLboolean r128CreateContext( const __GLcontextModes *glVisual,
 {
    GLcontext *ctx, *shareCtx;
    __DRIscreenPrivate *sPriv = driContextPriv->driScreenPriv;
-   __DRIdrawablePrivate *dPriv = driContextPriv->driDrawablePriv;
    struct dd_function_table functions;
    r128ContextPtr rmesa;
    r128ScreenPtr r128scrn;
@@ -263,9 +262,6 @@ GLboolean r128CreateContext( const __GLcontextModes *glVisual,
    r128DDInitSpanFuncs( ctx );
    r128DDInitState( rmesa );
 
-   dPriv->vblFlags = (rmesa->r128Screen->irq != 0)
-       ? driGetDefaultVBlankFlags(&rmesa->optionCache) : VBLANK_FLAG_NO_IRQ;
-
    driContextPriv->driverPrivate = (void *)rmesa;
 
 #if DO_DEBUG
@@ -348,7 +344,13 @@ r128MakeCurrent( __DRIcontextPrivate *driContextPriv,
 	 newR128Ctx->dirty = R128_UPLOAD_ALL;
       }
 
-      driDrawableInitVBlank( driDrawPriv );
+      if (driDrawPriv->swap_interval == (unsigned)-1) {
+	 driDrawPriv->vblFlags = (newR128Ctx->r128Screen->irq != 0)
+	    ? driGetDefaultVBlankFlags(&newR128Ctx->optionCache)
+	    : VBLANK_FLAG_NO_IRQ;
+
+	 driDrawableInitVBlank( driDrawPriv );
+      }
       newR128Ctx->driDrawable = driDrawPriv;
 
       _mesa_make_current( newR128Ctx->glCtx,

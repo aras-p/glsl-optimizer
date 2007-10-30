@@ -320,7 +320,7 @@ void mach64CopyBuffer( __DRIdrawablePrivate *dPriv )
 #endif
 
    UNLOCK_HARDWARE( mmesa );
-   driWaitForVBlank( dPriv, &dPriv->vblSeq, dPriv->vblFlags, &missed_target );
+   driWaitForVBlank( dPriv, &missed_target );
    LOCK_HARDWARE( mmesa );
 
    /* use front buffer cliprects */

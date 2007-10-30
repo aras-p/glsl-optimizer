@@ -248,7 +248,6 @@ GLboolean r200CreateContext( const __GLcontextModes *glVisual,
 			     void *sharedContextPrivate)
 {
    __DRIscreenPrivate *sPriv = driContextPriv->driScreenPriv;
-   __DRIdrawablePrivate *dPriv = driContextPriv->driDrawablePriv;
    radeonScreenPtr screen = (radeonScreenPtr)(sPriv->private);
    struct dd_function_table functions;
    r200ContextPtr rmesa;
@@ -500,9 +499,6 @@ GLboolean r200CreateContext( const __GLcontextModes *glVisual,
 	      fthrottle_mode,
 	      rmesa->r200Screen->irq);
 
-   dPriv->vblFlags = (rmesa->r200Screen->irq != 0)
-       ? driGetDefaultVBlankFlags(&rmesa->optionCache) : VBLANK_FLAG_NO_IRQ;
-
    rmesa->prefer_gart_client_texturing = 
       (getenv("R200_GART_CLIENT_TEXTURES") != 0);
 
@@ -667,14 +663,18 @@ r200MakeCurrent( __DRIcontextPrivate *driContextPriv,
       if (R200_DEBUG & DEBUG_DRI)
 	 fprintf(stderr, "%s ctx %p\n", __FUNCTION__, (void *)newCtx->glCtx);
 
-      if ( newCtx->dri.drawable != driDrawPriv ) {
-	  driDrawableInitVBlank( driDrawPriv );
-      }
-
       newCtx->dri.readable = driReadPriv;
 
       if ( newCtx->dri.drawable != driDrawPriv ||
            newCtx->lastStamp != driDrawPriv->lastStamp ) {
+	 if (driDrawPriv->swap_interval == (unsigned)-1) {
+	    driDrawPriv->vblFlags = (newCtx->r200Screen->irq != 0)
+	       ? driGetDefaultVBlankFlags(&newCtx->optionCache)
+	       : VBLANK_FLAG_NO_IRQ;
+
+	    driDrawableInitVBlank( driDrawPriv );
+	 }
+
 	 newCtx->dri.drawable = driDrawPriv;
 
 	 r200SetCliprects(newCtx);
