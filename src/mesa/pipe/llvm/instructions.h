@@ -36,6 +36,7 @@
 #include <llvm/BasicBlock.h>
 #include <llvm/Module.h>
 #include <llvm/Value.h>
+#include <llvm/Support/LLVMBuilder.h>
 
 #include <map>
 #include <stack>
@@ -50,7 +51,8 @@ class Storage;
 class Instructions
 {
 public:
-   Instructions(llvm::Module *mod, llvm::Function *func, llvm::BasicBlock *block);
+   Instructions(llvm::Module *mod, llvm::Function *func, llvm::BasicBlock *block,
+                Storage *storage);
 
    llvm::BasicBlock *currentBlock() const;
 
@@ -58,7 +60,7 @@ public:
    llvm::Value *arl(llvm::Value *in1);
    llvm::Value *add(llvm::Value *in1, llvm::Value *in2);
    void         beginLoop();
-   void         bgnSub(unsigned, Storage *);
+   void         bgnSub(unsigned);
    void         brk();
    void         cal(int label, llvm::Value *out, llvm::Value *in,
                     llvm::Value *cst, llvm::Value *tmp);
@@ -116,11 +118,11 @@ private:
 
    std::vector<llvm::Value*> extractVector(llvm::Value *vec);
 private:
-   llvm::Module *m_mod;
-   llvm::Function *m_func;
-   char        m_name[32];
-   llvm::BasicBlock *m_block;
-   int               m_idx;
+   llvm::Module             *m_mod;
+   llvm::Function           *m_func;
+   char                      m_name[32];
+   llvm::LLVMFoldingBuilder  m_builder;
+   int                       m_idx;
 
    llvm::VectorType *m_floatVecType;
 
@@ -140,6 +142,7 @@ private:
    };
    std::stack<Loop> m_loopStack;
    std::map<int, llvm::Function*> m_functions;
+   Storage *m_storage;
 };
 
 #endif

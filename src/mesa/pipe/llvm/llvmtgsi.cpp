@@ -517,7 +517,7 @@ translate_instruction(llvm::Module *module,
    }
       break;
    case TGSI_OPCODE_BGNSUB: {
-      instr->bgnSub(instno, storage);
+      instr->bgnSub(instno);
       storage->setCurrentBlock(instr->currentBlock());
       storage->pushTemps();
       return;
@@ -679,7 +679,7 @@ tgsi_to_llvm(struct gallivm_prog *prog, const struct tgsi_token *tokens)
    fi = tgsi_default_full_instruction();
    fd = tgsi_default_full_declaration();
    Storage storage(label_entry, ptr_OUT, ptr_IN, ptr_CONST, ptr_TEMPS);
-   Instructions instr(mod, shader, label_entry);
+   Instructions instr(mod, shader, label_entry, &storage);
    while(!tgsi_parse_end_of_tokens(&parse)) {
       tgsi_parse_token(&parse);
 
