@@ -41,7 +41,7 @@
 #include "shader/prog_parameter.h"
 #include "shader/prog_print.h"
 
-#include "st_pixeltransfer.h"
+#include "st_context.h"
 
 
 #define MAX_INST 100
@@ -49,13 +49,18 @@
 /**
  * Returns a fragment program which implements the current pixel transfer ops.
  */
-struct gl_fragment_program *
-st_get_pixel_transfer_program(GLcontext *ctx)
+static struct gl_fragment_program *
+get_pixel_transfer_program(GLcontext *ctx)
 {
    struct prog_instruction inst[MAX_INST];
    struct gl_program_parameter_list *params;
    struct gl_fragment_program *fp;
    GLuint ic = 0;
+
+   fp = (struct gl_fragment_program *)
+      ctx->Driver.NewProgram(ctx, GL_FRAGMENT_PROGRAM_ARB, 0);
+   if (!fp)
+      return NULL;
 
    params = _mesa_new_parameter_list();
 
@@ -69,6 +74,8 @@ st_get_pixel_transfer_program(GLcontext *ctx)
    inst[ic].TexSrcUnit = 0;
    inst[ic].TexSrcTarget = TEXTURE_2D_INDEX;
    ic++;
+   fp->Base.InputsRead = (1 << FRAG_ATTRIB_TEX0);
+   fp->Base.OutputsWritten = (1 << FRAG_RESULT_COLR);
 
    /* MAD result.color, result.color, scale, bias; */
    if (ctx->Pixel.RedBias != 0.0 || ctx->Pixel.RedScale != 1.0 ||
@@ -110,11 +117,6 @@ st_get_pixel_transfer_program(GLcontext *ctx)
    assert(ic <= MAX_INST);
 
 
-   fp = (struct gl_fragment_program *)
-      ctx->Driver.NewProgram(ctx, GL_FRAGMENT_PROGRAM_ARB, 0);
-   if (!fp)
-      return NULL;
-
    fp->Base.Instructions = _mesa_alloc_instructions(ic);
    if (!fp->Base.Instructions) {
       _mesa_error(ctx, GL_OUT_OF_MEMORY,
@@ -122,10 +124,38 @@ st_get_pixel_transfer_program(GLcontext *ctx)
       return NULL;
    }
 
-   _mesa_copy_instructions(fp->Base.Instructions, inst,
-                           fp->Base.NumInstructions);
-
+   _mesa_copy_instructions(fp->Base.Instructions, inst, ic);
    fp->Base.NumInstructions = ic;
+   fp->Base.Parameters = params;
+
+   printf("========= pixel transfer prog\n");
+   _mesa_print_program(&fp->Base);
+   _mesa_print_parameter_list(fp->Base.Parameters);
 
    return fp;
 }
+
+
+
+static void
+update_pixel_transfer(struct st_context *st)
+{
+   /* XXX temporary - implement a program cache */
+   GLcontext *ctx = st->ctx;
+   if (st->pixel_transfer_program) {
+      ctx->Driver.DeleteProgram(ctx, &st->pixel_transfer_program->Base);
+   }
+
+   st->pixel_transfer_program = get_pixel_transfer_program(ctx);
+}
+
+
+
+const struct st_tracked_state st_update_pixel_transfer = {
+   .name = "st_update_pixel_transfer",
+   .dirty = {
+      .mesa = _NEW_PIXEL,
+      .st  = 0,
+   },
+   .update = update_pixel_transfer
+};
