@@ -206,6 +206,7 @@ STATETRACKER_SOURCES = \
 	state_tracker/st_atom_depth.c \
 	state_tracker/st_atom_fixedfunction.c \
 	state_tracker/st_atom_framebuffer.c \
+	state_tracker/st_atom_pixeltransfer.c \
 	state_tracker/st_atom_sampler.c \
 	state_tracker/st_atom_scissor.c \
 	state_tracker/st_atom_shader.c \
@@ -232,7 +233,6 @@ STATETRACKER_SOURCES = \
 	state_tracker/st_draw.c \
 	state_tracker/st_format.c \
 	state_tracker/st_mesa_to_tgsi.c \
-	state_tracker/st_pixeltransfer.c \
 	state_tracker/st_program.c \
 	state_tracker/st_mipmap_tree.c
 
