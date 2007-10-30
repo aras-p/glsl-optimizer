@@ -5138,7 +5138,7 @@
 
     <function name="StencilOpSeparate" offset="assign">
         <param name="face" type="GLenum"/>
-        <param name="fail" type="GLenum"/>
+        <param name="sfail" type="GLenum"/>
         <param name="zfail" type="GLenum"/>
         <param name="zpass" type="GLenum"/>
         <glx ignore="true"/>
@@ -12170,7 +12170,7 @@
         <size name="Get" mode="get"/>
     </enum>
 
-    <function name="StencilOpSeparateATI" offset="assign" static_dispatch="false">
+    <function name="StencilOpSeparateATI" alias="StencilOpSeparate" static_dispatch="false">
         <param name="face" type="GLenum"/>
         <param name="sfail" type="GLenum"/>
         <param name="zfail" type="GLenum"/>
