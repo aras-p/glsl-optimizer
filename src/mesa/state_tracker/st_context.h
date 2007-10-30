@@ -28,7 +28,8 @@
 #ifndef ST_CONTEXT_H
 #define ST_CONTEXT_H
 
-#include "mtypes.h"
+#include "main/mtypes.h"
+#include "shader/prog_cache.h"
 #include "pipe/p_state.h"
 
 
@@ -133,6 +134,7 @@ struct st_context
    struct st_fragment_program *fp;  /**< Currently bound fragment program */
 
    struct gl_fragment_program *pixel_transfer_program;
+   struct gl_program_cache *pixel_transfer_cache;
 
    /**
     * Buffer object which stores the ctx->Current.Attrib[] values.
