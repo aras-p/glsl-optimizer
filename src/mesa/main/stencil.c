@@ -85,6 +85,81 @@ _mesa_ClearStencil( GLint s )
 /**
  * Set the function and reference value for stencil testing.
  *
+ * \param frontfunc front test function.
+ * \param backfunc back test function.
+ * \param ref front and back reference value.
+ * \param mask front and back bitmask.
+ *
+ * \sa glStencilFunc().
+ *
+ * Verifies the parameters and updates the respective values in
+ * __GLcontextRec::Stencil. On change flushes the vertices and notifies the
+ * driver via the dd_function_table::StencilFunc callback.
+ */
+void GLAPIENTRY
+_mesa_StencilFuncSeparateATI( GLenum frontfunc, GLenum backfunc, GLint ref, GLuint mask )
+{
+   GET_CURRENT_CONTEXT(ctx);
+   const GLint stencilMax = (1 << ctx->DrawBuffer->Visual.stencilBits) - 1;
+   ASSERT_OUTSIDE_BEGIN_END(ctx);
+
+   switch (frontfunc) {
+      case GL_NEVER:
+      case GL_LESS:
+      case GL_LEQUAL:
+      case GL_GREATER:
+      case GL_GEQUAL:
+      case GL_EQUAL:
+      case GL_NOTEQUAL:
+      case GL_ALWAYS:
+         break;
+      default:
+         _mesa_error( ctx, GL_INVALID_ENUM, "glStencilFuncSeparateATI (0x%04x)", frontfunc );
+         return;
+   }
+
+   switch (backfunc) {
+      case GL_NEVER:
+      case GL_LESS:
+      case GL_LEQUAL:
+      case GL_GREATER:
+      case GL_GEQUAL:
+      case GL_EQUAL:
+      case GL_NOTEQUAL:
+      case GL_ALWAYS:
+         break;
+      default:
+         _mesa_error( ctx, GL_INVALID_ENUM, "glStencilFuncSeparateATI (0x%04x)", backfunc );
+         return;
+   }
+
+   ref = CLAMP( ref, 0, stencilMax );
+
+   /* set both front and back state */
+   if (ctx->Stencil.Function[0] == frontfunc &&
+       ctx->Stencil.Function[1] == backfunc &&
+       ctx->Stencil.ValueMask[0] == mask &&
+       ctx->Stencil.ValueMask[1] == mask &&
+       ctx->Stencil.Ref[0] == ref &&
+       ctx->Stencil.Ref[1] == ref)
+      return;
+   FLUSH_VERTICES(ctx, _NEW_STENCIL);
+   ctx->Stencil.Function[0]  = frontfunc;
+   ctx->Stencil.Function[1]  = backfunc;
+   ctx->Stencil.Ref[0]       = ctx->Stencil.Ref[1]       = ref;
+   ctx->Stencil.ValueMask[0] = ctx->Stencil.ValueMask[1] = mask;
+   if (ctx->Driver.StencilFuncSeparate) {
+      ctx->Driver.StencilFuncSeparate(ctx, GL_FRONT,
+                                      frontfunc, ref, mask);
+      ctx->Driver.StencilFuncSeparate(ctx, GL_BACK,
+                                      backfunc, ref, mask);
+   }
+}
+
+
+/**
+ * Set the function and reference value for stencil testing.
+ *
  * \param func test function.
  * \param ref reference value.
  * \param mask bitmask.
