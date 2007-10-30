@@ -508,6 +508,8 @@ _mesa_program_state_flags(const gl_state_index state[STATE_LENGTH])
       return _NEW_TEXTURE_MATRIX;
    case STATE_PROGRAM_MATRIX:
       return _NEW_TRACK_MATRIX;
+   case STATE_COLOR_MATRIX:
+      return _NEW_COLOR_MATRIX;
 
    case STATE_DEPTH_RANGE:
       return _NEW_VIEWPORT;
@@ -601,6 +603,9 @@ append_token(char *dst, gl_state_index k)
    case STATE_PROGRAM_MATRIX:
       append(dst, "matrix.program");
       break;
+   case STATE_COLOR_MATRIX:
+      append(dst, "matrix.color");
+      break;
    case STATE_MATRIX_INVERSE:
       append(dst, ".inverse");
       break;
@@ -686,6 +691,12 @@ append_token(char *dst, gl_state_index k)
    case STATE_POSITION_NORMALIZED:
       append(dst, "(internal)");
       break;
+   case STATE_PT_SCALE:
+      append(dst, "PTscale");
+      break;
+   case STATE_PT_BIAS:
+      append(dst, "PTbias");
+      break;
    default:
       ;
    }
@@ -764,6 +775,7 @@ _mesa_program_state_string(const gl_state_index state[STATE_LENGTH])
    case STATE_MVP_MATRIX:
    case STATE_TEXTURE_MATRIX:
    case STATE_PROGRAM_MATRIX:
+   case STATE_COLOR_MATRIX:
       {
          /* state[0] = modelview, projection, texture, etc. */
          /* state[1] = which texture matrix or program matrix */
