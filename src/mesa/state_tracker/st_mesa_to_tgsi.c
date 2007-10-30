@@ -792,7 +792,8 @@ tgsi_translate_mesa_program(
    }
 
    /* immediates/literals */
-   for (i = 0; i < program->Parameters->NumParameters; i++) {
+   for (i = 0; program->Parameters && i < program->Parameters->NumParameters;
+	i++) {
       if (program->Parameters->Parameters[i].Type == PROGRAM_CONSTANT) {
          struct tgsi_full_immediate fullimm
             = make_immediate(program->Parameters->ParameterValues[i],
