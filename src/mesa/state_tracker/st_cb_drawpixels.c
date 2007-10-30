@@ -64,26 +64,23 @@
  * If bitmapMode, use KIL instruction to kill the "0-pixels".
  */
 static struct st_fragment_program *
-make_fragment_shader(struct st_context *st, GLboolean bitmapMode)
+make_bitmap_fragment_shader(struct st_context *st)
 {
    /* only make programs once and re-use */
-   static struct st_fragment_program *progs[2] = { NULL, NULL };
+   static struct st_fragment_program *prog = NULL;
    GLcontext *ctx = st->ctx;
    struct st_fragment_program *stfp;
    struct gl_program *p;
    GLuint ic = 0;
 
-   if (progs[bitmapMode])
-      return progs[bitmapMode];
+   if (prog)
+      return prog;
 
    p = ctx->Driver.NewProgram(ctx, GL_FRAGMENT_PROGRAM_ARB, 0);
    if (!p)
       return NULL;
 
-   if (bitmapMode)
-      p->NumInstructions = 6;
-   else
-      p->NumInstructions = 2;
+   p->NumInstructions = 6;
 
    p->Instructions = _mesa_alloc_instructions(p->NumInstructions);
    if (!p->Instructions) {
@@ -91,96 +88,81 @@ make_fragment_shader(struct st_context *st, GLboolean bitmapMode)
       return NULL;
    }
    _mesa_init_instructions(p->Instructions, p->NumInstructions);
-   if (bitmapMode) {
-      /*
-       * XXX, we need to compose this fragment shader with the current
-       * user-provided fragment shader so the fragment program is applied
-       * to the fragments which aren't culled.
-       */
-      /* TEX tmp0, fragment.texcoord[0], texture[0], 2D; */
-      p->Instructions[ic].Opcode = OPCODE_TEX;
-      p->Instructions[ic].DstReg.File = PROGRAM_TEMPORARY;
-      p->Instructions[ic].DstReg.Index = 0;
-      p->Instructions[ic].SrcReg[0].File = PROGRAM_INPUT;
-      p->Instructions[ic].SrcReg[0].Index = FRAG_ATTRIB_TEX0;
-      p->Instructions[ic].TexSrcUnit = 0;
-      p->Instructions[ic].TexSrcTarget = TEXTURE_2D_INDEX;
-      ic++;
 
-      /* SWZ tmp0.x, tmp0.x, 1111; # tmp0.x = 1.0 */
-      p->Instructions[ic].Opcode = OPCODE_SWZ;
-      p->Instructions[ic].DstReg.File = PROGRAM_TEMPORARY;
-      p->Instructions[ic].DstReg.Index = 0;
-      p->Instructions[ic].DstReg.WriteMask = WRITEMASK_X;
-      p->Instructions[ic].SrcReg[0].File = PROGRAM_TEMPORARY;
-      p->Instructions[ic].SrcReg[0].Index = 0;
-      p->Instructions[ic].SrcReg[0].Swizzle
-         = MAKE_SWIZZLE4(SWIZZLE_ONE, SWIZZLE_ONE, SWIZZLE_ONE, SWIZZLE_ONE );
-      ic++;
+   /*
+    * XXX, we need to compose this fragment shader with the current
+    * user-provided fragment shader so the fragment program is applied
+    * to the fragments which aren't culled.
+    */
+   /* TEX tmp0, fragment.texcoord[0], texture[0], 2D; */
+   p->Instructions[ic].Opcode = OPCODE_TEX;
+   p->Instructions[ic].DstReg.File = PROGRAM_TEMPORARY;
+   p->Instructions[ic].DstReg.Index = 0;
+   p->Instructions[ic].SrcReg[0].File = PROGRAM_INPUT;
+   p->Instructions[ic].SrcReg[0].Index = FRAG_ATTRIB_TEX0;
+   p->Instructions[ic].TexSrcUnit = 0;
+   p->Instructions[ic].TexSrcTarget = TEXTURE_2D_INDEX;
+   ic++;
 
-      /* SUB tmp0, tmp0.wwww, tmp0.xxxx;  #  tmp0.w -= 1 */
-      p->Instructions[ic].Opcode = OPCODE_SUB;
-      p->Instructions[ic].DstReg.File = PROGRAM_TEMPORARY;
-      p->Instructions[ic].DstReg.Index = 0;
-      p->Instructions[ic].SrcReg[0].File = PROGRAM_TEMPORARY;
-      p->Instructions[ic].SrcReg[0].Index = 0;
-      p->Instructions[ic].SrcReg[0].Swizzle = SWIZZLE_WWWW;
-      p->Instructions[ic].SrcReg[1].File = PROGRAM_TEMPORARY;
-      p->Instructions[ic].SrcReg[1].Index = 0;
-      p->Instructions[ic].SrcReg[1].Swizzle = SWIZZLE_XXXX; /* 1.0 */
-      ic++;
+   /* SWZ tmp0.x, tmp0.x, 1111; # tmp0.x = 1.0 */
+   p->Instructions[ic].Opcode = OPCODE_SWZ;
+   p->Instructions[ic].DstReg.File = PROGRAM_TEMPORARY;
+   p->Instructions[ic].DstReg.Index = 0;
+   p->Instructions[ic].DstReg.WriteMask = WRITEMASK_X;
+   p->Instructions[ic].SrcReg[0].File = PROGRAM_TEMPORARY;
+   p->Instructions[ic].SrcReg[0].Index = 0;
+   p->Instructions[ic].SrcReg[0].Swizzle
+      = MAKE_SWIZZLE4(SWIZZLE_ONE, SWIZZLE_ONE, SWIZZLE_ONE, SWIZZLE_ONE );
+   ic++;
 
-      /* KIL if tmp0 < 0 */
-      p->Instructions[ic].Opcode = OPCODE_KIL;
-      p->Instructions[ic].SrcReg[0].File = PROGRAM_TEMPORARY;
-      p->Instructions[ic].SrcReg[0].Index = 0;
-      ic++;
+   /* SUB tmp0, tmp0.wwww, tmp0.xxxx;  #  tmp0.w -= 1 */
+   p->Instructions[ic].Opcode = OPCODE_SUB;
+   p->Instructions[ic].DstReg.File = PROGRAM_TEMPORARY;
+   p->Instructions[ic].DstReg.Index = 0;
+   p->Instructions[ic].SrcReg[0].File = PROGRAM_TEMPORARY;
+   p->Instructions[ic].SrcReg[0].Index = 0;
+   p->Instructions[ic].SrcReg[0].Swizzle = SWIZZLE_WWWW;
+   p->Instructions[ic].SrcReg[1].File = PROGRAM_TEMPORARY;
+   p->Instructions[ic].SrcReg[1].Index = 0;
+   p->Instructions[ic].SrcReg[1].Swizzle = SWIZZLE_XXXX; /* 1.0 */
+   ic++;
 
-      /* MOV result.color, fragment.color */
-      p->Instructions[ic].Opcode = OPCODE_MOV;
-      p->Instructions[ic].DstReg.File = PROGRAM_OUTPUT;
-      p->Instructions[ic].DstReg.Index = FRAG_RESULT_COLR;
-      p->Instructions[ic].SrcReg[0].File = PROGRAM_INPUT;
-      p->Instructions[ic].SrcReg[0].Index = FRAG_ATTRIB_COL0;
-      ic++;
-   }
-   else {
-      /* DrawPixels mode */
-      /* TEX result.color, fragment.texcoord[0], texture[0], 2D; */
-      p->Instructions[ic].Opcode = OPCODE_TEX;
-      p->Instructions[ic].DstReg.File = PROGRAM_OUTPUT;
-      p->Instructions[ic].DstReg.Index = FRAG_RESULT_COLR;
-      p->Instructions[ic].SrcReg[0].File = PROGRAM_INPUT;
-      p->Instructions[ic].SrcReg[0].Index = FRAG_ATTRIB_TEX0;
-      p->Instructions[ic].TexSrcUnit = 0;
-      p->Instructions[ic].TexSrcTarget = TEXTURE_2D_INDEX;
-      ic++;
-   }
+   /* KIL if tmp0 < 0 */
+   p->Instructions[ic].Opcode = OPCODE_KIL;
+   p->Instructions[ic].SrcReg[0].File = PROGRAM_TEMPORARY;
+   p->Instructions[ic].SrcReg[0].Index = 0;
+   ic++;
+
+   /* MOV result.color, fragment.color */
+   p->Instructions[ic].Opcode = OPCODE_MOV;
+   p->Instructions[ic].DstReg.File = PROGRAM_OUTPUT;
+   p->Instructions[ic].DstReg.Index = FRAG_RESULT_COLR;
+   p->Instructions[ic].SrcReg[0].File = PROGRAM_INPUT;
+   p->Instructions[ic].SrcReg[0].Index = FRAG_ATTRIB_COL0;
+   ic++;
+
    /* END; */
    p->Instructions[ic++].Opcode = OPCODE_END;
 
    assert(ic == p->NumInstructions);
 
-   p->InputsRead = FRAG_BIT_TEX0;
+   p->InputsRead = FRAG_BIT_TEX0 | FRAG_BIT_COL0;
    p->OutputsWritten = (1 << FRAG_RESULT_COLR);
-   if (bitmapMode) {
-      p->InputsRead |= FRAG_BIT_COL0;
-   }
 
    stfp = (struct st_fragment_program *) p;
    st_translate_fragment_program(st, stfp, NULL,
                                  stfp->tokens, ST_MAX_SHADER_TOKENS);
 
-   progs[bitmapMode] = stfp;
+   prog = stfp;
 
    return stfp;
 }
 
 
 static struct st_fragment_program *
-make_drawpix_fragment_shader(struct st_context *st)
+make_drawpix_fragment_shader(GLcontext *ctx)
 {
-   GLcontext *ctx = st->ctx;
+   struct st_context *st = ctx->st;
    struct st_fragment_program *stfp;
 
    if (st->pixel_xfer.program->serialNo == st->pixel_xfer.xfer_prog_sn
@@ -963,7 +945,7 @@ st_DrawPixels(GLcontext *ctx, GLint x, GLint y, GLsizei width, GLsizei height,
    }
    else {
       ps = st->state.framebuffer.cbufs[0];
-      stfp = make_drawpix_fragment_shader(ctx->st);
+      stfp = make_drawpix_fragment_shader(ctx);
       stvp = make_vertex_shader(ctx->st, GL_FALSE);
       color = NULL;
    }
@@ -1146,7 +1128,7 @@ st_Bitmap(GLcontext *ctx, GLint x, GLint y, GLsizei width, GLsizei height,
    struct pipe_mipmap_tree *mt;
 
    /* create the fragment program */
-   stfp = make_fragment_shader(ctx->st, GL_TRUE);
+   stfp = make_bitmap_fragment_shader(ctx->st);
 
    /* and vertex program */
    stvp = make_vertex_shader(ctx->st, GL_TRUE);
@@ -1252,6 +1234,9 @@ st_CopyPixels(GLcontext *ctx, GLint srcx, GLint srcy,
    GLfloat *color;
    uint format;
 
+   /* make sure rendering has completed */
+   pipe->flush(pipe, 0x0);
+
    st_validate_state(st);
 
    if (type == GL_STENCIL) {
@@ -1263,7 +1248,7 @@ st_CopyPixels(GLcontext *ctx, GLint srcx, GLint srcy,
    if (type == GL_COLOR) {
       rbRead = st_renderbuffer(ctx->ReadBuffer->_ColorReadBuffer);
       color = NULL;
-      stfp = make_fragment_shader(ctx->st, GL_FALSE);
+      stfp = make_drawpix_fragment_shader(ctx);
       stvp = make_vertex_shader(ctx->st, GL_FALSE);
    }
    else {
