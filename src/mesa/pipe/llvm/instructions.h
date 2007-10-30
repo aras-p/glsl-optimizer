@@ -113,6 +113,8 @@ private:
    llvm::Function *declareFunc(int label);
 
    llvm::Function *findFunction(int label);
+
+   std::vector<llvm::Value*> extractVector(llvm::Value *vec);
 private:
    llvm::Module *m_mod;
    llvm::Function *m_func;
