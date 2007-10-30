@@ -1,3 +1,4 @@
+/* clang --emit-llvm llvm_builtins.c |llvm-as |opt -std-compile-opts |llvm2cpp -for=Shader -gen-module -funcname=createBaseShader */
 /**************************************************************************
  *
  * Copyright 2007 Tungsten Graphics, Inc., Cedar Park, Texas.
@@ -31,7 +32,6 @@
   */
 
 /* clang --emit-llvm llvm_builtins.c |llvm-as |opt -std-compile-opts |llvm-dis */
-/* clang --emit-llvm llvm_builtins.c |llvm-as |opt -std-compile-opts |llvm2cpp -for=Shader -gen-module -funcname=createBaseShader */
 typedef __attribute__(( ocu_vector_type(4) )) float float4;
 
 #if 0
