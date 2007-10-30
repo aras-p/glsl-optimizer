@@ -33,9 +33,13 @@
 #include "main/imports.h"
 #include "main/image.h"
 #include "main/macros.h"
+#include "shader/program.h"
+#include "shader/prog_parameter.h"
+#include "shader/prog_print.h"
 
 #include "st_context.h"
 #include "st_atom.h"
+#include "st_atom_constbuf.h"
 #include "st_cache.h"
 #include "st_draw.h"
 #include "st_program.h"
@@ -168,6 +172,34 @@ make_fragment_shader(struct st_context *st, GLboolean bitmapMode)
                                  stfp->tokens, ST_MAX_SHADER_TOKENS);
 
    progs[bitmapMode] = stfp;
+
+   return stfp;
+}
+
+
+static struct st_fragment_program *
+make_drawpix_fragment_shader(struct st_context *st)
+{
+   GLcontext *ctx = st->ctx;
+   struct st_fragment_program *stfp;
+   struct gl_program *p;
+
+   printf("====== drawpix combine progs\n");
+   p = _mesa_combine_programs(ctx,
+                              &st->pixel_transfer_program->Base,
+                              &ctx->FragmentProgram._Current->Base);
+
+   _mesa_print_program(p);
+   printf("InputsRead: 0x%x\n", p->InputsRead);
+   printf("OutputsWritten: 0x%x\n", p->OutputsWritten);
+   _mesa_print_parameter_list(p->Parameters);
+
+   stfp = (struct st_fragment_program *) p;
+   st_translate_fragment_program(st, stfp, NULL,
+                                 stfp->tokens, ST_MAX_SHADER_TOKENS);
+
+
+   st_upload_constants( st, p->Parameters, PIPE_SHADER_FRAGMENT );
 
    return stfp;
 }
@@ -899,7 +931,7 @@ st_DrawPixels(GLcontext *ctx, GLint x, GLint y, GLsizei width, GLsizei height,
    }
    else {
       ps = st->state.framebuffer.cbufs[0];
-      stfp = make_fragment_shader(ctx->st, GL_FALSE);
+      stfp = make_drawpix_fragment_shader(ctx->st);
       stvp = make_vertex_shader(ctx->st, GL_FALSE);
       color = NULL;
    }
