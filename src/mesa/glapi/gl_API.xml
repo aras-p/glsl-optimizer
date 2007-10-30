@@ -12156,6 +12156,35 @@
     </function>
 </category>
 
+<category name="GL_ATI_separate_stencil">
+    <enum name="STENCIL_BACK_FUNC_ATI"     count="1"  value="0x8800">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="STENCIL_BACK_FAIL_ATI"     count="1"  value="0x8801">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="STENCIL_BACK_PASS_DEPTH_FAIL_ATI" count="1"  value="0x8802">
+        <size name="Get" mode="get"/>
+    </enum>
+    <enum name="STENCIL_BACK_PASS_DEPTH_PASS_ATI" count="1"  value="0x8803">
+        <size name="Get" mode="get"/>
+    </enum>
+
+    <function name="StencilOpSeparateATI" offset="assign" static_dispatch="false">
+        <param name="face" type="GLenum"/>
+        <param name="sfail" type="GLenum"/>
+        <param name="zfail" type="GLenum"/>
+        <param name="zpass" type="GLenum"/>
+    </function>
+    <function name="StencilFuncSeparateATI" offset="assign" static_dispatch="false">
+        <param name="frontfunc" type="GLenum"/>
+        <param name="backfunc" type="GLenum"/>
+        <param name="ref" type="GLint"/>
+        <param name="mask" type="GLuint"/>
+    </function>
+
+</category>
+
 <category name="GL_EXT_gpu_program_parameters">
     <function name="ProgramEnvParameters4fvEXT" offset="assign" static_dispatch="false">
         <param name="target" type="GLenum"/>
