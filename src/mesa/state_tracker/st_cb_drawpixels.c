@@ -424,6 +424,7 @@ make_mipmap_tree(struct st_context *st,
                  const struct gl_pixelstore_attrib *unpack,
                  const GLvoid *pixels)
 {
+   GLcontext *ctx = st->ctx;
    struct pipe_context *pipe = st->pipe;
    const struct gl_texture_format *mformat;
    struct pipe_mipmap_tree *mt;
@@ -432,7 +433,7 @@ make_mipmap_tree(struct st_context *st,
 
    baseFormat = _mesa_base_format(format);
 
-   mformat = st_ChooseTextureFormat(st->ctx, baseFormat, format, type);
+   mformat = st_ChooseTextureFormat(ctx, baseFormat, format, type);
    assert(mformat);
 
    pipeFormat = st_mesa_format_to_pipe_format(mformat->MesaFormat);
@@ -455,6 +456,10 @@ make_mipmap_tree(struct st_context *st,
       GLboolean success;
       GLuint pitch = mt->region->pitch;
       GLubyte *dest;
+      const GLbitfield imageTransferStateSave = ctx->_ImageTransferState;
+
+      /* we'll do pixel transfer in a fragment shader */
+      ctx->_ImageTransferState = 0x0;
 
       /* map texture region */
       dest = pipe->region_map(pipe, mt->region);
@@ -463,7 +468,7 @@ make_mipmap_tree(struct st_context *st,
        * Note that the image is actually going to be upside down in
        * the texture.  We deal with that with texcoords.
        */
-      success = mformat->StoreImage(st->ctx, 2,       /* dims */
+      success = mformat->StoreImage(ctx, 2,           /* dims */
                                     baseFormat,       /* baseInternalFormat */
                                     mformat,          /* gl_texture_format */
                                     dest,             /* dest */
@@ -478,6 +483,9 @@ make_mipmap_tree(struct st_context *st,
       /* unmap */
       pipe->region_unmap(pipe, mt->region);
       assert(success);
+
+      /* restore */
+      ctx->_ImageTransferState = imageTransferStateSave;
    }
 
 #if 0
