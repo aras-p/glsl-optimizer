@@ -44,6 +44,60 @@
 #include "st_context.h"
 
 
+
+struct state_key
+{
+   GLuint scaleAndBias:1;
+   GLuint colorMatrix:1;
+
+#if 0
+   GLfloat Maps[3][256][4];
+   int NumMaps;
+   GLint NumStages;
+   pipeline_stage Stages[STAGE_MAX];
+   GLboolean StagesUsed[STAGE_MAX];
+   GLfloat Scale1[4], Bias1[4];
+   GLfloat Scale2[4], Bias2[4];
+#endif
+};
+
+
+static GLboolean
+is_identity(const GLfloat m[16])
+{
+   GLuint i;
+   for (i = 0; i < 16; i++) {
+      const int row = i % 4, col = i / 4;
+      const float val = (row == col);
+      if (m[i] != val)
+         return GL_FALSE;
+   }
+   return GL_TRUE;
+}
+
+
+static void
+make_state_key(GLcontext *ctx,  struct state_key *key)
+{
+   /*GLuint i, j;*/
+	
+   memset(key, 0, sizeof(*key));
+
+   if (ctx->Pixel.RedBias != 0.0 || ctx->Pixel.RedScale != 1.0 ||
+       ctx->Pixel.GreenBias != 0.0 || ctx->Pixel.GreenScale != 1.0 ||
+       ctx->Pixel.BlueBias != 0.0 || ctx->Pixel.BlueScale != 1.0 ||
+       ctx->Pixel.AlphaBias != 0.0 || ctx->Pixel.AlphaScale != 1.0) {
+      key->scaleAndBias = 1;
+   }
+
+   if (!is_identity(ctx->ColorMatrixStack.Top->m)) {
+      key->colorMatrix = 1;
+   }
+}
+
+
+
+
 #define MAX_INST 100
 
 /**
@@ -142,13 +196,24 @@ get_pixel_transfer_program(GLcontext *ctx)
 static void
 update_pixel_transfer(struct st_context *st)
 {
-   /* XXX temporary - implement a program cache */
-   GLcontext *ctx = st->ctx;
-   if (st->pixel_transfer_program) {
-      ctx->Driver.DeleteProgram(ctx, &st->pixel_transfer_program->Base);
+   struct state_key key;
+   struct gl_fragment_program *fp;
+
+   make_state_key(st->ctx, &key);
+
+   fp = (struct gl_fragment_program *)
+      _mesa_search_program_cache(st->pixel_transfer_cache, &key, sizeof(key));
+   if (!fp) {
+      printf("Cached program not found\n");
+      fp = get_pixel_transfer_program(st->ctx);
+      _mesa_program_cache_insert(st->ctx, st->pixel_transfer_cache,
+                                 &key, sizeof(key), &fp->Base);
+   }
+   else {
+      printf("Use cached program\n");
    }
 
-   st->pixel_transfer_program = get_pixel_transfer_program(ctx);
+   st->pixel_transfer_program = fp;
 }
 
 
