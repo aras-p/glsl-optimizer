@@ -132,6 +132,8 @@ struct st_context
    struct st_vertex_program *vp;    /**< Currently bound vertex program */
    struct st_fragment_program *fp;  /**< Currently bound fragment program */
 
+   struct gl_fragment_program *pixel_transfer_program;
+
    /**
     * Buffer object which stores the ctx->Current.Attrib[] values.
     * Used for vertex array drawing when we we need an attribute for
