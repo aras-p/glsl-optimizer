@@ -2365,6 +2365,12 @@
 #define CALL_FramebufferTextureLayerEXT(disp, parameters) (*((disp)->FramebufferTextureLayerEXT)) parameters
 #define GET_FramebufferTextureLayerEXT(disp) ((disp)->FramebufferTextureLayerEXT)
 #define SET_FramebufferTextureLayerEXT(disp, fn) ((disp)->FramebufferTextureLayerEXT = fn)
+#define CALL_StencilFuncSeparateATI(disp, parameters) (*((disp)->StencilFuncSeparateATI)) parameters
+#define GET_StencilFuncSeparateATI(disp) ((disp)->StencilFuncSeparateATI)
+#define SET_StencilFuncSeparateATI(disp, fn) ((disp)->StencilFuncSeparateATI = fn)
+#define CALL_StencilOpSeparateATI(disp, parameters) (*((disp)->StencilOpSeparateATI)) parameters
+#define GET_StencilOpSeparateATI(disp) ((disp)->StencilOpSeparateATI)
+#define SET_StencilOpSeparateATI(disp, fn) ((disp)->StencilOpSeparateATI = fn)
 #define CALL_ProgramEnvParameters4fvEXT(disp, parameters) (*((disp)->ProgramEnvParameters4fvEXT)) parameters
 #define GET_ProgramEnvParameters4fvEXT(disp) ((disp)->ProgramEnvParameters4fvEXT)
 #define SET_ProgramEnvParameters4fvEXT(disp, fn) ((disp)->ProgramEnvParameters4fvEXT = fn)
@@ -2380,7 +2386,7 @@
 
 #else
 
-#define driDispatchRemapTable_size 365
+#define driDispatchRemapTable_size 367
 extern int driDispatchRemapTable[ driDispatchRemapTable_size ];
 
 #define AttachShader_remap_index 0
@@ -2744,10 +2750,12 @@ extern int driDispatchRemapTable[ driDispatchRemapTable_size ];
 #define RenderbufferStorageEXT_remap_index 358
 #define BlitFramebufferEXT_remap_index 359
 #define FramebufferTextureLayerEXT_remap_index 360
-#define ProgramEnvParameters4fvEXT_remap_index 361
-#define ProgramLocalParameters4fvEXT_remap_index 362
-#define GetQueryObjecti64vEXT_remap_index 363
-#define GetQueryObjectui64vEXT_remap_index 364
+#define StencilFuncSeparateATI_remap_index 361
+#define StencilOpSeparateATI_remap_index 362
+#define ProgramEnvParameters4fvEXT_remap_index 363
+#define ProgramLocalParameters4fvEXT_remap_index 364
+#define GetQueryObjecti64vEXT_remap_index 365
+#define GetQueryObjectui64vEXT_remap_index 366
 
 #define CALL_AttachShader(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLuint, GLuint)), driDispatchRemapTable[AttachShader_remap_index], parameters)
 #define GET_AttachShader(disp) GET_by_offset(disp, driDispatchRemapTable[AttachShader_remap_index])
@@ -3832,6 +3840,12 @@ extern int driDispatchRemapTable[ driDispatchRemapTable_size ];
 #define CALL_FramebufferTextureLayerEXT(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLenum, GLuint, GLint, GLint)), driDispatchRemapTable[FramebufferTextureLayerEXT_remap_index], parameters)
 #define GET_FramebufferTextureLayerEXT(disp) GET_by_offset(disp, driDispatchRemapTable[FramebufferTextureLayerEXT_remap_index])
 #define SET_FramebufferTextureLayerEXT(disp, fn) SET_by_offset(disp, driDispatchRemapTable[FramebufferTextureLayerEXT_remap_index], fn)
+#define CALL_StencilFuncSeparateATI(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLenum, GLint, GLuint)), driDispatchRemapTable[StencilFuncSeparateATI_remap_index], parameters)
+#define GET_StencilFuncSeparateATI(disp) GET_by_offset(disp, driDispatchRemapTable[StencilFuncSeparateATI_remap_index])
+#define SET_StencilFuncSeparateATI(disp, fn) SET_by_offset(disp, driDispatchRemapTable[StencilFuncSeparateATI_remap_index], fn)
+#define CALL_StencilOpSeparateATI(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLenum, GLenum, GLenum)), driDispatchRemapTable[StencilOpSeparateATI_remap_index], parameters)
+#define GET_StencilOpSeparateATI(disp) GET_by_offset(disp, driDispatchRemapTable[StencilOpSeparateATI_remap_index])
+#define SET_StencilOpSeparateATI(disp, fn) SET_by_offset(disp, driDispatchRemapTable[StencilOpSeparateATI_remap_index], fn)
 #define CALL_ProgramEnvParameters4fvEXT(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLuint, GLsizei, const GLfloat *)), driDispatchRemapTable[ProgramEnvParameters4fvEXT_remap_index], parameters)
 #define GET_ProgramEnvParameters4fvEXT(disp) GET_by_offset(disp, driDispatchRemapTable[ProgramEnvParameters4fvEXT_remap_index])
 #define SET_ProgramEnvParameters4fvEXT(disp, fn) SET_by_offset(disp, driDispatchRemapTable[ProgramEnvParameters4fvEXT_remap_index], fn)
