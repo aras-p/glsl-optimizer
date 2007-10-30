@@ -92,7 +92,7 @@ struct st_context *st_create_context( GLcontext *ctx,
 
    st->haveFramebufferRegions = GL_TRUE;
 
-   st->pixel_transfer_cache = _mesa_new_program_cache();
+   st->pixel_xfer.cache = _mesa_new_program_cache();
 
 #if 0
    st_init_cb_clear( st );
@@ -126,7 +126,7 @@ void st_destroy_context( struct st_context *st )
 #endif
    cso_cache_delete( st->cache );
 
-   _mesa_delete_program_cache(st->ctx, st->pixel_transfer_cache);
+   _mesa_delete_program_cache(st->ctx, st->pixel_xfer.cache);
 
    st->pipe->destroy( st->pipe );
    FREE( st );

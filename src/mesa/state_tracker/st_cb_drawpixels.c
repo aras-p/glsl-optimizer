@@ -182,30 +182,48 @@ make_drawpix_fragment_shader(struct st_context *st)
 {
    GLcontext *ctx = st->ctx;
    struct st_fragment_program *stfp;
-   struct gl_program *p;
 
-   /*
-    * XXX Use st_program's serial numbers to determine when the
-    * user-provided program and pixel-transfer program to avoid
-    * needless combining/translation here.
-    */
+   if (st->pixel_xfer.program->serialNo == st->pixel_xfer.xfer_prog_sn
+       && st->fp->serialNo == st->pixel_xfer.user_prog_sn) {
+      /* the pixel tranfer program has not changed and the user-defined
+       * shader has not changed, so re-use the combined program.
+       */
+      stfp = st->pixel_xfer.combined_prog;
+   }
+   else {
+      /* Concatenate the pixel transfer program with the current user-
+       * defined shader.
+       */
+      stfp = (struct st_fragment_program *)
+         _mesa_combine_programs(ctx,
+                                &st->pixel_xfer.program->Base.Base,
+                                &st->fp->Base.Base);
 
-   p = _mesa_combine_programs(ctx,
-                              &st->pixel_transfer_program->Base,
-                              &ctx->FragmentProgram._Current->Base);
 #if 0
-   _mesa_print_program(p);
-   printf("InputsRead: 0x%x\n", p->InputsRead);
-   printf("OutputsWritten: 0x%x\n", p->OutputsWritten);
-   _mesa_print_parameter_list(p->Parameters);
+      {
+         struct gl_program *p = &stfp->Base.Base;
+         _mesa_print_program(p);
+         printf("InputsRead: 0x%x\n", p->InputsRead);
+         printf("OutputsWritten: 0x%x\n", p->OutputsWritten);
+         _mesa_print_parameter_list(p->Parameters);
+      }
 #endif
 
-   stfp = (struct st_fragment_program *) p;
-   st_translate_fragment_program(st, stfp, NULL,
-                                 stfp->tokens, ST_MAX_SHADER_TOKENS);
+      /* translate to TGSI tokens */
+      st_translate_fragment_program(st, stfp, NULL,
+                                    stfp->tokens, ST_MAX_SHADER_TOKENS);
 
+      /* save new program, update serial numbers */
+      st->pixel_xfer.xfer_prog_sn = st->pixel_xfer.program->serialNo;
+      st->pixel_xfer.user_prog_sn = st->fp->serialNo;
+      st->pixel_xfer.combined_prog_sn = stfp->serialNo;
+      st->pixel_xfer.combined_prog = stfp;
+   }
 
-   st_upload_constants( st, p->Parameters, PIPE_SHADER_FRAGMENT );
+   /* Ideally we'd have updated the pipe constants during the normal
+    * st/atom mechanism.  But we can't since this is specific to glDrawPixels.
+    */
+   st_upload_constants(st, stfp->Base.Base.Parameters, PIPE_SHADER_FRAGMENT);
 
    return stfp;
 }

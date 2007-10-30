@@ -42,6 +42,7 @@
 #include "shader/prog_print.h"
 
 #include "st_context.h"
+#include "st_program.h"
 
 
 
@@ -79,8 +80,6 @@ is_identity(const GLfloat m[16])
 static void
 make_state_key(GLcontext *ctx,  struct state_key *key)
 {
-   /*GLuint i, j;*/
-	
    memset(key, 0, sizeof(*key));
 
    if (ctx->Pixel.RedBias != 0.0 || ctx->Pixel.RedScale != 1.0 ||
@@ -189,6 +188,8 @@ get_pixel_transfer_program(GLcontext *ctx, const struct state_key *key)
       inst[ic].SrcReg[0].Index = FRAG_RESULT_COLR;
       ic++;
 
+      /* XXX reimplement in terms of MUL/MAD (see t_vp_build.c) */
+
       /* DP4 result.color.x, tmp0, matrow0; */
       _mesa_init_instructions(inst + ic, 1);
       inst[ic].Opcode = OPCODE_DP4;
@@ -268,6 +269,9 @@ get_pixel_transfer_program(GLcontext *ctx, const struct state_key *key)
 
 
 
+/**
+ * Update st->pixel_xfer.program in response to new pixel-transfer state.
+ */
 static void
 update_pixel_transfer(struct st_context *st)
 {
@@ -277,14 +281,14 @@ update_pixel_transfer(struct st_context *st)
    make_state_key(st->ctx, &key);
 
    fp = (struct gl_fragment_program *)
-      _mesa_search_program_cache(st->pixel_transfer_cache, &key, sizeof(key));
+      _mesa_search_program_cache(st->pixel_xfer.cache, &key, sizeof(key));
    if (!fp) {
       fp = get_pixel_transfer_program(st->ctx, &key);
-      _mesa_program_cache_insert(st->ctx, st->pixel_transfer_cache,
+      _mesa_program_cache_insert(st->ctx, st->pixel_xfer.cache,
                                  &key, sizeof(key), &fp->Base);
    }
 
-   st->pixel_transfer_program = fp;
+   st->pixel_xfer.program = (struct st_fragment_program *) fp;
 }
 
 

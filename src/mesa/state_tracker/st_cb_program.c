@@ -44,6 +44,8 @@
 #include "st_atom_shader.h"
 
 
+static GLuint SerialNo = 1;
+
 
 /**
  * Called via ctx->Driver.BindProgram() to bind an ARB vertex or
@@ -91,7 +93,7 @@ static struct gl_program *st_new_program( GLcontext *ctx,
    case GL_VERTEX_PROGRAM_ARB: {
       struct st_vertex_program *prog = CALLOC_STRUCT(st_vertex_program);
 
-      prog->serialNo = 1;
+      prog->serialNo = SerialNo++;
 
       return _mesa_init_vertex_program( ctx, 
 					&prog->Base,
@@ -103,7 +105,7 @@ static struct gl_program *st_new_program( GLcontext *ctx,
    case GL_FRAGMENT_PROGRAM_NV: {
       struct st_fragment_program *prog = CALLOC_STRUCT(st_fragment_program);
 
-      prog->serialNo = 1;
+      prog->serialNo = SerialNo++;
 
       return _mesa_init_fragment_program( ctx, 
 					  &prog->Base,

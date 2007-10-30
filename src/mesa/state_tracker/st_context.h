@@ -133,8 +133,14 @@ struct st_context
    struct st_vertex_program *vp;    /**< Currently bound vertex program */
    struct st_fragment_program *fp;  /**< Currently bound fragment program */
 
-   struct gl_fragment_program *pixel_transfer_program;
-   struct gl_program_cache *pixel_transfer_cache;
+   struct {
+      struct gl_program_cache *cache;
+      struct st_fragment_program *program;  /**< cur pixel transfer prog */
+      GLuint xfer_prog_sn;  /**< pixel xfer program serial no. */
+      GLuint user_prog_sn;  /**< user fragment program serial no. */
+      struct st_fragment_program *combined_prog;
+      GLuint combined_prog_sn;
+   } pixel_xfer;
 
    /**
     * Buffer object which stores the ctx->Current.Attrib[] values.
