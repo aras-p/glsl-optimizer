@@ -75,151 +75,6 @@ finish_or_flush( GLcontext *ctx )
 }
 
 
-/**********************************************************************/
-/*** glClear implementations                                        ***/
-/**********************************************************************/
-
-
-/**
- * Clear the front or back color buffer, if it's implemented with a pixmap.
- */
-static void
-clear_pixmap(GLcontext *ctx, struct xmesa_renderbuffer *xrb, GLuint value)
-{
-   const XMesaContext xmesa = XMESA_CONTEXT(ctx);
-   XMesaBuffer xmbuf = XMESA_BUFFER(ctx->DrawBuffer);
-
-   assert(xmbuf);
-   assert(xrb->pixmap);
-   assert(xmesa);
-   assert(xmesa->display);
-   assert(xrb->pixmap);
-   assert(xmbuf->cleargc);
-
-   XMesaSetForeground( xmesa->display, xmbuf->cleargc, value );
-
-   XMesaFillRectangle( xmesa->display, xrb->pixmap, xmbuf->cleargc,
-                       0, 0, xrb->St.Base.Width, xrb->St.Base.Height);
-}
-
-
-static void
-clear_8bit_ximage(GLcontext *ctx, struct xmesa_renderbuffer *xrb, GLuint value)
-{
-   const XMesaContext xmesa = XMESA_CONTEXT(ctx);
-   GLint width = xrb->St.Base.Width;
-   GLint height = xrb->St.Base.Height;
-   GLint i;
-   for (i = 0; i < height; i++) {
-      GLubyte *ptr = PIXEL_ADDR1(xrb, 0, i);
-      MEMSET( ptr, xmesa->clearpixel, width );
-   }
-}
-
-
-static void
-clear_16bit_ximage(GLcontext *ctx, struct xmesa_renderbuffer *xrb, GLuint value)
-{
-   const XMesaContext xmesa = XMESA_CONTEXT(ctx);
-   GLint width = xrb->St.Base.Width;
-   GLint height = xrb->St.Base.Height;
-   GLint i, j;
-
-   if (xmesa->swapbytes) {
-      value = ((value >> 8) & 0x00ff) | ((value << 8) & 0xff00);
-   }
-
-   for (j = 0; j < height; j++) {
-      GLushort *ptr2 = PIXEL_ADDR2(xrb, 0, j);
-      for (i = 0; i < width; i++) {
-         ptr2[i] = value;
-      }
-   }
-}
-
-
-/* Optimized code provided by Nozomi Ytow <noz@xfree86.org> */
-static void
-clear_24bit_ximage(GLcontext *ctx, struct xmesa_renderbuffer *xrb,
-                   GLuint value)
-{
-   GLint width = xrb->St.Base.Width;
-   GLint height = xrb->St.Base.Height;
-   const GLubyte r = (value      ) & 0xff;
-   const GLubyte g = (value >>  8) & 0xff;
-   const GLubyte b = (value >> 16) & 0xff;
-
-   if (r == g && g == b) {
-      /* same value for all three components (gray) */
-      GLint j;
-      for (j = 0; j < height; j++) {
-         bgr_t *ptr3 = PIXEL_ADDR3(xrb, 0, j);
-         MEMSET(ptr3, r, 3 * width);
-      }
-   }
-   else {
-      /* non-gray clear color */
-      GLint i, j;
-      for (j = 0; j < height; j++) {
-         bgr_t *ptr3 = PIXEL_ADDR3(xrb, 0, j);
-         for (i = 0; i < width; i++) {
-            ptr3->r = r;
-            ptr3->g = g;
-            ptr3->b = b;
-            ptr3++;
-         }
-      }
-   }
-}
-
-
-static void
-clear_32bit_ximage(GLcontext *ctx, struct xmesa_renderbuffer *xrb,
-                   GLuint value)
-{
-   const XMesaContext xmesa = XMESA_CONTEXT(ctx);
-   GLint width = xrb->St.Base.Width;
-   GLint height = xrb->St.Base.Height;
-   const GLuint n = width * height;
-   GLuint *ptr4 = (GLuint *) xrb->ximage->data;
-
-   if (!xrb->ximage)
-      return;
-
-   if (xmesa->swapbytes) {
-      value = ((value >> 24) & 0x000000ff)
-            | ((value >> 8)  & 0x0000ff00)
-            | ((value << 8)  & 0x00ff0000)
-            | ((value << 24) & 0xff000000);
-   }
-
-   if (value == 0) {
-      /* common case */
-      _mesa_memset(ptr4, value, 4 * n);
-   }
-   else {
-      GLuint i;
-      for (i = 0; i < n; i++)
-         ptr4[i] = value;
-   }
-}
-
-
-static void
-clear_nbit_ximage(GLcontext *ctx, struct xmesa_renderbuffer *xrb, GLuint value)
-{
-   XMesaImage *img = xrb->ximage;
-   GLint width = xrb->St.Base.Width;
-   GLint height = xrb->St.Base.Height;
-   GLint i, j;
-   for (j = 0; j < height; j++) {
-      for (i = 0; i < width; i++) {
-         XMesaPutPixel(img, i, j, value);
-      }
-   }
-}
-
-
 /**
  * Called when the driver should update its state, based on the new_state
  * flags.
@@ -227,7 +82,9 @@ clear_nbit_ximage(GLcontext *ctx, struct xmesa_renderbuffer *xrb, GLuint value)
 void
 xmesa_update_state( GLcontext *ctx, GLbitfield new_state )
 {
+#if 0
    const XMesaContext xmesa = XMESA_CONTEXT(ctx);
+#endif
 
    st_invalidate_state( ctx, new_state );
 
@@ -245,13 +102,16 @@ xmesa_update_state( GLcontext *ctx, GLbitfield new_state )
 
       front_xrb = xmbuf->frontxrb;
       if (front_xrb) {
+#if 0
          xmesa_set_renderbuffer_funcs(front_xrb, xmesa->pixelformat,
                                       xmesa->xm_visual->BitsPerPixel);
          front_xrb->clearFunc = clear_pixmap;
+#endif
       }
 
       back_xrb = xmbuf->backxrb;
       if (back_xrb) {
+#if 0
          xmesa_set_renderbuffer_funcs(back_xrb, xmesa->pixelformat,
                                       xmesa->xm_visual->BitsPerPixel);
          if (xmbuf->backxrb->pixmap) {
@@ -276,6 +136,7 @@ xmesa_update_state( GLcontext *ctx, GLbitfield new_state )
                break;
             }
          }
+#endif
       }
    }
 }
