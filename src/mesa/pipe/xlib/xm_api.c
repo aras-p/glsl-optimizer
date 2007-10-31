@@ -1615,9 +1615,10 @@ XMesaContext XMesaCreateContext( XMesaVisual v, XMesaContext share_list )
    tnl->Driver.RunPipeline = _tnl_run_pipeline;
 #endif
 
+#if 0
    /* swrast setup */
    xmesa_register_swrast_functions( mesaCtx );
-
+#endif
 
    st_create_context( mesaCtx,
                       xmesa_create_softpipe( c ) );

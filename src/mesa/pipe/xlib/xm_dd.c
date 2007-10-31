@@ -1121,6 +1121,7 @@ xmesa_init_driver_functions( XMesaVisual xmvisual,
                             _SWRAST_NEW_RASTERMASK)
 
 
+#if 0
 /**
  * Extend the software rasterizer with our line/point/triangle
  * functions.
@@ -1139,3 +1140,4 @@ void xmesa_register_swrast_functions( GLcontext *ctx )
    swrast->InvalidateLineMask |= XMESA_NEW_LINE;
    swrast->InvalidateTriangleMask |= XMESA_NEW_TRIANGLE;
 }
+#endif

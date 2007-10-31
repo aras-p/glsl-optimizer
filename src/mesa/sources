@@ -334,11 +334,9 @@ X11_DRIVER_SOURCES =		\
 	pipe/xlib/xm_api.c	\
 	pipe/xlib/xm_buffer.c	\
 	pipe/xlib/xm_dd.c	\
-	pipe/xlib/xm_line.c	\
 	pipe/xlib/xm_winsys.c	\
 	pipe/xlib/xm_span.c	\
-	pipe/xlib/xm_surface.c	\
-	pipe/xlib/xm_tri.c
+	pipe/xlib/xm_surface.c
 
 OSMESA_DRIVER_SOURCES = \
 	drivers/osmesa/osmesa.c
