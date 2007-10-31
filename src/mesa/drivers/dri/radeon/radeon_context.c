@@ -233,14 +233,14 @@ radeonCreateContext( const __GLcontextModes *glVisual,
                                                  "def_max_anisotropy");
 
    if ( driQueryOptionb( &rmesa->optionCache, "hyperz" ) ) {
-      if ( sPriv->drmMinor < 13 )
+      if ( sPriv->drm_version.minor < 13 )
 	 fprintf( stderr, "DRM version 1.%d too old to support HyperZ, "
-			  "disabling.\n",sPriv->drmMinor );
+			  "disabling.\n", sPriv->drm_version.minor );
       else
 	 rmesa->using_hyperz = GL_TRUE;
    }
 
-   if ( sPriv->drmMinor >= 15 )
+   if ( sPriv->drm_version.minor >= 15 )
       rmesa->texmicrotile = GL_TRUE;
 
    /* Init default driver functions then plug in our Radeon-specific functions
@@ -271,7 +271,7 @@ radeonCreateContext( const __GLcontextModes *glVisual,
    rmesa->dri.hwContext = driContextPriv->hHWContext;
    rmesa->dri.hwLock = &sPriv->pSAREA->lock;
    rmesa->dri.fd = sPriv->fd;
-   rmesa->dri.drmMinor = sPriv->drmMinor;
+   rmesa->dri.drmMinor = sPriv->drm_version.minor;
 
    rmesa->radeonScreen = screen;
    rmesa->sarea = (drm_radeon_sarea_t *)((GLubyte *)sPriv->pSAREA +
@@ -423,9 +423,6 @@ radeonCreateContext( const __GLcontextModes *glVisual,
 		     fthrottle_mode == DRI_CONF_FTHROTTLE_IRQS);
 
    rmesa->do_usleeps = (fthrottle_mode == DRI_CONF_FTHROTTLE_USLEEPS);
-
-   rmesa->vblank_flags = (rmesa->radeonScreen->irq != 0)
-       ? driGetDefaultVBlankFlags(&rmesa->optionCache) : VBLANK_FLAG_NO_IRQ;
 
    (*dri_interface->getUST)( & rmesa->swap_ust );
 
@@ -592,16 +589,18 @@ radeonMakeCurrent( __DRIcontextPrivate *driContextPriv,
       if (RADEON_DEBUG & DEBUG_DRI)
 	 fprintf(stderr, "%s ctx %p\n", __FUNCTION__, (void *) newCtx->glCtx);
 
-      if ( newCtx->dri.drawable != driDrawPriv ) {
-         /* XXX we may need to validate the drawable here!!! */
-	 driDrawableInitVBlank( driDrawPriv, newCtx->vblank_flags,
-				&newCtx->vbl_seq );
-      }
-
       newCtx->dri.readable = driReadPriv;
 
       if ( (newCtx->dri.drawable != driDrawPriv) ||
            newCtx->lastStamp != driDrawPriv->lastStamp ) {
+	 if (driDrawPriv->swap_interval == (unsigned)-1) {
+	    driDrawPriv->vblFlags = (newCtx->radeonScreen->irq != 0)
+	       ? driGetDefaultVBlankFlags(&newCtx->optionCache)
+	       : VBLANK_FLAG_NO_IRQ;
+
+	    driDrawableInitVBlank( driDrawPriv );
+	 }
+
 	 newCtx->dri.drawable = driDrawPriv;
 
 	 radeonSetCliprects(newCtx);

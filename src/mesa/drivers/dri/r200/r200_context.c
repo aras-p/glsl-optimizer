@@ -277,14 +277,14 @@ GLboolean r200CreateContext( const __GLcontextModes *glVisual,
                                                  "def_max_anisotropy");
 
    if ( driQueryOptionb( &rmesa->optionCache, "hyperz" ) ) {
-      if ( sPriv->drmMinor < 13 )
+      if ( sPriv->drm_version.minor < 13 )
 	 fprintf( stderr, "DRM version 1.%d too old to support HyperZ, "
-			  "disabling.\n",sPriv->drmMinor );
+			  "disabling.\n", sPriv->drm_version.minor );
       else
 	 rmesa->using_hyperz = GL_TRUE;
    }
  
-   if ( sPriv->drmMinor >= 15 )
+   if ( sPriv->drm_version.minor >= 15 )
       rmesa->texmicrotile = GL_TRUE;
 
    /* Init default driver functions then plug in our R200-specific functions
@@ -317,7 +317,7 @@ GLboolean r200CreateContext( const __GLcontextModes *glVisual,
    rmesa->dri.hwContext = driContextPriv->hHWContext;
    rmesa->dri.hwLock = &sPriv->pSAREA->lock;
    rmesa->dri.fd = sPriv->fd;
-   rmesa->dri.drmMinor = sPriv->drmMinor;
+   rmesa->dri.drmMinor = sPriv->drm_version.minor;
 
    rmesa->r200Screen = screen;
    rmesa->sarea = (drm_radeon_sarea_t *)((GLubyte *)sPriv->pSAREA +
@@ -499,9 +499,6 @@ GLboolean r200CreateContext( const __GLcontextModes *glVisual,
 	      fthrottle_mode,
 	      rmesa->r200Screen->irq);
 
-   rmesa->vblank_flags = (rmesa->r200Screen->irq != 0)
-       ? driGetDefaultVBlankFlags(&rmesa->optionCache) : VBLANK_FLAG_NO_IRQ;
-
    rmesa->prefer_gart_client_texturing = 
       (getenv("R200_GART_CLIENT_TEXTURES") != 0);
 
@@ -666,15 +663,18 @@ r200MakeCurrent( __DRIcontextPrivate *driContextPriv,
       if (R200_DEBUG & DEBUG_DRI)
 	 fprintf(stderr, "%s ctx %p\n", __FUNCTION__, (void *)newCtx->glCtx);
 
-      if ( newCtx->dri.drawable != driDrawPriv ) {
-	 driDrawableInitVBlank( driDrawPriv, newCtx->vblank_flags,
-				&newCtx->vbl_seq );
-      }
-
       newCtx->dri.readable = driReadPriv;
 
       if ( newCtx->dri.drawable != driDrawPriv ||
            newCtx->lastStamp != driDrawPriv->lastStamp ) {
+	 if (driDrawPriv->swap_interval == (unsigned)-1) {
+	    driDrawPriv->vblFlags = (newCtx->r200Screen->irq != 0)
+	       ? driGetDefaultVBlankFlags(&newCtx->optionCache)
+	       : VBLANK_FLAG_NO_IRQ;
+
+	    driDrawableInitVBlank( driDrawPriv );
+	 }
+
 	 newCtx->dri.drawable = driDrawPriv;
 
 	 r200SetCliprects(newCtx);

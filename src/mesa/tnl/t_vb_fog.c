@@ -41,7 +41,6 @@
 
 struct fog_stage_data {
    GLvector4f fogcoord;		/* has actual storage allocated */
-   GLvector4f input;		/* points into VB->EyePtr Z values */
 };
 
 #define FOG_STAGE_DATA(stage) ((struct fog_stage_data *)stage->privatePtr)
@@ -91,7 +90,8 @@ init_static_data( void )
  * evaluating the GL_LINEAR, GL_EXP or GL_EXP2 fog function.
  * Fog coordinates are distances from the eye (typically between the
  * near and far clip plane distances).
- * Note the fog (eye Z) coords may be negative so we use ABS(z) below.
+ * Note that fogcoords may be negative, if eye z is source absolute
+ * value must be taken earlier.
  * Fog blend factors are in the range [0,1].
  */
 static void
@@ -169,13 +169,10 @@ run_fog_stage(GLcontext *ctx, struct tnl_pipeline_stage *stage)
 	  */
 	 input = &store->fogcoord;
 
-         /* NOTE: negate plane here so we get positive fog coords! */
-	 /* NOTE2: this doesn't always work (tests/fog - all frag depth fog
-	    coords will be negative). */
-	 plane[0] = -m[2];
-	 plane[1] = -m[6];
-	 plane[2] = -m[10];
-	 plane[3] = -m[14];
+	 plane[0] = m[2];
+	 plane[1] = m[6];
+	 plane[2] = m[10];
+	 plane[3] = m[14];
 	 /* Full eye coords weren't required, just calculate the
 	  * eye Z values.
 	  */
@@ -189,12 +186,12 @@ run_fog_stage(GLcontext *ctx, struct tnl_pipeline_stage *stage)
 	    NOTE should avoid going through array twice */
 	 coord = input->start;
 	 for (i = 0; i < input->count; i++) {
-	    input->data[i][0] = FABSF(*coord);
+	    *coord = FABSF(*coord);
 	    STRIDE_F(coord, input->stride);
 	 }
       }
       else {
-         /* fog coordinates = eye Z coordinates (use ABS later) */
+         /* fog coordinates = eye Z coordinates - need to copy for ABS */
 	 input = &store->fogcoord;
 
 	 if (VB->EyePtr->size < 2)
@@ -249,7 +246,6 @@ alloc_fog_data(GLcontext *ctx, struct tnl_pipeline_stage *stage)
       return GL_FALSE;
 
    _mesa_vector4f_alloc( &store->fogcoord, 0, tnl->vb.Size, 32 );
-   _mesa_vector4f_init( &store->input, 0, NULL );
 
    if (!inited)
       init_static_data();

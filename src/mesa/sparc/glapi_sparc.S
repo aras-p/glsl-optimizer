@@ -838,6 +838,7 @@ __glapi_sparc_icache_flush: /* %o0 = insn_addr */
 		.globl gl_dispatch_stub_770 ; .type gl_dispatch_stub_770,#function
 		.globl gl_dispatch_stub_771 ; .type gl_dispatch_stub_771,#function
 		.globl gl_dispatch_stub_772 ; .type gl_dispatch_stub_772,#function
+		.globl gl_dispatch_stub_773 ; .type gl_dispatch_stub_773,#function
 		.globl _mesa_sparc_glapi_begin ; .type _mesa_sparc_glapi_begin,#function
 _mesa_sparc_glapi_begin:
 
@@ -1614,6 +1615,7 @@ _mesa_sparc_glapi_begin:
 	GL_STUB(gl_dispatch_stub_770, _gloffset__dispatch_stub_770)
 	GL_STUB(gl_dispatch_stub_771, _gloffset__dispatch_stub_771)
 	GL_STUB(gl_dispatch_stub_772, _gloffset__dispatch_stub_772)
+	GL_STUB(gl_dispatch_stub_773, _gloffset__dispatch_stub_773)
 
 		.globl _mesa_sparc_glapi_end ; .type _mesa_sparc_glapi_end,#function
 _mesa_sparc_glapi_end:

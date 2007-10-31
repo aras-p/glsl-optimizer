@@ -133,9 +133,6 @@ typedef struct nouveau_context {
 	nouveau_renderbuffer_t *color_buffer;
 	nouveau_renderbuffer_t *depth_buffer;
 
-	/* Color buffer clear value */
-	uint32_t clear_color_value;
-
 	/* Depth/stencil clear value */
 	uint32_t clear_value;
 
@@ -185,10 +182,6 @@ typedef struct nouveau_context {
 	/* Configuration cache */
 	driOptionCache optionCache;
 
-	/* vblank stuff */
-	uint32_t vblank_flags;
-	uint32_t vblank_seq;
-
 	GLuint new_state;
 	GLuint new_render_state;
 	GLuint render_index;
@@ -233,6 +226,9 @@ extern void nouveauSwapBuffers(__DRIdrawablePrivate *dPriv);
 
 extern void nouveauCopySubBuffer(__DRIdrawablePrivate *dPriv,
 				 int x, int y, int w, int h);
+
+extern void nouveauClearBuffer(GLcontext *ctx, nouveau_renderbuffer_t *buffer,
+	int fill, int mask);
 
 /* Debugging utils: */
 extern int NOUVEAU_DEBUG;

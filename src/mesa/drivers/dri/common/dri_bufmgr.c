@@ -88,18 +88,6 @@ dri_bo_unmap(dri_bo *buf)
    return buf->bufmgr->bo_unmap(buf);
 }
 
-int
-dri_bo_validate(dri_bo *buf, unsigned int flags)
-{
-   return buf->bufmgr->bo_validate(buf, flags);
-}
-
-dri_fence *
-dri_fence_validated(dri_bufmgr *bufmgr, const char *name, GLboolean flushed)
-{
-   return bufmgr->fence_validated(bufmgr, name, flushed);
-}
-
 void
 dri_fence_wait(dri_fence *fence)
 {
@@ -149,4 +137,20 @@ void
 dri_bufmgr_destroy(dri_bufmgr *bufmgr)
 {
    bufmgr->destroy(bufmgr);
+}
+
+
+void dri_emit_reloc(dri_bo *batch_buf, GLuint flags, GLuint delta, GLuint offset, dri_bo *relocatee)
+{
+   batch_buf->bufmgr->emit_reloc(batch_buf, flags, delta, offset, relocatee);
+}
+
+void *dri_process_relocs(dri_bo *batch_buf, GLuint *count)
+{
+   return batch_buf->bufmgr->process_relocs(batch_buf, count);
+}
+
+void dri_post_submit(dri_bo *batch_buf, dri_fence **last_fence)
+{
+   batch_buf->bufmgr->post_submit(batch_buf, last_fence);
 }

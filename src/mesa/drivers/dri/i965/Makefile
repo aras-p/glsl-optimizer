@@ -69,18 +69,13 @@ DRIVER_SOURCES = \
 	brw_wm_emit.c \
 	brw_wm_fp.c \
 	brw_wm_iz.c \
+	brw_wm_glsl.c \
 	brw_wm_pass0.c \
 	brw_wm_pass1.c \
 	brw_wm_pass2.c \
 	brw_wm_sampler_state.c \
 	brw_wm_state.c \
 	brw_wm_surface_state.c 
-
-SYMLINKS = \
-	server/i830_dri.h \
-	server/i830_common.h \
-	server/intel_dri.c \
-	server/intel.h
 
 C_SOURCES = \
 	$(COMMON_SOURCES) \
@@ -89,17 +84,10 @@ C_SOURCES = \
 
 ASM_SOURCES = 
 
-DRIVER_DEFINES = -I../intel
+DRIVER_DEFINES = -I../intel -I../intel/server
 
 include ../Makefile.template
 
+symlinks:
 intel_decode.o: ../intel/intel_decode.c
 intel_tex_layout.o: ../intel/intel_tex_layout.c
-
-server:
-	mkdir -p server
-
-$(SYMLINKS): server
-	@[ -e $@ ] || ln -sf ../../i915/$@ server/
-
-symlinks: $(SYMLINKS)

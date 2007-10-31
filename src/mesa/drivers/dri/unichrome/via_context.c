@@ -601,9 +601,6 @@ viaCreateContext(const __GLcontextModes *visual,
     _tnl_allow_pixel_fog(ctx, GL_FALSE);
     _tnl_allow_vertex_fog(ctx, GL_TRUE);
 
-/*     vmesa->display = dpy; */
-    vmesa->display = sPriv->display;
-    
     vmesa->hHWContext = driContextPriv->hHWContext;
     vmesa->driFd = sPriv->fd;
     vmesa->driHwLock = &sPriv->pSAREA->lock;
@@ -660,10 +657,6 @@ viaCreateContext(const __GLcontextModes *visual,
     if (getenv("VIA_NO_RAST") ||
         driQueryOptionb(&vmesa->optionCache, "no_rast"))
        FALLBACK(vmesa, VIA_FALLBACK_USER_DISABLE, 1);
-
-    vmesa->vblank_flags =
-       vmesa->viaScreen->irqEnabled ?
-        driGetDefaultVBlankFlags(&vmesa->optionCache) : VBLANK_FLAG_NO_IRQ;
 
     if (getenv("VIA_PAGEFLIP"))
        vmesa->allowPageFlip = 1;
@@ -840,13 +833,17 @@ viaMakeCurrent(__DRIcontextPrivate *driContextPriv,
         drawBuffer = (GLframebuffer *)driDrawPriv->driverPrivate;
         readBuffer = (GLframebuffer *)driReadPriv->driverPrivate;
 
-	if (vmesa->driDrawable != driDrawPriv) {
-	   driDrawableInitVBlank(driDrawPriv, vmesa->vblank_flags,
-				 &vmesa->vbl_seq);
-	}
-
        if ((vmesa->driDrawable != driDrawPriv)
 	   || (vmesa->driReadable != driReadPriv)) {
+	  if (driDrawPriv->swap_interval == (unsigned)-1) {
+	     driDrawPriv->vblFlags =
+		vmesa->viaScreen->irqEnabled ?
+		driGetDefaultVBlankFlags(&vmesa->optionCache) :
+		VBLANK_FLAG_NO_IRQ;
+
+	     driDrawableInitVBlank(driDrawPriv);
+	  }
+
 	  vmesa->driDrawable = driDrawPriv;
 	  vmesa->driReadable = driReadPriv;
 

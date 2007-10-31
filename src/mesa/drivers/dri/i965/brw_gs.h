@@ -40,11 +40,11 @@
 #define MAX_GS_VERTS (4)	     
 
 struct brw_gs_prog_key {
+   GLuint attrs:32;
    GLuint primitive:4;
-   GLuint attrs:16;		
    GLuint hint_gs_always:1;
    GLuint need_gs_prog:1;
-   GLuint pad:10;
+   GLuint pad:26;
 };
 
 struct brw_gs_compile {

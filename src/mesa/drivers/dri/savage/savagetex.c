@@ -1016,7 +1016,7 @@ static void savageUploadTexImages( savageContextPtr imesa, savageTexObjPtr t )
       /* Heap timestamps are only reliable with Savage DRM 2.3.x or
        * later. Earlier versions had only 16 bit time stamps which
        * would wrap too frequently. */
-      if (imesa->savageScreen->driScrnPriv->drmMinor >= 3) {
+      if (imesa->savageScreen->driScrnPriv->drm_version.minor >= 3) {
 	  unsigned int heap = t->base.heap->heapId;
 	  LOCK_HARDWARE(imesa);
 	  savageWaitEvent (imesa, imesa->textureHeaps[heap]->timestamp);
@@ -1713,7 +1713,7 @@ static void savageTimestampTextures( savageContextPtr imesa )
     * Only useful with long-lived 32-bit event tags available
     * with Savage DRM 2.3.x or later. */
    if ((imesa->CurrentTexObj[0] || imesa->CurrentTexObj[1]) &&
-       imesa->savageScreen->driScrnPriv->drmMinor >= 3) {
+       imesa->savageScreen->driScrnPriv->drm_version.minor >= 3) {
        unsigned int e;
        FLUSH_BATCH(imesa);
        e = savageEmitEvent(imesa, SAVAGE_WAIT_3D);

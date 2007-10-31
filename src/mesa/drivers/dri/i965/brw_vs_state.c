@@ -44,7 +44,7 @@ static void upload_vs_unit( struct brw_context *brw )
 
    /* CACHE_NEW_VS_PROG */
    vs.thread0.kernel_start_pointer = brw->vs.prog_gs_offset >> 6;
-   vs.thread0.grf_reg_count = ((brw->vs.prog_data->total_grf-1) & ~15) / 16;
+   vs.thread0.grf_reg_count = ALIGN(brw->vs.prog_data->total_grf, 16) / 16 - 1;
    vs.thread3.urb_entry_read_length = brw->vs.prog_data->urb_read_length;
    vs.thread3.const_urb_entry_read_length = brw->vs.prog_data->curb_read_length;
    vs.thread3.dispatch_grf_start_reg = 1;

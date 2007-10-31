@@ -778,8 +778,6 @@ void mgaUpdateRects( mgaContextPtr mmesa, GLuint buffers )
 {
    __DRIdrawablePrivate *const driDrawable = mmesa->driDrawable;
    __DRIdrawablePrivate *const driReadable = mmesa->driReadable;
-   drm_mga_sarea_t *sarea = mmesa->sarea;
-
 
    mmesa->dirty_cliprects = 0;	
 
@@ -789,9 +787,6 @@ void mgaUpdateRects( mgaContextPtr mmesa, GLuint buffers )
    }
 
    mga_set_cliprects(mmesa);
-
-   sarea->req_drawable = driDrawable->draw;
-   sarea->req_draw_buffer = mmesa->draw_buffer;
 
    mgaUpdateClipping( mmesa->glCtx );
    mgaCalcViewport( mmesa->glCtx );

@@ -148,7 +148,7 @@ GLuint brw_upload_cache( struct brw_cache *cache,
    GLuint hash = hash_key(key, key_size);
    void *tmp = _mesa_malloc(key_size + cache->aux_size);
    
-   if (!brw_pool_alloc(cache->pool, data_size, 6, &offset)) {
+   if (!brw_pool_alloc(cache->pool, data_size, 1 << 6, &offset)) {
       /* Should not be possible: 
        */
       _mesa_printf("brw_pool_alloc failed\n");

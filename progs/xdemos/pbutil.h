@@ -27,6 +27,9 @@
 
 
 extern int
+QueryFBConfig(Display *dpy, int screen);
+
+extern int
 QueryPbuffers(Display *dpy, int screen);
 
 

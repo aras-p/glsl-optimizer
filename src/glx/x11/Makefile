@@ -31,7 +31,8 @@ SOURCES = \
 	  glx_query.c \
 	  glx_texture_compression.c \
 	  dri_glx.c \
-	  XF86dri.c
+	  XF86dri.c \
+	  glxhash.c
 
 include $(TOP)/src/mesa/sources
 

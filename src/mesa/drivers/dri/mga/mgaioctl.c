@@ -55,7 +55,7 @@ mgaSetFence( mgaContextPtr mmesa, uint32_t * fence )
 {
     int ret = ENOSYS;
 
-    if ( mmesa->driScreen->drmMinor >= 2 ) {
+    if ( mmesa->driScreen->drm_version.minor >= 2 ) {
 	ret = drmCommandWriteRead( mmesa->driScreen->fd, DRM_MGA_SET_FENCE,
 				   fence, sizeof( uint32_t ));
 	if (ret) {
@@ -73,7 +73,7 @@ mgaWaitFence( mgaContextPtr mmesa, uint32_t fence, uint32_t * curr_fence )
 {
     int ret = ENOSYS;
 
-    if ( mmesa->driScreen->drmMinor >= 2 ) {
+    if ( mmesa->driScreen->drm_version.minor >= 2 ) {
 	uint32_t temp = fence;
 	
 	ret = drmCommandWriteRead( mmesa->driScreen->fd,
@@ -409,7 +409,7 @@ static void mgaWaitForFrameCompletion( mgaContextPtr mmesa )
 /*
  * Copy the back buffer to the front buffer.
  */
-void mgaCopyBuffer( const __DRIdrawablePrivate *dPriv )
+void mgaCopyBuffer( __DRIdrawablePrivate *dPriv )
 {
    mgaContextPtr mmesa;
    drm_clip_rect_t *pbox;
@@ -428,8 +428,7 @@ void mgaCopyBuffer( const __DRIdrawablePrivate *dPriv )
    FLUSH_BATCH( mmesa );
 
    mgaWaitForFrameCompletion( mmesa );
-   driWaitForVBlank( dPriv, & mmesa->vbl_seq, mmesa->vblank_flags,
-		     & missed_target );
+   driWaitForVBlank( dPriv, & missed_target );
    if ( missed_target ) {
       mmesa->swap_missed_count++;
       (void) (*dri_interface->getUST)( & mmesa->swap_missed_ust );

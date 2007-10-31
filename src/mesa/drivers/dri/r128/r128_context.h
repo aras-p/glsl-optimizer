@@ -210,11 +210,6 @@ struct r128_context {
    GLuint c_textureBytes;
    GLuint c_vertexBuffers;
 
-   /* VBI
-    */
-   GLuint vbl_seq;
-   GLuint vblank_flags;
-
    /* Configuration cache
     */
    driOptionCache optionCache;

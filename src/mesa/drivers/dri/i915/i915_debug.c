@@ -376,20 +376,25 @@ static void BR13( struct debug_stream *stream,
 }
 
 
-static void BR22( struct debug_stream *stream,
-		  GLuint val )
+static void BR2223( struct debug_stream *stream,
+		    GLuint val22, GLuint val23 )
 {
-   PRINTF("\t0x%08x\n",  val);
-   BITS(val, 31, 16, "dest y1");
-   BITS(val, 15, 0,  "dest x1");
-}
+   union { GLuint val; short field[2]; } BR22, BR23;
 
-static void BR23( struct debug_stream *stream,
-		  GLuint val )
-{
-   PRINTF("\t0x%08x\n",  val);
-   BITS(val, 31, 16, "dest y2");
-   BITS(val, 15, 0,  "dest x2");
+   BR22.val = val22;
+   BR23.val = val23;
+
+   PRINTF("\t0x%08x\n",  val22);
+   BITS(val22, 31, 16, "dest y1");
+   BITS(val22, 15, 0,  "dest x1");
+
+   PRINTF("\t0x%08x\n",  val23);
+   BITS(val23, 31, 16, "dest y2");
+   BITS(val23, 15, 0,  "dest x2");
+
+   /* The blit engine may produce unexpected results when these aren't met */
+   assert(BR22.field[0] < BR23.field[0]);
+   assert(BR22.field[1] < BR23.field[1]);
 }
 
 static void BR09( struct debug_stream *stream,
@@ -436,8 +441,8 @@ static GLboolean debug_copy_blit( struct debug_stream *stream,
    PRINTF("\t0x%08x\n",  ptr[j++]);
    
    BR13(stream, ptr[j++]);
-   BR22(stream, ptr[j++]);
-   BR23(stream, ptr[j++]);
+   BR2223(stream, ptr[j], ptr[j+1]);
+   j += 2;
    BR09(stream, ptr[j++]);
    BR26(stream, ptr[j++]);
    BR11(stream, ptr[j++]);
@@ -459,8 +464,8 @@ static GLboolean debug_color_blit( struct debug_stream *stream,
    PRINTF("\t0x%08x\n",  ptr[j++]);
 
    BR13(stream, ptr[j++]);
-   BR22(stream, ptr[j++]);
-   BR23(stream, ptr[j++]);
+   BR2223(stream, ptr[j], ptr[j+1]);
+   j += 2;
    BR09(stream, ptr[j++]);
    BR16(stream, ptr[j++]);
 

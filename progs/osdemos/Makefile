@@ -13,6 +13,8 @@ OSMESA32_LIBS = -L$(TOP)/$(LIB_DIR) -lglut -lOSMesa32 -lGLU -lGL $(APP_LIB_DEPS)
 
 LIB_DEP = $(TOP)/$(LIB_DIR)/$(GL_LIB_NAME) $(TOP)/$(LIB_DIR)/$(GLU_LIB_NAME) $(TOP)/$(LIB_DIR)/$(GLUT_LIB_NAME)
 
+LIBS = -L$(TOP)/$(LIB_DIR) -l$(GLUT_LIB) -l$(GLU_LIB) -l$(GL_LIB) $(APP_LIB_DEPS)
+
 PROGS = \
 	osdemo \
 	ostest1
@@ -26,7 +28,7 @@ PROGS = \
 
 # make executable from .c file:
 .c: $(LIB_DEP) readtex.o
-	$(CC) -I$(INCDIR) $(CFLAGS) $(LDFLAGS) $< readtex.o $(APP_LIB_DEPS) -o $@
+	$(CC) -I$(INCDIR) $(CFLAGS) $(LDFLAGS) $< readtex.o $(LIBS) -o $@
 
 
 ##### TARGETS #####

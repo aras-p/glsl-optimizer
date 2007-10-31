@@ -489,8 +489,8 @@ static void emit_dst( struct prog_dst_register *dst,
    dst->Index = reg.idx;
    /* allow zero as a shorthand for xyzw */
    dst->WriteMask = mask ? mask : WRITEMASK_XYZW; 
-   dst->CondMask = COND_TR;
-   dst->CondSwizzle = 0;
+   dst->CondMask = COND_TR;  /* always pass cond test */
+   dst->CondSwizzle = SWIZZLE_NOOP;
    dst->CondSrc = 0;
    dst->pad = 0;
 }
@@ -513,7 +513,7 @@ static void debug_insn( struct prog_instruction *inst, const char *fn,
 
 
 static void emit_op3fn(struct tnl_program *p,
-		       GLuint op,
+                       enum prog_opcode op,
 		       struct ureg dest,
 		       GLuint mask,
 		       struct ureg src0,
@@ -699,7 +699,7 @@ static struct ureg get_eye_normal( struct tnl_program *p )
 	 struct ureg rescale = register_param2(p, STATE_INTERNAL,
 					       STATE_NORMAL_SCALE);
 
-	 emit_op2( p, OPCODE_MUL, p->eye_normal, 0, normal, 
+	 emit_op2( p, OPCODE_MUL, p->eye_normal, 0, p->eye_normal,
 		   swizzle1(rescale, X));
       }
    }
@@ -1123,8 +1123,6 @@ static void build_fog( struct tnl_program *p )
 {
    struct ureg fog = register_output(p, VERT_RESULT_FOGC);
    struct ureg input;
-   GLuint useabs = p->state->fog_source_is_depth && p->state->fog_mode &&
-		   (p->state->fog_mode != FOG_EXP2);
 
    if (p->state->fog_source_is_depth) {
       input = swizzle1(get_eye_position(p), Z);
@@ -1137,6 +1135,7 @@ static void build_fog( struct tnl_program *p )
       struct ureg params = register_param2(p, STATE_INTERNAL,
 					   STATE_FOG_PARAMS_OPTIMIZED);
       struct ureg tmp = get_temp(p);
+      GLboolean useabs = (p->state->fog_mode != FOG_EXP2);
 
       if (useabs) {
 	 emit_op1(p, OPCODE_ABS, tmp, 0, input);
@@ -1169,7 +1168,10 @@ static void build_fog( struct tnl_program *p )
       /* results = incoming fog coords (compute fog per-fragment later) 
        *
        * KW:  Is it really necessary to do anything in this case?
+       * BP: Yes, we always need to compute the absolute value, unless
+       * we want to push that down into the fragment program...
        */
+      GLboolean useabs = GL_TRUE;
       emit_op1(p, useabs ? OPCODE_ABS : OPCODE_MOV, fog, WRITEMASK_X, input);
    }
 }

@@ -13,6 +13,8 @@ OSMESA32_LIBS = -L$(TOP)/$(LIB_DIR) -lglut -lOSMesa32 -lGLU -lGL $(APP_LIB_DEPS)
 
 LIB_DEP = $(TOP)/$(LIB_DIR)/$(GL_LIB_NAME) $(TOP)/$(LIB_DIR)/$(GLU_LIB_NAME) $(TOP)/$(LIB_DIR)/$(GLUT_LIB_NAME)
 
+LIBS = -L$(TOP)/$(LIB_DIR) -l$(GLUT_LIB) -l$(GLU_LIB) -l$(GL_LIB) $(APP_LIB_DEPS)
+
 PROGS = \
 	arbfplight \
 	arbfslight \
@@ -75,7 +77,7 @@ PROGS = \
 
 # make executable from .c file:
 .c: $(LIB_DEP) readtex.o
-	$(CC) -I$(INCDIR) $(CFLAGS) $(LDFLAGS) $< readtex.o $(APP_LIB_DEPS) -o $@
+	$(CC) -I$(INCDIR) $(CFLAGS) $(LDFLAGS) $< readtex.o $(LIBS) -o $@
 
 
 ##### TARGETS #####
@@ -119,35 +121,35 @@ extfuncs.h:  $(TOP)/progs/util/extfuncs.h
 
 
 reflect: reflect.o showbuffer.o readtex.o
-	$(CC) $(LDFLAGS) reflect.o showbuffer.o readtex.o $(APP_LIB_DEPS) -o $@
+	$(CC) $(LDFLAGS) reflect.o showbuffer.o readtex.o $(LIBS) -o $@
 
 reflect.o: reflect.c showbuffer.h
 	$(CC) -c -I$(INCDIR) $(CFLAGS) reflect.c
 
 
 shadowtex: shadowtex.o showbuffer.o
-	$(CC) $(LDFLAGS) shadowtex.o showbuffer.o $(APP_LIB_DEPS) -o $@
+	$(CC) $(LDFLAGS) shadowtex.o showbuffer.o $(LIBS) -o $@
 
 shadowtex.o: shadowtex.c showbuffer.h
 	$(CC) -c -I$(INCDIR) $(CFLAGS) shadowtex.c
 
 
 gloss: gloss.o trackball.o readtex.o
-	$(CC) $(LDFLAGS) gloss.o trackball.o readtex.o $(APP_LIB_DEPS) -o $@
+	$(CC) $(LDFLAGS) gloss.o trackball.o readtex.o $(LIBS) -o $@
 
 gloss.o: gloss.c trackball.h
 	$(CC) -c -I$(INCDIR) $(CFLAGS) gloss.c
 
 
 engine: engine.o trackball.o readtex.o
-	$(CC) $(LDFLAGS) engine.o trackball.o readtex.o $(APP_LIB_DEPS) -o $@
+	$(CC) $(LDFLAGS) engine.o trackball.o readtex.o $(LIBS) -o $@
 
 engine.o: engine.c trackball.h
 	$(CC) -c -I$(INCDIR) $(CFLAGS) engine.c
 
 
 fslight: fslight.o
-	$(CC) $(LDFLAGS) fslight.o $(APP_LIB_DEPS) -o $@
+	$(CC) $(LDFLAGS) fslight.o $(LIBS) -o $@
 
 fslight.o: fslight.c extfuncs.h
 	$(CC) -c -I$(INCDIR) $(CFLAGS) fslight.c
@@ -155,7 +157,7 @@ fslight.o: fslight.c extfuncs.h
 
 
 viewdds: viewdds.c
-	$(CC) -I$(INCDIR) $(CFLAGS) $< readtex.o $(APP_LIB_DEPS) -L. -lgltc -o $@
+	$(CC) -I$(INCDIR) $(CFLAGS) $< readtex.o $(LIBS) -L. -lgltc -o $@
 
 
 clean:

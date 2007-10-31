@@ -289,7 +289,6 @@ struct via_context {
    drm_context_t hHWContext;
    drm_hw_lock_t *driHwLock;
    int driFd;
-   __DRInativeDisplay *display;
 
    /**
     * DRI drawable bound to this context for drawing.
@@ -321,9 +320,6 @@ struct via_context {
    /* Configuration cache
     */
    driOptionCache optionCache;
-
-   GLuint vblank_flags;
-   GLuint vbl_seq;
 
    int64_t swap_ust;
    int64_t swap_missed_ust;

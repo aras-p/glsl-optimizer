@@ -34,8 +34,6 @@
 
 #define I915_SET_FIELD( var, mask, value ) (var &= ~(mask), var |= value)
 
-#define CMD_3D (0x3<<29)
-
 #define PRIM3D_INLINE		(CMD_3D | (0x1f<<24))
 #define PRIM3D_TRILIST		(0x0<<18)
 #define PRIM3D_TRISTRIP 	(0x1<<18)

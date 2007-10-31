@@ -44,6 +44,7 @@
 #include "intel_blit.h"
 #include "intel_buffer_objects.h"
 #include "dri_bufmgr.h"
+#include "intel_bufmgr_ttm.h"
 #include "intel_batchbuffer.h"
 
 #define FILE_DEBUG_FLAG DEBUG_REGION
@@ -162,7 +163,7 @@ intel_region_create_static(intelScreenPrivate *intelScreen,
 
    if (intelScreen->ttm) {
       assert(bo_handle != -1);
-      region->buffer = dri_ttm_bo_create_from_handle(intelScreen->bufmgr,
+      region->buffer = intel_ttm_bo_create_from_handle(intelScreen->bufmgr,
 						     "static region",
 						     bo_handle);
    } else {
@@ -201,7 +202,7 @@ intel_region_update_static(intelScreenPrivate *intelScreen,
    dri_bo_unreference(region->buffer);
    if (intelScreen->ttm) {
       assert(bo_handle != -1);
-      region->buffer = dri_ttm_bo_create_from_handle(intelScreen->bufmgr,
+      region->buffer = intel_ttm_bo_create_from_handle(intelScreen->bufmgr,
 						     "static region",
 						     bo_handle);
    } else {

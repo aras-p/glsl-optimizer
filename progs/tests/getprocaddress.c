@@ -269,6 +269,32 @@ test_VertexAttrib4dvNV(generic_func func)
 
 
 static GLboolean
+test_StencilFuncSeparateATI(generic_func func)
+{
+#ifdef GL_ATI_separate_stencil
+   PFNGLSTENCILFUNCSEPARATEATIPROC stencilFuncSeparateATI = (PFNGLSTENCILFUNCSEPARATEATIPROC) func;
+   GLint frontFunc, backFunc;
+   GLint frontRef, backRef;
+   GLint frontMask, backMask;
+   (*stencilFuncSeparateATI)(GL_LESS, GL_GREATER, 2, 0xa);
+   glGetIntegerv(GL_STENCIL_FUNC, &frontFunc);
+   glGetIntegerv(GL_STENCIL_BACK_FUNC, &backFunc);
+   glGetIntegerv(GL_STENCIL_REF, &frontRef);
+   glGetIntegerv(GL_STENCIL_BACK_REF, &backRef);
+   glGetIntegerv(GL_STENCIL_VALUE_MASK, &frontMask);
+   glGetIntegerv(GL_STENCIL_BACK_VALUE_MASK, &backMask);
+   if (frontFunc != GL_LESS ||
+       backFunc != GL_GREATER ||
+       frontRef != 2 ||
+       backRef != 2 ||
+       frontMask != 0xa ||
+       backMask != 0xa)
+      return GL_FALSE;
+#endif
+   return GL_TRUE;
+}
+
+static GLboolean
 test_StencilFuncSeparate(generic_func func)
 {
 #ifdef GL_VERSION_2_0

@@ -35,6 +35,7 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "framebuffer.h"
 
 #include "utils.h"
+#include "colormac.h"
 
 /* Wrapper for DRM_NOUVEAU_GETPARAM ioctl */
 GLboolean nouveauDRMGetParam(nouveauContextPtr nmesa,
@@ -135,7 +136,74 @@ static void nouveauFinish( GLcontext *ctx )
 /* glClear */
 static void nouveauClear( GLcontext *ctx, GLbitfield mask )
 {
-	// XXX we really should do something here...
+	uint32_t clear_value;
+	nouveauContextPtr nmesa = NOUVEAU_CONTEXT(ctx);
+
+	/* FIXME: should we clear front buffer, even if asked to do it? */
+	if (mask & (BUFFER_BIT_FRONT_LEFT|BUFFER_BIT_BACK_LEFT)) {
+		GLubyte c[4];
+		int color_bits = 32;
+		int color_mask = 0xffffffff;
+
+		UNCLAMPED_FLOAT_TO_RGBA_CHAN(c,ctx->Color.ClearColor);
+		clear_value = PACK_COLOR_8888(c[3],c[0],c[1],c[2]);
+
+		if (ctx->DrawBuffer) {
+			/* FIXME: find correct color buffer, instead of [0][0] */
+			if (ctx->DrawBuffer->_ColorDrawBuffers[0][0]) {
+				color_bits = ctx->DrawBuffer->_ColorDrawBuffers[0][0]->RedBits;
+				color_bits += ctx->DrawBuffer->_ColorDrawBuffers[0][0]->GreenBits;
+				color_bits += ctx->DrawBuffer->_ColorDrawBuffers[0][0]->BlueBits;
+				color_bits += ctx->DrawBuffer->_ColorDrawBuffers[0][0]->AlphaBits;
+			}
+		}
+
+		if (color_bits<24) {
+			clear_value = PACK_COLOR_565(c[0],c[1],c[2]);
+			color_mask = 0xffff;
+		}
+
+		nouveauClearBuffer(ctx, nmesa->color_buffer,
+			clear_value, color_mask);
+	}
+
+	if (mask & (BUFFER_BIT_DEPTH)) {
+		int depth_bits = 24;
+		int depth_mask;
+		if (ctx->DrawBuffer) {
+			if (ctx->DrawBuffer->_DepthBuffer) {
+				depth_bits = ctx->DrawBuffer->_DepthBuffer->DepthBits;
+			}
+		}
+
+		switch(depth_bits) {
+			case 16:
+				clear_value = (uint32_t) (ctx->Depth.Clear * 32767.0);
+				depth_mask = 0xffff;
+				break;
+			default:
+				clear_value = ((uint32_t) (ctx->Depth.Clear * 16777215.0)) << 8;
+				depth_mask = 0xffffff00;
+				break;
+		}
+
+		nouveauClearBuffer(ctx, nmesa->depth_buffer,
+			clear_value, depth_mask);
+	}
+
+	if (mask & (BUFFER_BIT_STENCIL)) {
+		int stencil_bits = 0;
+		if (ctx->DrawBuffer) {
+			if (ctx->DrawBuffer->_StencilBuffer) {
+				stencil_bits = ctx->DrawBuffer->_StencilBuffer->StencilBits;
+			}
+		}
+
+		if (stencil_bits>0) {
+			nouveauClearBuffer(ctx, nmesa->depth_buffer,
+				ctx->Stencil.Clear, (1<<stencil_bits)-1);
+		}	
+	}
 }
 
 void nouveauDriverInitFunctions( struct dd_function_table *functions )

@@ -52,6 +52,13 @@
 #define GLX_TRANSPARENT_RGB 0x8008
 #endif
 
+#ifndef GLX_RGBA_BIT
+#define GLX_RGBA_BIT			0x00000001
+#endif
+
+#ifndef GLX_COLOR_INDEX_BIT
+#define GLX_COLOR_INDEX_BIT		0x00000002
+#endif
 
 typedef enum
 {
@@ -81,7 +88,7 @@ struct visual_attribs
    int transparentIndexValue;
    int bufferSize;
    int level;
-   int rgba;
+   int render_type;
    int doubleBuffer;
    int stereo;
    int auxBuffers;
@@ -388,19 +395,60 @@ print_screen_info(Display *dpy, int scrnum, Bool allowDirect, GLboolean limits)
    XSetWindowAttributes attr;
    unsigned long mask;
    Window root;
-   GLXContext ctx;
+   GLXContext ctx = NULL;
    XVisualInfo *visinfo;
    int width = 100, height = 100;
 
    root = RootWindow(dpy, scrnum);
 
    visinfo = glXChooseVisual(dpy, scrnum, attribSingle);
-   if (!visinfo) {
+   if (!visinfo)
       visinfo = glXChooseVisual(dpy, scrnum, attribDouble);
-      if (!visinfo) {
-         fprintf(stderr, "Error: couldn't find RGB GLX visual\n");
-         return;
+
+   if (visinfo)
+      ctx = glXCreateContext( dpy, visinfo, NULL, allowDirect );
+
+#ifdef GLX_VERSION_1_3
+   {
+      int fbAttribSingle[] = {
+	 GLX_RENDER_TYPE,   GLX_RGBA_BIT,
+	 GLX_RED_SIZE,      1,
+	 GLX_GREEN_SIZE,    1,
+	 GLX_BLUE_SIZE,     1,
+	 GLX_DOUBLEBUFFER,  GL_TRUE,
+	 None };
+      int fbAttribDouble[] = {
+	 GLX_RENDER_TYPE,   GLX_RGBA_BIT,
+	 GLX_RED_SIZE,      1,
+	 GLX_GREEN_SIZE,    1,
+	 GLX_BLUE_SIZE,     1,
+	 None };
+      GLXFBConfig *configs = NULL;
+      int nConfigs;
+
+      if (!visinfo)
+	 configs = glXChooseFBConfig(dpy, scrnum, fbAttribSingle, &nConfigs);
+      if (!visinfo)
+	 configs = glXChooseFBConfig(dpy, scrnum, fbAttribDouble, &nConfigs);
+
+      if (configs) {
+	 visinfo = glXGetVisualFromFBConfig(dpy, configs[0]);
+	 ctx = glXCreateNewContext(dpy, configs[0], GLX_RGBA_TYPE, NULL, allowDirect);
+	 XFree(configs);
       }
+   }
+#endif
+
+   if (!visinfo) {
+      fprintf(stderr, "Error: couldn't find RGB GLX visual or fbconfig\n");
+      return;
+   }
+
+   if (!ctx) {
+      fprintf(stderr, "Error: glXCreateContext failed\n");
+      XFree(visinfo);
+      XDestroyWindow(dpy, win);
+      return;
    }
 
    attr.background_pixel = 0;
@@ -411,14 +459,6 @@ print_screen_info(Display *dpy, int scrnum, Bool allowDirect, GLboolean limits)
    win = XCreateWindow(dpy, root, 0, 0, width, height,
 		       0, visinfo->depth, InputOutput,
 		       visinfo->visual, mask, &attr);
-
-   ctx = glXCreateContext( dpy, visinfo, NULL, allowDirect );
-   if (!ctx) {
-      fprintf(stderr, "Error: glXCreateContext failed\n");
-      XFree(visinfo);
-      XDestroyWindow(dpy, win);
-      return;
-   }
 
    if (glXMakeCurrent(dpy, win, ctx)) {
       const char *serverVendor = glXQueryServerString(dpy, scrnum, GLX_VENDOR);
@@ -541,12 +581,27 @@ visual_class_abbrev(int cls)
    }
 }
 
+static const char *
+visual_render_type_name(int type)
+{
+   switch (type) {
+      case GLX_RGBA_BIT:
+         return "rgba";
+      case GLX_COLOR_INDEX_BIT:
+         return "ci";
+      case GLX_RGBA_BIT | GLX_COLOR_INDEX_BIT:
+         return "rgba|ci";
+      default:
+         return "";
+      }
+}
 
-static void
+static GLboolean
 get_visual_attribs(Display *dpy, XVisualInfo *vInfo,
                    struct visual_attribs *attribs)
 {
    const char *ext = glXQueryExtensionsString(dpy, vInfo->screen);
+   int rgba;
 
    memset(attribs, 0, sizeof(struct visual_attribs));
 
@@ -563,11 +618,17 @@ get_visual_attribs(Display *dpy, XVisualInfo *vInfo,
    attribs->colormapSize = vInfo->colormap_size;
    attribs->bitsPerRGB = vInfo->bits_per_rgb;
 
-   if (glXGetConfig(dpy, vInfo, GLX_USE_GL, &attribs->supportsGL) != 0)
-      return;
+   if (glXGetConfig(dpy, vInfo, GLX_USE_GL, &attribs->supportsGL) != 0 ||
+       !attribs->supportsGL)
+      return GL_FALSE;
    glXGetConfig(dpy, vInfo, GLX_BUFFER_SIZE, &attribs->bufferSize);
    glXGetConfig(dpy, vInfo, GLX_LEVEL, &attribs->level);
-   glXGetConfig(dpy, vInfo, GLX_RGBA, &attribs->rgba);
+   glXGetConfig(dpy, vInfo, GLX_RGBA, &rgba);
+   if (rgba)
+      attribs->render_type = GLX_RGBA_BIT;
+   else
+      attribs->render_type = GLX_COLOR_INDEX_BIT;
+   
    glXGetConfig(dpy, vInfo, GLX_DOUBLEBUFFER, &attribs->doubleBuffer);
    glXGetConfig(dpy, vInfo, GLX_STEREO, &attribs->stereo);
    glXGetConfig(dpy, vInfo, GLX_AUX_BUFFERS, &attribs->auxBuffers);
@@ -616,7 +677,96 @@ get_visual_attribs(Display *dpy, XVisualInfo *vInfo,
 #else
    attribs->visualCaveat = 0;
 #endif
+
+   return GL_TRUE;
 }
+
+#ifdef GLX_VERSION_1_3
+
+static int
+glx_token_to_visual_class(int visual_type)
+{
+   switch (visual_type) {
+   case GLX_TRUE_COLOR:
+      return TrueColor;
+   case GLX_DIRECT_COLOR:
+      return DirectColor;
+   case GLX_PSEUDO_COLOR:
+      return PseudoColor;
+   case GLX_STATIC_COLOR:
+      return StaticColor;
+   case GLX_GRAY_SCALE:
+      return GrayScale;
+   case GLX_STATIC_GRAY:
+      return StaticGray;
+   case GLX_NONE:
+   default:
+      return None;
+   }
+}
+
+static GLboolean
+get_fbconfig_attribs(Display *dpy, GLXFBConfig fbconfig,
+		     struct visual_attribs *attribs)
+{
+   int visual_type;
+
+   memset(attribs, 0, sizeof(struct visual_attribs));
+
+   glXGetFBConfigAttrib(dpy, fbconfig, GLX_FBCONFIG_ID, &attribs->id);
+
+#if 0
+   attribs->depth = vInfo->depth;
+   attribs->redMask = vInfo->red_mask;
+   attribs->greenMask = vInfo->green_mask;
+   attribs->blueMask = vInfo->blue_mask;
+   attribs->colormapSize = vInfo->colormap_size;
+   attribs->bitsPerRGB = vInfo->bits_per_rgb;
+#endif
+
+   glXGetFBConfigAttrib(dpy, fbconfig, GLX_X_VISUAL_TYPE, &visual_type);
+   attribs->klass = glx_token_to_visual_class(visual_type);
+
+   glXGetFBConfigAttrib(dpy, fbconfig, GLX_BUFFER_SIZE, &attribs->bufferSize);
+   glXGetFBConfigAttrib(dpy, fbconfig, GLX_LEVEL, &attribs->level);
+   glXGetFBConfigAttrib(dpy, fbconfig, GLX_RENDER_TYPE, &attribs->render_type);
+   glXGetFBConfigAttrib(dpy, fbconfig, GLX_DOUBLEBUFFER, &attribs->doubleBuffer);
+   glXGetFBConfigAttrib(dpy, fbconfig, GLX_STEREO, &attribs->stereo);
+   glXGetFBConfigAttrib(dpy, fbconfig, GLX_AUX_BUFFERS, &attribs->auxBuffers);
+
+   glXGetFBConfigAttrib(dpy, fbconfig, GLX_RED_SIZE, &attribs->redSize);
+   glXGetFBConfigAttrib(dpy, fbconfig, GLX_GREEN_SIZE, &attribs->greenSize);
+   glXGetFBConfigAttrib(dpy, fbconfig, GLX_BLUE_SIZE, &attribs->blueSize);
+   glXGetFBConfigAttrib(dpy, fbconfig, GLX_ALPHA_SIZE, &attribs->alphaSize);
+   glXGetFBConfigAttrib(dpy, fbconfig, GLX_DEPTH_SIZE, &attribs->depthSize);
+   glXGetFBConfigAttrib(dpy, fbconfig, GLX_STENCIL_SIZE, &attribs->stencilSize);
+
+   glXGetFBConfigAttrib(dpy, fbconfig, GLX_ACCUM_RED_SIZE, &attribs->accumRedSize);
+   glXGetFBConfigAttrib(dpy, fbconfig, GLX_ACCUM_GREEN_SIZE, &attribs->accumGreenSize);
+   glXGetFBConfigAttrib(dpy, fbconfig, GLX_ACCUM_BLUE_SIZE, &attribs->accumBlueSize);
+   glXGetFBConfigAttrib(dpy, fbconfig, GLX_ACCUM_ALPHA_SIZE, &attribs->accumAlphaSize);
+
+   /* get transparent pixel stuff */
+   glXGetFBConfigAttrib(dpy, fbconfig,GLX_TRANSPARENT_TYPE, &attribs->transparentType);
+   if (attribs->transparentType == GLX_TRANSPARENT_RGB) {
+     glXGetFBConfigAttrib(dpy, fbconfig, GLX_TRANSPARENT_RED_VALUE, &attribs->transparentRedValue);
+     glXGetFBConfigAttrib(dpy, fbconfig, GLX_TRANSPARENT_GREEN_VALUE, &attribs->transparentGreenValue);
+     glXGetFBConfigAttrib(dpy, fbconfig, GLX_TRANSPARENT_BLUE_VALUE, &attribs->transparentBlueValue);
+     glXGetFBConfigAttrib(dpy, fbconfig, GLX_TRANSPARENT_ALPHA_VALUE, &attribs->transparentAlphaValue);
+   }
+   else if (attribs->transparentType == GLX_TRANSPARENT_INDEX) {
+     glXGetFBConfigAttrib(dpy, fbconfig, GLX_TRANSPARENT_INDEX_VALUE, &attribs->transparentIndexValue);
+   }
+
+   glXGetFBConfigAttrib(dpy, fbconfig, GLX_SAMPLE_BUFFERS, &attribs->numMultisample);
+   glXGetFBConfigAttrib(dpy, fbconfig, GLX_SAMPLES, &attribs->numSamples);
+   glXGetFBConfigAttrib(dpy, fbconfig, GLX_CONFIG_CAVEAT, &attribs->visualCaveat);
+
+   return GL_TRUE;
+}
+
+#endif
+
 
 
 static void
@@ -625,7 +775,8 @@ print_visual_attribs_verbose(const struct visual_attribs *attribs)
    printf("Visual ID: %x  depth=%d  class=%s\n",
           attribs->id, attribs->depth, visual_class_name(attribs->klass));
    printf("    bufferSize=%d level=%d renderType=%s doubleBuffer=%d stereo=%d\n",
-          attribs->bufferSize, attribs->level, attribs->rgba ? "rgba" : "ci",
+          attribs->bufferSize, attribs->level,
+	  visual_render_type_name(attribs->render_type),
           attribs->doubleBuffer, attribs->stereo);
    printf("    rgba: redSize=%d greenSize=%d blueSize=%d alphaSize=%d\n",
           attribs->redSize, attribs->greenSize,
@@ -683,16 +834,17 @@ print_visual_attribs_short(const struct visual_attribs *attribs)
    caveat = "None";
 #endif 
 
-   printf("0x%2x %2d %2s %2d %2d %2d %1s %2s %2s %2d %2d %2d %2d %2d %2d %2d",
+   printf("0x%02x %2d %2s %2d %2d %2d %c%c %c  %c %2d %2d %2d %2d %2d %2d %2d",
           attribs->id,
           attribs->depth,
           visual_class_abbrev(attribs->klass),
           attribs->transparentType != GLX_NONE,
           attribs->bufferSize,
           attribs->level,
-          attribs->rgba ? "r" : "c",
-          attribs->doubleBuffer ? "y" : ".",
-          attribs->stereo ? "y" : ".",
+          (attribs->render_type & GLX_RGBA_BIT) ? 'r' : ' ',
+          (attribs->render_type & GLX_COLOR_INDEX_BIT) ? 'c' : ' ',
+          attribs->doubleBuffer ? 'y' : '.',
+          attribs->stereo ? 'y' : '.',
           attribs->redSize, attribs->greenSize,
           attribs->blueSize, attribs->alphaSize,
           attribs->auxBuffers,
@@ -728,7 +880,7 @@ print_visual_attribs_long(const struct visual_attribs *attribs)
           attribs->transparentType != GLX_NONE,
           attribs->bufferSize,
           attribs->level,
-          attribs->rgba ? "rgba" : "ci  ",
+          visual_render_type_name(attribs->render_type),
           attribs->doubleBuffer,
           attribs->stereo,
           attribs->redSize, attribs->greenSize,
@@ -751,42 +903,86 @@ print_visual_info(Display *dpy, int scrnum, InfoMode mode)
 {
    XVisualInfo theTemplate;
    XVisualInfo *visuals;
-   int numVisuals;
+   int numVisuals, numGlxVisuals;
    long mask;
    int i;
+   struct visual_attribs attribs;
 
    /* get list of all visuals on this screen */
    theTemplate.screen = scrnum;
    mask = VisualScreenMask;
    visuals = XGetVisualInfo(dpy, mask, &theTemplate, &numVisuals);
 
-   if (mode == Verbose) {
-      for (i = 0; i < numVisuals; i++) {
-         struct visual_attribs attribs;
-         get_visual_attribs(dpy, &visuals[i], &attribs);
-         print_visual_attribs_verbose(&attribs);
-      }
+   numGlxVisuals = 0;
+   for (i = 0; i < numVisuals; i++) {
+      if (get_visual_attribs(dpy, &visuals[i], &attribs))
+	 numGlxVisuals++;
    }
-   else if (mode == Normal) {
+
+   if (numGlxVisuals == 0)
+      return;
+
+   printf("%d GLX Visuals\n", numGlxVisuals);
+
+   if (mode == Normal)
       print_visual_attribs_short_header();
-      for (i = 0; i < numVisuals; i++) {
-         struct visual_attribs attribs;
-         get_visual_attribs(dpy, &visuals[i], &attribs);
-         print_visual_attribs_short(&attribs);
-      }
-   }
-   else if (mode == Wide) {
+   else if (mode == Wide)
       print_visual_attribs_long_header();
-      for (i = 0; i < numVisuals; i++) {
-         struct visual_attribs attribs;
-         get_visual_attribs(dpy, &visuals[i], &attribs);
+
+   for (i = 0; i < numVisuals; i++) {
+      if (!get_visual_attribs(dpy, &visuals[i], &attribs))
+	 continue;
+
+      if (mode == Verbose)
+	 print_visual_attribs_verbose(&attribs);
+      else if (mode == Normal)
+         print_visual_attribs_short(&attribs);
+      else if (mode == Wide) 
          print_visual_attribs_long(&attribs);
-      }
    }
+   printf("\n");
 
    XFree(visuals);
 }
 
+#ifdef GLX_VERSION_1_3
+
+static void
+print_fbconfig_info(Display *dpy, int scrnum, InfoMode mode)
+{
+   int numFBConfigs;
+   struct visual_attribs attribs;
+   GLXFBConfig *fbconfigs;
+   int i;
+
+   /* get list of all fbconfigs on this screen */
+   fbconfigs = glXGetFBConfigs(dpy, scrnum, &numFBConfigs);
+
+   if (numFBConfigs == 0)
+      return;
+
+   printf("%d GLXFBConfigs:\n", numFBConfigs);
+   if (mode == Normal)
+      print_visual_attribs_short_header();
+   else if (mode == Wide)
+      print_visual_attribs_long_header();
+
+   for (i = 0; i < numFBConfigs; i++) {
+      get_fbconfig_attribs(dpy, fbconfigs[i], &attribs);
+
+      if (mode == Verbose) 
+         print_visual_attribs_verbose(&attribs);
+      else if (mode == Normal)
+	 print_visual_attribs_short(&attribs);
+      else if (mode == Wide)
+         print_visual_attribs_long(&attribs);
+   }
+   printf("\n");
+
+   XFree(fbconfigs);
+}
+
+#endif
 
 /*
  * Stand-alone Mesa doesn't really implement the GLX protocol so it
@@ -860,7 +1056,7 @@ find_best_visual(Display *dpy, int scrnum)
       /* see if this vis is better than bestVis */
       if ((!bestVis.supportsGL && vis.supportsGL) ||
           (bestVis.visualCaveat != GLX_NONE_EXT) ||
-          (!bestVis.rgba && vis.rgba) ||
+          (!(bestVis.render_type & GLX_RGBA_BIT) && (vis.render_type & GLX_RGBA_BIT)) ||
           (!bestVis.doubleBuffer && vis.doubleBuffer) ||
           (bestVis.redSize < vis.redSize) ||
           (bestVis.greenSize < vis.greenSize) ||
@@ -957,6 +1153,9 @@ main(int argc, char *argv[])
          print_screen_info(dpy, scrnum, allowDirect, limits);
          printf("\n");
          print_visual_info(dpy, scrnum, mode);
+#ifdef GLX_VERSION_1_3
+         print_fbconfig_info(dpy, scrnum, mode);
+#endif
          if (scrnum + 1 < numScreens)
             printf("\n\n");
       }

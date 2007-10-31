@@ -863,7 +863,7 @@ static void radeonWaitForFrameCompletion( radeonContextPtr rmesa )
 
 /* Copy the back color buffer to the front color buffer.
  */
-void radeonCopyBuffer( const __DRIdrawablePrivate *dPriv,
+void radeonCopyBuffer( __DRIdrawablePrivate *dPriv,
 		       const drm_clip_rect_t	  *rect)
 {
    radeonContextPtr rmesa;
@@ -891,7 +891,7 @@ void radeonCopyBuffer( const __DRIdrawablePrivate *dPriv,
    if (!rect)
    {
        UNLOCK_HARDWARE( rmesa );
-       driWaitForVBlank( dPriv, & rmesa->vbl_seq, rmesa->vblank_flags, & missed_target );
+       driWaitForVBlank( dPriv, & missed_target );
        LOCK_HARDWARE( rmesa );
    }
 
@@ -952,7 +952,7 @@ void radeonCopyBuffer( const __DRIdrawablePrivate *dPriv,
    }
 }
 
-void radeonPageFlip( const __DRIdrawablePrivate *dPriv )
+void radeonPageFlip( __DRIdrawablePrivate *dPriv )
 {
    radeonContextPtr rmesa;
    GLint ret;
@@ -987,7 +987,7 @@ void radeonPageFlip( const __DRIdrawablePrivate *dPriv )
     */
    radeonWaitForFrameCompletion( rmesa );
    UNLOCK_HARDWARE( rmesa );
-   driWaitForVBlank( dPriv, & rmesa->vbl_seq, rmesa->vblank_flags, & missed_target );
+   driWaitForVBlank( dPriv, & missed_target );
    if ( missed_target ) {
       rmesa->swap_missed_count++;
       (void) (*dri_interface->getUST)( & rmesa->swap_missed_ust );
