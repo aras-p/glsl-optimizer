@@ -12,6 +12,9 @@ CXXFLAGS = -O3 -mcpu=ev5 -ansi -mieee -pedantic -D_XOPEN_SOURCE
 GLUT_CFLAGS = -fexceptions
 MKLIB_OPTIONS = -static
 
+# Work around aliasing bugs - developers should comment this out
+CFLAGS += -fno-strict-aliasing
+CXXFLAGS += -fno-strict-aliasing
 
 # Library names (actual file names)
 GL_LIB_NAME = libGL.a

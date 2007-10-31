@@ -12,6 +12,9 @@ CFLAGS = -O3 -ansi -pedantic -fPIC -ffast-math -D_POSIX_SOURCE -D_POSIX_C_SOURCE
 CXXFLAGS = -O3 -ansi -pedantic -fPIC -ffast-math -D_POSIX_SOURCE -D_POSIX_C_SOURCE=199309L -D_SVID_SOURCE -D_BSD_SOURCE
 GLUT_CFLAGS = -fexceptions
 
+# Work around aliasing bugs - developers should comment this out
+CFLAGS += -fno-strict-aliasing
+CXXFLAGS += -fno-strict-aliasing
 
 # Library/program dependencies
 GL_LIB_DEPS = -L/usr/X11R6/lib -lX11 -lXext -L/usr/local/glide/lib -lglide3x -lm -lpthread
