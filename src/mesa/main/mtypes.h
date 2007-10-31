@@ -1557,17 +1557,6 @@ struct gl_texture_unit
    /*@}*/
 };
 
-struct texenvprog_cache_item {
-   GLuint hash;
-   void *key;
-   struct gl_fragment_program *data;
-   struct texenvprog_cache_item *next;
-};
-
-struct texenvprog_cache {
-   struct texenvprog_cache_item **items;
-   GLuint size, n_items;
-};
 
 /**
  * Texture attribute group (GL_TEXTURE_BIT).
@@ -1599,9 +1588,6 @@ struct gl_texture_attrib
    /** GL_EXT_shared_texture_palette */
    GLboolean SharedPalette;
    struct gl_color_table Palette;
-   
-   /** Cached texenv fragment programs */
-   struct texenvprog_cache env_fp_cache;
 };
 
 

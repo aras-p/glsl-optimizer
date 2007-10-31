@@ -1,6 +1,6 @@
 /**************************************************************************
  * 
- * Copyright 2003 Tungsten Graphics, Inc., Cedar Park, Texas.
+ * Copyright 2007 Tungsten Graphics, Inc., Cedar Park, Texas.
  * All Rights Reserved.
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a
@@ -29,6 +29,7 @@
 #include "macros.h"
 #include "enums.h"
 #include "shader/prog_parameter.h"
+#include "shader/prog_cache.h"
 #include "shader/prog_instruction.h"
 #include "shader/prog_print.h"
 #include "shader/prog_statevars.h"
@@ -1131,109 +1132,6 @@ create_new_program(GLcontext *ctx, struct state_key *key,
 }
 
 
-static struct gl_fragment_program *
-search_cache(const struct texenvprog_cache *cache,
-             GLuint hash,
-             const void *key,
-             GLuint keysize)
-{
-   struct texenvprog_cache_item *c;
-
-   for (c = cache->items[hash % cache->size]; c; c = c->next) {
-      if (c->hash == hash && memcmp(c->key, key, keysize) == 0)
-	 return (struct gl_fragment_program *) c->data;
-   }
-
-   return NULL;
-}
-
-static void rehash( struct texenvprog_cache *cache )
-{
-   struct texenvprog_cache_item **items;
-   struct texenvprog_cache_item *c, *next;
-   GLuint size, i;
-
-   size = cache->size * 3;
-   items = (struct texenvprog_cache_item**) _mesa_malloc(size * sizeof(*items));
-   _mesa_memset(items, 0, size * sizeof(*items));
-
-   for (i = 0; i < cache->size; i++)
-      for (c = cache->items[i]; c; c = next) {
-	 next = c->next;
-	 c->next = items[c->hash % size];
-	 items[c->hash % size] = c;
-      }
-
-   _mesa_free(cache->items);
-   cache->items = items;
-   cache->size = size;
-}
-
-static void clear_cache( GLcontext *ctx, struct texenvprog_cache *cache )
-{
-   struct texenvprog_cache_item *c, *next;
-   GLuint i;
-
-   for (i = 0; i < cache->size; i++) {
-      for (c = cache->items[i]; c; c = next) {
-	 next = c->next;
-	 _mesa_free(c->key);
-	 ctx->Driver.DeleteProgram(ctx, (struct gl_program *) c->data);
-	 _mesa_free(c);
-      }
-      cache->items[i] = NULL;
-   }
-
-
-   cache->n_items = 0;
-}
-
-
-static void cache_item( GLcontext *ctx,
-                        struct texenvprog_cache *cache,
-			GLuint hash,
-			const struct state_key *key,
-			void *data )
-{
-   struct texenvprog_cache_item *c
-      = (struct texenvprog_cache_item *) MALLOC(sizeof(*c));
-   c->hash = hash;
-
-   c->key = _mesa_malloc(sizeof(*key));
-   memcpy(c->key, key, sizeof(*key));
-
-   c->data = (struct gl_fragment_program *) data;
-
-   if (cache->n_items > cache->size * 1.5) {
-      if (cache->size < 1000)
-	 rehash(cache);
-      else 
-	 clear_cache(ctx, cache);
-   }
-
-   cache->n_items++;
-   c->next = cache->items[hash % cache->size];
-   cache->items[hash % cache->size] = c;
-}
-
-static GLuint hash_key( const struct state_key *key )
-{
-   GLuint *ikey = (GLuint *)key;
-   GLuint hash = 0, i;
-
-   /* Make a slightly better attempt at a hash function:
-    */
-   for (i = 0; i < sizeof(*key)/sizeof(*ikey); i++)
-   {
-      hash += ikey[i];
-      hash += (hash << 10);
-      hash ^= (hash >> 6);
-   }
-
-   return hash;
-}
-
-
 /**
  * Return a fragment program which implements the current
  * fixed-function texture, fog and color-sum operations.
@@ -1243,23 +1141,21 @@ _mesa_get_fixed_func_fragment_program(GLcontext *ctx)
 {
    struct gl_fragment_program *prog;
    struct state_key key;
-   GLuint hash;
 	
    make_state_key(ctx, &key);
-   hash = hash_key(&key);
       
-   prog = search_cache(&ctx->Texture.env_fp_cache, hash, &key, sizeof(key));
+   prog = (struct gl_fragment_program *)
+      _mesa_search_program_cache(ctx->FragmentProgram.Cache,
+                                 &key, sizeof(key));
 
    if (!prog) {
-      if (0)
-         _mesa_printf("Building new texenv proggy for key %x\n", hash);
-
       prog = (struct gl_fragment_program *) 
          ctx->Driver.NewProgram(ctx, GL_FRAGMENT_PROGRAM_ARB, 0);
 
       create_new_program(ctx, &key, prog);
 
-      cache_item(ctx, &ctx->Texture.env_fp_cache, hash, &key, prog);
+      _mesa_program_cache_insert(ctx, ctx->FragmentProgram.Cache,
+                                 &key, sizeof(key), &prog->Base);
    }
 
    return prog;
@@ -1296,21 +1192,4 @@ _mesa_UpdateTexEnvProgram( GLcontext *ctx )
       ctx->Driver.BindProgram(ctx, GL_FRAGMENT_PROGRAM_ARB,
                          (struct gl_program *) ctx->FragmentProgram._Current);
    }
-}
-
-
-void _mesa_TexEnvProgramCacheInit( GLcontext *ctx )
-{
-   ctx->Texture.env_fp_cache.size = 17;
-   ctx->Texture.env_fp_cache.n_items = 0;
-   ctx->Texture.env_fp_cache.items = (struct texenvprog_cache_item **)
-      _mesa_calloc(ctx->Texture.env_fp_cache.size * 
-		   sizeof(struct texenvprog_cache_item));
-}
-
-
-void _mesa_TexEnvProgramCacheDestroy( GLcontext *ctx )
-{
-   clear_cache(ctx, &ctx->Texture.env_fp_cache);
-   _mesa_free(ctx->Texture.env_fp_cache.items);
 }
