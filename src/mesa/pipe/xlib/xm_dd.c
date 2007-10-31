@@ -326,33 +326,6 @@ xmesa_clear_buffers(GLcontext *ctx, GLbitfield buffers, GLuint value)
 
 
 /*
- * Every driver should implement a GetString function in order to
- * return a meaningful GL_RENDERER string.
- */
-static const GLubyte *
-get_string( GLcontext *ctx, GLenum name )
-{
-   (void) ctx;
-   switch (name) {
-      case GL_RENDERER:
-#ifdef XFree86Server
-         return (const GLubyte *) "Mesa GLX Indirect";
-#else
-         return (const GLubyte *) "Mesa X11 (softpipe)";
-#endif
-      case GL_VENDOR:
-#ifdef XFree86Server
-         return (const GLubyte *) "Mesa project: www.mesa3d.org";
-#else
-         return NULL;
-#endif
-      default:
-         return NULL;
-   }
-}
-
-
-/*
  * We implement the glEnable function only because we care about
  * dither enable/disable.
  */
@@ -532,43 +505,6 @@ xmesa_update_state( GLcontext *ctx, GLbitfield new_state )
 
 
 /**
- * Called via ctx->Driver.TestProxyTeximage().  Normally, we'd just use
- * the _mesa_test_proxy_teximage() fallback function, but we're going to
- * special-case the 3D texture case to allow textures up to 512x512x32
- * texels.
- */
-static GLboolean
-test_proxy_teximage(GLcontext *ctx, GLenum target, GLint level,
-                    GLint internalFormat, GLenum format, GLenum type,
-                    GLint width, GLint height, GLint depth, GLint border)
-{
-   if (target == GL_PROXY_TEXTURE_3D) {
-      /* special case for 3D textures */
-      if (width * height * depth > 512 * 512 * 64 ||
-          width  < 2 * border ||
-          (!ctx->Extensions.ARB_texture_non_power_of_two &&
-           _mesa_bitcount(width  - 2 * border) != 1) ||
-          height < 2 * border ||
-          (!ctx->Extensions.ARB_texture_non_power_of_two &&
-           _mesa_bitcount(height - 2 * border) != 1) ||
-          depth  < 2 * border ||
-          (!ctx->Extensions.ARB_texture_non_power_of_two &&
-           _mesa_bitcount(depth  - 2 * border) != 1)) {
-         /* Bad size, or too many texels */
-         return GL_FALSE;
-      }
-      return GL_TRUE;
-   }
-   else {
-      /* use the fallback routine for 1D, 2D, cube and rect targets */
-      return _mesa_test_proxy_teximage(ctx, target, level, internalFormat,
-                                       format, type, width, height, depth,
-                                       border);
-   }
-}
-
-
-/**
  * Called by glViewport.
  * This is a good time for us to poll the current X window size and adjust
  * our renderbuffers to match the current window size.
@@ -602,7 +538,6 @@ void
 xmesa_init_driver_functions( XMesaVisual xmvisual,
                              struct dd_function_table *driver )
 {
-   driver->GetString = get_string;
    driver->UpdateState = xmesa_update_state;
    driver->GetBufferSize = NULL; /* OBSOLETE */
    driver->Flush = finish_or_flush;
@@ -612,5 +547,4 @@ xmesa_init_driver_functions( XMesaVisual xmvisual,
    driver->Clear = xmesa_clear_buffers;
 #endif
    driver->Viewport = xmesa_viewport;
-   driver->TestProxyTexImage = test_proxy_teximage;
 }
