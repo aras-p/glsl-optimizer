@@ -61,9 +61,6 @@ _tnl_CreateContext( GLcontext *ctx )
    /* Initialize tnl state.
     */
    if (ctx->VertexProgram._MaintainTnlProgram) {
-#if 0
-      _tnl_ProgramCacheInit( ctx );
-#endif
       _tnl_install_pipeline( ctx, _tnl_vp_pipeline );
    } else {
       _tnl_install_pipeline( ctx, _tnl_default_pipeline );
@@ -91,11 +88,6 @@ _tnl_DestroyContext( GLcontext *ctx )
    TNLcontext *tnl = TNL_CONTEXT(ctx);
 
    _tnl_destroy_pipeline( ctx );
-
-#if 0
-   if (ctx->VertexProgram._MaintainTnlProgram)
-      _tnl_ProgramCacheDestroy( ctx );
-#endif
 
    FREE(tnl);
    ctx->swtnl_context = NULL;
