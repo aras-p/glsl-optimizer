@@ -42,7 +42,7 @@ intel_bufferobj_alloc_buffer(struct intel_context *intel,
 {
    intel_obj->buffer = dri_bo_alloc(intel->intelScreen->bufmgr, "bufferobj",
 				    intel_obj->Base.Size, 64,
-				    DRM_BO_FLAG_MEM_TT);
+				    DRM_BO_FLAG_MEM_LOCAL | DRM_BO_FLAG_CACHED | DRM_BO_FLAG_CACHED_MAPPED);
 }
 
 /**

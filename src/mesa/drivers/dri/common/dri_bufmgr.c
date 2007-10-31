@@ -40,9 +40,8 @@ dri_bo_alloc(dri_bufmgr *bufmgr, const char *name, unsigned long size,
    assert((location_mask & ~(DRM_BO_FLAG_MEM_LOCAL | DRM_BO_FLAG_MEM_TT |
 			     DRM_BO_FLAG_MEM_VRAM | DRM_BO_FLAG_MEM_PRIV0 |
 			     DRM_BO_FLAG_MEM_PRIV1 | DRM_BO_FLAG_MEM_PRIV2 |
-			     DRM_BO_FLAG_MEM_PRIV3 |
-			     DRM_BO_FLAG_MEM_PRIV4)) == 0);
-
+			     DRM_BO_FLAG_MEM_PRIV3 | DRM_BO_FLAG_MEM_PRIV4 |
+			     DRM_BO_FLAG_CACHED | DRM_BO_FLAG_CACHED_MAPPED)) == 0);
    return bufmgr->bo_alloc(bufmgr, name, size, alignment, location_mask);
 }
 

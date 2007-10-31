@@ -80,7 +80,7 @@ intel_batchbuffer_reset(struct intel_batchbuffer *batch)
 
    batch->buf = dri_bo_alloc(intel->intelScreen->bufmgr, "batchbuffer",
 			     intel->intelScreen->maxBatchSize, 4096,
-			     DRM_BO_FLAG_MEM_TT);
+			     DRM_BO_FLAG_MEM_LOCAL | DRM_BO_FLAG_CACHED | DRM_BO_FLAG_CACHED_MAPPED);
    dri_bo_map(batch->buf, GL_TRUE);
    batch->map = batch->buf->virtual;
    batch->size = intel->intelScreen->maxBatchSize;
