@@ -50,8 +50,10 @@
 #include "swrast/swrast.h"
 #include "swrast/s_context.h"
 #include "swrast_setup/swrast_setup.h"
+#if 0
 #include "tnl/tnl.h"
 #include "tnl/t_context.h"
+#endif
 
 #include "pipe/softpipe/sp_context.h"
 #include "state_tracker/st_public.h"
@@ -423,274 +425,6 @@ xmesa_clear_buffers(GLcontext *ctx, GLbitfield buffers)
 }
 
 
-#ifndef XFree86Server
-/* XXX this was never tested in the Xserver environment */
-
-/**
- * This function implements glDrawPixels() with an XPutImage call when
- * drawing to the front buffer (X Window drawable).
- * The image format must be GL_BGRA to match the PF_8R8G8B pixel format.
- */
-static void
-xmesa_DrawPixels_8R8G8B( GLcontext *ctx,
-                         GLint x, GLint y, GLsizei width, GLsizei height,
-                         GLenum format, GLenum type,
-                         const struct gl_pixelstore_attrib *unpack,
-                         const GLvoid *pixels )
-{
-   const SWcontext *swrast = SWRAST_CONTEXT( ctx );
-   struct gl_renderbuffer *rb = ctx->DrawBuffer->_ColorDrawBuffers[0][0];
-   struct xmesa_renderbuffer *xrb = xmesa_renderbuffer(rb->Wrapped);
-
-   if (swrast->NewState)
-      _swrast_validate_derived( ctx );
-
-   if (ctx->DrawBuffer->Name == 0 &&
-       format == GL_BGRA &&
-       type == GL_UNSIGNED_BYTE &&
-       (swrast->_RasterMask & ~CLIP_BIT) == 0 && /* no blend, z-test, etc */
-       ctx->_ImageTransferState == 0 &&  /* no color tables, scale/bias, etc */
-       ctx->Pixel.ZoomX == 1.0 &&        /* no zooming */
-       ctx->Pixel.ZoomY == 1.0 &&
-       xrb->pixmap &&                    /* drawing to pixmap or window */
-       xrb->St.Base.AlphaBits == 0)
-   {
-      const XMesaContext xmesa = XMESA_CONTEXT(ctx);
-      XMesaBuffer xmbuf = XMESA_BUFFER(ctx->DrawBuffer);
-      XMesaDisplay *dpy = xmesa->xm_visual->display;
-      const XMesaGC gc = xmbuf->cleargc;  /* effected by glColorMask */
-      int dstX = x;
-      int dstY = y;
-      int w = width;
-      int h = height;
-      struct gl_pixelstore_attrib clippedUnpack = *unpack;
-
-      ASSERT(xmesa->xm_visual->dithered_pf == PF_8R8G8B);
-      ASSERT(xmesa->xm_visual->undithered_pf == PF_8R8G8B);
-      ASSERT(dpy);
-      ASSERT(gc);
-
-      if (unpack->BufferObj->Name) {
-         /* unpack from PBO */
-         GLubyte *buf;
-         if (!_mesa_validate_pbo_access(2, unpack, width, height, 1,
-                                        format, type, pixels)) {
-            _mesa_error(ctx, GL_INVALID_OPERATION,
-                        "glDrawPixels(invalid PBO access)");
-            return;
-         }
-         buf = (GLubyte *) ctx->Driver.MapBuffer(ctx,
-                                                 GL_PIXEL_UNPACK_BUFFER_EXT,
-                                                 GL_READ_ONLY_ARB,
-                                                 unpack->BufferObj);
-         if (!buf) {
-            /* buffer is already mapped - that's an error */
-            _mesa_error(ctx, GL_INVALID_OPERATION,
-                        "glDrawPixels(PBO is mapped)");
-            return;
-         }
-         pixels = ADD_POINTERS(buf, pixels);
-      }
-
-      if (_mesa_clip_drawpixels(ctx, &dstX, &dstY, &w, &h, &clippedUnpack)) {
-         /* This is a little tricky since all coordinates up to now have
-          * been in the OpenGL bottom-to-top orientation.  X is top-to-bottom
-          * so we have to carefully compute the Y coordinates/addresses here.
-          */
-         int srcX = clippedUnpack.SkipPixels;
-         int srcY = clippedUnpack.SkipRows;
-         int rowLength = clippedUnpack.RowLength;
-         XMesaImage ximage;
-         MEMSET(&ximage, 0, sizeof(XMesaImage));
-         ximage.width = width;
-         ximage.height = height;
-         ximage.format = ZPixmap;
-         ximage.data = (char *) pixels
-            + ((srcY + h - 1) * rowLength + srcX) * 4;
-         ximage.byte_order = LSBFirst;
-         ximage.bitmap_unit = 32;
-         ximage.bitmap_bit_order = LSBFirst;
-         ximage.bitmap_pad = 32;
-         ximage.depth = 24;
-         ximage.bytes_per_line = -rowLength * 4; /* negative to flip image */
-         ximage.bits_per_pixel = 32;
-         /* it seems we don't need to set the ximage.red/green/blue_mask fields */
-         /* flip Y axis for dest position */
-         dstY = YFLIP(xrb, dstY) - h + 1;
-         XPutImage(dpy, xrb->pixmap, gc, &ximage, 0, 0, dstX, dstY, w, h);
-      }
-
-      if (unpack->BufferObj->Name) {
-         ctx->Driver.UnmapBuffer(ctx, GL_PIXEL_UNPACK_BUFFER_EXT,
-                                 unpack->BufferObj);
-      }
-   }
-   else {
-      /* software fallback */
-      _swrast_DrawPixels(ctx, x, y, width, height,
-                         format, type, unpack, pixels);
-   }
-}
-
-
-
-/**
- * This function implements glDrawPixels() with an XPutImage call when
- * drawing to the front buffer (X Window drawable).  The image format
- * must be GL_RGB and image type must be GL_UNSIGNED_SHORT_5_6_5 to
- * match the PF_5R6G5B pixel format.
- */
-static void
-xmesa_DrawPixels_5R6G5B( GLcontext *ctx,
-                         GLint x, GLint y, GLsizei width, GLsizei height,
-                         GLenum format, GLenum type,
-                         const struct gl_pixelstore_attrib *unpack,
-                         const GLvoid *pixels )
-{
-   struct xmesa_renderbuffer *xrb
-      = xmesa_renderbuffer(ctx->DrawBuffer->_ColorDrawBuffers[0][0]->Wrapped);
-   const XMesaContext xmesa = XMESA_CONTEXT(ctx);
-   const SWcontext *swrast = SWRAST_CONTEXT( ctx );
-   XMesaDisplay *dpy = xmesa->xm_visual->display;
-   XMesaBuffer xmbuf = XMESA_BUFFER(ctx->DrawBuffer);
-   const XMesaGC gc = xmbuf->cleargc;  /* effected by glColorMask */
-
-   ASSERT(dpy);
-   ASSERT(gc);
-   ASSERT(xmesa->xm_visual->undithered_pf == PF_5R6G5B);
-
-   if (swrast->NewState)
-      _swrast_validate_derived( ctx );
-
-   if (xrb->pixmap &&       /* drawing to pixmap or window */
-       format == GL_RGB &&
-       type == GL_UNSIGNED_SHORT_5_6_5 &&
-       !ctx->Color.DitherFlag &&  /* no dithering */
-       (swrast->_RasterMask & ~CLIP_BIT) == 0 && /* no blend, z-test, etc */
-       ctx->_ImageTransferState == 0 &&  /* no color tables, scale/bias, etc */
-       ctx->Pixel.ZoomX == 1.0 &&        /* no zooming */
-       ctx->Pixel.ZoomY == 1.0) {
-      int dstX = x;
-      int dstY = y;
-      int w = width;
-      int h = height;
-      struct gl_pixelstore_attrib clippedUnpack = *unpack;
-
-      if (unpack->BufferObj->Name) {
-         /* unpack from PBO */
-         GLubyte *buf;
-         if (!_mesa_validate_pbo_access(2, unpack, width, height, 1,
-                                        format, type, pixels)) {
-            _mesa_error(ctx, GL_INVALID_OPERATION,
-                        "glDrawPixels(invalid PBO access)");
-            return;
-         }
-         buf = (GLubyte *) ctx->Driver.MapBuffer(ctx,
-                                                 GL_PIXEL_UNPACK_BUFFER_EXT,
-                                                 GL_READ_ONLY_ARB,
-                                                 unpack->BufferObj);
-         if (!buf) {
-            /* buffer is already mapped - that's an error */
-            _mesa_error(ctx, GL_INVALID_OPERATION,
-                        "glDrawPixels(PBO is mapped)");
-            return;
-         }
-         pixels = ADD_POINTERS(buf, pixels);
-      }
-
-      if (_mesa_clip_drawpixels(ctx, &dstX, &dstY, &w, &h, &clippedUnpack)) {
-         /* This is a little tricky since all coordinates up to now have
-          * been in the OpenGL bottom-to-top orientation.  X is top-to-bottom
-          * so we have to carefully compute the Y coordinates/addresses here.
-          */
-         int srcX = clippedUnpack.SkipPixels;
-         int srcY = clippedUnpack.SkipRows;
-         int rowLength = clippedUnpack.RowLength;
-         XMesaImage ximage;
-         MEMSET(&ximage, 0, sizeof(XMesaImage));
-         ximage.width = width;
-         ximage.height = height;
-         ximage.format = ZPixmap;
-         ximage.data = (char *) pixels
-            + ((srcY + h - 1) * rowLength + srcX) * 2;
-         ximage.byte_order = LSBFirst;
-         ximage.bitmap_unit = 16;
-         ximage.bitmap_bit_order = LSBFirst;
-         ximage.bitmap_pad = 16;
-         ximage.depth = 16;
-         ximage.bytes_per_line = -rowLength * 2; /* negative to flip image */
-         ximage.bits_per_pixel = 16;
-         /* it seems we don't need to set the ximage.red/green/blue_mask fields */
-         /* flip Y axis for dest position */
-         dstY = YFLIP(xrb, dstY) - h + 1;
-         XPutImage(dpy, xrb->pixmap, gc, &ximage, 0, 0, dstX, dstY, w, h);
-      }
-
-      if (unpack->BufferObj->Name) {
-         ctx->Driver.UnmapBuffer(ctx, GL_PIXEL_UNPACK_BUFFER_EXT,
-                                 unpack->BufferObj);
-      }
-   }
-   else {
-      /* software fallback */
-      _swrast_DrawPixels(ctx, x, y, width, height,
-                         format, type, unpack, pixels);
-   }
-}
-
-
-
-/**
- * Implement glCopyPixels for the front color buffer (or back buffer Pixmap)
- * for the color buffer.  Don't support zooming, pixel transfer, etc.
- * We do support copying from one window to another, ala glXMakeCurrentRead.
- */
-static void
-xmesa_CopyPixels( GLcontext *ctx,
-                  GLint srcx, GLint srcy, GLsizei width, GLsizei height,
-                  GLint destx, GLint desty, GLenum type )
-{
-   const XMesaContext xmesa = XMESA_CONTEXT(ctx);
-   const SWcontext *swrast = SWRAST_CONTEXT( ctx );
-   XMesaDisplay *dpy = xmesa->xm_visual->display;
-   XMesaBuffer xmbuf = XMESA_BUFFER(ctx->DrawBuffer);
-   const XMesaGC gc = xmbuf->cleargc;  /* effected by glColorMask */
-   struct xmesa_renderbuffer *srcXrb
-      = xmesa_renderbuffer(ctx->ReadBuffer->_ColorReadBuffer->Wrapped);
-   struct xmesa_renderbuffer *dstXrb
-      = xmesa_renderbuffer(ctx->DrawBuffer->_ColorDrawBuffers[0][0]->Wrapped);
-
-   ASSERT(dpy);
-   ASSERT(gc);
-
-   if (swrast->NewState)
-      _swrast_validate_derived( ctx );
-
-   if (ctx->Color.DrawBuffer[0] == GL_FRONT &&
-       ctx->Pixel.ReadBuffer == GL_FRONT &&
-       srcXrb->pixmap &&
-       dstXrb->pixmap &&
-       type == GL_COLOR &&
-       (swrast->_RasterMask & ~CLIP_BIT) == 0 && /* no blend, z-test, etc */
-       ctx->_ImageTransferState == 0 &&  /* no color tables, scale/bias, etc */
-       ctx->Pixel.ZoomX == 1.0 &&        /* no zooming */
-       ctx->Pixel.ZoomY == 1.0) {
-      /* Note: we don't do any special clipping work here.  We could,
-       * but X will do it for us.
-       */
-      srcy = YFLIP(srcXrb, srcy) - height + 1;
-      desty = YFLIP(dstXrb, desty) - height + 1;
-      XCopyArea(dpy, srcXrb->pixmap, dstXrb->pixmap, gc,
-                srcx, srcy, width, height, destx, desty);
-   }
-   else {
-      _swrast_CopyPixels(ctx, srcx, srcy, width, height, destx, desty, type );
-   }
-}
-#endif /* XFree86Server */
-
-
-
 /*
  * Every driver should implement a GetString function in order to
  * return a meaningful GL_RENDERER string.
@@ -826,10 +560,12 @@ xmesa_update_state( GLcontext *ctx, GLbitfield new_state )
    /* Propagate statechange information to swrast and swrast_setup
     * modules.  The X11 driver has no internal GL-dependent state.
     */
+#if 0
    _swrast_InvalidateState( ctx, new_state );
    _tnl_InvalidateState( ctx, new_state );
-   _vbo_InvalidateState( ctx, new_state );
    _swsetup_InvalidateState( ctx, new_state );
+   _vbo_InvalidateState( ctx, new_state );
+#endif
 
    st_invalidate_state( ctx, new_state );
 
@@ -1076,16 +812,6 @@ xmesa_init_driver_functions( XMesaVisual xmvisual,
    driver->Enable = enable;
    driver->Clear = xmesa_clear_buffers;
    driver->Viewport = xmesa_viewport;
-#ifndef XFree86Server
-   driver->CopyPixels = xmesa_CopyPixels;
-   if (xmvisual->undithered_pf == PF_8R8G8B &&
-       xmvisual->dithered_pf == PF_8R8G8B) {
-      driver->DrawPixels = xmesa_DrawPixels_8R8G8B;
-   }
-   else if (xmvisual->undithered_pf == PF_5R6G5B) {
-      driver->DrawPixels = xmesa_DrawPixels_5R6G5B;
-   }
-#endif
    driver->TestProxyTexImage = test_proxy_teximage;
 #if ENABLE_EXT_texure_compression_s3tc
    driver->ChooseTextureFormat = choose_tex_format;
