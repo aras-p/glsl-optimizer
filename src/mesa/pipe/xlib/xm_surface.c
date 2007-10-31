@@ -33,14 +33,12 @@
  */
 
 
-#include "glxheader.h"
 #include "GL/xmesa.h"
+#include "glxheader.h"
 #include "xmesaP.h"
-#include "context.h"
-#include "imports.h"
-#include "macros.h"
-#include "framebuffer.h"
-#include "renderbuffer.h"
+#include "main/context.h"
+#include "main/imports.h"
+#include "main/macros.h"
 
 #include "pipe/p_context.h"
 #include "pipe/p_defines.h"

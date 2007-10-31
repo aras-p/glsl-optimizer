@@ -24,14 +24,9 @@
 
 #include "glxheader.h"
 #include "colormac.h"
-#include "context.h"
-#include "depth.h"
-#include "drawpix.h"
-#include "extensions.h"
 #include "macros.h"
 #include "imports.h"
 #include "mtypes.h"
-#include "state.h"
 #include "xmesaP.h"
 
 
