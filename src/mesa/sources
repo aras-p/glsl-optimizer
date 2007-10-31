@@ -27,6 +27,7 @@ MAIN_SOURCES = \
 	main/extensions.c \
 	main/fbobject.c \
 	main/feedback.c \
+	main/ffvertex_prog.c \
 	main/fog.c \
 	main/framebuffer.c \
 	main/get.c \

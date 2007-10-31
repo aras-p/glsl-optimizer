@@ -37,12 +37,16 @@
 					_NEW_FOG |		\
 					_NEW_POINT)
 
+#if 0
 extern struct gl_vertex_program *
 _mesa_get_fixed_func_vertex_program(GLcontext *ctx);
+#endif
 
 extern void _tnl_UpdateFixedFunctionProgram( GLcontext *ctx );
 
+#if 0
 extern void _tnl_ProgramCacheInit( GLcontext *ctx );
 extern void _tnl_ProgramCacheDestroy( GLcontext *ctx );
+#endif
 
 #endif

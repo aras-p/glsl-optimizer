@@ -36,8 +36,6 @@
 #include "vbo/vbo.h"
 #include "vbo/vbo_context.h"
 
-#include "tnl/t_vp_build.h"
-
 #include "st_atom.h"
 #include "st_cache.h"
 #include "st_context.h"
@@ -527,8 +525,6 @@ void st_init_draw( struct st_context *st )
    assert(vbo);
    assert(vbo->draw_prims);
    vbo->draw_prims = st_draw_vbo;
-
-   _tnl_ProgramCacheInit( ctx );
 }
 
 

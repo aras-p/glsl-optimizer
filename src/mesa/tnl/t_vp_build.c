@@ -33,6 +33,7 @@
 #include "glheader.h"
 #include "macros.h"
 #include "enums.h"
+#include "main/ffvertex_prog.h"
 #include "shader/program.h"
 #include "shader/prog_instruction.h"
 #include "shader/prog_parameter.h"
@@ -41,7 +42,7 @@
 #include "t_context.h" /* NOTE: very light dependency on this */
 #include "t_vp_build.h"
 
-
+#if 0
 struct state_key {
    unsigned light_global_enabled:1;
    unsigned light_local_viewer:1;
@@ -1605,6 +1606,7 @@ _mesa_get_fixed_func_vertex_program(GLcontext *ctx)
 
    return prog;
 }
+#endif
 
 
 void _tnl_UpdateFixedFunctionProgram( GLcontext *ctx )
@@ -1627,6 +1629,7 @@ void _tnl_UpdateFixedFunctionProgram( GLcontext *ctx )
    }
 }
 
+#if 0
 void _tnl_ProgramCacheInit( GLcontext *ctx )
 {
    TNLcontext *tnl = TNL_CONTEXT(ctx);
@@ -1655,3 +1658,4 @@ void _tnl_ProgramCacheDestroy( GLcontext *ctx )
    FREE(tnl->vp_cache->items);
    FREE(tnl->vp_cache);
 }
+#endif
