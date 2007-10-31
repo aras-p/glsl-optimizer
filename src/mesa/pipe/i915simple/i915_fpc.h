@@ -204,7 +204,7 @@ extern void i915_disassemble_program(const uint * program, uint sz);
  */
 
 extern void
-i915_program_error(struct i915_fp_compile *p, const char *msg);
+i915_program_error(struct i915_fp_compile *p, const char *msg, ...);
 
 extern void
 i915_translate_fragment_program(struct i915_context *i915);

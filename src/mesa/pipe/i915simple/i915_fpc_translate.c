@@ -25,6 +25,9 @@
  * 
  **************************************************************************/
 
+
+#include <stdarg.h>
+
 #include "i915_reg.h"
 #include "i915_context.h"
 #include "i915_fpc.h"
@@ -111,9 +114,16 @@ i915_use_passthrough_shader(struct i915_context *i915)
 
 
 void
-i915_program_error(struct i915_fp_compile *p, const char *msg)
+i915_program_error(struct i915_fp_compile *p, const char *msg, ...)
 {
-   fprintf(stderr, "i915_program_error: %s\n", msg);
+   va_list args;
+
+   fprintf(stderr, "i915_program_error: ");
+   va_start( args, msg );  
+   vfprintf( stderr, msg, args );
+   va_end( args );
+   fprintf(stderr, "\n");
+
    p->error = 1;
 }
 
@@ -855,7 +865,7 @@ i915_translate_instruction(struct i915_fp_compile *p,
       break;
 
    default:
-      i915_program_error(p, "bad opcode");
+      i915_program_error(p, "bad opcode %d", inst->Instruction.Opcode);
       return;
    }
 
