@@ -205,7 +205,6 @@ STATETRACKER_SOURCES = \
 	state_tracker/st_atom_clip.c \
 	state_tracker/st_atom_constbuf.c \
 	state_tracker/st_atom_depth.c \
-	state_tracker/st_atom_fixedfunction.c \
 	state_tracker/st_atom_framebuffer.c \
 	state_tracker/st_atom_pixeltransfer.c \
 	state_tracker/st_atom_sampler.c \
