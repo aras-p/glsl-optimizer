@@ -328,18 +328,17 @@ COMMON_DRIVER_SOURCES =			\
 	drivers/common/driverfuncs.c
 
 X11_DRIVER_SOURCES =		\
-	drivers/x11/glxapi.c	\
-	drivers/x11/fakeglx.c	\
-	drivers/x11/xfonts.c	\
-	drivers/x11/xm_api.c	\
-	drivers/x11/xm_buffer.c	\
-	drivers/x11/xm_dd.c	\
-	drivers/x11/xm_glide.c	\
-	drivers/x11/xm_line.c	\
-	drivers/x11/xm_winsys.c	\
-	drivers/x11/xm_span.c	\
-	drivers/x11/xm_surface.c	\
-	drivers/x11/xm_tri.c
+	pipe/xlib/glxapi.c	\
+	pipe/xlib/fakeglx.c	\
+	pipe/xlib/xfonts.c	\
+	pipe/xlib/xm_api.c	\
+	pipe/xlib/xm_buffer.c	\
+	pipe/xlib/xm_dd.c	\
+	pipe/xlib/xm_line.c	\
+	pipe/xlib/xm_winsys.c	\
+	pipe/xlib/xm_span.c	\
+	pipe/xlib/xm_surface.c	\
+	pipe/xlib/xm_tri.c
 
 OSMESA_DRIVER_SOURCES = \
 	drivers/osmesa/osmesa.c
