@@ -54,7 +54,6 @@ struct xmesa_renderbuffer;
 
 /* Function pointer for clearing color buffers */
 typedef void (*ClearFunc)( GLcontext *ctx, struct xmesa_renderbuffer *xrb,
-                           GLint x, GLint y, GLint width, GLint height,
                            GLuint value );
 
 
