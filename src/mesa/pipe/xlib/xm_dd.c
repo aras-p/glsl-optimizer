@@ -47,13 +47,6 @@
 #include "texstore.h"
 #include "texformat.h"
 #include "xmesaP.h"
-#include "swrast/swrast.h"
-#include "swrast/s_context.h"
-#include "swrast_setup/swrast_setup.h"
-#if 0
-#include "tnl/tnl.h"
-#include "tnl/t_context.h"
-#endif
 
 #include "pipe/softpipe/sp_context.h"
 #include "state_tracker/st_public.h"
@@ -420,8 +413,6 @@ xmesa_clear_buffers(GLcontext *ctx, GLbitfield buffers)
          }
       }
    }
-   if (buffers)
-      _swrast_Clear(ctx, buffers);
 }
 
 
@@ -556,16 +547,6 @@ void
 xmesa_update_state( GLcontext *ctx, GLbitfield new_state )
 {
    const XMesaContext xmesa = XMESA_CONTEXT(ctx);
-
-   /* Propagate statechange information to swrast and swrast_setup
-    * modules.  The X11 driver has no internal GL-dependent state.
-    */
-#if 0
-   _swrast_InvalidateState( ctx, new_state );
-   _tnl_InvalidateState( ctx, new_state );
-   _swsetup_InvalidateState( ctx, new_state );
-   _vbo_InvalidateState( ctx, new_state );
-#endif
 
    st_invalidate_state( ctx, new_state );
 
@@ -826,44 +807,3 @@ xmesa_init_driver_functions( XMesaVisual xmvisual,
 #endif
 
 }
-
-
-#define XMESA_NEW_POINT  (_NEW_POINT | \
-                          _NEW_RENDERMODE | \
-                          _SWRAST_NEW_RASTERMASK)
-
-#define XMESA_NEW_LINE   (_NEW_LINE | \
-                          _NEW_TEXTURE | \
-                          _NEW_LIGHT | \
-                          _NEW_DEPTH | \
-                          _NEW_RENDERMODE | \
-                          _SWRAST_NEW_RASTERMASK)
-
-#define XMESA_NEW_TRIANGLE (_NEW_POLYGON | \
-                            _NEW_TEXTURE | \
-                            _NEW_LIGHT | \
-                            _NEW_DEPTH | \
-                            _NEW_RENDERMODE | \
-                            _SWRAST_NEW_RASTERMASK)
-
-
-#if 0
-/**
- * Extend the software rasterizer with our line/point/triangle
- * functions.
- * Called during context creation only.
- */
-void xmesa_register_swrast_functions( GLcontext *ctx )
-{
-   SWcontext *swrast = SWRAST_CONTEXT( ctx );
-
-   swrast->choose_point = xmesa_choose_point;
-   swrast->choose_line = xmesa_choose_line;
-   swrast->choose_triangle = xmesa_choose_triangle;
-
-   /* XXX these lines have no net effect.  Remove??? */
-   swrast->InvalidatePointMask |= XMESA_NEW_POINT;
-   swrast->InvalidateLineMask |= XMESA_NEW_LINE;
-   swrast->InvalidateTriangleMask |= XMESA_NEW_TRIANGLE;
-}
-#endif
