@@ -4535,7 +4535,7 @@ xmesa_set_renderbuffer_funcs(struct xmesa_renderbuffer *xrb,
       }
       break;
    default:
-      _mesa_problem(NULL, "Bad pixel format in xmesa_update_state (1)");
+      _mesa_problem(NULL, "Bad pixel format in xmesa_set_renderbuffer_funcs");
       return;
    }
 

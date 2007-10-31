@@ -566,44 +566,6 @@ xmesa_create_renderbuffer(GLcontext *ctx, GLuint name, const GLvisual *visual,
 }
 
 
-#if 0
-struct gl_renderbuffer *
-xmesa_new_renderbuffer(GLcontext *ctx, struct gl_renderbuffer *rb,
-                       GLenum internalFormat, GLuint width, GLuint height)
-{
-   struct xmesa_renderbuffer *xrb = CALLOC_STRUCT(xmesa_renderbuffer);
-   if (xrb) {
-      GLuint name = 0;
-      _mesa_init_renderbuffer(&xrb->St.Base, name);
-
-      xrb->St.Base.Delete = xmesa_delete_renderbuffer;
-      if (backBuffer)
-         xrb->St.Base.AllocStorage = xmesa_alloc_back_storage;
-      else
-         xrb->St.Base.AllocStorage = xmesa_alloc_front_storage;
-
-      if (visual->rgbMode) {
-         xrb->St.Base.InternalFormat = GL_RGBA;
-         xrb->St.Base._BaseFormat = GL_RGBA;
-         xrb->St.Base.DataType = GL_UNSIGNED_BYTE;
-         xrb->St.Base.RedBits = visual->redBits;
-         xrb->St.Base.GreenBits = visual->greenBits;
-         xrb->St.Base.BlueBits = visual->blueBits;
-         xrb->St.Base.AlphaBits = visual->alphaBits;
-      }
-      else {
-         xrb->St.Base.InternalFormat = GL_COLOR_INDEX;
-         xrb->St.Base._BaseFormat = GL_COLOR_INDEX;
-         xrb->St.Base.DataType = GL_UNSIGNED_INT;
-         xrb->St.Base.IndexBits = visual->indexBits;
-      }
-      /* only need to set Red/Green/EtcBits fields for user-created RBs */
-   }
-   return xrb;
-}
-#endif
-
-
 /**
  * Called via gl_framebuffer::Delete() method when this buffer
  * is _really_ being deleted.

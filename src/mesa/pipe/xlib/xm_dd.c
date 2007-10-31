@@ -76,74 +76,6 @@ finish_or_flush( GLcontext *ctx )
 
 
 /**
- * Called when the driver should update its state, based on the new_state
- * flags.
- */
-void
-xmesa_update_state( GLcontext *ctx, GLbitfield new_state )
-{
-#if 0
-   const XMesaContext xmesa = XMESA_CONTEXT(ctx);
-#endif
-
-   st_invalidate_state( ctx, new_state );
-
-
-   if (ctx->DrawBuffer->Name != 0)
-      return;
-
-   /*
-    * GL_DITHER, GL_READ/DRAW_BUFFER, buffer binding state, etc. effect
-    * renderbuffer span/clear funcs.
-    */
-   if (new_state & (_NEW_COLOR | _NEW_BUFFERS)) {
-      XMesaBuffer xmbuf = XMESA_BUFFER(ctx->DrawBuffer);
-      struct xmesa_renderbuffer *front_xrb, *back_xrb;
-
-      front_xrb = xmbuf->frontxrb;
-      if (front_xrb) {
-#if 0
-         xmesa_set_renderbuffer_funcs(front_xrb, xmesa->pixelformat,
-                                      xmesa->xm_visual->BitsPerPixel);
-         front_xrb->clearFunc = clear_pixmap;
-#endif
-      }
-
-      back_xrb = xmbuf->backxrb;
-      if (back_xrb) {
-#if 0
-         xmesa_set_renderbuffer_funcs(back_xrb, xmesa->pixelformat,
-                                      xmesa->xm_visual->BitsPerPixel);
-         if (xmbuf->backxrb->pixmap) {
-            back_xrb->clearFunc = clear_pixmap;
-         }
-         else {
-            switch (xmesa->xm_visual->BitsPerPixel) {
-            case 8:
-               back_xrb->clearFunc = clear_8bit_ximage;
-               break;
-            case 16:
-               back_xrb->clearFunc = clear_16bit_ximage;
-               break;
-            case 24:
-               back_xrb->clearFunc = clear_24bit_ximage;
-               break;
-            case 32:
-               back_xrb->clearFunc = clear_32bit_ximage;
-               break;
-            default:
-               back_xrb->clearFunc = clear_nbit_ximage;
-               break;
-            }
-         }
-#endif
-      }
-   }
-}
-
-
-
-/**
  * Called by glViewport.
  * This is a good time for us to poll the current X window size and adjust
  * our renderbuffers to match the current window size.
@@ -177,7 +109,6 @@ void
 xmesa_init_driver_functions( XMesaVisual xmvisual,
                              struct dd_function_table *driver )
 {
-   driver->UpdateState = xmesa_update_state;
    driver->Flush = finish_or_flush;
    driver->Finish = finish_or_flush;
    driver->Viewport = xmesa_viewport;
