@@ -526,17 +526,6 @@ XMESA_BUFFER(GLframebuffer *b)
 
 
 
-#define ENABLE_EXT_texure_compression_s3tc 0 /* SW texture compression */
-
-#ifdef XFree86Server
-#define ENABLE_EXT_timer_query 0
-#elif defined(__STDC_VERSION__) && __STDC_VERSION__ >= 199901L
-#define ENABLE_EXT_timer_query 1 /* should have 64-bit GLuint64EXT */
-#else
-#define ENABLE_EXT_timer_query 0 /* may not have 64-bit GLuint64EXT */
-#endif
-
-
 struct pipe_surface;
 struct pipe_context;
 
