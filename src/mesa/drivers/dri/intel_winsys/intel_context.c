@@ -225,17 +225,16 @@ intelCreateContext(const __GLcontextModes * mesaVis,
    intel->iw.irq_seq = -1;
    intel->irqsEmitted = 0;
 
+   intel->batch = intel_batchbuffer_alloc(intel);
+   intel->last_swap_fence = NULL;
+   intel->first_swap_fence = NULL;
+
    /* Disable imaging extension until convolution is working in
     * teximage paths:
     */
    driInitExtensions(ctx, card_extensions,
 /* 		      GL_TRUE, */
                      GL_FALSE);
-
-
-   intel->batch = intel_batchbuffer_alloc(intel);
-   intel->last_swap_fence = NULL;
-   intel->first_swap_fence = NULL;
 
    if (intel->ctx.Mesa_DXTn) {
       _mesa_enable_extension(ctx, "GL_EXT_texture_compression_s3tc");
