@@ -525,7 +525,7 @@ _mesa_print_instruction_opt(const struct prog_instruction *inst, GLint indent,
          _mesa_printf("_SAT");
       _mesa_printf(" ");
       print_dst_reg(&inst->DstReg, mode, prog);
-      _mesa_printf("%s[%d], %s",
+      _mesa_printf(", %s[%d], %s",
                    file_string((enum register_file) inst->SrcReg[0].File,
                                mode),
                    inst->SrcReg[0].Index,
@@ -535,6 +535,7 @@ _mesa_print_instruction_opt(const struct prog_instruction *inst, GLint indent,
       break;
    case OPCODE_TEX:
    case OPCODE_TXP:
+   case OPCODE_TXL:
    case OPCODE_TXB:
       _mesa_printf("%s", _mesa_opcode_string(inst->Opcode));
       if (inst->SaturateMode == SATURATE_ZERO_ONE)
@@ -555,6 +556,23 @@ _mesa_print_instruction_opt(const struct prog_instruction *inst, GLint indent,
       }
       print_comment(inst);
       break;
+
+   case OPCODE_KIL:
+      _mesa_printf("%s", _mesa_opcode_string(inst->Opcode));
+      _mesa_printf(" ");
+      print_src_reg(&inst->SrcReg[0], mode, prog);
+      print_comment(inst);
+      break;
+   case OPCODE_KIL_NV:
+      _mesa_printf("%s", _mesa_opcode_string(inst->Opcode));
+      _mesa_printf(" ");
+      _mesa_printf("%s.%s",
+                   _mesa_condcode_string(inst->DstReg.CondMask),
+                   _mesa_swizzle_string(inst->DstReg.CondSwizzle,
+                                        GL_FALSE, GL_FALSE));
+      print_comment(inst);
+      break;
+
    case OPCODE_ARL:
       _mesa_printf("ARL addr.x, ");
       print_src_reg(&inst->SrcReg[0], mode, prog);
