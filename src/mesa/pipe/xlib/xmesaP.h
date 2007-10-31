@@ -569,17 +569,6 @@ XMESA_BUFFER(GLframebuffer *b)
 }
 
 
-/* Plugged into the software rasterizer.  Try to use internal
- * swrast-style point, line and triangle functions.
- */
-extern void xmesa_choose_point( GLcontext *ctx );
-extern void xmesa_choose_line( GLcontext *ctx );
-extern void xmesa_choose_triangle( GLcontext *ctx );
-
-
-extern void xmesa_register_swrast_functions( GLcontext *ctx );
-
-
 
 #define ENABLE_EXT_texure_compression_s3tc 0 /* SW texture compression */
 

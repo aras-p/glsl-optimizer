@@ -34,7 +34,6 @@
 #include "state.h"
 #include "xmesaP.h"
 
-#include "swrast/swrast.h"
 
 
 /*
