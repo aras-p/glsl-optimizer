@@ -907,6 +907,10 @@
 #define MI_WAIT_FOR_PLANE_B_FLIP        (1<<6)
 #define MI_WAIT_FOR_PLANE_A_FLIP        (1<<2)
 
+#define MI_BATCH_BUFFER                 (0x30<<23)
+#define MI_BATCH_BUFFER_START           (0x31<<23)
+#define MI_BATCH_BUFFER_END             (0xa<<23)
+
 
 
 #define COMPAREFUNC_ALWAYS		0

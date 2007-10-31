@@ -67,19 +67,17 @@ static void vbuf_flush_elements( struct draw_stage *stage );
 struct vbuf_stage {
    struct draw_stage stage; /**< This must be first (base class) */
 
+   /** Vertex size in bytes */
+   unsigned vertex_size;
+
    /* FIXME: we have no guarantee that 'unsigned' is 32bit */
-   
-   /* Vertices are passed in as an array of floats making up each
-    * attribute in turn.  Will eventually convert to hardware format
-    * in this stage.
-    */
+
+   /** Vertices in hardware format */
    unsigned *vertex_map;
    unsigned *vertex_ptr;
-   unsigned vertex_size;
-   unsigned nr_vertices;
-
    unsigned max_vertices;
-
+   unsigned nr_vertices;
+   
    ushort *element_map;
    unsigned nr_elements;
 
@@ -274,11 +272,13 @@ static void vbuf_draw( struct draw_stage *stage )
 {
    struct vbuf_stage *vbuf = vbuf_stage( stage );
    struct i915_context *i915 = vbuf->i915;
+   struct pipe_winsys *winsys = i915->pipe.winsys;
    unsigned nr = vbuf->nr_elements;
    unsigned vertex_size = i915->current.vertex_info.size * 4; /* in bytes */
    unsigned hwprim;
-   unsigned *ptr;
-   unsigned i, j;
+   unsigned i;
+   char *ptr;
+   struct pipe_buffer_handle *buf;
    
    switch(vbuf->prim) {
    case PIPE_PRIM_POINTS:
@@ -295,15 +295,37 @@ static void vbuf_draw( struct draw_stage *stage )
       return;
    }
 
+   assert(vbuf->vertex_ptr - vbuf->vertex_map == vbuf->nr_vertices * vertex_size / 4);
+
+   /* FIXME: handle failure */
+   buf = winsys->buffer_create(winsys, 64);
+   winsys->buffer_data(winsys, buf, 8 + nr * vertex_size, NULL);
+   ptr = winsys->buffer_map(winsys, buf, PIPE_BUFFER_FLAG_WRITE);
+   *(unsigned *)ptr = _3DPRIMITIVE | 
+	              hwprim |
+	              ((4 + vertex_size * nr)/4 - 2);
+   ptr += 4;
+   for (i = 0; i < nr; i++) {
+      memcpy(ptr, 
+             (char*)vbuf->vertex_map + vbuf->element_map[i]*vertex_size, 
+             vertex_size );
+      ptr += vertex_size;
+   }
+   *(unsigned *)ptr = MI_BATCH_BUFFER_END;
+   ptr += 4;
+   winsys->buffer_unmap(winsys, buf);
+   
    if (i915->dirty)
       i915_update_derived( i915 );
 
    if (i915->hardware_dirty)
       i915_emit_hardware_state( i915 );
 
-   assert(vbuf->vertex_ptr - vbuf->vertex_map == vbuf->nr_vertices * vertex_size / 4);
-   
-   ptr = BEGIN_BATCH( 1 + nr * vertex_size / 4, 0 );
+   ptr = BEGIN_BATCH( 2, 1 );
+#if 1
+   assert(ptr);
+#else
+   /* XXX: below is bogues as ptr always nonzero except in fatal errors */
    if (ptr == 0) {
       FLUSH_BATCH();
 
@@ -312,21 +334,23 @@ static void vbuf_draw( struct draw_stage *stage )
       i915_update_derived( i915 );
       i915_emit_hardware_state( i915 );
 
-      ptr = BEGIN_BATCH( 1 + nr * vertex_size / 4, 0 );
+      ptr = BEGIN_BATCH( 2, 1 );
       if (ptr == 0) {
 	 assert(0);
 	 return;
       }
    }
+#endif
+   
+   /* chain the vertex buffer in the batch buffer */
+   OUT_BATCH(MI_BATCH_BUFFER_START
+             | (2 << 6) /* GTT-mapped memory */);
+   OUT_RELOC( buf, I915_BUFFER_ACCESS_READ, 0 );
+   /* FIXME: we need to flush here since control after chained buffers returns
+    * directly to the ring buffer */
+   FLUSH_BATCH();
 
-   /* TODO: Fire a DMA buffer */
-   OUT_BATCH(_3DPRIMITIVE | 
-	     hwprim |
-	     ((4 + vertex_size * nr)/4 - 2));
-
-   for (i = 0; i < nr; i++)
-      for (j = 0; j < vertex_size / 4; j++)
-        OUT_BATCH(vbuf->vertex_map[vbuf->element_map[i]*vertex_size/4 + j]);
+   winsys->buffer_reference(winsys, &buf, NULL);
 }
 
 
