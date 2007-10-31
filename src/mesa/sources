@@ -333,7 +333,6 @@ X11_DRIVER_SOURCES =		\
 	pipe/xlib/xfonts.c	\
 	pipe/xlib/xm_api.c	\
 	pipe/xlib/xm_buffer.c	\
-	pipe/xlib/xm_dd.c	\
 	pipe/xlib/xm_winsys.c	\
 	pipe/xlib/xm_span.c	\
 	pipe/xlib/xm_surface.c
