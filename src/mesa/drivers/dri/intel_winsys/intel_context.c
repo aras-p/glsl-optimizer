@@ -151,16 +151,6 @@ static const struct dri_debug_control debug_control[] = {
 };
 #endif
 
-static void
-intelInvalidateState(GLcontext * ctx, GLuint new_state)
-{
-   _vbo_InvalidateState(ctx, new_state);
-   _tnl_InvalidateState(ctx, new_state);
-   _tnl_invalidate_vertex_state(ctx, new_state);
-
-   st_invalidate_state( ctx, new_state );
-}
-
 
 void
 intelFlush(GLcontext * ctx)
@@ -180,9 +170,6 @@ static void
 intelInitDriverFunctions(struct dd_function_table *functions)
 {
    _mesa_init_driver_functions(functions);
-
-   functions->UpdateState = intelInvalidateState;
-
    st_init_driver_functions(functions);
 }
 
