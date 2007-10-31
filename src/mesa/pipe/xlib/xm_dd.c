@@ -569,24 +569,6 @@ test_proxy_teximage(GLcontext *ctx, GLenum target, GLint level,
 
 
 /**
- * In SW, we don't really compress GL_COMPRESSED_RGB[A] textures!
- */
-static const struct gl_texture_format *
-choose_tex_format( GLcontext *ctx, GLint internalFormat,
-                   GLenum format, GLenum type )
-{
-   switch (internalFormat) {
-      case GL_COMPRESSED_RGB_ARB:
-         return &_mesa_texformat_rgb;
-      case GL_COMPRESSED_RGBA_ARB:
-         return &_mesa_texformat_rgba;
-      default:
-         return _mesa_choose_tex_format(ctx, internalFormat, format, type);
-   }
-}
-
-
-/**
  * Called by glViewport.
  * This is a good time for us to poll the current X window size and adjust
  * our renderbuffers to match the current window size.
@@ -612,76 +594,6 @@ xmesa_viewport(GLcontext *ctx, GLint x, GLint y, GLsizei w, GLsizei h)
 }
 
 
-#if ENABLE_EXT_timer_query
-
-/*
- * The GL_EXT_timer_query extension is not enabled for the XServer
- * indirect renderer.  Not sure about how/if wrapping of gettimeofday()
- * is done, etc.
- */
-
-struct xmesa_query_object
-{
-   struct gl_query_object Base;
-   struct timeval StartTime;
-};
-
-
-static struct gl_query_object *
-xmesa_new_query_object(GLcontext *ctx, GLuint id)
-{
-   struct xmesa_query_object *q = CALLOC_STRUCT(xmesa_query_object);
-   if (q) {
-      q->Base.Id = id;
-      q->Base.Ready = GL_TRUE;
-   }
-   return &q->Base;
-}
-
-
-static void
-xmesa_begin_query(GLcontext *ctx, struct gl_query_object *q)
-{
-   if (q->Target == GL_TIME_ELAPSED_EXT) {
-      struct xmesa_query_object *xq = (struct xmesa_query_object *) q;
-      (void) gettimeofday(&xq->StartTime, NULL);
-   }
-}
-
-
-/**
- * Return the difference between the two given times in microseconds.
- */
-#ifdef __VMS
-#define suseconds_t unsigned int
-#endif
-static GLuint64EXT
-time_diff(const struct timeval *t0, const struct timeval *t1)
-{
-   GLuint64EXT seconds0 = t0->tv_sec & 0xff;  /* 0 .. 255 seconds */
-   GLuint64EXT seconds1 = t1->tv_sec & 0xff;  /* 0 .. 255 seconds */
-   GLuint64EXT nanosec0 = (seconds0 * 1000000 + t0->tv_usec) * 1000;
-   GLuint64EXT nanosec1 = (seconds1 * 1000000 + t1->tv_usec) * 1000;
-   return nanosec1 - nanosec0;
-}
-
-
-static void
-xmesa_end_query(GLcontext *ctx, struct gl_query_object *q)
-{
-   if (q->Target == GL_TIME_ELAPSED_EXT) {
-      struct xmesa_query_object *xq = (struct xmesa_query_object *) q;
-      struct timeval endTime;
-      (void) gettimeofday(&endTime, NULL);
-      /* result is in nanoseconds! */
-      q->Result = time_diff(&xq->StartTime, &endTime);
-   }
-   q->Ready = GL_TRUE;
-}
-
-#endif /* ENABLE_timer_query */
-
-
 /**
  * Initialize the device driver function table with the functions
  * we implement in this driver.
@@ -701,16 +613,4 @@ xmesa_init_driver_functions( XMesaVisual xmvisual,
 #endif
    driver->Viewport = xmesa_viewport;
    driver->TestProxyTexImage = test_proxy_teximage;
-#if ENABLE_EXT_texure_compression_s3tc
-   driver->ChooseTextureFormat = choose_tex_format;
-#else
-   (void) choose_tex_format;
-#endif
-
-#if ENABLE_EXT_timer_query
-   driver->NewQueryObject = xmesa_new_query_object;
-   driver->BeginQuery = xmesa_begin_query;
-   driver->EndQuery = xmesa_end_query;
-#endif
-
 }
