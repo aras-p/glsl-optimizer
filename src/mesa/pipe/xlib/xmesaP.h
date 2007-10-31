@@ -584,9 +584,6 @@ struct xmesa_surface
 extern void
 xmesa_clear(struct pipe_context *pipe, struct pipe_surface *ps, GLuint value);
 
-extern void
-xmesa_clear_buffers(GLcontext *ctx, GLbitfield buffers, GLuint value);
-
 extern struct pipe_context *
 xmesa_create_softpipe(XMesaContext xm);
 

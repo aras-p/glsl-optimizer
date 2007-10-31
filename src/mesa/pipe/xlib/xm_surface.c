@@ -214,6 +214,7 @@ xmesa_is_format_supported(struct pipe_context *pipe, uint format)
 void
 xmesa_clear(struct pipe_context *pipe, struct pipe_surface *ps, GLuint value)
 {
+   GET_CURRENT_CONTEXT(ctx);
    struct xmesa_renderbuffer *xrb = xmesa_rb(ps);
 
    /* XXX actually, we should just discard any cached tiles from this
@@ -233,15 +234,9 @@ xmesa_clear(struct pipe_context *pipe, struct pipe_surface *ps, GLuint value)
       }
    }
 
-   if (xrb && xrb->ximage) {
-      /* clearing back color buffer */
-      GET_CURRENT_CONTEXT(ctx);
-      xmesa_clear_buffers(ctx, BUFFER_BIT_BACK_LEFT, value);
-   }
-   else if (xrb && xrb->pixmap) {
-      /* clearing front color buffer */
-      GET_CURRENT_CONTEXT(ctx);
-      xmesa_clear_buffers(ctx, BUFFER_BIT_FRONT_LEFT, value);
+   if (xrb) {
+      /* clearing front/back color buffer */
+      xrb->clearFunc(ctx, xrb, value);
    }
    else {
       /* clearing other buffer */

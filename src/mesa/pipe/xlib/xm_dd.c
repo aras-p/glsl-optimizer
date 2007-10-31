@@ -273,45 +273,6 @@ clear_nbit_ximage(GLcontext *ctx, struct xmesa_renderbuffer *xrb, GLuint value)
 }
 
 
-
-void
-xmesa_clear_buffers(GLcontext *ctx, GLbitfield buffers, GLuint value)
-{
-   if (ctx->DrawBuffer->Name == 0) {
-      /* this is a window system framebuffer */
-      const GLuint *colorMask = (GLuint *) &ctx->Color.ColorMask;
-      XMesaBuffer b = XMESA_BUFFER(ctx->DrawBuffer);
-
-      /* we can't handle color or index masking */
-      if (*colorMask == 0xffffffff && ctx->Color.IndexMask == 0xffffffff) {
-         if (buffers & BUFFER_BIT_FRONT_LEFT) {
-            /* clear front color buffer */
-            struct gl_renderbuffer *frontRb
-               = ctx->DrawBuffer->Attachment[BUFFER_FRONT_LEFT].Renderbuffer;
-            if (b->frontxrb == xmesa_renderbuffer(frontRb)) {
-               /* renderbuffer is not wrapped - great! */
-               b->frontxrb->clearFunc(ctx, b->frontxrb, value);
-               buffers &= ~BUFFER_BIT_FRONT_LEFT;
-            }
-            else {
-               /* we can't directly clear an alpha-wrapped color buffer */
-            }
-         }
-         if (buffers & BUFFER_BIT_BACK_LEFT) {
-            /* clear back color buffer */
-            struct gl_renderbuffer *backRb
-               = ctx->DrawBuffer->Attachment[BUFFER_BACK_LEFT].Renderbuffer;
-            if (b->backxrb == xmesa_renderbuffer(backRb)) {
-               /* renderbuffer is not wrapped - great! */
-               b->backxrb->clearFunc(ctx, b->backxrb, value);
-               buffers &= ~BUFFER_BIT_BACK_LEFT;
-            }
-         }
-      }
-   }
-}
-
-
 static void
 clear_color_HPCR_ximage( GLcontext *ctx, const GLfloat color[4] )
 {
