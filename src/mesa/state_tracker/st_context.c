@@ -51,12 +51,20 @@
 #include "pipe/cso_cache/cso_cache.h"
 
 
+/**
+ * Called via ctx->Driver.UpdateState()
+ */
 void st_invalidate_state(GLcontext * ctx, GLuint new_state)
 {
    struct st_context *st = st_context(ctx);
 
    st->dirty.mesa |= new_state;
    st->dirty.st |= ST_NEW_MESA;
+
+   /* This is the only core Mesa module we depend upon.
+    * No longer use swrast, swsetup, tnl.
+    */
+   _vbo_InvalidateState(ctx, new_state);
 }
 
 
@@ -149,4 +157,6 @@ void st_init_driver_functions(struct dd_function_table *functions)
    st_init_texture_functions(functions);
    st_init_flush_functions(functions);
    st_init_string_functions(functions);
+
+   functions->UpdateState = st_invalidate_state;
 }
