@@ -62,6 +62,7 @@
 #if FEATURE_EXT_framebuffer_object
 #include "fbobject.h"
 #endif
+#include "ffvertex_prog.h"
 #include "framebuffer.h"
 #include "hint.h"
 #include "histogram.h"
@@ -92,7 +93,6 @@
 #include "shader/program.h"
 #include "texenvprogram.h"
 #endif
-#include "tnl/t_vp_build.h"
 #if FEATURE_ARB_shader_objects
 #include "shaders.h"
 #endif
@@ -1202,7 +1202,9 @@ _mesa_update_state_locked( GLcontext *ctx )
       prog_flags |= (_NEW_TEXTURE | _NEW_FOG | _DD_NEW_SEPARATE_SPECULAR);
    }
    if (ctx->VertexProgram._MaintainTnlProgram) {
-      prog_flags |= (_NEW_TEXTURE | _NEW_FOG | _NEW_LIGHT);
+      prog_flags |= (_NEW_TEXTURE | _NEW_TEXTURE_MATRIX |
+                     _NEW_TRANSFORM | _NEW_POINT |
+                     _NEW_FOG | _NEW_LIGHT);
    }
    if (new_state & prog_flags)
       update_program( ctx );
