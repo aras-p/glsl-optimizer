@@ -33,6 +33,7 @@
 #include "context.h"
 #include "hash.h"
 #include "program.h"
+#include "prog_cache.h"
 #include "prog_parameter.h"
 #include "prog_instruction.h"
 
@@ -66,6 +67,7 @@ _mesa_init_program(GLcontext *ctx)
       ctx->VertexProgram.TrackMatrix[i] = GL_NONE;
       ctx->VertexProgram.TrackMatrixTransform[i] = GL_IDENTITY_NV;
    }
+   ctx->VertexProgram.Cache = _mesa_new_program_cache();
 #endif
 
 #if FEATURE_NV_fragment_program || FEATURE_ARB_fragment_program
@@ -73,7 +75,9 @@ _mesa_init_program(GLcontext *ctx)
    ctx->FragmentProgram.Current = (struct gl_fragment_program *) ctx->Shared->DefaultFragmentProgram;
    assert(ctx->FragmentProgram.Current);
    ctx->FragmentProgram.Current->Base.RefCount++;
+   ctx->FragmentProgram.Cache = _mesa_new_program_cache();
 #endif
+
 
    /* XXX probably move this stuff */
 #if FEATURE_ATI_fragment_shader
