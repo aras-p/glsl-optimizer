@@ -73,8 +73,10 @@
 #include "macros.h"
 #include "renderbuffer.h"
 #include "teximage.h"
+#if 0
 #include "swrast/swrast.h"
 #include "swrast_setup/swrast_setup.h"
+#endif
 #include "vbo/vbo.h"
 #if 0
 #include "tnl/tnl.h"
@@ -1597,6 +1599,7 @@ XMesaContext XMesaCreateContext( XMesaVisual v, XMesaContext share_list )
 
    /* Initialize the software rasterizer and helper modules.
     */
+#if 0
    if (!_swrast_CreateContext( mesaCtx )
 #if 0
        || !_vbo_CreateContext( mesaCtx ) ||
@@ -1608,6 +1611,7 @@ XMesaContext XMesaCreateContext( XMesaVisual v, XMesaContext share_list )
       _mesa_free(c);
       return NULL;
    }
+#endif
 
 #if 0
    /* tnl setup */
@@ -1623,8 +1627,10 @@ XMesaContext XMesaCreateContext( XMesaVisual v, XMesaContext share_list )
    st_create_context( mesaCtx,
                       xmesa_create_softpipe( c ) );
 
+#if 0
    _swsetup_CreateContext( mesaCtx );
    _swsetup_Wakeup(mesaCtx);
+#endif
 
    /* override these functions, as if the xlib driver were derived from
     * the softpipe driver.
@@ -1655,8 +1661,10 @@ void XMesaDestroyContext( XMesaContext c )
    FXdestroyContext( XMESA_BUFFER(mesaCtx->DrawBuffer) );
 #endif
 
+#if 0
    _swsetup_DestroyContext( mesaCtx );
    _swrast_DestroyContext( mesaCtx );
+#endif
 #if 0
    _tnl_DestroyContext( mesaCtx );
    _vbo_DestroyContext( mesaCtx );
