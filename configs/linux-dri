@@ -32,6 +32,8 @@ CFLAGS = -Wall -Wmissing-prototypes -std=c99 -ffast-math \
 
 CXXFLAGS = -Wall $(OPT_FLAGS) $(PIC_FLAGS) $(ARCH_FLAGS) $(DEFINES)
 
+GLUT_CFLAGS = -fexceptions
+
 # Work around aliasing bugs - developers should comment this out
 CFLAGS += -fno-strict-aliasing
 CXXFLAGS += -fno-strict-aliasing
