@@ -59,6 +59,7 @@ void gallivm_prog_dump(struct gallivm_prog *prog, const char *file_prefix);
 
 
 struct gallivm_cpu_engine *gallivm_cpu_engine_create(struct gallivm_prog *prog);
+struct gallivm_cpu_engine *gallivm_global_cpu_engine();
 void gallivm_cpu_jit_compile(struct gallivm_cpu_engine *ee, struct gallivm_prog *prog);
 void gallivm_cpu_engine_delete(struct gallivm_cpu_engine *ee);
 

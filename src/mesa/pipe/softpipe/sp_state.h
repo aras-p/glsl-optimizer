@@ -35,6 +35,10 @@
 
 #include "x86/rtasm/x86sse.h"
 
+#ifdef MESA_LLVM
+struct gallivm_prog;
+#endif
+
 /**
  * Softpipe fs state is derived from pipe_shader_state.
  */
@@ -42,6 +46,9 @@ struct sp_fragment_shader_state {
    struct pipe_shader_state   shader;
 #if defined(__i386__) || defined(__386__)
    struct x86_function        sse2_program;
+#endif
+#ifdef MESA_LLVM
+   struct gallivm_prog *llvm_prog;
 #endif
 };
 

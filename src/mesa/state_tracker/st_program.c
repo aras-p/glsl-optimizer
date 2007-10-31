@@ -38,7 +38,6 @@
 #include "pipe/p_defines.h"
 #include "pipe/draw/draw_context.h"
 #include "pipe/tgsi/exec/tgsi_core.h"
-#include "pipe/llvm/llvmtgsi.h"
 
 #include "st_context.h"
 #include "st_cache.h"
@@ -407,9 +406,7 @@ st_translate_fragment_program(struct st_context *st,
                                 tokensOut, maxTokens);
 
    fs.tokens = tokensOut;
-#ifdef MESA_LLVM
-   /*fs.llvm_prog = gallivm_from_tgsi(st->pipe, fs.tokens);*/
-#endif
+
    cso = st_cached_fs_state(st, &fs);
    stfp->fs = cso;
 

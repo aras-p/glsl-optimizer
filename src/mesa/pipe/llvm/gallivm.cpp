@@ -31,7 +31,7 @@
   */
 #ifdef MESA_LLVM
 
-#include "llvmtgsi.h"
+#include "gallivm.h"
 
 #include "instructions.h"
 #include "storage.h"
@@ -828,6 +828,7 @@ void gallivm_prog_dump(struct gallivm_prog *prog, const char *file_prefix)
 }
 
 
+static struct gallivm_cpu_engine *CPU = 0;
 /*!
   This function creates a CPU based execution engine for the given gallivm_prog.
   gallivm_cpu_engine should be used as a singleton throughout the library. Before
@@ -847,6 +848,7 @@ struct gallivm_cpu_engine * gallivm_cpu_engine_create(struct gallivm_prog *prog)
 
    llvm::Function *func = mod->getFunction("run_vertex_shader");
    prog->function = ee->getPointerToFunctionOrStub(func);
+   CPU = cpu;
    return cpu;
 }
 
@@ -874,6 +876,12 @@ void gallivm_cpu_engine_delete(struct gallivm_cpu_engine *cpu)
    free(cpu);
 }
 
+struct gallivm_cpu_engine * gallivm_global_cpu_engine()
+{
+   return CPU;
+}
+
 #endif /* MESA_LLVM */
+
 
 

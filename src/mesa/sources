@@ -189,7 +189,7 @@ TGSIDECO_SOURCES = \
 
 
 LLVMTGSI_SOURCES = \
-	pipe/llvm/llvmtgsi.cpp \
+	pipe/llvm/gallivm.cpp \
 	pipe/llvm/storage.cpp \
 	pipe/llvm/instructions.cpp
 

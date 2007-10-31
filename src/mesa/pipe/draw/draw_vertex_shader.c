@@ -39,7 +39,7 @@
 #include "x86/rtasm/x86sse.h"
 
 #include "pipe/tgsi/exec/tgsi_core.h"
-#include "pipe/llvm/llvmtgsi.h"
+#include "pipe/llvm/gallivm.h"
 
 
 #define DBG_VS 0
@@ -240,8 +240,10 @@ draw_create_vertex_shader(struct draw_context *draw,
 #endif
 #ifdef MESA_LLVM
    vs->llvm_prog = gallivm_from_tgsi(shader->tokens);
-   if (!draw->engine)
+   draw->engine = gallivm_global_cpu_engine();
+   if (!draw->engine) {
       draw->engine = gallivm_cpu_engine_create(vs->llvm_prog);
+   }
    else
       gallivm_cpu_jit_compile(draw->engine, vs->llvm_prog);
 #endif

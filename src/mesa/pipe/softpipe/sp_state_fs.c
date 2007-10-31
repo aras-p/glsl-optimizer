@@ -33,6 +33,7 @@
 #include "pipe/p_winsys.h"
 #include "pipe/draw/draw_context.h"
 #include "pipe/tgsi/exec/tgsi_core.h"
+#include "pipe/llvm/gallivm.h"
 
 
 void * softpipe_create_fs_state(struct pipe_context *pipe,
@@ -58,6 +59,17 @@ void * softpipe_create_fs_state(struct pipe_context *pipe,
       x86_init_func( &state->sse2_program );
       tgsi_emit_sse2_fs( state->shader.tokens, &state->sse2_program );
    }
+#endif
+
+#ifdef MESA_LLVM
+   fprintf(stderr, "+++++++++++++++++++++++++++++++++++++++++++++++++\n");
+   state->llvm_prog = gallivm_from_tgsi(state->shader.tokens);
+   if (!gallivm_global_cpu_engine()) {
+      gallivm_cpu_engine_create(state->llvm_prog);
+   }
+   else
+      gallivm_cpu_jit_compile(gallivm_global_cpu_engine(), state->llvm_prog);
+   fprintf(stderr, "+++++++++++++++++++++++++++++++++++++++++++++++++\n");
 #endif
 
    return state;

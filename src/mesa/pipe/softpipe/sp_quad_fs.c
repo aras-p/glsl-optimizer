@@ -156,6 +156,76 @@ shade_quad(
    }
 }
 
+#if 0
+static void
+shade_quad_llvm(struct quad_stage *qs,
+                struct quad_header *quad)
+{
+   struct quad_shade_stage *qss = quad_shade_stage(qs);
+   struct softpipe_context *softpipe = qs->softpipe;
+   const float fx = (float) quad->x0;
+   const float fy = (float) quad->y0;
+
+   /* Consts does not require 16 byte alignment. */
+   machine->Consts = softpipe->mapped_constants[PIPE_SHADER_FRAGMENT];
+
+   machine->SamplerUnits = softpipe->sampler_units;
+   machine->InterpCoefs = quad->coef;
+
+   machine->Inputs[0].xyzw[0].f[0] = fx;
+   machine->Inputs[0].xyzw[0].f[1] = fx + 1.0f;
+   machine->Inputs[0].xyzw[0].f[2] = fx;
+   machine->Inputs[0].xyzw[0].f[3] = fx + 1.0f;
+
+   machine->Inputs[0].xyzw[1].f[0] = fy;
+   machine->Inputs[0].xyzw[1].f[1] = fy;
+   machine->Inputs[0].xyzw[1].f[2] = fy + 1.0f;
+   machine->Inputs[0].xyzw[1].f[3] = fy + 1.0f;
+
+   /* run shader */
+#if defined(__i386__) || defined(__386__)
+         machine->Inputs,
+         machine->Outputs,
+         machine->Consts,
+         machine->Temps,
+         machine->InterpCoefs );
+      quad->mask &= ~(machine->Temps[TGSI_EXEC_TEMP_KILMASK_I].xyzw[TGSI_EXEC_TEMP_KILMASK_C].u[0]);
+#endif
+   ga_llvm_prog_exec(softpipe->fs->llvm_prog);
+
+   /* store result color */
+   if (qss->colorOutSlot >= 0) {
+      /* XXX need to handle multiple color outputs someday */
+      assert(qss->stage.softpipe->fs->shader.output_semantic_name[qss->colorOutSlot]
+             == TGSI_SEMANTIC_COLOR);
+      memcpy(
+             quad->outputs.color,
+             &machine->Outputs[qss->colorOutSlot].xyzw[0].f[0],
+             sizeof( quad->outputs.color ) );
+   }
+
+   /* store result Z */
+   if (qss->depthOutSlot >= 0) {
+      /* output[slot] is new Z */
+      uint i;
+      for (i = 0; i < 4; i++) {
+         quad->outputs.depth[i] = machine->Outputs[0].xyzw[2].f[i];
+      }
+   }
+   else {
+      /* copy input Z (which was interpolated by the executor) to output Z */
+      uint i;
+      for (i = 0; i < 4; i++) {
+         quad->outputs.depth[i] = machine->Inputs[0].xyzw[2].f[i];
+      }
+   }
+
+   /* shader may cull fragments */
+   if( quad->mask ) {
+      qs->next->run( qs->next, quad );
+   }
+}
+#endif
 
 /**
  * Per-primitive (or per-begin?) setup

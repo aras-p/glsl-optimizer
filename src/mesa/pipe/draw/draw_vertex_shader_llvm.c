@@ -37,7 +37,7 @@
 
 #ifdef MESA_LLVM
 
-#include "pipe/llvm/llvmtgsi.h"
+#include "pipe/llvm/gallivm.h"
 #include "pipe/tgsi/exec/tgsi_core.h"
 
 #define DBG 0

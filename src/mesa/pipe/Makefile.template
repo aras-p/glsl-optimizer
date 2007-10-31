@@ -22,7 +22,7 @@ INCLUDES = \
 ##### RULES #####
 
 .c.o:
-	$(CC) -c $(INCLUDES) $(CFLAGS) $(DRIVER_DEFINES) $< -o $@
+	$(CC) -c $(INCLUDES) $(LLVM_CFLAGS) $(CFLAGS) $(DRIVER_DEFINES) $< -o $@
 
 .S.o:
 	$(CC) -c $(INCLUDES) $(CFLAGS) $(DRIVER_DEFINES)  $< -o $@
