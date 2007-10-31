@@ -76,9 +76,11 @@
 #include "swrast/swrast.h"
 #include "swrast_setup/swrast_setup.h"
 #include "vbo/vbo.h"
+#if 0
 #include "tnl/tnl.h"
 #include "tnl/t_context.h"
 #include "tnl/t_pipeline.h"
+#endif
 #include "drivers/common/driverfuncs.h"
 
 #include "state_tracker/st_public.h"
@@ -1528,7 +1530,9 @@ XMesaContext XMesaCreateContext( XMesaVisual v, XMesaContext share_list )
    XMesaContext c;
    GLcontext *mesaCtx;
    struct dd_function_table functions;
+#if 0
    TNLcontext *tnl;
+#endif
 
    if (firstTime) {
       _glthread_INIT_MUTEX(_xmesa_lock);
@@ -1591,17 +1595,22 @@ XMesaContext XMesaCreateContext( XMesaVisual v, XMesaContext share_list )
    /* Initialize the software rasterizer and helper modules.
     */
    if (!_swrast_CreateContext( mesaCtx ) ||
+#if 0
        !_vbo_CreateContext( mesaCtx ) ||
        !_tnl_CreateContext( mesaCtx ) ||
+#endif
        !_swsetup_CreateContext( mesaCtx )) {
       _mesa_free_context_data(&c->mesa);
       _mesa_free(c);
       return NULL;
    }
 
+#if 0
    /* tnl setup */
    tnl = TNL_CONTEXT(mesaCtx);
    tnl->Driver.RunPipeline = _tnl_run_pipeline;
+#endif
+
    /* swrast setup */
    xmesa_register_swrast_functions( mesaCtx );
    _swsetup_Wakeup(mesaCtx);
@@ -1641,8 +1650,10 @@ void XMesaDestroyContext( XMesaContext c )
 
    _swsetup_DestroyContext( mesaCtx );
    _swrast_DestroyContext( mesaCtx );
+#if 0
    _tnl_DestroyContext( mesaCtx );
    _vbo_DestroyContext( mesaCtx );
+#endif
    _mesa_free_context_data( mesaCtx );
    _mesa_free( c );
 }

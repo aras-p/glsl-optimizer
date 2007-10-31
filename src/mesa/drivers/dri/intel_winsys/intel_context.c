@@ -30,10 +30,6 @@
 #include "context.h"
 #include "extensions.h"
 
-#include "tnl/tnl.h"
-#include "tnl/t_pipeline.h"
-#include "tnl/t_vertex.h"
-
 #include "drivers/common/driverfuncs.h"
 
 #include "i830_dri.h"
@@ -210,11 +206,6 @@ intelCreateContext(const __GLcontextModes * mesaVis,
                        intel->driScreen->myNum, "i915");
 
 
-   /* Initialize the software rasterizer and helper modules. */
-   _vbo_CreateContext(ctx);
-   _tnl_CreateContext(ctx);
-
-
    /*
     * memory pools
     */
@@ -229,9 +220,6 @@ intelCreateContext(const __GLcontextModes * mesaVis,
    intel->hHWContext = driContextPriv->hHWContext;
    intel->driFd = sPriv->fd;
    intel->driHwLock = (drmLock *) & sPriv->pSAREA->lock;
-
-   TNL_CONTEXT(ctx)->Driver.RunPipeline = _tnl_run_pipeline;
-
 
    fthrottle_mode = driQueryOptioni(&intel->optionCache, "fthrottle_mode");
    intel->iw.irq_seq = -1;
@@ -309,8 +297,6 @@ intelDestroyContext(__DRIcontextPrivate * driContextPriv)
       //intel->vtbl.destroy(intel);
 
       release_texture_heaps = (intel->ctx.Shared->RefCount == 1);
-      _tnl_DestroyContext(&intel->ctx);
-      _vbo_DestroyContext(&intel->ctx);
 
       intel_batchbuffer_free(intel->batch);
 
@@ -332,8 +318,10 @@ intelDestroyContext(__DRIcontextPrivate * driContextPriv)
           */
       }
 
-      /* free the Mesa context */
+      /* free the Mesa context data */
       _mesa_free_context_data(&intel->ctx);
+
+      st_destroy_context(intel->ctx.st);
    }
 }
 

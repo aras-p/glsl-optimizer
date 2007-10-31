@@ -78,6 +78,11 @@ struct st_context *st_create_context( GLcontext *ctx,
    st->ctx = ctx;
    st->pipe = pipe;
 
+   /* state tracker needs the VBO module */
+   _vbo_CreateContext(ctx);
+   /* XXX temporary */
+   _tnl_CreateContext(ctx);
+
    st->draw = draw_create(); /* for selection/feedback */
 
    st->dirty.mesa = ~0;
@@ -124,6 +129,9 @@ void st_destroy_context( struct st_context *st )
    draw_destroy(st->draw);
    st_destroy_atoms( st );
    st_destroy_draw( st );
+
+   _vbo_DestroyContext(st->ctx);
+   _tnl_DestroyContext(st->ctx); /* XXX temporary */
 
 #if 0
    st_destroy_cb_clear( st );
