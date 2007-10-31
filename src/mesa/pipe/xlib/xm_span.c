@@ -989,71 +989,6 @@ static void put_row_rgb_1BIT_pixmap( RGB_SPAN_ARGS )
 
 
 /*
- * Write a span of PF_HPCR pixels to a pixmap.
- */
-static void put_row_HPCR_pixmap( PUT_ROW_ARGS )
-{
-   const GLubyte (*rgba)[4] = (const GLubyte (*)[4]) values;
-   const XMesaContext xmesa = XMESA_CONTEXT(ctx);
-   GET_XRB(xrb);
-   XMesaDisplay *dpy = xmesa->xm_visual->display;
-   XMesaDrawable buffer = xrb->drawable;
-   XMesaGC gc = XMESA_BUFFER(ctx->DrawBuffer)->gc;
-   register GLuint i;
-   y = YFLIP(xrb, y);
-   if (mask) {
-      for (i=0;i<n;i++,x++) {
-         if (mask[i]) {
-            XMesaSetForeground( dpy, gc,
-                            DITHER_HPCR( x, y, rgba[i][RCOMP], rgba[i][GCOMP], rgba[i][BCOMP] ) );
-            XMesaDrawPoint( dpy, buffer, gc, (int) x, (int) y );
-         }
-      }
-   }
-   else {
-      XMesaImage *rowimg = XMESA_BUFFER(ctx->DrawBuffer)->rowimage;
-      register GLubyte *ptr = (GLubyte *) XMESA_BUFFER(ctx->DrawBuffer)->rowimage->data;
-      for (i=0;i<n;i++) {
-         ptr[i] = DITHER_HPCR( (x+i), y, rgba[i][RCOMP], rgba[i][GCOMP], rgba[i][BCOMP] );
-      }
-      XMesaPutImage( dpy, buffer, gc, rowimg, 0, 0, x, y, n, 1 );
-   }
-}
-
-
-/*
- * Write a span of PF_HPCR pixels to a pixmap (no alpha).
- */
-static void put_row_rgb_HPCR_pixmap( RGB_SPAN_ARGS )
-{
-   const GLubyte (*rgb)[3] = (const GLubyte (*)[3]) values;
-   const XMesaContext xmesa = XMESA_CONTEXT(ctx);
-   GET_XRB(xrb);
-   XMesaDisplay *dpy = xmesa->xm_visual->display;
-   XMesaDrawable buffer = xrb->drawable;
-   XMesaGC gc = XMESA_BUFFER(ctx->DrawBuffer)->gc;
-   register GLuint i;
-   y = YFLIP(xrb, y);
-   if (mask) {
-      for (i=0;i<n;i++,x++) {
-         if (mask[i]) {
-            XMesaSetForeground( dpy, gc,
-              DITHER_HPCR(x, y, rgb[i][RCOMP], rgb[i][GCOMP], rgb[i][BCOMP]) );
-            XMesaDrawPoint( dpy, buffer, gc, (int) x, (int) y );
-         }
-      }
-   }
-   else {
-      XMesaImage *rowimg = XMESA_BUFFER(ctx->DrawBuffer)->rowimage;
-      register GLubyte *ptr = (GLubyte *) XMESA_BUFFER(ctx->DrawBuffer)->rowimage->data;
-      for (i=0;i<n;i++) {
-         ptr[i] = DITHER_HPCR( (x+i), y, rgb[i][RCOMP], rgb[i][GCOMP], rgb[i][BCOMP] );
-      }
-      XMesaPutImage( dpy, buffer, gc, rowimg, 0, 0, x, y, n, 1 );
-   }
-}
-
-/*
  * Write a span of PF_LOOKUP pixels to a pixmap.
  */
 static void put_row_LOOKUP_pixmap( PUT_ROW_ARGS )
@@ -1968,58 +1903,6 @@ static void put_row_rgb_1BIT_ximage( RGB_SPAN_ARGS )
 
 
 /*
- * Write a span of PF_HPCR pixels to an XImage.
- */
-static void put_row_HPCR_ximage( PUT_ROW_ARGS )
-{
-   const GLubyte (*rgba)[4] = (const GLubyte (*)[4]) values;
-   GET_XRB(xrb);
-   const XMesaContext xmesa = XMESA_CONTEXT(ctx);
-   register GLuint i;
-   register GLubyte *ptr = PIXEL_ADDR1(xrb, x, y);
-   if (mask) {
-      for (i=0;i<n;i++,x++) {
-         if (mask[i]) {
-            ptr[i] = DITHER_HPCR( x, y, rgba[i][RCOMP], rgba[i][GCOMP], rgba[i][BCOMP] );
-         }
-      }
-   }
-   else {
-      /* draw all pixels */
-      for (i=0;i<n;i++,x++) {
-         ptr[i] = DITHER_HPCR( x, y, rgba[i][RCOMP], rgba[i][GCOMP], rgba[i][BCOMP] );
-      }
-   }
-}
-
-
-/*
- * Write a span of PF_HPCR pixels to an XImage (no alpha).
- */
-static void put_row_rgb_HPCR_ximage( RGB_SPAN_ARGS )
-{
-   const GLubyte (*rgb)[3] = (const GLubyte (*)[3]) values;
-   GET_XRB(xrb);
-   const XMesaContext xmesa = XMESA_CONTEXT(ctx);
-   register GLuint i;
-   register GLubyte *ptr = PIXEL_ADDR1(xrb, x, y);
-   if (mask) {
-      for (i=0;i<n;i++,x++) {
-         if (mask[i]) {
-            ptr[i] = DITHER_HPCR( x, y, rgb[i][RCOMP], rgb[i][GCOMP], rgb[i][BCOMP] );
-         }
-      }
-   }
-   else {
-      /* draw all pixels */
-      for (i=0;i<n;i++,x++) {
-         ptr[i] = DITHER_HPCR( x, y, rgb[i][RCOMP], rgb[i][GCOMP], rgb[i][BCOMP] );
-      }
-   }
-}
-
-
-/*
  * Write a span of PF_LOOKUP pixels to an XImage.
  */
 static void put_row_LOOKUP_ximage( PUT_ROW_ARGS )
@@ -2459,27 +2342,6 @@ static void put_values_1BIT_pixmap( PUT_VALUES_ARGS )
 }
 
 
-/*
- * Write an array of PF_HPCR pixels to a pixmap.
- */
-static void put_values_HPCR_pixmap( PUT_VALUES_ARGS )
-{
-   const GLubyte (*rgba)[4] = (const GLubyte (*)[4]) values;
-   const XMesaContext xmesa = XMESA_CONTEXT(ctx);
-   GET_XRB(xrb);
-   XMesaDisplay *dpy = xmesa->xm_visual->display;
-   XMesaDrawable buffer = xrb->drawable;
-   XMesaGC gc = XMESA_BUFFER(ctx->DrawBuffer)->gc;
-   register GLuint i;
-   for (i=0;i<n;i++) {
-      if (mask[i]) {
-         XMesaSetForeground( dpy, gc,
-                         DITHER_HPCR( x[i], y[i], rgba[i][RCOMP], rgba[i][GCOMP], rgba[i][BCOMP] ));
-         XMesaDrawPoint( dpy, buffer, gc, (int) x[i], (int) YFLIP(xrb, y[i]) );
-      }
-   }
-}
-
 
 /*
  * Write an array of PF_LOOKUP pixels to a pixmap.
@@ -2720,24 +2582,6 @@ static void put_values_1BIT_ximage( PUT_VALUES_ARGS )
       if (mask[i]) {
 	 XMesaPutPixel( img, x[i], YFLIP(xrb, y[i]),
                     DITHER_1BIT( x[i], y[i], rgba[i][RCOMP], rgba[i][GCOMP], rgba[i][BCOMP] ));
-      }
-   }
-}
-
-
-/*
- * Write an array of PF_HPCR pixels to an XImage.
- */
-static void put_values_HPCR_ximage( PUT_VALUES_ARGS )
-{
-   const GLubyte (*rgba)[4] = (const GLubyte (*)[4]) values;
-   GET_XRB(xrb);
-   const XMesaContext xmesa = XMESA_CONTEXT(ctx);
-   register GLuint i;
-   for (i=0;i<n;i++) {
-      if (mask[i]) {
-         GLubyte *ptr = PIXEL_ADDR1(xrb, x[i], y[i]);
-         *ptr = (GLubyte) DITHER_HPCR( x[i], y[i], rgba[i][RCOMP], rgba[i][GCOMP], rgba[i][BCOMP] );
       }
    }
 }
@@ -3196,25 +3040,6 @@ static void put_mono_row_1BIT_ximage( PUT_MONO_ROW_ARGS )
 
 
 /*
- * Write a span of identical HPCR pixels to an XImage.
- */
-static void put_mono_row_HPCR_ximage( PUT_MONO_ROW_ARGS )
-{
-   const GLubyte *color = (const GLubyte *) value;
-   GET_XRB(xrb);
-   const XMesaContext xmesa = XMESA_CONTEXT(ctx);
-   const GLubyte r = color[RCOMP], g = color[GCOMP], b = color[BCOMP];
-   register GLubyte *ptr = PIXEL_ADDR1(xrb, x, y);
-   register GLuint i;
-   for (i=0;i<n;i++,x++) {
-      if (!mask || mask[i]) {
-         ptr[i] = DITHER_HPCR( x, y, r, g, b );
-      }
-   }
-}
-
-
-/*
  * Write a span of identical 8-bit GRAYSCALE pixels to an XImage.
  */
 static void put_mono_row_GRAYSCALE8_ximage( PUT_MONO_ROW_ARGS )
@@ -3586,25 +3411,6 @@ static void put_mono_values_1BIT_ximage( PUT_MONO_VALUES_ARGS )
       if (mask[i]) {
 	 XMesaPutPixel( img, x[i], YFLIP(xrb, y[i]),
                         DITHER_1BIT( x[i], y[i], r, g, b ));
-      }
-   }
-}
-
-
-/*
- * Write an array of identical PF_HPCR pixels to an XImage.
- */
-static void put_mono_values_HPCR_ximage( PUT_MONO_VALUES_ARGS )
-{
-   const GLubyte *color = (const GLubyte *) value;
-   GET_XRB(xrb);
-   const XMesaContext xmesa = XMESA_CONTEXT(ctx);
-   const GLubyte r = color[RCOMP], g = color[GCOMP], b = color[BCOMP];
-   register GLuint i;
-   for (i=0;i<n;i++) {
-      if (mask[i]) {
-         GLubyte *ptr = PIXEL_ADDR1(xrb, x[i], y[i]);
-         *ptr = DITHER_HPCR( x[i], y[i], r, g, b );
       }
    }
 }
@@ -3990,19 +3796,6 @@ get_row_rgba(GLcontext *ctx, struct gl_renderbuffer *rb,
                   }
 	       }
 	       break;
-            case PF_HPCR:
-               {
-                  GLubyte *ptr1 = (GLubyte *) span->data;
-                  GLuint i;
-                  for (i=0;i<n;i++) {
-                     GLubyte p = *ptr1++;
-                     rgba[i][RCOMP] =  p & 0xE0;
-                     rgba[i][GCOMP] = (p & 0x1C) << 3;
-                     rgba[i][BCOMP] = (p & 0x03) << 6;
-                     rgba[i][ACOMP] = 255;
-                  }
-               }
-               break;
 	    case PF_Dither:
 	    case PF_Lookup:
 	    case PF_Grayscale:
@@ -4190,19 +3983,6 @@ get_row_rgba(GLcontext *ctx, struct gl_renderbuffer *rb,
                }
             }
 	    break;
-         case PF_HPCR:
-            {
-               const GLubyte *ptr1 = PIXEL_ADDR1(xrb, x, y);
-               GLuint i;
-               for (i=0;i<n;i++) {
-                  GLubyte p = *ptr1++;
-                  rgba[i][RCOMP] =  p & 0xE0;
-                  rgba[i][GCOMP] = (p & 0x1C) << 3;
-                  rgba[i][BCOMP] = (p & 0x03) << 6;
-                  rgba[i][ACOMP] = 255;
-               }
-            }
-            break;
 	 case PF_Dither:
 	 case PF_Lookup:
 	 case PF_Grayscale:
@@ -4365,16 +4145,6 @@ get_values_rgba(GLcontext *ctx, struct gl_renderbuffer *rb,
                rgba[i][ACOMP] = 255;
 	    }
 	    break;
-         case PF_HPCR:
-            for (i=0;i<n;i++) {
-               unsigned long p = read_pixel( dpy, buffer,
-                                             x[i], YFLIP(xrb, y[i]) );
-               rgba[i][RCOMP] = (GLubyte) ( p & 0xE0      );
-               rgba[i][GCOMP] = (GLubyte) ((p & 0x1C) << 3);
-                  rgba[i][BCOMP] = (GLubyte) ((p & 0x03) << 6);
-                  rgba[i][ACOMP] = (GLubyte) 255;
-            }
-            break;
 	 case PF_Dither:
 	 case PF_Lookup:
 	 case PF_Grayscale:
@@ -4477,16 +4247,6 @@ get_values_rgba(GLcontext *ctx, struct gl_renderbuffer *rb,
                rgba[i][ACOMP] = 255;
 	    }
 	    break;
-         case PF_HPCR:
-            for (i=0;i<n;i++) {
-               GLubyte *ptr1 = PIXEL_ADDR1(xrb, x[i], y[i]);
-               GLubyte p = *ptr1;
-               rgba[i][RCOMP] =  p & 0xE0;
-               rgba[i][GCOMP] = (p & 0x1C) << 3;
-               rgba[i][BCOMP] = (p & 0x03) << 6;
-               rgba[i][ACOMP] = 255;
-            }
-            break;
 	 case PF_Dither:
 	 case PF_Lookup:
 	 case PF_Grayscale:
@@ -4727,22 +4487,6 @@ xmesa_set_renderbuffer_funcs(struct xmesa_renderbuffer *xrb,
          rb->PutMonoRow    = put_mono_row_1BIT_ximage;
          rb->PutValues     = put_values_1BIT_ximage;
          rb->PutMonoValues = put_mono_values_1BIT_ximage;
-      }
-      break;
-   case PF_HPCR:
-      if (pixmap) {
-         rb->PutRow        = put_row_HPCR_pixmap;
-         rb->PutRowRGB     = put_row_rgb_HPCR_pixmap;
-         rb->PutMonoRow    = put_mono_row_pixmap;
-         rb->PutValues     = put_values_HPCR_pixmap;
-         rb->PutMonoValues = put_mono_values_pixmap;
-      }
-      else {
-         rb->PutRow        = put_row_HPCR_ximage;
-         rb->PutRowRGB     = put_row_rgb_HPCR_ximage;
-         rb->PutMonoRow    = put_mono_row_HPCR_ximage;
-         rb->PutValues     = put_values_HPCR_ximage;
-         rb->PutMonoValues = put_mono_values_HPCR_ximage;
       }
       break;
    case PF_Lookup:

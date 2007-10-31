@@ -65,21 +65,6 @@ const int xmesa_kernel8[DITH_DY * DITH_DX] = {
    15 * MAXC,  7 * MAXC, 13 * MAXC,  5 * MAXC,
 };
 
-const short xmesa_HPCR_DRGB[3][2][16] = {
-   {
-      { 16, -4,  1,-11, 14, -6,  3, -9, 15, -5,  2,-10, 13, -7,  4, -8},
-      {-15,  5,  0, 12,-13,  7, -2, 10,-14,  6, -1, 11,-12,  8, -3,  9}
-   },
-   {
-      {-11, 15, -7,  3, -8, 14, -4,  2,-10, 16, -6,  4, -9, 13, -5,  1},
-      { 12,-14,  8, -2,  9,-13,  5, -1, 11,-15,  7, -3, 10,-12,  6,  0}
-   },
-   {
-      {  6,-18, 26,-14,  2,-22, 30,-10,  8,-16, 28,-12,  4,-20, 32, -8},
-      { -4, 20,-24, 16,  0, 24,-28, 12, -6, 18,-26, 14, -2, 22,-30, 10}
-   }
-};
-
 const int xmesa_kernel1[16] = {
    0*47,  9*47,  4*47, 12*47,     /* 47 = (255*3)/16 */
    6*47,  2*47, 14*47,  8*47,
@@ -143,29 +128,6 @@ clear_8bit_ximage(GLcontext *ctx, struct xmesa_renderbuffer *xrb, GLuint value)
    for (i = 0; i < height; i++) {
       GLubyte *ptr = PIXEL_ADDR1(xrb, 0, i);
       MEMSET( ptr, xmesa->clearpixel, width );
-   }
-}
-
-
-static void
-clear_HPCR_ximage(GLcontext *ctx, struct xmesa_renderbuffer *xrb, GLuint value)
-                   
-{
-   const XMesaContext xmesa = XMESA_CONTEXT(ctx);
-   GLint width = xrb->St.Base.Width;
-   GLint height = xrb->St.Base.Height;
-   GLint i;
-   for (i = 0; i < height; i++) {
-      GLubyte *ptr = PIXEL_ADDR1( xrb, 0, i );
-      int j;
-      const GLubyte *sptr = xmesa->xm_visual->hpcr_clear_ximage_pattern[0];
-      if (i & 1) {
-         sptr += 16;
-      }
-      for (j = 0; j < width; j++) {
-         *ptr = sptr[j&15];
-         ptr++;
-      }
    }
 }
 
@@ -273,80 +235,6 @@ clear_nbit_ximage(GLcontext *ctx, struct xmesa_renderbuffer *xrb, GLuint value)
 }
 
 
-static void
-clear_color_HPCR_ximage( GLcontext *ctx, const GLfloat color[4] )
-{
-   int i;
-   const XMesaContext xmesa = XMESA_CONTEXT(ctx);
-
-   CLAMPED_FLOAT_TO_UBYTE(xmesa->clearcolor[0], color[0]);
-   CLAMPED_FLOAT_TO_UBYTE(xmesa->clearcolor[1], color[1]);
-   CLAMPED_FLOAT_TO_UBYTE(xmesa->clearcolor[2], color[2]);
-   CLAMPED_FLOAT_TO_UBYTE(xmesa->clearcolor[3], color[3]);
-
-   if (color[0] == 0.0 && color[1] == 0.0 && color[2] == 0.0) {
-      /* black is black */
-      MEMSET( xmesa->xm_visual->hpcr_clear_ximage_pattern, 0x0 ,
-              sizeof(xmesa->xm_visual->hpcr_clear_ximage_pattern));
-   }
-   else {
-      /* build clear pattern */
-      for (i=0; i<16; i++) {
-         xmesa->xm_visual->hpcr_clear_ximage_pattern[0][i] =
-            DITHER_HPCR(i, 0,
-                        xmesa->clearcolor[0],
-                        xmesa->clearcolor[1],
-                        xmesa->clearcolor[2]);
-         xmesa->xm_visual->hpcr_clear_ximage_pattern[1][i]    =
-            DITHER_HPCR(i, 1,
-                        xmesa->clearcolor[0],
-                        xmesa->clearcolor[1],
-                        xmesa->clearcolor[2]);
-      }
-   }
-}
-
-
-static void
-clear_color_HPCR_pixmap( GLcontext *ctx, const GLfloat color[4] )
-{
-   int i;
-   const XMesaContext xmesa = XMESA_CONTEXT(ctx);
-
-   CLAMPED_FLOAT_TO_UBYTE(xmesa->clearcolor[0], color[0]);
-   CLAMPED_FLOAT_TO_UBYTE(xmesa->clearcolor[1], color[1]);
-   CLAMPED_FLOAT_TO_UBYTE(xmesa->clearcolor[2], color[2]);
-   CLAMPED_FLOAT_TO_UBYTE(xmesa->clearcolor[3], color[3]);
-
-   if (color[0] == 0.0 && color[1] == 0.0 && color[2] == 0.0) {
-      /* black is black */
-      for (i=0; i<16; i++) {
-         XMesaPutPixel(xmesa->xm_visual->hpcr_clear_ximage, i, 0, 0);
-         XMesaPutPixel(xmesa->xm_visual->hpcr_clear_ximage, i, 1, 0);
-      }
-   }
-   else {
-      for (i=0; i<16; i++) {
-         XMesaPutPixel(xmesa->xm_visual->hpcr_clear_ximage, i, 0,
-                       DITHER_HPCR(i, 0,
-                                   xmesa->clearcolor[0],
-                                   xmesa->clearcolor[1],
-                                   xmesa->clearcolor[2]));
-         XMesaPutPixel(xmesa->xm_visual->hpcr_clear_ximage, i, 1,
-                       DITHER_HPCR(i, 1,
-                                   xmesa->clearcolor[0],
-                                   xmesa->clearcolor[1],
-                                   xmesa->clearcolor[2]));
-      }
-   }
-   /* change tile pixmap content */
-   XMesaPutImage(xmesa->display,
-		 (XMesaDrawable)xmesa->xm_visual->hpcr_clear_pixmap,
-		 XMESA_BUFFER(ctx->DrawBuffer)->cleargc,
-		 xmesa->xm_visual->hpcr_clear_ximage, 0, 0, 0, 0, 16, 2);
-}
-
-
 /**
  * Called when the driver should update its state, based on the new_state
  * flags.
@@ -387,12 +275,7 @@ xmesa_update_state( GLcontext *ctx, GLbitfield new_state )
          else {
             switch (xmesa->xm_visual->BitsPerPixel) {
             case 8:
-               if (xmesa->xm_visual->hpcr_clear_flag) {
-                  back_xrb->clearFunc = clear_HPCR_ximage;
-               }
-               else {
-                  back_xrb->clearFunc = clear_8bit_ximage;
-               }
+               back_xrb->clearFunc = clear_8bit_ximage;
                break;
             case 16:
                back_xrb->clearFunc = clear_16bit_ximage;
@@ -409,22 +292,6 @@ xmesa_update_state( GLcontext *ctx, GLbitfield new_state )
             }
          }
       }
-   }
-
-   if (xmesa->xm_visual->hpcr_clear_flag) {
-      /* this depends on whether we're drawing to the front or back buffer */
-      /* XXX FIX THIS! */
-#if 0
-      if (pixmap) {
-         ctx->Driver.ClearColor = clear_color_HPCR_pixmap;
-      }
-      else {
-         ctx->Driver.ClearColor = clear_color_HPCR_ximage;
-      }
-#else
-      (void) clear_color_HPCR_pixmap;
-      (void) clear_color_HPCR_ximage;
-#endif
    }
 }
 

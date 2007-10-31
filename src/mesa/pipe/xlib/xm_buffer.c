@@ -484,11 +484,6 @@ xmesa_delete_framebuffer(struct gl_framebuffer *fb)
       }
       if (b->backxrb->pixmap) {
          XMesaFreePixmap( b->display, b->backxrb->pixmap );
-         if (b->xm_visual->hpcr_clear_flag) {
-            XMesaFreePixmap( b->display,
-                             b->xm_visual->hpcr_clear_pixmap );
-            XMesaDestroyImage( b->xm_visual->hpcr_clear_ximage );
-         }
       }
    }
 

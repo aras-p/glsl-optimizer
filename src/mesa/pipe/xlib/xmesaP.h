@@ -71,7 +71,6 @@ enum pixel_format {
    PF_5R6G5B,		/**< 16-bit TrueColor:  5-R, 6-G, 5-B bits */
    PF_Dither,		/**< Color-mapped RGB with dither */
    PF_Lookup,		/**< Color-mapped RGB without dither */
-   PF_HPCR,		/**< HP Color Recovery (ad@lms.be 30/08/95) */
    PF_1Bit,		/**< monochrome dithering of RGB */
    PF_Grayscale,	/**< Grayscale or StaticGray */
    PF_Dither_5R6G5B	/**< 16-bit dithered TrueColor: 5-R, 6-G, 5-B */
@@ -112,13 +111,6 @@ struct xmesa_visual {
    GLubyte PixelToR[256];	/* Pixel to RGB conversion */
    GLubyte PixelToG[256];
    GLubyte PixelToB[256];
-
-   /* For PF_HPCR */
-   short       hpcr_rgbTbl[3][256];
-   GLboolean   hpcr_clear_flag;
-   GLubyte     hpcr_clear_ximage_pattern[2][16];
-   XMesaImage *hpcr_clear_ximage;
-   XMesaPixmap hpcr_clear_pixmap;
 
    /* For PF_1BIT */
    int bitFlip;
@@ -420,25 +412,6 @@ extern const int xmesa_kernel8[DITH_DY * DITH_DX];
 	ctable[DITH_MIX(_dither_lookup(DITH_R, (R)),	\
 		        _dither_lookup(DITH_G, (G)),	\
 		        _dither_lookup(DITH_B, (B)))]
-
-
-/**
- * If pixelformat==PF_HPCR:
- *
- *      HP Color Recovery dithering               (ad@lms.be 30/08/95)
- *      HP has on it's 8-bit 700-series computers, a feature called
- *      'Color Recovery'.  This allows near 24-bit output (so they say).
- *      It is enabled by selecting the 8-bit  TrueColor  visual AND
- *      corresponding  colormap (see tkInitWindow) AND doing some special
- *      dither.
- */
-extern const short xmesa_HPCR_DRGB[3][2][16];
-
-#define DITHER_HPCR( X, Y, R, G, B )					   \
-  ( ((xmesa->xm_visual->hpcr_rgbTbl[0][R] + xmesa_HPCR_DRGB[0][(Y)&1][(X)&15]) & 0xE0)     \
-  |(((xmesa->xm_visual->hpcr_rgbTbl[1][G] + xmesa_HPCR_DRGB[1][(Y)&1][(X)&15]) & 0xE0)>>3) \
-  | ((xmesa->xm_visual->hpcr_rgbTbl[2][B] + xmesa_HPCR_DRGB[2][(Y)&1][(X)&15])>>6)	   \
-  )
 
 
 
