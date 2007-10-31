@@ -247,8 +247,9 @@ _mesa_validate_DrawArrays(GLcontext *ctx,
 {
    ASSERT_OUTSIDE_BEGIN_END_WITH_RETVAL(ctx, GL_FALSE);
 
-   if (count < 0) {
-      _mesa_error(ctx, GL_INVALID_VALUE, "glDrawArrays(count)" );
+   if (count <= 0) {
+      if (count < 0)
+         _mesa_error(ctx, GL_INVALID_VALUE, "glDrawArrays(count)" );
       return GL_FALSE;
    }
 
