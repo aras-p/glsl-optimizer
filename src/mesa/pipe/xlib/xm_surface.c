@@ -236,12 +236,12 @@ xmesa_clear(struct pipe_context *pipe, struct pipe_surface *ps, GLuint value)
    if (xrb && xrb->ximage) {
       /* clearing back color buffer */
       GET_CURRENT_CONTEXT(ctx);
-      xmesa_clear_buffers(ctx, BUFFER_BIT_BACK_LEFT);
+      xmesa_clear_buffers(ctx, BUFFER_BIT_BACK_LEFT, value);
    }
    else if (xrb && xrb->pixmap) {
       /* clearing front color buffer */
       GET_CURRENT_CONTEXT(ctx);
-      xmesa_clear_buffers(ctx, BUFFER_BIT_FRONT_LEFT);
+      xmesa_clear_buffers(ctx, BUFFER_BIT_FRONT_LEFT, value);
    }
    else {
       /* clearing other buffer */

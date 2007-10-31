@@ -1523,9 +1523,6 @@ XMesaContext XMesaCreateContext( XMesaVisual v, XMesaContext share_list )
    XMesaContext c;
    GLcontext *mesaCtx;
    struct dd_function_table functions;
-#if 0
-   TNLcontext *tnl;
-#endif
 
    if (firstTime) {
       _glthread_INIT_MUTEX(_xmesa_lock);

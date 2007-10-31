@@ -54,7 +54,8 @@ struct xmesa_renderbuffer;
 
 /* Function pointer for clearing color buffers */
 typedef void (*ClearFunc)( GLcontext *ctx, struct xmesa_renderbuffer *xrb,
-                           GLint x, GLint y, GLint width, GLint height );
+                           GLint x, GLint y, GLint width, GLint height,
+                           GLuint value );
 
 
 
@@ -585,7 +586,7 @@ extern void
 xmesa_clear(struct pipe_context *pipe, struct pipe_surface *ps, GLuint value);
 
 extern void
-xmesa_clear_buffers(GLcontext *ctx, GLbitfield buffers);
+xmesa_clear_buffers(GLcontext *ctx, GLbitfield buffers, GLuint value);
 
 extern struct pipe_context *
 xmesa_create_softpipe(XMesaContext xm);
