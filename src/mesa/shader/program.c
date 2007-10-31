@@ -469,6 +469,7 @@ _mesa_combine_programs(GLcontext *ctx,
    const GLuint lenB = progB->NumInstructions;
    const GLuint numParamsA = _mesa_num_parameters(progA->Parameters);
    const GLuint newLength = lenA + lenB;
+   GLbitfield inputsB;
    GLuint i;
 
    ASSERT(progA->Target == progB->Target);
@@ -498,8 +499,11 @@ _mesa_combine_programs(GLcontext *ctx,
                            PROGRAM_OUTPUT, FRAG_RESULT_COLR);
       }
 
-      newProg->InputsRead = progA->InputsRead;
-      newProg->InputsRead |= (progB->InputsRead & ~(1 << FRAG_ATTRIB_COL0));
+      inputsB = progB->InputsRead;
+      if (progA->OutputsWritten & (1 << FRAG_RESULT_COLR)) {
+         inputsB &= ~(1 << FRAG_ATTRIB_COL0);
+      }
+      newProg->InputsRead = progA->InputsRead | inputsB;
       newProg->OutputsWritten = progB->OutputsWritten;
    }
    else {
