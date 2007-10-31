@@ -59,28 +59,22 @@
 
 
 /**
- * Create a simple fragment shader that does a TEX() instruction to get
- * the fragment color.
- * If bitmapMode, use KIL instruction to kill the "0-pixels".
+ * Make fragment program for glBitmap:
+ *   Sample the texture and kill the fragment if the bit is 0.
+ * This program will be combined with the user's fragment program.
  */
 static struct st_fragment_program *
-make_bitmap_fragment_shader(struct st_context *st)
+make_bitmap_fragment_program(GLcontext *ctx)
 {
-   /* only make programs once and re-use */
-   static struct st_fragment_program *prog = NULL;
-   GLcontext *ctx = st->ctx;
    struct st_fragment_program *stfp;
    struct gl_program *p;
    GLuint ic = 0;
-
-   if (prog)
-      return prog;
 
    p = ctx->Driver.NewProgram(ctx, GL_FRAGMENT_PROGRAM_ARB, 0);
    if (!p)
       return NULL;
 
-   p->NumInstructions = 6;
+   p->NumInstructions = 5;
 
    p->Instructions = _mesa_alloc_instructions(p->NumInstructions);
    if (!p->Instructions) {
@@ -89,11 +83,6 @@ make_bitmap_fragment_shader(struct st_context *st)
    }
    _mesa_init_instructions(p->Instructions, p->NumInstructions);
 
-   /*
-    * XXX, we need to compose this fragment shader with the current
-    * user-provided fragment shader so the fragment program is applied
-    * to the fragments which aren't culled.
-    */
    /* TEX tmp0, fragment.texcoord[0], texture[0], 2D; */
    p->Instructions[ic].Opcode = OPCODE_TEX;
    p->Instructions[ic].DstReg.File = PROGRAM_TEMPORARY;
@@ -133,34 +122,84 @@ make_bitmap_fragment_shader(struct st_context *st)
    p->Instructions[ic].SrcReg[0].Index = 0;
    ic++;
 
-   /* MOV result.color, fragment.color */
-   p->Instructions[ic].Opcode = OPCODE_MOV;
-   p->Instructions[ic].DstReg.File = PROGRAM_OUTPUT;
-   p->Instructions[ic].DstReg.Index = FRAG_RESULT_COLR;
-   p->Instructions[ic].SrcReg[0].File = PROGRAM_INPUT;
-   p->Instructions[ic].SrcReg[0].Index = FRAG_ATTRIB_COL0;
-   ic++;
-
    /* END; */
    p->Instructions[ic++].Opcode = OPCODE_END;
 
    assert(ic == p->NumInstructions);
 
-   p->InputsRead = FRAG_BIT_TEX0 | FRAG_BIT_COL0;
-   p->OutputsWritten = (1 << FRAG_RESULT_COLR);
+   p->InputsRead = FRAG_BIT_TEX0;
+   p->OutputsWritten = 0x0;
 
    stfp = (struct st_fragment_program *) p;
-   st_translate_fragment_program(st, stfp, NULL,
+   st_translate_fragment_program(ctx->st, stfp, NULL,
                                  stfp->tokens, ST_MAX_SHADER_TOKENS);
-
-   prog = stfp;
 
    return stfp;
 }
 
 
+/**
+ * Combine basic bitmap fragment program with the user-defined program.
+ */
 static struct st_fragment_program *
-make_drawpix_fragment_shader(GLcontext *ctx)
+combined_bitmap_fragment_program(GLcontext *ctx)
+{
+   struct st_context *st = ctx->st;
+   struct st_fragment_program *stfp;
+
+   if (!st->bitmap.program) {
+      /* create the basic bitmap fragment program */
+      st->bitmap.program = make_bitmap_fragment_program(ctx);
+   }
+
+   if (st->bitmap.user_prog_sn == st->fp->serialNo) {
+      /* re-use */
+      stfp = st->bitmap.combined_prog;
+   }
+   else {
+      /* Concatenate the bitmap program with the current user-defined program.
+       */
+      stfp = (struct st_fragment_program *)
+         _mesa_combine_programs(ctx,
+                                &st->bitmap.program->Base.Base,
+                                &st->fp->Base.Base);
+
+#if 0
+      {
+         struct gl_program *p = &stfp->Base.Base;
+         printf("Combined bitmap program:\n");
+         _mesa_print_program(p);
+         printf("InputsRead: 0x%x\n", p->InputsRead);
+         printf("OutputsWritten: 0x%x\n", p->OutputsWritten);
+         _mesa_print_parameter_list(p->Parameters);
+      }
+#endif
+
+      /* translate to TGSI tokens */
+      st_translate_fragment_program(st, stfp, NULL,
+                                    stfp->tokens, ST_MAX_SHADER_TOKENS);
+
+      /* save new program, update serial numbers */
+      st->bitmap.user_prog_sn = st->fp->serialNo;
+      st->bitmap.combined_prog = stfp;
+   }
+
+   /* Ideally we'd have updated the pipe constants during the normal
+    * st/atom mechanism.  But we can't since this is specific to glBitmap.
+    */
+   st_upload_constants(st, stfp->Base.Base.Parameters, PIPE_SHADER_FRAGMENT);
+
+   return stfp;
+}
+
+
+
+/**
+ * Make fragment shader for glDraw/CopyPixels.  This shader is made
+ * by combining the pixel transfer shader with the user-defined shader.
+ */
+static struct st_fragment_program *
+combined_drawpix_fragment_program(GLcontext *ctx)
 {
    struct st_context *st = ctx->st;
    struct st_fragment_program *stfp;
@@ -168,13 +207,13 @@ make_drawpix_fragment_shader(GLcontext *ctx)
    if (st->pixel_xfer.program->serialNo == st->pixel_xfer.xfer_prog_sn
        && st->fp->serialNo == st->pixel_xfer.user_prog_sn) {
       /* the pixel tranfer program has not changed and the user-defined
-       * shader has not changed, so re-use the combined program.
+       * program has not changed, so re-use the combined program.
        */
       stfp = st->pixel_xfer.combined_prog;
    }
    else {
       /* Concatenate the pixel transfer program with the current user-
-       * defined shader.
+       * defined program.
        */
       stfp = (struct st_fragment_program *)
          _mesa_combine_programs(ctx,
@@ -241,7 +280,7 @@ make_fragment_shader_z(struct st_context *st)
    }
    _mesa_init_instructions(p->Instructions, p->NumInstructions);
 
-   /* TEX result.color, fragment.texcoord[0], texture[0], 2D; */
+   /* TEX result.depth, fragment.texcoord[0], texture[0], 2D; */
    p->Instructions[ic].Opcode = OPCODE_TEX;
    p->Instructions[ic].DstReg.File = PROGRAM_OUTPUT;
    p->Instructions[ic].DstReg.Index = FRAG_RESULT_DEPR;
@@ -945,7 +984,7 @@ st_DrawPixels(GLcontext *ctx, GLint x, GLint y, GLsizei width, GLsizei height,
    }
    else {
       ps = st->state.framebuffer.cbufs[0];
-      stfp = make_drawpix_fragment_shader(ctx);
+      stfp = combined_drawpix_fragment_program(ctx);
       stvp = make_vertex_shader(ctx->st, GL_FALSE);
       color = NULL;
    }
@@ -1122,16 +1161,13 @@ static void
 st_Bitmap(GLcontext *ctx, GLint x, GLint y, GLsizei width, GLsizei height,
           const struct gl_pixelstore_attrib *unpack, const GLubyte *bitmap )
 {
-   struct st_vertex_program *stvp;
    struct st_fragment_program *stfp;
+   struct st_vertex_program *stvp;
    struct st_context *st = ctx->st;
    struct pipe_mipmap_tree *mt;
 
-   /* create the fragment program */
-   stfp = make_bitmap_fragment_shader(ctx->st);
-
-   /* and vertex program */
    stvp = make_vertex_shader(ctx->st, GL_TRUE);
+   stfp = combined_bitmap_fragment_program(ctx);
 
    st_validate_state(st);
 
@@ -1248,7 +1284,7 @@ st_CopyPixels(GLcontext *ctx, GLint srcx, GLint srcy,
    if (type == GL_COLOR) {
       rbRead = st_renderbuffer(ctx->ReadBuffer->_ColorReadBuffer);
       color = NULL;
-      stfp = make_drawpix_fragment_shader(ctx);
+      stfp = combined_drawpix_fragment_program(ctx);
       stvp = make_vertex_shader(ctx->st, GL_FALSE);
    }
    else {

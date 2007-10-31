@@ -142,6 +142,12 @@ struct st_context
       GLuint combined_prog_sn;
    } pixel_xfer;
 
+   struct {
+      struct st_fragment_program *program;  /**< bitmap tex/kil program */
+      GLuint user_prog_sn;  /**< user fragment program serial no. */
+      struct st_fragment_program *combined_prog;
+   } bitmap;
+
    /**
     * Buffer object which stores the ctx->Current.Attrib[] values.
     * Used for vertex array drawing when we we need an attribute for
