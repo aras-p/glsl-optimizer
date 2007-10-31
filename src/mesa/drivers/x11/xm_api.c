@@ -1551,6 +1551,9 @@ XMesaContext XMesaCreateContext( XMesaVisual v, XMesaContext share_list )
    xmesa_init_driver_functions(v, &functions);
    st_init_driver_functions(&functions);
 
+   /* override st's function */
+   functions.UpdateState = xmesa_update_state;
+
    /*
    functions.NewRenderbuffer = xmesa_new_renderbuffer;
    */
@@ -1594,12 +1597,13 @@ XMesaContext XMesaCreateContext( XMesaVisual v, XMesaContext share_list )
 
    /* Initialize the software rasterizer and helper modules.
     */
-   if (!_swrast_CreateContext( mesaCtx ) ||
+   if (!_swrast_CreateContext( mesaCtx )
 #if 0
-       !_vbo_CreateContext( mesaCtx ) ||
+       || !_vbo_CreateContext( mesaCtx ) ||
        !_tnl_CreateContext( mesaCtx ) ||
+       !_swsetup_CreateContext( mesaCtx )
 #endif
-       !_swsetup_CreateContext( mesaCtx )) {
+       ) {
       _mesa_free_context_data(&c->mesa);
       _mesa_free(c);
       return NULL;
@@ -1613,11 +1617,13 @@ XMesaContext XMesaCreateContext( XMesaVisual v, XMesaContext share_list )
 
    /* swrast setup */
    xmesa_register_swrast_functions( mesaCtx );
-   _swsetup_Wakeup(mesaCtx);
 
 
    st_create_context( mesaCtx,
                       xmesa_create_softpipe( c ) );
+
+   _swsetup_CreateContext( mesaCtx );
+   _swsetup_Wakeup(mesaCtx);
 
    /* override these functions, as if the xlib driver were derived from
     * the softpipe driver.
