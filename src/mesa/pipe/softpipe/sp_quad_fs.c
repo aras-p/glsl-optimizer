@@ -91,6 +91,11 @@ shade_quad(
 
    machine->SamplerUnits = softpipe->sampler_units;
    machine->InterpCoefs = quad->coef;
+   printf("COEF = [%f %f %f %f], [%f %f %f %f], [%f %f %f %f] %p\n",
+          quad->coef->a0[0], quad->coef->a0[1], quad->coef->a0[2], quad->coef->a0[3],
+          quad->coef->dadx[0], quad->coef->dadx[1], quad->coef->dadx[2], quad->coef->dadx[3],
+          quad->coef->dady[0], quad->coef->dady[1], quad->coef->dady[2], quad->coef->dady[3],
+          quad->coef);
 
    machine->Inputs[0].xyzw[0].f[0] = fx;
    machine->Inputs[0].xyzw[0].f[1] = fx + 1.0f;
@@ -165,33 +170,13 @@ shade_quad_llvm(struct quad_stage *qs,
    struct softpipe_context *softpipe = qs->softpipe;
    const float fx = (float) quad->x0;
    const float fy = (float) quad->y0;
+   struct gallivm_prog *llvm = qss->llvm_prog;
 
-   /* Consts does not require 16 byte alignment. */
-   machine->Consts = softpipe->mapped_constants[PIPE_SHADER_FRAGMENT];
 
-   machine->SamplerUnits = softpipe->sampler_units;
-   machine->InterpCoefs = quad->coef;
-
-   machine->Inputs[0].xyzw[0].f[0] = fx;
-   machine->Inputs[0].xyzw[0].f[1] = fx + 1.0f;
-   machine->Inputs[0].xyzw[0].f[2] = fx;
-   machine->Inputs[0].xyzw[0].f[3] = fx + 1.0f;
-
-   machine->Inputs[0].xyzw[1].f[0] = fy;
-   machine->Inputs[0].xyzw[1].f[1] = fy;
-   machine->Inputs[0].xyzw[1].f[2] = fy + 1.0f;
-   machine->Inputs[0].xyzw[1].f[3] = fy + 1.0f;
-
-   /* run shader */
-#if defined(__i386__) || defined(__386__)
-         machine->Inputs,
-         machine->Outputs,
-         machine->Consts,
-         machine->Temps,
-         machine->InterpCoefs );
-      quad->mask &= ~(machine->Temps[TGSI_EXEC_TEMP_KILMASK_I].xyzw[TGSI_EXEC_TEMP_KILMASK_C].u[0]);
-#endif
-   ga_llvm_prog_exec(softpipe->fs->llvm_prog);
+   quad->mask = gallivm_fragment_shader_exec(
+      llvm, fx, fy, quad->coef,
+      softpipe->mapped_constants[PIPE_SHADER_FRAGMENT],
+      qss->samplers, softpipe->sampler_units);
 
    /* store result color */
    if (qss->colorOutSlot >= 0) {

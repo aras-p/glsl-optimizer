@@ -191,3 +191,60 @@ void run_vertex_shader(float (*ainputs)[16][4],
       to_array(dests[i], res, num_attribs);
    }
 }
+
+
+struct pipe_sampler_state;
+struct pipe_mipmap_tree;
+struct softpipe_tile_cache;
+
+#define NUM_CHANNELS 4  /* R,G,B,A */
+#define QUAD_SIZE    4  /* 4 pixel/quad */
+
+struct tgsi_sampler
+{
+   const struct pipe_sampler_state *state;
+   struct pipe_mipmap_tree *texture;
+   /** Get samples for four fragments in a quad */
+   void (*get_samples)(struct tgsi_sampler *sampler,
+                       const float s[QUAD_SIZE],
+                       const float t[QUAD_SIZE],
+                       const float p[QUAD_SIZE],
+                       float lodbias,
+                       float rgba[NUM_CHANNELS][QUAD_SIZE]);
+   void *pipe; /*XXX temporary*/
+   struct softpipe_tile_cache *cache;
+};
+
+struct tgsi_interp_coef
+{
+   float a0[NUM_CHANNELS];	/* in an xyzw layout */
+   float dadx[NUM_CHANNELS];
+   float dady[NUM_CHANNELS];
+};
+
+int run_fragment_shader(float x, float y,
+                        float (*dests)[32][4],
+                        struct tgsi_interp_coef *coef,
+                        float (*consts)[4],
+                        int num_consts,
+                        struct tgsi_sampler *samplers,
+                        int num_samplers)
+{
+   float4  inputs[4][16];
+   float4  consts[32];
+   float4  results[4][16];
+   float4  temps[128];//MAX_PROGRAM_TEMPS
+
+   /*printf("XXX LLVM run_vertex_shader vertices = %d, inputs = %d, attribs = %d, consts = %d\n",
+     num_vertices, num_inputs, num_attribs, num_consts);*/
+   //from_array(inputs, ainputs, num_vertices, num_inputs);
+   from_consts(consts, aconsts, num_consts);
+   printf("AAAAAAAAAAAAAAAAAAAAAAA FRAGMENT SHADER %f %f\n", x, y);
+   for (int i = 0; i < 4; ++i) {
+      float4 *in  = inputs[i];
+      float4 *res = results[i];
+      //execute_shader(res, in, consts, temps);
+      to_array(dests[i], res, num_attribs);
+   }
+}
+

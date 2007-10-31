@@ -239,7 +239,7 @@ draw_create_vertex_shader(struct draw_context *draw,
    }
 #endif
 #ifdef MESA_LLVM
-   vs->llvm_prog = gallivm_from_tgsi(shader->tokens);
+   vs->llvm_prog = gallivm_from_tgsi(shader->tokens, GALLIVM_VS);
    draw->engine = gallivm_global_cpu_engine();
    if (!draw->engine) {
       draw->engine = gallivm_cpu_engine_create(vs->llvm_prog);

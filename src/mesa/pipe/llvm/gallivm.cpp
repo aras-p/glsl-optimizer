@@ -73,6 +73,7 @@ struct gallivm_prog {
    void *function;
    int   num_consts;
    int   id;
+   enum gallivm_shader_type type;
 };
 
 struct gallivm_cpu_engine {
@@ -722,7 +723,7 @@ tgsi_to_llvm(struct gallivm_prog *prog, const struct tgsi_token *tokens)
   with gallivm_prog_exec to run the module on the CPU.
  */
 struct gallivm_prog *
-gallivm_from_tgsi(const struct tgsi_token *tokens)
+gallivm_from_tgsi(const struct tgsi_token *tokens, enum gallivm_shader_type type)
 {
    std::cout << "Creating llvm from: " <<std::endl;
    ++GLOBAL_ID;
@@ -742,11 +743,13 @@ gallivm_from_tgsi(const struct tgsi_token *tokens)
    passes.run(*mod);
 
    gallivm->module = mod;
+   gallivm->type = type;
 
    gallivm_prog_dump(gallivm, 0);
 
    return gallivm;
 }
+
 
 void gallivm_prog_delete(struct gallivm_prog *prog)
 {
@@ -783,6 +786,28 @@ int gallivm_prog_exec(struct gallivm_prog *prog,
    assert(runner);
    runner(inputs, dests, consts, num_vertices, num_inputs,
           num_attribs, prog->num_consts);
+
+   return 0;
+}
+
+
+typedef int (*fragment_shader_runner)(float x, float y,
+                                     float (*dests)[32][4],
+                                     struct tgsi_interp_coef *coef,
+                                     float (*consts)[4], int num_consts,
+                                     struct tgsi_sampler *samplers,
+                                     int num_samplers);
+int gallivm_fragment_shader_exec(struct gallivm_prog *prog,
+                                 float x, float y,
+                                 float (*dests)[32][4],
+                                 struct tgsi_interp_coef *coef,
+                                 float (*consts)[4],
+                                 struct tgsi_sampler *samplers,
+                                 int num_samplers)
+{
+   fragment_shader_runner runner = reinterpret_cast<fragment_shader_runner>(prog->function);
+   assert(runner);
+   runner(x, y, dests, coef, consts, prog->num_consts, samplers, num_samplers);
 
    return 0;
 }
@@ -829,6 +854,26 @@ void gallivm_prog_dump(struct gallivm_prog *prog, const char *file_prefix)
 
 
 static struct gallivm_cpu_engine *CPU = 0;
+
+static inline llvm::Function *func_for_shader(struct gallivm_prog *prog)
+{
+   llvm::Module *mod = prog->module;
+   llvm::Function *func = 0;
+
+   switch (prog->type) {
+   case GALLIVM_VS:
+      func = mod->getFunction("run_vertex_shader");
+      break;
+   case GALLIVM_FS:
+      func = mod->getFunction("run_fragment_shader");
+      break;
+   default:
+      assert(!"Unknown shader type!");
+      break;
+   }
+   return func;
+}
+
 /*!
   This function creates a CPU based execution engine for the given gallivm_prog.
   gallivm_cpu_engine should be used as a singleton throughout the library. Before
@@ -846,7 +891,8 @@ struct gallivm_cpu_engine * gallivm_cpu_engine_create(struct gallivm_prog *prog)
    llvm::ExecutionEngine *ee = llvm::ExecutionEngine::create(mp, false);
    cpu->engine = ee;
 
-   llvm::Function *func = mod->getFunction("run_vertex_shader");
+   llvm::Function *func = func_for_shader(prog);
+
    prog->function = ee->getPointerToFunctionOrStub(func);
    CPU = cpu;
    return cpu;
@@ -867,7 +913,7 @@ void gallivm_cpu_jit_compile(struct gallivm_cpu_engine *cpu, struct gallivm_prog
    assert(ee);
    ee->addModuleProvider(mp);
 
-   llvm::Function *func = mod->getFunction("run_vertex_shader");
+   llvm::Function *func = func_for_shader(prog);
    prog->function = ee->getPointerToFunctionOrStub(func);
 }
 
@@ -882,6 +928,7 @@ struct gallivm_cpu_engine * gallivm_global_cpu_engine()
 }
 
 #endif /* MESA_LLVM */
+
 
 
 

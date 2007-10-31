@@ -46,7 +46,12 @@ struct tgsi_token;
 struct gallivm_prog;
 struct gallivm_cpu_engine;
 
-struct gallivm_prog *gallivm_from_tgsi(const struct tgsi_token *tokens);
+enum gallivm_shader_type {
+   GALLIVM_VS,
+   GALLIVM_FS
+};
+
+struct gallivm_prog *gallivm_from_tgsi(const struct tgsi_token *tokens, enum gallivm_shader_type type);
 void gallivm_prog_delete(struct gallivm_prog *prog);
 int gallivm_prog_exec(struct gallivm_prog *prog,
                       float (*inputs)[PIPE_MAX_SHADER_INPUTS][4],
@@ -55,6 +60,13 @@ int gallivm_prog_exec(struct gallivm_prog *prog,
                       int num_vertices,
                       int num_inputs,
                       int num_attribs);
+int gallivm_fragment_shader_exec(struct gallivm_prog *prog,
+                                 float x, float y,
+                                 float (*dests)[4],
+                                 struct tgsi_interp_coef *coef,
+                                 float (*consts)[4],
+                                 struct tgsi_sampler *samplers,
+                                 int num_samplers);
 void gallivm_prog_dump(struct gallivm_prog *prog, const char *file_prefix);
 
 
