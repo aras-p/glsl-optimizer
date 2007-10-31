@@ -29,9 +29,6 @@
 
 #include "GL/xmesa.h"
 #include "mtypes.h"
-#if defined(FX)
-#include "GL/fxmesa.h"
-#endif
 #ifdef XFree86Server
 #include "xm_image.h"
 #endif
@@ -266,13 +263,6 @@ struct xmesa_buffer {
    Pixel alloced_colors[256];
 #else
    unsigned long alloced_colors[256];
-#endif
-
-#if defined( FX )
-   /* For 3Dfx Glide only */
-   GLboolean FXisHackUsable;	/* Can we render into window? */
-   GLboolean FXwindowHack;	/* Are we rendering into a window? */
-   fxMesaContext FXctx;
 #endif
 
    /* GLX_EXT_texture_from_pixmap */

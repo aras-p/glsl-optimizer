@@ -1616,10 +1616,6 @@ void XMesaDestroyContext( XMesaContext c )
 {
    GLcontext *mesaCtx = &c->mesa;
 
-#ifdef FX
-   FXdestroyContext( XMESA_BUFFER(mesaCtx->DrawBuffer) );
-#endif
-
    _mesa_free_context_data( mesaCtx );
    _mesa_free( c );
 }
@@ -1879,11 +1875,6 @@ GLboolean XMesaMakeCurrent2( XMesaContext c, XMesaBuffer drawBuffer,
 
       c->xm_buffer = drawBuffer;
 
-#ifdef FX
-      if (FXmakeCurrent( drawBuffer ))
-         return GL_TRUE;
-#endif
-
       /* Call this periodically to detect when the user has begun using
        * GL rendering from multiple threads.
        */
@@ -2038,10 +2029,6 @@ void XMesaSwapBuffers( XMesaBuffer b )
       _mesa_notifySwapBuffers(ctx);
 
    if (b->db_mode) {
-#ifdef FX
-      if (FXswapBuffers(b))
-         return;
-#endif
       if (b->backxrb->ximage) {
 	 /* Copy Ximage (back buf) from client memory to server window */
 #if defined(USE_XSHM) && !defined(XFree86Server)
@@ -2108,10 +2095,6 @@ void XMesaCopySubBuffer( XMesaBuffer b, int x, int y, int width, int height )
 
    if (b->db_mode) {
       int yTop = b->mesa_buffer.Height - y - height;
-#ifdef FX
-      if (FXswapBuffers(b))
-         return;
-#endif
       if (b->backxrb->ximage) {
          /* Copy Ximage from host's memory to server's window */
 #if defined(USE_XSHM) && !defined(XFree86Server)
