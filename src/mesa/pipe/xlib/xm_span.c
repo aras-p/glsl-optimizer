@@ -32,6 +32,26 @@
 
 
 /*
+ * Dithering kernels and lookup tables.
+ */
+
+const int xmesa_kernel8[DITH_DY * DITH_DX] = {
+    0 * MAXC,  8 * MAXC,  2 * MAXC, 10 * MAXC,
+   12 * MAXC,  4 * MAXC, 14 * MAXC,  6 * MAXC,
+    3 * MAXC, 11 * MAXC,  1 * MAXC,  9 * MAXC,
+   15 * MAXC,  7 * MAXC, 13 * MAXC,  5 * MAXC,
+};
+
+const int xmesa_kernel1[16] = {
+   0*47,  9*47,  4*47, 12*47,     /* 47 = (255*3)/16 */
+   6*47,  2*47, 14*47,  8*47,
+  10*47,  1*47,  5*47, 11*47,
+   7*47, 13*47,  3*47, 15*47
+};
+
+
+
+/*
  * The following functions are used to trap XGetImage() calls which
  * generate BadMatch errors if the drawable isn't mapped.
  */
