@@ -69,6 +69,10 @@ struct i915_winsys {
 			unsigned delta );
    void (*batch_flush)( struct i915_winsys *sws );
 
+#if 0
+   void (*batch_chain)( struct i915_winsys *sws, 
+	 		struct pipe_buffer_handle *buf ):
+#endif
 };
 
 #define I915_BUFFER_ACCESS_WRITE   0x1 

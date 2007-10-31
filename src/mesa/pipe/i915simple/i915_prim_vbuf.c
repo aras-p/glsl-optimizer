@@ -81,6 +81,8 @@ struct vbuf_stage {
    ushort *element_map;
    unsigned nr_elements;
 
+   struct pipe_buffer_handle *buf; 
+   
    unsigned prim;
 
    struct i915_context *i915;   
@@ -278,7 +280,6 @@ static void vbuf_draw( struct draw_stage *stage )
    unsigned hwprim;
    unsigned i;
    char *ptr;
-   struct pipe_buffer_handle *buf;
    
    switch(vbuf->prim) {
    case PIPE_PRIM_POINTS:
@@ -298,9 +299,11 @@ static void vbuf_draw( struct draw_stage *stage )
    assert(vbuf->vertex_ptr - vbuf->vertex_map == vbuf->nr_vertices * vertex_size / 4);
 
    /* FIXME: handle failure */
-   buf = winsys->buffer_create(winsys, 64);
-   winsys->buffer_data(winsys, buf, 8 + nr * vertex_size, NULL);
-   ptr = winsys->buffer_map(winsys, buf, PIPE_BUFFER_FLAG_WRITE);
+   if(!vbuf->buf)
+      vbuf->buf = winsys->buffer_create(winsys, 64);
+
+   winsys->buffer_data(winsys, vbuf->buf, 8 + nr * vertex_size, NULL);
+   ptr = winsys->buffer_map(winsys, vbuf->buf, PIPE_BUFFER_FLAG_WRITE);
    *(unsigned *)ptr = _3DPRIMITIVE | 
 	              hwprim |
 	              ((4 + vertex_size * nr)/4 - 2);
@@ -313,7 +316,7 @@ static void vbuf_draw( struct draw_stage *stage )
    }
    *(unsigned *)ptr = MI_BATCH_BUFFER_END;
    ptr += 4;
-   winsys->buffer_unmap(winsys, buf);
+   winsys->buffer_unmap(winsys, vbuf->buf);
    
    if (i915->dirty)
       i915_update_derived( i915 );
@@ -345,12 +348,10 @@ static void vbuf_draw( struct draw_stage *stage )
    /* chain the vertex buffer in the batch buffer */
    OUT_BATCH(MI_BATCH_BUFFER_START
              | (2 << 6) /* GTT-mapped memory */);
-   OUT_RELOC( buf, I915_BUFFER_ACCESS_READ, 0 );
+   OUT_RELOC( vbuf->buf, I915_BUFFER_ACCESS_READ, 0 );
    /* FIXME: we need to flush here since control after chained buffers returns
     * directly to the ring buffer */
    FLUSH_BATCH();
-
-   winsys->buffer_reference(winsys, &buf, NULL);
 }
 
 
