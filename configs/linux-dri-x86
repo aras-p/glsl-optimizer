@@ -5,9 +5,6 @@ include $(TOP)/configs/linux-dri
 
 CONFIG_NAME = linux-dri-x86
 
-# Unnecessary on x86, generally.
-PIC_FLAGS = 
-
 # Add -m32 to CFLAGS:
 ARCH_FLAGS = -m32
 
