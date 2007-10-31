@@ -484,10 +484,6 @@ extern void
 xmesa_check_and_update_buffer_size(XMesaContext xmctx, XMesaBuffer drawBuffer);
 
 extern void
-xmesa_init_driver_functions( XMesaVisual xmvisual,
-                             struct dd_function_table *driver );
-
-extern void
 xmesa_set_renderbuffer_funcs(struct xmesa_renderbuffer *xrb,
                              enum pixel_format pixelformat, GLint depth);
 

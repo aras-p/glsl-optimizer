@@ -1365,6 +1365,63 @@ void XMesaDestroyVisual( XMesaVisual v )
 
 
 
+static void
+finish_or_flush( GLcontext *ctx )
+{
+#ifdef XFree86Server
+      /* NOT_NEEDED */
+#else
+   const XMesaContext xmesa = XMESA_CONTEXT(ctx);
+   if (xmesa) {
+      _glthread_LOCK_MUTEX(_xmesa_lock);
+      XSync( xmesa->display, False );
+      _glthread_UNLOCK_MUTEX(_xmesa_lock);
+   }
+#endif
+   abort();
+}
+
+
+/**
+ * Called by glViewport.
+ * This is a good time for us to poll the current X window size and adjust
+ * our renderbuffers to match the current window size.
+ * Remember, we have no opportunity to respond to conventional
+ * X Resize/StructureNotify events since the X driver has no event loop.
+ * Thus, we poll.
+ * Note that this trick isn't fool-proof.  If the application never calls
+ * glViewport, our notion of the current window size may be incorrect.
+ * That problem led to the GLX_MESA_resize_buffers extension.
+ */
+static void
+xmesa_viewport(GLcontext *ctx, GLint x, GLint y, GLsizei w, GLsizei h)
+{
+   XMesaContext xmctx = XMESA_CONTEXT(ctx);
+   XMesaBuffer xmdrawbuf = XMESA_BUFFER(ctx->WinSysDrawBuffer);
+   XMesaBuffer xmreadbuf = XMESA_BUFFER(ctx->WinSysReadBuffer);
+   xmesa_check_and_update_buffer_size(xmctx, xmdrawbuf);
+   xmesa_check_and_update_buffer_size(xmctx, xmreadbuf);
+   (void) x;
+   (void) y;
+   (void) w;
+   (void) h;
+}
+
+
+/**
+ * Initialize the device driver function table with the functions
+ * we implement in this driver.
+ */
+static void
+xmesa_init_driver_functions( XMesaVisual xmvisual,
+                             struct dd_function_table *driver )
+{
+   driver->Flush = finish_or_flush;
+   driver->Finish = finish_or_flush;
+   driver->Viewport = xmesa_viewport;
+}
+
+
 /**
  * Create a new XMesaContext.
  * \param v  the XMesaVisual
