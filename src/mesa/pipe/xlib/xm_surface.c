@@ -77,6 +77,7 @@ void
 xmesa_get_tile(struct pipe_context *pipe, struct pipe_surface *ps,
                uint x, uint y, uint w, uint h, void *p, int dst_stride)
 {
+   const uint w0 = w;
    struct xmesa_surface *xms = xmesa_surface(ps);
    XMesaImage *ximage = NULL;
    ubyte *dst = (ubyte *) p;
@@ -105,7 +106,7 @@ xmesa_get_tile(struct pipe_context *pipe, struct pipe_surface *ps,
    switch (ps->format) {
    case PIPE_FORMAT_U_A8_R8_G8_B8:
       if (!dst_stride) {
-         dst_stride = w * 4;
+         dst_stride = w0 * 4;
       }
       for (i = 0; i < h; i++) {
          memcpy(dst, ximage->data + y * ximage->bytes_per_line + x * 4, 4 * w);
@@ -114,7 +115,7 @@ xmesa_get_tile(struct pipe_context *pipe, struct pipe_surface *ps,
       break;
    case PIPE_FORMAT_U_R5_G6_B5:
       if (!dst_stride) {
-         dst_stride = w * 2;
+         dst_stride = w0 * 2;
       }
       for (i = 0; i < h; i++) {
          memcpy(dst, ximage->data + y * ximage->bytes_per_line + x * 2, 4 * 2);
@@ -138,6 +139,7 @@ void
 xmesa_put_tile(struct pipe_context *pipe, struct pipe_surface *ps,
                uint x, uint y, uint w, uint h, const void *p, int src_stride)
 {
+   const uint w0 = w;
    struct xmesa_surface *xms = xmesa_surface(ps);
    const ubyte *src = (const ubyte *) p;
    XMesaImage *ximage;
@@ -160,7 +162,7 @@ xmesa_put_tile(struct pipe_context *pipe, struct pipe_surface *ps,
       switch (ps->format) {
       case PIPE_FORMAT_U_A8_R8_G8_B8:
          if (!src_stride) {
-            src_stride = w * 4;
+            src_stride = w0 * 4;
          }
          dst = ximage->data + y * ximage->bytes_per_line + x * 4;
          for (i = 0; i < h; i++) {
@@ -171,7 +173,7 @@ xmesa_put_tile(struct pipe_context *pipe, struct pipe_surface *ps,
          break;
       case PIPE_FORMAT_U_R5_G6_B5:
          if (!src_stride) {
-            src_stride = w * 2;
+            src_stride = w0 * 2;
          }
          dst = ximage->data + y * ximage->bytes_per_line + x * 2;
          for (i = 0; i < h; i++) {
@@ -213,16 +215,17 @@ xmesa_put_tile(struct pipe_context *pipe, struct pipe_surface *ps,
 
 void
 xmesa_get_tile_rgba(struct pipe_context *pipe, struct pipe_surface *ps,
-                    uint x, uint y, uint w, uint h, float *p)
+                    uint x, uint y, uint w, uint h, float *pixels)
 {
+   const uint w0 = w;
    struct xmesa_surface *xms = xmesa_surface(ps);
    XMesaImage *ximage = NULL;
-   float *pRow = p;
+   float *pRow = pixels;
    uint i, j;
 
    if (!xms->drawable && !xms->ximage) {
       /* not an X surface */
-      softpipe_get_tile_rgba(pipe, ps, x, y, w, h, p);
+      softpipe_get_tile_rgba(pipe, ps, x, y, w, h, pixels);
       return;
    }
 
@@ -259,7 +262,7 @@ xmesa_get_tile_rgba(struct pipe_context *pipe, struct pipe_surface *ps,
                p += 4;
             }
             src += ximage->width;
-            pRow += 4 * w;
+            pRow += 4 * w0;
          }
       }
       break;
@@ -281,7 +284,7 @@ xmesa_get_tile_rgba(struct pipe_context *pipe, struct pipe_surface *ps,
                p += 4;
             }
             src += ximage->width;
-            pRow += 4 * w;
+            pRow += 4 * w0;
          }
       }
       break;
@@ -297,16 +300,16 @@ xmesa_get_tile_rgba(struct pipe_context *pipe, struct pipe_surface *ps,
 
 void
 xmesa_put_tile_rgba(struct pipe_context *pipe, struct pipe_surface *ps,
-                    uint x, uint y, uint w, uint h, const float *p)
+                    uint x, uint y, uint w, uint h, const float *pixels)
 {
-   const uint x0 = x, y0 = y;
+   const uint x0 = x, y0 = y, w0 = w;
    struct xmesa_surface *xms = xmesa_surface(ps);
    XMesaImage *ximage;
    uint i, j;
 
    if (!xms->drawable && !xms->ximage) {
       /* not an X surface */
-      softpipe_put_tile_rgba(pipe, ps, x, y, w, h, p);
+      softpipe_put_tile_rgba(pipe, ps, x, y, w, h, pixels);
       return;
    }
 
@@ -340,7 +343,9 @@ xmesa_put_tile_rgba(struct pipe_context *pipe, struct pipe_surface *ps,
       {
          uint *dst
             = (uint *) (ximage->data + y * ximage->bytes_per_line + x * 4);
+         const float *pRow = pixels;
          for (i = 0; i < h; i++) {
+            const float *p = pRow;
             for (j = 0; j < w; j++) {
                ubyte r, g, b, a;
                UNCLAMPED_FLOAT_TO_UBYTE(r, p[0]);
@@ -351,6 +356,7 @@ xmesa_put_tile_rgba(struct pipe_context *pipe, struct pipe_surface *ps,
                p += 4;
             }
             dst += ximage->width;
+            pRow += 4 * w0;
          }
       }
       break;
@@ -358,7 +364,9 @@ xmesa_put_tile_rgba(struct pipe_context *pipe, struct pipe_surface *ps,
       {
          ushort *dst =
             (ushort *) (ximage->data + y * ximage->bytes_per_line + x * 2);
+         const float *pRow = pixels;
          for (i = 0; i < h; i++) {
+            const float *p = pRow;
             for (j = 0; j < w; j++) {
                ubyte r, g, b;
                UNCLAMPED_FLOAT_TO_UBYTE(r, p[0]);
@@ -368,6 +376,7 @@ xmesa_put_tile_rgba(struct pipe_context *pipe, struct pipe_surface *ps,
                p += 4;
             }
             dst += ximage->width;
+            pRow += 4 * w0;
          }
       }
       break;
