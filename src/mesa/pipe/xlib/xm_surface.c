@@ -59,13 +59,6 @@
    } while(0)
 
 
-static INLINE struct xmesa_surface *
-xmesa_surface(struct pipe_surface *ps)
-{
-   return (struct xmesa_surface *) ps;
-}
-
-
 static INLINE struct xmesa_renderbuffer *
 xmesa_rb(struct pipe_surface *ps)
 {
@@ -77,6 +70,26 @@ xmesa_rb(struct pipe_surface *ps)
 #define FLIP(Y) Y = xrb->St.Base.Height - (Y) - 1;
 
 
+void
+xmesa_get_tile(struct pipe_context *pipe, struct pipe_surface *ps,
+               uint x, uint y, uint w, uint h, void *p, int dst_stride)
+{
+
+}
+
+
+void
+xmesa_put_tile(struct pipe_context *pipe, struct pipe_surface *ps,
+               uint x, uint y, uint w, uint h, const void *p, int src_stride)
+{
+
+}
+
+
+
+/**
+ * XXX rewrite to stop using renderbuffer->GetRow()
+ */
 void
 xmesa_get_tile_rgba(struct pipe_context *pipe, struct pipe_surface *ps,
                     uint x, uint y, uint w, uint h, float *p)
@@ -109,6 +122,9 @@ xmesa_get_tile_rgba(struct pipe_context *pipe, struct pipe_surface *ps,
 }
 
 
+/**
+ * XXX rewrite to stop using renderbuffer->PutRow()
+ */
 void
 xmesa_put_tile_rgba(struct pipe_context *pipe, struct pipe_surface *ps,
                     uint x, uint y, uint w, uint h, const float *p)
@@ -143,6 +159,110 @@ xmesa_put_tile_rgba(struct pipe_context *pipe, struct pipe_surface *ps,
       softpipe_put_tile_rgba(pipe, ps, x, y, w, h, p);
    }
 }
+
+
+static void
+clear_pixmap_surface(struct pipe_context *pipe, struct pipe_surface *ps,
+                     uint value)
+{
+   struct xmesa_surface *xms = xmesa_surface(ps);
+   assert(xms);
+   assert(xms->display);
+   assert(xms->drawable);
+   assert(xms->gc);
+   XMesaSetForeground( xms->display, xms->gc, value );
+   XMesaFillRectangle( xms->display, xms->drawable, xms->gc,
+                       0, 0, ps->width, ps->height);
+}
+
+static void
+clear_nbit_ximage_surface(struct pipe_context *pipe, struct pipe_surface *ps,
+                          uint value)
+{
+   struct xmesa_surface *xms = xmesa_surface(ps);
+   int width = xms->surface.width;
+   int height = xms->surface.height;
+   int i, j;
+   for (j = 0; j < height; j++) {
+      for (i = 0; i < width; i++) {
+         XMesaPutPixel(xms->ximage, i, j, value);
+      }
+   }
+}
+
+static void
+clear_8bit_ximage_surface(struct pipe_context *pipe, struct pipe_surface *ps,
+                          uint value)
+{
+   struct xmesa_surface *xms = xmesa_surface(ps);
+   memset(xms->ximage->data,
+          value,
+          xms->ximage->bytes_per_line * xms->ximage->height);
+}
+
+static void
+clear_16bit_ximage_surface(struct pipe_context *pipe, struct pipe_surface *ps,
+                           uint value)
+{
+   struct xmesa_surface *xms = xmesa_surface(ps);
+   const int n = xms->ximage->width * xms->ximage->height;
+   ushort *dst = (ushort *) xms->ximage->data;
+   int i;
+   for (i = 0; i < n; i++) {
+      dst[i] = value;
+   }
+}
+
+
+/* Optimized code provided by Nozomi Ytow <noz@xfree86.org> */
+static void
+clear_24bit_ximage_surface(struct pipe_context *pipe, struct pipe_surface *ps,
+                           uint value)
+{
+   struct xmesa_surface *xms = xmesa_surface(ps);
+   const ubyte r = (value      ) & 0xff;
+   const ubyte g = (value >>  8) & 0xff;
+   const ubyte b = (value >> 16) & 0xff;
+
+   if (r == g && g == b) {
+      /* same value for all three components (gray) */
+      memset(xms->ximage->data, r,
+             xms->ximage->bytes_per_line * xms->ximage->height);
+   }
+   else {
+      /* non-gray clear color */
+      const int n = xms->ximage->width * xms->ximage->height;
+      int i;
+      bgr_t *ptr3 = (bgr_t *) xms->ximage->data;
+      for (i = 0; i < n; i++) {
+         ptr3->r = r;
+         ptr3->g = g;
+         ptr3->b = b;
+         ptr3++;
+      }
+   }
+}
+
+static void
+clear_32bit_ximage_surface(struct pipe_context *pipe, struct pipe_surface *ps,
+                           uint value)
+{
+   struct xmesa_surface *xms = xmesa_surface(ps);
+
+   if (value == 0) {
+      /* common case */
+      memset(xms->ximage->data, value,
+             xms->ximage->bytes_per_line * xms->ximage->height);
+   }
+   else {
+      const int n = xms->ximage->width * xms->ximage->height;
+      uint *dst = (uint *) xms->ximage->data;
+      int i;
+      for (i = 0; i < n; i++)
+         dst[i] = value;
+   }
+}
+
 
 
 
@@ -194,13 +314,14 @@ xmesa_surface_alloc(struct pipe_context *pipe, GLuint pipeFormat)
 
 
 /**
- * Called via pipe->clear()
+ * Called via pipe->clear() to clear entire surface to a certain value.
+ * If the surface is not an X pixmap or XImage, pass the call to
+ * softpipe_clear().
  */
 void
-xmesa_clear(struct pipe_context *pipe, struct pipe_surface *ps, GLuint value)
+xmesa_clear(struct pipe_context *pipe, struct pipe_surface *ps, uint value)
 {
-   GET_CURRENT_CONTEXT(ctx);
-   struct xmesa_renderbuffer *xrb = xmesa_rb(ps);
+   struct xmesa_surface *xms = xmesa_surface(ps);
 
    /* XXX actually, we should just discard any cached tiles from this
     * surface since we don't want to accidentally re-use them after clearing.
@@ -219,13 +340,54 @@ xmesa_clear(struct pipe_context *pipe, struct pipe_surface *ps, GLuint value)
       }
    }
 
-   if (xrb) {
-      /* clearing front/back color buffer */
-      xrb->clearFunc(ctx, xrb, value);
+#if 1
+   (void) clear_8bit_ximage_surface;
+   (void) clear_24bit_ximage_surface;
+#endif
+
+   if (xms->ximage) {
+      /* back color buffer */
+      switch (xms->surface.format) {
+      case PIPE_FORMAT_U_R5_G6_B5:
+         clear_16bit_ximage_surface(pipe, ps, value);
+         break;
+      case PIPE_FORMAT_U_A8_R8_G8_B8:
+         clear_32bit_ximage_surface(pipe, ps, value);
+         break;
+      default:
+         clear_nbit_ximage_surface(pipe, ps, value);
+         break;
+      }
+   }
+   else if (xms->drawable) {
+      /* front color buffer */
+      clear_pixmap_surface(pipe, ps, value);
    }
    else {
-      /* clearing other buffer */
+      /* other kind of buffer */
       softpipe_clear(pipe, ps, value);
    }
+}
+
+
+/** XXX unfinished sketch... */
+struct pipe_surface *
+xmesa_create_front_surface(XMesaVisual vis, Window win)
+{
+   struct xmesa_surface *xms = CALLOC_STRUCT(xmesa_surface);
+   if (!xms) {
+      return NULL;
+   }
+
+   xms->display = vis->display;
+   xms->drawable = win;
+
+   xms->surface.format = PIPE_FORMAT_U_A8_R8_G8_B8;
+   xms->surface.refcount = 1;
+#if 0
+   xms->surface.region = pipe->winsys->region_alloc(pipe->winsys,
+                                                    1, 0, 0, 0x0);
+#endif
+   return &xms->surface;
 }
 

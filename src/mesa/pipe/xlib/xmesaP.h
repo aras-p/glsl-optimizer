@@ -52,12 +52,6 @@ typedef struct {
 struct xmesa_renderbuffer;
 
 
-/* Function pointer for clearing color buffers */
-typedef void (*ClearFunc)( GLcontext *ctx, struct xmesa_renderbuffer *xrb,
-                           GLuint value );
-
-
-
 
 /** Framebuffer pixel formats */
 enum pixel_format {
@@ -118,7 +112,7 @@ struct xmesa_visual {
 
 
 /**
- * Context info, dDerived from GLcontext.
+ * Context info, derived from GLcontext.
  * Basically corresponds to a GLXContext.
  */
 struct xmesa_context {
@@ -168,11 +162,7 @@ typedef enum {
  */
 struct xmesa_renderbuffer
 {
-#if 0
-   struct gl_renderbuffer Base;  /* Base class */
-#else
-   struct st_renderbuffer St; /**< Base class */
-#endif
+   struct st_renderbuffer St; /**< Base class (XXX temporary?) */
 
    XMesaBuffer Parent;  /**< The XMesaBuffer this renderbuffer belongs to */
    XMesaDrawable drawable;	/* Usually the X window ID */
@@ -189,10 +179,6 @@ struct xmesa_renderbuffer
    GLint width4;
 
    GLint bottom;	/* used for FLIP macro, equals height - 1 */
-
-   ClearFunc clearFunc;
-
-   void *pSurface;      /** pipe surface */
 };
 
 
@@ -526,18 +512,30 @@ XMESA_BUFFER(GLframebuffer *b)
 
 
 
-struct pipe_surface;
 struct pipe_context;
 
 struct xmesa_surface
 {
    struct pipe_surface surface;
    struct xmesa_renderbuffer *xrb;
+   XMesaDisplay *display;
+   BufferType type;
+   XMesaDrawable drawable;
+   XMesaImage *ximage;
+   XMesaGC gc;
 };
 
 
+/** Cast wrapper */
+static INLINE struct xmesa_surface *
+xmesa_surface(struct pipe_surface *ps)
+{
+   return (struct xmesa_surface *) ps;
+}
+
+
 extern void
-xmesa_clear(struct pipe_context *pipe, struct pipe_surface *ps, GLuint value);
+xmesa_clear(struct pipe_context *pipe, struct pipe_surface *ps, uint value);
 
 extern struct pipe_context *
 xmesa_create_softpipe(XMesaContext xm);
@@ -548,6 +546,15 @@ xmesa_surface_alloc(struct pipe_context *pipe, GLuint format);
 extern struct pipe_surface *
 xmesa_new_color_surface(struct pipe_context *pipe, GLuint format);
 
+
+extern void
+xmesa_get_tile(struct pipe_context *pipe, struct pipe_surface *ps,
+               uint x, uint y, uint w, uint h, void *p, int dst_stride);
+
+extern void
+xmesa_put_tile(struct pipe_context *pipe, struct pipe_surface *ps,
+               uint x, uint y, uint w, uint h, const void *p, int src_stride);
+
 extern void
 xmesa_get_tile_rgba(struct pipe_context *pipe, struct pipe_surface *ps,
                     uint x, uint y, uint w, uint h, float *p);
@@ -555,5 +562,9 @@ xmesa_get_tile_rgba(struct pipe_context *pipe, struct pipe_surface *ps,
 extern void
 xmesa_put_tile_rgba(struct pipe_context *pipe, struct pipe_surface *ps,
                     uint x, uint y, uint w, uint h, const float *p);
+
+
+extern struct pipe_surface *
+xmesa_create_front_surface(XMesaVisual vis, Window win);
 
 #endif

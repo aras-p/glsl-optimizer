@@ -333,6 +333,14 @@ create_xmesa_buffer(XMesaDrawable d, BufferType type,
    b->frontxrb->pixmap = (XMesaPixmap) d;
    _mesa_add_renderbuffer(&b->mesa_buffer, BUFFER_FRONT_LEFT,
                           &b->frontxrb->St.Base);
+#if 0 /* sketch... */
+   {
+      struct pipe_surface *front_surf;
+      front_surf = xmesa_create_front_surface(vis, d);
+   }
+#endif
+
+
 
    /*
     * Back renderbuffer
@@ -1495,6 +1503,8 @@ XMesaContext XMesaCreateContext( XMesaVisual v, XMesaContext share_list )
    mesaCtx->st->pipe->surface_alloc = xmesa_surface_alloc;
    mesaCtx->st->pipe->is_format_supported = xmesa_is_format_supported;
 #endif
+   mesaCtx->st->pipe->get_tile = xmesa_get_tile;
+   mesaCtx->st->pipe->put_tile = xmesa_put_tile;
    mesaCtx->st->pipe->get_tile_rgba = xmesa_get_tile_rgba;
    mesaCtx->st->pipe->put_tile_rgba = xmesa_put_tile_rgba;
 

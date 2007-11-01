@@ -341,7 +341,7 @@ xmesa_get_pipe_winsys(void)
  * softpipe_winsys object that corresponds to the specified screen...
  *
  * Also, this query only really matters for on-screen drawables.
- * For textures and FBOs we (softpipe) can support any format.
+ * For textures and FBOs we (softpipe) can support any format.o
  */
 static boolean
 xmesa_is_format_supported(struct softpipe_winsys *sws, uint format)
