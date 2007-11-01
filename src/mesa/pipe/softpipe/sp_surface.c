@@ -502,9 +502,8 @@ softpipe_get_tex_surface(struct pipe_context *pipe,
 /**
  * Move raw block of pixels from surface to user memory.
  */
-static void
-softpipe_get_tile(struct pipe_context *pipe,
-                  struct pipe_surface *ps,
+void
+softpipe_get_tile(struct pipe_context *pipe, struct pipe_surface *ps,
                   uint x, uint y, uint w, uint h,
                   void *p, int dst_stride)
 {
@@ -535,9 +534,8 @@ softpipe_get_tile(struct pipe_context *pipe,
 /**
  * Move raw block of pixels from user memory to surface.
  */
-static void
-softpipe_put_tile(struct pipe_context *pipe,
-                  struct pipe_surface *ps,
+void
+softpipe_put_tile(struct pipe_context *pipe, struct pipe_surface *ps,
                   uint x, uint y, uint w, uint h,
                   const void *p, int src_stride)
 {

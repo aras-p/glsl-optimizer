@@ -70,19 +70,138 @@ xmesa_rb(struct pipe_surface *ps)
 #define FLIP(Y) Y = xrb->St.Base.Height - (Y) - 1;
 
 
+/**
+ * Return raw pixels from pixmap or XImage.
+ */
 void
 xmesa_get_tile(struct pipe_context *pipe, struct pipe_surface *ps,
                uint x, uint y, uint w, uint h, void *p, int dst_stride)
 {
+   struct xmesa_surface *xms = xmesa_surface(ps);
+   XMesaImage *ximage = NULL;
+   ubyte *dst = (ubyte *) p;
+   uint i;
 
+   if (!xms->drawable && !xms->ximage) {
+      /* not an X surface */
+      softpipe_get_tile(pipe, ps, x, y, w, h, p, dst_stride);
+      return;
+   }
+
+   if (!xms->ximage) {
+      /* XImage = pixmap data */
+      assert(xms->drawable);
+      ximage = XGetImage(xms->display, xms->drawable, x, y, w, h,
+                         AllPlanes, ZPixmap);
+      x = y = 0;
+   }
+   else {
+      ximage = xms->ximage;
+   }
+   
+   switch (ps->format) {
+   case PIPE_FORMAT_U_A8_R8_G8_B8:
+      if (!dst_stride) {
+         dst_stride = w * 4;
+      }
+      for (i = 0; i < h; i++) {
+         memcpy(dst, ximage->data + y * ximage->bytes_per_line + x * 4, 4 * w);
+         dst += dst_stride;
+      }
+      break;
+   case PIPE_FORMAT_U_R5_G6_B5:
+      if (!dst_stride) {
+         dst_stride = w * 2;
+      }
+      for (i = 0; i < h; i++) {
+         memcpy(dst, ximage->data + y * ximage->bytes_per_line + x * 2, 4 * 2);
+         dst += dst_stride;
+      }
+      break;
+   default:
+      assert(0);
+   }
+
+   if (!xms->ximage) {
+      XMesaDestroyImage(ximage);
+   }
 }
 
 
+/**
+ * Put raw pixels into pixmap or XImage.
+ */
 void
 xmesa_put_tile(struct pipe_context *pipe, struct pipe_surface *ps,
                uint x, uint y, uint w, uint h, const void *p, int src_stride)
 {
+   struct xmesa_surface *xms = xmesa_surface(ps);
+   const ubyte *src = (const ubyte *) p;
+   XMesaImage *ximage;
 
+   if (!xms->drawable && !xms->ximage) {
+      /* not an X surface */
+      softpipe_put_tile(pipe, ps, x, y, w, h, p, src_stride);
+      return;
+   }
+
+   if (xms->ximage) {
+      /* put to ximage */
+      ximage = xms->ximage;
+      char *dst;
+      int i;
+
+      switch (ps->format) {
+      case PIPE_FORMAT_U_A8_R8_G8_B8:
+         if (!src_stride) {
+            src_stride = w * 4;
+         }
+         dst = ximage->data + y * ximage->bytes_per_line + x * 4;
+         for (i = 0; i < h; i++) {
+            memcpy(dst, src, w * 4);
+            dst += ximage->bytes_per_line;
+            src += src_stride;
+         }
+         break;
+      case PIPE_FORMAT_U_R5_G6_B5:
+         if (!src_stride) {
+            src_stride = w * 2;
+         }
+         dst = ximage->data + y * ximage->bytes_per_line + x * 2;
+         for (i = 0; i < h; i++) {
+            memcpy(dst, src, w * 2);
+            dst += ximage->bytes_per_line;
+            src += src_stride;
+         }
+         break;
+      default:
+         assert(0);
+      }
+   }
+   else {
+      /* put to pixmap/window */
+      /* Create temp XImage for data */
+#ifdef XFree86Server
+      ximage = XMesaCreateImage(GET_VISUAL_DEPTH(v), w, h, p);
+#else
+      XVisualInfo *visinfo = xms->xrb->Parent->xm_visual->visinfo;
+      ximage = XCreateImage(xms->display,
+                            visinfo->visual,
+                            visinfo->depth,
+                            ZPixmap, 0,   /* format, offset */
+                            (char *) p,   /* data */
+                            w, h,         /* width, height */
+                            32,           /* bitmap_pad */
+                            0);           /* bytes_per_line */
+#endif
+
+      /* send XImage data to pixmap */
+      XPutImage(xms->display, xms->drawable, xms->gc,
+                ximage, 0, 0, x, y, w, h);
+      /* clean-up */
+      ximage->data = NULL; /* prevents freeing user data at 'p' */
+      XMesaDestroyImage(ximage);
+   }
 }
 
 

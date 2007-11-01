@@ -46,6 +46,15 @@ softpipe_get_tex_surface(struct pipe_context *pipe,
 
 
 extern void
+softpipe_get_tile(struct pipe_context *pipe, struct pipe_surface *ps,
+                  uint x, uint y, uint w, uint h, void *p, int dst_stride);
+
+extern void
+softpipe_put_tile(struct pipe_context *pipe, struct pipe_surface *ps,
+                  uint x, uint y, uint w, uint h,
+                  const void *p, int src_stride);
+
+extern void
 softpipe_get_tile_rgba(struct pipe_context *pipe,
                        struct pipe_surface *ps,
                        uint x, uint y, uint w, uint h,
