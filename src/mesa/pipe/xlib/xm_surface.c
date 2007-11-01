@@ -100,7 +100,8 @@ xmesa_get_tile(struct pipe_context *pipe, struct pipe_surface *ps,
    else {
       ximage = xms->ximage;
    }
-   
+
+   /* this could be optimized/simplified */
    switch (ps->format) {
    case PIPE_FORMAT_U_A8_R8_G8_B8:
       if (!dst_stride) {
@@ -155,6 +156,7 @@ xmesa_put_tile(struct pipe_context *pipe, struct pipe_surface *ps,
       char *dst;
       int i;
 
+      /* this could be optimized/simplified */
       switch (ps->format) {
       case PIPE_FORMAT_U_A8_R8_G8_B8:
          if (!src_stride) {
@@ -302,13 +304,13 @@ xmesa_put_tile_rgba(struct pipe_context *pipe, struct pipe_surface *ps,
    XMesaImage *ximage;
    uint i, j;
 
-   CLIP_TILE;
-
    if (!xms->drawable && !xms->ximage) {
       /* not an X surface */
       softpipe_put_tile_rgba(pipe, ps, x, y, w, h, p);
       return;
    }
+
+   CLIP_TILE;
 
    if (!xms->ximage) {
       /* create temp XImage */
