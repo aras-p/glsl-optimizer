@@ -88,6 +88,8 @@ xmesa_get_tile(struct pipe_context *pipe, struct pipe_surface *ps,
       return;
    }
 
+   CLIP_TILE;
+
    if (!xms->ximage) {
       /* XImage = pixmap data */
       assert(xms->drawable);
@@ -144,6 +146,8 @@ xmesa_put_tile(struct pipe_context *pipe, struct pipe_surface *ps,
       softpipe_put_tile(pipe, ps, x, y, w, h, p, src_stride);
       return;
    }
+
+   CLIP_TILE;
 
    if (xms->ximage) {
       /* put to ximage */
@@ -205,45 +209,90 @@ xmesa_put_tile(struct pipe_context *pipe, struct pipe_surface *ps,
 }
 
 
-
-/**
- * XXX rewrite to stop using renderbuffer->GetRow()
- */
 void
 xmesa_get_tile_rgba(struct pipe_context *pipe, struct pipe_surface *ps,
                     uint x, uint y, uint w, uint h, float *p)
 {
    struct xmesa_surface *xms = xmesa_surface(ps);
-   struct xmesa_renderbuffer *xrb = xms->xrb;
+   XMesaImage *ximage = NULL;
+   float *pRow = p;
+   uint i, j;
 
-   if (xrb) {
-      /* this is a front/back color buffer */
-      GLubyte tmp[MAX_WIDTH * 4];
-      GLuint i, j;
-      uint w0 = w;
-      GET_CURRENT_CONTEXT(ctx);
+   if (!xms->drawable && !xms->ximage) {
+      /* not an X surface */
+      softpipe_get_tile_rgba(pipe, ps, x, y, w, h, p);
+      return;
+   }
 
-      CLIP_TILE;
+   CLIP_TILE;
 
-      FLIP(y);
-      for (i = 0; i < h; i++) {
-         xrb->St.Base.GetRow(ctx, &xrb->St.Base, w, x, y - i, tmp);
-         for (j = 0; j < w * 4; j++) {
-            p[j] = UBYTE_TO_FLOAT(tmp[j]);
-         }
-         p += w0 * 4;
-      }
+   if (!xms->ximage) {
+      /* XImage = pixmap data */
+      assert(xms->drawable);
+      ximage = XGetImage(xms->display, xms->drawable, x, y, w, h,
+                         AllPlanes, ZPixmap);
+      x = y = 0;
    }
    else {
-      /* other softpipe surface */
-      softpipe_get_tile_rgba(pipe, ps, x, y, w, h, p);
+      ximage = xms->ximage;
+   }
+   
+   switch (ps->format) {
+   case PIPE_FORMAT_U_A8_R8_G8_B8:
+      {
+         const uint *src
+            = (uint *) (ximage->data + y * ximage->bytes_per_line + x * 4);
+         for (i = 0; i < h; i++) {
+            float *p = pRow;
+            for (j = 0; j < w; j++) {
+               uint pix = src[j];
+               ubyte r = ((pix >> 16) & 0xff);
+               ubyte g = ((pix >> 8)  & 0xff);
+               ubyte b = ( pix        & 0xff);
+               ubyte a = ((pix >> 24) & 0xff);
+               p[0] = UBYTE_TO_FLOAT(r);
+               p[1] = UBYTE_TO_FLOAT(g);
+               p[2] = UBYTE_TO_FLOAT(b);
+               p[3] = UBYTE_TO_FLOAT(a);
+               p += 4;
+            }
+            src += ximage->width;
+            pRow += 4 * w;
+         }
+      }
+      break;
+   case PIPE_FORMAT_U_R5_G6_B5:
+      {
+         ushort *src
+            = (ushort *) (ximage->data + y * ximage->bytes_per_line + x * 2);
+         for (i = 0; i < h; i++) {
+            float *p = pRow;
+            for (j = 0; j < w; j++) {
+               uint pix = src[j];
+               ubyte r = (pix >> 8) | ((pix >> 13) & 0x7);
+               ubyte g = (pix >> 3) | ((pix >>  9) & 0x3);
+               ubyte b = ((pix & 0x1f) << 3) | ((pix >> 2) & 0x3);
+               p[0] = UBYTE_TO_FLOAT(r);
+               p[1] = UBYTE_TO_FLOAT(g);
+               p[2] = UBYTE_TO_FLOAT(b);
+               p[3] = 1.0;
+               p += 4;
+            }
+            src += ximage->width;
+            pRow += 4 * w;
+         }
+      }
+      break;
+   default:
+      assert(0);
+   }
+
+   if (!xms->ximage) {
+      XMesaDestroyImage(ximage);
    }
 }
 
 
-/**
- * XXX rewrite to stop using renderbuffer->PutRow()
- */
 void
 xmesa_put_tile_rgba(struct pipe_context *pipe, struct pipe_surface *ps,
                     uint x, uint y, uint w, uint h, const float *p)
