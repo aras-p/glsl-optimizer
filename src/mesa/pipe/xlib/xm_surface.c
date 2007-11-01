@@ -79,6 +79,93 @@ const int xmesa_kernel1[16] = {
    } while(0)
 
 
+
+/*
+ * The following functions are used to trap XGetImage() calls which
+ * generate BadMatch errors if the drawable isn't mapped.
+ */
+
+#ifndef XFree86Server
+static int caught_xgetimage_error = 0;
+static int (*old_xerror_handler)( XMesaDisplay *dpy, XErrorEvent *ev );
+static unsigned long xgetimage_serial;
+
+/*
+ * This is the error handler which will be called if XGetImage fails.
+ */
+static int xgetimage_error_handler( XMesaDisplay *dpy, XErrorEvent *ev )
+{
+   if (ev->serial==xgetimage_serial && ev->error_code==BadMatch) {
+      /* caught the expected error */
+      caught_xgetimage_error = 0;
+   }
+   else {
+      /* call the original X error handler, if any.  otherwise ignore */
+      if (old_xerror_handler) {
+         (*old_xerror_handler)( dpy, ev );
+      }
+   }
+   return 0;
+}
+
+
+/*
+ * Call this right before XGetImage to setup error trap.
+ */
+static void catch_xgetimage_errors( XMesaDisplay *dpy )
+{
+   xgetimage_serial = NextRequest( dpy );
+   old_xerror_handler = XSetErrorHandler( xgetimage_error_handler );
+   caught_xgetimage_error = 0;
+}
+
+
+/*
+ * Call this right after XGetImage to check if an error occured.
+ */
+static int check_xgetimage_errors( void )
+{
+   /* restore old handler */
+   (void) XSetErrorHandler( old_xerror_handler );
+   /* return 0=no error, 1=error caught */
+   return caught_xgetimage_error;
+}
+#endif
+
+
+/**
+ * Wrapper for XGetImage() that catches BadMatch errors that can occur
+ * when the window is unmapped or the x/y/w/h extend beyond the window
+ * bounds.
+ * If build into xserver, wrap the internal GetImage method.
+ */
+static XMesaImage *
+xget_image(XMesaDisplay *dpy, Drawable d, int x, int y, uint w, uint h)
+{
+#ifdef XFree86Server
+   uint bpp = 4; /* XXX fix this */
+   XMesaImage *ximage = (XMesaImage *) malloc(sizeof(XMesaImage));
+   if (ximage) {
+      ximage->data = malloc(width * height * bpp);
+   }
+   (*dpy->GetImage)(d, x, y, w, h, ZPixmap, ~0L, (pointer)ximage->data);
+   ximage->width = w;
+   ximage->height = h;
+   ximage->bytes_per_row = w * bpp;
+   return ximage;
+#else
+   int error;
+   XMesaImage *ximage;
+   catch_xgetimage_errors(dpy);
+   ximage = XGetImage(dpy, d, x, y, w, h, AllPlanes, ZPixmap);
+   error = check_xgetimage_errors();
+   return ximage;
+#endif
+}
+
+
+
+
 static INLINE struct xmesa_renderbuffer *
 xmesa_rb(struct pipe_surface *ps)
 {
@@ -88,6 +175,7 @@ xmesa_rb(struct pipe_surface *ps)
 
 
 #define FLIP(Y) Y = xrb->St.Base.Height - (Y) - 1;
+
 
 
 /**
@@ -114,8 +202,9 @@ xmesa_get_tile(struct pipe_context *pipe, struct pipe_surface *ps,
    if (!xms->ximage) {
       /* XImage = pixmap data */
       assert(xms->drawable);
-      ximage = XGetImage(xms->display, xms->drawable, x, y, w, h,
-                         AllPlanes, ZPixmap);
+      ximage = xget_image(xms->display, xms->drawable, x, y, w, h);
+      if (!ximage)
+         return;
       x = y = 0;
    }
    else {
@@ -254,8 +343,9 @@ xmesa_get_tile_rgba(struct pipe_context *pipe, struct pipe_surface *ps,
    if (!xms->ximage) {
       /* XImage = pixmap data */
       assert(xms->drawable);
-      ximage = XGetImage(xms->display, xms->drawable, x, y, w, h,
-                         AllPlanes, ZPixmap);
+      ximage = xget_image(xms->display, xms->drawable, x, y, w, h);
+      if (!ximage)
+         return;
       x = y = 0;
    }
    else {
