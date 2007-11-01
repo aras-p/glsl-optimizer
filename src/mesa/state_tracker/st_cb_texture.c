@@ -1599,4 +1599,7 @@ st_init_texture_functions(struct dd_function_table *functions)
    functions->IsTextureResident = st_IsTextureResident;
 
    functions->TextureMemCpy = do_memcpy;
+
+   /* XXX Temporary until we can query pipe's texture sizes */
+   functions->TestProxyTexImage = _mesa_test_proxy_teximage;
 }
