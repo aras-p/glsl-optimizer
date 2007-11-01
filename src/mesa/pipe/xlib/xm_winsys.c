@@ -296,40 +296,53 @@ xm_surface_alloc(struct pipe_winsys *ws, GLuint pipeFormat)
 
 
 /**
- * Create a winsys layer.
+ * Return pointer to a pipe_winsys object.
+ * For Xlib, this is a singleton object.
  * Nothing special for the Xlib driver so no subclassing or anything.
  */
 static struct pipe_winsys *
-xmesa_create_pipe_winsys(void)
+xmesa_get_pipe_winsys(void)
 {
-   struct pipe_winsys *ws = CALLOC_STRUCT(pipe_winsys);
+   static struct pipe_winsys *ws = NULL;
+
+   if (!ws) {
+      ws = CALLOC_STRUCT(pipe_winsys);
    
-   /* Fill in this struct with callbacks that pipe will need to
-    * communicate with the window system, buffer manager, etc. 
-    */
-   ws->buffer_create = xm_buffer_create;
-   ws->user_buffer_create = xm_user_buffer_create;
-   ws->buffer_map = xm_buffer_map;
-   ws->buffer_unmap = xm_buffer_unmap;
-   ws->buffer_reference = xm_buffer_reference;
-   ws->buffer_data = xm_buffer_data;
-   ws->buffer_subdata = xm_buffer_subdata;
-   ws->buffer_get_subdata = xm_buffer_get_subdata;
+      /* Fill in this struct with callbacks that pipe will need to
+       * communicate with the window system, buffer manager, etc. 
+       */
+      ws->buffer_create = xm_buffer_create;
+      ws->user_buffer_create = xm_user_buffer_create;
+      ws->buffer_map = xm_buffer_map;
+      ws->buffer_unmap = xm_buffer_unmap;
+      ws->buffer_reference = xm_buffer_reference;
+      ws->buffer_data = xm_buffer_data;
+      ws->buffer_subdata = xm_buffer_subdata;
+      ws->buffer_get_subdata = xm_buffer_get_subdata;
 
-   ws->region_alloc = xm_region_alloc;
-   ws->region_release = xm_region_release;
+      ws->region_alloc = xm_region_alloc;
+      ws->region_release = xm_region_release;
 
-   ws->surface_alloc = xm_surface_alloc;
+      ws->surface_alloc = xm_surface_alloc;
 
-   ws->flush_frontbuffer = xm_flush_frontbuffer;
-   ws->wait_idle = xm_wait_idle;
-   ws->printf = xm_printf;
-   ws->get_name = xm_get_name;
+      ws->flush_frontbuffer = xm_flush_frontbuffer;
+      ws->wait_idle = xm_wait_idle;
+      ws->printf = xm_printf;
+      ws->get_name = xm_get_name;
+   }
 
    return ws;
 }
 
 
+/**
+ * XXX this depends on the depths supported by the screen (8/16/32/etc).
+ * Maybe when we're about to create a context/drawable we create a new
+ * softpipe_winsys object that corresponds to the specified screen...
+ *
+ * Also, this query only really matters for on-screen drawables.
+ * For textures and FBOs we (softpipe) can support any format.
+ */
 static boolean
 xmesa_is_format_supported(struct softpipe_winsys *sws, uint format)
 {
@@ -344,13 +357,22 @@ xmesa_is_format_supported(struct softpipe_winsys *sws, uint format)
 }
 
 
+/**
+ * Return pointer to a softpipe_winsys object.
+ * For Xlib, this is a singleton object.
+ */
 static struct softpipe_winsys *
-xmesa_create_softpipe_winsys(void)
+xmesa_get_softpipe_winsys(void)
 {
-   struct softpipe_winsys *spws = CALLOC_STRUCT(softpipe_winsys);
-   if (spws) {
-      spws->is_format_supported = xmesa_is_format_supported;
+   static struct softpipe_winsys *spws = NULL;
+
+   if (!spws) {
+      spws = CALLOC_STRUCT(softpipe_winsys);
+      if (spws) {
+         spws->is_format_supported = xmesa_is_format_supported;
+      }
    }
+
    return spws;
 }
 
@@ -358,8 +380,8 @@ xmesa_create_softpipe_winsys(void)
 struct pipe_context *
 xmesa_create_softpipe(XMesaContext xmesa)
 {
-   struct pipe_winsys *pws = xmesa_create_pipe_winsys();
-   struct softpipe_winsys *spws = xmesa_create_softpipe_winsys();
+   struct pipe_winsys *pws = xmesa_get_pipe_winsys();
+   struct softpipe_winsys *spws = xmesa_get_softpipe_winsys();
    
    return softpipe_create( pws, spws );
 }

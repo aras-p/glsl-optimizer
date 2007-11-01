@@ -317,6 +317,10 @@ create_xmesa_buffer(XMesaDrawable d, BufferType type,
    b->mesa_buffer.Delete = xmesa_delete_framebuffer;
 
    /*
+    * XXX we want to create surfaces for pipe, not renderbuffers for Mesa.
+    */
+
+   /*
     * Front renderbuffer
     */
    b->frontxrb = xmesa_create_renderbuffer(NULL, 0, &vis->mesa_visual, GL_FALSE);
