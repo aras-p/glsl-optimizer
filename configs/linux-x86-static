@@ -20,4 +20,5 @@ OSMESA_LIB_DEPS =
 GLU_LIB_DEPS = 
 GLUT_LIB_DEPS = 
 GLW_LIB_DEPS = 
-APP_LIB_DEPS = $(EXTRA_LIB_PATH) -lX11 -lXmu -lXt -lXi -lpthread -lstdc++ -lm
+APP_LIB_DEPS = $(EXTRA_LIB_PATH) -lX11 -lXext -lXmu -lXt -lXi -lpthread \
+	-lstdc++ -lm
