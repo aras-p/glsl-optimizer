@@ -60,8 +60,31 @@ static unsigned translate_depth_format( unsigned zformat )
 void
 i915_emit_hardware_state(struct i915_context *i915 )
 {
-   BEGIN_BATCH(100, 10);
+   /* XXX: there must be an easier way */
+   const unsigned dwords = ( 14 + 
+                             5 + 
+                             I915_MAX_DYNAMIC + 
+                             8 + 
+                             2 + I915_TEX_UNITS*3 + 
+                             2 + I915_TEX_UNITS*3 +
+                             2 + I915_MAX_CONSTANT*4 + 
+                             i915->current.program_len + 
+                             6 
+                           ) * 3/2; /* plus 50% margin */
+   const unsigned relocs = ( I915_TEX_UNITS +
+	                     2
+                           ) * 3/2; /* plus 50% margin */
 
+#if 0
+   fprintf (stderr, "i915_emit_hardware_state: %d dwords, %d relocs\n", dwords, relocs);
+#endif
+   
+   if(!BEGIN_BATCH(dwords, relocs)) {
+      FLUSH_BATCH();
+      BEGIN_BATCH(dwords, relocs);
+   }
+
+   /* 14 dwords, 0 relocs */
    if (i915->hardware_dirty & I915_HW_INVARIENT)
    {
       OUT_BATCH(_3DSTATE_AA_CMD |
@@ -111,7 +134,7 @@ i915_emit_hardware_state(struct i915_context *i915 )
       OUT_BATCH(0);
    }
    
-
+   /* 5 dwords, 0 relocs */
    if (i915->hardware_dirty & I915_HW_IMMEDIATE)
    {
       OUT_BATCH(_3DSTATE_LOAD_STATE_IMMEDIATE_1 | 
@@ -125,9 +148,9 @@ i915_emit_hardware_state(struct i915_context *i915 )
       OUT_BATCH(i915->current.immediate[I915_IMMEDIATE_S4]);
       OUT_BATCH(i915->current.immediate[I915_IMMEDIATE_S5]);
       OUT_BATCH(i915->current.immediate[I915_IMMEDIATE_S6]);
-   }
+   } 
    
-
+   /* I915_MAX_DYNAMIC dwords, 0 relocs */
    if (i915->hardware_dirty & I915_HW_DYNAMIC) 
    {
       int i;
@@ -135,7 +158,8 @@ i915_emit_hardware_state(struct i915_context *i915 )
 	 OUT_BATCH(i915->current.dynamic[i]);
       }
    }
-
+   
+   /* 8 dwords, 2 relocs */
    if (i915->hardware_dirty & I915_HW_STATIC)
    {
       if (i915->framebuffer.cbufs[0]) {
@@ -189,9 +213,9 @@ i915_emit_hardware_state(struct i915_context *i915 )
       }
    }
 
-
 #if 01
       /* texture images */
+      /* 2 + I915_TEX_UNITS*3 dwords, I915_TEX_UNITS relocs */
       if (i915->hardware_dirty & (I915_HW_MAP | I915_HW_SAMPLER))
       {
 	 /* XXX: we were refering to sampler state
@@ -230,6 +254,7 @@ i915_emit_hardware_state(struct i915_context *i915 )
 
 #if 01
    /* samplers */
+   /* 2 + I915_TEX_UNITS*3 dwords, 0 relocs */
    if (i915->hardware_dirty & I915_HW_SAMPLER) 
    {
       if (i915->current.sampler_enable_nr) {
@@ -252,6 +277,7 @@ i915_emit_hardware_state(struct i915_context *i915 )
 #endif
 
    /* constants */
+   /* 2 + I915_MAX_CONSTANT*4 dwords, 0 relocs */
    if (i915->hardware_dirty & I915_HW_PROGRAM)
    {
       const uint nr = i915->current.num_constants[PIPE_SHADER_FRAGMENT];
@@ -272,6 +298,7 @@ i915_emit_hardware_state(struct i915_context *i915 )
    }
 
    /* Fragment program */
+   /* i915->current.program_len dwords, 0 relocs */
    if (i915->hardware_dirty & I915_HW_PROGRAM)
    {
       uint i;
@@ -283,6 +310,7 @@ i915_emit_hardware_state(struct i915_context *i915 )
    }
 
    /* drawing surface size */
+   /* 6 dwords, 0 relocs */
    {
       int w = i915->framebuffer.cbufs[0]->width;
       int h = i915->framebuffer.cbufs[0]->height;
