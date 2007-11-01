@@ -40,6 +40,8 @@
 
 #include "x86/rtasm/x86sse.h"
 
+#include "pipe/llvm/gallivm.h"
+
 #include "sp_context.h"
 #include "sp_state.h"
 #include "sp_headers.h"
@@ -54,6 +56,7 @@ struct quad_shade_stage
    struct tgsi_exec_machine machine;
    struct tgsi_exec_vector *inputs, *outputs;
    int colorOutSlot, depthOutSlot;
+   struct gallivm_prog *llvm_prog;
 };
 
 
@@ -161,20 +164,20 @@ shade_quad(
    }
 }
 
-#if 0
 static void
 shade_quad_llvm(struct quad_stage *qs,
                 struct quad_header *quad)
 {
    struct quad_shade_stage *qss = quad_shade_stage(qs);
    struct softpipe_context *softpipe = qs->softpipe;
+   float dests[4][32][4];
    const float fx = (float) quad->x0;
    const float fy = (float) quad->y0;
    struct gallivm_prog *llvm = qss->llvm_prog;
 
 
    quad->mask = gallivm_fragment_shader_exec(
-      llvm, fx, fy, quad->coef,
+      llvm, fx, fy, dests, quad->coef,
       softpipe->mapped_constants[PIPE_SHADER_FRAGMENT],
       qss->samplers, softpipe->sampler_units);
 
@@ -185,7 +188,7 @@ shade_quad_llvm(struct quad_stage *qs,
              == TGSI_SEMANTIC_COLOR);
       memcpy(
              quad->outputs.color,
-             &machine->Outputs[qss->colorOutSlot].xyzw[0].f[0],
+             &dests[0][qss->colorOutSlot],
              sizeof( quad->outputs.color ) );
    }
 
@@ -194,14 +197,14 @@ shade_quad_llvm(struct quad_stage *qs,
       /* output[slot] is new Z */
       uint i;
       for (i = 0; i < 4; i++) {
-         quad->outputs.depth[i] = machine->Outputs[0].xyzw[2].f[i];
+         quad->outputs.depth[i] = dests[0][2][i];
       }
    }
    else {
       /* copy input Z (which was interpolated by the executor) to output Z */
       uint i;
       for (i = 0; i < 4; i++) {
-         quad->outputs.depth[i] = machine->Inputs[0].xyzw[2].f[i];
+         quad->outputs.depth[i] = dests[0][2][i];
       }
    }
 
@@ -210,7 +213,6 @@ shade_quad_llvm(struct quad_stage *qs,
       qs->next->run( qs->next, quad );
    }
 }
-#endif
 
 /**
  * Per-primitive (or per-begin?) setup
@@ -227,6 +229,7 @@ static void shade_begin(struct quad_stage *qs)
       qss->samplers[i].texture = softpipe->texture[i];
    }
 
+   qss->llvm_prog = softpipe->fs->llvm_prog;
    /* XXX only do this if the fragment shader changes... */
    tgsi_exec_machine_init(&qss->machine,
                           softpipe->fs->shader.tokens,
@@ -275,7 +278,11 @@ struct quad_stage *sp_quad_shade_stage( struct softpipe_context *softpipe )
 
    qss->stage.softpipe = softpipe;
    qss->stage.begin = shade_begin;
+#ifdef MESA_LLVM
+   qss->stage.run = shade_quad_llvm;
+#else
    qss->stage.run = shade_quad;
+#endif
    qss->stage.destroy = shade_destroy;
 
    /* set TGSI sampler state that's constant */

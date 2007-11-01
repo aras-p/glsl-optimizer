@@ -45,6 +45,8 @@ struct tgsi_token;
 
 struct gallivm_prog;
 struct gallivm_cpu_engine;
+struct tgsi_interp_coef;
+struct tgsi_sampler;
 
 enum gallivm_shader_type {
    GALLIVM_VS,
@@ -62,11 +64,11 @@ int gallivm_prog_exec(struct gallivm_prog *prog,
                       int num_attribs);
 int gallivm_fragment_shader_exec(struct gallivm_prog *prog,
                                  float x, float y,
-                                 float (*dests)[4],
+                                 float (*dests)[32][4],
                                  struct tgsi_interp_coef *coef,
                                  float (*consts)[4],
                                  struct tgsi_sampler *samplers,
-                                 int num_samplers);
+                                 unsigned *sampler_units);
 void gallivm_prog_dump(struct gallivm_prog *prog, const char *file_prefix);
 
 

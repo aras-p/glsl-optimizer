@@ -221,20 +221,42 @@ struct tgsi_interp_coef
    float dadx[NUM_CHANNELS];
    float dady[NUM_CHANNELS];
 };
-
 int run_fragment_shader(float x, float y,
                         float (*dests)[32][4],
                         struct tgsi_interp_coef *coef,
-                        float (*consts)[4],
+                        float (*aconsts)[4],
                         int num_consts,
                         struct tgsi_sampler *samplers,
-                        int num_samplers)
+                        unsigned *sampler_units)
 {
    float4  inputs[4][16];
    float4  consts[32];
    float4  results[4][16];
    float4  temps[128];//MAX_PROGRAM_TEMPS
 
+   float4  fr1, fr2, fr3, fr4;
+   fr1.x = x;
+   fr1.y = y;
+   fr2.x = x + 1.f;
+   fr2.y = y;
+   fr3.x = x;
+   fr3.y = y + 1.f;
+   fr4.x = x + 1.f;
+   fr4.y = y + 1.f;
+
+   inputs[0][0] = fr1;
+   inputs[1][0] = fr2;
+   inputs[2][0] = fr3;
+   inputs[3][0] = fr4;
+
+   for (int i = 0; i < 4; ++i) {
+      float4 vec;
+      vec.x = coef->a0[0];
+      vec.y = coef->a0[1];
+      vec.z = coef->a0[2];
+      vec.w = coef->a0[3];
+      inputs[i][1] = vec;
+   }
    /*printf("XXX LLVM run_vertex_shader vertices = %d, inputs = %d, attribs = %d, consts = %d\n",
      num_vertices, num_inputs, num_attribs, num_consts);*/
    //from_array(inputs, ainputs, num_vertices, num_inputs);
@@ -243,8 +265,8 @@ int run_fragment_shader(float x, float y,
    for (int i = 0; i < 4; ++i) {
       float4 *in  = inputs[i];
       float4 *res = results[i];
-      //execute_shader(res, in, consts, temps);
-      to_array(dests[i], res, num_attribs);
+      execute_shader(res, in, consts, temps);
+      to_array(dests[i], res, 2);
    }
 }
 

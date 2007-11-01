@@ -796,18 +796,19 @@ typedef int (*fragment_shader_runner)(float x, float y,
                                      struct tgsi_interp_coef *coef,
                                      float (*consts)[4], int num_consts,
                                      struct tgsi_sampler *samplers,
-                                     int num_samplers);
+                                     unsigned *sampler_units);
+
 int gallivm_fragment_shader_exec(struct gallivm_prog *prog,
                                  float x, float y,
                                  float (*dests)[32][4],
                                  struct tgsi_interp_coef *coef,
                                  float (*consts)[4],
                                  struct tgsi_sampler *samplers,
-                                 int num_samplers)
+                                 unsigned *sampler_units)
 {
    fragment_shader_runner runner = reinterpret_cast<fragment_shader_runner>(prog->function);
    assert(runner);
-   runner(x, y, dests, coef, consts, prog->num_consts, samplers, num_samplers);
+   runner(x, y, dests, coef, consts, prog->num_consts, samplers, sampler_units);
 
    return 0;
 }
