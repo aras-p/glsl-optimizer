@@ -110,7 +110,7 @@ static boolean check_space( struct vbuf_stage *vbuf )
 {
    if (overflow( vbuf->vertex_map, 
                  vbuf->vertex_ptr,  
-                 4 * vbuf->vertex_size, 
+                 vbuf->vertex_size, 
                  VBUF_SIZE ))
       return FALSE;
 
@@ -274,12 +274,11 @@ static void vbuf_draw( struct draw_stage *stage )
 {
    struct vbuf_stage *vbuf = vbuf_stage( stage );
    struct i915_context *i915 = vbuf->i915;
-   struct pipe_winsys *winsys = i915->pipe.winsys;
    unsigned nr = vbuf->nr_elements;
    unsigned vertex_size = i915->current.vertex_info.size * 4; /* in bytes */
    unsigned hwprim;
    unsigned i;
-   char *ptr;
+   unsigned *ptr;
    
    switch(vbuf->prim) {
    case PIPE_PRIM_POINTS:
@@ -295,40 +294,20 @@ static void vbuf_draw( struct draw_stage *stage )
       assert(0);
       return;
    }
-
+   
    assert(vbuf->vertex_ptr - vbuf->vertex_map == vbuf->nr_vertices * vertex_size / 4);
 
-   /* FIXME: handle failure */
-   if(!vbuf->buf)
-      vbuf->buf = winsys->buffer_create(winsys, 64);
-
-   winsys->buffer_data(winsys, vbuf->buf, 8 + nr * vertex_size, NULL);
-   ptr = winsys->buffer_map(winsys, vbuf->buf, PIPE_BUFFER_FLAG_WRITE);
-   *(unsigned *)ptr = _3DPRIMITIVE | 
-	              hwprim |
-	              ((4 + vertex_size * nr)/4 - 2);
-   ptr += 4;
-   for (i = 0; i < nr; i++) {
-      memcpy(ptr, 
-             (char*)vbuf->vertex_map + vbuf->element_map[i]*vertex_size, 
-             vertex_size );
-      ptr += vertex_size;
-   }
-   *(unsigned *)ptr = MI_BATCH_BUFFER_END;
-   ptr += 4;
-   winsys->buffer_unmap(winsys, vbuf->buf);
-   
    if (i915->dirty)
       i915_update_derived( i915 );
 
    if (i915->hardware_dirty)
       i915_emit_hardware_state( i915 );
 
-   ptr = BEGIN_BATCH( 2, 1 );
+   ptr = BEGIN_BATCH( 4 + (nr + 1)/2, 1 );
 #if 1
    assert(ptr);
 #else
-   /* XXX: below is bogues as ptr always nonzero except in fatal errors */
+   /* XXX: below is bogus as ptr always nonzero except in fatal errors */
    if (ptr == 0) {
       FLUSH_BATCH();
 
@@ -344,20 +323,35 @@ static void vbuf_draw( struct draw_stage *stage )
       }
    }
 #endif
-   
-   /* chain the vertex buffer in the batch buffer */
-   OUT_BATCH(MI_BATCH_BUFFER_START
-             | (2 << 6) /* GTT-mapped memory */);
+
+   /* FIXME: don't do this every time */
+   OUT_BATCH( _3DSTATE_LOAD_STATE_IMMEDIATE_1 | 
+	      I1_LOAD_S(0) |
+	      I1_LOAD_S(1) |
+	      (1));
    OUT_RELOC( vbuf->buf, I915_BUFFER_ACCESS_READ, 0 );
-   /* FIXME: we need to flush here since control after chained buffers returns
-    * directly to the ring buffer */
-   FLUSH_BATCH();
+   OUT_BATCH( ((vertex_size/4) << 24) |  /* vertex size in dwords */
+              ((vertex_size/4) << 16) ); /* vertex pitch in dwords */
+   OUT_BATCH( _3DPRIMITIVE |
+              PRIM_INDIRECT |
+   	      hwprim |
+   	      PRIM_INDIRECT_ELTS |
+   	      nr );
+   for (i = 0; i + 1 < nr; i += 2) {
+      OUT_BATCH( vbuf->element_map[i] |
+                 (vbuf->element_map[i + 1] << 16) );
+   }
+   if (i < nr) {
+      OUT_BATCH( vbuf->element_map[i] );
+   }
 }
 
 
 static void vbuf_flush_elements( struct draw_stage *stage )
 {
    struct vbuf_stage *vbuf = vbuf_stage( stage );
+   struct i915_context *i915 = vbuf->i915;
+   struct pipe_winsys *winsys = i915->pipe.winsys;
 
    if (vbuf->nr_elements) {
 #if 0
@@ -373,7 +367,8 @@ static void vbuf_flush_elements( struct draw_stage *stage )
       
       vbuf->nr_elements = 0;
 
-      vbuf->vertex_ptr = vbuf->vertex_map;
+      winsys->buffer_unmap(winsys, vbuf->buf);
+
       vbuf->nr_vertices = 0;
 
       /* Reset vertex ids?  Actually, want to not do that unless our
@@ -384,6 +379,15 @@ static void vbuf_flush_elements( struct draw_stage *stage )
        */
       draw_vertex_cache_reset_vertex_ids( vbuf->i915->draw );
    }
+
+   /* FIXME: handle failure */
+   if(!vbuf->buf)
+      vbuf->buf = winsys->buffer_create(winsys, 64);
+   winsys->buffer_data(winsys, vbuf->buf, VBUF_SIZE, NULL);
+   vbuf->vertex_map = winsys->buffer_map(winsys, 
+                                         vbuf->buf, 
+                                         PIPE_BUFFER_FLAG_WRITE );
+   vbuf->vertex_ptr = vbuf->vertex_map;
 
    stage->tri = vbuf_first_tri;
    stage->line = vbuf_first_line;
@@ -430,7 +434,7 @@ struct draw_stage *i915_draw_vbuf_stage( struct i915_context *i915 )
 
    /* FIXME: free this memory on takedown */
    vbuf->element_map = malloc( IBUF_SIZE );
-   vbuf->vertex_map = malloc( VBUF_SIZE );
+   vbuf->vertex_map = NULL;
    
    vbuf->vertex_ptr = vbuf->vertex_map;
    
