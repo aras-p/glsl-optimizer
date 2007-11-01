@@ -626,11 +626,7 @@ static void i915_set_viewport_state( struct pipe_context *pipe,
    /* pass the viewport info to the draw module */
    draw_set_viewport_state(i915->draw, &i915->viewport);
 
-   /* Using tnl/ and vf/ modules is temporary while getting started.
-    * Full pipe will have vertex shader, vertex fetch of its own.
-    */
    i915->dirty |= I915_NEW_VIEWPORT;
-
 }
 
 
