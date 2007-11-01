@@ -548,9 +548,6 @@ xmesa_surface_alloc(struct pipe_context *pipe, GLuint format);
 extern struct pipe_surface *
 xmesa_new_color_surface(struct pipe_context *pipe, GLuint format);
 
-extern boolean
-xmesa_is_format_supported(struct pipe_context *pipe, uint format);
-
 extern void
 xmesa_get_tile_rgba(struct pipe_context *pipe, struct pipe_surface *ps,
                     uint x, uint y, uint w, uint h, float *p);

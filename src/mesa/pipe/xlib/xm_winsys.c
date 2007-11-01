@@ -42,18 +42,6 @@
 
 
 /**
- * XMesa winsys, derived from softpipe winsys.
- * NOTE: there's nothing really X-specific in this winsys layer so
- * we could probably lift it up somewhere.
- */
-struct xm_winsys
-{
-   struct softpipe_winsys sws;
-   int foo; /* placeholder */
-};
-
-
-/**
  * Low-level OS/window system memory buffer
  */
 struct xm_buffer
@@ -80,14 +68,6 @@ static inline struct pipe_buffer_handle *
 pipe_bo( struct xm_buffer *bo )
 {
    return (struct pipe_buffer_handle *) bo;
-}
-
-/* Turn a softpipe winsys into an xm/softpipe winsys:
- */
-static inline struct xm_winsys *
-xm_winsys(struct softpipe_winsys *sws)
-{
-   return (struct xm_winsys *) sws;
 }
 
 
@@ -315,54 +295,71 @@ xm_surface_alloc(struct pipe_winsys *ws, GLuint pipeFormat)
 
 
 
-struct xmesa_pipe_winsys
-{
-   struct pipe_winsys winsys;
-   XMesaContext xmesa;
-};
-
+/**
+ * Create a winsys layer.
+ * Nothing special for the Xlib driver so no subclassing or anything.
+ */
 static struct pipe_winsys *
-xmesa_create_pipe_winsys( XMesaContext xmesa )
+xmesa_create_pipe_winsys(void)
 {
-   struct xmesa_pipe_winsys *xws = CALLOC_STRUCT(xmesa_pipe_winsys);
+   struct pipe_winsys *ws = CALLOC_STRUCT(pipe_winsys);
    
    /* Fill in this struct with callbacks that pipe will need to
     * communicate with the window system, buffer manager, etc. 
-    *
-    * Pipe would be happy with a malloc based memory manager, but
-    * the SwapBuffers implementation in this winsys driver requires
-    * that rendering be done to an appropriate _DriBufferObject.  
     */
-   xws->winsys.buffer_create = xm_buffer_create;
-   xws->winsys.user_buffer_create = xm_user_buffer_create;
-   xws->winsys.buffer_map = xm_buffer_map;
-   xws->winsys.buffer_unmap = xm_buffer_unmap;
-   xws->winsys.buffer_reference = xm_buffer_reference;
-   xws->winsys.buffer_data = xm_buffer_data;
-   xws->winsys.buffer_subdata = xm_buffer_subdata;
-   xws->winsys.buffer_get_subdata = xm_buffer_get_subdata;
+   ws->buffer_create = xm_buffer_create;
+   ws->user_buffer_create = xm_user_buffer_create;
+   ws->buffer_map = xm_buffer_map;
+   ws->buffer_unmap = xm_buffer_unmap;
+   ws->buffer_reference = xm_buffer_reference;
+   ws->buffer_data = xm_buffer_data;
+   ws->buffer_subdata = xm_buffer_subdata;
+   ws->buffer_get_subdata = xm_buffer_get_subdata;
 
-   xws->winsys.region_alloc = xm_region_alloc;
-   xws->winsys.region_release = xm_region_release;
+   ws->region_alloc = xm_region_alloc;
+   ws->region_release = xm_region_release;
 
-   xws->winsys.surface_alloc = xm_surface_alloc;
+   ws->surface_alloc = xm_surface_alloc;
 
-   xws->winsys.flush_frontbuffer = xm_flush_frontbuffer;
-   xws->winsys.wait_idle = xm_wait_idle;
-   xws->winsys.printf = xm_printf;
-   xws->winsys.get_name = xm_get_name;
-   xws->xmesa = xmesa;
+   ws->flush_frontbuffer = xm_flush_frontbuffer;
+   ws->wait_idle = xm_wait_idle;
+   ws->printf = xm_printf;
+   ws->get_name = xm_get_name;
 
-   return &xws->winsys;
+   return ws;
+}
+
+
+static boolean
+xmesa_is_format_supported(struct softpipe_winsys *sws, uint format)
+{
+   switch (format) {
+   case PIPE_FORMAT_U_A8_R8_G8_B8:
+   case PIPE_FORMAT_S_R16_G16_B16_A16:
+   case PIPE_FORMAT_S8_Z24:
+      return TRUE;
+   default:
+      return FALSE;
+   };
+}
+
+
+static struct softpipe_winsys *
+xmesa_create_softpipe_winsys(void)
+{
+   struct softpipe_winsys *spws = CALLOC_STRUCT(softpipe_winsys);
+   if (spws) {
+      spws->is_format_supported = xmesa_is_format_supported;
+   }
+   return spws;
 }
 
 
 struct pipe_context *
 xmesa_create_softpipe(XMesaContext xmesa)
 {
-   struct xm_winsys *xm_ws = CALLOC_STRUCT( xm_winsys );
+   struct pipe_winsys *pws = xmesa_create_pipe_winsys();
+   struct softpipe_winsys *spws = xmesa_create_softpipe_winsys();
    
-   /* Create the softpipe context:
-    */
-   return softpipe_create( xmesa_create_pipe_winsys(xmesa), &xm_ws->sws );
+   return softpipe_create( pws, spws );
 }

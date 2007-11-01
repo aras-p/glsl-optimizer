@@ -193,19 +193,6 @@ xmesa_surface_alloc(struct pipe_context *pipe, GLuint pipeFormat)
 }
 
 
-boolean
-xmesa_is_format_supported(struct pipe_context *pipe, uint format)
-{
-   switch( format ) {
-   case PIPE_FORMAT_U_A8_R8_G8_B8:
-   case PIPE_FORMAT_S_R16_G16_B16_A16:
-   case PIPE_FORMAT_S8_Z24:
-      return TRUE;
-   };
-   return FALSE;
-}
-
-
 /**
  * Called via pipe->clear()
  */
