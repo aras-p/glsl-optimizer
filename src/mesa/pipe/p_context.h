@@ -31,9 +31,14 @@
 #include "p_state.h"
 
 struct pipe_state_cache;
+
+
 /**
- * Software pipeline rendering context.  Basically a collection of
- * state setting functions, plus VBO drawing entrypoint.
+ * Gallium rendering context.  Basically:
+ *  - state setting functions
+ *  - VBO drawing functions
+ *  - memory region function
+ *  - device queries
  */
 struct pipe_context {
    struct pipe_winsys *winsys;
