@@ -29,8 +29,7 @@
 #include "glheader.h"
 #include "context.h"
 #include "extensions.h"
-
-#include "drivers/common/driverfuncs.h"
+#include "framebuffer.h"
 
 #include "i830_dri.h"
 
@@ -45,7 +44,7 @@
 #include "pipe/p_defines.h"
 #include "pipe/p_context.h"
 
-#include "drirenderbuffer.h"
+/*#include "drirenderbuffer.h"*/
 #include "vblank.h"
 #include "utils.h"
 #include "xmlpool.h"            /* for symbolic values of enum-type options */
@@ -165,7 +164,7 @@ intelFlush(GLcontext * ctx)
 static void
 intelInitDriverFunctions(struct dd_function_table *functions)
 {
-   _mesa_init_driver_functions(functions);
+   memset(functions, 0, sizeof(*functions));
    st_init_driver_functions(functions);
 }
 
@@ -335,6 +334,24 @@ intelUnbindContext(__DRIcontextPrivate * driContextPriv)
    return GL_TRUE;
 }
 
+
+/**
+ * Copied/modified from drirenderbuffer.c
+ */
+static void
+updateFramebufferSize(GLcontext *ctx, const __DRIdrawablePrivate *dPriv)
+{
+   struct gl_framebuffer *fb = (struct gl_framebuffer *) dPriv->driverPrivate;
+   if (fb && (dPriv->w != fb->Width || dPriv->h != fb->Height)) {
+      _mesa_resize_framebuffer(ctx, fb, dPriv->w, dPriv->h);
+      /* if the driver needs the hw lock for ResizeBuffers, the drawable
+         might have changed again by now */
+      assert(fb->Width == dPriv->w);
+      assert(fb->Height == dPriv->h);
+   }
+}
+
+
 GLboolean
 intelMakeCurrent(__DRIcontextPrivate * driContextPriv,
                  __DRIdrawablePrivate * driDrawPriv,
@@ -360,10 +377,10 @@ intelMakeCurrent(__DRIcontextPrivate * driContextPriv,
       intel->intelScreen->dummyctxptr = intel;
 
       /* update GLframebuffer size to match window if needed */
-      driUpdateFramebufferSize(&intel->ctx, driDrawPriv);
+      updateFramebufferSize(&intel->ctx, driDrawPriv);
 
       if (driReadPriv != driDrawPriv) {
-         driUpdateFramebufferSize(&intel->ctx, driReadPriv);
+         updateFramebufferSize(&intel->ctx, driReadPriv);
       }
 
       _mesa_make_current(&intel->ctx, &intel_fb->Base, readFb);
