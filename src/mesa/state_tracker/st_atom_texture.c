@@ -56,8 +56,10 @@ update_textures(struct st_context *st)
          GLboolean flush, retval;
 
          retval = st_finalize_mipmap_tree(st->ctx, st->pipe, u, &flush);
+#if 0
          printf("finalize_mipmap_tree returned %d, flush = %d\n",
                 retval, flush);
+#endif
 
          mt = st_get_texobj_mipmap_tree(texObj);
       }
