@@ -104,13 +104,6 @@ struct st_context *st_create_context( GLcontext *ctx,
 
    st->pixel_xfer.cache = _mesa_new_program_cache();
 
-#if 0
-   st_init_cb_clear( st );
-   st_init_cb_program( st );
-   st_init_cb_drawpixels( st );
-   st_init_cb_texture( st );
-#endif
-
    /* XXXX This is temporary! */
    _mesa_enable_sw_extensions(ctx);
 
@@ -126,13 +119,6 @@ void st_destroy_context( struct st_context *st )
 
    _vbo_DestroyContext(st->ctx);
 
-#if 0
-   st_destroy_cb_clear( st );
-   st_destroy_cb_program( st );
-   st_destroy_cb_drawpixels( st );
-   /*st_destroy_cb_teximage( st );*/
-   st_destroy_cb_texture( st );
-#endif
    cso_cache_delete( st->cache );
 
    _mesa_delete_program_cache(st->ctx, st->pixel_xfer.cache);
