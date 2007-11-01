@@ -165,19 +165,6 @@ xget_image(XMesaDisplay *dpy, Drawable d, int x, int y, uint w, uint h)
 
 
 
-
-static INLINE struct xmesa_renderbuffer *
-xmesa_rb(struct pipe_surface *ps)
-{
-   struct xmesa_surface *xms = xmesa_surface(ps);
-   return xms->xrb;
-}
-
-
-#define FLIP(Y) Y = xrb->St.Base.Height - (Y) - 1;
-
-
-
 /**
  * Return raw pixels from pixmap or XImage.
  */
