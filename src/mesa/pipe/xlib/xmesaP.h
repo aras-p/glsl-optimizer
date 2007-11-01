@@ -469,9 +469,6 @@ xmesa_get_window_size(XMesaDisplay *dpy, XMesaBuffer b,
 extern void
 xmesa_check_and_update_buffer_size(XMesaContext xmctx, XMesaBuffer drawBuffer);
 
-extern void
-xmesa_set_renderbuffer_funcs(struct xmesa_renderbuffer *xrb,
-                             enum pixel_format pixelformat, GLint depth);
 
 extern void
 xmesa_destroy_buffers_on_display(XMesaDisplay *dpy);
