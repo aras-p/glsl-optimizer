@@ -74,7 +74,6 @@
 #include "renderbuffer.h"
 #include "teximage.h"
 #include "vbo/vbo.h"
-#include "drivers/common/driverfuncs.h"
 
 #include "state_tracker/st_public.h"
 #include "state_tracker/st_context.h"
@@ -1462,7 +1461,11 @@ XMesaContext XMesaCreateContext( XMesaVisual v, XMesaContext share_list )
    mesaCtx = &(c->mesa);
 
    /* initialize with default driver functions, then plug in XMesa funcs */
+#if 0
    _mesa_init_driver_functions(&functions);
+#else
+   memset(&functions, 0, sizeof(functions));
+#endif
    xmesa_init_driver_functions(v, &functions);
    st_init_driver_functions(&functions);
 
