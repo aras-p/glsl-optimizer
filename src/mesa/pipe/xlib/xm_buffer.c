@@ -289,8 +289,10 @@ xmesa_alloc_front_storage(GLcontext *ctx, struct gl_renderbuffer *rb,
    if (!xrb->St.surface || !xrb->St.surface->region)
       finish_surface_init(ctx, xrb);
 
+#if 0
    xmesa_set_renderbuffer_funcs(xrb, xmesa->pixelformat,
                                 xmesa->xm_visual->BitsPerPixel);
+#endif
 
    /* surface info */
    xms->surface.width = width;
@@ -351,8 +353,10 @@ xmesa_alloc_back_storage(GLcontext *ctx, struct gl_renderbuffer *rb,
       xrb->origin4 = NULL;
    }
 
+#if 0
    xmesa_set_renderbuffer_funcs(xrb, xmesa->pixelformat,
                                 xmesa->xm_visual->BitsPerPixel);
+#endif
 
    if (!xrb->St.surface || !xrb->St.surface->region)
       finish_surface_init(ctx, xrb);
