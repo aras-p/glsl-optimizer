@@ -248,34 +248,91 @@ void
 xmesa_put_tile_rgba(struct pipe_context *pipe, struct pipe_surface *ps,
                     uint x, uint y, uint w, uint h, const float *p)
 {
+   const uint x0 = x, y0 = y;
    struct xmesa_surface *xms = xmesa_surface(ps);
-   struct xmesa_renderbuffer *xrb = xms->xrb;
+   XMesaImage *ximage;
+   uint i, j;
 
-   if (xrb) {
-      /* this is a front/back color buffer */
-      GLubyte tmp[MAX_WIDTH * 4];
-      GLuint i, j;
-      uint w0 = w;
-      GET_CURRENT_CONTEXT(ctx);
-      CLIP_TILE;
-      FLIP(y);
-      for (i = 0; i < h; i++) {
-         for (j = 0; j < w * 4; j++) {
-            UNCLAMPED_FLOAT_TO_UBYTE(tmp[j], p[j]);
-         }
-         xrb->St.Base.PutRow(ctx, &xrb->St.Base, w, x, y - i, tmp, NULL);
-         p += w0 * 4;
-      }
-#if 0 /* debug: flush */
-      {
-         XMesaContext xm = XMESA_CONTEXT(ctx);
-         XSync(xm->display, 0);
-      }
+   CLIP_TILE;
+
+   if (!xms->drawable && !xms->ximage) {
+      /* not an X surface */
+      softpipe_put_tile_rgba(pipe, ps, x, y, w, h, p);
+      return;
+   }
+
+   if (!xms->ximage) {
+      /* create temp XImage */
+      char *data = (char *) malloc(w * h * 4);
+#ifdef XFree86Server
+      ximage = XMesaCreateImage(GET_VISUAL_DEPTH(v), w, h, data);
+#else
+      XVisualInfo *visinfo = xms->xrb->Parent->xm_visual->visinfo;
+      ximage = XCreateImage(xms->display,
+                            visinfo->visual,
+                            visinfo->depth,
+                            ZPixmap, 0,   /* format, offset */
+                            data,         /* data */
+                            w, h,         /* width, height */
+                            32,           /* bitmap_pad */
+                            0);           /* bytes_per_line */
 #endif
+      x = y = 0;
    }
    else {
-      /* other softpipe surface */
-      softpipe_put_tile_rgba(pipe, ps, x, y, w, h, p);
+      ximage = xms->ximage;
+   }
+
+   /* convert floats to ximage's format */
+   switch (ps->format) {
+   case PIPE_FORMAT_U_A8_R8_G8_B8:
+      {
+         uint *dst
+            = (uint *) (ximage->data + y * ximage->bytes_per_line + x * 4);
+         for (i = 0; i < h; i++) {
+            for (j = 0; j < w; j++) {
+               ubyte r, g, b, a;
+               UNCLAMPED_FLOAT_TO_UBYTE(r, p[0]);
+               UNCLAMPED_FLOAT_TO_UBYTE(g, p[1]);
+               UNCLAMPED_FLOAT_TO_UBYTE(b, p[2]);
+               UNCLAMPED_FLOAT_TO_UBYTE(a, p[3]);
+               dst[j] = PACK_8A8R8G8B(r, g, b, a);
+               p += 4;
+            }
+            dst += ximage->width;
+         }
+      }
+      break;
+   case PIPE_FORMAT_U_R5_G6_B5:
+      {
+         ushort *dst =
+            (ushort *) (ximage->data + y * ximage->bytes_per_line + x * 2);
+         for (i = 0; i < h; i++) {
+            for (j = 0; j < w; j++) {
+               ubyte r, g, b;
+               UNCLAMPED_FLOAT_TO_UBYTE(r, p[0]);
+               UNCLAMPED_FLOAT_TO_UBYTE(g, p[1]);
+               UNCLAMPED_FLOAT_TO_UBYTE(b, p[2]);
+               dst[j] = PACK_5R6G5B(r, g, b);
+               p += 4;
+            }
+            dst += ximage->width;
+         }
+      }
+      break;
+      
+   default:
+      assert(0);
+   }
+
+   if (!xms->ximage) {
+      /* send XImage data to pixmap */
+      XPutImage(xms->display, xms->drawable, xms->gc,
+                ximage, 0, 0, x0, y0, w, h);
+      /* clean-up */
+      free(ximage->data);
+      ximage->data = NULL;
+      XMesaDestroyImage(ximage);
    }
 }
 
