@@ -224,7 +224,7 @@ nouveau_bo_init_storage(GLcontext *ctx,	GLuint valid_gpu_access,
 					GLsizeiptrARB size,
 					const GLvoid *data,
 					GLenum usage,
-					struct gl_buffer_object *bo)
+ 			struct gl_buffer_object *bo, int flags)
 {
 	nouveau_buffer_object *nbo = (nouveau_buffer_object *)bo;
 
@@ -257,7 +257,18 @@ nouveau_bo_init_storage(GLcontext *ctx,	GLuint valid_gpu_access,
 
 	if (data) {
 		GLvoid *map = nouveau_bo_map(ctx, GL_WRITE_ONLY_ARB, bo);
-		_mesa_memcpy(map, data, size);
+#ifdef MESA_BIG_ENDIAN
+		int i;
+		if (flags) {
+		  for (i = 0; i < size; i+=4) {
+		    uint32_t _data = *(unsigned int *)(data+i);
+		    _data = ((_data >> 16) | ((_data & 0xffff) << 16));
+		    *(unsigned int *)(map+i) = _data;
+		  }
+		} else
+#endif
+		  _mesa_memcpy(map, data, size);
+		(void)flags; /* get rid of warning */
 		nouveau_bo_dirty_all(ctx, GL_FALSE, bo);
 		nouveau_bo_unmap(ctx, bo);
 	}
@@ -514,7 +525,7 @@ nouveauBufferData(GLcontext *ctx, GLenum target, GLsizeiptrARB size,
 		gpu_flags = NOUVEAU_BO_VRAM_OK | NOUVEAU_BO_GART_OK;
 		break;
 	}
-	nouveau_bo_init_storage(ctx, gpu_flags, size, data, usage, obj);
+	nouveau_bo_init_storage(ctx, gpu_flags, size, data, usage, obj, 0);
 }
 
 static void

@@ -36,7 +36,7 @@ NV30FPUploadToHW(GLcontext *ctx, nouveauShader *nvs)
 	 		  nvs->program_size * sizeof(uint32_t),
 			  (const GLvoid *)nvs->program,
 			  GL_DYNAMIC_DRAW_ARB,
-			  nvs->program_buffer);
+			   nvs->program_buffer, 1);
 
    offset = nouveau_bo_gpu_ref(ctx, nvs->program_buffer);
 
