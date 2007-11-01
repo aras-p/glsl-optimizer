@@ -26,6 +26,7 @@
  **************************************************************************/
 
 #include "main/imports.h"
+#include "main/context.h"
 #include "main/extensions.h"
 #include "vbo/vbo.h"
 #include "st_public.h"
@@ -64,6 +65,23 @@ void st_invalidate_state(GLcontext * ctx, GLuint new_state)
     * No longer use swrast, swsetup, tnl.
     */
    _vbo_InvalidateState(ctx, new_state);
+}
+
+
+struct st_context *st_create_context2(struct pipe_context *pipe,
+                                      const GLvisual *visual,
+                                      struct st_context *share)
+{
+   GLcontext *ctx;
+   GLcontext *shareCtx = share ? share->ctx : NULL;
+   struct dd_function_table funcs;
+
+   memset(&funcs, 0, sizeof(funcs));
+   st_init_driver_functions(&funcs);
+
+   ctx = _mesa_create_context(visual, shareCtx, &funcs, NULL);
+
+   return st_create_context(ctx, pipe);
 }
 
 
@@ -108,6 +126,15 @@ struct st_context *st_create_context( GLcontext *ctx,
    _mesa_enable_sw_extensions(ctx);
 
    return st;
+}
+
+
+void st_destroy_context2( struct st_context *st )
+{
+   GLcontext *ctx = st->ctx;
+   _mesa_free_context_data(ctx);
+   st_destroy_context(st);
+   free(ctx);
 }
 
 

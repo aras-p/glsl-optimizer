@@ -36,7 +36,13 @@ struct pipe_context;
 struct st_context *st_create_context( GLcontext *ctx,
 				      struct pipe_context *pipe);
 
+struct st_context *st_create_context2(struct pipe_context *pipe,
+                                      const GLvisual *visual,
+                                      struct st_context *share);
+
 void st_destroy_context( struct st_context *st );
+
+void st_destroy_context2( struct st_context *st );
 
 void st_invalidate_state(GLcontext * ctx, GLuint new_state);
 
