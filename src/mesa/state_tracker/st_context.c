@@ -27,7 +27,6 @@
 
 #include "main/imports.h"
 #include "main/extensions.h"
-#include "tnl/tnl.h"
 #include "vbo/vbo.h"
 #include "st_public.h"
 #include "st_context.h"
@@ -80,8 +79,6 @@ struct st_context *st_create_context( GLcontext *ctx,
 
    /* state tracker needs the VBO module */
    _vbo_CreateContext(ctx);
-   /* XXX temporary */
-   _tnl_CreateContext(ctx);
 
    st->draw = draw_create(); /* for selection/feedback */
 
@@ -117,9 +114,6 @@ struct st_context *st_create_context( GLcontext *ctx,
    /* XXXX This is temporary! */
    _mesa_enable_sw_extensions(ctx);
 
-   /* we'll always do per-pixel fog in the fragment shader */
-   _tnl_allow_vertex_fog(ctx, GL_FALSE);
-
    return st;
 }
 
@@ -131,7 +125,6 @@ void st_destroy_context( struct st_context *st )
    st_destroy_draw( st );
 
    _vbo_DestroyContext(st->ctx);
-   _tnl_DestroyContext(st->ctx); /* XXX temporary */
 
 #if 0
    st_destroy_cb_clear( st );
