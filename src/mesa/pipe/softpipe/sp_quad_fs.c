@@ -94,11 +94,6 @@ shade_quad(
 
    machine->SamplerUnits = softpipe->sampler_units;
    machine->InterpCoefs = quad->coef;
-   printf("COEF = [%f %f %f %f], [%f %f %f %f], [%f %f %f %f] %p\n",
-          quad->coef->a0[0], quad->coef->a0[1], quad->coef->a0[2], quad->coef->a0[3],
-          quad->coef->dadx[0], quad->coef->dadx[1], quad->coef->dadx[2], quad->coef->dadx[3],
-          quad->coef->dady[0], quad->coef->dady[1], quad->coef->dady[2], quad->coef->dady[3],
-          quad->coef);
 
    machine->Inputs[0].xyzw[0].f[0] = fx;
    machine->Inputs[0].xyzw[0].f[1] = fx + 1.0f;
@@ -170,26 +165,59 @@ shade_quad_llvm(struct quad_stage *qs,
 {
    struct quad_shade_stage *qss = quad_shade_stage(qs);
    struct softpipe_context *softpipe = qs->softpipe;
-   float dests[4][32][4];
+   float dests[4][16][4];
    const float fx = (float) quad->x0;
    const float fy = (float) quad->y0;
    struct gallivm_prog *llvm = qss->llvm_prog;
+   float inputs[4][16][4];
+   memset(inputs, 0, sizeof(inputs));
 
+   inputs[0][0][0] = fx;
+   inputs[1][0][0] = fx + 1.0f;
+   inputs[2][0][0] = fx;
+   inputs[3][0][0] = fx + 1.0f;
 
-   quad->mask = gallivm_fragment_shader_exec(
-      llvm, fx, fy, dests, quad->coef,
-      softpipe->mapped_constants[PIPE_SHADER_FRAGMENT],
-      qss->samplers, softpipe->sampler_units);
+   inputs[0][0][1] = fy;
+   inputs[1][0][1] = fy;
+   inputs[2][0][1] = fy + 1.0f;
+   inputs[3][0][1] = fy + 1.0f;
+   printf("MASK = %d\n", quad->mask);
+   gallivm_prog_inputs_interpolate(llvm, inputs, quad->coef);
+   for (int i = 0; i < 4; ++i) {
+      for (int j = 0; j < 2; ++j) {
+         printf("IN(%d,%d) [%f %f %f %f]\n", i, j, 
+                inputs[i][j][0], inputs[i][j][1], inputs[i][j][2], inputs[i][j][3]);
+      }
+   }
+
+   /*quad->mask &=*/
+      gallivm_fragment_shader_exec(llvm, fx, fy, dests, inputs,
+                                   softpipe->mapped_constants[PIPE_SHADER_FRAGMENT],
+                                   qss->samplers, softpipe->sampler_units);
+
+   printf("OUT LLVM = 1[%f %f %f %f], 2[%f %f %f %f]\n",
+          dests[0][0][0], dests[0][0][1], dests[0][0][2], dests[0][0][3], 
+          dests[0][1][0], dests[0][1][1], dests[0][1][2], dests[0][1][3]);
 
    /* store result color */
    if (qss->colorOutSlot >= 0) {
+      unsigned i;
       /* XXX need to handle multiple color outputs someday */
       assert(qss->stage.softpipe->fs->shader.output_semantic_name[qss->colorOutSlot]
              == TGSI_SEMANTIC_COLOR);
-      memcpy(
-             quad->outputs.color,
-             &dests[0][qss->colorOutSlot],
-             sizeof( quad->outputs.color ) );
+      for (i = 0; i < QUAD_SIZE; ++i) {
+         quad->outputs.color[0][i] = dests[i][qss->colorOutSlot][0];
+         quad->outputs.color[1][i] = dests[i][qss->colorOutSlot][1];
+         quad->outputs.color[2][i] = dests[i][qss->colorOutSlot][2];
+         quad->outputs.color[3][i] = dests[i][qss->colorOutSlot][3];
+      }
+   }
+   for (int i = 0; i < QUAD_SIZE; ++i) {
+      printf("Q%d(%d) [%f, %f, %f, %f]\n", i, qss->colorOutSlot,
+             quad->outputs.color[0][i],
+             quad->outputs.color[1][i],
+             quad->outputs.color[2][i],
+             quad->outputs.color[3][i]);
    }
 
    /* store result Z */
@@ -197,16 +225,21 @@ shade_quad_llvm(struct quad_stage *qs,
       /* output[slot] is new Z */
       uint i;
       for (i = 0; i < 4; i++) {
-         quad->outputs.depth[i] = dests[0][2][i];
+         quad->outputs.depth[i] = dests[i][0][2];
       }
    }
    else {
       /* copy input Z (which was interpolated by the executor) to output Z */
       uint i;
       for (i = 0; i < 4; i++) {
-         quad->outputs.depth[i] = dests[0][2][i];
+         quad->outputs.depth[i] = inputs[i][0][2];
       }
    }
+   printf("D [%f, %f, %f, %f] mask = %d\n",
+             quad->outputs.depth[0],
+             quad->outputs.depth[1],
+             quad->outputs.depth[2],
+             quad->outputs.depth[3], quad->mask);
 
    /* shader may cull fragments */
    if( quad->mask ) {

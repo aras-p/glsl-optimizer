@@ -64,11 +64,14 @@ int gallivm_prog_exec(struct gallivm_prog *prog,
                       int num_attribs);
 int gallivm_fragment_shader_exec(struct gallivm_prog *prog,
                                  float x, float y,
-                                 float (*dests)[32][4],
-                                 struct tgsi_interp_coef *coef,
+                                 float (*dests)[PIPE_MAX_SHADER_INPUTS][4],
+                                 float (*inputs)[PIPE_MAX_SHADER_INPUTS][4],
                                  float (*consts)[4],
                                  struct tgsi_sampler *samplers,
                                  unsigned *sampler_units);
+void gallivm_prog_inputs_interpolate(struct gallivm_prog *prog,
+                                     float (*inputs)[PIPE_MAX_SHADER_INPUTS][4],
+                                     const struct tgsi_interp_coef *coefs);
 void gallivm_prog_dump(struct gallivm_prog *prog, const char *file_prefix);
 
 

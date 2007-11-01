@@ -68,12 +68,21 @@
 #include <fstream>
 #include <iostream>
 
+struct gallivm_interpolate {
+   int attrib;
+   int chan;
+   int type;
+};
+
 struct gallivm_prog {
    llvm::Module *module;
    void *function;
    int   num_consts;
    int   id;
    enum gallivm_shader_type type;
+
+   struct gallivm_interpolate interpolators[32*4]; //FIXME: this might not be enough for some shaders
+   int   num_interp;
 };
 
 struct gallivm_cpu_engine {
@@ -141,12 +150,71 @@ static inline void AddStandardCompilePasses(PassManager &PM) {
    PM.add(createConstantMergePass());        // Merge dup global constants
 }
 
+static inline void
+add_interpolator(struct gallivm_prog *prog,
+                 struct gallivm_interpolate *interp)
+{
+   prog->interpolators[prog->num_interp] = *interp;
+   ++prog->num_interp;
+}
 static void
-translate_declaration(llvm::Module *module,
+translate_declaration(struct gallivm_prog *prog,
+                      llvm::Module *module,
                       Storage *storage,
                       struct tgsi_full_declaration *decl,
                       struct tgsi_full_declaration *fd)
 {
+   if (decl->Declaration.File == TGSI_FILE_INPUT) {
+      unsigned first, last, mask;
+      uint interp_method;
+
+      assert(decl->Declaration.Declare == TGSI_DECLARE_RANGE);
+
+      first = decl->u.DeclarationRange.First;
+      last = decl->u.DeclarationRange.Last;
+      mask = decl->Declaration.UsageMask;
+
+      /* Do not touch WPOS.xy */
+      if (first == 0) {
+         mask &= ~TGSI_WRITEMASK_XY;
+         if (mask == TGSI_WRITEMASK_NONE) {
+            first++;
+            if (first > last) {
+               return;
+            }
+         }
+      }
+
+      interp_method = decl->Interpolation.Interpolate;
+
+      if (mask == TGSI_WRITEMASK_XYZW) {
+         unsigned i, j;
+
+         for (i = first; i <= last; i++) {
+            for (j = 0; j < NUM_CHANNELS; j++) {
+               //interp( mach, i, j );
+               struct gallivm_interpolate interp;
+               interp.type = interp_method;
+               interp.attrib = i;
+               interp.chan = j;
+               add_interpolator(prog, &interp);
+            }
+         }
+      } else {
+         unsigned i, j;
+         for( j = 0; j < NUM_CHANNELS; j++ ) {
+            if( mask & (1 << j) ) {
+               for( i = first; i <= last; i++ ) {
+                  struct gallivm_interpolate interp;
+                  interp.type = interp_method;
+                  interp.attrib = i;
+                  interp.chan = j;
+                  add_interpolator(prog, &interp);
+               }
+            }
+         }
+      }
+   }
 }
 
 
@@ -686,7 +754,7 @@ tgsi_to_llvm(struct gallivm_prog *prog, const struct tgsi_token *tokens)
 
       switch (parse.FullToken.Token.Type) {
       case TGSI_TOKEN_TYPE_DECLARATION:
-         translate_declaration(mod, &storage,
+         translate_declaration(prog, mod, &storage,
                                &parse.FullToken.FullDeclaration,
                                &fd);
          break;
@@ -791,24 +859,83 @@ int gallivm_prog_exec(struct gallivm_prog *prog,
 }
 
 
+
+static inline void
+constant_interpolation(float (*inputs)[16][4],
+                       const struct tgsi_interp_coef *coefs,
+                       unsigned attrib,
+                       unsigned chan)
+{
+   unsigned i;
+
+   for (i = 0; i < QUAD_SIZE; ++i) {
+      inputs[i][attrib][chan] = coefs[attrib].a0[chan];
+   }
+}
+
+static inline void
+linear_interpolation(float (*inputs)[16][4],
+                     const struct tgsi_interp_coef *coefs,
+                     unsigned attrib,
+                     unsigned chan)
+{
+   unsigned i;
+
+   for( i = 0; i < QUAD_SIZE; i++ ) {
+      const float x = inputs[i][0][0];
+      const float y = inputs[i][0][1];
+
+      inputs[i][attrib][chan] =
+         coefs[attrib].a0[chan] +
+         coefs[attrib].dadx[chan] * x +
+         coefs[attrib].dady[chan] * y;
+   }
+}
+
+static inline void
+perspective_interpolation(float (*inputs)[16][4],
+                          const struct tgsi_interp_coef *coefs,
+                          unsigned attrib,
+                          unsigned chan )
+{
+   unsigned i;
+
+   for( i = 0; i < QUAD_SIZE; i++ ) {
+      const float x = inputs[i][0][0];
+      const float y = inputs[i][0][1];
+      /* WPOS.w here is really 1/w */
+      const float w = 1.0f / inputs[i][0][3];
+      assert(inputs[i][0][3] != 0.0);
+
+      inputs[i][attrib][chan] =
+         (coefs[attrib].a0[chan] +
+          coefs[attrib].dadx[chan] * x +
+          coefs[attrib].dady[chan] * y) * w;
+   }
+}
+
 typedef int (*fragment_shader_runner)(float x, float y,
-                                     float (*dests)[32][4],
-                                     struct tgsi_interp_coef *coef,
-                                     float (*consts)[4], int num_consts,
-                                     struct tgsi_sampler *samplers,
-                                     unsigned *sampler_units);
+                                      float (*dests)[16][4],
+                                      float (*inputs)[16][4],
+                                      int num_attribs,
+                                      float (*consts)[4], int num_consts,
+                                      struct tgsi_sampler *samplers,
+                                      unsigned *sampler_units);
 
 int gallivm_fragment_shader_exec(struct gallivm_prog *prog,
-                                 float x, float y,
-                                 float (*dests)[32][4],
-                                 struct tgsi_interp_coef *coef,
+                                 float fx, float fy,
+                                 float (*dests)[16][4],
+                                 float (*inputs)[16][4],
                                  float (*consts)[4],
                                  struct tgsi_sampler *samplers,
                                  unsigned *sampler_units)
 {
    fragment_shader_runner runner = reinterpret_cast<fragment_shader_runner>(prog->function);
    assert(runner);
-   runner(x, y, dests, coef, consts, prog->num_consts, samplers, sampler_units);
+
+   runner(fx, fy, dests, inputs, prog->num_interp,
+          consts, prog->num_consts,
+          samplers, sampler_units);
 
    return 0;
 }
@@ -928,7 +1055,33 @@ struct gallivm_cpu_engine * gallivm_global_cpu_engine()
    return CPU;
 }
 
+void gallivm_prog_inputs_interpolate(struct gallivm_prog *prog,
+                                     float (*inputs)[16][4],
+                                     const struct tgsi_interp_coef *coef)
+{
+   for (int i = 0; i < prog->num_interp; ++i) {
+      const gallivm_interpolate &interp = prog->interpolators[i];
+      switch (interp.type) {
+      case TGSI_INTERPOLATE_CONSTANT:
+         constant_interpolation(inputs, coef, interp.attrib, interp.chan);
+         break;
+
+      case TGSI_INTERPOLATE_LINEAR:
+         linear_interpolation(inputs, coef, interp.attrib, interp.chan);
+         break;
+
+      case TGSI_INTERPOLATE_PERSPECTIVE:
+         perspective_interpolation(inputs, coef, interp.attrib, interp.chan);
+         break;
+
+      default:
+         assert( 0 );
+      }
+   }
+}
+
 #endif /* MESA_LLVM */
+
 
 
 
