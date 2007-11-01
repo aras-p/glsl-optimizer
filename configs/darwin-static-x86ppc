@@ -11,6 +11,10 @@ CXXFLAGS = -arch ppc -arch i386 -isysroot /Developer/SDKs/MacOSX10.4u.sdk \
            -I/usr/X11R6/include -O3 -fno-common -ffast-math -funroll-loops -fexpensive-optimizations -no-cpp-precomp -dynamic -Ddarwin
 MKLIB_OPTIONS = -static -archopt "-isysroot /Developer/SDKs/MacOSX10.4u.sdk"
 
+# Work around aliasing bugs - developers should comment this out
+CFLAGS += -fno-strict-aliasing
+CXXFLAGS += -fno-strict-aliasing
+
 # Library names (actual file names)
 GL_LIB_NAME = libGL.a
 GLU_LIB_NAME = libGLU.a

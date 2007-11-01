@@ -12,6 +12,10 @@ CXXFLAGS = -pedantic -O2
 GLUT_CFLAGS = -fexceptions
 MKLIB_OPTIONS = -static
 
+# Work around aliasing bugs - developers should comment this out
+CFLAGS += -fno-strict-aliasing
+CXXFLAGS += -fno-strict-aliasing
+
 GL_LIB_NAME = libGL.a
 GLU_LIB_NAME = libGLU.a
 GLUT_LIB_NAME = libglut.a

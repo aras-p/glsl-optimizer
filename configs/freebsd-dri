@@ -22,6 +22,10 @@ CFLAGS = $(WARN_FLAGS) $(OPT_FLAGS) $(PIC_FLAGS) -Wmissing-prototypes -std=c99 -
 
 CXXFLAGS = $(WARN_FLAGS) $(OPT_FLAGS) $(PIC_FLAGS) $(DEFINES) -Wall -ansi -pedantic $(ASM_FLAGS) $(X11_INCLUDES) 
 
+# Work around aliasing bugs - developers should comment this out
+CFLAGS += -fno-strict-aliasing
+CXXFLAGS += -fno-strict-aliasing
+
 ASM_SOURCES = 
 
 # Library/program dependencies

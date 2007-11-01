@@ -39,6 +39,10 @@ ifeq ($(CPU), x86)
 
 	CXXFLAGS = $(CFLAGS)
 
+	# Work around aliasing bugs - developers should comment this out
+	CFLAGS += -fno-strict-aliasing
+	CXXFLAGS += -fno-strict-aliasing
+
 	LDFLAGS += -Xlinker
 
 	ifdef DEBUG

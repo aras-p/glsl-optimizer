@@ -11,6 +11,10 @@ CXX = g++
 CFLAGS = -O2 -DAIXV3
 CXXFLAGS = -O2 -DAIXV3
 
+# Work around aliasing bugs - developers should comment this out
+CFLAGS += -fno-strict-aliasing
+CXXFLAGS += -fno-strict-aliasing
+
 MKLIB_OPTIONS = -arch aix-gcc
 GL_LIB_DEPS = -lX11 -lXext -lm
 GLU_LIB_DEPS = -L$(TOP)/$(LIB_DIR) -l$(GL_LIB) -lm

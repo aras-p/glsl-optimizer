@@ -11,6 +11,10 @@ CFLAGS = -O3 -march=i486 -fPIC -I/usr/openwin/include -DUSE_XSHM
 CXXFLAGS = -O3 -march=i486 -fPIC
 GLUT_CFLAGS = -fexceptions
 
+# Work around aliasing bugs - developers should comment this out
+CFLAGS += -fno-strict-aliasing
+CXXFLAGS += -fno-strict-aliasing
+
 GL_LIB_DEPS = -L/usr/openwin/lib -lX11 -lXext -lm -lpthread
 GLU_LIB_DEPS = -L$(TOP)/$(LIB_DIR) -l$(GL_LIB) -lm
 GLUT_LIB_DEPS = -L$(TOP)/$(LIB_DIR) -l$(GLU_LIB) -l$(GL_LIB) -L/usr/openwin/lib -lX11 -lXmu -lXt -lXi -lm
