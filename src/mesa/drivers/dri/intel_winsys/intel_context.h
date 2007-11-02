@@ -143,9 +143,6 @@ extern int __intel_debug;
  * intel_context.c:
  */
 
-extern void intelGetLock(struct intel_context *intel, GLuint flags);
-
-extern void intelFinish(GLcontext * ctx);
 extern void intelFlush(GLcontext * ctx);
 
 /*======================================================================
@@ -158,10 +155,6 @@ intel_context(GLcontext * ctx)
    return (struct intel_context *) ctx->DriverCtx;
 }
 
-extern struct intel_renderbuffer *intel_renderbuffer(struct gl_renderbuffer
-                                                     *rb);
-
-extern void intel_init_region_functions(struct pipe_context *pipe);
 
 extern void
 intelUpdateFramebufferSize(GLcontext *ctx, const __DRIdrawablePrivate *dPriv);
