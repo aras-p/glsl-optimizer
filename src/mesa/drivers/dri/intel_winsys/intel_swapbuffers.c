@@ -32,9 +32,6 @@
 #include "intel_reg.h"
 #include "intel_winsys.h"
 #include "context.h"
-#include "utils.h"
-#include "drirenderbuffer.h"
-#include "vblank.h"
 
 #include "pipe/p_context.h"
 #include "state_tracker/st_context.h"

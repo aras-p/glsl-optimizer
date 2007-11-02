@@ -28,7 +28,7 @@
 
 #include "glheader.h"
 #include "context.h"
-#include "extensions.h"
+#include "state_tracker/st_public.h"
 
 #include "intel_screen.h"
 #include "intel_context.h"
@@ -36,15 +36,6 @@
 #include "intel_swapbuffers.h"
 
 #include "i830_dri.h"
-
-
-#include "state_tracker/st_public.h"
-#include "state_tracker/st_context.h"
-
-#include "drirenderbuffer.h"
-#include "vblank.h"
-#include "utils.h"
-#include "xmlpool.h"            /* for symbolic values of enum-type options */
 
 
 

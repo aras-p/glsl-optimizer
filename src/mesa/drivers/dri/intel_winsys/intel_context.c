@@ -44,8 +44,6 @@
 #include "pipe/p_defines.h"
 #include "pipe/p_context.h"
 
-/*#include "drirenderbuffer.h"*/
-#include "vblank.h"
 #include "utils.h"
 #include "xmlpool.h"            /* for symbolic values of enum-type options */
 
@@ -327,6 +325,7 @@ intelDestroyContext(__DRIcontextPrivate * driContextPriv)
    }
 }
 
+
 GLboolean
 intelUnbindContext(__DRIcontextPrivate * driContextPriv)
 {
@@ -358,14 +357,6 @@ intelMakeCurrent(__DRIcontextPrivate * driContextPriv,
                  __DRIdrawablePrivate * driDrawPriv,
                  __DRIdrawablePrivate * driReadPriv)
 {
-
-#if 0
-   if (driDrawPriv) {
-      fprintf(stderr, "x %d, y %d, width %d, height %d\n",
-	      driDrawPriv->x, driDrawPriv->y, driDrawPriv->w, driDrawPriv->h);
-   }
-#endif
-
    if (driContextPriv) {
       struct intel_context *intel =
          (struct intel_context *) driContextPriv->driverPrivate;
@@ -393,7 +384,6 @@ intelMakeCurrent(__DRIcontextPrivate * driContextPriv,
 	    intelWindowMoved(intel);
 	    intel->lastStamp = driDrawPriv->lastStamp;
       }
-
    }
    else {
       _mesa_make_current(NULL, NULL, NULL);
@@ -413,8 +403,6 @@ struct intel_context *intelScreenContext(intelScreenPrivate *intelScreen)
 
   GET_CURRENT_CONTEXT(ctx);
   if (ctx == NULL) {
-/*     _mesa_problem(NULL, "No current context in intelScreenContext\n");
-     return NULL; */
      /* need a context for the first time makecurrent is called (for hw lock
         when allocating priv buffers) */
      if (intelScreen->dummyctxptr == NULL) {
