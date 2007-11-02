@@ -185,12 +185,13 @@ static void intel_wait_idle( struct pipe_winsys *sws )
  * we copied its contents to the real frontbuffer.  Our task is easy:
  */
 static void
-intel_flush_frontbuffer( struct pipe_winsys *sws )
+intel_flush_frontbuffer( struct pipe_winsys *sws,
+                         struct pipe_surface *surf )
 {
    struct intel_context *intel = intel_pipe_winsys(sws)->intel;
    __DRIdrawablePrivate *dPriv = intel->driDrawable;
-   
-   intelCopyBuffer(dPriv, NULL);
+
+   intelDisplayBuffer(dPriv, surf, NULL);
 }
 
 

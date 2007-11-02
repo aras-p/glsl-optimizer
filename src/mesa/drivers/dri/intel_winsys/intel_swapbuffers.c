@@ -58,15 +58,33 @@ typedef struct drm_i915_flip {
 #endif
 
 
+/**
+ * Return the pipe_surface for the given renderbuffer.
+ */
+static struct pipe_surface *
+get_color_surface(struct intel_framebuffer *intel_fb,
+                  GLuint bufferIndex)
+{
+   struct st_renderbuffer *strb
+      = st_renderbuffer(intel_fb->Base.Attachment[bufferIndex].Renderbuffer);
+   if (strb)
+      return strb->surface;
+   return NULL;
+}
 
 
 /**
- * Copy the back color buffer to the front color buffer. 
- * Used for SwapBuffers().
+ * Display a colorbuffer surface in an X window.
+ * Used for SwapBuffers and flushing front buffer rendering.
+ *
+ * \param dPriv  the window/drawable to display into
+ * \param surf  the surface to display
+ * \param rect  optional subrect of surface to display (may be NULL).
  */
 void
-intelCopyBuffer(__DRIdrawablePrivate * dPriv,
-                const drm_clip_rect_t * rect)
+intelDisplayBuffer(__DRIdrawablePrivate * dPriv,
+                   struct pipe_surface *surf,
+                   const drm_clip_rect_t * rect)
 {
 
    struct intel_context *intel;
@@ -103,49 +121,24 @@ intelCopyBuffer(__DRIdrawablePrivate * dPriv,
 
    if (dPriv && dPriv->numClipRects) {
       struct intel_framebuffer *intel_fb = dPriv->driverPrivate;
-#if 0
-      const struct pipe_region *backRegion
-	 = intel_fb->Base._ColorDrawBufferMask[0] == BUFFER_BIT_FRONT_LEFT ?
-	   intel_get_rb_region(&intel_fb->Base, BUFFER_FRONT_LEFT) :
-	   intel_get_rb_region(&intel_fb->Base, BUFFER_BACK_LEFT);
-#endif
       const int backWidth = intel_fb->Base.Width;
       const int backHeight = intel_fb->Base.Height;
       const int nbox = dPriv->numClipRects;
       const drm_clip_rect_t *pbox = dPriv->pClipRects;
       const int pitch = intelScreen->front.pitch / intelScreen->front.cpp;
-#if 0
-      const int srcpitch = backRegion->pitch;
-#endif
       const int cpp = intelScreen->front.cpp;
       int BR13, CMD;
       int i;
-
-      const struct pipe_surface *backSurf;
-      const struct pipe_region *backRegion;
-      int srcpitch;
-      struct st_renderbuffer *strb;
-
-      /* blit from back color buffer if it exists, else front buffer */
-      strb = st_renderbuffer(intel_fb->Base.Attachment[BUFFER_BACK_LEFT].Renderbuffer);
-      if (strb) {
-         backSurf = strb->surface;
-      }
-      else {
-         strb = st_renderbuffer(intel_fb->Base.Attachment[BUFFER_FRONT_LEFT].Renderbuffer);
-         backSurf = strb->surface;
-      }
-
-      backRegion = backSurf->region;
-      srcpitch = backRegion->pitch;
+      const struct pipe_region *srcRegion = surf->region;
+      const int srcpitch= srcRegion->pitch;
 
       ASSERT(intel_fb);
       ASSERT(intel_fb->Base.Name == 0);    /* Not a user-created FBO */
-      ASSERT(backRegion);
-      ASSERT(backRegion->cpp == cpp);
+      ASSERT(srcRegion);
+      ASSERT(srcRegion->cpp == cpp);
 
       DBG(SWAP, "front pitch %d back pitch %d\n",
-	  pitch, backRegion->pitch);
+	  pitch, srcRegion->pitch);
 
       if (cpp == 2) {
 	 BR13 = (pitch * cpp) | (0xCC << 16) | (1 << 24);
@@ -164,12 +157,15 @@ intelCopyBuffer(__DRIdrawablePrivate * dPriv,
 	 if (pbox->x1 > pbox->x2 ||
 	     pbox->y1 > pbox->y2 ||
 	     pbox->x2 > intelScreen->front.width || 
-	     pbox->y2 > intelScreen->front.height)
+	     pbox->y2 > intelScreen->front.height) {
+            /* invalid cliprect, skip it */
 	    continue;
+         }
 
 	 box = *pbox;
 
 	 if (rect) {
+            /* intersect cliprect with user-provided src rect */
 	    drm_clip_rect_t rrect;
 
 	    rrect.x1 = dPriv->x + rect->x1;
@@ -212,7 +208,7 @@ intelCopyBuffer(__DRIdrawablePrivate * dPriv,
 		   DRM_BO_MASK_MEM | DRM_BO_FLAG_WRITE, 0);
 	 OUT_BATCH((sbox.y1 << 16) | sbox.x1);
 	 OUT_BATCH((srcpitch * cpp) & 0xffff);
-	 OUT_RELOC(dri_bo(backRegion->buffer),
+	 OUT_RELOC(dri_bo(srcRegion->buffer),
                    DRM_BO_FLAG_MEM_TT | DRM_BO_FLAG_READ,
 		   DRM_BO_MASK_MEM | DRM_BO_FLAG_READ, 0);
 
@@ -590,10 +586,13 @@ intelSwapBuffers(__DRIdrawablePrivate * dPriv)
 	 _mesa_notifySwapBuffers(ctx);  /* flush pending rendering comands */
 
          if (!intelScheduleSwap(dPriv, &missed_target)) {
+            struct pipe_surface *back_surf
+               = get_color_surface(intel_fb, BUFFER_BACK_LEFT);
+
 	    driWaitForVBlank(dPriv, &intel_fb->vbl_seq, intel_fb->vblank_flags,
 			     &missed_target);
 
-            intelCopyBuffer(dPriv, NULL);
+            intelDisplayBuffer(dPriv, back_surf, NULL);
 	 }
 
 	 intel_fb->swap_count++;
@@ -621,6 +620,10 @@ intelCopySubBuffer(__DRIdrawablePrivate * dPriv, int x, int y, int w, int h)
       GLcontext *ctx = intel->st->ctx;
 
       if (ctx->Visual.doubleBufferMode) {
+         struct intel_framebuffer *intel_fb = dPriv->driverPrivate;
+         struct pipe_surface *back_surf
+            = get_color_surface(intel_fb, BUFFER_BACK_LEFT);
+
          drm_clip_rect_t rect;
 	 /* fixup cliprect (driDrawable may have changed?) later */
          rect.x1 = x;
@@ -628,7 +631,7 @@ intelCopySubBuffer(__DRIdrawablePrivate * dPriv, int x, int y, int w, int h)
          rect.x2 = w;
          rect.y2 = h;
          _mesa_notifySwapBuffers(ctx);  /* flush pending rendering comands */
-         intelCopyBuffer(dPriv, &rect);
+         intelDisplayBuffer(dPriv, back_surf, &rect);
       }
    }
    else {

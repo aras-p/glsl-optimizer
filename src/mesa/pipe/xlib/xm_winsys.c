@@ -157,14 +157,14 @@ xm_buffer_get_subdata(struct pipe_winsys *pws, struct pipe_buffer_handle *buf,
 }
 
 static void
-xm_flush_frontbuffer(struct pipe_winsys *pws)
+xm_flush_frontbuffer(struct pipe_winsys *pws,
+                     struct pipe_surface *surf )
 {
-   /*
-   struct intel_context *intel = intel_pipe_winsys(sws)->intel;
-   __DRIdrawablePrivate *dPriv = intel->driDrawable;
-   
-   intelCopyBuffer(dPriv, NULL);
-   */
+   /* The Xlib driver's front color surfaces are actually X Windows so
+    * this flush is a no-op.
+    * If we instead did front buffer rendering to a temporary XImage,
+    * this would be the place to copy the Ximage to the on-screen Window.
+    */
 }
 
 static void

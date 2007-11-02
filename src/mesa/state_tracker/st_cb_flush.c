@@ -35,6 +35,7 @@
 #include "main/macros.h"
 #include "st_context.h"
 #include "st_cb_flush.h"
+#include "st_cb_fbo.h"
 #include "pipe/p_context.h"
 #include "pipe/p_defines.h"
 #include "pipe/p_winsys.h"
@@ -59,9 +60,13 @@ static void st_flush(GLcontext *ctx)
 
 
    if (st->flags.frontbuffer_dirty) {
+      struct st_renderbuffer *strb
+         = st_renderbuffer(ctx->DrawBuffer->Attachment[BUFFER_FRONT_LEFT].Renderbuffer);
+      struct pipe_surface *front_surf = strb->surface;
+
       /* Hook for copying "fake" frontbuffer if necessary:
        */
-      st->pipe->winsys->flush_frontbuffer( st->pipe->winsys );
+      st->pipe->winsys->flush_frontbuffer( st->pipe->winsys, front_surf );
       st->flags.frontbuffer_dirty = 0;
    }
 }

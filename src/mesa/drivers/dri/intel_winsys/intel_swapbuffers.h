@@ -62,8 +62,9 @@ struct intel_framebuffer
 };
 
 
-void intelCopyBuffer(__DRIdrawablePrivate * dPriv,
-		     const drm_clip_rect_t * rect);
+extern void intelDisplayBuffer(__DRIdrawablePrivate * dPriv,
+                               struct pipe_surface *surf,
+                               const drm_clip_rect_t * rect);
 
 extern void intel_wait_flips(struct intel_context *intel, GLuint batch_flags);
 

@@ -53,6 +53,7 @@ struct pipe_buffer_handle;
 
 
 struct pipe_region;
+struct pipe_surface;
 
 /** Opaque type */
 struct pipe_buffer_handle;
@@ -63,7 +64,8 @@ struct pipe_winsys
     * Do any special operations to ensure frontbuffer contents are
     * displayed, eg copy fake frontbuffer.
     */
-   void (*flush_frontbuffer)( struct pipe_winsys *sws );
+   void (*flush_frontbuffer)( struct pipe_winsys *sws,
+                              struct pipe_surface *surf );
 
    /** Debug output */
    void (*printf)( struct pipe_winsys *sws,
