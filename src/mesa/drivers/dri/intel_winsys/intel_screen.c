@@ -383,7 +383,7 @@ intelSetTexOffset(__DRIcontext *pDRICtx, GLint texname,
       return;
 
    if (stObj->mt)
-      st_miptree_release(intel->pipe, &stObj->mt);
+      st_miptree_release(intel->st->pipe, &stObj->mt);
 
    stObj->imageOverride = GL_TRUE;
    stObj->depthOverride = depth;

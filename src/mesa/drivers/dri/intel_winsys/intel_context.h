@@ -50,8 +50,6 @@ struct intel_context
 {
    struct st_context *st;
 
-   struct pipe_context *pipe;  /**< a softpipe or i915simple context */
-
    GLint refcount;
 
    struct _DriFenceObject *last_swap_fence;

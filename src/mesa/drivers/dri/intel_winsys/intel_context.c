@@ -175,6 +175,7 @@ intelCreateContext(const __GLcontextModes * mesaVis,
    drmI830Sarea *saPriv = intelScreen->sarea;
    int fthrottle_mode;
    GLboolean havePools;
+   struct pipe_context *pipe;
 
 #if 0
    intelInitDriverFunctions(&functions);
@@ -245,7 +246,7 @@ intelCreateContext(const __GLcontextModes * mesaVis,
     * Pipe-related setup
     */
    if (!getenv("INTEL_HW")) {
-      intel->pipe = intel_create_softpipe( intel );
+      pipe = intel_create_softpipe( intel );
    }
    else {
       switch (intel->intelScreen->deviceID) {
@@ -257,21 +258,21 @@ intelCreateContext(const __GLcontextModes * mesaVis,
       case PCI_CHIP_Q35_G:
       case PCI_CHIP_I915_G:
       case PCI_CHIP_I915_GM:
-	 intel->pipe = intel_create_i915simple( intel );
+	 pipe = intel_create_i915simple( intel );
 	 break;
       default:
 	 _mesa_printf("Unknown PCIID %x in %s, using software driver\n", 
 		      intel->intelScreen->deviceID, __FUNCTION__);
 
-	 intel->pipe = intel_create_softpipe( intel );
+	 pipe = intel_create_softpipe( intel );
 	 break;
       }
    }
 
 #if 0
-   st_create_context( &intel->ctx, intel->pipe ); 
+   st_create_context( &intel->ctx, pipe ); 
 #else
-   intel->st = st_create_context2(intel->pipe,  mesaVis, NULL);
+   intel->st = st_create_context2(pipe,  mesaVis, NULL);
    intel->st->ctx->DriverCtx = intel;
 #endif
 
