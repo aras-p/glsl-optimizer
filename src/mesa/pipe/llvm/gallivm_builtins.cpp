@@ -114,6 +114,18 @@ Function* func_cosf = new Function(
   /*Name=*/"cosf", mod); // (external, no body)
 func_cosf->setCallingConv(CallingConv::C);
 
+Function* func_scs = new Function(
+  /*Type=*/FuncTy_5,
+  /*Linkage=*/GlobalValue::ExternalLinkage,
+  /*Name=*/"scs", mod); 
+func_scs->setCallingConv(CallingConv::C);
+
+Function* func_sinf = new Function(
+  /*Type=*/FuncTy_12,
+  /*Linkage=*/GlobalValue::ExternalLinkage,
+  /*Name=*/"sinf", mod); // (external, no body)
+func_sinf->setCallingConv(CallingConv::C);
+
 // Global Variable Declarations
 
 
@@ -391,6 +403,28 @@ gvar_array__str1->setInitializer(const_array_14);
   int32_call43->setCallingConv(CallingConv::C);
   int32_call43->setTailCall(true);
   new ReturnInst(packed_tmp30, label_entry_51);
+  
+}
+
+// Function: scs (func_scs)
+{
+  Function::arg_iterator args = func_scs->arg_begin();
+  Value* packed_val_55 = args++;
+  packed_val_55->setName("val");
+  
+  BasicBlock* label_entry_56 = new BasicBlock("entry",func_scs,0);
+  
+  // Block entry (label_entry_56)
+  ExtractElementInst* float_tmp2 = new ExtractElementInst(packed_val_55, const_int32_18, "tmp2", label_entry_56);
+  CallInst* float_call_57 = new CallInst(func_cosf, float_tmp2, "call", label_entry_56);
+  float_call_57->setCallingConv(CallingConv::C);
+  float_call_57->setTailCall(true);
+  InsertElementInst* packed_tmp5 = new InsertElementInst(const_packed_34, float_call_57, const_int32_18, "tmp5", label_entry_56);
+  CallInst* float_call7 = new CallInst(func_sinf, float_tmp2, "call7", label_entry_56);
+  float_call7->setCallingConv(CallingConv::C);
+  float_call7->setTailCall(true);
+  InsertElementInst* packed_tmp9 = new InsertElementInst(packed_tmp5, float_call7, const_int32_22, "tmp9", label_entry_56);
+  new ReturnInst(packed_tmp9, label_entry_56);
   
 }
 

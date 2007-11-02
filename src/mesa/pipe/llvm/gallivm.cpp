@@ -502,7 +502,9 @@ translate_instruction(llvm::Module *module,
       out = instr->cmp(inputs[0], inputs[1], inputs[2]);
    }
       break;
-   case TGSI_OPCODE_SCS:
+   case TGSI_OPCODE_SCS: {
+      out = instr->scs(inputs[0]);
+   }
       break;
    case TGSI_OPCODE_TXB:
       break;

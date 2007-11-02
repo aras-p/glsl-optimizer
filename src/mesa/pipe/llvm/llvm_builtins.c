@@ -71,6 +71,7 @@ inline float4 cmp(float4 tmp0, float4 tmp1, float4 tmp2)
 }
 
 extern float cosf(float  val);
+extern float sinf(float  val);
 
 inline float4 vcos(float4 val)
 {
@@ -81,5 +82,14 @@ inline float4 vcos(float4 val)
    result.z = cosf(val.x);
    result.w = cosf(val.x);
    printf("VEC OUT  is %f %f %f %f\n", result.x, result.y, result.z, result.w);
+   return result;
+}
+
+inline float4 scs(float4 val)
+{
+   float4 result;
+   float tmp = val.x;
+   result.x = cosf(tmp);
+   result.y = sinf(tmp);
    return result;
 }

@@ -864,4 +864,15 @@ llvm::Value * Instructions::cos(llvm::Value *in)
 #endif
 }
 
+llvm::Value * Instructions::scs(llvm::Value *in)
+{
+   llvm::Function *func = m_mod->getFunction("scs");
+   assert(func);
+
+   CallInst *call = m_builder.CreateCall(func, in, name("scsres"));
+   call->setTailCall(false);
+   return call;
+}
+
 #endif //MESA_LLVM
+

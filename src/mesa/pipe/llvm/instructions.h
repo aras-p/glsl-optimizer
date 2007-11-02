@@ -92,6 +92,7 @@ public:
    llvm::Value *pow(llvm::Value *in1, llvm::Value *in2);
    llvm::Value *rcp(llvm::Value *in);
    llvm::Value *rsq(llvm::Value *in);
+   llvm::Value *scs(llvm::Value *in);
    llvm::Value *sge(llvm::Value *in1, llvm::Value *in2);
    llvm::Value *sgt(llvm::Value *in1, llvm::Value *in2);
    llvm::Value *slt(llvm::Value *in1, llvm::Value *in2);
