@@ -38,6 +38,28 @@
 #include "state_tracker/st_cb_fbo.h"
 
 
+static struct intel_context *
+intelScreenContext(intelScreenPrivate *intelScreen)
+{
+  /*
+   * This should probably change to have the screen allocate a dummy
+   * context at screen creation. For now just use the current context.
+   */
+
+  GET_CURRENT_CONTEXT(ctx);
+  if (ctx == NULL) {
+     /* need a context for the first time makecurrent is called (for hw lock
+        when allocating priv buffers) */
+     if (intelScreen->dummyctxptr == NULL) {
+        _mesa_problem(NULL, "No current context in intelScreenContext\n");
+        return NULL;
+     }
+     return intelScreen->dummyctxptr;
+  }
+
+  return intel_context(ctx);
+}
+
 
 /**
  * Return the pipe_surface for the given renderbuffer.

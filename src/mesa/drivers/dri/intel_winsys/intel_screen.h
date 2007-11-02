@@ -97,8 +97,6 @@ extern struct _DriBufferPool *driBatchPoolInit(int fd, unsigned flags,
                                                unsigned numBufs,
                                                unsigned checkDelayed);
 
-extern struct intel_context *intelScreenContext(intelScreenPrivate *intelScreen);
-
 extern GLboolean
 intelCreatePools(intelScreenPrivate *intelScreen);
 
