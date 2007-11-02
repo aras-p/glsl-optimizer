@@ -91,9 +91,6 @@ void UNLOCK_HARDWARE( struct intel_context *intel );
 
 extern char *__progname;
 
-/* Will become a call into state_tracker:
- */
-#define INTEL_FIREVERTICES(intel)	       
 
 
 /* ================================================================

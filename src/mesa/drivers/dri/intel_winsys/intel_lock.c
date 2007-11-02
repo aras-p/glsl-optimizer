@@ -93,7 +93,7 @@ intelContendedLock(struct intel_context *intel, GLuint flags)
        */
       intel->numClipRects = 0;
 
-      INTEL_FIREVERTICES(intel);
+      st_flush(intel->st);
 
       if (intel->batch->map != intel->batch->ptr)
 	 intel_batchbuffer_flush(intel->batch);
