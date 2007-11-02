@@ -39,16 +39,6 @@ struct intel_framebuffer
 {
    struct gl_framebuffer Base;
 
-#define PF 0
-#if PF
-   /* Drawable page flipping state */
-   GLboolean pf_active;
-   GLuint pf_seq;
-   GLint pf_planes;
-   GLint pf_current_page;
-   GLint pf_num_pages;
-#endif
-
    /* VBI
     */
    GLuint vbl_seq;
@@ -68,8 +58,6 @@ struct intel_framebuffer
 extern void intelDisplayBuffer(__DRIdrawablePrivate * dPriv,
                                struct pipe_surface *surf,
                                const drm_clip_rect_t * rect);
-
-extern void intel_wait_flips(struct intel_context *intel, GLuint batch_flags);
 
 extern void intelSwapBuffers(__DRIdrawablePrivate * dPriv);
 
