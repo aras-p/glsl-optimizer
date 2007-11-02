@@ -192,7 +192,7 @@ intel_flush_frontbuffer( struct pipe_winsys *sws,
    struct intel_context *intel = intel_pipe_winsys(sws)->intel;
    __DRIdrawablePrivate *dPriv = intel->driDrawable;
 
-   intelDisplayBuffer(dPriv, surf, NULL);
+   intelDisplaySurface(dPriv, surf, NULL);
 }
 
 

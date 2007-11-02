@@ -66,9 +66,9 @@ get_color_surface(struct intel_framebuffer *intel_fb,
  * \param rect  optional subrect of surface to display (may be NULL).
  */
 void
-intelDisplayBuffer(__DRIdrawablePrivate * dPriv,
-                   struct pipe_surface *surf,
-                   const drm_clip_rect_t * rect)
+intelDisplaySurface(__DRIdrawablePrivate * dPriv,
+                    struct pipe_surface *surf,
+                    const drm_clip_rect_t * rect)
 {
    struct intel_context *intel;
    const intelScreenPrivate *intelScreen
@@ -250,7 +250,7 @@ intelSwapBuffers(__DRIdrawablePrivate * dPriv)
 
 	 _mesa_notifySwapBuffers(ctx);  /* flush pending rendering comands */
 
-         intelDisplayBuffer(dPriv, back_surf, NULL);
+         intelDisplaySurface(dPriv, back_surf, NULL);
       }
    }
    else {
@@ -284,7 +284,7 @@ intelCopySubBuffer(__DRIdrawablePrivate * dPriv, int x, int y, int w, int h)
          rect.x2 = w;
          rect.y2 = h;
          _mesa_notifySwapBuffers(ctx);  /* flush pending rendering comands */
-         intelDisplayBuffer(dPriv, back_surf, &rect);
+         intelDisplaySurface(dPriv, back_surf, &rect);
       }
    }
    else {

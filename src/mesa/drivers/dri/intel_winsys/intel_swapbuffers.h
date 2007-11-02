@@ -42,9 +42,9 @@ struct intel_framebuffer
 };
 
 
-extern void intelDisplayBuffer(__DRIdrawablePrivate * dPriv,
-                               struct pipe_surface *surf,
-                               const drm_clip_rect_t * rect);
+extern void intelDisplaySurface(__DRIdrawablePrivate * dPriv,
+                                struct pipe_surface *surf,
+                                const drm_clip_rect_t * rect);
 
 extern void intelSwapBuffers(__DRIdrawablePrivate * dPriv);
 
