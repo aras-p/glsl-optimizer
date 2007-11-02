@@ -155,16 +155,6 @@ void st_destroy_context( struct st_context *st )
 }
 
  
-struct st_framebuffer *st_create_framebuffer( const __GLcontextModes *visual )
-{
-   struct st_framebuffer *stfb
-      = CALLOC_STRUCT(st_framebuffer);
-   if (stfb) {
-   }
-   return stfb;
-}
-
-
 void st_make_current(struct st_context *st,
                      struct st_framebuffer *draw,
                      struct st_framebuffer *read)
