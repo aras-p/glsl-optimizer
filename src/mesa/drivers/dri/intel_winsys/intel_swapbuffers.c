@@ -243,12 +243,6 @@ intelWindowMoved(struct intel_context *intel)
    __DRIdrawablePrivate *dPriv = intel->driDrawable;
    struct intel_framebuffer *intel_fb = dPriv->driverPrivate;
 
-   if (!intel->st->ctx->DrawBuffer) {
-      /* when would this happen? -BP */
-      assert(0);
-      intel->numClipRects = 0;
-   }
-
    /* Update Mesa's notion of window size */
    intelUpdateFramebufferSize(ctx, dPriv);
    intel_fb->Base.Initialized = GL_TRUE; /* XXX remove someday */
@@ -257,10 +251,12 @@ intelWindowMoved(struct intel_context *intel)
       drmI830Sarea *sarea = intel->sarea;
       drm_clip_rect_t drw_rect = { .x1 = dPriv->x, .x2 = dPriv->x + dPriv->w,
 				   .y1 = dPriv->y, .y2 = dPriv->y + dPriv->h };
-      drm_clip_rect_t pipeA_rect = { .x1 = sarea->pipeA_x, .y1 = sarea->pipeA_y,
+      drm_clip_rect_t pipeA_rect = { .x1 = sarea->pipeA_x,
+                                     .y1 = sarea->pipeA_y,
 				     .x2 = sarea->pipeA_x + sarea->pipeA_w,
 				     .y2 = sarea->pipeA_y + sarea->pipeA_h };
-      drm_clip_rect_t pipeB_rect = { .x1 = sarea->pipeB_x, .y1 = sarea->pipeB_y,
+      drm_clip_rect_t pipeB_rect = { .x1 = sarea->pipeB_x,
+                                     .y1 = sarea->pipeB_y,
 				     .x2 = sarea->pipeB_x + sarea->pipeB_w,
 				     .y2 = sarea->pipeB_y + sarea->pipeB_h };
       GLint areaA = driIntersectArea( drw_rect, pipeA_rect );
@@ -326,10 +322,6 @@ intelWindowMoved(struct intel_context *intel)
       }
 
       intel_fb->pf_active = pf_active;
-#if 0
-      intel_flip_renderbuffers(intel_fb);
-      intel_draw_buffer(&intel->ctx, intel->ctx.DrawBuffer);
-#endif
 
       /* Update vblank info
        */
@@ -368,15 +360,6 @@ intelWindowMoved(struct intel_context *intel)
       }
    }
 
-   /* This will be picked up by looking at the dirty state flags:
-    */
-
-   /* Update hardware scissor */
-//   ctx->Driver.Scissor(ctx, ctx->Scissor.X, ctx->Scissor.Y,
-//                       ctx->Scissor.Width, ctx->Scissor.Height);
-
-   /* Re-calculate viewport related state */
-//   ctx->Driver.DepthRange( ctx, ctx->Viewport.Near, ctx->Viewport.Far );
 }
 
 
