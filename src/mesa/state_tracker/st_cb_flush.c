@@ -33,6 +33,7 @@
 
 #include "main/glheader.h"
 #include "main/macros.h"
+#include "main/context.h"
 #include "st_context.h"
 #include "st_cb_flush.h"
 #include "st_cb_fbo.h"
