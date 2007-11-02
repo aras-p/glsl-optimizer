@@ -39,22 +39,6 @@ struct intel_framebuffer
 {
    struct gl_framebuffer Base;
 
-#define VBL 0
-#if VBL
-   /* VBI
-    */
-   GLuint vbl_seq;
-   GLuint vblank_flags;
-   GLuint vbl_waited;
-
-   int64_t swap_ust;
-   int64_t swap_missed_ust;
-
-   GLuint swap_count;
-   GLuint swap_missed_count;
-
-   GLuint vbl_pending[3];  /**< [number of color buffers] */
-#endif
 };
 
 

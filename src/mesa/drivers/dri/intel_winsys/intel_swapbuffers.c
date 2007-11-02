@@ -230,114 +230,8 @@ intelWindowMoved(struct intel_context *intel)
    /* Update Mesa's notion of window size */
    intelUpdateFramebufferSize(ctx, dPriv);
    intel_fb->Base.Initialized = GL_TRUE; /* XXX remove someday */
-
-#if VBL
-   {
-      drmI830Sarea *sarea = intel->sarea;
-      drm_clip_rect_t drw_rect = { .x1 = dPriv->x, .x2 = dPriv->x + dPriv->w,
-				   .y1 = dPriv->y, .y2 = dPriv->y + dPriv->h };
-      drm_clip_rect_t pipeA_rect = { .x1 = sarea->pipeA_x,
-                                     .y1 = sarea->pipeA_y,
-				     .x2 = sarea->pipeA_x + sarea->pipeA_w,
-				     .y2 = sarea->pipeA_y + sarea->pipeA_h };
-      drm_clip_rect_t pipeB_rect = { .x1 = sarea->pipeB_x,
-                                     .y1 = sarea->pipeB_y,
-				     .x2 = sarea->pipeB_x + sarea->pipeB_w,
-				     .y2 = sarea->pipeB_y + sarea->pipeB_h };
-      GLint areaA = driIntersectArea( drw_rect, pipeA_rect );
-      GLint areaB = driIntersectArea( drw_rect, pipeB_rect );
-      GLuint flags = intel_fb->vblank_flags;
-
-      /* Update vblank info
-       */
-      if (areaB > areaA || (areaA == areaB && areaB > 0)) {
-	 flags = intel_fb->vblank_flags | VBLANK_FLAG_SECONDARY;
-      } else {
-	 flags = intel_fb->vblank_flags & ~VBLANK_FLAG_SECONDARY;
-      }
-
-      if (flags != intel_fb->vblank_flags && intel_fb->vblank_flags &&
-	  !(intel_fb->vblank_flags & VBLANK_FLAG_NO_IRQ)) {
-	 drmVBlank vbl;
-
-	 vbl.request.type = DRM_VBLANK_ABSOLUTE;
-
-	 if ( intel_fb->vblank_flags & VBLANK_FLAG_SECONDARY ) {
-	    vbl.request.type |= DRM_VBLANK_SECONDARY;
-	 }
-
-	 intel_fb->vblank_flags = flags;
-	 driGetCurrentVBlank(dPriv, intel_fb->vblank_flags, &intel_fb->vbl_seq);
-	 intel_fb->vbl_waited = intel_fb->vbl_seq;
-
-      }
-   }
-#endif
 }
 
-
-
-#if VBL
-static GLboolean
-intelScheduleSwap(const __DRIdrawablePrivate * dPriv, GLboolean *missed_target)
-{
-   struct intel_framebuffer *intel_fb = dPriv->driverPrivate;
-   unsigned int interval = driGetVBlankInterval(dPriv, intel_fb->vblank_flags);
-   struct intel_context *intel =
-      intelScreenContext(dPriv->driScreenPriv->private);
-   unsigned int target;
-   drm_i915_vblank_swap_t swap;
-   GLboolean ret;
-
-   /* XXX: Scheduled buffer swaps don't work with private back buffers yet */
-   if (1 || !intel_fb->vblank_flags ||
-       (intel_fb->vblank_flags & VBLANK_FLAG_NO_IRQ))
-      return GL_FALSE;
-
-   swap.seqtype = DRM_VBLANK_ABSOLUTE;
-
-   if (intel_fb->vblank_flags & VBLANK_FLAG_SYNC) {
-      swap.seqtype |= DRM_VBLANK_NEXTONMISS;
-   } else if (interval == 0) {
-      return GL_FALSE;
-   }
-
-   swap.drawable = dPriv->hHWDrawable;
-   target = swap.sequence = intel_fb->vbl_seq + interval;
-
-   if ( intel_fb->vblank_flags & VBLANK_FLAG_SECONDARY ) {
-      swap.seqtype |= DRM_VBLANK_SECONDARY;
-   }
-
-   LOCK_HARDWARE(intel);
-
-   intel_batchbuffer_flush(intel->batch);
-
-   if (!drmCommandWriteRead(intel->driFd, DRM_I915_VBLANK_SWAP, &swap,
-			    sizeof(swap))) {
-      intel_fb->vbl_seq = swap.sequence;
-      swap.sequence -= target;
-      *missed_target = swap.sequence > 0 && swap.sequence <= (1 << 23);
-
-#if 1
-      intel_fb->vbl_pending[1] = intel_fb->vbl_pending[0] = intel_fb->vbl_seq;
-#else
-      intel_get_renderbuffer(&intel_fb->Base, BUFFER_BACK_LEFT)->vbl_pending =
-	 intel_get_renderbuffer(&intel_fb->Base,
-				BUFFER_FRONT_LEFT)->vbl_pending =
-	 intel_fb->vbl_seq;
-#endif
-
-      ret = GL_TRUE;
-   } else {
-      ret = GL_FALSE;
-   }
-
-   UNLOCK_HARDWARE(intel);
-
-   return ret;
-}
-#endif
 
 
 void
@@ -359,34 +253,12 @@ intelSwapBuffers(__DRIdrawablePrivate * dPriv)
 
 	 _mesa_notifySwapBuffers(ctx);  /* flush pending rendering comands */
 
-#if VBL
-         if (!intelScheduleSwap(dPriv, &missed_target)) {
-            struct pipe_surface *back_surf
-               = get_color_surface(intel_fb, BUFFER_BACK_LEFT);
-
-	    driWaitForVBlank(dPriv, &intel_fb->vbl_seq, intel_fb->vblank_flags,
-			     &missed_target);
-
-            intelDisplayBuffer(dPriv, back_surf, NULL);
-	 }
-#else
          {
             struct pipe_surface *back_surf
                = get_color_surface(intel_fb, BUFFER_BACK_LEFT);
             intelDisplayBuffer(dPriv, back_surf, NULL);
          }
-#endif
 
-#if VBL
-	 intel_fb->swap_count++;
-	 (*dri_interface->getUST) (&ust);
-	 if (missed_target) {
-	    intel_fb->swap_missed_count++;
-	    intel_fb->swap_missed_ust = ust - intel_fb->swap_ust;
-	 }
-
-	 intel_fb->swap_ust = ust;
-#endif
       }
    }
    else {

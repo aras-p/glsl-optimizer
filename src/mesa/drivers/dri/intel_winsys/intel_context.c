@@ -392,20 +392,6 @@ intelMakeCurrent(__DRIcontextPrivate * driContextPriv,
 
 	 if (intel->driDrawable != driDrawPriv) {
 	    if (driDrawPriv->pdraw->swap_interval == (unsigned)-1) {
-#if VBL
-	       int i;
-
-	       intel_fb->vblank_flags = driGetDefaultVBlankFlags(&intel->optionCache);
-
-	       (*dri_interface->getUST) (&intel_fb->swap_ust);
-	       driDrawableInitVBlank(driDrawPriv, intel_fb->vblank_flags,
-				     &intel_fb->vbl_seq);
-	       intel_fb->vbl_waited = intel_fb->vbl_seq;
-
-	       for (i = 0; i < 2; i++) {
-                  intel_fb->vbl_pending[i] = intel_fb->vbl_seq;
-	       }
-#endif
 	    }
 	 }
       }

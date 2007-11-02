@@ -127,24 +127,6 @@ void LOCK_HARDWARE( struct intel_context *intel )
 
     curbuf = 0; /* current draw buf: 0 = front, 1 = back */
 
-#if VBL
-    if (intel_fb && intel_fb->vblank_flags &&
-	!(intel_fb->vblank_flags & VBLANK_FLAG_NO_IRQ) &&
-	(intel_fb->vbl_waited - intel_fb->vbl_pending[curbuf]) > (1<<23)) {
-       drmVBlank vbl;
-
-       vbl.request.type = DRM_VBLANK_ABSOLUTE;
-
-       if ( intel_fb->vblank_flags & VBLANK_FLAG_SECONDARY ) {
-          vbl.request.type |= DRM_VBLANK_SECONDARY;
-       }
-
-       vbl.request.sequence = intel_fb->vbl_pending[curbuf];
-       drmWaitVBlank(intel->driFd, &vbl);
-       intel_fb->vbl_waited = vbl.reply.sequence;
-    }
-#endif
-
     DRM_CAS(intel->driHwLock, intel->hHWContext,
             (DRM_LOCK_HELD|intel->hHWContext), __ret);
 
