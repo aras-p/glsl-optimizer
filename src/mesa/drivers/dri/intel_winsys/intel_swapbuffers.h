@@ -29,8 +29,6 @@
 #define INTEL_BUFFERS_H
 
 
-struct intel_context;
-struct intel_framebuffer;
 
 /**
  * Intel framebuffer, derived from gl_framebuffer.
