@@ -32,12 +32,9 @@
 
 #include "mtypes.h"
 #include "drm.h"
-#include "mm.h"
-#include "texmem.h"
 
 #include "intel_screen.h"
 #include "i915_drm.h"
-#include "i830_common.h"
 
 
 struct pipe_context;
