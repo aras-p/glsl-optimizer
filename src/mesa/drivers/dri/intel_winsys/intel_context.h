@@ -139,12 +139,6 @@ extern int __intel_debug;
 #define PCI_CHIP_Q33_G			0x29D2
 
 
-/* ================================================================
- * intel_context.c:
- */
-
-extern void intelFlush(GLcontext * ctx);
-
 /*======================================================================
  * Inline conversion functions.  
  * These are better-typed than the macros used previously:

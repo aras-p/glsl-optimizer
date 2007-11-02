@@ -417,7 +417,7 @@ intelPageFlip(const __DRIdrawablePrivate * dPriv)
    if (intel->intelScreen->drmMinor < 9)
       return GL_FALSE;
 
-   intelFlush(&intel->ctx);
+   st_flush(intel->st);
 
    ret = 0;
 

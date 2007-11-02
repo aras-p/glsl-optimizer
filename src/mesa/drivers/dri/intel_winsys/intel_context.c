@@ -147,20 +147,6 @@ static const struct dri_debug_control debug_control[] = {
 #endif
 
 
-void
-intelFlush(GLcontext * ctx)
-{
-   struct intel_context *intel = intel_context(ctx);
-
-   /* Hmm:
-    */
-   intel->pipe->flush( intel->pipe, 0 );
-}
-
-
-
-
-
 static void
 intelInitDriverFunctions(struct dd_function_table *functions)
 {
@@ -344,11 +330,7 @@ GLboolean
 intelUnbindContext(__DRIcontextPrivate * driContextPriv)
 {
    struct intel_context *intel = (struct intel_context *) driContextPriv->driverPrivate;
-   /* XXX UnbindContext is called AFTER the new context is made current.
-      Hopefully shouldn't be a problem ? */
-   GLcontext *ctx = intel->st->ctx;
-   FLUSH_VERTICES(ctx, 0);
-   intelFlush(ctx);
+   st_flush(intel->st);
    return GL_TRUE;
 }
 
