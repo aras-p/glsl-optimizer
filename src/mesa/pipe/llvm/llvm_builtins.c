@@ -93,3 +93,16 @@ inline float4 scs(float4 val)
    result.y = sinf(tmp);
    return result;
 }
+
+
+inline float4 vsin(float4 val)
+{
+   float4 result;
+   float tmp = val.x;
+   float res = sinf(tmp);
+   result.x = res;
+   result.y = res;
+   result.z = res;
+   result.w = res;
+   return result;
+}

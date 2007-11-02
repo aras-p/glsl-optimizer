@@ -95,6 +95,7 @@ public:
    llvm::Value *scs(llvm::Value *in);
    llvm::Value *sge(llvm::Value *in1, llvm::Value *in2);
    llvm::Value *sgt(llvm::Value *in1, llvm::Value *in2);
+   llvm::Value *sin(llvm::Value *in);
    llvm::Value *slt(llvm::Value *in1, llvm::Value *in2);
    llvm::Value *sub(llvm::Value *in1, llvm::Value *in2);
    llvm::Value *trunc(llvm::Value *in);

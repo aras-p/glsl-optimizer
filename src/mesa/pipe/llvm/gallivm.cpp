@@ -452,7 +452,9 @@ translate_instruction(llvm::Module *module,
       out = instr->sgt(inputs[0], inputs[1]);
    }
       break;
-   case TGSI_OPCODE_SIN:
+   case TGSI_OPCODE_SIN: {
+      out = instr->sin(inputs[0]);
+   }
       break;
    case TGSI_OPCODE_SLE:
       break;

@@ -126,6 +126,12 @@ Function* func_sinf = new Function(
   /*Name=*/"sinf", mod); // (external, no body)
 func_sinf->setCallingConv(CallingConv::C);
 
+Function* func_vsin = new Function(
+  /*Type=*/FuncTy_5,
+  /*Linkage=*/GlobalValue::ExternalLinkage,
+  /*Name=*/"vsin", mod); 
+func_vsin->setCallingConv(CallingConv::C);
+
 // Global Variable Declarations
 
 
@@ -425,6 +431,27 @@ gvar_array__str1->setInitializer(const_array_14);
   float_call7->setTailCall(true);
   InsertElementInst* packed_tmp9 = new InsertElementInst(packed_tmp5, float_call7, const_int32_22, "tmp9", label_entry_56);
   new ReturnInst(packed_tmp9, label_entry_56);
+  
+}
+
+// Function: vsin (func_vsin)
+{
+  Function::arg_iterator args = func_vsin->arg_begin();
+  Value* packed_val_59 = args++;
+  packed_val_59->setName("val");
+  
+  BasicBlock* label_entry_60 = new BasicBlock("entry",func_vsin,0);
+  
+  // Block entry (label_entry_60)
+  ExtractElementInst* float_tmp2_61 = new ExtractElementInst(packed_val_59, const_int32_18, "tmp2", label_entry_60);
+  CallInst* float_call_62 = new CallInst(func_sinf, float_tmp2_61, "call", label_entry_60);
+  float_call_62->setCallingConv(CallingConv::C);
+  float_call_62->setTailCall(true);
+  InsertElementInst* packed_tmp6 = new InsertElementInst(const_packed_34, float_call_62, const_int32_18, "tmp6", label_entry_60);
+  InsertElementInst* packed_tmp9_63 = new InsertElementInst(packed_tmp6, float_call_62, const_int32_22, "tmp9", label_entry_60);
+  InsertElementInst* packed_tmp12_64 = new InsertElementInst(packed_tmp9_63, float_call_62, const_int32_24, "tmp12", label_entry_60);
+  InsertElementInst* packed_tmp15_65 = new InsertElementInst(packed_tmp12_64, float_call_62, const_int32_23, "tmp15", label_entry_60);
+  new ReturnInst(packed_tmp15_65, label_entry_60);
   
 }
 
