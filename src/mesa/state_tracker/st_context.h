@@ -167,6 +167,16 @@ static INLINE struct st_context *st_context(GLcontext *ctx)
 }
 
 
+/**
+ * Wrapper for GLframebuffer, nothing extra for now.
+ * This is an opaque type to the outside world.
+ */
+struct st_framebuffer
+{
+   GLframebuffer Base;
+};
+
+
 extern void st_init_driver_functions(struct dd_function_table *functions);
 
 

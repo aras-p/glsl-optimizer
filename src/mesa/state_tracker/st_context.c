@@ -155,6 +155,29 @@ void st_destroy_context( struct st_context *st )
 }
 
  
+struct st_framebuffer *st_create_framebuffer( const __GLcontextModes *visual )
+{
+   struct st_framebuffer *stfb
+      = CALLOC_STRUCT(st_framebuffer);
+   if (stfb) {
+   }
+   return stfb;
+}
+
+
+void st_make_current(struct st_context *st,
+                     struct st_framebuffer *draw,
+                     struct st_framebuffer *read)
+{
+   if (st) {
+      _mesa_make_current(st->ctx, &draw->Base, &read->Base);
+   }
+   else {
+      _mesa_make_current(NULL, NULL, NULL);
+   }
+}
+
+
 
 void st_init_driver_functions(struct dd_function_table *functions)
 {

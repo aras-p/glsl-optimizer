@@ -31,6 +31,8 @@
 #include "mtypes.h"
 
 struct st_context;
+struct st_framebuffer;
+
 struct pipe_context;
 
 struct st_context *st_create_context( GLcontext *ctx,
@@ -43,6 +45,12 @@ struct st_context *st_create_context2(struct pipe_context *pipe,
 void st_destroy_context( struct st_context *st );
 
 void st_destroy_context2( struct st_context *st );
+
+struct st_framebuffer *st_create_framebuffer( const __GLcontextModes *visual );
+
+void st_make_current(struct st_context *st,
+                     struct st_framebuffer *draw,
+                     struct st_framebuffer *read);
 
 void st_invalidate_state(GLcontext * ctx, GLuint new_state);
 
