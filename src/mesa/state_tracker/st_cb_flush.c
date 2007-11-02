@@ -55,7 +55,9 @@ void st_flush( struct st_context *st )
     */
    st->pipe->flush( st->pipe, 0 );
 
-   
+   if (!fb)
+      return;
+
    /* XXX: temporary hack.  This flag should only be set if we do any
     * rendering to the front buffer.
     */
