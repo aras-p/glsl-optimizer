@@ -40,7 +40,9 @@
 
 #include "x86/rtasm/x86sse.h"
 
+#ifdef MESA_LLVM
 #include "pipe/llvm/gallivm.h"
+#endif
 
 #include "sp_context.h"
 #include "sp_state.h"
@@ -56,7 +58,9 @@ struct quad_shade_stage
    struct tgsi_exec_machine machine;
    struct tgsi_exec_vector *inputs, *outputs;
    int colorOutSlot, depthOutSlot;
+#ifdef MESA_LLVM
    struct gallivm_prog *llvm_prog;
+#endif
 };
 
 
@@ -120,9 +124,6 @@ shade_quad(
    else
 #endif
    {
-#ifdef MESA_LLVM
-      /*ga_llvm_prog_exec(softpipe->fs->llvm_prog);*/
-#endif
       quad->mask &= tgsi_exec_machine_run( machine );
    }
 
@@ -159,6 +160,7 @@ shade_quad(
    }
 }
 
+#ifdef MESA_LLVM
 #define DLLVM 0
 static void
 shade_quad_llvm(struct quad_stage *qs,
@@ -256,6 +258,7 @@ shade_quad_llvm(struct quad_stage *qs,
       qs->next->run( qs->next, quad );
    }
 }
+#endif /*MESA_LLVM*/
 
 /**
  * Per-primitive (or per-begin?) setup
@@ -272,7 +275,9 @@ static void shade_begin(struct quad_stage *qs)
       qss->samplers[i].texture = softpipe->texture[i];
    }
 
+#ifdef MESA_LLVM
    qss->llvm_prog = softpipe->fs->llvm_prog;
+#endif
    /* XXX only do this if the fragment shader changes... */
    tgsi_exec_machine_init(&qss->machine,
                           softpipe->fs->shader.tokens,
