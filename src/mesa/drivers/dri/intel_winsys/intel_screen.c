@@ -363,6 +363,7 @@ intelGetSwapInfo(__DRIdrawablePrivate * dPriv, __DRIswapInfo * sInfo)
    }
 
    intel_fb = dPriv->driverPrivate;
+#if VBL
    sInfo->swap_count = intel_fb->swap_count;
    sInfo->swap_ust = intel_fb->swap_ust;
    sInfo->swap_missed_count = intel_fb->swap_missed_count;
@@ -370,6 +371,7 @@ intelGetSwapInfo(__DRIdrawablePrivate * dPriv, __DRIswapInfo * sInfo)
    sInfo->swap_missed_usage = (sInfo->swap_missed_count != 0)
       ? driCalculateSwapUsage(dPriv, 0, intel_fb->swap_missed_ust)
       : 0.0;
+#endif
 
    return 0;
 }

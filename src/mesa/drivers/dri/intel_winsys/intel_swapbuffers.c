@@ -231,6 +231,7 @@ intelWindowMoved(struct intel_context *intel)
    intelUpdateFramebufferSize(ctx, dPriv);
    intel_fb->Base.Initialized = GL_TRUE; /* XXX remove someday */
 
+#if VBL
    {
       drmI830Sarea *sarea = intel->sarea;
       drm_clip_rect_t drw_rect = { .x1 = dPriv->x, .x2 = dPriv->x + dPriv->w,
@@ -271,11 +272,12 @@ intelWindowMoved(struct intel_context *intel)
 
       }
    }
-
+#endif
 }
 
 
 
+#if VBL
 static GLboolean
 intelScheduleSwap(const __DRIdrawablePrivate * dPriv, GLboolean *missed_target)
 {
@@ -335,6 +337,8 @@ intelScheduleSwap(const __DRIdrawablePrivate * dPriv, GLboolean *missed_target)
 
    return ret;
 }
+#endif
+
 
 void
 intelSwapBuffers(__DRIdrawablePrivate * dPriv)
@@ -355,6 +359,7 @@ intelSwapBuffers(__DRIdrawablePrivate * dPriv)
 
 	 _mesa_notifySwapBuffers(ctx);  /* flush pending rendering comands */
 
+#if VBL
          if (!intelScheduleSwap(dPriv, &missed_target)) {
             struct pipe_surface *back_surf
                = get_color_surface(intel_fb, BUFFER_BACK_LEFT);
@@ -364,7 +369,15 @@ intelSwapBuffers(__DRIdrawablePrivate * dPriv)
 
             intelDisplayBuffer(dPriv, back_surf, NULL);
 	 }
+#else
+         {
+            struct pipe_surface *back_surf
+               = get_color_surface(intel_fb, BUFFER_BACK_LEFT);
+            intelDisplayBuffer(dPriv, back_surf, NULL);
+         }
+#endif
 
+#if VBL
 	 intel_fb->swap_count++;
 	 (*dri_interface->getUST) (&ust);
 	 if (missed_target) {
@@ -373,6 +386,7 @@ intelSwapBuffers(__DRIdrawablePrivate * dPriv)
 	 }
 
 	 intel_fb->swap_ust = ust;
+#endif
       }
    }
    else {

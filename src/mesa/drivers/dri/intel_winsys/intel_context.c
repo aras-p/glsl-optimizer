@@ -392,6 +392,7 @@ intelMakeCurrent(__DRIcontextPrivate * driContextPriv,
 
 	 if (intel->driDrawable != driDrawPriv) {
 	    if (driDrawPriv->pdraw->swap_interval == (unsigned)-1) {
+#if VBL
 	       int i;
 
 	       intel_fb->vblank_flags = driGetDefaultVBlankFlags(&intel->optionCache);
@@ -404,6 +405,7 @@ intelMakeCurrent(__DRIcontextPrivate * driContextPriv,
 	       for (i = 0; i < 2; i++) {
                   intel_fb->vbl_pending[i] = intel_fb->vbl_seq;
 	       }
+#endif
 	    }
 	 }
       }
