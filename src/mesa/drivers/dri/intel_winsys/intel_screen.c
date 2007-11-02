@@ -295,6 +295,11 @@ intelCreateBuffer(__DRIscreenPrivate * driScrnPriv,
 
       _mesa_initialize_framebuffer(&intel_fb->Base, mesaVis);
 
+      /*
+       * XXX Create pipe_surfaces for front/back buffers,
+       * hand them to state tracker to create a framebuffer object.
+       */
+
       {
 	 /* fake frontbuffer */
 	 /* XXX allocation should only happen in the unusual case
