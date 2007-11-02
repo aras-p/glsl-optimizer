@@ -86,9 +86,9 @@ intelDisplayBuffer(__DRIdrawablePrivate * dPriv,
                    struct pipe_surface *surf,
                    const drm_clip_rect_t * rect)
 {
-
    struct intel_context *intel;
-   const intelScreenPrivate *intelScreen;
+   const intelScreenPrivate *intelScreen
+      = (intelScreenPrivate *) dPriv->driScreenPriv->private;
 
    DBG(SWAP, "%s\n", __FUNCTION__);
 
@@ -97,8 +97,6 @@ intelDisplayBuffer(__DRIdrawablePrivate * dPriv,
    intel = intelScreenContext(dPriv->driScreenPriv->private);
    if (!intel)
       return;
-
-   intelScreen = intel->intelScreen;
 
    if (intel->last_swap_fence) {
       driFenceFinish(intel->last_swap_fence, DRM_FENCE_TYPE_EXE, GL_TRUE);
@@ -120,9 +118,8 @@ intelDisplayBuffer(__DRIdrawablePrivate * dPriv,
 
 
    if (dPriv && dPriv->numClipRects) {
-      struct intel_framebuffer *intel_fb = dPriv->driverPrivate;
-      const int backWidth = intel_fb->Base.Width;
-      const int backHeight = intel_fb->Base.Height;
+      const int srcWidth = surf->width;
+      const int srcHeight = surf->height;
       const int nbox = dPriv->numClipRects;
       const drm_clip_rect_t *pbox = dPriv->pClipRects;
       const int pitch = intelScreen->front.pitch / intelScreen->front.cpp;
@@ -132,12 +129,10 @@ intelDisplayBuffer(__DRIdrawablePrivate * dPriv,
       const struct pipe_region *srcRegion = surf->region;
       const int srcpitch= srcRegion->pitch;
 
-      ASSERT(intel_fb);
-      ASSERT(intel_fb->Base.Name == 0);    /* Not a user-created FBO */
       ASSERT(srcRegion);
       ASSERT(srcRegion->cpp == cpp);
 
-      DBG(SWAP, "front pitch %d back pitch %d\n",
+      DBG(SWAP, "screen pitch %d  src surface pitch %d\n",
 	  pitch, srcRegion->pitch);
 
       if (cpp == 2) {
@@ -186,10 +181,10 @@ intelDisplayBuffer(__DRIdrawablePrivate * dPriv,
 	 }
 
 	 /* restrict blit to size of actually rendered area */
-	 if (box.x2 - box.x1 > backWidth)
-	    box.x2 = backWidth + box.x1;
-	 if (box.y2 - box.y1 > backHeight)
-	    box.y2 = backHeight + box.y1;
+	 if (box.x2 - box.x1 > srcWidth)
+	    box.x2 = srcWidth + box.x1;
+	 if (box.y2 - box.y1 > srcHeight)
+	    box.y2 = srcHeight + box.y1;
 
 	 DBG(SWAP, "box x1 x2 y1 y2 %d %d %d %d\n",
 	     box.x1, box.x2, box.y1, box.y2);
@@ -611,6 +606,11 @@ intelSwapBuffers(__DRIdrawablePrivate * dPriv)
    }
 }
 
+
+/**
+ * Called via glXCopySubBufferMESA() to copy a subrect of the back
+ * buffer to the front buffer/screen.
+ */
 void
 intelCopySubBuffer(__DRIdrawablePrivate * dPriv, int x, int y, int w, int h)
 {
