@@ -46,6 +46,8 @@ void st_flush( struct st_context *st )
 {
    GLframebuffer *fb = st->ctx->DrawBuffer;
 
+   FLUSH_VERTICES(st->ctx, 0);
+
    /* If there has been no rendering to the frontbuffer, consider
     * short-circuiting this, or perhaps pass an "optional" flag down
     * to the driver so that it can make the decision.
