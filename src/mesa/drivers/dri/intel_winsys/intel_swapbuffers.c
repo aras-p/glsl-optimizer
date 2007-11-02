@@ -262,11 +262,13 @@ intelWindowMoved(struct intel_context *intel)
       GLint areaA = driIntersectArea( drw_rect, pipeA_rect );
       GLint areaB = driIntersectArea( drw_rect, pipeB_rect );
       GLuint flags = intel_fb->vblank_flags;
+#if PF
       GLboolean pf_active;
       GLint pf_planes;
-
+#endif
       /* Update page flipping info
        */
+#if PF
       pf_planes = 0;
 
       if (areaA > 0)
@@ -274,7 +276,9 @@ intelWindowMoved(struct intel_context *intel)
 
       if (areaB > 0)
 	 pf_planes |= 2;
+#endif
 
+#if PF
       intel_fb->pf_current_page = (intel->sarea->pf_current_page >>
 				   (intel_fb->pf_planes & 0x2)) & 0x3;
 
@@ -322,6 +326,7 @@ intelWindowMoved(struct intel_context *intel)
       }
 
       intel_fb->pf_active = pf_active;
+#endif
 
       /* Update vblank info
        */
@@ -334,14 +339,16 @@ intelWindowMoved(struct intel_context *intel)
       if (flags != intel_fb->vblank_flags && intel_fb->vblank_flags &&
 	  !(intel_fb->vblank_flags & VBLANK_FLAG_NO_IRQ)) {
 	 drmVBlank vbl;
+#if PF
 	 int i;
-
+#endif
 	 vbl.request.type = DRM_VBLANK_ABSOLUTE;
 
 	 if ( intel_fb->vblank_flags & VBLANK_FLAG_SECONDARY ) {
 	    vbl.request.type |= DRM_VBLANK_SECONDARY;
 	 }
 
+#if PF
 	 for (i = 0; i < intel_fb->pf_num_pages; i++) {
 	    if ((intel_fb->vbl_waited - intel_fb->vbl_pending[i]) <= (1<<23))
 	       continue;
@@ -349,14 +356,16 @@ intelWindowMoved(struct intel_context *intel)
 	    vbl.request.sequence = intel_fb->vbl_pending[i];
 	    drmWaitVBlank(intel->driFd, &vbl);
 	 }
-
+#endif
 	 intel_fb->vblank_flags = flags;
 	 driGetCurrentVBlank(dPriv, intel_fb->vblank_flags, &intel_fb->vbl_seq);
 	 intel_fb->vbl_waited = intel_fb->vbl_seq;
 
+#if PF
 	 for (i = 0; i < intel_fb->pf_num_pages; i++) {
             intel_fb->vbl_pending[i] = intel_fb->vbl_waited;
 	 }
+#endif
       }
    }
 
@@ -468,15 +477,21 @@ intelScheduleSwap(const __DRIdrawablePrivate * dPriv, GLboolean *missed_target)
    unsigned int interval = driGetVBlankInterval(dPriv, intel_fb->vblank_flags);
    struct intel_context *intel =
       intelScreenContext(dPriv->driScreenPriv->private);
+#if PF
    const intelScreenPrivate *intelScreen = intel->intelScreen;
+#endif
    unsigned int target;
    drm_i915_vblank_swap_t swap;
    GLboolean ret;
 
    /* XXX: Scheduled buffer swaps don't work with private back buffers yet */
    if (1 || !intel_fb->vblank_flags ||
-       (intel_fb->vblank_flags & VBLANK_FLAG_NO_IRQ) ||
-       intelScreen->drmMinor < (intel_fb->pf_active ? 9 : 6))
+       (intel_fb->vblank_flags & VBLANK_FLAG_NO_IRQ)
+#if PF
+ ||
+       intelScreen->drmMinor < (intel_fb->pf_active ? 9 : 6)
+#endif
+)
       return GL_FALSE;
 
    swap.seqtype = DRM_VBLANK_ABSOLUTE;
@@ -498,6 +513,7 @@ intelScheduleSwap(const __DRIdrawablePrivate * dPriv, GLboolean *missed_target)
 
    intel_batchbuffer_flush(intel->batch);
 
+#if PF
    if ( intel_fb->pf_active ) {
       swap.seqtype |= DRM_VBLANK_FLIP;
 
@@ -505,6 +521,7 @@ intelScheduleSwap(const __DRIdrawablePrivate * dPriv, GLboolean *missed_target)
 				     (intel_fb->pf_planes & 0x2)) & 0x3) + 1) %
 				  intel_fb->pf_num_pages;
    }
+#endif
 
    if (!drmCommandWriteRead(intel->driFd, DRM_I915_VBLANK_SWAP, &swap,
 			    sizeof(swap))) {
@@ -530,12 +547,13 @@ intelScheduleSwap(const __DRIdrawablePrivate * dPriv, GLboolean *missed_target)
 
       ret = GL_TRUE;
    } else {
+#if PF
       if (swap.seqtype & DRM_VBLANK_FLIP) {
 	 intel_fb->pf_current_page = ((intel->sarea->pf_current_page >>
 					(intel_fb->pf_planes & 0x2)) & 0x3) %
 				     intel_fb->pf_num_pages;
       }
-
+#endif
       ret = GL_FALSE;
    }
 
