@@ -50,24 +50,19 @@ struct intel_context
 {
    struct st_context *st;
 
-   GLint refcount;
-
    struct _DriFenceObject *last_swap_fence;
    struct _DriFenceObject *first_swap_fence;
 
    struct intel_batchbuffer *batch;
 
-
    GLboolean locked;
    char *prevLockFile;
    int prevLockLine;
-
 
    /* These refer to the current drawing buffer:
     */
    GLuint numClipRects;         /**< cliprects for drawing */
    drm_clip_rect_t *pClipRects;
-   drm_clip_rect_t fboRect;     /**< cliprect for rendering */
 
    GLuint irqsEmitted;
    drm_i915_irq_wait_t iw;
