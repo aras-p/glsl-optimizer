@@ -43,7 +43,7 @@ inline float approx(float a, float b)
     return powf(a, b);
 }
 
-float4 lit(float4 tmp)
+inline float4 lit(float4 tmp)
 {
     float4 result;
     result.x = 1.0;
@@ -56,4 +56,30 @@ float4 lit(float4 tmp)
         result.z = 0;
     }
     return result;
+}
+
+inline float4 cmp(float4 tmp0, float4 tmp1, float4 tmp2)
+{
+   float4 result;
+
+   result.x = (tmp0.x < 0.0) ? tmp1.x : tmp2.x;
+   result.y = (tmp0.y < 0.0) ? tmp1.y : tmp2.y;
+   result.z = (tmp0.z < 0.0) ? tmp1.z : tmp2.z;
+   result.w = (tmp0.w < 0.0) ? tmp1.w : tmp2.w;
+
+   return result;
+}
+
+extern float cosf(float  val);
+
+inline float4 vcos(float4 val)
+{
+   float4 result;
+   printf("VEC IN   is %f %f %f %f\n", val.x, val.y, val.z, val.w);
+   result.x = cosf(val.x);
+   result.y = cosf(val.x);
+   result.z = cosf(val.x);
+   result.w = cosf(val.x);
+   printf("VEC OUT  is %f %f %f %f\n", result.x, result.y, result.z, result.w);
+   return result;
 }

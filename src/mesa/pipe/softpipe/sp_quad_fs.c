@@ -220,7 +220,7 @@ shade_quad_llvm(struct quad_stage *qs,
    }
 #if DLLVM
    for (int i = 0; i < QUAD_SIZE; ++i) {
-      printf("Q%d(%d) [%f, %f, %f, %f]\n", i, qss->colorOutSlot,
+      printf("QLLVM%d(%d) [%f, %f, %f, %f]\n", i, qss->colorOutSlot,
              quad->outputs.color[0][i],
              quad->outputs.color[1][i],
              quad->outputs.color[2][i],

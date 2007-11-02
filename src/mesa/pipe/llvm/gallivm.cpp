@@ -424,7 +424,9 @@ translate_instruction(llvm::Module *module,
       out = instr->dph(inputs[0], inputs[1]);
    }
       break;
-   case TGSI_OPCODE_COS:
+   case TGSI_OPCODE_COS: {
+      out = instr->cos(inputs[0]);
+   }
       break;
    case TGSI_OPCODE_DDX:
       break;
@@ -496,7 +498,9 @@ translate_instruction(llvm::Module *module,
       break;
    case TGSI_OPCODE_SSG:
       break;
-   case TGSI_OPCODE_CMP:
+   case TGSI_OPCODE_CMP: {
+      out = instr->cmp(inputs[0], inputs[1], inputs[2]);
+   }
       break;
    case TGSI_OPCODE_SCS:
       break;

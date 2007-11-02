@@ -87,7 +87,7 @@ llvm::Value * Instructions::madd(llvm::Value *in1, llvm::Value *in2,
    Value *mulRes = mul(in1, in2);
    return add(mulRes, in3);
 }
-
+ 
 llvm::Value * Instructions::mul(llvm::Value *in1, llvm::Value *in2)
 {
    return m_builder.CreateMul(in1, in2, name("mul"));
@@ -830,7 +830,38 @@ std::vector<llvm::Value*> Instructions::extractVector(llvm::Value *vec)
    return elems;
 }
 
+llvm::Value * Instructions::cmp(llvm::Value *in1, llvm::Value *in2, llvm::Value *in3)
+{
+   llvm::Function *func = m_mod->getFunction("cmp");
+   assert(func);
+
+   std::vector<Value*> params;
+   params.push_back(in1);
+   params.push_back(in2);
+   params.push_back(in3);
+   CallInst *call = m_builder.CreateCall(func, params.begin(), params.end(), name("cmpres"));
+   call->setTailCall(false);
+   return call;
+}
+
+llvm::Value * Instructions::cos(llvm::Value *in)
+{
+#if 0
+   llvm::Function *func = m_mod->getFunction("vcos");
+   assert(func);
+
+   CallInst *call = m_builder.CreateCall(func, in, name("cosres"));
+   call->setTailCall(false);
+   return call;
+#else
+   std::vector<llvm::Value*> elems = extractVector(in);
+   Function *func = m_mod->getFunction("cosf");
+   assert(func);
+   CallInst *cos = m_builder.CreateCall(func, elems[0], name("cosres"));
+   cos->setCallingConv(CallingConv::C);
+   cos->setTailCall(true);
+   return vectorFromVals(cos, cos, cos, cos);
+#endif
+}
+
 #endif //MESA_LLVM
-
-
-

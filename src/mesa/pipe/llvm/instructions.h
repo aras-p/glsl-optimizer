@@ -64,6 +64,8 @@ public:
    void         brk();
    void         cal(int label, llvm::Value *out, llvm::Value *in,
                     llvm::Value *cst, llvm::Value *tmp);
+   llvm::Value *cmp(llvm::Value *in1, llvm::Value *in2, llvm::Value *in3);
+   llvm::Value *cos(llvm::Value *in);
    llvm::Value *cross(llvm::Value *in1, llvm::Value *in2);
    llvm::Value *dp3(llvm::Value *in1, llvm::Value *in2);
    llvm::Value *dp4(llvm::Value *in1, llvm::Value *in2);
