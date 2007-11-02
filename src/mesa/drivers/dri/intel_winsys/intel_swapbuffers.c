@@ -239,26 +239,18 @@ intelSwapBuffers(__DRIdrawablePrivate * dPriv)
 {
    if (dPriv->driContextPriv && dPriv->driContextPriv->driverPrivate) {
       GET_CURRENT_CONTEXT(ctx);
-      struct intel_context *intel;
 
       if (ctx == NULL)
 	 return;
 
-      intel = intel_context(ctx);
-
       if (ctx->Visual.doubleBufferMode) {
-	 GLboolean missed_target;
 	 struct intel_framebuffer *intel_fb = dPriv->driverPrivate;
-	 int64_t ust;
+         struct pipe_surface *back_surf
+            = get_color_surface(intel_fb, BUFFER_BACK_LEFT);
 
 	 _mesa_notifySwapBuffers(ctx);  /* flush pending rendering comands */
 
-         {
-            struct pipe_surface *back_surf
-               = get_color_surface(intel_fb, BUFFER_BACK_LEFT);
-            intelDisplayBuffer(dPriv, back_surf, NULL);
-         }
-
+         intelDisplayBuffer(dPriv, back_surf, NULL);
       }
    }
    else {
