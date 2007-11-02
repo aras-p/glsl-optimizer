@@ -149,6 +149,7 @@ intelCreateContext(const __GLcontextModes * mesaVis,
    return GL_TRUE;
 }
 
+
 void
 intelDestroyContext(__DRIcontextPrivate * driContextPriv)
 {
@@ -158,13 +159,7 @@ intelDestroyContext(__DRIcontextPrivate * driContextPriv)
 
    assert(intel);               /* should never be null */
    if (intel) {
-      GLboolean release_texture_heaps;
-
       st_flush(intel->st);
-
-      //intel->vtbl.destroy(intel);
-
-      release_texture_heaps = (ctx->Shared->RefCount == 1);
 
       intel_batchbuffer_free(intel->batch);
 
@@ -179,13 +174,6 @@ intelDestroyContext(__DRIcontextPrivate * driContextPriv)
 	 intel->first_swap_fence = NULL;
       }
 
-
-      if (release_texture_heaps) {
-         /* This share group is about to go away, free our private
-          * texture object data.
-          */
-      }
-
       st_destroy_context2(intel->st);
    }
 }
@@ -194,7 +182,8 @@ intelDestroyContext(__DRIcontextPrivate * driContextPriv)
 GLboolean
 intelUnbindContext(__DRIcontextPrivate * driContextPriv)
 {
-   struct intel_context *intel = (struct intel_context *) driContextPriv->driverPrivate;
+   struct intel_context *intel
+      = (struct intel_context *) driContextPriv->driverPrivate;
    st_flush(intel->st);
    return GL_TRUE;
 }
