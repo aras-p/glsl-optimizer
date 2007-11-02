@@ -145,16 +145,6 @@ static const struct dri_debug_control debug_control[] = {
 #endif
 
 
-static void
-intelInitDriverFunctions(struct dd_function_table *functions)
-{
-   memset(functions, 0, sizeof(*functions));
-   st_init_driver_functions(functions);
-}
-
-
-
-
 
 GLboolean
 intelCreateContext(const __GLcontextModes * mesaVis,
@@ -162,11 +152,6 @@ intelCreateContext(const __GLcontextModes * mesaVis,
                    void *sharedContextPrivate)
 {
    struct intel_context *intel = CALLOC_STRUCT(intel_context);
-#if 0
-   struct dd_function_table functions;
-   GLcontext *ctx = &intel->ctx;
-   GLcontext *shareCtx = (GLcontext *) sharedContextPrivate;
-#endif
 
    __DRIscreenPrivate *sPriv = driContextPriv->driScreenPriv;
    intelScreenPrivate *intelScreen = (intelScreenPrivate *) sPriv->private;
@@ -174,15 +159,6 @@ intelCreateContext(const __GLcontextModes * mesaVis,
    int fthrottle_mode;
    GLboolean havePools;
    struct pipe_context *pipe;
-
-#if 0
-   intelInitDriverFunctions(&functions);
-
-   if (!_mesa_initialize_context(&intel->ctx,
-                                 mesaVis, shareCtx,
-                                 &functions, (void *) intel))
-      return GL_FALSE;
-#endif
 
    driContextPriv->driverPrivate = intel;
    intel->intelScreen = intelScreen;
@@ -267,12 +243,8 @@ intelCreateContext(const __GLcontextModes * mesaVis,
       }
    }
 
-#if 0
-   st_create_context( &intel->ctx, pipe ); 
-#else
    intel->st = st_create_context2(pipe,  mesaVis, NULL);
-   intel->st->ctx->DriverCtx = intel;
-#endif
+   intel->st->ctx->DriverCtx = intel;  /* hope to get rid of this... */
 
    return GL_TRUE;
 }
@@ -314,14 +286,7 @@ intelDestroyContext(__DRIcontextPrivate * driContextPriv)
           */
       }
 
-#if 0
-      /* free the Mesa context data */
-      _mesa_free_context_data(ctx);
-
-      st_destroy_context(intel->ctx.st);
-#else
       st_destroy_context2(intel->st);
-#endif
    }
 }
 
