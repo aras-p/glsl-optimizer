@@ -36,14 +36,15 @@
 #include "st_context.h"
 #include "st_cb_flush.h"
 #include "st_cb_fbo.h"
+#include "st_public.h"
 #include "pipe/p_context.h"
 #include "pipe/p_defines.h"
 #include "pipe/p_winsys.h"
 
 
-static void st_flush(GLcontext *ctx)
+void st_flush( struct st_context *st )
 {
-   struct st_context *st = ctx->st;
+   GLframebuffer *fb = st->ctx->DrawBuffer;
 
    /* If there has been no rendering to the frontbuffer, consider
     * short-circuiting this, or perhaps pass an "optional" flag down
@@ -55,13 +56,12 @@ static void st_flush(GLcontext *ctx)
    /* XXX: temporary hack.  This flag should only be set if we do any
     * rendering to the front buffer.
     */
-   st->flags.frontbuffer_dirty = (ctx->DrawBuffer->_ColorDrawBufferMask[0] == 
-				  BUFFER_BIT_FRONT_LEFT);
-
+   st->flags.frontbuffer_dirty
+      = (fb->_ColorDrawBufferMask[0] & BUFFER_BIT_FRONT_LEFT);
 
    if (st->flags.frontbuffer_dirty) {
       struct st_renderbuffer *strb
-         = st_renderbuffer(ctx->DrawBuffer->Attachment[BUFFER_FRONT_LEFT].Renderbuffer);
+         = st_renderbuffer(fb->Attachment[BUFFER_FRONT_LEFT].Renderbuffer);
       struct pipe_surface *front_surf = strb->surface;
 
       /* Hook for copying "fake" frontbuffer if necessary:
@@ -71,17 +71,30 @@ static void st_flush(GLcontext *ctx)
    }
 }
 
-static void st_finish(GLcontext *ctx)
+
+/**
+ * Called via ctx->Driver.Flush()
+ */
+static void st_Flush(GLcontext *ctx)
+{
+   st_flush(ctx->st);
+}
+
+
+/**
+ * Called via ctx->Driver.Finish()
+ */
+static void st_Finish(GLcontext *ctx)
 {
    struct st_context *st = ctx->st;
 
-   st_flush( ctx );
+   st_flush( st );
    st->pipe->winsys->wait_idle( st->pipe->winsys );
 }
 
 
 void st_init_flush_functions(struct dd_function_table *functions)
 {
-   functions->Flush = st_flush;
-   functions->Finish = st_finish;
+   functions->Flush = st_Flush;
+   functions->Finish = st_Finish;
 }

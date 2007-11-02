@@ -46,4 +46,6 @@ void st_destroy_context2( struct st_context *st );
 
 void st_invalidate_state(GLcontext * ctx, GLuint new_state);
 
+void st_flush( struct st_context *st );
+
 #endif
