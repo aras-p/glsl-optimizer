@@ -386,16 +386,6 @@ intelMakeCurrent(__DRIcontextPrivate * driContextPriv,
 
       _mesa_make_current(ctx, &intel_fb->Base, readFb);
 
-      /* The drawbuffer won't always be updated by _mesa_make_current: 
-       */
-      if (ctx->DrawBuffer == &intel_fb->Base) {
-
-	 if (intel->driDrawable != driDrawPriv) {
-	    if (driDrawPriv->pdraw->swap_interval == (unsigned)-1) {
-	    }
-	 }
-      }
-
       if ((intel->driDrawable != driDrawPriv) ||
 	  (intel->lastStamp != driDrawPriv->lastStamp)) {
 	    intel->driDrawable = driDrawPriv;
