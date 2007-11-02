@@ -177,24 +177,27 @@ intelCreateContext(const __GLcontextModes * mesaVis,
                    __DRIcontextPrivate * driContextPriv,
                    void *sharedContextPrivate)
 {
-   struct dd_function_table functions;
-   
    struct intel_context *intel = CALLOC_STRUCT(intel_context);
+#if 0
+   struct dd_function_table functions;
    GLcontext *ctx = &intel->ctx;
-
    GLcontext *shareCtx = (GLcontext *) sharedContextPrivate;
+#endif
+
    __DRIscreenPrivate *sPriv = driContextPriv->driScreenPriv;
    intelScreenPrivate *intelScreen = (intelScreenPrivate *) sPriv->private;
    drmI830Sarea *saPriv = intelScreen->sarea;
    int fthrottle_mode;
    GLboolean havePools;
 
+#if 0
    intelInitDriverFunctions(&functions);
 
    if (!_mesa_initialize_context(&intel->ctx,
                                  mesaVis, shareCtx,
                                  &functions, (void *) intel))
       return GL_FALSE;
+#endif
 
    driContextPriv->driverPrivate = intel;
    intel->intelScreen = intelScreen;
@@ -231,10 +234,13 @@ intelCreateContext(const __GLcontextModes * mesaVis,
    /* Disable imaging extension until convolution is working in
     * teximage paths:
     */
+#if 0
    driInitExtensions(ctx, card_extensions,
 /* 		      GL_TRUE, */
                      GL_FALSE);
+#endif
 
+#if 0
    if (intel->ctx.Mesa_DXTn) {
       _mesa_enable_extension(ctx, "GL_EXT_texture_compression_s3tc");
       _mesa_enable_extension(ctx, "GL_S3_s3tc");
@@ -242,6 +248,7 @@ intelCreateContext(const __GLcontextModes * mesaVis,
    else if (driQueryOptionb(&intel->optionCache, "force_s3tc_enable")) {
       _mesa_enable_extension(ctx, "GL_EXT_texture_compression_s3tc");
    }
+#endif
 
 #ifdef DEBUG
    __intel_debug = driParseDebugString(getenv("INTEL_DEBUG"), debug_control);
@@ -275,7 +282,12 @@ intelCreateContext(const __GLcontextModes * mesaVis,
       }
    }
 
+#if 0
    st_create_context( &intel->ctx, intel->pipe ); 
+#else
+   intel->st = st_create_context2(intel->pipe,  mesaVis, NULL);
+   intel->st->ctx->DriverCtx = intel;
+#endif
 
    return GL_TRUE;
 }
@@ -285,6 +297,7 @@ intelDestroyContext(__DRIcontextPrivate * driContextPriv)
 {
    struct intel_context *intel =
       (struct intel_context *) driContextPriv->driverPrivate;
+   GLcontext *ctx = intel->st->ctx;
 
    assert(intel);               /* should never be null */
    if (intel) {
@@ -294,7 +307,7 @@ intelDestroyContext(__DRIcontextPrivate * driContextPriv)
 
       //intel->vtbl.destroy(intel);
 
-      release_texture_heaps = (intel->ctx.Shared->RefCount == 1);
+      release_texture_heaps = (ctx->Shared->RefCount == 1);
 
       intel_batchbuffer_free(intel->batch);
 
@@ -316,10 +329,14 @@ intelDestroyContext(__DRIcontextPrivate * driContextPriv)
           */
       }
 
+#if 0
       /* free the Mesa context data */
-      _mesa_free_context_data(&intel->ctx);
+      _mesa_free_context_data(ctx);
 
       st_destroy_context(intel->ctx.st);
+#else
+      st_destroy_context2(intel->st);
+#endif
    }
 }
 
@@ -329,8 +346,9 @@ intelUnbindContext(__DRIcontextPrivate * driContextPriv)
    struct intel_context *intel = (struct intel_context *) driContextPriv->driverPrivate;
    /* XXX UnbindContext is called AFTER the new context is made current.
       Hopefully shouldn't be a problem ? */
-   FLUSH_VERTICES((&intel->ctx), 0);
-   intelFlush(&intel->ctx);
+   GLcontext *ctx = intel->st->ctx;
+   FLUSH_VERTICES(ctx, 0);
+   intelFlush(ctx);
    return GL_TRUE;
 }
 
@@ -338,8 +356,8 @@ intelUnbindContext(__DRIcontextPrivate * driContextPriv)
 /**
  * Copied/modified from drirenderbuffer.c
  */
-static void
-updateFramebufferSize(GLcontext *ctx, const __DRIdrawablePrivate *dPriv)
+void
+intelUpdateFramebufferSize(GLcontext *ctx, const __DRIdrawablePrivate *dPriv)
 {
    struct gl_framebuffer *fb = (struct gl_framebuffer *) dPriv->driverPrivate;
    if (fb && (dPriv->w != fb->Width || dPriv->h != fb->Height)) {
@@ -371,23 +389,24 @@ intelMakeCurrent(__DRIcontextPrivate * driContextPriv,
       struct intel_framebuffer *intel_fb =
 	 (struct intel_framebuffer *) driDrawPriv->driverPrivate;
       GLframebuffer *readFb = (GLframebuffer *) driReadPriv->driverPrivate;
+      GLcontext *ctx = intel->st->ctx;
 
       /* this is a hack so we have a valid context when the region allocation
          is done. Need a per-screen context? */
       intel->intelScreen->dummyctxptr = intel;
 
       /* update GLframebuffer size to match window if needed */
-      updateFramebufferSize(&intel->ctx, driDrawPriv);
+      intelUpdateFramebufferSize(ctx, driDrawPriv);
 
       if (driReadPriv != driDrawPriv) {
-         updateFramebufferSize(&intel->ctx, driReadPriv);
+         intelUpdateFramebufferSize(ctx, driReadPriv);
       }
 
-      _mesa_make_current(&intel->ctx, &intel_fb->Base, readFb);
+      _mesa_make_current(ctx, &intel_fb->Base, readFb);
 
       /* The drawbuffer won't always be updated by _mesa_make_current: 
        */
-      if (intel->ctx.DrawBuffer == &intel_fb->Base) {
+      if (ctx->DrawBuffer == &intel_fb->Base) {
 
 	 if (intel->driDrawable != driDrawPriv) {
 	    if (driDrawPriv->pdraw->swap_interval == (unsigned)-1) {

@@ -44,16 +44,16 @@ struct pipe_context;
 struct pipe_region;
 struct intel_context;
 struct _DriBufferObject;
-
+struct st_context;
 
 
 #define INTEL_MAX_FIXUP 64
 
 struct intel_context
 {
-   GLcontext ctx;               /* the parent class */
-   
-   struct pipe_context *pipe;
+   struct st_context *st;
+
+   struct pipe_context *pipe;  /**< a softpipe or i915simple context */
 
    GLint refcount;
 
@@ -158,7 +158,7 @@ extern void intelFlush(GLcontext * ctx);
 static INLINE struct intel_context *
 intel_context(GLcontext * ctx)
 {
-   return (struct intel_context *) ctx;
+   return (struct intel_context *) ctx->DriverCtx;
 }
 
 extern struct intel_renderbuffer *intel_renderbuffer(struct gl_renderbuffer
@@ -166,5 +166,7 @@ extern struct intel_renderbuffer *intel_renderbuffer(struct gl_renderbuffer
 
 extern void intel_init_region_functions(struct pipe_context *pipe);
 
+extern void
+intelUpdateFramebufferSize(GLcontext *ctx, const __DRIdrawablePrivate *dPriv);
 
 #endif

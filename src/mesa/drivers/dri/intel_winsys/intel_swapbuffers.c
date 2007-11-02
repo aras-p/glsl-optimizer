@@ -30,12 +30,14 @@
 #include "intel_swapbuffers.h"
 #include "intel_batchbuffer.h"
 #include "intel_reg.h"
+#include "intel_winsys.h"
 #include "context.h"
 #include "utils.h"
 #include "drirenderbuffer.h"
 #include "vblank.h"
 
 #include "pipe/p_context.h"
+#include "state_tracker/st_context.h"
 #include "state_tracker/st_cb_fbo.h"
 
 
@@ -95,8 +97,8 @@ intelCopyBuffer(__DRIdrawablePrivate * dPriv,
    /* if this drawable isn't currently bound the LOCK_HARDWARE done on the
       current context (which is what intelScreenContext should return) might
       not get a contended lock and thus cliprects not updated (tests/manywin) */
-      if ((struct intel_context *)dPriv->driContextPriv->driverPrivate != intel)
-         DRI_VALIDATE_DRAWABLE_INFO(intel->driScreen, dPriv);
+   if ((struct intel_context *)dPriv->driContextPriv->driverPrivate != intel)
+      DRI_VALIDATE_DRAWABLE_INFO(intel->driScreen, dPriv);
 
 
    if (dPriv && dPriv->numClipRects) {
@@ -210,7 +212,8 @@ intelCopyBuffer(__DRIdrawablePrivate * dPriv,
 		   DRM_BO_MASK_MEM | DRM_BO_FLAG_WRITE, 0);
 	 OUT_BATCH((sbox.y1 << 16) | sbox.x1);
 	 OUT_BATCH((srcpitch * cpp) & 0xffff);
-	 OUT_RELOC(backRegion->buffer, DRM_BO_FLAG_MEM_TT | DRM_BO_FLAG_READ,
+	 OUT_RELOC(dri_bo(backRegion->buffer),
+                   DRM_BO_FLAG_MEM_TT | DRM_BO_FLAG_READ,
 		   DRM_BO_MASK_MEM | DRM_BO_FLAG_READ, 0);
 
 	 ADVANCE_BATCH();
@@ -245,18 +248,18 @@ intelCopyBuffer(__DRIdrawablePrivate * dPriv,
 void
 intelWindowMoved(struct intel_context *intel)
 {
-   GLcontext *ctx = &intel->ctx;
+   GLcontext *ctx = intel->st->ctx;
    __DRIdrawablePrivate *dPriv = intel->driDrawable;
    struct intel_framebuffer *intel_fb = dPriv->driverPrivate;
 
-   if (!intel->ctx.DrawBuffer) {
+   if (!intel->st->ctx->DrawBuffer) {
       /* when would this happen? -BP */
       assert(0);
       intel->numClipRects = 0;
    }
 
    /* Update Mesa's notion of window size */
-   driUpdateFramebufferSize(ctx, dPriv);
+   intelUpdateFramebufferSize(ctx, dPriv);
    intel_fb->Base.Initialized = GL_TRUE; /* XXX remove someday */
 
    {
@@ -615,7 +618,7 @@ intelCopySubBuffer(__DRIdrawablePrivate * dPriv, int x, int y, int w, int h)
    if (dPriv->driContextPriv && dPriv->driContextPriv->driverPrivate) {
       struct intel_context *intel =
          (struct intel_context *) dPriv->driContextPriv->driverPrivate;
-      GLcontext *ctx = &intel->ctx;
+      GLcontext *ctx = intel->st->ctx;
 
       if (ctx->Visual.doubleBufferMode) {
          drm_clip_rect_t rect;
