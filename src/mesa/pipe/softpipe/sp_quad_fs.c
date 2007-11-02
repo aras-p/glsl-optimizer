@@ -159,6 +159,7 @@ shade_quad(
    }
 }
 
+#define DLLVM 0
 static void
 shade_quad_llvm(struct quad_stage *qs,
                 struct quad_header *quad)
@@ -181,23 +182,28 @@ shade_quad_llvm(struct quad_stage *qs,
    inputs[1][0][1] = fy;
    inputs[2][0][1] = fy + 1.0f;
    inputs[3][0][1] = fy + 1.0f;
+#if DLLVM
    printf("MASK = %d\n", quad->mask);
+#endif
    gallivm_prog_inputs_interpolate(llvm, inputs, quad->coef);
+#if DLLVM
    for (int i = 0; i < 4; ++i) {
       for (int j = 0; j < 2; ++j) {
          printf("IN(%d,%d) [%f %f %f %f]\n", i, j, 
                 inputs[i][j][0], inputs[i][j][1], inputs[i][j][2], inputs[i][j][3]);
       }
    }
+#endif
 
    /*quad->mask &=*/
       gallivm_fragment_shader_exec(llvm, fx, fy, dests, inputs,
                                    softpipe->mapped_constants[PIPE_SHADER_FRAGMENT],
                                    qss->samplers, softpipe->sampler_units);
-
+#if DLLVM
    printf("OUT LLVM = 1[%f %f %f %f], 2[%f %f %f %f]\n",
           dests[0][0][0], dests[0][0][1], dests[0][0][2], dests[0][0][3], 
           dests[0][1][0], dests[0][1][1], dests[0][1][2], dests[0][1][3]);
+#endif
 
    /* store result color */
    if (qss->colorOutSlot >= 0) {
@@ -212,6 +218,7 @@ shade_quad_llvm(struct quad_stage *qs,
          quad->outputs.color[3][i] = dests[i][qss->colorOutSlot][3];
       }
    }
+#if DLLVM
    for (int i = 0; i < QUAD_SIZE; ++i) {
       printf("Q%d(%d) [%f, %f, %f, %f]\n", i, qss->colorOutSlot,
              quad->outputs.color[0][i],
@@ -219,6 +226,7 @@ shade_quad_llvm(struct quad_stage *qs,
              quad->outputs.color[2][i],
              quad->outputs.color[3][i]);
    }
+#endif
 
    /* store result Z */
    if (qss->depthOutSlot >= 0) {
@@ -235,11 +243,13 @@ shade_quad_llvm(struct quad_stage *qs,
          quad->outputs.depth[i] = inputs[i][0][2];
       }
    }
+#if DLLVM
    printf("D [%f, %f, %f, %f] mask = %d\n",
              quad->outputs.depth[0],
              quad->outputs.depth[1],
              quad->outputs.depth[2],
              quad->outputs.depth[3], quad->mask);
+#endif
 
    /* shader may cull fragments */
    if( quad->mask ) {
