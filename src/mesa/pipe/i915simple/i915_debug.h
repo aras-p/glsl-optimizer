@@ -79,9 +79,7 @@ void i915_print_ureg(const char *msg, unsigned ureg);
 #endif
 
 
-void i915_dump_batchbuffer( struct i915_context *i915,
-			    unsigned *start,
-			    unsigned *end );
+void i915_dump_batchbuffer( struct i915_context *i915 );
 
 
 

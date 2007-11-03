@@ -347,7 +347,7 @@ struct pipe_context *i915_create( struct pipe_winsys *pipe_winsys,
 
    /* Batch stream debugging is a bit hacked up at the moment:
     */
-   i915->batch_start = BEGIN_BATCH(0, 0);
+   i915->batch_start = NULL;
 
    /*
     * XXX we could plug GL selection/feedback into the drawing pipeline
