@@ -48,6 +48,9 @@ void st_destroy_context2( struct st_context *st );
 
 struct st_framebuffer *st_create_framebuffer( const __GLcontextModes *visual );
 
+void st_resize_framebuffer( struct st_framebuffer *,
+                            GLuint width, GLuint height );
+
 void st_make_current(struct st_context *st,
                      struct st_framebuffer *draw,
                      struct st_framebuffer *read);
