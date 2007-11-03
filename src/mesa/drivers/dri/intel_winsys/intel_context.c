@@ -53,6 +53,20 @@ int __intel_debug = 0;
 
 
 
+
+/**
+ * Extension strings exported by the intel driver.
+ *
+ * \note
+ * It appears that ARB_texture_env_crossbar has "disappeared" compared to the
+ * old i830-specific driver.
+ */
+const struct dri_extension card_extensions[] = {
+   {NULL, NULL}
+};
+
+
+
 #ifdef DEBUG
 static const struct dri_debug_control debug_control[] = {
    {"ioctl", DEBUG_IOCTL},
