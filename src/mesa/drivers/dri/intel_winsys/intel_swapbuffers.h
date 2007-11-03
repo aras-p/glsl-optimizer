@@ -46,6 +46,7 @@ extern void intelDisplaySurface(__DRIdrawablePrivate * dPriv,
 
 extern void intelSwapBuffers(__DRIdrawablePrivate * dPriv);
 
-extern void intelWindowMoved(struct intel_context *intel);
+extern void intelWindowMoved(__DRIdrawablePrivate *dPriv);
+
 
 #endif /* INTEL_BUFFERS_H */

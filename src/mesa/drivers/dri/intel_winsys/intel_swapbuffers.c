@@ -222,16 +222,10 @@ intelDisplaySurface(__DRIdrawablePrivate * dPriv,
 
    UNLOCK_HARDWARE(intel);
 
-   /* XXX this is bogus. The context here may not even be bound to this drawable! */
    if (intel->lastStamp != dPriv->lastStamp) {
-      GET_CURRENT_CONTEXT(currctx);
-      struct intel_context *intelcurrent = intel_context(currctx);
-      if (intelcurrent == intel && intelcurrent->driDrawable == dPriv) {
-         intelWindowMoved(intel);
-         intel->lastStamp = dPriv->lastStamp;
-      }
+      intelWindowMoved(dPriv);
+      intel->lastStamp = dPriv->lastStamp;
    }
-
 }
 
 
@@ -240,12 +234,10 @@ intelDisplaySurface(__DRIdrawablePrivate * dPriv,
  * This will be called whenever the currently bound window is moved/resized.
  */
 void
-intelWindowMoved(struct intel_context *intel)
+intelWindowMoved(__DRIdrawablePrivate *dPriv)
 {
-   __DRIdrawablePrivate *dPriv = intel->driDrawable;
    struct st_framebuffer *stfb
       = (struct st_framebuffer *) dPriv->driverPrivate;
-
    st_resize_framebuffer(stfb, dPriv->w, dPriv->h);
 }
 

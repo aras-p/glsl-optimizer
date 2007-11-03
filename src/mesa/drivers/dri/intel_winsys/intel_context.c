@@ -232,7 +232,7 @@ intelMakeCurrent(__DRIcontextPrivate * driContextPriv,
       if ((intel->driDrawable != driDrawPriv) ||
 	  (intel->lastStamp != driDrawPriv->lastStamp)) {
          intel->driDrawable = driDrawPriv;
-         intelWindowMoved(intel);
+         intelWindowMoved(driDrawPriv);
          intel->lastStamp = driDrawPriv->lastStamp;
       }
 
@@ -241,7 +241,7 @@ intelMakeCurrent(__DRIcontextPrivate * driContextPriv,
        * If the readbuffer is a different window, check/update its size now.
        */
       if (driReadPriv != driDrawPriv) {
-         st_resize_framebuffer(read_fb, driReadPriv->w, driReadPriv->h);
+         intelWindowMoved(driReadPriv);
       }
 #endif
 
