@@ -83,6 +83,9 @@ struct st_framebuffer *st_create_framebuffer( const __GLcontextModes *visual )
                                    GL_FALSE, /* never sw alpha */
                                    GL_FALSE  /* never sw aux */ );
 
+
+      stfb->Base.Initialized = GL_TRUE;
+
    }
    return stfb;
 }
