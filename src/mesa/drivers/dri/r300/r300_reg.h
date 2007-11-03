@@ -334,7 +334,7 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #define R300_VAP_CLIP_X_0                   0x2220
 #define R300_VAP_CLIP_X_1                   0x2224
 #define R300_VAP_CLIP_Y_0                   0x2228
-#define R300_VAP_CLIP_Y_1                   0x2230
+#define R300_VAP_CLIP_Y_1                   0x222c
 
 /* gap */
 
