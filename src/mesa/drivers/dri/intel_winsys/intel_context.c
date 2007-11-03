@@ -228,9 +228,10 @@ intelMakeCurrent(__DRIcontextPrivate * driContextPriv,
    if (driContextPriv) {
       struct intel_context *intel =
          (struct intel_context *) driContextPriv->driverPrivate;
-      struct intel_framebuffer *intel_fb =
-	 (struct intel_framebuffer *) driDrawPriv->driverPrivate;
-      GLframebuffer *readFb = (GLframebuffer *) driReadPriv->driverPrivate;
+      struct st_framebuffer *draw_fb
+         = (struct st_framebuffer *) driDrawPriv->driverPrivate;
+      struct st_framebuffer *read_fb
+         = (struct st_framebuffer *) driReadPriv->driverPrivate;
       GLcontext *ctx = intel->st->ctx;
 
       /* this is a hack so we have a valid context when the region allocation
@@ -244,7 +245,7 @@ intelMakeCurrent(__DRIcontextPrivate * driContextPriv,
          intelUpdateFramebufferSize(ctx, driReadPriv);
       }
 
-      _mesa_make_current(ctx, &intel_fb->Base, readFb);
+      st_make_current(intel->st, draw_fb, read_fb);
 
       if ((intel->driDrawable != driDrawPriv) ||
 	  (intel->lastStamp != driDrawPriv->lastStamp)) {
@@ -254,7 +255,7 @@ intelMakeCurrent(__DRIcontextPrivate * driContextPriv,
       }
    }
    else {
-      _mesa_make_current(NULL, NULL, NULL);
+      st_make_current(NULL, NULL, NULL);
    }
 
    return GL_TRUE;
