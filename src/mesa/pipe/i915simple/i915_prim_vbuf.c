@@ -303,12 +303,7 @@ static void vbuf_draw( struct draw_stage *stage )
    if (i915->hardware_dirty)
       i915_emit_hardware_state( i915 );
 
-   ptr = BEGIN_BATCH( 4 + (nr + 1)/2, 1 );
-#if 1
-   assert(ptr);
-#else
-   /* XXX: below is bogus as ptr always nonzero except in fatal errors */
-   if (ptr == 0) {
+   if (!BEGIN_BATCH( 4 + (nr + 1)/2, 1 )) {
       FLUSH_BATCH();
 
       /* Make sure state is re-emitted after a flush: 
@@ -316,13 +311,11 @@ static void vbuf_draw( struct draw_stage *stage )
       i915_update_derived( i915 );
       i915_emit_hardware_state( i915 );
 
-      ptr = BEGIN_BATCH( 2, 1 );
-      if (ptr == 0) {
+      if (!BEGIN_BATCH( 4 + (nr + 1)/2, 1 )) {
 	 assert(0);
 	 return;
       }
    }
-#endif
 
    /* FIXME: don't do this every time */
    OUT_BATCH( _3DSTATE_LOAD_STATE_IMMEDIATE_1 | 

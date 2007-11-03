@@ -123,7 +123,6 @@ emit_prim( struct draw_stage *stage,
 {
    struct i915_context *i915 = setup_stage(stage)->i915;
    unsigned vertex_size = i915->current.vertex_info.size * 4; /* in bytes */
-   unsigned *ptr;
    unsigned i;
 
    assert(vertex_size >= 12); /* never smaller than 12 bytes */
@@ -134,8 +133,7 @@ emit_prim( struct draw_stage *stage,
    if (i915->hardware_dirty)
       i915_emit_hardware_state( i915 );
 
-   ptr = BEGIN_BATCH( 1 + nr * vertex_size / 4, 0 );
-   if (ptr == 0) {
+   if (!BEGIN_BATCH( 1 + nr * vertex_size / 4, 0 )) {
       FLUSH_BATCH();
 
       /* Make sure state is re-emitted after a flush: 
@@ -143,8 +141,7 @@ emit_prim( struct draw_stage *stage,
       i915_update_derived( i915 );
       i915_emit_hardware_state( i915 );
 
-      ptr = BEGIN_BATCH( 1 + nr * vertex_size / 4, 0 );
-      if (ptr == 0) {
+      if (!BEGIN_BATCH( 1 + nr * vertex_size / 4, 0 )) {
 	 assert(0);
 	 return;
       }
