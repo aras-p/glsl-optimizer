@@ -243,13 +243,10 @@ void
 intelWindowMoved(struct intel_context *intel)
 {
    __DRIdrawablePrivate *dPriv = intel->driDrawable;
-   struct intel_framebuffer *intel_fb = dPriv->driverPrivate;
    struct st_framebuffer *stfb
       = (struct st_framebuffer *) dPriv->driverPrivate;
 
    st_resize_framebuffer(stfb, dPriv->w, dPriv->h);
-
-   intel_fb->Base.Initialized = GL_TRUE; /* XXX remove someday */
 }
 
 
