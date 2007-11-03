@@ -127,7 +127,7 @@ struct xmesa_visual {
 
 
 /**
- * Context info, dDerived from GLcontext.
+ * Context info, derived from GLcontext.
  * Basically corresponds to a GLXContext.
  */
 struct xmesa_context {
