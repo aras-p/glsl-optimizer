@@ -223,7 +223,7 @@ intelDisplaySurface(__DRIdrawablePrivate * dPriv,
    UNLOCK_HARDWARE(intel);
 
    if (intel->lastStamp != dPriv->lastStamp) {
-      intelWindowMoved(dPriv);
+      intelUpdateWindowSize(dPriv);
       intel->lastStamp = dPriv->lastStamp;
    }
 }
@@ -234,7 +234,7 @@ intelDisplaySurface(__DRIdrawablePrivate * dPriv,
  * This will be called whenever the currently bound window is moved/resized.
  */
 void
-intelWindowMoved(__DRIdrawablePrivate *dPriv)
+intelUpdateWindowSize(__DRIdrawablePrivate *dPriv)
 {
    struct st_framebuffer *stfb
       = (struct st_framebuffer *) dPriv->driverPrivate;

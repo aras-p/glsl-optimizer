@@ -221,29 +221,19 @@ intelMakeCurrent(__DRIcontextPrivate * driContextPriv,
 
       st_make_current(intel->st, draw_fb, read_fb);
 
-#if 0
-      /* update size of Mesa framebuffer(s) to match window */
-      st_resize_framebuffer(draw_fb, driDrawPriv->w, driDrawPriv->h);
-      if (driReadPriv != driDrawPriv) {
-         st_resize_framebuffer(read_fb, driReadPriv->w, driReadPriv->h);
-      }
-#endif
-
       if ((intel->driDrawable != driDrawPriv) ||
 	  (intel->lastStamp != driDrawPriv->lastStamp)) {
          intel->driDrawable = driDrawPriv;
-         intelWindowMoved(driDrawPriv);
+         intelUpdateWindowSize(driDrawPriv);
          intel->lastStamp = driDrawPriv->lastStamp;
       }
 
-#if 1
       /* The size of the draw buffer will have been updated above.
        * If the readbuffer is a different window, check/update its size now.
        */
       if (driReadPriv != driDrawPriv) {
-         intelWindowMoved(driReadPriv);
+         intelUpdateWindowSize(driReadPriv);
       }
-#endif
 
    }
    else {
