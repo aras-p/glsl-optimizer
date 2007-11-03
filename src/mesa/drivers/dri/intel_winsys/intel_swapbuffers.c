@@ -34,6 +34,7 @@
 #include "context.h"
 
 #include "pipe/p_context.h"
+#include "state_tracker/st_public.h"
 #include "state_tracker/st_context.h"
 #include "state_tracker/st_cb_fbo.h"
 
@@ -237,17 +238,17 @@ intelDisplaySurface(__DRIdrawablePrivate * dPriv,
 
 /**
  * This will be called whenever the currently bound window is moved/resized.
- * XXX: actually, it seems to NOT be called when the window is only moved (BP).
  */
 void
 intelWindowMoved(struct intel_context *intel)
 {
-   GLcontext *ctx = intel->st->ctx;
    __DRIdrawablePrivate *dPriv = intel->driDrawable;
    struct intel_framebuffer *intel_fb = dPriv->driverPrivate;
+   struct st_framebuffer *stfb
+      = (struct st_framebuffer *) dPriv->driverPrivate;
 
-   /* Update Mesa's notion of window size */
-   intelUpdateFramebufferSize(ctx, dPriv);
+   st_resize_framebuffer(stfb, dPriv->w, dPriv->h);
+
    intel_fb->Base.Initialized = GL_TRUE; /* XXX remove someday */
 }
 

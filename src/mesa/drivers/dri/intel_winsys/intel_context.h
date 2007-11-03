@@ -140,7 +140,4 @@ intel_context(GLcontext * ctx)
 }
 
 
-extern void
-intelUpdateFramebufferSize(GLcontext *ctx, const __DRIdrawablePrivate *dPriv);
-
 #endif

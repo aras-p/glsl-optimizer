@@ -169,7 +169,6 @@ intelDestroyContext(__DRIcontextPrivate * driContextPriv)
 {
    struct intel_context *intel =
       (struct intel_context *) driContextPriv->driverPrivate;
-   GLcontext *ctx = intel->st->ctx;
 
    assert(intel);               /* should never be null */
    if (intel) {
@@ -203,55 +202,36 @@ intelUnbindContext(__DRIcontextPrivate * driContextPriv)
 }
 
 
-/**
- * Copied/modified from drirenderbuffer.c
- */
-void
-intelUpdateFramebufferSize(GLcontext *ctx, const __DRIdrawablePrivate *dPriv)
-{
-   struct gl_framebuffer *fb = (struct gl_framebuffer *) dPriv->driverPrivate;
-   if (fb && (dPriv->w != fb->Width || dPriv->h != fb->Height)) {
-      _mesa_resize_framebuffer(ctx, fb, dPriv->w, dPriv->h);
-      /* if the driver needs the hw lock for ResizeBuffers, the drawable
-         might have changed again by now */
-      assert(fb->Width == dPriv->w);
-      assert(fb->Height == dPriv->h);
-   }
-}
-
-
 GLboolean
 intelMakeCurrent(__DRIcontextPrivate * driContextPriv,
                  __DRIdrawablePrivate * driDrawPriv,
                  __DRIdrawablePrivate * driReadPriv)
 {
    if (driContextPriv) {
-      struct intel_context *intel =
-         (struct intel_context *) driContextPriv->driverPrivate;
+      struct intel_context *intel
+         = (struct intel_context *) driContextPriv->driverPrivate;
       struct st_framebuffer *draw_fb
          = (struct st_framebuffer *) driDrawPriv->driverPrivate;
       struct st_framebuffer *read_fb
          = (struct st_framebuffer *) driReadPriv->driverPrivate;
-      GLcontext *ctx = intel->st->ctx;
 
       /* this is a hack so we have a valid context when the region allocation
          is done. Need a per-screen context? */
       intel->intelScreen->dummyctxptr = intel;
 
-      /* update GLframebuffer size to match window if needed */
-      intelUpdateFramebufferSize(ctx, driDrawPriv);
-
-      if (driReadPriv != driDrawPriv) {
-         intelUpdateFramebufferSize(ctx, driReadPriv);
-      }
-
       st_make_current(intel->st, draw_fb, read_fb);
+
+      /* update size of Mesa framebuffer(s) to match window */
+      st_resize_framebuffer(draw_fb, driDrawPriv->w, driDrawPriv->h);
+      if (driReadPriv != driDrawPriv) {
+         st_resize_framebuffer(read_fb, driReadPriv->w, driReadPriv->h);
+      }
 
       if ((intel->driDrawable != driDrawPriv) ||
 	  (intel->lastStamp != driDrawPriv->lastStamp)) {
-	    intel->driDrawable = driDrawPriv;
-	    intelWindowMoved(intel);
-	    intel->lastStamp = driDrawPriv->lastStamp;
+         intel->driDrawable = driDrawPriv;
+         intelWindowMoved(intel);
+         intel->lastStamp = driDrawPriv->lastStamp;
       }
    }
    else {
