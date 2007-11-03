@@ -25,14 +25,16 @@
  * 
  **************************************************************************/
 
+/**
+ * \file
+ * This is the interface that i915simple requires any window system
+ * hosting it to implement.  This is the only include file in i915simple
+ * which is public.
+ * 
+ */
+
 #ifndef I915_WINSYS_H
 #define I915_WINSYS_H
-
-
-/* This is the interface that softpipe requires any window system
- * hosting it to implement.  This is the only include file in softpipe
- * which is public.
- */
 
 
 /* Pipe drivers are (meant to be!) independent of both GL and the
@@ -48,31 +50,51 @@
 struct pipe_buffer_handle;
 struct pipe_winsys;
 
+
+/**
+ * Additional winsys interface for i915simple.
+ * 
+ * It is an over-simple batchbuffer mechanism.  Will want to improve the
+ * performance of this, perhaps based on the cmdstream stuff.  It
+ * would be pretty impossible to implement swz on top of this
+ * interface.
+ *
+ * Will also need additions/changes to implement static/dynamic
+ * indirect state.
+ */
 struct i915_winsys {
 
-   /* An over-simple batchbuffer mechanism.  Will want to improve the
-    * performance of this, perhaps based on the cmdstream stuff.  It
-    * would be pretty impossible to implement swz on top of this
-    * interface.
-    *
-    * Will also need additions/changes to implement static/dynamic
-    * indirect state.
+   /**
+    * Reserve space on batch buffer. 
+    * 
+    * Returns a null pointer if there is insufficient space in the batch buffer 
+    * to hold the requested number of dwords and relocations.
+    * 
+    * The number of dwords should also include the number of relocations.
     */
    unsigned *(*batch_start)( struct i915_winsys *sws,
 			     unsigned dwords,
 			     unsigned relocs );
+   
    void (*batch_dword)( struct i915_winsys *sws,
 			unsigned dword );
+   
+   /**
+    * Emit a relocation to a buffer.
+    * 
+    * Used not only when the buffer addresses are not pinned, but also to 
+    * ensure refered buffers will not be destroyed until the current batch 
+    * buffer execution is finished.
+    *
+    * The access flags is a combination of I915_BUFFER_ACCESS_WRITE and 
+    * I915_BUFFER_ACCESS_READ macros.
+    */
    void (*batch_reloc)( struct i915_winsys *sws,
 			struct pipe_buffer_handle *buf,
 			unsigned access_flags,
 			unsigned delta );
+   
    void (*batch_flush)( struct i915_winsys *sws );
-
-#if 0
-   void (*batch_chain)( struct i915_winsys *sws, 
-	 		struct pipe_buffer_handle *buf ):
-#endif
 };
 
 #define I915_BUFFER_ACCESS_WRITE   0x1 
