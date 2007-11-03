@@ -41,6 +41,7 @@
 #include "dri_bufpool.h"
 
 #include "pipe/p_context.h"
+#include "state_tracker/st_public.h"
 #include "state_tracker/st_cb_fbo.h"
 
 
@@ -283,6 +284,7 @@ intelCreateBuffer(__DRIscreenPrivate * driScrnPriv,
       return GL_FALSE;          /* not implemented */
    }
    else {
+#if 0
       GLboolean swStencil = (mesaVis->stencilBits > 0 &&
                              mesaVis->depthBits != 24);
       GLenum rgbFormat = (mesaVis->redBits == 5 ? GL_RGB5 : GL_RGBA8);
@@ -335,6 +337,13 @@ intelCreateBuffer(__DRIscreenPrivate * driScrnPriv,
                                    GL_FALSE, /* never sw alpha */
                                    GL_FALSE  /* never sw aux */ );
       driDrawPriv->driverPrivate = (void *) intel_fb;
+#else
+      struct st_framebuffer *stfb;
+
+      stfb = st_create_framebuffer(mesaVis);
+
+      driDrawPriv->driverPrivate = (void *) stfb;
+#endif
 
       return GL_TRUE;
    }
