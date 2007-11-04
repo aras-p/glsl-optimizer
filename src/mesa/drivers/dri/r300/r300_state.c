@@ -67,6 +67,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 extern int future_hw_tcl_on;
 extern void _tnl_UpdateFixedFunctionProgram(GLcontext * ctx);
+static void r300ClipPlane( GLcontext *ctx, GLenum plane, const GLfloat *eq );
 
 static void r300BlendColor(GLcontext * ctx, const GLfloat cf[4])
 {
@@ -1665,7 +1666,7 @@ static void r300SetupVertexProgram(r300ContextPtr rmesa)
 static void r300Enable(GLcontext * ctx, GLenum cap, GLboolean state)
 {
 	r300ContextPtr r300 = R300_CONTEXT(ctx);
-
+	GLuint p;
 	if (RADEON_DEBUG & DEBUG_STATE)
 		fprintf(stderr, "%s( %s = %s )\n", __FUNCTION__,
 			_mesa_lookup_enum_by_nr(cap),
@@ -1704,6 +1705,27 @@ static void r300Enable(GLcontext * ctx, GLenum cap, GLboolean state)
 		r300SetBlendState(ctx);
 		break;
 
+		
+	case GL_CLIP_PLANE0:
+	case GL_CLIP_PLANE1:
+	case GL_CLIP_PLANE2:
+	case GL_CLIP_PLANE3:
+	case GL_CLIP_PLANE4:
+	case GL_CLIP_PLANE5:
+		/* no VAP UCP on non-TCL chipsets */
+		if (!(r300->radeon.radeonScreen->chip_flags & RADEON_CHIPSET_TCL))
+			return;
+
+		p = cap-GL_CLIP_PLANE0;
+		R300_STATECHANGE( r300, unk221C );
+		if (state) {
+			r300->hw.unk221C.cmd[1] |= (R300_VAP_UCP_ENABLE_0<<p);
+			r300ClipPlane( ctx, cap, NULL );
+		}
+		else {
+			r300->hw.unk221C.cmd[1] &= ~(R300_VAP_UCP_ENABLE_0<<p);
+		}
+		break;
 	case GL_DEPTH_TEST:
 		r300SetDepthState(ctx);
 		break;
@@ -1739,6 +1761,8 @@ static void r300Enable(GLcontext * ctx, GLenum cap, GLboolean state)
 			r300->hw.occlusion_cntl.cmd[1] &= ~(3 << 0);
 		}
 		break;
+
+
 	default:
 		radeonEnable(ctx, cap, state);
 		return;
@@ -2188,6 +2212,38 @@ static void r300RenderMode(GLcontext * ctx, GLenum mode)
 	(void)mode;
 }
 
+static void r300ClipPlane( GLcontext *ctx, GLenum plane, const GLfloat *eq )
+{
+	r300ContextPtr rmesa = R300_CONTEXT(ctx);
+	GLint p = (GLint) plane - (GLint) GL_CLIP_PLANE0;
+	GLint *ip = (GLint *)ctx->Transform._ClipUserPlane[p];
+
+	R300_STATECHANGE( rmesa, vpucp[p] );
+	rmesa->hw.vpucp[p].cmd[R300_VPUCP_X] = ip[0];
+	rmesa->hw.vpucp[p].cmd[R300_VPUCP_Y] = ip[1];
+	rmesa->hw.vpucp[p].cmd[R300_VPUCP_Z] = ip[2];
+	rmesa->hw.vpucp[p].cmd[R300_VPUCP_W] = ip[3];
+}
+
+
+void r300UpdateClipPlanes( GLcontext *ctx )
+{
+	r300ContextPtr rmesa = R300_CONTEXT(ctx);
+	GLuint p;
+	
+	for (p = 0; p < ctx->Const.MaxClipPlanes; p++) {
+		if (ctx->Transform.ClipPlanesEnabled & (1 << p)) {
+			GLint *ip = (GLint *)ctx->Transform._ClipUserPlane[p];
+			
+			R300_STATECHANGE( rmesa, vpucp[p] );
+			rmesa->hw.vpucp[p].cmd[R300_VPUCP_X] = ip[0];
+			rmesa->hw.vpucp[p].cmd[R300_VPUCP_Y] = ip[1];
+			rmesa->hw.vpucp[p].cmd[R300_VPUCP_Z] = ip[2];
+			rmesa->hw.vpucp[p].cmd[R300_VPUCP_W] = ip[3];
+		}
+	}
+}
+
 /**
  * Initialize driver's state callback functions
  */
@@ -2225,4 +2281,6 @@ void r300InitStateFuncs(struct dd_function_table *functions)
 	functions->PolygonMode = r300PolygonMode;
 
 	functions->RenderMode = r300RenderMode;
+
+	functions->ClipPlane = r300ClipPlane;
 }
