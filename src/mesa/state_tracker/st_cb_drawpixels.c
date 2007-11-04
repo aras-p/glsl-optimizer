@@ -57,6 +57,30 @@
 #include "shader/prog_instruction.h"
 
 
+/**
+ * Check if the given program is:
+ * 0: MOVE result.color, fragment.color;
+ * 1: END;
+ */
+static GLboolean
+is_passthrough_program(const struct gl_fragment_program *prog)
+{
+   if (prog->Base.NumInstructions == 2) {
+      const struct prog_instruction *inst = prog->Base.Instructions;
+      if (inst[0].Opcode == OPCODE_MOV &&
+          inst[1].Opcode == OPCODE_END &&
+          inst[0].DstReg.File == PROGRAM_OUTPUT &&
+          inst[0].DstReg.Index == FRAG_RESULT_COLR &&
+          inst[0].DstReg.WriteMask == WRITEMASK_XYZW &&
+          inst[0].SrcReg[0].File == PROGRAM_INPUT &&
+          inst[0].SrcReg[0].Index == FRAG_ATTRIB_COL0 &&
+          inst[0].SrcReg[0].Swizzle == SWIZZLE_XYZW) {
+         return GL_TRUE;
+      }
+   }
+   return GL_FALSE;
+}
+
 
 /**
  * Make fragment program for glBitmap:
@@ -215,14 +239,21 @@ combined_drawpix_fragment_program(GLcontext *ctx)
       /* Concatenate the pixel transfer program with the current user-
        * defined program.
        */
-      stfp = (struct st_fragment_program *)
-         _mesa_combine_programs(ctx,
-                                &st->pixel_xfer.program->Base.Base,
-                                &st->fp->Base.Base);
+      if (is_passthrough_program(&st->fp->Base)) {
+         stfp = (struct st_fragment_program *)
+            _mesa_clone_program(ctx, &st->pixel_xfer.program->Base.Base);
+      }
+      else {
+         stfp = (struct st_fragment_program *)
+            _mesa_combine_programs(ctx,
+                                   &st->pixel_xfer.program->Base.Base,
+                                   &st->fp->Base.Base);
+      }
 
 #if 0
       {
          struct gl_program *p = &stfp->Base.Base;
+         printf("Combined DrawPixels program:\n");
          _mesa_print_program(p);
          printf("InputsRead: 0x%x\n", p->InputsRead);
          printf("OutputsWritten: 0x%x\n", p->OutputsWritten);
