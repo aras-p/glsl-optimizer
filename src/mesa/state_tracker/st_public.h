@@ -71,4 +71,6 @@ void st_invalidate_state(GLcontext * ctx, GLuint new_state);
 
 void st_flush( struct st_context *st );
 
+void st_notify_swapbuffers(struct st_framebuffer *stfb);
+
 #endif

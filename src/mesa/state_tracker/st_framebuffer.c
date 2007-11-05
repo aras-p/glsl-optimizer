@@ -132,3 +132,20 @@ st_get_framebuffer_surface(struct st_framebuffer *stfb, uint surfIndex)
       return strb->surface;
    return NULL;
 }
+
+
+/**
+ * This function is to be called prior to SwapBuffers on the given
+ * framebuffer.  It checks if the current context is bound to the framebuffer
+ * and flushes rendering if needed.
+ */
+void
+st_notify_swapbuffers(struct st_framebuffer *stfb)
+{
+   GET_CURRENT_CONTEXT(ctx);
+
+   if (ctx && ctx->DrawBuffer == &stfb->Base) {
+      st_flush(ctx->st);
+   }
+}
+
