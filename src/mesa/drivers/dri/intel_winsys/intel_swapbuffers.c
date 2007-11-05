@@ -39,6 +39,15 @@
 #include "state_tracker/st_cb_fbo.h"
 
 
+
+/** Cast wrapper */
+static INLINE struct intel_context *
+intel_context_mesa(GLcontext * ctx)
+{
+   return (struct intel_context *) ctx->DriverCtx;
+}
+
+
 /** XXX temporary - want to get rid of this */
 static struct intel_context *
 intelScreenContext(struct intel_screen *intelScreen)
