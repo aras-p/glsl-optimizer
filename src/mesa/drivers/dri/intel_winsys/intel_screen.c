@@ -32,6 +32,7 @@
 #include "intel_context.h"
 #include "intel_screen.h"
 #include "intel_batchbuffer.h"
+#include "intel_batchpool.h"
 #include "intel_swapbuffers.h"
 
 #include "i830_dri.h"

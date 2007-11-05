@@ -29,6 +29,11 @@
  * Authors: Thomas Hellström <thomas-at-tungstengraphics-dot-com>
  */
 
+/**
+ * XXX NOTE: there are no intel dependencies in this file.
+ * Rename to dri_batchpool.c?
+ */
+
 #include <xf86drm.h>
 #include <stdlib.h>
 #include <errno.h>
@@ -36,7 +41,8 @@
 #include "glthread.h"
 #include "dri_bufpool.h"
 #include "dri_bufmgr.h"
-#include "intel_screen.h"
+#include "intel_batchpool.h"
+
 
 typedef struct
 {

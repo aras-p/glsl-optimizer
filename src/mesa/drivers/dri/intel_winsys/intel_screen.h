@@ -95,10 +95,6 @@ intelMakeCurrent(__DRIcontextPrivate * driContextPriv,
                  __DRIdrawablePrivate * driDrawPriv,
                  __DRIdrawablePrivate * driReadPriv);
 
-extern struct _DriBufferPool *driBatchPoolInit(int fd, unsigned flags,
-                                               unsigned long bufSize,
-                                               unsigned numBufs,
-                                               unsigned checkDelayed);
 
 extern GLboolean
 intelCreatePools(__DRIscreenPrivate *sPriv);
