@@ -26,8 +26,6 @@
  **************************************************************************/
 
 
-#include "glheader.h"
-#include "context.h"
 #include "state_tracker/st_public.h"
 
 #include "intel_screen.h"

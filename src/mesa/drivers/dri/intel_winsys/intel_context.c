@@ -26,10 +26,6 @@
  **************************************************************************/
 
 
-#include "glheader.h"
-#include "context.h"
-#include "framebuffer.h"
-
 #include "i830_dri.h"
 
 #include "intel_screen.h"

@@ -29,12 +29,11 @@
  * Authors: Keith Whitwell <keithw-at-tungstengraphics-dot-com>
  */
 
-#include "imports.h"
 #include "intel_context.h"
 #include "intel_winsys.h"
 #include "pipe/softpipe/sp_winsys.h"
 #include "pipe/p_defines.h"
-
+#include "pipe/p_util.h"
 
 
 struct intel_softpipe_winsys {

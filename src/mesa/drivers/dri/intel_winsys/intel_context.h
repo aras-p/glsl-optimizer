@@ -106,7 +106,7 @@ extern int __intel_debug;
 
 #define DBG(flag, ...)  do { 			\
    if (__intel_debug & (DEBUG_##flag)) 		\
-      _mesa_printf(__VA_ARGS__); 		\
+      printf(__VA_ARGS__); 		\
 } while(0)
 
 #else

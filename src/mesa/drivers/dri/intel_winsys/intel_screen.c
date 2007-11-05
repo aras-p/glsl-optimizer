@@ -25,10 +25,6 @@
  * 
  **************************************************************************/
 
-#include "glheader.h"
-#include "context.h"
-#include "framebuffer.h"
-#include "renderbuffer.h"
 #include "utils.h"
 #include "vblank.h"
 #include "xmlpool.h"
