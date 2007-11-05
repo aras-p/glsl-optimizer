@@ -587,17 +587,17 @@ _generic_read_RGBA_span_RGB565_MMX:
 	movq	prescale, %mm6
 	movq	scale, %mm7
  */
- 	pushl	MASK_565_H
- 	pushl	MASK_565_L
+	pushl	$MASK_565_H
+	pushl	$MASK_565_L
 	movq	(%esp), %mm5
- 	pushl	PRESCALE_H
- 	pushl	PRESCALE_L
+	pushl	$PRESCALE_H
+	pushl	$PRESCALE_L
 	movq	(%esp), %mm6
- 	pushl	SCALE_H
- 	pushl	SCALE_L
+	pushl	$SCALE_H
+	pushl	$SCALE_L
 	movq	(%esp), %mm7
- 	pushl	ALPHA_H
- 	pushl	ALPHA_L
+	pushl	$ALPHA_H
+	pushl	$ALPHA_L
 	movq	(%esp), %mm3
 	addl	$32,%esp
 
