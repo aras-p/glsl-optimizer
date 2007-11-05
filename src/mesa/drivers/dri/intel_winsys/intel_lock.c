@@ -26,6 +26,7 @@
  **************************************************************************/
 
 
+#include "main/mtypes.h"  /* XXX try to remove */
 #include "state_tracker/st_public.h"
 #include "intel_context.h"
 #include "i830_dri.h"
