@@ -210,7 +210,6 @@ do_flush_locked(struct intel_batchbuffer *batch,
 {
    GLuint *ptr;
    GLuint i;
-   struct intel_context *intel = batch->intel;
    unsigned fenceFlags;
    struct _DriFenceObject *fo;
 
