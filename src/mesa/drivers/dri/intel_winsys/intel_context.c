@@ -163,8 +163,7 @@ intelCreateContext(const __GLcontextModes * mesaVis,
 void
 intelDestroyContext(__DRIcontextPrivate * driContextPriv)
 {
-   struct intel_context *intel =
-      (struct intel_context *) driContextPriv->driverPrivate;
+   struct intel_context *intel = intel_context(driContextPriv);
 
    assert(intel);               /* should never be null */
    if (intel) {
@@ -191,8 +190,7 @@ intelDestroyContext(__DRIcontextPrivate * driContextPriv)
 GLboolean
 intelUnbindContext(__DRIcontextPrivate * driContextPriv)
 {
-   struct intel_context *intel
-      = (struct intel_context *) driContextPriv->driverPrivate;
+   struct intel_context *intel = intel_context(driContextPriv);
    st_flush(intel->st);
    return GL_TRUE;
 }
@@ -204,8 +202,7 @@ intelMakeCurrent(__DRIcontextPrivate * driContextPriv,
                  __DRIdrawablePrivate * driReadPriv)
 {
    if (driContextPriv) {
-      struct intel_context *intel
-         = (struct intel_context *) driContextPriv->driverPrivate;
+      struct intel_context *intel = intel_context(driContextPriv);
       struct intel_framebuffer *draw_fb = intel_framebuffer(driDrawPriv);
       struct intel_framebuffer *read_fb = intel_framebuffer(driReadPriv);
 

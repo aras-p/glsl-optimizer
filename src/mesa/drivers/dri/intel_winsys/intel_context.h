@@ -145,9 +145,17 @@ extern int __intel_debug;
 
 /** Cast wrapper */
 static INLINE struct intel_context *
-intel_context(GLcontext * ctx)
+intel_context_mesa(GLcontext * ctx)
 {
    return (struct intel_context *) ctx->DriverCtx;
+}
+
+
+/** Cast wrapper */
+static INLINE struct intel_context *
+intel_context(__DRIcontextPrivate *driContextPriv)
+{
+   return (struct intel_context *) driContextPriv->driverPrivate;
 }
 
 

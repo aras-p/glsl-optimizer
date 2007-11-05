@@ -58,7 +58,7 @@ intelScreenContext(intelScreenPrivate *intelScreen)
      return intelScreen->dummyctxptr;
   }
 
-  return intel_context(ctx);
+  return intel_context_mesa(ctx);
 }
 
 
@@ -117,7 +117,7 @@ intelDisplaySurface(__DRIdrawablePrivate * dPriv,
    /* if this drawable isn't currently bound the LOCK_HARDWARE done on the
       current context (which is what intelScreenContext should return) might
       not get a contended lock and thus cliprects not updated (tests/manywin) */
-   if ((struct intel_context *)dPriv->driContextPriv->driverPrivate != intel)
+   if (intel_context(dPriv->driContextPriv) != intel)
       DRI_VALIDATE_DRAWABLE_INFO(intel->driScreen, dPriv);
 
 
@@ -277,8 +277,7 @@ void
 intelCopySubBuffer(__DRIdrawablePrivate * dPriv, int x, int y, int w, int h)
 {
    if (dPriv->driContextPriv && dPriv->driContextPriv->driverPrivate) {
-      struct intel_context *intel =
-         (struct intel_context *) dPriv->driContextPriv->driverPrivate;
+      struct intel_context *intel = intel_context(dPriv->driContextPriv);
       GLcontext *ctx = intel->st->ctx;
 
       if (ctx->Visual.doubleBufferMode) {
