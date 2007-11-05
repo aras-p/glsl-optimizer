@@ -43,7 +43,7 @@
 
 
 struct intel_i915_winsys {
-   struct i915_winsys winsys;
+   struct i915_winsys winsys;   /**< batch buffer funcs */
    struct intel_context *intel;
 };
 

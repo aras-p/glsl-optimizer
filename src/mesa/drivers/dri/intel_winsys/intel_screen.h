@@ -58,14 +58,14 @@ struct intel_screen
    __DRIscreenPrivate *driScrnPriv;
    drmI830Sarea *sarea;
 
-
    /**
    * Configuration cache with default values for all contexts
    */
    driOptionCache optionCache;
+
    struct _DriBufferPool *batchPool;
    struct _DriBufferPool *regionPool;
-   struct _DriBufferPool *staticPool;
+   struct _DriBufferPool *staticPool; /** for the X screen/framebuffer */
    GLboolean havePools;
 
    struct intel_context *dummyctxptr;
