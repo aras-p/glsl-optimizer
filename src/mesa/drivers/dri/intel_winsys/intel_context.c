@@ -83,7 +83,7 @@ intelCreateContext(const __GLcontextModes * mesaVis,
    struct intel_context *intel = CALLOC_STRUCT(intel_context);
 
    __DRIscreenPrivate *sPriv = driContextPriv->driScreenPriv;
-   intelScreenPrivate *intelScreen = (intelScreenPrivate *) sPriv->private;
+   struct intel_screen *intelScreen = intel_screen(sPriv);
    drmI830Sarea *saPriv = intelScreen->sarea;
    int fthrottle_mode;
    GLboolean havePools;

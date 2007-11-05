@@ -41,7 +41,7 @@
 
 /** XXX temporary - want to get rid of this */
 static struct intel_context *
-intelScreenContext(intelScreenPrivate *intelScreen)
+intelScreenContext(struct intel_screen *intelScreen)
 {
   /*
    * This should probably change to have the screen allocate a dummy
@@ -77,8 +77,7 @@ intelDisplaySurface(__DRIdrawablePrivate *dPriv,
                     const drm_clip_rect_t *rect)
 {
    struct intel_context *intel;
-   const intelScreenPrivate *intelScreen
-      = (intelScreenPrivate *) dPriv->driScreenPriv->private;
+   const struct intel_screen *intelScreen = intel_screen(dPriv->driScreenPriv);
 
    DBG(SWAP, "%s\n", __FUNCTION__);
 

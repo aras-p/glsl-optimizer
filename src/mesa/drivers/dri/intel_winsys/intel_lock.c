@@ -45,7 +45,7 @@ intelContendedLock(struct intel_context *intel, GLuint flags)
 {
    __DRIdrawablePrivate *dPriv = intel->driDrawable;
    __DRIscreenPrivate *sPriv = intel->driScreen;
-   intelScreenPrivate *intelScreen = (intelScreenPrivate *) sPriv->private;
+   struct intel_screen *intelScreen = intel_screen(sPriv);
    drmI830Sarea *sarea = intel->sarea;
 
    drmGetLock(intel->driFd, intel->hHWContext, flags);

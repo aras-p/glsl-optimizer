@@ -71,7 +71,7 @@ struct intel_context
 
    __DRIdrawablePrivate *driDrawable;
    __DRIscreenPrivate *driScreen;
-   intelScreenPrivate *intelScreen;
+   struct intel_screen *intelScreen;
    drmI830Sarea *sarea;
 
    GLuint lastStamp;

@@ -33,6 +33,8 @@
 #include "xmlconfig.h"
 #include "dri_bufpool.h"
 
+#include "pipe/p_compiler.h"
+
 
 struct intel_screen
 {
@@ -70,7 +72,15 @@ struct intel_screen
    struct intel_context *dummyctxptr;
 };
 
-typedef struct intel_screen intelScreenPrivate;
+
+
+/** cast wrapper */
+static INLINE struct intel_screen *
+intel_screen(__DRIscreenPrivate *sPriv)
+{
+   return (struct intel_screen *) sPriv->private;
+}
+
 
 extern void
 intelUpdateScreenRotation(__DRIscreenPrivate * sPriv, drmI830Sarea * sarea);

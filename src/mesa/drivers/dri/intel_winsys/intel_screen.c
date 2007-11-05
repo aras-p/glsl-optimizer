@@ -64,7 +64,7 @@ PUBLIC const char __driConfigOptions[] =
 
 
 static void
-intelPrintDRIInfo(intelScreenPrivate * intelScreen,
+intelPrintDRIInfo(struct intel_screen * intelScreen,
                   __DRIscreenPrivate * sPriv, I830DRIPtr gDRIPriv)
 {
    fprintf(stderr, "*** Front size:   0x%x  offset: 0x%x  pitch: %d\n",
@@ -110,7 +110,7 @@ intelPrintSAREA(const drmI830Sarea * sarea)
 void
 intelUpdateScreenRotation(__DRIscreenPrivate * sPriv, drmI830Sarea * sarea)
 {
-   intelScreenPrivate *intelScreen = (intelScreenPrivate *) sPriv->private;
+   struct intel_screen *intelScreen = intel_screen(sPriv);
 
    if (intelScreen->front.map) {
       drmUnmap(intelScreen->front.map, intelScreen->front.size);
@@ -160,7 +160,7 @@ GLboolean
 intelCreatePools(__DRIscreenPrivate * sPriv)
 {
    unsigned batchPoolSize = 1024*1024;
-   intelScreenPrivate *intelScreen = sPriv->private;
+   struct intel_screen *intelScreen = intel_screen(sPriv);
 
    if (intelScreen->havePools)
       return GL_TRUE;
@@ -198,7 +198,7 @@ intelCreatePools(__DRIscreenPrivate * sPriv)
 static GLboolean
 intelInitDriver(__DRIscreenPrivate * sPriv)
 {
-   intelScreenPrivate *intelScreen;
+   struct intel_screen *intelScreen;
    I830DRIPtr gDRIPriv = (I830DRIPtr) sPriv->pDevPriv;
 
    PFNGLXSCRENABLEEXTENSIONPROC glx_enable_extension =
@@ -213,7 +213,7 @@ intelInitDriver(__DRIscreenPrivate * sPriv)
    }
 
    /* Allocate the private area */
-   intelScreen = (intelScreenPrivate *) CALLOC(sizeof(intelScreenPrivate));
+   intelScreen = CALLOC_STRUCT(intel_screen);
    if (!intelScreen) 
       return GL_FALSE;
 
@@ -252,7 +252,7 @@ intelInitDriver(__DRIscreenPrivate * sPriv)
 static void
 intelDestroyScreen(__DRIscreenPrivate * sPriv)
 {
-   intelScreenPrivate *intelScreen = (intelScreenPrivate *) sPriv->private;
+   struct intel_screen *intelScreen = intel_screen(sPriv);
 
 //   intelUnmapScreenRegions(intelScreen);
 
