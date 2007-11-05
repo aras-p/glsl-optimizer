@@ -73,15 +73,10 @@ intelContendedLock(struct intel_context *intel, GLuint flags)
 void LOCK_HARDWARE( struct intel_context *intel )
 {
     char __ret=0;
-    struct intel_framebuffer *intel_fb = NULL;
     int curbuf;
 
     _glthread_LOCK_MUTEX(lockMutex);
     assert(!intel->locked);
-
-    if (intel->driDrawable) {
-       intel_fb = intel->driDrawable->driverPrivate;
-    }
 
     curbuf = 0; /* current draw buf: 0 = front, 1 = back */
 

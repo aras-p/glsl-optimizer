@@ -300,14 +300,10 @@ intelDestroyBuffer(__DRIdrawablePrivate * driDrawPriv)
 static int
 intelGetSwapInfo(__DRIdrawablePrivate * dPriv, __DRIswapInfo * sInfo)
 {
-   struct intel_framebuffer *intel_fb;
-
    if ((dPriv == NULL) || (dPriv->driverPrivate == NULL)
        || (sInfo == NULL)) {
       return -1;
    }
-
-   intel_fb = dPriv->driverPrivate;
 
    return 0;
 }
