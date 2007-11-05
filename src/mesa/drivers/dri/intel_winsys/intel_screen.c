@@ -157,10 +157,10 @@ intelUpdateScreenRotation(__DRIscreenPrivate * sPriv, drmI830Sarea * sarea)
 
 
 GLboolean
-intelCreatePools(intelScreenPrivate *intelScreen)
+intelCreatePools(__DRIscreenPrivate * sPriv)
 {
    unsigned batchPoolSize = 1024*1024;
-   __DRIscreenPrivate * sPriv = intelScreen->driScrnPriv;
+   intelScreenPrivate *intelScreen = sPriv->private;
 
    if (intelScreen->havePools)
       return GL_TRUE;
@@ -221,7 +221,6 @@ intelInitDriver(__DRIscreenPrivate * sPriv)
    driParseOptionInfo(&intelScreen->optionCache,
                       __driConfigOptions, __driNConfigOptions);
 
-   intelScreen->driScrnPriv = sPriv;
    sPriv->private = (void *) intelScreen;
 
    intelScreen->sarea = (drmI830Sarea *) (((GLubyte *) sPriv->pSAREA) +

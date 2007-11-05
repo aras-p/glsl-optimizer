@@ -55,7 +55,6 @@ struct intel_screen
    int deviceID;
    int drmMinor;
 
-   __DRIscreenPrivate *driScrnPriv;
    drmI830Sarea *sarea;
 
    /**
@@ -92,7 +91,7 @@ extern struct _DriBufferPool *driBatchPoolInit(int fd, unsigned flags,
                                                unsigned checkDelayed);
 
 extern GLboolean
-intelCreatePools(intelScreenPrivate *intelScreen);
+intelCreatePools(__DRIscreenPrivate *sPriv);
 
 extern GLboolean
 intelCreateContext(const __GLcontextModes * mesaVis,

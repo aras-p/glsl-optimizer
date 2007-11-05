@@ -102,7 +102,7 @@ intelCreateContext(const __GLcontextModes * mesaVis,
     * memory pools
     */
    DRM_LIGHT_LOCK(sPriv->fd, &sPriv->pSAREA->lock, driContextPriv->hHWContext);
-   havePools = intelCreatePools(intelScreen);
+   havePools = intelCreatePools(sPriv);
    DRM_UNLOCK(sPriv->fd, &sPriv->pSAREA->lock, driContextPriv->hHWContext);
    if (!havePools)
       return GL_FALSE;
