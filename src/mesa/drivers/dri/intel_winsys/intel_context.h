@@ -25,8 +25,8 @@
  * 
  **************************************************************************/
 
-#ifndef INTELCONTEXT_INC
-#define INTELCONTEXT_INC
+#ifndef INTEL_CONTEXT_H
+#define INTEL_CONTEXT_H
 
 
 #include "drm.h"

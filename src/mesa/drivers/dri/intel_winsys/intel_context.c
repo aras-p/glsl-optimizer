@@ -40,7 +40,6 @@
 #include "pipe/p_context.h"
 
 #include "utils.h"
-#include "xmlpool.h"            /* for symbolic values of enum-type options */
 
 
 #ifdef DEBUG

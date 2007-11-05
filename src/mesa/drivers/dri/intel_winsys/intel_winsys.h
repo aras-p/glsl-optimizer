@@ -25,8 +25,8 @@
  * 
  **************************************************************************/
 
-#ifndef INTEL_PIPE_H
-#define INTEL_PIPE_H
+#ifndef INTEL_WINSYS_H
+#define INTEL_WINSYS_H
 
 struct intel_context;
 struct pipe_context;

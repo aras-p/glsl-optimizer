@@ -27,12 +27,7 @@
 
 
 #include "state_tracker/st_public.h"
-
-#include "intel_screen.h"
 #include "intel_context.h"
-#include "intel_batchbuffer.h"
-#include "intel_swapbuffers.h"
-
 #include "i830_dri.h"
 
 
@@ -73,12 +68,9 @@ intelContendedLock(struct intel_context *intel, uint flags)
 void LOCK_HARDWARE( struct intel_context *intel )
 {
     char __ret=0;
-    int curbuf;
 
     _glthread_LOCK_MUTEX(lockMutex);
     assert(!intel->locked);
-
-    curbuf = 0; /* current draw buf: 0 = front, 1 = back */
 
     DRM_CAS(intel->driHwLock, intel->hHWContext,
             (DRM_LOCK_HELD|intel->hHWContext), __ret);
