@@ -70,7 +70,7 @@ get_color_surface(struct intel_framebuffer *intel_fb,
                   GLuint bufferIndex)
 {
    struct st_renderbuffer *strb
-      = st_renderbuffer(intel_fb->Base.Attachment[bufferIndex].Renderbuffer);
+      = st_renderbuffer(intel_fb->stfb->Base.Attachment[bufferIndex].Renderbuffer);
    if (strb)
       return strb->surface;
    return NULL;
@@ -236,9 +236,9 @@ intelDisplaySurface(__DRIdrawablePrivate * dPriv,
 void
 intelUpdateWindowSize(__DRIdrawablePrivate *dPriv)
 {
-   struct st_framebuffer *stfb
-      = (struct st_framebuffer *) dPriv->driverPrivate;
-   st_resize_framebuffer(stfb, dPriv->w, dPriv->h);
+   struct intel_framebuffer *intelfb = intel_framebuffer(dPriv);
+   assert(intelfb->stfb);
+   st_resize_framebuffer(intelfb->stfb, dPriv->w, dPriv->h);
 }
 
 

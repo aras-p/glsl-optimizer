@@ -29,6 +29,7 @@
 #include "vblank.h"
 #include "xmlpool.h"
 
+#include "intel_context.h"
 #include "intel_screen.h"
 #include "intel_batchbuffer.h"
 #include "intel_swapbuffers.h"
@@ -280,8 +281,17 @@ intelCreateBuffer(__DRIscreenPrivate * driScrnPriv,
       return GL_FALSE;          /* not implemented */
    }
    else {
-      struct st_framebuffer *stfb = st_create_framebuffer(mesaVis);
-      driDrawPriv->driverPrivate = (void *) stfb;
+      struct intel_framebuffer *intelfb = CALLOC_STRUCT(intel_framebuffer);
+      if (!intelfb)
+         return GL_FALSE;
+
+      intelfb->stfb = st_create_framebuffer(mesaVis);
+      if (!intelfb->stfb) {
+         free(intelfb);
+         return GL_FALSE;
+      }
+
+      driDrawPriv->driverPrivate = (void *) intelfb;
       return GL_TRUE;
    }
 }
@@ -289,8 +299,10 @@ intelCreateBuffer(__DRIscreenPrivate * driScrnPriv,
 static void
 intelDestroyBuffer(__DRIdrawablePrivate * driDrawPriv)
 {
-   st_unreference_framebuffer((struct st_framebuffer **)
-                              (&(driDrawPriv->driverPrivate)));
+   struct intel_framebuffer *intelfb = intel_framebuffer(driDrawPriv);
+   assert(intelfb->stfb);
+   st_unreference_framebuffer(&intelfb->stfb);
+   free(intelfb);
 }
 
 

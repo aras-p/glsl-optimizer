@@ -46,6 +46,9 @@ struct st_context;
 
 #define INTEL_MAX_FIXUP 64
 
+/**
+ * Intel rendering context, contains a state tracker and intel-specific info.
+ */
 struct intel_context
 {
    struct st_context *st;
@@ -78,6 +81,22 @@ struct intel_context
     */
    driOptionCache optionCache;
 };
+
+
+
+/**
+ * Intel framebuffer.
+ */
+struct intel_framebuffer
+{
+   struct st_framebuffer *stfb;
+
+   /* other fields TBD */
+   int other;
+};
+
+
+
 
 /* These are functions now:
  */
@@ -124,14 +143,19 @@ extern int __intel_debug;
 #define PCI_CHIP_Q33_G			0x29D2
 
 
-/*======================================================================
- * Inline conversion functions.  
- * These are better-typed than the macros used previously:
- */
+/** Cast wrapper */
 static INLINE struct intel_context *
 intel_context(GLcontext * ctx)
 {
    return (struct intel_context *) ctx->DriverCtx;
+}
+
+
+/** Cast wrapper */
+static INLINE struct intel_framebuffer *
+intel_framebuffer(__DRIdrawablePrivate * driDrawPriv)
+{
+   return (struct intel_framebuffer *) driDrawPriv->driverPrivate;
 }
 
 

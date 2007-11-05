@@ -206,16 +206,17 @@ intelMakeCurrent(__DRIcontextPrivate * driContextPriv,
    if (driContextPriv) {
       struct intel_context *intel
          = (struct intel_context *) driContextPriv->driverPrivate;
-      struct st_framebuffer *draw_fb
-         = (struct st_framebuffer *) driDrawPriv->driverPrivate;
-      struct st_framebuffer *read_fb
-         = (struct st_framebuffer *) driReadPriv->driverPrivate;
+      struct intel_framebuffer *draw_fb = intel_framebuffer(driDrawPriv);
+      struct intel_framebuffer *read_fb = intel_framebuffer(driReadPriv);
+
+      assert(draw_fb->stfb);
+      assert(read_fb->stfb);
 
       /* this is a hack so we have a valid context when the region allocation
          is done. Need a per-screen context? */
       intel->intelScreen->dummyctxptr = intel;
 
-      st_make_current(intel->st, draw_fb, read_fb);
+      st_make_current(intel->st, draw_fb->stfb, read_fb->stfb);
 
       if ((intel->driDrawable != driDrawPriv) ||
 	  (intel->lastStamp != driDrawPriv->lastStamp)) {

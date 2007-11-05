@@ -25,19 +25,8 @@
  * 
  **************************************************************************/
 
-#ifndef INTEL_BUFFERS_H
-#define INTEL_BUFFERS_H
-
-
-
-/**
- * Intel framebuffer, derived from gl_framebuffer.
- */
-struct intel_framebuffer
-{
-   struct gl_framebuffer Base;
-
-};
+#ifndef INTEL_SWAPBUFFERS_H
+#define INTEL_SWAPBUFFERS_H
 
 
 extern void intelDisplaySurface(__DRIdrawablePrivate * dPriv,
@@ -52,4 +41,4 @@ extern void intelCopySubBuffer(__DRIdrawablePrivate * dPriv,
 extern void intelUpdateWindowSize(__DRIdrawablePrivate *dPriv);
 
 
-#endif /* INTEL_BUFFERS_H */
+#endif /* INTEL_SWAPBUFFERS_H */
