@@ -379,17 +379,21 @@ CreateContext(Display *dpy, XVisualInfo *vis,
 	    const __GLcontextModes * mode;
 	    drm_context_t hwContext;
 
-	    /* The value of fbconfig cannot change because it is tested
-	     * later in the function.
-	     */
-	    if ( fbconfig == NULL ) {
-		/* FIXME: Is it possible for the __GLcontextModes structure
-		 * FIXME: to not be found?
-		 */
-		mode = _gl_context_modes_find_visual( psc->configs,
-						      vis->visualid );
-		assert( mode != NULL );
-		assert( mode->screen == screen );
+
+	    if (fbconfig == NULL) {
+		mode = _gl_context_modes_find_visual(psc->visuals, vis->visualid);
+		if (mode == NULL) {
+		   xError error;
+
+		   error.errorCode = BadValue;
+		   error.resourceID = vis->visualid;
+		   error.sequenceNumber = dpy->request;
+		   error.type = X_Error;
+		   error.majorCode = gc->majorOpcode;
+		   error.minorCode = X_GLXCreateContext;
+		   _XError(dpy, &error);
+		   return None;
+		}
 	    }
 	    else {
 		mode = fbconfig;
