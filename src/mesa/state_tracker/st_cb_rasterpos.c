@@ -282,7 +282,9 @@ st_RasterPos(GLcontext *ctx, const GLfloat v[4])
       const unsigned size = sizeof(ctx->Current.Attrib);
       const void *data = ctx->Current.Attrib;
       /* colors, texcoords, etc */
-      pipe->winsys->buffer_data(pipe->winsys, buf, size, data);
+      pipe->winsys->buffer_data(pipe->winsys, buf, 
+                                size, data, 
+                                PIPE_BUFFER_USAGE_VERTEX);
       /* position */
       pipe->winsys->buffer_subdata(pipe->winsys, buf,
                                    0, /* offset */
@@ -301,7 +303,8 @@ st_RasterPos(GLcontext *ctx, const GLfloat v[4])
       fb_buf.start_offset = 0;
       pipe->winsys->buffer_data(pipe->winsys, fb_buf.buffer,
                                 fb_buf.size,
-                                NULL); /* data */
+                                NULL, /* data */
+                                PIPE_BUFFER_USAGE_VERTEX);
       if (pipe->set_feedback_buffer)
          pipe->set_feedback_buffer(pipe, 0, &fb_buf);
    }

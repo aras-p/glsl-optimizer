@@ -116,10 +116,17 @@ struct pipe_winsys
                              struct pipe_buffer_handle **ptr,
                              struct pipe_buffer_handle *buf );
 
-   /** Create the data store of a buffer and optionally initialize it */
+   /** 
+    * Create the data store of a buffer and optionally initialize it.
+    * 
+    * usage is a bitmask of PIPE_BUFFER_USAGE_PIXEL/VERTEX/INDEX/CONSTANT. This
+    * usage argument is only an optimization hint, not a guarantee, therefore 
+    * proper behavior must be observed in all circumstances.
+    */
    void (*buffer_data)(struct pipe_winsys *sws, 
 		       struct pipe_buffer_handle *buf,
-		       unsigned size, const void *data );
+		       unsigned size, const void *data,
+		       unsigned usage);
 
    /** Modify some or all of the data contained in a buffer's data store */
    void (*buffer_subdata)(struct pipe_winsys *sws, 

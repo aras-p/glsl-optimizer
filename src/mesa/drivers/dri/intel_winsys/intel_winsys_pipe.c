@@ -107,7 +107,8 @@ intel_buffer_reference(struct pipe_winsys *sws,
  */
 static void intel_buffer_data(struct pipe_winsys *sws, 
 			      struct pipe_buffer_handle *buf,
-			      unsigned size, const void *data )
+			      unsigned size, const void *data,
+			      unsigned usage )
 {
    struct intel_context *intel = intel_pipe_winsys(sws)->intel;
 
@@ -229,7 +230,8 @@ intel_i915_region_alloc(struct pipe_winsys *winsys,
    winsys->buffer_data( winsys,
                         region->buffer, 
                         pitch * cpp * height, 
-                        NULL );
+                        NULL,
+                        PIPE_BUFFER_USAGE_PIXEL );
 
    return region;
 }

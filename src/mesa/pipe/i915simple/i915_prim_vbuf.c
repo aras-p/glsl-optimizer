@@ -376,7 +376,9 @@ static void vbuf_flush_elements( struct draw_stage *stage )
    /* FIXME: handle failure */
    if(!vbuf->buf)
       vbuf->buf = winsys->buffer_create(winsys, 64);
-   winsys->buffer_data(winsys, vbuf->buf, VBUF_SIZE, NULL);
+   winsys->buffer_data( winsys, vbuf->buf, 
+                        VBUF_SIZE, NULL, 
+                        PIPE_BUFFER_USAGE_VERTEX );
    vbuf->vertex_map = winsys->buffer_map(winsys, 
                                          vbuf->buf, 
                                          PIPE_BUFFER_FLAG_WRITE );

@@ -104,11 +104,29 @@ st_bufferobj_data(GLcontext *ctx,
 {
    struct pipe_context *pipe = st_context(ctx)->pipe;
    struct st_buffer_object *st_obj = st_buffer_object(obj);
+   unsigned buffer_usage;
 
    st_obj->Base.Size = size;
    st_obj->Base.Usage = usage;
+   
+   switch(target) {
+   case GL_PIXEL_PACK_BUFFER_ARB:
+   case GL_PIXEL_UNPACK_BUFFER_ARB:
+      buffer_usage = PIPE_BUFFER_USAGE_PIXEL;
+      break;
+   case GL_ARRAY_BUFFER_ARB:
+      buffer_usage = PIPE_BUFFER_USAGE_VERTEX;
+      break;
+   case GL_ELEMENT_ARRAY_BUFFER_ARB:
+      buffer_usage = PIPE_BUFFER_USAGE_INDEX;
+      break;
+   default:
+      buffer_usage = 0;
+   }
 
-   pipe->winsys->buffer_data( pipe->winsys, st_obj->buffer, size, data );
+   pipe->winsys->buffer_data( pipe->winsys, st_obj->buffer, 
+                              size, data, 
+                              buffer_usage );
 }
 
 

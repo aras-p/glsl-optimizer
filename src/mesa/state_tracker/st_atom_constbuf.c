@@ -80,7 +80,8 @@ void st_upload_constants( struct st_context *st,
       }
 
       /* load Mesa constants into the constant buffer */
-      ws->buffer_data(ws, cbuf->buffer, paramBytes, params->ParameterValues);
+      ws->buffer_data(ws, cbuf->buffer, paramBytes, params->ParameterValues,
+                      PIPE_BUFFER_USAGE_CONSTANT);
 
       cbuf->size = paramBytes;
 

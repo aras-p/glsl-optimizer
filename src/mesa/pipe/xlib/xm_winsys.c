@@ -120,7 +120,7 @@ xm_buffer_reference(struct pipe_winsys *pws,
 
 static void
 xm_buffer_data(struct pipe_winsys *pws, struct pipe_buffer_handle *buf,
-               unsigned size, const void *data )
+               unsigned size, const void *data, unsigned usage )
 {
    struct xm_buffer *xm_buf = xm_bo(buf);
    assert(!xm_buf->userBuffer);
@@ -245,7 +245,8 @@ xm_region_alloc(struct pipe_winsys *winsys,
    winsys->buffer_data( winsys,
                         region->buffer, 
                         region->pitch * cpp * height, 
-                        NULL );
+                        NULL,
+                        PIPE_BUFFER_USAGE_PIXEL );
    return region;
 }
 

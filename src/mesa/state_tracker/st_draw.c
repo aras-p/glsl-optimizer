@@ -289,7 +289,9 @@ st_draw_vertices(GLcontext *ctx, unsigned prim,
 
    /* XXX create one-time */
    vbuf = pipe->winsys->buffer_create(pipe->winsys, 32);
-   pipe->winsys->buffer_data(pipe->winsys, vbuf, vertex_bytes, verts);
+   pipe->winsys->buffer_data(pipe->winsys, vbuf, 
+                             vertex_bytes, verts,
+                             PIPE_BUFFER_USAGE_VERTEX);
 
    /* tell pipe about the vertex buffer */
    vbuffer.buffer = vbuf;
