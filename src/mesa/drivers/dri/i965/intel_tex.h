@@ -34,9 +34,14 @@
 
 void intelInitTextureFuncs( struct dd_function_table *functions );
 
+const struct gl_texture_format *intelChooseTextureFormat(GLcontext * ctx,
+                                                         GLint internalFormat,
+                                                         GLenum format,
+                                                         GLenum type);
 
 GLuint intel_finalize_mipmap_tree( struct intel_context *intel,
 				   struct gl_texture_object *tObj );
 
+int intel_compressed_num_bytes(GLuint mesaFormat);
 
 #endif

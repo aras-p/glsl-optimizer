@@ -89,7 +89,6 @@ static void brwInitProgFuncs( struct dd_function_table *functions )
 static void brwInitDriverFunctions( struct dd_function_table *functions )
 {
    intelInitDriverFunctions( functions );
-   brwInitTextureFuncs( functions );
    brwInitFragProgFuncs( functions );
    brwInitProgFuncs( functions );
 }

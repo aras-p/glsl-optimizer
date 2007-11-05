@@ -664,7 +664,6 @@ void brw_destroy_state( struct brw_context *brw );
  * brw_tex.c
  */
 void brwUpdateTextureState( struct intel_context *intel );
-void brwInitTextureFuncs( struct dd_function_table *functions );
 void brw_FrameBufferTexInit( struct brw_context *brw );
 void brw_FrameBufferTexDestroy( struct brw_context *brw );
 

@@ -289,6 +289,7 @@ intel_delete_texture_object( GLcontext *ctx, struct gl_texture_object *texObj )
 void intelInitTextureFuncs( struct dd_function_table *functions )
 {
    functions->NewTextureObject          = intelNewTextureObject;
+   functions->ChooseTextureFormat = intelChooseTextureFormat;
    functions->TexImage1D                = intelTexImage1D;
    functions->TexImage2D                = intelTexImage2D;
    functions->TexImage3D                = intelTexImage3D;
