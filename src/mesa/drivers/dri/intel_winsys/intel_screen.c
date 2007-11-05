@@ -352,7 +352,8 @@ intelCreateBuffer(__DRIscreenPrivate * driScrnPriv,
 static void
 intelDestroyBuffer(__DRIdrawablePrivate * driDrawPriv)
 {
-   _mesa_unreference_framebuffer((GLframebuffer **)(&(driDrawPriv->driverPrivate)));
+   st_unreference_framebuffer((struct st_framebuffer **)
+                              (&(driDrawPriv->driverPrivate)));
 }
 
 
