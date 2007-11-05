@@ -231,25 +231,18 @@ intelUpdateWindowSize(__DRIdrawablePrivate *dPriv)
 void
 intelSwapBuffers(__DRIdrawablePrivate * dPriv)
 {
-   if (dPriv->driContextPriv && dPriv->driContextPriv->driverPrivate) {
-      GET_CURRENT_CONTEXT(ctx);
+   struct intel_framebuffer *intel_fb = intel_framebuffer(dPriv);
+   struct pipe_surface *back_surf;
 
-      if (ctx == NULL)
-	 return;
+   assert(intel_fb);
+   assert(intel_fb->stfb);
 
-      if (ctx->Visual.doubleBufferMode) {
-	 struct intel_framebuffer *intel_fb = dPriv->driverPrivate;
-         struct pipe_surface *back_surf
-            = st_get_framebuffer_surface(intel_fb->stfb, ST_SURFACE_BACK_LEFT);
+   st_notify_swapbuffers(intel_fb->stfb);
 
-	 _mesa_notifySwapBuffers(ctx);  /* flush pending rendering comands */
-
-         intelDisplaySurface(dPriv, back_surf, NULL);
-      }
-   }
-   else {
-      /* XXX this shouldn't be an error but we can't handle it for now */
-      fprintf(stderr, "%s: drawable has no context!\n", __FUNCTION__);
+   back_surf = st_get_framebuffer_surface(intel_fb->stfb,
+                                          ST_SURFACE_BACK_LEFT);
+   if (back_surf) {
+      intelDisplaySurface(dPriv, back_surf, NULL);
    }
 }
 
