@@ -55,7 +55,7 @@ void intel_batchbuffer_reset(struct intel_batchbuffer *batch);
 
 
 /* Unlike bmBufferData, this currently requires the buffer be mapped.
- * Consider it a convenience function wrapping multple
+ * Consider it a convenience function wrapping multiple
  * intel_buffer_dword() calls.
  */
 void intel_batchbuffer_data(struct intel_batchbuffer *batch,
@@ -113,7 +113,7 @@ intel_batchbuffer_require_space(struct intel_batchbuffer *batch,
 #define OUT_BATCH(d)  intel_batchbuffer_emit_dword(intel->batch, d)
 
 #define OUT_RELOC(buf,flags,mask,delta) do { 				\
-   assert((delta) >= 0);							\
+   assert((delta) >= 0);						\
    intel_batchbuffer_emit_reloc(intel->batch, buf, flags, mask, delta);	\
 } while (0)
 
