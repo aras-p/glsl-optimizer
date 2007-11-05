@@ -65,39 +65,8 @@ intelContendedLock(struct intel_context *intel, GLuint flags)
 
       intelUpdateScreenRotation(sPriv, sarea);
    }
-
-#if 0
-   if (sarea->width != intel->width ||
-       sarea->height != intel->height ||
-       sarea->rotation != intel->current_rotation) {
-      int numClipRects = intel->numClipRects;
-
-      /*
-       * FIXME: Really only need to do this when drawing to a
-       * common back- or front buffer.
-       */
-
-      /*
-       * This will essentially drop the outstanding batchbuffer on the floor.
-       */
-      intel->numClipRects = 0;
-
-      st_flush(intel->st);
-
-      if (intel->batch->map != intel->batch->ptr)
-	 intel_batchbuffer_flush(intel->batch);
-
-      intel->numClipRects = numClipRects;
-
-      /* force window update */
-      intel->lastStamp = 0;
-
-      intel->width = sarea->width;
-      intel->height = sarea->height;
-      intel->current_rotation = sarea->rotation;
-   }
-#endif
 }
+
 
 /* Lock the hardware and validate our state.
  */

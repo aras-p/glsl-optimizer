@@ -59,11 +59,6 @@ struct intel_context
    char *prevLockFile;
    int prevLockLine;
 
-   /* These refer to the current drawing buffer:
-    */
-   GLuint numClipRects;         /**< cliprects for drawing */
-   drm_clip_rect_t *pClipRects;
-
    GLuint irqsEmitted;
    drm_i915_irq_wait_t iw;
 
