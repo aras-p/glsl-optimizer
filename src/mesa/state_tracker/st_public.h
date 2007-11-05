@@ -39,7 +39,7 @@ struct st_context *st_create_context( GLcontext *ctx,
 				      struct pipe_context *pipe);
 
 struct st_context *st_create_context2(struct pipe_context *pipe,
-                                      const GLvisual *visual,
+                                      const __GLcontextModes *visual,
                                       struct st_context *share);
 
 void st_destroy_context( struct st_context *st );

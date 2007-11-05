@@ -68,8 +68,11 @@ void st_invalidate_state(GLcontext * ctx, GLuint new_state)
 }
 
 
+/*
+ * XXX rename after above func is removed.
+ */
 struct st_context *st_create_context2(struct pipe_context *pipe,
-                                      const GLvisual *visual,
+                                      const __GLcontextModes *visual,
                                       struct st_context *share)
 {
    GLcontext *ctx;
@@ -129,6 +132,9 @@ struct st_context *st_create_context( GLcontext *ctx,
 }
 
 
+/*
+ * XXX rename after below func is removed.
+ */
 void st_destroy_context2( struct st_context *st )
 {
    GLcontext *ctx = st->ctx;
@@ -151,7 +157,7 @@ void st_destroy_context( struct st_context *st )
    _mesa_delete_program_cache(st->ctx, st->pixel_xfer.cache);
 
    st->pipe->destroy( st->pipe );
-   FREE( st );
+   free( st );
 }
 
  
