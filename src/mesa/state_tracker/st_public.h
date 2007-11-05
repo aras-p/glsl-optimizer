@@ -30,6 +30,13 @@
 
 #include "mtypes.h"
 
+
+#define ST_SURFACE_FRONT_LEFT   0
+#define ST_SURFACE_BACK_LEFT    1
+#define ST_SURFACE_FRONT_RIGHT  2
+#define ST_SURFACE_BACK_RIGHT   3
+
+
 struct st_context;
 struct st_framebuffer;
 
@@ -50,6 +57,9 @@ struct st_framebuffer *st_create_framebuffer( const __GLcontextModes *visual );
 
 void st_resize_framebuffer( struct st_framebuffer *stfb,
                             GLuint width, GLuint height );
+
+struct pipe_surface *st_get_framebuffer_surface(struct st_framebuffer *stfb,
+                                                uint surfIndex);
 
 void st_unreference_framebuffer( struct st_framebuffer **stfb );
 

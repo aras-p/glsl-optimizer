@@ -112,3 +112,23 @@ void st_unreference_framebuffer( struct st_framebuffer **stfb )
 }
 
 
+
+/**
+ * Return the pipe_surface for the given renderbuffer.
+ */
+struct pipe_surface *
+st_get_framebuffer_surface(struct st_framebuffer *stfb, uint surfIndex)
+{
+   struct st_renderbuffer *strb;
+
+   assert(surfIndex <= ST_SURFACE_BACK_RIGHT);
+
+   /* sanity checks, ST tokens should match Mesa tokens */
+   assert(ST_SURFACE_FRONT_LEFT == BUFFER_FRONT_LEFT);
+   assert(ST_SURFACE_BACK_RIGHT == BUFFER_BACK_RIGHT);
+
+   strb = st_renderbuffer(stfb->Base.Attachment[surfIndex].Renderbuffer);
+   if (strb)
+      return strb->surface;
+   return NULL;
+}
