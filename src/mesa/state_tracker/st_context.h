@@ -180,6 +180,8 @@ struct st_framebuffer
 
 extern void st_init_driver_functions(struct dd_function_table *functions);
 
+void st_invalidate_state(GLcontext * ctx, GLuint new_state);
+
 
 
 #define Y_0_TOP 1
