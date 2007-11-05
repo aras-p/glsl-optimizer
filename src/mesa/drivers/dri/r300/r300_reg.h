@@ -326,8 +326,13 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 /* I do not know the purpose of this register. However, I do know that
  * it is set to 221C_CLEAR for clear operations and to 221C_NORMAL
  * for normal rendering.
+ *
+ * 2007-11-05: This register is the user clip plane control register, but there
+ * also seems to be a rendering mode control; the NORMAL/CLEAR defines.
+ *
+ * See bug #9871. http://bugs.freedesktop.org/attachment.cgi?id=10672&action=view
  */
-#define R300_VAP_UNKNOWN_221C               0x221C
+#define R300_VAP_CLIP_CNTL                       0x221C
 #       define R300_221C_NORMAL                  0x00000000
 #       define R300_221C_CLEAR                   0x0001C000
 #define R300_VAP_UCP_ENABLE_0 (1 << 0)

@@ -261,8 +261,8 @@ static void r300EmitClearState(GLcontext * ctx)
 	e32(0x0);
 
 	if (has_tcl) {
-	    R300_STATECHANGE(r300, unk221C);
-	    reg_start(R300_VAP_UNKNOWN_221C, 0);
+	    R300_STATECHANGE(r300, vap_clip_cntl);
+	    reg_start(R300_VAP_CLIP_CNTL, 0);
 	    e32(R300_221C_CLEAR);
         }
 

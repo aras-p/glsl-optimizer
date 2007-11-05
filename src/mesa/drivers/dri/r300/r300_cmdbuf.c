@@ -319,8 +319,8 @@ void r300InitCmdBuf(r300ContextPtr r300)
 	r300->hw.unk21DC.cmd[0] = cmdpacket0(0x21DC, 1);
 
 	if (has_tcl) {
-		ALLOC_STATE(unk221C, always, 2, 0);
-		r300->hw.unk221C.cmd[0] = cmdpacket0(R300_VAP_UNKNOWN_221C, 1);
+		ALLOC_STATE(vap_clip_cntl, always, 2, 0);
+		r300->hw.vap_clip_cntl.cmd[0] = cmdpacket0(R300_VAP_CLIP_CNTL, 1);
 		ALLOC_STATE(vap_clip, always, 5, 0);
 		r300->hw.vap_clip.cmd[0] = cmdpacket0(R300_VAP_CLIP_X_0, 4);
 		ALLOC_STATE(unk2288, always, 2, 0);

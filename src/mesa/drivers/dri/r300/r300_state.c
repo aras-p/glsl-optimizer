@@ -1717,13 +1717,13 @@ static void r300Enable(GLcontext * ctx, GLenum cap, GLboolean state)
 			return;
 
 		p = cap-GL_CLIP_PLANE0;
-		R300_STATECHANGE( r300, unk221C );
+		R300_STATECHANGE( r300, vap_clip_cntl );
 		if (state) {
-			r300->hw.unk221C.cmd[1] |= (R300_VAP_UCP_ENABLE_0<<p);
+			r300->hw.vap_clip_cntl.cmd[1] |= (R300_VAP_UCP_ENABLE_0<<p);
 			r300ClipPlane( ctx, cap, NULL );
 		}
 		else {
-			r300->hw.unk221C.cmd[1] &= ~(R300_VAP_UCP_ENABLE_0<<p);
+			r300->hw.vap_clip_cntl.cmd[1] &= ~(R300_VAP_UCP_ENABLE_0<<p);
 		}
 		break;
 	case GL_DEPTH_TEST:
@@ -1842,7 +1842,7 @@ static void r300ResetHwState(r300ContextPtr r300)
 
 	/* XXX: Other families? */
 	if (has_tcl) {
-		r300->hw.unk221C.cmd[1] = R300_221C_NORMAL;
+		r300->hw.vap_clip_cntl.cmd[1] = R300_221C_NORMAL;
 
 		r300->hw.vap_clip.cmd[1] = r300PackFloat32(1.0); /* X */
 		r300->hw.vap_clip.cmd[2] = r300PackFloat32(1.0); /* X */
