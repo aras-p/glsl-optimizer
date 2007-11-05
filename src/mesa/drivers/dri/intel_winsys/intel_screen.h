@@ -87,11 +87,6 @@ intelMakeCurrent(__DRIcontextPrivate * driContextPriv,
                  __DRIdrawablePrivate * driDrawPriv,
                  __DRIdrawablePrivate * driReadPriv);
 
-extern void intelSwapBuffers(__DRIdrawablePrivate * dPriv);
-
-extern void
-intelCopySubBuffer(__DRIdrawablePrivate * dPriv, int x, int y, int w, int h);
-
 extern struct _DriBufferPool *driBatchPoolInit(int fd, unsigned flags,
                                                unsigned long bufSize,
                                                unsigned numBufs,

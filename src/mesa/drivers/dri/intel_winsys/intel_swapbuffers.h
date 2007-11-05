@@ -46,6 +46,9 @@ extern void intelDisplaySurface(__DRIdrawablePrivate * dPriv,
 
 extern void intelSwapBuffers(__DRIdrawablePrivate * dPriv);
 
+extern void intelCopySubBuffer(__DRIdrawablePrivate * dPriv,
+                               int x, int y, int w, int h);
+
 extern void intelUpdateWindowSize(__DRIdrawablePrivate *dPriv);
 
 
