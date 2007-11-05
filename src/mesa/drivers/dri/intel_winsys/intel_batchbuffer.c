@@ -174,14 +174,14 @@ static void
 intel_batch_ioctl(struct intel_context *intel,
                   GLuint start_offset,
                   GLuint used,
-                  GLboolean ignore_cliprects, GLboolean allow_unlock)
+                  GLboolean allow_unlock)
 {
    drmI830BatchBuffer batch;
 
    batch.start = start_offset;
    batch.used = used;
-   batch.cliprects = intel->pClipRects;
-   batch.num_cliprects = ignore_cliprects ? 0 : intel->numClipRects;
+   batch.cliprects = NULL; /* unused */
+   batch.num_cliprects = 0;
    batch.DR1 = 0;
    batch.DR4 = 0; /* still need this ? */
 
@@ -206,7 +206,7 @@ intel_batch_ioctl(struct intel_context *intel,
 static void
 do_flush_locked(struct intel_batchbuffer *batch,
                 GLuint used,
-                GLboolean ignore_cliprects, GLboolean allow_unlock)
+                GLboolean allow_unlock)
 {
    GLuint *ptr;
    GLuint i;
@@ -236,17 +236,9 @@ do_flush_locked(struct intel_batchbuffer *batch,
    driBOUnmap(batch->buffer);
    batch->map = NULL;
 
-   /* Throw away non-effective packets.  Won't work once we have
-    * hardware contexts which would preserve statechanges beyond a
-    * single buffer.
-    */
-
-   if (!(intel->numClipRects == 0 && !ignore_cliprects)) {
-      intel_batch_ioctl(batch->intel,
-                        driBOOffset(batch->buffer),
-                        used, ignore_cliprects, allow_unlock);
-   }
-
+   intel_batch_ioctl(batch->intel,
+                     driBOOffset(batch->buffer),
+                     used, allow_unlock);
 
    /*
     * Kernel fencing. The flags tells the kernel that we've 
@@ -278,15 +270,6 @@ do_flush_locked(struct intel_batchbuffer *batch,
 	struct buffer_reloc *r = &batch->reloc[i];
 	driBOFence(r->buf, fo);
       }
-   }
-
-   if (intel->numClipRects == 0 && !ignore_cliprects) {
-      if (allow_unlock) {
-         UNLOCK_HARDWARE(intel);
-         sched_yield();
-         LOCK_HARDWARE(intel);
-      }
-//      intel->vtbl.lost_hardware(intel);
    }
 }
 
@@ -328,8 +311,7 @@ intel_batchbuffer_flush(struct intel_batchbuffer *batch)
    if (!was_locked)
       LOCK_HARDWARE(intel);
 
-   do_flush_locked(batch, used, !(batch->flags & INTEL_BATCH_CLIPRECTS),
-		   GL_FALSE);
+   do_flush_locked(batch, used, GL_FALSE);
 
    if (!was_locked)
       UNLOCK_HARDWARE(intel);
