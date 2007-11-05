@@ -192,6 +192,7 @@ intelUnbindContext(__DRIcontextPrivate * driContextPriv)
 {
    struct intel_context *intel = intel_context(driContextPriv);
    st_flush(intel->st);
+   /* XXX make_current(NULL)? */
    return GL_TRUE;
 }
 

@@ -63,21 +63,6 @@ intelScreenContext(intelScreenPrivate *intelScreen)
 
 
 /**
- * Return the pipe_surface for the given renderbuffer.
- */
-static struct pipe_surface *
-get_color_surface(struct intel_framebuffer *intel_fb,
-                  GLuint bufferIndex)
-{
-   struct st_renderbuffer *strb
-      = st_renderbuffer(intel_fb->stfb->Base.Attachment[bufferIndex].Renderbuffer);
-   if (strb)
-      return strb->surface;
-   return NULL;
-}
-
-
-/**
  * Display a colorbuffer surface in an X window.
  * Used for SwapBuffers and flushing front buffer rendering.
  *
@@ -255,7 +240,7 @@ intelSwapBuffers(__DRIdrawablePrivate * dPriv)
       if (ctx->Visual.doubleBufferMode) {
 	 struct intel_framebuffer *intel_fb = dPriv->driverPrivate;
          struct pipe_surface *back_surf
-            = get_color_surface(intel_fb, BUFFER_BACK_LEFT);
+            = st_get_framebuffer_surface(intel_fb->stfb, ST_SURFACE_BACK_LEFT);
 
 	 _mesa_notifySwapBuffers(ctx);  /* flush pending rendering comands */
 
@@ -283,7 +268,7 @@ intelCopySubBuffer(__DRIdrawablePrivate * dPriv, int x, int y, int w, int h)
       if (ctx->Visual.doubleBufferMode) {
          struct intel_framebuffer *intel_fb = dPriv->driverPrivate;
          struct pipe_surface *back_surf
-            = get_color_surface(intel_fb, BUFFER_BACK_LEFT);
+            = st_get_framebuffer_surface(intel_fb->stfb, ST_SURFACE_BACK_LEFT);
 
          drm_clip_rect_t rect;
 	 /* fixup cliprect (driDrawable may have changed?) later */
