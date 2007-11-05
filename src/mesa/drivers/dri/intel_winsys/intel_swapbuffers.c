@@ -237,11 +237,10 @@ intelSwapBuffers(__DRIdrawablePrivate * dPriv)
    assert(intel_fb);
    assert(intel_fb->stfb);
 
-   st_notify_swapbuffers(intel_fb->stfb);
-
    back_surf = st_get_framebuffer_surface(intel_fb->stfb,
                                           ST_SURFACE_BACK_LEFT);
    if (back_surf) {
+      st_notify_swapbuffers(intel_fb->stfb);
       intelDisplaySurface(dPriv, back_surf, NULL);
    }
 }
@@ -254,27 +253,22 @@ intelSwapBuffers(__DRIdrawablePrivate * dPriv)
 void
 intelCopySubBuffer(__DRIdrawablePrivate * dPriv, int x, int y, int w, int h)
 {
-   if (dPriv->driContextPriv && dPriv->driContextPriv->driverPrivate) {
-      struct intel_context *intel = intel_context(dPriv->driContextPriv);
-      GLcontext *ctx = intel->st->ctx;
+   struct intel_framebuffer *intel_fb = intel_framebuffer(dPriv);
+   struct pipe_surface *back_surf;
 
-      if (ctx->Visual.doubleBufferMode) {
-         struct intel_framebuffer *intel_fb = dPriv->driverPrivate;
-         struct pipe_surface *back_surf
-            = st_get_framebuffer_surface(intel_fb->stfb, ST_SURFACE_BACK_LEFT);
+   assert(intel_fb);
+   assert(intel_fb->stfb);
 
-         drm_clip_rect_t rect;
-	 /* fixup cliprect (driDrawable may have changed?) later */
-         rect.x1 = x;
-         rect.y1 = y;
-         rect.x2 = w;
-         rect.y2 = h;
-         _mesa_notifySwapBuffers(ctx);  /* flush pending rendering comands */
-         intelDisplaySurface(dPriv, back_surf, &rect);
-      }
-   }
-   else {
-      /* XXX this shouldn't be an error but we can't handle it for now */
-      fprintf(stderr, "%s: drawable has no context!\n", __FUNCTION__);
+   back_surf = st_get_framebuffer_surface(intel_fb->stfb,
+                                          ST_SURFACE_BACK_LEFT);
+   if (back_surf) {
+      drm_clip_rect_t rect;
+      rect.x1 = x;
+      rect.y1 = y;
+      rect.x2 = w;
+      rect.y2 = h;
+
+      st_notify_swapbuffers(intel_fb->stfb);
+      intelDisplaySurface(dPriv, back_surf, &rect);
    }
 }
