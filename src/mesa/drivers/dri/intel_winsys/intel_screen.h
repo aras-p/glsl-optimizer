@@ -67,7 +67,7 @@ struct intel_screen
    struct _DriBufferPool *batchPool;
    struct _DriBufferPool *regionPool;
    struct _DriBufferPool *staticPool; /** for the X screen/framebuffer */
-   GLboolean havePools;
+   boolean havePools;
 
    struct intel_context *dummyctxptr;
 };

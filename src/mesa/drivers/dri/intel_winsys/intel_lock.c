@@ -41,7 +41,7 @@ _glthread_DECLARE_STATIC_MUTEX( lockMutex );
 
 
 static void
-intelContendedLock(struct intel_context *intel, GLuint flags)
+intelContendedLock(struct intel_context *intel, uint flags)
 {
    __DRIdrawablePrivate *dPriv = intel->driDrawable;
    __DRIscreenPrivate *sPriv = intel->driScreen;

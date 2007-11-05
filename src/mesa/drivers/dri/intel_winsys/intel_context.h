@@ -29,10 +29,7 @@
 #define INTELCONTEXT_INC
 
 
-
-#include "mtypes.h"
 #include "drm.h"
-
 #include "intel_screen.h"
 #include "i915_drm.h"
 
@@ -58,11 +55,11 @@ struct intel_context
 
    struct intel_batchbuffer *batch;
 
-   GLboolean locked;
+   boolean locked;
    char *prevLockFile;
    int prevLockLine;
 
-   GLuint irqsEmitted;
+   uint irqsEmitted;
    drm_i915_irq_wait_t iw;
 
    drm_context_t hHWContext;
@@ -74,7 +71,7 @@ struct intel_context
    struct intel_screen *intelScreen;
    drmI830Sarea *sarea;
 
-   GLuint lastStamp;
+   uint lastStamp;
 
    /**
     * Configuration cache

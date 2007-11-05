@@ -29,6 +29,9 @@
 #define INTEL_SWAPBUFFERS_H
 
 
+struct pipe_surface;
+
+
 extern void intelDisplaySurface(__DRIdrawablePrivate * dPriv,
                                 struct pipe_surface *surf,
                                 const drm_clip_rect_t * rect);

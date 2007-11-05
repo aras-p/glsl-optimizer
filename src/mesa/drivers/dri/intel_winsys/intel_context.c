@@ -35,7 +35,7 @@
 #include "intel_batchbuffer.h"
 
 #include "state_tracker/st_public.h"
-#include "state_tracker/st_context.h"
+#include "state_tracker/st_context.h" /* XXX temporary */
 #include "pipe/p_defines.h"
 #include "pipe/p_context.h"
 
