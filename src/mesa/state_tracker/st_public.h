@@ -39,19 +39,15 @@
 
 struct st_context;
 struct st_framebuffer;
-
 struct pipe_context;
+struct pipe_surface;
 
-struct st_context *st_create_context( GLcontext *ctx,
-				      struct pipe_context *pipe);
 
-struct st_context *st_create_context2(struct pipe_context *pipe,
-                                      const __GLcontextModes *visual,
-                                      struct st_context *share);
+struct st_context *st_create_context(struct pipe_context *pipe,
+                                     const __GLcontextModes *visual,
+                                     struct st_context *share);
 
 void st_destroy_context( struct st_context *st );
-
-void st_destroy_context2( struct st_context *st );
 
 void st_copy_context_state(struct st_context *dst, struct st_context *src,
                            uint mask);

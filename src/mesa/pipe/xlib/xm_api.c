@@ -1465,8 +1465,8 @@ XMesaContext XMesaCreateContext( XMesaVisual v, XMesaContext share_list )
 
    pipe = xmesa_create_softpipe( c );
 
-   c->st = st_create_context2(pipe, &v->mesa_visual,
-                              share_list ? share_list->st : NULL);
+   c->st = st_create_context(pipe, &v->mesa_visual,
+                             share_list ? share_list->st : NULL);
    mesaCtx = c->st->ctx;
    c->st->ctx->DriverCtx = c;
 
@@ -1513,7 +1513,7 @@ XMesaContext XMesaCreateContext( XMesaVisual v, XMesaContext share_list )
 PUBLIC
 void XMesaDestroyContext( XMesaContext c )
 {
-   st_destroy_context2(c->st);
+   st_destroy_context(c->st);
    _mesa_free(c);
 }
 

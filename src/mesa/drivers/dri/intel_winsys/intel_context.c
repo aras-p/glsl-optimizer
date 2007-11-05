@@ -152,7 +152,7 @@ intelCreateContext(const __GLcontextModes * mesaVis,
       }
    }
 
-   intel->st = st_create_context2(pipe, mesaVis, NULL);
+   intel->st = st_create_context(pipe, mesaVis, NULL);
    intel->st->ctx->DriverCtx = intel;  /* hope to get rid of this... */
 
    return GL_TRUE;
@@ -181,7 +181,7 @@ intelDestroyContext(__DRIcontextPrivate * driContextPriv)
 	 intel->first_swap_fence = NULL;
       }
 
-      st_destroy_context2(intel->st);
+      st_destroy_context(intel->st);
       free(intel);
    }
 }

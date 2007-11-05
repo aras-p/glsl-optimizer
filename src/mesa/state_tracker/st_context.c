@@ -68,28 +68,8 @@ void st_invalidate_state(GLcontext * ctx, GLuint new_state)
 }
 
 
-/*
- * XXX rename after above func is removed.
- */
-struct st_context *st_create_context2(struct pipe_context *pipe,
-                                      const __GLcontextModes *visual,
-                                      struct st_context *share)
-{
-   GLcontext *ctx;
-   GLcontext *shareCtx = share ? share->ctx : NULL;
-   struct dd_function_table funcs;
-
-   memset(&funcs, 0, sizeof(funcs));
-   st_init_driver_functions(&funcs);
-
-   ctx = _mesa_create_context(visual, shareCtx, &funcs, NULL);
-
-   return st_create_context(ctx, pipe);
-}
-
-
-struct st_context *st_create_context( GLcontext *ctx,
-				      struct pipe_context *pipe )
+static struct st_context *
+st_create_context_priv( GLcontext *ctx, struct pipe_context *pipe )
 {
    struct st_context *st = CALLOC_STRUCT( st_context );
    
@@ -132,19 +112,24 @@ struct st_context *st_create_context( GLcontext *ctx,
 }
 
 
-/*
- * XXX rename after below func is removed.
- */
-void st_destroy_context2( struct st_context *st )
+struct st_context *st_create_context(struct pipe_context *pipe,
+                                     const __GLcontextModes *visual,
+                                     struct st_context *share)
 {
-   GLcontext *ctx = st->ctx;
-   _mesa_free_context_data(ctx);
-   st_destroy_context(st);
-   free(ctx);
+   GLcontext *ctx;
+   GLcontext *shareCtx = share ? share->ctx : NULL;
+   struct dd_function_table funcs;
+
+   memset(&funcs, 0, sizeof(funcs));
+   st_init_driver_functions(&funcs);
+
+   ctx = _mesa_create_context(visual, shareCtx, &funcs, NULL);
+
+   return st_create_context_priv(ctx, pipe);
 }
 
 
-void st_destroy_context( struct st_context *st )
+static void st_destroy_context_priv( struct st_context *st )
 {
    draw_destroy(st->draw);
    st_destroy_atoms( st );
@@ -161,6 +146,15 @@ void st_destroy_context( struct st_context *st )
 }
 
  
+void st_destroy_context( struct st_context *st )
+{
+   GLcontext *ctx = st->ctx;
+   _mesa_free_context_data(ctx);
+   st_destroy_context_priv(st);
+   free(ctx);
+}
+
+
 void st_make_current(struct st_context *st,
                      struct st_framebuffer *draw,
                      struct st_framebuffer *read)
