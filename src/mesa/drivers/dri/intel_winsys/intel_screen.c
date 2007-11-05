@@ -176,8 +176,6 @@ intelCreatePools(intelScreenPrivate *intelScreen)
    if (!intelScreen->staticPool)
       return GL_FALSE;
 
-   intelScreen->texPool = intelScreen->regionPool;
-
    intelScreen->batchPool = driBatchPoolInit(sPriv->fd,
                                              DRM_BO_FLAG_EXE |
                                              DRM_BO_FLAG_MEM_TT |

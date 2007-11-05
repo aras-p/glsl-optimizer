@@ -64,7 +64,6 @@ struct intel_screen
    */
    driOptionCache optionCache;
    struct _DriBufferPool *batchPool;
-   struct _DriBufferPool *texPool;
    struct _DriBufferPool *regionPool;
    struct _DriBufferPool *staticPool;
    GLboolean havePools;
