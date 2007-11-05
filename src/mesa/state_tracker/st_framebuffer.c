@@ -96,7 +96,7 @@ struct st_framebuffer *st_create_framebuffer( const __GLcontextModes *visual,
 
 
 void st_resize_framebuffer( struct st_framebuffer *stfb,
-                            GLuint width, GLuint height )
+                            uint width, uint height )
 {
    if (stfb->Base.Width != width || stfb->Base.Height != height) {
       GET_CURRENT_CONTEXT(ctx);

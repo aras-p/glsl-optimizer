@@ -28,7 +28,7 @@
 #ifndef ST_PUBLIC_H
 #define ST_PUBLIC_H
 
-#include "mtypes.h"
+#include "pipe/p_compiler.h"
 
 
 #define ST_SURFACE_FRONT_LEFT   0
@@ -53,11 +53,11 @@ void st_copy_context_state(struct st_context *dst, struct st_context *src,
                            uint mask);
 
 struct st_framebuffer *st_create_framebuffer( const __GLcontextModes *visual,
-                                              GLboolean createRenderbuffers,
+                                              boolean createRenderbuffers,
                                               void *privateData);
 
 void st_resize_framebuffer( struct st_framebuffer *stfb,
-                            GLuint width, GLuint height );
+                            uint width, uint height );
 
 struct pipe_surface *st_get_framebuffer_surface(struct st_framebuffer *stfb,
                                                 uint surfIndex);
