@@ -39,6 +39,7 @@
 #include "state_tracker/st_cb_fbo.h"
 
 
+/** XXX temporary - want to get rid of this */
 static struct intel_context *
 intelScreenContext(intelScreenPrivate *intelScreen)
 {
@@ -71,9 +72,9 @@ intelScreenContext(intelScreenPrivate *intelScreen)
  * \param rect  optional subrect of surface to display (may be NULL).
  */
 void
-intelDisplaySurface(__DRIdrawablePrivate * dPriv,
+intelDisplaySurface(__DRIdrawablePrivate *dPriv,
                     struct pipe_surface *surf,
-                    const drm_clip_rect_t * rect)
+                    const drm_clip_rect_t *rect)
 {
    struct intel_context *intel;
    const intelScreenPrivate *intelScreen
@@ -100,8 +101,9 @@ intelDisplaySurface(__DRIdrawablePrivate * dPriv,
     */
    LOCK_HARDWARE(intel);
    /* if this drawable isn't currently bound the LOCK_HARDWARE done on the
-      current context (which is what intelScreenContext should return) might
-      not get a contended lock and thus cliprects not updated (tests/manywin) */
+    * current context (which is what intelScreenContext should return) might
+    * not get a contended lock and thus cliprects not updated (tests/manywin)
+    */
    if (intel_context(dPriv->driContextPriv) != intel)
       DRI_VALIDATE_DRAWABLE_INFO(intel->driScreen, dPriv);
 
@@ -113,10 +115,10 @@ intelDisplaySurface(__DRIdrawablePrivate * dPriv,
       const drm_clip_rect_t *pbox = dPriv->pClipRects;
       const int pitch = intelScreen->front.pitch / intelScreen->front.cpp;
       const int cpp = intelScreen->front.cpp;
+      const struct pipe_region *srcRegion = surf->region;
+      const int srcpitch = srcRegion->pitch;
       int BR13, CMD;
       int i;
-      const struct pipe_region *srcRegion = surf->region;
-      const int srcpitch= srcRegion->pitch;
 
       ASSERT(srcRegion);
       ASSERT(srcRegion->cpp == cpp);
@@ -181,6 +183,10 @@ intelDisplaySurface(__DRIdrawablePrivate * dPriv,
 	 sbox.x1 = box.x1 - dPriv->x;
 	 sbox.y1 = box.y1 - dPriv->y;
 
+         assert(box.x1 < box.x2);
+         assert(box.y1 < box.y2);
+
+         /* XXX this could be done with pipe->region_copy() */
 	 BEGIN_BATCH(8, INTEL_BATCH_NO_CLIPRECTS);
 	 OUT_BATCH(CMD);
 	 OUT_BATCH(BR13);
