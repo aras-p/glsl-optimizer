@@ -283,7 +283,7 @@ intelCreateBuffer(__DRIscreenPrivate * driScrnPriv,
       if (!intelfb)
          return GL_FALSE;
 
-      intelfb->stfb = st_create_framebuffer(mesaVis);
+      intelfb->stfb = st_create_framebuffer(mesaVis, GL_TRUE, (void*) intelfb);
       if (!intelfb->stfb) {
          free(intelfb);
          return GL_FALSE;

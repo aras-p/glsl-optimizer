@@ -51,6 +51,9 @@
 #include "version.h"
 #include "xfonts.h"
 #include "xmesaP.h"
+#include "state_tracker/st_context.h"
+#include "state_tracker/st_public.h"
+
 
 #ifdef __VMS
 #define _mesa_sprintf sprintf
@@ -1617,7 +1620,7 @@ Fake_glXCopyContext( Display *dpy, GLXContext src, GLXContext dst,
    if (MakeCurrent_PrevContext == src) {
       _mesa_Flush();
    }
-   _mesa_copy_context( &(xm_src->mesa), &(xm_dst->mesa), (GLuint) mask );
+   st_copy_context_state( xm_src->st, xm_dst->st, (GLuint) mask );
 }
 
 
@@ -2383,16 +2386,16 @@ Fake_glXQueryDrawable( Display *dpy, GLXDrawable draw, int attribute,
 
    switch (attribute) {
       case GLX_WIDTH:
-         *value = xmbuf->mesa_buffer.Width;
+         *value = xmesa_buffer_width(xmbuf);
          break;
       case GLX_HEIGHT:
-         *value = xmbuf->mesa_buffer.Height;
+         *value = xmesa_buffer_width(xmbuf);
          break;
       case GLX_PRESERVED_CONTENTS:
          *value = True;
          break;
       case GLX_LARGEST_PBUFFER:
-         *value = xmbuf->mesa_buffer.Width * xmbuf->mesa_buffer.Height;
+         *value = xmesa_buffer_width(xmbuf) * xmesa_buffer_height(xmbuf);
          break;
       case GLX_FBCONFIG_ID:
          *value = xmbuf->xm_visual->visinfo->visualid;
@@ -2762,13 +2765,13 @@ Fake_glXQueryGLXPbufferSGIX(Display *dpy, GLXPbufferSGIX pbuf, int attribute, un
          *value = True;
          break;
       case GLX_LARGEST_PBUFFER_SGIX:
-         *value = xmbuf->mesa_buffer.Width * xmbuf->mesa_buffer.Height;
+         *value = xmesa_buffer_width(xmbuf) * xmesa_buffer_height(xmbuf);
          break;
       case GLX_WIDTH_SGIX:
-         *value = xmbuf->mesa_buffer.Width;
+         *value = xmesa_buffer_width(xmbuf);
          break;
       case GLX_HEIGHT_SGIX:
-         *value = xmbuf->mesa_buffer.Height;
+         *value = xmesa_buffer_height(xmbuf);
          break;
       case GLX_EVENT_MASK_SGIX:
          *value = 0;  /* XXX might be wrong */

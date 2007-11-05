@@ -35,7 +35,9 @@
 #include "st_cb_fbo.h"
 
 
-struct st_framebuffer *st_create_framebuffer( const __GLcontextModes *visual )
+struct st_framebuffer *st_create_framebuffer( const __GLcontextModes *visual,
+                                              boolean createRenderbuffers,
+                                              void *private)
 {
    struct st_framebuffer *stfb
       = CALLOC_STRUCT(st_framebuffer);
@@ -46,46 +48,48 @@ struct st_framebuffer *st_create_framebuffer( const __GLcontextModes *visual )
 
       _mesa_initialize_framebuffer(&stfb->Base, visual);
 
-      {
-	 /* fake frontbuffer */
-	 /* XXX allocation should only happen in the unusual case
-            it's actually needed */
-         struct gl_renderbuffer *rb = st_new_renderbuffer_fb(rgbFormat);
-         _mesa_add_renderbuffer(&stfb->Base, BUFFER_FRONT_LEFT, rb);
+      if (createRenderbuffers) {
+         {
+            /* fake frontbuffer */
+            /* XXX allocation should only happen in the unusual case
+               it's actually needed */
+            struct gl_renderbuffer *rb = st_new_renderbuffer_fb(rgbFormat);
+            _mesa_add_renderbuffer(&stfb->Base, BUFFER_FRONT_LEFT, rb);
+         }
+
+         if (visual->doubleBufferMode) {
+            struct gl_renderbuffer *rb = st_new_renderbuffer_fb(rgbFormat);
+            _mesa_add_renderbuffer(&stfb->Base, BUFFER_BACK_LEFT, rb);
+         }
+
+         if (visual->depthBits == 24 && visual->stencilBits == 8) {
+            /* combined depth/stencil buffer */
+            struct gl_renderbuffer *depthStencilRb
+               = st_new_renderbuffer_fb(GL_DEPTH24_STENCIL8_EXT);
+            /* note: bind RB to two attachment points */
+            _mesa_add_renderbuffer(&stfb->Base, BUFFER_DEPTH, depthStencilRb);
+            _mesa_add_renderbuffer(&stfb->Base, BUFFER_STENCIL,depthStencilRb);
+         }
+         else if (visual->depthBits == 16) {
+            /* just 16-bit depth buffer, no hw stencil */
+            struct gl_renderbuffer *depthRb
+               = st_new_renderbuffer_fb(GL_DEPTH_COMPONENT16);
+            _mesa_add_renderbuffer(&stfb->Base, BUFFER_DEPTH, depthRb);
+         }
+
+
+         /* now add any/all software-based renderbuffers we may need */
+         _mesa_add_soft_renderbuffers(&stfb->Base,
+                                      GL_FALSE, /* never sw color */
+                                      GL_FALSE, /* never sw depth */
+                                      swStencil, visual->accumRedBits > 0,
+                                      GL_FALSE, /* never sw alpha */
+                                      GL_FALSE  /* never sw aux */ );
       }
-
-      if (visual->doubleBufferMode) {
-         struct gl_renderbuffer *rb = st_new_renderbuffer_fb(rgbFormat);
-         _mesa_add_renderbuffer(&stfb->Base, BUFFER_BACK_LEFT, rb);
-      }
-
-      if (visual->depthBits == 24 && visual->stencilBits == 8) {
-         /* combined depth/stencil buffer */
-         struct gl_renderbuffer *depthStencilRb
-            = st_new_renderbuffer_fb(GL_DEPTH24_STENCIL8_EXT);
-         /* note: bind RB to two attachment points */
-         _mesa_add_renderbuffer(&stfb->Base, BUFFER_DEPTH, depthStencilRb);
-         _mesa_add_renderbuffer(&stfb->Base, BUFFER_STENCIL,depthStencilRb);
-      }
-      else if (visual->depthBits == 16) {
-         /* just 16-bit depth buffer, no hw stencil */
-         struct gl_renderbuffer *depthRb
-            = st_new_renderbuffer_fb(GL_DEPTH_COMPONENT16);
-         _mesa_add_renderbuffer(&stfb->Base, BUFFER_DEPTH, depthRb);
-      }
-
-
-      /* now add any/all software-based renderbuffers we may need */
-      _mesa_add_soft_renderbuffers(&stfb->Base,
-                                   GL_FALSE, /* never sw color */
-                                   GL_FALSE, /* never sw depth */
-                                   swStencil, visual->accumRedBits > 0,
-                                   GL_FALSE, /* never sw alpha */
-                                   GL_FALSE  /* never sw aux */ );
-
 
       stfb->Base.Initialized = GL_TRUE;
 
+      stfb->Private = private;
    }
    return stfb;
 }
@@ -147,5 +151,11 @@ st_notify_swapbuffers(struct st_framebuffer *stfb)
    if (ctx && ctx->DrawBuffer == &stfb->Base) {
       st_flush(ctx->st);
    }
+}
+
+
+void *st_framebuffer_private( struct st_framebuffer *stfb )
+{
+   return stfb->Private;
 }
 

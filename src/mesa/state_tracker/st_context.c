@@ -174,6 +174,13 @@ void st_make_current(struct st_context *st,
 }
 
 
+void st_copy_context_state(struct st_context *dst,
+                           struct st_context *src,
+                           uint mask)
+{
+   _mesa_copy_context(dst->ctx, src->ctx, mask);
+}
+
 
 void st_init_driver_functions(struct dd_function_table *functions)
 {

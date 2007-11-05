@@ -33,6 +33,8 @@
 #include "xm_image.h"
 #endif
 #include "state_tracker/st_cb_fbo.h"
+#include "state_tracker/st_context.h"
+#include "state_tracker/st_public.h"
 #include "pipe/softpipe/sp_context.h"
 #include "pipe/softpipe/sp_surface.h"
 
@@ -116,7 +118,8 @@ struct xmesa_visual {
  * Basically corresponds to a GLXContext.
  */
 struct xmesa_context {
-   GLcontext mesa;		/* the core library context (containment) */
+   struct st_context *st;
+
    XMesaVisual xm_visual;	/* Describes the buffers */
    XMesaBuffer xm_buffer;	/* current span/point/line/triangle buffer */
 
@@ -187,8 +190,8 @@ struct xmesa_renderbuffer
  * Basically corresponds to a GLXDrawable.
  */
 struct xmesa_buffer {
-   GLframebuffer mesa_buffer;	/* depth, stencil, accum, etc buffers */
-				/* This MUST BE FIRST! */
+   struct st_framebuffer *stfb;
+
    GLboolean wasCurrent;	/* was ever the current buffer? */
    XMesaVisual xm_visual;	/* the X/Mesa visual */
 
@@ -458,7 +461,7 @@ extern XMesaBuffer
 xmesa_find_buffer(XMesaDisplay *dpy, XMesaColormap cmap, XMesaBuffer notThis);
 
 extern unsigned long
-xmesa_color_to_pixel( GLcontext *ctx,
+xmesa_color_to_pixel( XMesaContext xmesa,
                       GLubyte r, GLubyte g, GLubyte b, GLubyte a,
                       GLuint pixelFormat );
 
@@ -492,7 +495,7 @@ xmesa_renderbuffer(struct gl_renderbuffer *rb)
 static INLINE XMesaContext
 XMESA_CONTEXT(GLcontext *ctx)
 {
-   return (XMesaContext) ctx;
+   return (XMesaContext) ctx->DriverCtx;
 }
 
 
@@ -502,9 +505,10 @@ XMESA_CONTEXT(GLcontext *ctx)
  * XXX should use inlined function for better type safety.
  */
 static INLINE XMesaBuffer
-XMESA_BUFFER(GLframebuffer *b)
+XMESA_BUFFER(GLframebuffer *fb)
 {
-   return (XMesaBuffer) b;
+   struct st_framebuffer *stfb = (struct st_framebuffer *) fb;
+   return (XMesaBuffer) st_framebuffer_private(stfb);
 }
 
 
@@ -563,5 +567,18 @@ xmesa_put_tile_rgba(struct pipe_context *pipe, struct pipe_surface *ps,
 
 extern struct pipe_surface *
 xmesa_create_front_surface(XMesaVisual vis, Window win);
+
+static INLINE GLuint
+xmesa_buffer_width(XMesaBuffer b)
+{
+   return b->stfb->Base.Width;
+}
+
+static INLINE GLuint
+xmesa_buffer_height(XMesaBuffer b)
+{
+   return b->stfb->Base.Height;
+}
+
 
 #endif

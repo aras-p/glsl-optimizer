@@ -53,13 +53,20 @@ void st_destroy_context( struct st_context *st );
 
 void st_destroy_context2( struct st_context *st );
 
-struct st_framebuffer *st_create_framebuffer( const __GLcontextModes *visual );
+void st_copy_context_state(struct st_context *dst, struct st_context *src,
+                           uint mask);
+
+struct st_framebuffer *st_create_framebuffer( const __GLcontextModes *visual,
+                                              GLboolean createRenderbuffers,
+                                              void *privateData);
 
 void st_resize_framebuffer( struct st_framebuffer *stfb,
                             GLuint width, GLuint height );
 
 struct pipe_surface *st_get_framebuffer_surface(struct st_framebuffer *stfb,
                                                 uint surfIndex);
+
+void *st_framebuffer_private( struct st_framebuffer *stfb );
 
 void st_unreference_framebuffer( struct st_framebuffer **stfb );
 
