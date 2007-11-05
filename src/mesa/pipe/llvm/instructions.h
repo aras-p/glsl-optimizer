@@ -62,8 +62,7 @@ public:
    void         beginLoop();
    void         bgnSub(unsigned);
    void         brk();
-   void         cal(int label, llvm::Value *out, llvm::Value *in,
-                    llvm::Value *cst, llvm::Value *tmp);
+   void         cal(int label, llvm::Value *input);
    llvm::Value *cmp(llvm::Value *in1, llvm::Value *in2, llvm::Value *in3);
    llvm::Value *cos(llvm::Value *in);
    llvm::Value *cross(llvm::Value *in1, llvm::Value *in2);

@@ -46,12 +46,10 @@
 
 using namespace llvm;
 
-Storage::Storage(llvm::BasicBlock *block, llvm::Value *out,
-                 llvm::Value *in, llvm::Value *consts, llvm::Value *temps)
-   : m_block(block), m_OUT(out),
-     m_IN(in), m_CONST(consts), m_TEMPS(temps),
+Storage::Storage(llvm::BasicBlock *block, llvm::Value *input)
+   : m_block(block),
+     m_INPUT(input),
      m_addrs(32),
-     m_dstCache(32),
      m_idx(0)
 {
    m_floatVecType = VectorType::get(Type::FloatTy, 4);
@@ -112,26 +110,8 @@ llvm::ConstantInt *Storage::constantInt(int idx)
 
 llvm::Value *Storage::inputElement(int idx, llvm::Value *indIdx)
 {
-   GetElementPtrInst *getElem = 0;
-
-   if (indIdx) {
-      getElem = new GetElementPtrInst(m_IN,
-                                      BinaryOperator::create(Instruction::Add,
-                                                             indIdx,
-                                                             constantInt(idx),
-                                                             name("add"),
-                                                             m_block),
-                                      name("input_ptr"),
-                                      m_block);
-   } else {
-      getElem = new GetElementPtrInst(m_IN,
-                                      constantInt(idx),
-                                      name("input_ptr"),
-                                      m_block);
-   }
-
-   LoadInst *load = new LoadInst(getElem, name("input"),
-                                 false, m_block);
+   Value *val = element(InputsArg, idx, indIdx);
+   LoadInst *load = new LoadInst(val, name("input"), false, m_block);
    load->setAlignment(8);
 
    return load;
@@ -141,24 +121,8 @@ llvm::Value *Storage::constElement(int idx, llvm::Value *indIdx)
 {
    m_numConsts = ((idx + 1) > m_numConsts) ? (idx + 1) : m_numConsts;
 
-   GetElementPtrInst *getElem = 0;
-
-   if (indIdx)
-      getElem = new GetElementPtrInst(m_CONST,
-                                      BinaryOperator::create(Instruction::Add,
-                                                             indIdx,
-                                                             constantInt(idx),
-                                                             name("add"),
-                                                             m_block),
-                                      name("const_ptr"),
-                                      m_block);
-   else
-      getElem = new GetElementPtrInst(m_CONST,
-                                      constantInt(idx),
-                                      name("const_ptr"),
-                                      m_block);
-   LoadInst *load = new LoadInst(getElem, name("const"),
-                                 false, m_block);
+   Value *elem = element(ConstsArg, idx, indIdx);
+   LoadInst *load = new LoadInst(elem, name("const"), false, m_block);
    load->setAlignment(8);
    return load;
 }
@@ -175,26 +139,9 @@ llvm::Value *Storage::shuffleVector(llvm::Value *vec, int shuffle)
 
 llvm::Value *Storage::tempElement(int idx, llvm::Value *indIdx)
 {
-   GetElementPtrInst *getElem = 0;
+   Value *elem = element(TempsArg, idx, indIdx);
 
-   if (indIdx) {
-      getElem = new GetElementPtrInst(m_TEMPS,
-                                      BinaryOperator::create(Instruction::Add,
-                                                             indIdx,
-                                                             constantInt(idx),
-                                                             name("add"),
-                                                             m_block),
-                                      name("temp_ptr"),
-                                      m_block);
-   } else {
-      getElem = new GetElementPtrInst(m_TEMPS,
-                                      constantInt(idx),
-                                      name("temp_ptr"),
-                                      m_block);
-   }
-
-   LoadInst *load = new LoadInst(getElem, name("temp"),
-                                 false, m_block);
+   LoadInst *load = new LoadInst(elem, name("temp"), false, m_block);
    load->setAlignment(8);
 
    return load;
@@ -208,11 +155,8 @@ void Storage::setTempElement(int idx, llvm::Value *val, int mask)
          templ = tempElement(idx);
       val = maskWrite(val, mask, templ);
    }
-   GetElementPtrInst *getElem = new GetElementPtrInst(m_TEMPS,
-                                                      constantInt(idx),
-                                                      name("temp_ptr"),
-                                                      m_block);
-   StoreInst *st = new StoreInst(val, getElem, false, m_block);
+   Value *elem = element(TempsArg, idx);
+   StoreInst *st = new StoreInst(val, elem, false, m_block);
    st->setAlignment(8);
    m_tempWriteMap[idx] = true;
 }
@@ -226,11 +170,8 @@ void Storage::setOutputElement(int dstIdx, llvm::Value *val, int mask)
       val = maskWrite(val, mask, templ);
    }
 
-   GetElementPtrInst *getElem = new GetElementPtrInst(m_OUT,
-                                                      constantInt(dstIdx),
-                                                      name("out_ptr"),
-                                                      m_block);
-   StoreInst *st = new StoreInst(val, getElem, false, m_block);
+   Value *elem = element(DestsArg, dstIdx);
+   StoreInst *st = new StoreInst(val, elem, false, m_block);
    st->setAlignment(8);
    m_destWriteMap[dstIdx] = true;
 }
@@ -310,26 +251,8 @@ void Storage::setCurrentBlock(llvm::BasicBlock *block)
 
 llvm::Value * Storage::outputElement(int idx, llvm::Value *indIdx)
 {
-    GetElementPtrInst *getElem = 0;
-
-   if (indIdx) {
-      getElem = new GetElementPtrInst(m_OUT,
-                                      BinaryOperator::create(Instruction::Add,
-                                                             indIdx,
-                                                             constantInt(idx),
-                                                             name("add"),
-                                                             m_block),
-                                      name("output_ptr"),
-                                      m_block);
-   } else {
-      getElem = new GetElementPtrInst(m_OUT,
-                                      constantInt(idx),
-                                      name("output_ptr"),
-                                      m_block);
-   }
-
-   LoadInst *load = new LoadInst(getElem, name("output"),
-                                 false, m_block);
+   Value *elem = element(DestsArg, idx, indIdx);
+   LoadInst *load = new LoadInst(elem, name("output"), false, m_block);
    load->setAlignment(8);
 
    return load;
@@ -337,47 +260,19 @@ llvm::Value * Storage::outputElement(int idx, llvm::Value *indIdx)
 
 llvm::Value * Storage::inputPtr() const
 {
-   return m_IN;
+   return m_INPUT;
 }
 
-llvm::Value * Storage::outputPtr() const
+void Storage::pushArguments(llvm::Value *input)
 {
-   return m_OUT;
-}
+   m_argStack.push(m_INPUT);
 
-llvm::Value * Storage::constPtr() const
-{
-   return m_CONST;
-}
-
-llvm::Value * Storage::tempPtr() const
-{
-   return m_TEMPS;
-}
-
-void Storage::pushArguments(llvm::Value *out, llvm::Value *in,
-                            llvm::Value *constPtr, llvm::Value *temp)
-{
-   Args arg;
-   arg.out = m_OUT;
-   arg.in  = m_IN;
-   arg.cst = m_CONST;
-   arg.temp = m_TEMPS;
-   m_argStack.push(arg);
-
-   m_OUT = out;
-   m_IN = in;
-   m_CONST = constPtr;
-   m_TEMPS = temp;
+   m_INPUT = input;
 }
 
 void Storage::popArguments()
 {
-   Args arg = m_argStack.top();
-   m_OUT = arg.out;
-   m_IN = arg.in;
-   m_CONST = arg.cst;
-   m_TEMPS = arg.temp;
+   m_INPUT = m_argStack.top();
    m_argStack.pop();
 }
 
@@ -405,4 +300,49 @@ void Storage::addImmediate(float *val)
    m_immediates.push_back(ConstantVector::get(m_floatVecType, vec));
 }
 
+
+llvm::Value * Storage::elemPtr(Args arg)
+{
+   std::vector<Value*> indices;
+   indices.push_back(constantInt(0));
+   indices.push_back(constantInt(static_cast<int>(arg)));
+   GetElementPtrInst *getElem = new GetElementPtrInst(m_INPUT,
+                                                      indices.begin(),
+                                                      indices.end(),
+                                                      name("input_ptr"),
+                                                      m_block);
+   return new LoadInst(getElem, name("input_field"), false, m_block);
+}
+
+llvm::Value * Storage::elemIdx(llvm::Value *ptr, int idx,
+                               llvm::Value *indIdx )
+{
+   GetElementPtrInst *getElem = 0;
+
+   if (indIdx) {
+      getElem = new GetElementPtrInst(ptr,
+                                      BinaryOperator::create(Instruction::Add,
+                                                             indIdx,
+                                                             constantInt(idx),
+                                                             name("add"),
+                                                             m_block),
+                                      name("field"),
+                                      m_block);
+   } else {
+      getElem = new GetElementPtrInst(ptr,
+                                      constantInt(idx),
+                                      name("field"),
+                                      m_block);
+   }
+   return getElem;
+}
+
+llvm::Value * Storage::element(Args arg, int idx, llvm::Value *indIdx )
+{
+   Value *val = elemPtr(arg);
+   return elemIdx(val, idx, indIdx);
+}
+
 #endif //MESA_LLVM
+
+

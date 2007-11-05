@@ -1,4 +1,4 @@
-/* clang --emit-llvm llvm_builtins.c |llvm-as |opt -std-compile-opts |llvm2cpp -for=Shader -gen-module -funcname=createBaseShader */
+/* clang --emit-llvm llvm_entry.c |llvm-as |opt -std-compile-opts |llvm2cpp -for=Shader -gen-module -funcname=createBaseShader */
 /**************************************************************************
  *
  * Copyright 2007 Tungsten Graphics, Inc., Cedar Park, Texas.
@@ -164,8 +164,17 @@ void to_array(float (*dests)[4], float4 *in, int num_attribs)
    }
 }
 
-extern void execute_shader(float4 dests[16], float4 inputs[16],
-                           float4 consts[32], float4 temps[128]);
+
+struct ShaderInput
+{
+   float4  *dests;
+   float4  *inputs;
+   float4  *temps;
+   float4  *consts;
+   int     kilmask;
+};
+
+extern void execute_shader(struct ShaderInput *input);
 
 void run_vertex_shader(float (*ainputs)[16][4],
                        float (*dests)[16][4],
@@ -180,15 +189,18 @@ void run_vertex_shader(float (*ainputs)[16][4],
    float4  results[16*32*4][16];
    float4  temps[128];//MAX_PROGRAM_TEMPS
 
+   struct ShaderInput args;
    /*printf("XXX LLVM run_vertex_shader vertices = %d, inputs = %d, attribs = %d, consts = %d\n",
      num_vertices, num_inputs, num_attribs, num_consts);*/
    from_array(inputs, ainputs, num_vertices, num_inputs);
    from_consts(consts, aconsts, num_consts);
+   args.consts = consts;
+   args.temps = temps;
    for (int i = 0; i < num_vertices; ++i) {
-      float4 *in  = inputs[i];
-      float4 *res = results[i];
-      execute_shader(res, in, consts, temps);
-      to_array(dests[i], res, num_attribs);
+      args.dests  = results[i];
+      args.inputs = inputs[i];
+      execute_shader(&args);
+      to_array(dests[i], args.dests, num_attribs);
    }
 }
 
@@ -213,6 +225,7 @@ struct tgsi_sampler
    struct softpipe_tile_cache *cache;
 };
 
+
 int run_fragment_shader(float x, float y,
                         float (*dests)[16][4],
                         float (*ainputs)[16][4],
@@ -225,17 +238,19 @@ int run_fragment_shader(float x, float y,
    float4  consts[32];
    float4  results[4][16];
    float4  temps[128];//MAX_PROGRAM_TEMPS
-   int     kilmask = 0;
+   struct ShaderInput args;
 
    from_array(inputs, ainputs, 4, num_inputs);
    from_consts(consts, aconsts, num_consts);
+   args.consts = consts;
+   args.temps = temps;
    //printf("AAAAAAAAAAAAAAAAAAAAAAA FRAGMENT SHADER %f %f\n", x, y);
    for (int i = 0; i < 4; ++i) {
-      float4 *in  = inputs[i];
-      float4 *res = results[i];
-      execute_shader(res, in, consts, temps);
-      to_array(dests[i], res, 2);
+      args.inputs  = inputs[i];
+      args.dests   = results[i];
+      execute_shader(&args);
+      to_array(dests[i], args.dests, 2);
    }
-   return ~kilmask;
+   return ~args.kilmask;
 }
 
