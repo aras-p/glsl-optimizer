@@ -85,14 +85,14 @@ intelDisplaySurface(__DRIdrawablePrivate *dPriv,
                     struct pipe_surface *surf,
                     const drm_clip_rect_t *rect)
 {
+   struct intel_screen *intelScreen = intel_screen(dPriv->driScreenPriv);
    struct intel_context *intel;
-   const struct intel_screen *intelScreen = intel_screen(dPriv->driScreenPriv);
 
    DBG(SWAP, "%s\n", __FUNCTION__);
 
    assert(dPriv);
 
-   intel = intelScreenContext(dPriv->driScreenPriv->private);
+   intel = intelScreenContext(intelScreen);
    if (!intel)
       return;
 
