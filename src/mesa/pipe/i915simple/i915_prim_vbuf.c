@@ -41,6 +41,7 @@
 #include "pipe/draw/draw_private.h"
 #include "pipe/draw/draw_vertex.h"
 #include "pipe/p_util.h"
+#include "pipe/p_winsys.h"
 
 #include "softpipe/sp_context.h"
 #include "softpipe/sp_headers.h"
