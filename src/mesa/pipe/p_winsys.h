@@ -72,6 +72,9 @@ struct pipe_winsys
 		   const char *, ... );	
 
 
+   /**
+    * flags is bitmask of PIPE_SURFACE_FLAG_RENDER, PIPE_SURFACE_FLAG_TEXTURE
+    */
    struct pipe_region *(*region_alloc)(struct pipe_winsys *ws,
                                        unsigned cpp, unsigned width,
                                        unsigned height, unsigned flags);
