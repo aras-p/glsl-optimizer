@@ -539,7 +539,7 @@ extern void
 xmesa_clear(struct pipe_context *pipe, struct pipe_surface *ps, uint value);
 
 extern struct pipe_context *
-xmesa_create_softpipe(XMesaContext xm);
+xmesa_create_context(XMesaContext xm);
 
 extern struct pipe_surface *
 xmesa_surface_alloc(struct pipe_context *pipe, GLuint format);

@@ -1464,7 +1464,7 @@ XMesaContext XMesaCreateContext( XMesaVisual v, XMesaContext share_list )
    if (!c)
       return NULL;
 
-   pipe = xmesa_create_softpipe( c );
+   pipe = xmesa_create_context( c );
 
    c->st = st_create_context(pipe, &v->mesa_visual,
                              share_list ? share_list->st : NULL);
