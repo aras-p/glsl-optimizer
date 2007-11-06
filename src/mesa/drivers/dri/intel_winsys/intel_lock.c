@@ -26,7 +26,9 @@
  **************************************************************************/
 
 
-#include "main/mtypes.h"  /* XXX try to remove */
+#include "main/glheader.h"
+#include "glapi/glthread.h"
+#include <GL/internal/glcore.h>
 #include "state_tracker/st_public.h"
 #include "intel_context.h"
 #include "i830_dri.h"
@@ -68,7 +70,7 @@ intelContendedLock(struct intel_context *intel, uint flags)
  */
 void LOCK_HARDWARE( struct intel_context *intel )
 {
-    char __ret=0;
+    char __ret = 0;
 
     _glthread_LOCK_MUTEX(lockMutex);
     assert(!intel->locked);
@@ -85,8 +87,8 @@ void LOCK_HARDWARE( struct intel_context *intel )
 }
 
 
-  /* Unlock the hardware using the global current context 
-   */
+/* Unlock the hardware using the global current context 
+ */
 void UNLOCK_HARDWARE( struct intel_context *intel )
 {
    assert(intel->locked);
