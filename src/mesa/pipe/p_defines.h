@@ -177,11 +177,12 @@
 /**
  * Buffer usage flags
  */
-#define PIPE_BUFFER_USAGE_PIXEL    0x1
-#define PIPE_BUFFER_USAGE_VERTEX   0x2
-#define PIPE_BUFFER_USAGE_INDEX    0x4
-#define PIPE_BUFFER_USAGE_CONSTANT 0x8
-
+#define PIPE_BUFFER_USAGE_PIXEL    (1 << 0)
+#define PIPE_BUFFER_USAGE_VERTEX   (1 << 1)
+#define PIPE_BUFFER_USAGE_INDEX    (1 << 2)
+#define PIPE_BUFFER_USAGE_CONSTANT (1 << 3)
+/** Pipe driver custam usage flags should be greater or equal to this value */
+#define PIPE_BUFFER_USAGE_CUSTOM   (1 << 16)
 
 /** 
  * Flush types:

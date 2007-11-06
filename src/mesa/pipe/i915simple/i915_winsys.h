@@ -37,6 +37,9 @@
 #define I915_WINSYS_H
 
 
+#include "pipe/p_defines.h"
+
+
 /* Pipe drivers are (meant to be!) independent of both GL and the
  * window system.  The window system provides a buffer manager and a
  * set of additional hooks for things like command buffer submission,
@@ -99,6 +102,8 @@ struct i915_winsys {
 
 #define I915_BUFFER_ACCESS_WRITE   0x1 
 #define I915_BUFFER_ACCESS_READ    0x2
+
+#define I915_BUFFER_USAGE_LIT_VERTEX  (PIPE_BUFFER_USAGE_CUSTOM << 0)
 
 
 struct pipe_context *i915_create( struct pipe_winsys *,
