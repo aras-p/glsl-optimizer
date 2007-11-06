@@ -80,10 +80,10 @@ intel_dump_batchbuffer(uint offset, uint * ptr, uint count)
    printf("END BATCH\n\n\n");
 }
 
+
 void
 intel_batchbuffer_reset(struct intel_batchbuffer *batch)
 {
-
    int i;
 
    if (batch->map) {
@@ -91,11 +91,9 @@ intel_batchbuffer_reset(struct intel_batchbuffer *batch)
       batch->map = NULL;
    }
 
-
    /*
     * Get a new, free batchbuffer.
     */
-
    batch->size =  BATCH_SZ;
    driBOData(batch->buffer, batch->size, NULL, 0);
 
@@ -104,7 +102,6 @@ intel_batchbuffer_reset(struct intel_batchbuffer *batch)
    /*
     * Unreference buffers previously on the relocation list.
     */
-
    for (i = 0; i < batch->nr_relocs; i++) {
       struct buffer_reloc *r = &batch->reloc[i];
       driBOUnReference(r->buf);
@@ -119,7 +116,6 @@ intel_batchbuffer_reset(struct intel_batchbuffer *batch)
     * while it's on the list.
     */
 
-
    driBOAddListItem(&batch->list, batch->buffer,
                     DRM_BO_FLAG_MEM_TT | DRM_BO_FLAG_EXE,
                     DRM_BO_MASK_MEM | DRM_BO_FLAG_EXE);
@@ -128,6 +124,7 @@ intel_batchbuffer_reset(struct intel_batchbuffer *batch)
    batch->map = driBOMap(batch->buffer, DRM_BO_FLAG_WRITE, 0);
    batch->ptr = batch->map;
 }
+
 
 /*======================================================================
  * Public functions
@@ -148,6 +145,7 @@ intel_batchbuffer_alloc(struct intel_context *intel)
    return batch;
 }
 
+
 void
 intel_batchbuffer_free(struct intel_batchbuffer *batch)
 {
@@ -167,13 +165,9 @@ intel_batchbuffer_free(struct intel_batchbuffer *batch)
 }
 
 
-
-
 static void
 intel_batch_ioctl(struct intel_context *intel,
-                  uint start_offset,
-                  uint used,
-                  boolean allow_unlock)
+                  uint start_offset, uint used, boolean allow_unlock)
 {
    drmI830BatchBuffer batch;
 
@@ -198,18 +192,14 @@ intel_batch_ioctl(struct intel_context *intel,
 }
 
 
-
-
 /* TODO: Push this whole function into bufmgr.
  */
 static void
 do_flush_locked(struct intel_batchbuffer *batch,
-                uint used,
-                boolean allow_unlock)
+                uint used, boolean allow_unlock)
 {
    uint *ptr;
-   uint i;
-   unsigned fenceFlags;
+   uint i, fenceFlags;
    struct _DriFenceObject *fo;
 
    driBOValidateList(batch->intel->driFd, &batch->list);
@@ -220,7 +210,6 @@ do_flush_locked(struct intel_batchbuffer *batch,
     */
    ptr = (uint *) driBOMap(batch->buffer, DRM_BO_FLAG_WRITE,
                              DRM_BO_HINT_ALLOW_UNFENCED_MAP);
-
 
    for (i = 0; i < batch->nr_relocs; i++) {
       struct buffer_reloc *r = &batch->reloc[i];
@@ -242,26 +231,22 @@ do_flush_locked(struct intel_batchbuffer *batch,
     * Kernel fencing. The flags tells the kernel that we've 
     * programmed an MI_FLUSH.
     */
-   
    fenceFlags = DRM_I915_FENCE_FLAG_FLUSHED;
-   fo = driFenceBuffers(batch->intel->driFd,
-			"Batch fence", fenceFlags);
+   fo = driFenceBuffers(batch->intel->driFd, "Batch fence", fenceFlags);
 
    /*
     * User space fencing.
     */
-
    driBOFence(batch->buffer, fo);
 
    if (driFenceType(fo) == DRM_FENCE_TYPE_EXE) {
-
      /*
       * Oops. We only validated a batch buffer. This means we
       * didn't do any proper rendering. Discard this fence object.
       */
-
       driFenceUnReference(fo);
-   } else {
+   }
+   else {
       driFenceUnReference(batch->last_fence);
       batch->last_fence = fo;
       for (i = 0; i < batch->nr_relocs; i++) {
@@ -277,12 +262,12 @@ intel_batchbuffer_flush(struct intel_batchbuffer *batch)
 {
    struct intel_context *intel = batch->intel;
    uint used = batch->ptr - batch->map;
-   boolean was_locked = intel->locked;
+   const boolean was_locked = intel->locked;
 
    if (used == 0)
       return batch->last_fence;
 
-#define MI_FLUSH           ((0<<29)|(4<<23))
+#define MI_FLUSH ((0 << 29) | (4 << 23))
 
    /* Add the MI_BATCH_BUFFER_END.  Always add an MI_FLUSH - this is a
     * performance drain that we would like to avoid.
@@ -320,6 +305,7 @@ intel_batchbuffer_flush(struct intel_batchbuffer *batch)
    return batch->last_fence;
 }
 
+
 void
 intel_batchbuffer_finish(struct intel_batchbuffer *batch)
 {
@@ -353,7 +339,6 @@ intel_batchbuffer_emit_reloc(struct intel_batchbuffer *batch,
    batch->ptr += 4;
    return GL_TRUE;
 }
-
 
 
 void
