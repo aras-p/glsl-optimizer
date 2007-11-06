@@ -420,8 +420,6 @@ CreateContext(Display *dpy, XVisualInfo *vis,
 		    gc->isDirect = GL_TRUE;
 		    gc->screen = mode->screen;
 		    gc->psc = psc;
-		    gc->vid = mode->visualID;
-		    gc->fbconfigID = mode->fbconfigID;
 		    gc->mode = mode;
 		}
 		else {
@@ -1515,13 +1513,15 @@ static int __glXQueryContextInfo(Display *dpy, GLXContext ctx)
 		    ctx->share_xid = *pProp++;
 		    break;
 		case GLX_VISUAL_ID_EXT:
-		    ctx->vid = *pProp++;
+		    ctx->mode =
+			_gl_context_modes_find_visual(ctx->psc->visuals, *pProp++);
 		    break;
 		case GLX_SCREEN:
 		    ctx->screen = *pProp++;
 		    break;
 		case GLX_FBCONFIG_ID:
-		    ctx->fbconfigID = *pProp++;
+		    ctx->mode =
+			_gl_context_modes_find_fbconfig(ctx->psc->configs, *pProp++);
 		    break;
 		case GLX_RENDER_TYPE:
 		    ctx->renderType = *pProp++;
@@ -1546,7 +1546,7 @@ glXQueryContext(Display *dpy, GLXContext ctx, int attribute, int *value)
     int retVal;
 
     /* get the information from the server if we don't have it already */
-    if (!ctx->isDirect && (ctx->vid == None)) {
+    if (!ctx->isDirect && (ctx->mode == NULL)) {
 	retVal = __glXQueryContextInfo(dpy, ctx);
 	if (Success != retVal) return retVal;
     }
@@ -1555,13 +1555,13 @@ glXQueryContext(Display *dpy, GLXContext ctx, int attribute, int *value)
 	*value = (int)(ctx->share_xid);
 	break;
     case GLX_VISUAL_ID_EXT:
-	*value = (int)(ctx->vid);
+	*value = ctx->mode ? ctx->mode->visualID : None;
 	break;
     case GLX_SCREEN:
 	*value = (int)(ctx->screen);
 	break;
     case GLX_FBCONFIG_ID:
-	*value = (int)(ctx->fbconfigID);
+	*value = ctx->mode ? ctx->mode->fbconfigID : None;
 	break;
     case GLX_RENDER_TYPE:
 	*value = (int)(ctx->renderType);

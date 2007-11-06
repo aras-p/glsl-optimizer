@@ -233,15 +233,6 @@ struct __GLXcontextRec {
     XID share_xid;
 
     /**
-     * Visual id.
-     * 
-     * \deprecated
-     * This filed has been largely been replaced by the \c mode field, but
-     * the work is not quite done.
-     */
-    VisualID vid;
-
-    /**
      * Screen number.
      */
     GLint screen;
@@ -367,18 +358,6 @@ struct __GLXcontextRec {
      */
     XID hwContextID;
 #endif
-    
-    /**
-     * \c GLXFBConfigID used to create this context.  May be \c None.  This
-     * field has been replaced by the \c mode field.
-     *
-     * \since Internal API version 20030317.
-     *
-     * \deprecated
-     * This filed has been largely been replaced by the \c mode field, but
-     * the work is not quite done.
-     */
-    GLXFBConfigID  fbconfigID;
 
     /**
      * The current read-drawable for this context.  Will be None if this

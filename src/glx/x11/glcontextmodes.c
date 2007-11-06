@@ -453,19 +453,28 @@ _gl_context_modes_destroy( __GLcontextModes * modes )
  */
 
 __GLcontextModes *
-_gl_context_modes_find_visual( __GLcontextModes * modes, int vid )
+_gl_context_modes_find_visual(__GLcontextModes *modes, int vid)
 {
-    while ( modes != NULL ) {
-	if ( modes->visualID == vid ) {
-	    break;
-	}
+    __GLcontextModes *m;
 
-	modes = modes->next;
-    }
+    for (m = modes; m != NULL; m = m->next)
+	if (m->visualID == vid)
+	    return m;
 
-    return modes;
+    return NULL;
 }
 
+__GLcontextModes *
+_gl_context_modes_find_fbconfig(__GLcontextModes *modes, int fbid)
+{
+    __GLcontextModes *m;
+
+    for (m = modes; m != NULL; m = m->next)
+	if (m->fbconfigID == fbid)
+	    return m;
+
+    return NULL;
+}
 
 /**
  * Determine if two context-modes are the same.  This is intended to be used
