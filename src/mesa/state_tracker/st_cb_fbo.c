@@ -61,7 +61,7 @@ st_renderbuffer_alloc_storage(GLcontext * ctx, struct gl_renderbuffer *rb,
 {
    struct pipe_context *pipe = ctx->st->pipe;
    struct st_renderbuffer *strb = st_renderbuffer(rb);
-   const GLuint pipeFormat
+   const uint pipeFormat
       = st_choose_pipe_format(pipe, internalFormat, GL_NONE, GL_NONE);
    struct pipe_format_info info;
    GLuint cpp;
@@ -84,6 +84,12 @@ st_renderbuffer_alloc_storage(GLcontext * ctx, struct gl_renderbuffer *rb,
    assert(strb->Base.DataType);
 
    cpp = info.size;
+
+   if (strb->surface && strb->surface->format != pipeFormat) {
+      /* need to change surface types, free this surface */
+      pipe_surface_reference(&strb->surface, NULL);
+      assert(strb->surface == NULL);
+   }
 
    if (!strb->surface) {
       strb->surface = pipe->winsys->surface_alloc(pipe->winsys, pipeFormat);
@@ -187,28 +193,10 @@ st_new_renderbuffer(GLcontext *ctx, GLuint name)
 }
 
 
-#if 000
-struct gl_renderbuffer *
-st_new_renderbuffer_fb(struct pipe_region *region, GLuint width, GLuint height)
-{
-   struct st_renderbuffer *strb = CALLOC_STRUCT(st_renderbuffer);
-   if (!strb)
-      return;
-
-   _mesa_init_renderbuffer(&strb->Base, name);
-   strb->Base.Delete = st_renderbuffer_delete;
-   strb->Base.AllocStorage = st_renderbuffer_alloc_storage;
-   strb->Base.GetPointer = null_get_pointer;
-   strb->Base.Width = width;
-   strb->Base.Heigth = height;
-
-   strb->region = region;
-
-   return &strb->Base;
-}
-
-#else
-
+/**
+ * Allocate a renderbuffer for a an on-screen window (not a user-created
+ * renderbuffer).  The window system code determines the internal format.
+ */
 struct gl_renderbuffer *
 st_new_renderbuffer_fb(GLenum intFormat)
 {
@@ -221,7 +209,7 @@ st_new_renderbuffer_fb(GLenum intFormat)
    }
 
    _mesa_init_renderbuffer(&strb->Base, 0);
-   strb->Base.ClassID = 0x42; /* XXX temp */
+   strb->Base.ClassID = 0x4242; /* just a unique value */
    strb->Base.InternalFormat = intFormat;
 
    switch (intFormat) {
@@ -251,12 +239,11 @@ st_new_renderbuffer_fb(GLenum intFormat)
    strb->Base.AllocStorage = st_renderbuffer_alloc_storage;
    strb->Base.GetPointer = null_get_pointer;
 
-   /* surface is allocate in alloc_renderbuffer_storage() */
+   /* surface is allocated in st_renderbuffer_alloc_storage() */
    strb->surface = NULL;
 
    return &strb->Base;
 }
-#endif
 
 
 
