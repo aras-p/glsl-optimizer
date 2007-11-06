@@ -46,6 +46,46 @@
 
 
 /***********************************************************************
+ * S0,S1: Vertex buffer state.  
+ */
+static void upload_S0S1(struct i915_context *i915)
+{
+   unsigned LIS0, LIS1;
+
+   /* INTEL_NEW_VBO */
+   /* TODO: re-use vertex buffers here? */
+   LIS0 = 0;
+
+   /* INTEL_NEW_VERTEX_SIZE -- do this where the vertex size is calculated! 
+    */
+   {
+      unsigned vertex_size = i915->current.vertex_info.size;
+
+      LIS1 = ((vertex_size << 24) |
+	      (vertex_size << 16));
+   }
+
+   /* INTEL_NEW_VBO */
+   /* TODO: use a vertex generation number to track vbo changes */
+   if (1 ||
+       i915->current.immediate[I915_IMMEDIATE_S0] != LIS0 ||
+       i915->current.immediate[I915_IMMEDIATE_S1] != LIS1) 
+   {
+      i915->current.immediate[I915_IMMEDIATE_S0] = LIS0;
+      i915->current.immediate[I915_IMMEDIATE_S1] = LIS1;
+      i915->hardware_dirty |= I915_HW_IMMEDIATE;
+   }
+}
+
+const struct i915_tracked_state i915_upload_S0S1 = {
+   .dirty = I915_NEW_VBO | I915_NEW_VERTEX_FORMAT,
+   .update = upload_S0S1
+};
+
+
+
+
+/***********************************************************************
  * S4: Vertex format, rasterization state
  */
 static void upload_S2S4(struct i915_context *i915)
@@ -166,6 +206,7 @@ const struct i915_tracked_state i915_upload_S7 = {
 
 
 static const struct i915_tracked_state *atoms[] = {
+   &i915_upload_S0S1,
    &i915_upload_S2S4,
    &i915_upload_S5,
    &i915_upload_S6,

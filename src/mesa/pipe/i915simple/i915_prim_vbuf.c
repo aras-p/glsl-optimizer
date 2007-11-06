@@ -82,8 +82,6 @@ struct vbuf_stage {
    ushort *element_map;
    unsigned nr_elements;
 
-   struct pipe_buffer_handle *buf; 
-   
    unsigned prim;
 
    struct i915_context *i915;   
@@ -279,7 +277,6 @@ static void vbuf_draw( struct draw_stage *stage )
    unsigned vertex_size = i915->current.vertex_info.size * 4; /* in bytes */
    unsigned hwprim;
    unsigned i;
-   unsigned *ptr;
    
    switch(vbuf->prim) {
    case PIPE_PRIM_POINTS:
@@ -304,7 +301,7 @@ static void vbuf_draw( struct draw_stage *stage )
    if (i915->hardware_dirty)
       i915_emit_hardware_state( i915 );
 
-   if (!BEGIN_BATCH( 4 + (nr + 1)/2, 1 )) {
+   if (!BEGIN_BATCH( 1 + (nr + 1)/2, 1 )) {
       FLUSH_BATCH();
 
       /* Make sure state is re-emitted after a flush: 
@@ -312,20 +309,12 @@ static void vbuf_draw( struct draw_stage *stage )
       i915_update_derived( i915 );
       i915_emit_hardware_state( i915 );
 
-      if (!BEGIN_BATCH( 4 + (nr + 1)/2, 1 )) {
+      if (!BEGIN_BATCH( 1 + (nr + 1)/2, 1 )) {
 	 assert(0);
 	 return;
       }
    }
 
-   /* FIXME: don't do this every time */
-   OUT_BATCH( _3DSTATE_LOAD_STATE_IMMEDIATE_1 | 
-	      I1_LOAD_S(0) |
-	      I1_LOAD_S(1) |
-	      (1));
-   OUT_RELOC( vbuf->buf, I915_BUFFER_ACCESS_READ, 0 );
-   OUT_BATCH( ((vertex_size/4) << 24) |  /* vertex size in dwords */
-              ((vertex_size/4) << 16) ); /* vertex pitch in dwords */
    OUT_BATCH( _3DPRIMITIVE |
               PRIM_INDIRECT |
    	      hwprim |
@@ -361,7 +350,7 @@ static void vbuf_flush_elements( struct draw_stage *stage )
       
       vbuf->nr_elements = 0;
 
-      winsys->buffer_unmap(winsys, vbuf->buf);
+      winsys->buffer_unmap(winsys, i915->vbo);
 
       vbuf->nr_vertices = 0;
 
@@ -375,13 +364,16 @@ static void vbuf_flush_elements( struct draw_stage *stage )
    }
 
    /* FIXME: handle failure */
-   if(!vbuf->buf)
-      vbuf->buf = winsys->buffer_create(winsys, 64);
-   winsys->buffer_data( winsys, vbuf->buf, 
+   if(!i915->vbo)
+      i915->vbo = winsys->buffer_create(winsys, 64);
+   winsys->buffer_data( winsys, i915->vbo, 
                         VBUF_SIZE, NULL, 
                         I915_BUFFER_USAGE_LIT_VERTEX );
+   
+   i915->dirty |= I915_NEW_VBO;
+   
    vbuf->vertex_map = winsys->buffer_map(winsys, 
-                                         vbuf->buf, 
+                                         i915->vbo, 
                                          PIPE_BUFFER_FLAG_WRITE );
    vbuf->vertex_ptr = vbuf->vertex_map;
 
@@ -394,7 +386,9 @@ static void vbuf_flush_elements( struct draw_stage *stage )
 static void vbuf_begin( struct draw_stage *stage )
 {
    struct vbuf_stage *vbuf = vbuf_stage(stage);
+   struct i915_context *i915 = vbuf->i915;
 
+   assert(!i915->dirty);
    vbuf->vertex_size = vbuf->i915->current.vertex_info.size * 4;
 }
 

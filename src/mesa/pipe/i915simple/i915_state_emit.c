@@ -62,7 +62,7 @@ i915_emit_hardware_state(struct i915_context *i915 )
 {
    /* XXX: there must be an easier way */
    const unsigned dwords = ( 14 + 
-                             5 + 
+                             7 + 
                              I915_MAX_DYNAMIC + 
                              8 + 
                              2 + I915_TEX_UNITS*3 + 
@@ -72,7 +72,7 @@ i915_emit_hardware_state(struct i915_context *i915 )
                              6 
                            ) * 3/2; /* plus 50% margin */
    const unsigned relocs = ( I915_TEX_UNITS +
-	                     2
+	                     3
                            ) * 3/2; /* plus 50% margin */
 
 #if 0
@@ -134,16 +134,26 @@ i915_emit_hardware_state(struct i915_context *i915 )
       OUT_BATCH(0);
    }
    
-   /* 5 dwords, 0 relocs */
+   /* 7 dwords, 1 relocs */
    if (i915->hardware_dirty & I915_HW_IMMEDIATE)
    {
       OUT_BATCH(_3DSTATE_LOAD_STATE_IMMEDIATE_1 | 
+		I1_LOAD_S(0) |
+		I1_LOAD_S(1) |
 		I1_LOAD_S(2) |
 		I1_LOAD_S(4) |
 		I1_LOAD_S(5) |
 		I1_LOAD_S(6) | 
-		(3));
+		(5));
       
+      if(i915->vbo)
+         OUT_RELOC(i915->vbo,
+                   I915_BUFFER_ACCESS_READ,
+                   i915->current.immediate[I915_IMMEDIATE_S0]);
+      else
+	 /* FIXME: we should not do this */
+	 OUT_BATCH(0);
+      OUT_BATCH(i915->current.immediate[I915_IMMEDIATE_S1]);
       OUT_BATCH(i915->current.immediate[I915_IMMEDIATE_S2]);
       OUT_BATCH(i915->current.immediate[I915_IMMEDIATE_S4]);
       OUT_BATCH(i915->current.immediate[I915_IMMEDIATE_S5]);

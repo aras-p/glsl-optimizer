@@ -109,7 +109,7 @@ struct i915_state
 
    /** Describes the current hardware vertex layout */
    struct vertex_info vertex_info;
-
+   
    unsigned id;			/* track lost context events */
 };
 
@@ -185,6 +185,9 @@ struct i915_context
 
    unsigned *batch_start;
 
+   /** Vertex buffer */
+   struct pipe_buffer_handle *vbo;
+
    struct i915_state current;
    unsigned hardware_dirty;
    
@@ -211,6 +214,7 @@ struct i915_context
 #define I915_NEW_SAMPLER       0x400
 #define I915_NEW_TEXTURE       0x800
 #define I915_NEW_CONSTANTS     0x1000
+#define I915_NEW_VBO           0x2000
 
 
 /* Driver's internally generated state flags:
