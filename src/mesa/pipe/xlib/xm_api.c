@@ -1427,8 +1427,7 @@ xmesa_viewport(GLcontext *ctx, GLint x, GLint y, GLsizei w, GLsizei h)
  * we implement in this driver.
  */
 static void
-xmesa_init_driver_functions( XMesaVisual xmvisual,
-                             struct dd_function_table *driver )
+xmesa_init_driver_functions(struct dd_function_table *driver)
 {
    driver->Flush = finish_or_flush;
    driver->Finish = finish_or_flush;
@@ -1450,8 +1449,6 @@ XMesaContext XMesaCreateContext( XMesaVisual v, XMesaContext share_list )
    struct pipe_context *pipe;
    XMesaContext c;
    GLcontext *mesaCtx;
-
-   (void) xmesa_init_driver_functions;
 
    if (firstTime) {
       _glthread_INIT_MUTEX(_xmesa_lock);
@@ -1484,6 +1481,8 @@ XMesaContext XMesaCreateContext( XMesaVisual v, XMesaContext share_list )
     */
    mesaCtx->Const.CheckArrayBounds = GL_TRUE;
 #endif
+
+   xmesa_init_driver_functions(&mesaCtx->Driver);
 
    /* finish up xmesa context initializations */
    c->swapbytes = CHECK_BYTE_ORDER(v) ? GL_FALSE : GL_TRUE;
