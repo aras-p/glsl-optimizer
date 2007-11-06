@@ -69,7 +69,11 @@ struct intel_screen
    struct _DriBufferPool *staticPool; /** for the X screen/framebuffer */
    boolean havePools;
 
-   struct intel_context *dummyctxptr;
+   /**
+    * Temporary(?) context to use for SwapBuffers or other situations in
+    * which we need a rendering context, but none is currently bound.
+    */
+   struct intel_context *dummyContext;
 };
 
 

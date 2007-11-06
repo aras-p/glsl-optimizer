@@ -31,45 +31,11 @@
 #include "intel_batchbuffer.h"
 #include "intel_reg.h"
 #include "intel_winsys.h"
-#include "context.h"
 
 #include "pipe/p_context.h"
 #include "state_tracker/st_public.h"
 #include "state_tracker/st_context.h"
 #include "state_tracker/st_cb_fbo.h"
-
-
-
-/** Cast wrapper */
-static INLINE struct intel_context *
-intel_context_mesa(GLcontext * ctx)
-{
-   return (struct intel_context *) ctx->DriverCtx;
-}
-
-
-/** XXX temporary - want to get rid of this */
-static struct intel_context *
-intelScreenContext(struct intel_screen *intelScreen)
-{
-  /*
-   * This should probably change to have the screen allocate a dummy
-   * context at screen creation. For now just use the current context.
-   */
-
-  GET_CURRENT_CONTEXT(ctx);
-  if (ctx == NULL) {
-     /* need a context for the first time makecurrent is called (for hw lock
-        when allocating priv buffers) */
-     if (intelScreen->dummyctxptr == NULL) {
-        _mesa_problem(NULL, "No current context in intelScreenContext\n");
-        return NULL;
-     }
-     return intelScreen->dummyctxptr;
-  }
-
-  return intel_context_mesa(ctx);
-}
 
 
 /**
@@ -86,18 +52,17 @@ intelDisplaySurface(__DRIdrawablePrivate *dPriv,
                     const drm_clip_rect_t *rect)
 {
    struct intel_screen *intelScreen = intel_screen(dPriv->driScreenPriv);
-   struct intel_context *intel;
+   struct intel_context *intel = intelScreen->dummyContext;
 
    DBG(SWAP, "%s\n", __FUNCTION__);
 
-   assert(dPriv);
-
-   intel = intelScreenContext(intelScreen);
-   if (!intel)
+   if (!intel) {
+      /* XXX this is where some kind of extra/meta context could be useful */
       return;
+   }
 
    if (intel->last_swap_fence) {
-      driFenceFinish(intel->last_swap_fence, DRM_FENCE_TYPE_EXE, GL_TRUE);
+      driFenceFinish(intel->last_swap_fence, DRM_FENCE_TYPE_EXE, TRUE);
       driFenceUnReference(intel->last_swap_fence);
       intel->last_swap_fence = NULL;
    }

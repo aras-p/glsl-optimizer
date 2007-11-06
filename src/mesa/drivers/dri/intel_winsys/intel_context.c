@@ -181,6 +181,9 @@ intelDestroyContext(__DRIcontextPrivate * driContextPriv)
 	 intel->first_swap_fence = NULL;
       }
 
+      if (intel->intelScreen->dummyContext == intel)
+         intel->intelScreen->dummyContext = NULL;
+
       st_destroy_context(intel->st);
       free(intel);
    }
@@ -210,9 +213,10 @@ intelMakeCurrent(__DRIcontextPrivate * driContextPriv,
       assert(draw_fb->stfb);
       assert(read_fb->stfb);
 
-      /* this is a hack so we have a valid context when the region allocation
-         is done. Need a per-screen context? */
-      intel->intelScreen->dummyctxptr = intel;
+      /* This is for situations in which we need a rendering context but
+       * there may not be any currently bound.
+       */
+      intel->intelScreen->dummyContext = intel;
 
       st_make_current(intel->st, draw_fb->stfb, read_fb->stfb);
 
