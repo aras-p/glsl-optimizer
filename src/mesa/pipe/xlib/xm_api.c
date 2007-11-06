@@ -1383,7 +1383,7 @@ static void
 finish_or_flush( GLcontext *ctx )
 {
 #ifdef XFree86Server
-      /* NOT_NEEDED */
+   /* NOT_NEEDED */
 #else
    const XMesaContext xmesa = XMESA_CONTEXT(ctx);
    ctx->st->pipe->flush(ctx->st->pipe, 0);
@@ -1429,8 +1429,12 @@ xmesa_viewport(GLcontext *ctx, GLint x, GLint y, GLsizei w, GLsizei h)
 static void
 xmesa_init_driver_functions(struct dd_function_table *driver)
 {
+#if 0 /* not needed for now */
    driver->Flush = finish_or_flush;
    driver->Finish = finish_or_flush;
+#else
+   (void) finish_or_flush;
+#endif
    driver->Viewport = xmesa_viewport;
 }
 
