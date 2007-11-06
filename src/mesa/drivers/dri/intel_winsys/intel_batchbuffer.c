@@ -26,7 +26,6 @@
  **************************************************************************/
 
 #include <errno.h>
-#include "main/imports.c"
 #include "intel_batchbuffer.h"
 #include "intel_context.h"
 #include "intel_screen.h"
@@ -72,13 +71,13 @@
  */
 
 static void
-intel_dump_batchbuffer(GLuint offset, GLuint * ptr, GLuint count)
+intel_dump_batchbuffer(uint offset, uint * ptr, uint count)
 {
    int i;
-   _mesa_printf("\n\n\nSTART BATCH (%d dwords):\n", count / 4);
+   printf("\n\n\nSTART BATCH (%d dwords):\n", count / 4);
    for (i = 0; i < count / 4; i += 1)
-      _mesa_printf("\t0x%08x\n", ptr[i]);
-   _mesa_printf("END BATCH\n\n\n");
+      printf("\t0x%08x\n", ptr[i]);
+   printf("END BATCH\n\n\n");
 }
 
 void
@@ -172,9 +171,9 @@ intel_batchbuffer_free(struct intel_batchbuffer *batch)
 
 static void
 intel_batch_ioctl(struct intel_context *intel,
-                  GLuint start_offset,
-                  GLuint used,
-                  GLboolean allow_unlock)
+                  uint start_offset,
+                  uint used,
+                  boolean allow_unlock)
 {
    drmI830BatchBuffer batch;
 
@@ -192,7 +191,7 @@ intel_batch_ioctl(struct intel_context *intel,
 
    if (drmCommandWrite(intel->driFd, DRM_I830_BATCHBUFFER, &batch,
                        sizeof(batch))) {
-      _mesa_printf("DRM_I830_BATCHBUFFER: %d\n", -errno);
+      printf("DRM_I830_BATCHBUFFER: %d\n", -errno);
       UNLOCK_HARDWARE(intel);
       exit(1);
    }
@@ -205,11 +204,11 @@ intel_batch_ioctl(struct intel_context *intel,
  */
 static void
 do_flush_locked(struct intel_batchbuffer *batch,
-                GLuint used,
-                GLboolean allow_unlock)
+                uint used,
+                boolean allow_unlock)
 {
-   GLuint *ptr;
-   GLuint i;
+   uint *ptr;
+   uint i;
    unsigned fenceFlags;
    struct _DriFenceObject *fo;
 
@@ -219,7 +218,7 @@ do_flush_locked(struct intel_batchbuffer *batch,
     * whole task should be done internally by the memory manager, and
     * that dma buffers probably need to be pinned within agp space.
     */
-   ptr = (GLuint *) driBOMap(batch->buffer, DRM_BO_FLAG_WRITE,
+   ptr = (uint *) driBOMap(batch->buffer, DRM_BO_FLAG_WRITE,
                              DRM_BO_HINT_ALLOW_UNFENCED_MAP);
 
 
@@ -277,8 +276,8 @@ struct _DriFenceObject *
 intel_batchbuffer_flush(struct intel_batchbuffer *batch)
 {
    struct intel_context *intel = batch->intel;
-   GLuint used = batch->ptr - batch->map;
-   GLboolean was_locked = intel->locked;
+   uint used = batch->ptr - batch->map;
+   boolean was_locked = intel->locked;
 
    if (used == 0)
       return batch->last_fence;
@@ -333,10 +332,10 @@ intel_batchbuffer_finish(struct intel_batchbuffer *batch)
 
 /*  This is the only way buffers get added to the validate list.
  */
-GLboolean
+boolean
 intel_batchbuffer_emit_reloc(struct intel_batchbuffer *batch,
                              struct _DriBufferObject *buffer,
-                             GLuint flags, GLuint mask, GLuint delta)
+                             uint flags, uint mask, uint delta)
 {
    assert(batch->nr_relocs < MAX_RELOCS);
 
@@ -348,7 +347,7 @@ intel_batchbuffer_emit_reloc(struct intel_batchbuffer *batch,
       r->buf = buffer;
       r->offset = batch->ptr - batch->map;
       r->delta = delta;
-      *(GLuint *) batch->ptr = 0x12345678;
+      *(uint *) batch->ptr = 0x12345678;
    }
 
    batch->ptr += 4;
@@ -359,7 +358,7 @@ intel_batchbuffer_emit_reloc(struct intel_batchbuffer *batch,
 
 void
 intel_batchbuffer_data(struct intel_batchbuffer *batch,
-                       const void *data, GLuint bytes, GLuint flags)
+                       const void *data, uint bytes, uint flags)
 {
    assert((bytes & 3) == 0);
    intel_batchbuffer_require_space(batch, bytes, flags);

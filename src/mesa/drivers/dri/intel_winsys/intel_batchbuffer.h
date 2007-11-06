@@ -28,7 +28,7 @@
 #ifndef INTEL_BATCHBUFFER_H
 #define INTEL_BATCHBUFFER_H
 
-#include "main/glheader.h"
+#include "pipe/p_compiler.h"
 #include "dri_bufmgr.h"
 
 struct intel_context;
@@ -44,8 +44,8 @@ struct intel_context;
 struct buffer_reloc
 {
    struct _DriBufferObject *buf;
-   GLuint offset;
-   GLuint delta;                /* not needed? */
+   uint offset;
+   uint delta;                /* not needed? */
 };
 
 struct intel_batchbuffer
@@ -55,20 +55,19 @@ struct intel_batchbuffer
 
    struct _DriBufferObject *buffer;
    struct _DriFenceObject *last_fence;
-   GLuint flags;
+   uint flags;
 
    drmBOList list;
-   GLuint list_count;
-   GLubyte *map;
-   GLubyte *ptr;
+   uint list_count;
+   ubyte *map;
+   ubyte *ptr;
 
    struct buffer_reloc reloc[MAX_RELOCS];
-   GLuint nr_relocs;
-   GLuint size;
+   uint nr_relocs;
+   uint size;
 };
 
-struct intel_batchbuffer *intel_batchbuffer_alloc(struct intel_context
-                                                  *intel);
+struct intel_batchbuffer *intel_batchbuffer_alloc(struct intel_context *intel);
 
 void intel_batchbuffer_free(struct intel_batchbuffer *batch);
 
@@ -86,22 +85,22 @@ void intel_batchbuffer_reset(struct intel_batchbuffer *batch);
  * intel_buffer_dword() calls.
  */
 void intel_batchbuffer_data(struct intel_batchbuffer *batch,
-                            const void *data, GLuint bytes, GLuint flags);
+                            const void *data, uint bytes, uint flags);
 
 void intel_batchbuffer_release_space(struct intel_batchbuffer *batch,
-                                     GLuint bytes);
+                                     uint bytes);
 
-GLboolean intel_batchbuffer_emit_reloc(struct intel_batchbuffer *batch,
-                                       struct _DriBufferObject *buffer,
-                                       GLuint flags,
-                                       GLuint mask, GLuint offset);
+boolean intel_batchbuffer_emit_reloc(struct intel_batchbuffer *batch,
+                                     struct _DriBufferObject *buffer,
+                                     uint flags,
+                                     uint mask, uint offset);
 
 /* Inline functions - might actually be better off with these
  * non-inlined.  Certainly better off switching all command packets to
  * be passed as structs rather than dwords, but that's a little bit of
  * work...
  */
-static INLINE GLuint
+static INLINE uint
 intel_batchbuffer_space(struct intel_batchbuffer *batch)
 {
    return (batch->size - BATCH_RESERVED) - (batch->ptr - batch->map);
@@ -109,17 +108,17 @@ intel_batchbuffer_space(struct intel_batchbuffer *batch)
 
 
 static INLINE void
-intel_batchbuffer_emit_dword(struct intel_batchbuffer *batch, GLuint dword)
+intel_batchbuffer_emit_dword(struct intel_batchbuffer *batch, uint dword)
 {
    assert(batch->map);
    assert(intel_batchbuffer_space(batch) >= 4);
-   *(GLuint *) (batch->ptr) = dword;
+   *(uint *) (batch->ptr) = dword;
    batch->ptr += 4;
 }
 
 static INLINE void
 intel_batchbuffer_require_space(struct intel_batchbuffer *batch,
-                                GLuint sz, GLuint flags)
+                                uint sz, uint flags)
 {
    assert(sz < batch->size - 8);
    if (intel_batchbuffer_space(batch) < sz ||
