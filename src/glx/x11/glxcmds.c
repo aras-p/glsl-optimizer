@@ -405,7 +405,7 @@ CreateContext(Display *dpy, XVisualInfo *vis,
 
 
 		if (!XF86DRICreateContextWithConfig(dpy, psc->scr,
-						    mode->fbconfigID,
+						    mode->visualID,
 						    &gc->hwContextID, &hwContext))
 		    /* gah, handle this better */
 		    return NULL;
