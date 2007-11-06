@@ -142,6 +142,26 @@ static int
 i915_get_param(struct pipe_context *pipe, int param)
 {
    switch (param) {
+   case PIPE_CAP_MAX_TEXTURE_IMAGE_UNITS:
+      return 8;
+   case PIPE_CAP_NPOT_TEXTURES:
+      return 1;
+   case PIPE_CAP_TWO_SIDED_STENCIL:
+      return 1;
+   case PIPE_CAP_GLSL:
+      return 0;
+   case PIPE_CAP_S3TC:
+      return 0;
+   case PIPE_CAP_ANISOTROPIC_FILTER:
+      return 0;
+   case PIPE_CAP_POINT_SPRITE:
+      return 0;
+   case PIPE_CAP_MAX_RENDER_TARGETS:
+      return 1;
+   case PIPE_CAP_OCCLUSION_QUERY:
+      return 0;
+   case PIPE_CAP_TEXTURE_SHADOW_MAP:
+      return 0;
    default:
       return 0;
    }

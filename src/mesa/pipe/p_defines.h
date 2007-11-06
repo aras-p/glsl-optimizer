@@ -225,4 +225,21 @@
 #define PIPE_SPRITE_COORD_UPPER_LEFT 1
 #define PIPE_SPRITE_COORD_LOWER_LEFT 2
 
+
+/**
+ * Implementation capabilities/limits
+ * Passed to pipe->get_param()
+ * XXX this will need some fine tuning...
+ */
+#define PIPE_CAP_MAX_TEXTURE_IMAGE_UNITS 1
+#define PIPE_CAP_NPOT_TEXTURES           2
+#define PIPE_CAP_TWO_SIDED_STENCIL       3
+#define PIPE_CAP_GLSL                    4  /* XXX need something better */
+#define PIPE_CAP_S3TC                    5
+#define PIPE_CAP_ANISOTROPIC_FILTER      6
+#define PIPE_CAP_POINT_SPRITE            7
+#define PIPE_CAP_MAX_RENDER_TARGETS      8
+#define PIPE_CAP_OCCLUSION_QUERY         9
+#define PIPE_CAP_TEXTURE_SHADOW_MAP     10
+
 #endif

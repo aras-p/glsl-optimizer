@@ -231,6 +231,7 @@ STATETRACKER_SOURCES = \
 	state_tracker/st_context.c \
 	state_tracker/st_debug.c \
 	state_tracker/st_draw.c \
+	state_tracker/st_extensions.c \
 	state_tracker/st_format.c \
 	state_tracker/st_framebuffer.c \
 	state_tracker/st_mesa_to_tgsi.c \

@@ -1,6 +1,6 @@
 /**************************************************************************
  * 
- * Copyright 2003 Tungsten Graphics, Inc., Cedar Park, Texas.
+ * Copyright 2007 Tungsten Graphics, Inc., Cedar Park, Texas.
  * All Rights Reserved.
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a
@@ -45,6 +45,7 @@
 #include "st_cb_strings.h"
 #include "st_atom.h"
 #include "st_draw.h"
+#include "st_extensions.h"
 #include "st_program.h"
 #include "pipe/p_context.h"
 #include "pipe/draw/draw_context.h"
@@ -105,8 +106,9 @@ st_create_context_priv( GLcontext *ctx, struct pipe_context *pipe )
 
    st->pixel_xfer.cache = _mesa_new_program_cache();
 
-   /* XXXX This is temporary! */
-   _mesa_enable_sw_extensions(ctx);
+   /* GL limits and extensions */
+   st_init_limits(st);
+   st_init_extensions(st);
 
    return st;
 }

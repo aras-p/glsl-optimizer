@@ -86,7 +86,7 @@ static const struct {
    { OFF, "GL_EXT_blend_logic_op",             F(EXT_blend_logic_op) },
    { OFF, "GL_EXT_blend_minmax",               F(EXT_blend_minmax) },
    { OFF, "GL_EXT_blend_subtract",             F(EXT_blend_subtract) },
-   { ON,  "GL_EXT_clip_volume_hint",           F(EXT_clip_volume_hint) },
+   { OFF, "GL_EXT_clip_volume_hint",           F(EXT_clip_volume_hint) },
    { OFF, "GL_EXT_cull_vertex",                F(EXT_cull_vertex) },
    { ON,  "GL_EXT_compiled_vertex_array",      F(EXT_compiled_vertex_array) },
    { OFF, "GL_EXT_convolution",                F(EXT_convolution) },
