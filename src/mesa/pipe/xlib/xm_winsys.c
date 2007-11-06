@@ -379,7 +379,7 @@ xmesa_get_softpipe_winsys(void)
 
 
 struct pipe_context *
-xmesa_create_softpipe(XMesaContext xmesa)
+xmesa_create_context(XMesaContext xmesa)
 {
    struct pipe_winsys *pws = xmesa_get_pipe_winsys();
    struct softpipe_winsys *spws = xmesa_get_softpipe_winsys();
