@@ -1386,6 +1386,7 @@ finish_or_flush( GLcontext *ctx )
       /* NOT_NEEDED */
 #else
    const XMesaContext xmesa = XMESA_CONTEXT(ctx);
+   ctx->st->pipe->flush(ctx->st->pipe, 0);
    if (xmesa) {
       _glthread_LOCK_MUTEX(_xmesa_lock);
       XSync( xmesa->display, False );
