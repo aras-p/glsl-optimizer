@@ -53,7 +53,7 @@ PUBLIC const char __driConfigOptions[] =
    DRI_CONF_ALLOW_LARGE_TEXTURES(1)
    DRI_CONF_SECTION_END DRI_CONF_END;
 
-const GLuint __driNConfigOptions = 4;
+const uint __driNConfigOptions = 4;
 
 #ifdef USE_NEW_INTERFACE
 static PFNGLXCREATECONTEXTMODES create_context_modes = NULL;
@@ -73,6 +73,7 @@ intelPrintDRIInfo(struct intel_screen * intelScreen,
            intelScreen->front.pitch);
    fprintf(stderr, "*** Memory : 0x%x\n", gDRIPriv->mem);
 }
+
 
 #if 0
 static void
@@ -101,7 +102,6 @@ intelPrintSAREA(const drmI830Sarea * sarea)
    fprintf(stderr, "SAREA: rotated pitch: %d\n", sarea->rotated_pitch);
 }
 #endif
-
 
 
 /**
@@ -138,7 +138,7 @@ intelUpdateScreenRotation(__DRIscreenPrivate * sPriv, drmI830Sarea * sarea)
 	      sarea->front_handle,
 	      intelScreen->front.size,
 	      (drmAddress *) & intelScreen->front.map) != 0) {
-      _mesa_problem(NULL, "drmMap(frontbuffer) failed!");
+      fprintf(stderr, "drmMap(frontbuffer) failed!\n");
       return;
    }
 
@@ -156,8 +156,7 @@ intelUpdateScreenRotation(__DRIscreenPrivate * sPriv, drmI830Sarea * sarea)
 }
 
 
-
-GLboolean
+boolean
 intelCreatePools(__DRIscreenPrivate * sPriv)
 {
    unsigned batchPoolSize = 1024*1024;
@@ -196,7 +195,7 @@ intelCreatePools(__DRIscreenPrivate * sPriv)
 }
 
 
-static GLboolean
+static boolean
 intelInitDriver(__DRIscreenPrivate * sPriv)
 {
    struct intel_screen *intelScreen;
@@ -270,10 +269,10 @@ intelDestroyScreen(__DRIscreenPrivate * sPriv)
 /**
  * This is called when we need to set up GL rendering to a new X window.
  */
-static GLboolean
+static boolean
 intelCreateBuffer(__DRIscreenPrivate * driScrnPriv,
                   __DRIdrawablePrivate * driDrawPriv,
-                  const __GLcontextModes * mesaVis, GLboolean isPixmap)
+                  const __GLcontextModes * visual, boolean isPixmap)
 {
    if (isPixmap) {
       return GL_FALSE;          /* not implemented */
@@ -283,7 +282,7 @@ intelCreateBuffer(__DRIscreenPrivate * driScrnPriv,
       if (!intelfb)
          return GL_FALSE;
 
-      intelfb->stfb = st_create_framebuffer(mesaVis, GL_TRUE, (void*) intelfb);
+      intelfb->stfb = st_create_framebuffer(visual, GL_TRUE, (void*) intelfb);
       if (!intelfb->stfb) {
          free(intelfb);
          return GL_FALSE;
@@ -320,8 +319,8 @@ intelGetSwapInfo(__DRIdrawablePrivate * dPriv, __DRIswapInfo * sInfo)
 
 
 static void
-intelSetTexOffset(__DRIcontext *pDRICtx, GLint texname,
-		  unsigned long long offset, GLint depth, GLuint pitch)
+intelSetTexOffset(__DRIcontext *pDRICtx, int texname,
+		  unsigned long long offset, int depth, uint pitch)
 {
    abort();
 #if 0
@@ -368,7 +367,7 @@ static const struct __DriverAPIRec intelAPI = {
 
 static __GLcontextModes *
 intelFillInModes(unsigned pixel_bits, unsigned depth_bits,
-                 unsigned stencil_bits, GLboolean have_back_buffer)
+                 unsigned stencil_bits, boolean have_back_buffer)
 {
    __GLcontextModes *modes;
    __GLcontextModes *m;
@@ -499,11 +498,13 @@ __driCreateNewScreen_20050727(__DRInativeDisplay * dpy, int scrn,
                                        (dri_priv->cpp == 2) ? 16 : 24,
                                        (dri_priv->cpp == 2) ? 0 : 8, 1);
 
-      /* Calling driInitExtensions here, with a NULL context pointer, does not actually
-       * enable the extensions.  It just makes sure that all the dispatch offsets for all
-       * the extensions that *might* be enables are known.  This is needed because the
-       * dispatch offsets need to be known when _mesa_context_create is called, but we can't
-       * enable the extensions until we have a context pointer.
+      /* Calling driInitExtensions here, with a NULL context pointer,
+       * does not actually enable the extensions.  It just makes sure
+       * that all the dispatch offsets for all the extensions that
+       * *might* be enables are known.  This is needed because the
+       * dispatch offsets need to be known when _mesa_context_create
+       * is called, but we can't enable the extensions until we have a
+       * context pointer.
        *
        * Hello chicken.  Hello egg.  How are you two today?
        */

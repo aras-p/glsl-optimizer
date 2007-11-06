@@ -92,19 +92,19 @@ intelUpdateScreenRotation(__DRIscreenPrivate * sPriv, drmI830Sarea * sarea);
 
 extern void intelDestroyContext(__DRIcontextPrivate * driContextPriv);
 
-extern GLboolean intelUnbindContext(__DRIcontextPrivate * driContextPriv);
+extern boolean intelUnbindContext(__DRIcontextPrivate * driContextPriv);
 
-extern GLboolean
+extern boolean
 intelMakeCurrent(__DRIcontextPrivate * driContextPriv,
                  __DRIdrawablePrivate * driDrawPriv,
                  __DRIdrawablePrivate * driReadPriv);
 
 
-extern GLboolean
+extern boolean
 intelCreatePools(__DRIscreenPrivate *sPriv);
 
-extern GLboolean
-intelCreateContext(const __GLcontextModes * mesaVis,
+extern boolean
+intelCreateContext(const __GLcontextModes * visual,
                    __DRIcontextPrivate * driContextPriv,
                    void *sharedContextPrivate);
 
