@@ -339,6 +339,11 @@ static const __DRIallocateExtension r200AllocateExtension = {
     r200FreeMemoryMESA,
     r200GetMemoryOffsetMESA
 };
+
+static const __DRItexOffsetExtension r200texOffsetExtension = {
+    { __DRI_TEX_OFFSET, __DRI_TEX_OFFSET_VERSION },
+   r200SetTexOffset,
+};
 #endif
 
 #if RADEON_COMMON && defined(RADEON_COMMON_FOR_R300)
@@ -758,6 +763,8 @@ radeonCreateScreen( __DRIscreenPrivate *sPriv )
 #if RADEON_COMMON && defined(RADEON_COMMON_FOR_R200)
    if (IS_R200_CLASS(screen))
        screen->extensions[i++] = &r200AllocateExtension.base;
+
+   screen->extensions[i++] = &r200texOffsetExtension.base;
 #endif
 
 #if RADEON_COMMON && defined(RADEON_COMMON_FOR_R300)
@@ -984,7 +991,6 @@ static const struct __DriverAPIRec r200API = {
    .WaitForSBC      = NULL,
    .SwapBuffersMSC  = NULL,
    .CopySubBuffer   = r200CopySubBuffer,
-   .setTexOffset    = r200SetTexOffset
 };
 #endif
 
