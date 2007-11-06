@@ -72,6 +72,10 @@ const int xmesa_kernel1[16] = {
 
 #define CLIP_TILE \
    do { \
+      if (x >= ps->width) \
+         return; \
+      if (y >= ps->height) \
+         return; \
       if (x + w > ps->width) \
          w = ps->width - x; \
       if (y + h > ps->height) \
