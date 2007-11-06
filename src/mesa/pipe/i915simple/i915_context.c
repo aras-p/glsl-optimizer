@@ -108,36 +108,6 @@ i915_is_format_supported( struct pipe_context *pipe,
 }
 
 
-/**
- * We might want to return max texture levels instead...
- */
-static void
-i915_max_texture_size(struct pipe_context *pipe, unsigned textureType,
-                      unsigned *maxWidth, unsigned *maxHeight, unsigned *maxDepth)
-{
-   switch (textureType) {
-   case PIPE_TEXTURE_1D:
-      *maxWidth = 2048;
-      break; 
-   case PIPE_TEXTURE_2D:
-      *maxWidth =
-      *maxHeight = 2048;
-      break; 
-   case PIPE_TEXTURE_3D:
-      *maxWidth =
-      *maxHeight =
-      *maxDepth = 256;
-      break; 
-   case PIPE_TEXTURE_CUBE:
-      *maxWidth =
-      *maxHeight = 2048;
-      break; 
-   default:
-      assert(0);
-   }
-}
-
-
 static int
 i915_get_param(struct pipe_context *pipe, int param)
 {
@@ -162,6 +132,12 @@ i915_get_param(struct pipe_context *pipe, int param)
       return 0;
    case PIPE_CAP_TEXTURE_SHADOW_MAP:
       return 0;
+   case PIPE_CAP_MAX_TEXTURE_2D_LEVELS:
+      return 11; /* max 1024x1024 */
+   case PIPE_CAP_MAX_TEXTURE_3D_LEVELS:
+      return 8;  /* max 128x128x128 */
+   case PIPE_CAP_MAX_TEXTURE_CUBE_LEVELS:
+      return 11; /* max 1024x1024 */
    default:
       return 0;
    }
@@ -324,7 +300,6 @@ struct pipe_context *i915_create( struct pipe_winsys *pipe_winsys,
 
    i915->pipe.destroy = i915_destroy;
    i915->pipe.is_format_supported = i915_is_format_supported;
-   i915->pipe.max_texture_size = i915_max_texture_size;
    i915->pipe.get_param = i915_get_param;
 
    i915->pipe.clear = i915_clear;

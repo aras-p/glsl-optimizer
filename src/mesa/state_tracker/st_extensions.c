@@ -37,57 +37,54 @@
 #include "st_extensions.h"
 
 
-/*
- * Compute floor(log_base_2(n)).
- * If n < 0 return -1.
- */
-static int
-logbase2( int n )
+static int min(int a, int b)
 {
-   GLint i = 1;
-   GLint log2 = 0;
+   return (a < b) ? a : b;
+}
 
-   if (n < 0)
-      return -1;
-
-   if (n == 0)
-      return 0;
-
-   while ( n > i ) {
-      i *= 2;
-      log2++;
-   }
-   if (i != n) {
-      return log2 - 1;
-   }
-   else {
-      return log2;
-   }
+static int clamp(int a, int min, int max)
+{
+   if (a < min)
+      return min;
+   else if (a > max)
+      return max;
+   else
+      return a;
 }
 
 
+/**
+ * Query driver to get implementation limits.
+ * Note that we have to limit/clamp against Mesa's internal limits too.
+ */
 void st_init_limits(struct st_context *st)
 {
    struct pipe_context *pipe = st->pipe;
-   GLcontext *ctx = st->ctx;
-   uint w, h, d;
+   struct gl_constants *c = &st->ctx->Const;
 
-   ctx->Const.MaxTextureImageUnits
-      = ctx->Const.MaxTextureCoordUnits
-      = pipe->get_param(pipe, PIPE_CAP_MAX_TEXTURE_IMAGE_UNITS);
+   c->MaxTextureLevels
+      = min(pipe->get_param(pipe, PIPE_CAP_MAX_TEXTURE_2D_LEVELS),
+            MAX_TEXTURE_LEVELS);
 
-   pipe->max_texture_size(pipe, PIPE_TEXTURE_2D, &w, &h, &d);
-   ctx->Const.MaxTextureLevels = logbase2(w) + 1;
-   ctx->Const.MaxTextureRectSize = w;
+   c->Max3DTextureLevels
+      = min(pipe->get_param(pipe, PIPE_CAP_MAX_TEXTURE_3D_LEVELS),
+            MAX_3D_TEXTURE_LEVELS);
 
-   pipe->max_texture_size(pipe, PIPE_TEXTURE_3D, &w, &h, &d);
-   ctx->Const.Max3DTextureLevels = logbase2(d) + 1;
+   c->MaxCubeTextureLevels
+      = min(pipe->get_param(pipe, PIPE_CAP_MAX_TEXTURE_CUBE_LEVELS),
+            MAX_CUBE_TEXTURE_LEVELS);
 
-   pipe->max_texture_size(pipe, PIPE_TEXTURE_CUBE, &w, &h, &d);
-   ctx->Const.MaxCubeTextureLevels = logbase2(w) + 1;
-   
-   ctx->Const.MaxDrawBuffers = MAX2(1, pipe->get_param(pipe, PIPE_CAP_MAX_RENDER_TARGETS));
+   c->MaxTextureRectSize
+      = min(1 << (c->MaxTextureLevels - 1), MAX_TEXTURE_RECT_SIZE);
 
+   c->MaxTextureImageUnits
+      = c->MaxTextureCoordUnits
+      = min(pipe->get_param(pipe, PIPE_CAP_MAX_TEXTURE_IMAGE_UNITS),
+            MAX_TEXTURE_IMAGE_UNITS);
+
+   c->MaxDrawBuffers
+      = clamp(pipe->get_param(pipe, PIPE_CAP_MAX_RENDER_TARGETS),
+              1, MAX_DRAW_BUFFERS);
 }
 
 

@@ -83,39 +83,6 @@ softpipe_is_format_supported( struct pipe_context *pipe,
 }
 
 
-/** XXX remove these? */
-#define MAX_TEXTURE_LEVELS 11
-#define MAX_TEXTURE_RECT_SIZE 2048
-#define MAX_3D_TEXTURE_LEVELS 8
-
-static void
-softpipe_max_texture_size(struct pipe_context *pipe, unsigned textureType,
-                          unsigned *maxWidth, unsigned *maxHeight,
-                          unsigned *maxDepth)
-{
-   switch (textureType) {
-   case PIPE_TEXTURE_1D:
-      *maxWidth = 1 << (MAX_TEXTURE_LEVELS - 1);
-      break;
-   case PIPE_TEXTURE_2D:
-      *maxWidth =
-      *maxHeight = 1 << (MAX_TEXTURE_LEVELS - 1);
-      break;
-   case PIPE_TEXTURE_3D:
-      *maxWidth =
-      *maxHeight =
-      *maxDepth = 1 << (MAX_3D_TEXTURE_LEVELS - 1);
-      break;
-   case PIPE_TEXTURE_CUBE:
-      *maxWidth =
-      *maxHeight = MAX_TEXTURE_RECT_SIZE;
-      break;
-   default:
-      assert(0);
-   }
-}
-
-
 /**
  * Map any drawing surfaces which aren't already mapped
  */
@@ -297,6 +264,12 @@ static int softpipe_get_param(struct pipe_context *pipe, int param)
       return 1;
    case PIPE_CAP_TEXTURE_SHADOW_MAP:
       return 1;
+   case PIPE_CAP_MAX_TEXTURE_2D_LEVELS:
+      return 12; /* max 2Kx2K */
+   case PIPE_CAP_MAX_TEXTURE_3D_LEVELS:
+      return 8;  /* max 128x128x128 */
+   case PIPE_CAP_MAX_TEXTURE_CUBE_LEVELS:
+      return 12; /* max 2Kx2K */
    default:
       return 0;
    }
@@ -321,7 +294,7 @@ struct pipe_context *softpipe_create( struct pipe_winsys *pipe_winsys,
 
    /* queries */
    softpipe->pipe.is_format_supported = softpipe_is_format_supported;
-   softpipe->pipe.max_texture_size = softpipe_max_texture_size;
+   //softpipe->pipe.max_texture_size = softpipe_max_texture_size;
    softpipe->pipe.get_param = softpipe_get_param;
 
    /* state setters */

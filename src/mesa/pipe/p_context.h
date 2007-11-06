@@ -51,12 +51,6 @@ struct pipe_context {
    boolean (*is_format_supported)( struct pipe_context *pipe,
                                    uint format );
 
-   void (*max_texture_size)(struct pipe_context *pipe,
-                            unsigned textureType, /* PIPE_TEXTURE_x */
-                            unsigned *maxWidth,
-                            unsigned *maxHeight,
-                            unsigned *maxDepth);
-
    const char *(*get_name)( struct pipe_context *pipe );
 
    const char *(*get_vendor)( struct pipe_context *pipe );

@@ -703,15 +703,15 @@ draw_textured_quad(GLcontext *ctx, GLint x, GLint y, GLfloat z,
    const GLuint unit = 0;
    struct pipe_context *pipe = ctx->st->pipe;
    GLfloat x0, y0, x1, y1;
-   GLuint maxWidth, maxHeight;
+   GLuint maxSize;
 
    /* limit checks */
    /* XXX if DrawPixels image is larger than max texture size, break
     * it up into chunks.
     */
-   pipe->max_texture_size(pipe, PIPE_TEXTURE_2D, &maxWidth, &maxHeight, NULL);
-   assert(width <= maxWidth);
-   assert(height <= maxHeight);
+   maxSize = 1 << (pipe->get_param(pipe, PIPE_CAP_MAX_TEXTURE_2D_LEVELS) - 1);
+   assert(width <= maxSize);
+   assert(height <= maxSize);
 
    /* setup state: just scissor */
    {
