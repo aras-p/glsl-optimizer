@@ -35,7 +35,7 @@
 #include "intel_batchbuffer.h"
 
 #include "state_tracker/st_public.h"
-#include "state_tracker/st_context.h" /* XXX temporary */
+#include "state_tracker/st_context.h"
 #include "pipe/p_defines.h"
 #include "pipe/p_context.h"
 
@@ -75,18 +75,22 @@ static const struct dri_debug_control debug_control[] = {
 
 
 GLboolean
-intelCreateContext(const __GLcontextModes * mesaVis,
+intelCreateContext(const __GLcontextModes * visual,
                    __DRIcontextPrivate * driContextPriv,
                    void *sharedContextPrivate)
 {
    struct intel_context *intel = CALLOC_STRUCT(intel_context);
-
    __DRIscreenPrivate *sPriv = driContextPriv->driScreenPriv;
    struct intel_screen *intelScreen = intel_screen(sPriv);
    drmI830Sarea *saPriv = intelScreen->sarea;
    int fthrottle_mode;
    GLboolean havePools;
    struct pipe_context *pipe;
+   struct st_context *st_share = NULL;
+
+   if (sharedContextPrivate) {
+      st_share = ((struct intel_context *) sharedContextPrivate)->st;
+   }
 
    driContextPriv->driverPrivate = intel;
    intel->intelScreen = intelScreen;
@@ -144,15 +148,15 @@ intelCreateContext(const __GLcontextModes * mesaVis,
 	 pipe = intel_create_i915simple( intel );
 	 break;
       default:
-	 _mesa_printf("Unknown PCIID %x in %s, using software driver\n", 
-		      intel->intelScreen->deviceID, __FUNCTION__);
+	 fprintf(stderr, "Unknown PCIID %x in %s, using software driver\n", 
+                 intel->intelScreen->deviceID, __FUNCTION__);
 
 	 pipe = intel_create_softpipe( intel );
 	 break;
       }
    }
 
-   intel->st = st_create_context(pipe, mesaVis, NULL);
+   intel->st = st_create_context(pipe, visual, st_share);
    intel->st->ctx->DriverCtx = intel;  /* hope to get rid of this... */
 
    return GL_TRUE;
