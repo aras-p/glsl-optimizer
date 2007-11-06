@@ -1392,7 +1392,6 @@ finish_or_flush( GLcontext *ctx )
       _glthread_UNLOCK_MUTEX(_xmesa_lock);
    }
 #endif
-   abort();
 }
 
 
