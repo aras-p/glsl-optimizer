@@ -29,7 +29,7 @@
 #include "tgsi_core.h"
 #include "x86/rtasm/x86sse.h"
 
-#ifdef USE_X86_ASM
+#if defined(__i386__) || defined(__386__)
 
 #define DUMP_SSE  0
 
@@ -2328,4 +2328,4 @@ tgsi_emit_sse2_fs(
    return 1;
 }
 
-#endif /* USE_X86_ASM */
+#endif /* i386 */
