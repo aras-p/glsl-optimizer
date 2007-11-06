@@ -2169,6 +2169,68 @@ static Bool __glXGetSyncValuesOML(Display *dpy, GLXDrawable drawable,
    return False;
 }
 
+#ifdef GLX_DIRECT_RENDERING
+GLboolean
+__driGetMscRateOML(__DRIdrawable *draw, int32_t *numerator, int32_t *denominator)
+{
+#ifdef XF86VIDMODE
+    __GLXscreenConfigs *psc;
+    XF86VidModeModeLine   mode_line;
+    int   dot_clock;
+    int   i;
+    __GLXdrawable *glxDraw;
+
+    glxDraw = containerOf(draw, __GLXdrawable, driDrawable);
+    psc = glxDraw->psc;
+    if (XF86VidModeQueryVersion(psc->dpy, &i, &i) &&
+	XF86VidModeGetModeLine(psc->dpy, psc->scr, &dot_clock, &mode_line) ) {
+	unsigned   n = dot_clock * 1000;
+	unsigned   d = mode_line.vtotal * mode_line.htotal;
+	
+# define V_INTERLACE 0x010
+# define V_DBLSCAN   0x020
+
+	if (mode_line.flags & V_INTERLACE)
+	    n *= 2;
+	else if (mode_line.flags & V_DBLSCAN)
+	    d *= 2;
+
+	/* The OML_sync_control spec requires that if the refresh rate is a
+	 * whole number, that the returned numerator be equal to the refresh
+	 * rate and the denominator be 1.
+	 */
+
+	if (n % d == 0) {
+	    n /= d;
+	    d = 1;
+	}
+	else {
+	    static const unsigned f[] = { 13, 11, 7, 5, 3, 2, 0 };
+
+	    /* This is a poor man's way to reduce a fraction.  It's far from
+	     * perfect, but it will work well enough for this situation.
+	     */
+
+	    for (i = 0; f[i] != 0; i++) {
+		while (n % f[i] == 0 && d % f[i] == 0) {
+		    d /= f[i];
+		    n /= f[i];
+		}
+	    }
+	}
+
+	*numerator = n;
+	*denominator = d;
+
+	return True;
+    }
+    else
+	return False;
+#else
+    return False;
+#endif
+}
+#endif
 
 /**
  * Determine the refresh rate of the specified drawable and display.
@@ -2186,71 +2248,19 @@ static Bool __glXGetSyncValuesOML(Display *dpy, GLXDrawable drawable,
  *       when GLX_OML_sync_control appears in the client extension string.
  */
 
-GLboolean __glXGetMscRateOML(__DRIdrawable *draw,
+GLboolean __glXGetMscRateOML(Display * dpy, GLXDrawable drawable,
 			     int32_t * numerator, int32_t * denominator)
 {
 #if defined( GLX_DIRECT_RENDERING ) && defined( XF86VIDMODE )
-    __GLXdrawable *glxDraw =
-	containerOf(draw, __GLXdrawable, driDrawable);
-    __GLXscreenConfigs *psc = glxDraw->psc;
-    Display *dpy = psc->dpy;
-   __GLXdisplayPrivate * const priv = __glXInitialize(dpy);
+    __DRIdrawable *driDraw = GetDRIDrawable(dpy, drawable, NULL);
 
+    if (driDraw == NULL)
+	return False;
 
-   if ( priv != NULL ) {
-      XF86VidModeModeLine   mode_line;
-      int   dot_clock;
-      int   i;
-
-
-      if (XF86VidModeQueryVersion( dpy, & i, & i ) &&
-	  XF86VidModeGetModeLine(dpy, psc->scr, &dot_clock, &mode_line) ) {
-	 unsigned   n = dot_clock * 1000;
-	 unsigned   d = mode_line.vtotal * mode_line.htotal;
-
-# define V_INTERLACE 0x010
-# define V_DBLSCAN   0x020
-
-	 if ( (mode_line.flags & V_INTERLACE) ) {
-	    n *= 2;
-	 }
-	 else if ( (mode_line.flags & V_DBLSCAN) ) {
-	    d *= 2;
-	 }
-
-	 /* The OML_sync_control spec requires that if the refresh rate is a
-	  * whole number, that the returned numerator be equal to the refresh
-	  * rate and the denominator be 1.
-	  */
-
-	 if ( (n % d) == 0 ) {
-	    n /= d;
-	    d = 1;
-	 }
-	 else {
-	    static const unsigned f[] = { 13, 11, 7, 5, 3, 2, 0 };
-
-
-	    /* This is a poor man's way to reduce a fraction.  It's far from
-	     * perfect, but it will work well enough for this situation.
-	     */
-
-	    for ( i = 0 ; f[i] != 0 ; i++ ) {
-	       while ( ((n % f[i]) == 0) && ((d % f[i]) == 0) ) {
-		  d /= f[i];
-		  n /= f[i];
-	       }
-	    }
-	 }
-
-	 *numerator = n;
-	 *denominator = d;
-
-	 return True;
-      }
-   }
+    return __driGetMscRateOML(driDraw, numerator, denominator);
 #else
-   (void) draw;
+   (void) dpy;
+   (void) drawable;
    (void) numerator;
    (void) denominator;
 #endif

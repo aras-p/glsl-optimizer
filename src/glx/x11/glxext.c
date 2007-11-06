@@ -788,7 +788,7 @@ static const __DRIinterfaceMethods interface_methods = {
     __glXDRIGetDrawableInfo,
 
     __glXGetUST,
-    __glXGetMscRateOML,
+    __driGetMscRateOML,
 
     __glXReportDamage,
 };

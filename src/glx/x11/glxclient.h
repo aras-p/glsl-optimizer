@@ -342,16 +342,16 @@ struct __GLXcontextRec {
      */
     GLint majorOpcode;
 
+    /**
+     * Pointer to the mode used to create this context.
+     */
+    const __GLcontextModes * mode;
+
 #ifdef GLX_DIRECT_RENDERING
     /**
      * Per context direct rendering interface functions and data.
      */
     __DRIcontext driContext;
-
-    /**
-     * Pointer to the mode used to create this context.
-     */
-    const __GLcontextModes * mode;
 
     /**
      * XID for the server side drm_context_t
@@ -719,7 +719,12 @@ extern int __glXGetInternalVersion(void);
 /* Get the unadjusted system time */
 extern int __glXGetUST( int64_t * ust );
 
-extern GLboolean __glXGetMscRateOML(__DRIdrawable *draw,
+extern GLboolean __glXGetMscRateOML(Display * dpy, GLXDrawable drawable,
 				    int32_t * numerator, int32_t * denominator);
+
+#ifdef GLX_DIRECT_RENDERING
+GLboolean
+__driGetMscRateOML(__DRIdrawable *draw, int32_t *numerator, int32_t *denominator);
+#endif
 
 #endif /* !__GLX_client_h__ */
