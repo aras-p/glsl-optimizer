@@ -153,6 +153,8 @@ st_get_format_info(
       pinfo->alpha_bits = format_bits( info, PIPE_FORMAT_COMP_A );
       pinfo->depth_bits = format_bits( info, PIPE_FORMAT_COMP_Z );
       pinfo->stencil_bits = format_bits( info, PIPE_FORMAT_COMP_S );
+      pinfo->luminance_bits = 0;
+      pinfo->intensity_bits = 0;
 
       /* Format size */
       pinfo->size = format_size( info ) / 8;
@@ -162,12 +164,10 @@ st_get_format_info(
           pf_swizzle_y(info) == PIPE_FORMAT_COMP_R &&
           pf_swizzle_z(info) == PIPE_FORMAT_COMP_R ) {
          if( pf_swizzle_w(info) == PIPE_FORMAT_COMP_R ) {
-            pinfo->luminance_bits = 0;
             pinfo->intensity_bits = pinfo->red_bits;
          }
          else {
             pinfo->luminance_bits = pinfo->red_bits;
-            pinfo->intensity_bits = 0;
          }
          pinfo->red_bits = 0;
       }
