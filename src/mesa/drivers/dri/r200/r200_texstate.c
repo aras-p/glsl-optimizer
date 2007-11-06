@@ -998,17 +998,17 @@ void r200SetTexOffset(__DRIcontext * pDRICtx, GLint texname,
 
 	switch (depth) {
 	case 32:
-		t->pp_txformat = tx_table_le[2].format;
-		t->pp_txfilter |= tx_table_le[2].filter;
+		t->pp_txformat = tx_table_le[MESA_FORMAT_ARGB8888].format;
+		t->pp_txfilter |= tx_table_le[MESA_FORMAT_ARGB8888].filter;
 		break;
 	case 24:
 	default:
-		t->pp_txformat = tx_table_le[4].format;
-		t->pp_txfilter |= tx_table_le[4].filter;
+		t->pp_txformat = tx_table_le[MESA_FORMAT_RGB888].format;
+		t->pp_txfilter |= tx_table_le[MESA_FORMAT_RGB888].filter;
 		break;
 	case 16:
-		t->pp_txformat = tx_table_le[5].format;
-		t->pp_txfilter |= tx_table_le[5].filter;
+		t->pp_txformat = tx_table_le[MESA_FORMAT_RGB565].format;
+		t->pp_txfilter |= tx_table_le[MESA_FORMAT_RGB565].filter;
 		break;
 	}
 }
