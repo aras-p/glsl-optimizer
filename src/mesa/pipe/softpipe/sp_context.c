@@ -51,35 +51,11 @@
  * parameter or another function.
  */
 static boolean
-softpipe_is_format_supported( struct pipe_context *pipe,
-                              uint format )
+softpipe_is_format_supported( struct pipe_context *pipe, uint format )
 {
-#if 0
-   /* XXX: This is broken -- rewrite if still needed. */
-   static const unsigned supported[] = {
-      PIPE_FORMAT_U_R8_G8_B8_A8,
-      PIPE_FORMAT_U_A8_R8_G8_B8,
-      PIPE_FORMAT_U_R5_G6_B5,
-      PIPE_FORMAT_U_L8,
-      PIPE_FORMAT_U_A8,
-      PIPE_FORMAT_U_I8,
-      PIPE_FORMAT_U_L8_A8,
-      PIPE_FORMAT_S_R16_G16_B16_A16,
-      PIPE_FORMAT_YCBCR,
-      PIPE_FORMAT_YCBCR_REV,
-      PIPE_FORMAT_U_Z16,
-      PIPE_FORMAT_U_Z32,
-      PIPE_FORMAT_F_Z32,
-      PIPE_FORMAT_S8_Z24,
-      PIPE_FORMAT_U_S8
-   };
-
-   *numFormats = sizeof(supported)/sizeof(supported[0]);
-   return supported;
-#else
    struct softpipe_context *softpipe = softpipe_context( pipe );
+   /* ask winsys if the format is supported */
    return softpipe->winsys->is_format_supported( softpipe->winsys, format );
-#endif
 }
 
 
