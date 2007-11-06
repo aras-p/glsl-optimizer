@@ -864,6 +864,15 @@ llvm::Value * Instructions::scs(llvm::Value *in)
    return call;
 }
 
+llvm::Value * Instructions::kilp(llvm::Value *in)
+{
+   llvm::Function *func = m_mod->getFunction("kilp");
+   assert(func);
+
+   CallInst *call = m_builder.CreateCall(func, in, name("kilpres"));
+   call->setTailCall(false);
+   return call;
+}
 
 llvm::Value * Instructions::sin(llvm::Value *in)
 {
@@ -875,4 +884,5 @@ llvm::Value * Instructions::sin(llvm::Value *in)
    return call;
 }
 #endif //MESA_LLVM
+
 

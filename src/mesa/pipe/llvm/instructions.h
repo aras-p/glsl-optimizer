@@ -79,6 +79,7 @@ public:
    llvm::Value *floor(llvm::Value *in);
    llvm::Value *frc(llvm::Value *in);
    void         ifop(llvm::Value *in);
+   llvm::Value *kilp(llvm::Value *in);
    llvm::Value *lerp(llvm::Value *in1, llvm::Value *in2,
                      llvm::Value *in3);
    llvm::Value *lit(llvm::Value *in);

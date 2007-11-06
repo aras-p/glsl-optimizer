@@ -71,6 +71,8 @@ public:
    llvm::Value *addrElement(int idx) const;
    void setAddrElement(int idx, llvm::Value *val, int mask);
 
+   void setKilElement(llvm::Value *val);
+
    llvm::Value *shuffleVector(llvm::Value *vec, int shuffle);
 
    llvm::Value *extractIndex(llvm::Value *vec);

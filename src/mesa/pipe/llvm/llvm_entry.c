@@ -239,6 +239,8 @@ int run_fragment_shader(float x, float y,
    float4  results[4][16];
    float4  temps[128];//MAX_PROGRAM_TEMPS
    struct ShaderInput args;
+   int mask = 0;
+   args.kilmask = 0;
 
    from_array(inputs, ainputs, 4, num_inputs);
    from_consts(consts, aconsts, num_consts);
@@ -248,7 +250,11 @@ int run_fragment_shader(float x, float y,
    for (int i = 0; i < 4; ++i) {
       args.inputs  = inputs[i];
       args.dests   = results[i];
+      mask = args.kilmask;
+      args.kilmask = 0;
       execute_shader(&args);
+      args.kilmask = mask | (args.kilmask << i);
+
       to_array(dests[i], args.dests, 2);
    }
    return ~args.kilmask;

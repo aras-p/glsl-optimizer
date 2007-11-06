@@ -343,6 +343,20 @@ llvm::Value * Storage::element(Args arg, int idx, llvm::Value *indIdx )
    return elemIdx(val, idx, indIdx);
 }
 
+void Storage::setKilElement(llvm::Value *val)
+{
+   std::vector<Value*> indices;
+   indices.push_back(constantInt(0));
+   indices.push_back(constantInt(static_cast<int>(KilArg)));
+   GetElementPtrInst *elem = new GetElementPtrInst(m_INPUT,
+                                                   indices.begin(),
+                                                   indices.end(),
+                                                   name("kil_ptr"),
+                                                   m_block);
+   StoreInst *st = new StoreInst(val, elem, false, m_block);
+   st->setAlignment(8);
+}
+
 #endif //MESA_LLVM
 
 

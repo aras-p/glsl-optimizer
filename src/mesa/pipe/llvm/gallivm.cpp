@@ -432,7 +432,11 @@ translate_instruction(llvm::Module *module,
       break;
    case TGSI_OPCODE_DDY:
       break;
-   case TGSI_OPCODE_KILP:
+   case TGSI_OPCODE_KILP: {
+      out = instr->kilp(inputs[0]);
+      storage->setKilElement(out);
+      return;
+   }
       break;
    case TGSI_OPCODE_PK2H:
       break;
@@ -929,11 +933,9 @@ int gallivm_fragment_shader_exec(struct gallivm_prog *prog,
    fragment_shader_runner runner = reinterpret_cast<fragment_shader_runner>(prog->function);
    assert(runner);
 
-   runner(fx, fy, dests, inputs, prog->num_interp,
-          consts, prog->num_consts,
-          samplers);
-
-   return 0;
+   return runner(fx, fy, dests, inputs, prog->num_interp,
+                 consts, prog->num_consts,
+                 samplers);
 }
 
 void gallivm_prog_dump(struct gallivm_prog *prog, const char *file_prefix)

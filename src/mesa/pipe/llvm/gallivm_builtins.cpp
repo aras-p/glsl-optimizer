@@ -69,6 +69,15 @@ FunctionType* FuncTy_12 = FunctionType::get(
 
 PointerType* PointerTy_11 = PointerType::get(FuncTy_12);
 
+std::vector<const Type*>FuncTy_13_args;
+FuncTy_13_args.push_back(VectorTy_4);
+ParamAttrsList *FuncTy_13_PAL = 0;
+FunctionType* FuncTy_13 = FunctionType::get(
+  /*Result=*/IntegerType::get(32),
+  /*Params=*/FuncTy_13_args,
+  /*isVarArg=*/false,
+  /*ParamAttrs=*/FuncTy_13_PAL);
+
 
 // Function Declarations
 
@@ -132,6 +141,12 @@ Function* func_vsin = new Function(
   /*Name=*/"vsin", mod); 
 func_vsin->setCallingConv(CallingConv::C);
 
+Function* func_kilp = new Function(
+  /*Type=*/FuncTy_13,
+  /*Linkage=*/GlobalValue::ExternalLinkage,
+  /*Name=*/"kilp", mod); 
+func_kilp->setCallingConv(CallingConv::C);
+
 // Global Variable Declarations
 
 
@@ -152,64 +167,64 @@ GlobalVariable* gvar_array__str1 = new GlobalVariable(
 mod);
 
 // Constant Definitions
-Constant* const_array_13 = ConstantArray::get("VEC IN   is %f %f %f %f\x0A", true);
-Constant* const_array_14 = ConstantArray::get("VEC OUT  is %f %f %f %f\x0A", true);
-ConstantFP* const_float_15 = ConstantFP::get(Type::FloatTy, APFloat(-1.280000e+02f));
-ConstantFP* const_float_16 = ConstantFP::get(Type::FloatTy, APFloat(1.280000e+02f));
-Constant* const_float_17 = Constant::getNullValue(Type::FloatTy);
-Constant* const_int32_18 = Constant::getNullValue(IntegerType::get(32));
-std::vector<Constant*> const_packed_19_elems;
-ConstantFP* const_float_20 = ConstantFP::get(Type::FloatTy, APFloat(1.000000e+00f));
-const_packed_19_elems.push_back(const_float_20);
-UndefValue* const_float_21 = UndefValue::get(Type::FloatTy);
-const_packed_19_elems.push_back(const_float_21);
-const_packed_19_elems.push_back(const_float_21);
-const_packed_19_elems.push_back(const_float_20);
-Constant* const_packed_19 = ConstantVector::get(VectorTy_4, const_packed_19_elems);
-ConstantInt* const_int32_22 = ConstantInt::get(APInt(32,  "1", 10));
-ConstantInt* const_int32_23 = ConstantInt::get(APInt(32,  "3", 10));
-ConstantInt* const_int32_24 = ConstantInt::get(APInt(32,  "2", 10));
-std::vector<Constant*> const_packed_25_elems;
-const_packed_25_elems.push_back(const_float_20);
-const_packed_25_elems.push_back(const_float_17);
-const_packed_25_elems.push_back(const_float_17);
-const_packed_25_elems.push_back(const_float_20);
-Constant* const_packed_25 = ConstantVector::get(VectorTy_4, const_packed_25_elems);
-Constant* const_double_26 = Constant::getNullValue(Type::DoubleTy);
-std::vector<Constant*> const_packed_27_elems;
-const_packed_27_elems.push_back(const_int32_18);
-ConstantInt* const_int32_28 = ConstantInt::get(APInt(32,  "5", 10));
-const_packed_27_elems.push_back(const_int32_28);
-const_packed_27_elems.push_back(const_int32_24);
-const_packed_27_elems.push_back(const_int32_23);
-Constant* const_packed_27 = ConstantVector::get(VectorTy_7, const_packed_27_elems);
-std::vector<Constant*> const_packed_29_elems;
-const_packed_29_elems.push_back(const_int32_18);
-const_packed_29_elems.push_back(const_int32_22);
-ConstantInt* const_int32_30 = ConstantInt::get(APInt(32,  "6", 10));
-const_packed_29_elems.push_back(const_int32_30);
-const_packed_29_elems.push_back(const_int32_23);
-Constant* const_packed_29 = ConstantVector::get(VectorTy_7, const_packed_29_elems);
-std::vector<Constant*> const_packed_31_elems;
-const_packed_31_elems.push_back(const_int32_18);
-const_packed_31_elems.push_back(const_int32_22);
-const_packed_31_elems.push_back(const_int32_24);
-ConstantInt* const_int32_32 = ConstantInt::get(APInt(32,  "7", 10));
-const_packed_31_elems.push_back(const_int32_32);
-Constant* const_packed_31 = ConstantVector::get(VectorTy_7, const_packed_31_elems);
-std::vector<Constant*> const_ptr_33_indices;
-const_ptr_33_indices.push_back(const_int32_18);
-const_ptr_33_indices.push_back(const_int32_18);
-Constant* const_ptr_33 = ConstantExpr::getGetElementPtr(gvar_array__str, &const_ptr_33_indices[0], const_ptr_33_indices.size() );
-UndefValue* const_packed_34 = UndefValue::get(VectorTy_4);
-std::vector<Constant*> const_ptr_35_indices;
-const_ptr_35_indices.push_back(const_int32_18);
-const_ptr_35_indices.push_back(const_int32_18);
-Constant* const_ptr_35 = ConstantExpr::getGetElementPtr(gvar_array__str1, &const_ptr_35_indices[0], const_ptr_35_indices.size() );
+Constant* const_array_14 = ConstantArray::get("VEC IN   is %f %f %f %f\x0A", true);
+Constant* const_array_15 = ConstantArray::get("VEC OUT  is %f %f %f %f\x0A", true);
+ConstantFP* const_float_16 = ConstantFP::get(Type::FloatTy, APFloat(-1.280000e+02f));
+ConstantFP* const_float_17 = ConstantFP::get(Type::FloatTy, APFloat(1.280000e+02f));
+Constant* const_float_18 = Constant::getNullValue(Type::FloatTy);
+Constant* const_int32_19 = Constant::getNullValue(IntegerType::get(32));
+std::vector<Constant*> const_packed_20_elems;
+ConstantFP* const_float_21 = ConstantFP::get(Type::FloatTy, APFloat(1.000000e+00f));
+const_packed_20_elems.push_back(const_float_21);
+UndefValue* const_float_22 = UndefValue::get(Type::FloatTy);
+const_packed_20_elems.push_back(const_float_22);
+const_packed_20_elems.push_back(const_float_22);
+const_packed_20_elems.push_back(const_float_21);
+Constant* const_packed_20 = ConstantVector::get(VectorTy_4, const_packed_20_elems);
+ConstantInt* const_int32_23 = ConstantInt::get(APInt(32,  "1", 10));
+ConstantInt* const_int32_24 = ConstantInt::get(APInt(32,  "3", 10));
+ConstantInt* const_int32_25 = ConstantInt::get(APInt(32,  "2", 10));
+std::vector<Constant*> const_packed_26_elems;
+const_packed_26_elems.push_back(const_float_21);
+const_packed_26_elems.push_back(const_float_18);
+const_packed_26_elems.push_back(const_float_18);
+const_packed_26_elems.push_back(const_float_21);
+Constant* const_packed_26 = ConstantVector::get(VectorTy_4, const_packed_26_elems);
+Constant* const_double_27 = Constant::getNullValue(Type::DoubleTy);
+std::vector<Constant*> const_packed_28_elems;
+const_packed_28_elems.push_back(const_int32_19);
+ConstantInt* const_int32_29 = ConstantInt::get(APInt(32,  "5", 10));
+const_packed_28_elems.push_back(const_int32_29);
+const_packed_28_elems.push_back(const_int32_25);
+const_packed_28_elems.push_back(const_int32_24);
+Constant* const_packed_28 = ConstantVector::get(VectorTy_7, const_packed_28_elems);
+std::vector<Constant*> const_packed_30_elems;
+const_packed_30_elems.push_back(const_int32_19);
+const_packed_30_elems.push_back(const_int32_23);
+ConstantInt* const_int32_31 = ConstantInt::get(APInt(32,  "6", 10));
+const_packed_30_elems.push_back(const_int32_31);
+const_packed_30_elems.push_back(const_int32_24);
+Constant* const_packed_30 = ConstantVector::get(VectorTy_7, const_packed_30_elems);
+std::vector<Constant*> const_packed_32_elems;
+const_packed_32_elems.push_back(const_int32_19);
+const_packed_32_elems.push_back(const_int32_23);
+const_packed_32_elems.push_back(const_int32_25);
+ConstantInt* const_int32_33 = ConstantInt::get(APInt(32,  "7", 10));
+const_packed_32_elems.push_back(const_int32_33);
+Constant* const_packed_32 = ConstantVector::get(VectorTy_7, const_packed_32_elems);
+std::vector<Constant*> const_ptr_34_indices;
+const_ptr_34_indices.push_back(const_int32_19);
+const_ptr_34_indices.push_back(const_int32_19);
+Constant* const_ptr_34 = ConstantExpr::getGetElementPtr(gvar_array__str, &const_ptr_34_indices[0], const_ptr_34_indices.size() );
+UndefValue* const_packed_35 = UndefValue::get(VectorTy_4);
+std::vector<Constant*> const_ptr_36_indices;
+const_ptr_36_indices.push_back(const_int32_19);
+const_ptr_36_indices.push_back(const_int32_19);
+Constant* const_ptr_36 = ConstantExpr::getGetElementPtr(gvar_array__str1, &const_ptr_36_indices[0], const_ptr_36_indices.size() );
 
 // Global Variable Definitions
-gvar_array__str->setInitializer(const_array_13);
-gvar_array__str1->setInitializer(const_array_14);
+gvar_array__str->setInitializer(const_array_14);
+gvar_array__str1->setInitializer(const_array_15);
 
 // Function Definitions
 
@@ -224,12 +239,12 @@ gvar_array__str1->setInitializer(const_array_14);
   BasicBlock* label_entry = new BasicBlock("entry",func_approx,0);
   
   // Block entry (label_entry)
-  FCmpInst* int1_cmp = new FCmpInst(FCmpInst::FCMP_OLT, float_b, const_float_15, "cmp", label_entry);
-  SelectInst* float_b_addr_0 = new SelectInst(int1_cmp, const_float_15, float_b, "b.addr.0", label_entry);
-  FCmpInst* int1_cmp3 = new FCmpInst(FCmpInst::FCMP_OGT, float_b_addr_0, const_float_16, "cmp3", label_entry);
-  SelectInst* float_b_addr_1 = new SelectInst(int1_cmp3, const_float_16, float_b_addr_0, "b.addr.1", label_entry);
-  FCmpInst* int1_cmp7 = new FCmpInst(FCmpInst::FCMP_OLT, float_a, const_float_17, "cmp7", label_entry);
-  SelectInst* float_a_addr_0 = new SelectInst(int1_cmp7, const_float_17, float_a, "a.addr.0", label_entry);
+  FCmpInst* int1_cmp = new FCmpInst(FCmpInst::FCMP_OLT, float_b, const_float_16, "cmp", label_entry);
+  SelectInst* float_b_addr_0 = new SelectInst(int1_cmp, const_float_16, float_b, "b.addr.0", label_entry);
+  FCmpInst* int1_cmp3 = new FCmpInst(FCmpInst::FCMP_OGT, float_b_addr_0, const_float_17, "cmp3", label_entry);
+  SelectInst* float_b_addr_1 = new SelectInst(int1_cmp3, const_float_17, float_b_addr_0, "b.addr.1", label_entry);
+  FCmpInst* int1_cmp7 = new FCmpInst(FCmpInst::FCMP_OLT, float_a, const_float_18, "cmp7", label_entry);
+  SelectInst* float_a_addr_0 = new SelectInst(int1_cmp7, const_float_18, float_a, "a.addr.0", label_entry);
   std::vector<Value*> float_call_params;
   float_call_params.push_back(float_a_addr_0);
   float_call_params.push_back(float_b_addr_1);
@@ -246,36 +261,36 @@ gvar_array__str1->setInitializer(const_array_14);
   Value* packed_tmp = args++;
   packed_tmp->setName("tmp");
   
-  BasicBlock* label_entry_37 = new BasicBlock("entry",func_lit,0);
+  BasicBlock* label_entry_38 = new BasicBlock("entry",func_lit,0);
   BasicBlock* label_ifthen = new BasicBlock("ifthen",func_lit,0);
   BasicBlock* label_UnifiedReturnBlock = new BasicBlock("UnifiedReturnBlock",func_lit,0);
   
-  // Block entry (label_entry_37)
-  ExtractElementInst* float_tmp7 = new ExtractElementInst(packed_tmp, const_int32_18, "tmp7", label_entry_37);
-  FCmpInst* int1_cmp_38 = new FCmpInst(FCmpInst::FCMP_OGT, float_tmp7, const_float_17, "cmp", label_entry_37);
-  new BranchInst(label_ifthen, label_UnifiedReturnBlock, int1_cmp_38, label_entry_37);
+  // Block entry (label_entry_38)
+  ExtractElementInst* float_tmp7 = new ExtractElementInst(packed_tmp, const_int32_19, "tmp7", label_entry_38);
+  FCmpInst* int1_cmp_39 = new FCmpInst(FCmpInst::FCMP_OGT, float_tmp7, const_float_18, "cmp", label_entry_38);
+  new BranchInst(label_ifthen, label_UnifiedReturnBlock, int1_cmp_39, label_entry_38);
   
   // Block ifthen (label_ifthen)
-  InsertElementInst* packed_tmp12 = new InsertElementInst(const_packed_19, float_tmp7, const_int32_22, "tmp12", label_ifthen);
-  ExtractElementInst* float_tmp14 = new ExtractElementInst(packed_tmp, const_int32_22, "tmp14", label_ifthen);
-  ExtractElementInst* float_tmp16 = new ExtractElementInst(packed_tmp, const_int32_23, "tmp16", label_ifthen);
-  FCmpInst* int1_cmp_i = new FCmpInst(FCmpInst::FCMP_OLT, float_tmp16, const_float_15, "cmp.i", label_ifthen);
-  SelectInst* float_b_addr_0_i = new SelectInst(int1_cmp_i, const_float_15, float_tmp16, "b.addr.0.i", label_ifthen);
-  FCmpInst* int1_cmp3_i = new FCmpInst(FCmpInst::FCMP_OGT, float_b_addr_0_i, const_float_16, "cmp3.i", label_ifthen);
-  SelectInst* float_b_addr_1_i = new SelectInst(int1_cmp3_i, const_float_16, float_b_addr_0_i, "b.addr.1.i", label_ifthen);
-  FCmpInst* int1_cmp7_i = new FCmpInst(FCmpInst::FCMP_OLT, float_tmp14, const_float_17, "cmp7.i", label_ifthen);
-  SelectInst* float_a_addr_0_i = new SelectInst(int1_cmp7_i, const_float_17, float_tmp14, "a.addr.0.i", label_ifthen);
+  InsertElementInst* packed_tmp12 = new InsertElementInst(const_packed_20, float_tmp7, const_int32_23, "tmp12", label_ifthen);
+  ExtractElementInst* float_tmp14 = new ExtractElementInst(packed_tmp, const_int32_23, "tmp14", label_ifthen);
+  ExtractElementInst* float_tmp16 = new ExtractElementInst(packed_tmp, const_int32_24, "tmp16", label_ifthen);
+  FCmpInst* int1_cmp_i = new FCmpInst(FCmpInst::FCMP_OLT, float_tmp16, const_float_16, "cmp.i", label_ifthen);
+  SelectInst* float_b_addr_0_i = new SelectInst(int1_cmp_i, const_float_16, float_tmp16, "b.addr.0.i", label_ifthen);
+  FCmpInst* int1_cmp3_i = new FCmpInst(FCmpInst::FCMP_OGT, float_b_addr_0_i, const_float_17, "cmp3.i", label_ifthen);
+  SelectInst* float_b_addr_1_i = new SelectInst(int1_cmp3_i, const_float_17, float_b_addr_0_i, "b.addr.1.i", label_ifthen);
+  FCmpInst* int1_cmp7_i = new FCmpInst(FCmpInst::FCMP_OLT, float_tmp14, const_float_18, "cmp7.i", label_ifthen);
+  SelectInst* float_a_addr_0_i = new SelectInst(int1_cmp7_i, const_float_18, float_tmp14, "a.addr.0.i", label_ifthen);
   std::vector<Value*> float_call_i_params;
   float_call_i_params.push_back(float_a_addr_0_i);
   float_call_i_params.push_back(float_b_addr_1_i);
   CallInst* float_call_i = new CallInst(func_powf, float_call_i_params.begin(), float_call_i_params.end(), "call.i", label_ifthen);
   float_call_i->setCallingConv(CallingConv::C);
   float_call_i->setTailCall(true);
-  InsertElementInst* packed_tmp18 = new InsertElementInst(packed_tmp12, float_call_i, const_int32_24, "tmp18", label_ifthen);
+  InsertElementInst* packed_tmp18 = new InsertElementInst(packed_tmp12, float_call_i, const_int32_25, "tmp18", label_ifthen);
   new ReturnInst(packed_tmp18, label_ifthen);
   
   // Block UnifiedReturnBlock (label_UnifiedReturnBlock)
-  new ReturnInst(const_packed_25, label_UnifiedReturnBlock);
+  new ReturnInst(const_packed_26, label_UnifiedReturnBlock);
   
 }
 
@@ -289,7 +304,7 @@ gvar_array__str1->setInitializer(const_array_14);
   Value* packed_tmp2 = args++;
   packed_tmp2->setName("tmp2");
   
-  BasicBlock* label_entry_42 = new BasicBlock("entry",func_cmp,0);
+  BasicBlock* label_entry_43 = new BasicBlock("entry",func_cmp,0);
   BasicBlock* label_cond__14 = new BasicBlock("cond.?14",func_cmp,0);
   BasicBlock* label_cond_cont20 = new BasicBlock("cond.cont20",func_cmp,0);
   BasicBlock* label_cond__28 = new BasicBlock("cond.?28",func_cmp,0);
@@ -297,28 +312,28 @@ gvar_array__str1->setInitializer(const_array_14);
   BasicBlock* label_cond__42 = new BasicBlock("cond.?42",func_cmp,0);
   BasicBlock* label_cond_cont48 = new BasicBlock("cond.cont48",func_cmp,0);
   
-  // Block entry (label_entry_42)
-  ExtractElementInst* float_tmp3 = new ExtractElementInst(packed_tmp0, const_int32_18, "tmp3", label_entry_42);
-  CastInst* double_conv = new FPExtInst(float_tmp3, Type::DoubleTy, "conv", label_entry_42);
-  FCmpInst* int1_cmp_43 = new FCmpInst(FCmpInst::FCMP_OLT, double_conv, const_double_26, "cmp", label_entry_42);
-  ExtractElementInst* float_tmp11 = new ExtractElementInst(packed_tmp0, const_int32_22, "tmp11", label_entry_42);
-  CastInst* double_conv12 = new FPExtInst(float_tmp11, Type::DoubleTy, "conv12", label_entry_42);
-  FCmpInst* int1_cmp13 = new FCmpInst(FCmpInst::FCMP_OLT, double_conv12, const_double_26, "cmp13", label_entry_42);
-  SelectInst* packed_tmp1_tmp2 = new SelectInst(int1_cmp_43, packed_tmp1, packed_tmp2, "tmp1.tmp2", label_entry_42);
-  new BranchInst(label_cond__14, label_cond_cont20, int1_cmp13, label_entry_42);
+  // Block entry (label_entry_43)
+  ExtractElementInst* float_tmp3 = new ExtractElementInst(packed_tmp0, const_int32_19, "tmp3", label_entry_43);
+  CastInst* double_conv = new FPExtInst(float_tmp3, Type::DoubleTy, "conv", label_entry_43);
+  FCmpInst* int1_cmp_44 = new FCmpInst(FCmpInst::FCMP_OLT, double_conv, const_double_27, "cmp", label_entry_43);
+  ExtractElementInst* float_tmp11 = new ExtractElementInst(packed_tmp0, const_int32_23, "tmp11", label_entry_43);
+  CastInst* double_conv12 = new FPExtInst(float_tmp11, Type::DoubleTy, "conv12", label_entry_43);
+  FCmpInst* int1_cmp13 = new FCmpInst(FCmpInst::FCMP_OLT, double_conv12, const_double_27, "cmp13", label_entry_43);
+  SelectInst* packed_tmp1_tmp2 = new SelectInst(int1_cmp_44, packed_tmp1, packed_tmp2, "tmp1.tmp2", label_entry_43);
+  new BranchInst(label_cond__14, label_cond_cont20, int1_cmp13, label_entry_43);
   
   // Block cond.?14 (label_cond__14)
-  ShuffleVectorInst* packed_tmp233 = new ShuffleVectorInst(packed_tmp1_tmp2, packed_tmp1, const_packed_27, "tmp233", label_cond__14);
-  ExtractElementInst* float_tmp254 = new ExtractElementInst(packed_tmp0, const_int32_24, "tmp254", label_cond__14);
+  ShuffleVectorInst* packed_tmp233 = new ShuffleVectorInst(packed_tmp1_tmp2, packed_tmp1, const_packed_28, "tmp233", label_cond__14);
+  ExtractElementInst* float_tmp254 = new ExtractElementInst(packed_tmp0, const_int32_25, "tmp254", label_cond__14);
   CastInst* double_conv265 = new FPExtInst(float_tmp254, Type::DoubleTy, "conv265", label_cond__14);
-  FCmpInst* int1_cmp276 = new FCmpInst(FCmpInst::FCMP_OLT, double_conv265, const_double_26, "cmp276", label_cond__14);
+  FCmpInst* int1_cmp276 = new FCmpInst(FCmpInst::FCMP_OLT, double_conv265, const_double_27, "cmp276", label_cond__14);
   new BranchInst(label_cond__28, label_cond_cont34, int1_cmp276, label_cond__14);
   
   // Block cond.cont20 (label_cond_cont20)
-  ShuffleVectorInst* packed_tmp23 = new ShuffleVectorInst(packed_tmp1_tmp2, packed_tmp2, const_packed_27, "tmp23", label_cond_cont20);
-  ExtractElementInst* float_tmp25 = new ExtractElementInst(packed_tmp0, const_int32_24, "tmp25", label_cond_cont20);
+  ShuffleVectorInst* packed_tmp23 = new ShuffleVectorInst(packed_tmp1_tmp2, packed_tmp2, const_packed_28, "tmp23", label_cond_cont20);
+  ExtractElementInst* float_tmp25 = new ExtractElementInst(packed_tmp0, const_int32_25, "tmp25", label_cond_cont20);
   CastInst* double_conv26 = new FPExtInst(float_tmp25, Type::DoubleTy, "conv26", label_cond_cont20);
-  FCmpInst* int1_cmp27 = new FCmpInst(FCmpInst::FCMP_OLT, double_conv26, const_double_26, "cmp27", label_cond_cont20);
+  FCmpInst* int1_cmp27 = new FCmpInst(FCmpInst::FCMP_OLT, double_conv26, const_double_27, "cmp27", label_cond_cont20);
   new BranchInst(label_cond__28, label_cond_cont34, int1_cmp27, label_cond_cont20);
   
   // Block cond.?28 (label_cond__28)
@@ -327,10 +342,10 @@ gvar_array__str1->setInitializer(const_array_14);
   packed_tmp23_reg2mem_0->addIncoming(packed_tmp233, label_cond__14);
   packed_tmp23_reg2mem_0->addIncoming(packed_tmp23, label_cond_cont20);
   
-  ShuffleVectorInst* packed_tmp378 = new ShuffleVectorInst(packed_tmp23_reg2mem_0, packed_tmp1, const_packed_29, "tmp378", label_cond__28);
-  ExtractElementInst* float_tmp399 = new ExtractElementInst(packed_tmp0, const_int32_23, "tmp399", label_cond__28);
+  ShuffleVectorInst* packed_tmp378 = new ShuffleVectorInst(packed_tmp23_reg2mem_0, packed_tmp1, const_packed_30, "tmp378", label_cond__28);
+  ExtractElementInst* float_tmp399 = new ExtractElementInst(packed_tmp0, const_int32_24, "tmp399", label_cond__28);
   CastInst* double_conv4010 = new FPExtInst(float_tmp399, Type::DoubleTy, "conv4010", label_cond__28);
-  FCmpInst* int1_cmp4111 = new FCmpInst(FCmpInst::FCMP_OLT, double_conv4010, const_double_26, "cmp4111", label_cond__28);
+  FCmpInst* int1_cmp4111 = new FCmpInst(FCmpInst::FCMP_OLT, double_conv4010, const_double_27, "cmp4111", label_cond__28);
   new BranchInst(label_cond__42, label_cond_cont48, int1_cmp4111, label_cond__28);
   
   // Block cond.cont34 (label_cond_cont34)
@@ -339,10 +354,10 @@ gvar_array__str1->setInitializer(const_array_14);
   packed_tmp23_reg2mem_1->addIncoming(packed_tmp233, label_cond__14);
   packed_tmp23_reg2mem_1->addIncoming(packed_tmp23, label_cond_cont20);
   
-  ShuffleVectorInst* packed_tmp37 = new ShuffleVectorInst(packed_tmp23_reg2mem_1, packed_tmp2, const_packed_29, "tmp37", label_cond_cont34);
-  ExtractElementInst* float_tmp39 = new ExtractElementInst(packed_tmp0, const_int32_23, "tmp39", label_cond_cont34);
+  ShuffleVectorInst* packed_tmp37 = new ShuffleVectorInst(packed_tmp23_reg2mem_1, packed_tmp2, const_packed_30, "tmp37", label_cond_cont34);
+  ExtractElementInst* float_tmp39 = new ExtractElementInst(packed_tmp0, const_int32_24, "tmp39", label_cond_cont34);
   CastInst* double_conv40 = new FPExtInst(float_tmp39, Type::DoubleTy, "conv40", label_cond_cont34);
-  FCmpInst* int1_cmp41 = new FCmpInst(FCmpInst::FCMP_OLT, double_conv40, const_double_26, "cmp41", label_cond_cont34);
+  FCmpInst* int1_cmp41 = new FCmpInst(FCmpInst::FCMP_OLT, double_conv40, const_double_27, "cmp41", label_cond_cont34);
   new BranchInst(label_cond__42, label_cond_cont48, int1_cmp41, label_cond_cont34);
   
   // Block cond.?42 (label_cond__42)
@@ -351,7 +366,7 @@ gvar_array__str1->setInitializer(const_array_14);
   packed_tmp37_reg2mem_0->addIncoming(packed_tmp378, label_cond__28);
   packed_tmp37_reg2mem_0->addIncoming(packed_tmp37, label_cond_cont34);
   
-  ShuffleVectorInst* packed_tmp5113 = new ShuffleVectorInst(packed_tmp37_reg2mem_0, packed_tmp1, const_packed_31, "tmp5113", label_cond__42);
+  ShuffleVectorInst* packed_tmp5113 = new ShuffleVectorInst(packed_tmp37_reg2mem_0, packed_tmp1, const_packed_32, "tmp5113", label_cond__42);
   new ReturnInst(packed_tmp5113, label_cond__42);
   
   // Block cond.cont48 (label_cond_cont48)
@@ -360,7 +375,7 @@ gvar_array__str1->setInitializer(const_array_14);
   packed_tmp37_reg2mem_1->addIncoming(packed_tmp378, label_cond__28);
   packed_tmp37_reg2mem_1->addIncoming(packed_tmp37, label_cond_cont34);
   
-  ShuffleVectorInst* packed_tmp51 = new ShuffleVectorInst(packed_tmp37_reg2mem_1, packed_tmp2, const_packed_31, "tmp51", label_cond_cont48);
+  ShuffleVectorInst* packed_tmp51 = new ShuffleVectorInst(packed_tmp37_reg2mem_1, packed_tmp2, const_packed_32, "tmp51", label_cond_cont48);
   new ReturnInst(packed_tmp51, label_cond_cont48);
   
 }
@@ -371,87 +386,125 @@ gvar_array__str1->setInitializer(const_array_14);
   Value* packed_val = args++;
   packed_val->setName("val");
   
-  BasicBlock* label_entry_51 = new BasicBlock("entry",func_vcos,0);
+  BasicBlock* label_entry_52 = new BasicBlock("entry",func_vcos,0);
   
-  // Block entry (label_entry_51)
-  ExtractElementInst* float_tmp1 = new ExtractElementInst(packed_val, const_int32_18, "tmp1", label_entry_51);
-  CastInst* double_conv_52 = new FPExtInst(float_tmp1, Type::DoubleTy, "conv", label_entry_51);
-  ExtractElementInst* float_tmp3_53 = new ExtractElementInst(packed_val, const_int32_22, "tmp3", label_entry_51);
-  CastInst* double_conv4 = new FPExtInst(float_tmp3_53, Type::DoubleTy, "conv4", label_entry_51);
-  ExtractElementInst* float_tmp6 = new ExtractElementInst(packed_val, const_int32_24, "tmp6", label_entry_51);
-  CastInst* double_conv7 = new FPExtInst(float_tmp6, Type::DoubleTy, "conv7", label_entry_51);
-  ExtractElementInst* float_tmp9 = new ExtractElementInst(packed_val, const_int32_23, "tmp9", label_entry_51);
-  CastInst* double_conv10 = new FPExtInst(float_tmp9, Type::DoubleTy, "conv10", label_entry_51);
+  // Block entry (label_entry_52)
+  ExtractElementInst* float_tmp1 = new ExtractElementInst(packed_val, const_int32_19, "tmp1", label_entry_52);
+  CastInst* double_conv_53 = new FPExtInst(float_tmp1, Type::DoubleTy, "conv", label_entry_52);
+  ExtractElementInst* float_tmp3_54 = new ExtractElementInst(packed_val, const_int32_23, "tmp3", label_entry_52);
+  CastInst* double_conv4 = new FPExtInst(float_tmp3_54, Type::DoubleTy, "conv4", label_entry_52);
+  ExtractElementInst* float_tmp6 = new ExtractElementInst(packed_val, const_int32_25, "tmp6", label_entry_52);
+  CastInst* double_conv7 = new FPExtInst(float_tmp6, Type::DoubleTy, "conv7", label_entry_52);
+  ExtractElementInst* float_tmp9 = new ExtractElementInst(packed_val, const_int32_24, "tmp9", label_entry_52);
+  CastInst* double_conv10 = new FPExtInst(float_tmp9, Type::DoubleTy, "conv10", label_entry_52);
   std::vector<Value*> int32_call_params;
-  int32_call_params.push_back(const_ptr_33);
-  int32_call_params.push_back(double_conv_52);
+  int32_call_params.push_back(const_ptr_34);
+  int32_call_params.push_back(double_conv_53);
   int32_call_params.push_back(double_conv4);
   int32_call_params.push_back(double_conv7);
   int32_call_params.push_back(double_conv10);
-  CallInst* int32_call = new CallInst(func_printf, int32_call_params.begin(), int32_call_params.end(), "call", label_entry_51);
+  CallInst* int32_call = new CallInst(func_printf, int32_call_params.begin(), int32_call_params.end(), "call", label_entry_52);
   int32_call->setCallingConv(CallingConv::C);
   int32_call->setTailCall(true);
-  CallInst* float_call13 = new CallInst(func_cosf, float_tmp1, "call13", label_entry_51);
+  CallInst* float_call13 = new CallInst(func_cosf, float_tmp1, "call13", label_entry_52);
   float_call13->setCallingConv(CallingConv::C);
   float_call13->setTailCall(true);
-  InsertElementInst* packed_tmp15 = new InsertElementInst(const_packed_34, float_call13, const_int32_18, "tmp15", label_entry_51);
-  InsertElementInst* packed_tmp20 = new InsertElementInst(packed_tmp15, float_call13, const_int32_22, "tmp20", label_entry_51);
-  InsertElementInst* packed_tmp25 = new InsertElementInst(packed_tmp20, float_call13, const_int32_24, "tmp25", label_entry_51);
-  InsertElementInst* packed_tmp30 = new InsertElementInst(packed_tmp25, float_call13, const_int32_23, "tmp30", label_entry_51);
-  CastInst* double_conv33 = new FPExtInst(float_call13, Type::DoubleTy, "conv33", label_entry_51);
+  InsertElementInst* packed_tmp15 = new InsertElementInst(const_packed_35, float_call13, const_int32_19, "tmp15", label_entry_52);
+  InsertElementInst* packed_tmp20 = new InsertElementInst(packed_tmp15, float_call13, const_int32_23, "tmp20", label_entry_52);
+  InsertElementInst* packed_tmp25 = new InsertElementInst(packed_tmp20, float_call13, const_int32_25, "tmp25", label_entry_52);
+  InsertElementInst* packed_tmp30 = new InsertElementInst(packed_tmp25, float_call13, const_int32_24, "tmp30", label_entry_52);
+  CastInst* double_conv33 = new FPExtInst(float_call13, Type::DoubleTy, "conv33", label_entry_52);
   std::vector<Value*> int32_call43_params;
-  int32_call43_params.push_back(const_ptr_35);
+  int32_call43_params.push_back(const_ptr_36);
   int32_call43_params.push_back(double_conv33);
   int32_call43_params.push_back(double_conv33);
   int32_call43_params.push_back(double_conv33);
   int32_call43_params.push_back(double_conv33);
-  CallInst* int32_call43 = new CallInst(func_printf, int32_call43_params.begin(), int32_call43_params.end(), "call43", label_entry_51);
+  CallInst* int32_call43 = new CallInst(func_printf, int32_call43_params.begin(), int32_call43_params.end(), "call43", label_entry_52);
   int32_call43->setCallingConv(CallingConv::C);
   int32_call43->setTailCall(true);
-  new ReturnInst(packed_tmp30, label_entry_51);
+  new ReturnInst(packed_tmp30, label_entry_52);
   
 }
 
 // Function: scs (func_scs)
 {
   Function::arg_iterator args = func_scs->arg_begin();
-  Value* packed_val_55 = args++;
-  packed_val_55->setName("val");
+  Value* packed_val_56 = args++;
+  packed_val_56->setName("val");
   
-  BasicBlock* label_entry_56 = new BasicBlock("entry",func_scs,0);
+  BasicBlock* label_entry_57 = new BasicBlock("entry",func_scs,0);
   
-  // Block entry (label_entry_56)
-  ExtractElementInst* float_tmp2 = new ExtractElementInst(packed_val_55, const_int32_18, "tmp2", label_entry_56);
-  CallInst* float_call_57 = new CallInst(func_cosf, float_tmp2, "call", label_entry_56);
-  float_call_57->setCallingConv(CallingConv::C);
-  float_call_57->setTailCall(true);
-  InsertElementInst* packed_tmp5 = new InsertElementInst(const_packed_34, float_call_57, const_int32_18, "tmp5", label_entry_56);
-  CallInst* float_call7 = new CallInst(func_sinf, float_tmp2, "call7", label_entry_56);
+  // Block entry (label_entry_57)
+  ExtractElementInst* float_tmp2 = new ExtractElementInst(packed_val_56, const_int32_19, "tmp2", label_entry_57);
+  CallInst* float_call_58 = new CallInst(func_cosf, float_tmp2, "call", label_entry_57);
+  float_call_58->setCallingConv(CallingConv::C);
+  float_call_58->setTailCall(true);
+  InsertElementInst* packed_tmp5 = new InsertElementInst(const_packed_35, float_call_58, const_int32_19, "tmp5", label_entry_57);
+  CallInst* float_call7 = new CallInst(func_sinf, float_tmp2, "call7", label_entry_57);
   float_call7->setCallingConv(CallingConv::C);
   float_call7->setTailCall(true);
-  InsertElementInst* packed_tmp9 = new InsertElementInst(packed_tmp5, float_call7, const_int32_22, "tmp9", label_entry_56);
-  new ReturnInst(packed_tmp9, label_entry_56);
+  InsertElementInst* packed_tmp9 = new InsertElementInst(packed_tmp5, float_call7, const_int32_23, "tmp9", label_entry_57);
+  new ReturnInst(packed_tmp9, label_entry_57);
   
 }
 
 // Function: vsin (func_vsin)
 {
   Function::arg_iterator args = func_vsin->arg_begin();
-  Value* packed_val_59 = args++;
-  packed_val_59->setName("val");
+  Value* packed_val_60 = args++;
+  packed_val_60->setName("val");
   
-  BasicBlock* label_entry_60 = new BasicBlock("entry",func_vsin,0);
+  BasicBlock* label_entry_61 = new BasicBlock("entry",func_vsin,0);
   
-  // Block entry (label_entry_60)
-  ExtractElementInst* float_tmp2_61 = new ExtractElementInst(packed_val_59, const_int32_18, "tmp2", label_entry_60);
-  CallInst* float_call_62 = new CallInst(func_sinf, float_tmp2_61, "call", label_entry_60);
-  float_call_62->setCallingConv(CallingConv::C);
-  float_call_62->setTailCall(true);
-  InsertElementInst* packed_tmp6 = new InsertElementInst(const_packed_34, float_call_62, const_int32_18, "tmp6", label_entry_60);
-  InsertElementInst* packed_tmp9_63 = new InsertElementInst(packed_tmp6, float_call_62, const_int32_22, "tmp9", label_entry_60);
-  InsertElementInst* packed_tmp12_64 = new InsertElementInst(packed_tmp9_63, float_call_62, const_int32_24, "tmp12", label_entry_60);
-  InsertElementInst* packed_tmp15_65 = new InsertElementInst(packed_tmp12_64, float_call_62, const_int32_23, "tmp15", label_entry_60);
-  new ReturnInst(packed_tmp15_65, label_entry_60);
+  // Block entry (label_entry_61)
+  ExtractElementInst* float_tmp2_62 = new ExtractElementInst(packed_val_60, const_int32_19, "tmp2", label_entry_61);
+  CallInst* float_call_63 = new CallInst(func_sinf, float_tmp2_62, "call", label_entry_61);
+  float_call_63->setCallingConv(CallingConv::C);
+  float_call_63->setTailCall(true);
+  InsertElementInst* packed_tmp6 = new InsertElementInst(const_packed_35, float_call_63, const_int32_19, "tmp6", label_entry_61);
+  InsertElementInst* packed_tmp9_64 = new InsertElementInst(packed_tmp6, float_call_63, const_int32_23, "tmp9", label_entry_61);
+  InsertElementInst* packed_tmp12_65 = new InsertElementInst(packed_tmp9_64, float_call_63, const_int32_25, "tmp12", label_entry_61);
+  InsertElementInst* packed_tmp15_66 = new InsertElementInst(packed_tmp12_65, float_call_63, const_int32_24, "tmp15", label_entry_61);
+  new ReturnInst(packed_tmp15_66, label_entry_61);
+  
+}
+
+// Function: kilp (func_kilp)
+{
+  Function::arg_iterator args = func_kilp->arg_begin();
+  Value* packed_val_68 = args++;
+  packed_val_68->setName("val");
+  
+  BasicBlock* label_entry_69 = new BasicBlock("entry",func_kilp,0);
+  BasicBlock* label_lor_rhs = new BasicBlock("lor_rhs",func_kilp,0);
+  BasicBlock* label_lor_rhs6 = new BasicBlock("lor_rhs6",func_kilp,0);
+  BasicBlock* label_lor_rhs13 = new BasicBlock("lor_rhs13",func_kilp,0);
+  BasicBlock* label_UnifiedReturnBlock_70 = new BasicBlock("UnifiedReturnBlock",func_kilp,0);
+  
+  // Block entry (label_entry_69)
+  ExtractElementInst* float_tmp1_71 = new ExtractElementInst(packed_val_68, const_int32_19, "tmp1", label_entry_69);
+  FCmpInst* int1_cmp_72 = new FCmpInst(FCmpInst::FCMP_OLT, float_tmp1_71, const_float_18, "cmp", label_entry_69);
+  new BranchInst(label_UnifiedReturnBlock_70, label_lor_rhs, int1_cmp_72, label_entry_69);
+  
+  // Block lor_rhs (label_lor_rhs)
+  ExtractElementInst* float_tmp3_74 = new ExtractElementInst(packed_val_68, const_int32_23, "tmp3", label_lor_rhs);
+  FCmpInst* int1_cmp5 = new FCmpInst(FCmpInst::FCMP_OLT, float_tmp3_74, const_float_18, "cmp5", label_lor_rhs);
+  new BranchInst(label_UnifiedReturnBlock_70, label_lor_rhs6, int1_cmp5, label_lor_rhs);
+  
+  // Block lor_rhs6 (label_lor_rhs6)
+  ExtractElementInst* float_tmp8 = new ExtractElementInst(packed_val_68, const_int32_25, "tmp8", label_lor_rhs6);
+  FCmpInst* int1_cmp10 = new FCmpInst(FCmpInst::FCMP_OLT, float_tmp8, const_float_18, "cmp10", label_lor_rhs6);
+  new BranchInst(label_UnifiedReturnBlock_70, label_lor_rhs13, int1_cmp10, label_lor_rhs6);
+  
+  // Block lor_rhs13 (label_lor_rhs13)
+  ExtractElementInst* float_tmp15 = new ExtractElementInst(packed_val_68, const_int32_24, "tmp15", label_lor_rhs13);
+  FCmpInst* int1_cmp17 = new FCmpInst(FCmpInst::FCMP_OLT, float_tmp15, const_float_18, "cmp17", label_lor_rhs13);
+  CastInst* int32_retval = new ZExtInst(int1_cmp17, IntegerType::get(32), "retval", label_lor_rhs13);
+  new ReturnInst(int32_retval, label_lor_rhs13);
+  
+  // Block UnifiedReturnBlock (label_UnifiedReturnBlock_70)
+  new ReturnInst(const_int32_23, label_UnifiedReturnBlock_70);
   
 }
 

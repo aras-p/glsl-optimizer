@@ -202,7 +202,7 @@ shade_quad_llvm(struct quad_stage *qs,
    }
 #endif
 
-   /*quad->mask &=*/
+   quad->mask &=
       gallivm_fragment_shader_exec(llvm, fx, fy, dests, inputs,
                                    softpipe->mapped_constants[PIPE_SHADER_FRAGMENT],
                                    qss->samplers);
