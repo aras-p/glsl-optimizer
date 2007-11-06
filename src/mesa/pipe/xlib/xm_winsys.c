@@ -347,10 +347,17 @@ xmesa_get_pipe_winsys(void)
 static boolean
 xmesa_is_format_supported(struct softpipe_winsys *sws, uint format)
 {
+   /* Any format supported by softpipe can be listed here.
+    * This query is not used for allocating window-system color buffers
+    * (which would depend on the screen depth/bpp).
+    */
    switch (format) {
    case PIPE_FORMAT_U_A8_R8_G8_B8:
    case PIPE_FORMAT_S_R16_G16_B16_A16:
    case PIPE_FORMAT_S8_Z24:
+   case PIPE_FORMAT_U_S8:
+   case PIPE_FORMAT_U_Z16:
+   case PIPE_FORMAT_U_Z32:
       return TRUE;
    default:
       return FALSE;
