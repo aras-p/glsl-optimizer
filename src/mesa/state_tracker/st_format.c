@@ -45,32 +45,32 @@
 
 static GLuint
 format_bits(
-   struct pipe_format_rgbazs  info,
+   pipe_format_rgbazs_t  info,
    GLuint comp )
 {
    GLuint   size;
 
-   if (info.swizzleX == comp) {
-      size = info.sizeX;
+   if (pf_swizzle_x(info) == comp) {
+      size = pf_size_x(info);
    }
-   else if (info.swizzleY == comp) {
-      size = info.sizeY;
+   else if (pf_swizzle_y(info) == comp) {
+      size = pf_size_y(info);
    }
-   else if (info.swizzleZ == comp) {
-      size = info.sizeZ;
+   else if (pf_swizzle_z(info) == comp) {
+      size = pf_size_z(info);
    }
-   else if (info.swizzleW == comp) {
-      size = info.sizeW;
+   else if (pf_swizzle_w(info) == comp) {
+      size = pf_size_w(info);
    }
    else {
       size = 0;
    }
-   return size << (info.exp8 * 3);
+   return size << (pf_exp8(info) * 3);
 }
 
 static GLuint
 format_max_bits(
-   struct pipe_format_rgbazs  info )
+   pipe_format_rgbazs_t  info )
 {
    GLuint   size = format_bits( info, PIPE_FORMAT_COMP_R );
 
@@ -84,7 +84,7 @@ format_max_bits(
 
 static GLuint
 format_size(
-   struct pipe_format_rgbazs  info )
+   pipe_format_rgbazs_t  info )
 {
    return
       format_bits( info, PIPE_FORMAT_COMP_R ) +
@@ -103,13 +103,10 @@ st_get_format_info(
    GLuint format,
    struct pipe_format_info *pinfo )
 {
-   union pipe_format fmt;
+   if (pf_layout(format) == PIPE_FORMAT_LAYOUT_RGBAZS) {
+      pipe_format_rgbazs_t info;
 
-   fmt.value32 = format;
-   if (fmt.header.layout == PIPE_FORMAT_LAYOUT_RGBAZS) {
-      struct pipe_format_rgbazs  info;
-
-      info = fmt.rgbazs;
+      info = format;
 
 #if 0
       printf(
@@ -129,20 +126,20 @@ st_get_format_info(
 
          size = format_max_bits( info );
          if (size == 8) {
-            if (info.type == PIPE_FORMAT_TYPE_UNORM)
+            if (pf_type(info) == PIPE_FORMAT_TYPE_UNORM)
                pinfo->datatype = GL_UNSIGNED_BYTE;
             else
                pinfo->datatype = GL_BYTE;
          }
          else if (size == 16) {
-            if (info.type == PIPE_FORMAT_TYPE_UNORM)
+            if (pf_type(info) == PIPE_FORMAT_TYPE_UNORM)
                pinfo->datatype = GL_UNSIGNED_SHORT;
             else
                pinfo->datatype = GL_SHORT;
          }
          else {
             assert( size <= 32 );
-            if (info.type == PIPE_FORMAT_TYPE_UNORM)
+            if (pf_type(info) == PIPE_FORMAT_TYPE_UNORM)
                pinfo->datatype = GL_UNSIGNED_INT;
             else
                pinfo->datatype = GL_INT;
@@ -161,8 +158,10 @@ st_get_format_info(
       pinfo->size = format_size( info ) / 8;
 
       /* Luminance & Intensity bits */
-      if( info.swizzleX == PIPE_FORMAT_COMP_R && info.swizzleY == PIPE_FORMAT_COMP_R && info.swizzleZ == PIPE_FORMAT_COMP_R ) {
-         if( info.swizzleW == PIPE_FORMAT_COMP_R ) {
+      if( pf_swizzle_x(info) == PIPE_FORMAT_COMP_R &&
+          pf_swizzle_y(info) == PIPE_FORMAT_COMP_R &&
+          pf_swizzle_z(info) == PIPE_FORMAT_COMP_R ) {
+         if( pf_swizzle_w(info) == PIPE_FORMAT_COMP_R ) {
             pinfo->luminance_bits = 0;
             pinfo->intensity_bits = pinfo->red_bits;
          }
@@ -190,11 +189,11 @@ st_get_format_info(
       }
    }
    else {
-      struct pipe_format_ycbcr   info;
+      pipe_format_ycbcr_t info;
 
-      assert( fmt.header.layout == PIPE_FORMAT_LAYOUT_YCBCR );
+      assert( pf_layout(format) == PIPE_FORMAT_LAYOUT_YCBCR );
 
-      info = fmt.ycbcr;
+      info = format;
 
       /* TODO */
       assert( 0 );

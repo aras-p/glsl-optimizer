@@ -42,11 +42,10 @@
 #define PIPE_FORMAT_LAYOUT_RGBAZS   0
 #define PIPE_FORMAT_LAYOUT_YCBCR    1
 
-struct pipe_format_header
+static INLINE uint pf_layout(uint f)  /**< PIPE_FORMAT_LAYOUT_ */
 {
-   uint  layout   : 2;  /**< PIPE_FORMAT_LAYOUT_ */
-   uint  padding  : 30;
-};
+   return f & 0x3;
+}
 
 /**
  * RGBAZS Format Layout.
@@ -75,16 +74,14 @@ struct pipe_format_header
 #define PIPE_FORMAT_TYPE_SSCALED 5
 
 /**
- * In a nutshell, this bitfield contains instructions how to unpack
- * a given format to a full-blown 4-component vector suitable for FS.
  * Because the destination vector is assumed to be RGBA FLOAT, we
  * need to know how to swizzle and expand components from the source
  * vector.
- * Let's take U_A1_R5_G5_B5 as an example. SwizzleX is A, sizeX
+ * Let's take U_A1_R5_G5_B5 as an example. X swizzle is A, X size
  * is 1 bit and type is UNORM. So we take the most significant bit
  * from source vector, convert 0 to 0.0 and 1 to 1.0 and save it
  * in the last component of the destination RGBA component.
- * Next, swizzleY is R, sizeY is 5 and type is UNORM. We normalize
+ * Next, Y swizzle is R, Y size is 5 and type is UNORM. We normalize
  * those 5 bits into [0.0; 1.0] range and put it into second
  * component of the destination vector. Rinse and repeat for
  * components Z and W.
@@ -93,21 +90,23 @@ struct pipe_format_header
  * If any swizzle is 0 or 1, the corresponding destination component
  * should be filled with 0.0 and 1.0, respectively.
  */
-struct pipe_format_rgbazs
+typedef uint pipe_format_rgbazs_t;
+
+static INLINE uint pf_get(pipe_format_rgbazs_t f, uint shift, uint mask)
 {
-   uint  layout   : 2;  /**< PIPE_FORMAT_LAYOUT_RGBAZS */
-   uint  swizzleX : 3;  /**< PIPE_FORMAT_COMP_ */
-   uint  swizzleY : 3;  /**< PIPE_FORMAT_COMP_ */
-   uint  swizzleZ : 3;  /**< PIPE_FORMAT_COMP_ */
-   uint  swizzleW : 3;  /**< PIPE_FORMAT_COMP_ */
-   uint  sizeX    : 3;  /**< Size of X - 1 */
-   uint  sizeY    : 3;  /**< Size of Y - 1 */
-   uint  sizeZ    : 3;  /**< Size of Z - 1 */
-   uint  sizeW    : 3;  /**< Size of W - 1 */
-   uint  exp8     : 2;  /**< Scale size by 8 ^ exp8 */
-   uint  type     : 3;  /**< PIPE_FORMAT_TYPE_ */
-   uint  padding  : 1;
-};
+   return (f >> shift) & mask;
+}
+
+#define pf_swizzle_x(f) pf_get(f, 2, 0x7)  /**< PIPE_FORMAT_COMP_ */
+#define pf_swizzle_y(f) pf_get(f, 5, 0x7)  /**< PIPE_FORMAT_COMP_ */
+#define pf_swizzle_z(f) pf_get(f, 8, 0x7)  /**< PIPE_FORMAT_COMP_ */
+#define pf_swizzle_w(f) pf_get(f, 11, 0x7) /**< PIPE_FORMAT_COMP_ */
+#define pf_size_x(f)    pf_get(f, 14, 0x7) /**< Size of X - 1 */
+#define pf_size_y(f)    pf_get(f, 17, 0x7) /**< Size of Y - 1 */
+#define pf_size_z(f)    pf_get(f, 20, 0x7) /**< Size of Z - 1 */
+#define pf_size_w(f)    pf_get(f, 23, 0x7) /**< Size of W - 1 */
+#define pf_exp8(f)      pf_get(f, 26, 0x3) /**< Scale size by 8 ^ exp8 */
+#define pf_type(f)      pf_get(f, 28, 0xf) /**< PIPE_FORMAT_TYPE_ */
 
 /**
  * Helper macro to encode the above structure into a 32-bit value.
@@ -179,15 +178,10 @@ struct pipe_format_rgbazs
  */
 
 /**
- * This bitfields is simple. It only contains a flag that indicates whether the
- * format is reversed or not.
+ * This only contains a flag that indicates whether the format is reversed or
+ * not.
  */
-struct pipe_format_ycbcr
-{
-   uint  layout   : 2;  /**< PIPE_FORMAT_LAYOUT_YCBCR */
-   uint  reversed : 1;
-   uint  padding  : 29;
-};
+typedef uint pipe_format_ycbcr_t;
 
 /**
  * Helper macro to encode the above structure into a 32-bit value.
@@ -196,13 +190,10 @@ struct pipe_format_ycbcr
    (PIPE_FORMAT_LAYOUT_YCBCR << 0) |\
    ((REV) << 2) )
 
-union pipe_format
+static INLINE uint pf_rev(pipe_format_ycbcr_t f)
 {
-   uint                       value32;
-   struct pipe_format_header  header;
-   struct pipe_format_rgbazs  rgbazs;
-   struct pipe_format_ycbcr   ycbcr;
-};
+   return (f >> 2) & 0x1;
+}
 
 /**
  * Texture/surface image formats (preliminary)
