@@ -43,6 +43,7 @@ struct st_framebuffer *st_create_framebuffer( const __GLcontextModes *visual,
       = CALLOC_STRUCT(st_framebuffer);
    if (stfb) {
       GLboolean swStencil = (visual->stencilBits > 0 &&
+	                     visual->stencilBits != 8 &&
                              visual->depthBits != 24);
       GLenum rgbFormat = (visual->redBits == 5 ? GL_RGB5 : GL_RGBA8);
 
@@ -62,13 +63,14 @@ struct st_framebuffer *st_create_framebuffer( const __GLcontextModes *visual,
             _mesa_add_renderbuffer(&stfb->Base, BUFFER_BACK_LEFT, rb);
          }
 
-         if (visual->depthBits == 24 && visual->stencilBits == 8) {
+         if (visual->depthBits == 24) {
             /* combined depth/stencil buffer */
             struct gl_renderbuffer *depthStencilRb
                = st_new_renderbuffer_fb(GL_DEPTH24_STENCIL8_EXT);
             /* note: bind RB to two attachment points */
             _mesa_add_renderbuffer(&stfb->Base, BUFFER_DEPTH, depthStencilRb);
-            _mesa_add_renderbuffer(&stfb->Base, BUFFER_STENCIL,depthStencilRb);
+            if(visual->stencilBits == 8)
+               _mesa_add_renderbuffer(&stfb->Base, BUFFER_STENCIL,depthStencilRb);
          }
          else if (visual->depthBits == 16) {
             /* just 16-bit depth buffer, no hw stencil */
@@ -76,7 +78,8 @@ struct st_framebuffer *st_create_framebuffer( const __GLcontextModes *visual,
                = st_new_renderbuffer_fb(GL_DEPTH_COMPONENT16);
             _mesa_add_renderbuffer(&stfb->Base, BUFFER_DEPTH, depthRb);
          }
-
+         else
+            assert(0);
 
          /* now add any/all software-based renderbuffers we may need */
          _mesa_add_soft_renderbuffers(&stfb->Base,
