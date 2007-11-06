@@ -643,9 +643,9 @@ filter_modes( __GLcontextModes ** server_modes,
     __GLcontextModes ** prev_next;
     const __GLcontextModes * check;
 
-    if ( driver_modes == NULL ) {
+    if (driver_modes == NULL) {
 	fprintf(stderr, "libGL warning: 3D driver returned no fbconfigs.\n");
-	return 0;
+	return;
     }
 
     /* For each mode in server_modes, check to see if a matching mode exists
