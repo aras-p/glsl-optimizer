@@ -86,7 +86,11 @@ depth_value(GLuint pipeFormat, GLfloat value)
       val = (GLuint) (value * 0xffffff);
       break;
    case PIPE_FORMAT_U_Z32:
-      val = (GLuint) (value * 0xffffffff);
+      /* special-case to avoid overflow */
+      if (value == 1.0)
+         val = 0xffffffff;
+      else
+         val = (GLuint) (value * 0xffffffff);
       break;
    case PIPE_FORMAT_S8_Z24:
    /*case PIPE_FORMAT_Z24_S8:*/
