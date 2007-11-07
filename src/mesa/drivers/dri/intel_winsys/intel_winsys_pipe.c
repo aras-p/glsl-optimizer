@@ -56,15 +56,15 @@ struct intel_pipe_winsys {
 /* Turn a pipe winsys into an intel/pipe winsys:
  */
 static inline struct intel_pipe_winsys *
-intel_pipe_winsys( struct pipe_winsys *sws )
+intel_pipe_winsys( struct pipe_winsys *winsys )
 {
-   return (struct intel_pipe_winsys *)sws;
+   return (struct intel_pipe_winsys *)winsys;
 }
 
 
 /* Most callbacks map direcly onto dri_bufmgr operations:
  */
-static void *intel_buffer_map(struct pipe_winsys *sws, 
+static void *intel_buffer_map(struct pipe_winsys *winsys, 
 			      struct pipe_buffer_handle *buf,
 			      unsigned flags )
 {
@@ -79,7 +79,7 @@ static void *intel_buffer_map(struct pipe_winsys *sws,
    return driBOMap( dri_bo(buf), drm_flags, 0 );
 }
 
-static void intel_buffer_unmap(struct pipe_winsys *sws, 
+static void intel_buffer_unmap(struct pipe_winsys *winsys, 
 			       struct pipe_buffer_handle *buf)
 {
    driBOUnmap( dri_bo(buf) );
@@ -87,7 +87,7 @@ static void intel_buffer_unmap(struct pipe_winsys *sws,
 
 
 static void
-intel_buffer_reference(struct pipe_winsys *sws,
+intel_buffer_reference(struct pipe_winsys *winsys,
 		       struct pipe_buffer_handle **ptr,
 		       struct pipe_buffer_handle *buf)
 {
@@ -105,19 +105,19 @@ intel_buffer_reference(struct pipe_winsys *sws,
 
 /* Grabs the hardware lock!
  */
-static void intel_buffer_data(struct pipe_winsys *sws, 
+static void intel_buffer_data(struct pipe_winsys *winsys, 
 			      struct pipe_buffer_handle *buf,
 			      unsigned size, const void *data,
 			      unsigned usage )
 {
-   struct intel_context *intel = intel_pipe_winsys(sws)->intel;
+   struct intel_context *intel = intel_pipe_winsys(winsys)->intel;
 
    LOCK_HARDWARE( intel );
    driBOData( dri_bo(buf), size, data, 0 );
    UNLOCK_HARDWARE( intel );
 }
 
-static void intel_buffer_subdata(struct pipe_winsys *sws, 
+static void intel_buffer_subdata(struct pipe_winsys *winsys, 
 				 struct pipe_buffer_handle *buf,
 				 unsigned long offset, 
 				 unsigned long size, 
@@ -126,7 +126,7 @@ static void intel_buffer_subdata(struct pipe_winsys *sws,
    driBOSubData( dri_bo(buf), offset, size, data );
 }
 
-static void intel_buffer_get_subdata(struct pipe_winsys *sws, 
+static void intel_buffer_get_subdata(struct pipe_winsys *winsys, 
 				     struct pipe_buffer_handle *buf,
 				     unsigned long offset, 
 				     unsigned long size, 
@@ -139,10 +139,10 @@ static void intel_buffer_get_subdata(struct pipe_winsys *sws,
  * for all buffers.
  */
 static struct pipe_buffer_handle *
-intel_buffer_create(struct pipe_winsys *sws, 
+intel_buffer_create(struct pipe_winsys *winsys, 
 		    unsigned alignment)
 {
-   struct intel_context *intel = intel_pipe_winsys(sws)->intel;
+   struct intel_context *intel = intel_pipe_winsys(winsys)->intel;
    struct _DriBufferObject *buffer;
 
    LOCK_HARDWARE( intel );
@@ -155,9 +155,9 @@ intel_buffer_create(struct pipe_winsys *sws,
 
 
 static struct pipe_buffer_handle *
-intel_user_buffer_create(struct pipe_winsys *sws, void *ptr, unsigned bytes)
+intel_user_buffer_create(struct pipe_winsys *winsys, void *ptr, unsigned bytes)
 {
-   struct intel_context *intel = intel_pipe_winsys(sws)->intel;
+   struct intel_context *intel = intel_pipe_winsys(winsys)->intel;
    struct _DriBufferObject *buffer;
 
    LOCK_HARDWARE( intel );
@@ -169,9 +169,9 @@ intel_user_buffer_create(struct pipe_winsys *sws, void *ptr, unsigned bytes)
 }
 
 
-static void intel_wait_idle( struct pipe_winsys *sws )
+static void intel_wait_idle( struct pipe_winsys *winsys )
 {
-   struct intel_context *intel = intel_pipe_winsys(sws)->intel;
+   struct intel_context *intel = intel_pipe_winsys(winsys)->intel;
 
    if (intel->batch->last_fence) {
       driFenceFinish(intel->batch->last_fence, 
@@ -187,10 +187,10 @@ static void intel_wait_idle( struct pipe_winsys *sws )
  * we copied its contents to the real frontbuffer.  Our task is easy:
  */
 static void
-intel_flush_frontbuffer( struct pipe_winsys *sws,
+intel_flush_frontbuffer( struct pipe_winsys *winsys,
                          struct pipe_surface *surf )
 {
-   struct intel_context *intel = intel_pipe_winsys(sws)->intel;
+   struct intel_context *intel = intel_pipe_winsys(winsys)->intel;
    __DRIdrawablePrivate *dPriv = intel->driDrawable;
 
    intelDisplaySurface(dPriv, surf, NULL);
@@ -249,8 +249,7 @@ intel_i915_region_release(struct pipe_winsys *winsys,
    if ((*region)->refcount == 0) {
       assert((*region)->map_refcount == 0);
 
-      winsys->buffer_reference( winsys,
-                                &((*region)->buffer), NULL );
+      winsys->buffer_reference( winsys, &((*region)->buffer), NULL );
       free(*region);
    }
    *region = NULL;
@@ -286,7 +285,7 @@ intel_i915_surface_release(struct pipe_winsys *winsys, struct pipe_surface **s)
 
 
 static void
-intel_printf( struct pipe_winsys *sws, const char *fmtString, ... )
+intel_printf( struct pipe_winsys *winsys, const char *fmtString, ... )
 {
    va_list args;
    va_start( args, fmtString );  
@@ -295,7 +294,7 @@ intel_printf( struct pipe_winsys *sws, const char *fmtString, ... )
 }
 
 static const char *
-intel_get_name( struct pipe_winsys *sws )
+intel_get_name( struct pipe_winsys *winsys )
 {
    return "Intel/DRI/ttm";
 }
