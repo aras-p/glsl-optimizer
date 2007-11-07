@@ -29,6 +29,7 @@
 #include "main/context.h"
 #include "main/extensions.h"
 #include "vbo/vbo.h"
+#include "drivers/common/driverfuncs.h"
 #include "st_public.h"
 #include "st_context.h"
 #include "st_cb_accum.h"
@@ -180,6 +181,8 @@ void st_copy_context_state(struct st_context *dst,
 
 void st_init_driver_functions(struct dd_function_table *functions)
 {
+   _mesa_init_glsl_driver_functions(functions);
+
    st_init_accum_functions(functions);
    st_init_bufferobject_functions(functions);
    st_init_clear_functions(functions);
