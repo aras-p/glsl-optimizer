@@ -380,9 +380,19 @@ create_xmesa_buffer(XMesaDrawable d, BufferType type,
       _mesa_add_renderbuffer(fb, BUFFER_STENCIL, rb);
    }
    else {
-      if (vis->mesa_visual.depthBits > 0) {
+      if (vis->mesa_visual.depthBits > 24) {
          struct gl_renderbuffer *rb
          = st_new_renderbuffer_fb(GL_DEPTH_COMPONENT32);
+         _mesa_add_renderbuffer(fb, BUFFER_DEPTH, rb);
+      }
+      else if (vis->mesa_visual.depthBits > 16) {
+         struct gl_renderbuffer *rb
+         = st_new_renderbuffer_fb(GL_DEPTH24_STENCIL8_EXT);
+         _mesa_add_renderbuffer(fb, BUFFER_DEPTH, rb);
+      }
+      else if (vis->mesa_visual.depthBits > 1) {
+         struct gl_renderbuffer *rb
+         = st_new_renderbuffer_fb(GL_DEPTH_COMPONENT16);
          _mesa_add_renderbuffer(fb, BUFFER_DEPTH, rb);
       }
 
