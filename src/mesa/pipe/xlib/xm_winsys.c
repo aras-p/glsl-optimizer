@@ -373,7 +373,7 @@ xmesa_is_format_supported(struct softpipe_winsys *sws, uint format)
    case PIPE_FORMAT_S8_Z24:
    case PIPE_FORMAT_U_S8:
    case PIPE_FORMAT_U_Z16:
-      /*case PIPE_FORMAT_U_Z32:*/
+   case PIPE_FORMAT_U_Z32:
       return TRUE;
    default:
       return FALSE;
