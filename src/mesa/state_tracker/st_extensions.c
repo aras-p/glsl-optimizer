@@ -175,6 +175,7 @@ void st_init_extensions(struct st_context *st)
 
    if (pipe->get_param(pipe, PIPE_CAP_POINT_SPRITE)) {
       ctx->Extensions.ARB_point_sprite = GL_TRUE;
+      ctx->Extensions.NV_point_sprite = GL_TRUE;
    }
 
    if (pipe->get_param(pipe, PIPE_CAP_OCCLUSION_QUERY)) {
