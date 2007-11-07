@@ -25,13 +25,6 @@
  * 
  **************************************************************************/
 
-//#include "mtypes.h"
-//#include "enums.h"
-//#include "texformat.h"
-//#include "macros.h"
-//#include "dri_bufmgr.h"
-
-
 #include "pipe/p_context.h"
 #include "pipe/p_state.h"
 #include "pipe/p_util.h"
@@ -40,7 +33,7 @@
 #include "i915_context.h"
 #include "i915_reg.h"
 #include "i915_state.h"
-//#include "i915_cache.h"
+
 
 static uint
 bitcount(uint k)
@@ -55,6 +48,7 @@ bitcount(uint k)
 }
 
 
+#if 0
 static boolean
 is_power_of_two_texture(const struct pipe_mipmap_tree *mt)
 {
@@ -66,6 +60,7 @@ is_power_of_two_texture(const struct pipe_mipmap_tree *mt)
    else
       return 0;
 }
+#endif
 
 
 /**
