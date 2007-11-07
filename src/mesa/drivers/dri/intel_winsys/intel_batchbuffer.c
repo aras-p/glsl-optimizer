@@ -151,7 +151,8 @@ intel_batchbuffer_free(struct intel_batchbuffer *batch)
 {
    if (batch->last_fence) {
       driFenceFinish(batch->last_fence,
-      DRM_FENCE_TYPE_EXE | DRM_I915_FENCE_TYPE_RW, GL_FALSE);
+                     DRM_FENCE_TYPE_EXE | DRM_I915_FENCE_TYPE_RW,
+                     GL_FALSE);
       driFenceUnReference(batch->last_fence);
       batch->last_fence = NULL;
    }
@@ -311,7 +312,9 @@ intel_batchbuffer_finish(struct intel_batchbuffer *batch)
 {
    struct _DriFenceObject *fence = intel_batchbuffer_flush(batch);
    driFenceReference(fence);
-   driFenceFinish(fence, 3, GL_FALSE);
+   driFenceFinish(fence,
+                  DRM_FENCE_TYPE_EXE | DRM_I915_FENCE_TYPE_RW,
+                  GL_FALSE);
    driFenceUnReference(fence);
 }
 
