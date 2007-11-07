@@ -52,6 +52,7 @@
 
 struct gallivm_prog;
 struct gallivm_cpu_engine;
+
 /**
  * Basic vertex info.
  * Carry some useful information around with the vertices in the prim pipe.  
@@ -66,6 +67,9 @@ struct vertex_header {
 
    float data[][4];		/* Note variable size */
 };
+
+/* NOTE: It should match vertex_id size above */
+#define UNDEFINED_VERTEX_ID 0xffff
 
 /* XXX This is too large */
 #define MAX_VERTEX_SIZE ((2 + PIPE_MAX_SHADER_OUTPUTS) * 4 * sizeof(float))
@@ -299,7 +303,7 @@ dup_vert( struct draw_stage *stage,
 {   
    struct vertex_header *tmp = stage->tmp[idx];
    memcpy(tmp, vert, stage->draw->vertex_info.size * sizeof(float) );
-   tmp->vertex_id = ~0;
+   tmp->vertex_id = UNDEFINED_VERTEX_ID;
    return tmp;
 }
 

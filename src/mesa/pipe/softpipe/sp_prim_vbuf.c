@@ -140,7 +140,7 @@ static void vbuf_tri( struct draw_stage *stage,
       vbuf_flush_elements( stage );
 
    for (i = 0; i < 3; i++) {
-      if (prim->v[i]->vertex_id == 0xffff) 
+      if (prim->v[i]->vertex_id == UNDEFINED_VERTEX_ID) 
          emit_vertex( vbuf, prim->v[i] );
       
       vbuf->element_map[vbuf->nr_elements++] = (ushort) prim->v[i]->vertex_id;
@@ -158,7 +158,7 @@ static void vbuf_line(struct draw_stage *stage,
       vbuf_flush_elements( stage );
 
    for (i = 0; i < 2; i++) {
-      if (prim->v[i]->vertex_id == 0xffff) 
+      if (prim->v[i]->vertex_id == UNDEFINED_VERTEX_ID) 
          emit_vertex( vbuf, prim->v[i] );
 
       vbuf->element_map[vbuf->nr_elements++] = (ushort) prim->v[i]->vertex_id;
@@ -174,7 +174,7 @@ static void vbuf_point(struct draw_stage *stage,
    if (!check_space( vbuf ))
       vbuf_flush_elements( stage );
 
-   if (prim->v[0]->vertex_id == 0xffff) 
+   if (prim->v[0]->vertex_id == UNDEFINED_VERTEX_ID) 
       emit_vertex( vbuf, prim->v[0] );
    
    vbuf->element_map[vbuf->nr_elements++] = (ushort) prim->v[0]->vertex_id;

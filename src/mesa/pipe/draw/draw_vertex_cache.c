@@ -88,7 +88,7 @@ static struct vertex_header *get_vertex( struct draw_context *draw,
       draw->vcache.vertex[slot]->clipmask = 0;
       draw->vcache.vertex[slot]->edgeflag = 1; /*XXX use user's edge flag! */
       draw->vcache.vertex[slot]->pad = 0;
-      draw->vcache.vertex[slot]->vertex_id = ~0;
+      draw->vcache.vertex[slot]->vertex_id = UNDEFINED_VERTEX_ID;
    }
 
 
@@ -130,7 +130,7 @@ void draw_vertex_cache_reset_vertex_ids( struct draw_context *draw )
    unsigned i;
 
    for (i = 0; i < Elements(draw->vcache.vertex); i++)
-      draw->vcache.vertex[i]->vertex_id = ~0;
+      draw->vcache.vertex[i]->vertex_id = UNDEFINED_VERTEX_ID;
 }
 
 

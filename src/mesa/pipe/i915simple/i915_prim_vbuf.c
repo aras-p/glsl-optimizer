@@ -98,15 +98,16 @@ static INLINE struct vbuf_stage *vbuf_stage( struct draw_stage *stage )
 }
 
 
-static inline 
-boolean overflow( void *map, void *ptr, unsigned bytes, unsigned bufsz )
+static INLINE boolean 
+overflow( void *map, void *ptr, unsigned bytes, unsigned bufsz )
 {
    unsigned long used = (char *)ptr - (char *)map;
    return (used + bytes) > bufsz;
 }
 
 
-static void check_space( struct vbuf_stage *vbuf )
+static INLINE void 
+check_space( struct vbuf_stage *vbuf )
 {
    if (overflow( vbuf->vertex_map, 
                  vbuf->vertex_ptr,  
@@ -125,7 +126,7 @@ static void check_space( struct vbuf_stage *vbuf )
  * have a couple of slots at the beginning (1-dword header, 4-dword
  * clip pos) that we ignore here.
  */
-static inline void 
+static INLINE void 
 emit_vertex( struct vbuf_stage *vbuf,
              struct vertex_header *vertex )
 {
@@ -137,6 +138,15 @@ emit_vertex( struct vbuf_stage *vbuf,
 //   fprintf(stderr, "emit vertex %d to %p\n", 
 //           vbuf->nr_vertices, vbuf->vertex_ptr);
 
+   if(vertex->vertex_id != UNDEFINED_VERTEX_ID) {
+      if(vertex->vertex_id < vbuf->nr_vertices)
+	 return;
+      else
+	 fprintf(stderr, "Bad vertex id 0x%04x (>= 0x%04x)\n", 
+	         vertex->vertex_id, vbuf->nr_vertices);
+      return;
+   }
+      
    vertex->vertex_id = vbuf->nr_vertices++;
 
    for (i = 0; i < vinfo->num_attribs; i++) {
@@ -190,8 +200,7 @@ static void vbuf_tri( struct draw_stage *stage,
    check_space( vbuf );
 
    for (i = 0; i < 3; i++) {
-      if (prim->v[i]->vertex_id == 0xffff) 
-         emit_vertex( vbuf, prim->v[i] );
+      emit_vertex( vbuf, prim->v[i] );
       
       vbuf->element_map[vbuf->nr_elements++] = prim->v[i]->vertex_id;
    }
@@ -207,8 +216,7 @@ static void vbuf_line(struct draw_stage *stage,
    check_space( vbuf );
 
    for (i = 0; i < 2; i++) {
-      if (prim->v[i]->vertex_id == 0xffff) 
-         emit_vertex( vbuf, prim->v[i] );
+      emit_vertex( vbuf, prim->v[i] );
 
       vbuf->element_map[vbuf->nr_elements++] = prim->v[i]->vertex_id;
    }   
@@ -222,8 +230,7 @@ static void vbuf_point(struct draw_stage *stage,
 
    check_space( vbuf );
 
-   if (prim->v[0]->vertex_id == 0xffff) 
-      emit_vertex( vbuf, prim->v[0] );
+   emit_vertex( vbuf, prim->v[0] );
    
    vbuf->element_map[vbuf->nr_elements++] = prim->v[0]->vertex_id;
 }

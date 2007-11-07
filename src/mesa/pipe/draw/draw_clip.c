@@ -102,7 +102,7 @@ static void interp( const struct clipper *clip,
       dst->clipmask = 0;
       dst->edgeflag = 0;
       dst->pad = 0;
-      dst->vertex_id = 0;
+      dst->vertex_id = UNDEFINED_VERTEX_ID;
    }
 
    /* Clip coordinates:  interpolate normally
