@@ -56,6 +56,7 @@
 
 
 static void vbuf_flush_elements( struct draw_stage *stage );
+static void vbuf_flush_vertices( struct draw_stage *stage );
 
 
 #define VBUF_SIZE (64*1024)
@@ -105,18 +106,16 @@ boolean overflow( void *map, void *ptr, unsigned bytes, unsigned bufsz )
 }
 
 
-static boolean check_space( struct vbuf_stage *vbuf )
+static void check_space( struct vbuf_stage *vbuf )
 {
    if (overflow( vbuf->vertex_map, 
                  vbuf->vertex_ptr,  
                  vbuf->vertex_size, 
                  VBUF_SIZE ))
-      return FALSE;
+      vbuf_flush_vertices(&vbuf->stage);
 
    if (vbuf->nr_elements + 4 > IBUF_SIZE / sizeof(ushort) )
-      return FALSE;
-   
-   return TRUE;
+      vbuf_flush_elements(&vbuf->stage);
 }
 
 
@@ -188,8 +187,7 @@ static void vbuf_tri( struct draw_stage *stage,
    struct vbuf_stage *vbuf = vbuf_stage( stage );
    unsigned i;
 
-   if (!check_space( vbuf ))
-      vbuf_flush_elements( stage );
+   check_space( vbuf );
 
    for (i = 0; i < 3; i++) {
       if (prim->v[i]->vertex_id == 0xffff) 
@@ -206,8 +204,7 @@ static void vbuf_line(struct draw_stage *stage,
    struct vbuf_stage *vbuf = vbuf_stage( stage );
    unsigned i;
 
-   if (!check_space( vbuf ))
-      vbuf_flush_elements( stage );
+   check_space( vbuf );
 
    for (i = 0; i < 2; i++) {
       if (prim->v[i]->vertex_id == 0xffff) 
@@ -223,8 +220,7 @@ static void vbuf_point(struct draw_stage *stage,
 {
    struct vbuf_stage *vbuf = vbuf_stage( stage );
 
-   if (!check_space( vbuf ))
-      vbuf_flush_elements( stage );
+   check_space( vbuf );
 
    if (prim->v[0]->vertex_id == 0xffff) 
       emit_vertex( vbuf, prim->v[0] );
@@ -269,7 +265,7 @@ static void vbuf_first_point( struct draw_stage *stage,
 }
 
 
-static void vbuf_draw( struct draw_stage *stage ) 
+static void vbuf_flush_elements( struct draw_stage *stage ) 
 {
    struct vbuf_stage *vbuf = vbuf_stage( stage );
    struct i915_context *i915 = vbuf->i915;
@@ -277,6 +273,9 @@ static void vbuf_draw( struct draw_stage *stage )
    unsigned vertex_size = i915->current.vertex_info.size * 4; /* in bytes */
    unsigned hwprim;
    unsigned i;
+   
+   if(!nr)
+      return;
    
    switch(vbuf->prim) {
    case PIPE_PRIM_POINTS:
@@ -295,6 +294,8 @@ static void vbuf_draw( struct draw_stage *stage )
    
    assert(vbuf->vertex_ptr - vbuf->vertex_map == vbuf->nr_vertices * vertex_size / 4);
 
+   assert((i915->dirty & ~I915_NEW_VBO) == 0);
+   
    if (i915->dirty)
       i915_update_derived( i915 );
 
@@ -327,34 +328,31 @@ static void vbuf_draw( struct draw_stage *stage )
    if (i < nr) {
       OUT_BATCH( vbuf->element_map[i] );
    }
+   
+   vbuf->nr_elements = 0;
 }
 
 
-static void vbuf_flush_elements( struct draw_stage *stage )
+
+/**
+ * Flush vertex buffer.
+ */
+static void vbuf_flush_vertices( struct draw_stage *stage )
 {
    struct vbuf_stage *vbuf = vbuf_stage( stage );
    struct i915_context *i915 = vbuf->i915;
    struct pipe_winsys *winsys = i915->pipe.winsys;
 
-   if (vbuf->nr_elements) {
-#if 0
-      fprintf(stderr, "%s (%d elts, %d verts)\n", 
-                      __FUNCTION__, 
-                      vbuf->nr_elements,
-                      vbuf->nr_vertices);
-#endif
-
-      /* Draw now or add to list of primitives???
-       */
-      vbuf_draw( stage );
+   if(vbuf->nr_vertices) {
       
-      vbuf->nr_elements = 0;
-
+      vbuf_flush_elements(stage);
+      
       winsys->buffer_unmap(winsys, i915->vbo);
-
+   
       vbuf->nr_vertices = 0;
-
-      /* Reset vertex ids?  Actually, want to not do that unless our
+   
+      /**
+       * XXX: Reset vertex ids?  Actually, want to not do that unless our
        * vertex buffer is full.  Would like separate
        * flush-on-index-full and flush-on-vb-full, but may raise
        * issues uploading vertices if the hardware wants to flush when
@@ -362,7 +360,7 @@ static void vbuf_flush_elements( struct draw_stage *stage )
        */
       draw_vertex_cache_reset_vertex_ids( vbuf->i915->draw );
    }
-
+   
    /* FIXME: handle failure */
    if(!i915->vbo)
       i915->vbo = winsys->buffer_create(winsys, 64);
@@ -376,20 +374,22 @@ static void vbuf_flush_elements( struct draw_stage *stage )
                                          i915->vbo, 
                                          PIPE_BUFFER_FLAG_WRITE );
    vbuf->vertex_ptr = vbuf->vertex_map;
-
-   stage->tri = vbuf_first_tri;
-   stage->line = vbuf_first_line;
-   stage->point = vbuf_first_point;
 }
+
 
 
 static void vbuf_begin( struct draw_stage *stage )
 {
    struct vbuf_stage *vbuf = vbuf_stage(stage);
    struct i915_context *i915 = vbuf->i915;
+   unsigned vertex_size = i915->current.vertex_info.size * 4;
 
    assert(!i915->dirty);
-   vbuf->vertex_size = vbuf->i915->current.vertex_info.size * 4;
+   
+   if(vbuf->vertex_size != vertex_size)
+      vbuf_flush_vertices(stage);
+      
+   vbuf->vertex_size = vertex_size;
 }
 
 
@@ -398,6 +398,10 @@ static void vbuf_end( struct draw_stage *stage )
    /* Overkill.
     */
    vbuf_flush_elements( stage );
+   
+   stage->point = vbuf_first_point;
+   stage->line = vbuf_first_line;
+   stage->tri = vbuf_first_tri;
 }
 
 
