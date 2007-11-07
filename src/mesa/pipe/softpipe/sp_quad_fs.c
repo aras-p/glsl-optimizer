@@ -173,12 +173,11 @@ shade_quad_llvm(struct quad_stage *qs,
 {
    struct quad_shade_stage *qss = quad_shade_stage(qs);
    struct softpipe_context *softpipe = qs->softpipe;
-   float dests[4][16][4];
+   float dests[4][16][4] ALIGN16_ATTRIB;
+   float inputs[4][16][4] ALIGN16_ATTRIB;
    const float fx = (float) quad->x0;
    const float fy = (float) quad->y0;
    struct gallivm_prog *llvm = qss->llvm_prog;
-   float inputs[4][16][4];
-   memset(inputs, 0, sizeof(inputs));
 
    inputs[0][0][0] = fx;
    inputs[1][0][0] = fx + 1.0f;

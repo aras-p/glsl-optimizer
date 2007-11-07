@@ -115,13 +115,12 @@ void draw_vertex_shader_queue_flush_llvm(struct draw_context *draw)
    unsigned i;
 
    struct vertex_header *dests[VS_QUEUE_LENGTH];
-   float                 inputs[VS_QUEUE_LENGTH][PIPE_MAX_SHADER_INPUTS][4];
-   float                 outputs[VS_QUEUE_LENGTH][PIPE_MAX_SHADER_INPUTS][4];
+   float                 inputs[VS_QUEUE_LENGTH][PIPE_MAX_SHADER_INPUTS][4] ALIGN16_ATTRIB;
+   float                 outputs[VS_QUEUE_LENGTH][PIPE_MAX_SHADER_INPUTS][4] ALIGN16_ATTRIB;
    float (*consts)[4]          = (float (*)[4]) draw->user.constants;
    struct gallivm_prog  *prog  = draw->vertex_shader->llvm_prog;
    const float          *scale = draw->viewport.scale;
    const float          *trans = draw->viewport.translate;
-
    /* fetch the inputs */
    for (i = 0; i < draw->vs.queue_nr; ++i) {
       unsigned elt = draw->vs.queue[i].elt;
@@ -134,6 +133,7 @@ void draw_vertex_shader_queue_flush_llvm(struct draw_context *draw)
                      draw->vs.queue_nr,
                      draw->vertex_shader->state->num_inputs,
                      draw->vertex_info.num_attribs - 2);
+
 
    /* store machine results */
    for (int i = 0; i < draw->vs.queue_nr; ++i) {
@@ -158,7 +158,6 @@ void draw_vertex_shader_queue_flush_llvm(struct draw_context *draw)
 
       vOut->clipmask = compute_clipmask(vOut->clip, draw->plane, draw->nr_planes);
       vOut->edgeflag = 1;
-
       /* divide by w */
       w = 1.0f / w;
       x *= w;
