@@ -300,9 +300,12 @@ static void
 xm_surface_release(struct pipe_winsys *winsys, struct pipe_surface **s)
 {
    struct pipe_surface *surf = *s;
-   if (surf->region)
-      winsys->region_release(winsys, &surf->region);
-   free(surf);
+   surf->refcount--;
+   if (surf->refcount == 0) {
+      if (surf->region)
+         winsys->region_release(winsys, &surf->region);
+      free(surf);
+   }
    *s = NULL;
 }
 
