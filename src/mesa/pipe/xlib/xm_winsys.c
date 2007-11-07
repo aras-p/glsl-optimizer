@@ -297,7 +297,7 @@ xm_surface_alloc(struct pipe_winsys *ws, GLuint pipeFormat)
 
 
 static void
-xm_surface_release(struct pipe_winsys *ws, struct pipe_surface **s)
+xm_surface_release(struct pipe_winsys *winsys, struct pipe_surface **s)
 {
    struct pipe_surface *surf = *s;
    if (surf->region)
