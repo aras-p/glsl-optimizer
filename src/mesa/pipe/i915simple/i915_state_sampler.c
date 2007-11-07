@@ -234,10 +234,14 @@ i915_update_texture(struct i915_context *i915, uint unit,
    }
 #endif
 
-
+   /* this reference does not seem to be needed.  In fact, when it's enabled
+    * we leak a lot of memory (try xdemos/wincopy).
+    */
+#if 0
    {
       /*struct pipe_buffer_handle *p =*/ driBOReference(mt->region->buffer);
    }
+#endif
 
 #if 0
    i915->state.tex_buffer[unit] = driBOReference(intelObj->mt->region->
