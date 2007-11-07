@@ -284,6 +284,7 @@ xm_surface_alloc(struct pipe_winsys *ws, GLuint pipeFormat)
 
    xms->surface.format = pipeFormat;
    xms->surface.refcount = 1;
+   xms->surface.winsys = ws;
 #if 0
    /*
     * This is really just a softpipe surface, not an XImage/Pixmap surface.
@@ -295,13 +296,24 @@ xm_surface_alloc(struct pipe_winsys *ws, GLuint pipeFormat)
 
 
 
+static void
+xm_surface_release(struct pipe_winsys *ws, struct pipe_surface **s)
+{
+   struct pipe_surface *surf = *s;
+   if (surf->region)
+      winsys->region_release(winsys, &surf->region);
+   free(surf);
+   *s = NULL;
+}
+
+
 
 /**
  * Return pointer to a pipe_winsys object.
  * For Xlib, this is a singleton object.
  * Nothing special for the Xlib driver so no subclassing or anything.
  */
-static struct pipe_winsys *
+struct pipe_winsys *
 xmesa_get_pipe_winsys(void)
 {
    static struct pipe_winsys *ws = NULL;
@@ -325,6 +337,7 @@ xmesa_get_pipe_winsys(void)
       ws->region_release = xm_region_release;
 
       ws->surface_alloc = xm_surface_alloc;
+      ws->surface_release = xm_surface_release;
 
       ws->flush_frontbuffer = xm_flush_frontbuffer;
       ws->wait_idle = xm_wait_idle;

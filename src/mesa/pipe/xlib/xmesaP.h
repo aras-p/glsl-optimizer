@@ -51,10 +51,6 @@ typedef struct {
 } bgr_t;
 
 
-struct xmesa_renderbuffer;
-
-
-
 /** Framebuffer pixel formats */
 enum pixel_format {
    PF_Index,		/**< Color Index mode */
@@ -451,7 +447,8 @@ extern const int xmesa_kernel1[16];
  */
 
 extern struct xmesa_renderbuffer *
-xmesa_create_renderbuffer(GLcontext *ctx, GLuint name, const GLvisual *visual,
+xmesa_create_renderbuffer(struct pipe_winsys *winsys,
+                          GLuint name, const GLvisual *visual,
                           GLboolean backBuffer);
 
 extern void
@@ -545,8 +542,10 @@ extern struct pipe_surface *
 xmesa_surface_alloc(struct pipe_context *pipe, GLuint format);
 
 extern struct pipe_surface *
-xmesa_new_color_surface(struct pipe_context *pipe, GLuint format);
+xmesa_new_color_surface(struct pipe_winsys *winsys, GLuint format);
 
+extern struct pipe_winsys *
+xmesa_get_pipe_winsys(void);
 
 extern void
 xmesa_get_tile(struct pipe_context *pipe, struct pipe_surface *ps,

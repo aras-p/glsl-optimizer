@@ -241,6 +241,12 @@ alloc_back_buffer(XMesaBuffer b, GLuint width, GLuint height)
 static void
 xmesa_delete_renderbuffer(struct gl_renderbuffer *rb)
 {
+   struct xmesa_renderbuffer *xrb = xmesa_renderbuffer(rb);
+   if (xrb->St.surface) {
+      struct pipe_winsys *ws = xrb->St.surface->winsys;
+      ws->surface_release(ws, &xrb->St.surface);
+   }
+
    /* XXX Note: the ximage or Pixmap attached to this renderbuffer
     * should probably get freed here, but that's currently done in
     * XMesaDestroyBuffer().
@@ -288,11 +294,6 @@ xmesa_alloc_front_storage(GLcontext *ctx, struct gl_renderbuffer *rb,
 
    if (!xrb->St.surface || !xrb->St.surface->region)
       finish_surface_init(ctx, xrb);
-
-#if 0
-   xmesa_set_renderbuffer_funcs(xrb, xmesa->pixelformat,
-                                xmesa->xm_visual->BitsPerPixel);
-#endif
 
    /* surface info */
    xms->surface.width = width;
@@ -353,11 +354,6 @@ xmesa_alloc_back_storage(GLcontext *ctx, struct gl_renderbuffer *rb,
       xrb->origin4 = NULL;
    }
 
-#if 0
-   xmesa_set_renderbuffer_funcs(xrb, xmesa->pixelformat,
-                                xmesa->xm_visual->BitsPerPixel);
-#endif
-
    if (!xrb->St.surface || !xrb->St.surface->region)
       finish_surface_init(ctx, xrb);
 
@@ -381,11 +377,11 @@ xmesa_alloc_back_storage(GLcontext *ctx, struct gl_renderbuffer *rb,
  * renderbuffers.
  */
 struct xmesa_renderbuffer *
-xmesa_create_renderbuffer(GLcontext *ctx, GLuint name, const GLvisual *visual,
+xmesa_create_renderbuffer(struct pipe_winsys *winsys,
+                          GLuint name, const GLvisual *visual,
                           GLboolean backBuffer)
 {
    struct xmesa_renderbuffer *xrb = CALLOC_STRUCT(xmesa_renderbuffer);
-   struct pipe_context *pipe = NULL;/*ctx->st->pipe;*/
    if (xrb) {
       GLuint name = 0;
       GLuint pipeFormat = 0;
@@ -416,11 +412,9 @@ xmesa_create_renderbuffer(GLcontext *ctx, GLuint name, const GLvisual *visual,
          xrb->St.Base.IndexBits = visual->indexBits;
       }
       /* only need to set Red/Green/EtcBits fields for user-created RBs */
-
-      xrb->St.surface = xmesa_new_color_surface(pipe, pipeFormat);
+      xrb->St.surface = xmesa_new_color_surface(winsys, pipeFormat);
       xms = (struct xmesa_surface *) xrb->St.surface;
       xms->xrb = xrb;
-
    }
    return xrb;
 }

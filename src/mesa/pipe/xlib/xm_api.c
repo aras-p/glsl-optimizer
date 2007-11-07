@@ -301,6 +301,7 @@ create_xmesa_buffer(XMesaDrawable d, BufferType type,
 {
    XMesaBuffer b;
    GLframebuffer *fb;
+   struct pipe_winsys *winsys = xmesa_get_pipe_winsys();
 
    ASSERT(type == WINDOW || type == PIXMAP || type == PBUFFER);
 
@@ -328,7 +329,7 @@ create_xmesa_buffer(XMesaDrawable d, BufferType type,
    /*
     * Front renderbuffer
     */
-   b->frontxrb = xmesa_create_renderbuffer(NULL, 0, &vis->mesa_visual, GL_FALSE);
+   b->frontxrb = xmesa_create_renderbuffer(winsys, 0, &vis->mesa_visual, GL_FALSE);
    if (!b->frontxrb) {
       _mesa_free(b);
       return NULL;
@@ -337,18 +338,12 @@ create_xmesa_buffer(XMesaDrawable d, BufferType type,
    b->frontxrb->drawable = d;
    b->frontxrb->pixmap = (XMesaPixmap) d;
    _mesa_add_renderbuffer(fb, BUFFER_FRONT_LEFT, &b->frontxrb->St.Base);
-#if 0 /* sketch... */
-   {
-      struct pipe_surface *front_surf;
-      front_surf = xmesa_create_front_surface(vis, d);
-   }
-#endif
 
    /*
     * Back renderbuffer
     */
    if (vis->mesa_visual.doubleBufferMode) {
-      b->backxrb = xmesa_create_renderbuffer(NULL, 0, &vis->mesa_visual, GL_TRUE);
+      b->backxrb = xmesa_create_renderbuffer(winsys, 0, &vis->mesa_visual, GL_TRUE);
       if (!b->backxrb) {
          /* XXX free front xrb too */
          _mesa_free(b);

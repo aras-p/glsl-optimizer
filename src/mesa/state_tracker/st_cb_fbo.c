@@ -129,19 +129,10 @@ static void
 st_renderbuffer_delete(struct gl_renderbuffer *rb)
 {
    struct st_renderbuffer *strb = st_renderbuffer(rb);
-   GET_CURRENT_CONTEXT(ctx);
-   if (ctx) {
-      struct pipe_context *pipe = ctx->st->pipe;
-      ASSERT(strb);
-      if (strb && strb->surface) {
-         if (strb->surface->region) {
-            pipe->winsys->region_release(pipe->winsys, &strb->surface->region);
-         }
-         free(strb->surface);
-      }
-   }
-   else {
-      _mesa_warning(NULL, "st_renderbuffer_delete() called, but no current context");
+   ASSERT(strb);
+   if (strb->surface) {
+      struct pipe_winsys *ws = strb->surface->winsys;
+      ws->surface_release(ws, &strb->surface);
    }
    free(strb);
 }

@@ -29,7 +29,8 @@
 #define P_INLINES_H
 
 #include "p_context.h"
-//#include "p_util.h"
+#include "p_winsys.h"
+
 
 /**
  * Set 'ptr' to point to 'region' and update reference counting.
@@ -68,16 +69,9 @@ pipe_surface_reference(struct pipe_surface **ptr, struct pipe_surface *surf)
 {
    assert(ptr);
    if (*ptr) {
-      /* unreference the old thing */
-      struct pipe_surface *oldSurf = *ptr;
-      assert(oldSurf->refcount > 0);
-      oldSurf->refcount--;
-      if (oldSurf->refcount == 0) {
-         /* free the old region */
-         pipe_region_reference(&oldSurf->region, NULL);
-         FREE( oldSurf );
-      }
-      *ptr = NULL;
+      struct pipe_winsys *winsys = (*ptr)->winsys;
+      winsys->surface_release(winsys, ptr);
+      assert(!*ptr);
    }
    if (surf) {
       /* reference the new thing */

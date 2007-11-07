@@ -60,6 +60,8 @@ struct pipe_surface;
 /* opaque type */
 struct pipe_buffer_handle;
 
+struct pipe_winsys;
+
 
 /***
  *** State objects
@@ -281,6 +283,7 @@ struct pipe_surface
    unsigned width, height;
    unsigned offset;              /**< offset from start of region, in bytes */
    unsigned refcount;
+   struct pipe_winsys *winsys;   /**< winsys which owns/created the surface */
 };
 
 

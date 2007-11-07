@@ -609,7 +609,7 @@ clear_32bit_ximage_surface(struct pipe_context *pipe, struct pipe_surface *ps,
  * have special/unique quad read/write functions for X.
  */
 struct pipe_surface *
-xmesa_new_color_surface(struct pipe_context *pipe, GLuint pipeFormat)
+xmesa_new_color_surface(struct pipe_winsys *winsys, GLuint pipeFormat)
 {
    struct xmesa_surface *xms = CALLOC_STRUCT(xmesa_surface);
 
@@ -617,15 +617,14 @@ xmesa_new_color_surface(struct pipe_context *pipe, GLuint pipeFormat)
 
    xms->surface.format = pipeFormat;
    xms->surface.refcount = 1;
+   xms->surface.winsys = winsys;
 
    /* Note, the region we allocate doesn't actually have any storage
     * since we're drawing into an XImage or Pixmap.
     * The region's size will get set in the xmesa_alloc_front/back_storage()
     * functions.
     */
-   if (pipe)
-      xms->surface.region = pipe->winsys->region_alloc(pipe->winsys,
-                                                       1, 0, 0, 0x0);
+   xms->surface.region = winsys->region_alloc(winsys, 1, 1, 1, 0x0);
 
    return &xms->surface;
 }
@@ -645,6 +644,7 @@ xmesa_surface_alloc(struct pipe_context *pipe, GLuint pipeFormat)
 
    xms->surface.format = pipeFormat;
    xms->surface.refcount = 1;
+   xms->surface.winsys = pipe->winsys;
 
    return &xms->surface;
 }
