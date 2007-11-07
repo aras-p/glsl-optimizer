@@ -144,6 +144,7 @@ intelCreateContext(const __GLcontextModes * visual,
    int fthrottle_mode;
    GLboolean havePools;
    struct pipe_context *pipe;
+   struct pipe_winsys *winsys;
    struct st_context *st_share = NULL;
 
    if (sharedContextPrivate) {
@@ -186,12 +187,13 @@ intelCreateContext(const __GLcontextModes * visual,
    __intel_debug = driParseDebugString(getenv("INTEL_DEBUG"), debug_control);
 #endif
 
+   winsys = intel_create_pipe_winsys( intel );
 
    /*
     * Pipe-related setup
     */
    if (!getenv("INTEL_HW")) {
-      pipe = intel_create_softpipe( intel );
+      pipe = intel_create_softpipe( intel, winsys );
    }
    else {
       switch (intel->intelScreen->deviceID) {
@@ -203,13 +205,13 @@ intelCreateContext(const __GLcontextModes * visual,
       case PCI_CHIP_Q35_G:
       case PCI_CHIP_I915_G:
       case PCI_CHIP_I915_GM:
-	 pipe = intel_create_i915simple( intel );
+	 pipe = intel_create_i915simple( intel, winsys );
 	 break;
       default:
 	 fprintf(stderr, "Unknown PCIID %x in %s, using software driver\n", 
                  intel->intelScreen->deviceID, __FUNCTION__);
 
-	 pipe = intel_create_softpipe( intel );
+	 pipe = intel_create_softpipe( intel, winsys );
 	 break;
       }
    }

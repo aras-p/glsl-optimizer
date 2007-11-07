@@ -58,8 +58,12 @@ intel_is_format_supported(struct softpipe_winsys *sws, uint format)
 }
 
 
+/**
+ * Create rendering context which uses software rendering.
+ */
 struct pipe_context *
-intel_create_softpipe( struct intel_context *intel )
+intel_create_softpipe( struct intel_context *intel,
+                       struct pipe_winsys *winsys )
 {
    struct intel_softpipe_winsys *isws = CALLOC_STRUCT( intel_softpipe_winsys );
    
@@ -71,6 +75,5 @@ intel_create_softpipe( struct intel_context *intel )
 
    /* Create the softpipe context:
     */
-   return softpipe_create( intel_create_pipe_winsys( intel ),
-			   &isws->sws );
+   return softpipe_create( winsys, &isws->sws );
 }

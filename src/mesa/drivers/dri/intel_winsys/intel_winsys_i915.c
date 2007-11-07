@@ -120,9 +120,12 @@ static void intel_i915_batch_flush( struct i915_winsys *sws )
 }
 
 
-
+/**
+ * Create i915 hardware rendering context.
+ */
 struct pipe_context *
-intel_create_i915simple( struct intel_context *intel )
+intel_create_i915simple( struct intel_context *intel,
+                         struct pipe_winsys *winsys )
 {
    struct intel_i915_winsys *iws = CALLOC_STRUCT( intel_i915_winsys );
    
@@ -137,7 +140,7 @@ intel_create_i915simple( struct intel_context *intel )
 
    /* Create the i915simple context:
     */
-   return i915_create( intel_create_pipe_winsys(intel),
-		       &iws->winsys, 
+   return i915_create( winsys,
+		       &iws->winsys,
 		       intel->intelScreen->deviceID );
 }
