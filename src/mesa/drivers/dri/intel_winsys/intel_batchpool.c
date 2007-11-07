@@ -288,7 +288,7 @@ static int
 pool_waitIdle(struct _DriBufferPool *pool, void *private, int lazy)
 {
    BBuf *buf = (BBuf *) private;
-   driFenceFinish(buf->fence, 0, lazy);
+   driFenceFinish(buf->fence, 0x0, lazy);
    return 0;
 }
 
