@@ -35,7 +35,6 @@
 #include "intel_batchbuffer.h"
 
 #include "state_tracker/st_public.h"
-#include "state_tracker/st_context.h"
 #include "pipe/p_defines.h"
 #include "pipe/p_context.h"
 
@@ -217,7 +216,6 @@ intelCreateContext(const __GLcontextModes * visual,
    }
 
    intel->st = st_create_context(pipe, visual, st_share);
-   intel->st->ctx->DriverCtx = intel;  /* hope to get rid of this... */
 
    return GL_TRUE;
 }
