@@ -71,7 +71,8 @@ void st_flush( struct st_context *st )
 
       /* Hook for copying "fake" frontbuffer if necessary:
        */
-      st->pipe->winsys->flush_frontbuffer( st->pipe->winsys, front_surf );
+      st->pipe->winsys->flush_frontbuffer( st->pipe->winsys, front_surf,
+                                           st->pipe->private );
       st->flags.frontbuffer_dirty = 0;
    }
 }
@@ -94,7 +95,7 @@ static void st_Finish(GLcontext *ctx)
    struct st_context *st = ctx->st;
 
    st_flush( st );
-   st->pipe->winsys->wait_idle( st->pipe->winsys );
+   st->pipe->winsys->wait_idle( st->pipe->winsys, st->pipe->private );
 }
 
 

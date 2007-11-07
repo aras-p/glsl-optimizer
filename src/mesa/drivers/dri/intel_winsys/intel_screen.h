@@ -65,7 +65,6 @@ struct intel_screen
    driOptionCache optionCache;
 
    struct _DriBufferPool *batchPool;
-   struct _DriBufferPool *regionPool;
    struct _DriBufferPool *staticPool; /** for the X screen/framebuffer */
    boolean havePools;
 
@@ -74,6 +73,8 @@ struct intel_screen
     * which we need a rendering context, but none is currently bound.
     */
    struct intel_context *dummyContext;
+
+   struct pipe_winsys *winsys;
 };
 
 

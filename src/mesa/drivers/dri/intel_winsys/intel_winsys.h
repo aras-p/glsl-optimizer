@@ -35,7 +35,10 @@ struct pipe_buffer_handle;
 struct _DriBufferObject;
 
 struct pipe_winsys *
-intel_create_pipe_winsys( struct intel_context *intel );
+intel_create_pipe_winsys( int fd );
+
+void
+intel_destroy_pipe_winsys( struct pipe_winsys *winsys );
 
 struct pipe_context *
 intel_create_softpipe( struct intel_context *intel,

@@ -168,7 +168,7 @@ xm_flush_frontbuffer(struct pipe_winsys *pws,
 }
 
 static void
-xm_wait_idle(struct pipe_winsys *pws)
+xm_wait_idle(struct pipe_winsys *pws, void *context_private)
 {
    /* no-op */
 }

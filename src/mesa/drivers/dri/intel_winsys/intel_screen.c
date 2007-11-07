@@ -34,6 +34,7 @@
 #include "intel_batchbuffer.h"
 #include "intel_batchpool.h"
 #include "intel_swapbuffers.h"
+#include "intel_winsys.h"
 
 #include "i830_dri.h"
 #include "dri_bufpool.h"
@@ -165,17 +166,11 @@ intelCreatePools(__DRIscreenPrivate * sPriv)
    if (intelScreen->havePools)
       return GL_TRUE;
 
-   batchPoolSize /= BATCH_SZ;
-   intelScreen->regionPool = driDRMPoolInit(sPriv->fd);
-
-   if (!intelScreen->regionPool)
-      return GL_FALSE;
-
    intelScreen->staticPool = driDRMStaticPoolInit(sPriv->fd);
-
    if (!intelScreen->staticPool)
       return GL_FALSE;
 
+   batchPoolSize /= BATCH_SZ;
    intelScreen->batchPool = driBatchPoolInit(sPriv->fd,
                                              DRM_BO_FLAG_EXE |
                                              DRM_BO_FLAG_MEM_TT |
@@ -245,6 +240,8 @@ intelInitDriver(__DRIscreenPrivate * sPriv)
       (*glx_enable_extension) (psc, "GLX_SGI_make_current_read");
    }
 
+   intelScreen->winsys = intel_create_pipe_winsys(sPriv->fd);
+
    return GL_TRUE;
 }
 
@@ -257,7 +254,6 @@ intelDestroyScreen(__DRIscreenPrivate * sPriv)
    /*  intelUnmapScreenRegions(intelScreen); */
 
    if (intelScreen->havePools) {
-      driPoolTakeDown(intelScreen->regionPool);
       driPoolTakeDown(intelScreen->staticPool);
       driPoolTakeDown(intelScreen->batchPool);
    }

@@ -64,14 +64,15 @@ struct pipe_winsys
    const char *(*get_name)( struct pipe_winsys *sws );
 
    /** Wait for any buffered rendering to finish */
-   void (*wait_idle)( struct pipe_winsys *sws );
+   void (*wait_idle)( struct pipe_winsys *sws, void *context_private );
 
    /**
     * Do any special operations to ensure frontbuffer contents are
     * displayed, eg copy fake frontbuffer.
     */
    void (*flush_frontbuffer)( struct pipe_winsys *sws,
-                              struct pipe_surface *surf );
+                              struct pipe_surface *surf,
+                              void *context_private );
 
    /** Debug output */
    void (*printf)( struct pipe_winsys *sws,

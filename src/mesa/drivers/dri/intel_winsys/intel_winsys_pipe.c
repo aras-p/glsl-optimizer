@@ -48,7 +48,7 @@
 
 struct intel_pipe_winsys {
    struct pipe_winsys winsys;
-   struct intel_context *intel;
+   struct _DriBufferPool *regionPool;
 };
 
 
@@ -110,11 +110,7 @@ static void intel_buffer_data(struct pipe_winsys *winsys,
 			      unsigned size, const void *data,
 			      unsigned usage )
 {
-   struct intel_context *intel = intel_pipe_winsys(winsys)->intel;
-
-   LOCK_HARDWARE( intel );
    driBOData( dri_bo(buf), size, data, 0 );
-   UNLOCK_HARDWARE( intel );
 }
 
 static void intel_buffer_subdata(struct pipe_winsys *winsys, 
@@ -142,14 +138,10 @@ static struct pipe_buffer_handle *
 intel_buffer_create(struct pipe_winsys *winsys, 
 		    unsigned alignment)
 {
-   struct intel_context *intel = intel_pipe_winsys(winsys)->intel;
    struct _DriBufferObject *buffer;
-
-   LOCK_HARDWARE( intel );
-   driGenBuffers( intel->intelScreen->regionPool, 
+   struct intel_pipe_winsys *iws = intel_pipe_winsys(winsys);
+   driGenBuffers( iws->regionPool, 
 		  "pipe buffer", 1, &buffer, alignment, 0, 0 );
-   UNLOCK_HARDWARE( intel );
-
    return pipe_bo(buffer);
 }
 
@@ -157,21 +149,18 @@ intel_buffer_create(struct pipe_winsys *winsys,
 static struct pipe_buffer_handle *
 intel_user_buffer_create(struct pipe_winsys *winsys, void *ptr, unsigned bytes)
 {
-   struct intel_context *intel = intel_pipe_winsys(winsys)->intel;
    struct _DriBufferObject *buffer;
-
-   LOCK_HARDWARE( intel );
-   driGenUserBuffer( intel->intelScreen->regionPool, 
+   struct intel_pipe_winsys *iws = intel_pipe_winsys(winsys);
+   driGenUserBuffer( iws->regionPool, 
                      "pipe user buffer", &buffer, ptr, bytes);
-   UNLOCK_HARDWARE( intel );
-
    return pipe_bo(buffer);
 }
 
 
-static void intel_wait_idle( struct pipe_winsys *winsys )
+static void
+intel_wait_idle( struct pipe_winsys *winsys, void *context_private )
 {
-   struct intel_context *intel = intel_pipe_winsys(winsys)->intel;
+   struct intel_context *intel = (struct intel_context *) context_private;
 
    if (intel->batch->last_fence) {
       driFenceFinish(intel->batch->last_fence, 
@@ -188,9 +177,10 @@ static void intel_wait_idle( struct pipe_winsys *winsys )
  */
 static void
 intel_flush_frontbuffer( struct pipe_winsys *winsys,
-                         struct pipe_surface *surf )
+                         struct pipe_surface *surf,
+                         void *context_private)
 {
-   struct intel_context *intel = intel_pipe_winsys(winsys)->intel;
+   struct intel_context *intel = (struct intel_context *) context_private;
    __DRIdrawablePrivate *dPriv = intel->driDrawable;
 
    intelDisplaySurface(dPriv, surf, NULL);
@@ -301,7 +291,7 @@ intel_get_name( struct pipe_winsys *winsys )
 
 
 struct pipe_winsys *
-intel_create_pipe_winsys( struct intel_context *intel )
+intel_create_pipe_winsys( int fd )
 {
    struct intel_pipe_winsys *iws = CALLOC_STRUCT( intel_pipe_winsys );
    
@@ -324,13 +314,25 @@ intel_create_pipe_winsys( struct intel_context *intel )
    iws->winsys.wait_idle = intel_wait_idle;
    iws->winsys.printf = intel_printf;
    iws->winsys.get_name = intel_get_name;
-   iws->intel = intel;
-
    iws->winsys.region_alloc = intel_i915_region_alloc;
    iws->winsys.region_release = intel_i915_region_release;
-
    iws->winsys.surface_alloc = intel_i915_surface_alloc;
    iws->winsys.surface_release = intel_i915_surface_release;
 
+   if (fd)
+      iws->regionPool = driDRMPoolInit(fd);
+
    return &iws->winsys;
 }
+
+
+void
+intel_destroy_pipe_winsys( struct pipe_winsys *winsys )
+{
+   struct intel_pipe_winsys *iws = intel_pipe_winsys(winsys);
+   if (iws->regionPool) {
+      driPoolTakeDown(iws->regionPool);
+   }
+   free(iws);
+}
+
