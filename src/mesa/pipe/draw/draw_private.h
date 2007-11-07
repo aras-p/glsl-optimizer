@@ -116,6 +116,13 @@ struct draw_stage
 
    void (*end)( struct draw_stage * );
 
+   /** 
+    * Reset temporary vertices ids in this stage 
+    * 
+    * draw_free_tmps will be called instead if null.
+    */
+   void (*reset_tmps)( struct draw_stage * );
+
    void (*reset_stipple_counter)( struct draw_stage * );
 };
 
@@ -254,7 +261,10 @@ extern struct draw_stage *draw_validate_stage( struct draw_context *context );
 
 
 extern void draw_free_tmps( struct draw_stage *stage );
+extern void draw_reset_tmps( struct draw_stage *stage );
 extern void draw_alloc_tmps( struct draw_stage *stage, unsigned nr );
+
+extern void draw_reset_vertex_ids( struct draw_context *draw );
 
 
 extern int draw_vertex_cache_check_space( struct draw_context *draw, 

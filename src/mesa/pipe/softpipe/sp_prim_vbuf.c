@@ -243,7 +243,7 @@ static void vbuf_flush_elements( struct draw_stage *stage )
        * issues uploading vertices if the hardware wants to flush when
        * we flush.
        */
-      draw_vertex_cache_reset_vertex_ids( vbuf->draw_context );
+      draw_reset_vertex_ids( vbuf->draw_context );
    }
 
    stage->tri = vbuf_first_tri;

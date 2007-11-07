@@ -290,9 +290,11 @@ static void vbuf_flush_elements( struct draw_stage *stage )
       break;
    case PIPE_PRIM_LINES:
       hwprim = PRIM3D_LINELIST;
+      assert(nr % 2 == 0);
       break;
    case PIPE_PRIM_TRIANGLES:
       hwprim = PRIM3D_TRILIST;
+      assert(nr % 3 == 0);
       break;
    default:
       assert(0);
@@ -365,7 +367,7 @@ static void vbuf_flush_vertices( struct draw_stage *stage )
        * issues uploading vertices if the hardware wants to flush when
        * we flush.
        */
-      draw_vertex_cache_reset_vertex_ids( vbuf->i915->draw );
+      draw_reset_vertex_ids( vbuf->i915->draw );
    }
    
    /* FIXME: handle failure */
