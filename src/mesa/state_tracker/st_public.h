@@ -70,7 +70,7 @@ void st_make_current(struct st_context *st,
                      struct st_framebuffer *draw,
                      struct st_framebuffer *read);
 
-void st_flush( struct st_context *st );
+void st_flush( struct st_context *st, uint pipeFlushFlags );
 
 void st_notify_swapbuffers(struct st_framebuffer *stfb);
 

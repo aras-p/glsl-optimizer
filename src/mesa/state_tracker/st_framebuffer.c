@@ -179,7 +179,7 @@ st_notify_swapbuffers(struct st_framebuffer *stfb)
    GET_CURRENT_CONTEXT(ctx);
 
    if (ctx && ctx->DrawBuffer == &stfb->Base) {
-      st_flush(ctx->st);
+      st_flush(ctx->st, 0x0);
    }
 }
 

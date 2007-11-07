@@ -47,7 +47,7 @@ static void i915_flush( struct pipe_context *pipe,
    /* Do we need to emit an MI_FLUSH command to flush the hardware
     * caches?
     */
-   if (flags) {
+   if (flags & (PIPE_FLUSH_RENDER_CACHE | PIPE_FLUSH_TEXTURE_CACHE)) {
       unsigned flush = MI_FLUSH;
       
       if (!(flags & PIPE_FLUSH_RENDER_CACHE))
@@ -67,6 +67,10 @@ static void i915_flush( struct pipe_context *pipe,
    /* If there are no flags, just flush pending commands to hardware:
     */
    FLUSH_BATCH();
+
+   if (flags & PIPE_FLUSH_WAIT) {
+      i915->pipe.winsys->wait_idle(i915->pipe.winsys, i915->pipe.private);
+   }
 }
 
 

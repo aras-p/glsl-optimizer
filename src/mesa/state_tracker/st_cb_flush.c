@@ -43,7 +43,7 @@
 #include "pipe/p_winsys.h"
 
 
-void st_flush( struct st_context *st )
+void st_flush( struct st_context *st, uint pipeFlushFlags )
 {
    GLframebuffer *fb = st->ctx->DrawBuffer;
 
@@ -53,7 +53,7 @@ void st_flush( struct st_context *st )
     * short-circuiting this, or perhaps pass an "optional" flag down
     * to the driver so that it can make the decision.
     */
-   st->pipe->flush( st->pipe, 0 );
+   st->pipe->flush( st->pipe, pipeFlushFlags );
 
    if (!fb)
       return;
@@ -83,7 +83,7 @@ void st_flush( struct st_context *st )
  */
 static void st_Flush(GLcontext *ctx)
 {
-   st_flush(ctx->st);
+   st_flush(ctx->st, 0x0);
 }
 
 
@@ -92,10 +92,7 @@ static void st_Flush(GLcontext *ctx)
  */
 static void st_Finish(GLcontext *ctx)
 {
-   struct st_context *st = ctx->st;
-
-   st_flush( st );
-   st->pipe->winsys->wait_idle( st->pipe->winsys, st->pipe->private );
+   st_flush(ctx->st, PIPE_FLUSH_WAIT);
 }
 
 

@@ -187,8 +187,9 @@
 /** 
  * Flush types:
  */
-#define PIPE_FLUSH_RENDER_CACHE  0x1
+#define PIPE_FLUSH_RENDER_CACHE   0x1
 #define PIPE_FLUSH_TEXTURE_CACHE  0x2
+#define PIPE_FLUSH_WAIT           0x4
 
 
 /**
