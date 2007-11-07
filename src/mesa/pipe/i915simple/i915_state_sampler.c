@@ -35,34 +35,6 @@
 #include "i915_state.h"
 
 
-static uint
-bitcount(uint k)
-{
-   uint count = 0;
-   while (k) {
-      if (k & 1)
-         count++;
-      k = k >> 1;
-   }
-   return count;
-}
-
-
-#if 0
-static boolean
-is_power_of_two_texture(const struct pipe_mipmap_tree *mt)
-{
-   if (bitcount(mt->width0) == 1 &&
-       bitcount(mt->height0) == 1 &&
-       bitcount(mt->depth0) == 1) {
-      return 1;
-   }
-   else
-      return 0;
-}
-#endif
-
-
 /**
  * Compute i915 texture sampling state.
  *
@@ -124,6 +96,7 @@ static void update_sampler(struct i915_context *i915,
    state[1] |= (unit << SS3_TEXTUREMAP_INDEX_SHIFT);
 }
 
+
 void i915_update_samplers( struct i915_context *i915 )
 {
    uint unit;
@@ -149,8 +122,6 @@ void i915_update_samplers( struct i915_context *i915 )
 
    i915->hardware_dirty |= I915_HW_SAMPLER;
 }
-
-
 
 
 static uint
@@ -204,10 +175,6 @@ translate_texture_format(uint pipeFormat)
 }
 
 
-#define I915_TEXREG_MS3        1
-#define I915_TEXREG_MS4        2
-
-
 static void
 i915_update_texture(struct i915_context *i915, uint unit,
                     uint state[6])
@@ -222,39 +189,11 @@ i915_update_texture(struct i915_context *i915, uint unit,
    assert(height);
    assert(depth);
 
-#if 0
-   if (i915->state.tex_buffer[unit] != NULL) {
-       driBOUnReference(i915->state.tex_buffer[unit]);
-       i915->state.tex_buffer[unit] = NULL;
-   }
-#endif
-
-   /* this reference does not seem to be needed.  In fact, when it's enabled
-    * we leak a lot of memory (try xdemos/wincopy).
-    */
-#if 0
-   {
-      /*struct pipe_buffer_handle *p =*/ driBOReference(mt->region->buffer);
-   }
-#endif
-
-#if 0
-   i915->state.tex_buffer[unit] = driBOReference(intelObj->mt->region->
-                                                 buffer);
-   i915->state.tex_offset[unit] =  intel_miptree_image_offset(intelObj->mt,
-                                                              0, intelObj->
-                                                              firstLevel);
-#endif
-
    format = translate_texture_format(mt->format);
    pitch = mt->pitch * mt->cpp;
 
    assert(format);
    assert(pitch);
-
-   /*
-   printf("texture format = 0x%x\n", format);
-   */
 
    /* MS3 state */
    state[0] =
@@ -270,7 +209,6 @@ i915_update_texture(struct i915_context *i915, uint unit,
        | ((num_levels * 4) << MS4_MAX_LOD_SHIFT)
        | ((depth - 1) << MS4_VOLUME_DEPTH_SHIFT));
 }
-
 
 
 void
