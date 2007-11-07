@@ -59,7 +59,7 @@ static void vbuf_flush_elements( struct draw_stage *stage );
 static void vbuf_flush_vertices( struct draw_stage *stage );
 
 
-#define VBUF_SIZE (64*1024)
+#define VBUF_SIZE (128*1024)
 #define IBUF_SIZE (16*1024)
 
 
@@ -107,15 +107,15 @@ overflow( void *map, void *ptr, unsigned bytes, unsigned bufsz )
 
 
 static INLINE void 
-check_space( struct vbuf_stage *vbuf )
+check_space( struct vbuf_stage *vbuf, unsigned nr )
 {
    if (overflow( vbuf->vertex_map, 
                  vbuf->vertex_ptr,  
-                 vbuf->vertex_size, 
+                 nr*vbuf->vertex_size, 
                  VBUF_SIZE ))
       vbuf_flush_vertices(&vbuf->stage);
 
-   if (vbuf->nr_elements + 4 > IBUF_SIZE / sizeof(ushort) )
+   if (vbuf->nr_elements + nr > IBUF_SIZE / sizeof(ushort) )
       vbuf_flush_elements(&vbuf->stage);
 }
 
@@ -197,7 +197,7 @@ static void vbuf_tri( struct draw_stage *stage,
    struct vbuf_stage *vbuf = vbuf_stage( stage );
    unsigned i;
 
-   check_space( vbuf );
+   check_space( vbuf, 3 );
 
    for (i = 0; i < 3; i++) {
       emit_vertex( vbuf, prim->v[i] );
@@ -213,7 +213,7 @@ static void vbuf_line(struct draw_stage *stage,
    struct vbuf_stage *vbuf = vbuf_stage( stage );
    unsigned i;
 
-   check_space( vbuf );
+   check_space( vbuf, 2 );
 
    for (i = 0; i < 2; i++) {
       emit_vertex( vbuf, prim->v[i] );
@@ -228,7 +228,7 @@ static void vbuf_point(struct draw_stage *stage,
 {
    struct vbuf_stage *vbuf = vbuf_stage( stage );
 
-   check_space( vbuf );
+   check_space( vbuf, 1 );
 
    emit_vertex( vbuf, prim->v[0] );
    
@@ -434,6 +434,8 @@ struct draw_stage *i915_draw_vbuf_stage( struct i915_context *i915 )
    vbuf->stage.tri = vbuf_first_tri;
    vbuf->stage.end = vbuf_end;
    vbuf->stage.reset_stipple_counter = reset_stipple_counter;
+
+   assert(IBUF_SIZE < UNDEFINED_VERTEX_ID);
 
    /* FIXME: free this memory on takedown */
    vbuf->element_map = malloc( IBUF_SIZE );
