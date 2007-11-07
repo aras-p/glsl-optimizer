@@ -99,11 +99,16 @@ void st_init_extensions(struct st_context *st)
    /*
     * Extensions that are supported by all Gallium drivers:
     */
+   ctx->Extensions.ARB_multisample = GL_TRUE; /* API support */
    ctx->Extensions.ARB_fragment_program = GL_TRUE;
+   ctx->Extensions.ARB_texture_border_clamp = GL_TRUE; /* XXX temp */
+   ctx->Extensions.ARB_texture_compression = GL_TRUE; /* API support only */
    ctx->Extensions.ARB_texture_cube_map = GL_TRUE;
    ctx->Extensions.ARB_texture_env_combine = GL_TRUE;
    ctx->Extensions.ARB_texture_env_crossbar = GL_TRUE;
    ctx->Extensions.ARB_texture_env_dot3 = GL_TRUE;
+   ctx->Extensions.ARB_texture_mirrored_repeat = GL_TRUE; /* XXX temp */
+
    ctx->Extensions.ARB_vertex_program = GL_TRUE;
    ctx->Extensions.ARB_vertex_buffer_object = GL_TRUE;
 
@@ -119,24 +124,27 @@ void st_init_extensions(struct st_context *st)
    ctx->Extensions.EXT_pixel_buffer_object = GL_TRUE;
    ctx->Extensions.EXT_point_parameters = GL_TRUE;
    ctx->Extensions.EXT_secondary_color = GL_TRUE;
+   ctx->Extensions.EXT_shadow_funcs = GL_TRUE; /* XXX temp */
    ctx->Extensions.EXT_stencil_wrap = GL_TRUE;
    ctx->Extensions.EXT_texture_env_add = GL_TRUE;
    ctx->Extensions.EXT_texture_env_combine = GL_TRUE;
    ctx->Extensions.EXT_texture_env_dot3 = GL_TRUE;
    ctx->Extensions.EXT_texture_lod_bias = GL_TRUE;
+   ctx->Extensions.EXT_texture_sRGB = GL_TRUE; /* XXX temp */
 
    ctx->Extensions.NV_blend_square = GL_TRUE;
    ctx->Extensions.NV_texgen_reflection = GL_TRUE;
 
+   ctx->Extensions.SGIS_generate_mipmap = GL_TRUE; /* XXX temp */
 
    /*
     * Extensions that depend on the driver/hardware:
     */
-   if (pipe->get_param(pipe, PIPE_CAP_MAX_RENDER_TARGETS) > 1) {
+   if (pipe->get_param(pipe, PIPE_CAP_MAX_RENDER_TARGETS) > 0) {
       ctx->Extensions.ARB_draw_buffers = GL_TRUE;
    }
 
-   if (pipe->get_param(pipe, PIPE_CAP_GLSL) > 1) {
+   if (pipe->get_param(pipe, PIPE_CAP_GLSL)) {
       ctx->Extensions.ARB_fragment_shader = GL_TRUE;
       ctx->Extensions.ARB_vertex_shader = GL_TRUE;
       ctx->Extensions.ARB_shader_objects = GL_TRUE;
@@ -153,12 +161,11 @@ void st_init_extensions(struct st_context *st)
       ctx->Extensions.ARB_multitexture = GL_TRUE;
    }
 
-   if (pipe->get_param(pipe, PIPE_CAP_TWO_SIDED_STENCIL) > 1) {
+   if (pipe->get_param(pipe, PIPE_CAP_TWO_SIDED_STENCIL)) {
       ctx->Extensions.ATI_separate_stencil = GL_TRUE;
    }
 
-   if (pipe->get_param(pipe, PIPE_CAP_S3TC) > 1) {
-      ctx->Extensions.ARB_texture_compression = GL_TRUE;
+   if (pipe->get_param(pipe, PIPE_CAP_S3TC)) {
       ctx->Extensions.EXT_texture_compression_s3tc = GL_TRUE;
    }
 
@@ -170,11 +177,11 @@ void st_init_extensions(struct st_context *st)
       ctx->Extensions.ARB_point_sprite = GL_TRUE;
    }
 
-   if (pipe->get_param(pipe, PIPE_CAP_OCCLUSION_QUERY) > 1) {
+   if (pipe->get_param(pipe, PIPE_CAP_OCCLUSION_QUERY)) {
       ctx->Extensions.ARB_occlusion_query = GL_TRUE;
    }
 
-   if (pipe->get_param(pipe, PIPE_CAP_TEXTURE_SHADOW_MAP) > 1) {
+   if (pipe->get_param(pipe, PIPE_CAP_TEXTURE_SHADOW_MAP)) {
       ctx->Extensions.ARB_depth_texture = GL_TRUE;
       ctx->Extensions.ARB_shadow = GL_TRUE;
       /*ctx->Extensions.ARB_shadow_ambient = GL_TRUE;*/
