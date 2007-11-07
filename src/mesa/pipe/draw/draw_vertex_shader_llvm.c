@@ -133,7 +133,7 @@ void draw_vertex_shader_queue_flush_llvm(struct draw_context *draw)
    gallivm_prog_exec(prog, inputs, outputs, consts,
                      draw->vs.queue_nr,
                      draw->vertex_shader->state->num_inputs,
-                     draw->vertex_info.num_attribs);
+                     draw->vertex_info.num_attribs - 2);
 
    /* store machine results */
    for (int i = 0; i < draw->vs.queue_nr; ++i) {
