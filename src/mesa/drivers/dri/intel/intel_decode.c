@@ -859,7 +859,7 @@ intel_decode(uint32_t *data, int count, uint32_t hw_offset, uint32_t devid)
     int index = 0;
     int failures = 0;
 
-    out = stdout;
+    out = stderr;
 
     while (index < count) {
 	switch ((data[index] & 0xe0000000) >> 29) {
