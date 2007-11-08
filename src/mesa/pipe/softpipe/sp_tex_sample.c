@@ -553,6 +553,50 @@ get_texel(struct tgsi_sampler *sampler,
 }
 
 
+/**
+ * Compare texcoord 'p' (aka R) against texture value 'rgba[0]'
+ * When we sampled the depth texture, the depth value was put into all
+ * RGBA channels.  We look at the red channel here.
+ */
+static INLINE void
+shadow_compare(uint compare_func,
+               float rgba[NUM_CHANNELS][QUAD_SIZE],
+               const float p[QUAD_SIZE],
+               uint j)
+{
+   int k;
+   switch (compare_func) {
+   case PIPE_FUNC_LESS:
+      k = p[j] < rgba[0][j];
+      break;
+   case PIPE_FUNC_LEQUAL:
+      k = p[j] <= rgba[0][j];
+      break;
+   case PIPE_FUNC_GREATER:
+      k = p[j] > rgba[0][j];
+      break;
+   case PIPE_FUNC_GEQUAL:
+      k = p[j] >= rgba[0][j];
+      break;
+   case PIPE_FUNC_EQUAL:
+      k = p[j] == rgba[0][j];
+      break;
+   case PIPE_FUNC_NOTEQUAL:
+      k = p[j] != rgba[0][j];
+      break;
+   case PIPE_FUNC_ALWAYS:
+      k = 1;
+      break;
+   case PIPE_FUNC_NEVER:
+      k = 0;
+      break;
+   default:
+      assert(0);
+   }
+
+   rgba[0][j] = rgba[1][j] = rgba[2][j] = (float) k;
+}
+
 
 /**
  * Common code for sampling 1D/2D/cube textures.
@@ -567,6 +611,7 @@ sp_get_samples_2d_common(struct tgsi_sampler *sampler,
                          float rgba[NUM_CHANNELS][QUAD_SIZE],
                          const unsigned faces[4])
 {
+   const uint compare_func = sampler->state->compare_func;
    unsigned level0, level1, j, imgFilter;
    int width, height;
    float levelBlend;
@@ -590,6 +635,9 @@ sp_get_samples_2d_common(struct tgsi_sampler *sampler,
          int x = nearest_texcoord(sampler->state->wrap_s, s[j], width);
          int y = nearest_texcoord(sampler->state->wrap_t, t[j], height);
          get_texel(sampler, faces[j], level0, x, y, 0, rgba, j);
+         if (sampler->state->compare_mode == PIPE_TEX_COMPARE_R_TO_TEXTURE) {
+            shadow_compare(compare_func, rgba, p, j);
+         }
 
          if (level0 != level1) {
             /* get texels from second mipmap level and blend */
@@ -598,6 +646,10 @@ sp_get_samples_2d_common(struct tgsi_sampler *sampler,
             x = x / 2;
             y = y / 2;
             get_texel(sampler, faces[j], level1, x, y, 0, rgba2, j);
+            if (sampler->state->compare_mode == PIPE_TEX_COMPARE_R_TO_TEXTURE){
+               shadow_compare(compare_func, rgba2, p, j);
+            }
+
             for (c = 0; c < NUM_CHANNELS; c++) {
                rgba[c][j] = LERP(levelBlend, rgba[c][j], rgba2[c][j]);
             }
@@ -614,6 +666,13 @@ sp_get_samples_2d_common(struct tgsi_sampler *sampler,
          get_texel(sampler, faces[j], level0, x1, y0, 0, tx, 1);
          get_texel(sampler, faces[j], level0, x0, y1, 0, tx, 2);
          get_texel(sampler, faces[j], level0, x1, y1, 0, tx, 3);
+         if (sampler->state->compare_mode == PIPE_TEX_COMPARE_R_TO_TEXTURE) {
+            shadow_compare(compare_func, tx, p, 0);
+            shadow_compare(compare_func, tx, p, 1);
+            shadow_compare(compare_func, tx, p, 2);
+            shadow_compare(compare_func, tx, p, 3);
+         }
+
          for (c = 0; c < 4; c++) {
             rgba[c][j] = lerp_2d(a, b, tx[c][0], tx[c][1], tx[c][2], tx[c][3]);
          }
@@ -629,6 +688,13 @@ sp_get_samples_2d_common(struct tgsi_sampler *sampler,
             get_texel(sampler, faces[j], level1, x1, y0, 0, tx, 1);
             get_texel(sampler, faces[j], level1, x0, y1, 0, tx, 2);
             get_texel(sampler, faces[j], level1, x1, y1, 0, tx, 3);
+            if (sampler->state->compare_mode == PIPE_TEX_COMPARE_R_TO_TEXTURE){
+               shadow_compare(compare_func, tx, p, 0);
+               shadow_compare(compare_func, tx, p, 1);
+               shadow_compare(compare_func, tx, p, 2);
+               shadow_compare(compare_func, tx, p, 3);
+            }
+
             for (c = 0; c < 4; c++) {
                rgba2[c][j] = lerp_2d(a, b,
                                      tx[c][0], tx[c][1], tx[c][2], tx[c][3]);
@@ -669,7 +735,7 @@ sp_get_samples_2d(struct tgsi_sampler *sampler,
                   float rgba[NUM_CHANNELS][QUAD_SIZE])
 {
    static const unsigned faces[4] = {0, 0, 0, 0};
-   sp_get_samples_2d_common(sampler, s, t, NULL, lodbias, rgba, faces);
+   sp_get_samples_2d_common(sampler, s, t, p, lodbias, rgba, faces);
 }
 
 
