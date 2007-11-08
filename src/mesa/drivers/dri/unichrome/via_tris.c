@@ -666,9 +666,11 @@ static void viaChooseRenderState(GLcontext *ctx)
    }
 
    if (flags & (ANY_FALLBACK_FLAGS|ANY_RASTER_FLAGS)) {
-      if (flags & DD_TRI_LIGHT_TWOSIDE)    index |= VIA_TWOSIDE_BIT;
+      if (ctx->Light.Enabled && ctx->Light.Model.TwoSide)
+         index |= VIA_TWOSIDE_BIT;
       if (flags & DD_TRI_OFFSET)           index |= VIA_OFFSET_BIT;
-      if (flags & DD_TRI_UNFILLED)         index |= VIA_UNFILLED_BIT;
+      if (ctx->Polygon.FrontMode != GL_FILL || ctx->Polygon.BackMode != GL_FILL)
+         index |= VIA_UNFILLED_BIT;
       if (flags & ANY_FALLBACK_FLAGS)      index |= VIA_FALLBACK_BIT;
 
       /* Hook in fallbacks for specific primitives.
