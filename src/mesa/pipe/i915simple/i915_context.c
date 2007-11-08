@@ -144,6 +144,32 @@ i915_get_param(struct pipe_context *pipe, int param)
 }
 
 
+static float
+i915_get_paramf(struct pipe_context *pipe, int param)
+{
+   switch (param) {
+   case PIPE_CAP_MAX_LINE_WIDTH:
+      /* fall-through */
+   case PIPE_CAP_MAX_LINE_WIDTH_AA:
+      return 7.5;
+
+   case PIPE_CAP_MAX_POINT_WIDTH:
+      /* fall-through */
+   case PIPE_CAP_MAX_POINT_WIDTH_AA:
+      return 255.0;
+
+   case PIPE_CAP_MAX_TEXTURE_ANISOTROPY:
+      return 0.0;
+
+   case PIPE_CAP_MAX_TEXTURE_LOD_BIAS:
+      return 16.0;
+
+   default:
+      return 0;
+   }
+}
+
+
 static void i915_destroy( struct pipe_context *pipe )
 {
    struct i915_context *i915 = i915_context( pipe );
@@ -301,6 +327,7 @@ struct pipe_context *i915_create( struct pipe_winsys *pipe_winsys,
    i915->pipe.destroy = i915_destroy;
    i915->pipe.is_format_supported = i915_is_format_supported;
    i915->pipe.get_param = i915_get_param;
+   i915->pipe.get_paramf = i915_get_paramf;
 
    i915->pipe.clear = i915_clear;
 

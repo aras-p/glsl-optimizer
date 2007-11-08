@@ -251,6 +251,30 @@ static int softpipe_get_param(struct pipe_context *pipe, int param)
    }
 }
 
+static float softpipe_get_paramf(struct pipe_context *pipe, int param)
+{
+   switch (param) {
+   case PIPE_CAP_MAX_LINE_WIDTH:
+      /* fall-through */
+   case PIPE_CAP_MAX_LINE_WIDTH_AA:
+      return 255.0; /* arbitrary */
+
+   case PIPE_CAP_MAX_POINT_WIDTH:
+      /* fall-through */
+   case PIPE_CAP_MAX_POINT_WIDTH_AA:
+      return 255.0; /* arbitrary */
+
+   case PIPE_CAP_MAX_TEXTURE_ANISOTROPY:
+      return 0.0;
+
+   case PIPE_CAP_MAX_TEXTURE_LOD_BIAS:
+      return 16.0; /* arbitrary */
+
+   default:
+      return 0;
+   }
+}
+
 struct pipe_context *softpipe_create( struct pipe_winsys *pipe_winsys,
 				      struct softpipe_winsys *softpipe_winsys )
 {
@@ -270,8 +294,8 @@ struct pipe_context *softpipe_create( struct pipe_winsys *pipe_winsys,
 
    /* queries */
    softpipe->pipe.is_format_supported = softpipe_is_format_supported;
-   //softpipe->pipe.max_texture_size = softpipe_max_texture_size;
    softpipe->pipe.get_param = softpipe_get_param;
+   softpipe->pipe.get_paramf = softpipe_get_paramf;
 
    /* state setters */
    softpipe->pipe.create_alpha_test_state = softpipe_create_alpha_test_state;

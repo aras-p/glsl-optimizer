@@ -42,6 +42,11 @@ static int min(int a, int b)
    return (a < b) ? a : b;
 }
 
+static int max(int a, int b)
+{
+   return (a > b) ? a : b;
+}
+
 static int clamp(int a, int min, int max)
 {
    if (a < min)
@@ -85,6 +90,22 @@ void st_init_limits(struct st_context *st)
    c->MaxDrawBuffers
       = clamp(pipe->get_param(pipe, PIPE_CAP_MAX_RENDER_TARGETS),
               1, MAX_DRAW_BUFFERS);
+
+   c->MaxLineWidth
+      = max(1.0, pipe->get_paramf(pipe, PIPE_CAP_MAX_LINE_WIDTH));
+   c->MaxLineWidthAA
+      = max(1.0, pipe->get_paramf(pipe, PIPE_CAP_MAX_LINE_WIDTH_AA));
+
+   c->MaxPointSize
+      = max(1.0, pipe->get_paramf(pipe, PIPE_CAP_MAX_POINT_WIDTH));
+   c->MaxPointSizeAA
+      = max(1.0, pipe->get_paramf(pipe, PIPE_CAP_MAX_POINT_WIDTH_AA));
+
+   c->MaxTextureMaxAnisotropy
+      = max(2.0, pipe->get_paramf(pipe, PIPE_CAP_MAX_TEXTURE_ANISOTROPY));
+
+   c->MaxTextureLodBias
+      = pipe->get_paramf(pipe, PIPE_CAP_MAX_TEXTURE_LOD_BIAS);
 }
 
 
