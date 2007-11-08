@@ -50,8 +50,44 @@ static unsigned translate_format( unsigned format )
 
 static unsigned translate_depth_format( unsigned zformat )
 {
-   assert(zformat == PIPE_FORMAT_S8_Z24);
-   return DEPTH_FRMT_24_FIXED_8_OTHER;
+   switch (zformat) {
+   case PIPE_FORMAT_S8_Z24:
+      return DEPTH_FRMT_24_FIXED_8_OTHER;
+   case PIPE_FORMAT_U_Z16:
+      return DEPTH_FRMT_16_FIXED;
+   default:
+      assert(0);
+      return 0;
+   }
+}
+
+
+/**
+ * Examine framebuffer state to determine width, height.
+ */
+static boolean
+framebuffer_size(const struct pipe_framebuffer_state *fb,
+                 uint *width, uint *height)
+{
+   if (fb->cbufs[0]) {
+      *width = fb->cbufs[0]->width;
+      *height = fb->cbufs[0]->height;
+      return TRUE;
+   }
+   else if (fb->zbuf) {
+      *width = fb->zbuf->width;
+      *height = fb->zbuf->height;
+      return TRUE;
+   }
+   else if (fb->sbuf) {
+      *width = fb->sbuf->width;
+      *height = fb->sbuf->height;
+      return TRUE;
+   }
+   else {
+      *width = *height = 0;
+      return FALSE;
+   }
 }
 
 
@@ -207,9 +243,14 @@ i915_emit_hardware_state(struct i915_context *i915 )
       }
    
       {
-	 unsigned cformat = translate_format( i915->framebuffer.cbufs[0]->format );
-	 unsigned zformat = 0;
+	 unsigned cformat, zformat = 0;
       
+	 if (i915->framebuffer.cbufs[0])
+            cformat = i915->framebuffer.cbufs[0]->format;
+         else
+            cformat = PIPE_FORMAT_U_A8_R8_G8_B8; /* arbitrary */
+         cformat = translate_format(cformat);
+
 	 if (i915->framebuffer.zbuf) 
 	    zformat = translate_depth_format( i915->framebuffer.zbuf->format );
 
@@ -322,8 +363,9 @@ i915_emit_hardware_state(struct i915_context *i915 )
    /* drawing surface size */
    /* 6 dwords, 0 relocs */
    {
-      int w = i915->framebuffer.cbufs[0]->width;
-      int h = i915->framebuffer.cbufs[0]->height;
+      uint w, h;
+      boolean k = framebuffer_size(&i915->framebuffer, &w, &h);
+      assert(k);
 
       OUT_BATCH(_3DSTATE_DRAW_RECT_CMD);
       OUT_BATCH(0);
@@ -336,4 +378,3 @@ i915_emit_hardware_state(struct i915_context *i915 )
 
    i915->hardware_dirty = 0;
 }
-
