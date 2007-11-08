@@ -913,8 +913,7 @@ check_end_texture_render(GLcontext *ctx, struct gl_framebuffer *fb)
       GLuint i;
       for (i = 0; i < BUFFER_COUNT; i++) {
          struct gl_renderbuffer_attachment *att = fb->Attachment + i;
-         struct gl_texture_object *texObj = att->Texture;
-         if (texObj) {
+         if (att->Texture && att->Renderbuffer) {
             ctx->Driver.FinishRenderTexture(ctx, att);
          }
       }
