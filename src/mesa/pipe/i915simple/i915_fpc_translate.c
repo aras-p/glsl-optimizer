@@ -844,10 +844,6 @@ i915_translate_instruction(struct i915_fp_compile *p,
       emit_tex(p, inst, T0_TEXLDB);
       break;
 
-   case TGSI_OPCODE_TXP:
-      emit_tex(p, inst, T0_TEXLDP);
-      break;
-
    case TGSI_OPCODE_XPD:
       /* Cross product:
        *      result.x = src0.y * src1.z - src0.z * src1.y;

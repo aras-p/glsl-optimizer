@@ -265,7 +265,7 @@ struct tgsi_immediate_float32
 /* TGSI_OPCODE_SUB */
 #define TGSI_OPCODE_TEX                 52
 #define TGSI_OPCODE_TXD                 53
-#define TGSI_OPCODE_TXP                 132
+/* TGSI_OPCODE_TXP */
 #define TGSI_OPCODE_UP2H                54
 #define TGSI_OPCODE_UP2US               55
 #define TGSI_OPCODE_UP4B                56
@@ -909,7 +909,7 @@ struct tgsi_immediate_float32
 /* TGSI_OPCODE_TEXKILL */
 /* TGSI_OPCODE_TEXLD */
 #define TGSI_OPCODE_TEXLDB              TGSI_OPCODE_TXB
-#define TGSI_OPCODE_TEXLDP              TGSI_OPCODE_TXP
+/* TGSI_OPCODE_TEXLDP */
 /* CMP - use TGSI_OPCODE_CND0 */
 #define TGSI_OPCODE_DP2ADD              TGSI_OPCODE_DP2A
 
@@ -1100,10 +1100,10 @@ struct tgsi_immediate_float32
 /* TGSI_OPCODE_MOVA */
 /* TGSI_OPCODE_LOGP */
 
-#define TGSI_OPCODE_KIL                 133  /* unpredicated kill */
-#define TGSI_OPCODE_END                 134  /* aka HALT */
+#define TGSI_OPCODE_KIL                 132  /* unpredicated kill */
+#define TGSI_OPCODE_END                 133  /* aka HALT */
 
-#define TGSI_OPCODE_LAST                135
+#define TGSI_OPCODE_LAST                134
 
 #define TGSI_SAT_NONE            0  /* do not saturate */
 #define TGSI_SAT_ZERO_ONE        1  /* clamp to [0,1] */
