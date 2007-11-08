@@ -72,7 +72,7 @@ void st_flush( struct st_context *st, uint pipeFlushFlags )
       /* Hook for copying "fake" frontbuffer if necessary:
        */
       st->pipe->winsys->flush_frontbuffer( st->pipe->winsys, front_surf,
-                                           st->pipe->private );
+                                           st->pipe->priv );
       st->flags.frontbuffer_dirty = 0;
    }
 }

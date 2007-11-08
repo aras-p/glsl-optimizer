@@ -43,7 +43,7 @@ struct pipe_state_cache;
 struct pipe_context {
    struct pipe_winsys *winsys;
 
-   void *private;  /** context private data (for DRI for example) */
+   void *priv;  /** context private data (for DRI for example) */
 
    void (*destroy)( struct pipe_context * );
 

@@ -212,7 +212,7 @@ intelCreateContext(const __GLcontextModes * visual,
       }
    }
 
-   pipe->private = intel;
+   pipe->priv = intel;
 
    intel->st = st_create_context(pipe, visual, st_share);
 
