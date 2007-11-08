@@ -158,7 +158,8 @@ xm_buffer_get_subdata(struct pipe_winsys *pws, struct pipe_buffer_handle *buf,
 
 static void
 xm_flush_frontbuffer(struct pipe_winsys *pws,
-                     struct pipe_surface *surf )
+                     struct pipe_surface *surf,
+                     void *context_private)
 {
    /* The Xlib driver's front color surfaces are actually X Windows so
     * this flush is a no-op.
