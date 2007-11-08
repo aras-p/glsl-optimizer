@@ -35,9 +35,9 @@
 #include "i915_reg.h"
 #include "i915_batch.h"
 
-/* There will be actual work to do here.  In future we may want a
- * fence-like interface instead of finish, and perhaps flush will take
- * flags to indicate what type of flush is required.
+
+/**
+ * In future we may want a fence-like interface instead of finish.
  */
 static void i915_flush( struct pipe_context *pipe,
 			unsigned flags )
