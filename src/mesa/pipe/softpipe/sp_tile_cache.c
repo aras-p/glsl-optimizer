@@ -126,7 +126,7 @@ void
 sp_tile_cache_set_surface(struct softpipe_tile_cache *tc,
                           struct pipe_surface *ps)
 {
-   tc->surface = ps;
+   pipe_surface_reference(&tc->surface, ps);
 }
 
 
