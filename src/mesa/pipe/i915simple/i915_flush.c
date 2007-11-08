@@ -69,7 +69,7 @@ static void i915_flush( struct pipe_context *pipe,
    FLUSH_BATCH();
 
    if (flags & PIPE_FLUSH_WAIT) {
-      i915->pipe.winsys->wait_idle(i915->pipe.winsys, i915->pipe.private);
+      i915->winsys->batch_finish(i915->winsys);
    }
 }
 

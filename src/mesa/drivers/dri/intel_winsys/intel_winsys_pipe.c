@@ -157,20 +157,6 @@ intel_user_buffer_create(struct pipe_winsys *winsys, void *ptr, unsigned bytes)
 }
 
 
-static void
-intel_wait_idle( struct pipe_winsys *winsys, void *context_private )
-{
-   struct intel_context *intel = (struct intel_context *) context_private;
-
-   if (intel->batch->last_fence) {
-      driFenceFinish(intel->batch->last_fence, 
-		     DRM_FENCE_TYPE_EXE | DRM_I915_FENCE_TYPE_RW, GL_FALSE);
-      driFenceUnReference(intel->batch->last_fence);
-      intel->batch->last_fence = NULL;
-   }
-}
-
-
 /* The state tracker (should!) keep track of whether the fake
  * frontbuffer has been touched by any rendering since the last time
  * we copied its contents to the real frontbuffer.  Our task is easy:
@@ -311,7 +297,6 @@ intel_create_pipe_winsys( int fd )
    iws->winsys.buffer_subdata = intel_buffer_subdata;
    iws->winsys.buffer_get_subdata = intel_buffer_get_subdata;
    iws->winsys.flush_frontbuffer = intel_flush_frontbuffer;
-   iws->winsys.wait_idle = intel_wait_idle;
    iws->winsys.printf = intel_printf;
    iws->winsys.get_name = intel_get_name;
    iws->winsys.region_alloc = intel_i915_region_alloc;

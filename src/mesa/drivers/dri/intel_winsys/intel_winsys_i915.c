@@ -120,6 +120,13 @@ static void intel_i915_batch_flush( struct i915_winsys *sws )
 }
 
 
+static void intel_i915_batch_finish( struct i915_winsys *sws )
+{
+   struct intel_context *intel = intel_i915_winsys(sws)->intel;
+   intel_batchbuffer_finish( intel->batch );
+}
+
+
 /**
  * Create i915 hardware rendering context.
  */
@@ -136,6 +143,7 @@ intel_create_i915simple( struct intel_context *intel,
    iws->winsys.batch_dword = intel_i915_batch_dword;
    iws->winsys.batch_reloc = intel_i915_batch_reloc;
    iws->winsys.batch_flush = intel_i915_batch_flush;
+   iws->winsys.batch_finish = intel_i915_batch_finish;
    iws->intel = intel;
 
    /* Create the i915simple context:

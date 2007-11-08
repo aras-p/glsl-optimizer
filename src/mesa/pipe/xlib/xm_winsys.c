@@ -167,11 +167,6 @@ xm_flush_frontbuffer(struct pipe_winsys *pws,
     */
 }
 
-static void
-xm_wait_idle(struct pipe_winsys *pws, void *context_private)
-{
-   /* no-op */
-}
 
 static void
 xm_printf(struct pipe_winsys *pws, const char *fmtString, ...)
@@ -343,7 +338,6 @@ xmesa_get_pipe_winsys(void)
       ws->surface_release = xm_surface_release;
 
       ws->flush_frontbuffer = xm_flush_frontbuffer;
-      ws->wait_idle = xm_wait_idle;
       ws->printf = xm_printf;
       ws->get_name = xm_get_name;
    }

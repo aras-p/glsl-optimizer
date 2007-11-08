@@ -63,9 +63,6 @@ struct pipe_winsys
    /** Returns name of this winsys interface */
    const char *(*get_name)( struct pipe_winsys *sws );
 
-   /** Wait for any buffered rendering to finish */
-   void (*wait_idle)( struct pipe_winsys *sws, void *context_private );
-
    /**
     * Do any special operations to ensure frontbuffer contents are
     * displayed, eg copy fake frontbuffer.
