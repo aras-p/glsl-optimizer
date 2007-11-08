@@ -311,11 +311,13 @@ void
 intel_batchbuffer_finish(struct intel_batchbuffer *batch)
 {
    struct _DriFenceObject *fence = intel_batchbuffer_flush(batch);
-   driFenceReference(fence);
-   driFenceFinish(fence,
-                  DRM_FENCE_TYPE_EXE | DRM_I915_FENCE_TYPE_RW,
-                  GL_FALSE);
-   driFenceUnReference(fence);
+   if (fence) {
+      driFenceReference(fence);
+      driFenceFinish(fence,
+                     DRM_FENCE_TYPE_EXE | DRM_I915_FENCE_TYPE_RW,
+                     GL_FALSE);
+      driFenceUnReference(fence);
+   }
 }
 
 
