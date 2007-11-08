@@ -90,24 +90,6 @@ static unsigned translate_mip_filter( unsigned filter )
    }
 }
 
-static unsigned translate_compare_func(unsigned func)
-{
-   switch (func) {
-   case PIPE_FUNC_NEVER:
-   case PIPE_FUNC_LESS:
-   case PIPE_FUNC_EQUAL:
-   case PIPE_FUNC_LEQUAL:
-   case PIPE_FUNC_GREATER:
-   case PIPE_FUNC_NOTEQUAL:
-   case PIPE_FUNC_GEQUAL:
-   case PIPE_FUNC_ALWAYS:
-      return 0;
-   default:
-      assert(0);
-      return 0;
-   }
-}
-
 
 /* None of this state is actually used for anything yet.
  */
@@ -247,7 +229,7 @@ i915_create_sampler_state(struct pipe_context *pipe,
    if (sampler->compare_mode == PIPE_TEX_COMPARE_R_TO_TEXTURE) 
    {
       cso->state[0] |= (SS2_SHADOW_ENABLE |
-                        translate_compare_func(sampler->compare_func));
+                        i915_translate_compare_func(sampler->compare_func));
 
       minFilt = FILTER_4X4_FLAT;
       magFilt = FILTER_4X4_FLAT;
