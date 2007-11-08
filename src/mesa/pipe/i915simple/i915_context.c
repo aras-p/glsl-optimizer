@@ -130,7 +130,7 @@ i915_get_param(struct pipe_context *pipe, int param)
    case PIPE_CAP_OCCLUSION_QUERY:
       return 0;
    case PIPE_CAP_TEXTURE_SHADOW_MAP:
-      return 0;
+      return 1;
    case PIPE_CAP_MAX_TEXTURE_2D_LEVELS:
       return 11; /* max 1024x1024 */
    case PIPE_CAP_MAX_TEXTURE_3D_LEVELS:
