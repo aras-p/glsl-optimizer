@@ -158,7 +158,7 @@ i915_get_paramf(struct pipe_context *pipe, int param)
       return 255.0;
 
    case PIPE_CAP_MAX_TEXTURE_ANISOTROPY:
-      return 0.0;
+      return 4.0;
 
    case PIPE_CAP_MAX_TEXTURE_LOD_BIAS:
       return 16.0;
