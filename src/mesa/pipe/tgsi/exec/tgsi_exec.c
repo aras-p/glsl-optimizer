@@ -1253,12 +1253,14 @@ exec_tex(struct tgsi_exec_machine *mach,
 
       FETCH(&r[0], 0, CHAN_X);
       FETCH(&r[1], 0, CHAN_Y);
+      FETCH(&r[2], 0, CHAN_Z);
 
       switch (inst->FullSrcRegisters[0].SrcRegisterExtSwz.ExtDivide) {
       case TGSI_EXTSWIZZLE_W:
-         FETCH(&r[2], 0, CHAN_W);
-         micro_div( &r[0], &r[0], &r[2] );
-         micro_div( &r[1], &r[1], &r[2] );
+         FETCH(&r[3], 0, CHAN_W);
+         micro_div( &r[0], &r[0], &r[3] );
+         micro_div( &r[1], &r[1], &r[3] );
+         micro_div( &r[2], &r[2], &r[3] );
          break;
 
       case TGSI_EXTSWIZZLE_ONE:
@@ -1269,15 +1271,15 @@ exec_tex(struct tgsi_exec_machine *mach,
       }
 
       if (biasLod) {
-         FETCH(&r[2], 0, CHAN_W);
-         lodBias = r[2].f[0];
+         FETCH(&r[3], 0, CHAN_W);
+         lodBias = r[3].f[0];
       }
       else
          lodBias = 0.0;
 
       fetch_texel(&mach->Samplers[unit],
-                  &r[0], &r[1], NULL, lodBias,
-                  &r[0], &r[1], &r[2], &r[3]);
+                  &r[0], &r[1], &r[2], lodBias,  /* inputs */
+                  &r[0], &r[1], &r[2], &r[3]);  /* outputs */
       break;
 
    case TGSI_TEXTURE_3D:
