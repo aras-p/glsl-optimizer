@@ -25,7 +25,6 @@
  * 
  **************************************************************************/
 
-//#include "main/imports.h"	/* CALLOC */
 #include "i915_context.h"
 #include "i915_winsys.h"
 #include "i915_state.h"
