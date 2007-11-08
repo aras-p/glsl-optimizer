@@ -30,12 +30,9 @@
   *   Keith Whitwell <keith@tungstengraphics.com>
   */
 
-#include "pipe/p_util.h"
 #include "draw_private.h"
 #include "draw_context.h"
-#include "draw_prim.h"
 
-#include "pipe/tgsi/exec/tgsi_core.h"
 
 
 #define RP_NONE  0
@@ -150,7 +147,10 @@ static struct prim_header *get_queued_prim( struct draw_context *draw,
 
 
 
-
+/**
+ * Add a point to the primitive queue.
+ * \param i0  index into user's vertex arrays
+ */
 static void do_point( struct draw_context *draw,
 		      unsigned i0 )
 {
@@ -163,6 +163,11 @@ static void do_point( struct draw_context *draw,
 }
 
 
+/**
+ * Add a line to the primitive queue.
+ * \param i0  index into user's vertex arrays
+ * \param i1  index into user's vertex arrays
+ */
 static void do_line( struct draw_context *draw,
 		     boolean reset_stipple,
 		     unsigned i0,
@@ -177,6 +182,9 @@ static void do_line( struct draw_context *draw,
    prim->v[1] = draw->vcache.get_vertex( draw, i1 );
 }
 
+/**
+ * Add a triangle to the primitive queue.
+ */
 static void do_triangle( struct draw_context *draw,
 			 unsigned i0,
 			 unsigned i1,
