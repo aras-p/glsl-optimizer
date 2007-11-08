@@ -34,11 +34,7 @@
  */
 
 
-#include "pipe/p_defines.h"
-#include "pipe/p_util.h"
-
 #include "pipe/draw/draw_private.h"
-#include "pipe/draw/draw_context.h"
 #include "pipe/draw/draw_vertex.h"
 
 
@@ -86,6 +82,8 @@ draw_compute_vertex_size(struct vertex_info *vinfo)
          assert(0);
       }
    }
+
+   assert(vinfo->size * 4 <= MAX_VERTEX_SIZE);
 }
 
 
