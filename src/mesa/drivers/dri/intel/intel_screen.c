@@ -655,21 +655,34 @@ intelCreateBuffer(__DRIscreenPrivate * driScrnPriv,
 	 }
       }
 
-      if (mesaVis->depthBits == 24 && mesaVis->stencilBits == 8) {
-         /* combined depth/stencil buffer */
-         struct intel_renderbuffer *depthStencilRb
-            = intel_create_renderbuffer(GL_DEPTH24_STENCIL8_EXT,
-                                        screen->width, screen->height,
-                                        screen->depth.offset,
-                                        screen->depth.pitch,
-                                        screen->cpp,    /* 4! */
-                                        screen->depth.map);
-         intel_set_span_functions(&depthStencilRb->Base);
-         /* note: bind RB to two attachment points */
-         _mesa_add_renderbuffer(&intel_fb->Base, BUFFER_DEPTH,
-				&depthStencilRb->Base);
-         _mesa_add_renderbuffer(&intel_fb->Base, BUFFER_STENCIL,
-				&depthStencilRb->Base);
+      if (mesaVis->depthBits == 24) {
+	 if (mesaVis->stencilBits == 8) {
+	    /* combined depth/stencil buffer */
+	    struct intel_renderbuffer *depthStencilRb
+	       = intel_create_renderbuffer(GL_DEPTH24_STENCIL8_EXT,
+					   screen->width, screen->height,
+					   screen->depth.offset,
+					   screen->depth.pitch,
+					   screen->cpp,    /* 4! */
+					   screen->depth.map);
+	    intel_set_span_functions(&depthStencilRb->Base);
+	    /* note: bind RB to two attachment points */
+	    _mesa_add_renderbuffer(&intel_fb->Base, BUFFER_DEPTH,
+				   &depthStencilRb->Base);
+	    _mesa_add_renderbuffer(&intel_fb->Base, BUFFER_STENCIL,
+				   &depthStencilRb->Base);
+	 } else {
+	    struct intel_renderbuffer *depthRb
+	       = intel_create_renderbuffer(GL_DEPTH_COMPONENT24,
+					   screen->width, screen->height,
+					   screen->depth.offset,
+					   screen->depth.pitch,
+					   screen->cpp,    /* 4! */
+					   screen->depth.map);
+	    intel_set_span_functions(&depthRb->Base);
+	    _mesa_add_renderbuffer(&intel_fb->Base, BUFFER_DEPTH,
+				   &depthRb->Base);
+	 }
       }
       else if (mesaVis->depthBits == 16) {
          /* just 16-bit depth buffer, no hw stencil */
