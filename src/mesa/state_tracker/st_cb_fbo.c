@@ -52,24 +52,15 @@
 
 
 /**
- * gl_renderbuffer::AllocStorage()
+ * Compute the renderbuffer's Red/Green/EtcBit fields from the pipe format.
  */
-static GLboolean
-st_renderbuffer_alloc_storage(GLcontext * ctx, struct gl_renderbuffer *rb,
-                              GLenum internalFormat,
-                              GLuint width, GLuint height)
+static int
+init_renderbuffer_bits(struct st_renderbuffer *strb, uint pipeFormat)
 {
-   struct pipe_context *pipe = ctx->st->pipe;
-   struct st_renderbuffer *strb = st_renderbuffer(rb);
-   const uint pipeFormat
-      = st_choose_pipe_format(pipe, internalFormat, GL_NONE, GL_NONE);
    struct pipe_format_info info;
-   GLuint cpp;
-   GLbitfield flags = PIPE_SURFACE_FLAG_RENDER; /* want to render to surface */
 
    if (!st_get_format_info( pipeFormat, &info )) {
       assert( 0 );
-      return GL_FALSE;
    }
 
    strb->Base._ActualFormat = info.base_format;
@@ -81,9 +72,26 @@ st_renderbuffer_alloc_storage(GLcontext * ctx, struct gl_renderbuffer *rb,
    strb->Base.StencilBits = info.stencil_bits;
    strb->Base.DataType = st_format_datatype(pipeFormat);
 
-   assert(strb->Base.DataType);
+   return info.size;
+}
 
-   cpp = info.size;
+
+/**
+ * gl_renderbuffer::AllocStorage()
+ */
+static GLboolean
+st_renderbuffer_alloc_storage(GLcontext * ctx, struct gl_renderbuffer *rb,
+                              GLenum internalFormat,
+                              GLuint width, GLuint height)
+{
+   struct pipe_context *pipe = ctx->st->pipe;
+   struct st_renderbuffer *strb = st_renderbuffer(rb);
+   const uint pipeFormat
+      = st_choose_pipe_format(pipe, internalFormat, GL_NONE, GL_NONE);
+   GLuint cpp;
+   GLbitfield flags = PIPE_SURFACE_FLAG_RENDER; /* want to render to surface */
+
+   cpp = init_renderbuffer_bits(strb, pipeFormat);
 
    if (strb->surface && strb->surface->format != pipeFormat) {
       /* need to change surface types, free this surface */
@@ -304,6 +312,8 @@ st_render_texture(GLcontext *ctx,
                                          att->TextureLevel,
                                          att->Zoffset);
    assert(strb->surface);
+
+   init_renderbuffer_bits(strb, mt->format);
 
    /*
    printf("RENDER TO TEXTURE obj=%p mt=%p surf=%p  %d x %d\n",
