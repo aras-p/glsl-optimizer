@@ -77,30 +77,24 @@ color_value(GLuint pipeFormat, const GLfloat color[4])
 }
  
 
-static GLuint
+static uint
 depth_value(GLuint pipeFormat, GLfloat value)
 {
-   GLuint val;
    switch (pipeFormat) {
    case PIPE_FORMAT_U_Z16:
-      val = (GLuint) (value * 0xffffff);
-      break;
+      return (uint) (value * 0xffff);
    case PIPE_FORMAT_U_Z32:
       /* special-case to avoid overflow */
       if (value == 1.0)
-         val = 0xffffffff;
+         return 0xffffffff;
       else
-         val = (GLuint) (value * 0xffffffff);
-      break;
+         return (uint) (value * 0xffffffff);
    case PIPE_FORMAT_S8_Z24:
-   /*case PIPE_FORMAT_Z24_S8:*/
-      val = (GLuint) (value * 0xffffff);
-      break;
+      return (uint) (value * 0xffffff);
    default:
-      val = 0;
       assert(0);
+      return 0;
    }
-   return val;
 }
 
 
@@ -480,7 +474,7 @@ clear_depth_buffer(GLcontext *ctx, struct gl_renderbuffer *rb)
    }
    else {
       /* simple clear of whole buffer */
-      GLuint clearValue = depth_value(strb->surface->format, ctx->Depth.Clear);
+      uint clearValue = depth_value(strb->surface->format, ctx->Depth.Clear);
       ctx->st->pipe->clear(ctx->st->pipe, strb->surface, clearValue);
    }
 }
