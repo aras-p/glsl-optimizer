@@ -60,6 +60,10 @@ static void draw_prim_queue_flush( struct draw_context *draw )
    struct draw_stage *first = draw->pipeline.first;
    unsigned i;
 
+   if (0)
+      printf("Flushing with %d prims, %d verts\n",
+             draw->pq.queue_nr, draw->vs.queue_nr);
+
    /* Make sure all vertices are available:
     */
    if (draw->vs.queue_nr)
@@ -137,10 +141,12 @@ static struct prim_header *get_queued_prim( struct draw_context *draw,
 //      fprintf(stderr, "v");
       draw_do_flush( draw, DRAW_FLUSH_VERTEX_CACHE_INVALIDATE );
    }
-   else if (draw->pq.queue_nr + 1 >= PRIM_QUEUE_LENGTH) {
+   else if (draw->pq.queue_nr == PRIM_QUEUE_LENGTH) {
 //      fprintf(stderr, "p");
       draw_do_flush( draw, DRAW_FLUSH_PRIM_QUEUE );
    }
+
+   assert(draw->pq.queue_nr < PRIM_QUEUE_LENGTH);
 
    return &draw->pq.queue[draw->pq.queue_nr++];
 }
