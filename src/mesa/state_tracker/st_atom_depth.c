@@ -41,10 +41,10 @@
 
 
 /**
- * Convert GLenum stencil func tokens to pipe tokens.
+ * Convert an OpenGL compare mode to a pipe tokens.
  */
-static GLuint
-gl_stencil_func_to_sp(GLenum func)
+GLuint
+st_compare_func_to_pipe(GLenum func)
 {
    /* Same values, just biased */
    assert(PIPE_FUNC_NEVER == GL_NEVER - GL_NEVER);
@@ -65,7 +65,7 @@ gl_stencil_func_to_sp(GLenum func)
  * Convert GLenum stencil op tokens to pipe tokens.
  */
 static GLuint
-gl_stencil_op_to_sp(GLenum func)
+gl_stencil_op_to_pipe(GLenum func)
 {
    switch (func) {
    case GL_KEEP:
@@ -85,31 +85,10 @@ gl_stencil_op_to_sp(GLenum func)
    case GL_INVERT:
       return PIPE_STENCIL_OP_INVERT;
    default:
-      assert("invalid GL token in gl_stencil_op_to_sp()" == NULL);
+      assert("invalid GL token in gl_stencil_op_to_pipe()" == NULL);
       return 0;
    }
 }
-
-/**
- * Convert GLenum depth func tokens to pipe tokens.
- */
-static GLuint
-gl_depth_func_to_sp(GLenum func)
-{
-   /* Same values, just biased */
-   assert(PIPE_FUNC_NEVER == GL_NEVER - GL_NEVER);
-   assert(PIPE_FUNC_LESS == GL_LESS - GL_NEVER);
-   assert(PIPE_FUNC_EQUAL == GL_EQUAL - GL_NEVER);
-   assert(PIPE_FUNC_LEQUAL == GL_LEQUAL - GL_NEVER);
-   assert(PIPE_FUNC_GREATER == GL_GREATER - GL_NEVER);
-   assert(PIPE_FUNC_NOTEQUAL == GL_NOTEQUAL - GL_NEVER);
-   assert(PIPE_FUNC_GEQUAL == GL_GEQUAL - GL_NEVER);
-   assert(PIPE_FUNC_ALWAYS == GL_ALWAYS - GL_NEVER);
-   assert(func >= GL_NEVER);
-   assert(func <= GL_ALWAYS);
-   return func - GL_NEVER;
-}
-
 
 static void
 update_depth_stencil(struct st_context *st)
@@ -121,7 +100,7 @@ update_depth_stencil(struct st_context *st)
 
    depth_stencil.depth.enabled = st->ctx->Depth.Test;
    depth_stencil.depth.writemask = st->ctx->Depth.Mask;
-   depth_stencil.depth.func = gl_depth_func_to_sp(st->ctx->Depth.Func);
+   depth_stencil.depth.func = st_compare_func_to_pipe(st->ctx->Depth.Func);
    depth_stencil.depth.clear = st->ctx->Depth.Clear;
 
    if (st->ctx->Query.CurrentOcclusionObject &&
@@ -130,19 +109,19 @@ update_depth_stencil(struct st_context *st)
 
    if (st->ctx->Stencil.Enabled) {
       depth_stencil.stencil.front_enabled = 1;
-      depth_stencil.stencil.front_func = gl_stencil_func_to_sp(st->ctx->Stencil.Function[0]);
-      depth_stencil.stencil.front_fail_op = gl_stencil_op_to_sp(st->ctx->Stencil.FailFunc[0]);
-      depth_stencil.stencil.front_zfail_op = gl_stencil_op_to_sp(st->ctx->Stencil.ZFailFunc[0]);
-      depth_stencil.stencil.front_zpass_op = gl_stencil_op_to_sp(st->ctx->Stencil.ZPassFunc[0]);
+      depth_stencil.stencil.front_func = st_compare_func_to_pipe(st->ctx->Stencil.Function[0]);
+      depth_stencil.stencil.front_fail_op = gl_stencil_op_to_pipe(st->ctx->Stencil.FailFunc[0]);
+      depth_stencil.stencil.front_zfail_op = gl_stencil_op_to_pipe(st->ctx->Stencil.ZFailFunc[0]);
+      depth_stencil.stencil.front_zpass_op = gl_stencil_op_to_pipe(st->ctx->Stencil.ZPassFunc[0]);
       depth_stencil.stencil.ref_value[0] = st->ctx->Stencil.Ref[0] & 0xff;
       depth_stencil.stencil.value_mask[0] = st->ctx->Stencil.ValueMask[0] & 0xff;
       depth_stencil.stencil.write_mask[0] = st->ctx->Stencil.WriteMask[0] & 0xff;
       if (st->ctx->Stencil.TestTwoSide) {
          depth_stencil.stencil.back_enabled = 1;
-         depth_stencil.stencil.back_func = gl_stencil_func_to_sp(st->ctx->Stencil.Function[1]);
-         depth_stencil.stencil.back_fail_op = gl_stencil_op_to_sp(st->ctx->Stencil.FailFunc[1]);
-         depth_stencil.stencil.back_zfail_op = gl_stencil_op_to_sp(st->ctx->Stencil.ZFailFunc[1]);
-         depth_stencil.stencil.back_zpass_op = gl_stencil_op_to_sp(st->ctx->Stencil.ZPassFunc[1]);
+         depth_stencil.stencil.back_func = st_compare_func_to_pipe(st->ctx->Stencil.Function[1]);
+         depth_stencil.stencil.back_fail_op = gl_stencil_op_to_pipe(st->ctx->Stencil.FailFunc[1]);
+         depth_stencil.stencil.back_zfail_op = gl_stencil_op_to_pipe(st->ctx->Stencil.ZFailFunc[1]);
+         depth_stencil.stencil.back_zpass_op = gl_stencil_op_to_pipe(st->ctx->Stencil.ZPassFunc[1]);
          depth_stencil.stencil.ref_value[1] = st->ctx->Stencil.Ref[1] & 0xff;
          depth_stencil.stencil.value_mask[1] = st->ctx->Stencil.ValueMask[1] & 0xff;
          depth_stencil.stencil.write_mask[1] = st->ctx->Stencil.WriteMask[1] & 0xff;

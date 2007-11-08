@@ -62,4 +62,6 @@ const struct st_tracked_state st_update_alpha_test;
 const struct st_tracked_state st_update_pixel_transfer;
 
 
+uint st_compare_func_to_pipe(GLenum func);
+
 #endif
