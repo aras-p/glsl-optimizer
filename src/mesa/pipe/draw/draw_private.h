@@ -224,8 +224,8 @@ struct draw_context
     */
    struct {
       struct {
-	 unsigned elt;
-	 struct vertex_header *dest;
+	 unsigned elt;   /**< index into the user's vertex arrays */
+	 struct vertex_header *dest; /**< points into vcache.vertex[] array */
       } queue[VS_QUEUE_LENGTH];
       unsigned queue_nr;
    } vs;
