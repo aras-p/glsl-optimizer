@@ -115,7 +115,12 @@ class glx_function(gl_XML.gl_function):
 	def process_element(self, element):
 		gl_XML.gl_function.process_element(self, element)
 
-		self.vectorequiv = element.nsProp( "vectorequiv", None )
+		# If the function already has a vector equivalent set, don't
+		# set it again.  This can happen if an alias to a function
+		# appears after the function that it aliases.
+
+		if not self.vectorequiv:
+			self.vectorequiv = element.nsProp("vectorequiv", None)
 
 
 		name = element.nsProp("name", None)
@@ -132,48 +137,47 @@ class glx_function(gl_XML.gl_function):
 
 		child = element.children
 		while child:
-			if child.type == "element":
-				if child.name == "glx":
-					rop = child.nsProp( 'rop', None )
-					sop = child.nsProp( 'sop', None )
-					vop = child.nsProp( 'vendorpriv', None )
+			if child.type == "element" and child.name == "glx":
+				rop = child.nsProp( 'rop', None )
+				sop = child.nsProp( 'sop', None )
+				vop = child.nsProp( 'vendorpriv', None )
 
-					if rop:
-						self.glx_rop = int(rop)
+				if rop:
+					self.glx_rop = int(rop)
 
-					if sop:
-						self.glx_sop = int(sop)
+				if sop:
+					self.glx_sop = int(sop)
 
-					if vop:
-						self.glx_vendorpriv = int(vop)
-						self.glx_vendorpriv_names.append(name)
+				if vop:
+					self.glx_vendorpriv = int(vop)
+					self.glx_vendorpriv_names.append(name)
 
-					self.img_reset = child.nsProp( 'img_reset', None )
+				self.img_reset = child.nsProp( 'img_reset', None )
 
-					# The 'handcode' attribute can be one of 'true',
-					# 'false', 'client', or 'server'.
+				# The 'handcode' attribute can be one of 'true',
+				# 'false', 'client', or 'server'.
 
-					handcode = child.nsProp( 'handcode', None )
-					if handcode == "false":
-						self.server_handcode = 0
-						self.client_handcode = 0
-					elif handcode == "true":
-						self.server_handcode = 1
-						self.client_handcode = 1
-					elif handcode == "client":
-						self.server_handcode = 0
-						self.client_handcode = 1
-					elif handcode == "server":
-						self.server_handcode = 1
-						self.client_handcode = 0
-					else:
-						raise RuntimeError('Invalid handcode mode "%s" in function "%s".' % (handcode, self.name))
+				handcode = child.nsProp( 'handcode', None )
+				if handcode == "false":
+					self.server_handcode = 0
+					self.client_handcode = 0
+				elif handcode == "true":
+					self.server_handcode = 1
+					self.client_handcode = 1
+				elif handcode == "client":
+					self.server_handcode = 0
+					self.client_handcode = 1
+				elif handcode == "server":
+					self.server_handcode = 1
+					self.client_handcode = 0
+				else:
+					raise RuntimeError('Invalid handcode mode "%s" in function "%s".' % (handcode, self.name))
 
-					self.ignore               = gl_XML.is_attr_true( child, 'ignore' )
-					self.can_be_large         = gl_XML.is_attr_true( child, 'large' )
-					self.glx_doubles_in_order = gl_XML.is_attr_true( child, 'doubles_in_order' )
-					self.reply_always_array   = gl_XML.is_attr_true( child, 'always_array' )
-					self.dimensions_in_reply  = gl_XML.is_attr_true( child, 'dimensions_in_reply' )
+				self.ignore               = gl_XML.is_attr_true( child, 'ignore' )
+				self.can_be_large         = gl_XML.is_attr_true( child, 'large' )
+				self.glx_doubles_in_order = gl_XML.is_attr_true( child, 'doubles_in_order' )
+				self.reply_always_array   = gl_XML.is_attr_true( child, 'always_array' )
+				self.dimensions_in_reply  = gl_XML.is_attr_true( child, 'dimensions_in_reply' )
 
 			child = child.next
 
@@ -553,6 +557,7 @@ class glx_function_iterator:
 
 	def next(self):
 		f = self.iterator.next()
+
 		if f.client_supported_for_indirect():
 			return f
 		else:
