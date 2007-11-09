@@ -278,37 +278,6 @@ intelFlush(GLcontext * ctx)
     */
 }
 
-
-/**
- * Check if we need to rotate/warp the front color buffer to the
- * rotated screen.  We generally need to do this when we get a glFlush
- * or glFinish after drawing to the front color buffer.
- */
-static void
-intelCheckFrontRotate(GLcontext * ctx)
-{
-   struct intel_context *intel = intel_context(ctx);
-   if (intel->ctx.DrawBuffer->_ColorDrawBufferMask[0] ==
-       BUFFER_BIT_FRONT_LEFT) {
-      intelScreenPrivate *screen = intel->intelScreen;
-      if (screen->current_rotation != 0) {
-         __DRIdrawablePrivate *dPriv = intel->driDrawable;
-         intelRotateWindow(intel, dPriv, BUFFER_BIT_FRONT_LEFT);
-      }
-   }
-}
-
-
-/**
- * Called via glFlush.
- */
-static void
-intelglFlush(GLcontext * ctx)
-{
-   intelFlush(ctx);
-   intelCheckFrontRotate(ctx);
-}
-
 void
 intelFinish(GLcontext * ctx)
 {
@@ -319,7 +288,6 @@ intelFinish(GLcontext * ctx)
       dri_fence_unreference(intel->batch->last_fence);
       intel->batch->last_fence = NULL;
    }
-   intelCheckFrontRotate(ctx);
 }
 
 
@@ -328,7 +296,7 @@ intelInitDriverFunctions(struct dd_function_table *functions)
 {
    _mesa_init_driver_functions(functions);
 
-   functions->Flush = intelglFlush;
+   functions->Flush = intelFlush;
    functions->Finish = intelFinish;
    functions->GetString = intelGetString;
    functions->UpdateState = intelInvalidateState;
@@ -371,7 +339,6 @@ intelInitContext(struct intel_context *intel,
 
    intel->width = intelScreen->width;
    intel->height = intelScreen->height;
-   intel->current_rotation = intelScreen->current_rotation;
 
    if (!lockMutexInit) {
       lockMutexInit = GL_TRUE;
@@ -676,16 +643,8 @@ intelContendedLock(struct intel_context *intel, GLuint flags)
 	 intel_decode_context_reset();
    }
 
-   if (sarea->width != intelScreen->width ||
-       sarea->height != intelScreen->height ||
-       sarea->rotation != intelScreen->current_rotation) {
-
-      intelUpdateScreenRotation(sPriv, sarea);
-   }
-
    if (sarea->width != intel->width ||
-       sarea->height != intel->height ||
-       sarea->rotation != intel->current_rotation) {
+       sarea->height != intel->height) {
       int numClipRects = intel->numClipRects;
 
       /*
@@ -713,7 +672,6 @@ intelContendedLock(struct intel_context *intel, GLuint flags)
 
       intel->width = sarea->width;
       intel->height = sarea->height;
-      intel->current_rotation = sarea->rotation;
    }
 
    /* Drawable changed?

@@ -202,8 +202,7 @@ intel_recreate_static(intelScreenPrivate *intelScreen,
  *
  * Although FBO's mean we now no longer use these as render targets in
  * all circumstances, they won't go away until the back and depth
- * buffers become private, and the front and rotated buffers will
- * remain even then.
+ * buffers become private, and the front buffer will remain even then.
  *
  * Note that these don't allocate video memory, just describe
  * allocations alread made by the X server.
@@ -216,17 +215,6 @@ intel_recreate_static_regions(intelScreenPrivate *intelScreen)
 			    intelScreen->front_region,
 			    &intelScreen->front,
 			    DRM_BO_FLAG_MEM_TT);
-
-   /* The rotated region is only used for old DDXes that didn't handle rotation
-\    * on their own.
-    */
-   if (intelScreen->driScrnPriv->ddx_version.minor < 8) {
-      intelScreen->rotated_region =
-	 intel_recreate_static(intelScreen,
-			       intelScreen->rotated_region,
-			       &intelScreen->rotated,
-			       DRM_BO_FLAG_MEM_TT);
-   }
 
    intelScreen->back_region =
       intel_recreate_static(intelScreen,
@@ -251,24 +239,6 @@ intel_recreate_static_regions(intelScreenPrivate *intelScreen)
 			    &intelScreen->depth,
 			    DRM_BO_FLAG_MEM_TT);
 }
-
-/**
- * Use the information in the sarea to update the screen parameters
- * related to screen rotation. Needs to be called locked.
- */
-void
-intelUpdateScreenRotation(__DRIscreenPrivate * sPriv, drmI830Sarea * sarea)
-{
-   intelScreenPrivate *intelScreen = (intelScreenPrivate *) sPriv->private;
-
-   intelUnmapScreenRegions(intelScreen);
-   intelUpdateScreenFromSAREA(intelScreen, sarea);
-   if (!intelMapScreenRegions(sPriv)) {
-      fprintf(stderr, "ERROR Remapping screen regions!!!\n");
-   }
-   intel_recreate_static_regions(intelScreen);
-}
-
 
 void
 intelUnmapScreenRegions(intelScreenPrivate * intelScreen)
@@ -323,9 +293,6 @@ intelPrintDRIInfo(intelScreenPrivate * intelScreen,
    fprintf(stderr, "*** Depth size:   0x%x  offset: 0x%x  pitch: %d\n",
            intelScreen->depth.size, intelScreen->depth.offset,
            intelScreen->depth.pitch);
-   fprintf(stderr, "*** Rotated size: 0x%x  offset: 0x%x  pitch: %d\n",
-           intelScreen->rotated.size, intelScreen->rotated.offset,
-           intelScreen->rotated.pitch);
    fprintf(stderr, "*** Texture size: 0x%x  offset: 0x%x\n",
            intelScreen->tex.size, intelScreen->tex.offset);
    fprintf(stderr, "*** Memory : 0x%x\n", gDRIPriv->mem);
@@ -351,11 +318,6 @@ intelPrintSAREA(const drmI830Sarea * sarea)
            (unsigned) sarea->depth_handle);
    fprintf(stderr, "SAREA: tex   offset: 0x%08x  size: 0x%x  handle: 0x%x\n",
            sarea->tex_offset, sarea->tex_size, (unsigned) sarea->tex_handle);
-   fprintf(stderr, "SAREA: rotation: %d\n", sarea->rotation);
-   fprintf(stderr,
-           "SAREA: rotated offset: 0x%08x  size: 0x%x\n",
-           sarea->rotated_offset, sarea->rotated_size);
-   fprintf(stderr, "SAREA: rotated pitch: %d\n", sarea->rotated_pitch);
 }
 
 
@@ -408,15 +370,6 @@ intelUpdateScreenFromSAREA(intelScreenPrivate * intelScreen,
    intelScreen->logTextureGranularity = sarea->log_tex_granularity;
    intelScreen->tex.handle = sarea->tex_handle;
    intelScreen->tex.size = sarea->tex_size;
-
-   intelScreen->rotated.offset = sarea->rotated_offset;
-   intelScreen->rotated.pitch = sarea->rotated_pitch * intelScreen->cpp;
-   intelScreen->rotated.size = sarea->rotated_size;
-   intelScreen->current_rotation = sarea->rotation;
-   matrix23Rotate(&intelScreen->rotMatrix,
-                  sarea->width, sarea->height, sarea->rotation);
-   intelScreen->rotatedWidth = sarea->virtualX;
-   intelScreen->rotatedHeight = sarea->virtualY;
 
    if (0)
       intelPrintSAREA(sarea);
