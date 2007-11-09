@@ -122,8 +122,8 @@ intelCopyBuffer(const __DRIdrawablePrivate * dPriv,
       for (i = 0; i < nbox; i++, pbox++) {
 	 drm_clip_rect_t box;
 
-	 if (pbox->x1 > pbox->x2 ||
-	     pbox->y1 > pbox->y2 ||
+	 if (pbox->x1 >= pbox->x2 ||
+	     pbox->y1 >= pbox->y2 ||
 	     pbox->x2 > intelScreen->width || pbox->y2 > intelScreen->height)
 	    continue;
 
@@ -139,19 +139,22 @@ intelCopyBuffer(const __DRIdrawablePrivate * dPriv,
 	    if (rect->y2 < box.y2)
 	       box.y2 = rect->y2;
 
-	    if (box.x1 > box.x2 || box.y1 > box.y2)
+	    if (box.x1 >= box.x2 || box.y1 >= box.y2)
 	       continue;
 	 }
+
+	 assert(box.x1 < box.x2);
+	 assert(box.y1 < box.y2);
 
 	 BEGIN_BATCH(8, INTEL_BATCH_NO_CLIPRECTS);
 	 OUT_BATCH(CMD);
 	 OUT_BATCH(BR13 | dst_pitch);
-	 OUT_BATCH((pbox->y1 << 16) | pbox->x1);
-	 OUT_BATCH((pbox->y2 << 16) | pbox->x2);
+	 OUT_BATCH((box.y1 << 16) | box.x1);
+	 OUT_BATCH((box.y2 << 16) | box.x2);
 
 	 OUT_RELOC(frontRegion->buffer, DRM_BO_FLAG_MEM_TT | DRM_BO_FLAG_WRITE,
 		   0);
-	 OUT_BATCH((pbox->y1 << 16) | pbox->x1);
+	 OUT_BATCH((box.y1 << 16) | box.x1);
 	 OUT_BATCH(src_pitch);
 	 OUT_RELOC(backRegion->buffer, DRM_BO_FLAG_MEM_TT | DRM_BO_FLAG_READ,
 		   0);
@@ -163,7 +166,8 @@ intelCopyBuffer(const __DRIdrawablePrivate * dPriv,
 	 dri_fence_unreference(intel->first_swap_fence);
       intel_batchbuffer_flush(intel->batch);
       intel->first_swap_fence = intel->batch->last_fence;
-      dri_fence_reference(intel->first_swap_fence);
+      if (intel->first_swap_fence)
+	 dri_fence_reference(intel->first_swap_fence);
    }
 
    UNLOCK_HARDWARE(intel);
@@ -210,6 +214,8 @@ intelEmitFillBlit(struct intel_context *intel,
    DBG("%s dst:buf(%p)/%d+%d %d,%d sz:%dx%d\n",
        __FUNCTION__, dst_buffer, dst_pitch, dst_offset, x, y, w, h);
 
+   assert(w > 0);
+   assert(h > 0);
 
    BEGIN_BATCH(6, INTEL_BATCH_NO_CLIPRECTS);
    OUT_BATCH(CMD);
@@ -306,9 +312,10 @@ intelEmitCopyBlit(struct intel_context *intel,
    }
 #endif
 
-   if (dst_y2 < dst_y || dst_x2 < dst_x) {
+   if (dst_y2 <= dst_y || dst_x2 <= dst_x) {
       return;
    }
+
 
    /* Initial y values don't seem to work with negative pitches.  If
     * we adjust the offsets manually (below), it seems to work fine.
@@ -318,6 +325,9 @@ intelEmitCopyBlit(struct intel_context *intel,
     * the wrong result.
     */
    if (dst_pitch > 0 && src_pitch > 0) {
+      assert(dst_x < dst_x2);
+      assert(dst_y < dst_y2);
+
       BEGIN_BATCH(8, INTEL_BATCH_NO_CLIPRECTS);
       OUT_BATCH(CMD);
       OUT_BATCH(BR13 | dst_pitch);
@@ -330,6 +340,9 @@ intelEmitCopyBlit(struct intel_context *intel,
       ADVANCE_BATCH();
    }
    else {
+      assert(dst_x < dst_x2);
+      assert(h > 0);
+
       BEGIN_BATCH(8, INTEL_BATCH_NO_CLIPRECTS);
       OUT_BATCH(CMD);
       OUT_BATCH(BR13 | dst_pitch);
@@ -507,6 +520,9 @@ intelClearWithBlit(GLcontext * ctx, GLbitfield mask)
                   buf, irb->Base.Name);
                 */
 	       intel_wait_flips(intel, INTEL_BATCH_NO_CLIPRECTS);
+
+               assert(b.x1 < b.x2);
+               assert(b.y1 < b.y2);
 
                BEGIN_BATCH(6, INTEL_BATCH_NO_CLIPRECTS);
                OUT_BATCH(CMD);
