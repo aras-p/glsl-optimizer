@@ -196,7 +196,7 @@ draw_set_mapped_vertex_buffer(struct draw_context *draw,
 {
    draw_flush( draw );
 
-   draw->mapped_vbuffer[attr] = buffer;
+   draw->user.vbuffer[attr] = buffer;
 }
 
 
@@ -206,7 +206,7 @@ draw_set_mapped_constant_buffer(struct draw_context *draw,
 {
    draw_flush( draw );
 
-   draw->mapped_constants = buffer;
+   draw->user.constants = buffer;
 }
 
 
@@ -217,8 +217,8 @@ draw_set_mapped_feedback_buffer(struct draw_context *draw, uint index,
    draw_flush( draw );
 
    assert(index < PIPE_MAX_FEEDBACK_ATTRIBS);
-   draw->mapped_feedback_buffer[index] = buffer;
-   draw->mapped_feedback_buffer_size[index] = size; /* in bytes */
+   draw->user.feedback_buffer[index] = buffer;
+   draw->user.feedback_buffer_size[index] = size; /* in bytes */
 }
 
 

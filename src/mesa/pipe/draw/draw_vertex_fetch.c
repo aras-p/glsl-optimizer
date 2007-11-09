@@ -103,7 +103,7 @@ void draw_vertex_fetch( struct draw_context *draw,
 
          unsigned buf = draw->vertex_element[attr].vertex_buffer_index;
          const void *src
-            = (const void *) ((const ubyte *) draw->mapped_vbuffer[buf]
+            = (const void *) ((const ubyte *) draw->user.vbuffer[buf]
                               + draw->vertex_buffer[buf].buffer_offset
                               + draw->vertex_element[attr].src_offset
                               + elts[j] * draw->vertex_buffer[buf].pitch);

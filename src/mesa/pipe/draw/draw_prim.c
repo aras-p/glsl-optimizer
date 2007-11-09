@@ -64,7 +64,7 @@ static void draw_prim_queue_flush( struct draw_context *draw )
       printf("Flushing with %d prims, %d verts\n",
              draw->pq.queue_nr, draw->vs.queue_nr);
 
-   /* Make sure all vertices are available:
+   /* Make sure all vertices are available/shaded:
     */
    if (draw->vs.queue_nr)
       draw_vertex_shader_queue_flush(draw);

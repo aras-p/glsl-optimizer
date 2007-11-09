@@ -178,17 +178,23 @@ struct draw_context
    struct pipe_vertex_buffer feedback_buffer[PIPE_ATTRIB_MAX];
    struct pipe_vertex_element feedback_element[PIPE_ATTRIB_MAX];
 
-   /** The mapped vertex element/index buffer */
-   const void *mapped_elts;
-   unsigned eltSize;  /**< bytes per index (0, 1, 2 or 4) */
-   /** The mapped vertex arrays */
-   const void *mapped_vbuffer[PIPE_ATTRIB_MAX];
-   /** The mapped constant buffers (for vertex shader) */
-   const void *mapped_constants;
+   /* user-space vertex data, buffers */
+   struct {
+      /** vertex element/index buffer (ex: glDrawElements) */
+      const void *elts;
+      /** bytes per index (0, 1, 2 or 4) */
+      unsigned eltSize;
 
-   /** The mapped vertex element/index buffer */
-   void *mapped_feedback_buffer[PIPE_MAX_FEEDBACK_ATTRIBS];
-   uint mapped_feedback_buffer_size[PIPE_MAX_FEEDBACK_ATTRIBS]; /* in bytes */
+      /** vertex arrays */
+      const void *vbuffer[PIPE_ATTRIB_MAX];
+
+      /** constant buffer (for vertex shader) */
+      const void *constants;
+
+      /** The vertex feedback buffer */
+      void *feedback_buffer[PIPE_MAX_FEEDBACK_ATTRIBS];
+      uint feedback_buffer_size[PIPE_MAX_FEEDBACK_ATTRIBS]; /* in bytes */
+   } user;
 
    /* Clip derived state:
     */
@@ -216,6 +222,7 @@ struct draw_context
       struct vertex_header *vertex[VCACHE_SIZE + VCACHE_OVERFLOW];
       unsigned overflow;
 
+      /** To find space in the vertex cache: */
       struct vertex_header *(*get_vertex)( struct draw_context *draw,
                                            unsigned i );
    } vcache;
@@ -233,7 +240,6 @@ struct draw_context
    /* Prim pipeline queue:
     */
    struct {
-
       /* Need to queue up primitives until their vertices have been
        * transformed by a vs queue flush.
        */

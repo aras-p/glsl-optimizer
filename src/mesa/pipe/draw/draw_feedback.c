@@ -128,20 +128,20 @@ static void feedback_begin( struct draw_stage *stage )
          vertex_size += feedback->size[i];
       }
       /* compute max number of vertices we can feedback */
-      fs->max_vert_emit = stage->draw->mapped_feedback_buffer_size[0]
+      fs->max_vert_emit = stage->draw->user.feedback_buffer_size[0]
          / sizeof(float) / vertex_size;
 
-      fs->dest[0] = (float *) stage->draw->mapped_feedback_buffer[0];
+      fs->dest[0] = (float *) stage->draw->user.feedback_buffer[0];
    }
    else {
       uint i;
       uint max = ~0;
       for (i = 0; i < feedback->num_attribs; i++) {
-         uint n = stage->draw->mapped_feedback_buffer_size[i]
+         uint n = stage->draw->user.feedback_buffer_size[i]
             / sizeof(float) / feedback->size[i];
          if (n < max)
             max = n;
-         fs->dest[i] = (float *) stage->draw->mapped_feedback_buffer[i];
+         fs->dest[i] = (float *) stage->draw->user.feedback_buffer[i];
       }
       fs->max_vert_emit = max;
    }

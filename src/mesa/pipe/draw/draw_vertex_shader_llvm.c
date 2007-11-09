@@ -83,7 +83,7 @@ void vertex_fetch(struct draw_context *draw,
 
       unsigned buf = draw->vertex_element[attr].vertex_buffer_index;
       const void *src
-         = (const void *) ((const ubyte *) draw->mapped_vbuffer[buf]
+         = (const void *) ((const ubyte *) draw->user.vbuffer[buf]
                            + draw->vertex_buffer[buf].buffer_offset
                            + draw->vertex_element[attr].src_offset
                            + elt * draw->vertex_buffer[buf].pitch);
@@ -124,7 +124,7 @@ void draw_vertex_shader_queue_flush_llvm(struct draw_context *draw)
    struct vertex_header *dests[VS_QUEUE_LENGTH];
    float                 inputs[VS_QUEUE_LENGTH][PIPE_MAX_SHADER_INPUTS][4];
    float                 outputs[VS_QUEUE_LENGTH][PIPE_MAX_SHADER_INPUTS][4];
-   float (*consts)[4]          = (float (*)[4]) draw->mapped_constants;
+   float (*consts)[4]          = (float (*)[4]) draw->user.constants;
    struct gallivm_prog  *prog  = draw->vertex_shader->llvm_prog;
    const float          *scale = draw->viewport.scale;
    const float          *trans = draw->viewport.translate;

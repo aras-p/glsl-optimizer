@@ -93,7 +93,7 @@ run_vertex_program(struct draw_context *draw,
           == TGSI_SEMANTIC_POSITION);
 
    /* Consts does not require 16 byte alignment. */
-   machine->Consts = (float (*)[4]) draw->mapped_constants;
+   machine->Consts = (float (*)[4]) draw->user.constants;
 
    machine->Inputs = ALIGN16_ASSIGN(inputs);
    machine->Outputs = ALIGN16_ASSIGN(outputs);
@@ -179,8 +179,8 @@ run_vertex_program(struct draw_context *draw,
 
 
 /**
+ * Run the vertex shader on all vertices in the vertex queue.
  * Called by the draw module when the vertx cache needs to be flushed.
- * This involves running the vertex shader.
  */
 void draw_vertex_shader_queue_flush( struct draw_context *draw )
 {
