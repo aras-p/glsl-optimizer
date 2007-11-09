@@ -100,7 +100,7 @@ struct draw_stage
 
    struct draw_stage *next;     /**< next stage in pipeline */
 
-   struct vertex_header **tmp;
+   struct vertex_header **tmp;  /**< temp vert storage, such as for clipping */
    unsigned nr_tmps;
 
    void (*begin)( struct draw_stage * );
@@ -117,7 +117,7 @@ struct draw_stage
    void (*end)( struct draw_stage * );
 
    /** 
-    * Reset temporary vertices ids in this stage 
+    * Reset temporary vertex ids in this stage 
     * 
     * draw_free_tmps will be called instead if null.
     */

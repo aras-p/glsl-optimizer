@@ -126,7 +126,8 @@ void draw_set_rasterizer_state( struct draw_context *draw,
 
 
 /** 
- * Plug in the primitive rendering/rasterization stage.
+ * Plug in the primitive rendering/rasterization stage (which is the last
+ * stage in the drawing pipeline).
  * This is provided by the device driver.
  */
 void draw_set_rasterize_stage( struct draw_context *draw,
@@ -230,6 +231,8 @@ draw_set_mapped_feedback_buffer(struct draw_context *draw, uint index,
  */
 void draw_alloc_tmps( struct draw_stage *stage, unsigned nr )
 {
+   assert(!stage->tmp);
+
    stage->nr_tmps = nr;
 
    if (nr) {
@@ -244,7 +247,7 @@ void draw_alloc_tmps( struct draw_stage *stage, unsigned nr )
 }
 
 /**
- * Reset the verticies ids of this and subsequent stages.
+ * Reset the vertex ids for the stage's temp verts.
  */
 void draw_reset_tmps( struct draw_stage *stage )
 {
@@ -260,6 +263,7 @@ void draw_free_tmps( struct draw_stage *stage )
    if (stage->tmp) {
       FREE( stage->tmp[0] );
       FREE( stage->tmp );
+      stage->tmp = NULL;
    }
 }
 
