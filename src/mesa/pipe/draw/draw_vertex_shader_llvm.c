@@ -87,14 +87,7 @@ void vertex_fetch(struct draw_context *draw,
                            + draw->vertex_buffer[buf].buffer_offset
                            + draw->vertex_element[attr].src_offset
                            + elt * draw->vertex_buffer[buf].pitch);
-      float p[4];
-
-      fetch_attrib4(src, draw->vertex_element[attr].src_format, p);
-
-      inputs[attr][0] = p[0]; /*X*/
-      inputs[attr][1] = p[1]; /*Y*/
-      inputs[attr][2] = p[2]; /*Z*/
-      inputs[attr][3] = p[3]; /*W*/
+      fetch_attrib4(src, draw->vertex_element[attr].src_format, inputs[attr]);
    }
 }
 
