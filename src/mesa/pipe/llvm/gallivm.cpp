@@ -157,6 +157,7 @@ add_interpolator(struct gallivm_prog *prog,
    prog->interpolators[prog->num_interp] = *interp;
    ++prog->num_interp;
 }
+
 static void
 translate_declaration(struct gallivm_prog *prog,
                       llvm::Module *module,
@@ -469,8 +470,6 @@ translate_instruction(llvm::Module *module,
    case TGSI_OPCODE_TEX:
       break;
    case TGSI_OPCODE_TXD:
-      break;
-   case TGSI_OPCODE_TXP:
       break;
    case TGSI_OPCODE_UP2H:
       break;
@@ -1015,11 +1014,12 @@ struct gallivm_cpu_engine * gallivm_cpu_engine_create(struct gallivm_prog *prog)
    llvm::Module *mod = static_cast<llvm::Module*>(prog->module);
    llvm::ExistingModuleProvider *mp = new llvm::ExistingModuleProvider(mod);
    llvm::ExecutionEngine *ee = llvm::ExecutionEngine::create(mp, false);
+   ee->DisableLazyCompilation();
    cpu->engine = ee;
 
    llvm::Function *func = func_for_shader(prog);
 
-   prog->function = ee->getPointerToFunctionOrStub(func);
+   prog->function = ee->getPointerToFunction(func);
    CPU = cpu;
    return cpu;
 }
@@ -1037,10 +1037,11 @@ void gallivm_cpu_jit_compile(struct gallivm_cpu_engine *cpu, struct gallivm_prog
    llvm::ExistingModuleProvider *mp = new llvm::ExistingModuleProvider(mod);
    llvm::ExecutionEngine *ee = cpu->engine;
    assert(ee);
+   ee->DisableLazyCompilation();
    ee->addModuleProvider(mp);
 
    llvm::Function *func = func_for_shader(prog);
-   prog->function = ee->getPointerToFunctionOrStub(func);
+   prog->function = ee->getPointerToFunction(func);
 }
 
 void gallivm_cpu_engine_delete(struct gallivm_cpu_engine *cpu)

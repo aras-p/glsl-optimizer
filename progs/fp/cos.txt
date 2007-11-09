@@ -1,0 +1,8 @@
+!!ARBfp1.0
+TEMP R0;
+MUL R0, fragment.color, {3.14}.x;
+COS result.color.x, R0.x;
+COS result.color.y, R0.y;
+COS result.color.z, R0.z;
+END
+
