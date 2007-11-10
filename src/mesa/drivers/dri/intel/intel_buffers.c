@@ -387,102 +387,87 @@ intelClearWithTris(struct intel_context *intel, GLbitfield mask)
 {
    GLcontext *ctx = &intel->ctx;
    struct gl_framebuffer *fb = ctx->DrawBuffer;
-   drm_clip_rect_t clear;
+   GLuint buf;
 
    if (INTEL_DEBUG & DEBUG_BLIT)
       _mesa_printf("%s 0x%x\n", __FUNCTION__, mask);
 
-   LOCK_HARDWARE(intel);
+   intel->vtbl.install_meta_state(intel);
 
-   /* XXX FBO: was: intel->driDrawable->numClipRects */
-   if (intel->numClipRects) {
-      GLint cx, cy, cw, ch;
-      GLuint buf;
+   /* Back and stencil cliprects are the same.  Try and do both
+    * buffers at once:
+    */
+   if (mask & (BUFFER_BIT_BACK_LEFT | BUFFER_BIT_STENCIL | BUFFER_BIT_DEPTH)) {
+      struct intel_region *backRegion =
+	 intel_get_rb_region(fb, BUFFER_BACK_LEFT);
+      struct intel_region *depthRegion =
+	 intel_get_rb_region(fb, BUFFER_DEPTH);
+      const GLuint clearColor = (backRegion && backRegion->cpp == 4)
+	 ? intel->ClearColor8888 : intel->ClearColor565;
 
-      intel->vtbl.install_meta_state(intel);
+      intel->vtbl.meta_draw_region(intel, backRegion, depthRegion);
 
-      /* Get clear bounds after locking */
-      cx = fb->_Xmin;
-      cy = fb->_Ymin;
-      ch = fb->_Ymax - cx;
-      cw = fb->_Xmax - cy;
+      if (mask & BUFFER_BIT_BACK_LEFT)
+	 intel->vtbl.meta_color_mask(intel, GL_TRUE);
+      else
+	 intel->vtbl.meta_color_mask(intel, GL_FALSE);
 
-      /* note: regardless of 'all', cx, cy, cw, ch are now correct */
-      clear.x1 = cx;
-      clear.y1 = cy;
-      clear.x2 = cx + cw;
-      clear.y2 = cy + ch;
+      if (mask & BUFFER_BIT_STENCIL)
+	 intel->vtbl.meta_stencil_replace(intel,
+					  intel->ctx.Stencil.WriteMask[0],
+					  intel->ctx.Stencil.Clear);
+      else
+	 intel->vtbl.meta_no_stencil_write(intel);
 
-      /* Back and stencil cliprects are the same.  Try and do both
-       * buffers at once:
-       */
-      if (mask &
-          (BUFFER_BIT_BACK_LEFT | BUFFER_BIT_STENCIL | BUFFER_BIT_DEPTH)) {
-         struct intel_region *backRegion =
-            intel_get_rb_region(fb, BUFFER_BACK_LEFT);
-         struct intel_region *depthRegion =
-            intel_get_rb_region(fb, BUFFER_DEPTH);
-         const GLuint clearColor = (backRegion && backRegion->cpp == 4)
-            ? intel->ClearColor8888 : intel->ClearColor565;
+      if (mask & BUFFER_BIT_DEPTH)
+	 intel->vtbl.meta_depth_replace(intel);
+      else
+	 intel->vtbl.meta_no_depth_write(intel);
 
-         intel->vtbl.meta_draw_region(intel, backRegion, depthRegion);
+      intel_meta_draw_quad(intel,
+			   fb->_Xmin,
+			   fb->_Xmax,
+			   fb->_Ymin,
+			   fb->_Ymax,
+			   intel->ctx.Depth.Clear, clearColor,
+			   0, 0, 0, 0);   /* texcoords */
 
-         if (mask & BUFFER_BIT_BACK_LEFT)
-            intel->vtbl.meta_color_mask(intel, GL_TRUE);
-         else
-            intel->vtbl.meta_color_mask(intel, GL_FALSE);
-
-         if (mask & BUFFER_BIT_STENCIL)
-            intel->vtbl.meta_stencil_replace(intel,
-                                             intel->ctx.Stencil.WriteMask[0],
-                                             intel->ctx.Stencil.Clear);
-         else
-            intel->vtbl.meta_no_stencil_write(intel);
-
-         if (mask & BUFFER_BIT_DEPTH)
-            intel->vtbl.meta_depth_replace(intel);
-         else
-            intel->vtbl.meta_no_depth_write(intel);
-
-         /* XXX: Using INTEL_BATCH_NO_CLIPRECTS here is dangerous as the
-          * drawing origin may not be correctly emitted.
-          */
-         intel_meta_draw_quad(intel, clear.x1, clear.x2, clear.y1, clear.y2, intel->ctx.Depth.Clear, clearColor, 0, 0, 0, 0);   /* texcoords */
-
-         mask &=
-            ~(BUFFER_BIT_BACK_LEFT | BUFFER_BIT_STENCIL | BUFFER_BIT_DEPTH);
-      }
-
-      /* clear the remaining (color) renderbuffers */
-      for (buf = 0; buf < BUFFER_COUNT && mask; buf++) {
-         const GLuint bufBit = 1 << buf;
-         if (mask & bufBit) {
-            struct intel_renderbuffer *irbColor =
-               intel_renderbuffer(fb->Attachment[buf].Renderbuffer);
-            GLuint color = (irbColor->region->cpp == 4)
-               ? intel->ClearColor8888 : intel->ClearColor565;
-
-            ASSERT(irbColor);
-
-            intel->vtbl.meta_no_depth_write(intel);
-            intel->vtbl.meta_no_stencil_write(intel);
-            intel->vtbl.meta_color_mask(intel, GL_TRUE);
-            intel->vtbl.meta_draw_region(intel, irbColor->region, NULL);
-
-            /* XXX: Using INTEL_BATCH_NO_CLIPRECTS here is dangerous as the
-             * drawing origin may not be correctly emitted.
-             */
-            intel_meta_draw_quad(intel, clear.x1, clear.x2, clear.y1, clear.y2, 0,      /* depth clear val */
-                                 color, 0, 0, 0, 0);    /* texcoords */
-
-            mask &= ~bufBit;
-         }
-      }
-
-      intel->vtbl.leave_meta_state(intel);
-      intel_batchbuffer_flush(intel->batch);
+      mask &= ~(BUFFER_BIT_BACK_LEFT | BUFFER_BIT_STENCIL | BUFFER_BIT_DEPTH);
    }
-   UNLOCK_HARDWARE(intel);
+
+   /* clear the remaining (color) renderbuffers */
+   for (buf = 0; buf < BUFFER_COUNT && mask; buf++) {
+      const GLuint bufBit = 1 << buf;
+      if (mask & bufBit) {
+	 struct intel_renderbuffer *irbColor =
+	    intel_renderbuffer(fb->Attachment[buf].Renderbuffer);
+	 GLuint color = (irbColor->region->cpp == 4)
+	    ? intel->ClearColor8888 : intel->ClearColor565;
+
+	 ASSERT(irbColor);
+
+	 intel->vtbl.meta_no_depth_write(intel);
+	 intel->vtbl.meta_no_stencil_write(intel);
+	 intel->vtbl.meta_color_mask(intel, GL_TRUE);
+	 intel->vtbl.meta_draw_region(intel, irbColor->region, NULL);
+
+	 /* XXX: Using INTEL_BATCH_NO_CLIPRECTS here is dangerous as the
+	  * drawing origin may not be correctly emitted.
+	  */
+	 intel_meta_draw_quad(intel,
+			      fb->_Xmin,
+			      fb->_Xmax,
+			      fb->_Ymin,
+			      fb->_Ymax,
+			      0, color,
+			      0, 0, 0, 0);   /* texcoords */
+
+	 mask &= ~bufBit;
+      }
+   }
+
+   intel->vtbl.leave_meta_state(intel);
+   intel_batchbuffer_flush(intel->batch);
 }
 
 /**
@@ -775,7 +760,6 @@ intelSwapBuffers(__DRIdrawablePrivate * dPriv)
       intel = intel_context(ctx);
 
       if (ctx->Visual.doubleBufferMode) {
-         intelScreenPrivate *screen = intel->intelScreen;
 	 GLboolean missed_target;
 	 struct intel_framebuffer *intel_fb = dPriv->driverPrivate;
 	 int64_t ust;
