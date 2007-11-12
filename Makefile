@@ -355,6 +355,7 @@ GLW_FILES = \
 	$(DIRECTORY)/src/glw/*.[ch]			\
 	$(DIRECTORY)/src/glw/Makefile*			\
 	$(DIRECTORY)/src/glw/README			\
+	$(DIRECTORY)/src/glw/glw.pc.in			\
 	$(DIRECTORY)/src/glw/depend
 
 DEMO_FILES = \
@@ -424,7 +425,6 @@ DEPEND_FILES = \
 	$(TOP)/src/mesa/depend		\
 	$(TOP)/src/glx/x11/depend	\
 	$(TOP)/src/glw/depend		\
-	$(TOP)/src/glw/glw.pc.in	\
 	$(TOP)/src/glut/glx/depend	\
 	$(TOP)/src/glu/sgi/depend
 
