@@ -55,7 +55,7 @@
 #define PRIM3D_DIB		(0x9<<18)
 #define PRIM3D_MASK		(0x1f<<18)
 
-#define XY_SETUP_BLT_CMD		(CMD_2D | (0x011 << 22) | 6)
+#define XY_SETUP_BLT_CMD		(CMD_2D | (0x01 << 22) | 6)
 
 #define XY_COLOR_BLT_CMD		(CMD_2D | (0x50 << 22) | 4)
 
