@@ -46,12 +46,131 @@
 #include "t_pipeline.h"
 
 
+
+/*!
+ * Private storage for the vertex program pipeline stage.
+ */
+struct vp_stage_data {
+   /** The results of running the vertex program go into these arrays. */
+   GLvector4f results[VERT_RESULT_MAX];
+
+   GLvector4f ndcCoords;              /**< normalized device coords */
+   GLubyte *clipmask;                 /**< clip flags */
+   GLubyte ormask, andmask;           /**< for clipping */
+};
+
+
+#define VP_STAGE_DATA(stage) ((struct vp_stage_data *)(stage->privatePtr))
+
+
 /**
  * XXX the texture sampling code in this module is a bit of a hack.
  * The texture sampling code is in swrast, though it doesn't have any
  * real dependencies on the rest of swrast.  It should probably be
  * moved into main/ someday.
  */
+
+static void userclip( GLcontext *ctx,
+		      GLvector4f *clip,
+		      GLubyte *clipmask,
+		      GLubyte *clipormask,
+		      GLubyte *clipandmask )
+{
+   GLuint p;
+
+   for (p = 0; p < ctx->Const.MaxClipPlanes; p++) {
+      if (ctx->Transform.ClipPlanesEnabled & (1 << p)) {
+	 GLuint nr, i;
+	 const GLfloat a = ctx->Transform._ClipUserPlane[p][0];
+	 const GLfloat b = ctx->Transform._ClipUserPlane[p][1];
+	 const GLfloat c = ctx->Transform._ClipUserPlane[p][2];
+	 const GLfloat d = ctx->Transform._ClipUserPlane[p][3];
+         GLfloat *coord = (GLfloat *)clip->data;
+         GLuint stride = clip->stride;
+         GLuint count = clip->count;
+
+	 for (nr = 0, i = 0 ; i < count ; i++) {
+	    GLfloat dp = (coord[0] * a + 
+			  coord[1] * b +
+			  coord[2] * c +
+			  coord[3] * d);
+
+	    if (dp < 0) {
+	       nr++;
+	       clipmask[i] |= CLIP_USER_BIT;
+	    }
+
+	    STRIDE_F(coord, stride);
+	 }
+
+	 if (nr > 0) {
+	    *clipormask |= CLIP_USER_BIT;
+	    if (nr == count) {
+	       *clipandmask |= CLIP_USER_BIT;
+	       return;
+	    }
+	 }
+      }
+   }
+}
+
+
+static GLboolean
+do_ndc_cliptest(GLcontext *ctx, struct vp_stage_data *store)
+{
+   TNLcontext *tnl = TNL_CONTEXT(ctx);
+   struct vertex_buffer *VB = &tnl->vb;
+   /* Cliptest and perspective divide.  Clip functions must clear
+    * the clipmask.
+    */
+   store->ormask = 0;
+   store->andmask = CLIP_FRUSTUM_BITS;
+
+   if (tnl->NeedNdcCoords) {
+      VB->NdcPtr =
+         _mesa_clip_tab[VB->ClipPtr->size]( VB->ClipPtr,
+                                            &store->ndcCoords,
+                                            store->clipmask,
+                                            &store->ormask,
+                                            &store->andmask );
+   }
+   else {
+      VB->NdcPtr = NULL;
+      _mesa_clip_np_tab[VB->ClipPtr->size]( VB->ClipPtr,
+                                            NULL,
+                                            store->clipmask,
+                                            &store->ormask,
+                                            &store->andmask );
+   }
+
+   if (store->andmask) {
+      /* All vertices are outside the frustum */
+      return GL_FALSE;
+   }
+
+   /* Test userclip planes.  This contributes to VB->ClipMask.
+    */
+   /** XXX NEW_SLANG _Enabled ??? */
+   if (ctx->Transform.ClipPlanesEnabled && (!ctx->VertexProgram._Enabled ||
+      ctx->VertexProgram.Current->IsPositionInvariant)) {
+      userclip( ctx,
+		VB->ClipPtr,
+		store->clipmask,
+		&store->ormask,
+		&store->andmask );
+
+      if (store->andmask) {
+	 return GL_FALSE;
+      }
+   }
+
+   VB->ClipAndMask = store->andmask;
+   VB->ClipOrMask = store->ormask;
+   VB->ClipMask = store->clipmask;
+
+   return GL_TRUE;
+}
+
 
 static void
 vp_fetch_texel(GLcontext *ctx, const GLfloat texcoord[4], GLfloat lambda,
@@ -83,22 +202,6 @@ _tnl_program_string(GLcontext *ctx, GLenum target, struct gl_program *program)
     * stage we'd recompute/validate it here.
     */
 }
-
-
-/*!
- * Private storage for the vertex program pipeline stage.
- */
-struct vp_stage_data {
-   /** The results of running the vertex program go into these arrays. */
-   GLvector4f results[VERT_RESULT_MAX];
-
-   GLvector4f ndcCoords;              /**< normalized device coords */
-   GLubyte *clipmask;                 /**< clip flags */
-   GLubyte ormask, andmask;           /**< for clipping */
-};
-
-
-#define VP_STAGE_DATA(stage) ((struct vp_stage_data *)(stage->privatePtr))
 
 
 /**
@@ -334,12 +437,39 @@ run_vp( GLcontext *ctx, struct tnl_pipeline_stage *stage )
       }
    }
 
+   if (program->IsPositionInvariant) {
+      /* We need the exact same transform as in the fixed function path here
+         to guarantee invariance, depending on compiler optimization flags results
+         could be different otherwise */
+      VB->ClipPtr = TransformRaw( &store->results[0],
+				  &ctx->_ModelProjectMatrix,
+				  VB->AttribPtr[0] );
+
+      /* Drivers expect this to be clean to element 4...
+       */
+      switch (VB->ClipPtr->size) {
+      case 1:
+	 /* impossible */
+      case 2:
+	 _mesa_vector4f_clean_elem( VB->ClipPtr, VB->Count, 2 );
+	 /* fall-through */
+      case 3:
+	 _mesa_vector4f_clean_elem( VB->ClipPtr, VB->Count, 3 );
+	 /* fall-through */
+      case 4:
+	 break;
+      }
+   }
+
+
    /* Setup the VB pointers so that the next pipeline stages get
     * their data from the right place (the program output arrays).
     */
-   VB->ClipPtr = &store->results[VERT_RESULT_HPOS];
-   VB->ClipPtr->size = 4;
-   VB->ClipPtr->count = VB->Count;
+   else {
+      VB->ClipPtr = &store->results[VERT_RESULT_HPOS];
+      VB->ClipPtr->size = 4;
+      VB->ClipPtr->count = VB->Count;
+   }
    VB->ColorPtr[0] = &store->results[VERT_RESULT_COL0];
    VB->ColorPtr[1] = &store->results[VERT_RESULT_BFC0];
    VB->SecondaryColorPtr[0] = &store->results[VERT_RESULT_COL1];
@@ -365,41 +495,10 @@ run_vp( GLcontext *ctx, struct tnl_pipeline_stage *stage )
       }
    }
 
-   /* Cliptest and perspective divide.  Clip functions must clear
-    * the clipmask.
+
+   /* Perform NDC and cliptest operations:
     */
-   store->ormask = 0;
-   store->andmask = CLIP_FRUSTUM_BITS;
-
-   if (tnl->NeedNdcCoords) {
-      VB->NdcPtr =
-         _mesa_clip_tab[VB->ClipPtr->size]( VB->ClipPtr,
-                                            &store->ndcCoords,
-                                            store->clipmask,
-                                            &store->ormask,
-                                            &store->andmask );
-   }
-   else {
-      VB->NdcPtr = NULL;
-      _mesa_clip_np_tab[VB->ClipPtr->size]( VB->ClipPtr,
-                                            NULL,
-                                            store->clipmask,
-                                            &store->ormask,
-                                            &store->andmask );
-   }
-
-   if (store->andmask)  /* All vertices are outside the frustum */
-      return GL_FALSE;
-
-
-   /* This is where we'd do clip testing against the user-defined
-    * clipping planes, but they're not supported by vertex programs.
-    */
-
-   VB->ClipOrMask = store->ormask;
-   VB->ClipMask = store->clipmask;
-
-   return GL_TRUE;
+   return do_ndc_cliptest(ctx, store);
 }
 
 
