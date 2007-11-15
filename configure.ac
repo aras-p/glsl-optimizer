@@ -325,8 +325,8 @@ AC_ARG_ENABLE(glx-tls,
         GLX_USE_TLS="$enableval",
         GLX_USE_TLS=no)
 dnl Directory for DRI drivers
-AC_ARG_WITH(dridriverdir,
-    [AS_HELP_STRING([--with-dridriverdir=DIR],
+AC_ARG_WITH(dri-driverdir,
+    [AS_HELP_STRING([--with-dri-driverdir=DIR],
         [directory for the DRI drivers @<:@/usr/X11R6/lib/modules/dri@:>@])],
     DRI_DRIVER_INSTALL_DIR="$withval",
     DRI_DRIVER_INSTALL_DIR='/usr/X11R6/lib/modules/dri')
@@ -337,6 +337,32 @@ AC_ARG_ENABLE(driglx-direct,
         [enable direct rendering in GLX for DRI @<:@default=yes@:>@])],
         driglx_direct="$enableval",
         driglx_direct="yes")
+
+dnl Which drivers to build - default is chosen by platform
+AC_ARG_WITH(dri-drivers,
+    [AS_HELP_STRING([--with-dri-drivers@<:@=DIRS...@:>@],
+        [comma delimited DRI drivers to build @<:@default=auto by platform@:>@])],
+    with_dri_drivers="$withval",
+    with_dri_drivers=yes)
+if test "x$with_dri_drivers" = x; then
+    with_dri_drivers=no
+fi
+
+dnl If $with_dri_drivers is yes, directories will be added through
+dnl platform checks
+DRI_DIRS=""
+case "$with_dri_drivers" in
+no|yes) ;;
+*)
+    # verify the requested driver directories exist
+    dri_drivers=`IFS=,; echo $with_dri_drivers`
+    for driver in $dri_drivers; do
+        test -d "$srcdir/src/mesa/drivers/dri/$driver" || \
+            AC_MSG_ERROR([DRI driver directory '$driver' doesn't exist])
+    done
+    DRI_DIRS="$dri_drivers"
+    ;;
+esac
 
 dnl Just default to no EGL for now
 USING_EGL=0
@@ -364,15 +390,21 @@ if test "$mesa_driver" = dri; then
 
         case "$host_cpu" in
         i*86)
-            DRI_DIRS="i810 i915tex i915 i965 mach64 mga r128 r200 r300 \
-                radeon s3v savage sis tdfx trident unichrome ffb"
+            if test "x$DRI_DIRS" = x; then
+                DRI_DIRS="i810 i915tex i915 i965 mach64 mga r128 r200 r300 \
+                    radeon s3v savage sis tdfx trident unichrome ffb"
+            fi
             ;;
         x86_64)
-            DRI_DIRS="i915tex i915 i965 mach64 mga r128 r200 radeon tdfx \
-                unichrome savage r300"
+            if test "x$DRI_DIRS" = x; then
+                DRI_DIRS="i915tex i915 i965 mach64 mga r128 r200 radeon tdfx \
+                    unichrome savage r300"
+            fi
             ;;
         powerpc*)
-            DRI_DIRS="mach64 r128 r200 r300 radeon tdfx"
+            if test "x$DRI_DIRS" = x; then
+                DRI_DIRS="mach64 r128 r200 r300 radeon tdfx"
+            fi
             ;;
         esac
         ;;
@@ -387,8 +419,10 @@ if test "$mesa_driver" = dri; then
             CXXFLAGS="$CXXFLAGS -ansi -pedantic"
         fi
 
-        DRI_DIRS="i810 i915 i965 mach64 mga r128 r200 r300 radeon tdfx \
-            unichrome savage sis"
+        if test "x$DRI_DIRS" = x; then
+            DRI_DIRS="i810 i915 i965 mach64 mga r128 r200 r300 radeon tdfx \
+                unichrome savage sis"
+        fi
         ;;
     esac
     DRI_DIRS=`echo "$DRI_DIRS" | $SED 's/  */ /g'`
