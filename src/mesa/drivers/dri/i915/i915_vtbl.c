@@ -290,7 +290,7 @@ get_state_size(struct i915_hw_state *state)
 /* Push the state into the sarea and/or texture memory.
  */
 static void
-i915_emit_state(struct intel_context *intel)
+i915_do_emit_state(struct intel_context *intel)
 {
    struct i915_context *i915 = i915_context(&intel->ctx);
    struct i915_hw_state *state = i915->current;
@@ -307,11 +307,32 @@ i915_emit_state(struct intel_context *intel)
     */
    intel_batchbuffer_require_space(intel->batch, get_state_size(state), 0);
 
+   /* Workaround.  There are cases I haven't been able to track down
+    * where we aren't emitting a full state at the start of a new
+    * batchbuffer.  This code spots that we are on a new batchbuffer
+    * and forces a full state emit no matter what.  
+    *
+    * In the normal case state->emitted is already zero, this code is
+    * another set of checks to make sure it really is.
+    */
+   if (intel->batch->id != intel->last_state_batch_id ||
+       intel->batch->map == intel->batch->ptr) 
+   {
+      state->emitted = 0;
+      intel_batchbuffer_require_space(intel->batch, get_state_size(state), 0);
+   }
+
    /* Do this here as we may have flushed the batchbuffer above,
     * causing more state to be dirty!
     */
    dirty = get_dirty(state);
    state->emitted |= dirty;
+   assert(get_dirty(state) == 0);
+
+   if (intel->batch->id != intel->last_state_batch_id) {
+      assert(dirty & I915_UPLOAD_CTX);
+      intel->last_state_batch_id = intel->batch->id;
+   }
 
    if (INTEL_DEBUG & DEBUG_STATE)
       fprintf(stderr, "%s dirty: %x\n", __FUNCTION__, dirty);
@@ -431,7 +452,30 @@ i915_emit_state(struct intel_context *intel)
          i915_disassemble_program(state->Program, state->ProgramSize);
    }
 
+   intel->batch->dirty_state &= ~dirty;
    assert(get_dirty(state) == 0);
+}
+
+static void
+i915_emit_state(struct intel_context *intel)
+{
+   struct i915_context *i915 = i915_context(&intel->ctx);
+
+   i915_do_emit_state( intel );
+
+   /* Second chance - catch batchbuffer wrap in the middle of state
+    * emit.  This shouldn't happen but it has been observed in
+    * testing.
+    */
+   if (get_dirty( i915->current )) {
+      /* Force a full re-emit if this happens.
+       */
+      i915->current->emitted = 0;
+      i915_do_emit_state( intel );
+   }
+
+   assert(get_dirty(i915->current) == 0);
+   assert((intel->batch->dirty_state & (1<<1)) == 0);
 }
 
 static void

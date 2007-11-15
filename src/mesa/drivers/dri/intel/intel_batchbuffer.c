@@ -85,6 +85,8 @@ intel_batchbuffer_reset(struct intel_batchbuffer *batch)
    batch->map = batch->buf->virtual;
    batch->size = intel->intelScreen->maxBatchSize;
    batch->ptr = batch->map;
+   batch->dirty_state = ~0;
+   batch->id = batch->intel->intelScreen->batch_id++;
 }
 
 struct intel_batchbuffer *

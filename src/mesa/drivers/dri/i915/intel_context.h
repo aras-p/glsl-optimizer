@@ -145,6 +145,7 @@ struct intel_context
    dri_fence *first_swap_fence;
 
    struct intel_batchbuffer *batch;
+   GLuint last_state_batch_id;
 
    struct
    {

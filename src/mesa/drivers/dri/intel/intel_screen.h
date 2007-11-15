@@ -98,6 +98,8 @@ typedef struct
     * instead of the fake client-side memory manager.
     */
    GLboolean ttm;
+
+   unsigned batch_id;
 } intelScreenPrivate;
 
 
