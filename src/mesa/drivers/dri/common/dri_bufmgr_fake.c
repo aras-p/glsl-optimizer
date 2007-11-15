@@ -66,7 +66,7 @@ struct fake_buffer_reloc
    dri_bo *reloc_buf;
    dri_bo *target_buf;
    GLuint offset;
-   GLuint delta;                /* not needed? */
+   GLuint delta;
    GLuint validate_flags;
    GLboolean relocated;
 };
@@ -75,10 +75,19 @@ struct block {
    struct block *next, *prev;
    struct mem_block *mem;	/* BM_MEM_AGP */
 
+   /**
+    * Marks that the block is currently in the aperture and has yet to be
+    * fenced.
+    */
    unsigned on_hardware:1;
+   /**
+    * Marks that the block is currently fenced (being used by rendering) and
+    * can't be freed until @fence is passed.
+    */
    unsigned fenced:1;
 
-   unsigned fence;		/* BM_MEM_AGP, Split to read_fence, write_fence */
+   /** Fence cookie for the block. */
+   unsigned fence; /* Split to read_fence, write_fence */
 
    dri_bo *bo;
    void *virtual;
