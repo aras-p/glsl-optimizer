@@ -73,13 +73,75 @@ AC_SUBST(OPT_FLAGS)
 AC_SUBST(ARCH_FLAGS)
 
 dnl
+dnl shared/static libraries, mimic libtool options
+dnl
+AC_ARG_ENABLE(static,
+    [AS_HELP_STRING([--enable-static],
+        [build static libraries @<:@default=no@:>@])],
+    enable_static="$enableval",
+    enable_static=no
+)
+case "x$enable_static" in
+xyes|xno ) ;;
+x ) enable_static=no ;;
+* )
+    AC_MSG_ERROR([Static library option '$enable_static' is not a valid])
+    ;;
+esac
+AC_ARG_ENABLE(shared,
+    [AS_HELP_STRING([--disable-shared],
+        [build shared libraries @<:@default=yes@:>@])],
+    enable_shared="$enableval",
+    enable_shared=yes
+)
+case "x$enable_shared" in
+xyes|xno ) ;;
+x ) enable_shared=yes ;;
+* )
+    AC_MSG_ERROR([Shared library option '$enable_shared' is not a valid])
+    ;;
+esac
+
+dnl Can't have static and shared libraries, default to static if user
+dnl explicitly requested. If both disabled, set to static since shared
+dnl was explicitly requirested.
+case "x$enable_static$enable_shared" in
+xyesyes )
+    AC_MSG_WARN([Can't build static and shared libraries, disabling shared])
+    enable_shared=no
+    ;;
+xnono )
+    AC_MSG_WARN([Can't disable both static and shared libraries, enabling static])
+    enable_static=yes
+    ;;
+esac
+
+dnl
+dnl mklib options
+dnl
+AC_ARG_VAR(MKLIB_OPTIONS,[Options for the Mesa library script, mklib])
+if test "$enable_static" = yes; then
+    MKLIB_OPTIONS="$MKLIB_OPTIONS -static"
+fi
+AC_SUBST(MKLIB_OPTIONS)
+
+
+dnl
 dnl library names
 dnl
-GL_LIB_NAME='lib$(GL_LIB).so'
-GLU_LIB_NAME='lib$(GLU_LIB).so'
-GLUT_LIB_NAME='lib$(GLUT_LIB).so'
-GLW_LIB_NAME='lib$(GLW_LIB).so'
-OSMESA_LIB_NAME='lib$(OSMESA_LIB).so'
+if test "$enable_static" = yes; then
+    GL_LIB_NAME='lib$(GL_LIB).a'
+    GLU_LIB_NAME='lib$(GLU_LIB).a'
+    GLUT_LIB_NAME='lib$(GLUT_LIB).a'
+    GLW_LIB_NAME='lib$(GLW_LIB).a'
+    OSMESA_LIB_NAME='lib$(OSMESA_LIB).a'
+else
+    GL_LIB_NAME='lib$(GL_LIB).so'
+    GLU_LIB_NAME='lib$(GLU_LIB).so'
+    GLUT_LIB_NAME='lib$(GLUT_LIB).so'
+    GLW_LIB_NAME='lib$(GLW_LIB).so'
+    OSMESA_LIB_NAME='lib$(OSMESA_LIB).so'
+fi
 AC_SUBST(GL_LIB_NAME)
 AC_SUBST(GLU_LIB_NAME)
 AC_SUBST(GLUT_LIB_NAME)
@@ -209,8 +271,20 @@ x11)
         GL_LIB_DEPS="$X_LIBS -lX11 -lXext"
     fi
     GL_LIB_DEPS="$GL_LIB_DEPS -lm -lpthread"
+
+    # if static, move the external libraries to the programs
+    # and empty the libraries for libGL
+    if test "$enable_static" = yes; then
+        APP_LIB_DEPS="$APP_LIB_DEPS $GL_LIB_DEPS"
+        GL_LIB_DEPS=""
+    fi
     ;;
 dri)
+    # DRI must be shared, I think
+    if test "$enable_static" = yes; then
+        AC_MSG_ERROR([Can't use static libraries for DRI drivers])
+    fi
+
     # Check for libdrm
     PKG_CHECK_MODULES(LIBDRM, libdrm)
 
@@ -387,13 +461,23 @@ AC_SUBST(OSMESA_LIB)
 
 case "$mesa_driver" in
 osmesa)
-    OSMESA_LIB_DEPS="-lm -lpthread"
+    # only link librararies with osmesa if shared
+    if test "$enable_static" = no; then
+        OSMESA_LIB_DEPS="-lm -lpthread"
+    else
+        OSMESA_LIB_DEPS=""
+    fi
     OSMESA_MESA_DEPS=""
     ;;
 *)
     # Link OSMesa to libGL otherwise
     OSMESA_LIB_DEPS=""
-    OSMESA_MESA_DEPS='-l$(GL_LIB)'
+    # only link librararies with osmesa if shared
+    if test "$enable_static" = no; then
+        OSMESA_MESA_DEPS='-l$(GL_LIB)'
+    else
+        OSMESA_MESA_DEPS=""
+    fi
     ;;
 esac
 AC_SUBST(OSMESA_LIB_DEPS)
@@ -420,7 +504,11 @@ if test "x$enable_glu" = xyes; then
 
         # Link libGLU to libOSMesa instead of libGL
         GLU_LIB_DEPS=""
-        GLU_MESA_DEPS='-l$(OSMESA_LIB)'
+        if test "$enable_static" = no; then
+            GLU_MESA_DEPS='-l$(OSMESA_LIB)'
+        else
+            GLU_MESA_DEPS=""
+        fi
         ;;
     *)
         # If GLU is available, we can build the xdemos
@@ -428,8 +516,15 @@ if test "x$enable_glu" = xyes; then
             PROGRAM_DIRS="$PROGRAM_DIRS xdemos"
         fi
 
-        GLU_LIB_DEPS="-lm"
-        GLU_MESA_DEPS='-l$(GL_LIB)'
+        # If static, empty GLU_LIB_DEPS and add libs for programs to link
+        if test "$enable_static" = no; then
+            GLU_LIB_DEPS="-lm"
+            GLU_MESA_DEPS='-l$(GL_LIB)'
+        else
+            GLU_LIB_DEPS=""
+            GLU_MESA_DEPS=""
+            APP_LIB_DEPS="$APP_LIB_DEPS -lstdc++"
+        fi
         ;;
     esac
 fi
@@ -459,7 +554,14 @@ if test "x$enable_glw" = xyes; then
         GLW_LIB_DEPS="$X_LIBS -lX11 -lXt"
     fi
 
-    GLW_MESA_DEPS='-l$(GL_LIB)'
+    # If static, empty GLW_LIB_DEPS and add libs for programs to link
+    if test "$enable_static" = no; then
+        GLW_MESA_DEPS='-l$(GL_LIB)'
+    else
+        APP_LIB_DEPS="$APP_LIB_DEPS $GLW_LIB_DEPS"
+        GLW_LIB_DEPS=""
+        GLW_MESA_DEPS=""
+    fi
 fi
 AC_SUBST(GLW_LIB_DEPS)
 AC_SUBST(GLW_MESA_DEPS)
@@ -509,7 +611,14 @@ if test "x$enable_glut" = xyes; then
         PROGRAM_DIRS="$PROGRAM_DIRS demos redbook samples glsl"
     fi
 
-    GLUT_MESA_DEPS='-l$(GLU_LIB) -l$(GL_LIB)'
+    # If static, empty GLUT_LIB_DEPS and add libs for programs to link
+    if test "$enable_static" = no; then
+        GLUT_MESA_DEPS='-l$(GLU_LIB) -l$(GL_LIB)'
+    else
+        APP_LIB_DEPS="$APP_LIB_DEPS $GLUT_LIB_DEPS"
+        GLUT_LIB_DEPS=""
+        GLUT_MESA_DEPS=""
+    fi
 fi
 AC_SUBST(GLUT_LIB_DEPS)
 AC_SUBST(GLUT_MESA_DEPS)

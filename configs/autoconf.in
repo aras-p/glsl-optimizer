@@ -32,7 +32,7 @@ ASM_API = @ASM_API@
 
 # Misc tools and flags
 MAKE = @MAKE@
-MKLIB_OPTIONS =
+MKLIB_OPTIONS = @MKLIB_OPTIONS@
 MKDEP = @MKDEP@
 MKDEP_OPTIONS = -fdepend
 INSTALL = $(TOP)/bin/minstall
