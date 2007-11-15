@@ -130,6 +130,39 @@ AC_SUBST(DRIVER_DIRS)
 AC_SUBST(WINDOW_SYSTEM)
 
 dnl
+dnl User supplied program configuration
+dnl
+if test -d "$srcdir/progs/demos"; then
+    default_demos=yes
+else
+    default_demos=no
+fi
+AC_ARG_WITH(demos,
+    [AS_HELP_STRING([--with-demos@<:@=DIRS...@:>@],
+        [optional comma delimited demo directories to build
+        @<:@default=yes if source available@:>@])],
+    with_demos="$withval",
+    with_demos="$default_demos")
+if test "x$with_demos" = x; then
+    with_demos=no
+fi
+
+dnl If $with_demos is yes, directories will be added as libs available
+PROGRAM_DIRS=""
+case "$with_demos" in
+no|yes) ;;
+*)
+    # verify the requested demos directories exist
+    demos=`IFS=,; echo $with_demos`
+    for demo in $demos; do
+        test -d "$srcdir/progs/$demo" || \
+            AC_MSG_ERROR([Program directory '$demo' doesn't exist])
+    done
+    PROGRAM_DIRS="$demos"
+    ;;
+esac
+
+dnl
 dnl Find out if X is available. The variables have_x or no_x will be
 dnl set and used later in the driver setups
 dnl
@@ -381,7 +414,7 @@ if test "x$enable_glu" = xyes; then
     osmesa)
         # If GLU is available and we have libOSMesa (not 16 or 32),
         # we can build the osdemos
-        if test "$osmesa_bits" = 8; then
+        if test "$with_demos" = yes && test "$osmesa_bits" = 8; then
             PROGRAM_DIRS="$PROGRAM_DIRS osdemos"
         fi
 
@@ -391,7 +424,9 @@ if test "x$enable_glu" = xyes; then
         ;;
     *)
         # If GLU is available, we can build the xdemos
-        PROGRAM_DIRS="$PROGRAM_DIRS xdemos"
+        if test "$with_demos" = yes; then
+            PROGRAM_DIRS="$PROGRAM_DIRS xdemos"
+        fi
 
         GLU_LIB_DEPS="-lm"
         GLU_MESA_DEPS='-l$(GL_LIB)'
@@ -470,7 +505,9 @@ if test "x$enable_glut" = xyes; then
     GLUT_LIB_DEPS="$GLUT_LIB_DEPS -lm"
 
     # If glut is available, we can build most programs
-    PROGRAM_DIRS="$PROGRAM_DIRS demos redbook samples glsl"
+    if test "$with_demos" = yes; then
+        PROGRAM_DIRS="$PROGRAM_DIRS demos redbook samples glsl"
+    fi
 
     GLUT_MESA_DEPS='-l$(GLU_LIB) -l$(GL_LIB)'
 fi
