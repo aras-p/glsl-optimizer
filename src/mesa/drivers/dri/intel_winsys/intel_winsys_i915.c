@@ -111,19 +111,62 @@ static void intel_i915_batch_reloc( struct i915_winsys *sws,
 
 
 
-static void intel_i915_batch_flush( struct i915_winsys *sws )
+static struct pipe_fence *
+intel_i915_batch_flush( struct i915_winsys *sws )
 {
    struct intel_context *intel = intel_i915_winsys(sws)->intel;
 
-   intel_batchbuffer_flush( intel->batch );
-//   if (0) intel_i915_batch_wait_idle( sws );
+   return pipe_fo(intel_batchbuffer_flush( intel->batch ));
 }
 
 
-static void intel_i915_batch_finish( struct i915_winsys *sws )
+static void 
+intel_i915_fence_reference( struct i915_winsys *sws, 
+                            struct pipe_fence **dst_fence,
+                            struct pipe_fence *src_fence )
 {
-   struct intel_context *intel = intel_i915_winsys(sws)->intel;
-   intel_batchbuffer_finish( intel->batch );
+   struct _DriFenceObject **dri_dst_fence = (struct _DriFenceObject **)dst_fence;
+   struct _DriFenceObject *dri_src_fence = (struct _DriFenceObject *)dst_fence;
+   
+   if(dri_src_fence)
+      driFenceReference(dri_src_fence);
+   
+   if(*dri_dst_fence)
+      driFenceUnReference(*dri_dst_fence);
+   
+   *dri_dst_fence = dri_src_fence;
+}
+
+
+static int 
+intel_i915_fence_is_signalled( struct i915_winsys *sws,
+                               struct pipe_fence *fence )
+{
+   struct _DriFenceObject *dri_fence = dri_fo(fence);
+   int ret = 1;
+   if (fence) {
+      driFenceReference(dri_fence);
+      ret = driFenceSignaled(dri_fence,
+                       DRM_FENCE_TYPE_EXE | DRM_I915_FENCE_TYPE_RW);
+      driFenceUnReference(dri_fence);
+   }
+   return ret;
+}
+
+
+static int 
+intel_i915_fence_wait( struct i915_winsys *sws,
+                       struct pipe_fence *fence )
+{
+   struct _DriFenceObject *dri_fence = dri_fo(fence);
+   if (fence) {
+      driFenceReference(dri_fence);
+      driFenceFinish(dri_fence,
+                     DRM_FENCE_TYPE_EXE | DRM_I915_FENCE_TYPE_RW,
+                     GL_FALSE);
+      driFenceUnReference(dri_fence);
+   }
+   return 1;
 }
 
 
@@ -143,7 +186,10 @@ intel_create_i915simple( struct intel_context *intel,
    iws->winsys.batch_dword = intel_i915_batch_dword;
    iws->winsys.batch_reloc = intel_i915_batch_reloc;
    iws->winsys.batch_flush = intel_i915_batch_flush;
-   iws->winsys.batch_finish = intel_i915_batch_finish;
+   iws->winsys.fence_reference = intel_i915_fence_reference;
+   iws->winsys.fence_is_signalled = intel_i915_fence_is_signalled;
+   iws->winsys.fence_wait = intel_i915_fence_wait;
+   
    iws->intel = intel;
 
    /* Create the i915simple context:

@@ -80,6 +80,7 @@
 
 
 
+struct pipe_fence;
 struct i915_cache_context;
 
 /* Use to calculate differences between state emitted to hardware and
@@ -184,6 +185,8 @@ struct i915_context
    unsigned dirty;
 
    unsigned *batch_start;
+   
+   struct pipe_fence *last_fence;
 
    /** Vertex buffer */
    struct pipe_buffer_handle *vbo;

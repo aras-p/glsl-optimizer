@@ -32,7 +32,9 @@ struct intel_context;
 struct pipe_context;
 struct pipe_winsys;
 struct pipe_buffer_handle;
+struct pipe_fence;
 struct _DriBufferObject;
+struct _DriFenceObject;
 
 struct pipe_winsys *
 intel_create_pipe_winsys( int fd );
@@ -65,6 +67,21 @@ pipe_bo( struct _DriBufferObject *bo )
    return (struct pipe_buffer_handle *)bo;
 }
 
+
+/* Turn the pipe opaque buffer pointer into a dri_bufmgr opaque
+ * buffer pointer...
+ */
+static INLINE struct _DriFenceObject *
+dri_fo( struct pipe_fence *bo )
+{
+   return (struct _DriFenceObject *)bo;
+}
+
+static INLINE struct pipe_fence *
+pipe_fo( struct _DriFenceObject *bo )
+{
+   return (struct pipe_fence *)bo;
+}
 
 
 #endif

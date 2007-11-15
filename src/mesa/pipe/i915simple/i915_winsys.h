@@ -52,6 +52,7 @@
 
 struct pipe_buffer_handle;
 struct pipe_winsys;
+struct pipe_fence;
 
 
 /**
@@ -97,8 +98,21 @@ struct i915_winsys {
 			unsigned access_flags,
 			unsigned delta );
    
-   void (*batch_flush)( struct i915_winsys *sws );
-   void (*batch_finish)( struct i915_winsys *sws );
+   struct pipe_fence *(*batch_flush)( struct i915_winsys *sws );
+
+
+   /* Fence 
+    */
+   void (*fence_reference)( struct i915_winsys *sws, 
+                            struct pipe_fence **dst_fence,
+                            struct pipe_fence *src_fence );
+
+   int (*fence_is_signalled)( struct i915_winsys *sws,
+                              struct pipe_fence *fence );
+   
+   int (*fence_wait)( struct i915_winsys *sws,
+                      struct pipe_fence *fence );
+
 };
 
 #define I915_BUFFER_ACCESS_WRITE   0x1 
