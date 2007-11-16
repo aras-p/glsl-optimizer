@@ -245,6 +245,7 @@ static const struct dri_debug_control debug_control[] = {
    {"reg", DEBUG_REGION},
    {"fbo", DEBUG_FBO},
    {"lock", DEBUG_LOCK},
+   {"sync", DEBUG_SYNC},
    {NULL, 0}
 };
 

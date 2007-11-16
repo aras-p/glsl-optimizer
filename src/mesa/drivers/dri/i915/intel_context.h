@@ -355,6 +355,7 @@ extern int INTEL_DEBUG;
 #define DEBUG_REGION    0x400
 #define DEBUG_FBO       0x800
 #define DEBUG_LOCK      0x1000
+#define DEBUG_SYNC	0x2000
 
 #define DBG(...)  do { if (INTEL_DEBUG & FILE_DEBUG_FLAG) _mesa_printf(__VA_ARGS__); } while(0)
 

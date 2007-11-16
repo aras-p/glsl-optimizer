@@ -212,6 +212,12 @@ intel_batchbuffer_flush(struct intel_batchbuffer *batch)
    if (!was_locked)
       UNLOCK_HARDWARE(intel);
 
+   if (INTEL_DEBUG & DEBUG_SYNC) {
+      fprintf(stderr, "waiting for idle\n");
+      if (batch->last_fence != NULL)
+	 dri_fence_wait(batch->last_fence);
+   }
+
    /* Reset the buffer:
     */
    intel_batchbuffer_reset(batch);
