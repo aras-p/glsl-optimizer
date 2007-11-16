@@ -125,7 +125,20 @@ typedef struct _bufmgr_fake {
    struct fake_buffer_reloc reloc[MAX_RELOCS];
    GLuint nr_relocs;
    GLboolean performed_rendering;
+   GLboolean in_relocation;
 } dri_bufmgr_fake;
+
+#define RELOC_CACHE_COUNT 10
+/**
+ * Relocation cache entry.
+ *
+ * These are used in buffer relocation to avoid re-mapping (and therefore
+ * dirtying) a buffer to emit constant relocations.
+ */
+struct reloc_cache {
+   unsigned int offset;
+   uint32_t data;
+};
 
 typedef struct _dri_bo_fake {
    dri_bo bo;
@@ -143,12 +156,19 @@ typedef struct _dri_bo_fake {
    unsigned int alignment;
    GLboolean is_static, validated;
    unsigned int map_count;
-   /* Relocation count to assist in determining the order to perform
-    * relocations.
+   /**
+    *  Relocation count with this as reloc_buffer, to assist in determining the
+    * order to perform relocations.
     */
    unsigned int nr_relocs;
+   struct reloc_cache reloc_cache[RELOC_CACHE_COUNT];
+
    /* Flags for the buffer to be validated with in command submission */
    uint64_t validate_flags;
+
+   /* Number of entries in the relocation data cache */
+   unsigned int reloc_cache_count;
+   
 
    struct block *block;
    void *backing_store;
@@ -669,6 +689,11 @@ dri_fake_bo_map(dri_bo *bo, GLboolean write_enable)
       return 0;
    }
 
+   /* Clear the relocation cache if unknown data is going to be written in. */
+   if (!bufmgr_fake->in_relocation && write_enable) {
+      bo_fake->reloc_cache_count = 0;
+   }
+
    {
       DBG("drm_bo_map: (buf %d: %s, %d kb)\n", bo_fake->id, bo_fake->name,
 	  bo_fake->bo.size / 1024);
@@ -925,6 +950,7 @@ dri_fake_process_relocs(dri_bo *batch_buf, GLuint *count_p)
    int ret;
 
    bufmgr_fake->performed_rendering = GL_FALSE;
+   bufmgr_fake->in_relocation = GL_TRUE;
 
    /* Loop over the relocation list validating and writing the relocation
     * entries for target buffers that don't contain any remaining relocations.
@@ -938,53 +964,82 @@ dri_fake_process_relocs(dri_bo *batch_buf, GLuint *count_p)
 	 struct fake_buffer_reloc *r = &bufmgr_fake->reloc[i];
 	 dri_bo_fake *reloc_fake = (dri_bo_fake *)r->reloc_buf;
 	 dri_bo_fake *target_fake = (dri_bo_fake *)r->target_buf;
+	 uint32_t reloc_data;
+	 int c;
+	 GLboolean cached = GL_FALSE;
 
 	 if (r->relocated)
 	    continue;
 
-	 if (target_fake->nr_relocs == 0) {
-	    /* Validate the target if it hasn't been.  If we fail, fence to
-	     * clear the unfenced list and bail out.
-	     */
-	    if (!target_fake->validated) {
-	       int ret;
+	 /* If there are still relocations to be done in the buffer, don't
+	  * validate it yet.
+	  */
+	 if (target_fake->nr_relocs != 0)
+	    continue;
 
-	       ret = dri_fake_bo_validate(r->target_buf,
-					  target_fake->validate_flags);
-	       if (ret != 0) {
-		  dri_fence *fo;
+	 /* Validate the target buffer if that hasn't been done. */
+	 if (!target_fake->validated) {
+	    ret = dri_fake_bo_validate(r->target_buf,
+				       target_fake->validate_flags);
+	    if (ret != 0) {
+	       dri_fence *fo;
 
-		  dri_bo_unmap(r->reloc_buf);
-		  fo = dri_fake_fence_validated(batch_buf->bufmgr,
-						"batchbuffer failure fence",
-						GL_TRUE);
-		  dri_fence_unreference(fo);
-		  goto done;
-	       }
-	       if (target_fake->validate_flags & DRM_BO_FLAG_WRITE)
-		  bufmgr_fake->performed_rendering = GL_TRUE;
-	       count++;
+	       dri_bo_unmap(r->reloc_buf);
+	       fo = dri_fake_fence_validated(batch_buf->bufmgr,
+					     "batchbuffer failure fence",
+					     GL_TRUE);
+	       dri_fence_unreference(fo);
+	       goto done;
 	    }
+	    if (target_fake->validate_flags & DRM_BO_FLAG_WRITE)
+	       bufmgr_fake->performed_rendering = GL_TRUE;
+	    count++;
+	 }
 
+	 /* Calculate the value of the relocation entry. */
+
+	 reloc_data = r->target_buf->offset + r->delta;
+
+	 /* Check the relocation cache of the buffer to see if we don't need
+	  * to bother writing this one.
+	  */
+	 for (c = 0; c < reloc_fake->reloc_cache_count; c++) {
+	    if (reloc_fake->reloc_cache[c].offset == r->offset &&
+		reloc_fake->reloc_cache[c].data == reloc_data) {
+	       cached = GL_TRUE;
+	    }
+	 }
+
+	 if (!cached) {
 	    /* Map and write in the relocation to reloc_buf */
 	    if (reloc_fake->map_count == 0)
 	       dri_bo_map(r->reloc_buf, GL_TRUE);
 
-	    *(uint32_t *)(r->reloc_buf->virtual + r->offset) =
-	       r->target_buf->offset + r->delta;
+	    *(uint32_t *)(r->reloc_buf->virtual + r->offset) = reloc_data;
 
-	    /* Mark this relocation in reloc_buf as done.  If it was the last
-	     * one to be done to it, unmap the buffer so it can be validated
-	     * next.
-	     */
-	    reloc_fake->nr_relocs--;
-	    if (reloc_fake->nr_relocs == 0)
-	       dri_bo_unmap(r->reloc_buf);
+	    /* Stick this new entry in the relocation cache if possible */
+	    if (reloc_fake->reloc_cache_count < RELOC_CACHE_COUNT) {
+	       struct reloc_cache *entry;
 
-	    r->relocated = GL_TRUE;
+	       entry = &reloc_fake->reloc_cache[reloc_fake->reloc_cache_count];
+	       entry->offset = r->offset;
+	       entry->data = reloc_data;
 
-	    cont = GL_TRUE;
+	       reloc_fake->reloc_cache_count++;
+	    }
 	 }
+
+	 /* Mark this relocation in reloc_buf as done.  If it was the last
+	  * reloc to be done to it, unmap the buffer so it can be validated
+	  * next.
+	  */
+	 reloc_fake->nr_relocs--;
+	 if (reloc_fake->nr_relocs == 0 && reloc_fake->map_count != 0)
+	    dri_bo_unmap(r->reloc_buf);
+
+	 r->relocated = GL_TRUE;
+
+	 cont = GL_TRUE;
       }
    } while (cont);
 
@@ -992,6 +1047,7 @@ dri_fake_process_relocs(dri_bo *batch_buf, GLuint *count_p)
    assert(ret == 0);
 
    *count_p = count;
+   bufmgr_fake->in_relocation = GL_FALSE;
  done:
    return NULL;
 }
