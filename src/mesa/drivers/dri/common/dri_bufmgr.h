@@ -134,13 +134,42 @@ struct _dri_bufmgr {
     * Tears down the buffer manager instance.
     */
    void (*destroy)(dri_bufmgr *bufmgr);
-   
-   /**
-    * Add relocation
-    */
-   void (*emit_reloc)(dri_bo *batch_buf, GLuint flags, GLuint delta, GLuint offset, dri_bo *relocatee);
 
-  void *(*process_relocs)(dri_bo *batch_buf, GLuint *count);
+   /**
+    * Add relocation entry in reloc_buf, to be set on command submission.
+    *
+    * \param reloc_buf Buffer to write the relocation into.
+    * \param flags BO flags to be used in validating the target buffer.
+    *	     Applicable flags include:
+    *	     - DRM_BO_FLAG_READ: The buffer will be read in the process of
+    *	       command execution.
+    *	     - DRM_BO_FLAG_WRITE: The buffer will be written in the process of
+    *	       command execution.
+    *	     - DRM_BO_FLAG_MEM_TT: The buffer should be validated in TT memory.
+    *	     - DRM_BO_FLAG_MEM_VRAM: The buffer should be validated in video
+    *	       memory.
+    * \param delta Constant value to be added to the relocation target's offset.
+    * \param offset Byte offset within batch_buf of the relocated pointer.
+    * \param target Buffer whose offset should be written into the relocation
+    *	     entry.
+    */
+   void (*emit_reloc)(dri_bo *reloc_buf, GLuint flags, GLuint delta,
+		      GLuint offset, dri_bo *target);
+
+   /**
+    * Processes the relocations, either in userland or by converting the list
+    * for use in batchbuffer submission.
+    *
+    * Kernel-based implementations will return a pointer to the arguments
+    * to be handed with batchbuffer submission to the kernel.  The userland
+    * implementation performs the buffer validation and emits relocations
+    * into them the appopriate order.
+    *
+    * \param batch_buf buffer at the root of the tree of relocations
+    * \param count returns the number of buffers validated.
+    * \return relocation record for use in command submission.
+    * */
+   void *(*process_relocs)(dri_bo *batch_buf, GLuint *count);
 
    void (*post_submit)(dri_bo *batch_buf, dri_fence **fence);
 };

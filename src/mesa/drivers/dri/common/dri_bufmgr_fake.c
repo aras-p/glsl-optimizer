@@ -63,10 +63,12 @@
 
 struct fake_buffer_reloc
 {
-   dri_bo *buf;
+   dri_bo *reloc_buf;
+   dri_bo *target_buf;
    GLuint offset;
    GLuint delta;                /* not needed? */
    GLuint validate_flags;
+   GLboolean relocated;
 };
 
 struct block {
@@ -139,7 +141,14 @@ typedef struct _dri_bo_fake {
     */
    unsigned int flags;
    unsigned int alignment;
-   GLboolean is_static;
+   GLboolean is_static, validated;
+   unsigned int map_count;
+   /* Relocation count to assist in determining the order to perform
+    * relocations.
+    */
+   unsigned int nr_relocs;
+   /* Flags for the buffer to be validated with in command submission */
+   uint64_t validate_flags;
 
    struct block *block;
    void *backing_store;
@@ -629,6 +638,7 @@ dri_fake_bo_unreference(dri_bo *bo)
       free_backing_store(bo);
       _glthread_UNLOCK_MUTEX(bufmgr_fake->mutex);
       free(bo);
+      DBG("drm_bo_unreference: free %s\n", bo_fake->name);
       return;
    }
    _glthread_UNLOCK_MUTEX(bufmgr_fake->mutex);
@@ -649,6 +659,12 @@ dri_fake_bo_map(dri_bo *bo, GLboolean write_enable)
       return 0;
 
    _glthread_LOCK_MUTEX(bufmgr_fake->mutex);
+   /* Allow recursive mapping, which is used internally in relocation. */
+   if (bo_fake->map_count++ != 0) {
+      _glthread_UNLOCK_MUTEX(bufmgr_fake->mutex);
+      return 0;
+   }
+
    {
       DBG("drm_bo_map: (buf %d: %s, %d kb)\n", bo_fake->id, bo_fake->name,
 	  bo_fake->bo.size / 1024);
@@ -692,19 +708,25 @@ dri_fake_bo_map(dri_bo *bo, GLboolean write_enable)
 static int
 dri_fake_bo_unmap(dri_bo *bo)
 {
+   dri_bufmgr_fake *bufmgr_fake = (dri_bufmgr_fake *)bo->bufmgr;
    dri_bo_fake *bo_fake = (dri_bo_fake *)bo;
 
    /* Static buffers are always mapped. */
    if (bo_fake->is_static)
       return 0;
 
-   if (bo == NULL)
+   _glthread_LOCK_MUTEX(bufmgr_fake->mutex);
+   if (--bo_fake->map_count != 0) {
+      _glthread_UNLOCK_MUTEX(bufmgr_fake->mutex);
       return 0;
+   }
 
    DBG("drm_bo_unmap: (buf %d: %s, %d kb)\n", bo_fake->id, bo_fake->name,
        bo_fake->bo.size / 1024);
 
    bo->virtual = NULL;
+
+   _glthread_UNLOCK_MUTEX(bufmgr_fake->mutex);
 
    return 0;
 }
@@ -854,17 +876,34 @@ dri_fake_destroy(dri_bufmgr *bufmgr)
 }
 
 static void
-dri_fake_emit_reloc(dri_bo *batch_buf, GLuint flags, GLuint delta, GLuint offset,
-		    dri_bo *relocatee)
+dri_fake_emit_reloc(dri_bo *reloc_buf, GLuint flags, GLuint delta,
+		    GLuint offset, dri_bo *target_buf)
 {
-   dri_bufmgr_fake *bufmgr_fake = (dri_bufmgr_fake *)batch_buf->bufmgr;
+   dri_bufmgr_fake *bufmgr_fake = (dri_bufmgr_fake *)reloc_buf->bufmgr;
    struct fake_buffer_reloc *r = &bufmgr_fake->reloc[bufmgr_fake->nr_relocs++];
-   
+   dri_bo_fake *target_fake = (dri_bo_fake *)target_buf;
+   dri_bo_fake *reloc_fake = (dri_bo_fake *)reloc_buf;
+
    assert(bufmgr_fake->nr_relocs <= MAX_RELOCS);
 
-   dri_bo_reference(relocatee);
+   dri_bo_reference(target_buf);
 
-   r->buf = relocatee;
+   if (target_fake->flags == 0) {
+      target_fake->validate_flags = flags;
+   } else {
+      /* Mask the memory location to the intersection of all the memory
+       * locations the buffer is being validated to.
+       */
+      target_fake->validate_flags =
+	 (target_fake->validate_flags & ~DRM_BO_MASK_MEM) |
+	 (flags & target_fake->validate_flags & DRM_BO_MASK_MEM);
+      /* All the other flags just accumulate. */
+      target_fake->validate_flags |= flags & ~DRM_BO_MASK_MEM;
+   }
+   reloc_fake->nr_relocs++;
+
+   r->reloc_buf = reloc_buf;
+   r->target_buf = target_buf;
    r->offset = offset;
    r->delta = delta;
    r->validate_flags = flags;
@@ -872,81 +911,83 @@ dri_fake_emit_reloc(dri_bo *batch_buf, GLuint flags, GLuint delta, GLuint offset
    return;
 }
 
-
-static int
-relocation_sort(const void *a_in, const void *b_in) {
-   const struct fake_buffer_reloc *a = a_in, *b = b_in;
-
-   return (intptr_t)a->buf < (intptr_t)b->buf ? -1 : 1;
-}
-
 static void *
 dri_fake_process_relocs(dri_bo *batch_buf, GLuint *count_p)
 {
    dri_bufmgr_fake *bufmgr_fake = (dri_bufmgr_fake *)batch_buf->bufmgr;
    GLuint i;
-   GLuint *ptr;
    GLuint count = 0;
-
-   assert(batch_buf->virtual != NULL);
-   ptr = batch_buf->virtual;
+   GLboolean cont;
+   int ret;
 
    bufmgr_fake->performed_rendering = GL_FALSE;
 
-   /* Sort our relocation list in terms of referenced buffer pointer.
-    * This lets us uniquely validate the buffers with the sum of all the flags,
-    * while avoiding O(n^2) on number of relocations.
+   /* Loop over the relocation list validating and writing the relocation
+    * entries for target buffers that don't contain any remaining relocations.
+    * In the current examples we have, the depth of the tree of relocations
+    * is small (up to 3), so this loop shouldn't hurt too bad.
     */
-   qsort(bufmgr_fake->reloc, bufmgr_fake->nr_relocs, sizeof(bufmgr_fake->reloc[0]),
-	 relocation_sort);
+   do {
+      cont = GL_FALSE;
 
-   /* Perform the necessary validations of buffers, and enter the relocations
-    * in the batchbuffer.
-    */
-   for (i = 0; i < bufmgr_fake->nr_relocs; i++) {
-      struct fake_buffer_reloc *r = &bufmgr_fake->reloc[i];
+      for (i = 0; i < bufmgr_fake->nr_relocs; i++) {
+	 struct fake_buffer_reloc *r = &bufmgr_fake->reloc[i];
+	 dri_bo_fake *reloc_fake = (dri_bo_fake *)r->reloc_buf;
+	 dri_bo_fake *target_fake = (dri_bo_fake *)r->target_buf;
 
-      if (r->validate_flags & DRM_BO_FLAG_WRITE)
-	 bufmgr_fake->performed_rendering = GL_TRUE;
+	 if (r->relocated)
+	    continue;
 
-      /* If this is the first time we've seen this buffer in the relocation
-       * list, figure out our flags and validate it.
-       */
-      if (i == 0 || bufmgr_fake->reloc[i - 1].buf != r->buf) {
-	 uint32_t validate_flags;
-	 int j, ret;
+	 if (target_fake->nr_relocs == 0) {
+	    /* Validate the target if it hasn't been.  If we fail, fence to
+	     * clear the unfenced list and bail out.
+	     */
+	    if (!target_fake->validated) {
+	       int ret;
 
-	 /* Accumulate the flags we need for validating this buffer. */
-	 validate_flags = r->validate_flags;
-	 for (j = i + 1; j < bufmgr_fake->nr_relocs; j++) {
-	    if (bufmgr_fake->reloc[j].buf != r->buf)
-	       break;
-	    validate_flags |= bufmgr_fake->reloc[j].validate_flags;
+	       ret = dri_fake_bo_validate(r->target_buf,
+					  target_fake->validate_flags);
+	       if (ret != 0) {
+		  dri_fence *fo;
+
+		  dri_bo_unmap(r->reloc_buf);
+		  fo = dri_fake_fence_validated(batch_buf->bufmgr,
+						"batchbuffer failure fence",
+						GL_TRUE);
+		  dri_fence_unreference(fo);
+		  goto done;
+	       }
+	       if (target_fake->validate_flags & DRM_BO_FLAG_WRITE)
+		  bufmgr_fake->performed_rendering = GL_TRUE;
+	       count++;
+	    }
+
+	    /* Map and write in the relocation to reloc_buf */
+	    if (reloc_fake->map_count == 0)
+	       dri_bo_map(r->reloc_buf, GL_TRUE);
+
+	    *(uint32_t *)(r->reloc_buf->virtual + r->offset) =
+	       r->target_buf->offset + r->delta;
+
+	    /* Mark this relocation in reloc_buf as done.  If it was the last
+	     * one to be done to it, unmap the buffer so it can be validated
+	     * next.
+	     */
+	    reloc_fake->nr_relocs--;
+	    if (reloc_fake->nr_relocs == 0)
+	       dri_bo_unmap(r->reloc_buf);
+
+	    r->relocated = GL_TRUE;
+
+	    cont = GL_TRUE;
 	 }
-
-	 /* Validate.  If we fail, fence to clear the unfenced list and bail
-	  * out.
-	  */
-	 ret = dri_fake_bo_validate(r->buf, validate_flags);
-	 if (ret != 0) {
-	    dri_fence *fo;
-	    dri_bo_unmap(batch_buf);
-	    fo = dri_fake_fence_validated(batch_buf->bufmgr,
-					  "batchbuffer failure fence", GL_TRUE);
-	    dri_fence_unreference(fo);
-	    goto done;
-	 }
-	 count++;
       }
-      ptr[r->offset / 4] = r->buf->offset + r->delta;
-      dri_bo_unreference(r->buf);
-   }
-   dri_bo_unmap(batch_buf);
+   } while (cont);
 
-   dri_fake_bo_validate(batch_buf, DRM_BO_FLAG_MEM_TT | DRM_BO_FLAG_EXE);
+   ret = dri_fake_bo_validate(batch_buf, DRM_BO_FLAG_MEM_TT | DRM_BO_FLAG_EXE);
+   assert(ret == 0);
 
    *count_p = count;
-   bufmgr_fake->nr_relocs = 0;
  done:
    return NULL;
 }
@@ -956,6 +997,7 @@ dri_fake_post_submit(dri_bo *batch_buf, dri_fence **last_fence)
 {
    dri_bufmgr_fake *bufmgr_fake = (dri_bufmgr_fake *)batch_buf->bufmgr;
    dri_fence *fo;
+   int i;
 
    fo = dri_fake_fence_validated(batch_buf->bufmgr, "Batch fence", GL_TRUE);
 
@@ -965,6 +1007,25 @@ dri_fake_post_submit(dri_bo *batch_buf, dri_fence **last_fence)
    } else {
       dri_fence_unreference(fo);
    }
+
+   /* Clean up the validation list. */
+   for (i = 0; i < bufmgr_fake->nr_relocs; i++) {
+      struct fake_buffer_reloc *r = &bufmgr_fake->reloc[i];
+      dri_bo_fake *reloc_fake = (dri_bo_fake *)r->reloc_buf;
+      dri_bo_fake *target_fake = (dri_bo_fake *)r->target_buf;
+
+      assert(r->relocated);
+      assert(reloc_fake->map_count == 0);
+      DBG("%s@0x%08x + 0x%08x -> %s@0x%08x + 0x%08x\n",
+	  reloc_fake->name, (uint32_t)r->reloc_buf->offset, r->offset,
+	  target_fake->name, (uint32_t)r->target_buf->offset, r->delta);
+
+      reloc_fake->validate_flags = 0;
+      target_fake->validated = GL_FALSE;
+      r->relocated = GL_FALSE;
+      dri_bo_unreference(r->target_buf);
+   }
+   bufmgr_fake->nr_relocs = 0;
 }
 
 dri_bufmgr *
