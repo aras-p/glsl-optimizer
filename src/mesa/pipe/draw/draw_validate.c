@@ -85,6 +85,7 @@ static void validate_begin( struct draw_stage *stage )
 
    /* Clip stage
     */
+   if (!draw->rasterizer->bypass_clipping)
    {
       draw->pipeline.clip->next = next;
       next = draw->pipeline.clip;
