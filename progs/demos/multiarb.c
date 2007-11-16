@@ -1,4 +1,3 @@
-
 /*
  * GL_ARB_multitexture demo
  *
@@ -32,7 +31,6 @@ static GLint NumUnits = 1;
 static GLboolean TexEnabled[8];
 
 static GLfloat Drift = 0.0;
-static GLfloat drift_increment = 0.005;
 static GLfloat Xrot = 20.0, Yrot = 30.0, Zrot = 0.0;
 
 
@@ -41,9 +39,7 @@ static void Idle( void )
    if (Animate) {
       GLint i;
 
-      Drift += drift_increment;
-      if (Drift >= 1.0)
-         Drift = 0.0;
+      Drift = glutGet(GLUT_ELAPSED_TIME) * 0.001;
 
       for (i = 0; i < NumUnits; i++) {
          glActiveTextureARB(GL_TEXTURE0_ARB + i);
@@ -57,10 +53,11 @@ static void Idle( void )
             glTranslatef(0.0, Drift, 0.0);
          }
          else {
-            glTranslatef(0.5, 0.5, 0.0);
+            float tx = 0.5, ty = 0.5;
+            glTranslatef(tx, ty, 0.0);
             glRotatef(180.0 * Drift, 0, 0, 1);
             glScalef(1.0/i, 1.0/i, 1.0/i);
-            glTranslatef(-0.5, -0.5, 0.0);
+            glTranslatef(-tx, -ty + i * 0.1, 0.0);
          }
       }
       glMatrixMode(GL_MODELVIEW);
@@ -72,10 +69,9 @@ static void Idle( void )
 
 static void DrawObject(void)
 {
-   GLint i;
-   GLint j;
-   static const GLfloat   tex_coords[] = {  0.0,  0.0,  1.0,  1.0,  0.0 };
-   static const GLfloat   vtx_coords[] = { -1.0, -1.0,  1.0,  1.0, -1.0 };
+   static const GLfloat tex_coords[] = {  0.0,  0.0,  1.0,  1.0,  0.0 };
+   static const GLfloat vtx_coords[] = { -1.0, -1.0,  1.0,  1.0, -1.0 };
+   GLint i, j;
 
    if (!TexEnabled[0] && !TexEnabled[1])
       glColor3f(0.1, 0.1, 0.1);  /* add onto this */
@@ -83,37 +79,20 @@ static void DrawObject(void)
       glColor3f(1, 1, 1);  /* modulate this */
 
    glBegin(GL_QUADS);
-
-   /* Toggle between the vector and scalar entry points.  This is done purely
-    * to hit multiple paths in the driver.
-    */
-   if ( Drift > 0.49 ) {
-      for (j = 0; j < 4; j++ ) {
-	 for (i = 0; i < NumUnits; i++)
-	    glMultiTexCoord2fARB(GL_TEXTURE0_ARB + i, 
-				 tex_coords[j], tex_coords[j+1]);
-	 glVertex2f( vtx_coords[j], vtx_coords[j+1] );
+   for (j = 0; j < 4; j++ ) {
+      for (i = 0; i < NumUnits; i++) {
+         if (TexEnabled[i])
+            glMultiTexCoord2fARB(GL_TEXTURE0_ARB + i, 
+                                 tex_coords[j], tex_coords[j+1]);
       }
+      glVertex2f( vtx_coords[j], vtx_coords[j+1] );
    }
-   else {
-      for (j = 0; j < 4; j++ ) {
-	 for (i = 0; i < NumUnits; i++)
-	    glMultiTexCoord2fvARB(GL_TEXTURE0_ARB + i, & tex_coords[j]);
-	 glVertex2fv( & vtx_coords[j] );
-      }
-   }
-
    glEnd();
 }
 
 
-
 static void Display( void )
 {
-   static GLint T0 = 0;
-   static GLint Frames = 0;
-   GLint t;
-
    glClear( GL_COLOR_BUFFER_BIT );
 
    glPushMatrix();
@@ -125,16 +104,6 @@ static void Display( void )
    glPopMatrix();
 
    glutSwapBuffers();
-
-   Frames++;
-
-   t = glutGet(GLUT_ELAPSED_TIME);
-   if (t - T0 >= 250) {
-      GLfloat seconds = (t - T0) / 1000.0;
-      drift_increment = 2.2 * seconds / Frames;
-      T0 = t;
-      Frames = 0;
-   }
 }
 
 
@@ -151,24 +120,34 @@ static void Reshape( int width, int height )
 }
 
 
+static void ToggleUnit(int unit)
+{
+   TexEnabled[unit] = !TexEnabled[unit];
+   glActiveTextureARB(GL_TEXTURE0_ARB + unit);
+   if (TexEnabled[unit])
+      glEnable(GL_TEXTURE_2D);
+   else
+      glDisable(GL_TEXTURE_2D);
+   printf("Enabled: ");
+   for (unit = 0; unit < NumUnits; unit++)
+      printf("%d ", (int) TexEnabled[unit]);
+   printf("\n");
+}
+
+
 static void ModeMenu(int entry)
 {
    if (entry >= TEX0 && entry <= TEX7) {
       /* toggle */
       GLint i = entry - TEX0;
-      TexEnabled[i] = !TexEnabled[i];
-      glActiveTextureARB(GL_TEXTURE0_ARB + i);
-      if (TexEnabled[i])
-         glEnable(GL_TEXTURE_2D);
-      else
-         glDisable(GL_TEXTURE_2D);
-      printf("Enabled: ");
-      for (i = 0; i < NumUnits; i++)
-         printf("%d ", (int) TexEnabled[i]);
-      printf("\n");
+      ToggleUnit(i);
    }
    else if (entry==ANIMATE) {
       Animate = !Animate;
+      if (Animate)
+         glutIdleFunc(Idle);
+      else
+         glutIdleFunc(NULL);
    }
    else if (entry==QUIT) {
       exit(0);
@@ -183,9 +162,36 @@ static void Key( unsigned char key, int x, int y )
    (void) x;
    (void) y;
    switch (key) {
-      case 27:
-         exit(0);
-         break;
+   case 'a':
+      Animate = !Animate;
+      break;
+   case '0':
+      ToggleUnit(0);
+      break;
+   case '1':
+      ToggleUnit(1);
+      break;
+   case '2':
+      ToggleUnit(2);
+      break;
+   case '3':
+      ToggleUnit(3);
+      break;
+   case '4':
+      ToggleUnit(4);
+      break;
+   case '5':
+      ToggleUnit(5);
+      break;
+   case '6':
+      ToggleUnit(6);
+      break;
+   case '7':
+      ToggleUnit(7);
+      break;
+   case 27:
+      exit(0);
+      break;
    }
    glutPostRedisplay();
 }
@@ -327,7 +333,8 @@ int main( int argc, char *argv[] )
    glutKeyboardFunc( Key );
    glutSpecialFunc( SpecialKey );
    glutDisplayFunc( Display );
-   glutIdleFunc( Idle );
+   if (Animate)
+      glutIdleFunc(Idle);
 
    glutCreateMenu(ModeMenu);
 
