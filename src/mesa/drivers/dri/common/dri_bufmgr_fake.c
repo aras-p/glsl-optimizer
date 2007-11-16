@@ -554,6 +554,8 @@ dri_fake_bo_alloc(dri_bufmgr *bufmgr, const char *name,
 
    bufmgr_fake = (dri_bufmgr_fake *)bufmgr;
 
+   assert(size != 0);
+
    bo_fake = calloc(1, sizeof(*bo_fake));
    if (!bo_fake)
       return NULL;
@@ -589,6 +591,8 @@ dri_fake_bo_alloc_static(dri_bufmgr *bufmgr, const char *name,
    dri_bo_fake *bo_fake;
 
    bufmgr_fake = (dri_bufmgr_fake *)bufmgr;
+
+   assert(size != 0);
 
    bo_fake = calloc(1, sizeof(*bo_fake));
    if (!bo_fake)
