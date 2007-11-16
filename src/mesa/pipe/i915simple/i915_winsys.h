@@ -98,7 +98,14 @@ struct i915_winsys {
 			unsigned access_flags,
 			unsigned delta );
    
-   struct pipe_fence *(*batch_flush)( struct i915_winsys *sws );
+   /**
+    * Flush the batch buffer.
+    * 
+    * Fence argument must point to NULL or to a previous fence, and the caller 
+    * must call fence_reference when done with the fence.
+    */
+   void (*batch_flush)( struct i915_winsys *sws,
+                        struct pipe_fence **fence );
 
 
    /* Fence 

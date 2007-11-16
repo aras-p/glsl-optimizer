@@ -111,12 +111,19 @@ static void intel_i915_batch_reloc( struct i915_winsys *sws,
 
 
 
-static struct pipe_fence *
-intel_i915_batch_flush( struct i915_winsys *sws )
+static void
+intel_i915_batch_flush( struct i915_winsys *sws, 
+                        struct pipe_fence **fence )
 {
    struct intel_context *intel = intel_i915_winsys(sws)->intel;
-
-   return pipe_fo(intel_batchbuffer_flush( intel->batch ));
+   struct pipe_fence *tmp_fence;
+   
+   tmp_fence = pipe_fo(intel_batchbuffer_flush( intel->batch ));
+   
+   /* this also increases the fence reference count, which is not done inside
+    * intel_batchbuffer_flush call above
+    */
+   sws->fence_reference(sws, fence, tmp_fence);
 }
 
 
@@ -143,14 +150,10 @@ intel_i915_fence_is_signalled( struct i915_winsys *sws,
                                struct pipe_fence *fence )
 {
    struct _DriFenceObject *dri_fence = dri_fo(fence);
-   int ret = 1;
-   if (fence) {
-      driFenceReference(dri_fence);
-      ret = driFenceSignaled(dri_fence,
+   if (fence)
+      return driFenceSignaled(dri_fence,
                        DRM_FENCE_TYPE_EXE | DRM_I915_FENCE_TYPE_RW);
-      driFenceUnReference(dri_fence);
-   }
-   return ret;
+   return 1;
 }
 
 
@@ -159,13 +162,10 @@ intel_i915_fence_wait( struct i915_winsys *sws,
                        struct pipe_fence *fence )
 {
    struct _DriFenceObject *dri_fence = dri_fo(fence);
-   if (fence) {
-      driFenceReference(dri_fence);
+   if (fence)
       driFenceFinish(dri_fence,
                      DRM_FENCE_TYPE_EXE | DRM_I915_FENCE_TYPE_RW,
                      GL_FALSE);
-      driFenceUnReference(dri_fence);
-   }
    return 1;
 }
 
