@@ -133,7 +133,7 @@ intel_i915_fence_reference( struct i915_winsys *sws,
                             struct pipe_fence *src_fence )
 {
    struct _DriFenceObject **dri_dst_fence = (struct _DriFenceObject **)dst_fence;
-   struct _DriFenceObject *dri_src_fence = (struct _DriFenceObject *)dst_fence;
+   struct _DriFenceObject *dri_src_fence = (struct _DriFenceObject *)src_fence;
    
    if(dri_src_fence)
       driFenceReference(dri_src_fence);
