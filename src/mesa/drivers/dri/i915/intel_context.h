@@ -36,6 +36,7 @@
 #include "texmem.h"
 
 #include "intel_screen.h"
+#include "intel_tex_obj.h"
 #include "i915_drm.h"
 #include "i830_common.h"
 #include "tnl/t_vertex.h"
@@ -72,49 +73,6 @@ extern void intelFallback(struct intel_context *intel, GLuint bit,
 #define INTEL_WRITE_PART  0x1
 #define INTEL_WRITE_FULL  0x2
 #define INTEL_READ        0x4
-
-struct intel_texture_object
-{
-   struct gl_texture_object base;       /* The "parent" object */
-
-   /* The mipmap tree must include at least these levels once
-    * validated:
-    */
-   GLuint firstLevel;
-   GLuint lastLevel;
-
-   /* Offset for firstLevel image:
-    */
-   GLuint textureOffset;
-
-   /* On validation any active images held in main memory or in other
-    * regions will be copied to this region and the old storage freed.
-    */
-   struct intel_mipmap_tree *mt;
-
-   GLboolean imageOverride;
-   GLint depthOverride;
-   GLuint pitchOverride;
-};
-
-
-
-struct intel_texture_image
-{
-   struct gl_texture_image base;
-
-   /* These aren't stored in gl_texture_image 
-    */
-   GLuint level;
-   GLuint face;
-
-   /* If intelImage->mt != NULL, image data is stored here.
-    * Else if intelImage->base.Data != NULL, image is stored there.
-    * Else there is no image data.
-    */
-   struct intel_mipmap_tree *mt;
-};
-
 
 #define INTEL_MAX_FIXUP 64
 
@@ -464,21 +422,5 @@ intel_context(GLcontext * ctx)
 {
    return (struct intel_context *) ctx;
 }
-
-static INLINE struct intel_texture_object *
-intel_texture_object(struct gl_texture_object *obj)
-{
-   return (struct intel_texture_object *) obj;
-}
-
-static INLINE struct intel_texture_image *
-intel_texture_image(struct gl_texture_image *img)
-{
-   return (struct intel_texture_image *) img;
-}
-
-extern struct intel_renderbuffer *intel_renderbuffer(struct gl_renderbuffer
-                                                     *rb);
-
 
 #endif

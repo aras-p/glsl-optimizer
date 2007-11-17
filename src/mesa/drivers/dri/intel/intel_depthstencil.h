@@ -2,6 +2,7 @@
 #ifndef INTEL_DEPTH_STENCIL_H
 #define INTEL_DEPTH_STENCIL_H
 
+#include "intel_fbo.h"
 
 extern void
 intel_unpair_depth_stencil(GLcontext * ctx, struct intel_renderbuffer *irb);
