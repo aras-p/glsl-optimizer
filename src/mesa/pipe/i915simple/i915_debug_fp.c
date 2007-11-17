@@ -327,7 +327,7 @@ i915_disassemble_program(struct debug_stream *stream,
 			 const unsigned * program, unsigned sz)
 {
    unsigned size = program[0] & 0x1ff;
-   int i;
+   unsigned i;
 
    PRINTF("\t\tBEGIN\n");
 

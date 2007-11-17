@@ -97,7 +97,7 @@ static void *
 i915_create_blend_state(struct pipe_context *pipe,
                         const struct pipe_blend_state *blend)
 {
-   struct i915_blend_state *cso_data = calloc(1, sizeof(struct i915_blend_state));
+   struct i915_blend_state *cso_data = CALLOC_STRUCT( i915_blend_state );
 
    {
       unsigned eqRGB  = blend->rgb_func;
@@ -182,7 +182,7 @@ static void i915_bind_blend_state(struct pipe_context *pipe,
 
 static void i915_delete_blend_state(struct pipe_context *pipe, void *blend)
 {
-   free(blend);
+   FREE(blend);
 }
 
 static void i915_set_blend_color( struct pipe_context *pipe,
@@ -199,14 +199,14 @@ static void *
 i915_create_sampler_state(struct pipe_context *pipe,
                           const struct pipe_sampler_state *sampler)
 {
-   struct i915_sampler_state *cso = calloc(1, sizeof(struct i915_sampler_state));
-   cso->templ = sampler;
-
+   struct i915_sampler_state *cso = CALLOC_STRUCT( i915_sampler_state );
    const unsigned ws = sampler->wrap_s;
    const unsigned wt = sampler->wrap_t;
    const unsigned wr = sampler->wrap_r;
    unsigned minFilt, magFilt;
    unsigned mipFilt;
+
+   cso->templ = sampler;
 
    mipFilt = translate_mip_filter(sampler->min_mip_filter);
    if (sampler->max_anisotropy > 1.0) {
@@ -222,7 +222,7 @@ i915_create_sampler_state(struct pipe_context *pipe,
    }
 
    {
-      int b = sampler->lod_bias * 16.0;
+      int b = (int) (sampler->lod_bias * 16.0);
       b = CLAMP(b, -256, 255);
       cso->state[0] |= ((b << SS2_LOD_BIAS_SHIFT) & SS2_LOD_BIAS_MASK);
    }
@@ -274,7 +274,7 @@ static void i915_bind_sampler_state(struct pipe_context *pipe,
 static void i915_delete_sampler_state(struct pipe_context *pipe,
                                       void *sampler)
 {
-   free(sampler);
+   FREE(sampler);
 }
 
 
@@ -286,7 +286,7 @@ static void *
 i915_create_depth_stencil_state(struct pipe_context *pipe,
                            const struct pipe_depth_stencil_state *depth_stencil)
 {
-   struct i915_depth_stencil_state *cso = calloc(1, sizeof(struct i915_depth_stencil_state));
+   struct i915_depth_stencil_state *cso = CALLOC_STRUCT( i915_depth_stencil_state );
 
    {
       int testmask = depth_stencil->stencil.value_mask[0] & 0xff;
@@ -379,7 +379,7 @@ static void i915_bind_depth_stencil_state(struct pipe_context *pipe,
 static void i915_delete_depth_stencil_state(struct pipe_context *pipe,
                                             void *depth_stencil)
 {
-   free(depth_stencil);
+   FREE(depth_stencil);
 }
 
 
@@ -387,7 +387,7 @@ static void *
 i915_create_alpha_test_state(struct pipe_context *pipe,
                              const struct pipe_alpha_test_state *alpha_test)
 {
-   struct i915_alpha_test_state *cso = calloc(1, sizeof(struct i915_alpha_test_state));
+   struct i915_alpha_test_state *cso = CALLOC_STRUCT( i915_alpha_test_state );
 
    if (alpha_test->enabled) {
       int test = i915_translate_compare_func(alpha_test->func);
@@ -413,7 +413,7 @@ static void i915_bind_alpha_test_state(struct pipe_context *pipe,
 static void i915_delete_alpha_test_state(struct pipe_context *pipe,
                                          void *alpha)
 {
-   free(alpha);
+   FREE(alpha);
 }
 
 static void i915_set_scissor_state( struct pipe_context *pipe,
@@ -619,7 +619,7 @@ static void *
 i915_create_rasterizer_state(struct pipe_context *pipe,
                              const struct pipe_rasterizer_state *rasterizer)
 {
-   struct i915_rasterizer_state *cso = calloc(1, sizeof(struct i915_rasterizer_state));
+   struct i915_rasterizer_state *cso = CALLOC_STRUCT( i915_rasterizer_state );
 
    cso->templ = rasterizer;
    cso->color_interp = rasterizer->flatshade ? INTERP_CONSTANT : INTERP_LINEAR;
@@ -671,7 +671,7 @@ i915_create_rasterizer_state(struct pipe_context *pipe,
                     S4_FLATSHADE_SPECULAR);
    }
 
-   cso->LIS7 = rasterizer->offset_units; /* probably incorrect */
+   cso->LIS7 = fui( rasterizer->offset_units );
 
 
    return cso;
@@ -693,7 +693,7 @@ static void i915_bind_rasterizer_state( struct pipe_context *pipe,
 static void i915_delete_rasterizer_state(struct pipe_context *pipe,
                                          void *setup)
 {
-   free(setup);
+   FREE(setup);
 }
 
 static void i915_set_vertex_buffer( struct pipe_context *pipe,

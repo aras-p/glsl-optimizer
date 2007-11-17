@@ -69,16 +69,16 @@ static unsigned passthrough[] =
 
 /* 1, -1/3!, 1/5!, -1/7! */
 static const float sin_constants[4] = { 1.0,
-   -1.0 / (3 * 2 * 1),
-   1.0 / (5 * 4 * 3 * 2 * 1),
-   -1.0 / (7 * 6 * 5 * 4 * 3 * 2 * 1)
+   -1.0f / (3 * 2 * 1),
+   1.0f / (5 * 4 * 3 * 2 * 1),
+   -1.0f / (7 * 6 * 5 * 4 * 3 * 2 * 1)
 };
 
 /* 1, -1/2!, 1/4!, -1/6! */
 static const float cos_constants[4] = { 1.0,
-   -1.0 / (2 * 1),
-   1.0 / (4 * 3 * 2 * 1),
-   -1.0 / (6 * 5 * 4 * 3 * 2 * 1)
+   -1.0f / (2 * 1),
+   1.0f / (4 * 3 * 2 * 1),
+   -1.0f / (6 * 5 * 4 * 3 * 2 * 1)
 };
 
 
@@ -102,7 +102,7 @@ i915_use_passthrough_shader(struct i915_context *i915)
 {
    fprintf(stderr, "**** Using i915 pass-through fragment shader\n");
 
-   i915->current.program = (uint *) malloc(sizeof(passthrough));
+   i915->current.program = (uint *) MALLOC(sizeof(passthrough));
    if (i915->current.program) {
       memcpy(i915->current.program, passthrough, sizeof(passthrough));
       i915->current.program_len = Elements(passthrough);
@@ -167,7 +167,7 @@ src_vector(struct i915_fp_compile *p,
 
       switch (sem_name) {
       case TGSI_SEMANTIC_POSITION:
-         printf("SKIP SEM POS\n");
+         fprintf(stderr, "SKIP SEM POS\n");
          /*
          assert(p->wpos_tex != -1);
          src = i915_emit_decl(p, REG_TYPE_T, p->wpos_tex, D0_CHANNEL_ALL);
@@ -430,7 +430,7 @@ i915_translate_instruction(struct i915_fp_compile *p,
       i915_emit_arith(p,
                       A0_MUL,
                       tmp, A0_DEST_CHANNEL_X, 0,
-                      src0, i915_emit_const1f(p, 1.0 / (M_PI * 2)), 0);
+                      src0, i915_emit_const1f(p, 1.0f / (M_PI * 2.0f)), 0);
 
       i915_emit_arith(p, A0_MOD, tmp, A0_DEST_CHANNEL_X, 0, tmp, 0, 0);
 
@@ -439,7 +439,7 @@ i915_translate_instruction(struct i915_fp_compile *p,
       i915_emit_arith(p,
                       A0_MUL,
                       tmp, A0_DEST_CHANNEL_X, 0,
-                      tmp, i915_emit_const1f(p, (M_PI * 2)), 0);
+                      tmp, i915_emit_const1f(p, (M_PI * 2.0f)), 0);
 
       /* 
        * t0.xy = MUL x.xx11, x.x1111  ; x^2, x, 1, 1
@@ -986,8 +986,8 @@ i915_init_compile(struct i915_context *i915,
 static void
 i915_fini_compile(struct i915_context *i915, struct i915_fp_compile *p)
 {
-   uint program_size = p->csr - p->program;
-   uint decl_size = p->decl - p->declarations;
+   unsigned long program_size = (unsigned long) (p->csr - p->program);
+   unsigned long decl_size = (unsigned long) (p->decl - p->declarations);
 
    if (p->nr_tex_indirect > I915_MAX_TEX_INDIRECT)
       i915_program_error(p, "Exceeded max nr indirect texture lookups");
@@ -1003,7 +1003,7 @@ i915_fini_compile(struct i915_context *i915, struct i915_fp_compile *p)
 
    /* free old program, if present */
    if (i915->current.program) {
-      free(i915->current.program);
+      FREE(i915->current.program);
       i915->current.program_len = 0;
    }
 
@@ -1028,7 +1028,7 @@ i915_fini_compile(struct i915_context *i915, struct i915_fp_compile *p)
       /* Copy compilation results to fragment program struct: 
        */
       i915->current.program
-         = (uint *) malloc((program_size + decl_size) * sizeof(uint));
+         = (uint *) MALLOC((program_size + decl_size) * sizeof(uint));
       if (i915->current.program) {
          i915->current.program_len = program_size + decl_size;
 
@@ -1049,7 +1049,7 @@ i915_fini_compile(struct i915_context *i915, struct i915_fp_compile *p)
 
    /* Release the compilation struct: 
     */
-   free(p);
+   FREE(p);
 }
 
 

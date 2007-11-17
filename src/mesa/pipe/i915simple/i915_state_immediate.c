@@ -78,8 +78,8 @@ static void upload_S0S1(struct i915_context *i915)
 }
 
 const struct i915_tracked_state i915_upload_S0S1 = {
-   .dirty = I915_NEW_VBO | I915_NEW_VERTEX_FORMAT,
-   .update = upload_S0S1
+   I915_NEW_VBO | I915_NEW_VERTEX_FORMAT,
+   upload_S0S1
 };
 
 
@@ -115,8 +115,8 @@ static void upload_S2S4(struct i915_context *i915)
 
 
 const struct i915_tracked_state i915_upload_S2S4 = {
-   .dirty = I915_NEW_RASTERIZER | I915_NEW_VERTEX_FORMAT,
-   .update = upload_S2S4
+   I915_NEW_RASTERIZER | I915_NEW_VERTEX_FORMAT,
+   upload_S2S4
 };
 
 
@@ -147,8 +147,8 @@ static void upload_S5( struct i915_context *i915 )
 }
 
 const struct i915_tracked_state i915_upload_S5 = {
-   .dirty = (I915_NEW_DEPTH_STENCIL | I915_NEW_BLEND | I915_NEW_RASTERIZER),
-   .update = upload_S5
+   (I915_NEW_DEPTH_STENCIL | I915_NEW_BLEND | I915_NEW_RASTERIZER),
+   upload_S5
 };
 
 
@@ -178,8 +178,8 @@ static void upload_S6( struct i915_context *i915 )
 }
 
 const struct i915_tracked_state i915_upload_S6 = {
-   .dirty = I915_NEW_ALPHA_TEST | I915_NEW_BLEND | I915_NEW_DEPTH_STENCIL,
-   .update = upload_S6
+   I915_NEW_ALPHA_TEST | I915_NEW_BLEND | I915_NEW_DEPTH_STENCIL,
+   upload_S6
 };
 
 
@@ -187,11 +187,11 @@ const struct i915_tracked_state i915_upload_S6 = {
  */
 static void upload_S7( struct i915_context *i915 )
 {
-   float LIS7;
+   unsigned LIS7;
 
    /* I915_NEW_RASTERIZER
     */
-   LIS7 = i915->rasterizer->LIS7; /* probably incorrect */
+   LIS7 = i915->rasterizer->LIS7;
 
    if (LIS7 != i915->current.immediate[I915_IMMEDIATE_S7]) {
       i915->current.immediate[I915_IMMEDIATE_S7] = LIS7;
@@ -200,8 +200,8 @@ static void upload_S7( struct i915_context *i915 )
 }
 
 const struct i915_tracked_state i915_upload_S7 = {
-   .dirty = I915_NEW_RASTERIZER,
-   .update = upload_S7
+   I915_NEW_RASTERIZER,
+   upload_S7
 };
 
 

@@ -69,12 +69,12 @@ void i915_print_ureg(const char *msg, unsigned ureg);
 
 #ifdef DEBUG
 #include "pipe/p_winsys.h"
-#define DBG( i915, ... ) do {						\
+#define I915_DBG( i915, ... ) do {						\
    if ((i915)->debug & FILE_DEBUG_FLAG) 				\
       (i915)->pipe.winsys->printf( (i915)->pipe.winsys, __VA_ARGS__ );	\
 } while(0)
 #else
-#define DBG( i915, ... ) \
+#define I915_DBG( i915, ... ) \
    (void)i915
 #endif
 

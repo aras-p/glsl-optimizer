@@ -81,7 +81,7 @@ i915_get_tile_rgba(struct pipe_context *pipe,
       break;
    case PIPE_FORMAT_S8_Z24:
       {
-         const float scale = 1.0 / (float) 0xffffff;
+         const float scale = 1.0f / (float) 0xffffff;
          for (i = 0; i < h; i++) {
             float *pRow = p;
             for (j = 0; j < w; j++) {

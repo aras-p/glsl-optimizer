@@ -50,7 +50,7 @@ static inline void set_dynamic_indirect( struct i915_context *i915,
 					 const unsigned *src,
 					 unsigned dwords )
 {
-   int i;
+   unsigned i;
 
    for (i = 0; i < dwords; i++)
       i915->current.dynamic[offset + i] = src[i];
@@ -80,8 +80,8 @@ static void upload_MODES4( struct i915_context *i915 )
 }
 
 const struct i915_tracked_state i915_upload_MODES4 = {
-   .dirty = I915_NEW_BLEND | I915_NEW_DEPTH_STENCIL,
-   .update = upload_MODES4
+   I915_NEW_BLEND | I915_NEW_DEPTH_STENCIL,
+   upload_MODES4
 };
 
 
@@ -99,8 +99,8 @@ static void upload_BFO( struct i915_context *i915 )
 }
 
 const struct i915_tracked_state i915_upload_BFO = {
-   .dirty = I915_NEW_DEPTH_STENCIL,
-   .update = upload_BFO
+   I915_NEW_DEPTH_STENCIL,
+   upload_BFO
 };
 
 
@@ -133,8 +133,8 @@ static void upload_BLENDCOLOR( struct i915_context *i915 )
 }
 
 const struct i915_tracked_state i915_upload_BLENDCOLOR = {
-   .dirty = I915_NEW_BLEND,
-   .update = upload_BLENDCOLOR
+   I915_NEW_BLEND,
+   upload_BLENDCOLOR
 };
 
 /***********************************************************************
@@ -153,8 +153,8 @@ static void upload_IAB( struct i915_context *i915 )
 }
 
 const struct i915_tracked_state i915_upload_IAB = {
-   .dirty = I915_NEW_BLEND,
-   .update = upload_IAB
+   I915_NEW_BLEND,
+   upload_IAB
 };
 
 
@@ -172,8 +172,8 @@ static void upload_DEPTHSCALE( struct i915_context *i915 )
 }
 
 const struct i915_tracked_state i915_upload_DEPTHSCALE = {
-   .dirty = I915_NEW_RASTERIZER,
-   .update = upload_DEPTHSCALE
+   I915_NEW_RASTERIZER,
+   upload_DEPTHSCALE
 };
 
 
@@ -230,8 +230,8 @@ static void upload_STIPPLE( struct i915_context *i915 )
 
 
 const struct i915_tracked_state i915_upload_STIPPLE = {
-   .dirty = I915_NEW_RASTERIZER | I915_NEW_STIPPLE,
-   .update = upload_STIPPLE
+   I915_NEW_RASTERIZER | I915_NEW_STIPPLE,
+   upload_STIPPLE
 };
 
 
@@ -248,8 +248,8 @@ static void upload_SCISSOR_ENABLE( struct i915_context *i915 )
 }
 
 const struct i915_tracked_state i915_upload_SCISSOR_ENABLE = {
-   .dirty = I915_NEW_RASTERIZER,
-   .update = upload_SCISSOR_ENABLE
+   I915_NEW_RASTERIZER,
+   upload_SCISSOR_ENABLE
 };
 
 
@@ -274,8 +274,8 @@ static void upload_SCISSOR_RECT( struct i915_context *i915 )
 
 
 const struct i915_tracked_state i915_upload_SCISSOR_RECT = {
-   .dirty = I915_NEW_SCISSOR,
-   .update = upload_SCISSOR_RECT
+   I915_NEW_SCISSOR,
+   upload_SCISSOR_RECT
 };
 
 

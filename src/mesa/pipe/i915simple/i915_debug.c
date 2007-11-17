@@ -498,7 +498,7 @@ static boolean debug_map_state( struct debug_stream *stream,
 				  unsigned len )
 {
    unsigned *ptr = (unsigned *)(stream->ptr + stream->offset);
-   int j = 0;
+   unsigned j = 0;
 
    PRINTF("%s (%d dwords):\n", name, len);
    PRINTF("\t0x%08x\n",  ptr[j++]);
@@ -550,7 +550,7 @@ static boolean debug_sampler_state( struct debug_stream *stream,
 				  unsigned len )
 {
    unsigned *ptr = (unsigned *)(stream->ptr + stream->offset);
-   int j = 0;
+   unsigned j = 0;
 
    PRINTF("%s (%d dwords):\n", name, len);
    PRINTF("\t0x%08x\n",  ptr[j++]);
@@ -827,7 +827,7 @@ i915_dump_batchbuffer( struct i915_context *i915 )
    struct debug_stream stream;
    unsigned *start = i915->batch_start;
    unsigned *end = i915->winsys->batch_start( i915->winsys, 0, 0 );
-   unsigned bytes = (end - start) * 4;
+   unsigned long bytes = (unsigned long) (end - start) * 4;
    boolean done = FALSE;
 
    stream.offset = 0;
@@ -843,8 +843,7 @@ i915_dump_batchbuffer( struct i915_context *i915 )
    stream.winsys->printf( stream.winsys, "\n\nBATCH: (%d)\n", bytes / 4);
 
    while (!done &&
-	  stream.offset < bytes &&
-	  stream.offset >= 0)
+	  stream.offset < bytes)
    {
       if (!i915_debug_packet( &stream ))
 	 break;

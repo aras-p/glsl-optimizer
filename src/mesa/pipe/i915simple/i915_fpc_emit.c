@@ -235,7 +235,7 @@ uint i915_emit_texld( struct i915_fp_compile *p,
 uint
 i915_emit_const1f(struct i915_fp_compile * p, float c0)
 {
-   int reg, idx;
+   unsigned reg, idx;
 
    if (c0 == 0.0)
       return swizzle(UREG(REG_TYPE_R, 0), ZERO, ZERO, ZERO, ZERO);
@@ -264,7 +264,7 @@ i915_emit_const1f(struct i915_fp_compile * p, float c0)
 uint
 i915_emit_const2f(struct i915_fp_compile * p, float c0, float c1)
 {
-   int reg, idx;
+   unsigned reg, idx;
 
    if (c0 == 0.0)
       return swizzle(i915_emit_const1f(p, c1), ZERO, X, Z, W);
@@ -302,7 +302,7 @@ uint
 i915_emit_const4f(struct i915_fp_compile * p,
                   float c0, float c1, float c2, float c3)
 {
-   int reg;
+   unsigned reg;
 
    for (reg = 0; reg < I915_MAX_CONSTANT; reg++) {
       if (p->constant_flags[reg] == 0xf &&

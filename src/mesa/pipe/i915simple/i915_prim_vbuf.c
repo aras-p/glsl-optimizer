@@ -101,7 +101,7 @@ static INLINE struct vbuf_stage *vbuf_stage( struct draw_stage *stage )
 static INLINE boolean 
 overflow( void *map, void *ptr, unsigned bytes, unsigned bufsz )
 {
-   unsigned long used = (char *)ptr - (char *)map;
+   unsigned long used = (unsigned long) ((char *)ptr - (char *)map);
    return (used + bytes) > bufsz;
 }
 
@@ -438,7 +438,7 @@ struct draw_stage *i915_draw_vbuf_stage( struct i915_context *i915 )
    assert(IBUF_SIZE < UNDEFINED_VERTEX_ID);
 
    /* FIXME: free this memory on takedown */
-   vbuf->element_map = malloc( IBUF_SIZE );
+   vbuf->element_map = MALLOC( IBUF_SIZE );
    vbuf->vertex_map = NULL;
    
    vbuf->vertex_ptr = vbuf->vertex_map;
