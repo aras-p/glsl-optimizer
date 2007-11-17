@@ -86,8 +86,9 @@ intelCopyBuffer(const __DRIdrawablePrivate * dPriv,
 	 = intel_get_rb_region(&intel_fb->Base, BUFFER_BACK_LEFT);
       const int nbox = dPriv->numClipRects;
       const drm_clip_rect_t *pbox = dPriv->pClipRects;
-      const int pitch = frontRegion->pitch;
       const int cpp = frontRegion->cpp;
+      int src_pitch = backRegion->pitch * cpp;
+      int dst_pitch = frontRegion->pitch * cpp;
       int BR13, CMD;
       int i;
 
@@ -99,13 +100,24 @@ intelCopyBuffer(const __DRIdrawablePrivate * dPriv,
       ASSERT(frontRegion->cpp == backRegion->cpp);
 
       if (cpp == 2) {
-	 BR13 = (pitch * cpp) | (0xCC << 16) | (1 << 24);
+	 BR13 = (0xCC << 16) | (1 << 24);
 	 CMD = XY_SRC_COPY_BLT_CMD;
       }
       else {
-	 BR13 = (pitch * cpp) | (0xCC << 16) | (1 << 24) | (1 << 25);
-	 CMD = (XY_SRC_COPY_BLT_CMD | XY_BLT_WRITE_ALPHA | XY_BLT_WRITE_RGB);
+	 BR13 = (0xCC << 16) | (1 << 24) | (1 << 25);
+	 CMD = XY_SRC_COPY_BLT_CMD | XY_BLT_WRITE_ALPHA | XY_BLT_WRITE_RGB;
       }
+
+#ifndef I915
+      if (backRegion->tiled) {
+	 CMD |= XY_SRC_TILED;
+	 src_pitch /= 4;
+      }
+      if (frontRegion->tiled) {
+	 CMD |= XY_DST_TILED;
+	 dst_pitch /= 4;
+      }
+#endif
 
       for (i = 0; i < nbox; i++, pbox++) {
 	 drm_clip_rect_t box;
@@ -133,14 +145,14 @@ intelCopyBuffer(const __DRIdrawablePrivate * dPriv,
 
 	 BEGIN_BATCH(8, INTEL_BATCH_NO_CLIPRECTS);
 	 OUT_BATCH(CMD);
-	 OUT_BATCH(BR13);
+	 OUT_BATCH(BR13 | dst_pitch);
 	 OUT_BATCH((pbox->y1 << 16) | pbox->x1);
 	 OUT_BATCH((pbox->y2 << 16) | pbox->x2);
 
 	 OUT_RELOC(frontRegion->buffer, DRM_BO_FLAG_MEM_TT | DRM_BO_FLAG_WRITE,
 		   0);
 	 OUT_BATCH((pbox->y1 << 16) | pbox->x1);
-	 OUT_BATCH(BR13 & 0xffff);
+	 OUT_BATCH(src_pitch);
 	 OUT_RELOC(backRegion->buffer, DRM_BO_FLAG_MEM_TT | DRM_BO_FLAG_READ,
 		   0);
 
@@ -166,6 +178,7 @@ intelEmitFillBlit(struct intel_context *intel,
                   GLshort dst_pitch,
                   dri_bo *dst_buffer,
                   GLuint dst_offset,
+		  GLboolean dst_tiled,
                   GLshort x, GLshort y, GLshort w, GLshort h, GLuint color)
 {
    GLuint BR13, CMD;
@@ -177,16 +190,22 @@ intelEmitFillBlit(struct intel_context *intel,
    case 1:
    case 2:
    case 3:
-      BR13 = dst_pitch | (0xF0 << 16) | (1 << 24);
+      BR13 = (0xF0 << 16) | (1 << 24);
       CMD = XY_COLOR_BLT_CMD;
       break;
    case 4:
-      BR13 = dst_pitch | (0xF0 << 16) | (1 << 24) | (1 << 25);
-      CMD = (XY_COLOR_BLT_CMD | XY_BLT_WRITE_ALPHA | XY_BLT_WRITE_RGB);
+      BR13 = (0xF0 << 16) | (1 << 24) | (1 << 25);
+      CMD = XY_COLOR_BLT_CMD | XY_BLT_WRITE_ALPHA | XY_BLT_WRITE_RGB;
       break;
    default:
       return;
    }
+#ifndef I915
+   if (dst_tiled) {
+      CMD |= XY_DST_TILED;
+      dst_pitch /= 4;
+   }
+#endif
 
    DBG("%s dst:buf(%p)/%d+%d %d,%d sz:%dx%d\n",
        __FUNCTION__, dst_buffer, dst_pitch, dst_offset, x, y, w, h);
@@ -194,7 +213,7 @@ intelEmitFillBlit(struct intel_context *intel,
 
    BEGIN_BATCH(6, INTEL_BATCH_NO_CLIPRECTS);
    OUT_BATCH(CMD);
-   OUT_BATCH(BR13);
+   OUT_BATCH(BR13 | dst_pitch);
    OUT_BATCH((y << 16) | x);
    OUT_BATCH(((y + h) << 16) | (x + w));
    OUT_RELOC(dst_buffer, DRM_BO_FLAG_MEM_TT | DRM_BO_FLAG_WRITE, dst_offset);
@@ -235,9 +254,11 @@ intelEmitCopyBlit(struct intel_context *intel,
                   GLshort src_pitch,
                   dri_bo *src_buffer,
                   GLuint src_offset,
+		  GLboolean src_tiled,
                   GLshort dst_pitch,
                   dri_bo *dst_buffer,
                   GLuint dst_offset,
+		  GLboolean dst_tiled,
                   GLshort src_x, GLshort src_y,
                   GLshort dst_x, GLshort dst_y, 
 		  GLshort w, GLshort h,
@@ -257,24 +278,33 @@ intelEmitCopyBlit(struct intel_context *intel,
    src_pitch *= cpp;
    dst_pitch *= cpp;
 
+   BR13 = (translate_raster_op(logic_op) << 16);
+
    switch (cpp) {
    case 1:
    case 2:
    case 3:
-      BR13 = (((GLint) dst_pitch) & 0xffff) | 
-	 (translate_raster_op(logic_op) << 16) | (1 << 24);
+      BR13 |= (1 << 24);
       CMD = XY_SRC_COPY_BLT_CMD;
       break;
    case 4:
-      BR13 =
-         (((GLint) dst_pitch) & 0xffff) | 
-	 (translate_raster_op(logic_op) << 16) | (1 << 24) | (1 << 25);
-      CMD =
-         (XY_SRC_COPY_BLT_CMD | XY_BLT_WRITE_ALPHA | XY_BLT_WRITE_RGB);
+      BR13 |= (1 << 24) | (1 << 25);
+      CMD = XY_SRC_COPY_BLT_CMD | XY_BLT_WRITE_ALPHA | XY_BLT_WRITE_RGB;
       break;
    default:
       return;
    }
+
+#ifndef I915
+   if (dst_tiled) {
+      CMD |= XY_DST_TILED;
+      dst_pitch /= 4;
+   }
+   if (src_tiled) {
+      CMD |= XY_SRC_TILED;
+      src_pitch /= 4;
+   }
+#endif
 
    if (dst_y2 < dst_y || dst_x2 < dst_x) {
       return;
@@ -290,25 +320,25 @@ intelEmitCopyBlit(struct intel_context *intel,
    if (dst_pitch > 0 && src_pitch > 0) {
       BEGIN_BATCH(8, INTEL_BATCH_NO_CLIPRECTS);
       OUT_BATCH(CMD);
-      OUT_BATCH(BR13);
+      OUT_BATCH(BR13 | dst_pitch);
       OUT_BATCH((dst_y << 16) | dst_x);
       OUT_BATCH((dst_y2 << 16) | dst_x2);
       OUT_RELOC(dst_buffer, DRM_BO_FLAG_MEM_TT | DRM_BO_FLAG_WRITE, dst_offset);
       OUT_BATCH((src_y << 16) | src_x);
-      OUT_BATCH(((GLint) src_pitch & 0xffff));
+      OUT_BATCH(src_pitch);
       OUT_RELOC(src_buffer, DRM_BO_FLAG_MEM_TT | DRM_BO_FLAG_READ, src_offset);
       ADVANCE_BATCH();
    }
    else {
       BEGIN_BATCH(8, INTEL_BATCH_NO_CLIPRECTS);
       OUT_BATCH(CMD);
-      OUT_BATCH(BR13);
+      OUT_BATCH(BR13 | dst_pitch);
       OUT_BATCH((0 << 16) | dst_x);
       OUT_BATCH((h << 16) | dst_x2);
       OUT_RELOC(dst_buffer, DRM_BO_FLAG_MEM_TT | DRM_BO_FLAG_WRITE,
                 dst_offset + dst_y * dst_pitch);
       OUT_BATCH((0 << 16) | src_x);
-      OUT_BATCH(((GLint) src_pitch & 0xffff));
+      OUT_BATCH(src_pitch);
       OUT_RELOC(src_buffer, DRM_BO_FLAG_MEM_TT | DRM_BO_FLAG_READ,
                 src_offset + src_y * src_pitch);
       ADVANCE_BATCH();
@@ -435,12 +465,13 @@ intelClearWithBlit(GLcontext * ctx, GLbitfield mask)
                    irb_region->draw_offset,
                    b.x1, b.y1, b.x2 - b.x1, b.y2 - b.y1);
 
+	       BR13 = 0xf0 << 16;
+	       CMD = XY_COLOR_BLT_CMD;
 
                /* Setup the blit command */
                if (cpp == 4) {
-                  BR13 = (0xF0 << 16) | (pitch * cpp) | (1 << 24) | (1 << 25);
+                  BR13 |= (1 << 24) | (1 << 25);
                   if (buf == BUFFER_DEPTH || buf == BUFFER_STENCIL) {
-                     CMD = XY_COLOR_BLT_CMD;
                      if (clearMask & BUFFER_BIT_DEPTH)
                         CMD |= XY_BLT_WRITE_RGB;
                      if (clearMask & BUFFER_BIT_STENCIL)
@@ -448,15 +479,21 @@ intelClearWithBlit(GLcontext * ctx, GLbitfield mask)
                   }
                   else {
                      /* clearing RGBA */
-                     CMD = XY_COLOR_BLT_CMD |
-			XY_BLT_WRITE_ALPHA | XY_BLT_WRITE_RGB;
+                     CMD |= XY_BLT_WRITE_ALPHA | XY_BLT_WRITE_RGB;
                   }
                }
                else {
                   ASSERT(cpp == 2 || cpp == 0);
-                  BR13 = (0xF0 << 16) | (pitch * cpp) | (1 << 24);
-                  CMD = XY_COLOR_BLT_CMD;
+                  BR13 |= (1 << 24);
                }
+
+#ifndef I915
+	       if (irb_region->tiled) {
+		  CMD |= XY_DST_TILED;
+		  pitch /= 4;
+	       }
+#endif
+	       BR13 |= (pitch * cpp);
 
                if (buf == BUFFER_DEPTH || buf == BUFFER_STENCIL) {
                   clearVal = clear_depth;

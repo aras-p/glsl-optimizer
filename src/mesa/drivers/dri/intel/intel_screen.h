@@ -45,6 +45,12 @@ typedef struct
    int offset;                  /* from start of video mem, in bytes */
    int pitch;                   /* row stride, in bytes */
    unsigned int bo_handle;	/* buffer object id if available, or -1 */
+   /**
+    * Flags if the region is tiled.
+    *
+    * Not included is Y versus X tiling.
+    */
+   GLboolean tiled;
 } intelRegion;
 
 typedef struct

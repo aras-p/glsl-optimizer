@@ -53,6 +53,7 @@ struct intel_region
    GLuint map_refcount;  /**< Reference count for mapping */
 
    GLuint draw_offset; /**< Offset of drawing address within the region */
+   GLboolean tiled; /**< True if the region is X or Y-tiled.  Used on 965. */
 
    struct intel_buffer_object *pbo;     /* zero-copy uploads */
 };
@@ -78,7 +79,7 @@ extern struct intel_region
 			    GLuint offset,
 			    void *virtual,
 			    GLuint cpp,
-			    GLuint pitch, GLuint height);
+			    GLuint pitch, GLuint height, GLboolean tiled);
 extern void 
 intel_region_update_static(intelScreenPrivate *intelScreen,
 			   struct intel_region *region,
@@ -87,7 +88,8 @@ intel_region_update_static(intelScreenPrivate *intelScreen,
 			   unsigned int bo_handle,
 			   GLuint offset,
 			   void *virtual,
-			   GLuint cpp, GLuint pitch, GLuint height);
+			   GLuint cpp, GLuint pitch, GLuint height,
+			   GLboolean tiled);
 
 
 void intel_region_idle(intelScreenPrivate *intelScreen,

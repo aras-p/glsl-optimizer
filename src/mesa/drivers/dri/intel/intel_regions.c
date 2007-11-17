@@ -152,7 +152,8 @@ intel_region_create_static(intelScreenPrivate *intelScreen,
 			   unsigned int bo_handle,
                            GLuint offset,
                            void *virtual,
-                           GLuint cpp, GLuint pitch, GLuint height)
+                           GLuint cpp, GLuint pitch, GLuint height,
+			   GLboolean tiled)
 {
    struct intel_region *region = calloc(sizeof(*region), 1);
    DBG("%s\n", __FUNCTION__);
@@ -161,6 +162,7 @@ intel_region_create_static(intelScreenPrivate *intelScreen,
    region->pitch = pitch;
    region->height = height;     /* needed? */
    region->refcount = 1;
+   region->tiled = tiled;
 
    if (intelScreen->ttm) {
       assert(bo_handle != -1);
@@ -188,13 +190,15 @@ intel_region_update_static(intelScreenPrivate *intelScreen,
 			   unsigned int bo_handle,
                            GLuint offset,
                            void *virtual,
-                           GLuint cpp, GLuint pitch, GLuint height)
+                           GLuint cpp, GLuint pitch, GLuint height,
+			   GLboolean tiled)
 {
    DBG("%s\n", __FUNCTION__);
 
    region->cpp = cpp;
    region->pitch = pitch;
    region->height = height;     /* needed? */
+   region->tiled = tiled;
 
    /*
     * We use a "shared" buffer type to indicate buffers created and
@@ -329,8 +333,8 @@ intel_region_copy(intelScreenPrivate *intelScreen,
 
    intelEmitCopyBlit(intel,
                      dst->cpp,
-                     src->pitch, src->buffer, src_offset,
-                     dst->pitch, dst->buffer, dst_offset,
+                     src->pitch, src->buffer, src_offset, src->tiled,
+                     dst->pitch, dst->buffer, dst_offset, dst->tiled,
                      srcx, srcy, dstx, dsty, width, height,
 		     GL_COPY);
 }
@@ -362,7 +366,7 @@ intel_region_fill(intelScreenPrivate *intelScreen,
 
    intelEmitFillBlit(intel,
                      dst->cpp,
-                     dst->pitch, dst->buffer, dst_offset,
+                     dst->pitch, dst->buffer, dst_offset, dst->tiled,
                      dstx, dsty, width, height, color);
 }
 
@@ -425,6 +429,7 @@ intel_region_cow(intelScreenPrivate *intelScreen, struct intel_region *region)
 {
    struct intel_context *intel = intelScreenContext(intelScreen);
    struct intel_buffer_object *pbo = region->pbo;
+   GLboolean was_locked = intel->locked;
 
    if (intel == NULL)
       return;
@@ -440,34 +445,22 @@ intel_region_cow(intelScreenPrivate *intelScreen, struct intel_region *region)
 
    intel_batchbuffer_flush(intel->batch);
 
-   if (!intel->locked) {
+   was_locked = intel->locked;
+   if (intel->locked)
       LOCK_HARDWARE(intel);
-      intelEmitCopyBlit(intel,
-			region->cpp,
-			region->pitch,
-			region->buffer, 0,
-			region->pitch,
-			pbo->buffer, 0,
-			0, 0, 0, 0, 
-			region->pitch, region->height,
-			GL_COPY);
-      
-      intel_batchbuffer_flush(intel->batch);
+
+   intelEmitCopyBlit(intel,
+		     region->cpp,
+		     region->pitch, region->buffer, 0, region->tiled,
+		     region->pitch, pbo->buffer, 0, region->tiled,
+		     0, 0, 0, 0,
+		     region->pitch, region->height,
+		     GL_COPY);
+
+   intel_batchbuffer_flush(intel->batch);
+
+   if (was_locked)
       UNLOCK_HARDWARE(intel);
-   }
-   else {
-      intelEmitCopyBlit(intel,
-			region->cpp,
-			region->pitch,
-			region->buffer, 0,
-			region->pitch,
-			pbo->buffer, 0,
-			0, 0, 0, 0, 
-			region->pitch, region->height,
-			GL_COPY);
-      
-      intel_batchbuffer_flush(intel->batch);
-   }
 }
 
 dri_bo *

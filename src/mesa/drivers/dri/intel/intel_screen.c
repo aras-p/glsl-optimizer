@@ -182,14 +182,15 @@ intel_recreate_static(intelScreenPrivate *intelScreen,
 			       region_desc->bo_handle, region_desc->offset,
 			       region_desc->map, intelScreen->cpp,
 			       region_desc->pitch / intelScreen->cpp,
-			       intelScreen->height);
+			       intelScreen->height, region_desc->tiled);
   } else {
     region = intel_region_create_static(intelScreen, name, mem_type,
 					region_desc->bo_handle,
 					region_desc->offset,
 					region_desc->map, intelScreen->cpp,
 					region_desc->pitch / intelScreen->cpp,
-					intelScreen->height);
+					intelScreen->height,
+					region_desc->tiled);
   }
 
   assert(region->buffer != NULL);
@@ -337,23 +338,27 @@ intelUpdateScreenFromSAREA(intelScreenPrivate * intelScreen,
    intelScreen->front.pitch = sarea->pitch * intelScreen->cpp;
    intelScreen->front.handle = sarea->front_handle;
    intelScreen->front.size = sarea->front_size;
+   intelScreen->front.tiled = sarea->front_tiled;
 
    intelScreen->back.offset = sarea->back_offset;
    intelScreen->back.pitch = sarea->pitch * intelScreen->cpp;
    intelScreen->back.handle = sarea->back_handle;
    intelScreen->back.size = sarea->back_size;
+   intelScreen->back.tiled = sarea->back_tiled;
 
    if (intelScreen->driScrnPriv->ddx_version.minor >= 8) {
       intelScreen->third.offset = sarea->third_offset;
       intelScreen->third.pitch = sarea->pitch * intelScreen->cpp;
       intelScreen->third.handle = sarea->third_handle;
       intelScreen->third.size = sarea->third_size;
+      intelScreen->third.tiled = sarea->third_tiled;
    }
 
    intelScreen->depth.offset = sarea->depth_offset;
    intelScreen->depth.pitch = sarea->pitch * intelScreen->cpp;
    intelScreen->depth.handle = sarea->depth_handle;
    intelScreen->depth.size = sarea->depth_size;
+   intelScreen->depth.tiled = sarea->depth_tiled;
 
    if (intelScreen->driScrnPriv->ddx_version.minor >= 9) {
       intelScreen->front.bo_handle = sarea->front_bo_handle;
