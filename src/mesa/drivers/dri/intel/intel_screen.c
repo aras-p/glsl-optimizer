@@ -172,18 +172,19 @@ intel_fence_wait(void *private, unsigned int cookie)
 
 static struct intel_region *
 intel_recreate_static(intelScreenPrivate *intelScreen,
+		      const char *name,
 		      struct intel_region *region,
 		      intelRegion *region_desc,
 		      GLuint mem_type)
 {
   if (region) {
-    intel_region_update_static(intelScreen, region, mem_type,
+    intel_region_update_static(intelScreen, region, name, mem_type,
 			       region_desc->bo_handle, region_desc->offset,
 			       region_desc->map, intelScreen->cpp,
 			       region_desc->pitch / intelScreen->cpp,
 			       intelScreen->height);
   } else {
-    region = intel_region_create_static(intelScreen, mem_type,
+    region = intel_region_create_static(intelScreen, name, mem_type,
 					region_desc->bo_handle,
 					region_desc->offset,
 					region_desc->map, intelScreen->cpp,
@@ -211,20 +212,20 @@ static void
 intel_recreate_static_regions(intelScreenPrivate *intelScreen)
 {
    intelScreen->front_region =
-      intel_recreate_static(intelScreen,
+      intel_recreate_static(intelScreen, "front",
 			    intelScreen->front_region,
 			    &intelScreen->front,
 			    DRM_BO_FLAG_MEM_TT);
 
    intelScreen->back_region =
-      intel_recreate_static(intelScreen,
+      intel_recreate_static(intelScreen, "back",
 			    intelScreen->back_region,
 			    &intelScreen->back,
 			    DRM_BO_FLAG_MEM_TT);
 
    if (intelScreen->third.handle) {
       intelScreen->third_region =
-	 intel_recreate_static(intelScreen,
+	 intel_recreate_static(intelScreen, "third",
 			       intelScreen->third_region,
 			       &intelScreen->third,
 			       DRM_BO_FLAG_MEM_TT);
@@ -234,7 +235,7 @@ intel_recreate_static_regions(intelScreenPrivate *intelScreen)
     * private buffers.
     */
    intelScreen->depth_region =
-      intel_recreate_static(intelScreen,
+      intel_recreate_static(intelScreen, "depth",
 			    intelScreen->depth_region,
 			    &intelScreen->depth,
 			    DRM_BO_FLAG_MEM_TT);
