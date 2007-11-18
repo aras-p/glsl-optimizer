@@ -155,8 +155,8 @@ nouveau_fill_in_modes(unsigned pixel_bits, unsigned depth_bits,
 		GLX_NONE, GLX_SWAP_UNDEFINED_OML, GLX_SWAP_COPY_OML
 	};
 
-	u_int8_t depth_bits_array[4]   = { 0, 16, 24 };
-	u_int8_t stencil_bits_array[4] = { 0,  0,  8 };
+	u_int8_t depth_bits_array[4]   = { 0, 16, 24, 24 };
+	u_int8_t stencil_bits_array[4] = { 0,  0,  0, 8 };
 
 	depth_buffer_factor = 4;
 	back_buffer_factor  = (have_back_buffer) ? 3 : 1;
