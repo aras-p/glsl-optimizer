@@ -117,11 +117,13 @@ void
 i915_program_error(struct i915_fp_compile *p, const char *msg, ...)
 {
    va_list args;
+   char buffer[1024];
 
    fprintf(stderr, "i915_program_error: ");
    va_start( args, msg );  
-   vfprintf( stderr, msg, args );
+   vsprintf( buffer, msg, args );
    va_end( args );
+   fprintf(stderr, buffer);
    fprintf(stderr, "\n");
 
    p->error = 1;
@@ -381,6 +383,9 @@ emit_simple_arith(struct i915_fp_compile *p,
                     arg3 );
 }
 
+#ifndef M_PI
+#define M_PI 3.14159265358979323846
+#endif
 
 /*
  * Translate TGSI instruction to i915 instruction.
@@ -430,7 +435,7 @@ i915_translate_instruction(struct i915_fp_compile *p,
       i915_emit_arith(p,
                       A0_MUL,
                       tmp, A0_DEST_CHANNEL_X, 0,
-                      src0, i915_emit_const1f(p, 1.0f / (M_PI * 2.0f)), 0);
+                      src0, i915_emit_const1f(p, 1.0f / (float) (M_PI * 2.0)), 0);
 
       i915_emit_arith(p, A0_MOD, tmp, A0_DEST_CHANNEL_X, 0, tmp, 0, 0);
 
@@ -439,7 +444,7 @@ i915_translate_instruction(struct i915_fp_compile *p,
       i915_emit_arith(p,
                       A0_MUL,
                       tmp, A0_DEST_CHANNEL_X, 0,
-                      tmp, i915_emit_const1f(p, (M_PI * 2.0f)), 0);
+                      tmp, i915_emit_const1f(p, (float) (M_PI * 2.0)), 0);
 
       /* 
        * t0.xy = MUL x.xx11, x.x1111  ; x^2, x, 1, 1
@@ -772,7 +777,7 @@ i915_translate_instruction(struct i915_fp_compile *p,
       i915_emit_arith(p,
                       A0_MUL,
                       tmp, A0_DEST_CHANNEL_X, 0,
-                      src0, i915_emit_const1f(p, 1.0 / (M_PI * 2)), 0);
+                      src0, i915_emit_const1f(p, 1.0f / (float) (M_PI * 2.0)), 0);
 
       i915_emit_arith(p, A0_MOD, tmp, A0_DEST_CHANNEL_X, 0, tmp, 0, 0);
 
@@ -781,7 +786,7 @@ i915_translate_instruction(struct i915_fp_compile *p,
       i915_emit_arith(p,
                       A0_MUL,
                       tmp, A0_DEST_CHANNEL_X, 0,
-                      tmp, i915_emit_const1f(p, (M_PI * 2)), 0);
+                      tmp, i915_emit_const1f(p, (float) (M_PI * 2.0)), 0);
 
       /* 
        * t0.xy = MUL x.xx11, x.x1111  ; x^2, x, 1, 1

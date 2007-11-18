@@ -45,7 +45,7 @@
  * (active) state every time a 4kb boundary is crossed.
  */
 
-static inline void set_dynamic_indirect( struct i915_context *i915,
+static INLINE void set_dynamic_indirect( struct i915_context *i915,
 					 unsigned offset,
 					 const unsigned *src,
 					 unsigned dwords )

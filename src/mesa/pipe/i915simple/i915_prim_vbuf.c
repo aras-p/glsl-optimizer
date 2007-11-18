@@ -202,7 +202,7 @@ static void vbuf_tri( struct draw_stage *stage,
    for (i = 0; i < 3; i++) {
       emit_vertex( vbuf, prim->v[i] );
       
-      vbuf->element_map[vbuf->nr_elements++] = prim->v[i]->vertex_id;
+      vbuf->element_map[vbuf->nr_elements++] = (ushort) prim->v[i]->vertex_id;
    }
 }
 
@@ -218,7 +218,7 @@ static void vbuf_line(struct draw_stage *stage,
    for (i = 0; i < 2; i++) {
       emit_vertex( vbuf, prim->v[i] );
 
-      vbuf->element_map[vbuf->nr_elements++] = prim->v[i]->vertex_id;
+      vbuf->element_map[vbuf->nr_elements++] = (ushort) prim->v[i]->vertex_id;
    }   
 }
 
@@ -232,7 +232,7 @@ static void vbuf_point(struct draw_stage *stage,
 
    emit_vertex( vbuf, prim->v[0] );
    
-   vbuf->element_map[vbuf->nr_elements++] = prim->v[0]->vertex_id;
+   vbuf->element_map[vbuf->nr_elements++] = (ushort) prim->v[0]->vertex_id;
 }
 
 

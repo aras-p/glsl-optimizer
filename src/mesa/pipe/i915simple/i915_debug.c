@@ -33,7 +33,21 @@
 #include "i915_debug.h"
 #include "pipe/p_winsys.h"
 
-#define PRINTF( ... ) (stream)->winsys->printf( (stream)->winsys, __VA_ARGS__ )
+
+static void
+PRINTF(
+   struct debug_stream  *stream,
+   const char           *fmt,
+                        ... )
+{
+   va_list  args;
+   char     buffer[256];
+
+   va_start( args, fmt );
+   vsprintf( buffer, fmt, args );
+   stream->winsys->printf( stream->winsys, buffer );
+   va_end( args );
+}
 
 
 static boolean debug( struct debug_stream *stream, const char *name, unsigned len )
@@ -42,19 +56,19 @@ static boolean debug( struct debug_stream *stream, const char *name, unsigned le
    unsigned *ptr = (unsigned *)(stream->ptr + stream->offset);
    
    if (len == 0) {
-      PRINTF("Error - zero length packet (0x%08x)\n", stream->ptr[0]);
+      PRINTF(stream, "Error - zero length packet (0x%08x)\n", stream->ptr[0]);
       assert(0);
       return FALSE;
    }
 
    if (stream->print_addresses)
-      PRINTF("%08x:  ", stream->offset);
+      PRINTF(stream, "%08x:  ", stream->offset);
 
 
-   PRINTF("%s (%d dwords):\n", name, len);
+   PRINTF(stream, "%s (%d dwords):\n", name, len);
    for (i = 0; i < len; i++)
-      PRINTF("\t0x%08x\n",  ptr[i]);   
-   PRINTF("\n");
+      PRINTF(stream, "\t0x%08x\n",  ptr[i]);   
+   PRINTF(stream, "\n");
 
    stream->offset += len * sizeof(unsigned);
    
@@ -91,17 +105,17 @@ static boolean debug_prim( struct debug_stream *stream, const char *name,
    
 
 
-   PRINTF("%s %s (%d dwords):\n", name, prim, len);
-   PRINTF("\t0x%08x\n",  ptr[0]);   
+   PRINTF(stream, "%s %s (%d dwords):\n", name, prim, len);
+   PRINTF(stream, "\t0x%08x\n",  ptr[0]);   
    for (i = 1; i < len; i++) {
       if (dump_floats)
-	 PRINTF("\t0x%08x // %f\n",  ptr[i], *(float *)&ptr[i]);   
+	 PRINTF(stream, "\t0x%08x // %f\n",  ptr[i], *(float *)&ptr[i]);   
       else
-	 PRINTF("\t0x%08x\n",  ptr[i]);   
+	 PRINTF(stream, "\t0x%08x\n",  ptr[i]);   
    }
 
       
-   PRINTF("\n");
+   PRINTF(stream, "\n");
 
    stream->offset += len * sizeof(unsigned);
    
@@ -116,15 +130,15 @@ static boolean debug_program( struct debug_stream *stream, const char *name, uns
    unsigned *ptr = (unsigned *)(stream->ptr + stream->offset);
 
    if (len == 0) {
-      PRINTF("Error - zero length packet (0x%08x)\n", stream->ptr[0]);
+      PRINTF(stream, "Error - zero length packet (0x%08x)\n", stream->ptr[0]);
       assert(0);
       return FALSE;
    }
 
    if (stream->print_addresses)
-      PRINTF("%08x:  ", stream->offset);
+      PRINTF(stream, "%08x:  ", stream->offset);
 
-   PRINTF("%s (%d dwords):\n", name, len);
+   PRINTF(stream, "%s (%d dwords):\n", name, len);
    i915_disassemble_program( stream, ptr, len );
 
    stream->offset += len * sizeof(unsigned);
@@ -138,17 +152,17 @@ static boolean debug_chain( struct debug_stream *stream, const char *name, unsig
    unsigned old_offset = stream->offset + len * sizeof(unsigned);
    unsigned i;
 
-   PRINTF("%s (%d dwords):\n", name, len);
+   PRINTF(stream, "%s (%d dwords):\n", name, len);
    for (i = 0; i < len; i++)
-      PRINTF("\t0x%08x\n",  ptr[i]);
+      PRINTF(stream, "\t0x%08x\n",  ptr[i]);
 
    stream->offset = ptr[1] & ~0x3;
    
    if (stream->offset < old_offset)
-      PRINTF("\n... skipping backwards from 0x%x --> 0x%x ...\n\n", 
+      PRINTF(stream, "\n... skipping backwards from 0x%x --> 0x%x ...\n\n", 
 		   old_offset, stream->offset );
    else
-      PRINTF("\n... skipping from 0x%x --> 0x%x ...\n\n", 
+      PRINTF(stream, "\n... skipping from 0x%x --> 0x%x ...\n\n", 
 		   old_offset, stream->offset );
 
 
@@ -168,23 +182,38 @@ static boolean debug_variable_length_prim( struct debug_stream *stream )
 
    len = 1+(i+2)/2;
 
-   PRINTF("3DPRIM, %s variable length %d indicies (%d dwords):\n", prim, i, len);
+   PRINTF(stream, "3DPRIM, %s variable length %d indicies (%d dwords):\n", prim, i, len);
    for (i = 0; i < len; i++)
-      PRINTF("\t0x%08x\n",  ptr[i]);
-   PRINTF("\n");
+      PRINTF(stream, "\t0x%08x\n",  ptr[i]);
+   PRINTF(stream, "\n");
 
    stream->offset += len * sizeof(unsigned);
    return TRUE;
 }
 
 
-#define BITS( dw, hi, lo, ... )				\
-do {							\
-   unsigned himask = ~0UL >> (31 - (hi));		\
-   PRINTF("\t\t ");				\
-   PRINTF(__VA_ARGS__);			\
-   PRINTF(": 0x%x\n", ((dw) & himask) >> (lo));	\
-} while (0)
+static void
+BITS(
+   struct debug_stream  *stream,
+   unsigned             dw,
+   unsigned             hi,
+   unsigned             lo,
+   const char           *fmt,
+                        ... )
+{
+   va_list  args;
+   char     buffer[256];
+   unsigned himask = ~0UL >> (31 - (hi));
+
+   PRINTF(stream, "\t\t ");
+
+   va_start( args, fmt );
+   vsprintf( buffer, fmt, args );
+   stream->winsys->printf( stream->winsys, buffer );
+   va_end( args );
+
+   PRINTF(stream, ": 0x%x\n", ((dw) & himask) >> (lo));
+}
 
 #define MBZ( dw, hi, lo) do {							\
    unsigned x = (dw) >> (lo);				\
@@ -194,14 +223,28 @@ do {							\
    assert ((x & himask & ~lomask) == 0);	\
 } while (0)
 
-#define FLAG( dw, bit, ... )			\
-do {							\
-   if (((dw) >> (bit)) & 1) {				\
-      PRINTF("\t\t ");				\
-      PRINTF(__VA_ARGS__);			\
-      PRINTF("\n");				\
-   }							\
-} while (0)
+static void
+FLAG(
+   struct debug_stream  *stream,
+   unsigned             dw,
+   unsigned             bit,
+   const char           *fmt,
+                        ... )
+{
+   if (((dw) >> (bit)) & 1) {
+      va_list  args;
+      char     buffer[256];
+
+      PRINTF(stream, "\t\t ");
+
+      va_start( args, fmt );
+      vsprintf( buffer, fmt, args );
+      stream->winsys->printf( stream->winsys, buffer );
+      va_end( args );
+
+      PRINTF(stream, "\n");
+   }
+}
 
 static boolean debug_load_immediate( struct debug_stream *stream,
 				       const char *name,
@@ -211,95 +254,95 @@ static boolean debug_load_immediate( struct debug_stream *stream,
    unsigned bits = (ptr[0] >> 4) & 0xff;
    unsigned j = 0;
    
-   PRINTF("%s (%d dwords, flags: %x):\n", name, len, bits);
-   PRINTF("\t0x%08x\n",  ptr[j++]);
+   PRINTF(stream, "%s (%d dwords, flags: %x):\n", name, len, bits);
+   PRINTF(stream, "\t0x%08x\n",  ptr[j++]);
 
    if (bits & (1<<0)) {
-      PRINTF("\t  LIS0: 0x%08x\n", ptr[j]);
-      PRINTF("\t vb address: 0x%08x\n", (ptr[j] & ~0x3));
-      BITS(ptr[j], 0, 0, "vb invalidate disable");
+      PRINTF(stream, "\t  LIS0: 0x%08x\n", ptr[j]);
+      PRINTF(stream, "\t vb address: 0x%08x\n", (ptr[j] & ~0x3));
+      BITS(stream, ptr[j], 0, 0, "vb invalidate disable");
       j++;
    }
    if (bits & (1<<1)) {
-      PRINTF("\t  LIS1: 0x%08x\n", ptr[j]);
-      BITS(ptr[j], 29, 24, "vb dword width");
-      BITS(ptr[j], 21, 16, "vb dword pitch");
-      BITS(ptr[j], 15, 0, "vb max index");
+      PRINTF(stream, "\t  LIS1: 0x%08x\n", ptr[j]);
+      BITS(stream, ptr[j], 29, 24, "vb dword width");
+      BITS(stream, ptr[j], 21, 16, "vb dword pitch");
+      BITS(stream, ptr[j], 15, 0, "vb max index");
       j++;
    }
    if (bits & (1<<2)) {
       int i;
-      PRINTF("\t  LIS2: 0x%08x\n", ptr[j]);
+      PRINTF(stream, "\t  LIS2: 0x%08x\n", ptr[j]);
       for (i = 0; i < 8; i++) {
 	 unsigned tc = (ptr[j] >> (i * 4)) & 0xf;
 	 if (tc != 0xf)
-	    BITS(tc, 3, 0, "tex coord %d", i);
+	    BITS(stream, tc, 3, 0, "tex coord %d", i);
       }
       j++;
    }
    if (bits & (1<<3)) {
-      PRINTF("\t  LIS3: 0x%08x\n", ptr[j]);
+      PRINTF(stream, "\t  LIS3: 0x%08x\n", ptr[j]);
       j++;
    }
    if (bits & (1<<4)) {
-      PRINTF("\t  LIS4: 0x%08x\n", ptr[j]);
-      BITS(ptr[j], 31, 23, "point width");
-      BITS(ptr[j], 22, 19, "line width");
-      FLAG(ptr[j], 18, "alpha flatshade");
-      FLAG(ptr[j], 17, "fog flatshade");
-      FLAG(ptr[j], 16, "spec flatshade");
-      FLAG(ptr[j], 15, "rgb flatshade");
-      BITS(ptr[j], 14, 13, "cull mode");
-      FLAG(ptr[j], 12, "vfmt: point width");
-      FLAG(ptr[j], 11, "vfmt: specular/fog");
-      FLAG(ptr[j], 10, "vfmt: rgba");
-      FLAG(ptr[j], 9, "vfmt: depth offset");
-      BITS(ptr[j], 8, 6, "vfmt: position (2==xyzw)");
-      FLAG(ptr[j], 5, "force dflt diffuse");
-      FLAG(ptr[j], 4, "force dflt specular");
-      FLAG(ptr[j], 3, "local depth offset enable");
-      FLAG(ptr[j], 2, "vfmt: fp32 fog coord");
-      FLAG(ptr[j], 1, "sprite point");
-      FLAG(ptr[j], 0, "antialiasing");
+      PRINTF(stream, "\t  LIS4: 0x%08x\n", ptr[j]);
+      BITS(stream, ptr[j], 31, 23, "point width");
+      BITS(stream, ptr[j], 22, 19, "line width");
+      FLAG(stream, ptr[j], 18, "alpha flatshade");
+      FLAG(stream, ptr[j], 17, "fog flatshade");
+      FLAG(stream, ptr[j], 16, "spec flatshade");
+      FLAG(stream, ptr[j], 15, "rgb flatshade");
+      BITS(stream, ptr[j], 14, 13, "cull mode");
+      FLAG(stream, ptr[j], 12, "vfmt: point width");
+      FLAG(stream, ptr[j], 11, "vfmt: specular/fog");
+      FLAG(stream, ptr[j], 10, "vfmt: rgba");
+      FLAG(stream, ptr[j], 9, "vfmt: depth offset");
+      BITS(stream, ptr[j], 8, 6, "vfmt: position (2==xyzw)");
+      FLAG(stream, ptr[j], 5, "force dflt diffuse");
+      FLAG(stream, ptr[j], 4, "force dflt specular");
+      FLAG(stream, ptr[j], 3, "local depth offset enable");
+      FLAG(stream, ptr[j], 2, "vfmt: fp32 fog coord");
+      FLAG(stream, ptr[j], 1, "sprite point");
+      FLAG(stream, ptr[j], 0, "antialiasing");
       j++;
    }
    if (bits & (1<<5)) {
-      PRINTF("\t  LIS5: 0x%08x\n", ptr[j]);
-      BITS(ptr[j], 31, 28, "rgba write disables");
-      FLAG(ptr[j], 27,     "force dflt point width");
-      FLAG(ptr[j], 26,     "last pixel enable");
-      FLAG(ptr[j], 25,     "global z offset enable");
-      FLAG(ptr[j], 24,     "fog enable");
-      BITS(ptr[j], 23, 16, "stencil ref");
-      BITS(ptr[j], 15, 13, "stencil test");
-      BITS(ptr[j], 12, 10, "stencil fail op");
-      BITS(ptr[j], 9, 7,   "stencil pass z fail op");
-      BITS(ptr[j], 6, 4,   "stencil pass z pass op");
-      FLAG(ptr[j], 3,      "stencil write enable");
-      FLAG(ptr[j], 2,      "stencil test enable");
-      FLAG(ptr[j], 1,      "color dither enable");
-      FLAG(ptr[j], 0,      "logiop enable");
+      PRINTF(stream, "\t  LIS5: 0x%08x\n", ptr[j]);
+      BITS(stream, ptr[j], 31, 28, "rgba write disables");
+      FLAG(stream, ptr[j], 27,     "force dflt point width");
+      FLAG(stream, ptr[j], 26,     "last pixel enable");
+      FLAG(stream, ptr[j], 25,     "global z offset enable");
+      FLAG(stream, ptr[j], 24,     "fog enable");
+      BITS(stream, ptr[j], 23, 16, "stencil ref");
+      BITS(stream, ptr[j], 15, 13, "stencil test");
+      BITS(stream, ptr[j], 12, 10, "stencil fail op");
+      BITS(stream, ptr[j], 9, 7,   "stencil pass z fail op");
+      BITS(stream, ptr[j], 6, 4,   "stencil pass z pass op");
+      FLAG(stream, ptr[j], 3,      "stencil write enable");
+      FLAG(stream, ptr[j], 2,      "stencil test enable");
+      FLAG(stream, ptr[j], 1,      "color dither enable");
+      FLAG(stream, ptr[j], 0,      "logiop enable");
       j++;
    }
    if (bits & (1<<6)) {
-      PRINTF("\t  LIS6: 0x%08x\n", ptr[j]);
-      FLAG(ptr[j], 31,      "alpha test enable");
-      BITS(ptr[j], 30, 28,  "alpha func");
-      BITS(ptr[j], 27, 20,  "alpha ref");
-      FLAG(ptr[j], 19,      "depth test enable");
-      BITS(ptr[j], 18, 16,  "depth func");
-      FLAG(ptr[j], 15,      "blend enable");
-      BITS(ptr[j], 14, 12,  "blend func");
-      BITS(ptr[j], 11, 8,   "blend src factor");
-      BITS(ptr[j], 7,  4,   "blend dst factor");
-      FLAG(ptr[j], 3,       "depth write enable");
-      FLAG(ptr[j], 2,       "color write enable");
-      BITS(ptr[j], 1,  0,   "provoking vertex"); 
+      PRINTF(stream, "\t  LIS6: 0x%08x\n", ptr[j]);
+      FLAG(stream, ptr[j], 31,      "alpha test enable");
+      BITS(stream, ptr[j], 30, 28,  "alpha func");
+      BITS(stream, ptr[j], 27, 20,  "alpha ref");
+      FLAG(stream, ptr[j], 19,      "depth test enable");
+      BITS(stream, ptr[j], 18, 16,  "depth func");
+      FLAG(stream, ptr[j], 15,      "blend enable");
+      BITS(stream, ptr[j], 14, 12,  "blend func");
+      BITS(stream, ptr[j], 11, 8,   "blend src factor");
+      BITS(stream, ptr[j], 7,  4,   "blend dst factor");
+      FLAG(stream, ptr[j], 3,       "depth write enable");
+      FLAG(stream, ptr[j], 2,       "color write enable");
+      BITS(stream, ptr[j], 1,  0,   "provoking vertex"); 
       j++;
    }
 
 
-   PRINTF("\n");
+   PRINTF(stream, "\n");
 
    assert(j == len);
 
@@ -318,34 +361,34 @@ static boolean debug_load_indirect( struct debug_stream *stream,
    unsigned bits = (ptr[0] >> 8) & 0x3f;
    unsigned i, j = 0;
    
-   PRINTF("%s (%d dwords):\n", name, len);
-   PRINTF("\t0x%08x\n",  ptr[j++]);
+   PRINTF(stream, "%s (%d dwords):\n", name, len);
+   PRINTF(stream, "\t0x%08x\n",  ptr[j++]);
 
    for (i = 0; i < 6; i++) {
       if (bits & (1<<i)) {
 	 switch (1<<(8+i)) {
 	 case LI0_STATE_STATIC_INDIRECT:
-	    PRINTF("        STATIC: 0x%08x | %x\n", ptr[j]&~3, ptr[j]&3); j++;
-	    PRINTF("                0x%08x\n", ptr[j++]);
+	    PRINTF(stream, "        STATIC: 0x%08x | %x\n", ptr[j]&~3, ptr[j]&3); j++;
+	    PRINTF(stream, "                0x%08x\n", ptr[j++]);
 	    break;
 	 case LI0_STATE_DYNAMIC_INDIRECT:
-	    PRINTF("       DYNAMIC: 0x%08x | %x\n", ptr[j]&~3, ptr[j]&3); j++;
+	    PRINTF(stream, "       DYNAMIC: 0x%08x | %x\n", ptr[j]&~3, ptr[j]&3); j++;
 	    break;
 	 case LI0_STATE_SAMPLER:
-	    PRINTF("       SAMPLER: 0x%08x | %x\n", ptr[j]&~3, ptr[j]&3); j++;
-	    PRINTF("                0x%08x\n", ptr[j++]);
+	    PRINTF(stream, "       SAMPLER: 0x%08x | %x\n", ptr[j]&~3, ptr[j]&3); j++;
+	    PRINTF(stream, "                0x%08x\n", ptr[j++]);
 	    break;
 	 case LI0_STATE_MAP:
-	    PRINTF("           MAP: 0x%08x | %x\n", ptr[j]&~3, ptr[j]&3); j++;
-	    PRINTF("                0x%08x\n", ptr[j++]);
+	    PRINTF(stream, "           MAP: 0x%08x | %x\n", ptr[j]&~3, ptr[j]&3); j++;
+	    PRINTF(stream, "                0x%08x\n", ptr[j++]);
 	    break;
 	 case LI0_STATE_PROGRAM:
-	    PRINTF("       PROGRAM: 0x%08x | %x\n", ptr[j]&~3, ptr[j]&3); j++;
-	    PRINTF("                0x%08x\n", ptr[j++]);
+	    PRINTF(stream, "       PROGRAM: 0x%08x | %x\n", ptr[j]&~3, ptr[j]&3); j++;
+	    PRINTF(stream, "                0x%08x\n", ptr[j++]);
 	    break;
 	 case LI0_STATE_CONSTANTS:
-	    PRINTF("     CONSTANTS: 0x%08x | %x\n", ptr[j]&~3, ptr[j]&3); j++;
-	    PRINTF("                0x%08x\n", ptr[j++]);
+	    PRINTF(stream, "     CONSTANTS: 0x%08x | %x\n", ptr[j]&~3, ptr[j]&3); j++;
+	    PRINTF(stream, "                0x%08x\n", ptr[j++]);
 	    break;
 	 default:
 	    assert(0);
@@ -355,10 +398,10 @@ static boolean debug_load_indirect( struct debug_stream *stream,
    }
 
    if (bits == 0) {
-      PRINTF("\t  DUMMY: 0x%08x\n", ptr[j++]);
+      PRINTF(stream, "\t  DUMMY: 0x%08x\n", ptr[j++]);
    }
 
-   PRINTF("\n");
+   PRINTF(stream, "\n");
 
 
    assert(j == len);
@@ -371,61 +414,61 @@ static boolean debug_load_indirect( struct debug_stream *stream,
 static void BR13( struct debug_stream *stream,
 		  unsigned val )
 {
-   PRINTF("\t0x%08x\n",  val);
-   FLAG(val, 30, "clipping enable");
-   BITS(val, 25, 24, "color depth (3==32bpp)");
-   BITS(val, 23, 16, "raster op");
-   BITS(val, 15, 0,  "dest pitch");
+   PRINTF(stream, "\t0x%08x\n",  val);
+   FLAG(stream, val, 30, "clipping enable");
+   BITS(stream, val, 25, 24, "color depth (3==32bpp)");
+   BITS(stream, val, 23, 16, "raster op");
+   BITS(stream, val, 15, 0,  "dest pitch");
 }
 
 
 static void BR22( struct debug_stream *stream,
 		  unsigned val )
 {
-   PRINTF("\t0x%08x\n",  val);
-   BITS(val, 31, 16, "dest y1");
-   BITS(val, 15, 0,  "dest x1");
+   PRINTF(stream, "\t0x%08x\n",  val);
+   BITS(stream, val, 31, 16, "dest y1");
+   BITS(stream, val, 15, 0,  "dest x1");
 }
 
 static void BR23( struct debug_stream *stream,
 		  unsigned val )
 {
-   PRINTF("\t0x%08x\n",  val);
-   BITS(val, 31, 16, "dest y2");
-   BITS(val, 15, 0,  "dest x2");
+   PRINTF(stream, "\t0x%08x\n",  val);
+   BITS(stream, val, 31, 16, "dest y2");
+   BITS(stream, val, 15, 0,  "dest x2");
 }
 
 static void BR09( struct debug_stream *stream,
 		  unsigned val )
 {
-   PRINTF("\t0x%08x -- dest address\n",  val);
+   PRINTF(stream, "\t0x%08x -- dest address\n",  val);
 }
 
 static void BR26( struct debug_stream *stream,
 		  unsigned val )
 {
-   PRINTF("\t0x%08x\n",  val);
-   BITS(val, 31, 16, "src y1");
-   BITS(val, 15, 0,  "src x1");
+   PRINTF(stream, "\t0x%08x\n",  val);
+   BITS(stream, val, 31, 16, "src y1");
+   BITS(stream, val, 15, 0,  "src x1");
 }
 
 static void BR11( struct debug_stream *stream,
 		  unsigned val )
 {
-   PRINTF("\t0x%08x\n",  val);
-   BITS(val, 15, 0,  "src pitch");
+   PRINTF(stream, "\t0x%08x\n",  val);
+   BITS(stream, val, 15, 0,  "src pitch");
 }
 
 static void BR12( struct debug_stream *stream,
 		  unsigned val )
 {
-   PRINTF("\t0x%08x -- src address\n",  val);
+   PRINTF(stream, "\t0x%08x -- src address\n",  val);
 }
 
 static void BR16( struct debug_stream *stream,
 		  unsigned val )
 {
-   PRINTF("\t0x%08x -- color\n",  val);
+   PRINTF(stream, "\t0x%08x -- color\n",  val);
 }
    
 static boolean debug_copy_blit( struct debug_stream *stream,
@@ -435,8 +478,8 @@ static boolean debug_copy_blit( struct debug_stream *stream,
    unsigned *ptr = (unsigned *)(stream->ptr + stream->offset);
    int j = 0;
 
-   PRINTF("%s (%d dwords):\n", name, len);
-   PRINTF("\t0x%08x\n",  ptr[j++]);
+   PRINTF(stream, "%s (%d dwords):\n", name, len);
+   PRINTF(stream, "\t0x%08x\n",  ptr[j++]);
    
    BR13(stream, ptr[j++]);
    BR22(stream, ptr[j++]);
@@ -458,8 +501,8 @@ static boolean debug_color_blit( struct debug_stream *stream,
    unsigned *ptr = (unsigned *)(stream->ptr + stream->offset);
    int j = 0;
 
-   PRINTF("%s (%d dwords):\n", name, len);
-   PRINTF("\t0x%08x\n",  ptr[j++]);
+   PRINTF(stream, "%s (%d dwords):\n", name, len);
+   PRINTF(stream, "\t0x%08x\n",  ptr[j++]);
 
    BR13(stream, ptr[j++]);
    BR22(stream, ptr[j++]);
@@ -479,13 +522,13 @@ static boolean debug_modes4( struct debug_stream *stream,
    unsigned *ptr = (unsigned *)(stream->ptr + stream->offset);
    int j = 0;
 
-   PRINTF("%s (%d dwords):\n", name, len);
-   PRINTF("\t0x%08x\n",  ptr[j]);
-   BITS(ptr[j], 21, 18, "logicop func");
-   FLAG(ptr[j], 17, "stencil test mask modify-enable");
-   FLAG(ptr[j], 16, "stencil write mask modify-enable");
-   BITS(ptr[j], 15, 8, "stencil test mask");
-   BITS(ptr[j], 7, 0,  "stencil write mask");
+   PRINTF(stream, "%s (%d dwords):\n", name, len);
+   PRINTF(stream, "\t0x%08x\n",  ptr[j]);
+   BITS(stream, ptr[j], 21, 18, "logicop func");
+   FLAG(stream, ptr[j], 17, "stencil test mask modify-enable");
+   FLAG(stream, ptr[j], 16, "stencil write mask modify-enable");
+   BITS(stream, ptr[j], 15, 8, "stencil test mask");
+   BITS(stream, ptr[j], 7, 0,  "stencil write mask");
    j++;
 
    stream->offset += len * sizeof(unsigned);
@@ -500,42 +543,42 @@ static boolean debug_map_state( struct debug_stream *stream,
    unsigned *ptr = (unsigned *)(stream->ptr + stream->offset);
    unsigned j = 0;
 
-   PRINTF("%s (%d dwords):\n", name, len);
-   PRINTF("\t0x%08x\n",  ptr[j++]);
+   PRINTF(stream, "%s (%d dwords):\n", name, len);
+   PRINTF(stream, "\t0x%08x\n",  ptr[j++]);
    
    {
-      PRINTF("\t0x%08x\n",  ptr[j]);
-      BITS(ptr[j], 15, 0,   "map mask");
+      PRINTF(stream, "\t0x%08x\n",  ptr[j]);
+      BITS(stream, ptr[j], 15, 0,   "map mask");
       j++;
    }
 
    while (j < len) {
       {
-	 PRINTF("\t  TMn.0: 0x%08x\n", ptr[j]);
-	 PRINTF("\t map address: 0x%08x\n", (ptr[j] & ~0x3));
-	 FLAG(ptr[j], 1, "vertical line stride");
-	 FLAG(ptr[j], 0, "vertical line stride offset");
+	 PRINTF(stream, "\t  TMn.0: 0x%08x\n", ptr[j]);
+	 PRINTF(stream, "\t map address: 0x%08x\n", (ptr[j] & ~0x3));
+	 FLAG(stream, ptr[j], 1, "vertical line stride");
+	 FLAG(stream, ptr[j], 0, "vertical line stride offset");
 	 j++;
       }
 
       {
-	 PRINTF("\t  TMn.1: 0x%08x\n", ptr[j]);
-	 BITS(ptr[j], 31, 21, "height");
-	 BITS(ptr[j], 20, 10, "width");
-	 BITS(ptr[j], 9, 7, "surface format");
-	 BITS(ptr[j], 6, 3, "texel format");
-	 FLAG(ptr[j], 2, "use fence regs");
-	 FLAG(ptr[j], 1, "tiled surface");
-	 FLAG(ptr[j], 0, "tile walk ymajor");
+	 PRINTF(stream, "\t  TMn.1: 0x%08x\n", ptr[j]);
+	 BITS(stream, ptr[j], 31, 21, "height");
+	 BITS(stream, ptr[j], 20, 10, "width");
+	 BITS(stream, ptr[j], 9, 7, "surface format");
+	 BITS(stream, ptr[j], 6, 3, "texel format");
+	 FLAG(stream, ptr[j], 2, "use fence regs");
+	 FLAG(stream, ptr[j], 1, "tiled surface");
+	 FLAG(stream, ptr[j], 0, "tile walk ymajor");
 	 j++;
       }
       {
-	 PRINTF("\t  TMn.2: 0x%08x\n", ptr[j]);
-	 BITS(ptr[j], 31, 21, "dword pitch");
-	 BITS(ptr[j], 20, 15, "cube face enables");
-	 BITS(ptr[j], 14, 9, "max lod");
-	 FLAG(ptr[j], 8,     "mip layout right");
-	 BITS(ptr[j], 7, 0, "depth");
+	 PRINTF(stream, "\t  TMn.2: 0x%08x\n", ptr[j]);
+	 BITS(stream, ptr[j], 31, 21, "dword pitch");
+	 BITS(stream, ptr[j], 20, 15, "cube face enables");
+	 BITS(stream, ptr[j], 14, 9, "max lod");
+	 FLAG(stream, ptr[j], 8,     "mip layout right");
+	 BITS(stream, ptr[j], 7, 0, "depth");
 	 j++;
       }
    }
@@ -552,50 +595,50 @@ static boolean debug_sampler_state( struct debug_stream *stream,
    unsigned *ptr = (unsigned *)(stream->ptr + stream->offset);
    unsigned j = 0;
 
-   PRINTF("%s (%d dwords):\n", name, len);
-   PRINTF("\t0x%08x\n",  ptr[j++]);
+   PRINTF(stream, "%s (%d dwords):\n", name, len);
+   PRINTF(stream, "\t0x%08x\n",  ptr[j++]);
    
    {
-      PRINTF("\t0x%08x\n",  ptr[j]);
-      BITS(ptr[j], 15, 0,   "sampler mask");
+      PRINTF(stream, "\t0x%08x\n",  ptr[j]);
+      BITS(stream, ptr[j], 15, 0,   "sampler mask");
       j++;
    }
 
    while (j < len) {
       {
-	 PRINTF("\t  TSn.0: 0x%08x\n", ptr[j]);
-	 FLAG(ptr[j], 31, "reverse gamma");
-	 FLAG(ptr[j], 30, "planar to packed");
-	 FLAG(ptr[j], 29, "yuv->rgb");
-	 BITS(ptr[j], 28, 27, "chromakey index");
-	 BITS(ptr[j], 26, 22, "base mip level");
-	 BITS(ptr[j], 21, 20, "mip mode filter");
-	 BITS(ptr[j], 19, 17, "mag mode filter");
-	 BITS(ptr[j], 16, 14, "min mode filter");
-	 BITS(ptr[j], 13, 5,  "lod bias (s4.4)");
-	 FLAG(ptr[j], 4,      "shadow enable");
-	 FLAG(ptr[j], 3,      "max-aniso-4");
-	 BITS(ptr[j], 2, 0,   "shadow func");
+	 PRINTF(stream, "\t  TSn.0: 0x%08x\n", ptr[j]);
+	 FLAG(stream, ptr[j], 31, "reverse gamma");
+	 FLAG(stream, ptr[j], 30, "planar to packed");
+	 FLAG(stream, ptr[j], 29, "yuv->rgb");
+	 BITS(stream, ptr[j], 28, 27, "chromakey index");
+	 BITS(stream, ptr[j], 26, 22, "base mip level");
+	 BITS(stream, ptr[j], 21, 20, "mip mode filter");
+	 BITS(stream, ptr[j], 19, 17, "mag mode filter");
+	 BITS(stream, ptr[j], 16, 14, "min mode filter");
+	 BITS(stream, ptr[j], 13, 5,  "lod bias (s4.4)");
+	 FLAG(stream, ptr[j], 4,      "shadow enable");
+	 FLAG(stream, ptr[j], 3,      "max-aniso-4");
+	 BITS(stream, ptr[j], 2, 0,   "shadow func");
 	 j++;
       }
 
       {
-	 PRINTF("\t  TSn.1: 0x%08x\n", ptr[j]);
-	 BITS(ptr[j], 31, 24, "min lod");
+	 PRINTF(stream, "\t  TSn.1: 0x%08x\n", ptr[j]);
+	 BITS(stream, ptr[j], 31, 24, "min lod");
 	 MBZ( ptr[j], 23, 18 );
-	 FLAG(ptr[j], 17,     "kill pixel enable");
-	 FLAG(ptr[j], 16,     "keyed tex filter mode");
-	 FLAG(ptr[j], 15,     "chromakey enable");
-	 BITS(ptr[j], 14, 12, "tcx wrap mode");
-	 BITS(ptr[j], 11, 9,  "tcy wrap mode");
-	 BITS(ptr[j], 8,  6,  "tcz wrap mode");
-	 FLAG(ptr[j], 5,      "normalized coords");
-	 BITS(ptr[j], 4,  1,  "map (surface) index");
-	 FLAG(ptr[j], 0,      "EAST deinterlacer enable");
+	 FLAG(stream, ptr[j], 17,     "kill pixel enable");
+	 FLAG(stream, ptr[j], 16,     "keyed tex filter mode");
+	 FLAG(stream, ptr[j], 15,     "chromakey enable");
+	 BITS(stream, ptr[j], 14, 12, "tcx wrap mode");
+	 BITS(stream, ptr[j], 11, 9,  "tcy wrap mode");
+	 BITS(stream, ptr[j], 8,  6,  "tcz wrap mode");
+	 FLAG(stream, ptr[j], 5,      "normalized coords");
+	 BITS(stream, ptr[j], 4,  1,  "map (surface) index");
+	 FLAG(stream, ptr[j], 0,      "EAST deinterlacer enable");
 	 j++;
       }
       {
-	 PRINTF("\t  TSn.2: 0x%08x  (default color)\n", ptr[j]);
+	 PRINTF(stream, "\t  TSn.2: 0x%08x  (default color)\n", ptr[j]);
 	 j++;
       }
    }
@@ -612,26 +655,26 @@ static boolean debug_dest_vars( struct debug_stream *stream,
    unsigned *ptr = (unsigned *)(stream->ptr + stream->offset);
    int j = 0;
 
-   PRINTF("%s (%d dwords):\n", name, len);
-   PRINTF("\t0x%08x\n",  ptr[j++]);
+   PRINTF(stream, "%s (%d dwords):\n", name, len);
+   PRINTF(stream, "\t0x%08x\n",  ptr[j++]);
 
    {
-      PRINTF("\t0x%08x\n",  ptr[j]);
-      FLAG(ptr[j], 31,     "early classic ztest");
-      FLAG(ptr[j], 30,     "opengl tex default color");
-      FLAG(ptr[j], 29,     "bypass iz");
-      FLAG(ptr[j], 28,     "lod preclamp");
-      BITS(ptr[j], 27, 26, "dither pattern");
-      FLAG(ptr[j], 25,     "linear gamma blend");
-      FLAG(ptr[j], 24,     "debug dither");
-      BITS(ptr[j], 23, 20, "dstorg x");
-      BITS(ptr[j], 19, 16, "dstorg y");
+      PRINTF(stream, "\t0x%08x\n",  ptr[j]);
+      FLAG(stream, ptr[j], 31,     "early classic ztest");
+      FLAG(stream, ptr[j], 30,     "opengl tex default color");
+      FLAG(stream, ptr[j], 29,     "bypass iz");
+      FLAG(stream, ptr[j], 28,     "lod preclamp");
+      BITS(stream, ptr[j], 27, 26, "dither pattern");
+      FLAG(stream, ptr[j], 25,     "linear gamma blend");
+      FLAG(stream, ptr[j], 24,     "debug dither");
+      BITS(stream, ptr[j], 23, 20, "dstorg x");
+      BITS(stream, ptr[j], 19, 16, "dstorg y");
       MBZ (ptr[j], 15, 15 );
-      BITS(ptr[j], 14, 12, "422 write select");
-      BITS(ptr[j], 11, 8,  "cbuf format");
-      BITS(ptr[j], 3, 2,   "zbuf format");
-      FLAG(ptr[j], 1,      "vert line stride");
-      FLAG(ptr[j], 1,      "vert line stride offset");
+      BITS(stream, ptr[j], 14, 12, "422 write select");
+      BITS(stream, ptr[j], 11, 8,  "cbuf format");
+      BITS(stream, ptr[j], 3, 2,   "zbuf format");
+      FLAG(stream, ptr[j], 1,      "vert line stride");
+      FLAG(stream, ptr[j], 1,      "vert line stride offset");
       j++;
    }
    
@@ -647,23 +690,23 @@ static boolean debug_buf_info( struct debug_stream *stream,
    unsigned *ptr = (unsigned *)(stream->ptr + stream->offset);
    int j = 0;
 
-   PRINTF("%s (%d dwords):\n", name, len);
-   PRINTF("\t0x%08x\n",  ptr[j++]);
+   PRINTF(stream, "%s (%d dwords):\n", name, len);
+   PRINTF(stream, "\t0x%08x\n",  ptr[j++]);
 
    {
-      PRINTF("\t0x%08x\n",  ptr[j]);
-      BITS(ptr[j], 28, 28, "aux buffer id");
-      BITS(ptr[j], 27, 24, "buffer id (7=depth, 3=back)");
-      FLAG(ptr[j], 23,     "use fence regs");
-      FLAG(ptr[j], 22,     "tiled surface");
-      FLAG(ptr[j], 21,     "tile walk ymajor");
+      PRINTF(stream, "\t0x%08x\n",  ptr[j]);
+      BITS(stream, ptr[j], 28, 28, "aux buffer id");
+      BITS(stream, ptr[j], 27, 24, "buffer id (7=depth, 3=back)");
+      FLAG(stream, ptr[j], 23,     "use fence regs");
+      FLAG(stream, ptr[j], 22,     "tiled surface");
+      FLAG(stream, ptr[j], 21,     "tile walk ymajor");
       MBZ (ptr[j], 20, 14);
-      BITS(ptr[j], 13, 2,  "dword pitch");
+      BITS(stream, ptr[j], 13, 2,  "dword pitch");
       MBZ (ptr[j], 2,  0);
       j++;
    }
    
-   PRINTF("\t0x%08x -- buffer base address\n",  ptr[j++]);
+   PRINTF(stream, "\t0x%08x -- buffer base address\n",  ptr[j++]);
 
    stream->offset += len * sizeof(unsigned);
    assert(j == len);

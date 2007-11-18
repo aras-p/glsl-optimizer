@@ -31,6 +31,8 @@
 #ifndef I915_DEBUG_H
 #define I915_DEBUG_H
 
+#include <stdarg.h>
+
 struct i915_context;
 
 struct debug_stream 
@@ -68,14 +70,38 @@ void i915_print_ureg(const char *msg, unsigned ureg);
 #define DEBUG_WINSYS     0x4000
 
 #ifdef DEBUG
+
 #include "pipe/p_winsys.h"
-#define I915_DBG( i915, ... ) do {						\
-   if ((i915)->debug & FILE_DEBUG_FLAG) 				\
-      (i915)->pipe.winsys->printf( (i915)->pipe.winsys, __VA_ARGS__ );	\
-} while(0)
+
+static void
+I915_DBG(
+   struct i915_context  *i915,
+   const char           *fmt,
+                        ... )
+{
+   if ((i915)->debug & FILE_DEBUG_FLAG) {
+      va_list  args;
+      char     buffer[256];
+
+      va_start( args, fmt );
+      vsprintf( buffer, fmt, args );
+      i915->pipe.winsys->printf( i915->pipe.winsys, buffer );
+      va_end( args );
+   }
+}
+
 #else
-#define I915_DBG( i915, ... ) \
-   (void)i915
+
+static void
+I915_DBG(
+   struct i915_context  *i915,
+   const char           *fmt,
+                        ... )
+{
+   (void) i915;
+   (void) fmt;
+}
+
 #endif
 
 
