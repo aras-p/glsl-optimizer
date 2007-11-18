@@ -34,6 +34,40 @@ nv04_region_display(void)
 }
 
 static int
+nv04_region_copy_m2mf(struct nouveau_context *nv, struct pipe_region *dst,
+		      unsigned dst_offset, struct pipe_region *src,
+		      unsigned src_offset, unsigned line_len, unsigned height)
+{
+	BEGIN_RING(NvM2MF, NV_MEMORY_TO_MEMORY_FORMAT_DMA_BUFFER_IN, 2);
+	OUT_RELOCo(src->buffer, NOUVEAU_BO_GART | NOUVEAU_BO_VRAM |
+		   NOUVEAU_BO_RD);
+	OUT_RELOCo(dst->buffer, NOUVEAU_BO_GART | NOUVEAU_BO_VRAM |
+		   NOUVEAU_BO_WR);
+
+	while (height) {
+		int count = (height > 2047) ? 2047 : height;
+
+		BEGIN_RING(NvM2MF, NV_MEMORY_TO_MEMORY_FORMAT_OFFSET_IN, 8);
+		OUT_RELOCl(src->buffer, src_offset, NOUVEAU_BO_VRAM |
+			   NOUVEAU_BO_GART | NOUVEAU_BO_RD);
+		OUT_RELOCl(dst->buffer, dst_offset, NOUVEAU_BO_VRAM |
+			   NOUVEAU_BO_GART | NOUVEAU_BO_WR);
+		OUT_RING  (src->pitch * src->cpp);
+		OUT_RING  (dst->pitch * dst->cpp);
+		OUT_RING  (line_len);
+		OUT_RING  (count);
+		OUT_RING  (0x0101);
+		OUT_RING  (0);
+
+		height -= count;
+		src_offset += src->pitch * count;
+		dst_offset += dst->pitch * count;
+	}
+
+	return 0;
+}
+
+static int
 nv04_region_copy(struct nouveau_context *nv, struct pipe_region *dst,
 		 unsigned dst_offset, unsigned dx, unsigned dy,
 		 struct pipe_region *src, unsigned src_offset,
@@ -43,6 +77,19 @@ nv04_region_copy(struct nouveau_context *nv, struct pipe_region *dst,
 
 	if (src->cpp != dst->cpp)
 		return 1;
+
+	NOUVEAU_ERR("preg\n");
+
+	/* NV_CONTEXT_SURFACES_2D has buffer alignment restrictions, fallback
+	 * to NV_MEMORY_TO_MEMORY_FORMAT in this case.
+	 */
+	if ((src_offset & 63) || (dst_offset & 63)) {
+		dst_offset += (dy * dst->pitch + dx) * dst->cpp;
+		src_offset += (sy * src->pitch + sx) * src->cpp;
+		return nv04_region_copy_m2mf(nv, dst, dst_offset, src,
+					     src_offset, w * src->cpp, h);
+
+	}
 
 	if ((format = nv04_surface_format(dst->cpp)) < 0) {
 		NOUVEAU_ERR("Bad cpp = %d\n", dst->cpp);
@@ -118,6 +165,14 @@ int
 nouveau_region_init_nv04(struct nouveau_context *nv)
 {
 	int ret;
+
+	if ((ret = nouveau_grobj_alloc(nv->channel, nv->next_handle++, 0x39,
+				       &nv->NvM2MF))) {
+		NOUVEAU_ERR("Error creating m2mf object: %d\n", ret);
+		return 1;
+	}
+	BEGIN_RING(NvM2MF, 0x0180, 1);
+	OUT_RING  (nv->sync_notifier->handle);
 
 	if ((ret = nouveau_grobj_alloc(nv->channel, nv->next_handle++, 0x62,
 				       &nv->NvCtxSurf2D))) {

@@ -52,6 +52,7 @@ struct nouveau_context {
 	struct nouveau_grobj    *NvCtxSurf2D;
 	struct nouveau_grobj    *NvImageBlit;
 	struct nouveau_grobj    *NvGdiRect;
+	struct nouveau_grobj    *NvM2MF;
 	uint32_t                 next_handle;
 	uint32_t                 next_sequence;
 
