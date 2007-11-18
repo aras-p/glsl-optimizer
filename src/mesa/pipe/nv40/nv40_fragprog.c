@@ -446,16 +446,15 @@ nv40_fragprog_parse_instruction(struct nv40_fpc *fpc,
 		arith(fpc, sat, ADD, dst, mask, src[0], neg(src[1]), none);
 		break;
 	case TGSI_OPCODE_TEX:
-		tex(fpc, sat, TEX, unit, dst, mask, src[0], none, none);
+		if (finst->FullSrcRegisters[0].SrcRegisterExtSwz.ExtDivide ==
+				TGSI_EXTSWIZZLE_W) {
+			tex(fpc, sat, TXP, unit, dst, mask, src[0], none, none);
+		} else
+			tex(fpc, sat, TEX, unit, dst, mask, src[0], none, none);
 		break;
 	case TGSI_OPCODE_TXB:
 		tex(fpc, sat, TXB, unit, dst, mask, src[0], none, none);
 		break;
-#if 0 /* XXX: reimplement on top of TEX */
-	case TGSI_OPCODE_TXP:
-		tex(fpc, sat, TXP, unit, dst, mask, src[0], none, none);
-		break;
-#endif
 	case TGSI_OPCODE_XPD:
 		tmp = temp(fpc);
 		arith(fpc, 0, MUL, tmp, mask,
