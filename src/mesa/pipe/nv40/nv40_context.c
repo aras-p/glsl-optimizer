@@ -79,10 +79,14 @@ nv40_get_paramf(struct pipe_context *pipe, int param)
 	switch (param) {
 	case PIPE_CAP_MAX_LINE_WIDTH:
 	case PIPE_CAP_MAX_LINE_WIDTH_AA:
+		return 10.0;
 	case PIPE_CAP_MAX_POINT_WIDTH:
 	case PIPE_CAP_MAX_POINT_WIDTH_AA:
+		return 64.0;
 	case PIPE_CAP_MAX_TEXTURE_ANISOTROPY:
+		return 16.0;
 	case PIPE_CAP_MAX_TEXTURE_LOD_BIAS:
+		return 4.0;
 	default:
 		NOUVEAU_ERR("Unknown PIPE_CAP %d\n", param);
 		return 0.0;
