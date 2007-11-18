@@ -36,7 +36,7 @@ nv40_miptree_layout(struct pipe_context *pipe, struct pipe_mipmap_tree *mt)
 			mt->level[l].nr_images = 6;
 		else
 		if (mt->target == PIPE_TEXTURE_3D)
-			mt->level[l].nr_images = 3;
+			mt->level[l].nr_images = mt->level[l].depth;
 		else
 			mt->level[l].nr_images = 1;
 		mt->level[l].image_offset =
