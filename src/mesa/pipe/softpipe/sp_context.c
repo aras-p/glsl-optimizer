@@ -161,6 +161,7 @@ static void softpipe_destroy( struct pipe_context *pipe )
    draw_destroy( softpipe->draw );
 
    softpipe->quad.polygon_stipple->destroy( softpipe->quad.polygon_stipple );
+   softpipe->quad.earlyz->destroy( softpipe->quad.earlyz );
    softpipe->quad.shade->destroy( softpipe->quad.shade );
    softpipe->quad.alpha_test->destroy( softpipe->quad.alpha_test );
    softpipe->quad.depth_test->destroy( softpipe->quad.depth_test );
@@ -369,6 +370,7 @@ struct pipe_context *softpipe_create( struct pipe_winsys *pipe_winsys,
 
    /* setup quad rendering stages */
    softpipe->quad.polygon_stipple = sp_quad_polygon_stipple_stage(softpipe);
+   softpipe->quad.earlyz = sp_quad_earlyz_stage(softpipe);
    softpipe->quad.shade = sp_quad_shade_stage(softpipe);
    softpipe->quad.alpha_test = sp_quad_alpha_test_stage(softpipe);
    softpipe->quad.depth_test = sp_quad_depth_test_stage(softpipe);
