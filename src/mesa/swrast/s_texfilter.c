@@ -1,6 +1,6 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.5.3
+ * Version:  7.0.3
  *
  * Copyright (C) 1999-2007  Brian Paul   All Rights Reserved.
  *
@@ -1036,7 +1036,7 @@ sample_2d_linear_repeat(GLcontext *ctx,
    ASSERT(tObj->WrapS == GL_REPEAT);
    ASSERT(tObj->WrapT == GL_REPEAT);
    ASSERT(img->Border == 0);
-   ASSERT(img->_BaseFormat != GL_COLOR_INDEX);
+   ASSERT(img->TexFormat->BaseFormat != GL_COLOR_INDEX);
    ASSERT(img->_IsPowerOfTwo);
 
    COMPUTE_LINEAR_REPEAT_TEXEL_LOCATION(texcoord[0], u, width,  i0, i1);
@@ -1230,7 +1230,7 @@ opt_sample_rgb_2d( GLcontext *ctx,
    ASSERT(tObj->WrapS==GL_REPEAT);
    ASSERT(tObj->WrapT==GL_REPEAT);
    ASSERT(img->Border==0);
-   ASSERT(img->_BaseFormat==GL_RGB);
+   ASSERT(img->TexFormat->MesaFormat==MESA_FORMAT_RGB);
    ASSERT(img->_IsPowerOfTwo);
 
    for (k=0; k<n; k++) {
@@ -1271,7 +1271,7 @@ opt_sample_rgba_2d( GLcontext *ctx,
    ASSERT(tObj->WrapS==GL_REPEAT);
    ASSERT(tObj->WrapT==GL_REPEAT);
    ASSERT(img->Border==0);
-   ASSERT(img->_BaseFormat==GL_RGBA);
+   ASSERT(img->TexFormat->MesaFormat==MESA_FORMAT_RGBA);
    ASSERT(img->_IsPowerOfTwo);
 
    for (i = 0; i < n; i++) {
@@ -1301,7 +1301,7 @@ sample_lambda_2d( GLcontext *ctx,
    const GLboolean repeatNoBorderPOT = (tObj->WrapS == GL_REPEAT)
       && (tObj->WrapT == GL_REPEAT)
       && (tImg->Border == 0 && (tImg->Width == tImg->RowStride))
-      && (tImg->_BaseFormat != GL_COLOR_INDEX)
+      && (tImg->TexFormat->BaseFormat != GL_COLOR_INDEX)
       && tImg->_IsPowerOfTwo;
 
    ASSERT(lambda != NULL);
@@ -1316,16 +1316,10 @@ sample_lambda_2d( GLcontext *ctx,
          if (repeatNoBorderPOT) {
             switch (tImg->TexFormat->MesaFormat) {
             case MESA_FORMAT_RGB:
-            case MESA_FORMAT_RGB888:
-            /*case MESA_FORMAT_BGR888:*/
                opt_sample_rgb_2d(ctx, tObj, m, texcoords + minStart,
                                  NULL, rgba + minStart);
                break;
             case MESA_FORMAT_RGBA:
-            case MESA_FORMAT_RGBA8888:
-            case MESA_FORMAT_ARGB8888:
-            /*case MESA_FORMAT_ABGR8888:*/
-            /*case MESA_FORMAT_BGRA8888:*/
 	       opt_sample_rgba_2d(ctx, tObj, m, texcoords + minStart,
                                   NULL, rgba + minStart);
                break;
@@ -1379,16 +1373,10 @@ sample_lambda_2d( GLcontext *ctx,
          if (repeatNoBorderPOT) {
             switch (tImg->TexFormat->MesaFormat) {
             case MESA_FORMAT_RGB:
-            case MESA_FORMAT_RGB888:
-            /*case MESA_FORMAT_BGR888:*/
                opt_sample_rgb_2d(ctx, tObj, m, texcoords + magStart,
                                  NULL, rgba + magStart);
                break;
             case MESA_FORMAT_RGBA:
-            case MESA_FORMAT_RGBA8888:
-            case MESA_FORMAT_ARGB8888:
-            /*case MESA_FORMAT_ABGR8888:*/
-            /*case MESA_FORMAT_BGRA8888:*/
 	       opt_sample_rgba_2d(ctx, tObj, m, texcoords + magStart,
                                   NULL, rgba + magStart);
                break;
@@ -2095,7 +2083,7 @@ sample_nearest_rect(GLcontext *ctx,
    ASSERT(tObj->WrapT == GL_CLAMP ||
           tObj->WrapT == GL_CLAMP_TO_EDGE ||
           tObj->WrapT == GL_CLAMP_TO_BORDER);
-   ASSERT(img->_BaseFormat != GL_COLOR_INDEX);
+   ASSERT(img->TexFormat->BaseFormat != GL_COLOR_INDEX);
 
    for (i = 0; i < n; i++) {
       GLint row, col;
@@ -2131,7 +2119,7 @@ sample_linear_rect(GLcontext *ctx,
    ASSERT(tObj->WrapT == GL_CLAMP ||
           tObj->WrapT == GL_CLAMP_TO_EDGE ||
           tObj->WrapT == GL_CLAMP_TO_BORDER);
-   ASSERT(img->_BaseFormat != GL_COLOR_INDEX);
+   ASSERT(img->TexFormat->BaseFormat != GL_COLOR_INDEX);
 
    /* XXX lots of opportunity for optimization in this loop */
    for (i = 0; i < n; i++) {
@@ -2873,8 +2861,8 @@ sample_depth_texture( GLcontext *ctx,
 
    (void) lambda;
 
-   ASSERT(tObj->Image[0][tObj->BaseLevel]->_BaseFormat == GL_DEPTH_COMPONENT ||
-          tObj->Image[0][tObj->BaseLevel]->_BaseFormat == GL_DEPTH_STENCIL_EXT);
+   ASSERT(img->TexFormat->BaseFormat == GL_DEPTH_COMPONENT ||
+          img->TexFormat->BaseFormat == GL_DEPTH_STENCIL_EXT);
 
    ASSERT(tObj->Target == GL_TEXTURE_1D ||
           tObj->Target == GL_TEXTURE_2D ||
@@ -3242,7 +3230,7 @@ sample_depth_texture2(const GLcontext *ctx,
     * GL_TEXTURE_COMPARE_SGIX == GL_TRUE but the current texture object
     * isn't a depth texture.
     */
-   if (texImage->_BaseFormat != GL_DEPTH_COMPONENT) {
+   if (texImage->TexFormat->BaseFormat != GL_DEPTH_COMPONENT) {
       _mesa_problem(ctx,"GL_TEXTURE_COMPARE_SGIX enabled with non-depth texture");
       return;
    }
@@ -3345,7 +3333,7 @@ _swrast_choose_texture_sample_func( GLcontext *ctx,
    }
    else {
       const GLboolean needLambda = (GLboolean) (t->MinFilter != t->MagFilter);
-      const GLenum format = t->Image[0][t->BaseLevel]->_BaseFormat;
+      const GLenum format = t->Image[0][t->BaseLevel]->TexFormat->BaseFormat;
 
       switch (t->Target) {
       case GL_TEXTURE_1D:
