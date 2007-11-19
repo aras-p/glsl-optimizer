@@ -1,8 +1,8 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.5.2
+ * Version:  7.0.3
  *
- * Copyright (C) 1999-2006  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2007  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -41,9 +41,12 @@ fetch_texel( GLcontext *ctx, const GLfloat texcoord[4], GLfloat lambda,
 {
    GLchan rgba[4];
    SWcontext *swrast = SWRAST_CONTEXT(ctx);
+   const struct gl_texture_object *texObj = ctx->Texture.Unit[unit]._Current;
 
+   lambda = CLAMP(lambda, texObj->MinLod, texObj->MaxLod);
+ 
    /* XXX use a float-valued TextureSample routine here!!! */
-   swrast->TextureSample[unit](ctx, ctx->Texture.Unit[unit]._Current,
+   swrast->TextureSample[unit](ctx, texObj,
                                1, (const GLfloat (*)[4]) texcoord,
                                &lambda, &rgba);
    color[0] = CHAN_TO_FLOAT(rgba[0]);
