@@ -29,11 +29,15 @@
 #ifndef ST_MESA_TO_TGSI_H
 #define ST_MESA_TO_TGSI_H
 
+#include "GL/gl.h"
+
+
 #if defined __cplusplus
 extern "C" {
 #endif
 
 struct tgsi_token;
+struct gl_program;
 
 GLboolean
 tgsi_translate_mesa_program(

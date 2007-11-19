@@ -34,6 +34,7 @@
 #include "tgsi_platform.h"
 #include "pipe/tgsi/exec/tgsi_core.h"
 #include "st_mesa_to_tgsi.h"
+#include "shader/prog_instruction.h"
 #include "shader/prog_parameter.h"
 
 #define TGSI_DEBUG 0
