@@ -69,7 +69,7 @@ void i915_print_ureg(const char *msg, unsigned ureg);
 #define DEBUG_SURFACE    0x2000
 #define DEBUG_WINSYS     0x4000
 
-#ifdef DEBUG
+#if defined(DEBUG) && defined(FILE_DEBUG_FLAG)
 
 #include "pipe/p_winsys.h"
 
