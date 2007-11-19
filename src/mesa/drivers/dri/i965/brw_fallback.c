@@ -39,12 +39,6 @@
 #include "macros.h"
 #include "mtypes.h"
 
-
-
-
-
-
-
 static GLboolean do_check_fallback(struct brw_context *brw)
 {
    GLcontext *ctx = &brw->intel.ctx;

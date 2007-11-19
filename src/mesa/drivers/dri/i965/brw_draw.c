@@ -48,7 +48,7 @@
 #include "swrast/swrast.h"
 #include "swrast_setup/swrast_setup.h"
 
-
+#define FILE_DEBUG_FLAG DEBUG_BATCH
 
 static GLuint hw_prim[GL_POLYGON+1] = {
    _3DPRIM_POINTLIST,

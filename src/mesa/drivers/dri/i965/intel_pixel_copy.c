@@ -40,6 +40,7 @@
 #include "intel_blit.h"
 #include "intel_regions.h"
 
+#define FILE_DEBUG_FLAG DEBUG_PIXEL
 
 static struct intel_region *
 copypix_src_region(struct intel_context *intel, GLenum type)

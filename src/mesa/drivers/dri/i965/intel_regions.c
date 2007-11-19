@@ -45,6 +45,8 @@
 #include "bufmgr.h"
 #include "imports.h"
 
+#define FILE_DEBUG_FLAG DEBUG_REGION
+
 /* XXX: Thread safety?
  */
 GLubyte *intel_region_map(struct intel_context *intel, struct intel_region *region)

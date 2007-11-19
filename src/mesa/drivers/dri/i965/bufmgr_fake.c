@@ -50,6 +50,7 @@
 #define BM_NO_BACKING_STORE   0x2000
 #define BM_NO_FENCE_SUBDATA   0x4000
 
+#define FILE_DEBUG_FLAG DEBUG_BUFMGR
 
 static int check_fenced( struct intel_context *intel );
 

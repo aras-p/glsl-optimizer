@@ -183,9 +183,4 @@ void bmFinishFenceLock( struct intel_context *, unsigned fence );
 
 void bm_fake_NotifyContendedLockTake( struct intel_context * );
 
-extern int INTEL_DEBUG;
-#define DEBUG_BUFMGR 0x10000000
-
-#define DBG(...)  do { if (INTEL_DEBUG & DEBUG_BUFMGR) _mesa_printf(__VA_ARGS__); } while(0)
-
 #endif
