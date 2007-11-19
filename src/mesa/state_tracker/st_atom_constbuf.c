@@ -70,7 +70,7 @@ void st_upload_constants( struct st_context *st,
       _mesa_load_state_parameters(st->ctx, params);
 
       if (!cbuf->buffer)   
-	 cbuf->buffer = ws->buffer_create(ws, 1);
+	 cbuf->buffer = ws->buffer_create(ws, 1, 0, 0);
 
       if (0)
       {

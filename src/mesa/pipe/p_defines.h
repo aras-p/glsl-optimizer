@@ -170,8 +170,12 @@
 /**
  * Buffer access flags
  */
-#define PIPE_BUFFER_FLAG_READ    0x1
-#define PIPE_BUFFER_FLAG_WRITE   0x2
+#define PIPE_BUFFER_FLAG_READ         0x1
+#define PIPE_BUFFER_FLAG_WRITE        0x2
+#define PIPE_BUFFER_FLAG_MEM_LOCAL    0x4
+#define PIPE_BUFFER_FLAG_CACHED       0x8
+#define PIPE_BUFFER_FLAG_CUSTOM       (1<<16)
+
 
 
 /**

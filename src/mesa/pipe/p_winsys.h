@@ -59,6 +59,7 @@ struct pipe_surface;
 
 /** Opaque type */
 struct pipe_buffer_handle;
+struct pipe_fence_handle;
 
 struct pipe_winsys
 {
@@ -104,8 +105,10 @@ struct pipe_winsys
     * systems must then implement that interface (rather than the
     * other way around...).
     */
-   struct pipe_buffer_handle *(*buffer_create)(struct pipe_winsys *sws, 
-					       unsigned alignment );
+   struct pipe_buffer_handle *(*buffer_create)( struct pipe_winsys *sws, 
+					        unsigned alignment,
+                                                unsigned flags,
+                                                unsigned hint );
 
    /** Create a buffer that wraps user-space data */
    struct pipe_buffer_handle *(*user_buffer_create)(struct pipe_winsys *sws, 
@@ -136,24 +139,39 @@ struct pipe_winsys
     * usage argument is only an optimization hint, not a guarantee, therefore 
     * proper behavior must be observed in all circumstances.
     */
-   void (*buffer_data)(struct pipe_winsys *sws, 
+   int (*buffer_data)(struct pipe_winsys *sws, 
 		       struct pipe_buffer_handle *buf,
 		       unsigned size, const void *data,
 		       unsigned usage);
 
    /** Modify some or all of the data contained in a buffer's data store */
-   void (*buffer_subdata)(struct pipe_winsys *sws, 
-			  struct pipe_buffer_handle *buf,
-			  unsigned long offset, 
-			  unsigned long size, 
-			  const void *data);
+   int (*buffer_subdata)(struct pipe_winsys *sws, 
+                         struct pipe_buffer_handle *buf,
+                         unsigned long offset, 
+                         unsigned long size, 
+                         const void *data);
 
    /** Query some or all of the data contained in a buffer's data store */
-   void (*buffer_get_subdata)(struct pipe_winsys *sws, 
-			      struct pipe_buffer_handle *buf,
-			      unsigned long offset, 
-			      unsigned long size, 
-			      void *data);
+   int (*buffer_get_subdata)(struct pipe_winsys *sws, 
+                             struct pipe_buffer_handle *buf,
+                             unsigned long offset, 
+                             unsigned long size, 
+                             void *data);
+
+
+   void (*fence_reference)( struct pipe_winsys *sws,
+                            struct pipe_fence_handle **ptr,
+                            struct pipe_fence_handle *fence );
+
+   int (*fence_signalled)( struct pipe_winsys *sws,
+                           struct pipe_fence_handle *fence,
+                           unsigned flag );
+
+
+   int (*fence_finish)( struct pipe_winsys *sws,
+                        struct pipe_fence_handle *fence,
+                        unsigned flag );
+
 
 };
 

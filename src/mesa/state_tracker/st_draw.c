@@ -95,7 +95,7 @@ static void
 create_default_attribs_buffer(struct st_context *st)
 {
    struct pipe_context *pipe = st->pipe;
-   st->default_attrib_buffer = pipe->winsys->buffer_create( pipe->winsys, 32 );
+   st->default_attrib_buffer = pipe->winsys->buffer_create( pipe->winsys, 32, 0, 0 );
 }
 
 
@@ -288,7 +288,7 @@ st_draw_vertices(GLcontext *ctx, unsigned prim,
    }
 
    /* XXX create one-time */
-   vbuf = pipe->winsys->buffer_create(pipe->winsys, 32);
+   vbuf = pipe->winsys->buffer_create(pipe->winsys, 32, 0, 0);
    pipe->winsys->buffer_data(pipe->winsys, vbuf, 
                              vertex_bytes, verts,
                              PIPE_BUFFER_USAGE_VERTEX);
