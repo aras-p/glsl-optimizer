@@ -461,6 +461,40 @@ s8z24_get_tile(struct pipe_surface *ps,
 }
 
 
+/*** PIPE_FORMAT_Z24_S8 ***/
+
+/**
+ * Return Z component as four float in [0,1].  Stencil part ignored.
+ */
+static void
+z24s8_get_tile(struct pipe_surface *ps,
+               unsigned x, unsigned y, unsigned w, unsigned h, float *p)
+{
+   const uint *src
+      = ((const uint *) (ps->region->map + ps->offset))
+      + y * ps->region->pitch + x;
+   const double scale = 1.0 / ((1 << 24) - 1);
+   unsigned i, j;
+   unsigned w0 = w;
+
+   assert(ps->format == PIPE_FORMAT_Z24_S8);
+
+   CLIP_TILE;
+
+   for (i = 0; i < h; i++) {
+      float *pRow = p;
+      for (j = 0; j < w; j++) {
+         pRow[j * 4 + 0] =
+         pRow[j * 4 + 1] =
+         pRow[j * 4 + 2] =
+         pRow[j * 4 + 3] = (float) (scale * (src[j] >> 8));
+      }
+      src += ps->region->pitch;
+      p += 4 * w0;
+   }
+}
+
+
 /**
  * Called via pipe->get_tex_surface()
  * XXX is this in the right place?
@@ -601,6 +635,9 @@ softpipe_get_tile_rgba(struct pipe_context *pipe,
    case PIPE_FORMAT_S8_Z24:
       s8z24_get_tile(ps, x, y, w, h, p);
       break;
+   case PIPE_FORMAT_Z24_S8:
+      z24s8_get_tile(ps, x, y, w, h, p);
+      break;
    default:
       assert(0);
    }
@@ -644,6 +681,9 @@ softpipe_put_tile_rgba(struct pipe_context *pipe,
       break;
    case PIPE_FORMAT_S8_Z24:
       /*s8z24_put_tile(ps, x, y, w, h, p);*/
+      break;
+   case PIPE_FORMAT_Z24_S8:
+      /*z24s8_put_tile(ps, x, y, w, h, p);*/
       break;
    default:
       assert(0);

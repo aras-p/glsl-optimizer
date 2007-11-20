@@ -166,6 +166,7 @@ sp_flush_tile_cache(struct softpipe_context *softpipe,
       return;
 
    is_depth_stencil = (ps->format == PIPE_FORMAT_S8_Z24 ||
+                       ps->format == PIPE_FORMAT_Z24_S8 ||
                        ps->format == PIPE_FORMAT_U_Z16 ||
                        ps->format == PIPE_FORMAT_U_Z32 ||
                        ps->format == PIPE_FORMAT_U_S8);
@@ -203,6 +204,7 @@ sp_get_cached_tile(struct softpipe_context *softpipe,
    struct pipe_surface *ps = tc->surface;
    boolean is_depth_stencil
       = (ps->format == PIPE_FORMAT_S8_Z24 ||
+         ps->format == PIPE_FORMAT_Z24_S8 ||
          ps->format == PIPE_FORMAT_U_Z16 ||
          ps->format == PIPE_FORMAT_U_Z32 ||
          ps->format == PIPE_FORMAT_U_S8);
@@ -261,6 +263,17 @@ sp_get_cached_tile(struct softpipe_context *softpipe,
             {
                uint clear_val = (uint) (tc->clear_value[0] * 0xffffff);
                clear_val |= ((uint) tc->clear_value[1]) << 24;
+               for (i = 0; i < TILE_SIZE; i++) {
+                  for (j = 0; j < TILE_SIZE; j++) {
+                     tile->data.depth32[i][j] = clear_val;
+                  }
+               }
+            }
+            break;
+         case PIPE_FORMAT_Z24_S8:
+            {
+               uint clear_val = ((uint) (tc->clear_value[0] * 0xffffff)) << 8;
+               clear_val |= ((uint) tc->clear_value[1]) & 0xff;
                for (i = 0; i < TILE_SIZE; i++) {
                   for (j = 0; j < TILE_SIZE; j++) {
                      tile->data.depth32[i][j] = clear_val;

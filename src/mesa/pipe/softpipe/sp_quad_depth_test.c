@@ -119,6 +119,21 @@ sp_depth_test_quad(struct quad_stage *qs, struct quad_header *quad)
          }
       }
       break;
+   case PIPE_FORMAT_Z24_S8:
+      {
+         float scale = (float) ((1 << 24) - 1);
+
+         for (j = 0; j < QUAD_SIZE; j++) {
+            qzzzz[j] = (unsigned) (quad->outputs.depth[j] * scale);
+         }
+
+         for (j = 0; j < QUAD_SIZE; j++) {
+            int x = quad->x0 % TILE_SIZE + (j & 1);
+            int y = quad->y0 % TILE_SIZE + (j >> 1);
+            bzzzz[j] = tile->data.depth32[y][x] >> 8;
+         }
+      }
+      break;
    default:
       assert(0);
    }
@@ -208,6 +223,15 @@ sp_depth_test_quad(struct quad_stage *qs, struct quad_header *quad)
             uint s8z24 = tile->data.depth32[y][x];
             s8z24 = (s8z24 & 0xff000000) | bzzzz[j];
             tile->data.depth32[y][x] = s8z24;
+         }
+         break;
+      case PIPE_FORMAT_Z24_S8:
+         for (j = 0; j < QUAD_SIZE; j++) {
+            int x = quad->x0 % TILE_SIZE + (j & 1);
+            int y = quad->y0 % TILE_SIZE + (j >> 1);
+            uint z24s8 = tile->data.depth32[y][x];
+            z24s8 = (z24s8 & 0xff) | (bzzzz[j] << 24);
+            tile->data.depth32[y][x] = z24s8;
          }
          break;
       default:
