@@ -91,6 +91,7 @@ emit_src(struct nv40_fpc *fpc, uint32_t *hw, int pos, struct nv40_sreg src)
 	case NV40SR_CONST:
 		sr |= (NV40_FP_REG_TYPE_CONST << NV40_FP_REG_TYPE_SHIFT);	
 		fpc->inst_has_const = TRUE;
+		fpc->inst_const_id = src.index;
 		break;
 	case NV40SR_NONE:
 		sr |= (NV40_FP_REG_TYPE_INPUT << NV40_FP_REG_TYPE_SHIFT);
