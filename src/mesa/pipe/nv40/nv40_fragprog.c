@@ -58,13 +58,13 @@ struct nv40_fpc {
 };
 
 static INLINE struct nv40_sreg
-nv40_sr_temp(struct nv40_fpc *fpc)
+temp(struct nv40_fpc *fpc)
 {
 	int idx;
 
 	idx  = fpc->temp_temp_count++;
 	idx += fpc->high_temp + 1;
-	return nv40_sr(0, NV40_FP_REG_TYPE_TEMP, idx);
+	return nv40_sr(NV40SR_TEMP, idx);
 }
 
 #define arith(cc,s,o,d,m,s0,s1,s2) \
@@ -73,22 +73,30 @@ nv40_sr_temp(struct nv40_fpc *fpc)
 #define tex(cc,s,o,u,d,m,s0,s1,s2) \
 	nv40_fp_tex((cc), (s), NV40_FP_OP_OPCODE_##o, (u), \
 		    (d), (m), (s0), none, none)
-#define temp(fpc) nv40_sr_temp((fpc))
 
 static void
 emit_src(struct nv40_fpc *fpc, uint32_t *hw, int pos, struct nv40_sreg src)
 {
 	uint32_t sr = 0;
 
-	sr |= (src.type << NV40_FP_REG_TYPE_SHIFT);
-	if (src.type == NV40_FP_REG_TYPE_INPUT) {
+	switch (src.type) {
+	case NV40SR_INPUT:
+		sr |= (NV40_FP_REG_TYPE_INPUT << NV40_FP_REG_TYPE_SHIFT);
 		hw[0] |= (src.index << NV40_FP_OP_INPUT_SRC_SHIFT);
-	} else
-	if (src.type == NV40_FP_REG_TYPE_CONST) {
-		fpc->inst_has_const = TRUE;
-	} else
-	if (src.type == NV40_FP_REG_TYPE_TEMP) {
+		break;
+	case NV40SR_TEMP:
+		sr |= (NV40_FP_REG_TYPE_TEMP << NV40_FP_REG_TYPE_SHIFT);
 		sr |= (src.index << NV40_FP_REG_SRC_SHIFT);
+		break;
+	case NV40SR_CONST:
+		sr |= (NV40_FP_REG_TYPE_CONST << NV40_FP_REG_TYPE_SHIFT);	
+		fpc->inst_has_const = TRUE;
+		break;
+	case NV40SR_NONE:
+		sr |= (NV40_FP_REG_TYPE_INPUT << NV40_FP_REG_TYPE_SHIFT);
+		break;
+	default:
+		assert(0);
 	}
 
 	if (src.negate)
@@ -110,16 +118,25 @@ emit_dst(struct nv40_fpc *fpc, uint32_t *hw, struct nv40_sreg dst)
 {
 	struct nv40_fragment_program *fp = fpc->fp;
 
-	if (dst.output) {
+	switch (dst.type) {
+	case NV40SR_TEMP:
+		if (fp->num_regs < (dst.index + 1))
+			fp->num_regs = dst.index + 1;
+		break;
+	case NV40SR_OUTPUT:
 		if (dst.index == 1) {
 			fp->writes_depth = 1;
 		} else {
 			hw[0] |= NV40_FP_OP_UNK0_7;
 		}
-	} else {
-		if (fp->num_regs < (dst.index + 1))
-			fp->num_regs = dst.index + 1;
+		break;
+	case NV40SR_NONE:
+		hw[0] |= (1 << 30);
+		break;
+	default:
+		assert(0);
 	}
+
 	hw[0] |= (dst.index << NV40_FP_OP_OUT_REG_SHIFT);
 }
 
@@ -180,29 +197,25 @@ static INLINE struct nv40_sreg
 tgsi_src(struct nv40_fpc *fpc, const struct tgsi_full_src_register *fsrc)
 {
 	struct nv40_sreg src;
-	uint type, index;
 
 	switch (fsrc->SrcRegister.File) {
 	case TGSI_FILE_INPUT:
-		type   = NV40_FP_REG_TYPE_INPUT;
-		index  = fpc->attrib_map[fsrc->SrcRegister.Index];
+		src = nv40_sr(NV40SR_INPUT,
+			      fpc->attrib_map[fsrc->SrcRegister.Index]);
 		break;
 	case TGSI_FILE_CONSTANT:
-		type   = NV40_FP_REG_TYPE_CONST;
-		index  = fsrc->SrcRegister.Index;
+		src = nv40_sr(NV40SR_CONST, fsrc->SrcRegister.Index);
 		break;
 	case TGSI_FILE_TEMPORARY:
-		type   = NV40_FP_REG_TYPE_TEMP;
-		index  = fsrc->SrcRegister.Index + 1;
-		if (fpc->high_temp < index)
-			fpc->high_temp = index;
+		src = nv40_sr(NV40SR_TEMP, fsrc->SrcRegister.Index + 1);
+		if (fpc->high_temp < src.index)
+			fpc->high_temp = src.index;
 		break;
 	default:
 		NOUVEAU_ERR("bad src file\n");
 		break;
 	}
 
-	src = nv40_sr(0, type, index);
 	src.abs = fsrc->SrcRegisterExtMod.Absolute;
 	src.negate = fsrc->SrcRegister.Negate;
 	src.swz[0] = fsrc->SrcRegister.SwizzleX;
@@ -214,30 +227,26 @@ tgsi_src(struct nv40_fpc *fpc, const struct tgsi_full_src_register *fsrc)
 
 static INLINE struct nv40_sreg
 tgsi_dst(struct nv40_fpc *fpc, const struct tgsi_full_dst_register *fdst) {
-	int out, idx;
+	int idx;
 
 	switch (fdst->DstRegister.File) {
 	case TGSI_FILE_OUTPUT:
-		out = 1;
 		if (fdst->DstRegister.Index == fpc->colour_id)
-			idx = 0;
+			return nv40_sr(NV40SR_OUTPUT, 0);
 		else
-			idx = 1;
+			return nv40_sr(NV40SR_OUTPUT, 1);
 		break;
 	case TGSI_FILE_TEMPORARY:
-		out = 0;
 		idx = fdst->DstRegister.Index + 1;
 		if (fpc->high_temp < idx)
 			fpc->high_temp = idx;
-		break;
+		return nv40_sr(NV40SR_TEMP, idx);
 	case TGSI_FILE_NULL:
-		break;
+		return nv40_sr(NV40SR_NONE, 0);
 	default:
 		NOUVEAU_ERR("bad dst file %d\n", fdst->DstRegister.File);
-		break;
+		return nv40_sr(NV40SR_NONE, 0);
 	}
-
-	return nv40_sr(out, NV40_FP_REG_TYPE_TEMP, idx);
 }
 
 static INLINE int
@@ -256,8 +265,8 @@ static boolean
 nv40_fragprog_parse_instruction(struct nv40_fpc *fpc,
 				const struct tgsi_full_instruction *finst)
 {
+	const struct nv40_sreg none = nv40_sr(NV40SR_NONE, 0);
 	struct nv40_sreg src[3], dst, tmp;
-	struct nv40_sreg none = nv40_sr(0, NV40_FP_REG_TYPE_INPUT, 0);
 	int mask, sat, unit;
 	int ai = -1, ci = -1;
 	int i;
@@ -361,14 +370,13 @@ nv40_fragprog_parse_instruction(struct nv40_fpc *fpc,
 		arith(fpc, sat, FRC, dst, mask, src[0], none, none);
 		break;
 	case TGSI_OPCODE_KIL:
+		arith(fpc, 0, KIL, none, 0, none, none, none);
+		break;
 	case TGSI_OPCODE_KILP:
-		/*XXX: Which is NV, which is ARB kil? ARB implemented here.
-		 *XXX: Don't need temp, can update CC0 without writing dst
-		 */
-		tmp = temp(fpc);
-		tmp.cc_update = 1;
-		arith(fpc, 0, MOV, tmp, MASK_ALL, src[0], none, none);
-		dst.cc_test = NV40_FP_OP_COND_LT;
+		dst = nv40_sr(NV40SR_NONE, 0);
+		dst.cc_update = 1;
+		arith(fpc, 0, MOV, dst, MASK_ALL, src[0], none, none);
+		dst.cc_update = 0; dst.cc_test = NV40_FP_OP_COND_LT;
 		arith(fpc, 0, KIL, dst, 0, none, none, none);
 		break;
 	case TGSI_OPCODE_LG2:

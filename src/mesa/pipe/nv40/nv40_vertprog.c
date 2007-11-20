@@ -54,18 +54,17 @@ struct nv40_vpc {
 };
 
 static INLINE struct nv40_sreg
-nv40_sr_temp(struct nv40_vpc *vpc)
+temp(struct nv40_vpc *vpc)
 {
 	int idx;
 
 	idx  = vpc->temp_temp_count++;
 	idx += vpc->high_temp;
-	return nv40_sr(0, NV40_VP_SRC_REG_TYPE_TEMP, idx);
+	return nv40_sr(NV40SR_TEMP, idx);
 }
 
 static INLINE struct nv40_sreg
-nv40_sr_const(struct nv40_vpc *vpc, int pipe,
-	      float x, float y, float z, float w)
+constant(struct nv40_vpc *vpc, int pipe, float x, float y, float z, float w)
 {
 	struct nv40_vertex_program *vp = vpc->vp;
 	int idx = vp->num_consts;
@@ -78,13 +77,11 @@ nv40_sr_const(struct nv40_vpc *vpc, int pipe,
 	vp->consts[idx].value[3] = w;
 	vp->num_consts++;
 
-	return nv40_sr(0, NV40_VP_SRC_REG_TYPE_CONST, idx);
+	return nv40_sr(NV40SR_CONST, idx);
 }
 
 #define arith(cc,s,o,d,m,s0,s1,s2) \
 	nv40_vp_arith((cc), (s), NV40_VP_INST_##o, (d), (m), (s0), (s1), (s2))
-#define temp(vpc) nv40_sr_temp((vpc))
-#define constant(v,p,x,y,z,w) nv40_sr_const((v), (p), (x), (y), (z), (w))
 
 static void
 emit_src(struct nv40_vpc *vpc, uint32_t *hw, int pos, struct nv40_sreg src)
@@ -92,15 +89,28 @@ emit_src(struct nv40_vpc *vpc, uint32_t *hw, int pos, struct nv40_sreg src)
 	struct nv40_vertex_program *vp = vpc->vp;
 	uint32_t sr = 0;
 
-	sr |= (src.type << NV40_VP_SRC_REG_TYPE_SHIFT);
-	if (src.type == NV40_VP_SRC_REG_TYPE_INPUT) {
+	switch (src.type) {
+	case NV40SR_TEMP:
+		sr |= (NV40_VP_SRC_REG_TYPE_TEMP << NV40_VP_SRC_REG_TYPE_SHIFT);
+		sr |= (src.index << NV40_VP_SRC_TEMP_SRC_SHIFT);
+		break;
+	case NV40SR_INPUT:
+		sr |= (NV40_VP_SRC_REG_TYPE_INPUT <<
+		       NV40_VP_SRC_REG_TYPE_SHIFT);
 		vp->ir |= (1 << src.index);
 		hw[1] |= (src.index << NV40_VP_INST_INPUT_SRC_SHIFT);
-	} else
-	if (src.type == NV40_VP_SRC_REG_TYPE_CONST) {
+		break;
+	case NV40SR_CONST:
+		sr |= (NV40_VP_SRC_REG_TYPE_CONST <<
+		       NV40_VP_SRC_REG_TYPE_SHIFT);
 		hw[1] |= (src.index << NV40_VP_INST_CONST_SRC_SHIFT);
-	} else {
-		sr |= (src.index << NV40_VP_SRC_TEMP_SRC_SHIFT);
+		break;
+	case NV40SR_NONE:
+		sr |= (NV40_VP_SRC_REG_TYPE_INPUT <<
+		       NV40_VP_SRC_REG_TYPE_SHIFT);
+		break;
+	default:
+		assert(0);
 	}
 
 	if (src.negate)
@@ -140,16 +150,18 @@ emit_dst(struct nv40_vpc *vpc, uint32_t *hw, int slot, struct nv40_sreg dst)
 {
 	struct nv40_vertex_program *vp = vpc->vp;
 
-	if (dst.output == 0) {
+	switch (dst.type) {
+	case NV40SR_TEMP:
 		hw[3] |= NV40_VP_INST_DEST_MASK;
 		if (slot == 0) {
 			hw[0] |= (dst.index <<
 				  NV40_VP_INST_VEC_DEST_TEMP_SHIFT);
 		} else {
-			hw[3] |= (dst.index <<
+			hw[3] |= (dst.index << 
 				  NV40_VP_INST_SCA_DEST_TEMP_SHIFT);
 		}
-	} else {
+		break;
+	case NV40SR_OUTPUT:
 		switch (dst.index) {
 		case NV40_VP_INST_DEST_COL0 : vp->or |= (1 << 0); break;
 		case NV40_VP_INST_DEST_COL1 : vp->or |= (1 << 1); break;
@@ -166,7 +178,7 @@ emit_dst(struct nv40_vpc *vpc, uint32_t *hw, int slot, struct nv40_sreg dst)
 		case NV40_VP_INST_DEST_TC(6): vp->or |= (1 << 20); break;
 		case NV40_VP_INST_DEST_TC(7): vp->or |= (1 << 21); break;
 		default:
-		     break;
+			break;
 		}
 
 		hw[3] |= (dst.index << NV40_VP_INST_DEST_SHIFT);
@@ -177,6 +189,9 @@ emit_dst(struct nv40_vpc *vpc, uint32_t *hw, int slot, struct nv40_sreg dst)
 			hw[3] |= NV40_VP_INST_SCA_RESULT;
 			hw[3] |= NV40_VP_INST_SCA_DEST_TEMP_MASK;
 		}
+		break;
+	default:
+		assert(0);
 	}
 }
 
@@ -220,8 +235,7 @@ tgsi_src(struct nv40_vpc *vpc, const struct tgsi_full_src_register *fsrc) {
 
 	switch (fsrc->SrcRegister.File) {
 	case TGSI_FILE_INPUT:
-		src = nv40_sr(0, NV40_VP_SRC_REG_TYPE_INPUT,
-			      fsrc->SrcRegister.Index);
+		src = nv40_sr(NV40SR_INPUT, fsrc->SrcRegister.Index);
 		break;
 	case TGSI_FILE_CONSTANT:
 		src = constant(vpc, fsrc->SrcRegister.Index, 0, 0, 0, 0);
@@ -229,8 +243,7 @@ tgsi_src(struct nv40_vpc *vpc, const struct tgsi_full_src_register *fsrc) {
 	case TGSI_FILE_TEMPORARY:
 		if (vpc->high_temp < fsrc->SrcRegister.Index)
 			vpc->high_temp = fsrc->SrcRegister.Index;
-		src = nv40_sr(0, NV40_VP_SRC_REG_TYPE_TEMP,
-			      fsrc->SrcRegister.Index);
+		src = nv40_sr(NV40SR_TEMP, fsrc->SrcRegister.Index);
 		break;
 	default:
 		NOUVEAU_ERR("bad src file\n");
@@ -248,25 +261,25 @@ tgsi_src(struct nv40_vpc *vpc, const struct tgsi_full_src_register *fsrc) {
 
 static INLINE struct nv40_sreg
 tgsi_dst(struct nv40_vpc *vpc, const struct tgsi_full_dst_register *fdst) {
-	uint out, idx;
+	struct nv40_sreg dst;
 
 	switch (fdst->DstRegister.File) {
 	case TGSI_FILE_OUTPUT:
-		out = 1;
-		idx = vpc->output_map[fdst->DstRegister.Index];
+		dst = nv40_sr(NV40SR_OUTPUT,
+			      vpc->output_map[fdst->DstRegister.Index]);
+
 		break;
 	case TGSI_FILE_TEMPORARY:
-		out = 0;
-		idx = fdst->DstRegister.Index;
-		if (vpc->high_temp < idx)
-			vpc->high_temp = idx;
+		dst = nv40_sr(NV40SR_TEMP, fdst->DstRegister.Index);
+		if (vpc->high_temp < dst.index)
+			vpc->high_temp = dst.index;
 		break;
 	default:
 		NOUVEAU_ERR("bad dst file\n");
 		break;
 	}
 
-	return nv40_sr(out, NV40_VP_SRC_REG_TYPE_TEMP, idx);
+	return dst;
 }
 
 static INLINE int
@@ -286,7 +299,7 @@ nv40_vertprog_parse_instruction(struct nv40_vpc *vpc,
 				const struct tgsi_full_instruction *finst)
 {
 	struct nv40_sreg src[3], dst, tmp;
-	struct nv40_sreg none = nv40_sr(0, NV40_VP_SRC_REG_TYPE_INPUT, 0);
+	struct nv40_sreg none = nv40_sr(NV40SR_NONE, 0);
 	int mask;
 	int ai = -1, ci = -1;
 	int i;

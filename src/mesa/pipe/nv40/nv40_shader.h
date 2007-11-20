@@ -472,8 +472,13 @@
 #        define NV40_FP_SWIZZLE_W                                              3
 #define NV40_FP_REG_NEGATE                                             (1 << 17)
 
+#define NV40SR_NONE	0
+#define NV40SR_OUTPUT	1
+#define NV40SR_INPUT	2
+#define NV40SR_TEMP	3
+#define NV40SR_CONST	4
+
 struct nv40_sreg {
-	int output;
 	int type;
 	int index;
 
@@ -491,10 +496,9 @@ struct nv40_sreg {
 };
 
 static INLINE struct nv40_sreg
-nv40_sr(int out, int type, int index)
+nv40_sr(int type, int index)
 {
 	struct nv40_sreg temp = {
-		.output = out,
 		.type = type,
 		.index = index,
 		.dst_scale = DEF_SCALE,
