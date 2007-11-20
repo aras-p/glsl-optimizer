@@ -138,20 +138,30 @@ struct pipe_winsys
     * usage is a bitmask of PIPE_BUFFER_USAGE_PIXEL/VERTEX/INDEX/CONSTANT. This
     * usage argument is only an optimization hint, not a guarantee, therefore 
     * proper behavior must be observed in all circumstances.
+    * 
+    * Returns zero on success.
     */
    int (*buffer_data)(struct pipe_winsys *sws, 
 		       struct pipe_buffer_handle *buf,
 		       unsigned size, const void *data,
 		       unsigned usage);
 
-   /** Modify some or all of the data contained in a buffer's data store */
+   /** 
+    * Modify some or all of the data contained in a buffer's data store.
+    * 
+    * Returns zero on success.
+    */
    int (*buffer_subdata)(struct pipe_winsys *sws, 
                          struct pipe_buffer_handle *buf,
                          unsigned long offset, 
                          unsigned long size, 
                          const void *data);
 
-   /** Query some or all of the data contained in a buffer's data store */
+   /** 
+    * Query some or all of the data contained in a buffer's data store.
+    * 
+    * Returns zero on success.
+    */
    int (*buffer_get_subdata)(struct pipe_winsys *sws, 
                              struct pipe_buffer_handle *buf,
                              unsigned long offset, 
