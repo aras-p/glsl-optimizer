@@ -42,10 +42,13 @@ nv40_state_update_vertprog(struct nv40_context *nv40)
 	struct pipe_context *pipe = (struct pipe_context *)nv40;
 	struct nv40_vertex_program *vp = nv40->vertprog.vp;
 	float *map;
-	int i;
+	int i, force_consts = 0;
 
 	if (!nv40->vertprog.vp->translated)
 		nv40_vertprog_translate(nv40, nv40->vertprog.vp);
+
+	if (nv40->vertprog.vp != nv40->vertprog.active_vp)
+		force_consts = 1;
 
 	if (vp->num_consts) {
 		map = pipe->winsys->buffer_map(pipe->winsys,
@@ -55,7 +58,8 @@ nv40_state_update_vertprog(struct nv40_context *nv40)
 			uint pid = vp->consts[i].pipe_id;
 
 			if (pid >= 0) {
-				if (!memcmp(vp->consts[i].value, &map[pid*4],
+				if (!force_consts &&
+				    !memcmp(vp->consts[i].value, &map[pid*4],
 					    4 * sizeof(float)))
 					continue;
 				memcpy(vp->consts[i].value, &map[pid*4],
