@@ -320,6 +320,9 @@ default_depth_format(
    if (pipe->is_format_supported( pipe, PIPE_FORMAT_S8_Z24 )) {
       return PIPE_FORMAT_S8_Z24;
    }
+   if (pipe->is_format_supported( pipe, PIPE_FORMAT_Z24_S8 )) {
+      return PIPE_FORMAT_Z24_S8;
+   }
    return PIPE_FORMAT_NONE;
 }
 
@@ -486,6 +489,8 @@ st_choose_pipe_format(struct pipe_context *pipe, GLint internalFormat,
    case GL_DEPTH_COMPONENT24:
       if (pipe->is_format_supported( pipe, PIPE_FORMAT_S8_Z24 ))
          return PIPE_FORMAT_S8_Z24;
+      if (pipe->is_format_supported( pipe, PIPE_FORMAT_Z24_S8 ))
+         return PIPE_FORMAT_Z24_S8;
       /* fall-through */
    case GL_DEPTH_COMPONENT32:
       if (pipe->is_format_supported( pipe, PIPE_FORMAT_U_Z32 ))
@@ -503,12 +508,16 @@ st_choose_pipe_format(struct pipe_context *pipe, GLint internalFormat,
          return PIPE_FORMAT_U_S8;
       if (pipe->is_format_supported( pipe, PIPE_FORMAT_S8_Z24 ))
          return PIPE_FORMAT_S8_Z24;
+      if (pipe->is_format_supported( pipe, PIPE_FORMAT_Z24_S8 ))
+         return PIPE_FORMAT_Z24_S8;
       return PIPE_FORMAT_NONE;
 
    case GL_DEPTH_STENCIL_EXT:
    case GL_DEPTH24_STENCIL8_EXT:
       if (pipe->is_format_supported( pipe, PIPE_FORMAT_S8_Z24 ))
          return PIPE_FORMAT_S8_Z24;
+      if (pipe->is_format_supported( pipe, PIPE_FORMAT_Z24_S8 ))
+         return PIPE_FORMAT_Z24_S8;
       return PIPE_FORMAT_NONE;
 
    default:

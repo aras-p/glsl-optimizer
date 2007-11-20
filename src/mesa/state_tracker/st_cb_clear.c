@@ -91,6 +91,8 @@ depth_value(GLuint pipeFormat, GLfloat value)
          return (uint) (value * 0xffffffff);
    case PIPE_FORMAT_S8_Z24:
       return (uint) (value * 0xffffff);
+   case PIPE_FORMAT_Z24_S8:
+      return ((uint) (value * 0xffffff)) << 8;
    default:
       assert(0);
       return 0;
@@ -103,7 +105,7 @@ is_depth_stencil_format(GLuint pipeFormat)
 {
    switch (pipeFormat) {
    case PIPE_FORMAT_S8_Z24:
-   /*case PIPE_FORMAT_Z24_S8:*/
+   case PIPE_FORMAT_Z24_S8:
       return GL_TRUE;
    default:
       return GL_FALSE;
@@ -521,11 +523,9 @@ clear_depth_stencil_buffer(GLcontext *ctx, struct gl_renderbuffer *rb)
       case PIPE_FORMAT_S8_Z24:
          clearValue |= ctx->Stencil.Clear << 24;
          break;
-#if 0
       case PIPE_FORMAT_Z24_S8:
-         clearValue = (clearValue << 8) | clearVal;
+         clearValue |= clearValue | ctx->Stencil.Clear;
          break;
-#endif
       default:
          assert(0);
       }  
