@@ -210,9 +210,9 @@ nv40_sampler_state_create(struct pipe_context *pipe,
 	}
 
 
-	ps->wrap = ((wrap_mode(cso->wrap_r) << NV40TCL_TEX_WRAP_S_SHIFT) |
+	ps->wrap = ((wrap_mode(cso->wrap_s) << NV40TCL_TEX_WRAP_S_SHIFT) |
 		    (wrap_mode(cso->wrap_t) << NV40TCL_TEX_WRAP_T_SHIFT) |
-		    (wrap_mode(cso->wrap_s) << NV40TCL_TEX_WRAP_R_SHIFT));
+		    (wrap_mode(cso->wrap_r) << NV40TCL_TEX_WRAP_R_SHIFT));
 	ps->filt = filter;
 	ps->bcol = ((float_to_ubyte(cso->border_color[3]) << 24) |
 		    (float_to_ubyte(cso->border_color[0]) << 16) |

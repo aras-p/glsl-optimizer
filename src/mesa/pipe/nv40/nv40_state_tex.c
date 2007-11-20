@@ -33,6 +33,7 @@ nv40_texture_formats[] = {
 //	_(RGBA_DXT1   , 0x86,   S1,   S1,   S1,   S1, X, Y, Z, W, 0x00, 0x00),
 //	_(RGBA_DXT3   , 0x87,   S1,   S1,   S1,   S1, X, Y, Z, W, 0x00, 0x00),
 //	_(RGBA_DXT5   , 0x88,   S1,   S1,   S1,   S1, X, Y, Z, W, 0x00, 0x00),
+	{},
 };
 
 static struct nv40_texture_format *
