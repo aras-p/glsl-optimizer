@@ -79,7 +79,7 @@ nv40_get_tile_rgba(struct pipe_context *pipe,
          p += w0 * 4;
       }
       break;
-   case PIPE_FORMAT_S8_Z24:
+   case PIPE_FORMAT_Z24_S8:
       {
          const float scale = 1.0 / (float) 0xffffff;
          for (i = 0; i < h; i++) {
@@ -89,7 +89,7 @@ nv40_get_tile_rgba(struct pipe_context *pipe,
                pRow[0] =
                pRow[1] =
                pRow[2] =
-               pRow[3] = (pixel & 0xffffff) * scale;
+               pRow[3] = ((pixel & 0xffffff) >> 8) * scale;
                pRow += 4;
             }
             src += ps->region->pitch;

@@ -12,7 +12,7 @@ nv40_is_format_supported(struct pipe_context *pipe, uint format)
 	switch (format) {
 	case PIPE_FORMAT_U_A8_R8_G8_B8:
 	case PIPE_FORMAT_U_R5_G6_B5: 
-	case PIPE_FORMAT_S8_Z24: 
+	case PIPE_FORMAT_Z24_S8:
 		return TRUE;
 	default:
 		break;
